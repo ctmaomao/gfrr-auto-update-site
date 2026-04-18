@@ -1,11 +1,11 @@
 # 全球金融风险雷达
 
-当前稳定版：`v25.0.0`
+当前稳定版：`v26.0A-rc1`
 
 全球金融风险雷达是一个面向公开部署场景的静态风险监测页面。项目以静态基线数据为主，以 realtime 覆盖层为辅，并在前端统一展示 freshness、degraded、unavailable 和 Health Dashboard 状态。
 
 ## 发布状态
-- 当前稳定版：`v25.0.0`
+- 当前稳定版：`v26.0A-rc1`
 - realtime 发布分支：`realtime-data`
 - 当前能力：`baseline + realtime overlay + freshness + degraded + health dashboard`
 
