@@ -19,6 +19,59 @@
     </header>
 
     <main>
+      <section class="full-width-section decision-header-section">
+        <article class="card decision-header-card full-width-card">
+          <div class="decision-header-layout">
+            <div class="decision-header-main">
+              <div class="decision-header-topline">
+                <span class="badge neutral" id="decision-header-state-badge">--</span>
+                <span class="muted" id="decision-header-escalation">--</span>
+              </div>
+              <div class="decision-header-kicker">Decision Header</div>
+              <h2 class="decision-header-title" id="decision-header-title">加载中...</h2>
+              <p class="decision-header-reason" id="decision-header-reason">正在汇总当前策略状态与风险结论...</p>
+              <div class="decision-header-action-block">
+                <div class="decision-header-action-label">今日核心动作</div>
+                <div class="decision-header-action" id="decision-header-action">--</div>
+              </div>
+            </div>
+            <div class="decision-header-side">
+              <div class="decision-header-metrics">
+                <div class="metric-box compact">
+                  <div class="metric-label">策略状态</div>
+                  <div class="metric-value" id="decision-header-state-label">--</div>
+                </div>
+                <div class="metric-box compact">
+                  <div class="metric-label">总风险指数</div>
+                  <div class="metric-value" id="decision-header-score">--</div>
+                </div>
+                <div class="metric-box compact">
+                  <div class="metric-label">建议总仓位区间</div>
+                  <div class="metric-value" id="decision-header-exposure">--</div>
+                </div>
+                <div class="metric-box compact">
+                  <div class="metric-label">状态变化</div>
+                  <div class="metric-value small" id="decision-header-change">--</div>
+                </div>
+              </div>
+              <div class="decision-header-policy-grid">
+                <div class="decision-header-policy-card">
+                  <div class="metric-label">现金指引</div>
+                  <div class="decision-header-policy-text" id="decision-header-cash">--</div>
+                </div>
+                <div class="decision-header-policy-card">
+                  <div class="metric-label">新增仓位政策</div>
+                  <div class="decision-header-policy-text" id="decision-header-policy">--</div>
+                </div>
+              </div>
+              <div class="decision-header-drivers">
+                <div class="metric-label">主导风险源</div>
+                <div class="decision-driver-list" id="decision-header-drivers"></div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
       
       <section class="full-width-section">
         <article class="card realtime-strip-card">

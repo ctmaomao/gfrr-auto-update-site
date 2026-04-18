@@ -1491,6 +1491,98 @@ function renderHealthDashboard(model) {
   renderList('health-source-list', model.sourceLines);
 }
 
+function getDecisionHeaderBadgeClass(strategyState) {
+  switch (strategyState) {
+    case 'Risk-On':
+      return 'decision-badge-risk-on';
+    case 'Balanced':
+      return 'decision-badge-balanced';
+    case 'Caution':
+      return 'decision-badge-caution';
+    case 'Defensive':
+      return 'decision-badge-defensive';
+    case 'Crisis':
+      return 'decision-badge-crisis';
+    default:
+      return 'neutral';
+  }
+}
+
+function describeStateChange(stateMeta = {}) {
+  const delta = Number(stateMeta.recent3dDelta);
+  const extremeCount = Number(stateMeta.extremeThresholdCount) || 0;
+  const highRiskStreakDays = Number(stateMeta.highRiskStreakDays) || 0;
+
+  if (delta >= 8) return 'Rising over last 3 days';
+  if (delta >= 3) return 'Firming over last 3 days';
+  if (delta <= -8) return extremeCount > 0 || highRiskStreakDays >= 3 ? 'Elevated but easing' : 'Easing over last 3 days';
+  if (delta <= -3) return 'Stabilizing';
+  if (extremeCount > 0) return 'Holding at elevated levels';
+  return 'Stable near current regime';
+}
+
+function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
+  const strategyState = decisionModel.strategyState || 'Caution';
+  const stateLabel = decisionModel.stateLabel || strategyState;
+  const stateScore = Number.isFinite(decisionModel.stateScore)
+    ? decisionModel.stateScore
+    : Number.isFinite(data?.score)
+      ? data.score
+      : '--';
+  const exposureBand = decisionModel?.positionGuidance?.totalExposureBand || '--';
+  const coreAction = decisionModel?.actionQueue?.priorityActions?.[0]
+    || decisionModel?.positionGuidance?.newExposurePolicy
+    || 'Keep risk changes paced and selective.';
+  const dominantRiskSources = Array.isArray(decisionModel?.dominantDrivers) && decisionModel.dominantDrivers.length
+    ? decisionModel.dominantDrivers.slice(0, 3).map((item) => item.label || item.key).filter(Boolean)
+    : Array.isArray(decisionModel?.stateDrivers)
+      ? decisionModel.stateDrivers.slice(0, 3).map((item) => item.label || item.key).filter(Boolean)
+      : ['Risk drivers unavailable'];
+
+  return {
+    stateBadge: strategyState,
+    stateLabel,
+    scoreLabel: stateScore,
+    exposureBand,
+    coreAction,
+    stateChange: describeStateChange(decisionModel.stateMeta || {}),
+    title: `${strategyState} Decision Header`,
+    reason: decisionModel.stateReason || data?.decisionLine || 'Current regime is being summarized from the v26 decision model.',
+    escalationLabel: decisionModel?.triggerMonitor?.escalationLevel
+      ? `Escalation ${decisionModel.triggerMonitor.escalationLevel}`
+      : 'Escalation watch active',
+    cashGuidance: decisionModel?.positionGuidance?.cashGuidance || 'Keep baseline cash discipline.',
+    newExposurePolicy: decisionModel?.positionGuidance?.newExposurePolicy || 'Use staged exposure changes only.',
+    dominantRiskSources
+  };
+}
+
+function renderDecisionHeader(model) {
+  const badge = $('decision-header-state-badge');
+  badge.textContent = model.stateBadge;
+  badge.className = `badge ${getDecisionHeaderBadgeClass(model.stateBadge)}`;
+
+  $('decision-header-escalation').textContent = model.escalationLabel;
+  $('decision-header-title').textContent = model.title;
+  $('decision-header-reason').textContent = model.reason;
+  $('decision-header-action').textContent = model.coreAction;
+  $('decision-header-state-label').textContent = model.stateLabel;
+  $('decision-header-score').textContent = model.scoreLabel;
+  $('decision-header-exposure').textContent = model.exposureBand;
+  $('decision-header-change').textContent = model.stateChange;
+  $('decision-header-cash').textContent = model.cashGuidance;
+  $('decision-header-policy').textContent = model.newExposurePolicy;
+
+  const drivers = $('decision-header-drivers');
+  drivers.innerHTML = '';
+  (model.dominantRiskSources || ['Risk drivers unavailable']).forEach((driver) => {
+    const chip = document.createElement('span');
+    chip.className = 'decision-driver-chip';
+    chip.textContent = driver;
+    drivers.appendChild(chip);
+  });
+}
+
 
 function renderBars(containerId, items, isTrend = false) {
   const root = $(containerId);
@@ -1904,6 +1996,7 @@ async function main() {
   window.__GFRR_ACTION_QUEUE__ = window.__GFRR_DECISION_MODEL__?.actionQueue || buildActionQueueFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_TRIGGER_MONITOR__ = window.__GFRR_DECISION_MODEL__?.triggerMonitor || buildTriggerMonitorFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_INVALIDATION_RULES__ = window.__GFRR_DECISION_MODEL__?.invalidationRules || buildInvalidationRulesFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
+  window.__GFRR_DECISION_HEADER__ = buildDecisionHeaderModel(window.__GFRR_DECISION_MODEL__, data);
   console.info('GFRR decision model ready', window.__GFRR_DECISION_MODEL__);
 
   if (metadata.realtimeOverlayEnabled && realtime?.values) {
@@ -1920,6 +2013,7 @@ async function main() {
     $('rt-source-mode').textContent = 'baseline only';
   }
   $('runtime-badge').textContent = metadata.realtimeStatusLabel;
+  renderDecisionHeader(window.__GFRR_DECISION_HEADER__);
   renderHealthDashboard(healthDashboard);
   $('overview-date').textContent = data.updatedAt.slice(0, 10);
   $('decision-line').textContent = data.decisionLine || '当前以防守型决策为主，等待更明确的宽松与增长信号。';
@@ -2015,5 +2109,6 @@ async function main() {
 main().catch((error) => {
   console.error(error);
   $('runtime-badge').textContent = '加载失败';
+  renderDecisionHeader(buildDecisionHeaderModel({}, {}));
   $('summary-text').textContent = `风险数据加载失败：${error.message}`;
 });

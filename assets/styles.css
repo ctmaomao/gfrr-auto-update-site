@@ -20,6 +20,146 @@
   align-items: start;
   margin-top: 18px;
 }
+.decision-header-section {
+  margin-top: 2px;
+}
+.decision-header-card {
+  border: 1px solid rgba(101, 180, 255, 0.22);
+  background:
+    radial-gradient(circle at top right, rgba(101, 180, 255, 0.15), transparent 28%),
+    linear-gradient(180deg, rgba(16, 35, 68, 0.98), rgba(9, 23, 43, 0.98));
+}
+.decision-header-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.9fr);
+  gap: 24px;
+  align-items: stretch;
+}
+.decision-header-main,
+.decision-header-policy-card,
+.decision-header-drivers {
+  background: rgba(10, 22, 43, 0.68);
+  border: 1px solid rgba(137, 167, 232, 0.14);
+  border-radius: 20px;
+}
+.decision-header-main {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 280px;
+}
+.decision-header-topline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.decision-header-kicker {
+  color: #8eb6ff;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+.decision-header-title {
+  margin: 0;
+  font-size: 42px;
+  line-height: 1.05;
+  color: #ffffff;
+}
+.decision-header-reason {
+  margin: 14px 0 0;
+  max-width: 60ch;
+  color: #dce9ff;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.decision-header-action-block {
+  margin-top: 22px;
+}
+.decision-header-action-label {
+  color: #9fb6dc;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.decision-header-action {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(137, 167, 232, 0.18);
+  background: rgba(17, 32, 58, 0.82);
+  color: #f4f8ff;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.45;
+}
+.decision-header-side {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+.decision-header-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.decision-header-policy-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.decision-header-policy-card,
+.decision-header-drivers {
+  padding: 16px;
+}
+.decision-header-policy-text {
+  color: #eef5ff;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+.decision-driver-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+.decision-driver-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(101, 180, 255, 0.12);
+  border: 1px solid rgba(137, 167, 232, 0.16);
+  color: #eef5ff;
+  font-size: 13px;
+  font-weight: 800;
+}
+.decision-badge-risk-on {
+  color: #48e7a3;
+  background: rgba(32, 167, 107, 0.12);
+}
+.decision-badge-balanced {
+  color: #9fd0ff;
+  background: rgba(101, 180, 255, 0.10);
+}
+.decision-badge-caution {
+  color: #ffcb6a;
+  background: rgba(255, 196, 74, 0.12);
+}
+.decision-badge-defensive {
+  color: #ff9d57;
+  background: rgba(255, 157, 87, 0.12);
+}
+.decision-badge-crisis {
+  color: #ff7488;
+  background: rgba(255, 92, 117, 0.10);
+}
 .health-level-healthy {
   color: #48e7a3;
   background: rgba(32, 167, 107, 0.12);
@@ -46,6 +186,17 @@
   color: #a9c7ff;
 }
 @media (max-width: 980px) {
+  .decision-header-layout,
+  .decision-header-policy-grid,
+  .decision-header-metrics {
+    grid-template-columns: 1fr;
+  }
+  .decision-header-title {
+    font-size: 30px;
+  }
+  .decision-header-action {
+    font-size: 17px;
+  }
   .realtime-strip-card .metric-row.four {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -54,6 +205,19 @@
   }
 }
 @media (max-width: 640px) {
+  .decision-header-main,
+  .decision-header-policy-card,
+  .decision-header-drivers {
+    padding: 14px;
+    border-radius: 16px;
+  }
+  .decision-header-title {
+    font-size: 24px;
+  }
+  .decision-header-reason,
+  .decision-header-policy-text {
+    font-size: 14px;
+  }
   .realtime-strip-card .metric-row.four {
     grid-template-columns: 1fr;
   }
