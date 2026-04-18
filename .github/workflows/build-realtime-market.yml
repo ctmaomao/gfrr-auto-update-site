@@ -28,14 +28,28 @@ jobs:
       - name: Generate realtime market
         run: npm run build:realtime
 
-      - name: Commit updated realtime files
+      - name: Commit updated realtime file to publish branch
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          cp realtime/market.json "$RUNNER_TEMP/market.json"
+
+          if git ls-remote --exit-code --heads origin realtime-data; then
+            git fetch origin realtime-data
+            git switch --create realtime-data --track origin/realtime-data || git switch realtime-data
+          else
+            git switch --create realtime-data
+          fi
+
+          mkdir -p realtime
+          cp "$RUNNER_TEMP/market.json" realtime/market.json
+
           git add realtime/market.json
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
             git commit -m "chore: refresh realtime market"
-            git push
+            git push --set-upstream origin realtime-data
           fi
