@@ -3,6 +3,43 @@
 .realtime-strip-card .metric-row.four {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
+.health-dashboard-card {
+  border: 1px solid rgba(101, 180, 255, 0.18);
+}
+.health-summary {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(137, 167, 232, 0.18);
+  background: rgba(17, 32, 58, 0.72);
+  color: #eef5ff;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.health-dashboard-grid {
+  align-items: start;
+  margin-top: 18px;
+}
+.health-level-healthy {
+  color: #48e7a3;
+  background: rgba(32, 167, 107, 0.12);
+}
+.health-level-watch {
+  color: #ffcb6a;
+  background: rgba(255, 196, 74, 0.12);
+}
+.health-level-degraded {
+  color: #ff9d57;
+  background: rgba(255, 157, 87, 0.12);
+}
+.health-level-stale {
+  color: #ffb27a;
+  background: rgba(255, 135, 87, 0.14);
+}
+.health-level-baseline {
+  color: #ff7488;
+  background: rgba(255, 92, 117, 0.10);
+}
 .mini-delta {
   margin-top: 6px;
   font-size: 12px;
@@ -12,9 +49,15 @@
   .realtime-strip-card .metric-row.four {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .health-dashboard-card .metric-row.four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 640px) {
   .realtime-strip-card .metric-row.four {
+    grid-template-columns: 1fr;
+  }
+  .health-dashboard-card .metric-row.four {
     grid-template-columns: 1fr;
   }
 }
