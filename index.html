@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="全球金融风险雷达 v23 - 全中文机构级宏观风险驾驶舱，加入30日时间维度、机构级预警系统和资产收益/回撤映射。" />
+  <title>全球金融风险雷达 v23</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">全球金融风险雷达 V23</div>
+        <h1>全球金融风险雷达 v23</h1>
+        <p class="hero-subtitle">全中文真实数据驱动版 · 官方市场数据输入 · 执行状态灯 · 目标仓位 · 动作清单 · 硬阈值风控</p>
+      </div>
+      <div class="hero-status" id="runtime-badge">加载中...</div>
+    </header>
+
+    <main>
+      <section class="grid two-col hero-grid">
+        <article class="card">
+          <div class="card-head split-head">
+            <h2>系统总览</h2>
+            <span class="muted" id="overview-date">--</span>
+          </div>
+          <div class="decision-line" id="decision-line">加载中...</div>
+          <p id="summary-text">加载中...</p>
+          <div class="metric-row">
+            <div class="metric-box">
+              <div class="metric-label">全球风险评分</div>
+              <div class="metric-value" id="global-score">--</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">当前宏观状态</div>
+              <div class="metric-value" id="macro-regime">--</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">当前危机阶段</div>
+              <div class="metric-value" id="crisis-phase">--</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">信号置信度</div>
+              <div class="metric-value" id="confidence-level">--</div>
+            </div>
+          </div>
+        </article>
+        <article class="card">
+          <h2>核心风险</h2>
+          <ul class="bullet-list" id="top-risks"></ul>
+        </article>
+
+      </section>
+
+      <section class="full-width-section main-lock-section">
+        <article class="card execution-lock-card full-width-card">
+          <div class="card-head split-head">
+            <h2>执行状态灯</h2>
+            <span class="muted" id="execution-lock-tag">--</span>
+          </div>
+          <div class="execution-lock-grid">
+            <div class="execution-lock-main">
+              <div class="execution-status-pill" id="execution-status-level">--</div>
+              <div class="execution-status-title" id="execution-status-title">--</div>
+              <div class="execution-status-desc" id="execution-status-desc">--</div>
+            </div>
+            <div class="execution-lock-panel">
+              <h3>今日允许</h3>
+              <ul class="bullet-list" id="execution-allow"></ul>
+            </div>
+            <div class="execution-lock-panel">
+              <h3>今日禁止</h3>
+              <ul class="bullet-list" id="execution-block"></ul>
+            </div>
+            <div class="execution-lock-panel">
+              <h3>强制动作</h3>
+              <ul class="bullet-list" id="execution-mandatory"></ul>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid three-col">
+        <article class="card">
+          <h2>风险趋势进化</h2>
+          <div class="trend-strip">
+            <div class="metric-box compact">
+              <div class="metric-label">当前趋势</div>
+              <div class="metric-value" id="trend-label">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">1日变化</div>
+              <div class="metric-value" id="score-change-1d">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">7日变化</div>
+              <div class="metric-value" id="score-change-7d">--</div>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <svg id="trend-chart" viewBox="0 0 760 220" role="img" aria-label="7日风险趋势图"></svg>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>宏观状态概率</h2>
+          <div id="regime-bars"></div>
+        </article>
+
+        <article class="card">
+          <h2>危机阶段追踪</h2>
+          <div class="metric-row three">
+            <div class="metric-box compact">
+              <div class="metric-label">当前阶段</div>
+              <div class="metric-value" id="phase-current">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">下一阶段</div>
+              <div class="metric-value" id="phase-next">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">转移风险</div>
+              <div class="metric-value" id="phase-transition">--</div>
+            </div>
+          </div>
+          <ul class="bullet-list" id="phase-signals"></ul>
+        </article>
+      </section>
+
+      <section class="full-width-section">
+        <article class="card">
+          <div class="card-head split-head">
+            <h2>30日时间维度、趋势解释与传导速度</h2>
+            <span class="muted" id="time-dominant-path">--</span>
+          </div>
+          <div class="grid two-col time-grid">
+            <div>
+              <div class="metric-row four">
+                <div class="metric-box compact trend-explainer">
+                  <div class="metric-label">趋势解释</div>
+                  <div class="metric-value small" id="trend-explanation">--</div>
+                </div>
+                <div class="metric-box compact">
+                  <div class="metric-label">30日总变化</div>
+                  <div class="metric-value" id="score-change-30d">--</div>
+                </div>
+                <div class="metric-box compact">
+                  <div class="metric-label">30日均值</div>
+                  <div class="metric-value" id="avg-30d">--</div>
+                </div>
+                <div class="metric-box compact">
+                  <div class="metric-label">30日高点 / 低点</div>
+                  <div class="metric-value small" id="range-30d">--</div>
+                </div>
+                <div class="metric-box compact">
+                  <div class="metric-label">距高点回撤</div>
+                  <div class="metric-value" id="draw-from-peak">--</div>
+                </div>
+              </div>
+              <div class="chart-wrap large-chart">
+                <svg id="trend-chart-30d" viewBox="0 0 980 260" role="img" aria-label="30日风险趋势图"></svg>
+              </div>
+            </div>
+            <div>
+              <div class="metric-row two">
+                <div class="metric-box compact">
+                  <div class="metric-label">传导速度</div>
+                  <div class="metric-value" id="transmission-speed">--</div>
+                </div>
+                <div class="metric-box compact">
+                  <div class="metric-label">加速度判断</div>
+                  <div class="metric-value small" id="transmission-acceleration">--</div>
+                </div>
+              </div>
+              <h3 style="margin-top:18px;">主链条变化</h3>
+              <div id="path-change-bars"></div>
+              <ul class="bullet-list" id="time-notes"></ul>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid two-col action-position-grid">
+        <article class="card">
+          <h2>六大底层风险模块</h2>
+          <div id="module-bars"></div>
+        </article>
+        <article class="card">
+          <h2>流动性指数</h2>
+          <div class="metric-row four liquidity-metrics">
+            <div class="metric-box compact">
+              <div class="metric-label">流动性压力指数</div>
+              <div class="metric-value" id="liquidity-score">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">融资环境</div>
+              <div class="metric-value" id="liquidity-regime">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">1日变化</div>
+              <div class="metric-value" id="liquidity-change">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">方向判断</div>
+              <div class="metric-value small" id="liquidity-direction">--</div>
+            </div>
+          </div>
+          <div id="liquidity-pillars"></div>
+          <ul class="bullet-list" id="liquidity-notes"></ul>
+        </article>
+      </section>
+
+      <section class="full-width-section">
+        <article class="card heatmap-card full-width-card">
+          <div class="card-head split-head">
+            <h2>全球风险热力图</h2>
+            <span class="muted">机构级区域热力图</span>
+          </div>
+          <div class="heatmap-layout">
+            <svg id="world-heatmap" viewBox="0 0 780 360" role="img" aria-label="全球风险热力图"></svg>
+            <div class="heatmap-legend">
+              <div class="legend-title">风险刻度</div>
+              <div class="legend-bar"></div>
+              <div class="legend-labels"><span>0</span><span>100</span></div>
+              <div id="heatmap-list"></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="full-width-section">
+        <article class="card transmission-card full-width-card">
+          <div class="card-head split-head">
+            <h2>机构级宏观传导网络</h2>
+            <span class="muted" id="chain-regime-tag">自动计算中...</span>
+          </div>
+          <div class="metric-row four chain-topline">
+            <div class="metric-box compact">
+              <div class="metric-label">传导压力</div>
+              <div class="metric-value" id="chain-stress-score">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">主导冲击</div>
+              <div class="metric-value" id="chain-lead-shock">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">路径置信度</div>
+              <div class="metric-value" id="chain-confidence">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">主导资产影响</div>
+              <div class="metric-value" id="chain-dominant-impact">--</div>
+            </div>
+          </div>
+          <div class="chain-flow" id="chain-flow"></div>
+          <div class="network-grid">
+            <div>
+              <h3>传导网络层</h3>
+              <div id="chain-layers" class="chain-layers"></div>
+            </div>
+            <div>
+              <h3>资产冲击分解</h3>
+              <div id="chain-decomposition" class="chain-decomposition"></div>
+            </div>
+          </div>
+          <div class="grid two-col chain-bottom-grid">
+            <div>
+              <h3>自动结论</h3>
+              <ul class="bullet-list" id="chain-summary"></ul>
+            </div>
+            <div>
+              <h3>资产映射</h3>
+              <div id="chain-asset-impacts" class="chain-asset-impacts"></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid two-col">
+        <article class="card">
+          <div class="card-head split-head">
+            <h2>机构级预警系统</h2>
+            <span class="muted" id="warning-status">--</span>
+          </div>
+          <div class="metric-row three">
+            <div class="metric-box compact">
+              <div class="metric-label">关键预警</div>
+              <div class="metric-value" id="warning-critical-count">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">重点预警</div>
+              <div class="metric-value" id="warning-warning-count">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">观察项</div>
+              <div class="metric-value" id="warning-watch-count">--</div>
+            </div>
+          </div>
+          <div id="warning-alert-list" class="warning-alert-list"></div>
+        </article>
+
+        <article class="card">
+          <h2>预警规则面板</h2>
+          <div id="warning-rules" class="rule-list"></div>
+          <div class="trigger-block">
+            <h3>关键观察触发器</h3>
+            <div class="trigger-block">
+              <h3>硬触发</h3>
+              <ul class="bullet-list" id="trigger-critical"></ul>
+            </div>
+            <div class="trigger-block">
+              <h3>主驱动因素</h3>
+              <ul class="bullet-list" id="trigger-drivers"></ul>
+            </div>
+            <div class="trigger-block">
+              <h3>持续跟踪</h3>
+              <ul class="bullet-list" id="trigger-watchlist"></ul>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="card">
+        <div class="card-head split-head">
+          <h2>资产收益 / 回撤映射</h2>
+          <span class="muted" id="return-map-horizon">--</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>资产</th>
+                <th>倾向</th>
+                <th>预期收益区间</th>
+                <th>回撤风险</th>
+                <th>把握度</th>
+                <th>主导驱动</th>
+                <th>解释</th>
+              </tr>
+            </thead>
+            <tbody id="asset-return-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>资产偏好矩阵</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>资产</th>
+                <th>评分</th>
+                <th>倾向</th>
+                <th>原因</th>
+              </tr>
+            </thead>
+            <tbody id="asset-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="grid two-col">
+        <article class="card">
+          <h2>四情景树</h2>
+          <div id="scenario-list"></div>
+        </article>
+        <article class="card">
+          <h2>信号可信度</h2>
+          <div class="metric-row two">
+            <div class="metric-box compact">
+              <div class="metric-label">评分</div>
+              <div class="metric-value" id="confidence-score">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">级别</div>
+              <div class="metric-value" id="confidence-level-bottom">--</div>
+            </div>
+          </div>
+          <ul class="bullet-list" id="confidence-notes"></ul>
+        </article>
+      </section>
+
+      <section class="grid two-col footer-grid">
+        <article class="card">
+          <h2>恢复状态</h2>
+          <div class="metric-row three">
+            <div class="metric-box compact">
+              <div class="metric-label">降级模式</div>
+              <div class="metric-value" id="degraded-mode">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">安全输出</div>
+              <div class="metric-value" id="safe-output">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">最近运行时间</div>
+              <div class="metric-value small" id="last-run">--</div>
+            </div>
+          </div>
+          <ul class="bullet-list" id="recovery-notes"></ul>
+        </article>
+        <article class="card">
+          <h2>系统说明</h2>
+          <ul class="bullet-list">
+            <li>v20.1 增加了 30 日时间维度、预警系统和收益 / 回撤映射。</li>
+            <li>页面继续保持全中文与全宽热力图布局。</li>
+            <li>GitHub Pages 工作流保持 Node 24，避免 Node20 弃用警告。</li>
+          </ul>
+        </article>
+      </section>
+    <section class="grid two-col trading-action-grid">
+        <article class="card">
+          <div class="card-head split-head">
+            <h2>交易信号</h2>
+            <span class="muted" id="signal-consistency">--</span>
+          </div>
+          <div class="metric-row four">
+            <div class="metric-box compact">
+              <div class="metric-label">信号强度</div>
+              <div class="metric-value" id="signal-strength">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">信号方向</div>
+              <div class="metric-value small" id="signal-direction">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">宏观信号</div>
+              <div class="metric-value small" id="signal-macro">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">流动性 / 传导链</div>
+              <div class="metric-value small" id="signal-liquidity-chain">--</div>
+            </div>
+          </div>
+          <ul class="bullet-list" id="signal-notes"></ul>
+        </article>
+        <article class="card">
+          <div class="card-head split-head">
+            <h2>今日执行</h2>
+            <span class="muted" id="action-tag">--</span>
+          </div>
+          <div class="today-action-box" id="today-action">--</div><div class="execution-subtitle" id="action-priority">--</div>
+          <div class="discipline-grid two-mini">
+            <div>
+              <h3>动作清单</h3>
+              <ul class="bullet-list" id="action-allow"></ul>
+            </div>
+            <div>
+              <h3>禁止清单</h3>
+              <ul class="bullet-list" id="action-avoid"></ul>
+            </div>
+          </div>
+          <div class="trigger-block">
+            <h3>执行检查点</h3>
+            <ul class="bullet-list" id="action-watch"></ul>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid two-col position-risk-grid">
+        <article class="card">
+          <div class="card-head split-head">
+            <h2>目标仓位</h2>
+            <span class="muted" id="position-regime">--</span>
+          </div>
+          <div class="metric-row three">
+            <div class="metric-box compact">
+              <div class="metric-label">风险预算</div>
+              <div class="metric-value" id="position-risk-budget">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">目标总仓位</div>
+              <div class="metric-value" id="position-gross-exposure">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">现金缓冲</div>
+              <div class="metric-value" id="position-cash-buffer">--</div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>核心配置</th><th>目标权重</th><th>执行说明</th></tr>
+              </thead>
+              <tbody id="position-core-body"></tbody>
+            </table>
+          </div>
+          <div class="trigger-block">
+            <h3>执行限制</h3>
+            <ul class="bullet-list" id="position-restrictions"></ul>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card-head split-head">
+            <h2>硬阈值风控</h2>
+            <span class="muted" id="risk-status">--</span>
+          </div>
+          <div class="metric-row three">
+            <div class="metric-box compact">
+              <div class="metric-label">最大回撤容忍</div>
+              <div class="metric-value" id="risk-max-drawdown">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">单资产上限</div>
+              <div class="metric-value" id="risk-single-asset-max">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">当前风控状态</div>
+              <div class="metric-value small" id="risk-system-state">--</div>
+            </div>
+          </div>
+          <div class="trigger-block">
+            <h3>强制减仓阈值</h3>
+            <ul class="bullet-list" id="risk-de-risk-triggers"></ul>
+          </div>
+          <div class="trigger-block">
+            <h3>停手与复位阈值</h3>
+            <ul class="bullet-list" id="risk-stop-rules"></ul>
+          </div>
+        </article>
+      </section>
+
+      <section class="full-width-section">
+        <article class="card">
+          <div class="card-head split-head">
+            <h2>行为纪律</h2>
+            <span class="muted" id="discipline-tag">--</span>
+          </div>
+          <div class="grid three-col discipline-three">
+            <div class="discipline-panel">
+              <h3>允许开仓条件</h3>
+              <ul class="bullet-list" id="discipline-entry"></ul>
+            </div>
+            <div class="discipline-panel">
+              <h3>禁止行为</h3>
+              <ul class="bullet-list" id="discipline-prohibited"></ul>
+            </div>
+            <div class="discipline-panel">
+              <h3>强制规则</h3>
+              <ul class="bullet-list" id="discipline-mandatory"></ul>
+            </div>
+          </div>
+        </article>
+      </section>
+
+
+
+    </main>
+
+    <footer class="footer">独立静态版 · 适配 GitHub Pages · 数据由 <code>scripts/run-daily-pipeline.mjs</code> 生成</footer>
+  </div>
+
+  <script type="module" src="scripts/app.js"></script>
+</body>
+</html>
