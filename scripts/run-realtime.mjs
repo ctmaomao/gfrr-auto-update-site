@@ -15,6 +15,11 @@ const REQUEST_TIMEOUT_MS = 8000;
 const REQUEST_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
 const USER_AGENT = 'gfr-v25.0.0-realtime/1.0';
+const FRESHNESS_WINDOWS = {
+  fresh: 30,
+  aging: 90,
+  stale: 360
+};
 
 const sourceSpecs = {
   brent: {
@@ -114,6 +119,28 @@ function sleep(ms) {
 function stringifyError(error) {
   const message = error instanceof Error ? error.message : String(error);
   return message.replace(/\s+/g, ' ').slice(0, 160);
+}
+
+function parseTimestamp(value) {
+  if (typeof value !== 'string' || !value) return null;
+  const normalized = value.includes('T') ? value : `${value}T00:00:00Z`;
+  const time = Date.parse(normalized);
+  return Number.isFinite(time) ? time : null;
+}
+
+function computeAgeMinutes(asOf, reference = now) {
+  const asOfTime = parseTimestamp(asOf);
+  const referenceTime = parseTimestamp(reference);
+  if (asOfTime === null || referenceTime === null) return null;
+  return Math.max(0, Math.round((referenceTime - asOfTime) / 60000));
+}
+
+function classifyFreshnessLevel(ageMinutes, hasRealtime) {
+  if (!hasRealtime || ageMinutes === null) return 'unavailable';
+  if (ageMinutes <= FRESHNESS_WINDOWS.fresh) return 'fresh';
+  if (ageMinutes <= FRESHNESS_WINDOWS.aging) return 'aging';
+  if (ageMinutes <= FRESHNESS_WINDOWS.stale) return 'stale';
+  return 'unavailable';
 }
 
 async function fetchWithTimeout(url, options = {}) {
@@ -295,6 +322,10 @@ function buildPayload(results, prev) {
   const liveSuccessCount = results.filter((result) => result.ok).length;
   const cacheOnly = criticalMissing >= 4 || liveSuccessCount === 0;
   const degradedMode = cacheOnly || criticalMissing >= 2 || fallbackCount >= 3 || secondarySourceCount >= 2;
+  const asOf = liveSuccessCount === 0 ? (prev?.asOf ?? prev?.lastSuccessAt ?? null) : now;
+  const ageMinutes = computeAgeMinutes(asOf, now);
+  const freshnessLevel = classifyFreshnessLevel(ageMinutes, liveSuccessCount > 0 || !!prev?.values);
+  const unavailable = freshnessLevel === 'unavailable';
   const healthScore = Math.max(
     0,
     Math.min(100, 100 - criticalMissing * 18 - fallbackCount * 6 - secondarySourceCount * 3)
@@ -302,6 +333,10 @@ function buildPayload(results, prev) {
 
   return {
     updatedAt: now,
+    asOf,
+    ageMinutes,
+    freshnessLevel,
+    unavailable,
     sourceMode: cacheOnly ? 'cache-only' : degradedMode ? 'live-with-fallback' : 'live',
     degradedMode,
     cacheOnly,
@@ -363,6 +398,10 @@ function mockPayload() {
 
   return {
     updatedAt: now,
+    asOf: now,
+    ageMinutes: 0,
+    freshnessLevel: 'fresh',
+    unavailable: false,
     sourceMode: 'mock',
     degradedMode: false,
     cacheOnly: false,
