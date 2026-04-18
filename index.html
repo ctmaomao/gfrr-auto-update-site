@@ -70,6 +70,62 @@
         </article>
       </section>
 
+      <section class="full-width-section">
+        <article class="card health-dashboard-card">
+          <div class="card-head split-head">
+            <h2>数据健康状态</h2>
+            <span class="badge neutral" id="health-level-badge">加载中...</span>
+          </div>
+          <div class="health-summary" id="health-summary-text">正在汇总 realtime 健康状态...</div>
+          <div class="metric-row four">
+            <div class="metric-box compact">
+              <div class="metric-label">Overall Health</div>
+              <div class="metric-value" id="health-overall-level">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">Health Score</div>
+              <div class="metric-value" id="health-score">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">Freshness</div>
+              <div class="metric-value" id="health-freshness">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">Data Age</div>
+              <div class="metric-value" id="health-age">--</div>
+            </div>
+          </div>
+          <div class="metric-row four">
+            <div class="metric-box compact">
+              <div class="metric-label">Realtime Source</div>
+              <div class="metric-value small" id="health-source">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">Flags</div>
+              <div class="metric-value small" id="health-flags">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">Critical Missing</div>
+              <div class="metric-value" id="health-critical-missing">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">Source Summary</div>
+              <div class="metric-value small" id="health-source-summary">--</div>
+            </div>
+          </div>
+          <div class="grid two-col health-dashboard-grid">
+            <div>
+              <h3>问题摘要</h3>
+              <ul class="bullet-list" id="health-issues"></ul>
+            </div>
+            <div>
+              <h3>来源状态摘要</h3>
+              <ul class="bullet-list" id="health-source-list"></ul>
+            </div>
+          </div>
+        </article>
+      </section>
+
       <section class="grid two-col hero-grid">
         <article class="card">
           <div class="card-head split-head">
