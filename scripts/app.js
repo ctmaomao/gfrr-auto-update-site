@@ -302,11 +302,29 @@ function buildStrategyStateFallback(data = {}, metadata = {}) {
   };
 }
 
+function buildPositionGuidanceFallback(data = {}, metadata = {}, strategyState = 'Caution') {
+  const defensiveFallback = metadata.realtimeUnavailable || strategyState === 'Defensive' || strategyState === 'Crisis';
+  return {
+    totalExposureBand: defensiveFallback ? '20%-40%' : '35%-55%',
+    riskAssetBias: defensiveFallback ? 'Constrained' : 'Selective',
+    defensiveBias: defensiveFallback ? 'High' : 'Moderate',
+    cashGuidance: defensiveFallback ? 'Keep elevated cash buffer (30%-45%)' : 'Keep reserve cash buffer (20%-30%)',
+    newExposurePolicy: defensiveFallback ? 'Pause broad new risk exposure until guidance recovers.' : 'Only add exposure selectively and in small clips.',
+    rebalancePosture: defensiveFallback ? 'De-risk first, rebalance second.' : 'Rebalance gradually around target bands.',
+    leveragePolicy: 'No incremental leverage in fallback mode.',
+    hedgePosture: defensiveFallback ? 'Maintain defensive hedges / buffers.' : 'Keep baseline hedges active.',
+    adjustmentNotes: [
+      'Fallback position guidance is active.',
+      Number.isFinite(data?.score) ? `Reference risk score: ${data.score}.` : 'Reference risk score unavailable.'
+    ]
+  };
+}
+
 function createDecisionFallback(data = {}, metadata = {}) {
   const fallbackLabel = metadata.realtimeUnavailable ? 'BASELINE / FALLBACK' : 'UNAVAILABLE / FALLBACK';
   const stateFallback = buildStrategyStateFallback(data, metadata);
   return {
-    contractVersion: 'v26.0A-step2',
+    contractVersion: 'v26.0A-step3',
     strategyState: stateFallback.strategyState,
     stateLabel: stateFallback.stateLabel || fallbackLabel,
     stateReason: stateFallback.stateReason || (metadata.realtimeUnavailable
@@ -323,6 +341,7 @@ function createDecisionFallback(data = {}, metadata = {}) {
       reason: 'Use baseline risk score and existing page modules until decision generation recovers.'
     }],
     positionGuidance: {
+      ...buildPositionGuidanceFallback(data, metadata, stateFallback.strategyState),
       stance: 'Preserve current defensive baseline',
       riskBudget: data?.tradingSystem?.positioning?.riskBudget || '--',
       targetGrossExposure: data?.tradingSystem?.positioning?.targetGrossExposure || '--',
@@ -548,6 +567,136 @@ function buildDominantDrivers(data, metadata) {
   return moduleEntries.slice(0, 4);
 }
 
+function buildPositionGuidanceEngine(data, metadata, decisionState, dominantDrivers) {
+  try {
+    const strategyState = decisionState?.strategyState || 'Caution';
+    const stateScore = Number.isFinite(decisionState?.stateScore) ? decisionState.stateScore : 55;
+    const stateMeta = decisionState?.stateMeta || {};
+    const positioning = data?.tradingSystem?.positioning || {};
+    const driverLabels = Array.isArray(dominantDrivers)
+      ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean)
+      : [];
+
+    const stateBandMap = {
+      'Risk-On': {
+        totalExposureBand: '65%-85%',
+        riskAssetBias: 'Overweight within risk budget',
+        defensiveBias: 'Low',
+        cashGuidance: 'Run lighter cash buffer (10%-18%)',
+        newExposurePolicy: 'Normal staged adds are allowed.',
+        rebalancePosture: 'Lean into target risk bands on pullbacks.',
+        leveragePolicy: 'Avoid aggressive leverage; only baseline financing if already embedded.',
+        hedgePosture: 'Keep only light strategic hedges.'
+      },
+      Balanced: {
+        totalExposureBand: '50%-70%',
+        riskAssetBias: 'Neutral to selective',
+        defensiveBias: 'Moderate',
+        cashGuidance: 'Hold balanced cash buffer (15%-25%)',
+        newExposurePolicy: 'Allow selective adds, but keep pacing controlled.',
+        rebalancePosture: 'Rebalance around targets without chasing.',
+        leveragePolicy: 'No new leverage expansion.',
+        hedgePosture: 'Maintain baseline hedges.'
+      },
+      Caution: {
+        totalExposureBand: '35%-55%',
+        riskAssetBias: 'Selective underweight',
+        defensiveBias: 'Moderately high',
+        cashGuidance: 'Raise cash buffer (20%-32%)',
+        newExposurePolicy: 'Only allow highly selective new exposure in small clips.',
+        rebalancePosture: 'Trim risk first, then rebalance.',
+        leveragePolicy: 'Reduce leverage where practical; do not add new leverage.',
+        hedgePosture: 'Keep hedges active and bias toward protection.'
+      },
+      Defensive: {
+        totalExposureBand: '20%-40%',
+        riskAssetBias: 'Underweight risk assets',
+        defensiveBias: 'High',
+        cashGuidance: 'Keep elevated cash buffer (30%-45%)',
+        newExposurePolicy: 'Pause broad new risk exposure; only defensive rebalancing is allowed.',
+        rebalancePosture: 'Prioritize de-risking and restoring buffers.',
+        leveragePolicy: 'No leverage expansion; favor leverage reduction.',
+        hedgePosture: 'Maintain defensive hedges and liquidity buffers.'
+      },
+      Crisis: {
+        totalExposureBand: '0%-20%',
+        riskAssetBias: 'Minimum risk exposure',
+        defensiveBias: 'Maximum',
+        cashGuidance: 'Hold maximum cash / liquidity buffer (45%-70%)',
+        newExposurePolicy: 'Suspend new high-risk exposure until state normalizes.',
+        rebalancePosture: 'Capital preservation first.',
+        leveragePolicy: 'No leverage; actively reduce gross exposure.',
+        hedgePosture: 'Keep strongest defensive posture available.'
+      }
+    };
+
+    const guidance = { ...(stateBandMap[strategyState] || stateBandMap.Caution) };
+    let bandShift = 0;
+
+    if (stateScore >= 90) bandShift -= 10;
+    else if (stateScore >= 80) bandShift -= 5;
+    else if (stateScore <= 20) bandShift += 8;
+    else if (stateScore <= 35) bandShift += 5;
+
+    if ((stateMeta.extremeThresholdCount || 0) >= 2) bandShift -= 5;
+    if ((stateMeta.highRiskStreakDays || 0) >= 5) bandShift -= 5;
+    if ((stateMeta.recent3dDelta || 0) <= -10 && strategyState !== 'Crisis') bandShift += 5;
+    if ((stateMeta.recent3dDelta || 0) >= 8) bandShift -= 5;
+    if (metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly) bandShift -= 5;
+
+    const parseBand = (band) => {
+      const match = String(band).match(/(\d+)%-(\d+)%/);
+      if (!match) return null;
+      return { min: Number(match[1]), max: Number(match[2]) };
+    };
+    const formatBand = (range) => `${range.min}%-${range.max}%`;
+    const shiftBand = (band, shift, floor = 0, ceil = 100, minWidth = 15) => {
+      const range = parseBand(band);
+      if (!range) return band;
+      let next = {
+        min: clampNumber(range.min + shift, floor, ceil),
+        max: clampNumber(range.max + shift, floor, ceil)
+      };
+      if (next.max - next.min < minWidth) {
+        next.max = clampNumber(next.min + minWidth, floor, ceil);
+        next.min = clampNumber(next.max - minWidth, floor, ceil);
+      }
+      return formatBand(next);
+    };
+
+    guidance.totalExposureBand = shiftBand(guidance.totalExposureBand, bandShift);
+
+    if (bandShift <= -8) {
+      guidance.riskAssetBias = strategyState === 'Crisis' ? 'Minimum risk exposure' : 'Further reduce risk asset exposure';
+      guidance.defensiveBias = strategyState === 'Risk-On' ? 'Moderate' : 'Very high';
+    } else if (bandShift >= 5) {
+      guidance.riskAssetBias = strategyState === 'Risk-On' ? 'Constructive within risk budget' : 'Selective but improving';
+      guidance.defensiveBias = strategyState === 'Defensive' ? 'High but stabilizing' : 'Moderate';
+    }
+
+    const existingRiskBudget = positioning.riskBudget || '--';
+    const existingExposureTarget = positioning.targetGrossExposure || '--';
+    const existingCashTarget = positioning.cashBufferTarget || '--';
+
+    return {
+      ...guidance,
+      stance: `${strategyState} position guidance`,
+      riskBudget: existingRiskBudget,
+      targetGrossExposure: existingExposureTarget,
+      cashBufferTarget: existingCashTarget,
+      adjustmentNotes: [
+        `Strategy state: ${strategyState} (${decisionState?.stateLabel || 'unlabeled'}).`,
+        `State score: ${stateScore}.`,
+        `3-day delta: ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta || 0}; resonance: ${stateMeta.resonanceCount || 0}.`,
+        driverLabels.length ? `Dominant drivers: ${driverLabels.join(', ')}.` : 'Dominant drivers unavailable.'
+      ]
+    };
+  } catch (error) {
+    console.warn('Position guidance engine failed, using fallback.', error);
+    return buildPositionGuidanceFallback(data, metadata, decisionState?.strategyState);
+  }
+}
+
 function buildDecisionModel(data, history, metadata, healthDashboard) {
   try {
     const state = deriveDecisionState(data, history, metadata, healthDashboard);
@@ -560,9 +709,10 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
     const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色').slice(0, 3);
     const watchlist = Array.isArray(data?.triggerPanel?.watchlist) ? data.triggerPanel.watchlist.slice(0, 3) : [];
     const driverLabels = dominantDrivers.map((item) => item.label).join(', ') || 'baseline drivers';
+    const positionGuidance = buildPositionGuidanceEngine(data, metadata, state, dominantDrivers);
 
     return {
-      contractVersion: 'v26.0A-step2',
+      contractVersion: 'v26.0A-step3',
       strategyState: state.strategyState,
       stateLabel: state.stateLabel,
       stateReason: state.stateReason || `${executionLock.title || 'Existing trading system state'}; health ${healthDashboard.overallLevel}; dominant drivers: ${driverLabels}.`,
@@ -571,10 +721,10 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
       stateMeta: state.stateMeta || {},
       dominantDrivers: dominantDrivers.length ? dominantDrivers : createDecisionFallback(data, metadata).dominantDrivers,
       positionGuidance: {
-        stance: position.regime || executionLock.levelLabel || 'Baseline posture',
-        riskBudget: position.riskBudget || clampPercent(data?.score),
-        targetGrossExposure: position.targetGrossExposure || '--',
-        cashBufferTarget: position.cashBufferTarget || '--',
+        ...positionGuidance,
+        riskBudget: positionGuidance.riskBudget || position.riskBudget || clampPercent(data?.score),
+        targetGrossExposure: positionGuidance.targetGrossExposure || position.targetGrossExposure || '--',
+        cashBufferTarget: positionGuidance.cashBufferTarget || position.cashBufferTarget || '--',
         notes: [
           executionLock.description || 'Follow current execution lock.',
           `Health: ${healthDashboard.overallLevel}.`,
@@ -1460,6 +1610,7 @@ async function main() {
   window.__GFRR_RUNTIME__ = runtimeState;
   window.__GFRR_DECISION_MODEL__ = data.decisionModel || createDecisionFallback(data, metadata);
   window.__GFRR_STRATEGY_STATE__ = window.__GFRR_DECISION_MODEL__?.strategyState || 'Caution';
+  window.__GFRR_POSITION_GUIDANCE__ = window.__GFRR_DECISION_MODEL__?.positionGuidance || buildPositionGuidanceFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   console.info('GFRR decision model ready', window.__GFRR_DECISION_MODEL__);
 
   if (metadata.realtimeOverlayEnabled && realtime?.values) {
