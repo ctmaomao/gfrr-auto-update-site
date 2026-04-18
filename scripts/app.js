@@ -375,11 +375,46 @@ function buildActionQueueFallback(data = {}, metadata = {}, strategyState = 'Cau
   return queue;
 }
 
+function buildTriggerMonitorFallback(data = {}, metadata = {}, strategyState = 'Caution') {
+  return {
+    upgradeTriggers: [
+      'Escalate if total risk score moves higher from the current baseline.',
+      'Escalate if short-term deterioration resumes over the next 3 days.',
+      'Escalate if warning intensity or data degradation increases.'
+    ],
+    activeEscalationSignals: [
+      metadata.realtimeUnavailable ? 'Realtime unavailable / baseline only.' : 'No reliable escalation engine output; use baseline monitoring.',
+      Number.isFinite(data?.score) ? `Reference risk score ${data.score}.` : 'Reference risk score unavailable.'
+    ],
+    triggerSummary: `${strategyState} fallback trigger monitor active.`,
+    escalationLevel: metadata.realtimeUnavailable ? 'high' : 'medium',
+    signalConfidence: metadata.realtimeUnavailable ? 'low' : 'medium'
+  };
+}
+
+function buildInvalidationRulesFallback(data = {}, metadata = {}, strategyState = 'Caution') {
+  return {
+    invalidationSignals: [
+      'Treat the current posture as invalid if risk deterioration accelerates materially.',
+      'Treat the current posture as stale if data quality continues to degrade.',
+      'Treat the current posture as review-required if warning intensity rises.'
+    ],
+    resetConditions: [
+      'Allow de-escalation only after short-term deterioration stops.',
+      'Allow de-escalation only after risk breadth narrows.',
+      'Allow de-escalation only after data freshness normalizes.'
+    ],
+    invalidationSummary: `${strategyState} fallback invalidation rules active.`,
+    deescalationBias: metadata.realtimeUnavailable ? 'low' : 'medium',
+    signalConfidence: metadata.realtimeUnavailable ? 'low' : 'medium'
+  };
+}
+
 function createDecisionFallback(data = {}, metadata = {}) {
   const fallbackLabel = metadata.realtimeUnavailable ? 'BASELINE / FALLBACK' : 'UNAVAILABLE / FALLBACK';
   const stateFallback = buildStrategyStateFallback(data, metadata);
   return {
-    contractVersion: 'v26.0A-step4',
+    contractVersion: 'v26.0A-step5',
     strategyState: stateFallback.strategyState,
     stateLabel: stateFallback.stateLabel || fallbackLabel,
     stateReason: stateFallback.stateReason || (metadata.realtimeUnavailable
@@ -404,18 +439,8 @@ function createDecisionFallback(data = {}, metadata = {}) {
       notes: ['Fallback mode active.', 'Do not expand risk until decision model recovers.']
     },
     actionQueue: buildActionQueueFallback(data, metadata, stateFallback.strategyState),
-    triggerMonitor: [{
-      id: 'fallback-recovery',
-      label: 'Decision contract recovery',
-      condition: 'Decision model can be regenerated without runtime errors.',
-      status: 'watch',
-      source: 'runtime'
-    }],
-    invalidationRules: [{
-      id: 'fallback-invalid',
-      rule: 'Invalidate fallback once runtime data and existing trading system fields are both available again.',
-      action: 'Regenerate the decision contract.'
-    }]
+    triggerMonitor: buildTriggerMonitorFallback(data, metadata, stateFallback.strategyState),
+    invalidationRules: buildInvalidationRulesFallback(data, metadata, stateFallback.strategyState)
   };
 }
 
@@ -898,6 +923,106 @@ function buildActionQueueEngine(data, metadata, decisionState, positionGuidance,
   }
 }
 
+function buildTriggerMonitorEngine(data, metadata, decisionState, positionGuidance, actionQueue, dominantDrivers) {
+  try {
+    const strategyState = decisionState?.strategyState || 'Caution';
+    const stateScore = Number.isFinite(decisionState?.stateScore) ? decisionState.stateScore : 55;
+    const stateMeta = decisionState?.stateMeta || {};
+    const warningAlerts = Array.isArray(data?.warningSystem?.alerts) ? data.warningSystem.alerts : [];
+    const triggerPanel = data?.triggerPanel || {};
+    const moduleEntries = Object.entries(data?.modules || {})
+      .map(([key, value]) => ({ key, value: Number(value) }))
+      .filter((item) => Number.isFinite(item.value));
+    const dominantLabels = Array.isArray(dominantDrivers) ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean) : [];
+    const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色').length;
+
+    const upgradeTriggers = uniqTexts([
+      'Upgrade if state score rises by 8 points or more from the current regime.',
+      'Upgrade if the 3-day change turns positive and exceeds +6.',
+      'Upgrade if resonance expands to 4 or more modules above 70.',
+      'Upgrade if severe resonance rises to 3 or more modules above 80.',
+      'Upgrade if red alerts increase or new critical alerts appear.',
+      'Upgrade if liquidity / volatility / funding stress re-accelerates.',
+      metadata.realtimeCacheOnly ? 'Upgrade if cache-only mode persists into the next cycle.' : '',
+      metadata.realtimeFreshnessLevel === 'stale' || metadata.realtimeUnavailable ? 'Upgrade if stale / baseline-only data persists without recovery.' : ''
+    ]).slice(0, 7);
+
+    const activeEscalationSignals = uniqTexts([
+      stateScore >= 85 ? `State score ${stateScore} is already near crisis escalation.` : '',
+      (stateMeta.recent3dDelta || 0) >= 6 ? `3-day deterioration is active at +${stateMeta.recent3dDelta}.` : '',
+      (stateMeta.resonanceCount || 0) >= 4 ? `Broad resonance active: ${stateMeta.resonanceCount} modules above 70.` : '',
+      (stateMeta.severeResonanceCount || 0) >= 2 ? `Severe resonance active: ${stateMeta.severeResonanceCount} modules above 80.` : '',
+      criticalAlerts > 0 ? `${criticalAlerts} red alert(s) active.` : '',
+      metadata.realtimeCacheOnly ? 'Cache-only mode is active.' : '',
+      metadata.realtimeUnavailable ? 'Realtime unavailable / baseline only.' : '',
+      metadata.realtimeFreshnessLevel === 'stale' ? 'Realtime freshness is stale.' : '',
+      dominantLabels.length ? `Dominant stress drivers: ${dominantLabels.join(', ')}.` : '',
+      Array.isArray(triggerPanel.critical) && triggerPanel.critical.length ? `Critical trigger panel active: ${triggerPanel.critical.slice(0, 2).join(', ')}.` : ''
+    ]).slice(0, 6);
+
+    let escalationLevel = 'medium';
+    if (stateScore >= 85 || (stateMeta.extremeThresholdCount || 0) >= 3 || criticalAlerts >= 2) escalationLevel = 'severe';
+    else if (stateScore >= 68 || (stateMeta.extremeThresholdCount || 0) >= 1 || criticalAlerts >= 1) escalationLevel = 'high';
+
+    return {
+      upgradeTriggers,
+      activeEscalationSignals,
+      triggerSummary: `${strategyState} trigger monitor watching score, resonance, alerts, and data-quality escalation paths.`,
+      escalationLevel,
+      signalConfidence: metadata.realtimeUnavailable ? 'medium' : metadata.realtimeCacheOnly ? 'medium' : 'high'
+    };
+  } catch (error) {
+    console.warn('Trigger monitor engine failed, using fallback.', error);
+    return buildTriggerMonitorFallback(data, metadata, decisionState?.strategyState);
+  }
+}
+
+function buildInvalidationRulesEngine(data, metadata, decisionState, positionGuidance, actionQueue, dominantDrivers) {
+  try {
+    const strategyState = decisionState?.strategyState || 'Caution';
+    const stateScore = Number.isFinite(decisionState?.stateScore) ? decisionState.stateScore : 55;
+    const stateMeta = decisionState?.stateMeta || {};
+    const riskControl = data?.tradingSystem?.riskControl || {};
+    const dominantLabels = Array.isArray(dominantDrivers) ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean) : [];
+
+    const invalidationSignals = uniqTexts([
+      'Invalidate the current defensive read if total risk score rises another 8 points from here.',
+      'Invalidate the current read if the 3-day trend stops easing and turns back above +3.',
+      'Invalidate the current read if resonance breadth expands again.',
+      'Invalidate the current read if red alerts increase.',
+      metadata.realtimeCacheOnly ? 'Invalidate the current read if cache-only mode persists and stress signals stay elevated.' : '',
+      metadata.realtimeUnavailable ? 'Invalidate the current read if baseline-only mode persists while alerts worsen.' : ''
+    ]).slice(0, 6);
+
+    const resetConditions = uniqTexts([
+      'Allow de-escalation after total risk score falls and holds lower.',
+      'Allow de-escalation after the 3-day trend turns flat or negative.',
+      'Allow de-escalation after resonance count drops below 3.',
+      'Allow de-escalation after severe resonance eases below 2.',
+      'Allow de-escalation after red alerts clear and data freshness normalizes.',
+      ...(Array.isArray(riskControl.resetThresholds) ? riskControl.resetThresholds.slice(0, 3).map((rule) => `Reset reference: ${rule}`) : [])
+    ]).slice(0, 6);
+
+    let deescalationBias = 'medium';
+    if ((stateMeta.recent3dDelta || 0) <= -8 && (stateMeta.resonanceCount || 0) <= 2 && (stateMeta.criticalAlertCount || 0) === 0) {
+      deescalationBias = 'improving';
+    } else if (metadata.realtimeUnavailable || metadata.realtimeCacheOnly || (stateMeta.extremeThresholdCount || 0) > 0) {
+      deescalationBias = 'low';
+    }
+
+    return {
+      invalidationSignals,
+      resetConditions,
+      invalidationSummary: `${strategyState} invalidation rules require lower score pressure, narrower resonance, cleaner alerts, and better data quality before easing.`,
+      deescalationBias,
+      signalConfidence: metadata.realtimeUnavailable ? 'medium' : metadata.realtimeCacheOnly ? 'medium' : 'high'
+    };
+  } catch (error) {
+    console.warn('Invalidation rules engine failed, using fallback.', error);
+    return buildInvalidationRulesFallback(data, metadata, decisionState?.strategyState);
+  }
+}
+
 function buildDecisionModel(data, history, metadata, healthDashboard) {
   try {
     const state = deriveDecisionState(data, history, metadata, healthDashboard);
@@ -912,9 +1037,11 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
     const driverLabels = dominantDrivers.map((item) => item.label).join(', ') || 'baseline drivers';
     const positionGuidance = buildPositionGuidanceEngine(data, metadata, state, dominantDrivers);
     const actionQueue = buildActionQueueEngine(data, metadata, state, positionGuidance, dominantDrivers);
+    const triggerMonitor = buildTriggerMonitorEngine(data, metadata, state, positionGuidance, actionQueue, dominantDrivers);
+    const invalidationRules = buildInvalidationRulesEngine(data, metadata, state, positionGuidance, actionQueue, dominantDrivers);
 
     return {
-      contractVersion: 'v26.0A-step4',
+      contractVersion: 'v26.0A-step5',
       strategyState: state.strategyState,
       stateLabel: state.stateLabel,
       stateReason: state.stateReason || `${executionLock.title || 'Existing trading system state'}; health ${healthDashboard.overallLevel}; dominant drivers: ${driverLabels}.`,
@@ -940,34 +1067,8 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
           actionLayer.todayAction || 'Use the queue as the primary execution guide.'
         ].filter(Boolean)
       },
-      triggerMonitor: [
-        ...criticalAlerts.map((alert, index) => ({
-          id: `critical-${index + 1}`,
-          label: alert.title || `Critical trigger ${index + 1}`,
-          condition: alert.condition || 'Critical warning triggered.',
-          status: 'critical',
-          source: alert.driver || 'warningSystem'
-        })),
-        ...watchlist.map((item, index) => ({
-          id: `watch-${index + 1}`,
-          label: `Watch ${index + 1}`,
-          condition: item,
-          status: 'watch',
-          source: 'triggerPanel.watchlist'
-        }))
-      ].slice(0, 6),
-      invalidationRules: [
-        ...(Array.isArray(riskControl.hardThresholds) ? riskControl.hardThresholds.slice(0, 3) : []).map((rule, index) => ({
-          id: `hard-${index + 1}`,
-          rule,
-          action: 'Recompute decision state and reduce risk if breached.'
-        })),
-        ...(Array.isArray(riskControl.resetThresholds) ? riskControl.resetThresholds.slice(0, 2) : []).map((rule, index) => ({
-          id: `reset-${index + 1}`,
-          rule,
-          action: 'Only relax the current strategy state after this reset condition is satisfied.'
-        }))
-      ]
+      triggerMonitor,
+      invalidationRules
     };
   } catch (error) {
     console.warn('Decision model generation failed, using fallback.', error);
@@ -1801,6 +1902,8 @@ async function main() {
   window.__GFRR_STRATEGY_STATE__ = window.__GFRR_DECISION_MODEL__?.strategyState || 'Caution';
   window.__GFRR_POSITION_GUIDANCE__ = window.__GFRR_DECISION_MODEL__?.positionGuidance || buildPositionGuidanceFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_ACTION_QUEUE__ = window.__GFRR_DECISION_MODEL__?.actionQueue || buildActionQueueFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
+  window.__GFRR_TRIGGER_MONITOR__ = window.__GFRR_DECISION_MODEL__?.triggerMonitor || buildTriggerMonitorFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
+  window.__GFRR_INVALIDATION_RULES__ = window.__GFRR_DECISION_MODEL__?.invalidationRules || buildInvalidationRulesFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   console.info('GFRR decision model ready', window.__GFRR_DECISION_MODEL__);
 
   if (metadata.realtimeOverlayEnabled && realtime?.values) {
