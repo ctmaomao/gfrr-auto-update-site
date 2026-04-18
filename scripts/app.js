@@ -1,6 +1,7 @@
 const dataUrl = './data/radar-data.json';
 const historyUrl = './data/radar-history.json';
-const realtimeUrl = './realtime/market.json';
+const localRealtimeUrl = './realtime/market.json';
+const remoteRealtimeUrl = 'https://raw.githubusercontent.com/ctmaomao/gfrr-auto-update-site/realtime-data/realtime/market.json';
 
 const $ = (id) => document.getElementById(id);
 const fmtSigned = (n) => `${n > 0 ? '+' : ''}${n}`;
@@ -18,6 +19,22 @@ const fmtSignedArrow = (n) => `${deltaArrow(n)} ${Number.isFinite(n) ? Math.abs(
 
 function fmtNumSafe(n, digits = 1) {
   return Number.isFinite(n) ? n.toFixed(digits) : '--';
+}
+
+async function fetchRealtimeData() {
+  const remoteUrl = `${remoteRealtimeUrl}?ts=${Date.now()}`;
+  const candidates = [remoteUrl, localRealtimeUrl];
+
+  for (const url of candidates) {
+    try {
+      const response = await fetch(url, { cache: 'no-store' });
+      if (response.ok) return await response.json();
+    } catch {
+      // Continue to the next candidate so the page can fall back safely.
+    }
+  }
+
+  return null;
 }
 
 function computeRealtimeOverlay(base, realtime) {
@@ -638,7 +655,7 @@ async function main() {
   const [baseData, history, realtime] = await Promise.all([
     fetch(dataUrl).then((r) => r.json()),
     fetch(historyUrl).then((r) => r.json()),
-    fetch(realtimeUrl).then((r) => r.ok ? r.json() : null).catch(() => null)
+    fetchRealtimeData()
   ]);
 
   const data = computeRealtimeOverlay(baseData, realtime);
