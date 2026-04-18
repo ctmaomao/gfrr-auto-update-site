@@ -572,13 +572,13 @@ function applyRealtimeOverlay(base, realtimePayload) {
     `10Y ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`
   ];
 
-  next.decisionLine = `当前已进入 v24.1 交易引擎模式：实时快变量 ${realtimePayload.sourceMode || '--'}，执行状态灯为 ${levelLabel}。先看状态灯，再决定能不能动。`;
-  next.summary = `v24.1 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(brent,1)}、美元 ${fmtNumSafe(dxy,2)}、VIX ${fmtNumSafe(vix,2)}、HY OAS ${fmtNumSafe(hy,2)}%。`;
+  next.decisionLine = `当前已进入 v25.0.0 交易引擎模式：实时快变量 ${realtimePayload.sourceMode || '--'}，执行状态灯为 ${levelLabel}。先看状态灯，再决定能不能动。`;
+  next.summary = `v25.0.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(brent,1)}、美元 ${fmtNumSafe(dxy,2)}、VIX ${fmtNumSafe(vix,2)}、HY OAS ${fmtNumSafe(hy,2)}%。`;
   next.recovery = {
     degradedMode: !!realtimePayload.degradedMode,
     safeOutput: true,
     lastRun: realtimePayload.updatedAt || next.updatedAt,
-    notes: realtimePayload.notes || ['v24.1 快变量正常。']
+    notes: realtimePayload.notes || ['v25.0.0 快变量正常。']
   };
 
   return next;
