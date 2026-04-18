@@ -31,6 +31,15 @@
 - 快变量：`realtime/market.json`
 - 页面逻辑：先加载慢变量，再覆盖快变量，并实时重算执行层
 
+### T1 发布说明
+- 主站继续由 `main` 提供。
+- 实时 `market.json` 现在发布到 `realtime-data` 分支。
+- 前端优先读取远端 realtime URL，再覆盖静态基线。
+- `main` 中的 `./realtime/market.json` 仅作为兼容性 fallback。
+- fallback 的作用是避免远端 realtime 暂时不可用时页面直接失效。
+- fallback 数据不保证是最新值。
+- 后续 v25 的 T2 / T4 将继续处理 freshness / stale 标记问题。
+
 ## 目录
 - `scripts/run-daily-pipeline.mjs`：慢变量构建（以 realtime 快照为主，不重复外抓）
 - `scripts/run-realtime.mjs`：快变量构建（多源冗余）
