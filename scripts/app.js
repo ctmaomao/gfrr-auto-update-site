@@ -21,6 +21,50 @@ function fmtNumSafe(n, digits = 1) {
   return Number.isFinite(n) ? n.toFixed(digits) : '--';
 }
 
+const FRESHNESS_WINDOWS = {
+  fresh: 30,
+  aging: 90,
+  stale: 360
+};
+
+function parseTimestamp(value) {
+  if (typeof value !== 'string' || !value) return null;
+  const normalized = value.includes('T') ? value : `${value}T00:00:00Z`;
+  const time = Date.parse(normalized);
+  return Number.isFinite(time) ? time : null;
+}
+
+function computeAgeMinutes(asOf) {
+  const asOfTime = parseTimestamp(asOf);
+  if (asOfTime === null) return null;
+  return Math.max(0, Math.round((Date.now() - asOfTime) / 60000));
+}
+
+function classifyFreshnessLevel(ageMinutes, hasRealtime) {
+  if (!hasRealtime || ageMinutes === null) return 'unavailable';
+  if (ageMinutes <= FRESHNESS_WINDOWS.fresh) return 'fresh';
+  if (ageMinutes <= FRESHNESS_WINDOWS.aging) return 'aging';
+  if (ageMinutes <= FRESHNESS_WINDOWS.stale) return 'stale';
+  return 'unavailable';
+}
+
+function buildRealtimeStatusLabel(metadata) {
+  if (metadata.realtimeUnavailable) {
+    return 'Realtime unavailable / baseline only';
+  }
+
+  const parts = [`Realtime ${metadata.realtimeFreshnessLevel}`];
+  if (Number.isFinite(metadata.realtimeAgeMinutes)) parts.push(`${metadata.realtimeAgeMinutes}m old`);
+  if (metadata.realtimeDegraded) parts.push('degraded');
+  if (metadata.realtimeFallbackUsed) parts.push('local fallback');
+  if (metadata.realtimeCacheOnly) parts.push('cache only');
+  return parts.join(' / ');
+}
+
+function shouldApplyRealtimeOverlay(metadata, realtimePayload) {
+  return !!realtimePayload?.values && !metadata.realtimeUnavailable;
+}
+
 async function fetchBaselineData() {
   return fetch(dataUrl).then((r) => r.json());
 }
@@ -35,15 +79,30 @@ function normalizeRealtimePayload(payload) {
   const values = payload.values && typeof payload.values === 'object' ? payload.values : null;
   if (!values) return null;
 
+  const asOf = typeof payload.asOf === 'string'
+    ? payload.asOf
+    : typeof payload.lastSuccessAt === 'string'
+      ? payload.lastSuccessAt
+      : typeof payload.updatedAt === 'string'
+        ? payload.updatedAt
+        : null;
+
   return {
     values,
     changes: payload.changes && typeof payload.changes === 'object' ? payload.changes : {},
     updatedAt: typeof payload.updatedAt === 'string' ? payload.updatedAt : null,
+    asOf,
+    ageMinutes: Number.isFinite(payload.ageMinutes) ? payload.ageMinutes : null,
+    freshnessLevel: typeof payload.freshnessLevel === 'string' ? payload.freshnessLevel : null,
+    unavailable: !!payload.unavailable,
     sourceMode: typeof payload.sourceMode === 'string' ? payload.sourceMode : null,
     degradedMode: !!payload.degradedMode,
     cacheOnly: !!payload.cacheOnly,
     healthScore: payload.healthScore ?? null,
     criticalMissing: payload.criticalMissing ?? null,
+    fallbackCount: payload.fallbackCount ?? null,
+    lastSuccessAt: typeof payload.lastSuccessAt === 'string' ? payload.lastSuccessAt : null,
+    sourceDetails: payload.sourceDetails && typeof payload.sourceDetails === 'object' ? payload.sourceDetails : {},
     notes: Array.isArray(payload.notes) ? payload.notes : []
   };
 }
@@ -96,21 +155,36 @@ async function fetchRealtimePayload() {
 }
 
 function buildRuntimeState(baseline, history, realtimeResult) {
+  const realtimePayload = realtimeResult.payload;
+  const realtimeAsOf = realtimePayload?.asOf || realtimePayload?.lastSuccessAt || realtimePayload?.updatedAt || null;
+  const realtimeAgeMinutes = computeAgeMinutes(realtimeAsOf);
+  const realtimeFreshnessLevel = classifyFreshnessLevel(realtimeAgeMinutes, !!realtimePayload?.values);
+  const realtimeDegraded = !!(realtimePayload?.degradedMode || realtimePayload?.cacheOnly || realtimeResult.realtimeFallbackUsed);
+  const realtimeUnavailable = realtimeFreshnessLevel === 'unavailable' || !realtimePayload?.values;
+
   const runtimeMetadata = {
     realtimeSource: realtimeResult.realtimeSource,
     realtimeAvailable: realtimeResult.realtimeAvailable,
     realtimeFetchFailed: realtimeResult.realtimeFetchFailed,
     realtimeFallbackUsed: realtimeResult.realtimeFallbackUsed,
     realtimeUpdatedAt: realtimeResult.realtimeUpdatedAt,
-    realtimeError: realtimeResult.realtimeError
+    realtimeError: realtimeResult.realtimeError,
+    realtimeAsOf,
+    realtimeFreshnessLevel,
+    realtimeAgeMinutes,
+    realtimeDegraded,
+    realtimeUnavailable,
+    realtimeCacheOnly: !!realtimePayload?.cacheOnly
   };
+  runtimeMetadata.realtimeStatusLabel = buildRealtimeStatusLabel(runtimeMetadata);
+  runtimeMetadata.realtimeOverlayEnabled = shouldApplyRealtimeOverlay(runtimeMetadata, realtimePayload);
 
   return {
     baseline,
     history,
-    realtimePayload: realtimeResult.payload,
+    realtimePayload,
     runtimeMetadata,
-    data: applyRealtimeOverlay(baseline, realtimeResult.payload)
+    data: runtimeMetadata.realtimeOverlayEnabled ? applyRealtimeOverlay(baseline, realtimePayload) : baseline
   };
 }
 
@@ -344,9 +418,9 @@ function applyRealtimeOverlay(base, realtimePayload) {
 }
 
 
-function renderRealtimeStrip(realtime) {
+function renderRealtimeStrip(realtime, metadata = null) {
   if (!realtime || !realtime.values) return;
-  $('realtime-updated-at').textContent = realtime.updatedAt || '--';
+  $('realtime-updated-at').textContent = realtime.asOf || realtime.updatedAt || '--';
   $('rt-brent').textContent = fmtNumSafe(realtime.values.brent, 1);
   $('rt-dxy').textContent = fmtNumSafe(realtime.values.dxy, 2);
   $('rt-vix').textContent = fmtNumSafe(realtime.values.vix, 2);
@@ -355,6 +429,15 @@ function renderRealtimeStrip(realtime) {
   $('rt-gold').textContent = fmtNumSafe(realtime.values.gold, 1);
   $('rt-spx').textContent = fmtNumSafe(realtime.values.spx, 0);
   $('rt-source-mode').textContent = realtime.degradedMode ? '部分回退' : '实时覆盖';
+  if (metadata?.realtimeUnavailable) {
+    $('rt-source-mode').textContent = 'baseline only';
+  } else if (metadata) {
+    const modeParts = [metadata.realtimeFreshnessLevel || realtime.freshnessLevel || 'fresh'];
+    if (metadata.realtimeDegraded) modeParts.push('degraded');
+    if (metadata.realtimeFallbackUsed) modeParts.push('local fallback');
+    if (metadata.realtimeCacheOnly) modeParts.push('cache only');
+    $('rt-source-mode').textContent = modeParts.join(' / ');
+  }
   $('rt-brent-delta').textContent = fmtSigned(realtime.changes?.brent1d || 0);
   $('rt-dxy-delta').textContent = fmtSigned(realtime.changes?.dxy1d || 0);
   $('rt-vix-delta').textContent = fmtSigned(realtime.changes?.vix1d || 0);
@@ -768,8 +851,8 @@ async function main() {
   const realtime = runtimeState.realtimePayload;
   const metadata = runtimeState.runtimeMetadata;
 
-  if (metadata.realtimeAvailable && realtime?.values) {
-    renderRealtimeStrip(realtime);
+  if (metadata.realtimeOverlayEnabled && realtime?.values) {
+    renderRealtimeStrip(realtime, metadata);
     $('runtime-badge').textContent = metadata.realtimeFallbackUsed
       ? '快变量来自本地 fallback'
       : realtime.degradedMode
@@ -778,6 +861,10 @@ async function main() {
   } else {
     $('runtime-badge').textContent = metadata.realtimeFetchFailed ? '当前处于基线模式 / realtime 不可用' : '当前处于基线模式';
   }
+  if (!metadata.realtimeOverlayEnabled) {
+    $('rt-source-mode').textContent = 'baseline only';
+  }
+  $('runtime-badge').textContent = metadata.realtimeStatusLabel;
   $('overview-date').textContent = data.updatedAt.slice(0, 10);
   $('decision-line').textContent = data.decisionLine || '当前以防守型决策为主，等待更明确的宽松与增长信号。';
   $('summary-text').textContent = data.summary;
