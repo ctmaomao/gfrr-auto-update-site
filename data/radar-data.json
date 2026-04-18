@@ -1,126 +1,126 @@
 {
-  "version": "v24.1.1",
-  "updatedAt": "2026-04-18T04:49:32.550Z",
-  "score": 52,
-  "scoreChange1d": -24,
-  "scoreChange7d": -26,
-  "scoreChange30d": -11,
+  "version": "v24.1",
+  "updatedAt": "2026-04-18T09:31:00.592Z",
+  "score": 60,
+  "scoreChange1d": -16,
+  "scoreChange7d": -18,
+  "scoreChange30d": -3,
   "trendLabel": "风险回落",
-  "currentMacroRegime": "流动性偏紧",
-  "currentCrisisPhase": "风险缓和",
+  "currentMacroRegime": "滞胀冲击",
+  "currentCrisisPhase": "通胀冲击",
   "nextCrisisPhase": "风险缓和",
-  "transitionRisk": 49,
-  "confidenceScore": 100,
+  "transitionRisk": 36,
+  "confidenceScore": 96,
   "confidenceLevel": "高",
   "topRisks": [
-    "布伦特 89.8 美元，能源链条仍在传导。",
-    "广义美元 104.70，融资环境尚未明显放松。",
-    "HY OAS 3.92%，信用风险可控但需观察。",
-    "10Y 美债 4.31%，实际利率 1.96%。"
+    "布伦特 123.3 美元，能源链条仍在传导。",
+    "广义美元 118.86，融资环境尚未明显放松。",
+    "HY OAS 2.86%，信用风险可控但需观察。",
+    "10Y 美债 4.32%，实际利率 1.93%。"
   ],
-  "decisionLine": "当前已进入 v24.1 交易引擎模式：实时快变量 mock，执行状态灯为 YELLOW / 仅允许微调。先看状态灯，再决定能不能动。",
-  "summary": "v24.1 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 89.8、美元 104.70、VIX 17.80、HY OAS 3.92%。",
+  "decisionLine": "当前已进入 v24.1 交易引擎模式：实时快变量 live，执行状态灯为 RED / 禁止新增。先看状态灯，再决定能不能动。",
+  "summary": "v24.1 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 123.3、美元 118.86、VIX 17.94、HY OAS 2.86%。",
   "modules": {
-    "geopolitical": 55,
-    "energy": 51,
-    "inflation": 46,
-    "liquidity": 57,
-    "debt": 46,
-    "banking": 55
+    "geopolitical": 84,
+    "energy": 90,
+    "inflation": 57,
+    "liquidity": 52,
+    "debt": 36,
+    "banking": 41
   },
   "moduleTrends": {
-    "geopolitical": 2,
-    "energy": 3,
-    "inflation": 1,
-    "liquidity": -1,
-    "debt": 0,
+    "geopolitical": 8,
+    "energy": 9,
+    "inflation": -1,
+    "liquidity": 0,
+    "debt": 1,
     "banking": 0
   },
   "regimeProbabilities": {
-    "disinflationaryGrowth": 2,
+    "disinflationaryGrowth": 6,
     "liquidityBull": 0,
-    "stagflationShock": 24,
-    "crisisLiquiditySqueeze": 32,
-    "monetaryDebasement": 21,
-    "deflationaryBust": 21
+    "stagflationShock": 33,
+    "crisisLiquiditySqueeze": 28,
+    "monetaryDebasement": 23,
+    "deflationaryBust": 10
   },
   "phaseSignals": [
-    "实时输入：布伦特 89.8 / VIX 17.80 / HY OAS 3.92%。",
-    "利率输入：10Y 4.31 / 实际利率 1.96 / 盈亏平衡通胀 2.35%。",
-    "快变量状态：mock，健康度 100。"
+    "实时输入：布伦特 123.3 / VIX 17.94 / HY OAS 2.86%。",
+    "利率输入：10Y 4.32 / 实际利率 1.93 / 盈亏平衡通胀 2.36%。",
+    "快变量状态：live，健康度 94。"
   ],
   "liquidityIndex": {
-    "score": 57,
-    "regime": "偏紧缓解",
-    "change1d": -1,
+    "score": 52,
+    "regime": "流动性修复",
+    "change1d": 0,
     "directionLabel": "快变量实时覆盖",
     "notes": [
-      "美元 104.70 / HY OAS 3.92 / VIX 17.80 为三大流动性输入。",
-      "本地测试模式：仅校验 v24.1 交易引擎脚本结构。"
+      "美元 118.86 / HY OAS 2.86 / VIX 17.94 为三大流动性输入。",
+      "gold 数据源失效，已回退到上次有效值"
     ],
     "pillars": [
       {
         "label": "美元融资",
-        "value": 78,
-        "delta": -1
+        "value": 100,
+        "delta": 0
       },
       {
         "label": "跨资产波动",
-        "value": 41,
-        "delta": -2
+        "value": 42,
+        "delta": -1
       },
       {
         "label": "信用 / 利差",
-        "value": 50,
+        "value": 13,
         "delta": 0
       },
       {
         "label": "利率敏感压力",
         "value": 44,
-        "delta": 0
+        "delta": 1
       }
     ]
   },
   "timeDimension": {
     "trend30d": "滚动风险曲线（混合实时驱动）",
-    "scoreChange30d": -11,
+    "scoreChange30d": -3,
     "avg30d": 71,
     "peak30d": 81,
-    "trough30d": 52,
-    "drawFromPeak": -29,
-    "transmissionSpeed": 51,
+    "trough30d": 60,
+    "drawFromPeak": -21,
+    "transmissionSpeed": 66,
     "transmissionAcceleration": "放缓",
-    "dominantPath": "美元 → 信用 → 流动性 → 股票",
+    "dominantPath": "油价 → 通胀 → 利率 → 股票",
     "pathChanges": [
       {
         "label": "油价→通胀",
-        "value": 60,
-        "delta": 3
+        "value": 87,
+        "delta": 9
       },
       {
         "label": "通胀→利率",
-        "value": 50,
-        "delta": 1
+        "value": 57,
+        "delta": -1
       },
       {
         "label": "美元→信用",
-        "value": 64,
-        "delta": -1
+        "value": 57,
+        "delta": 0
       },
       {
         "label": "利率→股票",
-        "value": 30,
-        "delta": -1
+        "value": 20,
+        "delta": -2
       },
       {
         "label": "流动性→估值",
-        "value": 49,
-        "delta": -2
+        "value": 47,
+        "delta": -1
       }
     ],
     "notes": [
-      "当前综合风险分数 52。",
-      "执行引擎状态：YELLOW / 仅允许微调。",
+      "当前综合风险分数 60。",
+      "执行引擎状态：RED / 禁止新增。",
       "慢变量由 realtime 快照驱动重算，不再直接依赖外抓。"
     ]
   },
@@ -129,49 +129,49 @@
       "key": "us",
       "label": "美国",
       "shortLabel": "美国",
-      "risk": 50,
-      "note": "融资偏紧 + 实际利率 1.96%"
+      "risk": 48,
+      "note": "融资偏紧 + 实际利率 1.93%"
     },
     {
       "key": "europe",
       "label": "欧洲",
       "shortLabel": "欧洲",
-      "risk": 53,
+      "risk": 66,
       "note": "能源敏感 + 增长拖累"
     },
     {
       "key": "middleeast",
       "label": "中东",
       "shortLabel": "中东",
-      "risk": 55,
+      "risk": 84,
       "note": "原油与地缘仍是主风险源"
     },
     {
       "key": "china",
       "label": "中国",
       "shortLabel": "中国",
-      "risk": 26,
+      "risk": 23,
       "note": "外需与美元约束"
     },
     {
       "key": "japan",
       "label": "日韩",
       "shortLabel": "日韩",
-      "risk": 27,
+      "risk": 35,
       "note": "输入型压力+美元波动"
     },
     {
       "key": "emAsia",
       "label": "新兴亚洲",
       "shortLabel": "新兴亚洲",
-      "risk": 27,
+      "risk": 33,
       "note": "美元敏感度较高"
     },
     {
       "key": "latam",
       "label": "拉美",
       "shortLabel": "拉美",
-      "risk": 27,
+      "risk": 33,
       "note": "商品支撑但外部融资受限"
     }
   ],
@@ -371,43 +371,43 @@
   "assetMatrix": [
     {
       "asset": "黄金",
-      "score": 83,
+      "score": 87,
       "bias": "中性偏多",
       "reason": "金价 2384.7，通胀对冲仍在，但真实利率继续约束。"
     },
     {
       "asset": "原油",
-      "score": 78,
-      "bias": "中性偏多",
-      "reason": "布伦特 89.8 美元，仍是主导链条。"
+      "score": 100,
+      "bias": "强配",
+      "reason": "布伦特 123.3 美元，仍是主导链条。"
     },
     {
       "asset": "美元",
-      "score": 83,
+      "score": 95,
       "bias": "强配",
-      "reason": "美元 104.70，融资偏紧阶段继续占优。"
+      "reason": "美元 118.86，融资偏紧阶段继续占优。"
     },
     {
       "asset": "美债久期",
-      "score": 38,
+      "score": 39,
       "bias": "谨慎偏多",
-      "reason": "10Y 4.31 / 实际利率 1.96%。"
+      "reason": "10Y 4.32 / 实际利率 1.93%。"
     },
     {
       "asset": "科技股",
-      "score": 31,
+      "score": 32,
       "bias": "低配",
       "reason": "高估值资产仍受利率与流动性制约。"
     },
     {
       "asset": "能源股",
-      "score": 73,
-      "bias": "中性偏多",
+      "score": 91,
+      "bias": "强配",
       "reason": "能源现金流继续受益于高油价环境。"
     },
     {
       "asset": "比特币",
-      "score": 20,
+      "score": 21,
       "bias": "低配",
       "reason": "高Beta资产对流动性最敏感。"
     }
@@ -524,53 +524,53 @@
   "scenarioTree": [
     {
       "name": "基准情景",
-      "probability": 28,
+      "probability": 31,
       "description": "快变量显示风险仍高位但未失控，市场以防守与分化为主。",
-      "triggers": "布伦特 89.8 / 美元 104.70 / HY OAS 3.92",
+      "triggers": "布伦特 123.3 / 美元 118.86 / HY OAS 2.86",
       "assets": "能源领先 / 美元与黄金保留 / 成长受限"
     },
     {
       "name": "风险情景",
-      "probability": 46,
+      "probability": 28,
       "description": "信用与波动率继续上行，执行引擎会切到 RED。",
       "triggers": "油价 > 110 或 HY OAS > 4.5% 或 VIX > 28",
       "assets": "只允许减仓 / 现金与美元提高 / 高Beta回避"
     },
     {
       "name": "极端情景",
-      "probability": 49,
+      "probability": 47,
       "description": "多源关键快变量连续失效时，系统进入缓存模式并强制防守。",
       "triggers": "criticalMissing ≥ 4 或 cacheOnly=true",
       "assets": "停止加仓 / 保留现金 / 仅做风险控制"
     },
     {
       "name": "反转情景",
-      "probability": 1,
+      "probability": 3,
       "description": "美元走弱、波动率和利差收敛后，系统重新开放进攻窗口。",
       "triggers": "VIX < 18 / HY OAS < 3.7 / Brent < 95",
       "assets": "逐步恢复权益与质量成长配置"
     }
   ],
   "warningSystem": {
-    "status": "YELLOW / 仅允许微调 / 数据模式 mock",
+    "status": "RED / 禁止新增 / 数据模式 live",
     "criticalCount": 0,
-    "warningCount": 0,
-    "watchCount": 0,
+    "warningCount": 1,
+    "watchCount": 9,
     "alerts": [
       {
-        "level": "橙色",
+        "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-04-18T04:49:32.550Z",
-        "condition": "风险尚未解除，执行引擎只允许微调。允许围绕目标仓位做再平衡，但禁止新增进攻性仓位。",
-        "action": "执行引擎锁定：只允许微调，不允许扩大风险暴露。"
+        "triggeredAgo": "2026-04-18T09:31:00.592Z",
+        "condition": "系统检测到高压风险组合，执行引擎已锁定为 RED。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
+        "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
       {
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-04-18T04:49:32.550Z",
-        "condition": "本地测试模式：仅校验 v24.1 交易引擎脚本结构。",
+        "triggeredAgo": "2026-04-18T09:31:00.592Z",
+        "condition": "gold 数据源失效，已回退到上次有效值",
         "action": "继续使用 fallback，不中断系统"
       }
     ],
@@ -582,14 +582,14 @@
   },
   "triggerPanel": {
     "critical": [
-      "Brent 89.8",
-      "DXY 104.70",
-      "HY 3.92%"
+      "Brent 123.3",
+      "DXY 118.86",
+      "HY 2.86%"
     ],
     "drivers": [
-      "VIX 17.80",
-      "10Y 4.31%",
-      "Real10Y 1.96%"
+      "VIX 17.94",
+      "10Y 4.32%",
+      "Real10Y 1.93%"
     ],
     "watchlist": [
       "下一次通胀数据",
@@ -598,67 +598,67 @@
     ]
   },
   "confidenceNotes": [
-    "数据模式：mock。",
-    "健康分数：100。",
+    "数据模式：live。",
+    "健康分数：94。",
     "关键缺失项：0。"
   ],
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-04-18T04:49:32.550Z",
+    "lastRun": "2026-04-18T09:31:00.592Z",
     "notes": [
-      "本地测试模式：仅校验 v24.1 交易引擎脚本结构。"
+      "gold 数据源失效，已回退到上次有效值"
     ]
   },
   "tradingSystem": {
     "signalEngine": {
-      "strength": 52,
-      "direction": "防御偏多能源 / 美元，限制久期与高Beta",
+      "strength": 60,
+      "direction": "只允许减仓/防守",
       "consistency": "高一致性",
-      "macroSignal": "流动性偏紧",
-      "liquiditySignal": "偏紧缓解（实时）",
-      "chainSignal": "美元→信用→流动性→股票",
+      "macroSignal": "滞胀冲击",
+      "liquiditySignal": "流动性修复（实时）",
+      "chainSignal": "油价→通胀→利率→股票",
       "notes": [
-        "执行引擎状态：YELLOW / 仅允许微调。",
-        "关键快变量：Brent 89.8 / DXY 104.70 / VIX 17.80 / HY 3.92。",
-        "健康度 100，关键缺失 0。"
+        "执行引擎状态：RED / 禁止新增。",
+        "关键快变量：Brent 123.3 / DXY 118.86 / VIX 17.94 / HY 2.86。",
+        "健康度 94，关键缺失 0。"
       ]
     },
     "positioning": {
-      "regime": "防守型执行框架",
-      "riskBudget": "40%",
-      "targetGrossExposure": "48%",
-      "cashBufferTarget": "27%",
+      "regime": "强防守执行框架",
+      "riskBudget": "30%",
+      "targetGrossExposure": "38%",
+      "cashBufferTarget": "35%",
       "coreAllocations": [
         {
-          "asset": "原油 / 能源",
+          "asset": "美元 / 短票",
           "target": "核心1",
-          "weight": "20%",
-          "reason": "主链条仍偏向能源与通胀输入。"
+          "weight": "24%",
+          "reason": "融资与信用压力阶段的首要防御层。"
         },
         {
-          "asset": "美元 / 短票",
-          "target": "核心2",
-          "weight": "18%",
-          "reason": "流动性偏紧阶段的稳定防御层。"
+          "asset": "现金",
+          "target": "缓冲层",
+          "weight": "35%",
+          "reason": "执行引擎 RED，现金缓冲必须充足。"
         },
         {
           "asset": "黄金",
           "target": "对冲",
-          "weight": "10%",
-          "reason": "对冲政策与通胀不确定性。"
+          "weight": "12%",
+          "reason": "用于对冲尾部风险和政策不确定性。"
         },
         {
-          "asset": "股票（防御板块）",
+          "asset": "原油 / 能源",
+          "target": "防守受益",
+          "weight": "12%",
+          "reason": "油价偏高时继续保留。"
+        },
+        {
+          "asset": "股票（防御）",
           "target": "观察仓",
-          "weight": "8%",
-          "reason": "只保留低波动、现金流型权益。"
-        },
-        {
-          "asset": "科技 / 高Beta",
-          "target": "限制仓",
-          "weight": "0%-3%",
-          "reason": "不允许成为进攻主仓。"
+          "weight": "5%",
+          "reason": "仅保留最低防御仓。"
         }
       ],
       "executionRestrictions": [
@@ -686,10 +686,10 @@
       ]
     },
     "riskControl": {
-      "status": "硬阈值生效中",
-      "maxDrawdown": "-8%",
-      "singleAssetMax": "22%",
-      "systemState": "今天不能主动加风险，只允许对齐目标仓位与防守再平衡",
+      "status": "硬阈值全面生效",
+      "maxDrawdown": "-6%",
+      "singleAssetMax": "20%",
+      "systemState": "今天禁止主动加仓，只允许减仓与恢复防御层",
       "hardThresholds": [
         "流动性 ≥ 75：总仓位降至 42%。",
         "Brent ≥ 110：能源上调，股票下调。",
@@ -704,45 +704,45 @@
     },
     "actionLayer": {
       "tag": "今日执行清单（交易引擎版）",
-      "priorityLine": "先看执行状态灯 YELLOW / 仅允许微调 → 再执行强制动作 → 再对齐目标仓位；不满足条件时禁止交易。",
-      "todayAction": "执行引擎锁定：只允许微调，不允许扩大风险暴露。",
+      "priorityLine": "先看执行状态灯 RED / 禁止新增 → 再执行强制动作 → 再对齐目标仓位；不满足条件时禁止交易。",
+      "todayAction": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。",
       "checklist": [
-        "若总仓位高于 53%，先减仓。",
-        "若科技/高Beta > 3%，降回上限以内。",
-        "若现金缓冲 < 25%，恢复到安全区间。"
+        "若总仓位高于 42%，必须先减到 38% 附近。",
+        "若科技/高Beta > 2%，立即降回 2% 以下。",
+        "若现金缓冲 < 30%，立即补回。"
       ],
       "blocked": [
-        "禁止新增高Beta与久期进攻仓位。",
-        "禁止因为单日反弹而加仓。",
-        "禁止无视执行状态灯。"
+        "禁止新增股票与高Beta仓位。",
+        "禁止盘中追涨。",
+        "禁止主观覆盖系统阈值。"
       ],
       "checkpoints": [
-        "Brent 当前 89.8",
-        "DXY 当前 104.70",
-        "VIX 当前 17.80",
-        "HY OAS 当前 3.92%"
+        "Brent 当前 123.3",
+        "DXY 当前 118.86",
+        "VIX 当前 17.94",
+        "HY OAS 当前 2.86%"
       ]
     },
     "executionLock": {
       "tag": "实时模式 · 主观不得覆盖",
-      "level": "yellow",
-      "levelLabel": "YELLOW / 仅允许微调",
-      "title": "今天不能主动加风险，只允许对齐目标仓位与防守再平衡",
-      "description": "风险尚未解除，执行引擎只允许微调。允许围绕目标仓位做再平衡，但禁止新增进攻性仓位。",
+      "level": "red",
+      "levelLabel": "RED / 禁止新增",
+      "title": "今天禁止主动加仓，只允许减仓与恢复防御层",
+      "description": "系统检测到高压风险组合，执行引擎已锁定为 RED。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
       "allow": [
-        "允许把总仓位向 48% 靠拢。",
-        "允许维持能源、美元/短票、黄金对冲层。",
-        "允许保留防御型股票观察仓。"
+        "允许减仓风险资产。",
+        "允许补充美元/短票与现金。",
+        "允许把黄金对冲恢复到上限。"
       ],
       "block": [
-        "禁止新增高Beta与久期进攻仓位。",
-        "禁止因为单日反弹而加仓。",
-        "禁止无视执行状态灯。"
+        "禁止新增股票与高Beta仓位。",
+        "禁止盘中追涨。",
+        "禁止主观覆盖系统阈值。"
       ],
       "mandatory": [
-        "若总仓位高于 53%，先减仓。",
-        "若科技/高Beta > 3%，降回上限以内。",
-        "若现金缓冲 < 25%，恢复到安全区间。"
+        "若总仓位高于 42%，必须先减到 38% 附近。",
+        "若科技/高Beta > 2%，立即降回 2% 以下。",
+        "若现金缓冲 < 30%，立即补回。"
       ]
     }
   }
