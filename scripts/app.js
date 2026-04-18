@@ -226,6 +226,194 @@ function buildHealthDashboardModel(runtimeState) {
   };
 }
 
+const MODULE_LABELS = {
+  geopolitical: '地缘政治',
+  energy: '能源',
+  inflation: '通胀',
+  liquidity: '流动性',
+  debt: '债务',
+  banking: '银行'
+};
+
+function clampPercent(value, fallback = '--') {
+  return Number.isFinite(value) ? `${Math.max(0, Math.min(100, Math.round(value)))}%` : fallback;
+}
+
+function createDecisionFallback(data = {}, metadata = {}) {
+  const fallbackLabel = metadata.realtimeUnavailable ? 'BASELINE / FALLBACK' : 'UNAVAILABLE / FALLBACK';
+  return {
+    contractVersion: 'v26.0A-step1',
+    strategyState: 'fallback',
+    stateLabel: fallbackLabel,
+    stateReason: metadata.realtimeUnavailable
+      ? 'Decision model generation fell back to baseline because realtime overlay is unavailable.'
+      : 'Decision model generation fell back to safe defaults.',
+    dominantDrivers: [{
+      key: 'fallback',
+      label: 'Fallback baseline',
+      score: Number.isFinite(data.score) ? data.score : null,
+      trend: 0,
+      reason: 'Use baseline risk score and existing page modules until decision generation recovers.'
+    }],
+    positionGuidance: {
+      stance: 'Preserve current defensive baseline',
+      riskBudget: data?.tradingSystem?.positioning?.riskBudget || '--',
+      targetGrossExposure: data?.tradingSystem?.positioning?.targetGrossExposure || '--',
+      cashBufferTarget: data?.tradingSystem?.positioning?.cashBufferTarget || '--',
+      notes: ['Fallback mode active.', 'Do not expand risk until decision model recovers.']
+    },
+    actionQueue: [{
+      id: 'fallback-hold',
+      title: 'Hold baseline posture',
+      priority: 'high',
+      status: 'ready',
+      owner: 'system',
+      reason: 'Decision model unavailable.',
+      action: 'Keep existing defensive positioning and rely on current execution/risk modules.'
+    }],
+    triggerMonitor: [{
+      id: 'fallback-recovery',
+      label: 'Decision contract recovery',
+      condition: 'Decision model can be regenerated without runtime errors.',
+      status: 'watch',
+      source: 'runtime'
+    }],
+    invalidationRules: [{
+      id: 'fallback-invalid',
+      rule: 'Invalidate fallback once runtime data and existing trading system fields are both available again.',
+      action: 'Regenerate the decision contract.'
+    }]
+  };
+}
+
+function deriveDecisionState(data, metadata, healthDashboard) {
+  const executionLevel = data?.tradingSystem?.executionLock?.level;
+  if (executionLevel === 'red') return { strategyState: 'risk_off', stateLabel: 'RED / Risk Off' };
+  if (executionLevel === 'yellow') return { strategyState: 'cautious', stateLabel: 'YELLOW / Cautious' };
+  if (executionLevel === 'green') return { strategyState: 'risk_on', stateLabel: 'GREEN / Selective Risk On' };
+
+  if (metadata.realtimeUnavailable || healthDashboard.overallLevel === 'Baseline Only') {
+    return { strategyState: 'baseline_only', stateLabel: 'BASELINE / Realtime Unavailable' };
+  }
+  if ((data?.score ?? 0) >= 70) return { strategyState: 'risk_off', stateLabel: 'RED / Risk Off' };
+  if ((data?.score ?? 0) >= 55) return { strategyState: 'cautious', stateLabel: 'YELLOW / Cautious' };
+  return { strategyState: 'risk_on', stateLabel: 'GREEN / Selective Risk On' };
+}
+
+function buildDominantDrivers(data, metadata) {
+  const moduleEntries = Object.entries(data?.modules || {})
+    .map(([key, score]) => ({
+      key,
+      label: MODULE_LABELS[key] || key,
+      score: Number.isFinite(score) ? score : null,
+      trend: Number.isFinite(data?.moduleTrends?.[key]) ? data.moduleTrends[key] : 0
+    }))
+    .filter((item) => item.score !== null)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((item) => ({
+      ...item,
+      reason: `${item.label} score ${item.score} with ${item.trend > 0 ? 'rising' : item.trend < 0 ? 'easing' : 'stable'} trend.`
+    }));
+
+  if (metadata.realtimeFallbackUsed) {
+    moduleEntries.push({
+      key: 'realtime-fallback',
+      label: 'Realtime fallback',
+      score: metadata.realtimeHealthScore ?? null,
+      trend: 0,
+      reason: 'Realtime fallback/local mode is active and should cap decision confidence.'
+    });
+  }
+
+  return moduleEntries.slice(0, 4);
+}
+
+function buildDecisionModel(data, metadata, healthDashboard) {
+  try {
+    const state = deriveDecisionState(data, metadata, healthDashboard);
+    const dominantDrivers = buildDominantDrivers(data, metadata);
+    const position = data?.tradingSystem?.positioning || {};
+    const actionLayer = data?.tradingSystem?.actionLayer || {};
+    const riskControl = data?.tradingSystem?.riskControl || {};
+    const executionLock = data?.tradingSystem?.executionLock || {};
+    const warningAlerts = Array.isArray(data?.warningSystem?.alerts) ? data.warningSystem.alerts : [];
+    const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色').slice(0, 3);
+    const watchlist = Array.isArray(data?.triggerPanel?.watchlist) ? data.triggerPanel.watchlist.slice(0, 3) : [];
+    const driverLabels = dominantDrivers.map((item) => item.label).join(', ') || 'baseline drivers';
+
+    return {
+      contractVersion: 'v26.0A-step1',
+      strategyState: state.strategyState,
+      stateLabel: state.stateLabel,
+      stateReason: `${executionLock.title || 'Existing trading system state'}; health ${healthDashboard.overallLevel}; dominant drivers: ${driverLabels}.`,
+      dominantDrivers: dominantDrivers.length ? dominantDrivers : createDecisionFallback(data, metadata).dominantDrivers,
+      positionGuidance: {
+        stance: position.regime || executionLock.levelLabel || 'Baseline posture',
+        riskBudget: position.riskBudget || clampPercent(data?.score),
+        targetGrossExposure: position.targetGrossExposure || '--',
+        cashBufferTarget: position.cashBufferTarget || '--',
+        notes: [
+          executionLock.description || 'Follow current execution lock.',
+          `Health: ${healthDashboard.overallLevel}.`,
+          `Realtime: ${metadata.realtimeStatusLabel || 'unknown'}.`
+        ].filter(Boolean)
+      },
+      actionQueue: [
+        {
+          id: 'primary-execution',
+          title: executionLock.title || 'Follow current execution lock',
+          priority: 'high',
+          status: 'ready',
+          owner: 'system',
+          reason: executionLock.description || 'Derived from existing trading system lock.',
+          action: actionLayer.todayAction || 'Hold current posture.'
+        },
+        ...(Array.isArray(actionLayer.checklist) ? actionLayer.checklist.slice(0, 3) : []).map((item, index) => ({
+          id: `checklist-${index + 1}`,
+          title: item,
+          priority: index === 0 ? 'high' : 'medium',
+          status: 'queued',
+          owner: 'operator',
+          reason: 'Imported from existing action checklist.',
+          action: item
+        }))
+      ],
+      triggerMonitor: [
+        ...criticalAlerts.map((alert, index) => ({
+          id: `critical-${index + 1}`,
+          label: alert.title || `Critical trigger ${index + 1}`,
+          condition: alert.condition || 'Critical warning triggered.',
+          status: 'critical',
+          source: alert.driver || 'warningSystem'
+        })),
+        ...watchlist.map((item, index) => ({
+          id: `watch-${index + 1}`,
+          label: `Watch ${index + 1}`,
+          condition: item,
+          status: 'watch',
+          source: 'triggerPanel.watchlist'
+        }))
+      ].slice(0, 6),
+      invalidationRules: [
+        ...(Array.isArray(riskControl.hardThresholds) ? riskControl.hardThresholds.slice(0, 3) : []).map((rule, index) => ({
+          id: `hard-${index + 1}`,
+          rule,
+          action: 'Recompute decision state and reduce risk if breached.'
+        })),
+        ...(Array.isArray(riskControl.resetThresholds) ? riskControl.resetThresholds.slice(0, 2) : []).map((rule, index) => ({
+          id: `reset-${index + 1}`,
+          rule,
+          action: 'Only relax the current strategy state after this reset condition is satisfied.'
+        }))
+      ]
+    };
+  } catch (error) {
+    console.warn('Decision model generation failed, using fallback.', error);
+    return createDecisionFallback(data, metadata);
+  }
+}
+
 async function fetchBaselineData() {
   return fetch(dataUrl).then((r) => r.json());
 }
@@ -346,12 +534,23 @@ function buildRuntimeState(baseline, history, realtimeResult) {
   runtimeMetadata.realtimeStatusLabel = buildRealtimeStatusLabel(runtimeMetadata);
   runtimeMetadata.realtimeOverlayEnabled = shouldApplyRealtimeOverlay(runtimeMetadata, realtimePayload);
 
+  const data = runtimeMetadata.realtimeOverlayEnabled ? applyRealtimeOverlay(baseline, realtimePayload) : baseline;
+  const healthDashboard = buildHealthDashboardModel({
+    baseline,
+    history,
+    realtimePayload,
+    runtimeMetadata,
+    data
+  });
+  data.decisionModel = buildDecisionModel(data, runtimeMetadata, healthDashboard);
+
   return {
     baseline,
     history,
     realtimePayload,
     runtimeMetadata,
-    data: runtimeMetadata.realtimeOverlayEnabled ? applyRealtimeOverlay(baseline, realtimePayload) : baseline
+    healthDashboard,
+    data
   };
 }
 
@@ -1035,7 +1234,10 @@ async function main() {
   const data = runtimeState.data;
   const realtime = runtimeState.realtimePayload;
   const metadata = runtimeState.runtimeMetadata;
-  const healthDashboard = buildHealthDashboardModel(runtimeState);
+  const healthDashboard = runtimeState.healthDashboard || buildHealthDashboardModel(runtimeState);
+  window.__GFRR_RUNTIME__ = runtimeState;
+  window.__GFRR_DECISION_MODEL__ = data.decisionModel || createDecisionFallback(data, metadata);
+  console.info('GFRR decision model ready', window.__GFRR_DECISION_MODEL__);
 
   if (metadata.realtimeOverlayEnabled && realtime?.values) {
     renderRealtimeStrip(realtime, metadata);
