@@ -1,5 +1,6 @@
 const dataUrl = './data/radar-data.json';
 const historyUrl = './data/radar-history.json';
+const realtimeUrl = './realtime/market.json';
 
 const $ = (id) => document.getElementById(id);
 const fmtSigned = (n) => `${n > 0 ? '+' : ''}${n}`;
@@ -13,6 +14,151 @@ const trendClass = (delta) => (delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat');
 const fmtDeltaSafe = (n) => Number.isFinite(n) ? `${n > 0 ? '+' : ''}${n}` : '--';
 const deltaArrow = (n) => !Number.isFinite(n) || n === 0 ? '→' : n > 0 ? '↑' : '↓';
 const fmtSignedArrow = (n) => `${deltaArrow(n)} ${Number.isFinite(n) ? Math.abs(n) : '--'}`;
+
+
+function fmtNumSafe(n, digits = 1) {
+  return Number.isFinite(n) ? n.toFixed(digits) : '--';
+}
+
+function computeRealtimeOverlay(base, realtime) {
+  if (!realtime || !realtime.values) return base;
+
+  const next = structuredClone(base);
+  next.realtime = realtime;
+
+  const brent = realtime.values.brent || 0;
+  const dxy = realtime.values.dxy || 0;
+  const vix = realtime.values.vix || 0;
+  const hy = realtime.values.hyOas || 0;
+  const us10y = realtime.values.us10y || 0;
+  const real10y = realtime.values.real10y || 0;
+  const gold = realtime.values.gold || 0;
+  const spx = realtime.values.spx || 0;
+  const breakeven10y = realtime.values.breakeven10y || 0;
+
+  const oilRisk = Math.max(0, Math.min(100, Math.round((brent - 60) * 2)));
+  const dollarRisk = Math.max(0, Math.min(100, Math.round((dxy - 95) * 8)));
+  const hyRisk = Math.max(0, Math.min(100, Math.round((hy - 2.5) * 35)));
+  const vixRisk = Math.max(0, Math.min(100, Math.round((vix - 12) * 7)));
+  const realRisk = Math.max(0, Math.min(100, Math.round((real10y - 0.5) * 33)));
+  const inflationRisk = Math.max(0, Math.min(100, Math.round(((breakeven10y || 2.2) - 1.5) * 45 + oilRisk * 0.35)));
+
+  next.modules.energy = Math.max(0, Math.min(100, Math.round((next.modules.energy * 0.45) + oilRisk * 0.55)));
+  next.modules.liquidity = Math.max(0, Math.min(100, Math.round((next.modules.liquidity * 0.35) + dollarRisk * 0.35 + hyRisk * 0.2 + vixRisk * 0.1)));
+  next.modules.inflation = Math.max(0, Math.min(100, Math.round((next.modules.inflation * 0.4) + inflationRisk * 0.6)));
+  next.modules.debt = Math.max(0, Math.min(100, Math.round((next.modules.debt * 0.45) + realRisk * 0.55)));
+
+  next.liquidityIndex.score = next.modules.liquidity;
+  next.liquidityIndex.regime = next.modules.liquidity >= 70 ? '限制性偏紧' : next.modules.liquidity >= 55 ? '偏紧缓解' : '流动性修复';
+  next.liquidityIndex.directionLabel = realtime.degradedMode ? '快变量部分降级' : '快变量已实时覆盖';
+  next.liquidityIndex.notes = [
+    `实时快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元 ${fmtNumSafe(dxy,2)} / VIX ${fmtNumSafe(vix,2)} / HY OAS ${fmtNumSafe(hy,2)}。`,
+    `10Y ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`,
+    ...(realtime.notes || [])
+  ];
+
+  let level = 'green';
+  let levelLabel = 'GREEN / 允许进攻';
+  let title = '今天允许小幅加仓，但必须按纪律分批执行';
+  let desc = '流动性、信用和波动率均已回到相对稳定区，系统允许小幅提高风险暴露，但仍要按目标仓位和分批规则执行。';
+  let allow = ['允许分三笔内提高总仓位。','允许增加防御型权益和部分科技观察仓。','允许降低美元/短票与现金缓冲。'];
+  let block = ['禁止一次性打满仓位。','禁止在单日大涨后追高。','禁止无视硬阈值。'];
+  let mandatory = ['任何新增仓位都必须分批完成。','若风险信号重新转黄，次日停止加仓。','若周回撤超过 -3%，立即回到 YELLOW 纪律。'];
+  let target = '58%';
+  let cash = '20%';
+  let status = '风险可控，仍需阈值约束';
+
+  if (next.modules.liquidity >= 75 || brent >= 110 || hy >= 4.5 || vix >= 28) {
+    level = 'red';
+    levelLabel = 'RED / 只允许减仓';
+    title = '今天禁止主动加仓，只允许减仓或恢复防御层';
+    desc = '风险阈值已进入高压区。系统锁定为 RED：任何新增风险动作都被禁止，只允许执行减仓、补现金和恢复防御仓。';
+    allow = ['允许降低总风险暴露。', '允许补充现金、美元/短票和黄金对冲。', '允许把高Beta与久期仓位降回最低。'];
+    block = ['禁止任何新增进攻仓位。', '禁止因为盘中反弹而追价。', '禁止主观覆盖系统阈值。'];
+    mandatory = ['若总仓位高于 46%，今日必须减回 42% 附近。', '若科技/高Beta > 2%，必须先降仓。', '若现金缓冲 < 30%，必须补回。'];
+    target = '42%';
+    cash = '32%';
+    status = '硬阈值风控全面生效';
+  } else if (next.modules.liquidity >= 60 || brent >= 90 || hy >= 3.7 || vix >= 20) {
+    level = 'yellow';
+    levelLabel = 'YELLOW / 仅允许微调';
+    title = '今天不能主动加风险，只允许对齐目标仓位与防守再平衡';
+    desc = '当前不属于进攻窗口。系统允许的动作仅限于：把总仓位校准到目标值附近，维持能源、美元/短票与黄金对冲层；禁止扩大科技、高Beta和久期风险暴露。';
+    allow = ['允许把总仓位向目标值 48% 靠拢，但调整幅度不得超过 ±5%。', '允许维持或小幅补足能源、美元/短票、黄金对冲层。', '允许对防御型股票保留观察仓，不允许扩大为进攻主仓。'];
+    block = ['禁止新增高Beta、科技与久期进攻仓位。', '禁止因为单日反弹而提升总风险暴露。', '禁止主观覆盖风控阈值和动作清单。'];
+    mandatory = ['若当前总仓位高于 53%，今日必须先减仓再做任何调整。', '若科技/高Beta 高于 3%，今日必须降回上限以内。', '若现金缓冲低于 25%，今日必须恢复到安全区间。'];
+    target = '48%';
+    cash = '27%';
+    status = '硬阈值风控生效中';
+  }
+
+  next.tradingSystem.executionLock = {
+    tag: realtime.degradedMode ? '快变量部分降级 · 主观不得覆盖' : '快变量实时覆盖 · 主观不得覆盖',
+    level,
+    levelLabel,
+    title,
+    description: desc,
+    allow,
+    block,
+    mandatory
+  };
+
+  next.tradingSystem.actionLayer = {
+    tag: '今日执行清单（不可主观覆盖）',
+    priorityLine: `执行顺序：先看执行状态灯（${levelLabel}）→ 再处理强制动作 → 再校准目标仓位；若不满足允许条件，直接停止交易。`,
+    todayAction: level === 'red'
+      ? '今日只允许减仓与恢复防御层，不允许任何新增风险动作。'
+      : level === 'yellow'
+        ? `今日只允许把组合对齐到目标总仓位 ${target}，并维持能源、美元/短票与黄金对冲层；不允许新增进攻性加仓。`
+        : `今日允许小幅提高总仓位到 ${target}，但必须分批执行并保留最低现金缓冲 ${cash}。`,
+    checklist: level === 'red'
+      ? ['若总仓位高于 46%，先减到 42% 左右。','恢复美元/短票和现金缓冲。','把科技/高Beta 降至最低观察仓。']
+      : level === 'yellow'
+        ? ['若总仓位高于 53%，先减仓。','维持能源、美元/短票与黄金对冲层。','全球股票仅保留防御仓，科技/高Beta 不超过 3%。']
+        : ['按三笔以内分批加仓。','优先增加防御型股票与部分科技观察仓。','保持现金缓冲不低于 20%。'],
+    blocked: block,
+    checkpoints: [
+      `检查布伦特是否高于 ${fmtNumSafe(brent,1)}。`,
+      `检查 VIX 是否高于 ${fmtNumSafe(vix,2)}。`,
+      `检查 HY OAS 是否高于 ${fmtNumSafe(hy,2)}%。`,
+      '检查执行状态灯是否发生切换。'
+    ]
+  };
+
+  next.tradingSystem.positioning.targetGrossExposure = target;
+  next.tradingSystem.positioning.cashBufferTarget = cash;
+  next.tradingSystem.riskControl.status = status;
+  next.tradingSystem.riskControl.systemState = title;
+  next.tradingSystem.riskControl.maxDrawdown = level === 'red' ? '-6%' : '-8%';
+
+  next.topRisks = [
+    `盘中快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元 ${fmtNumSafe(dxy,2)} / VIX ${fmtNumSafe(vix,2)} / HY OAS ${fmtNumSafe(hy,2)}。`,
+    ...next.topRisks.slice(0, 3)
+  ];
+  next.decisionLine = `v24 混合实时架构已启用：慢变量来自静态构建，执行状态灯与今日执行由盘中快变量实时覆盖。`;
+  next.summary = `${base.summary} 当前盘中快变量显示：Brent ${fmtNumSafe(brent,1)}，DXY ${fmtNumSafe(dxy,2)}，VIX ${fmtNumSafe(vix,2)}，HY OAS ${fmtNumSafe(hy,2)}。`;
+
+  return next;
+}
+
+function renderRealtimeStrip(realtime) {
+  if (!realtime || !realtime.values) return;
+  $('realtime-updated-at').textContent = realtime.updatedAt || '--';
+  $('rt-brent').textContent = fmtNumSafe(realtime.values.brent, 1);
+  $('rt-dxy').textContent = fmtNumSafe(realtime.values.dxy, 2);
+  $('rt-vix').textContent = fmtNumSafe(realtime.values.vix, 2);
+  $('rt-hy').textContent = fmtNumSafe(realtime.values.hyOas, 2);
+  $('rt-us10y').textContent = fmtNumSafe(realtime.values.us10y, 2);
+  $('rt-gold').textContent = fmtNumSafe(realtime.values.gold, 1);
+  $('rt-spx').textContent = fmtNumSafe(realtime.values.spx, 0);
+  $('rt-source-mode').textContent = realtime.degradedMode ? '部分回退' : '实时覆盖';
+  $('rt-brent-delta').textContent = fmtSigned(realtime.changes?.brent1d || 0);
+  $('rt-dxy-delta').textContent = fmtSigned(realtime.changes?.dxy1d || 0);
+  $('rt-vix-delta').textContent = fmtSigned(realtime.changes?.vix1d || 0);
+  $('rt-hy-delta').textContent = fmtSigned(realtime.changes?.hyOas1d || 0);
+  renderList('realtime-notes', realtime.notes || []);
+}
+
 
 function renderBars(containerId, items, isTrend = false) {
   const root = $(containerId);
@@ -408,12 +554,19 @@ function renderWarningSystem(warning) {
 }
 
 async function main() {
-  const [data, history] = await Promise.all([
+  const [baseData, history, realtime] = await Promise.all([
     fetch(dataUrl).then((r) => r.json()),
-    fetch(historyUrl).then((r) => r.json())
+    fetch(historyUrl).then((r) => r.json()),
+    fetch(realtimeUrl).then((r) => r.ok ? r.json() : null).catch(() => null)
   ]);
 
-  $('runtime-badge').textContent = data.recovery.safeOutput ? '当前处于正常运行模式' : '当前处于降级输出模式';
+  const data = computeRealtimeOverlay(baseData, realtime);
+  if (realtime?.values) {
+    renderRealtimeStrip(realtime);
+    $('runtime-badge').textContent = realtime.degradedMode ? '快变量部分降级 / 慢变量正常' : '快变量已实时覆盖';
+  } else {
+    $('runtime-badge').textContent = data.recovery.safeOutput ? '当前处于正常运行模式' : '当前处于降级输出模式';
+  }
   $('overview-date').textContent = data.updatedAt.slice(0, 10);
   $('decision-line').textContent = data.decisionLine || '当前以防守型决策为主，等待更明确的宽松与增长信号。';
   $('summary-text').textContent = data.summary;

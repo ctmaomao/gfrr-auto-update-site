@@ -1,12 +1,13 @@
 {
-  "name": "gfr-v23-package",
-  "version": "23.0.0",
+  "name": "gfr-v24-package",
+  "version": "24.0.0",
   "private": true,
-  "description": "全球金融风险雷达 v23 - 真实数据驱动版，Build Daily Radar Data 读取官方市场数据后自动更新",
+  "description": "全球金融风险雷达 v24 - 混合实时架构版，慢变量静态构建 + 快变量实时覆盖",
   "type": "module",
   "scripts": {
     "build:data": "node scripts/run-daily-pipeline.mjs",
-    "validate": "node scripts/validate-data.mjs"
+    "validate": "node scripts/validate-data.mjs",
+    "build:realtime": "node scripts/run-realtime.mjs"
   },
   "engines": {
     "node": ">=24"

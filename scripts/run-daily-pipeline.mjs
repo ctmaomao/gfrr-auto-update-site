@@ -50,7 +50,7 @@ function parseCsv(text) {
 
 async function fetchFredSeries(id) {
   const url = `${FRED}?cosd=${cosd}&id=${id}`;
-  const res = await fetch(url, { headers: { 'User-Agent': 'gfr-v23-data-pipeline/1.0' } });
+  const res = await fetch(url, { headers: { 'User-Agent': 'gfr-v24-data-pipeline/1.0' } });
   if (!res.ok) throw new Error(`Failed to fetch ${id}: ${res.status}`);
   const text = await res.text();
   const rows = parseCsv(text);
@@ -308,7 +308,7 @@ async function buildLiveData() {
 
   const decisionLine = `当前系统已切换到真实数据驱动模式：今天的结论来自布伦特、广义美元、VIX、高收益利差、美债收益率与金价等官方市场数据；先看执行状态灯，再决定能不能动。`;
 
-  const summary = `全球金融风险雷达 v23 当前根据真实市场数据生成：布伦特 ${round(oil, 1)} 美元、广义美元 ${round(dollar, 2)}、VIX ${round(vix, 2)}、高收益利差 ${round(hy, 2)}%、10年美债 ${round(y10, 2)}%、10年实际利率 ${round(real10, 2)}%。当前主导环境为“${currentMacroRegime}”，危机阶段为“${currentCrisisPhase}”。`;
+  const summary = `全球金融风险雷达 v24 当前根据真实市场数据生成：布伦特 ${round(oil, 1)} 美元、广义美元 ${round(dollar, 2)}、VIX ${round(vix, 2)}、高收益利差 ${round(hy, 2)}%、10年美债 ${round(y10, 2)}%、10年实际利率 ${round(real10, 2)}%。当前主导环境为“${currentMacroRegime}”，危机阶段为“${currentCrisisPhase}”。`;
 
   const heatmap = [
     { key: 'us', label: '美国', shortLabel: '美国', risk: clamp(avg([risk.modules.inflation, risk.modules.debt, risk.modules.liquidity])), note: `融资偏紧 + 实际利率 ${round(real10,2)}%` },
@@ -590,7 +590,7 @@ async function buildLiveData() {
   };
 
   const data = {
-    version: 'v23',
+    version: 'v24',
     updatedAt: isoNow,
     score: globalRiskScore,
     scoreChange1d,
@@ -696,7 +696,7 @@ async function buildLiveData() {
       safeOutput: true,
       lastRun: isoNow,
       notes: [
-        'v23 已切换为真实数据驱动模式。',
+        'v24 已切换为真实数据驱动模式。',
         '主输入来自 FRED 图表 CSV 官方下载端点；市场源包括 Treasury、Cboe、ICE/BofA 与 EIA 在 FRED 的系列。',
         '若未来某个源短暂不可用，系统可回退到上次有效结构并保留更新时间戳。'
       ]
@@ -712,10 +712,10 @@ function fallbackBuild(error) {
   const prevHistoryPath = path.join(dataDir, 'radar-history.json');
   const prevData = JSON.parse(fs.readFileSync(prevDataPath, 'utf8'));
   const prevHistory = JSON.parse(fs.readFileSync(prevHistoryPath, 'utf8'));
-  prevData.version = 'v23';
+  prevData.version = 'v24';
   prevData.updatedAt = isoNow;
   prevData.decisionLine = '真实数据源暂时不可用，系统已退回到上次有效结构，但保留今日更新时间戳。';
-  prevData.summary = `v23 实时构建失败，已回退到上次有效数据。错误摘要：${String(error.message).slice(0, 120)}`;
+  prevData.summary = `v24 慢变量构建失败，已回退到上次有效数据。错误摘要：${String(error.message).slice(0, 120)}`;
   prevData.recovery = {
     degradedMode: true,
     safeOutput: true,
@@ -733,10 +733,10 @@ function mockBuild() {
   // local test mode for offline validation
   const prevData = JSON.parse(fs.readFileSync(path.join(dataDir, 'radar-data.json'), 'utf8'));
   const prevHistory = JSON.parse(fs.readFileSync(path.join(dataDir, 'radar-history.json'), 'utf8'));
-  prevData.version = 'v23';
+  prevData.version = 'v24';
   prevData.updatedAt = isoNow;
   prevData.decisionLine = '当前处于本地测试模式：脚本结构已切换为真实数据驱动版，线上 GitHub Actions 将读取官方市场数据后自动更新。';
-  prevData.summary = 'v23 本地测试模式已启用。GitHub Actions 线上环境会从官方数据源抓取市场数据并重新计算模块。';
+  prevData.summary = 'v24 本地测试模式已启用。GitHub Actions 线上环境会从官方数据源抓取市场数据并重新计算模块。';
   prevData.recovery = {
     degradedMode: false,
     safeOutput: true,
@@ -765,7 +765,7 @@ async function main() {
   fs.mkdirSync(dataDir, { recursive: true });
   fs.writeFileSync(path.join(dataDir, 'radar-data.json'), JSON.stringify(built.data, null, 2));
   fs.writeFileSync(path.join(dataDir, 'radar-history.json'), JSON.stringify(built.history, null, 2));
-  console.log('Built v23 data successfully.');
+  console.log('Built v24 data successfully.');
 }
 
 main().catch((error) => {

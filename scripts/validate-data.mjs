@@ -22,3 +22,7 @@ if (!data.updatedAt || !String(data.version).startsWith('v23')) {
   throw new Error('Validation failed: missing v23 markers.');
 }
 console.log('Validation passed.');
+
+import fs2 from 'fs';
+const realtimePath = path.join(root, 'realtime', 'market.json');
+if (!fs2.existsSync(realtimePath)) { throw new Error('Validation failed: missing realtime/market.json'); }
