@@ -239,15 +239,82 @@ function clampPercent(value, fallback = '--') {
   return Number.isFinite(value) ? `${Math.max(0, Math.min(100, Math.round(value)))}%` : fallback;
 }
 
+function clampNumber(value, min = 0, max = 100) {
+  if (!Number.isFinite(value)) return min;
+  return Math.max(min, Math.min(max, value));
+}
+
+function countConsecutiveDays(values, predicate) {
+  let streak = 0;
+  for (let i = values.length - 1; i >= 0; i -= 1) {
+    if (!predicate(values[i])) break;
+    streak += 1;
+  }
+  return streak;
+}
+
+function createScoreSeries(history = [], currentScore = null) {
+  const historyScores = Array.isArray(history)
+    ? history
+      .map((item) => Number(item?.score))
+      .filter((score) => Number.isFinite(score))
+    : [];
+
+  if (!Number.isFinite(currentScore)) return historyScores;
+  if (!historyScores.length) return [currentScore];
+
+  const lastScore = historyScores[historyScores.length - 1];
+  if (lastScore === currentScore) return historyScores;
+
+  return [...historyScores, currentScore];
+}
+
+function buildStrategyStateFallback(data = {}, metadata = {}) {
+  const fallbackState = metadata.realtimeUnavailable ? 'Defensive' : 'Caution';
+  const fallbackMeta = {
+    totalRiskScore: Number.isFinite(data.score) ? data.score : null,
+    recent3dDelta: 0,
+    recent3dSpeed: 0,
+    resonanceCount: 0,
+    severeResonanceCount: 0,
+    extremeThresholdCount: 0,
+    extremeThresholds: ['fallback-mode'],
+    elevatedRiskStreakDays: 0,
+    highRiskStreakDays: 0,
+    criticalAlertCount: 0,
+    healthLevel: metadata.realtimeUnavailable ? 'Baseline Only' : 'Unknown'
+  };
+
+  return {
+    strategyState: fallbackState,
+    stateLabel: `${fallbackState} / Fallback`,
+    stateScore: fallbackState === 'Defensive' ? 72 : 55,
+    stateReason: metadata.realtimeUnavailable
+      ? 'Strategy state fell back to a defensive baseline because realtime overlay is unavailable.'
+      : 'Strategy state engine fell back to a cautious baseline because state computation was unavailable.',
+    stateDrivers: [{
+      key: 'fallback',
+      label: 'Fallback guardrail',
+      impact: fallbackState,
+      reason: 'Fallback mode preserves a safe, non-empty strategy state output.'
+    }],
+    stateMeta: fallbackMeta
+  };
+}
+
 function createDecisionFallback(data = {}, metadata = {}) {
   const fallbackLabel = metadata.realtimeUnavailable ? 'BASELINE / FALLBACK' : 'UNAVAILABLE / FALLBACK';
+  const stateFallback = buildStrategyStateFallback(data, metadata);
   return {
-    contractVersion: 'v26.0A-step1',
-    strategyState: 'fallback',
-    stateLabel: fallbackLabel,
-    stateReason: metadata.realtimeUnavailable
+    contractVersion: 'v26.0A-step2',
+    strategyState: stateFallback.strategyState,
+    stateLabel: stateFallback.stateLabel || fallbackLabel,
+    stateReason: stateFallback.stateReason || (metadata.realtimeUnavailable
       ? 'Decision model generation fell back to baseline because realtime overlay is unavailable.'
-      : 'Decision model generation fell back to safe defaults.',
+      : 'Decision model generation fell back to safe defaults.'),
+    stateScore: stateFallback.stateScore,
+    stateDrivers: stateFallback.stateDrivers,
+    stateMeta: stateFallback.stateMeta,
     dominantDrivers: [{
       key: 'fallback',
       label: 'Fallback baseline',
@@ -286,18 +353,170 @@ function createDecisionFallback(data = {}, metadata = {}) {
   };
 }
 
-function deriveDecisionState(data, metadata, healthDashboard) {
-  const executionLevel = data?.tradingSystem?.executionLock?.level;
-  if (executionLevel === 'red') return { strategyState: 'risk_off', stateLabel: 'RED / Risk Off' };
-  if (executionLevel === 'yellow') return { strategyState: 'cautious', stateLabel: 'YELLOW / Cautious' };
-  if (executionLevel === 'green') return { strategyState: 'risk_on', stateLabel: 'GREEN / Selective Risk On' };
+function getStrategyStateLabel(strategyState, stateScore) {
+  const scoreLabel = Number.isFinite(stateScore) ? `S${Math.round(stateScore)}` : 'S--';
+  return `${strategyState} / ${scoreLabel}`;
+}
 
-  if (metadata.realtimeUnavailable || healthDashboard.overallLevel === 'Baseline Only') {
-    return { strategyState: 'baseline_only', stateLabel: 'BASELINE / Realtime Unavailable' };
+function deriveStrategyState(stateScore) {
+  if (stateScore >= 85) return 'Crisis';
+  if (stateScore >= 68) return 'Defensive';
+  if (stateScore >= 48) return 'Caution';
+  if (stateScore >= 28) return 'Balanced';
+  return 'Risk-On';
+}
+
+function buildStrategyStateMeta(data, history, metadata, healthDashboard) {
+  const totalRiskScore = Number(data?.score);
+  const scoreSeries = createScoreSeries(history, totalRiskScore);
+  const referenceScore = scoreSeries.length >= 4 ? scoreSeries[scoreSeries.length - 4] : scoreSeries[0];
+  const recent3dDelta = Number.isFinite(referenceScore) && Number.isFinite(totalRiskScore) ? totalRiskScore - referenceScore : 0;
+  const recent3dSpeed = Number.isFinite(recent3dDelta) ? Number((recent3dDelta / 3).toFixed(1)) : 0;
+  const moduleEntries = Object.entries(data?.modules || {})
+    .map(([key, value]) => ({ key, value: Number(value) }))
+    .filter((item) => Number.isFinite(item.value));
+  const resonanceCount = moduleEntries.filter((item) => item.value >= 70).length;
+  const severeResonanceCount = moduleEntries.filter((item) => item.value >= 80).length;
+  const elevatedRiskStreakDays = countConsecutiveDays(scoreSeries, (score) => score >= 60);
+  const highRiskStreakDays = countConsecutiveDays(scoreSeries, (score) => score >= 70);
+  const alertCriticalCount = Array.isArray(data?.warningSystem?.alerts)
+    ? data.warningSystem.alerts.filter((alert) => alert?.level === '红色').length
+    : 0;
+  const criticalAlertCount = Math.max(
+    Number.isFinite(data?.warningSystem?.criticalCount) ? data.warningSystem.criticalCount : 0,
+    alertCriticalCount
+  );
+  const warningCount = Number.isFinite(data?.warningSystem?.warningCount) ? data.warningSystem.warningCount : 0;
+  const extremeThresholds = [];
+  const pushExtreme = (condition, label) => {
+    if (condition) extremeThresholds.push(label);
+  };
+
+  pushExtreme(totalRiskScore >= 85, 'total-risk>=85');
+  pushExtreme(moduleEntries.some((item) => item.value >= 90), 'module>=90');
+  pushExtreme(severeResonanceCount >= 3, 'three-modules>=80');
+  pushExtreme(data?.liquidityIndex?.score >= 75, 'liquidity>=75');
+  pushExtreme(criticalAlertCount > 0, 'critical-alert');
+  pushExtreme(metadata.realtimeCacheOnly, 'cache-only');
+  pushExtreme(highRiskStreakDays >= 7, 'high-risk-streak');
+
+  return {
+    totalRiskScore,
+    recent3dDelta,
+    recent3dSpeed,
+    resonanceCount,
+    severeResonanceCount,
+    extremeThresholdCount: extremeThresholds.length,
+    extremeThresholds,
+    elevatedRiskStreakDays,
+    highRiskStreakDays,
+    criticalAlertCount,
+    warningCount,
+    healthLevel: healthDashboard.overallLevel,
+    executionLevel: data?.tradingSystem?.executionLock?.level || 'unknown'
+  };
+}
+
+function calculateStrategyStateEngine(data, history, metadata, healthDashboard) {
+  const stateMeta = buildStrategyStateMeta(data, history, metadata, healthDashboard);
+  const executionLevel = data?.tradingSystem?.executionLock?.level;
+  let stateScore = Number.isFinite(stateMeta.totalRiskScore) ? stateMeta.totalRiskScore : 55;
+
+  if (stateMeta.recent3dDelta >= 12) stateScore += 18;
+  else if (stateMeta.recent3dDelta >= 6) stateScore += 10;
+  else if (stateMeta.recent3dDelta >= 3) stateScore += 6;
+  else if (stateMeta.recent3dDelta <= -12) stateScore -= 14;
+  else if (stateMeta.recent3dDelta <= -6) stateScore -= 8;
+  else if (stateMeta.recent3dDelta <= -3) stateScore -= 4;
+
+  if (stateMeta.resonanceCount >= 5) stateScore += 18;
+  else if (stateMeta.resonanceCount === 4) stateScore += 12;
+  else if (stateMeta.resonanceCount === 3) stateScore += 8;
+  else if (stateMeta.resonanceCount === 2) stateScore += 4;
+
+  if (stateMeta.severeResonanceCount >= 3) stateScore += 10;
+  else if (stateMeta.severeResonanceCount === 2) stateScore += 6;
+
+  if (stateMeta.extremeThresholdCount >= 3) stateScore += 24;
+  else if (stateMeta.extremeThresholdCount >= 1) stateScore += 14;
+
+  if (stateMeta.highRiskStreakDays >= 7) stateScore += 12;
+  else if (stateMeta.highRiskStreakDays >= 5) stateScore += 8;
+  else if (stateMeta.highRiskStreakDays >= 3) stateScore += 5;
+
+  if (stateMeta.healthLevel === 'Baseline Only') stateScore += 6;
+  else if (stateMeta.healthLevel === 'Stale') stateScore += 8;
+  else if (stateMeta.healthLevel === 'Degraded') stateScore += 4;
+  else if (stateMeta.healthLevel === 'Healthy') stateScore -= 2;
+
+  if (executionLevel === 'red') stateScore += 4;
+  else if (executionLevel === 'yellow') stateScore += 2;
+  else if (executionLevel === 'green') stateScore -= 2;
+
+  if (metadata.realtimeFallbackUsed) stateScore += 3;
+
+  stateScore = clampNumber(Math.round(stateScore), 0, 100);
+  const strategyState = deriveStrategyState(stateScore);
+  const stateDrivers = [
+    {
+      key: 'total-risk',
+      label: 'Total risk score',
+      impact: strategyState,
+      reason: `Current total risk score is ${stateMeta.totalRiskScore ?? '--'}.`
+    },
+    {
+      key: 'three-day-speed',
+      label: '3-day speed',
+      impact: stateMeta.recent3dDelta > 0 ? 'deteriorating' : stateMeta.recent3dDelta < 0 ? 'easing' : 'flat',
+      reason: `Recent 3-day change is ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta} (${stateMeta.recent3dSpeed}/day).`
+    },
+    {
+      key: 'module-resonance',
+      label: 'Module resonance',
+      impact: stateMeta.resonanceCount >= 3 ? 'broad' : stateMeta.resonanceCount >= 2 ? 'narrow' : 'contained',
+      reason: `${stateMeta.resonanceCount} modules are at or above 70, with ${stateMeta.severeResonanceCount} at or above 80.`
+    },
+    {
+      key: 'extreme-thresholds',
+      label: 'Extreme thresholds',
+      impact: stateMeta.extremeThresholdCount > 0 ? 'triggered' : 'clear',
+      reason: stateMeta.extremeThresholdCount
+        ? `Triggered: ${stateMeta.extremeThresholds.join(', ')}.`
+        : 'No extreme thresholds are currently triggered.'
+    },
+    {
+      key: 'high-risk-streak',
+      label: 'High-risk persistence',
+      impact: stateMeta.highRiskStreakDays >= 3 ? 'persistent' : 'not-persistent',
+      reason: `High-risk streak: ${stateMeta.highRiskStreakDays} day(s); elevated-risk streak: ${stateMeta.elevatedRiskStreakDays} day(s).`
+    }
+  ];
+
+  const stateReason = [
+    `Strategy state resolved to ${strategyState} with state score ${stateScore}.`,
+    `Total risk ${stateMeta.totalRiskScore ?? '--'}, 3-day delta ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta}, resonance ${stateMeta.resonanceCount}.`,
+    stateMeta.extremeThresholdCount
+      ? `Extreme thresholds active: ${stateMeta.extremeThresholds.join(', ')}.`
+      : 'No extreme thresholds are active.'
+  ].join(' ');
+
+  return {
+    strategyState,
+    stateLabel: getStrategyStateLabel(strategyState, stateScore),
+    stateScore,
+    stateReason,
+    stateDrivers,
+    stateMeta
+  };
+}
+
+function deriveDecisionState(data, history, metadata, healthDashboard) {
+  try {
+    return calculateStrategyStateEngine(data, history, metadata, healthDashboard);
+  } catch (error) {
+    console.warn('Strategy state engine failed, using fallback.', error);
+    return buildStrategyStateFallback(data, metadata);
   }
-  if ((data?.score ?? 0) >= 70) return { strategyState: 'risk_off', stateLabel: 'RED / Risk Off' };
-  if ((data?.score ?? 0) >= 55) return { strategyState: 'cautious', stateLabel: 'YELLOW / Cautious' };
-  return { strategyState: 'risk_on', stateLabel: 'GREEN / Selective Risk On' };
 }
 
 function buildDominantDrivers(data, metadata) {
@@ -329,9 +548,9 @@ function buildDominantDrivers(data, metadata) {
   return moduleEntries.slice(0, 4);
 }
 
-function buildDecisionModel(data, metadata, healthDashboard) {
+function buildDecisionModel(data, history, metadata, healthDashboard) {
   try {
-    const state = deriveDecisionState(data, metadata, healthDashboard);
+    const state = deriveDecisionState(data, history, metadata, healthDashboard);
     const dominantDrivers = buildDominantDrivers(data, metadata);
     const position = data?.tradingSystem?.positioning || {};
     const actionLayer = data?.tradingSystem?.actionLayer || {};
@@ -343,10 +562,13 @@ function buildDecisionModel(data, metadata, healthDashboard) {
     const driverLabels = dominantDrivers.map((item) => item.label).join(', ') || 'baseline drivers';
 
     return {
-      contractVersion: 'v26.0A-step1',
+      contractVersion: 'v26.0A-step2',
       strategyState: state.strategyState,
       stateLabel: state.stateLabel,
-      stateReason: `${executionLock.title || 'Existing trading system state'}; health ${healthDashboard.overallLevel}; dominant drivers: ${driverLabels}.`,
+      stateReason: state.stateReason || `${executionLock.title || 'Existing trading system state'}; health ${healthDashboard.overallLevel}; dominant drivers: ${driverLabels}.`,
+      stateScore: state.stateScore,
+      stateDrivers: state.stateDrivers || [],
+      stateMeta: state.stateMeta || {},
       dominantDrivers: dominantDrivers.length ? dominantDrivers : createDecisionFallback(data, metadata).dominantDrivers,
       positionGuidance: {
         stance: position.regime || executionLock.levelLabel || 'Baseline posture',
@@ -542,7 +764,7 @@ function buildRuntimeState(baseline, history, realtimeResult) {
     runtimeMetadata,
     data
   });
-  data.decisionModel = buildDecisionModel(data, runtimeMetadata, healthDashboard);
+  data.decisionModel = buildDecisionModel(data, history, runtimeMetadata, healthDashboard);
 
   return {
     baseline,
@@ -1237,6 +1459,7 @@ async function main() {
   const healthDashboard = runtimeState.healthDashboard || buildHealthDashboardModel(runtimeState);
   window.__GFRR_RUNTIME__ = runtimeState;
   window.__GFRR_DECISION_MODEL__ = data.decisionModel || createDecisionFallback(data, metadata);
+  window.__GFRR_STRATEGY_STATE__ = window.__GFRR_DECISION_MODEL__?.strategyState || 'Caution';
   console.info('GFRR decision model ready', window.__GFRR_DECISION_MODEL__);
 
   if (metadata.realtimeOverlayEnabled && realtime?.values) {
