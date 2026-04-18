@@ -1,6 +1,7 @@
 const dataUrl = './data/radar-data.json';
 const historyUrl = './data/radar-history.json';
-const realtimeUrl = './realtime/market.json';
+const localRealtimeUrl = './realtime/market.json';
+const remoteRealtimeUrl = 'https://raw.githubusercontent.com/ctmaomao/gfrr-auto-update-site/realtime-data/realtime/market.json';
 
 const $ = (id) => document.getElementById(id);
 const fmtSigned = (n) => `${n > 0 ? '+' : ''}${n}`;
@@ -20,37 +21,146 @@ function fmtNumSafe(n, digits = 1) {
   return Number.isFinite(n) ? n.toFixed(digits) : '--';
 }
 
-function computeRealtimeOverlay(base, realtime) {
-  if (!realtime || !realtime.values) return base;
+async function fetchBaselineData() {
+  return fetch(dataUrl).then((r) => r.json());
+}
+
+async function fetchHistoryData() {
+  return fetch(historyUrl).then((r) => r.json());
+}
+
+function normalizeRealtimePayload(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+
+  const values = payload.values && typeof payload.values === 'object' ? payload.values : null;
+  if (!values) return null;
+
+  return {
+    values,
+    changes: payload.changes && typeof payload.changes === 'object' ? payload.changes : {},
+    updatedAt: typeof payload.updatedAt === 'string' ? payload.updatedAt : null,
+    sourceMode: typeof payload.sourceMode === 'string' ? payload.sourceMode : null,
+    degradedMode: !!payload.degradedMode,
+    cacheOnly: !!payload.cacheOnly,
+    healthScore: payload.healthScore ?? null,
+    criticalMissing: payload.criticalMissing ?? null,
+    notes: Array.isArray(payload.notes) ? payload.notes : []
+  };
+}
+
+async function fetchRealtimePayload() {
+  const attempts = [
+    { url: `${remoteRealtimeUrl}?ts=${Date.now()}`, source: 'remote', fallbackUsed: false },
+    { url: localRealtimeUrl, source: 'local-fallback', fallbackUsed: true }
+  ];
+
+  let lastError = null;
+
+  for (const attempt of attempts) {
+    try {
+      const response = await fetch(attempt.url, { cache: 'no-store' });
+      if (!response.ok) {
+        lastError = `${attempt.source}:${response.status}`;
+        continue;
+      }
+
+      const payload = normalizeRealtimePayload(await response.json());
+      if (!payload) {
+        lastError = `${attempt.source}:invalid-payload`;
+        continue;
+      }
+
+      return {
+        payload,
+        realtimeSource: attempt.source,
+        realtimeAvailable: true,
+        realtimeFetchFailed: false,
+        realtimeFallbackUsed: attempt.fallbackUsed,
+        realtimeUpdatedAt: payload.updatedAt,
+        realtimeError: lastError
+      };
+    } catch (error) {
+      lastError = `${attempt.source}:${error.message}`;
+    }
+  }
+
+  return {
+    payload: null,
+    realtimeSource: 'none',
+    realtimeAvailable: false,
+    realtimeFetchFailed: true,
+    realtimeFallbackUsed: false,
+    realtimeUpdatedAt: null,
+    realtimeError: lastError
+  };
+}
+
+function buildRuntimeState(baseline, history, realtimeResult) {
+  const runtimeMetadata = {
+    realtimeSource: realtimeResult.realtimeSource,
+    realtimeAvailable: realtimeResult.realtimeAvailable,
+    realtimeFetchFailed: realtimeResult.realtimeFetchFailed,
+    realtimeFallbackUsed: realtimeResult.realtimeFallbackUsed,
+    realtimeUpdatedAt: realtimeResult.realtimeUpdatedAt,
+    realtimeError: realtimeResult.realtimeError
+  };
+
+  return {
+    baseline,
+    history,
+    realtimePayload: realtimeResult.payload,
+    runtimeMetadata,
+    data: applyRealtimeOverlay(baseline, realtimeResult.payload)
+  };
+}
+
+function getRealtimeNumber(values, key) {
+  const value = Number(values?.[key]);
+  return Number.isFinite(value) ? value : null;
+}
+
+function applyRealtimeOverlay(base, realtimePayload) {
+  if (!realtimePayload?.values) return base;
 
   const next = structuredClone(base);
-  next.realtime = realtime;
+  const brent = getRealtimeNumber(realtimePayload.values, 'brent');
+  const dxy = getRealtimeNumber(realtimePayload.values, 'dxy');
+  const vix = getRealtimeNumber(realtimePayload.values, 'vix');
+  const hy = getRealtimeNumber(realtimePayload.values, 'hyOas');
+  const us10y = getRealtimeNumber(realtimePayload.values, 'us10y');
+  const real10y = getRealtimeNumber(realtimePayload.values, 'real10y');
+  const gold = getRealtimeNumber(realtimePayload.values, 'gold');
+  const spx = getRealtimeNumber(realtimePayload.values, 'spx');
+  const breakeven10y = getRealtimeNumber(realtimePayload.values, 'breakeven10y');
 
-  const brent = Number(realtime.values.brent || 0);
-  const dxy = Number(realtime.values.dxy || 0);
-  const vix = Number(realtime.values.vix || 0);
-  const hy = Number(realtime.values.hyOas || 0);
-  const us10y = Number(realtime.values.us10y || 0);
-  const real10y = Number(realtime.values.real10y || 0);
-  const gold = Number(realtime.values.gold || 0);
-  const spx = Number(realtime.values.spx || 0);
-  const breakeven10y = Number(realtime.values.breakeven10y || 0);
+  const oilRisk = brent === null ? null : Math.max(0, Math.min(100, Math.round((brent - 60) * 2)));
+  const dollarRisk = dxy === null ? null : Math.max(0, Math.min(100, Math.round((dxy - 95) * 8)));
+  const hyRisk = hy === null ? null : Math.max(0, Math.min(100, Math.round((hy - 2.5) * 35)));
+  const vixRisk = vix === null ? null : Math.max(0, Math.min(100, Math.round((vix - 12) * 7)));
+  const rateRisk = us10y === null ? null : Math.max(0, Math.min(100, Math.round((us10y - 2.5) * 22)));
+  const realRisk = real10y === null ? null : Math.max(0, Math.min(100, Math.round((real10y - 0.5) * 33)));
+  const inflationRisk = breakeven10y === null || oilRisk === null
+    ? null
+    : Math.max(0, Math.min(100, Math.round((breakeven10y - 1.5) * 45 + oilRisk * 0.35)));
 
-  const oilRisk = Math.max(0, Math.min(100, Math.round((brent - 60) * 2)));
-  const dollarRisk = Math.max(0, Math.min(100, Math.round((dxy - 95) * 8)));
-  const hyRisk = Math.max(0, Math.min(100, Math.round((hy - 2.5) * 35)));
-  const vixRisk = Math.max(0, Math.min(100, Math.round((vix - 12) * 7)));
-  const rateRisk = Math.max(0, Math.min(100, Math.round((us10y - 2.5) * 22)));
-  const realRisk = Math.max(0, Math.min(100, Math.round((real10y - 0.5) * 33)));
-  const inflationRisk = Math.max(0, Math.min(100, Math.round(((breakeven10y || 2.2) - 1.5) * 45 + oilRisk * 0.35)));
-  const spxRisk = Math.max(0, Math.min(100, Math.round((5300 - spx) / 6)));
-
-  next.modules.geopolitical = Math.max(0, Math.min(100, Math.round((next.modules.geopolitical * 0.4) + (oilRisk * 0.45) + (vixRisk * 0.15))));
-  next.modules.energy = Math.max(0, Math.min(100, Math.round((next.modules.energy * 0.25) + oilRisk * 0.75)));
-  next.modules.inflation = Math.max(0, Math.min(100, Math.round((next.modules.inflation * 0.25) + inflationRisk * 0.75)));
-  next.modules.liquidity = Math.max(0, Math.min(100, Math.round((next.modules.liquidity * 0.2) + dollarRisk * 0.3 + hyRisk * 0.3 + vixRisk * 0.12 + rateRisk * 0.08)));
-  next.modules.debt = Math.max(0, Math.min(100, Math.round((next.modules.debt * 0.25) + realRisk * 0.45 + rateRisk * 0.25 + hyRisk * 0.05)));
-  next.modules.banking = Math.max(0, Math.min(100, Math.round((next.modules.banking * 0.2) + hyRisk * 0.55 + vixRisk * 0.2 + dollarRisk * 0.05)));
+  if (oilRisk !== null && vixRisk !== null) {
+    next.modules.geopolitical = Math.max(0, Math.min(100, Math.round((next.modules.geopolitical * 0.4) + (oilRisk * 0.45) + (vixRisk * 0.15))));
+  }
+  if (oilRisk !== null) {
+    next.modules.energy = Math.max(0, Math.min(100, Math.round((next.modules.energy * 0.25) + oilRisk * 0.75)));
+  }
+  if (inflationRisk !== null) {
+    next.modules.inflation = Math.max(0, Math.min(100, Math.round((next.modules.inflation * 0.25) + inflationRisk * 0.75)));
+  }
+  if (dollarRisk !== null && hyRisk !== null && vixRisk !== null && rateRisk !== null) {
+    next.modules.liquidity = Math.max(0, Math.min(100, Math.round((next.modules.liquidity * 0.2) + dollarRisk * 0.3 + hyRisk * 0.3 + vixRisk * 0.12 + rateRisk * 0.08)));
+  }
+  if (realRisk !== null && rateRisk !== null && hyRisk !== null) {
+    next.modules.debt = Math.max(0, Math.min(100, Math.round((next.modules.debt * 0.25) + realRisk * 0.45 + rateRisk * 0.25 + hyRisk * 0.05)));
+  }
+  if (hyRisk !== null && vixRisk !== null && dollarRisk !== null) {
+    next.modules.banking = Math.max(0, Math.min(100, Math.round((next.modules.banking * 0.2) + hyRisk * 0.55 + vixRisk * 0.2 + dollarRisk * 0.05)));
+  }
 
   const totalScore = Math.round(
     next.modules.geopolitical * 0.15 +
@@ -63,16 +173,28 @@ function computeRealtimeOverlay(base, realtime) {
   next.score = totalScore;
   next.liquidityIndex.score = next.modules.liquidity;
   next.liquidityIndex.regime = next.modules.liquidity >= 70 ? '限制性偏紧' : next.modules.liquidity >= 55 ? '偏紧缓解' : '流动性修复';
-  next.liquidityIndex.directionLabel = realtime.cacheOnly ? '快变量缓存模式' : realtime.degradedMode ? '快变量带回退' : '快变量已实时覆盖';
+  next.liquidityIndex.directionLabel = realtimePayload.cacheOnly ? '快变量缓存模式' : realtimePayload.degradedMode ? '快变量带回退' : '快变量已实时覆盖';
   next.liquidityIndex.notes = [
     `实时快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元 ${fmtNumSafe(dxy,2)} / VIX ${fmtNumSafe(vix,2)} / HY OAS ${fmtNumSafe(hy,2)}。`,
     `10Y ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`,
-    `数据模式：${realtime.sourceMode || 'unknown'} / 健康分数：${realtime.healthScore ?? '--'} / 关键缺失：${realtime.criticalMissing ?? 0}。`,
-    ...(realtime.notes || [])
+    `数据模式：${realtimePayload.sourceMode || 'unknown'} / 健康分数：${realtimePayload.healthScore ?? '--'} / 关键缺失：${realtimePayload.criticalMissing ?? 0}。`,
+    ...(realtimePayload.notes || [])
   ];
 
-  const hardStop = realtime.cacheOnly || next.modules.liquidity >= 75 || brent >= 110 || hy >= 4.5 || vix >= 28 || totalScore >= 82;
-  const caution = !hardStop && (realtime.degradedMode || next.modules.liquidity >= 60 || brent >= 90 || hy >= 3.7 || vix >= 20 || totalScore >= 65);
+  const hardStop = realtimePayload.cacheOnly
+    || next.modules.liquidity >= 75
+    || (brent !== null && brent >= 110)
+    || (hy !== null && hy >= 4.5)
+    || (vix !== null && vix >= 28)
+    || totalScore >= 82;
+  const caution = !hardStop && (
+    realtimePayload.degradedMode
+    || next.modules.liquidity >= 60
+    || (brent !== null && brent >= 90)
+    || (hy !== null && hy >= 3.7)
+    || (vix !== null && vix >= 20)
+    || totalScore >= 65
+  );
 
   let level = 'green';
   let levelLabel = 'GREEN / 允许分批进攻';
@@ -90,7 +212,7 @@ function computeRealtimeOverlay(base, realtime) {
     level = 'red';
     levelLabel = 'RED / 禁止新增';
     title = '今天禁止主动加仓，只允许减仓与恢复防御层';
-    desc = realtime.cacheOnly
+    desc = realtimePayload.cacheOnly
       ? '关键快变量不足，系统进入缓存模式。为避免误判，执行引擎直接锁为 RED：禁止新增，只允许风险收缩。'
       : '高压风险组合已触发。执行引擎直接锁为 RED：任何新增风险动作都被禁止，只允许减仓、补现金和恢复防御仓。';
     allow = ['允许减仓风险资产。', '允许补充美元/短票与现金。', '允许把黄金对冲恢复到上限。'];
@@ -115,7 +237,7 @@ function computeRealtimeOverlay(base, realtime) {
   }
 
   next.tradingSystem.executionLock = {
-    tag: realtime.cacheOnly ? '缓存模式 · 主观不得覆盖' : realtime.degradedMode ? '带回退实时模式 · 主观不得覆盖' : '实时模式 · 主观不得覆盖',
+    tag: realtimePayload.cacheOnly ? '缓存模式 · 主观不得覆盖' : realtimePayload.degradedMode ? '带回退实时模式 · 主观不得覆盖' : '实时模式 · 主观不得覆盖',
     level,
     levelLabel,
     title,
@@ -191,31 +313,31 @@ function computeRealtimeOverlay(base, realtime) {
   next.tradingSystem.signalEngine = {
     strength: totalScore,
     direction: level === 'red' ? '只允许减仓/防守' : level === 'yellow' ? '防御偏多能源 / 美元，限制久期与高Beta' : '允许质量权益分批进攻',
-    consistency: realtime.cacheOnly ? '低一致性（缓存）' : realtime.degradedMode ? '中一致性（回退）' : '高一致性',
+    consistency: realtimePayload.cacheOnly ? '低一致性（缓存）' : realtimePayload.degradedMode ? '中一致性（回退）' : '高一致性',
     macroSignal: totalScore >= 70 ? '滞胀冲击' : totalScore >= 55 ? '流动性偏紧' : '通胀回落增长',
     liquiditySignal: `${next.liquidityIndex.regime}（实时）`,
     chainSignal: next.modules.energy >= next.modules.liquidity ? '油价→通胀→利率→股票' : '美元→信用→流动性→股票',
     notes: [
       `执行引擎状态：${levelLabel}。`,
       `关键快变量：Brent ${fmtNumSafe(brent,1)} / DXY ${fmtNumSafe(dxy,2)} / VIX ${fmtNumSafe(vix,2)} / HY ${fmtNumSafe(hy,2)}。`,
-      `健康度 ${realtime.healthScore ?? '--'}，关键缺失 ${realtime.criticalMissing ?? 0}。`
+      `健康度 ${realtimePayload.healthScore ?? '--'}，关键缺失 ${realtimePayload.criticalMissing ?? 0}。`
     ]
   };
 
   next.topRisks = [
     `盘中快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元 ${fmtNumSafe(dxy,2)} / VIX ${fmtNumSafe(vix,2)} / HY OAS ${fmtNumSafe(hy,2)}。`,
     `执行状态灯：${levelLabel}。`,
-    realtime.cacheOnly ? '当前为缓存模式，系统自动提升防守等级。' : realtime.degradedMode ? '当前为带回退实时模式，少量数据已回退但系统继续运行。' : '当前为实时模式，快变量直接驱动信号与仓位。',
+    realtimePayload.cacheOnly ? '当前为缓存模式，系统自动提升防守等级。' : realtimePayload.degradedMode ? '当前为带回退实时模式，少量数据已回退但系统继续运行。' : '当前为实时模式，快变量直接驱动信号与仓位。',
     `10Y ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`
   ];
 
-  next.decisionLine = `当前已进入 v24.1 交易引擎模式：实时快变量 ${realtime.sourceMode || '--'}，执行状态灯为 ${levelLabel}。先看状态灯，再决定能不能动。`;
+  next.decisionLine = `当前已进入 v24.1 交易引擎模式：实时快变量 ${realtimePayload.sourceMode || '--'}，执行状态灯为 ${levelLabel}。先看状态灯，再决定能不能动。`;
   next.summary = `v24.1 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(brent,1)}、美元 ${fmtNumSafe(dxy,2)}、VIX ${fmtNumSafe(vix,2)}、HY OAS ${fmtNumSafe(hy,2)}%。`;
   next.recovery = {
-    degradedMode: !!realtime.degradedMode,
+    degradedMode: !!realtimePayload.degradedMode,
     safeOutput: true,
-    lastRun: realtime.updatedAt || next.updatedAt,
-    notes: realtime.notes || ['v24.1 快变量正常。']
+    lastRun: realtimePayload.updatedAt || next.updatedAt,
+    notes: realtimePayload.notes || ['v24.1 快变量正常。']
   };
 
   return next;
@@ -635,18 +757,26 @@ function renderWarningSystem(warning) {
 }
 
 async function main() {
-  const [baseData, history, realtime] = await Promise.all([
-    fetch(dataUrl).then((r) => r.json()),
-    fetch(historyUrl).then((r) => r.json()),
-    fetch(realtimeUrl).then((r) => r.ok ? r.json() : null).catch(() => null)
+  const [baseline, history, realtimeResult] = await Promise.all([
+    fetchBaselineData(),
+    fetchHistoryData(),
+    fetchRealtimePayload()
   ]);
 
-  const data = computeRealtimeOverlay(baseData, realtime);
-  if (realtime?.values) {
+  const runtimeState = buildRuntimeState(baseline, history, realtimeResult);
+  const data = runtimeState.data;
+  const realtime = runtimeState.realtimePayload;
+  const metadata = runtimeState.runtimeMetadata;
+
+  if (metadata.realtimeAvailable && realtime?.values) {
     renderRealtimeStrip(realtime);
-    $('runtime-badge').textContent = realtime.degradedMode ? '快变量部分降级 / 慢变量正常' : '快变量已实时覆盖';
+    $('runtime-badge').textContent = metadata.realtimeFallbackUsed
+      ? '快变量来自本地 fallback'
+      : realtime.degradedMode
+        ? '快变量部分降级 / 慢变量正常'
+        : '快变量已实时覆盖';
   } else {
-    $('runtime-badge').textContent = data.recovery.safeOutput ? '当前处于正常运行模式' : '当前处于降级输出模式';
+    $('runtime-badge').textContent = metadata.realtimeFetchFailed ? '当前处于基线模式 / realtime 不可用' : '当前处于基线模式';
   }
   $('overview-date').textContent = data.updatedAt.slice(0, 10);
   $('decision-line').textContent = data.decisionLine || '当前以防守型决策为主，等待更明确的宽松与增长信号。';
