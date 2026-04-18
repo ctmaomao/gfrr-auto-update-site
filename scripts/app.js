@@ -320,11 +320,66 @@ function buildPositionGuidanceFallback(data = {}, metadata = {}, strategyState =
   };
 }
 
+function flattenActionQueueItems(queue = {}) {
+  return [
+    ...(Array.isArray(queue.priorityActions) ? queue.priorityActions.map((text) => ({ bucket: 'priority', text })) : []),
+    ...(Array.isArray(queue.watchItems) ? queue.watchItems.map((text) => ({ bucket: 'watch', text })) : []),
+    ...(Array.isArray(queue.blockedActions) ? queue.blockedActions.map((text) => ({ bucket: 'blocked', text })) : [])
+  ];
+}
+
+function buildActionQueueFallback(data = {}, metadata = {}, strategyState = 'Caution') {
+  const defensiveFallback = metadata.realtimeUnavailable || strategyState === 'Defensive' || strategyState === 'Crisis';
+  const queue = {
+    priorityActions: defensiveFallback
+      ? [
+          'Reduce broad risk exposure incrementally.',
+          'Raise cash buffer and avoid leverage expansion.',
+          'Only allow defensive rebalancing.'
+        ]
+      : [
+          'Keep new exposure selective and staged.',
+          'Rebalance toward target exposure bands.',
+          'Maintain base defensive buffers.'
+        ],
+    watchItems: defensiveFallback
+      ? [
+          'Watch for volatility re-acceleration.',
+          'Monitor credit and liquidity stress for escalation.',
+          'Track data quality before relaxing posture.'
+        ]
+      : [
+          'Monitor regime stability before adding risk.',
+          'Watch for renewed volatility or spread widening.',
+          'Track driver persistence before expanding pace.'
+        ],
+    blockedActions: defensiveFallback
+      ? [
+          'Pause aggressive new risk deployment.',
+          'Avoid leverage expansion.',
+          'Avoid concentration increase under elevated regime.'
+        ]
+      : [
+          'Avoid oversized single-step exposure changes.',
+          'Avoid leverage expansion before confirmation.',
+          'Avoid concentration increase without confirmation.'
+        ],
+    actionSummary: defensiveFallback ? 'Defensive fallback queue active.' : 'Cautious fallback queue active.',
+    escalationHint: defensiveFallback ? 'Escalate if stress indicators worsen or data quality degrades.' : 'Escalate if state score or stress signals worsen.',
+    executionNotes: [
+      'Fallback action queue is active.',
+      Number.isFinite(data?.score) ? `Reference risk score: ${data.score}.` : 'Reference risk score unavailable.'
+    ]
+  };
+  queue.items = flattenActionQueueItems(queue);
+  return queue;
+}
+
 function createDecisionFallback(data = {}, metadata = {}) {
   const fallbackLabel = metadata.realtimeUnavailable ? 'BASELINE / FALLBACK' : 'UNAVAILABLE / FALLBACK';
   const stateFallback = buildStrategyStateFallback(data, metadata);
   return {
-    contractVersion: 'v26.0A-step3',
+    contractVersion: 'v26.0A-step4',
     strategyState: stateFallback.strategyState,
     stateLabel: stateFallback.stateLabel || fallbackLabel,
     stateReason: stateFallback.stateReason || (metadata.realtimeUnavailable
@@ -348,15 +403,7 @@ function createDecisionFallback(data = {}, metadata = {}) {
       cashBufferTarget: data?.tradingSystem?.positioning?.cashBufferTarget || '--',
       notes: ['Fallback mode active.', 'Do not expand risk until decision model recovers.']
     },
-    actionQueue: [{
-      id: 'fallback-hold',
-      title: 'Hold baseline posture',
-      priority: 'high',
-      status: 'ready',
-      owner: 'system',
-      reason: 'Decision model unavailable.',
-      action: 'Keep existing defensive positioning and rely on current execution/risk modules.'
-    }],
+    actionQueue: buildActionQueueFallback(data, metadata, stateFallback.strategyState),
     triggerMonitor: [{
       id: 'fallback-recovery',
       label: 'Decision contract recovery',
@@ -697,6 +744,160 @@ function buildPositionGuidanceEngine(data, metadata, decisionState, dominantDriv
   }
 }
 
+function uniqTexts(items = []) {
+  return [...new Set(items.filter(Boolean).map((item) => String(item).trim()).filter(Boolean))];
+}
+
+function buildActionQueueEngine(data, metadata, decisionState, positionGuidance, dominantDrivers) {
+  try {
+    const strategyState = decisionState?.strategyState || 'Caution';
+    const stateScore = Number.isFinite(decisionState?.stateScore) ? decisionState.stateScore : 55;
+    const stateMeta = decisionState?.stateMeta || {};
+    const riskControl = data?.tradingSystem?.riskControl || {};
+    const warningAlerts = Array.isArray(data?.warningSystem?.alerts) ? data.warningSystem.alerts : [];
+    const triggerPanel = data?.triggerPanel || {};
+    const healthLevel = stateMeta.healthLevel || 'Unknown';
+    const topDrivers = Array.isArray(dominantDrivers) ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean) : [];
+    const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色');
+    const yellowAlerts = warningAlerts.filter((alert) => alert?.level !== '红色');
+
+    const priorityActions = [];
+    const watchItems = [];
+    const blockedActions = [];
+
+    const byState = {
+      'Risk-On': {
+        priority: [
+          'Add new risk exposure only in staged increments.',
+          'Keep total exposure inside the current target band.',
+          'Rebalance without chasing short-term moves.'
+        ],
+        blocked: [
+          'Avoid leverage expansion beyond baseline.',
+          'Avoid concentration increase without confirmation.'
+        ]
+      },
+      Balanced: {
+        priority: [
+          'Keep exposure pacing controlled and selective.',
+          'Rebalance toward the middle of the target band.',
+          'Maintain baseline defensive buffers.'
+        ],
+        blocked: [
+          'Avoid oversized single-step exposure changes.',
+          'Avoid leverage expansion before confirmation.'
+        ]
+      },
+      Caution: {
+        priority: [
+          'Reduce broad risk exposure incrementally.',
+          'Keep new exposure highly selective and small.',
+          'Raise cash buffer toward the guidance band.'
+        ],
+        blocked: [
+          'Pause aggressive new risk deployment.',
+          'Avoid leverage expansion.',
+          'Avoid concentration increase under elevated regime.'
+        ]
+      },
+      Defensive: {
+        priority: [
+          'Reduce broad risk exposure incrementally.',
+          'Raise cash buffer and keep exposure inside the lower band.',
+          'Only allow defensive rebalancing.'
+        ],
+        blocked: [
+          'Pause aggressive new risk deployment.',
+          'Avoid leverage expansion.',
+          'Avoid concentration increase under elevated regime.'
+        ]
+      },
+      Crisis: {
+        priority: [
+          'Prioritize capital preservation and liquidity restoration.',
+          'Cut broad risk exposure toward minimum levels.',
+          'Keep only defensive rebalancing and hedge maintenance.'
+        ],
+        blocked: [
+          'Suspend new high-risk exposure.',
+          'Avoid leverage use or expansion.',
+          'Avoid concentration increase under crisis regime.'
+        ]
+      }
+    };
+
+    priorityActions.push(...(byState[strategyState]?.priority || byState.Caution.priority));
+    blockedActions.push(...(byState[strategyState]?.blocked || byState.Caution.blocked));
+
+    if ((stateMeta.extremeThresholdCount || 0) >= 2) {
+      priorityActions.push('Tighten execution pace until extreme thresholds clear.');
+      blockedActions.push('Avoid discretionary risk expansion while extreme thresholds remain active.');
+    }
+    if ((stateMeta.recent3dDelta || 0) >= 8) {
+      priorityActions.push('Accelerate de-risking cadence while short-term stress is rising.');
+      watchItems.push('Watch for further 3-day risk acceleration.');
+    } else if ((stateMeta.recent3dDelta || 0) <= -8) {
+      watchItems.push('Watch whether recent easing persists before relaxing posture.');
+    }
+    if ((stateMeta.highRiskStreakDays || 0) >= 5) {
+      priorityActions.push('Maintain defensive buffers until the high-risk streak breaks.');
+    }
+    if (metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly || healthLevel === 'Baseline Only' || healthLevel === 'Stale') {
+      watchItems.push('Monitor data quality and freshness before easing controls.');
+      blockedActions.push('Avoid expanding risk using degraded or fallback data only.');
+    }
+    if ((positionGuidance?.newExposurePolicy || '').toLowerCase().includes('pause') || strategyState === 'Crisis') {
+      blockedActions.push('Pause broad new risk deployment.');
+    }
+    if ((positionGuidance?.leveragePolicy || '').toLowerCase().includes('no leverage')) {
+      blockedActions.push('Avoid leverage expansion.');
+    }
+
+    topDrivers.forEach((driver) => {
+      watchItems.push(`Monitor ${driver} stress for escalation or relief.`);
+    });
+
+    criticalAlerts.slice(0, 2).forEach((alert) => {
+      priorityActions.push(`Respond to ${alert.title || 'critical alert'} immediately.`);
+    });
+    yellowAlerts.slice(0, 2).forEach((alert) => {
+      watchItems.push(`Watch ${alert.title || 'warning signal'} for deterioration.`);
+    });
+
+    (Array.isArray(triggerPanel.watchlist) ? triggerPanel.watchlist : []).slice(0, 3).forEach((item) => {
+      watchItems.push(`Watch ${item}.`);
+    });
+    (Array.isArray(triggerPanel.critical) ? triggerPanel.critical : []).slice(0, 2).forEach((item) => {
+      watchItems.push(`Track critical trigger ${item}.`);
+    });
+
+    if (Array.isArray(riskControl.hardThresholds) && riskControl.hardThresholds.length) {
+      watchItems.push('Monitor hard thresholds for escalation.');
+    }
+
+    const queue = {
+      priorityActions: uniqTexts(priorityActions).slice(0, 6),
+      watchItems: uniqTexts(watchItems).slice(0, 6),
+      blockedActions: uniqTexts(blockedActions).slice(0, 6),
+      actionSummary: `${strategyState} queue aligned with ${positionGuidance?.totalExposureBand || 'current'} exposure guidance.`,
+      escalationHint: (stateMeta.extremeThresholdCount || 0) > 0
+        ? 'Escalate immediately if extreme thresholds widen or critical alerts increase.'
+        : 'Escalate if volatility, spread stress, or data quality worsens.',
+      executionNotes: uniqTexts([
+        `State score ${stateScore}; exposure band ${positionGuidance?.totalExposureBand || '--'}.`,
+        `Cash guidance: ${positionGuidance?.cashGuidance || '--'}.`,
+        topDrivers.length ? `Driver focus: ${topDrivers.join(', ')}.` : '',
+        healthLevel ? `Health: ${healthLevel}.` : ''
+      ]).slice(0, 4)
+    };
+    queue.items = flattenActionQueueItems(queue);
+    return queue;
+  } catch (error) {
+    console.warn('Action queue engine failed, using fallback.', error);
+    return buildActionQueueFallback(data, metadata, decisionState?.strategyState);
+  }
+}
+
 function buildDecisionModel(data, history, metadata, healthDashboard) {
   try {
     const state = deriveDecisionState(data, history, metadata, healthDashboard);
@@ -710,9 +911,10 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
     const watchlist = Array.isArray(data?.triggerPanel?.watchlist) ? data.triggerPanel.watchlist.slice(0, 3) : [];
     const driverLabels = dominantDrivers.map((item) => item.label).join(', ') || 'baseline drivers';
     const positionGuidance = buildPositionGuidanceEngine(data, metadata, state, dominantDrivers);
+    const actionQueue = buildActionQueueEngine(data, metadata, state, positionGuidance, dominantDrivers);
 
     return {
-      contractVersion: 'v26.0A-step3',
+      contractVersion: 'v26.0A-step4',
       strategyState: state.strategyState,
       stateLabel: state.stateLabel,
       stateReason: state.stateReason || `${executionLock.title || 'Existing trading system state'}; health ${healthDashboard.overallLevel}; dominant drivers: ${driverLabels}.`,
@@ -731,26 +933,13 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
           `Realtime: ${metadata.realtimeStatusLabel || 'unknown'}.`
         ].filter(Boolean)
       },
-      actionQueue: [
-        {
-          id: 'primary-execution',
-          title: executionLock.title || 'Follow current execution lock',
-          priority: 'high',
-          status: 'ready',
-          owner: 'system',
-          reason: executionLock.description || 'Derived from existing trading system lock.',
-          action: actionLayer.todayAction || 'Hold current posture.'
-        },
-        ...(Array.isArray(actionLayer.checklist) ? actionLayer.checklist.slice(0, 3) : []).map((item, index) => ({
-          id: `checklist-${index + 1}`,
-          title: item,
-          priority: index === 0 ? 'high' : 'medium',
-          status: 'queued',
-          owner: 'operator',
-          reason: 'Imported from existing action checklist.',
-          action: item
-        }))
-      ],
+      actionQueue: {
+        ...actionQueue,
+        notes: [
+          executionLock.description || 'Follow current execution lock.',
+          actionLayer.todayAction || 'Use the queue as the primary execution guide.'
+        ].filter(Boolean)
+      },
       triggerMonitor: [
         ...criticalAlerts.map((alert, index) => ({
           id: `critical-${index + 1}`,
@@ -1611,6 +1800,7 @@ async function main() {
   window.__GFRR_DECISION_MODEL__ = data.decisionModel || createDecisionFallback(data, metadata);
   window.__GFRR_STRATEGY_STATE__ = window.__GFRR_DECISION_MODEL__?.strategyState || 'Caution';
   window.__GFRR_POSITION_GUIDANCE__ = window.__GFRR_DECISION_MODEL__?.positionGuidance || buildPositionGuidanceFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
+  window.__GFRR_ACTION_QUEUE__ = window.__GFRR_DECISION_MODEL__?.actionQueue || buildActionQueueFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   console.info('GFRR decision model ready', window.__GFRR_DECISION_MODEL__);
 
   if (metadata.realtimeOverlayEnabled && realtime?.values) {
