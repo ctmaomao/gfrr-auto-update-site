@@ -6,23 +6,23 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
 
-const data = JSON.parse(fs.readFileSync(path.join(root, 'data', 'radar-data.json'), 'utf8'));
-const history = JSON.parse(fs.readFileSync(path.join(root, 'data', 'radar-history.json'), 'utf8'));
-
-if (!data.score || !Array.isArray(history) || history.length < 30) {
-  throw new Error('Validation failed: missing score or insufficient 30-day history.');
-}
-if (!data.timeDimension || !data.warningSystem || !data.assetReturnMap) {
-  throw new Error('Validation failed: missing core modules.');
-}
-if (!data.tradingSystem || !data.tradingSystem.executionLock || !data.tradingSystem.actionLayer) {
-  throw new Error('Validation failed: missing trading execution modules.');
-}
-if (!data.updatedAt || !String(data.version).startsWith('v23')) {
-  throw new Error('Validation failed: missing v23 markers.');
-}
-console.log('Validation passed.');
-
-import fs2 from 'fs';
+const dataPath = path.join(root, 'data', 'radar-data.json');
+const historyPath = path.join(root, 'data', 'radar-history.json');
 const realtimePath = path.join(root, 'realtime', 'market.json');
-if (!fs2.existsSync(realtimePath)) { throw new Error('Validation failed: missing realtime/market.json'); }
+
+if (!fs.existsSync(dataPath)) throw new Error('Validation failed: missing data/radar-data.json');
+if (!fs.existsSync(historyPath)) throw new Error('Validation failed: missing data/radar-history.json');
+if (!fs.existsSync(realtimePath)) throw new Error('Validation failed: missing realtime/market.json');
+
+const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+const history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+const realtime = JSON.parse(fs.readFileSync(realtimePath, 'utf8'));
+
+if (!data.updatedAt) throw new Error('Validation failed: missing updatedAt.');
+if (!Array.isArray(history) || history.length < 30) throw new Error('Validation failed: insufficient history.');
+if (!data.timeDimension || !data.warningSystem || !data.assetReturnMap) throw new Error('Validation failed: core modules missing.');
+if (!data.tradingSystem || !data.tradingSystem.executionLock || !data.tradingSystem.actionLayer || !data.tradingSystem.positioning) {
+  throw new Error('Validation failed: trading engine modules missing.');
+}
+if (!realtime.values || !realtime.sourceStatus) throw new Error('Validation failed: realtime payload incomplete.');
+console.log('Validation passed (v24.1 trading-engine mode)');

@@ -1,28 +1,28 @@
-# 全球金融风险雷达 v24
+# 全球金融风险雷达 v24.1
 
-全中文混合实时架构版宏观风险驾驶舱。
+全中文混合实时交易引擎版宏观风险驾驶舱。
 
 ## 本版核心升级
-- 保留 `data/radar-data.json` 作为慢变量静态骨架
-- 新增 `realtime/market.json` 作为快变量实时覆盖层
-- 页面加载时自动请求快变量，并重新计算执行状态灯、今日执行、目标仓位与部分流动性判断
-- 新增 `Build Realtime Market` 工作流，每 15 分钟刷新一次快变量
-- `Deploy Static Site to Pages` 现已监听 `realtime/**`
-- 黄金数据改为可选源，不再阻断整次构建
+- 快变量构建改成多源冗余：官方 FRED 为主，黄金与部分市场价格支持备用源
+- 自动 fallback：单一数据源失败不再阻断整次构建
+- 实时权重融合：页面加载后用快变量重新融合风险分数、执行状态灯、目标仓位与今日动作
+- executionLock 真正锁死：直接输出“允许/禁止/强制”动作
+- 风险 → 仓位自动映射：总仓位、现金缓冲、核心仓位随风险自动变化
+- API 失败不影响系统：若个别源失败则回退上次有效值；若多项关键源失败则进入缓存模式但页面不崩
 
 ## 当前架构
-- 慢变量：GitHub Actions 定时静态构建
-- 快变量：GitHub Actions 15 分钟刷新一次实时 JSON
-- 前端：页面打开即合并两层数据并重算执行层
+- 慢变量：`data/radar-data.json`
+- 快变量：`realtime/market.json`
+- 页面逻辑：先加载慢变量，再覆盖快变量，并实时重算执行层
 
 ## 目录
-- `data/`：慢变量
-- `realtime/`：快变量
-- `scripts/run-daily-pipeline.mjs`：慢变量构建
-- `scripts/run-realtime.mjs`：快变量构建
+- `scripts/run-daily-pipeline.mjs`：慢变量构建（以 realtime 快照为主，不重复外抓）
+- `scripts/run-realtime.mjs`：快变量构建（多源冗余）
+- `.github/workflows/build-daily-radar-data.yml`
+- `.github/workflows/build-realtime-market.yml`
 
 ## 部署
-1. 上传全部文件到 GitHub 仓库根目录
-2. 等 `Build Daily Radar Data` 与 `Build Realtime Market` 运行
-3. 腾讯云 EdgeOne 自动重新部署
-4. Cloudflare 域名无需变更
+1. 覆盖上传到原 GitHub 仓库根目录
+2. 运行 `Build Realtime Market`
+3. 再运行 `Build Daily Radar Data`
+4. 查看网站是否切换到 v24.1
