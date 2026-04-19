@@ -235,7 +235,7 @@ const MODULE_LABELS = {
   banking: '银行'
 };
 
-const DECISION_SCHEMA_VERSION = 'v26.0B-pr2';
+const DECISION_SCHEMA_VERSION = 'v26.0B-pr3';
 const DECISION_CANONICAL_FIELDS = Object.freeze([
   'strategyState',
   'riskMode',
@@ -266,6 +266,8 @@ const DECISION_CANONICAL_FIELDS = Object.freeze([
   'actionQueue.priorityActions',
   'actionQueue.watchItems',
   'actionQueue.blockedActions',
+  'actionQueue.controlActions',
+  'actionQueue.unblockConditions',
   'actionQueue.actionSummary',
   'actionQueue.escalationHint',
   'actionQueue.executionNotes',
@@ -887,6 +889,30 @@ function buildActionQueueFallback(data = {}, metadata = {}, strategyState = 'Cau
           'Avoid oversized single-step exposure changes.',
           'Avoid leverage expansion before confirmation.',
           'Avoid concentration increase without confirmation.'
+        ],
+    controlActions: defensiveFallback
+      ? [
+          'Freeze aggressive new risk adds.',
+          'Block leverage expansion.',
+          'Keep defensive rebalancing only.',
+          'Prevent concentration increase.'
+        ]
+      : [
+          'Cap gross exposure drift.',
+          'Keep adds selective and staged.',
+          'Prevent oversizing before confirmation.'
+        ],
+    unblockConditions: defensiveFallback
+      ? [
+          'Re-open tactical re-risk after the 3-day trend turns flat or negative.',
+          'Re-open selective adds after resonance count drops below 3.',
+          'Re-open leverage only after volatility and liquidity stress normalize.',
+          'Re-open concentration only after critical alerts clear.'
+        ]
+      : [
+          'Allow broader adds after de-escalation bias improves.',
+          'Allow tactical re-risk after short-term deterioration stops.',
+          'Allow concentration increases only after alerts remain contained.'
         ],
     actionSummary: defensiveFallback ? 'Defensive fallback queue active.' : 'Cautious fallback queue active.',
     escalationHint: defensiveFallback ? 'Escalate if stress indicators worsen or data quality degrades.' : 'Escalate if state score or stress signals worsen.',
@@ -1567,6 +1593,103 @@ function buildActionQueueEngine(data, metadata, decisionState, positionGuidance,
   }
 }
 
+function buildActionQueueUpgradeLayer(data, metadata, decisionState, positionGuidance, triggerMonitor, invalidationRules, dominantDrivers) {
+  const strategyState = decisionState?.strategyState || 'Caution';
+  const riskMode = decisionState?.riskMode || 'Deterioration';
+  const repairSignal = decisionState?.repairSignal || 'None';
+  const stateMeta = decisionState?.stateMeta || {};
+  const executionPermissions = positionGuidance?.executionPermissions;
+  if (!executionPermissions || typeof executionPermissions !== 'object') {
+    return {
+      controlActions: buildActionQueueFallback(data, metadata, strategyState).controlActions,
+      unblockConditions: buildActionQueueFallback(data, metadata, strategyState).unblockConditions
+    };
+  }
+
+  const riskBudget = positionGuidance?.riskBudget || 'Reduced';
+  const reRiskingPosture = positionGuidance?.reRiskingPosture || 'Selective';
+  const escalationLevel = triggerMonitor?.escalationLevel || stateMeta?.escalationLevel || 'medium';
+  const deescalationBias = invalidationRules?.deescalationBias || stateMeta?.deescalationBias || 'low';
+  const criticalAlertCount = Number(stateMeta.criticalAlertCount) || 0;
+  const resonanceCount = Number(stateMeta.resonanceCount) || 0;
+  const extremeThresholdCount = Number(stateMeta.extremeThresholdCount) || 0;
+  const dominantLabels = Array.isArray(dominantDrivers) ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean) : [];
+  const resetConditions = Array.isArray(invalidationRules?.resetConditions) ? invalidationRules.resetConditions : [];
+
+  const controlActions = uniqTexts([
+    executionPermissions.addRisk === 'Blocked' || executionPermissions.addRisk === 'Restricted'
+      ? 'Freeze aggressive new risk adds.'
+      : '',
+    executionPermissions.addLeverage === 'Blocked'
+      ? 'Block leverage expansion.'
+      : executionPermissions.addLeverage === 'Limited' || executionPermissions.addLeverage === 'Restricted'
+        ? 'Cap leverage usage to defensive sizing only.'
+        : '',
+    executionPermissions.increaseConcentration === 'Blocked'
+      ? 'Prevent concentration increase.'
+      : executionPermissions.increaseConcentration === 'Restricted'
+        ? 'Keep concentration increases on hold pending breadth improvement.'
+        : '',
+    executionPermissions.defensiveRebalance === 'Allowed'
+      ? 'Keep defensive rebalancing only.'
+      : '',
+    riskBudget === 'Minimal' || riskBudget === 'Tight'
+      ? 'Cap gross exposure drift.'
+      : '',
+    strategyState === 'Defensive' || strategyState === 'Crisis'
+      ? 'Reduce concentration in elevated stress buckets.'
+      : '',
+    riskMode === 'Stress'
+      ? 'Hold elevated controls until stress signals cool.'
+      : riskMode === 'Deterioration'
+        ? 'Tighten exposure adds while breadth is worsening.'
+        : '',
+    metadata.realtimeUnavailable || metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly
+      ? 'Do not relax controls while data quality is degraded.'
+      : '',
+    dominantLabels.length ? `Keep controls focused on ${dominantLabels.join(' and ')} stress.` : ''
+  ]).slice(0, 6);
+
+  const unblockConditions = uniqTexts([
+    executionPermissions.tacticalReRisk !== 'Allowed'
+      ? 'Re-open tactical re-risk after the 3-day trend turns flat or negative.'
+      : '',
+    resonanceCount >= 3 || executionPermissions.addRisk !== 'Allowed'
+      ? 'Re-open selective adds after resonance count drops below 3.'
+      : '',
+    executionPermissions.addLeverage !== 'Allowed'
+      ? 'Re-open leverage only after volatility and liquidity stress normalize.'
+      : '',
+    executionPermissions.increaseConcentration !== 'Allowed'
+      ? 'Re-open concentration only after critical alerts clear.'
+      : '',
+    deescalationBias === 'low' || riskMode === 'Stress' || strategyState === 'Crisis'
+      ? 'Re-open broader risk adds only after de-escalation bias improves.'
+      : '',
+    riskMode === 'Repair' && (repairSignal === 'Moderate' || repairSignal === 'Strong')
+      ? 'Re-open selective adds after repair holds for another full review cycle.'
+      : '',
+    escalationLevel === 'high' || escalationLevel === 'severe'
+      ? 'Do not relax controls until escalation signals stop widening.'
+      : '',
+    extremeThresholdCount > 0
+      ? 'Do not relax controls until extreme thresholds clear.'
+      : '',
+    criticalAlertCount > 0
+      ? 'Do not relax controls until critical alerts stop increasing.'
+      : '',
+    reRiskingPosture === 'None'
+      ? 'Re-open tactical re-risk only after broader reset conditions are met.'
+      : '',
+    ...resetConditions.slice(0, 3)
+  ]).slice(0, 6);
+
+  return {
+    controlActions,
+    unblockConditions
+  };
+}
+
 function buildTriggerMonitorEngine(data, metadata, decisionState, positionGuidance, actionQueue, dominantDrivers) {
   try {
     const strategyState = decisionState?.strategyState || 'Caution';
@@ -1877,6 +2000,11 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
     const invalidationRules = buildInvalidationRulesEngine(data, metadata, state, positionGuidance, actionQueue, dominantDrivers);
     const historicalRegime = buildHistoricalRegimeEngine(data, history, metadata, state, dominantDrivers, triggerMonitor, invalidationRules);
     const positionPermissions = buildPositionPermissionLayer(metadata, state, triggerMonitor, invalidationRules);
+    const actionQueueUpgrade = buildActionQueueUpgradeLayer(data, metadata, state, positionGuidance, triggerMonitor, invalidationRules, dominantDrivers);
+    const actionQueueWithUpgrade = {
+      ...actionQueue,
+      ...actionQueueUpgrade
+    };
     const positionGuidanceWithPermissions = {
       ...positionGuidance,
       ...positionPermissions
@@ -1905,8 +2033,8 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
         ])
       },
       actionQueue: {
-        ...actionQueue,
-        ...buildLegacyActionQueueCompat(actionQueue, [
+        ...actionQueueWithUpgrade,
+        ...buildLegacyActionQueueCompat(actionQueueWithUpgrade, [
           executionLock.description || 'Follow current execution lock.',
           actionLayer.todayAction || 'Use the queue as the primary execution guide.'
         ])
