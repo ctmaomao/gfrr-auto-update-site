@@ -235,7 +235,7 @@ const MODULE_LABELS = {
   banking: '银行'
 };
 
-const DECISION_SCHEMA_VERSION = 'v26.0B-pr5';
+const DECISION_SCHEMA_VERSION = 'v26.0B-pr6';
 const DECISION_CANONICAL_FIELDS = Object.freeze([
   'strategyState',
   'riskMode',
@@ -251,6 +251,11 @@ const DECISION_CANONICAL_FIELDS = Object.freeze([
   'executionBinding.defensiveRebalance',
   'executionBinding.bindingBias',
   'executionBinding.bindingReason',
+  'executionDirective.mode',
+  'executionDirective.allowedActions',
+  'executionDirective.blockedActions',
+  'executionDirective.priorityAction',
+  'executionDirective.executionSummary',
   'stateLabel',
   'stateReason',
   'stateScore',
@@ -1197,6 +1202,103 @@ function buildExecutionBinding(decisionModel = {}) {
   }
 }
 
+function buildExecutionDirectiveFallback() {
+  return {
+    mode: '防守执行',
+    allowedActions: ['防守再平衡', '持仓结构调整'],
+    blockedActions: ['主动加仓', '增加杠杆', '提高集中度'],
+    priorityAction: '优先降低风险暴露',
+    executionSummary: '当前以防守执行为主，仅允许防守再平衡与结构调整，禁止主动加仓和杠杆扩张。'
+  };
+}
+
+function normalizePriorityActionToChinese(source = '') {
+  const text = String(source || '').trim();
+  if (!text) return '';
+  if (/[\u4e00-\u9fff]/.test(text)) return text;
+  if (/reduce broad risk exposure/i.test(text)) return '优先降低风险暴露';
+  if (/raise cash buffer/i.test(text)) return '优先提高现金缓冲';
+  if (/defensive rebalancing/i.test(text)) return '优先执行防守再平衡';
+  if (/pause aggressive new risk/i.test(text)) return '优先控制新增风险仓位';
+  if (/avoid leverage expansion|block leverage/i.test(text)) return '优先阻断杠杆扩张';
+  if (/monitor/i.test(text)) return '优先观察风险信号变化';
+  return '优先维持当前执行策略';
+}
+
+function buildExecutionDirective(decisionModel = {}) {
+  try {
+    const decisionStatement = decisionModel?.decisionStatement || buildDecisionStatementFallback();
+    const executionBinding = decisionModel?.executionBinding || buildExecutionBindingFallback();
+    const actionQueue = decisionModel?.actionQueue || {};
+
+    const bindingBias = String(executionBinding.bindingBias || '');
+    const modeMap = {
+      '防守优先': '防守执行',
+      '暂不扩张': '谨慎执行',
+      '谨慎观察': '受控执行',
+      '受控恢复': '受控恢复'
+    };
+    const mode = modeMap[bindingBias] || '受控执行';
+
+    const allowedActions = [];
+    if (executionBinding.defensiveRebalance === 'Allowed') {
+      allowedActions.push('防守再平衡');
+    }
+    if (executionBinding.addRisk === 'Allowed' || executionBinding.addRisk === 'Limited') {
+      allowedActions.push('选择性调整仓位');
+    }
+    if (executionBinding.tacticalReRisk === 'Allowed' || executionBinding.tacticalReRisk === 'Limited') {
+      allowedActions.push('有限恢复风险');
+    }
+    if (!allowedActions.length) {
+      allowedActions.push('持仓结构调整');
+    } else if (!allowedActions.includes('持仓结构调整')) {
+      allowedActions.push('持仓结构调整');
+    }
+
+    const blockedActions = [];
+    if (executionBinding.addRisk === 'Restricted' || executionBinding.addRisk === 'Blocked') {
+      blockedActions.push('主动加仓');
+    }
+    if (executionBinding.addLeverage === 'Restricted' || executionBinding.addLeverage === 'Blocked') {
+      blockedActions.push('增加杠杆');
+    }
+    if (executionBinding.increaseConcentration === 'Restricted' || executionBinding.increaseConcentration === 'Blocked') {
+      blockedActions.push('提高集中度');
+    }
+    if (executionBinding.tacticalReRisk === 'Restricted' || executionBinding.tacticalReRisk === 'Blocked') {
+      blockedActions.push('激进恢复风险');
+    }
+
+    const rawPriorityAction = Array.isArray(actionQueue?.priorityActions) ? actionQueue.priorityActions[0] : '';
+    const priorityAction = normalizePriorityActionToChinese(rawPriorityAction)
+      || (executionBinding.addRisk === 'Blocked'
+        ? '优先降低风险暴露'
+        : executionBinding.defensiveRebalance === 'Allowed'
+          ? '优先执行防守再平衡'
+          : decisionStatement?.actionBias === '控制加仓节奏'
+            ? '优先控制新增风险仓位'
+            : '优先维持当前防守策略');
+
+    const allowedSummary = allowedActions.slice(0, 2).join('与');
+    const blockedSummary = blockedActions.slice(0, 2).join('和');
+    const executionSummary = blockedActions.length
+      ? `当前以${mode}为主，优先${priorityAction}，仅允许${allowedSummary}，禁止${blockedSummary}。`
+      : `当前以${mode}为主，优先${priorityAction}，可执行${allowedSummary}。`;
+
+    return {
+      mode,
+      allowedActions: Array.from(new Set(allowedActions)).slice(0, 4),
+      blockedActions: Array.from(new Set(blockedActions)).slice(0, 4),
+      priorityAction,
+      executionSummary
+    };
+  } catch (error) {
+    console.warn('Execution directive generation failed, using fallback.', error);
+    return buildExecutionDirectiveFallback();
+  }
+}
+
 function createDecisionFallback(data = {}, metadata = {}) {
   const fallbackLabel = metadata.realtimeUnavailable ? 'BASELINE / FALLBACK' : 'UNAVAILABLE / FALLBACK';
   const stateFallback = buildStrategyStateFallback(data, metadata);
@@ -1242,7 +1344,8 @@ function createDecisionFallback(data = {}, metadata = {}) {
     invalidationRules: buildInvalidationRulesFallback(data, metadata, stateFallback.strategyState),
     historicalRegime: buildHistoricalRegimeFallback(data, metadata, stateFallback),
     decisionStatement: buildDecisionStatementFallback(),
-    executionBinding: buildExecutionBindingFallback()
+    executionBinding: buildExecutionBindingFallback(),
+    executionDirective: buildExecutionDirectiveFallback()
   };
 }
 
@@ -2246,6 +2349,7 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
     };
     decisionModel.decisionStatement = buildDecisionStatement(decisionModel);
     decisionModel.executionBinding = buildExecutionBinding(decisionModel);
+    decisionModel.executionDirective = buildExecutionDirective(decisionModel);
     return decisionModel;
   } catch (error) {
     console.warn('Decision model generation failed, using fallback.', error);
@@ -3207,6 +3311,7 @@ async function main() {
   window.__GFRR_ACTION_QUEUE__ = window.__GFRR_DECISION_MODEL__?.actionQueue || buildActionQueueFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_DECISION_STATEMENT__ = window.__GFRR_DECISION_MODEL__?.decisionStatement || buildDecisionStatementFallback();
   window.__GFRR_EXECUTION_BINDING__ = window.__GFRR_DECISION_MODEL__?.executionBinding || buildExecutionBindingFallback();
+  window.__GFRR_EXECUTION_DIRECTIVE__ = window.__GFRR_DECISION_MODEL__?.executionDirective || buildExecutionDirectiveFallback();
   window.__GFRR_TRIGGER_MONITOR__ = window.__GFRR_DECISION_MODEL__?.triggerMonitor || buildTriggerMonitorFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_INVALIDATION_RULES__ = window.__GFRR_DECISION_MODEL__?.invalidationRules || buildInvalidationRulesFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_HISTORICAL_REGIME__ = window.__GFRR_DECISION_MODEL__?.historicalRegime || buildHistoricalRegimeFallback(data, metadata, window.__GFRR_DECISION_MODEL__);
