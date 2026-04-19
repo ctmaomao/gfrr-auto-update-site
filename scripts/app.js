@@ -235,6 +235,80 @@ const MODULE_LABELS = {
   banking: '银行'
 };
 
+const DECISION_SCHEMA_VERSION = 'v26.0B-step2';
+const DECISION_CANONICAL_FIELDS = Object.freeze([
+  'strategyState',
+  'stateLabel',
+  'stateReason',
+  'stateScore',
+  'stateDrivers',
+  'dominantDrivers',
+  'stateMeta',
+  'positionGuidance.totalExposureBand',
+  'positionGuidance.riskAssetBias',
+  'positionGuidance.defensiveBias',
+  'positionGuidance.cashGuidance',
+  'positionGuidance.newExposurePolicy',
+  'positionGuidance.rebalancePosture',
+  'positionGuidance.leveragePolicy',
+  'positionGuidance.hedgePosture',
+  'actionQueue.priorityActions',
+  'actionQueue.watchItems',
+  'actionQueue.blockedActions',
+  'actionQueue.actionSummary',
+  'actionQueue.escalationHint',
+  'actionQueue.executionNotes',
+  'triggerMonitor.upgradeTriggers',
+  'triggerMonitor.activeEscalationSignals',
+  'triggerMonitor.triggerSummary',
+  'triggerMonitor.escalationLevel',
+  'triggerMonitor.signalConfidence',
+  'invalidationRules.invalidationSignals',
+  'invalidationRules.resetConditions',
+  'invalidationRules.invalidationSummary',
+  'invalidationRules.deescalationBias',
+  'invalidationRules.signalConfidence',
+  'historicalRegime.regimeName',
+  'historicalRegime.regimeLabel',
+  'historicalRegime.matchScore',
+  'historicalRegime.matchedFeatures',
+  'historicalRegime.mismatchFeatures',
+  'historicalRegime.regimeSummary',
+  'historicalRegime.secondaryMatch',
+  'historicalRegime.confidence',
+  'historicalRegime.interpretationNote'
+]);
+const DECISION_LEGACY_COMPATIBILITY_FIELDS = Object.freeze([
+  'positionGuidance.stance',
+  'positionGuidance.riskBudget',
+  'positionGuidance.targetGrossExposure',
+  'positionGuidance.cashBufferTarget',
+  'positionGuidance.adjustmentNotes',
+  'positionGuidance.notes',
+  'actionQueue.items',
+  'actionQueue.notes'
+]);
+const DECISION_LEGACY_DISPLAY_DEPENDENCIES = Object.freeze([
+  'data.decisionLine',
+  'data.summary',
+  'data.tradingSystem.executionLock',
+  'data.tradingSystem.actionLayer',
+  'data.tradingSystem.positioning',
+  'data.tradingSystem.riskControl',
+  'data.tradingSystem.signalEngine',
+  'data.topRisks',
+  'data.confidenceNotes'
+]);
+
+function buildDecisionSchemaMeta() {
+  return {
+    version: DECISION_SCHEMA_VERSION,
+    canonicalFields: [...DECISION_CANONICAL_FIELDS],
+    legacyCompatibilityFields: [...DECISION_LEGACY_COMPATIBILITY_FIELDS],
+    legacyDisplayDependencies: [...DECISION_LEGACY_DISPLAY_DEPENDENCIES]
+  };
+}
+
 function clampPercent(value, fallback = '--') {
   return Number.isFinite(value) ? `${Math.max(0, Math.min(100, Math.round(value)))}%` : fallback;
 }
@@ -410,13 +484,33 @@ function buildInvalidationRulesFallback(data = {}, metadata = {}, strategyState 
   };
 }
 
+function buildLegacyPositionGuidanceCompat(positionGuidance = {}, legacyPositioning = {}, notes = []) {
+  return {
+    stance: positionGuidance.stance || `${positionGuidance.totalExposureBand || 'Current'} legacy stance`,
+    riskBudget: positionGuidance.riskBudget || legacyPositioning.riskBudget || '--',
+    targetGrossExposure: positionGuidance.targetGrossExposure || legacyPositioning.targetGrossExposure || '--',
+    cashBufferTarget: positionGuidance.cashBufferTarget || legacyPositioning.cashBufferTarget || '--',
+    adjustmentNotes: Array.isArray(positionGuidance.adjustmentNotes) ? positionGuidance.adjustmentNotes : [],
+    notes: Array.isArray(positionGuidance.notes) ? positionGuidance.notes : notes.filter(Boolean)
+  };
+}
+
+function buildLegacyActionQueueCompat(actionQueue = {}, legacyNotes = []) {
+  return {
+    items: Array.isArray(actionQueue.items) ? actionQueue.items : flattenActionQueueItems(actionQueue),
+    notes: Array.isArray(actionQueue.notes) ? actionQueue.notes : legacyNotes.filter(Boolean)
+  };
+}
+
 function createDecisionFallback(data = {}, metadata = {}) {
   const fallbackLabel = metadata.realtimeUnavailable ? 'BASELINE / FALLBACK' : 'UNAVAILABLE / FALLBACK';
   const stateFallback = buildStrategyStateFallback(data, metadata);
+  const fallbackPositionGuidance = buildPositionGuidanceFallback(data, metadata, stateFallback.strategyState);
+  const fallbackActionQueue = buildActionQueueFallback(data, metadata, stateFallback.strategyState);
   return {
-    contractVersion: 'v26.0A-final',
-    // v26.0A canonical decision fields: the fields below are the stable contract
-    // for state, guidance, action, trigger, and invalidation consumers.
+    contractVersion: DECISION_SCHEMA_VERSION,
+    schemaMeta: buildDecisionSchemaMeta(),
+    // Canonical decision fields: stable v26 decision contract paths.
     strategyState: stateFallback.strategyState,
     stateLabel: stateFallback.stateLabel || fallbackLabel,
     stateReason: stateFallback.stateReason || (metadata.realtimeUnavailable
@@ -432,19 +526,21 @@ function createDecisionFallback(data = {}, metadata = {}) {
       trend: 0,
       reason: 'Use baseline risk score and existing page modules until decision generation recovers.'
     }],
-    // Legacy compatibility fields: keep these while legacy positioning cards still
-    // read older exposure / cash / note fields directly.
     positionGuidance: {
-      ...buildPositionGuidanceFallback(data, metadata, stateFallback.strategyState),
-      stance: 'Preserve current defensive baseline',
-      riskBudget: data?.tradingSystem?.positioning?.riskBudget || '--',
-      targetGrossExposure: data?.tradingSystem?.positioning?.targetGrossExposure || '--',
-      cashBufferTarget: data?.tradingSystem?.positioning?.cashBufferTarget || '--',
-      notes: ['Fallback mode active.', 'Do not expand risk until decision model recovers.']
+      ...fallbackPositionGuidance,
+      ...buildLegacyPositionGuidanceCompat(
+        {
+          ...fallbackPositionGuidance,
+          stance: 'Preserve current defensive baseline'
+        },
+        data?.tradingSystem?.positioning || {},
+        ['Fallback mode active.', 'Do not expand risk until decision model recovers.']
+      )
     },
-    // Legacy compatibility fields: `items` / `notes` are retained for transitional
-    // renderers and debugging, even though the canonical queue is split by bucket.
-    actionQueue: buildActionQueueFallback(data, metadata, stateFallback.strategyState),
+    actionQueue: {
+      ...fallbackActionQueue,
+      ...buildLegacyActionQueueCompat(fallbackActionQueue)
+    },
     triggerMonitor: buildTriggerMonitorFallback(data, metadata, stateFallback.strategyState),
     invalidationRules: buildInvalidationRulesFallback(data, metadata, stateFallback.strategyState)
   };
@@ -1045,17 +1141,12 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
     const actionQueue = buildActionQueueEngine(data, metadata, state, positionGuidance, dominantDrivers);
     const triggerMonitor = buildTriggerMonitorEngine(data, metadata, state, positionGuidance, actionQueue, dominantDrivers);
     const invalidationRules = buildInvalidationRulesEngine(data, metadata, state, positionGuidance, actionQueue, dominantDrivers);
+    const schemaMeta = buildDecisionSchemaMeta();
 
     return {
-      contractVersion: 'v26.0A-final',
-      // v26.0A canonical decision fields.
-      // These are the primary contract paths to extend in future work:
-      // - strategyState / stateLabel / stateReason / stateScore
-      // - stateDrivers / dominantDrivers / stateMeta
-      // - positionGuidance.totalExposureBand / riskAssetBias / defensiveBias / cashGuidance / newExposurePolicy
-      // - actionQueue.priorityActions / watchItems / blockedActions
-      // - triggerMonitor.upgradeTriggers / activeEscalationSignals
-      // - invalidationRules.invalidationSignals / resetConditions
+      contractVersion: DECISION_SCHEMA_VERSION,
+      schemaMeta,
+      // Canonical decision fields. New v26 logic should extend these paths first.
       strategyState: state.strategyState,
       stateLabel: state.stateLabel,
       stateReason: state.stateReason || `${executionLock.title || 'Existing trading system state'}; health ${healthDashboard.overallLevel}; dominant drivers: ${driverLabels}.`,
@@ -1063,29 +1154,22 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
       stateDrivers: state.stateDrivers || [],
       stateMeta: state.stateMeta || {},
       dominantDrivers: dominantDrivers.length ? dominantDrivers : createDecisionFallback(data, metadata).dominantDrivers,
-      // Canonical position guidance fields are generated by the v26 engine above.
-      // Legacy compatibility fields are retained below because older page sections
-      // still read budget / target / note style properties directly.
       positionGuidance: {
         ...positionGuidance,
-        riskBudget: positionGuidance.riskBudget || position.riskBudget || clampPercent(data?.score),
-        targetGrossExposure: positionGuidance.targetGrossExposure || position.targetGrossExposure || '--',
-        cashBufferTarget: positionGuidance.cashBufferTarget || position.cashBufferTarget || '--',
-        notes: [
+        // Legacy compatibility fields for older positioning panels.
+        ...buildLegacyPositionGuidanceCompat(positionGuidance, position, [
           executionLock.description || 'Follow current execution lock.',
           `Health: ${healthDashboard.overallLevel}.`,
           `Realtime: ${metadata.realtimeStatusLabel || 'unknown'}.`
-        ].filter(Boolean)
+        ])
       },
-      // Canonical queue fields are priorityActions / watchItems / blockedActions.
-      // Legacy compatibility fields such as `items` and `notes` are intentionally
-      // preserved for transitional renderers and debugging.
       actionQueue: {
         ...actionQueue,
-        notes: [
+        // Legacy compatibility fields for older queue renderers and debugging.
+        ...buildLegacyActionQueueCompat(actionQueue, [
           executionLock.description || 'Follow current execution lock.',
           actionLayer.todayAction || 'Use the queue as the primary execution guide.'
-        ].filter(Boolean)
+        ])
       },
       triggerMonitor,
       invalidationRules
@@ -1541,10 +1625,7 @@ function describeStateChange(stateMeta = {}) {
   return 'Stable near current regime';
 }
 
-function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
-  // Decision Header is intentionally decision-model-first. It should consume the
-  // v26 canonical fields above and only fall back to legacy display fields when
-  // a canonical value is missing during safe rendering.
+function buildCanonicalDecisionHeaderSource(decisionModel = {}, data = {}) {
   const strategyState = decisionModel.strategyState || 'Caution';
   const stateLabel = decisionModel.stateLabel || strategyState;
   const stateScore = Number.isFinite(decisionModel.stateScore)
@@ -1563,20 +1644,41 @@ function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
       : ['Risk drivers unavailable'];
 
   return {
-    stateBadge: strategyState,
+    strategyState,
     stateLabel,
-    scoreLabel: stateScore,
+    stateScore,
     exposureBand,
     coreAction,
+    dominantRiskSources,
     stateChange: describeStateChange(decisionModel.stateMeta || {}),
-    title: `${strategyState} Decision Header`,
     reason: decisionModel.stateReason || data?.decisionLine || 'Current regime is being summarized from the v26 decision model.',
     escalationLabel: decisionModel?.triggerMonitor?.escalationLevel
       ? `Escalation ${decisionModel.triggerMonitor.escalationLevel}`
       : 'Escalation watch active',
     cashGuidance: decisionModel?.positionGuidance?.cashGuidance || 'Keep baseline cash discipline.',
-    newExposurePolicy: decisionModel?.positionGuidance?.newExposurePolicy || 'Use staged exposure changes only.',
-    dominantRiskSources
+    newExposurePolicy: decisionModel?.positionGuidance?.newExposurePolicy || 'Use staged exposure changes only.'
+  };
+}
+
+function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
+  // Decision Header is intentionally decision-model-first. It should consume the
+  // v26 canonical fields above and only fall back to legacy display fields when
+  // a canonical value is missing during safe rendering.
+  const headerSource = buildCanonicalDecisionHeaderSource(decisionModel, data);
+
+  return {
+    stateBadge: headerSource.strategyState,
+    stateLabel: headerSource.stateLabel,
+    scoreLabel: headerSource.stateScore,
+    exposureBand: headerSource.exposureBand,
+    coreAction: headerSource.coreAction,
+    stateChange: headerSource.stateChange,
+    title: `${headerSource.strategyState} Decision Header`,
+    reason: headerSource.reason,
+    escalationLabel: headerSource.escalationLabel,
+    cashGuidance: headerSource.cashGuidance,
+    newExposurePolicy: headerSource.newExposurePolicy,
+    dominantRiskSources: headerSource.dominantRiskSources
   };
 }
 
@@ -2014,6 +2116,7 @@ async function main() {
   const healthDashboard = runtimeState.healthDashboard || buildHealthDashboardModel(runtimeState);
   window.__GFRR_RUNTIME__ = runtimeState;
   window.__GFRR_DECISION_MODEL__ = data.decisionModel || createDecisionFallback(data, metadata);
+  window.__GFRR_DECISION_SCHEMA__ = window.__GFRR_DECISION_MODEL__?.schemaMeta || buildDecisionSchemaMeta();
   window.__GFRR_STRATEGY_STATE__ = window.__GFRR_DECISION_MODEL__?.strategyState || 'Caution';
   window.__GFRR_POSITION_GUIDANCE__ = window.__GFRR_DECISION_MODEL__?.positionGuidance || buildPositionGuidanceFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_ACTION_QUEUE__ = window.__GFRR_DECISION_MODEL__?.actionQueue || buildActionQueueFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
