@@ -1,4 +1,4 @@
-const dataUrl = './data/radar-data.json';
+﻿const dataUrl = './data/radar-data.json';
 const historyUrl = './data/radar-history.json';
 const localRealtimeUrl = './realtime/market.json';
 const remoteRealtimeUrl = 'https://raw.githubusercontent.com/ctmaomao/gfrr-auto-update-site/realtime-data/realtime/market.json';
@@ -53,13 +53,8 @@ function buildRealtimeStatusLabel(metadata) {
     return '实时不可用 / 仅基线';
   }
 
-  const freshnessLabelMap = {
-    fresh: '新鲜',
-    aging: '老化',
-    stale: '陈旧',
-    unavailable: '不可用'
-  };
-  const parts = [`实时 ${freshnessLabelMap[metadata.realtimeFreshnessLevel] || metadata.realtimeFreshnessLevel || '未知'}`];
+  const freshnessMap = { fresh: '新鲜', aging: '老化', stale: '陈旧', unavailable: '不可用' };
+  const parts = [`实时 ${freshnessMap[metadata.realtimeFreshnessLevel] || metadata.realtimeFreshnessLevel}`];
   if (Number.isFinite(metadata.realtimeAgeMinutes)) parts.push(`${metadata.realtimeAgeMinutes} 分钟前`);
   if (metadata.realtimeDegraded) parts.push('降级');
   if (metadata.realtimeFallbackUsed) parts.push('本地回退');
@@ -86,6 +81,49 @@ function normalizeHealthLevel(level) {
   }
 }
 
+function formatHealthLevelLabel(level) {
+  return ({
+    Healthy: '健康',
+    Watch: '观察',
+    Degraded: '降级',
+    Stale: '陈旧',
+    'Baseline Only': '仅基线',
+    Unknown: '未知'
+  })[level] || '未知';
+}
+
+function formatRealtimeModeLabel(mode) {
+  return ({
+    fresh: '新鲜',
+    aging: '老化',
+    stale: '陈旧',
+    unavailable: '不可用',
+    degraded: '降级',
+    'local fallback': '本地回退',
+    'cache only': '仅缓存',
+    'baseline only': '仅基线'
+  })[mode] || (mode === 'unknown' ? '??' : mode);
+}
+
+function formatStrategyStateDisplayLabel(strategyState) {
+  return ({
+    'Risk-On': '风险偏好',
+    Balanced: '中性平衡',
+    Caution: '谨慎观察',
+    Defensive: '防守应对',
+    Crisis: '危机防御'
+  })[strategyState] || strategyState || '谨慎观察';
+}
+
+function formatRiskModeDisplayLabel(riskMode) {
+  return ({
+    Compression: '压缩',
+    Deterioration: '恶化',
+    Stress: '高压',
+    Repair: '修复'
+  })[riskMode] || riskMode || '恶化';
+}
+
 function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
   const entries = Object.entries(sourceDetails);
   if (!entries.length) {
@@ -99,7 +137,7 @@ function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
         failedCount,
         fallbackCount,
         summaryLabel: `${Math.max(0, statusEntries.length - failedCount)} 正常 / ${fallbackCount} 回退 / ${failedCount} 失败`,
-        issueLines: statusEntries.slice(0, 4).map(([key, status]) => `${key}: ${String(status).replace('fallback', '回退').replace('secondary', '次级来源').replace('failed', '失败')}`)
+        issueLines: statusEntries.slice(0, 4).map(([key, status]) => `${key}: ${status}`)
       };
     }
 
@@ -129,7 +167,7 @@ function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
     .filter(([, detail]) => detail?.ok && detail?.fallbackUsed)
     .slice(0, Math.max(0, 4 - issueLines.length))
     .forEach(([key, detail]) => {
-      issueLines.push(`${key}: fallback active via ${detail?.source || 'secondary source'}`);
+      issueLines.push(`${key}: 已启用回退，来源 ${detail?.source === 'local-fallback' ? '本地回退' : (detail?.source || '次级来源')}`);
     });
 
   if (!issueLines.length) {
@@ -146,28 +184,6 @@ function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
   };
 }
 
-function formatHealthLevelLabel(level) {
-  const map = {
-    Healthy: '健康',
-    Watch: '观察',
-    Degraded: '降级',
-    Stale: '陈旧',
-    'Baseline Only': '仅基线',
-    Unknown: '未知'
-  };
-  return map[level] || level || '--';
-}
-
-function formatFreshnessLabel(level) {
-  const map = {
-    fresh: '新鲜',
-    aging: '老化',
-    stale: '陈旧',
-    unavailable: '不可用'
-  };
-  return map[level] || level || '--';
-}
-
 function buildHealthDashboardModel(runtimeState) {
   const metadata = runtimeState.runtimeMetadata || {};
   const realtime = runtimeState.realtimePayload || null;
@@ -178,7 +194,7 @@ function buildHealthDashboardModel(runtimeState) {
   const issues = [];
 
   if (metadata.realtimeUnavailable) {
-    issues.push('实时数据不可用，页面按基线模式显示。');
+    issues.push('实时数据不可用，当前按基线模式显示。');
   } else if (metadata.realtimeFreshnessLevel === 'stale') {
     issues.push(`实时数据已陈旧（${metadata.realtimeAgeMinutes ?? '--'} 分钟前）。`);
   } else if (metadata.realtimeFreshnessLevel === 'aging') {
@@ -243,17 +259,13 @@ function buildHealthDashboardModel(runtimeState) {
     healthTone,
     summary,
     healthScore,
-      freshness: formatFreshnessLabel(metadata.realtimeFreshnessLevel || 'unavailable'),
-      ageLabel: Number.isFinite(metadata.realtimeAgeMinutes) ? `${metadata.realtimeAgeMinutes} min` : '--',
-      realtimeSource: metadata.realtimeSource === 'remote'
-        ? '远端'
-        : metadata.realtimeSource === 'local-fallback'
-          ? '本地回退'
-          : metadata.realtimeSource || '无',
+    freshness: ({ fresh: '新鲜', aging: '老化', stale: '陈旧', unavailable: '不可用' })[metadata.realtimeFreshnessLevel || 'unavailable'] || '不可用',
+    ageLabel: Number.isFinite(metadata.realtimeAgeMinutes) ? `${metadata.realtimeAgeMinutes} 分钟` : '--',
+    realtimeSource: metadata.realtimeSource === 'remote' ? '远端' : metadata.realtimeSource === 'local-fallback' ? '本地回退' : (metadata.realtimeSource || '无'),
     flagsLabel: flags.join(' / '),
     criticalMissing,
     sourceSummaryLabel: sourceSummary.summaryLabel,
-      issues: issues.length ? issues : ['实时数据健康。'],
+    issues: issues.length ? issues : ['实时数据健康。'],
     sourceLines: sourceSummary.issueLines
   };
 }
@@ -457,53 +469,53 @@ const POSITION_RULES = Object.freeze({
   stateBandMap: {
     'Risk-On': {
       totalExposureBand: '65%-85%',
-      riskAssetBias: 'Overweight within risk budget',
-      defensiveBias: 'Low',
-      cashGuidance: 'Run lighter cash buffer (10%-18%)',
-      newExposurePolicy: 'Normal staged adds are allowed.',
-      rebalancePosture: 'Lean into target risk bands on pullbacks.',
-      leveragePolicy: 'Avoid aggressive leverage; only baseline financing if already embedded.',
-      hedgePosture: 'Keep only light strategic hedges.'
+      riskAssetBias: '在风险预算内保持偏高仓位',
+      defensiveBias: '低',
+      cashGuidance: '保持较轻现金缓冲（10%-18%）',
+      newExposurePolicy: '允许按节奏分批新增风险敞口。',
+      rebalancePosture: '回撤时可围绕目标风险带逐步回补。',
+      leveragePolicy: '避免激进杠杆；如已内嵌融资，仅维持基线水平。',
+      hedgePosture: '仅保留轻度战略对冲。'
     },
     Balanced: {
       totalExposureBand: '50%-70%',
-      riskAssetBias: 'Neutral to selective',
-      defensiveBias: 'Moderate',
-      cashGuidance: 'Hold balanced cash buffer (15%-25%)',
-      newExposurePolicy: 'Allow selective adds, but keep pacing controlled.',
-      rebalancePosture: 'Rebalance around targets without chasing.',
-      leveragePolicy: 'No new leverage expansion.',
-      hedgePosture: 'Maintain baseline hedges.'
+      riskAssetBias: '中性到选择性配置',
+      defensiveBias: '中等',
+      cashGuidance: '保持均衡现金缓冲（15%-25%）',
+      newExposurePolicy: '允许选择性加仓，但要控制节奏。',
+      rebalancePosture: '围绕目标仓位再平衡，不追涨杀跌。',
+      leveragePolicy: '不新增杠杆扩张。',
+      hedgePosture: '维持基线对冲。'
     },
     Caution: {
       totalExposureBand: '35%-55%',
-      riskAssetBias: 'Selective underweight',
-      defensiveBias: 'Moderately high',
-      cashGuidance: 'Raise cash buffer (20%-32%)',
-      newExposurePolicy: 'Only allow highly selective new exposure in small clips.',
-      rebalancePosture: 'Trim risk first, then rebalance.',
-      leveragePolicy: 'Reduce leverage where practical; do not add new leverage.',
-      hedgePosture: 'Keep hedges active and bias toward protection.'
+      riskAssetBias: '选择性低配风险资产',
+      defensiveBias: '偏高',
+      cashGuidance: '提高现金缓冲（20%-32%）',
+      newExposurePolicy: '仅允许小幅、严格筛选后的新增敞口。',
+      rebalancePosture: '先降风险，再做再平衡。',
+      leveragePolicy: '有条件地降杠杆，不新增杠杆。',
+      hedgePosture: '保持对冲开启，并偏向保护。'
     },
     Defensive: {
       totalExposureBand: '20%-40%',
-      riskAssetBias: 'Underweight risk assets',
-      defensiveBias: 'High',
-      cashGuidance: 'Keep elevated cash buffer (30%-45%)',
-      newExposurePolicy: 'Pause broad new risk exposure; only defensive rebalancing is allowed.',
-      rebalancePosture: 'Prioritize de-risking and restoring buffers.',
-      leveragePolicy: 'No leverage expansion; favor leverage reduction.',
-      hedgePosture: 'Maintain defensive hedges and liquidity buffers.'
+      riskAssetBias: '低配风险资产',
+      defensiveBias: '高',
+      cashGuidance: '保持高现金缓冲（30%-45%）',
+      newExposurePolicy: '暂停广泛新增风险敞口，仅允许防守性再平衡。',
+      rebalancePosture: '优先降风险并恢复缓冲垫。',
+      leveragePolicy: '不扩张杠杆，优先降低杠杆。',
+      hedgePosture: '维持防守性对冲与流动性缓冲。'
     },
     Crisis: {
       totalExposureBand: '0%-20%',
-      riskAssetBias: 'Minimum risk exposure',
-      defensiveBias: 'Maximum',
-      cashGuidance: 'Hold maximum cash / liquidity buffer (45%-70%)',
-      newExposurePolicy: 'Suspend new high-risk exposure until state normalizes.',
-      rebalancePosture: 'Capital preservation first.',
-      leveragePolicy: 'No leverage; actively reduce gross exposure.',
-      hedgePosture: 'Keep strongest defensive posture available.'
+      riskAssetBias: '最低风险暴露',
+      defensiveBias: '最高',
+      cashGuidance: '保持最高现金 / 流动性缓冲（45%-70%）',
+      newExposurePolicy: '在状态恢复正常前，暂停新增高风险敞口。',
+      rebalancePosture: '以资本保全为先。',
+      leveragePolicy: '不使用杠杆，并主动降低总暴露。',
+      hedgePosture: '保持可用范围内最强防守姿态。'
     }
   },
   bandShiftRules: {
@@ -792,21 +804,21 @@ function buildStrategyStateFallback(data = {}, metadata = {}) {
     stateTransitionBias: fallbackRiskMode === 'Stress' ? 'up-bias' : 'guarded'
   };
 
-  return {
-    strategyState: fallbackState,
-    riskMode: fallbackRiskMode,
-    repairSignal: fallbackRepairSignal,
-    stateLabel: `${fallbackState} · ${fallbackRiskMode}`,
-    stateScore: fallbackState === 'Defensive' ? 72 : 55,
-    stateReason: metadata.realtimeUnavailable
-      ? 'Strategy state fell back to a defensive stress baseline because realtime overlay is unavailable.'
-      : 'Strategy state engine fell back to a cautious deterioration baseline because state computation was unavailable.',
-    stateDrivers: [{
-      key: 'fallback',
-      label: 'Fallback guardrail',
-      impact: fallbackState,
-      reason: 'Fallback mode preserves a safe, non-empty strategy state output.'
-    }],
+    return {
+      strategyState: fallbackState,
+      riskMode: fallbackRiskMode,
+      repairSignal: fallbackRepairSignal,
+      stateLabel: `${formatStrategyStateDisplayLabel(fallbackState)} · ${formatRiskModeDisplayLabel(fallbackRiskMode)}`,
+      stateScore: fallbackState === 'Defensive' ? 72 : 55,
+      stateReason: metadata.realtimeUnavailable
+        ? '实时覆盖不可用，策略状态已安全回落到防守高压基线。'
+        : '状态计算暂不可用，策略状态已安全回落到谨慎恶化基线。',
+      stateDrivers: [{
+        key: 'fallback',
+        label: '安全兜底',
+        impact: formatStrategyStateDisplayLabel(fallbackState),
+        reason: '兜底模式会保留一个安全且非空的策略状态输出。'
+      }],
     stateMeta: fallbackMeta,
     stateTransitionBias: fallbackMeta.stateTransitionBias
   };
@@ -817,13 +829,13 @@ function buildPositionGuidanceFallback(data = {}, metadata = {}, strategyState =
   return {
     totalExposureBand: defensiveFallback ? '20%-40%' : '35%-55%',
     riskBudget: defensiveFallback ? 'Tight' : 'Reduced',
-    riskAssetBias: defensiveFallback ? 'Constrained' : 'Selective',
-    defensiveBias: defensiveFallback ? 'High' : 'Moderate',
-    cashGuidance: defensiveFallback ? 'Keep elevated cash buffer (30%-45%)' : 'Keep reserve cash buffer (20%-30%)',
-    newExposurePolicy: defensiveFallback ? 'Pause broad new risk exposure until guidance recovers.' : 'Only add exposure selectively and in small clips.',
-    rebalancePosture: defensiveFallback ? 'De-risk first, rebalance second.' : 'Rebalance gradually around target bands.',
-    leveragePolicy: 'No incremental leverage in fallback mode.',
-    hedgePosture: defensiveFallback ? 'Maintain defensive hedges / buffers.' : 'Keep baseline hedges active.',
+    riskAssetBias: defensiveFallback ? '收缩风险资产' : '选择性配置',
+    defensiveBias: defensiveFallback ? '高' : '中等',
+    cashGuidance: defensiveFallback ? '保持较高现金缓冲（30%-45%）' : '保持备用现金缓冲（20%-30%）',
+    newExposurePolicy: defensiveFallback ? '在指引恢复前暂停新增广谱风险敞口。' : '只允许小步、选择性地增加敞口。',
+    rebalancePosture: defensiveFallback ? '先去风险，再做再平衡。' : '围绕目标区间逐步再平衡。',
+    leveragePolicy: '兜底模式下不允许新增杠杆。',
+    hedgePosture: defensiveFallback ? '维持防守型对冲与缓冲层。' : '维持基础对冲仓位。',
     leveragePermission: defensiveFallback ? 'Blocked' : 'Limited',
     concentrationPosture: defensiveFallback ? 'Reduce concentration' : 'Controlled',
     reRiskingPosture: defensiveFallback ? 'None' : 'Selective',
@@ -835,8 +847,8 @@ function buildPositionGuidanceFallback(data = {}, metadata = {}, strategyState =
       tacticalReRisk: defensiveFallback ? 'Blocked' : 'Restricted'
     },
     adjustmentNotes: [
-      'Fallback position guidance is active.',
-      Number.isFinite(data?.score) ? `Reference risk score: ${data.score}.` : 'Reference risk score unavailable.'
+      '仓位指引兜底模式已启用。',
+      Number.isFinite(data?.score) ? `参考风险分数：${data.score}。` : '参考风险分数暂不可用。'
     ]
   };
 }
@@ -907,66 +919,66 @@ function buildActionQueueFallback(data = {}, metadata = {}, strategyState = 'Cau
   const queue = {
     priorityActions: defensiveFallback
       ? [
-          'Reduce broad risk exposure incrementally.',
-          'Raise cash buffer and avoid leverage expansion.',
-          'Only allow defensive rebalancing.'
+          '逐步降低广谱风险暴露。',
+          '提高现金缓冲，避免杠杆扩张。',
+          '仅允许防守性再平衡。'
         ]
       : [
-          'Keep new exposure selective and staged.',
-          'Rebalance toward target exposure bands.',
-          'Maintain base defensive buffers.'
+          '新增敞口保持选择性并分步推进。',
+          '围绕目标暴露区间做再平衡。',
+          '维持基础防守缓冲。'
         ],
     watchItems: defensiveFallback
       ? [
-          'Watch for volatility re-acceleration.',
-          'Monitor credit and liquidity stress for escalation.',
-          'Track data quality before relaxing posture.'
+          '观察波动是否重新抬升。',
+          '跟踪信用与流动性压力是否升级。',
+          '在放松姿态前先确认数据质量。'
         ]
       : [
-          'Monitor regime stability before adding risk.',
-          'Watch for renewed volatility or spread widening.',
-          'Track driver persistence before expanding pace.'
+          '新增风险前先确认阶段稳定性。',
+          '观察波动与利差是否再次走阔。',
+          '在扩大节奏前先确认主导因子是否持续。'
         ],
     blockedActions: defensiveFallback
       ? [
-          'Pause aggressive new risk deployment.',
-          'Avoid leverage expansion.',
-          'Avoid concentration increase under elevated regime.'
+          '暂停激进新增风险敞口。',
+          '避免杠杆扩张。',
+          '高压阶段避免提高集中度。'
         ]
       : [
-          'Avoid oversized single-step exposure changes.',
-          'Avoid leverage expansion before confirmation.',
-          'Avoid concentration increase without confirmation.'
+          '避免单步过大调整暴露。',
+          '在缺乏确认前避免扩张杠杆。',
+          '在缺乏确认前避免提高集中度。'
         ],
     controlActions: defensiveFallback
       ? [
-          'Freeze aggressive new risk adds.',
-          'Block leverage expansion.',
-          'Keep defensive rebalancing only.',
-          'Prevent concentration increase.'
+          '冻结激进新增风险动作。',
+          '阻断杠杆扩张。',
+          '仅保留防守性再平衡。',
+          '防止集中度继续上升。'
         ]
       : [
-          'Cap gross exposure drift.',
-          'Keep adds selective and staged.',
-          'Prevent oversizing before confirmation.'
+          '控制总暴露漂移。',
+          '新增仓位保持选择性和分步执行。',
+          '在确认前避免仓位放大过快。'
         ],
     unblockConditions: defensiveFallback
       ? [
-          'Re-open tactical re-risk after the 3-day trend turns flat or negative.',
-          'Re-open selective adds after resonance count drops below 3.',
-          'Re-open leverage only after volatility and liquidity stress normalize.',
-          'Re-open concentration only after critical alerts clear.'
+          '待三日趋势转平或转弱后，再恢复战术性风险回补。',
+          '待共振数量回落到 3 以下后，再恢复选择性加仓。',
+          '待波动与流动性压力恢复正常后，再放开杠杆。',
+          '待关键告警清除后，再放开集中度。'
         ]
       : [
-          'Allow broader adds after de-escalation bias improves.',
-          'Allow tactical re-risk after short-term deterioration stops.',
-          'Allow concentration increases only after alerts remain contained.'
+          '待去升级偏向改善后，再放开更广泛的加仓。',
+          '待短期恶化停止后，再恢复战术性风险回补。',
+          '仅在告警持续受控后，才允许提高集中度。'
         ],
-    actionSummary: defensiveFallback ? 'Defensive fallback queue active.' : 'Cautious fallback queue active.',
-    escalationHint: defensiveFallback ? 'Escalate if stress indicators worsen or data quality degrades.' : 'Escalate if state score or stress signals worsen.',
+    actionSummary: defensiveFallback ? '当前启用回退防守动作队列。' : '当前启用回退谨慎动作队列。',
+    escalationHint: defensiveFallback ? '若压力指标恶化或数据质量继续下降，应升级防守。' : '若状态分数或压力信号恶化，应升级处理。',
     executionNotes: [
-      'Fallback action queue is active.',
-      Number.isFinite(data?.score) ? `Reference risk score: ${data.score}.` : 'Reference risk score unavailable.'
+      '当前启用回退动作队列。',
+      Number.isFinite(data?.score) ? `参考风险分数：${data.score}。` : '参考风险分数不可用。'
     ]
   };
   queue.items = flattenActionQueueItems(queue);
@@ -976,15 +988,15 @@ function buildActionQueueFallback(data = {}, metadata = {}, strategyState = 'Cau
 function buildTriggerMonitorFallback(data = {}, metadata = {}, strategyState = 'Caution') {
   return {
     upgradeTriggers: [
-      'Escalate if total risk score moves higher from the current baseline.',
-      'Escalate if short-term deterioration resumes over the next 3 days.',
-      'Escalate if warning intensity or data degradation increases.'
+      '若总风险分数较当前基线继续抬升，应升级处理。',
+      '若未来 3 日短期恶化重新出现，应升级处理。',
+      '若预警强度上升或数据质量继续下降，应升级处理。'
     ],
     activeEscalationSignals: [
         metadata.realtimeUnavailable ? '实时不可用，当前仅使用基线监控。' : '当前未获得可靠的升级信号输出，请先按基线监控执行。',
         Number.isFinite(data?.score) ? `参考风险分数 ${data.score}。` : '参考风险分数不可用。'
-      ],
-      triggerSummary: `${strategyState} 回退触发监控已启用。`,
+    ],
+    triggerSummary: `${strategyState} 回退触发监控已启用。`,
     escalationLevel: metadata.realtimeUnavailable ? 'high' : 'medium',
     signalConfidence: metadata.realtimeUnavailable ? 'low' : 'medium'
   };
@@ -993,16 +1005,16 @@ function buildTriggerMonitorFallback(data = {}, metadata = {}, strategyState = '
 function buildInvalidationRulesFallback(data = {}, metadata = {}, strategyState = 'Caution') {
   return {
     invalidationSignals: [
-      'Treat the current posture as invalid if risk deterioration accelerates materially.',
-      'Treat the current posture as stale if data quality continues to degrade.',
-      'Treat the current posture as review-required if warning intensity rises.'
+      '????????????????????',
+      '??????????????????????',
+      '若预警强度上升，应将当前姿态视为需要重新审查。'
     ],
     resetConditions: [
-      'Allow de-escalation only after short-term deterioration stops.',
-      'Allow de-escalation only after risk breadth narrows.',
-      'Allow de-escalation only after data freshness normalizes.'
+      '仅在短期恶化停止后，才允许去升级。',
+      '仅在风险广度收窄后，才允许去升级。',
+      '仅在数据时效恢复正常后，才允许去升级。'
     ],
-    invalidationSummary: `${strategyState} fallback invalidation rules active.`,
+    invalidationSummary: `${strategyState} 回退失效规则已启用。`,
     deescalationBias: metadata.realtimeUnavailable ? 'low' : 'medium',
     signalConfidence: metadata.realtimeUnavailable ? 'low' : 'medium'
   };
@@ -1010,7 +1022,7 @@ function buildInvalidationRulesFallback(data = {}, metadata = {}, strategyState 
 
 function buildLegacyPositionGuidanceCompat(positionGuidance = {}, legacyPositioning = {}, notes = []) {
   return {
-    stance: positionGuidance.stance || `${positionGuidance.totalExposureBand || 'Current'} legacy stance`,
+    stance: positionGuidance.stance || `${positionGuidance.totalExposureBand || '??'} ??????`,
     riskBudget: positionGuidance.riskBudget || legacyPositioning.riskBudget || '--',
     targetGrossExposure: positionGuidance.targetGrossExposure || legacyPositioning.targetGrossExposure || '--',
     cashBufferTarget: positionGuidance.cashBufferTarget || legacyPositioning.cashBufferTarget || '--',
@@ -1042,7 +1054,7 @@ function buildHistoricalRegimeFallback(data = {}, metadata = {}, decisionState =
     regimeSummary: '历史相似阶段暂不可用，请继续以当前状态、仓位建议与触发条件作为主要判断框架。',
     secondaryMatch: null,
     confidence: metadata.realtimeUnavailable ? 'low' : 'medium',
-    interpretationNote: '该层仅用于历史解释，不会改变当前策略状态。'
+    interpretationNote: '这只是解释层的兜底输出，不会改变当前策略状态。'
   };
 }
 
@@ -1332,7 +1344,7 @@ function buildExecutionDirective(decisionModel = {}) {
 }
 
 function createDecisionFallback(data = {}, metadata = {}) {
-  const fallbackLabel = metadata.realtimeUnavailable ? '基线 / 回退' : '不可用 / 回退';
+  const fallbackLabel = metadata.realtimeUnavailable ? '仅基线 / 安全回退' : '不可用 / 安全回退';
   const stateFallback = buildStrategyStateFallback(data, metadata);
   const fallbackPositionGuidance = buildPositionGuidanceFallback(data, metadata, stateFallback.strategyState);
   const fallbackActionQueue = buildActionQueueFallback(data, metadata, stateFallback.strategyState);
@@ -1344,28 +1356,28 @@ function createDecisionFallback(data = {}, metadata = {}) {
     repairSignal: stateFallback.repairSignal,
     stateLabel: stateFallback.stateLabel || fallbackLabel,
     stateReason: stateFallback.stateReason || (metadata.realtimeUnavailable
-      ? '决策模型因实时覆盖不可用，已回退到基线结果。'
-      : '决策模型已回退到安全默认值。'),
+      ? '实时覆盖不可用，决策模型已回落到基线兜底输出。'
+      : '决策模型已回落到安全默认输出。'),
     stateScore: stateFallback.stateScore,
     stateDrivers: stateFallback.stateDrivers,
     stateMeta: stateFallback.stateMeta,
     stateTransitionBias: stateFallback.stateTransitionBias,
     dominantDrivers: [{
       key: 'fallback',
-        label: '基线回退',
+      label: '回退基线',
       score: Number.isFinite(data.score) ? data.score : null,
       trend: 0,
-        reason: '在决策模型恢复前，请先参考基线风险分数和现有页面模块。'
+      reason: '在决策生成恢复前，请先使用基线风险分数与现有页面模块。'
     }],
     positionGuidance: {
       ...fallbackPositionGuidance,
       ...buildLegacyPositionGuidanceCompat(
         {
           ...fallbackPositionGuidance,
-            stance: '维持当前防守基线'
+          stance: '维持当前防守基线'
         },
         data?.tradingSystem?.positioning || {},
-          ['当前处于回退模式。', '在决策模型恢复前不要扩张风险。']
+        ['安全回退模式已启用。', '在决策模型恢复前不要主动扩大风险暴露。']
       )
     },
     actionQueue: {
@@ -1382,7 +1394,7 @@ function createDecisionFallback(data = {}, metadata = {}) {
 }
 
 function getStrategyStateLabel(strategyState, riskMode) {
-  return `${strategyState} · ${riskMode || 'Deterioration'}`;
+  return `${formatStrategyStateDisplayLabel(strategyState)} ? ${formatRiskModeDisplayLabel(riskMode || 'Deterioration')}`;
 }
 
 function deriveStrategyState(stateScore) {
@@ -1599,7 +1611,7 @@ function calculateStrategyStateEngine(data, history, metadata, healthDashboard) 
       key: 'total-risk',
       label: 'Total risk score',
       impact: strategyState,
-      reason: `Current total risk score is ${stateMeta.totalRiskScore ?? '--'}.`
+      reason: `???????? ${stateMeta.totalRiskScore ?? '--'}?`
     },
     {
       key: 'three-day-speed',
@@ -1625,29 +1637,29 @@ function calculateStrategyStateEngine(data, history, metadata, healthDashboard) 
       impact: stateMeta.extremeThresholdCount > 0 ? 'triggered' : 'clear',
       reason: stateMeta.extremeThresholdCount
         ? `Triggered: ${stateMeta.extremeThresholds.join(', ')}.`
-        : 'No extreme thresholds are currently triggered.'
+        : '????????????'
     },
     {
       key: 'high-risk-streak',
-      label: 'High-risk persistence',
-      impact: stateMeta.highRiskStreakDays >= 3 ? 'persistent' : 'not-persistent',
-      reason: `High-risk streak: ${stateMeta.highRiskStreakDays} day(s); elevated-risk streak: ${stateMeta.elevatedRiskStreakDays} day(s).`
+      label: '?????',
+      impact: stateMeta.highRiskStreakDays >= 3 ? '????' : '?????',
+      reason: `?????? ${stateMeta.highRiskStreakDays} ????????? ${stateMeta.elevatedRiskStreakDays} ??`
     },
     {
       key: 'mode-layer',
-      label: 'Risk mode',
+      label: '风险模式',
       impact: riskMode,
-      reason: `Mode resolved as ${riskMode} with repair signal ${repairSignal} and de-escalation bias ${stateMeta.deescalationBias}.`
+      reason: `当前识别为 ${riskMode} 模式，修复信号为 ${repairSignal}，去升级偏向为 ${stateMeta.deescalationBias}。`
     }
   ];
 
   const stateReason = [
-    `Strategy state resolved to ${strategyState} in ${riskMode} mode with state score ${stateScore}.`,
-    `Total risk ${stateMeta.totalRiskScore ?? '--'}, 3-day delta ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta}, resonance ${stateMeta.resonanceCount}, repair signal ${repairSignal}.`,
+    `当前主状态为 ${strategyState}，风险模式为 ${riskMode}，状态分数 ${stateScore}。`,
+    `总风险 ${stateMeta.totalRiskScore ?? '--'}，近 3 日变化 ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta}，共振数量 ${stateMeta.resonanceCount}，修复信号 ${repairSignal}。`,
     stateMeta.extremeThresholdCount
-      ? `Extreme thresholds active: ${stateMeta.extremeThresholds.join(', ')}.`
-      : 'No extreme thresholds are active.',
-    `Transition bias remains ${stateTransitionBias}.`
+      ? `当前生效的极端阈值：${stateMeta.extremeThresholds.join('、')}。`
+      : '当前没有极端阈值生效。',
+    `状态迁移偏向为 ${stateTransitionBias}。`
   ].join(' ');
 
   return {
@@ -1685,16 +1697,16 @@ function buildDominantDrivers(data, metadata) {
     .slice(0, 3)
     .map((item) => ({
       ...item,
-      reason: `${item.label} score ${item.score} with ${item.trend > 0 ? 'rising' : item.trend < 0 ? 'easing' : 'stable'} trend.`
+      reason: `${item.label} ?? ${item.score}???${item.trend > 0 ? '??' : item.trend < 0 ? '??' : '??'}?`
     }));
 
   if (metadata.realtimeFallbackUsed) {
     moduleEntries.push({
       key: 'realtime-fallback',
-      label: 'Realtime fallback',
+      label: '????',
       score: metadata.realtimeHealthScore ?? null,
       trend: 0,
-      reason: 'Realtime fallback/local mode is active and should cap decision confidence.'
+      reason: '??????????????????????????'
     });
   }
 
@@ -1746,11 +1758,11 @@ function buildPositionGuidanceEngine(data, metadata, decisionState, dominantDriv
     guidance.totalExposureBand = shiftBand(guidance.totalExposureBand, bandShift);
 
     if (bandShift <= bandShiftRules.riskOffOverrideThreshold) {
-      guidance.riskAssetBias = strategyState === 'Crisis' ? 'Minimum risk exposure' : 'Further reduce risk asset exposure';
-      guidance.defensiveBias = strategyState === 'Risk-On' ? 'Moderate' : 'Very high';
+      guidance.riskAssetBias = strategyState === 'Crisis' ? '最低风险暴露' : '进一步降低风险资产暴露';
+      guidance.defensiveBias = strategyState === 'Risk-On' ? '中等' : '很高';
     } else if (bandShift >= bandShiftRules.improvingOverrideThreshold) {
-      guidance.riskAssetBias = strategyState === 'Risk-On' ? 'Constructive within risk budget' : 'Selective but improving';
-      guidance.defensiveBias = strategyState === 'Defensive' ? 'High but stabilizing' : 'Moderate';
+      guidance.riskAssetBias = strategyState === 'Risk-On' ? '在风险预算内偏积极' : '选择性恢复但仍需观察';
+      guidance.defensiveBias = strategyState === 'Defensive' ? '高但趋稳' : '中等';
     }
 
     const existingExposureTarget = positioning.targetGrossExposure || '--';
@@ -1758,15 +1770,15 @@ function buildPositionGuidanceEngine(data, metadata, decisionState, dominantDriv
 
     return {
       ...guidance,
-      stance: `${strategyState} position guidance`,
+      stance: `${strategyState} 仓位指引`,
       targetGrossExposure: existingExposureTarget,
       cashBufferTarget: existingCashTarget,
       adjustmentNotes: [
-        `Strategy state: ${strategyState} (${decisionState?.stateLabel || 'unlabeled'}).`,
-        `Mode: ${decisionState?.riskMode || 'Deterioration'} / repair signal ${decisionState?.repairSignal || 'None'}.`,
-        `State score: ${stateScore}.`,
-        `3-day delta: ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta || 0}; resonance: ${stateMeta.resonanceCount || 0}.`,
-        driverLabels.length ? `Dominant drivers: ${driverLabels.join(', ')}.` : 'Dominant drivers unavailable.'
+        `策略状态：${strategyState}（${decisionState?.stateLabel || '未命名'}）。`,
+        `?????${formatRiskModeDisplayLabel(decisionState?.riskMode || 'Deterioration')} / ???? ${decisionState?.repairSignal || 'None'}?`,
+        `状态分数：${stateScore}。`,
+        `3 日变化：${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta || 0}；共振数量：${stateMeta.resonanceCount || 0}。`,
+        driverLabels.length ? `主导因子：${driverLabels.join('、')}。` : '主导因子暂不可用。'
       ]
     };
   } catch (error) {
@@ -1799,60 +1811,60 @@ function buildActionQueueEngine(data, metadata, decisionState, positionGuidance,
     const byState = {
       'Risk-On': {
         priority: [
-          'Add new risk exposure only in staged increments.',
-          'Keep total exposure inside the current target band.',
-          'Rebalance without chasing short-term moves.'
+          '新增风险敞口仅按分步节奏执行。',
+          '总暴露保持在当前目标区间内。',
+          '围绕目标再平衡，不追逐短期波动。'
         ],
         blocked: [
-          'Avoid leverage expansion beyond baseline.',
-          'Avoid concentration increase without confirmation.'
+          '避免超出基线的杠杆扩张。',
+          '在缺乏确认前避免提高集中度。'
         ]
       },
       Balanced: {
         priority: [
-          'Keep exposure pacing controlled and selective.',
-          'Rebalance toward the middle of the target band.',
-          'Maintain baseline defensive buffers.'
+          '新增仓位保持节奏可控且具选择性。',
+          '围绕目标区间中枢做再平衡。',
+          '维持基础防守缓冲。'
         ],
         blocked: [
-          'Avoid oversized single-step exposure changes.',
-          'Avoid leverage expansion before confirmation.'
+          '避免单步过大的暴露变化。',
+          '在缺乏确认前避免扩张杠杆。'
         ]
       },
       Caution: {
         priority: [
-          'Reduce broad risk exposure incrementally.',
-          'Keep new exposure highly selective and small.',
-          'Raise cash buffer toward the guidance band.'
+          '逐步降低广谱风险暴露。',
+          '新增敞口保持高度选择性并控制在小幅。',
+          '将现金缓冲提高到指引区间。'
         ],
         blocked: [
-          'Pause aggressive new risk deployment.',
-          'Avoid leverage expansion.',
-          'Avoid concentration increase under elevated regime.'
+          '暂停激进新增风险敞口。',
+          '避免杠杆扩张。',
+          '高压阶段避免提高集中度。'
         ]
       },
       Defensive: {
         priority: [
-          'Reduce broad risk exposure incrementally.',
-          'Raise cash buffer and keep exposure inside the lower band.',
-          'Only allow defensive rebalancing.'
+          '逐步降低广谱风险暴露。',
+          '提高现金缓冲，并把暴露维持在低位区间。',
+          '仅允许防守性再平衡。'
         ],
         blocked: [
-          'Pause aggressive new risk deployment.',
-          'Avoid leverage expansion.',
-          'Avoid concentration increase under elevated regime.'
+          '暂停激进新增风险敞口。',
+          '避免杠杆扩张。',
+          '高压阶段避免提高集中度。'
         ]
       },
       Crisis: {
         priority: [
-          'Prioritize capital preservation and liquidity restoration.',
-          'Cut broad risk exposure toward minimum levels.',
-          'Keep only defensive rebalancing and hedge maintenance.'
+          '优先保全资本并恢复流动性缓冲。',
+          '将广谱风险暴露压向最低水平。',
+          '仅保留防守性再平衡与对冲维护。'
         ],
         blocked: [
-          'Suspend new high-risk exposure.',
-          'Avoid leverage use or expansion.',
-          'Avoid concentration increase under crisis regime.'
+          '暂停新增高风险敞口。',
+          '避免使用或扩张杠杆。',
+          '危机阶段避免提高集中度。'
         ]
       }
     };
@@ -1861,64 +1873,64 @@ function buildActionQueueEngine(data, metadata, decisionState, positionGuidance,
     blockedActions.push(...(byState[strategyState]?.blocked || byState.Caution.blocked));
 
     if ((stateMeta.extremeThresholdCount || 0) >= 2) {
-      priorityActions.push('Tighten execution pace until extreme thresholds clear.');
-      blockedActions.push('Avoid discretionary risk expansion while extreme thresholds remain active.');
+      priorityActions.push('在极端阈值解除前进一步收紧执行节奏。');
+      blockedActions.push('极端阈值仍在生效时，避免主观扩张风险。');
     }
     if ((stateMeta.recent3dDelta || 0) >= 8) {
-      priorityActions.push('Accelerate de-risking cadence while short-term stress is rising.');
-      watchItems.push('Watch for further 3-day risk acceleration.');
+      priorityActions.push('短期压力继续上行时，加快降风险节奏。');
+      watchItems.push('观察未来 3 日风险是否继续加速。');
     } else if ((stateMeta.recent3dDelta || 0) <= -8) {
-      watchItems.push('Watch whether recent easing persists before relaxing posture.');
+      watchItems.push('在放松姿态前，先确认近期缓和是否持续。');
     }
     if ((stateMeta.highRiskStreakDays || 0) >= 5) {
-      priorityActions.push('Maintain defensive buffers until the high-risk streak breaks.');
+      priorityActions.push('在高风险连续期结束前，维持防守缓冲。');
     }
     if (metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly || healthLevel === 'Baseline Only' || healthLevel === 'Stale') {
-      watchItems.push('Monitor data quality and freshness before easing controls.');
-      blockedActions.push('Avoid expanding risk using degraded or fallback data only.');
+      watchItems.push('在放松控制前，先确认数据质量与时效。');
+      blockedActions.push('仅凭降级或回退数据时，避免扩张风险。');
     }
     if ((positionGuidance?.newExposurePolicy || '').toLowerCase().includes('pause') || strategyState === 'Crisis') {
-      blockedActions.push('Pause broad new risk deployment.');
+      blockedActions.push('暂停广泛新增风险敞口。');
     }
     if ((positionGuidance?.leveragePolicy || '').toLowerCase().includes('no leverage')) {
-      blockedActions.push('Avoid leverage expansion.');
+      blockedActions.push('避免杠杆扩张。');
     }
 
     topDrivers.forEach((driver) => {
-      watchItems.push(`Monitor ${driver} stress for escalation or relief.`);
+      watchItems.push(`跟踪${driver}压力是否升级或缓和。`);
     });
 
     criticalAlerts.slice(0, 2).forEach((alert) => {
-      priorityActions.push(`Respond to ${alert.title || 'critical alert'} immediately.`);
+      priorityActions.push(`立即响应${alert.title || '关键告警'}。`);
     });
     yellowAlerts.slice(0, 2).forEach((alert) => {
-      watchItems.push(`Watch ${alert.title || 'warning signal'} for deterioration.`);
+      watchItems.push(`观察${alert.title || '预警信号'}是否继续恶化。`);
     });
 
     (Array.isArray(triggerPanel.watchlist) ? triggerPanel.watchlist : []).slice(0, 3).forEach((item) => {
-      watchItems.push(`Watch ${item}.`);
+      watchItems.push(`观察：${item}。`);
     });
     (Array.isArray(triggerPanel.critical) ? triggerPanel.critical : []).slice(0, 2).forEach((item) => {
-      watchItems.push(`Track critical trigger ${item}.`);
+      watchItems.push(`跟踪关键触发项：${item}。`);
     });
 
     if (Array.isArray(riskControl.hardThresholds) && riskControl.hardThresholds.length) {
-      watchItems.push('Monitor hard thresholds for escalation.');
+      watchItems.push('跟踪硬阈值是否触发升级。');
     }
 
     const queue = {
       priorityActions: uniqTexts(priorityActions).slice(0, 6),
       watchItems: uniqTexts(watchItems).slice(0, 6),
       blockedActions: uniqTexts(blockedActions).slice(0, 6),
-      actionSummary: `${strategyState} queue aligned with ${positionGuidance?.totalExposureBand || 'current'} exposure guidance.`,
+      actionSummary: `${strategyState} 动作队列已与${positionGuidance?.totalExposureBand || '当前'}暴露指引对齐。`,
       escalationHint: (stateMeta.extremeThresholdCount || 0) > 0
-        ? 'Escalate immediately if extreme thresholds widen or critical alerts increase.'
-        : 'Escalate if volatility, spread stress, or data quality worsens.',
+        ? '若极端阈值扩大或关键告警增加，应立即升级处理。'
+        : '若波动、利差压力或数据质量恶化，应升级处理。',
       executionNotes: uniqTexts([
-        `State score ${stateScore}; exposure band ${positionGuidance?.totalExposureBand || '--'}.`,
-        `Cash guidance: ${positionGuidance?.cashGuidance || '--'}.`,
-        topDrivers.length ? `Driver focus: ${topDrivers.join(', ')}.` : '',
-        healthLevel ? `Health: ${healthLevel}.` : ''
+        `状态分数 ${stateScore}；暴露区间 ${positionGuidance?.totalExposureBand || '--'}。`,
+        `现金指引：${positionGuidance?.cashGuidance || '--'}。`,
+        topDrivers.length ? `主导因子：${topDrivers.join('、')}。` : '',
+        healthLevel ? `健康状态：${formatHealthLevelLabel(healthLevel)}。` : ''
       ]).slice(0, 4)
     };
     queue.items = flattenActionQueueItems(queue);
@@ -1954,68 +1966,68 @@ function buildActionQueueUpgradeLayer(data, metadata, decisionState, positionGui
 
   const controlActions = uniqTexts([
     executionPermissions.addRisk === 'Blocked' || executionPermissions.addRisk === 'Restricted'
-      ? 'Freeze aggressive new risk adds.'
+      ? '冻结激进新增风险动作。'
       : '',
     executionPermissions.addLeverage === 'Blocked'
-      ? 'Block leverage expansion.'
+      ? '阻断杠杆扩张。'
       : executionPermissions.addLeverage === 'Limited' || executionPermissions.addLeverage === 'Restricted'
-        ? 'Cap leverage usage to defensive sizing only.'
+        ? '杠杆仅允许用于防守性仓位规模。'
         : '',
     executionPermissions.increaseConcentration === 'Blocked'
-      ? 'Prevent concentration increase.'
+      ? '防止集中度继续上升。'
       : executionPermissions.increaseConcentration === 'Restricted'
-        ? 'Keep concentration increases on hold pending breadth improvement.'
+        ? '在广度改善前暂停提高集中度。'
         : '',
     executionPermissions.defensiveRebalance === 'Allowed'
-      ? 'Keep defensive rebalancing only.'
+      ? '仅保留防守性再平衡。'
       : '',
     riskBudget === 'Minimal' || riskBudget === 'Tight'
-      ? 'Cap gross exposure drift.'
+      ? '控制总暴露漂移。'
       : '',
     strategyState === 'Defensive' || strategyState === 'Crisis'
-      ? 'Reduce concentration in elevated stress buckets.'
+      ? '压降低位高压桶中的集中暴露。'
       : '',
     riskMode === 'Stress'
-      ? 'Hold elevated controls until stress signals cool.'
+      ? '在压力信号降温前维持高强度控制。'
       : riskMode === 'Deterioration'
-        ? 'Tighten exposure adds while breadth is worsening.'
+        ? '当风险广度恶化时收紧新增暴露。'
         : '',
     metadata.realtimeUnavailable || metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly
-      ? 'Do not relax controls while data quality is degraded.'
+      ? '数据质量降级期间不要放松控制。'
       : '',
-    dominantLabels.length ? `Keep controls focused on ${dominantLabels.join(' and ')} stress.` : ''
+    dominantLabels.length ? `控制重点放在${dominantLabels.join('和')}压力。` : ''
   ]).slice(0, 6);
 
   const unblockConditions = uniqTexts([
     executionPermissions.tacticalReRisk !== 'Allowed'
-      ? 'Re-open tactical re-risk after the 3-day trend turns flat or negative.'
+      ? '待三日趋势转平或转弱后，再恢复战术性风险回补。'
       : '',
     resonanceCount >= 3 || executionPermissions.addRisk !== 'Allowed'
-      ? 'Re-open selective adds after resonance count drops below 3.'
+      ? '待共振数量回落到 3 以下后，再恢复选择性加仓。'
       : '',
     executionPermissions.addLeverage !== 'Allowed'
-      ? 'Re-open leverage only after volatility and liquidity stress normalize.'
+      ? '待波动与流动性压力恢复正常后，再放开杠杆。'
       : '',
     executionPermissions.increaseConcentration !== 'Allowed'
-      ? 'Re-open concentration only after critical alerts clear.'
+      ? '待关键告警清除后，再放开集中度。'
       : '',
     deescalationBias === 'low' || riskMode === 'Stress' || strategyState === 'Crisis'
-      ? 'Re-open broader risk adds only after de-escalation bias improves.'
+      ? '待去升级偏向改善后，再放开更广泛的风险新增。'
       : '',
     riskMode === 'Repair' && (repairSignal === 'Moderate' || repairSignal === 'Strong')
-      ? 'Re-open selective adds after repair holds for another full review cycle.'
+      ? '待修复状态再维持一个完整复核周期后，再恢复选择性加仓。'
       : '',
     escalationLevel === 'high' || escalationLevel === 'severe'
-      ? 'Do not relax controls until escalation signals stop widening.'
+      ? '在升级信号停止扩散前，不要放松控制。'
       : '',
     extremeThresholdCount > 0
-      ? 'Do not relax controls until extreme thresholds clear.'
+      ? '在极端阈值清除前，不要放松控制。'
       : '',
     criticalAlertCount > 0
-      ? 'Do not relax controls until critical alerts stop increasing.'
+      ? '在关键告警停止增加前，不要放松控制。'
       : '',
     reRiskingPosture === 'None'
-      ? 'Re-open tactical re-risk only after broader reset conditions are met.'
+      ? '仅在更广泛的重置条件满足后，才恢复战术性风险回补。'
       : '',
     ...resetConditions.slice(0, 3)
   ]).slice(0, 6);
@@ -2040,14 +2052,14 @@ function buildTriggerMonitorEngine(data, metadata, decisionState, positionGuidan
     const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色').length;
 
     const upgradeTriggers = uniqTexts([
-      'Upgrade if state score rises by 8 points or more from the current regime.',
-      'Upgrade if the 3-day change turns positive and exceeds +6.',
-      'Upgrade if resonance expands to 4 or more modules above 70.',
-      'Upgrade if severe resonance rises to 3 or more modules above 80.',
-      'Upgrade if red alerts increase or new critical alerts appear.',
-      'Upgrade if liquidity / volatility / funding stress re-accelerates.',
-      metadata.realtimeCacheOnly ? 'Upgrade if cache-only mode persists into the next cycle.' : '',
-      metadata.realtimeFreshnessLevel === 'stale' || metadata.realtimeUnavailable ? 'Upgrade if stale / baseline-only data persists without recovery.' : ''
+      '若状态分数较当前阶段再上升 8 分或以上，应升级处理。',
+      '若 3 日变化重新转正且超过 +6，应升级处理。',
+      '若高于 70 的共振模块扩大到 4 个或以上，应升级处理。',
+      '若高于 80 的严重共振模块升至 3 个或以上，应升级处理。',
+      '若红色告警增加或出现新的关键告警，应升级处理。',
+      '若流动性 / 波动 / 资金压力重新加速，应升级处理。',
+      metadata.realtimeCacheOnly ? '若仅缓存模式持续到下一个周期，应升级处理。' : '',
+      metadata.realtimeFreshnessLevel === 'stale' || metadata.realtimeUnavailable ? '若陈旧 / 仅基线数据持续且未恢复，应升级处理。' : ''
     ]).slice(0, 7);
 
     const activeEscalationSignals = uniqTexts([
@@ -2055,12 +2067,12 @@ function buildTriggerMonitorEngine(data, metadata, decisionState, positionGuidan
       (stateMeta.recent3dDelta || 0) >= 6 ? `3-day deterioration is active at +${stateMeta.recent3dDelta}.` : '',
       (stateMeta.resonanceCount || 0) >= 4 ? `Broad resonance active: ${stateMeta.resonanceCount} modules above 70.` : '',
       (stateMeta.severeResonanceCount || 0) >= 2 ? `Severe resonance active: ${stateMeta.severeResonanceCount} modules above 80.` : '',
-      criticalAlerts > 0 ? `${criticalAlerts} red alert(s) active.` : '',
-      metadata.realtimeCacheOnly ? 'Cache-only mode is active.' : '',
-      metadata.realtimeUnavailable ? '实时不可用，当前仅使用基线。' : '',
-      metadata.realtimeFreshnessLevel === 'stale' ? 'Realtime freshness is stale.' : '',
-      dominantLabels.length ? `Dominant stress drivers: ${dominantLabels.join(', ')}.` : '',
-      Array.isArray(triggerPanel.critical) && triggerPanel.critical.length ? `Critical trigger panel active: ${triggerPanel.critical.slice(0, 2).join(', ')}.` : ''
+      criticalAlerts > 0 ? `当前有 ${criticalAlerts} 个红色告警在生效。` : '',
+      metadata.realtimeCacheOnly ? '当前处于仅缓存模式。' : '',
+      metadata.realtimeUnavailable ? '实时数据不可用，当前仅基线显示。' : '',
+      metadata.realtimeFreshnessLevel === 'stale' ? '实时数据时效已陈旧。' : '',
+      dominantLabels.length ? `当前主导压力源：${dominantLabels.join('、')}。` : '',
+      Array.isArray(triggerPanel.critical) && triggerPanel.critical.length ? `关键触发面板已激活：${triggerPanel.critical.slice(0, 2).join('、')}。` : ''
     ]).slice(0, 6);
 
     let escalationLevel = 'medium';
@@ -2070,7 +2082,7 @@ function buildTriggerMonitorEngine(data, metadata, decisionState, positionGuidan
     return {
       upgradeTriggers,
       activeEscalationSignals,
-      triggerSummary: `${strategyState} trigger monitor watching score, resonance, alerts, and data-quality escalation paths.`,
+      triggerSummary: `${strategyState} 触发监控正在跟踪分数、共振、告警与数据质量升级路径。`,
       escalationLevel,
       signalConfidence: metadata.realtimeUnavailable ? 'medium' : metadata.realtimeCacheOnly ? 'medium' : 'high'
     };
@@ -2089,21 +2101,21 @@ function buildInvalidationRulesEngine(data, metadata, decisionState, positionGui
     const dominantLabels = Array.isArray(dominantDrivers) ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean) : [];
 
     const invalidationSignals = uniqTexts([
-      'Invalidate the current defensive read if total risk score rises another 8 points from here.',
-      'Invalidate the current read if the 3-day trend stops easing and turns back above +3.',
-      'Invalidate the current read if resonance breadth expands again.',
-      'Invalidate the current read if red alerts increase.',
-      metadata.realtimeCacheOnly ? 'Invalidate the current read if cache-only mode persists and stress signals stay elevated.' : '',
-      metadata.realtimeUnavailable ? 'Invalidate the current read if baseline-only mode persists while alerts worsen.' : ''
+      '若总风险分数在此基础上再上升 8 分，应判定当前防守判断失效。',
+      '若 3 日趋势停止缓和并重新高于 +3，应判定当前读数失效。',
+      '若共振广度再次扩大，应判定当前读数失效。',
+      '若红色告警增加，应判定当前读数失效。',
+      metadata.realtimeCacheOnly ? '若仅缓存模式持续且压力信号维持高位，应判定当前读数失效。' : '',
+      metadata.realtimeUnavailable ? '若仅基线模式持续且告警恶化，应判定当前读数失效。' : ''
     ]).slice(0, 6);
 
     const resetConditions = uniqTexts([
-      'Allow de-escalation after total risk score falls and holds lower.',
-      'Allow de-escalation after the 3-day trend turns flat or negative.',
-      'Allow de-escalation after resonance count drops below 3.',
-      'Allow de-escalation after severe resonance eases below 2.',
-      'Allow de-escalation after red alerts clear and data freshness normalizes.',
-      ...(Array.isArray(riskControl.resetThresholds) ? riskControl.resetThresholds.slice(0, 3).map((rule) => `Reset reference: ${rule}`) : [])
+      '仅在总风险分数回落并维持较低水平后，才允许去升级。',
+      '仅在 3 日趋势转平或转弱后，才允许去升级。',
+      '仅在共振数量回落到 3 以下后，才允许去升级。',
+      '在严重共振回落到 2 以下后，才允许去升级。',
+      '在红色告警清除且数据时效恢复正常后，才允许去升级。',
+      ...(Array.isArray(riskControl.resetThresholds) ? riskControl.resetThresholds.slice(0, 3).map((rule) => `重置参考：${rule}`) : [])
     ]).slice(0, 6);
 
     let deescalationBias = 'medium';
@@ -2116,7 +2128,7 @@ function buildInvalidationRulesEngine(data, metadata, decisionState, positionGui
     return {
       invalidationSignals,
       resetConditions,
-      invalidationSummary: `${strategyState} invalidation rules require lower score pressure, narrower resonance, cleaner alerts, and better data quality before easing.`,
+      invalidationSummary: `${formatStrategyStateDisplayLabel(strategyState)} ????????????????????????????????????????`,
       deescalationBias,
       signalConfidence: metadata.realtimeUnavailable ? 'medium' : metadata.realtimeCacheOnly ? 'medium' : 'high'
     };
@@ -2203,9 +2215,9 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
           addMismatch(severeResonanceCount >= t.broadStressMismatch.severeResonanceMin || stateScore >= t.broadStressMismatch.stateScoreMin, t.broadStressMismatch.points, 'Current stress is broader than a typical 2018 Q4 tightening shock.');
         },
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
-          const lead = matchedFeatures[0] || 'Tightening-style stress features are present.';
-          const caveat = mismatchFeatures[0] || 'This still looks more like a drawdown regime than a disorderly seizure.';
-          return `当前更接近“紧缩驱动回撤”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
+          const lead = matchedFeatures[0] || '当前更接近紧缩主导的回撤特征。';
+          const caveat = mismatchFeatures[0] || '但当前环境仍更像回撤阶段，而非完全失序的流动性挤兑。';
+          return `当前最接近“2018 年四季度式紧缩冲击”（${matchScore}/100）。相似点：${lead}；差异点：${caveat}`;
         }
       }),
       evaluateCandidate({
@@ -2225,9 +2237,9 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
           addMismatch(deescalationBias === 'improving', t.improvingMismatchPoints, 'The current backdrop is easing faster than an early-2020 style break.');
         },
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
-          const lead = matchedFeatures[0] || 'Liquidity crisis features are partially present.';
-          const caveat = mismatchFeatures[0] || 'Current conditions still stop short of a full seizure template.';
-          return `当前更接近“早期流动性危机”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
+          const lead = matchedFeatures[0] || '当前已出现部分流动性危机特征。';
+          const caveat = mismatchFeatures[0] || '但当前环境仍未达到完全挤兑模板。';
+          return `当前最接近“2020 年早期流动性危机”（${matchScore}/100）。相似点：${lead}；差异点：${caveat}`;
         }
       }),
       evaluateCandidate({
@@ -2246,9 +2258,9 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
           addMismatch(liquidity >= t.acuteLiquidityMismatch.liquidityMin && recent3dDelta >= t.acuteLiquidityMismatch.recent3dDeltaMin, t.acuteLiquidityMismatch.points, 'Liquidity deterioration is too acute for a clean 2022-style analogue.');
         },
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
-          const lead = matchedFeatures[0] || 'Inflation-led suppression features are visible.';
-          const caveat = mismatchFeatures[0] || 'The backdrop still carries more episodic stress than a pure 2022-style grind.';
-          return `当前更接近“通胀加加息压制”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
+          const lead = matchedFeatures[0] || '当前可见通胀主导的压制特征。';
+          const caveat = mismatchFeatures[0] || '但当前背景仍带有比典型 2022 式慢磨更强的事件性压力。';
+          return `当前最接近“2022 式通胀 + 加息压制”（${matchScore}/100）。相似点：${lead}；差异点：${caveat}`;
         }
       }),
       evaluateCandidate({
@@ -2267,9 +2279,9 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
           addMismatch(stateScore >= t.highScoreMismatch.stateScoreMin, t.highScoreMismatch.points, 'State score is too high for a merely regional shock template.');
         },
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
-          const lead = matchedFeatures[0] || 'Regional stress is visible without broad systemic spread.';
-          const caveat = mismatchFeatures[0] || 'Systemic diffusion still looks limited for now.';
-          return `当前更接近“区域性风险但尚未扩散”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
+          const lead = matchedFeatures[0] || '当前已出现区域性压力，但尚未广泛系统扩散。';
+          const caveat = mismatchFeatures[0] || '系统性扩散目前仍相对有限。';
+          return `当前最接近“区域性风险但未系统扩散阶段”（${matchScore}/100）。相似点：${lead}；差异点：${caveat}`;
         }
       }),
       evaluateCandidate({
@@ -2288,9 +2300,9 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
           addMismatch(recent3dDelta >= t.accelerationMismatch.recent3dDeltaMin, t.accelerationMismatch.points, 'Short-term deterioration is too fast for a plateau regime.');
         },
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
-          const lead = matchedFeatures[0] || 'Elevated-but-choppy features are present.';
-          const caveat = mismatchFeatures[0] || 'The backdrop still falls short of a crisis analogue.';
-          return `当前更接近“高位震荡但未危机化”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
+          const lead = matchedFeatures[0] || '当前呈现高位震荡但未危机化的特征。';
+          const caveat = mismatchFeatures[0] || '但当前背景仍未达到危机类模板。';
+          return `当前最接近“高位震荡但尚未危机化阶段”（${matchScore}/100）。相似点：${lead}；差异点：${caveat}`;
         }
       })
     ].sort((a, b) => b.matchScore - a.matchScore);
@@ -2310,7 +2322,7 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
           }
         : null,
       confidence,
-      interpretationNote: '该历史相似层仅用于解释，不会改变当前策略状态、仓位建议或动作队列。'
+      interpretationNote: '该层为规则化历史相似性解释，仅用于辅助理解，不会改变当前策略状态、仓位指引或动作队列。'
     };
   } catch (error) {
     console.warn('Historical regime matcher failed, using fallback.', error);
@@ -2363,16 +2375,16 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
       positionGuidance: {
         ...positionGuidanceWithPermissions,
         ...buildLegacyPositionGuidanceCompat(positionGuidanceWithPermissions, position, [
-          executionLock.description || '按当前执行锁状态运行。',
-          `健康状态：${formatHealthLevelLabel(healthDashboard.overallLevel)}。`,
-          `实时状态：${metadata.realtimeStatusLabel || '未知'}。`
+          executionLock.description || '??????????????',
+          `Health: ${healthDashboard.overallLevel}.`,
+          `Realtime: ${metadata.realtimeStatusLabel || 'unknown'}.`
         ])
       },
       actionQueue: {
         ...actionQueueWithUpgrade,
         ...buildLegacyActionQueueCompat(actionQueueWithUpgrade, [
-            executionLock.description || '按当前执行锁状态运行。',
-            actionLayer.todayAction || '请以当前动作队列作为主要执行依据。'
+          executionLock.description || '??????????????',
+          actionLayer.todayAction || 'Use the queue as the primary execution guide.'
         ])
       },
       triggerMonitor,
@@ -2590,9 +2602,9 @@ function applyRealtimeOverlay(base, realtimePayload) {
   next.liquidityIndex.regime = next.modules.liquidity >= 70 ? '限制性偏紧' : next.modules.liquidity >= 55 ? '偏紧缓解' : '流动性修复';
   next.liquidityIndex.directionLabel = realtimePayload.cacheOnly ? '快变量缓存模式' : realtimePayload.degradedMode ? '快变量带回退' : '快变量已实时覆盖';
   next.liquidityIndex.notes = [
-    `实时快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元 ${fmtNumSafe(dxy,2)} / VIX ${fmtNumSafe(vix,2)} / HY OAS ${fmtNumSafe(hy,2)}。`,
-    `10Y ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`,
-    `数据模式：${realtimePayload.sourceMode || 'unknown'} / 健康分数：${realtimePayload.healthScore ?? '--'} / 关键缺失：${realtimePayload.criticalMissing ?? 0}。`,
+    `实时快变量：布伦特原油 ${fmtNumSafe(brent,1)} / 美元指数 ${fmtNumSafe(dxy,2)} / 波动率指数 VIX ${fmtNumSafe(vix,2)} / 高收益利差 HY OAS ${fmtNumSafe(hy,2)}。`,
+    `10年美债收益率 ${fmtNumSafe(us10y,2)} / 10年实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`,
+    `数据模式：${formatRealtimeModeLabel(realtimePayload.sourceMode || 'unknown')} / 健康分数：${realtimePayload.healthScore ?? '--'} / 关键缺失：${realtimePayload.criticalMissing ?? 0}。`,
     ...(realtimePayload.notes || [])
   ];
 
@@ -2612,12 +2624,12 @@ function applyRealtimeOverlay(base, realtimePayload) {
   );
 
   let level = 'green';
-  let levelLabel = 'GREEN / 允许分批进攻';
+  let levelLabel = '绿灯 / 允许分批进攻';
   let title = '今天允许小幅加仓，但必须按纪律分批执行';
   let desc = '流动性、信用和波动率均回到相对稳定区，系统允许提高风险暴露，但必须按分批规则执行。';
   let allow = ['允许分三笔以内提高总仓位。', '允许增加质量权益和部分成长观察仓。', '允许适度降低美元/短票仓位。'];
   let block = ['禁止一次性打满仓位。', '禁止单日大涨后追高。', '禁止取消全部对冲。'];
-  let mandatory = ['单日净加仓不得超过总资产 5%。', '若状态灯重新转黄，次日停止加仓。', '若周回撤 > -3%，立即回到 YELLOW。'];
+  let mandatory = ['单日净加仓不得超过总资产 5%。', '若状态灯重新转黄，次日停止加仓。', '若周回撤 > -3%，立即回到黄灯纪律。'];
   let target = '58%';
   let cash = '20%';
   let riskBudget = '50%';
@@ -2625,11 +2637,11 @@ function applyRealtimeOverlay(base, realtimePayload) {
 
   if (hardStop) {
     level = 'red';
-    levelLabel = 'RED / 禁止新增';
+    levelLabel = '红灯 / 禁止新增';
     title = '今天禁止主动加仓，只允许减仓与恢复防御层';
     desc = realtimePayload.cacheOnly
-      ? '关键快变量不足，系统进入缓存模式。为避免误判，执行引擎直接锁为 RED：禁止新增，只允许风险收缩。'
-      : '高压风险组合已触发。执行引擎直接锁为 RED：任何新增风险动作都被禁止，只允许减仓、补现金和恢复防御仓。';
+      ? '关键快变量不足，系统进入缓存模式。为避免误判，执行引擎直接锁为红灯：禁止新增，只允许风险收缩。'
+      : '高压风险组合已触发。执行引擎直接锁为红灯：任何新增风险动作都被禁止，只允许减仓、补现金和恢复防御仓。';
     allow = ['允许减仓风险资产。', '允许补充美元/短票与现金。', '允许把黄金对冲恢复到上限。'];
     block = ['禁止新增股票与高Beta仓位。', '禁止盘中追涨。', '禁止主观覆盖系统阈值。'];
     mandatory = ['若总仓位高于 42%，必须先减回 38%-42%。', '若科技/高Beta > 2%，立即降回 2% 以下。', '若现金缓冲 < 30%，立即补回。'];
@@ -2639,7 +2651,7 @@ function applyRealtimeOverlay(base, realtimePayload) {
     status = '硬阈值全面生效';
   } else if (caution) {
     level = 'yellow';
-    levelLabel = 'YELLOW / 仅允许微调';
+    levelLabel = '黄灯 / 仅允许微调';
     title = '今天不能主动加风险，只允许对齐目标仓位与防守再平衡';
     desc = '风险尚未解除，执行引擎只允许微调。允许围绕目标仓位做再平衡，但禁止新增进攻性仓位。';
     allow = ['允许把总仓位向 48% 靠拢。', '允许维持能源、美元/短票、黄金对冲层。', '允许保留防御型股票观察仓。'];
@@ -2675,10 +2687,10 @@ function applyRealtimeOverlay(base, realtimePayload) {
     checklist: mandatory,
     blocked: block,
     checkpoints: [
-      `Brent 当前 ${fmtNumSafe(brent,1)}`,
-      `DXY 当前 ${fmtNumSafe(dxy,2)}`,
-      `VIX 当前 ${fmtNumSafe(vix,2)}`,
-      `HY OAS 当前 ${fmtNumSafe(hy,2)}%`
+      `布伦特原油当前 ${fmtNumSafe(brent,1)}`,
+      `美元指数当前 ${fmtNumSafe(dxy,2)}`,
+      `波动率指数 VIX 当前 ${fmtNumSafe(vix,2)}`,
+      `高收益利差 HY OAS 当前 ${fmtNumSafe(hy,2)}%`
     ]
   };
 
@@ -2689,7 +2701,7 @@ function applyRealtimeOverlay(base, realtimePayload) {
   next.tradingSystem.positioning.coreAllocations = level === 'red'
     ? [
         { asset: '美元 / 短票', target: '核心1', weight: '24%', reason: '融资与信用压力阶段的首要防御层。' },
-        { asset: '现金', target: '缓冲层', weight: '35%', reason: '执行引擎 RED，现金缓冲必须充足。' },
+      { asset: '??', target: '???', weight: '35%', reason: '????????????????' },
         { asset: '黄金', target: '对冲', weight: '12%', reason: '用于对冲尾部风险与政策不确定性。' },
         { asset: '原油 / 能源', target: '防守受益', weight: '12%', reason: '油价偏高时继续保留。' }
       ]
@@ -2715,14 +2727,14 @@ function applyRealtimeOverlay(base, realtimePayload) {
   next.tradingSystem.riskControl.maxDrawdown = level === 'red' ? '-6%' : '-8%';
   next.tradingSystem.riskControl.hardThresholds = [
     '流动性 ≥ 75：总仓位降至 42%。',
-    'Brent ≥ 110：能源上调，股票下调。',
-    'HY OAS ≥ 4.5%：暂停新增风险仓位。',
-    'VIX ≥ 28：进入 RED。'
+    '布伦特原油 ≥ 110：上调能源，降低股票。',
+    '高收益利差 HY OAS ≥ 4.5%：暂停新增风险仓位。',
+    '波动率指数 VIX ≥ 28：进入红灯。'
   ];
   next.tradingSystem.riskControl.resetThresholds = [
-    'VIX < 18 且 HY OAS < 3.7：才允许回到 GREEN。',
-    'Brent < 95 且 DXY 走弱：才允许提高成长仓。',
-    'criticalMissing < 2：解除数据回退约束。'
+    '波动率指数 VIX < 18 且高收益利差 HY OAS < 3.7：才允许回到绿灯。',
+    '布伦特原油 < 95 且美元指数走弱：才允许提高成长仓。',
+    '关键缺失项 < 2：解除数据回退约束。'
   ];
 
   next.tradingSystem.signalEngine = {
@@ -2734,32 +2746,27 @@ function applyRealtimeOverlay(base, realtimePayload) {
     chainSignal: next.modules.energy >= next.modules.liquidity ? '油价→通胀→利率→股票' : '美元→信用→流动性→股票',
     notes: [
       `执行引擎状态：${levelLabel}。`,
-      `关键快变量：Brent ${fmtNumSafe(brent,1)} / DXY ${fmtNumSafe(dxy,2)} / VIX ${fmtNumSafe(vix,2)} / HY ${fmtNumSafe(hy,2)}。`,
+      `关键快变量：布伦特原油 ${fmtNumSafe(brent,1)} / 美元指数 ${fmtNumSafe(dxy,2)} / 波动率指数 VIX ${fmtNumSafe(vix,2)} / 高收益利差 HY OAS ${fmtNumSafe(hy,2)}。`,
       `健康度 ${realtimePayload.healthScore ?? '--'}，关键缺失 ${realtimePayload.criticalMissing ?? 0}。`
     ]
   };
 
   next.topRisks = [
-    `盘中快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元 ${fmtNumSafe(dxy,2)} / VIX ${fmtNumSafe(vix,2)} / HY OAS ${fmtNumSafe(hy,2)}。`,
+    `盘中快变量：布伦特原油 ${fmtNumSafe(brent,1)} / 美元指数 ${fmtNumSafe(dxy,2)} / 波动率指数 VIX ${fmtNumSafe(vix,2)} / 高收益利差 HY OAS ${fmtNumSafe(hy,2)}。`,
     `执行状态灯：${levelLabel}。`,
     realtimePayload.cacheOnly ? '当前为缓存模式，系统自动提升防守等级。' : realtimePayload.degradedMode ? '当前为带回退实时模式，少量数据已回退但系统继续运行。' : '当前为实时模式，快变量直接驱动信号与仓位。',
     `10Y ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`
   ];
 
-  next.decisionLine = `当前已进入 v26.0B-pr6 交易引擎模式：实时快变量 ${realtimePayload.sourceMode || '--'}，执行状态灯为 ${levelLabel}。先看状态灯，再决定能不能动。`;
-  next.summary = `v26.0B-pr6 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(brent,1)}、美元 ${fmtNumSafe(dxy,2)}、VIX ${fmtNumSafe(vix,2)}、HY OAS ${fmtNumSafe(hy,2)}%。`;
+  next.decisionLine = `????? v26.0B-pr6 ???????????? ${formatRealtimeModeLabel(realtimePayload.sourceMode || '--')}??????? ${levelLabel}???????????????`;
+  next.summary = `v26.0B-pr6 ????????????????????????????? ${fmtNumSafe(brent,1)}????? ${fmtNumSafe(dxy,2)}?????? VIX ${fmtNumSafe(vix,2)}?????? HY OAS ${fmtNumSafe(hy,2)}%?`;
   next.recovery = {
     degradedMode: !!realtimePayload.degradedMode,
     safeOutput: true,
     lastRun: realtimePayload.updatedAt || next.updatedAt,
-    notes: realtimePayload.notes || ['v26.0B-pr6 快变量正常。']
+    notes: realtimePayload.notes || ['v26.0B-pr6 ??????']
   };
 
-  next.decisionLine = String(next.decisionLine || '').replace(/v26\.0A-rc1/g, 'v26.0B-pr6');
-  next.summary = String(next.summary || '').replace(/v26\.0A-rc1/g, 'v26.0B-pr6');
-  if (Array.isArray(next.recovery?.notes)) {
-    next.recovery.notes = next.recovery.notes.map((note) => String(note).replace(/v26\.0A-rc1/g, 'v26.0B-pr6'));
-  }
   return next;
 }
 
@@ -2778,8 +2785,7 @@ function renderRealtimeStrip(realtime, metadata = null) {
   if (metadata?.realtimeUnavailable) {
     $('rt-source-mode').textContent = '仅基线';
   } else if (metadata) {
-    const modeLabelMap = { fresh: '新鲜', aging: '老化', stale: '陈旧', unavailable: '不可用' };
-    const modeParts = [modeLabelMap[metadata.realtimeFreshnessLevel || realtime.freshnessLevel || 'fresh'] || '新鲜'];
+    const modeParts = [formatRealtimeModeLabel(metadata.realtimeFreshnessLevel || realtime.freshnessLevel || 'fresh')];
     if (metadata.realtimeDegraded) modeParts.push('降级');
     if (metadata.realtimeFallbackUsed) modeParts.push('本地回退');
     if (metadata.realtimeCacheOnly) modeParts.push('仅缓存');
@@ -2832,13 +2838,13 @@ function describeStateChange(stateMeta = {}) {
   const extremeCount = Number(stateMeta.extremeThresholdCount) || 0;
   const highRiskStreakDays = Number(stateMeta.highRiskStreakDays) || 0;
 
-    if (delta >= 8) return '近 3 日持续上行';
-    if (delta >= 3) return '近 3 日偏强走高';
-    if (delta <= -8) return extremeCount > 0 || highRiskStreakDays >= 3 ? '高位仍在，但已开始缓和' : '近 3 日明显回落';
-    if (delta <= -3) return '正在趋稳';
-    if (extremeCount > 0) return '仍维持在高位区间';
-    return '接近当前状态中枢';
-  }
+  if (delta >= 8) return '? 3 ?????';
+  if (delta >= 3) return '? 3 ?????';
+  if (delta <= -8) return extremeCount > 0 || highRiskStreakDays >= 3 ? '?????' : '? 3 ?????';
+  if (delta <= -3) return '????';
+  if (extremeCount > 0) return '????????';
+  return '????????';
+}
 
 function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
   // Decision Header is intentionally decision-model-first. It should consume the
@@ -2854,17 +2860,17 @@ function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
   const exposureBand = decisionModel?.positionGuidance?.totalExposureBand || '--';
   const coreAction = decisionModel?.actionQueue?.priorityActions?.[0]
     || decisionModel?.positionGuidance?.newExposurePolicy
-      || '保持节奏，选择性调整风险。';
+    || '风险调整保持有节奏并具选择性。';
   const dominantRiskSources = Array.isArray(decisionModel?.dominantDrivers) && decisionModel.dominantDrivers.length
     ? decisionModel.dominantDrivers.slice(0, 3).map((item) => item.label || item.key).filter(Boolean)
     : Array.isArray(decisionModel?.stateDrivers)
       ? decisionModel.stateDrivers.slice(0, 3).map((item) => item.label || item.key).filter(Boolean)
-        : ['风险来源暂不可用'];
+      : ['风险驱动暂不可用'];
   const historicalRegimeLabel = decisionModel?.historicalRegime?.regimeLabel
     ? `${decisionModel.historicalRegime.regimeLabel} / ${decisionModel.historicalRegime.matchScore ?? '--'}`
-      : '历史相似阶段不可用';
-    const historicalRegimeSummary = decisionModel?.historicalRegime?.regimeSummary
-      || '历史相似层暂不可用，请优先参考当前状态与触发条件。';
+    : '历史相似阶段不可用';
+  const historicalRegimeSummary = decisionModel?.historicalRegime?.regimeSummary
+    || '历史相似性解释层暂不可用，请以当前状态与触发器为主。';
   const decisionStatement = decisionModel?.decisionStatement || buildDecisionStatementFallback();
 
   return {
@@ -2874,16 +2880,16 @@ function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
     exposureBand,
     riskBudget: decisionModel?.positionGuidance?.riskBudget || 'Reduced',
     leveragePermission: decisionModel?.positionGuidance?.leveragePermission || 'Limited',
-    reRiskingPosture: decisionModel?.positionGuidance?.reRiskingPosture || 'Selective',
+    reRiskingPosture: decisionModel?.positionGuidance?.reRiskingPosture || '?????',
     coreAction,
     stateChange: describeStateChange(decisionModel.stateMeta || {}),
-      title: `${stateLabel} 决策总览`,
-      reason: decisionModel.stateReason || data?.decisionLine || '当前结论由 v26 决策模型统一汇总生成。',
-      escalationLabel: decisionModel?.triggerMonitor?.escalationLevel
-        ? `升级监控：${({ low: '低', medium: '中', high: '高', severe: '极高' })[decisionModel.triggerMonitor.escalationLevel] || decisionModel.triggerMonitor.escalationLevel}`
-        : '升级监控已开启',
-      cashGuidance: decisionModel?.positionGuidance?.cashGuidance || '保持基线现金纪律。',
-      newExposurePolicy: decisionModel?.positionGuidance?.newExposurePolicy || '新增风险暴露仅允许分步执行。',
+    title: `${stateLabel} 决策总览`,
+    reason: decisionModel.stateReason || data?.decisionLine || '当前阶段正在根据 v26 决策模型汇总。',
+    escalationLabel: decisionModel?.triggerMonitor?.escalationLevel
+      ? `升级监测：${decisionModel.triggerMonitor.escalationLevel}`
+      : '升级观察已启用',
+    cashGuidance: decisionModel?.positionGuidance?.cashGuidance || '保持基础现金纪律。',
+    newExposurePolicy: decisionModel?.positionGuidance?.newExposurePolicy || '暴露调整仅允许分步执行。',
     decisionStatementHeadline: decisionStatement.headline,
     decisionStatementPosture: decisionStatement.posture,
     decisionStatementActionBias: decisionStatement.actionBias,
@@ -2918,7 +2924,7 @@ function renderDecisionHeader(model) {
 
   const drivers = $('decision-header-drivers');
   drivers.innerHTML = '';
-    (model.dominantRiskSources || ['风险来源暂不可用']).forEach((driver) => {
+  (model.dominantRiskSources || ['风险驱动暂不可用']).forEach((driver) => {
     const chip = document.createElement('span');
     chip.className = 'decision-driver-chip';
     chip.textContent = driver;
@@ -3343,7 +3349,7 @@ async function main() {
     riskBudget: window.__GFRR_POSITION_GUIDANCE__?.riskBudget || 'Reduced',
     leveragePermission: window.__GFRR_POSITION_GUIDANCE__?.leveragePermission || 'Limited',
     concentrationPosture: window.__GFRR_POSITION_GUIDANCE__?.concentrationPosture || 'Controlled',
-    reRiskingPosture: window.__GFRR_POSITION_GUIDANCE__?.reRiskingPosture || 'Selective',
+    reRiskingPosture: window.__GFRR_POSITION_GUIDANCE__?.reRiskingPosture || '?????',
     executionPermissions: window.__GFRR_POSITION_GUIDANCE__?.executionPermissions || {}
   };
   window.__GFRR_ACTION_QUEUE__ = window.__GFRR_DECISION_MODEL__?.actionQueue || buildActionQueueFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
@@ -3359,7 +3365,7 @@ async function main() {
   if (metadata.realtimeOverlayEnabled && realtime?.values) {
     renderRealtimeStrip(realtime, metadata);
     $('runtime-badge').textContent = metadata.realtimeFallbackUsed
-      ? '快变量来自本地 fallback'
+    ? '?????????'
       : realtime.degradedMode
         ? '快变量部分降级 / 慢变量正常'
         : '快变量已实时覆盖';
