@@ -235,7 +235,7 @@ const MODULE_LABELS = {
   banking: '银行'
 };
 
-const DECISION_SCHEMA_VERSION = 'v26.0B-pr3';
+const DECISION_SCHEMA_VERSION = 'v26.0B-pr5';
 const DECISION_CANONICAL_FIELDS = Object.freeze([
   'strategyState',
   'riskMode',
@@ -244,6 +244,13 @@ const DECISION_CANONICAL_FIELDS = Object.freeze([
   'decisionStatement.posture',
   'decisionStatement.actionBias',
   'decisionStatement.condition',
+  'executionBinding.addRisk',
+  'executionBinding.addLeverage',
+  'executionBinding.increaseConcentration',
+  'executionBinding.tacticalReRisk',
+  'executionBinding.defensiveRebalance',
+  'executionBinding.bindingBias',
+  'executionBinding.bindingReason',
   'stateLabel',
   'stateReason',
   'stateScore',
@@ -1082,6 +1089,114 @@ function buildDecisionStatement(decisionModel = {}) {
   }
 }
 
+function buildExecutionBindingFallback() {
+  return {
+    addRisk: 'Restricted',
+    addLeverage: 'Blocked',
+    increaseConcentration: 'Restricted',
+    tacticalReRisk: 'Restricted',
+    defensiveRebalance: 'Allowed',
+    bindingBias: '防守优先',
+    bindingReason: '当前执行绑定层采用安全防守口径，优先限制风险扩张动作。'
+  };
+}
+
+function tightenPermission(current, ceiling) {
+  const permissionOrder = {
+    Blocked: 0,
+    Restricted: 1,
+    Limited: 2,
+    Allowed: 3
+  };
+  const currentRank = permissionOrder[current];
+  const ceilingRank = permissionOrder[ceiling];
+  if (!Number.isInteger(currentRank) || !Number.isInteger(ceilingRank)) {
+    return Number.isInteger(currentRank) ? current : (Number.isInteger(ceilingRank) ? ceiling : 'Restricted');
+  }
+  return currentRank <= ceilingRank ? current : ceiling;
+}
+
+function buildExecutionBinding(decisionModel = {}) {
+  try {
+    const strategyState = decisionModel?.strategyState || 'Caution';
+    const riskMode = decisionModel?.riskMode || 'Deterioration';
+    const positionGuidance = decisionModel?.positionGuidance || {};
+    const executionPermissions = positionGuidance?.executionPermissions;
+    const actionQueue = decisionModel?.actionQueue || {};
+    const decisionStatement = decisionModel?.decisionStatement || buildDecisionStatementFallback();
+    if (!executionPermissions || typeof executionPermissions !== 'object') {
+      return buildExecutionBindingFallback();
+    }
+
+    const binding = {
+      addRisk: executionPermissions.addRisk || 'Restricted',
+      addLeverage: executionPermissions.addLeverage || 'Blocked',
+      increaseConcentration: executionPermissions.increaseConcentration || 'Restricted',
+      tacticalReRisk: executionPermissions.tacticalReRisk || 'Restricted',
+      defensiveRebalance: executionPermissions.defensiveRebalance || 'Allowed'
+    };
+
+    const actionBias = String(decisionStatement.actionBias || '');
+    const posture = String(decisionStatement.posture || '');
+    const headline = String(decisionStatement.headline || '');
+    const unblockConditions = Array.isArray(actionQueue?.unblockConditions) ? actionQueue.unblockConditions : [];
+    const controlActions = Array.isArray(actionQueue?.controlActions) ? actionQueue.controlActions : [];
+
+    const defensiveActionBiases = ['先降风险，暂不加仓', '持稳观察', '控制加仓节奏'];
+    const defensivePostures = ['受控防守', '危机防御', '防守收缩'];
+    const defensiveHeadlinePhrases = ['不要主动加仓', '优先降低风险暴露', '保持防守', '暂不加仓'];
+
+    if (defensiveActionBiases.includes(actionBias)) {
+      binding.addRisk = tightenPermission(binding.addRisk, 'Restricted');
+      binding.addLeverage = tightenPermission(binding.addLeverage, 'Blocked');
+      binding.increaseConcentration = tightenPermission(binding.increaseConcentration, 'Restricted');
+      binding.tacticalReRisk = tightenPermission(binding.tacticalReRisk, 'Restricted');
+    }
+
+    if (defensivePostures.includes(posture) || strategyState === 'Crisis' || riskMode === 'Stress') {
+      binding.addRisk = tightenPermission(binding.addRisk, 'Restricted');
+      binding.addLeverage = tightenPermission(binding.addLeverage, 'Blocked');
+      binding.increaseConcentration = tightenPermission(binding.increaseConcentration, 'Restricted');
+      binding.tacticalReRisk = tightenPermission(binding.tacticalReRisk, 'Restricted');
+    }
+
+    if (defensiveHeadlinePhrases.some((phrase) => headline.includes(phrase))) {
+      binding.addRisk = tightenPermission(binding.addRisk, 'Restricted');
+    }
+
+    const highDefensive = defensivePostures.includes(posture) || strategyState === 'Crisis' || riskMode === 'Stress';
+    const observationBias = actionBias === '持稳观察' || actionBias === '控制加仓节奏';
+    const blockedExpansion = binding.addRisk === 'Blocked' || binding.addLeverage === 'Blocked';
+
+    let bindingBias = '受控恢复';
+    if (highDefensive) {
+      bindingBias = '防守优先';
+    } else if (blockedExpansion) {
+      bindingBias = '暂不扩张';
+    } else if (observationBias) {
+      bindingBias = '谨慎观察';
+    }
+
+    let bindingReason = '当前仍以观察为主，执行层仅保留防守再平衡与有限调整空间。';
+    if (highDefensive) {
+      bindingReason = '当前处于受控防守阶段，系统对加仓与杠杆动作做附加限制。';
+    } else if (defensiveHeadlinePhrases.some((phrase) => headline.includes(phrase))) {
+      bindingReason = '当前决策结论要求优先降风险，执行权限按防守口径收紧。';
+    } else if (unblockConditions.length || controlActions.length) {
+      bindingReason = '当前执行层按既有控制动作运行，仅保留有限的防守性调整空间。';
+    }
+
+    return {
+      ...binding,
+      bindingBias,
+      bindingReason
+    };
+  } catch (error) {
+    console.warn('Execution binding generation failed, using fallback.', error);
+    return buildExecutionBindingFallback();
+  }
+}
+
 function createDecisionFallback(data = {}, metadata = {}) {
   const fallbackLabel = metadata.realtimeUnavailable ? 'BASELINE / FALLBACK' : 'UNAVAILABLE / FALLBACK';
   const stateFallback = buildStrategyStateFallback(data, metadata);
@@ -1126,7 +1241,8 @@ function createDecisionFallback(data = {}, metadata = {}) {
     triggerMonitor: buildTriggerMonitorFallback(data, metadata, stateFallback.strategyState),
     invalidationRules: buildInvalidationRulesFallback(data, metadata, stateFallback.strategyState),
     historicalRegime: buildHistoricalRegimeFallback(data, metadata, stateFallback),
-    decisionStatement: buildDecisionStatementFallback()
+    decisionStatement: buildDecisionStatementFallback(),
+    executionBinding: buildExecutionBindingFallback()
   };
 }
 
@@ -2129,6 +2245,7 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
       historicalRegime
     };
     decisionModel.decisionStatement = buildDecisionStatement(decisionModel);
+    decisionModel.executionBinding = buildExecutionBinding(decisionModel);
     return decisionModel;
   } catch (error) {
     console.warn('Decision model generation failed, using fallback.', error);
@@ -3089,6 +3206,7 @@ async function main() {
   };
   window.__GFRR_ACTION_QUEUE__ = window.__GFRR_DECISION_MODEL__?.actionQueue || buildActionQueueFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_DECISION_STATEMENT__ = window.__GFRR_DECISION_MODEL__?.decisionStatement || buildDecisionStatementFallback();
+  window.__GFRR_EXECUTION_BINDING__ = window.__GFRR_DECISION_MODEL__?.executionBinding || buildExecutionBindingFallback();
   window.__GFRR_TRIGGER_MONITOR__ = window.__GFRR_DECISION_MODEL__?.triggerMonitor || buildTriggerMonitorFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_INVALIDATION_RULES__ = window.__GFRR_DECISION_MODEL__?.invalidationRules || buildInvalidationRulesFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_HISTORICAL_REGIME__ = window.__GFRR_DECISION_MODEL__?.historicalRegime || buildHistoricalRegimeFallback(data, metadata, window.__GFRR_DECISION_MODEL__);
