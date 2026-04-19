@@ -129,7 +129,7 @@ function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
     .filter(([, detail]) => detail?.ok && detail?.fallbackUsed)
     .slice(0, Math.max(0, 4 - issueLines.length))
     .forEach(([key, detail]) => {
-      issueLines.push(`${key}: fallback active via ${detail?.source || 'secondary source'}`);
+      issueLines.push(`${key}: 已通过${detail?.source || '次级来源'}启用回退`);
     });
 
   if (!issueLines.length) {
@@ -244,7 +244,7 @@ function buildHealthDashboardModel(runtimeState) {
     summary,
     healthScore,
       freshness: formatFreshnessLabel(metadata.realtimeFreshnessLevel || 'unavailable'),
-      ageLabel: Number.isFinite(metadata.realtimeAgeMinutes) ? `${metadata.realtimeAgeMinutes} min` : '--',
+      ageLabel: Number.isFinite(metadata.realtimeAgeMinutes) ? `${metadata.realtimeAgeMinutes} 分钟` : '--',
       realtimeSource: metadata.realtimeSource === 'remote'
         ? '远端'
         : metadata.realtimeSource === 'local-fallback'
@@ -799,13 +799,13 @@ function buildStrategyStateFallback(data = {}, metadata = {}) {
     stateLabel: `${fallbackState} · ${fallbackRiskMode}`,
     stateScore: fallbackState === 'Defensive' ? 72 : 55,
     stateReason: metadata.realtimeUnavailable
-      ? 'Strategy state fell back to a defensive stress baseline because realtime overlay is unavailable.'
-      : 'Strategy state engine fell back to a cautious deterioration baseline because state computation was unavailable.',
+      ? '由于实时叠加不可用，策略状态已回退到防守型压力基线。'
+      : '由于状态计算不可用，策略状态已回退到谨慎恶化基线。',
     stateDrivers: [{
       key: 'fallback',
-      label: 'Fallback guardrail',
+      label: '回退护栏',
       impact: fallbackState,
-      reason: 'Fallback mode preserves a safe, non-empty strategy state output.'
+      reason: '回退模式会保留一个安全且非空的策略状态输出。'
     }],
     stateMeta: fallbackMeta,
     stateTransitionBias: fallbackMeta.stateTransitionBias
@@ -835,8 +835,8 @@ function buildPositionGuidanceFallback(data = {}, metadata = {}, strategyState =
       tacticalReRisk: defensiveFallback ? 'Blocked' : 'Restricted'
     },
     adjustmentNotes: [
-      'Fallback position guidance is active.',
-      Number.isFinite(data?.score) ? `Reference risk score: ${data.score}.` : 'Reference risk score unavailable.'
+      '当前启用回退仓位指引。',
+      Number.isFinite(data?.score) ? `参考风险分数：${data.score}。` : '参考风险分数暂不可用。'
     ]
   };
 }
@@ -907,66 +907,66 @@ function buildActionQueueFallback(data = {}, metadata = {}, strategyState = 'Cau
   const queue = {
     priorityActions: defensiveFallback
       ? [
-          'Reduce broad risk exposure incrementally.',
-          'Raise cash buffer and avoid leverage expansion.',
-          'Only allow defensive rebalancing.'
+          '分步降低广泛风险暴露。',
+          '提高现金缓冲，并避免扩张杠杆。',
+          '仅允许防守性再平衡。'
         ]
       : [
-          'Keep new exposure selective and staged.',
-          'Rebalance toward target exposure bands.',
-          'Maintain base defensive buffers.'
+          '新增仓位保持选择性并分步执行。',
+          '向目标仓位区间执行再平衡。',
+          '维持基础防守缓冲。'
         ],
     watchItems: defensiveFallback
       ? [
-          'Watch for volatility re-acceleration.',
-          'Monitor credit and liquidity stress for escalation.',
-          'Track data quality before relaxing posture.'
+          '关注波动率是否再次加速上行。',
+          '关注信用与流动性压力是否升级。',
+          '在放松姿态前先跟踪数据质量。'
         ]
       : [
-          'Monitor regime stability before adding risk.',
-          'Watch for renewed volatility or spread widening.',
-          'Track driver persistence before expanding pace.'
+          '在加风险前先观察阶段稳定性。',
+          '关注波动率或利差是否再次走阔。',
+          '在加快节奏前先观察主导驱动是否持续。'
         ],
     blockedActions: defensiveFallback
       ? [
-          'Pause aggressive new risk deployment.',
-          'Avoid leverage expansion.',
-          'Avoid concentration increase under elevated regime.'
+          '暂停激进新增风险暴露。',
+          '避免扩张杠杆。',
+          '在高压阶段避免提高集中度。'
         ]
       : [
-          'Avoid oversized single-step exposure changes.',
-          'Avoid leverage expansion before confirmation.',
-          'Avoid concentration increase without confirmation.'
+          '避免单步过度调整仓位。',
+          '在信号确认前避免扩张杠杆。',
+          '在信号确认前避免提高集中度。'
         ],
     controlActions: defensiveFallback
       ? [
-          'Freeze aggressive new risk adds.',
-          'Block leverage expansion.',
-          'Keep defensive rebalancing only.',
-          'Prevent concentration increase.'
+          '冻结激进新增风险动作。',
+          '阻断杠杆扩张。',
+          '仅保留防守性再平衡。',
+          '防止集中度继续上升。'
         ]
       : [
-          'Cap gross exposure drift.',
-          'Keep adds selective and staged.',
-          'Prevent oversizing before confirmation.'
+          '限制总仓位漂移。',
+          '新增仓位保持选择性并分步执行。',
+          '在确认前避免超配。'
         ],
     unblockConditions: defensiveFallback
       ? [
-          'Re-open tactical re-risk after the 3-day trend turns flat or negative.',
-          'Re-open selective adds after resonance count drops below 3.',
-          'Re-open leverage only after volatility and liquidity stress normalize.',
-          'Re-open concentration only after critical alerts clear.'
+          '待近3日趋势转平或转负后，再恢复战术性再风险化。',
+          '待共振数量降到 3 以下后，再恢复选择性新增仓位。',
+          '待波动率与流动性压力恢复正常后，再恢复杠杆权限。',
+          '待关键预警清除后，再恢复集中度权限。'
         ]
       : [
-          'Allow broader adds after de-escalation bias improves.',
-          'Allow tactical re-risk after short-term deterioration stops.',
-          'Allow concentration increases only after alerts remain contained.'
+          '待缓和偏向改善后，再允许更广泛的新增仓位。',
+          '待短期恶化停止后，再允许战术性再风险化。',
+          '仅在预警持续受控后，才允许提高集中度。'
         ],
-    actionSummary: defensiveFallback ? 'Defensive fallback queue active.' : 'Cautious fallback queue active.',
-    escalationHint: defensiveFallback ? 'Escalate if stress indicators worsen or data quality degrades.' : 'Escalate if state score or stress signals worsen.',
+    actionSummary: defensiveFallback ? '当前启用防守型回退动作队列。' : '当前启用谨慎型回退动作队列。',
+    escalationHint: defensiveFallback ? '若压力指标恶化或数据质量下降，应立即升级处理。' : '若状态分数或压力信号恶化，应立即升级处理。',
     executionNotes: [
-      'Fallback action queue is active.',
-      Number.isFinite(data?.score) ? `Reference risk score: ${data.score}.` : 'Reference risk score unavailable.'
+      '当前启用回退动作队列。',
+      Number.isFinite(data?.score) ? `参考风险分数：${data.score}。` : '参考风险分数暂不可用。'
     ]
   };
   queue.items = flattenActionQueueItems(queue);
@@ -976,9 +976,9 @@ function buildActionQueueFallback(data = {}, metadata = {}, strategyState = 'Cau
 function buildTriggerMonitorFallback(data = {}, metadata = {}, strategyState = 'Caution') {
   return {
     upgradeTriggers: [
-      'Escalate if total risk score moves higher from the current baseline.',
-      'Escalate if short-term deterioration resumes over the next 3 days.',
-      'Escalate if warning intensity or data degradation increases.'
+      '若总风险分数继续高于当前基线，应升级处理。',
+      '若未来近3日短期恶化重新出现，应升级处理。',
+      '若预警强度或数据退化程度上升，应升级处理。'
     ],
     activeEscalationSignals: [
         metadata.realtimeUnavailable ? '实时不可用，当前仅使用基线监控。' : '当前未获得可靠的升级信号输出，请先按基线监控执行。',
@@ -993,16 +993,16 @@ function buildTriggerMonitorFallback(data = {}, metadata = {}, strategyState = '
 function buildInvalidationRulesFallback(data = {}, metadata = {}, strategyState = 'Caution') {
   return {
     invalidationSignals: [
-      'Treat the current posture as invalid if risk deterioration accelerates materially.',
-      'Treat the current posture as stale if data quality continues to degrade.',
-      'Treat the current posture as review-required if warning intensity rises.'
+      '若风险恶化明显加速，应视为当前判断失效。',
+      '若数据质量继续退化，应视为当前判断失去时效。',
+      '若预警强度上升，应重新审查当前判断。'
     ],
     resetConditions: [
-      'Allow de-escalation only after short-term deterioration stops.',
-      'Allow de-escalation only after risk breadth narrows.',
-      'Allow de-escalation only after data freshness normalizes.'
+      '仅在短期恶化停止后，才允许缓和。',
+      '仅在风险广度收窄后，才允许缓和。',
+      '仅在数据新鲜度恢复正常后，才允许缓和。'
     ],
-    invalidationSummary: `${strategyState} fallback invalidation rules active.`,
+    invalidationSummary: `${strategyState} 当前启用回退失效规则。`,
     deescalationBias: metadata.realtimeUnavailable ? 'low' : 'medium',
     signalConfidence: metadata.realtimeUnavailable ? 'low' : 'medium'
   };
@@ -1597,13 +1597,13 @@ function calculateStrategyStateEngine(data, history, metadata, healthDashboard) 
   const stateDrivers = [
     {
       key: 'total-risk',
-      label: 'Total risk score',
+      label: '总风险分数',
       impact: strategyState,
-      reason: `Current total risk score is ${stateMeta.totalRiskScore ?? '--'}.`
+      reason: `当前总风险分数为 ${stateMeta.totalRiskScore ?? '--'}。`
     },
     {
       key: 'three-day-speed',
-      label: '3-day speed',
+      label: '近3日变化速度',
       impact: riskMode === 'Repair'
         ? 'repairing'
         : stateMeta.recent3dDelta > 0
@@ -1611,27 +1611,27 @@ function calculateStrategyStateEngine(data, history, metadata, healthDashboard) 
           : stateMeta.recent3dDelta < 0
             ? 'easing'
             : 'flat',
-      reason: `Recent 3-day change is ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta} (${stateMeta.recent3dSpeed}/day).`
+      reason: `近3日变化为 ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta}（日均 ${stateMeta.recent3dSpeed}）。`
     },
     {
       key: 'module-resonance',
-      label: 'Module resonance',
+      label: '模块共振',
       impact: riskMode === 'Stress' ? 'stress' : stateMeta.resonanceCount >= 3 ? 'broad' : stateMeta.resonanceCount >= 2 ? 'narrow' : 'contained',
-      reason: `${stateMeta.resonanceCount} modules are at or above 70, with ${stateMeta.severeResonanceCount} at or above 80; stress pressure count ${stateMeta.stressPressureCount || 0}.`
+      reason: `${stateMeta.resonanceCount} 个模块达到 70 以上，其中 ${stateMeta.severeResonanceCount} 个达到 80 以上；高压计数为 ${stateMeta.stressPressureCount || 0}。`
     },
     {
       key: 'extreme-thresholds',
-      label: 'Extreme thresholds',
+      label: '极端阈值',
       impact: stateMeta.extremeThresholdCount > 0 ? 'triggered' : 'clear',
       reason: stateMeta.extremeThresholdCount
-        ? `Triggered: ${stateMeta.extremeThresholds.join(', ')}.`
-        : 'No extreme thresholds are currently triggered.'
+        ? `当前已触发：${stateMeta.extremeThresholds.join('、')}。`
+        : '当前没有极端阈值被触发。'
     },
     {
       key: 'high-risk-streak',
-      label: 'High-risk persistence',
+      label: '高风险持续性',
       impact: stateMeta.highRiskStreakDays >= 3 ? 'persistent' : 'not-persistent',
-      reason: `High-risk streak: ${stateMeta.highRiskStreakDays} day(s); elevated-risk streak: ${stateMeta.elevatedRiskStreakDays} day(s).`
+      reason: `高风险持续 ${stateMeta.highRiskStreakDays} 天；高位风险持续 ${stateMeta.elevatedRiskStreakDays} 天。`
     },
     {
       key: 'mode-layer',
@@ -1691,10 +1691,10 @@ function buildDominantDrivers(data, metadata) {
   if (metadata.realtimeFallbackUsed) {
     moduleEntries.push({
       key: 'realtime-fallback',
-      label: 'Realtime fallback',
+      label: '实时回退',
       score: metadata.realtimeHealthScore ?? null,
       trend: 0,
-      reason: 'Realtime fallback/local mode is active and should cap decision confidence.'
+      reason: '当前已启用实时回退 / 本地模式，决策置信度应受限。'
     });
   }
 
@@ -1799,60 +1799,60 @@ function buildActionQueueEngine(data, metadata, decisionState, positionGuidance,
     const byState = {
       'Risk-On': {
         priority: [
-          'Add new risk exposure only in staged increments.',
-          'Keep total exposure inside the current target band.',
-          'Rebalance without chasing short-term moves.'
+          '新增风险暴露只允许分步进行。',
+          '将总仓位控制在当前目标区间内。',
+          '再平衡时不要追逐短期波动。'
         ],
         blocked: [
-          'Avoid leverage expansion beyond baseline.',
-          'Avoid concentration increase without confirmation.'
+          '避免在基线之上继续扩张杠杆。',
+          '在确认信号前避免提高集中度。'
         ]
       },
       Balanced: {
         priority: [
-          'Keep exposure pacing controlled and selective.',
-          'Rebalance toward the middle of the target band.',
-          'Maintain baseline defensive buffers.'
+          '控制仓位节奏，保持选择性调整。',
+          '向目标区间中部执行再平衡。',
+          '维持基线防守缓冲。'
         ],
         blocked: [
-          'Avoid oversized single-step exposure changes.',
-          'Avoid leverage expansion before confirmation.'
+          '避免单步过度调整仓位。',
+          '在信号确认前避免扩张杠杆。'
         ]
       },
       Caution: {
         priority: [
-          'Reduce broad risk exposure incrementally.',
-          'Keep new exposure highly selective and small.',
-          'Raise cash buffer toward the guidance band.'
+          '分步降低广泛风险暴露。',
+          '新增仓位保持高度选择性且小规模。',
+          '将现金缓冲提高到建议区间。'
         ],
         blocked: [
-          'Pause aggressive new risk deployment.',
-          'Avoid leverage expansion.',
-          'Avoid concentration increase under elevated regime.'
+          '暂停激进新增风险暴露。',
+          '避免扩张杠杆。',
+          '在高压阶段避免提高集中度。'
         ]
       },
       Defensive: {
         priority: [
-          'Reduce broad risk exposure incrementally.',
-          'Raise cash buffer and keep exposure inside the lower band.',
-          'Only allow defensive rebalancing.'
+          '分步降低广泛风险暴露。',
+          '提高现金缓冲，并将仓位压在区间下沿。',
+          '仅允许防守性再平衡。'
         ],
         blocked: [
-          'Pause aggressive new risk deployment.',
-          'Avoid leverage expansion.',
-          'Avoid concentration increase under elevated regime.'
+          '暂停激进新增风险暴露。',
+          '避免扩张杠杆。',
+          '在高压阶段避免提高集中度。'
         ]
       },
       Crisis: {
         priority: [
-          'Prioritize capital preservation and liquidity restoration.',
-          'Cut broad risk exposure toward minimum levels.',
-          'Keep only defensive rebalancing and hedge maintenance.'
+          '优先保全资本并恢复流动性。',
+          '将广泛风险暴露压向最低水平。',
+          '仅保留防守性再平衡与对冲维护。'
         ],
         blocked: [
-          'Suspend new high-risk exposure.',
-          'Avoid leverage use or expansion.',
-          'Avoid concentration increase under crisis regime.'
+          '暂停新增高风险暴露。',
+          '避免使用或扩张杠杆。',
+          '在危机阶段避免提高集中度。'
         ]
       }
     };
@@ -1861,64 +1861,64 @@ function buildActionQueueEngine(data, metadata, decisionState, positionGuidance,
     blockedActions.push(...(byState[strategyState]?.blocked || byState.Caution.blocked));
 
     if ((stateMeta.extremeThresholdCount || 0) >= 2) {
-      priorityActions.push('Tighten execution pace until extreme thresholds clear.');
-      blockedActions.push('Avoid discretionary risk expansion while extreme thresholds remain active.');
+      priorityActions.push('在极端阈值清除前，继续收紧执行节奏。');
+      blockedActions.push('在极端阈值仍然有效时，避免主观扩大风险。');
     }
     if ((stateMeta.recent3dDelta || 0) >= 8) {
-      priorityActions.push('Accelerate de-risking cadence while short-term stress is rising.');
-      watchItems.push('Watch for further 3-day risk acceleration.');
+      priorityActions.push('在短期压力上升阶段，加快去风险节奏。');
+      watchItems.push('关注近3日风险是否继续加速。');
     } else if ((stateMeta.recent3dDelta || 0) <= -8) {
-      watchItems.push('Watch whether recent easing persists before relaxing posture.');
+      watchItems.push('在放松姿态前，先观察近期缓和是否持续。');
     }
     if ((stateMeta.highRiskStreakDays || 0) >= 5) {
-      priorityActions.push('Maintain defensive buffers until the high-risk streak breaks.');
+      priorityActions.push('在高风险持续阶段结束前，维持防守缓冲。');
     }
     if (metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly || healthLevel === 'Baseline Only' || healthLevel === 'Stale') {
-      watchItems.push('Monitor data quality and freshness before easing controls.');
-      blockedActions.push('Avoid expanding risk using degraded or fallback data only.');
+      watchItems.push('在放松控制前，先确认数据质量与新鲜度。');
+      blockedActions.push('在仅有降级或回退数据时，避免扩大风险。');
     }
     if ((positionGuidance?.newExposurePolicy || '').toLowerCase().includes('pause') || strategyState === 'Crisis') {
-      blockedActions.push('Pause broad new risk deployment.');
+      blockedActions.push('暂停更广泛的新增风险暴露。');
     }
     if ((positionGuidance?.leveragePolicy || '').toLowerCase().includes('no leverage')) {
-      blockedActions.push('Avoid leverage expansion.');
+      blockedActions.push('避免扩张杠杆。');
     }
 
     topDrivers.forEach((driver) => {
-      watchItems.push(`Monitor ${driver} stress for escalation or relief.`);
+      watchItems.push(`关注 ${driver} 压力是否升级或缓和。`);
     });
 
     criticalAlerts.slice(0, 2).forEach((alert) => {
-      priorityActions.push(`Respond to ${alert.title || 'critical alert'} immediately.`);
+      priorityActions.push(`立即响应${alert.title || '关键预警'}。`);
     });
     yellowAlerts.slice(0, 2).forEach((alert) => {
-      watchItems.push(`Watch ${alert.title || 'warning signal'} for deterioration.`);
+      watchItems.push(`关注${alert.title || '预警信号'}是否继续恶化。`);
     });
 
     (Array.isArray(triggerPanel.watchlist) ? triggerPanel.watchlist : []).slice(0, 3).forEach((item) => {
-      watchItems.push(`Watch ${item}.`);
+      watchItems.push(`关注${item}。`);
     });
     (Array.isArray(triggerPanel.critical) ? triggerPanel.critical : []).slice(0, 2).forEach((item) => {
-      watchItems.push(`Track critical trigger ${item}.`);
+      watchItems.push(`跟踪关键触发项：${item}。`);
     });
 
     if (Array.isArray(riskControl.hardThresholds) && riskControl.hardThresholds.length) {
-      watchItems.push('Monitor hard thresholds for escalation.');
+      watchItems.push('关注硬阈值是否触发升级。');
     }
 
     const queue = {
       priorityActions: uniqTexts(priorityActions).slice(0, 6),
       watchItems: uniqTexts(watchItems).slice(0, 6),
       blockedActions: uniqTexts(blockedActions).slice(0, 6),
-      actionSummary: `${strategyState} queue aligned with ${positionGuidance?.totalExposureBand || 'current'} exposure guidance.`,
+      actionSummary: `${strategyState} 动作队列已对齐 ${positionGuidance?.totalExposureBand || '当前'} 仓位指引。`,
       escalationHint: (stateMeta.extremeThresholdCount || 0) > 0
-        ? 'Escalate immediately if extreme thresholds widen or critical alerts increase.'
-        : 'Escalate if volatility, spread stress, or data quality worsens.',
+        ? '若极端阈值扩大或关键预警增加，应立即升级处理。'
+        : '若波动、利差压力或数据质量恶化，应升级处理。',
       executionNotes: uniqTexts([
-        `State score ${stateScore}; exposure band ${positionGuidance?.totalExposureBand || '--'}.`,
-        `Cash guidance: ${positionGuidance?.cashGuidance || '--'}.`,
-        topDrivers.length ? `Driver focus: ${topDrivers.join(', ')}.` : '',
-        healthLevel ? `Health: ${healthLevel}.` : ''
+        `状态分数 ${stateScore}；仓位区间 ${positionGuidance?.totalExposureBand || '--'}。`,
+        `现金指引：${positionGuidance?.cashGuidance || '--'}。`,
+        topDrivers.length ? `关注驱动：${topDrivers.join('、')}。` : '',
+        healthLevel ? `健康状态：${healthLevel}。` : ''
       ]).slice(0, 4)
     };
     queue.items = flattenActionQueueItems(queue);
@@ -1952,70 +1952,70 @@ function buildActionQueueUpgradeLayer(data, metadata, decisionState, positionGui
   const dominantLabels = Array.isArray(dominantDrivers) ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean) : [];
   const resetConditions = Array.isArray(invalidationRules?.resetConditions) ? invalidationRules.resetConditions : [];
 
-  const controlActions = uniqTexts([
+    const controlActions = uniqTexts([
     executionPermissions.addRisk === 'Blocked' || executionPermissions.addRisk === 'Restricted'
-      ? 'Freeze aggressive new risk adds.'
+      ? '冻结激进新增风险动作。'
       : '',
     executionPermissions.addLeverage === 'Blocked'
-      ? 'Block leverage expansion.'
+      ? '阻断杠杆扩张。'
       : executionPermissions.addLeverage === 'Limited' || executionPermissions.addLeverage === 'Restricted'
-        ? 'Cap leverage usage to defensive sizing only.'
+        ? '将杠杆使用限制在防守仓位范围内。'
         : '',
     executionPermissions.increaseConcentration === 'Blocked'
-      ? 'Prevent concentration increase.'
+      ? '防止集中度继续上升。'
       : executionPermissions.increaseConcentration === 'Restricted'
-        ? 'Keep concentration increases on hold pending breadth improvement.'
+        ? '在广度改善前，暂停提高集中度。'
         : '',
     executionPermissions.defensiveRebalance === 'Allowed'
-      ? 'Keep defensive rebalancing only.'
+      ? '仅保留防守性再平衡。'
       : '',
     riskBudget === 'Minimal' || riskBudget === 'Tight'
-      ? 'Cap gross exposure drift.'
+      ? '限制总仓位漂移。'
       : '',
     strategyState === 'Defensive' || strategyState === 'Crisis'
-      ? 'Reduce concentration in elevated stress buckets.'
+      ? '降低高压桶内的集中度。'
       : '',
     riskMode === 'Stress'
-      ? 'Hold elevated controls until stress signals cool.'
+      ? '在压力信号缓和前，维持高强度控制。'
       : riskMode === 'Deterioration'
-        ? 'Tighten exposure adds while breadth is worsening.'
+        ? '在广度恶化阶段收紧新增仓位。'
         : '',
     metadata.realtimeUnavailable || metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly
-      ? 'Do not relax controls while data quality is degraded.'
+      ? '在数据质量退化期间不要放松控制。'
       : '',
-    dominantLabels.length ? `Keep controls focused on ${dominantLabels.join(' and ')} stress.` : ''
+    dominantLabels.length ? `继续将控制重点放在${dominantLabels.join('与')}压力上。` : ''
   ]).slice(0, 6);
 
   const unblockConditions = uniqTexts([
     executionPermissions.tacticalReRisk !== 'Allowed'
-      ? 'Re-open tactical re-risk after the 3-day trend turns flat or negative.'
+      ? '待近3日趋势转平或转负后，再恢复战术性再风险化。'
       : '',
     resonanceCount >= 3 || executionPermissions.addRisk !== 'Allowed'
-      ? 'Re-open selective adds after resonance count drops below 3.'
+      ? '待共振数量降到 3 以下后，再恢复选择性新增仓位。'
       : '',
     executionPermissions.addLeverage !== 'Allowed'
-      ? 'Re-open leverage only after volatility and liquidity stress normalize.'
+      ? '待波动率与流动性压力恢复正常后，再恢复杠杆权限。'
       : '',
     executionPermissions.increaseConcentration !== 'Allowed'
-      ? 'Re-open concentration only after critical alerts clear.'
+      ? '待关键预警清除后，再恢复集中度权限。'
       : '',
     deescalationBias === 'low' || riskMode === 'Stress' || strategyState === 'Crisis'
-      ? 'Re-open broader risk adds only after de-escalation bias improves.'
+      ? '仅在缓和偏向改善后，才恢复更广泛的新增风险。'
       : '',
     riskMode === 'Repair' && (repairSignal === 'Moderate' || repairSignal === 'Strong')
-      ? 'Re-open selective adds after repair holds for another full review cycle.'
+      ? '待修复状态再持续一个完整复核周期后，再恢复选择性新增仓位。'
       : '',
     escalationLevel === 'high' || escalationLevel === 'severe'
-      ? 'Do not relax controls until escalation signals stop widening.'
+      ? '在升级信号停止扩散前，不要放松控制。'
       : '',
     extremeThresholdCount > 0
-      ? 'Do not relax controls until extreme thresholds clear.'
+      ? '在极端阈值清除前，不要放松控制。'
       : '',
     criticalAlertCount > 0
-      ? 'Do not relax controls until critical alerts stop increasing.'
+      ? '在关键预警停止增加前，不要放松控制。'
       : '',
     reRiskingPosture === 'None'
-      ? 'Re-open tactical re-risk only after broader reset conditions are met.'
+      ? '仅在更广泛的重置条件满足后，才恢复战术性再风险化。'
       : '',
     ...resetConditions.slice(0, 3)
   ]).slice(0, 6);
@@ -2040,27 +2040,27 @@ function buildTriggerMonitorEngine(data, metadata, decisionState, positionGuidan
     const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色').length;
 
     const upgradeTriggers = uniqTexts([
-      'Upgrade if state score rises by 8 points or more from the current regime.',
-      'Upgrade if the 3-day change turns positive and exceeds +6.',
-      'Upgrade if resonance expands to 4 or more modules above 70.',
-      'Upgrade if severe resonance rises to 3 or more modules above 80.',
-      'Upgrade if red alerts increase or new critical alerts appear.',
-      'Upgrade if liquidity / volatility / funding stress re-accelerates.',
-      metadata.realtimeCacheOnly ? 'Upgrade if cache-only mode persists into the next cycle.' : '',
-      metadata.realtimeFreshnessLevel === 'stale' || metadata.realtimeUnavailable ? 'Upgrade if stale / baseline-only data persists without recovery.' : ''
+      '若状态分数较当前阶段再上升 8 分或以上，应升级处理。',
+      '若近3日变化转正并超过 +6，应升级处理。',
+      '若共振扩大到 4 个或以上模块超过 70，应升级处理。',
+      '若严重共振升至 3 个或以上模块超过 80，应升级处理。',
+      '若红色预警增加或出现新的关键预警，应升级处理。',
+      '若流动性 / 波动率 / 融资压力重新加速，应升级处理。',
+      metadata.realtimeCacheOnly ? '若缓存模式持续到下一轮，应升级处理。' : '',
+      metadata.realtimeFreshnessLevel === 'stale' || metadata.realtimeUnavailable ? '若陈旧 / 仅基线数据持续且未恢复，应升级处理。' : ''
     ]).slice(0, 7);
 
     const activeEscalationSignals = uniqTexts([
-      stateScore >= 85 ? `State score ${stateScore} is already near crisis escalation.` : '',
-      (stateMeta.recent3dDelta || 0) >= 6 ? `3-day deterioration is active at +${stateMeta.recent3dDelta}.` : '',
-      (stateMeta.resonanceCount || 0) >= 4 ? `Broad resonance active: ${stateMeta.resonanceCount} modules above 70.` : '',
-      (stateMeta.severeResonanceCount || 0) >= 2 ? `Severe resonance active: ${stateMeta.severeResonanceCount} modules above 80.` : '',
-      criticalAlerts > 0 ? `${criticalAlerts} red alert(s) active.` : '',
-      metadata.realtimeCacheOnly ? 'Cache-only mode is active.' : '',
+      stateScore >= 85 ? `状态分数 ${stateScore} 已接近危机升级区间。` : '',
+      (stateMeta.recent3dDelta || 0) >= 6 ? `近3日恶化正在发生，当前为 +${stateMeta.recent3dDelta}。` : '',
+      (stateMeta.resonanceCount || 0) >= 4 ? `广泛共振已激活：${stateMeta.resonanceCount} 个模块超过 70。` : '',
+      (stateMeta.severeResonanceCount || 0) >= 2 ? `严重共振已激活：${stateMeta.severeResonanceCount} 个模块超过 80。` : '',
+      criticalAlerts > 0 ? `当前有 ${criticalAlerts} 个红色预警。` : '',
+      metadata.realtimeCacheOnly ? '当前处于缓存模式。' : '',
       metadata.realtimeUnavailable ? '实时不可用，当前仅使用基线。' : '',
-      metadata.realtimeFreshnessLevel === 'stale' ? 'Realtime freshness is stale.' : '',
-      dominantLabels.length ? `Dominant stress drivers: ${dominantLabels.join(', ')}.` : '',
-      Array.isArray(triggerPanel.critical) && triggerPanel.critical.length ? `Critical trigger panel active: ${triggerPanel.critical.slice(0, 2).join(', ')}.` : ''
+      metadata.realtimeFreshnessLevel === 'stale' ? '实时数据新鲜度已进入陈旧状态。' : '',
+      dominantLabels.length ? `主导压力来源：${dominantLabels.join('、')}。` : '',
+      Array.isArray(triggerPanel.critical) && triggerPanel.critical.length ? `关键触发面板已激活：${triggerPanel.critical.slice(0, 2).join('、')}。` : ''
     ]).slice(0, 6);
 
     let escalationLevel = 'medium';
@@ -2070,7 +2070,7 @@ function buildTriggerMonitorEngine(data, metadata, decisionState, positionGuidan
     return {
       upgradeTriggers,
       activeEscalationSignals,
-      triggerSummary: `${strategyState} trigger monitor watching score, resonance, alerts, and data-quality escalation paths.`,
+      triggerSummary: `${strategyState} 触发监控当前重点观察分数、共振、预警与数据质量的升级路径。`,
       escalationLevel,
       signalConfidence: metadata.realtimeUnavailable ? 'medium' : metadata.realtimeCacheOnly ? 'medium' : 'high'
     };
@@ -2089,21 +2089,21 @@ function buildInvalidationRulesEngine(data, metadata, decisionState, positionGui
     const dominantLabels = Array.isArray(dominantDrivers) ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean) : [];
 
     const invalidationSignals = uniqTexts([
-      'Invalidate the current defensive read if total risk score rises another 8 points from here.',
-      'Invalidate the current read if the 3-day trend stops easing and turns back above +3.',
-      'Invalidate the current read if resonance breadth expands again.',
-      'Invalidate the current read if red alerts increase.',
-      metadata.realtimeCacheOnly ? 'Invalidate the current read if cache-only mode persists and stress signals stay elevated.' : '',
-      metadata.realtimeUnavailable ? 'Invalidate the current read if baseline-only mode persists while alerts worsen.' : ''
+      '若总风险分数在当前基础上再上升 8 分，应视为当前判断失效。',
+      '若近3日趋势停止缓和并重新升到 +3 以上，应视为当前判断失效。',
+      '若共振广度再次扩大，应视为当前判断失效。',
+      '若红色预警增加，应视为当前判断失效。',
+      metadata.realtimeCacheOnly ? '若缓存模式持续且压力信号仍处高位，应视为当前判断失效。' : '',
+      metadata.realtimeUnavailable ? '若仅基线模式持续且预警继续恶化，应视为当前判断失效。' : ''
     ]).slice(0, 6);
 
     const resetConditions = uniqTexts([
-      'Allow de-escalation after total risk score falls and holds lower.',
-      'Allow de-escalation after the 3-day trend turns flat or negative.',
-      'Allow de-escalation after resonance count drops below 3.',
-      'Allow de-escalation after severe resonance eases below 2.',
-      'Allow de-escalation after red alerts clear and data freshness normalizes.',
-      ...(Array.isArray(riskControl.resetThresholds) ? riskControl.resetThresholds.slice(0, 3).map((rule) => `Reset reference: ${rule}`) : [])
+      '待总风险分数回落并维持在更低区间后，才允许缓和。',
+      '待近3日趋势转平或转负后，才允许缓和。',
+      '待共振数量降到 3 以下后，才允许缓和。',
+      '待严重共振降到 2 以下后，才允许缓和。',
+      '待红色预警清除且数据新鲜度恢复正常后，才允许缓和。',
+      ...(Array.isArray(riskControl.resetThresholds) ? riskControl.resetThresholds.slice(0, 3).map((rule) => `重置参考：${rule}`) : [])
     ]).slice(0, 6);
 
     let deescalationBias = 'medium';
@@ -2116,7 +2116,7 @@ function buildInvalidationRulesEngine(data, metadata, decisionState, positionGui
     return {
       invalidationSignals,
       resetConditions,
-      invalidationSummary: `${strategyState} invalidation rules require lower score pressure, narrower resonance, cleaner alerts, and better data quality before easing.`,
+      invalidationSummary: `${strategyState} 当前失效规则要求分数压力回落、共振收窄、预警净化且数据质量改善后，才允许缓和。`,
       deescalationBias,
       signalConfidence: metadata.realtimeUnavailable ? 'medium' : metadata.realtimeCacheOnly ? 'medium' : 'high'
     };
@@ -2192,19 +2192,19 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
         regimeLabel: regimeConfig.tightening2018.regimeLabel,
         evaluate: ({ addMatch, addMismatch }) => {
           const t = regimeConfig.tightening2018.thresholds;
-          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `State score ${stateScore} sits in a tightening-shock range rather than a full panic range.`);
-          addMatch(recent3dDelta >= t.recent3dDelta.min && recent3dDelta <= t.recent3dDelta.max, t.recent3dDelta.points, `3-day change of ${recent3dDelta >= 0 ? '+' : ''}${recent3dDelta} points is consistent with a tightening-led stress build.`);
-          addMatch(resonanceCount >= t.resonanceCount.min && resonanceCount <= t.resonanceCount.max, t.resonanceCount.points, `Resonance is elevated but not yet fully systemic at ${resonanceCount} modules above 70.`);
-          addMatch(liquidity >= t.liquidity.min, t.liquidity.points, `Liquidity pressure is elevated at ${liquidity}.`);
-          addMatch(creditPressure >= t.creditPressure.min, t.creditPressure.points, `Credit / balance-sheet pressure is visible at ${creditPressure}.`);
-          addMatch(hasDriver('liquidity', 'debt', 'banking'), t.tighteningDriversPoints, 'Dominant drivers include tightening-sensitive channels.');
-          addMatch(t.escalationLevels.values.includes(escalationLevel), t.escalationLevels.points, `Escalation level ${escalationLevel} fits a tightening shock better than a collapse.`);
-          addMismatch(energy >= t.energyGeopoliticalMismatch.energyMin && geopolitical >= t.energyGeopoliticalMismatch.geopoliticalMin, t.energyGeopoliticalMismatch.points, 'Energy and geopolitical stress are too dominant for a clean tightening-only analogue.');
-          addMismatch(severeResonanceCount >= t.broadStressMismatch.severeResonanceMin || stateScore >= t.broadStressMismatch.stateScoreMin, t.broadStressMismatch.points, 'Current stress is broader than a typical 2018 Q4 tightening shock.');
+          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `状态分数 ${stateScore} 更像紧缩冲击区间，而不是全面恐慌区间。`);
+          addMatch(recent3dDelta >= t.recent3dDelta.min && recent3dDelta <= t.recent3dDelta.max, t.recent3dDelta.points, `近3日变化 ${recent3dDelta >= 0 ? '+' : ''}${recent3dDelta} 点，符合紧缩驱动压力累积特征。`);
+          addMatch(resonanceCount >= t.resonanceCount.min && resonanceCount <= t.resonanceCount.max, t.resonanceCount.points, `共振水平已抬升，但 ${resonanceCount} 个超过 70 的模块尚未全面系统化。`);
+          addMatch(liquidity >= t.liquidity.min, t.liquidity.points, `流动性压力已抬升至 ${liquidity}。`);
+          addMatch(creditPressure >= t.creditPressure.min, t.creditPressure.points, `信用 / 资产负债表压力已上升至 ${creditPressure}。`);
+          addMatch(hasDriver('liquidity', 'debt', 'banking'), t.tighteningDriversPoints, '主导压力来源包含对紧缩敏感的渠道。');
+          addMatch(t.escalationLevels.values.includes(escalationLevel), t.escalationLevels.points, `升级等级 ${escalationLevel} 更像紧缩冲击，而不是全面崩裂。`);
+          addMismatch(energy >= t.energyGeopoliticalMismatch.energyMin && geopolitical >= t.energyGeopoliticalMismatch.geopoliticalMin, t.energyGeopoliticalMismatch.points, '能源与地缘压力过于主导，不完全像纯粹的紧缩型相似阶段。');
+          addMismatch(severeResonanceCount >= t.broadStressMismatch.severeResonanceMin || stateScore >= t.broadStressMismatch.stateScoreMin, t.broadStressMismatch.points, '当前压力广度已超过典型的 2018 年四季度紧缩冲击。');
         },
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
-          const lead = matchedFeatures[0] || 'Tightening-style stress features are present.';
-          const caveat = mismatchFeatures[0] || 'This still looks more like a drawdown regime than a disorderly seizure.';
+          const lead = matchedFeatures[0] || '当前已出现紧缩驱动压力特征。';
+          const caveat = mismatchFeatures[0] || '当前仍更像回撤阶段，而不是失序性流动性崩裂。';
           return `当前更接近“紧缩驱动回撤”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
         }
       }),
@@ -2213,20 +2213,20 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
         regimeLabel: regimeConfig.liquidity2020.regimeLabel,
         evaluate: ({ addMatch, addMismatch }) => {
           const t = regimeConfig.liquidity2020.thresholds;
-          addMatch(stateScore >= t.stateScore.min, t.stateScore.points, `State score ${stateScore} is in a crisis-adjacent range.`);
-          addMatch(recent3dDelta >= t.recent3dDelta.min, t.recent3dDelta.points, `3-day deterioration of +${recent3dDelta} is fast enough to resemble a liquidity break.`);
-          addMatch(resonanceCount >= t.resonanceCount.min, t.resonanceCount.points, `Stress is broad across ${resonanceCount} modules.`);
-          addMatch(severeResonanceCount >= t.severeResonanceCount.min, t.severeResonanceCount.points, `Severe resonance at ${severeResonanceCount} modules resembles systemic spread.`);
-          addMatch(liquidity >= t.liquidity.min, t.liquidity.points, `Liquidity pressure is elevated at ${liquidity}.`);
-          addMatch(creditPressure >= t.creditPressure.min, t.creditPressure.points, `Credit / banking pressure is elevated at ${creditPressure}.`);
-          addMatch(t.escalationLevels.values.includes(escalationLevel), t.escalationLevels.points, `Escalation level ${escalationLevel} fits crisis spillover.`);
-          addMatch(criticalAlertCount > 0 || extremeThresholdCount >= t.alertsOrExtreme.extremeMin, t.alertsOrExtreme.points, 'Alerts or extreme thresholds are already active.');
-          addMismatch(inflationPressure >= t.inflationLiquidityMismatch.inflationMin && liquidity <= t.inflationLiquidityMismatch.liquidityMax, t.inflationLiquidityMismatch.points, 'Inflation / energy pressure is more dominant than a pure liquidity seizure.');
-          addMismatch(deescalationBias === 'improving', t.improvingMismatchPoints, 'The current backdrop is easing faster than an early-2020 style break.');
+          addMatch(stateScore >= t.stateScore.min, t.stateScore.points, `状态分数 ${stateScore} 已进入危机邻近区间。`);
+          addMatch(recent3dDelta >= t.recent3dDelta.min, t.recent3dDelta.points, `近3日恶化达到 +${recent3dDelta}，速度已接近流动性断裂特征。`);
+          addMatch(resonanceCount >= t.resonanceCount.min, t.resonanceCount.points, `压力已扩散到 ${resonanceCount} 个模块。`);
+          addMatch(severeResonanceCount >= t.severeResonanceCount.min, t.severeResonanceCount.points, `${severeResonanceCount} 个模块出现严重共振，接近系统性扩散特征。`);
+          addMatch(liquidity >= t.liquidity.min, t.liquidity.points, `流动性压力已抬升至 ${liquidity}。`);
+          addMatch(creditPressure >= t.creditPressure.min, t.creditPressure.points, `信用 / 银行压力已抬升至 ${creditPressure}。`);
+          addMatch(t.escalationLevels.values.includes(escalationLevel), t.escalationLevels.points, `升级等级 ${escalationLevel} 符合危机扩散特征。`);
+          addMatch(criticalAlertCount > 0 || extremeThresholdCount >= t.alertsOrExtreme.extremeMin, t.alertsOrExtreme.points, '当前已出现预警或极端阈值触发。');
+          addMismatch(inflationPressure >= t.inflationLiquidityMismatch.inflationMin && liquidity <= t.inflationLiquidityMismatch.liquidityMax, t.inflationLiquidityMismatch.points, '当前更像通胀 / 能源主导，而不是纯粹的流动性挤兑。');
+          addMismatch(deescalationBias === 'improving', t.improvingMismatchPoints, '当前环境缓和速度快于典型的 2020 年初断裂阶段。');
         },
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
-          const lead = matchedFeatures[0] || 'Liquidity crisis features are partially present.';
-          const caveat = mismatchFeatures[0] || 'Current conditions still stop short of a full seizure template.';
+          const lead = matchedFeatures[0] || '当前已出现部分流动性危机特征。';
+          const caveat = mismatchFeatures[0] || '当前环境仍未完全达到全面挤兑模板。';
           return `当前更接近“早期流动性危机”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
         }
       }),
@@ -2235,19 +2235,19 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
         regimeLabel: regimeConfig.inflation2022.regimeLabel,
         evaluate: ({ addMatch, addMismatch }) => {
           const t = regimeConfig.inflation2022.thresholds;
-          addMatch(energy >= t.energy.min, t.energy.points, `Energy stress is elevated at ${energy}.`);
-          addMatch(inflation >= t.inflation.min, t.inflation.points, `Inflation pressure remains elevated at ${inflation}.`);
-          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `State score ${stateScore} fits a persistent but non-panic suppression regime.`);
-          addMatch(t.strategyStates.values.includes(decisionState?.strategyState), t.strategyStates.points, `Strategy state ${decisionState?.strategyState || 'Caution'} fits a prolonged suppression regime.`);
-          addMatch(liquidity >= t.liquidity.min && liquidity <= t.liquidity.max, t.liquidity.points, `Liquidity is restrictive but not in full crisis territory at ${liquidity}.`);
-          addMatch(hasDriver('energy', 'inflation'), t.inflationDriversPoints, 'Dominant drivers are inflation / energy led.');
-          addMatch(highRiskStreakDays >= t.persistence.highRiskMin || elevatedRiskStreakDays >= t.persistence.elevatedRiskMin, t.persistence.points, 'Stress persistence resembles a grind rather than a one-day break.');
-          addMismatch(severeResonanceCount >= t.broadStressMismatch.severeResonanceMin || criticalAlertCount >= t.broadStressMismatch.criticalAlertMin, t.broadStressMismatch.points, 'Current stress is broader than a typical inflation-hike suppression regime.');
-          addMismatch(liquidity >= t.acuteLiquidityMismatch.liquidityMin && recent3dDelta >= t.acuteLiquidityMismatch.recent3dDeltaMin, t.acuteLiquidityMismatch.points, 'Liquidity deterioration is too acute for a clean 2022-style analogue.');
+          addMatch(energy >= t.energy.min, t.energy.points, `能源压力已抬升至 ${energy}。`);
+          addMatch(inflation >= t.inflation.min, t.inflation.points, `通胀压力仍维持在 ${inflation} 的高位。`);
+          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `状态分数 ${stateScore} 符合持续压制、但尚未全面恐慌的阶段。`);
+          addMatch(t.strategyStates.values.includes(decisionState?.strategyState), t.strategyStates.points, `策略状态 ${decisionState?.strategyState || 'Caution'} 符合长期压制型环境。`);
+          addMatch(liquidity >= t.liquidity.min && liquidity <= t.liquidity.max, t.liquidity.points, `流动性处于限制性区间，但尚未进入全面危机，当前为 ${liquidity}。`);
+          addMatch(hasDriver('energy', 'inflation'), t.inflationDriversPoints, '主导压力来源以通胀 / 能源为主。');
+          addMatch(highRiskStreakDays >= t.persistence.highRiskMin || elevatedRiskStreakDays >= t.persistence.elevatedRiskMin, t.persistence.points, '压力持续性更像漫长磨损，而不是单日断裂。');
+          addMismatch(severeResonanceCount >= t.broadStressMismatch.severeResonanceMin || criticalAlertCount >= t.broadStressMismatch.criticalAlertMin, t.broadStressMismatch.points, '当前压力广度已超过典型的通胀加息压制阶段。');
+          addMismatch(liquidity >= t.acuteLiquidityMismatch.liquidityMin && recent3dDelta >= t.acuteLiquidityMismatch.recent3dDeltaMin, t.acuteLiquidityMismatch.points, '流动性恶化过于急促，不完全像 2022 式压制阶段。');
         },
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
-          const lead = matchedFeatures[0] || 'Inflation-led suppression features are visible.';
-          const caveat = mismatchFeatures[0] || 'The backdrop still carries more episodic stress than a pure 2022-style grind.';
+          const lead = matchedFeatures[0] || '当前可见通胀主导的压制特征。';
+          const caveat = mismatchFeatures[0] || '当前环境仍带有更多阶段性冲击，不完全是纯粹的 2022 式磨损。';
           return `当前更接近“通胀加加息压制”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
         }
       }),
@@ -2256,19 +2256,19 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
         regimeLabel: regimeConfig.regionalContained.regimeLabel,
         evaluate: ({ addMatch, addMismatch }) => {
           const t = regimeConfig.regionalContained.thresholds;
-          addMatch(geopolitical >= t.regionalDrivers.geopoliticalMin || energy >= t.regionalDrivers.energyMin, t.regionalDrivers.points, `Regional shock drivers remain dominant with geopolitical ${geopolitical} and energy ${energy}.`);
-          addMatch(resonanceCount <= t.resonanceCount.max, t.resonanceCount.points, `Resonance remains contained at ${resonanceCount} modules.`);
-          addMatch(severeResonanceCount <= t.severeResonanceCount.max, t.severeResonanceCount.points, `Severe resonance is limited at ${severeResonanceCount}.`);
-          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `State score ${stateScore} is elevated but not full-systemic.`);
-          addMatch(criticalAlertCount <= t.criticalAlertCount.max, t.criticalAlertCount.points, `Critical alert count remains limited at ${criticalAlertCount}.`);
-          addMatch(!systemicSpread, t.noSystemicSpreadPoints, 'Stress is not yet diffusing across the full system.');
-          addMatch(hasDriver('geopolitical', 'energy'), t.regionalDriverFocusPoints, 'Dominant drivers are regional / commodity sensitive.');
-          addMismatch(resonanceCount >= t.broadResonanceMismatch.resonanceMin || severeResonanceCount >= t.broadResonanceMismatch.severeResonanceMin, t.broadResonanceMismatch.points, 'Stress breadth is too wide for a contained regional analogue.');
-          addMismatch(stateScore >= t.highScoreMismatch.stateScoreMin, t.highScoreMismatch.points, 'State score is too high for a merely regional shock template.');
+          addMatch(geopolitical >= t.regionalDrivers.geopoliticalMin || energy >= t.regionalDrivers.energyMin, t.regionalDrivers.points, `地缘 ${geopolitical} 与能源 ${energy} 仍是区域性冲击的主导来源。`);
+          addMatch(resonanceCount <= t.resonanceCount.max, t.resonanceCount.points, `共振仍被控制在 ${resonanceCount} 个模块内。`);
+          addMatch(severeResonanceCount <= t.severeResonanceCount.max, t.severeResonanceCount.points, `严重共振仍限制在 ${severeResonanceCount} 个模块。`);
+          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `状态分数 ${stateScore} 虽高，但尚未全面系统化。`);
+          addMatch(criticalAlertCount <= t.criticalAlertCount.max, t.criticalAlertCount.points, `关键预警数量仍受控在 ${criticalAlertCount}。`);
+          addMatch(!systemicSpread, t.noSystemicSpreadPoints, '当前压力尚未扩散到整个系统。');
+          addMatch(hasDriver('geopolitical', 'energy'), t.regionalDriverFocusPoints, '主导压力来源对区域与商品更敏感。');
+          addMismatch(resonanceCount >= t.broadResonanceMismatch.resonanceMin || severeResonanceCount >= t.broadResonanceMismatch.severeResonanceMin, t.broadResonanceMismatch.points, '当前压力广度过宽，不完全像受限的区域性相似阶段。');
+          addMismatch(stateScore >= t.highScoreMismatch.stateScoreMin, t.highScoreMismatch.points, '状态分数过高，不完全像单纯区域冲击模板。');
         },
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
-          const lead = matchedFeatures[0] || 'Regional stress is visible without broad systemic spread.';
-          const caveat = mismatchFeatures[0] || 'Systemic diffusion still looks limited for now.';
+          const lead = matchedFeatures[0] || '当前可见区域性压力，但尚未广泛系统扩散。';
+          const caveat = mismatchFeatures[0] || '目前系统性扩散仍相对受限。';
           return `当前更接近“区域性风险但尚未扩散”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
         }
       }),
@@ -2277,19 +2277,19 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
         regimeLabel: regimeConfig.elevatedOscillation.regimeLabel,
         evaluate: ({ addMatch, addMismatch }) => {
           const t = regimeConfig.elevatedOscillation.thresholds;
-          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `State score ${stateScore} sits in an elevated but not crisis-level range.`);
-          addMatch(Math.abs(recent3dDelta) <= t.recent3dDeltaAbsMax.max, t.recent3dDeltaAbsMax.points, `3-day change of ${recent3dDelta >= 0 ? '+' : ''}${recent3dDelta} points suggests oscillation rather than a break.`);
-          addMatch(resonanceCount >= t.resonanceCount.min && resonanceCount <= t.resonanceCount.max, t.resonanceCount.points, `Resonance is elevated but still moderate at ${resonanceCount} modules.`);
-          addMatch(severeResonanceCount <= t.severeResonanceCount.max, t.severeResonanceCount.points, `Severe resonance remains limited at ${severeResonanceCount}.`);
-          addMatch(highRiskStreakDays >= t.persistence.highRiskMin || elevatedRiskStreakDays >= t.persistence.elevatedRiskMin, t.persistence.points, 'Stress persistence resembles an elevated plateau.');
-          addMatch(t.deescalationBias.values.includes(deescalationBias), t.deescalationBias.points, `De-escalation bias is ${deescalationBias}, consistent with a choppy plateau.`);
-          addMatch(t.escalationLevels.values.includes(escalationLevel), t.escalationLevels.points, `Escalation level ${escalationLevel} is elevated but not necessarily disorderly.`);
-          addMismatch(extremeThresholdCount >= t.extremeMismatch.extremeMin, t.extremeMismatch.points, 'Too many extreme thresholds are active for a benign oscillation analogue.');
-          addMismatch(recent3dDelta >= t.accelerationMismatch.recent3dDeltaMin, t.accelerationMismatch.points, 'Short-term deterioration is too fast for a plateau regime.');
+          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `状态分数 ${stateScore} 处在高位但未到危机级别的区间。`);
+          addMatch(Math.abs(recent3dDelta) <= t.recent3dDeltaAbsMax.max, t.recent3dDeltaAbsMax.points, `近3日变化 ${recent3dDelta >= 0 ? '+' : ''}${recent3dDelta} 更像震荡而不是断裂。`);
+          addMatch(resonanceCount >= t.resonanceCount.min && resonanceCount <= t.resonanceCount.max, t.resonanceCount.points, `共振虽高，但 ${resonanceCount} 个模块仍属中等范围。`);
+          addMatch(severeResonanceCount <= t.severeResonanceCount.max, t.severeResonanceCount.points, `严重共振仍限制在 ${severeResonanceCount} 个模块。`);
+          addMatch(highRiskStreakDays >= t.persistence.highRiskMin || elevatedRiskStreakDays >= t.persistence.elevatedRiskMin, t.persistence.points, '压力持续性更像高位平台。');
+          addMatch(t.deescalationBias.values.includes(deescalationBias), t.deescalationBias.points, `缓和偏向为 ${deescalationBias}，符合高位震荡平台特征。`);
+          addMatch(t.escalationLevels.values.includes(escalationLevel), t.escalationLevels.points, `升级等级 ${escalationLevel} 偏高，但未必失序。`);
+          addMismatch(extremeThresholdCount >= t.extremeMismatch.extremeMin, t.extremeMismatch.points, '极端阈值过多，不完全像温和震荡阶段。');
+          addMismatch(recent3dDelta >= t.accelerationMismatch.recent3dDeltaMin, t.accelerationMismatch.points, '短期恶化速度过快，不像平台震荡阶段。');
         },
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
-          const lead = matchedFeatures[0] || 'Elevated-but-choppy features are present.';
-          const caveat = mismatchFeatures[0] || 'The backdrop still falls short of a crisis analogue.';
+          const lead = matchedFeatures[0] || '当前已出现高位震荡特征。';
+          const caveat = mismatchFeatures[0] || '当前环境仍未完全进入危机类相似阶段。';
           return `当前更接近“高位震荡但未危机化”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
         }
       })
@@ -3359,12 +3359,12 @@ async function main() {
   if (metadata.realtimeOverlayEnabled && realtime?.values) {
     renderRealtimeStrip(realtime, metadata);
     $('runtime-badge').textContent = metadata.realtimeFallbackUsed
-      ? '快变量来自本地 fallback'
+      ? '快变量来自本地回退'
       : realtime.degradedMode
         ? '快变量部分降级 / 慢变量正常'
         : '快变量已实时覆盖';
   } else {
-    $('runtime-badge').textContent = metadata.realtimeFetchFailed ? '当前处于基线模式 / realtime 不可用' : '当前处于基线模式';
+    $('runtime-badge').textContent = metadata.realtimeFetchFailed ? '当前处于基线模式 / 实时不可用' : '当前处于基线模式';
   }
   if (!metadata.realtimeOverlayEnabled) {
     $('rt-source-mode').textContent = '仅基线';
