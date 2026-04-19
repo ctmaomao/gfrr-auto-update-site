@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="全球金融风险雷达 v26.0A-rc1 - 全中文机构级宏观风险驾驶舱，加入30日时间维度、机构级预警系统和资产收益/回撤映射。" />
-  <title>全球金融风险雷达 v26.0A-rc1</title>
+  <meta name="description" content="全球金融风险雷达 v26.0B-pr6 - 全中文机构级宏观风险驾驶舱，加入决策系统、执行绑定与统一执行出口。" />
+  <title>全球金融风险雷达 v26.0B-pr6</title>
   <link rel="stylesheet" href="assets/styles.css" />
 </head>
 <body>
@@ -12,7 +12,7 @@
     <header class="hero">
       <div>
         <div class="eyebrow">全球金融风险雷达 V25</div>
-        <h1>全球金融风险雷达 v26.0A-rc1</h1>
+      <h1>全球金融风险雷达 v26.0B-pr6</h1>
         <p class="hero-subtitle">全中文混合实时架构版 · 慢变量静态构建 + 快变量实时覆盖 · 执行状态灯 · 目标仓位 · 动作清单 · 硬阈值风控</p>
       </div>
       <div class="hero-status" id="runtime-badge">加载中...</div>
@@ -27,7 +27,7 @@
                 <span class="badge neutral" id="decision-header-state-badge">--</span>
                 <span class="muted" id="decision-header-escalation">--</span>
               </div>
-              <div class="decision-header-kicker">Decision Header</div>
+              <div class="decision-header-kicker">决策总览</div>
               <h2 class="decision-header-title" id="decision-header-title">加载中...</h2>
               <p class="decision-header-reason" id="decision-header-reason">正在汇总当前策略状态与风险结论...</p>
               <div class="decision-header-action-block">
@@ -103,12 +103,12 @@
               <div class="mini-delta" id="rt-dxy-delta">--</div>
             </div>
             <div class="metric-box compact">
-              <div class="metric-label">VIX</div>
+              <div class="metric-label">波动率指数 VIX</div>
               <div class="metric-value" id="rt-vix">--</div>
               <div class="mini-delta" id="rt-vix-delta">--</div>
             </div>
             <div class="metric-box compact">
-              <div class="metric-label">HY OAS</div>
+              <div class="metric-label">高收益利差 HY OAS</div>
               <div class="metric-value" id="rt-hy">--</div>
               <div class="mini-delta" id="rt-hy-delta">--</div>
             </div>
@@ -141,40 +141,40 @@
             <h2>数据健康状态</h2>
             <span class="badge neutral" id="health-level-badge">加载中...</span>
           </div>
-          <div class="health-summary" id="health-summary-text">正在汇总 realtime 健康状态...</div>
+          <div class="health-summary" id="health-summary-text">正在汇总实时健康状态...</div>
           <div class="metric-row four">
             <div class="metric-box compact">
-              <div class="metric-label">Overall Health</div>
+              <div class="metric-label">整体健康度</div>
               <div class="metric-value" id="health-overall-level">--</div>
             </div>
             <div class="metric-box compact">
-              <div class="metric-label">Health Score</div>
+              <div class="metric-label">健康评分</div>
               <div class="metric-value" id="health-score">--</div>
             </div>
             <div class="metric-box compact">
-              <div class="metric-label">Freshness</div>
+              <div class="metric-label">新鲜度</div>
               <div class="metric-value" id="health-freshness">--</div>
             </div>
             <div class="metric-box compact">
-              <div class="metric-label">Data Age</div>
+              <div class="metric-label">数据时效</div>
               <div class="metric-value" id="health-age">--</div>
             </div>
           </div>
           <div class="metric-row four">
             <div class="metric-box compact">
-              <div class="metric-label">Realtime Source</div>
+              <div class="metric-label">实时来源</div>
               <div class="metric-value small" id="health-source">--</div>
             </div>
             <div class="metric-box compact">
-              <div class="metric-label">Flags</div>
+              <div class="metric-label">状态标记</div>
               <div class="metric-value small" id="health-flags">--</div>
             </div>
             <div class="metric-box compact">
-              <div class="metric-label">Critical Missing</div>
+              <div class="metric-label">关键缺失</div>
               <div class="metric-value" id="health-critical-missing">--</div>
             </div>
             <div class="metric-box compact">
-              <div class="metric-label">Source Summary</div>
+              <div class="metric-label">来源摘要</div>
               <div class="metric-value small" id="health-source-summary">--</div>
             </div>
           </div>
