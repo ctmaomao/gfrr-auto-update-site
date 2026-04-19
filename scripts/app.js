@@ -235,7 +235,7 @@ const MODULE_LABELS = {
   banking: '银行'
 };
 
-const DECISION_SCHEMA_VERSION = 'v26.0B-step2';
+const DECISION_SCHEMA_VERSION = 'v26.0B-step3';
 const DECISION_CANONICAL_FIELDS = Object.freeze([
   'strategyState',
   'stateLabel',
@@ -299,6 +299,227 @@ const DECISION_LEGACY_DISPLAY_DEPENDENCIES = Object.freeze([
   'data.topRisks',
   'data.confidenceNotes'
 ]);
+const STATE_RULES = Object.freeze({
+  stateBands: [
+    { min: 85, state: 'Crisis' },
+    { min: 68, state: 'Defensive' },
+    { min: 48, state: 'Caution' },
+    { min: 28, state: 'Balanced' },
+    { min: 0, state: 'Risk-On' }
+  ],
+  metaThresholds: {
+    resonanceFloor: 70,
+    severeResonanceFloor: 80,
+    elevatedRiskFloor: 60,
+    highRiskFloor: 70,
+    totalRiskExtreme: 85,
+    moduleExtreme: 90,
+    severeResonanceExtremeCount: 3,
+    liquidityExtreme: 75,
+    highRiskExtremeStreak: 7
+  },
+  scoreAdjustments: {
+    recent3dDelta: [
+      { min: 12, delta: 18 },
+      { min: 6, delta: 10 },
+      { min: 3, delta: 6 },
+      { max: -12, delta: -14 },
+      { max: -6, delta: -8 },
+      { max: -3, delta: -4 }
+    ],
+    resonanceCount: [
+      { min: 5, delta: 18 },
+      { equals: 4, delta: 12 },
+      { equals: 3, delta: 8 },
+      { equals: 2, delta: 4 }
+    ],
+    severeResonanceCount: [
+      { min: 3, delta: 10 },
+      { equals: 2, delta: 6 }
+    ],
+    extremeThresholdCount: [
+      { min: 3, delta: 24 },
+      { min: 1, delta: 14 }
+    ],
+    highRiskStreakDays: [
+      { min: 7, delta: 12 },
+      { min: 5, delta: 8 },
+      { min: 3, delta: 5 }
+    ],
+    healthLevel: {
+      'Baseline Only': 6,
+      Stale: 8,
+      Degraded: 4,
+      Healthy: -2
+    },
+    executionLevel: {
+      red: 4,
+      yellow: 2,
+      green: -2
+    },
+    realtimeFallbackDelta: 3
+  }
+});
+const POSITION_RULES = Object.freeze({
+  stateBandMap: {
+    'Risk-On': {
+      totalExposureBand: '65%-85%',
+      riskAssetBias: 'Overweight within risk budget',
+      defensiveBias: 'Low',
+      cashGuidance: 'Run lighter cash buffer (10%-18%)',
+      newExposurePolicy: 'Normal staged adds are allowed.',
+      rebalancePosture: 'Lean into target risk bands on pullbacks.',
+      leveragePolicy: 'Avoid aggressive leverage; only baseline financing if already embedded.',
+      hedgePosture: 'Keep only light strategic hedges.'
+    },
+    Balanced: {
+      totalExposureBand: '50%-70%',
+      riskAssetBias: 'Neutral to selective',
+      defensiveBias: 'Moderate',
+      cashGuidance: 'Hold balanced cash buffer (15%-25%)',
+      newExposurePolicy: 'Allow selective adds, but keep pacing controlled.',
+      rebalancePosture: 'Rebalance around targets without chasing.',
+      leveragePolicy: 'No new leverage expansion.',
+      hedgePosture: 'Maintain baseline hedges.'
+    },
+    Caution: {
+      totalExposureBand: '35%-55%',
+      riskAssetBias: 'Selective underweight',
+      defensiveBias: 'Moderately high',
+      cashGuidance: 'Raise cash buffer (20%-32%)',
+      newExposurePolicy: 'Only allow highly selective new exposure in small clips.',
+      rebalancePosture: 'Trim risk first, then rebalance.',
+      leveragePolicy: 'Reduce leverage where practical; do not add new leverage.',
+      hedgePosture: 'Keep hedges active and bias toward protection.'
+    },
+    Defensive: {
+      totalExposureBand: '20%-40%',
+      riskAssetBias: 'Underweight risk assets',
+      defensiveBias: 'High',
+      cashGuidance: 'Keep elevated cash buffer (30%-45%)',
+      newExposurePolicy: 'Pause broad new risk exposure; only defensive rebalancing is allowed.',
+      rebalancePosture: 'Prioritize de-risking and restoring buffers.',
+      leveragePolicy: 'No leverage expansion; favor leverage reduction.',
+      hedgePosture: 'Maintain defensive hedges and liquidity buffers.'
+    },
+    Crisis: {
+      totalExposureBand: '0%-20%',
+      riskAssetBias: 'Minimum risk exposure',
+      defensiveBias: 'Maximum',
+      cashGuidance: 'Hold maximum cash / liquidity buffer (45%-70%)',
+      newExposurePolicy: 'Suspend new high-risk exposure until state normalizes.',
+      rebalancePosture: 'Capital preservation first.',
+      leveragePolicy: 'No leverage; actively reduce gross exposure.',
+      hedgePosture: 'Keep strongest defensive posture available.'
+    }
+  },
+  bandShiftRules: {
+    stateScore: [
+      { min: 90, shift: -10 },
+      { min: 80, shift: -5 },
+      { max: 20, shift: 8 },
+      { max: 35, shift: 5 }
+    ],
+    extremeThresholdCount: { min: 2, shift: -5 },
+    highRiskStreakDays: { min: 5, shift: -5 },
+    easing3dDelta: { max: -10, shift: 5, excludeState: 'Crisis' },
+    deteriorating3dDelta: { min: 8, shift: -5 },
+    degradedRealtimeShift: -5,
+    riskOffOverrideThreshold: -8,
+    improvingOverrideThreshold: 5
+  },
+  bandLimits: {
+    floor: 0,
+    ceil: 100,
+    minWidth: 15
+  }
+});
+const REGIME_RULES = Object.freeze({
+  baseMatchScore: 20,
+  confidenceBands: [
+    { minScore: 72, minGap: 12, confidence: 'high' },
+    { minScore: 58, minGap: 6, confidence: 'medium' },
+    { minScore: 0, minGap: 0, confidence: 'low' }
+  ],
+  candidates: Object.freeze({
+    tightening2018: {
+      regimeName: 'q4-2018-tightening-shock',
+      regimeLabel: '2018 Q4 式紧缩冲击',
+      thresholds: {
+        stateScore: { min: 55, max: 82, points: 16 },
+        recent3dDelta: { min: 0, max: 10, points: 10 },
+        resonanceCount: { min: 2, max: 4, points: 12 },
+        liquidity: { min: 50, points: 12 },
+        creditPressure: { min: 42, points: 12 },
+        escalationLevels: { values: ['medium', 'high'], points: 8 },
+        energyGeopoliticalMismatch: { energyMin: 85, geopoliticalMin: 80, points: 18 },
+        broadStressMismatch: { severeResonanceMin: 3, stateScoreMin: 88, points: 20 },
+        tighteningDriversPoints: 10
+      }
+    },
+    liquidity2020: {
+      regimeName: 'early-2020-liquidity-crisis',
+      regimeLabel: '2020 早期流动性危机',
+      thresholds: {
+        stateScore: { min: 75, points: 18 },
+        recent3dDelta: { min: 8, points: 16 },
+        resonanceCount: { min: 4, points: 14 },
+        severeResonanceCount: { min: 2, points: 14 },
+        liquidity: { min: 68, points: 18 },
+        creditPressure: { min: 52, points: 10 },
+        escalationLevels: { values: ['high', 'severe'], points: 10 },
+        alertsOrExtreme: { extremeMin: 2, points: 8 },
+        inflationLiquidityMismatch: { inflationMin: 78, liquidityMax: 64, points: 16 },
+        improvingMismatchPoints: 10
+      }
+    },
+    inflation2022: {
+      regimeName: '2022-inflation-hike-squeeze',
+      regimeLabel: '2022 式通胀 + 加息压制',
+      thresholds: {
+        energy: { min: 75, points: 18 },
+        inflation: { min: 55, points: 14 },
+        stateScore: { min: 55, max: 80, points: 12 },
+        strategyStates: { values: ['Caution', 'Defensive'], points: 10 },
+        liquidity: { min: 45, max: 70, points: 10 },
+        persistence: { highRiskMin: 3, elevatedRiskMin: 5, points: 10 },
+        broadStressMismatch: { severeResonanceMin: 3, criticalAlertMin: 2, points: 16 },
+        acuteLiquidityMismatch: { liquidityMin: 75, recent3dDeltaMin: 8, points: 12 },
+        inflationDriversPoints: 16
+      }
+    },
+    regionalContained: {
+      regimeName: 'regional-risk-contained',
+      regimeLabel: '区域性风险但未系统扩散阶段',
+      thresholds: {
+        regionalDrivers: { geopoliticalMin: 75, energyMin: 80, points: 18 },
+        resonanceCount: { max: 3, points: 16 },
+        severeResonanceCount: { max: 1, points: 12 },
+        stateScore: { min: 45, max: 72, points: 12 },
+        criticalAlertCount: { max: 1, points: 8 },
+        noSystemicSpreadPoints: 14,
+        regionalDriverFocusPoints: 12,
+        broadResonanceMismatch: { resonanceMin: 4, severeResonanceMin: 2, points: 20 },
+        highScoreMismatch: { stateScoreMin: 85, points: 14 }
+      }
+    },
+    elevatedOscillation: {
+      regimeName: 'elevated-non-crisis-oscillation',
+      regimeLabel: '高位震荡但尚未危机化阶段',
+      thresholds: {
+        stateScore: { min: 45, max: 68, points: 18 },
+        recent3dDeltaAbsMax: { max: 5, points: 16 },
+        resonanceCount: { min: 2, max: 3, points: 12 },
+        severeResonanceCount: { max: 1, points: 10 },
+        persistence: { highRiskMin: 3, elevatedRiskMin: 5, points: 10 },
+        deescalationBias: { values: ['medium', 'improving'], points: 8 },
+        escalationLevels: { values: ['medium', 'high'], points: 8 },
+        extremeMismatch: { extremeMin: 3, points: 18 },
+        accelerationMismatch: { recent3dDeltaMin: 10, points: 16 }
+      }
+    }
+  })
+});
 
 function buildDecisionSchemaMeta() {
   return {
@@ -502,6 +723,26 @@ function buildLegacyActionQueueCompat(actionQueue = {}, legacyNotes = []) {
   };
 }
 
+function buildHistoricalRegimeFallback(data = {}, metadata = {}, decisionState = {}) {
+  const strategyState = decisionState?.strategyState || 'Caution';
+  return {
+    regimeName: 'historical-regime-fallback',
+    regimeLabel: 'Historical analogue unavailable',
+    matchScore: 0,
+    matchedFeatures: [
+      `Use the current ${strategyState} state and live decision outputs as the primary guide.`
+    ],
+    mismatchFeatures: [
+      'Historical regime matching fallback is active.',
+      metadata.realtimeUnavailable ? 'Realtime is unavailable, so analogy confidence is capped.' : 'Analogy engine did not complete.'
+    ],
+    regimeSummary: 'Historical similarity layer is unavailable; keep using the current state, guidance, and triggers as the main decision framework.',
+    secondaryMatch: null,
+    confidence: metadata.realtimeUnavailable ? 'low' : 'medium',
+    interpretationNote: 'This is a fallback interpretation layer only and does not change the current strategy state.'
+  };
+}
+
 function createDecisionFallback(data = {}, metadata = {}) {
   const fallbackLabel = metadata.realtimeUnavailable ? 'BASELINE / FALLBACK' : 'UNAVAILABLE / FALLBACK';
   const stateFallback = buildStrategyStateFallback(data, metadata);
@@ -510,7 +751,6 @@ function createDecisionFallback(data = {}, metadata = {}) {
   return {
     contractVersion: DECISION_SCHEMA_VERSION,
     schemaMeta: buildDecisionSchemaMeta(),
-    // Canonical decision fields: stable v26 decision contract paths.
     strategyState: stateFallback.strategyState,
     stateLabel: stateFallback.stateLabel || fallbackLabel,
     stateReason: stateFallback.stateReason || (metadata.realtimeUnavailable
@@ -542,7 +782,8 @@ function createDecisionFallback(data = {}, metadata = {}) {
       ...buildLegacyActionQueueCompat(fallbackActionQueue)
     },
     triggerMonitor: buildTriggerMonitorFallback(data, metadata, stateFallback.strategyState),
-    invalidationRules: buildInvalidationRulesFallback(data, metadata, stateFallback.strategyState)
+    invalidationRules: buildInvalidationRulesFallback(data, metadata, stateFallback.strategyState),
+    historicalRegime: buildHistoricalRegimeFallback(data, metadata, stateFallback)
   };
 }
 
@@ -552,11 +793,17 @@ function getStrategyStateLabel(strategyState, stateScore) {
 }
 
 function deriveStrategyState(stateScore) {
-  if (stateScore >= 85) return 'Crisis';
-  if (stateScore >= 68) return 'Defensive';
-  if (stateScore >= 48) return 'Caution';
-  if (stateScore >= 28) return 'Balanced';
-  return 'Risk-On';
+  const band = STATE_RULES.stateBands.find((item) => stateScore >= item.min);
+  return band?.state || 'Risk-On';
+}
+
+function resolveRuleDelta(value, rules = []) {
+  const matched = rules.find((rule) => (
+    (Number.isFinite(rule.min) ? value >= rule.min : true)
+    && (Number.isFinite(rule.max) ? value <= rule.max : true)
+    && (Number.isFinite(rule.equals) ? value === rule.equals : true)
+  ));
+  return matched?.delta || 0;
 }
 
 function buildStrategyStateMeta(data, history, metadata, healthDashboard) {
@@ -565,13 +812,14 @@ function buildStrategyStateMeta(data, history, metadata, healthDashboard) {
   const referenceScore = scoreSeries.length >= 4 ? scoreSeries[scoreSeries.length - 4] : scoreSeries[0];
   const recent3dDelta = Number.isFinite(referenceScore) && Number.isFinite(totalRiskScore) ? totalRiskScore - referenceScore : 0;
   const recent3dSpeed = Number.isFinite(recent3dDelta) ? Number((recent3dDelta / 3).toFixed(1)) : 0;
+  const metaThresholds = STATE_RULES.metaThresholds;
   const moduleEntries = Object.entries(data?.modules || {})
     .map(([key, value]) => ({ key, value: Number(value) }))
     .filter((item) => Number.isFinite(item.value));
-  const resonanceCount = moduleEntries.filter((item) => item.value >= 70).length;
-  const severeResonanceCount = moduleEntries.filter((item) => item.value >= 80).length;
-  const elevatedRiskStreakDays = countConsecutiveDays(scoreSeries, (score) => score >= 60);
-  const highRiskStreakDays = countConsecutiveDays(scoreSeries, (score) => score >= 70);
+  const resonanceCount = moduleEntries.filter((item) => item.value >= metaThresholds.resonanceFloor).length;
+  const severeResonanceCount = moduleEntries.filter((item) => item.value >= metaThresholds.severeResonanceFloor).length;
+  const elevatedRiskStreakDays = countConsecutiveDays(scoreSeries, (score) => score >= metaThresholds.elevatedRiskFloor);
+  const highRiskStreakDays = countConsecutiveDays(scoreSeries, (score) => score >= metaThresholds.highRiskFloor);
   const alertCriticalCount = Array.isArray(data?.warningSystem?.alerts)
     ? data.warningSystem.alerts.filter((alert) => alert?.level === '红色').length
     : 0;
@@ -585,13 +833,13 @@ function buildStrategyStateMeta(data, history, metadata, healthDashboard) {
     if (condition) extremeThresholds.push(label);
   };
 
-  pushExtreme(totalRiskScore >= 85, 'total-risk>=85');
-  pushExtreme(moduleEntries.some((item) => item.value >= 90), 'module>=90');
-  pushExtreme(severeResonanceCount >= 3, 'three-modules>=80');
-  pushExtreme(data?.liquidityIndex?.score >= 75, 'liquidity>=75');
+  pushExtreme(totalRiskScore >= metaThresholds.totalRiskExtreme, 'total-risk>=85');
+  pushExtreme(moduleEntries.some((item) => item.value >= metaThresholds.moduleExtreme), 'module>=90');
+  pushExtreme(severeResonanceCount >= metaThresholds.severeResonanceExtremeCount, 'three-modules>=80');
+  pushExtreme(data?.liquidityIndex?.score >= metaThresholds.liquidityExtreme, 'liquidity>=75');
   pushExtreme(criticalAlertCount > 0, 'critical-alert');
   pushExtreme(metadata.realtimeCacheOnly, 'cache-only');
-  pushExtreme(highRiskStreakDays >= 7, 'high-risk-streak');
+  pushExtreme(highRiskStreakDays >= metaThresholds.highRiskExtremeStreak, 'high-risk-streak');
 
   return {
     totalRiskScore,
@@ -613,40 +861,17 @@ function buildStrategyStateMeta(data, history, metadata, healthDashboard) {
 function calculateStrategyStateEngine(data, history, metadata, healthDashboard) {
   const stateMeta = buildStrategyStateMeta(data, history, metadata, healthDashboard);
   const executionLevel = data?.tradingSystem?.executionLock?.level;
+  const adjustments = STATE_RULES.scoreAdjustments;
   let stateScore = Number.isFinite(stateMeta.totalRiskScore) ? stateMeta.totalRiskScore : 55;
 
-  if (stateMeta.recent3dDelta >= 12) stateScore += 18;
-  else if (stateMeta.recent3dDelta >= 6) stateScore += 10;
-  else if (stateMeta.recent3dDelta >= 3) stateScore += 6;
-  else if (stateMeta.recent3dDelta <= -12) stateScore -= 14;
-  else if (stateMeta.recent3dDelta <= -6) stateScore -= 8;
-  else if (stateMeta.recent3dDelta <= -3) stateScore -= 4;
-
-  if (stateMeta.resonanceCount >= 5) stateScore += 18;
-  else if (stateMeta.resonanceCount === 4) stateScore += 12;
-  else if (stateMeta.resonanceCount === 3) stateScore += 8;
-  else if (stateMeta.resonanceCount === 2) stateScore += 4;
-
-  if (stateMeta.severeResonanceCount >= 3) stateScore += 10;
-  else if (stateMeta.severeResonanceCount === 2) stateScore += 6;
-
-  if (stateMeta.extremeThresholdCount >= 3) stateScore += 24;
-  else if (stateMeta.extremeThresholdCount >= 1) stateScore += 14;
-
-  if (stateMeta.highRiskStreakDays >= 7) stateScore += 12;
-  else if (stateMeta.highRiskStreakDays >= 5) stateScore += 8;
-  else if (stateMeta.highRiskStreakDays >= 3) stateScore += 5;
-
-  if (stateMeta.healthLevel === 'Baseline Only') stateScore += 6;
-  else if (stateMeta.healthLevel === 'Stale') stateScore += 8;
-  else if (stateMeta.healthLevel === 'Degraded') stateScore += 4;
-  else if (stateMeta.healthLevel === 'Healthy') stateScore -= 2;
-
-  if (executionLevel === 'red') stateScore += 4;
-  else if (executionLevel === 'yellow') stateScore += 2;
-  else if (executionLevel === 'green') stateScore -= 2;
-
-  if (metadata.realtimeFallbackUsed) stateScore += 3;
+  stateScore += resolveRuleDelta(stateMeta.recent3dDelta, adjustments.recent3dDelta);
+  stateScore += resolveRuleDelta(stateMeta.resonanceCount, adjustments.resonanceCount);
+  stateScore += resolveRuleDelta(stateMeta.severeResonanceCount, adjustments.severeResonanceCount);
+  stateScore += resolveRuleDelta(stateMeta.extremeThresholdCount, adjustments.extremeThresholdCount);
+  stateScore += resolveRuleDelta(stateMeta.highRiskStreakDays, adjustments.highRiskStreakDays);
+  stateScore += adjustments.healthLevel[stateMeta.healthLevel] || 0;
+  stateScore += adjustments.executionLevel[executionLevel] || 0;
+  if (metadata.realtimeFallbackUsed) stateScore += adjustments.realtimeFallbackDelta;
 
   stateScore = clampNumber(Math.round(stateScore), 0, 100);
   const strategyState = deriveStrategyState(stateScore);
@@ -750,73 +975,18 @@ function buildPositionGuidanceEngine(data, metadata, decisionState, dominantDriv
     const driverLabels = Array.isArray(dominantDrivers)
       ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean)
       : [];
-
-    const stateBandMap = {
-      'Risk-On': {
-        totalExposureBand: '65%-85%',
-        riskAssetBias: 'Overweight within risk budget',
-        defensiveBias: 'Low',
-        cashGuidance: 'Run lighter cash buffer (10%-18%)',
-        newExposurePolicy: 'Normal staged adds are allowed.',
-        rebalancePosture: 'Lean into target risk bands on pullbacks.',
-        leveragePolicy: 'Avoid aggressive leverage; only baseline financing if already embedded.',
-        hedgePosture: 'Keep only light strategic hedges.'
-      },
-      Balanced: {
-        totalExposureBand: '50%-70%',
-        riskAssetBias: 'Neutral to selective',
-        defensiveBias: 'Moderate',
-        cashGuidance: 'Hold balanced cash buffer (15%-25%)',
-        newExposurePolicy: 'Allow selective adds, but keep pacing controlled.',
-        rebalancePosture: 'Rebalance around targets without chasing.',
-        leveragePolicy: 'No new leverage expansion.',
-        hedgePosture: 'Maintain baseline hedges.'
-      },
-      Caution: {
-        totalExposureBand: '35%-55%',
-        riskAssetBias: 'Selective underweight',
-        defensiveBias: 'Moderately high',
-        cashGuidance: 'Raise cash buffer (20%-32%)',
-        newExposurePolicy: 'Only allow highly selective new exposure in small clips.',
-        rebalancePosture: 'Trim risk first, then rebalance.',
-        leveragePolicy: 'Reduce leverage where practical; do not add new leverage.',
-        hedgePosture: 'Keep hedges active and bias toward protection.'
-      },
-      Defensive: {
-        totalExposureBand: '20%-40%',
-        riskAssetBias: 'Underweight risk assets',
-        defensiveBias: 'High',
-        cashGuidance: 'Keep elevated cash buffer (30%-45%)',
-        newExposurePolicy: 'Pause broad new risk exposure; only defensive rebalancing is allowed.',
-        rebalancePosture: 'Prioritize de-risking and restoring buffers.',
-        leveragePolicy: 'No leverage expansion; favor leverage reduction.',
-        hedgePosture: 'Maintain defensive hedges and liquidity buffers.'
-      },
-      Crisis: {
-        totalExposureBand: '0%-20%',
-        riskAssetBias: 'Minimum risk exposure',
-        defensiveBias: 'Maximum',
-        cashGuidance: 'Hold maximum cash / liquidity buffer (45%-70%)',
-        newExposurePolicy: 'Suspend new high-risk exposure until state normalizes.',
-        rebalancePosture: 'Capital preservation first.',
-        leveragePolicy: 'No leverage; actively reduce gross exposure.',
-        hedgePosture: 'Keep strongest defensive posture available.'
-      }
-    };
-
-    const guidance = { ...(stateBandMap[strategyState] || stateBandMap.Caution) };
+    const bandShiftRules = POSITION_RULES.bandShiftRules;
+    const guidance = { ...(POSITION_RULES.stateBandMap[strategyState] || POSITION_RULES.stateBandMap.Caution) };
     let bandShift = 0;
 
-    if (stateScore >= 90) bandShift -= 10;
-    else if (stateScore >= 80) bandShift -= 5;
-    else if (stateScore <= 20) bandShift += 8;
-    else if (stateScore <= 35) bandShift += 5;
-
-    if ((stateMeta.extremeThresholdCount || 0) >= 2) bandShift -= 5;
-    if ((stateMeta.highRiskStreakDays || 0) >= 5) bandShift -= 5;
-    if ((stateMeta.recent3dDelta || 0) <= -10 && strategyState !== 'Crisis') bandShift += 5;
-    if ((stateMeta.recent3dDelta || 0) >= 8) bandShift -= 5;
-    if (metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly) bandShift -= 5;
+    bandShift += resolveRuleDelta(stateScore, bandShiftRules.stateScore);
+    if ((stateMeta.extremeThresholdCount || 0) >= bandShiftRules.extremeThresholdCount.min) bandShift += bandShiftRules.extremeThresholdCount.shift;
+    if ((stateMeta.highRiskStreakDays || 0) >= bandShiftRules.highRiskStreakDays.min) bandShift += bandShiftRules.highRiskStreakDays.shift;
+    if ((stateMeta.recent3dDelta || 0) <= bandShiftRules.easing3dDelta.max && strategyState !== bandShiftRules.easing3dDelta.excludeState) {
+      bandShift += bandShiftRules.easing3dDelta.shift;
+    }
+    if ((stateMeta.recent3dDelta || 0) >= bandShiftRules.deteriorating3dDelta.min) bandShift += bandShiftRules.deteriorating3dDelta.shift;
+    if (metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly) bandShift += bandShiftRules.degradedRealtimeShift;
 
     const parseBand = (band) => {
       const match = String(band).match(/(\d+)%-(\d+)%/);
@@ -824,7 +994,7 @@ function buildPositionGuidanceEngine(data, metadata, decisionState, dominantDriv
       return { min: Number(match[1]), max: Number(match[2]) };
     };
     const formatBand = (range) => `${range.min}%-${range.max}%`;
-    const shiftBand = (band, shift, floor = 0, ceil = 100, minWidth = 15) => {
+    const shiftBand = (band, shift, floor = POSITION_RULES.bandLimits.floor, ceil = POSITION_RULES.bandLimits.ceil, minWidth = POSITION_RULES.bandLimits.minWidth) => {
       const range = parseBand(band);
       if (!range) return band;
       let next = {
@@ -840,10 +1010,10 @@ function buildPositionGuidanceEngine(data, metadata, decisionState, dominantDriv
 
     guidance.totalExposureBand = shiftBand(guidance.totalExposureBand, bandShift);
 
-    if (bandShift <= -8) {
+    if (bandShift <= bandShiftRules.riskOffOverrideThreshold) {
       guidance.riskAssetBias = strategyState === 'Crisis' ? 'Minimum risk exposure' : 'Further reduce risk asset exposure';
       guidance.defensiveBias = strategyState === 'Risk-On' ? 'Moderate' : 'Very high';
-    } else if (bandShift >= 5) {
+    } else if (bandShift >= bandShiftRules.improvingOverrideThreshold) {
       guidance.riskAssetBias = strategyState === 'Risk-On' ? 'Constructive within risk budget' : 'Selective but improving';
       guidance.defensiveBias = strategyState === 'Defensive' ? 'High but stabilizing' : 'Moderate';
     }
@@ -1125,6 +1295,198 @@ function buildInvalidationRulesEngine(data, metadata, decisionState, positionGui
   }
 }
 
+function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dominantDrivers, triggerMonitor, invalidationRules) {
+  try {
+    const regimeConfig = REGIME_RULES.candidates;
+    const stateMeta = decisionState?.stateMeta || {};
+    const stateScore = Number.isFinite(decisionState?.stateScore)
+      ? decisionState.stateScore
+      : Number.isFinite(data?.score)
+        ? data.score
+        : 55;
+    const modules = data?.modules || {};
+    const moduleScore = (key) => Number.isFinite(Number(modules?.[key])) ? Number(modules[key]) : 0;
+    const dominantKeys = Array.isArray(dominantDrivers) ? dominantDrivers.map((item) => item?.key).filter(Boolean) : [];
+    const hasDriver = (...keys) => dominantKeys.some((key) => keys.includes(key));
+    const resonanceCount = Number(stateMeta.resonanceCount) || 0;
+    const severeResonanceCount = Number(stateMeta.severeResonanceCount) || 0;
+    const recent3dDelta = Number(stateMeta.recent3dDelta) || 0;
+    const criticalAlertCount = Number(stateMeta.criticalAlertCount) || 0;
+    const extremeThresholdCount = Number(stateMeta.extremeThresholdCount) || 0;
+    const highRiskStreakDays = Number(stateMeta.highRiskStreakDays) || 0;
+    const elevatedRiskStreakDays = Number(stateMeta.elevatedRiskStreakDays) || 0;
+    const escalationLevel = triggerMonitor?.escalationLevel || 'medium';
+    const deescalationBias = invalidationRules?.deescalationBias || 'medium';
+    const geopolitical = moduleScore('geopolitical');
+    const energy = moduleScore('energy');
+    const inflation = moduleScore('inflation');
+    const liquidity = moduleScore('liquidity');
+    const debt = moduleScore('debt');
+    const banking = moduleScore('banking');
+    const inflationPressure = Math.max(inflation, energy);
+    const creditPressure = Math.max(debt, banking);
+    const systemicSpread = resonanceCount >= 4 || severeResonanceCount >= 2 || criticalAlertCount >= 2;
+
+    const evaluateCandidate = (config) => {
+      let matchScore = REGIME_RULES.baseMatchScore;
+      const matchedFeatures = [];
+      const mismatchFeatures = [];
+      const addMatch = (condition, points, text) => {
+        if (!condition) return;
+        matchScore += points;
+        matchedFeatures.push(text);
+      };
+      const addMismatch = (condition, points, text) => {
+        if (!condition) return;
+        matchScore -= points;
+        mismatchFeatures.push(text);
+      };
+
+      config.evaluate({ addMatch, addMismatch });
+      matchScore = clampNumber(Math.round(matchScore), 0, 100);
+
+      return {
+        regimeName: config.regimeName,
+        regimeLabel: config.regimeLabel,
+        matchScore,
+        matchedFeatures: matchedFeatures.slice(0, 5),
+        mismatchFeatures: mismatchFeatures.slice(0, 4),
+        regimeSummary: config.summary({ matchScore, matchedFeatures, mismatchFeatures })
+      };
+    };
+
+    const candidates = [
+      evaluateCandidate({
+        regimeName: regimeConfig.tightening2018.regimeName,
+        regimeLabel: regimeConfig.tightening2018.regimeLabel,
+        evaluate: ({ addMatch, addMismatch }) => {
+          const t = regimeConfig.tightening2018.thresholds;
+          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `State score ${stateScore} sits in a tightening-shock range rather than a full panic range.`);
+          addMatch(recent3dDelta >= t.recent3dDelta.min && recent3dDelta <= t.recent3dDelta.max, t.recent3dDelta.points, `3-day change of ${recent3dDelta >= 0 ? '+' : ''}${recent3dDelta} points is consistent with a tightening-led stress build.`);
+          addMatch(resonanceCount >= t.resonanceCount.min && resonanceCount <= t.resonanceCount.max, t.resonanceCount.points, `Resonance is elevated but not yet fully systemic at ${resonanceCount} modules above 70.`);
+          addMatch(liquidity >= t.liquidity.min, t.liquidity.points, `Liquidity pressure is elevated at ${liquidity}.`);
+          addMatch(creditPressure >= t.creditPressure.min, t.creditPressure.points, `Credit / balance-sheet pressure is visible at ${creditPressure}.`);
+          addMatch(hasDriver('liquidity', 'debt', 'banking'), t.tighteningDriversPoints, 'Dominant drivers include tightening-sensitive channels.');
+          addMatch(t.escalationLevels.values.includes(escalationLevel), t.escalationLevels.points, `Escalation level ${escalationLevel} fits a tightening shock better than a collapse.`);
+          addMismatch(energy >= t.energyGeopoliticalMismatch.energyMin && geopolitical >= t.energyGeopoliticalMismatch.geopoliticalMin, t.energyGeopoliticalMismatch.points, 'Energy and geopolitical stress are too dominant for a clean tightening-only analogue.');
+          addMismatch(severeResonanceCount >= t.broadStressMismatch.severeResonanceMin || stateScore >= t.broadStressMismatch.stateScoreMin, t.broadStressMismatch.points, 'Current stress is broader than a typical 2018 Q4 tightening shock.');
+        },
+        summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
+          const lead = matchedFeatures[0] || 'Tightening-style stress features are present.';
+          const caveat = mismatchFeatures[0] || 'This still looks more like a drawdown regime than a disorderly seizure.';
+          return `Closest to a tightening-led drawdown analogue (${matchScore}/100). ${lead} Difference: ${caveat}`;
+        }
+      }),
+      evaluateCandidate({
+        regimeName: regimeConfig.liquidity2020.regimeName,
+        regimeLabel: regimeConfig.liquidity2020.regimeLabel,
+        evaluate: ({ addMatch, addMismatch }) => {
+          const t = regimeConfig.liquidity2020.thresholds;
+          addMatch(stateScore >= t.stateScore.min, t.stateScore.points, `State score ${stateScore} is in a crisis-adjacent range.`);
+          addMatch(recent3dDelta >= t.recent3dDelta.min, t.recent3dDelta.points, `3-day deterioration of +${recent3dDelta} is fast enough to resemble a liquidity break.`);
+          addMatch(resonanceCount >= t.resonanceCount.min, t.resonanceCount.points, `Stress is broad across ${resonanceCount} modules.`);
+          addMatch(severeResonanceCount >= t.severeResonanceCount.min, t.severeResonanceCount.points, `Severe resonance at ${severeResonanceCount} modules resembles systemic spread.`);
+          addMatch(liquidity >= t.liquidity.min, t.liquidity.points, `Liquidity pressure is elevated at ${liquidity}.`);
+          addMatch(creditPressure >= t.creditPressure.min, t.creditPressure.points, `Credit / banking pressure is elevated at ${creditPressure}.`);
+          addMatch(t.escalationLevels.values.includes(escalationLevel), t.escalationLevels.points, `Escalation level ${escalationLevel} fits crisis spillover.`);
+          addMatch(criticalAlertCount > 0 || extremeThresholdCount >= t.alertsOrExtreme.extremeMin, t.alertsOrExtreme.points, 'Alerts or extreme thresholds are already active.');
+          addMismatch(inflationPressure >= t.inflationLiquidityMismatch.inflationMin && liquidity <= t.inflationLiquidityMismatch.liquidityMax, t.inflationLiquidityMismatch.points, 'Inflation / energy pressure is more dominant than a pure liquidity seizure.');
+          addMismatch(deescalationBias === 'improving', t.improvingMismatchPoints, 'The current backdrop is easing faster than an early-2020 style break.');
+        },
+        summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
+          const lead = matchedFeatures[0] || 'Liquidity crisis features are partially present.';
+          const caveat = mismatchFeatures[0] || 'Current conditions still stop short of a full seizure template.';
+          return `Closest to an early liquidity-crisis analogue (${matchScore}/100). ${lead} Difference: ${caveat}`;
+        }
+      }),
+      evaluateCandidate({
+        regimeName: regimeConfig.inflation2022.regimeName,
+        regimeLabel: regimeConfig.inflation2022.regimeLabel,
+        evaluate: ({ addMatch, addMismatch }) => {
+          const t = regimeConfig.inflation2022.thresholds;
+          addMatch(energy >= t.energy.min, t.energy.points, `Energy stress is elevated at ${energy}.`);
+          addMatch(inflation >= t.inflation.min, t.inflation.points, `Inflation pressure remains elevated at ${inflation}.`);
+          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `State score ${stateScore} fits a persistent but non-panic suppression regime.`);
+          addMatch(t.strategyStates.values.includes(decisionState?.strategyState), t.strategyStates.points, `Strategy state ${decisionState?.strategyState || 'Caution'} fits a prolonged suppression regime.`);
+          addMatch(liquidity >= t.liquidity.min && liquidity <= t.liquidity.max, t.liquidity.points, `Liquidity is restrictive but not in full crisis territory at ${liquidity}.`);
+          addMatch(hasDriver('energy', 'inflation'), t.inflationDriversPoints, 'Dominant drivers are inflation / energy led.');
+          addMatch(highRiskStreakDays >= t.persistence.highRiskMin || elevatedRiskStreakDays >= t.persistence.elevatedRiskMin, t.persistence.points, 'Stress persistence resembles a grind rather than a one-day break.');
+          addMismatch(severeResonanceCount >= t.broadStressMismatch.severeResonanceMin || criticalAlertCount >= t.broadStressMismatch.criticalAlertMin, t.broadStressMismatch.points, 'Current stress is broader than a typical inflation-hike suppression regime.');
+          addMismatch(liquidity >= t.acuteLiquidityMismatch.liquidityMin && recent3dDelta >= t.acuteLiquidityMismatch.recent3dDeltaMin, t.acuteLiquidityMismatch.points, 'Liquidity deterioration is too acute for a clean 2022-style analogue.');
+        },
+        summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
+          const lead = matchedFeatures[0] || 'Inflation-led suppression features are visible.';
+          const caveat = mismatchFeatures[0] || 'The backdrop still carries more episodic stress than a pure 2022-style grind.';
+          return `Closest to an inflation-and-hikes suppression analogue (${matchScore}/100). ${lead} Difference: ${caveat}`;
+        }
+      }),
+      evaluateCandidate({
+        regimeName: regimeConfig.regionalContained.regimeName,
+        regimeLabel: regimeConfig.regionalContained.regimeLabel,
+        evaluate: ({ addMatch, addMismatch }) => {
+          const t = regimeConfig.regionalContained.thresholds;
+          addMatch(geopolitical >= t.regionalDrivers.geopoliticalMin || energy >= t.regionalDrivers.energyMin, t.regionalDrivers.points, `Regional shock drivers remain dominant with geopolitical ${geopolitical} and energy ${energy}.`);
+          addMatch(resonanceCount <= t.resonanceCount.max, t.resonanceCount.points, `Resonance remains contained at ${resonanceCount} modules.`);
+          addMatch(severeResonanceCount <= t.severeResonanceCount.max, t.severeResonanceCount.points, `Severe resonance is limited at ${severeResonanceCount}.`);
+          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `State score ${stateScore} is elevated but not full-systemic.`);
+          addMatch(criticalAlertCount <= t.criticalAlertCount.max, t.criticalAlertCount.points, `Critical alert count remains limited at ${criticalAlertCount}.`);
+          addMatch(!systemicSpread, t.noSystemicSpreadPoints, 'Stress is not yet diffusing across the full system.');
+          addMatch(hasDriver('geopolitical', 'energy'), t.regionalDriverFocusPoints, 'Dominant drivers are regional / commodity sensitive.');
+          addMismatch(resonanceCount >= t.broadResonanceMismatch.resonanceMin || severeResonanceCount >= t.broadResonanceMismatch.severeResonanceMin, t.broadResonanceMismatch.points, 'Stress breadth is too wide for a contained regional analogue.');
+          addMismatch(stateScore >= t.highScoreMismatch.stateScoreMin, t.highScoreMismatch.points, 'State score is too high for a merely regional shock template.');
+        },
+        summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
+          const lead = matchedFeatures[0] || 'Regional stress is visible without broad systemic spread.';
+          const caveat = mismatchFeatures[0] || 'Systemic diffusion still looks limited for now.';
+          return `Closest to a contained regional-risk analogue (${matchScore}/100). ${lead} Difference: ${caveat}`;
+        }
+      }),
+      evaluateCandidate({
+        regimeName: regimeConfig.elevatedOscillation.regimeName,
+        regimeLabel: regimeConfig.elevatedOscillation.regimeLabel,
+        evaluate: ({ addMatch, addMismatch }) => {
+          const t = regimeConfig.elevatedOscillation.thresholds;
+          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `State score ${stateScore} sits in an elevated but not crisis-level range.`);
+          addMatch(Math.abs(recent3dDelta) <= t.recent3dDeltaAbsMax.max, t.recent3dDeltaAbsMax.points, `3-day change of ${recent3dDelta >= 0 ? '+' : ''}${recent3dDelta} points suggests oscillation rather than a break.`);
+          addMatch(resonanceCount >= t.resonanceCount.min && resonanceCount <= t.resonanceCount.max, t.resonanceCount.points, `Resonance is elevated but still moderate at ${resonanceCount} modules.`);
+          addMatch(severeResonanceCount <= t.severeResonanceCount.max, t.severeResonanceCount.points, `Severe resonance remains limited at ${severeResonanceCount}.`);
+          addMatch(highRiskStreakDays >= t.persistence.highRiskMin || elevatedRiskStreakDays >= t.persistence.elevatedRiskMin, t.persistence.points, 'Stress persistence resembles an elevated plateau.');
+          addMatch(t.deescalationBias.values.includes(deescalationBias), t.deescalationBias.points, `De-escalation bias is ${deescalationBias}, consistent with a choppy plateau.`);
+          addMatch(t.escalationLevels.values.includes(escalationLevel), t.escalationLevels.points, `Escalation level ${escalationLevel} is elevated but not necessarily disorderly.`);
+          addMismatch(extremeThresholdCount >= t.extremeMismatch.extremeMin, t.extremeMismatch.points, 'Too many extreme thresholds are active for a benign oscillation analogue.');
+          addMismatch(recent3dDelta >= t.accelerationMismatch.recent3dDeltaMin, t.accelerationMismatch.points, 'Short-term deterioration is too fast for a plateau regime.');
+        },
+        summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
+          const lead = matchedFeatures[0] || 'Elevated-but-choppy features are present.';
+          const caveat = mismatchFeatures[0] || 'The backdrop still falls short of a crisis analogue.';
+          return `Closest to an elevated-but-not-crisis analogue (${matchScore}/100). ${lead} Difference: ${caveat}`;
+        }
+      })
+    ].sort((a, b) => b.matchScore - a.matchScore);
+
+    const primary = candidates[0] || buildHistoricalRegimeFallback(data, metadata, decisionState);
+    const secondary = candidates[1] || null;
+    const scoreGap = secondary ? primary.matchScore - secondary.matchScore : primary.matchScore;
+    const confidence = (REGIME_RULES.confidenceBands.find((band) => primary.matchScore >= band.minScore && scoreGap >= band.minGap) || REGIME_RULES.confidenceBands[REGIME_RULES.confidenceBands.length - 1]).confidence;
+
+    return {
+      ...primary,
+      secondaryMatch: secondary
+        ? {
+            regimeName: secondary.regimeName,
+            regimeLabel: secondary.regimeLabel,
+            matchScore: secondary.matchScore
+          }
+        : null,
+      confidence,
+      interpretationNote: 'This is a rule-based historical similarity layer for interpretation only; it does not change the current strategy state, position guidance, or action queue.'
+    };
+  } catch (error) {
+    console.warn('Historical regime matcher failed, using fallback.', error);
+    return buildHistoricalRegimeFallback(data, metadata, decisionState);
+  }
+}
+
 function buildDecisionModel(data, history, metadata, healthDashboard) {
   try {
     const state = deriveDecisionState(data, history, metadata, healthDashboard);
@@ -1141,12 +1503,12 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
     const actionQueue = buildActionQueueEngine(data, metadata, state, positionGuidance, dominantDrivers);
     const triggerMonitor = buildTriggerMonitorEngine(data, metadata, state, positionGuidance, actionQueue, dominantDrivers);
     const invalidationRules = buildInvalidationRulesEngine(data, metadata, state, positionGuidance, actionQueue, dominantDrivers);
+    const historicalRegime = buildHistoricalRegimeEngine(data, history, metadata, state, dominantDrivers, triggerMonitor, invalidationRules);
     const schemaMeta = buildDecisionSchemaMeta();
 
     return {
       contractVersion: DECISION_SCHEMA_VERSION,
       schemaMeta,
-      // Canonical decision fields. New v26 logic should extend these paths first.
       strategyState: state.strategyState,
       stateLabel: state.stateLabel,
       stateReason: state.stateReason || `${executionLock.title || 'Existing trading system state'}; health ${healthDashboard.overallLevel}; dominant drivers: ${driverLabels}.`,
@@ -1156,7 +1518,6 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
       dominantDrivers: dominantDrivers.length ? dominantDrivers : createDecisionFallback(data, metadata).dominantDrivers,
       positionGuidance: {
         ...positionGuidance,
-        // Legacy compatibility fields for older positioning panels.
         ...buildLegacyPositionGuidanceCompat(positionGuidance, position, [
           executionLock.description || 'Follow current execution lock.',
           `Health: ${healthDashboard.overallLevel}.`,
@@ -1165,14 +1526,14 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
       },
       actionQueue: {
         ...actionQueue,
-        // Legacy compatibility fields for older queue renderers and debugging.
         ...buildLegacyActionQueueCompat(actionQueue, [
           executionLock.description || 'Follow current execution lock.',
           actionLayer.todayAction || 'Use the queue as the primary execution guide.'
         ])
       },
       triggerMonitor,
-      invalidationRules
+      invalidationRules,
+      historicalRegime
     };
   } catch (error) {
     console.warn('Decision model generation failed, using fallback.', error);
@@ -1625,7 +1986,10 @@ function describeStateChange(stateMeta = {}) {
   return 'Stable near current regime';
 }
 
-function buildCanonicalDecisionHeaderSource(decisionModel = {}, data = {}) {
+function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
+  // Decision Header is intentionally decision-model-first. It should consume the
+  // v26 canonical fields above and only fall back to legacy display fields when
+  // a canonical value is missing during safe rendering.
   const strategyState = decisionModel.strategyState || 'Caution';
   const stateLabel = decisionModel.stateLabel || strategyState;
   const stateScore = Number.isFinite(decisionModel.stateScore)
@@ -1642,43 +2006,29 @@ function buildCanonicalDecisionHeaderSource(decisionModel = {}, data = {}) {
     : Array.isArray(decisionModel?.stateDrivers)
       ? decisionModel.stateDrivers.slice(0, 3).map((item) => item.label || item.key).filter(Boolean)
       : ['Risk drivers unavailable'];
+  const historicalRegimeLabel = decisionModel?.historicalRegime?.regimeLabel
+    ? `${decisionModel.historicalRegime.regimeLabel} / ${decisionModel.historicalRegime.matchScore ?? '--'}`
+    : 'Historical analogue unavailable';
+  const historicalRegimeSummary = decisionModel?.historicalRegime?.regimeSummary
+    || 'Historical similarity layer unavailable; use current state and triggers as the primary guide.';
 
   return {
-    strategyState,
+    stateBadge: strategyState,
     stateLabel,
-    stateScore,
+    scoreLabel: stateScore,
     exposureBand,
     coreAction,
-    dominantRiskSources,
     stateChange: describeStateChange(decisionModel.stateMeta || {}),
+    title: `${strategyState} Decision Header`,
     reason: decisionModel.stateReason || data?.decisionLine || 'Current regime is being summarized from the v26 decision model.',
     escalationLabel: decisionModel?.triggerMonitor?.escalationLevel
       ? `Escalation ${decisionModel.triggerMonitor.escalationLevel}`
       : 'Escalation watch active',
     cashGuidance: decisionModel?.positionGuidance?.cashGuidance || 'Keep baseline cash discipline.',
-    newExposurePolicy: decisionModel?.positionGuidance?.newExposurePolicy || 'Use staged exposure changes only.'
-  };
-}
-
-function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
-  // Decision Header is intentionally decision-model-first. It should consume the
-  // v26 canonical fields above and only fall back to legacy display fields when
-  // a canonical value is missing during safe rendering.
-  const headerSource = buildCanonicalDecisionHeaderSource(decisionModel, data);
-
-  return {
-    stateBadge: headerSource.strategyState,
-    stateLabel: headerSource.stateLabel,
-    scoreLabel: headerSource.stateScore,
-    exposureBand: headerSource.exposureBand,
-    coreAction: headerSource.coreAction,
-    stateChange: headerSource.stateChange,
-    title: `${headerSource.strategyState} Decision Header`,
-    reason: headerSource.reason,
-    escalationLabel: headerSource.escalationLabel,
-    cashGuidance: headerSource.cashGuidance,
-    newExposurePolicy: headerSource.newExposurePolicy,
-    dominantRiskSources: headerSource.dominantRiskSources
+    newExposurePolicy: decisionModel?.positionGuidance?.newExposurePolicy || 'Use staged exposure changes only.',
+    historicalRegimeLabel,
+    historicalRegimeSummary,
+    dominantRiskSources
   };
 }
 
@@ -1697,6 +2047,8 @@ function renderDecisionHeader(model) {
   $('decision-header-change').textContent = model.stateChange;
   $('decision-header-cash').textContent = model.cashGuidance;
   $('decision-header-policy').textContent = model.newExposurePolicy;
+  $('decision-header-regime-label').textContent = model.historicalRegimeLabel;
+  $('decision-header-regime-summary').textContent = model.historicalRegimeSummary;
 
   const drivers = $('decision-header-drivers');
   drivers.innerHTML = '';
@@ -2122,6 +2474,7 @@ async function main() {
   window.__GFRR_ACTION_QUEUE__ = window.__GFRR_DECISION_MODEL__?.actionQueue || buildActionQueueFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_TRIGGER_MONITOR__ = window.__GFRR_DECISION_MODEL__?.triggerMonitor || buildTriggerMonitorFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_INVALIDATION_RULES__ = window.__GFRR_DECISION_MODEL__?.invalidationRules || buildInvalidationRulesFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
+  window.__GFRR_HISTORICAL_REGIME__ = window.__GFRR_DECISION_MODEL__?.historicalRegime || buildHistoricalRegimeFallback(data, metadata, window.__GFRR_DECISION_MODEL__);
   window.__GFRR_DECISION_HEADER__ = buildDecisionHeaderModel(window.__GFRR_DECISION_MODEL__, data);
   console.info('GFRR decision model ready', window.__GFRR_DECISION_MODEL__);
 
