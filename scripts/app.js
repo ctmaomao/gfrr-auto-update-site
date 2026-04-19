@@ -235,7 +235,7 @@ const MODULE_LABELS = {
   banking: '银行'
 };
 
-const DECISION_SCHEMA_VERSION = 'v26.0B-pr1';
+const DECISION_SCHEMA_VERSION = 'v26.0B-pr2';
 const DECISION_CANONICAL_FIELDS = Object.freeze([
   'strategyState',
   'riskMode',
@@ -247,6 +247,7 @@ const DECISION_CANONICAL_FIELDS = Object.freeze([
   'dominantDrivers',
   'stateMeta',
   'positionGuidance.totalExposureBand',
+  'positionGuidance.riskBudget',
   'positionGuidance.riskAssetBias',
   'positionGuidance.defensiveBias',
   'positionGuidance.cashGuidance',
@@ -254,6 +255,14 @@ const DECISION_CANONICAL_FIELDS = Object.freeze([
   'positionGuidance.rebalancePosture',
   'positionGuidance.leveragePolicy',
   'positionGuidance.hedgePosture',
+  'positionGuidance.leveragePermission',
+  'positionGuidance.concentrationPosture',
+  'positionGuidance.reRiskingPosture',
+  'positionGuidance.executionPermissions.addRisk',
+  'positionGuidance.executionPermissions.addLeverage',
+  'positionGuidance.executionPermissions.increaseConcentration',
+  'positionGuidance.executionPermissions.defensiveRebalance',
+  'positionGuidance.executionPermissions.tacticalReRisk',
   'actionQueue.priorityActions',
   'actionQueue.watchItems',
   'actionQueue.blockedActions',
@@ -282,7 +291,6 @@ const DECISION_CANONICAL_FIELDS = Object.freeze([
 ]);
 const DECISION_LEGACY_COMPATIBILITY_FIELDS = Object.freeze([
   'positionGuidance.stance',
-  'positionGuidance.riskBudget',
   'positionGuidance.targetGrossExposure',
   'positionGuidance.cashBufferTarget',
   'positionGuidance.adjustmentNotes',
@@ -467,7 +475,119 @@ const POSITION_RULES = Object.freeze({
     floor: 0,
     ceil: 100,
     minWidth: 15
+  },
+  permissionBaseMap: {
+    'Risk-On': {
+      riskBudget: 'Full',
+      leveragePermission: 'Allowed',
+      concentrationPosture: 'Flexible',
+      reRiskingPosture: 'Normalized',
+      executionPermissions: {
+        addRisk: 'Allowed',
+        addLeverage: 'Allowed',
+        increaseConcentration: 'Allowed',
+        defensiveRebalance: 'Allowed',
+        tacticalReRisk: 'Allowed'
+      }
+    },
+    Balanced: {
+      riskBudget: 'Moderate',
+      leveragePermission: 'Limited',
+      concentrationPosture: 'Controlled',
+      reRiskingPosture: 'Selective',
+      executionPermissions: {
+        addRisk: 'Limited',
+        addLeverage: 'Limited',
+        increaseConcentration: 'Limited',
+        defensiveRebalance: 'Allowed',
+        tacticalReRisk: 'Allowed'
+      }
+    },
+    Caution: {
+      riskBudget: 'Reduced',
+      leveragePermission: 'Blocked',
+      concentrationPosture: 'No increase',
+      reRiskingPosture: 'Tactical only',
+      executionPermissions: {
+        addRisk: 'Restricted',
+        addLeverage: 'Blocked',
+        increaseConcentration: 'Restricted',
+        defensiveRebalance: 'Allowed',
+        tacticalReRisk: 'Restricted'
+      }
+    },
+    Defensive: {
+      riskBudget: 'Tight',
+      leveragePermission: 'Defensive only',
+      concentrationPosture: 'Reduce concentration',
+      reRiskingPosture: 'Tactical only',
+      executionPermissions: {
+        addRisk: 'Restricted',
+        addLeverage: 'Blocked',
+        increaseConcentration: 'Blocked',
+        defensiveRebalance: 'Allowed',
+        tacticalReRisk: 'Limited'
+      }
+    },
+    Crisis: {
+      riskBudget: 'Minimal',
+      leveragePermission: 'Blocked',
+      concentrationPosture: 'Reduce concentration',
+      reRiskingPosture: 'None',
+      executionPermissions: {
+        addRisk: 'Blocked',
+        addLeverage: 'Blocked',
+        increaseConcentration: 'Blocked',
+        defensiveRebalance: 'Allowed',
+        tacticalReRisk: 'Blocked'
+      }
+    }
+  },
+  permissionModeOverlay: {
+    Compression: {
+      riskBudget: 1,
+      addRisk: 1,
+      addLeverage: 1,
+      increaseConcentration: 1,
+      tacticalReRisk: 1,
+      reRiskingPosture: 1,
+      concentrationPosture: 1
+    },
+    Deterioration: {
+      riskBudget: -1,
+      addRisk: -1,
+      addLeverage: -1,
+      increaseConcentration: -1,
+      tacticalReRisk: -1,
+      reRiskingPosture: -1,
+      concentrationPosture: -1
+    },
+    Stress: {
+      riskBudget: -2,
+      addRisk: -2,
+      addLeverage: -2,
+      increaseConcentration: -2,
+      tacticalReRisk: -2,
+      reRiskingPosture: -2,
+      concentrationPosture: -1
+    },
+    Repair: {
+      riskBudget: 0,
+      addRisk: 1,
+      addLeverage: 0,
+      increaseConcentration: 0,
+      tacticalReRisk: 1,
+      reRiskingPosture: 1,
+      concentrationPosture: 0
+    }
   }
+});
+const POSITION_PERMISSION_ENUMS = Object.freeze({
+  riskBudget: ['Minimal', 'Tight', 'Reduced', 'Moderate', 'Full'],
+  leveragePermission: ['Blocked', 'Defensive only', 'Limited', 'Allowed'],
+  concentrationPosture: ['Reduce concentration', 'No increase', 'Controlled', 'Flexible'],
+  reRiskingPosture: ['None', 'Tactical only', 'Selective', 'Normalized'],
+  executionPermission: ['Blocked', 'Restricted', 'Limited', 'Allowed']
 });
 const REGIME_RULES = Object.freeze({
   baseMatchScore: 20,
@@ -646,6 +766,7 @@ function buildPositionGuidanceFallback(data = {}, metadata = {}, strategyState =
   const defensiveFallback = metadata.realtimeUnavailable || strategyState === 'Defensive' || strategyState === 'Crisis';
   return {
     totalExposureBand: defensiveFallback ? '20%-40%' : '35%-55%',
+    riskBudget: defensiveFallback ? 'Tight' : 'Reduced',
     riskAssetBias: defensiveFallback ? 'Constrained' : 'Selective',
     defensiveBias: defensiveFallback ? 'High' : 'Moderate',
     cashGuidance: defensiveFallback ? 'Keep elevated cash buffer (30%-45%)' : 'Keep reserve cash buffer (20%-30%)',
@@ -653,11 +774,74 @@ function buildPositionGuidanceFallback(data = {}, metadata = {}, strategyState =
     rebalancePosture: defensiveFallback ? 'De-risk first, rebalance second.' : 'Rebalance gradually around target bands.',
     leveragePolicy: 'No incremental leverage in fallback mode.',
     hedgePosture: defensiveFallback ? 'Maintain defensive hedges / buffers.' : 'Keep baseline hedges active.',
+    leveragePermission: defensiveFallback ? 'Blocked' : 'Limited',
+    concentrationPosture: defensiveFallback ? 'Reduce concentration' : 'Controlled',
+    reRiskingPosture: defensiveFallback ? 'None' : 'Selective',
+    executionPermissions: {
+      addRisk: defensiveFallback ? 'Blocked' : 'Restricted',
+      addLeverage: 'Blocked',
+      increaseConcentration: defensiveFallback ? 'Blocked' : 'Restricted',
+      defensiveRebalance: 'Allowed',
+      tacticalReRisk: defensiveFallback ? 'Blocked' : 'Restricted'
+    },
     adjustmentNotes: [
       'Fallback position guidance is active.',
       Number.isFinite(data?.score) ? `Reference risk score: ${data.score}.` : 'Reference risk score unavailable.'
     ]
   };
+}
+
+function shiftEnumValue(currentValue, enumValues = [], step = 0) {
+  const currentIndex = Math.max(0, enumValues.indexOf(currentValue));
+  const nextIndex = clampNumber(currentIndex + step, 0, enumValues.length - 1);
+  return enumValues[nextIndex] || currentValue;
+}
+
+function buildPositionPermissionLayer(metadata = {}, decisionState = {}, triggerMonitor = {}, invalidationRules = {}) {
+  const strategyState = decisionState?.strategyState || 'Caution';
+  const riskMode = decisionState?.riskMode || 'Deterioration';
+  const repairSignal = decisionState?.repairSignal || 'None';
+  const stateScore = Number(decisionState?.stateScore) || 55;
+  const stateMeta = decisionState?.stateMeta || {};
+  const escalationLevel = triggerMonitor?.escalationLevel || stateMeta?.escalationLevel || 'medium';
+  const deescalationBias = invalidationRules?.deescalationBias || stateMeta?.deescalationBias || 'low';
+  const modeOverlay = POSITION_RULES.permissionModeOverlay[riskMode] || {};
+  const base = JSON.parse(JSON.stringify(POSITION_RULES.permissionBaseMap[strategyState] || POSITION_RULES.permissionBaseMap.Caution));
+
+  base.riskBudget = shiftEnumValue(base.riskBudget, POSITION_PERMISSION_ENUMS.riskBudget, modeOverlay.riskBudget || 0);
+  base.leveragePermission = shiftEnumValue(base.leveragePermission, POSITION_PERMISSION_ENUMS.leveragePermission, modeOverlay.addLeverage || 0);
+  base.concentrationPosture = shiftEnumValue(base.concentrationPosture, POSITION_PERMISSION_ENUMS.concentrationPosture, modeOverlay.concentrationPosture || 0);
+  base.reRiskingPosture = shiftEnumValue(base.reRiskingPosture, POSITION_PERMISSION_ENUMS.reRiskingPosture, modeOverlay.reRiskingPosture || 0);
+
+  base.executionPermissions.addRisk = shiftEnumValue(base.executionPermissions.addRisk, POSITION_PERMISSION_ENUMS.executionPermission, modeOverlay.addRisk || 0);
+  base.executionPermissions.addLeverage = shiftEnumValue(base.executionPermissions.addLeverage, POSITION_PERMISSION_ENUMS.executionPermission, modeOverlay.addLeverage || 0);
+  base.executionPermissions.increaseConcentration = shiftEnumValue(base.executionPermissions.increaseConcentration, POSITION_PERMISSION_ENUMS.executionPermission, modeOverlay.increaseConcentration || 0);
+  base.executionPermissions.tacticalReRisk = shiftEnumValue(base.executionPermissions.tacticalReRisk, POSITION_PERMISSION_ENUMS.executionPermission, modeOverlay.tacticalReRisk || 0);
+
+  if (escalationLevel === 'high' || escalationLevel === 'severe' || stateScore >= 85 || metadata.realtimeUnavailable || metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly) {
+    base.riskBudget = shiftEnumValue(base.riskBudget, POSITION_PERMISSION_ENUMS.riskBudget, -1);
+    base.leveragePermission = shiftEnumValue(base.leveragePermission, POSITION_PERMISSION_ENUMS.leveragePermission, -1);
+    base.concentrationPosture = shiftEnumValue(base.concentrationPosture, POSITION_PERMISSION_ENUMS.concentrationPosture, -1);
+    base.reRiskingPosture = shiftEnumValue(base.reRiskingPosture, POSITION_PERMISSION_ENUMS.reRiskingPosture, -1);
+    base.executionPermissions.addRisk = shiftEnumValue(base.executionPermissions.addRisk, POSITION_PERMISSION_ENUMS.executionPermission, -1);
+    base.executionPermissions.addLeverage = shiftEnumValue(base.executionPermissions.addLeverage, POSITION_PERMISSION_ENUMS.executionPermission, -1);
+    base.executionPermissions.increaseConcentration = shiftEnumValue(base.executionPermissions.increaseConcentration, POSITION_PERMISSION_ENUMS.executionPermission, -1);
+    base.executionPermissions.tacticalReRisk = shiftEnumValue(base.executionPermissions.tacticalReRisk, POSITION_PERMISSION_ENUMS.executionPermission, -1);
+  }
+
+  if (repairSignal === 'Strong' && riskMode === 'Repair' && deescalationBias === 'high') {
+    base.riskBudget = shiftEnumValue(base.riskBudget, POSITION_PERMISSION_ENUMS.riskBudget, 1);
+    base.reRiskingPosture = shiftEnumValue(base.reRiskingPosture, POSITION_PERMISSION_ENUMS.reRiskingPosture, 1);
+    base.executionPermissions.addRisk = shiftEnumValue(base.executionPermissions.addRisk, POSITION_PERMISSION_ENUMS.executionPermission, 1);
+    base.executionPermissions.tacticalReRisk = shiftEnumValue(base.executionPermissions.tacticalReRisk, POSITION_PERMISSION_ENUMS.executionPermission, 1);
+  }
+
+  if (strategyState === 'Crisis' || riskMode === 'Stress') {
+    base.executionPermissions.addLeverage = 'Blocked';
+    base.executionPermissions.increaseConcentration = 'Blocked';
+  }
+
+  return base;
 }
 
 function flattenActionQueueItems(queue = {}) {
@@ -1207,18 +1391,17 @@ function buildPositionGuidanceEngine(data, metadata, decisionState, dominantDriv
       guidance.defensiveBias = strategyState === 'Defensive' ? 'High but stabilizing' : 'Moderate';
     }
 
-    const existingRiskBudget = positioning.riskBudget || '--';
     const existingExposureTarget = positioning.targetGrossExposure || '--';
     const existingCashTarget = positioning.cashBufferTarget || '--';
 
     return {
       ...guidance,
       stance: `${strategyState} position guidance`,
-      riskBudget: existingRiskBudget,
       targetGrossExposure: existingExposureTarget,
       cashBufferTarget: existingCashTarget,
       adjustmentNotes: [
         `Strategy state: ${strategyState} (${decisionState?.stateLabel || 'unlabeled'}).`,
+        `Mode: ${decisionState?.riskMode || 'Deterioration'} / repair signal ${decisionState?.repairSignal || 'None'}.`,
         `State score: ${stateScore}.`,
         `3-day delta: ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta || 0}; resonance: ${stateMeta.resonanceCount || 0}.`,
         driverLabels.length ? `Dominant drivers: ${driverLabels.join(', ')}.` : 'Dominant drivers unavailable.'
@@ -1693,6 +1876,11 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
     const triggerMonitor = buildTriggerMonitorEngine(data, metadata, state, positionGuidance, actionQueue, dominantDrivers);
     const invalidationRules = buildInvalidationRulesEngine(data, metadata, state, positionGuidance, actionQueue, dominantDrivers);
     const historicalRegime = buildHistoricalRegimeEngine(data, history, metadata, state, dominantDrivers, triggerMonitor, invalidationRules);
+    const positionPermissions = buildPositionPermissionLayer(metadata, state, triggerMonitor, invalidationRules);
+    const positionGuidanceWithPermissions = {
+      ...positionGuidance,
+      ...positionPermissions
+    };
     const schemaMeta = buildDecisionSchemaMeta();
 
     return {
@@ -1709,8 +1897,8 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
       stateTransitionBias: state.stateTransitionBias,
       dominantDrivers: dominantDrivers.length ? dominantDrivers : createDecisionFallback(data, metadata).dominantDrivers,
       positionGuidance: {
-        ...positionGuidance,
-        ...buildLegacyPositionGuidanceCompat(positionGuidance, position, [
+        ...positionGuidanceWithPermissions,
+        ...buildLegacyPositionGuidanceCompat(positionGuidanceWithPermissions, position, [
           executionLock.description || 'Follow current execution lock.',
           `Health: ${healthDashboard.overallLevel}.`,
           `Realtime: ${metadata.realtimeStatusLabel || 'unknown'}.`
@@ -2209,6 +2397,9 @@ function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
     stateLabel,
     scoreLabel: stateScore,
     exposureBand,
+    riskBudget: decisionModel?.positionGuidance?.riskBudget || 'Reduced',
+    leveragePermission: decisionModel?.positionGuidance?.leveragePermission || 'Limited',
+    reRiskingPosture: decisionModel?.positionGuidance?.reRiskingPosture || 'Selective',
     coreAction,
     stateChange: describeStateChange(decisionModel.stateMeta || {}),
     title: `${stateLabel} Decision Header`,
@@ -2665,6 +2856,13 @@ async function main() {
   window.__GFRR_RISK_MODE__ = window.__GFRR_DECISION_MODEL__?.riskMode || 'Deterioration';
   window.__GFRR_REPAIR_SIGNAL__ = window.__GFRR_DECISION_MODEL__?.repairSignal || 'None';
   window.__GFRR_POSITION_GUIDANCE__ = window.__GFRR_DECISION_MODEL__?.positionGuidance || buildPositionGuidanceFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
+  window.__GFRR_POSITION_PERMISSIONS__ = {
+    riskBudget: window.__GFRR_POSITION_GUIDANCE__?.riskBudget || 'Reduced',
+    leveragePermission: window.__GFRR_POSITION_GUIDANCE__?.leveragePermission || 'Limited',
+    concentrationPosture: window.__GFRR_POSITION_GUIDANCE__?.concentrationPosture || 'Controlled',
+    reRiskingPosture: window.__GFRR_POSITION_GUIDANCE__?.reRiskingPosture || 'Selective',
+    executionPermissions: window.__GFRR_POSITION_GUIDANCE__?.executionPermissions || {}
+  };
   window.__GFRR_ACTION_QUEUE__ = window.__GFRR_DECISION_MODEL__?.actionQueue || buildActionQueueFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_TRIGGER_MONITOR__ = window.__GFRR_DECISION_MODEL__?.triggerMonitor || buildTriggerMonitorFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_INVALIDATION_RULES__ = window.__GFRR_DECISION_MODEL__?.invalidationRules || buildInvalidationRulesFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
