@@ -129,7 +129,7 @@ function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
     .filter(([, detail]) => detail?.ok && detail?.fallbackUsed)
     .slice(0, Math.max(0, 4 - issueLines.length))
     .forEach(([key, detail]) => {
-      issueLines.push(`${key}: fallback active via ${detail?.source || 'secondary source'}`);
+      issueLines.push(`${key}: 已启用回退来源 ${detail?.source || '次级来源'}`);
     });
 
   if (!issueLines.length) {
@@ -462,7 +462,7 @@ const POSITION_RULES = Object.freeze({
       cashGuidance: 'Run lighter cash buffer (10%-18%)',
       newExposurePolicy: 'Normal staged adds are allowed.',
       rebalancePosture: 'Lean into target risk bands on pullbacks.',
-      leveragePolicy: 'Avoid aggressive leverage; only baseline financing if already embedded.',
+      leveragePolicy: '避免激进杠杆；如已存在基础融资，仅允许维持。',
       hedgePosture: 'Keep only light strategic hedges.'
     },
     Balanced: {
@@ -473,7 +473,7 @@ const POSITION_RULES = Object.freeze({
       newExposurePolicy: 'Allow selective adds, but keep pacing controlled.',
       rebalancePosture: 'Rebalance around targets without chasing.',
       leveragePolicy: 'No new leverage expansion.',
-      hedgePosture: 'Maintain baseline hedges.'
+      hedgePosture: '维持基础对冲。'
     },
     Caution: {
       totalExposureBand: '35%-55%',
@@ -490,7 +490,7 @@ const POSITION_RULES = Object.freeze({
       riskAssetBias: 'Underweight risk assets',
       defensiveBias: 'High',
       cashGuidance: 'Keep elevated cash buffer (30%-45%)',
-      newExposurePolicy: 'Pause broad new risk exposure; only defensive rebalancing is allowed.',
+      newExposurePolicy: '暂停新增广义风险暴露，只允许防守性再平衡。',
       rebalancePosture: 'Prioritize de-risking and restoring buffers.',
       leveragePolicy: 'No leverage expansion; favor leverage reduction.',
       hedgePosture: 'Maintain defensive hedges and liquidity buffers.'
@@ -929,21 +929,21 @@ function buildActionQueueFallback(data = {}, metadata = {}, strategyState = 'Cau
         ],
     blockedActions: defensiveFallback
       ? [
-          'Pause aggressive new risk deployment.',
-          'Avoid leverage expansion.',
-          'Avoid concentration increase under elevated regime.'
+          '暂停激进的新风险投放。',
+          '避免扩张杠杆。',
+          '在高压阶段避免提高集中度。'
         ]
       : [
-          'Avoid oversized single-step exposure changes.',
-          'Avoid leverage expansion before confirmation.',
-          'Avoid concentration increase without confirmation.'
+          '避免单次过大幅度调整仓位。',
+          '在确认信号前不要扩张杠杆。',
+          '未经确认不要提高集中度。'
         ],
     controlActions: defensiveFallback
       ? [
-          'Freeze aggressive new risk adds.',
-          'Block leverage expansion.',
-          'Keep defensive rebalancing only.',
-          'Prevent concentration increase.'
+          '冻结激进的新风险增加动作。',
+          '阻止杠杆扩张。',
+          '仅保留防守性再平衡。',
+          '防止集中度进一步上升。'
         ]
       : [
           'Cap gross exposure drift.',
@@ -952,21 +952,21 @@ function buildActionQueueFallback(data = {}, metadata = {}, strategyState = 'Cau
         ],
     unblockConditions: defensiveFallback
       ? [
-          'Re-open tactical re-risk after the 3-day trend turns flat or negative.',
-          'Re-open selective adds after resonance count drops below 3.',
-          'Re-open leverage only after volatility and liquidity stress normalize.',
-          'Re-open concentration only after critical alerts clear.'
+          '待近3日趋势转平或转负后，再恢复战术性再冒险。',
+          '待共振数量降到 3 以下后，再恢复选择性加仓。',
+          '仅在波动与流动性压力恢复正常后，才重新开放杠杆。',
+          '仅在关键告警清除后，才重新开放提高集中度。'
         ]
       : [
-          'Allow broader adds after de-escalation bias improves.',
-          'Allow tactical re-risk after short-term deterioration stops.',
-          'Allow concentration increases only after alerts remain contained.'
+          '仅在缓和倾向改善后，才允许更广泛地加仓。',
+          '仅在短期恶化停止后，才允许战术性再冒险。',
+          '仅在告警持续受控后，才允许提高集中度。'
         ],
-    actionSummary: defensiveFallback ? 'Defensive fallback queue active.' : 'Cautious fallback queue active.',
-    escalationHint: defensiveFallback ? 'Escalate if stress indicators worsen or data quality degrades.' : 'Escalate if state score or stress signals worsen.',
+    actionSummary: defensiveFallback ? '当前启用防守型回退动作队列。' : '当前启用谨慎型回退动作队列。',
+    escalationHint: defensiveFallback ? '若压力指标恶化或数据质量继续下降，应升级响应。' : '若状态分数或压力信号继续恶化，应升级响应。',
     executionNotes: [
-      'Fallback action queue is active.',
-      Number.isFinite(data?.score) ? `Reference risk score: ${data.score}.` : 'Reference risk score unavailable.'
+      '当前已启用回退动作队列。',
+      Number.isFinite(data?.score) ? `参考风险分数：${data.score}。` : '参考风险分数不可用。'
     ]
   };
   queue.items = flattenActionQueueItems(queue);
@@ -976,9 +976,9 @@ function buildActionQueueFallback(data = {}, metadata = {}, strategyState = 'Cau
 function buildTriggerMonitorFallback(data = {}, metadata = {}, strategyState = 'Caution') {
   return {
     upgradeTriggers: [
-      'Escalate if total risk score moves higher from the current baseline.',
-      'Escalate if short-term deterioration resumes over the next 3 days.',
-      'Escalate if warning intensity or data degradation increases.'
+      '若总风险分数在当前位置继续上升，则升级响应。',
+      '若未来近3日短期恶化重新启动，则升级响应。',
+      '若预警强度或数据降级继续增加，则升级响应。'
     ],
     activeEscalationSignals: [
         metadata.realtimeUnavailable ? '实时不可用，当前仅使用基线监控。' : '当前未获得可靠的升级信号输出，请先按基线监控执行。',
@@ -993,16 +993,16 @@ function buildTriggerMonitorFallback(data = {}, metadata = {}, strategyState = '
 function buildInvalidationRulesFallback(data = {}, metadata = {}, strategyState = 'Caution') {
   return {
     invalidationSignals: [
-      'Treat the current posture as invalid if risk deterioration accelerates materially.',
-      'Treat the current posture as stale if data quality continues to degrade.',
-      'Treat the current posture as review-required if warning intensity rises.'
+      '若风险恶化明显加速，则当前姿态判断失效。',
+      '若数据质量继续下降，则当前姿态判断过期。',
+      '若预警强度上升，则当前姿态需要重新评估。'
     ],
     resetConditions: [
-      'Allow de-escalation only after short-term deterioration stops.',
-      'Allow de-escalation only after risk breadth narrows.',
-      'Allow de-escalation only after data freshness normalizes.'
+      '仅在短期恶化停止后，才允许缓和。',
+      '仅在风险广度收窄后，才允许缓和。',
+      '仅在数据新鲜度恢复正常后，才允许缓和。'
     ],
-    invalidationSummary: `${strategyState} fallback invalidation rules active.`,
+    invalidationSummary: `${strategyState} 回退失效规则已启用。`,
     deescalationBias: metadata.realtimeUnavailable ? 'low' : 'medium',
     signalConfidence: metadata.realtimeUnavailable ? 'low' : 'medium'
   };
@@ -1691,10 +1691,10 @@ function buildDominantDrivers(data, metadata) {
   if (metadata.realtimeFallbackUsed) {
     moduleEntries.push({
       key: 'realtime-fallback',
-      label: 'Realtime fallback',
+      label: '实时回退',
       score: metadata.realtimeHealthScore ?? null,
       trend: 0,
-      reason: 'Realtime fallback/local mode is active and should cap decision confidence.'
+      reason: '实时回退或本地模式已启用，当前应压低决策置信度。'
     });
   }
 
@@ -1804,7 +1804,7 @@ function buildActionQueueEngine(data, metadata, decisionState, positionGuidance,
           'Rebalance without chasing short-term moves.'
         ],
         blocked: [
-          'Avoid leverage expansion beyond baseline.',
+          '避免把杠杆扩张到基础水平以上。',
           'Avoid concentration increase without confirmation.'
         ]
       },
@@ -1812,7 +1812,7 @@ function buildActionQueueEngine(data, metadata, decisionState, positionGuidance,
         priority: [
           'Keep exposure pacing controlled and selective.',
           'Rebalance toward the middle of the target band.',
-          'Maintain baseline defensive buffers.'
+          '维持基础防守缓冲。'
         ],
         blocked: [
           'Avoid oversized single-step exposure changes.',
@@ -1874,11 +1874,11 @@ function buildActionQueueEngine(data, metadata, decisionState, positionGuidance,
       priorityActions.push('Maintain defensive buffers until the high-risk streak breaks.');
     }
     if (metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly || healthLevel === 'Baseline Only' || healthLevel === 'Stale') {
-      watchItems.push('Monitor data quality and freshness before easing controls.');
-      blockedActions.push('Avoid expanding risk using degraded or fallback data only.');
+      watchItems.push('在放松控制前，先确认数据质量与新鲜度。');
+      blockedActions.push('仅依赖降级或回退数据时，不要扩张风险。');
     }
     if ((positionGuidance?.newExposurePolicy || '').toLowerCase().includes('pause') || strategyState === 'Crisis') {
-      blockedActions.push('Pause broad new risk deployment.');
+      blockedActions.push('暂停广义新增风险投放。');
     }
     if ((positionGuidance?.leveragePolicy || '').toLowerCase().includes('no leverage')) {
       blockedActions.push('Avoid leverage expansion.');
@@ -1954,10 +1954,10 @@ function buildActionQueueUpgradeLayer(data, metadata, decisionState, positionGui
 
   const controlActions = uniqTexts([
     executionPermissions.addRisk === 'Blocked' || executionPermissions.addRisk === 'Restricted'
-      ? 'Freeze aggressive new risk adds.'
+      ? '冻结激进的新风险增加动作。'
       : '',
     executionPermissions.addLeverage === 'Blocked'
-      ? 'Block leverage expansion.'
+      ? '阻止杠杆扩张。'
       : executionPermissions.addLeverage === 'Limited' || executionPermissions.addLeverage === 'Restricted'
         ? 'Cap leverage usage to defensive sizing only.'
         : '',
@@ -1988,22 +1988,22 @@ function buildActionQueueUpgradeLayer(data, metadata, decisionState, positionGui
 
   const unblockConditions = uniqTexts([
     executionPermissions.tacticalReRisk !== 'Allowed'
-      ? 'Re-open tactical re-risk after the 3-day trend turns flat or negative.'
+      ? '待近3日趋势转平或转负后，再恢复战术性再冒险。'
       : '',
     resonanceCount >= 3 || executionPermissions.addRisk !== 'Allowed'
-      ? 'Re-open selective adds after resonance count drops below 3.'
+      ? '待共振数量降到 3 以下后，再恢复选择性加仓。'
       : '',
     executionPermissions.addLeverage !== 'Allowed'
-      ? 'Re-open leverage only after volatility and liquidity stress normalize.'
+      ? '仅在波动与流动性压力恢复正常后，才重新开放杠杆。'
       : '',
     executionPermissions.increaseConcentration !== 'Allowed'
-      ? 'Re-open concentration only after critical alerts clear.'
+      ? '仅在关键告警清除后，才重新开放提高集中度。'
       : '',
     deescalationBias === 'low' || riskMode === 'Stress' || strategyState === 'Crisis'
-      ? 'Re-open broader risk adds only after de-escalation bias improves.'
+      ? '仅在缓和倾向改善后，才重新开放更广泛的风险增加动作。'
       : '',
     riskMode === 'Repair' && (repairSignal === 'Moderate' || repairSignal === 'Strong')
-      ? 'Re-open selective adds after repair holds for another full review cycle.'
+      ? '待修复信号再持续一个完整评估周期后，才恢复选择性加仓。'
       : '',
     escalationLevel === 'high' || escalationLevel === 'severe'
       ? 'Do not relax controls until escalation signals stop widening.'
@@ -2015,7 +2015,7 @@ function buildActionQueueUpgradeLayer(data, metadata, decisionState, positionGui
       ? 'Do not relax controls until critical alerts stop increasing.'
       : '',
     reRiskingPosture === 'None'
-      ? 'Re-open tactical re-risk only after broader reset conditions are met.'
+      ? '仅在更广泛的重置条件满足后，才恢复战术性再冒险。'
       : '',
     ...resetConditions.slice(0, 3)
   ]).slice(0, 6);
@@ -2040,14 +2040,14 @@ function buildTriggerMonitorEngine(data, metadata, decisionState, positionGuidan
     const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色').length;
 
     const upgradeTriggers = uniqTexts([
-      'Upgrade if state score rises by 8 points or more from the current regime.',
-      'Upgrade if the 3-day change turns positive and exceeds +6.',
-      'Upgrade if resonance expands to 4 or more modules above 70.',
-      'Upgrade if severe resonance rises to 3 or more modules above 80.',
-      'Upgrade if red alerts increase or new critical alerts appear.',
-      'Upgrade if liquidity / volatility / funding stress re-accelerates.',
-      metadata.realtimeCacheOnly ? 'Upgrade if cache-only mode persists into the next cycle.' : '',
-      metadata.realtimeFreshnessLevel === 'stale' || metadata.realtimeUnavailable ? 'Upgrade if stale / baseline-only data persists without recovery.' : ''
+      '若状态分数较当前阶段再上升 8 分或以上，则升级。',
+      '若近3日变化转正且超过 +6，则升级。',
+      '若 70 以上模块共振扩大到 4 个或以上，则升级。',
+      '若 80 以上严重共振扩大到 3 个或以上，则升级。',
+      '若红色告警增加或出现新的关键告警，则升级。',
+      '若流动性、波动或资金压力再度加速，则升级。',
+      metadata.realtimeCacheOnly ? '若仅缓存模式持续到下一周期，则升级。' : '',
+      metadata.realtimeFreshnessLevel === 'stale' || metadata.realtimeUnavailable ? '若陈旧数据或仅基线模式持续且未恢复，则升级。' : ''
     ]).slice(0, 7);
 
     const activeEscalationSignals = uniqTexts([
@@ -2089,12 +2089,12 @@ function buildInvalidationRulesEngine(data, metadata, decisionState, positionGui
     const dominantLabels = Array.isArray(dominantDrivers) ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean) : [];
 
     const invalidationSignals = uniqTexts([
-      'Invalidate the current defensive read if total risk score rises another 8 points from here.',
-      'Invalidate the current read if the 3-day trend stops easing and turns back above +3.',
-      'Invalidate the current read if resonance breadth expands again.',
-      'Invalidate the current read if red alerts increase.',
-      metadata.realtimeCacheOnly ? 'Invalidate the current read if cache-only mode persists and stress signals stay elevated.' : '',
-      metadata.realtimeUnavailable ? 'Invalidate the current read if baseline-only mode persists while alerts worsen.' : ''
+      '若总风险分数在当前位置再上升 8 分，则当前防守判断失效。',
+      '若近3日趋势停止缓和并重新回到 +3 以上，则当前判断失效。',
+      '若共振广度再次扩大，则当前判断失效。',
+      '若红色告警增加，则当前判断失效。',
+      metadata.realtimeCacheOnly ? '若仅缓存模式持续且压力信号维持高位，则当前判断失效。' : '',
+      metadata.realtimeUnavailable ? '若仅基线模式持续且告警恶化，则当前判断失效。' : ''
     ]).slice(0, 6);
 
     const resetConditions = uniqTexts([
@@ -2235,7 +2235,7 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
         regimeLabel: regimeConfig.inflation2022.regimeLabel,
         evaluate: ({ addMatch, addMismatch }) => {
           const t = regimeConfig.inflation2022.thresholds;
-          addMatch(energy >= t.energy.min, t.energy.points, `Energy stress is elevated at ${energy}.`);
+          addMatch(energy >= t.energy.min, t.energy.points, `能源压力升至 ${energy}，仍处高位。`);
           addMatch(inflation >= t.inflation.min, t.inflation.points, `Inflation pressure remains elevated at ${inflation}.`);
           addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `State score ${stateScore} fits a persistent but non-panic suppression regime.`);
           addMatch(t.strategyStates.values.includes(decisionState?.strategyState), t.strategyStates.points, `Strategy state ${decisionState?.strategyState || 'Caution'} fits a prolonged suppression regime.`);
@@ -2256,7 +2256,7 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
         regimeLabel: regimeConfig.regionalContained.regimeLabel,
         evaluate: ({ addMatch, addMismatch }) => {
           const t = regimeConfig.regionalContained.thresholds;
-          addMatch(geopolitical >= t.regionalDrivers.geopoliticalMin || energy >= t.regionalDrivers.energyMin, t.regionalDrivers.points, `Regional shock drivers remain dominant with geopolitical ${geopolitical} and energy ${energy}.`);
+          addMatch(geopolitical >= t.regionalDrivers.geopoliticalMin || energy >= t.regionalDrivers.energyMin, t.regionalDrivers.points, `地缘与能源驱动仍占主导，当前地缘 ${geopolitical}、能源 ${energy}。`);
           addMatch(resonanceCount <= t.resonanceCount.max, t.resonanceCount.points, `Resonance remains contained at ${resonanceCount} modules.`);
           addMatch(severeResonanceCount <= t.severeResonanceCount.max, t.severeResonanceCount.points, `Severe resonance is limited at ${severeResonanceCount}.`);
           addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `State score ${stateScore} is elevated but not full-systemic.`);
@@ -2277,7 +2277,7 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
         regimeLabel: regimeConfig.elevatedOscillation.regimeLabel,
         evaluate: ({ addMatch, addMismatch }) => {
           const t = regimeConfig.elevatedOscillation.thresholds;
-          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `State score ${stateScore} sits in an elevated but not crisis-level range.`);
+          addMatch(stateScore >= t.stateScore.min && stateScore <= t.stateScore.max, t.stateScore.points, `状态分数 ${stateScore} 处于高位但未进入危机区间。`);
           addMatch(Math.abs(recent3dDelta) <= t.recent3dDeltaAbsMax.max, t.recent3dDeltaAbsMax.points, `3-day change of ${recent3dDelta >= 0 ? '+' : ''}${recent3dDelta} points suggests oscillation rather than a break.`);
           addMatch(resonanceCount >= t.resonanceCount.min && resonanceCount <= t.resonanceCount.max, t.resonanceCount.points, `Resonance is elevated but still moderate at ${resonanceCount} modules.`);
           addMatch(severeResonanceCount <= t.severeResonanceCount.max, t.severeResonanceCount.points, `Severe resonance remains limited at ${severeResonanceCount}.`);
@@ -2329,7 +2329,7 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
     const warningAlerts = Array.isArray(data?.warningSystem?.alerts) ? data.warningSystem.alerts : [];
     const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色').slice(0, 3);
     const watchlist = Array.isArray(data?.triggerPanel?.watchlist) ? data.triggerPanel.watchlist.slice(0, 3) : [];
-    const driverLabels = dominantDrivers.map((item) => item.label).join(', ') || 'baseline drivers';
+    const driverLabels = dominantDrivers.map((item) => item.label).join('、') || '基础驱动项';
     const positionGuidance = buildPositionGuidanceEngine(data, metadata, state, dominantDrivers);
     const actionQueue = buildActionQueueEngine(data, metadata, state, positionGuidance, dominantDrivers);
     const triggerMonitor = buildTriggerMonitorEngine(data, metadata, state, positionGuidance, actionQueue, dominantDrivers);
@@ -2590,7 +2590,7 @@ function applyRealtimeOverlay(base, realtimePayload) {
   next.liquidityIndex.regime = next.modules.liquidity >= 70 ? '限制性偏紧' : next.modules.liquidity >= 55 ? '偏紧缓解' : '流动性修复';
   next.liquidityIndex.directionLabel = realtimePayload.cacheOnly ? '快变量缓存模式' : realtimePayload.degradedMode ? '快变量带回退' : '快变量已实时覆盖';
   next.liquidityIndex.notes = [
-    `实时快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元 ${fmtNumSafe(dxy,2)} / VIX ${fmtNumSafe(vix,2)} / HY OAS ${fmtNumSafe(hy,2)}。`,
+    `实时快变量：布伦特原油 ${fmtNumSafe(brent,1)} / 美元指数 ${fmtNumSafe(dxy,2)} / 波动率指数 VIX ${fmtNumSafe(vix,2)} / 高收益利差 HY OAS ${fmtNumSafe(hy,2)}。`,
     `10Y ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`,
     `数据模式：${realtimePayload.sourceMode || 'unknown'} / 健康分数：${realtimePayload.healthScore ?? '--'} / 关键缺失：${realtimePayload.criticalMissing ?? 0}。`,
     ...(realtimePayload.notes || [])
@@ -2612,7 +2612,7 @@ function applyRealtimeOverlay(base, realtimePayload) {
   );
 
   let level = 'green';
-  let levelLabel = 'GREEN / 允许分批进攻';
+  let levelLabel = '绿色 / 允许分批进攻';
   let title = '今天允许小幅加仓，但必须按纪律分批执行';
   let desc = '流动性、信用和波动率均回到相对稳定区，系统允许提高风险暴露，但必须按分批规则执行。';
   let allow = ['允许分三笔以内提高总仓位。', '允许增加质量权益和部分成长观察仓。', '允许适度降低美元/短票仓位。'];
@@ -2625,7 +2625,7 @@ function applyRealtimeOverlay(base, realtimePayload) {
 
   if (hardStop) {
     level = 'red';
-    levelLabel = 'RED / 禁止新增';
+    levelLabel = '红色 / 禁止新增';
     title = '今天禁止主动加仓，只允许减仓与恢复防御层';
     desc = realtimePayload.cacheOnly
       ? '关键快变量不足，系统进入缓存模式。为避免误判，执行引擎直接锁为 RED：禁止新增，只允许风险收缩。'
@@ -2639,7 +2639,7 @@ function applyRealtimeOverlay(base, realtimePayload) {
     status = '硬阈值全面生效';
   } else if (caution) {
     level = 'yellow';
-    levelLabel = 'YELLOW / 仅允许微调';
+    levelLabel = '黄色 / 仅允许微调';
     title = '今天不能主动加风险，只允许对齐目标仓位与防守再平衡';
     desc = '风险尚未解除，执行引擎只允许微调。允许围绕目标仓位做再平衡，但禁止新增进攻性仓位。';
     allow = ['允许把总仓位向 48% 靠拢。', '允许维持能源、美元/短票、黄金对冲层。', '允许保留防御型股票观察仓。'];
@@ -2675,8 +2675,8 @@ function applyRealtimeOverlay(base, realtimePayload) {
     checklist: mandatory,
     blocked: block,
     checkpoints: [
-      `Brent 当前 ${fmtNumSafe(brent,1)}`,
-      `DXY 当前 ${fmtNumSafe(dxy,2)}`,
+      `布伦特原油当前 ${fmtNumSafe(brent,1)}`,
+      `美元指数当前 ${fmtNumSafe(dxy,2)}`,
       `VIX 当前 ${fmtNumSafe(vix,2)}`,
       `HY OAS 当前 ${fmtNumSafe(hy,2)}%`
     ]
@@ -2715,13 +2715,13 @@ function applyRealtimeOverlay(base, realtimePayload) {
   next.tradingSystem.riskControl.maxDrawdown = level === 'red' ? '-6%' : '-8%';
   next.tradingSystem.riskControl.hardThresholds = [
     '流动性 ≥ 75：总仓位降至 42%。',
-    'Brent ≥ 110：能源上调，股票下调。',
+    '布伦特原油 ≥ 110：能源上调，股票下调。',
     'HY OAS ≥ 4.5%：暂停新增风险仓位。',
     'VIX ≥ 28：进入 RED。'
   ];
   next.tradingSystem.riskControl.resetThresholds = [
-    'VIX < 18 且 HY OAS < 3.7：才允许回到 GREEN。',
-    'Brent < 95 且 DXY 走弱：才允许提高成长仓。',
+    '波动率指数 VIX < 18 且高收益利差 HY OAS < 3.7：才允许回到绿色状态。',
+    '布伦特原油 < 95 且美元指数 DXY 走弱：才允许提高成长仓。',
     'criticalMissing < 2：解除数据回退约束。'
   ];
 
@@ -2734,20 +2734,20 @@ function applyRealtimeOverlay(base, realtimePayload) {
     chainSignal: next.modules.energy >= next.modules.liquidity ? '油价→通胀→利率→股票' : '美元→信用→流动性→股票',
     notes: [
       `执行引擎状态：${levelLabel}。`,
-      `关键快变量：Brent ${fmtNumSafe(brent,1)} / DXY ${fmtNumSafe(dxy,2)} / VIX ${fmtNumSafe(vix,2)} / HY ${fmtNumSafe(hy,2)}。`,
+      `关键快变量：布伦特原油 ${fmtNumSafe(brent,1)} / 美元指数 ${fmtNumSafe(dxy,2)} / 波动率指数 VIX ${fmtNumSafe(vix,2)} / 高收益利差 ${fmtNumSafe(hy,2)}。`,
       `健康度 ${realtimePayload.healthScore ?? '--'}，关键缺失 ${realtimePayload.criticalMissing ?? 0}。`
     ]
   };
 
   next.topRisks = [
-    `盘中快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元 ${fmtNumSafe(dxy,2)} / VIX ${fmtNumSafe(vix,2)} / HY OAS ${fmtNumSafe(hy,2)}。`,
+    `盘中快变量：布伦特原油 ${fmtNumSafe(brent,1)} / 美元指数 ${fmtNumSafe(dxy,2)} / 波动率指数 VIX ${fmtNumSafe(vix,2)} / 高收益利差 HY OAS ${fmtNumSafe(hy,2)}。`,
     `执行状态灯：${levelLabel}。`,
     realtimePayload.cacheOnly ? '当前为缓存模式，系统自动提升防守等级。' : realtimePayload.degradedMode ? '当前为带回退实时模式，少量数据已回退但系统继续运行。' : '当前为实时模式，快变量直接驱动信号与仓位。',
     `10Y ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`
   ];
 
-  next.decisionLine = `当前已进入 v26.0B-pr6 交易引擎模式：实时快变量 ${realtimePayload.sourceMode || '--'}，执行状态灯为 ${levelLabel}。先看状态灯，再决定能不能动。`;
-  next.summary = `v26.0B-pr6 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(brent,1)}、美元 ${fmtNumSafe(dxy,2)}、VIX ${fmtNumSafe(vix,2)}、HY OAS ${fmtNumSafe(hy,2)}%。`;
+  next.decisionLine = `当前已进入 v26.0B-pr6 交易引擎模式：实时快变量 ${realtimePayload.sourceMode === 'live' ? '实时模式' : realtimePayload.sourceMode === 'cache' ? '缓存模式' : realtimePayload.sourceMode || '--'}，执行状态灯为 ${levelLabel}。先看状态灯，再决定能不能动。`;
+  next.summary = `v26.0B-pr6 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特原油 ${fmtNumSafe(brent,1)}、美元指数 ${fmtNumSafe(dxy,2)}、波动率指数 VIX ${fmtNumSafe(vix,2)}、高收益利差 HY OAS ${fmtNumSafe(hy,2)}%。`;
   next.recovery = {
     degradedMode: !!realtimePayload.degradedMode,
     safeOutput: true,
@@ -3359,7 +3359,7 @@ async function main() {
   if (metadata.realtimeOverlayEnabled && realtime?.values) {
     renderRealtimeStrip(realtime, metadata);
     $('runtime-badge').textContent = metadata.realtimeFallbackUsed
-      ? '快变量来自本地 fallback'
+      ? '快变量来自本地回退'
       : realtime.degradedMode
         ? '快变量部分降级 / 慢变量正常'
         : '快变量已实时覆盖';

@@ -32,7 +32,7 @@ function buildFallback() {
     degradedMode: true,
     safeOutput: true,
     lastRun: isoNow,
-    notes: ['Build Daily Radar Data 未拿到可用 realtime 快照，已回退到上次有效结果。']
+    notes: ['日度雷达构建未拿到可用实时快照，已回退到上次有效结果。']
   };
   return { data: next, history: prevHistory };
 }
@@ -102,7 +102,7 @@ function lockEngine(score, risk, rt) {
   if (criticalDown || score >= 82 || risk.brent >= 110 || risk.hy >= 4.5 || risk.vix >= 28) {
     return {
       level:'red',
-      levelLabel:'RED / 禁止新增',
+      levelLabel:'红色 / 禁止新增',
       title:'今天禁止主动加仓，只允许减仓与恢复防御层',
       description:'系统检测到高压风险组合，执行引擎已锁定为 RED。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。',
       gross:'38%',
@@ -117,7 +117,7 @@ function lockEngine(score, risk, rt) {
   if (score >= 65 || risk.brent >= 90 || risk.hy >= 3.7 || risk.vix >= 20) {
     return {
       level:'yellow',
-      levelLabel:'YELLOW / 仅允许微调',
+      levelLabel:'黄色 / 仅允许微调',
       title:'今天不能主动加风险，只允许对齐目标仓位与防守再平衡',
       description:'风险尚未解除，执行引擎只允许微调。允许围绕目标仓位做再平衡，但禁止新增进攻性仓位。',
       gross:'48%',
@@ -131,7 +131,7 @@ function lockEngine(score, risk, rt) {
   }
   return {
     level:'green',
-    levelLabel:'GREEN / 允许分批进攻',
+    levelLabel:'绿色 / 允许分批进攻',
     title:'今天允许小幅加仓，但必须按纪律分批执行',
     description:'风险组合回到可控区，执行引擎允许提高风险暴露，但必须分批、限额，并保留最低现金缓冲。',
     gross:'58%',
@@ -202,8 +202,8 @@ function build() {
   const topRisks = [
     `布伦特 ${risk.brent.toFixed(1)} 美元，能源链条仍在传导。`,
     `广义美元 ${risk.dxy.toFixed(2)}，融资环境尚未明显放松。`,
-    `HY OAS ${risk.hy.toFixed(2)}%，信用风险${risk.hy >= 4 ? '偏紧' : '可控但需观察'}。`,
-    `10Y 美债 ${risk.us10y.toFixed(2)}%，实际利率 ${risk.real10y.toFixed(2)}%。`
+    `高收益利差 HY OAS ${risk.hy.toFixed(2)}%，信用风险${risk.hy >= 4 ? '偏紧' : '可控但需观察'}。`,
+    `10年美债收益率 ${risk.us10y.toFixed(2)}%，10年实际利率 ${risk.real10y.toFixed(2)}%。`
   ];
 
   const data = {
@@ -221,8 +221,8 @@ function build() {
     confidenceScore: clamp(100 - (realtime.criticalMissing ?? 0) * 14 - (realtime.fallbackCount ?? 0) * 4),
     confidenceLevel: (realtime.cacheOnly ? '低' : realtime.degradedMode ? '中' : '高'),
     topRisks,
-    decisionLine: `当前已进入 v26.0B-pr6 交易引擎模式：实时快变量 ${realtime.sourceMode}，执行状态灯为 ${lock.levelLabel}。先看状态灯，再决定能不能动。`,
-    summary: `v26.0B-pr6 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${risk.brent.toFixed(1)}、美元 ${risk.dxy.toFixed(2)}、VIX ${risk.vix.toFixed(2)}、HY OAS ${risk.hy.toFixed(2)}%。`,
+    decisionLine: `当前已进入 v26.0B-pr6 交易引擎模式：实时快变量 ${realtime.sourceMode === 'live' ? '实时模式' : realtime.sourceMode}，执行状态灯为 ${lock.levelLabel}。先看状态灯，再决定能不能动。`,
+    summary: `v26.0B-pr6 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特原油 ${risk.brent.toFixed(1)}、美元指数 ${risk.dxy.toFixed(2)}、波动率指数 VIX ${risk.vix.toFixed(2)}、高收益利差 HY OAS ${risk.hy.toFixed(2)}%。`,
     modules: risk.modules,
     moduleTrends: {
       geopolitical: clamp((realtime.changes?.brent1d ?? 0) * 2, -9, 9),
@@ -234,9 +234,9 @@ function build() {
     },
     regimeProbabilities: probs,
     phaseSignals: [
-      `实时输入：布伦特 ${risk.brent.toFixed(1)} / VIX ${risk.vix.toFixed(2)} / HY OAS ${risk.hy.toFixed(2)}%。`,
-      `利率输入：10Y ${risk.us10y.toFixed(2)} / 实际利率 ${risk.real10y.toFixed(2)} / 盈亏平衡通胀 ${risk.breakeven.toFixed(2)}%。`,
-      `快变量状态：${realtime.sourceMode}，健康度 ${realtime.healthScore}。`
+      `实时输入：布伦特原油 ${risk.brent.toFixed(1)} / 波动率指数 VIX ${risk.vix.toFixed(2)} / 高收益利差 HY OAS ${risk.hy.toFixed(2)}%。`,
+      `利率输入：10年美债收益率 ${risk.us10y.toFixed(2)} / 10年实际利率 ${risk.real10y.toFixed(2)} / 盈亏平衡通胀 ${risk.breakeven.toFixed(2)}%。`,
+      `快变量状态：${realtime.sourceMode === 'live' ? '实时模式' : realtime.sourceMode}，健康度 ${realtime.healthScore}。`
     ],
     liquidityIndex: {
       score:risk.modules.liquidity,
@@ -244,7 +244,7 @@ function build() {
       change1d: clamp(((realtime.changes?.dxy1d ?? 0) * 10) + ((realtime.changes?.hyOas1d ?? 0) * 8), -9, 9),
       directionLabel: realtime.cacheOnly ? '快变量缓存模式' : realtime.degradedMode ? '快变量带回退' : '快变量实时覆盖',
       notes: [
-        `美元 ${risk.dxy.toFixed(2)} / HY OAS ${risk.hy.toFixed(2)} / VIX ${risk.vix.toFixed(2)} 为三大流动性输入。`,
+        `美元指数 ${risk.dxy.toFixed(2)} / 高收益利差 HY OAS ${risk.hy.toFixed(2)} / 波动率指数 VIX ${risk.vix.toFixed(2)} 为三大流动性输入。`,
         ...(realtime.notes || [])
       ],
       pillars: [
@@ -323,7 +323,7 @@ function build() {
         name:'反转情景',
         probability: clamp(avg([probs.disinflationaryGrowth, probs.liquidityBull])),
         description:'美元走弱、波动率和利差收敛后，系统重新开放进攻窗口。',
-        triggers:'VIX < 18 / HY OAS < 3.7 / Brent < 95',
+        triggers:'波动率指数 VIX < 18 / 高收益利差 HY OAS < 3.7 / 布伦特原油 < 95',
         assets:'逐步恢复权益与质量成长配置'
       }
     ],
@@ -334,7 +334,7 @@ function build() {
       watchCount: Object.values(realtime.sourceStatus || {}).filter(v => String(v).startsWith('fred') || String(v).startsWith('stooq')).length,
       alerts: [
         { level: lock.level === 'red' ? '红色' : lock.level === 'yellow' ? '橙色' : '黄色', title:'执行状态灯', driver:'交易引擎', triggeredAgo: isoNow, condition: lock.description, action: lock.actionText },
-        ...(realtime.notes || []).map((n) => ({ level:'黄色', title:'数据源提示', driver:'快变量源', triggeredAgo: isoNow, condition:n, action:'继续使用 fallback，不中断系统' }))
+        ...(realtime.notes || []).map((n) => ({ level:'黄色', title:'数据源提示', driver:'快变量源', triggeredAgo: isoNow, condition:n, action:'继续使用回退结果，不中断系统' }))
       ],
       rules: [
         '关键快变量失败 2 项以上 → 标记部分降级。',
@@ -343,8 +343,8 @@ function build() {
       ]
     },
     triggerPanel: {
-      critical:[`Brent ${risk.brent.toFixed(1)}`, `DXY ${risk.dxy.toFixed(2)}`, `HY ${risk.hy.toFixed(2)}%`],
-      drivers:[`VIX ${risk.vix.toFixed(2)}`, `10Y ${risk.us10y.toFixed(2)}%`, `Real10Y ${risk.real10y.toFixed(2)}%`],
+        critical:[`布伦特原油 ${risk.brent.toFixed(1)}`, `美元指数 ${risk.dxy.toFixed(2)}`, `高收益利差 ${risk.hy.toFixed(2)}%`],
+        drivers:[`波动率指数 VIX ${risk.vix.toFixed(2)}`, `10年美债收益率 ${risk.us10y.toFixed(2)}%`, `10年实际利率 ${risk.real10y.toFixed(2)}%`],
       watchlist:['下一次通胀数据','油价是否高于 100','信用利差是否重新走阔']
     },
     confidenceNotes: [
@@ -368,7 +368,7 @@ function build() {
         chainSignal: risk.modules.energy >= risk.modules.liquidity ? '油价→通胀→利率→股票' : '美元→信用→流动性→股票',
         notes: [
           `执行引擎状态：${lock.levelLabel}。`,
-          `关键快变量：Brent ${risk.brent.toFixed(1)} / DXY ${risk.dxy.toFixed(2)} / VIX ${risk.vix.toFixed(2)} / HY ${risk.hy.toFixed(2)}。`,
+          `关键快变量：布伦特原油 ${risk.brent.toFixed(1)} / 美元指数 ${risk.dxy.toFixed(2)} / 波动率指数 VIX ${risk.vix.toFixed(2)} / 高收益利差 ${risk.hy.toFixed(2)}。`,
           `健康度 ${realtime.healthScore}，关键缺失 ${realtime.criticalMissing || 0}。`
         ]
       },
@@ -395,13 +395,13 @@ function build() {
         systemState: lock.title,
         hardThresholds: [
           '流动性 ≥ 75：总仓位降至 42%。',
-          'Brent ≥ 110：能源上调，股票下调。',
-          'HY OAS ≥ 4.5%：暂停新增风险仓位。',
-          'VIX ≥ 28：进入 RED。'
+          '布伦特原油 ≥ 110：能源上调，股票下调。',
+          '高收益利差 HY OAS ≥ 4.5%：暂停新增风险仓位。',
+          '波动率指数 VIX ≥ 28：进入红色状态。'
         ],
         resetThresholds: [
-          'VIX < 18 且 HY OAS < 3.7：才允许回到 GREEN。',
-          'Brent < 95 且 DXY 走弱：才允许提高成长仓。',
+          '波动率指数 VIX < 18 且高收益利差 HY OAS < 3.7：才允许回到绿色状态。',
+          '布伦特原油 < 95 且美元指数 DXY 走弱：才允许提高成长仓。',
           'criticalMissing < 2：解除数据回退约束。'
         ]
       },
@@ -412,10 +412,10 @@ function build() {
         checklist: lock.mandatory,
         blocked: lock.block,
         checkpoints: [
-          `Brent 当前 ${risk.brent.toFixed(1)}`,
-          `DXY 当前 ${risk.dxy.toFixed(2)}`,
-          `VIX 当前 ${risk.vix.toFixed(2)}`,
-          `HY OAS 当前 ${risk.hy.toFixed(2)}%`
+          `布伦特原油当前 ${risk.brent.toFixed(1)}`,
+          `美元指数当前 ${risk.dxy.toFixed(2)}`,
+          `波动率指数 VIX 当前 ${risk.vix.toFixed(2)}`,
+          `高收益利差 HY OAS 当前 ${risk.hy.toFixed(2)}%`
         ]
       },
       executionLock: {
