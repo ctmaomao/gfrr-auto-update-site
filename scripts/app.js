@@ -240,6 +240,10 @@ const DECISION_CANONICAL_FIELDS = Object.freeze([
   'strategyState',
   'riskMode',
   'repairSignal',
+  'decisionStatement.headline',
+  'decisionStatement.posture',
+  'decisionStatement.actionBias',
+  'decisionStatement.condition',
   'stateLabel',
   'stateReason',
   'stateScore',
@@ -998,6 +1002,86 @@ function buildHistoricalRegimeFallback(data = {}, metadata = {}, decisionState =
   };
 }
 
+function buildDecisionStatementFallback() {
+  return {
+    headline: '当前保持受控防守姿态，在确认信号改善前不要主动增加风险暴露。',
+    posture: '受控防守',
+    actionBias: '持稳观察',
+    condition: '等待确认信号改善'
+  };
+}
+
+function buildDecisionStatement(decisionModel = {}) {
+  try {
+    const strategyState = decisionModel?.strategyState || 'Caution';
+    const riskMode = decisionModel?.riskMode || 'Deterioration';
+    const actionQueue = decisionModel?.actionQueue || {};
+    const positionGuidance = decisionModel?.positionGuidance || {};
+    const executionPermissions = positionGuidance?.executionPermissions || {};
+    const unblockConditions = Array.isArray(actionQueue?.unblockConditions) ? actionQueue.unblockConditions : [];
+
+    const postureMap = {
+      'Defensive:Stress': '受控防守',
+      'Defensive:Repair': '防守修复',
+      'Defensive:Deterioration': '防守收缩',
+      'Crisis:Stress': '危机防御',
+      'Crisis:Repair': '危机修复',
+      'Caution:Deterioration': '谨慎观察',
+      'Caution:Repair': '谨慎修复',
+      'Caution:Compression': '谨慎收敛',
+      'Balanced:Compression': '中性收敛',
+      'Balanced:Repair': '中性修复',
+      'Balanced:Deterioration': '中性偏谨慎',
+      'Risk-On:Compression': '积极运行',
+      'Risk-On:Repair': '积极修复'
+    };
+    const posture = postureMap[`${strategyState}:${riskMode}`]
+      || (strategyState === 'Balanced' ? '中性' : strategyState === 'Risk-On' ? '积极配置' : strategyState === 'Defensive' ? '受控防守' : strategyState === 'Crisis' ? '危机防御' : '谨慎观察');
+
+    let actionBias = '持稳观察';
+    if (executionPermissions.addRisk === 'Blocked') {
+      actionBias = '先降风险，暂不加仓';
+    } else if (executionPermissions.addRisk === 'Restricted') {
+      actionBias = '控制加仓节奏';
+    } else if (executionPermissions.addRisk === 'Limited') {
+      actionBias = '允许小幅试探加仓';
+    } else if (executionPermissions.addRisk === 'Allowed') {
+      actionBias = '允许选择性加仓';
+    } else if (Array.isArray(actionQueue.priorityActions) && actionQueue.priorityActions[0]) {
+      actionBias = '按当前控制动作执行';
+    }
+
+    const conditionSource = unblockConditions[0];
+    let condition = '等待风险信号改善';
+    if (conditionSource) {
+      if (/re-open tactical re-risk/i.test(conditionSource)) condition = '待三日趋势转平或转弱后再逐步恢复';
+      else if (/re-open selective adds/i.test(conditionSource)) condition = '待共振回落后再恢复选择性加仓';
+      else if (/re-open leverage/i.test(conditionSource)) condition = '待波动与流动性压力恢复后再放开杠杆';
+      else if (/re-open concentration/i.test(conditionSource)) condition = '待关键告警清除后再放开集中度';
+      else if (/de-escalation bias/i.test(conditionSource)) condition = '待去升级信号改善后再逐步放松';
+      else condition = '等待风险信号改善';
+    }
+
+    const headline = actionBias === '先降风险，暂不加仓'
+      ? `当前以${posture}姿态执行，优先降低风险暴露，${condition}前保持该策略。`
+      : actionBias === '控制加仓节奏'
+        ? `当前保持${posture}，控制加仓节奏，${condition}前维持现有策略。`
+        : actionBias === '允许选择性加仓'
+          ? `当前维持${posture}，允许选择性加仓，但在${condition}前仍需保持纪律。`
+          : `当前以${posture}姿态执行，${actionBias}，${condition}前保持该策略。`;
+
+    return {
+      headline,
+      posture,
+      actionBias,
+      condition
+    };
+  } catch (error) {
+    console.warn('Decision statement generation failed, using fallback.', error);
+    return buildDecisionStatementFallback();
+  }
+}
+
 function createDecisionFallback(data = {}, metadata = {}) {
   const fallbackLabel = metadata.realtimeUnavailable ? 'BASELINE / FALLBACK' : 'UNAVAILABLE / FALLBACK';
   const stateFallback = buildStrategyStateFallback(data, metadata);
@@ -1041,7 +1125,8 @@ function createDecisionFallback(data = {}, metadata = {}) {
     },
     triggerMonitor: buildTriggerMonitorFallback(data, metadata, stateFallback.strategyState),
     invalidationRules: buildInvalidationRulesFallback(data, metadata, stateFallback.strategyState),
-    historicalRegime: buildHistoricalRegimeFallback(data, metadata, stateFallback)
+    historicalRegime: buildHistoricalRegimeFallback(data, metadata, stateFallback),
+    decisionStatement: buildDecisionStatementFallback()
   };
 }
 
@@ -2011,7 +2096,7 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
     };
     const schemaMeta = buildDecisionSchemaMeta();
 
-    return {
+    const decisionModel = {
       contractVersion: DECISION_SCHEMA_VERSION,
       schemaMeta,
       strategyState: state.strategyState,
@@ -2043,6 +2128,8 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
       invalidationRules,
       historicalRegime
     };
+    decisionModel.decisionStatement = buildDecisionStatement(decisionModel);
+    return decisionModel;
   } catch (error) {
     console.warn('Decision model generation failed, using fallback.', error);
     return createDecisionFallback(data, metadata);
@@ -2519,6 +2606,7 @@ function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
     : 'Historical analogue unavailable';
   const historicalRegimeSummary = decisionModel?.historicalRegime?.regimeSummary
     || 'Historical similarity layer unavailable; use current state and triggers as the primary guide.';
+  const decisionStatement = decisionModel?.decisionStatement || buildDecisionStatementFallback();
 
   return {
     stateBadge: strategyState,
@@ -2537,6 +2625,10 @@ function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
       : 'Escalation watch active',
     cashGuidance: decisionModel?.positionGuidance?.cashGuidance || 'Keep baseline cash discipline.',
     newExposurePolicy: decisionModel?.positionGuidance?.newExposurePolicy || 'Use staged exposure changes only.',
+    decisionStatementHeadline: decisionStatement.headline,
+    decisionStatementPosture: decisionStatement.posture,
+    decisionStatementActionBias: decisionStatement.actionBias,
+    decisionStatementCondition: decisionStatement.condition,
     historicalRegimeLabel,
     historicalRegimeSummary,
     dominantRiskSources
@@ -2558,6 +2650,10 @@ function renderDecisionHeader(model) {
   $('decision-header-change').textContent = model.stateChange;
   $('decision-header-cash').textContent = model.cashGuidance;
   $('decision-header-policy').textContent = model.newExposurePolicy;
+  $('decision-statement-headline').textContent = model.decisionStatementHeadline;
+  $('decision-statement-posture').textContent = model.decisionStatementPosture;
+  $('decision-statement-action-bias').textContent = model.decisionStatementActionBias;
+  $('decision-statement-condition').textContent = model.decisionStatementCondition;
   $('decision-header-regime-label').textContent = model.historicalRegimeLabel;
   $('decision-header-regime-summary').textContent = model.historicalRegimeSummary;
 
@@ -2992,6 +3088,7 @@ async function main() {
     executionPermissions: window.__GFRR_POSITION_GUIDANCE__?.executionPermissions || {}
   };
   window.__GFRR_ACTION_QUEUE__ = window.__GFRR_DECISION_MODEL__?.actionQueue || buildActionQueueFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
+  window.__GFRR_DECISION_STATEMENT__ = window.__GFRR_DECISION_MODEL__?.decisionStatement || buildDecisionStatementFallback();
   window.__GFRR_TRIGGER_MONITOR__ = window.__GFRR_DECISION_MODEL__?.triggerMonitor || buildTriggerMonitorFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_INVALIDATION_RULES__ = window.__GFRR_DECISION_MODEL__?.invalidationRules || buildInvalidationRulesFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_HISTORICAL_REGIME__ = window.__GFRR_DECISION_MODEL__?.historicalRegime || buildHistoricalRegimeFallback(data, metadata, window.__GFRR_DECISION_MODEL__);
