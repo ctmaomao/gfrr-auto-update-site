@@ -2612,12 +2612,12 @@ function applyRealtimeOverlay(base, realtimePayload) {
   );
 
   let level = 'green';
-  let levelLabel = 'GREEN / 允许分批进攻';
+  let levelLabel = '绿色 / 允许分批进攻';
   let title = '今天允许小幅加仓，但必须按纪律分批执行';
   let desc = '流动性、信用和波动率均回到相对稳定区，系统允许提高风险暴露，但必须按分批规则执行。';
   let allow = ['允许分三笔以内提高总仓位。', '允许增加质量权益和部分成长观察仓。', '允许适度降低美元/短票仓位。'];
   let block = ['禁止一次性打满仓位。', '禁止单日大涨后追高。', '禁止取消全部对冲。'];
-  let mandatory = ['单日净加仓不得超过总资产 5%。', '若状态灯重新转黄，次日停止加仓。', '若周回撤 > -3%，立即回到 YELLOW。'];
+  let mandatory = ['单日净加仓不得超过总资产 5%。', '若状态灯重新转黄，次日停止加仓。', '若周回撤 > -3%，立即回到黄色状态。'];
   let target = '58%';
   let cash = '20%';
   let riskBudget = '50%';
@@ -2625,11 +2625,11 @@ function applyRealtimeOverlay(base, realtimePayload) {
 
   if (hardStop) {
     level = 'red';
-    levelLabel = 'RED / 禁止新增';
+    levelLabel = '红色 / 禁止新增';
     title = '今天禁止主动加仓，只允许减仓与恢复防御层';
     desc = realtimePayload.cacheOnly
-      ? '关键快变量不足，系统进入缓存模式。为避免误判，执行引擎直接锁为 RED：禁止新增，只允许风险收缩。'
-      : '高压风险组合已触发。执行引擎直接锁为 RED：任何新增风险动作都被禁止，只允许减仓、补现金和恢复防御仓。';
+      ? '关键快变量不足，系统进入缓存模式。为避免误判，执行引擎直接锁为红色：禁止新增，只允许风险收缩。'
+      : '高压风险组合已触发。执行引擎直接锁为红色：任何新增风险动作都被禁止，只允许减仓、补现金和恢复防御仓。';
     allow = ['允许减仓风险资产。', '允许补充美元/短票与现金。', '允许把黄金对冲恢复到上限。'];
     block = ['禁止新增股票与高Beta仓位。', '禁止盘中追涨。', '禁止主观覆盖系统阈值。'];
     mandatory = ['若总仓位高于 42%，必须先减回 38%-42%。', '若科技/高Beta > 2%，立即降回 2% 以下。', '若现金缓冲 < 30%，立即补回。'];
@@ -2639,7 +2639,7 @@ function applyRealtimeOverlay(base, realtimePayload) {
     status = '硬阈值全面生效';
   } else if (caution) {
     level = 'yellow';
-    levelLabel = 'YELLOW / 仅允许微调';
+    levelLabel = '黄色 / 仅允许微调';
     title = '今天不能主动加风险，只允许对齐目标仓位与防守再平衡';
     desc = '风险尚未解除，执行引擎只允许微调。允许围绕目标仓位做再平衡，但禁止新增进攻性仓位。';
     allow = ['允许把总仓位向 48% 靠拢。', '允许维持能源、美元/短票、黄金对冲层。', '允许保留防御型股票观察仓。'];
