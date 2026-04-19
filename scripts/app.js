@@ -50,14 +50,20 @@ function classifyFreshnessLevel(ageMinutes, hasRealtime) {
 
 function buildRealtimeStatusLabel(metadata) {
   if (metadata.realtimeUnavailable) {
-    return 'Realtime unavailable / baseline only';
+    return '实时不可用 / 仅基线';
   }
 
-  const parts = [`Realtime ${metadata.realtimeFreshnessLevel}`];
-  if (Number.isFinite(metadata.realtimeAgeMinutes)) parts.push(`${metadata.realtimeAgeMinutes}m old`);
-  if (metadata.realtimeDegraded) parts.push('degraded');
-  if (metadata.realtimeFallbackUsed) parts.push('local fallback');
-  if (metadata.realtimeCacheOnly) parts.push('cache only');
+  const freshnessLabelMap = {
+    fresh: '新鲜',
+    aging: '老化',
+    stale: '陈旧',
+    unavailable: '不可用'
+  };
+  const parts = [`实时 ${freshnessLabelMap[metadata.realtimeFreshnessLevel] || metadata.realtimeFreshnessLevel || '未知'}`];
+  if (Number.isFinite(metadata.realtimeAgeMinutes)) parts.push(`${metadata.realtimeAgeMinutes} 分钟前`);
+  if (metadata.realtimeDegraded) parts.push('降级');
+  if (metadata.realtimeFallbackUsed) parts.push('本地回退');
+  if (metadata.realtimeCacheOnly) parts.push('仅缓存');
   return parts.join(' / ');
 }
 
@@ -92,8 +98,8 @@ function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
         okCount: Math.max(0, statusEntries.length - failedCount),
         failedCount,
         fallbackCount,
-        summaryLabel: `${Math.max(0, statusEntries.length - failedCount)} healthy / ${fallbackCount} fallback / ${failedCount} failed`,
-        issueLines: statusEntries.slice(0, 4).map(([key, status]) => `${key}: ${status}`)
+        summaryLabel: `${Math.max(0, statusEntries.length - failedCount)} 正常 / ${fallbackCount} 回退 / ${failedCount} 失败`,
+        issueLines: statusEntries.slice(0, 4).map(([key, status]) => `${key}: ${String(status).replace('fallback', '回退').replace('secondary', '次级来源').replace('failed', '失败')}`)
       };
     }
 
@@ -102,8 +108,8 @@ function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
       okCount: 0,
       failedCount: 0,
       fallbackCount: 0,
-      summaryLabel: 'No source detail available',
-      issueLines: ['Source detail unavailable.']
+      summaryLabel: '暂无来源明细',
+      issueLines: ['来源明细不可用。']
     };
   }
 
@@ -127,7 +133,7 @@ function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
     });
 
   if (!issueLines.length) {
-    issueLines.push('All tracked realtime sources are currently healthy.');
+    issueLines.push('所有已跟踪的实时来源当前均正常。');
   }
 
   return {
@@ -135,9 +141,31 @@ function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
     okCount,
     failedCount,
     fallbackCount,
-    summaryLabel: `${okCount} healthy / ${fallbackCount} fallback / ${failedCount} failed`,
+    summaryLabel: `${okCount} 正常 / ${fallbackCount} 回退 / ${failedCount} 失败`,
     issueLines
   };
+}
+
+function formatHealthLevelLabel(level) {
+  const map = {
+    Healthy: '健康',
+    Watch: '观察',
+    Degraded: '降级',
+    Stale: '陈旧',
+    'Baseline Only': '仅基线',
+    Unknown: '未知'
+  };
+  return map[level] || level || '--';
+}
+
+function formatFreshnessLabel(level) {
+  const map = {
+    fresh: '新鲜',
+    aging: '老化',
+    stale: '陈旧',
+    unavailable: '不可用'
+  };
+  return map[level] || level || '--';
 }
 
 function buildHealthDashboardModel(runtimeState) {
@@ -150,32 +178,32 @@ function buildHealthDashboardModel(runtimeState) {
   const issues = [];
 
   if (metadata.realtimeUnavailable) {
-    issues.push('Realtime unavailable; rendering baseline only');
+    issues.push('实时数据不可用，页面按基线模式显示。');
   } else if (metadata.realtimeFreshnessLevel === 'stale') {
-    issues.push(`Realtime is stale (${metadata.realtimeAgeMinutes ?? '--'} min old)`);
+    issues.push(`实时数据已陈旧（${metadata.realtimeAgeMinutes ?? '--'} 分钟前）。`);
   } else if (metadata.realtimeFreshnessLevel === 'aging') {
-    issues.push(`Realtime is aging (${metadata.realtimeAgeMinutes ?? '--'} min old)`);
+    issues.push(`实时数据开始老化（${metadata.realtimeAgeMinutes ?? '--'} 分钟前）。`);
   }
 
   if (metadata.realtimeFallbackUsed) {
-    flags.push('local fallback');
-    issues.push('Local fallback is active');
+    flags.push('本地回退');
+    issues.push('本地回退已启用。');
   }
   if (metadata.realtimeCacheOnly) {
-    flags.push('cache-only');
-    issues.push('Cache-only mode active');
+    flags.push('仅缓存');
+    issues.push('当前处于仅缓存模式。');
   }
   if (metadata.realtimeDegraded) {
-    flags.push('degraded');
+    flags.push('降级');
   }
   if (criticalMissing > 0) {
-    issues.push(`${criticalMissing} critical source${criticalMissing > 1 ? 's' : ''} missing`);
+    issues.push(`${criticalMissing} 个关键来源缺失。`);
   }
   if (sourceSummary.failedCount > 0) {
-    issues.push(`${sourceSummary.failedCount} source${sourceSummary.failedCount > 1 ? 's' : ''} currently failing`);
+    issues.push(`${sourceSummary.failedCount} 个来源当前失败。`);
   }
   if (!flags.length) {
-    flags.push('normal');
+    flags.push('正常');
   }
 
   let overallLevel = 'Healthy';
@@ -199,14 +227,14 @@ function buildHealthDashboardModel(runtimeState) {
   }
 
   const summary = overallLevel === 'Baseline Only'
-    ? 'Baseline only due to unavailable realtime.'
+    ? '实时不可用，当前仅显示基线结果。'
     : overallLevel === 'Stale'
-      ? 'Realtime is available but stale; use with caution.'
+      ? '实时数据可用但已陈旧，使用时需谨慎。'
       : overallLevel === 'Degraded'
-        ? 'Realtime is available with visible degradation.'
+        ? '实时数据可用，但存在明显降级。'
         : overallLevel === 'Watch'
-          ? 'Realtime is aging or showing mild health drift.'
-          : 'Realtime healthy and actively overlaying baseline.';
+          ? '实时数据开始老化，或健康度出现轻微漂移。'
+          : '实时数据健康，正在覆盖基线结果。';
 
   const healthTone = normalizeHealthLevel(overallLevel);
 
@@ -215,13 +243,17 @@ function buildHealthDashboardModel(runtimeState) {
     healthTone,
     summary,
     healthScore,
-    freshness: metadata.realtimeFreshnessLevel || 'unavailable',
-    ageLabel: Number.isFinite(metadata.realtimeAgeMinutes) ? `${metadata.realtimeAgeMinutes} min` : '--',
-    realtimeSource: metadata.realtimeSource || 'none',
+      freshness: formatFreshnessLabel(metadata.realtimeFreshnessLevel || 'unavailable'),
+      ageLabel: Number.isFinite(metadata.realtimeAgeMinutes) ? `${metadata.realtimeAgeMinutes} min` : '--',
+      realtimeSource: metadata.realtimeSource === 'remote'
+        ? '远端'
+        : metadata.realtimeSource === 'local-fallback'
+          ? '本地回退'
+          : metadata.realtimeSource || '无',
     flagsLabel: flags.join(' / '),
     criticalMissing,
     sourceSummaryLabel: sourceSummary.summaryLabel,
-    issues: issues.length ? issues : ['Realtime healthy.'],
+      issues: issues.length ? issues : ['实时数据健康。'],
     sourceLines: sourceSummary.issueLines
   };
 }
@@ -949,10 +981,10 @@ function buildTriggerMonitorFallback(data = {}, metadata = {}, strategyState = '
       'Escalate if warning intensity or data degradation increases.'
     ],
     activeEscalationSignals: [
-      metadata.realtimeUnavailable ? 'Realtime unavailable / baseline only.' : 'No reliable escalation engine output; use baseline monitoring.',
-      Number.isFinite(data?.score) ? `Reference risk score ${data.score}.` : 'Reference risk score unavailable.'
-    ],
-    triggerSummary: `${strategyState} fallback trigger monitor active.`,
+        metadata.realtimeUnavailable ? '实时不可用，当前仅使用基线监控。' : '当前未获得可靠的升级信号输出，请先按基线监控执行。',
+        Number.isFinite(data?.score) ? `参考风险分数 ${data.score}。` : '参考风险分数不可用。'
+      ],
+      triggerSummary: `${strategyState} 回退触发监控已启用。`,
     escalationLevel: metadata.realtimeUnavailable ? 'high' : 'medium',
     signalConfidence: metadata.realtimeUnavailable ? 'low' : 'medium'
   };
@@ -998,19 +1030,19 @@ function buildHistoricalRegimeFallback(data = {}, metadata = {}, decisionState =
   const strategyState = decisionState?.strategyState || 'Caution';
   return {
     regimeName: 'historical-regime-fallback',
-    regimeLabel: 'Historical analogue unavailable',
+    regimeLabel: '历史相似阶段不可用',
     matchScore: 0,
     matchedFeatures: [
-      `Use the current ${strategyState} state and live decision outputs as the primary guide.`
+      `请优先参考当前 ${strategyState} 状态与实时决策输出。`
     ],
     mismatchFeatures: [
-      'Historical regime matching fallback is active.',
-      metadata.realtimeUnavailable ? 'Realtime is unavailable, so analogy confidence is capped.' : 'Analogy engine did not complete.'
+      '历史阶段匹配当前处于回退模式。',
+      metadata.realtimeUnavailable ? '实时数据不可用，历史相似性置信度已受限。' : '历史相似性引擎本轮未完成。'
     ],
-    regimeSummary: 'Historical similarity layer is unavailable; keep using the current state, guidance, and triggers as the main decision framework.',
+    regimeSummary: '历史相似阶段暂不可用，请继续以当前状态、仓位建议与触发条件作为主要判断框架。',
     secondaryMatch: null,
     confidence: metadata.realtimeUnavailable ? 'low' : 'medium',
-    interpretationNote: 'This is a fallback interpretation layer only and does not change the current strategy state.'
+    interpretationNote: '该层仅用于历史解释，不会改变当前策略状态。'
   };
 }
 
@@ -1300,7 +1332,7 @@ function buildExecutionDirective(decisionModel = {}) {
 }
 
 function createDecisionFallback(data = {}, metadata = {}) {
-  const fallbackLabel = metadata.realtimeUnavailable ? 'BASELINE / FALLBACK' : 'UNAVAILABLE / FALLBACK';
+  const fallbackLabel = metadata.realtimeUnavailable ? '基线 / 回退' : '不可用 / 回退';
   const stateFallback = buildStrategyStateFallback(data, metadata);
   const fallbackPositionGuidance = buildPositionGuidanceFallback(data, metadata, stateFallback.strategyState);
   const fallbackActionQueue = buildActionQueueFallback(data, metadata, stateFallback.strategyState);
@@ -1312,28 +1344,28 @@ function createDecisionFallback(data = {}, metadata = {}) {
     repairSignal: stateFallback.repairSignal,
     stateLabel: stateFallback.stateLabel || fallbackLabel,
     stateReason: stateFallback.stateReason || (metadata.realtimeUnavailable
-      ? 'Decision model generation fell back to baseline because realtime overlay is unavailable.'
-      : 'Decision model generation fell back to safe defaults.'),
+      ? '决策模型因实时覆盖不可用，已回退到基线结果。'
+      : '决策模型已回退到安全默认值。'),
     stateScore: stateFallback.stateScore,
     stateDrivers: stateFallback.stateDrivers,
     stateMeta: stateFallback.stateMeta,
     stateTransitionBias: stateFallback.stateTransitionBias,
     dominantDrivers: [{
       key: 'fallback',
-      label: 'Fallback baseline',
+        label: '基线回退',
       score: Number.isFinite(data.score) ? data.score : null,
       trend: 0,
-      reason: 'Use baseline risk score and existing page modules until decision generation recovers.'
+        reason: '在决策模型恢复前，请先参考基线风险分数和现有页面模块。'
     }],
     positionGuidance: {
       ...fallbackPositionGuidance,
       ...buildLegacyPositionGuidanceCompat(
         {
           ...fallbackPositionGuidance,
-          stance: 'Preserve current defensive baseline'
+            stance: '维持当前防守基线'
         },
         data?.tradingSystem?.positioning || {},
-        ['Fallback mode active.', 'Do not expand risk until decision model recovers.']
+          ['当前处于回退模式。', '在决策模型恢复前不要扩张风险。']
       )
     },
     actionQueue: {
@@ -2025,7 +2057,7 @@ function buildTriggerMonitorEngine(data, metadata, decisionState, positionGuidan
       (stateMeta.severeResonanceCount || 0) >= 2 ? `Severe resonance active: ${stateMeta.severeResonanceCount} modules above 80.` : '',
       criticalAlerts > 0 ? `${criticalAlerts} red alert(s) active.` : '',
       metadata.realtimeCacheOnly ? 'Cache-only mode is active.' : '',
-      metadata.realtimeUnavailable ? 'Realtime unavailable / baseline only.' : '',
+      metadata.realtimeUnavailable ? '实时不可用，当前仅使用基线。' : '',
       metadata.realtimeFreshnessLevel === 'stale' ? 'Realtime freshness is stale.' : '',
       dominantLabels.length ? `Dominant stress drivers: ${dominantLabels.join(', ')}.` : '',
       Array.isArray(triggerPanel.critical) && triggerPanel.critical.length ? `Critical trigger panel active: ${triggerPanel.critical.slice(0, 2).join(', ')}.` : ''
@@ -2173,7 +2205,7 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
           const lead = matchedFeatures[0] || 'Tightening-style stress features are present.';
           const caveat = mismatchFeatures[0] || 'This still looks more like a drawdown regime than a disorderly seizure.';
-          return `Closest to a tightening-led drawdown analogue (${matchScore}/100). ${lead} Difference: ${caveat}`;
+          return `当前更接近“紧缩驱动回撤”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
         }
       }),
       evaluateCandidate({
@@ -2195,7 +2227,7 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
           const lead = matchedFeatures[0] || 'Liquidity crisis features are partially present.';
           const caveat = mismatchFeatures[0] || 'Current conditions still stop short of a full seizure template.';
-          return `Closest to an early liquidity-crisis analogue (${matchScore}/100). ${lead} Difference: ${caveat}`;
+          return `当前更接近“早期流动性危机”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
         }
       }),
       evaluateCandidate({
@@ -2216,7 +2248,7 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
           const lead = matchedFeatures[0] || 'Inflation-led suppression features are visible.';
           const caveat = mismatchFeatures[0] || 'The backdrop still carries more episodic stress than a pure 2022-style grind.';
-          return `Closest to an inflation-and-hikes suppression analogue (${matchScore}/100). ${lead} Difference: ${caveat}`;
+          return `当前更接近“通胀加加息压制”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
         }
       }),
       evaluateCandidate({
@@ -2237,7 +2269,7 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
           const lead = matchedFeatures[0] || 'Regional stress is visible without broad systemic spread.';
           const caveat = mismatchFeatures[0] || 'Systemic diffusion still looks limited for now.';
-          return `Closest to a contained regional-risk analogue (${matchScore}/100). ${lead} Difference: ${caveat}`;
+          return `当前更接近“区域性风险但尚未扩散”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
         }
       }),
       evaluateCandidate({
@@ -2258,7 +2290,7 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
         summary: ({ matchScore, matchedFeatures, mismatchFeatures }) => {
           const lead = matchedFeatures[0] || 'Elevated-but-choppy features are present.';
           const caveat = mismatchFeatures[0] || 'The backdrop still falls short of a crisis analogue.';
-          return `Closest to an elevated-but-not-crisis analogue (${matchScore}/100). ${lead} Difference: ${caveat}`;
+          return `当前更接近“高位震荡但未危机化”阶段（${matchScore}/100）。相似点：${lead} 不同点：${caveat}`;
         }
       })
     ].sort((a, b) => b.matchScore - a.matchScore);
@@ -2278,7 +2310,7 @@ function buildHistoricalRegimeEngine(data, history, metadata, decisionState, dom
           }
         : null,
       confidence,
-      interpretationNote: 'This is a rule-based historical similarity layer for interpretation only; it does not change the current strategy state, position guidance, or action queue.'
+      interpretationNote: '该历史相似层仅用于解释，不会改变当前策略状态、仓位建议或动作队列。'
     };
   } catch (error) {
     console.warn('Historical regime matcher failed, using fallback.', error);
@@ -2331,16 +2363,16 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
       positionGuidance: {
         ...positionGuidanceWithPermissions,
         ...buildLegacyPositionGuidanceCompat(positionGuidanceWithPermissions, position, [
-          executionLock.description || 'Follow current execution lock.',
-          `Health: ${healthDashboard.overallLevel}.`,
-          `Realtime: ${metadata.realtimeStatusLabel || 'unknown'}.`
+          executionLock.description || '按当前执行锁状态运行。',
+          `健康状态：${formatHealthLevelLabel(healthDashboard.overallLevel)}。`,
+          `实时状态：${metadata.realtimeStatusLabel || '未知'}。`
         ])
       },
       actionQueue: {
         ...actionQueueWithUpgrade,
         ...buildLegacyActionQueueCompat(actionQueueWithUpgrade, [
-          executionLock.description || 'Follow current execution lock.',
-          actionLayer.todayAction || 'Use the queue as the primary execution guide.'
+            executionLock.description || '按当前执行锁状态运行。',
+            actionLayer.todayAction || '请以当前动作队列作为主要执行依据。'
         ])
       },
       triggerMonitor,
@@ -2714,15 +2746,20 @@ function applyRealtimeOverlay(base, realtimePayload) {
     `10Y ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`
   ];
 
-  next.decisionLine = `当前已进入 v26.0A-rc1 交易引擎模式：实时快变量 ${realtimePayload.sourceMode || '--'}，执行状态灯为 ${levelLabel}。先看状态灯，再决定能不能动。`;
-  next.summary = `v26.0A-rc1 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(brent,1)}、美元 ${fmtNumSafe(dxy,2)}、VIX ${fmtNumSafe(vix,2)}、HY OAS ${fmtNumSafe(hy,2)}%。`;
+  next.decisionLine = `当前已进入 v26.0B-pr6 交易引擎模式：实时快变量 ${realtimePayload.sourceMode || '--'}，执行状态灯为 ${levelLabel}。先看状态灯，再决定能不能动。`;
+  next.summary = `v26.0B-pr6 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(brent,1)}、美元 ${fmtNumSafe(dxy,2)}、VIX ${fmtNumSafe(vix,2)}、HY OAS ${fmtNumSafe(hy,2)}%。`;
   next.recovery = {
     degradedMode: !!realtimePayload.degradedMode,
     safeOutput: true,
     lastRun: realtimePayload.updatedAt || next.updatedAt,
-    notes: realtimePayload.notes || ['v26.0A-rc1 快变量正常。']
+    notes: realtimePayload.notes || ['v26.0B-pr6 快变量正常。']
   };
 
+  next.decisionLine = String(next.decisionLine || '').replace(/v26\.0A-rc1/g, 'v26.0B-pr6');
+  next.summary = String(next.summary || '').replace(/v26\.0A-rc1/g, 'v26.0B-pr6');
+  if (Array.isArray(next.recovery?.notes)) {
+    next.recovery.notes = next.recovery.notes.map((note) => String(note).replace(/v26\.0A-rc1/g, 'v26.0B-pr6'));
+  }
   return next;
 }
 
@@ -2739,12 +2776,13 @@ function renderRealtimeStrip(realtime, metadata = null) {
   $('rt-spx').textContent = fmtNumSafe(realtime.values.spx, 0);
   $('rt-source-mode').textContent = realtime.degradedMode ? '部分回退' : '实时覆盖';
   if (metadata?.realtimeUnavailable) {
-    $('rt-source-mode').textContent = 'baseline only';
+    $('rt-source-mode').textContent = '仅基线';
   } else if (metadata) {
-    const modeParts = [metadata.realtimeFreshnessLevel || realtime.freshnessLevel || 'fresh'];
-    if (metadata.realtimeDegraded) modeParts.push('degraded');
-    if (metadata.realtimeFallbackUsed) modeParts.push('local fallback');
-    if (metadata.realtimeCacheOnly) modeParts.push('cache only');
+    const modeLabelMap = { fresh: '新鲜', aging: '老化', stale: '陈旧', unavailable: '不可用' };
+    const modeParts = [modeLabelMap[metadata.realtimeFreshnessLevel || realtime.freshnessLevel || 'fresh'] || '新鲜'];
+    if (metadata.realtimeDegraded) modeParts.push('降级');
+    if (metadata.realtimeFallbackUsed) modeParts.push('本地回退');
+    if (metadata.realtimeCacheOnly) modeParts.push('仅缓存');
     $('rt-source-mode').textContent = modeParts.join(' / ');
   }
   $('rt-brent-delta').textContent = fmtSigned(realtime.changes?.brent1d || 0);
@@ -2756,10 +2794,10 @@ function renderRealtimeStrip(realtime, metadata = null) {
 
 function renderHealthDashboard(model) {
   const badge = $('health-level-badge');
-  badge.textContent = model.overallLevel;
+  badge.textContent = formatHealthLevelLabel(model.overallLevel);
   badge.className = `badge ${model.healthTone.badgeTone} ${model.healthTone.badgeClass}`;
 
-  $('health-overall-level').textContent = model.overallLevel;
+  $('health-overall-level').textContent = formatHealthLevelLabel(model.overallLevel);
   $('health-score').textContent = model.healthScore ?? '--';
   $('health-freshness').textContent = model.freshness;
   $('health-age').textContent = model.ageLabel;
@@ -2794,13 +2832,13 @@ function describeStateChange(stateMeta = {}) {
   const extremeCount = Number(stateMeta.extremeThresholdCount) || 0;
   const highRiskStreakDays = Number(stateMeta.highRiskStreakDays) || 0;
 
-  if (delta >= 8) return 'Rising over last 3 days';
-  if (delta >= 3) return 'Firming over last 3 days';
-  if (delta <= -8) return extremeCount > 0 || highRiskStreakDays >= 3 ? 'Elevated but easing' : 'Easing over last 3 days';
-  if (delta <= -3) return 'Stabilizing';
-  if (extremeCount > 0) return 'Holding at elevated levels';
-  return 'Stable near current regime';
-}
+    if (delta >= 8) return '近 3 日持续上行';
+    if (delta >= 3) return '近 3 日偏强走高';
+    if (delta <= -8) return extremeCount > 0 || highRiskStreakDays >= 3 ? '高位仍在，但已开始缓和' : '近 3 日明显回落';
+    if (delta <= -3) return '正在趋稳';
+    if (extremeCount > 0) return '仍维持在高位区间';
+    return '接近当前状态中枢';
+  }
 
 function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
   // Decision Header is intentionally decision-model-first. It should consume the
@@ -2816,17 +2854,17 @@ function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
   const exposureBand = decisionModel?.positionGuidance?.totalExposureBand || '--';
   const coreAction = decisionModel?.actionQueue?.priorityActions?.[0]
     || decisionModel?.positionGuidance?.newExposurePolicy
-    || 'Keep risk changes paced and selective.';
+      || '保持节奏，选择性调整风险。';
   const dominantRiskSources = Array.isArray(decisionModel?.dominantDrivers) && decisionModel.dominantDrivers.length
     ? decisionModel.dominantDrivers.slice(0, 3).map((item) => item.label || item.key).filter(Boolean)
     : Array.isArray(decisionModel?.stateDrivers)
       ? decisionModel.stateDrivers.slice(0, 3).map((item) => item.label || item.key).filter(Boolean)
-      : ['Risk drivers unavailable'];
+        : ['风险来源暂不可用'];
   const historicalRegimeLabel = decisionModel?.historicalRegime?.regimeLabel
     ? `${decisionModel.historicalRegime.regimeLabel} / ${decisionModel.historicalRegime.matchScore ?? '--'}`
-    : 'Historical analogue unavailable';
-  const historicalRegimeSummary = decisionModel?.historicalRegime?.regimeSummary
-    || 'Historical similarity layer unavailable; use current state and triggers as the primary guide.';
+      : '历史相似阶段不可用';
+    const historicalRegimeSummary = decisionModel?.historicalRegime?.regimeSummary
+      || '历史相似层暂不可用，请优先参考当前状态与触发条件。';
   const decisionStatement = decisionModel?.decisionStatement || buildDecisionStatementFallback();
 
   return {
@@ -2839,13 +2877,13 @@ function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
     reRiskingPosture: decisionModel?.positionGuidance?.reRiskingPosture || 'Selective',
     coreAction,
     stateChange: describeStateChange(decisionModel.stateMeta || {}),
-    title: `${stateLabel} Decision Header`,
-    reason: decisionModel.stateReason || data?.decisionLine || 'Current regime is being summarized from the v26 decision model.',
-    escalationLabel: decisionModel?.triggerMonitor?.escalationLevel
-      ? `Escalation ${decisionModel.triggerMonitor.escalationLevel}`
-      : 'Escalation watch active',
-    cashGuidance: decisionModel?.positionGuidance?.cashGuidance || 'Keep baseline cash discipline.',
-    newExposurePolicy: decisionModel?.positionGuidance?.newExposurePolicy || 'Use staged exposure changes only.',
+      title: `${stateLabel} 决策总览`,
+      reason: decisionModel.stateReason || data?.decisionLine || '当前结论由 v26 决策模型统一汇总生成。',
+      escalationLabel: decisionModel?.triggerMonitor?.escalationLevel
+        ? `升级监控：${({ low: '低', medium: '中', high: '高', severe: '极高' })[decisionModel.triggerMonitor.escalationLevel] || decisionModel.triggerMonitor.escalationLevel}`
+        : '升级监控已开启',
+      cashGuidance: decisionModel?.positionGuidance?.cashGuidance || '保持基线现金纪律。',
+      newExposurePolicy: decisionModel?.positionGuidance?.newExposurePolicy || '新增风险暴露仅允许分步执行。',
     decisionStatementHeadline: decisionStatement.headline,
     decisionStatementPosture: decisionStatement.posture,
     decisionStatementActionBias: decisionStatement.actionBias,
@@ -2880,7 +2918,7 @@ function renderDecisionHeader(model) {
 
   const drivers = $('decision-header-drivers');
   drivers.innerHTML = '';
-  (model.dominantRiskSources || ['Risk drivers unavailable']).forEach((driver) => {
+    (model.dominantRiskSources || ['风险来源暂不可用']).forEach((driver) => {
     const chip = document.createElement('span');
     chip.className = 'decision-driver-chip';
     chip.textContent = driver;
@@ -3329,7 +3367,7 @@ async function main() {
     $('runtime-badge').textContent = metadata.realtimeFetchFailed ? '当前处于基线模式 / realtime 不可用' : '当前处于基线模式';
   }
   if (!metadata.realtimeOverlayEnabled) {
-    $('rt-source-mode').textContent = 'baseline only';
+    $('rt-source-mode').textContent = '仅基线';
   }
   $('runtime-badge').textContent = metadata.realtimeStatusLabel;
   renderDecisionHeader(window.__GFRR_DECISION_HEADER__);

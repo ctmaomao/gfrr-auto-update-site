@@ -24,10 +24,10 @@ const realtime = readJson(rtPath, null);
 
 function buildFallback() {
   const next = structuredClone(prevData);
-  next.version = 'v24.1';
+  next.version = 'v26.0B-pr6';
   next.updatedAt = isoNow;
   next.decisionLine = '实时快变量暂不可用，系统沿用上次有效慢变量结构，但保留今日更新时间戳。';
-  next.summary = 'v24.1 日构建已退回到上次有效慢变量结构。';
+  next.summary = 'v26.0B-pr6 日构建已退回到上次有效慢变量结构。';
   next.recovery = {
     degradedMode: true,
     safeOutput: true,
@@ -207,7 +207,7 @@ function build() {
   ];
 
   const data = {
-    version:'v24.1',
+    version:'v26.0B-pr6',
     updatedAt: isoNow,
     score:risk.score,
     scoreChange1d,
@@ -221,8 +221,8 @@ function build() {
     confidenceScore: clamp(100 - (realtime.criticalMissing ?? 0) * 14 - (realtime.fallbackCount ?? 0) * 4),
     confidenceLevel: (realtime.cacheOnly ? '低' : realtime.degradedMode ? '中' : '高'),
     topRisks,
-    decisionLine: `当前已进入 v24.1 交易引擎模式：实时快变量 ${realtime.sourceMode}，执行状态灯为 ${lock.levelLabel}。先看状态灯，再决定能不能动。`,
-    summary: `v24.1 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${risk.brent.toFixed(1)}、美元 ${risk.dxy.toFixed(2)}、VIX ${risk.vix.toFixed(2)}、HY OAS ${risk.hy.toFixed(2)}%。`,
+    decisionLine: `当前已进入 v26.0B-pr6 交易引擎模式：实时快变量 ${realtime.sourceMode}，执行状态灯为 ${lock.levelLabel}。先看状态灯，再决定能不能动。`,
+    summary: `v26.0B-pr6 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${risk.brent.toFixed(1)}、美元 ${risk.dxy.toFixed(2)}、VIX ${risk.vix.toFixed(2)}、HY OAS ${risk.hy.toFixed(2)}%。`,
     modules: risk.modules,
     moduleTrends: {
       geopolitical: clamp((realtime.changes?.brent1d ?? 0) * 2, -9, 9),
@@ -356,7 +356,7 @@ function build() {
       degradedMode: realtime.degradedMode,
       safeOutput: true,
       lastRun: isoNow,
-      notes: realtime.notes || ['v24.1 慢变量已由最新 realtime 快照重算。']
+      notes: realtime.notes || ['v26.0B-pr6 慢变量已由最新 realtime 快照重算。']
     },
     tradingSystem: {
       signalEngine: {
@@ -438,4 +438,4 @@ const built = build();
 fs.mkdirSync(dataDir, { recursive: true });
 fs.writeFileSync(dataPath, JSON.stringify(built.data, null, 2));
 fs.writeFileSync(histPath, JSON.stringify(built.history, null, 2));
-console.log('Built v24.1 radar data successfully.');
+console.log('Built v26.0B-pr6 radar data successfully.');
