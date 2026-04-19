@@ -235,9 +235,11 @@ const MODULE_LABELS = {
   banking: '银行'
 };
 
-const DECISION_SCHEMA_VERSION = 'v26.0B-step3';
+const DECISION_SCHEMA_VERSION = 'v26.0B-pr1';
 const DECISION_CANONICAL_FIELDS = Object.freeze([
   'strategyState',
+  'riskMode',
+  'repairSignal',
   'stateLabel',
   'stateReason',
   'stateScore',
@@ -358,6 +360,39 @@ const STATE_RULES = Object.freeze({
       green: -2
     },
     realtimeFallbackDelta: 3
+  },
+  riskModeThresholds: {
+    deteriorationDeltaFloor: 3,
+    deteriorationResonanceFloor: 3,
+    stressResonanceFloor: 4,
+    stressSevereResonanceFloor: 2,
+    stressCriticalAlertFloor: 2,
+    stressExtremeThresholdFloor: 2,
+    stressPressureFloor: 2,
+    compressionResonanceCeil: 2,
+    compressionSevereResonanceCeil: 0,
+    compressionCriticalAlertCeil: 0,
+    compressionExtremeThresholdCeil: 0
+  },
+  repairSignalThresholds: {
+    strong: {
+      recent3dDeltaMax: -8,
+      criticalAlertMax: 0,
+      severeResonanceMax: 1,
+      extremeThresholdMax: 0,
+      resonanceMax: 2
+    },
+    moderate: {
+      recent3dDeltaMax: -3,
+      criticalAlertMax: 1,
+      severeResonanceMax: 1,
+      extremeThresholdMax: 1
+    },
+    weak: {
+      recent3dDeltaMax: 0,
+      criticalAlertMax: 1,
+      severeResonanceMax: 2
+    }
   }
 });
 const POSITION_RULES = Object.freeze({
@@ -566,34 +601,44 @@ function createScoreSeries(history = [], currentScore = null) {
 
 function buildStrategyStateFallback(data = {}, metadata = {}) {
   const fallbackState = metadata.realtimeUnavailable ? 'Defensive' : 'Caution';
+  const fallbackRiskMode = metadata.realtimeUnavailable ? 'Stress' : 'Deterioration';
+  const fallbackRepairSignal = metadata.realtimeUnavailable ? 'None' : 'Weak';
   const fallbackMeta = {
     totalRiskScore: Number.isFinite(data.score) ? data.score : null,
     recent3dDelta: 0,
     recent3dSpeed: 0,
     resonanceCount: 0,
     severeResonanceCount: 0,
+    stressPressureCount: metadata.realtimeUnavailable ? 2 : 0,
+    dataQualityPressure: Boolean(metadata.realtimeUnavailable || metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly),
     extremeThresholdCount: 0,
     extremeThresholds: ['fallback-mode'],
     elevatedRiskStreakDays: 0,
     highRiskStreakDays: 0,
     criticalAlertCount: 0,
-    healthLevel: metadata.realtimeUnavailable ? 'Baseline Only' : 'Unknown'
+    healthLevel: metadata.realtimeUnavailable ? 'Baseline Only' : 'Unknown',
+    riskMode: fallbackRiskMode,
+    repairSignal: fallbackRepairSignal,
+    stateTransitionBias: fallbackRiskMode === 'Stress' ? 'up-bias' : 'guarded'
   };
 
   return {
     strategyState: fallbackState,
-    stateLabel: `${fallbackState} / Fallback`,
+    riskMode: fallbackRiskMode,
+    repairSignal: fallbackRepairSignal,
+    stateLabel: `${fallbackState} · ${fallbackRiskMode}`,
     stateScore: fallbackState === 'Defensive' ? 72 : 55,
     stateReason: metadata.realtimeUnavailable
-      ? 'Strategy state fell back to a defensive baseline because realtime overlay is unavailable.'
-      : 'Strategy state engine fell back to a cautious baseline because state computation was unavailable.',
+      ? 'Strategy state fell back to a defensive stress baseline because realtime overlay is unavailable.'
+      : 'Strategy state engine fell back to a cautious deterioration baseline because state computation was unavailable.',
     stateDrivers: [{
       key: 'fallback',
       label: 'Fallback guardrail',
       impact: fallbackState,
       reason: 'Fallback mode preserves a safe, non-empty strategy state output.'
     }],
-    stateMeta: fallbackMeta
+    stateMeta: fallbackMeta,
+    stateTransitionBias: fallbackMeta.stateTransitionBias
   };
 }
 
@@ -752,6 +797,8 @@ function createDecisionFallback(data = {}, metadata = {}) {
     contractVersion: DECISION_SCHEMA_VERSION,
     schemaMeta: buildDecisionSchemaMeta(),
     strategyState: stateFallback.strategyState,
+    riskMode: stateFallback.riskMode,
+    repairSignal: stateFallback.repairSignal,
     stateLabel: stateFallback.stateLabel || fallbackLabel,
     stateReason: stateFallback.stateReason || (metadata.realtimeUnavailable
       ? 'Decision model generation fell back to baseline because realtime overlay is unavailable.'
@@ -759,6 +806,7 @@ function createDecisionFallback(data = {}, metadata = {}) {
     stateScore: stateFallback.stateScore,
     stateDrivers: stateFallback.stateDrivers,
     stateMeta: stateFallback.stateMeta,
+    stateTransitionBias: stateFallback.stateTransitionBias,
     dominantDrivers: [{
       key: 'fallback',
       label: 'Fallback baseline',
@@ -787,9 +835,8 @@ function createDecisionFallback(data = {}, metadata = {}) {
   };
 }
 
-function getStrategyStateLabel(strategyState, stateScore) {
-  const scoreLabel = Number.isFinite(stateScore) ? `S${Math.round(stateScore)}` : 'S--';
-  return `${strategyState} / ${scoreLabel}`;
+function getStrategyStateLabel(strategyState, riskMode) {
+  return `${strategyState} · ${riskMode || 'Deterioration'}`;
 }
 
 function deriveStrategyState(stateScore) {
@@ -804,6 +851,96 @@ function resolveRuleDelta(value, rules = []) {
     && (Number.isFinite(rule.equals) ? value === rule.equals : true)
   ));
   return matched?.delta || 0;
+}
+
+function deriveRepairSignal(stateMeta = {}, metadata = {}) {
+  const thresholds = STATE_RULES.repairSignalThresholds;
+  const delta = Number(stateMeta.recent3dDelta) || 0;
+  const criticalAlertCount = Number(stateMeta.criticalAlertCount) || 0;
+  const severeResonanceCount = Number(stateMeta.severeResonanceCount) || 0;
+  const extremeThresholdCount = Number(stateMeta.extremeThresholdCount) || 0;
+  const resonanceCount = Number(stateMeta.resonanceCount) || 0;
+
+  if (!metadata.realtimeUnavailable
+    && delta <= thresholds.strong.recent3dDeltaMax
+    && criticalAlertCount <= thresholds.strong.criticalAlertMax
+    && severeResonanceCount <= thresholds.strong.severeResonanceMax
+    && extremeThresholdCount <= thresholds.strong.extremeThresholdMax
+    && resonanceCount <= thresholds.strong.resonanceMax) {
+    return 'Strong';
+  }
+
+  if (delta <= thresholds.moderate.recent3dDeltaMax
+    && criticalAlertCount <= thresholds.moderate.criticalAlertMax
+    && severeResonanceCount <= thresholds.moderate.severeResonanceMax
+    && extremeThresholdCount <= thresholds.moderate.extremeThresholdMax) {
+    return 'Moderate';
+  }
+
+  if (delta <= thresholds.weak.recent3dDeltaMax
+    && criticalAlertCount <= thresholds.weak.criticalAlertMax
+    && severeResonanceCount <= thresholds.weak.severeResonanceMax) {
+    return 'Weak';
+  }
+
+  return 'None';
+}
+
+function deriveRiskMode(stateMeta = {}, metadata = {}, triggerMonitorMeta = {}) {
+  const thresholds = STATE_RULES.riskModeThresholds;
+  const delta = Number(stateMeta.recent3dDelta) || 0;
+  const resonanceCount = Number(stateMeta.resonanceCount) || 0;
+  const severeResonanceCount = Number(stateMeta.severeResonanceCount) || 0;
+  const criticalAlertCount = Number(stateMeta.criticalAlertCount) || 0;
+  const extremeThresholdCount = Number(stateMeta.extremeThresholdCount) || 0;
+  const stressPressureCount = Number(stateMeta.stressPressureCount) || 0;
+  const repairSignal = stateMeta.repairSignal || 'None';
+  const deescalationBias = triggerMonitorMeta.deescalationBias || 'low';
+  const escalationLevel = triggerMonitorMeta.escalationLevel || 'low';
+  const dataQualityPressure = Boolean(stateMeta.dataQualityPressure || metadata.realtimeUnavailable || metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly);
+
+  if (
+    severeResonanceCount >= thresholds.stressSevereResonanceFloor
+    || resonanceCount >= thresholds.stressResonanceFloor
+    || criticalAlertCount >= thresholds.stressCriticalAlertFloor
+    || extremeThresholdCount >= thresholds.stressExtremeThresholdFloor
+    || stressPressureCount >= thresholds.stressPressureFloor
+    || escalationLevel === 'high'
+    || escalationLevel === 'severe'
+    || dataQualityPressure
+  ) {
+    return 'Stress';
+  }
+
+  if (
+    delta <= 0
+    && (repairSignal === 'Moderate' || repairSignal === 'Strong')
+    && criticalAlertCount <= 1
+    && severeResonanceCount <= 1
+    && deescalationBias !== 'low'
+  ) {
+    return 'Repair';
+  }
+
+  if (
+    delta > 0
+    || resonanceCount >= thresholds.deteriorationResonanceFloor
+    || criticalAlertCount > 0
+  ) {
+    return 'Deterioration';
+  }
+
+  if (
+    delta <= 0
+    && resonanceCount <= thresholds.compressionResonanceCeil
+    && severeResonanceCount <= thresholds.compressionSevereResonanceCeil
+    && criticalAlertCount <= thresholds.compressionCriticalAlertCeil
+    && extremeThresholdCount <= thresholds.compressionExtremeThresholdCeil
+  ) {
+    return 'Compression';
+  }
+
+  return 'Deterioration';
 }
 
 function buildStrategyStateMeta(data, history, metadata, healthDashboard) {
@@ -828,6 +965,11 @@ function buildStrategyStateMeta(data, history, metadata, healthDashboard) {
     alertCriticalCount
   );
   const warningCount = Number.isFinite(data?.warningSystem?.warningCount) ? data.warningSystem.warningCount : 0;
+  const liquidityStress = Number(data?.modules?.liquidity) >= metaThresholds.resonanceFloor;
+  const creditStress = Number(data?.modules?.debt) >= metaThresholds.resonanceFloor;
+  const bankingStress = Number(data?.modules?.banking) >= metaThresholds.resonanceFloor;
+  const stressPressureCount = [liquidityStress, creditStress, bankingStress].filter(Boolean).length;
+  const dataQualityPressure = Boolean(metadata.realtimeUnavailable || metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly);
   const extremeThresholds = [];
   const pushExtreme = (condition, label) => {
     if (condition) extremeThresholds.push(label);
@@ -841,6 +983,12 @@ function buildStrategyStateMeta(data, history, metadata, healthDashboard) {
   pushExtreme(metadata.realtimeCacheOnly, 'cache-only');
   pushExtreme(highRiskStreakDays >= metaThresholds.highRiskExtremeStreak, 'high-risk-streak');
 
+  const deescalationBias = recent3dDelta <= -6 && criticalAlertCount === 0 && severeResonanceCount <= 1
+    ? 'high'
+    : recent3dDelta <= 0 && criticalAlertCount <= 1 && severeResonanceCount <= 1
+      ? 'medium'
+      : 'low';
+
   return {
     totalRiskScore,
     recent3dDelta,
@@ -853,6 +1001,12 @@ function buildStrategyStateMeta(data, history, metadata, healthDashboard) {
     highRiskStreakDays,
     criticalAlertCount,
     warningCount,
+    stressPressureCount,
+    liquidityStress,
+    creditStress,
+    bankingStress,
+    dataQualityPressure,
+    deescalationBias,
     healthLevel: healthDashboard.overallLevel,
     executionLevel: data?.tradingSystem?.executionLock?.level || 'unknown'
   };
@@ -875,6 +1029,25 @@ function calculateStrategyStateEngine(data, history, metadata, healthDashboard) 
 
   stateScore = clampNumber(Math.round(stateScore), 0, 100);
   const strategyState = deriveStrategyState(stateScore);
+  const repairSignal = deriveRepairSignal(stateMeta, metadata);
+  const escalationLevel = stateScore >= 85 || (stateMeta.extremeThresholdCount || 0) >= 2 || (stateMeta.criticalAlertCount || 0) >= 2
+    ? 'high'
+    : stateScore >= 68 || (stateMeta.severeResonanceCount || 0) >= 2
+      ? 'medium'
+      : 'low';
+  stateMeta.repairSignal = repairSignal;
+  stateMeta.escalationLevel = escalationLevel;
+  const riskMode = deriveRiskMode(stateMeta, metadata, {
+    escalationLevel,
+    deescalationBias: stateMeta.deescalationBias
+  });
+  const stateTransitionBias = riskMode === 'Stress' || riskMode === 'Deterioration'
+    ? 'up-bias'
+    : riskMode === 'Repair'
+      ? 'down-bias'
+      : 'stable';
+  stateMeta.riskMode = riskMode;
+  stateMeta.stateTransitionBias = stateTransitionBias;
   const stateDrivers = [
     {
       key: 'total-risk',
@@ -885,14 +1058,20 @@ function calculateStrategyStateEngine(data, history, metadata, healthDashboard) 
     {
       key: 'three-day-speed',
       label: '3-day speed',
-      impact: stateMeta.recent3dDelta > 0 ? 'deteriorating' : stateMeta.recent3dDelta < 0 ? 'easing' : 'flat',
+      impact: riskMode === 'Repair'
+        ? 'repairing'
+        : stateMeta.recent3dDelta > 0
+          ? 'deteriorating'
+          : stateMeta.recent3dDelta < 0
+            ? 'easing'
+            : 'flat',
       reason: `Recent 3-day change is ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta} (${stateMeta.recent3dSpeed}/day).`
     },
     {
       key: 'module-resonance',
       label: 'Module resonance',
-      impact: stateMeta.resonanceCount >= 3 ? 'broad' : stateMeta.resonanceCount >= 2 ? 'narrow' : 'contained',
-      reason: `${stateMeta.resonanceCount} modules are at or above 70, with ${stateMeta.severeResonanceCount} at or above 80.`
+      impact: riskMode === 'Stress' ? 'stress' : stateMeta.resonanceCount >= 3 ? 'broad' : stateMeta.resonanceCount >= 2 ? 'narrow' : 'contained',
+      reason: `${stateMeta.resonanceCount} modules are at or above 70, with ${stateMeta.severeResonanceCount} at or above 80; stress pressure count ${stateMeta.stressPressureCount || 0}.`
     },
     {
       key: 'extreme-thresholds',
@@ -907,24 +1086,34 @@ function calculateStrategyStateEngine(data, history, metadata, healthDashboard) 
       label: 'High-risk persistence',
       impact: stateMeta.highRiskStreakDays >= 3 ? 'persistent' : 'not-persistent',
       reason: `High-risk streak: ${stateMeta.highRiskStreakDays} day(s); elevated-risk streak: ${stateMeta.elevatedRiskStreakDays} day(s).`
+    },
+    {
+      key: 'mode-layer',
+      label: 'Risk mode',
+      impact: riskMode,
+      reason: `Mode resolved as ${riskMode} with repair signal ${repairSignal} and de-escalation bias ${stateMeta.deescalationBias}.`
     }
   ];
 
   const stateReason = [
-    `Strategy state resolved to ${strategyState} with state score ${stateScore}.`,
-    `Total risk ${stateMeta.totalRiskScore ?? '--'}, 3-day delta ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta}, resonance ${stateMeta.resonanceCount}.`,
+    `Strategy state resolved to ${strategyState} in ${riskMode} mode with state score ${stateScore}.`,
+    `Total risk ${stateMeta.totalRiskScore ?? '--'}, 3-day delta ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta}, resonance ${stateMeta.resonanceCount}, repair signal ${repairSignal}.`,
     stateMeta.extremeThresholdCount
       ? `Extreme thresholds active: ${stateMeta.extremeThresholds.join(', ')}.`
-      : 'No extreme thresholds are active.'
+      : 'No extreme thresholds are active.',
+    `Transition bias remains ${stateTransitionBias}.`
   ].join(' ');
 
   return {
     strategyState,
-    stateLabel: getStrategyStateLabel(strategyState, stateScore),
+    riskMode,
+    repairSignal,
+    stateLabel: getStrategyStateLabel(strategyState, riskMode),
     stateScore,
     stateReason,
     stateDrivers,
-    stateMeta
+    stateMeta,
+    stateTransitionBias
   };
 }
 
@@ -1510,11 +1699,14 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
       contractVersion: DECISION_SCHEMA_VERSION,
       schemaMeta,
       strategyState: state.strategyState,
+      riskMode: state.riskMode,
+      repairSignal: state.repairSignal,
       stateLabel: state.stateLabel,
       stateReason: state.stateReason || `${executionLock.title || 'Existing trading system state'}; health ${healthDashboard.overallLevel}; dominant drivers: ${driverLabels}.`,
       stateScore: state.stateScore,
       stateDrivers: state.stateDrivers || [],
       stateMeta: state.stateMeta || {},
+      stateTransitionBias: state.stateTransitionBias,
       dominantDrivers: dominantDrivers.length ? dominantDrivers : createDecisionFallback(data, metadata).dominantDrivers,
       positionGuidance: {
         ...positionGuidance,
@@ -2019,7 +2211,7 @@ function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
     exposureBand,
     coreAction,
     stateChange: describeStateChange(decisionModel.stateMeta || {}),
-    title: `${strategyState} Decision Header`,
+    title: `${stateLabel} Decision Header`,
     reason: decisionModel.stateReason || data?.decisionLine || 'Current regime is being summarized from the v26 decision model.',
     escalationLabel: decisionModel?.triggerMonitor?.escalationLevel
       ? `Escalation ${decisionModel.triggerMonitor.escalationLevel}`
@@ -2470,6 +2662,8 @@ async function main() {
   window.__GFRR_DECISION_MODEL__ = data.decisionModel || createDecisionFallback(data, metadata);
   window.__GFRR_DECISION_SCHEMA__ = window.__GFRR_DECISION_MODEL__?.schemaMeta || buildDecisionSchemaMeta();
   window.__GFRR_STRATEGY_STATE__ = window.__GFRR_DECISION_MODEL__?.strategyState || 'Caution';
+  window.__GFRR_RISK_MODE__ = window.__GFRR_DECISION_MODEL__?.riskMode || 'Deterioration';
+  window.__GFRR_REPAIR_SIGNAL__ = window.__GFRR_DECISION_MODEL__?.repairSignal || 'None';
   window.__GFRR_POSITION_GUIDANCE__ = window.__GFRR_DECISION_MODEL__?.positionGuidance || buildPositionGuidanceFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_ACTION_QUEUE__ = window.__GFRR_DECISION_MODEL__?.actionQueue || buildActionQueueFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_TRIGGER_MONITOR__ = window.__GFRR_DECISION_MODEL__?.triggerMonitor || buildTriggerMonitorFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
