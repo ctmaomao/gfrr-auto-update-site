@@ -5,6 +5,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
+const rulesPath = path.join(root, 'config', 'rules.json');
+const RULES = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
 const realtimePath = path.join(root, 'realtime', 'market.json');
 
 const now = new Date().toISOString();
@@ -15,11 +17,7 @@ const REQUEST_TIMEOUT_MS = 8000;
 const REQUEST_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
 const USER_AGENT = 'gfr-v25.0.0-realtime/1.0';
-const FRESHNESS_WINDOWS = {
-  fresh: 30,
-  aging: 90,
-  stale: 360
-};
+const FRESHNESS_WINDOWS = RULES.freshnessWindows;
 
 const sourceSpecs = {
   brent: {
@@ -342,9 +340,10 @@ function buildPayload(results, prev) {
   const ageMinutes = computeAgeMinutes(asOf, now);
   const freshnessLevel = classifyFreshnessLevel(ageMinutes, liveSuccessCount > 0 || !!prev?.values);
   const unavailable = freshnessLevel === 'unavailable';
+  const hs = RULES.healthScoring;
   const healthScore = Math.max(
     0,
-    Math.min(100, 100 - criticalMissing * 18 - fallbackCount * 6 - secondarySourceCount * 3)
+    Math.min(100, 100 - criticalMissing * hs.criticalMissingPenalty - fallbackCount * hs.fallbackPenalty - secondarySourceCount * hs.secondarySourcePenalty)
   );
 
   return {

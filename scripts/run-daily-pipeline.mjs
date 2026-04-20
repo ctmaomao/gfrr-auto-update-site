@@ -5,6 +5,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
+const rulesPath = path.join(root, 'config', 'rules.json');
+const RULES = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
+const R = RULES;
 const dataDir = path.join(root, 'data');
 const dataPath = path.join(dataDir, 'radar-data.json');
 const histPath = path.join(dataDir, 'radar-history.json');
@@ -39,23 +42,24 @@ function buildFallback() {
 
 function deriveRisk(rt) {
   const v = rt.values || {};
-  const brent = v.brent ?? 85;
-  const dxy = v.dxy ?? 104;
-  const vix = v.vix ?? 18;
-  const hy = v.hyOas ?? 4;
-  const us10y = v.us10y ?? 4.3;
-  const real10y = v.real10y ?? 2.0;
+  const brent = v.brent ?? R.defaults.brent;
+  const dxy = v.dxy ?? R.defaults.dxy;
+  const vix = v.vix ?? R.defaults.vix;
+  const hy = v.hyOas ?? R.defaults.hyOas;
+  const us10y = v.us10y ?? R.defaults.us10y;
+  const real10y = v.real10y ?? R.defaults.real10y;
   const breakeven = v.breakeven10y ?? 2.3;
   const spx = v.spx ?? 5100;
   const gold = v.gold ?? 2350;
 
-  const oilRisk = clamp((brent - 60) * 2);
-  const dollarRisk = clamp((dxy - 95) * 8);
-  const hyRisk = clamp((hy - 2.5) * 35);
-  const vixRisk = clamp((vix - 12) * 7);
-  const rateRisk = clamp((us10y - 2.5) * 22);
-  const realRisk = clamp((real10y - 0.5) * 33);
-  const inflationRisk = clamp((breakeven - 1.5) * 45 + oilRisk * 0.35);
+  const rb = R.riskBaselines;
+  const oilRisk = clamp((brent - rb.brentBase) * rb.brentScale);
+  const dollarRisk = clamp((dxy - rb.dxyBase) * rb.dxyScale);
+  const hyRisk = clamp((hy - rb.hyBase) * rb.hyScale);
+  const vixRisk = clamp((vix - rb.vixBase) * rb.vixScale);
+  const rateRisk = clamp((us10y - rb.us10yBase) * rb.us10yScale);
+  const realRisk = clamp((real10y - rb.real10yBase) * rb.real10yScale);
+  const inflationRisk = clamp((breakeven - rb.breakevenBase) * rb.breakevenScale + oilRisk * rb.oilInflationWeight);
   const spxRisk = clamp((5300 - spx) / 6);
 
   const modules = {
@@ -66,13 +70,14 @@ function deriveRisk(rt) {
     debt: clamp((realRisk * 0.45) + (rateRisk * 0.3) + (hyRisk * 0.25)),
     banking: clamp((hyRisk * 0.55) + (vixRisk * 0.2) + (dollarRisk * 0.25))
   };
+  const mw = R.moduleWeights;
   const score = clamp(
-    modules.geopolitical * 0.15 +
-    modules.energy * 0.16 +
-    modules.inflation * 0.18 +
-    modules.liquidity * 0.2 +
-    modules.debt * 0.17 +
-    modules.banking * 0.14
+    modules.geopolitical * mw.geopolitical +
+    modules.energy * mw.energy +
+    modules.inflation * mw.inflation +
+    modules.liquidity * mw.liquidity +
+    modules.debt * mw.debt +
+    modules.banking * mw.banking
   );
   return { modules, score, oilRisk, dollarRisk, hyRisk, vixRisk, rateRisk, realRisk, inflationRisk, spxRisk, brent, dxy, vix, hy, us10y, real10y, breakeven, spx, gold };
 }
@@ -98,8 +103,9 @@ function regimeLabel(probs) {
 }
 
 function lockEngine(score, risk, rt) {
-  const criticalDown = (rt.criticalMissing ?? 0) >= 2 || (rt.cacheOnly ?? false);
-  if (criticalDown || score >= 82 || risk.brent >= 110 || risk.hy >= 4.5 || risk.vix >= 28) {
+  const el = R.executionLock;
+  const criticalDown = (rt.criticalMissing ?? 0) >= el.red.criticalMissingThreshold || (rt.cacheOnly ?? false);
+  if (criticalDown || score >= el.red.scoreThreshold || risk.brent >= el.red.brentThreshold || risk.hy >= el.red.hyThreshold || risk.vix >= el.red.vixThreshold) {
     return {
       level:'red',
       levelLabel:'RED / 禁止新增',
@@ -114,7 +120,7 @@ function lockEngine(score, risk, rt) {
       actionText:'执行引擎锁定：禁止新增，只允许减仓与防守恢复。'
     };
   }
-  if (score >= 65 || risk.brent >= 90 || risk.hy >= 3.7 || risk.vix >= 20) {
+  if (score >= el.yellow.scoreThreshold || risk.brent >= el.yellow.brentThreshold || risk.hy >= el.yellow.hyThreshold || risk.vix >= el.yellow.vixThreshold) {
     return {
       level:'yellow',
       levelLabel:'YELLOW / 仅允许微调',
@@ -213,12 +219,12 @@ function build() {
     scoreChange1d,
     scoreChange7d,
     scoreChange30d,
-    trendLabel: scoreChange7d > 4 ? '风险上升' : scoreChange7d < -4 ? '风险回落' : '高位震荡偏紧',
+    trendLabel: scoreChange7d > R.trendThresholds.risingThreshold ? '风险上升' : scoreChange7d < R.trendThresholds.fallingThreshold ? '风险回落' : '高位震荡偏紧',
     currentMacroRegime: macro,
     currentCrisisPhase: phase,
     nextCrisisPhase: phase === '流动性偏紧' ? '政策应对' : '风险缓和',
     transitionRisk: clamp(avg([risk.modules.liquidity, risk.hyRisk, risk.vixRisk])),
-    confidenceScore: clamp(100 - (realtime.criticalMissing ?? 0) * 14 - (realtime.fallbackCount ?? 0) * 4),
+    confidenceScore: clamp(100 - (realtime.criticalMissing ?? 0) * R.confidenceScoring.criticalMissingPenalty - (realtime.fallbackCount ?? 0) * R.confidenceScoring.fallbackPenalty),
     confidenceLevel: (realtime.cacheOnly ? '低' : realtime.degradedMode ? '中' : '高'),
     topRisks,
     decisionLine: `当前已进入 v24.1 交易引擎模式：实时快变量 ${realtime.sourceMode}，执行状态灯为 ${lock.levelLabel}。先看状态灯，再决定能不能动。`,
@@ -262,7 +268,7 @@ function build() {
       trough30d,
       drawFromPeak: risk.score - peak30d,
       transmissionSpeed: clamp(avg([risk.modules.energy, risk.modules.inflation, risk.modules.liquidity])),
-      transmissionAcceleration: scoreChange7d > 3 ? '加快' : scoreChange7d < -3 ? '放缓' : '平稳',
+      transmissionAcceleration: scoreChange7d > R.trendThresholds.acceleratingThreshold ? '加快' : scoreChange7d < R.trendThresholds.deceleratingThreshold ? '放缓' : '平稳',
       dominantPath: risk.modules.energy >= risk.modules.liquidity ? '油价 → 通胀 → 利率 → 股票' : '美元 → 信用 → 流动性 → 股票',
       pathChanges: [
         { label:'油价→通胀', value: clamp(avg([risk.oilRisk, risk.inflationRisk])), delta: clamp((realtime.changes?.brent1d ?? 0) * 3, -9, 9) },

@@ -1,0 +1,118 @@
+{
+  "_comment": "全局风险规则配置文件 — 修改此文件即可调整系统阈值，无需改动代码",
+
+  "riskBaselines": {
+    "_comment": "各指标的中性基准值，用于计算风险分数",
+    "brentBase": 60,
+    "brentScale": 2,
+    "dxyBase": 95,
+    "dxyScale": 8,
+    "hyBase": 2.5,
+    "hyScale": 35,
+    "vixBase": 12,
+    "vixScale": 7,
+    "us10yBase": 2.5,
+    "us10yScale": 22,
+    "real10yBase": 0.5,
+    "real10yScale": 33,
+    "breakevenBase": 1.5,
+    "breakevenScale": 45,
+    "oilInflationWeight": 0.35
+  },
+
+  "moduleWeights": {
+    "_comment": "六大模块对总风险分数的权重，总和应为 1.0",
+    "geopolitical": 0.15,
+    "energy": 0.16,
+    "inflation": 0.18,
+    "liquidity": 0.20,
+    "debt": 0.17,
+    "banking": 0.14
+  },
+
+  "moduleComposition": {
+    "_comment": "各模块由哪些子风险合成，以及对应权重",
+    "geopolitical": { "oilRisk": 0.72, "vixRisk": 0.28 },
+    "liquidity": { "dollarRisk": 0.35, "hyRisk": 0.35, "vixRisk": 0.18, "rateRisk": 0.12 },
+    "debt": { "realRisk": 0.45, "rateRisk": 0.30, "hyRisk": 0.25 },
+    "banking": { "hyRisk": 0.55, "vixRisk": 0.20, "dollarRisk": 0.25 }
+  },
+
+  "executionLock": {
+    "_comment": "执行状态灯的触发阈值",
+    "red": {
+      "scoreThreshold": 82,
+      "brentThreshold": 110,
+      "hyThreshold": 4.5,
+      "vixThreshold": 28,
+      "criticalMissingThreshold": 2
+    },
+    "yellow": {
+      "scoreThreshold": 65,
+      "brentThreshold": 90,
+      "hyThreshold": 3.7,
+      "vixThreshold": 20
+    }
+  },
+
+  "resetThresholds": {
+    "_comment": "从高风险状态恢复到正常所需满足的条件",
+    "vixReset": 18,
+    "hyReset": 3.7,
+    "brentReset": 95
+  },
+
+  "liquidityRegime": {
+    "_comment": "流动性状态分级阈值",
+    "tightThreshold": 70,
+    "easingThreshold": 55
+  },
+
+  "freshnessWindows": {
+    "_comment": "数据新鲜度分级（分钟）",
+    "fresh": 30,
+    "aging": 90,
+    "stale": 360
+  },
+
+  "healthScoring": {
+    "_comment": "健康分数扣分规则",
+    "criticalMissingPenalty": 18,
+    "fallbackPenalty": 6,
+    "secondarySourcePenalty": 3
+  },
+
+  "confidenceScoring": {
+    "_comment": "置信度分数扣分规则",
+    "criticalMissingPenalty": 14,
+    "fallbackPenalty": 4
+  },
+
+  "trendThresholds": {
+    "_comment": "趋势判断阈值（7日变化）",
+    "risingThreshold": 4,
+    "fallingThreshold": -4,
+    "acceleratingThreshold": 3,
+    "deceleratingThreshold": -3
+  },
+
+  "historyWindow": {
+    "_comment": "历史数据保留天数",
+    "maxDays": 90,
+    "shortWindow": 7,
+    "longWindow": 30
+  },
+
+  "defaults": {
+    "_comment": "realtime 不可用时的默认指标值",
+    "brent": 85,
+    "dxy": 104,
+    "vix": 18,
+    "hyOas": 4,
+    "us10y": 4.3,
+    "real10y": 2.0,
+    "breakeven10y": 2.3,
+    "spx": 5100,
+    "gold": 2350
+  }
+}
