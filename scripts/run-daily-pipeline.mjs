@@ -27,7 +27,7 @@ const realtime = readJson(rtPath, null);
 
 function buildFallback() {
   const next = structuredClone(prevData);
-  next.version = 'v24.1';
+  next.version = 'v26.0A-rc1';
   next.updatedAt = isoNow;
   next.decisionLine = '实时快变量暂不可用，系统沿用上次有效慢变量结构，但保留今日更新时间戳。';
   next.summary = 'v24.1 日构建已退回到上次有效慢变量结构。';
@@ -48,9 +48,9 @@ function deriveRisk(rt) {
   const hy = v.hyOas ?? R.defaults.hyOas;
   const us10y = v.us10y ?? R.defaults.us10y;
   const real10y = v.real10y ?? R.defaults.real10y;
-  const breakeven = v.breakeven10y ?? 2.3;
-  const spx = v.spx ?? 5100;
-  const gold = v.gold ?? 2350;
+  const breakeven = v.breakeven10y ?? R.defaults.breakeven10y;
+  const spx = v.spx ?? R.defaults.spx;
+  const gold = v.gold ?? R.defaults.gold;
 
   const rb = R.riskBaselines;
   const oilRisk = clamp((brent - rb.brentBase) * rb.brentScale);
@@ -213,7 +213,7 @@ function build() {
   ];
 
   const data = {
-    version:'v24.1',
+    version:'v26.0A-rc1',
     updatedAt: isoNow,
     score:risk.score,
     scoreChange1d,
@@ -437,6 +437,38 @@ function build() {
     }
   };
 
+  data.decisionModel = {
+    contractVersion: 'v26.0A-final',
+    strategyState: lock.level === 'red' ? 'Defensive' : lock.level === 'yellow' ? 'Caution' : 'Balanced',
+    stateLabel: lock.levelLabel,
+    stateScore: risk.score,
+    stateReason: `Daily pipeline baseline: execution lock ${lock.levelLabel}, risk score ${risk.score}.`,
+    dominantDrivers: Object.entries(risk.modules)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([key, score]) => ({ key, score, label: key, trend: 0 })),
+    positionGuidance: {
+      totalExposureBand: lock.gross ? `${parseInt(lock.gross) - 10}%-${lock.gross}` : '35%-55%',
+      riskAssetBias: lock.level === 'red' ? 'Underweight risk assets' : lock.level === 'yellow' ? 'Selective underweight' : 'Neutral to selective',
+      cashGuidance: `Target cash buffer: ${lock.cash}`,
+      targetGrossExposure: lock.gross,
+      cashBufferTarget: lock.cash,
+      riskBudget: lock.riskBudget
+    },
+    actionQueue: {
+      priorityActions: lock.mandatory,
+      blockedActions: lock.block,
+      watchItems: data.triggerPanel?.watchlist || []
+    },
+    triggerMonitor: {
+      upgradeTriggers: data.triggerPanel?.critical || [],
+      activeEscalationSignals: data.triggerPanel?.drivers || []
+    },
+    invalidationRules: {
+      resetConditions: data.tradingSystem?.riskControl?.resetThresholds || []
+    }
+  };
+
   return { data, history };
 }
 
@@ -444,4 +476,4 @@ const built = build();
 fs.mkdirSync(dataDir, { recursive: true });
 fs.writeFileSync(dataPath, JSON.stringify(built.data, null, 2));
 fs.writeFileSync(histPath, JSON.stringify(built.history, null, 2));
-console.log('Built v24.1 radar data successfully.');
+console.log('Built v26.0A-rc1 radar data successfully.');
