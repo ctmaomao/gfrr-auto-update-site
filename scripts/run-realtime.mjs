@@ -61,10 +61,9 @@ const sourceSpecs = {
   },
   gold: {
     critical: false,
-    primary: { kind: 'stooq', symbol: 'xauusd', source: 'stooq:xauusd' },
+    primary: { kind: 'goldapi', symbol: 'XAU', source: 'goldapi:XAU' },
     alternates: [
-      { kind: 'stooq', symbol: 'gc.f', source: 'stooq:gc.f' },
-      { kind: 'stooq', symbol: 'xau.f', source: 'stooq:xau.f' }
+      { kind: 'stooq', symbol: 'xauusd', source: 'stooq:xauusd' }
     ]
   }
 };
@@ -194,6 +193,8 @@ async function retryTask(fn, { label, retries = REQUEST_RETRIES } = {}) {
 async function fetchRows(descriptor) {
   const url = descriptor.kind === 'fred'
     ? `${FRED}?cosd=${cosd}&id=${descriptor.id}`
+    : descriptor.kind === 'goldapi'
+      ? `https://api.gold-api.com/price/${descriptor.symbol}`
     : `https://stooq.com/q/d/l/?s=${encodeURIComponent(descriptor.symbol)}&i=d`;
 
   const text = await retryTask(
@@ -201,6 +202,17 @@ async function fetchRows(descriptor) {
     { label: descriptor.source }
   );
 
+  if (descriptor.kind === 'goldapi') {
+    const json = JSON.parse(text);
+    if (!json || !Number.isFinite(Number(json.price))) {
+      throw new Error(`${descriptor.source} returned invalid data`);
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    return [
+      { date: today, value: Number(json.price) },
+      { date: today, value: Number(json.price) }
+    ];
+  }
   const rows = descriptor.kind === 'fred' ? parseFredCsv(text) : parseStooqCsv(text);
   if (rows.length < 2) throw new Error(`${descriptor.source} returned insufficient rows`);
   return rows;
