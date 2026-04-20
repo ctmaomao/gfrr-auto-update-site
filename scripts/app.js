@@ -1795,6 +1795,9 @@ function renderHeatmap(regions) {
     japan: { x: 672, y: 206, w: 86, h: 70 },
     emAsia: { x: 548, y: 232, w: 126, h: 84 }
   };
+  const heatmapKeyAliases = {
+    middleeast: 'middleEast'
+  };
 
   svg.innerHTML = `
     <rect x="12" y="20" width="756" height="330" rx="24" fill="rgba(8, 20, 39, 0.65)" stroke="rgba(133,164,229,0.14)"></rect>
@@ -1802,7 +1805,8 @@ function renderHeatmap(regions) {
   `;
 
   regions.forEach((region) => {
-    const spec = layout[region.key];
+    const normalizedKey = heatmapKeyAliases[region.key] || region.key;
+    const spec = layout[normalizedKey];
     if (!spec) return;
     const color = riskColor(region.risk);
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -2000,6 +2004,14 @@ function renderWarningSystem(warning) {
   });
 }
 
+function renderNonCriticalSection(label, renderFn) {
+  try {
+    renderFn();
+  } catch (error) {
+    console.warn(`Non-critical section render failed: ${label}`, error);
+  }
+}
+
 async function main() {
   const [baseline, history, realtimeResult] = await Promise.all([
     fetchBaselineData(),
@@ -2115,20 +2127,24 @@ async function main() {
     mode: trendClass(item.delta)
   })), true);
 
-  renderLineChart('trend-chart', history.slice(-7), { width: 760, height: 220, pad: { top: 18, right: 18, bottom: 34, left: 46 } });
-  renderLineChart('trend-chart-30d', history, { width: 980, height: 260, pad: { top: 18, right: 18, bottom: 34, left: 46 } });
-  renderHeatmap(data.heatmap);
-  renderTransmission(data.transmissionChain);
-  renderExecutionLock(data.tradingSystem.executionLock);
-  renderSignalEngine(data.tradingSystem.signalEngine);
-  renderActionLayer(data.tradingSystem.actionLayer);
-  renderPositioning(data.tradingSystem.positioning);
-  renderRiskControl(data.tradingSystem.riskControl);
-  renderDiscipline(data.tradingSystem.discipline);
-  renderWarningSystem(data.warningSystem);
-  renderAssetReturnMap(data.assetReturnMap);
-  renderAssetTable(data.assetMatrix);
-  renderScenarioTree(data.scenarioTree);
+  renderNonCriticalSection('trend-chart', () => {
+    renderLineChart('trend-chart', history.slice(-7), { width: 760, height: 220, pad: { top: 18, right: 18, bottom: 34, left: 46 } });
+  });
+  renderNonCriticalSection('trend-chart-30d', () => {
+    renderLineChart('trend-chart-30d', history, { width: 980, height: 260, pad: { top: 18, right: 18, bottom: 34, left: 46 } });
+  });
+  renderNonCriticalSection('heatmap', () => renderHeatmap(data.heatmap));
+  renderNonCriticalSection('transmission', () => renderTransmission(data.transmissionChain));
+  renderNonCriticalSection('execution-lock', () => renderExecutionLock(data.tradingSystem.executionLock));
+  renderNonCriticalSection('signal-engine', () => renderSignalEngine(data.tradingSystem.signalEngine));
+  renderNonCriticalSection('action-layer', () => renderActionLayer(data.tradingSystem.actionLayer));
+  renderNonCriticalSection('positioning', () => renderPositioning(data.tradingSystem.positioning));
+  renderNonCriticalSection('risk-control', () => renderRiskControl(data.tradingSystem.riskControl));
+  renderNonCriticalSection('discipline', () => renderDiscipline(data.tradingSystem.discipline));
+  renderNonCriticalSection('warning-system', () => renderWarningSystem(data.warningSystem));
+  renderNonCriticalSection('asset-return-map', () => renderAssetReturnMap(data.assetReturnMap));
+  renderNonCriticalSection('asset-table', () => renderAssetTable(data.assetMatrix));
+  renderNonCriticalSection('scenario-tree', () => renderScenarioTree(data.scenarioTree));
 }
 
 main().catch((error) => {
