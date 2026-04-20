@@ -14,7 +14,7 @@ const FRED = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
 const REQUEST_TIMEOUT_MS = 8000;
 const REQUEST_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
-const USER_AGENT = 'gfrr-v26.0B-realtime/1.0';
+const USER_AGENT = 'gfr-v25.0.0-realtime/1.0';
 const FRESHNESS_WINDOWS = {
   fresh: 30,
   aging: 90,
