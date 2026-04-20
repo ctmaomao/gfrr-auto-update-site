@@ -41,7 +41,7 @@ function computeAgeMinutes(asOf) {
 }
 
 function classifyFreshnessLevel(ageMinutes, hasRealtime) {
-  if (!has实时 || ageMinutes === null) return 'unavailable';
+  if (!hasRealtime || ageMinutes === null) return 'unavailable';
   if (ageMinutes <= FRESHNESS_WINDOWS.fresh) return 'fresh';
   if (ageMinutes <= FRESHNESS_WINDOWS.aging) return 'aging';
   if (ageMinutes <= FRESHNESS_WINDOWS.stale) return 'stale';
@@ -152,9 +152,9 @@ function buildHealthDashboardModel(runtimeState) {
   if (metadata.realtimeUnavailable) {
     issues.push('实时 unavailable; rendering 仅基线');
   } else if (metadata.realtimeFreshnessLevel === 'stale') {
-    issues.push(`实时 is stale (${metadata.realtimeAgeMinutes ?? '--'} 分钟前）`);
+    issues.push(`实时已陈旧 (${metadata.realtimeAgeMinutes ?? '--'} 分钟前）`);
   } else if (metadata.realtimeFreshnessLevel === 'aging') {
-    issues.push(`实时 is aging (${metadata.realtimeAgeMinutes ?? '--'} 分钟前）`);
+    issues.push(`实时正在变旧 (${metadata.realtimeAgeMinutes ?? '--'} 分钟前）`);
   }
 
   if (metadata.realtimeFallbackUsed) {
@@ -172,7 +172,7 @@ function buildHealthDashboardModel(runtimeState) {
     issues.push(`${criticalMissing} 个关键源${criticalMissing > 1 ? 's' : ''} missing`);
   }
   if (sourceSummary.失败Count > 0) {
-    issues.push(`${sourceSummary.失败Count} source${sourceSummary.失败Count > 1 ? 's' : ''} 当前失败`);
+    issues.push(`${sourceSummary.失败Count} 个数据源当前失败`);
   }
   if (!flags.length) {
     flags.push('正常');
@@ -201,12 +201,12 @@ function buildHealthDashboardModel(runtimeState) {
   const summary = overallLevel === '仅基线'
     ? '由于实时数据不可用，当前仅使用基线。'
     : overallLevel === '陈旧'
-      ? '实时 is available but stale; use with caution.'
+      ? '实时数据已陈旧，当前仅可谨慎参考。'
       : overallLevel === '降级'
-        ? '实时 is available with visible degradation.'
+        ? '实时数据可用但存在明显降级。'
         : overallLevel === '观察'
-          ? '实时 is aging or showing mild health drift.'
-          : '实时 正常 and actively overlaying baseline.';
+          ? '实时正在变旧 or showing mild health drift.'
+          : '实时数据正常，正在覆盖基线。';
 
   const healthTone = 正常izeHealthLevel(overallLevel);
 
@@ -239,8 +239,8 @@ function clampPercent(value, 回退 = '--') {
   return Number.isFinite(value) ? `${Math.max(0, Math.min(100, Math.round(value)))}%` : 回退;
 }
 
-function clampNumber(value, 分钟 = 0, max = 100) {
-  if (!Number.isFinite(value)) return 分钟;
+function clampNumber(value, min = 0, max = 100) {
+  if (!Number.isFinite(value)) return min;
   return Math.max(min, Math.min(max, value));
 }
 
@@ -270,7 +270,7 @@ function createScoreSeries(history = [], currentScore = null) {
 }
 
 function buildStrategyStateFallback(data = {}, metadata = {}) {
-  const 回退State = metadata.realtimeUnavailable ? 'Defensive' : 'Caution';
+  const 回退State = metadata.realtimeUnavailable ? '防御' : 'Caution';
   const 回退Meta = {
     totalRiskScore: Number.isFinite(data.score) ? data.score : null,
     recent3dDelta: 0,
@@ -282,39 +282,39 @@ function buildStrategyStateFallback(data = {}, metadata = {}) {
     elevatedRiskStreakDays: 0,
     highRiskStreakDays: 0,
     criticalAlertCount: 0,
-    healthLevel: metadata.realtimeUnavailable ? '仅基线' : 'Unknown'
+    healthLevel: metadata.realtimeUnavailable ? '仅基线' : '未知'
   };
 
   return {
     strategyState: 回退State,
     stateLabel: `${回退State} / Fallback`,
-    stateScore: 回退State === 'Defensive' ? 72 : 55,
+    stateScore: 回退State === '防御' ? 72 : 55,
     stateReason: metadata.realtimeUnavailable
-      ? 'Strategy state fell back to a defensive baseline because realtime overlay is unavailable.'
+      ? '由于实时覆盖不可用，策略状态已回退到防御基线。'
       : 'Strategy state engine fell back to a cautious baseline because state computation was unavailable.',
     stateDrivers: [{
       key: '回退',
-      label: 'Fallback guardrail',
+      label: '回退护栏',
       impact: 回退State,
-      reason: 'Fallback mode preserves a safe, non-empty strategy state output.'
+      reason: '回退模式用于保留安全且非空的策略状态输出。'
     }],
     stateMeta: 回退Meta
   };
 }
 
 function buildPositionGuidanceFallback(data = {}, metadata = {}, strategyState = 'Caution') {
-  const defensiveFallback = metadata.realtimeUnavailable || strategyState === 'Defensive' || strategyState === 'Crisis';
+  const defensiveFallback = metadata.realtimeUnavailable || strategyState === '防御' || strategyState === 'Crisis';
   return {
     totalExposureBand: defensiveFallback ? '20%-40%' : '35%-55%',
-    riskAssetBias: defensiveFallback ? 'Constrained' : 'Selective',
-    defensiveBias: defensiveFallback ? 'High' : 'Moderate',
-    cashGuidance: defensiveFallback ? 'Keep elevated cash buffer (30%-45%)' : 'Keep reserve cash buffer (20%-30%)',
-    newExposurePolicy: defensiveFallback ? 'Pause broad new risk exposure until guidance recovers.' : 'Only add exposure selectively and in small clips.',
-    rebalancePosture: defensiveFallback ? 'De-risk first, rebalance second.' : 'Rebalance gradually around target bands.',
-    leveragePolicy: 'No incremental leverage in 回退 mode.',
-    hedgePosture: defensiveFallback ? 'Maintain defensive hedges / buffers.' : 'Keep baseline hedges active.',
+    riskAssetBias: defensiveFallback ? '受限' : 'Selective',
+    defensiveBias: defensiveFallback ? '高' : 'Moderate',
+    cashGuidance: defensiveFallback ? '保持较高现金缓冲（30%-45%）' : 'Keep reserve cash buffer (20%-30%)',
+    newExposurePolicy: defensiveFallback ? '在指引恢复前暂停新增广泛风险敞口。' : 'Only add exposure selectively and in small clips.',
+    rebalancePosture: defensiveFallback ? '先降风险，再做再平衡。' : 'Rebalance gradually around target bands.',
+    leveragePolicy: '回退模式下不增加杠杆。',
+    hedgePosture: defensiveFallback ? '保持防御性对冲与缓冲。' : 'Keep baseline hedges active.',
     adjustmentNotes: [
-      'Fallback position guidance is active.',
+      '当前启用回退仓位指引。',
       Number.isFinite(data?.score) ? `Reference risk score: ${data.score}.` : '参考风险分数不可用。'
     ]
   };
@@ -329,13 +329,13 @@ function flattenActionQueueItems(queue = {}) {
 }
 
 function buildActionQueueFallback(data = {}, metadata = {}, strategyState = 'Caution') {
-  const defensiveFallback = metadata.realtimeUnavailable || strategyState === 'Defensive' || strategyState === 'Crisis';
+  const defensiveFallback = metadata.realtimeUnavailable || strategyState === '防御' || strategyState === 'Crisis';
   const queue = {
     priorityActions: defensiveFallback
       ? [
-          'Reduce broad risk exposure incrementally.',
+          '逐步降低广泛风险敞口。',
           'Raise cash buffer and avoid leverage expansion.',
-          'Only allow defensive rebalancing.'
+          '只允许防御性再平衡。'
         ]
       : [
           'Keep new exposure selective and staged.',
@@ -355,16 +355,16 @@ function buildActionQueueFallback(data = {}, metadata = {}, strategyState = 'Cau
         ],
     blockedActions: defensiveFallback
       ? [
-          'Pause aggressive new risk deployment.',
-          'Avoid leverage expansion.',
-          'Avoid concentration increase under elevated regime.'
+          '暂停激进新增风险。',
+          '避免扩大杠杆。',
+          '在高压状态下避免提高集中度。'
         ]
       : [
           'Avoid oversized single-step exposure changes.',
           'Avoid leverage expansion before confirmation.',
           'Avoid concentration increase without confirmation.'
         ],
-    actionSummary: defensiveFallback ? 'Defensive 回退 queue active.' : 'Cautious 回退 queue active.',
+    actionSummary: defensiveFallback ? '防御 回退 queue active.' : 'Cautious 回退 queue active.',
     escalationHint: defensiveFallback ? 'Escalate if stress indicators worsen or data quality degrades.' : 'Escalate if state score or stress signals worsen.',
     executionNotes: [
       'Fallback action queue is active.',
@@ -402,7 +402,7 @@ function buildInvalidationRulesFallback(data = {}, metadata = {}, strategyState 
     resetConditions: [
       '仅在短期恶化停止后允许降级。',
       '仅在风险广度收窄后允许降级。',
-      'Allow de-escalation only after data freshness 正常izes.'
+      '仅在数据新鲜度恢复正常后允许降级。'
     ],
     invalidationSummary: `${strategyState} 回退 invalidation rules active.`,
     deescalationBias: metadata.realtimeUnavailable ? 'low' : 'medium',
@@ -443,7 +443,7 @@ function createDecisionFallback(data = {}, metadata = {}) {
     // read older exposure / cash / note fields directly.
     positionGuidance: {
       ...buildPositionGuidanceFallback(data, metadata, stateFallback.strategyState),
-      stance: 'Preserve current defensive baseline',
+      stance: '保持当前防御基线',
       riskBudget: data?.tradingSystem?.positioning?.riskBudget || '--',
       targetGrossExposure: data?.tradingSystem?.positioning?.targetGrossExposure || '--',
       cashBufferTarget: data?.tradingSystem?.positioning?.cashBufferTarget || '--',
@@ -464,7 +464,7 @@ function getStrategyStateLabel(strategyState, stateScore) {
 
 function deriveStrategyState(stateScore) {
   if (stateScore >= 85) return 'Crisis';
-  if (stateScore >= 68) return 'Defensive';
+  if (stateScore >= 68) return '防御';
   if (stateScore >= 48) return 'Caution';
   if (stateScore >= 28) return 'Balanced';
   return 'Risk-On';
@@ -590,9 +590,9 @@ function calculateStrategyStateEngine(data, history, metadata, healthDashboard) 
     },
     {
       key: 'high-risk-streak',
-      label: 'High-risk persistence',
+      label: '高-risk persistence',
       impact: stateMeta.highRiskStreakDays >= 3 ? 'persistent' : 'not-persistent',
-      reason: `High-risk streak: ${stateMeta.highRiskStreakDays} day(s); elevated-risk streak: ${stateMeta.elevatedRiskStreakDays} day(s).`
+      reason: `高-risk streak: ${stateMeta.highRiskStreakDays} day(s); elevated-risk streak: ${stateMeta.elevatedRiskStreakDays} day(s).`
     }
   ];
 
@@ -693,11 +693,11 @@ function buildPositionGuidanceEngine(data, metadata, decisionState, dominantDriv
         leveragePolicy: 'Reduce leverage where practical; do not add new leverage.',
         hedgePosture: 'Keep hedges active and bias toward protection.'
       },
-      Defensive: {
+      防御: {
         totalExposureBand: '20%-40%',
         riskAssetBias: 'Underweight risk assets',
-        defensiveBias: 'High',
-        cashGuidance: 'Keep elevated cash buffer (30%-45%)',
+        defensiveBias: '高',
+        cashGuidance: '保持较高现金缓冲（30%-45%）',
         newExposurePolicy: 'Pause broad new risk exposure; only defensive rebalancing is allowed.',
         rebalancePosture: 'Prioritize de-risking and restoring buffers.',
         leveragePolicy: 'No leverage expansion; favor leverage reduction.',
@@ -708,7 +708,7 @@ function buildPositionGuidanceEngine(data, metadata, decisionState, dominantDriv
         riskAssetBias: 'Minimum risk exposure',
         defensiveBias: 'Maximum',
         cashGuidance: 'Hold maximum cash / liquidity buffer (45%-70%)',
-        newExposurePolicy: 'Suspend new high-risk exposure until state 正常izes.',
+        newExposurePolicy: '在状态恢复正常前暂停新增高风险敞口。',
         rebalancePosture: 'Capital preservation first.',
         leveragePolicy: 'No leverage; actively reduce gross exposure.',
         hedgePosture: 'Keep strongest defensive posture available.'
@@ -756,7 +756,7 @@ function buildPositionGuidanceEngine(data, metadata, decisionState, dominantDriv
       guidance.defensiveBias = strategyState === 'Risk-On' ? 'Moderate' : 'Very high';
     } else if (bandShift >= 5) {
       guidance.riskAssetBias = strategyState === 'Risk-On' ? 'Constructive within risk budget' : 'Selective but improving';
-      guidance.defensiveBias = strategyState === 'Defensive' ? 'High but stabilizing' : 'Moderate';
+      guidance.defensiveBias = strategyState === '防御' ? '高 but stabilizing' : 'Moderate';
     }
 
     const existingRiskBudget = positioning.riskBudget || '--';
@@ -794,7 +794,7 @@ function buildActionQueueEngine(data, metadata, decisionState, positionGuidance,
     const riskControl = data?.tradingSystem?.riskControl || {};
     const warningAlerts = Array.isArray(data?.warningSystem?.alerts) ? data.warningSystem.alerts : [];
     const triggerPanel = data?.triggerPanel || {};
-    const healthLevel = stateMeta.healthLevel || 'Unknown';
+    const healthLevel = stateMeta.healthLevel || '未知';
     const topDrivers = Array.isArray(dominantDrivers) ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean) : [];
     const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色');
     const yellowAlerts = warningAlerts.filter((alert) => alert?.level !== '红色');
@@ -828,26 +828,26 @@ function buildActionQueueEngine(data, metadata, decisionState, positionGuidance,
       },
       Caution: {
         priority: [
-          'Reduce broad risk exposure incrementally.',
+          '逐步降低广泛风险敞口。',
           'Keep new exposure highly selective and small.',
           'Raise cash buffer toward the guidance band.'
         ],
         blocked: [
-          'Pause aggressive new risk deployment.',
-          'Avoid leverage expansion.',
-          'Avoid concentration increase under elevated regime.'
+          '暂停激进新增风险。',
+          '避免扩大杠杆。',
+          '在高压状态下避免提高集中度。'
         ]
       },
-      Defensive: {
+      防御: {
         priority: [
-          'Reduce broad risk exposure incrementally.',
-          'Raise cash buffer and keep exposure inside the lower band.',
-          'Only allow defensive rebalancing.'
+          '逐步降低广泛风险敞口。',
+          '提高现金缓冲，并将敞口保持在下沿区间。',
+          '只允许防御性再平衡。'
         ],
         blocked: [
-          'Pause aggressive new risk deployment.',
-          'Avoid leverage expansion.',
-          'Avoid concentration increase under elevated regime.'
+          '暂停激进新增风险。',
+          '避免扩大杠杆。',
+          '在高压状态下避免提高集中度。'
         ]
       },
       Crisis: {
@@ -881,14 +881,14 @@ function buildActionQueueEngine(data, metadata, decisionState, positionGuidance,
       priorityActions.push('Maintain defensive buffers until the high-risk streak breaks.');
     }
     if (metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly || healthLevel === '仅基线' || healthLevel === '陈旧') {
-      watchItems.push('Monitor data quality and freshness before easing controls.');
-      blockedActions.push('Avoid expanding risk using 降级 or 回退 data only.');
+      watchItems.push('在放松控制前先观察数据质量与新鲜度。');
+      blockedActions.push('避免仅凭降级或回退数据扩大风险。');
     }
     if ((positionGuidance?.newExposurePolicy || '').toLowerCase().includes('pause') || strategyState === 'Crisis') {
-      blockedActions.push('Pause broad new risk deployment.');
+      blockedActions.push('暂停广泛新增风险。');
     }
     if ((positionGuidance?.leveragePolicy || '').toLowerCase().includes('no leverage')) {
-      blockedActions.push('Avoid leverage expansion.');
+      blockedActions.push('避免扩大杠杆。');
     }
 
     topDrivers.forEach((driver) => {
@@ -920,7 +920,7 @@ function buildActionQueueEngine(data, metadata, decisionState, positionGuidance,
       actionSummary: `${strategyState} queue aligned with ${positionGuidance?.totalExposureBand || 'current'} exposure guidance.`,
       escalationHint: (stateMeta.extremeThresholdCount || 0) > 0
         ? 'Escalate immediately if extreme thresholds widen or critical alerts increase.'
-        : 'Escalate if volatility, spread stress, or data quality worsens.',
+        : '若波动、利差压力或数据质量恶化，应升级警戒。',
       executionNotes: uniqTexts([
         `State score ${stateScore}; exposure band ${positionGuidance?.totalExposureBand || '--'}.`,
         `Cash guidance: ${positionGuidance?.cashGuidance || '--'}.`,
@@ -950,13 +950,13 @@ function buildTriggerMonitorEngine(data, metadata, decisionState, positionGuidan
     const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色').length;
 
     const upgradeTriggers = uniqTexts([
-      'Upgrade if state score rises by 8 points or more from the current regime.',
-      'Upgrade if the 3-day change turns positive and exceeds +6.',
-      'Upgrade if resonance expands to 4 or more modules above 70.',
-      'Upgrade if severe resonance rises to 3 or more modules above 80.',
-      'Upgrade if red alerts increase or new critical alerts appear.',
-      'Upgrade if liquidity / volatility / funding stress re-accelerates.',
-      metadata.realtimeCacheOnly ? 'Upgrade if 仅缓存 mode persists into the next cycle.' : '',
+      '若状态评分较当前再上升 8 分或以上，应升级。',
+      '若 3 日变化转正且超过 +6，应升级。',
+      '若共振扩展到 4 个或以上模块超过 70，应升级。',
+      '若严重共振升至 3 个或以上模块超过 80，应升级。',
+      '若红色告警增加或出现新的关键告警，应升级。',
+      '若流动性、波动或融资压力再次加速，应升级。',
+      metadata.realtimeCacheOnly ? '若仅缓存模式持续到下一轮，应提升警戒。' : '',
       metadata.realtimeFreshnessLevel === 'stale' || metadata.realtimeUnavailable ? '若 stale / 仅基线状态持续且未恢复，应上调警戒级别。' : ''
     ]).slice(0, 7);
 
@@ -966,7 +966,7 @@ function buildTriggerMonitorEngine(data, metadata, decisionState, positionGuidan
       (stateMeta.resonanceCount || 0) >= 4 ? `Broad resonance active: ${stateMeta.resonanceCount} modules above 70.` : '',
       (stateMeta.severeResonanceCount || 0) >= 2 ? `Severe resonance active: ${stateMeta.severeResonanceCount} modules above 80.` : '',
       criticalAlerts > 0 ? `${criticalAlerts} red alert(s) active.` : '',
-      metadata.realtimeCacheOnly ? 'Cache-only mode is active.' : '',
+      metadata.realtimeCacheOnly ? '当前处于仅缓存模式。' : '',
       metadata.realtimeUnavailable ? '实时不可用 / 仅基线.' : '',
       metadata.realtimeFreshnessLevel === 'stale' ? '实时数据已进入 stale 状态。' : '',
       dominantLabels.length ? `Dominant stress drivers: ${dominantLabels.join(', ')}.` : '',
@@ -999,20 +999,20 @@ function buildInvalidationRulesEngine(data, metadata, decisionState, positionGui
     const dominantLabels = Array.isArray(dominantDrivers) ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean) : [];
 
     const invalidationSignals = uniqTexts([
-      'Invalidate the current defensive read if total risk score rises another 8 points from here.',
-      'Invalidate the current read if the 3-day trend stops easing and turns back above +3.',
-      'Invalidate the current read if resonance breadth expands again.',
-      'Invalidate the current read if red alerts increase.',
-      metadata.realtimeCacheOnly ? 'Invalidate the current read if 仅缓存 mode persists and stress signals stay elevated.' : '',
+      '若总风险评分在当前基础上再上升 8 分，应使当前防御判断失效。',
+      '若 3 日趋势停止缓和并重新回到 +3 以上，应使当前判断失效。',
+      '若共振广度再次扩张，应使当前判断失效。',
+      '若红色告警增加，应使当前判断失效。',
+      metadata.realtimeCacheOnly ? '若仅缓存模式持续且压力信号维持高位，应使当前判断失效。' : '',
       metadata.realtimeUnavailable ? '若仅基线模式持续且告警恶化，应使当前判断失效。' : ''
     ]).slice(0, 6);
 
     const resetConditions = uniqTexts([
-      'Allow de-escalation after total risk score falls and holds lower.',
-      'Allow de-escalation after the 3-day trend turns flat or negative.',
-      'Allow de-escalation after resonance count drops below 3.',
-      'Allow de-escalation after severe resonance eases below 2.',
-      'Allow de-escalation after red alerts clear and data freshness 正常izes.',
+      '仅在总风险评分下降并稳定后允许降级。',
+      '仅在 3 日趋势转平或转负后允许降级。',
+      '仅在共振数量降至 3 以下后允许降级。',
+      '仅在严重共振降至 2 以下后允许降级。',
+      '仅在红色告警解除且数据新鲜度恢复正常后允许降级。',
       ...(Array.isArray(riskControl.resetThresholds) ? riskControl.resetThresholds.slice(0, 3).map((rule) => `Reset reference: ${rule}`) : [])
     ]).slice(0, 6);
 
@@ -1047,7 +1047,7 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
     const warningAlerts = Array.isArray(data?.warningSystem?.alerts) ? data.warningSystem.alerts : [];
     const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色').slice(0, 3);
     const watchlist = Array.isArray(data?.triggerPanel?.watchlist) ? data.triggerPanel.watchlist.slice(0, 3) : [];
-    const driverLabels = dominantDrivers.map((item) => item.label).join(', ') || 'baseline drivers';
+    const driverLabels = dominantDrivers.map((item) => item.label).join(', ') || '基线驱动因子';
     const positionGuidance = buildPositionGuidanceEngine(data, metadata, state, dominantDrivers);
     const actionQueue = buildActionQueueEngine(data, metadata, state, positionGuidance, dominantDrivers);
     const triggerMonitor = buildTriggerMonitorEngine(data, metadata, state, positionGuidance, actionQueue, dominantDrivers);
@@ -1065,7 +1065,7 @@ function buildDecisionModel(data, history, metadata, healthDashboard) {
       // - invalidationRules.invalidationSignals / resetConditions
       strategyState: state.strategyState,
       stateLabel: state.stateLabel,
-      stateReason: state.stateReason || `${executionLock.title || '现有交易系统状态'}; health ${healthDashboard.overallLevel}; dominant drivers: ${driverLabels}.`,
+      stateReason: state.stateReason || `${executionLock.title || '现有交易系统状态'}；健康状态：${healthDashboard.overallLevel}；主导风险：${driverLabels}。`,
       stateScore: state.stateScore,
       stateDrivers: state.stateDrivers || [],
       stateMeta: state.stateMeta || {},
@@ -1534,7 +1534,7 @@ function getDecisionHeaderBadgeClass(strategyState) {
       return 'decision-badge-balanced';
     case 'Caution':
       return 'decision-badge-caution';
-    case 'Defensive':
+    case '防御':
       return 'decision-badge-defensive';
     case 'Crisis':
       return 'decision-badge-crisis';
@@ -1788,7 +1788,7 @@ function renderLineChart(svgId, history, opts = {}) {
   const line = history.map((d, i) => `${i === 0 ? 'M' : 'L'} ${x(i)} ${y(d.score)}`).join(' ');
   const area = `${line} L ${x(history.length - 1)} ${height - pad.bottom} L ${x(0)} ${height - pad.bottom} Z`;
 
-  const gridValues = [min, Math.round((min + max) / 2), max];
+  const gridValues = [分钟, Math.round((分钟 + max) / 2), max];
   const grid = gridValues.map((g) => `
     <line class="gridline" x1="${pad.left}" y1="${y(g)}" x2="${width - pad.right}" y2="${y(g)}"></line>
     <text x="${pad.left - 10}" y="${y(g) + 4}" text-anchor="end">${g}</text>
