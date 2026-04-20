@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-04-20T08:28:33.093Z",
-  "asOf": "2026-04-20T08:28:33.093Z",
+  "updatedAt": "2026-04-20T08:47:24.382Z",
+  "asOf": "2026-04-20T08:47:24.382Z",
   "ageMinutes": 0,
   "freshnessLevel": "fresh",
   "unavailable": false,
@@ -11,8 +11,8 @@
   "criticalMissing": 0,
   "fallbackCount": 1,
   "secondarySourceCount": 0,
-  "lastSuccessAt": "2026-04-20T08:28:33.093Z",
-  "freshnessPreparedAt": "2026-04-20T08:28:33.093Z",
+  "lastSuccessAt": "2026-04-20T08:47:24.382Z",
+  "freshnessPreparedAt": "2026-04-20T08:47:24.382Z",
   "freshnessPending": true,
   "notes": [
     "gold source failed; reused previous stable value."
@@ -51,7 +51,7 @@
     "us2y": "fred:DGS2",
     "real10y": "fred:DFII10",
     "breakeven10y": "fred:T10YIE",
-    "gold": "fallback:stooq:xauusd:stooq:xauusd returned insufficient rows"
+    "gold": "fallback:stooq:xauusd:stooq:xauusd returned insufficient rows | fred:GOLDAMGBD228NLBM:fred:GOLDAMGBD228NLBM failed after 3 attempts: HTTP 404"
   },
   "sourceDetails": {
     "brent": {
@@ -62,7 +62,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 635314
+      "ageSeconds": 636445
     },
     "dxy": {
       "ok": true,
@@ -72,7 +72,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 894516
+      "ageSeconds": 895645
     },
     "hyOas": {
       "ok": true,
@@ -82,7 +82,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 376114
+      "ageSeconds": 377245
     },
     "vix": {
       "ok": true,
@@ -92,7 +92,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 376114
+      "ageSeconds": 377245
     },
     "spx": {
       "ok": true,
@@ -102,7 +102,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 462516
+      "ageSeconds": 463645
     },
     "us10y": {
       "ok": true,
@@ -112,7 +112,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 376116
+      "ageSeconds": 377245
     },
     "us2y": {
       "ok": true,
@@ -122,7 +122,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 376116
+      "ageSeconds": 377245
     },
     "real10y": {
       "ok": true,
@@ -132,7 +132,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 376114
+      "ageSeconds": 377245
     },
     "breakeven10y": {
       "ok": true,
@@ -142,7 +142,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 289714
+      "ageSeconds": 290845
     },
     "gold": {
       "ok": false,
@@ -150,9 +150,9 @@
       "source": "stooq:xauusd",
       "timestamp": "2026-04-18T06:48:47.483Z",
       "fallbackUsed": true,
-      "error": "stooq:xauusd returned insufficient rows",
+      "error": "stooq:xauusd returned insufficient rows | fred:GOLDAMGBD228NLBM:fred:GOLDAMGBD228NLBM failed after 3 attempts: HTTP 404",
       "freshnessPrepared": true,
-      "ageSeconds": 178787
+      "ageSeconds": 179919
     }
   }
 }
