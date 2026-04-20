@@ -1,6 +1,6 @@
 {
   "version": "v26.0A-rc1",
-  "updatedAt": "2026-04-20T09:42:53.700Z",
+  "updatedAt": "2026-04-20T09:49:00.403Z",
   "score": 60,
   "scoreChange1d": 0,
   "scoreChange7d": -19,
@@ -18,8 +18,8 @@
     "HY OAS 2.86%，信用风险可控但需观察。",
     "10Y 美债 4.32%，实际利率 1.93%。"
   ],
-  "decisionLine": "当前已进入 v24.1 交易引擎模式：实时快变量 live，执行状态灯为 RED / 禁止新增。先看状态灯，再决定能不能动。",
-  "summary": "v24.1 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 123.3、美元 118.86、VIX 17.94、HY OAS 2.86%。",
+  "decisionLine": "当前已进入 v26.0A-rc1 交易引擎模式：实时快变量 live，执行状态灯为 RED / 禁止新增。先看状态灯，再决定能不能动。",
+  "summary": "v26.0A-rc1 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 123.3、美元 118.86、VIX 17.94、HY OAS 2.86%。",
   "modules": {
     "geopolitical": 84,
     "energy": 90,
@@ -561,7 +561,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-04-20T09:42:53.700Z",
+        "triggeredAgo": "2026-04-20T09:49:00.403Z",
         "condition": "系统检测到高压风险组合，执行引擎已锁定为 RED。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -569,7 +569,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-04-20T09:42:53.700Z",
+        "triggeredAgo": "2026-04-20T09:49:00.403Z",
         "condition": "gold 数据源失效，已回退到上次有效值",
         "action": "继续使用 fallback，不中断系统"
       }
@@ -605,7 +605,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-04-20T09:42:53.700Z",
+    "lastRun": "2026-04-20T09:49:00.403Z",
     "notes": [
       "gold 数据源失效，已回退到上次有效值"
     ]
