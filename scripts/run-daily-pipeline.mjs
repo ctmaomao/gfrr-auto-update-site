@@ -185,7 +185,7 @@ function appendHistory(prevHistory, score) {
   } else {
     history.push({ date: today, score });
   }
-  return history.slice(-90);
+  return history.slice(-R.historyWindow.maxDays);
 }
 
 function build() {
@@ -194,14 +194,14 @@ function build() {
   const risk = deriveRisk(realtime);
   const history = appendHistory(prevHistory, risk.score);
   const scoreChange1d = history.length >= 2 ? risk.score - history[history.length - 2].score : 0;
-  const scoreChange7d = history.length >= 8 ? risk.score - history[history.length - 8].score : 0;
-  const scoreChange30d = history.length >= 30 ? risk.score - history[Math.max(0, history.length - 30)].score : scoreChange7d;
-  const avg30d = clamp(avg(history.slice(-30).map(x => x.score)));
-  const peak30d = Math.max(...history.slice(-30).map(x => x.score));
-  const trough30d = Math.min(...history.slice(-30).map(x => x.score));
+  const scoreChange7d = history.length >= R.historyWindow.shortWindow + 1 ? risk.score - history[history.length - (R.historyWindow.shortWindow + 1)].score : 0;
+  const scoreChange30d = history.length >= R.historyWindow.longWindow ? risk.score - history[Math.max(0, history.length - R.historyWindow.longWindow)].score : scoreChange7d;
+  const avg30d = clamp(avg(history.slice(-R.historyWindow.longWindow).map(x => x.score)));
+  const peak30d = Math.max(...history.slice(-R.historyWindow.longWindow).map(x => x.score));
+  const trough30d = Math.min(...history.slice(-R.historyWindow.longWindow).map(x => x.score));
   const probs = regimeProb(risk.score, risk);
   const macro = regimeLabel(probs);
-  const phase = risk.modules.liquidity >= 70 ? '流动性偏紧' : risk.modules.energy >= 75 ? '通胀冲击' : '风险缓和';
+  const phase = risk.modules.liquidity >= R.liquidityRegime.tightThreshold ? '流动性偏紧' : risk.modules.energy >= 75 ? '通胀冲击' : '风险缓和';
   const lock = lockEngine(risk.score, risk, realtime);
   const allocs = targetAllocations(lock, risk);
 
@@ -246,7 +246,7 @@ function build() {
     ],
     liquidityIndex: {
       score:risk.modules.liquidity,
-      regime:risk.modules.liquidity >= 70 ? '限制性偏紧' : risk.modules.liquidity >= 55 ? '偏紧缓解' : '流动性修复',
+      regime:risk.modules.liquidity >= R.liquidityRegime.tightThreshold ? '限制性偏紧' : risk.modules.liquidity >= R.liquidityRegime.easingThreshold ? '偏紧缓解' : '流动性修复',
       change1d: clamp(((realtime.changes?.dxy1d ?? 0) * 10) + ((realtime.changes?.hyOas1d ?? 0) * 8), -9, 9),
       directionLabel: realtime.cacheOnly ? '快变量缓存模式' : realtime.degradedMode ? '快变量带回退' : '快变量实时覆盖',
       notes: [
@@ -370,7 +370,7 @@ function build() {
         direction: lock.level === 'red' ? '只允许减仓/防守' : lock.level === 'yellow' ? '防御偏多能源 / 美元，限制久期与高Beta' : '允许质量权益分批进攻',
         consistency: realtime.cacheOnly ? '低一致性（缓存）' : realtime.degradedMode ? '中一致性（回退）' : '高一致性',
         macroSignal: macro,
-        liquiditySignal: `${risk.modules.liquidity >= 70 ? '限制性偏紧' : risk.modules.liquidity >= 55 ? '偏紧缓解' : '流动性修复'}（实时）`,
+        liquiditySignal: `${risk.modules.liquidity >= R.liquidityRegime.tightThreshold ? '限制性偏紧' : risk.modules.liquidity >= R.liquidityRegime.easingThreshold ? '偏紧缓解' : '流动性修复'}（实时）`,
         chainSignal: risk.modules.energy >= risk.modules.liquidity ? '油价→通胀→利率→股票' : '美元→信用→流动性→股票',
         notes: [
           `执行引擎状态：${lock.levelLabel}。`,
