@@ -61,7 +61,8 @@ const sourceSpecs = {
   },
   gold: {
     critical: false,
-    primary: { kind: 'stooq', symbol: 'xauusd', source: 'stooq:xauusd' }
+    primary: { kind: 'stooq', symbol: 'xauusd', source: 'stooq:xauusd' },
+    alternates: [{ kind: 'fred', id: 'GOLDAMGBD228NLBM', source: 'fred:GOLDAMGBD228NLBM' }]
   }
 };
 
