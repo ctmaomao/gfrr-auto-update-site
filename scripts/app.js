@@ -2456,21 +2456,18 @@ async function fetchRealtimePayload() {
   ];
 
   let lastError = null;
-  let remoteError = null;
 
   for (const attempt of attempts) {
     try {
       const response = await fetch(attempt.url, { cache: 'no-store' });
       if (!response.ok) {
         lastError = `${attempt.source}:${response.status}`;
-        if (attempt.source === 'remote') remoteError = lastError;
         continue;
       }
 
       const payload = normalizeRealtimePayload(await response.json());
       if (!payload) {
         lastError = `${attempt.source}:invalid-payload`;
-        if (attempt.source === 'remote') remoteError = lastError;
         continue;
       }
 
@@ -2480,13 +2477,11 @@ async function fetchRealtimePayload() {
         realtimeAvailable: true,
         realtimeFetchFailed: false,
         realtimeFallbackUsed: attempt.fallbackUsed,
-        realtimeUpdatedAt: payload.updatedAt || payload.asOf || null,
-        realtimeError: attempt.fallbackUsed ? (remoteError || lastError) : null,
-        realtimeRemoteFailed: attempt.fallbackUsed && !!remoteError
+        realtimeUpdatedAt: payload.updatedAt,
+        realtimeError: lastError
       };
     } catch (error) {
       lastError = `${attempt.source}:${error.message}`;
-      if (attempt.source === 'remote') remoteError = lastError;
     }
   }
 
@@ -2497,47 +2492,57 @@ async function fetchRealtimePayload() {
     realtimeFetchFailed: true,
     realtimeFallbackUsed: false,
     realtimeUpdatedAt: null,
-    realtimeError: lastError,
-    realtimeRemoteFailed: true
+    realtimeError: lastError
   };
 }
 
 function buildRuntimeState(baseline, history, realtimeResult) {
   const realtimePayload = realtimeResult.payload;
-  const realtimeUpdatedAt = realtimeResult.realtimeUpdatedAt;
-  const realtimeAgeMinutes = computeAgeMinutes(realtimeUpdatedAt);
-  const realtimeFreshnessLevel = classifyFreshnessLevel(realtimeAgeMinutes, realtimeResult.realtimeAvailable);
-  const realtimeSource = realtimeResult.realtimeSource;
+  const realtimeAsOf = realtimePayload?.asOf || realtimePayload?.lastSuccessAt || realtimePayload?.updatedAt || null;
+  const realtimeAgeMinutes = computeAgeMinutes(realtimeAsOf);
+  const realtimeFreshnessLevel = classifyFreshnessLevel(realtimeAgeMinutes, !!realtimePayload?.values);
+  const realtimeDegraded = !!(realtimePayload?.degradedMode || realtimePayload?.cacheOnly || realtimeResult.realtimeFallbackUsed);
+  const realtimeUnavailable = realtimeFreshnessLevel === 'unavailable' || !realtimePayload?.values;
 
   const runtimeMetadata = {
-    realtimeSource,
+    realtimeSource: realtimeResult.realtimeSource,
     realtimeAvailable: realtimeResult.realtimeAvailable,
-    realtimeUnavailable: !realtimeResult.realtimeAvailable,
     realtimeFetchFailed: realtimeResult.realtimeFetchFailed,
     realtimeFallbackUsed: realtimeResult.realtimeFallbackUsed,
-    realtimeUpdatedAt,
+    realtimeUpdatedAt: realtimeResult.realtimeUpdatedAt,
     realtimeError: realtimeResult.realtimeError,
-    realtimeRemoteFailed: !!realtimeResult.realtimeRemoteFailed,
-    realtimeAgeMinutes,
+    realtimeAsOf,
     realtimeFreshnessLevel,
-    realtimeSnapshotAged: realtimeSource === 'remote'
-      && Number.isFinite(realtimeAgeMinutes)
-      && realtimeAgeMinutes > FRESHNESS_WINDOWS.aging,
-    realtimeDegraded: !!realtimePayload?.degradedMode,
+    realtimeAgeMinutes,
+    realtimeDegraded,
+    realtimeUnavailable,
     realtimeCacheOnly: !!realtimePayload?.cacheOnly,
     realtimeHealthScore: realtimePayload?.healthScore ?? null,
-    realtimeCriticalMissing: realtimePayload?.criticalMissing ?? 0,
-    realtimeFallbackCount: realtimePayload?.fallbackCount ?? 0,
+    realtimeCriticalMissing: realtimePayload?.criticalMissing ?? null,
+    realtimeSourceMode: realtimePayload?.sourceMode || null,
     realtimeSourceStatus: realtimePayload?.sourceStatus || {},
     realtimeSourceDetails: realtimePayload?.sourceDetails || {}
   };
+  runtimeMetadata.realtimeStatusLabel = buildRealtimeStatusLabel(runtimeMetadata);
+  runtimeMetadata.realtimeOverlayEnabled = shouldApplyRealtimeOverlay(runtimeMetadata, realtimePayload);
+
+  const data = runtimeMetadata.realtimeOverlayEnabled ? applyRealtimeOverlay(baseline, realtimePayload) : baseline;
+  const healthDashboard = buildHealthDashboardModel({
+    baseline,
+    history,
+    realtimePayload,
+    runtimeMetadata,
+    data
+  });
+  data.decisionModel = buildDecisionModel(data, history, runtimeMetadata, healthDashboard);
 
   return {
     baseline,
     history,
     realtimePayload,
     runtimeMetadata,
-    data: applyRealtimeOverlay(baseline, realtimePayload)
+    healthDashboard,
+    data
   };
 }
 
@@ -3384,24 +3389,24 @@ async function main() {
   window.__GFRR_DECISION_HEADER__ = buildDecisionHeaderModel(window.__GFRR_DECISION_MODEL__, data);
   console.info('GFRR decision model ready', window.__GFRR_DECISION_MODEL__);
 
-  if (metadata.realtimeOverlayEnabled && realtime?.values) {
-  renderRealtimeStrip(realtime, metadata);
-  $('runtime-badge').textContent = buildRealtimeStatusLabel(metadata);
-} else {
-  $('runtime-badge').textContent = buildRealtimeStatusLabel(metadata);
-}
+    if (metadata.realtimeOverlayEnabled && realtime?.values) {
+    renderRealtimeStrip(realtime, metadata);
+    $('runtime-badge').textContent = buildRealtimeStatusLabel(metadata);
+  } else {
+    $('runtime-badge').textContent = buildRealtimeStatusLabel(metadata);
+  }
 
-if (!metadata.realtimeOverlayEnabled) {
-  $('rt-source-mode').textContent = '仅基线';
-} else if (metadata.realtimeRemoteFailed && metadata.realtimeSource === 'local-fallback') {
-  $('rt-source-mode').textContent = '远程失败 / 本地快照';
-} else if (metadata.realtimeSnapshotAged) {
-  $('rt-source-mode').textContent = '远程快照 / 已老化';
-} else if (metadata.realtimeSource === 'remote') {
-  $('rt-source-mode').textContent = '远程实时 / 正常覆盖';
-} else if (metadata.realtimeSource === 'local-fallback') {
-  $('rt-source-mode').textContent = '本地快照 / 正常兜底';
-}
+  if (!metadata.realtimeOverlayEnabled) {
+    $('rt-source-mode').textContent = '仅基线';
+  } else if (metadata.realtimeRemoteFailed && metadata.realtimeSource === 'local-fallback') {
+    $('rt-source-mode').textContent = '远程失败 / 本地快照';
+  } else if (metadata.realtimeSnapshotAged) {
+    $('rt-source-mode').textContent = '远程快照 / 已老化';
+  } else if (metadata.realtimeSource === 'remote') {
+    $('rt-source-mode').textContent = '远程实时 / 正常覆盖';
+  } else if (metadata.realtimeSource === 'local-fallback') {
+    $('rt-source-mode').textContent = '本地快照 / 正常兜底';
+  }
   renderDecisionHeader(window.__GFRR_DECISION_HEADER__);
   renderHealthDashboard(healthDashboard);
   // Legacy display dependencies: these older overview fields remain for the
