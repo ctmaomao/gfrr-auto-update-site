@@ -49,8 +49,24 @@ function classifyFreshnessLevel(ageMinutes, hasRealtime) {
 }
 
 function buildRealtimeStatusLabel(metadata) {
+  if (!metadata) return '实时状态未知';
+
   if (metadata.realtimeUnavailable) {
     return '实时不可用 / 仅基线';
+  }
+
+  if (metadata.realtimeRemoteFailed && metadata.realtimeSource === 'local-fallback') {
+    return '远程实时源失败 / 当前使用本地快照';
+  }
+
+  if (metadata.realtimeSnapshotAged) {
+    const parts = ['实时快照已老化'];
+    if (Number.isFinite(metadata.realtimeAgeMinutes)) {
+      parts.push(`${metadata.realtimeAgeMinutes} 分钟前`);
+    }
+    if (metadata.realtimeFallbackUsed) parts.push('本地回退');
+    if (metadata.realtimeCacheOnly) parts.push('仅缓存');
+    return parts.join(' / ');
   }
 
   const freshnessLabelMap = {
@@ -59,7 +75,8 @@ function buildRealtimeStatusLabel(metadata) {
     stale: '陈旧',
     unavailable: '不可用'
   };
-  const parts = [`实时 ${freshnessLabelMap[metadata.realtimeFreshnessLevel] || metadata.realtimeFreshnessLevel || '未知'}`];
+
+  const parts = [`实时状态：${freshnessLabelMap[metadata.realtimeFreshnessLevel] || metadata.realtimeFreshnessLevel || '未知'}`];
   if (Number.isFinite(metadata.realtimeAgeMinutes)) parts.push(`${metadata.realtimeAgeMinutes} 分钟前`);
   if (metadata.realtimeDegraded) parts.push('降级');
   if (metadata.realtimeFallbackUsed) parts.push('本地回退');
@@ -2761,6 +2778,7 @@ function applyRealtimeOverlay(base, realtimePayload) {
 
 function renderRealtimeStrip(realtime, metadata = null) {
   if (!realtime || !realtime.values) return;
+
   $('realtime-updated-at').textContent = realtime.asOf || realtime.updatedAt || '--';
   $('rt-brent').textContent = fmtNumSafe(realtime.values.brent, 1);
   $('rt-dxy').textContent = fmtNumSafe(realtime.values.dxy, 2);
@@ -2769,6 +2787,7 @@ function renderRealtimeStrip(realtime, metadata = null) {
   $('rt-us10y').textContent = fmtNumSafe(realtime.values.us10y, 2);
   $('rt-gold').textContent = fmtNumSafe(realtime.values.gold, 1);
   $('rt-spx').textContent = fmtNumSafe(realtime.values.spx, 0);
+
   $('rt-source-mode').textContent = realtime.degradedMode ? '部分回退' : '实时覆盖';
 
   if (metadata?.realtimeUnavailable) {
@@ -2789,10 +2808,15 @@ function renderRealtimeStrip(realtime, metadata = null) {
     if (metadata.realtimeCacheOnly) modeParts.push('仅缓存');
     $('rt-source-mode').textContent = modeParts.join(' / ');
   }
+
   $('rt-brent-delta').textContent = fmtSigned(realtime.changes?.brent1d || 0);
   $('rt-dxy-delta').textContent = fmtSigned(realtime.changes?.dxy1d || 0);
   $('rt-vix-delta').textContent = fmtSigned(realtime.changes?.vix1d || 0);
   $('rt-hy-delta').textContent = fmtSigned(realtime.changes?.hyOas1d || 0);
+  if ($('rt-us10y-delta')) $('rt-us10y-delta').textContent = fmtSigned(realtime.changes?.us10y1d || 0);
+  if ($('rt-spx-delta')) $('rt-spx-delta').textContent = fmtSigned(realtime.changes?.spx1d || 0);
+  if ($('rt-gold-delta')) $('rt-gold-delta').textContent = '--';
+
   renderList('realtime-notes', realtime.notes || []);
 }
 
