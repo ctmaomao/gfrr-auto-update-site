@@ -1,21 +1,21 @@
 {
-  "updatedAt": "2026-04-20T09:08:33.248Z",
-  "asOf": "2026-04-20T09:08:33.248Z",
+  "updatedAt": "2026-04-20T09:14:29.447Z",
+  "asOf": "2026-04-20T09:14:29.447Z",
   "ageMinutes": 0,
   "freshnessLevel": "fresh",
   "unavailable": false,
   "sourceMode": "live",
   "degradedMode": false,
   "cacheOnly": false,
-  "healthScore": 94,
+  "healthScore": 100,
   "criticalMissing": 0,
-  "fallbackCount": 1,
+  "fallbackCount": 0,
   "secondarySourceCount": 0,
-  "lastSuccessAt": "2026-04-20T09:08:33.248Z",
-  "freshnessPreparedAt": "2026-04-20T09:08:33.248Z",
+  "lastSuccessAt": "2026-04-20T09:14:29.447Z",
+  "freshnessPreparedAt": "2026-04-20T09:14:29.447Z",
   "freshnessPending": true,
   "notes": [
-    "gold source failed; reused previous stable value."
+    "Realtime sources refreshed successfully."
   ],
   "values": {
     "brent": 123.28,
@@ -27,7 +27,7 @@
     "us2y": 3.78,
     "real10y": 1.93,
     "breakeven10y": 2.36,
-    "gold": 2384.7
+    "gold": 4796.899902
   },
   "changes": {
     "brent1d": 4.21,
@@ -39,7 +39,7 @@
     "us2y1d": 0.02,
     "real10y1d": 0.03,
     "breakeven10y1d": -0.03,
-    "gold1d": 8.3
+    "gold1d": 0
   },
   "sourceStatus": {
     "brent": "fred:DCOILBRENTEU",
@@ -51,7 +51,7 @@
     "us2y": "fred:DGS2",
     "real10y": "fred:DFII10",
     "breakeven10y": "fred:T10YIE",
-    "gold": "fallback:stooq:xauusd:stooq:xauusd returned insufficient rows | stooq:gc.f:stooq:gc.f returned insufficient rows | stooq:xau.f:stooq:xau.f returned insufficient rows"
+    "gold": "goldapi:XAU"
   },
   "sourceDetails": {
     "brent": {
@@ -62,7 +62,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 637714
+      "ageSeconds": 638070
     },
     "dxy": {
       "ok": true,
@@ -72,7 +72,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 896914
+      "ageSeconds": 897270
     },
     "hyOas": {
       "ok": true,
@@ -82,7 +82,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 378514
+      "ageSeconds": 378870
     },
     "vix": {
       "ok": true,
@@ -92,7 +92,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 378514
+      "ageSeconds": 378870
     },
     "spx": {
       "ok": true,
@@ -102,7 +102,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 464914
+      "ageSeconds": 465270
     },
     "us10y": {
       "ok": true,
@@ -112,7 +112,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 378514
+      "ageSeconds": 378870
     },
     "us2y": {
       "ok": true,
@@ -122,7 +122,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 378514
+      "ageSeconds": 378870
     },
     "real10y": {
       "ok": true,
@@ -132,7 +132,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 378514
+      "ageSeconds": 378870
     },
     "breakeven10y": {
       "ok": true,
@@ -142,17 +142,17 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 292114
+      "ageSeconds": 292470
     },
     "gold": {
-      "ok": false,
-      "value": 2384.7,
-      "source": "stooq:xauusd",
-      "timestamp": "2026-04-18T06:48:47.483Z",
-      "fallbackUsed": true,
-      "error": "stooq:xauusd returned insufficient rows | stooq:gc.f:stooq:gc.f returned insufficient rows | stooq:xau.f:stooq:xau.f returned insufficient rows",
+      "ok": true,
+      "value": 4796.899902,
+      "source": "goldapi:XAU",
+      "timestamp": "2026-04-20",
+      "fallbackUsed": false,
+      "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 181187
+      "ageSeconds": 33271
     }
   }
 }
