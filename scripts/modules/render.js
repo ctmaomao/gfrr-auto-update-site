@@ -61,7 +61,8 @@ export function renderHealthDashboard(model) {
   $('health-score').textContent = model.healthScore ?? '--';
   $('health-freshness').textContent = FRESHNESS_CN[model.freshness] || model.freshness;
   $('health-age').textContent = model.ageLabel;
-  $('health-source').textContent = model.realtimeSource;
+  const sourceMap = { 'remote': '远程', 'local-fallback': '本地回退', 'none': '无' };
+  $('health-source').textContent = sourceMap[model.realtimeSource] || model.realtimeSource;
   $('health-flags').textContent = model.flagsLabel;
   $('health-critical-missing').textContent = model.criticalMissing;
   $('health-source-summary').textContent = model.sourceSummaryLabel;
