@@ -16,7 +16,7 @@ const FRED = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
 const REQUEST_TIMEOUT_MS = 8000;
 const REQUEST_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
-const USER_AGENT = 'gfr-v25.0.0-realtime/1.0';
+const USER_AGENT = 'gfr-v26.0a-realtime/1.0';
 const FRESHNESS_WINDOWS = RULES.freshnessWindows;
 
 const sourceSpecs = {
@@ -448,7 +448,7 @@ async function main() {
 
   fs.mkdirSync(path.dirname(realtimePath), { recursive: true });
   fs.writeFileSync(realtimePath, JSON.stringify(payload, null, 2));
-  console.log('Built realtime market successfully.');
+  console.log('Built realtime market successfully. (v26.0A-rc1)');
 }
 
 main().catch((error) => {
