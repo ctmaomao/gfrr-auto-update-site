@@ -29,14 +29,21 @@ export function classifyFreshnessLevel(ageMinutes, hasRealtime) {
 
 export function buildRealtimeStatusLabel(metadata) {
   if (metadata.realtimeUnavailable) {
-    return 'Realtime unavailable / baseline only';
+    return '实时数据不可用 / 仅基线模式';
   }
 
-  const parts = [`Realtime ${metadata.realtimeFreshnessLevel}`];
-  if (Number.isFinite(metadata.realtimeAgeMinutes)) parts.push(`${metadata.realtimeAgeMinutes}m old`);
-  if (metadata.realtimeDegraded) parts.push('degraded');
-  if (metadata.realtimeFallbackUsed) parts.push('local fallback');
-  if (metadata.realtimeCacheOnly) parts.push('cache only');
+  const freshnessMap = {
+    fresh: '新鲜',
+    aging: '老化中',
+    stale: '已过期',
+    unavailable: '不可用'
+  };
+  const freshnessLabel = freshnessMap[metadata.realtimeFreshnessLevel] || metadata.realtimeFreshnessLevel;
+  const parts = [`实时数据 ${freshnessLabel}`];
+  if (Number.isFinite(metadata.realtimeAgeMinutes)) parts.push(`${metadata.realtimeAgeMinutes} 分钟前`);
+  if (metadata.realtimeDegraded) parts.push('降级');
+  if (metadata.realtimeFallbackUsed) parts.push('本地回退');
+  if (metadata.realtimeCacheOnly) parts.push('缓存模式');
   return parts.join(' / ');
 }
 
