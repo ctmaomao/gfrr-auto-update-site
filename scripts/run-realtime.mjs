@@ -60,9 +60,7 @@ const sourceSpecs = {
   gold: {
     critical: false,
     primary: { kind: 'goldapi', symbol: 'XAU', source: 'goldapi:XAU' },
-    alternates: [
-      { kind: 'stooq', symbol: 'xauusd', source: 'stooq:xauusd' }
-    ]
+    alternates: [{ kind: 'stooq', symbol: 'xauusd', source: 'stooq:xauusd' }]
   }
 };
 
@@ -147,17 +145,12 @@ function classifyFreshnessLevel(ageMinutes, hasRealtime) {
 async function fetchWithTimeout(url, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? REQUEST_TIMEOUT_MS);
-
   try {
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        'User-Agent': USER_AGENT,
-        ...(options.headers || {})
-      },
+      headers: { 'User-Agent': USER_AGENT, ...(options.headers || {}) },
       signal: controller.signal
     });
-
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.text();
   } catch (error) {
@@ -173,7 +166,6 @@ async function fetchWithTimeout(url, options = {}) {
 async function retryTask(fn, { label, retries = REQUEST_RETRIES } = {}) {
   let attempt = 0;
   let lastError = null;
-
   while (attempt <= retries) {
     try {
       return await fn({ attempt });
@@ -184,7 +176,6 @@ async function retryTask(fn, { label, retries = REQUEST_RETRIES } = {}) {
       attempt += 1;
     }
   }
-
   throw new Error(`${label} failed after ${retries + 1} attempts: ${stringifyError(lastError)}`);
 }
 
@@ -193,7 +184,7 @@ async function fetchRows(descriptor) {
     ? `${FRED}?cosd=${cosd}&id=${descriptor.id}`
     : descriptor.kind === 'goldapi'
       ? `https://api.gold-api.com/price/${descriptor.symbol}`
-    : `https://stooq.com/q/d/l/?s=${encodeURIComponent(descriptor.symbol)}&i=d`;
+      : `https://stooq.com/q/d/l/?s=${encodeURIComponent(descriptor.symbol)}&i=d`;
 
   const text = await retryTask(
     () => fetchWithTimeout(url, { timeoutMs: REQUEST_TIMEOUT_MS }),
@@ -240,7 +231,6 @@ function normalizeFallbackResult(key, descriptor, prev, critical, error) {
   const prevValue = prev?.values?.[key];
   const prevChange = prev?.changes?.[`${key}1d`];
   const prevTimestamp = prev?.sourceDetails?.[key]?.timestamp ?? prev?.lastSuccessAt ?? null;
-
   return {
     key,
     ok: false,
@@ -263,23 +253,17 @@ async function resolveMetric(key, spec, prev) {
     return normalizeLiveResult(key, spec.primary, rows, { critical: spec.critical });
   } catch (primaryError) {
     const alternateErrors = [];
-
     for (const alternate of spec.alternates || []) {
       try {
         const rows = await fetchRows(alternate);
-        return normalizeLiveResult(key, alternate, rows, {
-          critical: spec.critical,
-          fallbackUsed: true
-        });
+        return normalizeLiveResult(key, alternate, rows, { critical: spec.critical, fallbackUsed: true });
       } catch (alternateError) {
         alternateErrors.push(`${alternate.source}:${stringifyError(alternateError)}`);
       }
     }
-
     const combinedError = alternateErrors.length
       ? new Error(`${stringifyError(primaryError)} | ${alternateErrors.join(' | ')}`)
       : primaryError;
-
     return normalizeFallbackResult(key, spec.primary, prev, spec.critical, combinedError);
   }
 }
@@ -306,30 +290,25 @@ function buildSourceStatus(results) {
 
 function buildNotes(results) {
   const notes = [];
-
   for (const result of results) {
     if (!result.ok) {
-      notes.push(`${result.key} source failed; reused previous stable value.`);
+      notes.push(`${result.key} 数据源失败，已沿用上次有效值。`);
       continue;
     }
-
     if (result.fallbackUsed) {
-      notes.push(`${result.key} switched to a secondary live source.`);
+      notes.push(`${result.key} 已切换到备用实时数据源。`);
     }
   }
-
-  return notes.length ? notes : ['Realtime sources refreshed successfully.'];
+  return notes.length ? notes : ['实时数据源刷新成功。'];
 }
 
 function buildPayload(results, prev) {
   const values = {};
   const changes = {};
-
   for (const result of results) {
     values[result.key] = result.value;
     changes[`${result.key}1d`] = result.change;
   }
-
   const criticalMissing = results.filter((result) => result.critical && !result.ok).length;
   const fallbackCount = results.filter((result) => !result.ok).length;
   const secondarySourceCount = results.filter((result) => result.ok && result.fallbackUsed).length;
@@ -345,7 +324,6 @@ function buildPayload(results, prev) {
     0,
     Math.min(100, 100 - criticalMissing * hs.criticalMissingPenalty - fallbackCount * hs.fallbackPenalty - secondarySourceCount * hs.secondarySourcePenalty)
   );
-
   return {
     updatedAt: now,
     asOf,
@@ -372,66 +350,25 @@ function buildPayload(results, prev) {
 
 function mockPayload() {
   const values = {
-    brent: 89.8,
-    dxy: 104.7,
-    vix: 17.8,
-    us10y: 4.31,
-    us2y: 4.72,
-    real10y: 1.96,
-    breakeven10y: 2.35,
-    spx: 5178.4,
-    gold: 2384.7,
-    hyOas: 3.92
+    brent: 89.8, dxy: 104.7, vix: 17.8, us10y: 4.31, us2y: 4.72,
+    real10y: 1.96, breakeven10y: 2.35, spx: 5178.4, gold: 2384.7, hyOas: 3.92
   };
   const changes = {
-    brent1d: 1.1,
-    dxy1d: -0.08,
-    vix1d: -0.5,
-    us10y1d: 0.01,
-    us2y1d: -0.02,
-    real10y1d: 0.01,
-    breakeven10y1d: 0.03,
-    spx1d: 22.5,
-    gold1d: 8.3,
-    hyOas1d: -0.04
+    brent1d: 1.1, dxy1d: -0.08, vix1d: -0.5, us10y1d: 0.01, us2y1d: -0.02,
+    real10y1d: 0.01, breakeven10y1d: 0.03, spx1d: 22.5, gold1d: 8.3, hyOas1d: -0.04
   };
-
   const sourceStatus = Object.fromEntries(Object.keys(sourceSpecs).map((key) => [key, 'mock']));
   const sourceDetails = Object.fromEntries(Object.keys(sourceSpecs).map((key) => [
     key,
-    {
-      ok: true,
-      value: values[key],
-      source: 'mock',
-      timestamp: now,
-      fallbackUsed: false,
-      error: null,
-      freshnessPrepared: true,
-      ageSeconds: 0
-    }
+    { ok: true, value: values[key], source: 'mock', timestamp: now, fallbackUsed: false, error: null, freshnessPrepared: true, ageSeconds: 0 }
   ]));
-
   return {
-    updatedAt: now,
-    asOf: now,
-    ageMinutes: 0,
-    freshnessLevel: 'fresh',
-    unavailable: false,
-    sourceMode: 'mock',
-    degradedMode: false,
-    cacheOnly: false,
-    healthScore: 100,
-    criticalMissing: 0,
-    fallbackCount: 0,
-    secondarySourceCount: 0,
-    lastSuccessAt: now,
-    freshnessPreparedAt: now,
-    freshnessPending: true,
-    notes: ['Local mock mode: verify realtime payload shape only.'],
-    values,
-    changes,
-    sourceStatus,
-    sourceDetails
+    updatedAt: now, asOf: now, ageMinutes: 0, freshnessLevel: 'fresh', unavailable: false,
+    sourceMode: 'mock', degradedMode: false, cacheOnly: false, healthScore: 100,
+    criticalMissing: 0, fallbackCount: 0, secondarySourceCount: 0, lastSuccessAt: now,
+    freshnessPreparedAt: now, freshnessPending: true,
+    notes: ['本地模拟模式：仅用于验证实时数据格式。'],
+    values, changes, sourceStatus, sourceDetails
   };
 }
 
@@ -445,10 +382,9 @@ async function main() {
         ),
         prev
       );
-
   fs.mkdirSync(path.dirname(realtimePath), { recursive: true });
   fs.writeFileSync(realtimePath, JSON.stringify(payload, null, 2));
-  console.log('Built realtime market successfully. (v26.0A-rc1)');
+  console.log('实时市场数据构建成功。(v26.0A-rc1)');
 }
 
 main().catch((error) => {
