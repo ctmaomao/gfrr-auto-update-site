@@ -33,13 +33,10 @@ export function createScoreSeries(history = [], currentScore = null) {
       .map((item) => Number(item?.score))
       .filter((score) => Number.isFinite(score))
     : [];
-
   if (!Number.isFinite(currentScore)) return historyScores;
   if (!historyScores.length) return [currentScore];
-
   const lastScore = historyScores[historyScores.length - 1];
   if (lastScore === currentScore) return historyScores;
-
   return [...historyScores, currentScore];
 }
 
@@ -56,12 +53,11 @@ export function buildStrategyStateFallback(data = {}, metadata = {}) {
     elevatedRiskStreakDays: 0,
     highRiskStreakDays: 0,
     criticalAlertCount: 0,
-    healthLevel: metadata.realtimeUnavailable ? 'Baseline Only' : 'Unknown'
+    healthLevel: metadata.realtimeUnavailable ? '仅基线' : '未知'
   };
-
   return {
     strategyState: fallbackState,
-    stateLabel: `${fallbackState} / Fallback`,
+    stateLabel: `${fallbackState} / 回退`,
     stateScore: fallbackState === 'Defensive' ? 72 : 55,
     stateReason: metadata.realtimeUnavailable
       ? '实时覆盖不可用，策略状态已回退到防守型基线。'
@@ -106,38 +102,14 @@ export function buildActionQueueFallback(data = {}, metadata = {}, strategyState
   const defensiveFallback = metadata.realtimeUnavailable || strategyState === 'Defensive' || strategyState === 'Crisis';
   const queue = {
     priorityActions: defensiveFallback
-      ? [
-          '逐步降低整体风险敞口。',
-          '提高现金缓冲，避免扩大杠杆。',
-          '仅允许防守型再平衡。'
-        ]
-      : [
-          '保持新增敞口的选择性与分批原则。',
-          '向目标敞口区间再平衡。',
-          '维持基础防守缓冲仓位。'
-        ],
+      ? ['逐步降低整体风险敞口。', '提高现金缓冲，避免扩大杠杆。', '仅允许防守型再平衡。']
+      : ['保持新增敞口的选择性与分批原则。', '向目标敞口区间再平衡。', '维持基础防守缓冲仓位。'],
     watchItems: defensiveFallback
-      ? [
-          '关注波动率是否重新加速。',
-          '监控信用与流动性压力是否升级。',
-          '数据质量恢复前不放松防守姿态。'
-        ]
-      : [
-          '加仓前先确认环境稳定性。',
-          '关注波动率或利差是否重新走阔。',
-          '扩大节奏前确认驱动因子持续性。'
-        ],
+      ? ['关注波动率是否重新加速。', '监控信用与流动性压力是否升级。', '数据质量恢复前不放松防守姿态。']
+      : ['加仓前先确认环境稳定性。', '关注波动率或利差是否重新走阔。', '扩大节奏前确认驱动因子持续性。'],
     blockedActions: defensiveFallback
-      ? [
-          '暂停激进新增风险敞口。',
-          '避免扩大杠杆。',
-          '高风险环境下避免提高集中度。'
-        ]
-      : [
-          '避免单次大幅调整敞口。',
-          '未经确认前避免扩大杠杆。',
-          '未经确认前避免提高集中度。'
-        ],
+      ? ['暂停激进新增风险敞口。', '避免扩大杠杆。', '高风险环境下避免提高集中度。']
+      : ['避免单次大幅调整敞口。', '未经确认前避免扩大杠杆。', '未经确认前避免提高集中度。'],
     actionSummary: defensiveFallback ? '防守型回退动作队列已启用。' : '谨慎型回退动作队列已启用。',
     escalationHint: defensiveFallback ? '若压力指标恶化或数据质量下降，应升级防守。' : '若状态分数或压力信号恶化，应升级防守。',
     executionNotes: [
@@ -161,8 +133,8 @@ export function buildTriggerMonitorFallback(data = {}, metadata = {}, strategySt
       Number.isFinite(data?.score) ? `参考风险分数：${data.score}。` : '参考风险分数不可用。'
     ],
     triggerSummary: `${strategyState} 回退触发监控已启用。`,
-    escalationLevel: metadata.realtimeUnavailable ? 'high' : 'medium',
-    signalConfidence: metadata.realtimeUnavailable ? 'low' : 'medium'
+    escalationLevel: metadata.realtimeUnavailable ? '高' : '中',
+    signalConfidence: metadata.realtimeUnavailable ? '低' : '中'
   };
 }
 
@@ -179,18 +151,16 @@ export function buildInvalidationRulesFallback(data = {}, metadata = {}, strateg
       '数据新鲜度恢复正常后，方可降级。'
     ],
     invalidationSummary: `${strategyState} 回退失效规则已启用。`,
-    deescalationBias: metadata.realtimeUnavailable ? 'low' : 'medium',
-    signalConfidence: metadata.realtimeUnavailable ? 'low' : 'medium'
+    deescalationBias: metadata.realtimeUnavailable ? '低' : '中',
+    signalConfidence: metadata.realtimeUnavailable ? '低' : '中'
   };
 }
 
 export function createDecisionFallback(data = {}, metadata = {}) {
-  const fallbackLabel = metadata.realtimeUnavailable ? 'BASELINE / FALLBACK' : 'UNAVAILABLE / FALLBACK';
+  const fallbackLabel = metadata.realtimeUnavailable ? '基线 / 回退' : '不可用 / 回退';
   const stateFallback = buildStrategyStateFallback(data, metadata);
   return {
     contractVersion: 'v26.0A-final',
-    // v26.0A canonical decision fields: the fields below are the stable contract
-    // for state, guidance, action, trigger, and invalidation consumers.
     strategyState: stateFallback.strategyState,
     stateLabel: stateFallback.stateLabel || fallbackLabel,
     stateReason: stateFallback.stateReason || (metadata.realtimeUnavailable
@@ -206,18 +176,14 @@ export function createDecisionFallback(data = {}, metadata = {}) {
       trend: 0,
       reason: '决策生成恢复前，使用基线风险分数与现有模块输出。'
     }],
-    // Legacy compatibility fields: keep these while legacy positioning cards still
-    // read older exposure / cash / note fields directly.
     positionGuidance: {
       ...buildPositionGuidanceFallback(data, metadata, stateFallback.strategyState),
-      stance: 'Preserve current defensive baseline',
+      stance: '维持当前防守型基线',
       riskBudget: data?.tradingSystem?.positioning?.riskBudget || '--',
       targetGrossExposure: data?.tradingSystem?.positioning?.targetGrossExposure || '--',
       cashBufferTarget: data?.tradingSystem?.positioning?.cashBufferTarget || '--',
       notes: ['回退模式已启用。', '决策模型恢复前，禁止扩大风险敞口。']
     },
-    // Legacy compatibility fields: `items` / `notes` are retained for transitional
-    // renderers and debugging, even though the canonical queue is split by bucket.
     actionQueue: buildActionQueueFallback(data, metadata, stateFallback.strategyState),
     triggerMonitor: buildTriggerMonitorFallback(data, metadata, stateFallback.strategyState),
     invalidationRules: buildInvalidationRulesFallback(data, metadata, stateFallback.strategyState)
@@ -259,10 +225,7 @@ export function buildStrategyStateMeta(data, history, metadata, healthDashboard)
   );
   const warningCount = Number.isFinite(data?.warningSystem?.warningCount) ? data.warningSystem.warningCount : 0;
   const extremeThresholds = [];
-  const pushExtreme = (condition, label) => {
-    if (condition) extremeThresholds.push(label);
-  };
-
+  const pushExtreme = (condition, label) => { if (condition) extremeThresholds.push(label); };
   pushExtreme(totalRiskScore >= 85, '总分>=85');
   pushExtreme(moduleEntries.some((item) => item.value >= 90), '模块>=90');
   pushExtreme(severeResonanceCount >= 3, '三模块>=80');
@@ -270,19 +233,10 @@ export function buildStrategyStateMeta(data, history, metadata, healthDashboard)
   pushExtreme(criticalAlertCount > 0, '关键预警触发');
   pushExtreme(metadata.realtimeCacheOnly, '缓存模式');
   pushExtreme(highRiskStreakDays >= 7, '高风险持续连streak');
-
   return {
-    totalRiskScore,
-    recent3dDelta,
-    recent3dSpeed,
-    resonanceCount,
-    severeResonanceCount,
-    extremeThresholdCount: extremeThresholds.length,
-    extremeThresholds,
-    elevatedRiskStreakDays,
-    highRiskStreakDays,
-    criticalAlertCount,
-    warningCount,
+    totalRiskScore, recent3dDelta, recent3dSpeed, resonanceCount, severeResonanceCount,
+    extremeThresholdCount: extremeThresholds.length, extremeThresholds,
+    elevatedRiskStreakDays, highRiskStreakDays, criticalAlertCount, warningCount,
     healthLevel: healthDashboard.overallLevel,
     executionLevel: data?.tradingSystem?.executionLock?.level || 'unknown'
   };
@@ -292,40 +246,31 @@ export function calculateStrategyStateEngine(data, history, metadata, healthDash
   const stateMeta = buildStrategyStateMeta(data, history, metadata, healthDashboard);
   const executionLevel = data?.tradingSystem?.executionLock?.level;
   let stateScore = Number.isFinite(stateMeta.totalRiskScore) ? stateMeta.totalRiskScore : 55;
-
   if (stateMeta.recent3dDelta >= 12) stateScore += 18;
   else if (stateMeta.recent3dDelta >= 6) stateScore += 10;
   else if (stateMeta.recent3dDelta >= 3) stateScore += 6;
   else if (stateMeta.recent3dDelta <= -12) stateScore -= 14;
   else if (stateMeta.recent3dDelta <= -6) stateScore -= 8;
   else if (stateMeta.recent3dDelta <= -3) stateScore -= 4;
-
   if (stateMeta.resonanceCount >= 5) stateScore += 18;
   else if (stateMeta.resonanceCount === 4) stateScore += 12;
   else if (stateMeta.resonanceCount === 3) stateScore += 8;
   else if (stateMeta.resonanceCount === 2) stateScore += 4;
-
   if (stateMeta.severeResonanceCount >= 3) stateScore += 10;
   else if (stateMeta.severeResonanceCount === 2) stateScore += 6;
-
   if (stateMeta.extremeThresholdCount >= 3) stateScore += 24;
   else if (stateMeta.extremeThresholdCount >= 1) stateScore += 14;
-
   if (stateMeta.highRiskStreakDays >= 7) stateScore += 12;
   else if (stateMeta.highRiskStreakDays >= 5) stateScore += 8;
   else if (stateMeta.highRiskStreakDays >= 3) stateScore += 5;
-
-  if (stateMeta.healthLevel === 'Baseline Only') stateScore += 6;
-  else if (stateMeta.healthLevel === 'Stale') stateScore += 8;
-  else if (stateMeta.healthLevel === 'Degraded') stateScore += 4;
-  else if (stateMeta.healthLevel === 'Healthy') stateScore -= 2;
-
+  if (stateMeta.healthLevel === '仅基线') stateScore += 6;
+  else if (stateMeta.healthLevel === '已过期') stateScore += 8;
+  else if (stateMeta.healthLevel === '降级') stateScore += 4;
+  else if (stateMeta.healthLevel === '健康') stateScore -= 2;
   if (executionLevel === 'red') stateScore += 4;
   else if (executionLevel === 'yellow') stateScore += 2;
   else if (executionLevel === 'green') stateScore -= 2;
-
   if (metadata.realtimeFallbackUsed) stateScore += 3;
-
   stateScore = clampNumber(Math.round(stateScore), 0, 100);
   const strategyState = deriveStrategyState(stateScore);
   const stateDrivers = [
@@ -362,7 +307,6 @@ export function calculateStrategyStateEngine(data, history, metadata, healthDash
       reason: `高风险连续天数：${stateMeta.highRiskStreakDays} 天；风险偏高连续天数：${stateMeta.elevatedRiskStreakDays} 天。`
     }
   ];
-
   const stateReason = [
     `策略状态判定为 ${strategyState}，状态分数 ${stateScore}。`,
     `总风险 ${stateMeta.totalRiskScore ?? '--'}，3日变化 ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta}，共振模块数 ${stateMeta.resonanceCount}。`,
@@ -370,15 +314,7 @@ export function calculateStrategyStateEngine(data, history, metadata, healthDash
       ? `极端阈值已触发：${stateMeta.extremeThresholds.join('、')}。`
       : '当前无极端阈值触发。'
   ].join(' ');
-
-  return {
-    strategyState,
-    stateLabel: getStrategyStateLabel(strategyState, stateScore),
-    stateScore,
-    stateReason,
-    stateDrivers,
-    stateMeta
-  };
+  return { strategyState, stateLabel: getStrategyStateLabel(strategyState, stateScore), stateScore, stateReason, stateDrivers, stateMeta };
 }
 
 export function deriveDecisionState(data, history, metadata, healthDashboard) {
@@ -405,7 +341,6 @@ export function buildDominantDrivers(data, metadata) {
       ...item,
       reason: `${item.label} 分数 ${item.score}，趋势${item.trend > 0 ? '上升' : item.trend < 0 ? '缓解' : '平稳'}。`
     }));
-
   if (metadata.realtimeFallbackUsed) {
     moduleEntries.push({
       key: 'realtime-fallback',
@@ -415,7 +350,6 @@ export function buildDominantDrivers(data, metadata) {
       reason: '实时数据回退/本地模式已启用，决策置信度受限。'
     });
   }
-
   return moduleEntries.slice(0, 4);
 }
 
@@ -428,7 +362,6 @@ export function buildPositionGuidanceEngine(data, metadata, decisionState, domin
     const driverLabels = Array.isArray(dominantDrivers)
       ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean)
       : [];
-
     const stateBandMap = {
       'Risk-On': {
         totalExposureBand: '65%-85%',
@@ -481,21 +414,17 @@ export function buildPositionGuidanceEngine(data, metadata, decisionState, domin
         hedgePosture: '保持最强防守姿态。'
       }
     };
-
     const guidance = { ...(stateBandMap[strategyState] || stateBandMap.Caution) };
     let bandShift = 0;
-
     if (stateScore >= 90) bandShift -= 10;
     else if (stateScore >= 80) bandShift -= 5;
     else if (stateScore <= 20) bandShift += 8;
     else if (stateScore <= 35) bandShift += 5;
-
     if ((stateMeta.extremeThresholdCount || 0) >= 2) bandShift -= 5;
     if ((stateMeta.highRiskStreakDays || 0) >= 5) bandShift -= 5;
     if ((stateMeta.recent3dDelta || 0) <= -10 && strategyState !== 'Crisis') bandShift += 5;
     if ((stateMeta.recent3dDelta || 0) >= 8) bandShift -= 5;
     if (metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly) bandShift -= 5;
-
     const parseBand = (band) => {
       const match = String(band).match(/(\d+)%-(\d+)%/);
       if (!match) return null;
@@ -515,9 +444,7 @@ export function buildPositionGuidanceEngine(data, metadata, decisionState, domin
       }
       return formatBand(next);
     };
-
     guidance.totalExposureBand = shiftBand(guidance.totalExposureBand, bandShift);
-
     if (bandShift <= -8) {
       guidance.riskAssetBias = strategyState === 'Crisis' ? '最低风险敞口' : '进一步压缩风险资产敞口';
       guidance.defensiveBias = strategyState === 'Risk-On' ? '中等' : '极高';
@@ -525,17 +452,12 @@ export function buildPositionGuidanceEngine(data, metadata, decisionState, domin
       guidance.riskAssetBias = strategyState === 'Risk-On' ? '在风险预算内积极配置' : '选择性配置，环境改善中';
       guidance.defensiveBias = strategyState === 'Defensive' ? '高但趋于稳定' : '中等';
     }
-
-    const existingRiskBudget = positioning.riskBudget || '--';
-    const existingExposureTarget = positioning.targetGrossExposure || '--';
-    const existingCashTarget = positioning.cashBufferTarget || '--';
-
     return {
       ...guidance,
       stance: `${strategyState} 仓位指引`,
-      riskBudget: existingRiskBudget,
-      targetGrossExposure: existingExposureTarget,
-      cashBufferTarget: existingCashTarget,
+      riskBudget: positioning.riskBudget || '--',
+      targetGrossExposure: positioning.targetGrossExposure || '--',
+      cashBufferTarget: positioning.cashBufferTarget || '--',
       adjustmentNotes: [
         `策略状态：${strategyState}（${decisionState?.stateLabel || '未标注'}）。`,
         `状态分数：${stateScore}。`,
@@ -561,79 +483,37 @@ export function buildActionQueueEngine(data, metadata, decisionState, positionGu
     const riskControl = data?.tradingSystem?.riskControl || {};
     const warningAlerts = Array.isArray(data?.warningSystem?.alerts) ? data.warningSystem.alerts : [];
     const triggerPanel = data?.triggerPanel || {};
-    const healthLevel = stateMeta.healthLevel || 'Unknown';
+    const healthLevel = stateMeta.healthLevel || '未知';
     const topDrivers = Array.isArray(dominantDrivers) ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean) : [];
     const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色');
     const yellowAlerts = warningAlerts.filter((alert) => alert?.level !== '红色');
-
     const priorityActions = [];
     const watchItems = [];
     const blockedActions = [];
-
     const byState = {
       'Risk-On': {
-        priority: [
-          '仅允许分批新增风险敞口。',
-          '将总敞口控制在当前目标区间内。',
-          '再平衡时不追短期波动。'
-        ],
-        blocked: [
-          '避免超出基础水平扩大杠杆。',
-          '未经确认前避免提高集中度。'
-        ]
+        priority: ['仅允许分批新增风险敞口。', '将总敞口控制在当前目标区间内。', '再平衡时不追短期波动。'],
+        blocked: ['避免超出基础水平扩大杠杆。', '未经确认前避免提高集中度。']
       },
       Balanced: {
-        priority: [
-          '保持敞口节奏的控制性与选择性。',
-          '向目标区间中值再平衡。',
-          '维持基础防守缓冲仓位。'
-        ],
-        blocked: [
-          '避免单次大幅调整敞口。',
-          '未经确认前避免扩大杠杆。'
-        ]
+        priority: ['保持敞口节奏的控制性与选择性。', '向目标区间中值再平衡。', '维持基础防守缓冲仓位。'],
+        blocked: ['避免单次大幅调整敞口。', '未经确认前避免扩大杠杆。']
       },
       Caution: {
-        priority: [
-          '逐步压缩整体风险敞口。',
-          '新增敞口须高度选择性且幅度小。',
-          '将现金缓冲提升至指引区间。'
-        ],
-        blocked: [
-          '暂停激进新增风险敞口。',
-          '避免扩大杠杆。',
-          '高风险环境下避免提高集中度。'
-        ]
+        priority: ['逐步压缩整体风险敞口。', '新增敞口须高度选择性且幅度小。', '将现金缓冲提升至指引区间。'],
+        blocked: ['暂停激进新增风险敞口。', '避免扩大杠杆。', '高风险环境下避免提高集中度。']
       },
       Defensive: {
-        priority: [
-          '逐步压缩整体风险敞口。',
-          '提高现金缓冲，将敞口控制在区间下沿。',
-          '仅允许防守型再平衡。'
-        ],
-        blocked: [
-          '暂停激进新增风险敞口。',
-          '避免扩大杠杆。',
-          '高风险环境下避免提高集中度。'
-        ]
+        priority: ['逐步压缩整体风险敞口。', '提高现金缓冲，将敞口控制在区间下沿。', '仅允许防守型再平衡。'],
+        blocked: ['暂停激进新增风险敞口。', '避免扩大杠杆。', '高风险环境下避免提高集中度。']
       },
       Crisis: {
-        priority: [
-          '资本保全与流动性恢复优先。',
-          '将整体风险敞口压缩至最低水平。',
-          '仅保留防守型再平衡与对冲维护。'
-        ],
-        blocked: [
-          '暂停新增高风险敞口。',
-          '避免使用或扩大杠杆。',
-          '危机环境下避免提高集中度。'
-        ]
+        priority: ['资本保全与流动性恢复优先。', '将整体风险敞口压缩至最低水平。', '仅保留防守型再平衡与对冲维护。'],
+        blocked: ['暂停新增高风险敞口。', '避免使用或扩大杠杆。', '危机环境下避免提高集中度。']
       }
     };
-
     priorityActions.push(...(byState[strategyState]?.priority || byState.Caution.priority));
     blockedActions.push(...(byState[strategyState]?.blocked || byState.Caution.blocked));
-
     if ((stateMeta.extremeThresholdCount || 0) >= 2) {
       priorityActions.push('极端阈值未解除前，收紧执行节奏。');
       blockedActions.push('极端阈值有效期间，避免主观扩大风险。');
@@ -647,39 +527,24 @@ export function buildActionQueueEngine(data, metadata, decisionState, positionGu
     if ((stateMeta.highRiskStreakDays || 0) >= 5) {
       priorityActions.push('高风险连续态势解除前，维持防守缓冲。');
     }
-    if (metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly || healthLevel === 'Baseline Only' || healthLevel === 'Stale') {
+    if (metadata.realtimeFallbackUsed || metadata.realtimeCacheOnly || healthLevel === '仅基线' || healthLevel === '已过期') {
       watchItems.push('数据质量与新鲜度恢复前，不放松管控。');
       blockedActions.push('避免仅凭降级或回退数据扩大风险。');
     }
-    if ((positionGuidance?.newExposurePolicy || '').toLowerCase().includes('pause') || strategyState === 'Crisis') {
+    if ((positionGuidance?.newExposurePolicy || '').includes('暂停') || strategyState === 'Crisis') {
       blockedActions.push('暂停大范围新增风险敞口。');
     }
-    if ((positionGuidance?.leveragePolicy || '').toLowerCase().includes('no leverage')) {
+    if ((positionGuidance?.leveragePolicy || '').includes('零杠杆') || (positionGuidance?.leveragePolicy || '').includes('不新增')) {
       blockedActions.push('避免扩大杠杆。');
     }
-
-    topDrivers.forEach((driver) => {
-      watchItems.push(`监控 ${driver} 压力的升级或缓解情况。`);
-    });
-
-    criticalAlerts.slice(0, 2).forEach((alert) => {
-      priorityActions.push(`立即响应 ${alert.title || '关键预警'}。`);
-    });
-    yellowAlerts.slice(0, 2).forEach((alert) => {
-      watchItems.push(`关注 ${alert.title || '预警信号'} 是否恶化。`);
-    });
-
-    (Array.isArray(triggerPanel.watchlist) ? triggerPanel.watchlist : []).slice(0, 3).forEach((item) => {
-      watchItems.push(`持续关注 ${item}。`);
-    });
-    (Array.isArray(triggerPanel.critical) ? triggerPanel.critical : []).slice(0, 2).forEach((item) => {
-      watchItems.push(`追踪关键触发器 ${item}。`);
-    });
-
+    topDrivers.forEach((driver) => { watchItems.push(`监控 ${driver} 压力的升级或缓解情况。`); });
+    criticalAlerts.slice(0, 2).forEach((alert) => { priorityActions.push(`立即响应 ${alert.title || '关键预警'}。`); });
+    yellowAlerts.slice(0, 2).forEach((alert) => { watchItems.push(`关注 ${alert.title || '预警信号'} 是否恶化。`); });
+    (Array.isArray(triggerPanel.watchlist) ? triggerPanel.watchlist : []).slice(0, 3).forEach((item) => { watchItems.push(`持续关注 ${item}。`); });
+    (Array.isArray(triggerPanel.critical) ? triggerPanel.critical : []).slice(0, 2).forEach((item) => { watchItems.push(`追踪关键触发器 ${item}。`); });
     if (Array.isArray(riskControl.hardThresholds) && riskControl.hardThresholds.length) {
       watchItems.push('监控硬阈值是否触发升级。');
     }
-
     const queue = {
       priorityActions: uniqTexts(priorityActions).slice(0, 6),
       watchItems: uniqTexts(watchItems).slice(0, 6),
@@ -710,12 +575,8 @@ export function buildTriggerMonitorEngine(data, metadata, decisionState, positio
     const stateMeta = decisionState?.stateMeta || {};
     const warningAlerts = Array.isArray(data?.warningSystem?.alerts) ? data.warningSystem.alerts : [];
     const triggerPanel = data?.triggerPanel || {};
-    const moduleEntries = Object.entries(data?.modules || {})
-      .map(([key, value]) => ({ key, value: Number(value) }))
-      .filter((item) => Number.isFinite(item.value));
     const dominantLabels = Array.isArray(dominantDrivers) ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean) : [];
     const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色').length;
-
     const upgradeTriggers = uniqTexts([
       '若状态分数从当前区间上升 8 点或以上，应升级。',
       '若3日变化转正并超过 +6，应升级。',
@@ -726,7 +587,6 @@ export function buildTriggerMonitorEngine(data, metadata, decisionState, positio
       metadata.realtimeCacheOnly ? '若缓存模式持续到下一周期，应升级。' : '',
       metadata.realtimeFreshnessLevel === 'stale' || metadata.realtimeUnavailable ? '若过期/仅基线数据持续无法恢复，应升级。' : ''
     ]).slice(0, 7);
-
     const activeEscalationSignals = uniqTexts([
       stateScore >= 85 ? `状态分数 ${stateScore} 已接近危机升级区间。` : '',
       (stateMeta.recent3dDelta || 0) >= 6 ? `3日恶化信号已激活，变化 +${stateMeta.recent3dDelta}。` : '',
@@ -739,11 +599,9 @@ export function buildTriggerMonitorEngine(data, metadata, decisionState, positio
       dominantLabels.length ? `主导压力驱动因子：${dominantLabels.join('、')}。` : '',
       Array.isArray(triggerPanel.critical) && triggerPanel.critical.length ? `关键触发器面板已激活：${triggerPanel.critical.slice(0, 2).join('、')}。` : ''
     ]).slice(0, 6);
-
-    let escalationLevel = 'medium';
-    if (stateScore >= 85 || (stateMeta.extremeThresholdCount || 0) >= 3 || criticalAlerts >= 2) escalationLevel = 'severe';
-    else if (stateScore >= 68 || (stateMeta.extremeThresholdCount || 0) >= 1 || criticalAlerts >= 1) escalationLevel = 'high';
-
+    let escalationLevel = '中';
+    if (stateScore >= 85 || (stateMeta.extremeThresholdCount || 0) >= 3 || criticalAlerts >= 2) escalationLevel = '严重';
+    else if (stateScore >= 68 || (stateMeta.extremeThresholdCount || 0) >= 1 || criticalAlerts >= 1) escalationLevel = '高';
     return {
       upgradeTriggers,
       activeEscalationSignals,
@@ -763,8 +621,6 @@ export function buildInvalidationRulesEngine(data, metadata, decisionState, posi
     const stateScore = Number.isFinite(decisionState?.stateScore) ? decisionState.stateScore : 55;
     const stateMeta = decisionState?.stateMeta || {};
     const riskControl = data?.tradingSystem?.riskControl || {};
-    const dominantLabels = Array.isArray(dominantDrivers) ? dominantDrivers.slice(0, 2).map((item) => item.label).filter(Boolean) : [];
-
     const invalidationSignals = uniqTexts([
       '若总风险分数再上升 8 点，当前防守判断应视为失效。',
       '若3日趋势停止缓解并重新超过 +3，当前判断应视为失效。',
@@ -773,7 +629,6 @@ export function buildInvalidationRulesEngine(data, metadata, decisionState, posi
       metadata.realtimeCacheOnly ? '若缓存模式持续且压力信号仍高，当前判断应视为失效。' : '',
       metadata.realtimeUnavailable ? '若仅基线模式持续且预警恶化，当前判断应视为失效。' : ''
     ]).slice(0, 6);
-
     const resetConditions = uniqTexts([
       '总风险分数下降并保持较低水平后，方可降级。',
       '3日趋势转平或转负后，方可降级。',
@@ -782,14 +637,12 @@ export function buildInvalidationRulesEngine(data, metadata, decisionState, posi
       '红色预警消除且数据新鲜度恢复正常后，方可降级。',
       ...(Array.isArray(riskControl.resetThresholds) ? riskControl.resetThresholds.slice(0, 3).map((rule) => `复位参考：${rule}`) : [])
     ]).slice(0, 6);
-
     let deescalationBias = '中等';
     if ((stateMeta.recent3dDelta || 0) <= -8 && (stateMeta.resonanceCount || 0) <= 2 && (stateMeta.criticalAlertCount || 0) === 0) {
       deescalationBias = '改善中';
     } else if (metadata.realtimeUnavailable || metadata.realtimeCacheOnly || (stateMeta.extremeThresholdCount || 0) > 0) {
       deescalationBias = '低';
     }
-
     return {
       invalidationSignals,
       resetConditions,
@@ -809,27 +662,14 @@ export function buildDecisionModel(data, history, metadata, healthDashboard) {
     const dominantDrivers = buildDominantDrivers(data, metadata);
     const position = data?.tradingSystem?.positioning || {};
     const actionLayer = data?.tradingSystem?.actionLayer || {};
-    const riskControl = data?.tradingSystem?.riskControl || {};
     const executionLock = data?.tradingSystem?.executionLock || {};
-    const warningAlerts = Array.isArray(data?.warningSystem?.alerts) ? data.warningSystem.alerts : [];
-    const criticalAlerts = warningAlerts.filter((alert) => alert?.level === '红色').slice(0, 3);
-    const watchlist = Array.isArray(data?.triggerPanel?.watchlist) ? data.triggerPanel.watchlist.slice(0, 3) : [];
-    const driverLabels = dominantDrivers.map((item) => item.label).join(', ') || 'baseline drivers';
+    const driverLabels = dominantDrivers.map((item) => item.label).join('、') || '基线驱动因子';
     const positionGuidance = buildPositionGuidanceEngine(data, metadata, state, dominantDrivers);
     const actionQueue = buildActionQueueEngine(data, metadata, state, positionGuidance, dominantDrivers);
     const triggerMonitor = buildTriggerMonitorEngine(data, metadata, state, positionGuidance, actionQueue, dominantDrivers);
     const invalidationRules = buildInvalidationRulesEngine(data, metadata, state, positionGuidance, actionQueue, dominantDrivers);
-
     return {
       contractVersion: 'v26.0A-final',
-      // v26.0A canonical decision fields.
-      // These are the primary contract paths to extend in future work:
-      // - strategyState / stateLabel / stateReason / stateScore
-      // - stateDrivers / dominantDrivers / stateMeta
-      // - positionGuidance.totalExposureBand / riskAssetBias / defensiveBias / cashGuidance / newExposurePolicy
-      // - actionQueue.priorityActions / watchItems / blockedActions
-      // - triggerMonitor.upgradeTriggers / activeEscalationSignals
-      // - invalidationRules.invalidationSignals / resetConditions
       strategyState: state.strategyState,
       stateLabel: state.stateLabel,
       stateReason: state.stateReason || `${executionLock.title || '当前交易系统状态'}；健康状态 ${healthDashboard.overallLevel}；主导驱动因子：${driverLabels}。`,
@@ -837,9 +677,6 @@ export function buildDecisionModel(data, history, metadata, healthDashboard) {
       stateDrivers: state.stateDrivers || [],
       stateMeta: state.stateMeta || {},
       dominantDrivers: dominantDrivers.length ? dominantDrivers : createDecisionFallback(data, metadata).dominantDrivers,
-      // Canonical position guidance fields are generated by the v26 engine above.
-      // Legacy compatibility fields are retained below because older page sections
-      // still read budget / target / note style properties directly.
       positionGuidance: {
         ...positionGuidance,
         riskBudget: positionGuidance.riskBudget || position.riskBudget || clampPercent(data?.score),
@@ -851,9 +688,6 @@ export function buildDecisionModel(data, history, metadata, healthDashboard) {
           `实时状态：${metadata.realtimeStatusLabel || '未知'}。`
         ].filter(Boolean)
       },
-      // Canonical queue fields are priorityActions / watchItems / blockedActions.
-      // Legacy compatibility fields such as `items` and `notes` are intentionally
-      // preserved for transitional renderers and debugging.
       actionQueue: {
         ...actionQueue,
         notes: [
