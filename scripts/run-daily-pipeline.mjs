@@ -11,6 +11,7 @@ const R = RULES;
 const dataDir = path.join(root, 'data');
 const dataPath = path.join(dataDir, 'radar-data.json');
 const histPath = path.join(dataDir, 'radar-history.json');
+const histFullPath = path.join(dataDir, 'radar-history-full.json');
 const rtPath = path.join(root, 'realtime', 'market.json');
 
 const clamp = (n, min = 0, max = 100) => Math.max(min, Math.min(max, Math.round(n)));
@@ -23,6 +24,7 @@ function readJson(file, fallback = null) {
 
 const prevData = readJson(dataPath, {});
 const prevHistory = readJson(histPath, []);
+const prevHistoryFull = readJson(histFullPath, []);
 const realtime = readJson(rtPath, null);
 
 function buildFallback() {
@@ -37,7 +39,7 @@ function buildFallback() {
     lastRun: isoNow,
     notes: ['Build Daily Radar Data 未拿到可用 realtime 快照，已回退到上次有效结果。']
   };
-  return { data: next, history: prevHistory };
+  return { data: next, history: prevHistory, historyFull: prevHistoryFull };
 }
 
 function deriveRisk(rt) {
@@ -186,6 +188,30 @@ function appendHistory(prevHistory, score) {
     history.push({ date: today, score });
   }
   return history.slice(-R.historyWindow.maxDays);
+}
+
+function appendHistoryFull(prevFull, risk, lock, macro, realtime) {
+  const today = isoNow.slice(0, 10);
+  const full = Array.isArray(prevFull) ? [...prevFull] : [];
+  const entry = {
+    date: today,
+    score: risk.score,
+    lock: lock.level,
+    modules: { ...risk.modules },
+    macro,
+    brent: risk.brent,
+    vix: risk.vix,
+    dxy: risk.dxy,
+    hyOas: risk.hy,
+    us10y: risk.us10y,
+    real10y: risk.real10y
+  };
+  if (full.length && full[full.length - 1].date === today) {
+    full[full.length - 1] = entry;
+  } else {
+    full.push(entry);
+  }
+  return full;
 }
 
 function build() {
@@ -469,11 +495,13 @@ function build() {
     }
   };
 
-  return { data, history };
+  const historyFull = appendHistoryFull(prevHistoryFull, risk, lock, macro, realtime);
+  return { data, history, historyFull };
 }
 
 const built = build();
 fs.mkdirSync(dataDir, { recursive: true });
 fs.writeFileSync(dataPath, JSON.stringify(built.data, null, 2));
 fs.writeFileSync(histPath, JSON.stringify(built.history, null, 2));
+fs.writeFileSync(histFullPath, JSON.stringify(built.historyFull, null, 2));
 console.log('Built v26.0A-rc1 radar data successfully.');

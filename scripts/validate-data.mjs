@@ -9,10 +9,17 @@ const root = path.resolve(__dirname, '..');
 const dataPath = path.join(root, 'data', 'radar-data.json');
 const historyPath = path.join(root, 'data', 'radar-history.json');
 const realtimePath = path.join(root, 'realtime', 'market.json');
+const historyFullPath = path.join(root, 'data', 'radar-history-full.json');
 
 if (!fs.existsSync(dataPath)) throw new Error('Validation failed: missing data/radar-data.json');
 if (!fs.existsSync(historyPath)) throw new Error('Validation failed: missing data/radar-history.json');
 if (!fs.existsSync(realtimePath)) throw new Error('Validation failed: missing realtime/market.json');
+if (fs.existsSync(historyFullPath)) {
+  const histFull = JSON.parse(fs.readFileSync(historyFullPath, 'utf8'));
+  if (!Array.isArray(histFull) || histFull.length === 0) throw new Error('Validation failed: radar-history-full.json is empty or malformed.');
+  const latest = histFull[histFull.length - 1];
+  if (!latest.date || !latest.score || !latest.modules) throw new Error('Validation failed: radar-history-full.json latest entry is missing required fields.');
+}
 
 const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
 const history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
