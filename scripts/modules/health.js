@@ -28,7 +28,7 @@ export function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
         okCount: Math.max(0, statusEntries.length - failedCount),
         failedCount,
         fallbackCount,
-        summaryLabel: `${Math.max(0, statusEntries.length - failedCount)} healthy / ${fallbackCount} fallback / ${failedCount} failed`,
+        summaryLabel: `${Math.max(0, statusEntries.length - failedCount)} 正常 / ${fallbackCount} 回退 / ${failedCount} 失败`,
         issueLines: statusEntries.slice(0, 4).map(([key, status]) => `${key}: ${status}`)
       };
     }
@@ -38,8 +38,8 @@ export function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
       okCount: 0,
       failedCount: 0,
       fallbackCount: 0,
-      summaryLabel: 'No source detail available',
-      issueLines: ['Source detail unavailable.']
+      summaryLabel: '无数据源详情',
+      issueLines: ['数据源详情不可用。']
     };
   }
 
@@ -52,18 +52,18 @@ export function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
     .filter(([, detail]) => detail?.ok === false)
     .slice(0, 4)
     .forEach(([key, detail]) => {
-      issueLines.push(`${key}: failed${detail?.error ? ` (${detail.error})` : ''}`);
+      issueLines.push(`${key}: 失败${detail?.error ? `（${detail.error}）` : ''}`);
     });
 
   entries
     .filter(([, detail]) => detail?.ok && detail?.fallbackUsed)
     .slice(0, Math.max(0, 4 - issueLines.length))
     .forEach(([key, detail]) => {
-      issueLines.push(`${key}: fallback active via ${detail?.source || 'secondary source'}`);
+      issueLines.push(`${key}: 回退已激活，来源 ${detail?.source || '备用数据源'}`);
     });
 
   if (!issueLines.length) {
-    issueLines.push('All tracked realtime sources are currently healthy.');
+    issueLines.push('当前所有实时数据源均正常。');
   }
 
   return {
@@ -71,7 +71,7 @@ export function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
     okCount,
     failedCount,
     fallbackCount,
-    summaryLabel: `${okCount} healthy / ${fallbackCount} fallback / ${failedCount} failed`,
+    summaryLabel: `${okCount} 正常 / ${fallbackCount} 回退 / ${failedCount} 失败`,
     issueLines
   };
 }
@@ -86,32 +86,32 @@ export function buildHealthDashboardModel(runtimeState) {
   const issues = [];
 
   if (metadata.realtimeUnavailable) {
-    issues.push('Realtime unavailable; rendering baseline only');
+    issues.push('实时数据不可用，当前仅渲染基线数据');
   } else if (metadata.realtimeFreshnessLevel === 'stale') {
-    issues.push(`Realtime is stale (${metadata.realtimeAgeMinutes ?? '--'} min old)`);
+    issues.push(`实时数据已过期（${metadata.realtimeAgeMinutes ?? '--'} 分钟前）`);
   } else if (metadata.realtimeFreshnessLevel === 'aging') {
-    issues.push(`Realtime is aging (${metadata.realtimeAgeMinutes ?? '--'} min old)`);
+    issues.push(`实时数据正在老化（${metadata.realtimeAgeMinutes ?? '--'} 分钟前）`);
   }
 
   if (metadata.realtimeFallbackUsed) {
-    flags.push('local fallback');
-    issues.push('Local fallback is active');
+    flags.push('本地回退');
+    issues.push('本地回退已激活');
   }
   if (metadata.realtimeCacheOnly) {
-    flags.push('cache-only');
-    issues.push('Cache-only mode active');
+    flags.push('缓存模式');
+    issues.push('缓存模式已激活');
   }
   if (metadata.realtimeDegraded) {
-    flags.push('degraded');
+    flags.push('降级');
   }
   if (criticalMissing > 0) {
-    issues.push(`${criticalMissing} critical source${criticalMissing > 1 ? 's' : ''} missing`);
+    issues.push(`${criticalMissing} 个关键数据源缺失`);
   }
   if (sourceSummary.failedCount > 0) {
-    issues.push(`${sourceSummary.failedCount} source${sourceSummary.failedCount > 1 ? 's' : ''} currently failing`);
+    issues.push(`${sourceSummary.failedCount} 个数据源当前失败`);
   }
   if (!flags.length) {
-    flags.push('normal');
+    flags.push('正常');
   }
 
   let overallLevel = 'Healthy';
@@ -135,14 +135,14 @@ export function buildHealthDashboardModel(runtimeState) {
   }
 
   const summary = overallLevel === 'Baseline Only'
-    ? 'Baseline only due to unavailable realtime.'
+    ? '实时数据不可用，当前仅使用基线数据。'
     : overallLevel === 'Stale'
-      ? 'Realtime is available but stale; use with caution.'
+      ? '实时数据可用但已过期，请谨慎使用。'
       : overallLevel === 'Degraded'
-        ? 'Realtime is available with visible degradation.'
+        ? '实时数据可用，但存在明显降级。'
         : overallLevel === 'Watch'
-          ? 'Realtime is aging or showing mild health drift.'
-          : 'Realtime healthy and actively overlaying baseline.';
+          ? '实时数据正在老化或出现轻微健康漂移。'
+          : '实时数据健康，正在覆盖基线数据。';
 
   const healthTone = normalizeHealthLevel(overallLevel);
 
@@ -157,7 +157,7 @@ export function buildHealthDashboardModel(runtimeState) {
     flagsLabel: flags.join(' / '),
     criticalMissing,
     sourceSummaryLabel: sourceSummary.summaryLabel,
-    issues: issues.length ? issues : ['Realtime healthy.'],
+    issues: issues.length ? issues : ['实时数据状态健康。'],
     sourceLines: sourceSummary.issueLines
   };
 }
