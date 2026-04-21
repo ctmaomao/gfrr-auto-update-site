@@ -206,7 +206,7 @@ export function applyRealtimeOverlay(base, realtimePayload) {
   next.liquidityIndex.notes = [
     `实时快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元 ${fmtNumSafe(dxy,2)} / VIX ${fmtNumSafe(vix,2)} / HY OAS ${fmtNumSafe(hy,2)}。`,
     `10Y ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`,
-    `数据模式：${realtimePayload.sourceMode || 'unknown'} / 健康分数：${realtimePayload.healthScore ?? '--'} / 关键缺失：${realtimePayload.criticalMissing ?? 0}。`,
+    `数据模式：${realtimePayload.sourceMode || '未知'} / 健康分数：${realtimePayload.healthScore ?? '--'} / 关键缺失：${realtimePayload.criticalMissing ?? 0}。`,
     ...(realtimePayload.notes || [])
   ];
 
