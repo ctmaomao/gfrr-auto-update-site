@@ -117,7 +117,14 @@ export function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
 
 export function renderDecisionHeader(model) {
   const badge = $('decision-header-state-badge');
-  badge.textContent = model.stateBadge;
+  const strategyStateMap = {
+    'Risk-On': '风险开启',
+    'Balanced': '均衡',
+    'Caution': '谨慎',
+    'Defensive': '防守',
+    'Crisis': '危机'
+  };
+  badge.textContent = strategyStateMap[model.stateBadge] || model.stateBadge;
   badge.className = `badge ${getDecisionHeaderBadgeClass(model.stateBadge)}`;
 
   $('decision-header-escalation').textContent = model.escalationLabel;

@@ -3,13 +3,13 @@ import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
-    case 'Healthy':
+    case '健康':
       return { badgeClass: 'health-level-healthy', badgeTone: 'strong' };
-    case 'Watch':
+    case '观察中':
       return { badgeClass: 'health-level-watch', badgeTone: 'cautious' };
-    case 'Degraded':
+    case '降级':
       return { badgeClass: 'health-level-degraded', badgeTone: 'neutral' };
-    case 'Stale':
+    case '已过期':
       return { badgeClass: 'health-level-stale', badgeTone: 'neutral' };
     default:
       return { badgeClass: 'health-level-baseline', badgeTone: 'underweight' };
@@ -114,11 +114,11 @@ export function buildHealthDashboardModel(runtimeState) {
     flags.push('正常');
   }
 
-  let overallLevel = 'Healthy';
+  let overallLevel = '健康';
   if (metadata.realtimeUnavailable) {
-    overallLevel = 'Baseline Only';
+    overallLevel = '仅基线';
   } else if (metadata.realtimeFreshnessLevel === 'stale') {
-    overallLevel = 'Stale';
+    overallLevel = '已过期';
   } else if (
     metadata.realtimeDegraded
     || metadata.realtimeFallbackUsed
@@ -126,21 +126,21 @@ export function buildHealthDashboardModel(runtimeState) {
     || criticalMissing > 0
     || sourceSummary.failedCount > 0
   ) {
-    overallLevel = 'Degraded';
+    overallLevel = '降级';
   } else if (
     metadata.realtimeFreshnessLevel === 'aging'
     || (healthScore !== null && healthScore < 95)
   ) {
-    overallLevel = 'Watch';
+    overallLevel = '观察中';
   }
 
-  const summary = overallLevel === 'Baseline Only'
+  const summary = overallLevel === '仅基线'
     ? '实时数据不可用，当前仅使用基线数据。'
-    : overallLevel === 'Stale'
+    : overallLevel === '已过期'
       ? '实时数据可用但已过期，请谨慎使用。'
-      : overallLevel === 'Degraded'
+      : overallLevel === '降级'
         ? '实时数据可用，但存在明显降级。'
-        : overallLevel === 'Watch'
+        : overallLevel === '观察中'
           ? '实时数据正在老化或出现轻微健康漂移。'
           : '实时数据健康，正在覆盖基线数据。';
 
@@ -152,8 +152,8 @@ export function buildHealthDashboardModel(runtimeState) {
     summary,
     healthScore,
     freshness: metadata.realtimeFreshnessLevel || 'unavailable',
-    ageLabel: Number.isFinite(metadata.realtimeAgeMinutes) ? `${metadata.realtimeAgeMinutes} min` : '--',
-    realtimeSource: metadata.realtimeSource || 'none',
+    ageLabel: Number.isFinite(metadata.realtimeAgeMinutes) ? `${metadata.realtimeAgeMinutes} 分钟` : '--',
+    realtimeSource: metadata.realtimeSource || '无',
     flagsLabel: flags.join(' / '),
     criticalMissing,
     sourceSummaryLabel: sourceSummary.summaryLabel,
