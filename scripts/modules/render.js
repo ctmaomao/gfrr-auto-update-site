@@ -32,7 +32,6 @@ export function renderHealthDashboard(model) {
   const badge = $('health-level-badge');
   badge.textContent = model.overallLevel;
   badge.className = `badge ${model.healthTone.badgeTone} ${model.healthTone.badgeClass}`;
-
   $('health-overall-level').textContent = model.overallLevel;
   $('health-score').textContent = model.healthScore ?? '--';
   $('health-freshness').textContent = model.freshness;
@@ -48,18 +47,12 @@ export function renderHealthDashboard(model) {
 
 export function getDecisionHeaderBadgeClass(strategyState) {
   switch (strategyState) {
-    case 'Risk-On':
-      return 'decision-badge-risk-on';
-    case 'Balanced':
-      return 'decision-badge-balanced';
-    case 'Caution':
-      return 'decision-badge-caution';
-    case 'Defensive':
-      return 'decision-badge-defensive';
-    case 'Crisis':
-      return 'decision-badge-crisis';
-    default:
-      return 'neutral';
+    case 'Risk-On': return 'decision-badge-risk-on';
+    case 'Balanced': return 'decision-badge-balanced';
+    case 'Caution': return 'decision-badge-caution';
+    case 'Defensive': return 'decision-badge-defensive';
+    case 'Crisis': return 'decision-badge-crisis';
+    default: return 'neutral';
   }
 }
 
@@ -67,7 +60,6 @@ export function describeStateChange(stateMeta = {}) {
   const delta = Number(stateMeta.recent3dDelta);
   const extremeCount = Number(stateMeta.extremeThresholdCount) || 0;
   const highRiskStreakDays = Number(stateMeta.highRiskStreakDays) || 0;
-
   if (delta >= 8) return '近3日持续上升';
   if (delta >= 3) return '近3日趋于走强';
   if (delta <= -8) return extremeCount > 0 || highRiskStreakDays >= 3 ? '高位但趋于缓解' : '近3日持续缓解';
@@ -77,9 +69,6 @@ export function describeStateChange(stateMeta = {}) {
 }
 
 export function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
-  // Decision Header is intentionally decision-model-first. It should consume the
-  // v26 canonical fields above and only fall back to legacy display fields when
-  // a canonical value is missing during safe rendering.
   const strategyState = decisionModel.strategyState || 'Caution';
   const stateLabel = decisionModel.stateLabel || strategyState;
   const stateScore = Number.isFinite(decisionModel.stateScore)
@@ -97,14 +86,23 @@ export function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
       ? decisionModel.stateDrivers.slice(0, 3).map((item) => item.label || item.key).filter(Boolean)
       : ['主导风险驱动因子不可用'];
 
+  const strategyStateMap = {
+    'Risk-On': '风险开启',
+    'Balanced': '均衡',
+    'Caution': '谨慎',
+    'Defensive': '防守',
+    'Crisis': '危机'
+  };
+
   return {
     stateBadge: strategyState,
+    stateBadgeLabel: strategyStateMap[strategyState] || strategyState,
     stateLabel,
     scoreLabel: stateScore,
     exposureBand,
     coreAction,
     stateChange: describeStateChange(decisionModel.stateMeta || {}),
-    title: `${strategyState} 决策概览`,
+    title: `${strategyStateMap[strategyState] || strategyState} 决策概览`,
     reason: decisionModel.stateReason || data?.decisionLine || '当前宏观环境正由 v26 决策模型汇总中。',
     escalationLabel: decisionModel?.triggerMonitor?.escalationLevel
       ? `升级风险：${decisionModel.triggerMonitor.escalationLevel}`
@@ -148,7 +146,6 @@ export function renderDecisionHeader(model) {
   });
 }
 
-
 export function renderBars(containerId, items, isTrend = false) {
   const root = $(containerId);
   root.innerHTML = '';
@@ -166,7 +163,6 @@ export function renderBars(containerId, items, isTrend = false) {
   });
 }
 
-
 export function renderExecutionLock(lock) {
   $('execution-lock-tag').textContent = lock.tag;
   $('execution-status-level').textContent = lock.levelLabel;
@@ -177,12 +173,6 @@ export function renderExecutionLock(lock) {
   if (lock.level === 'green') pill.classList.add('green');
   else if (lock.level === 'yellow') pill.classList.add('yellow');
   else pill.classList.add('red');
-  const allow = $('execution-allow');
-  const block = $('execution-block');
-  const mandatory = $('execution-mandatory');
-  allow.className = 'bullet-list lock-allow';
-  block.className = 'bullet-list lock-block';
-  mandatory.className = 'bullet-list lock-mandatory';
   renderList('execution-allow', lock.allow || []);
   renderList('execution-block', lock.block || []);
   renderList('execution-mandatory', lock.mandatory || []);
@@ -287,19 +277,16 @@ export function renderLineChart(svgId, history, opts = {}) {
   const y = (v) => height - pad.bottom - ((v - min) / (max - min || 1)) * (height - pad.top - pad.bottom);
   const line = history.map((d, i) => `${i === 0 ? 'M' : 'L'} ${x(i)} ${y(d.score)}`).join(' ');
   const area = `${line} L ${x(history.length - 1)} ${height - pad.bottom} L ${x(0)} ${height - pad.bottom} Z`;
-
   const gridValues = [min, Math.round((min + max) / 2), max];
   const grid = gridValues.map((g) => `
     <line class="gridline" x1="${pad.left}" y1="${y(g)}" x2="${width - pad.right}" y2="${y(g)}"></line>
     <text x="${pad.left - 10}" y="${y(g) + 4}" text-anchor="end">${g}</text>
   `).join('');
-
   const labelEvery = history.length > 10 ? 3 : 1;
   const labels = dates.map((d, i) => i % labelEvery === 0 || i === history.length - 1
     ? `<text x="${x(i)}" y="${height - 12}" text-anchor="middle">${d}</text>`
     : '').join('');
   const points = history.map((d, i) => `<circle class="point" cx="${x(i)}" cy="${y(d.score)}" r="${history.length > 10 ? 3.5 : 5}"></circle>`).join('');
-
   svg.innerHTML = `
     <defs>
       <linearGradient id="${svgId}-gradient" x1="0" y1="0" x2="0" y2="1">
@@ -327,7 +314,6 @@ export function renderHeatmap(regions) {
   const svg = $('world-heatmap');
   const list = $('heatmap-list');
   list.innerHTML = '';
-
   const layout = {
     us: { x: 34, y: 108, w: 182, h: 90 },
     latam: { x: 118, y: 228, w: 118, h: 104 },
@@ -337,15 +323,11 @@ export function renderHeatmap(regions) {
     japan: { x: 672, y: 206, w: 86, h: 70 },
     emAsia: { x: 548, y: 232, w: 126, h: 84 }
   };
-  const heatmapKeyAliases = {
-    middleeast: 'middleEast'
-  };
-
+  const heatmapKeyAliases = { middleeast: 'middleEast' };
   svg.innerHTML = `
     <rect x="12" y="20" width="756" height="330" rx="24" fill="rgba(8, 20, 39, 0.65)" stroke="rgba(133,164,229,0.14)"></rect>
     <text class="heat-label" x="44" y="48">区域风险集中度</text>
   `;
-
   regions.forEach((region) => {
     const normalizedKey = heatmapKeyAliases[region.key] || region.key;
     const spec = layout[normalizedKey];
@@ -358,7 +340,6 @@ export function renderHeatmap(regions) {
       <text class="heat-score" x="${spec.x + 12}" y="${spec.y + 58}">风险 ${region.risk}</text>
     `;
     svg.appendChild(g);
-
     const item = document.createElement('div');
     item.className = 'heatmap-item';
     item.innerHTML = `
@@ -376,7 +357,6 @@ export function renderTransmission(chain) {
   $('chain-lead-shock').textContent = chain.leadShock;
   $('chain-confidence').textContent = `${chain.pathConfidence}%`;
   $('chain-dominant-impact').textContent = chain.dominantImpact;
-
   const flow = $('chain-flow');
   flow.innerHTML = '';
   chain.nodes.forEach((node) => {
@@ -399,7 +379,6 @@ export function renderTransmission(chain) {
     `;
     flow.appendChild(card);
   });
-
   const layers = $('chain-layers');
   layers.innerHTML = '';
   chain.layers.forEach((layer) => {
@@ -411,7 +390,6 @@ export function renderTransmission(chain) {
     `;
     layers.appendChild(div);
   });
-
   const decomp = $('chain-decomposition');
   decomp.innerHTML = '';
   chain.decomposition.forEach((asset) => {
@@ -430,9 +408,7 @@ export function renderTransmission(chain) {
     });
     decomp.appendChild(card);
   });
-
   renderList('chain-summary', chain.summary);
-
   const impacts = $('chain-asset-impacts');
   impacts.innerHTML = '';
   chain.assetImpacts.forEach((item) => {
@@ -447,7 +423,6 @@ export function renderTransmission(chain) {
   });
 }
 
-
 export function renderSignalEngine(signal) {
   $('signal-strength').textContent = signal.strength;
   $('signal-direction').textContent = signal.direction;
@@ -461,12 +436,6 @@ export function renderActionLayer(action) {
   $('action-tag').textContent = action.tag;
   $('today-action').textContent = action.todayAction;
   $('action-priority').textContent = action.priorityLine || '执行优先级：先减风险，再做微调，最后观察确认。';
-  const allow = $('action-allow');
-  const avoid = $('action-avoid');
-  const watch = $('action-watch');
-  allow.className = 'bullet-list action-checklist';
-  avoid.className = 'bullet-list action-blocklist';
-  watch.className = 'bullet-list threshold-list';
   renderList('action-allow', action.checklist || []);
   renderList('action-avoid', action.blocked || []);
   renderList('action-watch', action.checkpoints || []);
@@ -496,10 +465,6 @@ export function renderRiskControl(risk) {
   $('risk-max-drawdown').textContent = risk.maxDrawdown;
   $('risk-single-asset-max').textContent = risk.singleAssetMax;
   $('risk-system-state').textContent = risk.systemState;
-  const deRisk = $('risk-de-risk-triggers');
-  const stopRules = $('risk-stop-rules');
-  deRisk.className = 'bullet-list threshold-list';
-  stopRules.className = 'bullet-list threshold-list';
   renderList('risk-de-risk-triggers', risk.hardThresholds || []);
   renderList('risk-stop-rules', risk.resetThresholds || []);
 }

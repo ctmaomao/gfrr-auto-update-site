@@ -31,7 +31,6 @@ export function buildRealtimeStatusLabel(metadata) {
   if (metadata.realtimeUnavailable) {
     return '实时数据不可用 / 仅基线模式';
   }
-
   const freshnessMap = {
     fresh: '新鲜',
     aging: '老化中',

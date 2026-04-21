@@ -32,7 +32,6 @@ export function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
         issueLines: statusEntries.slice(0, 4).map(([key, status]) => `${key}: ${status}`)
       };
     }
-
     return {
       total: 0,
       okCount: 0,
