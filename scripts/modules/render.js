@@ -13,12 +13,12 @@ export function renderRealtimeStrip(realtime, metadata = null) {
   $('rt-spx').textContent = fmtNumSafe(realtime.values.spx, 0);
   $('rt-source-mode').textContent = realtime.degradedMode ? '部分回退' : '实时覆盖';
   if (metadata?.realtimeUnavailable) {
-    $('rt-source-mode').textContent = 'baseline only';
+    $('rt-source-mode').textContent = '仅基线模式';
   } else if (metadata) {
     const modeParts = [metadata.realtimeFreshnessLevel || realtime.freshnessLevel || 'fresh'];
-    if (metadata.realtimeDegraded) modeParts.push('degraded');
-    if (metadata.realtimeFallbackUsed) modeParts.push('local fallback');
-    if (metadata.realtimeCacheOnly) modeParts.push('cache only');
+    if (metadata.realtimeDegraded) modeParts.push('降级');
+    if (metadata.realtimeFallbackUsed) modeParts.push('本地回退');
+    if (metadata.realtimeCacheOnly) modeParts.push('缓存模式');
     $('rt-source-mode').textContent = modeParts.join(' / ');
   }
   $('rt-brent-delta').textContent = fmtSigned(realtime.changes?.brent1d || 0);
@@ -68,12 +68,12 @@ export function describeStateChange(stateMeta = {}) {
   const extremeCount = Number(stateMeta.extremeThresholdCount) || 0;
   const highRiskStreakDays = Number(stateMeta.highRiskStreakDays) || 0;
 
-  if (delta >= 8) return 'Rising over last 3 days';
-  if (delta >= 3) return 'Firming over last 3 days';
-  if (delta <= -8) return extremeCount > 0 || highRiskStreakDays >= 3 ? 'Elevated but easing' : 'Easing over last 3 days';
-  if (delta <= -3) return 'Stabilizing';
-  if (extremeCount > 0) return 'Holding at elevated levels';
-  return 'Stable near current regime';
+  if (delta >= 8) return '近3日持续上升';
+  if (delta >= 3) return '近3日趋于走强';
+  if (delta <= -8) return extremeCount > 0 || highRiskStreakDays >= 3 ? '高位但趋于缓解' : '近3日持续缓解';
+  if (delta <= -3) return '趋于稳定';
+  if (extremeCount > 0) return '维持高位';
+  return '当前区间内平稳';
 }
 
 export function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
@@ -90,12 +90,12 @@ export function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
   const exposureBand = decisionModel?.positionGuidance?.totalExposureBand || '--';
   const coreAction = decisionModel?.actionQueue?.priorityActions?.[0]
     || decisionModel?.positionGuidance?.newExposurePolicy
-    || 'Keep risk changes paced and selective.';
+    || '保持风险调整的节奏性与选择性。';
   const dominantRiskSources = Array.isArray(decisionModel?.dominantDrivers) && decisionModel.dominantDrivers.length
     ? decisionModel.dominantDrivers.slice(0, 3).map((item) => item.label || item.key).filter(Boolean)
     : Array.isArray(decisionModel?.stateDrivers)
       ? decisionModel.stateDrivers.slice(0, 3).map((item) => item.label || item.key).filter(Boolean)
-      : ['Risk drivers unavailable'];
+      : ['主导风险驱动因子不可用'];
 
   return {
     stateBadge: strategyState,
@@ -104,13 +104,13 @@ export function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
     exposureBand,
     coreAction,
     stateChange: describeStateChange(decisionModel.stateMeta || {}),
-    title: `${strategyState} Decision Header`,
-    reason: decisionModel.stateReason || data?.decisionLine || 'Current regime is being summarized from the v26 decision model.',
+    title: `${strategyState} 决策概览`,
+    reason: decisionModel.stateReason || data?.decisionLine || '当前宏观环境正由 v26 决策模型汇总中。',
     escalationLabel: decisionModel?.triggerMonitor?.escalationLevel
-      ? `Escalation ${decisionModel.triggerMonitor.escalationLevel}`
-      : 'Escalation watch active',
-    cashGuidance: decisionModel?.positionGuidance?.cashGuidance || 'Keep baseline cash discipline.',
-    newExposurePolicy: decisionModel?.positionGuidance?.newExposurePolicy || 'Use staged exposure changes only.',
+      ? `升级风险：${decisionModel.triggerMonitor.escalationLevel}`
+      : '升级监控中',
+    cashGuidance: decisionModel?.positionGuidance?.cashGuidance || '维持基础现金纪律。',
+    newExposurePolicy: decisionModel?.positionGuidance?.newExposurePolicy || '仅允许分批调整敞口。',
     dominantRiskSources
   };
 }
@@ -133,7 +133,7 @@ export function renderDecisionHeader(model) {
 
   const drivers = $('decision-header-drivers');
   drivers.innerHTML = '';
-  (model.dominantRiskSources || ['Risk drivers unavailable']).forEach((driver) => {
+  (model.dominantRiskSources || ['主导风险驱动因子不可用']).forEach((driver) => {
     const chip = document.createElement('span');
     chip.className = 'decision-driver-chip';
     chip.textContent = driver;
