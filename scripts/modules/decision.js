@@ -52,7 +52,7 @@ export function buildStrategyStateFallback(data = {}, metadata = {}) {
     resonanceCount: 0,
     severeResonanceCount: 0,
     extremeThresholdCount: 0,
-    extremeThresholds: ['fallback-mode'],
+    extremeThresholds: ['回退模式'],
     elevatedRiskStreakDays: 0,
     highRiskStreakDays: 0,
     criticalAlertCount: 0,
@@ -64,13 +64,13 @@ export function buildStrategyStateFallback(data = {}, metadata = {}) {
     stateLabel: `${fallbackState} / Fallback`,
     stateScore: fallbackState === 'Defensive' ? 72 : 55,
     stateReason: metadata.realtimeUnavailable
-      ? 'Strategy state fell back to a defensive baseline because realtime overlay is unavailable.'
-      : 'Strategy state engine fell back to a cautious baseline because state computation was unavailable.',
+      ? '实时覆盖不可用，策略状态已回退到防守型基线。'
+      : '策略状态引擎不可用，已回退到谨慎型基线。',
     stateDrivers: [{
       key: 'fallback',
-      label: 'Fallback guardrail',
+      label: '回退保护',
       impact: fallbackState,
-      reason: 'Fallback mode preserves a safe, non-empty strategy state output.'
+      reason: '回退模式确保系统输出安全的非空策略状态。'
     }],
     stateMeta: fallbackMeta
   };
@@ -80,16 +80,16 @@ export function buildPositionGuidanceFallback(data = {}, metadata = {}, strategy
   const defensiveFallback = metadata.realtimeUnavailable || strategyState === 'Defensive' || strategyState === 'Crisis';
   return {
     totalExposureBand: defensiveFallback ? '20%-40%' : '35%-55%',
-    riskAssetBias: defensiveFallback ? 'Constrained' : 'Selective',
-    defensiveBias: defensiveFallback ? 'High' : 'Moderate',
-    cashGuidance: defensiveFallback ? 'Keep elevated cash buffer (30%-45%)' : 'Keep reserve cash buffer (20%-30%)',
-    newExposurePolicy: defensiveFallback ? 'Pause broad new risk exposure until guidance recovers.' : 'Only add exposure selectively and in small clips.',
-    rebalancePosture: defensiveFallback ? 'De-risk first, rebalance second.' : 'Rebalance gradually around target bands.',
-    leveragePolicy: 'No incremental leverage in fallback mode.',
-    hedgePosture: defensiveFallback ? 'Maintain defensive hedges / buffers.' : 'Keep baseline hedges active.',
+    riskAssetBias: defensiveFallback ? '严格约束' : '选择性配置',
+    defensiveBias: defensiveFallback ? '高' : '中等',
+    cashGuidance: defensiveFallback ? '维持较高现金缓冲（30%-45%）' : '维持储备现金缓冲（20%-30%）',
+    newExposurePolicy: defensiveFallback ? '暂停新增风险敞口，等待系统恢复。' : '仅允许选择性小幅加仓。',
+    rebalancePosture: defensiveFallback ? '先降风险，再做再平衡。' : '围绕目标区间逐步再平衡。',
+    leveragePolicy: '回退模式下禁止新增杠杆。',
+    hedgePosture: defensiveFallback ? '维持防守型对冲与缓冲仓。' : '保持基础对冲仓位有效。',
     adjustmentNotes: [
-      'Fallback position guidance is active.',
-      Number.isFinite(data?.score) ? `Reference risk score: ${data.score}.` : 'Reference risk score unavailable.'
+      '回退仓位指引已启用。',
+      Number.isFinite(data?.score) ? `参考风险分数：${data.score}。` : '参考风险分数不可用。'
     ]
   };
 }
@@ -107,42 +107,42 @@ export function buildActionQueueFallback(data = {}, metadata = {}, strategyState
   const queue = {
     priorityActions: defensiveFallback
       ? [
-          'Reduce broad risk exposure incrementally.',
-          'Raise cash buffer and avoid leverage expansion.',
-          'Only allow defensive rebalancing.'
+          '逐步降低整体风险敞口。',
+          '提高现金缓冲，避免扩大杠杆。',
+          '仅允许防守型再平衡。'
         ]
       : [
-          'Keep new exposure selective and staged.',
-          'Rebalance toward target exposure bands.',
-          'Maintain base defensive buffers.'
+          '保持新增敞口的选择性与分批原则。',
+          '向目标敞口区间再平衡。',
+          '维持基础防守缓冲仓位。'
         ],
     watchItems: defensiveFallback
       ? [
-          'Watch for volatility re-acceleration.',
-          'Monitor credit and liquidity stress for escalation.',
-          'Track data quality before relaxing posture.'
+          '关注波动率是否重新加速。',
+          '监控信用与流动性压力是否升级。',
+          '数据质量恢复前不放松防守姿态。'
         ]
       : [
-          'Monitor regime stability before adding risk.',
-          'Watch for renewed volatility or spread widening.',
-          'Track driver persistence before expanding pace.'
+          '加仓前先确认环境稳定性。',
+          '关注波动率或利差是否重新走阔。',
+          '扩大节奏前确认驱动因子持续性。'
         ],
     blockedActions: defensiveFallback
       ? [
-          'Pause aggressive new risk deployment.',
-          'Avoid leverage expansion.',
-          'Avoid concentration increase under elevated regime.'
+          '暂停激进新增风险敞口。',
+          '避免扩大杠杆。',
+          '高风险环境下避免提高集中度。'
         ]
       : [
-          'Avoid oversized single-step exposure changes.',
-          'Avoid leverage expansion before confirmation.',
-          'Avoid concentration increase without confirmation.'
+          '避免单次大幅调整敞口。',
+          '未经确认前避免扩大杠杆。',
+          '未经确认前避免提高集中度。'
         ],
-    actionSummary: defensiveFallback ? 'Defensive fallback queue active.' : 'Cautious fallback queue active.',
-    escalationHint: defensiveFallback ? 'Escalate if stress indicators worsen or data quality degrades.' : 'Escalate if state score or stress signals worsen.',
+    actionSummary: defensiveFallback ? '防守型回退动作队列已启用。' : '谨慎型回退动作队列已启用。',
+    escalationHint: defensiveFallback ? '若压力指标恶化或数据质量下降，应升级防守。' : '若状态分数或压力信号恶化，应升级防守。',
     executionNotes: [
-      'Fallback action queue is active.',
-      Number.isFinite(data?.score) ? `Reference risk score: ${data.score}.` : 'Reference risk score unavailable.'
+      '回退动作队列已启用。',
+      Number.isFinite(data?.score) ? `参考风险分数：${data.score}。` : '参考风险分数不可用。'
     ]
   };
   queue.items = flattenActionQueueItems(queue);
@@ -152,15 +152,15 @@ export function buildActionQueueFallback(data = {}, metadata = {}, strategyState
 export function buildTriggerMonitorFallback(data = {}, metadata = {}, strategyState = 'Caution') {
   return {
     upgradeTriggers: [
-      'Escalate if total risk score moves higher from the current baseline.',
-      'Escalate if short-term deterioration resumes over the next 3 days.',
-      'Escalate if warning intensity or data degradation increases.'
+      '若总风险分数从当前基线继续上升，应升级。',
+      '若未来3日短期恶化趋势重启，应升级。',
+      '若预警强度或数据质量下降加剧，应升级。'
     ],
     activeEscalationSignals: [
-      metadata.realtimeUnavailable ? 'Realtime unavailable / baseline only.' : 'No reliable escalation engine output; use baseline monitoring.',
-      Number.isFinite(data?.score) ? `Reference risk score ${data.score}.` : 'Reference risk score unavailable.'
+      metadata.realtimeUnavailable ? '实时数据不可用 / 当前仅基线模式。' : '升级引擎无可靠输出，请使用基线监控。',
+      Number.isFinite(data?.score) ? `参考风险分数：${data.score}。` : '参考风险分数不可用。'
     ],
-    triggerSummary: `${strategyState} fallback trigger monitor active.`,
+    triggerSummary: `${strategyState} 回退触发监控已启用。`,
     escalationLevel: metadata.realtimeUnavailable ? 'high' : 'medium',
     signalConfidence: metadata.realtimeUnavailable ? 'low' : 'medium'
   };
@@ -169,16 +169,16 @@ export function buildTriggerMonitorFallback(data = {}, metadata = {}, strategySt
 export function buildInvalidationRulesFallback(data = {}, metadata = {}, strategyState = 'Caution') {
   return {
     invalidationSignals: [
-      'Treat the current posture as invalid if risk deterioration accelerates materially.',
-      'Treat the current posture as stale if data quality continues to degrade.',
-      'Treat the current posture as review-required if warning intensity rises.'
+      '若风险明显加速恶化，当前判断应视为失效。',
+      '若数据质量持续下降，当前判断应视为过期。',
+      '若预警强度上升，当前判断需重新审视。'
     ],
     resetConditions: [
-      'Allow de-escalation only after short-term deterioration stops.',
-      'Allow de-escalation only after risk breadth narrows.',
-      'Allow de-escalation only after data freshness normalizes.'
+      '短期恶化趋势停止后，方可降级。',
+      '风险广度收窄后，方可降级。',
+      '数据新鲜度恢复正常后，方可降级。'
     ],
-    invalidationSummary: `${strategyState} fallback invalidation rules active.`,
+    invalidationSummary: `${strategyState} 回退失效规则已启用。`,
     deescalationBias: metadata.realtimeUnavailable ? 'low' : 'medium',
     signalConfidence: metadata.realtimeUnavailable ? 'low' : 'medium'
   };
@@ -194,17 +194,17 @@ export function createDecisionFallback(data = {}, metadata = {}) {
     strategyState: stateFallback.strategyState,
     stateLabel: stateFallback.stateLabel || fallbackLabel,
     stateReason: stateFallback.stateReason || (metadata.realtimeUnavailable
-      ? 'Decision model generation fell back to baseline because realtime overlay is unavailable.'
-      : 'Decision model generation fell back to safe defaults.'),
+      ? '实时覆盖不可用，决策模型已回退到基线。'
+      : '决策模型已回退到安全默认值。'),
     stateScore: stateFallback.stateScore,
     stateDrivers: stateFallback.stateDrivers,
     stateMeta: stateFallback.stateMeta,
     dominantDrivers: [{
       key: 'fallback',
-      label: 'Fallback baseline',
+      label: '回退基线',
       score: Number.isFinite(data.score) ? data.score : null,
       trend: 0,
-      reason: 'Use baseline risk score and existing page modules until decision generation recovers.'
+      reason: '决策生成恢复前，使用基线风险分数与现有模块输出。'
     }],
     // Legacy compatibility fields: keep these while legacy positioning cards still
     // read older exposure / cash / note fields directly.
@@ -214,7 +214,7 @@ export function createDecisionFallback(data = {}, metadata = {}) {
       riskBudget: data?.tradingSystem?.positioning?.riskBudget || '--',
       targetGrossExposure: data?.tradingSystem?.positioning?.targetGrossExposure || '--',
       cashBufferTarget: data?.tradingSystem?.positioning?.cashBufferTarget || '--',
-      notes: ['Fallback mode active.', 'Do not expand risk until decision model recovers.']
+      notes: ['回退模式已启用。', '决策模型恢复前，禁止扩大风险敞口。']
     },
     // Legacy compatibility fields: `items` / `notes` are retained for transitional
     // renderers and debugging, even though the canonical queue is split by bucket.
