@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-04-22T23:10:16.257Z",
-  "asOf": "2026-04-22T23:10:16.257Z",
+  "updatedAt": "2026-04-22T23:48:32.284Z",
+  "asOf": "2026-04-22T23:48:32.284Z",
   "ageMinutes": 0,
   "freshnessLevel": "fresh",
   "unavailable": false,
@@ -11,8 +11,8 @@
   "criticalMissing": 0,
   "fallbackCount": 0,
   "secondarySourceCount": 0,
-  "lastSuccessAt": "2026-04-22T23:10:16.257Z",
-  "freshnessPreparedAt": "2026-04-22T23:10:16.257Z",
+  "lastSuccessAt": "2026-04-22T23:48:32.284Z",
+  "freshnessPreparedAt": "2026-04-22T23:48:32.284Z",
   "freshnessPending": true,
   "notes": [
     "实时数据源刷新成功。"
@@ -27,7 +27,7 @@
     "us2y": 3.78,
     "real10y": 1.92,
     "breakeven10y": 2.38,
-    "gold": 4726.600098
+    "gold": 4728.100098
   },
   "changes": {
     "brent1d": 4.77,
@@ -62,7 +62,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 256217
+      "ageSeconds": 258513
     },
     "dxy": {
       "ok": true,
@@ -72,7 +72,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 515417
+      "ageSeconds": 517713
     },
     "hyOas": {
       "ok": true,
@@ -82,7 +82,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 169817
+      "ageSeconds": 172113
     },
     "vix": {
       "ok": true,
@@ -92,7 +92,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 169817
+      "ageSeconds": 172113
     },
     "spx": {
       "ok": true,
@@ -102,7 +102,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 169817
+      "ageSeconds": 172113
     },
     "us10y": {
       "ok": true,
@@ -112,7 +112,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 169817
+      "ageSeconds": 172113
     },
     "us2y": {
       "ok": true,
@@ -122,7 +122,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 169817
+      "ageSeconds": 172113
     },
     "real10y": {
       "ok": true,
@@ -132,7 +132,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 169817
+      "ageSeconds": 172113
     },
     "breakeven10y": {
       "ok": true,
@@ -142,25 +142,73 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 83417
+      "ageSeconds": 85713
     },
     "gold": {
       "ok": true,
-      "value": 4726.600098,
+      "value": 4728.100098,
       "source": "goldapi:XAU",
       "timestamp": "2026-04-22",
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 83417
+      "ageSeconds": 85713
     }
   },
   "fieldFreshness": {
     "brent": {
       "observedAt": "2026-04-20",
-      "ageMinutes": 4270,
+      "ageMinutes": 4309,
       "freshnessLevel": "unavailable",
       "isStale": true
+    }
+  },
+  "brentValidation": {
+    "candidates": [
+      {
+        "source": "ice",
+        "value": null,
+        "observedAt": null,
+        "fetchedAt": "2026-04-22T23:48:32.284Z",
+        "delayClass": "delayed-15m",
+        "available": false,
+        "reason": "parse-failed:value"
+      },
+      {
+        "source": "investing",
+        "value": null,
+        "observedAt": null,
+        "fetchedAt": "2026-04-22T23:48:32.284Z",
+        "delayClass": "delay-unknown",
+        "available": false,
+        "reason": "fetch-failed:investing:brent failed after 3 attempts: HTTP 403"
+      },
+      {
+        "source": "marketscreener",
+        "value": null,
+        "observedAt": null,
+        "fetchedAt": "2026-04-22T23:48:32.284Z",
+        "delayClass": "delayed-otc",
+        "available": false,
+        "reason": "parse-failed:out-of-range(1.48)"
+      },
+      {
+        "source": "fred-anchor",
+        "value": 103.4,
+        "observedAt": "2026-04-20",
+        "fetchedAt": "2026-04-22T23:48:32.284Z",
+        "delayClass": "daily-anchor",
+        "available": true,
+        "reason": null
+      }
+    ],
+    "consensus": {
+      "recommendedValue": null,
+      "recommendedSource": null,
+      "confidence": "none",
+      "reason": "无可用网页源，无法形成 Brent 推荐值。",
+      "divergencePct": null,
+      "canPromoteToPrimary": false
     }
   }
 }
