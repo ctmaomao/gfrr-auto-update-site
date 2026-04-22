@@ -10,6 +10,14 @@ const SOURCE_MODE_CN = {
   'mock': '模拟'
 };
 
+const STRUCTURAL_SIGNAL_LABELS_CN = {
+  curveDeepInversion: '曲线深度倒挂',
+  curveRapidSteepening: '曲线快速陡峭化',
+  onRrpCritical: '逆回购准备金告急',
+  fedRapidContraction: '美联储快速缩表',
+  igOasStress: '投资级信用利差扩张'
+};
+
 export async function fetchBaselineData() {
   return fetch(dataUrl).then((r) => r.json());
 }
@@ -137,11 +145,89 @@ export function getRealtimeNumber(values, key) {
   return Number.isFinite(value) ? value : null;
 }
 
+function readStructuralGatingFromBase(base) {
+  const md = base?.macroDrivers;
+  if (!md || typeof md !== 'object') {
+    return {
+      available: false,
+      allMissing: true,
+      activeLabels: [],
+      structuralRed: false,
+      structuralYellow: false,
+      redReasons: [],
+      yellowReasons: []
+    };
+  }
+
+  const pipelineEval = md.gatingEvaluation;
+  const activeSignals = Array.isArray(md.activeSignals) ? md.activeSignals : [];
+  const activeLabels = activeSignals
+    .filter((s) => s && s.reliability !== 'missing')
+    .map((s) => s?.label || STRUCTURAL_SIGNAL_LABELS_CN[s?.key] || s?.key)
+    .filter(Boolean);
+
+  const fed = md.fedLiquidity || {};
+  const fedStatus = fed.sourceStatus || {};
+  const curve = md.curve || {};
+  const curveStatus = curve.sourceStatus || {};
+  const credit = md.credit || {};
+  const creditStatus = credit.sourceStatus || {};
+
+  const walclAvailable = fedStatus.walcl && fedStatus.walcl !== 'missing';
+  const onRrpAvailable = fedStatus.onRrp && fedStatus.onRrp !== 'missing';
+  const curveAvailable = curveStatus.t10y2y && curveStatus.t10y2y !== 'missing';
+  const creditAvailable = creditStatus.igOas && creditStatus.igOas !== 'missing';
+  const allMissing = !walclAvailable && !onRrpAvailable && !curveAvailable && !creditAvailable;
+
+  if (pipelineEval && typeof pipelineEval === 'object') {
+    return {
+      available: !allMissing,
+      allMissing,
+      activeLabels,
+      structuralRed: !!pipelineEval.structuralRed,
+      structuralYellow: !!pipelineEval.structuralYellow,
+      redReasons: Array.isArray(pipelineEval.redReasons) ? pipelineEval.redReasons : [],
+      yellowReasons: Array.isArray(pipelineEval.yellowReasons) ? pipelineEval.yellowReasons : []
+    };
+  }
+
+  const t10y2y = curveAvailable && Number.isFinite(curve.t10y2y) ? curve.t10y2y : null;
+  const onRrp = onRrpAvailable && Number.isFinite(fed.onRrp) ? fed.onRrp : null;
+  const walcl4w = walclAvailable && Number.isFinite(fed.walcl4wChange) ? fed.walcl4wChange : null;
+  const igOas = creditAvailable && Number.isFinite(credit.igOas) ? credit.igOas : null;
+
+  const redCurveCreditDouble = t10y2y !== null && t10y2y <= -0.8 && igOas !== null && igOas >= 2.0;
+  const onRrpCatastrophic = onRrp !== null && onRrp < 50;
+  const structuralRed = redCurveCreditDouble || onRrpCatastrophic;
+
+  const yellowCurveFedDouble = t10y2y !== null && t10y2y <= -0.5 && walcl4w !== null && walcl4w <= -1.0;
+  const yellowIgWatch = igOas !== null && igOas >= 1.5;
+  const yellowOnRrpCritical = onRrp !== null && onRrp < 100;
+  const yellowCurveDeep = t10y2y !== null && t10y2y <= -0.5;
+  const structuralYellow = yellowCurveFedDouble || yellowIgWatch || yellowOnRrpCritical || yellowCurveDeep;
+
+  const redReasons = [];
+  if (redCurveCreditDouble) redReasons.push('曲线严重倒挂且投资级信用告警');
+  if (onRrpCatastrophic) redReasons.push('逆回购准备金临界告急');
+  const yellowReasons = [];
+  if (yellowCurveFedDouble) yellowReasons.push('曲线深度倒挂叠加美联储缩表');
+  if (yellowIgWatch) yellowReasons.push('投资级信用利差进入应力区');
+  if (yellowOnRrpCritical) yellowReasons.push('逆回购余额告急');
+  if (yellowCurveDeep) yellowReasons.push('曲线深度倒挂');
+
+  return {
+    available: !allMissing,
+    allMissing,
+    activeLabels,
+    structuralRed,
+    structuralYellow,
+    redReasons,
+    yellowReasons
+  };
+}
+
 export function applyRealtimeOverlay(base, realtimePayload) {
   if (!realtimePayload?.values) return base;
-
-  // sourceMode 中文映射，在函数最顶部定义，供全函数使用
-  const sourceModeLabel = SOURCE_MODE_CN[realtimePayload.sourceMode] || realtimePayload.sourceMode || '--';
 
   const next = structuredClone(base);
   const brent = getRealtimeNumber(realtimePayload.values, 'brent');
@@ -195,20 +281,23 @@ export function applyRealtimeOverlay(base, realtimePayload) {
   next.liquidityIndex.score = next.modules.liquidity;
   next.liquidityIndex.regime = next.modules.liquidity >= 70 ? '限制性偏紧' : next.modules.liquidity >= 55 ? '偏紧缓解' : '流动性修复';
   next.liquidityIndex.directionLabel = realtimePayload.cacheOnly ? '快变量缓存模式' : realtimePayload.degradedMode ? '快变量带回退' : '快变量已实时覆盖';
-  next.liquidityIndex.notes = [
-    `实时快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元指数 ${fmtNumSafe(dxy,2)} / 波动率 ${fmtNumSafe(vix,2)} / 高收益利差 ${fmtNumSafe(hy,2)}。`,
-    `10年期美债 ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`,
-    `数据模式：${sourceModeLabel} / 健康分数：${realtimePayload.healthScore ?? '--'} / 关键缺失：${realtimePayload.criticalMissing ?? 0}。`,
-    ...(realtimePayload.notes || [])
-  ];
+  {
+    const sourceModeLabel = SOURCE_MODE_CN[realtimePayload.sourceMode] || realtimePayload.sourceMode || '--';
+    next.liquidityIndex.notes = [
+      `实时快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元指数 ${fmtNumSafe(dxy,2)} / 波动率 ${fmtNumSafe(vix,2)} / 高收益利差 ${fmtNumSafe(hy,2)}。`,
+      `10年期美债 ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`,
+      `数据模式：${sourceModeLabel} / 健康分数：${realtimePayload.healthScore ?? '--'} / 关键缺失：${realtimePayload.criticalMissing ?? 0}。`,
+      ...(realtimePayload.notes || [])
+    ];
+  }
 
-  const hardStop = realtimePayload.cacheOnly
+  const hardStopBase = realtimePayload.cacheOnly
     || next.modules.liquidity >= 75
     || (brent !== null && brent >= 110)
     || (hy !== null && hy >= 4.5)
     || (vix !== null && vix >= 28)
     || totalScore >= 82;
-  const caution = !hardStop && (
+  const cautionBase = !hardStopBase && (
     realtimePayload.degradedMode
     || next.modules.liquidity >= 60
     || (brent !== null && brent >= 90)
@@ -217,6 +306,11 @@ export function applyRealtimeOverlay(base, realtimePayload) {
     || totalScore >= 65
   );
 
+  const gating = readStructuralGatingFromBase(base);
+
+  const hardStop = hardStopBase || gating.structuralRed;
+  const caution = !hardStop && (cautionBase || gating.structuralYellow);
+
   let level = 'green';
   let levelLabel = '绿灯 / 允许分批进攻';
   let title = '今天允许小幅加仓，但必须按纪律分批执行';
@@ -224,142 +318,106 @@ export function applyRealtimeOverlay(base, realtimePayload) {
   let allow = ['允许分三笔以内提高总仓位。', '允许增加质量权益和部分成长观察仓。', '允许适度降低美元/短票仓位。'];
   let block = ['禁止一次性打满仓位。', '禁止单日大涨后追高。', '禁止取消全部对冲。'];
   let mandatory = ['单日净加仓不得超过总资产 5%。', '若状态灯重新转黄，次日停止加仓。', '若周回撤 > -3%，立即切回黄灯。'];
-  let target = '58%';
-  let cash = '20%';
-  let riskBudget = '50%';
-  let status = '风险可控，仍需阈值约束';
+  let structurallyTriggered = false;
 
   if (hardStop) {
     level = 'red';
     levelLabel = '红灯 / 禁止新增';
     title = '今天禁止主动加仓，只允许减仓与恢复防御层';
-    desc = realtimePayload.cacheOnly
-      ? '关键快变量不足，系统进入缓存模式。为避免误判，执行引擎直接锁为红灯：禁止新增，只允许风险收缩。'
-      : '高压风险组合已触发。执行引擎直接锁为红灯：任何新增风险动作都被禁止，只允许减仓、补现金和恢复防御仓。';
+    const structDesc = (gating.structuralRed && !hardStopBase)
+      ? `结构性双压触发红灯（${gating.redReasons.join('、')}）。`
+      : '';
+    desc = structDesc + (
+      realtimePayload.cacheOnly
+        ? '关键快变量不足，系统进入缓存模式。为避免误判，执行引擎直接锁为红灯：禁止新增，只允许风险收缩。'
+        : '高压风险组合已触发。执行引擎直接锁为红灯：任何新增风险动作都被禁止，只允许减仓、补现金和恢复防御仓。'
+    );
     allow = ['允许减仓风险资产。', '允许补充美元/短票与现金。', '允许把黄金对冲恢复到上限。'];
     block = ['禁止新增股票与高波动仓位。', '禁止盘中追涨。', '禁止主观覆盖系统阈值。'];
     mandatory = ['若总仓位高于 42%，必须先减回 38%-42%。', '若高波动资产 > 2%，立即降回 2% 以下。', '若现金缓冲 < 30%，立即补回。'];
-    target = '38%';
-    cash = '35%';
-    riskBudget = '30%';
-    status = '硬阈值全面生效';
+    structurallyTriggered = gating.structuralRed && !hardStopBase;
   } else if (caution) {
     level = 'yellow';
     levelLabel = '黄灯 / 仅允许微调';
     title = '今天不能主动加风险，只允许对齐目标仓位与防守再平衡';
-    desc = '风险尚未解除，执行引擎只允许微调。允许围绕目标仓位做再平衡，但禁止新增进攻性仓位。';
+    const structDesc = (gating.structuralYellow && !cautionBase)
+      ? `结构性压力触发黄灯（${gating.yellowReasons.join('、')}）。`
+      : '';
+    desc = structDesc + '风险尚未解除，执行引擎只允许微调。允许围绕目标仓位做再平衡，但禁止新增进攻性仓位。';
     allow = ['允许把总仓位向 48% 靠拢。', '允许维持能源、美元/短票、黄金对冲层。', '允许保留防御型股票观察仓。'];
     block = ['禁止新增高波动与久期进攻仓位。', '禁止因为单日反弹而加仓。', '禁止无视执行状态灯。'];
     mandatory = ['若总仓位高于 53%，先减仓。', '若高波动资产 > 3%，降回上限以内。', '若现金缓冲 < 25%，恢复到安全区间。'];
-    target = '48%';
-    cash = '27%';
-    riskBudget = '40%';
-    status = '硬阈值生效中';
+    structurallyTriggered = gating.structuralYellow && !cautionBase;
   }
 
+  // v27 允许保留的修改之一：executionLock（结构性红灯/黄灯门控 + structurallyTriggered）
   next.tradingSystem.executionLock = {
     tag: realtimePayload.cacheOnly ? '缓存模式 · 主观不得覆盖' : realtimePayload.degradedMode ? '带回退实时模式 · 主观不得覆盖' : '实时模式 · 主观不得覆盖',
     level,
     levelLabel,
     title,
-    description: desc,
+    description: desc.trim(),
     allow,
     block,
-    mandatory
+    mandatory,
+    structurallyTriggered
   };
 
-  const actionText = level === 'red'
-    ? '执行引擎锁定：禁止新增，只允许减仓与防守恢复。'
-    : level === 'yellow'
-      ? '执行引擎锁定：只允许微调，不允许扩大风险暴露。'
-      : '执行引擎开放：允许分批进攻，但不得破坏现金缓冲与止损纪律。';
-
-  next.tradingSystem.actionLayer = {
-    tag: '今日执行清单（交易引擎版）',
-    priorityLine: `先看执行状态灯（${levelLabel}）→ 再执行强制动作 → 再对齐目标仓位；不满足条件时禁止交易。`,
-    todayAction: actionText,
-    checklist: mandatory,
-    blocked: block,
-    checkpoints: [
+  // v27 允许保留的修改之二：actionLayer.checkpoints 的结构性兼容合并（不整块重写 actionLayer）
+  if (!next.tradingSystem.actionLayer || typeof next.tradingSystem.actionLayer !== 'object') {
+    next.tradingSystem.actionLayer = {};
+  }
+  {
+    const baseCheckpoints = [
       `布伦特 当前 ${fmtNumSafe(brent,1)}`,
       `美元指数 当前 ${fmtNumSafe(dxy,2)}`,
       `波动率指数 当前 ${fmtNumSafe(vix,2)}`,
       `高收益利差 当前 ${fmtNumSafe(hy,2)}%`
-    ]
-  };
+    ];
+    const prevCheckpoints = Array.isArray(base?.tradingSystem?.actionLayer?.checkpoints)
+      ? base.tradingSystem.actionLayer.checkpoints
+      : [];
+    const structuralCheckpoints = prevCheckpoints.filter((cp) => {
+      const text = String(cp);
+      return text.includes('曲线') || text.includes('投资级信用利差') || text.includes('逆回购') || text.includes('10年-2年');
+    });
+    next.tradingSystem.actionLayer.checkpoints = [...baseCheckpoints, ...structuralCheckpoints];
+  }
 
-  next.tradingSystem.positioning.regime = level === 'red' ? '强防守执行框架' : level === 'yellow' ? '防守型执行框架' : '可控进攻框架';
-  next.tradingSystem.positioning.riskBudget = riskBudget;
-  next.tradingSystem.positioning.targetGrossExposure = target;
-  next.tradingSystem.positioning.cashBufferTarget = cash;
-  next.tradingSystem.positioning.coreAllocations = level === 'red'
-    ? [
-        { asset: '美元 / 短票', target: '核心1', weight: '24%', reason: '融资与信用压力阶段的首要防御层。' },
-        { asset: '现金', target: '缓冲层', weight: '35%', reason: '执行引擎红灯，现金缓冲必须充足。' },
-        { asset: '黄金', target: '对冲', weight: '12%', reason: '用于对冲尾部风险与政策不确定性。' },
-        { asset: '原油 / 能源', target: '防守受益', weight: '12%', reason: '油价偏高时继续保留。' }
-      ]
-    : level === 'yellow'
-      ? [
-          { asset: '原油 / 能源', target: '核心1', weight: '20%', reason: '主链条仍偏向能源与通胀输入。' },
-          { asset: '美元 / 短票', target: '核心2', weight: '18%', reason: '流动性偏紧阶段的稳定防御层。' },
-          { asset: '黄金', target: '对冲', weight: '10%', reason: '对冲政策与通胀不确定性。' },
-          { asset: '股票（防御板块）', target: '观察仓', weight: '8%', reason: '只保留低波动、现金流型权益。' }
-        ]
-      : [
-          { asset: '股票（质量+防御）', target: '核心1', weight: '24%', reason: '风险回到可控区后恢复权益暴露。' },
-          { asset: '原油 / 能源', target: '核心2', weight: '16%', reason: '保留主链条防守属性。' },
-          { asset: '黄金', target: '对冲', weight: '8%', reason: '保留尾部对冲。' },
-          { asset: '美元 / 短票', target: '缓冲层', weight: '12%', reason: '保留机动空间。' }
-        ];
-  next.tradingSystem.positioning.executionRestrictions = level === 'green'
-    ? ['任何新增仓位必须分批执行。', '单日净加仓不超过总资产的 5%。', '若状态灯转黄，次日停止加仓。']
-    : ['总仓位偏离目标值超过 ±5% 前，不得做方向性大调整。', '高波动资产合计不得超过 3%。', '任何新增进攻仓位都必须由减仓腾出空间。'];
-
-  next.tradingSystem.riskControl.status = status;
-  next.tradingSystem.riskControl.systemState = title;
-  next.tradingSystem.riskControl.maxDrawdown = level === 'red' ? '-6%' : '-8%';
-  next.tradingSystem.riskControl.hardThresholds = [
-    '流动性 ≥ 75：总仓位降至 42%。',
-    '布伦特 ≥ 110：能源上调，股票下调。',
-    '高收益利差 ≥ 4.5%：暂停新增风险仓位。',
-    '波动率指数 ≥ 28：切入红灯。'
-  ];
-  next.tradingSystem.riskControl.resetThresholds = [
-    '波动率指数 < 18 且高收益利差 < 3.7：才允许回到绿灯。',
-    '布伦特 < 95 且美元走弱：才允许提高成长仓。',
-    '关键缺失 < 2：解除数据回退约束。'
-  ];
-
-  next.tradingSystem.signalEngine = {
-    strength: totalScore,
-    direction: level === 'red' ? '只允许减仓/防守' : level === 'yellow' ? '防御偏多能源 / 美元，限制久期与高波动' : '允许质量权益分批进攻',
-    consistency: realtimePayload.cacheOnly ? '低一致性（缓存）' : realtimePayload.degradedMode ? '中一致性（回退）' : '高一致性',
-    macroSignal: totalScore >= 70 ? '滞胀冲击' : totalScore >= 55 ? '流动性偏紧' : '通胀回落增长',
-    liquiditySignal: `${next.liquidityIndex.regime}（实时）`,
-    chainSignal: next.modules.energy >= next.modules.liquidity ? '油价→通胀→利率→股票' : '美元→信用→流动性→股票',
-    notes: [
-      `执行引擎状态：${levelLabel}。`,
-      `关键快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元指数 ${fmtNumSafe(dxy,2)} / 波动率 ${fmtNumSafe(vix,2)} / 高收益利差 ${fmtNumSafe(hy,2)}。`,
-      `健康度 ${realtimePayload.healthScore ?? '--'}，关键缺失 ${realtimePayload.criticalMissing ?? 0}。`
-    ]
-  };
-
-  next.topRisks = [
-    `盘中快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元指数 ${fmtNumSafe(dxy,2)} / 波动率 ${fmtNumSafe(vix,2)} / 高收益利差 ${fmtNumSafe(hy,2)}。`,
-    `执行状态灯：${levelLabel}。`,
-    realtimePayload.cacheOnly ? '当前为缓存模式，系统自动提升防守等级。' : realtimePayload.degradedMode ? '当前为带回退实时模式，少量数据已回退但系统继续运行。' : '当前为实时模式，快变量直接驱动信号与仓位。',
-    `10年期美债 ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`
-  ];
-
-  next.decisionLine = `当前已进入 v26.0A-rc1 交易引擎模式：实时快变量${sourceModeLabel}，执行状态灯为${levelLabel}。先看状态灯，再决定能不能动。`;
-  next.summary = `v26.0A-rc1 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(brent,1)}、美元指数 ${fmtNumSafe(dxy,2)}、波动率 ${fmtNumSafe(vix,2)}、高收益利差 ${fmtNumSafe(hy,2)}%。`;
-  next.recovery = {
-    degradedMode: !!realtimePayload.degradedMode,
-    safeOutput: true,
-    lastRun: realtimePayload.updatedAt || next.updatedAt,
-    notes: realtimePayload.notes || ['v26.0A-rc1 快变量正常。']
-  };
+  // v27 允许保留的修改之三：riskControl.hardThresholds / resetThresholds 保留 pipeline 结构性规则不被覆盖
+  if (!next.tradingSystem.riskControl || typeof next.tradingSystem.riskControl !== 'object') {
+    next.tradingSystem.riskControl = {};
+  }
+  {
+    const prevHard = Array.isArray(base?.tradingSystem?.riskControl?.hardThresholds)
+      ? base.tradingSystem.riskControl.hardThresholds
+      : [];
+    const prevReset = Array.isArray(base?.tradingSystem?.riskControl?.resetThresholds)
+      ? base.tradingSystem.riskControl.resetThresholds
+      : [];
+    const realtimeHardRules = [
+      '流动性 ≥ 75：总仓位降至 42%。',
+      '布伦特 ≥ 110：能源上调，股票下调。',
+      '高收益利差 ≥ 4.5%：暂停新增风险仓位。',
+      '波动率指数 ≥ 28：切入红灯。'
+    ];
+    const realtimeResetRules = [
+      '波动率指数 < 18 且高收益利差 < 3.7：才允许回到绿灯。',
+      '布伦特 < 95 且美元走弱：才允许提高成长仓。',
+      '关键缺失 < 2：解除数据回退约束。'
+    ];
+    const pipelineStructuralHard = prevHard.filter((rule) => {
+      const text = String(rule);
+      return text.includes('结构性') || text.includes('曲线') || text.includes('投资级信用利差') || text.includes('逆回购');
+    });
+    const pipelineStructuralReset = prevReset.filter((rule) => {
+      const text = String(rule);
+      return text.includes('结构性') || text.includes('曲线') || text.includes('投资级信用利差') || text.includes('逆回购');
+    });
+    const uniq = (arr) => [...new Set(arr.filter(Boolean))];
+    next.tradingSystem.riskControl.hardThresholds = uniq([...realtimeHardRules, ...pipelineStructuralHard]);
+    next.tradingSystem.riskControl.resetThresholds = uniq([...realtimeResetRules, ...pipelineStructuralReset]);
+  }
 
   return next;
 }

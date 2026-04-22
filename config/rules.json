@@ -1,6 +1,5 @@
 {
   "_comment": "全局风险规则配置文件 — 修改此文件即可调整系统阈值，无需改动代码",
-
   "riskBaselines": {
     "_comment": "各指标的中性基准值，用于计算风险分数",
     "brentBase": 60,
@@ -19,7 +18,6 @@
     "breakevenScale": 45,
     "oilInflationWeight": 0.35
   },
-
   "moduleWeights": {
     "_comment": "六大模块对总风险分数的权重，总和应为 1.0",
     "geopolitical": 0.15,
@@ -29,7 +27,6 @@
     "debt": 0.17,
     "banking": 0.14
   },
-
   "moduleComposition": {
     "_comment": "各模块由哪些子风险合成，以及对应权重",
     "geopolitical": { "oilRisk": 0.72, "vixRisk": 0.28 },
@@ -37,7 +34,6 @@
     "debt": { "realRisk": 0.45, "rateRisk": 0.30, "hyRisk": 0.25 },
     "banking": { "hyRisk": 0.55, "vixRisk": 0.20, "dollarRisk": 0.25 }
   },
-
   "executionLock": {
     "_comment": "执行状态灯的触发阈值",
     "red": {
@@ -54,40 +50,34 @@
       "vixThreshold": 20
     }
   },
-
   "resetThresholds": {
     "_comment": "从高风险状态恢复到正常所需满足的条件",
     "vixReset": 18,
     "hyReset": 3.7,
     "brentReset": 95
   },
-
   "liquidityRegime": {
     "_comment": "流动性状态分级阈值",
     "tightThreshold": 70,
     "easingThreshold": 55
   },
-
   "freshnessWindows": {
     "_comment": "数据新鲜度分级（分钟）",
     "fresh": 30,
     "aging": 90,
     "stale": 360
   },
-
   "healthScoring": {
     "_comment": "健康分数扣分规则",
     "criticalMissingPenalty": 18,
     "fallbackPenalty": 6,
     "secondarySourcePenalty": 3
   },
-
   "confidenceScoring": {
     "_comment": "置信度分数扣分规则",
     "criticalMissingPenalty": 14,
     "fallbackPenalty": 4
   },
-
   "trendThresholds": {
     "_comment": "趋势判断阈值（7日变化）",
     "risingThreshold": 4,
@@ -95,14 +85,12 @@
     "acceleratingThreshold": 3,
     "deceleratingThreshold": -3
   },
-
   "historyWindow": {
     "_comment": "历史数据保留天数",
     "maxDays": 90,
     "shortWindow": 7,
     "longWindow": 30
   },
-
   "defaults": {
     "_comment": "realtime 不可用时的默认指标值",
     "brent": 85,
@@ -114,5 +102,68 @@
     "breakeven10y": 2.3,
     "spx": 5100,
     "gold": 2350
+  },
+  "macroDrivers": {
+    "_comment": "v27.0 新增：结构性宏观数据源配置（WALCL / RRPONTSYD / T10Y2Y / IG OAS）",
+    "fedLiquidity": {
+      "_comment": "美联储流动性：WALCL (总资产，周频，十亿美元) + RRPONTSYD (ON RRP 余额，日频，十亿美元)",
+      "walclBaseline": 7500,
+      "walcl4wContractionAlert": -1.0,
+      "walcl4wRapidContractionAlert": -2.0,
+      "walcl4wExpansionSignal": 1.0,
+      "onRrpTightThreshold": 300,
+      "onRrpCriticalThreshold": 100,
+      "onRrpWeekRapidDropPct": -15,
+      "pressureScale": 1.0
+    },
+    "curve": {
+      "_comment": "收益率曲线：T10Y2Y (10年-2年利差，日频，百分点)",
+      "inversionThreshold": 0,
+      "mildInversionThreshold": -0.3,
+      "deepInversionThreshold": -0.5,
+      "severeInversionThreshold": -0.8,
+      "steepeningWeekChangeThreshold": 0.3
+    },
+    "credit": {
+      "_comment": "投资级信用利差：BAMLC0A0CM (IG OAS，日频，百分点)",
+      "igOasNormalCeiling": 1.2,
+      "igOasWatchThreshold": 1.5,
+      "igOasStressThreshold": 1.8,
+      "igOasCriticalThreshold": 2.0
+    }
+  },
+  "structuralGating": {
+    "_comment": "v27.0 新增：结构信号对 strategyState 的加分门控（在现有 score 基础上叠加）",
+    "curveDeepInversion": 8,
+    "curveRapidSteepening": 12,
+    "onRrpCritical": 10,
+    "fedRapidContraction": 6,
+    "igOasStress": 8
+  },
+  "moduleSubWeights": {
+    "_comment": "v27.0 新增：三模块在引入结构信号后的加权分配（旧版基础权重 + 结构信号权重，每组总和为 1.0）",
+    "liquidity": {
+      "baseWeight": 0.70,
+      "fedAssetWeight": 0.15,
+      "onRrpWeight": 0.15
+    },
+    "debt": {
+      "baseWeight": 0.65,
+      "curveInversionWeight": 0.20,
+      "curveSteepeningWeight": 0.15
+    },
+    "banking": {
+      "baseWeight": 0.50,
+      "igOasWeight": 0.25,
+      "nimPressureWeight": 0.15,
+      "reservePressureWeight": 0.10
+    }
+  },
+  "positionGuidanceShifts": {
+    "_comment": "v27.0 新增：positionGuidance 在结构信号激活时的 bandShift 修正（越负越保守）",
+    "curveDeepInversion": -8,
+    "onRrpCritical": -5,
+    "igOasStress": -6,
+    "fedRapidContraction": -3
   }
 }

@@ -15,6 +15,7 @@ const histFullPath = path.join(dataDir, 'radar-history-full.json');
 const rtPath = path.join(root, 'realtime', 'market.json');
 
 const clamp = (n, min = 0, max = 100) => Math.max(min, Math.min(max, Math.round(n)));
+const clampRange = (n, min, max) => Math.max(min, Math.min(max, n));
 const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 const isoNow = new Date().toISOString();
 
@@ -34,6 +35,12 @@ const SOURCE_MODE_CN = {
   'mock': '模拟'
 };
 
+const FRED_BASE = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
+const MACRO_FETCH_TIMEOUT_MS = 10000;
+const MACRO_FETCH_RETRIES = 2;
+const MACRO_FETCH_RETRY_DELAY_MS = 800;
+const MACRO_USER_AGENT = 'gfr-v27.0-macro/1.0';
+
 function readJson(file, fallback = null) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
 }
@@ -43,22 +50,397 @@ const prevHistory = readJson(histPath, []);
 const prevHistoryFull = readJson(histFullPath, []);
 const realtime = readJson(rtPath, null);
 
-function buildFallback() {
-  const next = structuredClone(prevData);
-  next.version = 'v26.0A-rc1';
-  next.updatedAt = isoNow;
-  next.decisionLine = '实时快变量暂不可用，系统沿用上次有效慢变量结构，但保留今日更新时间戳。';
-  next.summary = 'v26.0A-rc1 日构建已退回到上次有效慢变量结构。';
-  next.recovery = {
-    degradedMode: true,
-    safeOutput: true,
-    lastRun: isoNow,
-    notes: ['日构建未拿到可用实时快照，已回退到上次有效结果。']
-  };
-  return { data: next, history: prevHistory, historyFull: prevHistoryFull };
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function deriveRisk(rt) {
+function stringifyFetchError(error) {
+  const msg = error instanceof Error ? error.message : String(error);
+  return msg.replace(/\s+/g, ' ').slice(0, 160);
+}
+
+async function fetchWithTimeout(url, timeoutMs = MACRO_FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { 'User-Agent': MACRO_USER_AGENT },
+      signal: controller.signal
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.text();
+  } catch (err) {
+    if (err?.name === 'AbortError') throw new Error(`timeout ${timeoutMs}ms`);
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function retryFetch(url, label) {
+  let attempt = 0;
+  let lastErr = null;
+  while (attempt <= MACRO_FETCH_RETRIES) {
+    try {
+      return await fetchWithTimeout(url);
+    } catch (e) {
+      lastErr = e;
+      if (attempt === MACRO_FETCH_RETRIES) break;
+      await sleep(MACRO_FETCH_RETRY_DELAY_MS * (attempt + 1));
+      attempt += 1;
+    }
+  }
+  throw new Error(`${label} failed: ${stringifyFetchError(lastErr)}`);
+}
+
+function parseFredCsv(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const out = [];
+  for (const line of lines.slice(1)) {
+    const [date, raw] = line.split(',');
+    if (!date || raw === undefined || raw === '.' || raw.trim() === '') continue;
+    const value = Number(raw);
+    if (!Number.isFinite(value)) continue;
+    out.push({ date, value });
+  }
+  return out;
+}
+
+function cosdIso(daysBack) {
+  return new Date(Date.now() - daysBack * 24 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+async function fetchFredSeries(seriesId, daysBack = 90) {
+  const url = `${FRED_BASE}?cosd=${cosdIso(daysBack)}&id=${seriesId}`;
+  const text = await retryFetch(url, `fred:${seriesId}`);
+  const rows = parseFredCsv(text);
+  if (rows.length < 2) throw new Error(`fred:${seriesId} insufficient rows`);
+  return rows;
+}
+
+function latestValue(rows) {
+  return rows[rows.length - 1]?.value;
+}
+
+function findValueAgo(rows, days) {
+  if (!rows.length) return null;
+  const lastDate = rows[rows.length - 1]?.date;
+  if (!lastDate) return null;
+  const lastTime = Date.parse(`${lastDate}T00:00:00Z`);
+  const targetTime = lastTime - days * 24 * 3600 * 1000;
+  let best = null;
+  let bestDiff = Infinity;
+  for (const r of rows) {
+    const t = Date.parse(`${r.date}T00:00:00Z`);
+    const diff = Math.abs(t - targetTime);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      best = r.value;
+    }
+  }
+  return best;
+}
+
+function classifyFedAssetTrend(pct4w) {
+  if (!Number.isFinite(pct4w)) return '未知';
+  const md = R.macroDrivers.fedLiquidity;
+  if (pct4w <= md.walcl4wRapidContractionAlert) return '快速缩表';
+  if (pct4w <= md.walcl4wContractionAlert) return '收缩中';
+  if (pct4w >= md.walcl4wExpansionSignal) return '扩张';
+  return '平稳';
+}
+
+function classifyOnRrpLevel(onRrp, weekChangePct) {
+  if (!Number.isFinite(onRrp)) return '未知';
+  const md = R.macroDrivers.fedLiquidity;
+  if (onRrp < md.onRrpCriticalThreshold) return '告急';
+  if (onRrp < md.onRrpTightThreshold) return '收紧';
+  if (Number.isFinite(weekChangePct) && weekChangePct <= md.onRrpWeekRapidDropPct) return '快速消耗';
+  return '充裕';
+}
+
+function classifyCurveRegime(t10y2y) {
+  if (!Number.isFinite(t10y2y)) return '未知';
+  const md = R.macroDrivers.curve;
+  if (t10y2y <= md.severeInversionThreshold) return '深度倒挂';
+  if (t10y2y <= md.deepInversionThreshold) return '深度倒挂';
+  if (t10y2y <= md.mildInversionThreshold) return '轻度倒挂';
+  if (t10y2y <= md.inversionThreshold) return '平坦';
+  return '正常';
+}
+
+function classifyCreditRegime(igOas) {
+  if (!Number.isFinite(igOas)) return '未知';
+  const md = R.macroDrivers.credit;
+  if (igOas >= md.igOasCriticalThreshold) return '扩张';
+  if (igOas >= md.igOasStressThreshold) return '偏紧';
+  if (igOas >= md.igOasWatchThreshold) return '正常';
+  return '偏宽松';
+}
+
+function computeFedLiquidityPressure(walcl4wChange, onRrp, onRrpWeekChange) {
+  let pressure = 0;
+  if (Number.isFinite(walcl4wChange)) {
+    if (walcl4wChange <= -2) pressure += 40;
+    else if (walcl4wChange <= -1) pressure += 25;
+    else if (walcl4wChange <= -0.3) pressure += 10;
+  }
+  if (Number.isFinite(onRrp)) {
+    const md = R.macroDrivers.fedLiquidity;
+    if (onRrp < md.onRrpCriticalThreshold) pressure += 45;
+    else if (onRrp < md.onRrpTightThreshold) pressure += 25;
+  }
+  if (Number.isFinite(onRrpWeekChange) && onRrpWeekChange <= -15) {
+    pressure += 15;
+  }
+  return clamp(pressure);
+}
+
+async function resolveFedLiquidity(prevFed) {
+  const status = { walcl: 'missing', onRrp: 'missing' };
+  let walcl = null;
+  let walcl4wChange = null;
+  let onRrp = null;
+  let onRrpWeekChange = null;
+
+  try {
+    const rows = await fetchFredSeries('WALCL', 90);
+    walcl = latestValue(rows);
+    const ago = findValueAgo(rows, 28);
+    if (Number.isFinite(walcl) && Number.isFinite(ago) && ago !== 0) {
+      walcl4wChange = +(((walcl - ago) / ago) * 100).toFixed(3);
+    }
+    status.walcl = 'live';
+  } catch (_err) {
+    if (Number.isFinite(prevFed?.walcl)) {
+      walcl = prevFed.walcl;
+      walcl4wChange = Number.isFinite(prevFed.walcl4wChange) ? prevFed.walcl4wChange : null;
+      status.walcl = 'fallback';
+    } else {
+      status.walcl = 'missing';
+    }
+  }
+
+  try {
+    const rows = await fetchFredSeries('RRPONTSYD', 30);
+    onRrp = latestValue(rows);
+    const ago = findValueAgo(rows, 7);
+    if (Number.isFinite(onRrp) && Number.isFinite(ago) && ago !== 0) {
+      onRrpWeekChange = +(((onRrp - ago) / ago) * 100).toFixed(3);
+    }
+    status.onRrp = 'live';
+  } catch (_err) {
+    if (Number.isFinite(prevFed?.onRrp)) {
+      onRrp = prevFed.onRrp;
+      onRrpWeekChange = Number.isFinite(prevFed.onRrpWeekChange) ? prevFed.onRrpWeekChange : null;
+      status.onRrp = 'fallback';
+    } else {
+      status.onRrp = 'missing';
+    }
+  }
+
+  const regime = classifyFedAssetTrend(walcl4wChange);
+  const rrpLevel = classifyOnRrpLevel(onRrp, onRrpWeekChange);
+  const pressure = computeFedLiquidityPressure(walcl4wChange, onRrp, onRrpWeekChange);
+
+  return {
+    walcl: Number.isFinite(walcl) ? walcl : null,
+    walcl4wChange: Number.isFinite(walcl4wChange) ? walcl4wChange : null,
+    onRrp: Number.isFinite(onRrp) ? onRrp : null,
+    onRrpWeekChange: Number.isFinite(onRrpWeekChange) ? onRrpWeekChange : null,
+    regime,
+    onRrpLevel: rrpLevel,
+    pressure,
+    sourceStatus: status
+  };
+}
+
+async function resolveCurve(prevCurve) {
+  const status = { t10y2y: 'missing' };
+  let t10y2y = null;
+  let weekChange = null;
+  try {
+    const rows = await fetchFredSeries('T10Y2Y', 30);
+    t10y2y = latestValue(rows);
+    const ago = findValueAgo(rows, 7);
+    if (Number.isFinite(t10y2y) && Number.isFinite(ago)) {
+      weekChange = +(t10y2y - ago).toFixed(3);
+    }
+    status.t10y2y = 'live';
+  } catch (_err) {
+    if (Number.isFinite(prevCurve?.t10y2y)) {
+      t10y2y = prevCurve.t10y2y;
+      weekChange = Number.isFinite(prevCurve.t10y2yWeekChange) ? prevCurve.t10y2yWeekChange : null;
+      status.t10y2y = 'fallback';
+    }
+  }
+
+  const regime = classifyCurveRegime(t10y2y);
+  const md = R.macroDrivers.curve;
+  const steepeningAlert = Number.isFinite(t10y2y) && Number.isFinite(weekChange)
+    && t10y2y < md.inversionThreshold
+    && weekChange >= md.steepeningWeekChangeThreshold;
+
+  return {
+    t10y2y: Number.isFinite(t10y2y) ? t10y2y : null,
+    t10y2yWeekChange: Number.isFinite(weekChange) ? weekChange : null,
+    regime,
+    steepeningAlert,
+    sourceStatus: status
+  };
+}
+
+async function resolveCredit(prevCredit, hyOasLive) {
+  const status = { igOas: 'missing' };
+  let igOas = null;
+  let igOas1dChange = null;
+  try {
+    const rows = await fetchFredSeries('BAMLC0A0CM', 30);
+    igOas = latestValue(rows);
+    if (rows.length >= 2) {
+      const prev = rows[rows.length - 2].value;
+      if (Number.isFinite(igOas) && Number.isFinite(prev)) {
+        igOas1dChange = +(igOas - prev).toFixed(3);
+      }
+    }
+    status.igOas = 'live';
+  } catch (_err) {
+    if (Number.isFinite(prevCredit?.igOas)) {
+      igOas = prevCredit.igOas;
+      igOas1dChange = Number.isFinite(prevCredit.igOas1dChange) ? prevCredit.igOas1dChange : null;
+      status.igOas = 'fallback';
+    }
+  }
+
+  const regime = classifyCreditRegime(igOas);
+  const igHyRatio = Number.isFinite(igOas) && Number.isFinite(hyOasLive) && hyOasLive !== 0
+    ? +(igOas / hyOasLive).toFixed(3)
+    : null;
+
+  return {
+    igOas: Number.isFinite(igOas) ? igOas : null,
+    igOas1dChange: Number.isFinite(igOas1dChange) ? igOas1dChange : null,
+    igHyRatio,
+    regime,
+    sourceStatus: status
+  };
+}
+
+async function fetchMacroDrivers(prev, hyOasLive) {
+  const prevMd = prev?.macroDrivers || {};
+  const results = await Promise.allSettled([
+    resolveFedLiquidity(prevMd.fedLiquidity),
+    resolveCurve(prevMd.curve),
+    resolveCredit(prevMd.credit, hyOasLive)
+  ]);
+
+  const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
+    walcl: null, walcl4wChange: null, onRrp: null, onRrpWeekChange: null,
+    regime: '未知', onRrpLevel: '未知', pressure: 0,
+    sourceStatus: { walcl: 'missing', onRrp: 'missing' }
+  };
+  const curve = results[1].status === 'fulfilled' ? results[1].value : {
+    t10y2y: null, t10y2yWeekChange: null, regime: '未知', steepeningAlert: false,
+    sourceStatus: { t10y2y: 'missing' }
+  };
+  const credit = results[2].status === 'fulfilled' ? results[2].value : {
+    igOas: null, igOas1dChange: null, igHyRatio: null, regime: '未知',
+    sourceStatus: { igOas: 'missing' }
+  };
+
+  return { fedLiquidity, curve, credit };
+}
+
+// 判断结构信号数据源是否"全不可用"
+function isAllStructuralSourcesMissing(macroDrivers) {
+  const fed = macroDrivers?.fedLiquidity?.sourceStatus || {};
+  const curve = macroDrivers?.curve?.sourceStatus || {};
+  const credit = macroDrivers?.credit?.sourceStatus || {};
+  return fed.walcl === 'missing'
+    && fed.onRrp === 'missing'
+    && curve.t10y2y === 'missing'
+    && credit.igOas === 'missing';
+}
+
+function activeStructuralSignals(macroDrivers) {
+  const active = [];
+  const fed = macroDrivers?.fedLiquidity || {};
+  const fedStatus = fed.sourceStatus || {};
+  const curve = macroDrivers?.curve || {};
+  const curveStatus = curve.sourceStatus || {};
+  const credit = macroDrivers?.credit || {};
+  const creditStatus = credit.sourceStatus || {};
+  const cfg = R.macroDrivers;
+
+  if (Number.isFinite(curve.t10y2y) && curveStatus.t10y2y !== 'missing'
+      && curve.t10y2y <= cfg.curve.deepInversionThreshold) {
+    active.push({
+      key: 'curveDeepInversion',
+      label: '曲线深度倒挂',
+      detail: `10年-2年利差 ${curve.t10y2y.toFixed(2)}`,
+      reliability: curveStatus.t10y2y
+    });
+  }
+  if (Number.isFinite(curve.t10y2y) && curve.steepeningAlert && curveStatus.t10y2y !== 'missing') {
+    active.push({
+      key: 'curveRapidSteepening',
+      label: '曲线快速陡峭化',
+      detail: `周变化 ${curve.t10y2yWeekChange?.toFixed?.(2) ?? '--'}`,
+      reliability: curveStatus.t10y2y
+    });
+  }
+  if (Number.isFinite(fed.onRrp) && fedStatus.onRrp !== 'missing'
+      && fed.onRrp < cfg.fedLiquidity.onRrpCriticalThreshold) {
+    active.push({
+      key: 'onRrpCritical',
+      label: '逆回购准备金告急',
+      detail: `ON RRP ${fed.onRrp.toFixed(0)} 十亿美元`,
+      reliability: fedStatus.onRrp
+    });
+  }
+  if (Number.isFinite(fed.walcl4wChange) && fedStatus.walcl !== 'missing'
+      && fed.walcl4wChange <= cfg.fedLiquidity.walcl4wRapidContractionAlert) {
+    active.push({
+      key: 'fedRapidContraction',
+      label: '美联储快速缩表',
+      detail: `4周变化 ${fed.walcl4wChange.toFixed(2)}%`,
+      reliability: fedStatus.walcl
+    });
+  }
+  if (Number.isFinite(credit.igOas) && creditStatus.igOas !== 'missing'
+      && credit.igOas >= cfg.credit.igOasStressThreshold) {
+    active.push({
+      key: 'igOasStress',
+      label: '投资级信用利差扩张',
+      detail: `IG OAS ${credit.igOas.toFixed(2)}%`,
+      reliability: creditStatus.igOas
+    });
+  }
+  return active;
+}
+
+function structuralScoreBump(activeSignals) {
+  const gating = R.structuralGating || {};
+  let bump = 0;
+  for (const sig of activeSignals) {
+    const add = gating[sig.key];
+    if (Number.isFinite(add)) bump += add;
+  }
+  return bump;
+}
+
+function structuralBandShift(activeSignals) {
+  const shifts = R.positionGuidanceShifts || {};
+  let total = 0;
+  for (const sig of activeSignals) {
+    const v = shifts[sig.key];
+    if (Number.isFinite(v)) total += v;
+  }
+  return total;
+}
+
+function deriveRisk(rt, macroDrivers) {
   const v = rt.values || {};
   const brent = v.brent ?? R.defaults.brent;
   const dxy = v.dxy ?? R.defaults.dxy;
@@ -80,13 +462,101 @@ function deriveRisk(rt) {
   const inflationRisk = clamp((breakeven - rb.breakevenBase) * rb.breakevenScale + oilRisk * rb.oilInflationWeight);
   const spxRisk = clamp((5300 - spx) / 6);
 
+  const baseLiquidity = clamp((dollarRisk * 0.35) + (hyRisk * 0.35) + (vixRisk * 0.18) + (rateRisk * 0.12));
+  const baseDebt = clamp((realRisk * 0.45) + (rateRisk * 0.3) + (hyRisk * 0.25));
+  const baseBanking = clamp((hyRisk * 0.55) + (vixRisk * 0.2) + (dollarRisk * 0.25));
+
+  const fed = macroDrivers?.fedLiquidity || {};
+  const fedStatus = fed.sourceStatus || {};
+  const curve = macroDrivers?.curve || {};
+  const curveStatus = curve.sourceStatus || {};
+  const credit = macroDrivers?.credit || {};
+  const creditStatus = credit.sourceStatus || {};
+
+  let fedAssetRisk = null;
+  if (Number.isFinite(fed.walcl4wChange) && fedStatus.walcl !== 'missing') {
+    fedAssetRisk = clamp((-fed.walcl4wChange) * 18);
+  }
+  let onRrpRisk = null;
+  if (Number.isFinite(fed.onRrp) && fedStatus.onRrp !== 'missing') {
+    const cfg = R.macroDrivers.fedLiquidity;
+    if (fed.onRrp < cfg.onRrpCriticalThreshold) onRrpRisk = 85;
+    else if (fed.onRrp < cfg.onRrpTightThreshold) onRrpRisk = 55;
+    else if (Number.isFinite(fed.onRrpWeekChange) && fed.onRrpWeekChange <= cfg.onRrpWeekRapidDropPct) onRrpRisk = 45;
+    else onRrpRisk = 15;
+  }
+
+  let curveInversionRisk = null;
+  let curveSteepeningRisk = null;
+  if (Number.isFinite(curve.t10y2y) && curveStatus.t10y2y !== 'missing') {
+    if (curve.t10y2y < 0) curveInversionRisk = clamp(Math.abs(curve.t10y2y) * 80);
+    else curveInversionRisk = 10;
+    curveSteepeningRisk = curve.steepeningAlert ? 80 : clamp(Number.isFinite(curve.t10y2yWeekChange) ? curve.t10y2yWeekChange * 30 : 0);
+  }
+
+  let igOasRisk = null;
+  let nimPressureRisk = null;
+  let reservePressure = null;
+  if (Number.isFinite(credit.igOas) && creditStatus.igOas !== 'missing') {
+    const cfg = R.macroDrivers.credit;
+    if (credit.igOas >= cfg.igOasCriticalThreshold) igOasRisk = 90;
+    else if (credit.igOas >= cfg.igOasStressThreshold) igOasRisk = 70;
+    else if (credit.igOas >= cfg.igOasWatchThreshold) igOasRisk = 45;
+    else igOasRisk = 20;
+  }
+  if (Number.isFinite(curve.t10y2y) && curveStatus.t10y2y !== 'missing') {
+    nimPressureRisk = curve.t10y2y < -0.5 ? 75 : curve.t10y2y < 0 ? 50 : 20;
+  }
+  if (Number.isFinite(fed.onRrp) && fedStatus.onRrp !== 'missing') {
+    const cfg = R.macroDrivers.fedLiquidity;
+    reservePressure = fed.onRrp < cfg.onRrpCriticalThreshold ? 85
+      : fed.onRrp < cfg.onRrpTightThreshold ? 50
+      : 15;
+  }
+
+  const sw = R.moduleSubWeights;
+  const weightedAvg = (entries) => {
+    let wSum = 0;
+    let vSum = 0;
+    for (const [val, w] of entries) {
+      if (Number.isFinite(val) && Number.isFinite(w)) {
+        vSum += val * w;
+        wSum += w;
+      }
+    }
+    return wSum > 0 ? vSum / wSum : null;
+  };
+
+  const newLiquidity = clamp(
+    weightedAvg([
+      [baseLiquidity, sw.liquidity.baseWeight],
+      [fedAssetRisk, sw.liquidity.fedAssetWeight],
+      [onRrpRisk, sw.liquidity.onRrpWeight]
+    ]) ?? baseLiquidity
+  );
+  const newDebt = clamp(
+    weightedAvg([
+      [baseDebt, sw.debt.baseWeight],
+      [curveInversionRisk, sw.debt.curveInversionWeight],
+      [curveSteepeningRisk, sw.debt.curveSteepeningWeight]
+    ]) ?? baseDebt
+  );
+  const newBanking = clamp(
+    weightedAvg([
+      [baseBanking, sw.banking.baseWeight],
+      [igOasRisk, sw.banking.igOasWeight],
+      [nimPressureRisk, sw.banking.nimPressureWeight],
+      [reservePressure, sw.banking.reservePressureWeight]
+    ]) ?? baseBanking
+  );
+
   const modules = {
     geopolitical: clamp((oilRisk * 0.72) + (vixRisk * 0.28)),
     energy: clamp((oilRisk * 0.82) + Math.max(0, rt.changes?.brent1d || 0) * 2),
     inflation: clamp((inflationRisk * 0.72) + (realRisk * 0.08)),
-    liquidity: clamp((dollarRisk * 0.35) + (hyRisk * 0.35) + (vixRisk * 0.18) + (rateRisk * 0.12)),
-    debt: clamp((realRisk * 0.45) + (rateRisk * 0.3) + (hyRisk * 0.25)),
-    banking: clamp((hyRisk * 0.55) + (vixRisk * 0.2) + (dollarRisk * 0.25))
+    liquidity: newLiquidity,
+    debt: newDebt,
+    banking: newBanking
   };
   const mw = R.moduleWeights;
   const score = clamp(
@@ -97,7 +567,13 @@ function deriveRisk(rt) {
     modules.debt * mw.debt +
     modules.banking * mw.banking
   );
-  return { modules, score, oilRisk, dollarRisk, hyRisk, vixRisk, rateRisk, realRisk, inflationRisk, spxRisk, brent, dxy, vix, hy, us10y, real10y, breakeven, spx, gold };
+  return {
+    modules, score,
+    oilRisk, dollarRisk, hyRisk, vixRisk, rateRisk, realRisk, inflationRisk, spxRisk,
+    brent, dxy, vix, hy, us10y, real10y, breakeven, spx, gold,
+    fedAssetRisk, onRrpRisk, curveInversionRisk, curveSteepeningRisk,
+    igOasRisk, nimPressureRisk, reservePressure
+  };
 }
 
 function regimeProb(score, risk) {
@@ -127,33 +603,108 @@ function regimeLabel(probs) {
   return labels[Object.entries(probs).sort((a, b) => b[1] - a[1])[0][0]];
 }
 
-function lockEngine(score, risk, rt) {
+// v27 结构性门控分层判定（严格分层：红灯需要更苛刻条件）
+function evaluateStructuralGating(macroDrivers) {
+  const cfg = R.macroDrivers;
+  const fed = macroDrivers?.fedLiquidity || {};
+  const fedStatus = fed.sourceStatus || {};
+  const curve = macroDrivers?.curve || {};
+  const curveStatus = curve.sourceStatus || {};
+  const credit = macroDrivers?.credit || {};
+  const creditStatus = credit.sourceStatus || {};
+
+  const t10y2y = (Number.isFinite(curve.t10y2y) && curveStatus.t10y2y !== 'missing') ? curve.t10y2y : null;
+  const onRrp = (Number.isFinite(fed.onRrp) && fedStatus.onRrp !== 'missing') ? fed.onRrp : null;
+  const walcl4w = (Number.isFinite(fed.walcl4wChange) && fedStatus.walcl !== 'missing') ? fed.walcl4wChange : null;
+  const igOas = (Number.isFinite(credit.igOas) && creditStatus.igOas !== 'missing') ? credit.igOas : null;
+
+  // === 红灯：严格阈值，需要严重双压或单项极端值 ===
+  // 红灯触发条件1：曲线严重倒挂（< -0.8）且 IG 告警级以上（>= critical 2.0%）
+  const redCurveCreditDouble = (t10y2y !== null && t10y2y <= cfg.curve.severeInversionThreshold)
+    && (igOas !== null && igOas >= cfg.credit.igOasCriticalThreshold);
+  // 红灯触发条件2：ON RRP 低于 onRrpCriticalThreshold / 2（单项极端，约 50 十亿美元）
+  const onRrpCatastrophic = onRrp !== null && onRrp < (cfg.fedLiquidity.onRrpCriticalThreshold / 2);
+  const structuralRed = redCurveCreditDouble || onRrpCatastrophic;
+
+  // === 黄灯：较宽阈值 ===
+  // 黄灯触发条件1：曲线深度倒挂（<= -0.5）且美联储快速缩表（4周 <= -1%）
+  const yellowCurveFedDouble = (t10y2y !== null && t10y2y <= cfg.curve.deepInversionThreshold)
+    && (walcl4w !== null && walcl4w <= cfg.fedLiquidity.walcl4wContractionAlert);
+  // 黄灯触发条件2：IG OAS 进入应力区（>= 1.5%）
+  const yellowIgWatch = igOas !== null && igOas >= cfg.credit.igOasWatchThreshold;
+  // 黄灯触发条件3：ON RRP 告急（< 100 十亿美元）单项
+  const yellowOnRrpCritical = onRrp !== null && onRrp < cfg.fedLiquidity.onRrpCriticalThreshold;
+  // 黄灯触发条件4：曲线深度倒挂单项（<= -0.5）
+  const yellowCurveDeep = t10y2y !== null && t10y2y <= cfg.curve.deepInversionThreshold;
+  const structuralYellow = yellowCurveFedDouble || yellowIgWatch || yellowOnRrpCritical || yellowCurveDeep;
+
+  // 记录触发原因（用于文案）
+  const redReasons = [];
+  if (redCurveCreditDouble) redReasons.push('曲线严重倒挂且投资级信用告警');
+  if (onRrpCatastrophic) redReasons.push('逆回购准备金临界告急');
+  const yellowReasons = [];
+  if (yellowCurveFedDouble) yellowReasons.push('曲线深度倒挂叠加美联储缩表');
+  if (yellowIgWatch) yellowReasons.push('投资级信用利差进入应力区');
+  if (yellowOnRrpCritical) yellowReasons.push('逆回购余额告急');
+  if (yellowCurveDeep) yellowReasons.push('曲线深度倒挂');
+
+  return {
+    structuralRed,
+    structuralYellow,
+    redReasons,
+    yellowReasons
+  };
+}
+
+function lockEngine(score, risk, rt, gatingResult) {
   const el = R.executionLock;
   const criticalDown = (rt.criticalMissing ?? 0) >= el.red.criticalMissingThreshold || (rt.cacheOnly ?? false);
-  if (criticalDown || score >= el.red.scoreThreshold || risk.brent >= el.red.brentThreshold || risk.hy >= el.red.hyThreshold || risk.vix >= el.red.vixThreshold) {
+
+  const baseRed = criticalDown
+    || score >= el.red.scoreThreshold
+    || risk.brent >= el.red.brentThreshold
+    || risk.hy >= el.red.hyThreshold
+    || risk.vix >= el.red.vixThreshold;
+
+  const baseYellow = score >= el.yellow.scoreThreshold
+    || risk.brent >= el.yellow.brentThreshold
+    || risk.hy >= el.yellow.hyThreshold
+    || risk.vix >= el.yellow.vixThreshold;
+
+  const structurallyTriggered = (!baseRed && gatingResult.structuralRed) || (!baseYellow && gatingResult.structuralYellow && !baseRed && !gatingResult.structuralRed);
+
+  if (baseRed || gatingResult.structuralRed) {
+    const structDesc = gatingResult.structuralRed && !baseRed
+      ? `结构性双压触发红灯（${gatingResult.redReasons.join('、')}）。`
+      : '';
     return {
       level: 'red',
       levelLabel: '红灯 / 禁止新增',
       title: '今天禁止主动加仓，只允许减仓与恢复防御层',
-      description: '系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。',
+      description: `${structDesc}系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。`.trim(),
       gross: '38%', cash: '35%', riskBudget: '30%',
       allow: ['允许减仓风险资产。', '允许补充美元/短票与现金。', '允许把黄金对冲恢复到上限。'],
       block: ['禁止新增股票与高波动仓位。', '禁止盘中追涨。', '禁止主观覆盖系统阈值。'],
       mandatory: ['若总仓位高于 42%，必须先减到 38% 附近。', '若高波动资产 > 2%，立即降回 2% 以下。', '若现金缓冲 < 30%，立即补回。'],
-      actionText: '执行引擎锁定：禁止新增，只允许减仓与防守恢复。'
+      actionText: '执行引擎锁定：禁止新增，只允许减仓与防守恢复。',
+      structurallyTriggered: gatingResult.structuralRed && !baseRed
     };
   }
-  if (score >= el.yellow.scoreThreshold || risk.brent >= el.yellow.brentThreshold || risk.hy >= el.yellow.hyThreshold || risk.vix >= el.yellow.vixThreshold) {
+  if (baseYellow || gatingResult.structuralYellow) {
+    const structDesc = gatingResult.structuralYellow && !baseYellow
+      ? `结构性压力触发黄灯（${gatingResult.yellowReasons.join('、')}）。`
+      : '';
     return {
       level: 'yellow',
       levelLabel: '黄灯 / 仅允许微调',
       title: '今天不能主动加风险，只允许对齐目标仓位与防守再平衡',
-      description: '风险尚未解除，执行引擎只允许微调。允许围绕目标仓位做再平衡，但禁止新增进攻性仓位。',
+      description: `${structDesc}风险尚未解除，执行引擎只允许微调。允许围绕目标仓位做再平衡，但禁止新增进攻性仓位。`.trim(),
       gross: '48%', cash: '27%', riskBudget: '40%',
       allow: ['允许把总仓位向 48% 靠拢。', '允许维持能源、美元/短票、黄金对冲层。', '允许保留防御型股票观察仓。'],
       block: ['禁止新增高波动与久期进攻仓位。', '禁止因为单日反弹而加仓。', '禁止无视执行状态灯。'],
       mandatory: ['若总仓位高于 53%，先减仓。', '若高波动资产 > 3%，降回上限以内。', '若现金缓冲 < 25%，恢复到安全区间。'],
-      actionText: '执行引擎锁定：只允许微调，不允许扩大风险暴露。'
+      actionText: '执行引擎锁定：只允许微调，不允许扩大风险暴露。',
+      structurallyTriggered: gatingResult.structuralYellow && !baseYellow
     };
   }
   return {
@@ -165,7 +716,8 @@ function lockEngine(score, risk, rt) {
     allow: ['允许分三笔内提高总仓位。', '允许增加质量权益和部分成长观察仓。', '允许降低部分美元/短票。'],
     block: ['禁止一次性打满仓位。', '禁止在单日大涨后追高。', '禁止取消防守底仓。'],
     mandatory: ['任何新增仓位都必须分批完成。', '若状态灯重新转黄，次日停止加仓。', '若周回撤超过 -3%，切回黄灯纪律。'],
-    actionText: '执行引擎开放：允许分批进攻，但不得破坏现金缓冲与止损纪律。'
+    actionText: '执行引擎开放：允许分批进攻，但不得破坏现金缓冲与止损纪律。',
+    structurallyTriggered: false
   };
 }
 
@@ -196,9 +748,9 @@ function targetAllocations(lock) {
   ];
 }
 
-function appendHistory(prevHistory, score) {
+function appendHistory(prev, score) {
   const today = isoNow.slice(0, 10);
-  const history = Array.isArray(prevHistory) ? [...prevHistory] : [];
+  const history = Array.isArray(prev) ? [...prev] : [];
   if (history.length && history[history.length - 1].date === today) {
     history[history.length - 1].score = score;
   } else {
@@ -207,7 +759,7 @@ function appendHistory(prevHistory, score) {
   return history.slice(-90);
 }
 
-function appendHistoryFull(prevFull, risk, lock, macro, rt) {
+function appendHistoryFull(prevFull, risk, lock, macro, macroDrivers) {
   const today = isoNow.slice(0, 10);
   const full = Array.isArray(prevFull) ? [...prevFull] : [];
   const entry = {
@@ -221,7 +773,11 @@ function appendHistoryFull(prevFull, risk, lock, macro, rt) {
     dxy: risk.dxy,
     hyOas: risk.hy,
     us10y: risk.us10y,
-    real10y: risk.real10y
+    real10y: risk.real10y,
+    t10y2y: macroDrivers?.curve?.t10y2y ?? null,
+    igOas: macroDrivers?.credit?.igOas ?? null,
+    walcl: macroDrivers?.fedLiquidity?.walcl ?? null,
+    onRrp: macroDrivers?.fedLiquidity?.onRrp ?? null
   };
   if (full.length && full[full.length - 1].date === today) {
     full[full.length - 1] = entry;
@@ -231,11 +787,33 @@ function appendHistoryFull(prevFull, risk, lock, macro, rt) {
   return full;
 }
 
-function build() {
+function buildFallback() {
+  const next = structuredClone(prevData);
+  next.version = 'v27.0';
+  next.updatedAt = isoNow;
+  next.decisionLine = '实时快变量暂不可用，系统沿用上次有效慢变量结构，但保留今日更新时间戳。';
+  next.summary = 'v27.0 日构建已退回到上次有效慢变量结构。';
+  next.recovery = {
+    degradedMode: true,
+    safeOutput: true,
+    lastRun: isoNow,
+    notes: ['日构建未拿到可用实时快照，已回退到上次有效结果。']
+  };
+  return { data: next, history: prevHistory, historyFull: prevHistoryFull };
+}
+
+async function build() {
   if (!realtime || !realtime.values) return buildFallback();
 
   const sourceModeLabel = SOURCE_MODE_CN[realtime.sourceMode] || realtime.sourceMode || '--';
-  const risk = deriveRisk(realtime);
+
+  const hyOasLive = Number(realtime.values?.hyOas);
+  const macroDrivers = await fetchMacroDrivers(prevData, Number.isFinite(hyOasLive) ? hyOasLive : null);
+  const allMacroMissing = isAllStructuralSourcesMissing(macroDrivers);
+  const activeSignals = activeStructuralSignals(macroDrivers);
+  const gatingResult = evaluateStructuralGating(macroDrivers);
+
+  const risk = deriveRisk(realtime, macroDrivers);
   const history = appendHistory(prevHistory, risk.score);
   const scoreChange1d = history.length >= 2 ? risk.score - history[history.length - 2].score : 0;
   const scoreChange7d = history.length >= 8 ? risk.score - history[history.length - 8].score : 0;
@@ -246,7 +824,7 @@ function build() {
   const probs = regimeProb(risk.score, risk);
   const macro = regimeLabel(probs);
   const phase = risk.modules.liquidity >= 70 ? '流动性偏紧' : risk.modules.energy >= 75 ? '通胀冲击' : '风险缓和';
-  const lock = lockEngine(risk.score, risk, realtime);
+  const lock = lockEngine(risk.score, risk, realtime, gatingResult);
   const allocs = targetAllocations(lock);
 
   const topRisks = [
@@ -256,13 +834,47 @@ function build() {
     `10年期美债 ${risk.us10y.toFixed(2)}%，实际利率 ${risk.real10y.toFixed(2)}%。`
   ];
 
-  // 主导驱动因子（中文标签）
-  const sortedModules = Object.entries(risk.modules)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
+  const sortedModules = Object.entries(risk.modules).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+  const signalDesc = allMacroMissing
+    ? '结构信号数据源当前全部不可用，结构门控已降级。'
+    : (activeSignals.length
+      ? `结构信号激活：${activeSignals.map(s => `${s.label}（${s.detail}）`).join('；')}。`
+      : '无结构信号激活。');
+
+  const reliabilityNote = activeSignals.some(s => s.reliability === 'fallback')
+    ? '（部分结构信号基于回退数据）'
+    : '';
+
+  const stateReasonCN = `${lock.levelLabel}，风险分数 ${risk.score}。${signalDesc}${reliabilityNote} 主导模块：${sortedModules.map(([k]) => MODULE_LABELS_CN[k]).join('、')}。`;
+
+  const structuralShift = structuralBandShift(activeSignals);
+  const guidanceSuffix = activeSignals.length
+    ? ` 结构性约束：${activeSignals.map(s => s.label).join('、')}，仓位需额外保守。`
+    : '';
+
+  const cashGuidanceText = `目标现金缓冲：${lock.cash}。${guidanceSuffix}`.trim();
+  const newExposurePolicyText = (lock.level === 'green'
+    ? '允许分批提高风险暴露，单日净加仓不超过总资产 5%。'
+    : lock.level === 'yellow'
+      ? '仅允许微调，禁止新增进攻性仓位。'
+      : '禁止新增，只允许减仓与防守。') + guidanceSuffix;
+
+  const baseBandByLock = lock.level === 'red' ? { lo: 20, hi: 40 } : lock.level === 'yellow' ? { lo: 38, hi: 53 } : { lo: 55, hi: 70 };
+  const shiftedLo = clampRange(Math.round(baseBandByLock.lo + structuralShift / 2), 0, 90);
+  const shiftedHi = clampRange(Math.round(baseBandByLock.hi + structuralShift / 2), 10, 100);
+  const totalExposureBandCN = `${shiftedLo}%-${shiftedHi}%`;
+
+  // v27: recovery.notes 构建 —— 若结构信号数据源全不可用则追加中文降级说明
+  const recoveryNotes = realtime.notes && realtime.notes.length
+    ? [...realtime.notes]
+    : ['v27.0 慢变量已由最新实时快照与结构性数据重算。'];
+  if (allMacroMissing) {
+    recoveryNotes.push('结构信号数据源当前全部不可用，v27 结构门控已降级。');
+  }
 
   const data = {
-    version: 'v26.0A-rc1',
+    version: 'v27.0',
     updatedAt: isoNow,
     score: risk.score,
     scoreChange1d,
@@ -276,8 +888,8 @@ function build() {
     confidenceScore: clamp(100 - (realtime.criticalMissing ?? 0) * R.confidenceScoring.criticalMissingPenalty - (realtime.fallbackCount ?? 0) * R.confidenceScoring.fallbackPenalty),
     confidenceLevel: (realtime.cacheOnly ? '低' : realtime.degradedMode ? '中' : '高'),
     topRisks,
-    decisionLine: `当前已进入 v26.0A-rc1 交易引擎模式：实时快变量${sourceModeLabel}，执行状态灯为${lock.levelLabel}。先看状态灯，再决定能不能动。`,
-    summary: `v26.0A-rc1 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${risk.brent.toFixed(1)}、美元指数 ${risk.dxy.toFixed(2)}、波动率 ${risk.vix.toFixed(2)}、高收益利差 ${risk.hy.toFixed(2)}%。`,
+    decisionLine: `当前已进入 v27.0 交易引擎模式：实时快变量${sourceModeLabel}，执行状态灯为${lock.levelLabel}。${activeSignals.length ? '已激活结构信号：' + activeSignals.map(s => s.label).join('、') + '。' : allMacroMissing ? '结构信号数据源暂不可用。' : ''}先看状态灯，再决定能不能动。`,
+    summary: `v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${risk.brent.toFixed(1)}、美元指数 ${risk.dxy.toFixed(2)}、波动率 ${risk.vix.toFixed(2)}、高收益利差 ${risk.hy.toFixed(2)}%。`,
     modules: risk.modules,
     moduleTrends: {
       geopolitical: clamp((realtime.changes?.brent1d ?? 0) * 2, -9, 9),
@@ -293,6 +905,22 @@ function build() {
       `利率输入：10年期 ${risk.us10y.toFixed(2)} / 实际利率 ${risk.real10y.toFixed(2)} / 盈亏平衡通胀 ${risk.breakeven.toFixed(2)}%。`,
       `快变量状态：${sourceModeLabel}，健康度 ${realtime.healthScore}。`
     ],
+    macroDrivers: {
+      fedLiquidity: macroDrivers.fedLiquidity,
+      curve: macroDrivers.curve,
+      credit: {
+        ...macroDrivers.credit,
+        hyOas: Number.isFinite(hyOasLive) ? hyOasLive : null
+      },
+      activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
+      gatingEvaluation: {
+        structuralRed: gatingResult.structuralRed,
+        structuralYellow: gatingResult.structuralYellow,
+        redReasons: gatingResult.redReasons,
+        yellowReasons: gatingResult.yellowReasons
+      },
+      allSourcesMissing: allMacroMissing
+    },
     liquidityIndex: {
       score: risk.modules.liquidity,
       regime: risk.modules.liquidity >= 70 ? '限制性偏紧' : risk.modules.liquidity >= 55 ? '偏紧缓解' : '流动性修复',
@@ -307,7 +935,12 @@ function build() {
         { label: '跨资产波动', value: risk.vixRisk, delta: clamp((realtime.changes?.vix1d ?? 0) * 4, -9, 9) },
         { label: '信用 / 利差', value: risk.hyRisk, delta: clamp((realtime.changes?.hyOas1d ?? 0) * 10, -9, 9) },
         { label: '利率敏感压力', value: clamp(avg([risk.rateRisk, risk.realRisk])), delta: clamp(((realtime.changes?.us10y1d ?? 0) + (realtime.changes?.real10y1d ?? 0)) * 18, -9, 9) }
-      ]
+      ],
+      structuralSignals: {
+        fedAssetTrend: macroDrivers.fedLiquidity.regime,
+        onRrpLevel: macroDrivers.fedLiquidity.onRrpLevel,
+        structuralPressure: macroDrivers.fedLiquidity.pressure
+      }
     },
     timeDimension: {
       trend30d: '滚动风险曲线（混合实时驱动）',
@@ -329,7 +962,7 @@ function build() {
       notes: [
         `当前综合风险分数 ${risk.score}。`,
         `执行引擎状态：${lock.levelLabel}。`,
-        `慢变量由实时快照驱动重算，不再直接依赖外抓。`
+        `慢变量由实时快照与结构性数据共同驱动。`
       ]
     },
     heatmap: [
@@ -396,6 +1029,14 @@ function build() {
           condition: lock.description,
           action: lock.actionText
         },
+        ...activeSignals.map((s) => ({
+          level: ['curveDeepInversion', 'onRrpCritical', 'igOasStress'].includes(s.key) ? '橙色' : '黄色',
+          title: s.label,
+          driver: '结构信号',
+          triggeredAgo: isoNow,
+          condition: s.detail,
+          action: '该结构信号已纳入决策层门控。'
+        })),
         ...(realtime.notes || []).map((n) => ({
           level: '黄色',
           title: '数据源提示',
@@ -408,7 +1049,9 @@ function build() {
       rules: [
         '关键快变量失败 2 项以上 → 标记部分降级。',
         '关键快变量失败 4 项以上 → 进入缓存模式。',
-        '缓存模式自动把执行状态灯至少提升到黄灯。'
+        '缓存模式自动把执行状态灯至少提升到黄灯。',
+        '结构性红灯门控：曲线严重倒挂（< -0.8）且投资级信用告警（>= 2.0%）；或逆回购余额临界告急。',
+        '结构性黄灯门控：曲线深度倒挂叠加美联储缩表；或投资级信用利差进入应力区；或逆回购告急。'
       ]
     },
     triggerPanel: {
@@ -419,13 +1062,14 @@ function build() {
     confidenceNotes: [
       `数据模式：${sourceModeLabel}。`,
       `健康分数：${realtime.healthScore}。`,
-      `关键缺失项：${realtime.criticalMissing || 0}。`
+      `关键缺失项：${realtime.criticalMissing || 0}。`,
+      `结构信号：${activeSignals.length ? activeSignals.map(s => s.label).join('、') : (allMacroMissing ? '数据源全不可用' : '无激活')}。`
     ],
     recovery: {
-      degradedMode: realtime.degradedMode,
+      degradedMode: realtime.degradedMode || allMacroMissing,
       safeOutput: true,
       lastRun: isoNow,
-      notes: realtime.notes || ['v26.0A-rc1 慢变量已由最新实时快照重算。']
+      notes: recoveryNotes
     },
     tradingSystem: {
       signalEngine: {
@@ -438,7 +1082,8 @@ function build() {
         notes: [
           `执行引擎状态：${lock.levelLabel}。`,
           `关键快变量：布伦特 ${risk.brent.toFixed(1)} / 美元指数 ${risk.dxy.toFixed(2)} / 波动率 ${risk.vix.toFixed(2)} / 高收益利差 ${risk.hy.toFixed(2)}。`,
-          `健康度 ${realtime.healthScore}，关键缺失 ${realtime.criticalMissing || 0}。`
+          `健康度 ${realtime.healthScore}，关键缺失 ${realtime.criticalMissing || 0}。`,
+          activeSignals.length ? `结构信号：${activeSignals.map(s => s.label).join('、')}。` : (allMacroMissing ? '结构信号数据源全不可用，门控已降级。' : '结构信号：无激活。')
         ]
       },
       positioning: {
@@ -466,12 +1111,15 @@ function build() {
           '流动性 ≥ 75：总仓位降至 42%。',
           '布伦特 ≥ 110：能源上调，股票下调。',
           '高收益利差 ≥ 4.5%：暂停新增风险仓位。',
-          '波动率指数 ≥ 28：切入红灯。'
+          '波动率指数 ≥ 28：切入红灯。',
+          '结构性红灯：曲线 < -0.8 且投资级信用利差 ≥ 2.0%；或逆回购余额临界告急。',
+          '结构性黄灯：曲线 ≤ -0.5 叠加美联储缩表；或投资级信用利差 ≥ 1.5%；或逆回购 < 1000 亿。'
         ],
         resetThresholds: [
           '波动率指数 < 18 且高收益利差 < 3.7：才允许回到绿灯。',
           '布伦特 < 95 且美元走弱：才允许提高成长仓。',
-          '关键缺失 < 2：解除数据回退约束。'
+          '关键缺失 < 2：解除数据回退约束。',
+          '曲线回到 0 以上且投资级信用利差 < 1.2%：解除结构性约束。'
         ]
       },
       actionLayer: {
@@ -484,7 +1132,10 @@ function build() {
           `布伦特 当前 ${risk.brent.toFixed(1)}`,
           `美元指数 当前 ${risk.dxy.toFixed(2)}`,
           `波动率指数 当前 ${risk.vix.toFixed(2)}`,
-          `高收益利差 当前 ${risk.hy.toFixed(2)}%`
+          `高收益利差 当前 ${risk.hy.toFixed(2)}%`,
+          ...(Number.isFinite(macroDrivers.curve.t10y2y) ? [`曲线 10年-2年 当前 ${macroDrivers.curve.t10y2y.toFixed(2)}`] : []),
+          ...(Number.isFinite(macroDrivers.credit.igOas) ? [`投资级信用利差 当前 ${macroDrivers.credit.igOas.toFixed(2)}%`] : []),
+          ...(Number.isFinite(macroDrivers.fedLiquidity.onRrp) ? [`逆回购余额 当前 ${macroDrivers.fedLiquidity.onRrp.toFixed(0)} 十亿美元`] : [])
         ]
       },
       executionLock: {
@@ -495,18 +1146,21 @@ function build() {
         description: lock.description,
         allow: lock.allow,
         block: lock.block,
-        mandatory: lock.mandatory
+        mandatory: lock.mandatory,
+        structurallyTriggered: !!lock.structurallyTriggered
       }
     }
   };
 
-  // decisionModel：写入中文化的主导驱动因子和仓位指引
   data.decisionModel = {
-    contractVersion: 'v26.0A-final',
+    contractVersion: 'v27.0',
     strategyState: lock.level === 'red' ? 'Defensive' : lock.level === 'yellow' ? 'Caution' : 'Balanced',
     stateLabel: lock.levelLabel,
     stateScore: risk.score,
-    stateReason: `当前执行锁定${lock.levelLabel}，风险分数 ${risk.score}，主导因子：${sortedModules.map(([k]) => MODULE_LABELS_CN[k]).join('、')}。`,
+    stateReason: stateReasonCN,
+    structuralSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
+    structuralScoreBump: structuralScoreBump(activeSignals),
+    allStructuralSourcesMissing: allMacroMissing,
     dominantDrivers: sortedModules.map(([key, score]) => ({
       key,
       score,
@@ -514,39 +1168,60 @@ function build() {
       trend: 0
     })),
     positionGuidance: {
-      totalExposureBand: lock.level === 'red' ? '20%-40%' : lock.level === 'yellow' ? '38%-53%' : '55%-70%',
+      totalExposureBand: totalExposureBandCN,
       riskAssetBias: lock.level === 'red' ? '低配风险资产' : lock.level === 'yellow' ? '选择性低配' : '中性至选择性配置',
-      cashGuidance: `目标现金缓冲：${lock.cash}`,
+      cashGuidance: cashGuidanceText,
+      newExposurePolicy: newExposurePolicyText,
       targetGrossExposure: lock.gross,
       cashBufferTarget: lock.cash,
-      riskBudget: lock.riskBudget
+      riskBudget: lock.riskBudget,
+      structuralBandShift: structuralShift
     },
     actionQueue: {
-      priorityActions: lock.mandatory,
+      priorityActions: [
+        ...lock.mandatory,
+        ...activeSignals.map(s => `关注结构信号：${s.label}（${s.detail}）。`)
+      ],
       blockedActions: lock.block,
-      watchItems: ['下一次通胀数据', '油价是否高于 100', '信用利差是否重新走阔']
+      watchItems: [
+        '下一次通胀数据',
+        '油价是否高于 100',
+        '信用利差是否重新走阔',
+        ...(Number.isFinite(macroDrivers.curve.t10y2y) ? ['10年-2年利差走向'] : []),
+        ...(Number.isFinite(macroDrivers.credit.igOas) ? ['投资级信用利差变化'] : []),
+        ...(Number.isFinite(macroDrivers.fedLiquidity.onRrp) ? ['逆回购余额变化'] : [])
+      ]
     },
     triggerMonitor: {
-      upgradeTriggers: [`布伦特 ${risk.brent.toFixed(1)}`, `美元指数 ${risk.dxy.toFixed(2)}`, `高收益利差 ${risk.hy.toFixed(2)}%`],
-      activeEscalationSignals: [`波动率 ${risk.vix.toFixed(2)}`, `10年期美债 ${risk.us10y.toFixed(2)}%`, `实际利率 ${risk.real10y.toFixed(2)}%`]
+      upgradeTriggers: [
+        `布伦特 ${risk.brent.toFixed(1)}`,
+        `美元指数 ${risk.dxy.toFixed(2)}`,
+        `高收益利差 ${risk.hy.toFixed(2)}%`,
+        ...(Number.isFinite(macroDrivers.curve.t10y2y) ? [`10年-2年利差 ${macroDrivers.curve.t10y2y.toFixed(2)}`] : []),
+        ...(Number.isFinite(macroDrivers.credit.igOas) ? [`投资级信用利差 ${macroDrivers.credit.igOas.toFixed(2)}%`] : [])
+      ],
+      activeEscalationSignals: activeSignals.length
+        ? activeSignals.map(s => `${s.label}（${s.detail}）`)
+        : [`波动率 ${risk.vix.toFixed(2)}`, `10年期美债 ${risk.us10y.toFixed(2)}%`, `实际利率 ${risk.real10y.toFixed(2)}%`]
     },
     invalidationRules: {
       resetConditions: [
         '波动率指数 < 18 且高收益利差 < 3.7：才允许回到绿灯。',
         '布伦特 < 95 且美元走弱：才允许提高成长仓。',
-        '关键缺失 < 2：解除数据回退约束。'
+        '关键缺失 < 2：解除数据回退约束。',
+        '曲线回到 0 以上且投资级信用利差 < 1.2%：解除结构性约束。'
       ]
     }
   };
 
-  const historyFull = appendHistoryFull(prevHistoryFull, risk, lock, macro, realtime);
+  const historyFull = appendHistoryFull(prevHistoryFull, risk, lock, macro, macroDrivers);
 
   return { data, history, historyFull };
 }
 
-const built = build();
+const built = await build();
 fs.mkdirSync(dataDir, { recursive: true });
 fs.writeFileSync(dataPath, JSON.stringify(built.data, null, 2));
 fs.writeFileSync(histPath, JSON.stringify(built.history, null, 2));
 fs.writeFileSync(histFullPath, JSON.stringify(built.historyFull, null, 2));
-console.log('v26.0A-rc1 雷达数据构建成功。');
+console.log('v27.0 雷达数据构建成功。');
