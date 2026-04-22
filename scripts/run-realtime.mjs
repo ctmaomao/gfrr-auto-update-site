@@ -18,6 +18,9 @@ const REQUEST_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
 const USER_AGENT = 'gfr-v26.0a-realtime/1.0';
 const FRESHNESS_WINDOWS = RULES.freshnessWindows;
+const BRENT_VALIDATION_SOURCES = ['ice', 'investing', 'marketscreener'];
+const BRENT_REASONABLE_MIN = 30;
+const BRENT_REASONABLE_MAX = 150;
 
 const sourceSpecs = {
   brent: {
@@ -120,6 +123,134 @@ function stringifyError(error) {
   return message.replace(/\s+/g, ' ').slice(0, 160);
 }
 
+function safeNumber(value) {
+  if (typeof value !== 'string') return null;
+  const normalized = value.replace(/,/g, '').trim();
+  const num = Number(normalized);
+  return Number.isFinite(num) ? num : null;
+}
+
+function firstMatch(text, patterns) {
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+  return null;
+}
+
+function extractValueByPatterns(text, patterns) {
+  const raw = firstMatch(text, patterns);
+  return safeNumber(raw);
+}
+
+function isReasonableBrentValue(value) {
+  return Number.isFinite(value) && value >= BRENT_REASONABLE_MIN && value <= BRENT_REASONABLE_MAX;
+}
+
+function parseObservedAtUtc(raw) {
+  if (typeof raw !== 'string') return null;
+  const cleaned = raw.replace(/\s+/g, ' ').trim();
+  if (!cleaned) return null;
+  const utcTime = Date.parse(cleaned.includes('GMT') || cleaned.includes('UTC') ? cleaned : `${cleaned} UTC`);
+  if (!Number.isFinite(utcTime)) return null;
+  return new Date(utcTime).toISOString();
+}
+
+function buildUnavailableCandidate(source, fetchedAt, delayClass, reason) {
+  return {
+    source,
+    value: null,
+    observedAt: null,
+    fetchedAt,
+    delayClass,
+    available: false,
+    reason
+  };
+}
+
+function summarizeWebReason(webCandidates, recommendedSource, hasClosePair, anchorCandidate) {
+  const availableSources = webCandidates.map((item) => item.source).join('/');
+  if (webCandidates.length === 0) return '无可用网页源，无法形成 Brent 推荐值。';
+  if (webCandidates.length >= 2 && hasClosePair) {
+    return `${recommendedSource} 与 ${availableSources} 基本一致；FRED 仅作低频锚点参考。`;
+  }
+  if (webCandidates.length === 1 && anchorCandidate?.available) {
+    return `仅 ${availableSources} 可用，已结合 FRED 锚点做偏离参考。`;
+  }
+  return `仅 ${availableSources} 可用，交叉验证不足。`;
+}
+
+function pickRecommendedCandidate(webCandidates) {
+  if (webCandidates.length === 0) return null;
+  if (webCandidates.length === 1) return webCandidates[0];
+
+  const sortedValues = webCandidates.map((item) => item.value).sort((a, b) => a - b);
+  const mid = Math.floor(sortedValues.length / 2);
+  const median = sortedValues.length % 2 === 1
+    ? sortedValues[mid]
+    : (sortedValues[mid - 1] + sortedValues[mid]) / 2;
+  const preference = ['ice', 'investing', 'marketscreener'];
+  return webCandidates
+    .slice()
+    .sort((a, b) => {
+      const distA = Math.abs(a.value - median);
+      const distB = Math.abs(b.value - median);
+      if (distA !== distB) return distA - distB;
+      return preference.indexOf(a.source) - preference.indexOf(b.source);
+    })[0];
+}
+
+function computePairDivergencePct(a, b) {
+  const avg = (a + b) / 2;
+  if (!Number.isFinite(avg) || avg === 0) return null;
+  return Math.abs(a - b) / avg * 100;
+}
+
+function buildBrentConsensus(candidates) {
+  const webCandidates = candidates.filter((item) => BRENT_VALIDATION_SOURCES.includes(item.source) && item.available);
+  const anchorCandidate = candidates.find((item) => item.source === 'fred-anchor') ?? null;
+  const recommended = pickRecommendedCandidate(webCandidates);
+  let divergencePct = null;
+  let hasClosePair = false;
+
+  if (webCandidates.length >= 2) {
+    const divergences = [];
+    for (let i = 0; i < webCandidates.length; i += 1) {
+      for (let j = i + 1; j < webCandidates.length; j += 1) {
+        const pct = computePairDivergencePct(webCandidates[i].value, webCandidates[j].value);
+        if (pct === null) continue;
+        divergences.push(pct);
+        if (pct < 2) hasClosePair = true;
+      }
+    }
+    if (divergences.length) {
+      divergencePct = Number(Math.max(...divergences).toFixed(3));
+    }
+  }
+
+  const recommendedValue = recommended?.value ?? null;
+  const recommendedSource = recommended?.source ?? null;
+  const valueLooksReasonable = isReasonableBrentValue(recommendedValue);
+
+  let confidence = 'none';
+  if (webCandidates.length >= 2 && hasClosePair && valueLooksReasonable) {
+    confidence = 'high';
+  } else if (webCandidates.length === 1 && anchorCandidate?.available && valueLooksReasonable) {
+    confidence = 'medium';
+  } else if (webCandidates.length === 1 && valueLooksReasonable) {
+    confidence = 'low';
+  }
+
+  return {
+    recommendedValue,
+    recommendedSource,
+    confidence,
+    reason: summarizeWebReason(webCandidates, recommendedSource, hasClosePair, anchorCandidate),
+    divergencePct,
+    canPromoteToPrimary: webCandidates.length >= 2 && hasClosePair && valueLooksReasonable
+  };
+}
+
 function parseTimestamp(value) {
   if (typeof value !== 'string' || !value) return null;
   const normalized = value.includes('T') ? value : `${value}T00:00:00Z`;
@@ -205,6 +336,178 @@ async function fetchRows(descriptor) {
   const rows = descriptor.kind === 'fred' ? parseFredCsv(text) : parseStooqCsv(text);
   if (rows.length < 2) throw new Error(`${descriptor.source} returned insufficient rows`);
   return rows;
+}
+
+async function fetchBrentIceCandidate(fetchedAt) {
+  const source = 'ice';
+  const delayClass = 'delayed-15m';
+  const url = 'https://www.ice.com/products/219/Brent-Crude-Futures';
+  try {
+    const text = await retryTask(
+      () => fetchWithTimeout(url, {
+        timeoutMs: REQUEST_TIMEOUT_MS,
+        headers: {
+          Accept: 'text/html,application/xhtml+xml',
+          'Accept-Language': 'en-US,en;q=0.9',
+          Referer: 'https://www.ice.com/'
+        }
+      }),
+      { label: 'ice:brent' }
+    );
+
+    const value = extractValueByPatterns(text, [
+      /"lastPrice"\s*:\s*"([\d.,]+)"/i,
+      /"settlementPrice"\s*:\s*"([\d.,]+)"/i,
+      /Last\s*Price[\s\S]{0,120}?>([\d.,]+)</i
+    ]);
+    if (!Number.isFinite(value)) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:value');
+    }
+    if (!isReasonableBrentValue(value)) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, `parse-failed:out-of-range(${value})`);
+    }
+    const observedRaw = firstMatch(text, [
+      /As of\s*([^<]{8,40}(?:GMT|UTC))/i,
+      /Last updated\s*([^<]{8,40}(?:GMT|UTC))/i
+    ]);
+    return {
+      source,
+      value,
+      observedAt: parseObservedAtUtc(observedRaw),
+      fetchedAt,
+      delayClass,
+      available: true,
+      reason: null
+    };
+  } catch (error) {
+    return buildUnavailableCandidate(source, fetchedAt, delayClass, `fetch-failed:${stringifyError(error)}`);
+  }
+}
+
+async function fetchBrentInvestingCandidate(fetchedAt) {
+  const source = 'investing';
+  const delayClass = 'delay-unknown';
+  const url = 'https://www.investing.com/commodities/brent-oil';
+  try {
+    const text = await retryTask(
+      () => fetchWithTimeout(url, {
+        timeoutMs: REQUEST_TIMEOUT_MS,
+        headers: {
+          Accept: 'text/html,application/xhtml+xml',
+          'Accept-Language': 'en-US,en;q=0.9',
+          Referer: 'https://www.investing.com/'
+        }
+      }),
+      { label: 'investing:brent' }
+    );
+    const value = extractValueByPatterns(text, [
+      /data-test="instrument-price-last"[^>]*>([\d.,]+)</i,
+      /"last_last"\s*:\s*"([\d.,]+)"/i,
+      /"last"\s*:\s*"([\d.,]+)"/i
+    ]);
+    if (!Number.isFinite(value)) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:value');
+    }
+    if (!isReasonableBrentValue(value)) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, `parse-failed:out-of-range(${value})`);
+    }
+    const observedRaw = firstMatch(text, [
+      /data-test="instrument-price-last-updated"[^>]*>([^<]+)</i,
+      /Last Update:\s*([^<]{5,40})</i
+    ]);
+    return {
+      source,
+      value,
+      observedAt: parseObservedAtUtc(observedRaw),
+      fetchedAt,
+      delayClass,
+      available: true,
+      reason: null
+    };
+  } catch (error) {
+    return buildUnavailableCandidate(source, fetchedAt, delayClass, `fetch-failed:${stringifyError(error)}`);
+  }
+}
+
+async function fetchBrentMarketScreenerCandidate(fetchedAt) {
+  const source = 'marketscreener';
+  const delayClass = 'delayed-otc';
+  const url = 'https://www.marketscreener.com/quote/commodity/BRENT-CRUDE-OIL-SPOT-4948/';
+  try {
+    const text = await retryTask(
+      () => fetchWithTimeout(url, {
+        timeoutMs: REQUEST_TIMEOUT_MS,
+        headers: {
+          Accept: 'text/html,application/xhtml+xml',
+          'Accept-Language': 'en-US,en;q=0.9',
+          Referer: 'https://www.marketscreener.com/'
+        }
+      }),
+      { label: 'marketscreener:brent' }
+    );
+    const value = extractValueByPatterns(text, [
+      /"last"\s*:\s*"([\d.,]+)"/i,
+      /class="c-faceplate__price"[^>]*>([\d.,]+)</i,
+      /BRENT[^<]{0,120}([\d]{2,3}\.[\d]{1,3})/i
+    ]);
+    if (!Number.isFinite(value)) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:value');
+    }
+    if (!isReasonableBrentValue(value)) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, `parse-failed:out-of-range(${value})`);
+    }
+    const observedRaw = firstMatch(text, [
+      /As of\s*([^<]{8,40}(?:GMT|UTC))/i,
+      /Updated on\s*([^<]{8,40}(?:GMT|UTC))/i
+    ]);
+    return {
+      source,
+      value,
+      observedAt: parseObservedAtUtc(observedRaw),
+      fetchedAt,
+      delayClass,
+      available: true,
+      reason: null
+    };
+  } catch (error) {
+    return buildUnavailableCandidate(source, fetchedAt, delayClass, `fetch-failed:${stringifyError(error)}`);
+  }
+}
+
+function buildFredAnchorCandidate(brentResult, fetchedAt) {
+  const source = 'fred-anchor';
+  const delayClass = 'daily-anchor';
+  if (!Number.isFinite(brentResult?.value)) {
+    return buildUnavailableCandidate(source, fetchedAt, delayClass, 'missing-fred-value');
+  }
+  return {
+    source,
+    value: brentResult.value,
+    observedAt: typeof brentResult.timestamp === 'string' ? brentResult.timestamp : null,
+    fetchedAt,
+    delayClass,
+    available: true,
+    reason: null
+  };
+}
+
+async function buildBrentValidation(results, fetchedAt) {
+  const brentResult = results.find((item) => item.key === 'brent');
+  const [iceCandidate, investingCandidate, marketScreenerCandidate] = await Promise.all([
+    fetchBrentIceCandidate(fetchedAt),
+    fetchBrentInvestingCandidate(fetchedAt),
+    fetchBrentMarketScreenerCandidate(fetchedAt)
+  ]);
+  const candidates = [
+    iceCandidate,
+    investingCandidate,
+    marketScreenerCandidate,
+    buildFredAnchorCandidate(brentResult, fetchedAt)
+  ];
+  return {
+    candidates,
+    consensus: buildBrentConsensus(candidates)
+  };
 }
 
 function normalizeLiveResult(key, descriptor, rows, { critical, fallbackUsed = false } = {}) {
@@ -317,7 +620,7 @@ function buildFieldFreshness(sourceDetails) {
   };
 }
 
-function buildPayload(results, prev) {
+function buildPayload(results, prev, brentValidation = null) {
   const values = {};
   const changes = {};
   for (const result of results) {
@@ -361,7 +664,8 @@ function buildPayload(results, prev) {
     changes,
     sourceStatus: buildSourceStatus(results),
     sourceDetails,
-    fieldFreshness: buildFieldFreshness(sourceDetails)
+    fieldFreshness: buildFieldFreshness(sourceDetails),
+    brentValidation
   };
 }
 
@@ -386,7 +690,23 @@ function mockPayload() {
     criticalMissing: 0, fallbackCount: 0, secondarySourceCount: 0, lastSuccessAt: now,
     freshnessPreparedAt: now, freshnessPending: true,
     notes: ['本地模拟模式：仅用于验证实时数据格式。'],
-    values, changes, sourceStatus, sourceDetails, fieldFreshness
+    values, changes, sourceStatus, sourceDetails, fieldFreshness,
+    brentValidation: {
+      candidates: [
+        { source: 'ice', value: 89.82, observedAt: now, fetchedAt: now, delayClass: 'delayed-15m', available: true, reason: null },
+        { source: 'investing', value: 89.79, observedAt: null, fetchedAt: now, delayClass: 'delay-unknown', available: true, reason: null },
+        { source: 'marketscreener', value: 89.85, observedAt: null, fetchedAt: now, delayClass: 'delayed-otc', available: true, reason: null },
+        { source: 'fred-anchor', value: 89.8, observedAt: now.slice(0, 10), fetchedAt: now, delayClass: 'daily-anchor', available: true, reason: null }
+      ],
+      consensus: {
+        recommendedValue: 89.82,
+        recommendedSource: 'ice',
+        confidence: 'high',
+        reason: 'ice 与 investing/marketscreener 基本一致；FRED 仅作低频锚点参考。',
+        divergencePct: 0.07,
+        canPromoteToPrimary: true
+      }
+    }
   };
 }
 
@@ -394,12 +714,26 @@ async function main() {
   const prev = readPrev();
   const payload = process.env.GFR_USE_LOCAL_MOCK === '1'
     ? mockPayload()
-    : buildPayload(
-        await Promise.all(
-          Object.entries(sourceSpecs).map(([key, spec]) => resolveMetric(key, spec, prev))
-        ),
-        prev
+    : await (async () => {
+      const results = await Promise.all(
+        Object.entries(sourceSpecs).map(([key, spec]) => resolveMetric(key, spec, prev))
       );
+      const brentValidation = await buildBrentValidation(results, now).catch((error) => ({
+        candidates: [buildUnavailableCandidate('ice', now, 'delayed-15m', `validation-failed:${stringifyError(error)}`),
+          buildUnavailableCandidate('investing', now, 'delay-unknown', 'validation-failed:skipped'),
+          buildUnavailableCandidate('marketscreener', now, 'delayed-otc', 'validation-failed:skipped'),
+          buildUnavailableCandidate('fred-anchor', now, 'daily-anchor', 'validation-failed:skipped')],
+        consensus: {
+          recommendedValue: null,
+          recommendedSource: null,
+          confidence: 'none',
+          reason: `brent 验证链路异常：${stringifyError(error)}`,
+          divergencePct: null,
+          canPromoteToPrimary: false
+        }
+      }));
+      return buildPayload(results, prev, brentValidation);
+    })();
   fs.mkdirSync(path.dirname(realtimePath), { recursive: true });
   fs.writeFileSync(realtimePath, JSON.stringify(payload, null, 2));
   console.log('实时市场数据构建成功。(v27.0)');
