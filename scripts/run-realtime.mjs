@@ -384,7 +384,7 @@ async function main() {
       );
   fs.mkdirSync(path.dirname(realtimePath), { recursive: true });
   fs.writeFileSync(realtimePath, JSON.stringify(payload, null, 2));
-  console.log('实时市场数据构建成功。(v26.0A-rc1)');
+  console.log('实时市场数据构建成功。(v27.0)');
 }
 
 main().catch((error) => {

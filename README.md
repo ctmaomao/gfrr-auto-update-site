@@ -1,11 +1,11 @@
 # 全球金融风险雷达
 
-当前稳定版：`v26.0A-rc1`
+当前稳定版：`v27.0`
 
 全球金融风险雷达是一个面向公开部署场景的静态风险监测页面。项目以静态基线数据为主，以 realtime 覆盖层为辅，并在前端统一展示 freshness、degraded、unavailable 和 Health Dashboard 状态。
 
 ## 发布状态
-- 当前稳定版：`v26.0A-rc1`
+- 当前稳定版：`v27.0`
 - realtime 发布分支：`realtime-data`
 - 当前能力：`baseline + realtime overlay + freshness + degraded + health dashboard`
 
@@ -52,11 +52,11 @@
 - realtime 发布与页面部署已经解耦；realtime 刷新不再依赖向 `main` 高频提交
 - 如果页面出现 `Baseline Only`，优先检查 realtime 发布链路和 `realtime-data` 分支内容
 
-## v26.0A 官方发布说明（Decision System Release）
+## v27.0 官方发布说明（Decision System Release）
 
 ### 版本定位
 
-`v26.0A` 是《全球金融风险雷达》的关键架构版本。
+`v27.0` 是《全球金融风险雷达》的当前稳定发布版本。
 
 这一版本将系统从“风险信息展示工具”升级为“可执行的风险决策系统”。
 
@@ -68,6 +68,16 @@
 
 ### 新增核心能力
 
+- 结构性宏观数据源
+  - 新增结构性宏观数据源接入，强化中长期风险识别能力
+- `macroDrivers`
+  - 在决策层引入 `macroDrivers`，统一承接核心宏观驱动项
+- 结构性红灯 / 黄灯门控
+  - 增加结构性红灯 / 黄灯门控规则，优先约束高风险状态下的动作
+- 流动性 / 债务 / 银行三模块重算
+  - 对流动性、债务、银行三模块执行重算与权重校正
+- pipeline 优先决策
+  - pipeline 采用“优先决策”路径，确保先输出状态与动作结论
 - `Strategy State`
   - 系统输出五档策略状态机：`Risk-On / Balanced / Caution / Defensive / Crisis`
 - `Position Guidance`
@@ -94,7 +104,7 @@
 
 ### 决策契约
 
-`v26.0A` 引入了统一的 `decisionModel` 输出层，用于承接后续所有状态、仓位、动作与触发逻辑。
+`v27.0` 在统一 `decisionModel` 输出层基础上，进一步纳入 `macroDrivers` 与结构性门控，用于承接后续所有状态、仓位、动作与触发逻辑。
 
 结构示意如下：
 
@@ -134,7 +144,7 @@ decisionModel
 
 ### 当前版本状态
 
-当前版本为：`v26.0A-rc1`
+当前版本为：`v27.0`
 
 版本状态判断如下：
 
@@ -164,4 +174,4 @@ decisionModel
 
 ### 总结
 
-`v25：看到风险；v26：知道该做什么。`
+`历史版本演进：v25：看到风险；v26：知道该做什么。`

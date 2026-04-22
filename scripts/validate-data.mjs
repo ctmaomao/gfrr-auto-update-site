@@ -32,4 +32,4 @@ if (!data.tradingSystem || !data.tradingSystem.executionLock || !data.tradingSys
   throw new Error('Validation failed: trading engine modules missing.');
 }
 if (!realtime.values || !realtime.sourceStatus) throw new Error('Validation failed: realtime payload incomplete.');
-console.log('Validation passed (v26.0A-rc1)');
+console.log('Validation passed (v27.0)');
