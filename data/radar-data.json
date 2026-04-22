@@ -1,10 +1,10 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-04-22T10:19:53.747Z",
-  "score": 57,
-  "scoreChange1d": -3,
-  "scoreChange7d": -24,
-  "scoreChange30d": -8,
+  "updatedAt": "2026-04-22T23:24:45.540Z",
+  "score": 56,
+  "scoreChange1d": -4,
+  "scoreChange7d": -25,
+  "scoreChange30d": -9,
   "trendLabel": "风险回落",
   "currentMacroRegime": "滞胀冲击",
   "currentCrisisPhase": "通胀冲击",
@@ -25,7 +25,7 @@
     "energy": 90,
     "inflation": 57,
     "liquidity": 49,
-    "debt": 26,
+    "debt": 25,
     "banking": 37
   },
   "moduleTrends": {
@@ -53,8 +53,8 @@
     "fedLiquidity": {
       "walcl": 6705696,
       "walcl4wChange": 0.748,
-      "onRrp": 0.807,
-      "onRrpWeekChange": 163.725,
+      "onRrp": 0.538,
+      "onRrpWeekChange": 141.256,
       "regime": "平稳",
       "onRrpLevel": "告急",
       "pressure": 45,
@@ -64,8 +64,8 @@
       }
     },
     "curve": {
-      "t10y2y": 0.52,
-      "t10y2yWeekChange": 0.02,
+      "t10y2y": 0.51,
+      "t10y2yWeekChange": -0.02,
       "regime": "正常",
       "steepeningAlert": false,
       "sourceStatus": {
@@ -73,9 +73,9 @@
       }
     },
     "credit": {
-      "igOas": 0.81,
-      "igOas1dChange": 0.01,
-      "igHyRatio": 0.283,
+      "igOas": 0.8,
+      "igOas1dChange": -0.01,
+      "igHyRatio": 0.28,
       "regime": "偏宽松",
       "sourceStatus": {
         "igOas": "live"
@@ -86,7 +86,7 @@
       {
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
-        "detail": "ON RRP 0.807 十亿美元",
+        "detail": "ON RRP 0.538 十亿美元",
         "reliability": "live"
       }
     ],
@@ -141,11 +141,11 @@
   },
   "timeDimension": {
     "trend30d": "滚动风险曲线（混合实时驱动）",
-    "scoreChange30d": -8,
+    "scoreChange30d": -9,
     "avg30d": 71,
     "peak30d": 81,
-    "trough30d": 57,
-    "drawFromPeak": -24,
+    "trough30d": 56,
+    "drawFromPeak": -25,
     "transmissionSpeed": 65,
     "transmissionAcceleration": "放缓",
     "dominantPath": "油价 → 通胀 → 利率 → 股票",
@@ -177,7 +177,7 @@
       }
     ],
     "notes": [
-      "当前综合风险分数 57。",
+      "当前综合风险分数 56。",
       "执行引擎状态：红灯 / 禁止新增。",
       "慢变量由实时快照与结构性数据共同驱动。"
     ]
@@ -619,7 +619,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-04-22T10:19:53.747Z",
+        "triggeredAgo": "2026-04-22T23:24:45.540Z",
         "condition": "系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -627,15 +627,15 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-04-22T10:19:53.747Z",
-        "condition": "ON RRP 0.807 十亿美元",
+        "triggeredAgo": "2026-04-22T23:24:45.540Z",
+        "condition": "ON RRP 0.538 十亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
       {
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-04-22T10:19:53.747Z",
+        "triggeredAgo": "2026-04-22T23:24:45.540Z",
         "condition": "gold 数据源失效，已回退到上次有效值",
         "action": "继续使用回退值，不中断系统"
       }
@@ -674,14 +674,14 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-04-22T10:19:53.747Z",
+    "lastRun": "2026-04-22T23:24:45.540Z",
     "notes": [
       "gold 数据源失效，已回退到上次有效值"
     ]
   },
   "tradingSystem": {
     "signalEngine": {
-      "strength": 57,
+      "strength": 56,
       "direction": "只允许减仓/防守",
       "consistency": "高一致性",
       "macroSignal": "滞胀冲击",
@@ -794,8 +794,8 @@
         "美元指数 当前 118.86",
         "波动率指数 当前 17.94",
         "高收益利差 当前 2.86%",
-        "曲线 10年-2年 当前 0.52",
-        "投资级信用利差 当前 0.81%",
+        "曲线 10年-2年 当前 0.51",
+        "投资级信用利差 当前 0.80%",
         "逆回购余额 当前 1 十亿美元"
       ]
     },
@@ -827,13 +827,13 @@
     "contractVersion": "v27.0",
     "strategyState": "Defensive",
     "stateLabel": "红灯 / 禁止新增",
-    "stateScore": 57,
-    "stateReason": "红灯 / 禁止新增，风险分数 57。结构信号激活：逆回购准备金告急（ON RRP 0.807 十亿美元）。 主导模块：能源、地缘政治、通胀。",
+    "stateScore": 56,
+    "stateReason": "红灯 / 禁止新增，风险分数 56。结构信号激活：逆回购准备金告急（ON RRP 0.538 十亿美元）。 主导模块：能源、地缘政治、通胀。",
     "structuralSignals": [
       {
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
-        "detail": "ON RRP 0.807 十亿美元",
+        "detail": "ON RRP 0.538 十亿美元",
         "reliability": "live"
       }
     ],
@@ -874,7 +874,7 @@
         "若总仓位高于 42%，必须先减到 38% 附近。",
         "若高波动资产 > 2%，立即降回 2% 以下。",
         "若现金缓冲 < 30%，立即补回。",
-        "关注结构信号：逆回购准备金告急（ON RRP 0.807 十亿美元）。"
+        "关注结构信号：逆回购准备金告急（ON RRP 0.538 十亿美元）。"
       ],
       "blockedActions": [
         "禁止新增股票与高波动仓位。",
@@ -895,11 +895,11 @@
         "布伦特 123.3",
         "美元指数 118.86",
         "高收益利差 2.86%",
-        "10年-2年利差 0.52",
-        "投资级信用利差 0.81%"
+        "10年-2年利差 0.51",
+        "投资级信用利差 0.80%"
       ],
       "activeEscalationSignals": [
-        "逆回购准备金告急（ON RRP 0.807 十亿美元）"
+        "逆回购准备金告急（ON RRP 0.538 十亿美元）"
       ]
     },
     "invalidationRules": {
