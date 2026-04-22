@@ -302,6 +302,21 @@ function buildNotes(results) {
   return notes.length ? notes : ['实时数据源刷新成功。'];
 }
 
+function buildFieldFreshness(sourceDetails) {
+  const brentObservedAtRaw = sourceDetails?.brent?.timestamp;
+  const brentObservedAt = typeof brentObservedAtRaw === 'string' && brentObservedAtRaw ? brentObservedAtRaw : null;
+  const brentAgeMinutes = computeAgeMinutes(brentObservedAt, now);
+  const brentFreshnessLevel = classifyFreshnessLevel(brentAgeMinutes, Number.isFinite(sourceDetails?.brent?.value));
+  return {
+    brent: {
+      observedAt: brentObservedAt,
+      ageMinutes: brentAgeMinutes,
+      freshnessLevel: brentFreshnessLevel,
+      isStale: brentFreshnessLevel === 'stale' || brentFreshnessLevel === 'unavailable'
+    }
+  };
+}
+
 function buildPayload(results, prev) {
   const values = {};
   const changes = {};
@@ -324,6 +339,7 @@ function buildPayload(results, prev) {
     0,
     Math.min(100, 100 - criticalMissing * hs.criticalMissingPenalty - fallbackCount * hs.fallbackPenalty - secondarySourceCount * hs.secondarySourcePenalty)
   );
+  const sourceDetails = buildSourceDetails(results);
   return {
     updatedAt: now,
     asOf,
@@ -344,7 +360,8 @@ function buildPayload(results, prev) {
     values,
     changes,
     sourceStatus: buildSourceStatus(results),
-    sourceDetails: buildSourceDetails(results)
+    sourceDetails,
+    fieldFreshness: buildFieldFreshness(sourceDetails)
   };
 }
 
@@ -362,13 +379,14 @@ function mockPayload() {
     key,
     { ok: true, value: values[key], source: 'mock', timestamp: now, fallbackUsed: false, error: null, freshnessPrepared: true, ageSeconds: 0 }
   ]));
+  const fieldFreshness = buildFieldFreshness(sourceDetails);
   return {
     updatedAt: now, asOf: now, ageMinutes: 0, freshnessLevel: 'fresh', unavailable: false,
     sourceMode: 'mock', degradedMode: false, cacheOnly: false, healthScore: 100,
     criticalMissing: 0, fallbackCount: 0, secondarySourceCount: 0, lastSuccessAt: now,
     freshnessPreparedAt: now, freshnessPending: true,
     notes: ['本地模拟模式：仅用于验证实时数据格式。'],
-    values, changes, sourceStatus, sourceDetails
+    values, changes, sourceStatus, sourceDetails, fieldFreshness
   };
 }
 

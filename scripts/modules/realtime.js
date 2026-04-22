@@ -30,6 +30,14 @@ export function normalizeRealtimePayload(payload) {
   if (!payload || typeof payload !== 'object') return null;
   const values = payload.values && typeof payload.values === 'object' ? payload.values : null;
   if (!values) return null;
+  const fieldFreshness = payload.fieldFreshness && typeof payload.fieldFreshness === 'object' ? payload.fieldFreshness : {};
+  const brentFreshnessRaw = fieldFreshness.brent && typeof fieldFreshness.brent === 'object' ? fieldFreshness.brent : null;
+  const brentFreshness = brentFreshnessRaw ? {
+    observedAt: typeof brentFreshnessRaw.observedAt === 'string' ? brentFreshnessRaw.observedAt : null,
+    ageMinutes: Number.isFinite(brentFreshnessRaw.ageMinutes) ? brentFreshnessRaw.ageMinutes : null,
+    freshnessLevel: typeof brentFreshnessRaw.freshnessLevel === 'string' ? brentFreshnessRaw.freshnessLevel : null,
+    isStale: !!brentFreshnessRaw.isStale
+  } : null;
   const asOf = typeof payload.asOf === 'string'
     ? payload.asOf
     : typeof payload.lastSuccessAt === 'string'
@@ -54,6 +62,9 @@ export function normalizeRealtimePayload(payload) {
     lastSuccessAt: typeof payload.lastSuccessAt === 'string' ? payload.lastSuccessAt : null,
     sourceStatus: payload.sourceStatus && typeof payload.sourceStatus === 'object' ? payload.sourceStatus : {},
     sourceDetails: payload.sourceDetails && typeof payload.sourceDetails === 'object' ? payload.sourceDetails : {},
+    fieldFreshness: {
+      brent: brentFreshness
+    },
     notes: Array.isArray(payload.notes) ? payload.notes : []
   };
 }
@@ -102,6 +113,9 @@ export async function fetchRealtimePayload() {
 
 export function buildRuntimeState(baseline, history, realtimeResult) {
   const realtimePayload = realtimeResult.payload;
+  const brentFieldFreshness = realtimePayload?.fieldFreshness?.brent || null;
+  const brentFreshnessLevel = brentFieldFreshness?.freshnessLevel || null;
+  const brentIsStale = brentFreshnessLevel === 'stale' || brentFreshnessLevel === 'unavailable';
   const realtimeAsOf = realtimePayload?.asOf || realtimePayload?.lastSuccessAt || realtimePayload?.updatedAt || null;
   const realtimeAgeMinutes = computeAgeMinutes(realtimeAsOf);
   const realtimeFreshnessLevel = classifyFreshnessLevel(realtimeAgeMinutes, !!realtimePayload?.values);
@@ -124,7 +138,12 @@ export function buildRuntimeState(baseline, history, realtimeResult) {
     realtimeCriticalMissing: realtimePayload?.criticalMissing ?? null,
     realtimeSourceMode: realtimePayload?.sourceMode || null,
     realtimeSourceStatus: realtimePayload?.sourceStatus || {},
-    realtimeSourceDetails: realtimePayload?.sourceDetails || {}
+    realtimeSourceDetails: realtimePayload?.sourceDetails || {},
+    brentObservedAt: brentFieldFreshness?.observedAt ?? null,
+    brentAgeMinutes: brentFieldFreshness?.ageMinutes ?? null,
+    brentFreshnessLevel,
+    brentIsStale,
+    realtimeHasStaleKeyFields: brentIsStale
   };
   runtimeMetadata.realtimeStatusLabel = buildRealtimeStatusLabel(runtimeMetadata);
   runtimeMetadata.realtimeOverlayEnabled = shouldApplyRealtimeOverlay(runtimeMetadata, realtimePayload);
