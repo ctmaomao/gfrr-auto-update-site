@@ -395,7 +395,7 @@ function activeStructuralSignals(macroDrivers) {
     active.push({
       key: 'onRrpCritical',
       label: '逆回购准备金告急',
-      detail: `ON RRP ${fed.onRrp.toFixed(0)} 十亿美元`,
+      detail: `ON RRP ${fed.onRrp.toFixed(3)} 十亿美元`,
       reliability: fedStatus.onRrp
     });
   }
