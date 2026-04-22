@@ -1,6 +1,6 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-04-22T10:08:15.078Z",
+  "updatedAt": "2026-04-22T10:19:53.747Z",
   "score": 57,
   "scoreChange1d": -3,
   "scoreChange7d": -24,
@@ -86,7 +86,7 @@
       {
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
-        "detail": "ON RRP 1 十亿美元",
+        "detail": "ON RRP 0.807 十亿美元",
         "reliability": "live"
       }
     ],
@@ -619,7 +619,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-04-22T10:08:15.078Z",
+        "triggeredAgo": "2026-04-22T10:19:53.747Z",
         "condition": "系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -627,15 +627,15 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-04-22T10:08:15.078Z",
-        "condition": "ON RRP 1 十亿美元",
+        "triggeredAgo": "2026-04-22T10:19:53.747Z",
+        "condition": "ON RRP 0.807 十亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
       {
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-04-22T10:08:15.078Z",
+        "triggeredAgo": "2026-04-22T10:19:53.747Z",
         "condition": "gold 数据源失效，已回退到上次有效值",
         "action": "继续使用回退值，不中断系统"
       }
@@ -674,7 +674,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-04-22T10:08:15.078Z",
+    "lastRun": "2026-04-22T10:19:53.747Z",
     "notes": [
       "gold 数据源失效，已回退到上次有效值"
     ]
@@ -828,12 +828,12 @@
     "strategyState": "Defensive",
     "stateLabel": "红灯 / 禁止新增",
     "stateScore": 57,
-    "stateReason": "红灯 / 禁止新增，风险分数 57。结构信号激活：逆回购准备金告急（ON RRP 1 十亿美元）。 主导模块：能源、地缘政治、通胀。",
+    "stateReason": "红灯 / 禁止新增，风险分数 57。结构信号激活：逆回购准备金告急（ON RRP 0.807 十亿美元）。 主导模块：能源、地缘政治、通胀。",
     "structuralSignals": [
       {
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
-        "detail": "ON RRP 1 十亿美元",
+        "detail": "ON RRP 0.807 十亿美元",
         "reliability": "live"
       }
     ],
@@ -874,7 +874,7 @@
         "若总仓位高于 42%，必须先减到 38% 附近。",
         "若高波动资产 > 2%，立即降回 2% 以下。",
         "若现金缓冲 < 30%，立即补回。",
-        "关注结构信号：逆回购准备金告急（ON RRP 1 十亿美元）。"
+        "关注结构信号：逆回购准备金告急（ON RRP 0.807 十亿美元）。"
       ],
       "blockedActions": [
         "禁止新增股票与高波动仓位。",
@@ -899,7 +899,7 @@
         "投资级信用利差 0.81%"
       ],
       "activeEscalationSignals": [
-        "逆回购准备金告急（ON RRP 1 十亿美元）"
+        "逆回购准备金告急（ON RRP 0.807 十亿美元）"
       ]
     },
     "invalidationRules": {
