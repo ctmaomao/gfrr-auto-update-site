@@ -305,6 +305,46 @@ function buildScenarioTreeTriggers(list, inputs) {
   });
 }
 
+function buildSignalEngineNotes(inputs, realtimePayload, lock, gating) {
+  const levelLabel = lock?.levelLabel || '--';
+  const healthScore = Number.isFinite(realtimePayload?.healthScore) ? realtimePayload.healthScore : '--';
+  const criticalMissing = Number.isFinite(realtimePayload?.criticalMissing) ? realtimePayload.criticalMissing : 0;
+  const structuralLine = gating?.activeLabels?.length
+    ? `结构信号：${gating.activeLabels.join('、')}。`
+    : (gating?.allMissing ? '结构信号数据源全不可用，门控已降级。' : '结构信号：无激活。');
+  return [
+    `执行引擎状态：${levelLabel}。`,
+    `关键快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)} / 美元指数 ${fmtNumSafe(inputs.dxy, 2)} / 波动率 ${fmtNumSafe(inputs.vix, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}。`,
+    `健康度 ${healthScore}，关键缺失 ${criticalMissing}。`,
+    structuralLine
+  ];
+}
+
+function buildLiquidityNotes(inputs, realtimePayload) {
+  const sourceModeLabel = SOURCE_MODE_CN[realtimePayload?.sourceMode] || realtimePayload?.sourceMode || '--';
+  const healthScore = Number.isFinite(realtimePayload?.healthScore) ? realtimePayload.healthScore : '--';
+  const criticalMissing = Number.isFinite(realtimePayload?.criticalMissing) ? realtimePayload.criticalMissing : 0;
+  const payloadNotes = Array.isArray(realtimePayload?.notes) ? realtimePayload.notes : [];
+  return [
+    `实时快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)} / 美元指数 ${fmtNumSafe(inputs.dxy, 2)} / 波动率 ${fmtNumSafe(inputs.vix, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}。`,
+    `10年期美债 ${fmtNumSafe(inputs.us10y, 2)} / 实际利率 ${fmtNumSafe(inputs.real10y, 2)} / 黄金 ${fmtNumSafe(inputs.gold, 1)} / 标普500 ${fmtNumSafe(inputs.spx, 0)}。`,
+    `数据模式：${sourceModeLabel} / 健康分数：${healthScore} / 关键缺失：${criticalMissing}。`,
+    ...payloadNotes
+  ];
+}
+
+function buildHeatmapNotes(list, inputs) {
+  if (!Array.isArray(list)) return list;
+  return list.map((entry) => {
+    if (!entry || typeof entry !== 'object') return entry;
+    const note = typeof entry.note === 'string' ? entry.note : '';
+    if (entry.key === 'us' && /实际利率/.test(note) && !containsComparisonSymbol(note)) {
+      return { ...entry, note: `融资偏紧 + 实际利率 ${fmtNumSafe(inputs.real10y, 2)}%` };
+    }
+    return entry;
+  });
+}
+
 function rebuildDisplayTexts(target, base, realtimePayload) {
   const effectiveDisplayInputs = buildEffectiveDisplayInputs(realtimePayload, base);
   const gating = readStructuralGatingFromBase(base);
@@ -316,6 +356,19 @@ function rebuildDisplayTexts(target, base, realtimePayload) {
   target.triggerPanel = buildTriggerPanelDisplay(effectiveDisplayInputs, base);
   target.assetMatrix = buildAssetMatrixReasons(target.assetMatrix, effectiveDisplayInputs);
   target.scenarioTree = buildScenarioTreeTriggers(target.scenarioTree, effectiveDisplayInputs);
+  if (target.tradingSystem && target.tradingSystem.signalEngine && typeof target.tradingSystem.signalEngine === 'object') {
+    target.tradingSystem.signalEngine = {
+      ...target.tradingSystem.signalEngine,
+      notes: buildSignalEngineNotes(effectiveDisplayInputs, realtimePayload, lock, gating)
+    };
+  }
+  if (target.liquidityIndex && typeof target.liquidityIndex === 'object') {
+    target.liquidityIndex = {
+      ...target.liquidityIndex,
+      notes: buildLiquidityNotes(effectiveDisplayInputs, realtimePayload)
+    };
+  }
+  target.heatmap = buildHeatmapNotes(target.heatmap, effectiveDisplayInputs);
   target.__effectiveDisplayInputs = effectiveDisplayInputs;
   return target;
 }
@@ -456,15 +509,6 @@ export function applyRealtimeOverlay(base, realtimePayload) {
   next.liquidityIndex.score = next.modules.liquidity;
   next.liquidityIndex.regime = next.modules.liquidity >= 70 ? '限制性偏紧' : next.modules.liquidity >= 55 ? '偏紧缓解' : '流动性修复';
   next.liquidityIndex.directionLabel = realtimePayload.cacheOnly ? '快变量缓存模式' : realtimePayload.degradedMode ? '快变量带回退' : '快变量已实时覆盖';
-  {
-    const sourceModeLabel = SOURCE_MODE_CN[realtimePayload.sourceMode] || realtimePayload.sourceMode || '--';
-    next.liquidityIndex.notes = [
-      `实时快变量：布伦特 ${fmtNumSafe(brent,1)} / 美元指数 ${fmtNumSafe(dxy,2)} / 波动率 ${fmtNumSafe(vix,2)} / 高收益利差 ${fmtNumSafe(hy,2)}。`,
-      `10年期美债 ${fmtNumSafe(us10y,2)} / 实际利率 ${fmtNumSafe(real10y,2)} / 黄金 ${fmtNumSafe(gold,1)} / 标普500 ${fmtNumSafe(spx,0)}。`,
-      `数据模式：${sourceModeLabel} / 健康分数：${realtimePayload.healthScore ?? '--'} / 关键缺失：${realtimePayload.criticalMissing ?? 0}。`,
-      ...(realtimePayload.notes || [])
-    ];
-  }
 
   const hardStopBase = realtimePayload.cacheOnly
     || next.modules.liquidity >= 75
