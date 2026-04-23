@@ -164,6 +164,135 @@ export function getRealtimeNumber(values, key) {
   return Number.isFinite(value) ? value : null;
 }
 
+function containsComparisonSymbol(text) {
+  return typeof text === 'string' && /[<>≤≥≠=]/.test(text);
+}
+
+function buildBaselineFallbackInputs(base) {
+  const credit = base?.macroDrivers?.credit || {};
+  const toNumber = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+  return {
+    hyOas: toNumber(credit.hyOas)
+    // 其余字段在当前 baseline (radar-data.json) 中没有结构化对应值，
+    // 只能落回 null（由 fmtNumSafe 统一显示为 --），不伪造数字。
+  };
+}
+
+function buildEffectiveDisplayInputs(realtimePayload, base) {
+  const values = realtimePayload?.values || {};
+  const baseline = buildBaselineFallbackInputs(base);
+  const pick = (key) => {
+    const rtValue = getRealtimeNumber(values, key);
+    if (Number.isFinite(rtValue)) return rtValue;
+    const baseValue = baseline[key];
+    return Number.isFinite(baseValue) ? baseValue : null;
+  };
+  return {
+    brent: pick('brent'),
+    dxy: pick('dxy'),
+    vix: pick('vix'),
+    hyOas: pick('hyOas'),
+    us10y: pick('us10y'),
+    real10y: pick('real10y'),
+    breakeven10y: pick('breakeven10y'),
+    gold: pick('gold'),
+    spx: pick('spx')
+  };
+}
+
+function hasAnyFiniteField(inputs, keys) {
+  return keys.some((key) => Number.isFinite(inputs?.[key]));
+}
+
+function buildTopRisksDisplay(inputs) {
+  if (!hasAnyFiniteField(inputs, ['brent', 'dxy', 'hyOas', 'us10y', 'real10y'])) {
+    return ['实时快变量暂不可用。'];
+  }
+  return [
+    `布伦特 ${fmtNumSafe(inputs.brent, 1)} 美元，能源链条仍在传导。`,
+    `广义美元 ${fmtNumSafe(inputs.dxy, 2)}，融资环境仍在持续观察。`,
+    `高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}%，信用风险需持续观察。`,
+    `10年期美债 ${fmtNumSafe(inputs.us10y, 2)}%，实际利率 ${fmtNumSafe(inputs.real10y, 2)}%。`
+  ];
+}
+
+function buildPhaseSignalsDisplay(inputs, realtimePayload) {
+  if (!hasAnyFiniteField(inputs, ['brent', 'vix', 'hyOas', 'us10y', 'real10y', 'breakeven10y'])) {
+    return ['实时快变量暂不可用。'];
+  }
+  const sourceModeLabel = SOURCE_MODE_CN[realtimePayload?.sourceMode] || realtimePayload?.sourceMode || '--';
+  const healthScore = Number.isFinite(realtimePayload?.healthScore) ? realtimePayload.healthScore : '--';
+  return [
+    `实时输入：布伦特 ${fmtNumSafe(inputs.brent, 1)} / 波动率 ${fmtNumSafe(inputs.vix, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}%。`,
+    `利率输入：10年期 ${fmtNumSafe(inputs.us10y, 2)} / 实际利率 ${fmtNumSafe(inputs.real10y, 2)} / 盈亏平衡通胀 ${fmtNumSafe(inputs.breakeven10y, 2)}%。`,
+    `快变量状态：${sourceModeLabel}，健康度 ${healthScore}。`
+  ];
+}
+
+function buildSummaryDisplay(inputs) {
+  if (!hasAnyFiniteField(inputs, ['brent', 'dxy', 'vix', 'hyOas'])) {
+    return 'v27.0 正根据混合实时架构输出交易引擎结论。实时快变量暂不可用。';
+  }
+  return `v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)}、美元指数 ${fmtNumSafe(inputs.dxy, 2)}、波动率 ${fmtNumSafe(inputs.vix, 2)}、高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}%。`;
+}
+
+function buildDecisionLineDisplay(realtimePayload, lock, gating) {
+  const sourceModeLabel = SOURCE_MODE_CN[realtimePayload?.sourceMode] || realtimePayload?.sourceMode || '--';
+  const lockLabel = lock?.levelLabel || '--';
+  const sigClause = gating?.activeLabels?.length
+    ? `已激活结构信号：${gating.activeLabels.join('、')}。`
+    : (gating?.allMissing ? '结构信号数据源暂不可用。' : '');
+  return `当前已进入 v27.0 交易引擎模式：实时快变量${sourceModeLabel}，执行状态灯为${lockLabel}。${sigClause}先看状态灯，再决定能不能动。`;
+}
+
+function buildTriggerPanelDisplay(inputs, base) {
+  const prev = base?.triggerPanel || {};
+  const watchlist = Array.isArray(prev.watchlist) ? [...prev.watchlist] : [];
+  return {
+    critical: [
+      `布伦特 ${fmtNumSafe(inputs.brent, 1)}`,
+      `美元指数 ${fmtNumSafe(inputs.dxy, 2)}`,
+      `高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}%`
+    ],
+    drivers: [
+      `波动率 ${fmtNumSafe(inputs.vix, 2)}`,
+      `10年期美债 ${fmtNumSafe(inputs.us10y, 2)}%`,
+      `实际利率 ${fmtNumSafe(inputs.real10y, 2)}%`
+    ],
+    watchlist
+  };
+}
+
+function buildAssetMatrixReasons(list, inputs) {
+  if (!Array.isArray(list)) return list;
+  const builders = {
+    '黄金': () => `金价 ${fmtNumSafe(inputs.gold, 1)}，通胀对冲仍在，但真实利率仍需观察。`,
+    '原油': () => `布伦特 ${fmtNumSafe(inputs.brent, 1)} 美元，仍是主导链条。`,
+    '美元': () => `美元指数 ${fmtNumSafe(inputs.dxy, 2)}，融资偏紧阶段继续占优。`,
+    '美债久期': () => `10年期 ${fmtNumSafe(inputs.us10y, 2)} / 实际利率 ${fmtNumSafe(inputs.real10y, 2)}%。`
+  };
+  return list.map((row) => {
+    const builder = builders[row?.asset];
+    if (!builder) return row;
+    if (containsComparisonSymbol(row?.reason)) return row;
+    return { ...row, reason: builder() };
+  });
+}
+
+function buildScenarioTreeTriggers(list, inputs) {
+  if (!Array.isArray(list)) return list;
+  const rebuilt = `布伦特 ${fmtNumSafe(inputs.brent, 1)} / 美元指数 ${fmtNumSafe(inputs.dxy, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}`;
+  return list.map((entry) => {
+    const triggers = entry?.triggers;
+    if (typeof triggers !== 'string' || !triggers) return entry;
+    if (containsComparisonSymbol(triggers)) return entry;
+    return { ...entry, triggers: rebuilt };
+  });
+}
+
 function readStructuralGatingFromBase(base) {
   const md = base?.macroDrivers;
   if (!md || typeof md !== 'object') {
@@ -437,6 +566,16 @@ export function applyRealtimeOverlay(base, realtimePayload) {
     next.tradingSystem.riskControl.hardThresholds = uniq([...realtimeHardRules, ...pipelineStructuralHard]);
     next.tradingSystem.riskControl.resetThresholds = uniq([...realtimeResetRules, ...pipelineStructuralReset]);
   }
+
+  const effectiveDisplayInputs = buildEffectiveDisplayInputs(realtimePayload, base);
+  next.topRisks = buildTopRisksDisplay(effectiveDisplayInputs);
+  next.phaseSignals = buildPhaseSignalsDisplay(effectiveDisplayInputs, realtimePayload);
+  next.summary = buildSummaryDisplay(effectiveDisplayInputs);
+  next.decisionLine = buildDecisionLineDisplay(realtimePayload, next.tradingSystem.executionLock, gating);
+  next.triggerPanel = buildTriggerPanelDisplay(effectiveDisplayInputs, base);
+  next.assetMatrix = buildAssetMatrixReasons(next.assetMatrix, effectiveDisplayInputs);
+  next.scenarioTree = buildScenarioTreeTriggers(next.scenarioTree, effectiveDisplayInputs);
+  next.__effectiveDisplayInputs = effectiveDisplayInputs;
 
   return next;
 }
