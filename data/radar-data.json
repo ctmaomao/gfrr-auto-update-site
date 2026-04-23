@@ -1,6 +1,6 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-04-23T05:39:53.958Z",
+  "updatedAt": "2026-04-23T23:12:31.512Z",
   "score": 56,
   "scoreChange1d": 0,
   "scoreChange7d": -23,
@@ -62,13 +62,13 @@
   ],
   "macroDrivers": {
     "fedLiquidity": {
-      "walcl": 6705696,
-      "walcl4wChange": 0.748,
-      "onRrp": 0.538,
-      "onRrpWeekChange": 141.256,
+      "walcl": 6707419,
+      "walcl4wChange": 0.755,
+      "onRrp": 0.114,
+      "onRrpWeekChange": -27.848,
       "regime": "平稳",
       "onRrpLevel": "告急",
-      "pressure": 45,
+      "pressure": 60,
       "sourceStatus": {
         "walcl": "live",
         "onRrp": "live"
@@ -76,7 +76,7 @@
     },
     "curve": {
       "t10y2y": 0.51,
-      "t10y2yWeekChange": -0.02,
+      "t10y2yWeekChange": -0.03,
       "regime": "正常",
       "steepeningAlert": false,
       "sourceStatus": {
@@ -84,9 +84,9 @@
       }
     },
     "credit": {
-      "igOas": 0.8,
+      "igOas": 0.79,
       "igOas1dChange": -0.01,
-      "igHyRatio": 0.28,
+      "igHyRatio": 0.276,
       "regime": "偏宽松",
       "sourceStatus": {
         "igOas": "live"
@@ -97,7 +97,7 @@
       {
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
-        "detail": "ON RRP 0.538 十亿美元",
+        "detail": "ON RRP 0.114 十亿美元",
         "reliability": "live"
       }
     ],
@@ -147,7 +147,7 @@
     "structuralSignals": {
       "fedAssetTrend": "平稳",
       "onRrpLevel": "告急",
-      "structuralPressure": 45
+      "structuralPressure": 60
     }
   },
   "timeDimension": {
@@ -630,7 +630,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-04-23T05:39:53.958Z",
+        "triggeredAgo": "2026-04-23T23:12:31.512Z",
         "condition": "系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -638,15 +638,15 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-04-23T05:39:53.958Z",
-        "condition": "ON RRP 0.538 十亿美元",
+        "triggeredAgo": "2026-04-23T23:12:31.512Z",
+        "condition": "ON RRP 0.114 十亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
       {
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-04-23T05:39:53.958Z",
+        "triggeredAgo": "2026-04-23T23:12:31.512Z",
         "condition": "gold 数据源失效，已回退到上次有效值",
         "action": "继续使用回退值，不中断系统"
       }
@@ -685,7 +685,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-04-23T05:39:53.958Z",
+    "lastRun": "2026-04-23T23:12:31.512Z",
     "notes": [
       "gold 数据源失效，已回退到上次有效值"
     ]
@@ -806,8 +806,8 @@
         "波动率指数 当前 17.94",
         "高收益利差 当前 2.86%",
         "曲线 10年-2年 当前 0.51",
-        "投资级信用利差 当前 0.80%",
-        "逆回购余额 当前 0.538 十亿美元"
+        "投资级信用利差 当前 0.79%",
+        "逆回购余额 当前 0.114 十亿美元"
       ]
     },
     "executionLock": {
@@ -839,12 +839,12 @@
     "strategyState": "Defensive",
     "stateLabel": "红灯 / 禁止新增",
     "stateScore": 56,
-    "stateReason": "红灯 / 禁止新增，风险分数 56。结构信号激活：逆回购准备金告急（ON RRP 0.538 十亿美元）。 主导模块：能源、地缘政治、通胀。",
+    "stateReason": "红灯 / 禁止新增，风险分数 56。结构信号激活：逆回购准备金告急（ON RRP 0.114 十亿美元）。 主导模块：能源、地缘政治、通胀。",
     "structuralSignals": [
       {
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
-        "detail": "ON RRP 0.538 十亿美元",
+        "detail": "ON RRP 0.114 十亿美元",
         "reliability": "live"
       }
     ],
@@ -885,7 +885,7 @@
         "若总仓位高于 42%，必须先减到 38% 附近。",
         "若高波动资产 > 2%，立即降回 2% 以下。",
         "若现金缓冲 < 30%，立即补回。",
-        "关注结构信号：逆回购准备金告急（ON RRP 0.538 十亿美元）。"
+        "关注结构信号：逆回购准备金告急（ON RRP 0.114 十亿美元）。"
       ],
       "blockedActions": [
         "禁止新增股票与高波动仓位。",
@@ -907,10 +907,10 @@
         "美元指数 118.86",
         "高收益利差 2.86%",
         "10年-2年利差 0.51",
-        "投资级信用利差 0.80%"
+        "投资级信用利差 0.79%"
       ],
       "activeEscalationSignals": [
-        "逆回购准备金告急（ON RRP 0.538 十亿美元）"
+        "逆回购准备金告急（ON RRP 0.114 十亿美元）"
       ]
     },
     "invalidationRules": {
