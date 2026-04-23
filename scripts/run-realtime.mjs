@@ -18,7 +18,7 @@ const REQUEST_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
 const USER_AGENT = 'gfr-v26.0a-realtime/1.0';
 const FRESHNESS_WINDOWS = RULES.freshnessWindows;
-const BRENT_VALIDATION_SOURCES = ['ice', 'investing', 'marketscreener'];
+const BRENT_VALIDATION_SOURCES = ['ice', 'yahoo', 'stooq'];
 const BRENT_REASONABLE_MIN = 30;
 const BRENT_REASONABLE_MAX = 150;
 
@@ -123,6 +123,21 @@ function stringifyError(error) {
   return message.replace(/\s+/g, ' ').slice(0, 160);
 }
 
+function classifyFetchFailure(error) {
+  const msg = stringifyError(error);
+  const httpMatch = msg.match(/HTTP\s*(\d{3})/i);
+  if (httpMatch) {
+    const code = Number(httpMatch[1]);
+    if (code === 403) return 'fetch-failed:http-403';
+    if (code === 404) return 'fetch-failed:http-404';
+    if (code === 429) return 'fetch-failed:http-429';
+    if (code >= 500 && code < 600) return 'fetch-failed:http-5xx';
+    return `fetch-failed:http-${code}`;
+  }
+  if (/timeout|abort/i.test(msg)) return 'fetch-failed:timeout';
+  return `fetch-failed:${msg}`;
+}
+
 function safeNumber(value) {
   if (typeof value !== 'string') return null;
   const normalized = value.replace(/,/g, '').trim();
@@ -170,9 +185,13 @@ function buildUnavailableCandidate(source, fetchedAt, delayClass, reason) {
 
 function summarizeWebReason(webCandidates, recommendedSource, hasClosePair, anchorCandidate) {
   const availableSources = webCandidates.map((item) => item.source).join('/');
+  const otherSources = webCandidates
+    .map((item) => item.source)
+    .filter((name) => name !== recommendedSource)
+    .join('/');
   if (webCandidates.length === 0) return '无可用网页源，无法形成 Brent 推荐值。';
   if (webCandidates.length >= 2 && hasClosePair) {
-    return `${recommendedSource} 与 ${availableSources} 基本一致；FRED 仅作低频锚点参考。`;
+    return `${recommendedSource} 与 ${otherSources} 基本一致；FRED 仅作低频锚点参考。`;
   }
   if (webCandidates.length === 1 && anchorCandidate?.available) {
     return `仅 ${availableSources} 可用，已结合 FRED 锚点做偏离参考。`;
@@ -189,7 +208,7 @@ function pickRecommendedCandidate(webCandidates) {
   const median = sortedValues.length % 2 === 1
     ? sortedValues[mid]
     : (sortedValues[mid - 1] + sortedValues[mid]) / 2;
-  const preference = ['ice', 'investing', 'marketscreener'];
+  const preference = ['ice', 'yahoo', 'stooq'];
   return webCandidates
     .slice()
     .sort((a, b) => {
@@ -341,24 +360,27 @@ async function fetchRows(descriptor) {
 async function fetchBrentIceCandidate(fetchedAt) {
   const source = 'ice';
   const delayClass = 'delayed-15m';
-  const url = 'https://www.ice.com/products/219/Brent-Crude-Futures';
+  const url = 'https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=400137160';
   try {
     const text = await retryTask(
       () => fetchWithTimeout(url, {
         timeoutMs: REQUEST_TIMEOUT_MS,
         headers: {
-          Accept: 'text/html,application/xhtml+xml',
+          Accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8',
           'Accept-Language': 'en-US,en;q=0.9',
-          Referer: 'https://www.ice.com/'
+          Referer: 'https://www.ice.com/products/219/Brent-Crude-Futures'
         }
       }),
       { label: 'ice:brent' }
     );
 
     const value = extractValueByPatterns(text, [
-      /"lastPrice"\s*:\s*"([\d.,]+)"/i,
-      /"settlementPrice"\s*:\s*"([\d.,]+)"/i,
-      /Last\s*Price[\s\S]{0,120}?>([\d.,]+)</i
+      /"lastPrice"\s*:\s*"?([\d.,]+)"?/i,
+      /"settlementPrice"\s*:\s*"?([\d.,]+)"?/i,
+      /"marketPrice"\s*:\s*"?([\d.,]+)"?/i,
+      /"price"\s*:\s*"?([\d.,]+)"?/i,
+      /Last\s*Price[\s\S]{0,160}?>([\d.,]+)</i,
+      /"previousDaySettlementPrice"\s*:\s*"?([\d.,]+)"?/i
     ]);
     if (!Number.isFinite(value)) {
       return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:value');
@@ -367,6 +389,8 @@ async function fetchBrentIceCandidate(fetchedAt) {
       return buildUnavailableCandidate(source, fetchedAt, delayClass, `parse-failed:out-of-range(${value})`);
     }
     const observedRaw = firstMatch(text, [
+      /"lastTime"\s*:\s*"([^"]{4,40})"/i,
+      /"lastUpdateTime"\s*:\s*"([^"]{4,40})"/i,
       /As of\s*([^<]{8,40}(?:GMT|UTC))/i,
       /Last updated\s*([^<]{8,40}(?:GMT|UTC))/i
     ]);
@@ -380,97 +404,113 @@ async function fetchBrentIceCandidate(fetchedAt) {
       reason: null
     };
   } catch (error) {
-    return buildUnavailableCandidate(source, fetchedAt, delayClass, `fetch-failed:${stringifyError(error)}`);
+    return buildUnavailableCandidate(source, fetchedAt, delayClass, classifyFetchFailure(error));
   }
 }
 
-async function fetchBrentInvestingCandidate(fetchedAt) {
-  const source = 'investing';
-  const delayClass = 'delay-unknown';
-  const url = 'https://www.investing.com/commodities/brent-oil';
+async function fetchBrentYahooCandidate(fetchedAt) {
+  const source = 'yahoo';
+  const delayClass = 'delayed-15m';
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/BZ%3DF?interval=1d&range=5d';
   try {
     const text = await retryTask(
       () => fetchWithTimeout(url, {
         timeoutMs: REQUEST_TIMEOUT_MS,
         headers: {
-          Accept: 'text/html,application/xhtml+xml',
+          Accept: 'application/json,text/plain,*/*',
           'Accept-Language': 'en-US,en;q=0.9',
-          Referer: 'https://www.investing.com/'
+          Referer: 'https://finance.yahoo.com/quote/BZ=F/'
         }
       }),
-      { label: 'investing:brent' }
+      { label: 'yahoo:brent' }
     );
-    const value = extractValueByPatterns(text, [
-      /data-test="instrument-price-last"[^>]*>([\d.,]+)</i,
-      /"last_last"\s*:\s*"([\d.,]+)"/i,
-      /"last"\s*:\s*"([\d.,]+)"/i
-    ]);
+    let payload = null;
+    try {
+      payload = JSON.parse(text);
+    } catch (parseError) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:non-json');
+    }
+    const meta = payload?.chart?.result?.[0]?.meta;
+    const rawValue = meta?.regularMarketPrice;
+    const value = Number.isFinite(rawValue) ? Number(rawValue) : null;
     if (!Number.isFinite(value)) {
       return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:value');
     }
     if (!isReasonableBrentValue(value)) {
       return buildUnavailableCandidate(source, fetchedAt, delayClass, `parse-failed:out-of-range(${value})`);
     }
-    const observedRaw = firstMatch(text, [
-      /data-test="instrument-price-last-updated"[^>]*>([^<]+)</i,
-      /Last Update:\s*([^<]{5,40})</i
-    ]);
+    const marketTime = Number(meta?.regularMarketTime);
+    const observedAt = Number.isFinite(marketTime) && marketTime > 0
+      ? new Date(marketTime * 1000).toISOString()
+      : null;
     return {
       source,
       value,
-      observedAt: parseObservedAtUtc(observedRaw),
+      observedAt,
       fetchedAt,
       delayClass,
       available: true,
       reason: null
     };
   } catch (error) {
-    return buildUnavailableCandidate(source, fetchedAt, delayClass, `fetch-failed:${stringifyError(error)}`);
+    return buildUnavailableCandidate(source, fetchedAt, delayClass, classifyFetchFailure(error));
   }
 }
 
-async function fetchBrentMarketScreenerCandidate(fetchedAt) {
-  const source = 'marketscreener';
-  const delayClass = 'delayed-otc';
-  const url = 'https://www.marketscreener.com/quote/commodity/BRENT-CRUDE-OIL-SPOT-4948/';
+async function fetchBrentStooqCandidate(fetchedAt) {
+  const source = 'stooq';
+  const delayClass = 'delayed-eod';
+  const url = 'https://stooq.com/q/l/?s=cb.f&f=sd2t2c&h&e=csv';
   try {
     const text = await retryTask(
       () => fetchWithTimeout(url, {
         timeoutMs: REQUEST_TIMEOUT_MS,
         headers: {
-          Accept: 'text/html,application/xhtml+xml',
+          Accept: 'text/csv,text/plain,*/*',
           'Accept-Language': 'en-US,en;q=0.9',
-          Referer: 'https://www.marketscreener.com/'
+          Referer: 'https://stooq.com/'
         }
       }),
-      { label: 'marketscreener:brent' }
+      { label: 'stooq:brent' }
     );
-    const value = extractValueByPatterns(text, [
-      /"last"\s*:\s*"([\d.,]+)"/i,
-      /class="c-faceplate__price"[^>]*>([\d.,]+)</i,
-      /BRENT[^<]{0,120}([\d]{2,3}\.[\d]{1,3})/i
-    ]);
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:empty-csv');
+    }
+    const fields = lines[1].split(',');
+    if (fields.length < 4) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:csv-structure');
+    }
+    const [, date, time, close] = fields;
+    if (!close || /N\/?D/i.test(close) || /N\/?D/i.test(date ?? '')) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:symbol-no-data');
+    }
+    const value = safeNumber(close);
     if (!Number.isFinite(value)) {
       return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:value');
     }
     if (!isReasonableBrentValue(value)) {
       return buildUnavailableCandidate(source, fetchedAt, delayClass, `parse-failed:out-of-range(${value})`);
     }
-    const observedRaw = firstMatch(text, [
-      /As of\s*([^<]{8,40}(?:GMT|UTC))/i,
-      /Updated on\s*([^<]{8,40}(?:GMT|UTC))/i
-    ]);
+    let observedAt = null;
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      const fetchedMs = Date.parse(fetchedAt);
+      const dateMs = Date.parse(`${date}T00:00:00Z`);
+      if (Number.isFinite(fetchedMs) && Number.isFinite(dateMs) && dateMs <= fetchedMs) {
+        observedAt = date;
+      }
+    }
     return {
       source,
       value,
-      observedAt: parseObservedAtUtc(observedRaw),
+      observedAt,
       fetchedAt,
       delayClass,
       available: true,
       reason: null
     };
   } catch (error) {
-    return buildUnavailableCandidate(source, fetchedAt, delayClass, `fetch-failed:${stringifyError(error)}`);
+    return buildUnavailableCandidate(source, fetchedAt, delayClass, classifyFetchFailure(error));
   }
 }
 
@@ -493,15 +533,15 @@ function buildFredAnchorCandidate(brentResult, fetchedAt) {
 
 async function buildBrentValidation(results, fetchedAt) {
   const brentResult = results.find((item) => item.key === 'brent');
-  const [iceCandidate, investingCandidate, marketScreenerCandidate] = await Promise.all([
+  const [iceCandidate, yahooCandidate, stooqCandidate] = await Promise.all([
     fetchBrentIceCandidate(fetchedAt),
-    fetchBrentInvestingCandidate(fetchedAt),
-    fetchBrentMarketScreenerCandidate(fetchedAt)
+    fetchBrentYahooCandidate(fetchedAt),
+    fetchBrentStooqCandidate(fetchedAt)
   ]);
   const candidates = [
     iceCandidate,
-    investingCandidate,
-    marketScreenerCandidate,
+    yahooCandidate,
+    stooqCandidate,
     buildFredAnchorCandidate(brentResult, fetchedAt)
   ];
   return {
@@ -694,15 +734,15 @@ function mockPayload() {
     brentValidation: {
       candidates: [
         { source: 'ice', value: 89.82, observedAt: now, fetchedAt: now, delayClass: 'delayed-15m', available: true, reason: null },
-        { source: 'investing', value: 89.79, observedAt: null, fetchedAt: now, delayClass: 'delay-unknown', available: true, reason: null },
-        { source: 'marketscreener', value: 89.85, observedAt: null, fetchedAt: now, delayClass: 'delayed-otc', available: true, reason: null },
+        { source: 'yahoo', value: 89.79, observedAt: now, fetchedAt: now, delayClass: 'delayed-15m', available: true, reason: null },
+        { source: 'stooq', value: 89.85, observedAt: now, fetchedAt: now, delayClass: 'delayed-eod', available: true, reason: null },
         { source: 'fred-anchor', value: 89.8, observedAt: now.slice(0, 10), fetchedAt: now, delayClass: 'daily-anchor', available: true, reason: null }
       ],
       consensus: {
         recommendedValue: 89.82,
         recommendedSource: 'ice',
         confidence: 'high',
-        reason: 'ice 与 investing/marketscreener 基本一致；FRED 仅作低频锚点参考。',
+        reason: 'ice 与 ice/yahoo/stooq 基本一致；FRED 仅作低频锚点参考。',
         divergencePct: 0.07,
         canPromoteToPrimary: true
       }
@@ -720,8 +760,8 @@ async function main() {
       );
       const brentValidation = await buildBrentValidation(results, now).catch((error) => ({
         candidates: [buildUnavailableCandidate('ice', now, 'delayed-15m', `validation-failed:${stringifyError(error)}`),
-          buildUnavailableCandidate('investing', now, 'delay-unknown', 'validation-failed:skipped'),
-          buildUnavailableCandidate('marketscreener', now, 'delayed-otc', 'validation-failed:skipped'),
+          buildUnavailableCandidate('yahoo', now, 'delayed-15m', 'validation-failed:skipped'),
+          buildUnavailableCandidate('stooq', now, 'delayed-eod', 'validation-failed:skipped'),
           buildUnavailableCandidate('fred-anchor', now, 'daily-anchor', 'validation-failed:skipped')],
         consensus: {
           recommendedValue: null,
