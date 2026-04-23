@@ -147,7 +147,9 @@ export function buildRuntimeState(baseline, history, realtimeResult) {
   };
   runtimeMetadata.realtimeStatusLabel = buildRealtimeStatusLabel(runtimeMetadata);
   runtimeMetadata.realtimeOverlayEnabled = shouldApplyRealtimeOverlay(runtimeMetadata, realtimePayload);
-  const data = runtimeMetadata.realtimeOverlayEnabled ? applyRealtimeOverlay(baseline, realtimePayload) : baseline;
+  const data = runtimeMetadata.realtimeOverlayEnabled
+    ? applyRealtimeOverlay(baseline, realtimePayload)
+    : rebuildDisplayTexts(structuredClone(baseline), baseline, realtimePayload);
   const healthDashboard = buildHealthDashboardModel({
     baseline,
     history,
@@ -169,15 +171,25 @@ function containsComparisonSymbol(text) {
 }
 
 function buildBaselineFallbackInputs(base) {
-  const credit = base?.macroDrivers?.credit || {};
   const toNumber = (value) => {
     const n = Number(value);
     return Number.isFinite(n) ? n : null;
   };
+  const dib = base?.displayInputsBaseline && typeof base.displayInputsBaseline === 'object'
+    ? base.displayInputsBaseline
+    : {};
+  const creditHyOas = toNumber(base?.macroDrivers?.credit?.hyOas);
+  const dibHyOas = toNumber(dib.hyOas);
   return {
-    hyOas: toNumber(credit.hyOas)
-    // 其余字段在当前 baseline (radar-data.json) 中没有结构化对应值，
-    // 只能落回 null（由 fmtNumSafe 统一显示为 --），不伪造数字。
+    brent: toNumber(dib.brent),
+    dxy: toNumber(dib.dxy),
+    vix: toNumber(dib.vix),
+    hyOas: dibHyOas !== null ? dibHyOas : creditHyOas,
+    us10y: toNumber(dib.us10y),
+    real10y: toNumber(dib.real10y),
+    breakeven10y: toNumber(dib.breakeven10y),
+    gold: toNumber(dib.gold),
+    spx: toNumber(dib.spx)
   };
 }
 
@@ -291,6 +303,21 @@ function buildScenarioTreeTriggers(list, inputs) {
     if (containsComparisonSymbol(triggers)) return entry;
     return { ...entry, triggers: rebuilt };
   });
+}
+
+function rebuildDisplayTexts(target, base, realtimePayload) {
+  const effectiveDisplayInputs = buildEffectiveDisplayInputs(realtimePayload, base);
+  const gating = readStructuralGatingFromBase(base);
+  const lock = target?.tradingSystem?.executionLock || null;
+  target.topRisks = buildTopRisksDisplay(effectiveDisplayInputs);
+  target.phaseSignals = buildPhaseSignalsDisplay(effectiveDisplayInputs, realtimePayload);
+  target.summary = buildSummaryDisplay(effectiveDisplayInputs);
+  target.decisionLine = buildDecisionLineDisplay(realtimePayload, lock, gating);
+  target.triggerPanel = buildTriggerPanelDisplay(effectiveDisplayInputs, base);
+  target.assetMatrix = buildAssetMatrixReasons(target.assetMatrix, effectiveDisplayInputs);
+  target.scenarioTree = buildScenarioTreeTriggers(target.scenarioTree, effectiveDisplayInputs);
+  target.__effectiveDisplayInputs = effectiveDisplayInputs;
+  return target;
 }
 
 function readStructuralGatingFromBase(base) {
@@ -567,15 +594,5 @@ export function applyRealtimeOverlay(base, realtimePayload) {
     next.tradingSystem.riskControl.resetThresholds = uniq([...realtimeResetRules, ...pipelineStructuralReset]);
   }
 
-  const effectiveDisplayInputs = buildEffectiveDisplayInputs(realtimePayload, base);
-  next.topRisks = buildTopRisksDisplay(effectiveDisplayInputs);
-  next.phaseSignals = buildPhaseSignalsDisplay(effectiveDisplayInputs, realtimePayload);
-  next.summary = buildSummaryDisplay(effectiveDisplayInputs);
-  next.decisionLine = buildDecisionLineDisplay(realtimePayload, next.tradingSystem.executionLock, gating);
-  next.triggerPanel = buildTriggerPanelDisplay(effectiveDisplayInputs, base);
-  next.assetMatrix = buildAssetMatrixReasons(next.assetMatrix, effectiveDisplayInputs);
-  next.scenarioTree = buildScenarioTreeTriggers(next.scenarioTree, effectiveDisplayInputs);
-  next.__effectiveDisplayInputs = effectiveDisplayInputs;
-
-  return next;
+  return rebuildDisplayTexts(next, base, realtimePayload);
 }

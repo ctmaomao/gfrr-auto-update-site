@@ -797,6 +797,21 @@ function buildFallback() {
   next.updatedAt = isoNow;
   next.decisionLine = '实时快变量暂不可用，系统沿用上次有效慢变量结构，但保留今日更新时间戳。';
   next.summary = 'v27.0 日构建已退回到上次有效慢变量结构。';
+  const prevInputs = (prevData && typeof prevData.displayInputsBaseline === 'object' && prevData.displayInputsBaseline)
+    ? prevData.displayInputsBaseline
+    : null;
+  const normFinite = (value) => (Number.isFinite(value) ? value : null);
+  next.displayInputsBaseline = {
+    brent: normFinite(prevInputs?.brent),
+    dxy: normFinite(prevInputs?.dxy),
+    vix: normFinite(prevInputs?.vix),
+    hyOas: normFinite(prevInputs?.hyOas),
+    us10y: normFinite(prevInputs?.us10y),
+    real10y: normFinite(prevInputs?.real10y),
+    breakeven10y: normFinite(prevInputs?.breakeven10y),
+    gold: normFinite(prevInputs?.gold),
+    spx: normFinite(prevInputs?.spx)
+  };
   next.recovery = {
     degradedMode: true,
     safeOutput: true,
@@ -877,6 +892,19 @@ async function build() {
     recoveryNotes.push('结构信号数据源当前全部不可用，v27 结构门控已降级。');
   }
 
+  const toFiniteOrNull = (value) => (Number.isFinite(value) ? value : null);
+  const displayInputsBaseline = {
+    brent: toFiniteOrNull(risk.brent),
+    dxy: toFiniteOrNull(risk.dxy),
+    vix: toFiniteOrNull(risk.vix),
+    hyOas: toFiniteOrNull(risk.hy),
+    us10y: toFiniteOrNull(risk.us10y),
+    real10y: toFiniteOrNull(risk.real10y),
+    breakeven10y: toFiniteOrNull(risk.breakeven),
+    gold: toFiniteOrNull(risk.gold),
+    spx: toFiniteOrNull(risk.spx)
+  };
+
   const data = {
     version: 'v27.0',
     updatedAt: isoNow,
@@ -891,6 +919,7 @@ async function build() {
     transitionRisk: clamp(avg([risk.modules.liquidity, risk.hyRisk, risk.vixRisk])),
     confidenceScore: clamp(100 - (realtime.criticalMissing ?? 0) * R.confidenceScoring.criticalMissingPenalty - (realtime.fallbackCount ?? 0) * R.confidenceScoring.fallbackPenalty),
     confidenceLevel: (realtime.cacheOnly ? '低' : realtime.degradedMode ? '中' : '高'),
+    displayInputsBaseline,
     topRisks,
     decisionLine: `当前已进入 v27.0 交易引擎模式：实时快变量${sourceModeLabel}，执行状态灯为${lock.levelLabel}。${activeSignals.length ? '已激活结构信号：' + activeSignals.map(s => s.label).join('、') + '。' : allMacroMissing ? '结构信号数据源暂不可用。' : ''}先看状态灯，再决定能不能动。`,
     summary: `v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${risk.brent.toFixed(1)}、美元指数 ${risk.dxy.toFixed(2)}、波动率 ${risk.vix.toFixed(2)}、高收益利差 ${risk.hy.toFixed(2)}%。`,
