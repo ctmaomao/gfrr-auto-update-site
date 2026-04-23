@@ -151,6 +151,10 @@ function classifyFedAssetTrend(pct4w) {
   return '平稳';
 }
 
+function formatOnRrpBillions(value) {
+  return Number.isFinite(value) ? value.toFixed(3) : '--';
+}
+
 function classifyOnRrpLevel(onRrp, weekChangePct) {
   if (!Number.isFinite(onRrp)) return '未知';
   const md = R.macroDrivers.fedLiquidity;
@@ -395,7 +399,7 @@ function activeStructuralSignals(macroDrivers) {
     active.push({
       key: 'onRrpCritical',
       label: '逆回购准备金告急',
-      detail: `ON RRP ${fed.onRrp.toFixed(3)} 十亿美元`,
+      detail: `ON RRP ${formatOnRrpBillions(fed.onRrp)} 十亿美元`,
       reliability: fedStatus.onRrp
     });
   }
@@ -1135,7 +1139,7 @@ async function build() {
           `高收益利差 当前 ${risk.hy.toFixed(2)}%`,
           ...(Number.isFinite(macroDrivers.curve.t10y2y) ? [`曲线 10年-2年 当前 ${macroDrivers.curve.t10y2y.toFixed(2)}`] : []),
           ...(Number.isFinite(macroDrivers.credit.igOas) ? [`投资级信用利差 当前 ${macroDrivers.credit.igOas.toFixed(2)}%`] : []),
-          ...(Number.isFinite(macroDrivers.fedLiquidity.onRrp) ? [`逆回购余额 当前 ${macroDrivers.fedLiquidity.onRrp.toFixed(0)} 十亿美元`] : [])
+          ...(Number.isFinite(macroDrivers.fedLiquidity.onRrp) ? [`逆回购余额 当前 ${formatOnRrpBillions(macroDrivers.fedLiquidity.onRrp)} 十亿美元`] : [])
         ]
       },
       executionLock: {
