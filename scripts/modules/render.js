@@ -200,10 +200,36 @@ export function renderExecutionLock(lock) {
   renderList('execution-mandatory', lock.mandatory || []);
 }
 
+const ASSET_MATRIX_BIAS_ORDER = ['强配', '中性偏多', '谨慎偏多', '中性', '谨慎偏空', '低配'];
+
+function sortAssetMatrixRows(rows) {
+  if (!Array.isArray(rows)) return [];
+  const biasRank = (bias) => {
+    const idx = ASSET_MATRIX_BIAS_ORDER.indexOf(typeof bias === 'string' ? bias.trim() : '');
+    return idx === -1 ? ASSET_MATRIX_BIAS_ORDER.length : idx;
+  };
+  return rows
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => {
+      const ra = biasRank(a.row?.bias);
+      const rb = biasRank(b.row?.bias);
+      if (ra !== rb) return ra - rb;
+      const sa = Number(a.row?.score);
+      const sb = Number(b.row?.score);
+      const aFinite = Number.isFinite(sa);
+      const bFinite = Number.isFinite(sb);
+      if (aFinite && bFinite && sa !== sb) return sb - sa;
+      if (aFinite !== bFinite) return aFinite ? -1 : 1;
+      return a.index - b.index;
+    })
+    .map((entry) => entry.row);
+}
+
 export function renderAssetTable(rows) {
   const body = $('asset-table-body');
   body.innerHTML = '';
-  rows.forEach((row) => {
+  const ordered = sortAssetMatrixRows(rows);
+  ordered.forEach((row) => {
     const tr = document.createElement('tr');
     const biasClass = row.bias.includes('强') ? 'strong'
       : row.bias.includes('谨慎') ? 'cautious'
