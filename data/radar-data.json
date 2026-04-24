@@ -1,10 +1,10 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-04-23T23:45:21.478Z",
+  "updatedAt": "2026-04-24T00:35:37.680Z",
   "score": 56,
   "scoreChange1d": 0,
-  "scoreChange7d": -23,
-  "scoreChange30d": -8,
+  "scoreChange7d": -22,
+  "scoreChange30d": -10,
   "trendLabel": "风险回落",
   "currentMacroRegime": "滞胀冲击",
   "currentCrisisPhase": "通胀冲击",
@@ -152,8 +152,8 @@
   },
   "timeDimension": {
     "trend30d": "滚动风险曲线（混合实时驱动）",
-    "scoreChange30d": -8,
-    "avg30d": 71,
+    "scoreChange30d": -10,
+    "avg30d": 70,
     "peak30d": 81,
     "trough30d": 56,
     "drawFromPeak": -25,
@@ -630,7 +630,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-04-23T23:45:21.478Z",
+        "triggeredAgo": "2026-04-24T00:35:37.680Z",
         "condition": "系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -638,7 +638,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-04-23T23:45:21.478Z",
+        "triggeredAgo": "2026-04-24T00:35:37.680Z",
         "condition": "ON RRP 0.114 十亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -646,7 +646,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-04-23T23:45:21.478Z",
+        "triggeredAgo": "2026-04-24T00:35:37.680Z",
         "condition": "gold 数据源失效，已回退到上次有效值",
         "action": "继续使用回退值，不中断系统"
       }
@@ -685,7 +685,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-04-23T23:45:21.478Z",
+    "lastRun": "2026-04-24T00:35:37.680Z",
     "notes": [
       "gold 数据源失效，已回退到上次有效值"
     ]
