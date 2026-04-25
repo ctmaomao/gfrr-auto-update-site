@@ -31,6 +31,7 @@ const BRENT_SOURCE_QUALITY = {
 };
 const BRENT_CONSENSUS_MAX_AGE_MINUTES = 120;
 const BRENT_CONSENSUS_DIVERGENCE_PCT = 2;
+const BRENT_WEAK_CONFIRMATION_DIVERGENCE_PCT = 1;
 const BRENT_REASONABLE_MIN = 30;
 const BRENT_REASONABLE_MAX = 150;
 
@@ -170,18 +171,51 @@ function extractValueByPatterns(text, patterns) {
   return safeNumber(raw);
 }
 
+function globalPattern(pattern) {
+  return pattern.global ? pattern : new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`);
+}
+
+function extractAllValuesByPatterns(text, patterns) {
+  const values = [];
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(globalPattern(pattern))) {
+      const value = safeNumber(match?.[1]);
+      if (Number.isFinite(value)) values.push(value);
+    }
+  }
+  return values;
+}
+
 function isReasonableBrentValue(value) {
   return Number.isFinite(value) && value >= BRENT_REASONABLE_MIN && value <= BRENT_REASONABLE_MAX;
 }
 
 function parseObservedAtUtc(raw) {
-  if (typeof raw !== 'string') return null;
-  const cleaned = raw.replace(/\bat\b/gi, ' ').replace(/\s+/g, ' ').trim();
+  if (typeof raw !== 'string' && typeof raw !== 'number') return null;
+  const cleaned = String(raw)
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\bat\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (!cleaned) return null;
-  const hasTimeZone = /(?:Z|GMT|UTC|[+-]\d{2}:?\d{2})$/i.test(cleaned);
+  if (/^\d{13}$/.test(cleaned)) return new Date(Number(cleaned)).toISOString();
+  if (/^\d{10}$/.test(cleaned)) return new Date(Number(cleaned) * 1000).toISOString();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) return null;
+  if (!/\b\d{4}\b/.test(cleaned)) return null;
+  const hasTimeZone = /(?:Z|GMT|UTC|EST|EDT|CST|CDT|MST|MDT|PST|PDT|[+-]\d{2}:?\d{2})$/i.test(cleaned);
   const utcTime = Date.parse(hasTimeZone ? cleaned : `${cleaned} UTC`);
   if (!Number.isFinite(utcTime)) return null;
   return new Date(utcTime).toISOString();
+}
+
+function extractObservedAtByPatterns(text, patterns) {
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(globalPattern(pattern))) {
+      const observedAt = parseObservedAtUtc(match?.[1]);
+      if (observedAt) return observedAt;
+    }
+  }
+  return null;
 }
 
 function buildUnavailableCandidate(source, fetchedAt, delayClass, reason) {
@@ -206,6 +240,9 @@ function summarizeWebReason(consensusCandidates, recommendedSource, selectedPair
     return `候选源偏差过大${suffix}，暂不形成 Brent 推荐值；FRED 仅作低频锚点参考。`;
   }
   const pairSources = selectedPair.map((item) => item.source).join('/');
+  if (selectedPair.some((item) => item.weakConfirmation)) {
+    return `${pairSources} 基本一致；Oilprice 缺少 observedAt，仅作为弱确认源参与，推荐优先采用 ${recommendedSource}；FRED 仅作低频锚点参考。`;
+  }
   return `${pairSources} 基本一致，推荐优先采用 ${recommendedSource}；FRED 仅作低频锚点参考。`;
 }
 
@@ -247,6 +284,9 @@ function annotateBrentCandidateForConsensus(candidate, fetchedAt) {
     ...candidate,
     quality,
     ageMinutes,
+    weakConfirmation: false,
+    participatesInConsensus: false,
+    consensusRole: null,
     staleForConsensus: false,
     excludedFromConsensus: null
   };
@@ -264,7 +304,7 @@ function annotateBrentCandidateForConsensus(candidate, fetchedAt) {
     return { ...base, excludedFromConsensus: 'out-of-range' };
   }
   if (candidate.source === 'stooq') {
-    return base;
+    return { ...base, participatesInConsensus: true, consensusRole: 'primary' };
   }
   if (!candidate.observedAt || parseTimestamp(candidate.observedAt) === null) {
     return { ...base, staleForConsensus: true, excludedFromConsensus: 'observedAt-missing' };
@@ -276,7 +316,60 @@ function annotateBrentCandidateForConsensus(candidate, fetchedAt) {
       excludedFromConsensus: `observedAt-stale(${ageMinutes}m)`
     };
   }
-  return base;
+  return { ...base, participatesInConsensus: true, consensusRole: 'primary' };
+}
+
+function applyOilpriceWeakConfirmation(annotatedCandidates) {
+  const strongHighQualityCandidates = annotatedCandidates.filter((item) => (
+    item.participatesInConsensus &&
+    item.quality === 'high' &&
+    item.source !== 'yahoo' &&
+    item.source !== 'oilprice'
+  ));
+  return annotatedCandidates.map((candidate) => {
+    if (
+      candidate.source !== 'oilprice' ||
+      candidate.available !== true ||
+      candidate.observedAt !== null ||
+      candidate.excludedFromConsensus !== 'observedAt-missing' ||
+      !isReasonableBrentValue(candidate.value)
+    ) {
+      return candidate;
+    }
+    const closeHighQualitySource = strongHighQualityCandidates.find((item) => {
+      const pct = computePairDivergencePct(candidate.value, item.value);
+      return pct !== null && pct < BRENT_WEAK_CONFIRMATION_DIVERGENCE_PCT;
+    });
+    if (!closeHighQualitySource) return candidate;
+    return {
+      ...candidate,
+      weakConfirmation: true,
+      participatesInConsensus: true,
+      consensusRole: 'weak-confirmation',
+      staleForConsensus: false,
+      excludedFromConsensus: null,
+      weakConfirmationWith: closeHighQualitySource.source
+    };
+  });
+}
+
+function prepareBrentCandidatesForConsensus(candidates, fetchedAt) {
+  return applyOilpriceWeakConfirmation(
+    candidates.map((item) => annotateBrentCandidateForConsensus(item, fetchedAt))
+  );
+}
+
+function pairIsEligibleForConsensus(left, right, pct) {
+  if (pct === null) return false;
+  const pair = [left, right];
+  const hasWeakConfirmation = pair.some((item) => item.weakConfirmation);
+  if (hasWeakConfirmation) {
+    const hasOilpriceWeakConfirmation = pair.some((item) => item.source === 'oilprice' && item.weakConfirmation);
+    const hasHighQualitySource = pair.some((item) => item.quality === 'high' && !item.weakConfirmation);
+    const hasYahoo = pair.some((item) => item.source === 'yahoo');
+    return hasOilpriceWeakConfirmation && hasHighQualitySource && !hasYahoo && pct < BRENT_WEAK_CONFIRMATION_DIVERGENCE_PCT;
+  }
+  return pct < BRENT_CONSENSUS_DIVERGENCE_PCT;
 }
 
 function findBestClosePair(consensusCandidates) {
@@ -287,7 +380,7 @@ function findBestClosePair(consensusCandidates) {
       const left = consensusCandidates[i];
       const right = consensusCandidates[j];
       const pct = computePairDivergencePct(left.value, right.value);
-      if (pct === null || pct >= BRENT_CONSENSUS_DIVERGENCE_PCT) continue;
+      if (!pairIsEligibleForConsensus(left, right, pct)) continue;
       const pair = [left, right].sort((a, b) => sourcePreferenceIndex(a.source) - sourcePreferenceIndex(b.source));
       if (
         bestPair === null ||
@@ -302,9 +395,9 @@ function findBestClosePair(consensusCandidates) {
   return { bestPair, bestDivergence };
 }
 
-function buildBrentConsensus(candidates, fetchedAt) {
-  const annotatedCandidates = candidates.map((item) => annotateBrentCandidateForConsensus(item, fetchedAt));
-  const consensusCandidates = annotatedCandidates.filter((item) => item.excludedFromConsensus === null);
+function buildBrentConsensus(candidates) {
+  const annotatedCandidates = candidates;
+  const consensusCandidates = annotatedCandidates.filter((item) => item.participatesInConsensus);
   let divergencePct = null;
 
   if (consensusCandidates.length >= 2) {
@@ -328,7 +421,10 @@ function buildBrentConsensus(candidates, fetchedAt) {
   let confidence = 'none';
   if (bestPair) {
     const highQualityCount = bestPair.filter((item) => item.quality === 'high').length;
-    confidence = highQualityCount >= 2 ? 'high' : 'medium';
+    const hasWeakConfirmation = bestPair.some((item) => item.weakConfirmation);
+    confidence = highQualityCount >= 2 && !hasWeakConfirmation ? 'high' : 'medium';
+  } else if (consensusCandidates.length === 1) {
+    confidence = 'low';
   }
   const canRecommend = confidence === 'high' || confidence === 'medium';
 
@@ -338,7 +434,7 @@ function buildBrentConsensus(candidates, fetchedAt) {
     confidence,
     reason: summarizeWebReason(consensusCandidates, recommended?.source ?? null, bestPair, divergencePct),
     divergencePct: selectedDivergencePct ?? divergencePct,
-    canPromoteToPrimary: canRecommend,
+    canPromoteToPrimary: confidence === 'high',
     excludedFromConsensus: annotatedCandidates
       .filter((item) => item.excludedFromConsensus !== null)
       .map((item) => ({
@@ -563,11 +659,10 @@ async function fetchBrentHtmlCandidate({
     if (!isReasonableBrentValue(value)) {
       return buildUnavailableCandidate(source, fetchedAt, delayClass, `parse-failed:out-of-range(${value})`);
     }
-    const observedRaw = firstMatch(text, observedAtPatterns);
     return {
       source,
       value,
-      observedAt: parseObservedAtUtc(observedRaw),
+      observedAt: extractObservedAtByPatterns(text, observedAtPatterns),
       fetchedAt,
       delayClass,
       available: true,
@@ -590,43 +685,103 @@ async function fetchBrentBarchartCandidate(fetchedAt) {
     },
     valuePatterns: [
       /"lastPrice"\s*:\s*"?([\d.,]+)"?/i,
+      /"lastPriceRaw"\s*:\s*"?([\d.,]+)"?/i,
+      /"lastPriceValue"\s*:\s*"?([\d.,]+)"?/i,
       /"last"\s*:\s*"?([\d.,]+)"?/i,
-      /"price"\s*:\s*"?([\d.,]+)"?/i,
+      /"settlementPrice"\s*:\s*"?([\d.,]+)"?/i,
       /Last Price[\s\S]{0,240}?>([\d.,]+)</i,
       /data-ng-bind="symbol\.lastPrice"[^>]*>([\d.,]+)</i
     ],
     observedAtPatterns: [
-      /"tradeTime"\s*:\s*"([^"]{4,60})"/i,
-      /"serverTimestamp"\s*:\s*"([^"]{4,60})"/i,
-      /Last Updated\s*:?\s*([^<]{8,60})/i
+      /"tradeTime"\s*:\s*"?([^",}]{4,80})"?/i,
+      /"lastTradeTime"\s*:\s*"?([^",}]{4,80})"?/i,
+      /"lastUpdate"\s*:\s*"?([^",}]{4,80})"?/i,
+      /"lastUpdated"\s*:\s*"?([^",}]{4,80})"?/i,
+      /"quoteTime"\s*:\s*"?([^",}]{4,80})"?/i,
+      /"quoteTimestamp"\s*:\s*"?(\d{10,13})"?/i,
+      /"serverTime"\s*:\s*"?([^",}]{4,80})"?/i,
+      /"serverTimestamp"\s*:\s*"?([^",}]{4,80})"?/i,
+      /"timestamp"\s*:\s*"?(\d{10,13})"?/i,
+      /"lastPrice"[\s\S]{0,300}?"(?:tradeTime|lastTradeTime|lastUpdate|quoteTime|timestamp)"\s*:\s*"?([^",}]{4,80})"?/i,
+      /(?:As of|Last Updated)\s*:?\s*([^<]{8,80})/i
     ],
     parseFailureReason: 'parse-failed:page-structure'
   }, fetchedAt);
 }
 
+function extractMarketWatchBrentValue(text) {
+  const directValues = extractAllValuesByPatterns(text, [
+    /<bg-quote[^>]+field=["']Last["'][^>]*>\s*([\d.,]+)\s*<\/bg-quote>/i,
+    /<bg-quote[^>]+channel=["'][^"']*\/futures\/quotes\/BRN00[^"']*["'][^>]+field=["']Last["'][^>]*>\s*([\d.,]+)\s*<\/bg-quote>/i
+  ]);
+  const directValue = directValues.find((value) => isReasonableBrentValue(value));
+  if (Number.isFinite(directValue)) return { value: directValue, reason: null };
+
+  const contextBlocks = text.match(/(?:Brent|BRN00|BRN\d{2}|futures\/quotes\/BRN00)[\s\S]{0,900}/gi) ?? [];
+  const contextValues = [];
+  for (const block of contextBlocks) {
+    contextValues.push(...extractAllValuesByPatterns(block, [
+      /field=["']Last["'][^>]*>\s*([\d.,]+)\s*</i,
+      /(?:last|lastPrice|regularMarketPrice)"?\s*[:=]\s*"?([\d.,]+)"?/i,
+      /(?:Last|Price)[^0-9]{0,80}([\d]{2,3}\.\d{1,4})/i
+    ]));
+  }
+  const contextValue = contextValues.find((value) => isReasonableBrentValue(value));
+  if (Number.isFinite(contextValue)) return { value: contextValue, reason: null };
+  if (directValues.some((value) => Number.isFinite(value))) {
+    return { value: null, reason: 'parse-failed:value-context' };
+  }
+  if (contextValues.some((value) => Number.isFinite(value))) {
+    return { value: null, reason: 'parse-failed:value-context' };
+  }
+  return { value: null, reason: 'parse-failed:page-structure' };
+}
+
 async function fetchBrentMarketWatchCandidate(fetchedAt) {
-  return fetchBrentHtmlCandidate({
-    source: 'marketwatch',
-    delayClass: 'delayed-10m',
-    url: 'https://www.marketwatch.com/investing/future/brn00',
-    headers: {
-      Accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.9',
-      Referer: 'https://www.marketwatch.com/markets/futures'
-    },
-    valuePatterns: [
-      /<bg-quote[^>]+field="Last"[^>]*>\s*([\d.,]+)\s*<\/bg-quote>/i,
-      /"last"\s*:\s*"?([\d.,]+)"?/i,
-      /"price"\s*:\s*"?([\d.,]+)"?/i,
-      /Last[\s\S]{0,180}?class="[^"]*value[^"]*"[^>]*>\s*([\d.,]+)\s*</i
-    ],
-    observedAtPatterns: [
+  const source = 'marketwatch';
+  const delayClass = 'delayed-10m';
+  const url = 'https://www.marketwatch.com/investing/future/brn00';
+  try {
+    const text = await retryTask(
+      () => fetchWithTimeout(url, {
+        timeoutMs: REQUEST_TIMEOUT_MS,
+        headers: {
+          Accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          Referer: 'https://www.marketwatch.com/markets/futures'
+        }
+      }),
+      { label: 'marketwatch:brent' }
+    );
+    if (!text || typeof text !== 'string') {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:page-structure');
+    }
+    const { value, reason } = extractMarketWatchBrentValue(text);
+    if (!Number.isFinite(value)) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, reason ?? 'parse-failed:value-context');
+    }
+    if (!isReasonableBrentValue(value)) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, `parse-failed:out-of-range(${value})`);
+    }
+    const observedAt = extractObservedAtByPatterns(text, [
       /<span[^>]+class="[^"]*timestamp[^"]*"[^>]*>\s*([^<]{8,80})\s*<\/span>/i,
-      /Last Updated\s*:?\s*([^<]{8,80})/i,
-      /"timestamp"\s*:\s*"([^"]{4,60})"/i
-    ],
-    parseFailureReason: 'parse-failed:page-structure'
-  }, fetchedAt);
+      /(?:As of|Last Updated)\s*:?\s*([^<]{8,80})/i,
+      /"timestamp"\s*:\s*"?([^",}]{4,80})"?/i,
+      /"quoteTime"\s*:\s*"?([^",}]{4,80})"?/i,
+      /"lastUpdate"\s*:\s*"?([^",}]{4,80})"?/i
+    ]);
+    return {
+      source,
+      value,
+      observedAt,
+      fetchedAt,
+      delayClass,
+      available: true,
+      reason: null
+    };
+  } catch (error) {
+    return buildUnavailableCandidate(source, fetchedAt, delayClass, classifyFetchFailure(error));
+  }
 }
 
 async function fetchBrentOilpriceCandidate(fetchedAt) {
@@ -746,10 +901,11 @@ async function buildBrentValidation(results, fetchedAt) {
     oilpriceCandidate,
     yahooCandidate,
     buildFredAnchorCandidate(brentResult, fetchedAt)
-  ].map((candidate) => annotateBrentCandidateForConsensus(candidate, fetchedAt));
+  ];
+  const preparedCandidates = prepareBrentCandidatesForConsensus(candidates, fetchedAt);
   return {
-    candidates,
-    consensus: buildBrentConsensus(candidates, fetchedAt)
+    candidates: preparedCandidates,
+    consensus: buildBrentConsensus(preparedCandidates)
   };
 }
 
