@@ -69,6 +69,7 @@ export function normalizeRealtimePayload(payload) {
     fieldFreshness: {
       brent: brentFreshness
     },
+    brentValidation: payload.brentValidation && typeof payload.brentValidation === 'object' ? payload.brentValidation : null,
     notes: Array.isArray(payload.notes) ? payload.notes : []
   };
 }
