@@ -18,6 +18,10 @@ const STRUCTURAL_SIGNAL_LABELS_CN = {
   igOasStress: '投资级信用利差扩张'
 };
 
+const LOCAL_FALLBACK_MAX_AGE_MINUTES = 180;
+const LOCAL_FALLBACK_KEY_FIELDS = ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'gold', 'spx'];
+const LOCAL_FALLBACK_MIN_FINITE_KEY_FIELDS = 5;
+
 export async function fetchBaselineData() {
   return fetch(dataUrl).then((r) => r.json());
 }
@@ -69,6 +73,55 @@ export function normalizeRealtimePayload(payload) {
   };
 }
 
+function parseLocalFallbackTimestamp(value) {
+  if (typeof value !== 'string' || !value) return null;
+  const normalized = value.includes('T') ? value : `${value}T00:00:00Z`;
+  const time = Date.parse(normalized);
+  return Number.isFinite(time) ? time : null;
+}
+
+export function isLocalRealtimeFallbackUsable(payload, nowMs = Date.now()) {
+  if (!payload || typeof payload !== 'object') {
+    return { usable: false, reason: 'local-fallback-invalid-structure' };
+  }
+
+  const values = payload.values && typeof payload.values === 'object' ? payload.values : null;
+  const sourceStatus = payload.sourceStatus && typeof payload.sourceStatus === 'object' ? payload.sourceStatus : null;
+  const timestamp = typeof payload.asOf === 'string'
+    ? payload.asOf
+    : typeof payload.updatedAt === 'string'
+      ? payload.updatedAt
+      : typeof payload.lastSuccessAt === 'string'
+        ? payload.lastSuccessAt
+        : null;
+  const observedMs = parseLocalFallbackTimestamp(timestamp);
+  const finiteKeyCount = LOCAL_FALLBACK_KEY_FIELDS
+    .filter((key) => Number.isFinite(Number(values?.[key])))
+    .length;
+  const missingNewFields = [
+    payload.fieldFreshness && typeof payload.fieldFreshness === 'object' ? null : 'fieldFreshness',
+    payload.brentValidation && typeof payload.brentValidation === 'object' ? null : 'brentValidation'
+  ].filter(Boolean);
+
+  if (!values || !sourceStatus || Object.keys(sourceStatus).length === 0 || (!payload.freshnessLevel && observedMs === null)) {
+    return { usable: false, reason: 'local-fallback-invalid-structure', finiteKeyCount, missingNewFields };
+  }
+  if (finiteKeyCount < LOCAL_FALLBACK_MIN_FINITE_KEY_FIELDS) {
+    return { usable: false, reason: `local-fallback-missing-values(${finiteKeyCount}/${LOCAL_FALLBACK_KEY_FIELDS.length})`, finiteKeyCount, missingNewFields };
+  }
+  if (observedMs === null) {
+    return { usable: false, reason: 'local-fallback-unparseable-time', finiteKeyCount, missingNewFields };
+  }
+  const ageMinutes = Math.max(0, Math.round((nowMs - observedMs) / 60000));
+  if (ageMinutes > LOCAL_FALLBACK_MAX_AGE_MINUTES) {
+    return { usable: false, reason: `local-fallback-stale(${ageMinutes}m)`, ageMinutes, finiteKeyCount, missingNewFields };
+  }
+  if (missingNewFields.length) {
+    return { usable: false, reason: `local-fallback-missing-new-structure(${missingNewFields.join(',')})`, ageMinutes, finiteKeyCount, missingNewFields };
+  }
+  return { usable: true, reason: null, ageMinutes, finiteKeyCount, missingNewFields };
+}
+
 export async function fetchRealtimePayload() {
   const attempts = [
     { url: `${remoteRealtimeUrl}?ts=${Date.now()}`, source: 'remote', fallbackUsed: false },
@@ -82,10 +135,22 @@ export async function fetchRealtimePayload() {
         lastError = `${attempt.source}:${response.status}`;
         continue;
       }
-      const payload = normalizeRealtimePayload(await response.json());
+      const rawPayload = await response.json();
+      const payload = normalizeRealtimePayload(rawPayload);
       if (!payload) {
         lastError = `${attempt.source}:invalid-payload`;
         continue;
+      }
+      if (attempt.fallbackUsed) {
+        const fallbackGate = isLocalRealtimeFallbackUsable(rawPayload);
+        if (!fallbackGate.usable) {
+          lastError = fallbackGate.reason;
+          continue;
+        }
+        payload.notes = [
+          ...payload.notes,
+          `local-fallback-accepted:age=${fallbackGate.ageMinutes}m`
+        ];
       }
       return {
         payload,
