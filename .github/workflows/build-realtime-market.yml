@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: '7,37 * * * *'
 
+concurrency:
+  group: gfrr-realtime-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
