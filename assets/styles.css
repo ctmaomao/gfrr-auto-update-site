@@ -1034,3 +1034,121 @@ code { color: #d3e4ff; }
 @media (max-width: 1280px) {
   .discipline-grid.two-mini, .discipline-three { grid-template-columns: 1fr; }
 }
+
+/* v27.1.3 mobile readability hardening */
+.card,
+.metric-box,
+.discipline-panel,
+.advanced-panel,
+.table-wrap,
+section,
+article {
+  min-width: 0;
+}
+.card p,
+.card li,
+.card td,
+.card th,
+.metric-value,
+.decision-line,
+.decision-header-reason,
+.decision-header-action,
+.decision-header-policy-text,
+.today-action-box,
+.execution-subtitle,
+.execution-status-title,
+.execution-status-desc,
+.scenario-card,
+.rule-item,
+.warning-card,
+.dashboard-jump-nav a,
+.advanced-panel > summary {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.advanced-panel > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+}
+.advanced-panel > summary::after {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 768px) {
+  .dashboard-jump-nav {
+    gap: 6px;
+    margin: -4px 0 16px;
+  }
+  .dashboard-jump-nav a {
+    flex: 1 1 140px;
+    justify-content: center;
+    padding: 7px 9px;
+    font-size: 12px;
+    text-align: center;
+  }
+  .section-group-title {
+    font-size: 17px;
+    margin-top: 14px;
+  }
+  .card {
+    padding: 14px;
+  }
+  .advanced-panel > summary {
+    padding: 14px 16px;
+  }
+  .advanced-panel > section {
+    margin: 0 12px 14px;
+  }
+  .bullet-list {
+    padding-left: 18px;
+  }
+  .chart-wrap,
+  .svg-wrap,
+  .heatmap-layout {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .heatmap-card {
+    min-height: auto;
+  }
+  .heatmap-layout {
+    gap: 14px;
+  }
+  #world-heatmap {
+    min-width: 680px;
+  }
+  .table-wrap table {
+    min-width: 680px;
+  }
+  .metric-row {
+    margin-top: 14px;
+  }
+  .today-action-box,
+  .decision-header-action {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 520px) {
+  .dashboard-jump-nav a {
+    flex-basis: 100%;
+  }
+  .advanced-panel > summary {
+    align-items: flex-start;
+  }
+  .advanced-panel > summary::after {
+    margin-top: 1px;
+  }
+  .table-wrap table {
+    min-width: 620px;
+  }
+}
