@@ -231,6 +231,15 @@ export function getRealtimeNumber(values, key) {
   return Number.isFinite(value) ? value : null;
 }
 
+function canUseRealtimeValuesForDisplay(realtimePayload) {
+  if (!realtimePayload) return false;
+  if (realtimePayload.cacheOnly === true) return false;
+  if (realtimePayload.sourceMode === 'cache-only') return false;
+  if (Number.isFinite(realtimePayload.healthScore) && realtimePayload.healthScore <= 0) return false;
+  if (Number.isFinite(realtimePayload.criticalMissing) && realtimePayload.criticalMissing >= 4) return false;
+  return true;
+}
+
 function containsComparisonSymbol(text) {
   return typeof text === 'string' && /[<>≤≥≠=]/.test(text);
 }
@@ -259,7 +268,7 @@ function buildBaselineFallbackInputs(base) {
 }
 
 function buildEffectiveDisplayInputs(realtimePayload, base) {
-  const values = realtimePayload?.values || {};
+  const values = canUseRealtimeValuesForDisplay(realtimePayload) ? (realtimePayload?.values || {}) : {};
   const baseline = buildBaselineFallbackInputs(base);
   const pick = (key) => {
     const rtValue = getRealtimeNumber(values, key);

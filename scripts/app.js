@@ -27,7 +27,7 @@ async function main() {
   console.info('GFRR decision model ready', window.__GFRR_DECISION_MODEL__);
 
   if (metadata.realtimeOverlayEnabled && realtime?.values) {
-    renderRealtimeStrip(realtime, metadata);
+    renderRealtimeStrip(realtime, metadata, data.__effectiveDisplayInputs);
     $('runtime-badge').textContent = metadata.realtimeFallbackUsed
       ? '快变量来自本地 fallback'
       : realtime.degradedMode

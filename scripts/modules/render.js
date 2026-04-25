@@ -25,16 +25,23 @@ const FRESHNESS_CN = {
   unavailable: '不可用'
 };
 
-export function renderRealtimeStrip(realtime, metadata = null) {
+function pickDisplayMetric(key, realtime, effectiveDisplayInputs = null) {
+  const effectiveValue = Number(effectiveDisplayInputs?.[key]);
+  if (Number.isFinite(effectiveValue)) return effectiveValue;
+  const realtimeValue = Number(realtime?.values?.[key]);
+  return Number.isFinite(realtimeValue) ? realtimeValue : null;
+}
+
+export function renderRealtimeStrip(realtime, metadata = null, effectiveDisplayInputs = null) {
   if (!realtime || !realtime.values) return;
   $('realtime-updated-at').textContent = realtime.asOf || realtime.updatedAt || '--';
-  $('rt-brent').textContent = fmtNumSafe(realtime.values.brent, 1);
-  $('rt-dxy').textContent = fmtNumSafe(realtime.values.dxy, 2);
-  $('rt-vix').textContent = fmtNumSafe(realtime.values.vix, 2);
-  $('rt-hy').textContent = fmtNumSafe(realtime.values.hyOas, 2);
-  $('rt-us10y').textContent = fmtNumSafe(realtime.values.us10y, 2);
-  $('rt-gold').textContent = fmtNumSafe(realtime.values.gold, 1);
-  $('rt-spx').textContent = fmtNumSafe(realtime.values.spx, 0);
+  $('rt-brent').textContent = fmtNumSafe(pickDisplayMetric('brent', realtime, effectiveDisplayInputs), 1);
+  $('rt-dxy').textContent = fmtNumSafe(pickDisplayMetric('dxy', realtime, effectiveDisplayInputs), 2);
+  $('rt-vix').textContent = fmtNumSafe(pickDisplayMetric('vix', realtime, effectiveDisplayInputs), 2);
+  $('rt-hy').textContent = fmtNumSafe(pickDisplayMetric('hyOas', realtime, effectiveDisplayInputs), 2);
+  $('rt-us10y').textContent = fmtNumSafe(pickDisplayMetric('us10y', realtime, effectiveDisplayInputs), 2);
+  $('rt-gold').textContent = fmtNumSafe(pickDisplayMetric('gold', realtime, effectiveDisplayInputs), 1);
+  $('rt-spx').textContent = fmtNumSafe(pickDisplayMetric('spx', realtime, effectiveDisplayInputs), 0);
   $('rt-source-mode').textContent = realtime.degradedMode ? '部分回退' : '实时覆盖';
   if (metadata?.realtimeUnavailable) {
     $('rt-source-mode').textContent = '仅基线模式';
