@@ -25,6 +25,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Use latest realtime payload
+        run: |
+          set -euo pipefail
+          mkdir -p realtime
+          git fetch origin realtime-data
+          git show origin/realtime-data:realtime/market.json > realtime/market.json
+
       - name: Generate radar data
         run: npm run build:data
 
