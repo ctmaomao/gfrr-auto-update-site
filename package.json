@@ -7,7 +7,8 @@
   "scripts": {
     "build:data": "node scripts/run-daily-pipeline.mjs",
     "validate": "node scripts/validate-data.mjs",
-    "build:realtime": "node scripts/run-realtime.mjs"
+    "build:realtime": "node scripts/run-realtime.mjs",
+    "check:dom": "node scripts/check-dom-ids.mjs"
   },
   "engines": {
     "node": ">=24"
