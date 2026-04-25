@@ -922,7 +922,7 @@ async function build() {
     displayInputsBaseline,
     topRisks,
     decisionLine: `当前已进入 v27.0 交易引擎模式：实时快变量${sourceModeLabel}，执行状态灯为${lock.levelLabel}。${activeSignals.length ? '已激活结构信号：' + activeSignals.map(s => s.label).join('、') + '。' : allMacroMissing ? '结构信号数据源暂不可用。' : ''}先看状态灯，再决定能不能动。`,
-    summary: `v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${risk.brent.toFixed(1)}、美元指数 ${risk.dxy.toFixed(2)}、波动率 ${risk.vix.toFixed(2)}、高收益利差 ${risk.hy.toFixed(2)}%。`,
+    summary: `v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${risk.brent.toFixed(1)}、广义美元指数 ${risk.dxy.toFixed(2)}、波动率 ${risk.vix.toFixed(2)}、高收益利差 ${risk.hy.toFixed(2)}%。`,
     modules: risk.modules,
     moduleTrends: {
       geopolitical: clamp((realtime.changes?.brent1d ?? 0) * 2, -9, 9),
@@ -960,7 +960,7 @@ async function build() {
       change1d: clamp(((realtime.changes?.dxy1d ?? 0) * 10) + ((realtime.changes?.hyOas1d ?? 0) * 8), -9, 9),
       directionLabel: realtime.cacheOnly ? '快变量缓存模式' : realtime.degradedMode ? '快变量带回退' : '快变量实时覆盖',
       notes: [
-        `美元指数 ${risk.dxy.toFixed(2)} / 高收益利差 ${risk.hy.toFixed(2)} / 波动率 ${risk.vix.toFixed(2)} 为三大流动性输入。`,
+        `广义美元指数 ${risk.dxy.toFixed(2)} / 高收益利差 ${risk.hy.toFixed(2)} / 波动率 ${risk.vix.toFixed(2)} 为三大流动性输入。`,
         ...(realtime.notes || [])
       ],
       pillars: [
@@ -1011,7 +1011,7 @@ async function build() {
     assetMatrix: [
       { asset: '黄金', score: clamp(50 + (100 - risk.realRisk) * 0.35 + risk.inflationRisk * 0.25), bias: (risk.realRisk < 60 ? '中性偏多' : '谨慎偏多'), reason: `金价 ${risk.gold.toFixed(1)}，通胀对冲仍在，但真实利率继续约束。` },
       { asset: '原油', score: clamp(45 + risk.oilRisk * 0.55), bias: risk.brent >= 90 ? '强配' : '中性偏多', reason: `布伦特 ${risk.brent.toFixed(1)} 美元，仍是主导链条。` },
-      { asset: '美元', score: clamp(40 + risk.dollarRisk * 0.55), bias: risk.dollarRisk >= 60 ? '强配' : '中性偏多', reason: `美元指数 ${risk.dxy.toFixed(2)}，融资偏紧阶段继续占优。` },
+      { asset: '美元', score: clamp(40 + risk.dollarRisk * 0.55), bias: risk.dollarRisk >= 60 ? '强配' : '中性偏多', reason: `广义美元指数 ${risk.dxy.toFixed(2)}，融资偏紧阶段继续占优。` },
       { asset: '美债久期', score: clamp(60 - risk.realRisk * 0.45), bias: risk.realRisk >= 60 ? '低配' : '谨慎偏多', reason: `10年期 ${risk.us10y.toFixed(2)} / 实际利率 ${risk.real10y.toFixed(2)}%。` },
       { asset: '科技股', score: clamp(55 - avg([risk.rateRisk, risk.modules.liquidity]) * 0.5), bias: risk.score >= 70 ? '回避' : '低配', reason: '高估值资产仍受利率与流动性制约。' },
       { asset: '能源股', score: clamp(50 + risk.modules.energy * 0.45), bias: risk.modules.energy >= 70 ? '强配' : '中性偏多', reason: '能源现金流继续受益于高油价环境。' },
@@ -1023,7 +1023,7 @@ async function build() {
         name: '基准情景',
         probability: clamp(avg([probs.stagflationShock, probs.crisisLiquiditySqueeze])),
         description: '快变量显示风险仍高位但未失控，市场以防守与分化为主。',
-        triggers: `布伦特 ${risk.brent.toFixed(1)} / 美元指数 ${risk.dxy.toFixed(2)} / 高收益利差 ${risk.hy.toFixed(2)}`,
+        triggers: `布伦特 ${risk.brent.toFixed(1)} / 广义美元指数 ${risk.dxy.toFixed(2)} / 高收益利差 ${risk.hy.toFixed(2)}`,
         assets: '能源领先 / 美元与黄金保留 / 成长受限'
       },
       {
@@ -1088,7 +1088,7 @@ async function build() {
       ]
     },
     triggerPanel: {
-      critical: [`布伦特 ${risk.brent.toFixed(1)}`, `美元指数 ${risk.dxy.toFixed(2)}`, `高收益利差 ${risk.hy.toFixed(2)}%`],
+      critical: [`布伦特 ${risk.brent.toFixed(1)}`, `广义美元指数 ${risk.dxy.toFixed(2)}`, `高收益利差 ${risk.hy.toFixed(2)}%`],
       drivers: [`波动率 ${risk.vix.toFixed(2)}`, `10年期美债 ${risk.us10y.toFixed(2)}%`, `实际利率 ${risk.real10y.toFixed(2)}%`],
       watchlist: ['下一次通胀数据', '油价是否高于 100', '信用利差是否重新走阔']
     },
@@ -1114,7 +1114,7 @@ async function build() {
         chainSignal: risk.modules.energy >= risk.modules.liquidity ? '油价→通胀→利率→股票' : '美元→信用→流动性→股票',
         notes: [
           `执行引擎状态：${lock.levelLabel}。`,
-          `关键快变量：布伦特 ${risk.brent.toFixed(1)} / 美元指数 ${risk.dxy.toFixed(2)} / 波动率 ${risk.vix.toFixed(2)} / 高收益利差 ${risk.hy.toFixed(2)}。`,
+          `关键快变量：布伦特 ${risk.brent.toFixed(1)} / 广义美元指数 ${risk.dxy.toFixed(2)} / 波动率 ${risk.vix.toFixed(2)} / 高收益利差 ${risk.hy.toFixed(2)}。`,
           `健康度 ${realtime.healthScore}，关键缺失 ${realtime.criticalMissing || 0}。`,
           activeSignals.length ? `结构信号：${activeSignals.map(s => s.label).join('、')}。` : (allMacroMissing ? '结构信号数据源全不可用，门控已降级。' : '结构信号：无激活。')
         ]
@@ -1163,7 +1163,7 @@ async function build() {
         blocked: lock.block,
         checkpoints: [
           `布伦特 当前 ${risk.brent.toFixed(1)}`,
-          `美元指数 当前 ${risk.dxy.toFixed(2)}`,
+          `广义美元指数 当前 ${risk.dxy.toFixed(2)}`,
           `波动率指数 当前 ${risk.vix.toFixed(2)}`,
           `高收益利差 当前 ${risk.hy.toFixed(2)}%`,
           ...(Number.isFinite(macroDrivers.curve.t10y2y) ? [`曲线 10年-2年 当前 ${macroDrivers.curve.t10y2y.toFixed(2)}`] : []),
@@ -1228,7 +1228,7 @@ async function build() {
     triggerMonitor: {
       upgradeTriggers: [
         `布伦特 ${risk.brent.toFixed(1)}`,
-        `美元指数 ${risk.dxy.toFixed(2)}`,
+        `广义美元指数 ${risk.dxy.toFixed(2)}`,
         `高收益利差 ${risk.hy.toFixed(2)}%`,
         ...(Number.isFinite(macroDrivers.curve.t10y2y) ? [`10年-2年利差 ${macroDrivers.curve.t10y2y.toFixed(2)}`] : []),
         ...(Number.isFinite(macroDrivers.credit.igOas) ? [`投资级信用利差 ${macroDrivers.credit.igOas.toFixed(2)}%`] : [])

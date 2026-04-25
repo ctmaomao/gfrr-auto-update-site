@@ -322,7 +322,7 @@ function buildSummaryDisplay(inputs) {
   if (!hasAnyFiniteField(inputs, ['brent', 'dxy', 'vix', 'hyOas'])) {
     return 'v27.0 正根据混合实时架构输出交易引擎结论。实时快变量暂不可用。';
   }
-  return `v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)}、美元指数 ${fmtNumSafe(inputs.dxy, 2)}、波动率 ${fmtNumSafe(inputs.vix, 2)}、高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}%。`;
+  return `v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)}、广义美元指数 ${fmtNumSafe(inputs.dxy, 2)}、波动率 ${fmtNumSafe(inputs.vix, 2)}、高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}%。`;
 }
 
 function buildDecisionLineDisplay(realtimePayload, lock, gating) {
@@ -340,7 +340,7 @@ function buildTriggerPanelDisplay(inputs, base) {
   return {
     critical: [
       `布伦特 ${fmtNumSafe(inputs.brent, 1)}`,
-      `美元指数 ${fmtNumSafe(inputs.dxy, 2)}`,
+      `广义美元指数 ${fmtNumSafe(inputs.dxy, 2)}`,
       `高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}%`
     ],
     drivers: [
@@ -357,7 +357,7 @@ function buildAssetMatrixReasons(list, inputs) {
   const builders = {
     '黄金': () => `金价 ${fmtNumSafe(inputs.gold, 1)}，通胀对冲仍在，但真实利率仍需观察。`,
     '原油': () => `布伦特 ${fmtNumSafe(inputs.brent, 1)} 美元，仍是主导链条。`,
-    '美元': () => `美元指数 ${fmtNumSafe(inputs.dxy, 2)}，融资偏紧阶段继续占优。`,
+    '美元': () => `广义美元指数 ${fmtNumSafe(inputs.dxy, 2)}，融资偏紧阶段继续占优。`,
     '美债久期': () => `10年期 ${fmtNumSafe(inputs.us10y, 2)} / 实际利率 ${fmtNumSafe(inputs.real10y, 2)}%。`
   };
   return list.map((row) => {
@@ -370,7 +370,7 @@ function buildAssetMatrixReasons(list, inputs) {
 
 function buildScenarioTreeTriggers(list, inputs) {
   if (!Array.isArray(list)) return list;
-  const rebuilt = `布伦特 ${fmtNumSafe(inputs.brent, 1)} / 美元指数 ${fmtNumSafe(inputs.dxy, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}`;
+  const rebuilt = `布伦特 ${fmtNumSafe(inputs.brent, 1)} / 广义美元指数 ${fmtNumSafe(inputs.dxy, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}`;
   return list.map((entry) => {
     const triggers = entry?.triggers;
     if (typeof triggers !== 'string' || !triggers) return entry;
@@ -388,7 +388,7 @@ function buildSignalEngineNotes(inputs, realtimePayload, lock, gating) {
     : (gating?.allMissing ? '结构信号数据源全不可用，门控已降级。' : '结构信号：无激活。');
   return [
     `执行引擎状态：${levelLabel}。`,
-    `关键快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)} / 美元指数 ${fmtNumSafe(inputs.dxy, 2)} / 波动率 ${fmtNumSafe(inputs.vix, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}。`,
+    `关键快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)} / 广义美元指数 ${fmtNumSafe(inputs.dxy, 2)} / 波动率 ${fmtNumSafe(inputs.vix, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}。`,
     `健康度 ${healthScore}，关键缺失 ${criticalMissing}。`,
     structuralLine
   ];
@@ -400,7 +400,7 @@ function buildLiquidityNotes(inputs, realtimePayload) {
   const criticalMissing = Number.isFinite(realtimePayload?.criticalMissing) ? realtimePayload.criticalMissing : 0;
   const payloadNotes = Array.isArray(realtimePayload?.notes) ? realtimePayload.notes : [];
   return [
-    `实时快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)} / 美元指数 ${fmtNumSafe(inputs.dxy, 2)} / 波动率 ${fmtNumSafe(inputs.vix, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}。`,
+    `实时快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)} / 广义美元指数 ${fmtNumSafe(inputs.dxy, 2)} / 波动率 ${fmtNumSafe(inputs.vix, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}。`,
     `10年期美债 ${fmtNumSafe(inputs.us10y, 2)} / 实际利率 ${fmtNumSafe(inputs.real10y, 2)} / 黄金 ${fmtNumSafe(inputs.gold, 1)} / 标普500 ${fmtNumSafe(inputs.spx, 0)}。`,
     `数据模式：${sourceModeLabel} / 健康分数：${healthScore} / 关键缺失：${criticalMissing}。`,
     ...payloadNotes
@@ -663,7 +663,7 @@ export function applyRealtimeOverlay(base, realtimePayload) {
   {
     const baseCheckpoints = [
       `布伦特 当前 ${fmtNumSafe(brent,1)}`,
-      `美元指数 当前 ${fmtNumSafe(dxy,2)}`,
+      `广义美元指数 当前 ${fmtNumSafe(dxy,2)}`,
       `波动率指数 当前 ${fmtNumSafe(vix,2)}`,
       `高收益利差 当前 ${fmtNumSafe(hy,2)}%`
     ];
