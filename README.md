@@ -23,6 +23,11 @@
 - overlay：前端按字段级规则把 realtime 覆盖到 baseline，而不是整体替换
 - unavailable：当 realtime 缺失或超过 freshness 阈值时，页面退回 `Baseline Only`
 
+## 数据契约
+本项目的数据链路、canonical 字段、fallback 规则、Brent 验证层边界、ON RRP 单位与广义美元指数命名规则，见：
+
+- `docs/DATA_CONTRACT.md`
+
 ## 运行机制
 - `baseline`：提供页面默认内容和安全兜底
 - `realtime overlay`：提供盘中快变量、状态覆盖和实时增强
