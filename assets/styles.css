@@ -678,7 +678,24 @@ main { display: grid; gap: 22px; }
   padding: 16px 20px;
   color: #eaf3ff;
   font-weight: 900;
-  list-style-position: inside;
+  list-style: none;
+}
+.advanced-panel > summary::-webkit-details-marker {
+  display: none;
+}
+.advanced-panel > summary::after {
+  content: '展开';
+  display: inline-flex;
+  margin-left: 10px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(101, 180, 255, 0.10);
+  color: #a9c7ff;
+  font-size: 12px;
+  font-weight: 800;
+}
+.advanced-panel[open] > summary::after {
+  content: '收起';
 }
 .advanced-panel > section {
   margin: 0 20px 20px;
