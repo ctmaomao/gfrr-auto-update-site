@@ -18,7 +18,19 @@ const REQUEST_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
 const USER_AGENT = 'gfr-v26.0a-realtime/1.0';
 const FRESHNESS_WINDOWS = RULES.freshnessWindows;
-const BRENT_VALIDATION_SOURCES = ['ice', 'yahoo', 'stooq'];
+const BRENT_VALIDATION_SOURCES = ['ice', 'barchart', 'stooq', 'marketwatch', 'oilprice', 'yahoo'];
+const BRENT_SOURCE_PREFERENCE = ['ice', 'barchart', 'stooq', 'marketwatch', 'oilprice', 'yahoo'];
+const BRENT_SOURCE_QUALITY = {
+  ice: 'high',
+  barchart: 'high',
+  stooq: 'high',
+  marketwatch: 'high',
+  oilprice: 'medium',
+  yahoo: 'weak',
+  'fred-anchor': 'anchor'
+};
+const BRENT_CONSENSUS_MAX_AGE_MINUTES = 120;
+const BRENT_CONSENSUS_DIVERGENCE_PCT = 2;
 const BRENT_REASONABLE_MIN = 30;
 const BRENT_REASONABLE_MAX = 150;
 
@@ -164,9 +176,10 @@ function isReasonableBrentValue(value) {
 
 function parseObservedAtUtc(raw) {
   if (typeof raw !== 'string') return null;
-  const cleaned = raw.replace(/\s+/g, ' ').trim();
+  const cleaned = raw.replace(/\bat\b/gi, ' ').replace(/\s+/g, ' ').trim();
   if (!cleaned) return null;
-  const utcTime = Date.parse(cleaned.includes('GMT') || cleaned.includes('UTC') ? cleaned : `${cleaned} UTC`);
+  const hasTimeZone = /(?:Z|GMT|UTC|[+-]\d{2}:?\d{2})$/i.test(cleaned);
+  const utcTime = Date.parse(hasTimeZone ? cleaned : `${cleaned} UTC`);
   if (!Number.isFinite(utcTime)) return null;
   return new Date(utcTime).toISOString();
 }
@@ -183,39 +196,30 @@ function buildUnavailableCandidate(source, fetchedAt, delayClass, reason) {
   };
 }
 
-function summarizeWebReason(webCandidates, recommendedSource, hasClosePair, anchorCandidate) {
-  const availableSources = webCandidates.map((item) => item.source).join('/');
-  const otherSources = webCandidates
-    .map((item) => item.source)
-    .filter((name) => name !== recommendedSource)
-    .join('/');
-  if (webCandidates.length === 0) return '无可用网页源，无法形成 Brent 推荐值。';
-  if (webCandidates.length >= 2 && hasClosePair) {
-    return `${recommendedSource} 与 ${otherSources} 基本一致；FRED 仅作低频锚点参考。`;
+function summarizeWebReason(consensusCandidates, recommendedSource, selectedPair, divergencePct) {
+  const availableSources = consensusCandidates.map((item) => item.source).join('/');
+  if (consensusCandidates.length < 2) {
+    return '无足够可用候选源，暂不形成 Brent 推荐值；FRED 仅作低频锚点参考。';
   }
-  if (webCandidates.length === 1 && anchorCandidate?.available) {
-    return `仅 ${availableSources} 可用，已结合 FRED 锚点做偏离参考。`;
+  if (!selectedPair) {
+    const suffix = Number.isFinite(divergencePct) ? `，最大偏差 ${divergencePct}%` : '';
+    return `候选源偏差过大${suffix}，暂不形成 Brent 推荐值；FRED 仅作低频锚点参考。`;
   }
-  return `仅 ${availableSources} 可用，交叉验证不足。`;
+  const pairSources = selectedPair.map((item) => item.source).join('/');
+  return `${pairSources} 基本一致，推荐优先采用 ${recommendedSource}；FRED 仅作低频锚点参考。`;
+}
+
+function sourcePreferenceIndex(source) {
+  const index = BRENT_SOURCE_PREFERENCE.indexOf(source);
+  return index === -1 ? BRENT_SOURCE_PREFERENCE.length : index;
 }
 
 function pickRecommendedCandidate(webCandidates) {
   if (webCandidates.length === 0) return null;
-  if (webCandidates.length === 1) return webCandidates[0];
-
-  const sortedValues = webCandidates.map((item) => item.value).sort((a, b) => a - b);
-  const mid = Math.floor(sortedValues.length / 2);
-  const median = sortedValues.length % 2 === 1
-    ? sortedValues[mid]
-    : (sortedValues[mid - 1] + sortedValues[mid]) / 2;
-  const preference = ['ice', 'yahoo', 'stooq'];
   return webCandidates
     .slice()
     .sort((a, b) => {
-      const distA = Math.abs(a.value - median);
-      const distB = Math.abs(b.value - median);
-      if (distA !== distB) return distA - distB;
-      return preference.indexOf(a.source) - preference.indexOf(b.source);
+      return sourcePreferenceIndex(a.source) - sourcePreferenceIndex(b.source);
     })[0];
 }
 
@@ -225,21 +229,91 @@ function computePairDivergencePct(a, b) {
   return Math.abs(a - b) / avg * 100;
 }
 
-function buildBrentConsensus(candidates) {
-  const webCandidates = candidates.filter((item) => BRENT_VALIDATION_SOURCES.includes(item.source) && item.available);
-  const anchorCandidate = candidates.find((item) => item.source === 'fred-anchor') ?? null;
-  const recommended = pickRecommendedCandidate(webCandidates);
-  let divergencePct = null;
-  let hasClosePair = false;
+function isFreshEnoughForConsensus(candidate, fetchedAt) {
+  if (candidate?.source === 'fred-anchor') return false;
+  if (candidate?.source === 'stooq') return true;
+  const observedTime = parseTimestamp(candidate?.observedAt);
+  const fetchedTime = parseTimestamp(fetchedAt);
+  if (observedTime === null || fetchedTime === null) return false;
+  const ageMinutes = Math.max(0, Math.round((fetchedTime - observedTime) / 60000));
+  return ageMinutes <= BRENT_CONSENSUS_MAX_AGE_MINUTES;
+}
 
-  if (webCandidates.length >= 2) {
+function annotateBrentCandidateForConsensus(candidate, fetchedAt) {
+  const quality = BRENT_SOURCE_QUALITY[candidate.source] ?? 'unknown';
+  const isDateOnlyObservedAt = typeof candidate.observedAt === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(candidate.observedAt);
+  const ageMinutes = candidate.observedAt && !isDateOnlyObservedAt ? computeAgeMinutes(candidate.observedAt, fetchedAt) : null;
+  const base = {
+    ...candidate,
+    quality,
+    ageMinutes,
+    staleForConsensus: false,
+    excludedFromConsensus: null
+  };
+
+  if (candidate.source === 'fred-anchor') {
+    return { ...base, excludedFromConsensus: 'fred-anchor' };
+  }
+  if (!BRENT_VALIDATION_SOURCES.includes(candidate.source)) {
+    return { ...base, excludedFromConsensus: 'unknown-source' };
+  }
+  if (!candidate.available) {
+    return { ...base, excludedFromConsensus: 'unavailable' };
+  }
+  if (!isReasonableBrentValue(candidate.value)) {
+    return { ...base, excludedFromConsensus: 'out-of-range' };
+  }
+  if (candidate.source === 'stooq') {
+    return base;
+  }
+  if (!candidate.observedAt || parseTimestamp(candidate.observedAt) === null) {
+    return { ...base, staleForConsensus: true, excludedFromConsensus: 'observedAt-missing' };
+  }
+  if (!isFreshEnoughForConsensus(candidate, fetchedAt)) {
+    return {
+      ...base,
+      staleForConsensus: true,
+      excludedFromConsensus: `observedAt-stale(${ageMinutes}m)`
+    };
+  }
+  return base;
+}
+
+function findBestClosePair(consensusCandidates) {
+  let bestPair = null;
+  let bestDivergence = null;
+  for (let i = 0; i < consensusCandidates.length; i += 1) {
+    for (let j = i + 1; j < consensusCandidates.length; j += 1) {
+      const left = consensusCandidates[i];
+      const right = consensusCandidates[j];
+      const pct = computePairDivergencePct(left.value, right.value);
+      if (pct === null || pct >= BRENT_CONSENSUS_DIVERGENCE_PCT) continue;
+      const pair = [left, right].sort((a, b) => sourcePreferenceIndex(a.source) - sourcePreferenceIndex(b.source));
+      if (
+        bestPair === null ||
+        pct < bestDivergence ||
+        (pct === bestDivergence && sourcePreferenceIndex(pair[0].source) < sourcePreferenceIndex(bestPair[0].source))
+      ) {
+        bestPair = pair;
+        bestDivergence = pct;
+      }
+    }
+  }
+  return { bestPair, bestDivergence };
+}
+
+function buildBrentConsensus(candidates, fetchedAt) {
+  const annotatedCandidates = candidates.map((item) => annotateBrentCandidateForConsensus(item, fetchedAt));
+  const consensusCandidates = annotatedCandidates.filter((item) => item.excludedFromConsensus === null);
+  let divergencePct = null;
+
+  if (consensusCandidates.length >= 2) {
     const divergences = [];
-    for (let i = 0; i < webCandidates.length; i += 1) {
-      for (let j = i + 1; j < webCandidates.length; j += 1) {
-        const pct = computePairDivergencePct(webCandidates[i].value, webCandidates[j].value);
+    for (let i = 0; i < consensusCandidates.length; i += 1) {
+      for (let j = i + 1; j < consensusCandidates.length; j += 1) {
+        const pct = computePairDivergencePct(consensusCandidates[i].value, consensusCandidates[j].value);
         if (pct === null) continue;
         divergences.push(pct);
-        if (pct < 2) hasClosePair = true;
       }
     }
     if (divergences.length) {
@@ -247,26 +321,31 @@ function buildBrentConsensus(candidates) {
     }
   }
 
-  const recommendedValue = recommended?.value ?? null;
-  const recommendedSource = recommended?.source ?? null;
-  const valueLooksReasonable = isReasonableBrentValue(recommendedValue);
+  const { bestPair, bestDivergence } = findBestClosePair(consensusCandidates);
+  const recommended = bestPair ? pickRecommendedCandidate(bestPair) : null;
+  const selectedDivergencePct = Number.isFinite(bestDivergence) ? Number(bestDivergence.toFixed(3)) : null;
 
   let confidence = 'none';
-  if (webCandidates.length >= 2 && hasClosePair && valueLooksReasonable) {
-    confidence = 'high';
-  } else if (webCandidates.length === 1 && anchorCandidate?.available && valueLooksReasonable) {
-    confidence = 'medium';
-  } else if (webCandidates.length === 1 && valueLooksReasonable) {
-    confidence = 'low';
+  if (bestPair) {
+    const highQualityCount = bestPair.filter((item) => item.quality === 'high').length;
+    confidence = highQualityCount >= 2 ? 'high' : 'medium';
   }
+  const canRecommend = confidence === 'high' || confidence === 'medium';
 
   return {
-    recommendedValue,
-    recommendedSource,
+    recommendedValue: canRecommend ? recommended.value : null,
+    recommendedSource: canRecommend ? recommended.source : null,
     confidence,
-    reason: summarizeWebReason(webCandidates, recommendedSource, hasClosePair, anchorCandidate),
-    divergencePct,
-    canPromoteToPrimary: webCandidates.length >= 2 && hasClosePair && valueLooksReasonable
+    reason: summarizeWebReason(consensusCandidates, recommended?.source ?? null, bestPair, divergencePct),
+    divergencePct: selectedDivergencePct ?? divergencePct,
+    canPromoteToPrimary: canRecommend,
+    excludedFromConsensus: annotatedCandidates
+      .filter((item) => item.excludedFromConsensus !== null)
+      .map((item) => ({
+        source: item.source,
+        reason: item.excludedFromConsensus,
+        ageMinutes: item.ageMinutes
+      }))
   };
 }
 
@@ -457,6 +536,124 @@ async function fetchBrentYahooCandidate(fetchedAt) {
   }
 }
 
+async function fetchBrentHtmlCandidate({
+  source,
+  delayClass,
+  url,
+  headers,
+  valuePatterns,
+  observedAtPatterns,
+  parseFailureReason = 'parse-failed:value'
+}, fetchedAt) {
+  try {
+    const text = await retryTask(
+      () => fetchWithTimeout(url, {
+        timeoutMs: REQUEST_TIMEOUT_MS,
+        headers
+      }),
+      { label: `${source}:brent` }
+    );
+    if (!text || typeof text !== 'string') {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:page-structure');
+    }
+    const value = extractValueByPatterns(text, valuePatterns);
+    if (!Number.isFinite(value)) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, parseFailureReason);
+    }
+    if (!isReasonableBrentValue(value)) {
+      return buildUnavailableCandidate(source, fetchedAt, delayClass, `parse-failed:out-of-range(${value})`);
+    }
+    const observedRaw = firstMatch(text, observedAtPatterns);
+    return {
+      source,
+      value,
+      observedAt: parseObservedAtUtc(observedRaw),
+      fetchedAt,
+      delayClass,
+      available: true,
+      reason: null
+    };
+  } catch (error) {
+    return buildUnavailableCandidate(source, fetchedAt, delayClass, classifyFetchFailure(error));
+  }
+}
+
+async function fetchBrentBarchartCandidate(fetchedAt) {
+  return fetchBrentHtmlCandidate({
+    source: 'barchart',
+    delayClass: 'delayed-10m',
+    url: 'https://www.barchart.com/futures/quotes/CB*0/overview',
+    headers: {
+      Accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      Referer: 'https://www.barchart.com/futures/major-commodities'
+    },
+    valuePatterns: [
+      /"lastPrice"\s*:\s*"?([\d.,]+)"?/i,
+      /"last"\s*:\s*"?([\d.,]+)"?/i,
+      /"price"\s*:\s*"?([\d.,]+)"?/i,
+      /Last Price[\s\S]{0,240}?>([\d.,]+)</i,
+      /data-ng-bind="symbol\.lastPrice"[^>]*>([\d.,]+)</i
+    ],
+    observedAtPatterns: [
+      /"tradeTime"\s*:\s*"([^"]{4,60})"/i,
+      /"serverTimestamp"\s*:\s*"([^"]{4,60})"/i,
+      /Last Updated\s*:?\s*([^<]{8,60})/i
+    ],
+    parseFailureReason: 'parse-failed:page-structure'
+  }, fetchedAt);
+}
+
+async function fetchBrentMarketWatchCandidate(fetchedAt) {
+  return fetchBrentHtmlCandidate({
+    source: 'marketwatch',
+    delayClass: 'delayed-10m',
+    url: 'https://www.marketwatch.com/investing/future/brn00',
+    headers: {
+      Accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      Referer: 'https://www.marketwatch.com/markets/futures'
+    },
+    valuePatterns: [
+      /<bg-quote[^>]+field="Last"[^>]*>\s*([\d.,]+)\s*<\/bg-quote>/i,
+      /"last"\s*:\s*"?([\d.,]+)"?/i,
+      /"price"\s*:\s*"?([\d.,]+)"?/i,
+      /Last[\s\S]{0,180}?class="[^"]*value[^"]*"[^>]*>\s*([\d.,]+)\s*</i
+    ],
+    observedAtPatterns: [
+      /<span[^>]+class="[^"]*timestamp[^"]*"[^>]*>\s*([^<]{8,80})\s*<\/span>/i,
+      /Last Updated\s*:?\s*([^<]{8,80})/i,
+      /"timestamp"\s*:\s*"([^"]{4,60})"/i
+    ],
+    parseFailureReason: 'parse-failed:page-structure'
+  }, fetchedAt);
+}
+
+async function fetchBrentOilpriceCandidate(fetchedAt) {
+  return fetchBrentHtmlCandidate({
+    source: 'oilprice',
+    delayClass: 'delayed-web',
+    url: 'https://oilprice.com/oil-price-charts/',
+    headers: {
+      Accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      Referer: 'https://oilprice.com/'
+    },
+    valuePatterns: [
+      /Brent\s+Crude[\s\S]{0,500}?"price"\s*:\s*"?([\d.,]+)"?/i,
+      /Brent\s+Crude[\s\S]{0,500}?data-price=["']([\d.,]+)["']/i,
+      /Brent\s+Crude[\s\S]{0,260}?<td[^>]*>\s*([\d.,]+)\s*<\/td>/i,
+      /"Brent Crude"[\s\S]{0,260}?([\d]{2,3}\.\d{1,2})/i
+    ],
+    observedAtPatterns: [
+      /Last Updated\s*:?\s*([^<]{8,80})/i,
+      /Updated\s*:?\s*([^<]{8,80})/i,
+      /"last_updated"\s*:\s*"([^"]{4,60})"/i
+    ],
+    parseFailureReason: 'parse-failed:page-structure'
+  }, fetchedAt);
+}
+
 async function fetchBrentStooqCandidate(fetchedAt) {
   const source = 'stooq';
   const delayClass = 'delayed-eod';
@@ -533,20 +730,26 @@ function buildFredAnchorCandidate(brentResult, fetchedAt) {
 
 async function buildBrentValidation(results, fetchedAt) {
   const brentResult = results.find((item) => item.key === 'brent');
-  const [iceCandidate, yahooCandidate, stooqCandidate] = await Promise.all([
+  const [iceCandidate, barchartCandidate, stooqCandidate, marketWatchCandidate, oilpriceCandidate, yahooCandidate] = await Promise.all([
     fetchBrentIceCandidate(fetchedAt),
-    fetchBrentYahooCandidate(fetchedAt),
-    fetchBrentStooqCandidate(fetchedAt)
+    fetchBrentBarchartCandidate(fetchedAt),
+    fetchBrentStooqCandidate(fetchedAt),
+    fetchBrentMarketWatchCandidate(fetchedAt),
+    fetchBrentOilpriceCandidate(fetchedAt),
+    fetchBrentYahooCandidate(fetchedAt)
   ]);
   const candidates = [
     iceCandidate,
-    yahooCandidate,
+    barchartCandidate,
     stooqCandidate,
+    marketWatchCandidate,
+    oilpriceCandidate,
+    yahooCandidate,
     buildFredAnchorCandidate(brentResult, fetchedAt)
-  ];
+  ].map((candidate) => annotateBrentCandidateForConsensus(candidate, fetchedAt));
   return {
     candidates,
-    consensus: buildBrentConsensus(candidates)
+    consensus: buildBrentConsensus(candidates, fetchedAt)
   };
 }
 
@@ -733,18 +936,22 @@ function mockPayload() {
     values, changes, sourceStatus, sourceDetails, fieldFreshness,
     brentValidation: {
       candidates: [
-        { source: 'ice', value: 89.82, observedAt: now, fetchedAt: now, delayClass: 'delayed-15m', available: true, reason: null },
-        { source: 'yahoo', value: 89.79, observedAt: now, fetchedAt: now, delayClass: 'delayed-15m', available: true, reason: null },
-        { source: 'stooq', value: 89.85, observedAt: now, fetchedAt: now, delayClass: 'delayed-eod', available: true, reason: null },
-        { source: 'fred-anchor', value: 89.8, observedAt: now.slice(0, 10), fetchedAt: now, delayClass: 'daily-anchor', available: true, reason: null }
+        { source: 'ice', value: 89.82, observedAt: now, fetchedAt: now, delayClass: 'delayed-15m', available: true, reason: null, quality: 'high', ageMinutes: 0, staleForConsensus: false, excludedFromConsensus: null },
+        { source: 'barchart', value: 89.83, observedAt: now, fetchedAt: now, delayClass: 'delayed-10m', available: true, reason: null, quality: 'high', ageMinutes: 0, staleForConsensus: false, excludedFromConsensus: null },
+        { source: 'stooq', value: 89.85, observedAt: now.slice(0, 10), fetchedAt: now, delayClass: 'delayed-eod', available: true, reason: null, quality: 'high', ageMinutes: null, staleForConsensus: false, excludedFromConsensus: null },
+        { source: 'marketwatch', value: 89.81, observedAt: now, fetchedAt: now, delayClass: 'delayed-10m', available: true, reason: null, quality: 'high', ageMinutes: 0, staleForConsensus: false, excludedFromConsensus: null },
+        { source: 'oilprice', value: 89.84, observedAt: now, fetchedAt: now, delayClass: 'delayed-web', available: true, reason: null, quality: 'medium', ageMinutes: 0, staleForConsensus: false, excludedFromConsensus: null },
+        { source: 'yahoo', value: 89.79, observedAt: now, fetchedAt: now, delayClass: 'delayed-15m', available: true, reason: null, quality: 'weak', ageMinutes: 0, staleForConsensus: false, excludedFromConsensus: null },
+        { source: 'fred-anchor', value: 89.8, observedAt: now.slice(0, 10), fetchedAt: now, delayClass: 'daily-anchor', available: true, reason: null, quality: 'anchor', ageMinutes: null, staleForConsensus: false, excludedFromConsensus: 'fred-anchor' }
       ],
       consensus: {
         recommendedValue: 89.82,
         recommendedSource: 'ice',
         confidence: 'high',
-        reason: 'ice 与 ice/yahoo/stooq 基本一致；FRED 仅作低频锚点参考。',
+        reason: 'ice/barchart 基本一致，推荐优先采用 ice；FRED 仅作低频锚点参考。',
         divergencePct: 0.07,
-        canPromoteToPrimary: true
+        canPromoteToPrimary: true,
+        excludedFromConsensus: [{ source: 'fred-anchor', reason: 'fred-anchor', ageMinutes: null }]
       }
     }
   };
@@ -760,8 +967,11 @@ async function main() {
       );
       const brentValidation = await buildBrentValidation(results, now).catch((error) => ({
         candidates: [buildUnavailableCandidate('ice', now, 'delayed-15m', `validation-failed:${stringifyError(error)}`),
-          buildUnavailableCandidate('yahoo', now, 'delayed-15m', 'validation-failed:skipped'),
+          buildUnavailableCandidate('barchart', now, 'delayed-10m', 'validation-failed:skipped'),
           buildUnavailableCandidate('stooq', now, 'delayed-eod', 'validation-failed:skipped'),
+          buildUnavailableCandidate('marketwatch', now, 'delayed-10m', 'validation-failed:skipped'),
+          buildUnavailableCandidate('oilprice', now, 'delayed-web', 'validation-failed:skipped'),
+          buildUnavailableCandidate('yahoo', now, 'delayed-15m', 'validation-failed:skipped'),
           buildUnavailableCandidate('fred-anchor', now, 'daily-anchor', 'validation-failed:skipped')],
         consensus: {
           recommendedValue: null,
