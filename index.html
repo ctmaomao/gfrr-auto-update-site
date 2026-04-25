@@ -19,7 +19,9 @@
     </header>
 
     <main>
-      <section class="full-width-section decision-header-section">
+      <h2 class="section-group-title cockpit-layer">核心驾驶舱</h2>
+
+      <section class="full-width-section decision-header-section cockpit-section">
         <article class="card decision-header-card full-width-card">
           <div class="decision-header-layout">
             <div class="decision-header-main">
@@ -73,7 +75,7 @@
         </article>
       </section>
 
-      <section class="full-width-section">
+      <section class="full-width-section cockpit-section">
         <article class="card realtime-strip-card">
           <div class="card-head split-head">
             <h2>盘中快变量</h2>
@@ -123,7 +125,7 @@
         </article>
       </section>
 
-      <section class="full-width-section">
+      <section class="full-width-section cockpit-section">
         <article class="card health-dashboard-card">
           <div class="card-head split-head">
             <h2>数据健康状态</h2>
@@ -179,7 +181,7 @@
         </article>
       </section>
 
-      <section class="grid two-col hero-grid">
+      <section class="grid two-col hero-grid cockpit-section">
         <article class="card">
           <div class="card-head split-head">
             <h2>系统总览</h2>
@@ -212,7 +214,7 @@
         </article>
       </section>
 
-      <section class="full-width-section main-lock-section">
+      <section class="full-width-section main-lock-section cockpit-section">
         <article class="card execution-lock-card full-width-card">
           <div class="card-head split-head">
             <h2>执行状态灯</h2>
@@ -240,7 +242,9 @@
         </article>
       </section>
 
-      <section class="grid three-col">
+      <h2 class="section-group-title risk-layer">风险解释层</h2>
+
+      <section class="grid three-col risk-section">
         <article class="card">
           <h2>风险趋势进化</h2>
           <div class="trend-strip">
@@ -287,6 +291,10 @@
         </article>
       </section>
 
+      <h2 class="section-group-title advanced-layer">高级分析与规则审计</h2>
+
+      <details open class="advanced-panel">
+        <summary>30日时间维度、趋势解释与传导速度</summary>
       <section class="full-width-section">
         <article class="card">
           <div class="card-head split-head">
@@ -339,8 +347,9 @@
           </div>
         </article>
       </section>
+      </details>
 
-      <section class="grid two-col action-position-grid">
+      <section class="grid two-col action-position-grid risk-section">
         <article class="card">
           <h2>六大底层风险模块</h2>
           <div id="module-bars"></div>
@@ -370,7 +379,7 @@
         </article>
       </section>
 
-      <section class="full-width-section">
+      <section class="full-width-section risk-section">
         <article class="card heatmap-card full-width-card">
           <div class="card-head split-head">
             <h2>全球风险热力图</h2>
@@ -388,6 +397,8 @@
         </article>
       </section>
 
+      <details open class="advanced-panel">
+        <summary>机构级宏观传导网络</summary>
       <section class="full-width-section">
         <article class="card transmission-card full-width-card">
           <div class="card-head split-head">
@@ -435,7 +446,10 @@
           </div>
         </article>
       </section>
+      </details>
 
+      <details open class="advanced-panel">
+        <summary>预警规则与触发器审计</summary>
       <section class="grid two-col">
         <article class="card">
           <div class="card-head split-head">
@@ -479,7 +493,10 @@
           </div>
         </article>
       </section>
+      </details>
 
+      <details open class="advanced-panel">
+        <summary>资产收益 / 回撤映射</summary>
       <section class="card">
         <div class="card-head split-head">
           <h2>资产收益 / 回撤映射</h2>
@@ -502,8 +519,9 @@
           </table>
         </div>
       </section>
+      </details>
 
-      <section class="card">
+      <section class="card risk-section">
         <h2>资产偏好矩阵</h2>
         <div class="table-wrap">
           <table>
@@ -520,6 +538,8 @@
         </div>
       </section>
 
+      <details open class="advanced-panel">
+        <summary>四情景树与信号可信度</summary>
       <section class="grid two-col">
         <article class="card">
           <h2>四情景树</h2>
@@ -540,7 +560,10 @@
           <ul class="bullet-list" id="confidence-notes"></ul>
         </article>
       </section>
+      </details>
 
+      <details open class="advanced-panel">
+        <summary>恢复状态与系统说明</summary>
       <section class="grid two-col footer-grid">
         <article class="card">
           <h2>恢复状态</h2>
@@ -569,8 +592,9 @@
           </ul>
         </article>
       </section>
+      </details>
 
-      <section class="grid two-col trading-action-grid">
+      <section class="grid two-col trading-action-grid cockpit-section">
         <article class="card">
           <div class="card-head split-head">
             <h2>交易信号</h2>
@@ -620,7 +644,7 @@
         </article>
       </section>
 
-      <section class="grid two-col position-risk-grid">
+      <section class="grid two-col position-risk-grid cockpit-section">
         <article class="card">
           <div class="card-head split-head">
             <h2>目标仓位</h2>
@@ -683,6 +707,8 @@
         </article>
       </section>
 
+      <details open class="advanced-panel">
+        <summary>行为纪律</summary>
       <section class="full-width-section">
         <article class="card">
           <div class="card-head split-head">
@@ -705,6 +731,7 @@
           </div>
         </article>
       </section>
+      </details>
 
     </main>
 
