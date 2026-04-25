@@ -1,3 +1,5 @@
+import { formatFiniteNumber } from './format.js';
+
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
 export const localRealtimeUrl = './realtime/market.json';
@@ -17,5 +19,5 @@ export const deltaArrow = (n) => !Number.isFinite(n) || n === 0 ? '→' : n > 0 
 export const fmtSignedArrow = (n) => `${deltaArrow(n)} ${Number.isFinite(n) ? Math.abs(n) : '--'}`;
 
 export function fmtNumSafe(n, digits = 1) {
-  return Number.isFinite(n) ? n.toFixed(digits) : '--';
+  return formatFiniteNumber(n, digits);
 }

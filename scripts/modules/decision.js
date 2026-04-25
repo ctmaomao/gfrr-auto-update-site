@@ -1,4 +1,5 @@
 import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js';
+import { formatOnRrpYiUsd } from './format.js';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',
@@ -17,10 +18,6 @@ const STRUCTURAL_SIGNAL_LABELS = {
   fedRapidContraction: '美联储快速缩表',
   igOasStress: '投资级信用利差扩张'
 };
-
-function formatOnRrpBillions(value) {
-  return Number.isFinite(value) ? `${(value * 10).toFixed(2)} 亿美元` : '--';
-}
 
 // ============================================================
 // 通用工具（保持原有导出签名）
@@ -97,7 +94,7 @@ function readActiveStructuralSignals(data) {
     active.push({ key: 'curveRapidSteepening', label: STRUCTURAL_SIGNAL_LABELS.curveRapidSteepening, detail: `周变化 ${curve.t10y2yWeekChange?.toFixed?.(2) ?? '--'}`, reliability: curveStatus.t10y2y });
   }
   if (Number.isFinite(fed.onRrp) && fedStatus.onRrp !== 'missing' && fed.onRrp < 100) {
-    active.push({ key: 'onRrpCritical', label: STRUCTURAL_SIGNAL_LABELS.onRrpCritical, detail: `ON RRP ${formatOnRrpBillions(fed.onRrp)}`, reliability: fedStatus.onRrp });
+    active.push({ key: 'onRrpCritical', label: STRUCTURAL_SIGNAL_LABELS.onRrpCritical, detail: `ON RRP ${formatOnRrpYiUsd(fed.onRrp)}`, reliability: fedStatus.onRrp });
   }
   if (Number.isFinite(fed.walcl4wChange) && fedStatus.walcl !== 'missing' && fed.walcl4wChange <= -2) {
     active.push({ key: 'fedRapidContraction', label: STRUCTURAL_SIGNAL_LABELS.fedRapidContraction, detail: `4周变化 ${fed.walcl4wChange.toFixed(2)}%`, reliability: fedStatus.walcl });
