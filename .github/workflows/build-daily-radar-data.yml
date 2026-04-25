@@ -35,6 +35,8 @@ jobs:
           mkdir -p realtime
           git fetch origin realtime-data
           git show origin/realtime-data:realtime/market.json > realtime/market.json
+          REALTIME_SHA="$(git rev-parse origin/realtime-data)"
+          echo "GFRR_REALTIME_COMMIT_SHA=$REALTIME_SHA" >> "$GITHUB_ENV"
 
       - name: Generate radar data
         run: npm run build:data

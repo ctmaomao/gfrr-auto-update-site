@@ -50,6 +50,17 @@ const prevHistory = readJson(histPath, []);
 const prevHistoryFull = readJson(histFullPath, []);
 const realtime = readJson(rtPath, null);
 
+function buildDailyRealtimeInput(realtimePayload) {
+  return {
+    branch: 'realtime-data',
+    commitSha: process.env.GFRR_REALTIME_COMMIT_SHA || null,
+    updatedAt: realtimePayload?.updatedAt || realtimePayload?.asOf || null,
+    sourceMode: realtimePayload?.sourceMode || null,
+    healthScore: Number.isFinite(realtimePayload?.healthScore) ? realtimePayload.healthScore : null,
+    capturedAt: isoNow
+  };
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -818,6 +829,7 @@ function buildFallback() {
     lastRun: isoNow,
     notes: ['日构建未拿到可用实时快照，已回退到上次有效结果。']
   };
+  next.dailyRealtimeInput = buildDailyRealtimeInput(realtime);
   return { data: next, history: prevHistory, historyFull: prevHistoryFull };
 }
 
@@ -908,6 +920,7 @@ async function build() {
   const data = {
     version: 'v27.0',
     updatedAt: isoNow,
+    dailyRealtimeInput: buildDailyRealtimeInput(realtime),
     score: risk.score,
     scoreChange1d,
     scoreChange7d,
