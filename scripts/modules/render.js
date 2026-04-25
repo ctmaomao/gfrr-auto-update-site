@@ -133,7 +133,7 @@ export function buildDecisionHeaderModel(decisionModel = {}, data = {}) {
     coreAction,
     stateChange: describeStateChange(decisionModel.stateMeta || {}),
     title: `${STRATEGY_STATE_CN[strategyState] || strategyState} 决策概览`,
-    reason: decisionModel.stateReason || data?.decisionLine || '当前宏观环境正由 v26 决策模型汇总中。',
+    reason: decisionModel.stateReason || data?.decisionLine || '当前宏观环境正由 v27 决策模型汇总中。',
     escalationLabel: decisionModel?.triggerMonitor?.escalationLevel
       ? `升级风险：${decisionModel.triggerMonitor.escalationLevel}`
       : '升级监控中',

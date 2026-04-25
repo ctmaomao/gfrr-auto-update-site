@@ -43,7 +43,7 @@ async function main() {
   renderDecisionHeader(window.__GFRR_DECISION_HEADER__);
   renderHealthDashboard(healthDashboard);
   // Legacy display dependencies: these older overview fields remain for the
-  // current page layout, but they are not part of the v26 canonical contract.
+  // current page layout, but they are not part of the v27 canonical contract.
   $('overview-date').textContent = data.updatedAt.slice(0, 10);
   $('decision-line').textContent = data.decisionLine || '当前以防守型决策为主，等待更明确的宽松与增长信号。';
   $('summary-text').textContent = data.summary;
