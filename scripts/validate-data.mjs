@@ -28,6 +28,9 @@ const realtime = JSON.parse(fs.readFileSync(realtimePath, 'utf8'));
 const DISPLAY_INPUT_KEYS = ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'real10y', 'breakeven10y', 'gold', 'spx'];
 const WIDE_TOLERANCE_KEYS = new Set(['gold', 'spx']);
 const BRENT_CONFIDENCE_LEVELS = new Set(['high', 'medium', 'low', 'none']);
+const DAILY_REALTIME_SOURCE_MODES = new Set(['live', 'degraded', 'live-with-fallback', 'fallback', 'cache-only', 'mock']);
+const DAILY_REALTIME_LIVE_MAX_AGE_MINUTES = 180;
+const DAILY_REALTIME_CACHE_ONLY_MAX_AGE_MINUTES = 360;
 
 function assert(condition, message) {
   if (!condition) throw new Error(`Validation failed: ${message}`);
@@ -39,6 +42,44 @@ function isFiniteNumberOrNull(value) {
 
 function isCloseEnough(a, b, tolerance) {
   return Math.abs(a - b) <= tolerance;
+}
+
+function parseIsoTime(value, fieldName) {
+  assert(typeof value === 'string' && value.trim().length > 0, `dailyRealtimeInput.${fieldName} must be a non-empty ISO string`);
+  const timestamp = Date.parse(value);
+  assert(Number.isFinite(timestamp), `dailyRealtimeInput.${fieldName} is not parseable`);
+  return timestamp;
+}
+
+function validateDailyRealtimeInput(dataPayload) {
+  const input = dataPayload.dailyRealtimeInput;
+  assert(input && typeof input === 'object' && !Array.isArray(input), 'dailyRealtimeInput is missing');
+
+  for (const key of ['branch', 'commitSha', 'updatedAt', 'sourceMode', 'healthScore', 'capturedAt']) {
+    assert(Object.hasOwn(input, key), `dailyRealtimeInput.${key} is missing`);
+  }
+
+  assert(input.branch === 'realtime-data', 'dailyRealtimeInput.branch must be realtime-data');
+  assert(
+    input.commitSha === null || (typeof input.commitSha === 'string' && input.commitSha.length >= 7),
+    'dailyRealtimeInput.commitSha must be null or a string with length >= 7'
+  );
+  assert(typeof input.sourceMode === 'string' && input.sourceMode.trim().length > 0, 'dailyRealtimeInput.sourceMode must be a non-empty string');
+  assert(DAILY_REALTIME_SOURCE_MODES.has(input.sourceMode), `dailyRealtimeInput.sourceMode is not supported: ${input.sourceMode}`);
+  assert(isFiniteNumberOrNull(input.healthScore), 'dailyRealtimeInput.healthScore must be finite number or null');
+
+  const updatedAtMs = parseIsoTime(input.updatedAt, 'updatedAt');
+  const capturedAtMs = parseIsoTime(input.capturedAt, 'capturedAt');
+  assert(capturedAtMs >= updatedAtMs, 'dailyRealtimeInput.capturedAt is before updatedAt');
+
+  const ageMinutes = Math.round((capturedAtMs - updatedAtMs) / 60000);
+  if (input.sourceMode === 'cache-only') {
+    assert(ageMinutes <= DAILY_REALTIME_CACHE_ONLY_MAX_AGE_MINUTES, `dailyRealtimeInput.cache-only payload is too old: ${ageMinutes} minutes`);
+    assert(!(Number.isFinite(input.healthScore) && input.healthScore > 0), 'dailyRealtimeInput.cache-only healthScore must not be positive');
+    return;
+  }
+
+  assert(ageMinutes <= DAILY_REALTIME_LIVE_MAX_AGE_MINUTES, `dailyRealtimeInput ${input.sourceMode} payload is stale: ${ageMinutes} minutes`);
 }
 
 function validateDisplayInputsBaseline(dataPayload) {
@@ -130,6 +171,7 @@ if (!data.tradingSystem || !data.tradingSystem.executionLock || !data.tradingSys
   throw new Error('Validation failed: trading engine modules missing.');
 }
 if (!realtime.values || !realtime.sourceStatus) throw new Error('Validation failed: realtime payload incomplete.');
+validateDailyRealtimeInput(data);
 validateDisplayInputsBaseline(data);
 validateRealtimeBaselineAlignment(data, realtime);
 validateBrentValidation(realtime);
