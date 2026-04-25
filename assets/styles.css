@@ -621,6 +621,29 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
   border: 1px solid var(--panel-border); background: rgba(12, 24, 44, 0.8); padding: 18px 24px;
   border-radius: 18px; min-width: 220px; text-align: center; color: #c7dbff; font-weight: 700;
 }
+.dashboard-jump-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -6px 0 20px;
+}
+.dashboard-jump-nav a {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 12px;
+  border: 1px solid rgba(137, 167, 232, 0.18);
+  border-radius: 999px;
+  background: rgba(12, 24, 44, 0.52);
+  color: #dce9ff;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.dashboard-jump-nav a:hover {
+  border-color: rgba(101, 180, 255, 0.36);
+  background: rgba(101, 180, 255, 0.10);
+  color: #ffffff;
+}
 main { display: grid; gap: 22px; }
 .section-group-title {
   margin: 18px 0 2px;
