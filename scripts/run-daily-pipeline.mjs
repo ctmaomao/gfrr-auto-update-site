@@ -152,7 +152,7 @@ function classifyFedAssetTrend(pct4w) {
 }
 
 function formatOnRrpBillions(value) {
-  return Number.isFinite(value) ? value.toFixed(3) : '--';
+  return Number.isFinite(value) ? `${(value * 10).toFixed(2)} 亿美元` : '--';
 }
 
 function classifyOnRrpLevel(onRrp, weekChangePct) {
@@ -399,7 +399,7 @@ function activeStructuralSignals(macroDrivers) {
     active.push({
       key: 'onRrpCritical',
       label: '逆回购准备金告急',
-      detail: `ON RRP ${formatOnRrpBillions(fed.onRrp)} 十亿美元`,
+      detail: `ON RRP ${formatOnRrpBillions(fed.onRrp)}`,
       reliability: fedStatus.onRrp
     });
   }
@@ -626,7 +626,7 @@ function evaluateStructuralGating(macroDrivers) {
   // 红灯触发条件1：曲线严重倒挂（< -0.8）且 IG 告警级以上（>= critical 2.0%）
   const redCurveCreditDouble = (t10y2y !== null && t10y2y <= cfg.curve.severeInversionThreshold)
     && (igOas !== null && igOas >= cfg.credit.igOasCriticalThreshold);
-  // 红灯触发条件2：ON RRP 低于 onRrpCriticalThreshold / 2（单项极端，约 50 十亿美元）
+  // 红灯触发条件2：ON RRP 低于 onRrpCriticalThreshold / 2（单项极端，约 500 亿美元）
   const onRrpCatastrophic = onRrp !== null && onRrp < (cfg.fedLiquidity.onRrpCriticalThreshold / 2);
   const structuralRed = redCurveCreditDouble || onRrpCatastrophic;
 
@@ -636,7 +636,7 @@ function evaluateStructuralGating(macroDrivers) {
     && (walcl4w !== null && walcl4w <= cfg.fedLiquidity.walcl4wContractionAlert);
   // 黄灯触发条件2：IG OAS 进入应力区（>= 1.5%）
   const yellowIgWatch = igOas !== null && igOas >= cfg.credit.igOasWatchThreshold;
-  // 黄灯触发条件3：ON RRP 告急（< 100 十亿美元）单项
+  // 黄灯触发条件3：ON RRP 告急（< 1000 亿美元）单项
   const yellowOnRrpCritical = onRrp !== null && onRrp < cfg.fedLiquidity.onRrpCriticalThreshold;
   // 黄灯触发条件4：曲线深度倒挂单项（<= -0.5）
   const yellowCurveDeep = t10y2y !== null && t10y2y <= cfg.curve.deepInversionThreshold;
@@ -1146,7 +1146,7 @@ async function build() {
           '高收益利差 ≥ 4.5%：暂停新增风险仓位。',
           '波动率指数 ≥ 28：切入红灯。',
           '结构性红灯：曲线 < -0.8 且投资级信用利差 ≥ 2.0%；或逆回购余额临界告急。',
-          '结构性黄灯：曲线 ≤ -0.5 叠加美联储缩表；或投资级信用利差 ≥ 1.5%；或逆回购 < 1000 亿。'
+          '结构性黄灯：曲线 ≤ -0.5 叠加美联储缩表；或投资级信用利差 ≥ 1.5%；或逆回购余额 < 1000 亿美元。'
         ],
         resetThresholds: [
           '波动率指数 < 18 且高收益利差 < 3.7：才允许回到绿灯。',
@@ -1168,7 +1168,7 @@ async function build() {
           `高收益利差 当前 ${risk.hy.toFixed(2)}%`,
           ...(Number.isFinite(macroDrivers.curve.t10y2y) ? [`曲线 10年-2年 当前 ${macroDrivers.curve.t10y2y.toFixed(2)}`] : []),
           ...(Number.isFinite(macroDrivers.credit.igOas) ? [`投资级信用利差 当前 ${macroDrivers.credit.igOas.toFixed(2)}%`] : []),
-          ...(Number.isFinite(macroDrivers.fedLiquidity.onRrp) ? [`逆回购余额 当前 ${formatOnRrpBillions(macroDrivers.fedLiquidity.onRrp)} 十亿美元`] : [])
+          ...(Number.isFinite(macroDrivers.fedLiquidity.onRrp) ? [`逆回购余额 当前 ${formatOnRrpBillions(macroDrivers.fedLiquidity.onRrp)}`] : [])
         ]
       },
       executionLock: {

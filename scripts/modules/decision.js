@@ -19,7 +19,7 @@ const STRUCTURAL_SIGNAL_LABELS = {
 };
 
 function formatOnRrpBillions(value) {
-  return Number.isFinite(value) ? value.toFixed(3) : '--';
+  return Number.isFinite(value) ? `${(value * 10).toFixed(2)} 亿美元` : '--';
 }
 
 // ============================================================
@@ -97,7 +97,7 @@ function readActiveStructuralSignals(data) {
     active.push({ key: 'curveRapidSteepening', label: STRUCTURAL_SIGNAL_LABELS.curveRapidSteepening, detail: `周变化 ${curve.t10y2yWeekChange?.toFixed?.(2) ?? '--'}`, reliability: curveStatus.t10y2y });
   }
   if (Number.isFinite(fed.onRrp) && fedStatus.onRrp !== 'missing' && fed.onRrp < 100) {
-    active.push({ key: 'onRrpCritical', label: STRUCTURAL_SIGNAL_LABELS.onRrpCritical, detail: `ON RRP ${formatOnRrpBillions(fed.onRrp)} 十亿美元`, reliability: fedStatus.onRrp });
+    active.push({ key: 'onRrpCritical', label: STRUCTURAL_SIGNAL_LABELS.onRrpCritical, detail: `ON RRP ${formatOnRrpBillions(fed.onRrp)}`, reliability: fedStatus.onRrp });
   }
   if (Number.isFinite(fed.walcl4wChange) && fedStatus.walcl !== 'missing' && fed.walcl4wChange <= -2) {
     active.push({ key: 'fedRapidContraction', label: STRUCTURAL_SIGNAL_LABELS.fedRapidContraction, detail: `4周变化 ${fed.walcl4wChange.toFixed(2)}%`, reliability: fedStatus.walcl });
@@ -764,7 +764,7 @@ export function buildTriggerMonitorEngine(data, metadata, decisionState, positio
       metadata.realtimeCacheOnly ? '若缓存模式持续到下一周期，应升级。' : '',
       metadata.realtimeFreshnessLevel === 'stale' || metadata.realtimeUnavailable ? '若过期/仅基线数据持续无法恢复，应升级。' : '',
       '若曲线倒挂扩大至 -0.8 以下且投资级信用利差达到 2.0% 以上，触发结构性红灯。',
-      '若逆回购余额跌破 50 十亿美元临界值，触发结构性红灯。',
+      '若逆回购余额跌破 500 亿美元临界值，触发结构性红灯。',
       '若投资级信用利差突破 1.5% 应力阈值，触发结构性黄灯。',
       '若曲线深度倒挂叠加美联储快速缩表，触发结构性黄灯。'
     ]).slice(0, 12);
@@ -826,7 +826,7 @@ export function buildInvalidationRulesEngine(data, metadata, decisionState, posi
       '严重共振缓解至 2 以下后，方可降级。',
       '红色预警消除且数据新鲜度恢复正常后，方可降级。',
       '曲线回到 0 以上且投资级信用利差 < 1.2%：方可解除结构性约束。',
-      '逆回购余额回到 300 十亿美元以上：方可解除逆回购告急门控。',
+      '逆回购余额回到 3000 亿美元以上：方可解除逆回购告急门控。',
       ...(Array.isArray(riskControl.resetThresholds) ? riskControl.resetThresholds.slice(0, 3).map((rule) => `复位参考：${rule}`) : [])
     ]).slice(0, 9);
     let deescalationBias = '中等';
