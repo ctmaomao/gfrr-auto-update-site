@@ -1,4 +1,4 @@
-import { dataUrl, historyUrl, localRealtimeUrl, remoteRealtimeUrl, fmtNumSafe } from './config.js';
+import { dataUrl, historyUrl, localRealtimeUrl, REMOTE_REALTIME_URL, fmtNumSafe } from './config.js';
 import { computeAgeMinutes, classifyFreshnessLevel, buildRealtimeStatusLabel, shouldApplyRealtimeOverlay } from './freshness.js';
 import { buildHealthDashboardModel } from './health.js';
 import { buildDecisionModel } from './decision.js';
@@ -125,7 +125,7 @@ export function isLocalRealtimeFallbackUsable(payload, nowMs = Date.now()) {
 
 export async function fetchRealtimePayload() {
   const attempts = [
-    { url: `${remoteRealtimeUrl}?ts=${Date.now()}`, source: 'remote', fallbackUsed: false },
+    { url: `${REMOTE_REALTIME_URL}?ts=${Date.now()}`, source: 'remote', fallbackUsed: false },
     { url: localRealtimeUrl, source: 'local-fallback', fallbackUsed: true }
   ];
   let lastError = null;
