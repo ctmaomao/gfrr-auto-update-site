@@ -44,6 +44,34 @@ jobs:
       - name: Validate output
         run: npm run validate
 
+      - name: Summarize daily output
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const data = JSON.parse(fs.readFileSync('data/radar-data.json', 'utf8'));
+          const input = data.dailyRealtimeInput || {};
+          const baseline = data.displayInputsBaseline || {};
+          const rows = [
+            ['dailyRealtimeInput.commitSha', input.commitSha || '--'],
+            ['dailyRealtimeInput.updatedAt', input.updatedAt || '--'],
+            ['dailyRealtimeInput.sourceMode', input.sourceMode || '--'],
+            ['dailyRealtimeInput.healthScore', input.healthScore ?? '--'],
+            ['baseline Brent', baseline.brent ?? '--'],
+            ['baseline broad dollar', baseline.dxy ?? '--'],
+            ['baseline VIX', baseline.vix ?? '--'],
+            ['baseline HY OAS', baseline.hyOas ?? '--'],
+            ['baseline SPX', baseline.spx ?? '--']
+          ];
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
+            '## Daily Radar Summary',
+            '',
+            '| Item | Value |',
+            '|---|---|',
+            ...rows.map(([key, value]) => `| ${key} | ${value} |`),
+            ''
+          ].join('\n'));
+          NODE
+
       - name: Commit updated data files
         run: |
           git config user.name "github-actions[bot]"

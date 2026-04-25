@@ -32,6 +32,31 @@ jobs:
       - name: Generate realtime market
         run: npm run build:realtime
 
+      - name: Summarize realtime output
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const rt = JSON.parse(fs.readFileSync('realtime/market.json', 'utf8'));
+          const c = rt.brentValidation?.consensus || {};
+          const rows = [
+            ['updatedAt', rt.updatedAt || '--'],
+            ['sourceMode', rt.sourceMode || '--'],
+            ['healthScore', rt.healthScore ?? '--'],
+            ['Brent', rt.values?.brent ?? '--'],
+            ['Brent consensus', c.recommendedValue ?? '--'],
+            ['confidence', c.confidence ?? '--'],
+            ['canPromoteToPrimary', c.canPromoteToPrimary ?? '--']
+          ];
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
+            '## Realtime Market Summary',
+            '',
+            '| Item | Value |',
+            '|---|---|',
+            ...rows.map(([key, value]) => `| ${key} | ${value} |`),
+            ''
+          ].join('\n'));
+          NODE
+
       - name: Commit updated realtime file to publish branch
         run: |
           set -euo pipefail
