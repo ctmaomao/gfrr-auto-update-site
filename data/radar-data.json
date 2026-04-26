@@ -1,13 +1,13 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-04-26T04:17:44.019Z",
+  "updatedAt": "2026-04-26T08:38:01.524Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "bfe063adde58a58da4469e3ce17f25a9ad713b2b",
-    "updatedAt": "2026-04-26T03:53:25.740Z",
+    "commitSha": "5359bda156e03ad0adfb9aacea72489890471e0c",
+    "updatedAt": "2026-04-26T07:59:09.269Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-04-26T04:17:44.019Z"
+    "capturedAt": "2026-04-26T08:38:01.524Z"
   },
   "score": 54,
   "scoreChange1d": 0,
@@ -263,37 +263,43 @@
         "label": "战争冲击",
         "score": 82,
         "directionLabel": "冲击上行",
-        "note": "地缘冲突与航运风险仍是链条起点。"
+        "note": "地缘冲突与航运风险仍是链条起点。",
+        "delta": 0
       },
       {
         "label": "油价压力",
         "score": 81,
         "directionLabel": "推升油价",
-        "note": "风险溢价与供给担忧共同抬升能源中枢。"
+        "note": "风险溢价与供给担忧共同抬升能源中枢。",
+        "delta": 0
       },
       {
         "label": "通胀传导",
         "score": 81,
         "directionLabel": "抬高通胀",
-        "note": "能源价格继续向运输、制造和服务环节传导。"
+        "note": "能源价格继续向运输、制造和服务环节传导。",
+        "delta": 0
       },
       {
         "label": "利率压力",
         "score": 78,
         "directionLabel": "压制宽松",
-        "note": "通胀黏性抬高真实利率并延后宽松窗口。"
+        "note": "通胀黏性抬高真实利率并延后宽松窗口。",
+        "delta": 0
       },
       {
         "label": "黄金影响",
         "score": 64,
         "directionLabel": "中期偏多",
-        "note": "中期通胀对冲逻辑仍在，但短线受利率压制。"
+        "note": "中期通胀对冲逻辑仍在，但短线受利率压制。",
+        "delta": 0
       },
       {
         "label": "股票影响",
         "score": 79,
         "directionLabel": "偏空",
-        "note": "高利率与融资收紧压缩估值，并削弱风险偏好。"
+        "note": "高利率与融资收紧压缩估值，并削弱风险偏好。",
+        "delta": 0
       }
     ],
     "layers": [
@@ -444,6 +450,11 @@
         "score": 82
       }
     ]
+  },
+  "transmissionDeltaMeta": {
+    "source": "previous-radar-data",
+    "matchedNodes": 6,
+    "totalNodes": 6
   },
   "assetMatrix": [
     {
@@ -638,7 +649,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-04-26T04:17:44.019Z",
+        "triggeredAgo": "2026-04-26T08:38:01.524Z",
         "condition": "结构性双压触发红灯（逆回购准备金临界告急）。系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -646,7 +657,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-04-26T04:17:44.019Z",
+        "triggeredAgo": "2026-04-26T08:38:01.524Z",
         "condition": "ON RRP 0.82 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -654,7 +665,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-04-26T04:17:44.019Z",
+        "triggeredAgo": "2026-04-26T08:38:01.524Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -693,7 +704,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-04-26T04:17:44.019Z",
+    "lastRun": "2026-04-26T08:38:01.524Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
