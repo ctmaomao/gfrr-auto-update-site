@@ -1,32 +1,34 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import path from 'node:path';
 
-const FILES = [
-  'scripts/app.js',
-  'scripts/run-realtime.mjs',
-  'scripts/run-daily-pipeline.mjs',
-  'scripts/validate-data.mjs',
-  'scripts/check-dom-ids.mjs',
-  'scripts/check-module-imports.mjs',
-  'scripts/modules/realtime.js',
-  'scripts/modules/render.js',
-  'scripts/modules/renderTables.js',
-  'scripts/modules/renderCharts.js',
-  'scripts/modules/renderAudit.js',
-  'scripts/modules/displayTextBuilders.js',
-  'scripts/modules/decision.js',
-  'scripts/modules/config.js',
-  'scripts/modules/format.js'
-];
+const ROOT_DIR = 'scripts';
+const EXCLUDED_DIRS = new Set(['.git', 'node_modules']);
+
+function toPosixPath(filePath) {
+  return filePath.split(path.sep).join('/');
+}
+
+function collectScriptFiles(dir) {
+  const files = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (!EXCLUDED_DIRS.has(entry.name)) files.push(...collectScriptFiles(fullPath));
+      continue;
+    }
+    if (entry.isFile() && /\.(mjs|js)$/.test(entry.name)) {
+      files.push(toPosixPath(fullPath));
+    }
+  }
+  return files;
+}
+
+const FILES = collectScriptFiles(ROOT_DIR).sort((a, b) => a.localeCompare(b));
 
 const failures = [];
 
 for (const file of FILES) {
-  if (!fs.existsSync(file)) {
-    console.log(`SKIP ${file}`);
-    continue;
-  }
-
   const result = spawnSync(process.execPath, ['--check', file], {
     encoding: 'utf8'
   });
