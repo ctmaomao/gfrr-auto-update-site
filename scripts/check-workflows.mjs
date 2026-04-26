@@ -45,6 +45,8 @@ const contracts = [
       'npm run check:dom',
       'npm run check:modules',
       'npm run check:copy',
+      'npm run check:workflows',
+      'npm run check:docs',
       'npm run check:data',
       'upload-pages-artifact',
       'deploy-pages'
