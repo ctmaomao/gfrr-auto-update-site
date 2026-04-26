@@ -1,18 +1,18 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-04-25T23:04:25.411Z",
+  "updatedAt": "2026-04-26T00:52:18.381Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "eacb4c03084774a2cb656622954c3b78f6ef4ec7",
-    "updatedAt": "2026-04-25T22:56:22.851Z",
+    "commitSha": "b50f2e795aeb017960c27b238674381ef1e31969",
+    "updatedAt": "2026-04-25T23:52:20.484Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-04-25T23:04:25.411Z"
+    "capturedAt": "2026-04-26T00:52:18.381Z"
   },
   "score": 54,
-  "scoreChange1d": -2,
-  "scoreChange7d": -22,
-  "scoreChange30d": -13,
+  "scoreChange1d": 0,
+  "scoreChange7d": -6,
+  "scoreChange30d": -12,
   "trendLabel": "风险回落",
   "currentMacroRegime": "流动性偏紧",
   "currentCrisisPhase": "通胀冲击",
@@ -160,7 +160,7 @@
   },
   "timeDimension": {
     "trend30d": "滚动风险曲线（混合实时驱动）",
-    "scoreChange30d": -13,
+    "scoreChange30d": -12,
     "avg30d": 70,
     "peak30d": 81,
     "trough30d": 54,
@@ -638,7 +638,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-04-25T23:04:25.411Z",
+        "triggeredAgo": "2026-04-26T00:52:18.381Z",
         "condition": "结构性双压触发红灯（逆回购准备金临界告急）。系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -646,7 +646,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-04-25T23:04:25.411Z",
+        "triggeredAgo": "2026-04-26T00:52:18.381Z",
         "condition": "ON RRP 0.82 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -654,7 +654,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-04-25T23:04:25.411Z",
+        "triggeredAgo": "2026-04-26T00:52:18.381Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -693,7 +693,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-04-25T23:04:25.411Z",
+    "lastRun": "2026-04-26T00:52:18.381Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
