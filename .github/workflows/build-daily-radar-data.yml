@@ -51,6 +51,45 @@ jobs:
           const data = JSON.parse(fs.readFileSync('data/radar-data.json', 'utf8'));
           const input = data.dailyRealtimeInput || {};
           const baseline = data.displayInputsBaseline || {};
+          const decisionModel = data.decisionModel || {};
+          const tradingSystem = data.tradingSystem || {};
+          const executionLock = tradingSystem.executionLock || {};
+          const signalEngine = tradingSystem.signalEngine || {};
+          const actionLayer = tradingSystem.actionLayer || {};
+          const riskControl = tradingSystem.riskControl || {};
+          const get = (obj, path, fallback = '--') => (
+            path.split('.').reduce((acc, key) => (
+              acc && Object.hasOwn(acc, key) ? acc[key] : undefined
+            ), obj) ?? fallback
+          );
+          const short = (value) => {
+            if (value === null || value === undefined) return '--';
+            if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
+            try {
+              const json = JSON.stringify(value);
+              return json.length > 120 ? `${json.slice(0, 117)}...` : json;
+            } catch {
+              return '--';
+            }
+          };
+          const tableValue = (value) => short(value).replace(/\r?\n/g, ' ').replace(/\|/g, '\\|');
+          const pickStateValue = (value) => {
+            if (value === null || value === undefined) return '--';
+            if (typeof value !== 'object' || Array.isArray(value)) return value;
+            for (const key of ['label', 'state', 'name', 'value', 'mode', 'status', 'level', 'color']) {
+              if (value[key] !== undefined && value[key] !== null) return value[key];
+            }
+            return value;
+          };
+          const countArray = (value) => Array.isArray(value) ? value.length : '--';
+          const summarizePositionGuidance = (guidance) => {
+            if (!guidance || typeof guidance !== 'object' || Array.isArray(guidance)) return '--';
+            const keys = ['targetExposure', 'min', 'max', 'band', 'range', 'label', 'totalExposureBand', 'targetGrossExposure', 'cashBufferTarget', 'riskBudget'];
+            const parts = keys
+              .filter((key) => guidance[key] !== undefined && guidance[key] !== null)
+              .map((key) => `${key}: ${short(guidance[key])}`);
+            return parts.length ? parts.join('; ') : guidance;
+          };
           const rows = [
             ['dailyRealtimeInput.commitSha', input.commitSha || '--'],
             ['dailyRealtimeInput.updatedAt', input.updatedAt || '--'],
@@ -62,12 +101,33 @@ jobs:
             ['baseline HY OAS', baseline.hyOas ?? '--'],
             ['baseline SPX', baseline.spx ?? '--']
           ];
+          const decisionRows = [
+            ['strategyState', pickStateValue(decisionModel.strategyState)],
+            ['riskMode', pickStateValue(decisionModel.riskMode)],
+            ['decision headline', get(decisionModel, 'decisionStatement.headline')],
+            ['decision posture', get(decisionModel, 'decisionStatement.posture')],
+            ['decision actionBias', get(decisionModel, 'decisionStatement.actionBias')],
+            ['decision condition', get(decisionModel, 'decisionStatement.condition')],
+            ['position guidance', summarizePositionGuidance(decisionModel.positionGuidance)],
+            ['execution lock', executionLock.state ?? executionLock.status ?? executionLock.level ?? executionLock.color ?? '--'],
+            ['signal engine state', signalEngine.state ?? signalEngine.status ?? '--'],
+            ['action checkpoints', countArray(actionLayer.checkpoints)],
+            ['control actions', countArray(actionLayer.actions ?? actionLayer.controlActions)],
+            ['hard thresholds', countArray(riskControl.hardThresholds)],
+            ['reset thresholds', countArray(riskControl.resetThresholds)]
+          ];
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
             '## Daily Radar Summary',
             '',
             '| Item | Value |',
             '|---|---|',
-            ...rows.map(([key, value]) => `| ${key} | ${value} |`),
+            ...rows.map(([key, value]) => `| ${key} | ${tableValue(value)} |`),
+            '',
+            '## Decision Summary',
+            '',
+            '| Item | Value |',
+            '|---|---|',
+            ...decisionRows.map(([key, value]) => `| ${key} | ${tableValue(value)} |`),
             ''
           ].join('\n'));
           NODE
