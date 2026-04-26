@@ -11,7 +11,8 @@
     "check:dom": "node scripts/check-dom-ids.mjs",
     "check:modules": "node scripts/check-module-imports.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",
-    "check:all": "npm run check:syntax && npm run check:dom && npm run check:modules && node scripts/validate-data.mjs"
+    "check:data": "node scripts/validate-data.mjs",
+    "check:all": "npm run check:syntax && npm run check:dom && npm run check:modules && npm run check:data"
   },
   "engines": {
     "node": ">=24"
