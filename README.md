@@ -104,7 +104,13 @@ values.brent
 
 ## 开发检查与提交前验收
 
-常用检查：
+提交前推荐直接运行完整检查：
+
+```bash
+npm run check:all
+```
+
+该命令会依次运行：
 
 ```bash
 npm run check:syntax
@@ -120,7 +126,7 @@ node scripts/validate-data.mjs
 - `check:modules`：检查模块 import / export 是否断裂。
 - `validate-data.mjs`：检查数据契约、Brent validation、Decision Output Contract、Transmission Delta 等结构。
 
-如果 `validate-data.mjs` 因本地 `realtime/market.json` 与 `dailyRealtimeInput` 不匹配而输出 warning，但最终显示 `Validation passed`，这是可接受状态。本地 fallback 可能不是 Daily 实际消费的 realtime 版本。
+如果 `validate-data.mjs` 因本地 `realtime/market.json` 与 `dailyRealtimeInput.updatedAt` 不匹配而输出 warning，但最终显示 `Validation passed (v27.0)`，这是可接受状态。本地 fallback 可能不是 Daily 实际消费的 realtime 版本。
 
 ## GitHub Actions 工作流
 
