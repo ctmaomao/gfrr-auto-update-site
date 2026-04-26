@@ -142,7 +142,12 @@ Pages deploy 前自动运行：
 npm run check:syntax
 npm run check:dom
 npm run check:modules
+node scripts/validate-data.mjs
 ```
+
+这些步骤分别检查 JS / MJS 语法、关键 DOM 挂载点、模块 import / export 和静态数据契约。Pages deploy 是分步骤运行这些检查，不运行 `npm run check:all`。
+
+如果 `validate-data.mjs` 输出本地 realtime 与 `dailyRealtimeInput.updatedAt` 不匹配的 warning，但最终显示 `Validation passed (v27.0)`，属于可接受状态；只有校验进程以非 0 退出才会阻止部署。
 
 Realtime / Daily workflow 会在 GitHub Actions Summary 输出关键审计信息，包括 `sourceMode`、`healthScore`、Brent、`dailyRealtimeInput`、`displayInputsBaseline` 和 Decision Summary。
 

@@ -152,6 +152,7 @@ pending deltas: 0
 npm run check:syntax
 npm run check:dom
 npm run check:modules
+node scripts/validate-data.mjs
 ```
 
 失败时按类型排查：
@@ -159,8 +160,9 @@ npm run check:modules
 - `check:syntax` 失败：查看具体 JS / MJS 文件语法错误。
 - `check:dom` 失败：检查 `index.html` 是否误删关键 DOM id。
 - `check:modules` 失败：检查模块 import / export，尤其是 `render.js` re-export 和 `scripts/modules/*`。
+- `validate-data.mjs` 失败：检查 `data/radar-data.json`、`realtime/market.json`、Brent validation、decision contract、transmission delta contract 等数据契约。
 
-Pages deploy 不运行 `check:all`，因为 `check:all` 包含数据契约校验，主要用于本地或 Daily 数据相关改动检查。
+`validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 是分步骤运行上述检查，不运行 `check:all`。
 
 ## 8. 不要做的修复
 
