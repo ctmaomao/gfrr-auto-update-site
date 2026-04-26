@@ -154,8 +154,23 @@ function shouldValidateRealtimeBaselineAlignment(realtimePayload) {
     typeof realtimePayload.values === 'object';
 }
 
+function isSameDailyRealtimeInput(dataPayload, realtimePayload) {
+  const input = dataPayload?.dailyRealtimeInput;
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return false;
+  if (!realtimePayload || typeof realtimePayload !== 'object' || Array.isArray(realtimePayload)) return false;
+  const inputUpdatedAt = Date.parse(input.updatedAt);
+  const realtimeUpdatedAt = Date.parse(realtimePayload.updatedAt);
+  return Number.isFinite(inputUpdatedAt) &&
+    Number.isFinite(realtimeUpdatedAt) &&
+    inputUpdatedAt === realtimeUpdatedAt;
+}
+
 function validateRealtimeBaselineAlignment(dataPayload, realtimePayload) {
   if (!shouldValidateRealtimeBaselineAlignment(realtimePayload)) return;
+  if (!isSameDailyRealtimeInput(dataPayload, realtimePayload)) {
+    console.warn('[validate-data] Skipping live realtime/displayInputsBaseline alignment: local realtime.updatedAt does not match dailyRealtimeInput.updatedAt.');
+    return;
+  }
   const baseline = dataPayload.displayInputsBaseline;
   for (const key of DISPLAY_INPUT_KEYS) {
     const realtimeValue = Number(realtimePayload.values[key]);
