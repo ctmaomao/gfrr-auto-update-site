@@ -57,31 +57,44 @@ jobs:
           const signalEngine = tradingSystem.signalEngine || {};
           const actionLayer = tradingSystem.actionLayer || {};
           const riskControl = tradingSystem.riskControl || {};
-          const get = (obj, path, fallback = '--') => (
+          const get = (obj, path) => (
             path.split('.').reduce((acc, key) => (
               acc && Object.hasOwn(acc, key) ? acc[key] : undefined
-            ), obj) ?? fallback
+            ), obj)
           );
-          const short = (value) => {
-            if (value === null || value === undefined) return '--';
+          const short = (value, max = 140) => {
+            if (value === null || value === undefined || value === '') return '--';
             if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
             try {
               const json = JSON.stringify(value);
-              return json.length > 120 ? `${json.slice(0, 117)}...` : json;
+              return json.length > max ? `${json.slice(0, max - 3)}...` : json;
             } catch {
               return '--';
             }
           };
           const tableValue = (value) => short(value).replace(/\r?\n/g, ' ').replace(/\|/g, '\\|');
-          const pickStateValue = (value) => {
-            if (value === null || value === undefined) return '--';
-            if (typeof value !== 'object' || Array.isArray(value)) return value;
-            for (const key of ['label', 'state', 'name', 'value', 'mode', 'status', 'level', 'color']) {
-              if (value[key] !== undefined && value[key] !== null) return value[key];
+          const pick = (...values) => {
+            for (const value of values) {
+              if (value !== null && value !== undefined && value !== '') return value;
             }
-            return value;
+            return '--';
           };
-          const countArray = (value) => Array.isArray(value) ? value.length : '--';
+          const labelOf = (value) => {
+            if (value === null || value === undefined || value === '') return '--';
+            if (typeof value !== 'object' || Array.isArray(value)) return value;
+            return pick(value.label, value.state, value.status, value.name, value.value, value.mode, value.level, value.color, short(value));
+          };
+          const pickPath = (...paths) => pick(...paths.map((path) => get(data, path)));
+          const countOf = (value) => {
+            if (Array.isArray(value)) return value.length;
+            if (value && typeof value === 'object') {
+              for (const key of ['items', 'actions', 'controlActions', 'checkpoints', 'queue', 'priorityActions', 'blockedActions', 'watchItems', 'checklist', 'blocked']) {
+                if (Array.isArray(value[key])) return value[key].length;
+              }
+              return Object.keys(value).length;
+            }
+            return '--';
+          };
           const summarizePositionGuidance = (guidance) => {
             if (!guidance || typeof guidance !== 'object' || Array.isArray(guidance)) return '--';
             const keys = ['targetExposure', 'min', 'max', 'band', 'range', 'label', 'totalExposureBand', 'targetGrossExposure', 'cashBufferTarget', 'riskBudget'];
@@ -101,20 +114,39 @@ jobs:
             ['baseline HY OAS', baseline.hyOas ?? '--'],
             ['baseline SPX', baseline.spx ?? '--']
           ];
+          const decisionStatement = pick(
+            decisionModel.decisionStatement,
+            data.decisionStatement,
+            tradingSystem.decisionStatement
+          );
+          const positionGuidance = pick(
+            decisionModel.positionGuidance,
+            data.positionGuidance,
+            tradingSystem.positionGuidance
+          );
+          const executionLockValue = pick(
+            tradingSystem.executionLock,
+            decisionModel.executionLock,
+            data.executionLock
+          );
+          const signalEngineValue = pick(
+            tradingSystem.signalEngine,
+            data.signalEngine
+          );
           const decisionRows = [
-            ['strategyState', pickStateValue(decisionModel.strategyState)],
-            ['riskMode', pickStateValue(decisionModel.riskMode)],
-            ['decision headline', get(decisionModel, 'decisionStatement.headline')],
-            ['decision posture', get(decisionModel, 'decisionStatement.posture')],
-            ['decision actionBias', get(decisionModel, 'decisionStatement.actionBias')],
-            ['decision condition', get(decisionModel, 'decisionStatement.condition')],
-            ['position guidance', summarizePositionGuidance(decisionModel.positionGuidance)],
-            ['execution lock', executionLock.state ?? executionLock.status ?? executionLock.level ?? executionLock.color ?? '--'],
-            ['signal engine state', signalEngine.state ?? signalEngine.status ?? '--'],
-            ['action checkpoints', countArray(actionLayer.checkpoints)],
-            ['control actions', countArray(actionLayer.actions ?? actionLayer.controlActions)],
-            ['hard thresholds', countArray(riskControl.hardThresholds)],
-            ['reset thresholds', countArray(riskControl.resetThresholds)]
+            ['strategyState', labelOf(pickPath('decisionModel.strategyState', 'strategyState'))],
+            ['riskMode', labelOf(pickPath('decisionModel.riskMode', 'riskMode', 'tradingSystem.riskMode', 'decisionModel.stateLabel', 'warningSystem.status'))],
+            ['decision headline', pick(get(decisionStatement, 'headline'), get(decisionStatement, 'title'), data.decisionLine, data.summary, decisionModel.stateLabel)],
+            ['decision posture', pick(get(decisionStatement, 'posture'), get(decisionStatement, 'summary'), decisionModel.stateLabel, executionLock.levelLabel, decisionModel.strategyState)],
+            ['decision actionBias', pick(get(decisionStatement, 'actionBias'), get(decisionStatement, 'bias'), executionLock.title, actionLayer.todayAction, decisionModel.positionGuidance?.newExposurePolicy)],
+            ['decision condition', pick(get(decisionStatement, 'condition'), get(decisionStatement, 'reason'), decisionModel.stateReason, executionLock.description, actionLayer.priorityLine)],
+            ['position guidance', summarizePositionGuidance(positionGuidance)],
+            ['execution lock', labelOf(pick(executionLockValue, get(decisionModel, 'executionLock'), data.executionLock))],
+            ['signal engine state', labelOf(pick(signalEngine.state, signalEngine.status, signalEngine.mode, data.signalEngine?.state, data.signalEngine?.status, signalEngine.direction, signalEngine.consistency))],
+            ['action checkpoints', countOf(pickPath('tradingSystem.actionLayer.checkpoints', 'actionLayer.checkpoints', 'decisionModel.actionLayer.checkpoints'))],
+            ['control actions', countOf(pickPath('tradingSystem.actionLayer.controlActions', 'tradingSystem.actionLayer.actions', 'decisionModel.actionQueue.controlActions', 'decisionModel.actionQueue.actions', 'decisionModel.actionQueue.priorityActions', 'decisionModel.actionQueue', 'actionQueue'))],
+            ['hard thresholds', countOf(pickPath('tradingSystem.riskControl.hardThresholds', 'riskControl.hardThresholds'))],
+            ['reset thresholds', countOf(pickPath('tradingSystem.riskControl.resetThresholds', 'riskControl.resetThresholds'))]
           ];
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
             '## Daily Radar Summary',
