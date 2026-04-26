@@ -175,6 +175,7 @@ Realtime / Daily workflow 会在 GitHub Actions Summary 输出关键审计信息
 ## 文档入口
 
 - 数据契约：`docs/DATA_CONTRACT.md`
+- 运行排查手册：`docs/OPERATIONS.md`
 - 核心入口：`index.html`
 - 前端入口：`scripts/app.js`
 - Realtime 构建：`scripts/run-realtime.mjs`
