@@ -1,14 +1,11 @@
-const MODULES = [
-  './modules/format.js',
-  './modules/config.js',
-  './modules/displayTextBuilders.js',
-  './modules/renderTables.js',
-  './modules/renderCharts.js',
-  './modules/renderAudit.js',
-  './modules/render.js',
-  './modules/realtime.js',
-  './modules/decision.js'
-];
+import fs from 'node:fs';
+
+const MODULE_DIR = 'modules';
+
+const MODULES = fs.readdirSync(new URL(`./${MODULE_DIR}/`, import.meta.url), { withFileTypes: true })
+  .filter((entry) => entry.isFile() && entry.name.endsWith('.js'))
+  .map((entry) => `./${MODULE_DIR}/${entry.name}`)
+  .sort((a, b) => a.localeCompare(b));
 
 const failures = [];
 
