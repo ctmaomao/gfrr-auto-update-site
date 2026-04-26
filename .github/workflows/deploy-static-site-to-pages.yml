@@ -51,6 +51,9 @@ jobs:
       - name: Check user-facing copy contract
         run: npm run check:copy
 
+      - name: Check workflow contract
+        run: npm run check:workflows
+
       - name: Validate data contract
         run: npm run check:data
 
