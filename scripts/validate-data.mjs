@@ -14,10 +14,12 @@ const historyFullPath = path.join(root, 'data', 'radar-history-full.json');
 if (!fs.existsSync(dataPath)) throw new Error('Validation failed: missing data/radar-data.json');
 if (!fs.existsSync(historyPath)) throw new Error('Validation failed: missing data/radar-history.json');
 if (!fs.existsSync(realtimePath)) throw new Error('Validation failed: missing realtime/market.json');
-if (fs.existsSync(historyFullPath)) {
-  const histFull = JSON.parse(fs.readFileSync(historyFullPath, 'utf8'));
-  if (!Array.isArray(histFull) || histFull.length === 0) throw new Error('Validation failed: radar-history-full.json is empty or malformed.');
-  const latest = histFull[histFull.length - 1];
+const historyFull = fs.existsSync(historyFullPath)
+  ? JSON.parse(fs.readFileSync(historyFullPath, 'utf8'))
+  : null;
+if (historyFull !== null) {
+  if (!Array.isArray(historyFull) || historyFull.length === 0) throw new Error('Validation failed: radar-history-full.json is empty or malformed.');
+  const latest = historyFull[historyFull.length - 1];
   if (!latest.date || !latest.score || !latest.modules) throw new Error('Validation failed: radar-history-full.json latest entry is missing required fields.');
 }
 
@@ -364,6 +366,67 @@ function validateDecisionContract(dataPayload) {
   }
 }
 
+function validateTransmissionDeltaMeta(dataPayload) {
+  if (dataPayload.transmissionDeltaMeta === undefined) return;
+  const meta = dataPayload.transmissionDeltaMeta;
+  assertPlainObject(meta, 'transmissionDeltaMeta');
+  validateStringIfPresent(meta, 'source', 'transmissionDeltaMeta');
+  validateFiniteNumberIfPresent(meta, 'matchedNodes', 'transmissionDeltaMeta');
+  validateFiniteNumberIfPresent(meta, 'totalNodes', 'transmissionDeltaMeta');
+  if (Number.isFinite(meta.matchedNodes)) {
+    assert(meta.matchedNodes >= 0, 'transmissionDeltaMeta.matchedNodes must be >= 0');
+  }
+  if (Number.isFinite(meta.totalNodes)) {
+    assert(meta.totalNodes >= 0, 'transmissionDeltaMeta.totalNodes must be >= 0');
+  }
+  if (Number.isFinite(meta.matchedNodes) && Number.isFinite(meta.totalNodes)) {
+    assert(meta.matchedNodes <= meta.totalNodes, 'transmissionDeltaMeta.matchedNodes cannot exceed totalNodes');
+  }
+}
+
+function validateTransmissionChainDeltas(dataPayload) {
+  if (dataPayload.transmissionChain === undefined) return;
+  const chain = dataPayload.transmissionChain;
+  assertPlainObject(chain, 'transmissionChain');
+  if (chain.nodes === undefined) return;
+  assertArray(chain.nodes, 'transmissionChain.nodes');
+  chain.nodes.forEach((node, index) => {
+    assertPlainObject(node, `transmissionChain.nodes[${index}]`);
+    if (Object.hasOwn(node, 'delta')) {
+      assert(
+        isFiniteNumberOrNull(node.delta),
+        `transmissionChain.nodes[${index}].delta must be finite number or null`
+      );
+    }
+  });
+}
+
+function validateTransmissionSnapshotHistory(historyPayload, fieldName) {
+  if (historyPayload === null || historyPayload === undefined) return;
+  assertArray(historyPayload, fieldName);
+  historyPayload.forEach((entry, entryIndex) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry) || entry.transmissionSnapshot === undefined) return;
+    const snapshot = entry.transmissionSnapshot;
+    assertPlainObject(snapshot, `${fieldName}[${entryIndex}].transmissionSnapshot`);
+    if (snapshot.nodes === undefined) return;
+    assertArray(snapshot.nodes, `${fieldName} transmissionSnapshot.nodes`);
+    snapshot.nodes.forEach((node, nodeIndex) => {
+      assertPlainObject(node, `${fieldName} transmissionSnapshot.nodes[${nodeIndex}]`);
+      validateFiniteNumberIfPresent(node, 'score', `${fieldName} transmissionSnapshot.nodes[${nodeIndex}]`);
+      validateStringIfPresent(node, 'label', `${fieldName} transmissionSnapshot.nodes[${nodeIndex}]`);
+      validateStringIfPresent(node, 'key', `${fieldName} transmissionSnapshot.nodes[${nodeIndex}]`);
+      validateStringIfPresent(node, 'id', `${fieldName} transmissionSnapshot.nodes[${nodeIndex}]`);
+    });
+  });
+}
+
+function validateTransmissionDeltaContract(dataPayload, historyPayload, historyFullPayload) {
+  validateTransmissionChainDeltas(dataPayload);
+  validateTransmissionDeltaMeta(dataPayload);
+  validateTransmissionSnapshotHistory(historyPayload, 'radar-history');
+  validateTransmissionSnapshotHistory(historyFullPayload, 'radar-history-full');
+}
+
 if (!data.updatedAt) throw new Error('Validation failed: missing updatedAt.');
 if (!Array.isArray(history) || history.length < 30) throw new Error('Validation failed: insufficient history.');
 if (!data.timeDimension || !data.warningSystem || !data.assetReturnMap) throw new Error('Validation failed: core modules missing.');
@@ -376,4 +439,5 @@ validateDisplayInputsBaseline(data);
 validateRealtimeBaselineAlignment(data, realtime);
 validateBrentValidation(realtime);
 validateDecisionContract(data);
+validateTransmissionDeltaContract(data, history, historyFull);
 console.log('Validation passed (v27.0)');
