@@ -42,7 +42,7 @@ jobs:
         run: npm run build:data
 
       - name: Validate output
-        run: npm run validate
+        run: npm run check:data
 
       - name: Summarize daily output
         run: |

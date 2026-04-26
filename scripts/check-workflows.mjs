@@ -23,19 +23,10 @@ const contracts = [
       'git show origin/realtime-data:realtime/market.json',
       'GFRR_REALTIME_COMMIT_SHA',
       'npm run build:data',
+      'npm run check:data',
       'Daily Radar Summary',
       'Decision Summary',
       'Transmission Delta Summary'
-    ],
-    anyOf: [
-      {
-        label: 'data validation command',
-        options: [
-          'node scripts/validate-data.mjs',
-          'npm run validate',
-          'npm run check:data'
-        ]
-      }
     ]
   },
   {
