@@ -40,8 +40,61 @@ function isFiniteNumberOrNull(value) {
   return value === null || Number.isFinite(value);
 }
 
+function isPlainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
+}
+
 function isCloseEnough(a, b, tolerance) {
   return Math.abs(a - b) <= tolerance;
+}
+
+function assertPlainObject(value, fieldName) {
+  assert(isPlainObject(value), `${fieldName} must be an object`);
+}
+
+function assertArray(value, fieldName) {
+  assert(Array.isArray(value), `${fieldName} must be an array`);
+}
+
+function assertString(value, fieldName) {
+  assert(typeof value === 'string', `${fieldName} must be a string`);
+}
+
+function assertBoolean(value, fieldName) {
+  assert(typeof value === 'boolean', `${fieldName} must be a boolean`);
+}
+
+function assertFiniteNumber(value, fieldName) {
+  assert(Number.isFinite(value), `${fieldName} must be a finite number`);
+}
+
+function validateStringIfPresent(source, key, fieldName) {
+  if (source[key] !== undefined) assertString(source[key], `${fieldName}.${key}`);
+}
+
+function validateBooleanIfPresent(source, key, fieldName) {
+  if (source[key] !== undefined) assertBoolean(source[key], `${fieldName}.${key}`);
+}
+
+function validateFiniteNumberIfPresent(source, key, fieldName) {
+  if (source[key] !== undefined) assertFiniteNumber(source[key], `${fieldName}.${key}`);
+}
+
+function validateArrayIfPresent(source, key, fieldName) {
+  if (source[key] !== undefined) assertArray(source[key], `${fieldName}.${key}`);
+}
+
+function validatePlainObjectIfPresent(source, key, fieldName) {
+  if (source[key] !== undefined) assertPlainObject(source[key], `${fieldName}.${key}`);
+}
+
+function validateStringOrPlainObjectIfPresent(source, key, fieldName) {
+  if (source[key] === undefined) return;
+  const value = source[key];
+  assert(
+    typeof value === 'string' || isPlainObject(value),
+    `${fieldName}.${key} must be a string or an object`
+  );
 }
 
 function parseIsoTime(value, fieldName) {
@@ -164,6 +217,153 @@ function validateBrentValidation(realtimePayload) {
   }
 }
 
+function validatePositionGuidance(positionGuidance, fieldName) {
+  assertPlainObject(positionGuidance, fieldName);
+
+  for (const key of [
+    'totalExposureBand',
+    'riskAssetBias',
+    'cashGuidance',
+    'newExposurePolicy',
+    'targetGrossExposure',
+    'cashBufferTarget',
+    'riskBudget',
+    'range',
+    'band'
+  ]) {
+    validateStringIfPresent(positionGuidance, key, fieldName);
+  }
+
+  for (const key of ['targetExposure', 'min', 'max', 'structuralBandShift']) {
+    validateFiniteNumberIfPresent(positionGuidance, key, fieldName);
+  }
+}
+
+function validateDecisionActionQueue(actionQueue, fieldName) {
+  assertPlainObject(actionQueue, fieldName);
+  for (const key of ['priorityActions', 'blockedActions', 'watchItems']) {
+    assert(Object.hasOwn(actionQueue, key), `${fieldName}.${key} is missing`);
+    assertArray(actionQueue[key], `${fieldName}.${key}`);
+  }
+}
+
+function validateExecutionLock(executionLock) {
+  assertPlainObject(executionLock, 'tradingSystem.executionLock');
+
+  for (const key of ['tag', 'level', 'levelLabel', 'title', 'description']) {
+    assert(Object.hasOwn(executionLock, key), `tradingSystem.executionLock.${key} is missing`);
+    assertString(executionLock[key], `tradingSystem.executionLock.${key}`);
+  }
+
+  for (const key of ['allow', 'block', 'mandatory']) {
+    assert(Object.hasOwn(executionLock, key), `tradingSystem.executionLock.${key} is missing`);
+    assertArray(executionLock[key], `tradingSystem.executionLock.${key}`);
+  }
+
+  assert(Object.hasOwn(executionLock, 'structurallyTriggered'), 'tradingSystem.executionLock.structurallyTriggered is missing');
+  assertBoolean(executionLock.structurallyTriggered, 'tradingSystem.executionLock.structurallyTriggered');
+
+  for (const key of ['state', 'status', 'color']) {
+    validateStringIfPresent(executionLock, key, 'tradingSystem.executionLock');
+  }
+  for (const key of ['canAddRisk', 'allowNewRisk']) {
+    validateBooleanIfPresent(executionLock, key, 'tradingSystem.executionLock');
+  }
+  for (const key of ['reasons', 'notes', 'drivers']) {
+    validateArrayIfPresent(executionLock, key, 'tradingSystem.executionLock');
+  }
+}
+
+function validateSignalEngine(signalEngine) {
+  assertPlainObject(signalEngine, 'tradingSystem.signalEngine');
+
+  for (const key of ['direction', 'consistency', 'macroSignal', 'liquiditySignal', 'chainSignal']) {
+    validateStringIfPresent(signalEngine, key, 'tradingSystem.signalEngine');
+  }
+  for (const key of ['state', 'status']) {
+    validateStringIfPresent(signalEngine, key, 'tradingSystem.signalEngine');
+  }
+  validateFiniteNumberIfPresent(signalEngine, 'strength', 'tradingSystem.signalEngine');
+  validateArrayIfPresent(signalEngine, 'notes', 'tradingSystem.signalEngine');
+  validateArrayIfPresent(signalEngine, 'signals', 'tradingSystem.signalEngine');
+}
+
+function validateActionLayer(actionLayer) {
+  assertPlainObject(actionLayer, 'tradingSystem.actionLayer');
+
+  for (const key of ['tag', 'priorityLine', 'todayAction']) {
+    validateStringIfPresent(actionLayer, key, 'tradingSystem.actionLayer');
+  }
+  for (const key of ['checklist', 'blocked', 'checkpoints', 'actions', 'controlActions']) {
+    validateArrayIfPresent(actionLayer, key, 'tradingSystem.actionLayer');
+  }
+  for (const key of ['watch', 'watchlist']) {
+    if (actionLayer[key] !== undefined) {
+      assert(
+        Array.isArray(actionLayer[key]) || isPlainObject(actionLayer[key]),
+        `tradingSystem.actionLayer.${key} must be an array or an object`
+      );
+    }
+  }
+}
+
+function validateRiskControl(riskControl, fieldName) {
+  assertPlainObject(riskControl, fieldName);
+
+  for (const key of ['status', 'maxDrawdown', 'singleAssetMax', 'systemState']) {
+    validateStringIfPresent(riskControl, key, fieldName);
+  }
+  for (const key of ['hardThresholds', 'resetThresholds', 'rules']) {
+    validateArrayIfPresent(riskControl, key, fieldName);
+  }
+}
+
+function validateDecisionContract(dataPayload) {
+  if (dataPayload.decisionModel !== undefined) {
+    const decisionModel = dataPayload.decisionModel;
+    assertPlainObject(decisionModel, 'decisionModel');
+
+    for (const key of ['contractVersion', 'stateLabel', 'stateReason']) {
+      assert(Object.hasOwn(decisionModel, key), `decisionModel.${key} is missing`);
+      assertString(decisionModel[key], `decisionModel.${key}`);
+    }
+    validateStringOrPlainObjectIfPresent(decisionModel, 'strategyState', 'decisionModel');
+    validateStringOrPlainObjectIfPresent(decisionModel, 'riskMode', 'decisionModel');
+    validateFiniteNumberIfPresent(decisionModel, 'stateScore', 'decisionModel');
+    validateFiniteNumberIfPresent(decisionModel, 'structuralScoreBump', 'decisionModel');
+    validateBooleanIfPresent(decisionModel, 'allStructuralSourcesMissing', 'decisionModel');
+    validateArrayIfPresent(decisionModel, 'structuralSignals', 'decisionModel');
+    validateArrayIfPresent(decisionModel, 'dominantDrivers', 'decisionModel');
+
+    if (decisionModel.positionGuidance !== undefined) {
+      validatePositionGuidance(decisionModel.positionGuidance, 'decisionModel.positionGuidance');
+    }
+    if (decisionModel.actionQueue !== undefined) {
+      validateDecisionActionQueue(decisionModel.actionQueue, 'decisionModel.actionQueue');
+    }
+    validatePlainObjectIfPresent(decisionModel, 'triggerMonitor', 'decisionModel');
+    validatePlainObjectIfPresent(decisionModel, 'invalidationRules', 'decisionModel');
+    validatePlainObjectIfPresent(decisionModel, 'decisionStatement', 'decisionModel');
+  }
+
+  if (dataPayload.tradingSystem !== undefined) {
+    const tradingSystem = dataPayload.tradingSystem;
+    assertPlainObject(tradingSystem, 'tradingSystem');
+
+    if (tradingSystem.executionLock !== undefined) validateExecutionLock(tradingSystem.executionLock);
+    if (tradingSystem.signalEngine !== undefined) validateSignalEngine(tradingSystem.signalEngine);
+    if (tradingSystem.actionLayer !== undefined) validateActionLayer(tradingSystem.actionLayer);
+    if (tradingSystem.riskControl !== undefined) validateRiskControl(tradingSystem.riskControl, 'tradingSystem.riskControl');
+  }
+
+  if (dataPayload.positionGuidance !== undefined) {
+    validatePositionGuidance(dataPayload.positionGuidance, 'positionGuidance');
+  }
+  if (dataPayload.riskControl !== undefined) {
+    validateRiskControl(dataPayload.riskControl, 'riskControl');
+  }
+}
+
 if (!data.updatedAt) throw new Error('Validation failed: missing updatedAt.');
 if (!Array.isArray(history) || history.length < 30) throw new Error('Validation failed: insufficient history.');
 if (!data.timeDimension || !data.warningSystem || !data.assetReturnMap) throw new Error('Validation failed: core modules missing.');
@@ -175,4 +375,5 @@ validateDailyRealtimeInput(data);
 validateDisplayInputsBaseline(data);
 validateRealtimeBaselineAlignment(data, realtime);
 validateBrentValidation(realtime);
+validateDecisionContract(data);
 console.log('Validation passed (v27.0)');
