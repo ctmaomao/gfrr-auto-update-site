@@ -129,7 +129,7 @@ npm run check:data
 - `check:modules`：自动扫描 `scripts/modules/*.js` 并执行动态 import 检查。
 - `check:copy`：检查用户可见文案契约，防止“广义美元指数 / 亿美元 / 传导网络 Δ”等已修复文案回退。
 - `check:workflows`：检查 GitHub Actions workflow 合约，防止 Realtime / Daily / Pages 部署中的关键调度、Summary、校验和部署步骤被误删。
-- `check:docs`：检查 README 和 docs 中的本地 Markdown 链接，防止 DATA_CONTRACT / OPERATIONS 等文档入口失效。
+- `check:docs`：检查 `README.md`、`AGENTS.md` 和 `docs/*.md` 中的本地 Markdown 链接，防止 DATA_CONTRACT / OPERATIONS 等文档入口失效。
 - `check:data`：检查数据契约、Brent validation、Decision Output Contract、Transmission Delta 等结构；底层运行 `node scripts/validate-data.mjs`。
 
 新增 `scripts/` 脚本或 `scripts/modules/` 模块后，通常会自动纳入对应检查，无需手动维护检查列表。
