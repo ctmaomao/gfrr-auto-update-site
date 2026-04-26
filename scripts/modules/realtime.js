@@ -128,15 +128,56 @@ export function isLocalRealtimeFallbackUsable(payload, nowMs = Date.now()) {
   return { usable: true, reason: null, ageMinutes, finiteKeyCount, missingNewFields };
 }
 
+function withCacheBust(url) {
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}_=${Date.now()}`;
+}
+
+function buildRealtimeFetchAudit({ realtimeResult, realtimePayload, runtimeMetadata }) {
+  const fromResult = realtimeResult?.realtimeFetchAudit || runtimeMetadata?.realtimeFetchAudit;
+  if (fromResult && typeof fromResult === 'object') {
+    return fromResult;
+  }
+  const selectedSource = runtimeMetadata?.realtimeSource === 'remote'
+    ? 'remote'
+    : runtimeMetadata?.realtimeFallbackUsed
+      ? 'local-fallback'
+      : 'none';
+  return {
+    attemptedAt: new Date().toISOString(),
+    remoteUrl: REMOTE_REALTIME_URL,
+    cacheBusted: true,
+    selectedSource,
+    remoteUpdatedAt: realtimePayload?.updatedAt || runtimeMetadata?.realtimeUpdatedAt || null,
+    remoteSourceMode: realtimePayload?.sourceMode || runtimeMetadata?.realtimeSourceMode || null,
+    remoteHealthScore: Number.isFinite(realtimePayload?.healthScore)
+      ? realtimePayload.healthScore
+      : Number.isFinite(runtimeMetadata?.realtimeHealthScore) ? runtimeMetadata.realtimeHealthScore : null,
+    fallbackReason: runtimeMetadata?.realtimeFetchFailed
+      ? runtimeMetadata?.realtimeFallbackUsed ? 'remote-failed-local-fallback-used' : 'remote-and-local-failed'
+      : selectedSource === 'remote' ? null : runtimeMetadata?.realtimeError || null
+  };
+}
+
 export async function fetchRealtimePayload() {
+  const realtimeFetchAudit = {
+    attemptedAt: new Date().toISOString(),
+    remoteUrl: REMOTE_REALTIME_URL,
+    cacheBusted: true,
+    selectedSource: 'none',
+    remoteUpdatedAt: null,
+    remoteSourceMode: null,
+    remoteHealthScore: null,
+    fallbackReason: null
+  };
   const attempts = [
-    { url: `${REMOTE_REALTIME_URL}?ts=${Date.now()}`, source: 'remote', fallbackUsed: false },
-    { url: localRealtimeUrl, source: 'local-fallback', fallbackUsed: true }
+    { url: withCacheBust(REMOTE_REALTIME_URL), source: 'remote', fallbackUsed: false, fetchOptions: { cache: 'no-store' } },
+    { url: localRealtimeUrl, source: 'local-fallback', fallbackUsed: true, fetchOptions: { cache: 'no-store' } }
   ];
   let lastError = null;
   for (const attempt of attempts) {
     try {
-      const response = await fetch(attempt.url, { cache: 'no-store' });
+      const response = await fetch(attempt.url, attempt.fetchOptions);
       if (!response.ok) {
         lastError = `${attempt.source}:${response.status}`;
         continue;
@@ -146,6 +187,11 @@ export async function fetchRealtimePayload() {
       if (!payload) {
         lastError = `${attempt.source}:invalid-payload`;
         continue;
+      }
+      if (attempt.source === 'remote') {
+        realtimeFetchAudit.remoteUpdatedAt = payload.updatedAt;
+        realtimeFetchAudit.remoteSourceMode = payload.sourceMode;
+        realtimeFetchAudit.remoteHealthScore = Number.isFinite(payload.healthScore) ? payload.healthScore : null;
       }
       if (attempt.fallbackUsed) {
         const fallbackGate = isLocalRealtimeFallbackUsable(rawPayload);
@@ -165,7 +211,12 @@ export async function fetchRealtimePayload() {
         realtimeFetchFailed: false,
         realtimeFallbackUsed: attempt.fallbackUsed,
         realtimeUpdatedAt: payload.updatedAt,
-        realtimeError: lastError
+        realtimeError: lastError,
+        realtimeFetchAudit: {
+          ...realtimeFetchAudit,
+          selectedSource: attempt.source,
+          fallbackReason: attempt.source === 'remote' ? null : lastError
+        }
       };
     } catch (error) {
       lastError = `${attempt.source}:${error.message}`;
@@ -178,7 +229,12 @@ export async function fetchRealtimePayload() {
     realtimeFetchFailed: true,
     realtimeFallbackUsed: false,
     realtimeUpdatedAt: null,
-    realtimeError: lastError
+    realtimeError: lastError,
+    realtimeFetchAudit: {
+      ...realtimeFetchAudit,
+      selectedSource: 'none',
+      fallbackReason: lastError
+    }
   };
 }
 
@@ -216,6 +272,7 @@ export function buildRuntimeState(baseline, history, realtimeResult) {
     brentIsStale,
     realtimeHasStaleKeyFields: brentIsStale
   };
+  runtimeMetadata.realtimeFetchAudit = buildRealtimeFetchAudit({ realtimeResult, realtimePayload, runtimeMetadata });
   runtimeMetadata.realtimeStatusLabel = buildRealtimeStatusLabel(runtimeMetadata);
   runtimeMetadata.realtimeOverlayEnabled = shouldApplyRealtimeOverlay(runtimeMetadata, realtimePayload);
   const data = runtimeMetadata.realtimeOverlayEnabled
@@ -229,7 +286,7 @@ export function buildRuntimeState(baseline, history, realtimeResult) {
     data
   });
   data.decisionModel = buildDecisionModel(data, history, runtimeMetadata, healthDashboard);
-  return { baseline, history, realtimePayload, runtimeMetadata, healthDashboard, data };
+  return { baseline, history, realtimePayload, realtimeFetchAudit: runtimeMetadata.realtimeFetchAudit, runtimeMetadata, healthDashboard, data };
 }
 
 export function getRealtimeNumber(values, key) {

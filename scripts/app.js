@@ -1,4 +1,4 @@
-import { $, fmtSignedArrow, trendClass } from './modules/config.js';
+import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js';
 import { buildHealthDashboardModel } from './modules/health.js';
 import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, buildRuntimeState } from './modules/realtime.js';
 import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js';
@@ -16,7 +16,27 @@ async function main() {
   const realtime = runtimeState.realtimePayload;
   const metadata = runtimeState.runtimeMetadata;
   const healthDashboard = runtimeState.healthDashboard || buildHealthDashboardModel(runtimeState);
-  window.__GFRR_RUNTIME__ = runtimeState;
+  if (metadata && !metadata.realtimeFetchAudit) {
+    metadata.realtimeFetchAudit = {
+      attemptedAt: new Date().toISOString(),
+      remoteUrl: REMOTE_REALTIME_URL,
+      cacheBusted: true,
+      selectedSource: metadata.realtimeSource || 'none',
+      remoteUpdatedAt: metadata.realtimeSource === 'remote' ? metadata.realtimeUpdatedAt || realtime?.updatedAt || null : null,
+      remoteSourceMode: metadata.realtimeSource === 'remote' ? metadata.realtimeSourceMode || realtime?.sourceMode || null : null,
+      remoteHealthScore: metadata.realtimeSource === 'remote' && Number.isFinite(metadata.realtimeHealthScore) ? metadata.realtimeHealthScore : null,
+      fallbackReason: metadata.realtimeSource === 'remote' ? null : metadata.realtimeError || null
+    };
+  }
+  const realtimeFetchAudit = runtimeState?.runtimeMetadata?.realtimeFetchAudit || null;
+  window.__GFRR_RUNTIME__ = {
+    ...runtimeState,
+    runtimeMetadata: {
+      ...runtimeState.runtimeMetadata,
+      realtimeFetchAudit
+    },
+    realtimeFetchAudit
+  };
   window.__GFRR_DECISION_MODEL__ = data.decisionModel || createDecisionFallback(data, metadata);
   window.__GFRR_STRATEGY_STATE__ = window.__GFRR_DECISION_MODEL__?.strategyState || 'Caution';
   window.__GFRR_POSITION_GUIDANCE__ = window.__GFRR_DECISION_MODEL__?.positionGuidance || buildPositionGuidanceFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
