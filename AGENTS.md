@@ -73,7 +73,7 @@ check:syntax → check:dom → check:modules → check:copy → check:workflows 
 - `check:modules`：自动扫描 `scripts/modules/*.js` 并动态 import。
 - `check:copy`：检查用户可见文案契约。
 - `check:workflows`：检查 GitHub Actions workflow 合约。
-- `check:docs`：检查 README / docs 本地 Markdown 链接。
+- `check:docs`：检查 `README.md`、`AGENTS.md` 和 `docs/*.md` 中的本地 Markdown 链接；跳过 `http / https / mailto / 纯锚点`。
 - `check:data`：等价于 `node scripts/validate-data.mjs`，检查数据契约。
 
 如果 `check:data` 输出本地 realtime 与 `dailyRealtimeInput.updatedAt` 不匹配的 warning，但最终显示 `Validation passed (v27.0)`，属于可接受状态。
@@ -82,7 +82,7 @@ check:syntax → check:dom → check:modules → check:copy → check:workflows 
 
 | 任务类型 | 必须运行 |
 |---|---|
-| 只改 README / docs | `npm run check:docs` 和 `npm run check:all` |
+| 只改 README / AGENTS / docs | `npm run check:docs` 和 `npm run check:all` |
 | 改 HTML | `npm run check:dom` 和 `npm run check:all` |
 | 改 JS / MJS | `npm run check:all` |
 | 改 workflow | `npm run check:workflows` 和 `npm run check:all` |
