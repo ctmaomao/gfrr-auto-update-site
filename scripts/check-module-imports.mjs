@@ -4,6 +4,7 @@ const MODULES = [
   './modules/displayTextBuilders.js',
   './modules/renderTables.js',
   './modules/renderCharts.js',
+  './modules/renderAudit.js',
   './modules/render.js',
   './modules/realtime.js',
   './modules/decision.js'
