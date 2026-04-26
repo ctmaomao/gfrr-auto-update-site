@@ -116,7 +116,7 @@ npm run check:all
 npm run check:syntax
 npm run check:dom
 npm run check:modules
-node scripts/validate-data.mjs
+npm run check:data
 ```
 
 用途：
@@ -124,9 +124,9 @@ node scripts/validate-data.mjs
 - `check:syntax`：统一检查核心 JS / MJS 文件语法。
 - `check:dom`：检查关键 DOM 挂载点。
 - `check:modules`：检查模块 import / export 是否断裂。
-- `validate-data.mjs`：检查数据契约、Brent validation、Decision Output Contract、Transmission Delta 等结构。
+- `check:data`：检查数据契约、Brent validation、Decision Output Contract、Transmission Delta 等结构；底层运行 `node scripts/validate-data.mjs`。
 
-如果 `validate-data.mjs` 因本地 `realtime/market.json` 与 `dailyRealtimeInput.updatedAt` 不匹配而输出 warning，但最终显示 `Validation passed (v27.0)`，这是可接受状态。本地 fallback 可能不是 Daily 实际消费的 realtime 版本。
+如果 `check:data` 输出本地 `realtime/market.json` 与 `dailyRealtimeInput.updatedAt` 不匹配的 warning，但最终显示 `Validation passed (v27.0)`，这是可接受状态。本地 fallback 可能不是 Daily 实际消费的 realtime 版本。
 
 ## GitHub Actions 工作流
 
@@ -147,7 +147,7 @@ node scripts/validate-data.mjs
 
 这些步骤分别检查 JS / MJS 语法、关键 DOM 挂载点、模块 import / export 和静态数据契约。Pages deploy 是分步骤运行这些检查，不运行 `npm run check:all`。
 
-如果 `validate-data.mjs` 输出本地 realtime 与 `dailyRealtimeInput.updatedAt` 不匹配的 warning，但最终显示 `Validation passed (v27.0)`，属于可接受状态；只有校验进程以非 0 退出才会阻止部署。
+其中数据契约检查等价于 `npm run check:data`。如果 `validate-data.mjs` 输出本地 realtime 与 `dailyRealtimeInput.updatedAt` 不匹配的 warning，但最终显示 `Validation passed (v27.0)`，属于可接受状态；只有校验进程以非 0 退出才会阻止部署。
 
 Realtime / Daily workflow 会在 GitHub Actions Summary 输出关键审计信息，包括 `sourceMode`、`healthScore`、Brent、`dailyRealtimeInput`、`displayInputsBaseline` 和 Decision Summary。
 
