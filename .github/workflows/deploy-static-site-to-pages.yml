@@ -39,6 +39,9 @@ jobs:
           cache: npm
           package-manager-cache: false
 
+      - name: Check JavaScript syntax
+        run: npm run check:syntax
+
       - name: Check DOM mount IDs
         run: npm run check:dom
 
