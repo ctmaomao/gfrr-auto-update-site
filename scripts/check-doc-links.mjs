@@ -3,6 +3,7 @@ import path from 'node:path';
 
 const ROOT = process.cwd();
 const README = 'README.md';
+const AGENTS = 'AGENTS.md';
 const DOCS_DIR = 'docs';
 const failures = [];
 
@@ -19,6 +20,7 @@ function addFailure(source, link, resolvedTarget) {
 
 function getMarkdownFiles() {
   const readmePath = path.join(ROOT, README);
+  const agentsPath = path.join(ROOT, AGENTS);
   const docsPath = path.join(ROOT, DOCS_DIR);
 
   if (!fs.existsSync(readmePath)) {
@@ -26,9 +28,14 @@ function getMarkdownFiles() {
     return [];
   }
 
+  if (!fs.existsSync(agentsPath)) {
+    addFailure(AGENTS, AGENTS, AGENTS);
+    return [README];
+  }
+
   if (!fs.existsSync(docsPath) || !fs.statSync(docsPath).isDirectory()) {
     addFailure(README, DOCS_DIR, DOCS_DIR);
-    return [README];
+    return [README, AGENTS];
   }
 
   const docs = fs.readdirSync(docsPath)
@@ -36,7 +43,7 @@ function getMarkdownFiles() {
     .sort()
     .map((entry) => toPosix(path.join(DOCS_DIR, entry)));
 
-  return [README, ...docs];
+  return [README, AGENTS, ...docs];
 }
 
 function shouldIgnoreLink(href) {
