@@ -760,18 +760,100 @@ function targetAllocations(lock) {
   ];
 }
 
-function appendHistory(prev, score) {
+function getTransmissionNodeKey(node) {
+  return node?.id || node?.key || node?.label || null;
+}
+
+function buildTransmissionSnapshot(chain) {
+  const nodes = Array.isArray(chain?.nodes) ? chain.nodes : [];
+  return {
+    nodes: nodes.map((node) => ({
+      key: getTransmissionNodeKey(node),
+      label: node?.label || getTransmissionNodeKey(node),
+      score: Number.isFinite(node?.score) ? node.score : null
+    })).filter((node) => node.key)
+  };
+}
+
+function getTransmissionSnapshotNodes(entry) {
+  if (Array.isArray(entry?.transmissionSnapshot?.nodes)) return entry.transmissionSnapshot.nodes;
+  if (Array.isArray(entry?.transmissionChain?.nodes)) return entry.transmissionChain.nodes;
+  return null;
+}
+
+function findLatestTransmissionSnapshotNodes(historyEntries) {
+  if (!Array.isArray(historyEntries)) return null;
+  for (let i = historyEntries.length - 1; i >= 0; i -= 1) {
+    const nodes = getTransmissionSnapshotNodes(historyEntries[i]);
+    if (nodes) return nodes;
+  }
+  return null;
+}
+
+function resolvePreviousTransmissionSource(previousData, previousHistoryFull, previousHistory) {
+  if (Array.isArray(previousData?.transmissionChain?.nodes)) {
+    return { source: 'previous-radar-data', nodes: previousData.transmissionChain.nodes };
+  }
+  const fullNodes = findLatestTransmissionSnapshotNodes(previousHistoryFull);
+  if (fullNodes) return { source: 'radar-history-full', nodes: fullNodes };
+  const historyNodes = findLatestTransmissionSnapshotNodes(previousHistory);
+  if (historyNodes) return { source: 'radar-history', nodes: historyNodes };
+  return { source: 'none', nodes: [] };
+}
+
+function indexTransmissionScores(nodes) {
+  const scores = new Map();
+  for (const node of Array.isArray(nodes) ? nodes : []) {
+    const key = getTransmissionNodeKey(node);
+    const score = Number(node?.score);
+    if (key && Number.isFinite(score)) scores.set(key, score);
+  }
+  return scores;
+}
+
+function applyTransmissionDeltas(chain, previousSource) {
+  const currentChain = chain && typeof chain === 'object' ? chain : {};
+  const nodes = Array.isArray(currentChain.nodes) ? currentChain.nodes : [];
+  const previousScores = indexTransmissionScores(previousSource.nodes);
+  let matchedNodes = 0;
+  const nextNodes = nodes.map((node) => {
+    const key = getTransmissionNodeKey(node);
+    const currentScore = Number(node?.score);
+    const previousScore = key ? previousScores.get(key) : undefined;
+    const hasDelta = Number.isFinite(currentScore) && Number.isFinite(previousScore);
+    if (hasDelta) matchedNodes += 1;
+    return {
+      ...node,
+      delta: hasDelta ? Math.round(currentScore - previousScore) : null
+    };
+  });
+  return {
+    chain: { ...currentChain, nodes: nextNodes },
+    meta: {
+      source: previousSource.source,
+      matchedNodes,
+      totalNodes: nodes.length
+    }
+  };
+}
+
+function appendHistory(prev, score, transmissionSnapshot = null) {
   const today = isoNow.slice(0, 10);
   const history = Array.isArray(prev) ? [...prev] : [];
   if (history.length && history[history.length - 1].date === today) {
     history[history.length - 1].score = score;
+    if (transmissionSnapshot) history[history.length - 1].transmissionSnapshot = transmissionSnapshot;
   } else {
-    history.push({ date: today, score });
+    history.push({
+      date: today,
+      score,
+      ...(transmissionSnapshot ? { transmissionSnapshot } : {})
+    });
   }
   return history.slice(-90);
 }
 
-function appendHistoryFull(prevFull, risk, lock, macro, macroDrivers) {
+function appendHistoryFull(prevFull, risk, lock, macro, macroDrivers, transmissionSnapshot = null) {
   const today = isoNow.slice(0, 10);
   const full = Array.isArray(prevFull) ? [...prevFull] : [];
   const entry = {
@@ -789,7 +871,8 @@ function appendHistoryFull(prevFull, risk, lock, macro, macroDrivers) {
     t10y2y: macroDrivers?.curve?.t10y2y ?? null,
     igOas: macroDrivers?.credit?.igOas ?? null,
     walcl: macroDrivers?.fedLiquidity?.walcl ?? null,
-    onRrp: macroDrivers?.fedLiquidity?.onRrp ?? null
+    onRrp: macroDrivers?.fedLiquidity?.onRrp ?? null,
+    ...(transmissionSnapshot ? { transmissionSnapshot } : {})
   };
   if (full.length && full[full.length - 1].date === today) {
     full[full.length - 1] = entry;
@@ -842,7 +925,10 @@ async function build() {
   const gatingResult = evaluateStructuralGating(macroDrivers);
 
   const risk = deriveRisk(realtime, macroDrivers);
-  const history = appendHistory(prevHistory, risk.score);
+  const previousTransmissionSource = resolvePreviousTransmissionSource(prevData, prevHistoryFull, prevHistory);
+  const transmissionDeltaResult = applyTransmissionDeltas(prevData.transmissionChain || {}, previousTransmissionSource);
+  const transmissionSnapshot = buildTransmissionSnapshot(transmissionDeltaResult.chain);
+  const history = appendHistory(prevHistory, risk.score, transmissionSnapshot);
   const scoreChange1d = history.length >= 2 ? risk.score - history[history.length - 2].score : 0;
   const scoreChange7d = history.length >= 8 ? risk.score - history[history.length - 8].score : 0;
   const scoreChange30d = history.length >= 30 ? risk.score - history[Math.max(0, history.length - 30)].score : scoreChange7d;
@@ -1017,7 +1103,8 @@ async function build() {
       { key: 'emAsia', label: '新兴亚洲', shortLabel: '新兴亚洲', risk: clamp(avg([risk.modules.liquidity * 0.65, risk.modules.energy * 0.35])), note: '美元敏感度较高' },
       { key: 'latam', label: '拉美', shortLabel: '拉美', risk: clamp(avg([risk.modules.energy * 0.35, risk.modules.liquidity * 0.65])), note: '商品支撑但外部融资受限' }
     ],
-    transmissionChain: prevData.transmissionChain || {},
+    transmissionChain: transmissionDeltaResult.chain,
+    transmissionDeltaMeta: transmissionDeltaResult.meta,
     assetMatrix: [
       { asset: '黄金', score: clamp(50 + (100 - risk.realRisk) * 0.35 + risk.inflationRisk * 0.25), bias: (risk.realRisk < 60 ? '中性偏多' : '谨慎偏多'), reason: `金价 ${risk.gold.toFixed(1)}，通胀对冲仍在，但真实利率继续约束。` },
       { asset: '原油', score: clamp(45 + risk.oilRisk * 0.55), bias: risk.brent >= 90 ? '强配' : '中性偏多', reason: `布伦特 ${risk.brent.toFixed(1)} 美元，仍是主导链条。` },
@@ -1257,7 +1344,7 @@ async function build() {
     }
   };
 
-  const historyFull = appendHistoryFull(prevHistoryFull, risk, lock, macro, macroDrivers);
+  const historyFull = appendHistoryFull(prevHistoryFull, risk, lock, macro, macroDrivers, transmissionSnapshot);
 
   return { data, history, historyFull };
 }
