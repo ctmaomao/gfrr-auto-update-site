@@ -148,6 +148,44 @@ jobs:
             ['hard thresholds', countOf(pickPath('tradingSystem.riskControl.hardThresholds', 'riskControl.hardThresholds'))],
             ['reset thresholds', countOf(pickPath('tradingSystem.riskControl.resetThresholds', 'riskControl.resetThresholds'))]
           ];
+          const fmtDelta = (value) => {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return '--';
+            if (n > 0) return `Δ +${n}`;
+            if (n < 0) return `Δ ${n}`;
+            return 'Δ 0';
+          };
+          const transmissionMeta = data.transmissionDeltaMeta || {};
+          const transmissionNodes = Array.isArray(data.transmissionChain?.nodes)
+            ? data.transmissionChain.nodes
+            : [];
+          const deltaNodes = transmissionNodes.map((node) => ({
+            label: node?.label || node?.key || node?.id || '--',
+            score: Number(node?.score),
+            delta: Number.isFinite(node?.delta) ? node.delta : null
+          }));
+          const positiveDeltas = deltaNodes.filter((node) => Number.isFinite(node.delta) && node.delta > 0);
+          const negativeDeltas = deltaNodes.filter((node) => Number.isFinite(node.delta) && node.delta < 0);
+          const zeroDeltas = deltaNodes.filter((node) => Number.isFinite(node.delta) && node.delta === 0);
+          const pendingDeltas = deltaNodes.filter((node) => !Number.isFinite(node.delta));
+          const describeDeltaNode = (node) => node ? `${node.label} ${fmtDelta(node.delta)}` : '--';
+          const largestPositive = positiveDeltas.length
+            ? positiveDeltas.reduce((best, node) => node.delta > best.delta ? node : best, positiveDeltas[0])
+            : null;
+          const largestNegative = negativeDeltas.length
+            ? negativeDeltas.reduce((best, node) => node.delta < best.delta ? node : best, negativeDeltas[0])
+            : null;
+          const transmissionRows = [
+            ['delta source', transmissionMeta.source || '--'],
+            ['matched nodes', transmissionMeta.matchedNodes ?? '--'],
+            ['total nodes', transmissionMeta.totalNodes ?? (transmissionNodes.length || '--')],
+            ['positive deltas', positiveDeltas.length],
+            ['negative deltas', negativeDeltas.length],
+            ['zero deltas', zeroDeltas.length],
+            ['pending deltas', pendingDeltas.length],
+            ['largest positive', describeDeltaNode(largestPositive)],
+            ['largest negative', describeDeltaNode(largestNegative)]
+          ];
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
             '## Daily Radar Summary',
             '',
@@ -160,6 +198,12 @@ jobs:
             '| Item | Value |',
             '|---|---|',
             ...decisionRows.map(([key, value]) => `| ${key} | ${tableValue(value)} |`),
+            '',
+            '## Transmission Delta Summary',
+            '',
+            '| Item | Value |',
+            '|---|---|',
+            ...transmissionRows.map(([key, value]) => `| ${key} | ${tableValue(value)} |`),
             ''
           ].join('\n'));
           NODE
