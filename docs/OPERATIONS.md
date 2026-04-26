@@ -16,10 +16,13 @@ npm run check:all
 npm run check:syntax
 npm run check:dom
 npm run check:modules
+npm run check:copy
 npm run check:data
 ```
 
 `check:data` 等价于 `node scripts/validate-data.mjs`。
+
+`check:copy` 检查用户可见文案契约，防止“广义美元指数 / 亿美元 / 传导网络 Δ”等已修复文案回退。
 
 `check:syntax` 和 `check:modules` 均为自动发现模式；新增 `scripts/` 文件或 `scripts/modules/` 模块后，通常会自动纳入检查。
 
@@ -156,7 +159,8 @@ pending deltas: 0
 npm run check:syntax
 npm run check:dom
 npm run check:modules
-node scripts/validate-data.mjs
+npm run check:copy
+npm run check:data
 ```
 
 失败时按类型排查：
@@ -164,6 +168,7 @@ node scripts/validate-data.mjs
 - `check:syntax` 失败：查看具体 JS / MJS 文件语法错误。
 - `check:dom` 失败：检查 `index.html` 是否误删关键 DOM id。
 - `check:modules` 失败：检查模块 import / export，尤其是 `render.js` re-export 和 `scripts/modules/*`。
+- `Check user-facing copy contract / check:copy` 失败：检查用户可见文案是否回退，例如“广义美元指数”被写成“广义美元 / 美元指数”，“亿美元”被写成“十亿美元”，或传导网络 delta 被写回“Δ --”。
 - `Validate data contract / check:data` 失败：检查 `data/radar-data.json`、`realtime/market.json`、Brent validation、decision contract、transmission delta contract 等数据契约，并查看 `validate-data.mjs` 的输出信息。
 
 `check:syntax` 会自动扫描 `scripts/` 下的 `.js` / `.mjs`；`check:modules` 会自动扫描 `scripts/modules/*.js`。

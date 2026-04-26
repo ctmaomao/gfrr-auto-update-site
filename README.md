@@ -116,6 +116,7 @@ npm run check:all
 npm run check:syntax
 npm run check:dom
 npm run check:modules
+npm run check:copy
 npm run check:data
 ```
 
@@ -124,6 +125,7 @@ npm run check:data
 - `check:syntax`：自动扫描 `scripts/` 下所有 `.js` / `.mjs` 文件并执行 `node --check`。
 - `check:dom`：检查关键 DOM 挂载点。
 - `check:modules`：自动扫描 `scripts/modules/*.js` 并执行动态 import 检查。
+- `check:copy`：检查用户可见文案契约，防止“广义美元指数 / 亿美元 / 传导网络 Δ”等已修复文案回退。
 - `check:data`：检查数据契约、Brent validation、Decision Output Contract、Transmission Delta 等结构；底层运行 `node scripts/validate-data.mjs`。
 
 新增 `scripts/` 脚本或 `scripts/modules/` 模块后，通常会自动纳入对应检查，无需手动维护检查列表。
@@ -144,10 +146,11 @@ Pages deploy 前自动运行：
 npm run check:syntax
 npm run check:dom
 npm run check:modules
-node scripts/validate-data.mjs
+npm run check:copy
+npm run check:data
 ```
 
-这些步骤分别检查 JS / MJS 语法、关键 DOM 挂载点、模块 import / export 和静态数据契约。Pages deploy 是分步骤运行这些检查，不运行 `npm run check:all`。
+这些步骤分别检查 JS / MJS 语法、关键 DOM 挂载点、模块 import / export、用户可见文案契约和静态数据契约。Pages deploy 是分步骤运行这些检查，不运行 `npm run check:all`。
 
 其中数据契约检查等价于 `npm run check:data`。如果 `validate-data.mjs` 输出本地 realtime 与 `dailyRealtimeInput.updatedAt` 不匹配的 warning，但最终显示 `Validation passed (v27.0)`，属于可接受状态；只有校验进程以非 0 退出才会阻止部署。
 
