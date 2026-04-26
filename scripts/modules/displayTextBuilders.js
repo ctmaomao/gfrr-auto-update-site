@@ -21,7 +21,7 @@ export function buildTopRisksDisplay(inputs) {
   }
   return [
     `布伦特 ${fmtNumSafe(inputs.brent, 1)} 美元，能源链条仍在传导。`,
-    `广义美元 ${fmtNumSafe(inputs.dxy, 2)}，融资环境仍在持续观察。`,
+    `广义美元指数 ${fmtNumSafe(inputs.dxy, 2)}，融资环境仍在持续观察。`,
     `高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}%，信用风险需持续观察。`,
     `10年期美债 ${fmtNumSafe(inputs.us10y, 2)}%，实际利率 ${fmtNumSafe(inputs.real10y, 2)}%。`
   ];

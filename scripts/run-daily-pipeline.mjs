@@ -943,7 +943,7 @@ async function build() {
 
   const topRisks = [
     `布伦特 ${risk.brent.toFixed(1)} 美元，能源链条仍在传导。`,
-    `广义美元 ${risk.dxy.toFixed(2)}，融资环境尚未明显放松。`,
+    `广义美元指数 ${risk.dxy.toFixed(2)}，融资环境尚未明显放松。`,
     `高收益利差 ${risk.hy.toFixed(2)}%，信用风险${risk.hy >= 4 ? '偏紧' : '可控但需观察'}。`,
     `10年期美债 ${risk.us10y.toFixed(2)}%，实际利率 ${risk.real10y.toFixed(2)}%。`
   ];
