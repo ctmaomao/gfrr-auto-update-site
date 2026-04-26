@@ -28,6 +28,54 @@
 
 - `docs/DATA_CONTRACT.md`
 
+## 开发检查与提交前验收
+
+根据本次改动范围选择运行以下检查，避免破坏 DOM 挂载点、模块 import、数据契约和页面渲染。
+
+### 1. 页面结构 / HTML / UI 改动
+
+如果修改了 `index.html`、`assets/styles.css` 或渲染模块，运行：
+
+```bash
+npm run check:dom
+npm run check:modules
+```
+
+### 2. 前端模块拆分 / import-export 改动
+
+如果修改了 `scripts/modules/*.js`，运行：
+
+```bash
+npm run check:modules
+```
+
+并对实际修改过的 JS / MJS 文件运行：
+
+```bash
+node --check <changed-file>
+```
+
+### 3. 数据生成 / 数据契约改动
+
+如果修改了 daily / realtime / validate 相关脚本，运行：
+
+```bash
+node scripts/validate-data.mjs
+```
+
+如果本地 JSON 产物过旧导致 validate 失败，应先确认是否为本地产物不一致，不要为了通过校验而削弱规则。
+
+### 4. GitHub Actions 验收
+
+部署前 workflow 会自动运行：
+
+```bash
+npm run check:dom
+npm run check:modules
+```
+
+Realtime / Daily workflow 会在 Actions Summary 中输出关键数据摘要，便于核对 `sourceMode`、`healthScore`、Brent、`dailyRealtimeInput` 和 `displayInputsBaseline`。
+
 ## 运行机制
 - `baseline`：提供页面默认内容和安全兜底
 - `realtime overlay`：提供盘中快变量、状态覆盖和实时增强
