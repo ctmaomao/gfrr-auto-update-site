@@ -21,6 +21,10 @@ export {
   renderWarningSystem
 } from './renderTables.js';
 
+export {
+  renderScenarioTree
+} from './renderAudit.js';
+
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
   energy: '能源',
@@ -208,22 +212,6 @@ export function renderExecutionLock(lock) {
   renderList('execution-allow', lock.allow || []);
   renderList('execution-block', lock.block || []);
   renderList('execution-mandatory', lock.mandatory || []);
-}
-
-export function renderScenarioTree(items) {
-  const root = $('scenario-list');
-  root.innerHTML = '';
-  items.forEach((item) => {
-    const node = document.createElement('div');
-    node.className = 'scenario-card';
-    node.innerHTML = `
-      <div class="scenario-title">${item.name} · ${item.probability}%</div>
-      <div class="scenario-meta">${item.description}</div>
-      <div><strong>触发条件：</strong>${item.triggers}</div>
-      <div style="margin-top:8px;"><strong>资产表现：</strong>${item.assets}</div>
-    `;
-    root.appendChild(node);
-  });
 }
 
 export function renderSignalEngine(signal) {
