@@ -87,6 +87,46 @@ criticalMissing >= 4
 
 `dailyRealtimeInput` 用于记录 Daily 构建实际消费了哪一次 realtime payload，便于排查 Daily 与 Realtime 的先后顺序问题。它不参与评分，不参与决策，也不参与页面主显示。本地运行时如果没有 GitHub Actions 注入的 commit SHA，`commitSha` 可以为 `null`。
 
+## GitHub Actions Summary 运行审计入口
+
+GitHub Actions Summary 是 Daily / Realtime 运行时审计入口，用于人工排查输入、baseline 与决策输出是否一致。Summary 不参与计算，不改变 JSON，也不是页面数据源。
+
+`Build Realtime Market` Summary 用于查看：
+
+- `updatedAt`
+- `sourceMode`
+- `healthScore`
+- `values.brent`
+- `brentValidation.consensus.recommendedValue`
+- `brentValidation.consensus.confidence`
+- `brentValidation.consensus.canPromoteToPrimary`
+
+其中 `values.brent` 是当前 Brent 主显示值来源之一；`brentValidation.consensus.recommendedValue` 只是验证层推荐值，不等于主值。`canPromoteToPrimary=false` 时不得切主值。
+
+`Build Daily Radar Data` Summary 用于查看：
+
+- `dailyRealtimeInput.commitSha`
+- `dailyRealtimeInput.updatedAt`
+- `dailyRealtimeInput.sourceMode`
+- `dailyRealtimeInput.healthScore`
+- `displayInputsBaseline.brent`
+- `displayInputsBaseline.dxy`
+- `displayInputsBaseline.vix`
+- `displayInputsBaseline.hyOas`
+- `displayInputsBaseline.spx`
+- `Decision Summary`
+
+其中 `dailyRealtimeInput` 用于判断 Daily 实际消费了哪一次 realtime payload；`displayInputsBaseline` 是 Daily 生成的 baseline fallback 当前值；`Decision Summary` 用于快速查看策略状态、执行锁、仓位建议、动作数量和阈值数量。
+
+如果页面值、`realtime-data` 分支和 `main` 分支数据暂时不一致，优先检查：
+
+1. Realtime Summary 的 `updatedAt` / `sourceMode` / `healthScore`
+2. Daily Summary 的 `dailyRealtimeInput.commitSha` / `dailyRealtimeInput.updatedAt`
+3. Daily Summary 的 `displayInputsBaseline`
+4. Decision Summary 的 strategy / execution lock
+
+如果 Realtime 在 Daily 之后又运行一次，`origin/realtime-data` 可能比 `origin/main:data/radar-data.json` 更新，这是正常的；应通过 `dailyRealtimeInput.commitSha` 判断 Daily 当时消费的是哪一次 realtime payload。
+
 ## Brent 主值与验证层契约
 
 页面主 Brent 当前仍来自：
