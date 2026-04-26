@@ -48,6 +48,9 @@ jobs:
       - name: Check module imports
         run: npm run check:modules
 
+      - name: Validate data contract
+        run: node scripts/validate-data.mjs
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
