@@ -163,6 +163,44 @@ window.__GFRR_RUNTIME__?.runtimeMetadata?.realtimeFetchAudit
 
 `realtimeFetchAudit` 只用于调试，不参与评分，不参与决策，不改变页面主值，不改变 `values.brent`，不改变 `effectiveDisplayInputs`，不改变 fallback 安全闸门，也不是页面数据源。
 
+## Realtime Freshness / 实时数据新鲜度契约
+
+前端运行时会基于 realtime payload 的时间戳计算：
+
+- `runtimeMetadata.realtimeAgeMinutes`
+- `runtimeMetadata.realtimeFreshnessLevel`
+- `runtimeMetadata.realtimeUnavailable`
+- `runtimeMetadata.realtimeOverlayEnabled`
+
+当前 freshness 分档为：
+
+```text
+0–30 分钟：fresh / 新鲜
+31–90 分钟：aging / 老化
+91–360 分钟：stale / 已过期
+>360 分钟或 realtime 不可用：unavailable / 不可用
+```
+
+状态含义：
+
+- `fresh / 新鲜`：近期成功读取 realtime，可正常用于 overlay。
+- `aging / 老化`：realtime 仍可参考，但页面应提示用户谨慎。
+- `stale / 已过期`：realtime 超出安全时效，页面应明确标识数据已过期。
+- `unavailable / 不可用`：远端和可用 fallback 均不可用，页面应回退到 baseline / degraded 状态。
+
+freshness 状态用于数据健康状态和显示安全判断。页面当前值仍必须遵守 `effectiveDisplayInputs` 契约：优先使用可用 realtime values，其次使用 `displayInputsBaseline`，最后为 `null`。当 realtime payload 处于 `cache-only`、`healthScore <= 0`、`criticalMissing >= 4` 等不安全状态时，不应覆盖 baseline。
+
+渲染层不得绕过 `effectiveDisplayInputs` 直接使用 raw realtime values 展示当前值。UI 文案可以解释 freshness 状态，但不能反向修改数据契约、fallback 闸门或当前值选择规则。
+
+freshness 与 `realtimeFetchAudit` 的职责不同：
+
+- freshness 说明“当前 payload 有多旧”。
+- `realtimeFetchAudit` 说明“页面这次到底读到了哪里”。
+- 如果 `selectedSource=remote` 且 `cacheBusted=true`，但 `remoteUpdatedAt` 很旧，优先检查 `Build Realtime Market` workflow。
+- 如果 `selectedSource=local-fallback` 或 `selectedSource=none`，优先检查远端 raw URL、网络读取和 fallback 闸门。
+
+freshness 不直接改变评分权重，不直接改变 Brent 主值，不直接改变决策状态机。评分、Brent 主值和决策输出仍以各自的数据契约和 pipeline / decision 层产物为准。
+
 ## Decision Output / 决策输出契约
 
 `decisionModel` 是决策层的结构化输出，用于承载策略状态、仓位建议、动作队列和一句话决策结论等信息。常见字段包括 `strategyState`、`riskMode`、`positionGuidance`、`actionQueue`、`decisionStatement`。具体字段以当前 `radar-data.json` 真实产物为准，不得凭空新增字段要求。
