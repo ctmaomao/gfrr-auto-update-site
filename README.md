@@ -190,6 +190,7 @@ Realtime / Daily workflow 会在 GitHub Actions Summary 输出关键审计信息
 
 ## 文档入口
 
+- [AI 开发守则](AGENTS.md)
 - [v27 稳定化基线](docs/V27_BASELINE.md)
 - 数据契约：`docs/DATA_CONTRACT.md`
 - 运行排查手册：`docs/OPERATIONS.md`
