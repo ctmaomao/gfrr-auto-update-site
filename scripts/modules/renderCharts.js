@@ -105,6 +105,15 @@ export function renderHeatmap(regions) {
   });
 }
 
+function formatTransmissionDelta(delta) {
+  if (!Number.isFinite(delta)) return '趋势待累计';
+  const rounded = Math.round(delta * 10) / 10;
+  const value = Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(1);
+  if (rounded > 0) return `Δ +${value}`;
+  if (rounded < 0) return `Δ ${value}`;
+  return 'Δ 0';
+}
+
 export function renderTransmission(chain) {
   $('chain-regime-tag').textContent = chain.regimeTag;
   $('chain-stress-score').textContent = chain.stressScore;
@@ -118,7 +127,7 @@ export function renderTransmission(chain) {
     const card = document.createElement('div');
     card.className = 'chain-node';
     const deltaClass = node.delta > 0 ? 'up' : node.delta < 0 ? 'down' : 'flat';
-    const deltaText = `${Number.isFinite(node.delta) ? `${node.delta > 0 ? '+' : ''}${node.delta}` : '--'}`;
+    const deltaText = formatTransmissionDelta(node.delta);
     card.innerHTML = `
       <div class="chain-node-top">
         <div class="chain-node-title">${node.label}</div>
@@ -126,7 +135,7 @@ export function renderTransmission(chain) {
       </div>
       <div class="chain-node-meta">
         <div class="chain-node-direction">${node.directionLabel}</div>
-        <div class="chain-delta ${deltaClass}">Δ ${deltaText}</div>
+        <div class="chain-delta ${deltaClass}">${deltaText}</div>
       </div>
       <div class="chain-node-bar"><div class="chain-node-fill" style="width:${node.score}%; background:${color}"></div></div>
       <div class="chain-node-note">${node.note}</div>
