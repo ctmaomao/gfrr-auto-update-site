@@ -48,6 +48,9 @@ jobs:
       - name: Check module imports
         run: npm run check:modules
 
+      - name: Check user-facing copy contract
+        run: npm run check:copy
+
       - name: Validate data contract
         run: npm run check:data
 
