@@ -283,6 +283,105 @@ billion USD
 
 不合格的本地 realtime payload 不得 overlay 页面。
 
+## Transmission Delta / 传导网络 Δ 契约
+
+`transmissionChain.nodes[*].delta` 是机构级宏观传导网络节点相对上一期同名节点 `score` 的变化值：
+
+```text
+delta = current.score - previous.score
+```
+
+示例：
+
+```json
+{
+  "label": "油价压力",
+  "score": 81,
+  "delta": -2
+}
+```
+
+页面显示为：
+
+```text
+Δ -2
+```
+
+如果找不到上一期同名节点，或当前分数 / 上一期分数不可比较，`delta` 必须为 `null`。`delta = null` 是合法状态，页面应显示：
+
+```text
+趋势待累计
+```
+
+这表示当前缺少可比较的上一期传导节点数据，不代表系统异常。
+
+Daily pipeline 计算 `delta` 时，上一期传导节点来源优先级为：
+
+1. 当前磁盘上的旧 `data/radar-data.json` 中的 `transmissionChain.nodes`
+2. `data/radar-history-full.json` 中最近一条 `transmissionSnapshot.nodes`
+3. `data/radar-history.json` 中最近一条 `transmissionSnapshot.nodes`
+4. 如果都没有，则当前所有传导节点的 `delta = null`
+
+节点匹配键优先级为：
+
+```text
+node.id → node.key → node.label
+```
+
+当前真实传导节点结构通常只有 `label`，因此目前主要按同名 `label` 匹配。
+
+`data/radar-data.json` 根层可包含审计字段：
+
+```json
+"transmissionDeltaMeta": {
+  "source": "previous-radar-data",
+  "matchedNodes": 6,
+  "totalNodes": 6
+}
+```
+
+字段含义：
+
+- `source`：本次 delta 使用的上一期来源，例如 `previous-radar-data`、`radar-history-full`、`radar-history` 或 `none`。
+- `matchedNodes`：成功匹配上一期节点的数量。
+- `totalNodes`：当前传导网络节点总数。
+
+如果没有可用上一期来源，应记录为：
+
+```json
+"transmissionDeltaMeta": {
+  "source": "none",
+  "matchedNodes": 0,
+  "totalNodes": 6
+}
+```
+
+`transmissionDeltaMeta` 只用于调试和审计，不参与评分、不参与决策，也不改变页面当前分数。
+
+Daily history 新记录可保存轻量传导网络快照：
+
+```json
+"transmissionSnapshot": {
+  "nodes": [
+    {
+      "key": "战争冲击",
+      "label": "战争冲击",
+      "score": 82
+    }
+  ]
+}
+```
+
+`transmissionSnapshot` 用于下一次 Daily 构建计算节点级 `delta`。它不用于直接渲染页面主值，不参与评分，不参与决策。旧历史记录没有 `transmissionSnapshot` 时必须保持兼容，不能视为数据错误。
+
+边界规则：
+
+- `delta` 是显示层趋势辅助信息，不是风险评分输入。
+- `delta` 不改变当前节点 `score`。
+- `delta` 不改变 `strategyState`、`executionLock`、`positionGuidance` 或其他决策输出。
+- `delta = null` 是合法状态，表示趋势数据仍在累计。
+- 页面显示“趋势待累计”表示暂无可比较上一期，不代表 pipeline 或页面异常。
+
 ## validate-data.mjs 契约
 
 当前自动校验覆盖：
