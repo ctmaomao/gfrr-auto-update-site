@@ -1,230 +1,176 @@
-# 全球金融风险雷达
+# Global Financial Risk Radar
 
-当前稳定版：`v27.0`
+全球金融风险雷达是一个面向公开部署场景的宏观风险监控与策略状态判断网站。它不只是展示图表，而是把 realtime 快变量、daily baseline、六大风险模块和决策系统组织成一个可审计的风险驾驶舱。
 
-全球金融风险雷达是一个面向公开部署场景的静态风险监测页面。项目以静态基线数据为主，以 realtime 覆盖层为辅，并在前端统一展示 freshness、degraded、unavailable 和 Health Dashboard 状态。
+在线访问：<https://ctmaomao.github.io/gfrr-auto-update-site/>
 
-## 发布状态
-- 当前稳定版：`v27.0`
-- realtime 发布分支：`realtime-data`
-- 当前能力：`baseline + realtime overlay + freshness + degraded + health dashboard`
+## 项目定位
 
-## 架构概览
-- `main`：承载 GitHub Pages 主站页面
-- `data/radar-data.json`：静态基线数据
-- `data/radar-history.json`：历史序列
-- `realtime/market.json`：realtime 产物路径
-- `realtime-data`：realtime JSON 发布分支
+本项目用于辅助回答：
 
-## 数据流
-- baseline：页面先读取 `data/radar-data.json`，保证在没有 realtime 时也能正常渲染
-- realtime：前端优先读取 `realtime-data` 分支上的远端 `realtime/market.json`
-- fallback：如果远端 realtime 暂时不可用，前端回退到 `main` 中的 `./realtime/market.json`
-- overlay：前端按字段级规则把 realtime 覆盖到 baseline，而不是整体替换
-- unavailable：当 realtime 缺失或超过 freshness 阈值时，页面退回 `Baseline Only`
+- 当前宏观风险处于什么状态。
+- 当前应偏进攻、均衡、谨慎还是防守。
+- 当前仓位区间、现金缓冲和风险预算应如何约束。
+- 哪些条件会触发风险升级，哪些条件允许判断缓和。
 
-## 数据契约
-本项目的数据链路、canonical 字段、fallback 规则、Brent 验证层边界、ON RRP 单位与广义美元指数命名规则，见：
+它不是选股工具，也不是短线交易信号系统。
 
-- `docs/DATA_CONTRACT.md`
+## 当前版本状态
+
+当前处于 `v27.x` 稳定化阶段。
+
+已经具备：
+
+- realtime 数据更新与 freshness / degraded / unavailable 状态展示。
+- daily baseline 构建与 `displayInputsBaseline` fallback。
+- 六大风险模块、热力图、传导网络、资产偏好矩阵和情景树。
+- 决策系统、执行灯、仓位建议、Action Queue、Trigger Monitor 和 Invalidation Rules。
+- GitHub Actions Summary 审计入口。
+- 数据契约保护与 DOM / module / syntax smoke check。
+
+一句话演进：`v25` 看见风险，`v26` 知道该做什么，`v27` 将风险状态、仓位约束和执行动作结构化。
+
+## 核心架构
+
+当前系统分为三层：
+
+1. 看见风险：聚合总风险分数、六大风险模块、实时快变量、健康状态与历史变化。
+2. 理解风险：将离散指标压缩为策略状态、主导风险源和状态解释。
+3. 执行动作：输出执行灯、仓位区间、动作队列、升级触发器和失效条件。
+
+主分支与数据职责：
+
+- `main`：GitHub Pages 主站页面和 daily baseline 数据。
+- `realtime-data`：远端 realtime payload 发布分支。
+- `data/radar-data.json`：页面 baseline 与决策主数据。
+- `data/radar-history.json` / `data/radar-history-full.json`：历史序列与审计快照。
+- `realtime/market.json`：realtime payload 路径；`main` 中的本地文件只作为 fallback。
+
+## 数据链路
+
+```text
+Build Realtime Market
+→ realtime-data 分支 / realtime/market.json
+→ Build Daily Radar Data
+→ main / data/radar-data.json
+→ 前端读取 baseline + 远端 realtime
+→ effectiveDisplayInputs
+→ 页面渲染
+```
+
+关键边界：
+
+- `realtime-data` 是前端远端 realtime payload 的主要来源。
+- `dailyRealtimeInput` 记录 Daily 构建实际消费的 realtime 版本。
+- `displayInputsBaseline` 是 baseline fallback 的结构化当前值来源。
+- 前端当前值最终使用 `effectiveDisplayInputs`，按“可用 realtime values → displayInputsBaseline → null”的顺序选择。
+- 本地 `./realtime/market.json` 只是 fallback，不保证是最新 realtime。
+
+完整字段契约见 `docs/DATA_CONTRACT.md`。
+
+## 决策系统
+
+决策输出以 `decisionModel` 和 `tradingSystem` 为核心：
+
+- `decisionModel`：策略状态、状态原因、主导驱动、仓位建议、动作队列、触发器和失效条件。
+- `tradingSystem.executionLock`：执行灯与新增风险约束。
+- `tradingSystem.positioning`：目标总仓位、现金缓冲、风险预算和核心配置。
+- `tradingSystem.actionLayer`：今日动作、禁止事项和执行检查点。
+- `tradingSystem.riskControl`：硬触发阈值与重置条件。
+
+渲染层只展示和格式化这些结构，不应重新推导执行灯、仓位建议或策略状态。
+
+## 页面结构
+
+页面按三层信息架构组织：
+
+- 核心驾驶舱：决策首屏、realtime strip、健康状态、总览和执行灯。
+- 风险解释层：风险模块、流动性、热力图、资产偏好和关键解释。
+- 高级分析与规则审计：30日时间维度、机构级传导网络、预警规则、情景树、恢复状态和行为纪律。
+
+高级区默认折叠，避免首屏信息过载。
+
+## Brent 验证边界
+
+Brent 主显示值仍来自：
+
+```text
+values.brent
+```
+
+`brentValidation.consensus.recommendedValue` 是验证层推荐值，不等于主值；系统不会自动切主值。`canPromoteToPrimary=false` 时不得提升为主值。
+
+详细规则见 `docs/DATA_CONTRACT.md`。
 
 ## 开发检查与提交前验收
 
-根据本次改动范围选择运行以下检查，避免破坏 DOM 挂载点、模块 import、数据契约和页面渲染。
-
-### 1. 页面结构 / HTML / UI 改动
-
-如果修改了 `index.html`、`assets/styles.css` 或渲染模块，运行：
+常用检查：
 
 ```bash
+npm run check:syntax
 npm run check:dom
 npm run check:modules
-```
-
-### 2. 前端模块拆分 / import-export 改动
-
-如果修改了 `scripts/modules/*.js`，运行：
-
-```bash
-npm run check:modules
-```
-
-并对实际修改过的 JS / MJS 文件运行：
-
-```bash
-node --check <changed-file>
-```
-
-### 3. 数据生成 / 数据契约改动
-
-如果修改了 daily / realtime / validate 相关脚本，运行：
-
-```bash
 node scripts/validate-data.mjs
 ```
 
-如果本地 JSON 产物过旧导致 validate 失败，应先确认是否为本地产物不一致，不要为了通过校验而削弱规则。
+用途：
 
-### 4. GitHub Actions 验收
+- `check:syntax`：统一检查核心 JS / MJS 文件语法。
+- `check:dom`：检查关键 DOM 挂载点。
+- `check:modules`：检查模块 import / export 是否断裂。
+- `validate-data.mjs`：检查数据契约、Brent validation、Decision Output Contract、Transmission Delta 等结构。
 
-部署前 workflow 会自动运行：
+如果 `validate-data.mjs` 因本地 `realtime/market.json` 与 `dailyRealtimeInput` 不匹配而输出 warning，但最终显示 `Validation passed`，这是可接受状态。本地 fallback 可能不是 Daily 实际消费的 realtime 版本。
+
+## GitHub Actions 工作流
+
+主要 workflow：
+
+- `Build Realtime Market`：定时生成 realtime payload，并发布到 `realtime-data` 分支。
+- `Build Daily Radar Data`：读取最新 `realtime-data` payload，生成 `data/radar-data.json` 与 history。
+- `Deploy Static Site to Pages`：部署静态站点到 GitHub Pages。
+
+Pages deploy 前自动运行：
 
 ```bash
+npm run check:syntax
 npm run check:dom
 npm run check:modules
 ```
 
-Realtime / Daily workflow 会在 Actions Summary 中输出关键数据摘要，便于核对 `sourceMode`、`healthScore`、Brent、`dailyRealtimeInput` 和 `displayInputsBaseline`。
+Realtime / Daily workflow 会在 GitHub Actions Summary 输出关键审计信息，包括 `sourceMode`、`healthScore`、Brent、`dailyRealtimeInput`、`displayInputsBaseline` 和 Decision Summary。
 
-## 运行机制
-- `baseline`：提供页面默认内容和安全兜底
-- `realtime overlay`：提供盘中快变量、状态覆盖和实时增强
-- `freshness`：区分 `fresh`、`aging`、`stale`、`unavailable`
-- `degraded`：标记 fallback、cache-only、critical missing 或单源失败等非理想状态
-- `Health Dashboard`：聚合 freshness、degraded、source status、health score 和问题摘要
+## 关键数据契约
 
-## 健康状态说明
-- `Healthy`：realtime 新鲜且无明显降级
-- `Watch`：realtime 进入 aging 或存在轻微异常
-- `Degraded`：realtime 可用，但存在 fallback、cache-only、critical missing 或源失败
-- `Stale`：realtime 可用但已明显过旧
-- `Baseline Only`：realtime unavailable，页面仅依赖 baseline
+详细数据契约统一维护在：
 
-## 相关脚本
-- `scripts/run-realtime.mjs`：生成 realtime payload
-- `scripts/run-daily-pipeline.mjs`：生成静态基线与历史数据
-- `scripts/validate-data.mjs`：验证基线、历史和 realtime 产物结构
+- `docs/DATA_CONTRACT.md`
 
-## 发布与部署
-1. `Build Realtime Market` 生成并发布 `realtime/market.json` 到 `realtime-data`
-2. `Build Daily Radar Data` 生成 `data/radar-data.json` 与 `data/radar-history.json`
-3. GitHub Pages 继续由 `main` 提供页面
+其中记录：
 
-## 维护提示
-- `main` 中的 `./realtime/market.json` 仅作为兼容性 fallback，不保证是最新值
-- realtime 发布与页面部署已经解耦；realtime 刷新不再依赖向 `main` 高频提交
-- 如果页面出现 `Baseline Only`，优先检查 realtime 发布链路和 `realtime-data` 分支内容
+- 数据链路与 canonical 当前值。
+- `displayInputsBaseline` 与 `dailyRealtimeInput`。
+- Brent 主值与验证层边界。
+- Decision Output Contract。
+- `realtimeFetchAudit`。
+- Transmission Delta / 传导网络 Δ。
+- ON RRP 单位。
+- DXY / 广义美元指数命名。
+- realtime fallback 与 validate 规则。
 
-## v27.0 官方发布说明（Decision System Release）
+## 当前维护原则
 
-### 版本定位
+- 不把 validation 推荐值直接当作主显示值。
+- 不通过解析中文文案恢复结构化数据。
+- 不削弱 fallback 闸门来掩盖旧 realtime 文件。
+- 不在渲染层重算评分、决策状态或执行约束。
+- 修改数据链路、决策契约或渲染结构时，必须运行对应检查。
 
-`v27.0` 是《全球金融风险雷达》的当前稳定发布版本。
+## 文档入口
 
-这一版本将系统从“风险信息展示工具”升级为“可执行的风险决策系统”。
-
-它的重点不在于增加更多图表，而在于将已有风险信息组织成统一的判断框架、仓位框架与动作框架。
-
-### 核心变化
-
-把“风险信息”压缩成“状态”，再把“状态”映射成“行动”。
-
-### 新增核心能力
-
-- 结构性宏观数据源
-  - 新增结构性宏观数据源接入，强化中长期风险识别能力
-- `macroDrivers`
-  - 在决策层引入 `macroDrivers`，统一承接核心宏观驱动项
-- 结构性红灯 / 黄灯门控
-  - 增加结构性红灯 / 黄灯门控规则，优先约束高风险状态下的动作
-- 流动性 / 债务 / 银行三模块重算
-  - 对流动性、债务、银行三模块执行重算与权重校正
-- pipeline 优先决策
-  - pipeline 采用“优先决策”路径，确保先输出状态与动作结论
-- `Strategy State`
-  - 系统输出五档策略状态机：`Risk-On / Balanced / Caution / Defensive / Crisis`
-- `Position Guidance`
-  - 系统输出区间化总仓位建议，而不是单点仓位
-- `Action Queue`
-  - 系统输出当日动作优先级，区分优先动作、观察事项与禁止事项
-- `Trigger Monitor`
-  - 系统说明哪些条件会推动当前状态升级
-- `Invalidation Rules`
-  - 系统说明哪些条件意味着当前判断可以缓和或需要重审
-- `Decision Header`
-  - 首页首屏改为“决策优先”，先给结论，再看图表
-
-### 系统结构
-
-当前系统可以概括为三层：
-
-1. 看见风险
-   - 聚合总风险分数、六大风险模块、实时快变量、健康状态与历史变化
-2. 理解风险
-   - 将离散指标压缩为统一策略状态、主导风险源与状态变化解释
-3. 执行动作
-   - 输出仓位区间建议、动作队列、升级触发器与缓和条件
-
-### 决策契约
-
-`v27.0` 在统一 `decisionModel` 输出层基础上，进一步纳入 `macroDrivers` 与结构性门控，用于承接后续所有状态、仓位、动作与触发逻辑。
-
-结构示意如下：
-
-```text
-decisionModel
-├─ strategyState / stateLabel / stateReason / stateScore
-├─ stateDrivers / dominantDrivers / stateMeta
-├─ positionGuidance
-├─ actionQueue
-├─ triggerMonitor
-└─ invalidationRules
-```
-
-这一层的意义在于让系统对外输出一个稳定、可消费、可扩展的决策对象，而不再只是分散展示多个指标。
-
-### 使用方式
-
-当前系统的定位需要明确：
-
-- 这不是选股工具
-- 这不是短线交易信号系统
-- 这不是个股买卖点生成器
-
-它的定位是：
-
-- 宏观风险判断工具
-- 风险状态识别工具
-- 资产配置与仓位管理辅助工具
-
-它更适合回答的问题是：
-
-- 当前风险状态属于哪一档
-- 当前应偏进攻还是偏防守
-- 当前总仓位大致应落在哪个区间
-- 当前最优先的动作是什么
-- 什么情况下应该进一步升级防御，什么情况下可以缓和
-
-### 当前版本状态
-
-当前版本为：`v27.0`
-
-版本状态判断如下：
-
-- 决策骨架已经完成
-- 首页已经具备“结论优先”的决策首屏
-- 状态、仓位、动作、触发器、失效条件已经形成统一输出
-- 当前规则系统仍属于 `v1` 版本
-
-这意味着：
-
-- 结构已经完整
-- 输出已经稳定
-- 但规则阈值、历史匹配与文案统一仍有继续优化空间
-
-### 下一阶段方向
-
-后续如进入下一阶段，更合理的推进方向包括：
-
-- `Historical Regime Matcher`
-  - 增加历史相似风险阶段匹配能力
-- `Schema Cleanup`
-  - 收缩兼容字段，进一步明确 canonical fields
-- `Rule Configuration`
-  - 将关键阈值、区间与映射规则从逻辑中抽离
-- `Language / Copy Unification`
-  - 统一页面文案、状态表达与术语层级
-
-### 总结
-
-`历史版本演进：v25：看到风险；v26：知道该做什么。`
+- 数据契约：`docs/DATA_CONTRACT.md`
+- 核心入口：`index.html`
+- 前端入口：`scripts/app.js`
+- Realtime 构建：`scripts/run-realtime.mjs`
+- Daily 构建：`scripts/run-daily-pipeline.mjs`
+- 数据校验：`scripts/validate-data.mjs`
