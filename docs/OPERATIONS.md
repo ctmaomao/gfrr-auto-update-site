@@ -21,6 +21,8 @@ npm run check:data
 
 `check:data` 等价于 `node scripts/validate-data.mjs`。
 
+`check:syntax` 和 `check:modules` 均为自动发现模式；新增 `scripts/` 文件或 `scripts/modules/` 模块后，通常会自动纳入检查。
+
 如果输出：
 
 ```text
@@ -163,6 +165,8 @@ node scripts/validate-data.mjs
 - `check:dom` 失败：检查 `index.html` 是否误删关键 DOM id。
 - `check:modules` 失败：检查模块 import / export，尤其是 `render.js` re-export 和 `scripts/modules/*`。
 - `Validate data contract / check:data` 失败：检查 `data/radar-data.json`、`realtime/market.json`、Brent validation、decision contract、transmission delta contract 等数据契约，并查看 `validate-data.mjs` 的输出信息。
+
+`check:syntax` 会自动扫描 `scripts/` 下的 `.js` / `.mjs`；`check:modules` 会自动扫描 `scripts/modules/*.js`。
 
 `validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 是分步骤运行上述检查，不运行 `check:all`。
 

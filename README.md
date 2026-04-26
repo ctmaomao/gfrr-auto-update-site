@@ -121,10 +121,12 @@ npm run check:data
 
 用途：
 
-- `check:syntax`：统一检查核心 JS / MJS 文件语法。
+- `check:syntax`：自动扫描 `scripts/` 下所有 `.js` / `.mjs` 文件并执行 `node --check`。
 - `check:dom`：检查关键 DOM 挂载点。
-- `check:modules`：检查模块 import / export 是否断裂。
+- `check:modules`：自动扫描 `scripts/modules/*.js` 并执行动态 import 检查。
 - `check:data`：检查数据契约、Brent validation、Decision Output Contract、Transmission Delta 等结构；底层运行 `node scripts/validate-data.mjs`。
+
+新增 `scripts/` 脚本或 `scripts/modules/` 模块后，通常会自动纳入对应检查，无需手动维护检查列表。
 
 如果 `check:data` 输出本地 `realtime/market.json` 与 `dailyRealtimeInput.updatedAt` 不匹配的 warning，但最终显示 `Validation passed (v27.0)`，这是可接受状态。本地 fallback 可能不是 Daily 实际消费的 realtime 版本。
 
