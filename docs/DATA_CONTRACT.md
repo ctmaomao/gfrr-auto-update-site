@@ -127,6 +127,42 @@ GitHub Actions Summary 是 Daily / Realtime 运行时审计入口，用于人工
 
 如果 Realtime 在 Daily 之后又运行一次，`origin/realtime-data` 可能比 `origin/main:data/radar-data.json` 更新，这是正常的；应通过 `dailyRealtimeInput.commitSha` 判断 Daily 当时消费的是哪一次 realtime payload。
 
+## Runtime Debug / Realtime Fetch Audit 契约
+
+`realtimeFetchAudit` 是前端运行时调试字段，用于判断页面当前 realtime payload 的来源。它用于排查页面是否读取了远端 `realtime-data`、是否使用本地 fallback、是否完全没有可用 realtime，以及页面 stale / aging / unavailable 是由 workflow 未更新还是前端 fetch / fallback 问题导致。
+
+浏览器调试路径为：
+
+```js
+window.__GFRR_RUNTIME__?.realtimeFetchAudit
+window.__GFRR_RUNTIME__?.runtimeMetadata?.realtimeFetchAudit
+```
+
+常见字段包括：
+
+- `attemptedAt`
+- `remoteUrl`
+- `cacheBusted`
+- `selectedSource`
+- `remoteUpdatedAt`
+- `remoteSourceMode`
+- `remoteHealthScore`
+- `fallbackReason`
+
+`selectedSource` 含义：
+
+- `remote`：页面成功读取远端 `realtime-data` payload
+- `local-fallback`：远端读取失败后使用本地 fallback payload
+- `none`：远端和本地 fallback 都不可用，页面只能走 baseline / degraded
+
+排查规则：
+
+- 如果 `selectedSource=remote`、`cacheBusted=true`，但 `remoteUpdatedAt` 很旧，说明前端已经绕过缓存并成功读取远端，优先检查 `Build Realtime Market` workflow。
+- 如果 `selectedSource=local-fallback`，说明远端读取失败或不可用，页面使用本地 fallback，需检查远端 raw URL、网络和 fallback 闸门。
+- 如果 `selectedSource=none`，说明远端和本地 fallback 都不可用，页面只能使用 baseline，需检查 realtime payload 生成和前端读取路径。
+
+`realtimeFetchAudit` 只用于调试，不参与评分，不参与决策，不改变页面主值，不改变 `values.brent`，不改变 `effectiveDisplayInputs`，不改变 fallback 安全闸门，也不是页面数据源。
+
 ## Decision Output / 决策输出契约
 
 `decisionModel` 是决策层的结构化输出，用于承载策略状态、仓位建议、动作队列和一句话决策结论等信息。常见字段包括 `strategyState`、`riskMode`、`positionGuidance`、`actionQueue`、`decisionStatement`。具体字段以当前 `radar-data.json` 真实产物为准，不得凭空新增字段要求。
