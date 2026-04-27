@@ -46,6 +46,15 @@ export function buildRealtimeStatusLabel(metadata) {
   return parts.join(' / ');
 }
 
+export function canUseRealtimePayloadValues(realtimePayload) {
+  if (!realtimePayload?.values) return false;
+  if (realtimePayload.cacheOnly === true) return false;
+  if (realtimePayload.sourceMode === 'cache-only') return false;
+  if (Number.isFinite(realtimePayload.healthScore) && realtimePayload.healthScore <= 0) return false;
+  if (Number.isFinite(realtimePayload.criticalMissing) && realtimePayload.criticalMissing >= 4) return false;
+  return true;
+}
+
 export function shouldApplyRealtimeOverlay(metadata, realtimePayload) {
-  return !!realtimePayload?.values && !metadata.realtimeUnavailable;
+  return canUseRealtimePayloadValues(realtimePayload) && !metadata.realtimeUnavailable;
 }

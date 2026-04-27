@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { formatOnRrpYiUsd } from './modules/format.js';
+import { canUseRealtimePayloadValues } from './modules/freshness.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -914,7 +915,7 @@ function buildFallback() {
 }
 
 async function build() {
-  if (!realtime || !realtime.values) return buildFallback();
+  if (!canUseRealtimePayloadValues(realtime)) return buildFallback();
 
   const sourceModeLabel = SOURCE_MODE_CN[realtime.sourceMode] || realtime.sourceMode || '--';
 
