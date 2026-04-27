@@ -86,7 +86,30 @@ Build Realtime Market
 
 如果 workflow 没跑或失败，优先修复 Realtime workflow；不要直接改 JSON 产物来掩盖问题。
 
-## 4. Daily workflow 排查
+## 4. Realtime Health Watchdog 排查
+
+Realtime Health Watchdog 是只读诊断工具，只检查 `realtime-data/realtime/market.json` 的 freshness，不生成数据、不修复数据、不参与评分。
+
+本地手动检查：
+
+```bash
+node scripts/check-realtime-health.mjs --soft
+```
+
+GitHub Actions watchdog 使用：
+
+```bash
+node scripts/check-realtime-health.mjs --fail-on-stale
+```
+
+如果结果是 `stale` 或 `unavailable`，优先检查：
+
+- `Build Realtime Market` workflow 最近运行结果。
+- `realtime-data` 分支的 `realtime/market.json` `updatedAt`。
+- GitHub Actions schedule 是否延迟或未触发。
+- workflow 权限是否异常。
+
+## 5. Daily workflow 排查
 
 检查 GitHub Actions 中的：
 
@@ -106,7 +129,7 @@ Build Daily Radar Data
 
 `dailyRealtimeInput.commitSha` 用于判断 Daily 当时消费的是哪一次 `realtime-data` payload。如果页面、`main` 数据和 `realtime-data` 暂时不同步，先用这个字段确认 Daily 的输入版本。
 
-## 5. Brent 主值与验证层排查
+## 6. Brent 主值与验证层排查
 
 页面主 Brent 来自：
 
@@ -131,7 +154,7 @@ values.brent / effectiveDisplayInputs
 - `weak-confirmation`：只能辅助确认，不能 promote。
 - `observedAt-stale(...)`：该来源过旧，不应参与主值提升。
 
-## 6. Transmission Delta 排查
+## 7. Transmission Delta 排查
 
 如果页面节点显示：
 
@@ -161,7 +184,7 @@ pending deltas: 0
 
 不要为了让页面显示 `Δ` 而手写 JSON；应让 Daily pipeline 自然生成节点级 delta。
 
-## 7. Pages 部署失败排查
+## 8. Pages 部署失败排查
 
 `Deploy Static Site to Pages` 在上传 artifact 和部署前会自动运行：
 
@@ -189,7 +212,7 @@ npm run check:data
 
 `validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 是分步骤运行上述检查，不运行 `check:all`。
 
-## 8. 不要做的修复
+## 9. 不要做的修复
 
 - 不要为了让 validate 通过而削弱校验规则。
 - 不要把 `brentValidation.consensus.recommendedValue` 直接改成 Brent 主值。

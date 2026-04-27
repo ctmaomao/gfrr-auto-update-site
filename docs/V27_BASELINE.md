@@ -12,7 +12,7 @@
 
 ### 数据链路
 
-- Realtime workflow 已改为每小时四次错峰调度，降低远端实时数据过期风险。
+- Realtime workflow 已改为每小时 6 次错峰调度，降低远端实时数据过期风险。
 - `realtime-data` 分支作为远端 realtime payload 来源，Pages 主站不直接依赖本地旧 realtime 产物。
 - Daily workflow 先消费 `origin/realtime-data`，再生成 daily baseline 数据。
 - `dailyRealtimeInput` 记录 Daily 实际消费的 realtime 输入与 commit 审计信息。
@@ -21,6 +21,7 @@
 - `realtimeFetchAudit` 记录 realtime 读取来源、fallback、cache busting 和失败原因。
 - local fallback 安全闸门已建立，避免旧本地 realtime 覆盖更新的远端 payload。
 - realtime freshness 已分为 fresh、aging、stale、unavailable 四档，用于解释实时数据新鲜度。
+- v27.x baseline 包含只读 Realtime Health Watchdog，用于监控 `realtime-data/realtime/market.json` 的 freshness 状态；它不参与评分、不生成数据、不改变 realtime fallback、不改变 Brent 主值链路。
 
 ### Brent 验证层
 

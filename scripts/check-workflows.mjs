@@ -42,6 +42,34 @@ const contracts = [
       'upload-pages-artifact',
       'deploy-pages'
     ]
+  },
+  {
+    file: '.github/workflows/check-realtime-health.yml',
+    required: [
+      'name: Check Realtime Health',
+      'workflow_dispatch',
+      "cron: '13,43 * * * *'",
+      'permissions:',
+      'contents: read',
+      'concurrency',
+      'realtime-health',
+      'actions/checkout@v4',
+      'actions/setup-node@v4',
+      "node-version: '20'",
+      'node scripts/check-realtime-health.mjs --fail-on-stale'
+    ],
+    forbidden: [
+      'contents: write',
+      'git push',
+      'git commit',
+      'run-realtime',
+      'run-daily',
+      'npm run build:realtime',
+      'npm run build:data',
+      'data/radar-data.json',
+      'realtime/market.json',
+      'realtime-data'
+    ]
   }
 ];
 
@@ -50,6 +78,11 @@ const failures = [];
 function addFailure(file, missing) {
   failures.push({ file, missing });
   console.error(`Workflow contract failed: ${file} missing "${missing}"`);
+}
+
+function addForbiddenFailure(file, forbidden) {
+  failures.push({ file, forbidden });
+  console.error(`Workflow contract failed: ${file} must not contain "${forbidden}"`);
 }
 
 for (const contract of contracts) {
@@ -62,6 +95,10 @@ for (const contract of contracts) {
 
   for (const needle of contract.required) {
     if (!text.includes(needle)) addFailure(contract.file, needle);
+  }
+
+  for (const needle of contract.forbidden || []) {
+    if (text.includes(needle)) addForbiddenFailure(contract.file, needle);
   }
 
   for (const group of contract.anyOf || []) {
