@@ -75,7 +75,7 @@ Build Realtime Market
 重点看：
 
 - 最近一次是否为 `Scheduled` 或手动触发成功。
-- 运行时间是否接近 `7,22,37,52 * * * *`。
+- 运行时间是否接近 `7,17,27,37,47,57 * * * *`。
 - Summary 中的 `updatedAt`。
 - Summary 中的 `sourceMode`。
 - Summary 中的 `healthScore`。
@@ -181,7 +181,7 @@ npm run check:data
 - `check:dom` 失败：检查 `index.html` 是否误删关键 DOM id。
 - `check:modules` 失败：检查模块 import / export，尤其是 `render.js` re-export 和 `scripts/modules/*`。
 - `Check user-facing copy contract / check:copy` 失败：检查用户可见文案是否回退，例如“广义美元指数”被写成“广义美元 / 美元指数”，“亿美元”被写成“十亿美元”，或传导网络 delta 被写回“Δ --”。
-- `Check workflow contract / check:workflows` 失败：检查 GitHub Actions workflow 是否误删关键保护项，例如 Realtime 四次/小时调度、Daily 消费 origin/realtime-data、Daily / Decision / Transmission Summary、Pages 部署前检查链路、upload-pages-artifact / deploy-pages 步骤。
+- `Check workflow contract / check:workflows` 失败：检查 GitHub Actions workflow 是否误删关键保护项，例如 Realtime 每小时 6 次错峰调度、Daily 消费 origin/realtime-data、Daily / Decision / Transmission Summary、Pages 部署前检查链路、upload-pages-artifact / deploy-pages 步骤。
 - `Check documentation links / check:docs` 失败：检查 README.md、AGENTS.md 和 docs/*.md 中的本地 Markdown 链接是否指向不存在的文件；http / https / mailto / 纯锚点链接会跳过。
 - `Validate data contract / check:data` 失败：检查 `data/radar-data.json`、`realtime/market.json`、Brent validation、decision contract、transmission delta contract 等数据契约，并查看 `validate-data.mjs` 的输出信息。
 

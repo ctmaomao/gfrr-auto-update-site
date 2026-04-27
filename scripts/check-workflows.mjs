@@ -5,7 +5,7 @@ const contracts = [
     file: '.github/workflows/build-realtime-market.yml',
     required: [
       'workflow_dispatch',
-      "cron: '7,22,37,52 * * * *'",
+      "cron: '7,17,27,37,47,57 * * * *'",
       'concurrency',
       'gfrr-realtime',
       'permissions:',

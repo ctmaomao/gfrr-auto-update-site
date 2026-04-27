@@ -3,7 +3,7 @@ name: Build Realtime Market
 on:
   workflow_dispatch:
   schedule:
-    - cron: '7,22,37,52 * * * *'
+    - cron: '7,17,27,37,47,57 * * * *'
 
 concurrency:
   group: gfrr-realtime-${{ github.ref }}
