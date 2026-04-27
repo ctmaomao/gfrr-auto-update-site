@@ -8,6 +8,16 @@
 
 后续改动应坚持小步、可验证、可回滚：优先补保护网、补文档、补小范围校验；避免一次性改变数据结构、决策状态机或核心 pipeline。
 
+## v27.1.0 Release Note
+
+v27.1.0 是 v27.x 稳定化 release，重点是提高 realtime 稳定性、补充只读诊断和清理仓库遗留文件：
+
+- Realtime workflow cron 增强为每小时 6 次错峰运行：`7,17,27,37,47,57 * * * *`。
+- 新增只读 Realtime Health Watchdog：`scripts/check-realtime-health.mjs` 和 `.github/workflows/check-realtime-health.yml`。
+- GitHub Actions runtime baseline 使用 `actions/checkout@v6`、`actions/setup-node@v6` 和 `node-version: 24`。
+- 仓库卫生清理删除无引用历史文件 `__head_health.js` 和 `render-check.png`，并同步 `package-lock.json` 元数据。
+- 继续保留 v27 数据契约、realtime fallback 安全闸门、Brent 主值链路、decision / scoring 架构和 `effectiveDisplayInputs` 显示链路。
+
 ## 已完成的核心升级
 
 ### 数据链路
