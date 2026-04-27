@@ -210,6 +210,8 @@ npm run check:data
 
 `check:syntax` 会自动扫描 `scripts/` 下的 `.js` / `.mjs`；`check:modules` 会自动扫描 `scripts/modules/*.js`。
 
+GitHub Actions workflow baseline 使用 Node 24-compatible official actions：`actions/checkout@v6` 和 `actions/setup-node@v6`；`setup-node` 使用 `node-version: 24`。不要用 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` 或 `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` 作为 workaround。
+
 `validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 是分步骤运行上述检查，不运行 `check:all`。
 
 ## 9. 不要做的修复

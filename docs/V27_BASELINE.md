@@ -86,6 +86,8 @@ check:data
 
 其中 `check:syntax` 保护脚本语法，`check:dom` 保护关键 DOM 挂载点，`check:modules` 保护模块 import/export，`check:copy` 保护用户可见文案契约，`check:workflows` 保护核心 GitHub Actions workflow 合约，`check:docs` 保护 README / docs 本地 Markdown 链接，`check:data` 保护数据契约。
 
+v27.x workflow baseline 已兼容 Node 24：官方 checkout / setup-node actions 应使用 v6，`setup-node` 应运行 `node-version: 24`。
+
 Pages deploy 也会在部署前分步骤运行这些检查，而不是直接运行 `npm run check:all`。保留分步骤运行，是为了部署失败时能快速定位失败类型。
 
 ## 当前必须遵守的维护边界
