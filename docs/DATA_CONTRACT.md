@@ -50,6 +50,21 @@ criticalMissing >= 4
 
 页面文案、面板、触发器中凡是表达“当前值”的内容，都应基于 `effectiveDisplayInputs` 重建。
 
+### effectiveDisplayInputs 运行时合成说明
+
+`data/radar-data.json` 不序列化根级 `effectiveDisplayInputs`，也不要求存在根级 `values` 对象。
+
+Daily pipeline 负责写入稳定基线字段，例如：
+
+- `dailyRealtimeInput`
+- `displayInputsBaseline`
+
+浏览器前端在运行时读取 `data/radar-data.json` 后，再叠加远端 `realtime-data/realtime/market.json`。在 realtime 安全闸门允许时，前端根据 `displayInputsBaseline` 与 realtime overlay 合成最终显示输入，并挂载为：
+
+`data.__effectiveDisplayInputs`
+
+因此，页面显示层应以运行时的 `data.__effectiveDisplayInputs` 作为有效显示输入，而不是要求 `radar-data.json` 预先序列化 `effectiveDisplayInputs`。
+
 ## displayInputsBaseline 契约
 
 `data/radar-data.json` 根层必须包含：

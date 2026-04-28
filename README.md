@@ -64,6 +64,7 @@ Build Realtime Market
 - `dailyRealtimeInput` 记录 Daily 构建实际消费的 realtime 版本。
 - `displayInputsBaseline` 是 baseline fallback 的结构化当前值来源。
 - 前端当前值最终使用 `effectiveDisplayInputs`，按“可用 realtime values → displayInputsBaseline → null”的顺序选择。
+- `effectiveDisplayInputs` 仅在前端运行时合成并挂到 `data.__effectiveDisplayInputs`；`radar-data.json` 根级不序列化该字段，也不要求根级 `values` 对象（详见 `docs/DATA_CONTRACT.md` 中「effectiveDisplayInputs 运行时合成说明」）。
 - 本地 `./realtime/market.json` 只是 fallback，不保证是最新 realtime。
 
 完整字段契约见 `docs/DATA_CONTRACT.md`。
