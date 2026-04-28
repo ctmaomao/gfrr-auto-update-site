@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+
 const DEFAULT_REALTIME_HEALTH_URL =
   'https://raw.githubusercontent.com/ctmaomao/gfrr-auto-update-site/realtime-data/realtime/market.json';
 
@@ -11,7 +13,8 @@ const FRESHNESS_ACTIONS = {
 function parseMode(argv) {
   return {
     soft: argv.includes('--soft'),
-    failOnStale: argv.includes('--fail-on-stale')
+    failOnStale: argv.includes('--fail-on-stale'),
+    githubOutput: argv.includes('--github-output')
   };
 }
 
@@ -78,6 +81,32 @@ function printReport(report) {
   }
 }
 
+function shouldRecover(report) {
+  return report.freshness === 'stale' || report.freshness === 'unavailable';
+}
+
+function writeGithubOutput(report, mode) {
+  if (!mode.githubOutput || !process.env.GITHUB_OUTPUT) return;
+
+  const output = {
+    updatedAt: report.updatedAt,
+    ageMinutes: report.ageMinutes,
+    freshness: report.freshness,
+    result: report.result,
+    shouldRecover: shouldRecover(report) ? 'true' : 'false'
+  };
+
+  const lines = Object.entries(output)
+    .map(([key, value]) => `${key}=${value ?? ''}`)
+    .join('\n');
+
+  try {
+    fs.appendFileSync(process.env.GITHUB_OUTPUT, `${lines}\n`);
+  } catch (error) {
+    console.warn(`[realtime-health] failed to write GitHub output: ${error.message}`);
+  }
+}
+
 async function checkRealtimeHealth() {
   const nowMs = Date.now();
   const fetchedAt = new Date(nowMs).toISOString();
@@ -131,6 +160,7 @@ async function main() {
   const mode = parseMode(process.argv.slice(2));
   const report = await checkRealtimeHealth();
   printReport(report);
+  writeGithubOutput(report, mode);
 
   if (mode.failOnStale && ['stale', 'unavailable'].includes(report.freshness)) {
     process.exitCode = 1;
@@ -143,6 +173,7 @@ main().catch((error) => {
   const sourceUrl = process.env.GFRR_REALTIME_HEALTH_URL || DEFAULT_REALTIME_HEALTH_URL;
   const report = unavailableReport(sourceUrl, fetchedAt, error.message);
   printReport(report);
+  writeGithubOutput(report, mode);
 
   if (!mode.soft) {
     process.exitCode = 1;

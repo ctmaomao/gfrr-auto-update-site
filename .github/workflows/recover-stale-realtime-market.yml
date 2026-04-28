@@ -1,0 +1,99 @@
+name: Recover Stale Realtime Market
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '8,28,48 * * * *'
+
+concurrency:
+  group: gfrr-realtime-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          package-manager-cache: false
+
+      - name: Check realtime freshness
+        id: health
+        run: node scripts/check-realtime-health.mjs --soft --github-output
+
+      - name: Append recovery decision summary
+        run: |
+          {
+            echo "## Realtime Recovery Decision"
+            echo
+            echo "| Item | Value |"
+            echo "|---|---|"
+            echo "| updatedAt | ${{ steps.health.outputs.updatedAt }} |"
+            echo "| ageMinutes | ${{ steps.health.outputs.ageMinutes }} |"
+            echo "| freshness | ${{ steps.health.outputs.freshness }} |"
+            echo "| shouldRecover | ${{ steps.health.outputs.shouldRecover }} |"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Skip recovery when realtime is fresh or aging
+        if: steps.health.outputs.shouldRecover != 'true'
+        run: echo "Realtime is fresh/aging. Recovery skipped."
+
+      - name: Install dependencies
+        if: steps.health.outputs.shouldRecover == 'true'
+        run: npm ci
+
+      - name: Generate realtime market
+        if: steps.health.outputs.shouldRecover == 'true'
+        run: npm run build:realtime
+
+      - name: Verify recovery output scope
+        if: steps.health.outputs.shouldRecover == 'true'
+        run: |
+          set -euo pipefail
+          unexpected="$(git status --short | awk '$2 != "realtime/market.json" { print }')"
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected generated files:"
+            echo "$unexpected"
+            exit 1
+          fi
+
+      - name: Commit updated realtime file to publish branch
+        if: steps.health.outputs.shouldRecover == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Keep the freshly generated file before switching away from main.
+          cp realtime/market.json "$RUNNER_TEMP/market.json"
+          # Clean the tracked worktree file so branch switching cannot be blocked.
+          git restore --worktree --staged realtime/market.json
+
+          if git ls-remote --exit-code --heads origin realtime-data; then
+            git fetch origin realtime-data
+            git switch --create realtime-data --track origin/realtime-data || git switch realtime-data
+          else
+            git switch --create realtime-data
+          fi
+
+          mkdir -p realtime
+          # Restore the generated realtime payload onto the publish branch.
+          cp "$RUNNER_TEMP/market.json" realtime/market.json
+
+          git add realtime/market.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: recover stale realtime market"
+            git push --set-upstream origin realtime-data
+          fi

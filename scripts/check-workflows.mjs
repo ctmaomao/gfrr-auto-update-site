@@ -18,6 +18,33 @@ const contracts = [
     ]
   },
   {
+    file: '.github/workflows/recover-stale-realtime-market.yml',
+    required: [
+      'name: Recover Stale Realtime Market',
+      'workflow_dispatch',
+      "cron: '8,28,48 * * * *'",
+      'permissions:',
+      'contents: write',
+      'concurrency',
+      'group: gfrr-realtime-${{ github.ref }}',
+      'cancel-in-progress: false',
+      'actions/checkout@v6',
+      'actions/setup-node@v6',
+      'node-version: 24',
+      'package-manager-cache: false',
+      'node scripts/check-realtime-health.mjs --soft --github-output',
+      'npm run build:realtime',
+      'git push --set-upstream origin realtime-data'
+    ],
+    forbidden: [
+      'npm run build:daily',
+      'scripts/run-daily-pipeline.mjs',
+      'data/radar-data.json',
+      'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24',
+      'ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION'
+    ]
+  },
+  {
     file: '.github/workflows/build-daily-radar-data.yml',
     required: [
       'workflow_dispatch',

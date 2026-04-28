@@ -32,6 +32,7 @@ v27.1.0 是 v27.x 稳定化 release，重点是提高 realtime 稳定性、补�
 - local fallback 安全闸门已建立，避免旧本地 realtime 覆盖更新的远端 payload。
 - realtime freshness 已分为 fresh、aging、stale、unavailable 四档，用于解释实时数据新鲜度。
 - v27.x baseline 包含只读 Realtime Health Watchdog，用于监控 `realtime-data/realtime/market.json` 的 freshness 状态；它不参与评分、不生成数据、不改变 realtime fallback、不改变 Brent 主值链路。
+- v27.1.x baseline includes a stale-only Realtime recovery workflow to reduce GitHub schedule gaps, without changing the realtime data contract or Brent/scoring logic.
 
 ### Brent 验证层
 
