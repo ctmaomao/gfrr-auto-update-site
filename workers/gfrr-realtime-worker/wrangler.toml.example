@@ -1,0 +1,11 @@
+name = "gfrr-realtime-worker"
+main = "src/index.js"
+compatibility_date = "2026-04-28"
+workers_dev = true
+
+[triggers]
+crons = ["*/3 * * * *"]
+
+[[kv_namespaces]]
+binding = "GFRR_MARKET_KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"

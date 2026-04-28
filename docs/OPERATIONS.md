@@ -233,7 +233,17 @@ GitHub Actions workflow baseline 使用 Node 24-compatible official actions：`a
 
 `validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 是分步骤运行上述检查，不运行 `check:all`。
 
-## 9. 不要做的修复
+## 9. Cloudflare Worker realtime backend 规划
+
+- 当前 **v27.1.x** 仍以 **GitHub Actions + realtime-data** 为生产 realtime 链路。
+- **v28** 计划引入 **Cloudflare Workers + KV**：Worker Cron 目标每 **3** 分钟；KV 中 latest market 的 `cacheTtl` 目标 **30** 秒。
+- 前端（未来）读取顺序规划：
+  1. Cloudflare Worker API（`/market.json`）
+  2. GitHub realtime-data fallback
+  3. local fallback
+- 仓库内 `workers/gfrr-realtime-worker/` 当前为 **脚手架**，**不参与生产**；部署与回滚以 Wrangler 与 Cloudflare 控制台为准，不改变现有 Pages 与 workflow 契约，除非后续版本明确切换读取源。
+
+## 10. 不要做的修复
 
 - 不要为了让 validate 通过而削弱校验规则。
 - 不要把 `brentValidation.consensus.recommendedValue` 直接改成 Brent 主值。
