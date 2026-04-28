@@ -109,6 +109,10 @@ node scripts/check-realtime-health.mjs --fail-on-stale
 - GitHub Actions schedule 是否延迟或未触发。
 - workflow 权限是否异常。
 
+### Realtime stale recovery
+
+`Build Realtime Market` remains the primary realtime generation workflow. `Recover Stale Realtime Market` is a recovery workflow that first runs `check-realtime-health`; when realtime is fresh or aging, it skips generation, and when realtime is stale or unavailable, it runs `build:realtime` and pushes only `realtime/market.json` to the `realtime-data` branch. It does not change Brent primary value logic, scoring, decision output, or write to `main`.
+
 ## 5. Daily workflow 排查
 
 检查 GitHub Actions 中的：
