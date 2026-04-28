@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { computeAgeMinutes, classifyFreshnessLevel } from './modules/freshness.js';
 import { formatOnRrpYiUsd } from './modules/format.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -46,10 +47,115 @@ function readJson(file, fallback = null) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
 }
 
+const DAILY_REALTIME_AUDIT_SOURCE = 'origin/realtime-data:realtime/market.json';
+
+function extractDailyRealtimeAuditTimestamp(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  const meta = payload.meta && typeof payload.meta === 'object' ? payload.meta : null;
+  const candidates = [payload.updatedAt, meta?.updatedAt, payload.generatedAt, payload.timestamp];
+  for (const c of candidates) {
+    if (typeof c === 'string' && c.trim()) return c.trim();
+  }
+  return null;
+}
+
+function formatDailyAuditScalar(value) {
+  if (value === null || value === undefined) return 'null';
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  if (typeof value === 'string') return value;
+  return String(value);
+}
+
+function runDailyRealtimeInputAudit(realtimePayload) {
+  const hasRealtime = !!(realtimePayload && typeof realtimePayload === 'object');
+  const updatedAtRaw = extractDailyRealtimeAuditTimestamp(realtimePayload);
+  const ageMinutes = updatedAtRaw ? computeAgeMinutes(updatedAtRaw) : null;
+  const freshness = classifyFreshnessLevel(ageMinutes, hasRealtime);
+  const sourceMode = hasRealtime ? (realtimePayload.sourceMode ?? null) : null;
+  const healthScore = hasRealtime && Number.isFinite(realtimePayload.healthScore)
+    ? realtimePayload.healthScore
+    : null;
+  const brent = hasRealtime && realtimePayload.values && typeof realtimePayload.values === 'object'
+    && Number.isFinite(Number(realtimePayload.values.brent))
+    ? Number(realtimePayload.values.brent)
+    : null;
+  const consensus = hasRealtime && realtimePayload.brentValidation && typeof realtimePayload.brentValidation === 'object'
+    ? realtimePayload.brentValidation.consensus
+    : null;
+  const brentConsensusRecommendedValue = consensus && Object.prototype.hasOwnProperty.call(consensus, 'recommendedValue')
+    ? consensus.recommendedValue
+    : null;
+  const brentCanPromoteToPrimary = consensus && Object.prototype.hasOwnProperty.call(consensus, 'canPromoteToPrimary')
+    ? consensus.canPromoteToPrimary
+    : null;
+  const brentConsensusConfidence = consensus?.confidence ?? null;
+
+  const isWarning = freshness === 'stale' || freshness === 'unavailable';
+  const result = isWarning ? 'WARNING' : 'OK';
+  let suggestedAction = 'Check realtime-data branch availability, realtime/market.json structure, workflow permissions, or upstream failures.';
+  if (freshness === 'fresh') suggestedAction = 'No action needed.';
+  else if (freshness === 'aging') suggestedAction = 'Monitor. Daily is using an aging realtime snapshot.';
+  else if (freshness === 'stale') {
+    suggestedAction = 'Check Build Realtime Market schedule, realtime-data branch updatedAt, and upstream market source freshness.';
+  }
+
+  const lines = [
+    `[Daily Realtime Audit] source: ${DAILY_REALTIME_AUDIT_SOURCE}`,
+    `[Daily Realtime Audit] updatedAt: ${updatedAtRaw ?? 'null'}`,
+    `[Daily Realtime Audit] ageMinutes: ${ageMinutes === null ? 'null' : String(ageMinutes)}`,
+    `[Daily Realtime Audit] freshness: ${freshness}`,
+    `[Daily Realtime Audit] sourceMode: ${formatDailyAuditScalar(sourceMode)}`,
+    `[Daily Realtime Audit] healthScore: ${formatDailyAuditScalar(healthScore)}`,
+    `[Daily Realtime Audit] brent: ${formatDailyAuditScalar(brent)}`,
+    `[Daily Realtime Audit] brentConsensusRecommendedValue: ${formatDailyAuditScalar(brentConsensusRecommendedValue)}`,
+    `[Daily Realtime Audit] brentCanPromoteToPrimary: ${formatDailyAuditScalar(brentCanPromoteToPrimary)}`,
+    `[Daily Realtime Audit] brentConsensusConfidence: ${formatDailyAuditScalar(brentConsensusConfidence)}`,
+    `[Daily Realtime Audit] result: ${result}`,
+    `[Daily Realtime Audit] suggestedAction: ${suggestedAction}`
+  ];
+
+  const logLine = isWarning ? console.warn : console.log;
+  for (const line of lines) logLine(line);
+
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (summaryPath && typeof summaryPath === 'string') {
+    try {
+      const esc = (v) => {
+        if (v === null || v === undefined) return '';
+        return String(v).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+      };
+      const md = [
+        '',
+        '### Daily Realtime Input Audit',
+        '',
+        '| Item | Value |',
+        '|---|---|',
+        `| source | ${esc(DAILY_REALTIME_AUDIT_SOURCE)} |`,
+        `| updatedAt | ${esc(updatedAtRaw)} |`,
+        `| ageMinutes | ${esc(ageMinutes === null ? 'null' : ageMinutes)} |`,
+        `| freshness | ${esc(freshness)} |`,
+        `| sourceMode | ${esc(sourceMode)} |`,
+        `| healthScore | ${esc(healthScore)} |`,
+        `| Brent | ${esc(brent)} |`,
+        `| Brent consensus | ${esc(brentConsensusRecommendedValue)} |`,
+        `| confidence | ${esc(brentConsensusConfidence)} |`,
+        `| canPromoteToPrimary | ${esc(brentCanPromoteToPrimary)} |`,
+        `| result | ${esc(result)} |`,
+        ''
+      ].join('\n');
+      fs.appendFileSync(summaryPath, md, 'utf8');
+    } catch (err) {
+      console.warn('[Daily Realtime Audit] Failed to write GitHub Step Summary:', err instanceof Error ? err.message : err);
+    }
+  }
+}
+
 const prevData = readJson(dataPath, {});
 const prevHistory = readJson(histPath, []);
 const prevHistoryFull = readJson(histFullPath, []);
 const realtime = readJson(rtPath, null);
+runDailyRealtimeInputAudit(realtime);
 
 function buildDailyRealtimeInput(realtimePayload) {
   return {
