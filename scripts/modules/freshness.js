@@ -27,6 +27,39 @@ export function classifyFreshnessLevel(ageMinutes, hasRealtime) {
   return 'unavailable';
 }
 
+/**
+ * Shared trust gate: whether realtime.values may drive runtime overlay, effective display inputs, or Daily baseline.
+ * Keep in sync across frontend (realtime.js) and Daily pipeline (run-daily-pipeline.mjs).
+ */
+export function canUseRealtimePayloadValues(realtimePayload) {
+  if (!realtimePayload || typeof realtimePayload !== 'object') {
+    return false;
+  }
+  const values = realtimePayload.values;
+  if (!values || typeof values !== 'object' || Array.isArray(values)) {
+    return false;
+  }
+  if (realtimePayload.cacheOnly === true) {
+    return false;
+  }
+  if (realtimePayload.sourceMode === 'cache-only') {
+    return false;
+  }
+  if (realtimePayload.unavailable === true) {
+    return false;
+  }
+  if (realtimePayload.degradedMode === true && realtimePayload.sourceMode !== 'live-with-fallback') {
+    return false;
+  }
+  if (Number.isFinite(realtimePayload.healthScore) && realtimePayload.healthScore <= 0) {
+    return false;
+  }
+  if (Number.isFinite(realtimePayload.criticalMissing) && realtimePayload.criticalMissing >= 4) {
+    return false;
+  }
+  return true;
+}
+
 export function buildRealtimeStatusLabel(metadata) {
   if (metadata.realtimeUnavailable) {
     return '实时数据不可用 / 仅基线模式';
@@ -47,5 +80,5 @@ export function buildRealtimeStatusLabel(metadata) {
 }
 
 export function shouldApplyRealtimeOverlay(metadata, realtimePayload) {
-  return !!realtimePayload?.values && !metadata.realtimeUnavailable;
+  return canUseRealtimePayloadValues(realtimePayload) && !metadata.realtimeUnavailable;
 }

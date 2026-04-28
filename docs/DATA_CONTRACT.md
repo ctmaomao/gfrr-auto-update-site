@@ -37,16 +37,21 @@ data.__effectiveDisplayInputs
 其来源优先级为：
 
 ```text
-可用 realtime.values → displayInputsBaseline → null
+闸门判定可用时的 realtime.values → displayInputsBaseline → null
 ```
 
-当 realtime payload 处于以下任一状态时，不得使用 `realtime.values` 覆盖页面当前显示值，必须回退到 `displayInputsBaseline`：
+共享信任闸门 **`canUseRealtimePayloadValues`**（`scripts/modules/freshness.js`）统一约束：前端 **runtime overlay**、**`__effectiveDisplayInputs` 合成**、以及 **Daily pipeline 基于 realtime 的 baseline 重算** 仅在该函数返回 `true` 时允许消费 `realtime.values`。以下任一情况（及同类不可信状态）必须回退到 `displayInputsBaseline` / 基线模式，而不得用该 payload 驱动 overlay 或 Daily 主路径重算：
 
 ```text
-cache-only
+缺少或无效的 values
+cache-only（cacheOnly 或 sourceMode）
+unavailable
 healthScore <= 0
 criticalMissing >= 4
+degradedMode 且 sourceMode 不是 live-with-fallback（live-with-fallback 仍可作为可接受的降级实时模式）
 ```
+
+`shouldApplyRealtimeOverlay` 与上述闸门对齐，并仍受元数据层 `realtimeUnavailable` 约束。`brentValidation.consensus.recommendedValue` 仅为验证层推荐值，不是主 Brent，也不得替代上述闸门。
 
 页面文案、面板、触发器中凡是表达“当前值”的内容，都应基于 `effectiveDisplayInputs` 重建。
 

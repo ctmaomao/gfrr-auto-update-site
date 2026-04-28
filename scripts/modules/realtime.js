@@ -1,5 +1,11 @@
 import { dataUrl, historyUrl, localRealtimeUrl, REMOTE_REALTIME_URL, fmtNumSafe } from './config.js';
-import { computeAgeMinutes, classifyFreshnessLevel, buildRealtimeStatusLabel, shouldApplyRealtimeOverlay } from './freshness.js';
+import {
+  computeAgeMinutes,
+  classifyFreshnessLevel,
+  buildRealtimeStatusLabel,
+  shouldApplyRealtimeOverlay,
+  canUseRealtimePayloadValues
+} from './freshness.js';
 import { buildHealthDashboardModel } from './health.js';
 import { buildDecisionModel } from './decision.js';
 import {
@@ -294,15 +300,6 @@ export function getRealtimeNumber(values, key) {
   return Number.isFinite(value) ? value : null;
 }
 
-function canUseRealtimeValuesForDisplay(realtimePayload) {
-  if (!realtimePayload) return false;
-  if (realtimePayload.cacheOnly === true) return false;
-  if (realtimePayload.sourceMode === 'cache-only') return false;
-  if (Number.isFinite(realtimePayload.healthScore) && realtimePayload.healthScore <= 0) return false;
-  if (Number.isFinite(realtimePayload.criticalMissing) && realtimePayload.criticalMissing >= 4) return false;
-  return true;
-}
-
 function buildBaselineFallbackInputs(base) {
   const toNumber = (value) => {
     const n = Number(value);
@@ -327,7 +324,7 @@ function buildBaselineFallbackInputs(base) {
 }
 
 function buildEffectiveDisplayInputs(realtimePayload, base) {
-  const values = canUseRealtimeValuesForDisplay(realtimePayload) ? (realtimePayload?.values || {}) : {};
+  const values = canUseRealtimePayloadValues(realtimePayload) ? (realtimePayload?.values || {}) : {};
   const baseline = buildBaselineFallbackInputs(base);
   const pick = (key) => {
     const rtValue = getRealtimeNumber(values, key);

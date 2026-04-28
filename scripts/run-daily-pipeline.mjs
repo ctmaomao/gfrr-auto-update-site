@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { computeAgeMinutes, classifyFreshnessLevel } from './modules/freshness.js';
+import { computeAgeMinutes, classifyFreshnessLevel, canUseRealtimePayloadValues } from './modules/freshness.js';
 import { formatOnRrpYiUsd } from './modules/format.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1020,7 +1020,7 @@ function buildFallback() {
 }
 
 async function build() {
-  if (!realtime || !realtime.values) return buildFallback();
+  if (!canUseRealtimePayloadValues(realtime)) return buildFallback();
 
   const sourceModeLabel = SOURCE_MODE_CN[realtime.sourceMode] || realtime.sourceMode || '--';
 
