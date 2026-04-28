@@ -1,79 +1,79 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-04-27T23:27:55.048Z",
+  "updatedAt": "2026-04-28T23:28:23.181Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "d4e9fdf9961bff73ac780cfbea0d5a884a134ce2",
-    "updatedAt": "2026-04-27T22:31:13.320Z",
+    "commitSha": "ffb742b1bac5b03e237af0319db9ef91315fb936",
+    "updatedAt": "2026-04-28T23:14:33.720Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-04-27T23:27:55.048Z"
+    "capturedAt": "2026-04-28T23:28:23.181Z"
   },
-  "score": 54,
-  "scoreChange1d": 0,
-  "scoreChange7d": -6,
-  "scoreChange30d": -14,
+  "score": 53,
+  "scoreChange1d": -1,
+  "scoreChange7d": -7,
+  "scoreChange30d": -16,
   "trendLabel": "风险回落",
   "currentMacroRegime": "滞胀冲击",
   "currentCrisisPhase": "通胀冲击",
   "nextCrisisPhase": "风险缓和",
-  "transitionRisk": 37,
+  "transitionRisk": 34,
   "confidenceScore": 100,
   "confidenceLevel": "高",
   "displayInputsBaseline": {
     "brent": 103.4,
     "dxy": 118.7294,
-    "vix": 18.71,
-    "hyOas": 2.86,
-    "us10y": 4.31,
-    "real10y": 1.89,
+    "vix": 18.02,
+    "hyOas": 2.84,
+    "us10y": 4.35,
+    "real10y": 1.91,
     "breakeven10y": 2.44,
-    "gold": 4690.200195,
-    "spx": 7165.08
+    "gold": 4590.799805,
+    "spx": 7173.91
   },
   "topRisks": [
     "布伦特 103.4 美元，能源链条仍在传导。",
     "广义美元指数 118.73，融资环境尚未明显放松。",
-    "高收益利差 2.86%，信用风险可控但需观察。",
-    "10年期美债 4.31%，实际利率 1.89%。"
+    "高收益利差 2.84%，信用风险可控但需观察。",
+    "10年期美债 4.35%，实际利率 1.91%。"
   ],
   "decisionLine": "当前已进入 v27.0 交易引擎模式：实时快变量实时，执行状态灯为红灯 / 禁止新增。已激活结构信号：逆回购准备金告急。先看状态灯，再决定能不能动。",
-  "summary": "v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 103.4、广义美元指数 118.73、波动率 18.71、高收益利差 2.86%。",
+  "summary": "v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 103.4、广义美元指数 118.73、波动率 18.02、高收益利差 2.84%。",
   "modules": {
-    "geopolitical": 76,
+    "geopolitical": 74,
     "energy": 81,
     "inflation": 56,
-    "liquidity": 50,
-    "debt": 26,
-    "banking": 38
+    "liquidity": 49,
+    "debt": 25,
+    "banking": 37
   },
   "moduleTrends": {
     "geopolitical": 9,
     "energy": 9,
     "inflation": 0,
     "liquidity": 0,
-    "debt": -1,
+    "debt": 1,
     "banking": 0
   },
   "regimeProbabilities": {
-    "disinflationaryGrowth": 6,
+    "disinflationaryGrowth": 7,
     "liquidityBull": 0,
     "stagflationShock": 30,
-    "crisisLiquiditySqueeze": 30,
-    "monetaryDebasement": 23,
-    "deflationaryBust": 11
+    "crisisLiquiditySqueeze": 29,
+    "monetaryDebasement": 24,
+    "deflationaryBust": 10
   },
   "phaseSignals": [
-    "实时输入：布伦特 103.4 / 波动率 18.71 / 高收益利差 2.86%。",
-    "利率输入：10年期 4.31 / 实际利率 1.89 / 盈亏平衡通胀 2.44%。",
+    "实时输入：布伦特 103.4 / 波动率 18.02 / 高收益利差 2.84%。",
+    "利率输入：10年期 4.35 / 实际利率 1.91 / 盈亏平衡通胀 2.44%。",
     "快变量状态：实时，健康度 100。"
   ],
   "macroDrivers": {
     "fedLiquidity": {
       "walcl": 6707419,
       "walcl4wChange": 0.755,
-      "onRrp": 0.363,
-      "onRrpWeekChange": -27.833,
+      "onRrp": 0.643,
+      "onRrpWeekChange": -20.322,
       "regime": "平稳",
       "onRrpLevel": "告急",
       "pressure": 60,
@@ -83,8 +83,8 @@
       }
     },
     "curve": {
-      "t10y2y": 0.57,
-      "t10y2yWeekChange": 0.03,
+      "t10y2y": 0.52,
+      "t10y2yWeekChange": 0,
       "regime": "正常",
       "steepeningAlert": false,
       "sourceStatus": {
@@ -92,20 +92,20 @@
       }
     },
     "credit": {
-      "igOas": 0.8,
-      "igOas1dChange": 0,
-      "igHyRatio": 0.28,
+      "igOas": 0.81,
+      "igOas1dChange": 0.01,
+      "igHyRatio": 0.285,
       "regime": "偏宽松",
       "sourceStatus": {
         "igOas": "live"
       },
-      "hyOas": 2.86
+      "hyOas": 2.84
     },
     "activeSignals": [
       {
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
-        "detail": "ON RRP 3.63 亿美元",
+        "detail": "ON RRP 6.43 亿美元",
         "reliability": "live"
       }
     ],
@@ -122,12 +122,12 @@
     "allSourcesMissing": false
   },
   "liquidityIndex": {
-    "score": 50,
+    "score": 49,
     "regime": "流动性修复",
     "change1d": 0,
     "directionLabel": "快变量实时覆盖",
     "notes": [
-      "广义美元指数 118.73 / 高收益利差 2.86 / 波动率 18.71 为三大流动性输入。",
+      "广义美元指数 118.73 / 高收益利差 2.84 / 波动率 18.02 为三大流动性输入。",
       "实时数据源刷新成功。"
     ],
     "pillars": [
@@ -138,18 +138,18 @@
       },
       {
         "label": "跨资产波动",
-        "value": 47,
-        "delta": -2
+        "value": 42,
+        "delta": -3
       },
       {
         "label": "信用 / 利差",
-        "value": 13,
+        "value": 12,
         "delta": 0
       },
       {
         "label": "利率敏感压力",
-        "value": 43,
-        "delta": -1
+        "value": 44,
+        "delta": 1
       }
     ],
     "structuralSignals": {
@@ -160,11 +160,11 @@
   },
   "timeDimension": {
     "trend30d": "滚动风险曲线（混合实时驱动）",
-    "scoreChange30d": -14,
+    "scoreChange30d": -16,
     "avg30d": 69,
     "peak30d": 81,
-    "trough30d": 54,
-    "drawFromPeak": -27,
+    "trough30d": 53,
+    "drawFromPeak": -28,
     "transmissionSpeed": 62,
     "transmissionAcceleration": "放缓",
     "dominantPath": "油价 → 通胀 → 利率 → 股票",
@@ -181,22 +181,22 @@
       },
       {
         "label": "美元→信用",
-        "value": 57,
+        "value": 56,
         "delta": 0
       },
       {
         "label": "利率→股票",
-        "value": 20,
-        "delta": -3
+        "value": 21,
+        "delta": 0
       },
       {
         "label": "流动性→估值",
-        "value": 49,
+        "value": 46,
         "delta": -2
       }
     ],
     "notes": [
-      "当前综合风险分数 54。",
+      "当前综合风险分数 53。",
       "执行引擎状态：红灯 / 禁止新增。",
       "慢变量由实时快照与结构性数据共同驱动。"
     ]
@@ -206,21 +206,21 @@
       "key": "us",
       "label": "美国",
       "shortLabel": "美国",
-      "risk": 44,
-      "note": "融资偏紧 + 实际利率 1.89%"
+      "risk": 43,
+      "note": "融资偏紧 + 实际利率 1.91%"
     },
     {
       "key": "europe",
       "label": "欧洲",
       "shortLabel": "欧洲",
-      "risk": 60,
+      "risk": 59,
       "note": "能源敏感 + 增长拖累"
     },
     {
       "key": "middleeast",
       "label": "中东",
       "shortLabel": "中东",
-      "risk": 76,
+      "risk": 74,
       "note": "原油与地缘仍是主风险源"
     },
     {
@@ -461,7 +461,7 @@
       "asset": "黄金",
       "score": 87,
       "bias": "中性偏多",
-      "reason": "金价 4690.2，通胀对冲仍在，但真实利率继续约束。"
+      "reason": "金价 4590.8，通胀对冲仍在，但真实利率继续约束。"
     },
     {
       "asset": "原油",
@@ -479,7 +479,7 @@
       "asset": "美债久期",
       "score": 39,
       "bias": "谨慎偏多",
-      "reason": "10年期 4.31 / 实际利率 1.89%。"
+      "reason": "10年期 4.35 / 实际利率 1.91%。"
     },
     {
       "asset": "科技股",
@@ -495,7 +495,7 @@
     },
     {
       "asset": "比特币",
-      "score": 21,
+      "score": 22,
       "bias": "低配",
       "reason": "高波动资产对流动性最敏感。"
     }
@@ -614,26 +614,26 @@
       "name": "基准情景",
       "probability": 30,
       "description": "快变量显示风险仍高位但未失控，市场以防守与分化为主。",
-      "triggers": "布伦特 103.4 / 广义美元指数 118.73 / 高收益利差 2.86",
+      "triggers": "布伦特 103.4 / 广义美元指数 118.73 / 高收益利差 2.84",
       "assets": "能源领先 / 美元与黄金保留 / 成长受限"
     },
     {
       "name": "风险情景",
-      "probability": 30,
+      "probability": 27,
       "description": "信用与波动率继续上行，执行引擎会切到红灯。",
       "triggers": "布伦特 > 110 或高收益利差 > 4.5% 或波动率 > 28",
       "assets": "只允许减仓 / 现金与美元提高 / 高波动回避"
     },
     {
       "name": "极端情景",
-      "probability": 49,
+      "probability": 46,
       "description": "多源关键快变量连续失效时，系统进入缓存模式并强制防守。",
       "triggers": "关键缺失 ≥ 4 或缓存模式启动",
       "assets": "停止加仓 / 保留现金 / 仅做风险控制"
     },
     {
       "name": "反转情景",
-      "probability": 3,
+      "probability": 4,
       "description": "美元走弱、波动率和利差收敛后，系统重新开放进攻窗口。",
       "triggers": "波动率 < 18 / 高收益利差 < 3.7 / 布伦特 < 95",
       "assets": "逐步恢复权益与质量成长配置"
@@ -649,7 +649,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-04-27T23:27:55.048Z",
+        "triggeredAgo": "2026-04-28T23:28:23.181Z",
         "condition": "结构性双压触发红灯（逆回购准备金临界告急）。系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -657,15 +657,15 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-04-27T23:27:55.048Z",
-        "condition": "ON RRP 3.63 亿美元",
+        "triggeredAgo": "2026-04-28T23:28:23.181Z",
+        "condition": "ON RRP 6.43 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
       {
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-04-27T23:27:55.048Z",
+        "triggeredAgo": "2026-04-28T23:28:23.181Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -682,12 +682,12 @@
     "critical": [
       "布伦特 103.4",
       "广义美元指数 118.73",
-      "高收益利差 2.86%"
+      "高收益利差 2.84%"
     ],
     "drivers": [
-      "波动率 18.71",
-      "10年期美债 4.31%",
-      "实际利率 1.89%"
+      "波动率 18.02",
+      "10年期美债 4.35%",
+      "实际利率 1.91%"
     ],
     "watchlist": [
       "下一次通胀数据",
@@ -704,14 +704,14 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-04-27T23:27:55.048Z",
+    "lastRun": "2026-04-28T23:28:23.181Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
   },
   "tradingSystem": {
     "signalEngine": {
-      "strength": 54,
+      "strength": 53,
       "direction": "只允许减仓/防守",
       "consistency": "高一致性",
       "macroSignal": "滞胀冲击",
@@ -719,7 +719,7 @@
       "chainSignal": "油价→通胀→利率→股票",
       "notes": [
         "执行引擎状态：红灯 / 禁止新增。",
-        "关键快变量：布伦特 103.4 / 广义美元指数 118.73 / 波动率 18.71 / 高收益利差 2.86。",
+        "关键快变量：布伦特 103.4 / 广义美元指数 118.73 / 波动率 18.02 / 高收益利差 2.84。",
         "健康度 100，关键缺失 0。",
         "结构信号：逆回购准备金告急。"
       ]
@@ -822,11 +822,11 @@
       "checkpoints": [
         "布伦特 当前 103.4",
         "广义美元指数 当前 118.73",
-        "波动率指数 当前 18.71",
-        "高收益利差 当前 2.86%",
-        "曲线 10年-2年 当前 0.57",
-        "投资级信用利差 当前 0.80%",
-        "逆回购余额 当前 3.63 亿美元"
+        "波动率指数 当前 18.02",
+        "高收益利差 当前 2.84%",
+        "曲线 10年-2年 当前 0.52",
+        "投资级信用利差 当前 0.81%",
+        "逆回购余额 当前 6.43 亿美元"
       ]
     },
     "executionLock": {
@@ -857,13 +857,13 @@
     "contractVersion": "v27.0",
     "strategyState": "Defensive",
     "stateLabel": "红灯 / 禁止新增",
-    "stateScore": 54,
-    "stateReason": "红灯 / 禁止新增，风险分数 54。结构信号激活：逆回购准备金告急（ON RRP 3.63 亿美元）。 主导模块：能源、地缘政治、通胀。",
+    "stateScore": 53,
+    "stateReason": "红灯 / 禁止新增，风险分数 53。结构信号激活：逆回购准备金告急（ON RRP 6.43 亿美元）。 主导模块：能源、地缘政治、通胀。",
     "structuralSignals": [
       {
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
-        "detail": "ON RRP 3.63 亿美元",
+        "detail": "ON RRP 6.43 亿美元",
         "reliability": "live"
       }
     ],
@@ -878,7 +878,7 @@
       },
       {
         "key": "geopolitical",
-        "score": 76,
+        "score": 74,
         "label": "地缘政治",
         "trend": 0
       },
@@ -904,7 +904,7 @@
         "若总仓位高于 42%，必须先减到 38% 附近。",
         "若高波动资产 > 2%，立即降回 2% 以下。",
         "若现金缓冲 < 30%，立即补回。",
-        "关注结构信号：逆回购准备金告急（ON RRP 3.63 亿美元）。"
+        "关注结构信号：逆回购准备金告急（ON RRP 6.43 亿美元）。"
       ],
       "blockedActions": [
         "禁止新增股票与高波动仓位。",
@@ -924,12 +924,12 @@
       "upgradeTriggers": [
         "布伦特 103.4",
         "广义美元指数 118.73",
-        "高收益利差 2.86%",
-        "10年-2年利差 0.57",
-        "投资级信用利差 0.80%"
+        "高收益利差 2.84%",
+        "10年-2年利差 0.52",
+        "投资级信用利差 0.81%"
       ],
       "activeEscalationSignals": [
-        "逆回购准备金告急（ON RRP 3.63 亿美元）"
+        "逆回购准备金告急（ON RRP 6.43 亿美元）"
       ]
     },
     "invalidationRules": {
