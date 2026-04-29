@@ -1,6 +1,7 @@
 /**
- * v28.0B-1: preview pipeline — scheduled fetch from GitHub realtime-data → KV market:latest-preview;
- * GET /market.preview.json reads that key. /market.json still reads market:latest only (not written here).
+ * v28.0B-1: preview pipeline — scheduled fetch from GitHub realtime-data → KV market:latest-preview.
+ * Cron uses a free-tier safe policy: at most one KV write per scheduled run.
+ * GET /market.preview.json reads the preview key. /market.json still reads market:latest only.
  */
 
 const MARKET_LATEST_KEY = 'market:latest';
@@ -35,6 +36,88 @@ function isValidPreviewPayload(payload) {
   if (!('updatedAt' in payload) || payload.updatedAt == null) return false;
   if (!('values' in payload) || payload.values == null) return false;
   return true;
+}
+
+function buildStatusPayload(scheduledAt, previewFetchStatus, previewError) {
+  return {
+    key: HEARTBEAT_KEY,
+    value: {
+      ok: false,
+      service: 'gfrr-realtime-worker',
+      scheduledAt,
+      note: 'preview pipeline attempted; production market generation not enabled',
+      previewFetchStatus,
+      previewUpdatedAt: null,
+      previewError: truncatePreviewError(previewError),
+      writePolicy: 'single-kv-write',
+    },
+  };
+}
+
+async function buildPreviewOrStatusPayload() {
+  const scheduledAt = new Date().toISOString();
+  const fetchUrl = `${GITHUB_REALTIME_URL}?t=${Date.now()}`;
+  let response;
+
+  try {
+    response = await fetch(fetchUrl, { cache: 'no-store' });
+  } catch (err) {
+    return buildStatusPayload(
+      scheduledAt,
+      'fetch-error',
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+
+  if (!response.ok) {
+    return buildStatusPayload(scheduledAt, 'http-error', `HTTP ${response.status}`);
+  }
+
+  let text;
+  try {
+    text = await response.text();
+  } catch (err) {
+    return buildStatusPayload(
+      scheduledAt,
+      'fetch-error',
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(text);
+  } catch (err) {
+    return buildStatusPayload(
+      scheduledAt,
+      'json-error',
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+
+  if (!isValidPreviewPayload(payload)) {
+    return buildStatusPayload(
+      scheduledAt,
+      'invalid-payload',
+      'missing or invalid updatedAt or values',
+    );
+  }
+
+  return {
+    key: MARKET_PREVIEW_KEY,
+    value: {
+      ...payload,
+      workerPreview: {
+        enabled: true,
+        source: 'github-realtime-data',
+        fetchedAt: new Date().toISOString(),
+        sourceUrl: GITHUB_REALTIME_URL,
+        previewFetchStatus: 'ok',
+        writePolicy: 'single-kv-write',
+        note: 'preview pipeline; production market generation not enabled',
+      },
+    },
+  };
 }
 
 export default {
@@ -117,82 +200,7 @@ export default {
   },
 
   async scheduled(_event, env) {
-    const scheduledAt = new Date().toISOString();
-    let previewFetchStatus = 'ok';
-    let previewUpdatedAt = null;
-    let previewError = null;
-    const kv = env.GFRR_MARKET_KV;
-
-    try {
-      const fetchUrl = `${GITHUB_REALTIME_URL}?t=${Date.now()}`;
-      let response;
-      try {
-        response = await fetch(fetchUrl, { cache: 'no-store' });
-      } catch (err) {
-        previewFetchStatus = 'http-error';
-        previewError = truncatePreviewError(err instanceof Error ? err.message : String(err));
-        return;
-      }
-
-      if (!response.ok) {
-        previewFetchStatus = 'http-error';
-        previewError = truncatePreviewError(`HTTP ${response.status}`);
-        return;
-      }
-
-      let text;
-      try {
-        text = await response.text();
-      } catch (err) {
-        previewFetchStatus = 'http-error';
-        previewError = truncatePreviewError(err instanceof Error ? err.message : String(err));
-        return;
-      }
-
-      let payload;
-      try {
-        payload = JSON.parse(text);
-      } catch (err) {
-        previewFetchStatus = 'json-error';
-        previewError = truncatePreviewError(err instanceof Error ? err.message : String(err));
-        return;
-      }
-
-      if (!isValidPreviewPayload(payload)) {
-        previewFetchStatus = 'invalid-payload';
-        previewError = truncatePreviewError('missing or invalid updatedAt or values');
-        return;
-      }
-
-      const previewPayload = {
-        ...payload,
-        workerPreview: {
-          enabled: true,
-          source: 'github-realtime-data',
-          fetchedAt: new Date().toISOString(),
-          sourceUrl: GITHUB_REALTIME_URL,
-        },
-      };
-
-      try {
-        await kv.put(MARKET_PREVIEW_KEY, JSON.stringify(previewPayload));
-        previewUpdatedAt =
-          typeof payload.updatedAt === 'string' ? payload.updatedAt : String(payload.updatedAt);
-      } catch (err) {
-        previewFetchStatus = 'kv-write-error';
-        previewError = truncatePreviewError(err instanceof Error ? err.message : String(err));
-      }
-    } finally {
-      const heartbeat = {
-        ok: true,
-        service: 'gfrr-realtime-worker',
-        scheduledAt,
-        note: 'preview pipeline enabled; production market generation not enabled',
-        previewFetchStatus,
-        previewUpdatedAt,
-        previewError,
-      };
-      await kv.put(HEARTBEAT_KEY, JSON.stringify(heartbeat));
-    }
+    const { key, value } = await buildPreviewOrStatusPayload();
+    await env.GFRR_MARKET_KV.put(key, JSON.stringify(value));
   },
 };
