@@ -242,6 +242,7 @@ GitHub Actions workflow baseline 使用 Node 24-compatible official actions：`a
   2. GitHub realtime-data fallback
   3. local fallback
 - 仓库内 `workers/gfrr-realtime-worker/` 当前为 **脚手架**，**不参与生产**；部署与回滚以 Wrangler 与 Cloudflare 控制台为准，不改变现有 Pages 与 workflow 契约，除非后续版本明确切换读取源。
+- **v28.0B-1 preview 管道**：Worker Cron 会从 GitHub `realtime-data` 拉取生产侧 `realtime/market.json` 并写入 KV 键 **`market:latest-preview`**；`GET /market.preview.json` 用于自测 Worker API 与 KV 读写。**`market:latest` 仍未由该管道写入**；前端 **仍不** 读取 Worker；当前生产 realtime 链路 **仍是** GitHub Actions + `realtime-data`。
 
 ## 10. 不要做的修复
 
