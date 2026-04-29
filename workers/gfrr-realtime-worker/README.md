@@ -45,3 +45,8 @@ npx wrangler deploy --config workers/gfrr-realtime-worker/wrangler.toml
 - 等待至少一次 Cron 后访问 `.../market.preview.json`，在 GitHub `realtime-data` 可得且校验通过时应返回 JSON（含 `workerPreview`）；否则可能 404。
 - 成功路径不再每轮写 `market:worker-heartbeat`；观察成功刷新应优先查看 `/market.preview.json` 中的 `workerPreview.fetchedAt`。
 - `market:worker-heartbeat` 只代表失败 / 状态记录，内容含 `scheduledAt`、`previewFetchStatus`、`previewError` 与 `writePolicy`，不再代表每轮成功心跳。
+- 可使用本地脚本做 6–24 小时观察；脚本不使用 Wrangler、不读取 heartbeat、不写 Cloudflare KV，只请求 `/market.preview.json` 并写本机 CSV：
+
+```bash
+node tools/observe-worker-preview.mjs --samples=24 --interval-minutes=15
+```
