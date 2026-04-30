@@ -2,6 +2,11 @@ name: Deploy Static Site to Pages
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Build Daily Radar Data
+    types:
+      - completed
   push:
     branches:
       - main
@@ -24,6 +29,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
