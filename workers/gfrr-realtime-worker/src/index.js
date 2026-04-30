@@ -1,14 +1,18 @@
 /**
- * v28.0B-1: preview pipeline — scheduled fetch from GitHub realtime-data → KV market:latest-preview.
- * Cron uses a free-tier safe policy: at most one KV write per scheduled run.
- * GET /market.preview.json reads the preview key. /market.json still reads market:latest only.
+ * v28.0B-2A: preview pipeline with alternating single-KV-write scheduled runs.
+ * /market.preview.json reads the GitHub mirror preview.
+ * /market.worker-preview.json reads the Worker-generated preview MVP.
+ * /market.json still reads market:latest only and is not written here.
  */
+
+import { buildWorkerGeneratedMarketPreview } from './worker-market-preview.js';
 
 const MARKET_LATEST_KEY = 'market:latest';
 const HEARTBEAT_KEY = 'market:worker-heartbeat';
 const GITHUB_REALTIME_URL =
   'https://raw.githubusercontent.com/ctmaomao/gfrr-auto-update-site/realtime-data/realtime/market.json';
 const MARKET_PREVIEW_KEY = 'market:latest-preview';
+const MARKET_WORKER_GENERATED_PREVIEW_KEY = 'market:worker-generated-preview';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +21,7 @@ const CORS_HEADERS = {
 };
 
 const PREVIEW_ERROR_MAX = 180;
+const SCHEDULE_SLOT_MS = 3 * 60 * 1000;
 
 function truncatePreviewError(msg) {
   if (msg == null || msg === '') return null;
@@ -38,24 +43,29 @@ function isValidPreviewPayload(payload) {
   return true;
 }
 
-function buildStatusPayload(scheduledAt, previewFetchStatus, previewError) {
+function buildStatusPayload(scheduledAt, previewFetchStatus, previewError, scheduledMode) {
   return {
     key: HEARTBEAT_KEY,
     value: {
       ok: false,
       service: 'gfrr-realtime-worker',
       scheduledAt,
+      scheduledMode,
       note: 'preview pipeline attempted; production market generation not enabled',
       previewFetchStatus,
       previewUpdatedAt: null,
       previewError: truncatePreviewError(previewError),
-      writePolicy: 'single-kv-write',
+      writePolicy: 'single-kv-write-alternating',
     },
   };
 }
 
-async function buildPreviewOrStatusPayload() {
-  const scheduledAt = new Date().toISOString();
+function selectScheduledPreviewMode(nowMs) {
+  const slot = Math.floor(nowMs / SCHEDULE_SLOT_MS);
+  return slot % 2 === 0 ? 'github-mirror-preview' : 'worker-generated-preview';
+}
+
+async function buildGitHubMirrorPreviewOrStatusPayload(scheduledAt) {
   const fetchUrl = `${GITHUB_REALTIME_URL}?t=${Date.now()}`;
   let response;
 
@@ -66,11 +76,17 @@ async function buildPreviewOrStatusPayload() {
       scheduledAt,
       'fetch-error',
       err instanceof Error ? err.message : String(err),
+      'github-mirror-preview',
     );
   }
 
   if (!response.ok) {
-    return buildStatusPayload(scheduledAt, 'http-error', `HTTP ${response.status}`);
+    return buildStatusPayload(
+      scheduledAt,
+      'http-error',
+      `HTTP ${response.status}`,
+      'github-mirror-preview',
+    );
   }
 
   let text;
@@ -81,6 +97,7 @@ async function buildPreviewOrStatusPayload() {
       scheduledAt,
       'fetch-error',
       err instanceof Error ? err.message : String(err),
+      'github-mirror-preview',
     );
   }
 
@@ -92,6 +109,7 @@ async function buildPreviewOrStatusPayload() {
       scheduledAt,
       'json-error',
       err instanceof Error ? err.message : String(err),
+      'github-mirror-preview',
     );
   }
 
@@ -100,6 +118,7 @@ async function buildPreviewOrStatusPayload() {
       scheduledAt,
       'invalid-payload',
       'missing or invalid updatedAt or values',
+      'github-mirror-preview',
     );
   }
 
@@ -113,11 +132,36 @@ async function buildPreviewOrStatusPayload() {
         fetchedAt: new Date().toISOString(),
         sourceUrl: GITHUB_REALTIME_URL,
         previewFetchStatus: 'ok',
-        writePolicy: 'single-kv-write',
+        writePolicy: 'single-kv-write-alternating',
         note: 'preview pipeline; production market generation not enabled',
       },
     },
   };
+}
+
+async function buildWorkerGeneratedPreviewOrStatusPayload(scheduledAt) {
+  try {
+    return {
+      key: MARKET_WORKER_GENERATED_PREVIEW_KEY,
+      value: await buildWorkerGeneratedMarketPreview(),
+    };
+  } catch (err) {
+    return buildStatusPayload(
+      scheduledAt,
+      'worker-generated-error',
+      err instanceof Error ? err.message : String(err),
+      'worker-generated-preview',
+    );
+  }
+}
+
+async function buildScheduledPreviewOrStatusPayload(nowMs) {
+  const scheduledAt = new Date(nowMs).toISOString();
+  const mode = selectScheduledPreviewMode(nowMs);
+  if (mode === 'worker-generated-preview') {
+    return buildWorkerGeneratedPreviewOrStatusPayload(scheduledAt);
+  }
+  return buildGitHubMirrorPreviewOrStatusPayload(scheduledAt);
 }
 
 export default {
@@ -196,11 +240,38 @@ export default {
       });
     }
 
+    if (path === '/market.worker-preview.json') {
+      const raw = await env.GFRR_MARKET_KV.get(MARKET_WORKER_GENERATED_PREVIEW_KEY, {
+        type: 'text',
+        cacheTtl: 30,
+      });
+      if (raw == null || raw === '') {
+        return jsonResponse(
+          { ok: false, error: 'market:worker-generated-preview not found' },
+          {
+            status: 404,
+            headers: {
+              'Cache-Control': 'no-store',
+              ...CORS_HEADERS,
+            },
+          },
+        );
+      }
+      return new Response(raw, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+          ...CORS_HEADERS,
+        },
+      });
+    }
+
     return jsonResponse({ ok: false, error: 'Not found' }, { status: 404 });
   },
 
   async scheduled(_event, env) {
-    const { key, value } = await buildPreviewOrStatusPayload();
+    const { key, value } = await buildScheduledPreviewOrStatusPayload(Date.now());
     await env.GFRR_MARKET_KV.put(key, JSON.stringify(value));
   },
 };

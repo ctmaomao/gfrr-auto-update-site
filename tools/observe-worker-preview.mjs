@@ -3,6 +3,7 @@ import { appendFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const DEFAULT_BASE_URL = 'https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev';
+const DEFAULT_PATH = '/market.preview.json';
 const DEFAULT_SAMPLES = 96;
 const DEFAULT_INTERVAL_MINUTES = 15;
 const CSV_FILE = path.join(
@@ -31,6 +32,7 @@ const CSV_FIELDS = [
 function parseArgs(argv) {
   const options = {
     base: DEFAULT_BASE_URL,
+    path: DEFAULT_PATH,
     samples: DEFAULT_SAMPLES,
     intervalMinutes: DEFAULT_INTERVAL_MINUTES,
   };
@@ -39,6 +41,8 @@ function parseArgs(argv) {
     const [name, value] = arg.split('=');
     if (name === '--base' && value) {
       options.base = value;
+    } else if (name === '--path' && value) {
+      options.path = value.startsWith('/') ? value : `/${value}`;
     } else if (name === '--samples' && value) {
       options.samples = Number(value);
     } else if (name === '--interval-minutes' && value) {
@@ -59,8 +63,8 @@ function parseArgs(argv) {
   return options;
 }
 
-function buildPreviewUrl(base) {
-  const url = new URL('/market.preview.json', base);
+function buildPreviewUrl(base, previewPath) {
+  const url = new URL(previewPath, base);
   url.searchParams.set('t', String(Date.now()));
   return url;
 }
@@ -95,25 +99,54 @@ function pickCanPromoteToPrimary(payload) {
   return (
     payload?.canPromoteToPrimary ??
     payload?.workerPreview?.canPromoteToPrimary ??
+    payload?.workerGeneratedPreview?.canPromoteToPrimary ??
+    payload?.brentValidation?.consensus?.canPromoteToPrimary ??
     ''
   );
 }
 
+function detectPreviewMeta(payload, error) {
+  if (payload?.workerGeneratedPreview) {
+    return {
+      mode: 'worker-generated-preview',
+      timestamp: payload.workerGeneratedPreview.generatedAt ?? '',
+      source: payload.workerGeneratedPreview.source ?? '',
+      status: payload.workerGeneratedPreview.previewFetchStatus ?? 'ok',
+    };
+  }
+
+  if (payload?.workerPreview) {
+    return {
+      mode: 'github-mirror-preview',
+      timestamp: payload.workerPreview.fetchedAt ?? '',
+      source: payload.workerPreview.source ?? '',
+      status: payload.workerPreview.previewFetchStatus ?? error ?? '',
+    };
+  }
+
+  return {
+    mode: 'unknown',
+    timestamp: '',
+    source: '',
+    status: error ?? '',
+  };
+}
+
 function buildRow(checkedAt, httpStatus, payload, error) {
   const nowMs = Date.parse(checkedAt);
-  const workerPreview = payload?.workerPreview ?? {};
+  const previewMeta = detectPreviewMeta(payload, error);
   const payloadUpdatedAt = payload?.updatedAt ?? '';
-  const workerPreviewFetchedAt = workerPreview?.fetchedAt ?? '';
 
   return {
     checkedAt,
     httpStatus,
     payloadUpdatedAt,
     payloadAgeMinutes: minutesSince(payloadUpdatedAt, nowMs),
-    workerPreviewFetchedAt,
-    workerPreviewFetchAgeMinutes: minutesSince(workerPreviewFetchedAt, nowMs),
-    workerPreviewSource: workerPreview?.source ?? '',
-    workerPreviewStatus: workerPreview?.previewFetchStatus ?? error ?? '',
+    workerPreviewFetchedAt: previewMeta.timestamp,
+    workerPreviewFetchAgeMinutes: minutesSince(previewMeta.timestamp, nowMs),
+    workerPreviewSource: previewMeta.source,
+    workerPreviewStatus: previewMeta.status,
+    previewMode: previewMeta.mode,
     sourceMode: payload?.sourceMode ?? '',
     healthScore: payload?.healthScore ?? '',
     cacheOnly: payload?.cacheOnly ?? '',
@@ -154,6 +187,7 @@ function logSummary(index, total, row) {
     `[${index}/${total}] preview=${row.httpStatus} ` +
       `workerFetchAge=${formatAge(row.workerPreviewFetchAgeMinutes)} ` +
       `payloadAge=${formatAge(row.payloadAgeMinutes)} ` +
+      `mode=${row.previewMode || 'n/a'} ` +
       `sourceMode=${row.sourceMode || 'n/a'} ` +
       `healthScore=${row.healthScore || 'n/a'} ` +
       `brent=${row.brent || 'n/a'} ` +
@@ -167,9 +201,9 @@ function sleep(ms) {
   });
 }
 
-async function samplePreview(base) {
+async function samplePreview(base, previewPath) {
   const checkedAt = new Date().toISOString();
-  const previewUrl = buildPreviewUrl(base);
+  const previewUrl = buildPreviewUrl(base, previewPath);
 
   try {
     const response = await fetch(previewUrl, { cache: 'no-store' });
@@ -196,11 +230,11 @@ async function main() {
   await ensureCsvHeader();
   console.log(`Writing observation CSV to: ${CSV_FILE}`);
   console.log(
-    'Health note: prefer workerPreview.fetchedAt; heartbeat is no longer a per-run success signal.',
+    'Health note: prefer workerPreview.fetchedAt or workerGeneratedPreview.generatedAt; heartbeat is no longer a per-run success signal.',
   );
 
   for (let i = 1; i <= options.samples; i += 1) {
-    const row = await samplePreview(options.base);
+    const row = await samplePreview(options.base, options.path);
     await appendRow(row);
     logSummary(i, options.samples, row);
 
