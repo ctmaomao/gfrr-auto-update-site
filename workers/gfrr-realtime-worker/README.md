@@ -15,6 +15,7 @@
   - 失败时：只写 KV **`market:worker-heartbeat`** / status payload，记录 `previewFetchStatus`、`previewError` 与 `writePolicy`；不会同时写两个 preview。
   - v28.0B-2A.1 增加数据源可达性诊断与 fetch hardening：FRED 顺序抓取并 retry，Yahoo / Stooq / Google Finance / Trading Economics / Gold 均记录 HTTP status、content type、body length、duration 与错误原因。
   - Google Finance 与 Trading Economics 仅作为 **diagnostic-only** experimental Brent 候选源；不参与 consensus，不覆盖 `values.brent`，也不能让 `canPromoteToPrimary` 变为 `true`。
+  - v28.0B-2B 增加本地只读对比脚本 `tools/compare-worker-vs-mirror.mjs`，用于比较 `/market.worker-preview.json` 与 `/market.preview.json` 的字段差异；脚本不使用 Wrangler、不读取 KV、不写 Cloudflare KV、不接前端。
 - **已提供的 HTTP 能力**：
   - `GET /health`：存活与模式探测。
   - `GET /market.json`：从 KV 读取 `market:latest`（若尚未由后续版本写入，则返回 404 JSON）。
@@ -61,4 +62,10 @@ node tools/observe-worker-preview.mjs --samples=24 --interval-minutes=15
 
 ```bash
 node tools/observe-worker-preview.mjs --samples=24 --interval-minutes=15 --path=/market.worker-preview.json
+```
+
+对比 Worker generated preview 与 GitHub mirror preview：
+
+```bash
+node tools/compare-worker-vs-mirror.mjs --samples=24 --interval-minutes=15
 ```
