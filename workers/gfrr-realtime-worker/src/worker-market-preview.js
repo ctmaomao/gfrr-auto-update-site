@@ -15,6 +15,18 @@ const GOLD_URL = 'https://api.gold-api.com/price/XAU';
 const YAHOO_BRENT_URL =
   'https://query1.finance.yahoo.com/v8/finance/chart/BZ%3DF?interval=1d&range=5d';
 const STOOQ_BRENT_URL = 'https://stooq.com/q/d/l/?s=brn.f&i=d';
+const GOOGLE_FINANCE_BRENT_URL = 'https://www.google.com/finance/beta/quote/BZW00:NYMEX';
+const TRADING_ECONOMICS_BRENT_URL =
+  'https://tradingeconomics.com/commodity/brent-crude-oil';
+const TRADING_ECONOMICS_ALT_BRENT_URL =
+  'https://tradingeconomics.com/commodity/brentcrudeoil';
+
+const FETCH_HEADERS = {
+  Accept: 'text/csv,application/json,text/plain,*/*',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'User-Agent':
+    'Mozilla/5.0 (compatible; GFRRWorkerPreview/28.0B-2A; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
+};
 
 function isFiniteNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
@@ -32,10 +44,98 @@ function formatDate(date) {
 
 function parseNumeric(raw) {
   if (raw == null) return null;
-  const text = String(raw).trim();
-  if (text === '' || text === '.') return null;
+  const text = String(raw).trim().replace(/[$,\s]/g, '');
+  if (text === '' || text === '.' || text === '-') return null;
   const value = Number(text);
   return Number.isFinite(value) ? value : null;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function retryDelayMs() {
+  return 300 + Math.floor(Math.random() * 501);
+}
+
+function sourceReason(status, error) {
+  if (status === 429) return 'rate-limited';
+  if (status === 522) return 'connection-timeout-or-origin-unreachable';
+  if (status === 520) return 'origin-returned-520';
+  if (status && status >= 400) return 'http-error';
+  if (error) return 'fetch-or-parse-error';
+  return null;
+}
+
+function normalizeDiagnostic(result) {
+  return {
+    ok: result.ok,
+    status: result.status,
+    statusText: result.statusText,
+    urlHost: result.urlHost,
+    finalUrl: result.finalUrl,
+    contentType: result.contentType,
+    bodyLength: result.bodyLength,
+    durationMs: result.durationMs,
+    error: result.error,
+    retryCount: result.retryCount,
+    reason: sourceReason(result.status, result.error),
+  };
+}
+
+async function fetchTextWithDiagnostics(url, options = {}) {
+  const headers = { ...FETCH_HEADERS, ...(options.headers ?? {}) };
+  let last = null;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const startedAt = Date.now();
+    const parsedUrl = new URL(url);
+
+    try {
+      const response = await fetch(url, {
+        cache: 'no-store',
+        headers,
+      });
+      const text = await response.text();
+      const result = {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        urlHost: parsedUrl.host,
+        finalUrl: response.url || url,
+        contentType: response.headers.get('content-type'),
+        bodyLength: text.length,
+        durationMs: Date.now() - startedAt,
+        error: response.ok ? null : `HTTP ${response.status}`,
+        retryCount: attempt,
+        text,
+      };
+
+      if (response.ok || attempt === 1) return result;
+      last = result;
+    } catch (err) {
+      last = {
+        ok: false,
+        status: null,
+        statusText: null,
+        urlHost: parsedUrl.host,
+        finalUrl: url,
+        contentType: null,
+        bodyLength: 0,
+        durationMs: Date.now() - startedAt,
+        error: err instanceof Error ? err.message : String(err),
+        retryCount: attempt,
+        text: '',
+      };
+      if (attempt === 1) return last;
+    }
+
+    await sleep(retryDelayMs());
+  }
+
+  return last;
 }
 
 function splitCsvLine(line) {
@@ -85,42 +185,13 @@ function latestTwoCsvValues(text, valueColumnIndex = 1) {
   };
 }
 
-async function fetchText(url) {
-  const response = await fetch(url, { cache: 'no-store' });
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
-  }
-  return response.text();
-}
-
 async function fetchFredSeries(name, seriesId, cosd) {
   const url = `https://fred.stlouisfed.org/graph/fredgraph.csv?cosd=${cosd}&id=${seriesId}`;
+  const result = await fetchTextWithDiagnostics(url);
+  const diagnostic = normalizeDiagnostic(result);
+  const source = `FRED:${seriesId}`;
 
-  try {
-    const text = await fetchText(url);
-    const { latest, previous } = latestTwoCsvValues(text);
-    if (!latest) {
-      return {
-        name,
-        value: null,
-        change: null,
-        detail: { ok: false, value: null, source: `FRED:${seriesId}`, timestamp: null, error: 'no numeric value' },
-      };
-    }
-
-    return {
-      name,
-      value: roundValue(latest.value),
-      change: previous ? roundValue(latest.value - previous.value) : null,
-      detail: {
-        ok: true,
-        value: roundValue(latest.value),
-        source: `FRED:${seriesId}`,
-        timestamp: latest.timestamp,
-        error: null,
-      },
-    };
-  } catch (err) {
+  if (!result.ok) {
     return {
       name,
       value: null,
@@ -128,19 +199,119 @@ async function fetchFredSeries(name, seriesId, cosd) {
       detail: {
         ok: false,
         value: null,
-        source: `FRED:${seriesId}`,
+        source,
         timestamp: null,
-        error: err instanceof Error ? err.message : String(err),
+        error: result.error,
+        httpStatus: result.status,
+        contentType: result.contentType,
+        bodyLength: result.bodyLength,
+        durationMs: result.durationMs,
+        fredUrlHost: result.urlHost,
+        fredHttpStatus: result.status,
+        fredBodyLength: result.bodyLength,
+        fredContentType: result.contentType,
+        fredError: result.error,
+        retryCount: result.retryCount,
       },
+      diagnostic,
     };
   }
+
+  const { latest, previous } = latestTwoCsvValues(result.text);
+  if (!latest) {
+    return {
+      name,
+      value: null,
+      change: null,
+      detail: {
+        ok: false,
+        value: null,
+        source,
+        timestamp: null,
+        error: 'no numeric value',
+        httpStatus: result.status,
+        contentType: result.contentType,
+        bodyLength: result.bodyLength,
+        durationMs: result.durationMs,
+        fredUrlHost: result.urlHost,
+        fredHttpStatus: result.status,
+        fredBodyLength: result.bodyLength,
+        fredContentType: result.contentType,
+        fredError: 'no numeric value',
+        retryCount: result.retryCount,
+      },
+      diagnostic,
+    };
+  }
+
+  return {
+    name,
+    value: roundValue(latest.value),
+    change: previous ? roundValue(latest.value - previous.value) : null,
+    detail: {
+      ok: true,
+      value: roundValue(latest.value),
+      source,
+      timestamp: latest.timestamp,
+      error: null,
+      httpStatus: result.status,
+      contentType: result.contentType,
+      bodyLength: result.bodyLength,
+      durationMs: result.durationMs,
+      fredUrlHost: result.urlHost,
+      fredHttpStatus: result.status,
+      fredBodyLength: result.bodyLength,
+      fredContentType: result.contentType,
+      fredError: null,
+      retryCount: result.retryCount,
+    },
+    diagnostic,
+  };
+}
+
+async function fetchAllFredSeries(cosd) {
+  const results = [];
+  const entries = Object.entries(FRED_SERIES);
+
+  for (let i = 0; i < entries.length; i += 1) {
+    const [name, seriesId] = entries[i];
+    results.push(await fetchFredSeries(name, seriesId, cosd));
+    if (i < entries.length - 1) {
+      await sleep(150 + Math.floor(Math.random() * 151));
+    }
+  }
+
+  return results;
 }
 
 async function fetchGold() {
+  const result = await fetchTextWithDiagnostics(GOLD_URL, {
+    headers: { Accept: 'application/json,text/plain,*/*' },
+  });
+  const diagnostic = normalizeDiagnostic(result);
+
+  if (!result.ok) {
+    return {
+      value: null,
+      change: null,
+      detail: {
+        ok: false,
+        value: null,
+        source: GOLD_URL,
+        timestamp: null,
+        error: result.error,
+        httpStatus: result.status,
+        contentType: result.contentType,
+        bodyLength: result.bodyLength,
+        durationMs: result.durationMs,
+        retryCount: result.retryCount,
+      },
+      diagnostic,
+    };
+  }
+
   try {
-    const response = await fetch(GOLD_URL, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const payload = await response.json();
+    const payload = JSON.parse(result.text);
     const value = parseNumeric(payload?.price);
 
     return {
@@ -152,6 +323,17 @@ async function fetchGold() {
         source: GOLD_URL,
         timestamp: payload?.updatedAt ?? payload?.timestamp ?? null,
         error: value == null ? 'missing price' : null,
+        httpStatus: result.status,
+        contentType: result.contentType,
+        bodyLength: result.bodyLength,
+        durationMs: result.durationMs,
+        retryCount: result.retryCount,
+      },
+      diagnostic: {
+        ...diagnostic,
+        ok: value != null,
+        error: value == null ? 'missing price' : diagnostic.error,
+        reason: value == null ? 'fetch-or-parse-error' : diagnostic.reason,
       },
     };
   } catch (err) {
@@ -164,74 +346,183 @@ async function fetchGold() {
         source: GOLD_URL,
         timestamp: null,
         error: err instanceof Error ? err.message : String(err),
+        httpStatus: result.status,
+        contentType: result.contentType,
+        bodyLength: result.bodyLength,
+        durationMs: result.durationMs,
+        retryCount: result.retryCount,
+      },
+      diagnostic: {
+        ...diagnostic,
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+        reason: 'fetch-or-parse-error',
       },
     };
   }
 }
 
-async function fetchYahooBrentCandidate() {
-  try {
-    const response = await fetch(YAHOO_BRENT_URL, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const payload = await response.json();
-    const result = payload?.chart?.result?.[0];
-    const closes = result?.indicators?.quote?.[0]?.close ?? [];
-    const timestamps = result?.timestamp ?? [];
+function buildCandidateDiagnostics(result, parseError = null) {
+  return {
+    status: result.status,
+    contentType: result.contentType,
+    bodyLength: result.bodyLength,
+    durationMs: result.durationMs,
+    error: parseError ?? result.error,
+    retryCount: result.retryCount,
+    reason: sourceReason(result.status, parseError ?? result.error),
+  };
+}
 
-    for (let i = closes.length - 1; i >= 0; i -= 1) {
-      const value = parseNumeric(closes[i]);
-      if (value != null) {
-        return {
-          source: 'yahoo:BZ=F',
-          value: roundValue(value),
-          timestamp: timestamps[i] ? new Date(timestamps[i] * 1000).toISOString() : null,
-          ok: true,
-          error: null,
-        };
-      }
+function parseYahooBrent(text) {
+  const payload = JSON.parse(text);
+  const result = payload?.chart?.result?.[0];
+  const closes = result?.indicators?.quote?.[0]?.close ?? [];
+  const timestamps = result?.timestamp ?? [];
+
+  for (let i = closes.length - 1; i >= 0; i -= 1) {
+    const value = parseNumeric(closes[i]);
+    if (value != null) {
+      return {
+        value: roundValue(value),
+        timestamp: timestamps[i] ? new Date(timestamps[i] * 1000).toISOString() : null,
+      };
     }
-
-    throw new Error('no numeric close');
-  } catch (err) {
-    return {
-      source: 'yahoo:BZ=F',
-      value: null,
-      timestamp: null,
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
   }
+
+  throw new Error('no numeric close');
+}
+
+async function fetchYahooBrentCandidate() {
+  const result = await fetchTextWithDiagnostics(YAHOO_BRENT_URL, {
+    headers: { Accept: 'application/json,text/plain,*/*' },
+  });
+  let parsed = null;
+  let parseError = null;
+
+  if (result.ok) {
+    try {
+      parsed = parseYahooBrent(result.text);
+    } catch (err) {
+      parseError = err instanceof Error ? err.message : String(err);
+    }
+  }
+
+  return {
+    source: 'yahoo:BZ=F',
+    value: parsed?.value ?? null,
+    timestamp: parsed?.timestamp ?? null,
+    ok: result.ok && parsed?.value != null,
+    error: parseError ?? result.error,
+    diagnostics: buildCandidateDiagnostics(result, parseError),
+  };
 }
 
 async function fetchStooqBrentCandidate() {
-  try {
-    const text = await fetchText(STOOQ_BRENT_URL);
-    const { latest } = latestTwoCsvValues(text, 4);
-    if (!latest) throw new Error('no numeric close');
+  const result = await fetchTextWithDiagnostics(STOOQ_BRENT_URL);
+  let parsed = null;
+  let parseError = null;
 
-    return {
-      source: 'stooq:brn.f',
-      value: roundValue(latest.value),
-      timestamp: latest.timestamp,
-      ok: true,
-      error: null,
-    };
-  } catch (err) {
-    return {
-      source: 'stooq:brn.f',
-      value: null,
-      timestamp: null,
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
+  if (result.ok) {
+    try {
+      const { latest } = latestTwoCsvValues(result.text, 4);
+      if (!latest) throw new Error('no numeric close');
+      parsed = { value: roundValue(latest.value), timestamp: latest.timestamp };
+    } catch (err) {
+      parseError = err instanceof Error ? err.message : String(err);
+    }
   }
+
+  return {
+    source: 'stooq:brn.f',
+    value: parsed?.value ?? null,
+    timestamp: parsed?.timestamp ?? null,
+    ok: result.ok && parsed?.value != null,
+    error: parseError ?? result.error,
+    diagnostics: buildCandidateDiagnostics(result, parseError),
+  };
+}
+
+function parsePriceFromHtml(text) {
+  const candidates = [
+    /data-last-price=["']?([0-9][0-9.,]*)/i,
+    /data-price=["']?([0-9][0-9.,]*)/i,
+    /"price"\s*:\s*"?([0-9][0-9.,]*)"?/i,
+    /(?:Brent|BZW00|Crude Oil)[\s\S]{0,600}?([0-9]{2,3}(?:\.[0-9]{1,4})?)/i,
+  ];
+
+  for (const pattern of candidates) {
+    const match = text.match(pattern);
+    const value = parseNumeric(match?.[1]);
+    if (value != null) return roundValue(value);
+  }
+
+  return null;
+}
+
+async function fetchGoogleFinanceDiagnosticCandidate() {
+  const result = await fetchTextWithDiagnostics(GOOGLE_FINANCE_BRENT_URL, {
+    headers: { Accept: 'text/html,text/plain,*/*' },
+  });
+  const value = result.ok ? parsePriceFromHtml(result.text) : null;
+  const parseError = result.ok && value == null ? 'price parse failed' : null;
+
+  return {
+    source: 'google-finance:BZW00:NYMEX',
+    value,
+    timestamp: null,
+    ok: result.ok && value != null,
+    error: parseError ?? result.error,
+    role: 'diagnostic',
+    participatesInConsensus: false,
+    quality: 'experimental',
+    diagnostics: buildCandidateDiagnostics(result, parseError),
+  };
+}
+
+async function fetchTradingEconomicsDiagnosticCandidate() {
+  let result = await fetchTextWithDiagnostics(TRADING_ECONOMICS_BRENT_URL, {
+    headers: { Accept: 'text/html,text/plain,*/*' },
+  });
+  let sourceUrl = TRADING_ECONOMICS_BRENT_URL;
+
+  if (!result.ok || result.bodyLength === 0) {
+    await sleep(150 + Math.floor(Math.random() * 151));
+    const alt = await fetchTextWithDiagnostics(TRADING_ECONOMICS_ALT_BRENT_URL, {
+      headers: { Accept: 'text/html,text/plain,*/*' },
+    });
+    if (alt.ok || !result.ok) {
+      result = alt;
+      sourceUrl = TRADING_ECONOMICS_ALT_BRENT_URL;
+    }
+  }
+
+  const value = result.ok ? parsePriceFromHtml(result.text) : null;
+  const parseError = result.ok && value == null ? 'price parse failed' : null;
+
+  return {
+    source: 'tradingeconomics:brent-crude-oil',
+    sourceUrl,
+    value,
+    timestamp: null,
+    ok: result.ok && value != null,
+    error: parseError ?? result.error,
+    role: 'diagnostic',
+    participatesInConsensus: false,
+    quality: 'experimental',
+    diagnostics: buildCandidateDiagnostics(result, parseError),
+  };
 }
 
 async function buildBrentValidation(anchorValue) {
-  const [yahoo, stooq] = await Promise.all([
-    fetchYahooBrentCandidate(),
-    fetchStooqBrentCandidate(),
-  ]);
+  const yahoo = await fetchYahooBrentCandidate();
+  await sleep(150 + Math.floor(Math.random() * 151));
+  const stooq = await fetchStooqBrentCandidate();
+  await sleep(150 + Math.floor(Math.random() * 151));
+  const googleFinance = await fetchGoogleFinanceDiagnosticCandidate();
+  await sleep(150 + Math.floor(Math.random() * 151));
+  const tradingEconomics = await fetchTradingEconomicsDiagnosticCandidate();
+
   const candidates = [
     {
       source: 'FRED:DCOILBRENTEU',
@@ -240,18 +531,27 @@ async function buildBrentValidation(anchorValue) {
       ok: isFiniteNumber(anchorValue),
       error: isFiniteNumber(anchorValue) ? null : 'missing FRED anchor',
     },
-    { ...yahoo, role: 'validation' },
-    { ...stooq, role: 'validation' },
+    { ...yahoo, role: 'validation', participatesInConsensus: true },
+    { ...stooq, role: 'validation', participatesInConsensus: true },
+    googleFinance,
+    tradingEconomics,
   ];
   const validationValues = candidates
-    .filter((candidate) => candidate.role === 'validation' && isFiniteNumber(candidate.value))
+    .filter(
+      (candidate) =>
+        candidate.role === 'validation' &&
+        candidate.participatesInConsensus === true &&
+        isFiniteNumber(candidate.value),
+    )
     .map((candidate) => candidate.value);
   const recommendedValue =
     validationValues.length > 0
       ? roundValue(validationValues.reduce((sum, value) => sum + value, 0) / validationValues.length)
       : null;
   const recommendedSource =
-    validationValues.length > 1 ? 'validation-average' : candidates.find((c) => c.role === 'validation' && c.ok)?.source ?? null;
+    validationValues.length > 1
+      ? 'validation-average'
+      : candidates.find((c) => c.role === 'validation' && c.ok)?.source ?? null;
 
   return {
     candidates,
@@ -260,8 +560,14 @@ async function buildBrentValidation(anchorValue) {
       recommendedSource,
       confidence: validationValues.length >= 2 ? 'medium' : validationValues.length === 1 ? 'low' : 'none',
       reason:
-        'Worker preview validation only; FRED DCOILBRENTEU remains the Brent anchor for values.brent.',
+        'Worker preview validation only; FRED DCOILBRENTEU remains the Brent anchor for values.brent. Diagnostic candidates do not participate in consensus.',
       canPromoteToPrimary: false,
+    },
+    diagnostics: {
+      yahoo: yahoo.diagnostics,
+      stooq: stooq.diagnostics,
+      googleFinance: googleFinance.diagnostics,
+      tradingEconomics: tradingEconomics.diagnostics,
     },
   };
 }
@@ -276,12 +582,39 @@ function countMissing(values, fields) {
   return fields.filter((field) => !isFiniteNumber(values[field])).length;
 }
 
+function summarizeFred(fredResults) {
+  const statuses = fredResults.map((result) => result.diagnostic.status);
+  const failStatuses = [
+    ...new Set(
+      fredResults
+        .filter((result) => !result.detail.ok)
+        .map((result) => result.diagnostic.status)
+        .filter((status) => status != null)
+        .map((status) => String(status)),
+    ),
+  ];
+
+  return {
+    okCount: fredResults.filter((result) => result.detail.ok).length,
+    failCount: fredResults.filter((result) => !result.detail.ok).length,
+    statuses: [...new Set(statuses.filter((status) => status != null).map((status) => String(status)))],
+    fredAllFailed: fredResults.every((result) => !result.detail.ok),
+    fredFailureStatuses: failStatuses,
+  };
+}
+
+function sourceSummaryFromDiagnostic(diagnostic) {
+  return {
+    status: diagnostic.status,
+    ok: diagnostic.ok,
+    reason: diagnostic.reason,
+  };
+}
+
 export async function buildWorkerGeneratedMarketPreview() {
   const nowIso = new Date().toISOString();
   const cosd = formatDate(new Date(Date.now() - 45 * 24 * 60 * 60 * 1000));
-  const fredResults = await Promise.all(
-    Object.entries(FRED_SERIES).map(([name, seriesId]) => fetchFredSeries(name, seriesId, cosd)),
-  );
+  const fredResults = await fetchAllFredSeries(cosd);
   const gold = await fetchGold();
 
   const values = Object.fromEntries(fredResults.map((result) => [result.name, result.value]));
@@ -303,6 +636,27 @@ export async function buildWorkerGeneratedMarketPreview() {
   const nonCriticalMissing = countMissing(values, nonCriticalFields);
   const healthScore = Math.max(0, Math.min(100, 100 - criticalMissing * 15 - nonCriticalMissing * 5));
   const unavailable = criticalMissing >= 4;
+  const fredSummary = summarizeFred(fredResults);
+  const diagnostics = {
+    generatedAt: nowIso,
+    requestPolicy: 'sequential-fred-with-retry',
+    fredAllFailed: fredSummary.fredAllFailed,
+    fredFailureStatuses: fredSummary.fredFailureStatuses,
+    sourceHttpSummary: {
+      fred: {
+        okCount: fredSummary.okCount,
+        failCount: fredSummary.failCount,
+        statuses: fredSummary.statuses,
+      },
+      yahoo: sourceSummaryFromDiagnostic(brentValidation.diagnostics.yahoo),
+      stooq: sourceSummaryFromDiagnostic(brentValidation.diagnostics.stooq),
+      googleFinance: sourceSummaryFromDiagnostic(brentValidation.diagnostics.googleFinance),
+      tradingEconomics: sourceSummaryFromDiagnostic(
+        brentValidation.diagnostics.tradingEconomics,
+      ),
+      gold: sourceSummaryFromDiagnostic(gold.diagnostic),
+    },
+  };
 
   return {
     updatedAt: nowIso,
@@ -324,12 +678,13 @@ export async function buildWorkerGeneratedMarketPreview() {
     brentValidation,
     workerGeneratedPreview: {
       enabled: true,
-      version: 'v28.0B-2A',
+      version: 'v28.0B-2A.1',
       source: 'cloudflare-worker',
       generatedAt: nowIso,
       writePolicy: 'single-kv-write-alternating',
       productionEnabled: false,
       note: 'Worker-generated preview only; not used by frontend',
+      diagnostics,
     },
   };
 }

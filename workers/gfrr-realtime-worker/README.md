@@ -13,6 +13,8 @@
   - v28.0B-2A Worker generated preview MVP：写 KV **`market:worker-generated-preview`**，`GET /market.worker-preview.json` 读取该 key。
   - 为保持 free-tier safe，两类 preview **交替写入**，因此每个 preview key 通常约 **6** 分钟更新一次。
   - 失败时：只写 KV **`market:worker-heartbeat`** / status payload，记录 `previewFetchStatus`、`previewError` 与 `writePolicy`；不会同时写两个 preview。
+  - v28.0B-2A.1 增加数据源可达性诊断与 fetch hardening：FRED 顺序抓取并 retry，Yahoo / Stooq / Google Finance / Trading Economics / Gold 均记录 HTTP status、content type、body length、duration 与错误原因。
+  - Google Finance 与 Trading Economics 仅作为 **diagnostic-only** experimental Brent 候选源；不参与 consensus，不覆盖 `values.brent`，也不能让 `canPromoteToPrimary` 变为 `true`。
 - **已提供的 HTTP 能力**：
   - `GET /health`：存活与模式探测。
   - `GET /market.json`：从 KV 读取 `market:latest`（若尚未由后续版本写入，则返回 404 JSON）。
@@ -24,6 +26,7 @@
 - 不是生产 market 生成器；Worker generated preview 只是独立生成链路的 **MVP 观察产物**。
 - **不**影响 GitHub Pages 前端读取路径。
 - **不**改变或取代 GitHub Actions 对 `realtime-data` 的更新。
+- 如果 FRED / Yahoo / Stooq 在 Cloudflare Worker 环境返回 520 / 429 / 522，payload 会保留 `worker-generated-unavailable` / `unavailable: true` 并写入 diagnostics，仍不会进入生产。
 
 **生产切换**与前端优先读 Worker 仍需后续版本明确约定；当前仍不写 `market:latest`，仍不接入前端，仍不替代 GitHub Actions。
 

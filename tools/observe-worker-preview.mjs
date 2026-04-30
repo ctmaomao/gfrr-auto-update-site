@@ -24,6 +24,14 @@ const CSV_FIELDS = [
   'healthScore',
   'cacheOnly',
   'criticalMissing',
+  'unavailable',
+  'fredAllFailed',
+  'fredFailureStatuses',
+  'yahooStatus',
+  'stooqStatus',
+  'goldStatus',
+  'googleFinanceStatus',
+  'tradingEconomicsStatus',
   'brent',
   'brentConsensus',
   'canPromoteToPrimary',
@@ -132,10 +140,28 @@ function detectPreviewMeta(payload, error) {
   };
 }
 
+function sourceStatus(summary, name) {
+  const status = summary?.[name]?.status;
+  return status == null ? '' : status;
+}
+
+function sourceSummaryText(row) {
+  const parts = [
+    row.yahooStatus ? `yahoo=${row.yahooStatus}` : '',
+    row.stooqStatus ? `stooq=${row.stooqStatus}` : '',
+    row.goldStatus ? `gold=${row.goldStatus}` : '',
+    row.googleFinanceStatus ? `googleFinance=${row.googleFinanceStatus}` : '',
+    row.tradingEconomicsStatus ? `tradingEconomics=${row.tradingEconomicsStatus}` : '',
+  ].filter(Boolean);
+  return parts.length > 0 ? ` ${parts.join(' ')}` : '';
+}
+
 function buildRow(checkedAt, httpStatus, payload, error) {
   const nowMs = Date.parse(checkedAt);
   const previewMeta = detectPreviewMeta(payload, error);
   const payloadUpdatedAt = payload?.updatedAt ?? '';
+  const diagnostics = payload?.workerGeneratedPreview?.diagnostics ?? {};
+  const sourceHttpSummary = diagnostics?.sourceHttpSummary ?? {};
 
   return {
     checkedAt,
@@ -151,6 +177,16 @@ function buildRow(checkedAt, httpStatus, payload, error) {
     healthScore: payload?.healthScore ?? '',
     cacheOnly: payload?.cacheOnly ?? '',
     criticalMissing: pickCriticalMissing(payload),
+    unavailable: payload?.unavailable ?? '',
+    fredAllFailed: diagnostics?.fredAllFailed ?? '',
+    fredFailureStatuses: Array.isArray(diagnostics?.fredFailureStatuses)
+      ? diagnostics.fredFailureStatuses.join('|')
+      : '',
+    yahooStatus: sourceStatus(sourceHttpSummary, 'yahoo'),
+    stooqStatus: sourceStatus(sourceHttpSummary, 'stooq'),
+    goldStatus: sourceStatus(sourceHttpSummary, 'gold'),
+    googleFinanceStatus: sourceStatus(sourceHttpSummary, 'googleFinance'),
+    tradingEconomicsStatus: sourceStatus(sourceHttpSummary, 'tradingEconomics'),
     brent: pickBrent(payload),
     brentConsensus: pickBrentConsensus(payload),
     canPromoteToPrimary: pickCanPromoteToPrimary(payload),
@@ -182,16 +218,26 @@ function formatAge(value) {
   return value === '' ? 'n/a' : `${value}m`;
 }
 
+function formatValue(value) {
+  return value === '' || value == null ? 'n/a' : value;
+}
+
 function logSummary(index, total, row) {
   console.log(
     `[${index}/${total}] preview=${row.httpStatus} ` +
       `workerFetchAge=${formatAge(row.workerPreviewFetchAgeMinutes)} ` +
       `payloadAge=${formatAge(row.payloadAgeMinutes)} ` +
-      `mode=${row.previewMode || 'n/a'} ` +
-      `sourceMode=${row.sourceMode || 'n/a'} ` +
-      `healthScore=${row.healthScore || 'n/a'} ` +
-      `brent=${row.brent || 'n/a'} ` +
-      `consensus=${row.brentConsensus || 'n/a'}`,
+      `mode=${formatValue(row.previewMode)} ` +
+      `sourceMode=${formatValue(row.sourceMode)} ` +
+      `healthScore=${formatValue(row.healthScore)} ` +
+      `criticalMissing=${formatValue(row.criticalMissing)} ` +
+      `unavailable=${row.unavailable === '' ? 'n/a' : row.unavailable} ` +
+      `fredAllFailed=${row.fredAllFailed === '' ? 'n/a' : row.fredAllFailed} ` +
+      `fredStatuses=${formatValue(row.fredFailureStatuses)}` +
+      sourceSummaryText(row) +
+      ' ' +
+      `brent=${formatValue(row.brent)} ` +
+      `consensus=${formatValue(row.brentConsensus)}`,
   );
 }
 
