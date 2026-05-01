@@ -70,6 +70,20 @@ Daily pipeline 负责写入稳定基线字段，例如：
 
 因此，页面显示层应以运行时的 `data.__effectiveDisplayInputs` 作为有效显示输入，而不是要求 `radar-data.json` 预先序列化 `effectiveDisplayInputs`。
 
+### Worker generated candidate 运行时状态
+
+v28.0C-1 起，浏览器前端会只读 Cloudflare Worker generated preview endpoint，并把候选源状态挂载为：
+
+`data.__workerGeneratedCandidate`
+
+该字段只存在于浏览器运行时：
+
+- 不序列化进 `data/radar-data.json`。
+- 不参与 `data.__effectiveDisplayInputs`。
+- 不改变 canonical display values。
+- 不参与 realtime overlay、scoring、decision 或 fallback。
+- 仅用于前端 readiness / health display，页面显示“Worker候选源可用”不代表生产数据源已切换。
+
 ## displayInputsBaseline 契约
 
 `data/radar-data.json` 根层必须包含：

@@ -1,4 +1,4 @@
-import { dataUrl, historyUrl, localRealtimeUrl, REMOTE_REALTIME_URL, fmtNumSafe } from './config.js';
+import { dataUrl, historyUrl, localRealtimeUrl, REMOTE_REALTIME_URL, WORKER_GENERATED_REALTIME_URL, fmtNumSafe } from './config.js';
 import {
   computeAgeMinutes,
   classifyFreshnessLevel,
@@ -32,6 +32,7 @@ const STRUCTURAL_SIGNAL_LABELS_CN = {
 const LOCAL_FALLBACK_MAX_AGE_MINUTES = 180;
 const LOCAL_FALLBACK_KEY_FIELDS = ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'gold', 'spx'];
 const LOCAL_FALLBACK_MIN_FINITE_KEY_FIELDS = 5;
+const WORKER_CANDIDATE_TIMEOUT_MS = 4500;
 
 export async function fetchBaselineData() {
   return fetch(dataUrl).then((r) => r.json());
@@ -139,6 +140,141 @@ function withCacheBust(url) {
   return `${url}${separator}_=${Date.now()}`;
 }
 
+function summarizeWorkerDiagnostics(payload) {
+  const diagnostics = payload?.workerGeneratedPreview?.diagnostics;
+  if (!diagnostics || typeof diagnostics !== 'object') return null;
+  const summary = diagnostics.sourceHttpSummary || {};
+  const sourceStatus = (key) => {
+    const status = summary?.[key]?.status;
+    return status == null ? 'n/a' : status;
+  };
+  const fredStatuses = Array.isArray(diagnostics.fredFailureStatuses)
+    ? diagnostics.fredFailureStatuses.join('|')
+    : 'n/a';
+  return `FRED全部失败=${diagnostics.fredAllFailed ?? 'n/a'} / FRED状态=${fredStatuses || 'n/a'} / Yahoo=${sourceStatus('yahoo')} / Stooq=${sourceStatus('stooq')} / Gold=${sourceStatus('gold')}`;
+}
+
+function buildWorkerCandidateStatus(partial = {}) {
+  return {
+    available: false,
+    status: 'unavailable',
+    url: WORKER_GENERATED_REALTIME_URL,
+    httpStatus: null,
+    fetchedAt: new Date().toISOString(),
+    updatedAt: null,
+    ageMinutes: null,
+    sourceMode: null,
+    healthScore: null,
+    criticalMissing: null,
+    unavailable: null,
+    valuesSummary: {
+      brent: null,
+      dxy: null,
+      vix: null,
+      spx: null,
+      us10y: null,
+      real10y: null,
+      gold: null
+    },
+    brentConsensus: null,
+    canPromoteToPrimary: null,
+    diagnosticsSummary: null,
+    ...partial
+  };
+}
+
+function validateWorkerCandidatePayload(payload) {
+  if (!payload || typeof payload !== 'object') return 'invalid-payload';
+  if (payload?.workerGeneratedPreview?.enabled !== true) return 'invalid-payload';
+  if (!payload.values || typeof payload.values !== 'object') return 'invalid-payload';
+  if (typeof payload.updatedAt !== 'string' || !payload.updatedAt) return 'invalid-payload';
+  if (typeof payload.sourceMode !== 'string' || !payload.sourceMode) return 'invalid-payload';
+  if (!Number.isFinite(Number(payload.healthScore))) return 'invalid-payload';
+  if (!Number.isFinite(Number(payload.criticalMissing))) return 'invalid-payload';
+  return null;
+}
+
+function buildWorkerCandidateFromPayload(payload, httpStatus, fetchedAt) {
+  const healthScore = Number(payload.healthScore);
+  const criticalMissing = Number(payload.criticalMissing);
+  const ageMinutes = computeAgeMinutes(payload.updatedAt);
+  const unavailable = payload.unavailable === true;
+  const available = !unavailable && healthScore >= 85 && criticalMissing <= 1;
+  const values = payload.values || {};
+  const consensus = payload?.brentValidation?.consensus || {};
+  return buildWorkerCandidateStatus({
+    available,
+    status: available ? 'ok' : 'unavailable',
+    httpStatus,
+    fetchedAt,
+    updatedAt: payload.updatedAt,
+    ageMinutes,
+    sourceMode: payload.sourceMode,
+    healthScore,
+    criticalMissing,
+    unavailable,
+    valuesSummary: {
+      brent: getRealtimeNumber(values, 'brent'),
+      dxy: getRealtimeNumber(values, 'dxy'),
+      vix: getRealtimeNumber(values, 'vix'),
+      spx: getRealtimeNumber(values, 'spx'),
+      us10y: getRealtimeNumber(values, 'us10y'),
+      real10y: getRealtimeNumber(values, 'real10y'),
+      gold: getRealtimeNumber(values, 'gold')
+    },
+    brentConsensus: Number.isFinite(Number(consensus.recommendedValue))
+      ? Number(consensus.recommendedValue)
+      : null,
+    canPromoteToPrimary: consensus.canPromoteToPrimary === true,
+    diagnosticsSummary: summarizeWorkerDiagnostics(payload)
+  });
+}
+
+export async function fetchWorkerGeneratedCandidate() {
+  const fetchedAt = new Date().toISOString();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), WORKER_CANDIDATE_TIMEOUT_MS);
+  try {
+    const response = await fetch(withCacheBust(WORKER_GENERATED_REALTIME_URL), {
+      cache: 'no-store',
+      signal: controller.signal
+    });
+    if (!response.ok) {
+      return buildWorkerCandidateStatus({
+        status: 'http-error',
+        httpStatus: response.status,
+        fetchedAt
+      });
+    }
+    let payload;
+    try {
+      payload = await response.json();
+    } catch (_error) {
+      return buildWorkerCandidateStatus({
+        status: 'json-error',
+        httpStatus: response.status,
+        fetchedAt
+      });
+    }
+    const invalidReason = validateWorkerCandidatePayload(payload);
+    if (invalidReason) {
+      return buildWorkerCandidateStatus({
+        status: invalidReason,
+        httpStatus: response.status,
+        fetchedAt
+      });
+    }
+    return buildWorkerCandidateFromPayload(payload, response.status, fetchedAt);
+  } catch (error) {
+    return buildWorkerCandidateStatus({
+      status: error?.name === 'AbortError' ? 'timeout' : 'unavailable',
+      fetchedAt
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function buildRealtimeFetchAudit({ realtimeResult, realtimePayload, runtimeMetadata }) {
   const fromResult = realtimeResult?.realtimeFetchAudit || runtimeMetadata?.realtimeFetchAudit;
   if (fromResult && typeof fromResult === 'object') {
@@ -166,6 +302,7 @@ function buildRealtimeFetchAudit({ realtimeResult, realtimePayload, runtimeMetad
 }
 
 export async function fetchRealtimePayload() {
+  const workerCandidatePromise = fetchWorkerGeneratedCandidate();
   const realtimeFetchAudit = {
     attemptedAt: new Date().toISOString(),
     remoteUrl: REMOTE_REALTIME_URL,
@@ -218,6 +355,7 @@ export async function fetchRealtimePayload() {
         realtimeFallbackUsed: attempt.fallbackUsed,
         realtimeUpdatedAt: payload.updatedAt,
         realtimeError: lastError,
+        workerGeneratedCandidate: await workerCandidatePromise,
         realtimeFetchAudit: {
           ...realtimeFetchAudit,
           selectedSource: attempt.source,
@@ -236,6 +374,7 @@ export async function fetchRealtimePayload() {
     realtimeFallbackUsed: false,
     realtimeUpdatedAt: null,
     realtimeError: lastError,
+    workerGeneratedCandidate: await workerCandidatePromise,
     realtimeFetchAudit: {
       ...realtimeFetchAudit,
       selectedSource: 'none',
@@ -246,6 +385,7 @@ export async function fetchRealtimePayload() {
 
 export function buildRuntimeState(baseline, history, realtimeResult) {
   const realtimePayload = realtimeResult.payload;
+  const workerGeneratedCandidate = realtimeResult.workerGeneratedCandidate || buildWorkerCandidateStatus();
   const brentFieldFreshness = realtimePayload?.fieldFreshness?.brent || null;
   const brentFreshnessLevel = brentFieldFreshness?.freshnessLevel || null;
   const brentIsStale = brentFreshnessLevel === 'stale' || brentFreshnessLevel === 'unavailable';
@@ -272,6 +412,7 @@ export function buildRuntimeState(baseline, history, realtimeResult) {
     realtimeSourceMode: realtimePayload?.sourceMode || null,
     realtimeSourceStatus: realtimePayload?.sourceStatus || {},
     realtimeSourceDetails: realtimePayload?.sourceDetails || {},
+    workerGeneratedCandidate,
     brentObservedAt: brentFieldFreshness?.observedAt ?? null,
     brentAgeMinutes: brentFieldFreshness?.ageMinutes ?? null,
     brentFreshnessLevel,
@@ -291,7 +432,11 @@ export function buildRuntimeState(baseline, history, realtimeResult) {
     runtimeMetadata,
     data
   });
-  data.decisionModel = buildDecisionModel(data, history, runtimeMetadata, healthDashboard);
+  const decisionRuntimeMetadata = { ...runtimeMetadata };
+  delete decisionRuntimeMetadata.workerGeneratedCandidate;
+  data.decisionModel = buildDecisionModel(data, history, decisionRuntimeMetadata, healthDashboard);
+  data.__workerGeneratedCandidate = workerGeneratedCandidate;
+  console.info('[gfrr] Worker candidate:', workerGeneratedCandidate);
   return { baseline, history, realtimePayload, realtimeFetchAudit: runtimeMetadata.realtimeFetchAudit, runtimeMetadata, healthDashboard, data };
 }
 

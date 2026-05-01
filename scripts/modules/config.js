@@ -4,6 +4,7 @@ export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
 export const localRealtimeUrl = './realtime/market.json';
 export const REMOTE_REALTIME_URL = 'https://raw.githubusercontent.com/ctmaomao/gfrr-auto-update-site/realtime-data/realtime/market.json';
+export const WORKER_GENERATED_REALTIME_URL = 'https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json';
 
 export const $ = (id) => document.getElementById(id);
 export const fmtSigned = (n) => `${n > 0 ? '+' : ''}${n}`;

@@ -78,6 +78,7 @@ export function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
 export function buildHealthDashboardModel(runtimeState) {
   const metadata = runtimeState.runtimeMetadata || {};
   const realtime = runtimeState.realtimePayload || null;
+  const workerCandidate = metadata.workerGeneratedCandidate || null;
   const healthScore = Number.isFinite(realtime?.healthScore) ? Math.round(realtime.healthScore) : null;
   const criticalMissing = Number.isFinite(realtime?.criticalMissing) ? realtime.criticalMissing : 0;
   const sourceSummary = buildSourceSummary(metadata.realtimeSourceDetails, metadata.realtimeSourceStatus);
@@ -112,6 +113,8 @@ export function buildHealthDashboardModel(runtimeState) {
   if (!flags.length) {
     flags.push('正常');
   }
+
+  const workerCandidateLine = buildWorkerCandidateLine(workerCandidate);
 
   let overallLevel = '健康';
   if (metadata.realtimeUnavailable) {
@@ -157,6 +160,23 @@ export function buildHealthDashboardModel(runtimeState) {
     criticalMissing,
     sourceSummaryLabel: sourceSummary.summaryLabel,
     issues: issues.length ? issues : ['实时数据状态健康。'],
-    sourceLines: sourceSummary.issueLines
+    sourceLines: workerCandidateLine
+      ? [...sourceSummary.issueLines, workerCandidateLine]
+      : sourceSummary.issueLines
   };
+}
+
+function buildWorkerCandidateLine(candidate) {
+  if (!candidate || typeof candidate !== 'object') {
+    return 'Worker候选源：未启用生产 / 候选不可用（原因：unavailable）/ 不影响当前数据';
+  }
+  if (candidate.available) {
+    const age = Number.isFinite(candidate.ageMinutes) ? candidate.ageMinutes : '--';
+    const score = Number.isFinite(candidate.healthScore) ? Math.round(candidate.healthScore) : '--';
+    return `Worker候选源：可用 / 独立生成 / 更新约 ${age} 分钟前 / 健康度 ${score} / 未启用生产`;
+  }
+  if (candidate.status === 'timeout') {
+    return 'Worker候选源：读取超时 / 未启用生产 / 不影响当前数据';
+  }
+  return `Worker候选源：未启用生产 / 候选不可用（原因：${candidate.status || 'unavailable'}）/ 不影响当前数据`;
 }
