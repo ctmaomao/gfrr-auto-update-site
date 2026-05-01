@@ -1,11 +1,45 @@
 import { $, riskColor, fmtSignedArrow } from './config.js';
 import { renderList } from './renderTables.js';
 
+const TRANSMISSION_CHAIN_ORDER = [
+  '油价→通胀',
+  '通胀→利率',
+  '利率→股票',
+  '流动性→估值',
+  '美元→信用'
+];
+
+const ASSET_MAPPING_ORDER = [
+  '能源',
+  '美元/短票',
+  '黄金',
+  '科技股',
+  '全球股票',
+  '长久期债券'
+];
+
+function sortByLabelOrder(items, orderedLabels, labelKey) {
+  if (!Array.isArray(items)) return [];
+  const rank = new Map(orderedLabels.map((label, index) => [label, index]));
+  return items
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const ra = rank.has(a.item?.[labelKey]) ? rank.get(a.item[labelKey]) : orderedLabels.length;
+      const rb = rank.has(b.item?.[labelKey]) ? rank.get(b.item[labelKey]) : orderedLabels.length;
+      if (ra !== rb) return ra - rb;
+      return a.index - b.index;
+    })
+    .map((entry) => entry.item);
+}
+
 export function renderBars(containerId, items, isTrend = false) {
   const root = $(containerId);
   root.innerHTML = '';
   root.className = 'progress-group';
-  items.forEach((item) => {
+  const orderedItems = containerId === 'path-change-bars'
+    ? sortByLabelOrder(items, TRANSMISSION_CHAIN_ORDER, 'label')
+    : items;
+  orderedItems.forEach((item) => {
     const wrap = document.createElement('div');
     wrap.className = 'progress-row';
     const trendNote = isTrend ? `<div class="progress-note">较上次 ${fmtSignedArrow(item.delta)}</div>` : '';
@@ -174,7 +208,7 @@ export function renderTransmission(chain) {
   renderList('chain-summary', chain.summary);
   const impacts = $('chain-asset-impacts');
   impacts.innerHTML = '';
-  chain.assetImpacts.forEach((item) => {
+  sortByLabelOrder(chain.assetImpacts, ASSET_MAPPING_ORDER, 'asset').forEach((item) => {
     const div = document.createElement('div');
     div.className = 'chain-impact-item';
     div.innerHTML = `
