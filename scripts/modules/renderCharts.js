@@ -145,7 +145,7 @@ function formatTransmissionDelta(delta) {
   const value = Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(1);
   if (rounded > 0) return `Δ +${value}`;
   if (rounded < 0) return `Δ ${value}`;
-  return 'Δ 0';
+  return '持平';
 }
 
 export function renderTransmission(chain) {
