@@ -22,7 +22,7 @@ export function buildTopRisksDisplay(inputs) {
   return [
     `布伦特 ${fmtNumSafe(inputs.brent, 1)} 美元，能源链条仍在传导。`,
     `广义美元指数 ${fmtNumSafe(inputs.dxy, 2)}，融资环境仍在持续观察。`,
-    `高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}%，信用风险需持续观察。`,
+    `HY OAS（高收益债相对无风险利率信用利差）${fmtNumSafe(inputs.hyOas, 2)}%，信用风险需持续观察。`,
     `10年期美债 ${fmtNumSafe(inputs.us10y, 2)}%，实际利率 ${fmtNumSafe(inputs.real10y, 2)}%。`
   ];
 }
@@ -34,7 +34,7 @@ export function buildPhaseSignalsDisplay(inputs, realtimePayload) {
   const sourceModeLabel = SOURCE_MODE_CN[realtimePayload?.sourceMode] || realtimePayload?.sourceMode || '--';
   const healthScore = Number.isFinite(realtimePayload?.healthScore) ? realtimePayload.healthScore : '--';
   return [
-    `实时输入：布伦特 ${fmtNumSafe(inputs.brent, 1)} / 波动率 ${fmtNumSafe(inputs.vix, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}%。`,
+    `实时输入：布伦特 ${fmtNumSafe(inputs.brent, 1)} / VIX（标普500期权隐含波动率）${fmtNumSafe(inputs.vix, 2)} / HY OAS（高收益债相对无风险利率信用利差）${fmtNumSafe(inputs.hyOas, 2)}%。`,
     `利率输入：10年期 ${fmtNumSafe(inputs.us10y, 2)} / 实际利率 ${fmtNumSafe(inputs.real10y, 2)} / 盈亏平衡通胀 ${fmtNumSafe(inputs.breakeven10y, 2)}%。`,
     `快变量状态：${sourceModeLabel}，健康度 ${healthScore}。`
   ];
@@ -44,7 +44,7 @@ export function buildSummaryDisplay(inputs) {
   if (!hasAnyFiniteField(inputs, ['brent', 'dxy', 'vix', 'hyOas'])) {
     return 'v27.0 正根据混合实时架构输出交易引擎结论。实时快变量暂不可用。';
   }
-  return `v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)}、广义美元指数 ${fmtNumSafe(inputs.dxy, 2)}、波动率 ${fmtNumSafe(inputs.vix, 2)}、高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}%。`;
+  return `v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)}、广义美元指数 ${fmtNumSafe(inputs.dxy, 2)}、VIX（标普500期权隐含波动率）${fmtNumSafe(inputs.vix, 2)}、HY OAS（高收益债相对无风险利率信用利差）${fmtNumSafe(inputs.hyOas, 2)}%。`;
 }
 
 export function buildDecisionLineDisplay(realtimePayload, lock, gating) {
@@ -63,10 +63,10 @@ export function buildTriggerPanelDisplay(inputs, base) {
     critical: [
       `布伦特 ${fmtNumSafe(inputs.brent, 1)}`,
       `广义美元指数 ${fmtNumSafe(inputs.dxy, 2)}`,
-      `高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}%`
+      `HY OAS（高收益债相对无风险利率信用利差）${fmtNumSafe(inputs.hyOas, 2)}%`
     ],
     drivers: [
-      `波动率 ${fmtNumSafe(inputs.vix, 2)}`,
+      `VIX（标普500期权隐含波动率）${fmtNumSafe(inputs.vix, 2)}`,
       `10年期美债 ${fmtNumSafe(inputs.us10y, 2)}%`,
       `实际利率 ${fmtNumSafe(inputs.real10y, 2)}%`
     ],
@@ -92,7 +92,7 @@ export function buildAssetMatrixReasons(list, inputs) {
 
 export function buildScenarioTreeTriggers(list, inputs) {
   if (!Array.isArray(list)) return list;
-  const rebuilt = `布伦特 ${fmtNumSafe(inputs.brent, 1)} / 广义美元指数 ${fmtNumSafe(inputs.dxy, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}`;
+  const rebuilt = `布伦特 ${fmtNumSafe(inputs.brent, 1)} / 广义美元指数 ${fmtNumSafe(inputs.dxy, 2)} / HY OAS（高收益债相对无风险利率信用利差）${fmtNumSafe(inputs.hyOas, 2)}`;
   return list.map((entry) => {
     const triggers = entry?.triggers;
     if (typeof triggers !== 'string' || !triggers) return entry;
@@ -110,7 +110,7 @@ export function buildSignalEngineNotes(inputs, realtimePayload, lock, gating) {
     : (gating?.allMissing ? '结构信号数据源全不可用，门控已降级。' : '结构信号：无激活。');
   return [
     `执行引擎状态：${levelLabel}。`,
-    `关键快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)} / 广义美元指数 ${fmtNumSafe(inputs.dxy, 2)} / 波动率 ${fmtNumSafe(inputs.vix, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}。`,
+    `关键快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)} / 广义美元指数 ${fmtNumSafe(inputs.dxy, 2)} / VIX（标普500期权隐含波动率）${fmtNumSafe(inputs.vix, 2)} / HY OAS（高收益债相对无风险利率信用利差）${fmtNumSafe(inputs.hyOas, 2)}。`,
     `健康度 ${healthScore}，关键缺失 ${criticalMissing}。`,
     structuralLine
   ];
@@ -122,7 +122,7 @@ export function buildLiquidityNotes(inputs, realtimePayload) {
   const criticalMissing = Number.isFinite(realtimePayload?.criticalMissing) ? realtimePayload.criticalMissing : 0;
   const payloadNotes = Array.isArray(realtimePayload?.notes) ? realtimePayload.notes : [];
   return [
-    `实时快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)} / 广义美元指数 ${fmtNumSafe(inputs.dxy, 2)} / 波动率 ${fmtNumSafe(inputs.vix, 2)} / 高收益利差 ${fmtNumSafe(inputs.hyOas, 2)}。`,
+    `实时快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)} / 广义美元指数 ${fmtNumSafe(inputs.dxy, 2)} / VIX（标普500期权隐含波动率）${fmtNumSafe(inputs.vix, 2)} / HY OAS（高收益债相对无风险利率信用利差）${fmtNumSafe(inputs.hyOas, 2)}。`,
     `10年期美债 ${fmtNumSafe(inputs.us10y, 2)} / 实际利率 ${fmtNumSafe(inputs.real10y, 2)} / 黄金 ${fmtNumSafe(inputs.gold, 1)} / 标普500 ${fmtNumSafe(inputs.spx, 0)}。`,
     `数据模式：${sourceModeLabel} / 健康分数：${healthScore} / 关键缺失：${criticalMissing}。`,
     ...payloadNotes
