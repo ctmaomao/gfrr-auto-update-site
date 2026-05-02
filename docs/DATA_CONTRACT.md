@@ -105,6 +105,25 @@ Worker payload 必须在 `workerFirstEnabled === true` 且通过 strict gate 后
 - 不参与 scoring 或 decision 公式。
 - selected source 与 rollback 配置记录在 runtime metadata 的 `realtimeSource` / `realtimeSourcePriority` / `realtimeSourcePolicy` 中，均不序列化进 `radar-data.json`。
 
+### Worker secondary source diagnostics
+
+v28.0D-1 起，Worker generated preview 可在运行时 payload 中附带核心指标第二数据源诊断：
+
+```text
+workerGeneratedPreview.diagnostics.secondarySources
+workerGeneratedPreview.diagnostics.secondarySourceSummary
+```
+
+该结构只存在于 Worker preview runtime payload：
+
+- 不序列化进 `data/radar-data.json`。
+- 不影响 `data.__effectiveDisplayInputs`。
+- 不影响 selected source gate 或 Worker-first / GitHub / local fallback 优先级。
+- 不影响 `healthScore` / `criticalMissing`，除非未来版本明确把某个来源升级为 validation。
+- 不覆盖 `values.dxy` / `values.vix` / `values.hyOas` / `values.gold` / `values.us10y` / `values.brent`。
+- 所有 candidate 必须声明 `participatesInPrimary: false` 与 `participatesInValidation: false`。
+- DXY 与 HY OAS 的备用来源属于 proxy / experimental diagnostic，不得直接视为 canonical 等价源。
+
 ## displayInputsBaseline 契约
 
 `data/radar-data.json` 根层必须包含：

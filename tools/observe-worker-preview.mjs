@@ -32,6 +32,12 @@ const CSV_FIELDS = [
   'goldStatus',
   'googleFinanceStatus',
   'tradingEconomicsStatus',
+  'secondaryDxyOkCount',
+  'secondaryVixOkCount',
+  'secondaryHyOasOkCount',
+  'secondaryGoldOkCount',
+  'secondaryUs10yOkCount',
+  'secondaryWarnings',
   'brent',
   'brentConsensus',
   'canPromoteToPrimary',
@@ -156,12 +162,54 @@ function sourceSummaryText(row) {
   return parts.length > 0 ? ` ${parts.join(' ')}` : '';
 }
 
+function secondaryMetricSummary(summary, metric) {
+  const item = summary?.[metric];
+  if (!item || typeof item !== 'object') {
+    return { okCount: '', failCount: '', text: `${metric}=n/a` };
+  }
+  const okCount = Number.isFinite(item.okCount) ? item.okCount : 0;
+  const failCount = Number.isFinite(item.failCount) ? item.failCount : 0;
+  return {
+    okCount,
+    failCount,
+    text: `${metric}=${okCount}/${okCount + failCount}`,
+  };
+}
+
+function secondaryWarnings(summary) {
+  if (!summary || typeof summary !== 'object') return '';
+  return ['dxy', 'vix', 'hyOas', 'gold', 'us10y']
+    .filter((metric) => {
+      const item = summary[metric];
+      if (!item || typeof item !== 'object') return true;
+      return Number(item.failCount) > 0 || Number(item.okCount) === 0;
+    })
+    .join('|');
+}
+
+function secondarySummaryText(row) {
+  const parts = [
+    row.secondaryDxyText,
+    row.secondaryVixText,
+    row.secondaryHyOasText,
+    row.secondaryGoldText,
+    row.secondaryUs10yText,
+  ].filter(Boolean);
+  return parts.length > 0 ? ` secondary: ${parts.join(' ')}` : '';
+}
+
 function buildRow(checkedAt, httpStatus, payload, error) {
   const nowMs = Date.parse(checkedAt);
   const previewMeta = detectPreviewMeta(payload, error);
   const payloadUpdatedAt = payload?.updatedAt ?? '';
   const diagnostics = payload?.workerGeneratedPreview?.diagnostics ?? {};
   const sourceHttpSummary = diagnostics?.sourceHttpSummary ?? {};
+  const secondarySummary = diagnostics?.secondarySourceSummary ?? {};
+  const secondaryDxy = secondaryMetricSummary(secondarySummary, 'dxy');
+  const secondaryVix = secondaryMetricSummary(secondarySummary, 'vix');
+  const secondaryHyOas = secondaryMetricSummary(secondarySummary, 'hyOas');
+  const secondaryGold = secondaryMetricSummary(secondarySummary, 'gold');
+  const secondaryUs10y = secondaryMetricSummary(secondarySummary, 'us10y');
 
   return {
     checkedAt,
@@ -187,6 +235,17 @@ function buildRow(checkedAt, httpStatus, payload, error) {
     goldStatus: sourceStatus(sourceHttpSummary, 'gold'),
     googleFinanceStatus: sourceStatus(sourceHttpSummary, 'googleFinance'),
     tradingEconomicsStatus: sourceStatus(sourceHttpSummary, 'tradingEconomics'),
+    secondaryDxyOkCount: secondaryDxy.okCount,
+    secondaryVixOkCount: secondaryVix.okCount,
+    secondaryHyOasOkCount: secondaryHyOas.okCount,
+    secondaryGoldOkCount: secondaryGold.okCount,
+    secondaryUs10yOkCount: secondaryUs10y.okCount,
+    secondaryWarnings: secondaryWarnings(secondarySummary),
+    secondaryDxyText: secondaryDxy.text,
+    secondaryVixText: secondaryVix.text,
+    secondaryHyOasText: secondaryHyOas.text,
+    secondaryGoldText: secondaryGold.text,
+    secondaryUs10yText: secondaryUs10y.text,
     brent: pickBrent(payload),
     brentConsensus: pickBrentConsensus(payload),
     canPromoteToPrimary: pickCanPromoteToPrimary(payload),
@@ -235,6 +294,7 @@ function logSummary(index, total, row) {
       `fredAllFailed=${row.fredAllFailed === '' ? 'n/a' : row.fredAllFailed} ` +
       `fredStatuses=${formatValue(row.fredFailureStatuses)}` +
       sourceSummaryText(row) +
+      secondarySummaryText(row) +
       ' ' +
       `brent=${formatValue(row.brent)} ` +
       `consensus=${formatValue(row.brentConsensus)}`,

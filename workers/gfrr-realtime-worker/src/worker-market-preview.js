@@ -20,6 +20,20 @@ const TRADING_ECONOMICS_BRENT_URL =
   'https://tradingeconomics.com/commodity/brent-crude-oil';
 const TRADING_ECONOMICS_ALT_BRENT_URL =
   'https://tradingeconomics.com/commodity/brentcrudeoil';
+const CBOE_VIX_HISTORY_URL = 'https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv';
+const YAHOO_TNX_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?interval=1d&range=5d';
+const YAHOO_GOLD_FUTURES_URL =
+  'https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=5d';
+const YAHOO_DXY_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?interval=1d&range=5d';
+const YAHOO_ALT_DXY_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EDXY?interval=1d&range=5d';
+const STOOQ_DXY_SYMBOLS = ['dxy', 'dxy.us', 'dx.f'];
+const TREASURY_DAILY_RATES_URL =
+  'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page[size]=5';
+const HY_OAS_PROXY_SERIES = 'BAMLH0A0HYM2EY';
+const ALPHA_VANTAGE_VIX_SOURCE = 'alphavantage:VIX';
+const ALPHA_VANTAGE_GOLD_SOURCE = 'alphavantage:XAU';
+const TRADING_ECONOMICS_HY_SOURCE = 'tradingeconomics:hy-credit';
+const DIAGNOSTIC_ERROR_MAX = 180;
 
 const FETCH_HEADERS = {
   Accept: 'text/csv,application/json,text/plain,*/*',
@@ -48,6 +62,27 @@ function parseNumeric(raw) {
   if (text === '' || text === '.' || text === '-') return null;
   const value = Number(text);
   return Number.isFinite(value) ? value : null;
+}
+
+function truncateDiagnosticError(error) {
+  if (error == null) return null;
+  const text = String(error);
+  return text.length > DIAGNOSTIC_ERROR_MAX
+    ? `${text.slice(0, DIAGNOSTIC_ERROR_MAX - 3)}...`
+    : text;
+}
+
+function diagnosticDelayMs() {
+  return 150 + Math.floor(Math.random() * 151);
+}
+
+function getOptionalEnvValue(_name) {
+  const container = globalThis?.GFRR_OPTIONAL_ENV;
+  if (container && typeof container === 'object' && typeof container[_name] === 'string') {
+    return container[_name];
+  }
+  const value = globalThis?.[_name];
+  return typeof value === 'string' && value.trim() !== '' ? value : null;
 }
 
 function sleep(ms) {
@@ -374,6 +409,491 @@ function buildCandidateDiagnostics(result, parseError = null) {
   };
 }
 
+function buildSecondaryCandidate({
+  source,
+  metric,
+  role = 'diagnostic',
+  quality = 'experimental',
+  primaryValue,
+  value = null,
+  timestamp = null,
+  error = null,
+  result = null,
+  note = null,
+}) {
+  const numericPrimary = isFiniteNumber(primaryValue) ? primaryValue : null;
+  const numericValue = isFiniteNumber(value) ? value : null;
+  const absDiff = numericPrimary != null && numericValue != null
+    ? roundValue(Math.abs(numericValue - numericPrimary))
+    : null;
+  const diff = numericPrimary != null && numericValue != null
+    ? roundValue(numericValue - numericPrimary)
+    : null;
+  const pctDiff = numericPrimary != null && numericPrimary !== 0 && numericValue != null
+    ? roundValue((Math.abs(numericValue - numericPrimary) / Math.abs(numericPrimary)) * 100)
+    : null;
+
+  return {
+    source,
+    metric,
+    role,
+    participatesInPrimary: false,
+    participatesInValidation: false,
+    quality,
+    ok: numericValue != null && error == null,
+    value: numericValue,
+    timestamp,
+    error: truncateDiagnosticError(error),
+    httpStatus: result?.status ?? null,
+    contentType: result?.contentType ?? null,
+    bodyLength: result?.bodyLength ?? null,
+    durationMs: result?.durationMs ?? null,
+    retryCount: result?.retryCount ?? null,
+    diffFromPrimary: diff,
+    pctDiffFromPrimary: pctDiff,
+    absDiffFromPrimary: absDiff,
+    ...(note ? { note } : {}),
+  };
+}
+
+function buildSkippedSecondaryCandidate(source, metric, role = 'diagnostic') {
+  return buildSecondaryCandidate({
+    source,
+    metric,
+    role,
+    quality: 'optional-api-key',
+    error: 'skipped-missing-api-key',
+  });
+}
+
+function parseYahooChartClose(text, transform = (value) => value) {
+  const payload = JSON.parse(text);
+  const result = payload?.chart?.result?.[0];
+  const closes = result?.indicators?.quote?.[0]?.close ?? [];
+  const timestamps = result?.timestamp ?? [];
+
+  for (let i = closes.length - 1; i >= 0; i -= 1) {
+    const parsed = parseNumeric(closes[i]);
+    if (parsed != null) {
+      return {
+        value: roundValue(transform(parsed)),
+        timestamp: timestamps[i] ? new Date(timestamps[i] * 1000).toISOString() : null,
+      };
+    }
+  }
+
+  throw new Error('no numeric close');
+}
+
+function parseCboeVixHistory(text) {
+  const rows = text
+    .trim()
+    .split(/\r?\n/)
+    .map((line) => splitCsvLine(line));
+  const header = rows.shift()?.map((item) => item.trim().toLowerCase()) ?? [];
+  const dateIndex = header.findIndex((name) => name === 'date');
+  const closeIndex = header.findIndex((name) => name === 'close');
+  if (dateIndex < 0 || closeIndex < 0) throw new Error('missing DATE/CLOSE columns');
+
+  for (let i = rows.length - 1; i >= 0; i -= 1) {
+    const value = parseNumeric(rows[i]?.[closeIndex]);
+    if (value != null) {
+      return {
+        value: roundValue(value),
+        timestamp: rows[i]?.[dateIndex] || null,
+      };
+    }
+  }
+
+  throw new Error('no numeric VIX close');
+}
+
+function parseTreasuryDailyRates(text) {
+  const payload = JSON.parse(text);
+  const rows = Array.isArray(payload?.data) ? payload.data : [];
+
+  for (const row of rows) {
+    const entries = Object.entries(row);
+    const match = entries.find(([key]) => /10[\s_-]*(yr|year)/i.test(key));
+    const value = parseNumeric(match?.[1]);
+    if (value != null) {
+      return {
+        value: roundValue(value),
+        timestamp: row.record_date ?? row.date ?? null,
+      };
+    }
+  }
+
+  throw new Error('daily treasury rate 10Y field not found');
+}
+
+async function fetchYahooChartSecondary({ url, source, metric, primaryValue, transform, quality, note }) {
+  const result = await fetchTextWithDiagnostics(url, {
+    headers: { Accept: 'application/json,text/plain,*/*' },
+  });
+  let parsed = null;
+  let parseError = null;
+
+  if (result.ok) {
+    try {
+      parsed = parseYahooChartClose(result.text, transform);
+    } catch (err) {
+      parseError = err instanceof Error ? err.message : String(err);
+    }
+  }
+
+  return buildSecondaryCandidate({
+    source,
+    metric,
+    quality,
+    primaryValue,
+    value: parsed?.value ?? null,
+    timestamp: parsed?.timestamp ?? null,
+    error: parseError ?? result.error,
+    result,
+    note,
+  });
+}
+
+function parseAlphaVantageNumber(text, preferredKeys = []) {
+  const payload = JSON.parse(text);
+  const stack = [payload];
+  while (stack.length) {
+    const item = stack.pop();
+    if (!item || typeof item !== 'object') continue;
+    for (const key of preferredKeys) {
+      const value = parseNumeric(item[key]);
+      if (value != null) return { value: roundValue(value), timestamp: item.date ?? item.timestamp ?? null };
+    }
+    for (const [key, value] of Object.entries(item)) {
+      if (/close|price|value/i.test(key)) {
+        const parsed = parseNumeric(value);
+        if (parsed != null) return { value: roundValue(parsed), timestamp: item.date ?? item.timestamp ?? null };
+      }
+      if (value && typeof value === 'object') stack.push(value);
+    }
+  }
+  throw new Error('no numeric Alpha Vantage value');
+}
+
+async function fetchAlphaVantageSecondary({ source, metric, primaryValue, url, preferredKeys }) {
+  const result = await fetchTextWithDiagnostics(url, {
+    headers: { Accept: 'application/json,text/plain,*/*' },
+  });
+  let parsed = null;
+  let parseError = null;
+  if (result.ok) {
+    try {
+      parsed = parseAlphaVantageNumber(result.text, preferredKeys);
+    } catch (err) {
+      parseError = err instanceof Error ? err.message : String(err);
+    }
+  }
+  return buildSecondaryCandidate({
+    source,
+    metric,
+    quality: 'optional-api',
+    primaryValue,
+    value: parsed?.value ?? null,
+    timestamp: parsed?.timestamp ?? null,
+    error: parseError ?? result.error,
+    result,
+  });
+}
+
+async function fetchVixSecondarySources(primaryValue) {
+  const candidates = [];
+  const cboe = await fetchTextWithDiagnostics(CBOE_VIX_HISTORY_URL);
+  let cboeParsed = null;
+  let cboeError = null;
+  if (cboe.ok) {
+    try {
+      cboeParsed = parseCboeVixHistory(cboe.text);
+    } catch (err) {
+      cboeError = err instanceof Error ? err.message : String(err);
+    }
+  }
+  candidates.push(buildSecondaryCandidate({
+    source: 'cboe:VIX_History',
+    metric: 'vix',
+    quality: 'official-csv',
+    primaryValue,
+    value: cboeParsed?.value ?? null,
+    timestamp: cboeParsed?.timestamp ?? null,
+    error: cboeError ?? cboe.error,
+    result: cboe,
+  }));
+
+  const alphaKey = getOptionalEnvValue('ALPHA_VANTAGE_API_KEY');
+  if (alphaKey) {
+    await sleep(diagnosticDelayMs());
+    candidates.push(await fetchAlphaVantageSecondary({
+      source: ALPHA_VANTAGE_VIX_SOURCE,
+      metric: 'vix',
+      primaryValue,
+      url: `https://www.alphavantage.co/query?function=INDEX_DATA&symbol=VIX&interval=daily&apikey=${encodeURIComponent(alphaKey)}`,
+      preferredKeys: ['close', 'Close', 'value'],
+    }));
+  } else {
+    candidates.push(buildSkippedSecondaryCandidate(ALPHA_VANTAGE_VIX_SOURCE, 'vix'));
+  }
+  return candidates;
+}
+
+async function fetchUs10ySecondarySources(primaryValue) {
+  const candidates = [];
+  const treasury = await fetchTextWithDiagnostics(TREASURY_DAILY_RATES_URL, {
+    headers: { Accept: 'application/json,text/plain,*/*' },
+  });
+  let treasuryParsed = null;
+  let treasuryError = null;
+  if (treasury.ok) {
+    try {
+      treasuryParsed = parseTreasuryDailyRates(treasury.text);
+    } catch (err) {
+      treasuryError = err instanceof Error ? err.message : String(err);
+    }
+  }
+  candidates.push(buildSecondaryCandidate({
+    source: 'treasury:daily-rates',
+    metric: 'us10y',
+    quality: 'diagnostic-experiment',
+    primaryValue,
+    value: treasuryParsed?.value ?? null,
+    timestamp: treasuryParsed?.timestamp ?? null,
+    error: treasuryError ?? treasury.error,
+    result: treasury,
+    note: 'diagnostic experiment; endpoint may not expose constant-maturity 10Y',
+  }));
+
+  await sleep(diagnosticDelayMs());
+  candidates.push(await fetchYahooChartSecondary({
+    url: YAHOO_TNX_URL,
+    source: 'yahoo:^TNX',
+    metric: 'us10y',
+    primaryValue,
+    transform: (value) => value / 10,
+    quality: 'market-index-proxy',
+    note: '^TNX is quoted as 10Y yield x 10; value is divided by 10',
+  }));
+  return candidates;
+}
+
+async function fetchGoldSecondarySources(primaryValue) {
+  const candidates = [];
+  const alphaKey = getOptionalEnvValue('ALPHA_VANTAGE_API_KEY');
+  if (alphaKey) {
+    candidates.push(await fetchAlphaVantageSecondary({
+      source: ALPHA_VANTAGE_GOLD_SOURCE,
+      metric: 'gold',
+      primaryValue,
+      url: `https://www.alphavantage.co/query?function=GOLD_SILVER_SPOT&symbol=XAU&apikey=${encodeURIComponent(alphaKey)}`,
+      preferredKeys: ['price', 'Price', 'close', 'Close'],
+    }));
+  } else {
+    candidates.push(buildSkippedSecondaryCandidate(ALPHA_VANTAGE_GOLD_SOURCE, 'gold'));
+  }
+
+  await sleep(diagnosticDelayMs());
+  candidates.push(await fetchYahooChartSecondary({
+    url: YAHOO_GOLD_FUTURES_URL,
+    source: 'yahoo:GC=F',
+    metric: 'gold',
+    primaryValue,
+    transform: (value) => value,
+    quality: 'futures-proxy',
+    note: 'diagnostic only; COMEX gold futures are not identical to spot XAU',
+  }));
+  return candidates;
+}
+
+async function fetchDxySecondarySources(primaryValue) {
+  const candidates = [];
+  let yahooSource = 'yahoo:DX-Y.NYB';
+  let yahoo = await fetchYahooChartSecondary({
+    url: YAHOO_DXY_URL,
+    source: yahooSource,
+    metric: 'dxy',
+    primaryValue,
+    transform: (value) => value,
+    quality: 'ice-dxy-proxy',
+    note: 'diagnostic only; FRED DTWEXBGS is broad dollar index and not identical to ICE DXY',
+  });
+  if (!yahoo.ok) {
+    await sleep(diagnosticDelayMs());
+    yahooSource = 'yahoo:^DXY';
+    yahoo = await fetchYahooChartSecondary({
+      url: YAHOO_ALT_DXY_URL,
+      source: yahooSource,
+      metric: 'dxy',
+      primaryValue,
+      transform: (value) => value,
+      quality: 'ice-dxy-proxy',
+      note: 'diagnostic only; FRED DTWEXBGS is broad dollar index and not identical to ICE DXY',
+    });
+  }
+  candidates.push(yahoo);
+
+  await sleep(diagnosticDelayMs());
+  let bestStooq = null;
+  for (let i = 0; i < STOOQ_DXY_SYMBOLS.length; i += 1) {
+    const symbol = STOOQ_DXY_SYMBOLS[i];
+    const result = await fetchTextWithDiagnostics(`https://stooq.com/q/d/l/?s=${encodeURIComponent(symbol)}&i=d`);
+    let parsed = null;
+    let parseError = null;
+    if (result.ok) {
+      try {
+        const { latest } = latestTwoCsvValues(result.text, 4);
+        if (!latest) throw new Error('no numeric close');
+        parsed = { value: roundValue(latest.value), timestamp: latest.timestamp };
+      } catch (err) {
+        parseError = err instanceof Error ? err.message : String(err);
+      }
+    }
+    const candidate = buildSecondaryCandidate({
+      source: `stooq:${symbol}`,
+      metric: 'dxy',
+      quality: 'symbol-experiment',
+      primaryValue,
+      value: parsed?.value ?? null,
+      timestamp: parsed?.timestamp ?? null,
+      error: parseError ?? result.error,
+      result,
+      note: 'diagnostic only; symbol may represent ICE DXY rather than broad dollar index',
+    });
+    bestStooq = bestStooq?.ok ? bestStooq : candidate;
+    if (candidate.ok || i === STOOQ_DXY_SYMBOLS.length - 1) break;
+    await sleep(diagnosticDelayMs());
+  }
+  candidates.push(bestStooq);
+  return candidates;
+}
+
+async function fetchHyOasSecondarySources(primaryValue, cosd) {
+  const candidates = [];
+  const fredProxy = await fetchTextWithDiagnostics(
+    `https://fred.stlouisfed.org/graph/fredgraph.csv?cosd=${cosd}&id=${HY_OAS_PROXY_SERIES}`,
+  );
+  let fredParsed = null;
+  let fredError = null;
+  if (fredProxy.ok) {
+    try {
+      const { latest } = latestTwoCsvValues(fredProxy.text);
+      if (!latest) throw new Error('no numeric HY effective yield');
+      fredParsed = { value: roundValue(latest.value), timestamp: latest.timestamp };
+    } catch (err) {
+      fredError = err instanceof Error ? err.message : String(err);
+    }
+  }
+  candidates.push(buildSecondaryCandidate({
+    source: `fred:${HY_OAS_PROXY_SERIES}`,
+    metric: 'hyOas',
+    role: 'diagnostic-proxy',
+    quality: 'related-fred-proxy',
+    primaryValue,
+    value: fredParsed?.value ?? null,
+    timestamp: fredParsed?.timestamp ?? null,
+    error: fredError ?? fredProxy.error,
+    result: fredProxy,
+    note: 'high yield effective yield proxy; not OAS and not validation',
+  }));
+
+  const tradingEconomicsKey = getOptionalEnvValue('TRADING_ECONOMICS_API_KEY');
+  if (tradingEconomicsKey) {
+    await sleep(diagnosticDelayMs());
+    const result = await fetchTextWithDiagnostics(
+      `https://api.tradingeconomics.com/markets/bonds?c=${encodeURIComponent(tradingEconomicsKey)}`,
+      { headers: { Accept: 'application/json,text/plain,*/*' } },
+    );
+    let parsed = null;
+    let parseError = null;
+    if (result.ok) {
+      try {
+        const payload = JSON.parse(result.text);
+        const rows = Array.isArray(payload) ? payload : [];
+        const match = rows.find((row) => /high\s*yield|junk|hy/i.test(JSON.stringify(row)));
+        const value = parseNumeric(match?.Last ?? match?.last ?? match?.Value ?? match?.value);
+        if (value == null) throw new Error('no high-yield proxy value');
+        parsed = { value: roundValue(value), timestamp: match?.Date ?? match?.date ?? null };
+      } catch (err) {
+        parseError = err instanceof Error ? err.message : String(err);
+      }
+    }
+    candidates.push(buildSecondaryCandidate({
+      source: TRADING_ECONOMICS_HY_SOURCE,
+      metric: 'hyOas',
+      role: 'diagnostic-proxy',
+      quality: 'optional-api-experiment',
+      primaryValue,
+      value: parsed?.value ?? null,
+      timestamp: parsed?.timestamp ?? null,
+      error: parseError ?? result.error,
+      result,
+      note: 'optional Trading Economics proxy; not OAS validation',
+    }));
+  } else {
+    candidates.push(buildSkippedSecondaryCandidate(TRADING_ECONOMICS_HY_SOURCE, 'hyOas', 'diagnostic-proxy'));
+  }
+  return candidates;
+}
+
+function summarizeSecondaryCandidates(candidates) {
+  const okCandidates = candidates.filter((candidate) => candidate.ok);
+  const absDiffs = okCandidates
+    .map((candidate) => candidate.absDiffFromPrimary)
+    .filter((value) => isFiniteNumber(value));
+  const pctDiffs = okCandidates
+    .map((candidate) => candidate.pctDiffFromPrimary)
+    .filter((value) => isFiniteNumber(value));
+
+  return {
+    okCount: okCandidates.length,
+    failCount: candidates.length - okCandidates.length,
+    bestSource: okCandidates[0]?.source ?? null,
+    maxAbsDiff: absDiffs.length ? roundValue(Math.max(...absDiffs)) : null,
+    maxPctDiff: pctDiffs.length ? roundValue(Math.max(...pctDiffs)) : null,
+  };
+}
+
+async function buildSecondarySourceDiagnostics(values, cosd) {
+  const secondarySources = {};
+  const safeMetric = async (metric, primaryValue, fetcher) => {
+    try {
+      return await fetcher();
+    } catch (err) {
+      return [
+        buildSecondaryCandidate({
+          source: `worker-secondary:${metric}`,
+          metric,
+          quality: 'internal-diagnostic-error',
+          primaryValue,
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      ];
+    }
+  };
+
+  secondarySources.vix = await safeMetric('vix', values.vix, () => fetchVixSecondarySources(values.vix));
+  await sleep(diagnosticDelayMs());
+  secondarySources.us10y = await safeMetric('us10y', values.us10y, () => fetchUs10ySecondarySources(values.us10y));
+  await sleep(diagnosticDelayMs());
+  secondarySources.gold = await safeMetric('gold', values.gold, () => fetchGoldSecondarySources(values.gold));
+  await sleep(diagnosticDelayMs());
+  secondarySources.dxy = await safeMetric('dxy', values.dxy, () => fetchDxySecondarySources(values.dxy));
+  await sleep(diagnosticDelayMs());
+  secondarySources.hyOas = await safeMetric('hyOas', values.hyOas, () => fetchHyOasSecondarySources(values.hyOas, cosd));
+
+  return {
+    secondarySources,
+    secondarySourceSummary: Object.fromEntries(
+      Object.entries(secondarySources).map(([metric, candidates]) => [
+        metric,
+        summarizeSecondaryCandidates(candidates),
+      ]),
+    ),
+  };
+}
+
 function parseYahooBrent(text) {
   const payload = JSON.parse(text);
   const result = payload?.chart?.result?.[0];
@@ -631,6 +1151,8 @@ export async function buildWorkerGeneratedMarketPreview() {
   sourceDetails.gold = gold.detail;
 
   const brentValidation = await buildBrentValidation(values.brent);
+  await sleep(diagnosticDelayMs());
+  const secondaryDiagnostics = await buildSecondarySourceDiagnostics(values, cosd);
   const criticalMissing = countMissing(values, CRITICAL_FIELDS);
   const nonCriticalFields = Object.keys(values).filter((field) => !CRITICAL_FIELDS.includes(field));
   const nonCriticalMissing = countMissing(values, nonCriticalFields);
@@ -639,9 +1161,11 @@ export async function buildWorkerGeneratedMarketPreview() {
   const fredSummary = summarizeFred(fredResults);
   const diagnostics = {
     generatedAt: nowIso,
-    requestPolicy: 'sequential-fred-with-retry',
+    requestPolicy: 'sequential-fred-with-retry-and-secondary-diagnostics',
     fredAllFailed: fredSummary.fredAllFailed,
     fredFailureStatuses: fredSummary.fredFailureStatuses,
+    secondarySources: secondaryDiagnostics.secondarySources,
+    secondarySourceSummary: secondaryDiagnostics.secondarySourceSummary,
     sourceHttpSummary: {
       fred: {
         okCount: fredSummary.okCount,
@@ -655,6 +1179,7 @@ export async function buildWorkerGeneratedMarketPreview() {
         brentValidation.diagnostics.tradingEconomics,
       ),
       gold: sourceSummaryFromDiagnostic(gold.diagnostic),
+      dxyDiagnostic: secondaryDiagnostics.secondarySourceSummary.dxy,
     },
   };
 
@@ -678,7 +1203,7 @@ export async function buildWorkerGeneratedMarketPreview() {
     brentValidation,
     workerGeneratedPreview: {
       enabled: true,
-      version: 'v28.0B-2A.1',
+      version: 'v28.0D-1',
       source: 'cloudflare-worker',
       generatedAt: nowIso,
       writePolicy: 'single-kv-write-alternating',

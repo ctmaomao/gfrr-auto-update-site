@@ -347,6 +347,8 @@ git push origin main
 - VIX 短时差异但没有 critical fail。
 - GitHub Actions schedule 空窗，但 Worker 当前 fresh 且健康。
 
+**v28.0D-1 core metrics secondary source diagnostics**：Worker generated preview 会在 `workerGeneratedPreview.diagnostics.secondarySources` / `secondarySourceSummary` 中记录 DXY、VIX、HY OAS、Gold、US10Y 的第二数据源诊断。该层只用于观察源可达性、HTTP 状态、解析状态和相对主值差异，不参与生产主值、不参与 validation、不影响 Worker-first selected source gate、不影响 `healthScore` / `criticalMissing`。观察时优先使用 `node tools/observe-worker-preview.mjs --samples=24 --interval-minutes=15 --path=/market.worker-preview.json`；若某一候选源连续 **24–72 小时** 稳定，再考虑后续版本是否升级为 validation。DXY 备用源与 FRED `DTWEXBGS` 定义不同，HY OAS 备用源是 yield / credit proxy，不得直接视为生产等价源。
+
 ## 10. 不要做的修复
 
 - 不要为了让 validate 通过而削弱校验规则。
