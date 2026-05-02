@@ -114,7 +114,7 @@ export function buildHealthDashboardModel(runtimeState) {
     flags.push('正常');
   }
 
-  const workerCandidateLine = buildWorkerCandidateLine(workerCandidate);
+  const workerCandidateLine = buildWorkerRealtimeSourceLine(workerCandidate, metadata);
 
   let overallLevel = '健康';
   if (metadata.realtimeUnavailable) {
@@ -166,17 +166,28 @@ export function buildHealthDashboardModel(runtimeState) {
   };
 }
 
-function buildWorkerCandidateLine(candidate) {
+function buildWorkerRealtimeSourceLine(candidate, metadata = {}) {
+  if (metadata.realtimeSource === 'worker-generated-preview' && candidate?.available) {
+    const age = Number.isFinite(candidate.ageMinutes) ? candidate.ageMinutes : '--';
+    const score = Number.isFinite(candidate.healthScore) ? Math.round(candidate.healthScore) : '--';
+    return `Worker实时源：已启用 / 独立生成 / 更新约 ${age} 分钟前 / 健康度 ${score}`;
+  }
+  if (metadata.realtimeSource === 'github-realtime-data') {
+    return `Worker实时源：未启用 / 已回退 GitHub（原因：${candidate?.rejectionReason || candidate?.status || 'unavailable'}）/ 当前数据不受影响`;
+  }
+  if (metadata.realtimeSource === 'local-fallback') {
+    return 'Worker实时源：不可用；GitHub实时源不可用；当前使用本地 fallback';
+  }
   if (!candidate || typeof candidate !== 'object') {
-    return 'Worker候选源：未启用生产 / 候选不可用（原因：unavailable）/ 不影响当前数据';
+    return 'Worker实时源：未启用 / 候选不可用（原因：unavailable）/ 当前数据不受影响';
   }
   if (candidate.available) {
     const age = Number.isFinite(candidate.ageMinutes) ? candidate.ageMinutes : '--';
     const score = Number.isFinite(candidate.healthScore) ? Math.round(candidate.healthScore) : '--';
-    return `Worker候选源：可用 / 独立生成 / 更新约 ${age} 分钟前 / 健康度 ${score} / 未启用生产`;
+    return `Worker实时源：候选可用但未作为主源 / 独立生成 / 更新约 ${age} 分钟前 / 健康度 ${score}`;
   }
   if (candidate.status === 'timeout') {
-    return 'Worker候选源：读取超时 / 未启用生产 / 不影响当前数据';
+    return 'Worker实时源：读取超时 / 未启用 / 当前数据不受影响';
   }
-  return `Worker候选源：未启用生产 / 候选不可用（原因：${candidate.status || 'unavailable'}）/ 不影响当前数据`;
+  return `Worker实时源：未启用 / 候选不可用（原因：${candidate.status || 'unavailable'}）/ 当前数据不受影响`;
 }

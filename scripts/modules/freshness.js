@@ -64,6 +64,12 @@ export function buildRealtimeStatusLabel(metadata) {
   if (metadata.realtimeUnavailable) {
     return '实时数据不可用 / 仅基线模式';
   }
+  const sourceMap = {
+    'worker-generated-preview': '主源 Worker独立生成',
+    'github-realtime-data': '主源 GitHub realtime-data',
+    'local-fallback': '主源 本地 fallback',
+    'remote': '主源 远程'
+  };
   const freshnessMap = {
     fresh: '新鲜',
     aging: '老化中',
@@ -71,7 +77,7 @@ export function buildRealtimeStatusLabel(metadata) {
     unavailable: '不可用'
   };
   const freshnessLabel = freshnessMap[metadata.realtimeFreshnessLevel] || metadata.realtimeFreshnessLevel;
-  const parts = [`实时数据 ${freshnessLabel}`];
+  const parts = [sourceMap[metadata.realtimeSource] || '主源 未知', `实时数据 ${freshnessLabel}`];
   if (Number.isFinite(metadata.realtimeAgeMinutes)) parts.push(`${metadata.realtimeAgeMinutes} 分钟前`);
   if (metadata.realtimeDegraded) parts.push('降级');
   if (metadata.realtimeFallbackUsed) parts.push('本地回退');

@@ -33,6 +33,8 @@ const LOCAL_FALLBACK_MAX_AGE_MINUTES = 180;
 const LOCAL_FALLBACK_KEY_FIELDS = ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'gold', 'spx'];
 const LOCAL_FALLBACK_MIN_FINITE_KEY_FIELDS = 5;
 const WORKER_CANDIDATE_TIMEOUT_MS = 4500;
+const WORKER_MAX_AGE_MINUTES = 10;
+const WORKER_REQUIRED_FIELDS = ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'real10y'];
 
 export async function fetchBaselineData() {
   return fetch(dataUrl).then((r) => r.json());
@@ -167,6 +169,7 @@ function buildWorkerCandidateStatus(partial = {}) {
     healthScore: null,
     criticalMissing: null,
     unavailable: null,
+    rejectionReason: null,
     valuesSummary: {
       brent: null,
       dxy: null,
@@ -183,28 +186,40 @@ function buildWorkerCandidateStatus(partial = {}) {
   };
 }
 
-function validateWorkerCandidatePayload(payload) {
-  if (!payload || typeof payload !== 'object') return 'invalid-payload';
-  if (payload?.workerGeneratedPreview?.enabled !== true) return 'invalid-payload';
-  if (!payload.values || typeof payload.values !== 'object') return 'invalid-payload';
-  if (typeof payload.updatedAt !== 'string' || !payload.updatedAt) return 'invalid-payload';
-  if (typeof payload.sourceMode !== 'string' || !payload.sourceMode) return 'invalid-payload';
-  if (!Number.isFinite(Number(payload.healthScore))) return 'invalid-payload';
-  if (!Number.isFinite(Number(payload.criticalMissing))) return 'invalid-payload';
-  return null;
+export function canUseWorkerGeneratedRealtimePayload(payload, nowMs = Date.now(), httpStatus = 200) {
+  if (httpStatus !== 200) return { usable: false, reason: `http-${httpStatus || 0}` };
+  if (!payload || typeof payload !== 'object') return { usable: false, reason: 'invalid-payload' };
+  if (payload?.workerGeneratedPreview?.enabled !== true) return { usable: false, reason: 'worker-preview-disabled' };
+  if (payload.unavailable === true) return { usable: false, reason: 'worker-unavailable' };
+  if (payload.sourceMode !== 'worker-generated-preview') return { usable: false, reason: 'source-mode-not-worker-preview' };
+  const healthScore = Number(payload.healthScore);
+  if (!Number.isFinite(healthScore) || healthScore < 85) return { usable: false, reason: 'health-score-below-85' };
+  const criticalMissing = Number(payload.criticalMissing);
+  if (!Number.isFinite(criticalMissing) || criticalMissing > 1) return { usable: false, reason: 'critical-missing-above-1' };
+  const updatedAtMs = Date.parse(payload.updatedAt);
+  if (!Number.isFinite(updatedAtMs)) return { usable: false, reason: 'updatedAt-invalid' };
+  const ageMinutes = Math.max(0, Math.round((nowMs - updatedAtMs) / 60000));
+  if (ageMinutes > WORKER_MAX_AGE_MINUTES) return { usable: false, reason: `worker-stale(${ageMinutes}m)` };
+  if (!payload.values || typeof payload.values !== 'object') return { usable: false, reason: 'values-missing' };
+  for (const key of WORKER_REQUIRED_FIELDS) {
+    const value = Number(payload.values[key]);
+    if (!Number.isFinite(value)) return { usable: false, reason: `${key}-not-finite` };
+    if (key === 'brent' && value === 0) return { usable: false, reason: 'brent-zero' };
+  }
+  return { usable: true, reason: null, ageMinutes };
 }
 
-function buildWorkerCandidateFromPayload(payload, httpStatus, fetchedAt) {
+function buildWorkerCandidateFromPayload(payload, httpStatus, fetchedAt, gate) {
   const healthScore = Number(payload.healthScore);
   const criticalMissing = Number(payload.criticalMissing);
   const ageMinutes = computeAgeMinutes(payload.updatedAt);
   const unavailable = payload.unavailable === true;
-  const available = !unavailable && healthScore >= 85 && criticalMissing <= 1;
+  const available = gate.usable;
   const values = payload.values || {};
   const consensus = payload?.brentValidation?.consensus || {};
   return buildWorkerCandidateStatus({
     available,
-    status: available ? 'ok' : 'unavailable',
+    status: available ? 'ok' : gate.reason || 'unavailable',
     httpStatus,
     fetchedAt,
     updatedAt: payload.updatedAt,
@@ -213,6 +228,7 @@ function buildWorkerCandidateFromPayload(payload, httpStatus, fetchedAt) {
     healthScore,
     criticalMissing,
     unavailable,
+    rejectionReason: gate.reason,
     valuesSummary: {
       brent: getRealtimeNumber(values, 'brent'),
       dxy: getRealtimeNumber(values, 'dxy'),
@@ -230,7 +246,7 @@ function buildWorkerCandidateFromPayload(payload, httpStatus, fetchedAt) {
   });
 }
 
-export async function fetchWorkerGeneratedCandidate() {
+async function fetchWorkerGeneratedCandidateResult() {
   const fetchedAt = new Date().toISOString();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), WORKER_CANDIDATE_TIMEOUT_MS);
@@ -240,39 +256,53 @@ export async function fetchWorkerGeneratedCandidate() {
       signal: controller.signal
     });
     if (!response.ok) {
-      return buildWorkerCandidateStatus({
+      return {
+        payload: null,
+        candidate: buildWorkerCandidateStatus({
         status: 'http-error',
         httpStatus: response.status,
-        fetchedAt
-      });
+          fetchedAt,
+          rejectionReason: `http-${response.status}`
+        })
+      };
     }
     let payload;
     try {
       payload = await response.json();
     } catch (_error) {
-      return buildWorkerCandidateStatus({
+      return {
+        payload: null,
+        candidate: buildWorkerCandidateStatus({
         status: 'json-error',
         httpStatus: response.status,
-        fetchedAt
-      });
+          fetchedAt,
+          rejectionReason: 'json-error'
+        })
+      };
     }
-    const invalidReason = validateWorkerCandidatePayload(payload);
-    if (invalidReason) {
-      return buildWorkerCandidateStatus({
-        status: invalidReason,
-        httpStatus: response.status,
-        fetchedAt
-      });
-    }
-    return buildWorkerCandidateFromPayload(payload, response.status, fetchedAt);
+    const gate = canUseWorkerGeneratedRealtimePayload(payload, Date.now(), response.status);
+    return {
+      payload: gate.usable ? normalizeRealtimePayload(payload) : null,
+      candidate: buildWorkerCandidateFromPayload(payload, response.status, fetchedAt, gate)
+    };
   } catch (error) {
-    return buildWorkerCandidateStatus({
-      status: error?.name === 'AbortError' ? 'timeout' : 'unavailable',
-      fetchedAt
-    });
+    const status = error?.name === 'AbortError' ? 'timeout' : 'unavailable';
+    return {
+      payload: null,
+      candidate: buildWorkerCandidateStatus({
+        status,
+        fetchedAt,
+        rejectionReason: status
+      })
+    };
   } finally {
     clearTimeout(timer);
   }
+}
+
+export async function fetchWorkerGeneratedCandidate() {
+  const result = await fetchWorkerGeneratedCandidateResult();
+  return result.candidate;
 }
 
 function buildRealtimeFetchAudit({ realtimeResult, realtimePayload, runtimeMetadata }) {
@@ -280,11 +310,7 @@ function buildRealtimeFetchAudit({ realtimeResult, realtimePayload, runtimeMetad
   if (fromResult && typeof fromResult === 'object') {
     return fromResult;
   }
-  const selectedSource = runtimeMetadata?.realtimeSource === 'remote'
-    ? 'remote'
-    : runtimeMetadata?.realtimeFallbackUsed
-      ? 'local-fallback'
-      : 'none';
+  const selectedSource = runtimeMetadata?.realtimeSource || 'none';
   return {
     attemptedAt: new Date().toISOString(),
     remoteUrl: REMOTE_REALTIME_URL,
@@ -297,30 +323,79 @@ function buildRealtimeFetchAudit({ realtimeResult, realtimePayload, runtimeMetad
       : Number.isFinite(runtimeMetadata?.realtimeHealthScore) ? runtimeMetadata.realtimeHealthScore : null,
     fallbackReason: runtimeMetadata?.realtimeFetchFailed
       ? runtimeMetadata?.realtimeFallbackUsed ? 'remote-failed-local-fallback-used' : 'remote-and-local-failed'
-      : selectedSource === 'remote' ? null : runtimeMetadata?.realtimeError || null
+      : selectedSource === 'worker-generated-preview' || selectedSource === 'github-realtime-data' ? null : runtimeMetadata?.realtimeError || null
   };
 }
 
 export async function fetchRealtimePayload() {
-  const workerCandidatePromise = fetchWorkerGeneratedCandidate();
+  const workerResult = await fetchWorkerGeneratedCandidateResult();
   const realtimeFetchAudit = {
     attemptedAt: new Date().toISOString(),
     remoteUrl: REMOTE_REALTIME_URL,
+    workerUrl: WORKER_GENERATED_REALTIME_URL,
     cacheBusted: true,
     selectedSource: 'none',
     remoteUpdatedAt: null,
     remoteSourceMode: null,
     remoteHealthScore: null,
+    workerStatus: workerResult.candidate.status,
+    workerRejectionReason: workerResult.candidate.rejectionReason,
     fallbackReason: null
   };
+  const realtimeSourcePriority = {
+    selected: 'none',
+    workerCandidate: {
+      attempted: true,
+      available: workerResult.candidate.available,
+      status: workerResult.candidate.status,
+      rejectionReason: workerResult.candidate.rejectionReason,
+      ageMinutes: workerResult.candidate.ageMinutes,
+      healthScore: workerResult.candidate.healthScore,
+      criticalMissing: workerResult.candidate.criticalMissing
+    },
+    githubFallback: {
+      attempted: false,
+      used: false,
+      status: null,
+      ageMinutes: null
+    }
+  };
+
+  if (workerResult.payload && workerResult.candidate.available) {
+    realtimeSourcePriority.selected = 'worker-generated-preview';
+    return {
+      payload: workerResult.payload,
+      realtimeSource: 'worker-generated-preview',
+      realtimeAvailable: true,
+      realtimeFetchFailed: false,
+      realtimeFallbackUsed: false,
+      realtimeUpdatedAt: workerResult.payload.updatedAt,
+      realtimeError: null,
+      workerGeneratedCandidate: workerResult.candidate,
+      realtimeSourcePriority,
+      realtimeFetchAudit: {
+        ...realtimeFetchAudit,
+        selectedSource: 'worker-generated-preview',
+        remoteUpdatedAt: workerResult.payload.updatedAt,
+        remoteSourceMode: workerResult.payload.sourceMode,
+        remoteHealthScore: Number.isFinite(workerResult.payload.healthScore) ? workerResult.payload.healthScore : null,
+        fallbackReason: null
+      }
+    };
+  }
+
   const attempts = [
-    { url: withCacheBust(REMOTE_REALTIME_URL), source: 'remote', fallbackUsed: false, fetchOptions: { cache: 'no-store' } },
+    { url: withCacheBust(REMOTE_REALTIME_URL), source: 'github-realtime-data', fallbackUsed: false, fetchOptions: { cache: 'no-store' } },
     { url: localRealtimeUrl, source: 'local-fallback', fallbackUsed: true, fetchOptions: { cache: 'no-store' } }
   ];
   let lastError = null;
   for (const attempt of attempts) {
     try {
       const response = await fetch(attempt.url, attempt.fetchOptions);
+      if (attempt.source === 'github-realtime-data') {
+        realtimeSourcePriority.githubFallback.attempted = true;
+        realtimeSourcePriority.githubFallback.status = response.status;
+      }
       if (!response.ok) {
         lastError = `${attempt.source}:${response.status}`;
         continue;
@@ -331,10 +406,11 @@ export async function fetchRealtimePayload() {
         lastError = `${attempt.source}:invalid-payload`;
         continue;
       }
-      if (attempt.source === 'remote') {
+      if (attempt.source === 'github-realtime-data') {
         realtimeFetchAudit.remoteUpdatedAt = payload.updatedAt;
         realtimeFetchAudit.remoteSourceMode = payload.sourceMode;
         realtimeFetchAudit.remoteHealthScore = Number.isFinite(payload.healthScore) ? payload.healthScore : null;
+        realtimeSourcePriority.githubFallback.ageMinutes = computeAgeMinutes(payload.updatedAt);
       }
       if (attempt.fallbackUsed) {
         const fallbackGate = isLocalRealtimeFallbackUsable(rawPayload);
@@ -347,6 +423,8 @@ export async function fetchRealtimePayload() {
           `local-fallback-accepted:age=${fallbackGate.ageMinutes}m`
         ];
       }
+      realtimeSourcePriority.selected = attempt.source;
+      if (attempt.source === 'github-realtime-data') realtimeSourcePriority.githubFallback.used = true;
       return {
         payload,
         realtimeSource: attempt.source,
@@ -355,11 +433,12 @@ export async function fetchRealtimePayload() {
         realtimeFallbackUsed: attempt.fallbackUsed,
         realtimeUpdatedAt: payload.updatedAt,
         realtimeError: lastError,
-        workerGeneratedCandidate: await workerCandidatePromise,
+        workerGeneratedCandidate: workerResult.candidate,
+        realtimeSourcePriority,
         realtimeFetchAudit: {
           ...realtimeFetchAudit,
           selectedSource: attempt.source,
-          fallbackReason: attempt.source === 'remote' ? null : lastError
+          fallbackReason: attempt.source === 'github-realtime-data' ? workerResult.candidate.rejectionReason : lastError
         }
       };
     } catch (error) {
@@ -374,7 +453,8 @@ export async function fetchRealtimePayload() {
     realtimeFallbackUsed: false,
     realtimeUpdatedAt: null,
     realtimeError: lastError,
-    workerGeneratedCandidate: await workerCandidatePromise,
+    workerGeneratedCandidate: workerResult.candidate,
+    realtimeSourcePriority,
     realtimeFetchAudit: {
       ...realtimeFetchAudit,
       selectedSource: 'none',
@@ -413,6 +493,7 @@ export function buildRuntimeState(baseline, history, realtimeResult) {
     realtimeSourceStatus: realtimePayload?.sourceStatus || {},
     realtimeSourceDetails: realtimePayload?.sourceDetails || {},
     workerGeneratedCandidate,
+    realtimeSourcePriority: realtimeResult.realtimeSourcePriority || null,
     brentObservedAt: brentFieldFreshness?.observedAt ?? null,
     brentAgeMinutes: brentFieldFreshness?.ageMinutes ?? null,
     brentFreshnessLevel,
@@ -434,6 +515,7 @@ export function buildRuntimeState(baseline, history, realtimeResult) {
   });
   const decisionRuntimeMetadata = { ...runtimeMetadata };
   delete decisionRuntimeMetadata.workerGeneratedCandidate;
+  delete decisionRuntimeMetadata.realtimeSourcePriority;
   data.decisionModel = buildDecisionModel(data, history, decisionRuntimeMetadata, healthDashboard);
   data.__workerGeneratedCandidate = workerGeneratedCandidate;
   console.info('[gfrr] Worker candidate:', workerGeneratedCandidate);
