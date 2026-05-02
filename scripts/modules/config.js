@@ -5,6 +5,15 @@ export const historyUrl = './data/radar-history.json';
 export const localRealtimeUrl = './realtime/market.json';
 export const REMOTE_REALTIME_URL = 'https://raw.githubusercontent.com/ctmaomao/gfrr-auto-update-site/realtime-data/realtime/market.json';
 export const WORKER_GENERATED_REALTIME_URL = 'https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json';
+export const realtimeSourcePolicy = {
+  workerFirstEnabled: true,
+  workerEndpoint: WORKER_GENERATED_REALTIME_URL,
+  workerTimeoutMs: 4500,
+  workerMaxAgeMinutes: 10,
+  workerMinHealthScore: 85,
+  workerMaxCriticalMissing: 1,
+  workerRequiredFields: ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'real10y']
+};
 
 export const $ = (id) => document.getElementById(id);
 export const fmtSigned = (n) => `${n > 0 ? '+' : ''}${n}`;

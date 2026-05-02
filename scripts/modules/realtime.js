@@ -1,4 +1,4 @@
-import { dataUrl, historyUrl, localRealtimeUrl, REMOTE_REALTIME_URL, WORKER_GENERATED_REALTIME_URL, fmtNumSafe } from './config.js';
+import { dataUrl, historyUrl, localRealtimeUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js';
 import {
   computeAgeMinutes,
   classifyFreshnessLevel,
@@ -32,9 +32,6 @@ const STRUCTURAL_SIGNAL_LABELS_CN = {
 const LOCAL_FALLBACK_MAX_AGE_MINUTES = 180;
 const LOCAL_FALLBACK_KEY_FIELDS = ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'gold', 'spx'];
 const LOCAL_FALLBACK_MIN_FINITE_KEY_FIELDS = 5;
-const WORKER_CANDIDATE_TIMEOUT_MS = 4500;
-const WORKER_MAX_AGE_MINUTES = 10;
-const WORKER_REQUIRED_FIELDS = ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'real10y'];
 
 export async function fetchBaselineData() {
   return fetch(dataUrl).then((r) => r.json());
@@ -160,7 +157,7 @@ function buildWorkerCandidateStatus(partial = {}) {
   return {
     available: false,
     status: 'unavailable',
-    url: WORKER_GENERATED_REALTIME_URL,
+    url: realtimeSourcePolicy.workerEndpoint,
     httpStatus: null,
     fetchedAt: new Date().toISOString(),
     updatedAt: null,
@@ -193,15 +190,15 @@ export function canUseWorkerGeneratedRealtimePayload(payload, nowMs = Date.now()
   if (payload.unavailable === true) return { usable: false, reason: 'worker-unavailable' };
   if (payload.sourceMode !== 'worker-generated-preview') return { usable: false, reason: 'source-mode-not-worker-preview' };
   const healthScore = Number(payload.healthScore);
-  if (!Number.isFinite(healthScore) || healthScore < 85) return { usable: false, reason: 'health-score-below-85' };
+  if (!Number.isFinite(healthScore) || healthScore < realtimeSourcePolicy.workerMinHealthScore) return { usable: false, reason: `health-score-below-${realtimeSourcePolicy.workerMinHealthScore}` };
   const criticalMissing = Number(payload.criticalMissing);
-  if (!Number.isFinite(criticalMissing) || criticalMissing > 1) return { usable: false, reason: 'critical-missing-above-1' };
+  if (!Number.isFinite(criticalMissing) || criticalMissing > realtimeSourcePolicy.workerMaxCriticalMissing) return { usable: false, reason: `critical-missing-above-${realtimeSourcePolicy.workerMaxCriticalMissing}` };
   const updatedAtMs = Date.parse(payload.updatedAt);
   if (!Number.isFinite(updatedAtMs)) return { usable: false, reason: 'updatedAt-invalid' };
   const ageMinutes = Math.max(0, Math.round((nowMs - updatedAtMs) / 60000));
-  if (ageMinutes > WORKER_MAX_AGE_MINUTES) return { usable: false, reason: `worker-stale(${ageMinutes}m)` };
+  if (ageMinutes > realtimeSourcePolicy.workerMaxAgeMinutes) return { usable: false, reason: `worker-stale(${ageMinutes}m)` };
   if (!payload.values || typeof payload.values !== 'object') return { usable: false, reason: 'values-missing' };
-  for (const key of WORKER_REQUIRED_FIELDS) {
+  for (const key of realtimeSourcePolicy.workerRequiredFields) {
     const value = Number(payload.values[key]);
     if (!Number.isFinite(value)) return { usable: false, reason: `${key}-not-finite` };
     if (key === 'brent' && value === 0) return { usable: false, reason: 'brent-zero' };
@@ -249,9 +246,9 @@ function buildWorkerCandidateFromPayload(payload, httpStatus, fetchedAt, gate) {
 async function fetchWorkerGeneratedCandidateResult() {
   const fetchedAt = new Date().toISOString();
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), WORKER_CANDIDATE_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), realtimeSourcePolicy.workerTimeoutMs);
   try {
-    const response = await fetch(withCacheBust(WORKER_GENERATED_REALTIME_URL), {
+    const response = await fetch(withCacheBust(realtimeSourcePolicy.workerEndpoint), {
       cache: 'no-store',
       signal: controller.signal
     });
@@ -305,6 +302,15 @@ export async function fetchWorkerGeneratedCandidate() {
   return result.candidate;
 }
 
+function buildWorkerFirstDisabledResult() {
+  const candidate = buildWorkerCandidateStatus({
+    status: 'disabled-by-config',
+    fetchedAt: new Date().toISOString(),
+    rejectionReason: 'worker-first-disabled-by-config'
+  });
+  return { payload: null, candidate };
+}
+
 function buildRealtimeFetchAudit({ realtimeResult, realtimePayload, runtimeMetadata }) {
   const fromResult = realtimeResult?.realtimeFetchAudit || runtimeMetadata?.realtimeFetchAudit;
   if (fromResult && typeof fromResult === 'object') {
@@ -328,11 +334,13 @@ function buildRealtimeFetchAudit({ realtimeResult, realtimePayload, runtimeMetad
 }
 
 export async function fetchRealtimePayload() {
-  const workerResult = await fetchWorkerGeneratedCandidateResult();
+  const workerResult = realtimeSourcePolicy.workerFirstEnabled
+    ? await fetchWorkerGeneratedCandidateResult()
+    : buildWorkerFirstDisabledResult();
   const realtimeFetchAudit = {
     attemptedAt: new Date().toISOString(),
     remoteUrl: REMOTE_REALTIME_URL,
-    workerUrl: WORKER_GENERATED_REALTIME_URL,
+    workerUrl: realtimeSourcePolicy.workerEndpoint,
     cacheBusted: true,
     selectedSource: 'none',
     remoteUpdatedAt: null,
@@ -344,8 +352,13 @@ export async function fetchRealtimePayload() {
   };
   const realtimeSourcePriority = {
     selected: 'none',
+    policy: {
+      workerFirstEnabled: realtimeSourcePolicy.workerFirstEnabled,
+      rollbackMode: !realtimeSourcePolicy.workerFirstEnabled,
+      reason: realtimeSourcePolicy.workerFirstEnabled ? 'worker-first-enabled' : 'worker-first-disabled-by-config'
+    },
     workerCandidate: {
-      attempted: true,
+      attempted: realtimeSourcePolicy.workerFirstEnabled,
       available: workerResult.candidate.available,
       status: workerResult.candidate.status,
       rejectionReason: workerResult.candidate.rejectionReason,
@@ -361,7 +374,7 @@ export async function fetchRealtimePayload() {
     }
   };
 
-  if (workerResult.payload && workerResult.candidate.available) {
+  if (realtimeSourcePolicy.workerFirstEnabled && workerResult.payload && workerResult.candidate.available) {
     realtimeSourcePriority.selected = 'worker-generated-preview';
     return {
       payload: workerResult.payload,
@@ -494,6 +507,14 @@ export function buildRuntimeState(baseline, history, realtimeResult) {
     realtimeSourceDetails: realtimePayload?.sourceDetails || {},
     workerGeneratedCandidate,
     realtimeSourcePriority: realtimeResult.realtimeSourcePriority || null,
+    realtimeSourcePolicy: {
+      ...(realtimeResult.realtimeSourcePriority?.policy || {
+        workerFirstEnabled: realtimeSourcePolicy.workerFirstEnabled,
+        rollbackMode: !realtimeSourcePolicy.workerFirstEnabled,
+        reason: realtimeSourcePolicy.workerFirstEnabled ? 'worker-first-enabled' : 'worker-first-disabled-by-config'
+      }),
+      selected: realtimeResult.realtimeSourcePriority?.selected || realtimeResult.realtimeSource || 'none'
+    },
     brentObservedAt: brentFieldFreshness?.observedAt ?? null,
     brentAgeMinutes: brentFieldFreshness?.ageMinutes ?? null,
     brentFreshnessLevel,
@@ -516,6 +537,7 @@ export function buildRuntimeState(baseline, history, realtimeResult) {
   const decisionRuntimeMetadata = { ...runtimeMetadata };
   delete decisionRuntimeMetadata.workerGeneratedCandidate;
   delete decisionRuntimeMetadata.realtimeSourcePriority;
+  delete decisionRuntimeMetadata.realtimeSourcePolicy;
   data.decisionModel = buildDecisionModel(data, history, decisionRuntimeMetadata, healthDashboard);
   data.__workerGeneratedCandidate = workerGeneratedCandidate;
   console.info('[gfrr] Worker candidate:', workerGeneratedCandidate);

@@ -64,7 +64,9 @@ Daily pipeline 负责写入稳定基线字段，例如：
 - `dailyRealtimeInput`
 - `displayInputsBaseline`
 
-浏览器前端在运行时读取 `data/radar-data.json` 后，再按 runtime source priority 选择 realtime overlay。v28.0C-2 起，运行时优先级为：
+浏览器前端在运行时读取 `data/radar-data.json` 后，再按 runtime source priority 选择 realtime overlay。v28.0C-3 起，runtime policy 由前端配置 `scripts/modules/config.js` 的 `realtimeSourcePolicy.workerFirstEnabled` 控制。
+
+当 `workerFirstEnabled === true` 时，运行时优先级为：
 
 ```text
 Worker generated preview
@@ -72,13 +74,22 @@ Worker generated preview
 → local fallback
 ```
 
-Worker payload 必须通过 strict gate 才能成为 selected realtime overlay：HTTP 200、`workerGeneratedPreview.enabled === true`、`unavailable !== true`、`sourceMode === "worker-generated-preview"`、`healthScore >= 85`、`criticalMissing <= 1`、`updatedAt` 不超过 10 分钟，且 `values.brent / dxy / vix / hyOas / us10y / real10y` 均为 finite number。未通过 gate 的 Worker candidate 不得进入 `effectiveDisplayInputs`。
+当 `workerFirstEnabled === false` 时，Worker 不得成为 selected realtime payload，运行时优先级为：
+
+```text
+GitHub realtime-data
+→ local fallback
+```
+
+Worker payload 必须在 `workerFirstEnabled === true` 且通过 strict gate 后，才能成为 selected realtime overlay：HTTP 200、`workerGeneratedPreview.enabled === true`、`unavailable !== true`、`sourceMode === "worker-generated-preview"`、`healthScore >= 85`、`criticalMissing <= 1`、`updatedAt` 不超过 10 分钟，且 `values.brent / dxy / vix / hyOas / us10y / real10y` 均为 finite number。未通过 gate 的 Worker candidate，以及 `workerFirstEnabled === false` 时的 Worker candidate，不得进入 `effectiveDisplayInputs`。
 
 前端根据 `displayInputsBaseline` 与选中的 realtime payload 合成最终显示输入，并挂载为：
 
 `data.__effectiveDisplayInputs`
 
 因此，页面显示层应以运行时的 `data.__effectiveDisplayInputs` 作为有效显示输入，而不是要求 `radar-data.json` 预先序列化 `effectiveDisplayInputs`。
+
+`realtimeSourcePolicy` 是前端运行时配置与 metadata，不序列化进 `data/radar-data.json`。`data.__effectiveDisplayInputs` 只能由 selected realtime payload 与 `displayInputsBaseline` 合成；未被 selected 的 Worker candidate 不得进入 `data.__effectiveDisplayInputs`。
 
 ### Worker generated runtime 状态
 
@@ -89,10 +100,10 @@ Worker payload 必须通过 strict gate 才能成为 selected realtime overlay�
 该字段只存在于浏览器运行时：
 
 - 不序列化进 `data/radar-data.json`。
-- 只有通过 strict gate 并成为 selected realtime source 时，Worker payload 才能参与 realtime overlay 与 `data.__effectiveDisplayInputs`。
-- 未通过 gate 的 Worker candidate 不参与 `data.__effectiveDisplayInputs`，不改变 canonical display values。
+- 只有 `realtimeSourcePolicy.workerFirstEnabled === true`、通过 strict gate 并成为 selected realtime source 时，Worker payload 才能参与 realtime overlay 与 `data.__effectiveDisplayInputs`。
+- `workerFirstEnabled === false`、未通过 gate 或未被 selected 的 Worker candidate 不参与 `data.__effectiveDisplayInputs`，不改变 canonical display values。
 - 不参与 scoring 或 decision 公式。
-- selected source 记录在 runtime metadata 的 `realtimeSource` / `realtimeSourcePriority` 中。
+- selected source 与 rollback 配置记录在 runtime metadata 的 `realtimeSource` / `realtimeSourcePriority` / `realtimeSourcePolicy` 中，均不序列化进 `radar-data.json`。
 
 ## displayInputsBaseline 契约
 

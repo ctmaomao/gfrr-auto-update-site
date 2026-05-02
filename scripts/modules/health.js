@@ -114,6 +114,7 @@ export function buildHealthDashboardModel(runtimeState) {
     flags.push('正常');
   }
 
+  const sourcePolicyLine = buildRealtimeSourcePolicyLine(metadata);
   const workerCandidateLine = buildWorkerRealtimeSourceLine(workerCandidate, metadata);
 
   let overallLevel = '健康';
@@ -160,13 +161,42 @@ export function buildHealthDashboardModel(runtimeState) {
     criticalMissing,
     sourceSummaryLabel: sourceSummary.summaryLabel,
     issues: issues.length ? issues : ['实时数据状态健康。'],
-    sourceLines: workerCandidateLine
-      ? [...sourceSummary.issueLines, workerCandidateLine]
-      : sourceSummary.issueLines
+    sourceLines: [
+      ...sourceSummary.issueLines,
+      ...(sourcePolicyLine ? [sourcePolicyLine] : []),
+      ...(workerCandidateLine ? [workerCandidateLine] : [])
+    ]
   };
 }
 
+function buildRealtimeSourcePolicyLine(metadata = {}) {
+  const policy = metadata.realtimeSourcePolicy || {};
+  const sourceMap = {
+    'worker-generated-preview': 'Worker独立生成',
+    'github-realtime-data': 'GitHub realtime-data',
+    'local-fallback': '本地回退',
+    none: '无可用实时源'
+  };
+  const current = sourceMap[metadata.realtimeSource] || sourceMap[policy.selected] || '未知';
+  if (policy.workerFirstEnabled === false) {
+    return `实时源策略：GitHub优先（Worker已由配置关闭）/ 当前主源：${current}`;
+  }
+  if (metadata.realtimeSource === 'worker-generated-preview') {
+    return `实时源策略：Worker优先 / 当前主源：${current}`;
+  }
+  if (metadata.realtimeSource === 'github-realtime-data') {
+    return `实时源策略：Worker优先 / Worker未通过安全闸门 / 当前主源：${current}`;
+  }
+  if (metadata.realtimeSource === 'local-fallback') {
+    return `实时源策略：Worker优先 / Worker与GitHub未作为主源 / 当前主源：${current}`;
+  }
+  return `实时源策略：Worker优先 / 当前主源：${current}`;
+}
+
 function buildWorkerRealtimeSourceLine(candidate, metadata = {}) {
+  if (metadata.realtimeSourcePolicy?.workerFirstEnabled === false) {
+    return 'Worker实时源：已由配置关闭 / 当前使用 GitHub 优先；这不是 Worker 出错';
+  }
   if (metadata.realtimeSource === 'worker-generated-preview' && candidate?.available) {
     const age = Number.isFinite(candidate.ageMinutes) ? candidate.ageMinutes : '--';
     const score = Number.isFinite(candidate.healthScore) ? Math.round(candidate.healthScore) : '--';

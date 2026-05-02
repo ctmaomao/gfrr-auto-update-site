@@ -248,6 +248,104 @@ GitHub Actions workflow baseline 使用 Node 24-compatible official actions：`a
 - **v28.0B-2B Worker vs mirror preview 对比**：可用 `node tools/compare-worker-vs-mirror.mjs --samples=24 --interval-minutes=15` 连续比较 `/market.worker-preview.json` 与 `/market.preview.json`。该脚本只读 HTTP endpoint，不使用 Wrangler，不读取 / 写入 KV，不消耗 KV write quota；只有当 Worker-generated preview 与 GitHub mirror preview 连续观察稳定后，才考虑后续 **v28.0C** 前端接入。
 - **v28.0C-1 Worker candidate readiness**：前端开始只读 `/market.worker-preview.json` 并显示 `Worker候选源` 状态；该 candidate 不参与 GitHub realtime-data overlay、`effectiveDisplayInputs`、scoring、decision 或 fallback。当前生产 realtime overlay 来源仍是 GitHub `realtime-data`，页面显示 Worker 候选源可用只代表 readiness 观察，不代表已切换生产数据源。
 - **v28.0C-2 Worker-first realtime source priority**：前端 runtime realtime 优先级升级为 **Worker generated preview → GitHub realtime-data → local fallback**。Worker 只有通过 strict safety gate 才能作为主 realtime source：HTTP 200、`workerGeneratedPreview.enabled === true`、`unavailable !== true`、`sourceMode === "worker-generated-preview"`、`healthScore >= 85`、`criticalMissing <= 1`、`updatedAt` 不超过 **10** 分钟，且 `values.brent / dxy / vix / hyOas / us10y / real10y` 均为 finite number。Worker 不通过时自动回退 GitHub；GitHub 不通过时自动回退 local fallback。本阶段不改变 Worker、GitHub Actions 或 data generation。
+- **v28.0C-3 Worker-first rollback switch**：前端 realtime source preference 集中在 `scripts/modules/config.js` 的 `realtimeSourcePolicy`。默认：
+
+```text
+workerFirstEnabled: true
+Worker generated preview → GitHub realtime-data → local fallback
+```
+
+紧急回退只改前端配置，不改 Worker、不改 GitHub Actions、不改数据生成逻辑。回退开关位置：
+
+```text
+scripts/modules/config.js
+realtimeSourcePolicy.workerFirstEnabled
+```
+
+当 `workerFirstEnabled: false` 时，前端跳过 Worker 主源选择，优先级变为：
+
+```text
+GitHub realtime-data → local fallback
+```
+
+健康面板应显示 `GitHub优先（Worker已由配置关闭）`，这表示运营配置回退，不表示 Worker endpoint 出错。
+
+紧急回退步骤：
+
+1. 修改 `scripts/modules/config.js`：
+
+```javascript
+workerFirstEnabled: false
+```
+
+2. 运行检查：
+
+```bash
+node --check scripts/modules/config.js
+node --check scripts/modules/realtime.js
+node --check scripts/modules/health.js
+npm run check:all
+```
+
+3. 提交并部署：
+
+```bash
+git add scripts/modules/config.js scripts/modules/realtime.js scripts/modules/health.js docs/OPERATIONS.md docs/DATA_CONTRACT.md
+git commit -m "Temporarily disable Worker-first realtime source"
+git pull --rebase origin main
+npm run check:all
+git push origin main
+```
+
+4. 验证页面健康面板显示：
+
+```text
+GitHub优先（Worker已由配置关闭）
+```
+
+重新启用 Worker-first：
+
+1. 修改 `scripts/modules/config.js`：
+
+```javascript
+workerFirstEnabled: true
+```
+
+2. 运行同样检查：
+
+```bash
+node --check scripts/modules/config.js
+node --check scripts/modules/realtime.js
+node --check scripts/modules/health.js
+npm run check:all
+```
+
+3. 提交：
+
+```bash
+git add scripts/modules/config.js scripts/modules/realtime.js scripts/modules/health.js docs/OPERATIONS.md docs/DATA_CONTRACT.md
+git commit -m "Re-enable Worker-first realtime source"
+git pull --rebase origin main
+npm run check:all
+git push origin main
+```
+
+回退触发条件：
+
+- Worker age > **10** 分钟持续两次以上。
+- Worker endpoint 非 200。
+- `healthScore < 85`。
+- `criticalMissing > 1`。
+- `brent / dxy / vix / hyOas / us10y / real10y` 任一核心字段无效。
+- 页面健康面板或主源显示出现明显异常。
+- `node tools/compare-worker-vs-mirror.mjs --samples=24 --interval-minutes=15` 显示 Worker 与 GitHub 多字段持续 critical fail。
+
+不应回退的情况：
+
+- GitHub mirror stale 但 Worker fresh 且通过 strict gate。
+- Worker 偶发 1 次 warn 后恢复。
+- VIX 短时差异但没有 critical fail。
+- GitHub Actions schedule 空窗，但 Worker 当前 fresh 且健康。
 
 ## 10. 不要做的修复
 
