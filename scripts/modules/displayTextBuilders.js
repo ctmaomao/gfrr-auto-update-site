@@ -42,9 +42,9 @@ export function buildPhaseSignalsDisplay(inputs, realtimePayload) {
 
 export function buildSummaryDisplay(inputs) {
   if (!hasAnyFiniteField(inputs, ['brent', 'dxy', 'vix', 'hyOas'])) {
-    return 'v27.0 正根据混合实时架构输出交易引擎结论。实时快变量暂不可用。';
+    return 'v28.0C 正根据 Worker-first 混合实时架构输出交易引擎结论。实时快变量暂不可用。';
   }
-  return `v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)}、广义美元指数 ${fmtNumSafe(inputs.dxy, 2)}、VIX（标普500期权隐含波动率）${fmtNumSafe(inputs.vix, 2)}、HY OAS（高收益债相对无风险利率信用利差）${fmtNumSafe(inputs.hyOas, 2)}%。`;
+  return `v28.0C 正根据 Worker-first 混合实时架构输出交易引擎结论。最新快变量：布伦特 ${fmtNumSafe(inputs.brent, 1)}、广义美元指数 ${fmtNumSafe(inputs.dxy, 2)}、VIX（标普500期权隐含波动率）${fmtNumSafe(inputs.vix, 2)}、HY OAS（高收益债相对无风险利率信用利差）${fmtNumSafe(inputs.hyOas, 2)}%。`;
 }
 
 export function buildDecisionLineDisplay(realtimePayload, lock, gating) {
@@ -53,7 +53,7 @@ export function buildDecisionLineDisplay(realtimePayload, lock, gating) {
   const sigClause = gating?.activeLabels?.length
     ? `已激活结构信号：${gating.activeLabels.join('、')}。`
     : (gating?.allMissing ? '结构信号数据源暂不可用。' : '');
-  return `当前已进入 v27.0 交易引擎模式：实时快变量${sourceModeLabel}，执行状态灯为${lockLabel}。${sigClause}先看状态灯，再决定能不能动。`;
+  return `当前已进入 v28.0C 交易引擎模式：实时快变量${sourceModeLabel}，执行状态灯为${lockLabel}。${sigClause}先看状态灯，再决定能不能动。`;
 }
 
 export function buildTriggerPanelDisplay(inputs, base) {
