@@ -1,18 +1,18 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-01T23:26:22.002Z",
+  "updatedAt": "2026-05-02T23:09:15.690Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "0078715db0d5f1d2c0dd69795af38241bc505e08",
-    "updatedAt": "2026-05-01T22:36:14.423Z",
+    "commitSha": "bf811c6e1b84f7f48849fe36de2427ea7f8dde31",
+    "updatedAt": "2026-05-02T22:54:23.320Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-01T23:26:22.002Z"
+    "capturedAt": "2026-05-02T23:09:15.690Z"
   },
   "score": 56,
-  "scoreChange1d": -1,
-  "scoreChange7d": 0,
-  "scoreChange30d": -15,
+  "scoreChange1d": 0,
+  "scoreChange7d": 2,
+  "scoreChange30d": -16,
   "trendLabel": "高位震荡偏紧",
   "currentMacroRegime": "滞胀冲击",
   "currentCrisisPhase": "通胀冲击",
@@ -29,7 +29,7 @@
     "real10y": 1.94,
     "breakeven10y": 2.48,
     "gold": 4615.399902,
-    "spx": 7209.01
+    "spx": 7230.12
   },
   "topRisks": [
     "布伦特 113.9 美元，能源链条仍在传导。",
@@ -160,7 +160,7 @@
   },
   "timeDimension": {
     "trend30d": "滚动风险曲线（混合实时驱动）",
-    "scoreChange30d": -15,
+    "scoreChange30d": -16,
     "avg30d": 67,
     "peak30d": 81,
     "trough30d": 53,
@@ -187,7 +187,7 @@
       {
         "label": "利率→股票",
         "value": 21,
-        "delta": -4
+        "delta": -1
       },
       {
         "label": "流动性→估值",
@@ -649,7 +649,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-01T23:26:22.002Z",
+        "triggeredAgo": "2026-05-02T23:09:15.690Z",
         "condition": "系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -657,7 +657,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-01T23:26:22.002Z",
+        "triggeredAgo": "2026-05-02T23:09:15.690Z",
         "condition": "ON RRP 6.07 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -665,7 +665,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-01T23:26:22.002Z",
+        "triggeredAgo": "2026-05-02T23:09:15.690Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -704,7 +704,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-01T23:26:22.002Z",
+    "lastRun": "2026-05-02T23:09:15.690Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
