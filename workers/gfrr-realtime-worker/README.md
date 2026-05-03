@@ -18,6 +18,7 @@
   - v28.0B-2B 增加本地只读对比脚本 `tools/compare-worker-vs-mirror.mjs`，用于比较 `/market.worker-preview.json` 与 `/market.preview.json` 的字段差异；脚本不使用 Wrangler、不读取 KV、不写 Cloudflare KV、不接前端。
   - v28.0D-1 增加核心指标第二数据源诊断层：DXY、VIX、HY OAS、Gold、US10Y 的新增候选源只写入 `workerGeneratedPreview.diagnostics.secondarySources` / `secondarySourceSummary`。这些来源全部为 **diagnostic-only** 或 **diagnostic-proxy**，不参与主值、不参与 validation、不覆盖 `values.*`、不影响 Worker-first selection、healthScore 或 criticalMissing。
   - 需要 API key 的来源（Alpha Vantage / Trading Economics）只通过 optional env 读取；缺失时记录 `skipped-missing-api-key`。不要把 API key 写入文档、payload、日志或 `wrangler.toml`，不要提交 secrets。
+  - v28.0D-1 emergency disable：D-1 部署后曾影响 Worker generated preview freshness，线上 Worker 已手动 rollback 到稳定版本 `679fb678-fe1d-4ff3-b9b9-53829d4d31f7`。仓库源码默认设置 `SECONDARY_DIAGNOSTICS_ENABLED = false`，只保留小型 `secondaryDiagnostics.enabled=false` 说明，不执行第二源外部请求。当前优先保证 Worker 主实时源稳定；未来重新启用前必须改为低频、分批、短超时、失败即跳过。
 - **已提供的 HTTP 能力**：
   - `GET /health`：存活与模式探测。
   - `GET /market.json`：从 KV 读取 `market:latest`（若尚未由后续版本写入，则返回 404 JSON）。

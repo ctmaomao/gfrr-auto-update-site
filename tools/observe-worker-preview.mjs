@@ -162,7 +162,10 @@ function sourceSummaryText(row) {
   return parts.length > 0 ? ` ${parts.join(' ')}` : '';
 }
 
-function secondaryMetricSummary(summary, metric) {
+function secondaryMetricSummary(summary, metric, secondaryDiagnostics) {
+  if (secondaryDiagnostics?.enabled === false) {
+    return { okCount: '', failCount: '', text: `${metric}=disabled` };
+  }
   const item = summary?.[metric];
   if (!item || typeof item !== 'object') {
     return { okCount: '', failCount: '', text: `${metric}=n/a` };
@@ -176,7 +179,8 @@ function secondaryMetricSummary(summary, metric) {
   };
 }
 
-function secondaryWarnings(summary) {
+function secondaryWarnings(summary, secondaryDiagnostics) {
+  if (secondaryDiagnostics?.enabled === false) return 'disabled';
   if (!summary || typeof summary !== 'object') return '';
   return ['dxy', 'vix', 'hyOas', 'gold', 'us10y']
     .filter((metric) => {
@@ -204,12 +208,13 @@ function buildRow(checkedAt, httpStatus, payload, error) {
   const payloadUpdatedAt = payload?.updatedAt ?? '';
   const diagnostics = payload?.workerGeneratedPreview?.diagnostics ?? {};
   const sourceHttpSummary = diagnostics?.sourceHttpSummary ?? {};
+  const secondaryDiagnostics = diagnostics?.secondaryDiagnostics ?? {};
   const secondarySummary = diagnostics?.secondarySourceSummary ?? {};
-  const secondaryDxy = secondaryMetricSummary(secondarySummary, 'dxy');
-  const secondaryVix = secondaryMetricSummary(secondarySummary, 'vix');
-  const secondaryHyOas = secondaryMetricSummary(secondarySummary, 'hyOas');
-  const secondaryGold = secondaryMetricSummary(secondarySummary, 'gold');
-  const secondaryUs10y = secondaryMetricSummary(secondarySummary, 'us10y');
+  const secondaryDxy = secondaryMetricSummary(secondarySummary, 'dxy', secondaryDiagnostics);
+  const secondaryVix = secondaryMetricSummary(secondarySummary, 'vix', secondaryDiagnostics);
+  const secondaryHyOas = secondaryMetricSummary(secondarySummary, 'hyOas', secondaryDiagnostics);
+  const secondaryGold = secondaryMetricSummary(secondarySummary, 'gold', secondaryDiagnostics);
+  const secondaryUs10y = secondaryMetricSummary(secondarySummary, 'us10y', secondaryDiagnostics);
 
   return {
     checkedAt,
@@ -240,7 +245,7 @@ function buildRow(checkedAt, httpStatus, payload, error) {
     secondaryHyOasOkCount: secondaryHyOas.okCount,
     secondaryGoldOkCount: secondaryGold.okCount,
     secondaryUs10yOkCount: secondaryUs10y.okCount,
-    secondaryWarnings: secondaryWarnings(secondarySummary),
+    secondaryWarnings: secondaryWarnings(secondarySummary, secondaryDiagnostics),
     secondaryDxyText: secondaryDxy.text,
     secondaryVixText: secondaryVix.text,
     secondaryHyOasText: secondaryHyOas.text,

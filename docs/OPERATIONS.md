@@ -349,6 +349,16 @@ git push origin main
 
 **v28.0D-1 core metrics secondary source diagnostics**：Worker generated preview 会在 `workerGeneratedPreview.diagnostics.secondarySources` / `secondarySourceSummary` 中记录 DXY、VIX、HY OAS、Gold、US10Y 的第二数据源诊断。该层只用于观察源可达性、HTTP 状态、解析状态和相对主值差异，不参与生产主值、不参与 validation、不影响 Worker-first selected source gate、不影响 `healthScore` / `criticalMissing`。观察时优先使用 `node tools/observe-worker-preview.mjs --samples=24 --interval-minutes=15 --path=/market.worker-preview.json`；若某一候选源连续 **24–72 小时** 稳定，再考虑后续版本是否升级为 validation。DXY 备用源与 FRED `DTWEXBGS` 定义不同，HY OAS 备用源是 yield / credit proxy，不得直接视为生产等价源。
 
+**v28.0D-1 emergency disable / D-1-lite**：D-1 部署后 Worker scheduled preview 曾停止刷新，`/market.worker-preview.json` stale，前端安全闸门已正确回退到 GitHub。线上 Cloudflare Worker 已手动 rollback 到稳定版本 `679fb678-fe1d-4ff3-b9b9-53829d4d31f7`。仓库源码现在默认 `SECONDARY_DIAGNOSTICS_ENABLED = false`，payload 只保留 `workerGeneratedPreview.diagnostics.secondaryDiagnostics.enabled=false` 的说明，不执行 Cboe / Alpha Vantage / Treasury / Yahoo ^TNX / Yahoo DXY / Yahoo GC=F / Stooq DXY / Trading Economics / HY proxy 等第二源请求。
+
+在该 hotfix 合并前，不应执行 `wrangler deploy`。合并后如需重新 deploy，应先确认 `workers/gfrr-realtime-worker/src/worker-market-preview.js` 中 secondary diagnostics 仍为 disabled。未来重新设计 secondary diagnostics 必须满足：
+
+- 不阻塞主 Worker generated preview 写入。
+- 低频运行，例如 **30–60 分钟**。
+- 每轮最多 **1–2** 个 secondary source。
+- 单源短超时。
+- 失败只记录 diagnostics，不影响 `values.*`、`updatedAt`、`healthScore`、`criticalMissing`、`sourceMode`、`unavailable` 或 KV put。
+
 ## 10. 不要做的修复
 
 - 不要为了让 validate 通过而削弱校验规则。

@@ -124,6 +124,20 @@ workerGeneratedPreview.diagnostics.secondarySourceSummary
 - 所有 candidate 必须声明 `participatesInPrimary: false` 与 `participatesInValidation: false`。
 - DXY 与 HY OAS 的备用来源属于 proxy / experimental diagnostic，不得直接视为 canonical 等价源。
 
+v28.0D-1 emergency disable 后，Worker payload 可只包含小型关闭说明：
+
+```text
+workerGeneratedPreview.diagnostics.secondaryDiagnostics.enabled=false
+```
+
+该状态表示第二源诊断层被运行时关闭：
+
+- 不影响 selected source gate。
+- 不影响 `data.__effectiveDisplayInputs`。
+- 不影响 `values.*` 主值。
+- 不影响 `healthScore` / `criticalMissing`。
+- `secondarySources` / `secondarySourceSummary` 为空或缺失时，不代表主 Worker generated preview 异常。
+
 ## displayInputsBaseline 契约
 
 `data/radar-data.json` 根层必须包含：

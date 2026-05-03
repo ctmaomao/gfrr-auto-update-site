@@ -34,6 +34,11 @@ const ALPHA_VANTAGE_VIX_SOURCE = 'alphavantage:VIX';
 const ALPHA_VANTAGE_GOLD_SOURCE = 'alphavantage:XAU';
 const TRADING_ECONOMICS_HY_SOURCE = 'tradingeconomics:hy-credit';
 const DIAGNOSTIC_ERROR_MAX = 180;
+const SECONDARY_DIAGNOSTICS_ENABLED = false;
+const SECONDARY_DIAGNOSTICS_DISABLED_REASON =
+  'disabled-by-default-after-v28.0D-1-stability-rollback';
+const SECONDARY_DIAGNOSTICS_DISABLED_NOTE =
+  'Core Worker preview generation is prioritized; secondary diagnostics require low-frequency redesign before re-enabling.';
 
 const FETCH_HEADERS = {
   Accept: 'text/csv,application/json,text/plain,*/*',
@@ -856,6 +861,16 @@ function summarizeSecondaryCandidates(candidates) {
 }
 
 async function buildSecondarySourceDiagnostics(values, cosd) {
+  if (!SECONDARY_DIAGNOSTICS_ENABLED) {
+    return {
+      secondaryDiagnostics: {
+        enabled: false,
+        reason: SECONDARY_DIAGNOSTICS_DISABLED_REASON,
+        note: SECONDARY_DIAGNOSTICS_DISABLED_NOTE,
+      },
+    };
+  }
+
   const secondarySources = {};
   const safeMetric = async (metric, primaryValue, fetcher) => {
     try {
@@ -884,6 +899,11 @@ async function buildSecondarySourceDiagnostics(values, cosd) {
   secondarySources.hyOas = await safeMetric('hyOas', values.hyOas, () => fetchHyOasSecondarySources(values.hyOas, cosd));
 
   return {
+    secondaryDiagnostics: {
+      enabled: true,
+      reason: 'enabled-by-worker-preview-feature-flag',
+      note: 'Diagnostic-only secondary sources; not used for primary values or validation.',
+    },
     secondarySources,
     secondarySourceSummary: Object.fromEntries(
       Object.entries(secondarySources).map(([metric, candidates]) => [
@@ -1131,6 +1151,13 @@ function sourceSummaryFromDiagnostic(diagnostic) {
   };
 }
 
+function sourceSummaryFromSecondaryDiagnostics(secondaryDiagnostics) {
+  if (!secondaryDiagnostics.secondarySourceSummary) return {};
+  return {
+    dxyDiagnostic: secondaryDiagnostics.secondarySourceSummary.dxy,
+  };
+}
+
 export async function buildWorkerGeneratedMarketPreview() {
   const nowIso = new Date().toISOString();
   const cosd = formatDate(new Date(Date.now() - 45 * 24 * 60 * 60 * 1000));
@@ -1151,7 +1178,9 @@ export async function buildWorkerGeneratedMarketPreview() {
   sourceDetails.gold = gold.detail;
 
   const brentValidation = await buildBrentValidation(values.brent);
-  await sleep(diagnosticDelayMs());
+  if (SECONDARY_DIAGNOSTICS_ENABLED) {
+    await sleep(diagnosticDelayMs());
+  }
   const secondaryDiagnostics = await buildSecondarySourceDiagnostics(values, cosd);
   const criticalMissing = countMissing(values, CRITICAL_FIELDS);
   const nonCriticalFields = Object.keys(values).filter((field) => !CRITICAL_FIELDS.includes(field));
@@ -1161,11 +1190,16 @@ export async function buildWorkerGeneratedMarketPreview() {
   const fredSummary = summarizeFred(fredResults);
   const diagnostics = {
     generatedAt: nowIso,
-    requestPolicy: 'sequential-fred-with-retry-and-secondary-diagnostics',
+    requestPolicy: SECONDARY_DIAGNOSTICS_ENABLED
+      ? 'sequential-fred-with-retry-and-secondary-diagnostics'
+      : 'sequential-fred-with-retry-secondary-diagnostics-disabled',
     fredAllFailed: fredSummary.fredAllFailed,
     fredFailureStatuses: fredSummary.fredFailureStatuses,
-    secondarySources: secondaryDiagnostics.secondarySources,
-    secondarySourceSummary: secondaryDiagnostics.secondarySourceSummary,
+    secondaryDiagnostics: secondaryDiagnostics.secondaryDiagnostics,
+    ...(secondaryDiagnostics.secondarySources ? { secondarySources: secondaryDiagnostics.secondarySources } : {}),
+    ...(secondaryDiagnostics.secondarySourceSummary
+      ? { secondarySourceSummary: secondaryDiagnostics.secondarySourceSummary }
+      : {}),
     sourceHttpSummary: {
       fred: {
         okCount: fredSummary.okCount,
@@ -1179,7 +1213,7 @@ export async function buildWorkerGeneratedMarketPreview() {
         brentValidation.diagnostics.tradingEconomics,
       ),
       gold: sourceSummaryFromDiagnostic(gold.diagnostic),
-      dxyDiagnostic: secondaryDiagnostics.secondarySourceSummary.dxy,
+      ...sourceSummaryFromSecondaryDiagnostics(secondaryDiagnostics),
     },
   };
 
