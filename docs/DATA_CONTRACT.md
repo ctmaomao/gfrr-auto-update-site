@@ -329,7 +329,7 @@ values.brent
 brentValidation.consensus.recommendedValue
 ```
 
-`brentValidation` 只是验证层 / 观察层。`fred-anchor` 只作低频锚点，不参与主值推荐。`recommendedValue` 不等于主值；只有 `canPromoteToPrimary === true` 才代表“理论上可考虑切主值”。当前即使 `confidence = medium`，也不得自动切主值。
+`brentValidation` 是验证层 / 观察层。`recommendedValue` 不等于主值，不得被无条件写入 `values.brent`。v28.0D-5 起，只有 `brentValidation.promotion.applied === true` 时，才允许按 freshness-gated promotion 规则切换 Brent 主值。
 
 当 weak-confirmation 参与时，`canPromoteToPrimary` 必须为 `false`。当 `confidence = none` 时，`recommendedValue` 和 `recommendedSource` 必须为 `null`。
 
@@ -341,15 +341,35 @@ v28.0D-4 起，Worker generated preview 可在 `brentValidation.audit` 中附带
 brentValidation.audit
 ```
 
-该字段用于解释 `values.brent` 的最终来源和验证层为什么没有 promote consensus：
+该字段用于解释 `values.brent` 的最终来源、验证层推荐值，以及 freshness-gated promotion 是否触发：
 
 - `selectedSource` / `selectedValue` / `selectedObservedAt` 记录当前主 Brent 来源。
 - `candidateSources` 记录各候选源的 status / value / observedAt / error 摘要。
-- `promoteDecision` 记录 `recommendedValue` / `canPromoteToPrimary` / `confidence` / `reason`。
-- audit 不覆盖 `values.brent`。
+- `promoteDecision` 记录 promotion 使用的 `recommendedValue` / `canPromoteToPrimary` / `confidence` / `reason`。
+- audit 本身不覆盖 `values.brent`；只有 `brentValidation.promotion.applied === true` 的受控路径可以覆盖 Brent 主值。
 - audit 不影响 `data.__effectiveDisplayInputs`。
 - audit 不影响 Worker-first strict gate、`healthScore`、`criticalMissing`、`sourceMode`、`unavailable`。
 - audit 不参与 scoring 或 decision。
+
+### Brent freshness-gated promotion
+
+v28.0D-5 起，FRED `DCOILBRENTEU` 仍是 Brent anchor。只有同时满足以下条件，Worker generated preview 才能把 `values.brent` promote 到市场确认值：
+
+- FRED anchor `ok`，且 value 为正的 finite number。
+- FRED `observedAt` 超过 72 小时。
+- Yahoo `BZ=F` `ok`，value 为正的 finite number，且 observedAt 不超过 48 小时。
+- Trading Economics Brent diagnostic `ok`，value 为正的 finite number。
+- Yahoo 与 Trading Economics 相对差距不超过 2%。
+- Google Finance 的 0 或其他非正值必须排除。
+- Stooq parse fail 或 unavailable 必须排除。
+
+promotion 成功时：
+
+- `values.brent` 使用 Yahoo 与 Trading Economics 的平均值。
+- `sourceDetails.brent.source` 必须标记 promoted source，不能伪装成 FRED。
+- `brentValidation.promotion.applied` 必须为 `true`，并记录 anchor、confirmation sources、divergence 与 reason。
+
+promotion 失败时，`values.brent` 继续使用 FRED anchor。promotion 成功或失败都不得改变 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable` 的计算规则，也不得影响 VIX secondary preview。
 
 ## DXY / 广义美元指数契约
 

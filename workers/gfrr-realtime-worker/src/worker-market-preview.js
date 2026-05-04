@@ -20,6 +20,9 @@ const TRADING_ECONOMICS_BRENT_URL =
   'https://tradingeconomics.com/commodity/brent-crude-oil';
 const TRADING_ECONOMICS_ALT_BRENT_URL =
   'https://tradingeconomics.com/commodity/brentcrudeoil';
+const BRENT_ANCHOR_STALE_HOURS = 72;
+const BRENT_CONFIRMATION_FRESH_HOURS = 48;
+const BRENT_PROMOTION_MAX_DIVERGENCE_PCT = 2;
 
 const FETCH_HEADERS = {
   Accept: 'text/csv,application/json,text/plain,*/*',
@@ -374,11 +377,113 @@ function buildCandidateDiagnostics(result, parseError = null) {
   };
 }
 
-function summarizeBrentCandidate(candidate, selectedDetail = null) {
+function hoursSinceTimestamp(timestamp, nowMs) {
+  if (typeof timestamp !== 'string' || timestamp === '') return null;
+  const parsed = Date.parse(timestamp);
+  if (!Number.isFinite(parsed)) return null;
+  return Math.max(0, (nowMs - parsed) / (60 * 60 * 1000));
+}
+
+function findBrentCandidate(candidates, source) {
+  return candidates.find((candidate) => candidate.source === source) || null;
+}
+
+function positiveFinite(value) {
+  return isFiniteNumber(value) && value > 0;
+}
+
+function divergencePct(a, b) {
+  if (!positiveFinite(a) || !positiveFinite(b)) return null;
+  const midpoint = (Math.abs(a) + Math.abs(b)) / 2;
+  if (midpoint === 0) return null;
+  return roundValue((Math.abs(a - b) / midpoint) * 100);
+}
+
+function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs) {
+  const candidates = brentValidation.candidates || [];
+  const yahoo = findBrentCandidate(candidates, 'yahoo:BZ=F');
+  const tradingEconomics = findBrentCandidate(candidates, 'tradingeconomics:brent-crude-oil');
+  const googleFinance = findBrentCandidate(candidates, 'google-finance:BZW00:NYMEX');
+  const stooq = findBrentCandidate(candidates, 'stooq:brn.f');
+  const anchorValue = positiveFinite(anchorDetail?.value) ? anchorDetail.value : null;
+  const anchorAgeHours = hoursSinceTimestamp(anchorDetail?.timestamp, nowMs);
+  const yahooAgeHours = hoursSinceTimestamp(yahoo?.timestamp, nowMs);
+  const maxConfirmationDivergencePct = divergencePct(yahoo?.value, tradingEconomics?.value);
+  const base = {
+    applied: false,
+    selectedValue: anchorValue,
+    selectedSource: anchorDetail?.source || 'FRED:DCOILBRENTEU',
+    anchorSource: anchorDetail?.source || 'FRED:DCOILBRENTEU',
+    anchorValue,
+    anchorObservedAt: anchorDetail?.timestamp ?? null,
+    anchorAgeHours: isFiniteNumber(anchorAgeHours) ? roundValue(anchorAgeHours, 2) : null,
+    confirmationSources: [
+      {
+        source: 'yahoo:BZ=F',
+        status: yahoo?.ok ? 'ok' : yahoo?.error || 'unavailable',
+        value: positiveFinite(yahoo?.value) ? yahoo.value : null,
+        observedAt: yahoo?.timestamp ?? null,
+        ageHours: isFiniteNumber(yahooAgeHours) ? roundValue(yahooAgeHours, 2) : null,
+      },
+      {
+        source: 'tradingeconomics:brent-crude-oil',
+        status: tradingEconomics?.ok ? 'ok' : tradingEconomics?.error || 'unavailable',
+        value: positiveFinite(tradingEconomics?.value) ? tradingEconomics.value : null,
+        observedAt: tradingEconomics?.timestamp ?? null,
+        ageHours: null,
+      },
+    ],
+    excludedSources: [
+      {
+        source: 'google-finance:BZW00:NYMEX',
+        value: isFiniteNumber(googleFinance?.value) ? googleFinance.value : null,
+        reason: positiveFinite(googleFinance?.value) ? 'diagnostic-only' : 'excluded-non-positive-or-invalid',
+      },
+      {
+        source: 'stooq:brn.f',
+        value: isFiniteNumber(stooq?.value) ? stooq.value : null,
+        reason: stooq?.ok ? 'not-required-for-promotion' : stooq?.error || 'excluded-unavailable',
+      },
+    ],
+    maxConfirmationDivergencePct,
+    confidence: 'low',
+    reason: null,
+  };
+
+  if (anchorDetail?.ok !== true) return { ...base, reason: 'fred-anchor-not-ok' };
+  if (!positiveFinite(anchorValue)) return { ...base, reason: 'fred-anchor-not-positive-finite' };
+  if (!isFiniteNumber(anchorAgeHours)) return { ...base, reason: 'fred-anchor-observedAt-invalid' };
+  if (anchorAgeHours <= BRENT_ANCHOR_STALE_HOURS) return { ...base, reason: 'fred-anchor-not-stale' };
+  if (yahoo?.ok !== true || !positiveFinite(yahoo.value)) return { ...base, reason: 'yahoo-confirmation-invalid' };
+  if (!isFiniteNumber(yahooAgeHours)) return { ...base, reason: 'yahoo-observedAt-invalid' };
+  if (yahooAgeHours > BRENT_CONFIRMATION_FRESH_HOURS) return { ...base, reason: 'yahoo-confirmation-stale' };
+  if (tradingEconomics?.ok !== true || !positiveFinite(tradingEconomics.value)) {
+    return { ...base, reason: 'tradingeconomics-confirmation-invalid' };
+  }
+  if (!isFiniteNumber(maxConfirmationDivergencePct)) return { ...base, reason: 'confirmation-divergence-unavailable' };
+  if (maxConfirmationDivergencePct > BRENT_PROMOTION_MAX_DIVERGENCE_PCT) {
+    return { ...base, reason: 'confirmation-divergence-above-2pct' };
+  }
+
+  const selectedValue = roundValue((yahoo.value + tradingEconomics.value) / 2);
+  return {
+    ...base,
+    applied: true,
+    selectedValue,
+    selectedSource: 'yahoo:BZ=F+tradingeconomics:brent-crude-oil-average',
+    selectedObservedAt: yahoo.timestamp ?? null,
+    confidence: 'high',
+    reason: 'promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation',
+  };
+}
+
+function summarizeBrentCandidate(candidate, anchorDetail = null) {
   const diagnostics = candidate.diagnostics || {};
   const value = isFiniteNumber(candidate.value) ? candidate.value : null;
-  const status = candidate.ok
+  const status = candidate.ok && positiveFinite(value)
     ? 'ok'
+    : candidate.ok && !positiveFinite(value)
+      ? 'invalid-non-positive'
     : diagnostics.reason || diagnostics.error || candidate.error || 'unavailable';
 
   return {
@@ -387,12 +492,12 @@ function summarizeBrentCandidate(candidate, selectedDetail = null) {
     participatesInConsensus: candidate.participatesInConsensus === true,
     status,
     value,
-    observedAt: candidate.timestamp ?? selectedDetail?.timestamp ?? null,
+    observedAt: candidate.timestamp ?? (candidate.role === 'anchor' ? anchorDetail?.timestamp : null) ?? null,
     error: candidate.error ?? diagnostics.error ?? null,
   };
 }
 
-function buildBrentAudit(selectedDetail, brentValidation) {
+function buildBrentAudit(selectedDetail, brentValidation, promotionDecision, anchorDetail) {
   const consensus = brentValidation.consensus || {};
   const selectedValue = isFiniteNumber(selectedDetail?.value) ? selectedDetail.value : null;
 
@@ -403,17 +508,19 @@ function buildBrentAudit(selectedDetail, brentValidation) {
     selectedStatus: selectedDetail?.ok ? 'ok' : selectedDetail?.error || 'missing',
     consensusValue: isFiniteNumber(consensus.recommendedValue) ? consensus.recommendedValue : null,
     candidateSources: brentValidation.candidates.map((candidate) =>
-      summarizeBrentCandidate(candidate, selectedDetail),
+      summarizeBrentCandidate(candidate, anchorDetail),
     ),
     promoteDecision: {
-      recommendedValue: isFiniteNumber(consensus.recommendedValue)
-        ? consensus.recommendedValue
+      recommendedValue: isFiniteNumber(promotionDecision?.selectedValue)
+        ? promotionDecision.selectedValue
         : null,
-      canPromoteToPrimary: consensus.canPromoteToPrimary === true,
-      confidence: consensus.confidence ?? null,
-      reason: consensus.reason ?? null,
+      canPromoteToPrimary: promotionDecision?.applied === true,
+      confidence: promotionDecision?.confidence ?? consensus.confidence ?? null,
+      reason: promotionDecision?.reason ?? consensus.reason ?? null,
     },
-    note: 'Diagnostic-only audit; values.brent remains selected from the primary FRED DCOILBRENTEU source.',
+    note: promotionDecision?.applied
+      ? 'Freshness-gated promotion applied; values.brent uses market confirmation over stale FRED anchor.'
+      : 'Freshness-gated promotion not applied; values.brent remains selected from the primary FRED DCOILBRENTEU source.',
   };
 }
 
@@ -674,7 +781,38 @@ export async function buildWorkerGeneratedMarketPreview() {
   sourceDetails.gold = gold.detail;
 
   const brentValidation = await buildBrentValidation(values.brent);
-  brentValidation.audit = buildBrentAudit(sourceDetails.brent, brentValidation);
+  const brentAnchorDetail = { ...sourceDetails.brent };
+  const brentPromotion = buildBrentPromotionDecision(
+    brentAnchorDetail,
+    brentValidation,
+    Date.parse(nowIso),
+  );
+  brentValidation.promotion = brentPromotion;
+  if (brentPromotion.applied) {
+    values.brent = brentPromotion.selectedValue;
+    changes.brent1d = null;
+    sourceDetails.brent = {
+      ...sourceDetails.brent,
+      value: brentPromotion.selectedValue,
+      source: `${brentPromotion.selectedSource} promoted over stale FRED anchor`,
+      timestamp: brentPromotion.selectedObservedAt ?? brentPromotion.anchorObservedAt,
+      error: null,
+      promoted: true,
+      promotionReason: brentPromotion.reason,
+      anchorSource: brentPromotion.anchorSource,
+      anchorValue: brentPromotion.anchorValue,
+      anchorObservedAt: brentPromotion.anchorObservedAt,
+      anchorAgeHours: brentPromotion.anchorAgeHours,
+      confirmationSources: brentPromotion.confirmationSources,
+      maxConfirmationDivergencePct: brentPromotion.maxConfirmationDivergencePct,
+    };
+  }
+  brentValidation.audit = buildBrentAudit(
+    sourceDetails.brent,
+    brentValidation,
+    brentPromotion,
+    brentAnchorDetail,
+  );
   const criticalMissing = countMissing(values, CRITICAL_FIELDS);
   const nonCriticalFields = Object.keys(values).filter((field) => !CRITICAL_FIELDS.includes(field));
   const nonCriticalMissing = countMissing(values, nonCriticalFields);

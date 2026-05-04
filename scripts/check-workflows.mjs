@@ -189,15 +189,23 @@ const workerContract = {
   ],
   brentAuditRequired: [
     'buildBrentAudit',
+    'buildBrentPromotionDecision',
     'brentValidation.audit',
+    'brentValidation.promotion',
     'selectedSource',
     'promoteDecision',
-    'Diagnostic-only audit'
+    'BRENT_ANCHOR_STALE_HOURS',
+    'BRENT_CONFIRMATION_FRESH_HOURS',
+    'BRENT_PROMOTION_MAX_DIVERGENCE_PCT',
+    'google-finance:BZW00:NYMEX',
+    'tradingeconomics:brent-crude-oil',
+    'yahoo:BZ=F',
+    'excluded-non-positive-or-invalid'
   ],
   brentPrimaryForbiddenPatterns: [
-    [/values\.brent\s*=/u, 'must not assign values.brent from audit or consensus'],
-    [/values\[['"]brent['"]\]\s*=/u, 'must not assign values[brent] from audit or consensus'],
-    [/values\.brent[\s\S]{0,80}recommendedValue/u, 'must not connect values.brent to consensus recommendedValue']
+    [/values\.brent\s*=\s*.*recommendedValue/u, 'must not assign values.brent directly from consensus recommendedValue'],
+    [/values\[['"]brent['"]\]\s*=\s*.*recommendedValue/u, 'must not assign values[brent] directly from consensus recommendedValue'],
+    [/values\.brent[\s\S]{0,80}consensusValue/u, 'must not connect values.brent directly to consensusValue']
   ]
 };
 
