@@ -186,6 +186,18 @@ const workerContract = {
     'CBOE_VIX_HISTORY_URL',
     'tryWriteSecondaryPreview',
     'key === MARKET_WORKER_GENERATED_PREVIEW_KEY'
+  ],
+  brentAuditRequired: [
+    'buildBrentAudit',
+    'brentValidation.audit',
+    'selectedSource',
+    'promoteDecision',
+    'Diagnostic-only audit'
+  ],
+  brentPrimaryForbiddenPatterns: [
+    [/values\.brent\s*=/u, 'must not assign values.brent from audit or consensus'],
+    [/values\[['"]brent['"]\]\s*=/u, 'must not assign values[brent] from audit or consensus'],
+    [/values\.brent[\s\S]{0,80}recommendedValue/u, 'must not connect values.brent to consensus recommendedValue']
   ]
 };
 
@@ -221,6 +233,14 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
     if (text.includes(needle)) {
       addRuntimeFailure(workerContract.mainPreviewFile, `must not contain isolated secondary preview marker "${needle}"`);
     }
+  }
+  for (const needle of workerContract.brentAuditRequired) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(workerContract.mainPreviewFile, `missing Brent audit contract "${needle}"`);
+    }
+  }
+  for (const [pattern, message] of workerContract.brentPrimaryForbiddenPatterns) {
+    if (pattern.test(text)) addRuntimeFailure(workerContract.mainPreviewFile, message);
   }
 } else {
   addRuntimeFailure(workerContract.mainPreviewFile, 'worker main preview file missing');

@@ -374,6 +374,49 @@ function buildCandidateDiagnostics(result, parseError = null) {
   };
 }
 
+function summarizeBrentCandidate(candidate, selectedDetail = null) {
+  const diagnostics = candidate.diagnostics || {};
+  const value = isFiniteNumber(candidate.value) ? candidate.value : null;
+  const status = candidate.ok
+    ? 'ok'
+    : diagnostics.reason || diagnostics.error || candidate.error || 'unavailable';
+
+  return {
+    source: candidate.source,
+    role: candidate.role,
+    participatesInConsensus: candidate.participatesInConsensus === true,
+    status,
+    value,
+    observedAt: candidate.timestamp ?? selectedDetail?.timestamp ?? null,
+    error: candidate.error ?? diagnostics.error ?? null,
+  };
+}
+
+function buildBrentAudit(selectedDetail, brentValidation) {
+  const consensus = brentValidation.consensus || {};
+  const selectedValue = isFiniteNumber(selectedDetail?.value) ? selectedDetail.value : null;
+
+  return {
+    selectedSource: selectedDetail?.source || 'FRED:DCOILBRENTEU',
+    selectedValue,
+    selectedObservedAt: selectedDetail?.timestamp ?? null,
+    selectedStatus: selectedDetail?.ok ? 'ok' : selectedDetail?.error || 'missing',
+    consensusValue: isFiniteNumber(consensus.recommendedValue) ? consensus.recommendedValue : null,
+    candidateSources: brentValidation.candidates.map((candidate) =>
+      summarizeBrentCandidate(candidate, selectedDetail),
+    ),
+    promoteDecision: {
+      recommendedValue: isFiniteNumber(consensus.recommendedValue)
+        ? consensus.recommendedValue
+        : null,
+      canPromoteToPrimary: consensus.canPromoteToPrimary === true,
+      confidence: consensus.confidence ?? null,
+      reason: consensus.reason ?? null,
+    },
+    note: 'Diagnostic-only audit; values.brent remains selected from the primary FRED DCOILBRENTEU source.',
+  };
+}
+
 function parseYahooBrent(text) {
   const payload = JSON.parse(text);
   const result = payload?.chart?.result?.[0];
@@ -631,6 +674,7 @@ export async function buildWorkerGeneratedMarketPreview() {
   sourceDetails.gold = gold.detail;
 
   const brentValidation = await buildBrentValidation(values.brent);
+  brentValidation.audit = buildBrentAudit(sourceDetails.brent, brentValidation);
   const criticalMissing = countMissing(values, CRITICAL_FIELDS);
   const nonCriticalFields = Object.keys(values).filter((field) => !CRITICAL_FIELDS.includes(field));
   const nonCriticalMissing = countMissing(values, nonCriticalFields);

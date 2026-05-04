@@ -333,6 +333,24 @@ brentValidation.consensus.recommendedValue
 
 当 weak-confirmation 参与时，`canPromoteToPrimary` 必须为 `false`。当 `confidence = none` 时，`recommendedValue` 和 `recommendedSource` 必须为 `null`。
 
+### Brent source audit
+
+v28.0D-4 起，Worker generated preview 可在 `brentValidation.audit` 中附带小型 Brent source selection audit：
+
+```text
+brentValidation.audit
+```
+
+该字段用于解释 `values.brent` 的最终来源和验证层为什么没有 promote consensus：
+
+- `selectedSource` / `selectedValue` / `selectedObservedAt` 记录当前主 Brent 来源。
+- `candidateSources` 记录各候选源的 status / value / observedAt / error 摘要。
+- `promoteDecision` 记录 `recommendedValue` / `canPromoteToPrimary` / `confidence` / `reason`。
+- audit 不覆盖 `values.brent`。
+- audit 不影响 `data.__effectiveDisplayInputs`。
+- audit 不影响 Worker-first strict gate、`healthScore`、`criticalMissing`、`sourceMode`、`unavailable`。
+- audit 不参与 scoring 或 decision。
+
 ## DXY / 广义美元指数契约
 
 内部字段名仍然是 `dxy`，不要把内部字段改名。DOM id 仍然可以是 `rt-dxy`，数据字段仍然是：

@@ -353,6 +353,8 @@ git push origin main
 
 **v28.0D-3 secondary preview VIX-only producer**：独立 secondary preview 当前只接入 **VIX via Cboe**，不接入 DXY / HY OAS / Gold / US10Y / Brent。scheduled 在主 preview KV put 成功后才低频尝试更新 `market:secondary-preview`；若该 key 的 `updatedAt` / `generatedAt` 距今小于 **30** 分钟则跳过。Cboe 单源请求使用短超时，失败只写入 secondary unavailable payload 或被捕获，不影响主 `market:worker-generated-preview`、Worker-first strict gate、GitHub fallback 或 local fallback。前端当前不消费 `/market.secondary-preview.json`。
 
+**v28.0D-4 Brent source audit**：Worker generated preview 会在 `brentValidation.audit` 中记录 Brent 主值选择与验证层摘要，包括 selected source/value、candidate source status/value/observedAt/error，以及 consensus promotion decision。该 audit 只用于诊断 `values.brent` 为什么仍来自当前主源；它不改变 `values.brent`、不将 `recommendedValue` promote 为主值、不影响 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable`、不影响 Worker-first strict gate，也不影响 scoring / decision。
+
 未来重新设计 secondary diagnostics 必须满足：
 
 - 不阻塞主 Worker generated preview 写入。
