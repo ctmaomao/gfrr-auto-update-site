@@ -168,6 +168,27 @@ const forbiddenRuntimePatterns = [
   [/FORCE_JAVASCRIPT_ACTIONS_TO_NODE24/u, 'must not use FORCE_JAVASCRIPT_ACTIONS_TO_NODE24']
 ];
 
+const workerContract = {
+  mainPreviewFile: 'workers/gfrr-realtime-worker/src/worker-market-preview.js',
+  routerFile: 'workers/gfrr-realtime-worker/src/index.js',
+  mainPreviewForbidden: [
+    'secondarySources',
+    'secondaryDiagnostics',
+    'secondarySourceSummary',
+    'market:secondary-preview',
+    '/market.secondary-preview.json',
+    'VIX_History',
+    'CBOE_VIX_HISTORY_URL'
+  ],
+  routerRequired: [
+    'market:secondary-preview',
+    '/market.secondary-preview.json',
+    'CBOE_VIX_HISTORY_URL',
+    'tryWriteSecondaryPreview',
+    'key === MARKET_WORKER_GENERATED_PREVIEW_KEY'
+  ]
+};
+
 for (const file of workflowFiles) {
   const text = fs.readFileSync(file, 'utf8');
 
@@ -192,6 +213,28 @@ for (const file of workflowFiles) {
   if (setupNodeMatches.length > 0 && !/node-version:\s*['"]?24['"]?/u.test(text)) {
     addRuntimeFailure(file, 'uses setup-node but does not set node-version: 24');
   }
+}
+
+if (fs.existsSync(workerContract.mainPreviewFile)) {
+  const text = fs.readFileSync(workerContract.mainPreviewFile, 'utf8');
+  for (const needle of workerContract.mainPreviewForbidden) {
+    if (text.includes(needle)) {
+      addRuntimeFailure(workerContract.mainPreviewFile, `must not contain isolated secondary preview marker "${needle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(workerContract.mainPreviewFile, 'worker main preview file missing');
+}
+
+if (fs.existsSync(workerContract.routerFile)) {
+  const text = fs.readFileSync(workerContract.routerFile, 'utf8');
+  for (const needle of workerContract.routerRequired) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(workerContract.routerFile, `missing isolated secondary preview contract "${needle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(workerContract.routerFile, 'worker router file missing');
 }
 
 if (failures.length > 0) {

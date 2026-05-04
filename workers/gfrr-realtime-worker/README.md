@@ -18,12 +18,13 @@
   - v28.0B-2B 增加本地只读对比脚本 `tools/compare-worker-vs-mirror.mjs`，用于比较 `/market.worker-preview.json` 与 `/market.preview.json` 的字段差异；脚本不使用 Wrangler、不读取 KV、不写 Cloudflare KV、不接前端。
   - v28.0D-1 曾尝试在 Worker generated preview payload 内加入核心指标第二数据源诊断；部署后影响 Worker generated preview freshness，线上 Worker 已手动 rollback 到稳定版本 `679fb678-fe1d-4ff3-b9b9-53829d4d31f7`。
   - v28.0D-2-lite 将第二源诊断从主 Worker preview 彻底隔离：`/market.worker-preview.json` 不包含 `secondarySources` / `secondaryDiagnostics`，不执行第二源外部请求；新增 `GET /market.secondary-preview.json` 只读 KV 键 `market:secondary-preview`。默认 scheduled 路径不写该 key；不存在时返回小型 unavailable payload。
+  - v28.0D-3 只在独立 secondary preview 链路接入 **VIX via Cboe**。主 preview KV 写入成功后，scheduled 才会低频尝试更新 `market:secondary-preview`；若该 key 30 分钟内已更新则跳过。Cboe 请求使用短超时，失败只写 secondary unavailable payload 或被捕获，不影响 `market:worker-generated-preview`。
 - **已提供的 HTTP 能力**：
   - `GET /health`：存活与模式探测。
   - `GET /market.json`：从 KV 读取 `market:latest`（若尚未由后续版本写入，则返回 404 JSON）。
   - `GET /market.preview.json`：从 KV 读取 `market:latest-preview`（preview 管道失败或未跑过 cron 时可能 404）。
   - `GET /market.worker-preview.json`：从 KV 读取 `market:worker-generated-preview`（Worker 独立生成 preview MVP，未部署或未跑到对应轮次时可能 404）。
-  - `GET /market.secondary-preview.json`：从 KV 读取 `market:secondary-preview`（独立第二源诊断 preview；默认不由 scheduled 写入，不存在时返回 unavailable JSON，不影响主 preview）。
+  - `GET /market.secondary-preview.json`：从 KV 读取 `market:secondary-preview`（独立第二源诊断 preview；当前只包含 VIX via Cboe；不存在时返回 unavailable JSON，不影响主 preview）。
 
 ## 这**不是**什么
 

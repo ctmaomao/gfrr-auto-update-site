@@ -138,6 +138,14 @@ market:secondary-preview
 - DXY 与 HY OAS 的备用来源属于 proxy / experimental diagnostic，不得直接视为 canonical 等价源。
 - 独立 secondary preview 不存在时，`/market.secondary-preview.json` 返回小型 unavailable payload；这不代表主 `/market.worker-preview.json` 异常。
 
+v28.0D-3 的独立 secondary preview 只允许包含 VIX via Cboe：
+
+```text
+diagnostics.sources.vix
+```
+
+该字段只用于观察 Cboe VIX 第二源可达性与最新可解析值。前端当前不消费 `/market.secondary-preview.json`；该 payload 不得进入 Worker-first strict gate、`__effectiveDisplayInputs`、scoring 或 decision。
+
 ## displayInputsBaseline 契约
 
 `data/radar-data.json` 根层必须包含：
