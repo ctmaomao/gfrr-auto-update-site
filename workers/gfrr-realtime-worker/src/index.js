@@ -48,6 +48,39 @@ function isValidPreviewPayload(payload) {
   return true;
 }
 
+function positiveNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function extractPreviousWorkerPreviewSummary(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  const promotion = payload.brentValidation?.promotion || {};
+  const sourceDetails = payload.sourceDetails?.brent || {};
+  return {
+    previousUpdatedAt: typeof payload.updatedAt === 'string' ? payload.updatedAt : null,
+    previousValuesBrent: positiveNumber(payload.values?.brent),
+    previousPromotionApplied: promotion.applied === true,
+    previousPromotionSelectedValue: positiveNumber(promotion.selectedValue),
+    previousPromotionSelectedSource: typeof promotion.selectedSource === 'string' ? promotion.selectedSource : null,
+    previousPromotionMoveStatus: typeof promotion.moveStatus === 'string' ? promotion.moveStatus : null,
+    previousSourceDetailsBrentSource: typeof sourceDetails.source === 'string' ? sourceDetails.source : null,
+  };
+}
+
+async function readPreviousWorkerPreviewSummary(env) {
+  try {
+    const raw = await env.GFRR_MARKET_KV.get(MARKET_WORKER_GENERATED_PREVIEW_KEY, {
+      type: 'text',
+      cacheTtl: 30,
+    });
+    if (raw == null || raw === '') return null;
+    return extractPreviousWorkerPreviewSummary(JSON.parse(raw));
+  } catch (_err) {
+    return null;
+  }
+}
+
 function splitCsvLine(line) {
   const out = [];
   let current = '';
@@ -332,11 +365,12 @@ async function buildGitHubMirrorPreviewOrStatusPayload(scheduledAt) {
   };
 }
 
-async function buildWorkerGeneratedPreviewOrStatusPayload(scheduledAt) {
+async function buildWorkerGeneratedPreviewOrStatusPayload(scheduledAt, env) {
   try {
+    const previousPreviewSummary = await readPreviousWorkerPreviewSummary(env);
     return {
       key: MARKET_WORKER_GENERATED_PREVIEW_KEY,
-      value: await buildWorkerGeneratedMarketPreview(),
+      value: await buildWorkerGeneratedMarketPreview({ previousPreviewSummary }),
     };
   } catch (err) {
     return buildStatusPayload(
@@ -348,11 +382,11 @@ async function buildWorkerGeneratedPreviewOrStatusPayload(scheduledAt) {
   }
 }
 
-async function buildScheduledPreviewOrStatusPayload(nowMs) {
+async function buildScheduledPreviewOrStatusPayload(nowMs, env) {
   const scheduledAt = new Date(nowMs).toISOString();
   const mode = selectScheduledPreviewMode(nowMs);
   if (mode === 'worker-generated-preview') {
-    return buildWorkerGeneratedPreviewOrStatusPayload(scheduledAt);
+    return buildWorkerGeneratedPreviewOrStatusPayload(scheduledAt, env);
   }
   return buildGitHubMirrorPreviewOrStatusPayload(scheduledAt);
 }
@@ -488,7 +522,7 @@ export default {
   },
 
   async scheduled(_event, env) {
-    const { key, value } = await buildScheduledPreviewOrStatusPayload(Date.now());
+    const { key, value } = await buildScheduledPreviewOrStatusPayload(Date.now(), env);
     await env.GFRR_MARKET_KV.put(key, JSON.stringify(value));
     if (key === MARKET_WORKER_GENERATED_PREVIEW_KEY) {
       await tryWriteSecondaryPreview(env);

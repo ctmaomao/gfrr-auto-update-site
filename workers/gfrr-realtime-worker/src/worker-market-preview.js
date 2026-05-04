@@ -23,6 +23,9 @@ const TRADING_ECONOMICS_ALT_BRENT_URL =
 const BRENT_ANCHOR_STALE_HOURS = 72;
 const BRENT_CONFIRMATION_FRESH_HOURS = 48;
 const BRENT_PROMOTION_MAX_DIVERGENCE_PCT = 2;
+const BRENT_MOVE_WATCH_PCT = 2;
+const BRENT_MOVE_EXTREME_PCT = 3;
+const BRENT_EXTREME_CONFIRMATION_DIVERGENCE_PCT = 1;
 
 const FETCH_HEADERS = {
   Accept: 'text/csv,application/json,text/plain,*/*',
@@ -399,7 +402,116 @@ function divergencePct(a, b) {
   return roundValue((Math.abs(a - b) / midpoint) * 100);
 }
 
-function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs) {
+function changePctFromPrevious(candidateValue, previousValue) {
+  if (!positiveFinite(candidateValue) || !positiveFinite(previousValue)) return null;
+  return roundValue((Math.abs(candidateValue - previousValue) / previousValue) * 100);
+}
+
+function selectPreviousBrentReference(previousPreviewSummary) {
+  if (!previousPreviewSummary || typeof previousPreviewSummary !== 'object') {
+    return null;
+  }
+  if (
+    previousPreviewSummary.previousPromotionApplied === true &&
+    positiveFinite(previousPreviewSummary.previousPromotionSelectedValue)
+  ) {
+    return {
+      value: previousPreviewSummary.previousPromotionSelectedValue,
+      source: previousPreviewSummary.previousPromotionSelectedSource || 'previous-promotion',
+      updatedAt: previousPreviewSummary.previousUpdatedAt ?? null,
+    };
+  }
+  if (positiveFinite(previousPreviewSummary.previousValuesBrent)) {
+    return {
+      value: previousPreviewSummary.previousValuesBrent,
+      source: previousPreviewSummary.previousSourceDetailsBrentSource || 'previous-values.brent',
+      updatedAt: previousPreviewSummary.previousUpdatedAt ?? null,
+    };
+  }
+  return null;
+}
+
+function buildMoveAssessment({
+  candidateValue,
+  previousReference,
+  yahoo,
+  tradingEconomics,
+  yahooAgeHours,
+  maxConfirmationDivergencePct,
+}) {
+  if (!previousReference) {
+    return {
+      previousReferenceValue: null,
+      previousReferenceSource: null,
+      previousUpdatedAt: null,
+      promotedChangePct: null,
+      moveStatus: 'no-previous',
+      moveReason: 'no previous accepted Brent reference; D-5 promotion gate decides',
+      extremeMoveConfirmedBy: [],
+      allowPromotion: true,
+    };
+  }
+
+  const promotedChangePct = changePctFromPrevious(candidateValue, previousReference.value);
+  const base = {
+    previousReferenceValue: previousReference.value,
+    previousReferenceSource: previousReference.source,
+    previousUpdatedAt: previousReference.updatedAt,
+    promotedChangePct,
+    extremeMoveConfirmedBy: [],
+    allowPromotion: true,
+  };
+
+  if (!isFiniteNumber(promotedChangePct)) {
+    return {
+      ...base,
+      moveStatus: 'no-previous',
+      moveReason: 'previous Brent reference exists but promoted change could not be calculated',
+    };
+  }
+  if (promotedChangePct <= BRENT_MOVE_WATCH_PCT) {
+    return {
+      ...base,
+      moveStatus: 'normal',
+      moveReason: 'promoted Brent move is within normal range',
+    };
+  }
+  if (promotedChangePct <= BRENT_MOVE_EXTREME_PCT) {
+    return {
+      ...base,
+      moveStatus: 'volatility-watch',
+      moveReason: 'promoted Brent move is elevated but below extreme confirmation threshold',
+    };
+  }
+
+  const extremeConfirmed =
+    yahoo?.ok === true &&
+    tradingEconomics?.ok === true &&
+    positiveFinite(yahoo.value) &&
+    positiveFinite(tradingEconomics.value) &&
+    isFiniteNumber(yahooAgeHours) &&
+    yahooAgeHours <= BRENT_CONFIRMATION_FRESH_HOURS &&
+    isFiniteNumber(maxConfirmationDivergencePct) &&
+    maxConfirmationDivergencePct <= BRENT_EXTREME_CONFIRMATION_DIVERGENCE_PCT;
+
+  if (extremeConfirmed) {
+    return {
+      ...base,
+      moveStatus: 'confirmed-extreme-move',
+      moveReason: 'large Brent move confirmed by fresh Yahoo and Trading Economics agreement',
+      extremeMoveConfirmedBy: ['yahoo:BZ=F', 'tradingeconomics:brent-crude-oil'],
+    };
+  }
+
+  return {
+    ...base,
+    moveStatus: 'unconfirmed-jump-hold',
+    moveReason: 'large Brent move not confirmed by sufficiently tight Yahoo and Trading Economics agreement',
+    allowPromotion: false,
+  };
+}
+
+function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previousPreviewSummary = null) {
   const candidates = brentValidation.candidates || [];
   const yahoo = findBrentCandidate(candidates, 'yahoo:BZ=F');
   const tradingEconomics = findBrentCandidate(candidates, 'tradingeconomics:brent-crude-oil');
@@ -409,6 +521,7 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs) {
   const anchorAgeHours = hoursSinceTimestamp(anchorDetail?.timestamp, nowMs);
   const yahooAgeHours = hoursSinceTimestamp(yahoo?.timestamp, nowMs);
   const maxConfirmationDivergencePct = divergencePct(yahoo?.value, tradingEconomics?.value);
+  const previousReference = selectPreviousBrentReference(previousPreviewSummary);
   const base = {
     applied: false,
     selectedValue: anchorValue,
@@ -446,6 +559,15 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs) {
       },
     ],
     maxConfirmationDivergencePct,
+    previousReferenceValue: previousReference?.value ?? null,
+    previousReferenceSource: previousReference?.source ?? null,
+    previousUpdatedAt: previousReference?.updatedAt ?? null,
+    promotedChangePct: null,
+    moveStatus: 'no-previous',
+    moveReason: previousReference
+      ? 'D-5 promotion gate did not reach move assessment'
+      : 'no previous accepted Brent reference; D-5 promotion gate decides',
+    extremeMoveConfirmedBy: [],
     confidence: 'low',
     reason: null,
   };
@@ -466,14 +588,39 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs) {
   }
 
   const selectedValue = roundValue((yahoo.value + tradingEconomics.value) / 2);
+  const moveAssessment = buildMoveAssessment({
+    candidateValue: selectedValue,
+    previousReference,
+    yahoo,
+    tradingEconomics,
+    yahooAgeHours,
+    maxConfirmationDivergencePct,
+  });
+  if (!moveAssessment.allowPromotion) {
+    const fallbackValue = positiveFinite(previousReference?.value) ? previousReference.value : anchorValue;
+    return {
+      ...base,
+      ...moveAssessment,
+      selectedValue: fallbackValue,
+      selectedSource: positiveFinite(previousReference?.value)
+        ? previousReference.source
+        : anchorDetail?.source || 'FRED:DCOILBRENTEU',
+      confidence: 'medium',
+      reason: moveAssessment.moveStatus,
+    };
+  }
+
   return {
     ...base,
+    ...moveAssessment,
     applied: true,
     selectedValue,
     selectedSource: 'yahoo:BZ=F+tradingeconomics:brent-crude-oil-average',
     selectedObservedAt: yahoo.timestamp ?? null,
-    confidence: 'high',
-    reason: 'promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation',
+    confidence: moveAssessment.moveStatus === 'confirmed-extreme-move' ? 'high' : 'high',
+    reason: moveAssessment.moveStatus === 'confirmed-extreme-move'
+      ? 'promoted-confirmed-extreme-move-with-fresh-yahoo-and-tradingeconomics-confirmation'
+      : 'promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation',
   };
 }
 
@@ -517,6 +664,9 @@ function buildBrentAudit(selectedDetail, brentValidation, promotionDecision, anc
       canPromoteToPrimary: promotionDecision?.applied === true,
       confidence: promotionDecision?.confidence ?? consensus.confidence ?? null,
       reason: promotionDecision?.reason ?? consensus.reason ?? null,
+      moveStatus: promotionDecision?.moveStatus ?? null,
+      promotedChangePct: promotionDecision?.promotedChangePct ?? null,
+      extremeMoveConfirmedBy: promotionDecision?.extremeMoveConfirmedBy ?? [],
     },
     note: promotionDecision?.applied
       ? 'Freshness-gated promotion applied; values.brent uses market confirmation over stale FRED anchor.'
@@ -761,7 +911,8 @@ function sourceSummaryFromDiagnostic(diagnostic) {
   };
 }
 
-export async function buildWorkerGeneratedMarketPreview() {
+export async function buildWorkerGeneratedMarketPreview(options = {}) {
+  const previousPreviewSummary = options?.previousPreviewSummary ?? null;
   const nowIso = new Date().toISOString();
   const cosd = formatDate(new Date(Date.now() - 45 * 24 * 60 * 60 * 1000));
   const fredResults = await fetchAllFredSeries(cosd);
@@ -786,6 +937,7 @@ export async function buildWorkerGeneratedMarketPreview() {
     brentAnchorDetail,
     brentValidation,
     Date.parse(nowIso),
+    previousPreviewSummary,
   );
   brentValidation.promotion = brentPromotion;
   if (brentPromotion.applied) {
@@ -803,6 +955,32 @@ export async function buildWorkerGeneratedMarketPreview() {
       anchorValue: brentPromotion.anchorValue,
       anchorObservedAt: brentPromotion.anchorObservedAt,
       anchorAgeHours: brentPromotion.anchorAgeHours,
+      confirmationSources: brentPromotion.confirmationSources,
+      maxConfirmationDivergencePct: brentPromotion.maxConfirmationDivergencePct,
+    };
+  } else if (
+    brentPromotion.moveStatus === 'unconfirmed-jump-hold' &&
+    positiveFinite(brentPromotion.selectedValue)
+  ) {
+    values.brent = brentPromotion.selectedValue;
+    changes.brent1d = null;
+    sourceDetails.brent = {
+      ...sourceDetails.brent,
+      value: brentPromotion.selectedValue,
+      source: `${brentPromotion.selectedSource} held after unconfirmed Brent jump`,
+      timestamp: brentPromotion.previousUpdatedAt ?? brentPromotion.anchorObservedAt,
+      error: null,
+      promotionHeld: true,
+      promotionReason: brentPromotion.reason,
+      moveStatus: brentPromotion.moveStatus,
+      moveReason: brentPromotion.moveReason,
+      previousReferenceValue: brentPromotion.previousReferenceValue,
+      previousReferenceSource: brentPromotion.previousReferenceSource,
+      previousUpdatedAt: brentPromotion.previousUpdatedAt,
+      promotedChangePct: brentPromotion.promotedChangePct,
+      anchorSource: brentPromotion.anchorSource,
+      anchorValue: brentPromotion.anchorValue,
+      anchorObservedAt: brentPromotion.anchorObservedAt,
       confirmationSources: brentPromotion.confirmationSources,
       maxConfirmationDivergencePct: brentPromotion.maxConfirmationDivergencePct,
     };

@@ -371,6 +371,53 @@ promotion 成功时：
 
 promotion 失败时，`values.brent` 继续使用 FRED anchor。promotion 成功或失败都不得改变 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable` 的计算规则，也不得影响 VIX secondary preview。
 
+### Brent extreme-move confirmation guard
+
+v28.0D-6 起，Worker generated preview 会在生成前读取上一轮 `market:worker-generated-preview` 的小型 Brent 摘要：
+
+```text
+previousUpdatedAt
+previous values.brent
+previous brentValidation.promotion.selectedValue
+previous brentValidation.promotion.selectedSource
+previous brentValidation.promotion.moveStatus
+previous sourceDetails.brent.source
+```
+
+读取失败或解析失败不得中断主 preview。该读取只用于 Brent move audit，不增加 KV write。
+
+`brentValidation.promotion` 必须包含：
+
+```text
+previousReferenceValue
+previousReferenceSource
+previousUpdatedAt
+promotedChangePct
+moveStatus
+moveReason
+extremeMoveConfirmedBy
+```
+
+`moveStatus` 取值：
+
+```text
+no-previous
+normal
+volatility-watch
+confirmed-extreme-move
+unconfirmed-jump-hold
+```
+
+规则：
+
+- previous reference 缺失时，`moveStatus = no-previous`，不阻止 D-5 promotion。
+- promoted change <= 2% 时，`moveStatus = normal`，允许 promotion。
+- promoted change > 2% 且 <= 3% 时，`moveStatus = volatility-watch`，允许 promotion 并记录 audit。
+- promoted change > 3% 时，只有 Yahoo 与 Trading Economics 同时有效、Yahoo fresh 且 divergence <= 1%，才允许并标记 `confirmed-extreme-move`。
+- > 3% 且未被双源确认时，`moveStatus = unconfirmed-jump-hold`，不得使用 candidate promoted value；应保留上一轮 accepted Brent，若不可用再回退 FRED anchor。
+
+`confirmed-extreme-move` 是风险信号，不是数据错误；不得降低 `healthScore`，不得影响 `criticalMissing` / `sourceMode` / `unavailable`，也不得改变 scoring / decision。
+
 ## DXY / 广义美元指数契约
 
 内部字段名仍然是 `dxy`，不要把内部字段改名。DOM id 仍然可以是 `rt-dxy`，数据字段仍然是：
