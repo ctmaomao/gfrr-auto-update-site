@@ -21,6 +21,7 @@
   - v28.0D-3 只在独立 secondary preview 链路接入 **VIX via Cboe**。主 preview KV 写入成功后，scheduled 才会低频尝试更新 `market:secondary-preview`；若该 key 30 分钟内已更新则跳过。Cboe 请求使用短超时，失败只写 secondary unavailable payload 或被捕获，不影响 `market:worker-generated-preview`。
   - v28.0D-5 增加 Brent freshness-gated promotion：FRED `DCOILBRENTEU` 仍是 anchor；只有当 FRED stale、Yahoo `BZ=F` fresh、Trading Economics Brent 与 Yahoo 接近且 Google Finance 0 / Stooq 失败被排除时，才允许用 Yahoo / Trading Economics 平均值修正 `values.brent`。
   - v28.0D-6 增加 Brent extreme-move confirmation guard：相对上一轮 accepted Brent 的 2%–3% 跳动进入 watch 但允许；超过 3% 时若 Yahoo + Trading Economics 高度一致则标记 confirmed extreme move 并允许，否则 hold 到上一轮 accepted Brent / FRED。
+  - v28.0D-8 增加 Brent source hygiene：Google Finance 明确为 `html-experimental` diagnostic，Stooq `brn.f` CSV close 缺失时输出 `csv-no-numeric-close` / `symbol-download-unavailable`，并新增 `stooq:brn.c` alternate diagnostic probe。Google Finance 与 Stooq candidate 均不参与 Brent promotion。
 - **已提供的 HTTP 能力**：
   - `GET /health`：存活与模式探测。
   - `GET /market.json`：从 KV 读取 `market:latest`（若尚未由后续版本写入，则返回 404 JSON）。

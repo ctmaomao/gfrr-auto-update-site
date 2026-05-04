@@ -15,6 +15,7 @@ const GOLD_URL = 'https://api.gold-api.com/price/XAU';
 const YAHOO_BRENT_URL =
   'https://query1.finance.yahoo.com/v8/finance/chart/BZ%3DF?interval=1d&range=5d';
 const STOOQ_BRENT_URL = 'https://stooq.com/q/d/l/?s=brn.f&i=d';
+const STOOQ_BRENT_ALT_URL = 'https://stooq.com/q/d/l/?s=brn.c&i=d';
 const GOOGLE_FINANCE_BRENT_URL = 'https://www.google.com/finance/beta/quote/BZW00:NYMEX';
 const TRADING_ECONOMICS_BRENT_URL =
   'https://tradingeconomics.com/commodity/brent-crude-oil';
@@ -380,6 +381,14 @@ function buildCandidateDiagnostics(result, parseError = null) {
   };
 }
 
+function buildDiagnosticCandidateDiagnostics(result, reason, error = null) {
+  return {
+    ...buildCandidateDiagnostics(result, error),
+    error: error ?? result.error,
+    reason: reason ?? sourceReason(result.status, error ?? result.error),
+  };
+}
+
 function hoursSinceTimestamp(timestamp, nowMs) {
   if (typeof timestamp !== 'string' || timestamp === '') return null;
   const parsed = Date.parse(timestamp);
@@ -517,6 +526,7 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
   const tradingEconomics = findBrentCandidate(candidates, 'tradingeconomics:brent-crude-oil');
   const googleFinance = findBrentCandidate(candidates, 'google-finance:BZW00:NYMEX');
   const stooq = findBrentCandidate(candidates, 'stooq:brn.f');
+  const stooqAlt = findBrentCandidate(candidates, 'stooq:brn.c');
   const anchorValue = positiveFinite(anchorDetail?.value) ? anchorDetail.value : null;
   const anchorAgeHours = hoursSinceTimestamp(anchorDetail?.timestamp, nowMs);
   const yahooAgeHours = hoursSinceTimestamp(yahoo?.timestamp, nowMs);
@@ -550,12 +560,22 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
       {
         source: 'google-finance:BZW00:NYMEX',
         value: isFiniteNumber(googleFinance?.value) ? googleFinance.value : null,
-        reason: positiveFinite(googleFinance?.value) ? 'diagnostic-only' : 'excluded-non-positive-or-invalid',
+        reason: googleFinance?.reason ||
+          (positiveFinite(googleFinance?.value)
+            ? 'google-finance-html-experimental-diagnostic-only'
+            : 'excluded-non-positive-or-invalid'),
       },
       {
         source: 'stooq:brn.f',
         value: isFiniteNumber(stooq?.value) ? stooq.value : null,
-        reason: stooq?.ok ? 'not-required-for-promotion' : stooq?.error || 'excluded-unavailable',
+        reason: stooq?.reason ||
+          (stooq?.ok ? 'stooq-brn-f-not-used-for-promotion' : 'symbol-download-unavailable'),
+      },
+      {
+        source: 'stooq:brn.c',
+        value: isFiniteNumber(stooqAlt?.value) ? stooqAlt.value : null,
+        reason: stooqAlt?.reason ||
+          (stooqAlt?.ok ? 'stooq-brn-c-alt-symbol-diagnostic-only' : 'symbol-download-unavailable'),
       },
     ],
     maxConfirmationDivergencePct,
@@ -627,11 +647,13 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
 function summarizeBrentCandidate(candidate, anchorDetail = null) {
   const diagnostics = candidate.diagnostics || {};
   const value = isFiniteNumber(candidate.value) ? candidate.value : null;
+  const reason = candidate.reason ?? diagnostics.reason ?? null;
+  const exclusionReason = candidate.exclusionReason ?? null;
   const status = candidate.ok && positiveFinite(value)
     ? 'ok'
     : candidate.ok && !positiveFinite(value)
-      ? 'invalid-non-positive'
-    : diagnostics.reason || diagnostics.error || candidate.error || 'unavailable';
+      ? reason || 'excluded-non-positive-or-invalid'
+    : reason || diagnostics.error || candidate.error || 'unavailable';
 
   return {
     source: candidate.source,
@@ -641,6 +663,10 @@ function summarizeBrentCandidate(candidate, anchorDetail = null) {
     value,
     observedAt: candidate.timestamp ?? (candidate.role === 'anchor' ? anchorDetail?.timestamp : null) ?? null,
     error: candidate.error ?? diagnostics.error ?? null,
+    reason,
+    exclusionReason,
+    quality: candidate.quality ?? null,
+    promotionEligible: candidate.promotionEligible === true,
   };
 }
 
@@ -718,28 +744,43 @@ async function fetchYahooBrentCandidate() {
   };
 }
 
-async function fetchStooqBrentCandidate() {
-  const result = await fetchTextWithDiagnostics(STOOQ_BRENT_URL);
+async function fetchStooqBrentCandidate({
+  url = STOOQ_BRENT_URL,
+  source = 'stooq:brn.f',
+  role = 'validation',
+  participatesInConsensus = true,
+  quality = 'csv',
+} = {}) {
+  const result = await fetchTextWithDiagnostics(url);
   let parsed = null;
   let parseError = null;
+  let reason = result.ok ? null : 'symbol-download-unavailable';
 
   if (result.ok) {
     try {
       const { latest } = latestTwoCsvValues(result.text, 4);
-      if (!latest) throw new Error('no numeric close');
+      if (!latest) throw new Error('csv-no-numeric-close');
       parsed = { value: roundValue(latest.value), timestamp: latest.timestamp };
     } catch (err) {
       parseError = err instanceof Error ? err.message : String(err);
+      reason = parseError === 'csv-no-numeric-close' ? 'csv-no-numeric-close' : 'fetch-or-parse-error';
     }
   }
+  const error = parseError ?? result.error;
 
   return {
-    source: 'stooq:brn.f',
+    source,
     value: parsed?.value ?? null,
     timestamp: parsed?.timestamp ?? null,
     ok: result.ok && parsed?.value != null,
-    error: parseError ?? result.error,
-    diagnostics: buildCandidateDiagnostics(result, parseError),
+    error,
+    reason,
+    role,
+    participatesInConsensus,
+    quality,
+    promotionEligible: false,
+    exclusionReason: 'stooq-diagnostic-not-used-for-promotion',
+    diagnostics: buildDiagnosticCandidateDiagnostics(result, reason, error),
   };
 }
 
@@ -765,18 +806,30 @@ async function fetchGoogleFinanceDiagnosticCandidate() {
     headers: { Accept: 'text/html,text/plain,*/*' },
   });
   const value = result.ok ? parsePriceFromHtml(result.text) : null;
+  const invalidValue = result.ok && !positiveFinite(value);
   const parseError = result.ok && value == null ? 'price parse failed' : null;
+  const reason = invalidValue
+    ? 'excluded-non-positive-or-invalid'
+    : parseError
+      ? 'fetch-or-parse-error'
+      : null;
+  const error = invalidValue
+    ? 'Google Finance HTML may contain futures-chain zero / non-primary price'
+    : parseError ?? result.error;
 
   return {
     source: 'google-finance:BZW00:NYMEX',
     value,
     timestamp: null,
-    ok: result.ok && value != null,
-    error: parseError ?? result.error,
+    ok: result.ok && positiveFinite(value),
+    error,
+    reason,
     role: 'diagnostic',
     participatesInConsensus: false,
-    quality: 'experimental',
-    diagnostics: buildCandidateDiagnostics(result, parseError),
+    quality: 'html-experimental',
+    promotionEligible: false,
+    exclusionReason: 'google-finance-html-experimental-not-used-for-promotion',
+    diagnostics: buildDiagnosticCandidateDiagnostics(result, reason, error),
   };
 }
 
@@ -819,6 +872,14 @@ async function buildBrentValidation(anchorValue) {
   await sleep(150 + Math.floor(Math.random() * 151));
   const stooq = await fetchStooqBrentCandidate();
   await sleep(150 + Math.floor(Math.random() * 151));
+  const stooqAlt = await fetchStooqBrentCandidate({
+    url: STOOQ_BRENT_ALT_URL,
+    source: 'stooq:brn.c',
+    role: 'diagnostic',
+    participatesInConsensus: false,
+    quality: 'experimental-alt-symbol',
+  });
+  await sleep(150 + Math.floor(Math.random() * 151));
   const googleFinance = await fetchGoogleFinanceDiagnosticCandidate();
   await sleep(150 + Math.floor(Math.random() * 151));
   const tradingEconomics = await fetchTradingEconomicsDiagnosticCandidate();
@@ -833,6 +894,7 @@ async function buildBrentValidation(anchorValue) {
     },
     { ...yahoo, role: 'validation', participatesInConsensus: true },
     { ...stooq, role: 'validation', participatesInConsensus: true },
+    stooqAlt,
     googleFinance,
     tradingEconomics,
   ];
@@ -866,6 +928,7 @@ async function buildBrentValidation(anchorValue) {
     diagnostics: {
       yahoo: yahoo.diagnostics,
       stooq: stooq.diagnostics,
+      stooqAlt: stooqAlt.diagnostics,
       googleFinance: googleFinance.diagnostics,
       tradingEconomics: tradingEconomics.diagnostics,
     },

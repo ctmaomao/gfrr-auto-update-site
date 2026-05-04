@@ -371,6 +371,17 @@ promotion 成功时：
 
 promotion 失败时，`values.brent` 继续使用 FRED anchor。promotion 成功或失败都不得改变 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable` 的计算规则，也不得影响 VIX secondary preview。
 
+### Brent source hygiene
+
+v28.0D-8 起，Brent candidate source hygiene 只改善 audit 可读性，不改变主值选择：
+
+- Google Finance `google-finance:BZW00:NYMEX` 必须保持 `role: diagnostic`、`participatesInConsensus: false`、`quality: html-experimental`。HTML 解析可能命中 futures chain 中的 `0` 或非主价格；0、负数、null、NaN 必须标记 `excluded-non-positive-or-invalid`，不得进入 promotion confirmation sources。
+- Stooq `stooq:brn.f` 保留观测，但 CSV close 缺失时应记录 `csv-no-numeric-close`，下载不可用时记录 `symbol-download-unavailable`。除非未来明确升级稳定性，否则不得参与 `values.brent` promotion。
+- Stooq alternate `stooq:brn.c` 只作为 `quality: experimental-alt-symbol` diagnostic probe，进入 `brentValidation.candidates` 与 `brentValidation.audit.candidateSources`，但不参与 consensus 或 promotion。
+- `brentValidation.audit.candidateSources` 对 Google Finance、Stooq `brn.f`、Stooq `brn.c` 应提供 `source`、`role`、`participatesInConsensus`、`status`、`value`、`observedAt`、`error`、`reason` / `exclusionReason` 与 `quality`。
+
+当前 Brent 主值逻辑仍是 FRED anchor + Yahoo `BZ=F` / Trading Economics confirmed promotion。Google Finance 或 Stooq 失败不得影响 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable`。
+
 ### Brent extreme-move confirmation guard
 
 v28.0D-6 起，Worker generated preview 会在生成前读取上一轮 `market:worker-generated-preview` 的小型 Brent 摘要：

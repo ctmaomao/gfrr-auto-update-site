@@ -208,6 +208,11 @@ const workerContract = {
     'BRENT_PROMOTION_MAX_DIVERGENCE_PCT',
     'BRENT_EXTREME_CONFIRMATION_DIVERGENCE_PCT',
     'google-finance:BZW00:NYMEX',
+    'html-experimental',
+    'Google Finance HTML may contain futures-chain zero / non-primary price',
+    'stooq:brn.c',
+    'experimental-alt-symbol',
+    'csv-no-numeric-close',
     'tradingeconomics:brent-crude-oil',
     'yahoo:BZ=F',
     'excluded-non-positive-or-invalid'
@@ -259,6 +264,21 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
   }
   for (const [pattern, message] of workerContract.brentPrimaryForbiddenPatterns) {
     if (pattern.test(text)) addRuntimeFailure(workerContract.mainPreviewFile, message);
+  }
+  const confirmationStart = text.indexOf('confirmationSources: [');
+  const excludedStart = text.indexOf('excludedSources: [');
+  if (confirmationStart !== -1 && excludedStart !== -1 && excludedStart > confirmationStart) {
+    const confirmationBlock = text.slice(confirmationStart, excludedStart);
+    for (const forbiddenSource of ['google-finance:', 'stooq:brn.f', 'stooq:brn.c']) {
+      if (confirmationBlock.includes(forbiddenSource)) {
+        addRuntimeFailure(
+          workerContract.mainPreviewFile,
+          `Brent promotion confirmationSources must not include ${forbiddenSource}`,
+        );
+      }
+    }
+  } else {
+    addRuntimeFailure(workerContract.mainPreviewFile, 'missing Brent confirmation/exclusion contract blocks');
   }
 } else {
   addRuntimeFailure(workerContract.mainPreviewFile, 'worker main preview file missing');
