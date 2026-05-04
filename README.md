@@ -17,18 +17,23 @@
 
 ## 当前版本状态
 
-当前处于 `v27.1.0` 稳定化 release（v27.x）。
+当前处于 `v28.0D-7` 工程进度；页面公开标签仍为 `v28.0C`。
 
 已经具备：
 
-- realtime 数据更新与 freshness / degraded / unavailable 状态展示。
+- Worker-first 实时主源，前端按 strict gate 选择 Worker generated preview。
+- GitHub `realtime-data` fallback 与本地 `./realtime/market.json` fallback。
+- realtime freshness / degraded / unavailable 状态展示。
 - daily baseline 构建与 `displayInputsBaseline` fallback。
 - 六大风险模块、热力图、传导网络、资产偏好矩阵和情景树。
 - 决策系统、执行灯、仓位建议、Action Queue、Trigger Monitor 和 Invalidation Rules。
+- secondary diagnostics 独立 endpoint `/market.secondary-preview.json`，当前接入 VIX secondary 独立诊断。
+- Brent audit、freshness-gated promotion、extreme-move confirmation guard 与 Brent source explainability UI。
+- Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。
 
-一句话演进：`v25` 看见风险，`v26` 知道该做什么，`v27` 将风险状态、仓位约束和执行动作结构化。
+一句话演进：`v25` 看见风险，`v26` 知道该做什么，`v27` 将决策结构化，`v28` 将实时数据源、Worker-first、Brent promotion 与诊断隔离工程化。
 
 ## 核心架构
 
@@ -49,18 +54,21 @@
 ## 数据链路
 
 ```text
-Build Realtime Market
-→ realtime-data 分支 / realtime/market.json
+Cloudflare Worker generated preview
+→ GitHub realtime-data
+→ local fallback
 → Build Daily Radar Data
 → main / data/radar-data.json
-→ 前端读取 baseline + 远端 realtime
+→ 前端读取 baseline + selected realtime
 → effectiveDisplayInputs
 → 页面渲染
 ```
 
 关键边界：
 
-- `realtime-data` 是前端远端 realtime payload 的主要来源。
+- 前端 realtime 优先级为 `Worker generated preview → GitHub realtime-data → local fallback`。
+- Worker generated preview 必须通过 strict gate：HTTP 200、`workerGeneratedPreview.enabled === true`、freshness、`healthScore`、`criticalMissing` 与关键字段有限值检查。
+- `realtime-data` 是 Worker 不可用或被策略关闭时的远端 fallback。
 - `dailyRealtimeInput` 记录 Daily 构建实际消费的 realtime 版本。
 - `displayInputsBaseline` 是 baseline fallback 的结构化当前值来源。
 - 前端当前值最终使用 `effectiveDisplayInputs`，按“可用 realtime values → displayInputsBaseline → null”的顺序选择。
@@ -99,9 +107,26 @@ Brent 主显示值仍来自：
 values.brent
 ```
 
-`brentValidation.consensus.recommendedValue` 是验证层推荐值，不等于主值；系统不会自动切主值。`canPromoteToPrimary=false` 时不得提升为主值。
+FRED `DCOILBRENTEU` 仍是 Brent anchor，但 v28.0D 起允许在严格条件下切换主值：
+
+- 当 FRED anchor stale，且 Yahoo `BZ=F` 与 Trading Economics Brent 均有效、fresh / 可用且 divergence 在阈值内时，允许 freshness-gated promotion。
+- `>3%` 的相邻周期大幅跳动不会默认视为错误；如果 Yahoo + Trading Economics 双源确认，可标记 `confirmed-extreme-move` 并进入 `values.brent`。
+- 未被双源确认的大幅跳动会 `hold`，保留上一轮 accepted Brent 或回退 FRED anchor。
+- Google Finance 的 `0`、failed / null 来源和未满足条件的 diagnostic candidate 不参与 promotion。
+- 页面“盘中快变量 / 布伦特”会显示 Brent 来源解释与 D-6 move status。
+
+`brentValidation.consensus.recommendedValue` 仍只是验证层推荐值，不得绕过 freshness-gated promotion 与 extreme-move confirmation guard 直接写入 `values.brent`。
 
 详细规则见 `docs/DATA_CONTRACT.md`。
+
+## Secondary diagnostics 边界
+
+secondary diagnostics 已从主 Worker preview 隔离：
+
+- 主 `/market.worker-preview.json` 不得包含 `secondarySources` / `secondaryDiagnostics` / `secondarySourceSummary`。
+- `/market.secondary-preview.json` 是独立诊断 endpoint，读取独立 KV key。
+- 当前只接入 VIX secondary producer。
+- 前端主页面暂不消费 VIX secondary；它只用于后台诊断，不影响 `effectiveDisplayInputs`、scoring、decision 或 Worker-first strict gate。
 
 ## 开发检查与提交前验收
 
@@ -143,7 +168,7 @@ npm run check:data
 
 - `Build Realtime Market`：定时生成 realtime payload，并发布到 `realtime-data` 分支。
 - `Build Daily Radar Data`：读取最新 `realtime-data` payload，生成 `data/radar-data.json` 与 history。
-- `Deploy Static Site to Pages`：部署静态站点到 GitHub Pages。
+- `Deploy Static Site to Pages`：Daily 成功提交 `data/*.json` 后，通过 `workflow_run` 触发并部署静态站点到 GitHub Pages。
 
 Pages deploy 前自动运行：
 
@@ -192,7 +217,7 @@ Realtime / Daily workflow 会在 GitHub Actions Summary 输出关键审计信息
 ## 文档入口
 
 - [AI 开发守则](AGENTS.md)
-- [v27 稳定化基线](docs/V27_BASELINE.md)
+- [v27 稳定化基线](docs/V27_BASELINE.md)：历史稳定基线与维护边界，不代表当前 v28.0D-7 工程进度。
 - 数据契约：`docs/DATA_CONTRACT.md`
 - 运行排查手册：`docs/OPERATIONS.md`
 - 核心入口：`index.html`
