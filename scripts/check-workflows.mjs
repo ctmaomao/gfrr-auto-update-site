@@ -187,15 +187,18 @@ const workerContract = {
     'tryWriteSecondaryPreview',
     'key === MARKET_WORKER_GENERATED_PREVIEW_KEY',
     'readPreviousWorkerPreviewSummary',
-    'previousPreviewSummary'
+    'previousPreviewSummary',
+    'previousSourceProbe'
   ],
   brentAuditRequired: [
     'buildBrentAudit',
     'buildBrentPromotionDecision',
+    'buildBrentSourceProbe',
     'selectPreviousBrentReference',
     'buildMoveAssessment',
     'brentValidation.audit',
     'brentValidation.promotion',
+    'sourceProbe',
     'selectedSource',
     'promoteDecision',
     'moveStatus',
@@ -210,6 +213,8 @@ const workerContract = {
     'google-finance:BZW00:NYMEX',
     'html-experimental',
     'Google Finance HTML may contain futures-chain zero / non-primary price',
+    'google-finance:BZW00:NYMEX canonical',
+    'google-finance:BZY00:NYMEX front-month',
     'stooq:brn.c',
     'experimental-alt-symbol',
     'csv-no-numeric-close',
@@ -219,10 +224,39 @@ const workerContract = {
     'yahoo:BZ=F',
     'excluded-non-positive-or-invalid'
   ],
+  sourceProbeRequired: [
+    'PROBE_SAMPLE_ROW_LIMIT = 3',
+    'PROBE_SNIPPET_LIMIT = 120',
+    'SOURCE_PROBE_FREQUENCY_MINUTES = 60',
+    'frequencyMinutes: SOURCE_PROBE_FREQUENCY_MINUTES',
+    'reused: true',
+    'reused: false',
+    'source-probe-reused-within-60m',
+    'probeCount: probes.length',
+    'fullHtmlStored: false',
+    'fullCsvStored: false',
+    'maxSampleRows: PROBE_SAMPLE_ROW_LIMIT',
+    'maxSnippetChars: PROBE_SNIPPET_LIMIT',
+    'role: \'diagnostic-only\'',
+    'affectsPromotion: false',
+    'participatesInConsensus: false',
+    'promotionEligible: false',
+    'header-unrecognized',
+    'non-csv-response',
+    'unreliable-html-parse',
+    'stooqProbeUrl(symbol)',
+    'google-finance:BZW00:NYMEX canonical',
+    'google-finance:BZY00:NYMEX front-month',
+    'stooq:brn.f',
+    'stooq:brn.c',
+    '\'bz.f\''
+  ],
   brentPrimaryForbiddenPatterns: [
     [/values\.brent\s*=\s*.*recommendedValue/u, 'must not assign values.brent directly from consensus recommendedValue'],
     [/values\[['"]brent['"]\]\s*=\s*.*recommendedValue/u, 'must not assign values[brent] directly from consensus recommendedValue'],
-    [/values\.brent[\s\S]{0,80}consensusValue/u, 'must not connect values.brent directly to consensusValue']
+    [/values\.brent[\s\S]{0,80}consensusValue/u, 'must not connect values.brent directly to consensusValue'],
+    [/values\.brent\s*=\s*.*sourceProbe/u, 'must not assign values.brent from sourceProbe'],
+    [/values\[['"]brent['"]\]\s*=\s*.*sourceProbe/u, 'must not assign values[brent] from sourceProbe']
   ]
 };
 
@@ -264,17 +298,84 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
       addRuntimeFailure(workerContract.mainPreviewFile, `missing Brent audit contract "${needle}"`);
     }
   }
+  for (const needle of workerContract.sourceProbeRequired) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(workerContract.mainPreviewFile, `missing Brent source probe contract "${needle}"`);
+    }
+  }
   for (const [pattern, message] of workerContract.brentPrimaryForbiddenPatterns) {
     if (pattern.test(text)) addRuntimeFailure(workerContract.mainPreviewFile, message);
   }
   if (/\{\s*\.\.\.stooq,\s*role:\s*['"]validation['"]/u.test(text)) {
     addRuntimeFailure(workerContract.mainPreviewFile, 'stooq:brn.f must not be spread with validation role');
   }
+  if (!/source\s*=\s*['"]stooq:brn\.f['"][\s\S]{0,160}role\s*=\s*['"]diagnostic['"][\s\S]{0,160}participatesInConsensus\s*=\s*false[\s\S]{0,160}quality\s*=\s*['"]csv-symbol-unstable['"]/u.test(text)) {
+    addRuntimeFailure(workerContract.mainPreviewFile, 'stooq:brn.f must remain diagnostic-only csv-symbol-unstable');
+  }
+  const sourceProbeStart = text.indexOf('async function buildBrentSourceProbe(');
+  const buildValidationStart = text.indexOf('async function buildBrentValidation');
+  if (sourceProbeStart !== -1 && buildValidationStart !== -1 && buildValidationStart > sourceProbeStart) {
+    const sourceProbeBlock = text.slice(sourceProbeStart, buildValidationStart);
+    for (const forbiddenNeedle of [
+      'role: \'validation\'',
+      'participatesInConsensus: true',
+      'canPromoteToPrimary: true',
+      'values.brent',
+    ]) {
+      if (sourceProbeBlock.includes(forbiddenNeedle)) {
+        addRuntimeFailure(
+          workerContract.mainPreviewFile,
+          `Brent sourceProbe must not contain promotion marker "${forbiddenNeedle}"`,
+        );
+      }
+    }
+    for (const removedProbe of [
+      'google-finance:BZW00:NYMEX beta',
+      'bzy.f',
+      'bzw.f',
+      'brent.f',
+      'ukousd',
+      'ukousd.c'
+    ]) {
+      if (sourceProbeBlock.includes(removedProbe)) {
+        addRuntimeFailure(
+          workerContract.mainPreviewFile,
+          `D-8B-lite sourceProbe must not include removed probe "${removedProbe}"`,
+        );
+      }
+    }
+    const googleProbeBlockMatch = sourceProbeBlock.match(/const googleProbes = \[([\s\S]*?)\];/u);
+    const stooqSymbolBlockMatch = text.match(/const STOOQ_BRENT_PROBE_SYMBOLS = \[([\s\S]*?)\];/u);
+    const googleProbeCount = googleProbeBlockMatch
+      ? (googleProbeBlockMatch[1].match(/probeId:/gu) || []).length
+      : 0;
+    const stooqProbeCount = stooqSymbolBlockMatch
+      ? (stooqSymbolBlockMatch[1].match(/'[^']+'/gu) || []).length
+      : 0;
+    if (googleProbeCount + stooqProbeCount > 5) {
+      addRuntimeFailure(
+        workerContract.mainPreviewFile,
+        `D-8B-lite sourceProbe count must be <= 5; found ${googleProbeCount + stooqProbeCount}`,
+      );
+    }
+  } else {
+    addRuntimeFailure(workerContract.mainPreviewFile, 'missing Brent sourceProbe function block');
+  }
   const confirmationStart = text.indexOf('confirmationSources: [');
   const excludedStart = text.indexOf('excludedSources: [');
   if (confirmationStart !== -1 && excludedStart !== -1 && excludedStart > confirmationStart) {
     const confirmationBlock = text.slice(confirmationStart, excludedStart);
-    for (const forbiddenSource of ['google-finance:', 'stooq:brn.f', 'stooq:brn.c']) {
+    for (const forbiddenSource of [
+      'google-finance:',
+      'stooq:brn.f',
+      'stooq:brn.c',
+      'stooq:bzy.f',
+      'stooq:bzw.f',
+      'stooq:bz.f',
+      'stooq:brent.f',
+      'stooq:ukousd',
+      'stooq:ukousd.c'
+    ]) {
       if (confirmationBlock.includes(forbiddenSource)) {
         addRuntimeFailure(
           workerContract.mainPreviewFile,

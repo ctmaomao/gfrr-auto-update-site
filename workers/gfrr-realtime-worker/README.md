@@ -23,6 +23,7 @@
   - v28.0D-6 增加 Brent extreme-move confirmation guard：相对上一轮 accepted Brent 的 2%–3% 跳动进入 watch 但允许；超过 3% 时若 Yahoo + Trading Economics 高度一致则标记 confirmed extreme move 并允许，否则 hold 到上一轮 accepted Brent / FRED。
   - v28.0D-8 增加 Brent source hygiene：Google Finance 明确为 `html-experimental` diagnostic，Stooq `brn.f` CSV close 缺失时输出 `csv-no-numeric-close` / `symbol-download-unavailable`，并新增 `stooq:brn.c` alternate diagnostic probe。Google Finance 与 Stooq candidate 均不参与 Brent promotion。
   - v28.0D-8A 将 `stooq:brn.f` 标为 `diagnostic` / `csv-symbol-unstable`，`participatesInConsensus: false`，不进入 `brentValidation.consensus`；仅为 audit 角色清理，抓取修复应另做 D-8B Source Probe。
+  - v28.0D-8B-lite 增加低频隔离的 `brentValidation.sourceProbe`：每 **60** 分钟最多运行一次，60 分钟内复用上一轮 main preview 中的 probe 摘要。当前只探测 Google Finance canonical / front-month 两个 URL 与 Stooq `brn.f` / `brn.c` / `bz.f` 三个 symbol。sourceProbe 不保存完整 HTML / CSV，不参与 `brentValidation.consensus`、`brentValidation.promotion` 或 `values.brent`；当前可靠 Brent 主逻辑仍是 FRED anchor + Yahoo `BZ=F` / Trading Economics confirmed promotion。即使某个 probe 返回 `ok`，也只代表后续可另开 D-8C 讨论是否升级为 validation source。
 - **已提供的 HTTP 能力**：
   - `GET /health`：存活与模式探测。
   - `GET /market.json`：从 KV 读取 `market:latest`（若尚未由后续版本写入，则返回 404 JSON）。

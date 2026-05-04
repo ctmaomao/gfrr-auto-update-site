@@ -382,6 +382,32 @@ v28.0D-8 起，Brent candidate source hygiene 只改善 audit 可读性，不改
 
 当前 Brent 主值逻辑仍是 FRED anchor + Yahoo `BZ=F` / Trading Economics confirmed promotion。Google Finance HTML experimental 与 Stooq CSV 探测均 **不是可靠诊断源**，抓取层面的真正修复（含 Google Finance 非主价 / futures-chain zero、Stooq 符号与列映射）应通过 **D-8B** 另行设计。Google Finance 或 Stooq 失败不得影响 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable`。
 
+### Brent source probe
+
+v28.0D-8B-lite 起，Worker generated preview 可在 `brentValidation.sourceProbe` 中附带低频隔离的 Brent source probe：
+
+```text
+brentValidation.sourceProbe
+```
+
+该字段只用于调查 Google Finance 与 Stooq 是否存在稳定可用路径，不是 promotion 逻辑修复。它不得参与 `values.brent`、`brentValidation.consensus`、`brentValidation.promotion`、Worker-first strict gate、scoring 或 decision。
+
+sourceProbe 每 **60** 分钟最多运行一次。生成新 main preview 前会读取上一轮 main preview 摘要；如果上一轮 `brentValidation.sourceProbe.generatedAt` 距今小于 60 分钟，则复用上一轮 `probes`，并标记 `reused: true` 与 `reason: source-probe-reused-within-60m`。该复用只使用既有上一轮 main preview KV read，不新增独立 KV key，也不增加 KV write 次数。
+
+当前 D-8B-lite 只保留最多 5 个 probe：
+
+- Google Finance canonical：`https://www.google.com/finance/quote/BZW00:NYMEX`
+- Google Finance front-month：`https://www.google.com/finance/quote/BZY00:NYMEX`
+- Stooq：`brn.f`
+- Stooq：`brn.c`
+- Stooq：`bz.f`
+
+Google Finance probe 用于记录 `httpStatus`、`contentType`、`bodyLength`、`finalUrl`、保守解析状态、`parsedValue`、`parseMethod`、`reason` 与小型 snippet / pattern 名称。解析不得接受 `value <= 0`，也不得把无法可靠定位主 quote price 的 HTML 标为 `ok`；此时应记录 `unreliable-html-parse` 或等价原因。
+
+Stooq probe 会对 `https://stooq.com/q/d/l/?s=<symbol>&i=d` CSV 响应做 header-aware 解析，记录 header、最多 3 行截断样本、列名、`parseStatus`、`parsedValue`、`parsedObservedAt`、`closeColumnUsed` 与原因。不得假设 close 一定是第 5 列；没有可识别 header、HTML / 空内容或无正数 close 时必须记录诊断状态。
+
+`sourceProbe` 必须保持小型：不保存完整 HTML，不保存完整 CSV，样本行最多 3 行，snippet / sample 字符串应截断。Google Finance / Stooq probe 即使成功，也仍是 diagnostic-only；只有后续某个 probe 连续稳定，才可另开 D-8C 讨论是否升级为 validation source。当前 Brent 主逻辑仍是 FRED anchor + Yahoo `BZ=F` / Trading Economics confirmed promotion。
+
 ### Brent extreme-move confirmation guard
 
 v28.0D-6 起，Worker generated preview 会在生成前读取上一轮 `market:worker-generated-preview` 的小型 Brent 摘要：

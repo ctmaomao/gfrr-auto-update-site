@@ -56,6 +56,7 @@ function positiveNumber(value) {
 function extractPreviousWorkerPreviewSummary(payload) {
   if (!payload || typeof payload !== 'object') return null;
   const promotion = payload.brentValidation?.promotion || {};
+  const sourceProbe = payload.brentValidation?.sourceProbe || {};
   const sourceDetails = payload.sourceDetails?.brent || {};
   return {
     previousUpdatedAt: typeof payload.updatedAt === 'string' ? payload.updatedAt : null,
@@ -65,6 +66,10 @@ function extractPreviousWorkerPreviewSummary(payload) {
     previousPromotionSelectedSource: typeof promotion.selectedSource === 'string' ? promotion.selectedSource : null,
     previousPromotionMoveStatus: typeof promotion.moveStatus === 'string' ? promotion.moveStatus : null,
     previousSourceDetailsBrentSource: typeof sourceDetails.source === 'string' ? sourceDetails.source : null,
+    previousSourceProbe: {
+      generatedAt: typeof sourceProbe.generatedAt === 'string' ? sourceProbe.generatedAt : null,
+      probes: Array.isArray(sourceProbe.probes) ? sourceProbe.probes : [],
+    },
   };
 }
 
