@@ -28,19 +28,19 @@ const BRENT_MOVE_EXTREME_PCT = 3;
 const BRENT_EXTREME_CONFIRMATION_DIVERGENCE_PCT = 1;
 const MONTH_NAME_TO_INDEX = new Map(
   [
-    'january',
-    'february',
-    'march',
-    'april',
-    'may',
-    'june',
-    'july',
-    'august',
-    'september',
-    'october',
-    'november',
-    'december',
-  ].map((month, index) => [month, index]),
+    ['january', 'jan'],
+    ['february', 'feb'],
+    ['march', 'mar'],
+    ['april', 'apr'],
+    ['may', 'may'],
+    ['june', 'jun'],
+    ['july', 'jul'],
+    ['august', 'aug'],
+    ['september', 'sep', 'sept'],
+    ['october', 'oct'],
+    ['november', 'nov'],
+    ['december', 'dec'],
+  ].flatMap((aliases, index) => aliases.map((month) => [month, index])),
 );
 
 const FETCH_HEADERS = {
