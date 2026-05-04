@@ -16,14 +16,14 @@
   - v28.0B-2A.1 增加数据源可达性诊断与 fetch hardening：FRED 顺序抓取并 retry，Yahoo / Stooq / Google Finance / Trading Economics / Gold 均记录 HTTP status、content type、body length、duration 与错误原因。
   - Google Finance 与 Trading Economics 仅作为 **diagnostic-only** experimental Brent 候选源；不参与 consensus，不覆盖 `values.brent`，也不能让 `canPromoteToPrimary` 变为 `true`。
   - v28.0B-2B 增加本地只读对比脚本 `tools/compare-worker-vs-mirror.mjs`，用于比较 `/market.worker-preview.json` 与 `/market.preview.json` 的字段差异；脚本不使用 Wrangler、不读取 KV、不写 Cloudflare KV、不接前端。
-  - v28.0D-1 增加核心指标第二数据源诊断层：DXY、VIX、HY OAS、Gold、US10Y 的新增候选源只写入 `workerGeneratedPreview.diagnostics.secondarySources` / `secondarySourceSummary`。这些来源全部为 **diagnostic-only** 或 **diagnostic-proxy**，不参与主值、不参与 validation、不覆盖 `values.*`、不影响 Worker-first selection、healthScore 或 criticalMissing。
-  - 需要 API key 的来源（Alpha Vantage / Trading Economics）只通过 optional env 读取；缺失时记录 `skipped-missing-api-key`。不要把 API key 写入文档、payload、日志或 `wrangler.toml`，不要提交 secrets。
-  - v28.0D-1 emergency disable：D-1 部署后曾影响 Worker generated preview freshness，线上 Worker 已手动 rollback 到稳定版本 `679fb678-fe1d-4ff3-b9b9-53829d4d31f7`。仓库源码默认设置 `SECONDARY_DIAGNOSTICS_ENABLED = false`，只保留小型 `secondaryDiagnostics.enabled=false` 说明，不执行第二源外部请求。当前优先保证 Worker 主实时源稳定；未来重新启用前必须改为低频、分批、短超时、失败即跳过。
+  - v28.0D-1 曾尝试在 Worker generated preview payload 内加入核心指标第二数据源诊断；部署后影响 Worker generated preview freshness，线上 Worker 已手动 rollback 到稳定版本 `679fb678-fe1d-4ff3-b9b9-53829d4d31f7`。
+  - v28.0D-2-lite 将第二源诊断从主 Worker preview 彻底隔离：`/market.worker-preview.json` 不包含 `secondarySources` / `secondaryDiagnostics`，不执行第二源外部请求；新增 `GET /market.secondary-preview.json` 只读 KV 键 `market:secondary-preview`。默认 scheduled 路径不写该 key；不存在时返回小型 unavailable payload。
 - **已提供的 HTTP 能力**：
   - `GET /health`：存活与模式探测。
   - `GET /market.json`：从 KV 读取 `market:latest`（若尚未由后续版本写入，则返回 404 JSON）。
   - `GET /market.preview.json`：从 KV 读取 `market:latest-preview`（preview 管道失败或未跑过 cron 时可能 404）。
   - `GET /market.worker-preview.json`：从 KV 读取 `market:worker-generated-preview`（Worker 独立生成 preview MVP，未部署或未跑到对应轮次时可能 404）。
+  - `GET /market.secondary-preview.json`：从 KV 读取 `market:secondary-preview`（独立第二源诊断 preview；默认不由 scheduled 写入，不存在时返回 unavailable JSON，不影响主 preview）。
 
 ## 这**不是**什么
 

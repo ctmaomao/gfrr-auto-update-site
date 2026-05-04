@@ -105,16 +105,29 @@ Worker payload 必须在 `workerFirstEnabled === true` 且通过 strict gate 后
 - 不参与 scoring 或 decision 公式。
 - selected source 与 rollback 配置记录在 runtime metadata 的 `realtimeSource` / `realtimeSourcePriority` / `realtimeSourcePolicy` 中，均不序列化进 `radar-data.json`。
 
-### Worker secondary source diagnostics
+### Worker secondary source diagnostics isolation
 
-v28.0D-1 起，Worker generated preview 可在运行时 payload 中附带核心指标第二数据源诊断：
+v28.0D-2-lite 起，核心指标第二源诊断不得进入主 Worker preview payload。主 realtime endpoint：
 
 ```text
-workerGeneratedPreview.diagnostics.secondarySources
-workerGeneratedPreview.diagnostics.secondarySourceSummary
+/market.worker-preview.json
 ```
 
-该结构只存在于 Worker preview runtime payload：
+必须保持只承载 Worker generated preview 主链路，不得包含 `secondarySources` / `secondaryDiagnostics`，也不得执行第二源外部请求。
+
+第二源诊断只能通过独立 endpoint 暴露：
+
+```text
+/market.secondary-preview.json
+```
+
+该 endpoint 只读独立 KV key：
+
+```text
+market:secondary-preview
+```
+
+该结构只存在于 Worker secondary preview runtime payload：
 
 - 不序列化进 `data/radar-data.json`。
 - 不影响 `data.__effectiveDisplayInputs`。
@@ -123,20 +136,7 @@ workerGeneratedPreview.diagnostics.secondarySourceSummary
 - 不覆盖 `values.dxy` / `values.vix` / `values.hyOas` / `values.gold` / `values.us10y` / `values.brent`。
 - 所有 candidate 必须声明 `participatesInPrimary: false` 与 `participatesInValidation: false`。
 - DXY 与 HY OAS 的备用来源属于 proxy / experimental diagnostic，不得直接视为 canonical 等价源。
-
-v28.0D-1 emergency disable 后，Worker payload 可只包含小型关闭说明：
-
-```text
-workerGeneratedPreview.diagnostics.secondaryDiagnostics.enabled=false
-```
-
-该状态表示第二源诊断层被运行时关闭：
-
-- 不影响 selected source gate。
-- 不影响 `data.__effectiveDisplayInputs`。
-- 不影响 `values.*` 主值。
-- 不影响 `healthScore` / `criticalMissing`。
-- `secondarySources` / `secondarySourceSummary` 为空或缺失时，不代表主 Worker generated preview 异常。
+- 独立 secondary preview 不存在时，`/market.secondary-preview.json` 返回小型 unavailable payload；这不代表主 `/market.worker-preview.json` 异常。
 
 ## displayInputsBaseline 契约
 
