@@ -363,6 +363,8 @@ git push origin main
 
 **v28.0D-8 Brent source hygiene**：Google Finance Brent 继续只作为 HTML experimental diagnostic，可能命中 futures chain 中的 `0` 或非主价格；非正值必须标记 `excluded-non-positive-or-invalid`，不参与 consensus 或 promotion。Stooq `brn.f` 保留为观测源，但 CSV close 缺失时应明确记录 `csv-no-numeric-close` 或 `symbol-download-unavailable`。新增 `stooq:brn.c` alternate diagnostic probe，仅进入 audit candidateSources，不参与主值、consensus 或 promotion。当前 Brent 主值逻辑仍是 FRED anchor + Yahoo / Trading Economics confirmed promotion，失败的 Google Finance / Stooq 不影响 `healthScore` / `criticalMissing` / `unavailable`。
 
+**v28.0D-8A Stooq role cleanup**：将 `stooq:brn.f` 标为 `diagnostic`、`participatesInConsensus: false`、`quality: csv-symbol-unstable`，不进入 `brentValidation.consensus`，避免误读为仍参与 Brent validation。此行 **不是** Google Finance / Stooq 抓取修复；不可靠 HTML / CSV 与符号问题应通过 **v28.0D-8B Source Probe** 另行处理。
+
 未来重新设计 secondary diagnostics 必须满足：
 
 - 不阻塞主 Worker generated preview 写入。

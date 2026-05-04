@@ -376,11 +376,11 @@ promotion 失败时，`values.brent` 继续使用 FRED anchor。promotion 成功
 v28.0D-8 起，Brent candidate source hygiene 只改善 audit 可读性，不改变主值选择：
 
 - Google Finance `google-finance:BZW00:NYMEX` 必须保持 `role: diagnostic`、`participatesInConsensus: false`、`quality: html-experimental`。HTML 解析可能命中 futures chain 中的 `0` 或非主价格；0、负数、null、NaN 必须标记 `excluded-non-positive-or-invalid`，不得进入 promotion confirmation sources。
-- Stooq `stooq:brn.f` 保留观测，但 CSV close 缺失时应记录 `csv-no-numeric-close`，下载不可用时记录 `symbol-download-unavailable`。除非未来明确升级稳定性，否则不得参与 `values.brent` promotion。
-- Stooq alternate `stooq:brn.c` 只作为 `quality: experimental-alt-symbol` diagnostic probe，进入 `brentValidation.candidates` 与 `brentValidation.audit.candidateSources`，但不参与 consensus 或 promotion。
+- Stooq `stooq:brn.f`（v28.0D-8A）必须为 `role: diagnostic`、`participatesInConsensus: false`、`quality: csv-symbol-unstable`；不进入 `brentValidation.consensus`，不进入 promotion confirmation sources；CSV close 缺失时记录 `csv-no-numeric-close`，下载不可用时记录 `symbol-download-unavailable`。这是 **role/audit 表达清理**，不是抓取修复；可靠 Stooq 符号与 CSV 解析应另做 **v28.0D-8B Source Probe**。
+- Stooq alternate `stooq:brn.c` 只作为 `quality: experimental-alt-symbol` diagnostic probe，进入 `brentValidation.candidates` 与 `brentValidation.audit.candidateSources`，但不参与 consensus 或 promotion。`brn.f` / `brn.c` 当前均可能无法返回可解析 close，仍为 experimental。
 - `brentValidation.audit.candidateSources` 对 Google Finance、Stooq `brn.f`、Stooq `brn.c` 应提供 `source`、`role`、`participatesInConsensus`、`status`、`value`、`observedAt`、`error`、`reason` / `exclusionReason` 与 `quality`。
 
-当前 Brent 主值逻辑仍是 FRED anchor + Yahoo `BZ=F` / Trading Economics confirmed promotion。Google Finance 或 Stooq 失败不得影响 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable`。
+当前 Brent 主值逻辑仍是 FRED anchor + Yahoo `BZ=F` / Trading Economics confirmed promotion。Google Finance HTML experimental 与 Stooq CSV 探测均 **不是可靠诊断源**，抓取层面的真正修复（含 Google Finance 非主价 / futures-chain zero、Stooq 符号与列映射）应通过 **D-8B** 另行设计。Google Finance 或 Stooq 失败不得影响 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable`。
 
 ### Brent extreme-move confirmation guard
 

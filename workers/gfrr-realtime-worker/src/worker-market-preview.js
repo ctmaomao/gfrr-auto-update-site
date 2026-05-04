@@ -569,7 +569,7 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
         source: 'stooq:brn.f',
         value: isFiniteNumber(stooq?.value) ? stooq.value : null,
         reason: stooq?.reason ||
-          (stooq?.ok ? 'stooq-brn-f-not-used-for-promotion' : 'symbol-download-unavailable'),
+          (stooq?.ok ? 'stooq-brn-f-diagnostic-only-not-used-for-promotion' : 'symbol-download-unavailable'),
       },
       {
         source: 'stooq:brn.c',
@@ -747,9 +747,9 @@ async function fetchYahooBrentCandidate() {
 async function fetchStooqBrentCandidate({
   url = STOOQ_BRENT_URL,
   source = 'stooq:brn.f',
-  role = 'validation',
-  participatesInConsensus = true,
-  quality = 'csv',
+  role = 'diagnostic',
+  participatesInConsensus = false,
+  quality = 'csv-symbol-unstable',
 } = {}) {
   const result = await fetchTextWithDiagnostics(url);
   let parsed = null;
@@ -893,7 +893,7 @@ async function buildBrentValidation(anchorValue) {
       error: isFiniteNumber(anchorValue) ? null : 'missing FRED anchor',
     },
     { ...yahoo, role: 'validation', participatesInConsensus: true },
-    { ...stooq, role: 'validation', participatesInConsensus: true },
+    stooq,
     stooqAlt,
     googleFinance,
     tradingEconomics,

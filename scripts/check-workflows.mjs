@@ -213,6 +213,8 @@ const workerContract = {
     'stooq:brn.c',
     'experimental-alt-symbol',
     'csv-no-numeric-close',
+    'csv-symbol-unstable',
+    'stooq-brn-f-diagnostic-only-not-used-for-promotion',
     'tradingeconomics:brent-crude-oil',
     'yahoo:BZ=F',
     'excluded-non-positive-or-invalid'
@@ -264,6 +266,9 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
   }
   for (const [pattern, message] of workerContract.brentPrimaryForbiddenPatterns) {
     if (pattern.test(text)) addRuntimeFailure(workerContract.mainPreviewFile, message);
+  }
+  if (/\{\s*\.\.\.stooq,\s*role:\s*['"]validation['"]/u.test(text)) {
+    addRuntimeFailure(workerContract.mainPreviewFile, 'stooq:brn.f must not be spread with validation role');
   }
   const confirmationStart = text.indexOf('confirmationSources: [');
   const excludedStart = text.indexOf('excludedSources: [');
