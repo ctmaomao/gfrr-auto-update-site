@@ -49,11 +49,65 @@ const FRESHNESS_CN = {
   unavailable: '不可用'
 };
 
+const BRENT_MOVE_STATUS_CN = {
+  'no-previous': '首次确认',
+  normal: '正常',
+  'volatility-watch': '较大波动观察',
+  'confirmed-extreme-move': '已确认极端波动',
+  'unconfirmed-jump-hold': '未确认跳变，暂不采用新值'
+};
+
 function pickDisplayMetric(key, realtime, effectiveDisplayInputs = null) {
   const effectiveValue = Number(effectiveDisplayInputs?.[key]);
   if (Number.isFinite(effectiveValue)) return effectiveValue;
   const realtimeValue = Number(realtime?.values?.[key]);
   return Number.isFinite(realtimeValue) ? realtimeValue : null;
+}
+
+function includesSourceText(value, needle) {
+  return typeof value === 'string' && value.toLowerCase().includes(needle);
+}
+
+function formatPercent(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? `${numeric.toFixed(2)}%` : null;
+}
+
+function buildBrentSourceLabel(realtime) {
+  const validation = realtime?.brentValidation;
+  if (!validation || typeof validation !== 'object') return '布伦特来源：实时源';
+
+  const promotion = validation.promotion || {};
+  const audit = validation.audit || {};
+  const sourceText = [
+    promotion.selectedSource,
+    audit.selectedSource,
+    realtime?.sourceDetails?.brent?.source
+  ].filter(Boolean).join(' ');
+
+  if (promotion.moveStatus === 'unconfirmed-jump-hold') {
+    return '布伦特来源：上一轮确认值';
+  }
+  if (promotion.applied === true || (
+    includesSourceText(sourceText, 'yahoo') &&
+    includesSourceText(sourceText, 'tradingeconomics')
+  )) {
+    return '布伦特来源：FRED 滞后，Yahoo + Trading Economics 双源确认';
+  }
+  if (includesSourceText(sourceText, 'fred')) {
+    return '布伦特来源：FRED 日度锚点';
+  }
+  return '布伦特来源：实时源';
+}
+
+function buildBrentMoveLabel(realtime) {
+  const promotion = realtime?.brentValidation?.promotion || {};
+  const statusLabel = BRENT_MOVE_STATUS_CN[promotion.moveStatus] || null;
+  const changeLabel = formatPercent(promotion.promotedChangePct);
+  if (!statusLabel && !changeLabel) return '波动状态：--';
+  if (!changeLabel) return `波动状态：${statusLabel}`;
+  if (!statusLabel) return `相邻周期变化：${changeLabel}`;
+  return `波动状态：${statusLabel}；相邻周期变化：${changeLabel}`;
 }
 
 export function renderRealtimeStrip(realtime, metadata = null, effectiveDisplayInputs = null) {
@@ -78,6 +132,8 @@ export function renderRealtimeStrip(realtime, metadata = null, effectiveDisplayI
     $('rt-source-mode').textContent = modeParts.join(' / ');
   }
   $('rt-brent-delta').textContent = fmtSigned(realtime.changes?.brent1d || 0);
+  $('rt-brent-source').textContent = buildBrentSourceLabel(realtime);
+  $('rt-brent-move').textContent = buildBrentMoveLabel(realtime);
   $('rt-dxy-delta').textContent = fmtSigned(realtime.changes?.dxy1d || 0);
   $('rt-vix-delta').textContent = fmtSigned(realtime.changes?.vix1d || 0);
   $('rt-hy-delta').textContent = fmtSigned(realtime.changes?.hyOas1d || 0);

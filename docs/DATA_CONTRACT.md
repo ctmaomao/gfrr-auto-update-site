@@ -418,6 +418,16 @@ unconfirmed-jump-hold
 
 `confirmed-extreme-move` 是风险信号，不是数据错误；不得降低 `healthScore`，不得影响 `criticalMissing` / `sourceMode` / `unavailable`，也不得改变 scoring / decision。
 
+### Brent source explainability UI
+
+v28.0D-7 起，前端“盘中快变量 / 布伦特”会读取 selected realtime payload 中的 `brentValidation.promotion` 与 `brentValidation.audit`，展示短文本来源解释与波动状态。该 UI 只解释当前 `values.brent` 的来源：
+
+- FRED anchor：`布伦特来源：FRED 日度锚点`
+- Yahoo + Trading Economics promotion：`布伦特来源：FRED 滞后，Yahoo + Trading Economics 双源确认`
+- `moveStatus` 会映射为中文短状态；`promotedChangePct` 存在时显示相邻周期变化。
+
+该显示不读取 `/market.secondary-preview.json`，不改变 Worker payload，不改变 `effectiveDisplayInputs`、scoring、decision 或 Worker-first strict gate。
+
 ## DXY / 广义美元指数契约
 
 内部字段名仍然是 `dxy`，不要把内部字段改名。DOM id 仍然可以是 `rt-dxy`，数据字段仍然是：
