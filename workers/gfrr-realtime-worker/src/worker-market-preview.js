@@ -26,6 +26,22 @@ const BRENT_PROMOTION_MAX_DIVERGENCE_PCT = 2;
 const BRENT_MOVE_WATCH_PCT = 2;
 const BRENT_MOVE_EXTREME_PCT = 3;
 const BRENT_EXTREME_CONFIRMATION_DIVERGENCE_PCT = 1;
+const MONTH_NAME_TO_INDEX = new Map(
+  [
+    'january',
+    'february',
+    'march',
+    'april',
+    'may',
+    'june',
+    'july',
+    'august',
+    'september',
+    'october',
+    'november',
+    'december',
+  ].map((month, index) => [month, index]),
+);
 
 const FETCH_HEADERS = {
   Accept: 'text/csv,application/json,text/plain,*/*',
@@ -387,6 +403,44 @@ function hoursSinceTimestamp(timestamp, nowMs) {
   return Math.max(0, (nowMs - parsed) / (60 * 60 * 1000));
 }
 
+function isoTimestampFromMonthNameDate(monthName, day, year) {
+  const monthIndex = MONTH_NAME_TO_INDEX.get(String(monthName).toLowerCase());
+  const dayNumber = Number(day);
+  const yearNumber = Number(year);
+  if (monthIndex == null || !Number.isInteger(dayNumber) || !Number.isInteger(yearNumber)) {
+    return null;
+  }
+
+  const parsed = new Date(Date.UTC(yearNumber, monthIndex, dayNumber, 12, 0, 0));
+  if (
+    parsed.getUTCFullYear() !== yearNumber ||
+    parsed.getUTCMonth() !== monthIndex ||
+    parsed.getUTCDate() !== dayNumber
+  ) {
+    return null;
+  }
+
+  return parsed.toISOString();
+}
+
+function isoTimestampFromMonthNameDateInCurrentYear(monthName, day, nowMs) {
+  const now = new Date(nowMs);
+  const currentYear = Number.isFinite(now.getTime())
+    ? now.getUTCFullYear()
+    : new Date().getUTCFullYear();
+  const timestamp = isoTimestampFromMonthNameDate(monthName, day, currentYear);
+  if (timestamp == null) return null;
+
+  const parsed = Date.parse(timestamp);
+  if (!Number.isFinite(parsed)) return null;
+
+  // Handle the Dec/Jan boundary for month/day-only commodity table dates.
+  if (parsed - nowMs > 36 * 60 * 60 * 1000) {
+    return isoTimestampFromMonthNameDate(monthName, day, currentYear - 1);
+  }
+  return timestamp;
+}
+
 function findBrentCandidate(candidates, source) {
   return candidates.find((candidate) => candidate.source === source) || null;
 }
@@ -437,6 +491,7 @@ function buildMoveAssessment({
   yahoo,
   tradingEconomics,
   yahooAgeHours,
+  tradingEconomicsAgeHours,
   maxConfirmationDivergencePct,
 }) {
   if (!previousReference) {
@@ -491,6 +546,8 @@ function buildMoveAssessment({
     positiveFinite(tradingEconomics.value) &&
     isFiniteNumber(yahooAgeHours) &&
     yahooAgeHours <= BRENT_CONFIRMATION_FRESH_HOURS &&
+    isFiniteNumber(tradingEconomicsAgeHours) &&
+    tradingEconomicsAgeHours <= BRENT_CONFIRMATION_FRESH_HOURS &&
     isFiniteNumber(maxConfirmationDivergencePct) &&
     maxConfirmationDivergencePct <= BRENT_EXTREME_CONFIRMATION_DIVERGENCE_PCT;
 
@@ -520,6 +577,7 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
   const anchorValue = positiveFinite(anchorDetail?.value) ? anchorDetail.value : null;
   const anchorAgeHours = hoursSinceTimestamp(anchorDetail?.timestamp, nowMs);
   const yahooAgeHours = hoursSinceTimestamp(yahoo?.timestamp, nowMs);
+  const tradingEconomicsAgeHours = hoursSinceTimestamp(tradingEconomics?.timestamp, nowMs);
   const maxConfirmationDivergencePct = divergencePct(yahoo?.value, tradingEconomics?.value);
   const previousReference = selectPreviousBrentReference(previousPreviewSummary);
   const base = {
@@ -543,7 +601,7 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
         status: tradingEconomics?.ok ? 'ok' : tradingEconomics?.error || 'unavailable',
         value: positiveFinite(tradingEconomics?.value) ? tradingEconomics.value : null,
         observedAt: tradingEconomics?.timestamp ?? null,
-        ageHours: null,
+        ageHours: isFiniteNumber(tradingEconomicsAgeHours) ? roundValue(tradingEconomicsAgeHours, 2) : null,
       },
     ],
     excludedSources: [
@@ -582,6 +640,12 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
   if (tradingEconomics?.ok !== true || !positiveFinite(tradingEconomics.value)) {
     return { ...base, reason: 'tradingeconomics-confirmation-invalid' };
   }
+  if (!isFiniteNumber(tradingEconomicsAgeHours)) {
+    return { ...base, reason: 'tradingeconomics-observedAt-invalid' };
+  }
+  if (tradingEconomicsAgeHours > BRENT_CONFIRMATION_FRESH_HOURS) {
+    return { ...base, reason: 'tradingeconomics-confirmation-stale' };
+  }
   if (!isFiniteNumber(maxConfirmationDivergencePct)) return { ...base, reason: 'confirmation-divergence-unavailable' };
   if (maxConfirmationDivergencePct > BRENT_PROMOTION_MAX_DIVERGENCE_PCT) {
     return { ...base, reason: 'confirmation-divergence-above-2pct' };
@@ -594,6 +658,7 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
     yahoo,
     tradingEconomics,
     yahooAgeHours,
+    tradingEconomicsAgeHours,
     maxConfirmationDivergencePct,
   });
   if (!moveAssessment.allowPromotion) {
@@ -760,6 +825,20 @@ function parsePriceFromHtml(text) {
   return null;
 }
 
+function parseTradingEconomicsObservedAt(text, nowMs) {
+  const updatedMatch = text.match(/last updated on\s+([A-Za-z]+)\s+(\d{1,2})\s+of\s+(\d{4})/i);
+  if (updatedMatch) {
+    return isoTimestampFromMonthNameDate(updatedMatch[1], updatedMatch[2], updatedMatch[3]);
+  }
+
+  const tableDateMatch = text.match(/<td[^>]*>\s*([A-Za-z]{3})\/(\d{2})\s*<\/td>/i);
+  if (tableDateMatch) {
+    return isoTimestampFromMonthNameDateInCurrentYear(tableDateMatch[1], tableDateMatch[2], nowMs);
+  }
+
+  return null;
+}
+
 async function fetchGoogleFinanceDiagnosticCandidate() {
   const result = await fetchTextWithDiagnostics(GOOGLE_FINANCE_BRENT_URL, {
     headers: { Accept: 'text/html,text/plain,*/*' },
@@ -798,19 +877,21 @@ async function fetchTradingEconomicsDiagnosticCandidate() {
   }
 
   const value = result.ok ? parsePriceFromHtml(result.text) : null;
+  const observedAt = result.ok ? parseTradingEconomicsObservedAt(result.text, Date.now()) : null;
   const parseError = result.ok && value == null ? 'price parse failed' : null;
+  const freshnessError = result.ok && value != null && observedAt == null ? 'observedAt parse failed' : null;
 
   return {
     source: 'tradingeconomics:brent-crude-oil',
     sourceUrl,
     value,
-    timestamp: null,
-    ok: result.ok && value != null,
-    error: parseError ?? result.error,
+    timestamp: observedAt,
+    ok: result.ok && value != null && observedAt != null,
+    error: parseError ?? freshnessError ?? result.error,
     role: 'diagnostic',
     participatesInConsensus: false,
     quality: 'experimental',
-    diagnostics: buildCandidateDiagnostics(result, parseError),
+    diagnostics: buildCandidateDiagnostics(result, parseError ?? freshnessError),
   };
 }
 
