@@ -65,6 +65,9 @@ const contracts = [
   {
     file: '.github/workflows/deploy-static-site-to-pages.yml',
     required: [
+      'workflow_run',
+      'Build Daily Radar Data',
+      "github.event.workflow_run.conclusion == 'success'",
       'npm run check:syntax',
       'npm run check:dom',
       'npm run check:modules',
