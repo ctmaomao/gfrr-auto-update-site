@@ -408,6 +408,26 @@ Stooq probe 会对 `https://stooq.com/q/d/l/?s=<symbol>&i=d` CSV 响应做 heade
 
 `sourceProbe` 必须保持小型：不保存完整 HTML，不保存完整 CSV，样本行最多 3 行，snippet / sample 字符串应截断。Google Finance / Stooq probe 即使成功，也仍是 diagnostic-only；只有后续某个 probe 连续稳定，才可另开 D-8C 讨论是否升级为 validation source。当前 Brent 主逻辑仍是 FRED anchor + Yahoo `BZ=F` / Trading Economics confirmed promotion。
 
+**v28.0D-8B findings（结论型快照，diagnostic-only）**：一次典型线上结果表明，这五路 probe **均未提供可靠 Brent primary quote**。下列 `parseStatus` 仅用于判断是否“存在稳定可用路径”，**不是** Brent 主值，也 **不构成** consensus / promotion 输入：
+
+| probeId | parseStatus |
+| --- | --- |
+| `google-finance:BZW00:NYMEX` canonical | `unreliable-html-parse` |
+| `google-finance:BZY00:NYMEX` front-month | `unreliable-html-parse` |
+| `stooq:brn.f` | `empty-body` |
+| `stooq:brn.c` | `header-unrecognized` |
+| `stooq:bz.f` | `empty-body` |
+
+在上述观测窗口内，Google Finance / Stooq **不得** 升级为 Brent validation source，也 **不得** 进入：
+
+- `brentValidation.consensus`
+- `brentValidation.promotion`
+- `values.brent`
+
+`sourceProbe` 的失败或不可靠解析 **不得** 影响 Worker generated preview 的 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable`（它们不参与主链路门禁）。
+
+若要重新评估“是否可能升级”，至少需要连续多轮 `parseStatus = ok`、`parsedValue > 0`、时间与样本可解释，并与 Yahoo / Trading Economics **合理接近**；仍应另开 **D-8C** 再做结构升级决策（而不是在 D-8B 的结论层直接改 promotion）。
+
 ### Brent extreme-move confirmation guard
 
 v28.0D-6 起，Worker generated preview 会在生成前读取上一轮 `market:worker-generated-preview` 的小型 Brent 摘要：

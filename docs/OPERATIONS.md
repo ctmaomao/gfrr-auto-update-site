@@ -367,6 +367,37 @@ git push origin main
 
 **v28.0D-8B-lite Brent source probe**：Worker generated preview 在 `brentValidation.sourceProbe` 中记录低频隔离的 Google Finance / Stooq source probe。它每 **60** 分钟最多运行一次；60 分钟内复用上一轮 main preview 中的 `sourceProbe.probes`，并标记 `reused: true` / `source-probe-reused-within-60m`。当前只探测 Google Finance canonical / front-month 两个 URL，以及 Stooq `brn.f` / `brn.c` / `bz.f` 三个 symbol。它不保存完整 HTML 或完整 CSV，不参与 `brentValidation.consensus`、`brentValidation.promotion` 或 `values.brent`，也不影响 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable`。即使某个 probe 显示 `parseStatus: ok`，当前 Brent 主逻辑仍是 FRED anchor + Yahoo `BZ=F` / Trading Economics confirmed promotion；只有连续稳定后才应另开 D-8C 讨论是否升级为 validation source。
 
+### v28.0D-8B Source Probe Findings
+
+v28.0D-8B-lite **已上线运行并通过验证**。以下为一次典型线上 `sourceProbe.probes[]` **结论型快照**（diagnostic-only，不是主 Brent 来源；失败不得影响 `healthScore` / `criticalMissing` / `unavailable`，因为它们只是 probes）：
+
+- `google-finance:BZW00:NYMEX` canonical：**`parseStatus = unreliable-html-parse`**
+- `google-finance:BZY00:NYMEX` front-month：**`parseStatus = unreliable-html-parse`**
+- `stooq:brn.f`：**`parseStatus = empty-body`**（不可靠 Brent close）
+- `stooq:brn.c`：**`parseStatus = header-unrecognized`**（不可靠 Brent close）
+- `stooq:bz.f`：**`parseStatus = empty-body`**（不可靠 Brent close）
+
+**运维结论**：Google Finance 与 Stooq **在此观测窗口内均不能升级为 Brent validation source**；也 **不得** 进入：
+
+- `brentValidation.consensus`
+- `brentValidation.promotion`
+- `values.brent`
+
+**当前可靠 Brent 主逻辑仍应保持**：
+
+1. **FRED `DCOILBRENTEU` anchor**
+2. **Yahoo `BZ=F` freshness-gated confirmation**（D-5 条件仍然成立时的 fresh 约束）
+3. **Trading Economics confirmation**（与 Yahoo 一起做 promotion confirmation pair）
+4. **v28.0D-6 extreme-move confirmation guard**
+
+若未来重新评估 Google / Stooq 是否“可升级候选”，必须先在 `sourceProbe` 中观察到**连续多轮**满足：
+
+- **`parseStatus = ok`**（且不得靠放宽解析把不可靠 HTML / 非 CSV 误判为 ok）
+- **`parsedValue > 0`**
+- **时间戳 / 样本行可解释**（能解释数据来源与新鲜度边界）
+- **与 Yahoo / Trading Economics 的数值关系合理接近**
+- **仍需另开独立版本评审**（例如 **D-8C**），再决定是否允许升级为 validation source 或接入更高权限链路。
+
 未来重新设计 secondary diagnostics 必须满足：
 
 - 不阻塞主 Worker generated preview 写入。
