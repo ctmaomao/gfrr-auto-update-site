@@ -86,6 +86,21 @@ function addReason(target, message) {
   target.push(message);
 }
 
+function approximatelyEqual(a, b, tolerance = 0.0002) {
+  return Math.abs(a - b) <= tolerance;
+}
+
+function isLegacyUs10yNormalization(source) {
+  const rawValue = positiveNumber(source.rawValue);
+  const value = positiveNumber(source.value);
+  return source.status === 'ok' &&
+    rawValue != null &&
+    rawValue <= 20 &&
+    value != null &&
+    source.normalization === 'divide-by-10' &&
+    approximatelyEqual(value, rawValue / 10);
+}
+
 function checkNoSecondaryPollution(payload, reasons) {
   const diagnostics = payload?.workerGeneratedPreview?.diagnostics || {};
   const polluted = [
@@ -174,13 +189,40 @@ function checkSecondarySource(name, source, expected, reasons, warnings) {
   if (source.provider !== expected.provider) addReason(reasons, `${name} provider is ${source.provider ?? 'missing'}`);
   if (source.participatesInPrimary !== false) addReason(reasons, `${name} participatesInPrimary must be false`);
   if (source.participatesInValidation !== false) addReason(reasons, `${name} participatesInValidation must be false`);
-  if (expected.normalization && source.normalization !== expected.normalization) {
-    addReason(reasons, `${name} normalization must be ${expected.normalization}`);
-  }
   if (!SECONDARY_STATUSES.has(source.status)) addReason(reasons, `${name} status invalid: ${source.status ?? 'missing'}`);
   if (source.status === 'ok' && positiveNumber(source.value) == null) addReason(reasons, `${name} status ok but value is not positive finite`);
   if (source.status === 'ok' && expected.requireRawValue && positiveNumber(source.rawValue) == null) {
     addReason(reasons, `${name} status ok but rawValue is not positive finite`);
+  }
+  if (expected.us10yNormalization) {
+    const rawValue = positiveNumber(source.rawValue);
+    const value = positiveNumber(source.value);
+    const legacyNormalization = isLegacyUs10yNormalization(source);
+    if (source.status === 'ok') {
+      if (!['divide-by-10', 'no-op'].includes(source.normalization)) {
+        addReason(reasons, `${name} normalization must be divide-by-10 or no-op when ok`);
+      } else if (rawValue != null && value != null) {
+        if (rawValue > 20) {
+          if (source.normalization !== 'divide-by-10') addReason(reasons, `${name} rawValue > 20 must use divide-by-10`);
+          if (!approximatelyEqual(value, rawValue / 10)) addReason(reasons, `${name} value must equal rawValue / 10`);
+        } else if (source.normalization !== 'no-op' || !approximatelyEqual(value, rawValue)) {
+          if (legacyNormalization) {
+            addReason(warnings, `${name} uses pre-E-3A divide-by-10 normalization for rawValue <= 20`);
+          } else {
+            addReason(reasons, `${name} rawValue <= 20 must use no-op normalization`);
+          }
+        }
+      }
+      if (typeof source.normalizationReason !== 'string' || source.normalizationReason.trim() === '') {
+        if (legacyNormalization) {
+          addReason(warnings, `${name} missing normalizationReason in pre-E-3A payload`);
+        } else {
+          addReason(reasons, `${name} normalizationReason must be a non-empty string when ok`);
+        }
+      }
+    } else if (source.status === 'failed' || source.status === 'unavailable') {
+      if (source.normalization !== 'unknown') addReason(warnings, `${name} normalization should be unknown when not ok`);
+    }
   }
   if (source.status === 'failed' || source.status === 'unavailable') {
     addReason(warnings, `${name} secondary status is ${source.status}`);
@@ -191,6 +233,7 @@ function checkSecondarySource(name, source, expected, reasons, warnings) {
     value: finiteNumber(source.value),
     rawValue: finiteNumber(source.rawValue),
     normalization: source.normalization ?? null,
+    normalizationReason: source.normalizationReason ?? null,
     observedAt: source.observedAt ?? null,
     participatesInPrimary: source.participatesInPrimary,
     participatesInValidation: source.participatesInValidation,
@@ -244,8 +287,8 @@ function checkSecondaryPreview(result) {
     {
       provider: 'yahoo',
       source: 'yahoo:^TNX',
-      normalization: 'divide-by-10',
       requireRawValue: true,
+      us10yNormalization: true,
     },
     reasons,
     warnings,
@@ -312,7 +355,7 @@ function printSummary(summary) {
   console.log(`  vix: ${summary.secondary.vix?.status ?? 'missing'} ${summary.secondary.vix?.value ?? '--'} ${summary.secondary.vix?.observedAt ?? '--'}`);
   console.log(`  gold: ${summary.secondary.gold?.status ?? 'missing'} ${summary.secondary.gold?.value ?? '--'} ${summary.secondary.gold?.observedAt ?? '--'}`);
   console.log(`  dxy: ${summary.secondary.dxy?.status ?? 'missing'} ${summary.secondary.dxy?.value ?? '--'} ${summary.secondary.dxy?.observedAt ?? '--'}`);
-  console.log(`  us10y: ${summary.secondary.us10y?.status ?? 'missing'} ${summary.secondary.us10y?.value ?? '--'} raw=${summary.secondary.us10y?.rawValue ?? '--'} ${summary.secondary.us10y?.observedAt ?? '--'}`);
+  console.log(`  us10y: ${summary.secondary.us10y?.status ?? 'missing'} ${summary.secondary.us10y?.value ?? '--'} raw=${summary.secondary.us10y?.rawValue ?? '--'} normalization=${summary.secondary.us10y?.normalization ?? '--'} reason=${summary.secondary.us10y?.normalizationReason ?? '--'} ${summary.secondary.us10y?.observedAt ?? '--'}`);
   console.log('');
   console.log(`Conclusion: ${summary.overall}`);
   if (summary.reasons.length > 0) {
@@ -366,7 +409,7 @@ function appendGithubSummary(summary) {
     `| VIX | ${tableValue(`${summary.secondary.vix?.status ?? 'missing'} / ${summary.secondary.vix?.value ?? '--'} / ${summary.secondary.vix?.observedAt ?? '--'}`)} |`,
     `| Gold | ${tableValue(`${summary.secondary.gold?.status ?? 'missing'} / ${summary.secondary.gold?.value ?? '--'} / ${summary.secondary.gold?.observedAt ?? '--'}`)} |`,
     `| DXY | ${tableValue(`${summary.secondary.dxy?.status ?? 'missing'} / ${summary.secondary.dxy?.value ?? '--'} / ${summary.secondary.dxy?.observedAt ?? '--'}`)} |`,
-    `| US10Y | ${tableValue(`${summary.secondary.us10y?.status ?? 'missing'} / ${summary.secondary.us10y?.value ?? '--'} / raw ${summary.secondary.us10y?.rawValue ?? '--'} / ${summary.secondary.us10y?.observedAt ?? '--'}`)} |`,
+    `| US10Y | ${tableValue(`${summary.secondary.us10y?.status ?? 'missing'} / ${summary.secondary.us10y?.value ?? '--'} / raw ${summary.secondary.us10y?.rawValue ?? '--'} / normalization ${summary.secondary.us10y?.normalization ?? '--'} / ${summary.secondary.us10y?.normalizationReason ?? '--'} / ${summary.secondary.us10y?.observedAt ?? '--'}`)} |`,
     '',
     '### Reasons',
     '',

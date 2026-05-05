@@ -156,7 +156,12 @@ diagnostics.sources.us10y
 
 Gold、DXY 与 US10Y secondary 只写入 `/market.secondary-preview.json` 的独立 KV payload，不得覆盖或参与主 `/market.worker-preview.json` 的 `values.gold` / `values.dxy` / `values.us10y`，不得进入 `data.__effectiveDisplayInputs`，不得参与 scoring / decision，也不得影响 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable`。VIX、Gold、DXY 与 US10Y secondary 均必须声明 `participatesInPrimary: false` 与 `participatesInValidation: false`。
 
-US10Y via Yahoo `^TNX` 必须保留 `rawValue`，并以 `normalization: "divide-by-10"` 说明 Yahoo raw value 需要除以 10 才是与主 `values.us10y` 同量纲的收益率百分比；diagnostic `value` 应使用归一化后的数值，不得把 `rawValue` 直接当作主 US10Y。
+v28.0E-3A 起，US10Y via Yahoo `^TNX` 必须保留 `rawValue`、归一化后的 diagnostic `value`、`normalization` 与 `normalizationReason`。Yahoo `^TNX` 可能返回两种形态：
+
+- `rawValue > 20`：视为 yield-times-10，`value = rawValue / 10`，`normalization = "divide-by-10"`，`normalizationReason = "raw-yahoo-tnx-appears-times-10"`。
+- `rawValue <= 20`：视为已经是 percent yield，`value = rawValue`，`normalization = "no-op"`，`normalizationReason = "raw-yahoo-tnx-already-percent"`。
+
+如果没有可用 Yahoo `^TNX` 值，US10Y secondary 应保留结构并输出 `value: null`、`rawValue: null`、`normalization: "unknown"`、`normalizationReason: "no-valid-yahoo-tnx-value"`。不得把 `rawValue` 直接接入主 `values.us10y`，也不得把 US10Y secondary 升级为 validation source；后续若要升级必须另开版本。
 
 Gold / DXY / US10Y secondary 失败只应记录在各自 `diagnostics.sources.*` 字段，US10Y 失败不得阻止 VIX / Gold / DXY secondary 写入，也不得阻止主 Worker preview 写入。只有 VIX、Gold、DXY 与 US10Y 全部失败时，secondary preview 才可标记 `sourceMode: "secondary-preview-unavailable"` / `unavailable: true`。如果后续 Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB` 或 US10Y via Yahoo `^TNX` 连续稳定，必须另开版本讨论是否作为主值验证层；v28.0E-1 / v28.0E-2 / v28.0E-3 不做升级。
 

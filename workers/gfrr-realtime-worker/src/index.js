@@ -203,6 +203,23 @@ function parseYahooDxyChart(text) {
   throw new Error('no numeric DXY close or regularMarketPrice');
 }
 
+function normalizeYahooTnxValue(rawValue) {
+  if (rawValue > 20) {
+    return {
+      value: roundValue(rawValue / 10),
+      rawValue: roundValue(rawValue),
+      normalization: 'divide-by-10',
+      normalizationReason: 'raw-yahoo-tnx-appears-times-10',
+    };
+  }
+  return {
+    value: roundValue(rawValue),
+    rawValue: roundValue(rawValue),
+    normalization: 'no-op',
+    normalizationReason: 'raw-yahoo-tnx-already-percent',
+  };
+}
+
 function parseYahooUs10yChart(text) {
   const payload = JSON.parse(text);
   const result = payload?.chart?.result?.[0];
@@ -213,9 +230,7 @@ function parseYahooUs10yChart(text) {
     const rawValue = positiveNumber(closes[i]);
     if (rawValue != null) {
       return {
-        value: roundValue(rawValue / 10),
-        rawValue: roundValue(rawValue),
-        normalization: 'divide-by-10',
+        ...normalizeYahooTnxValue(rawValue),
         observedAt: timestamps[i] ? new Date(timestamps[i] * 1000).toISOString() : null,
       };
     }
@@ -224,9 +239,7 @@ function parseYahooUs10yChart(text) {
   const regularMarketPrice = positiveNumber(result?.meta?.regularMarketPrice);
   if (regularMarketPrice != null) {
     return {
-      value: roundValue(regularMarketPrice / 10),
-      rawValue: roundValue(regularMarketPrice),
-      normalization: 'divide-by-10',
+      ...normalizeYahooTnxValue(regularMarketPrice),
       observedAt: result?.meta?.regularMarketTime
         ? new Date(result.meta.regularMarketTime * 1000).toISOString()
         : null,
@@ -248,6 +261,7 @@ function buildSecondarySourcePayload({
   value = null,
   rawValue = null,
   normalization = null,
+  normalizationReason = null,
   observedAt = null,
   error = null,
 }) {
@@ -265,6 +279,9 @@ function buildSecondarySourcePayload({
   if (normalization != null) {
     payload.rawValue = ok && Number.isFinite(rawValue) ? rawValue : null;
     payload.normalization = normalization;
+  }
+  if (normalizationReason != null) {
+    payload.normalizationReason = normalizationReason;
   }
   return payload;
 }
@@ -316,7 +333,8 @@ function buildSecondaryPreviewPayload({ vix, gold, dxy, us10y }) {
           source: 'yahoo:^TNX',
           value: us10y?.value ?? null,
           rawValue: us10y?.rawValue ?? null,
-          normalization: 'divide-by-10',
+          normalization: us10y?.normalization ?? 'unknown',
+          normalizationReason: us10y?.normalizationReason ?? 'no-valid-yahoo-tnx-value',
           observedAt: us10y?.observedAt ?? null,
           error: us10y?.error ?? null,
         }),
@@ -472,6 +490,7 @@ async function buildSecondarySourceResult(fetcher) {
       value: result.value,
       rawValue: result.rawValue ?? null,
       normalization: result.normalization ?? null,
+      normalizationReason: result.normalizationReason ?? null,
       observedAt: result.observedAt,
       error: null,
     };

@@ -241,7 +241,11 @@ const workerContract = {
     'yahoo:DX-Y.NYB',
     'yahoo:^TNX',
     'rawValue',
-    'normalization: \'divide-by-10\'',
+    'normalization',
+    'normalizationReason',
+    'raw-yahoo-tnx-appears-times-10',
+    'raw-yahoo-tnx-already-percent',
+    'no-valid-yahoo-tnx-value',
     'tryWriteSecondaryPreview',
     'key === MARKET_WORKER_GENERATED_PREVIEW_KEY',
     'readPreviousWorkerPreviewSummary',
@@ -389,8 +393,13 @@ if (fs.existsSync(workerHealthScriptFile)) {
     'yahoo:GC=F',
     'yahoo:DX-Y.NYB',
     'yahoo:^TNX',
-    'normalization: \'divide-by-10\'',
+    'divide-by-10',
+    'no-op',
+    'unknown',
+    'normalizationReason',
     'rawValue',
+    'rawValue > 20',
+    'rawValue <= 20',
     'VIX, Gold, DXY, and US10Y secondary sources are all missing',
     'participatesInPrimary !== false',
     'participatesInValidation !== false',
@@ -574,9 +583,13 @@ if (fs.existsSync(workerContract.routerFile)) {
     !/participatesInPrimary:\s*false/u.test(text) ||
     !/participatesInValidation:\s*false/u.test(text) ||
     !/rawValue/u.test(text) ||
-    !/normalization:\s*['"]divide-by-10['"]/u.test(text)
+    !/normalization/u.test(text) ||
+    !/normalizationReason/u.test(text) ||
+    !/raw-yahoo-tnx-appears-times-10/u.test(text) ||
+    !/raw-yahoo-tnx-already-percent/u.test(text) ||
+    !/no-valid-yahoo-tnx-value/u.test(text)
   ) {
-    addRuntimeFailure(workerContract.routerFile, 'US10Y secondary must remain diagnostic-only with divide-by-10 normalization');
+    addRuntimeFailure(workerContract.routerFile, 'US10Y secondary must remain diagnostic-only with audited normalization');
   }
   if (!/MARKET_SECONDARY_PREVIEW_KEY\s*=\s*['"]market:secondary-preview['"]/u.test(text)) {
     addRuntimeFailure(workerContract.routerFile, 'secondary preview must continue using market:secondary-preview KV key');
