@@ -36,6 +36,7 @@
 - Check Realtime Health 已对齐为 soft-fail：只观察 GitHub `realtime-data` fallback / Daily baseline freshness，stale / unavailable 只报告 warning 与 `shouldRecover`，Worker-first runtime hard gate 由 Check Worker Health 承担。
 - v28.0G-3 只清理健康检查 Summary 文案：Check Worker Health 明确为 hard gate，Check Realtime Health 明确为 fallback / Daily baseline soft observer；不改变数据源、Worker 或前端。
 - v28.0G-4A 增加 Trading Economics Brent observedAt audit-only：只在 Brent promotion / audit 输出中展示 observedAt freshness 诊断，不改变 `values.brent` 或 promotion hard gate。
+- v28.0G-4B decision：建议另开 G-4C 实现 Trading Economics freshness hard gate；G-4B does not change runtime behavior。G-4C 方案为 TE `observedAt` 可解析且 `ageHours <= 48` 小时，否则用 `tradingeconomics-observedAt-invalid` 或 `tradingeconomics-confirmation-stale` hold promotion；旧 PR #53 已 superseded，不再使用。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。

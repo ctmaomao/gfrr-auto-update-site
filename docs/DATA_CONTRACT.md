@@ -443,7 +443,21 @@ promotion 成功时：
 
 promotion 失败时，`values.brent` 继续使用 FRED anchor。promotion 成功或失败都不得改变 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable` 的计算规则，也不得影响 VIX secondary preview。
 
-v28.0G-4A 起，Trading Economics Brent 会额外输出 `observedAt` audit：`brentValidation.promotion.confirmationSources` 与 `brentValidation.audit.candidateSources` 可显示 Trading Economics 的 `observedAt`、`ageHours`、`freshnessStatus` 与 `freshnessReason`。这些字段只用于 diagnostics / audit；`freshnessStatus = unknown` 或 `tradingeconomics-observedAt-unparsed` 不会阻止 promotion，Trading Economics freshness 暂不进入 hard gate。旧 Draft PR #53 不应直接 merge，因为它基于旧分支、引入 hard gate 风险且未完成完整检查；若 G-4A 观察到 observedAt 稳定，再另开 G-4B 讨论是否纳入 gate。
+v28.0G-4A 起，Trading Economics Brent 会额外输出 `observedAt` audit：`brentValidation.promotion.confirmationSources` 与 `brentValidation.audit.candidateSources` 可显示 Trading Economics 的 `observedAt`、`ageHours`、`freshnessStatus` 与 `freshnessReason`。这些字段只用于 diagnostics / audit；`freshnessStatus = unknown` 或 `tradingeconomics-observedAt-unparsed` 不会阻止 promotion，Trading Economics freshness 暂不进入 hard gate。旧 Draft PR #53 不应直接 merge，因为它基于旧分支、引入 hard gate 风险且未完成完整检查；G-4B / G-4C 必须基于最新 main 串行 trunk flow。
+
+### G-4B decision: Trading Economics freshness hard gate
+
+v28.0G-4B 是 decision review，不是 runtime change。G-4B does not change runtime behavior，也不改变 `values.brent`、`brentValidation.promotion`、D-6 `moveStatus` / extreme-move guard 或 sourceProbe 实际行为。当前线上行为仍是 G-4A audit-only：Trading Economics `observedAt` 已能解析并显示 `freshnessStatus = fresh / stale / unknown`，解析失败仍只作为 diagnostic。
+
+G-4B 结论：建议进入 v28.0G-4C，实现保守的 Trading Economics freshness hard gate。G-4C 中 Trading Economics confirmation 应同时满足 `ok === true`、value 为正的 finite number、`observedAt` 可解析、`ageHours` 为 finite number，且 `ageHours <= BRENT_CONFIRMATION_FRESH_HOURS`（48 小时）。
+
+G-4C 计划中的 hard hold 条件：
+
+- Trading Economics `observedAt` 不可解析：阻止 promotion，reason 使用 `tradingeconomics-observedAt-invalid`；`confirmationSources` 仍显示 `freshnessStatus = unknown` 与 `freshnessReason = tradingeconomics-observedAt-unparsed`。
+- Trading Economics `observedAt` 超过 48 小时：阻止 promotion，reason 使用 `tradingeconomics-confirmation-stale`；`confirmationSources` 显示 `freshnessStatus = stale` 与 `freshnessReason = tradingeconomics-observedAt-stale`。
+- D-6 `confirmed-extreme-move` 也应要求 Trading Economics freshness fresh；如果 Yahoo fresh 但 Trading Economics stale / unknown，不应确认 extreme move。
+
+G-4C 风险是 Trading Economics HTML 日期格式可能变化；一旦 hard gate 生效，解析失败会让 Brent 回退到 FRED anchor 或 previous accepted reference。因此 G-4C 实现后需要 deploy preflight、live validation，以及 1-2 轮 scheduled `Check Worker Health` observation。进入 G-4C 的前提是 Worker Health scheduled 稳定且 Trading Economics `observedAt` audit 持续稳定。
 
 ### Brent source hygiene
 

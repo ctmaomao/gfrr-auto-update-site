@@ -211,6 +211,13 @@ const secondaryConsolidationDocs = [
   'docs/OPERATIONS.md',
   'workers/gfrr-realtime-worker/README.md',
 ];
+const g4bDecisionDocs = [
+  'README.md',
+  'AGENTS.md',
+  'docs/DATA_CONTRACT.md',
+  'docs/OPERATIONS.md',
+  'workers/gfrr-realtime-worker/README.md',
+];
 
 const workerContract = {
   mainPreviewFile: 'workers/gfrr-realtime-worker/src/worker-market-preview.js',
@@ -501,6 +508,25 @@ for (const file of secondaryConsolidationDocs) {
   ]) {
     if (!text.includes(needle)) {
       addRuntimeFailure(file, `missing secondary diagnostics consolidation marker "${needle}"`);
+    }
+  }
+}
+
+for (const file of g4bDecisionDocs) {
+  if (!fs.existsSync(file)) {
+    addRuntimeFailure(file, 'G-4B decision document missing');
+    continue;
+  }
+  const text = fs.readFileSync(file, 'utf8');
+  for (const needle of [
+    'G-4B decision',
+    'G-4C',
+    'tradingeconomics-observedAt-invalid',
+    'tradingeconomics-confirmation-stale',
+    'G-4B does not change runtime behavior',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(file, `missing G-4B decision marker "${needle}"`);
     }
   }
 }
