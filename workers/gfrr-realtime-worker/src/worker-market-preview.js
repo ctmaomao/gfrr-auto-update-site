@@ -422,6 +422,118 @@ function hoursSinceTimestamp(timestamp, nowMs) {
   return Math.max(0, (nowMs - parsed) / (60 * 60 * 1000));
 }
 
+const MONTH_NAME_TO_INDEX = {
+  jan: 0,
+  january: 0,
+  feb: 1,
+  february: 1,
+  mar: 2,
+  march: 2,
+  apr: 3,
+  april: 3,
+  may: 4,
+  jun: 5,
+  june: 5,
+  jul: 6,
+  july: 6,
+  aug: 7,
+  august: 7,
+  sep: 8,
+  sept: 8,
+  september: 8,
+  oct: 9,
+  october: 9,
+  nov: 10,
+  november: 10,
+  dec: 11,
+  december: 11,
+};
+
+function isoTimestampFromMonthNameDate(monthName, day, year) {
+  const monthIndex = MONTH_NAME_TO_INDEX[String(monthName ?? '').trim().toLowerCase()];
+  const numericDay = Number(day);
+  const numericYear = Number(year);
+  if (
+    monthIndex == null ||
+    !Number.isInteger(numericDay) ||
+    numericDay < 1 ||
+    numericDay > 31 ||
+    !Number.isInteger(numericYear)
+  ) {
+    return null;
+  }
+
+  const timestamp = Date.UTC(numericYear, monthIndex, numericDay);
+  const date = new Date(timestamp);
+  if (
+    date.getUTCFullYear() !== numericYear ||
+    date.getUTCMonth() !== monthIndex ||
+    date.getUTCDate() !== numericDay
+  ) {
+    return null;
+  }
+
+  return date.toISOString();
+}
+
+function isoTimestampFromMonthNameDateInCurrentYear(monthName, day, nowMs) {
+  const now = new Date(nowMs);
+  let year = now.getUTCFullYear();
+  let observedAt = isoTimestampFromMonthNameDate(monthName, day, year);
+  const observedMs = Date.parse(observedAt);
+  if (Number.isFinite(observedMs) && observedMs - nowMs > 36 * 60 * 60 * 1000) {
+    year -= 1;
+    observedAt = isoTimestampFromMonthNameDate(monthName, day, year);
+  }
+  return observedAt;
+}
+
+function parseTradingEconomicsObservedAt(text, nowMs) {
+  if (typeof text !== 'string' || text.trim() === '') return null;
+  const normalizedText = text
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#160;/g, ' ')
+    .replace(/\s+/g, ' ');
+
+  const explicit = normalizedText.match(
+    /last\s+updated\s+on\s+([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,)?\s+(?:of\s+)?(\d{4})/iu,
+  );
+  if (explicit) {
+    return isoTimestampFromMonthNameDate(explicit[1], explicit[2], explicit[3]);
+  }
+
+  const tableDate = normalizedText.match(
+    /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\/(\d{1,2})(?:st|nd|rd|th)?\b/iu,
+  );
+  if (tableDate) {
+    return isoTimestampFromMonthNameDateInCurrentYear(tableDate[1], tableDate[2], nowMs);
+  }
+
+  return null;
+}
+
+function auditFreshnessFromObservedAt(observedAt, nowMs, freshHours) {
+  const age = hoursSinceTimestamp(observedAt, nowMs);
+  if (!isFiniteNumber(age)) {
+    return {
+      observedAt: null,
+      ageHours: null,
+      freshnessStatus: 'unknown',
+      freshnessReason: 'tradingeconomics-observedAt-unparsed',
+    };
+  }
+
+  const ageHours = roundValue(age, 2);
+  return {
+    observedAt,
+    ageHours,
+    freshnessStatus: ageHours <= freshHours ? 'fresh' : 'stale',
+    freshnessReason: ageHours <= freshHours
+      ? 'tradingeconomics-observedAt-within-48h'
+      : 'tradingeconomics-observedAt-stale',
+  };
+}
+
 function findBrentCandidate(candidates, source) {
   return candidates.find((candidate) => candidate.source === source) || null;
 }
@@ -556,6 +668,8 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
   const anchorValue = positiveFinite(anchorDetail?.value) ? anchorDetail.value : null;
   const anchorAgeHours = hoursSinceTimestamp(anchorDetail?.timestamp, nowMs);
   const yahooAgeHours = hoursSinceTimestamp(yahoo?.timestamp, nowMs);
+  const tradingEconomicsAudit = tradingEconomics?.observedAtAudit ??
+    auditFreshnessFromObservedAt(tradingEconomics?.timestamp ?? null, nowMs, BRENT_CONFIRMATION_FRESH_HOURS);
   const maxConfirmationDivergencePct = divergencePct(yahoo?.value, tradingEconomics?.value);
   const previousReference = selectPreviousBrentReference(previousPreviewSummary);
   const base = {
@@ -578,8 +692,10 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
         source: 'tradingeconomics:brent-crude-oil',
         status: tradingEconomics?.ok ? 'ok' : tradingEconomics?.error || 'unavailable',
         value: positiveFinite(tradingEconomics?.value) ? tradingEconomics.value : null,
-        observedAt: tradingEconomics?.timestamp ?? null,
-        ageHours: null,
+        observedAt: tradingEconomicsAudit.observedAt ?? null,
+        ageHours: tradingEconomicsAudit.ageHours ?? null,
+        freshnessStatus: tradingEconomicsAudit.freshnessStatus,
+        freshnessReason: tradingEconomicsAudit.freshnessReason,
       },
     ],
     excludedSources: [
@@ -675,6 +791,8 @@ function summarizeBrentCandidate(candidate, anchorDetail = null) {
   const value = isFiniteNumber(candidate.value) ? candidate.value : null;
   const reason = candidate.reason ?? diagnostics.reason ?? null;
   const exclusionReason = candidate.exclusionReason ?? null;
+  const observedAt = candidate.timestamp ?? (candidate.role === 'anchor' ? anchorDetail?.timestamp : null) ?? null;
+  const observedAtAudit = candidate.observedAtAudit || {};
   const status = candidate.ok && positiveFinite(value)
     ? 'ok'
     : candidate.ok && !positiveFinite(value)
@@ -687,7 +805,10 @@ function summarizeBrentCandidate(candidate, anchorDetail = null) {
     participatesInConsensus: candidate.participatesInConsensus === true,
     status,
     value,
-    observedAt: candidate.timestamp ?? (candidate.role === 'anchor' ? anchorDetail?.timestamp : null) ?? null,
+    observedAt,
+    ageHours: observedAtAudit.ageHours ?? null,
+    freshnessStatus: observedAtAudit.freshnessStatus ?? null,
+    freshnessReason: observedAtAudit.freshnessReason ?? null,
     error: candidate.error ?? diagnostics.error ?? null,
     reason,
     exclusionReason,
@@ -1182,7 +1303,7 @@ async function fetchGoogleFinanceDiagnosticCandidate() {
   };
 }
 
-async function fetchTradingEconomicsDiagnosticCandidate() {
+async function fetchTradingEconomicsDiagnosticCandidate(nowMs = Date.now()) {
   let result = await fetchTextWithDiagnostics(TRADING_ECONOMICS_BRENT_URL, {
     headers: { Accept: 'text/html,text/plain,*/*' },
   });
@@ -1200,19 +1321,30 @@ async function fetchTradingEconomicsDiagnosticCandidate() {
   }
 
   const value = result.ok ? parsePriceFromHtml(result.text) : null;
+  const observedAt = result.ok ? parseTradingEconomicsObservedAt(result.text, nowMs) : null;
+  const observedAtAudit = auditFreshnessFromObservedAt(
+    observedAt,
+    nowMs,
+    BRENT_CONFIRMATION_FRESH_HOURS,
+  );
   const parseError = result.ok && value == null ? 'price parse failed' : null;
 
   return {
     source: 'tradingeconomics:brent-crude-oil',
     sourceUrl,
     value,
-    timestamp: null,
+    timestamp: observedAt,
+    observedAtAudit,
     ok: result.ok && value != null,
     error: parseError ?? result.error,
     role: 'diagnostic',
     participatesInConsensus: false,
     quality: 'experimental',
-    diagnostics: buildCandidateDiagnostics(result, parseError),
+    diagnostics: {
+      ...buildCandidateDiagnostics(result, parseError),
+      observedAt,
+      observedAtAudit,
+    },
   };
 }
 
@@ -1231,7 +1363,7 @@ async function buildBrentValidation(anchorValue, previousPreviewSummary = null, 
   await sleep(150 + Math.floor(Math.random() * 151));
   const googleFinance = await fetchGoogleFinanceDiagnosticCandidate();
   await sleep(150 + Math.floor(Math.random() * 151));
-  const tradingEconomics = await fetchTradingEconomicsDiagnosticCandidate();
+  const tradingEconomics = await fetchTradingEconomicsDiagnosticCandidate(nowMs);
   await sleep(150 + Math.floor(Math.random() * 151));
   const sourceProbe = await buildBrentSourceProbe(previousPreviewSummary, nowMs);
 

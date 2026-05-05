@@ -443,6 +443,8 @@ promotion 成功时：
 
 promotion 失败时，`values.brent` 继续使用 FRED anchor。promotion 成功或失败都不得改变 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable` 的计算规则，也不得影响 VIX secondary preview。
 
+v28.0G-4A 起，Trading Economics Brent 会额外输出 `observedAt` audit：`brentValidation.promotion.confirmationSources` 与 `brentValidation.audit.candidateSources` 可显示 Trading Economics 的 `observedAt`、`ageHours`、`freshnessStatus` 与 `freshnessReason`。这些字段只用于 diagnostics / audit；`freshnessStatus = unknown` 或 `tradingeconomics-observedAt-unparsed` 不会阻止 promotion，Trading Economics freshness 暂不进入 hard gate。旧 Draft PR #53 不应直接 merge，因为它基于旧分支、引入 hard gate 风险且未完成完整检查；若 G-4A 观察到 observedAt 稳定，再另开 G-4B 讨论是否纳入 gate。
+
 ### Brent source hygiene
 
 v28.0D-8 起，Brent candidate source hygiene 只改善 audit 可读性，不改变主值选择：

@@ -299,6 +299,10 @@ const workerContract = {
     'csv-symbol-unstable',
     'stooq-brn-f-diagnostic-only-not-used-for-promotion',
     'tradingeconomics:brent-crude-oil',
+    'parseTradingEconomicsObservedAt',
+    'tradingeconomics-observedAt-unparsed',
+    'tradingeconomics-observedAt-within-48h',
+    'tradingeconomics-observedAt-stale',
     'yahoo:BZ=F',
     'excluded-non-positive-or-invalid'
   ],
@@ -557,6 +561,51 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
   }
   if (!/source\s*=\s*['"]stooq:brn\.f['"][\s\S]{0,160}role\s*=\s*['"]diagnostic['"][\s\S]{0,160}participatesInConsensus\s*=\s*false[\s\S]{0,160}quality\s*=\s*['"]csv-symbol-unstable['"]/u.test(text)) {
     addRuntimeFailure(workerContract.mainPreviewFile, 'stooq:brn.f must remain diagnostic-only csv-symbol-unstable');
+  }
+  for (const forbiddenNeedle of [
+    'tradingeconomics-confirmation-stale',
+    'tradingeconomics-observedAt-invalid',
+  ]) {
+    if (text.includes(forbiddenNeedle)) {
+      addRuntimeFailure(workerContract.mainPreviewFile, `Trading Economics observedAt audit must not hard gate via "${forbiddenNeedle}"`);
+    }
+  }
+  const tradingEconomicsCandidateStart = text.indexOf('async function fetchTradingEconomicsDiagnosticCandidate');
+  const buildValidationAfterTradingEconomics = text.indexOf('async function buildBrentValidation', tradingEconomicsCandidateStart);
+  if (
+    tradingEconomicsCandidateStart !== -1 &&
+    buildValidationAfterTradingEconomics !== -1 &&
+    buildValidationAfterTradingEconomics > tradingEconomicsCandidateStart
+  ) {
+    const tradingEconomicsCandidateBlock = text.slice(
+      tradingEconomicsCandidateStart,
+      buildValidationAfterTradingEconomics,
+    );
+    if (/ok:\s*result\.ok\s*&&\s*value\s*!=\s*null\s*&&\s*observedAt\s*!=\s*null/u.test(tradingEconomicsCandidateBlock)) {
+      addRuntimeFailure(
+        workerContract.mainPreviewFile,
+        'Trading Economics candidate must not require observedAt for ok=true',
+      );
+    }
+  } else {
+    addRuntimeFailure(workerContract.mainPreviewFile, 'missing Trading Economics diagnostic candidate block');
+  }
+  const promotionDecisionStart = text.indexOf('function buildBrentPromotionDecision');
+  const summarizeCandidateStart = text.indexOf('function summarizeBrentCandidate', promotionDecisionStart);
+  if (
+    promotionDecisionStart !== -1 &&
+    summarizeCandidateStart !== -1 &&
+    summarizeCandidateStart > promotionDecisionStart
+  ) {
+    const promotionDecisionBlock = text.slice(promotionDecisionStart, summarizeCandidateStart);
+    if (promotionDecisionBlock.includes('tradingEconomicsAgeHours')) {
+      addRuntimeFailure(
+        workerContract.mainPreviewFile,
+        'Trading Economics observedAt age must not become a promotion gate in G-4A',
+      );
+    }
+  } else {
+    addRuntimeFailure(workerContract.mainPreviewFile, 'missing Brent promotion decision block');
   }
   const sourceProbeStart = text.indexOf('async function buildBrentSourceProbe(');
   const buildValidationStart = text.indexOf('async function buildBrentValidation');
