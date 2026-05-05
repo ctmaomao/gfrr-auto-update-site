@@ -16,6 +16,8 @@ const MARKET_PREVIEW_KEY = 'market:latest-preview';
 const MARKET_WORKER_GENERATED_PREVIEW_KEY = 'market:worker-generated-preview';
 const MARKET_SECONDARY_PREVIEW_KEY = 'market:secondary-preview';
 const CBOE_VIX_HISTORY_URL = 'https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv';
+const YAHOO_GOLD_SECONDARY_URL =
+  'https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=5d';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -149,14 +151,56 @@ function parseCboeVixHistory(text) {
   throw new Error('no numeric VIX close');
 }
 
+function parseYahooGoldChart(text) {
+  const payload = JSON.parse(text);
+  const result = payload?.chart?.result?.[0];
+  const closes = result?.indicators?.quote?.[0]?.close ?? [];
+  const timestamps = result?.timestamp ?? [];
+
+  for (let i = closes.length - 1; i >= 0; i -= 1) {
+    const value = parseNumeric(closes[i]);
+    if (value != null) {
+      return {
+        value: roundValue(value),
+        observedAt: timestamps[i] ? new Date(timestamps[i] * 1000).toISOString() : null,
+      };
+    }
+  }
+
+  throw new Error('no numeric Gold close');
+}
+
 function truncateSecondaryError(error) {
   if (error == null || error === '') return null;
   return truncatePreviewError(error);
 }
 
-function buildSecondaryPreviewPayload({ value = null, observedAt = null, status = 'ok', error = null }) {
-  const nowIso = new Date().toISOString();
+function buildSecondarySourcePayload({
+  status,
+  provider,
+  source,
+  value = null,
+  observedAt = null,
+  error = null,
+}) {
   const ok = status === 'ok' && Number.isFinite(value);
+  return {
+    status: ok ? 'ok' : status,
+    provider,
+    source,
+    participatesInPrimary: false,
+    participatesInValidation: false,
+    value: ok ? value : null,
+    observedAt: ok ? observedAt : null,
+    error: ok ? null : truncateSecondaryError(error),
+  };
+}
+
+function buildSecondaryPreviewPayload({ vix, gold }) {
+  const nowIso = new Date().toISOString();
+  const vixOk = vix?.status === 'ok' && Number.isFinite(vix.value);
+  const goldOk = gold?.status === 'ok' && Number.isFinite(gold.value);
+  const ok = vixOk || goldOk;
   return {
     sourceMode: ok ? 'secondary-preview' : 'secondary-preview-unavailable',
     updatedAt: nowIso,
@@ -167,16 +211,22 @@ function buildSecondaryPreviewPayload({ value = null, observedAt = null, status 
       frequency: 'low-frequency',
       isolation: 'separate-kv-key',
       sources: {
-        vix: {
-          status: ok ? 'ok' : status,
+        vix: buildSecondarySourcePayload({
+          status: vix?.status ?? 'unavailable',
           provider: 'cboe',
           source: 'cboe:VIX_History',
-          participatesInPrimary: false,
-          participatesInValidation: false,
-          value: ok ? value : null,
-          observedAt: ok ? observedAt : null,
-          error: truncateSecondaryError(error),
-        },
+          value: vix?.value ?? null,
+          observedAt: vix?.observedAt ?? null,
+          error: vix?.error ?? null,
+        }),
+        gold: buildSecondarySourcePayload({
+          status: gold?.status ?? 'unavailable',
+          provider: 'yahoo',
+          source: 'yahoo:GC=F',
+          value: gold?.value ?? null,
+          observedAt: gold?.observedAt ?? null,
+          error: gold?.error ?? null,
+        }),
       },
     },
   };
@@ -184,8 +234,8 @@ function buildSecondaryPreviewPayload({ value = null, observedAt = null, status 
 
 function buildSecondaryPreviewFailurePayload(error) {
   return buildSecondaryPreviewPayload({
-    status: 'failed',
-    error,
+    vix: { status: 'failed', error },
+    gold: { status: 'unavailable', error: 'not attempted after secondary preview failure' },
   });
 }
 
@@ -250,17 +300,52 @@ async function fetchCboeVixLatest() {
   }
 }
 
-async function buildSecondaryPreview() {
+async function fetchYahooGoldSecondaryLatest() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SECONDARY_PREVIEW_TIMEOUT_MS);
   try {
-    const vix = await fetchCboeVixLatest();
-    return buildSecondaryPreviewPayload({
-      value: vix.value,
-      observedAt: vix.observedAt,
-      status: 'ok',
+    const response = await fetch(`${YAHOO_GOLD_SECONDARY_URL}&t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {
+        Accept: 'application/json,text/plain,*/*',
+        'User-Agent':
+          'Mozilla/5.0 (compatible; GFRRWorkerSecondaryPreview/28.0E-1; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
+      },
+      signal: controller.signal,
     });
-  } catch (err) {
-    return buildSecondaryPreviewFailurePayload(err instanceof Error ? err.message : String(err));
+    const text = await response.text();
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return parseYahooGoldChart(text);
+  } finally {
+    clearTimeout(timer);
   }
+}
+
+async function buildSecondarySourceResult(fetcher) {
+  try {
+    const result = await fetcher();
+    return {
+      status: 'ok',
+      value: result.value,
+      observedAt: result.observedAt,
+      error: null,
+    };
+  } catch (err) {
+    return {
+      status: 'failed',
+      value: null,
+      observedAt: null,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+async function buildSecondaryPreview() {
+  const vix = await buildSecondarySourceResult(fetchCboeVixLatest);
+  const gold = await buildSecondarySourceResult(fetchYahooGoldSecondaryLatest);
+  return buildSecondaryPreviewPayload({ vix, gold });
 }
 
 async function tryWriteSecondaryPreview(env) {

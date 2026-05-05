@@ -138,13 +138,23 @@ market:secondary-preview
 - DXY 与 HY OAS 的备用来源属于 proxy / experimental diagnostic，不得直接视为 canonical 等价源。
 - 独立 secondary preview 不存在时，`/market.secondary-preview.json` 返回小型 unavailable payload；这不代表主 `/market.worker-preview.json` 异常。
 
-v28.0D-3 的独立 secondary preview 只允许包含 VIX via Cboe：
+v28.0D-3 的独立 secondary preview 只接入 VIX via Cboe；v28.0E-1 在同一独立 endpoint 中新增 Gold via Yahoo `GC=F` 后台诊断：
 
 ```text
 diagnostics.sources.vix
+diagnostics.sources.gold
 ```
 
-该字段只用于观察 Cboe VIX 第二源可达性与最新可解析值。前端当前不消费 `/market.secondary-preview.json`；该 payload 不得进入 Worker-first strict gate、`__effectiveDisplayInputs`、scoring 或 decision。
+这些字段只用于观察第二诊断源可达性与最新可解析值。当前 secondary diagnostics 包含：
+
+- VIX via Cboe：`diagnostics.sources.vix`
+- Gold via Yahoo `GC=F`：`diagnostics.sources.gold`
+
+Gold secondary 只写入 `/market.secondary-preview.json` 的独立 KV payload，不得覆盖或参与主 `/market.worker-preview.json` 的 `values.gold`，不得进入 `data.__effectiveDisplayInputs`，不得参与 scoring / decision，也不得影响 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable`。Gold secondary 与 VIX secondary 均必须声明 `participatesInPrimary: false` 与 `participatesInValidation: false`。
+
+Gold secondary 失败只应记录在 `diagnostics.sources.gold`，不得阻止 VIX secondary 写入，也不得阻止主 Worker preview 写入。只有 VIX 与 Gold 全部失败时，secondary preview 才可标记 `sourceMode: "secondary-preview-unavailable"` / `unavailable: true`。如果后续 Gold via Yahoo `GC=F` 连续稳定，必须另开版本讨论是否作为主 `gold-api.com` 源的验证层；v28.0E-1 不做升级。
+
+前端当前不消费 `/market.secondary-preview.json`；该 payload 不得进入 Worker-first strict gate、`__effectiveDisplayInputs`、scoring 或 decision。
 
 ## displayInputsBaseline 契约
 
