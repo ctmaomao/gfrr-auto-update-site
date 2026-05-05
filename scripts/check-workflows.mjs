@@ -55,6 +55,8 @@ const contracts = [
       'actions/checkout@v6',
       'actions/setup-node@v6',
       'node-version: 24',
+      'Audit Daily realtime input vs Worker preview',
+      'node scripts/audit-daily-vs-worker.mjs --github-summary',
       'npm run build:data',
       'npm run check:data',
       'Daily Radar Summary',
@@ -167,6 +169,10 @@ const forbiddenRuntimePatterns = [
   [/ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION/u, 'must not use ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION'],
   [/FORCE_JAVASCRIPT_ACTIONS_TO_NODE24/u, 'must not use FORCE_JAVASCRIPT_ACTIONS_TO_NODE24']
 ];
+
+const dailyWorkflowFile = '.github/workflows/build-daily-radar-data.yml';
+const auditScriptFile = 'scripts/audit-daily-vs-worker.mjs';
+const packageFile = 'package.json';
 
 const workerContract = {
   mainPreviewFile: 'workers/gfrr-realtime-worker/src/worker-market-preview.js',
@@ -297,6 +303,37 @@ for (const file of workflowFiles) {
   if (setupNodeMatches.length > 0 && !/node-version:\s*['"]?24['"]?/u.test(text)) {
     addRuntimeFailure(file, 'uses setup-node but does not set node-version: 24');
   }
+}
+
+if (fs.existsSync(dailyWorkflowFile)) {
+  const text = fs.readFileSync(dailyWorkflowFile, 'utf8');
+  if (text.includes('--fail-on-large-drift')) {
+    addRuntimeFailure(dailyWorkflowFile, 'Daily workflow must not enable --fail-on-large-drift');
+  }
+  for (const forbiddenNeedle of [
+    'market.worker-preview.json > realtime/market.json',
+    'curl https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json',
+    'wget https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json',
+  ]) {
+    if (text.includes(forbiddenNeedle)) {
+      addRuntimeFailure(dailyWorkflowFile, `Daily input must not be replaced by Worker endpoint: "${forbiddenNeedle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(dailyWorkflowFile, 'Daily workflow file missing');
+}
+
+if (!fs.existsSync(auditScriptFile)) {
+  addRuntimeFailure(auditScriptFile, 'Daily vs Worker audit script missing');
+}
+
+if (fs.existsSync(packageFile)) {
+  const packageText = fs.readFileSync(packageFile, 'utf8');
+  if (!packageText.includes('"audit:daily-worker": "node scripts/audit-daily-vs-worker.mjs"')) {
+    addRuntimeFailure(packageFile, 'missing audit:daily-worker package script');
+  }
+} else {
+  addRuntimeFailure(packageFile, 'package.json missing');
 }
 
 if (fs.existsSync(workerContract.mainPreviewFile)) {

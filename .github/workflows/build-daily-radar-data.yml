@@ -38,6 +38,9 @@ jobs:
           REALTIME_SHA="$(git rev-parse origin/realtime-data)"
           echo "GFRR_REALTIME_COMMIT_SHA=$REALTIME_SHA" >> "$GITHUB_ENV"
 
+      - name: Audit Daily realtime input vs Worker preview
+        run: node scripts/audit-daily-vs-worker.mjs --github-summary
+
       - name: Generate radar data
         run: npm run build:data
 

@@ -16,6 +16,7 @@
 - Google Finance / Stooq 只保留 D-8B-lite sourceProbe；D-8B findings 已确认当前不可升级为 validation source，除非另开版本连续验证。
 - VIX / Gold secondary 当前只用于诊断，不影响 `values.*`、scoring、decision、healthScore、criticalMissing 或 unavailable。
 - Worker fetch timeout guard 已上线；后续新增外部源必须继承短超时、try/catch、diagnostics-only 和失败隔离原则。
+- Daily vs Worker Input Audit 只是 Summary 审计；Daily 仍消费 `origin/realtime-data:realtime/market.json`，不得在未另开版本评审时切到 Worker 作为 Daily 输入。
 
 每次任务应尽量做到：
 
@@ -51,6 +52,7 @@
 14. 不要让 VIX / Gold secondary 覆盖或参与任何 `values.*` 主值。
 15. 不要让 Google Finance / Stooq sourceProbe 进入 Brent consensus / promotion。
 16. 不要新增外部源却不加短超时、try/catch 和 diagnostics-only 失败隔离。
+17. 不要把 Daily workflow 的主输入从 `realtime-data` 改成 Worker endpoint；Daily vs Worker drift 只能作为 audit-only 信息。
 
 ## 4. 默认开发流程
 

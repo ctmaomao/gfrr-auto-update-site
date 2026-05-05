@@ -201,6 +201,18 @@ secondary diagnostics（VIX via Cboe、Gold via Yahoo `GC=F`）仍只属于 `/ma
 
 `dailyRealtimeInput` 用于记录 Daily 构建实际消费了哪一次 realtime payload，便于排查 Daily 与 Realtime 的先后顺序问题。它不参与评分，不参与决策，也不参与页面主显示。本地运行时如果没有 GitHub Actions 注入的 commit SHA，`commitSha` 可以为 `null`。
 
+### Daily vs Worker input audit
+
+v28.0F-1 起，仓库提供只读脚本：
+
+```bash
+node scripts/audit-daily-vs-worker.mjs
+```
+
+该脚本比较本地 `realtime/market.json`（Daily workflow 从 `origin/realtime-data` 写入的实际输入）与当前 Cloudflare Worker `/market.worker-preview.json`。输出只用于 GitHub Actions Summary / 人工审计，不序列化进 `data/radar-data.json`，不改变 `dailyRealtimeInput`，不改变 Daily 主路径输入，不改变前端 Worker-first runtime 选择。
+
+`drift.materialDriftFields` 表示观察到的字段差异，不代表错误，也不会默认阻塞 Daily。Worker 可能比 Daily 消费的 `realtime-data` 更新；是否把 Daily 输入切到 Worker 必须另开 F-2 / F-3 版本讨论。
+
 ## GitHub Actions Summary 运行审计入口
 
 GitHub Actions Summary 是 Daily / Realtime 运行时审计入口，用于人工排查输入、baseline 与决策输出是否一致。Summary 不参与计算，不改变 JSON，也不是页面数据源。
@@ -229,6 +241,7 @@ GitHub Actions Summary 是 Daily / Realtime 运行时审计入口，用于人工
 - `displayInputsBaseline.hyOas`
 - `displayInputsBaseline.spx`
 - `Decision Summary`
+- `Daily vs Worker Input Audit`
 
 其中 `dailyRealtimeInput` 用于判断 Daily 实际消费了哪一次 realtime payload；`displayInputsBaseline` 是 Daily 生成的 baseline fallback 当前值；`Decision Summary` 用于快速查看策略状态、执行锁、仓位建议、动作数量和阈值数量。
 
