@@ -11,10 +11,10 @@
 当前关键边界：
 
 - Worker-first 主链路读取 `/market.worker-preview.json`，并由前端 strict gate 决定是否使用。
-- `/market.secondary-preview.json` 只承载独立 secondary diagnostics，当前包含 VIX via Cboe、Gold via Yahoo `GC=F` 与 DXY via Yahoo `DX-Y.NYB`；不得污染主 preview。
+- `/market.secondary-preview.json` 只承载独立 secondary diagnostics，当前包含 VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB` 与 US10Y via Yahoo `^TNX`；不得污染主 preview。
 - Brent 主逻辑为 FRED `DCOILBRENTEU` anchor + Yahoo `BZ=F` fresh confirmation + Trading Economics confirmation + D-6 extreme-move guard。
 - Google Finance / Stooq 只保留 D-8B-lite sourceProbe；D-8B findings 已确认当前不可升级为 validation source，除非另开版本连续验证。
-- VIX / Gold / DXY secondary 当前只用于诊断，不影响 `values.*`、scoring、decision、healthScore、criticalMissing 或 unavailable。
+- VIX / Gold / DXY / US10Y secondary 当前只用于诊断，不影响 `values.*`、scoring、decision、healthScore、criticalMissing 或 unavailable。
 - Worker fetch timeout guard 已上线；后续新增外部源必须继承短超时、try/catch、diagnostics-only 和失败隔离原则。
 - Daily vs Worker Input Audit 只是 Summary 审计；Daily 仍消费 `origin/realtime-data:realtime/market.json`，不得在未另开版本评审时切到 Worker 作为 Daily 输入。
 - Worker-first Health Check 是只读监控；不得把健康检查脚本改成写 KV、写数据产物或触发 deploy。
@@ -50,7 +50,7 @@
 11. 不要只交 diff 或让用户手动合并冲突；必须直接修改真实仓库文件。
 12. 不要在未被要求时改变数据结构。
 13. 不要把 `secondarySources` / `secondaryDiagnostics` / `secondarySourceSummary` 混入 `/market.worker-preview.json`。
-14. 不要让 VIX / Gold / DXY secondary 覆盖或参与任何 `values.*` 主值。
+14. 不要让 VIX / Gold / DXY / US10Y secondary 覆盖或参与任何 `values.*` 主值。
 15. 不要让 Google Finance / Stooq sourceProbe 进入 Brent consensus / promotion。
 16. 不要新增外部源却不加短超时、try/catch 和 diagnostics-only 失败隔离。
 17. 不要把 Daily workflow 的主输入从 `realtime-data` 改成 Worker endpoint；Daily vs Worker drift 只能作为 audit-only 信息。

@@ -217,7 +217,9 @@ const workerContract = {
     'yahoo:GC=F',
     'GC%3DF',
     'yahoo:DX-Y.NYB',
-    'DX-Y.NYB'
+    'DX-Y.NYB',
+    'yahoo:^TNX',
+    '%5ETNX'
   ],
   routerRequired: [
     'market:secondary-preview',
@@ -225,14 +227,21 @@ const workerContract = {
     'CBOE_VIX_HISTORY_URL',
     'YAHOO_GOLD_SECONDARY_URL',
     'YAHOO_DXY_SECONDARY_URL',
+    'YAHOO_US10Y_SECONDARY_URL',
     'https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=5d',
     'https://query1.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?interval=1d&range=5d',
+    'https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?interval=1d&range=5d',
     'parseYahooGoldChart',
     'parseYahooDxyChart',
+    'parseYahooUs10yChart',
     'fetchYahooGoldSecondaryLatest',
     'fetchYahooDxySecondaryLatest',
+    'fetchYahooUs10ySecondaryLatest',
     'yahoo:GC=F',
     'yahoo:DX-Y.NYB',
+    'yahoo:^TNX',
+    'rawValue',
+    'normalization: \'divide-by-10\'',
     'tryWriteSecondaryPreview',
     'key === MARKET_WORKER_GENERATED_PREVIEW_KEY',
     'readPreviousWorkerPreviewSummary',
@@ -379,7 +388,10 @@ if (fs.existsSync(workerHealthScriptFile)) {
     'cboe:VIX_History',
     'yahoo:GC=F',
     'yahoo:DX-Y.NYB',
-    'VIX, Gold, and DXY secondary sources are all missing',
+    'yahoo:^TNX',
+    'normalization: \'divide-by-10\'',
+    'rawValue',
+    'VIX, Gold, DXY, and US10Y secondary sources are all missing',
     'participatesInPrimary !== false',
     'participatesInValidation !== false',
   ]) {
@@ -556,6 +568,15 @@ if (fs.existsSync(workerContract.routerFile)) {
     !/participatesInValidation:\s*false/u.test(text)
   ) {
     addRuntimeFailure(workerContract.routerFile, 'DXY secondary must remain diagnostic-only and out of primary/validation');
+  }
+  if (
+    !/source:\s*['"]yahoo:\^TNX['"]/u.test(text) ||
+    !/participatesInPrimary:\s*false/u.test(text) ||
+    !/participatesInValidation:\s*false/u.test(text) ||
+    !/rawValue/u.test(text) ||
+    !/normalization:\s*['"]divide-by-10['"]/u.test(text)
+  ) {
+    addRuntimeFailure(workerContract.routerFile, 'US10Y secondary must remain diagnostic-only with divide-by-10 normalization');
   }
   if (!/MARKET_SECONDARY_PREVIEW_KEY\s*=\s*['"]market:secondary-preview['"]/u.test(text)) {
     addRuntimeFailure(workerContract.routerFile, 'secondary preview must continue using market:secondary-preview KV key');

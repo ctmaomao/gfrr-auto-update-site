@@ -138,12 +138,13 @@ market:secondary-preview
 - DXY 与 HY OAS 的备用来源属于 proxy / experimental diagnostic，不得直接视为 canonical 等价源。
 - 独立 secondary preview 不存在时，`/market.secondary-preview.json` 返回小型 unavailable payload；这不代表主 `/market.worker-preview.json` 异常。
 
-v28.0D-3 的独立 secondary preview 只接入 VIX via Cboe；v28.0E-1 在同一独立 endpoint 中新增 Gold via Yahoo `GC=F` 后台诊断；v28.0E-2 继续在同一独立 endpoint 中新增 DXY via Yahoo `DX-Y.NYB` 后台诊断：
+v28.0D-3 的独立 secondary preview 只接入 VIX via Cboe；v28.0E-1 在同一独立 endpoint 中新增 Gold via Yahoo `GC=F` 后台诊断；v28.0E-2 继续在同一独立 endpoint 中新增 DXY via Yahoo `DX-Y.NYB` 后台诊断；v28.0E-3 新增 US10Y via Yahoo `^TNX` 后台诊断：
 
 ```text
 diagnostics.sources.vix
 diagnostics.sources.gold
 diagnostics.sources.dxy
+diagnostics.sources.us10y
 ```
 
 这些字段只用于观察第二诊断源可达性与最新可解析值。当前 secondary diagnostics 包含：
@@ -151,10 +152,13 @@ diagnostics.sources.dxy
 - VIX via Cboe：`diagnostics.sources.vix`
 - Gold via Yahoo `GC=F`：`diagnostics.sources.gold`
 - DXY via Yahoo `DX-Y.NYB`：`diagnostics.sources.dxy`
+- US10Y via Yahoo `^TNX`：`diagnostics.sources.us10y`
 
-Gold secondary 与 DXY secondary 只写入 `/market.secondary-preview.json` 的独立 KV payload，不得覆盖或参与主 `/market.worker-preview.json` 的 `values.gold` / `values.dxy`，不得进入 `data.__effectiveDisplayInputs`，不得参与 scoring / decision，也不得影响 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable`。VIX、Gold 与 DXY secondary 均必须声明 `participatesInPrimary: false` 与 `participatesInValidation: false`。
+Gold、DXY 与 US10Y secondary 只写入 `/market.secondary-preview.json` 的独立 KV payload，不得覆盖或参与主 `/market.worker-preview.json` 的 `values.gold` / `values.dxy` / `values.us10y`，不得进入 `data.__effectiveDisplayInputs`，不得参与 scoring / decision，也不得影响 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable`。VIX、Gold、DXY 与 US10Y secondary 均必须声明 `participatesInPrimary: false` 与 `participatesInValidation: false`。
 
-Gold / DXY secondary 失败只应记录在各自 `diagnostics.sources.*` 字段，DXY 失败不得阻止 VIX / Gold secondary 写入，也不得阻止主 Worker preview 写入。只有 VIX、Gold 与 DXY 全部失败时，secondary preview 才可标记 `sourceMode: "secondary-preview-unavailable"` / `unavailable: true`。如果后续 Gold via Yahoo `GC=F` 或 DXY via Yahoo `DX-Y.NYB` 连续稳定，必须另开版本讨论是否作为主值验证层；v28.0E-1 / v28.0E-2 不做升级。
+US10Y via Yahoo `^TNX` 必须保留 `rawValue`，并以 `normalization: "divide-by-10"` 说明 Yahoo raw value 需要除以 10 才是与主 `values.us10y` 同量纲的收益率百分比；diagnostic `value` 应使用归一化后的数值，不得把 `rawValue` 直接当作主 US10Y。
+
+Gold / DXY / US10Y secondary 失败只应记录在各自 `diagnostics.sources.*` 字段，US10Y 失败不得阻止 VIX / Gold / DXY secondary 写入，也不得阻止主 Worker preview 写入。只有 VIX、Gold、DXY 与 US10Y 全部失败时，secondary preview 才可标记 `sourceMode: "secondary-preview-unavailable"` / `unavailable: true`。如果后续 Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB` 或 US10Y via Yahoo `^TNX` 连续稳定，必须另开版本讨论是否作为主值验证层；v28.0E-1 / v28.0E-2 / v28.0E-3 不做升级。
 
 前端当前不消费 `/market.secondary-preview.json`；该 payload 不得进入 Worker-first strict gate、`__effectiveDisplayInputs`、scoring 或 decision。
 
@@ -164,7 +168,7 @@ v28.0E-0 起，Worker 主 preview 对外部 HTTP source 使用统一短超时保
 
 timeout 结果应作为普通 source diagnostics 返回，例如进入 `sourceDetails`、`workerGeneratedPreview.diagnostics.sourceHttpSummary`、`brentValidation.diagnostics` 或 `brentValidation.sourceProbe.probes[*]` 的 `error` / `reason` 字段。`fetchTextWithDiagnostics` 不应因 timeout 直接 throw 到主 preview 生成流程；critical source timeout 仍应按原有 finite value / `criticalMissing` / `healthScore` / `unavailable` 规则自然反映，不得通过 timeout guard 放松健康门槛。
 
-secondary diagnostics（VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB`）仍只属于 `/market.secondary-preview.json`，使用独立短超时和失败隔离。secondary timeout 不得影响 `/market.worker-preview.json`，也不得影响 `values.gold` / `values.dxy`、Brent promotion、scoring 或 decision。未来新增 US10Y / SPX 等 secondary source 时，必须继承短超时、try/catch 捕获和独立 KV 隔离原则。
+secondary diagnostics（VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB`、US10Y via Yahoo `^TNX`）仍只属于 `/market.secondary-preview.json`，使用独立短超时和失败隔离。secondary timeout 不得影响 `/market.worker-preview.json`，也不得影响 `values.gold` / `values.dxy` / `values.us10y`、Brent promotion、scoring 或 decision。未来新增 SPX 等 secondary source 时，必须继承短超时、try/catch 捕获和独立 KV 隔离原则。
 
 ### Worker-first health check
 
@@ -174,9 +178,9 @@ v28.0F-2 起，仓库提供只读脚本：
 node scripts/check-worker-health.mjs
 ```
 
-该脚本只读取 `/market.worker-preview.json` 与 `/market.secondary-preview.json`，用于检查 Worker-first 主 payload 健康、secondary diagnostics 隔离、Brent promotion / sourceProbe 可读性，以及 VIX / Gold / DXY secondary 的 diagnostic-only flags。它不写 KV，不写 `data/*.json` / `realtime/*.json`，不改变 payload contract，也不参与页面 runtime 选择。
+该脚本只读取 `/market.worker-preview.json` 与 `/market.secondary-preview.json`，用于检查 Worker-first 主 payload 健康、secondary diagnostics 隔离、Brent promotion / sourceProbe 可读性，以及 VIX / Gold / DXY / US10Y secondary 的 diagnostic-only flags。它不写 KV，不写 `data/*.json` / `realtime/*.json`，不改变 payload contract，也不参与页面 runtime 选择。
 
-`Check Worker Health` workflow 使用 `--fail-on-unhealthy`：主 preview 不健康或 secondary endpoint 不可读会失败；VIX / Gold / DXY 单个 diagnostic source failed / unavailable 只作为 warning。该检查不改变 `values.*`、scoring、decision、Daily 输入或前端 fallback 逻辑。
+`Check Worker Health` workflow 使用 `--fail-on-unhealthy`：主 preview 不健康或 secondary endpoint 不可读会失败；VIX / Gold / DXY / US10Y 单个 diagnostic source failed / unavailable 只作为 warning。该检查不改变 `values.*`、scoring、decision、Daily 输入或前端 fallback 逻辑。
 
 ## displayInputsBaseline 契约
 

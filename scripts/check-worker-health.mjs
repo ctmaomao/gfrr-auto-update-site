@@ -174,8 +174,14 @@ function checkSecondarySource(name, source, expected, reasons, warnings) {
   if (source.provider !== expected.provider) addReason(reasons, `${name} provider is ${source.provider ?? 'missing'}`);
   if (source.participatesInPrimary !== false) addReason(reasons, `${name} participatesInPrimary must be false`);
   if (source.participatesInValidation !== false) addReason(reasons, `${name} participatesInValidation must be false`);
+  if (expected.normalization && source.normalization !== expected.normalization) {
+    addReason(reasons, `${name} normalization must be ${expected.normalization}`);
+  }
   if (!SECONDARY_STATUSES.has(source.status)) addReason(reasons, `${name} status invalid: ${source.status ?? 'missing'}`);
   if (source.status === 'ok' && positiveNumber(source.value) == null) addReason(reasons, `${name} status ok but value is not positive finite`);
+  if (source.status === 'ok' && expected.requireRawValue && positiveNumber(source.rawValue) == null) {
+    addReason(reasons, `${name} status ok but rawValue is not positive finite`);
+  }
   if (source.status === 'failed' || source.status === 'unavailable') {
     addReason(warnings, `${name} secondary status is ${source.status}`);
   }
@@ -183,6 +189,8 @@ function checkSecondarySource(name, source, expected, reasons, warnings) {
   return {
     status: source.status ?? null,
     value: finiteNumber(source.value),
+    rawValue: finiteNumber(source.rawValue),
+    normalization: source.normalization ?? null,
     observedAt: source.observedAt ?? null,
     participatesInPrimary: source.participatesInPrimary,
     participatesInValidation: source.participatesInValidation,
@@ -230,8 +238,20 @@ function checkSecondaryPreview(result) {
     reasons,
     warnings,
   );
-  if (!sources.vix && !sources.gold && !sources.dxy) {
-    addReason(reasons, 'VIX, Gold, and DXY secondary sources are all missing');
+  const us10y = checkSecondarySource(
+    'us10y',
+    sources.us10y,
+    {
+      provider: 'yahoo',
+      source: 'yahoo:^TNX',
+      normalization: 'divide-by-10',
+      requireRawValue: true,
+    },
+    reasons,
+    warnings,
+  );
+  if (!sources.vix && !sources.gold && !sources.dxy && !sources.us10y) {
+    addReason(reasons, 'VIX, Gold, DXY, and US10Y secondary sources are all missing');
   }
 
   return {
@@ -243,6 +263,7 @@ function checkSecondaryPreview(result) {
     vix,
     gold,
     dxy,
+    us10y,
     healthy: reasons.length === 0,
     warnings,
     reasons,
@@ -291,6 +312,7 @@ function printSummary(summary) {
   console.log(`  vix: ${summary.secondary.vix?.status ?? 'missing'} ${summary.secondary.vix?.value ?? '--'} ${summary.secondary.vix?.observedAt ?? '--'}`);
   console.log(`  gold: ${summary.secondary.gold?.status ?? 'missing'} ${summary.secondary.gold?.value ?? '--'} ${summary.secondary.gold?.observedAt ?? '--'}`);
   console.log(`  dxy: ${summary.secondary.dxy?.status ?? 'missing'} ${summary.secondary.dxy?.value ?? '--'} ${summary.secondary.dxy?.observedAt ?? '--'}`);
+  console.log(`  us10y: ${summary.secondary.us10y?.status ?? 'missing'} ${summary.secondary.us10y?.value ?? '--'} raw=${summary.secondary.us10y?.rawValue ?? '--'} ${summary.secondary.us10y?.observedAt ?? '--'}`);
   console.log('');
   console.log(`Conclusion: ${summary.overall}`);
   if (summary.reasons.length > 0) {
@@ -344,6 +366,7 @@ function appendGithubSummary(summary) {
     `| VIX | ${tableValue(`${summary.secondary.vix?.status ?? 'missing'} / ${summary.secondary.vix?.value ?? '--'} / ${summary.secondary.vix?.observedAt ?? '--'}`)} |`,
     `| Gold | ${tableValue(`${summary.secondary.gold?.status ?? 'missing'} / ${summary.secondary.gold?.value ?? '--'} / ${summary.secondary.gold?.observedAt ?? '--'}`)} |`,
     `| DXY | ${tableValue(`${summary.secondary.dxy?.status ?? 'missing'} / ${summary.secondary.dxy?.value ?? '--'} / ${summary.secondary.dxy?.observedAt ?? '--'}`)} |`,
+    `| US10Y | ${tableValue(`${summary.secondary.us10y?.status ?? 'missing'} / ${summary.secondary.us10y?.value ?? '--'} / raw ${summary.secondary.us10y?.rawValue ?? '--'} / ${summary.secondary.us10y?.observedAt ?? '--'}`)} |`,
     '',
     '### Reasons',
     '',
