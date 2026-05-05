@@ -17,7 +17,7 @@
 
 ## 当前版本状态
 
-当前处于 `v28.0D-7` 工程进度；页面公开标签仍为 `v28.0C`。
+当前处于 `v28.0E-0` 工程进度；页面公开标签仍为 `v28.0C`。
 
 已经具备：
 
@@ -27,8 +27,10 @@
 - daily baseline 构建与 `displayInputsBaseline` fallback。
 - 六大风险模块、热力图、传导网络、资产偏好矩阵和情景树。
 - 决策系统、执行灯、仓位建议、Action Queue、Trigger Monitor 和 Invalidation Rules。
-- secondary diagnostics 独立 endpoint `/market.secondary-preview.json`，当前接入 VIX secondary 独立诊断。
-- Brent audit、freshness-gated promotion、extreme-move confirmation guard 与 Brent source explainability UI。
+- secondary diagnostics 独立 endpoint `/market.secondary-preview.json`，当前接入 VIX via Cboe 与 Gold via Yahoo `GC=F` 诊断。
+- Brent audit、freshness-gated promotion、extreme-move confirmation guard、D-8B-lite sourceProbe 与 Brent source explainability UI。
+- D-8B findings 已确认 Google Finance / Stooq 当前不可升级为 Brent validation source，仍只保留 diagnostic sourceProbe。
+- Worker fetch timeout guard 已上线，外部免费源慢响应只进入 diagnostics，不改变主值选择。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。
@@ -125,8 +127,8 @@ secondary diagnostics 已从主 Worker preview 隔离：
 
 - 主 `/market.worker-preview.json` 不得包含 `secondarySources` / `secondaryDiagnostics` / `secondarySourceSummary`。
 - `/market.secondary-preview.json` 是独立诊断 endpoint，读取独立 KV key。
-- 当前只接入 VIX secondary producer。
-- 前端主页面暂不消费 VIX secondary；它只用于后台诊断，不影响 `effectiveDisplayInputs`、scoring、decision 或 Worker-first strict gate。
+- 当前接入 VIX via Cboe 与 Gold via Yahoo `GC=F` secondary diagnostics。
+- 前端主页面暂不消费 secondary diagnostics；它们只用于后台诊断，不影响 `effectiveDisplayInputs`、`values.*`、scoring、decision 或 Worker-first strict gate。
 
 ## 开发检查与提交前验收
 
@@ -217,7 +219,7 @@ Realtime / Daily workflow 会在 GitHub Actions Summary 输出关键审计信息
 ## 文档入口
 
 - [AI 开发守则](AGENTS.md)
-- [v27 稳定化基线](docs/V27_BASELINE.md)：历史稳定基线与维护边界，不代表当前 v28.0D-7 工程进度。
+- [v27 稳定化基线](docs/V27_BASELINE.md)：历史稳定基线与维护边界，不代表当前 v28.0E-0 工程进度。
 - 数据契约：`docs/DATA_CONTRACT.md`
 - 运行排查手册：`docs/OPERATIONS.md`
 - 核心入口：`index.html`

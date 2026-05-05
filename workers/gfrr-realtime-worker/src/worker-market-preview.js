@@ -44,7 +44,7 @@ const FETCH_HEADERS = {
   Accept: 'text/csv,application/json,text/plain,*/*',
   'Accept-Language': 'en-US,en;q=0.9',
   'User-Agent':
-    'Mozilla/5.0 (compatible; GFRRWorkerPreview/28.0B-2A; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
+    'Mozilla/5.0 (compatible; GFRRWorkerPreview/28.0E-0; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
 };
 
 function isFiniteNumber(value) {

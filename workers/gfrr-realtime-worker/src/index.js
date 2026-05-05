@@ -1,5 +1,5 @@
 /**
- * v28.0B-2A: preview pipeline with alternating single-KV-write scheduled runs.
+ * v28.0E-0: Worker-first preview pipeline with isolated secondary diagnostics.
  * /market.preview.json reads the GitHub mirror preview.
  * /market.worker-preview.json reads the Worker-generated preview MVP.
  * /market.secondary-preview.json reads isolated secondary diagnostics only.
@@ -286,7 +286,7 @@ async function fetchCboeVixLatest() {
       headers: {
         Accept: 'text/csv,text/plain,*/*',
         'User-Agent':
-          'Mozilla/5.0 (compatible; GFRRWorkerSecondaryPreview/28.0D-3; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
+          'Mozilla/5.0 (compatible; GFRRWorkerSecondaryPreview/28.0E-0; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
       },
       signal: controller.signal,
     });
@@ -309,7 +309,7 @@ async function fetchYahooGoldSecondaryLatest() {
       headers: {
         Accept: 'application/json,text/plain,*/*',
         'User-Agent':
-          'Mozilla/5.0 (compatible; GFRRWorkerSecondaryPreview/28.0E-1; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
+          'Mozilla/5.0 (compatible; GFRRWorkerSecondaryPreview/28.0E-0; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
       },
       signal: controller.signal,
     });
