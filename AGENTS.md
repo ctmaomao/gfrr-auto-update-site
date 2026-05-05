@@ -17,6 +17,7 @@
 - VIX / Gold secondary 当前只用于诊断，不影响 `values.*`、scoring、decision、healthScore、criticalMissing 或 unavailable。
 - Worker fetch timeout guard 已上线；后续新增外部源必须继承短超时、try/catch、diagnostics-only 和失败隔离原则。
 - Daily vs Worker Input Audit 只是 Summary 审计；Daily 仍消费 `origin/realtime-data:realtime/market.json`，不得在未另开版本评审时切到 Worker 作为 Daily 输入。
+- Worker-first Health Check 是只读监控；不得把健康检查脚本改成写 KV、写数据产物或触发 deploy。
 
 每次任务应尽量做到：
 
@@ -53,6 +54,7 @@
 15. 不要让 Google Finance / Stooq sourceProbe 进入 Brent consensus / promotion。
 16. 不要新增外部源却不加短超时、try/catch 和 diagnostics-only 失败隔离。
 17. 不要把 Daily workflow 的主输入从 `realtime-data` 改成 Worker endpoint；Daily vs Worker drift 只能作为 audit-only 信息。
+18. 不要让 Worker health check 修改 Worker runtime、payload contract、KV、data/realtime 产物或前端 fallback 逻辑。
 
 ## 4. 默认开发流程
 

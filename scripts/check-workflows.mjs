@@ -112,6 +112,34 @@ const contracts = [
       'realtime/market.json',
       'realtime-data'
     ]
+  },
+  {
+    file: '.github/workflows/check-worker-health.yml',
+    required: [
+      'name: Check Worker Health',
+      'workflow_dispatch',
+      "cron: '16,46 * * * *'",
+      'permissions:',
+      'contents: read',
+      'concurrency',
+      'group: worker-health',
+      'cancel-in-progress: true',
+      'actions/checkout@v6',
+      'actions/setup-node@v6',
+      'node-version: 24',
+      'package-manager-cache: false',
+      'node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy'
+    ],
+    forbidden: [
+      'contents: write',
+      'git push',
+      'git commit',
+      'wrangler deploy',
+      'npm run build:realtime',
+      'npm run build:data',
+      'data/radar-data.json',
+      'realtime/market.json'
+    ]
   }
 ];
 
@@ -172,6 +200,7 @@ const forbiddenRuntimePatterns = [
 
 const dailyWorkflowFile = '.github/workflows/build-daily-radar-data.yml';
 const auditScriptFile = 'scripts/audit-daily-vs-worker.mjs';
+const workerHealthScriptFile = 'scripts/check-worker-health.mjs';
 const packageFile = 'package.json';
 
 const workerContract = {
@@ -327,10 +356,49 @@ if (!fs.existsSync(auditScriptFile)) {
   addRuntimeFailure(auditScriptFile, 'Daily vs Worker audit script missing');
 }
 
+if (fs.existsSync(workerHealthScriptFile)) {
+  const text = fs.readFileSync(workerHealthScriptFile, 'utf8');
+  for (const needle of [
+    'market.worker-preview.json',
+    'market.secondary-preview.json',
+    'FETCH_TIMEOUT_MS = 4500',
+    '--github-summary',
+    '--fail-on-unhealthy',
+    'secondarySources',
+    'secondaryDiagnostics',
+    'secondarySourceSummary',
+    'sourceProbe.frequencyMinutes !== 60',
+    'sourceProbe.probeCount',
+    'cboe:VIX_History',
+    'yahoo:GC=F',
+    'participatesInPrimary !== false',
+    'participatesInValidation !== false',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(workerHealthScriptFile, `missing Worker health contract "${needle}"`);
+    }
+  }
+  for (const forbiddenNeedle of [
+    'fs.writeFileSync',
+    'GFRR_MARKET_KV',
+    'data/radar-data.json',
+    'realtime/market.json',
+  ]) {
+    if (text.includes(forbiddenNeedle)) {
+      addRuntimeFailure(workerHealthScriptFile, `Worker health check must remain read-only; found "${forbiddenNeedle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(workerHealthScriptFile, 'Worker health check script missing');
+}
+
 if (fs.existsSync(packageFile)) {
   const packageText = fs.readFileSync(packageFile, 'utf8');
   if (!packageText.includes('"audit:daily-worker": "node scripts/audit-daily-vs-worker.mjs"')) {
     addRuntimeFailure(packageFile, 'missing audit:daily-worker package script');
+  }
+  if (!packageText.includes('"check:worker-health": "node scripts/check-worker-health.mjs"')) {
+    addRuntimeFailure(packageFile, 'missing check:worker-health package script');
   }
 } else {
   addRuntimeFailure(packageFile, 'package.json missing');

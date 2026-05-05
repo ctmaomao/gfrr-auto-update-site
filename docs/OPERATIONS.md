@@ -113,6 +113,29 @@ node scripts/check-realtime-health.mjs --fail-on-stale
 
 `Build Realtime Market` remains the primary realtime generation workflow. `Recover Stale Realtime Market` is a recovery workflow that first runs `check-realtime-health`; when realtime is fresh or aging, it skips generation, and when realtime is stale or unavailable, it runs `build:realtime` and pushes only `realtime/market.json` to the `realtime-data` branch. It does not change Brent primary value logic, scoring, decision output, or write to `main`.
 
+## 4A. Worker-first Health Check 排查
+
+`Check Worker Health` 是 v28.0F-2 新增的只读 Worker-first health workflow。它定时运行：
+
+```bash
+node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy
+```
+
+该检查只读取 Cloudflare Worker endpoint，不写 KV，不写 `data/*.json` / `realtime/*.json`，也不改变前端、Daily 或 Worker runtime。
+
+重点看 GitHub Actions Summary：
+
+- 主 `/market.worker-preview.json`：HTTP status、`updatedAt` / age、`sourceMode`、`healthScore`、`criticalMissing`、`unavailable`、核心 `values.*`、Brent promotion `moveStatus`、sourceProbe 频率 / 数量。
+- 主 preview 隔离：不得出现 `secondarySources` / `secondaryDiagnostics` / `secondarySourceSummary`，也不得出现在 `workerGeneratedPreview.diagnostics` 内。
+- 独立 `/market.secondary-preview.json`：VIX via Cboe 与 Gold via Yahoo `GC=F` 是否存在，`participatesInPrimary` / `participatesInValidation` 是否均为 `false`。
+
+判断口径：
+
+- 主 Worker preview 不健康会 fail。
+- secondary endpoint HTTP / JSON 不可读会 fail。
+- VIX 或 Gold 单个 failed / unavailable 只作为 warning；两者都缺失、或任何 secondary source 参与 primary / validation，视为 fail。
+- 该 workflow 只用于监控 Worker-first 运行健康，不触发 deploy，不修改数据源。
+
 ## 5. Daily workflow 排查
 
 检查 GitHub Actions 中的：

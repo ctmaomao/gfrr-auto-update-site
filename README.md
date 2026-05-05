@@ -32,6 +32,7 @@
 - D-8B findings 已确认 Google Finance / Stooq 当前不可升级为 Brent validation source，仍只保留 diagnostic sourceProbe。
 - Worker fetch timeout guard 已上线，外部免费源慢响应只进入 diagnostics，不改变主值选择。
 - Daily vs Worker Input Audit 已上线，用于观察 Daily 消费的 `realtime-data` payload 与当前 Worker preview 的差异；该审计不改变 Daily 输入或前端 Worker-first 选择逻辑。
+- Worker-first Health Check 已上线，定时只读检查主 `/market.worker-preview.json` 与独立 `/market.secondary-preview.json` 的健康、隔离和诊断字段。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。

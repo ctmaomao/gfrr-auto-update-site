@@ -164,6 +164,18 @@ timeout 结果应作为普通 source diagnostics 返回，例如进入 `sourceDe
 
 secondary diagnostics（VIX via Cboe、Gold via Yahoo `GC=F`）仍只属于 `/market.secondary-preview.json`，使用独立短超时和失败隔离。secondary timeout 不得影响 `/market.worker-preview.json`，也不得影响 `values.gold`、Brent promotion、scoring 或 decision。未来新增 DXY / US10Y / SPX 等 secondary source 时，必须继承短超时、try/catch 捕获和独立 KV 隔离原则。
 
+### Worker-first health check
+
+v28.0F-2 起，仓库提供只读脚本：
+
+```bash
+node scripts/check-worker-health.mjs
+```
+
+该脚本只读取 `/market.worker-preview.json` 与 `/market.secondary-preview.json`，用于检查 Worker-first 主 payload 健康、secondary diagnostics 隔离、Brent promotion / sourceProbe 可读性，以及 VIX / Gold secondary 的 diagnostic-only flags。它不写 KV，不写 `data/*.json` / `realtime/*.json`，不改变 payload contract，也不参与页面 runtime 选择。
+
+`Check Worker Health` workflow 使用 `--fail-on-unhealthy`：主 preview 不健康或 secondary endpoint 不可读会失败；VIX / Gold 单个 diagnostic source failed / unavailable 只作为 warning。该检查不改变 `values.*`、scoring、decision、Daily 输入或前端 fallback 逻辑。
+
 ## displayInputsBaseline 契约
 
 `data/radar-data.json` 根层必须包含：

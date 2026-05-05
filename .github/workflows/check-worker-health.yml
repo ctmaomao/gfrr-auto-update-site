@@ -1,0 +1,29 @@
+name: Check Worker Health
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '16,46 * * * *'
+
+concurrency:
+  group: worker-health
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Check Worker health
+        run: node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy
