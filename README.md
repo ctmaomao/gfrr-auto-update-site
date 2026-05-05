@@ -33,6 +33,7 @@
 - Worker fetch timeout guard 已上线，外部免费源慢响应只进入 diagnostics，不改变主值选择。
 - Daily vs Worker Input Audit 已上线，用于观察 Daily 消费的 `realtime-data` payload 与当前 Worker preview 的差异；该审计不改变 Daily 输入或前端 Worker-first 选择逻辑。
 - Worker-first Health Check 已上线，定时只读检查主 `/market.worker-preview.json` 与独立 `/market.secondary-preview.json` 的健康、隔离和诊断字段。
+- Check Realtime Health 已对齐为 soft-fail：只观察 GitHub `realtime-data` fallback / Daily baseline freshness，stale / unavailable 只报告 warning 与 `shouldRecover`，Worker-first runtime hard gate 由 Check Worker Health 承担。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。
@@ -73,6 +74,7 @@ Cloudflare Worker generated preview
 - 前端 realtime 优先级为 `Worker generated preview → GitHub realtime-data → local fallback`。
 - Worker generated preview 必须通过 strict gate：HTTP 200、`workerGeneratedPreview.enabled === true`、freshness、`healthScore`、`criticalMissing` 与关键字段有限值检查。
 - `realtime-data` 是 Worker 不可用或被策略关闭时的远端 fallback。
+- Check Realtime Health 只观察 `realtime-data` fallback / Daily baseline freshness；即使 stale，也不代表 Worker-first runtime unhealthy。
 - `dailyRealtimeInput` 记录 Daily 构建实际消费的 realtime 版本。
 - `displayInputsBaseline` 是 baseline fallback 的结构化当前值来源。
 - 前端当前值最终使用 `effectiveDisplayInputs`，按“可用 realtime values → displayInputsBaseline → null”的顺序选择。

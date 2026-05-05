@@ -2,6 +2,8 @@ import fs from 'node:fs';
 
 const DEFAULT_REALTIME_HEALTH_URL =
   'https://raw.githubusercontent.com/ctmaomao/gfrr-auto-update-site/realtime-data/realtime/market.json';
+const SOFT_FAIL_NOTE =
+  'Realtime-data health is fallback/Daily baseline observation; Worker-first runtime hard fail is handled by Check Worker Health.';
 
 const FRESHNESS_ACTIONS = {
   fresh: 'No action needed.',
@@ -61,6 +63,9 @@ function unavailableReport(url, fetchedAt, reason) {
 }
 
 function printReport(report) {
+  console.log(`[realtime-health] note: ${SOFT_FAIL_NOTE}`);
+  console.log('[realtime-health] mode: soft-fail unless --fail-on-stale is explicitly passed');
+
   const orderedKeys = [
     'source',
     'url',
@@ -104,6 +109,40 @@ function writeGithubOutput(report, mode) {
     fs.appendFileSync(process.env.GITHUB_OUTPUT, `${lines}\n`);
   } catch (error) {
     console.warn(`[realtime-health] failed to write GitHub output: ${error.message}`);
+  }
+}
+
+function markdownValue(value) {
+  if (value == null || value === '') return '--';
+  return String(value).replace(/\r?\n/gu, ' ').replace(/\|/gu, '\\|');
+}
+
+function writeGithubSummary(report, mode) {
+  if (!process.env.GITHUB_STEP_SUMMARY) return;
+
+  const lines = [
+    '## Realtime-data Health',
+    '',
+    `Mode: **${mode.failOnStale ? 'strict --fail-on-stale' : 'soft-fail mode'}**`,
+    '',
+    SOFT_FAIL_NOTE,
+    '',
+    '| Item | Value |',
+    '|---|---|',
+    `| updatedAt | ${markdownValue(report.updatedAt)} |`,
+    `| ageMinutes | ${markdownValue(report.ageMinutes)} |`,
+    `| freshness | ${markdownValue(report.freshness)} |`,
+    `| result | ${markdownValue(report.result)} |`,
+    `| shouldRecover | ${shouldRecover(report) ? 'true' : 'false'} |`,
+    `| suggestedAction | ${markdownValue(report.suggestedAction)} |`,
+    `| reason | ${markdownValue(report.reason)} |`,
+    '',
+  ];
+
+  try {
+    fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\n'));
+  } catch (error) {
+    console.warn(`[realtime-health] failed to write GitHub summary: ${error.message}`);
   }
 }
 
@@ -161,6 +200,7 @@ async function main() {
   const report = await checkRealtimeHealth();
   printReport(report);
   writeGithubOutput(report, mode);
+  writeGithubSummary(report, mode);
 
   if (mode.failOnStale && ['stale', 'unavailable'].includes(report.freshness)) {
     process.exitCode = 1;
@@ -174,6 +214,7 @@ main().catch((error) => {
   const report = unavailableReport(sourceUrl, fetchedAt, error.message);
   printReport(report);
   writeGithubOutput(report, mode);
+  writeGithubSummary(report, mode);
 
   if (!mode.soft) {
     process.exitCode = 1;

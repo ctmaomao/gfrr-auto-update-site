@@ -98,9 +98,10 @@ const contracts = [
       'actions/setup-node@v6',
       'node-version: 24',
       'package-manager-cache: false',
-      'node scripts/check-realtime-health.mjs --fail-on-stale'
+      'node scripts/check-realtime-health.mjs --github-output'
     ],
     forbidden: [
+      '--fail-on-stale',
       'contents: write',
       'git push',
       'git commit',
@@ -450,6 +451,26 @@ if (fs.existsSync(workerHealthScriptFile)) {
   }
 } else {
   addRuntimeFailure(workerHealthScriptFile, 'Worker health check script missing');
+}
+
+const realtimeHealthScriptFile = 'scripts/check-realtime-health.mjs';
+if (fs.existsSync(realtimeHealthScriptFile)) {
+  const text = fs.readFileSync(realtimeHealthScriptFile, 'utf8');
+  for (const needle of [
+    'fallback/Daily baseline observation',
+    'Worker-first runtime hard fail',
+    'Check Worker Health',
+    'GITHUB_STEP_SUMMARY',
+    'soft-fail mode',
+    'shouldRecover',
+    '--fail-on-stale',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(realtimeHealthScriptFile, `missing soft-fail realtime health contract "${needle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(realtimeHealthScriptFile, 'Realtime health check script missing');
 }
 
 for (const file of secondaryConsolidationDocs) {

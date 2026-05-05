@@ -88,7 +88,7 @@ Build Realtime Market
 
 ## 4. Realtime Health Watchdog 排查
 
-Realtime Health Watchdog 是只读诊断工具，只检查 `realtime-data/realtime/market.json` 的 freshness，不生成数据、不修复数据、不参与评分。
+Realtime Health Watchdog 是只读诊断工具，只检查 `realtime-data/realtime/market.json` 的 freshness，不生成数据、不修复数据、不参与评分。v28.0G-2 起，它是 GitHub `realtime-data` fallback / Daily baseline 的 freshness observer，不再作为 Worker-first runtime hard fail gate；主运行链路 hard fail 由 `Check Worker Health` 承担。
 
 本地手动检查：
 
@@ -99,15 +99,17 @@ node scripts/check-realtime-health.mjs --soft
 GitHub Actions watchdog 使用：
 
 ```bash
-node scripts/check-realtime-health.mjs --fail-on-stale
+node scripts/check-realtime-health.mjs --github-output
 ```
 
-如果结果是 `stale` 或 `unavailable`，优先检查：
+如果结果是 `stale` 或 `unavailable`，workflow 会输出 warning / `shouldRecover` / `suggestedAction`，但不会 hard fail。优先检查：
 
 - `Build Realtime Market` workflow 最近运行结果。
 - `realtime-data` 分支的 `realtime/market.json` `updatedAt`。
 - GitHub Actions schedule 是否延迟或未触发。
 - workflow 权限是否异常。
+
+如果 `realtime-data` stale 但 `Check Worker Health` overall ok，页面主链路仍健康；若 `Check Worker Health` unhealthy，则优先排查 Worker runtime。
 
 ### Realtime stale recovery
 

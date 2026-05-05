@@ -26,4 +26,4 @@ jobs:
           package-manager-cache: false
 
       - name: Check realtime health
-        run: node scripts/check-realtime-health.mjs --fail-on-stale
+        run: node scripts/check-realtime-health.mjs --github-output
