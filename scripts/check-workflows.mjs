@@ -211,7 +211,7 @@ const secondaryConsolidationDocs = [
   'docs/OPERATIONS.md',
   'workers/gfrr-realtime-worker/README.md',
 ];
-const g4bDecisionDocs = [
+const g4cRuntimeDocs = [
   'README.md',
   'AGENTS.md',
   'docs/DATA_CONTRACT.md',
@@ -307,6 +307,9 @@ const workerContract = {
     'stooq-brn-f-diagnostic-only-not-used-for-promotion',
     'tradingeconomics:brent-crude-oil',
     'parseTradingEconomicsObservedAt',
+    'tradingeconomics-observedAt-invalid',
+    'tradingeconomics-confirmation-stale',
+    'tradingEconomicsAgeHours',
     'tradingeconomics-observedAt-unparsed',
     'tradingeconomics-observedAt-within-48h',
     'tradingeconomics-observedAt-stale',
@@ -512,21 +515,21 @@ for (const file of secondaryConsolidationDocs) {
   }
 }
 
-for (const file of g4bDecisionDocs) {
+for (const file of g4cRuntimeDocs) {
   if (!fs.existsSync(file)) {
-    addRuntimeFailure(file, 'G-4B decision document missing');
+    addRuntimeFailure(file, 'G-4C runtime document missing');
     continue;
   }
   const text = fs.readFileSync(file, 'utf8');
   for (const needle of [
-    'G-4B decision',
     'G-4C',
+    'Trading Economics freshness hard gate',
     'tradingeconomics-observedAt-invalid',
     'tradingeconomics-confirmation-stale',
-    'G-4B does not change runtime behavior',
+    'observedAt failure does not make candidate ok false',
   ]) {
     if (!text.includes(needle)) {
-      addRuntimeFailure(file, `missing G-4B decision marker "${needle}"`);
+      addRuntimeFailure(file, `missing G-4C runtime marker "${needle}"`);
     }
   }
 }
@@ -588,14 +591,6 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
   if (!/source\s*=\s*['"]stooq:brn\.f['"][\s\S]{0,160}role\s*=\s*['"]diagnostic['"][\s\S]{0,160}participatesInConsensus\s*=\s*false[\s\S]{0,160}quality\s*=\s*['"]csv-symbol-unstable['"]/u.test(text)) {
     addRuntimeFailure(workerContract.mainPreviewFile, 'stooq:brn.f must remain diagnostic-only csv-symbol-unstable');
   }
-  for (const forbiddenNeedle of [
-    'tradingeconomics-confirmation-stale',
-    'tradingeconomics-observedAt-invalid',
-  ]) {
-    if (text.includes(forbiddenNeedle)) {
-      addRuntimeFailure(workerContract.mainPreviewFile, `Trading Economics observedAt audit must not hard gate via "${forbiddenNeedle}"`);
-    }
-  }
   const tradingEconomicsCandidateStart = text.indexOf('async function fetchTradingEconomicsDiagnosticCandidate');
   const buildValidationAfterTradingEconomics = text.indexOf('async function buildBrentValidation', tradingEconomicsCandidateStart);
   if (
@@ -624,14 +619,45 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
     summarizeCandidateStart > promotionDecisionStart
   ) {
     const promotionDecisionBlock = text.slice(promotionDecisionStart, summarizeCandidateStart);
-    if (promotionDecisionBlock.includes('tradingEconomicsAgeHours')) {
-      addRuntimeFailure(
-        workerContract.mainPreviewFile,
-        'Trading Economics observedAt age must not become a promotion gate in G-4A',
-      );
+    for (const needle of [
+      'tradingEconomicsAgeHours',
+      'tradingeconomics-observedAt-invalid',
+      'tradingeconomics-confirmation-stale',
+      'tradingEconomicsAgeHours > BRENT_CONFIRMATION_FRESH_HOURS',
+    ]) {
+      if (!promotionDecisionBlock.includes(needle)) {
+        addRuntimeFailure(
+          workerContract.mainPreviewFile,
+          `G-4C Trading Economics promotion hard gate missing "${needle}"`,
+        );
+      }
     }
   } else {
     addRuntimeFailure(workerContract.mainPreviewFile, 'missing Brent promotion decision block');
+  }
+  const moveAssessmentStart = text.indexOf('function buildMoveAssessment');
+  const promotionDecisionAfterMove = text.indexOf('function buildBrentPromotionDecision', moveAssessmentStart);
+  if (
+    moveAssessmentStart !== -1 &&
+    promotionDecisionAfterMove !== -1 &&
+    promotionDecisionAfterMove > moveAssessmentStart
+  ) {
+    const moveAssessmentBlock = text.slice(moveAssessmentStart, promotionDecisionAfterMove);
+    for (const needle of [
+      'tradingEconomicsAgeHours',
+      'tradingEconomicsAgeHours <= BRENT_CONFIRMATION_FRESH_HOURS',
+      'confirmed-extreme-move',
+      'unconfirmed-jump-hold',
+    ]) {
+      if (!moveAssessmentBlock.includes(needle)) {
+        addRuntimeFailure(
+          workerContract.mainPreviewFile,
+          `G-4C extreme move confirmation missing "${needle}"`,
+        );
+      }
+    }
+  } else {
+    addRuntimeFailure(workerContract.mainPreviewFile, 'missing Brent move assessment block');
   }
   const sourceProbeStart = text.indexOf('async function buildBrentSourceProbe(');
   const buildValidationStart = text.indexOf('async function buildBrentValidation');

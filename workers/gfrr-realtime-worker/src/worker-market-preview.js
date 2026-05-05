@@ -527,8 +527,8 @@ function auditFreshnessFromObservedAt(observedAt, nowMs, freshHours) {
   return {
     observedAt,
     ageHours,
-    freshnessStatus: ageHours <= freshHours ? 'fresh' : 'stale',
-    freshnessReason: ageHours <= freshHours
+    freshnessStatus: age <= freshHours ? 'fresh' : 'stale',
+    freshnessReason: age <= freshHours
       ? 'tradingeconomics-observedAt-within-48h'
       : 'tradingeconomics-observedAt-stale',
   };
@@ -584,6 +584,7 @@ function buildMoveAssessment({
   yahoo,
   tradingEconomics,
   yahooAgeHours,
+  tradingEconomicsAgeHours,
   maxConfirmationDivergencePct,
 }) {
   if (!previousReference) {
@@ -638,6 +639,8 @@ function buildMoveAssessment({
     positiveFinite(tradingEconomics.value) &&
     isFiniteNumber(yahooAgeHours) &&
     yahooAgeHours <= BRENT_CONFIRMATION_FRESH_HOURS &&
+    isFiniteNumber(tradingEconomicsAgeHours) &&
+    tradingEconomicsAgeHours <= BRENT_CONFIRMATION_FRESH_HOURS &&
     isFiniteNumber(maxConfirmationDivergencePct) &&
     maxConfirmationDivergencePct <= BRENT_EXTREME_CONFIRMATION_DIVERGENCE_PCT;
 
@@ -668,6 +671,7 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
   const anchorValue = positiveFinite(anchorDetail?.value) ? anchorDetail.value : null;
   const anchorAgeHours = hoursSinceTimestamp(anchorDetail?.timestamp, nowMs);
   const yahooAgeHours = hoursSinceTimestamp(yahoo?.timestamp, nowMs);
+  const tradingEconomicsAgeHours = hoursSinceTimestamp(tradingEconomics?.timestamp, nowMs);
   const tradingEconomicsAudit = tradingEconomics?.observedAtAudit ??
     auditFreshnessFromObservedAt(tradingEconomics?.timestamp ?? null, nowMs, BRENT_CONFIRMATION_FRESH_HOURS);
   const maxConfirmationDivergencePct = divergencePct(yahoo?.value, tradingEconomics?.value);
@@ -744,6 +748,12 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
   if (tradingEconomics?.ok !== true || !positiveFinite(tradingEconomics.value)) {
     return { ...base, reason: 'tradingeconomics-confirmation-invalid' };
   }
+  if (!isFiniteNumber(tradingEconomicsAgeHours)) {
+    return { ...base, reason: 'tradingeconomics-observedAt-invalid' };
+  }
+  if (tradingEconomicsAgeHours > BRENT_CONFIRMATION_FRESH_HOURS) {
+    return { ...base, reason: 'tradingeconomics-confirmation-stale' };
+  }
   if (!isFiniteNumber(maxConfirmationDivergencePct)) return { ...base, reason: 'confirmation-divergence-unavailable' };
   if (maxConfirmationDivergencePct > BRENT_PROMOTION_MAX_DIVERGENCE_PCT) {
     return { ...base, reason: 'confirmation-divergence-above-2pct' };
@@ -756,6 +766,7 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
     yahoo,
     tradingEconomics,
     yahooAgeHours,
+    tradingEconomicsAgeHours,
     maxConfirmationDivergencePct,
   });
   if (!moveAssessment.allowPromotion) {
