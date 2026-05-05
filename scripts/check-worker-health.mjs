@@ -293,8 +293,15 @@ function checkSecondaryPreview(result) {
     reasons,
     warnings,
   );
-  if (!sources.vix && !sources.gold && !sources.dxy && !sources.us10y) {
-    addReason(reasons, 'VIX, Gold, DXY, and US10Y secondary sources are all missing');
+  const spx = checkSecondarySource(
+    'spx',
+    sources.spx,
+    { provider: 'yahoo', source: 'yahoo:^GSPC' },
+    reasons,
+    warnings,
+  );
+  if (!sources.vix && !sources.gold && !sources.dxy && !sources.us10y && !sources.spx) {
+    addReason(reasons, 'VIX, Gold, DXY, US10Y, and SPX secondary sources are all missing');
   }
 
   return {
@@ -307,6 +314,7 @@ function checkSecondaryPreview(result) {
     gold,
     dxy,
     us10y,
+    spx,
     healthy: reasons.length === 0,
     warnings,
     reasons,
@@ -356,6 +364,7 @@ function printSummary(summary) {
   console.log(`  gold: ${summary.secondary.gold?.status ?? 'missing'} ${summary.secondary.gold?.value ?? '--'} ${summary.secondary.gold?.observedAt ?? '--'}`);
   console.log(`  dxy: ${summary.secondary.dxy?.status ?? 'missing'} ${summary.secondary.dxy?.value ?? '--'} ${summary.secondary.dxy?.observedAt ?? '--'}`);
   console.log(`  us10y: ${summary.secondary.us10y?.status ?? 'missing'} ${summary.secondary.us10y?.value ?? '--'} raw=${summary.secondary.us10y?.rawValue ?? '--'} normalization=${summary.secondary.us10y?.normalization ?? '--'} reason=${summary.secondary.us10y?.normalizationReason ?? '--'} ${summary.secondary.us10y?.observedAt ?? '--'}`);
+  console.log(`  spx: ${summary.secondary.spx?.status ?? 'missing'} ${summary.secondary.spx?.value ?? '--'} ${summary.secondary.spx?.observedAt ?? '--'}`);
   console.log('');
   console.log(`Conclusion: ${summary.overall}`);
   if (summary.reasons.length > 0) {
@@ -410,6 +419,7 @@ function appendGithubSummary(summary) {
     `| Gold | ${tableValue(`${summary.secondary.gold?.status ?? 'missing'} / ${summary.secondary.gold?.value ?? '--'} / ${summary.secondary.gold?.observedAt ?? '--'}`)} |`,
     `| DXY | ${tableValue(`${summary.secondary.dxy?.status ?? 'missing'} / ${summary.secondary.dxy?.value ?? '--'} / ${summary.secondary.dxy?.observedAt ?? '--'}`)} |`,
     `| US10Y | ${tableValue(`${summary.secondary.us10y?.status ?? 'missing'} / ${summary.secondary.us10y?.value ?? '--'} / raw ${summary.secondary.us10y?.rawValue ?? '--'} / normalization ${summary.secondary.us10y?.normalization ?? '--'} / ${summary.secondary.us10y?.normalizationReason ?? '--'} / ${summary.secondary.us10y?.observedAt ?? '--'}`)} |`,
+    `| SPX | ${tableValue(`${summary.secondary.spx?.status ?? 'missing'} / ${summary.secondary.spx?.value ?? '--'} / ${summary.secondary.spx?.observedAt ?? '--'}`)} |`,
     '',
     '### Reasons',
     '',

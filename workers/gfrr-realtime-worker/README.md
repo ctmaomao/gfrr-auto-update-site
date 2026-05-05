@@ -23,6 +23,7 @@
   - v28.0E-1 在独立 secondary preview 链路新增 **Gold via Yahoo `GC=F`** 诊断。Gold secondary 只写入 `/market.secondary-preview.json` / `market:secondary-preview`，不写入主 Worker preview，不覆盖 `values.gold`，不参与 scoring / decision；Gold 失败不得影响 VIX secondary 或主 Worker preview。
   - v28.0E-2 在独立 secondary preview 链路新增 **DXY via Yahoo `DX-Y.NYB`** 诊断。DXY secondary 只写入 `/market.secondary-preview.json` / `market:secondary-preview`，不写入主 Worker preview，不覆盖 `values.dxy`，不参与 scoring / decision；DXY 失败不得影响 VIX / Gold secondary 或主 Worker preview。
   - v28.0E-3 在独立 secondary preview 链路新增 **US10Y via Yahoo `^TNX`** 诊断。US10Y secondary 只写入 `/market.secondary-preview.json` / `market:secondary-preview`，不写入主 Worker preview，不覆盖 `values.us10y`，不参与 scoring / decision；US10Y 失败不得影响 VIX / Gold / DXY secondary 或主 Worker preview。v28.0E-3A 增加 normalization audit：Yahoo `^TNX` `rawValue > 20` 时按 `divide-by-10` 归一化，`rawValue <= 20` 时按 `no-op` 保留百分比值，并写入 `normalizationReason`。当前 secondary diagnostics 包含 VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB` 与 US10Y via Yahoo `^TNX`。
+  - v28.0E-4 在独立 secondary preview 链路新增 **SPX via Yahoo `^GSPC`** 诊断。SPX secondary 只写入 `/market.secondary-preview.json` / `market:secondary-preview`，不写入主 Worker preview，不覆盖 `values.spx`，不参与 scoring / decision；SPX 失败不得影响 VIX / Gold / DXY / US10Y secondary 或主 Worker preview。当前 secondary diagnostics 包含 VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB`、US10Y via Yahoo `^TNX` 与 SPX via Yahoo `^GSPC`。
   - v28.0D-5 增加 Brent freshness-gated promotion：FRED `DCOILBRENTEU` 仍是 anchor；只有当 FRED stale、Yahoo `BZ=F` fresh、Trading Economics Brent 与 Yahoo 接近且 Google Finance 0 / Stooq 失败被排除时，才允许用 Yahoo / Trading Economics 平均值修正 `values.brent`。
   - v28.0D-6 增加 Brent extreme-move confirmation guard：相对上一轮 accepted Brent 的 2%–3% 跳动进入 watch 但允许；超过 3% 时若 Yahoo + Trading Economics 高度一致则标记 confirmed extreme move 并允许，否则 hold 到上一轮 accepted Brent / FRED。
   - v28.0D-8 增加 Brent source hygiene：Google Finance 明确为 `html-experimental` diagnostic，Stooq `brn.f` CSV close 缺失时输出 `csv-no-numeric-close` / `symbol-download-unavailable`，并新增 `stooq:brn.c` alternate diagnostic probe。Google Finance 与 Stooq candidate 均不参与 Brent promotion。
@@ -33,7 +34,7 @@
   - `GET /market.json`：从 KV 读取 `market:latest`（若尚未由后续版本写入，则返回 404 JSON）。
   - `GET /market.preview.json`：从 KV 读取 `market:latest-preview`（preview 管道失败或未跑过 cron 时可能 404）。
   - `GET /market.worker-preview.json`：从 KV 读取 `market:worker-generated-preview`（Worker 独立生成 preview MVP，未部署或未跑到对应轮次时可能 404）。
-  - `GET /market.secondary-preview.json`：从 KV 读取 `market:secondary-preview`（独立第二源诊断 preview；当前包含 VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB` 与 US10Y via Yahoo `^TNX`；不存在时返回 unavailable JSON，不影响主 preview）。
+  - `GET /market.secondary-preview.json`：从 KV 读取 `market:secondary-preview`（独立第二源诊断 preview；当前包含 VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB`、US10Y via Yahoo `^TNX` 与 SPX via Yahoo `^GSPC`；不存在时返回 unavailable JSON，不影响主 preview）。
 
 ## 这**不是**什么
 

@@ -127,13 +127,13 @@ node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy
 
 - 主 `/market.worker-preview.json`：HTTP status、`updatedAt` / age、`sourceMode`、`healthScore`、`criticalMissing`、`unavailable`、核心 `values.*`、Brent promotion `moveStatus`、sourceProbe 频率 / 数量。
 - 主 preview 隔离：不得出现 `secondarySources` / `secondaryDiagnostics` / `secondarySourceSummary`，也不得出现在 `workerGeneratedPreview.diagnostics` 内。
-- 独立 `/market.secondary-preview.json`：VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB` 与 US10Y via Yahoo `^TNX` 是否存在，`participatesInPrimary` / `participatesInValidation` 是否均为 `false`；US10Y 还应显示 `rawValue`、`normalization` 与 `normalizationReason`。`rawValue > 20` 应 `divide-by-10`，`rawValue <= 20` 应 `no-op`。
+- 独立 `/market.secondary-preview.json`：VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB`、US10Y via Yahoo `^TNX` 与 SPX via Yahoo `^GSPC` 是否存在，`participatesInPrimary` / `participatesInValidation` 是否均为 `false`；US10Y 还应显示 `rawValue`、`normalization` 与 `normalizationReason`。`rawValue > 20` 应 `divide-by-10`，`rawValue <= 20` 应 `no-op`。
 
 判断口径：
 
 - 主 Worker preview 不健康会 fail。
 - secondary endpoint HTTP / JSON 不可读会 fail。
-- VIX / Gold / DXY / US10Y 单个 failed / unavailable 只作为 warning；四者都缺失、或任何 secondary source 参与 primary / validation，视为 fail。
+- VIX / Gold / DXY / US10Y / SPX 单个 failed / unavailable 只作为 warning；五者都缺失、或任何 secondary source 参与 primary / validation，视为 fail。
 - 该 workflow 只用于监控 Worker-first 运行健康，不触发 deploy，不修改数据源。
 
 ## 5. Daily workflow 排查
