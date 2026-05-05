@@ -4,6 +4,7 @@ const WORKER_PREVIEW_URL = 'https://gfrr-realtime-worker.gfrrriskradar2026.worke
 const SECONDARY_PREVIEW_URL = 'https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.secondary-preview.json';
 const FETCH_TIMEOUT_MS = 4500;
 const CORE_FIELDS = ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'real10y'];
+const CORE_SECONDARY_SET = ['vix', 'gold', 'dxy', 'us10y', 'spx'];
 const MOVE_STATUSES = new Set([
   'no-previous',
   'normal',
@@ -356,6 +357,7 @@ function printSummary(summary) {
   console.log('');
   console.log('Secondary preview:');
   console.log(`  status: ${summary.secondary.status}`);
+  console.log(`  coreSecondarySet: ${CORE_SECONDARY_SET.join(',')}`);
   console.log(`  updatedAt: ${summary.secondary.updatedAt}`);
   console.log(`  ageMinutes: ${summary.secondary.ageMinutes}`);
   console.log(`  sourceMode: ${summary.secondary.sourceMode}`);
@@ -411,6 +413,7 @@ function appendGithubSummary(summary) {
     '| Item | Value |',
     '|---|---|',
     `| HTTP status | ${tableValue(summary.secondary.status)} |`,
+    `| core secondary set | ${tableValue(CORE_SECONDARY_SET.join(', '))} |`,
     `| updatedAt | ${tableValue(summary.secondary.updatedAt)} |`,
     `| ageMinutes | ${tableValue(summary.secondary.ageMinutes)} |`,
     `| sourceMode | ${tableValue(summary.secondary.sourceMode)} |`,

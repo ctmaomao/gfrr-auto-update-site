@@ -202,6 +202,13 @@ const dailyWorkflowFile = '.github/workflows/build-daily-radar-data.yml';
 const auditScriptFile = 'scripts/audit-daily-vs-worker.mjs';
 const workerHealthScriptFile = 'scripts/check-worker-health.mjs';
 const packageFile = 'package.json';
+const secondaryConsolidationDocs = [
+  'README.md',
+  'AGENTS.md',
+  'docs/DATA_CONTRACT.md',
+  'docs/OPERATIONS.md',
+  'workers/gfrr-realtime-worker/README.md',
+];
 
 const workerContract = {
   mainPreviewFile: 'workers/gfrr-realtime-worker/src/worker-market-preview.js',
@@ -396,6 +403,12 @@ if (fs.existsSync(workerHealthScriptFile)) {
     'secondarySourceSummary',
     'sourceProbe.frequencyMinutes !== 60',
     'sourceProbe.probeCount',
+    'CORE_SECONDARY_SET',
+    'vix',
+    'gold',
+    'dxy',
+    'us10y',
+    'spx',
     'cboe:VIX_History',
     'yahoo:GC=F',
     'yahoo:DX-Y.NYB',
@@ -428,6 +441,26 @@ if (fs.existsSync(workerHealthScriptFile)) {
   }
 } else {
   addRuntimeFailure(workerHealthScriptFile, 'Worker health check script missing');
+}
+
+for (const file of secondaryConsolidationDocs) {
+  if (!fs.existsSync(file)) {
+    addRuntimeFailure(file, 'secondary diagnostics consolidation document missing');
+    continue;
+  }
+  const text = fs.readFileSync(file, 'utf8');
+  for (const needle of [
+    'core secondary set',
+    'vix',
+    'gold',
+    'dxy',
+    'us10y',
+    'spx',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(file, `missing secondary diagnostics consolidation marker "${needle}"`);
+    }
+  }
 }
 
 if (fs.existsSync(packageFile)) {
