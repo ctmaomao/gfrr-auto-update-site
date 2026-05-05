@@ -90,6 +90,8 @@ Build Realtime Market
 
 Realtime Health Watchdog 是只读诊断工具，只检查 `realtime-data/realtime/market.json` 的 freshness，不生成数据、不修复数据、不参与评分。v28.0G-2 起，它是 GitHub `realtime-data` fallback / Daily baseline 的 freshness observer，不再作为 Worker-first runtime hard fail gate；主运行链路 hard fail 由 `Check Worker Health` 承担。
 
+v28.0G-3 起，GitHub Actions Summary 顶部会明确显示 `Realtime-data Health`、`Role: soft observer for fallback / Daily baseline`、当前 `Result` 和建议 `Action`。`stale` / `unavailable` 不代表 Worker-first runtime failure；若持续出现，再检查 `Build Realtime Market` 或 `realtime-data` 分支。
+
 本地手动检查：
 
 ```bash
@@ -124,6 +126,8 @@ node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy
 ```
 
 该检查只读取 Cloudflare Worker endpoint，不写 KV，不写 `data/*.json` / `realtime/*.json`，也不改变前端、Daily 或 Worker runtime。
+
+v28.0G-3 起，GitHub Actions Summary 顶部会明确显示 `Worker-first Health Check`、`Role: hard gate for Cloudflare Worker runtime`、`Overall` 和建议 `Action`。只有该检查 unhealthy 才代表主运行链路 hard gate 失败，需要优先排查 Worker runtime。
 
 重点看 GitHub Actions Summary：
 

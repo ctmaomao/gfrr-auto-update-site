@@ -440,6 +440,20 @@ function overallStatus(worker, secondary) {
   return 'ok';
 }
 
+function actionForOverall(overall) {
+  if (overall === 'ok') return 'No action needed';
+  if (overall === 'warning') return 'Monitor';
+  return 'Investigate Worker runtime';
+}
+
+function interpretationForOverall(overall) {
+  if (overall === 'ok') return 'Worker-first runtime is healthy. No action needed.';
+  if (overall === 'warning') {
+    return 'Worker-first runtime is usable, but one or more secondary/freshness observations need monitoring.';
+  }
+  return 'Worker-first runtime hard gate failed. Investigate before continuing deployments or source changes.';
+}
+
 function collectReasons(worker, secondary) {
   return [
     ...worker.reasons.map((reason) => `worker: ${reason}`),
@@ -450,6 +464,12 @@ function collectReasons(worker, secondary) {
 }
 
 function printSummary(summary) {
+  console.log('Worker-first Health Check');
+  console.log('Role: hard gate for Cloudflare Worker runtime');
+  console.log(`Overall: ${summary.overall}`);
+  console.log(`Action: ${actionForOverall(summary.overall)}`);
+  console.log(`Interpretation: ${interpretationForOverall(summary.overall)}`);
+  console.log('');
   console.log('Worker preview:');
   console.log(`  status: ${summary.worker.status}`);
   console.log(`  updatedAt: ${summary.worker.updatedAt}`);
@@ -498,7 +518,15 @@ function appendGithubSummary(summary) {
   const lines = [
     '## Worker-first Health Check',
     '',
+    'Role: **hard gate for Cloudflare Worker runtime**',
+    '',
     `Overall: **${summary.overall}**`,
+    '',
+    `Action: **${actionForOverall(summary.overall)}**`,
+    '',
+    '### Interpretation',
+    '',
+    interpretationForOverall(summary.overall),
     '',
     '### Worker Preview',
     '',

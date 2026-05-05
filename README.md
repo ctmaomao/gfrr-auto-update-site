@@ -34,6 +34,7 @@
 - Daily vs Worker Input Audit 已上线，用于观察 Daily 消费的 `realtime-data` payload 与当前 Worker preview 的差异；该审计不改变 Daily 输入或前端 Worker-first 选择逻辑。
 - Worker-first Health Check 已上线，定时只读检查主 `/market.worker-preview.json` 与独立 `/market.secondary-preview.json` 的健康、隔离和诊断字段。
 - Check Realtime Health 已对齐为 soft-fail：只观察 GitHub `realtime-data` fallback / Daily baseline freshness，stale / unavailable 只报告 warning 与 `shouldRecover`，Worker-first runtime hard gate 由 Check Worker Health 承担。
+- v28.0G-3 只清理健康检查 Summary 文案：Check Worker Health 明确为 hard gate，Check Realtime Health 明确为 fallback / Daily baseline soft observer；不改变数据源、Worker 或前端。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。

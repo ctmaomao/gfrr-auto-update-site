@@ -105,6 +105,7 @@ const contracts = [
       'contents: write',
       'git push',
       'git commit',
+      'wrangler deploy',
       'run-realtime',
       'run-daily',
       'npm run build:realtime',
@@ -399,6 +400,10 @@ if (fs.existsSync(workerHealthScriptFile)) {
     'FETCH_TIMEOUT_MS = 4500',
     '--github-summary',
     '--fail-on-unhealthy',
+    'Worker-first Health Check',
+    'hard gate for Cloudflare Worker runtime',
+    'Worker-first runtime is healthy',
+    'Investigate Worker runtime',
     'secondarySources',
     'secondaryDiagnostics',
     'secondarySourceSummary',
@@ -458,6 +463,9 @@ if (fs.existsSync(realtimeHealthScriptFile)) {
   const text = fs.readFileSync(realtimeHealthScriptFile, 'utf8');
   for (const needle of [
     'fallback/Daily baseline observation',
+    'Realtime-data Health',
+    'soft observer for fallback / Daily baseline',
+    'This check does not represent the Worker-first runtime health',
     'Worker-first runtime hard fail',
     'Check Worker Health',
     'GITHUB_STEP_SUMMARY',

@@ -4,6 +4,8 @@ const DEFAULT_REALTIME_HEALTH_URL =
   'https://raw.githubusercontent.com/ctmaomao/gfrr-auto-update-site/realtime-data/realtime/market.json';
 const SOFT_FAIL_NOTE =
   'Realtime-data health is fallback/Daily baseline observation; Worker-first runtime hard fail is handled by Check Worker Health.';
+const WORKER_RUNTIME_NOTE =
+  'This check does not represent the Worker-first runtime health. Worker-first runtime hard gate is handled by Check Worker Health.';
 
 const FRESHNESS_ACTIONS = {
   fresh: 'No action needed.',
@@ -48,6 +50,21 @@ function resultForFreshness(freshness) {
   return 'UNAVAILABLE';
 }
 
+function actionForReport(report) {
+  if (!shouldRecover(report)) return 'No action needed';
+  return 'shouldRecover=true, check realtime-data workflow if persistent';
+}
+
+function interpretationForFreshness(freshness) {
+  if (freshness === 'fresh' || freshness === 'aging') {
+    return 'Fallback realtime-data is usable. No action needed.';
+  }
+  if (freshness === 'stale') {
+    return 'Fallback realtime-data is stale. Worker-first runtime may still be healthy. Check Build Realtime Market only if this persists.';
+  }
+  return 'Fallback realtime-data is unavailable. This is not a Worker runtime failure, but should be reviewed if persistent.';
+}
+
 function unavailableReport(url, fetchedAt, reason) {
   return {
     source: 'remote',
@@ -63,8 +80,15 @@ function unavailableReport(url, fetchedAt, reason) {
 }
 
 function printReport(report) {
+  console.log('Realtime-data Health');
+  console.log('Role: soft observer for fallback / Daily baseline');
+  console.log('[realtime-health] mode: soft-fail mode');
+  console.log(`[realtime-health] result: ${report.result}`);
+  console.log(`[realtime-health] action: ${actionForReport(report)}`);
   console.log(`[realtime-health] note: ${SOFT_FAIL_NOTE}`);
-  console.log('[realtime-health] mode: soft-fail unless --fail-on-stale is explicitly passed');
+  console.log(`[realtime-health] runtime-note: ${WORKER_RUNTIME_NOTE}`);
+  console.log(`[realtime-health] interpretation: ${interpretationForFreshness(report.freshness)}`);
+  console.log('[realtime-health] strict-mode-note: --fail-on-stale is available for manual strict checks');
 
   const orderedKeys = [
     'source',
@@ -73,7 +97,6 @@ function printReport(report) {
     'updatedAt',
     'ageMinutes',
     'freshness',
-    'result',
     'suggestedAction'
   ];
 
@@ -123,9 +146,17 @@ function writeGithubSummary(report, mode) {
   const lines = [
     '## Realtime-data Health',
     '',
+    'Role: **soft observer for fallback / Daily baseline**',
+    '',
     `Mode: **${mode.failOnStale ? 'strict --fail-on-stale' : 'soft-fail mode'}**`,
     '',
+    `Result: **${report.result}**`,
+    '',
+    `Action: **${actionForReport(report)}**`,
+    '',
     SOFT_FAIL_NOTE,
+    '',
+    WORKER_RUNTIME_NOTE,
     '',
     '| Item | Value |',
     '|---|---|',
@@ -136,6 +167,10 @@ function writeGithubSummary(report, mode) {
     `| shouldRecover | ${shouldRecover(report) ? 'true' : 'false'} |`,
     `| suggestedAction | ${markdownValue(report.suggestedAction)} |`,
     `| reason | ${markdownValue(report.reason)} |`,
+    '',
+    '### Interpretation',
+    '',
+    interpretationForFreshness(report.freshness),
     '',
   ];
 
