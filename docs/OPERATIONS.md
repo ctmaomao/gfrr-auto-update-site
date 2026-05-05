@@ -129,12 +129,14 @@ node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy
 - 主 preview 隔离：不得出现 `secondarySources` / `secondaryDiagnostics` / `secondarySourceSummary`，也不得出现在 `workerGeneratedPreview.diagnostics` 内。
 - 独立 `/market.secondary-preview.json`：VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB`、US10Y via Yahoo `^TNX` 与 SPX via Yahoo `^GSPC` 是否存在，`participatesInPrimary` / `participatesInValidation` 是否均为 `false`；US10Y 还应显示 `rawValue`、`normalization` 与 `normalizationReason`。`rawValue > 20` 应 `divide-by-10`，`rawValue <= 20` 应 `no-op`。
 - core secondary set 为 `vix` / `gold` / `dxy` / `us10y` / `spx`。这些 source 只属于 `/market.secondary-preview.json`，使用独立 KV key `market:secondary-preview`，30 分钟低频刷新，不影响主 `values.*`、scoring、decision、Brent promotion 或 sourceProbe。
+- v28.0G-1 起，Summary 还会展示每个 core secondary source 的 `freshnessStatus`、`observedAgeHours` 与 `freshnessReason`。这些是 `check-worker-health` 基于 `observedAt` 的只读派生字段，不是 Worker payload 字段。
 
 判断口径：
 
 - 主 Worker preview 不健康会 fail。
 - secondary endpoint HTTP / JSON 不可读会 fail。
 - VIX / Gold / DXY / US10Y / SPX 单个 failed / unavailable 只作为 warning；五者都缺失、或任何 secondary source 参与 primary / validation，视为 fail。
+- `stale-warning` / `stale-critical` / missing / unparsable freshness 初版只作为 warning，不阻断 workflow；market closed、交易时段和节假日造成的上一交易日 `observedAt` 不应直接视为错误。
 - 该 workflow 只用于监控 Worker-first 运行健康，不触发 deploy，不修改数据源。
 
 E-4 后先观察 Worker health workflow 与 secondary freshness，不继续堆新 secondary source。HY OAS、real10y、credit spread proxy、liquidity proxy 和其它 macro stress indicators 如需加入，必须另开版本、一轮一个、先进入 isolated secondary diagnostic，并继承 short timeout / try-catch / isolated payload / health warning-only 原则。

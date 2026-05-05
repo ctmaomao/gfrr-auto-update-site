@@ -132,6 +132,7 @@ secondary diagnostics 已从主 Worker preview 隔离：
 - 当前接入 VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB`、US10Y via Yahoo `^TNX` 与 SPX via Yahoo `^GSPC` secondary diagnostics。
 - 当前 core secondary set 为 `vix` / `gold` / `dxy` / `us10y` / `spx`，只写 `/market.secondary-preview.json` 的 `diagnostics.sources.*`。
 - 前端主页面暂不消费 secondary diagnostics；它们只用于后台诊断，不影响 `effectiveDisplayInputs`、`values.*`、scoring、decision 或 Worker-first strict gate。
+- v28.0G-1 起，`check-worker-health` 会对 secondary `observedAt` 派生 `freshnessStatus` / `observedAgeHours` / `freshnessReason`；这是只读 health summary，不是 Worker payload 字段。market-closed 或节假日造成的 stale 初版只 warning，不阻断 workflow。
 - E-4 后暂停继续堆新 secondary source，先观察 Worker health workflow 与 secondary freshness；HY OAS、real10y、credit spread proxy、liquidity proxy 和其它 macro stress indicators 必须另开版本，且先进入 isolated secondary diagnostic。
 
 ## 开发检查与提交前验收

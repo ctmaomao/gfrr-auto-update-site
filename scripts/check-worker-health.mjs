@@ -5,6 +5,13 @@ const SECONDARY_PREVIEW_URL = 'https://gfrr-realtime-worker.gfrrriskradar2026.wo
 const FETCH_TIMEOUT_MS = 4500;
 const CORE_FIELDS = ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'real10y'];
 const CORE_SECONDARY_SET = ['vix', 'gold', 'dxy', 'us10y', 'spx'];
+const SECONDARY_FRESHNESS_PROFILES = {
+  vix: { freshHours: 36, marketClosedHours: 72, staleWarningHours: Infinity },
+  gold: { freshHours: 12, marketClosedHours: 36, staleWarningHours: 72 },
+  dxy: { freshHours: 12, marketClosedHours: 36, staleWarningHours: 72 },
+  us10y: { freshHours: 24, marketClosedHours: 72, staleWarningHours: 120 },
+  spx: { freshHours: 24, marketClosedHours: 72, staleWarningHours: 120 },
+};
 const MOVE_STATUSES = new Set([
   'no-previous',
   'normal',
@@ -37,6 +44,24 @@ function ageMinutes(updatedAt) {
   const parsed = Date.parse(updatedAt);
   if (!Number.isFinite(parsed)) return null;
   return Math.round((Date.now() - parsed) / 60000);
+}
+
+function parseObservedAt(value) {
+  if (typeof value !== 'string' || value.trim() === '') return null;
+  const text = value.trim();
+  const slashDate = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/u);
+  if (slashDate) {
+    const [, month, day, year] = slashDate;
+    const parsed = Date.UTC(Number(year), Number(month) - 1, Number(day));
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  const parsed = Date.parse(text);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function roundHours(value) {
+  if (!Number.isFinite(value)) return null;
+  return Math.round(value * 10) / 10;
 }
 
 async function fetchJson(url) {
@@ -100,6 +125,74 @@ function isLegacyUs10yNormalization(source) {
     value != null &&
     source.normalization === 'divide-by-10' &&
     approximatelyEqual(value, rawValue / 10);
+}
+
+function freshnessWarningStatus(status) {
+  return ['stale-warning', 'stale-critical', 'missing-observedAt', 'unparsable-observedAt'].includes(status);
+}
+
+function auditSecondaryFreshness(name, source) {
+  if (!source || typeof source !== 'object') {
+    return {
+      observedAgeHours: null,
+      freshnessStatus: 'not-applicable',
+      freshnessReason: 'source-missing',
+    };
+  }
+  if (source.status !== 'ok') {
+    return {
+      observedAgeHours: null,
+      freshnessStatus: 'not-applicable',
+      freshnessReason: `source-status-${source.status ?? 'missing'}`,
+    };
+  }
+  if (typeof source.observedAt !== 'string' || source.observedAt.trim() === '') {
+    return {
+      observedAgeHours: null,
+      freshnessStatus: 'missing-observedAt',
+      freshnessReason: `${name}-observedAt-missing`,
+    };
+  }
+
+  const observedMs = parseObservedAt(source.observedAt);
+  if (observedMs == null) {
+    return {
+      observedAgeHours: null,
+      freshnessStatus: 'unparsable-observedAt',
+      freshnessReason: `${name}-observedAt-unparsable`,
+    };
+  }
+
+  const ageHours = Math.max(0, (Date.now() - observedMs) / 36e5);
+  const observedAgeHours = roundHours(ageHours);
+  const profile = SECONDARY_FRESHNESS_PROFILES[name] || { freshHours: 24, marketClosedHours: 72, staleWarningHours: 120 };
+
+  if (ageHours <= profile.freshHours) {
+    return {
+      observedAgeHours,
+      freshnessStatus: 'fresh',
+      freshnessReason: `${name}-observedAt-within-${profile.freshHours}h`,
+    };
+  }
+  if (ageHours <= profile.marketClosedHours) {
+    return {
+      observedAgeHours,
+      freshnessStatus: 'market-closed-stale-ok',
+      freshnessReason: `${name}-observedAt-within-market-closed-window`,
+    };
+  }
+  if (ageHours <= profile.staleWarningHours) {
+    return {
+      observedAgeHours,
+      freshnessStatus: 'stale-warning',
+      freshnessReason: `${name}-observedAt-stale-warning`,
+    };
+  }
+  return {
+    observedAgeHours,
+    freshnessStatus: 'stale-critical',
+    freshnessReason: `${name}-observedAt-stale-critical`,
+  };
 }
 
 function checkNoSecondaryPollution(payload, reasons) {
@@ -184,7 +277,19 @@ function checkWorkerPreview(result) {
 function checkSecondarySource(name, source, expected, reasons, warnings) {
   if (!source || typeof source !== 'object') {
     addReason(warnings, `secondary ${name} missing`);
-    return null;
+    return {
+      status: null,
+      value: null,
+      rawValue: null,
+      normalization: null,
+      normalizationReason: null,
+      observedAt: null,
+      observedAgeHours: null,
+      freshnessStatus: 'not-applicable',
+      freshnessReason: 'source-missing',
+      participatesInPrimary: null,
+      participatesInValidation: null,
+    };
   }
   if (source.source !== expected.source) addReason(reasons, `${name} source is ${source.source ?? 'missing'}`);
   if (source.provider !== expected.provider) addReason(reasons, `${name} provider is ${source.provider ?? 'missing'}`);
@@ -228,6 +333,10 @@ function checkSecondarySource(name, source, expected, reasons, warnings) {
   if (source.status === 'failed' || source.status === 'unavailable') {
     addReason(warnings, `${name} secondary status is ${source.status}`);
   }
+  const freshness = auditSecondaryFreshness(name, source);
+  if (freshnessWarningStatus(freshness.freshnessStatus)) {
+    addReason(warnings, `${name} freshness ${freshness.freshnessStatus}: ${freshness.freshnessReason}`);
+  }
 
   return {
     status: source.status ?? null,
@@ -236,6 +345,9 @@ function checkSecondarySource(name, source, expected, reasons, warnings) {
     normalization: source.normalization ?? null,
     normalizationReason: source.normalizationReason ?? null,
     observedAt: source.observedAt ?? null,
+    observedAgeHours: freshness.observedAgeHours,
+    freshnessStatus: freshness.freshnessStatus,
+    freshnessReason: freshness.freshnessReason,
     participatesInPrimary: source.participatesInPrimary,
     participatesInValidation: source.participatesInValidation,
   };
@@ -362,11 +474,11 @@ function printSummary(summary) {
   console.log(`  ageMinutes: ${summary.secondary.ageMinutes}`);
   console.log(`  sourceMode: ${summary.secondary.sourceMode}`);
   console.log(`  unavailable: ${summary.secondary.unavailable}`);
-  console.log(`  vix: ${summary.secondary.vix?.status ?? 'missing'} ${summary.secondary.vix?.value ?? '--'} ${summary.secondary.vix?.observedAt ?? '--'}`);
-  console.log(`  gold: ${summary.secondary.gold?.status ?? 'missing'} ${summary.secondary.gold?.value ?? '--'} ${summary.secondary.gold?.observedAt ?? '--'}`);
-  console.log(`  dxy: ${summary.secondary.dxy?.status ?? 'missing'} ${summary.secondary.dxy?.value ?? '--'} ${summary.secondary.dxy?.observedAt ?? '--'}`);
-  console.log(`  us10y: ${summary.secondary.us10y?.status ?? 'missing'} ${summary.secondary.us10y?.value ?? '--'} raw=${summary.secondary.us10y?.rawValue ?? '--'} normalization=${summary.secondary.us10y?.normalization ?? '--'} reason=${summary.secondary.us10y?.normalizationReason ?? '--'} ${summary.secondary.us10y?.observedAt ?? '--'}`);
-  console.log(`  spx: ${summary.secondary.spx?.status ?? 'missing'} ${summary.secondary.spx?.value ?? '--'} ${summary.secondary.spx?.observedAt ?? '--'}`);
+  console.log(`  vix: ${summary.secondary.vix?.status ?? 'missing'} ${summary.secondary.vix?.value ?? '--'} ${summary.secondary.vix?.observedAt ?? '--'} freshness=${summary.secondary.vix?.freshnessStatus ?? '--'} ageHours=${summary.secondary.vix?.observedAgeHours ?? '--'} reason=${summary.secondary.vix?.freshnessReason ?? '--'}`);
+  console.log(`  gold: ${summary.secondary.gold?.status ?? 'missing'} ${summary.secondary.gold?.value ?? '--'} ${summary.secondary.gold?.observedAt ?? '--'} freshness=${summary.secondary.gold?.freshnessStatus ?? '--'} ageHours=${summary.secondary.gold?.observedAgeHours ?? '--'} reason=${summary.secondary.gold?.freshnessReason ?? '--'}`);
+  console.log(`  dxy: ${summary.secondary.dxy?.status ?? 'missing'} ${summary.secondary.dxy?.value ?? '--'} ${summary.secondary.dxy?.observedAt ?? '--'} freshness=${summary.secondary.dxy?.freshnessStatus ?? '--'} ageHours=${summary.secondary.dxy?.observedAgeHours ?? '--'} reason=${summary.secondary.dxy?.freshnessReason ?? '--'}`);
+  console.log(`  us10y: ${summary.secondary.us10y?.status ?? 'missing'} ${summary.secondary.us10y?.value ?? '--'} raw=${summary.secondary.us10y?.rawValue ?? '--'} normalization=${summary.secondary.us10y?.normalization ?? '--'} reason=${summary.secondary.us10y?.normalizationReason ?? '--'} ${summary.secondary.us10y?.observedAt ?? '--'} freshness=${summary.secondary.us10y?.freshnessStatus ?? '--'} ageHours=${summary.secondary.us10y?.observedAgeHours ?? '--'} freshnessReason=${summary.secondary.us10y?.freshnessReason ?? '--'}`);
+  console.log(`  spx: ${summary.secondary.spx?.status ?? 'missing'} ${summary.secondary.spx?.value ?? '--'} ${summary.secondary.spx?.observedAt ?? '--'} freshness=${summary.secondary.spx?.freshnessStatus ?? '--'} ageHours=${summary.secondary.spx?.observedAgeHours ?? '--'} reason=${summary.secondary.spx?.freshnessReason ?? '--'}`);
   console.log('');
   console.log(`Conclusion: ${summary.overall}`);
   if (summary.reasons.length > 0) {
@@ -418,11 +530,11 @@ function appendGithubSummary(summary) {
     `| ageMinutes | ${tableValue(summary.secondary.ageMinutes)} |`,
     `| sourceMode | ${tableValue(summary.secondary.sourceMode)} |`,
     `| unavailable | ${tableValue(summary.secondary.unavailable)} |`,
-    `| VIX | ${tableValue(`${summary.secondary.vix?.status ?? 'missing'} / ${summary.secondary.vix?.value ?? '--'} / ${summary.secondary.vix?.observedAt ?? '--'}`)} |`,
-    `| Gold | ${tableValue(`${summary.secondary.gold?.status ?? 'missing'} / ${summary.secondary.gold?.value ?? '--'} / ${summary.secondary.gold?.observedAt ?? '--'}`)} |`,
-    `| DXY | ${tableValue(`${summary.secondary.dxy?.status ?? 'missing'} / ${summary.secondary.dxy?.value ?? '--'} / ${summary.secondary.dxy?.observedAt ?? '--'}`)} |`,
-    `| US10Y | ${tableValue(`${summary.secondary.us10y?.status ?? 'missing'} / ${summary.secondary.us10y?.value ?? '--'} / raw ${summary.secondary.us10y?.rawValue ?? '--'} / normalization ${summary.secondary.us10y?.normalization ?? '--'} / ${summary.secondary.us10y?.normalizationReason ?? '--'} / ${summary.secondary.us10y?.observedAt ?? '--'}`)} |`,
-    `| SPX | ${tableValue(`${summary.secondary.spx?.status ?? 'missing'} / ${summary.secondary.spx?.value ?? '--'} / ${summary.secondary.spx?.observedAt ?? '--'}`)} |`,
+    `| VIX | ${tableValue(`${summary.secondary.vix?.status ?? 'missing'} / ${summary.secondary.vix?.value ?? '--'} / ${summary.secondary.vix?.observedAt ?? '--'} / ${summary.secondary.vix?.freshnessStatus ?? '--'} / age ${summary.secondary.vix?.observedAgeHours ?? '--'}h / ${summary.secondary.vix?.freshnessReason ?? '--'}`)} |`,
+    `| Gold | ${tableValue(`${summary.secondary.gold?.status ?? 'missing'} / ${summary.secondary.gold?.value ?? '--'} / ${summary.secondary.gold?.observedAt ?? '--'} / ${summary.secondary.gold?.freshnessStatus ?? '--'} / age ${summary.secondary.gold?.observedAgeHours ?? '--'}h / ${summary.secondary.gold?.freshnessReason ?? '--'}`)} |`,
+    `| DXY | ${tableValue(`${summary.secondary.dxy?.status ?? 'missing'} / ${summary.secondary.dxy?.value ?? '--'} / ${summary.secondary.dxy?.observedAt ?? '--'} / ${summary.secondary.dxy?.freshnessStatus ?? '--'} / age ${summary.secondary.dxy?.observedAgeHours ?? '--'}h / ${summary.secondary.dxy?.freshnessReason ?? '--'}`)} |`,
+    `| US10Y | ${tableValue(`${summary.secondary.us10y?.status ?? 'missing'} / ${summary.secondary.us10y?.value ?? '--'} / raw ${summary.secondary.us10y?.rawValue ?? '--'} / normalization ${summary.secondary.us10y?.normalization ?? '--'} / ${summary.secondary.us10y?.normalizationReason ?? '--'} / ${summary.secondary.us10y?.observedAt ?? '--'} / ${summary.secondary.us10y?.freshnessStatus ?? '--'} / age ${summary.secondary.us10y?.observedAgeHours ?? '--'}h / ${summary.secondary.us10y?.freshnessReason ?? '--'}`)} |`,
+    `| SPX | ${tableValue(`${summary.secondary.spx?.status ?? 'missing'} / ${summary.secondary.spx?.value ?? '--'} / ${summary.secondary.spx?.observedAt ?? '--'} / ${summary.secondary.spx?.freshnessStatus ?? '--'} / age ${summary.secondary.spx?.observedAgeHours ?? '--'}h / ${summary.secondary.spx?.freshnessReason ?? '--'}`)} |`,
     '',
     '### Reasons',
     '',
