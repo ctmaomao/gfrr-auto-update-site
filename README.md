@@ -27,7 +27,7 @@
 - daily baseline 构建与 `displayInputsBaseline` fallback。
 - 六大风险模块、热力图、传导网络、资产偏好矩阵和情景树。
 - 决策系统、执行灯、仓位建议、Action Queue、Trigger Monitor 和 Invalidation Rules。
-- secondary diagnostics 独立 endpoint `/market.secondary-preview.json`，当前接入 VIX via Cboe 与 Gold via Yahoo `GC=F` 诊断。
+- secondary diagnostics 独立 endpoint `/market.secondary-preview.json`，当前接入 VIX via Cboe、Gold via Yahoo `GC=F` 与 DXY via Yahoo `DX-Y.NYB` 诊断。
 - Brent audit、freshness-gated promotion、extreme-move confirmation guard、D-8B-lite sourceProbe 与 Brent source explainability UI。
 - D-8B findings 已确认 Google Finance / Stooq 当前不可升级为 Brent validation source，仍只保留 diagnostic sourceProbe。
 - Worker fetch timeout guard 已上线，外部免费源慢响应只进入 diagnostics，不改变主值选择。

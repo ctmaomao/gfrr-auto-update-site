@@ -167,7 +167,7 @@ function checkWorkerPreview(result) {
 
 function checkSecondarySource(name, source, expected, reasons, warnings) {
   if (!source || typeof source !== 'object') {
-    addReason(reasons, `secondary ${name} missing`);
+    addReason(warnings, `secondary ${name} missing`);
     return null;
   }
   if (source.source !== expected.source) addReason(reasons, `${name} source is ${source.source ?? 'missing'}`);
@@ -223,7 +223,16 @@ function checkSecondaryPreview(result) {
     reasons,
     warnings,
   );
-  if (!sources.vix && !sources.gold) addReason(reasons, 'both VIX and Gold secondary sources are missing');
+  const dxy = checkSecondarySource(
+    'dxy',
+    sources.dxy,
+    { provider: 'yahoo', source: 'yahoo:DX-Y.NYB' },
+    reasons,
+    warnings,
+  );
+  if (!sources.vix && !sources.gold && !sources.dxy) {
+    addReason(reasons, 'VIX, Gold, and DXY secondary sources are all missing');
+  }
 
   return {
     status: result.status,
@@ -233,6 +242,7 @@ function checkSecondaryPreview(result) {
     unavailable: bool(payload.unavailable),
     vix,
     gold,
+    dxy,
     healthy: reasons.length === 0,
     warnings,
     reasons,
@@ -280,6 +290,7 @@ function printSummary(summary) {
   console.log(`  unavailable: ${summary.secondary.unavailable}`);
   console.log(`  vix: ${summary.secondary.vix?.status ?? 'missing'} ${summary.secondary.vix?.value ?? '--'} ${summary.secondary.vix?.observedAt ?? '--'}`);
   console.log(`  gold: ${summary.secondary.gold?.status ?? 'missing'} ${summary.secondary.gold?.value ?? '--'} ${summary.secondary.gold?.observedAt ?? '--'}`);
+  console.log(`  dxy: ${summary.secondary.dxy?.status ?? 'missing'} ${summary.secondary.dxy?.value ?? '--'} ${summary.secondary.dxy?.observedAt ?? '--'}`);
   console.log('');
   console.log(`Conclusion: ${summary.overall}`);
   if (summary.reasons.length > 0) {
@@ -332,6 +343,7 @@ function appendGithubSummary(summary) {
     `| unavailable | ${tableValue(summary.secondary.unavailable)} |`,
     `| VIX | ${tableValue(`${summary.secondary.vix?.status ?? 'missing'} / ${summary.secondary.vix?.value ?? '--'} / ${summary.secondary.vix?.observedAt ?? '--'}`)} |`,
     `| Gold | ${tableValue(`${summary.secondary.gold?.status ?? 'missing'} / ${summary.secondary.gold?.value ?? '--'} / ${summary.secondary.gold?.observedAt ?? '--'}`)} |`,
+    `| DXY | ${tableValue(`${summary.secondary.dxy?.status ?? 'missing'} / ${summary.secondary.dxy?.value ?? '--'} / ${summary.secondary.dxy?.observedAt ?? '--'}`)} |`,
     '',
     '### Reasons',
     '',

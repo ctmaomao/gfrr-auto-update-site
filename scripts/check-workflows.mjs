@@ -215,17 +215,24 @@ const workerContract = {
     'VIX_History',
     'CBOE_VIX_HISTORY_URL',
     'yahoo:GC=F',
-    'GC%3DF'
+    'GC%3DF',
+    'yahoo:DX-Y.NYB',
+    'DX-Y.NYB'
   ],
   routerRequired: [
     'market:secondary-preview',
     '/market.secondary-preview.json',
     'CBOE_VIX_HISTORY_URL',
     'YAHOO_GOLD_SECONDARY_URL',
+    'YAHOO_DXY_SECONDARY_URL',
     'https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=5d',
+    'https://query1.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?interval=1d&range=5d',
     'parseYahooGoldChart',
+    'parseYahooDxyChart',
     'fetchYahooGoldSecondaryLatest',
+    'fetchYahooDxySecondaryLatest',
     'yahoo:GC=F',
+    'yahoo:DX-Y.NYB',
     'tryWriteSecondaryPreview',
     'key === MARKET_WORKER_GENERATED_PREVIEW_KEY',
     'readPreviousWorkerPreviewSummary',
@@ -371,6 +378,8 @@ if (fs.existsSync(workerHealthScriptFile)) {
     'sourceProbe.probeCount',
     'cboe:VIX_History',
     'yahoo:GC=F',
+    'yahoo:DX-Y.NYB',
+    'VIX, Gold, and DXY secondary sources are all missing',
     'participatesInPrimary !== false',
     'participatesInValidation !== false',
   ]) {
@@ -540,6 +549,13 @@ if (fs.existsSync(workerContract.routerFile)) {
     !/participatesInValidation:\s*false/u.test(text)
   ) {
     addRuntimeFailure(workerContract.routerFile, 'Gold secondary must remain diagnostic-only and out of primary/validation');
+  }
+  if (
+    !/source:\s*['"]yahoo:DX-Y\.NYB['"]/u.test(text) ||
+    !/participatesInPrimary:\s*false/u.test(text) ||
+    !/participatesInValidation:\s*false/u.test(text)
+  ) {
+    addRuntimeFailure(workerContract.routerFile, 'DXY secondary must remain diagnostic-only and out of primary/validation');
   }
   if (!/MARKET_SECONDARY_PREVIEW_KEY\s*=\s*['"]market:secondary-preview['"]/u.test(text)) {
     addRuntimeFailure(workerContract.routerFile, 'secondary preview must continue using market:secondary-preview KV key');

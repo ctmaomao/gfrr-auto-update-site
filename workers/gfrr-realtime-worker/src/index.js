@@ -18,6 +18,8 @@ const MARKET_SECONDARY_PREVIEW_KEY = 'market:secondary-preview';
 const CBOE_VIX_HISTORY_URL = 'https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv';
 const YAHOO_GOLD_SECONDARY_URL =
   'https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=5d';
+const YAHOO_DXY_SECONDARY_URL =
+  'https://query1.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?interval=1d&range=5d';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -158,7 +160,7 @@ function parseYahooGoldChart(text) {
   const timestamps = result?.timestamp ?? [];
 
   for (let i = closes.length - 1; i >= 0; i -= 1) {
-    const value = parseNumeric(closes[i]);
+    const value = positiveNumber(closes[i]);
     if (value != null) {
       return {
         value: roundValue(value),
@@ -168,6 +170,35 @@ function parseYahooGoldChart(text) {
   }
 
   throw new Error('no numeric Gold close');
+}
+
+function parseYahooDxyChart(text) {
+  const payload = JSON.parse(text);
+  const result = payload?.chart?.result?.[0];
+  const closes = result?.indicators?.quote?.[0]?.close ?? [];
+  const timestamps = result?.timestamp ?? [];
+
+  for (let i = closes.length - 1; i >= 0; i -= 1) {
+    const value = parseNumeric(closes[i]);
+    if (value != null) {
+      return {
+        value: roundValue(value),
+        observedAt: timestamps[i] ? new Date(timestamps[i] * 1000).toISOString() : null,
+      };
+    }
+  }
+
+  const regularMarketPrice = positiveNumber(result?.meta?.regularMarketPrice);
+  if (regularMarketPrice != null) {
+    return {
+      value: roundValue(regularMarketPrice),
+      observedAt: result?.meta?.regularMarketTime
+        ? new Date(result.meta.regularMarketTime * 1000).toISOString()
+        : null,
+    };
+  }
+
+  throw new Error('no numeric DXY close or regularMarketPrice');
 }
 
 function truncateSecondaryError(error) {
@@ -196,11 +227,12 @@ function buildSecondarySourcePayload({
   };
 }
 
-function buildSecondaryPreviewPayload({ vix, gold }) {
+function buildSecondaryPreviewPayload({ vix, gold, dxy }) {
   const nowIso = new Date().toISOString();
   const vixOk = vix?.status === 'ok' && Number.isFinite(vix.value);
   const goldOk = gold?.status === 'ok' && Number.isFinite(gold.value);
-  const ok = vixOk || goldOk;
+  const dxyOk = dxy?.status === 'ok' && Number.isFinite(dxy.value);
+  const ok = vixOk || goldOk || dxyOk;
   return {
     sourceMode: ok ? 'secondary-preview' : 'secondary-preview-unavailable',
     updatedAt: nowIso,
@@ -227,6 +259,14 @@ function buildSecondaryPreviewPayload({ vix, gold }) {
           observedAt: gold?.observedAt ?? null,
           error: gold?.error ?? null,
         }),
+        dxy: buildSecondarySourcePayload({
+          status: dxy?.status ?? 'unavailable',
+          provider: 'yahoo',
+          source: 'yahoo:DX-Y.NYB',
+          value: dxy?.value ?? null,
+          observedAt: dxy?.observedAt ?? null,
+          error: dxy?.error ?? null,
+        }),
       },
     },
   };
@@ -236,6 +276,7 @@ function buildSecondaryPreviewFailurePayload(error) {
   return buildSecondaryPreviewPayload({
     vix: { status: 'failed', error },
     gold: { status: 'unavailable', error: 'not attempted after secondary preview failure' },
+    dxy: { status: 'unavailable', error: 'not attempted after secondary preview failure' },
   });
 }
 
@@ -323,6 +364,29 @@ async function fetchYahooGoldSecondaryLatest() {
   }
 }
 
+async function fetchYahooDxySecondaryLatest() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SECONDARY_PREVIEW_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${YAHOO_DXY_SECONDARY_URL}&t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {
+        Accept: 'application/json,text/plain,*/*',
+        'User-Agent':
+          'Mozilla/5.0 (compatible; GFRRWorkerSecondaryPreview/28.0E-0; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
+      },
+      signal: controller.signal,
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return parseYahooDxyChart(text);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function buildSecondarySourceResult(fetcher) {
   try {
     const result = await fetcher();
@@ -343,9 +407,12 @@ async function buildSecondarySourceResult(fetcher) {
 }
 
 async function buildSecondaryPreview() {
-  const vix = await buildSecondarySourceResult(fetchCboeVixLatest);
-  const gold = await buildSecondarySourceResult(fetchYahooGoldSecondaryLatest);
-  return buildSecondaryPreviewPayload({ vix, gold });
+  const [vix, gold, dxy] = await Promise.all([
+    buildSecondarySourceResult(fetchCboeVixLatest),
+    buildSecondarySourceResult(fetchYahooGoldSecondaryLatest),
+    buildSecondarySourceResult(fetchYahooDxySecondaryLatest),
+  ]);
+  return buildSecondaryPreviewPayload({ vix, gold, dxy });
 }
 
 async function tryWriteSecondaryPreview(env) {
