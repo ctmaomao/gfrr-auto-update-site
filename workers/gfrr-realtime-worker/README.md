@@ -14,6 +14,7 @@
   - 为保持 free-tier safe，两类 preview **交替写入**，因此每个 preview key 通常约 **6** 分钟更新一次。
   - 失败时：只写 KV **`market:worker-heartbeat`** / status payload，记录 `previewFetchStatus`、`previewError` 与 `writePolicy`；不会同时写两个 preview。
   - v28.0B-2A.1 增加数据源可达性诊断与 fetch hardening：FRED 顺序抓取并 retry，Yahoo / Stooq / Google Finance / Trading Economics / Gold 均记录 HTTP status、content type、body length、duration 与错误原因。
+  - v28.0E-0 为 Worker 主 preview 外部 fetch 增加统一短超时保护。timeout 只进入 `sourceDetails` / diagnostics / sourceProbe 错误摘要，不新增数据源，不改变 `values.*`、Brent promotion、D-6 moveStatus 或 sourceProbe 决策；secondary VIX / Gold 仍保持独立短超时与失败隔离。
   - Google Finance 与 Trading Economics 仅作为 **diagnostic-only** experimental Brent 候选源；不参与 consensus，不覆盖 `values.brent`，也不能让 `canPromoteToPrimary` 变为 `true`。
   - v28.0B-2B 增加本地只读对比脚本 `tools/compare-worker-vs-mirror.mjs`，用于比较 `/market.worker-preview.json` 与 `/market.preview.json` 的字段差异；脚本不使用 Wrangler、不读取 KV、不写 Cloudflare KV、不接前端。
   - v28.0D-1 曾尝试在 Worker generated preview payload 内加入核心指标第二数据源诊断；部署后影响 Worker generated preview freshness，线上 Worker 已手动 rollback 到稳定版本 `679fb678-fe1d-4ff3-b9b9-53829d4d31f7`。

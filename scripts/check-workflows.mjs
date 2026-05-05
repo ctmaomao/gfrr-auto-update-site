@@ -232,6 +232,12 @@ const workerContract = {
     'excluded-non-positive-or-invalid'
   ],
   sourceProbeRequired: [
+    'WORKER_FETCH_TIMEOUT_MS = 4500',
+    'SOURCE_PROBE_FETCH_TIMEOUT_MS = 4000',
+    'AbortController',
+    'options.timeoutMs',
+    'clearTimeout(timer)',
+    'timeout after ${timeoutMs}ms',
     'PROBE_SAMPLE_ROW_LIMIT = 3',
     'PROBE_SNIPPET_LIMIT = 120',
     'SOURCE_PROBE_FREQUENCY_MINUTES = 60',
@@ -312,6 +318,25 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
   }
   for (const [pattern, message] of workerContract.brentPrimaryForbiddenPatterns) {
     if (pattern.test(text)) addRuntimeFailure(workerContract.mainPreviewFile, message);
+  }
+  const fetchHelperStart = text.indexOf('async function fetchTextWithDiagnostics');
+  const splitCsvStart = text.indexOf('function splitCsvLine');
+  if (fetchHelperStart !== -1 && splitCsvStart !== -1 && splitCsvStart > fetchHelperStart) {
+    const fetchHelperBlock = text.slice(fetchHelperStart, splitCsvStart);
+    for (const needle of [
+      'new AbortController()',
+      'setTimeout(() => controller.abort(), timeoutMs)',
+      'signal: controller.signal',
+      'clearTimeout(timer)',
+      'options.timeoutMs',
+      'WORKER_FETCH_TIMEOUT_MS',
+    ]) {
+      if (!fetchHelperBlock.includes(needle)) {
+        addRuntimeFailure(workerContract.mainPreviewFile, `fetchTextWithDiagnostics missing timeout guard "${needle}"`);
+      }
+    }
+  } else {
+    addRuntimeFailure(workerContract.mainPreviewFile, 'missing fetchTextWithDiagnostics timeout guard block');
   }
   if (/\{\s*\.\.\.stooq,\s*role:\s*['"]validation['"]/u.test(text)) {
     addRuntimeFailure(workerContract.mainPreviewFile, 'stooq:brn.f must not be spread with validation role');

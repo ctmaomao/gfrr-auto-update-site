@@ -156,6 +156,14 @@ Gold secondary 失败只应记录在 `diagnostics.sources.gold`，不得阻止 V
 
 前端当前不消费 `/market.secondary-preview.json`；该 payload 不得进入 Worker-first strict gate、`__effectiveDisplayInputs`、scoring 或 decision。
 
+### Worker fetch timeout guard
+
+v28.0E-0 起，Worker 主 preview 对外部 HTTP source 使用统一短超时保护。该 guard 只限制慢响应对 Worker runtime 的影响，不新增数据源，不改变 `values.*` 选择逻辑，不改变 Brent promotion、D-6 moveStatus 或 D-8B sourceProbe 决策逻辑。
+
+timeout 结果应作为普通 source diagnostics 返回，例如进入 `sourceDetails`、`workerGeneratedPreview.diagnostics.sourceHttpSummary`、`brentValidation.diagnostics` 或 `brentValidation.sourceProbe.probes[*]` 的 `error` / `reason` 字段。`fetchTextWithDiagnostics` 不应因 timeout 直接 throw 到主 preview 生成流程；critical source timeout 仍应按原有 finite value / `criticalMissing` / `healthScore` / `unavailable` 规则自然反映，不得通过 timeout guard 放松健康门槛。
+
+secondary diagnostics（VIX via Cboe、Gold via Yahoo `GC=F`）仍只属于 `/market.secondary-preview.json`，使用独立短超时和失败隔离。secondary timeout 不得影响 `/market.worker-preview.json`，也不得影响 `values.gold`、Brent promotion、scoring 或 decision。未来新增 DXY / US10Y / SPX 等 secondary source 时，必须继承短超时、try/catch 捕获和独立 KV 隔离原则。
+
 ## displayInputsBaseline 契约
 
 `data/radar-data.json` 根层必须包含：

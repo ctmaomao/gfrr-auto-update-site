@@ -29,6 +29,8 @@ const BRENT_PROMOTION_MAX_DIVERGENCE_PCT = 2;
 const BRENT_MOVE_WATCH_PCT = 2;
 const BRENT_MOVE_EXTREME_PCT = 3;
 const BRENT_EXTREME_CONFIRMATION_DIVERGENCE_PCT = 1;
+const WORKER_FETCH_TIMEOUT_MS = 4500;
+const SOURCE_PROBE_FETCH_TIMEOUT_MS = 4000;
 const PROBE_SAMPLE_ROW_LIMIT = 3;
 const PROBE_SNIPPET_LIMIT = 120;
 const SOURCE_PROBE_FREQUENCY_MINUTES = 60;
@@ -78,6 +80,7 @@ function retryDelayMs() {
 }
 
 function sourceReason(status, error) {
+  if (typeof error === 'string' && error.includes('timeout after')) return 'timeout';
   if (status === 429) return 'rate-limited';
   if (status === 522) return 'connection-timeout-or-origin-unreachable';
   if (status === 520) return 'origin-returned-520';
@@ -104,16 +107,22 @@ function normalizeDiagnostic(result) {
 
 async function fetchTextWithDiagnostics(url, options = {}) {
   const headers = { ...FETCH_HEADERS, ...(options.headers ?? {}) };
+  const timeoutMs = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0
+    ? options.timeoutMs
+    : WORKER_FETCH_TIMEOUT_MS;
   let last = null;
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const startedAt = Date.now();
     const parsedUrl = new URL(url);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch(url, {
         cache: 'no-store',
         headers,
+        signal: controller.signal,
       });
       const text = await response.text();
       const result = {
@@ -133,6 +142,11 @@ async function fetchTextWithDiagnostics(url, options = {}) {
       if (response.ok || attempt === 1) return result;
       last = result;
     } catch (err) {
+      const error = err instanceof Error && err.name === 'AbortError'
+        ? `timeout after ${timeoutMs}ms`
+        : err instanceof Error
+          ? err.message
+          : String(err);
       last = {
         ok: false,
         status: null,
@@ -142,11 +156,13 @@ async function fetchTextWithDiagnostics(url, options = {}) {
         contentType: null,
         bodyLength: 0,
         durationMs: Date.now() - startedAt,
-        error: err instanceof Error ? err.message : String(err),
+        error,
         retryCount: attempt,
         text: '',
       };
       if (attempt === 1) return last;
+    } finally {
+      clearTimeout(timer);
     }
 
     await sleep(retryDelayMs());
@@ -1011,6 +1027,7 @@ function parseStooqProbeCsv(text, contentType) {
 async function probeGoogleFinanceBrentSource({ probeId, url }) {
   const result = await fetchTextWithDiagnostics(url, {
     headers: { Accept: 'text/html,text/plain,*/*' },
+    timeoutMs: SOURCE_PROBE_FETCH_TIMEOUT_MS,
   });
   const parsed = result.ok
     ? parseGoogleFinanceProbeHtml(result.text)
@@ -1037,7 +1054,9 @@ async function probeGoogleFinanceBrentSource({ probeId, url }) {
 async function probeStooqBrentSource(symbol) {
   const probeId = `stooq:${symbol}`;
   const url = stooqProbeUrl(symbol);
-  const result = await fetchTextWithDiagnostics(url);
+  const result = await fetchTextWithDiagnostics(url, {
+    timeoutMs: SOURCE_PROBE_FETCH_TIMEOUT_MS,
+  });
   const parsed = result.ok
     ? parseStooqProbeCsv(result.text, result.contentType)
     : {
