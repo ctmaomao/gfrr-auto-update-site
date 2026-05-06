@@ -1,8 +1,10 @@
-import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js';
-import { buildHealthDashboardModel } from './modules/health.js';
-import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, buildRuntimeState } from './modules/realtime.js';
-import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js';
-import { renderRealtimeStrip, renderHealthDashboard, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js';
+import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0G-9';
+import { buildHealthDashboardModel } from './modules/health.js?v=28.0G-9';
+import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, buildRuntimeState } from './modules/realtime.js?v=28.0G-9';
+import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0G-9';
+import { renderRealtimeStrip, renderHealthDashboard, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0G-9';
+
+window.__GFRR_FRONTEND_VERSION__ = '28.0G-9';
 
 async function main() {
   const [baseline, history, realtimeResult] = await Promise.all([

@@ -64,6 +64,26 @@ window.__GFRR_RUNTIME__?.realtimeFetchAudit
 - `selectedSource = none`：远端和本地 fallback 都不可用，页面只能走 baseline / degraded。
 - `cacheBusted = true`：前端已经尝试绕过缓存，问题通常不在浏览器缓存。
 
+### 2A. Android Chrome 旧前端缓存排查
+
+v28.0G-9 Frontend Asset Cache Busting 处理 Android Chrome cached old module graph：普通窗口可能缓存旧 `scripts/app.js` / ES module graph，导致页面仍显示 Actions/FRED 旧逻辑，例如 Brent 来源停留在 FRED 日度锚点；无痕窗口显示 Worker 独立生成 / 实时数据新鲜 / Yahoo + Trading Economics 双源确认，则说明线上 Worker-first runtime 正常，问题不在 Worker、DNS 或自定义域名。
+
+当前处理方式：
+
+```text
+index.html app.js entry → ?v=28.0G-9
+scripts/app.js and scripts/modules/*.js local imports → ?v=28.0G-9
+window.__GFRR_FRONTEND_VERSION__ → 28.0G-9
+```
+
+浏览器 Console 可执行：
+
+```js
+window.__GFRR_FRONTEND_VERSION__
+```
+
+应返回 `"28.0G-9"`。本轮不改 Worker runtime、不改数据源、不新增 KV、不 deploy Worker。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。后续 v28.0G-9B 会另开 bump helper，不在本轮实现。
+
 ## 3. Realtime workflow 排查
 
 检查 GitHub Actions 中的：

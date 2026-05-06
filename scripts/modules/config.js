@@ -1,4 +1,4 @@
-import { formatFiniteNumber } from './format.js';
+import { formatFiniteNumber } from './format.js?v=28.0G-9';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

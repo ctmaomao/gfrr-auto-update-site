@@ -232,6 +232,16 @@ const releaseStateDocs = [
 ];
 const operationsRunbookFile = 'docs/OPERATIONS.md';
 const dataContractFile = 'docs/DATA_CONTRACT.md';
+const frontendAssetVersion = '28.0G-9';
+const frontendAssetEntryFile = 'index.html';
+const frontendAssetAppFile = 'scripts/app.js';
+const frontendAssetModuleDir = 'scripts/modules';
+const frontendAssetDocs = [
+  'README.md',
+  'AGENTS.md',
+  'docs/OPERATIONS.md',
+  'docs/DATA_CONTRACT.md',
+];
 
 const workerContract = {
   mainPreviewFile: 'workers/gfrr-realtime-worker/src/worker-market-preview.js',
@@ -682,6 +692,68 @@ if (fs.existsSync(packageFile)) {
   }
 } else {
   addRuntimeFailure(packageFile, 'package.json missing');
+}
+
+if (fs.existsSync(frontendAssetEntryFile)) {
+  const text = fs.readFileSync(frontendAssetEntryFile, 'utf8');
+  if (!text.includes(`app.js?v=${frontendAssetVersion}`)) {
+    addRuntimeFailure(frontendAssetEntryFile, `missing app.js?v=${frontendAssetVersion}`);
+  }
+} else {
+  addRuntimeFailure(frontendAssetEntryFile, 'frontend entry file missing');
+}
+
+if (fs.existsSync(frontendAssetAppFile)) {
+  const text = fs.readFileSync(frontendAssetAppFile, 'utf8');
+  if (!text.includes('__GFRR_FRONTEND_VERSION__') || !text.includes(frontendAssetVersion)) {
+    addRuntimeFailure(frontendAssetAppFile, `missing frontend version marker ${frontendAssetVersion}`);
+  }
+} else {
+  addRuntimeFailure(frontendAssetAppFile, 'frontend app file missing');
+}
+
+const frontendAssetFiles = [
+  frontendAssetAppFile,
+  ...(fs.existsSync(frontendAssetModuleDir)
+    ? fs.readdirSync(frontendAssetModuleDir)
+      .filter((file) => file.endsWith('.js'))
+      .map((file) => `${frontendAssetModuleDir}/${file}`)
+    : [])
+];
+const localJsImportPattern = /(?:^|\n)\s*(?:import\s+(?:[^;]*?\s+from\s+)?|export\s+[^;]*?\s+from\s+)['"](\.{1,2}\/[^'"]+\.js(?:\?[^'"]*)?)['"]/gu;
+for (const file of frontendAssetFiles) {
+  if (!fs.existsSync(file)) {
+    addRuntimeFailure(file, 'frontend asset file missing');
+    continue;
+  }
+  const text = fs.readFileSync(file, 'utf8');
+  for (const match of text.matchAll(localJsImportPattern)) {
+    const specifier = match[1];
+    if (!specifier.endsWith(`?v=${frontendAssetVersion}`)) {
+      addRuntimeFailure(file, `local JS import must use ?v=${frontendAssetVersion}: ${specifier}`);
+    }
+  }
+}
+
+const frontendAssetDocText = frontendAssetDocs
+  .filter((file) => fs.existsSync(file))
+  .map((file) => fs.readFileSync(file, 'utf8'))
+  .join('\n');
+for (const file of frontendAssetDocs) {
+  if (!fs.existsSync(file)) {
+    addRuntimeFailure(file, 'frontend asset cache busting document missing');
+  }
+}
+for (const needle of [
+  'v28.0G-9',
+  'Frontend Asset Cache Busting',
+  'Android Chrome cached old module graph',
+  '__GFRR_FRONTEND_VERSION__',
+  'frontend asset cache version must be bumped when index.html or frontend JS changes',
+]) {
+  if (!frontendAssetDocText.includes(needle)) {
+    addRuntimeFailure('frontend asset cache busting docs', `missing marker "${needle}"`);
+  }
 }
 
 if (fs.existsSync(workerContract.mainPreviewFile)) {
