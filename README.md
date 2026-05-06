@@ -40,6 +40,7 @@
 - v28.0G-4C 实现 Trading Economics freshness hard gate：Brent promotion 要求 Yahoo fresh + TE observedAt fresh；TE observedAt 不可解析或超过 48 小时会 hold promotion。TE candidate 仍保留 value/audit，observedAt failure does not make candidate ok false；D-6 confirmed-extreme-move 也要求 TE freshness fresh。
 - v28.0G-6 Operations Runbook 已加入 `docs/OPERATIONS.md`：运维判断、rollback / No rollback、KV usage 和 development sequencing 以该 runbook 为准。PR #53 superseded；KV write guard deferred，先观察。
 - v28.0G-7A Health Summary Snapshot / Audit Export：`Check Worker Health` 生成 `worker-health-snapshot` artifact，用于回看 Worker / Brent TE freshness / sourceProbe / secondary / reasons；不写 KV，不写 data/realtime，不改变 fail 边界。
+- v28.0G-7B Health Snapshot Review Helper：`npm run review:worker-health-snapshot -- health-worker-snapshot.json` 本地只读审阅 artifact，输出 PASS / WARN / FAIL；不访问网络，不写 KV / data / realtime，不替代 hard gate。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。

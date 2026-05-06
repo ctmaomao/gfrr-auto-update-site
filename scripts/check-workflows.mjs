@@ -207,6 +207,7 @@ const forbiddenRuntimePatterns = [
 const dailyWorkflowFile = '.github/workflows/build-daily-radar-data.yml';
 const auditScriptFile = 'scripts/audit-daily-vs-worker.mjs';
 const workerHealthScriptFile = 'scripts/check-worker-health.mjs';
+const workerHealthSnapshotReviewScriptFile = 'scripts/review-worker-health-snapshot.mjs';
 const packageFile = 'package.json';
 const secondaryConsolidationDocs = [
   'README.md',
@@ -412,6 +413,38 @@ if (!fs.existsSync(auditScriptFile)) {
   addRuntimeFailure(auditScriptFile, 'Daily vs Worker audit script missing');
 }
 
+if (fs.existsSync(workerHealthSnapshotReviewScriptFile)) {
+  const text = fs.readFileSync(workerHealthSnapshotReviewScriptFile, 'utf8');
+  for (const needle of [
+    'Worker Health Snapshot Review',
+    'schemaVersion',
+    'tradingEconomics',
+    'SourceProbe',
+    'Secondary',
+    'PASS',
+    'WARN',
+    'FAIL',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(workerHealthSnapshotReviewScriptFile, `missing snapshot review marker "${needle}"`);
+    }
+  }
+  for (const forbiddenNeedle of [
+    'fetch(',
+    'wrangler',
+    'GFRR_MARKET_KV',
+    'put(',
+    'data/radar-data.json',
+    'realtime/market.json',
+  ]) {
+    if (text.includes(forbiddenNeedle)) {
+      addRuntimeFailure(workerHealthSnapshotReviewScriptFile, `snapshot review helper must remain local read-only; found "${forbiddenNeedle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(workerHealthSnapshotReviewScriptFile, 'Worker health snapshot review script missing');
+}
+
 if (fs.existsSync(workerHealthScriptFile)) {
   const text = fs.readFileSync(workerHealthScriptFile, 'utf8');
   for (const needle of [
@@ -604,6 +637,9 @@ if (fs.existsSync(packageFile)) {
   }
   if (!packageText.includes('"check:worker-health": "node scripts/check-worker-health.mjs"')) {
     addRuntimeFailure(packageFile, 'missing check:worker-health package script');
+  }
+  if (!packageText.includes('"review:worker-health-snapshot": "node scripts/review-worker-health-snapshot.mjs"')) {
+    addRuntimeFailure(packageFile, 'missing review:worker-health-snapshot package script');
   }
 } else {
   addRuntimeFailure(packageFile, 'package.json missing');
