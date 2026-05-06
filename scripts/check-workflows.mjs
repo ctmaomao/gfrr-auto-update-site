@@ -130,7 +130,11 @@ const contracts = [
       'actions/setup-node@v6',
       'node-version: 24',
       'package-manager-cache: false',
-      'node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy'
+      'node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy',
+      '--snapshot-file health-worker-snapshot.json',
+      'actions/upload-artifact@v6',
+      'worker-health-snapshot',
+      'retention-days: 14'
     ],
     forbidden: [
       'contents: write',
@@ -416,6 +420,13 @@ if (fs.existsSync(workerHealthScriptFile)) {
     'FETCH_TIMEOUT_MS = 4500',
     '--github-summary',
     '--fail-on-unhealthy',
+    '--snapshot-file',
+    'schemaVersion',
+    'v28.0G-7A',
+    'worker-first-hard-gate',
+    'tradingEconomics',
+    'validateSnapshotPath',
+    'data/ or realtime/',
     'Worker-first Health Check',
     'hard gate for Cloudflare Worker runtime',
     'Worker-first runtime is healthy',
@@ -461,7 +472,6 @@ if (fs.existsSync(workerHealthScriptFile)) {
     }
   }
   for (const forbiddenNeedle of [
-    'fs.writeFileSync',
     'GFRR_MARKET_KV',
     'data/radar-data.json',
     'realtime/market.json',

@@ -26,4 +26,12 @@ jobs:
           package-manager-cache: false
 
       - name: Check Worker health
-        run: node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy
+        run: node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy --snapshot-file health-worker-snapshot.json
+
+      - name: Upload Worker health snapshot
+        uses: actions/upload-artifact@v6
+        with:
+          name: worker-health-snapshot
+          path: health-worker-snapshot.json
+          if-no-files-found: error
+          retention-days: 14

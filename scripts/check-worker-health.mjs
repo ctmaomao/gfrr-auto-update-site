@@ -25,6 +25,13 @@ function hasArg(name) {
   return process.argv.includes(name);
 }
 
+function argValue(name) {
+  const index = process.argv.indexOf(name);
+  if (index === -1) return null;
+  const value = process.argv[index + 1];
+  return value && !value.startsWith('--') ? value : null;
+}
+
 function finiteNumber(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
@@ -219,6 +226,12 @@ function checkWorkerPreview(result) {
   const payload = result.payload || {};
   const values = payload.values || {};
   const promotion = payload.brentValidation?.promotion || {};
+  const confirmationSources = Array.isArray(promotion.confirmationSources)
+    ? promotion.confirmationSources
+    : [];
+  const tradingEconomicsConfirmation = confirmationSources.find(
+    (source) => source?.source === 'tradingeconomics:brent-crude-oil',
+  ) || {};
   const sourceProbe = payload.brentValidation?.sourceProbe || {};
   const sourceProbeProbes = Array.isArray(sourceProbe.probes) ? sourceProbe.probes : null;
   const age = ageMinutes(payload.updatedAt);
@@ -263,7 +276,19 @@ function checkWorkerPreview(result) {
     brent: finiteNumber(values.brent),
     gold: finiteNumber(values.gold),
     promotionApplied: promotion.applied === true,
+    promotionSelectedValue: finiteNumber(promotion.selectedValue),
+    promotionSelectedSource: promotion.selectedSource ?? null,
+    promotionReason: promotion.reason ?? null,
     moveStatus: promotion.moveStatus ?? null,
+    promotedChangePct: finiteNumber(promotion.promotedChangePct),
+    tradingEconomics: {
+      status: tradingEconomicsConfirmation.status ?? null,
+      value: finiteNumber(tradingEconomicsConfirmation.value),
+      observedAt: tradingEconomicsConfirmation.observedAt ?? null,
+      ageHours: finiteNumber(tradingEconomicsConfirmation.ageHours),
+      freshnessStatus: tradingEconomicsConfirmation.freshnessStatus ?? null,
+      freshnessReason: tradingEconomicsConfirmation.freshnessReason ?? null,
+    },
     sourceProbeReused: sourceProbe.reused === true,
     sourceProbeFrequencyMinutes: sourceProbe.frequencyMinutes ?? null,
     sourceProbeCount: sourceProbe.probeCount ?? null,
@@ -512,6 +537,110 @@ function tableValue(value) {
   return String(value).replace(/\r?\n/gu, ' ').replace(/\|/gu, '\\|');
 }
 
+function jsonValue(value) {
+  return value === undefined ? null : value;
+}
+
+function snapshotSecondarySource(source, includeUs10y = false) {
+  const base = {
+    status: jsonValue(source?.status),
+    value: jsonValue(source?.value),
+    observedAt: jsonValue(source?.observedAt),
+    freshnessStatus: jsonValue(source?.freshnessStatus),
+    observedAgeHours: jsonValue(source?.observedAgeHours),
+    freshnessReason: jsonValue(source?.freshnessReason),
+  };
+  if (!includeUs10y) return base;
+  return {
+    ...base,
+    rawValue: jsonValue(source?.rawValue),
+    normalization: jsonValue(source?.normalization),
+    normalizationReason: jsonValue(source?.normalizationReason),
+  };
+}
+
+function buildSnapshot(summary) {
+  return {
+    schemaVersion: 'v28.0G-7A',
+    generatedAt: summary.checkedAt,
+    role: 'worker-first-hard-gate',
+    overall: summary.overall,
+    action: actionForOverall(summary.overall),
+    interpretation: interpretationForOverall(summary.overall),
+    worker: {
+      status: jsonValue(summary.worker.status),
+      updatedAt: jsonValue(summary.worker.updatedAt),
+      ageMinutes: jsonValue(summary.worker.ageMinutes),
+      sourceMode: jsonValue(summary.worker.sourceMode),
+      healthScore: jsonValue(summary.worker.healthScore),
+      criticalMissing: jsonValue(summary.worker.criticalMissing),
+      unavailable: jsonValue(summary.worker.unavailable),
+      brent: jsonValue(summary.worker.brent),
+      gold: jsonValue(summary.worker.gold),
+      promotionApplied: jsonValue(summary.worker.promotionApplied),
+      moveStatus: jsonValue(summary.worker.moveStatus),
+      sourceProbeReused: jsonValue(summary.worker.sourceProbeReused),
+      sourceProbeFrequencyMinutes: jsonValue(summary.worker.sourceProbeFrequencyMinutes),
+      sourceProbeCount: jsonValue(summary.worker.sourceProbeCount),
+      secondaryPollution: jsonValue(summary.worker.secondaryPollution),
+    },
+    brent: {
+      promotionApplied: jsonValue(summary.worker.promotionApplied),
+      selectedValue: jsonValue(summary.worker.promotionSelectedValue),
+      selectedSource: jsonValue(summary.worker.promotionSelectedSource),
+      reason: jsonValue(summary.worker.promotionReason),
+      moveStatus: jsonValue(summary.worker.moveStatus),
+      promotedChangePct: jsonValue(summary.worker.promotedChangePct),
+      tradingEconomics: {
+        status: jsonValue(summary.worker.tradingEconomics?.status),
+        value: jsonValue(summary.worker.tradingEconomics?.value),
+        observedAt: jsonValue(summary.worker.tradingEconomics?.observedAt),
+        ageHours: jsonValue(summary.worker.tradingEconomics?.ageHours),
+        freshnessStatus: jsonValue(summary.worker.tradingEconomics?.freshnessStatus),
+        freshnessReason: jsonValue(summary.worker.tradingEconomics?.freshnessReason),
+      },
+    },
+    secondary: {
+      status: jsonValue(summary.secondary.status),
+      updatedAt: jsonValue(summary.secondary.updatedAt),
+      ageMinutes: jsonValue(summary.secondary.ageMinutes),
+      sourceMode: jsonValue(summary.secondary.sourceMode),
+      unavailable: jsonValue(summary.secondary.unavailable),
+      coreSecondarySet: CORE_SECONDARY_SET,
+      sources: {
+        vix: snapshotSecondarySource(summary.secondary.vix),
+        gold: snapshotSecondarySource(summary.secondary.gold),
+        dxy: snapshotSecondarySource(summary.secondary.dxy),
+        us10y: snapshotSecondarySource(summary.secondary.us10y, true),
+        spx: snapshotSecondarySource(summary.secondary.spx),
+      },
+    },
+    reasons: summary.reasons,
+  };
+}
+
+function validateSnapshotPath(snapshotPath) {
+  if (!snapshotPath) return null;
+  const normalized = snapshotPath.replace(/\\/gu, '/');
+  if (normalized.startsWith('/') || /^[A-Za-z]:\//u.test(normalized)) {
+    throw new Error('--snapshot-file must be a relative path');
+  }
+  if (normalized.split('/').some((part) => part === '..')) {
+    throw new Error('--snapshot-file must not contain parent directory segments');
+  }
+  if (/(^|\/)(data|realtime)(\/|$)/u.test(normalized)) {
+    throw new Error('--snapshot-file must not write into data/ or realtime/');
+  }
+  return snapshotPath;
+}
+
+function writeSnapshot(summary, snapshotPath) {
+  if (!snapshotPath) return;
+  const safePath = validateSnapshotPath(snapshotPath);
+  fs.writeFileSync(safePath, `${JSON.stringify(buildSnapshot(summary), null, 2)}\n`);
+  console.log(`Worker health snapshot written: ${safePath}`);
+}
+
 function appendGithubSummary(summary) {
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;
   if (!summaryPath) return;
@@ -574,6 +703,20 @@ function appendGithubSummary(summary) {
 
 const githubSummary = hasArg('--github-summary');
 const failOnUnhealthy = hasArg('--fail-on-unhealthy');
+const snapshotFile = (() => {
+  if (!hasArg('--snapshot-file')) return null;
+  const value = argValue('--snapshot-file');
+  if (!value) {
+    console.error('--snapshot-file requires a relative output path');
+    process.exit(1);
+  }
+  try {
+    return validateSnapshotPath(value);
+  } catch (err) {
+    console.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+})();
 
 const [workerResult, secondaryResult] = await Promise.all([
   fetchJson(WORKER_PREVIEW_URL),
@@ -591,4 +734,5 @@ const summary = {
 
 printSummary(summary);
 if (githubSummary) appendGithubSummary(summary);
+writeSnapshot(summary, snapshotFile);
 if (failOnUnhealthy && summary.overall === 'unhealthy') process.exit(1);

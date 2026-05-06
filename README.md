@@ -39,6 +39,7 @@
 - v28.0G-4B decision：建议另开 G-4C 实现 Trading Economics freshness hard gate；G-4B does not change runtime behavior。G-4C 方案为 TE `observedAt` 可解析且 `ageHours <= 48` 小时，否则用 `tradingeconomics-observedAt-invalid` 或 `tradingeconomics-confirmation-stale` hold promotion；旧 PR #53 已 superseded，不再使用。
 - v28.0G-4C 实现 Trading Economics freshness hard gate：Brent promotion 要求 Yahoo fresh + TE observedAt fresh；TE observedAt 不可解析或超过 48 小时会 hold promotion。TE candidate 仍保留 value/audit，observedAt failure does not make candidate ok false；D-6 confirmed-extreme-move 也要求 TE freshness fresh。
 - v28.0G-6 Operations Runbook 已加入 `docs/OPERATIONS.md`：运维判断、rollback / No rollback、KV usage 和 development sequencing 以该 runbook 为准。PR #53 superseded；KV write guard deferred，先观察。
+- v28.0G-7A Health Summary Snapshot / Audit Export：`Check Worker Health` 生成 `worker-health-snapshot` artifact，用于回看 Worker / Brent TE freshness / sourceProbe / secondary / reasons；不写 KV，不写 data/realtime，不改变 fail 边界。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。

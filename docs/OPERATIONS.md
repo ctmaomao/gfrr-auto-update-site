@@ -516,6 +516,12 @@ git push origin main
 - 文档 / Summary / check 脚本改动通常不需要 deploy。
 - 不使用旧 PR / stacked PR；旧 PR #53 已 superseded。
 
+## v28.0G-7A Health Summary Snapshot / Audit Export
+
+v28.0G-7A 只增强 `Check Worker Health` 的只读输出。它保留既有 stdout 和 GitHub Step Summary，并在 workflow 中通过 `--snapshot-file health-worker-snapshot.json` 生成结构化 JSON，再上传 GitHub artifact `worker-health-snapshot`。该 snapshot 不写 Cloudflare KV，不写 `data/*.json` / `realtime/*.json`，不 deploy，也不是网站运行输入。
+
+snapshot 用于回看历史健康状态，包含 Worker Health hard gate 结果、Brent promotion 与 Trading Economics freshness、sourceProbe 摘要、core secondary freshness、secondary pollution 状态和 reasons。`Check Worker Health` 仍是 Worker-first runtime hard gate；snapshot 不改变 fail 边界。`Check Realtime Health` 仍是 fallback / Daily baseline soft observer，不受 G-7A 影响。KV write guard deferred，继续先观察。
+
 **v28.0D-7 Brent source explainability UI**：页面“盘中快变量 / 布伦特”会显示 Brent 来源与 D-6 move status，例如 FRED 日度锚点、FRED 滞后且 Yahoo + Trading Economics 双源确认、正常 / 较大波动观察 / 已确认极端波动 / 未确认跳变。该 UI 仅用于解释 selected realtime payload，不改变 Worker 数据、Brent promotion、scoring、decision，也不读取或展示 secondary diagnostics preview。
 
 **v28.0D-8 Brent source hygiene**：Google Finance Brent 继续只作为 HTML experimental diagnostic，可能命中 futures chain 中的 `0` 或非主价格；非正值必须标记 `excluded-non-positive-or-invalid`，不参与 consensus 或 promotion。Stooq `brn.f` 保留为观测源，但 CSV close 缺失时应明确记录 `csv-no-numeric-close` 或 `symbol-download-unavailable`。新增 `stooq:brn.c` alternate diagnostic probe，仅进入 audit candidateSources，不参与主值、consensus 或 promotion。当前 Brent 主值逻辑仍是 FRED anchor + Yahoo / Trading Economics confirmed promotion，失败的 Google Finance / Stooq 不影响 `healthScore` / `criticalMissing` / `unavailable`。
