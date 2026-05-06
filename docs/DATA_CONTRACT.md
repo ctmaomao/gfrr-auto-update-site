@@ -116,7 +116,15 @@ v28.0G-9 Frontend Asset Cache Busting 只定义前端静态资源版本契约，
 - `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0G-9"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
-- 后续 v28.0G-9B 会另开 bump helper，不在本轮实现。
+
+v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
+
+```bash
+node scripts/bump-frontend-asset-version.mjs 28.0G-10
+npm run bump:frontend-asset-version -- 28.0G-10
+```
+
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0G-9`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

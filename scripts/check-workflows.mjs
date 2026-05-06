@@ -236,11 +236,13 @@ const frontendAssetVersion = '28.0G-9';
 const frontendAssetEntryFile = 'index.html';
 const frontendAssetAppFile = 'scripts/app.js';
 const frontendAssetModuleDir = 'scripts/modules';
+const frontendAssetBumpScriptFile = 'scripts/bump-frontend-asset-version.mjs';
 const frontendAssetDocs = [
   'README.md',
   'AGENTS.md',
   'docs/OPERATIONS.md',
   'docs/DATA_CONTRACT.md',
+  'workers/gfrr-realtime-worker/README.md',
 ];
 
 const workerContract = {
@@ -690,8 +692,39 @@ if (fs.existsSync(packageFile)) {
   if (!packageText.includes('"review:worker-health-snapshot": "node scripts/review-worker-health-snapshot.mjs"')) {
     addRuntimeFailure(packageFile, 'missing review:worker-health-snapshot package script');
   }
+  if (!packageText.includes('"bump:frontend-asset-version": "node scripts/bump-frontend-asset-version.mjs"')) {
+    addRuntimeFailure(packageFile, 'missing bump:frontend-asset-version package script');
+  }
 } else {
   addRuntimeFailure(packageFile, 'package.json missing');
+}
+
+if (fs.existsSync(frontendAssetBumpScriptFile)) {
+  const text = fs.readFileSync(frontendAssetBumpScriptFile, 'utf8');
+  for (const needle of [
+    'Frontend asset version bumped to',
+    '__GFRR_FRONTEND_VERSION__',
+    'scripts/modules',
+    'index.html',
+    'check-workflows.mjs',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(frontendAssetBumpScriptFile, `missing bump helper marker "${needle}"`);
+    }
+  }
+  for (const forbiddenNeedle of [
+    'fetch(',
+    'wrangler',
+    'GFRR_MARKET_KV',
+    'data/radar-data.json',
+    'realtime/market.json',
+  ]) {
+    if (text.includes(forbiddenNeedle)) {
+      addRuntimeFailure(frontendAssetBumpScriptFile, `frontend bump helper must remain local-only; found "${forbiddenNeedle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(frontendAssetBumpScriptFile, 'frontend asset version bump helper missing');
 }
 
 if (fs.existsSync(frontendAssetEntryFile)) {
@@ -745,11 +778,15 @@ for (const file of frontendAssetDocs) {
   }
 }
 for (const needle of [
-  'v28.0G-9',
+  `v${frontendAssetVersion}`,
   'Frontend Asset Cache Busting',
   'Android Chrome cached old module graph',
   '__GFRR_FRONTEND_VERSION__',
   'frontend asset cache version must be bumped when index.html or frontend JS changes',
+  'v28.0G-9B',
+  'Frontend Asset Version Bump Helper',
+  'bump:frontend-asset-version',
+  'node scripts/bump-frontend-asset-version.mjs 28.0G-10',
 ]) {
   if (!frontendAssetDocText.includes(needle)) {
     addRuntimeFailure('frontend asset cache busting docs', `missing marker "${needle}"`);

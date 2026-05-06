@@ -42,7 +42,8 @@
 - v28.0G-6 Operations Runbook 已加入 `docs/OPERATIONS.md`：运维判断、rollback / No rollback、KV usage 和 development sequencing 以该 runbook 为准。PR #53 superseded；KV write guard deferred，先观察。
 - v28.0G-7A Health Summary Snapshot / Audit Export：`Check Worker Health` 生成 `worker-health-snapshot` artifact，用于回看 Worker / Brent TE freshness / sourceProbe / secondary / reasons；不写 KV，不写 data/realtime，不改变 fail 边界。
 - v28.0G-7B Health Snapshot Review Helper：`npm run review:worker-health-snapshot -- health-worker-snapshot.json` 本地只读审阅 artifact，输出 PASS / WARN / FAIL；不访问网络，不写 KV / data / realtime，不替代 hard gate。
-- v28.0G-9 Frontend Asset Cache Busting：针对 Android Chrome cached old module graph 导致普通窗口仍显示 Actions/FRED 旧前端逻辑的问题，`index.html` 入口 `app.js` 与前端 ES module import graph 统一追加 `?v=28.0G-9`，并暴露 `window.__GFRR_FRONTEND_VERSION__` 供 Console 确认。无痕窗口正常证明线上 Worker-first runtime 正常；本轮不改 Worker runtime、数据源、KV，也不 deploy Worker。后续 v28.0G-9B 会另开 bump helper，本轮不实现。
+- v28.0G-9 Frontend Asset Cache Busting：针对 Android Chrome cached old module graph 导致普通窗口仍显示 Actions/FRED 旧前端逻辑的问题，`index.html` 入口 `app.js` 与前端 ES module import graph 统一追加 `?v=28.0G-9`，并暴露 `window.__GFRR_FRONTEND_VERSION__` 供 Console 确认。无痕窗口正常证明线上 Worker-first runtime 正常；本轮不改 Worker runtime、数据源、KV，也不 deploy Worker。
+- v28.0G-9B Frontend Asset Version Bump Helper：新增本地只读维护工具 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0G-9`；该工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。
@@ -178,7 +179,14 @@ npm run check:data
 
 新增 `scripts/` 脚本或 `scripts/modules/` 模块后，通常会自动纳入对应检查，无需手动维护检查列表。
 
-前端静态资源维护规则：frontend asset cache version must be bumped when index.html or frontend JS changes。以后只要修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`，必须同步 bump frontend asset cache version，并替换 `index.html` 入口脚本与所有本地 module import query。不需要 bump 的情况包括只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json`，或只 deploy Worker。
+前端静态资源维护规则：frontend asset cache version must be bumped when index.html or frontend JS changes。以后只要修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`，必须同步 bump frontend asset cache version，并替换 `index.html` 入口脚本与所有本地 module import query。当前 frontend asset cache version 是 `28.0G-9`。推荐使用：
+
+```bash
+node scripts/bump-frontend-asset-version.mjs 28.0G-10
+npm run bump:frontend-asset-version -- 28.0G-10
+```
+
+不需要 bump 的情况包括只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json`，或只 deploy Worker。
 
 如果 `check:data` 输出本地 `realtime/market.json` 与 `dailyRealtimeInput.updatedAt` 不匹配的 warning，但最终显示 `Validation passed (v27.0)`，这是可接受状态。本地 fallback 可能不是 Daily 实际消费的 realtime 版本。
 

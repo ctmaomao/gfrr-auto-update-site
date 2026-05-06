@@ -82,7 +82,16 @@ window.__GFRR_FRONTEND_VERSION__ → 28.0G-9
 window.__GFRR_FRONTEND_VERSION__
 ```
 
-应返回 `"28.0G-9"`。本轮不改 Worker runtime、不改数据源、不新增 KV、不 deploy Worker。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。后续 v28.0G-9B 会另开 bump helper，不在本轮实现。
+应返回 `"28.0G-9"`。本轮不改 Worker runtime、不改数据源、不新增 KV、不 deploy Worker。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
+
+v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
+
+```bash
+node scripts/bump-frontend-asset-version.mjs 28.0G-10
+npm run bump:frontend-asset-version -- 28.0G-10
+```
+
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0G-9`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 
 ## 3. Realtime workflow 排查
 
