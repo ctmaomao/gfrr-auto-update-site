@@ -223,6 +223,13 @@ const g4cRuntimeDocs = [
   'docs/OPERATIONS.md',
   'workers/gfrr-realtime-worker/README.md',
 ];
+const releaseStateDocs = [
+  'README.md',
+  'AGENTS.md',
+  'docs/DATA_CONTRACT.md',
+  'docs/OPERATIONS.md',
+  'workers/gfrr-realtime-worker/README.md',
+];
 const operationsRunbookFile = 'docs/OPERATIONS.md';
 const dataContractFile = 'docs/DATA_CONTRACT.md';
 
@@ -579,6 +586,27 @@ for (const file of g4cRuntimeDocs) {
   }
 }
 
+for (const file of releaseStateDocs) {
+  if (!fs.existsSync(file)) {
+    addRuntimeFailure(file, 'release state document missing');
+    continue;
+  }
+  const text = fs.readFileSync(file, 'utf8');
+  for (const needle of [
+    'v28.0G-4C',
+    'Trading Economics freshness hard gate',
+    'worker-health-snapshot',
+    'review:worker-health-snapshot',
+    'Operations Runbook',
+    'KV write guard deferred',
+    'PR #53 superseded',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(file, `missing release state marker "${needle}"`);
+    }
+  }
+}
+
 if (fs.existsSync(operationsRunbookFile)) {
   const text = fs.readFileSync(operationsRunbookFile, 'utf8');
   for (const needle of [
@@ -605,6 +633,8 @@ if (fs.existsSync(dataContractFile)) {
   for (const needle of [
     'Worker-first runtime hard gate',
     'fallback / Daily baseline soft observer',
+    'tradingeconomics-observedAt-invalid',
+    'tradingeconomics-confirmation-stale',
     'promotionApplied',
     'moveStatus',
     'freshnessStatus',
@@ -620,6 +650,15 @@ if (fs.existsSync(dataContractFile)) {
 
 const readmeText = fs.existsSync('README.md') ? fs.readFileSync('README.md', 'utf8') : '';
 const agentsText = fs.existsSync('AGENTS.md') ? fs.readFileSync('AGENTS.md', 'utf8') : '';
+for (const needle of [
+  'serial trunk mode',
+  'latest main',
+  'no stacked PR',
+]) {
+  if (!agentsText.includes(needle)) {
+    addRuntimeFailure('AGENTS.md', `missing serial trunk marker "${needle}"`);
+  }
+}
 for (const needle of [
   'Operations Runbook',
   'PR #53 superseded',

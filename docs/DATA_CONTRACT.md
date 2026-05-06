@@ -207,11 +207,11 @@ v28.0G-1 起，`check-worker-health` 对 core secondary set 的 `observedAt` 派
 
 secondary stale 不等于错误；市场关闭、交易时段和节假日可能让 US10Y / SPX / VIX 等 `observedAt` 停留在上一交易日。G-1 初版中 `stale-warning` / `stale-critical` / missing / unparsable 只让 health check overall 进入 warning，不直接 fail workflow。若未来要让 `stale-critical` fail，必须另开版本。
 
-Operational fields such as `promotionApplied`, `promotionReason`, `moveStatus`, and TE confirm `freshnessStatus` / `freshnessReason` explain why Brent promotion did or did not apply. They are audit / decision fields, not render-layer inputs. Secondary diagnostics must not create secondary pollution in main preview: `secondarySources`, `secondaryDiagnostics`, and `secondarySourceSummary` belong outside `/market.worker-preview.json`. Cloudflare KV usage is not a payload contract, but it is an operational constraint; KV write guard is deferred and tracked through the Operations Runbook rather than encoded as a data field.
+Operational fields such as `promotionApplied`, `promotionReason`, `moveStatus`, and TE confirm `freshnessStatus` / `freshnessReason` explain why Brent promotion did or did not apply. They are audit / decision fields, not render-layer inputs. Secondary diagnostics must not create secondary pollution in main preview: `secondarySources`, `secondaryDiagnostics`, and `secondarySourceSummary` belong outside `/market.worker-preview.json`. Cloudflare KV usage is not a payload contract, but it is an operational constraint; KV write guard deferred and tracked through the Operations Runbook rather than encoded as a data field.
 
 v28.0G-7A adds a Check Worker Health snapshot artifact named `worker-health-snapshot`. The JSON snapshot is an audit export of the health summary only: it may include Worker Health, Brent / Trading Economics freshness, sourceProbe, secondary freshness, and reasons. It is not a website runtime input, not a `data/*.json` or `realtime/*.json` product, and not a payload contract for `/market.worker-preview.json` or `/market.secondary-preview.json`. The snapshot does not change `Check Worker Health` hard gate semantics or `Check Realtime Health` soft observer semantics.
 
-v28.0G-7B adds `scripts/review-worker-health-snapshot.mjs`, a local read-only helper for downloaded G-7A artifacts. It reports PASS / WARN / FAIL from the snapshot fields and does not access network, write KV, write `data/*.json` / `realtime/*.json`, or change runtime behavior. The review output is an operational convenience, not a data contract and not a replacement for the scheduled hard gate.
+v28.0G-7B adds `scripts/review-worker-health-snapshot.mjs` and `review:worker-health-snapshot`, a local read-only helper for downloaded G-7A artifacts. It reports PASS / WARN / FAIL from the snapshot fields and does not access network, write KV, write `data/*.json` / `realtime/*.json`, or change runtime behavior. The review output is an operational convenience, not a data contract and not a replacement for the scheduled hard gate.
 
 ## displayInputsBaseline 契约
 
@@ -438,7 +438,7 @@ v28.0D-5 起，FRED `DCOILBRENTEU` 仍是 Brent anchor。只有同时满足以�
 - FRED anchor `ok`，且 value 为正的 finite number。
 - FRED `observedAt` 超过 72 小时。
 - Yahoo `BZ=F` `ok`，value 为正的 finite number，且 observedAt 不超过 48 小时。
-- Trading Economics Brent diagnostic `ok`，value 为正的 finite number。
+- Trading Economics Brent diagnostic `ok`，value 为正的 finite number，`observedAt` 可解析，且 `ageHours <= 48`。
 - Yahoo 与 Trading Economics 相对差距不超过 2%。
 - Google Finance 的 0 或其他非正值必须排除。
 - Stooq parse fail 或 unavailable 必须排除。
@@ -451,13 +451,13 @@ promotion 成功时：
 
 promotion 失败时，`values.brent` 继续使用 FRED anchor。promotion 成功或失败都不得改变 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable` 的计算规则，也不得影响 VIX secondary preview。
 
-v28.0G-4A 起，Trading Economics Brent 会额外输出 `observedAt` audit：`brentValidation.promotion.confirmationSources` 与 `brentValidation.audit.candidateSources` 可显示 Trading Economics 的 `observedAt`、`ageHours`、`freshnessStatus` 与 `freshnessReason`。这些字段只用于 diagnostics / audit；`freshnessStatus = unknown` 或 `tradingeconomics-observedAt-unparsed` 不会阻止 promotion，Trading Economics freshness 暂不进入 hard gate。旧 Draft PR #53 不应直接 merge，因为它基于旧分支、引入 hard gate 风险且未完成完整检查；G-4B / G-4C 必须基于最新 main 串行 trunk flow。
+v28.0G-4A 起，Trading Economics Brent 会额外输出 `observedAt` audit：`brentValidation.promotion.confirmationSources` 与 `brentValidation.audit.candidateSources` 可显示 Trading Economics 的 `observedAt`、`ageHours`、`freshnessStatus` 与 `freshnessReason`。G-4A 字段仍保留，但当前不再只是 audit-only；v28.0G-4C 会使用这些字段参与 hard gate。旧 Draft PR #53 superseded，不应 merge / cherry-pick；后续必须基于 latest main 串行 trunk flow。
 
-### G-4B decision: Trading Economics freshness hard gate
+### G-4B / G-4C Trading Economics freshness hard gate
 
-v28.0G-4B 是 decision review，不是 runtime change。G-4B does not change runtime behavior，也不改变 `values.brent`、`brentValidation.promotion`、D-6 `moveStatus` / extreme-move guard 或 sourceProbe 实际行为。当前线上行为仍是 G-4A audit-only：Trading Economics `observedAt` 已能解析并显示 `freshnessStatus = fresh / stale / unknown`，解析失败仍只作为 diagnostic。
+v28.0G-4B 是历史 decision review，不是 runtime change；当前线上已到 v28.0G-4C。G-4C 是当前 Brent promotion contract：Trading Economics `observedAt` 已不只是 audit 字段，会参与 promotion hard gate。
 
-G-4B 结论：建议进入 v28.0G-4C，实现保守的 Trading Economics freshness hard gate。G-4C 中 Trading Economics confirmation 应同时满足 `ok === true`、value 为正的 finite number、`observedAt` 可解析、`ageHours` 为 finite number，且 `ageHours <= BRENT_CONFIRMATION_FRESH_HOURS`（48 小时）。
+G-4C 中 Trading Economics confirmation 应同时满足 `ok === true`、value 为正的 finite number、`observedAt` 可解析、`ageHours` 为 finite number，且 `ageHours <= BRENT_CONFIRMATION_FRESH_HOURS`（48 小时）。TE fresh 时才可进入 divergence / D-6 gate。
 
 G-4C 计划中的 hard hold 条件：
 

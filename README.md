@@ -17,7 +17,7 @@
 
 ## 当前版本状态
 
-当前处于 `v28.0E-0` 工程进度；页面公开标签仍为 `v28.0C`。
+当前处于 `v28.0G` 后段稳定观察 / health snapshot 阶段；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。
 
 已经具备：
 
@@ -34,6 +34,7 @@
 - Daily vs Worker Input Audit 已上线，用于观察 Daily 消费的 `realtime-data` payload 与当前 Worker preview 的差异；该审计不改变 Daily 输入或前端 Worker-first 选择逻辑。
 - Worker-first Health Check 已上线，定时只读检查主 `/market.worker-preview.json` 与独立 `/market.secondary-preview.json` 的健康、隔离和诊断字段。
 - Check Realtime Health 已对齐为 soft-fail：只观察 GitHub `realtime-data` fallback / Daily baseline freshness，stale / unavailable 只报告 warning 与 `shouldRecover`，Worker-first runtime hard gate 由 Check Worker Health 承担。
+- Recover Stale Realtime Market 只处理 fallback `realtime-data` 恢复，不回滚或修正 Worker-first runtime。
 - v28.0G-3 只清理健康检查 Summary 文案：Check Worker Health 明确为 hard gate，Check Realtime Health 明确为 fallback / Daily baseline soft observer；不改变数据源、Worker 或前端。
 - v28.0G-4A 增加 Trading Economics Brent observedAt audit-only：只在 Brent promotion / audit 输出中展示 observedAt freshness 诊断，不改变 `values.brent` 或 promotion hard gate。
 - v28.0G-4B decision：建议另开 G-4C 实现 Trading Economics freshness hard gate；G-4B does not change runtime behavior。G-4C 方案为 TE `observedAt` 可解析且 `ageHours <= 48` 小时，否则用 `tradingeconomics-observedAt-invalid` 或 `tradingeconomics-confirmation-stale` hold promotion；旧 PR #53 已 superseded，不再使用。
