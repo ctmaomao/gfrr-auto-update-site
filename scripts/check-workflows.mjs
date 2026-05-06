@@ -218,6 +218,8 @@ const g4cRuntimeDocs = [
   'docs/OPERATIONS.md',
   'workers/gfrr-realtime-worker/README.md',
 ];
+const operationsRunbookFile = 'docs/OPERATIONS.md';
+const dataContractFile = 'docs/DATA_CONTRACT.md';
 
 const workerContract = {
   mainPreviewFile: 'workers/gfrr-realtime-worker/src/worker-market-preview.js',
@@ -531,6 +533,57 @@ for (const file of g4cRuntimeDocs) {
     if (!text.includes(needle)) {
       addRuntimeFailure(file, `missing G-4C runtime marker "${needle}"`);
     }
+  }
+}
+
+if (fs.existsSync(operationsRunbookFile)) {
+  const text = fs.readFileSync(operationsRunbookFile, 'utf8');
+  for (const needle of [
+    'v28.0G-6 Operations Runbook',
+    'Check Worker Health',
+    'Check Realtime Health',
+    'Recover Stale Realtime Market',
+    'Trading Economics freshness',
+    'SourceProbe',
+    'Cloudflare KV usage',
+    'Rollback',
+    'No rollback',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(operationsRunbookFile, `missing G-6 operations runbook marker "${needle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(operationsRunbookFile, 'G-6 operations runbook document missing');
+}
+
+if (fs.existsSync(dataContractFile)) {
+  const text = fs.readFileSync(dataContractFile, 'utf8');
+  for (const needle of [
+    'Worker-first runtime hard gate',
+    'fallback / Daily baseline soft observer',
+    'promotionApplied',
+    'moveStatus',
+    'freshnessStatus',
+    'secondary pollution',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(dataContractFile, `missing G-6 data contract marker "${needle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(dataContractFile, 'data contract document missing');
+}
+
+const readmeText = fs.existsSync('README.md') ? fs.readFileSync('README.md', 'utf8') : '';
+const agentsText = fs.existsSync('AGENTS.md') ? fs.readFileSync('AGENTS.md', 'utf8') : '';
+for (const needle of [
+  'Operations Runbook',
+  'PR #53 superseded',
+  'KV write guard deferred',
+]) {
+  if (!readmeText.includes(needle) && !agentsText.includes(needle)) {
+    addRuntimeFailure('README.md / AGENTS.md', `missing G-6 repository marker "${needle}"`);
   }
 }
 

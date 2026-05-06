@@ -412,6 +412,110 @@ git push origin main
 
 **v28.0G-4C Trading Economics freshness hard gate**：G-4C 已将上述方案落到 Worker runtime。Brent promotion 现在要求 Yahoo fresh + Trading Economics `observedAt` fresh；TE `observedAt` 不可解析时 hold promotion，`reason = tradingeconomics-observedAt-invalid`；TE `observedAt` 超过 48 小时时 hold promotion，`reason = tradingeconomics-confirmation-stale`。Trading Economics candidate 仍保留 value/audit，observedAt failure does not make candidate ok false，hard hold 只在 promotion decision 层处理。D-6 `confirmed-extreme-move` 同样要求 TE freshness fresh。该版本部署前必须做 deploy preflight；部署后应做 live validation，并观察 1-2 轮 scheduled `Check Worker Health`。
 
+## v28.0G-6 Operations Runbook / Decision Matrix
+
+本节是 Worker-first 稳定化后的运维判断入口。先看 `Check Worker Health`，再看 `Check Realtime Health` / recovery，最后看 Brent、secondary 和 KV usage。不要把 soft observer warning 当成 Worker runtime failure。
+
+### Check Worker Health
+
+- `overall=ok`：主运行链路健康，不需要操作。
+- `overall=warning`：主运行链路可用，检查 reasons，通常先观察。
+- `overall=unhealthy`：暂停部署和新增数据源，优先排查 Worker runtime。
+- `healthScore <85`、`criticalMissing >1`、`unavailable=true`、`sourceMode` 异常、worker `ageMinutes >10`：视为 hard gate 问题。
+- GitHub runner acquisition / internal server error：平台侧失败，不等于 Worker failure；看下一轮是否恢复。
+
+### Check Realtime Health
+
+- `fresh` / `aging`：fallback `realtime-data` 可用。
+- `stale` / `unavailable`：soft observer warning，不代表 Worker-first runtime failure。
+- `shouldRecover=true`：检查 `Recover Stale Realtime Market` 和 `Build Realtime Market`。
+- 如果 Worker Health ok，但 Realtime Health stale：页面主链路仍健康，先观察或查 fallback pipeline。
+- 如果长期 stale：检查 build / recover workflow 和 `realtime-data` branch。
+
+### Recover Stale Realtime Market
+
+- workflow success 且下一轮 Realtime Health fresh / aging：恢复成功。
+- workflow success 但 Realtime Health 仍 stale：检查是否实际写入 `realtime-data`。
+- workflow failure：检查权限、checkout、branch push、build script。
+- 不要因 recovery warning 回滚 Worker runtime。
+
+### Brent promotion
+
+- `promotionApplied=true` 且 `moveStatus=normal`：正常。
+- `promotionApplied=false` 且 reason 是 freshness / divergence / confirmed hold：可能是正常防守，不等于故障。
+- `moveStatus=volatility-watch`：观察，不自动回滚。
+- `moveStatus=unconfirmed-jump-hold`：防止未确认大跳变，正常保护逻辑。
+- `moveStatus=confirmed-extreme-move`：需要确认 Yahoo + TE 都 fresh 且 divergence <= 1%。
+- `values.brent` 退回 FRED anchor 或 previous accepted reference：先看 reason，不直接修代码。
+
+### Trading Economics freshness
+
+- TE `freshnessStatus=fresh`：允许进入 Brent promotion divergence / D-6 gate。
+- TE `freshnessStatus=unknown`：G-4C 后 promotion 应 hold，reason 为 `tradingeconomics-observedAt-invalid`。
+- TE `freshnessStatus=stale`：G-4C 后 promotion 应 hold，reason 为 `tradingeconomics-confirmation-stale`。
+- TE candidate value 可以 ok，但 observedAt invalid / stale 会在 promotion decision 层 hold。
+- 不应在 candidate fetch 层把 `ok` 改为 false。
+
+### SourceProbe
+
+- `sourceProbeFrequencyMinutes=60`、`probeCount<=5`：正常。
+- Google Finance / Stooq probe failed：正常 diagnostic-only，不影响 main values。
+- sourceProbe missing 或 `probeCount >5`：检查 Worker payload contract。
+- 不要把 Google Finance / Stooq 升级为 validation source，除非另开版本并有稳定证据。
+
+### Secondary diagnostics
+
+- core secondary set：`vix` / `gold` / `dxy` / `us10y` / `spx`。
+- 单个 secondary failed 或 `stale-warning`：warning，通常不影响主链路。
+- secondary endpoint unavailable：检查 secondary producer，但不直接等同主 preview failure。
+- 主 preview 出现 `secondarySources` / `secondaryDiagnostics` / `secondarySourceSummary`：secondary pollution，需要修。
+- US10Y normalization：`rawValue <=20` 时 `no-op`；`rawValue >20` 时 `divide-by-10`。
+- secondary 不参与 `values.*` / scoring / decision。
+
+### Gold / DXY / US10Y / SPX observations
+
+- 主 `values.gold=0` 但 secondary gold 正常：先观察，若连续出现再开 audit。
+- US10Y raw / value normalization 不一致：优先查 E-3A 规则。
+- SPX / DXY secondary ok 但主 FRED values 不同：正常，因为 source 不同、延迟不同。
+- 不要因为 secondary 与 main 不一致直接覆盖主链路。
+
+### Cloudflare KV usage
+
+- 50% warning：记录，不立即修。
+- 80%：减少手动 deploy / 检查频率，观察是否接近 UTC reset。
+- 90% 或连续多日 >800 writes/day：考虑 cron `*/3` -> `*/5` 或付费计划。
+- 429：暂停非必要 Worker 写入和 deploy，等 UTC reset 或升级。
+- 当前 KV write guard deferred：暂不做复杂 KV write guard。原因是它会增加 runtime 判断复杂度，未来数据字段多时 no-op skip 价值可能有限，且当前 writes 可解释并未超过 hard limit。
+
+### Rollback
+
+需要考虑 rollback：
+
+- Worker preview HTTP 500 / JSON invalid。
+- `sourceMode` 异常。
+- `healthScore` 大幅下降。
+- `criticalMissing` 增加。
+- `unavailable=true`。
+- Brent promotion 被错误阻断且 reason 不合理。
+- secondary pollution 进入 main payload。
+
+### No rollback
+
+不需要 rollback：
+
+- Realtime Health stale 但 Worker Health ok。
+- 单次 GitHub runner failure。
+- sourceProbe diagnostic failure。
+- 单个 secondary source `stale-warning`。
+- KV 50% usage warning。
+- promotion hold reason 合理。
+
+### Development sequencing
+
+- runtime 改动必须基于最新 main、单一逻辑 PR / commit、先本地 checks、提交后 deploy preflight、deploy 后 live validation、再观察 1-2 轮 scheduled `Check Worker Health`。
+- 文档 / Summary / check 脚本改动通常不需要 deploy。
+- 不使用旧 PR / stacked PR；旧 PR #53 已 superseded。
+
 **v28.0D-7 Brent source explainability UI**：页面“盘中快变量 / 布伦特”会显示 Brent 来源与 D-6 move status，例如 FRED 日度锚点、FRED 滞后且 Yahoo + Trading Economics 双源确认、正常 / 较大波动观察 / 已确认极端波动 / 未确认跳变。该 UI 仅用于解释 selected realtime payload，不改变 Worker 数据、Brent promotion、scoring、decision，也不读取或展示 secondary diagnostics preview。
 
 **v28.0D-8 Brent source hygiene**：Google Finance Brent 继续只作为 HTML experimental diagnostic，可能命中 futures chain 中的 `0` 或非主价格；非正值必须标记 `excluded-non-positive-or-invalid`，不参与 consensus 或 promotion。Stooq `brn.f` 保留为观测源，但 CSV close 缺失时应明确记录 `csv-no-numeric-close` 或 `symbol-download-unavailable`。新增 `stooq:brn.c` alternate diagnostic probe，仅进入 audit candidateSources，不参与主值、consensus 或 promotion。当前 Brent 主值逻辑仍是 FRED anchor + Yahoo / Trading Economics confirmed promotion，失败的 Google Finance / Stooq 不影响 `healthScore` / `criticalMissing` / `unavailable`。

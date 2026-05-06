@@ -34,6 +34,7 @@
   - v28.0G-4A 增加 Trading Economics Brent `observedAt` audit-only：Worker 会尝试解析 Trading Economics 页面更新时间，并把 `observedAt` / `ageHours` / `freshnessStatus` / `freshnessReason` 写入 `brentValidation.promotion.confirmationSources` 与 `brentValidation.audit.candidateSources`。解析失败只显示 `tradingeconomics-observedAt-unparsed`，不阻止 Brent promotion；Trading Economics freshness 暂不参与 hard gate，若观察稳定再另开 G-4B 讨论。
   - v28.0G-4B decision：建议进入 G-4C 实现 Trading Economics freshness hard gate，但 G-4B does not change runtime behavior。G-4C 才能加入 `observedAt` 可解析、`ageHours <= 48` 小时的 hard gate；不可解析时 reason 使用 `tradingeconomics-observedAt-invalid`，超过 48 小时时 reason 使用 `tradingeconomics-confirmation-stale`。旧 PR #53 已 superseded，不应 merge；G-4C 必须基于最新 main 串行实现并观察 Worker Health scheduled 稳定。
   - v28.0G-4C 实现 Trading Economics freshness hard gate：Brent promotion 现在要求 Yahoo fresh + TE `observedAt` fresh；TE observedAt 不可解析时 hold promotion，reason 为 `tradingeconomics-observedAt-invalid`；TE observedAt 超过 48 小时时 hold promotion，reason 为 `tradingeconomics-confirmation-stale`。TE candidate 仍保留 value/audit，observedAt failure does not make candidate ok false；D-6 confirmed-extreme-move 也要求 TE freshness fresh。PR #53 仍为 superseded，不使用。
+  - v28.0G-6 Operations Runbook / Decision Matrix 记录在 `docs/OPERATIONS.md`，用于判断 Worker Health、Realtime Health、Recover、Brent、secondary、KV usage、Rollback / No rollback 与 development sequencing。KV write guard deferred，先观察；PR #53 superseded。
 - **已提供的 HTTP 能力**：
   - `GET /health`：存活与模式探测。
   - `GET /market.json`：从 KV 读取 `market:latest`（若尚未由后续版本写入，则返回 404 JSON）。
