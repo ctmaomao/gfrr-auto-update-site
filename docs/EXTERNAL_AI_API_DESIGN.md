@@ -8,6 +8,8 @@ v28.0K-0 仅为设计文档阶段，不实现 API 代码，不写入 secrets，�
 
 v28.0K-1 补充 future prompt contract 和非生产样例 fixtures，入口见 [`EXTERNAL_AI_PROMPT_CONTRACT.md`](EXTERNAL_AI_PROMPT_CONTRACT.md)。样例文件包括 [`sample-input-v28.0K-1.json`](fixtures/external-ai/sample-input-v28.0K-1.json)、[`sample-output-v28.0K-1.json`](fixtures/external-ai/sample-output-v28.0K-1.json) 和 [`sample-audit-result-v28.0K-1.json`](fixtures/external-ai/sample-audit-result-v28.0K-1.json)，仅用于未来 manual/offline prompt tests，不得被 production runtime 导入或当作 live data。
 
+v28.0K-2 新增 offline external AI output validator and banned-copy checker：`npm run check:external-ai-output`。该 validator 只读取本地样例或显式传入的 output artifact，不调用 API，不接入 runtime，不读取 production data。未来任何 external AI output 进入展示前，都必须先通过该类 contract / boundary / source attribution / banned copy / overreach 检查。
+
 ## 2. Current Baseline / 当前基线
 
 当前稳定基线为：
