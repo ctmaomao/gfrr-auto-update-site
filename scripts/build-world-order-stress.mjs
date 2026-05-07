@@ -56,6 +56,83 @@ function freshnessFromSources(sources) {
   return 'error';
 }
 
+function finiteOrNull(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function fmtValue(value) {
+  const numeric = finiteOrNull(value);
+  if (numeric === null) return 'null';
+  return Number.isInteger(numeric) ? String(numeric) : String(Number(numeric.toFixed(2)));
+}
+
+function fmtText(value) {
+  if (value === null || value === undefined || value === '') return 'null';
+  return String(value).replace(/\s+/gu, ' ').trim();
+}
+
+function fmtPercent(value) {
+  const numeric = finiteOrNull(value);
+  return numeric === null ? 'null' : `${Math.round(numeric * 100)}%`;
+}
+
+function shortNote(value, maxLength = 120) {
+  const text = fmtText(value);
+  if (text === 'null' || text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength - 1)}…`;
+}
+
+function printBuildSummary(output) {
+  const gdelt = output.externalSources?.gdelt || {};
+  const gdeltSummary = gdelt.summary || {};
+  const ofac = output.externalSources?.ofac || {};
+  const ofacSummary = ofac.summary || {};
+  const sipri = output.externalSources?.sipri || {};
+  const sipriSummary = sipri.summary || {};
+  const acled = output.externalSources?.acled || {};
+  const marketConfirmation = output.dimensions?.marketConfirmation || {};
+  const marketInput = output.marketConfirmationInput || {};
+  const warnings = Array.isArray(output.warnings) ? output.warnings : [];
+
+  console.log('');
+  console.log('World Order Stress Build Summary');
+  console.log(`updatedAt: ${fmtText(output.updatedAt)}`);
+  console.log(`score: ${fmtValue(output.score)}`);
+  console.log(`state: ${fmtText(output.state)} / ${fmtText(output.labelZh)}`);
+  console.log(`confidence: ${fmtPercent(output.confidence)}`);
+  console.log(`freshness: ${fmtText(output.freshness)}`);
+  console.log('');
+  console.log('Sources');
+  console.log(`GDELT: ${fmtText(gdelt.status)} success=${fmtValue(gdeltSummary.successCount)} failed=${fmtValue(gdeltSummary.failureCount)} rateLimited=${fmtValue(gdeltSummary.rateLimitedCount)} cached=${gdeltSummary.usedCachedSummary === true}`);
+  if (gdelt.status === 'stale' || gdelt.status === 'partial') {
+    console.log(`GDELT reason: ${shortNote(gdeltSummary.cacheReason || (Array.isArray(gdeltSummary.errors) ? gdeltSummary.errors.join('; ') : null))}`);
+  }
+  console.log(`OFAC: ${fmtText(ofac.status)} recentActions=${fmtValue(ofacSummary.recentActionsCount)} listUpdates=${fmtValue(ofacSummary.listUpdatesCount)}`);
+  console.log(`SIPRI: ${fmtText(sipri.status)} updatedYear=${fmtValue(sipriSummary.updatedYear)} note=${shortNote(sipriSummary.noteZh)}`);
+  console.log(`ACLED: ${fmtText(acled.status)} enabled=${acled.enabled === true}`);
+  if (acled.status === 'not_configured') {
+    console.log('ACLED reason: not configured; GDELT remains the proxy conflict event layer.');
+  }
+  console.log('');
+  console.log('Market confirmation');
+  console.log(`source: ${fmtText(marketInput.source)}`);
+  console.log(`brent: ${fmtValue(marketInput.brent)}`);
+  console.log(`gold: ${fmtValue(marketInput.gold)}`);
+  console.log(`state: ${fmtText(marketConfirmation.state)}`);
+  console.log(`score: ${fmtValue(marketConfirmation.score)}`);
+  console.log('');
+  console.log('Warnings');
+  if (warnings.length === 0) {
+    console.log('- none');
+  } else {
+    for (const warning of warnings) {
+      console.log(`- ${fmtText(warning)}`);
+    }
+  }
+}
+
 async function main() {
   const rules = readJsonIfExists(configPath, {});
   const previous = readJsonIfExists(outputPath, null);
@@ -117,10 +194,7 @@ async function main() {
 
   fs.writeFileSync(outputPath, `${JSON.stringify(output, null, 2)}\n`);
   console.log(`World order stress data written: ${path.relative(root, outputPath)}`);
-  console.log(`score=${output.score} state=${output.state} freshness=${output.freshness} confidence=${output.confidence}`);
-  for (const key of SOURCE_KEYS) {
-    console.log(`${key}: ${output.externalSources[key].status}`);
-  }
+  printBuildSummary(output);
 }
 
 main().catch((err) => {

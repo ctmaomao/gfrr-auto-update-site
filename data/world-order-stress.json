@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-05-07T02:01:16.668Z",
+  "updatedAt": "2026-05-07T02:11:44.337Z",
   "sourceMode": "computed_with_partial_external_sources",
   "score": 49,
   "state": "bloc_fragmentation",
@@ -11,12 +11,12 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-05-07T01:57:50.155Z",
-    "ageMinutes": 3,
+    "updatedAt": "2026-05-07T02:09:50.000Z",
+    "ageMinutes": 2,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 101.77,
-    "gold": 4715.2998,
+    "brent": 101.665,
+    "gold": 4714.3999,
     "vix": 17.38,
     "dxy": 118.3926,
     "hyOas": 2.77,
@@ -36,9 +36,9 @@
       "summary": {
         "errors": [
           "conflict-theater: 请求超时或被中止",
-          "sanctions-weaponization: 请求超时或被中止",
+          "sanctions-weaponization: HTTP 429 rate limited",
           "chokepoint: 请求超时或被中止",
-          "bloc-formation: 请求超时或被中止"
+          "bloc-formation: HTTP 429 rate limited"
         ],
         "totalEvents": 150,
         "totalArticles": 150,
@@ -69,9 +69,9 @@
           },
           {
             "label": "制裁与经济金融武器化",
-            "status": "error",
+            "status": "rate_limited",
             "articleCount": 0,
-            "error": "请求超时或被中止"
+            "error": "HTTP 429 rate limited"
           },
           {
             "label": "封锁、海峡与关键通道",
@@ -81,23 +81,23 @@
           },
           {
             "label": "阵营化与联盟硬化",
-            "status": "error",
+            "status": "rate_limited",
             "articleCount": 0,
-            "error": "请求超时或被中止"
+            "error": "HTTP 429 rate limited"
           }
         ],
         "successCount": 0,
         "failureCount": 4,
-        "rateLimitedCount": 0,
+        "rateLimitedCount": 2,
         "usedCachedSummary": true,
         "cacheReason": "all-current-gdelt-queries-failed-using-previous-summary",
-        "attemptedAt": "2026-05-07T02:00:37.274Z"
+        "attemptedAt": "2026-05-07T02:10:29.626Z"
       }
     },
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-05-07T02:00:40.417Z",
+      "lastFetchedAt": "2026-05-07T02:10:29.755Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 7,
@@ -232,16 +232,16 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4715.3，显示避险或实际利率压力定价。",
-          "value": 4715.2998,
+          "summary": "基于 Worker 快变量，黄金当前值 4714.4，显示避险或实际利率压力定价。",
+          "value": 4714.3999,
           "direction": "up",
           "confidence": 0.75
         },
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 101.77，对地缘与供应风险有部分确认作用。",
-          "value": 101.77,
+          "summary": "基于 Worker 快变量，布伦特当前值 101.67，对地缘与供应风险有部分确认作用。",
+          "value": 101.665,
           "direction": "up",
           "confidence": 0.55
         },
@@ -249,7 +249,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "118.3926/4715.2998",
+          "value": "118.3926/4714.3999",
           "direction": "up",
           "confidence": 0.6
         },
@@ -257,7 +257,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7365.12/4715.2998",
+          "value": "7365.12/4714.3999",
           "direction": "mixed",
           "confidence": 0.45
         },
@@ -265,7 +265,7 @@
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
           "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 101.77,
+          "value": 101.665,
           "direction": "up",
           "confidence": 0.65
         }

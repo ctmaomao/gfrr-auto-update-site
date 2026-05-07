@@ -79,6 +79,10 @@ function assertParseableIsoOrNull(value, fieldName) {
   if (typeof value !== 'string' || !Number.isFinite(Date.parse(value))) fail(`${fieldName} must be parseable ISO string or null`);
 }
 
+function fmtPercent(value) {
+  return Number.isFinite(value) ? `${Math.round(value * 100)}%` : 'null';
+}
+
 if (!fs.existsSync(dataPath)) fail('data/world-order-stress.json missing');
 const text = fs.readFileSync(dataPath, 'utf8');
 if (text.includes('undefined') || text.includes('NaN')) fail('payload must not contain undefined or NaN');
@@ -223,4 +227,15 @@ for (const key of ['enabled', 'riskBias', 'maxStateBoost', 'appliesWhen']) {
   if (!(key in payload.decisionModifier)) fail(`decisionModifier.${key} missing`);
 }
 
-console.log('World order stress check passed');
+console.log('World Order Stress Check');
+console.log('Result: PASS');
+console.log(`score: ${payload.score}`);
+console.log(`state: ${payload.state}`);
+console.log(`freshness: ${payload.freshness}`);
+console.log(`confidence: ${fmtPercent(payload.confidence)}`);
+console.log(`marketConfirmationSource: ${payload.marketConfirmationInput.source}`);
+console.log(`gdeltStatus: ${payload.externalSources.gdelt.status}`);
+console.log(`ofacStatus: ${payload.externalSources.ofac.status}`);
+console.log(`sipriStatus: ${payload.externalSources.sipri.status}`);
+console.log(`acledStatus: ${payload.externalSources.acled.status}`);
+console.log(`warnings: ${payload.warnings.length}`);

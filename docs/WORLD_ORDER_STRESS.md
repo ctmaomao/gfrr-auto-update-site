@@ -109,6 +109,42 @@ ACLED_ACCESS_KEY=<key>
 
 `npm run check:all` 已集成该检查：check:all includes check:world-order。正常 CI / 本地检查会验证 world-order-stress 数据产物，但不会自动刷新外部数据。
 
+## v28.0H-4 手动刷新与工作流准备
+
+当前 World Order Stress 使用手动刷新，不自动刷新，不新增 scheduled workflow。scheduled refresh 后续再评估，因为 GDELT 仍可能 timeout / 429，外部源刷新频率不应过高，先观察手动刷新稳定性。
+
+手动刷新：
+
+```bash
+npm run build:world-order
+```
+
+`build:world-order` 会访问 GDELT / OFAC / SIPRI / ACLED adapter，并写入 `data/world-order-stress.json`。构建完成后会输出 World Order Stress Build Summary，包含 score、state、confidence、freshness、GDELT / OFAC / SIPRI / ACLED 状态、marketConfirmation 输入源和 warnings。
+
+本地检查：
+
+```bash
+npm run check:world-order
+npm run check:all
+```
+
+`check:world-order` 只验证本地 JSON，不访问外部源，不写文件。H-4 起检查通过时会输出 PASS summary，便于确认 freshness、marketConfirmation source 和四个外部源状态。
+
+人工审阅：
+
+```bash
+npm run review:world-order
+```
+
+`review:world-order` 是只读 helper，不替代 `check:world-order`。它输出 PASS / WARN / FAIL 和建议动作，用于人工判断是否需要再次手动刷新、提供 SIPRI normalized data 或配置 ACLED credentials。
+
+GDELT stale / partial 可接受条件：
+
+- `partial`：至少一个 query 成功，status 明确，使用成功 query 生成当前摘要，confidence 降低。
+- `stale`：当前全部 query 失败，但 `usedCachedSummary=true`，使用旧 summary，记录 cache reason，confidence 降低。
+
+SIPRI `manual_required` 可接受：真实 normalized 数据未导入时，不伪造慢变量。ACLED `not_configured` 可接受：未提供 API credentials 时，GDELT 作为代理冲突事件层。
+
 ## H-2 前端展示
 
 H-2 前端展示新增独立的“世界秩序压力层”区域，显示状态、压力分数、市场确认、主导驱动、六个维度、数据源状态、系统解读和免责声明。该区域只读展示 `data/world-order-stress.json`，并在读取失败或字段缺失时显示保守 fallback，不输出空白卡片、`NaN` 或 `undefined`。

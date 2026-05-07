@@ -236,6 +236,9 @@ const validateDataScriptFile = 'scripts/validate-data.mjs';
 const worldOrderDataFile = 'data/world-order-stress.json';
 const worldOrderDocFile = 'docs/WORLD_ORDER_STRESS.md';
 const worldOrderSipriExampleFile = 'config/world-order-sipri-normalized.example.json';
+const worldOrderBuildScriptFile = 'scripts/build-world-order-stress.mjs';
+const worldOrderCheckScriptFile = 'scripts/check-world-order-stress.mjs';
+const worldOrderReviewScriptFile = 'scripts/review-world-order-stress.mjs';
 const worldOrderRequiredFiles = [
   'scripts/build-world-order-stress.mjs',
   'scripts/check-world-order-stress.mjs',
@@ -737,6 +740,9 @@ if (fs.existsSync(packageFile)) {
   if (!packageText.includes('"check:world-order": "node scripts/check-world-order-stress.mjs"')) {
     addRuntimeFailure(packageFile, 'missing check:world-order package script');
   }
+  if (!packageText.includes('"review:world-order": "node scripts/review-world-order-stress.mjs data/world-order-stress.json"')) {
+    addRuntimeFailure(packageFile, 'missing review:world-order package script');
+  }
   const checkAllMatch = packageText.match(/"check:all":\s*"([^"]+)"/u);
   const checkAllScript = checkAllMatch?.[1] || '';
   if (!checkAllScript.includes('npm run check:world-order')) {
@@ -753,6 +759,56 @@ for (const file of worldOrderRequiredFiles) {
   if (!fs.existsSync(file)) {
     addRuntimeFailure(file, 'world order stress pipeline file missing');
   }
+}
+if (fs.existsSync(worldOrderBuildScriptFile)) {
+  const text = fs.readFileSync(worldOrderBuildScriptFile, 'utf8');
+  for (const needle of [
+    'World Order Stress Build Summary',
+    'Sources',
+    'Market confirmation',
+    'GDELT',
+    'OFAC',
+    'SIPRI',
+    'ACLED',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(worldOrderBuildScriptFile, `missing build summary marker "${needle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(worldOrderBuildScriptFile, 'world order build script missing');
+}
+if (fs.existsSync(worldOrderCheckScriptFile)) {
+  const text = fs.readFileSync(worldOrderCheckScriptFile, 'utf8');
+  for (const needle of [
+    'World Order Stress Check',
+    'Result: PASS',
+    'marketConfirmationSource',
+    'gdeltStatus',
+    'sipriStatus',
+    'acledStatus',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(worldOrderCheckScriptFile, `missing check summary marker "${needle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(worldOrderCheckScriptFile, 'world order check script missing');
+}
+if (fs.existsSync(worldOrderReviewScriptFile)) {
+  const text = fs.readFileSync(worldOrderReviewScriptFile, 'utf8');
+  for (const needle of ['PASS', 'WARN', 'FAIL']) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(worldOrderReviewScriptFile, `missing review marker "${needle}"`);
+    }
+  }
+  for (const forbiddenNeedle of ['fetch(', 'writeFile', 'writeFileSync']) {
+    if (text.includes(forbiddenNeedle)) {
+      addRuntimeFailure(worldOrderReviewScriptFile, `review:world-order must remain local read-only; found "${forbiddenNeedle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(worldOrderReviewScriptFile, 'world order review helper missing');
 }
 if (!fs.existsSync(worldOrderDataFile)) {
   addRuntimeFailure(worldOrderDataFile, 'world order stress data product missing');
@@ -877,6 +933,11 @@ if (!fs.existsSync(worldOrderDocFile)) {
     'quality.isRealData',
     '手动导入',
     '示例数据不会参与评分',
+    'v28.0H-4',
+    '手动刷新',
+    '不自动刷新',
+    'scheduled refresh 后续再评估',
+    'GDELT stale / partial 可接受条件',
   ]) {
     if (!text.includes(needle)) {
       addRuntimeFailure(worldOrderDocFile, `missing world order stress marker "${needle}"`);

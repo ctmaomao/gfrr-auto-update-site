@@ -10,6 +10,7 @@
     "build:realtime": "node scripts/run-realtime.mjs",
     "build:world-order": "node scripts/build-world-order-stress.mjs",
     "check:world-order": "node scripts/check-world-order-stress.mjs",
+    "review:world-order": "node scripts/review-world-order-stress.mjs data/world-order-stress.json",
     "audit:daily-worker": "node scripts/audit-daily-vs-worker.mjs",
     "check:worker-health": "node scripts/check-worker-health.mjs",
     "review:worker-health-snapshot": "node scripts/review-worker-health-snapshot.mjs",
