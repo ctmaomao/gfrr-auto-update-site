@@ -17,7 +17,7 @@
 
 ## 当前版本状态
 
-当前处于 `v28.0G` 后段稳定观察 / health snapshot 阶段；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。
+当前处于 `v28.0I` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0I release review 与 v28.0I-8B post-deploy audit 已通过，当前前端版本为 `28.0I-8`。
 
 已经具备：
 
@@ -46,6 +46,7 @@
 - v28.0G-9B Frontend Asset Version Bump Helper：新增本地只读维护工具 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0I-8`；该工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：`npm run check:data` 默认不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 已是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要细节时运行 `npm run check:data:verbose`，需要把 mismatch 当作失败时运行 `npm run check:data:strict-live-alignment`。本轮不改 data/realtime、不改 Worker runtime、不改前端、不 deploy。
 - v28.0H-1 World Order Stress Overlay Data Pipeline MVP：新增 `data/world-order-stress.json` 与本地构建 / 检查脚本。该层只做结构性风险识别和市场交叉验证，不预测战争、不输出战争概率。`npm run check:world-order` 校验该数据产物，并已纳入 `npm run check:all`。H-2 已加入独立 UI shell；H-2B 起 market confirmation 会记录输入来源；H-2C 起 GDELT 支持 partial success 与 stale cache fallback；H-3 起支持 SIPRI manual normalized import；H-4 增强 `npm run build:world-order` / `npm run check:world-order` summary，并新增 `npm run review:world-order` 只读审阅。详细说明见 `docs/WORLD_ORDER_STRESS.md`。
+- v28.0I Cockpit Structure Upgrade：已上线 Daily Brief / 今日主判断、Divergence Layer / 实体压力与金融定价背离、Consumer vs Asset Divergence、Brent Public Proxy Pricing Layer 与 compact cockpit layout。当前 live data 包含 `dailyBrief.contractVersion = v28.0I-1`、`divergenceLayer.contractVersion = v28.0I-3A`、`macroDrivers.consumer`、`consumer_vs_asset_pricing` 与 `brentPricingLayer.contractVersion = v28.0I-5A`。这些字段均为 display-only / audit-only / interpretation-only，不接入 scoring / decision。详见 `docs/SYSTEM_UPGRADE_PLAN.md`、`docs/DATA_CONTRACT.md` 与 `docs/OPERATIONS.md`。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。

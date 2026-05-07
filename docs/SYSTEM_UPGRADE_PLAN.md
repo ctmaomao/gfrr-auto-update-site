@@ -31,6 +31,32 @@ v28.0I 的目标不是继续堆数据，而是把现有数据、风险模块、W
 
 v28.0I 的任何结构升级都必须保护以上基线，不得通过重写页面或重排数据链路来绕过现有稳定边界。
 
+## v28.0I Stable Baseline
+
+v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。v28.0I 已完成从“多模块数据驾驶舱”到“宏观判断压缩层 + 背离校验层 + Brent 代理审计层”的第一阶段结构升级。
+
+已上线并进入稳定观察：
+
+- Daily Brief / 今日主判断。
+- Divergence Layer / 实体压力与金融定价背离。
+- Consumer vs Asset Divergence / 消费者体感与风险资产背离。
+- Brent Public Proxy Pricing Layer / Brent 公开代理价格层。
+- Compact cockpit layout，当前前端版本为 `28.0I-8`。
+
+当前 live data 已包含 `dailyBrief.contractVersion = v28.0I-1`、`divergenceLayer.contractVersion = v28.0I-3A`、`macroDrivers.consumer`、`consumer_vs_asset_pricing` 与 `brentPricingLayer.contractVersion = v28.0I-5A`。
+
+这些解释层均为 display-only / audit-only / interpretation-only，不影响 `values.*`、`effectiveDisplayInputs`、Brent promotion、scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。Worker-first runtime 仍为主链路，Check Worker Health 仍是 hard gate，Check Realtime Health 仍是 fallback / Daily baseline soft observer。World Order Stress Overlay 仍是独立 regime overlay，不是第七个底层风险模块；Global Risk Heatmap 仍必须独立显示。
+
+下一阶段若继续开发，应优先考虑：
+
+1. AI Interpretation Layer Contract。
+2. 页面解释文案进一步压缩。
+3. Brent term structure candidate。
+4. Crack spread / diesel stress candidate。
+5. World Order data quality improvement。
+
+任何新信号、新解释层或新数据源都不得直接接入 scoring / decision，必须先按 `docs/SIGNAL_INTAKE.md` 走 audit-only / diagnostic-only / display-only 观察路径。
+
 ## 3. Core Problem / 核心问题
 
 当前系统的问题不是数据不够，而是判断层压缩不足：
