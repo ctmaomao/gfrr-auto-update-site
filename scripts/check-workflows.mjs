@@ -757,11 +757,30 @@ if (!fs.existsSync(worldOrderDataFile)) {
   addRuntimeFailure(worldOrderDataFile, 'world order stress data product missing');
 } else {
   const text = fs.readFileSync(worldOrderDataFile, 'utf8');
+  if (!text.includes('marketConfirmationInput')) {
+    addRuntimeFailure(worldOrderDataFile, 'missing marketConfirmationInput');
+  }
   for (const phrase of worldOrderForbiddenPhrases) {
     if (text.includes(phrase)) {
       addRuntimeFailure(worldOrderDataFile, `must not contain forbidden phrase "${phrase}"`);
     }
   }
+}
+const worldOrderMarketConfirmationFile = 'scripts/world-order/build-market-confirmation.mjs';
+if (fs.existsSync(worldOrderMarketConfirmationFile)) {
+  const text = fs.readFileSync(worldOrderMarketConfirmationFile, 'utf8');
+  for (const needle of [
+    'worker-generated-preview',
+    'local-realtime',
+    'daily-baseline',
+    'marketConfirmationInput',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(worldOrderMarketConfirmationFile, `missing market confirmation source marker "${needle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(worldOrderMarketConfirmationFile, 'world order market confirmation script missing');
 }
 if (!fs.existsSync(worldOrderDocFile)) {
   addRuntimeFailure(worldOrderDocFile, 'world order stress document missing');
@@ -783,6 +802,9 @@ if (!fs.existsSync(worldOrderDocFile)) {
     '前端只读取 data/world-order-stress.json',
     '前端不调用外部 API',
     '不接入 decisionModel',
+    'marketConfirmation 优先使用 Worker-generated preview',
+    'fallback 到 local realtime',
+    'fallback 到 Daily baseline',
   ]) {
     if (!text.includes(needle)) {
       addRuntimeFailure(worldOrderDocFile, `missing world order stress marker "${needle}"`);

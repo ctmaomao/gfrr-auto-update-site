@@ -16,6 +16,8 @@ const allowedStates = new Set([
 ]);
 const allowedFreshness = new Set(['fresh', 'stale', 'partial', 'error']);
 const allowedMarketStates = new Set(['not_confirmed', 'weak', 'partial_confirmed', 'high_confirmed']);
+const allowedMarketInputSources = new Set(['worker-generated-preview', 'local-realtime', 'daily-baseline', 'unavailable']);
+const marketInputNumberFields = ['brent', 'gold', 'vix', 'dxy', 'hyOas', 'us10y', 'real10y', 'spx'];
 const sourceKeys = ['gdelt', 'ofac', 'sipri', 'acled'];
 const dimensionKeys = [
   'peaceDividendRetreat',
@@ -58,8 +60,21 @@ function assertEvidenceArray(value, fieldName) {
       if (!(key in item)) fail(`${fieldName}[${index}].${key} missing`);
     }
     if (!('summary' in item) && !('value' in item)) fail(`${fieldName}[${index}] must include summary or value`);
+    const serialized = JSON.stringify(item);
+    if (serialized.includes('undefined') || serialized.includes('NaN')) {
+      fail(`${fieldName}[${index}] must not contain undefined or NaN`);
+    }
     assertConfidence(item.confidence, `${fieldName}[${index}].confidence`);
   }
+}
+
+function assertFiniteOrNull(value, fieldName) {
+  if (value !== null && !Number.isFinite(value)) fail(`${fieldName} must be finite number or null`);
+}
+
+function assertParseableIsoOrNull(value, fieldName) {
+  if (value === null) return;
+  if (typeof value !== 'string' || !Number.isFinite(Date.parse(value))) fail(`${fieldName} must be parseable ISO string or null`);
 }
 
 if (!fs.existsSync(dataPath)) fail('data/world-order-stress.json missing');
@@ -69,13 +84,39 @@ for (const phrase of forbiddenPhrases) {
 }
 
 const payload = JSON.parse(text);
-for (const key of ['version', 'updatedAt', 'sourceMode', 'score', 'state', 'labelZh', 'confidence', 'freshness', 'externalSources', 'dimensions', 'dominantDrivers', 'systemInterpretationZh', 'decisionModifier', 'warnings']) {
+for (const key of ['version', 'updatedAt', 'sourceMode', 'score', 'state', 'labelZh', 'confidence', 'freshness', 'marketConfirmationInput', 'externalSources', 'dimensions', 'dominantDrivers', 'systemInterpretationZh', 'decisionModifier', 'warnings']) {
   if (!(key in payload)) fail(`${key} missing`);
 }
 assertScore(payload.score, 'score');
 assertConfidence(payload.confidence, 'confidence');
 if (!allowedStates.has(payload.state)) fail(`invalid state: ${payload.state}`);
 if (!allowedFreshness.has(payload.freshness)) fail(`invalid freshness: ${payload.freshness}`);
+if (!isObject(payload.marketConfirmationInput)) fail('marketConfirmationInput must be object');
+if (!allowedMarketInputSources.has(payload.marketConfirmationInput.source)) {
+  fail(`invalid marketConfirmationInput.source: ${payload.marketConfirmationInput.source}`);
+}
+assertParseableIsoOrNull(payload.marketConfirmationInput.updatedAt, 'marketConfirmationInput.updatedAt');
+assertFiniteOrNull(payload.marketConfirmationInput.ageMinutes, 'marketConfirmationInput.ageMinutes');
+assertFiniteOrNull(payload.marketConfirmationInput.healthScore, 'marketConfirmationInput.healthScore');
+assertFiniteOrNull(payload.marketConfirmationInput.criticalMissing, 'marketConfirmationInput.criticalMissing');
+for (const key of marketInputNumberFields) {
+  if (!(key in payload.marketConfirmationInput)) fail(`marketConfirmationInput.${key} missing`);
+  assertFiniteOrNull(payload.marketConfirmationInput[key], `marketConfirmationInput.${key}`);
+}
+for (const key of ['brentSource', 'brentPromotionApplied', 'brentPromotionReason', 'fallbackReason']) {
+  if (!(key in payload.marketConfirmationInput)) fail(`marketConfirmationInput.${key} missing`);
+}
+if (typeof payload.marketConfirmationInput.brentPromotionApplied !== 'boolean') {
+  fail('marketConfirmationInput.brentPromotionApplied must be boolean');
+}
+if (payload.marketConfirmationInput.source === 'worker-generated-preview') {
+  if (payload.marketConfirmationInput.updatedAt === null) fail('worker market input updatedAt required');
+  if (!Number.isFinite(payload.marketConfirmationInput.healthScore)) fail('worker market input healthScore required');
+  if (!Number.isFinite(payload.marketConfirmationInput.criticalMissing)) fail('worker market input criticalMissing required');
+  if (!Number.isFinite(payload.marketConfirmationInput.brent) || payload.marketConfirmationInput.brent <= 0) {
+    fail('worker market input brent must be positive finite');
+  }
+}
 if (!isObject(payload.externalSources)) fail('externalSources must be object');
 
 for (const sourceKey of sourceKeys) {

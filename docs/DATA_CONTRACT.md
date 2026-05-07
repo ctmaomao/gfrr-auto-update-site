@@ -128,6 +128,7 @@ npm run check:data:strict-live-alignment
 - `freshness` 只能为 `fresh` / `stale` / `partial` / `error`。
 - `state` 只能为 `normal_globalization` / `friction_rising` / `bloc_fragmentation` / `multi_theater_stress` / `war_economy_stress`。
 - `externalSources` 必须包含 `gdelt` / `ofac` / `sipri` / `acled`。
+- `marketConfirmationInput` 必须记录市场确认使用的输入源、时间和关键市场值。
 - `dimensions` 必须包含和平红利退潮、阵营化与联盟硬化、多战区冲突、经济金融武器化、资本管制与金融抑制风险和市场确认。
 - `decisionModifier` 只用于解释未来潜在状态修正，不在 H-1 接入现有决策状态机。
 - `warnings` 必须包含“该模块用于结构性风险识别，不构成战争预测或投资建议。”
@@ -142,6 +143,34 @@ npm run check:world-order
 `data/world-order-stress.json` 由 `check:world-order` 校验，并已纳入 `check:all`。默认完整检查只验证现有 JSON，不运行 `build:world-order`，因此不会自动访问外部数据源或重写该数据产物。
 
 H-2 前端独立 UI 只读消费 `data/world-order-stress.json`，用于展示状态、压力分数、市场确认、六维度、数据源状态和免责声明。该 UI 不直接调用 GDELT、OFAC、SIPRI、ACLED 或其它外部 API，不接入 `decisionModel`，不改变仓位、Action Queue 或任何 realtime / baseline 计算。
+
+#### marketConfirmationInput
+
+v28.0H-2B 起，`data/world-order-stress.json` 必须包含：
+
+```text
+marketConfirmationInput
+```
+
+`source` 枚举：
+
+```text
+worker-generated-preview
+local-realtime
+daily-baseline
+unavailable
+```
+
+输入优先级为 Worker-generated preview → local realtime fallback → Daily baseline。Worker 输入必须通过安全 gate 后才能使用；否则构建不会失败，而是记录 `fallbackReason` 并继续 fallback。
+
+字段 contract：
+
+- `updatedAt` 为可解析 ISO 字符串或 `null`。
+- `ageMinutes`、`healthScore`、`criticalMissing` 为 finite number 或 `null`。
+- `brent`、`gold`、`vix`、`dxy`、`hyOas`、`us10y`、`real10y`、`spx` 为 finite number 或 `null`。
+- `brentSource`、`brentPromotionReason`、`fallbackReason` 为字符串或 `null`。
+- `brentPromotionApplied` 为 boolean。
+- 当 `source="worker-generated-preview"` 时，`updatedAt`、`healthScore`、`criticalMissing` 必须有效，且 `brent` 必须为正数。
 
 ### Frontend asset cache version
 

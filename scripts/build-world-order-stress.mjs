@@ -6,7 +6,7 @@ import { fetchGdeltSummary } from './world-order/fetch-gdelt.mjs';
 import { fetchOfacSummary } from './world-order/fetch-ofac.mjs';
 import { importSipriSummary } from './world-order/import-sipri.mjs';
 import { fetchAcledSummary } from './world-order/fetch-acled.mjs';
-import { buildMarketConfirmation } from './world-order/build-market-confirmation.mjs';
+import { buildMarketConfirmation, selectMarketConfirmationInput } from './world-order/build-market-confirmation.mjs';
 import { scoreWorldOrderStress } from './world-order/score-world-order-stress.mjs';
 import {
   SOURCE_KEYS,
@@ -70,7 +70,8 @@ async function main() {
   ]);
 
   const externalSources = normalizeSourceMap({ gdelt, ofac, sipri, acled });
-  const marketConfirmation = buildMarketConfirmation({ dataPayload, realtimePayload, rules });
+  const marketConfirmationInput = await selectMarketConfirmationInput({ dataPayload, realtimePayload });
+  const marketConfirmation = buildMarketConfirmation({ marketConfirmationInput, rules });
   const scored = scoreWorldOrderStress({ externalSources, marketConfirmation, dataPayload, rules });
   const freshness = freshnessFromSources(externalSources);
   const sourceMode = freshness === 'fresh'
@@ -95,6 +96,7 @@ async function main() {
     labelZh: scored.labelZh,
     confidence: scored.confidence,
     freshness,
+    marketConfirmationInput,
     externalSources: Object.fromEntries(
       SOURCE_KEYS.map((key) => {
         const source = externalSources[key];

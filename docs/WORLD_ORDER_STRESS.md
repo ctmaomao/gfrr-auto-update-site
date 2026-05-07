@@ -84,6 +84,16 @@ H-2 前端展示新增独立的“世界秩序压力层”区域，显示状态�
 
 H-2 不接入 decisionModel，不改变仓位、Action Queue、Trigger Monitor、Invalidation Rules 或 Worker-first realtime 逻辑。所有用户可见文案必须中文、克制、不预测战争、不输出战争概率。
 
+## 市场确认输入源
+
+v28.0H-2B 对齐 World Order marketConfirmation 与主站 Worker-first 链路。marketConfirmation 优先使用 Worker-generated preview：构建脚本显式读取 `/market.worker-preview.json`，并要求 HTTP 200、`sourceMode="worker-generated-preview"`、未 unavailable、`healthScore >= 85`、`criticalMissing <= 1`、`updatedAt` 可解析、`ageMinutes <= 15` 且 `values.brent` 为正数。
+
+如果 Worker 输入不可用，fallback 到 local realtime，即仓库内 `realtime/market.json`。如果 local realtime 也不可用，再 fallback 到 Daily baseline，即 `data/radar-data.json` 的 `displayInputsBaseline`。
+
+最终 `data/world-order-stress.json` 会写入 `marketConfirmationInput.source`、`updatedAt`、`ageMinutes`、关键市场值、Brent 来源与 fallback reason。若页面市场确认与主页面快变量不同，应先检查 `data/world-order-stress.json` 的 `marketConfirmationInput.source` / `marketConfirmationInput.updatedAt`，确认本次数据构建使用的是 Worker、local realtime 还是 Daily baseline。
+
+前端仍只读取 data/world-order-stress.json，不直接调用 Worker、GDELT、OFAC、SIPRI、ACLED 或任何外部 API。
+
 ## 与 decisionModel 的关系
 
 H-1 只输出：
