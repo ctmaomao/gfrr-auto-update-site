@@ -44,6 +44,7 @@
 - v28.0G-7B Health Snapshot Review Helper：`npm run review:worker-health-snapshot -- health-worker-snapshot.json` 本地只读审阅 artifact，输出 PASS / WARN / FAIL；不访问网络，不写 KV / data / realtime，不替代 hard gate。
 - v28.0G-9 Frontend Asset Cache Busting：针对 Android Chrome cached old module graph 导致普通窗口仍显示 Actions/FRED 旧前端逻辑的问题，`index.html` 入口 `app.js` 与前端 ES module import graph 统一追加 `?v=28.0G-9`，并暴露 `window.__GFRR_FRONTEND_VERSION__` 供 Console 确认。无痕窗口正常证明线上 Worker-first runtime 正常；本轮不改 Worker runtime、数据源、KV，也不 deploy Worker。
 - v28.0G-9B Frontend Asset Version Bump Helper：新增本地只读维护工具 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0G-9`；该工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
+- v28.0G-10 Data Check Expected-Skip Noise Cleanup：`npm run check:data` 默认不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 已是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要细节时运行 `npm run check:data:verbose`，需要把 mismatch 当作失败时运行 `npm run check:data:strict-live-alignment`。本轮不改 data/realtime、不改 Worker runtime、不改前端、不 deploy。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。
@@ -176,6 +177,8 @@ npm run check:data
 - `check:workflows`：检查 GitHub Actions workflow 合约，防止 Realtime / Daily / Pages 部署中的关键调度、Summary、校验和部署步骤被误删。
 - `check:docs`：检查 `README.md`、`AGENTS.md` 和 `docs/*.md` 中的本地 Markdown 链接，防止 DATA_CONTRACT / OPERATIONS 等文档入口失效。
 - `check:data`：检查数据契约、Brent validation、Decision Output Contract、Transmission Delta 等结构；底层运行 `node scripts/validate-data.mjs`。
+- `check:data:verbose`：输出 live realtime / `displayInputsBaseline` alignment 的 expected skip reason。
+- `check:data:strict-live-alignment`：要求本地 `realtime/market.json.updatedAt` 与 `dailyRealtimeInput.updatedAt` 是同一快照，否则失败。
 
 新增 `scripts/` 脚本或 `scripts/modules/` 模块后，通常会自动纳入对应检查，无需手动维护检查列表。
 
@@ -188,7 +191,7 @@ npm run bump:frontend-asset-version -- 28.0G-10
 
 不需要 bump 的情况包括只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json`，或只 deploy Worker。
 
-如果 `check:data` 输出本地 `realtime/market.json` 与 `dailyRealtimeInput.updatedAt` 不匹配的 warning，但最终显示 `Validation passed (v27.0)`，这是可接受状态。本地 fallback 可能不是 Daily 实际消费的 realtime 版本。
+v28.0G-10 起，默认 `check:data` 会安静跳过本地 realtime 与 `dailyRealtimeInput` 时间不一致时的 live alignment，这是 expected skip，不代表删除了 `validateRealtimeBaselineAlignment`。本地 fallback 可能不是 Daily 实际消费的 realtime 版本；若需要确认原因，用 `npm run check:data:verbose`，若需要强制同快照，用 `npm run check:data:strict-live-alignment`。
 
 ## GitHub Actions 工作流
 

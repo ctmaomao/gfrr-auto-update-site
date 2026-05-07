@@ -23,6 +23,7 @@
 - v28.0G-7B 新增本地只读 `review:worker-health-snapshot` helper，用于审阅下载后的 snapshot 并输出 PASS / WARN / FAIL；不得让它访问网络、写 KV、写 data/realtime 或替代 scheduled hard gate。
 - v28.0G-9 Frontend Asset Cache Busting 用 `?v=28.0G-9` 刷新 `index.html` 入口与前端 ES module graph，解决 Android Chrome cached old module graph 让普通窗口继续显示 Actions/FRED 旧逻辑的问题；`window.__GFRR_FRONTEND_VERSION__` 应返回 `28.0G-9`。无痕窗口正常代表 Worker-first runtime 正常；不改 Worker runtime、数据源、KV，也不 deploy Worker。
 - v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0G-9`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
+- v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`，必须同步 bump 入口脚本和所有本地 JS module import query。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 - Worker runtime 改动流程：Cursor 实现 → 本地 checks → 提交 / push → deploy preflight → `wrangler deploy` → live validation → 观察 1-2 轮 scheduled Check Worker Health。文档 / check 脚本改动通常不需要 deploy。
 - KV write guard deferred：只有持续 >800 writes/day、90% warning 或 429 时，才考虑 cron 调整、paid plan 或另开版本设计 guard。
@@ -109,9 +110,11 @@ check:syntax → check:dom → check:modules → check:copy → check:workflows 
 - `check:copy`：检查用户可见文案契约。
 - `check:workflows`：检查 GitHub Actions workflow 合约。
 - `check:docs`：检查 `README.md`、`AGENTS.md` 和 `docs/*.md` 中的本地 Markdown 链接；跳过 `http / https / mailto / 纯锚点`。
-- `check:data`：等价于 `node scripts/validate-data.mjs`，检查数据契约。
+- `check:data`：等价于 `node scripts/validate-data.mjs`，检查数据契约；local realtime / Daily baseline alignment 的 expected skip 默认静默。
+- `check:data:verbose`：输出 expected skip reason。
+- `check:data:strict-live-alignment`：把本地 realtime 与 `dailyRealtimeInput` 非同一快照视为失败。
 
-如果 `check:data` 输出本地 realtime 与 `dailyRealtimeInput.updatedAt` 不匹配的 warning，但最终显示 `Validation passed (v27.0)`，属于可接受状态。
+v28.0G-10 起，如果本地 realtime 与 `dailyRealtimeInput.updatedAt` 不匹配，默认 `check:data` 会静默跳过 live alignment 并继续其它检查；`Validation passed (v27.0)` 表示数据契约通过。
 
 ## 6. 不同类型任务的检查要求
 

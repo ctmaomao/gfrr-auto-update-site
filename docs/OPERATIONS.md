@@ -26,7 +26,7 @@ npm run check:docs
 npm run check:data
 ```
 
-`check:data` 等价于 `node scripts/validate-data.mjs`。
+`check:data` 等价于 `node scripts/validate-data.mjs`。v28.0G-10 Data Check Expected-Skip Noise Cleanup 后，默认检查不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 已是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。
 
 `check:copy` 检查用户可见文案契约，防止“广义美元指数 / 亿美元 / 传导网络 Δ”等已修复文案回退。
 
@@ -36,14 +36,19 @@ npm run check:data
 
 `check:syntax` 和 `check:modules` 均为自动发现模式；新增 `scripts/` 文件或 `scripts/modules/` 模块后，通常会自动纳入检查。
 
-如果输出：
+需要查看跳过原因时运行：
 
-```text
-[validate-data] Skipping live realtime/displayInputsBaseline alignment...
-Validation passed (v27.0)
+```bash
+npm run check:data:verbose
 ```
 
-这是可接受 warning，不是失败。它表示本地 `realtime/market.json` 不是 Daily 实际消费的 realtime 版本，因此跳过本地 realtime 与 baseline 的对齐检查。
+需要强制本地 realtime 与 `dailyRealtimeInput` 同快照时运行：
+
+```bash
+npm run check:data:strict-live-alignment
+```
+
+如果当前本地 `realtime/market.json.updatedAt` 与 `dailyRealtimeInput.updatedAt` 不一致，strict 模式会失败；这不代表默认 `check:data` 失败，也不代表删除了 `validateRealtimeBaselineAlignment`。本轮不改 data/realtime、不改 Worker runtime、不改前端、不 deploy。
 
 ## 2. 页面显示“实时数据已过期”
 

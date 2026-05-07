@@ -232,12 +232,20 @@ const releaseStateDocs = [
 ];
 const operationsRunbookFile = 'docs/OPERATIONS.md';
 const dataContractFile = 'docs/DATA_CONTRACT.md';
+const validateDataScriptFile = 'scripts/validate-data.mjs';
 const frontendAssetVersion = '28.0G-9';
 const frontendAssetEntryFile = 'index.html';
 const frontendAssetAppFile = 'scripts/app.js';
 const frontendAssetModuleDir = 'scripts/modules';
 const frontendAssetBumpScriptFile = 'scripts/bump-frontend-asset-version.mjs';
 const frontendAssetDocs = [
+  'README.md',
+  'AGENTS.md',
+  'docs/OPERATIONS.md',
+  'docs/DATA_CONTRACT.md',
+  'workers/gfrr-realtime-worker/README.md',
+];
+const dataCheckDocs = [
   'README.md',
   'AGENTS.md',
   'docs/OPERATIONS.md',
@@ -695,8 +703,38 @@ if (fs.existsSync(packageFile)) {
   if (!packageText.includes('"bump:frontend-asset-version": "node scripts/bump-frontend-asset-version.mjs"')) {
     addRuntimeFailure(packageFile, 'missing bump:frontend-asset-version package script');
   }
+  if (!packageText.includes('"check:data:verbose": "node scripts/validate-data.mjs --verbose"')) {
+    addRuntimeFailure(packageFile, 'missing check:data:verbose package script');
+  }
+  if (!packageText.includes('"check:data:strict-live-alignment": "node scripts/validate-data.mjs --strict-live-alignment"')) {
+    addRuntimeFailure(packageFile, 'missing check:data:strict-live-alignment package script');
+  }
 } else {
   addRuntimeFailure(packageFile, 'package.json missing');
+}
+
+if (fs.existsSync(validateDataScriptFile)) {
+  const text = fs.readFileSync(validateDataScriptFile, 'utf8');
+  for (const needle of [
+    '--verbose',
+    '--strict-live-alignment',
+    'VALIDATE_DATA_VERBOSE',
+    'VALIDATE_DATA_STRICT_LIVE_ALIGNMENT',
+    'Expected skip',
+    'strict live alignment requested',
+    'validateRealtimeBaselineAlignment',
+    'validateDisplayInputsBaseline',
+    'validateDailyRealtimeInput',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(validateDataScriptFile, `missing validate-data expected-skip marker "${needle}"`);
+    }
+  }
+  if (text.includes('Skipping live realtime/displayInputsBaseline alignment')) {
+    addRuntimeFailure(validateDataScriptFile, 'default live alignment expected skip must not use the old warning text');
+  }
+} else {
+  addRuntimeFailure(validateDataScriptFile, 'validate data script missing');
 }
 
 if (fs.existsSync(frontendAssetBumpScriptFile)) {
@@ -790,6 +828,29 @@ for (const needle of [
 ]) {
   if (!frontendAssetDocText.includes(needle)) {
     addRuntimeFailure('frontend asset cache busting docs', `missing marker "${needle}"`);
+  }
+}
+
+const dataCheckDocText = dataCheckDocs
+  .filter((file) => fs.existsSync(file))
+  .map((file) => fs.readFileSync(file, 'utf8'))
+  .join('\n');
+for (const file of dataCheckDocs) {
+  if (!fs.existsSync(file)) {
+    addRuntimeFailure(file, 'data check expected-skip document missing');
+  }
+}
+for (const needle of [
+  'v28.0G-10',
+  'Data Check Expected-Skip Noise Cleanup',
+  'expected skip',
+  'check:data:verbose',
+  'check:data:strict-live-alignment',
+  'Worker-first runtime',
+  'fallback / Daily baseline',
+]) {
+  if (!dataCheckDocText.includes(needle)) {
+    addRuntimeFailure('data check expected-skip docs', `missing marker "${needle}"`);
   }
 }
 

@@ -10,6 +10,17 @@ const dataPath = path.join(root, 'data', 'radar-data.json');
 const historyPath = path.join(root, 'data', 'radar-history.json');
 const realtimePath = path.join(root, 'realtime', 'market.json');
 const historyFullPath = path.join(root, 'data', 'radar-history-full.json');
+const args = new Set(process.argv.slice(2));
+const supportedArgs = new Set(['--verbose', '--strict-live-alignment']);
+
+for (const arg of args) {
+  if (!supportedArgs.has(arg)) {
+    throw new Error(`Validation failed: unsupported argument ${arg}`);
+  }
+}
+
+const validateDataVerbose = args.has('--verbose') || process.env.VALIDATE_DATA_VERBOSE === '1';
+const strictLiveAlignment = args.has('--strict-live-alignment') || process.env.VALIDATE_DATA_STRICT_LIVE_ALIGNMENT === '1';
 
 if (!fs.existsSync(dataPath)) throw new Error('Validation failed: missing data/radar-data.json');
 if (!fs.existsSync(historyPath)) throw new Error('Validation failed: missing data/radar-history.json');
@@ -168,7 +179,12 @@ function isSameDailyRealtimeInput(dataPayload, realtimePayload) {
 function validateRealtimeBaselineAlignment(dataPayload, realtimePayload) {
   if (!shouldValidateRealtimeBaselineAlignment(realtimePayload)) return;
   if (!isSameDailyRealtimeInput(dataPayload, realtimePayload)) {
-    console.warn('[validate-data] Skipping live realtime/displayInputsBaseline alignment: local realtime.updatedAt does not match dailyRealtimeInput.updatedAt.');
+    if (strictLiveAlignment) {
+      throw new Error('Validation failed: strict live alignment requested but local realtime.updatedAt does not match dailyRealtimeInput.updatedAt.');
+    }
+    if (validateDataVerbose) {
+      console.info('[validate-data] Expected skip: local realtime.updatedAt does not match dailyRealtimeInput.updatedAt; live realtime/displayInputsBaseline alignment was not checked.');
+    }
     return;
   }
   const baseline = dataPayload.displayInputsBaseline;
