@@ -134,6 +134,55 @@
         </article>
       </section>
 
+      <section class="full-width-section cockpit-section" id="ai-interpretation-layer-section">
+        <article class="card full-width-card">
+          <div class="card-head split-head">
+            <div>
+              <h2>规则化 AI 解释层</h2>
+              <p class="muted">将事实、数据推断、模型判断与情景假设分开显示；当前不调用外部 AI。</p>
+            </div>
+            <span class="badge neutral" id="ai-interpretation-confidence">加载中...</span>
+          </div>
+          <div class="metric-row two">
+            <div class="metric-box compact">
+              <div class="metric-label">摘要</div>
+              <div class="metric-value small" id="ai-interpretation-summary">--</div>
+              <div class="mini-delta" id="ai-interpretation-mode">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">边界提示</div>
+              <p id="ai-interpretation-boundary">该区域仅为解释层展示，不参与评分、仓位、执行灯或交易建议。</p>
+            </div>
+          </div>
+          <div class="grid two-col hero-grid">
+            <details class="metric-box compact">
+              <summary class="metric-label">查看已验证事实</summary>
+              <ul class="bullet-list" id="ai-interpretation-facts"></ul>
+            </details>
+            <details class="metric-box compact">
+              <summary class="metric-label">查看数据推断</summary>
+              <ul class="bullet-list" id="ai-interpretation-inferences"></ul>
+            </details>
+            <details class="metric-box compact">
+              <summary class="metric-label">查看模型判断</summary>
+              <ul class="bullet-list" id="ai-interpretation-judgments"></ul>
+            </details>
+            <details class="metric-box compact">
+              <summary class="metric-label">查看情景假设</summary>
+              <div id="ai-interpretation-scenarios"></div>
+            </details>
+            <details class="metric-box compact">
+              <summary class="metric-label">查看数据缺口与反证条件</summary>
+              <ul class="bullet-list" id="ai-interpretation-gaps-invalidations"></ul>
+            </details>
+            <details class="metric-box compact">
+              <summary class="metric-label">查看证据链接</summary>
+              <ul class="bullet-list" id="ai-interpretation-evidence-links"></ul>
+            </details>
+          </div>
+        </article>
+      </section>
+
       <section class="full-width-section decision-header-section cockpit-section">
         <article class="card decision-header-card full-width-card">
           <div class="decision-header-layout">
@@ -1025,6 +1074,6 @@
     <footer class="footer">独立静态版 · 适配静态托管 · 数据由自动化流程每日生成</footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0I-8"></script>
+  <script type="module" src="scripts/app.js?v=28.0J-2"></script>
 </body>
 </html>

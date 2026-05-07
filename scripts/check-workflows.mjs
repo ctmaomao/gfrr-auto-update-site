@@ -261,7 +261,7 @@ const worldOrderForbiddenPhrases = [
   ['13 步', '已走几步'].join(''),
   ['世界大战', '第几步'].join(''),
 ];
-const frontendAssetVersion = '28.0I-8';
+const frontendAssetVersion = '28.0J-2';
 const frontendAssetEntryFile = 'index.html';
 const frontendAssetAppFile = 'scripts/app.js';
 const frontendAssetModuleDir = 'scripts/modules';
@@ -1116,6 +1116,10 @@ if (fs.existsSync(frontendAssetEntryFile)) {
     'world-order-score-bar',
     'world-order-source-status',
     'world-order-warnings',
+    'ai-interpretation-layer-section',
+    '规则化 AI 解释层',
+    '当前不调用外部 AI',
+    'ai-interpretation-scenarios',
   ]) {
     if (!text.includes(needle)) {
       addRuntimeFailure(frontendAssetEntryFile, `missing world order UI marker "${needle}"`);
@@ -1134,6 +1138,8 @@ if (fs.existsSync(frontendAssetAppFile)) {
     'renderWorldOrderStressOverlay',
     '__GFRR_WORLD_ORDER_STRESS__',
     'fetchWorldOrderStressData',
+    'renderAiInterpretationLayer',
+    'data.aiInterpretationLayer',
   ]) {
     if (!text.includes(needle)) {
       addRuntimeFailure(frontendAssetAppFile, `missing world order app marker "${needle}"`);
@@ -1208,6 +1214,7 @@ for (const forbiddenUiCopy of [
   '趋势：watching',
   '趋势：rising',
   '趋势：stable',
+  '模式：rule_based_structured_interpretation',
   'market 风险上升',
   '数据质量：数据质量',
   'undefined',

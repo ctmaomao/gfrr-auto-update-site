@@ -190,7 +190,8 @@ v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。v28.0I 已完�
 - v28.0J-0 introduces `aiInterpretationLayer` data contract.
 - Rule-based structured interpretation only.
 - No external AI API; no DeepSeek / OpenAI integration.
-- No frontend rendering yet.
+- v28.0J-2 adds read-only compact frontend rendering under Daily Brief.
+- Facts, data inferences, model judgments, scenarios, data gaps, invalidations and evidence links remain folded by default.
 - No scoring / decision / execution / position integration.
 
 ## 6. Risk Boundaries / 风险边界

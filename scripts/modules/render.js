@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0I-8';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0I-8';
-import { renderList } from './renderTables.js?v=28.0I-8';
+import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0J-2';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0J-2';
+import { renderList } from './renderTables.js?v=28.0J-2';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0I-8';
+} from './renderCharts.js?v=28.0J-2';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0I-8';
+} from './renderTables.js?v=28.0J-2';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0I-8';
+} from './renderAudit.js?v=28.0J-2';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -480,6 +480,216 @@ export function renderDailyBrief(dailyBrief) {
   const scoreLabel = Number.isFinite(confidenceScore) ? ` / ${Math.round(confidenceScore)}` : '';
   setTextIfPresent('daily-brief-confidence', `置信度：${confidenceLabel}${scoreLabel}`);
   setTextIfPresent('daily-brief-boundary', `该区域仅为解释层展示，不参与评分、仓位、执行灯或交易建议。${safeText(confidence.reasonZh, '')}`);
+}
+
+const AI_CONFIDENCE_CN = {
+  low: '低',
+  medium: '中',
+  high: '高',
+  unknown: '待确认'
+};
+
+const AI_MODE_CN = {
+  rule_based_structured_interpretation: '规则化结构解释'
+};
+
+const AI_MODEL_SOURCE_CN = {
+  dailyBrief: '今日主判断',
+  divergenceLayer: '背离校验层',
+  brentPricingLayer: 'Brent 公开代理价格层',
+  macroDrivers: '宏观驱动层',
+  decisionModel: '决策模型',
+  combined: '多层综合'
+};
+
+const AI_LAYER_CN = {
+  dailyBrief: '今日主判断',
+  divergenceLayer: '背离校验层',
+  brentPricingLayer: 'Brent 公开代理价格层',
+  macroDrivers: '宏观驱动层',
+  decisionModel: '决策模型',
+  healthDashboard: '数据健康状态',
+  combined: '多层综合'
+};
+
+const AI_FIELD_CN = {
+  'dailyBrief.contractVersion': 'Daily Brief 合约',
+  'dailyBrief.oneLineConclusion': '一句话结论',
+  'dailyBrief.macroState': '宏观状态',
+  'divergenceLayer.boundaries': '背离层边界',
+  'divergenceLayer.primaryDivergence': '主要背离',
+  'divergenceLayer.checks': '背离检查',
+  'brentPricingLayer.proxySpread': 'Brent 代理价差',
+  'brentPricingLayer.promotionAudit': 'Brent 主值审计',
+  'macroDrivers.consumer': '消费者慢变量',
+  'decisionModel.strategyState': '策略状态',
+  oneLineConclusion: '一句话结论',
+  primaryDivergence: '主要背离',
+  proxySpread: 'Brent 代理价差'
+};
+
+function formatAiConfidenceLabel(value) {
+  return AI_CONFIDENCE_CN[String(value || '').toLowerCase()] || '待确认';
+}
+
+function formatAiConfidence(confidence = {}) {
+  const level = formatAiConfidenceLabel(confidence.level);
+  const score = Number(confidence.score);
+  const scoreLabel = Number.isFinite(score) ? ` / ${Math.round(score)}` : ' / --';
+  return `置信度：${level}${scoreLabel}。${safeText(confidence.reasonZh, '暂不足以判断')}`;
+}
+
+function formatAiReference(value) {
+  const key = String(value || '');
+  if (AI_FIELD_CN[key]) return AI_FIELD_CN[key];
+  const layerKey = key.split('.')[0];
+  if (AI_LAYER_CN[layerKey]) return `${AI_LAYER_CN[layerKey]}结构字段`;
+  return '站内结构化字段';
+}
+
+function formatAiReferenceList(values, fallback = '站内结构化数据') {
+  const refs = safeArray(values).map(formatAiReference).filter(Boolean);
+  return refs.length ? Array.from(new Set(refs)).join('、') : fallback;
+}
+
+function formatAiTextItem(item, referenceKey, referenceLabel) {
+  const label = safeText(item?.labelZh, '解释项');
+  const statement = safeText(item?.statementZh, '暂不足以判断');
+  const confidence = formatAiConfidenceLabel(item?.confidence);
+  const refs = formatAiReferenceList(item?.[referenceKey]);
+  return `${label}：${statement}。${referenceLabel}：${refs}。置信度：${confidence}`;
+}
+
+function formatAiJudgment(item) {
+  const label = safeText(item?.labelZh, '模型判断');
+  const statement = safeText(item?.statementZh, '暂不足以判断');
+  const modelSource = AI_MODEL_SOURCE_CN[String(item?.modelSource || '')] || '模型来源待确认';
+  const confidence = formatAiConfidenceLabel(item?.confidence);
+  return `${label}：${statement}。模型来源：${modelSource}。置信度：${confidence}`;
+}
+
+function renderAiScenarios(scenarios) {
+  const root = $('ai-interpretation-scenarios');
+  if (!root) return;
+  root.innerHTML = '';
+  const items = safeArray(scenarios).slice(0, 4);
+  if (!items.length) {
+    const fallback = document.createElement('p');
+    fallback.textContent = '暂未生成情景假设；前端不会根据 raw values 反推解释层。';
+    root.appendChild(fallback);
+    return;
+  }
+  items.forEach((scenario) => {
+    const card = document.createElement('div');
+    card.className = 'metric-box compact';
+
+    const title = document.createElement('div');
+    title.className = 'metric-label';
+    title.textContent = safeText(scenario?.labelZh, '情景假设');
+    card.appendChild(title);
+
+    const statement = document.createElement('p');
+    statement.textContent = safeText(scenario?.statementZh, '暂不足以判断');
+    card.appendChild(statement);
+
+    const triggers = document.createElement('ul');
+    triggers.className = 'bullet-list';
+    safeArray(scenario?.triggerConditions).slice(0, 3).forEach((item) => {
+      const li = document.createElement('li');
+      li.textContent = `触发条件：${safeText(item, '暂不足以判断')}`;
+      triggers.appendChild(li);
+    });
+    if (!triggers.children.length) {
+      const li = document.createElement('li');
+      li.textContent = '触发条件：暂不足以判断';
+      triggers.appendChild(li);
+    }
+    card.appendChild(triggers);
+
+    const invalidations = document.createElement('ul');
+    invalidations.className = 'bullet-list';
+    safeArray(scenario?.invalidationConditions).slice(0, 3).forEach((item) => {
+      const li = document.createElement('li');
+      li.textContent = `反证条件：${safeText(item, '暂不足以判断')}`;
+      invalidations.appendChild(li);
+    });
+    if (!invalidations.children.length) {
+      const li = document.createElement('li');
+      li.textContent = '反证条件：暂不足以判断';
+      invalidations.appendChild(li);
+    }
+    card.appendChild(invalidations);
+
+    root.appendChild(card);
+  });
+}
+
+function renderAiInterpretationFallback() {
+  setTextIfPresent('ai-interpretation-summary', 'AI 解释层将在下一次 Daily 数据构建后显示。当前仍可参考今日主判断、背离校验层和数据健康状态。');
+  setTextIfPresent('ai-interpretation-mode', '模式：规则化结构解释待生成；当前不调用外部 AI API。');
+  setTextIfPresent('ai-interpretation-confidence', '置信度：待确认');
+  setTextIfPresent('ai-interpretation-boundary', '该区域仅为解释层展示，不参与评分、仓位、执行灯或交易建议。');
+  renderListIfPresent('ai-interpretation-facts', [], 'AI 解释层待生成，前端不会自行反推已验证事实。');
+  renderListIfPresent('ai-interpretation-inferences', [], 'AI 解释层待生成，前端不会自行生成数据推断。');
+  renderListIfPresent('ai-interpretation-judgments', [], 'AI 解释层待生成，前端不会自行生成模型判断。');
+  renderAiScenarios([]);
+  renderListIfPresent('ai-interpretation-gaps-invalidations', [], 'AI 解释层待生成，当前先参考数据健康状态。');
+  renderListIfPresent('ai-interpretation-evidence-links', [], 'AI 解释层待生成，暂无可展示证据链接。');
+}
+
+export function renderAiInterpretationLayer(aiInterpretationLayer) {
+  if (!aiInterpretationLayer || typeof aiInterpretationLayer !== 'object' || aiInterpretationLayer.contractVersion !== 'v28.0J-0') {
+    renderAiInterpretationFallback();
+    return;
+  }
+
+  const modeLabel = AI_MODE_CN[String(aiInterpretationLayer.mode || '')] || '规则化结构解释';
+  setTextIfPresent('ai-interpretation-summary', safeText(aiInterpretationLayer.summaryZh, '暂不足以判断'));
+  setTextIfPresent('ai-interpretation-mode', `模式：${modeLabel}。当前不调用外部 AI API，仅基于站内结构化数据生成解释。`);
+  setTextIfPresent('ai-interpretation-confidence', formatAiConfidence(aiInterpretationLayer.confidence || {}));
+  setTextIfPresent('ai-interpretation-boundary', '该区域仅为解释层展示，不参与评分、仓位、执行灯或交易建议。');
+
+  renderListIfPresent(
+    'ai-interpretation-facts',
+    safeArray(aiInterpretationLayer.facts)
+      .slice(0, 5)
+      .map((item) => formatAiTextItem(item, 'sourceFields', '来源')),
+    '暂未生成已验证事实。'
+  );
+  renderListIfPresent(
+    'ai-interpretation-inferences',
+    safeArray(aiInterpretationLayer.dataInferences)
+      .slice(0, 5)
+      .map((item) => formatAiTextItem(item, 'basedOn', '基于')),
+    '暂未生成数据推断。'
+  );
+  renderListIfPresent(
+    'ai-interpretation-judgments',
+    safeArray(aiInterpretationLayer.modelJudgments)
+      .slice(0, 5)
+      .map(formatAiJudgment),
+    '暂未生成模型判断。'
+  );
+  renderAiScenarios(aiInterpretationLayer.scenarioHypotheses);
+
+  const gaps = safeArray(aiInterpretationLayer.dataGaps).slice(0, 5).map((item) => `数据缺口：${safeText(item, '暂不足以判断')}`);
+  const invalidations = safeArray(aiInterpretationLayer.invalidationSignals).slice(0, 5).map((item) => `反证条件：${safeText(item, '暂不足以判断')}`);
+  renderListIfPresent(
+    'ai-interpretation-gaps-invalidations',
+    gaps.concat(invalidations),
+    '当前未记录额外数据缺口或反证条件。'
+  );
+  renderListIfPresent(
+    'ai-interpretation-evidence-links',
+    safeArray(aiInterpretationLayer.evidenceLinks)
+      .slice(0, 6)
+      .map((item) => {
+        const layer = AI_LAYER_CN[String(item?.layer || '')] || '站内解释层';
+        const field = formatAiReference(item?.field);
+        return `${layer} / ${field}：${safeText(item?.noteZh, '暂不足以判断')}`;
+      }),
+    '暂未生成证据链接。'
+  );
 }
 
 function formatDivergenceScore(value) {
