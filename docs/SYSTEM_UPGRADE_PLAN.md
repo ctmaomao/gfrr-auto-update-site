@@ -146,6 +146,7 @@ v28.0I 的任何结构升级都必须保护以上基线，不得通过重写页�
 - No Brent promotion / scoring / decision integration.
 - v28.0I-5C adds the read-only Brent public proxy pricing layer frontend display.
 - Missing `brentPricingLayer` must render a gentle fallback.
+- v28.0I-8 compacts the cockpit layout by moving data health earlier and folding Divergence / Brent audit details by default.
 
 ### Phase 6: AI Interpretation Layer Contract
 

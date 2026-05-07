@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0I-5C';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0I-5C';
-import { renderList } from './renderTables.js?v=28.0I-5C';
+import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0I-8';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0I-8';
+import { renderList } from './renderTables.js?v=28.0I-8';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0I-5C';
+} from './renderCharts.js?v=28.0I-8';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0I-5C';
+} from './renderTables.js?v=28.0I-8';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0I-5C';
+} from './renderAudit.js?v=28.0I-8';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -464,9 +464,9 @@ export function renderDailyBrief(dailyBrief) {
     '数据不足，暂不足以判断最大背离证据。'
   );
 
-  renderListIfPresent('daily-brief-triggers', safeArray(dailyBrief.keyTriggers).slice(0, 5), '暂未生成关键触发器。');
-  renderListIfPresent('daily-brief-invalidations', safeArray(dailyBrief.invalidationSignals).slice(0, 5), '暂未生成反证条件。');
-  renderListIfPresent('daily-brief-data-gaps', safeArray(dailyBrief.dataGaps).slice(0, 4), '当前未记录额外数据限制。');
+  renderListIfPresent('daily-brief-triggers', safeArray(dailyBrief.keyTriggers).slice(0, 3), '暂未生成关键触发器。');
+  renderListIfPresent('daily-brief-invalidations', safeArray(dailyBrief.invalidationSignals).slice(0, 3), '暂未生成反证条件。');
+  renderListIfPresent('daily-brief-data-gaps', safeArray(dailyBrief.dataGaps).slice(0, 3), '当前未记录额外数据限制。');
 
   const confidence = dailyBrief.confidence && typeof dailyBrief.confidence === 'object' ? dailyBrief.confidence : {};
   const confidenceLevel = safeText(confidence.level, 'unknown');
@@ -520,7 +520,7 @@ function renderDivergenceChecks(checks) {
   const root = $('divergence-checks');
   if (!root) return;
   root.innerHTML = '';
-  const items = safeArray(checks).slice(0, 4);
+  const items = safeArray(checks).slice(0, 5);
   if (!items.length) {
     const fallback = document.createElement('div');
     fallback.className = 'metric-box compact';
@@ -624,10 +624,6 @@ function formatBrentValue(value, digits = 2) {
   return Number.isFinite(numeric) ? numeric.toFixed(digits) : '--';
 }
 
-function formatBrentText(value) {
-  return safeText(value, '暂不足以判断');
-}
-
 function formatBrentStatus(status) {
   return {
     ok: '可用',
@@ -658,14 +654,25 @@ function formatBrentBoolean(value) {
   return '--';
 }
 
+function formatBrentMoveStatus(status) {
+  return BRENT_MOVE_STATUS_CN[String(status || '')] || '状态待确认';
+}
+
+function formatBrentPromotionReason(reason) {
+  return {
+    'promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation': 'FRED 锚定值偏旧，但 Yahoo 与 Trading Economics 的新鲜确认支持采用公开代理主值。',
+    'promoted-fresh-fred-anchor': 'FRED 锚定值仍在新鲜窗口内。',
+    'promotion-not-applied': '未应用主值提升。',
+    'candidate-missing': '候选价格不足，未应用主值提升。'
+  }[String(reason || '')] || '提升原因待确认';
+}
+
 function formatBrentPriceNode(node = {}) {
   const value = formatBrentValue(node.value);
   const source = safeText(node.source, '--');
-  const observedAt = safeText(node.observedAt, '--');
   const status = formatBrentStatus(node.status);
   const label = safeText(node.labelZh, '公开代理');
-  const limitation = safeText(node.limitationZh, '');
-  return `${label}：${value} / 来源 ${source} / 时间 ${observedAt} / 状态 ${status}${limitation ? `。${limitation}` : ''}`;
+  return `${label}：${value} / 来源 ${source} / 状态 ${status}`;
 }
 
 function formatBrentConfidence(confidence = {}) {
@@ -707,7 +714,7 @@ function renderBrentConfirmationSources(sources) {
 
     const meta = document.createElement('p');
     meta.className = 'muted';
-    meta.textContent = `source=${safeText(source?.source, '--')}；role=${formatBrentRole(source?.role)}；参与 promotion=${formatBrentBoolean(source?.participatesInPromotion)}；observedAt=${safeText(source?.observedAt, '--')}。${safeText(source?.noteZh, '')}`;
+    meta.textContent = `来源：${safeText(source?.source, '--')}；角色：${formatBrentRole(source?.role)}；参与主值提升：${formatBrentBoolean(source?.participatesInPromotion)}；观察时间：${safeText(source?.observedAt, '--')}。${safeText(source?.noteZh, '')}`;
     card.appendChild(meta);
 
     root.appendChild(card);
@@ -759,7 +766,7 @@ export function renderBrentPricingLayer(brentPricingLayer) {
   const audit = brentPricingLayer.promotionAudit && typeof brentPricingLayer.promotionAudit === 'object' ? brentPricingLayer.promotionAudit : {};
   setTextIfPresent(
     'brent-promotion-audit',
-    `promotionApplied=${formatBrentBoolean(audit.promotionApplied)}；moveStatus=${safeText(audit.moveStatus, '--')}；reason=${safeText(audit.promotionReason, '--')}；selectedSource=${safeText(audit.selectedSource, '--')}；anchorSource=${safeText(audit.anchorSource, '--')}；anchorAgeHours=${formatBrentValue(audit.anchorAgeHours, 1)}。`
+    `是否应用主值提升：${formatBrentBoolean(audit.promotionApplied)}；移动状态：${formatBrentMoveStatus(audit.moveStatus)}；提升原因：${formatBrentPromotionReason(audit.promotionReason)}；选中来源：${safeText(audit.selectedSource, '--')}；锚定来源：${safeText(audit.anchorSource, '--')}；锚定价格年龄：${formatBrentValue(audit.anchorAgeHours, 1)} 小时。`
   );
 
   renderBrentConfirmationSources(brentPricingLayer.confirmationSources);
