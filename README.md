@@ -184,6 +184,7 @@ npm run check:data
 - `check:world-order`：只读检查现有 World Order Stress JSON，已纳入 `check:all`。
 - `review:world-order`：只读审阅现有 World Order Stress JSON，输出 PASS / WARN / FAIL 和建议动作。
 - `diagnose:gdelt`：只读诊断 GDELT timeout / 429，不修改生产数据。
+- `diagnose:reliefweb`：只读诊断 ReliefWeb 备用源可行性，不修改生产数据。
 
 新增 `scripts/` 脚本或 `scripts/modules/` 模块后，通常会自动纳入对应检查，无需手动维护检查列表。
 

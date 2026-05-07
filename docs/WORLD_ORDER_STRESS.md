@@ -159,6 +159,18 @@ npm run diagnose:gdelt
 
 Source alternatives review 见 `docs/WORLD_ORDER_SOURCE_REVIEW.md`。scheduled refresh 后续再评估。
 
+## v28.0H-4B ReliefWeb 公开备用源可行性探针
+
+H-4B 增加 ReliefWeb public fallback feasibility probe。它是只读诊断，不改变 production scoring，不写 data/world-order-stress.json，不接入 `build:world-order`，也不改变当前正式 World Order 数据来源。
+
+只读诊断命令：
+
+```bash
+npm run diagnose:reliefweb
+```
+
+当前正式 World Order 数据仍来自 GDELT / OFAC / SIPRI / ACLED adapter / marketConfirmation。ReliefWeb 只用于评估未来是否适合作为公开备用冲突 / 人道事件 proxy。
+
 ## H-2 前端展示
 
 H-2 前端展示新增独立的“世界秩序压力层”区域，显示状态、压力分数、市场确认、主导驱动、六个维度、数据源状态、系统解读和免责声明。该区域只读展示 `data/world-order-stress.json`，并在读取失败或字段缺失时显示保守 fallback，不输出空白卡片、`NaN` 或 `undefined`。

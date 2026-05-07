@@ -28,3 +28,34 @@ GDELT DOC 2.0 仍是 World Order Stress 第一版主代理源，但应先用 `np
 5. WTO / Global Trade Alert / UN Comtrade / IMF trade data 更适合贸易和阵营化慢变量，后续另开 slow-variable pipeline。
 
 `not_now` 表示该来源或接入方式当前不应进入 production scoring，需要先完成单独诊断、字段契约和稳定性验证。
+
+## v28.0H-4B ReliefWeb Probe
+
+ReliefWeb 目前只作为 feasibility probe。本轮不接入 scoring，不写 data/world-order-stress.json，不修改 `build:world-order`，也不改变当前正式 World Order 数据链路。
+
+只读诊断命令：
+
+```bash
+npm run diagnose:reliefweb
+```
+
+诊断枚举解释：
+
+- `reliefweb-currently-healthy`：ReliefWeb API 可访问，至少两个 probe 成功且有匹配报告。
+- `reliefweb-query-too-narrow`：API 可访问，但当前 query 大多没有匹配，需要扩大关键词或测试 country/theme filters。
+- `reliefweb-network-or-availability`：多数请求 timeout、fetch error 或访问被阻断，当前不适合接入。
+- `reliefweb-rate-limited`：429 较多，应保持手动 probe，不适合 scheduled use。
+- `reliefweb-api-contract-changed`：HTTP 200 但响应结构不符合预期，需要先更新 adapter contract。
+
+如果未来接入，应另开版本，例如 `v28.0H-4C ReliefWeb Fallback Adapter`。ReliefWeb 更适合做人道 / 冲突报告密度 proxy，但不能替代 ACLED 的政治暴力事件结构数据。
+
+任何 production integration 都必须先完成：
+
+- adapter
+- normalized summary
+- cache fallback
+- confidence impact
+- check-world-order contract
+- UI source status
+
+当前 H-4B probe 结果：`diagnosis=reliefweb-network-or-availability`。当前网络下 ReliefWeb reports API 快速返回 HTTP 406，并提示 blocked due to bot activity；未获得可用于 feasibility 判断的 reports JSON。脚本使用当前可用的 ReliefWeb reports endpoint 版本进行探测，v1 endpoint 已不适合作为后续 adapter 假设。建议暂不接入 ReliefWeb；后续如另开 `v28.0H-4C ReliefWeb Fallback Adapter`，应先确认可用 appname / runner 网络 / API contract。

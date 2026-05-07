@@ -30,6 +30,7 @@
 - SIPRI normalized example/template 数据不得当作真实宏观数据参与 scoring；只有 `quality.isRealData=true` 的真实手动标准化文件才能让 SIPRI 进入 `ok`。
 - World Order 外部数据刷新应先手动观察，再考虑 scheduled workflow；不要把 `build:world-order` 加入 `check:all`，H-4 的 `review:world-order` 只是本地只读人工审阅 helper。
 - World Order 新外部源不得直接进入 scoring；必须先通过 diagnosis / source review，再另开版本接入。
+- ReliefWeb 或任何新外部源不得直接进入 scoring；必须先通过 diagnosis / review，再另开 integration version。
 - 修改 World Order Stress schema / scoring / data product 时，必须确保 `npm run check:world-order` 和 `npm run check:all` 通过；`check:all` 只检查现有 JSON，不应默认运行 `build:world-order`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`，必须同步 bump 入口脚本和所有本地 JS module import query。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 - Worker runtime 改动流程：Cursor 实现 → 本地 checks → 提交 / push → deploy preflight → `wrangler deploy` → live validation → 观察 1-2 轮 scheduled Check Worker Health。文档 / check 脚本改动通常不需要 deploy。
