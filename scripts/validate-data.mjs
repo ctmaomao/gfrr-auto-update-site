@@ -53,6 +53,9 @@ const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
 const BRENT_PROXY_SPREAD_STATUSES = new Set(['normal', 'watch', 'stress', 'insufficient_data']);
+const AI_INTERPRETATION_MODE = 'rule_based_structured_interpretation';
+const AI_INTERPRETATION_MODEL_SOURCES = new Set(['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'macroDrivers', 'decisionModel', 'combined']);
+const AI_INTERPRETATION_EVIDENCE_LAYERS = new Set(['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'macroDrivers.consumer', 'worldOrder', 'decisionModel']);
 const DAILY_BRIEF_FORBIDDEN_PHRASES = [
   '战争概率',
   '世界大战',
@@ -67,7 +70,11 @@ const DAILY_BRIEF_FORBIDDEN_PHRASES = [
   '真实 Dated Brent 已接入',
   '实物油价已经确认',
   '石油危机已经爆发',
-  '必然逼空'
+  '必然逼空',
+  '已经进入第三次世界大战',
+  '13步已走几步',
+  'sure thing',
+  'risk-free'
 ];
 
 function assert(condition, message) {
@@ -503,6 +510,154 @@ function validateBrentPricingLayer(dataPayload) {
   }
 }
 
+function validateAiConfidence(value, fieldName) {
+  assert(DAILY_BRIEF_CONFIDENCE_LEVELS.has(value), `${fieldName} must be low, medium, or high`);
+}
+
+function validateStringArray(value, fieldName) {
+  assertArray(value, fieldName);
+  value.forEach((item, index) => assertString(item, `${fieldName}[${index}]`));
+}
+
+function validateAiInterpretationFacts(items, fieldName) {
+  assertArray(items, fieldName);
+  items.forEach((item, index) => {
+    const itemField = `${fieldName}[${index}]`;
+    assertPlainObject(item, itemField);
+    for (const key of ['key', 'labelZh', 'statementZh', 'sourceFields', 'confidence']) {
+      assert(Object.hasOwn(item, key), `${itemField}.${key} is missing`);
+    }
+    assertString(item.key, `${itemField}.key`);
+    assertString(item.labelZh, `${itemField}.labelZh`);
+    assertString(item.statementZh, `${itemField}.statementZh`);
+    validateStringArray(item.sourceFields, `${itemField}.sourceFields`);
+    validateAiConfidence(item.confidence, `${itemField}.confidence`);
+  });
+}
+
+function validateAiInterpretationInferences(items, fieldName) {
+  assertArray(items, fieldName);
+  items.forEach((item, index) => {
+    const itemField = `${fieldName}[${index}]`;
+    assertPlainObject(item, itemField);
+    for (const key of ['key', 'labelZh', 'statementZh', 'basedOn', 'confidence']) {
+      assert(Object.hasOwn(item, key), `${itemField}.${key} is missing`);
+    }
+    assertString(item.key, `${itemField}.key`);
+    assertString(item.labelZh, `${itemField}.labelZh`);
+    assertString(item.statementZh, `${itemField}.statementZh`);
+    validateStringArray(item.basedOn, `${itemField}.basedOn`);
+    validateAiConfidence(item.confidence, `${itemField}.confidence`);
+  });
+}
+
+function validateAiInterpretationJudgments(items, fieldName) {
+  assertArray(items, fieldName);
+  items.forEach((item, index) => {
+    const itemField = `${fieldName}[${index}]`;
+    assertPlainObject(item, itemField);
+    for (const key of ['key', 'labelZh', 'statementZh', 'modelSource', 'confidence']) {
+      assert(Object.hasOwn(item, key), `${itemField}.${key} is missing`);
+    }
+    assertString(item.key, `${itemField}.key`);
+    assertString(item.labelZh, `${itemField}.labelZh`);
+    assertString(item.statementZh, `${itemField}.statementZh`);
+    assert(AI_INTERPRETATION_MODEL_SOURCES.has(item.modelSource), `${itemField}.modelSource is not supported`);
+    validateAiConfidence(item.confidence, `${itemField}.confidence`);
+  });
+}
+
+function validateAiInterpretationScenarios(items, fieldName) {
+  assertArray(items, fieldName);
+  items.forEach((item, index) => {
+    const itemField = `${fieldName}[${index}]`;
+    assertPlainObject(item, itemField);
+    for (const key of ['key', 'labelZh', 'statementZh', 'triggerConditions', 'invalidationConditions', 'confidence']) {
+      assert(Object.hasOwn(item, key), `${itemField}.${key} is missing`);
+    }
+    assertString(item.key, `${itemField}.key`);
+    assertString(item.labelZh, `${itemField}.labelZh`);
+    assertString(item.statementZh, `${itemField}.statementZh`);
+    validateStringArray(item.triggerConditions, `${itemField}.triggerConditions`);
+    validateStringArray(item.invalidationConditions, `${itemField}.invalidationConditions`);
+    validateAiConfidence(item.confidence, `${itemField}.confidence`);
+  });
+}
+
+function validateAiInterpretationEvidenceLinks(items, fieldName) {
+  assertArray(items, fieldName);
+  items.forEach((item, index) => {
+    const itemField = `${fieldName}[${index}]`;
+    assertPlainObject(item, itemField);
+    for (const key of ['layer', 'field', 'noteZh']) {
+      assert(Object.hasOwn(item, key), `${itemField}.${key} is missing`);
+      assertString(item[key], `${itemField}.${key}`);
+    }
+    assert(AI_INTERPRETATION_EVIDENCE_LAYERS.has(item.layer), `${itemField}.layer is not supported`);
+  });
+}
+
+function validateAiInterpretationLayer(dataPayload) {
+  const layer = dataPayload.aiInterpretationLayer;
+  if (layer === undefined) {
+    console.warn('[validate-data] Warning: aiInterpretationLayer is missing; run npm run build:data with a valid realtime input to generate the v28.0J-0 interpretation-only contract.');
+    return;
+  }
+  assertPlainObject(layer, 'aiInterpretationLayer');
+  for (const key of [
+    'contractVersion',
+    'generatedAt',
+    'mode',
+    'summaryZh',
+    'facts',
+    'dataInferences',
+    'modelJudgments',
+    'scenarioHypotheses',
+    'dataGaps',
+    'invalidationSignals',
+    'evidenceLinks',
+    'confidence',
+    'boundaries'
+  ]) {
+    assert(Object.hasOwn(layer, key), `aiInterpretationLayer.${key} is missing`);
+  }
+
+  assert(layer.contractVersion === 'v28.0J-0', 'aiInterpretationLayer.contractVersion must be v28.0J-0');
+  parseIsoTime(layer.generatedAt, 'generatedAt');
+  assert(layer.mode === AI_INTERPRETATION_MODE, `aiInterpretationLayer.mode must be ${AI_INTERPRETATION_MODE}`);
+  assertString(layer.summaryZh, 'aiInterpretationLayer.summaryZh');
+  validateAiInterpretationFacts(layer.facts, 'aiInterpretationLayer.facts');
+  validateAiInterpretationInferences(layer.dataInferences, 'aiInterpretationLayer.dataInferences');
+  validateAiInterpretationJudgments(layer.modelJudgments, 'aiInterpretationLayer.modelJudgments');
+  validateAiInterpretationScenarios(layer.scenarioHypotheses, 'aiInterpretationLayer.scenarioHypotheses');
+  validateStringArray(layer.dataGaps, 'aiInterpretationLayer.dataGaps');
+  validateStringArray(layer.invalidationSignals, 'aiInterpretationLayer.invalidationSignals');
+  validateAiInterpretationEvidenceLinks(layer.evidenceLinks, 'aiInterpretationLayer.evidenceLinks');
+
+  const confidence = layer.confidence;
+  assertPlainObject(confidence, 'aiInterpretationLayer.confidence');
+  validateAiConfidence(confidence.level, 'aiInterpretationLayer.confidence.level');
+  assertFiniteNumber(confidence.score, 'aiInterpretationLayer.confidence.score');
+  assert(confidence.score >= 0 && confidence.score <= 100, 'aiInterpretationLayer.confidence.score must be 0-100');
+  assertString(confidence.reasonZh, 'aiInterpretationLayer.confidence.reasonZh');
+
+  const boundaries = layer.boundaries;
+  assertPlainObject(boundaries, 'aiInterpretationLayer.boundaries');
+  assert(boundaries.displayOnly === true, 'aiInterpretationLayer.boundaries.displayOnly must be true');
+  assert(boundaries.interpretationOnly === true, 'aiInterpretationLayer.boundaries.interpretationOnly must be true');
+  assert(boundaries.generatedByExternalAi === false, 'aiInterpretationLayer.boundaries.generatedByExternalAi must be false');
+  assert(boundaries.usesExternalAiApi === false, 'aiInterpretationLayer.boundaries.usesExternalAiApi must be false');
+  assert(boundaries.affectsScoring === false, 'aiInterpretationLayer.boundaries.affectsScoring must be false');
+  assert(boundaries.affectsDecisionModel === false, 'aiInterpretationLayer.boundaries.affectsDecisionModel must be false');
+  assert(boundaries.affectsExecutionLock === false, 'aiInterpretationLayer.boundaries.affectsExecutionLock must be false');
+  assert(boundaries.affectsPositionGuidance === false, 'aiInterpretationLayer.boundaries.affectsPositionGuidance must be false');
+
+  const serializedStrings = collectStrings(layer).join('\n');
+  for (const phrase of DAILY_BRIEF_FORBIDDEN_PHRASES) {
+    assert(!serializedStrings.includes(phrase), `aiInterpretationLayer must not contain forbidden phrase "${phrase}"`);
+  }
+}
+
 function validateDailyRealtimeInput(dataPayload) {
   const input = dataPayload.dailyRealtimeInput;
   assert(input && typeof input === 'object' && !Array.isArray(input), 'dailyRealtimeInput is missing');
@@ -856,6 +1011,7 @@ validateDailyBrief(data);
 validateDivergenceLayer(data);
 validateMacroDriversConsumer(data);
 validateBrentPricingLayer(data);
+validateAiInterpretationLayer(data);
 validateDisplayInputsBaseline(data);
 validateRealtimeBaselineAlignment(data, realtime);
 validateBrentValidation(realtime);

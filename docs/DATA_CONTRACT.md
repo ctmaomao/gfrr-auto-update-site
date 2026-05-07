@@ -279,6 +279,43 @@ brentPricingLayer
 
 v28.0I-5C 前端展示只读消费 `brentPricingLayer`。v28.0I-8 起默认以 compact summary 展示，Brent 主值审计、验证源明细和数据限制放入折叠区。前端不得在 render 层反推 Brent 主值、Brent promotion、评分、仓位、执行灯或交易建议；当 `brentPricingLayer` 缺失时只显示温和 fallback。
 
+### aiInterpretationLayer 规则化结构解释层 contract
+
+`v28.0J-0` 在 `data/radar-data.json` 根级新增：
+
+```text
+aiInterpretationLayer
+```
+
+`aiInterpretationLayer` 是规则化结构解释层，用于把现有 Daily 数据中的事实、数据推断、模型判断、情景假设、数据缺口和反证条件分开记录。本轮不调用外部 AI，不接 DeepSeek / OpenAI，不新增外部网络请求，不做前端展示。
+
+严格边界：
+
+- 只读取当前 Daily pipeline 已有结构。
+- 不读取 `data/world-order-stress.json`。
+- 不参与 scoring。
+- 不参与 `decisionModel`。
+- 不参与 `executionLock`。
+- 不参与 `positionGuidance`。
+- 不改变 Action Queue、Trigger Monitor 或 Invalidation Rules。
+- 不改变 Brent promotion、Worker-first runtime priority、`values.*` 或 `effectiveDisplayInputs`。
+
+字段 contract：
+
+- `contractVersion` 必须为 `v28.0J-0`。
+- `mode` 必须为 `rule_based_structured_interpretation`。
+- `facts` 只记录已有数据明确支持的事实，不写预测。
+- `dataInferences` 只记录从已有数据可合理推断的观察性内容，必须使用克制措辞。
+- `modelJudgments` 只记录模型层判断，`modelSource` 只能为 `dailyBrief` / `divergenceLayer` / `brentPricingLayer` / `macroDrivers` / `decisionModel` / `combined`。
+- `scenarioHypotheses` 只能写条件句，每项必须包含 `triggerConditions` 与 `invalidationConditions`。
+- `dataGaps`、`invalidationSignals` 必须为数组。
+- `evidenceLinks.layer` 只能引用 `dailyBrief` / `divergenceLayer` / `brentPricingLayer` / `macroDrivers.consumer` / `worldOrder` / `decisionModel`。
+- `confidence.level` 只能为 `low` / `medium` / `high`，`confidence.score` 必须为 `0-100`。
+- `boundaries.displayOnly`、`boundaries.interpretationOnly` 必须为 `true`。
+- `boundaries.generatedByExternalAi`、`usesExternalAiApi`、`affectsScoring`、`affectsDecisionModel`、`affectsExecutionLock`、`affectsPositionGuidance` 必须为 `false`。
+
+未来前端只能只读消费 `aiInterpretationLayer`，不得在 render 层重算、生成解释、调用外部 AI、改写数据对象或把 AI 文案接入评分 / 决策 / 执行 / 仓位。
+
 ### v28.0I contract boundary summary
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。当前 live data 已包含 `dailyBrief.contractVersion = v28.0I-1`、`divergenceLayer.contractVersion = v28.0I-3A`、`macroDrivers.consumer`、`consumer_vs_asset_pricing` 与 `brentPricingLayer.contractVersion = v28.0I-5A`。

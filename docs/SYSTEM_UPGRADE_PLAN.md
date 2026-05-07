@@ -187,6 +187,12 @@ v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。v28.0I 已完�
 
 不允许 AI 生成无来源、煽动性、确定性危机文案。
 
+- v28.0J-0 introduces `aiInterpretationLayer` data contract.
+- Rule-based structured interpretation only.
+- No external AI API; no DeepSeek / OpenAI integration.
+- No frontend rendering yet.
+- No scoring / decision / execution / position integration.
+
 ## 6. Risk Boundaries / 风险边界
 
 明确禁止：

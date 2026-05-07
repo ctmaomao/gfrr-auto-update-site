@@ -60,9 +60,10 @@ v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。日常排查 c
 4. 检查 Realtime Health；Check Realtime Health 仍是 GitHub `realtime-data` fallback / Daily baseline soft observer。
 5. 若页面显示 Daily Brief / Divergence Layer / Brent Pricing Layer fallback，先判断 Daily workflow 是否已在对应 contract 合并后运行并完成 Pages deploy。
 6. 若 Brent Pricing Layer 缺失，不要手工改 `data/*.json`；应触发或等待 Daily workflow 自然生成。
-7. 若 World Order warning 仍为 GDELT stale / SIPRI manual_required / ACLED not_configured，属于已知非阻断观察状态。
+7. 若 `aiInterpretationLayer` 缺失，先确认 Daily workflow 是否已在 v28.0J-0 之后运行；不要手工补 `data/radar-data.json`。
+8. 若 World Order warning 仍为 GDELT stale / SIPRI manual_required / ACLED not_configured，属于已知非阻断观察状态。
 
-v28.0I 新增的 `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`consumer_vs_asset_pricing` 与 `brentPricingLayer` 均为解释层 / 审计层 / 展示层，不改变 `values.*`、`effectiveDisplayInputs`、Brent promotion、scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
+v28.0I / v28.0J 新增的 `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`consumer_vs_asset_pricing`、`brentPricingLayer` 与 `aiInterpretationLayer` 均为解释层 / 审计层 / 展示层，不改变 `values.*`、`effectiveDisplayInputs`、Brent promotion、scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
 
 ## 2. 页面显示“实时数据已过期”
 

@@ -116,7 +116,20 @@
 - 会诱导恐慌性表述。
 - 会直接影响仓位但没有足够验证。
 
-## 7. Copywriting Rules / 文案规则
+## 7. AI Interpretation Layer Rules / AI 解释层规则
+
+v28.0J-0 的 AI Interpretation Layer 只建立规则化结构解释 contract，不调用外部 AI API。任何 AI 输出都必须严格区分：
+
+- 已验证事实。
+- 数据推断。
+- 模型判断。
+- 情景假设。
+- 数据缺口。
+- 反证条件。
+
+未来如接入外部 AI API，必须另开版本，单独评审数据源、提示词、输出审计、禁用文案、成本、隐私和 fallback。不得让 AI 文案越权改变评分、仓位、执行灯、Action Queue、Trigger Monitor 或 Invalidation Rules。
+
+## 8. Copywriting Rules / 文案规则
 
 所有用户可见文案必须：
 
