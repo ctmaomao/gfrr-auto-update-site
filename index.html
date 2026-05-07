@@ -81,6 +81,59 @@
     <main>
       <h2 id="core-dashboard" class="section-group-title cockpit-layer">核心驾驶舱</h2>
 
+      <section class="full-width-section cockpit-section" id="daily-brief-section">
+        <article class="card full-width-card">
+          <div class="card-head split-head">
+            <div>
+              <h2>今日主判断</h2>
+              <p class="muted">将宏观状态、主导风险链、最大背离、触发器与反证条件压缩为一屏判断。</p>
+            </div>
+            <span class="badge neutral" id="daily-brief-confidence">加载中...</span>
+          </div>
+          <div class="metric-row two">
+            <div class="metric-box compact">
+              <div class="metric-label">今日宏观状态</div>
+              <div class="metric-value small" id="daily-brief-state">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">一句话结论</div>
+              <div class="metric-value small" id="daily-brief-one-line">--</div>
+            </div>
+          </div>
+          <div class="grid two-col hero-grid">
+            <div class="metric-box compact">
+              <div class="metric-label">主导风险链</div>
+              <div class="metric-value small" id="daily-brief-chain-title">--</div>
+              <div class="mini-delta" id="daily-brief-chain-stage">--</div>
+              <p id="daily-brief-chain-summary">--</p>
+              <ul class="bullet-list" id="daily-brief-chain-evidence"></ul>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">最大背离</div>
+              <div class="metric-value small" id="daily-brief-divergence-title">--</div>
+              <div class="mini-delta" id="daily-brief-divergence-status">--</div>
+              <p id="daily-brief-divergence-summary">--</p>
+              <ul class="bullet-list" id="daily-brief-divergence-evidence"></ul>
+            </div>
+          </div>
+          <div class="metric-row three">
+            <div class="metric-box compact">
+              <div class="metric-label">关键触发器</div>
+              <ul class="bullet-list" id="daily-brief-triggers"></ul>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">反证条件</div>
+              <ul class="bullet-list" id="daily-brief-invalidations"></ul>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">数据限制</div>
+              <ul class="bullet-list" id="daily-brief-data-gaps"></ul>
+            </div>
+          </div>
+          <p class="muted" id="daily-brief-boundary">该区域仅为解释层展示，不参与评分、仓位、执行灯或交易建议。</p>
+        </article>
+      </section>
+
       <section class="full-width-section decision-header-section cockpit-section">
         <article class="card decision-header-card full-width-card">
           <div class="decision-header-layout">
@@ -873,6 +926,6 @@
     <footer class="footer">独立静态版 · 适配静态托管 · 数据由自动化流程每日生成</footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0H-5A"></script>
+  <script type="module" src="scripts/app.js?v=28.0I-2"></script>
 </body>
 </html>

@@ -111,6 +111,9 @@ v28.0I 的任何结构升级都必须保护以上基线，不得通过重写页�
 - 首页新增今日主判断区域。
 - 修改前端时必须 bump frontend asset version。
 - 只展示，不改评分。
+- v28.0I-2 adds the read-only Daily Brief frontend display.
+- Missing `dailyBrief` must render a gentle fallback.
+- Still no scoring / decision / execution integration.
 
 ### Phase 3: Divergence Layer MVP
 

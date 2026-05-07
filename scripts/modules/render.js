@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0H-5A';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0H-5A';
-import { renderList } from './renderTables.js?v=28.0H-5A';
+import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0I-2';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0I-2';
+import { renderList } from './renderTables.js?v=28.0I-2';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0H-5A';
+} from './renderCharts.js?v=28.0I-2';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0H-5A';
+} from './renderTables.js?v=28.0I-2';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0H-5A';
+} from './renderAudit.js?v=28.0I-2';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -387,6 +387,99 @@ export function renderHealthDashboard(model) {
   $('health-summary-text').textContent = model.summary;
   renderList('health-issues', model.issues);
   renderList('health-source-list', model.sourceLines);
+}
+
+function setTextIfPresent(id, text) {
+  const node = $(id);
+  if (node) node.textContent = safeText(text, '暂不足以判断');
+}
+
+function renderListIfPresent(id, items, fallback = '暂不足以判断') {
+  const root = $(id);
+  if (!root) return;
+  root.innerHTML = '';
+  const values = safeArray(items).filter((item) => typeof item === 'string' && item.trim()).slice(0, 5);
+  const list = values.length ? values : [fallback];
+  list.forEach((item) => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    root.appendChild(li);
+  });
+}
+
+function formatDailyBriefEvidence(evidence) {
+  const label = safeText(evidence?.labelZh, '证据');
+  const summary = safeText(evidence?.summaryZh, '暂不足以判断');
+  return `${label}：${summary}`;
+}
+
+function renderDailyBriefFallback() {
+  setTextIfPresent('daily-brief-state', 'Daily Brief 待生成');
+  setTextIfPresent('daily-brief-one-line', 'Daily Brief 将在下一次 Daily 数据构建后显示。当前仍可参考下方决策概览、盘中快变量和风险模块。');
+  setTextIfPresent('daily-brief-chain-title', '主导风险链待生成');
+  setTextIfPresent('daily-brief-chain-stage', '阶段：暂不足以判断');
+  setTextIfPresent('daily-brief-chain-summary', '暂不足以判断。');
+  renderListIfPresent('daily-brief-chain-evidence', [], '数据不足，暂不从前端反推主导风险链。');
+  setTextIfPresent('daily-brief-divergence-title', '最大背离待生成');
+  setTextIfPresent('daily-brief-divergence-status', '状态：暂不足以判断');
+  setTextIfPresent('daily-brief-divergence-summary', '暂不足以判断。');
+  renderListIfPresent('daily-brief-divergence-evidence', [], '数据不足，暂不从前端反推最大背离。');
+  renderListIfPresent('daily-brief-triggers', [], '等待下一次 Daily 数据构建生成关键触发器。');
+  renderListIfPresent('daily-brief-invalidations', [], '等待下一次 Daily 数据构建生成反证条件。');
+  renderListIfPresent('daily-brief-data-gaps', [], 'Daily Brief 数据结构尚未出现在当前 baseline。');
+  setTextIfPresent('daily-brief-confidence', '置信度：待确认');
+  setTextIfPresent('daily-brief-boundary', '该区域仅为解释层展示，不参与评分、仓位、执行灯或交易建议。');
+}
+
+export function renderDailyBrief(dailyBrief) {
+  if (!dailyBrief || typeof dailyBrief !== 'object' || dailyBrief.contractVersion !== 'v28.0I-1') {
+    renderDailyBriefFallback();
+    return;
+  }
+
+  setTextIfPresent('daily-brief-state', dailyBrief.macroState);
+  setTextIfPresent('daily-brief-one-line', dailyBrief.oneLineConclusion);
+
+  const chain = dailyBrief.dominantRiskChain && typeof dailyBrief.dominantRiskChain === 'object'
+    ? dailyBrief.dominantRiskChain
+    : {};
+  setTextIfPresent('daily-brief-chain-title', chain.labelZh);
+  setTextIfPresent('daily-brief-chain-stage', chain.stageZh ? `阶段：${chain.stageZh}` : '阶段：暂不足以判断');
+  setTextIfPresent('daily-brief-chain-summary', chain.summaryZh);
+  renderListIfPresent(
+    'daily-brief-chain-evidence',
+    safeArray(chain.evidence).slice(0, 3).map(formatDailyBriefEvidence),
+    '数据不足，暂不足以判断主导风险链证据。'
+  );
+
+  const divergence = dailyBrief.largestDivergence && typeof dailyBrief.largestDivergence === 'object'
+    ? dailyBrief.largestDivergence
+    : {};
+  setTextIfPresent('daily-brief-divergence-title', divergence.labelZh);
+  setTextIfPresent('daily-brief-divergence-status', divergence.statusZh ? `状态：${divergence.statusZh}` : '状态：暂不足以判断');
+  setTextIfPresent('daily-brief-divergence-summary', divergence.summaryZh);
+  renderListIfPresent(
+    'daily-brief-divergence-evidence',
+    safeArray(divergence.evidence).slice(0, 3).map(formatDailyBriefEvidence),
+    '数据不足，暂不足以判断最大背离证据。'
+  );
+
+  renderListIfPresent('daily-brief-triggers', safeArray(dailyBrief.keyTriggers).slice(0, 5), '暂未生成关键触发器。');
+  renderListIfPresent('daily-brief-invalidations', safeArray(dailyBrief.invalidationSignals).slice(0, 5), '暂未生成反证条件。');
+  renderListIfPresent('daily-brief-data-gaps', safeArray(dailyBrief.dataGaps).slice(0, 4), '当前未记录额外数据限制。');
+
+  const confidence = dailyBrief.confidence && typeof dailyBrief.confidence === 'object' ? dailyBrief.confidence : {};
+  const confidenceLevel = safeText(confidence.level, 'unknown');
+  const confidenceScore = Number(confidence.score);
+  const confidenceLabel = {
+    low: '低',
+    medium: '中',
+    high: '高',
+    unknown: '待确认'
+  }[confidenceLevel] || '待确认';
+  const scoreLabel = Number.isFinite(confidenceScore) ? ` / ${Math.round(confidenceScore)}` : '';
+  setTextIfPresent('daily-brief-confidence', `置信度：${confidenceLabel}${scoreLabel}`);
+  setTextIfPresent('daily-brief-boundary', `该区域仅为解释层展示，不参与评分、仓位、执行灯或交易建议。${safeText(confidence.reasonZh, '')}`);
 }
 
 export function renderWorldOrderStressOverlay(payload) {

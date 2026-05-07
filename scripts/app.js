@@ -1,10 +1,10 @@
-import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0H-5A';
-import { buildHealthDashboardModel } from './modules/health.js?v=28.0H-5A';
-import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0H-5A';
-import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0H-5A';
-import { renderRealtimeStrip, renderHealthDashboard, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0H-5A';
+import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0I-2';
+import { buildHealthDashboardModel } from './modules/health.js?v=28.0I-2';
+import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0I-2';
+import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0I-2';
+import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0I-2';
 
-window.__GFRR_FRONTEND_VERSION__ = '28.0H-5A';
+window.__GFRR_FRONTEND_VERSION__ = '28.0I-2';
 
 async function main() {
   const [baseline, history, realtimeResult, worldOrderStressData] = await Promise.all([
@@ -64,6 +64,7 @@ async function main() {
     $('rt-source-mode').textContent = 'baseline only';
   }
   $('runtime-badge').textContent = metadata.realtimeStatusLabel;
+  renderDailyBrief(data.dailyBrief);
   renderDecisionHeader(window.__GFRR_DECISION_HEADER__);
   renderHealthDashboard(healthDashboard);
   renderWorldOrderStressOverlay(worldOrderStressData);
