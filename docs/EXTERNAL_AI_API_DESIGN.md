@@ -14,6 +14,8 @@ v28.0K-3A 新增 disabled production scaffold：`externalAiInterpretationLayer`�
 
 v28.0K-3B activation audit 已确认 live data 包含 v28.0K-3A disabled scaffold。该 live scaffold 仍不是 API integration；未来 enabled external AI output 仍需要 output validator、fallback handling、source attribution、disabled-by-default release gate 和单独 frontend display review。
 
+v28.0K-4A adds [`EXTERNAL_AI_MANUAL_TEST_DESIGN.md`](EXTERNAL_AI_MANUAL_TEST_DESIGN.md), a design-only plan for future disabled-by-default manual API tests. No API is connected in v28.0K-4A; production `externalAiInterpretationLayer` remains disabled, and future manual tests must be opt-in, isolated from production, and validator-gated.
+
 ## 2. Current Baseline / 当前基线
 
 当前稳定基线为：

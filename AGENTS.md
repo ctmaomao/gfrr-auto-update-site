@@ -36,6 +36,7 @@
 - v28.0K-2 新增 `npm run check:external-ai-output` 离线 validator；未来 external AI output 不得绕过该 validator 进入展示路径，validator 不调用外部 API、不导入 runtime。
 - v28.0K-3A / 3B 后，live `externalAiInterpretationLayer` 只是 disabled scaffold，必须保持 disabled，直到另一个经过评审的版本明确启用 API；不得把它显示成 active external AI，不得替换 `aiInterpretationLayer`。
 - v28.0K-3D Stable Observation Audit 是只读 gate；不得用它 auto-fix、auto-commit、auto-push、deploy 或触发 recovery。PASS 可允许规划 v28.0K-4，FAIL 阻止 v28.0K-4。
+- v28.0K-4A 后，任何 external AI API calls implementation 必须先阅读 `docs/EXTERNAL_AI_MANUAL_TEST_DESIGN.md`；manual API test 必须 opt-in、validator-gated，并与 production data / scoring / decision / execution / position 隔离。
 - v28.0I compact cockpit layout 不得被后续改动破坏，除非另开版本评审；Global Risk Heatmap 必须继续独立显示，World Order Stress Overlay 仍是独立 regime overlay，不是第七个底层风险模块。
 - World Order 外部源失败必须降级 status / confidence，而不是清空旧可用缓存；GDELT partial / stale / error 必须可解释，不得伪装成功或输出 NaN / undefined。
 - World Order UI 必须清楚显示低置信 / 数据限制，不得把 proxy、stale、manual_required 或 not_configured 数据包装成高确定性结论。
@@ -76,6 +77,7 @@
 - `docs/SYSTEM_UPGRADE_PLAN.md` 与 `docs/SIGNAL_INTAKE.md`：后续新增宏观指标、背离指标、新数据源或解释层前必须先读；新信号默认不得直接进入 scoring / decision，默认先 audit-only / diagnostic-only / display-only。
 - `docs/EXTERNAL_AI_API_DESIGN.md`：未来 DeepSeek / OpenAI / external AI API 接入前必须先读；定义 external AI output audit、fallback、source attribution、禁用文案和 display-only 边界。
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md`：未来外部 AI prompt contract 与 sample fixtures 入口；`docs/fixtures/external-ai/*.json` 不得导入 runtime，不得作为生产数据。
+- `docs/EXTERNAL_AI_MANUAL_TEST_DESIGN.md`：未来 manual API test 设计入口；任何 API test 实现前必须确认 opt-in、disabled-by-default、validator-gated、no production data mutation。
 - `scripts/check-external-ai-output.mjs`：离线检查 external AI sample/future output artifacts；不得把它改成 API caller、runtime dependency 或 production data writer。
 
 ## 3. 严格禁止的高风险行为
