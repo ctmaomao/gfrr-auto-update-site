@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-07T09:03:35.365Z",
+  "updatedAt": "2026-05-07T10:44:44.566Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "bfd9a19dbf893af553744c4b6cee9df8e59e99cd",
-    "updatedAt": "2026-05-07T09:01:36.566Z",
+    "commitSha": "dcbd5f70c7ac734eef6077f7bd01624005bbd5e5",
+    "updatedAt": "2026-05-07T10:00:24.734Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-07T09:03:35.365Z"
+    "capturedAt": "2026-05-07T10:44:44.566Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-07T09:03:35.365Z",
+    "generatedAt": "2026-05-07T10:44:44.566Z",
     "macroState": "滞胀冲击 / 通胀冲击",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
     "dominantRiskChain": {
@@ -129,7 +129,7 @@
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-07T09:03:35.365Z",
+    "generatedAt": "2026-05-07T10:44:44.566Z",
     "score": 48,
     "state": "watch",
     "stateZh": "背离观察",
@@ -428,13 +428,13 @@
   },
   "brentPricingLayer": {
     "contractVersion": "v28.0I-5A",
-    "generatedAt": "2026-05-07T09:03:35.365Z",
+    "generatedAt": "2026-05-07T10:44:44.566Z",
     "mode": "public_proxy_observation",
     "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
     "selectedBrent": {
       "value": 118.26,
       "source": "fred:DCOILBRENTEU",
-      "observedAt": "2026-05-07T09:01:36.566Z",
+      "observedAt": "2026-05-07T10:00:24.734Z",
       "status": "ok",
       "noteZh": "当前主 Brent 显示值来自现有 Daily / realtime 输入；该层只做公开代理审计，不改变 values.brent。"
     },
@@ -449,8 +449,8 @@
     "futuresProxy": {
       "labelZh": "Brent 期货代理",
       "source": "yahoo",
-      "value": 99.52,
-      "observedAt": "2026-05-07T08:51:17.000Z",
+      "value": 98.37,
+      "observedAt": "2026-05-07T09:49:19.000Z",
       "status": "ok",
       "limitationZh": "该字段为公开期货/市场报价代理，仅用于验证层观察。"
     },
@@ -468,8 +468,8 @@
       {
         "source": "barchart",
         "labelZh": "barchart",
-        "value": 99.53,
-        "observedAt": "2026-05-07T08:51:33.000Z",
+        "value": 98.46,
+        "observedAt": "2026-05-07T09:50:25.000Z",
         "status": "excluded",
         "role": "diagnostic",
         "participatesInPromotion": false,
@@ -478,7 +478,7 @@
       {
         "source": "stooq",
         "labelZh": "Stooq Brent diagnostic",
-        "value": 99.06,
+        "value": 99.13,
         "observedAt": "2026-05-07",
         "status": "excluded",
         "role": "diagnostic",
@@ -488,9 +488,9 @@
       {
         "source": "marketwatch",
         "labelZh": "marketwatch",
-        "value": null,
+        "value": 80.745,
         "observedAt": null,
-        "status": "missing",
+        "status": "excluded",
         "role": "diagnostic",
         "participatesInPromotion": false,
         "noteZh": "该来源仅作为诊断观察，不参与 Brent promotion。"
@@ -508,8 +508,8 @@
       {
         "source": "yahoo",
         "labelZh": "Yahoo BZ=F",
-        "value": 99.52,
-        "observedAt": "2026-05-07T08:51:17.000Z",
+        "value": 98.37,
+        "observedAt": "2026-05-07T09:49:19.000Z",
         "status": "ok",
         "role": "futures_proxy",
         "participatesInPromotion": true,
@@ -527,9 +527,9 @@
       }
     ],
     "proxySpread": {
-      "spotMinusFutures": 18.74,
-      "selectedMinusFutures": 18.74,
-      "maxProxyDivergencePct": 16.73,
+      "spotMinusFutures": 19.89,
+      "selectedMinusFutures": 19.89,
+      "maxProxyDivergencePct": 17.818,
       "status": "stress",
       "statusZh": "公开代理价差压力",
       "interpretationZh": "该价差只用于公开代理价格层审计，不改变 Brent 主值或 promotion。"
@@ -587,7 +587,7 @@
     "us10y": 4.43,
     "real10y": 1.96,
     "breakeven10y": 2.42,
-    "gold": 4732.200195,
+    "gold": 4728.700195,
     "spx": 7365.12
   },
   "topRisks": [
@@ -1035,7 +1035,7 @@
       "asset": "黄金",
       "score": 87,
       "bias": "中性偏多",
-      "reason": "金价 4732.2，通胀对冲仍在，但真实利率继续约束。"
+      "reason": "金价 4728.7，通胀对冲仍在，但真实利率继续约束。"
     },
     {
       "asset": "原油",
@@ -1223,7 +1223,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-07T09:03:35.365Z",
+        "triggeredAgo": "2026-05-07T10:44:44.566Z",
         "condition": "系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -1231,7 +1231,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-07T09:03:35.365Z",
+        "triggeredAgo": "2026-05-07T10:44:44.566Z",
         "condition": "ON RRP 16.33 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -1239,7 +1239,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-07T09:03:35.365Z",
+        "triggeredAgo": "2026-05-07T10:44:44.566Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -1278,7 +1278,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-07T09:03:35.365Z",
+    "lastRun": "2026-05-07T10:44:44.566Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
@@ -1517,7 +1517,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-05-07T09:03:35.365Z",
+    "generatedAt": "2026-05-07T10:44:44.566Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [
@@ -1744,6 +1744,73 @@
       "affectsDecisionModel": false,
       "affectsExecutionLock": false,
       "affectsPositionGuidance": false
+    }
+  },
+  "externalAiInterpretationLayer": {
+    "contractVersion": "v28.0K-3A",
+    "generatedAt": "2026-05-07T10:44:44.566Z",
+    "enabled": false,
+    "status": "disabled",
+    "provider": "none",
+    "model": null,
+    "mode": "external_ai_disabled_scaffold",
+    "summaryZh": "外部 AI 解释层当前未启用。系统继续使用规则化 AI 解释层作为只读解释基线。",
+    "inputDigest": {
+      "inputVersion": "v27.0",
+      "siteStructuredDataOnly": true,
+      "layersAvailable": [
+        "dailyBrief",
+        "divergenceLayer",
+        "brentPricingLayer",
+        "macroDrivers.consumer",
+        "aiInterpretationLayer",
+        "decisionModel"
+      ],
+      "usesPrivateUserData": false,
+      "usesSecrets": false,
+      "usesExternalMarketData": false,
+      "noteZh": "该 scaffold 仅记录外部 AI 当前禁用；不读取外部 AI API、不读取样例 fixtures、不包含用户私有数据或 secrets。"
+    },
+    "output": null,
+    "audit": {
+      "outputValidated": false,
+      "validator": "check-external-ai-output",
+      "auditStatus": "not_applicable",
+      "auditFlags": [],
+      "bannedCopyPassed": null,
+      "sourceAttributionPresent": null,
+      "boundariesValid": true
+    },
+    "fallback": {
+      "used": true,
+      "fallbackLayer": "aiInterpretationLayer",
+      "reasonZh": "未启用外部 AI API，当前回退到规则化 aiInterpretationLayer。"
+    },
+    "confidence": {
+      "level": "low",
+      "score": 0,
+      "reasonZh": "外部 AI 未启用且没有外部 AI 输出，因此该 scaffold 仅为低置信诊断状态。"
+    },
+    "dataGaps": [
+      "DeepSeek / OpenAI / 外部 AI API 未接入",
+      "外部 AI 输出尚未生成",
+      "外部 AI 输出审计尚未适用于生产输出"
+    ],
+    "limitations": [
+      "该字段只是 disabled scaffold，不代表外部 AI 已接入。",
+      "该字段不参与评分、决策、仓位或执行灯。",
+      "前端不得把该字段显示成外部 AI 可用或正在运行。"
+    ],
+    "boundaries": {
+      "displayOnly": true,
+      "diagnosticOnly": true,
+      "externalAiGenerated": false,
+      "usesExternalAiApi": false,
+      "affectsScoring": false,
+      "affectsDecisionModel": false,
+      "affectsExecutionLock": false,
+      "affectsPositionGuidance": false,
+      "notInvestmentAdvice": true
     }
   }
 }
