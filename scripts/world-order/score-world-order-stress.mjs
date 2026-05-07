@@ -33,7 +33,20 @@ function sourceScore(sourceKey, source) {
     );
   }
   if (sourceKey === 'sipri') {
-    return source?.status === 'ok' ? 40 : 10;
+    if (source?.status === 'error') return 0;
+    if (source?.status !== 'ok') return 10;
+    const fiveYearGrowth = Number(summary.globalFiveYearGrowthPct);
+    const tenYearGrowth = Number(summary.globalTenYearGrowthPct);
+    const risingMajorPowers = Number(summary.risingMajorPowers);
+    const risingRegions = Number(summary.risingRegions);
+    const shareTrendBoost = summary.militarySpendShareOfGDPTrend === 'rising' ? 12 : 0;
+    return clampScore(
+      (Number.isFinite(fiveYearGrowth) ? Math.max(0, fiveYearGrowth) * 1.8 : 0) +
+      (Number.isFinite(tenYearGrowth) ? Math.max(0, tenYearGrowth) * 0.8 : 0) +
+      (Number.isFinite(risingMajorPowers) ? risingMajorPowers * 8 : 0) +
+      (Number.isFinite(risingRegions) ? risingRegions * 5 : 0) +
+      shareTrendBoost
+    );
   }
   if (sourceKey === 'acled') {
     return source?.status === 'ok' ? clampScore((summary.eventCount || 0) * 0.6) : 0;
@@ -55,6 +68,39 @@ function buildEvidence(labelZh, source, summary, value, confidence) {
     value,
     direction: value >= 40 ? 'up' : 'neutral',
     confidence
+  };
+}
+
+function buildSipriEvidence(source, sipriScore) {
+  const summary = source?.summary || {};
+  if (source?.status === 'ok') {
+    const rising = summary.globalMilitarySpendTrend === 'rising' || summary.majorPowerMilitarySpendTrend === 'rising';
+    return {
+      labelZh: 'SIPRI 军费慢变量显示全球或主要大国军费趋势上升',
+      source: 'sipri',
+      summary: `SIPRI 手动标准化数据更新至 ${summary.updatedYear}，全球五年军费变化 ${summary.globalFiveYearGrowthPct ?? '--'}%，主要大国趋势 ${summary.majorPowerMilitarySpendTrend || 'unknown'}。`,
+      value: sipriScore,
+      direction: rising ? 'risk_up' : 'neutral',
+      confidence: summary.confidence ?? source.confidence ?? 0.5
+    };
+  }
+  if (source?.status === 'error') {
+    return {
+      labelZh: 'SIPRI 军费慢变量数据源异常',
+      source: 'sipri',
+      summary: 'SIPRI normalized 数据校验或解析异常，本轮不参与军费慢变量评分。',
+      value: 0,
+      direction: 'neutral',
+      confidence: 0.05
+    };
+  }
+  return {
+    labelZh: '军费慢变量与地缘风险组合',
+    source: 'SIPRI/GDELT/modules',
+    summary: 'SIPRI 慢变量尚未导入，当前仅以 GDELT 与现有地缘模块低置信代理，不把 manual_required 当作真实军费上升证据。',
+    value: sipriScore,
+    direction: 'neutral',
+    confidence: 0.25
   };
 }
 
@@ -98,7 +144,7 @@ export function scoreWorldOrderStress({ externalSources, marketConfirmation, dat
       labelZh: DIMENSION_LABELS_ZH.peaceDividendRetreat,
       trend: 'watching',
       evidence: sanitizeEvidence([
-        buildEvidence('军费慢变量与地缘风险组合', 'SIPRI/GDELT/modules', 'SIPRI 当前为手动导入框架，先以 GDELT 与现有地缘模块低置信代理。', sipriScore, 0.35)
+        buildSipriEvidence(externalSources.sipri, sipriScore)
       ])
     },
     blocFormation: {

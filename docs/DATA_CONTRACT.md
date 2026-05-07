@@ -188,6 +188,38 @@ v28.0H-2C 起，`externalSources.gdelt.summary` 必须明确记录 query throttl
 - 当 `externalSources.gdelt.status="stale"` 时，`usedCachedSummary=true` 且 `cacheReason` 非空。
 - 当 `externalSources.gdelt.status="error"` 时，`successCount=0`。
 
+#### SIPRI normalized input
+
+v28.0H-3 起，SIPRI 支持手动标准化导入。真实输入路径为：
+
+```text
+config/world-order-sipri-normalized.json
+```
+
+模板路径为：
+
+```text
+config/world-order-sipri-normalized.example.json
+```
+
+模板必须包含 `exampleOnly=true` 与 `notForScoring=true`，不得参与评分。真实输入必须满足：
+
+- `source="sipri-milex-manual-normalized"`。
+- `updatedYear` 为 finite number。
+- `preparedAt` 为可解析 ISO 字符串。
+- `quality.isRealData=true`。
+- `quality.confidence` 为 `0-1`。
+- `global`、`majorPowers`、`regions`、`quality` 均存在。
+- `trend` 枚举只能为 `rising` / `stable` / `falling` / `unknown`。
+- 所有数值字段必须为 finite number 或 `null`。
+
+`externalSources.sipri.summary` contract：
+
+- 必须包含 `updatedYear`、`globalMilitarySpendTrend`、`majorPowerMilitarySpendTrend`、`militarySpendShareOfGDPTrend`、`sourceFreshness`、`noteZh`。
+- 当 `status="ok"` 时，`updatedYear`、`confidence`、`majorPowersTracked`、`regionsTracked` 必须有效。
+- 当 `status="manual_required"` 时，`noteZh` 必须说明“手动导入”或“尚未导入”。
+- example/template 数据不得以 `ok` 状态进入 `data/world-order-stress.json`。
+
 ### Frontend asset cache version
 
 v28.0H-2 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。

@@ -235,6 +235,7 @@ const dataContractFile = 'docs/DATA_CONTRACT.md';
 const validateDataScriptFile = 'scripts/validate-data.mjs';
 const worldOrderDataFile = 'data/world-order-stress.json';
 const worldOrderDocFile = 'docs/WORLD_ORDER_STRESS.md';
+const worldOrderSipriExampleFile = 'config/world-order-sipri-normalized.example.json';
 const worldOrderRequiredFiles = [
   'scripts/build-world-order-stress.mjs',
   'scripts/check-world-order-stress.mjs',
@@ -808,6 +809,43 @@ if (fs.existsSync(worldOrderGdeltFile)) {
 } else {
   addRuntimeFailure(worldOrderGdeltFile, 'world order GDELT fetcher missing');
 }
+if (fs.existsSync(worldOrderSipriExampleFile)) {
+  const text = fs.readFileSync(worldOrderSipriExampleFile, 'utf8');
+  for (const needle of [
+    'exampleOnly',
+    'notForScoring',
+    'SIPRI Military Expenditure Database',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(worldOrderSipriExampleFile, `missing SIPRI example marker "${needle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(worldOrderSipriExampleFile, 'SIPRI normalized example file missing');
+}
+const worldOrderSipriImporterFile = 'scripts/world-order/import-sipri.mjs';
+if (fs.existsSync(worldOrderSipriImporterFile)) {
+  const text = fs.readFileSync(worldOrderSipriImporterFile, 'utf8');
+  for (const needle of [
+    'world-order-sipri-normalized.json',
+    'exampleOnly',
+    'notForScoring',
+    'quality.isRealData',
+    'manual_required',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(worldOrderSipriImporterFile, `missing SIPRI importer marker "${needle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(worldOrderSipriImporterFile, 'world order SIPRI importer missing');
+}
+if (fs.existsSync(worldOrderDataFile)) {
+  const text = fs.readFileSync(worldOrderDataFile, 'utf8');
+  if (/"status":\s*"ok"[\s\S]{0,1200}(exampleOnly|notForScoring)/u.test(text)) {
+    addRuntimeFailure(worldOrderDataFile, 'must not treat SIPRI example/template data as ok scoring data');
+  }
+}
 if (!fs.existsSync(worldOrderDocFile)) {
   addRuntimeFailure(worldOrderDocFile, 'world order stress document missing');
 } else {
@@ -835,6 +873,10 @@ if (!fs.existsSync(worldOrderDocFile)) {
     'partial success',
     'stale cache fallback',
     '429 handling',
+    'world-order-sipri-normalized.example.json',
+    'quality.isRealData',
+    '手动导入',
+    '示例数据不会参与评分',
   ]) {
     if (!text.includes(needle)) {
       addRuntimeFailure(worldOrderDocFile, `missing world order stress marker "${needle}"`);

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-05-07T01:50:10.396Z",
+  "updatedAt": "2026-05-07T02:01:16.668Z",
   "sourceMode": "computed_with_partial_external_sources",
   "score": 49,
   "state": "bloc_fragmentation",
@@ -11,12 +11,12 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-05-07T01:45:51.703Z",
-    "ageMinutes": 4,
+    "updatedAt": "2026-05-07T01:57:50.155Z",
+    "ageMinutes": 3,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 101.845,
-    "gold": 4713.8999,
+    "brent": 101.77,
+    "gold": 4715.2998,
     "vix": 17.38,
     "dxy": 118.3926,
     "hyOas": 2.77,
@@ -91,13 +91,13 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
         "cacheReason": "all-current-gdelt-queries-failed-using-previous-summary",
-        "attemptedAt": "2026-05-07T01:49:30.990Z"
+        "attemptedAt": "2026-05-07T02:00:37.274Z"
       }
     },
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-05-07T01:49:31.196Z",
+      "lastFetchedAt": "2026-05-07T02:00:40.417Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 7,
@@ -126,7 +126,13 @@
         "militarySpendShareOfGDPTrend": null,
         "updatedYear": null,
         "sourceFreshness": "manual_required",
-        "noteZh": "SIPRI 是慢变量数据源。H-1 仅提供导入框架，需要后续手动导入标准化军费数据后再参与高置信度评分。"
+        "noteZh": "SIPRI 慢变量尚未导入。请根据 config/world-order-sipri-normalized.example.json 准备 normalized 数据。",
+        "latestSpendUsdBillion": null,
+        "globalFiveYearGrowthPct": null,
+        "globalTenYearGrowthPct": null,
+        "majorPowersTracked": 0,
+        "regionsTracked": 0,
+        "confidence": 0
       }
     },
     "acled": {
@@ -151,10 +157,10 @@
         {
           "labelZh": "军费慢变量与地缘风险组合",
           "source": "SIPRI/GDELT/modules",
-          "summary": "SIPRI 当前为手动导入框架，先以 GDELT 与现有地缘模块低置信代理。",
+          "summary": "SIPRI 慢变量尚未导入，当前仅以 GDELT 与现有地缘模块低置信代理，不把 manual_required 当作真实军费上升证据。",
           "value": 10,
           "direction": "neutral",
-          "confidence": 0.35
+          "confidence": 0.25
         }
       ]
     },
@@ -226,16 +232,16 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4713.9，显示避险或实际利率压力定价。",
-          "value": 4713.8999,
+          "summary": "基于 Worker 快变量，黄金当前值 4715.3，显示避险或实际利率压力定价。",
+          "value": 4715.2998,
           "direction": "up",
           "confidence": 0.75
         },
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 101.84，对地缘与供应风险有部分确认作用。",
-          "value": 101.845,
+          "summary": "基于 Worker 快变量，布伦特当前值 101.77，对地缘与供应风险有部分确认作用。",
+          "value": 101.77,
           "direction": "up",
           "confidence": 0.55
         },
@@ -243,7 +249,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "118.3926/4713.8999",
+          "value": "118.3926/4715.2998",
           "direction": "up",
           "confidence": 0.6
         },
@@ -251,7 +257,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7365.12/4713.8999",
+          "value": "7365.12/4715.2998",
           "direction": "mixed",
           "confidence": 0.45
         },
@@ -259,7 +265,7 @@
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
           "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 101.845,
+          "value": 101.77,
           "direction": "up",
           "confidence": 0.65
         }

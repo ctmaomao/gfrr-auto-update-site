@@ -1,0 +1,43 @@
+{
+  "exampleOnly": true,
+  "notForScoring": true,
+  "version": "1.0.0",
+  "source": "sipri-milex-manual-normalized",
+  "sourceName": "SIPRI Military Expenditure Database",
+  "updatedYear": 2025,
+  "preparedAt": "2026-01-01T00:00:00.000Z",
+  "preparedBy": "manual",
+  "notesZh": "示例模板，仅用于说明字段结构。不要把该文件复制为真实数据后直接参与评分。",
+  "global": {
+    "latestSpendUsdBillion": null,
+    "latestSpendRealTermsGrowthPct": null,
+    "fiveYearGrowthPct": null,
+    "tenYearGrowthPct": null,
+    "militarySpendShareOfGdpPct": null
+  },
+  "majorPowers": [
+    {
+      "name": "United States",
+      "nameZh": "美国",
+      "latestSpendUsdBillion": null,
+      "latestSpendRealTermsGrowthPct": null,
+      "fiveYearGrowthPct": null,
+      "shareOfGdpPct": null,
+      "trend": "unknown"
+    }
+  ],
+  "regions": [
+    {
+      "name": "Europe",
+      "nameZh": "欧洲",
+      "fiveYearGrowthPct": null,
+      "trend": "unknown"
+    }
+  ],
+  "quality": {
+    "isRealData": false,
+    "sourceUrl": "https://www.sipri.org/databases/milex",
+    "methodologyNoteZh": "请使用真实 SIPRI Military Expenditure Database 数据手动标准化后，将 quality.isRealData 改为 true。",
+    "confidence": 0
+  }
+}

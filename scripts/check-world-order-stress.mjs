@@ -18,6 +18,7 @@ const allowedFreshness = new Set(['fresh', 'stale', 'partial', 'error']);
 const allowedMarketStates = new Set(['not_confirmed', 'weak', 'partial_confirmed', 'high_confirmed']);
 const allowedMarketInputSources = new Set(['worker-generated-preview', 'local-realtime', 'daily-baseline', 'unavailable']);
 const allowedGdeltQueryStatuses = new Set(['ok', 'partial', 'error', 'rate_limited', 'skipped']);
+const allowedSipriStatuses = new Set(['ok', 'stale', 'error', 'manual_required']);
 const marketInputNumberFields = ['brent', 'gold', 'vix', 'dxy', 'hyOas', 'us10y', 'real10y', 'spx'];
 const sourceKeys = ['gdelt', 'ofac', 'sipri', 'acled'];
 const dimensionKeys = [
@@ -168,6 +169,35 @@ if (gdelt.status === 'stale') {
 }
 if (gdelt.status === 'error' && gdeltSummary.successCount !== 0) {
   fail('externalSources.gdelt error status requires successCount=0');
+}
+
+const sipri = payload.externalSources.sipri;
+const sipriSummary = sipri.summary;
+if (!allowedSipriStatuses.has(sipri.status)) fail(`externalSources.sipri.status invalid: ${sipri.status}`);
+for (const key of [
+  'updatedYear',
+  'globalMilitarySpendTrend',
+  'majorPowerMilitarySpendTrend',
+  'militarySpendShareOfGDPTrend',
+  'sourceFreshness',
+  'noteZh'
+]) {
+  if (!(key in sipriSummary)) fail(`externalSources.sipri.summary.${key} missing`);
+}
+if (JSON.stringify(sipriSummary).includes('exampleOnly') || JSON.stringify(sipriSummary).includes('notForScoring')) {
+  fail('externalSources.sipri summary must not expose exampleOnly or notForScoring as scoring data');
+}
+if (sipri.status === 'ok') {
+  if (!Number.isFinite(sipriSummary.updatedYear)) fail('externalSources.sipri.summary.updatedYear required when ok');
+  assertConfidence(sipriSummary.confidence, 'externalSources.sipri.summary.confidence');
+  if (!Number.isFinite(sipriSummary.majorPowersTracked)) fail('externalSources.sipri.summary.majorPowersTracked required when ok');
+  if (!Number.isFinite(sipriSummary.regionsTracked)) fail('externalSources.sipri.summary.regionsTracked required when ok');
+}
+if (sipri.status === 'manual_required') {
+  const note = String(sipriSummary.noteZh || '');
+  if (!note.includes('手动导入') && !note.includes('尚未导入')) {
+    fail('externalSources.sipri manual_required noteZh must mention manual import');
+  }
 }
 
 if (!isObject(payload.dimensions)) fail('dimensions must be object');

@@ -56,6 +56,26 @@ OFAC Recent Actions 用于观察制裁清单更新、执法、General Licenses�
 
 SIPRI 是慢变量。H-1 只提供 importer / manual cache 框架，默认 `manual_required`，不会伪造军费趋势。后续导入标准化 SIPRI 数据后，可提高和平红利退潮维度置信度。
 
+### SIPRI 手动标准化导入
+
+v28.0H-3 支持 SIPRI manual normalized import。SIPRI 是慢变量，不需要盘中更新；只有用户手动准备并校验过的真实 normalized 数据才会参与评分。
+
+真实数据文件路径：
+
+```text
+config/world-order-sipri-normalized.json
+```
+
+示例模板：
+
+```text
+config/world-order-sipri-normalized.example.json
+```
+
+模板包含 `exampleOnly` / `notForScoring`，示例数据不会参与评分。真实文件必须设置 `quality.isRealData=true`，并保留来源、方法说明、年份、全球军费趋势、主要大国和地区趋势等字段。Importer 会拒绝 example/template、`notForScoring` 或 `quality.isRealData !== true` 的文件。
+
+未导入真实数据时，页面继续显示“SIPRI：慢变量 / 需要手动导入”。导入合法后，SIPRI 会影响 `peaceDividendRetreat` 维度和 confidence，并生成中文 evidence。不得伪造 SIPRI 数据，也不得把模板数据改名后当作真实宏观数据。
+
 ### ACLED
 
 ACLED adapter 已预留。需要配置：
