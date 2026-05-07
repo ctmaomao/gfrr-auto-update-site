@@ -5,6 +5,7 @@
 相关文档：
 
 - [v27 稳定化基线](V27_BASELINE.md)：用于确认当前 v27.x 已完成升级、维护边界、保护网和下一阶段建议。
+- [External AI API Design](EXTERNAL_AI_API_DESIGN.md)：用于未来 DeepSeek / OpenAI / external AI API 接入前的设计、输出审计和 fallback 边界。
 
 ## 1. 本地完整检查
 
@@ -76,6 +77,12 @@ v28.0J-2B post-deploy audit 已通过，当前 AI 解释层为 rule-based struct
 5. 若页面显示 AI fallback，先确认 Daily workflow 是否已在 v28.0J-0 之后运行，并确认 Pages deploy 是否完成。
 6. 不要手工补 `data/radar-data.json`。
 7. 若未来外部 AI 接入，必须检查 timeout、fallback、source attribution、禁用文案和不影响 scoring / decision 的边界。
+
+## Future External AI operations note
+
+未来如果新增 `externalAiInterpretationLayer`，排查时必须先确认该层是否通过 output audit。若外部 AI output 缺失、timeout、API error、rate limit、invalid JSON、unsafe output 或 stale input，应 fallback 到现有 rule-based `aiInterpretationLayer`。
+
+若 AI output audit 失败，应隐藏 external output，不得手工编辑 `data/radar-data.json` 修复 AI 输出。外部 AI 输出不得影响 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
 
 ## 2. 页面显示“实时数据已过期”
 

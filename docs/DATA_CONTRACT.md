@@ -331,6 +331,19 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 - 前端只能只读消费 `aiInterpretationLayer`，不得在 render 层生成、重算或补写解释。
 - 未来如接入外部 AI，必须使用单独字段或明确 source metadata，不得覆盖现有 rule-based layer。
 
+#### future externalAiInterpretationLayer contract note
+
+`externalAiInterpretationLayer` 是 future-only contract candidate，当前数据产物不得要求或生成该字段。未来如接入 DeepSeek / OpenAI / external AI API，必须先遵守 [`EXTERNAL_AI_API_DESIGN.md`](EXTERNAL_AI_API_DESIGN.md)。
+
+边界：
+
+- 不得覆盖现有 `aiInterpretationLayer`。
+- 必须是 display-only / commentary-only。
+- 必须包含 `provider` / `model` / `source` / `audit` / `fallback` metadata。
+- 必须包含 source attribution 与 output audit flags。
+- 不得影响 scoring / decision / execution / position。
+- 不得影响 `values.*`、`effectiveDisplayInputs`、Brent promotion、Action Queue、Trigger Monitor 或 Invalidation Rules。
+
 ### v28.0I contract boundary summary
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。当前 live data 已包含 `dailyBrief.contractVersion = v28.0I-1`、`divergenceLayer.contractVersion = v28.0I-3A`、`macroDrivers.consumer`、`consumer_vs_asset_pricing` 与 `brentPricingLayer.contractVersion = v28.0I-5A`。
