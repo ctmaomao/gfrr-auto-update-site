@@ -141,6 +141,10 @@ v28.0I 的任何结构升级都必须保护以上基线，不得通过重写页�
 - 明确 Brent spot / physical proxy、Brent futures proxy、confirmation source 的边界。
 - 可先使用公开 proxy，不等同于 Platts Dated Brent。
 - 不改变 `values.brent` 和 Brent promotion。
+- v28.0I-5A introduces Brent public proxy pricing layer data contract.
+- Uses existing data only.
+- No frontend rendering yet.
+- No Brent promotion / scoring / decision integration.
 
 ### Phase 6: AI Interpretation Layer Contract
 

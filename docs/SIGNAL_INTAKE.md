@@ -66,9 +66,11 @@
 ### A. Brent futures vs Brent spot / physical proxy spread
 
 - 作用：识别纸面油价与实体油价是否背离。
-- 初始级别：audit-only / display-only。
+- 当前级别：Level 2/3 data contract active（v28.0I-5A）。
+- 仅为 public proxy observation。
 - 不等同于 Platts Dated Brent。
 - 不改变 `values.brent`。
+- 不进入 scoring、不进入 decision。
 
 ### B. US10Y pressure vs equity pricing
 

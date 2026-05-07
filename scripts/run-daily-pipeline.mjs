@@ -493,6 +493,251 @@ function buildDivergenceLayer({ risk, realtimePayload, displayInputsBaseline, ma
   };
 }
 
+function firstFinite(...values) {
+  for (const value of values) {
+    if (value === null || value === undefined || value === '') continue;
+    const numeric = Number(value);
+    if (Number.isFinite(numeric)) return numeric;
+  }
+  return null;
+}
+
+function firstString(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function normalizeBrentSourceName(source) {
+  return String(source || '').trim().toLowerCase();
+}
+
+function brentCandidateSource(candidate = {}) {
+  return firstString(candidate.source, candidate.sourceId, candidate.id, candidate.key, candidate.name, candidate.label, candidate.symbol);
+}
+
+function brentCandidateValue(candidate = {}) {
+  return firstFinite(candidate.value, candidate.price, candidate.last, candidate.close, candidate.recommendedValue, candidate.selectedValue);
+}
+
+function brentCandidateObservedAt(candidate = {}) {
+  return firstString(candidate.observedAt, candidate.asOf, candidate.updatedAt, candidate.date, candidate.timestamp);
+}
+
+function findBrentCandidate(candidates, matcher) {
+  return (Array.isArray(candidates) ? candidates : []).find((candidate) => matcher(normalizeBrentSourceName(brentCandidateSource(candidate))));
+}
+
+function brentConfirmationRole(source) {
+  const normalized = normalizeBrentSourceName(source);
+  if (/fred|dcoilbrenteu/u.test(normalized)) return 'anchor';
+  if (/yahoo|bz=f|bz%3df/u.test(normalized)) return 'futures_proxy';
+  if (/tradingeconomics|brent-crude-oil/u.test(normalized)) return 'confirmation';
+  return 'diagnostic';
+}
+
+function brentConfirmationLabel(source) {
+  const normalized = normalizeBrentSourceName(source);
+  if (/fred|dcoilbrenteu/u.test(normalized)) return 'FRED DCOILBRENTEU';
+  if (/yahoo|bz=f|bz%3df/u.test(normalized)) return 'Yahoo BZ=F';
+  if (/tradingeconomics|brent-crude-oil/u.test(normalized)) return 'Trading Economics Brent';
+  if (/stooq/u.test(normalized)) return 'Stooq Brent diagnostic';
+  if (/google/u.test(normalized)) return 'Google Finance diagnostic';
+  return source || 'Brent source';
+}
+
+function normalizeBrentStatus(status, value) {
+  const normalized = String(status || '').toLowerCase();
+  if (['ok', 'fallback', 'missing', 'excluded'].includes(normalized)) return normalized;
+  if (Number.isFinite(value)) return 'ok';
+  return 'missing';
+}
+
+function buildBrentConfirmationSources(realtimePayload, selectedBrent) {
+  const validation = realtimePayload?.brentValidation || {};
+  const candidates = Array.isArray(validation.candidates) ? validation.candidates : [];
+  const sources = candidates.map((candidate) => {
+    const source = brentCandidateSource(candidate) || 'unknown';
+    const value = brentCandidateValue(candidate);
+    const role = brentConfirmationRole(source);
+    const status = normalizeBrentStatus(candidate.status, value);
+    return {
+      source,
+      labelZh: brentConfirmationLabel(source),
+      value,
+      observedAt: brentCandidateObservedAt(candidate),
+      status: role === 'diagnostic' && status === 'ok' ? 'excluded' : status,
+      role,
+      participatesInPromotion: candidate.participatesInPromotion === true || (role !== 'diagnostic' && status === 'ok'),
+      noteZh: role === 'diagnostic'
+        ? '该来源仅作为诊断观察，不参与 Brent promotion。'
+        : '该来源来自现有 Brent validation / confirmation 字段，仅用于公开代理价格层审计。'
+    };
+  });
+
+  if (!sources.some((item) => /fred|dcoilbrenteu/iu.test(item.source)) && Number.isFinite(selectedBrent.value)) {
+    sources.push({
+      source: selectedBrent.source || 'fred:DCOILBRENTEU',
+      labelZh: 'FRED DCOILBRENTEU',
+      value: selectedBrent.value,
+      observedAt: selectedBrent.observedAt,
+      status: selectedBrent.status === 'missing' ? 'missing' : 'fallback',
+      role: 'anchor',
+      participatesInPromotion: false,
+      noteZh: '未在 candidates 中找到 FRED anchor，按当前 selectedBrent / sourceDetails 作为公开现货代理 fallback 记录。'
+    });
+  }
+  return sources;
+}
+
+function computeMaxProxyDivergencePct(values) {
+  const finiteValues = values.filter(Number.isFinite);
+  if (finiteValues.length < 2) return null;
+  const min = Math.min(...finiteValues);
+  const max = Math.max(...finiteValues);
+  const baseline = Math.max(1, avg(finiteValues));
+  return +(((max - min) / baseline) * 100).toFixed(3);
+}
+
+function classifyProxySpreadStatus(spotMinusFutures, divergencePct) {
+  if (!Number.isFinite(spotMinusFutures) || !Number.isFinite(divergencePct)) return 'insufficient_data';
+  const absSpread = Math.abs(spotMinusFutures);
+  if (absSpread >= 5 || divergencePct >= 5) return 'stress';
+  if (absSpread >= 2 || divergencePct >= 2) return 'watch';
+  return 'normal';
+}
+
+function brentSpreadStatusZh(status) {
+  return {
+    normal: '公开代理价差正常',
+    watch: '公开代理价差观察',
+    stress: '公开代理价差压力',
+    insufficient_data: '数据不足'
+  }[status] || '状态待确认';
+}
+
+function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyRealtimeInput }) {
+  const validation = realtimePayload?.brentValidation || {};
+  const promotion = validation.promotion || {};
+  const consensus = validation.consensus || {};
+  const candidates = Array.isArray(validation.candidates) ? validation.candidates : [];
+  const sourceDetails = realtimePayload?.sourceDetails?.brent || {};
+  const selectedValue = firstFinite(displayInputsBaseline?.brent, realtimePayload?.values?.brent);
+  const selectedSource = firstString(sourceDetails.source, realtimePayload?.sourceStatus?.brent, promotion.selectedSource, consensus.recommendedSource);
+  const selectedObservedAt = firstString(sourceDetails.observedAt, sourceDetails.updatedAt, realtimePayload?.updatedAt, dailyRealtimeInput?.updatedAt);
+  const selectedBrent = {
+    value: selectedValue,
+    source: selectedSource,
+    observedAt: selectedObservedAt,
+    status: Number.isFinite(selectedValue) ? (String(selectedSource || '').includes('fallback') ? 'fallback' : 'ok') : 'missing',
+    noteZh: '当前主 Brent 显示值来自现有 Daily / realtime 输入；该层只做公开代理审计，不改变 values.brent。'
+  };
+
+  const fredCandidate = findBrentCandidate(candidates, (source) => /fred|dcoilbrenteu/u.test(source));
+  const yahooCandidate = findBrentCandidate(candidates, (source) => /yahoo|bz=f|bz%3df/u.test(source));
+  const teCandidate = findBrentCandidate(candidates, (source) => /tradingeconomics|brent-crude-oil/u.test(source));
+  const fredValue = brentCandidateValue(fredCandidate || {});
+  const yahooValue = brentCandidateValue(yahooCandidate || {});
+  const teValue = brentCandidateValue(teCandidate || {});
+  const selectedIsFred = /fred|dcoilbrenteu/u.test(normalizeBrentSourceName(selectedSource));
+
+  const publicSpotProxy = {
+    labelZh: 'Brent 公开现货代理',
+    source: brentCandidateSource(fredCandidate || {}) || (selectedIsFred ? selectedSource : null),
+    value: Number.isFinite(fredValue) ? fredValue : selectedIsFred ? selectedValue : null,
+    observedAt: brentCandidateObservedAt(fredCandidate || {}) || (selectedIsFred ? selectedObservedAt : null),
+    status: Number.isFinite(fredValue) ? 'ok' : selectedIsFred && Number.isFinite(selectedValue) ? 'fallback' : 'missing',
+    limitationZh: '该字段为公开 Brent 现货代理观察，不等同于 Platts Dated Brent 或正式实物现货成交价。'
+  };
+
+  const futuresProxyValue = Number.isFinite(yahooValue) ? yahooValue : Number.isFinite(teValue) ? teValue : null;
+  const futuresProxy = {
+    labelZh: 'Brent 期货代理',
+    source: brentCandidateSource(yahooCandidate || {}) || (Number.isFinite(teValue) ? brentCandidateSource(teCandidate || {}) : null),
+    value: futuresProxyValue,
+    observedAt: brentCandidateObservedAt(yahooCandidate || {}) || (Number.isFinite(teValue) ? brentCandidateObservedAt(teCandidate || {}) : null),
+    status: Number.isFinite(yahooValue) ? 'ok' : Number.isFinite(teValue) ? 'fallback' : 'missing',
+    limitationZh: '该字段为公开期货/市场报价代理，仅用于验证层观察。'
+  };
+
+  const confirmationSources = buildBrentConfirmationSources(realtimePayload, selectedBrent);
+  const spotMinusFutures = Number.isFinite(publicSpotProxy.value) && Number.isFinite(futuresProxy.value)
+    ? +(publicSpotProxy.value - futuresProxy.value).toFixed(3)
+    : null;
+  const selectedMinusFutures = Number.isFinite(selectedBrent.value) && Number.isFinite(futuresProxy.value)
+    ? +(selectedBrent.value - futuresProxy.value).toFixed(3)
+    : null;
+  const maxProxyDivergencePct = firstFinite(
+    validation.maxConfirmationDivergencePct,
+    validation.maxProxyDivergencePct,
+    consensus.maxConfirmationDivergencePct,
+    computeMaxProxyDivergencePct([publicSpotProxy.value, futuresProxy.value, selectedBrent.value])
+  );
+  const spreadStatus = classifyProxySpreadStatus(spotMinusFutures, maxProxyDivergencePct);
+  const confidenceLevel = spreadStatus === 'insufficient_data' ? 'low' : futuresProxy.status === 'ok' && publicSpotProxy.status === 'ok' ? 'medium' : 'low';
+
+  return {
+    contractVersion: 'v28.0I-5A',
+    generatedAt: isoNow,
+    mode: 'public_proxy_observation',
+    summaryZh: spreadStatus === 'insufficient_data'
+      ? '当前公开数据不足以判断 Brent 现货代理与期货代理之间是否存在明显背离。'
+      : spreadStatus === 'normal'
+        ? 'Brent 公开代理价格层显示，当前主值与公开期货/确认源之间未形成明显异常背离。'
+        : 'Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。',
+    selectedBrent,
+    publicSpotProxy,
+    futuresProxy,
+    confirmationSources,
+    proxySpread: {
+      spotMinusFutures,
+      selectedMinusFutures,
+      maxProxyDivergencePct,
+      status: spreadStatus,
+      statusZh: brentSpreadStatusZh(spreadStatus),
+      interpretationZh: spreadStatus === 'insufficient_data'
+        ? '公开现货代理或期货代理数据不足，暂不足以判断。'
+        : '该价差只用于公开代理价格层审计，不改变 Brent 主值或 promotion。'
+    },
+    promotionAudit: {
+      promotionApplied: typeof promotion.applied === 'boolean' ? promotion.applied : null,
+      moveStatus: firstString(promotion.moveStatus, validation.moveStatus),
+      promotionReason: firstString(promotion.reason, validation.reason),
+      selectedSource,
+      anchorSource: publicSpotProxy.source,
+      anchorAgeHours: firstFinite(sourceDetails.ageHours, sourceDetails.observedAgeHours, validation.anchorAgeHours)
+    },
+    dataGaps: [
+      'Platts Dated Brent / 正式 Dated Brent 未接入。',
+      'Brent 期限结构尚未正式接入。',
+      'Crack spread / 柴油裂解价差尚未正式接入。',
+      '油轮运费 / 航运压力尚未正式接入。'
+    ],
+    limitations: [
+      '当前仅为公开代理价格观察，不等同于付费 Dated Brent 或实物成交数据。',
+      '该层不改变 Brent 主值、评分、仓位或执行灯。'
+    ],
+    confidence: {
+      level: confidenceLevel,
+      score: confidenceLevel === 'medium' ? 60 : 35,
+      reasonZh: confidenceLevel === 'medium'
+        ? '公开现货代理与期货代理均可用，但该层仍只作为审计观察。'
+        : '公开代理来源不足或只能 fallback，因此维持低置信。'
+    },
+    boundaries: {
+      displayOnly: true,
+      auditOnly: true,
+      affectsValuesBrent: false,
+      affectsBrentPromotion: false,
+      affectsScoring: false,
+      affectsDecisionModel: false,
+      affectsExecutionLock: false,
+      affectsPositionGuidance: false
+    }
+  };
+}
+
 function classifyDailyBriefConfidence(score, realtimePayload, allMacroMissing) {
   if (allMacroMissing || realtimePayload.cacheOnly || (realtimePayload.criticalMissing ?? 0) > 1 || score < 55) return 'low';
   if (realtimePayload.degradedMode || (realtimePayload.fallbackCount ?? 0) > 0 || score < 80) return 'medium';
@@ -1750,6 +1995,11 @@ async function build() {
     macroDrivers,
     confidenceScore
   });
+  const brentPricingLayer = buildBrentPricingLayer({
+    realtimePayload: realtime,
+    displayInputsBaseline,
+    dailyRealtimeInput: buildDailyRealtimeInput(realtime)
+  });
 
   const data = {
     version: 'v27.0',
@@ -1757,6 +2007,7 @@ async function build() {
     dailyRealtimeInput: buildDailyRealtimeInput(realtime),
     dailyBrief,
     divergenceLayer,
+    brentPricingLayer,
     score: risk.score,
     scoreChange1d,
     scoreChange7d,

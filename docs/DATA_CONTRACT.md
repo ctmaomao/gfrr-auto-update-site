@@ -242,6 +242,43 @@ macroDrivers.consumer
 
 `consumer_vs_asset_pricing` 的 `category` 为 `consumer_assets`。该 check 只能说明消费者信心与 S&P 500、VIX、HY OAS 之间是否存在观察性错配；不得写成实时交易信号，不得声称消费崩盘已确认，也不得改变任何仓位或交易建议。
 
+### brentPricingLayer 公开代理价格层 contract
+
+`v28.0I-5A` 在 `data/radar-data.json` 根级新增：
+
+```text
+brentPricingLayer
+```
+
+`brentPricingLayer` 是 Brent 公开代理价格层，用于把当前主 Brent 显示值、公开 Brent 现货代理、公开 Brent 期货代理、Brent validation / confirmation sources 与公开代理价差分开记录。它是 audit-only / display-only 字段。
+
+严格边界：
+
+- 不等同于 Platts Dated Brent。
+- 不等同于正式实物成交价。
+- 不代表付费 Dated Brent 数据已接入。
+- 不改变 `values.brent`。
+- 不改变 Brent promotion。
+- 不参与 scoring。
+- 不参与 `decisionModel`。
+- 不参与 `executionLock` 或 `positionGuidance`。
+- 不改变 Action Queue、Trigger Monitor 或 Invalidation Rules。
+
+字段 contract：
+
+- `contractVersion` 必须为 `v28.0I-5A`。
+- `mode` 必须为 `public_proxy_observation`。
+- `selectedBrent`、`publicSpotProxy`、`futuresProxy` 必须记录 `source`、`value`、`observedAt`、`status` 与中文说明。
+- `confirmationSources` 必须为数组；每项记录 `source`、`labelZh`、`value`、`observedAt`、`status`、`role`、`participatesInPromotion`、`noteZh`。
+- `proxySpread.status` 只能为 `normal` / `watch` / `stress` / `insufficient_data`。
+- `confidence.level` 只能为 `low` / `medium` / `high`。
+- `boundaries.displayOnly`、`boundaries.auditOnly` 必须为 `true`。
+- `boundaries.affectsValuesBrent`、`affectsBrentPromotion`、`affectsScoring`、`affectsDecisionModel`、`affectsExecutionLock`、`affectsPositionGuidance` 必须为 `false`。
+
+`publicSpotProxy.limitationZh` 必须说明该字段只是公开 Brent 现货代理观察，不等同于 Platts Dated Brent 或正式实物现货成交价。`futuresProxy.limitationZh` 必须说明该字段是公开期货 / 市场报价代理，仅用于验证层观察。
+
+未来前端展示必须只读消费 `brentPricingLayer`，不得在 render 层反推 Brent 主值、Brent promotion、评分、仓位、执行灯或交易建议。
+
 #### marketConfirmationInput
 
 v28.0H-2B 起，`data/world-order-stress.json` 必须包含：

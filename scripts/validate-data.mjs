@@ -49,6 +49,10 @@ const DIVERGENCE_LAYER_STATES = new Set(['normal', 'watch', 'stress', 'high_stre
 const DIVERGENCE_CHECK_STATUSES = new Set(['normal', 'watch', 'stress', 'insufficient_data']);
 const DIVERGENCE_CHECK_CATEGORIES = new Set(['energy_pricing', 'rates_assets', 'liquidity_credit', 'risk_complacency', 'consumer_assets']);
 const CONSUMER_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
+const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
+const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
+const BRENT_PROXY_SPREAD_STATUSES = new Set(['normal', 'watch', 'stress', 'insufficient_data']);
 const DAILY_BRIEF_FORBIDDEN_PHRASES = [
   '战争概率',
   '世界大战',
@@ -60,7 +64,10 @@ const DAILY_BRIEF_FORBIDDEN_PHRASES = [
   'guaranteed',
   'certainty',
   'Platts Dated Brent 已接入',
-  '真实 Dated Brent 已接入'
+  '真实 Dated Brent 已接入',
+  '实物油价已经确认',
+  '石油危机已经爆发',
+  '必然逼空'
 ];
 
 function assert(condition, message) {
@@ -367,6 +374,133 @@ function validateMacroDriversConsumer(dataPayload) {
   assert(consumer.source === 'FRED:UMCSENT', 'macroDrivers.consumer.source must be FRED:UMCSENT');
   assertArray(consumer.notes, 'macroDrivers.consumer.notes');
   consumer.notes.forEach((item, index) => assertString(item, `macroDrivers.consumer.notes[${index}]`));
+}
+
+function validateNullableString(value, fieldName) {
+  assert(value === null || typeof value === 'string', `${fieldName} must be string or null`);
+}
+
+function validateNullableIsoString(value, fieldName) {
+  assert(
+    value === null || (typeof value === 'string' && Number.isFinite(Date.parse(value))),
+    `${fieldName} must be null or parseable ISO string`
+  );
+}
+
+function validateBrentLayerPriceNode(node, fieldName, expectedLabel = null) {
+  assertPlainObject(node, fieldName);
+  if (expectedLabel !== null) assert(node.labelZh === expectedLabel, `${fieldName}.labelZh must be ${expectedLabel}`);
+  validateStringIfPresent(node, 'labelZh', fieldName);
+  assert(Object.hasOwn(node, 'source'), `${fieldName}.source is missing`);
+  assert(Object.hasOwn(node, 'value'), `${fieldName}.value is missing`);
+  assert(Object.hasOwn(node, 'observedAt'), `${fieldName}.observedAt is missing`);
+  assert(Object.hasOwn(node, 'status'), `${fieldName}.status is missing`);
+  validateNullableString(node.source, `${fieldName}.source`);
+  assert(isFiniteNumberOrNull(node.value), `${fieldName}.value must be finite number or null`);
+  validateNullableIsoString(node.observedAt, `${fieldName}.observedAt`);
+  assert(BRENT_LAYER_SOURCE_STATUSES.has(node.status), `${fieldName}.status is not supported`);
+}
+
+function validateBrentPricingLayer(dataPayload) {
+  const layer = dataPayload.brentPricingLayer;
+  if (layer === undefined) {
+    console.warn('[validate-data] Warning: brentPricingLayer is missing; run npm run build:data with a valid realtime input to generate the v28.0I-5A audit-only contract.');
+    return;
+  }
+  assertPlainObject(layer, 'brentPricingLayer');
+  for (const key of [
+    'contractVersion',
+    'generatedAt',
+    'mode',
+    'summaryZh',
+    'selectedBrent',
+    'publicSpotProxy',
+    'futuresProxy',
+    'confirmationSources',
+    'proxySpread',
+    'promotionAudit',
+    'dataGaps',
+    'limitations',
+    'confidence',
+    'boundaries'
+  ]) {
+    assert(Object.hasOwn(layer, key), `brentPricingLayer.${key} is missing`);
+  }
+
+  assert(layer.contractVersion === 'v28.0I-5A', 'brentPricingLayer.contractVersion must be v28.0I-5A');
+  parseIsoTime(layer.generatedAt, 'generatedAt');
+  assert(layer.mode === 'public_proxy_observation', 'brentPricingLayer.mode must be public_proxy_observation');
+  assertString(layer.summaryZh, 'brentPricingLayer.summaryZh');
+
+  validateBrentLayerPriceNode(layer.selectedBrent, 'brentPricingLayer.selectedBrent');
+  assertString(layer.selectedBrent.noteZh, 'brentPricingLayer.selectedBrent.noteZh');
+  validateBrentLayerPriceNode(layer.publicSpotProxy, 'brentPricingLayer.publicSpotProxy', 'Brent 公开现货代理');
+  assertString(layer.publicSpotProxy.limitationZh, 'brentPricingLayer.publicSpotProxy.limitationZh');
+  validateBrentLayerPriceNode(layer.futuresProxy, 'brentPricingLayer.futuresProxy', 'Brent 期货代理');
+  assertString(layer.futuresProxy.limitationZh, 'brentPricingLayer.futuresProxy.limitationZh');
+
+  assertArray(layer.confirmationSources, 'brentPricingLayer.confirmationSources');
+  layer.confirmationSources.forEach((source, index) => {
+    const fieldName = `brentPricingLayer.confirmationSources[${index}]`;
+    assertPlainObject(source, fieldName);
+    for (const key of ['source', 'labelZh', 'value', 'observedAt', 'status', 'role', 'participatesInPromotion', 'noteZh']) {
+      assert(Object.hasOwn(source, key), `${fieldName}.${key} is missing`);
+    }
+    assertString(source.source, `${fieldName}.source`);
+    assertString(source.labelZh, `${fieldName}.labelZh`);
+    assert(isFiniteNumberOrNull(source.value), `${fieldName}.value must be finite number or null`);
+    validateNullableIsoString(source.observedAt, `${fieldName}.observedAt`);
+    assert(BRENT_CONFIRMATION_STATUSES.has(source.status), `${fieldName}.status is not supported`);
+    assert(BRENT_CONFIRMATION_ROLES.has(source.role), `${fieldName}.role is not supported`);
+    assertBoolean(source.participatesInPromotion, `${fieldName}.participatesInPromotion`);
+    assertString(source.noteZh, `${fieldName}.noteZh`);
+  });
+
+  const spread = layer.proxySpread;
+  assertPlainObject(spread, 'brentPricingLayer.proxySpread');
+  for (const key of ['spotMinusFutures', 'selectedMinusFutures', 'maxProxyDivergencePct']) {
+    assert(Object.hasOwn(spread, key), `brentPricingLayer.proxySpread.${key} is missing`);
+    assert(isFiniteNumberOrNull(spread[key]), `brentPricingLayer.proxySpread.${key} must be finite number or null`);
+  }
+  assert(BRENT_PROXY_SPREAD_STATUSES.has(spread.status), 'brentPricingLayer.proxySpread.status is not supported');
+  assertString(spread.statusZh, 'brentPricingLayer.proxySpread.statusZh');
+  assertString(spread.interpretationZh, 'brentPricingLayer.proxySpread.interpretationZh');
+
+  const promotionAudit = layer.promotionAudit;
+  assertPlainObject(promotionAudit, 'brentPricingLayer.promotionAudit');
+  assert(promotionAudit.promotionApplied === null || typeof promotionAudit.promotionApplied === 'boolean', 'brentPricingLayer.promotionAudit.promotionApplied must be boolean or null');
+  for (const key of ['moveStatus', 'promotionReason', 'selectedSource', 'anchorSource']) {
+    validateNullableString(promotionAudit[key], `brentPricingLayer.promotionAudit.${key}`);
+  }
+  assert(isFiniteNumberOrNull(promotionAudit.anchorAgeHours), 'brentPricingLayer.promotionAudit.anchorAgeHours must be finite number or null');
+
+  assertArray(layer.dataGaps, 'brentPricingLayer.dataGaps');
+  assertArray(layer.limitations, 'brentPricingLayer.limitations');
+  layer.dataGaps.forEach((item, index) => assertString(item, `brentPricingLayer.dataGaps[${index}]`));
+  layer.limitations.forEach((item, index) => assertString(item, `brentPricingLayer.limitations[${index}]`));
+
+  const confidence = layer.confidence;
+  assertPlainObject(confidence, 'brentPricingLayer.confidence');
+  assert(DAILY_BRIEF_CONFIDENCE_LEVELS.has(confidence.level), 'brentPricingLayer.confidence.level must be low, medium, or high');
+  assertFiniteNumber(confidence.score, 'brentPricingLayer.confidence.score');
+  assert(confidence.score >= 0 && confidence.score <= 100, 'brentPricingLayer.confidence.score must be 0-100');
+  assertString(confidence.reasonZh, 'brentPricingLayer.confidence.reasonZh');
+
+  const boundaries = layer.boundaries;
+  assertPlainObject(boundaries, 'brentPricingLayer.boundaries');
+  assert(boundaries.displayOnly === true, 'brentPricingLayer.boundaries.displayOnly must be true');
+  assert(boundaries.auditOnly === true, 'brentPricingLayer.boundaries.auditOnly must be true');
+  assert(boundaries.affectsValuesBrent === false, 'brentPricingLayer.boundaries.affectsValuesBrent must be false');
+  assert(boundaries.affectsBrentPromotion === false, 'brentPricingLayer.boundaries.affectsBrentPromotion must be false');
+  assert(boundaries.affectsScoring === false, 'brentPricingLayer.boundaries.affectsScoring must be false');
+  assert(boundaries.affectsDecisionModel === false, 'brentPricingLayer.boundaries.affectsDecisionModel must be false');
+  assert(boundaries.affectsExecutionLock === false, 'brentPricingLayer.boundaries.affectsExecutionLock must be false');
+  assert(boundaries.affectsPositionGuidance === false, 'brentPricingLayer.boundaries.affectsPositionGuidance must be false');
+
+  const serializedStrings = collectStrings(layer).join('\n');
+  for (const phrase of DAILY_BRIEF_FORBIDDEN_PHRASES) {
+    assert(!serializedStrings.includes(phrase), `brentPricingLayer must not contain forbidden phrase "${phrase}"`);
+  }
 }
 
 function validateDailyRealtimeInput(dataPayload) {
@@ -721,6 +855,7 @@ validateDailyRealtimeInput(data);
 validateDailyBrief(data);
 validateDivergenceLayer(data);
 validateMacroDriversConsumer(data);
+validateBrentPricingLayer(data);
 validateDisplayInputsBaseline(data);
 validateRealtimeBaselineAlignment(data, realtime);
 validateBrentValidation(realtime);
