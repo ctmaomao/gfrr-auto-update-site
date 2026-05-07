@@ -96,6 +96,12 @@ v28.0K-2 新增 offline external AI output validator and banned-copy checker：`
 
 v28.0K-3A 新增 disabled-by-default production data scaffold：`externalAiInterpretationLayer`。该字段只记录 external AI 当前 disabled，并 fallback 到 rule-based `aiInterpretationLayer`；不接 API、不写 secrets、不做 frontend display、不进入 scoring / decision / execution / position。旧 data 缺少该字段时，`check:data` 可 warning 不失败，等待 Daily 在 fresh / aging realtime 条件下自然生成。
 
+## v28.0K-3D Stable Observation Automation Gate
+
+v28.0K-3D adds a read-only Stable Observation Audit automation gate before v28.0K-4. It provides local command `npm run audit:stable-observation` and GitHub Actions workflow `Stable Observation Audit`.
+
+The gate checks whether the v28.0K baseline remains stable across design docs, prompt fixtures, offline validator, disabled `externalAiInterpretationLayer`, live data, Worker Health, realtime-data Health, frontend reachability, and forbidden-copy boundaries. This stage does not connect DeepSeek / OpenAI / external AI APIs, does not add frontend display, and does not affect scoring / decision / execution / position.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

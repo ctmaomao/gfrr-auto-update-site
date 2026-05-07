@@ -52,6 +52,7 @@
 - v28.0K-1 External AI Prompt Contract：新增 future prompt contract 与非生产 sample fixtures；当前不接 API、不写 secrets、不改变 runtime。详见 `docs/EXTERNAL_AI_PROMPT_CONTRACT.md`。
 - v28.0K-2 External AI Output Validator：新增 `npm run check:external-ai-output`，用于离线验证非生产 external AI output fixture / artifact 的 contract、source attribution、banned copy 与越权文案；不调用 API，不接入 runtime。
 - v28.0K-3 Disabled External AI Scaffold：live data 已包含 disabled `externalAiInterpretationLayer` scaffold。它是 diagnostic-only，不是 active external AI，不调用 DeepSeek / OpenAI / 外部 AI API，不进入 scoring / decision / execution / position。
+- v28.0K-3D Stable Observation Audit：新增只读 workflow 监控 v28.0K baseline，并作为是否考虑 v28.0K-4 design planning 的 gate。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。

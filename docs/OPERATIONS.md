@@ -112,6 +112,30 @@ v28.0K-3A 后，如果 `externalAiInterpretationLayer.status="disabled"`，这�
 9. 不要把 disabled scaffold 当成 API failure。
 10. 不要在未另开评审版本前把该字段暴露到 frontend。
 
+## Stable Observation Audit
+
+v28.0K-3D adds a read-only stable observation gate for the v28.0K baseline.
+
+Local command:
+
+```bash
+npm run audit:stable-observation
+```
+
+GitHub Actions workflow:
+
+```text
+Stable Observation Audit
+```
+
+Status meaning:
+
+- PASS: live frontend, live data, disabled `externalAiInterpretationLayer`, rule-based `aiInterpretationLayer`, Worker Health, realtime-data health, and `check:external-ai-output` are stable enough. v28.0K-4 design planning may be considered.
+- WARN: non-blocking observation issue. Review warnings before proceeding to v28.0K-4.
+- FAIL: blocking issue. Do not proceed to v28.0K-4 until the issue is fixed.
+
+The workflow is observation-only. It must not auto-fix, auto-open issues, auto-commit, auto-push, deploy Worker, trigger recovery workflows, or hand-edit `data/radar-data.json`. A disabled scaffold is expected and must not be treated as an API failure.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
