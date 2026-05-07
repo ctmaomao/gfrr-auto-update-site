@@ -350,13 +350,13 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 
 #### externalAiInterpretationLayer disabled scaffold contract
 
-v28.0K-3A 在 Daily radar data 根级新增 future-only disabled scaffold：
+v28.0K-3A 在 Daily radar data 根级新增 future-only disabled scaffold；v28.0K-3B activation audit 通过后，该字段已进入 live data baseline：
 
 ```text
 externalAiInterpretationLayer
 ```
 
-该字段不是外部 AI 输出，也不代表 DeepSeek / OpenAI / external AI API 已接入。它只记录外部 AI 当前 disabled，并明确 fallback 到现有 rule-based `aiInterpretationLayer`。
+该字段不是外部 AI 输出，也不代表 DeepSeek / OpenAI / external AI API 已接入。它只记录外部 AI 当前 disabled，并明确 fallback 到现有 rule-based `aiInterpretationLayer`。本地旧数据如果缺少该字段，`check:data` 可能 warning；pull latest `main` 或等待 Daily workflow 重新生成后即可对齐。
 
 当前 contract：
 
@@ -365,13 +365,14 @@ externalAiInterpretationLayer
 - `provider="none"`，`model=null`。
 - `mode="external_ai_disabled_scaffold"`。
 - `output=null`。
+- `externalAiGenerated=false`，`usesExternalAiApi=false`。
 - `fallback.used=true`，`fallback.fallbackLayer="aiInterpretationLayer"`。
 - `boundaries.displayOnly=true`，`boundaries.diagnosticOnly=true`。
 - `boundaries.externalAiGenerated=false`，`boundaries.usesExternalAiApi=false`。
 - `boundaries.affectsScoring=false`，`boundaries.affectsDecisionModel=false`，`boundaries.affectsExecutionLock=false`，`boundaries.affectsPositionGuidance=false`。
 - `boundaries.notInvestmentAdvice=true`。
 
-该字段当前不得用户可见，不得替换 `aiInterpretationLayer`，不得进入 scoring / decision / execution / position，也不得读取 `docs/fixtures/external-ai/*.json`。
+该字段是 diagnostic scaffold only，当前不得用户可见，不得被视为 enabled external AI，不得替换 `aiInterpretationLayer`，不得进入 scoring / decision / execution / position，也不得读取 `docs/fixtures/external-ai/*.json`。
 
 ### v28.0I contract boundary summary
 

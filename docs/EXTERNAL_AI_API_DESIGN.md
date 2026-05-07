@@ -12,6 +12,8 @@ v28.0K-2 新增 offline external AI output validator and banned-copy checker：`
 
 v28.0K-3A 新增 disabled production scaffold：`externalAiInterpretationLayer`。该字段不是 external AI output，不调用 DeepSeek / OpenAI / external AI API，不读取 sample fixtures，也不进入 frontend display。未来真正 external AI output 仍必须经过 API design、prompt contract、output validator、fallback review、source attribution 和单独 display review。
 
+v28.0K-3B activation audit 已确认 live data 包含 v28.0K-3A disabled scaffold。该 live scaffold 仍不是 API integration；未来 enabled external AI output 仍需要 output validator、fallback handling、source attribution、disabled-by-default release gate 和单独 frontend display review。
+
 ## 2. Current Baseline / 当前基线
 
 当前稳定基线为：
