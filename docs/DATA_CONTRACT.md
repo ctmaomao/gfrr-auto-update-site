@@ -348,6 +348,31 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 
 `scripts/check-external-ai-output.mjs` / `npm run check:external-ai-output` 只验证 sample 或 future external AI output artifacts；它不验证 production `data/radar-data.json`，不改变 `aiInterpretationLayer`，也不把 external AI 字段加入当前 production contract。
 
+#### externalAiInterpretationLayer disabled scaffold contract
+
+v28.0K-3A 在 Daily radar data 根级新增 future-only disabled scaffold：
+
+```text
+externalAiInterpretationLayer
+```
+
+该字段不是外部 AI 输出，也不代表 DeepSeek / OpenAI / external AI API 已接入。它只记录外部 AI 当前 disabled，并明确 fallback 到现有 rule-based `aiInterpretationLayer`。
+
+当前 contract：
+
+- `contractVersion` 必须为 `v28.0K-3A`。
+- `enabled=false`，`status="disabled"`。
+- `provider="none"`，`model=null`。
+- `mode="external_ai_disabled_scaffold"`。
+- `output=null`。
+- `fallback.used=true`，`fallback.fallbackLayer="aiInterpretationLayer"`。
+- `boundaries.displayOnly=true`，`boundaries.diagnosticOnly=true`。
+- `boundaries.externalAiGenerated=false`，`boundaries.usesExternalAiApi=false`。
+- `boundaries.affectsScoring=false`，`boundaries.affectsDecisionModel=false`，`boundaries.affectsExecutionLock=false`，`boundaries.affectsPositionGuidance=false`。
+- `boundaries.notInvestmentAdvice=true`。
+
+该字段当前不得用户可见，不得替换 `aiInterpretationLayer`，不得进入 scoring / decision / execution / position，也不得读取 `docs/fixtures/external-ai/*.json`。
+
 ### v28.0I contract boundary summary
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。当前 live data 已包含 `dailyBrief.contractVersion = v28.0I-1`、`divergenceLayer.contractVersion = v28.0I-3A`、`macroDrivers.consumer`、`consumer_vs_asset_pricing` 与 `brentPricingLayer.contractVersion = v28.0I-5A`。
