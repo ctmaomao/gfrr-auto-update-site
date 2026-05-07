@@ -174,6 +174,44 @@ dailyBrief
 
 v28.0I-2 前端展示只读消费 `dailyBrief`。前端不得在 render 层反推评分、仓位、执行灯、Action Queue 或任何 decision contract；当 `dailyBrief` 缺失时只显示温和 fallback。证据不足时应显示“数据不足”或“暂不足以判断”，不得为了显示漂亮伪造数据。
 
+### divergenceLayer 背离解释层 contract
+
+`v28.0I-3A` 在 `data/radar-data.json` 根级新增：
+
+```text
+divergenceLayer
+```
+
+`divergenceLayer` 是“实体压力与金融定价背离”的解释层 / audit-only / display-only 字段。它只读取现有 Daily pipeline 与 realtime 输入中的公开 proxy、验证层、模块分数和数据健康信息，用于未来前端展示前的数据契约准备。
+
+严格边界：
+
+- 不参与 scoring。
+- 不参与 `decisionModel`。
+- 不参与 `executionLock`。
+- 不参与 `positionGuidance`。
+- 不改变 `effectiveDisplayInputs`。
+- 不改变 Brent promotion。
+- 不改变 Worker-first runtime priority。
+- 不改变 Action Queue、Trigger Monitor 或 Invalidation Rules。
+
+字段 contract：
+
+- `contractVersion` 必须为 `v28.0I-3A`。
+- `generatedAt` 必须为可解析 ISO 字符串。
+- `score` 必须为 `0-100` finite number。
+- `state` 只能为 `normal` / `watch` / `stress` / `high_stress` / `insufficient_data`。
+- `primaryDivergence` 必须包含 `key`、`labelZh`、`status`、`statusZh`、`summaryZh`、`evidence`。
+- `checks` 必须为数组；每项必须包含 `key`、`labelZh`、`category`、`status`、`score`、`summaryZh`、`evidence`、`dataUsed`、`limitations`。
+- `category` 只能为 `energy_pricing` / `rates_assets` / `liquidity_credit` / `risk_complacency`。
+- `confidence.level` 只能为 `low` / `medium` / `high`，第一版一般不应为 `high`。
+- `boundaries.displayOnly`、`boundaries.auditOnly` 必须为 `true`。
+- `boundaries.affectsScoring`、`affectsDecisionModel`、`affectsExecutionLock`、`affectsPositionGuidance` 必须为 `false`。
+
+Brent 相关观察只能说明公开 Brent proxy / validation 层状态，不等同于 Platts Dated Brent，不代表真实 Dated Brent 已接入，也不能证明真实实物现货溢价。不得把 FRED Brent、Yahoo `BZ=F`、Trading Economics Brent 混同为同一个价格，不得把 `brentValidation.consensus.recommendedValue` 直接当作 Brent 主值。
+
+未来前端展示必须只读消费 `divergenceLayer`，不得在 render 层反推评分、仓位、执行灯、Action Queue 或任何 decision contract。证据不足时必须显示“数据不足”或“暂不足以判断”，不得伪造不存在的数据。
+
 #### marketConfirmationInput
 
 v28.0H-2B 起，`data/world-order-stress.json` 必须包含：

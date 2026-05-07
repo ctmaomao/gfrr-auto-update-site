@@ -45,13 +45,18 @@ const DAILY_REALTIME_SOURCE_MODES = new Set(['live', 'degraded', 'live-with-fall
 const DAILY_REALTIME_LIVE_MAX_AGE_MINUTES = 180;
 const DAILY_REALTIME_CACHE_ONLY_MAX_AGE_MINUTES = 360;
 const DAILY_BRIEF_CONFIDENCE_LEVELS = new Set(['low', 'medium', 'high']);
+const DIVERGENCE_LAYER_STATES = new Set(['normal', 'watch', 'stress', 'high_stress', 'insufficient_data']);
+const DIVERGENCE_CHECK_STATUSES = new Set(['normal', 'watch', 'stress', 'insufficient_data']);
+const DIVERGENCE_CHECK_CATEGORIES = new Set(['energy_pricing', 'rates_assets', 'liquidity_credit', 'risk_complacency']);
 const DAILY_BRIEF_FORBIDDEN_PHRASES = [
   '战争概率',
   '世界大战',
   '必然崩盘',
   '危机已经爆发',
   'guaranteed',
-  'certainty'
+  'certainty',
+  'Platts Dated Brent 已接入',
+  '真实 Dated Brent 已接入'
 ];
 
 function assert(condition, message) {
@@ -223,6 +228,108 @@ function validateDailyBrief(dataPayload) {
   const serializedStrings = collectStrings(brief).join('\n');
   for (const phrase of DAILY_BRIEF_FORBIDDEN_PHRASES) {
     assert(!serializedStrings.includes(phrase), `dailyBrief must not contain forbidden phrase "${phrase}"`);
+  }
+}
+
+function validateDivergenceEvidence(evidence, fieldName) {
+  assertArray(evidence, fieldName);
+  evidence.forEach((item, index) => {
+    assertPlainObject(item, `${fieldName}[${index}]`);
+    for (const key of ['source', 'key', 'labelZh', 'summaryZh']) {
+      assert(Object.hasOwn(item, key), `${fieldName}[${index}].${key} is missing`);
+      assertString(item[key], `${fieldName}[${index}].${key}`);
+    }
+    assert(Object.hasOwn(item, 'value'), `${fieldName}[${index}].value is missing`);
+  });
+}
+
+function validateDivergenceLayer(dataPayload) {
+  const layer = dataPayload.divergenceLayer;
+  if (layer === undefined) {
+    console.warn('[validate-data] Warning: divergenceLayer is missing; run npm run build:data with a valid realtime input to generate the v28.0I-3A audit-only contract.');
+    return;
+  }
+  assertPlainObject(layer, 'divergenceLayer');
+  for (const key of [
+    'contractVersion',
+    'generatedAt',
+    'score',
+    'state',
+    'stateZh',
+    'summaryZh',
+    'primaryDivergence',
+    'checks',
+    'dataGaps',
+    'confidence',
+    'boundaries'
+  ]) {
+    assert(Object.hasOwn(layer, key), `divergenceLayer.${key} is missing`);
+  }
+
+  assert(layer.contractVersion === 'v28.0I-3A', 'divergenceLayer.contractVersion must be v28.0I-3A');
+  parseIsoTime(layer.generatedAt, 'generatedAt');
+  assertFiniteNumber(layer.score, 'divergenceLayer.score');
+  assert(layer.score >= 0 && layer.score <= 100, 'divergenceLayer.score must be 0-100');
+  assert(DIVERGENCE_LAYER_STATES.has(layer.state), 'divergenceLayer.state is not supported');
+  assertString(layer.stateZh, 'divergenceLayer.stateZh');
+  assertString(layer.summaryZh, 'divergenceLayer.summaryZh');
+
+  const primary = layer.primaryDivergence;
+  assertPlainObject(primary, 'divergenceLayer.primaryDivergence');
+  for (const key of ['key', 'labelZh', 'status', 'statusZh', 'summaryZh', 'evidence']) {
+    assert(Object.hasOwn(primary, key), `divergenceLayer.primaryDivergence.${key} is missing`);
+  }
+  assertString(primary.key, 'divergenceLayer.primaryDivergence.key');
+  assertString(primary.labelZh, 'divergenceLayer.primaryDivergence.labelZh');
+  assert(DIVERGENCE_CHECK_STATUSES.has(primary.status), 'divergenceLayer.primaryDivergence.status is not supported');
+  assertString(primary.statusZh, 'divergenceLayer.primaryDivergence.statusZh');
+  assertString(primary.summaryZh, 'divergenceLayer.primaryDivergence.summaryZh');
+  validateDivergenceEvidence(primary.evidence, 'divergenceLayer.primaryDivergence.evidence');
+
+  assertArray(layer.checks, 'divergenceLayer.checks');
+  assert(layer.checks.length >= 1, 'divergenceLayer.checks must not be empty');
+  layer.checks.forEach((check, index) => {
+    const fieldName = `divergenceLayer.checks[${index}]`;
+    assertPlainObject(check, fieldName);
+    for (const key of ['key', 'labelZh', 'category', 'status', 'score', 'summaryZh', 'evidence', 'dataUsed', 'limitations']) {
+      assert(Object.hasOwn(check, key), `${fieldName}.${key} is missing`);
+    }
+    assertString(check.key, `${fieldName}.key`);
+    assertString(check.labelZh, `${fieldName}.labelZh`);
+    assert(DIVERGENCE_CHECK_CATEGORIES.has(check.category), `${fieldName}.category is not supported`);
+    assert(DIVERGENCE_CHECK_STATUSES.has(check.status), `${fieldName}.status is not supported`);
+    assertFiniteNumber(check.score, `${fieldName}.score`);
+    assert(check.score >= 0 && check.score <= 100, `${fieldName}.score must be 0-100`);
+    assertString(check.summaryZh, `${fieldName}.summaryZh`);
+    validateDivergenceEvidence(check.evidence, `${fieldName}.evidence`);
+    assertArray(check.dataUsed, `${fieldName}.dataUsed`);
+    assertArray(check.limitations, `${fieldName}.limitations`);
+    check.dataUsed.forEach((item, itemIndex) => assertString(item, `${fieldName}.dataUsed[${itemIndex}]`));
+    check.limitations.forEach((item, itemIndex) => assertString(item, `${fieldName}.limitations[${itemIndex}]`));
+  });
+
+  assertArray(layer.dataGaps, 'divergenceLayer.dataGaps');
+  layer.dataGaps.forEach((item, index) => assertString(item, `divergenceLayer.dataGaps[${index}]`));
+
+  const confidence = layer.confidence;
+  assertPlainObject(confidence, 'divergenceLayer.confidence');
+  assert(DAILY_BRIEF_CONFIDENCE_LEVELS.has(confidence.level), 'divergenceLayer.confidence.level must be low, medium, or high');
+  assertFiniteNumber(confidence.score, 'divergenceLayer.confidence.score');
+  assert(confidence.score >= 0 && confidence.score <= 100, 'divergenceLayer.confidence.score must be 0-100');
+  assertString(confidence.reasonZh, 'divergenceLayer.confidence.reasonZh');
+
+  const boundaries = layer.boundaries;
+  assertPlainObject(boundaries, 'divergenceLayer.boundaries');
+  assert(boundaries.displayOnly === true, 'divergenceLayer.boundaries.displayOnly must be true');
+  assert(boundaries.auditOnly === true, 'divergenceLayer.boundaries.auditOnly must be true');
+  assert(boundaries.affectsScoring === false, 'divergenceLayer.boundaries.affectsScoring must be false');
+  assert(boundaries.affectsDecisionModel === false, 'divergenceLayer.boundaries.affectsDecisionModel must be false');
+  assert(boundaries.affectsExecutionLock === false, 'divergenceLayer.boundaries.affectsExecutionLock must be false');
+  assert(boundaries.affectsPositionGuidance === false, 'divergenceLayer.boundaries.affectsPositionGuidance must be false');
+
+  const serializedStrings = collectStrings(layer).join('\n');
+  for (const phrase of DAILY_BRIEF_FORBIDDEN_PHRASES) {
+    assert(!serializedStrings.includes(phrase), `divergenceLayer must not contain forbidden phrase "${phrase}"`);
   }
 }
 
@@ -576,6 +683,7 @@ if (!data.tradingSystem || !data.tradingSystem.executionLock || !data.tradingSys
 if (!realtime.values || !realtime.sourceStatus) throw new Error('Validation failed: realtime payload incomplete.');
 validateDailyRealtimeInput(data);
 validateDailyBrief(data);
+validateDivergenceLayer(data);
 validateDisplayInputsBaseline(data);
 validateRealtimeBaselineAlignment(data, realtime);
 validateBrentValidation(realtime);
