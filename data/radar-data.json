@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-07T07:45:01.460Z",
+  "updatedAt": "2026-05-07T07:56:29.419Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
     "commitSha": "f0673361ae094784ecd377edb420d1324f4cfb11",
     "updatedAt": "2026-05-07T07:20:51.838Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-07T07:45:01.460Z"
+    "capturedAt": "2026-05-07T07:56:29.419Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-07T07:45:01.460Z",
+    "generatedAt": "2026-05-07T07:56:29.419Z",
     "macroState": "滞胀冲击 / 通胀冲击",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
     "dominantRiskChain": {
@@ -129,11 +129,11 @@
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-07T07:45:01.460Z",
-    "score": 56,
-    "state": "stress",
-    "stateZh": "背离压力",
-    "summaryZh": "当前背离层综合状态为背离压力，仅用于实体压力与金融定价的 audit-only 观察。",
+    "generatedAt": "2026-05-07T07:56:29.419Z",
+    "score": 48,
+    "state": "watch",
+    "stateZh": "背离观察",
+    "summaryZh": "当前背离层综合状态为背离观察，仅用于实体压力与金融定价的 audit-only 观察。",
     "primaryDivergence": {
       "key": "energy_pricing_gap_watch",
       "labelZh": "能源定价背离观察",
@@ -348,13 +348,69 @@
           "不表示市场一定错误。",
           "只作为 audit-only / display-only 观察。"
         ]
+      },
+      {
+        "key": "consumer_vs_asset_pricing",
+        "labelZh": "消费者体感与风险资产背离",
+        "category": "consumer_assets",
+        "status": "normal",
+        "score": 18,
+        "summaryZh": "消费者信心暂未显示明显走弱，暂未形成消费者体感与风险资产定价背离。",
+        "evidence": [
+          {
+            "source": "macroDrivers.consumer",
+            "key": "umichSentiment",
+            "labelZh": "密歇根消费者信心",
+            "value": 53.3,
+            "summaryZh": "UMCSENT 当前值 53.3。"
+          },
+          {
+            "source": "macroDrivers.consumer",
+            "key": "threeMonthChange",
+            "labelZh": "三个月变化",
+            "value": 0.4,
+            "summaryZh": "UMCSENT 三个月变化 0.4。"
+          },
+          {
+            "source": "displayInputsBaseline",
+            "key": "spx",
+            "labelZh": "标普500",
+            "value": 7365.12,
+            "summaryZh": "标普500 7365。"
+          },
+          {
+            "source": "displayInputsBaseline",
+            "key": "vix",
+            "labelZh": "VIX",
+            "value": 17.38,
+            "summaryZh": "VIX 17.38。"
+          },
+          {
+            "source": "displayInputsBaseline",
+            "key": "hyOas",
+            "labelZh": "高收益债信用利差",
+            "value": 2.77,
+            "summaryZh": "高收益债信用利差 2.77%。"
+          }
+        ],
+        "dataUsed": [
+          "macroDrivers.consumer.umichSentiment",
+          "macroDrivers.consumer.threeMonthChange",
+          "displayInputsBaseline.spx",
+          "displayInputsBaseline.vix",
+          "displayInputsBaseline.hyOas"
+        ],
+        "limitations": [
+          "UMCSENT 为月频慢变量，发布时间存在延迟。",
+          "该信号为非实时解释层观察，不进入 scoring / decision。"
+        ]
       }
     ],
     "dataGaps": [
       "Platts Dated Brent / 真实 Dated Brent 数据未接入。",
       "Brent term structure 尚未正式接入。",
       "Crack spread / diesel stress 尚未正式接入。",
-      "Michigan Consumer Sentiment 尚未接入。"
+      "UMCSENT 为月频慢变量，存在发布延迟。"
     ],
     "confidence": {
       "level": "medium",
@@ -461,6 +517,21 @@
         "igOas": "live"
       },
       "hyOas": 2.77
+    },
+    "consumer": {
+      "umichSentiment": 53.3,
+      "previousValue": 56.6,
+      "threeMonthChange": 0.4,
+      "sixMonthChange": -1.8,
+      "regime": "稳定",
+      "sourceStatus": {
+        "umichSentiment": "live"
+      },
+      "updatedAt": "2026-03-01T00:00:00Z",
+      "source": "FRED:UMCSENT",
+      "notes": [
+        "UMCSENT 为 FRED 月频慢变量，用于消费者体感与风险资产定价的 audit-only 观察。"
+      ]
     },
     "activeSignals": [
       {
@@ -1010,7 +1081,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-07T07:45:01.460Z",
+        "triggeredAgo": "2026-05-07T07:56:29.419Z",
         "condition": "系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -1018,7 +1089,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-07T07:45:01.460Z",
+        "triggeredAgo": "2026-05-07T07:56:29.419Z",
         "condition": "ON RRP 16.33 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -1026,7 +1097,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-07T07:45:01.460Z",
+        "triggeredAgo": "2026-05-07T07:56:29.419Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -1065,7 +1136,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-07T07:45:01.460Z",
+    "lastRun": "2026-05-07T07:56:29.419Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
