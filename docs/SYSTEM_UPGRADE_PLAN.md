@@ -41,7 +41,7 @@ v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。v28.0I 已完�
 - Divergence Layer / 实体压力与金融定价背离。
 - Consumer vs Asset Divergence / 消费者体感与风险资产背离。
 - Brent Public Proxy Pricing Layer / Brent 公开代理价格层。
-- Compact cockpit layout，当前前端版本为 `28.0I-8`。
+- Compact cockpit layout，v28.0I release 对应前端版本为 `28.0I-8`。
 
 当前 live data 已包含 `dailyBrief.contractVersion = v28.0I-1`、`divergenceLayer.contractVersion = v28.0I-3A`、`macroDrivers.consumer`、`consumer_vs_asset_pricing` 与 `brentPricingLayer.contractVersion = v28.0I-5A`。
 
@@ -56,6 +56,31 @@ v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。v28.0I 已完�
 5. World Order data quality improvement。
 
 任何新信号、新解释层或新数据源都不得直接接入 scoring / decision，必须先按 `docs/SIGNAL_INTAKE.md` 走 audit-only / diagnostic-only / display-only 观察路径。
+
+## v28.0J Stable Baseline
+
+v28.0J 已完成规则化 AI 解释层的 contract、live data activation、frontend display 和 post-deploy audit。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0J-2`。
+
+当前 live data 已包含：
+
+- `dailyBrief.contractVersion = v28.0I-1`
+- `divergenceLayer.contractVersion = v28.0I-3A`
+- `brentPricingLayer.contractVersion = v28.0I-5A`
+- `aiInterpretationLayer.contractVersion = v28.0J-0`
+
+`aiInterpretationLayer.mode` 当前为 `rule_based_structured_interpretation`。它不是外部 AI 输出，而是 rule-based structured interpretation：只把站内结构化数据拆分为已验证事实、数据推断、模型判断、情景假设、数据缺口、反证条件和证据链接，避免把不同确定性层级混在一起。
+
+当前 AI 解释层不调用 DeepSeek / OpenAI / 外部 AI API，`generatedByExternalAi=false`，`usesExternalAiApi=false`。它仅为 display-only / interpretation-only，不参与 scoring、`decisionModel`、`executionLock` 或 `positionGuidance`，也不是投资建议或外部 AI 预测系统。
+
+下一阶段如继续开发，可选方向：
+
+1. External AI API Design / DeepSeek Integration Design。
+2. AI output audit and moderation contract。
+3. AI news explanation layer。
+4. AI one-line conclusion comparison against site data。
+5. AI explanation fallback and timeout handling。
+
+任何外部 AI 接入都必须另开版本，先完成 API 接入设计文档、输出审计 contract、禁用文案检查、fallback / timeout / error display，并保持不影响 scoring / decision / execution / position。
 
 ## 3. Core Problem / 核心问题
 

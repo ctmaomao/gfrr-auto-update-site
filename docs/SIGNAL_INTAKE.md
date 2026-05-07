@@ -129,6 +129,8 @@ v28.0J-0 的 AI Interpretation Layer 只建立规则化结构解释 contract，�
 
 未来如接入外部 AI API，必须另开版本，单独评审数据源、提示词、输出审计、禁用文案、成本、隐私和 fallback。不得让 AI 文案越权改变评分、仓位、执行灯、Action Queue、Trigger Monitor 或 Invalidation Rules。
 
+外部 AI 输出属于 high-risk signal source。默认只允许 commentary / display-only，不得跳过 promotion ladder 直接进入 scoring、decision、execution 或 position。
+
 ## 8. Copywriting Rules / 文案规则
 
 所有用户可见文案必须：

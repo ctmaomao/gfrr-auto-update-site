@@ -1,10 +1,10 @@
 # AGENTS.md — Global Financial Risk Radar AI 开发守则
 
-本文档供 Cursor、Codex 和其他 AI 工具接手本项目时优先阅读。目标是保护当前 v28.0I 稳定观察基线，避免误改核心数据链路、Worker-first 主链路、解释层边界、决策契约和部署保护网。
+本文档供 Cursor、Codex 和其他 AI 工具接手本项目时优先阅读。目标是保护当前 v28.0J 稳定观察基线，避免误改核心数据链路、Worker-first 主链路、解释层边界、决策契约和部署保护网。
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0I 稳定观察基线。v28.0I release review 与 v28.0I-8B post-deploy audit 已通过；当前前端版本为 `28.0I-8`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0J-2`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -28,6 +28,9 @@
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。
 - v28.0I 后，任何新增解释层 / 新信号 / 新数据源必须先检查 `docs/SYSTEM_UPGRADE_PLAN.md` 中的 v28.0I stable baseline 边界。
 - `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`consumer_vs_asset_pricing` 与 `brentPricingLayer` 均为解释层 / 审计层 / 展示层；不得直接接入 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
+- v28.0J 后，`aiInterpretationLayer` 不得被改成外部 AI 输出，除非另开版本并新增 API / output audit contract。当前 `generatedByExternalAi=false`、`usesExternalAiApi=false`，不调用 DeepSeek / OpenAI / 外部 AI API。
+- 不得让 AI 输出直接影响 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
+- 任何 DeepSeek / OpenAI 接入必须从设计文档和审计 contract 开始，并先定义 timeout、fallback、source attribution 与禁用文案检查。
 - v28.0I compact cockpit layout 不得被后续改动破坏，除非另开版本评审；Global Risk Heatmap 必须继续独立显示，World Order Stress Overlay 仍是独立 regime overlay，不是第七个底层风险模块。
 - World Order 外部源失败必须降级 status / confidence，而不是清空旧可用缓存；GDELT partial / stale / error 必须可解释，不得伪装成功或输出 NaN / undefined。
 - World Order UI 必须清楚显示低置信 / 数据限制，不得把 proxy、stale、manual_required 或 not_configured 数据包装成高确定性结论。

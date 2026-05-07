@@ -316,6 +316,21 @@ aiInterpretationLayer
 
 v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判断”下方显示 compact summary，并把 facts、dataInferences、modelJudgments、scenarioHypotheses、dataGaps、invalidationSignals 与 evidenceLinks 放入默认折叠 details。前端不得在 render 层重算、生成解释、调用外部 AI、改写数据对象或把 AI 文案接入评分 / 决策 / 执行 / 仓位；当 `aiInterpretationLayer` 缺失时只能显示温和 fallback。
 
+#### v28.0J stable boundary summary
+
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`，当前前端版本为 `28.0J-2`。
+
+稳定边界：
+
+- `aiInterpretationLayer` 是 display-only / interpretation-only。
+- `generatedByExternalAi=false`。
+- `usesExternalAiApi=false`。
+- 当前不调用 DeepSeek / OpenAI / 外部 AI API。
+- 不参与 scoring / `decisionModel` / `executionLock` / `positionGuidance`。
+- 不改变 `values.*`、`effectiveDisplayInputs`、Brent promotion、Action Queue、Trigger Monitor 或 Invalidation Rules。
+- 前端只能只读消费 `aiInterpretationLayer`，不得在 render 层生成、重算或补写解释。
+- 未来如接入外部 AI，必须使用单独字段或明确 source metadata，不得覆盖现有 rule-based layer。
+
 ### v28.0I contract boundary summary
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。当前 live data 已包含 `dailyBrief.contractVersion = v28.0I-1`、`divergenceLayer.contractVersion = v28.0I-3A`、`macroDrivers.consumer`、`consumer_vs_asset_pricing` 与 `brentPricingLayer.contractVersion = v28.0I-5A`。
@@ -411,14 +426,14 @@ v28.0J-2 Frontend Asset Cache Busting 只定义前端静态资源版本契约，
 当前前端资源版本为：
 
 ```text
-28.0I-8
+28.0J-2
 ```
 
 要求：
 
 - `index.html` 入口 module script 必须指向 `app.js?v=28.0J-2`。
 - `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0J-2`。
-- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0I-8"`。
+- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0J-2"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 

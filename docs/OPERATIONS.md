@@ -54,7 +54,7 @@ npm run check:data:strict-live-alignment
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。日常排查 cockpit 解释层时，优先按以下顺序：
 
-1. 先看页面 frontend version 是否为当前版本，当前应为 `28.0I-8`。
+1. 先看页面 frontend version 是否为当前版本，当前应为 `28.0J-2`。
 2. 检查 live `data/radar-data.json` 是否包含 `dailyBrief`、`divergenceLayer` 与 `brentPricingLayer`。
 3. 检查 Worker Health；Check Worker Health 仍是 Worker-first runtime hard gate。
 4. 检查 Realtime Health；Check Realtime Health 仍是 GitHub `realtime-data` fallback / Daily baseline soft observer。
@@ -64,6 +64,18 @@ v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。日常排查 c
 8. 若 World Order warning 仍为 GDELT stale / SIPRI manual_required / ACLED not_configured，属于已知非阻断观察状态。
 
 v28.0I / v28.0J 新增的 `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`consumer_vs_asset_pricing`、`brentPricingLayer` 与 `aiInterpretationLayer` 均为解释层 / 审计层 / 展示层，不改变 `values.*`、`effectiveDisplayInputs`、Brent promotion、scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
+
+## v28.0J AI Interpretation Layer baseline checks
+
+v28.0J-2B post-deploy audit 已通过，当前 AI 解释层为 rule-based structured interpretation，不调用 DeepSeek / OpenAI / 外部 AI API。日常排查顺序：
+
+1. 检查 live frontend version 是否为当前版本，当前应为 `28.0J-2`。
+2. 检查 live `data/radar-data.json` 是否包含 `aiInterpretationLayer`。
+3. 检查 `aiInterpretationLayer.contractVersion` 是否为 `v28.0J-0`。
+4. 检查 `generatedByExternalAi=false` 与 `usesExternalAiApi=false`。
+5. 若页面显示 AI fallback，先确认 Daily workflow 是否已在 v28.0J-0 之后运行，并确认 Pages deploy 是否完成。
+6. 不要手工补 `data/radar-data.json`。
+7. 若未来外部 AI 接入，必须检查 timeout、fallback、source attribution、禁用文案和不影响 scoring / decision 的边界。
 
 ## 2. 页面显示“实时数据已过期”
 
@@ -93,7 +105,7 @@ v28.0J-2 Frontend Asset Cache Busting 处理 Android Chrome cached old module gr
 ```text
 index.html app.js entry → ?v=28.0J-2
 scripts/app.js and scripts/modules/*.js local imports → ?v=28.0J-2
-window.__GFRR_FRONTEND_VERSION__ → 28.0I-8
+window.__GFRR_FRONTEND_VERSION__ → 28.0J-2
 ```
 
 浏览器 Console 可执行：
@@ -102,7 +114,7 @@ window.__GFRR_FRONTEND_VERSION__ → 28.0I-8
 window.__GFRR_FRONTEND_VERSION__
 ```
 
-应返回 `"28.0I-8"`。本轮不改 Worker runtime、不改数据源、不新增 KV、不 deploy Worker。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
+应返回 `"28.0J-2"`。本轮不改 Worker runtime、不改数据源、不新增 KV、不 deploy Worker。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 
 v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
 
