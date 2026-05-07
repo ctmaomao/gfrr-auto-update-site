@@ -117,6 +117,30 @@ npm run check:data:verbose
 npm run check:data:strict-live-alignment
 ```
 
+### World Order Stress 数据产物
+
+`v28.0H-1` 新增 `data/world-order-stress.json`，作为 World Order Stress Overlay 的独立数据产物。该产物用于结构性风险识别和市场交叉验证，不预测战争，不输出战争概率，不直接修改 `decisionModel`、仓位或 action queue。
+
+关键 contract：
+
+- `score` 与各维度 `score` 必须为 `0-100`。
+- `confidence` 必须为 `0-1`。
+- `freshness` 只能为 `fresh` / `stale` / `partial` / `error`。
+- `state` 只能为 `normal_globalization` / `friction_rising` / `bloc_fragmentation` / `multi_theater_stress` / `war_economy_stress`。
+- `externalSources` 必须包含 `gdelt` / `ofac` / `sipri` / `acled`。
+- `dimensions` 必须包含和平红利退潮、阵营化与联盟硬化、多战区冲突、经济金融武器化、资本管制与金融抑制风险和市场确认。
+- `decisionModifier` 只用于解释未来潜在状态修正，不在 H-1 接入现有决策状态机。
+- `warnings` 必须包含“该模块用于结构性风险识别，不构成战争预测或投资建议。”
+
+构建与检查：
+
+```bash
+npm run build:world-order
+npm run check:world-order
+```
+
+前端未来只能读取最终 JSON，不应直接调用 GDELT、OFAC、SIPRI 或 ACLED。
+
 ### Frontend asset cache version
 
 v28.0G-9 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。

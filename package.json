@@ -8,6 +8,8 @@
     "build:data": "node scripts/run-daily-pipeline.mjs",
     "validate": "node scripts/validate-data.mjs",
     "build:realtime": "node scripts/run-realtime.mjs",
+    "build:world-order": "node scripts/build-world-order-stress.mjs",
+    "check:world-order": "node scripts/check-world-order-stress.mjs",
     "audit:daily-worker": "node scripts/audit-daily-vs-worker.mjs",
     "check:worker-health": "node scripts/check-worker-health.mjs",
     "review:worker-health-snapshot": "node scripts/review-worker-health-snapshot.mjs",

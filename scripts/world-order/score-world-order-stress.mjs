@@ -1,0 +1,193 @@
+import { classifyWorldOrderState } from './classify-world-order-state.mjs';
+import {
+  DIMENSION_KEYS,
+  DIMENSION_LABELS_ZH,
+  WORLD_ORDER_WARNING,
+  clampConfidence,
+  clampScore,
+  sanitizeEvidence
+} from './normalize-world-order-inputs.mjs';
+
+function sourceScore(sourceKey, source) {
+  const summary = source?.summary || {};
+  if (sourceKey === 'gdelt') {
+    return clampScore(
+      (summary.conflictEvents || 0) * 1.4 +
+      (summary.sanctionsEvents || 0) * 1.2 +
+      (summary.blockadeOrChokepointEvents || 0) * 1.8 +
+      (summary.regionsCovered?.length || 0) * 5
+    );
+  }
+  if (sourceKey === 'ofac') {
+    return clampScore(
+      (summary.recentActionsCount || 0) * 1.8 +
+      (summary.listUpdatesCount || 0) * 4 +
+      (summary.enforcementActionsCount || 0) * 3 +
+      (summary.highRiskPrograms?.length || 0) * 5
+    );
+  }
+  if (sourceKey === 'sipri') {
+    return source?.status === 'ok' ? 40 : 10;
+  }
+  if (sourceKey === 'acled') {
+    return source?.status === 'ok' ? clampScore((summary.eventCount || 0) * 0.6) : 0;
+  }
+  return 0;
+}
+
+function trendFromScore(score) {
+  if (score >= 60) return 'rising';
+  if (score <= 20) return 'stable';
+  return 'watching';
+}
+
+function buildEvidence(labelZh, source, summary, value, confidence) {
+  return {
+    labelZh,
+    source,
+    summary,
+    value,
+    direction: value >= 40 ? 'up' : 'neutral',
+    confidence
+  };
+}
+
+function existingRiskModuleScore(dataPayload) {
+  const modules = dataPayload?.modules || {};
+  const keys = ['geopolitical', 'energy', 'inflation', 'liquidity', 'debt', 'banking'];
+  const values = keys.map((key) => Number(modules[key])).filter(Number.isFinite);
+  if (!values.length) return 0;
+  const weighted = (
+    (Number(modules.geopolitical) || 0) * 0.28 +
+    (Number(modules.energy) || 0) * 0.2 +
+    (Number(modules.inflation) || 0) * 0.14 +
+    (Number(modules.liquidity) || 0) * 0.16 +
+    (Number(modules.debt) || 0) * 0.12 +
+    (Number(modules.banking) || 0) * 0.1
+  );
+  return clampScore(weighted);
+}
+
+function confidenceFromSources(externalSources, marketConfirmation) {
+  const sourceConfidences = Object.values(externalSources).map((source) => Number(source.confidence) || 0);
+  const base = sourceConfidences.length
+    ? sourceConfidences.reduce((sum, value) => sum + value, 0) / sourceConfidences.length
+    : 0;
+  const freshnessBonus = Object.values(externalSources).filter((source) => ['ok', 'partial'].includes(source.status)).length * 0.06;
+  const marketBonus = (marketConfirmation.confidence || 0) * 0.2;
+  const missingPenalty = Object.values(externalSources).filter((source) => ['manual_required', 'not_configured', 'error'].includes(source.status)).length * 0.08;
+  return clampConfidence(base + freshnessBonus + marketBonus - missingPenalty);
+}
+
+export function scoreWorldOrderStress({ externalSources, marketConfirmation, dataPayload, rules }) {
+  const gdeltScore = sourceScore('gdelt', externalSources.gdelt);
+  const ofacScore = sourceScore('ofac', externalSources.ofac);
+  const sipriScore = sourceScore('sipri', externalSources.sipri);
+  const acledScore = sourceScore('acled', externalSources.acled);
+  const moduleScore = existingRiskModuleScore(dataPayload);
+
+  const dimensions = {
+    peaceDividendRetreat: {
+      score: clampScore((sipriScore * 0.45) + (gdeltScore * 0.25) + (moduleScore * 0.3)),
+      labelZh: DIMENSION_LABELS_ZH.peaceDividendRetreat,
+      trend: 'watching',
+      evidence: sanitizeEvidence([
+        buildEvidence('军费慢变量与地缘风险组合', 'SIPRI/GDELT/modules', 'SIPRI 当前为手动导入框架，先以 GDELT 与现有地缘模块低置信代理。', sipriScore, 0.35)
+      ])
+    },
+    blocFormation: {
+      score: clampScore((gdeltScore * 0.45) + (ofacScore * 0.35) + (moduleScore * 0.2)),
+      labelZh: DIMENSION_LABELS_ZH.blocFormation,
+      trend: 'watching',
+      evidence: sanitizeEvidence([
+        buildEvidence('阵营化与关键通道压力', 'GDELT/OFAC', '由关键区域报道、制裁清单更新与高风险项目共同估算。', Math.max(gdeltScore, ofacScore), 0.55)
+      ])
+    },
+    multiTheaterConflict: {
+      score: clampScore((gdeltScore * 0.55) + (acledScore * 0.25) + (moduleScore * 0.2)),
+      labelZh: DIMENSION_LABELS_ZH.multiTheaterConflict,
+      trend: 'watching',
+      evidence: sanitizeEvidence([
+        buildEvidence('多区域冲突报道密度', 'GDELT/ACLED', 'ACLED 未配置时由 GDELT 代理估算冲突事件层。', Math.max(gdeltScore, acledScore), 0.55)
+      ])
+    },
+    economicWeaponization: {
+      score: clampScore((ofacScore * 0.62) + (gdeltScore * 0.25) + (moduleScore * 0.13)),
+      labelZh: DIMENSION_LABELS_ZH.economicWeaponization,
+      trend: 'watching',
+      evidence: sanitizeEvidence([
+        buildEvidence('制裁与金融限制活动', 'OFAC/GDELT', '由 OFAC 近期行动与 GDELT 制裁主题共同估算。', ofacScore, 0.6)
+      ])
+    },
+    capitalControlRisk: {
+      score: clampScore((ofacScore * 0.35) + (gdeltScore * 0.25) + (moduleScore * 0.4)),
+      labelZh: DIMENSION_LABELS_ZH.capitalControlRisk,
+      trend: 'watching',
+      evidence: sanitizeEvidence([
+        buildEvidence('金融限制与流动性压力组合', 'OFAC/GDELT/modules', '用于识别资本管制、金融抑制或跨境限制风险的代理信号。', Math.max(ofacScore, moduleScore), 0.5)
+      ])
+    }
+  };
+
+  for (const key of DIMENSION_KEYS) {
+    dimensions[key].trend = trendFromScore(dimensions[key].score);
+  }
+
+  dimensions.marketConfirmation = {
+    score: clampScore(marketConfirmation.score),
+    labelZh: DIMENSION_LABELS_ZH.marketConfirmation,
+    state: marketConfirmation.state,
+    evidence: sanitizeEvidence(marketConfirmation.evidence, 'market')
+  };
+
+  const weights = rules.dimensionWeights || {};
+  const externalStructuralScore = clampScore(DIMENSION_KEYS.reduce(
+    (sum, key) => sum + dimensions[key].score * (Number(weights[key]) || 0.2),
+    0
+  ));
+  const scoreWeights = rules.scoreWeights || {};
+  const finalScore = clampScore(
+    externalStructuralScore * (Number(scoreWeights.externalStructural) || 0.6) +
+    dimensions.marketConfirmation.score * (Number(scoreWeights.marketConfirmation) || 0.3) +
+    moduleScore * (Number(scoreWeights.existingRiskModules) || 0.1)
+  );
+  const classification = classifyWorldOrderState(finalScore);
+  const confidence = confidenceFromSources(externalSources, marketConfirmation);
+
+  const dominantDrivers = DIMENSION_KEYS
+    .map((key) => ({ key, labelZh: dimensions[key].labelZh, score: dimensions[key].score }))
+    .sort((a, b) => b.score - a.score)
+    .filter((item) => item.score >= 35)
+    .slice(0, 3);
+
+  const decisionModifier = {
+    enabled: true,
+    riskBias: 'neutral',
+    maxStateBoost: 0,
+    appliesWhen: '仅作为结构性解释层，不直接修改现有 decisionModel。'
+  };
+  if (finalScore >= 61 && finalScore <= 75 && ['partial_confirmed', 'high_confirmed'].includes(marketConfirmation.state)) {
+    decisionModifier.riskBias = 'upward';
+    decisionModifier.maxStateBoost = 1;
+    decisionModifier.appliesWhen = '结构性压力进入多战区压力期，且市场至少部分确认时，未来可作为状态上修参考。';
+  }
+  if (finalScore > 75 && marketConfirmation.state === 'high_confirmed') {
+    decisionModifier.riskBias = 'upward';
+    decisionModifier.maxStateBoost = 1;
+    decisionModifier.appliesWhen = '结构性压力进入战争经济压力期且市场高度确认时，未来可提示组合压力测试。';
+  }
+
+  return {
+    score: finalScore,
+    state: classification.state,
+    labelZh: classification.labelZh,
+    confidence,
+    dimensions,
+    dominantDrivers,
+    systemInterpretationZh: dominantDrivers.length
+      ? `世界秩序压力主要来自：${dominantDrivers.map((item) => item.labelZh).join('、')}。该层仅用于结构性风险识别。`
+      : '世界秩序压力处于低位或证据不足，当前仅作为观察层保留。',
+    decisionModifier,
+    warnings: [WORLD_ORDER_WARNING]
+  };
+}

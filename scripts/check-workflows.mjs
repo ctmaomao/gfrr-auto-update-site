@@ -233,6 +233,27 @@ const releaseStateDocs = [
 const operationsRunbookFile = 'docs/OPERATIONS.md';
 const dataContractFile = 'docs/DATA_CONTRACT.md';
 const validateDataScriptFile = 'scripts/validate-data.mjs';
+const worldOrderDataFile = 'data/world-order-stress.json';
+const worldOrderDocFile = 'docs/WORLD_ORDER_STRESS.md';
+const worldOrderRequiredFiles = [
+  'scripts/build-world-order-stress.mjs',
+  'scripts/check-world-order-stress.mjs',
+  'scripts/world-order/fetch-gdelt.mjs',
+  'scripts/world-order/fetch-ofac.mjs',
+  'scripts/world-order/import-sipri.mjs',
+  'scripts/world-order/fetch-acled.mjs',
+  'scripts/world-order/score-world-order-stress.mjs',
+  'scripts/world-order/classify-world-order-state.mjs',
+  'scripts/world-order/build-market-confirmation.mjs',
+];
+const worldOrderForbiddenPhrases = [
+  'WW3 已确认',
+  '世界大战即将爆发',
+  '世界大战概率',
+  '第三次世界大战已确认',
+  '13 步已走',
+  '世界大战第几步',
+];
 const frontendAssetVersion = '28.0G-9';
 const frontendAssetEntryFile = 'index.html';
 const frontendAssetAppFile = 'scripts/app.js';
@@ -709,8 +730,49 @@ if (fs.existsSync(packageFile)) {
   if (!packageText.includes('"check:data:strict-live-alignment": "node scripts/validate-data.mjs --strict-live-alignment"')) {
     addRuntimeFailure(packageFile, 'missing check:data:strict-live-alignment package script');
   }
+  if (!packageText.includes('"build:world-order": "node scripts/build-world-order-stress.mjs"')) {
+    addRuntimeFailure(packageFile, 'missing build:world-order package script');
+  }
+  if (!packageText.includes('"check:world-order": "node scripts/check-world-order-stress.mjs"')) {
+    addRuntimeFailure(packageFile, 'missing check:world-order package script');
+  }
 } else {
   addRuntimeFailure(packageFile, 'package.json missing');
+}
+
+for (const file of worldOrderRequiredFiles) {
+  if (!fs.existsSync(file)) {
+    addRuntimeFailure(file, 'world order stress pipeline file missing');
+  }
+}
+if (!fs.existsSync(worldOrderDataFile)) {
+  addRuntimeFailure(worldOrderDataFile, 'world order stress data product missing');
+} else {
+  const text = fs.readFileSync(worldOrderDataFile, 'utf8');
+  for (const phrase of worldOrderForbiddenPhrases) {
+    if (text.includes(phrase)) {
+      addRuntimeFailure(worldOrderDataFile, `must not contain forbidden phrase "${phrase}"`);
+    }
+  }
+}
+if (!fs.existsSync(worldOrderDocFile)) {
+  addRuntimeFailure(worldOrderDocFile, 'world order stress document missing');
+} else {
+  const text = fs.readFileSync(worldOrderDocFile, 'utf8');
+  for (const needle of [
+    '不预测战争',
+    '不输出战争概率',
+    'GDELT',
+    'OFAC',
+    'SIPRI',
+    'ACLED',
+    'decisionModifier',
+    'GDELT 代理估算',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(worldOrderDocFile, `missing world order stress marker "${needle}"`);
+    }
+  }
 }
 
 if (fs.existsSync(validateDataScriptFile)) {

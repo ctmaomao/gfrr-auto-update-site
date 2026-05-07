@@ -1,0 +1,80 @@
+{
+  "version": "1.0.0",
+  "scoreWeights": {
+    "externalStructural": 0.6,
+    "marketConfirmation": 0.3,
+    "existingRiskModules": 0.1
+  },
+  "dimensionWeights": {
+    "peaceDividendRetreat": 0.16,
+    "blocFormation": 0.2,
+    "multiTheaterConflict": 0.24,
+    "economicWeaponization": 0.22,
+    "capitalControlRisk": 0.18
+  },
+  "gdelt": {
+    "enabled": true,
+    "timeoutMs": 9000,
+    "maxRecords": 50,
+    "queries": [
+      {
+        "id": "conflict",
+        "labelZh": "战争与冲突报道",
+        "query": "(war OR conflict OR military escalation) sourceCountry:US",
+        "dimension": "multiTheaterConflict"
+      },
+      {
+        "id": "sanctions",
+        "labelZh": "制裁与经济金融武器化",
+        "query": "(sanctions OR export controls OR financial restrictions)",
+        "dimension": "economicWeaponization"
+      },
+      {
+        "id": "chokepoints",
+        "labelZh": "封锁、海峡与关键通道",
+        "query": "(blockade OR Strait OR Taiwan OR Red Sea OR South China Sea)",
+        "dimension": "blocFormation"
+      },
+      {
+        "id": "regions",
+        "labelZh": "多区域压力报道",
+        "query": "(Ukraine OR Russia OR Iran OR Middle East OR North Korea)",
+        "dimension": "multiTheaterConflict"
+      }
+    ]
+  },
+  "ofac": {
+    "enabled": true,
+    "timeoutMs": 9000,
+    "recentActionsUrl": "https://ofac.treasury.gov/recent-actions"
+  },
+  "sipri": {
+    "enabled": true,
+    "mode": "manual_required"
+  },
+  "acled": {
+    "enabled": true,
+    "timeoutMs": 9000,
+    "apiBaseUrl": "https://api.acleddata.com/acled/read"
+  },
+  "marketConfirmation": {
+    "goldHigh": 2400,
+    "goldVeryHigh": 3000,
+    "brentPressure": 95,
+    "brentHighPressure": 110,
+    "vixElevated": 20,
+    "vixHigh": 30,
+    "dxyStrong": 105,
+    "hyOasElevated": 4,
+    "hyOasHigh": 6,
+    "spxStrong": 6000
+  },
+  "forbiddenPhrases": [
+    "WW3 已确认",
+    "世界大战即将爆发",
+    "世界大战概率",
+    "第三次世界大战已确认",
+    "13 步已走",
+    "世界大战第几步"
+  ]
+}

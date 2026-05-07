@@ -1,0 +1,209 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-05-07T00:39:38.144Z",
+  "sourceMode": "computed_with_partial_external_sources",
+  "score": 49,
+  "state": "bloc_fragmentation",
+  "labelZh": "阵营化与脱钩期",
+  "confidence": 0.49,
+  "freshness": "partial",
+  "externalSources": {
+    "gdelt": {
+      "enabled": true,
+      "status": "partial",
+      "lastFetchedAt": "2026-05-07T00:39:38.143Z",
+      "summary": {
+        "totalEvents": 150,
+        "totalArticles": 150,
+        "conflictEvents": 11,
+        "sanctionsEvents": 16,
+        "blockadeOrChokepointEvents": 2,
+        "regionsCovered": [
+          "Taiwan",
+          "Ukraine",
+          "Russia",
+          "Iran",
+          "Middle East",
+          "North Korea"
+        ],
+        "topThemes": [
+          "制裁与经济金融武器化",
+          "封锁、海峡与关键通道",
+          "多区域压力报道"
+        ],
+        "averageTone": null,
+        "toneProxy": -0.19,
+        "queriesRun": 3,
+        "errors": [
+          "conflict: HTTP 请求失败 429"
+        ]
+      }
+    },
+    "ofac": {
+      "enabled": true,
+      "status": "ok",
+      "lastFetchedAt": "2026-05-07T00:39:19.370Z",
+      "summary": {
+        "recentActionsCount": 18,
+        "listUpdatesCount": 7,
+        "enforcementActionsCount": 1,
+        "guidanceCount": 8,
+        "highRiskPrograms": [
+          "Russia",
+          "Iran",
+          "Cyber",
+          "Terrorism",
+          "Venezuela"
+        ],
+        "lastUpdated": "May 05, 2026",
+        "sourceFreshness": "fresh",
+        "errors": []
+      }
+    },
+    "sipri": {
+      "enabled": true,
+      "status": "manual_required",
+      "lastFetchedAt": null,
+      "summary": {
+        "errors": [],
+        "globalMilitarySpendTrend": null,
+        "majorPowerMilitarySpendTrend": null,
+        "militarySpendShareOfGDPTrend": null,
+        "updatedYear": null,
+        "sourceFreshness": "manual_required",
+        "noteZh": "SIPRI 是慢变量数据源。H-1 仅提供导入框架，需要后续手动导入标准化军费数据后再参与高置信度评分。"
+      }
+    },
+    "acled": {
+      "enabled": false,
+      "status": "not_configured",
+      "lastFetchedAt": null,
+      "summary": {
+        "errors": [],
+        "eventCount": 0,
+        "countriesCovered": [],
+        "sourceFreshness": "not_configured",
+        "noteZh": "ACLED 数据源未配置，当前冲突事件层由 GDELT 代理估算。"
+      }
+    }
+  },
+  "dimensions": {
+    "peaceDividendRetreat": {
+      "score": 40,
+      "labelZh": "和平红利退潮",
+      "trend": "watching",
+      "evidence": [
+        {
+          "labelZh": "军费慢变量与地缘风险组合",
+          "source": "SIPRI/GDELT/modules",
+          "summary": "SIPRI 当前为手动导入框架，先以 GDELT 与现有地缘模块低置信代理。",
+          "value": 10,
+          "direction": "neutral",
+          "confidence": 0.35
+        }
+      ]
+    },
+    "blocFormation": {
+      "score": 74,
+      "labelZh": "阵营化与联盟硬化",
+      "trend": "rising",
+      "evidence": [
+        {
+          "labelZh": "阵营化与关键通道压力",
+          "source": "GDELT/OFAC",
+          "summary": "由关键区域报道、制裁清单更新与高风险项目共同估算。",
+          "value": 88,
+          "direction": "up",
+          "confidence": 0.55
+        }
+      ]
+    },
+    "multiTheaterConflict": {
+      "score": 50,
+      "labelZh": "多战区冲突",
+      "trend": "watching",
+      "evidence": [
+        {
+          "labelZh": "多区域冲突报道密度",
+          "source": "GDELT/ACLED",
+          "summary": "ACLED 未配置时由 GDELT 代理估算冲突事件层。",
+          "value": 68,
+          "direction": "up",
+          "confidence": 0.55
+        }
+      ]
+    },
+    "economicWeaponization": {
+      "score": 80,
+      "labelZh": "经济金融武器化",
+      "trend": "rising",
+      "evidence": [
+        {
+          "labelZh": "制裁与金融限制活动",
+          "source": "OFAC/GDELT",
+          "summary": "由 OFAC 近期行动与 GDELT 制裁主题共同估算。",
+          "value": 88,
+          "direction": "up",
+          "confidence": 0.6
+        }
+      ]
+    },
+    "capitalControlRisk": {
+      "score": 73,
+      "labelZh": "资本管制与金融抑制风险",
+      "trend": "rising",
+      "evidence": [
+        {
+          "labelZh": "金融限制与流动性压力组合",
+          "source": "OFAC/GDELT/modules",
+          "summary": "用于识别资本管制、金融抑制或跨境限制风险的代理信号。",
+          "value": 88,
+          "direction": "up",
+          "confidence": 0.5
+        }
+      ]
+    },
+    "marketConfirmation": {
+      "score": 16,
+      "labelZh": "市场确认",
+      "state": "not_confirmed",
+      "evidence": [
+        {
+          "labelZh": "能源价格压力偏高",
+          "source": "market:brent",
+          "summary": "布伦特当前值 123.28，对地缘与供应风险有部分确认作用。",
+          "value": 123.28,
+          "direction": "up",
+          "confidence": 0.75
+        }
+      ]
+    }
+  },
+  "dominantDrivers": [
+    {
+      "key": "economicWeaponization",
+      "labelZh": "经济金融武器化",
+      "score": 80
+    },
+    {
+      "key": "blocFormation",
+      "labelZh": "阵营化与联盟硬化",
+      "score": 74
+    },
+    {
+      "key": "capitalControlRisk",
+      "labelZh": "资本管制与金融抑制风险",
+      "score": 73
+    }
+  ],
+  "systemInterpretationZh": "世界秩序压力主要来自：经济金融武器化、阵营化与联盟硬化、资本管制与金融抑制风险。该层仅用于结构性风险识别。",
+  "decisionModifier": {
+    "enabled": true,
+    "riskBias": "neutral",
+    "maxStateBoost": 0,
+    "appliesWhen": "仅作为结构性解释层，不直接修改现有 decisionModel。"
+  },
+  "warnings": [
+    "该模块用于结构性风险识别，不构成战争预测或投资建议。"
+  ]
+}

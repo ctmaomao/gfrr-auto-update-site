@@ -45,6 +45,7 @@
 - v28.0G-9 Frontend Asset Cache Busting：针对 Android Chrome cached old module graph 导致普通窗口仍显示 Actions/FRED 旧前端逻辑的问题，`index.html` 入口 `app.js` 与前端 ES module import graph 统一追加 `?v=28.0G-9`，并暴露 `window.__GFRR_FRONTEND_VERSION__` 供 Console 确认。无痕窗口正常证明线上 Worker-first runtime 正常；本轮不改 Worker runtime、数据源、KV，也不 deploy Worker。
 - v28.0G-9B Frontend Asset Version Bump Helper：新增本地只读维护工具 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0G-9`；该工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：`npm run check:data` 默认不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 已是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要细节时运行 `npm run check:data:verbose`，需要把 mismatch 当作失败时运行 `npm run check:data:strict-live-alignment`。本轮不改 data/realtime、不改 Worker runtime、不改前端、不 deploy。
+- v28.0H-1 World Order Stress Overlay Data Pipeline MVP：新增 `data/world-order-stress.json` 与本地构建 / 检查脚本。该层只做结构性风险识别和市场交叉验证，不预测战争、不输出战争概率。详细说明见 `docs/WORLD_ORDER_STRESS.md`。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。
