@@ -16,6 +16,8 @@ v28.0K-3B activation audit 已确认 live data 包含 v28.0K-3A disabled scaffol
 
 v28.0K-4A adds [`EXTERNAL_AI_MANUAL_TEST_DESIGN.md`](EXTERNAL_AI_MANUAL_TEST_DESIGN.md), a design-only plan for future disabled-by-default manual API tests. No API is connected in v28.0K-4A; production `externalAiInterpretationLayer` remains disabled, and future manual tests must be opt-in, isolated from production, and validator-gated.
 
+v28.0K-4B adds a local dry-run scaffold command only. It does not enable DeepSeek / OpenAI, does not call any external API, does not read API keys or secrets, and does not affect production data or frontend display.
+
 ## 2. Current Baseline / 当前基线
 
 当前稳定基线为：

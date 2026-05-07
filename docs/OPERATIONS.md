@@ -142,6 +142,18 @@ v28.0K-4A is design-only. It documents a future disabled-by-default manual API t
 
 If future manual API tests exist, they must be explicitly opt-in. A failed manual test is a diagnostic event, not a production incident. Production fallback remains the rule-based `aiInterpretationLayer`, and production `externalAiInterpretationLayer` must remain disabled unless a separate reviewed version changes that boundary.
 
+## External AI Manual Dry-Run Scaffold
+
+v28.0K-4B adds a local no-network scaffold command:
+
+```bash
+npm run manual:external-ai:dry-run
+```
+
+Expected result: a dry-run scaffold report only. The command does not use network, does not read API keys, does not call a provider, and does not mutate production data. If it fails because provider is not `none`, that is expected safety behavior.
+
+Do not use this command to troubleshoot production `externalAiInterpretationLayer`; the production field remains a disabled scaffold until a separate reviewed version changes it.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
