@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0H-2';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0H-2';
-import { renderList } from './renderTables.js?v=28.0H-2';
+import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0H-5';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0H-5';
+import { renderList } from './renderTables.js?v=28.0H-5';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0H-2';
+} from './renderCharts.js?v=28.0H-5';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0H-2';
+} from './renderTables.js?v=28.0H-5';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0H-2';
+} from './renderAudit.js?v=28.0H-5';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -86,7 +86,9 @@ const WORLD_ORDER_SOURCE_LABELS = {
   gdelt: 'GDELT',
   ofac: 'OFAC',
   sipri: 'SIPRI',
-  acled: 'ACLED'
+  acled: 'ACLED',
+  market: 'market',
+  system: 'system'
 };
 
 const WORLD_ORDER_SOURCE_STATUS_CN = {
@@ -97,6 +99,16 @@ const WORLD_ORDER_SOURCE_STATUS_CN = {
   manual_required: '慢变量 / 需要手动导入',
   not_configured: '未配置，使用 GDELT 代理冲突事件层',
   disabled: '未启用'
+};
+
+const WORLD_ORDER_EVIDENCE_DIRECTION_CN = {
+  risk_up: '风险上升',
+  up: '风险上升',
+  risk_down: '风险下降',
+  down: '风险下降',
+  neutral: '中性',
+  unknown: '方向待确认',
+  mixed: '方向待确认'
 };
 
 function clampDisplayScore(value) {
@@ -115,6 +127,126 @@ function safeArray(value) {
 
 function worldOrderStatusLabel(status) {
   return WORLD_ORDER_SOURCE_STATUS_CN[status] || '状态待确认';
+}
+
+function worldOrderSources(payload) {
+  return payload?.externalSources && typeof payload.externalSources === 'object' ? payload.externalSources : {};
+}
+
+function worldOrderConfidencePercent(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  const normalized = numeric > 1 ? numeric / 100 : numeric;
+  return Math.round(Math.min(1, Math.max(0, normalized)) * 100);
+}
+
+function statusIs(status, expected) {
+  return String(status || '').toLowerCase() === expected;
+}
+
+export function buildWorldOrderConfidenceExplanation(payload) {
+  if (!payload || typeof payload !== 'object' || payload.unavailable === true) {
+    return '置信度反映当前外部数据完整度、数据新鲜度和市场确认一致性。当前 World Order 数据暂不可用，结论只能作为低置信观察信号。';
+  }
+
+  const sources = worldOrderSources(payload);
+  const parts = ['置信度反映当前外部数据完整度、数据新鲜度和市场确认一致性。'];
+  const gdeltStatus = sources.gdelt?.status;
+  const sipriStatus = sources.sipri?.status;
+  const acledStatus = sources.acled?.status;
+  const marketSource = payload.marketConfirmationInput?.source;
+
+  if (statusIs(gdeltStatus, 'stale')) {
+    parts.push('GDELT 当前使用缓存，事件密度信号偏旧。');
+  } else if (statusIs(gdeltStatus, 'partial')) {
+    parts.push('GDELT 部分更新，部分查询失败或受限。');
+  } else if (statusIs(gdeltStatus, 'error')) {
+    parts.push('GDELT 当前异常，冲突新闻密度信号受限。');
+  }
+  if (statusIs(sipriStatus, 'manual_required')) {
+    parts.push('SIPRI 军费慢变量尚未导入，因此和平红利退潮维度置信度较低。');
+  }
+  if (statusIs(acledStatus, 'not_configured')) {
+    parts.push('ACLED 未配置，冲突事件层当前由 GDELT 代理估算。');
+  }
+  if (marketSource === 'worker-generated-preview') {
+    parts.push('市场确认使用 Worker 快变量。');
+  } else if (marketSource === 'local-realtime') {
+    parts.push('市场确认使用本地 realtime fallback，可能滞后。');
+  } else if (marketSource === 'daily-baseline') {
+    parts.push('市场确认使用 Daily baseline，可能滞后。');
+  } else {
+    parts.push('市场确认来源待确认。');
+  }
+
+  return parts.join('');
+}
+
+export function classifyWorldOrderDataQuality(payload) {
+  if (!payload || typeof payload !== 'object' || payload.unavailable === true) {
+    return { label: '受限', tone: 'red' };
+  }
+  const confidence = Number(payload.confidence);
+  const sources = worldOrderSources(payload);
+  const statuses = Object.values(sources).map((source) => source?.status).filter(Boolean);
+  const hasUnavailable = statuses.some((status) => ['error', 'unavailable'].includes(String(status)));
+  const hasLowConfidenceStatus = statuses.some((status) => ['stale', 'manual_required', 'not_configured'].includes(String(status)));
+  const hasPartial = statuses.some((status) => status === 'partial');
+
+  if (hasUnavailable) return { label: '受限', tone: 'red' };
+  if (!Number.isFinite(confidence) || confidence < 0.5 || hasLowConfidenceStatus) return { label: '低', tone: 'yellow' };
+  if (confidence >= 0.7 && !hasPartial && statuses.every((status) => ['ok', 'fresh'].includes(String(status)))) {
+    return { label: '高', tone: 'green' };
+  }
+  return { label: '中', tone: 'neutral' };
+}
+
+export function buildWorldOrderLimitations(payload) {
+  if (!payload || typeof payload !== 'object' || payload.unavailable === true) {
+    return ['World Order 数据暂不可用，当前仅能显示保守 fallback。'];
+  }
+  const sources = worldOrderSources(payload);
+  const limitations = [];
+  if (statusIs(sources.gdelt?.status, 'stale')) {
+    limitations.push('GDELT：当前使用缓存，冲突新闻密度可能滞后。');
+  } else if (statusIs(sources.gdelt?.status, 'partial')) {
+    limitations.push('GDELT：部分更新，部分查询失败或受限。');
+  } else if (statusIs(sources.gdelt?.status, 'error')) {
+    limitations.push('GDELT：当前异常，冲突新闻密度信号受限。');
+  }
+  if (statusIs(sources.sipri?.status, 'manual_required')) {
+    limitations.push('SIPRI：尚未导入真实军费慢变量，和平红利退潮判断采用低置信代理。');
+  }
+  if (statusIs(sources.acled?.status, 'not_configured')) {
+    limitations.push('ACLED：未配置 API，冲突事件层由 GDELT 代理估算。');
+  }
+  const marketSource = payload.marketConfirmationInput?.source;
+  if (marketSource === 'local-realtime' || marketSource === 'daily-baseline') {
+    limitations.push('市场确认：当前使用 fallback / baseline，可能滞后。');
+  }
+  limitations.push('ReliefWeb：当前环境访问受限，备用公开源仍在评估中，不参与评分。');
+  return limitations.slice(0, 5);
+}
+
+function normalizeWorldOrderEvidenceSource(source) {
+  const value = String(source || '').toLowerCase();
+  if (value.includes('gdelt')) return 'gdelt';
+  if (value.includes('ofac')) return 'ofac';
+  if (value.includes('sipri')) return 'sipri';
+  if (value.includes('acled')) return 'acled';
+  if (value.includes('market')) return 'market';
+  return 'system';
+}
+
+export function formatWorldOrderEvidence(evidence = {}) {
+  const sourceKey = normalizeWorldOrderEvidenceSource(evidence.source);
+  const confidence = worldOrderConfidencePercent(evidence.confidence);
+  return {
+    sourceLabel: WORLD_ORDER_SOURCE_LABELS[sourceKey] || 'system',
+    directionLabel: WORLD_ORDER_EVIDENCE_DIRECTION_CN[evidence.direction] || '方向待确认',
+    confidenceLabel: confidence === null ? '置信度待确认' : `置信度 ${confidence}%`,
+    summary: safeText(evidence.summary, safeText(evidence.labelZh, '证据摘要待补充'))
+  };
 }
 
 function pickDisplayMetric(key, realtime, effectiveDisplayInputs = null) {
@@ -251,6 +383,11 @@ export function renderWorldOrderStressOverlay(payload) {
     : `${marketStateMap[marketConfirmation.state] || '状态待确认'} / ${marketScore}`;
   const confidence = Number(payload?.confidence);
   $('world-order-confidence').textContent = Number.isFinite(confidence) ? `${Math.round(confidence * 100)}%` : '--';
+  const dataQuality = classifyWorldOrderDataQuality(payload);
+  const dataQualityBadge = $('world-order-data-quality');
+  dataQualityBadge.textContent = `数据质量：${dataQuality.label}`;
+  dataQualityBadge.className = `metric-value small ${dataQuality.tone}`;
+  $('world-order-confidence-explanation').textContent = buildWorldOrderConfidenceExplanation(payload);
   $('world-order-updated-at').textContent = safeText(payload?.updatedAt, '--');
 
   const driversRoot = $('world-order-dominant-drivers');
@@ -297,8 +434,14 @@ export function renderWorldOrderStressOverlay(payload) {
       evidenceList.appendChild(empty);
     } else {
       evidenceItems.forEach((evidence) => {
+        const formatted = formatWorldOrderEvidence(evidence);
         const li = document.createElement('li');
-        li.textContent = safeText(evidence.summary, safeText(evidence.labelZh, '证据摘要待补充'));
+        const sourceBadge = document.createElement('span');
+        sourceBadge.className = 'badge neutral';
+        sourceBadge.textContent = formatted.sourceLabel;
+        const text = document.createElement('span');
+        text.textContent = ` ${formatted.directionLabel} / ${formatted.confidenceLabel}：${formatted.summary}`;
+        li.append(sourceBadge, text);
         evidenceList.appendChild(li);
       });
     }
@@ -310,17 +453,21 @@ export function renderWorldOrderStressOverlay(payload) {
   sourceRoot.innerHTML = '';
   const sources = payload?.externalSources && typeof payload.externalSources === 'object' ? payload.externalSources : {};
   Object.entries(WORLD_ORDER_SOURCE_LABELS).forEach(([key, label]) => {
+    if (key === 'market' || key === 'system') return;
     const li = document.createElement('li');
     const status = sources[key]?.status;
     li.textContent = `${label}：${worldOrderStatusLabel(status)}`;
     sourceRoot.appendChild(li);
   });
+  renderList('world-order-limitations', buildWorldOrderLimitations(payload));
 
   $('world-order-interpretation').textContent = unavailable
     ? '世界秩序压力层数据暂不可用。'
     : safeText(payload?.systemInterpretationZh, '世界秩序压力层数据已生成，但当前解读文本不足，建议结合数据源状态和维度评分观察。');
   const warnings = safeArray(payload?.warnings);
-  renderList('world-order-warnings', warnings.length ? warnings : ['该模块用于结构性风险识别，不构成战争预测或投资建议。']);
+  const defaultWarnings = ['该模块用于结构性风险识别，不构成战争预测或投资建议。'];
+  const limitationWarning = '当数据源状态为缓存、未配置或手动导入时，结论应按低置信观察信号处理。';
+  renderList('world-order-warnings', [...(warnings.length ? warnings : defaultWarnings), limitationWarning]);
 }
 
 export function getDecisionHeaderBadgeClass(strategyState) {

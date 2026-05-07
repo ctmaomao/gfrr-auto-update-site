@@ -171,6 +171,16 @@ npm run diagnose:reliefweb
 
 当前正式 World Order 数据仍来自 GDELT / OFAC / SIPRI / ACLED adapter / marketConfirmation。ReliefWeb 只用于评估未来是否适合作为公开备用冲突 / 人道事件 proxy。
 
+## v28.0H-5 UI 证据透明度与置信度解释
+
+H-5 只增强前端 UI 解释，不改变 scoring，不修改 `data/world-order-stress.json`，不接入 `decisionModel`。
+
+页面会显示数据质量、置信度解释和当前数据限制。数据质量与置信度解释由展示层根据 `externalSources`、`confidence` 与 `marketConfirmationInput` 派生：GDELT stale / partial、SIPRI manual_required、ACLED not_configured 会降低 confidence，并在页面中说明哪些信号来自缓存、代理或未配置数据源。
+
+`marketConfirmationInput.source` 会用于说明市场确认来自 Worker 快变量、local realtime fallback 或 Daily baseline。使用 fallback / baseline 时，页面会提示可能滞后。
+
+前端只读取 data/world-order-stress.json，不调用外部 API，不访问 GDELT、ReliefWeb、OFAC、SIPRI、ACLED 或 Worker endpoint。H-5 不改变 scoring，不改变 production scoring，不输出战争概率，不构成战争预测或投资建议。
+
 ## H-2 前端展示
 
 H-2 前端展示新增独立的“世界秩序压力层”区域，显示状态、压力分数、市场确认、主导驱动、六个维度、数据源状态、系统解读和免责声明。该区域只读展示 `data/world-order-stress.json`，并在读取失败或字段缺失时显示保守 fallback，不输出空白卡片、`NaN` 或 `undefined`。

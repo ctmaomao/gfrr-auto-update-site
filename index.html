@@ -274,9 +274,17 @@
                   <div class="metric-value" id="world-order-confidence">--</div>
                 </div>
                 <div class="metric-box compact">
-                  <div class="metric-label">更新时间</div>
-                  <div class="metric-value small" id="world-order-updated-at">--</div>
+                  <div class="metric-label">数据质量</div>
+                  <div class="metric-value small" id="world-order-data-quality">--</div>
                 </div>
+              </div>
+              <div class="metric-box compact" style="margin-top: 14px;">
+                <div class="metric-label">置信度解释</div>
+                <p class="muted" id="world-order-confidence-explanation">置信度反映当前外部数据完整度、数据新鲜度和市场确认一致性。</p>
+              </div>
+              <div class="metric-box compact" style="margin-top: 14px;">
+                <div class="metric-label">更新时间</div>
+                <div class="metric-value small" id="world-order-updated-at">--</div>
               </div>
               <div class="metric-box compact" style="margin-top: 14px;">
                 <div class="metric-label">主导驱动</div>
@@ -292,6 +300,8 @@
             <div>
               <h3>数据源状态</h3>
               <ul class="bullet-list" id="world-order-source-status"></ul>
+              <h3>当前数据限制</h3>
+              <ul class="bullet-list" id="world-order-limitations"></ul>
             </div>
             <div>
               <h3>系统解读</h3>
@@ -863,6 +873,6 @@
     <footer class="footer">独立静态版 · 适配静态托管 · 数据由自动化流程每日生成</footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0H-2"></script>
+  <script type="module" src="scripts/app.js?v=28.0H-5"></script>
 </body>
 </html>

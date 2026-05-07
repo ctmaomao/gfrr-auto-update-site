@@ -261,7 +261,7 @@ const worldOrderForbiddenPhrases = [
   ['13 步', '已走几步'].join(''),
   ['世界大战', '第几步'].join(''),
 ];
-const frontendAssetVersion = '28.0H-2';
+const frontendAssetVersion = '28.0H-5';
 const frontendAssetEntryFile = 'index.html';
 const frontendAssetAppFile = 'scripts/app.js';
 const frontendAssetModuleDir = 'scripts/modules';
@@ -1035,6 +1035,12 @@ if (!fs.existsSync(worldOrderDocFile)) {
     '不写 data/world-order-stress.json',
     'v28.0H-4B',
     'ReliefWeb public fallback feasibility probe',
+    'v28.0H-5',
+    '数据质量',
+    '置信度解释',
+    '当前数据限制',
+    '不改变 scoring',
+    '前端只读取 data/world-order-stress.json',
   ]) {
     if (!text.includes(needle)) {
       addRuntimeFailure(worldOrderDocFile, `missing world order stress marker "${needle}"`);
@@ -1148,8 +1154,12 @@ for (const file of frontendAssetFiles) {
     continue;
   }
   const text = fs.readFileSync(file, 'utf8');
-  if (text.includes('?v=28.0G-9')) {
-    addRuntimeFailure(file, 'frontend asset file must not retain ?v=28.0G-9');
+  const staleFrontendAssetVersions = ['28.0H-2', '28.0G-9'];
+  for (const staleAssetVersion of staleFrontendAssetVersions) {
+    const staleVersion = `?v=${staleAssetVersion}`;
+    if (text.includes(staleVersion)) {
+      addRuntimeFailure(file, `frontend asset file must not retain ${staleVersion}`);
+    }
   }
   for (const match of text.matchAll(localJsImportPattern)) {
     const specifier = match[1];
@@ -1160,6 +1170,7 @@ for (const file of frontendAssetFiles) {
 }
 
 const frontendWorldOrderText = frontendAssetFiles
+  .concat(frontendAssetEntryFile)
   .filter((file) => fs.existsSync(file))
   .map((file) => fs.readFileSync(file, 'utf8'))
   .join('\n');
@@ -1168,6 +1179,16 @@ for (const needle of [
   'worldOrderStressUrl',
   'fetchWorldOrderStressData',
   'renderWorldOrderStressOverlay',
+  '数据质量',
+  '当前数据限制',
+  '置信度反映',
+  'Worker 快变量',
+  'ACLED 未配置',
+  'SIPRI',
+  'GDELT',
+  'buildWorldOrderConfidenceExplanation',
+  'classifyWorldOrderDataQuality',
+  'buildWorldOrderLimitations',
 ]) {
   if (!frontendWorldOrderText.includes(needle)) {
     addRuntimeFailure('frontend world order UI', `missing marker "${needle}"`);
