@@ -127,6 +127,25 @@ const SAFE_EXTERNAL_DATA_CONTEXTS = [
   '不包含外部市场数据'
 ];
 
+const DIRECT_NEGATION_PREFIXES = [
+  '不',
+  '非',
+  '无',
+  '未',
+  '勿',
+  '别',
+  '禁止',
+  '避免',
+  '不得',
+  '不能',
+  '不可',
+  '不会',
+  '不应',
+  '不宜',
+  'not',
+  'no'
+];
+
 function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -155,19 +174,55 @@ function collectStrings(value, currentPath = '$', results = []) {
   return results;
 }
 
-function phraseAppearsNegated(text, phrase) {
-  if (SAFE_NEGATIVE_CONTEXTS.some((safe) => text.includes(safe))) return true;
+function findPhraseOccurrences(text, phrase) {
+  const normalizedText = text.toLowerCase();
+  const normalizedPhrase = phrase.toLowerCase();
+  const occurrences = [];
 
-  const index = text.indexOf(phrase);
-  if (index < 0) return false;
+  let index = normalizedText.indexOf(normalizedPhrase);
+  while (index !== -1) {
+    occurrences.push(index);
+    index = normalizedText.indexOf(normalizedPhrase, index + normalizedPhrase.length);
+  }
 
-  const prefix = text.slice(Math.max(0, index - 8), index);
-  return /(不|非|无|未|勿|别|禁止|避免|不得|不能|不可|不会|不应|不宜|not|no)\s*$/.test(prefix);
+  return occurrences;
 }
 
-function hasSafeExternalDataContext(text) {
-  const normalized = text.toLowerCase();
-  return SAFE_EXTERNAL_DATA_CONTEXTS.some((safe) => normalized.includes(safe.toLowerCase()));
+function occurrenceIsInsideSafePhrase(text, phrase, occurrenceIndex, safePhrases) {
+  const normalizedText = text.toLowerCase();
+  const normalizedPhrase = phrase.toLowerCase();
+  const occurrenceEnd = occurrenceIndex + normalizedPhrase.length;
+
+  for (const safePhrase of safePhrases) {
+    const normalizedSafe = safePhrase.toLowerCase();
+    if (!normalizedSafe.includes(normalizedPhrase)) continue;
+
+    for (const safeIndex of findPhraseOccurrences(normalizedText, normalizedSafe)) {
+      const safeEnd = safeIndex + normalizedSafe.length;
+      if (occurrenceIndex >= safeIndex && occurrenceEnd <= safeEnd) return true;
+    }
+  }
+
+  return false;
+}
+
+function occurrenceHasDirectNegationPrefix(text, occurrenceIndex) {
+  const prefixWindow = text.slice(Math.max(0, occurrenceIndex - 12), occurrenceIndex).toLowerCase();
+  const trimmedPrefix = prefixWindow.trimEnd();
+  return DIRECT_NEGATION_PREFIXES.some((prefix) => trimmedPrefix.endsWith(prefix.toLowerCase()));
+}
+
+function phraseOccurrenceIsAllowed(text, phrase, occurrenceIndex, safePhrases) {
+  return (
+    occurrenceIsInsideSafePhrase(text, phrase, occurrenceIndex, safePhrases) ||
+    occurrenceHasDirectNegationPrefix(text, occurrenceIndex)
+  );
+}
+
+function findUnallowedPhraseOccurrences(text, phrase, safePhrases) {
+  return findPhraseOccurrences(text, phrase).filter(
+    (occurrenceIndex) => !phraseOccurrenceIsAllowed(text, phrase, occurrenceIndex, safePhrases)
+  );
 }
 
 function addError(errors, message) {
@@ -278,11 +333,10 @@ function validateSourceAttribution(sourceAttribution, errors, warnings) {
     }
 
     const serialized = JSON.stringify(item);
-    if (
-      EXTERNAL_MARKET_DATA_CLAIMS.some((claim) => serialized.toLowerCase().includes(claim.toLowerCase())) &&
-      !hasSafeExternalDataContext(serialized)
-    ) {
-      addError(errors, `sourceAttribution[${index}] claims independent external market data`);
+    for (const claim of EXTERNAL_MARKET_DATA_CLAIMS) {
+      if (findUnallowedPhraseOccurrences(serialized, claim, SAFE_EXTERNAL_DATA_CONTEXTS).length > 0) {
+        addError(errors, `sourceAttribution[${index}] claims independent external market data: ${claim}`);
+      }
     }
   });
 
@@ -302,15 +356,49 @@ function validateRecursiveStrings(data, errors) {
     }
 
     for (const phrase of UNSAFE_CLAIMS) {
-      if (value.includes(phrase) && !phraseAppearsNegated(value, phrase)) {
+      if (findUnallowedPhraseOccurrences(value, phrase, SAFE_NEGATIVE_CONTEXTS).length > 0) {
         addError(errors, `${stringPath} contains unsafe overreach wording: ${phrase}`);
       }
     }
 
     for (const phrase of EXTERNAL_MARKET_DATA_CLAIMS) {
-      if (lower.includes(phrase.toLowerCase()) && !hasSafeExternalDataContext(value)) {
+      if (findUnallowedPhraseOccurrences(value, phrase, SAFE_EXTERNAL_DATA_CONTEXTS).length > 0) {
         addError(errors, `${stringPath} claims unavailable external market data: ${phrase}`);
       }
+    }
+  }
+}
+
+function runSelfTests() {
+  const passingTexts = [
+    '不提供投资建议',
+    '不构成交易建议',
+    '不影响仓位',
+    '不得买入',
+    '禁止卖出',
+    '未使用外部市场数据'
+  ];
+
+  const failingTexts = [
+    '不提供投资建议，但必须买入',
+    '不是交易建议，但应该立即执行',
+    '不影响仓位，但建议加仓',
+    '未使用外部市场数据，但基于外部市场数据确认'
+  ];
+
+  for (const text of passingTexts) {
+    const errors = [];
+    validateRecursiveStrings({ text }, errors);
+    if (errors.length > 0) {
+      throw new Error(`self-test failed: expected pass for "${text}", got ${errors.join('; ')}`);
+    }
+  }
+
+  for (const text of failingTexts) {
+    const errors = [];
+    validateRecursiveStrings({ text }, errors);
+    if (errors.length === 0) {
+      throw new Error(`self-test failed: expected failure for "${text}"`);
     }
   }
 }
@@ -370,10 +458,15 @@ let errors = [];
 let warnings = [];
 
 try {
+  runSelfTests();
   data = readJsonFile(resolvedPath);
   ({ errors, warnings } = validateOutput(data));
 } catch (error) {
-  errors = [`failed to read or parse JSON: ${error.message}`];
+  errors = [
+    error.message.startsWith('self-test failed')
+      ? error.message
+      : `failed to read or parse JSON: ${error.message}`
+  ];
 }
 
 printResult({ filePath: inputPath, data: data || {}, errors, warnings });
