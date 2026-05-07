@@ -736,6 +736,14 @@ if (fs.existsSync(packageFile)) {
   if (!packageText.includes('"check:world-order": "node scripts/check-world-order-stress.mjs"')) {
     addRuntimeFailure(packageFile, 'missing check:world-order package script');
   }
+  const checkAllMatch = packageText.match(/"check:all":\s*"([^"]+)"/u);
+  const checkAllScript = checkAllMatch?.[1] || '';
+  if (!checkAllScript.includes('npm run check:world-order')) {
+    addRuntimeFailure(packageFile, 'check:all must include check:world-order');
+  }
+  if (checkAllScript.includes('build:world-order')) {
+    addRuntimeFailure(packageFile, 'check:all must not run build:world-order');
+  }
 } else {
   addRuntimeFailure(packageFile, 'package.json missing');
 }
@@ -768,6 +776,9 @@ if (!fs.existsSync(worldOrderDocFile)) {
     'ACLED',
     'decisionModifier',
     'GDELT 代理估算',
+    'check:world-order',
+    'check:all includes check:world-order',
+    'build:world-order is manual',
   ]) {
     if (!text.includes(needle)) {
       addRuntimeFailure(worldOrderDocFile, `missing world order stress marker "${needle}"`);

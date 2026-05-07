@@ -139,6 +139,8 @@ npm run build:world-order
 npm run check:world-order
 ```
 
+`data/world-order-stress.json` 由 `check:world-order` 校验，并已纳入 `check:all`。默认完整检查只验证现有 JSON，不运行 `build:world-order`，因此不会自动访问外部数据源或重写该数据产物。
+
 前端未来只能读取最终 JSON，不应直接调用 GDELT、OFAC、SIPRI 或 ACLED。
 
 ### Frontend asset cache version

@@ -75,6 +75,14 @@ ACLED_ACCESS_KEY=<key>
 - 外部源失败会降低 `confidence`，但不会阻止最终 JSON 生成。
 - 不允许输出 `NaN`、`undefined` 或空白字段。
 
+## 构建与检查
+
+`npm run build:world-order` 用于显式刷新 World Order Stress 数据。它会访问 GDELT / OFAC / SIPRI / ACLED adapter，并写入 `data/world-order-stress.json`。因此 build:world-order is manual / explicit because it fetches external data and writes data/world-order-stress.json。
+
+`npm run check:world-order` 只验证现有 `data/world-order-stress.json` 的结构、枚举、分数范围、证据字段和禁止文案，不抓取外部数据，不重写数据文件。
+
+`npm run check:all` 已集成该检查：check:all includes check:world-order。正常 CI / 本地检查会验证 world-order-stress 数据产物，但不会自动刷新外部数据。
+
 ## 与 decisionModel 的关系
 
 H-1 只输出：
