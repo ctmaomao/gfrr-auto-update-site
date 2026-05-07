@@ -102,6 +102,12 @@ v28.0K-3D adds a read-only Stable Observation Audit automation gate before v28.0
 
 The gate checks whether the v28.0K baseline remains stable across design docs, prompt fixtures, offline validator, disabled `externalAiInterpretationLayer`, live data, Worker Health, realtime-data Health, frontend reachability, and forbidden-copy boundaries. This stage does not connect DeepSeek / OpenAI / external AI APIs, does not add frontend display, and does not affect scoring / decision / execution / position.
 
+## v28.0K-4A Disabled-by-Default Manual API Test Design
+
+v28.0K-4A adds [`EXTERNAL_AI_MANUAL_TEST_DESIGN.md`](EXTERNAL_AI_MANUAL_TEST_DESIGN.md). It is design-only: no API, no secrets, no provider SDK, no workflow for external AI calls, no frontend display, and no production data change.
+
+This stage prepares future v28.0K-4B / v28.0K-4C manual test scaffolding by defining opt-in execution, environment-variable boundaries, non-production input/output handling, validator gating, fallback behavior, and production isolation. It does not affect scoring / decision / execution / position.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

@@ -206,6 +206,8 @@ Fixtures remain non-production documentation samples.
 
 v28.0K-3B activation audit 后，live data 中的 disabled `externalAiInterpretationLayer` scaffold 不消费这些 fixtures。未来任何真正 external AI output 仍必须通过 `npm run check:external-ai-output`。
 
+v28.0K-4A adds the manual API test design in [`EXTERNAL_AI_MANUAL_TEST_DESIGN.md`](EXTERNAL_AI_MANUAL_TEST_DESIGN.md). Future manual API outputs must still follow this prompt/output contract, use Chinese restrained user-facing text, and pass `check:external-ai-output`. Prompt fixtures remain offline-only and must not be treated as production data.
+
 ## 13. Non-goals / 非目标
 
 This stage does not:

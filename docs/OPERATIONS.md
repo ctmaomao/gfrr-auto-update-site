@@ -136,6 +136,12 @@ Status meaning:
 
 The workflow is observation-only. It must not auto-fix, auto-open issues, auto-commit, auto-push, deploy Worker, trigger recovery workflows, or hand-edit `data/radar-data.json`. A disabled scaffold is expected and must not be treated as an API failure.
 
+## v28.0K-4A Manual API Test Design
+
+v28.0K-4A is design-only. It documents a future disabled-by-default manual API test process in [`EXTERNAL_AI_MANUAL_TEST_DESIGN.md`](EXTERNAL_AI_MANUAL_TEST_DESIGN.md), but it does not add API code, secrets, provider SDKs, external AI workflows, frontend display, or production data changes.
+
+If future manual API tests exist, they must be explicitly opt-in. A failed manual test is a diagnostic event, not a production incident. Production fallback remains the rule-based `aiInterpretationLayer`, and production `externalAiInterpretationLayer` must remain disabled unless a separate reviewed version changes that boundary.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
