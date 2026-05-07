@@ -367,12 +367,74 @@ function buildRiskComplacencyCheck(risk, displayInputsBaseline) {
   });
 }
 
-function buildDivergenceLayer({ risk, realtimePayload, displayInputsBaseline, confidenceScore }) {
+function buildConsumerAssetsCheck(risk, displayInputsBaseline, macroDrivers) {
+  const consumer = macroDrivers?.consumer || {};
+  const sourceStatus = consumer?.sourceStatus?.umichSentiment || 'missing';
+  const sentiment = Number(consumer.umichSentiment);
+  const threeMonthChange = Number(consumer.threeMonthChange);
+  const spx = Number(displayInputsBaseline.spx);
+  const vix = Number(displayInputsBaseline.vix);
+  const hyOas = Number(displayInputsBaseline.hyOas);
+  if (sourceStatus === 'missing' || !Number.isFinite(sentiment) || !Number.isFinite(threeMonthChange)) {
+    return buildDivergenceCheck({
+      key: 'consumer_vs_asset_pricing',
+      labelZh: '消费者体感与风险资产背离',
+      category: 'consumer_assets',
+      score: null,
+      summaryZh: '数据不足，暂不足以判断消费者体感与风险资产定价背离。',
+      evidence: [],
+      dataUsed: ['macroDrivers.consumer', 'displayInputsBaseline.spx', 'displayInputsBaseline.vix', 'displayInputsBaseline.hyOas'],
+      limitations: ['UMCSENT 为月频慢变量。', '该信号为非实时观察，不应作为实时交易信号。']
+    });
+  }
+
+  const assetStillStrong = Number.isFinite(spx) && spx >= 5000;
+  const pricingCalm = Number.isFinite(vix) && vix <= 18 && Number.isFinite(hyOas) && hyOas < 4;
+  const pricingConfirmed = (Number.isFinite(vix) && vix >= 25) || (Number.isFinite(hyOas) && hyOas >= 4.5);
+  const strongDeterioration = threeMonthChange <= -8;
+  const mildDeterioration = threeMonthChange <= -4;
+  const improvingOrStable = threeMonthChange >= -4;
+  const score = strongDeterioration && assetStillStrong && pricingCalm
+    ? 76
+    : strongDeterioration && assetStillStrong
+      ? 66
+      : mildDeterioration && assetStillStrong
+        ? 54
+        : mildDeterioration
+          ? 40
+          : improvingOrStable ? 18 : 24;
+
+  return buildDivergenceCheck({
+    key: 'consumer_vs_asset_pricing',
+    labelZh: '消费者体感与风险资产背离',
+    category: 'consumer_assets',
+    score,
+    summaryZh: mildDeterioration && assetStillStrong && pricingCalm
+      ? '消费者体感与风险资产定价之间存在观察性背离；该信号为月频慢变量，不应作为实时交易信号。'
+      : mildDeterioration && pricingConfirmed
+        ? '消费者压力已部分被信用或波动率确认，背离程度需要结合信用与波动率继续观察。'
+        : improvingOrStable
+          ? '消费者信心暂未显示明显走弱，暂未形成消费者体感与风险资产定价背离。'
+          : '消费者信心变化与风险资产定价暂不足以形成明确背离。',
+    evidence: [
+      briefEvidence('macroDrivers.consumer', 'umichSentiment', '密歇根消费者信心', sentiment, `UMCSENT 当前值 ${sentiment.toFixed(1)}。`),
+      briefEvidence('macroDrivers.consumer', 'threeMonthChange', '三个月变化', threeMonthChange, `UMCSENT 三个月变化 ${threeMonthChange.toFixed(1)}。`),
+      briefEvidence('displayInputsBaseline', 'spx', '标普500', spx, Number.isFinite(spx) ? `标普500 ${spx.toFixed(0)}。` : '标普500数据不足。'),
+      briefEvidence('displayInputsBaseline', 'vix', 'VIX', vix, Number.isFinite(vix) ? `VIX ${vix.toFixed(2)}。` : 'VIX 数据不足。'),
+      briefEvidence('displayInputsBaseline', 'hyOas', '高收益债信用利差', hyOas, Number.isFinite(hyOas) ? `高收益债信用利差 ${hyOas.toFixed(2)}%。` : '高收益债信用利差数据不足。')
+    ],
+    dataUsed: ['macroDrivers.consumer.umichSentiment', 'macroDrivers.consumer.threeMonthChange', 'displayInputsBaseline.spx', 'displayInputsBaseline.vix', 'displayInputsBaseline.hyOas'],
+    limitations: ['UMCSENT 为月频慢变量，发布时间存在延迟。', '该信号为非实时解释层观察，不进入 scoring / decision。']
+  });
+}
+
+function buildDivergenceLayer({ risk, realtimePayload, displayInputsBaseline, macroDrivers, confidenceScore }) {
   const checks = [
     buildEnergyPricingGapCheck(risk, realtimePayload, displayInputsBaseline),
     buildRatesAssetsCheck(risk, displayInputsBaseline),
     buildLiquidityCreditCheck(risk, displayInputsBaseline),
-    buildRiskComplacencyCheck(risk, displayInputsBaseline)
+    buildRiskComplacencyCheck(risk, displayInputsBaseline),
+    buildConsumerAssetsCheck(risk, displayInputsBaseline, macroDrivers)
   ];
   const validChecks = checks.filter((check) => check.status !== 'insufficient_data');
   const score = validChecks.length ? clamp(avg(validChecks.map((check) => check.score))) : 0;
@@ -413,7 +475,7 @@ function buildDivergenceLayer({ risk, realtimePayload, displayInputsBaseline, co
       'Platts Dated Brent / 真实 Dated Brent 数据未接入。',
       'Brent term structure 尚未正式接入。',
       'Crack spread / diesel stress 尚未正式接入。',
-      'Michigan Consumer Sentiment 尚未接入。'
+      'UMCSENT 为月频慢变量，存在发布延迟。'
     ],
     confidence: {
       level: confidenceLevel,
@@ -787,6 +849,14 @@ function classifyCreditRegime(igOas) {
   return '偏宽松';
 }
 
+function classifyConsumerRegime(threeMonthChange) {
+  if (!Number.isFinite(threeMonthChange)) return '未知';
+  if (threeMonthChange <= -8) return '明显走弱';
+  if (threeMonthChange <= -4) return '走弱';
+  if (threeMonthChange >= 6) return '改善';
+  return '稳定';
+}
+
 function computeFedLiquidityPressure(walcl4wChange, onRrp, onRrpWeekChange) {
   let pressure = 0;
   if (Number.isFinite(walcl4wChange)) {
@@ -935,12 +1005,74 @@ async function resolveCredit(prevCredit, hyOasLive) {
   };
 }
 
+function buildMissingConsumer() {
+  return {
+    umichSentiment: null,
+    previousValue: null,
+    threeMonthChange: null,
+    sixMonthChange: null,
+    regime: '未知',
+    sourceStatus: { umichSentiment: 'missing' },
+    updatedAt: null,
+    source: 'FRED:UMCSENT',
+    notes: ['UMCSENT 为月频慢变量；当前数据不足，暂不足以判断消费者体感与风险资产背离。']
+  };
+}
+
+function normalizePreviousConsumer(prevConsumer) {
+  if (!prevConsumer || typeof prevConsumer !== 'object') return buildMissingConsumer();
+  const threeMonthChange = Number.isFinite(prevConsumer.threeMonthChange) ? prevConsumer.threeMonthChange : null;
+  return {
+    umichSentiment: Number.isFinite(prevConsumer.umichSentiment) ? prevConsumer.umichSentiment : null,
+    previousValue: Number.isFinite(prevConsumer.previousValue) ? prevConsumer.previousValue : null,
+    threeMonthChange,
+    sixMonthChange: Number.isFinite(prevConsumer.sixMonthChange) ? prevConsumer.sixMonthChange : null,
+    regime: typeof prevConsumer.regime === 'string' && prevConsumer.regime.trim() ? prevConsumer.regime : classifyConsumerRegime(threeMonthChange),
+    sourceStatus: { umichSentiment: 'fallback' },
+    updatedAt: typeof prevConsumer.updatedAt === 'string' ? prevConsumer.updatedAt : null,
+    source: 'FRED:UMCSENT',
+    notes: ['FRED UMCSENT 当前抓取失败，沿用上一轮 Daily 数据作为 fallback；该指标为月频慢变量。']
+  };
+}
+
+async function resolveConsumerSentiment(prevConsumer) {
+  try {
+    const rows = await fetchFredSeries('UMCSENT', 420);
+    const latest = rows[rows.length - 1] || null;
+    const previous = rows.length >= 2 ? rows[rows.length - 2].value : null;
+    const current = latest?.value;
+    const threeMonthAgo = findValueAgo(rows, 90);
+    const sixMonthAgo = findValueAgo(rows, 180);
+    const threeMonthChange = Number.isFinite(current) && Number.isFinite(threeMonthAgo)
+      ? +(current - threeMonthAgo).toFixed(3)
+      : null;
+    const sixMonthChange = Number.isFinite(current) && Number.isFinite(sixMonthAgo)
+      ? +(current - sixMonthAgo).toFixed(3)
+      : null;
+    return {
+      umichSentiment: Number.isFinite(current) ? current : null,
+      previousValue: Number.isFinite(previous) ? previous : null,
+      threeMonthChange,
+      sixMonthChange,
+      regime: classifyConsumerRegime(threeMonthChange),
+      sourceStatus: { umichSentiment: 'live' },
+      updatedAt: latest?.date ? `${latest.date}T00:00:00Z` : null,
+      source: 'FRED:UMCSENT',
+      notes: ['UMCSENT 为 FRED 月频慢变量，用于消费者体感与风险资产定价的 audit-only 观察。']
+    };
+  } catch (_err) {
+    const fallback = normalizePreviousConsumer(prevConsumer);
+    return Number.isFinite(fallback.umichSentiment) ? fallback : buildMissingConsumer();
+  }
+}
+
 async function fetchMacroDrivers(prev, hyOasLive) {
   const prevMd = prev?.macroDrivers || {};
   const results = await Promise.allSettled([
     resolveFedLiquidity(prevMd.fedLiquidity),
     resolveCurve(prevMd.curve),
-    resolveCredit(prevMd.credit, hyOasLive)
+    resolveCredit(prevMd.credit, hyOasLive),
+    resolveConsumerSentiment(prevMd.consumer)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -956,8 +1088,9 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     igOas: null, igOas1dChange: null, igHyRatio: null, regime: '未知',
     sourceStatus: { igOas: 'missing' }
   };
+  const consumer = results[3].status === 'fulfilled' ? results[3].value : buildMissingConsumer();
 
-  return { fedLiquidity, curve, credit };
+  return { fedLiquidity, curve, credit, consumer };
 }
 
 // 判断结构信号数据源是否"全不可用"
@@ -1614,6 +1747,7 @@ async function build() {
     risk,
     realtimePayload: realtime,
     displayInputsBaseline,
+    macroDrivers,
     confidenceScore
   });
 
@@ -1660,6 +1794,7 @@ async function build() {
         ...macroDrivers.credit,
         hyOas: Number.isFinite(hyOasLive) ? hyOasLive : null
       },
+      consumer: macroDrivers.consumer,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

@@ -203,7 +203,7 @@ divergenceLayer
 - `state` 只能为 `normal` / `watch` / `stress` / `high_stress` / `insufficient_data`。
 - `primaryDivergence` 必须包含 `key`、`labelZh`、`status`、`statusZh`、`summaryZh`、`evidence`。
 - `checks` 必须为数组；每项必须包含 `key`、`labelZh`、`category`、`status`、`score`、`summaryZh`、`evidence`、`dataUsed`、`limitations`。
-- `category` 只能为 `energy_pricing` / `rates_assets` / `liquidity_credit` / `risk_complacency`。
+- `category` 只能为 `energy_pricing` / `rates_assets` / `liquidity_credit` / `risk_complacency` / `consumer_assets`。
 - `confidence.level` 只能为 `low` / `medium` / `high`，第一版一般不应为 `high`。
 - `boundaries.displayOnly`、`boundaries.auditOnly` 必须为 `true`。
 - `boundaries.affectsScoring`、`affectsDecisionModel`、`affectsExecutionLock`、`affectsPositionGuidance` 必须为 `false`。
@@ -211,6 +211,36 @@ divergenceLayer
 Brent 相关观察只能说明公开 Brent proxy / validation 层状态，不等同于 Platts Dated Brent，不代表真实 Dated Brent 已接入，也不能证明真实实物现货溢价。不得把 FRED Brent、Yahoo `BZ=F`、Trading Economics Brent 混同为同一个价格，不得把 `brentValidation.consensus.recommendedValue` 直接当作 Brent 主值。
 
 v28.0I-3B 前端展示只读消费 `divergenceLayer`。前端不得在 render 层反推评分、仓位、执行灯、Action Queue 或任何 decision contract；当 `divergenceLayer` 缺失时只显示温和 fallback。证据不足时必须显示“数据不足”或“暂不足以判断”，不得伪造不存在的数据。
+
+#### macroDrivers.consumer
+
+`v28.0I-4A` 在 `macroDrivers` 中新增：
+
+```text
+macroDrivers.consumer
+```
+
+该字段使用 FRED `UMCSENT`（University of Michigan: Consumer Sentiment）作为月频慢变量，只在 Daily pipeline 中抓取，用于消费者体感与风险资产定价背离的 audit-only 观察。
+
+字段 contract：
+
+- `umichSentiment`、`previousValue`、`threeMonthChange`、`sixMonthChange` 为 finite number 或 `null`。
+- `sourceStatus.umichSentiment` 只能为 `live` / `fallback` / `missing`。
+- `updatedAt` 为可解析 ISO 字符串或 `null`。
+- `source` 必须为 `FRED:UMCSENT`。
+- `notes` 必须为数组，并说明 UMCSENT 是月频慢变量。
+
+严格边界：
+
+- 不进入 Worker。
+- 不进入 realtime overlay。
+- 不进入 Worker required fields。
+- 不参与 scoring。
+- 不参与 `decisionModel`。
+- 不参与 `executionLock` 或 `positionGuidance`。
+- 只用于 `divergenceLayer.checks[]` 中 `consumer_vs_asset_pricing` 的解释层 / 审计层观察。
+
+`consumer_vs_asset_pricing` 的 `category` 为 `consumer_assets`。该 check 只能说明消费者信心与 S&P 500、VIX、HY OAS 之间是否存在观察性错配；不得写成实时交易信号，不得声称消费崩盘已确认，也不得改变任何仓位或交易建议。
 
 #### marketConfirmationInput
 

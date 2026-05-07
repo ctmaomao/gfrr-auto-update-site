@@ -132,6 +132,9 @@ v28.0I 的任何结构升级都必须保护以上基线，不得通过重写页�
 - 接入或使用月频消费者信心数据。
 - 与 S&P 500 做背离观察。
 - 先 Daily / baseline 层，不放入 Worker required fields。
+- v28.0I-4A introduces consumer sentiment data contract and consumer-vs-asset divergence check.
+- No frontend rendering yet.
+- Still no scoring / decision / execution integration.
 
 ### Phase 5: Brent Physical/Futures Proxy Formalization
 

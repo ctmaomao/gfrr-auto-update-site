@@ -47,12 +47,16 @@ const DAILY_REALTIME_CACHE_ONLY_MAX_AGE_MINUTES = 360;
 const DAILY_BRIEF_CONFIDENCE_LEVELS = new Set(['low', 'medium', 'high']);
 const DIVERGENCE_LAYER_STATES = new Set(['normal', 'watch', 'stress', 'high_stress', 'insufficient_data']);
 const DIVERGENCE_CHECK_STATUSES = new Set(['normal', 'watch', 'stress', 'insufficient_data']);
-const DIVERGENCE_CHECK_CATEGORIES = new Set(['energy_pricing', 'rates_assets', 'liquidity_credit', 'risk_complacency']);
+const DIVERGENCE_CHECK_CATEGORIES = new Set(['energy_pricing', 'rates_assets', 'liquidity_credit', 'risk_complacency', 'consumer_assets']);
+const CONSUMER_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const DAILY_BRIEF_FORBIDDEN_PHRASES = [
   '战争概率',
   '世界大战',
   '必然崩盘',
   '危机已经爆发',
+  '实时消费者恐慌',
+  '消费崩盘已确认',
+  '必然衰退',
   'guaranteed',
   'certainty',
   'Platts Dated Brent 已接入',
@@ -306,6 +310,15 @@ function validateDivergenceLayer(dataPayload) {
     assertArray(check.limitations, `${fieldName}.limitations`);
     check.dataUsed.forEach((item, itemIndex) => assertString(item, `${fieldName}.dataUsed[${itemIndex}]`));
     check.limitations.forEach((item, itemIndex) => assertString(item, `${fieldName}.limitations[${itemIndex}]`));
+    if (check.key === 'consumer_vs_asset_pricing') {
+      assert(check.category === 'consumer_assets', `${fieldName}.category must be consumer_assets`);
+      const limitationsText = check.limitations.join('\n');
+      assert(
+        /月频|慢变量|非实时/u.test(limitationsText),
+        `${fieldName}.limitations must describe monthly, slow-variable, or non-realtime limits`
+      );
+      assert(!/作为实时信号|实时交易信号$/u.test(limitationsText), `${fieldName}.limitations must not present consumer sentiment as a realtime signal`);
+    }
   });
 
   assertArray(layer.dataGaps, 'divergenceLayer.dataGaps');
@@ -331,6 +344,29 @@ function validateDivergenceLayer(dataPayload) {
   for (const phrase of DAILY_BRIEF_FORBIDDEN_PHRASES) {
     assert(!serializedStrings.includes(phrase), `divergenceLayer must not contain forbidden phrase "${phrase}"`);
   }
+}
+
+function validateMacroDriversConsumer(dataPayload) {
+  const consumer = dataPayload?.macroDrivers?.consumer;
+  if (consumer === undefined) return;
+  assertPlainObject(consumer, 'macroDrivers.consumer');
+  for (const key of ['umichSentiment', 'previousValue', 'threeMonthChange', 'sixMonthChange']) {
+    assert(Object.hasOwn(consumer, key), `macroDrivers.consumer.${key} is missing`);
+    assert(isFiniteNumberOrNull(consumer[key]), `macroDrivers.consumer.${key} must be finite number or null`);
+  }
+  assertString(consumer.regime, 'macroDrivers.consumer.regime');
+  assertPlainObject(consumer.sourceStatus, 'macroDrivers.consumer.sourceStatus');
+  assert(
+    CONSUMER_SOURCE_STATUSES.has(consumer.sourceStatus.umichSentiment),
+    'macroDrivers.consumer.sourceStatus.umichSentiment must be live, fallback, or missing'
+  );
+  assert(
+    consumer.updatedAt === null || (typeof consumer.updatedAt === 'string' && Number.isFinite(Date.parse(consumer.updatedAt))),
+    'macroDrivers.consumer.updatedAt must be null or parseable ISO string'
+  );
+  assert(consumer.source === 'FRED:UMCSENT', 'macroDrivers.consumer.source must be FRED:UMCSENT');
+  assertArray(consumer.notes, 'macroDrivers.consumer.notes');
+  consumer.notes.forEach((item, index) => assertString(item, `macroDrivers.consumer.notes[${index}]`));
 }
 
 function validateDailyRealtimeInput(dataPayload) {
@@ -684,6 +720,7 @@ if (!realtime.values || !realtime.sourceStatus) throw new Error('Validation fail
 validateDailyRealtimeInput(data);
 validateDailyBrief(data);
 validateDivergenceLayer(data);
+validateMacroDriversConsumer(data);
 validateDisplayInputsBaseline(data);
 validateRealtimeBaselineAlignment(data, realtime);
 validateBrentValidation(realtime);

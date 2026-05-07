@@ -79,8 +79,11 @@
 ### C. Michigan Consumer Sentiment vs S&P 500
 
 - 作用：识别消费者体感与资产价格背离。
-- 初始级别：daily/monthly diagnostic。
+- 当前级别：Level 2/3 data contract active（v28.0I-4A）。
+- 仍为 audit-only / display-only。
+- FRED `UMCSENT` 为月频慢变量，不是 realtime 指标。
 - 不进入 Worker required fields。
+- 不进入 Worker、不进入 scoring、不进入 decision。
 
 ### D. Brent term structure
 
