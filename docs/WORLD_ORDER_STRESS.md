@@ -6,14 +6,7 @@
 
 本模块不预测战争，不输出战争概率，不使用煽动性语言，也不直接修改现有 `decisionModel`、仓位、Action Queue 或 Worker runtime。最终前端只应读取 `data/world-order-stress.json`，不应直接调用外部 API。
 
-禁止输出：
-
-- `WW3 已确认`
-- `世界大战即将爆发`
-- `世界大战概率`
-- `第三次世界大战已确认`
-- `13 步已走`
-- `世界大战第几步`
+禁止把结构性压力描述成确定性事件、概率倒计时或阶段进度。允许说明“不预测战争”“不输出战争概率”“不构成战争预测或投资建议”。
 
 ## 六个维度
 
@@ -82,6 +75,14 @@ ACLED_ACCESS_KEY=<key>
 `npm run check:world-order` 只验证现有 `data/world-order-stress.json` 的结构、枚举、分数范围、证据字段和禁止文案，不抓取外部数据，不重写数据文件。
 
 `npm run check:all` 已集成该检查：check:all includes check:world-order。正常 CI / 本地检查会验证 world-order-stress 数据产物，但不会自动刷新外部数据。
+
+## H-2 前端展示
+
+H-2 前端展示新增独立的“世界秩序压力层”区域，显示状态、压力分数、市场确认、主导驱动、六个维度、数据源状态、系统解读和免责声明。该区域只读展示 `data/world-order-stress.json`，并在读取失败或字段缺失时显示保守 fallback，不输出空白卡片、`NaN` 或 `undefined`。
+
+前端只读取 data/world-order-stress.json。前端不调用外部 API，也不访问 GDELT、OFAC、SIPRI、ACLED 或其它外部数据源。外部源只由显式的 `npm run build:world-order` 管道处理。
+
+H-2 不接入 decisionModel，不改变仓位、Action Queue、Trigger Monitor、Invalidation Rules 或 Worker-first realtime 逻辑。所有用户可见文案必须中文、克制、不预测战争、不输出战争概率。
 
 ## 与 decisionModel 的关系
 

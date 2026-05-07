@@ -1,13 +1,13 @@
-import { dataUrl, historyUrl, localRealtimeUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=28.0G-9';
+import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=28.0H-2';
 import {
   computeAgeMinutes,
   classifyFreshnessLevel,
   buildRealtimeStatusLabel,
   shouldApplyRealtimeOverlay,
   canUseRealtimePayloadValues
-} from './freshness.js?v=28.0G-9';
-import { buildHealthDashboardModel } from './health.js?v=28.0G-9';
-import { buildDecisionModel } from './decision.js?v=28.0G-9';
+} from './freshness.js?v=28.0H-2';
+import { buildHealthDashboardModel } from './health.js?v=28.0H-2';
+import { buildDecisionModel } from './decision.js?v=28.0H-2';
 import {
   buildAssetMatrixReasons,
   buildDecisionLineDisplay,
@@ -19,7 +19,7 @@ import {
   buildSummaryDisplay,
   buildTopRisksDisplay,
   buildTriggerPanelDisplay
-} from './displayTextBuilders.js?v=28.0G-9';
+} from './displayTextBuilders.js?v=28.0H-2';
 
 const STRUCTURAL_SIGNAL_LABELS_CN = {
   curveDeepInversion: '曲线深度倒挂',
@@ -39,6 +39,29 @@ export async function fetchBaselineData() {
 
 export async function fetchHistoryData() {
   return fetch(historyUrl).then((r) => r.json());
+}
+
+export async function fetchWorldOrderStressData() {
+  try {
+    const response = await fetch(withCacheBust(worldOrderStressUrl), { cache: 'no-store' });
+    if (!response.ok) {
+      return {
+        unavailable: true,
+        error: `HTTP ${response.status}`,
+        sourceUrl: worldOrderStressUrl
+      };
+    }
+    const payload = await response.json();
+    return payload && typeof payload === 'object'
+      ? payload
+      : { unavailable: true, error: 'invalid-json-shape', sourceUrl: worldOrderStressUrl };
+  } catch (error) {
+    return {
+      unavailable: true,
+      error: error instanceof Error ? error.message : String(error),
+      sourceUrl: worldOrderStressUrl
+    };
+  }
 }
 
 export function normalizeRealtimePayload(payload) {

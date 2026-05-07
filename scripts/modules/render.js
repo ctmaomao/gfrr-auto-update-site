@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow } from './config.js?v=28.0G-9';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0G-9';
-import { renderList } from './renderTables.js?v=28.0G-9';
+import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0H-2';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0H-2';
+import { renderList } from './renderTables.js?v=28.0H-2';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0G-9';
+} from './renderCharts.js?v=28.0H-2';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0G-9';
+} from './renderTables.js?v=28.0H-2';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0G-9';
+} from './renderAudit.js?v=28.0H-2';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -56,6 +56,66 @@ const BRENT_MOVE_STATUS_CN = {
   'confirmed-extreme-move': '已确认极端波动',
   'unconfirmed-jump-hold': '未确认跳变，暂不采用新值'
 };
+
+const WORLD_ORDER_STATE_CN = {
+  normal_globalization: '全球化正常期',
+  friction_rising: '摩擦升温期',
+  bloc_fragmentation: '阵营化与脱钩期',
+  multi_theater_stress: '多战区压力期',
+  war_economy_stress: '战争经济压力期'
+};
+
+const WORLD_ORDER_STATE_COLOR = {
+  normal_globalization: '#2fd38a',
+  friction_rising: '#ffd46a',
+  bloc_fragmentation: '#ffb15d',
+  multi_theater_stress: '#ff5e72',
+  war_economy_stress: '#9b1c31'
+};
+
+const WORLD_ORDER_DIMENSION_KEYS = [
+  'peaceDividendRetreat',
+  'blocFormation',
+  'multiTheaterConflict',
+  'economicWeaponization',
+  'capitalControlRisk',
+  'marketConfirmation'
+];
+
+const WORLD_ORDER_SOURCE_LABELS = {
+  gdelt: 'GDELT',
+  ofac: 'OFAC',
+  sipri: 'SIPRI',
+  acled: 'ACLED'
+};
+
+const WORLD_ORDER_SOURCE_STATUS_CN = {
+  ok: '已更新',
+  partial: '部分更新',
+  stale: '使用缓存 / 数据偏旧',
+  error: '数据源异常',
+  manual_required: '慢变量 / 需要手动导入',
+  not_configured: '未配置，使用 GDELT 代理冲突事件层',
+  disabled: '未启用'
+};
+
+function clampDisplayScore(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.min(100, Math.max(0, Math.round(parsed)));
+}
+
+function safeText(value, fallback = '--') {
+  return typeof value === 'string' && value.trim().length > 0 ? value : fallback;
+}
+
+function safeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function worldOrderStatusLabel(status) {
+  return WORLD_ORDER_SOURCE_STATUS_CN[status] || '状态待确认';
+}
 
 function pickDisplayMetric(key, realtime, effectiveDisplayInputs = null) {
   const effectiveValue = Number(effectiveDisplayInputs?.[key]);
@@ -162,6 +222,105 @@ export function renderHealthDashboard(model) {
   $('health-summary-text').textContent = model.summary;
   renderList('health-issues', model.issues);
   renderList('health-source-list', model.sourceLines);
+}
+
+export function renderWorldOrderStressOverlay(payload) {
+  const unavailable = !payload || typeof payload !== 'object' || payload.unavailable === true;
+  const score = clampDisplayScore(payload?.score);
+  const state = safeText(payload?.state, 'unavailable');
+  const stateLabel = unavailable
+    ? '世界秩序压力层数据暂不可用'
+    : safeText(payload?.labelZh, WORLD_ORDER_STATE_CN[state] || '状态待确认');
+  const stateColor = unavailable ? '#8a93a5' : WORLD_ORDER_STATE_COLOR[state] || riskColor(score);
+  const marketConfirmation = payload?.dimensions?.marketConfirmation || {};
+  const marketScore = clampDisplayScore(marketConfirmation.score);
+  const marketStateMap = {
+    not_confirmed: '未确认',
+    weak: '弱确认',
+    partial_confirmed: '部分确认',
+    high_confirmed: '高度确认'
+  };
+
+  $('world-order-state').textContent = unavailable ? '数据暂不可用' : `${stateLabel} / ${state}`;
+  $('world-order-state').style.color = stateColor;
+  $('world-order-score').textContent = unavailable ? '--' : `${score}`;
+  $('world-order-score-bar').style.width = `${score}%`;
+  $('world-order-score-bar').style.background = stateColor;
+  $('world-order-market-confirmation').textContent = unavailable
+    ? '--'
+    : `${marketStateMap[marketConfirmation.state] || '状态待确认'} / ${marketScore}`;
+  const confidence = Number(payload?.confidence);
+  $('world-order-confidence').textContent = Number.isFinite(confidence) ? `${Math.round(confidence * 100)}%` : '--';
+  $('world-order-updated-at').textContent = safeText(payload?.updatedAt, '--');
+
+  const driversRoot = $('world-order-dominant-drivers');
+  driversRoot.innerHTML = '';
+  const drivers = safeArray(payload?.dominantDrivers);
+  if (unavailable || drivers.length === 0) {
+    const item = document.createElement('span');
+    item.className = 'badge neutral';
+    item.textContent = unavailable ? '数据暂不可用' : '暂无主导驱动';
+    driversRoot.appendChild(item);
+  } else {
+    drivers.forEach((driver) => {
+      const item = document.createElement('span');
+      item.className = 'badge neutral';
+      item.textContent = `${safeText(driver.labelZh, '未命名驱动')} ${clampDisplayScore(driver.score)}`;
+      driversRoot.appendChild(item);
+    });
+  }
+
+  const dimensionsRoot = $('world-order-dimensions');
+  dimensionsRoot.innerHTML = '';
+  const dimensions = payload?.dimensions && typeof payload.dimensions === 'object' ? payload.dimensions : {};
+  WORLD_ORDER_DIMENSION_KEYS.forEach((key) => {
+    const dimension = dimensions[key] || {};
+    const card = document.createElement('div');
+    card.className = 'metric-box compact';
+    const title = document.createElement('div');
+    title.className = 'metric-label';
+    title.textContent = safeText(dimension.labelZh, key);
+    const value = document.createElement('div');
+    value.className = 'metric-value';
+    value.textContent = unavailable ? '--' : `${clampDisplayScore(dimension.score)}`;
+    const meta = document.createElement('div');
+    meta.className = 'mini-delta';
+    meta.textContent = key === 'marketConfirmation'
+      ? `状态：${marketStateMap[dimension.state] || '状态待确认'}`
+      : `趋势：${safeText(dimension.trend, '状态待确认')}`;
+    const evidenceList = document.createElement('ul');
+    evidenceList.className = 'bullet-list';
+    const evidenceItems = safeArray(dimension.evidence).slice(0, 2);
+    if (evidenceItems.length === 0) {
+      const empty = document.createElement('li');
+      empty.textContent = unavailable ? '数据暂不可用' : '暂无证据摘要';
+      evidenceList.appendChild(empty);
+    } else {
+      evidenceItems.forEach((evidence) => {
+        const li = document.createElement('li');
+        li.textContent = safeText(evidence.summary, safeText(evidence.labelZh, '证据摘要待补充'));
+        evidenceList.appendChild(li);
+      });
+    }
+    card.append(title, value, meta, evidenceList);
+    dimensionsRoot.appendChild(card);
+  });
+
+  const sourceRoot = $('world-order-source-status');
+  sourceRoot.innerHTML = '';
+  const sources = payload?.externalSources && typeof payload.externalSources === 'object' ? payload.externalSources : {};
+  Object.entries(WORLD_ORDER_SOURCE_LABELS).forEach(([key, label]) => {
+    const li = document.createElement('li');
+    const status = sources[key]?.status;
+    li.textContent = `${label}：${worldOrderStatusLabel(status)}`;
+    sourceRoot.appendChild(li);
+  });
+
+  $('world-order-interpretation').textContent = unavailable
+    ? '世界秩序压力层数据暂不可用。'
+    : safeText(payload?.systemInterpretationZh, '世界秩序压力层数据已生成，但当前解读文本不足，建议结合数据源状态和维度评分观察。');
+  const warnings = safeArray(payload?.warnings);
+  renderList('world-order-warnings', warnings.length ? warnings : ['该模块用于结构性风险识别，不构成战争预测或投资建议。']);
 }
 
 export function getDecisionHeaderBadgeClass(strategyState) {

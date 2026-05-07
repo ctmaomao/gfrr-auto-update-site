@@ -247,14 +247,14 @@ const worldOrderRequiredFiles = [
   'scripts/world-order/build-market-confirmation.mjs',
 ];
 const worldOrderForbiddenPhrases = [
-  'WW3 已确认',
-  '世界大战即将爆发',
-  '世界大战概率',
-  '第三次世界大战已确认',
-  '13 步已走',
-  '世界大战第几步',
+  ['WW3 ', '概率'].join(''),
+  ['世界大战', '即将爆发'].join(''),
+  ['战争', '已确认'].join(''),
+  ['已经进入', '第三次世界大战'].join(''),
+  ['13 步', '已走几步'].join(''),
+  ['世界大战', '第几步'].join(''),
 ];
-const frontendAssetVersion = '28.0G-9';
+const frontendAssetVersion = '28.0H-2';
 const frontendAssetEntryFile = 'index.html';
 const frontendAssetAppFile = 'scripts/app.js';
 const frontendAssetModuleDir = 'scripts/modules';
@@ -779,6 +779,10 @@ if (!fs.existsSync(worldOrderDocFile)) {
     'check:world-order',
     'check:all includes check:world-order',
     'build:world-order is manual',
+    'H-2 前端展示',
+    '前端只读取 data/world-order-stress.json',
+    '前端不调用外部 API',
+    '不接入 decisionModel',
   ]) {
     if (!text.includes(needle)) {
       addRuntimeFailure(worldOrderDocFile, `missing world order stress marker "${needle}"`);
@@ -843,6 +847,18 @@ if (fs.existsSync(frontendAssetEntryFile)) {
   if (!text.includes(`app.js?v=${frontendAssetVersion}`)) {
     addRuntimeFailure(frontendAssetEntryFile, `missing app.js?v=${frontendAssetVersion}`);
   }
+  for (const needle of [
+    'world-order-stress-section',
+    '世界秩序压力层',
+    '和平红利退潮、阵营化与多战区风险监测',
+    'world-order-score-bar',
+    'world-order-source-status',
+    'world-order-warnings',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(frontendAssetEntryFile, `missing world order UI marker "${needle}"`);
+    }
+  }
 } else {
   addRuntimeFailure(frontendAssetEntryFile, 'frontend entry file missing');
 }
@@ -851,6 +867,15 @@ if (fs.existsSync(frontendAssetAppFile)) {
   const text = fs.readFileSync(frontendAssetAppFile, 'utf8');
   if (!text.includes('__GFRR_FRONTEND_VERSION__') || !text.includes(frontendAssetVersion)) {
     addRuntimeFailure(frontendAssetAppFile, `missing frontend version marker ${frontendAssetVersion}`);
+  }
+  for (const needle of [
+    'renderWorldOrderStressOverlay',
+    '__GFRR_WORLD_ORDER_STRESS__',
+    'fetchWorldOrderStressData',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(frontendAssetAppFile, `missing world order app marker "${needle}"`);
+    }
   }
 } else {
   addRuntimeFailure(frontendAssetAppFile, 'frontend app file missing');
@@ -871,10 +896,42 @@ for (const file of frontendAssetFiles) {
     continue;
   }
   const text = fs.readFileSync(file, 'utf8');
+  if (text.includes('?v=28.0G-9')) {
+    addRuntimeFailure(file, 'frontend asset file must not retain ?v=28.0G-9');
+  }
   for (const match of text.matchAll(localJsImportPattern)) {
     const specifier = match[1];
     if (!specifier.endsWith(`?v=${frontendAssetVersion}`)) {
       addRuntimeFailure(file, `local JS import must use ?v=${frontendAssetVersion}: ${specifier}`);
+    }
+  }
+}
+
+const frontendWorldOrderText = frontendAssetFiles
+  .filter((file) => fs.existsSync(file))
+  .map((file) => fs.readFileSync(file, 'utf8'))
+  .join('\n');
+for (const needle of [
+  'data/world-order-stress.json',
+  'worldOrderStressUrl',
+  'fetchWorldOrderStressData',
+  'renderWorldOrderStressOverlay',
+]) {
+  if (!frontendWorldOrderText.includes(needle)) {
+    addRuntimeFailure('frontend world order UI', `missing marker "${needle}"`);
+  }
+}
+for (const file of [
+  frontendAssetEntryFile,
+  ...frontendAssetFiles,
+  worldOrderDocFile,
+  worldOrderDataFile,
+]) {
+  if (!fs.existsSync(file)) continue;
+  const text = fs.readFileSync(file, 'utf8');
+  for (const phrase of worldOrderForbiddenPhrases) {
+    if (text.includes(phrase)) {
+      addRuntimeFailure(file, 'must not contain forbidden world order phrase');
     }
   }
 }

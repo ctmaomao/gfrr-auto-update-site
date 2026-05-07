@@ -7,6 +7,58 @@
   <title>全球金融风险雷达 v28.0C</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="assets/styles.css" />
+  <style>
+    .world-order-grid {
+      align-items: start;
+      grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.35fr);
+    }
+    .world-order-score-track {
+      height: 14px;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+    }
+    .world-order-score-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #4f86ff, #82d9ff);
+      transition: width 240ms ease;
+    }
+    .world-order-driver-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .world-order-dimension-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 14px;
+    }
+    .world-order-status-grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      margin-top: 18px;
+    }
+    @media (max-width: 900px) {
+      .world-order-grid,
+      .world-order-status-grid {
+        grid-template-columns: 1fr;
+      }
+      .world-order-dimension-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 640px) {
+      .world-order-dimension-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="page-shell">
@@ -21,6 +73,7 @@
 
     <nav class="dashboard-jump-nav" aria-label="Dashboard sections">
       <a href="#core-dashboard">核心驾驶舱</a>
+      <a href="#world-order-stress-section">世界秩序压力层</a>
       <a href="#risk-explainer">风险解释层</a>
       <a href="#advanced-audit">高级分析与规则审计</a>
     </nav>
@@ -186,6 +239,67 @@
             <div>
               <h3>来源状态摘要</h3>
               <ul class="bullet-list" id="health-source-list"></ul>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="full-width-section cockpit-section" id="world-order-stress-section">
+        <article class="card full-width-card">
+          <div class="card-head split-head">
+            <div>
+              <h2>世界秩序压力层</h2>
+              <p class="muted">和平红利退潮、阵营化与多战区风险监测</p>
+            </div>
+            <span class="badge neutral" id="world-order-state">加载中...</span>
+          </div>
+          <div class="grid world-order-grid">
+            <div>
+              <div class="metric-row two">
+                <div class="metric-box compact">
+                  <div class="metric-label">压力分数</div>
+                  <div class="metric-value" id="world-order-score">--</div>
+                  <div class="world-order-score-track" aria-label="世界秩序压力分数进度条">
+                    <div class="world-order-score-fill" id="world-order-score-bar"></div>
+                  </div>
+                </div>
+                <div class="metric-box compact">
+                  <div class="metric-label">市场确认度</div>
+                  <div class="metric-value small" id="world-order-market-confirmation">--</div>
+                </div>
+              </div>
+              <div class="metric-row two">
+                <div class="metric-box compact">
+                  <div class="metric-label">置信度</div>
+                  <div class="metric-value" id="world-order-confidence">--</div>
+                </div>
+                <div class="metric-box compact">
+                  <div class="metric-label">更新时间</div>
+                  <div class="metric-value small" id="world-order-updated-at">--</div>
+                </div>
+              </div>
+              <div class="metric-box compact" style="margin-top: 14px;">
+                <div class="metric-label">主导驱动</div>
+                <div class="world-order-driver-list" id="world-order-dominant-drivers"></div>
+              </div>
+            </div>
+            <div>
+              <div class="metric-label">六维度观察</div>
+              <div class="world-order-dimension-grid" id="world-order-dimensions"></div>
+            </div>
+          </div>
+          <div class="world-order-status-grid">
+            <div>
+              <h3>数据源状态</h3>
+              <ul class="bullet-list" id="world-order-source-status"></ul>
+            </div>
+            <div>
+              <h3>系统解读</h3>
+              <p id="world-order-interpretation">世界秩序压力层数据加载中...</p>
+              <h3>免责声明</h3>
+              <ul class="bullet-list" id="world-order-warnings">
+                <li>该模块用于结构性风险识别，不构成战争预测或投资建议。</li>
+              </ul>
             </div>
           </div>
         </article>
@@ -749,6 +863,6 @@
     <footer class="footer">独立静态版 · 适配静态托管 · 数据由自动化流程每日生成</footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0G-9"></script>
+  <script type="module" src="scripts/app.js?v=28.0H-2"></script>
 </body>
 </html>

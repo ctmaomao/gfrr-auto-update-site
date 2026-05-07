@@ -1,8 +1,9 @@
-import { formatFiniteNumber } from './format.js?v=28.0G-9';
+import { formatFiniteNumber } from './format.js?v=28.0H-2';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
 export const localRealtimeUrl = './realtime/market.json';
+export const worldOrderStressUrl = './data/world-order-stress.json';
 export const REMOTE_REALTIME_URL = 'https://raw.githubusercontent.com/ctmaomao/gfrr-auto-update-site/realtime-data/realtime/market.json';
 export const WORKER_GENERATED_REALTIME_URL = 'https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json';
 export const realtimeSourcePolicy = {

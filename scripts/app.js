@@ -1,16 +1,17 @@
-import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0G-9';
-import { buildHealthDashboardModel } from './modules/health.js?v=28.0G-9';
-import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, buildRuntimeState } from './modules/realtime.js?v=28.0G-9';
-import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0G-9';
-import { renderRealtimeStrip, renderHealthDashboard, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0G-9';
+import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0H-2';
+import { buildHealthDashboardModel } from './modules/health.js?v=28.0H-2';
+import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0H-2';
+import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0H-2';
+import { renderRealtimeStrip, renderHealthDashboard, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0H-2';
 
-window.__GFRR_FRONTEND_VERSION__ = '28.0G-9';
+window.__GFRR_FRONTEND_VERSION__ = '28.0H-2';
 
 async function main() {
-  const [baseline, history, realtimeResult] = await Promise.all([
+  const [baseline, history, realtimeResult, worldOrderStressData] = await Promise.all([
     fetchBaselineData(),
     fetchHistoryData(),
-    fetchRealtimePayload()
+    fetchRealtimePayload(),
+    fetchWorldOrderStressData()
   ]);
 
   const runtimeState = buildRuntimeState(baseline, history, realtimeResult);
@@ -46,6 +47,7 @@ async function main() {
   window.__GFRR_TRIGGER_MONITOR__ = window.__GFRR_DECISION_MODEL__?.triggerMonitor || buildTriggerMonitorFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_INVALIDATION_RULES__ = window.__GFRR_DECISION_MODEL__?.invalidationRules || buildInvalidationRulesFallback(data, metadata, window.__GFRR_STRATEGY_STATE__);
   window.__GFRR_DECISION_HEADER__ = buildDecisionHeaderModel(window.__GFRR_DECISION_MODEL__, data);
+  window.__GFRR_WORLD_ORDER_STRESS__ = worldOrderStressData;
   console.info('GFRR decision model ready', window.__GFRR_DECISION_MODEL__);
 
   if (metadata.realtimeOverlayEnabled && realtime?.values) {
@@ -64,6 +66,7 @@ async function main() {
   $('runtime-badge').textContent = metadata.realtimeStatusLabel;
   renderDecisionHeader(window.__GFRR_DECISION_HEADER__);
   renderHealthDashboard(healthDashboard);
+  renderWorldOrderStressOverlay(worldOrderStressData);
   // Legacy display dependencies: these older overview fields remain for the
   // current page layout, but they are not part of the v27 canonical contract.
   $('overview-date').textContent = data.updatedAt.slice(0, 10);
