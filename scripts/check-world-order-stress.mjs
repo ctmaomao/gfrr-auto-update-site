@@ -17,6 +17,7 @@ const allowedStates = new Set([
 const allowedFreshness = new Set(['fresh', 'stale', 'partial', 'error']);
 const allowedMarketStates = new Set(['not_confirmed', 'weak', 'partial_confirmed', 'high_confirmed']);
 const allowedMarketInputSources = new Set(['worker-generated-preview', 'local-realtime', 'daily-baseline', 'unavailable']);
+const allowedGdeltQueryStatuses = new Set(['ok', 'partial', 'error', 'rate_limited', 'skipped']);
 const marketInputNumberFields = ['brent', 'gold', 'vix', 'dxy', 'hyOas', 'us10y', 'real10y', 'spx'];
 const sourceKeys = ['gdelt', 'ofac', 'sipri', 'acled'];
 const dimensionKeys = [
@@ -79,6 +80,7 @@ function assertParseableIsoOrNull(value, fieldName) {
 
 if (!fs.existsSync(dataPath)) fail('data/world-order-stress.json missing');
 const text = fs.readFileSync(dataPath, 'utf8');
+if (text.includes('undefined') || text.includes('NaN')) fail('payload must not contain undefined or NaN');
 for (const phrase of forbiddenPhrases) {
   if (text.includes(phrase)) fail(`forbidden phrase present: ${phrase}`);
 }
@@ -128,6 +130,44 @@ for (const sourceKey of sourceKeys) {
   if (typeof source.enabled !== 'boolean') fail(`externalSources.${sourceKey}.enabled must be boolean`);
   if (typeof source.status !== 'string' || source.status.length === 0) fail(`externalSources.${sourceKey}.status invalid`);
   if (!isObject(source.summary)) fail(`externalSources.${sourceKey}.summary must be object`);
+}
+
+const gdelt = payload.externalSources.gdelt;
+const gdeltSummary = gdelt.summary;
+for (const key of ['successCount', 'failureCount', 'rateLimitedCount']) {
+  if (!Number.isFinite(gdeltSummary[key])) fail(`externalSources.gdelt.summary.${key} must be finite number`);
+}
+if (typeof gdeltSummary.usedCachedSummary !== 'boolean') {
+  fail('externalSources.gdelt.summary.usedCachedSummary must be boolean');
+}
+if (!('cacheReason' in gdeltSummary)) fail('externalSources.gdelt.summary.cacheReason missing');
+if (gdeltSummary.cacheReason !== null && typeof gdeltSummary.cacheReason !== 'string') {
+  fail('externalSources.gdelt.summary.cacheReason must be string or null');
+}
+if (!Array.isArray(gdeltSummary.queriesRun)) fail('externalSources.gdelt.summary.queriesRun must be array');
+for (const [index, queryRun] of gdeltSummary.queriesRun.entries()) {
+  if (!isObject(queryRun)) fail(`externalSources.gdelt.summary.queriesRun[${index}] must be object`);
+  for (const key of ['label', 'status', 'articleCount', 'error']) {
+    if (!(key in queryRun)) fail(`externalSources.gdelt.summary.queriesRun[${index}].${key} missing`);
+  }
+  if (!allowedGdeltQueryStatuses.has(queryRun.status)) {
+    fail(`externalSources.gdelt.summary.queriesRun[${index}].status invalid`);
+  }
+  if (!Number.isFinite(queryRun.articleCount)) {
+    fail(`externalSources.gdelt.summary.queriesRun[${index}].articleCount must be finite number`);
+  }
+}
+if (gdelt.status === 'partial' && gdeltSummary.successCount < 1) {
+  fail('externalSources.gdelt partial status requires successCount >= 1');
+}
+if (gdelt.status === 'stale') {
+  if (gdeltSummary.usedCachedSummary !== true) fail('externalSources.gdelt stale status requires usedCachedSummary=true');
+  if (typeof gdeltSummary.cacheReason !== 'string' || gdeltSummary.cacheReason.length === 0) {
+    fail('externalSources.gdelt stale status requires cacheReason');
+  }
+}
+if (gdelt.status === 'error' && gdeltSummary.successCount !== 0) {
+  fail('externalSources.gdelt error status requires successCount=0');
 }
 
 if (!isObject(payload.dimensions)) fail('dimensions must be object');

@@ -35,6 +35,19 @@
 
 GDELT DOC 2.0 提供无需 API key 的新闻报道代理指标。H-1 查询战争、冲突、制裁、封锁、台湾、乌克兰、俄罗斯、伊朗、中东、红海、南海和朝鲜等主题，并输出压缩后的摘要。ACLED 未配置时，冲突事件层由 GDELT 代理估算。
 
+### GDELT 稳定性与缓存策略
+
+v28.0H-2C 加入 GDELT query throttle / partial success / stale cache fallback / 429 handling。GDELT 是 ACLED 未配置时的冲突事件代理数据源，因此构建脚本使用少量组合 query、串行请求和轻量 throttle，降低 GDELT 429 风险。
+
+GDELT status 规则：
+
+- `ok`：核心 query 多数成功，并生成非空摘要。
+- `partial`：至少一个 query 成功，即使其它 query 失败或出现 429，也使用成功数据生成当前摘要。
+- `stale`：本轮 query 全部失败，但旧 `data/world-order-stress.json` 中有可复用 GDELT summary；此时使用缓存并记录 cache reason。
+- `error`：本轮 query 全部失败且没有旧 summary 可用。
+
+`partial` / `stale` 会降低 confidence，但不会让模块崩溃，也不会把单个 429 伪装成成功。
+
 ### OFAC
 
 OFAC Recent Actions 用于观察制裁清单更新、执法、General Licenses、Regulations and Guidance 等经济金融武器化信号。页面结构变化或抓取失败时，管道不会崩溃。

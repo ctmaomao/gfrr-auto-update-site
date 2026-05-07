@@ -1,22 +1,22 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-05-07T01:17:11.667Z",
+  "updatedAt": "2026-05-07T01:50:10.396Z",
   "sourceMode": "computed_with_partial_external_sources",
-  "score": 58,
+  "score": 49,
   "state": "bloc_fragmentation",
   "labelZh": "阵营化与脱钩期",
-  "confidence": 0.35,
+  "confidence": 0.34,
   "freshness": "partial",
   "marketConfirmationInput": {
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-05-07T01:15:53.910Z",
-    "ageMinutes": 1,
+    "updatedAt": "2026-05-07T01:45:51.703Z",
+    "ageMinutes": 4,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 102.225,
-    "gold": 4710.7998,
+    "brent": 101.845,
+    "gold": 4713.8999,
     "vix": 17.38,
     "dxy": 118.3926,
     "hyOas": 2.77,
@@ -34,6 +34,12 @@
       "status": "stale",
       "lastFetchedAt": "2026-05-07T00:39:38.143Z",
       "summary": {
+        "errors": [
+          "conflict-theater: 请求超时或被中止",
+          "sanctions-weaponization: 请求超时或被中止",
+          "chokepoint: 请求超时或被中止",
+          "bloc-formation: 请求超时或被中止"
+        ],
         "totalEvents": 150,
         "totalArticles": 150,
         "conflictEvents": 11,
@@ -52,19 +58,46 @@
           "封锁、海峡与关键通道",
           "多区域压力报道"
         ],
-        "averageTone": null,
+        "averageTone": 0,
         "toneProxy": -0.19,
-        "queriesRun": 3,
-        "errors": [
-          "conflict: HTTP 请求失败 429",
-          "请求超时或被中止"
-        ]
+        "queriesRun": [
+          {
+            "label": "多战区冲突报道",
+            "status": "error",
+            "articleCount": 0,
+            "error": "请求超时或被中止"
+          },
+          {
+            "label": "制裁与经济金融武器化",
+            "status": "error",
+            "articleCount": 0,
+            "error": "请求超时或被中止"
+          },
+          {
+            "label": "封锁、海峡与关键通道",
+            "status": "error",
+            "articleCount": 0,
+            "error": "请求超时或被中止"
+          },
+          {
+            "label": "阵营化与联盟硬化",
+            "status": "error",
+            "articleCount": 0,
+            "error": "请求超时或被中止"
+          }
+        ],
+        "successCount": 0,
+        "failureCount": 4,
+        "rateLimitedCount": 0,
+        "usedCachedSummary": true,
+        "cacheReason": "all-current-gdelt-queries-failed-using-previous-summary",
+        "attemptedAt": "2026-05-07T01:49:30.990Z"
       }
     },
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-05-07T01:17:02.718Z",
+      "lastFetchedAt": "2026-05-07T01:49:31.196Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 7,
@@ -111,7 +144,7 @@
   },
   "dimensions": {
     "peaceDividendRetreat": {
-      "score": 40,
+      "score": 29,
       "labelZh": "和平红利退潮",
       "trend": "watching",
       "evidence": [
@@ -126,9 +159,9 @@
       ]
     },
     "blocFormation": {
-      "score": 74,
+      "score": 54,
       "labelZh": "阵营化与联盟硬化",
-      "trend": "rising",
+      "trend": "watching",
       "evidence": [
         {
           "labelZh": "阵营化与关键通道压力",
@@ -141,7 +174,7 @@
       ]
     },
     "multiTheaterConflict": {
-      "score": 50,
+      "score": 26,
       "labelZh": "多战区冲突",
       "trend": "watching",
       "evidence": [
@@ -149,14 +182,14 @@
           "labelZh": "多区域冲突报道密度",
           "source": "GDELT/ACLED",
           "summary": "ACLED 未配置时由 GDELT 代理估算冲突事件层。",
-          "value": 68,
-          "direction": "up",
+          "value": 24,
+          "direction": "neutral",
           "confidence": 0.55
         }
       ]
     },
     "economicWeaponization": {
-      "score": 80,
+      "score": 69,
       "labelZh": "经济金融武器化",
       "trend": "rising",
       "evidence": [
@@ -171,7 +204,7 @@
       ]
     },
     "capitalControlRisk": {
-      "score": 73,
+      "score": 62,
       "labelZh": "资本管制与金融抑制风险",
       "trend": "rising",
       "evidence": [
@@ -193,16 +226,16 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4710.8，显示避险或实际利率压力定价。",
-          "value": 4710.7998,
+          "summary": "基于 Worker 快变量，黄金当前值 4713.9，显示避险或实际利率压力定价。",
+          "value": 4713.8999,
           "direction": "up",
           "confidence": 0.75
         },
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 102.22，对地缘与供应风险有部分确认作用。",
-          "value": 102.225,
+          "summary": "基于 Worker 快变量，布伦特当前值 101.84，对地缘与供应风险有部分确认作用。",
+          "value": 101.845,
           "direction": "up",
           "confidence": 0.55
         },
@@ -210,7 +243,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "118.3926/4710.7998",
+          "value": "118.3926/4713.8999",
           "direction": "up",
           "confidence": 0.6
         },
@@ -218,7 +251,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7365.12/4710.7998",
+          "value": "7365.12/4713.8999",
           "direction": "mixed",
           "confidence": 0.45
         },
@@ -226,7 +259,7 @@
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
           "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 102.225,
+          "value": 101.845,
           "direction": "up",
           "confidence": 0.65
         }
@@ -237,20 +270,20 @@
     {
       "key": "economicWeaponization",
       "labelZh": "经济金融武器化",
-      "score": 80
-    },
-    {
-      "key": "blocFormation",
-      "labelZh": "阵营化与联盟硬化",
-      "score": 74
+      "score": 69
     },
     {
       "key": "capitalControlRisk",
       "labelZh": "资本管制与金融抑制风险",
-      "score": 73
+      "score": 62
+    },
+    {
+      "key": "blocFormation",
+      "labelZh": "阵营化与联盟硬化",
+      "score": 54
     }
   ],
-  "systemInterpretationZh": "世界秩序压力主要来自：经济金融武器化、阵营化与联盟硬化、资本管制与金融抑制风险。该层仅用于结构性风险识别。",
+  "systemInterpretationZh": "世界秩序压力主要来自：经济金融武器化、资本管制与金融抑制风险、阵营化与联盟硬化。该层仅用于结构性风险识别。",
   "decisionModifier": {
     "enabled": true,
     "riskBias": "neutral",

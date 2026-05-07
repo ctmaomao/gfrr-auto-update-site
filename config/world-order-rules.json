@@ -16,30 +16,33 @@
     "enabled": true,
     "timeoutMs": 9000,
     "maxRecords": 50,
+    "maxQueries": 4,
+    "throttleMs": 1000,
+    "rateLimitRetryMs": 2500,
     "queries": [
       {
-        "id": "conflict",
-        "labelZh": "战争与冲突报道",
-        "query": "(war OR conflict OR military escalation) sourceCountry:US",
+        "id": "conflict-theater",
+        "labelZh": "多战区冲突报道",
+        "query": "(war OR conflict OR military OR strike) (Ukraine OR Russia OR Iran OR Taiwan OR \"Middle East\" OR \"Red Sea\" OR \"South China Sea\" OR \"North Korea\")",
         "dimension": "multiTheaterConflict"
       },
       {
-        "id": "sanctions",
+        "id": "sanctions-weaponization",
         "labelZh": "制裁与经济金融武器化",
-        "query": "(sanctions OR export controls OR financial restrictions)",
+        "query": "(sanctions OR \"export controls\" OR \"financial restrictions\" OR blacklist OR OFAC)",
         "dimension": "economicWeaponization"
       },
       {
-        "id": "chokepoints",
+        "id": "chokepoint",
         "labelZh": "封锁、海峡与关键通道",
-        "query": "(blockade OR Strait OR Taiwan OR Red Sea OR South China Sea)",
+        "query": "(blockade OR Strait OR \"Red Sea\" OR \"South China Sea\" OR \"Taiwan Strait\")",
         "dimension": "blocFormation"
       },
       {
-        "id": "regions",
-        "labelZh": "多区域压力报道",
-        "query": "(Ukraine OR Russia OR Iran OR Middle East OR North Korea)",
-        "dimension": "multiTheaterConflict"
+        "id": "bloc-formation",
+        "labelZh": "阵营化与联盟硬化",
+        "query": "(alliance OR NATO OR AUKUS OR BRICS OR decoupling OR \"supply chain\")",
+        "dimension": "blocFormation"
       }
     ]
   },

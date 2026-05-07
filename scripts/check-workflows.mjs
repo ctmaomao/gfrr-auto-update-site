@@ -760,6 +760,15 @@ if (!fs.existsSync(worldOrderDataFile)) {
   if (!text.includes('marketConfirmationInput')) {
     addRuntimeFailure(worldOrderDataFile, 'missing marketConfirmationInput');
   }
+  for (const needle of [
+    'usedCachedSummary',
+    'successCount',
+    'rateLimitedCount',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(worldOrderDataFile, `missing GDELT hardening marker "${needle}"`);
+    }
+  }
   for (const phrase of worldOrderForbiddenPhrases) {
     if (text.includes(phrase)) {
       addRuntimeFailure(worldOrderDataFile, `must not contain forbidden phrase "${phrase}"`);
@@ -781,6 +790,23 @@ if (fs.existsSync(worldOrderMarketConfirmationFile)) {
   }
 } else {
   addRuntimeFailure(worldOrderMarketConfirmationFile, 'world order market confirmation script missing');
+}
+const worldOrderGdeltFile = 'scripts/world-order/fetch-gdelt.mjs';
+if (fs.existsSync(worldOrderGdeltFile)) {
+  const text = fs.readFileSync(worldOrderGdeltFile, 'utf8');
+  for (const needle of [
+    'delay',
+    'rate_limited',
+    'successCount',
+    'usedCachedSummary',
+    'cacheReason',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(worldOrderGdeltFile, `missing GDELT throttle/cache marker "${needle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(worldOrderGdeltFile, 'world order GDELT fetcher missing');
 }
 if (!fs.existsSync(worldOrderDocFile)) {
   addRuntimeFailure(worldOrderDocFile, 'world order stress document missing');
@@ -805,6 +831,10 @@ if (!fs.existsSync(worldOrderDocFile)) {
     'marketConfirmation 优先使用 Worker-generated preview',
     'fallback 到 local realtime',
     'fallback 到 Daily baseline',
+    'GDELT query throttle',
+    'partial success',
+    'stale cache fallback',
+    '429 handling',
   ]) {
     if (!text.includes(needle)) {
       addRuntimeFailure(worldOrderDocFile, `missing world order stress marker "${needle}"`);

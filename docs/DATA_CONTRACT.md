@@ -172,6 +172,22 @@ unavailable
 - `brentPromotionApplied` 为 boolean。
 - 当 `source="worker-generated-preview"` 时，`updatedAt`、`healthScore`、`criticalMissing` 必须有效，且 `brent` 必须为正数。
 
+#### GDELT summary
+
+v28.0H-2C 起，`externalSources.gdelt.summary` 必须明确记录 query throttle / partial success / stale cache fallback 状态。
+
+字段 contract：
+
+- `totalArticles`、`conflictEvents`、`sanctionsEvents`、`blockadeOrChokepointEvents`、`successCount`、`failureCount`、`rateLimitedCount` 必须为 finite number。
+- `regionsCovered`、`topThemes`、`errors` 必须为数组。
+- `queriesRun` 必须为数组，每项至少包含 `label`、`status`、`articleCount`、`error`。
+- `queriesRun[].status` 只能为 `ok` / `partial` / `error` / `rate_limited` / `skipped`。
+- `usedCachedSummary` 必须为 boolean。
+- `cacheReason` 必须为字符串或 `null`。
+- 当 `externalSources.gdelt.status="partial"` 时，`successCount >= 1`。
+- 当 `externalSources.gdelt.status="stale"` 时，`usedCachedSummary=true` 且 `cacheReason` 非空。
+- 当 `externalSources.gdelt.status="error"` 时，`successCount=0`。
+
 ### Frontend asset cache version
 
 v28.0H-2 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。

@@ -11,12 +11,18 @@ import {
 function sourceScore(sourceKey, source) {
   const summary = source?.summary || {};
   if (sourceKey === 'gdelt') {
-    return clampScore(
+    if (source?.status === 'error') return 0;
+    const statusMultiplier = source?.status === 'stale'
+      ? 0.35
+      : source?.status === 'partial'
+        ? 0.75
+        : 1;
+    return clampScore(statusMultiplier * (
       (summary.conflictEvents || 0) * 1.4 +
       (summary.sanctionsEvents || 0) * 1.2 +
       (summary.blockadeOrChokepointEvents || 0) * 1.8 +
       (summary.regionsCovered?.length || 0) * 5
-    );
+    ));
   }
   if (sourceKey === 'ofac') {
     return clampScore(
