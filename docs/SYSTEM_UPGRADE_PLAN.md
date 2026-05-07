@@ -102,6 +102,9 @@ v28.0I 的任何结构升级都必须保护以上基线，不得通过重写页�
 - 新增 `dailyBrief` / `dominantRiskChain` / `largestDivergence` / `invalidationSignals`。
 - 不改变 `decisionModel` / `executionLock` / `positionGuidance`。
 - 先在 Daily pipeline 生成结构化解释字段。
+- v28.0I-1 introduces dailyBrief data contract.
+- Still no frontend rendering.
+- Still no scoring / decision integration.
 
 ### Phase 2: Daily Brief Frontend Display
 

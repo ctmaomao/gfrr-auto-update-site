@@ -150,6 +150,30 @@ H-5A 的 UI source / trend / direction labels 也是 presentation-only derivatio
 
 H-4 的 build summary / check summary / review helper 只改变 stdout 可读性，不改变 JSON contract。`check:world-order` 已纳入 `check:all`，但 `build:world-order` 仍需显式运行，不得加入默认完整检查。
 
+### dailyBrief 解释层 contract
+
+`v28.0I-1` 在 `data/radar-data.json` 根级新增：
+
+```text
+dailyBrief
+```
+
+`dailyBrief` 是解释层 / display-only 字段，用于未来首页“今日总判断层”。它只压缩已有 daily baseline、realtime input、macro drivers、模块分数和数据健康信息，不参与 scoring，不参与 `decisionModel`，不参与 `executionLock`，不参与 `positionGuidance`，不改变 `effectiveDisplayInputs`。
+
+字段 contract：
+
+- `contractVersion` 必须为 `v28.0I-1`。
+- `generatedAt` 必须为可解析 ISO 字符串。
+- `macroState`、`oneLineConclusion` 必须为中文字符串。
+- `dominantRiskChain` 必须包含 `key`、`labelZh`、`stageZh`、`summaryZh`、`evidence`。
+- `largestDivergence` 必须包含 `key`、`labelZh`、`statusZh`、`summaryZh`、`evidence`。
+- `keyTriggers`、`invalidationSignals`、`dataGaps` 必须为数组。
+- `confidence.level` 只能为 `low` / `medium` / `high`，`confidence.score` 必须为 `0-100`。
+- `boundaries.displayOnly` 必须为 `true`。
+- `boundaries.affectsScoring`、`affectsDecisionModel`、`affectsExecutionLock`、`affectsPositionGuidance` 必须为 `false`。
+
+未来前端展示必须只读消费 `dailyBrief`，不得在 render 层反推评分、仓位、执行灯、Action Queue 或任何 decision contract。证据不足时应显示“数据不足”或“暂不足以判断”，不得为了显示漂亮伪造数据。
+
 #### marketConfirmationInput
 
 v28.0H-2B 起，`data/world-order-stress.json` 必须包含：

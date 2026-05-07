@@ -44,6 +44,15 @@ const BRENT_CONFIDENCE_LEVELS = new Set(['high', 'medium', 'low', 'none']);
 const DAILY_REALTIME_SOURCE_MODES = new Set(['live', 'degraded', 'live-with-fallback', 'fallback', 'cache-only', 'mock']);
 const DAILY_REALTIME_LIVE_MAX_AGE_MINUTES = 180;
 const DAILY_REALTIME_CACHE_ONLY_MAX_AGE_MINUTES = 360;
+const DAILY_BRIEF_CONFIDENCE_LEVELS = new Set(['low', 'medium', 'high']);
+const DAILY_BRIEF_FORBIDDEN_PHRASES = [
+  '战争概率',
+  '世界大战',
+  '必然崩盘',
+  '危机已经爆发',
+  'guaranteed',
+  'certainty'
+];
 
 function assert(condition, message) {
   if (!condition) throw new Error(`Validation failed: ${message}`);
@@ -115,6 +124,106 @@ function parseIsoTime(value, fieldName) {
   const timestamp = Date.parse(value);
   assert(Number.isFinite(timestamp), `dailyRealtimeInput.${fieldName} is not parseable`);
   return timestamp;
+}
+
+function collectStrings(value, output = []) {
+  if (typeof value === 'string') {
+    output.push(value);
+    return output;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectStrings(item, output));
+    return output;
+  }
+  if (isPlainObject(value)) {
+    Object.values(value).forEach((item) => collectStrings(item, output));
+  }
+  return output;
+}
+
+function validateDailyBriefEvidence(evidence, fieldName) {
+  assertArray(evidence, fieldName);
+  evidence.forEach((item, index) => {
+    assertPlainObject(item, `${fieldName}[${index}]`);
+    validateStringIfPresent(item, 'source', `${fieldName}[${index}]`);
+    validateStringIfPresent(item, 'key', `${fieldName}[${index}]`);
+    validateStringIfPresent(item, 'labelZh', `${fieldName}[${index}]`);
+    validateStringIfPresent(item, 'summaryZh', `${fieldName}[${index}]`);
+  });
+}
+
+function validateDailyBrief(dataPayload) {
+  const brief = dataPayload.dailyBrief;
+  if (brief === undefined) {
+    console.warn('[validate-data] Warning: dailyBrief is missing; run npm run build:data with a valid realtime input to generate the v28.0I-1 display-only contract.');
+    return;
+  }
+  assertPlainObject(brief, 'dailyBrief');
+  for (const key of [
+    'contractVersion',
+    'generatedAt',
+    'macroState',
+    'oneLineConclusion',
+    'dominantRiskChain',
+    'largestDivergence',
+    'keyTriggers',
+    'invalidationSignals',
+    'dataGaps',
+    'confidence',
+    'boundaries'
+  ]) {
+    assert(Object.hasOwn(brief, key), `dailyBrief.${key} is missing`);
+  }
+
+  assert(brief.contractVersion === 'v28.0I-1', 'dailyBrief.contractVersion must be v28.0I-1');
+  parseIsoTime(brief.generatedAt, 'generatedAt');
+  assertString(brief.macroState, 'dailyBrief.macroState');
+  assertString(brief.oneLineConclusion, 'dailyBrief.oneLineConclusion');
+
+  const chain = brief.dominantRiskChain;
+  assertPlainObject(chain, 'dailyBrief.dominantRiskChain');
+  for (const key of ['key', 'labelZh', 'stageZh', 'summaryZh', 'evidence']) {
+    assert(Object.hasOwn(chain, key), `dailyBrief.dominantRiskChain.${key} is missing`);
+  }
+  for (const key of ['key', 'labelZh', 'stageZh', 'summaryZh']) {
+    assertString(chain[key], `dailyBrief.dominantRiskChain.${key}`);
+  }
+  validateDailyBriefEvidence(chain.evidence, 'dailyBrief.dominantRiskChain.evidence');
+
+  const divergence = brief.largestDivergence;
+  assertPlainObject(divergence, 'dailyBrief.largestDivergence');
+  for (const key of ['key', 'labelZh', 'statusZh', 'summaryZh', 'evidence']) {
+    assert(Object.hasOwn(divergence, key), `dailyBrief.largestDivergence.${key} is missing`);
+  }
+  for (const key of ['key', 'labelZh', 'statusZh', 'summaryZh']) {
+    assertString(divergence[key], `dailyBrief.largestDivergence.${key}`);
+  }
+  validateDailyBriefEvidence(divergence.evidence, 'dailyBrief.largestDivergence.evidence');
+
+  assertArray(brief.keyTriggers, 'dailyBrief.keyTriggers');
+  assertArray(brief.invalidationSignals, 'dailyBrief.invalidationSignals');
+  assertArray(brief.dataGaps, 'dailyBrief.dataGaps');
+  validateDailyBriefEvidence(brief.evidence || [], 'dailyBrief.evidence');
+
+  const confidence = brief.confidence;
+  assertPlainObject(confidence, 'dailyBrief.confidence');
+  assert(DAILY_BRIEF_CONFIDENCE_LEVELS.has(confidence.level), 'dailyBrief.confidence.level must be low, medium, or high');
+  assertFiniteNumber(confidence.score, 'dailyBrief.confidence.score');
+  assert(confidence.score >= 0 && confidence.score <= 100, 'dailyBrief.confidence.score must be 0-100');
+  assertString(confidence.reasonZh, 'dailyBrief.confidence.reasonZh');
+
+  const boundaries = brief.boundaries;
+  assertPlainObject(boundaries, 'dailyBrief.boundaries');
+  assert(boundaries.displayOnly === true, 'dailyBrief.boundaries.displayOnly must be true');
+  assert(boundaries.affectsScoring === false, 'dailyBrief.boundaries.affectsScoring must be false');
+  assert(boundaries.affectsDecisionModel === false, 'dailyBrief.boundaries.affectsDecisionModel must be false');
+  assert(boundaries.affectsExecutionLock === false, 'dailyBrief.boundaries.affectsExecutionLock must be false');
+  assert(boundaries.affectsPositionGuidance === false, 'dailyBrief.boundaries.affectsPositionGuidance must be false');
+
+  const serializedStrings = collectStrings(brief).join('\n');
+  for (const phrase of DAILY_BRIEF_FORBIDDEN_PHRASES) {
+    assert(!serializedStrings.includes(phrase), `dailyBrief must not contain forbidden phrase "${phrase}"`);
+  }
 }
 
 function validateDailyRealtimeInput(dataPayload) {
@@ -466,6 +575,7 @@ if (!data.tradingSystem || !data.tradingSystem.executionLock || !data.tradingSys
 }
 if (!realtime.values || !realtime.sourceStatus) throw new Error('Validation failed: realtime payload incomplete.');
 validateDailyRealtimeInput(data);
+validateDailyBrief(data);
 validateDisplayInputsBaseline(data);
 validateRealtimeBaselineAlignment(data, realtime);
 validateBrentValidation(realtime);
