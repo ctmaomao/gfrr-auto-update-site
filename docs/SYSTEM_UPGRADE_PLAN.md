@@ -94,6 +94,8 @@ v28.0K-1 是 prompt contract and sample fixtures only，入口见 [`EXTERNAL_AI_
 
 v28.0K-2 新增 offline external AI output validator and banned-copy checker：`npm run check:external-ai-output`，并纳入 `check:all`。本阶段仍不接 API、不做 production display、不进入 scoring / decision integration；validator 只检查本地 sample / future output artifact 的 contract、boundaries、source attribution、banned copy 和 overreach，不导入 runtime。
 
+v28.0K-3A 新增 disabled-by-default production data scaffold：`externalAiInterpretationLayer`。该字段只记录 external AI 当前 disabled，并 fallback 到 rule-based `aiInterpretationLayer`；不接 API、不写 secrets、不做 frontend display、不进入 scoring / decision / execution / position。旧 data 缺少该字段时，`check:data` 可 warning 不失败，等待 Daily 在 fresh / aging realtime 条件下自然生成。
+
 ## 3. Core Problem / 核心问题
 
 当前系统的问题不是数据不够，而是判断层压缩不足：

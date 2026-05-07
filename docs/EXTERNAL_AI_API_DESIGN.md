@@ -10,6 +10,8 @@ v28.0K-1 补充 future prompt contract 和非生产样例 fixtures，入口见 [
 
 v28.0K-2 新增 offline external AI output validator and banned-copy checker：`npm run check:external-ai-output`。该 validator 只读取本地样例或显式传入的 output artifact，不调用 API，不接入 runtime，不读取 production data。未来任何 external AI output 进入展示前，都必须先通过该类 contract / boundary / source attribution / banned copy / overreach 检查。
 
+v28.0K-3A 新增 disabled production scaffold：`externalAiInterpretationLayer`。该字段不是 external AI output，不调用 DeepSeek / OpenAI / external AI API，不读取 sample fixtures，也不进入 frontend display。未来真正 external AI output 仍必须经过 API design、prompt contract、output validator、fallback review、source attribution 和单独 display review。
+
 ## 2. Current Baseline / 当前基线
 
 当前稳定基线为：

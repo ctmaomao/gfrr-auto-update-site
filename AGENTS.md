@@ -34,6 +34,7 @@
 - 任何 DeepSeek / OpenAI / external AI API implementation 必须先阅读 `docs/EXTERNAL_AI_API_DESIGN.md`；external AI output 不得直接影响 scoring / decision / execution / position，未来也必须作为单独 layer 设计，不得覆盖当前 rule-based `aiInterpretationLayer`。
 - v28.0K-1 的 `docs/fixtures/external-ai/*.json` 只允许作为 offline/manual prompt design samples；未来 external AI implementation 不得把这些 fixtures 当作 production data，不得导入 runtime。
 - v28.0K-2 新增 `npm run check:external-ai-output` 离线 validator；未来 external AI output 不得绕过该 validator 进入展示路径，validator 不调用外部 API、不导入 runtime。
+- v28.0K-3A `externalAiInterpretationLayer` 是 disabled scaffold，必须保持 disabled，直到另一个经过评审的版本明确启用 API；不得把它显示成 active external AI，不得替换 `aiInterpretationLayer`。
 - v28.0I compact cockpit layout 不得被后续改动破坏，除非另开版本评审；Global Risk Heatmap 必须继续独立显示，World Order Stress Overlay 仍是独立 regime overlay，不是第七个底层风险模块。
 - World Order 外部源失败必须降级 status / confidence，而不是清空旧可用缓存；GDELT partial / stale / error 必须可解释，不得伪装成功或输出 NaN / undefined。
 - World Order UI 必须清楚显示低置信 / 数据限制，不得把 proxy、stale、manual_required 或 not_configured 数据包装成高确定性结论。

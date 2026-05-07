@@ -95,6 +95,8 @@ npm run check:external-ai-output
 
 如果 validation fails，应隐藏 external output 或 fallback 到 rule-based `aiInterpretationLayer`。不要手工编辑 `data/radar-data.json` 修复 external AI output。
 
+v28.0K-3A 后，如果 `externalAiInterpretationLayer.status="disabled"`，这是预期状态，不代表 API failure；含义是当前回退到 rule-based `aiInterpretationLayer`。如果 live data 暂时缺少该字段，等待 v28.0K-3A 合并后的 Daily 自然刷新；只有 realtime health 为 fresh / aging 时才考虑手动触发 Daily。不要手工编辑 `data/radar-data.json` 补该字段。
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：

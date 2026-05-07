@@ -56,6 +56,9 @@ const BRENT_PROXY_SPREAD_STATUSES = new Set(['normal', 'watch', 'stress', 'insuf
 const AI_INTERPRETATION_MODE = 'rule_based_structured_interpretation';
 const AI_INTERPRETATION_MODEL_SOURCES = new Set(['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'macroDrivers', 'decisionModel', 'combined']);
 const AI_INTERPRETATION_EVIDENCE_LAYERS = new Set(['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'macroDrivers.consumer', 'worldOrder', 'decisionModel']);
+const EXTERNAL_AI_SCAFFOLD_CONTRACT_VERSION = 'v28.0K-3A';
+const EXTERNAL_AI_SCAFFOLD_MODE = 'external_ai_disabled_scaffold';
+const EXTERNAL_AI_SCAFFOLD_LAYERS = new Set(['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'macroDrivers.consumer', 'aiInterpretationLayer', 'decisionModel']);
 const DAILY_BRIEF_FORBIDDEN_PHRASES = [
   '战争概率',
   '世界大战',
@@ -75,6 +78,15 @@ const DAILY_BRIEF_FORBIDDEN_PHRASES = [
   '13步已走几步',
   'sure thing',
   'risk-free'
+];
+const EXTERNAL_AI_FORBIDDEN_PHRASES = [
+  ...DAILY_BRIEF_FORBIDDEN_PHRASES,
+  'DeepSeek 已验证市场事实',
+  'OpenAI 已验证市场事实',
+  '外部 AI 已确认危机',
+  'DeepSeek 已接入',
+  'OpenAI 已接入',
+  '外部 AI 已启用'
 ];
 
 function assert(condition, message) {
@@ -658,6 +670,102 @@ function validateAiInterpretationLayer(dataPayload) {
   }
 }
 
+function validateExternalAiInterpretationLayer(dataPayload) {
+  const layer = dataPayload.externalAiInterpretationLayer;
+  if (layer === undefined) {
+    console.warn('[validate-data] Warning: externalAiInterpretationLayer is missing; run npm run build:data with a valid realtime input after v28.0K-3A to generate the disabled scaffold.');
+    return;
+  }
+
+  assertPlainObject(layer, 'externalAiInterpretationLayer');
+  for (const key of [
+    'contractVersion',
+    'generatedAt',
+    'enabled',
+    'status',
+    'provider',
+    'model',
+    'mode',
+    'summaryZh',
+    'inputDigest',
+    'output',
+    'audit',
+    'fallback',
+    'confidence',
+    'dataGaps',
+    'limitations',
+    'boundaries'
+  ]) {
+    assert(Object.hasOwn(layer, key), `externalAiInterpretationLayer.${key} is missing`);
+  }
+
+  assert(layer.contractVersion === EXTERNAL_AI_SCAFFOLD_CONTRACT_VERSION, `externalAiInterpretationLayer.contractVersion must be ${EXTERNAL_AI_SCAFFOLD_CONTRACT_VERSION}`);
+  parseIsoTime(layer.generatedAt, 'generatedAt');
+  assert(layer.enabled === false, 'externalAiInterpretationLayer.enabled must be false');
+  assert(layer.status === 'disabled', 'externalAiInterpretationLayer.status must be disabled');
+  assert(layer.provider === 'none', 'externalAiInterpretationLayer.provider must be none');
+  assert(layer.model === null, 'externalAiInterpretationLayer.model must be null');
+  assert(layer.mode === EXTERNAL_AI_SCAFFOLD_MODE, `externalAiInterpretationLayer.mode must be ${EXTERNAL_AI_SCAFFOLD_MODE}`);
+  assertString(layer.summaryZh, 'externalAiInterpretationLayer.summaryZh');
+  assert(layer.output === null, 'externalAiInterpretationLayer.output must be null');
+
+  const inputDigest = layer.inputDigest;
+  assertPlainObject(inputDigest, 'externalAiInterpretationLayer.inputDigest');
+  assertString(inputDigest.inputVersion, 'externalAiInterpretationLayer.inputDigest.inputVersion');
+  assert(inputDigest.siteStructuredDataOnly === true, 'externalAiInterpretationLayer.inputDigest.siteStructuredDataOnly must be true');
+  assertArray(inputDigest.layersAvailable, 'externalAiInterpretationLayer.inputDigest.layersAvailable');
+  inputDigest.layersAvailable.forEach((item, index) => {
+    assertString(item, `externalAiInterpretationLayer.inputDigest.layersAvailable[${index}]`);
+    assert(EXTERNAL_AI_SCAFFOLD_LAYERS.has(item), `externalAiInterpretationLayer.inputDigest.layersAvailable[${index}] is not supported`);
+  });
+  assert(inputDigest.usesPrivateUserData === false, 'externalAiInterpretationLayer.inputDigest.usesPrivateUserData must be false');
+  assert(inputDigest.usesSecrets === false, 'externalAiInterpretationLayer.inputDigest.usesSecrets must be false');
+  assert(inputDigest.usesExternalMarketData === false, 'externalAiInterpretationLayer.inputDigest.usesExternalMarketData must be false');
+  assertString(inputDigest.noteZh, 'externalAiInterpretationLayer.inputDigest.noteZh');
+
+  const audit = layer.audit;
+  assertPlainObject(audit, 'externalAiInterpretationLayer.audit');
+  assert(audit.outputValidated === false, 'externalAiInterpretationLayer.audit.outputValidated must be false');
+  assert(audit.validator === 'check-external-ai-output', 'externalAiInterpretationLayer.audit.validator must be check-external-ai-output');
+  assert(audit.auditStatus === 'not_applicable', 'externalAiInterpretationLayer.audit.auditStatus must be not_applicable');
+  assertArray(audit.auditFlags, 'externalAiInterpretationLayer.audit.auditFlags');
+  assert(audit.bannedCopyPassed === null, 'externalAiInterpretationLayer.audit.bannedCopyPassed must be null');
+  assert(audit.sourceAttributionPresent === null, 'externalAiInterpretationLayer.audit.sourceAttributionPresent must be null');
+  assert(audit.boundariesValid === true, 'externalAiInterpretationLayer.audit.boundariesValid must be true');
+
+  const fallback = layer.fallback;
+  assertPlainObject(fallback, 'externalAiInterpretationLayer.fallback');
+  assert(fallback.used === true, 'externalAiInterpretationLayer.fallback.used must be true');
+  assert(fallback.fallbackLayer === 'aiInterpretationLayer', 'externalAiInterpretationLayer.fallback.fallbackLayer must be aiInterpretationLayer');
+  assertString(fallback.reasonZh, 'externalAiInterpretationLayer.fallback.reasonZh');
+
+  const confidence = layer.confidence;
+  assertPlainObject(confidence, 'externalAiInterpretationLayer.confidence');
+  assert(confidence.level === 'low', 'externalAiInterpretationLayer.confidence.level must be low');
+  assert(confidence.score === 0, 'externalAiInterpretationLayer.confidence.score must be 0');
+  assertString(confidence.reasonZh, 'externalAiInterpretationLayer.confidence.reasonZh');
+
+  validateStringArray(layer.dataGaps, 'externalAiInterpretationLayer.dataGaps');
+  validateStringArray(layer.limitations, 'externalAiInterpretationLayer.limitations');
+
+  const boundaries = layer.boundaries;
+  assertPlainObject(boundaries, 'externalAiInterpretationLayer.boundaries');
+  assert(boundaries.displayOnly === true, 'externalAiInterpretationLayer.boundaries.displayOnly must be true');
+  assert(boundaries.diagnosticOnly === true, 'externalAiInterpretationLayer.boundaries.diagnosticOnly must be true');
+  assert(boundaries.externalAiGenerated === false, 'externalAiInterpretationLayer.boundaries.externalAiGenerated must be false');
+  assert(boundaries.usesExternalAiApi === false, 'externalAiInterpretationLayer.boundaries.usesExternalAiApi must be false');
+  assert(boundaries.affectsScoring === false, 'externalAiInterpretationLayer.boundaries.affectsScoring must be false');
+  assert(boundaries.affectsDecisionModel === false, 'externalAiInterpretationLayer.boundaries.affectsDecisionModel must be false');
+  assert(boundaries.affectsExecutionLock === false, 'externalAiInterpretationLayer.boundaries.affectsExecutionLock must be false');
+  assert(boundaries.affectsPositionGuidance === false, 'externalAiInterpretationLayer.boundaries.affectsPositionGuidance must be false');
+  assert(boundaries.notInvestmentAdvice === true, 'externalAiInterpretationLayer.boundaries.notInvestmentAdvice must be true');
+
+  const serializedStrings = collectStrings(layer).join('\n');
+  for (const phrase of EXTERNAL_AI_FORBIDDEN_PHRASES) {
+    assert(!serializedStrings.includes(phrase), `externalAiInterpretationLayer must not contain forbidden phrase "${phrase}"`);
+  }
+}
+
 function validateDailyRealtimeInput(dataPayload) {
   const input = dataPayload.dailyRealtimeInput;
   assert(input && typeof input === 'object' && !Array.isArray(input), 'dailyRealtimeInput is missing');
@@ -1012,6 +1120,7 @@ validateDivergenceLayer(data);
 validateMacroDriversConsumer(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);
+validateExternalAiInterpretationLayer(data);
 validateDisplayInputsBaseline(data);
 validateRealtimeBaselineAlignment(data, realtime);
 validateBrentValidation(realtime);

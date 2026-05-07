@@ -1203,6 +1203,77 @@ function buildAiInterpretationLayer(data) {
   };
 }
 
+function buildExternalAiInterpretationLayerScaffold(data) {
+  const layersAvailable = [];
+  if (data?.dailyBrief && typeof data.dailyBrief === 'object') layersAvailable.push('dailyBrief');
+  if (data?.divergenceLayer && typeof data.divergenceLayer === 'object') layersAvailable.push('divergenceLayer');
+  if (data?.brentPricingLayer && typeof data.brentPricingLayer === 'object') layersAvailable.push('brentPricingLayer');
+  if (data?.macroDrivers?.consumer && typeof data.macroDrivers.consumer === 'object') layersAvailable.push('macroDrivers.consumer');
+  if (data?.aiInterpretationLayer && typeof data.aiInterpretationLayer === 'object') layersAvailable.push('aiInterpretationLayer');
+  if (data?.decisionModel && typeof data.decisionModel === 'object') layersAvailable.push('decisionModel');
+
+  return {
+    contractVersion: 'v28.0K-3A',
+    generatedAt: isoNow,
+    enabled: false,
+    status: 'disabled',
+    provider: 'none',
+    model: null,
+    mode: 'external_ai_disabled_scaffold',
+    summaryZh: '外部 AI 解释层当前未启用。系统继续使用规则化 AI 解释层作为只读解释基线。',
+    inputDigest: {
+      inputVersion: data?.version || 'v27.0',
+      siteStructuredDataOnly: true,
+      layersAvailable,
+      usesPrivateUserData: false,
+      usesSecrets: false,
+      usesExternalMarketData: false,
+      noteZh: '该 scaffold 仅记录外部 AI 当前禁用；不读取外部 AI API、不读取样例 fixtures、不包含用户私有数据或 secrets。'
+    },
+    output: null,
+    audit: {
+      outputValidated: false,
+      validator: 'check-external-ai-output',
+      auditStatus: 'not_applicable',
+      auditFlags: [],
+      bannedCopyPassed: null,
+      sourceAttributionPresent: null,
+      boundariesValid: true
+    },
+    fallback: {
+      used: true,
+      fallbackLayer: 'aiInterpretationLayer',
+      reasonZh: '未启用外部 AI API，当前回退到规则化 aiInterpretationLayer。'
+    },
+    confidence: {
+      level: 'low',
+      score: 0,
+      reasonZh: '外部 AI 未启用且没有外部 AI 输出，因此该 scaffold 仅为低置信诊断状态。'
+    },
+    dataGaps: [
+      'DeepSeek / OpenAI / 外部 AI API 未接入',
+      '外部 AI 输出尚未生成',
+      '外部 AI 输出审计尚未适用于生产输出'
+    ],
+    limitations: [
+      '该字段只是 disabled scaffold，不代表外部 AI 已接入。',
+      '该字段不参与评分、决策、仓位或执行灯。',
+      '前端不得把该字段显示成外部 AI 可用或正在运行。'
+    ],
+    boundaries: {
+      displayOnly: true,
+      diagnosticOnly: true,
+      externalAiGenerated: false,
+      usesExternalAiApi: false,
+      affectsScoring: false,
+      affectsDecisionModel: false,
+      affectsExecutionLock: false,
+      affectsPositionGuidance: false,
+      notInvestmentAdvice: true
+    }
+  };
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -2128,6 +2199,7 @@ function buildFallback() {
   next.aiInterpretationLayer = prevData.aiInterpretationLayer && typeof prevData.aiInterpretationLayer === 'object'
     ? { ...prevData.aiInterpretationLayer, generatedAt: isoNow }
     : buildAiInterpretationLayer(next);
+  next.externalAiInterpretationLayer = buildExternalAiInterpretationLayerScaffold(next);
   return { data: next, history: prevHistory, historyFull: prevHistoryFull };
 }
 
@@ -2591,6 +2663,7 @@ async function build() {
   };
 
   data.aiInterpretationLayer = buildAiInterpretationLayer(data);
+  data.externalAiInterpretationLayer = buildExternalAiInterpretationLayerScaffold(data);
 
   const historyFull = appendHistoryFull(prevHistoryFull, risk, lock, macro, macroDrivers, transmissionSnapshot);
 
