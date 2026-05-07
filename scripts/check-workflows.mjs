@@ -261,7 +261,7 @@ const worldOrderForbiddenPhrases = [
   ['13 步', '已走几步'].join(''),
   ['世界大战', '第几步'].join(''),
 ];
-const frontendAssetVersion = '28.0H-5';
+const frontendAssetVersion = '28.0H-5A';
 const frontendAssetEntryFile = 'index.html';
 const frontendAssetAppFile = 'scripts/app.js';
 const frontendAssetModuleDir = 'scripts/modules';
@@ -1041,6 +1041,10 @@ if (!fs.existsSync(worldOrderDocFile)) {
     '当前数据限制',
     '不改变 scoring',
     '前端只读取 data/world-order-stress.json',
+    'v28.0H-5A',
+    'UI 文案清理',
+    '中文化趋势',
+    '证据来源归因',
   ]) {
     if (!text.includes(needle)) {
       addRuntimeFailure(worldOrderDocFile, `missing world order stress marker "${needle}"`);
@@ -1154,10 +1158,11 @@ for (const file of frontendAssetFiles) {
     continue;
   }
   const text = fs.readFileSync(file, 'utf8');
-  const staleFrontendAssetVersions = ['28.0H-2', '28.0G-9'];
+  const staleFrontendAssetVersions = ['28.0H-5', '28.0H-2', '28.0G-9'];
   for (const staleAssetVersion of staleFrontendAssetVersions) {
     const staleVersion = `?v=${staleAssetVersion}`;
-    if (text.includes(staleVersion)) {
+    const staleVersionPattern = new RegExp(`\\?v=${staleAssetVersion.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}(?![A-Za-z0-9._-])`, 'u');
+    if (staleVersionPattern.test(text)) {
       addRuntimeFailure(file, `frontend asset file must not retain ${staleVersion}`);
     }
   }
@@ -1189,9 +1194,27 @@ for (const needle of [
   'buildWorldOrderConfidenceExplanation',
   'classifyWorldOrderDataQuality',
   'buildWorldOrderLimitations',
+  'formatWorldOrderTrend',
+  'formatWorldOrderSource',
+  'formatWorldOrderDirection',
+  'extractWorldOrderEvidenceSources',
+  ".join(' + ')",
 ]) {
   if (!frontendWorldOrderText.includes(needle)) {
     addRuntimeFailure('frontend world order UI', `missing marker "${needle}"`);
+  }
+}
+for (const forbiddenUiCopy of [
+  '趋势：watching',
+  '趋势：rising',
+  '趋势：stable',
+  'market 风险上升',
+  '数据质量：数据质量',
+  'undefined',
+  'NaN',
+]) {
+  if (frontendWorldOrderText.includes(forbiddenUiCopy)) {
+    addRuntimeFailure('frontend world order UI', `must not expose stale UI copy "${forbiddenUiCopy}"`);
   }
 }
 for (const file of [

@@ -21,13 +21,14 @@
 - v28.0G-6 Operations Runbook / Decision Matrix 是运维判断入口；看 `docs/OPERATIONS.md`。PR #53 superseded；KV write guard deferred，先观察，不在未另开版本时加入复杂 runtime guard。
 - v28.0G-7A 只增强 `Check Worker Health` 只读输出，生成 `worker-health-snapshot` artifact；不得把 snapshot 当作网站输入，不得写 KV 或 data/realtime，不得改变 Worker Health fail 边界。
 - v28.0G-7B 新增本地只读 `review:worker-health-snapshot` helper，用于审阅下载后的 snapshot 并输出 PASS / WARN / FAIL；不得让它访问网络、写 KV、写 data/realtime 或替代 scheduled hard gate。
-- v28.0H-5 Frontend Asset Cache Busting 用 `?v=28.0H-5` 刷新 `index.html` 入口与前端 ES module graph，解决 Android Chrome cached old module graph 让普通窗口继续显示 Actions/FRED 旧逻辑的问题；`window.__GFRR_FRONTEND_VERSION__` 应返回 `28.0H-5`。无痕窗口正常代表 Worker-first runtime 正常；不改 Worker runtime、数据源、KV，也不 deploy Worker。
-- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0H-5`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
+- v28.0H-5A Frontend Asset Cache Busting 用 `?v=28.0H-5A` 刷新 `index.html` 入口与前端 ES module graph，解决 Android Chrome cached old module graph 让普通窗口继续显示 Actions/FRED 旧逻辑的问题；`window.__GFRR_FRONTEND_VERSION__` 应返回 `28.0H-5A`。无痕窗口正常代表 Worker-first runtime 正常；不改 Worker runtime、数据源、KV，也不 deploy Worker。
+- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0H-5A`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
 - v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。
 - World Order 外部源失败必须降级 status / confidence，而不是清空旧可用缓存；GDELT partial / stale / error 必须可解释，不得伪装成功或输出 NaN / undefined。
 - World Order UI 必须清楚显示低置信 / 数据限制，不得把 proxy、stale、manual_required 或 not_configured 数据包装成高确定性结论。
+- World Order 用户可见 UI 文案必须中文化；source attribution 不得误导，多源 evidence 应尽量显示清楚来源组合。
 - SIPRI normalized example/template 数据不得当作真实宏观数据参与 scoring；只有 `quality.isRealData=true` 的真实手动标准化文件才能让 SIPRI 进入 `ok`。
 - World Order 外部数据刷新应先手动观察，再考虑 scheduled workflow；不要把 `build:world-order` 加入 `check:all`，H-4 的 `review:world-order` 只是本地只读人工审阅 helper。
 - World Order 新外部源不得直接进入 scoring；必须先通过 diagnosis / source review，再另开版本接入。

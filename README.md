@@ -42,8 +42,8 @@
 - v28.0G-6 Operations Runbook 已加入 `docs/OPERATIONS.md`：运维判断、rollback / No rollback、KV usage 和 development sequencing 以该 runbook 为准。PR #53 superseded；KV write guard deferred，先观察。
 - v28.0G-7A Health Summary Snapshot / Audit Export：`Check Worker Health` 生成 `worker-health-snapshot` artifact，用于回看 Worker / Brent TE freshness / sourceProbe / secondary / reasons；不写 KV，不写 data/realtime，不改变 fail 边界。
 - v28.0G-7B Health Snapshot Review Helper：`npm run review:worker-health-snapshot -- health-worker-snapshot.json` 本地只读审阅 artifact，输出 PASS / WARN / FAIL；不访问网络，不写 KV / data / realtime，不替代 hard gate。
-- v28.0H-2 / H-5 World Order Stress Overlay UI Shell：前端资源版本统一为 `?v=28.0H-5`，并新增“世界秩序压力层”独立展示区。H-5 会解释 confidence / data quality limitations。前端只读取 `data/world-order-stress.json`，不直接调用外部 API，不接入 `decisionModel`，不改变 Worker runtime、数据源、KV 或 realtime / baseline 计算。
-- v28.0G-9B Frontend Asset Version Bump Helper：新增本地只读维护工具 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0H-5`；该工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
+- v28.0H-2 / H-5 / H-5A World Order Stress Overlay UI Shell：前端资源版本统一为 `?v=28.0H-5A`，并新增“世界秩序压力层”独立展示区。H-5 会解释 confidence / data quality limitations；H-5A 使用中文趋势 / 来源标签和更清晰的 evidence attribution。前端只读取 `data/world-order-stress.json`，不直接调用外部 API，不接入 `decisionModel`，不改变 Worker runtime、数据源、KV 或 realtime / baseline 计算。
+- v28.0G-9B Frontend Asset Version Bump Helper：新增本地只读维护工具 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0H-5A`；该工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：`npm run check:data` 默认不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 已是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要细节时运行 `npm run check:data:verbose`，需要把 mismatch 当作失败时运行 `npm run check:data:strict-live-alignment`。本轮不改 data/realtime、不改 Worker runtime、不改前端、不 deploy。
 - v28.0H-1 World Order Stress Overlay Data Pipeline MVP：新增 `data/world-order-stress.json` 与本地构建 / 检查脚本。该层只做结构性风险识别和市场交叉验证，不预测战争、不输出战争概率。`npm run check:world-order` 校验该数据产物，并已纳入 `npm run check:all`。H-2 已加入独立 UI shell；H-2B 起 market confirmation 会记录输入来源；H-2C 起 GDELT 支持 partial success 与 stale cache fallback；H-3 起支持 SIPRI manual normalized import；H-4 增强 `npm run build:world-order` / `npm run check:world-order` summary，并新增 `npm run review:world-order` 只读审阅。详细说明见 `docs/WORLD_ORDER_STRESS.md`。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
@@ -188,7 +188,7 @@ npm run check:data
 
 新增 `scripts/` 脚本或 `scripts/modules/` 模块后，通常会自动纳入对应检查，无需手动维护检查列表。
 
-前端静态资源维护规则：frontend asset cache version must be bumped when index.html or frontend JS changes。以后只要修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`，必须同步 bump frontend asset cache version，并替换 `index.html` 入口脚本与所有本地 module import query。当前 frontend asset cache version 是 `28.0H-5`。推荐使用：
+前端静态资源维护规则：frontend asset cache version must be bumped when index.html or frontend JS changes。以后只要修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`，必须同步 bump frontend asset cache version，并替换 `index.html` 入口脚本与所有本地 module import query。当前 frontend asset cache version 是 `28.0H-5A`。推荐使用：
 
 ```bash
 node scripts/bump-frontend-asset-version.mjs 28.0G-10

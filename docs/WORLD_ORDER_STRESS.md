@@ -181,6 +181,16 @@ H-5 只增强前端 UI 解释，不改变 scoring，不修改 `data/world-order-
 
 前端只读取 data/world-order-stress.json，不调用外部 API，不访问 GDELT、ReliefWeb、OFAC、SIPRI、ACLED 或 Worker endpoint。H-5 不改变 scoring，不改变 production scoring，不输出战争概率，不构成战争预测或投资建议。
 
+## v28.0H-5A UI 文案与归因清理
+
+H-5A 只做 UI 文案清理，不改变 scoring，不修改 `data/world-order-stress.json`，不接入 `decisionModel`。
+
+页面会中文化趋势、方向和市场确认状态，例如 `watching` 显示为“观察”，`rising` 显示为“上升”，market evidence 显示为“市场确认”。数据质量 badge 去除重复文案，只显示“高 / 中 / 低 / 受限 / 待确认”等中文值。
+
+Evidence 会显示更清晰的证据来源归因，例如摘要同时涉及 GDELT 与 OFAC 时，前缀可显示为 `GDELT + OFAC`。该归因只来自展示层轻量规则，不改变 evidence 原始数据、不改变 scoring。
+
+前端仍只读取 data/world-order-stress.json，不调用外部 API，不访问 GDELT、ReliefWeb、OFAC、SIPRI、ACLED 或 Worker endpoint。H-5A 不输出战争概率，不构成战争预测或投资建议。
+
 ## H-2 前端展示
 
 H-2 前端展示新增独立的“世界秩序压力层”区域，显示状态、压力分数、市场确认、主导驱动、六个维度、数据源状态、系统解读和免责声明。该区域只读展示 `data/world-order-stress.json`，并在读取失败或字段缺失时显示保守 fallback，不输出空白卡片、`NaN` 或 `undefined`。

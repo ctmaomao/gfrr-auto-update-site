@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0H-5';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0H-5';
-import { renderList } from './renderTables.js?v=28.0H-5';
+import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0H-5A';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0H-5A';
+import { renderList } from './renderTables.js?v=28.0H-5A';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0H-5';
+} from './renderCharts.js?v=28.0H-5A';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0H-5';
+} from './renderTables.js?v=28.0H-5A';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0H-5';
+} from './renderAudit.js?v=28.0H-5A';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -87,8 +87,11 @@ const WORLD_ORDER_SOURCE_LABELS = {
   ofac: 'OFAC',
   sipri: 'SIPRI',
   acled: 'ACLED',
-  market: 'market',
-  system: 'system'
+  market: '市场确认',
+  worker: 'Worker 快变量',
+  system: '系统',
+  reliefweb: 'ReliefWeb',
+  unknown: '来源待确认'
 };
 
 const WORLD_ORDER_SOURCE_STATUS_CN = {
@@ -109,6 +112,15 @@ const WORLD_ORDER_EVIDENCE_DIRECTION_CN = {
   neutral: '中性',
   unknown: '方向待确认',
   mixed: '方向待确认'
+};
+
+const WORLD_ORDER_TREND_CN = {
+  rising: '上升',
+  falling: '下降',
+  stable: '稳定',
+  watch: '观察',
+  watching: '观察',
+  unknown: '待确认'
 };
 
 function clampDisplayScore(value) {
@@ -142,6 +154,14 @@ function worldOrderConfidencePercent(value) {
 
 function statusIs(status, expected) {
   return String(status || '').toLowerCase() === expected;
+}
+
+export function formatWorldOrderTrend(trend) {
+  return WORLD_ORDER_TREND_CN[String(trend || '').toLowerCase()] || '待确认';
+}
+
+export function formatWorldOrderDirection(direction) {
+  return WORLD_ORDER_EVIDENCE_DIRECTION_CN[String(direction || '').toLowerCase()] || '方向待确认';
 }
 
 export function buildWorldOrderConfidenceExplanation(payload) {
@@ -228,22 +248,35 @@ export function buildWorldOrderLimitations(payload) {
   return limitations.slice(0, 5);
 }
 
-function normalizeWorldOrderEvidenceSource(source) {
-  const value = String(source || '').toLowerCase();
-  if (value.includes('gdelt')) return 'gdelt';
-  if (value.includes('ofac')) return 'ofac';
-  if (value.includes('sipri')) return 'sipri';
-  if (value.includes('acled')) return 'acled';
-  if (value.includes('market')) return 'market';
-  return 'system';
+function pushUniqueSource(sources, key) {
+  if (!sources.includes(key)) sources.push(key);
+}
+
+function extractWorldOrderEvidenceSources(evidence = {}) {
+  const value = `${evidence.source || ''} ${evidence.summary || ''}`.toLowerCase();
+  const sources = [];
+  if (value.includes('gdelt')) pushUniqueSource(sources, 'gdelt');
+  if (value.includes('ofac')) pushUniqueSource(sources, 'ofac');
+  if (value.includes('sipri')) pushUniqueSource(sources, 'sipri');
+  if (value.includes('acled')) pushUniqueSource(sources, 'acled');
+  if (value.includes('worker')) pushUniqueSource(sources, 'worker');
+  if (value.includes('market')) pushUniqueSource(sources, 'market');
+  if (value.includes('reliefweb')) pushUniqueSource(sources, 'reliefweb');
+  if (sources.length === 0) pushUniqueSource(sources, 'system');
+  return sources.slice(0, 3);
+}
+
+export function formatWorldOrderSource(evidence = {}) {
+  return extractWorldOrderEvidenceSources(evidence)
+    .map((source) => WORLD_ORDER_SOURCE_LABELS[source] || WORLD_ORDER_SOURCE_LABELS.unknown)
+    .join(' + ');
 }
 
 export function formatWorldOrderEvidence(evidence = {}) {
-  const sourceKey = normalizeWorldOrderEvidenceSource(evidence.source);
   const confidence = worldOrderConfidencePercent(evidence.confidence);
   return {
-    sourceLabel: WORLD_ORDER_SOURCE_LABELS[sourceKey] || 'system',
-    directionLabel: WORLD_ORDER_EVIDENCE_DIRECTION_CN[evidence.direction] || '方向待确认',
+    sourceLabel: formatWorldOrderSource(evidence),
+    directionLabel: formatWorldOrderDirection(evidence.direction),
     confidenceLabel: confidence === null ? '置信度待确认' : `置信度 ${confidence}%`,
     summary: safeText(evidence.summary, safeText(evidence.labelZh, '证据摘要待补充'))
   };
@@ -370,7 +403,7 @@ export function renderWorldOrderStressOverlay(payload) {
     not_confirmed: '未确认',
     weak: '弱确认',
     partial_confirmed: '部分确认',
-    high_confirmed: '高度确认'
+    high_confirmed: '高确认'
   };
 
   $('world-order-state').textContent = unavailable ? '数据暂不可用' : `${stateLabel} / ${state}`;
@@ -385,7 +418,7 @@ export function renderWorldOrderStressOverlay(payload) {
   $('world-order-confidence').textContent = Number.isFinite(confidence) ? `${Math.round(confidence * 100)}%` : '--';
   const dataQuality = classifyWorldOrderDataQuality(payload);
   const dataQualityBadge = $('world-order-data-quality');
-  dataQualityBadge.textContent = `数据质量：${dataQuality.label}`;
+  dataQualityBadge.textContent = dataQuality.label;
   dataQualityBadge.className = `metric-value small ${dataQuality.tone}`;
   $('world-order-confidence-explanation').textContent = buildWorldOrderConfidenceExplanation(payload);
   $('world-order-updated-at').textContent = safeText(payload?.updatedAt, '--');
@@ -424,7 +457,7 @@ export function renderWorldOrderStressOverlay(payload) {
     meta.className = 'mini-delta';
     meta.textContent = key === 'marketConfirmation'
       ? `状态：${marketStateMap[dimension.state] || '状态待确认'}`
-      : `趋势：${safeText(dimension.trend, '状态待确认')}`;
+      : `趋势：${formatWorldOrderTrend(dimension.trend)}`;
     const evidenceList = document.createElement('ul');
     evidenceList.className = 'bullet-list';
     const evidenceItems = safeArray(dimension.evidence).slice(0, 2);
@@ -453,7 +486,7 @@ export function renderWorldOrderStressOverlay(payload) {
   sourceRoot.innerHTML = '';
   const sources = payload?.externalSources && typeof payload.externalSources === 'object' ? payload.externalSources : {};
   Object.entries(WORLD_ORDER_SOURCE_LABELS).forEach(([key, label]) => {
-    if (key === 'market' || key === 'system') return;
+    if (['market', 'worker', 'system', 'reliefweb', 'unknown'].includes(key)) return;
     const li = document.createElement('li');
     const status = sources[key]?.status;
     li.textContent = `${label}：${worldOrderStatusLabel(status)}`;
