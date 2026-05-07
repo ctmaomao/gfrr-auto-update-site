@@ -96,6 +96,14 @@ v28.0K-2 新增 offline external AI output validator and banned-copy checker：`
 
 v28.0K-3A 新增 disabled-by-default production data scaffold：`externalAiInterpretationLayer`。该字段只记录 external AI 当前 disabled，并 fallback 到 rule-based `aiInterpretationLayer`；不接 API、不写 secrets、不做 frontend display、不进入 scoring / decision / execution / position。旧 data 缺少该字段时，`check:data` 可 warning 不失败，等待 Daily 在 fresh / aging realtime 条件下自然生成。
 
+## v28.0K-3 Disabled External AI Scaffold Baseline
+
+v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。
+
+该 scaffold 不是 external AI output，不调用 DeepSeek / OpenAI / 任何外部 AI API，不用户可见，并且 fallback 到现有 rule-based `aiInterpretationLayer`。它不影响 scoring / decision / execution / position，不改变 Action Queue、Trigger Monitor 或 Invalidation Rules。
+
+未来 external AI 工作仍必须继续沿 promotion ladder 推进，并先通过 prompt contract、output validator、fallback handling、source attribution 和 display review。
+
 ## 3. Core Problem / 核心问题
 
 当前系统的问题不是数据不够，而是判断层压缩不足：

@@ -204,6 +204,8 @@ node scripts/check-external-ai-output.mjs path/to/output.json
 
 Fixtures remain non-production documentation samples.
 
+v28.0K-3B activation audit 后，live data 中的 disabled `externalAiInterpretationLayer` scaffold 不消费这些 fixtures。未来任何真正 external AI output 仍必须通过 `npm run check:external-ai-output`。
+
 ## 13. Non-goals / 非目标
 
 This stage does not:

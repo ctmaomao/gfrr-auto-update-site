@@ -97,6 +97,21 @@ npm run check:external-ai-output
 
 v28.0K-3A 后，如果 `externalAiInterpretationLayer.status="disabled"`，这是预期状态，不代表 API failure；含义是当前回退到 rule-based `aiInterpretationLayer`。如果 live data 暂时缺少该字段，等待 v28.0K-3A 合并后的 Daily 自然刷新；只有 realtime health 为 fresh / aging 时才考虑手动触发 Daily。不要手工编辑 `data/radar-data.json` 补该字段。
 
+## v28.0K-3 external AI disabled scaffold checks
+
+日常或 incident 排查顺序：
+
+1. 检查 live data 是否包含 `externalAiInterpretationLayer`。
+2. 确认 `contractVersion` 为 `v28.0K-3A`。
+3. 确认 `enabled=false` 且 `status=disabled`。
+4. 确认 `provider=none` 且 `output=null`。
+5. 确认 `externalAiGenerated=false` 且 `usesExternalAiApi=false`。
+6. 确认 `fallback.fallbackLayer=aiInterpretationLayer`。
+7. 如果本地缺失但 live 已存在，pull latest `main` 或等待 Daily data commit。
+8. 不要手工编辑 `data/radar-data.json`。
+9. 不要把 disabled scaffold 当成 API failure。
+10. 不要在未另开评审版本前把该字段暴露到 frontend。
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
