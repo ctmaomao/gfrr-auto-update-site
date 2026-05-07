@@ -1,0 +1,80 @@
+{
+  "fixtureType": "external-ai-sample-output",
+  "noteZh": "非生产样例 fixture，仅用于未来手动或离线 prompt 测试；不得被 runtime 导入，不代表 live external AI output。",
+  "contractVersion": "v28.0K-1-sample",
+  "generatedAt": "2026-05-07T00:05:00.000Z",
+  "provider": "sample",
+  "model": "sample-model",
+  "mode": "external_ai_explanation_sample",
+  "summaryZh": "基于站内结构化样例数据，当前更适合描述为谨慎观察状态；证据仍不足以形成更强结论。",
+  "facts": [
+    {
+      "textZh": "样例输入包含 dailyBrief、divergenceLayer、brentPricingLayer、macroDrivers.consumer 和规则化 aiInterpretationLayer。",
+      "source": "site-structured-sample-input"
+    }
+  ],
+  "inferences": [
+    {
+      "textZh": "消费者体感与资产定价之间存在观察性背离，但该判断仅来自样例输入。",
+      "source": "divergenceLayer.primaryDivergence"
+    }
+  ],
+  "modelJudgments": [
+    {
+      "textZh": "样例输出倾向于维持克制的风险观察表述，不把单一压力链写成确定性结果。",
+      "source": "sample-output-contract"
+    }
+  ],
+  "scenarioHypotheses": [
+    {
+      "textZh": "如果能源代理价格和利率压力继续同步上行，样例风险解释可保持谨慎观察。",
+      "triggerConditions": [
+        "站内结构化数据继续显示能源与利率压力共振"
+      ],
+      "invalidationConditions": [
+        "站内数据恢复到低压力状态",
+        "关键数据缺口被补足并显示压力缓和"
+      ]
+    }
+  ],
+  "dataGaps": [
+    {
+      "textZh": "该样例不包含真实新闻源、外部 AI 验证或生产级 freshness 信息。",
+      "severity": "medium"
+    }
+  ],
+  "invalidationSignals": [
+    {
+      "textZh": "若后续站内结构化数据不再支持能源、利率或消费者背离压力，应下调该样例解释强度。",
+      "source": "site-structured-sample-input"
+    }
+  ],
+  "sourceAttribution": [
+    {
+      "labelZh": "基于站内结构化样例数据",
+      "source": "docs/fixtures/external-ai/sample-input-v28.0K-1.json",
+      "usesExternalMarketData": false
+    }
+  ],
+  "auditFlags": [
+    {
+      "key": "sample_only",
+      "level": "info",
+      "messageZh": "该输出是离线样例，不是生产外部 AI 输出。"
+    }
+  ],
+  "confidence": {
+    "level": "medium",
+    "score": 58,
+    "reasonZh": "样例输入结构完整，但不是生产数据，且缺少真实外部来源验证。"
+  },
+  "boundaries": {
+    "displayOnly": true,
+    "externalAiGenerated": true,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "notInvestmentAdvice": true
+  }
+}

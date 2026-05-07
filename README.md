@@ -49,6 +49,7 @@
 - v28.0I Cockpit Structure Upgrade：已上线 Daily Brief / 今日主判断、Divergence Layer / 实体压力与金融定价背离、Consumer vs Asset Divergence、Brent Public Proxy Pricing Layer 与 compact cockpit layout。当前 live data 包含 `dailyBrief.contractVersion = v28.0I-1`、`divergenceLayer.contractVersion = v28.0I-3A`、`macroDrivers.consumer`、`consumer_vs_asset_pricing` 与 `brentPricingLayer.contractVersion = v28.0I-5A`。这些字段均为 display-only / audit-only / interpretation-only，不接入 scoring / decision。详见 `docs/SYSTEM_UPGRADE_PLAN.md`、`docs/DATA_CONTRACT.md` 与 `docs/OPERATIONS.md`。
 - v28.0J AI Interpretation Layer：已上线 rule-based / non-external-AI display layer。当前 live data 包含 `aiInterpretationLayer.contractVersion = v28.0J-0`，mode 为 `rule_based_structured_interpretation`；该层只把站内结构化数据拆分为事实、推断、模型判断、情景假设、数据缺口、反证条件和证据链接，不调用 DeepSeek / OpenAI / 外部 AI API，不进入 scoring / decision / execution / position。详见 `docs/SYSTEM_UPGRADE_PLAN.md`、`docs/DATA_CONTRACT.md` 与 `docs/OPERATIONS.md`。
 - v28.0K-0 External AI API Design：新增 future DeepSeek / OpenAI / external AI API design and output audit plan；当前不接 API、不显示外部 AI 输出、不改变 rule-based `aiInterpretationLayer`。详见 `docs/EXTERNAL_AI_API_DESIGN.md`。
+- v28.0K-1 External AI Prompt Contract：新增 future prompt contract 与非生产 sample fixtures；当前不接 API、不写 secrets、不改变 runtime。详见 `docs/EXTERNAL_AI_PROMPT_CONTRACT.md`。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。

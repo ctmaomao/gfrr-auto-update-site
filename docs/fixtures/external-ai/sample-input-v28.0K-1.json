@@ -1,0 +1,96 @@
+{
+  "fixtureType": "external-ai-sample-input",
+  "noteZh": "非生产样例 fixture，仅用于未来手动或离线 prompt 测试；不得被 runtime 导入，不代表 live data。",
+  "inputVersion": "v28.0K-1-sample",
+  "generatedAt": "2026-05-07T00:00:00.000Z",
+  "siteData": {
+    "dailyBrief": {
+      "contractVersion": "v28.0I-1",
+      "macroState": "风险偏谨慎",
+      "oneLineConclusion": "样例数据提示市场压力处于观察区间，仍需等待更多确认。",
+      "dominantRiskChain": {
+        "key": "energy_rates_assets",
+        "labelZh": "能源-利率-资产定价链条",
+        "stageZh": "观察",
+        "summaryZh": "能源代理价格和利率压力同时存在，但证据不足以推导单一结论。"
+      },
+      "dataGaps": [
+        "部分外部数据源为样例状态"
+      ]
+    },
+    "divergenceLayer": {
+      "contractVersion": "v28.0I-3A",
+      "state": "watch",
+      "score": 54,
+      "primaryDivergence": {
+        "key": "consumer_vs_asset_pricing",
+        "labelZh": "消费者体感与资产定价",
+        "status": "watch",
+        "summaryZh": "样例中消费者信心偏弱，但资产价格未充分同步反映。"
+      }
+    },
+    "brentPricingLayer": {
+      "contractVersion": "v28.0I-5A",
+      "mode": "public_proxy_observation",
+      "selectedBrent": {
+        "source": "sample-public-proxy",
+        "value": 82.4,
+        "status": "sample"
+      },
+      "proxySpread": {
+        "status": "normal",
+        "value": 1.2
+      },
+      "limitations": [
+        "样例 Brent 代理价格不等同于 Platts Dated Brent 或正式实物成交价。"
+      ]
+    },
+    "macroDrivers": {
+      "consumer": {
+        "source": "sample:consumer-sentiment",
+        "umichSentiment": 68.5,
+        "previousValue": 70.1,
+        "threeMonthChange": -2.4,
+        "sixMonthChange": -4.8,
+        "sourceStatus": {
+          "umichSentiment": "sample"
+        }
+      }
+    },
+    "aiInterpretationLayer": {
+      "contractVersion": "v28.0J-0",
+      "mode": "rule_based_structured_interpretation",
+      "generatedByExternalAi": false,
+      "usesExternalAiApi": false,
+      "facts": [
+        "样例输入包含 dailyBrief、divergenceLayer、brentPricingLayer 和 consumer macro driver。"
+      ],
+      "dataInferences": [
+        "样例数据可以支持谨慎观察，但不足以生成交易指令。"
+      ],
+      "dataGaps": [
+        "样例不包含真实新闻源或外部 AI 验证。"
+      ]
+    },
+    "dataHealth": {
+      "status": "sample",
+      "freshness": "sample",
+      "knownLimitations": [
+        "该对象为离线样例，不代表生产 freshness。"
+      ]
+    },
+    "decisionContext": {
+      "strategyState": "sample-cautious",
+      "executionLight": "read-only-sample",
+      "positionGuidance": "not-applicable",
+      "readOnlySummaryZh": "样例仅提供只读上下文，不允许外部 AI 修改决策、执行灯或仓位。"
+    }
+  },
+  "boundaries": {
+    "siteStructuredDataOnly": true,
+    "noExternalMarketData": true,
+    "noPrivateUserData": true,
+    "noSecrets": true,
+    "readOnlyContext": true
+  }
+}

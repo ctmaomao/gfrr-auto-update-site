@@ -90,6 +90,8 @@ v28.0K-0 是 design-only documentation PR，用于定义未来 DeepSeek / OpenAI
 
 任何外部 AI API integration 都必须先从 design and output audit 开始，并保持 display-only / commentary-only 边界。不得直接进入 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
 
+v28.0K-1 是 prompt contract and sample fixtures only，入口见 [`EXTERNAL_AI_PROMPT_CONTRACT.md`](EXTERNAL_AI_PROMPT_CONTRACT.md)。本阶段不接 API、不写 secrets、不做 production display、不进入 scoring / decision integration；`docs/fixtures/external-ai/*.json` 仅为 offline/manual prompt design artifacts，不是 live data。
+
 ## 3. Core Problem / 核心问题
 
 当前系统的问题不是数据不够，而是判断层压缩不足：

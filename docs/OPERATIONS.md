@@ -6,6 +6,7 @@
 
 - [v27 稳定化基线](V27_BASELINE.md)：用于确认当前 v27.x 已完成升级、维护边界、保护网和下一阶段建议。
 - [External AI API Design](EXTERNAL_AI_API_DESIGN.md)：用于未来 DeepSeek / OpenAI / external AI API 接入前的设计、输出审计和 fallback 边界。
+- [External AI Prompt Contract](EXTERNAL_AI_PROMPT_CONTRACT.md)：用于未来 offline/manual prompt tests 的输入输出契约和非生产样例 fixture 边界。
 
 ## 1. 本地完整检查
 
@@ -83,6 +84,8 @@ v28.0J-2B post-deploy audit 已通过，当前 AI 解释层为 rule-based struct
 未来如果新增 `externalAiInterpretationLayer`，排查时必须先确认该层是否通过 output audit。若外部 AI output 缺失、timeout、API error、rate limit、invalid JSON、unsafe output 或 stale input，应 fallback 到现有 rule-based `aiInterpretationLayer`。
 
 若 AI output audit 失败，应隐藏 external output，不得手工编辑 `data/radar-data.json` 修复 AI 输出。外部 AI 输出不得影响 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
+
+v28.0K-1 的 `docs/fixtures/external-ai/*.json` 不影响 live operations。不要通过编辑这些 fixtures 排查或修复生产问题；未来 external AI production issues 必须按 output audit、source attribution 和 fallback rules 排查。
 
 ## 2. 页面显示“实时数据已过期”
 
