@@ -239,6 +239,8 @@ const worldOrderSipriExampleFile = 'config/world-order-sipri-normalized.example.
 const worldOrderBuildScriptFile = 'scripts/build-world-order-stress.mjs';
 const worldOrderCheckScriptFile = 'scripts/check-world-order-stress.mjs';
 const worldOrderReviewScriptFile = 'scripts/review-world-order-stress.mjs';
+const worldOrderGdeltDiagnosisFile = 'scripts/world-order/diagnose-gdelt-source.mjs';
+const worldOrderSourceReviewFile = 'docs/WORLD_ORDER_SOURCE_REVIEW.md';
 const worldOrderRequiredFiles = [
   'scripts/build-world-order-stress.mjs',
   'scripts/check-world-order-stress.mjs',
@@ -743,6 +745,9 @@ if (fs.existsSync(packageFile)) {
   if (!packageText.includes('"review:world-order": "node scripts/review-world-order-stress.mjs data/world-order-stress.json"')) {
     addRuntimeFailure(packageFile, 'missing review:world-order package script');
   }
+  if (!packageText.includes('"diagnose:gdelt": "node scripts/world-order/diagnose-gdelt-source.mjs"')) {
+    addRuntimeFailure(packageFile, 'missing diagnose:gdelt package script');
+  }
   const checkAllMatch = packageText.match(/"check:all":\s*"([^"]+)"/u);
   const checkAllScript = checkAllMatch?.[1] || '';
   if (!checkAllScript.includes('npm run check:world-order')) {
@@ -809,6 +814,54 @@ if (fs.existsSync(worldOrderReviewScriptFile)) {
   }
 } else {
   addRuntimeFailure(worldOrderReviewScriptFile, 'world order review helper missing');
+}
+if (fs.existsSync(worldOrderGdeltDiagnosisFile)) {
+  const text = fs.readFileSync(worldOrderGdeltDiagnosisFile, 'utf8');
+  for (const needle of [
+    'GDELT Diagnosis Summary',
+    'production-query-too-heavy',
+    'rate-limited',
+    'network-or-gdelt-availability',
+    'gdelt-currently-healthy',
+    'local-runtime-network-error',
+    'delay',
+    'timeout',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(worldOrderGdeltDiagnosisFile, `missing GDELT diagnosis marker "${needle}"`);
+    }
+  }
+  for (const forbiddenNeedle of [
+    'data/world-order-stress.json',
+    'writeFileSync',
+    'GFRR_MARKET_KV',
+    'wrangler',
+  ]) {
+    if (text.includes(forbiddenNeedle)) {
+      addRuntimeFailure(worldOrderGdeltDiagnosisFile, `diagnose:gdelt must remain diagnostic-only; found "${forbiddenNeedle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(worldOrderGdeltDiagnosisFile, 'GDELT diagnosis script missing');
+}
+if (fs.existsSync(worldOrderSourceReviewFile)) {
+  const text = fs.readFileSync(worldOrderSourceReviewFile, 'utf8');
+  for (const needle of [
+    'GDELT DOC 2.0',
+    'GDELT Context 2.0',
+    'ACLED',
+    'ReliefWeb',
+    'OFAC',
+    'SIPRI',
+    'requires_key',
+    'not_now',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(worldOrderSourceReviewFile, `missing source review marker "${needle}"`);
+    }
+  }
+} else {
+  addRuntimeFailure(worldOrderSourceReviewFile, 'world order source review document missing');
 }
 if (!fs.existsSync(worldOrderDataFile)) {
   addRuntimeFailure(worldOrderDataFile, 'world order stress data product missing');
@@ -938,6 +991,10 @@ if (!fs.existsSync(worldOrderDocFile)) {
     '不自动刷新',
     'scheduled refresh 后续再评估',
     'GDELT stale / partial 可接受条件',
+    'v28.0H-4A',
+    'diagnose:gdelt',
+    '不改变 production scoring',
+    '不写 data/world-order-stress.json',
   ]) {
     if (!text.includes(needle)) {
       addRuntimeFailure(worldOrderDocFile, `missing world order stress marker "${needle}"`);

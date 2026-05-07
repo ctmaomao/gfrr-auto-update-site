@@ -145,6 +145,20 @@ GDELT stale / partial 可接受条件：
 
 SIPRI `manual_required` 可接受：真实 normalized 数据未导入时，不伪造慢变量。ACLED `not_configured` 可接受：未提供 API credentials 时，GDELT 作为代理冲突事件层。
 
+## v28.0H-4A GDELT 诊断与替代源评审
+
+H-4A 是 GDELT timeout diagnosis / source alternatives review，不改变 production scoring，不写 data/world-order-stress.json，不接入新外部源。
+
+只读诊断命令：
+
+```bash
+npm run diagnose:gdelt
+```
+
+`diagnose:gdelt` 会用少量轻量 query 串行访问 GDELT，输出 success / failure / timeout / rate limit 统计、diagnosis 和 recommendation。诊断结果用于决定后续是继续优化 GDELT query、改为更轻 query、增加备用公开源，还是继续暂缓 scheduled workflow。GDELT stale 目前仍可接受，因为 H-2C 已有 stale cache fallback。
+
+Source alternatives review 见 `docs/WORLD_ORDER_SOURCE_REVIEW.md`。scheduled refresh 后续再评估。
+
 ## H-2 前端展示
 
 H-2 前端展示新增独立的“世界秩序压力层”区域，显示状态、压力分数、市场确认、主导驱动、六个维度、数据源状态、系统解读和免责声明。该区域只读展示 `data/world-order-stress.json`，并在读取失败或字段缺失时显示保守 fallback，不输出空白卡片、`NaN` 或 `undefined`。
