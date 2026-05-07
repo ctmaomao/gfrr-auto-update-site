@@ -257,6 +257,8 @@ Realtime / Daily workflow 会在 GitHub Actions Summary 输出关键审计信息
 - [v27 稳定化基线](docs/V27_BASELINE.md)：历史稳定基线与维护边界，不代表当前 v28.0E-0 工程进度。
 - 数据契约：`docs/DATA_CONTRACT.md`
 - 运行排查手册：`docs/OPERATIONS.md`
+- 系统升级路线：`docs/SYSTEM_UPGRADE_PLAN.md`
+- 新信号纳入框架：`docs/SIGNAL_INTAKE.md`
 - 核心入口：`index.html`
 - 前端入口：`scripts/app.js`
 - Realtime 构建：`scripts/run-realtime.mjs`

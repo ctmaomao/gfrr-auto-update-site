@@ -62,6 +62,7 @@
 - `docs/V27_BASELINE.md`：历史 v27.x 稳定化基线。做架构或功能判断前可作为背景阅读，但当前运行边界以 README、DATA_CONTRACT 与 OPERATIONS 的 v28.0E 状态为准。
 - `docs/DATA_CONTRACT.md`：数据字段、显示值、Brent validation、Decision Output、Transmission Delta 等契约。改数据字段或显示值前，先读此文档。
 - `docs/OPERATIONS.md`：运行排查手册。排查 realtime stale、Daily、Brent、Transmission Delta、Pages deploy 等问题前，先读此文档。
+- `docs/SYSTEM_UPGRADE_PLAN.md` 与 `docs/SIGNAL_INTAKE.md`：后续新增宏观指标、背离指标、新数据源或解释层前必须先读；新信号默认不得直接进入 scoring / decision，默认先 audit-only / diagnostic-only / display-only。
 
 ## 3. 严格禁止的高风险行为
 
