@@ -186,7 +186,25 @@ Current sample fixtures:
 - [`sample-output-v28.0K-1.json`](fixtures/external-ai/sample-output-v28.0K-1.json)
 - [`sample-audit-result-v28.0K-1.json`](fixtures/external-ai/sample-audit-result-v28.0K-1.json)
 
-## 12. Non-goals / 非目标
+## 12. Validation / 离线验证
+
+Future sample outputs must pass:
+
+```bash
+npm run check:external-ai-output
+```
+
+The validator checks required contract fields, array fields, `confidence`, `boundaries`, `sourceAttribution`, banned copy, deterministic crisis language, trading overreach and direct scoring / decision / execution / position claims. It uses only local files and Node built-in modules; it does not call DeepSeek / OpenAI / external AI APIs and does not import fixtures into runtime.
+
+To validate a saved future output artifact manually:
+
+```bash
+node scripts/check-external-ai-output.mjs path/to/output.json
+```
+
+Fixtures remain non-production documentation samples.
+
+## 13. Non-goals / 非目标
 
 This stage does not:
 

@@ -87,6 +87,14 @@ v28.0J-2B post-deploy audit 已通过，当前 AI 解释层为 rule-based struct
 
 v28.0K-1 的 `docs/fixtures/external-ai/*.json` 不影响 live operations。不要通过编辑这些 fixtures 排查或修复生产问题；未来 external AI production issues 必须按 output audit、source attribution 和 fallback rules 排查。
 
+未来排查 external AI output 问题时，先运行：
+
+```bash
+npm run check:external-ai-output
+```
+
+如果 validation fails，应隐藏 external output 或 fallback 到 rule-based `aiInterpretationLayer`。不要手工编辑 `data/radar-data.json` 修复 external AI output。
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：

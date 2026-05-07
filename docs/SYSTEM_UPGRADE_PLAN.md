@@ -92,6 +92,8 @@ v28.0K-0 是 design-only documentation PR，用于定义未来 DeepSeek / OpenAI
 
 v28.0K-1 是 prompt contract and sample fixtures only，入口见 [`EXTERNAL_AI_PROMPT_CONTRACT.md`](EXTERNAL_AI_PROMPT_CONTRACT.md)。本阶段不接 API、不写 secrets、不做 production display、不进入 scoring / decision integration；`docs/fixtures/external-ai/*.json` 仅为 offline/manual prompt design artifacts，不是 live data。
 
+v28.0K-2 新增 offline external AI output validator and banned-copy checker：`npm run check:external-ai-output`，并纳入 `check:all`。本阶段仍不接 API、不做 production display、不进入 scoring / decision integration；validator 只检查本地 sample / future output artifact 的 contract、boundaries、source attribution、banned copy 和 overreach，不导入 runtime。
+
 ## 3. Core Problem / 核心问题
 
 当前系统的问题不是数据不够，而是判断层压缩不足：
