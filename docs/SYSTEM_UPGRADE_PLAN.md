@@ -82,6 +82,14 @@ v28.0J 已完成规则化 AI 解释层的 contract、live data activation、fron
 
 任何外部 AI 接入都必须另开版本，先完成 API 接入设计文档、输出审计 contract、禁用文案检查、fallback / timeout / error display，并保持不影响 scoring / decision / execution / position。
 
+## v28.0K External AI API Design Baseline
+
+v28.0K-0 是 design-only documentation PR，用于定义未来 DeepSeek / OpenAI / external AI API integration 的设计和输出审计边界。详细入口见 [`EXTERNAL_AI_API_DESIGN.md`](EXTERNAL_AI_API_DESIGN.md)。
+
+当前 v28.0J rule-based `aiInterpretationLayer` 仍是 baseline：`contractVersion = v28.0J-0`、`mode = rule_based_structured_interpretation`、`generatedByExternalAi=false`、`usesExternalAiApi=false`。未来外部 AI 必须作为单独的 `externalAiInterpretationLayer` 设计，不得替换或覆盖现有 `aiInterpretationLayer`。
+
+任何外部 AI API integration 都必须先从 design and output audit 开始，并保持 display-only / commentary-only 边界。不得直接进入 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
+
 ## 3. Core Problem / 核心问题
 
 当前系统的问题不是数据不够，而是判断层压缩不足：
