@@ -1,10 +1,10 @@
-import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0I-2';
-import { buildHealthDashboardModel } from './modules/health.js?v=28.0I-2';
-import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0I-2';
-import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0I-2';
-import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0I-2';
+import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0I-3B';
+import { buildHealthDashboardModel } from './modules/health.js?v=28.0I-3B';
+import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0I-3B';
+import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0I-3B';
+import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderDivergenceLayer, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0I-3B';
 
-window.__GFRR_FRONTEND_VERSION__ = '28.0I-2';
+window.__GFRR_FRONTEND_VERSION__ = '28.0I-3B';
 
 async function main() {
   const [baseline, history, realtimeResult, worldOrderStressData] = await Promise.all([
@@ -66,6 +66,7 @@ async function main() {
   $('runtime-badge').textContent = metadata.realtimeStatusLabel;
   renderDailyBrief(data.dailyBrief);
   renderDecisionHeader(window.__GFRR_DECISION_HEADER__);
+  renderDivergenceLayer(data.divergenceLayer);
   renderHealthDashboard(healthDashboard);
   renderWorldOrderStressOverlay(worldOrderStressData);
   // Legacy display dependencies: these older overview fields remain for the

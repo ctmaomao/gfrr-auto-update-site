@@ -122,9 +122,10 @@ v28.0I 的任何结构升级都必须保护以上基线，不得通过重写页�
 - 先 audit-only / display-only。
 - 不进入主评分。
 - v28.0I-3A introduces `divergenceLayer` data contract.
-- Still no frontend rendering.
 - Still no scoring / decision / execution integration.
 - Uses existing Daily pipeline and realtime fields only.
+- v28.0I-3B adds the read-only Divergence Layer frontend display.
+- Missing `divergenceLayer` must render a gentle fallback.
 
 ### Phase 4: Consumer vs Asset Divergence
 

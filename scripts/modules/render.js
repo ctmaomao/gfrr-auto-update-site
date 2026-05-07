@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0I-2';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0I-2';
-import { renderList } from './renderTables.js?v=28.0I-2';
+import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0I-3B';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0I-3B';
+import { renderList } from './renderTables.js?v=28.0I-3B';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0I-2';
+} from './renderCharts.js?v=28.0I-3B';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0I-2';
+} from './renderTables.js?v=28.0I-3B';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0I-2';
+} from './renderAudit.js?v=28.0I-3B';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -480,6 +480,143 @@ export function renderDailyBrief(dailyBrief) {
   const scoreLabel = Number.isFinite(confidenceScore) ? ` / ${Math.round(confidenceScore)}` : '';
   setTextIfPresent('daily-brief-confidence', `置信度：${confidenceLabel}${scoreLabel}`);
   setTextIfPresent('daily-brief-boundary', `该区域仅为解释层展示，不参与评分、仓位、执行灯或交易建议。${safeText(confidence.reasonZh, '')}`);
+}
+
+function formatDivergenceScore(value) {
+  const score = Number(value);
+  return Number.isFinite(score) ? String(Math.round(score)) : '--';
+}
+
+function formatDivergenceEvidence(evidence) {
+  const label = safeText(evidence?.labelZh, '证据');
+  const summary = safeText(evidence?.summaryZh, '暂不足以判断');
+  return `${label}：${summary}`;
+}
+
+function formatDivergenceConfidence(confidence = {}) {
+  const level = safeText(confidence.level, 'unknown');
+  const levelLabel = {
+    low: '低',
+    medium: '中',
+    high: '高',
+    unknown: '待确认'
+  }[level] || '待确认';
+  const score = Number(confidence.score);
+  const scoreLabel = Number.isFinite(score) ? ` / ${Math.round(score)}` : '';
+  const reason = safeText(confidence.reasonZh, '暂不足以判断');
+  return `置信度：${levelLabel}${scoreLabel}。${reason}`;
+}
+
+function formatDivergenceStatus(status) {
+  return {
+    normal: '未见明显背离',
+    watch: '背离观察',
+    stress: '背离压力',
+    insufficient_data: '数据不足'
+  }[String(status || '')] || '暂不足以判断';
+}
+
+function renderDivergenceChecks(checks) {
+  const root = $('divergence-checks');
+  if (!root) return;
+  root.innerHTML = '';
+  const items = safeArray(checks).slice(0, 4);
+  if (!items.length) {
+    const fallback = document.createElement('div');
+    fallback.className = 'metric-box compact';
+    fallback.textContent = '数据不足，暂不从前端反推背离检查。';
+    root.appendChild(fallback);
+    return;
+  }
+  items.forEach((check) => {
+    const card = document.createElement('div');
+    card.className = 'metric-box compact';
+
+    const title = document.createElement('div');
+    title.className = 'metric-label';
+    title.textContent = safeText(check?.labelZh, '背离检查');
+    card.appendChild(title);
+
+    const status = document.createElement('div');
+    status.className = 'metric-value small';
+    status.textContent = `${safeText(check?.statusZh, formatDivergenceStatus(check?.status))} / ${formatDivergenceScore(check?.score)}`;
+    card.appendChild(status);
+
+    const summary = document.createElement('p');
+    summary.textContent = safeText(check?.summaryZh, '暂不足以判断。');
+    card.appendChild(summary);
+
+    const evidenceList = document.createElement('ul');
+    evidenceList.className = 'bullet-list';
+    safeArray(check?.evidence).slice(0, 2).map(formatDivergenceEvidence).forEach((item) => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      evidenceList.appendChild(li);
+    });
+    if (!evidenceList.children.length) {
+      const li = document.createElement('li');
+      li.textContent = '数据不足，暂不足以判断。';
+      evidenceList.appendChild(li);
+    }
+    card.appendChild(evidenceList);
+
+    const limitations = safeArray(check?.limitations).slice(0, 2);
+    if (limitations.length) {
+      const limitationList = document.createElement('ul');
+      limitationList.className = 'bullet-list';
+      limitations.forEach((item) => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        limitationList.appendChild(li);
+      });
+      card.appendChild(limitationList);
+    }
+
+    root.appendChild(card);
+  });
+}
+
+function renderDivergenceLayerFallback() {
+  setTextIfPresent('divergence-layer-state', '背离层待生成');
+  setTextIfPresent('divergence-layer-score', '--');
+  setTextIfPresent('divergence-layer-summary', '背离校验层将在下一次 Daily 数据构建后显示。当前仍可参考盘中快变量、数据健康状态和风险模块。');
+  setTextIfPresent('divergence-primary-title', '暂无明确主背离');
+  setTextIfPresent('divergence-primary-status', '状态：暂不足以判断');
+  setTextIfPresent('divergence-primary-summary', '暂不足以判断。');
+  renderListIfPresent('divergence-primary-evidence', [], '数据不足，暂不从前端反推 divergenceLayer。');
+  renderDivergenceChecks([]);
+  renderListIfPresent('divergence-data-gaps', [], 'divergenceLayer 将在下一次 Daily 数据构建后显示。');
+  setTextIfPresent('divergence-confidence', '置信度：待确认');
+  setTextIfPresent('divergence-boundary', '该区域仅为解释层和审计层展示，不参与评分、仓位、执行灯或交易建议。');
+}
+
+export function renderDivergenceLayer(divergenceLayer) {
+  if (!divergenceLayer || typeof divergenceLayer !== 'object' || divergenceLayer.contractVersion !== 'v28.0I-3A') {
+    renderDivergenceLayerFallback();
+    return;
+  }
+
+  setTextIfPresent('divergence-layer-state', divergenceLayer.stateZh);
+  setTextIfPresent('divergence-layer-score', `背离分数：${formatDivergenceScore(divergenceLayer.score)}`);
+  setTextIfPresent('divergence-layer-summary', divergenceLayer.summaryZh);
+
+  const primary = divergenceLayer.primaryDivergence && typeof divergenceLayer.primaryDivergence === 'object'
+    ? divergenceLayer.primaryDivergence
+    : {};
+  setTextIfPresent('divergence-primary-title', primary.labelZh);
+  setTextIfPresent('divergence-primary-status', primary.statusZh ? `状态：${primary.statusZh}` : '状态：暂不足以判断');
+  setTextIfPresent('divergence-primary-summary', primary.summaryZh);
+  renderListIfPresent(
+    'divergence-primary-evidence',
+    safeArray(primary.evidence).slice(0, 3).map(formatDivergenceEvidence),
+    '数据不足，暂不足以判断主要背离证据。'
+  );
+
+  renderDivergenceChecks(divergenceLayer.checks);
+  renderListIfPresent('divergence-data-gaps', safeArray(divergenceLayer.dataGaps).slice(0, 4), '当前未记录额外数据缺口。');
+  const confidence = divergenceLayer.confidence && typeof divergenceLayer.confidence === 'object' ? divergenceLayer.confidence : {};
+  setTextIfPresent('divergence-confidence', formatDivergenceConfidence(confidence));
+  setTextIfPresent('divergence-boundary', '该区域仅为解释层和审计层展示，不参与评分、仓位、执行灯或交易建议。');
 }
 
 export function renderWorldOrderStressOverlay(payload) {
