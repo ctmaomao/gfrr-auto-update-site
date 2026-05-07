@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-07T08:11:30.630Z",
+  "updatedAt": "2026-05-07T09:03:35.365Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "f0673361ae094784ecd377edb420d1324f4cfb11",
-    "updatedAt": "2026-05-07T07:20:51.838Z",
+    "commitSha": "bfd9a19dbf893af553744c4b6cee9df8e59e99cd",
+    "updatedAt": "2026-05-07T09:01:36.566Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-07T08:11:30.630Z"
+    "capturedAt": "2026-05-07T09:03:35.365Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-07T08:11:30.630Z",
+    "generatedAt": "2026-05-07T09:03:35.365Z",
     "macroState": "滞胀冲击 / 通胀冲击",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
     "dominantRiskChain": {
@@ -129,7 +129,7 @@
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-07T08:11:30.630Z",
+    "generatedAt": "2026-05-07T09:03:35.365Z",
     "score": 48,
     "state": "watch",
     "stateZh": "背离观察",
@@ -428,13 +428,13 @@
   },
   "brentPricingLayer": {
     "contractVersion": "v28.0I-5A",
-    "generatedAt": "2026-05-07T08:11:30.630Z",
+    "generatedAt": "2026-05-07T09:03:35.365Z",
     "mode": "public_proxy_observation",
     "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
     "selectedBrent": {
       "value": 118.26,
       "source": "fred:DCOILBRENTEU",
-      "observedAt": "2026-05-07T07:20:51.838Z",
+      "observedAt": "2026-05-07T09:01:36.566Z",
       "status": "ok",
       "noteZh": "当前主 Brent 显示值来自现有 Daily / realtime 输入；该层只做公开代理审计，不改变 values.brent。"
     },
@@ -449,8 +449,8 @@
     "futuresProxy": {
       "labelZh": "Brent 期货代理",
       "source": "yahoo",
-      "value": 99.22,
-      "observedAt": "2026-05-07T07:10:51.000Z",
+      "value": 99.52,
+      "observedAt": "2026-05-07T08:51:17.000Z",
       "status": "ok",
       "limitationZh": "该字段为公开期货/市场报价代理，仅用于验证层观察。"
     },
@@ -468,8 +468,8 @@
       {
         "source": "barchart",
         "labelZh": "barchart",
-        "value": 99.35,
-        "observedAt": "2026-05-07T07:10:51.000Z",
+        "value": 99.53,
+        "observedAt": "2026-05-07T08:51:33.000Z",
         "status": "excluded",
         "role": "diagnostic",
         "participatesInPromotion": false,
@@ -478,7 +478,7 @@
       {
         "source": "stooq",
         "labelZh": "Stooq Brent diagnostic",
-        "value": 98.34,
+        "value": 99.06,
         "observedAt": "2026-05-07",
         "status": "excluded",
         "role": "diagnostic",
@@ -508,8 +508,8 @@
       {
         "source": "yahoo",
         "labelZh": "Yahoo BZ=F",
-        "value": 99.22,
-        "observedAt": "2026-05-07T07:10:51.000Z",
+        "value": 99.52,
+        "observedAt": "2026-05-07T08:51:17.000Z",
         "status": "ok",
         "role": "futures_proxy",
         "participatesInPromotion": true,
@@ -527,9 +527,9 @@
       }
     ],
     "proxySpread": {
-      "spotMinusFutures": 19.04,
-      "selectedMinusFutures": 19.04,
-      "maxProxyDivergencePct": 17.013,
+      "spotMinusFutures": 18.74,
+      "selectedMinusFutures": 18.74,
+      "maxProxyDivergencePct": 16.73,
       "status": "stress",
       "statusZh": "公开代理价差压力",
       "interpretationZh": "该价差只用于公开代理价格层审计，不改变 Brent 主值或 promotion。"
@@ -587,7 +587,7 @@
     "us10y": 4.43,
     "real10y": 1.96,
     "breakeven10y": 2.42,
-    "gold": 4745.600098,
+    "gold": 4732.200195,
     "spx": 7365.12
   },
   "topRisks": [
@@ -1035,7 +1035,7 @@
       "asset": "黄金",
       "score": 87,
       "bias": "中性偏多",
-      "reason": "金价 4745.6，通胀对冲仍在，但真实利率继续约束。"
+      "reason": "金价 4732.2，通胀对冲仍在，但真实利率继续约束。"
     },
     {
       "asset": "原油",
@@ -1223,7 +1223,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-07T08:11:30.630Z",
+        "triggeredAgo": "2026-05-07T09:03:35.365Z",
         "condition": "系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -1231,7 +1231,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-07T08:11:30.630Z",
+        "triggeredAgo": "2026-05-07T09:03:35.365Z",
         "condition": "ON RRP 16.33 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -1239,7 +1239,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-07T08:11:30.630Z",
+        "triggeredAgo": "2026-05-07T09:03:35.365Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -1278,7 +1278,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-07T08:11:30.630Z",
+    "lastRun": "2026-05-07T09:03:35.365Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
@@ -1513,6 +1513,237 @@
         "关键缺失 < 2：解除数据回退约束。",
         "曲线回到 0 以上且投资级信用利差 < 1.2%：解除结构性约束。"
       ]
+    }
+  },
+  "aiInterpretationLayer": {
+    "contractVersion": "v28.0J-0",
+    "generatedAt": "2026-05-07T09:03:35.365Z",
+    "mode": "rule_based_structured_interpretation",
+    "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
+    "facts": [
+      {
+        "key": "daily_brief_generated",
+        "labelZh": "Daily Brief 已生成",
+        "statementZh": "当前 Daily Brief 已生成今日主判断，并以解释层形式展示。",
+        "sourceFields": [
+          "dailyBrief.contractVersion",
+          "dailyBrief.oneLineConclusion"
+        ],
+        "confidence": "high"
+      },
+      {
+        "key": "divergence_layer_audit_only",
+        "labelZh": "背离层为审计层",
+        "statementZh": "divergenceLayer 当前为审计层和展示层，不参与评分或决策。",
+        "sourceFields": [
+          "divergenceLayer.boundaries"
+        ],
+        "confidence": "high"
+      },
+      {
+        "key": "brent_proxy_observation_mode",
+        "labelZh": "Brent 公开代理观察",
+        "statementZh": "Brent 公开代理价格层处于公开代理观察模式，不等同于正式实物成交价。",
+        "sourceFields": [
+          "brentPricingLayer.mode",
+          "brentPricingLayer.limitations"
+        ],
+        "confidence": "high"
+      },
+      {
+        "key": "consumer_monthly_source",
+        "labelZh": "消费者信心慢变量",
+        "statementZh": "消费者信心数据来自 FRED:UMCSENT，属于 Daily 月频慢变量。",
+        "sourceFields": [
+          "macroDrivers.consumer.source",
+          "macroDrivers.consumer.notes"
+        ],
+        "confidence": "high"
+      },
+      {
+        "key": "interpretation_layer_rule_based",
+        "labelZh": "规则化解释层",
+        "statementZh": "本层为规则化结构解释，不调用外部 AI API。",
+        "sourceFields": [
+          "aiInterpretationLayer.mode",
+          "aiInterpretationLayer.boundaries"
+        ],
+        "confidence": "high"
+      }
+    ],
+    "dataInferences": [
+      {
+        "key": "primary_divergence_observation",
+        "labelZh": "主要背离观察",
+        "statementZh": "当前主背离来自 divergenceLayer.primaryDivergence：能源定价背离观察。该结论仍是观察性解释。",
+        "basedOn": [
+          "divergenceLayer.primaryDivergence"
+        ],
+        "confidence": "medium"
+      },
+      {
+        "key": "brent_proxy_spread_observation",
+        "labelZh": "Brent 代理价差观察",
+        "statementZh": "公开 Brent 代理价格之间显示观察性价差，需要结合验证源继续跟踪。",
+        "basedOn": [
+          "brentPricingLayer.proxySpread"
+        ],
+        "confidence": "medium"
+      },
+      {
+        "key": "consumer_margin_observation",
+        "labelZh": "消费者体感边际观察",
+        "statementZh": "UMCSENT 三个月变化未转负，消费者体感暂未显示明确边际走弱。",
+        "basedOn": [
+          "macroDrivers.consumer.threeMonthChange"
+        ],
+        "confidence": "medium"
+      },
+      {
+        "key": "consumer_asset_divergence_check",
+        "labelZh": "消费者与资产背离检查",
+        "statementZh": "consumer_vs_asset_pricing 只说明消费者体感与风险资产定价之间是否存在观察性错配。",
+        "basedOn": [
+          "divergenceLayer.checks.consumer_vs_asset_pricing"
+        ],
+        "confidence": "medium"
+      }
+    ],
+    "modelJudgments": [
+      {
+        "key": "daily_brief_model_context",
+        "labelZh": "主判断上下文",
+        "statementZh": "Daily Brief 提供今日主判断压缩，但不生成交易建议。",
+        "modelSource": "dailyBrief",
+        "confidence": "medium"
+      },
+      {
+        "key": "interpretation_layers_do_not_execute",
+        "labelZh": "解释层不进入执行系统",
+        "statementZh": "当前新增解释层均未进入评分、仓位或执行灯系统。",
+        "modelSource": "combined",
+        "confidence": "high"
+      },
+      {
+        "key": "decision_context_separated",
+        "labelZh": "决策上下文隔离",
+        "statementZh": "decisionModel 可作为解释证据来源，但 AI 解释层不能改写策略状态或仓位建议。",
+        "modelSource": "decisionModel",
+        "confidence": "high"
+      },
+      {
+        "key": "cross_layer_observation_priority",
+        "labelZh": "跨层观察优先级",
+        "statementZh": "若数据健康正常且多个背离层同向提示，可提高人工观察优先级，但不能自动改变仓位。",
+        "modelSource": "combined",
+        "confidence": "medium"
+      }
+    ],
+    "scenarioHypotheses": [
+      {
+        "key": "energy_rates_asset_repricing_watch",
+        "labelZh": "能源—利率—资产重新定价观察",
+        "statementZh": "如果 Brent 公开代理价差扩大，同时 US10Y 上行、VIX 或 HY OAS 扩张，则能源—利率—资产重新定价链条需要升级观察。",
+        "triggerConditions": [
+          "brentPricingLayer.proxySpread.status 进入 watch 或 stress",
+          "displayInputsBaseline.us10y 上行",
+          "displayInputsBaseline.vix 或 displayInputsBaseline.hyOas 扩张"
+        ],
+        "invalidationConditions": [
+          "Brent 公开代理价差收敛",
+          "US10Y 回落",
+          "VIX 与 HY OAS 未扩张"
+        ],
+        "confidence": "medium"
+      },
+      {
+        "key": "consumer_asset_divergence_deescalation",
+        "labelZh": "消费者体感与风险资产背离降级条件",
+        "statementZh": "如果消费者信心修复、长端利率回落、信用利差未扩张，则消费者体感与风险资产背离可降级观察。",
+        "triggerConditions": [
+          "macroDrivers.consumer.threeMonthChange 改善",
+          "displayInputsBaseline.us10y 回落",
+          "displayInputsBaseline.hyOas 未扩张"
+        ],
+        "invalidationConditions": [
+          "UMCSENT 继续走弱",
+          "HY OAS 或 VIX 扩张",
+          "风险资产定价继续与体感数据背离"
+        ],
+        "confidence": "medium"
+      },
+      {
+        "key": "data_health_guardrail",
+        "labelZh": "数据健康保护条件",
+        "statementZh": "如果数据健康下降或关键字段缺失增加，AI 解释层应降低置信度，并以 Daily Brief、背离层和数据健康状态为主。",
+        "triggerConditions": [
+          "dailyRealtimeInput.healthScore 下降",
+          "realtime criticalMissing 增加",
+          "数据源进入 fallback 或 cache-only"
+        ],
+        "invalidationConditions": [
+          "Worker Health 正常",
+          "realtime-data 处于 fresh 或 aging",
+          "关键缺失项回落"
+        ],
+        "confidence": "high"
+      }
+    ],
+    "dataGaps": [
+      "Platts Dated Brent / 正式 Dated Brent 未接入。",
+      "Brent term structure 尚未接入。",
+      "crack spread / diesel stress 尚未接入。",
+      "shipping / freight stress 尚未接入。",
+      "世界秩序外部源质量需单独查看 World Order 模块。"
+    ],
+    "invalidationSignals": [
+      "Brent 回落且验证层不再提示压力。",
+      "美国10年期收益率回落。",
+      "VIX / HY OAS 未扩张且综合风险分数下降。",
+      "多个模块趋势回落。",
+      "数据健康恢复且风险判断不再获得交叉验证。"
+    ],
+    "evidenceLinks": [
+      {
+        "layer": "dailyBrief",
+        "field": "oneLineConclusion",
+        "noteZh": "今日主判断来自 Daily Brief。"
+      },
+      {
+        "layer": "divergenceLayer",
+        "field": "primaryDivergence",
+        "noteZh": "主要背离来自 divergenceLayer。"
+      },
+      {
+        "layer": "brentPricingLayer",
+        "field": "proxySpread",
+        "noteZh": "Brent 代理价差来自 brentPricingLayer。"
+      },
+      {
+        "layer": "macroDrivers.consumer",
+        "field": "threeMonthChange",
+        "noteZh": "消费者体感观察来自 FRED UMCSENT 月频数据。"
+      },
+      {
+        "layer": "decisionModel",
+        "field": "strategyState",
+        "noteZh": "策略状态仅作为上下文证据，不被 AI 解释层改写。"
+      }
+    ],
+    "confidence": {
+      "level": "high",
+      "score": 100,
+      "reasonZh": "基于 Daily Brief、背离层、Brent 代理审计层、消费者慢变量和数据健康状态生成。"
+    },
+    "boundaries": {
+      "displayOnly": true,
+      "interpretationOnly": true,
+      "generatedByExternalAi": false,
+      "usesExternalAiApi": false,
+      "affectsScoring": false,
+      "affectsDecisionModel": false,
+      "affectsExecutionLock": false,
+      "affectsPositionGuidance": false
     }
   }
 }
