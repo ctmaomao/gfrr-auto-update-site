@@ -204,6 +204,20 @@ Manual API tests must not:
 - v28.0K-4F Hidden diagnostic comparison, still no frontend
 - v28.0K-4G Separate frontend comparison design review
 
+### v28.0K-4B Local Dry-Run Scaffold
+
+v28.0K-4B adds a local dry-run scaffold command only:
+
+```bash
+npm run manual:external-ai:dry-run
+```
+
+This command reads the non-production sample input fixture only for readiness inspection. It does not call a provider, does not use network, does not read API keys, does not read secrets, does not write production data, and does not affect frontend display.
+
+The output is an `external_ai_manual_test_scaffold_report`, not external AI provider output. It must not be displayed, must not be committed as production data, and must not be treated as a replacement for the sample output fixture or live `externalAiInterpretationLayer`.
+
+Production `externalAiInterpretationLayer` remains disabled. v28.0K-4C is required before any provider adapter may exist, and that adapter must be behind explicit review and an environment gate.
+
 ## 13. Promotion Criteria / 晋升条件
 
 Before any external AI output becomes user-visible:

@@ -108,6 +108,12 @@ v28.0K-4A adds [`EXTERNAL_AI_MANUAL_TEST_DESIGN.md`](EXTERNAL_AI_MANUAL_TEST_DES
 
 This stage prepares future v28.0K-4B / v28.0K-4C manual test scaffolding by defining opt-in execution, environment-variable boundaries, non-production input/output handling, validator gating, fallback behavior, and production isolation. It does not affect scoring / decision / execution / position.
 
+## v28.0K-4B Local Manual Test Scaffold
+
+v28.0K-4B adds `npm run manual:external-ai:dry-run`, a local manual test scaffold that is disabled and no-network by default. It is not a provider adapter, does not call API, does not read secrets, does not write production data, and does not change frontend display or scoring / decision / execution / position.
+
+The scaffold prints a readiness report from controlled sample input and prepares v28.0K-4C, where any provider adapter would still require explicit review and an environment gate.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。
