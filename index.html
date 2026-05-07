@@ -284,6 +284,62 @@
         </article>
       </section>
 
+      <section class="full-width-section cockpit-section" id="brent-pricing-layer-section">
+        <article class="card full-width-card">
+          <div class="card-head split-head">
+            <div>
+              <h2>Brent 公开代理价格层</h2>
+              <p class="muted">区分 Brent 主值、公开现货代理、期货代理与验证源；该层不等同于 Platts Dated Brent。</p>
+            </div>
+            <span class="badge neutral" id="brent-pricing-mode">加载中...</span>
+          </div>
+          <p class="muted" id="brent-pricing-summary">Brent 公开代理价格层将在下一次 Daily 数据构建后显示。</p>
+          <div class="metric-row three">
+            <div class="metric-box compact">
+              <div class="metric-label">当前主 Brent</div>
+              <div class="metric-value" id="brent-selected-value">--</div>
+              <div class="mini-delta" id="brent-selected-source">来源：--</div>
+              <div class="mini-delta" id="brent-selected-observed">时间：--</div>
+              <p class="muted" id="brent-selected-note">暂不足以判断。</p>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">公开现货代理</div>
+              <div class="metric-value small" id="brent-spot-proxy">--</div>
+            </div>
+            <div class="metric-box compact">
+              <div class="metric-label">期货代理</div>
+              <div class="metric-value small" id="brent-futures-proxy">--</div>
+            </div>
+          </div>
+          <div class="grid two-col">
+            <div>
+              <h3>代理价差 / 背离观察</h3>
+              <div class="metric-box compact" id="brent-proxy-spread">--</div>
+            </div>
+            <div>
+              <h3>Brent promotion audit</h3>
+              <div class="metric-box compact" id="brent-promotion-audit">--</div>
+            </div>
+          </div>
+          <div style="margin-top: 16px;">
+            <h3>验证来源</h3>
+            <div class="grid two-col" id="brent-confirmation-sources"></div>
+          </div>
+          <div class="grid two-col" style="margin-top: 16px;">
+            <div>
+              <h3>数据缺口</h3>
+              <ul class="bullet-list" id="brent-pricing-data-gaps"></ul>
+            </div>
+            <div>
+              <h3>限制说明</h3>
+              <ul class="bullet-list" id="brent-pricing-limitations"></ul>
+            </div>
+          </div>
+          <p class="muted" id="brent-pricing-confidence">置信度：待确认</p>
+          <p class="muted" id="brent-pricing-boundary">该区域仅为 Brent 公开代理价格审计层，不改变 Brent 主值、评分、仓位、执行灯或交易建议。</p>
+        </article>
+      </section>
+
       <section class="full-width-section cockpit-section">
         <article class="card health-dashboard-card">
           <div class="card-head split-head">
@@ -970,6 +1026,6 @@
     <footer class="footer">独立静态版 · 适配静态托管 · 数据由自动化流程每日生成</footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0I-3B"></script>
+  <script type="module" src="scripts/app.js?v=28.0I-5C"></script>
 </body>
 </html>

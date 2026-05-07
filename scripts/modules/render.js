@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0I-3B';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0I-3B';
-import { renderList } from './renderTables.js?v=28.0I-3B';
+import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0I-5C';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0I-5C';
+import { renderList } from './renderTables.js?v=28.0I-5C';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0I-3B';
+} from './renderCharts.js?v=28.0I-5C';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0I-3B';
+} from './renderTables.js?v=28.0I-5C';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0I-3B';
+} from './renderAudit.js?v=28.0I-5C';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -617,6 +617,157 @@ export function renderDivergenceLayer(divergenceLayer) {
   const confidence = divergenceLayer.confidence && typeof divergenceLayer.confidence === 'object' ? divergenceLayer.confidence : {};
   setTextIfPresent('divergence-confidence', formatDivergenceConfidence(confidence));
   setTextIfPresent('divergence-boundary', '该区域仅为解释层和审计层展示，不参与评分、仓位、执行灯或交易建议。');
+}
+
+function formatBrentValue(value, digits = 2) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric.toFixed(digits) : '--';
+}
+
+function formatBrentText(value) {
+  return safeText(value, '暂不足以判断');
+}
+
+function formatBrentStatus(status) {
+  return {
+    ok: '可用',
+    fallback: '回退',
+    missing: '缺失',
+    excluded: '排除'
+  }[String(status || '').toLowerCase()] || '待确认';
+}
+
+function formatBrentMode(mode) {
+  return {
+    public_proxy_observation: '公开代理观察'
+  }[String(mode || '')] || '模式待确认';
+}
+
+function formatBrentRole(role) {
+  return {
+    anchor: '锚定源',
+    futures_proxy: '期货代理',
+    confirmation: '确认源',
+    diagnostic: '诊断源'
+  }[String(role || '')] || '角色待确认';
+}
+
+function formatBrentBoolean(value) {
+  if (value === true) return '是';
+  if (value === false) return '否';
+  return '--';
+}
+
+function formatBrentPriceNode(node = {}) {
+  const value = formatBrentValue(node.value);
+  const source = safeText(node.source, '--');
+  const observedAt = safeText(node.observedAt, '--');
+  const status = formatBrentStatus(node.status);
+  const label = safeText(node.labelZh, '公开代理');
+  const limitation = safeText(node.limitationZh, '');
+  return `${label}：${value} / 来源 ${source} / 时间 ${observedAt} / 状态 ${status}${limitation ? `。${limitation}` : ''}`;
+}
+
+function formatBrentConfidence(confidence = {}) {
+  const level = {
+    low: '低',
+    medium: '中',
+    high: '高'
+  }[String(confidence.level || '')] || '待确认';
+  const score = Number(confidence.score);
+  const scoreLabel = Number.isFinite(score) ? ` / ${Math.round(score)}` : '';
+  return `置信度：${level}${scoreLabel}。${safeText(confidence.reasonZh, '暂不足以判断')}`;
+}
+
+function renderBrentConfirmationSources(sources) {
+  const root = $('brent-confirmation-sources');
+  if (!root) return;
+  root.innerHTML = '';
+  const items = safeArray(sources).slice(0, 5);
+  if (!items.length) {
+    const fallback = document.createElement('div');
+    fallback.className = 'metric-box compact';
+    fallback.textContent = '暂无可展示的 Brent 验证来源。';
+    root.appendChild(fallback);
+    return;
+  }
+  items.forEach((source) => {
+    const card = document.createElement('div');
+    card.className = 'metric-box compact';
+
+    const title = document.createElement('div');
+    title.className = 'metric-label';
+    title.textContent = safeText(source?.labelZh, 'Brent 验证来源');
+    card.appendChild(title);
+
+    const value = document.createElement('div');
+    value.className = 'metric-value small';
+    value.textContent = `${formatBrentValue(source?.value)} / ${formatBrentStatus(source?.status)}`;
+    card.appendChild(value);
+
+    const meta = document.createElement('p');
+    meta.className = 'muted';
+    meta.textContent = `source=${safeText(source?.source, '--')}；role=${formatBrentRole(source?.role)}；参与 promotion=${formatBrentBoolean(source?.participatesInPromotion)}；observedAt=${safeText(source?.observedAt, '--')}。${safeText(source?.noteZh, '')}`;
+    card.appendChild(meta);
+
+    root.appendChild(card);
+  });
+}
+
+function renderBrentPricingLayerFallback() {
+  setTextIfPresent('brent-pricing-mode', '公开代理观察待生成');
+  setTextIfPresent('brent-pricing-summary', 'Brent 公开代理价格层将在下一次 Daily 数据构建后显示。当前仍可参考盘中快变量、背离校验层和数据健康状态。');
+  setTextIfPresent('brent-selected-value', '--');
+  setTextIfPresent('brent-selected-source', '来源：--');
+  setTextIfPresent('brent-selected-observed', '时间：--');
+  setTextIfPresent('brent-selected-note', '暂不足以判断。');
+  setTextIfPresent('brent-spot-proxy', '暂不足以判断。');
+  setTextIfPresent('brent-futures-proxy', '暂不足以判断。');
+  setTextIfPresent('brent-proxy-spread', '数据不足，暂不从前端反推 brentPricingLayer。');
+  setTextIfPresent('brent-promotion-audit', '暂不足以判断。');
+  renderBrentConfirmationSources([]);
+  renderListIfPresent('brent-pricing-data-gaps', [], '等待下一次 Daily 数据构建生成 Brent 公开代理价格层。');
+  renderListIfPresent('brent-pricing-limitations', [], '当前仅为公开代理价格观察，不等同于正式实物成交价。');
+  setTextIfPresent('brent-pricing-confidence', '置信度：待确认');
+  setTextIfPresent('brent-pricing-boundary', '该区域仅为 Brent 公开代理价格审计层，不改变 Brent 主值、评分、仓位、执行灯或交易建议。');
+}
+
+export function renderBrentPricingLayer(brentPricingLayer) {
+  if (!brentPricingLayer || typeof brentPricingLayer !== 'object' || brentPricingLayer.contractVersion !== 'v28.0I-5A') {
+    renderBrentPricingLayerFallback();
+    return;
+  }
+
+  setTextIfPresent('brent-pricing-mode', formatBrentMode(brentPricingLayer.mode));
+  setTextIfPresent('brent-pricing-summary', brentPricingLayer.summaryZh);
+
+  const selected = brentPricingLayer.selectedBrent && typeof brentPricingLayer.selectedBrent === 'object' ? brentPricingLayer.selectedBrent : {};
+  setTextIfPresent('brent-selected-value', formatBrentValue(selected.value));
+  setTextIfPresent('brent-selected-source', `来源：${safeText(selected.source, '--')} / 状态：${formatBrentStatus(selected.status)}`);
+  setTextIfPresent('brent-selected-observed', `时间：${safeText(selected.observedAt, '--')}`);
+  setTextIfPresent('brent-selected-note', selected.noteZh);
+
+  setTextIfPresent('brent-spot-proxy', formatBrentPriceNode(brentPricingLayer.publicSpotProxy || {}));
+  setTextIfPresent('brent-futures-proxy', formatBrentPriceNode(brentPricingLayer.futuresProxy || {}));
+
+  const spread = brentPricingLayer.proxySpread && typeof brentPricingLayer.proxySpread === 'object' ? brentPricingLayer.proxySpread : {};
+  setTextIfPresent(
+    'brent-proxy-spread',
+    `现货-期货：${formatBrentValue(spread.spotMinusFutures)}；主值-期货：${formatBrentValue(spread.selectedMinusFutures)}；最大代理背离：${formatBrentValue(spread.maxProxyDivergencePct)}%；状态：${safeText(spread.statusZh, '暂不足以判断')}。${safeText(spread.interpretationZh, '')}`
+  );
+
+  const audit = brentPricingLayer.promotionAudit && typeof brentPricingLayer.promotionAudit === 'object' ? brentPricingLayer.promotionAudit : {};
+  setTextIfPresent(
+    'brent-promotion-audit',
+    `promotionApplied=${formatBrentBoolean(audit.promotionApplied)}；moveStatus=${safeText(audit.moveStatus, '--')}；reason=${safeText(audit.promotionReason, '--')}；selectedSource=${safeText(audit.selectedSource, '--')}；anchorSource=${safeText(audit.anchorSource, '--')}；anchorAgeHours=${formatBrentValue(audit.anchorAgeHours, 1)}。`
+  );
+
+  renderBrentConfirmationSources(brentPricingLayer.confirmationSources);
+  renderListIfPresent('brent-pricing-data-gaps', safeArray(brentPricingLayer.dataGaps).slice(0, 4), '当前未记录额外数据缺口。');
+  renderListIfPresent('brent-pricing-limitations', safeArray(brentPricingLayer.limitations).slice(0, 4), '当前仅为公开代理价格观察，不等同于正式实物成交价。');
+  const confidence = brentPricingLayer.confidence && typeof brentPricingLayer.confidence === 'object' ? brentPricingLayer.confidence : {};
+  setTextIfPresent('brent-pricing-confidence', formatBrentConfidence(confidence));
+  setTextIfPresent('brent-pricing-boundary', '该区域仅为 Brent 公开代理价格审计层，不改变 Brent 主值、评分、仓位、执行灯或交易建议。');
 }
 
 export function renderWorldOrderStressOverlay(payload) {

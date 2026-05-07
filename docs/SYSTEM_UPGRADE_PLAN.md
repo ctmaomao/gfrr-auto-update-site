@@ -143,8 +143,9 @@ v28.0I 的任何结构升级都必须保护以上基线，不得通过重写页�
 - 不改变 `values.brent` 和 Brent promotion。
 - v28.0I-5A introduces Brent public proxy pricing layer data contract.
 - Uses existing data only.
-- No frontend rendering yet.
 - No Brent promotion / scoring / decision integration.
+- v28.0I-5C adds the read-only Brent public proxy pricing layer frontend display.
+- Missing `brentPricingLayer` must render a gentle fallback.
 
 ### Phase 6: AI Interpretation Layer Contract
 

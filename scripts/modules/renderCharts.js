@@ -1,5 +1,5 @@
-import { $, riskColor, fmtSignedArrow } from './config.js?v=28.0I-3B';
-import { renderList } from './renderTables.js?v=28.0I-3B';
+import { $, riskColor, fmtSignedArrow } from './config.js?v=28.0I-5C';
+import { renderList } from './renderTables.js?v=28.0I-5C';
 
 const TRANSMISSION_CHAIN_ORDER = [
   '油价→通胀',

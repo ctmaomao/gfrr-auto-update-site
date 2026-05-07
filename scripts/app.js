@@ -1,10 +1,10 @@
-import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0I-3B';
-import { buildHealthDashboardModel } from './modules/health.js?v=28.0I-3B';
-import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0I-3B';
-import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0I-3B';
-import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderDivergenceLayer, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0I-3B';
+import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0I-5C';
+import { buildHealthDashboardModel } from './modules/health.js?v=28.0I-5C';
+import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0I-5C';
+import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0I-5C';
+import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderDivergenceLayer, renderBrentPricingLayer, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0I-5C';
 
-window.__GFRR_FRONTEND_VERSION__ = '28.0I-3B';
+window.__GFRR_FRONTEND_VERSION__ = '28.0I-5C';
 
 async function main() {
   const [baseline, history, realtimeResult, worldOrderStressData] = await Promise.all([
@@ -67,6 +67,7 @@ async function main() {
   renderDailyBrief(data.dailyBrief);
   renderDecisionHeader(window.__GFRR_DECISION_HEADER__);
   renderDivergenceLayer(data.divergenceLayer);
+  renderBrentPricingLayer(data.brentPricingLayer);
   renderHealthDashboard(healthDashboard);
   renderWorldOrderStressOverlay(worldOrderStressData);
   // Legacy display dependencies: these older overview fields remain for the
