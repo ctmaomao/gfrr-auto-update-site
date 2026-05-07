@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-07T07:56:29.419Z",
+  "updatedAt": "2026-05-07T08:11:30.630Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
     "commitSha": "f0673361ae094784ecd377edb420d1324f4cfb11",
     "updatedAt": "2026-05-07T07:20:51.838Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-07T07:56:29.419Z"
+    "capturedAt": "2026-05-07T08:11:30.630Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-07T07:56:29.419Z",
+    "generatedAt": "2026-05-07T08:11:30.630Z",
     "macroState": "滞胀冲击 / 通胀冲击",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
     "dominantRiskChain": {
@@ -129,7 +129,7 @@
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-07T07:56:29.419Z",
+    "generatedAt": "2026-05-07T08:11:30.630Z",
     "score": 48,
     "state": "watch",
     "stateZh": "背离观察",
@@ -420,6 +420,148 @@
     "boundaries": {
       "displayOnly": true,
       "auditOnly": true,
+      "affectsScoring": false,
+      "affectsDecisionModel": false,
+      "affectsExecutionLock": false,
+      "affectsPositionGuidance": false
+    }
+  },
+  "brentPricingLayer": {
+    "contractVersion": "v28.0I-5A",
+    "generatedAt": "2026-05-07T08:11:30.630Z",
+    "mode": "public_proxy_observation",
+    "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
+    "selectedBrent": {
+      "value": 118.26,
+      "source": "fred:DCOILBRENTEU",
+      "observedAt": "2026-05-07T07:20:51.838Z",
+      "status": "ok",
+      "noteZh": "当前主 Brent 显示值来自现有 Daily / realtime 输入；该层只做公开代理审计，不改变 values.brent。"
+    },
+    "publicSpotProxy": {
+      "labelZh": "Brent 公开现货代理",
+      "source": "fred-anchor",
+      "value": 118.26,
+      "observedAt": "2026-05-01",
+      "status": "ok",
+      "limitationZh": "该字段为公开 Brent 现货代理观察，不等同于 Platts Dated Brent 或正式实物现货成交价。"
+    },
+    "futuresProxy": {
+      "labelZh": "Brent 期货代理",
+      "source": "yahoo",
+      "value": 99.22,
+      "observedAt": "2026-05-07T07:10:51.000Z",
+      "status": "ok",
+      "limitationZh": "该字段为公开期货/市场报价代理，仅用于验证层观察。"
+    },
+    "confirmationSources": [
+      {
+        "source": "ice",
+        "labelZh": "ice",
+        "value": null,
+        "observedAt": null,
+        "status": "missing",
+        "role": "diagnostic",
+        "participatesInPromotion": false,
+        "noteZh": "该来源仅作为诊断观察，不参与 Brent promotion。"
+      },
+      {
+        "source": "barchart",
+        "labelZh": "barchart",
+        "value": 99.35,
+        "observedAt": "2026-05-07T07:10:51.000Z",
+        "status": "excluded",
+        "role": "diagnostic",
+        "participatesInPromotion": false,
+        "noteZh": "该来源仅作为诊断观察，不参与 Brent promotion。"
+      },
+      {
+        "source": "stooq",
+        "labelZh": "Stooq Brent diagnostic",
+        "value": 98.34,
+        "observedAt": "2026-05-07",
+        "status": "excluded",
+        "role": "diagnostic",
+        "participatesInPromotion": false,
+        "noteZh": "该来源仅作为诊断观察，不参与 Brent promotion。"
+      },
+      {
+        "source": "marketwatch",
+        "labelZh": "marketwatch",
+        "value": null,
+        "observedAt": null,
+        "status": "missing",
+        "role": "diagnostic",
+        "participatesInPromotion": false,
+        "noteZh": "该来源仅作为诊断观察，不参与 Brent promotion。"
+      },
+      {
+        "source": "oilprice",
+        "labelZh": "oilprice",
+        "value": 98.33,
+        "observedAt": null,
+        "status": "excluded",
+        "role": "diagnostic",
+        "participatesInPromotion": false,
+        "noteZh": "该来源仅作为诊断观察，不参与 Brent promotion。"
+      },
+      {
+        "source": "yahoo",
+        "labelZh": "Yahoo BZ=F",
+        "value": 99.22,
+        "observedAt": "2026-05-07T07:10:51.000Z",
+        "status": "ok",
+        "role": "futures_proxy",
+        "participatesInPromotion": true,
+        "noteZh": "该来源来自现有 Brent validation / confirmation 字段，仅用于公开代理价格层审计。"
+      },
+      {
+        "source": "fred-anchor",
+        "labelZh": "FRED DCOILBRENTEU",
+        "value": 118.26,
+        "observedAt": "2026-05-01",
+        "status": "ok",
+        "role": "anchor",
+        "participatesInPromotion": true,
+        "noteZh": "该来源来自现有 Brent validation / confirmation 字段，仅用于公开代理价格层审计。"
+      }
+    ],
+    "proxySpread": {
+      "spotMinusFutures": 19.04,
+      "selectedMinusFutures": 19.04,
+      "maxProxyDivergencePct": 17.013,
+      "status": "stress",
+      "statusZh": "公开代理价差压力",
+      "interpretationZh": "该价差只用于公开代理价格层审计，不改变 Brent 主值或 promotion。"
+    },
+    "promotionAudit": {
+      "promotionApplied": null,
+      "moveStatus": null,
+      "promotionReason": null,
+      "selectedSource": "fred:DCOILBRENTEU",
+      "anchorSource": "fred-anchor",
+      "anchorAgeHours": null
+    },
+    "dataGaps": [
+      "Platts Dated Brent / 正式 Dated Brent 未接入。",
+      "Brent 期限结构尚未正式接入。",
+      "Crack spread / 柴油裂解价差尚未正式接入。",
+      "油轮运费 / 航运压力尚未正式接入。"
+    ],
+    "limitations": [
+      "当前仅为公开代理价格观察，不等同于付费 Dated Brent 或实物成交数据。",
+      "该层不改变 Brent 主值、评分、仓位或执行灯。"
+    ],
+    "confidence": {
+      "level": "medium",
+      "score": 60,
+      "reasonZh": "公开现货代理与期货代理均可用，但该层仍只作为审计观察。"
+    },
+    "boundaries": {
+      "displayOnly": true,
+      "auditOnly": true,
+      "affectsValuesBrent": false,
+      "affectsBrentPromotion": false,
       "affectsScoring": false,
       "affectsDecisionModel": false,
       "affectsExecutionLock": false,
@@ -1081,7 +1223,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-07T07:56:29.419Z",
+        "triggeredAgo": "2026-05-07T08:11:30.630Z",
         "condition": "系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -1089,7 +1231,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-07T07:56:29.419Z",
+        "triggeredAgo": "2026-05-07T08:11:30.630Z",
         "condition": "ON RRP 16.33 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -1097,7 +1239,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-07T07:56:29.419Z",
+        "triggeredAgo": "2026-05-07T08:11:30.630Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -1136,7 +1278,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-07T07:56:29.419Z",
+    "lastRun": "2026-05-07T08:11:30.630Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
