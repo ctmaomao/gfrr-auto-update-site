@@ -190,6 +190,8 @@ The DeepSeek command requires `DEEPSEEK_API_KEY`, `--allow-network`, `--validate
 
 Failure is a manual diagnostic event, not a production incident. Do not commit the artifact, do not copy it into `data/radar-data.json`, and do not use it to troubleshoot production `externalAiInterpretationLayer`. Production remains disabled and rule-based fallback remains unchanged.
 
+After running `npm run manual:external-ai:deepseek`, do not run `git add manual-artifacts/` and do not commit artifacts. `manual-artifacts/` is ignored by git; delete local artifacts after review if they are no longer needed. A validator PASS means only that the artifact passed offline checks, not that it is approved for production promotion, frontend display, scoring, decision, execution, or position use.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：

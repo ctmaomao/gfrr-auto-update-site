@@ -254,7 +254,7 @@ Required gates:
 - safe `--output` path outside production / frontend / workflow directories
 - `DEEPSEEK_API_KEY` present in the environment
 
-The command uses the sample input fixture as explicit manual input and writes only to a manual artifact path such as `manual-artifacts/external-ai/deepseek-output-latest.json`. The artifact must not be committed, must not be copied into `data/radar-data.json`, and must not be displayed in the frontend.
+The command uses the sample input fixture as explicit manual input and writes only to a manual artifact path such as `manual-artifacts/external-ai/deepseek-output-latest.json`. The `manual-artifacts/` directory is ignored by git, and manual DeepSeek output artifacts must not be committed. Artifacts are for local/manual review only; they must not be imported into `data/radar-data.json`, must not be treated as production data, and must not be displayed in the frontend.
 
 OpenAI remains unsupported in v28.0K-4D. Production `externalAiInterpretationLayer` remains disabled and `provider=none`; the manual artifact path does not modify Daily, Worker, Pages deploy, scoring, decision, execution, or position logic.
 

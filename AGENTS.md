@@ -39,7 +39,7 @@
 - v28.0K-4A 后，任何 external AI API calls implementation 必须先阅读 `docs/EXTERNAL_AI_MANUAL_TEST_DESIGN.md`；manual API test 必须 opt-in、validator-gated，并与 production data / scoring / decision / execution / position 隔离。
 - v28.0K-4B 的 `scripts/run-external-ai-manual-test.mjs` 必须保持 no-network dry-run scaffold；不得在未另开 K-4C reviewed PR 前加入 provider calls，不得读取 API keys。
 - v28.0K-4C 的 `scripts/external-ai/provider-adapters.mjs` 只是 disabled provider skeleton；不得把它改成真实 provider call，不得读取 API keys。任何真实 DeepSeek / OpenAI provider call 必须另开 reviewed PR。
-- v28.0K-4D 的 DeepSeek manual artifact test 只能在用户明确要求且提供 `DEEPSEEK_API_KEY` 环境变量时运行；不得打印 API key，不得提交 output artifact，不得把 artifact 提升为生产数据或前端展示，除非另开 reviewed PR 且 validator 通过。
+- v28.0K-4D 的 DeepSeek manual artifact test 只能在用户明确要求且提供 `DEEPSEEK_API_KEY` 环境变量时运行；不得打印 API key，不得提交 `manual-artifacts/` 或其中的 output artifact，不得把 artifact 提升为生产数据或前端展示，除非另开 reviewed PR 且 validator 通过。
 - v28.0I compact cockpit layout 不得被后续改动破坏，除非另开版本评审；Global Risk Heatmap 必须继续独立显示，World Order Stress Overlay 仍是独立 regime overlay，不是第七个底层风险模块。
 - World Order 外部源失败必须降级 status / confidence，而不是清空旧可用缓存；GDELT partial / stale / error 必须可解释，不得伪装成功或输出 NaN / undefined。
 - World Order UI 必须清楚显示低置信 / 数据限制，不得把 proxy、stale、manual_required 或 not_configured 数据包装成高确定性结论。
