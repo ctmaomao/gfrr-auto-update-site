@@ -144,6 +144,12 @@ v28.0K-4E-1 adds compact manual input generation for live site-structured `radar
 
 This stage remains manual-only and artifact-only. It does not run a real DeepSeek call automatically, does not add secrets, SDKs, dependencies, workflows, frontend display, Worker changes, production data writes, or scoring / decision / execution / position impact. Timeout failure artifacts may include request diagnostics such as timeout and approximate input size, but must not include API keys, headers, or raw request bodies.
 
+## v28.0K-4E-2 Global Unsafe Wording Prompt Guard
+
+v28.0K-4E-2 tightens the manual DeepSeek prompt after compact live input successfully reached the provider but failed local output validation because unsafe wording appeared in `modelJudgments`. The fix applies unsafe wording rules globally across returned string fields and keeps boundary semantics in `boundaries` booleans.
+
+This stage does not weaken the validator, does not run a real DeepSeek call automatically, does not write production data, does not display external AI output, and does not affect scoring / decision / execution / position.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

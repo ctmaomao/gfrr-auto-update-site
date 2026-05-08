@@ -220,6 +220,8 @@ v28.0K-4E input artifacts may contain real site-structured data from `data/radar
 
 v28.0K-4E-1 compact input artifacts are still site-structured context only. Compaction must not add external market data, infer missing market facts, or include secrets/private data. Omitted fields should be documented in the artifact `compaction.omittedLargeFields` metadata so a reviewer can understand why historical arrays, chart arrays, raw diagnostics, or full action queues are absent.
 
+v28.0K-4E-2 applies the unsafe wording guard globally across every returned string field, not only `auditFlags`. Manual external AI output must not use prose disclaimers containing `投资建议` or `交易建议`; boundary semantics belong only in boolean fields such as `boundaries.notInvestmentAdvice=true`, `boundaries.affectsScoring=false`, `boundaries.affectsDecisionModel=false`, `boundaries.affectsExecutionLock=false`, and `boundaries.affectsPositionGuidance=false`. `modelJudgments` must focus on evidence strength, data sufficiency, uncertainty, and watch / insufficient-data / low-confidence conditions, not trading, execution, portfolio action, or position language.
+
 ## 13. Non-goals / 非目标
 
 This stage does not:
