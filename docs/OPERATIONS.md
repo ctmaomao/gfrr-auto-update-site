@@ -405,6 +405,14 @@ Use this run as proof that the dry-run skeleton works in GitHub Actions. Do not 
 
 If operators rerun the workflow, keep it dry-run only with the default `fixture_sample` input or `local_compact`. Artifacts remain short-lived diagnostics only and must not be promoted.
 
+### External AI provider-call workflow design status
+
+v28.0L-3C is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md). It is design-only.
+
+Do not add `DEEPSEEK_API_KEY` to GitHub Secrets until a provider-call implementation PR is explicitly approved. Continue using the v28.0L-3B `External AI Manual Dry Run` workflow for no-secret validation. The dry-run workflow must remain `provider=none`, no-network, no-secret, and no-provider-call.
+
+Provider-call artifacts, if implemented later, are still non-production manual diagnostics. A successful provider-call artifact would not imply Daily readiness, frontend readiness, production data readiness, or scoring / decision / execution / position readiness.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：

@@ -34,6 +34,8 @@ v28.0L-3 designs a future manual `workflow_dispatch` provider test path. Any fut
 
 v28.0L-3B adds a manual `workflow_dispatch` dry-run skeleton only. It does not call any API, does not use or reference a provider secret, and does not create API integration. Provider-call workflow remains a later reviewed stage.
 
+v28.0L-3C is tracked in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md). It identifies the future DeepSeek provider-call command, explicit operator gates, secret-injection boundary, validation, quality review, artifact, exit-code, and cost-control policy. No API path is active in L-3C, no workflow file is added or modified, and no provider call is run.
+
 ## 2. Current Baseline / 当前基线
 
 当前稳定基线为：

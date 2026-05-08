@@ -336,6 +336,8 @@ v28.0L-3 designs a future manual `workflow_dispatch` artifact-only path in [`EXT
 
 v28.0L-3B adds that dry-run workflow skeleton only. It is `workflow_dispatch` only, has no provider or allow-network inputs, references no provider secrets, uploads only sanitized dry-run diagnostics, and still performs no provider call, no production data write, and no frontend display. It does not change the L-0 production architecture status: production external AI remains not implemented.
 
+v28.0L-3C provider-call workflow design is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md). It remains design-only. A future provider-call workflow would still be artifact-only and would not be production integration. L-3C allows no Daily integration, frontend display, production data write, enabled `externalAiInterpretationLayer`, or scoring / decision / execution / position change.
+
 ## 18. Non-goals
 
 v28.0L-0 does not:

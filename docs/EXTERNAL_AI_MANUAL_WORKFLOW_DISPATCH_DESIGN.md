@@ -446,3 +446,9 @@ Validated safety findings:
 This audit does not enable provider calls. It does not add or require `DEEPSEEK_API_KEY`, does not write production data, does not make external AI frontend-visible, and does not change scoring / decision / execution / position behavior.
 
 Artifacts from this run are dry-run diagnostics only. They are not production data, are not external AI output, and must not be copied into `data/radar-data.json` or any frontend-visible path.
+
+## v28.0L-3C provider-call workflow design note
+
+v28.0L-3C is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md). It designs a future provider-call workflow path only.
+
+The existing v28.0L-3B workflow remains dry-run-only. Do not modify the dry-run workflow to call a provider, add provider inputs, add `allow_network`, add a `dry_run=false` path, reference secrets, or upload provider output in the L-3C design PR. Any implementation must be a separate reviewed PR.
