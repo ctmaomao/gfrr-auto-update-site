@@ -57,6 +57,7 @@
 - v28.0K-4B External AI Manual Dry-Run Scaffold：新增 `npm run manual:external-ai:dry-run`，仅输出 no-network scaffold report，不调用 provider。
 - v28.0K-4C External AI Provider Adapter Skeleton：新增 disabled provider adapter skeleton 与 `npm run check:external-ai-provider-adapters`；`deepseek` / `openai` 仍只是 refused placeholders，不联网、不读 API keys。
 - v28.0K-4D DeepSeek Manual Artifact Test：新增显式 opt-in 的 `npm run manual:external-ai:deepseek`，仅写 manual artifact 并通过 validator gate；不写生产数据、不显示前端、不影响 scoring / decision / execution / position。OpenAI 仍 disabled。
+- v28.0K-4E Live Site Data Manual Input Artifact：新增 `npm run manual:external-ai:build-input`，从本地或 allowlisted live `radar-data.json` 生成 ignored manual input artifact；不调用 DeepSeek、不读 API keys、不写生产数据、不显示前端。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。

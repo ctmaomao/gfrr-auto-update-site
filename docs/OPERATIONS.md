@@ -208,6 +208,42 @@ On Windows PowerShell, read the artifact as UTF-8 to avoid encoding confusion:
 Get-Content manual-artifacts/external-ai/deepseek-output-latest.json -Raw -Encoding utf8
 ```
 
+## External AI Live Site Manual Input Artifact
+
+v28.0K-4E adds a manual-only input builder for real site-structured radar data. It writes an ignored artifact and does not call DeepSeek, read API keys, mutate production data, display frontend output, or change scoring / decision / execution / position logic.
+
+Build manual input from local site data:
+
+```bash
+npm run manual:external-ai:build-input
+```
+
+Confirm the generated input artifact is ignored:
+
+```bash
+git check-ignore -v manual-artifacts/external-ai/manual-input-latest.json
+```
+
+Optional explicit live-site source, read-only and allowlisted:
+
+```bash
+node scripts/build-external-ai-manual-input.mjs --source-url https://radar.gfrfinradar.uk/data/radar-data.json --output manual-artifacts/external-ai/manual-input-live.json
+```
+
+Optional manual DeepSeek run using the generated input. Run this only when an operator explicitly intends a paid/manual provider call and has provided `DEEPSEEK_API_KEY` locally:
+
+```bash
+node scripts/run-external-ai-manual-test.mjs --provider deepseek --input manual-artifacts/external-ai/manual-input-latest.json --output manual-artifacts/external-ai/deepseek-output-latest.json --allow-network --validate-output
+```
+
+Validate a saved manual DeepSeek output:
+
+```bash
+npm run check:external-ai-output -- manual-artifacts/external-ai/deepseek-output-latest.json
+```
+
+Do not commit manual artifacts. Do not copy input or output artifacts into `data/radar-data.json`. Do not display external AI output in the frontend. Remove `DEEPSEEK_API_KEY` from the local shell after a manual test.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
