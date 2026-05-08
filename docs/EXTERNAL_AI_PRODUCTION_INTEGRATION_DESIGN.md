@@ -319,6 +319,7 @@ Local manual artifacts must not become production data. GitHub tokens and workfl
 Before any implementation PR:
 
 - K-4G baseline remains green.
+- v28.0L-1 readiness audit has passed and confirmed the next allowed step.
 - Manual compact live artifact has at least one recent successful validator PASS.
 - Quality review has been run on a successful artifact.
 - Provider failure handling is documented.
@@ -326,6 +327,8 @@ Before any implementation PR:
 - Cost budget is agreed.
 - Frontend placement is agreed.
 - Rollback plan is agreed.
+
+v28.0L-1 readiness audit is the gate before implementation. L-2 must be a disabled skeleton only, with no provider calls and no secret reads. Do not proceed from L-0 directly to workflow automation, Daily integration, production data writes, or frontend display.
 
 ## 18. Non-goals
 

@@ -386,6 +386,8 @@ Manual artifacts must not be copied into `data/radar-data.json`, `data/*.json`, 
 
 [`EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`](EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md) designs a future production `externalAiInterpretationLayer` contract, but it is not implemented. The current production data contract remains the v28.0K-3A disabled scaffold: `enabled=false`, `status="disabled"`, `provider="none"`, and `output=null`.
 
+v28.0L-1 readiness audit does not change the production data contract. [`EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md`](EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md) confirms production external AI data writes are not ready, and `externalAiInterpretationLayer` remains the disabled scaffold.
+
 ### v28.0I contract boundary summary
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。当前 live data 已包含 `dailyBrief.contractVersion = v28.0I-1`、`divergenceLayer.contractVersion = v28.0I-3A`、`macroDrivers.consumer`、`consumer_vs_asset_pricing` 与 `brentPricingLayer.contractVersion = v28.0I-5A`。

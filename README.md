@@ -61,6 +61,7 @@
 - v28.0K-4E-1 Live Input Compaction and Timeout Diagnostics：新增 compact manual input artifact 与 `--timeout-ms` 诊断，用于降低 live-data DeepSeek manual test 的输入体积；仍不自动调用 DeepSeek、不写生产数据、不显示前端。
 - v28.0K-4G External AI Manual Test Baseline：External AI API 仍未 production-enabled。当前只存在本地 / 手动 DeepSeek artifact path，输出必须先通过 `check:external-ai-output` 与 `review:external-ai-artifact`；尚无 frontend / Daily / Worker / workflow / production data integration。
 - v28.0L-0 External AI Production Integration Design：新增 production integration design doc；当前仍无 production external AI、无 Daily provider call、无 frontend display、无 production data write。
+- v28.0L-1 External AI Implementation Readiness Audit：新增 readiness audit；结论为 production integration not ready，下一阶段只允许 disabled skeleton/no provider calls。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。
