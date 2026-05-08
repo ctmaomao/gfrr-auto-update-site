@@ -258,6 +258,14 @@ The command uses the sample input fixture as explicit manual input and writes on
 
 OpenAI remains unsupported in v28.0K-4D. Production `externalAiInterpretationLayer` remains disabled and `provider=none`; the manual artifact path does not modify Daily, Worker, Pages deploy, scoring, decision, execution, or position logic.
 
+### v28.0K-4D-1 DeepSeek JSON Mode Hardening
+
+v28.0K-4D-1 keeps the same explicit DeepSeek manual artifact path but hardens JSON mode after an observed empty `message.content` response. The DeepSeek request disables thinking, increases `max_tokens`, and strengthens the system prompt so the provider is repeatedly instructed to return one valid JSON object with no markdown or explanation outside JSON.
+
+Failure artifacts may include sanitized `responseDiagnostics` for review, including finish reason, message keys, content length, reasoning-content presence, usage keys, and a redacted provider error summary. The artifact remains manual-only and must not include API keys, request headers, or a full raw provider response.
+
+This stage does not write production data, does not display external AI output in the frontend, and does not affect scoring, `decisionModel`, execution, or position logic.
+
 ## 13. Promotion Criteria / 晋升条件
 
 Before any external AI output becomes user-visible:

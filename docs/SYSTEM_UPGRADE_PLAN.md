@@ -126,6 +126,12 @@ v28.0K-4D adds the first real DeepSeek manual API path. It is explicit opt-in, a
 
 This stage does not add scheduled external AI workflows, does not write production data, does not change frontend display, and does not affect scoring / decision / execution / position. OpenAI remains disabled. Production `externalAiInterpretationLayer` remains disabled and continues to fallback to the rule-based `aiInterpretationLayer`.
 
+## v28.0K-4D-1 DeepSeek Manual Response Diagnostic Hardening
+
+v28.0K-4D-1 is a narrow fix to the existing DeepSeek manual artifact path after an observed empty `message.content` response. It hardens JSON mode with thinking disabled, larger `max_tokens`, stronger JSON-only prompt language, and sanitized failure diagnostics for manual review.
+
+This stage does not add dependencies, SDKs, secrets, production data writes, frontend display, Worker changes, workflows, or scoring / decision / execution / position impact. Manual artifacts remain ignored and must not be promoted into production data.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。
