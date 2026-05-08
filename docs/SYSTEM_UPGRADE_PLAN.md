@@ -181,6 +181,12 @@ External AI remains manual-only, artifact-only, validator-gated, quality-review-
 
 The next stage must be a separate reviewed design PR before any production integration. Passing `check:external-ai-output` or `review:external-ai-artifact` is not sufficient for production promotion.
 
+## v28.0L-0 External AI Production Integration Design
+
+v28.0L-0 adds [`EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`](EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md). It is production integration design only: no code, no provider call, no secrets, no workflow automation, no production data write, no frontend display, and no scoring / decision / execution / position impact.
+
+The design defines a future staged path from manual artifacts toward a disabled-by-default production integration. Any implementation must be split into later reviewed PRs with feature flags, validator and quality gates, provider failure handling, cost controls, rollback/disable switches, and frontend visibility reviewed separately.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

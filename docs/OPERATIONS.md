@@ -350,6 +350,12 @@ Security:
 - Clear `DEEPSEEK_API_KEY` from the local shell after manual tests.
 - Do not commit `manual-artifacts/`.
 
+### External AI production integration design status
+
+v28.0L-0 is documented in [`EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`](EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md), but no production integration exists. Do not create GitHub secrets, scheduled provider calls, Daily provider calls, Worker provider calls, or frontend display until the L-0 design is reviewed and a later implementation PR is approved.
+
+Manual testing remains the only allowed provider usage. Production `externalAiInterpretationLayer` remains the disabled scaffold.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
