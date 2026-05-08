@@ -187,6 +187,12 @@ v28.0L-0 adds [`EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`](EXTERNAL_AI_PRODU
 
 The design defines a future staged path from manual artifacts toward a disabled-by-default production integration. Any implementation must be split into later reviewed PRs with feature flags, validator and quality gates, provider failure handling, cost controls, rollback/disable switches, and frontend visibility reviewed separately.
 
+## v28.0L-1 External AI Implementation Readiness Audit
+
+v28.0L-1 adds [`EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md`](EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md). It is documentation-only and records the current decision as **NO-GO for production integration**.
+
+The only recommended next implementation path is v28.0L-2 Disabled Production Provider Path Skeleton — No Provider Calls. Do not proceed directly to workflow provider calls, Daily integration, production data writes, frontend display, secrets, or enabled `externalAiInterpretationLayer`.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。
