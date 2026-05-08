@@ -179,18 +179,22 @@ function buildDeepSeekSystemPrompt() {
     'User-facing text must be Chinese, professional, restrained, and non-sensational.',
     'Separate facts, inferences, modelJudgments, scenarioHypotheses, dataGaps, invalidationSignals, sourceAttribution, auditFlags, confidence, and boundaries.',
     'Do not provide investment advice, trading instructions, deterministic crisis claims, war probability, or world-war predictions.',
-    'Global unsafe wording rule: the following Chinese phrases must not appear anywhere in any returned string field: 投资建议, 交易建议, 买入, 卖出, 加仓, 减仓, 满仓, 清仓, 立即执行, 执行交易, 仓位建议, 仓位.',
+    'Global unsafe wording rule: the following Chinese phrases must not appear anywhere in any returned string field: 投资建议, 交易建议, 买入, 卖出, 加仓, 减仓, 满仓, 清仓, 立即执行, 执行交易, 仓位建议, 执行灯, 禁止新增, 新增仓位, 现金缓冲, 风险敞口, 敞口带, 总风险敞口, 仓位.',
     'This global unsafe wording rule applies to summaryZh, facts, inferences, modelJudgments, scenarioHypotheses, dataGaps, invalidationSignals, sourceAttribution.noteZh, auditFlags, confidence.reasonZh, and every other text field.',
     'Do not write disclaimer sentences using these unsafe phrases. Do not write 不构成交易建议 or 不构成投资建议 in any text field.',
     'Express safety boundaries only through boundaries.notInvestmentAdvice=true and the other boolean boundaries.',
     'auditFlags must contain short neutral diagnostic tags only, not prose sentences.',
     'Allowed auditFlags vocabulary includes manual_artifact_only, sample_input_only, site_structured_data_only, validator_required, non_production_output, and no_frontend_display.',
     'modelJudgments must discuss only evidence strength, data sufficiency, uncertainty, and whether a condition is watch, insufficient_data, or low_confidence.',
-    'modelJudgments must not discuss trading, execution, portfolio action, or position.',
+    'modelJudgments must not discuss trading, execution, portfolio action, exposure, cash targets, or position.',
+    'If decisionContext is present, summarize it only as 决策上下文显示系统处于只读防御状态 or 该信息仅作为系统状态背景，不改变任何判断.',
+    'Do not repeat concrete execution or position fields from decisionContext. Do not include concrete exposure bands, cash targets, execution-light colors, or position details.',
     'sourceAttribution must be an array of objects, not a string and not an array of strings.',
     'Each sourceAttribution object must include sourceLayer, field, claimType, and noteZh.',
     'Each sourceAttribution.noteZh must include validator-recognized attribution wording: 样例结构化输入, 站内结构化数据, or sample input.',
-    'For sample fixture based outputs, use noteZh: 来自提供的样例结构化输入.',
+    'For local_file or allowed_live_url input with live-site inputVersion, use noteZh: 来自站内结构化数据 and prefer claimType: site_structured_data.',
+    'Only sample fixture input may use noteZh: 来自提供的样例结构化输入 and claimType: sample_input.',
+    'Do not call live site radar-data sample data. Do not write 样例输入 or 样例结构化输入 when input source is local_file or allowed_live_url.',
     'Do not use only 来自提供的结构化输入 because it may not satisfy validator attribution keyword detection.',
     'Keep claimType as one of site_structured_data, rule_based_interpretation, or sample_input.',
     'Every factual claim should map to one provided structured input layer: dailyBrief, divergenceLayer, brentPricingLayer, macroDrivers.consumer, aiInterpretationLayer, dataHealth, or decisionContext.',
@@ -203,7 +207,33 @@ function buildDeepSeekSystemPrompt() {
   ].join('\n');
 }
 
+function getInputPromptSemantics(input) {
+  const sourceType = input?.source?.type;
+  const inputVersion = typeof input?.inputVersion === 'string' ? input.inputVersion : '';
+  const isSiteRadarData = (
+    sourceType === 'local_file' ||
+    sourceType === 'allowed_live_url' ||
+    input?.source?.dataSemantics === 'site_structured_data' ||
+    inputVersion.includes('live-site')
+  );
+  if (isSiteRadarData) {
+    return {
+      sourceKind: 'site_structured_data',
+      claimType: 'site_structured_data',
+      noteZh: '来自站内结构化数据',
+      confidenceGuidance: 'For live/local site structured input without external independent verification, confidence.score should usually be 20-40. Keep confidence.level low unless evidence is very strong. confidence.reasonZh should say 基于站内结构化数据，尚未接入外部独立验证.'
+    };
+  }
+  return {
+    sourceKind: 'sample_fixture',
+    claimType: 'sample_input',
+    noteZh: '来自提供的样例结构化输入',
+    confidenceGuidance: 'For sample fixture input, confidence.score may be 0-20. confidence.reasonZh may mention 样例结构化输入.'
+  };
+}
+
 function buildDeepSeekUserPrompt(input) {
+  const promptSemantics = getInputPromptSemantics(input);
   return [
     'Return a JSON object with this shape:',
     JSON.stringify({
@@ -229,8 +259,8 @@ function buildDeepSeekUserPrompt(input) {
         {
           sourceLayer: 'dailyBrief',
           field: 'macroState',
-          claimType: 'sample_input',
-          noteZh: '来自提供的样例结构化输入'
+          claimType: promptSemantics.claimType,
+          noteZh: promptSemantics.noteZh
         }
       ],
       auditFlags: [
@@ -242,7 +272,7 @@ function buildDeepSeekUserPrompt(input) {
       ],
       confidence: {
         level: 'low',
-        score: 0,
+        score: promptSemantics.sourceKind === 'site_structured_data' ? 30 : 10,
         reasonZh: 'string'
       },
       boundaries: {
@@ -261,14 +291,17 @@ function buildDeepSeekUserPrompt(input) {
     '- If current time is unavailable, use the input generatedAt.',
     '- Do not invent a market-data timestamp; generatedAt is artifact metadata only.',
     'global unsafe wording requirements:',
-    '- The following Chinese phrases must not appear anywhere in any returned string field: 投资建议, 交易建议, 买入, 卖出, 加仓, 减仓, 满仓, 清仓, 立即执行, 执行交易, 仓位建议, 仓位.',
+    '- The following Chinese phrases must not appear anywhere in any returned string field: 投资建议, 交易建议, 买入, 卖出, 加仓, 减仓, 满仓, 清仓, 立即执行, 执行交易, 仓位建议, 执行灯, 禁止新增, 新增仓位, 现金缓冲, 风险敞口, 敞口带, 总风险敞口, 仓位.',
     '- This includes summaryZh, facts, inferences, modelJudgments, scenarioHypotheses, dataGaps, invalidationSignals, sourceAttribution.noteZh, auditFlags, confidence.reasonZh, and every other text field.',
     '- Do not write disclaimer sentences using these phrases.',
     '- Do not write 不构成交易建议 or 不构成投资建议 in any text field.',
     '- Express all boundary semantics only through boundaries.notInvestmentAdvice=true, boundaries.affectsScoring=false, boundaries.affectsDecisionModel=false, boundaries.affectsExecutionLock=false, and boundaries.affectsPositionGuidance=false.',
     'modelJudgments requirements:',
     '- modelJudgments should discuss only evidence strength, data sufficiency, uncertainty, and whether a condition is watch, insufficient_data, or low_confidence.',
-    '- modelJudgments must not discuss trading, execution, portfolio action, or position.',
+    '- modelJudgments must not discuss trading, execution, portfolio action, exposure, cash targets, or position.',
+    '- If decisionContext is present, summarize it only as 决策上下文显示系统处于只读防御状态 or 该信息仅作为系统状态背景，不改变任何判断.',
+    '- Do not repeat concrete execution or position fields from decisionContext.',
+    '- Do not include concrete exposure bands, cash targets, execution-light colors, or position details.',
     '- Good: 当前证据仅支持观察，不足以形成高置信度方向判断。',
     '- Good: 消费者慢变量与资产定价存在背离，但仍需更多数据确认。',
     '- Good: 该结论仅用于解释站内结构化数据，不改变任何系统判断。',
@@ -285,11 +318,19 @@ function buildDeepSeekUserPrompt(input) {
     '- sourceLayer must be one of dailyBrief, divergenceLayer, brentPricingLayer, macroDrivers.consumer, aiInterpretationLayer, dataHealth, or decisionContext.',
     '- claimType must be one of site_structured_data, rule_based_interpretation, or sample_input.',
     '- noteZh must include validator-recognized attribution wording: 样例结构化输入, 站内结构化数据, or sample input.',
-    '- For sample fixture based outputs, use noteZh: 来自提供的样例结构化输入.',
-    '- For future production site data outputs, use noteZh wording that includes 站内结构化数据.',
+    `- This input source kind is ${promptSemantics.sourceKind}.`,
+    `- For this input, use claimType: ${promptSemantics.claimType}.`,
+    `- For this input, use sourceAttribution.noteZh wording: ${promptSemantics.noteZh}.`,
+    '- If input source.type is local_file or allowed_live_url, do not call the input sample data.',
+    '- If input source.type is local_file or allowed_live_url, do not write 样例输入 or 样例结构化输入 in any returned text field.',
+    '- Use 站内结构化数据 for local/live radar-data input.',
+    '- Only sample fixture input should use 来自提供的样例结构化输入 and claimType sample_input.',
     '- Do not use only 来自提供的结构化输入 because it may not satisfy validator attribution keyword detection.',
     '- Every factual claim should map to one of the provided structured input layers.',
     '- Do not claim external web, news, or market verification.',
+    'confidence requirements:',
+    `- ${promptSemantics.confidenceGuidance}`,
+    '- Keep confidence.level low unless evidence is very strong.',
     'Use only this structured input JSON:',
     JSON.stringify(input, null, 2)
   ].join('\n\n');

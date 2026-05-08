@@ -204,6 +204,8 @@ If validation fails with `sourceAttribution must include site structured data or
 
 If validation fails because `modelJudgments`, `facts`, `inferences`, or another prose field contains unsafe wording such as `交易建议`, do not weaken the validator and do not repeatedly retry paid calls. Tighten the prompt globally so unsafe wording is excluded from every returned string field. Boundary statements belong in the `boundaries` booleans, not in prose text, and `modelJudgments` should stay limited to evidence strength, data sufficiency, uncertainty, and low-confidence / watch conditions.
 
+If a live DeepSeek output passes validation but describes live radar input as sample input or repeats execution / position fields, do not promote the output and do not weaken the validator. Tighten prompt and input metadata, review the artifact, then rerun only after confirming local/live `radar-data.json` is attributed as `站内结构化数据` and `decisionContext` is treated as read-only system-state background.
+
 On Windows PowerShell, read the artifact as UTF-8 to avoid encoding confusion:
 
 ```powershell
