@@ -114,6 +114,12 @@ v28.0K-4B adds `npm run manual:external-ai:dry-run`, a local manual test scaffol
 
 The scaffold prints a readiness report from controlled sample input and prepares v28.0K-4C, where any provider adapter would still require explicit review and an environment gate.
 
+## v28.0K-4C Disabled Provider Adapter Skeleton
+
+v28.0K-4C adds disabled provider adapter structure and `npm run check:external-ai-provider-adapters`. It normalizes future provider values (`none`, `deepseek`, `openai`) and returns disabled metadata / diagnostics only.
+
+This stage does not connect API, does not read secrets or API keys, does not use network, does not add provider SDKs, does not write production data, and does not change frontend display or scoring / decision / execution / position. `deepseek` and `openai` remain refused placeholders until a separate reviewed PR explicitly changes that boundary.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

@@ -198,7 +198,7 @@ Manual API tests must not:
 
 - v28.0K-4A Design only
 - v28.0K-4B Local manual test scaffold, disabled and no network by default
-- v28.0K-4C Provider request/response adapter behind explicit environment gate
+- v28.0K-4C Disabled provider adapter skeleton, no network and no provider calls
 - v28.0K-4D Manual sample input to manual output artifact, no production display
 - v28.0K-4E Validator-gated manual artifact review
 - v28.0K-4F Hidden diagnostic comparison, still no frontend
@@ -217,6 +217,24 @@ This command reads the non-production sample input fixture only for readiness in
 The output is an `external_ai_manual_test_scaffold_report`, not external AI provider output. It must not be displayed, must not be committed as production data, and must not be treated as a replacement for the sample output fixture or live `externalAiInterpretationLayer`.
 
 Production `externalAiInterpretationLayer` remains disabled. v28.0K-4C is required before any provider adapter may exist, and that adapter must be behind explicit review and an environment gate.
+
+### v28.0K-4C Disabled Provider Adapter Skeleton
+
+v28.0K-4C adds a provider adapter skeleton only. The skeleton recognizes `none`, `deepseek`, and `openai` as future provider values, but every adapter remains disabled and no-network.
+
+Current K-4C boundaries:
+
+- no provider call
+- no network
+- no API key read
+- no secrets
+- no provider SDK
+- `deepseek` and `openai` are placeholders only and must be refused
+- `provider=none` remains the only successful dry-run path
+- output remains a scaffold report, not external AI provider output
+- production `externalAiInterpretationLayer` remains disabled
+
+Future real provider adapters require a separate reviewed PR. They must stay opt-in, validator-gated, isolated from production data, and must not affect scoring / decision / execution / position.
 
 ## 13. Promotion Criteria / 晋升条件
 

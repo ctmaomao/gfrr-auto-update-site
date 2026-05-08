@@ -1,8 +1,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import {
+  assertProviderDisabled,
+  createExternalAiProviderAdapter,
+  normalizeExternalAiProvider
+} from './external-ai/provider-adapters.mjs';
 
-const CONTRACT_VERSION = 'v28.0K-4B';
+const CONTRACT_VERSION = 'v28.0K-4C';
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-input-v28.0K-1.json';
 const UNSAFE_OUTPUT_DIRS = [
   'data',
@@ -139,20 +144,39 @@ async function main() {
   }
 
   if (!options.dryRun) {
-    fail('K-4B only supports --dry-run. No provider calls are available in this version.');
+    fail('K-4C only supports --dry-run. No provider calls are available in this version.');
     return;
   }
 
-  if (options.provider !== 'none') {
-    fail('K-4B does not support provider calls. Use provider=none.');
+  let provider;
+  try {
+    provider = normalizeExternalAiProvider(options.provider);
+  } catch (error) {
+    fail(error.message);
     return;
   }
 
   const environmentProvider = process.env.EXTERNAL_AI_PROVIDER;
-  if (environmentProvider && environmentProvider !== 'none') {
-    fail('K-4B is no-network. Provider environment variables are intentionally ignored.');
+  let normalizedEnvironmentProvider;
+  try {
+    normalizedEnvironmentProvider = normalizeExternalAiProvider(environmentProvider);
+  } catch (error) {
+    fail(error.message);
     return;
   }
+  if (normalizedEnvironmentProvider !== 'none') {
+    fail('K-4C is no-network. Provider environment variables are intentionally ignored.');
+    return;
+  }
+
+  try {
+    assertProviderDisabled(provider);
+  } catch (error) {
+    fail(error.message);
+    return;
+  }
+
+  const providerAdapter = createExternalAiProviderAdapter({ provider, model: options.model });
 
   let input;
   try {
@@ -173,8 +197,9 @@ async function main() {
     kind: 'external_ai_manual_test_scaffold_report',
     generatedAt: new Date().toISOString(),
     status: 'dry_run_only',
-    provider: 'none',
-    model: options.model || null,
+    provider: providerAdapter.provider,
+    model: providerAdapter.model,
+    providerMetadata: providerAdapter.metadata,
     networkAllowed: false,
     apiCalled: false,
     secretsRead: false,
@@ -192,7 +217,7 @@ async function main() {
       affectsExecutionLock: false,
       affectsPositionGuidance: false
     },
-    nextAllowedStep: 'v28.0K-4C may add a provider adapter only behind explicit review and environment gate.',
+    nextAllowedStep: 'A later reviewed version may add real provider calls only behind an explicit environment gate.',
     notesZh: [
       '该命令仅为本地 dry-run scaffold。',
       '本版本不联网、不读取 API key、不调用外部 AI provider。',

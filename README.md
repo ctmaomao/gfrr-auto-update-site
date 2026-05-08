@@ -55,6 +55,7 @@
 - v28.0K-3D Stable Observation Audit：新增只读 workflow 监控 v28.0K baseline，并作为是否考虑 v28.0K-4 design planning 的 gate。
 - v28.0K-4A External AI Manual API Test Design：新增 future manual external AI API test design；production 仍保持 disabled，不接 API、不写 secrets、不改变 runtime。
 - v28.0K-4B External AI Manual Dry-Run Scaffold：新增 `npm run manual:external-ai:dry-run`，仅输出 no-network scaffold report，不调用 provider。
+- v28.0K-4C External AI Provider Adapter Skeleton：新增 disabled provider adapter skeleton 与 `npm run check:external-ai-provider-adapters`；`deepseek` / `openai` 仍只是 refused placeholders，不联网、不读 API keys。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。

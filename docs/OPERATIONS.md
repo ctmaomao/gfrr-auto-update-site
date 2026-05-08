@@ -154,6 +154,18 @@ Expected result: a dry-run scaffold report only. The command does not use networ
 
 Do not use this command to troubleshoot production `externalAiInterpretationLayer`; the production field remains a disabled scaffold until a separate reviewed version changes it.
 
+## External AI Provider Adapter Skeleton
+
+v28.0K-4C adds a disabled provider adapter skeleton for future manual tests. Local check command:
+
+```bash
+npm run check:external-ai-provider-adapters
+```
+
+Expected result: `External AI provider adapter skeleton: PASS`.
+
+Non-`none` provider refusal is expected in v28.0K-4C. Do not treat `deepseek` / `openai` refusal as an incident; no API call is expected, no API key should be read, and production `externalAiInterpretationLayer` remains disabled.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
