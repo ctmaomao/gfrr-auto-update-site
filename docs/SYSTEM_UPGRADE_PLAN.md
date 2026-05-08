@@ -156,6 +156,12 @@ v28.0K-4E-3 improves manual DeepSeek output semantics after compact live input p
 
 This stage keeps `decisionContext` read-only, prevents concrete execution / position details from being repeated in external AI output, does not weaken the validator, does not run a real DeepSeek call automatically, does not write production data, and does not affect scoring / decision / execution / position.
 
+## v28.0K-4E-4 Provider Unavailable Classification and Retry Guidance
+
+v28.0K-4E-4 adds normalized failure categories and retry guidance for manual DeepSeek failure artifacts. Provider-side HTTP 503 and timeout / abort failures are classified as diagnostic, non-production availability issues, with guidance to stop repeated paid calls and retry later only after reviewing diagnostics.
+
+This stage keeps failure artifacts manual-only and ignored. It does not weaken the output validator, does not run a real DeepSeek call automatically, does not write production data, does not display external AI output, and does not affect scoring / decision / execution / position.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

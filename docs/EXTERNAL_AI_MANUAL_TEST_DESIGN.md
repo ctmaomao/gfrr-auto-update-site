@@ -332,6 +332,14 @@ The manual prompt now tells DeepSeek to use `来自站内结构化数据` and `c
 
 The validator remains strict and unchanged. This stage does not write production data, does not display external AI output in the frontend, and does not affect scoring, `decisionModel`, execution, or position logic.
 
+### v28.0K-4E-4 Provider Failure Classification
+
+v28.0K-4E-4 classifies manual provider failures in the failure artifact. HTTP 503 / `service_unavailable_error` is `provider_unavailable`, timeout / abort is `provider_timeout`, and other provider response failures receive normalized categories such as `provider_empty_content`, `provider_content_filter`, `provider_length_truncated`, `provider_insufficient_resource`, `provider_invalid_json`, or `provider_unknown_error`.
+
+Provider unavailable and timeout failures are non-production provider availability issues. They should stop repeated paid calls and guide a later single retry, not trigger production recovery. Failure artifacts remain diagnostic-only and are not valid external AI output.
+
+The output validator remains strict. If a failure artifact is passed to `check:external-ai-output`, it must fail with clear operator guidance instead of masquerading as a valid output.
+
 ## 13. Promotion Criteria / 晋升条件
 
 Before any external AI output becomes user-visible:

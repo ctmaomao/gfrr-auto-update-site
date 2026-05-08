@@ -364,6 +364,7 @@ async function runDeepSeekRequest({ input, apiKey, model, timeoutMs }) {
     const responseJson = await response.json();
     if (!response.ok) {
       const error = new Error(`DeepSeek API returned HTTP ${response.status}`);
+      error.httpStatus = response.status;
       error.responseDiagnostics = buildResponseDiagnostics(responseJson, 'http_error');
       throw error;
     }
@@ -434,6 +435,110 @@ function extractProviderContent(responseJson) {
   throw new Error(`DeepSeek response did not include message content; finish_reason=${finishReason}; message_keys=${messageKeys}`);
 }
 
+function buildFailureClassification(category, retryable, retryAfter, recommendedAction) {
+  return {
+    category,
+    retryable,
+    retryAfter,
+    recommendedAction
+  };
+}
+
+function classifyProviderFailure(error, responseDiagnostics = null, requestDiagnostics = null) {
+  const message = error?.message || '';
+  const finishReason = responseDiagnostics?.firstChoiceFinishReason || null;
+  const responseErrorCode = responseDiagnostics?.error?.code || null;
+  const responseErrorType = responseDiagnostics?.error?.type || null;
+  const likelyCause = requestDiagnostics?.likelyCause || null;
+
+  if (
+    error?.httpStatus === 503 ||
+    responseErrorCode === 'service_unavailable_error' ||
+    responseErrorType === 'service_unavailable_error'
+  ) {
+    return buildFailureClassification(
+      'provider_unavailable',
+      true,
+      'later',
+      'Stop repeated paid calls and retry later.'
+    );
+  }
+
+  if (isAbortError(error) || likelyCause === 'timeout_or_abort') {
+    return buildFailureClassification(
+      'provider_timeout',
+      true,
+      'later',
+      'Use compact input, review input size, and retry once later with --timeout-ms 120000.'
+    );
+  }
+
+  if (finishReason === 'content_filter' || /content_filter/i.test(message)) {
+    return buildFailureClassification(
+      'provider_content_filter',
+      false,
+      'prompt_review_required',
+      'Review prompt/input. Do not retry unchanged.'
+    );
+  }
+
+  if (finishReason === 'length' || /finish_reason=length/i.test(message) || /truncated/i.test(message)) {
+    return buildFailureClassification(
+      'provider_length_truncated',
+      true,
+      'after_compaction_or_token_adjustment',
+      'Use compact input or reduce input before retry.'
+    );
+  }
+
+  if (finishReason === 'insufficient_system_resource' || /insufficient_system_resource/i.test(message)) {
+    return buildFailureClassification(
+      'provider_insufficient_resource',
+      true,
+      'later',
+      'Retry later.'
+    );
+  }
+
+  if (error?.failureCategory === 'provider_invalid_json' || error instanceof SyntaxError) {
+    return buildFailureClassification(
+      'provider_invalid_json',
+      false,
+      'prompt_review_required',
+      'Tighten prompt. Do not promote artifact.'
+    );
+  }
+
+  if (
+    responseDiagnostics &&
+    responseDiagnostics.hasContent === false &&
+    (/did not include message content/i.test(message) || /content missing/i.test(message))
+  ) {
+    return buildFailureClassification(
+      'provider_empty_content',
+      true,
+      'later_or_prompt_review',
+      'Review diagnostics and prompt before retrying.'
+    );
+  }
+
+  if (responseDiagnostics?.errorType === 'http_error') {
+    return buildFailureClassification(
+      'provider_http_error',
+      true,
+      'later_or_manual_review',
+      'Inspect HTTP diagnostics before retrying.'
+    );
+  }
+
+  return buildFailureClassification(
+    'provider_unknown_error',
+    false,
+    'manual_review_required',
+    'Inspect failure artifact.'
+  );
+}
+
 function runValidator(outputPath) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, ['scripts/check-external-ai-output.mjs', outputPath], {
@@ -454,7 +559,15 @@ function runValidator(outputPath) {
   });
 }
 
-async function writeFailureArtifact(outputPath, stage, message, providerMetadata, responseDiagnostics = null, requestDiagnostics = null) {
+async function writeFailureArtifact(
+  outputPath,
+  stage,
+  message,
+  providerMetadata,
+  responseDiagnostics = null,
+  requestDiagnostics = null,
+  failureClassification = null
+) {
   const artifact = {
     contractVersion: CONTRACT_VERSION,
     kind: 'external_ai_manual_test_failure_artifact',
@@ -475,6 +588,13 @@ async function writeFailureArtifact(outputPath, stage, message, providerMetadata
     note: 'Manual artifact only. Do not import into production data or frontend.',
     noteZh: '该 artifact 仅用于手动诊断，不得进入生产数据或前端展示。'
   };
+  if (failureClassification) {
+    artifact.failureClassification = {
+      ...failureClassification,
+      productionImpact: 'none',
+      validatorAction: 'Do not run check:external-ai-output on failure artifacts; inspect diagnostics instead.'
+    };
+  }
   if (responseDiagnostics) artifact.responseDiagnostics = responseDiagnostics;
   if (requestDiagnostics) artifact.requestDiagnostics = requestDiagnostics;
   await writeOutputFile(outputPath, `${JSON.stringify(artifact, null, 2)}\n`);
@@ -572,9 +692,16 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
       timeoutMs: options.timeoutMs
     });
     responseDiagnostics = buildResponseDiagnostics(responseJson);
-    providerOutput = JSON.parse(extractProviderContent(responseJson));
+    const providerContent = extractProviderContent(responseJson);
+    try {
+      providerOutput = JSON.parse(providerContent);
+    } catch (error) {
+      error.failureCategory = 'provider_invalid_json';
+      throw error;
+    }
   } catch (error) {
     const aborted = isAbortError(error);
+    const diagnostics = error.responseDiagnostics || responseDiagnostics;
     const requestDiagnostics = buildRequestDiagnostics({
       timeoutMs: options.timeoutMs,
       inputText,
@@ -588,13 +715,15 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
     const message = aborted
       ? 'DeepSeek manual request timed out or was aborted'
       : error.message;
+    const failureClassification = classifyProviderFailure(error, diagnostics, requestDiagnostics);
     await writeFailureArtifact(
       options.output,
       'provider_response',
       message,
       providerAdapter.metadata,
-      error.responseDiagnostics || responseDiagnostics,
-      requestDiagnostics
+      diagnostics,
+      requestDiagnostics,
+      failureClassification
     );
     fail(`DeepSeek manual test failed before validation: ${message}`);
     return;
