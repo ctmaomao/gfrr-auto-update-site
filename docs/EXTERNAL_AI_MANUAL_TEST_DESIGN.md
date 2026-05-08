@@ -266,6 +266,16 @@ Failure artifacts may include sanitized `responseDiagnostics` for review, includ
 
 This stage does not write production data, does not display external AI output in the frontend, and does not affect scoring, `decisionModel`, execution, or position logic.
 
+### v28.0K-4D-2 DeepSeek Output Contract Prompt Tightening
+
+v28.0K-4D-2 keeps the same explicit DeepSeek manual artifact path and tightens the prompt after a real manual artifact reached the validator but failed output contract checks.
+
+Manual output `auditFlags` must be short neutral diagnostic tags such as `manual_artifact_only`, `sample_input_only`, `site_structured_data_only`, `validator_required`, `non_production_output`, or `no_frontend_display`. `auditFlags` must not contain prose safety sentences or investment / trading boundary wording. Boundary expression belongs in boolean fields such as `boundaries.notInvestmentAdvice=true`, not in `auditFlags`.
+
+Manual output `sourceAttribution` must be an array of metadata objects, not a string and not an array of strings. Each object must include `sourceLayer`, `field`, `claimType`, and `noteZh`, and factual claims should map back to the provided structured input layers only. Manual artifacts must not claim external web, news, or market verification.
+
+The validator remains strict. This stage does not weaken validation, does not write production data, does not display external AI output in the frontend, and does not affect scoring, `decisionModel`, execution, or position logic.
+
 ## 13. Promotion Criteria / 晋升条件
 
 Before any external AI output becomes user-visible:
