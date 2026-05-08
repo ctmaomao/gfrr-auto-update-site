@@ -218,6 +218,8 @@ v28.0K-4D-3 aligns source attribution wording with the existing validator keywor
 
 v28.0K-4E input artifacts may contain real site-structured data from `data/radar-data.json` or an allowlisted public site `radar-data.json` URL. They are still site-structured context only, not external market data, not private user data, and not secrets. They must remain manual-only artifacts under `manual-artifacts/`, must not be committed, and must not be treated as production data or frontend display data.
 
+v28.0K-4E-1 compact input artifacts are still site-structured context only. Compaction must not add external market data, infer missing market facts, or include secrets/private data. Omitted fields should be documented in the artifact `compaction.omittedLargeFields` metadata so a reviewer can understand why historical arrays, chart arrays, raw diagnostics, or full action queues are absent.
+
 ## 13. Non-goals / 非目标
 
 This stage does not:

@@ -138,6 +138,12 @@ v28.0K-4E adds `npm run manual:external-ai:build-input`, a deterministic manual 
 
 This remains manual-only and validator-gated. It does not create production external AI, does not display external AI output in the frontend, does not call DeepSeek by itself, does not read API keys, and does not affect scoring / decision / execution / position. The purpose is to prepare manual real-data DeepSeek quality review without promoting artifacts into production.
 
+## v28.0K-4E-1 Compact Live Input and Timeout Diagnostics
+
+v28.0K-4E-1 adds compact manual input generation for live site-structured `radar-data.json` and improves DeepSeek manual timeout diagnostics. Compact artifacts are intended for real-data manual quality review after the full live input proved too large for the current JSON-mode request / timeout envelope.
+
+This stage remains manual-only and artifact-only. It does not run a real DeepSeek call automatically, does not add secrets, SDKs, dependencies, workflows, frontend display, Worker changes, production data writes, or scoring / decision / execution / position impact. Timeout failure artifacts may include request diagnostics such as timeout and approximate input size, but must not include API keys, headers, or raw request bodies.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。
