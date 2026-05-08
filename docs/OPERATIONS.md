@@ -200,6 +200,8 @@ v28.0K-4D-2 tightens the DeepSeek manual artifact prompt after a real provider r
 
 If a `sourceAttribution` warning appears, require `sourceAttribution` to be an array of objects with `sourceLayer`, `field`, `claimType`, and `noteZh`. Do not allow a string or an array of strings. Review the failed artifact before rerunning to avoid repeated paid calls.
 
+If validation fails with `sourceAttribution must include site structured data or sample input attribution`, check whether each `sourceAttribution.noteZh` includes validator-recognized wording such as `样例`, `站内结构化`, or `sample input`. For sample/manual fixture based outputs, prefer `来自提供的样例结构化输入`; do not use only `来自提供的结构化输入`.
+
 On Windows PowerShell, read the artifact as UTF-8 to avoid encoding confusion:
 
 ```powershell

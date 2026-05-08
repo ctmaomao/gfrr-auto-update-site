@@ -276,6 +276,12 @@ Manual output `sourceAttribution` must be an array of metadata objects, not a st
 
 The validator remains strict. This stage does not weaken validation, does not write production data, does not display external AI output in the frontend, and does not affect scoring, `decisionModel`, execution, or position logic.
 
+### v28.0K-4D-3 Source Attribution Keyword Alignment
+
+v28.0K-4D-3 keeps the same manual DeepSeek artifact boundary and aligns prompt `sourceAttribution.noteZh` wording with the existing validator keyword rule. Sample/manual fixture based outputs should use wording such as `来自提供的样例结构化输入`, while future production site data outputs should include `站内结构化数据`.
+
+This stage does not weaken the validator, does not write production data, does not display external AI output in the frontend, and does not affect scoring, `decisionModel`, execution, or position logic.
+
 ## 13. Promotion Criteria / 晋升条件
 
 Before any external AI output becomes user-visible:
