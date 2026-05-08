@@ -277,6 +277,10 @@ v28.0L-2 adds the disabled skeleton only. Production integration remains `not_re
 
 v28.0L-3 is workflow design only. Production integration remains `not_ready`. The next implementation must be v28.0L-3B dry-run workflow skeleton, not a provider-call workflow.
 
+v28.0L-3B adds the dry-run workflow skeleton only. Production integration remains `not_ready`; provider-call workflow remains `not_ready`; GitHub secret readiness remains `not_ready` / `design_only` because no secret is added or referenced. The only allowed L-3B workflow behavior is no-secret, no-provider-call, dry-run diagnostics.
+
+The next possible stage after L-3B is an L-3C provider-call workflow design or implementation PR, but it must be separate, protected, and reviewed. It must not be bundled with Daily integration, production data writes, frontend display, or scoring / decision / execution / position changes.
+
 Do not proceed directly to:
 
 - `workflow_dispatch` provider call

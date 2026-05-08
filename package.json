@@ -35,11 +35,12 @@
     "check:external-ai-manual-input:compact": "node --check scripts/build-external-ai-manual-input.mjs && npm run manual:external-ai:build-input:compact",
     "check:external-ai-artifact-review": "node --check scripts/review-external-ai-artifact.mjs && npm run review:external-ai-artifact",
     "check:external-ai-production-provider-path": "node --check scripts/external-ai/production-provider-path.mjs && node --check scripts/check-external-ai-production-provider-path.mjs && node scripts/check-external-ai-production-provider-path.mjs",
+    "check:external-ai-manual-workflow": "node --check scripts/check-external-ai-manual-workflow.mjs && node scripts/check-external-ai-manual-workflow.mjs",
     "check:external-ai-manual-scaffold": "node --check scripts/run-external-ai-manual-test.mjs && node --check scripts/external-ai/provider-adapters.mjs && npm run check:external-ai-provider-adapters && npm run check:external-ai-manual-input && npm run check:external-ai-manual-input:compact && npm run manual:external-ai:dry-run",
     "check:data": "node scripts/validate-data.mjs",
     "check:data:verbose": "node scripts/validate-data.mjs --verbose",
     "check:data:strict-live-alignment": "node scripts/validate-data.mjs --strict-live-alignment",
-    "check:all": "npm run check:syntax && npm run check:dom && npm run check:modules && npm run check:copy && npm run check:workflows && npm run check:docs && npm run check:external-ai-output && npm run check:external-ai-manual-scaffold && npm run check:external-ai-production-provider-path && npm run check:data && npm run check:world-order"
+    "check:all": "npm run check:syntax && npm run check:dom && npm run check:modules && npm run check:copy && npm run check:workflows && npm run check:external-ai-manual-workflow && npm run check:docs && npm run check:external-ai-output && npm run check:external-ai-manual-scaffold && npm run check:external-ai-production-provider-path && npm run check:data && npm run check:world-order"
   },
   "engines": {
     "node": ">=24"

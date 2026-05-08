@@ -334,6 +334,8 @@ v28.0L-1 readiness audit is the gate before implementation. L-2 must be a disabl
 
 v28.0L-3 designs a future manual `workflow_dispatch` artifact-only path in [`EXTERNAL_AI_MANUAL_WORKFLOW_DISPATCH_DESIGN.md`](EXTERNAL_AI_MANUAL_WORKFLOW_DISPATCH_DESIGN.md). L-3 does not add workflow automation. The first implementation should be a dry-run workflow skeleton only, with no secret and no provider call.
 
+v28.0L-3B adds that dry-run workflow skeleton only. It is `workflow_dispatch` only, has no provider or allow-network inputs, references no provider secrets, uploads only sanitized dry-run diagnostics, and still performs no provider call, no production data write, and no frontend display. It does not change the L-0 production architecture status: production external AI remains not implemented.
+
 ## 18. Non-goals
 
 v28.0L-0 does not:

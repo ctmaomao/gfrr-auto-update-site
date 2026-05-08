@@ -51,6 +51,7 @@
 - v28.0L-1 后，readiness status 是 `partially_ready_for_disabled_skeleton_only`，不是 production-ready。不得跳过 L-2；不得在 L-1 或 L-2 实现 workflow / provider call / frontend；不得在 reviewed workflow_dispatch 阶段前添加 GitHub secret；不得通过 readiness docs 让 external AI production-visible。
 - v28.0L-2 skeleton 必须保持 disabled；不得把它改成读取 env vars、调用 provider、连接 Daily / frontend，或让 `maybeCreateExternalAiProductionLayer` 激活 provider。未来 activation 必须另开 L-3+ reviewed PR。
 - v28.0L-3 是 workflow design only；不得在 L-3 添加 workflow / provider call / secrets。第一个 workflow implementation 必须是 dry-run-only 且 no-secret / no-provider；不得从 L-3 直接跳到 provider-call workflow 或 Daily。Workflow artifacts 不是 production data，绝不得上传 secrets 或 raw provider headers。
+- v28.0L-3B dry-run workflow 必须保持 dry-run-only；不得加入 provider call、provider input、allow_network input、dry_run=false path、secret reference 或 provider output upload。不得把该 workflow 改成 production workflow；任何 provider-call workflow 必须另开 reviewed L-3C PR。
 - v28.0I compact cockpit layout 不得被后续改动破坏，除非另开版本评审；Global Risk Heatmap 必须继续独立显示，World Order Stress Overlay 仍是独立 regime overlay，不是第七个底层风险模块。
 - World Order 外部源失败必须降级 status / confidence，而不是清空旧可用缓存；GDELT partial / stale / error 必须可解释，不得伪装成功或输出 NaN / undefined。
 - World Order UI 必须清楚显示低置信 / 数据限制，不得把 proxy、stale、manual_required 或 not_configured 数据包装成高确定性结论。

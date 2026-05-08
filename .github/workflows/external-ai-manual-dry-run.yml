@@ -1,0 +1,124 @@
+name: External AI Manual Dry Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      input_source:
+        description: "Dry-run input source"
+        required: true
+        default: "fixture_sample"
+        type: choice
+        options:
+          - fixture_sample
+          - local_compact
+      upload_artifacts:
+        description: "Upload sanitized dry-run artifacts"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      timeout_ms:
+        description: "Dry-run timeout metadata only; no provider call is made"
+        required: true
+        default: "120000"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: external-ai-manual-dry-run
+  cancel-in-progress: false
+
+jobs:
+  external-ai-manual-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Preflight safety checks
+        run: |
+          npm run check:external-ai-production-provider-path
+          npm run check:external-ai-manual-scaffold
+
+      - name: Prepare dry-run artifact directory
+        run: mkdir -p manual-artifacts/external-ai
+
+      - name: Build local compact input
+        if: ${{ github.event.inputs.input_source == 'local_compact' }}
+        run: node scripts/build-external-ai-manual-input.mjs --compact --output manual-artifacts/external-ai/manual-input-compact-latest.json
+
+      - name: Run dry-run external AI manual scaffold with fixture input
+        if: ${{ github.event.inputs.input_source == 'fixture_sample' }}
+        run: node scripts/run-external-ai-manual-test.mjs --dry-run --input docs/fixtures/external-ai/sample-input-v28.0K-1.json > manual-artifacts/external-ai/workflow-dry-run-report.json
+
+      - name: Run dry-run external AI manual scaffold with local compact input
+        if: ${{ github.event.inputs.input_source == 'local_compact' }}
+        run: node scripts/run-external-ai-manual-test.mjs --dry-run --input manual-artifacts/external-ai/manual-input-compact-latest.json > manual-artifacts/external-ai/workflow-dry-run-report.json
+
+      - name: Write dry-run summary
+        run: |
+          {
+            echo "## External AI Manual Dry Run"
+            echo ""
+            echo "External AI Manual Dry Run completed."
+            echo ""
+            echo "- provider=none"
+            echo "- networkAllowed=false"
+            echo "- apiCalled=false"
+            echo "- secretsRead=false"
+            echo "- productionDataWritten=false"
+            echo "- frontendDisplayChanged=false"
+            echo "- timeoutMetadataMs=${{ github.event.inputs.timeout_ms }}"
+            echo ""
+            echo "This workflow is dry-run-only and does not call DeepSeek."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload sanitized dry-run artifacts
+        if: ${{ github.event.inputs.upload_artifacts == 'true' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: external-ai-manual-dry-run-${{ github.run_id }}
+          path: |
+            manual-artifacts/external-ai/workflow-dry-run-report.json
+            manual-artifacts/external-ai/manual-input-compact-latest.json
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: Post-run safety assertion
+        run: |
+          forbidden_provider_output="deepseek-output-latest"".json"
+          forbidden_quality_review="external-ai-quality-review-latest"".json"
+          for forbidden_file in \
+            "manual-artifacts/external-ai/${forbidden_provider_output}" \
+            "manual-artifacts/external-ai/${forbidden_quality_review}"
+          do
+            if [ -e "$forbidden_file" ]; then
+              echo "Forbidden provider artifact was created in dry-run workflow"
+              exit 1
+            fi
+          done
+
+          key_name="DEEPSEEK""_API_KEY"
+          if [ -n "${!key_name:-}" ]; then
+            echo "Provider API key env must not be set in dry-run workflow"
+            exit 1
+          fi
+
+          app_path="scripts/app"".js"
+          index_path="index"".html"
+          module_path="scripts/modules"
+          git diff --exit-code -- data realtime config "$app_path" "$index_path" "$module_path"
