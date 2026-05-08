@@ -193,6 +193,12 @@ v28.0L-1 adds [`EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md`](EXTERNAL_AI_IMPL
 
 The only recommended next implementation path is v28.0L-2 Disabled Production Provider Path Skeleton — No Provider Calls. Do not proceed directly to workflow provider calls, Daily integration, production data writes, frontend display, secrets, or enabled `externalAiInterpretationLayer`.
 
+## v28.0L-2 Disabled Production Provider Path Skeleton
+
+v28.0L-2 adds a disabled production provider path skeleton and `npm run check:external-ai-production-provider-path`. The skeleton is no-network, no-secret, no-workflow, no-frontend, and no-production-write; activation attempts still return a disabled state.
+
+This stage does not call providers, does not read API keys, does not add GitHub secrets, does not write production data, does not change frontend display, and does not affect scoring / decision / execution / position.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

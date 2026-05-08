@@ -233,6 +233,8 @@ Phase L-2:
 - no scheduled call
 - no frontend
 
+v28.0L-2 adds the disabled production provider path skeleton. It has no provider calls, no secrets, no workflow, no frontend display, and no production data write. The skeleton defaults to disabled and refuses activation attempts by returning a disabled state with `disabledBecause = v28.0L-2_does_not_allow_provider_activation`.
+
 Phase L-3:
 
 - add manual `workflow_dispatch` test with GitHub secret
