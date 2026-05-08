@@ -45,6 +45,7 @@
 - v28.0K-4E-2 后，不得通过削弱 unsafe wording validator 来让 external AI artifact 通过；unsafe wording 必须从所有 external AI output text fields 中排除，而不只是 `auditFlags`。
 - v28.0K-4E-3 后，live/local `radar-data.json` manual input 必须按站内结构化数据归因，不得写成 sample input；external AI output 不得复述具体 execution / position / exposure / cash buffer 字段。
 - v28.0K-4E-4 后，manual DeepSeek failure artifact 的 `provider_unavailable` 或 `provider_timeout` 不得反复付费重试；先审阅 `failureClassification` / diagnostics。failure artifact 不得进入 output promotion logic，也不得通过削弱 validator 让 failure artifact 通过。
+- v28.0K-4F 后，`check:external-ai-output` 通过不等于可晋升；还必须运行 `npm run review:external-ai-artifact`。不得晋升 provider failure artifact，不得晋升包含 execution / position language 的输出；`promotionEligible` 必须保持 false，直到另开 reviewed integration PR。
 - v28.0I compact cockpit layout 不得被后续改动破坏，除非另开版本评审；Global Risk Heatmap 必须继续独立显示，World Order Stress Overlay 仍是独立 regime overlay，不是第七个底层风险模块。
 - World Order 外部源失败必须降级 status / confidence，而不是清空旧可用缓存；GDELT partial / stale / error 必须可解释，不得伪装成功或输出 NaN / undefined。
 - World Order UI 必须清楚显示低置信 / 数据限制，不得把 proxy、stale、manual_required 或 not_configured 数据包装成高确定性结论。

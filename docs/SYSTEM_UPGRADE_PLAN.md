@@ -162,6 +162,12 @@ v28.0K-4E-4 adds normalized failure categories and retry guidance for manual Dee
 
 This stage keeps failure artifacts manual-only and ignored. It does not weaken the output validator, does not run a real DeepSeek call automatically, does not write production data, does not display external AI output, and does not affect scoring / decision / execution / position.
 
+## v28.0K-4F External AI Artifact Quality Review and Promotion Gate
+
+v28.0K-4F adds an offline manual quality review gate for external AI artifacts. It separates structural validation from product-quality eligibility by checking incremental value, live/sample semantics, execution / position language, unsupported external verification claims, source attribution, confidence, output structure, and display-only boundaries.
+
+This stage remains manual-only and artifact-only. `promotionEligible` stays false, provider failure artifacts cannot be promoted, and any future production or frontend integration still requires a separate reviewed PR.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。
