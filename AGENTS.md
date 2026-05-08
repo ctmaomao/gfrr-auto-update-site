@@ -232,3 +232,11 @@ AI 完成任务后只输出：
 6. 如有 warning，说明是否可接受。
 7. 不输出整文件源码。
 8. 不输出 patch / diff。
+
+## 10. v28.0L-3B-1 audit-sync reminder
+
+v28.0L-3B-1 only records that the `External AI Manual Dry Run` workflow passed one manual GitHub Actions dry-run dispatch (`25583503038`). Do not confuse this audit success with provider-call readiness.
+
+Audit-sync PRs must not add secrets, provider-call workflow behavior, provider inputs, `allow_network`, `dry_run=false`, SDKs, dependencies, production data writes, frontend visibility, or scoring / decision / execution / position changes.
+
+Dry-run artifacts remain diagnostics only. Do not promote them, copy them into `data/radar-data.json`, or treat them as external AI output.

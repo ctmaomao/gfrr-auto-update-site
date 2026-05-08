@@ -65,6 +65,7 @@
 - v28.0L-2 Disabled Production Provider Path Skeleton：新增 disabled production provider skeleton 与安全检查；无 production external AI active、无 provider call、无 secrets、无 frontend / Daily integration。
 - v28.0L-3 Manual Workflow Dispatch Design：仅设计 future manual workflow testing；当前无 workflow、无 provider call、无 GitHub secret、无 production data write。
 - v28.0L-3B External AI Manual Dry Run Workflow：新增 manual `workflow_dispatch` dry-run workflow，仅跑安全检查和 dry-run diagnostics；不调用 DeepSeek，不使用 secrets，不写 production data。
+- v28.0L-3B-1 External AI Manual Dry Run Audit：已记录一次 GitHub Actions manual dispatch dry-run PASS（run `25583503038`）；这仍不调用 DeepSeek，也不代表 provider-call readiness。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。
