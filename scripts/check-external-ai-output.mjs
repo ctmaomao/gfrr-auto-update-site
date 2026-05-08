@@ -450,6 +450,51 @@ function printResult({ filePath, data, errors, warnings }) {
   for (const warning of warnings) console.log(`- ${warning}`);
 }
 
+function isFailureArtifact(data) {
+  return isPlainObject(data) && data.kind === 'external_ai_manual_test_failure_artifact';
+}
+
+function getFailureArtifactClassification(data) {
+  if (isPlainObject(data.failureClassification)) return data.failureClassification;
+
+  const responseError = isPlainObject(data.responseDiagnostics?.error) ? data.responseDiagnostics.error : {};
+  if (
+    responseError.code === 'service_unavailable_error' ||
+    responseError.type === 'service_unavailable_error' ||
+    /HTTP 503/i.test(data.message || '')
+  ) {
+    return {
+      category: 'provider_unavailable',
+      recommendedAction: 'Stop repeated paid calls and retry later.'
+    };
+  }
+
+  if (
+    data.requestDiagnostics?.likelyCause === 'timeout_or_abort' ||
+    /aborted|timed out/i.test(data.message || '')
+  ) {
+    return {
+      category: 'provider_timeout',
+      recommendedAction: 'Use compact input, review input size, and retry once later with --timeout-ms 120000.'
+    };
+  }
+
+  return {
+    category: 'unknown',
+    recommendedAction: 'Inspect failure artifact.'
+  };
+}
+
+function printFailureArtifactResult(filePath, data) {
+  const classification = getFailureArtifactClassification(data);
+  console.error('External AI output validation: FAIL');
+  console.error(`file: ${filePath}`);
+  console.error('kind: external_ai_manual_test_failure_artifact');
+  console.error('reason: This is a provider failure artifact, not a valid external AI output.');
+  console.error(`failureCategory: ${classification.category}`);
+  console.error(`recommendedAction: ${classification.recommendedAction}`);
+}
+
 const inputPath = process.argv[2] || DEFAULT_INPUT;
 const resolvedPath = path.resolve(inputPath);
 
@@ -460,7 +505,9 @@ let warnings = [];
 try {
   runSelfTests();
   data = readJsonFile(resolvedPath);
-  ({ errors, warnings } = validateOutput(data));
+  if (!isFailureArtifact(data)) {
+    ({ errors, warnings } = validateOutput(data));
+  }
 } catch (error) {
   errors = [
     error.message.startsWith('self-test failed')
@@ -469,5 +516,10 @@ try {
   ];
 }
 
-printResult({ filePath: inputPath, data: data || {}, errors, warnings });
-process.exitCode = errors.length > 0 ? 1 : 0;
+if (isFailureArtifact(data)) {
+  printFailureArtifactResult(inputPath, data);
+  process.exitCode = 1;
+} else {
+  printResult({ filePath: inputPath, data: data || {}, errors, warnings });
+  process.exitCode = errors.length > 0 ? 1 : 0;
+}

@@ -266,6 +266,17 @@ If it still fails, inspect the failure artifact `requestDiagnostics` before anot
 
 Artifacts remain manual-only and ignored. Do not copy compact input or provider output into production data, and do not display external AI output in the frontend.
 
+### Manual DeepSeek provider failure classification
+
+v28.0K-4E-4 failure artifacts include `failureClassification` so provider-side failures can be handled without mistaking them for valid external AI output.
+
+- `provider_unavailable` / HTTP 503: stop repeated paid calls, do not run the output validator expecting PASS, retry later once, and do not treat this as a production incident.
+- `provider_timeout`: use compact input, check `requestDiagnostics.inputApproxChars`, retry once later with `--timeout-ms 120000`, and stop if it repeats.
+- `provider_invalid_json` or `provider_empty_content`: inspect the failure artifact and tighten prompt / input guidance before retrying.
+- Failure artifacts are diagnostic only. Do not import them into `data/radar-data.json`, do not display them in the frontend, and do not use them for scoring / decision / execution / position logic.
+
+If `npm run check:external-ai-output -- manual-artifacts/external-ai/deepseek-output-latest.json` is run against a failure artifact, the validator should fail with failure-artifact guidance rather than a long list of missing output fields. Failure artifacts must never be treated as PASS.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
