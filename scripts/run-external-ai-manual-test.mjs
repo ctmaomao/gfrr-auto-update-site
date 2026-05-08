@@ -155,12 +155,17 @@ function buildDeepSeekSystemPrompt() {
   return [
     'You are a display-only external AI explanation layer for Global Financial Risk Radar manual testing.',
     'Use only the provided structured JSON input. Do not browse. Do not invent market data. Do not claim independent sources.',
+    'Return valid JSON only.',
+    'The entire response must be one JSON object.',
     'Return strict JSON only, with no markdown fences and no explanatory prose outside JSON.',
+    'Do not output markdown.',
+    'Do not output explanation outside JSON.',
     'User-facing text must be Chinese, professional, restrained, and non-sensational.',
     'Separate facts, inferences, modelJudgments, scenarioHypotheses, dataGaps, invalidationSignals, sourceAttribution, auditFlags, confidence, and boundaries.',
     'Do not provide investment advice, trading instructions, deterministic crisis claims, war probability, or world-war predictions.',
     'Do not affect scoring, decisionModel, executionLock, positionGuidance, execution, or position.',
     'The JSON must match the external AI output contract and include boundaries.displayOnly=true, boundaries.externalAiGenerated=true, boundaries.usesExternalAiApi=true, boundaries.affectsScoring=false, boundaries.affectsDecisionModel=false, boundaries.affectsExecutionLock=false, boundaries.affectsPositionGuidance=false, boundaries.notInvestmentAdvice=true.',
+    'If unsure, still return a JSON object using dataGaps and low confidence.',
     'If evidence is insufficient, state 数据不足 or 暂不足以判断.'
   ].join('\n');
 }
@@ -224,7 +229,8 @@ async function runDeepSeekRequest({ input, apiKey, model }) {
         model,
         stream: false,
         temperature: 0.2,
-        max_tokens: 1200,
+        max_tokens: 2400,
+        thinking: { type: 'disabled' },
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: buildDeepSeekSystemPrompt() },
@@ -234,22 +240,77 @@ async function runDeepSeekRequest({ input, apiKey, model }) {
       signal: controller.signal
     });
 
+    const responseJson = await response.json();
     if (!response.ok) {
-      throw new Error(`DeepSeek API returned HTTP ${response.status}`);
+      const error = new Error(`DeepSeek API returned HTTP ${response.status}`);
+      error.responseDiagnostics = buildResponseDiagnostics(responseJson, 'http_error');
+      throw error;
     }
 
-    return await response.json();
+    return responseJson;
   } finally {
     clearTimeout(timeout);
   }
 }
 
+function sanitizedResponseError(responseJson) {
+  const error = responseJson?.error;
+  if (!error || typeof error !== 'object') return null;
+  return {
+    type: typeof error.type === 'string' ? error.type : null,
+    code: typeof error.code === 'string' || typeof error.code === 'number' ? error.code : null,
+    message: typeof error.message === 'string' ? error.message : null
+  };
+}
+
+function buildResponseDiagnostics(responseJson, errorType = 'provider_response') {
+  const choices = Array.isArray(responseJson?.choices) ? responseJson.choices : [];
+  const firstChoice = choices[0] || null;
+  const message = firstChoice?.message && typeof firstChoice.message === 'object' ? firstChoice.message : null;
+  const content = message?.content;
+  const reasoningContent = message?.reasoning_content;
+  const usage = responseJson?.usage && typeof responseJson.usage === 'object' ? responseJson.usage : null;
+  const diagnostics = {
+    responseId: typeof responseJson?.id === 'string' ? responseJson.id : null,
+    responseModel: typeof responseJson?.model === 'string' ? responseJson.model : null,
+    choicesLength: choices.length,
+    firstChoiceFinishReason: typeof firstChoice?.finish_reason === 'string' ? firstChoice.finish_reason : null,
+    firstChoiceIndex: typeof firstChoice?.index === 'number' ? firstChoice.index : null,
+    firstChoiceMessageKeys: message ? Object.keys(message).sort() : [],
+    hasMessage: Boolean(message),
+    hasContent: typeof content === 'string' && content.length > 0,
+    contentType: content === undefined ? null : typeof content,
+    contentLength: typeof content === 'string' ? content.length : null,
+    hasReasoningContent: typeof reasoningContent === 'string' && reasoningContent.length > 0,
+    reasoningContentLength: typeof reasoningContent === 'string' ? reasoningContent.length : null,
+    hasUsage: Boolean(usage),
+    usageKeys: usage ? Object.keys(usage).sort() : [],
+    errorType
+  };
+  const responseError = sanitizedResponseError(responseJson);
+  if (responseError) diagnostics.error = responseError;
+  return diagnostics;
+}
+
 function extractProviderContent(responseJson) {
-  const content = responseJson?.choices?.[0]?.message?.content;
-  if (typeof content !== 'string' || content.trim().length === 0) {
-    throw new Error('DeepSeek response did not include message content');
+  const firstChoice = responseJson?.choices?.[0] || {};
+  const finishReason = typeof firstChoice.finish_reason === 'string' ? firstChoice.finish_reason : 'unknown';
+  const message = firstChoice.message && typeof firstChoice.message === 'object' ? firstChoice.message : null;
+  const messageKeys = message ? Object.keys(message).sort().join(',') : 'none';
+  const content = message?.content;
+  if (typeof content === 'string' && content.trim().length > 0) {
+    return content.trim();
   }
-  return content.trim();
+  if (finishReason === 'length') {
+    throw new Error(`DeepSeek response content missing or truncated; finish_reason=length. message_keys=${messageKeys}`);
+  }
+  if (finishReason === 'content_filter') {
+    throw new Error(`DeepSeek response omitted by content_filter. message_keys=${messageKeys}`);
+  }
+  if (finishReason === 'insufficient_system_resource') {
+    throw new Error(`DeepSeek response interrupted by insufficient_system_resource. message_keys=${messageKeys}`);
+  }
+  throw new Error(`DeepSeek response did not include message content; finish_reason=${finishReason}; message_keys=${messageKeys}`);
 }
 
 function runValidator(outputPath) {
@@ -272,7 +333,7 @@ function runValidator(outputPath) {
   });
 }
 
-async function writeFailureArtifact(outputPath, stage, message, providerMetadata) {
+async function writeFailureArtifact(outputPath, stage, message, providerMetadata, responseDiagnostics = null) {
   const artifact = {
     contractVersion: CONTRACT_VERSION,
     kind: 'external_ai_manual_test_failure_artifact',
@@ -290,8 +351,10 @@ async function writeFailureArtifact(outputPath, stage, message, providerMetadata
       affectsExecutionLock: false,
       affectsPositionGuidance: false
     },
+    note: 'Manual artifact only. Do not import into production data or frontend.',
     noteZh: '该 artifact 仅用于手动诊断，不得进入生产数据或前端展示。'
   };
+  if (responseDiagnostics) artifact.responseDiagnostics = responseDiagnostics;
   await writeOutputFile(outputPath, `${JSON.stringify(artifact, null, 2)}\n`);
 }
 
@@ -357,15 +420,23 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
   }
 
   let providerOutput;
+  let responseDiagnostics = null;
   try {
     const responseJson = await runDeepSeekRequest({
       input,
       apiKey,
       model: providerAdapter.model
     });
+    responseDiagnostics = buildResponseDiagnostics(responseJson);
     providerOutput = JSON.parse(extractProviderContent(responseJson));
   } catch (error) {
-    await writeFailureArtifact(options.output, 'provider_response', error.message, providerAdapter.metadata);
+    await writeFailureArtifact(
+      options.output,
+      'provider_response',
+      error.message,
+      providerAdapter.metadata,
+      error.responseDiagnostics || responseDiagnostics
+    );
     fail(`DeepSeek manual test failed before validation: ${error.message}`);
     return;
   }

@@ -192,6 +192,16 @@ Failure is a manual diagnostic event, not a production incident. Do not commit t
 
 After running `npm run manual:external-ai:deepseek`, do not run `git add manual-artifacts/` and do not commit artifacts. `manual-artifacts/` is ignored by git; delete local artifacts after review if they are no longer needed. A validator PASS means only that the artifact passed offline checks, not that it is approved for production promotion, frontend display, scoring, decision, execution, or position use.
 
+v28.0K-4D-1 hardens the DeepSeek JSON artifact request after the first real test returned `DeepSeek response did not include message content`. This may indicate DeepSeek JSON Output returned empty `message.content`, including when thinking mode is left enabled. The request now explicitly disables thinking, uses a larger `max_tokens` budget, and repeats the JSON-only contract in the system prompt.
+
+Failure artifacts may include sanitized `responseDiagnostics` such as response id/model, choices length, finish reason, message keys, content length, reasoning-content presence, usage keys, and a redacted API error summary. They must not include API keys, request headers, or the full raw API response. Do not repeatedly retry paid calls before reviewing these diagnostics.
+
+On Windows PowerShell, read the artifact as UTF-8 to avoid encoding confusion:
+
+```powershell
+Get-Content manual-artifacts/external-ai/deepseek-output-latest.json -Raw -Encoding utf8
+```
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
