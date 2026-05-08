@@ -332,6 +332,8 @@ Before any implementation PR:
 
 v28.0L-1 readiness audit is the gate before implementation. L-2 must be a disabled skeleton only, with no provider calls and no secret reads. Do not proceed from L-0 directly to workflow automation, Daily integration, production data writes, or frontend display.
 
+v28.0L-3 designs a future manual `workflow_dispatch` artifact-only path in [`EXTERNAL_AI_MANUAL_WORKFLOW_DISPATCH_DESIGN.md`](EXTERNAL_AI_MANUAL_WORKFLOW_DISPATCH_DESIGN.md). L-3 does not add workflow automation. The first implementation should be a dry-run workflow skeleton only, with no secret and no provider call.
+
 ## 18. Non-goals
 
 v28.0L-0 does not:

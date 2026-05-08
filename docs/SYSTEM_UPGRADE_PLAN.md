@@ -199,6 +199,12 @@ v28.0L-2 adds a disabled production provider path skeleton and `npm run check:ex
 
 This stage does not call providers, does not read API keys, does not add GitHub secrets, does not write production data, does not change frontend display, and does not affect scoring / decision / execution / position.
 
+## v28.0L-3 Manual Workflow Dispatch Artifact-Only Design
+
+v28.0L-3 adds [`EXTERNAL_AI_MANUAL_WORKFLOW_DISPATCH_DESIGN.md`](EXTERNAL_AI_MANUAL_WORKFLOW_DISPATCH_DESIGN.md). It designs a future manual `workflow_dispatch` artifact-only external AI test path, but adds no workflow, no secret, no provider call, no artifact upload, no production data write, and no frontend display.
+
+The next stage should be v28.0L-3B Manual Workflow Dispatch Dry-Run Skeleton — No Secret / No Provider Call. Do not jump from L-3 directly to provider-call workflow, Daily integration, production data write, or frontend display.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。
