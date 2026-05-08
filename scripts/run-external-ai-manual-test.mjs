@@ -169,6 +169,10 @@ function buildDeepSeekSystemPrompt() {
     'Allowed auditFlags vocabulary includes manual_artifact_only, sample_input_only, site_structured_data_only, validator_required, non_production_output, and no_frontend_display.',
     'sourceAttribution must be an array of objects, not a string and not an array of strings.',
     'Each sourceAttribution object must include sourceLayer, field, claimType, and noteZh.',
+    'Each sourceAttribution.noteZh must include validator-recognized attribution wording: 样例结构化输入, 站内结构化数据, or sample input.',
+    'For sample fixture based outputs, use noteZh: 来自提供的样例结构化输入.',
+    'Do not use only 来自提供的结构化输入 because it may not satisfy validator attribution keyword detection.',
+    'Keep claimType as one of site_structured_data, rule_based_interpretation, or sample_input.',
     'Every factual claim should map to one provided structured input layer: dailyBrief, divergenceLayer, brentPricingLayer, macroDrivers.consumer, aiInterpretationLayer, dataHealth, or decisionContext.',
     'Do not claim external web, news, or market verification.',
     'generatedAt must be an ISO timestamp and is artifact metadata only. If you cannot know current time, use the input generatedAt; do not invent a market-data timestamp.',
@@ -206,7 +210,7 @@ function buildDeepSeekUserPrompt(input) {
           sourceLayer: 'dailyBrief',
           field: 'macroState',
           claimType: 'sample_input',
-          noteZh: '来自提供的结构化输入'
+          noteZh: '来自提供的样例结构化输入'
         }
       ],
       auditFlags: [
@@ -246,6 +250,10 @@ function buildDeepSeekUserPrompt(input) {
     '- Each object must include sourceLayer, field, claimType, and noteZh.',
     '- sourceLayer must be one of dailyBrief, divergenceLayer, brentPricingLayer, macroDrivers.consumer, aiInterpretationLayer, dataHealth, or decisionContext.',
     '- claimType must be one of site_structured_data, rule_based_interpretation, or sample_input.',
+    '- noteZh must include validator-recognized attribution wording: 样例结构化输入, 站内结构化数据, or sample input.',
+    '- For sample fixture based outputs, use noteZh: 来自提供的样例结构化输入.',
+    '- For future production site data outputs, use noteZh wording that includes 站内结构化数据.',
+    '- Do not use only 来自提供的结构化输入 because it may not satisfy validator attribution keyword detection.',
     '- Every factual claim should map to one of the provided structured input layers.',
     '- Do not claim external web, news, or market verification.',
     'Use only this structured input JSON:',

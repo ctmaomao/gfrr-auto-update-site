@@ -214,6 +214,8 @@ v28.0K-4D adds a DeepSeek manual artifact path. Any saved manual output artifact
 
 v28.0K-4D-2 tightens the manual DeepSeek output expectation. `auditFlags` must be neutral diagnostic tags only, not prose sentences and not investment / trading boundary text. Use boolean `boundaries` fields, including `boundaries.notInvestmentAdvice=true`, for safety boundaries. `sourceAttribution` must be an array of objects only; each item must include `sourceLayer`, `field`, `claimType`, and `noteZh`, and must map claims to the provided structured input rather than external web/news/market verification.
 
+v28.0K-4D-3 aligns source attribution wording with the existing validator keyword rule. `sourceAttribution` must be an object array. Each item should include validator-recognized attribution wording in `noteZh`: for sample/manual fixture based outputs, include `样例结构化输入`; for future production site data outputs, include `站内结构化数据`. Do not use only `结构化输入`, because it may not satisfy attribution detection.
+
 ## 13. Non-goals / 非目标
 
 This stage does not:
