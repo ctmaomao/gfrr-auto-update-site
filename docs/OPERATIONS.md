@@ -277,6 +277,31 @@ v28.0K-4E-4 failure artifacts include `failureClassification` so provider-side f
 
 If `npm run check:external-ai-output -- manual-artifacts/external-ai/deepseek-output-latest.json` is run against a failure artifact, the validator should fail with failure-artifact guidance rather than a long list of missing output fields. Failure artifacts must never be treated as PASS.
 
+### Manual external AI quality review
+
+v28.0K-4F adds an offline quality review gate for manual external AI artifacts. It does not call DeepSeek, does not read API keys, does not write production data, and writes only an ignored review artifact under `manual-artifacts/`.
+
+After a successful manual DeepSeek output, first confirm the structural validator:
+
+```bash
+npm run check:external-ai-output -- manual-artifacts/external-ai/deepseek-output-latest.json
+```
+
+Then run the quality review:
+
+```bash
+npm run review:external-ai-artifact
+```
+
+Interpret the recommendation:
+
+- `pass_for_manual_review`: the artifact may be considered in a later reviewed design PR, but is still not production.
+- `needs_prompt_revision`: do not promote; tighten prompt or input guidance before another paid/manual run.
+- `provider_failure_only`: provider issue only; this is not valid external AI output.
+- `reject_for_promotion`: do not promote.
+
+Promotion remains forbidden without a separate reviewed PR. Do not commit the quality review artifact, do not copy provider output into `data/radar-data.json`, and do not display external AI output in the frontend.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：

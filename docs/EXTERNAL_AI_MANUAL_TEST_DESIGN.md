@@ -340,6 +340,20 @@ Provider unavailable and timeout failures are non-production provider availabili
 
 The output validator remains strict. If a failure artifact is passed to `check:external-ai-output`, it must fail with clear operator guidance instead of masquerading as a valid output.
 
+### v28.0K-4F External AI Artifact Quality Review Gate
+
+v28.0K-4F adds an offline manual quality gate:
+
+```bash
+npm run review:external-ai-artifact
+```
+
+The gate reviews an existing external AI output artifact or provider failure artifact. It checks semantic integrity, execution / position language, unsupported external market or news verification claims, source attribution coverage, confidence reasonableness, structure quality, incremental value over rule-based interpretation, and strict display-only boundaries.
+
+This gate separates technical validation from product-quality eligibility. `check:external-ai-output` can pass while the quality review still returns `needs_prompt_revision` or `reject_for_promotion`. Provider failure artifacts return `provider_failure_only` and are not valid external AI output.
+
+The review artifact remains manual-only and ignored under `manual-artifacts/`. `promotionEligible` must remain `false`; no output is promoted to production, displayed in the frontend, copied into data files, or connected to scoring / decision / execution / position logic.
+
 ## 13. Promotion Criteria / 晋升条件
 
 Before any external AI output becomes user-visible:

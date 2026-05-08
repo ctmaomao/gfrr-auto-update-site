@@ -224,6 +224,8 @@ v28.0K-4E-2 applies the unsafe wording guard globally across every returned stri
 
 v28.0K-4E-3 distinguishes sample fixture input from live/local site-structured radar input. Live or local `radar-data.json` input must use source attribution wording such as `来自站内结构化数据` and `claimType=site_structured_data`; only sample fixture input may use `样例结构化输入` or `claimType=sample_input`. External AI output must not repeat concrete execution / position fields such as execution-light labels, exposure bands, cash targets, or position details; `decisionContext` is read-only system-state background only.
 
+v28.0K-4F adds a separate offline quality review gate. An external AI artifact can pass the structural validator and still fail quality review if it confuses live data with sample input, repeats execution / position language, claims unsupported external verification, has weak attribution, lacks useful synthesis, or uses unreasonable confidence. The quality gate is intentionally stricter about execution / position language and live/sample semantics, and it never promotes output to production.
+
 ## 13. Non-goals / 非目标
 
 This stage does not:
