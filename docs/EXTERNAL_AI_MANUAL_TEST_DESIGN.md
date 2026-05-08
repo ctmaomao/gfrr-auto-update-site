@@ -200,7 +200,7 @@ Manual API tests must not:
 - v28.0K-4B Local manual test scaffold, disabled and no network by default
 - v28.0K-4C Disabled provider adapter skeleton, no network and no provider calls
 - v28.0K-4D DeepSeek manual API test to validator-gated artifact, no production display
-- v28.0K-4E Validator-gated manual artifact review
+- v28.0K-4E Live site manual input artifact
 - v28.0K-4F Hidden diagnostic comparison, still no frontend
 - v28.0K-4G Separate frontend comparison design review
 
@@ -281,6 +281,20 @@ The validator remains strict. This stage does not weaken validation, does not wr
 v28.0K-4D-3 keeps the same manual DeepSeek artifact boundary and aligns prompt `sourceAttribution.noteZh` wording with the existing validator keyword rule. Sample/manual fixture based outputs should use wording such as `来自提供的样例结构化输入`, while future production site data outputs should include `站内结构化数据`.
 
 This stage does not weaken the validator, does not write production data, does not display external AI output in the frontend, and does not affect scoring, `decisionModel`, execution, or position logic.
+
+### v28.0K-4E Live Site Manual Input Artifact
+
+v28.0K-4E adds a deterministic local builder for manual external AI input artifacts:
+
+```bash
+npm run manual:external-ai:build-input
+```
+
+The builder reads real site-structured radar data from local `data/radar-data.json` by default and writes only to `manual-artifacts/external-ai/manual-input-latest.json`. It may also read from an explicitly allowlisted live site `radar-data.json` URL when `--source-url` is provided. The live URL path is read-only, rejects non-allowlisted URLs, sends no secrets, and does not call DeepSeek / OpenAI / external AI APIs.
+
+The generated input artifact remains manual-only, artifact-only, and non-production. It must not be committed, copied into `data/radar-data.json`, displayed in the frontend, or used to change scoring, `decisionModel`, execution, or position logic. Production `externalAiInterpretationLayer` remains disabled and continues to fallback to the rule-based `aiInterpretationLayer`.
+
+DeepSeek remains a separate explicit manual command. The input builder itself does not read `DEEPSEEK_API_KEY`, does not read `OPENAI_API_KEY`, does not call DeepSeek, and does not write production data. Any manual DeepSeek output generated from this input must still pass `check:external-ai-output` before review.
 
 ## 13. Promotion Criteria / 晋升条件
 

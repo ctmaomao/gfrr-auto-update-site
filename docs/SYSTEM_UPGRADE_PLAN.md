@@ -132,6 +132,12 @@ v28.0K-4D-1 is a narrow fix to the existing DeepSeek manual artifact path after 
 
 This stage does not add dependencies, SDKs, secrets, production data writes, frontend display, Worker changes, workflows, or scoring / decision / execution / position impact. Manual artifacts remain ignored and must not be promoted into production data.
 
+## v28.0K-4E Live Site Manual Input Artifact
+
+v28.0K-4E adds `npm run manual:external-ai:build-input`, a deterministic manual input artifact builder for real site-structured `radar-data.json`. It reads local `data/radar-data.json` by default, may read an explicitly allowlisted live site URL, and writes only to ignored `manual-artifacts/external-ai/*.json` paths.
+
+This remains manual-only and validator-gated. It does not create production external AI, does not display external AI output in the frontend, does not call DeepSeek by itself, does not read API keys, and does not affect scoring / decision / execution / position. The purpose is to prepare manual real-data DeepSeek quality review without promoting artifacts into production.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

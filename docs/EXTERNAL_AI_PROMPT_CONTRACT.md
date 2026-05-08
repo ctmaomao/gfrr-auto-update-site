@@ -216,6 +216,8 @@ v28.0K-4D-2 tightens the manual DeepSeek output expectation. `auditFlags` must b
 
 v28.0K-4D-3 aligns source attribution wording with the existing validator keyword rule. `sourceAttribution` must be an object array. Each item should include validator-recognized attribution wording in `noteZh`: for sample/manual fixture based outputs, include `样例结构化输入`; for future production site data outputs, include `站内结构化数据`. Do not use only `结构化输入`, because it may not satisfy attribution detection.
 
+v28.0K-4E input artifacts may contain real site-structured data from `data/radar-data.json` or an allowlisted public site `radar-data.json` URL. They are still site-structured context only, not external market data, not private user data, and not secrets. They must remain manual-only artifacts under `manual-artifacts/`, must not be committed, and must not be treated as production data or frontend display data.
+
 ## 13. Non-goals / 非目标
 
 This stage does not:
