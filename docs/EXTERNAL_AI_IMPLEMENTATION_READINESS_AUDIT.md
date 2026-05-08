@@ -275,6 +275,8 @@ Recommended next PR: v28.0L-2 Disabled Production Provider Path Skeleton — No 
 
 v28.0L-2 adds the disabled skeleton only. Production integration remains `not_ready`; the next possible stage after L-2 is v28.0L-3 manual `workflow_dispatch` artifact-only design, and that must still be separately reviewed before any implementation.
 
+v28.0L-3 is workflow design only. Production integration remains `not_ready`. The next implementation must be v28.0L-3B dry-run workflow skeleton, not a provider-call workflow.
+
 Do not proceed directly to:
 
 - `workflow_dispatch` provider call

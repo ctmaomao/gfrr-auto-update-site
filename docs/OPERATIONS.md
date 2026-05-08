@@ -366,6 +366,8 @@ npm run check:external-ai-production-provider-path
 
 Do not set `DEEPSEEK_API_KEY` for L-2 checks. L-2 does not use secrets or network, and activation attempts must remain disabled.
 
+v28.0L-3 designs a future manual `workflow_dispatch` artifact-only path. Operators must not add `DEEPSEEK_API_KEY` to GitHub Secrets until a reviewed workflow implementation PR requires it. Current allowed provider usage remains local/manual only. Any future workflow should use short-lived artifacts and explicit manual dispatch.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：

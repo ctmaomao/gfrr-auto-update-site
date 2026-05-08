@@ -30,6 +30,8 @@ v28.0L-1 readiness audit is tracked in [`EXTERNAL_AI_IMPLEMENTATION_READINESS_AU
 
 v28.0L-2 adds a no-network / no-secret production provider path skeleton. `provider=none` remains the default, and no API call can occur in L-2.
 
+v28.0L-3 designs a future manual `workflow_dispatch` provider test path. Any future workflow provider call must be artifact-only and manually triggered; no Daily/API production integration is allowed yet.
+
 ## 2. Current Baseline / 当前基线
 
 当前稳定基线为：
