@@ -392,6 +392,19 @@ Expected behavior:
 
 If the workflow fails safety checks, do not bypass them. Do not edit the workflow to add provider-call arguments, provider inputs, allow-network inputs, or secret references. Any provider-call workflow requires a separate reviewed L-3C PR.
 
+### External AI Manual Dry Run audit result
+
+Successful dry-run validation:
+
+- Run ID: `25583503038`
+- Result: `PASS`
+- Input source: `fixture_sample`
+- Artifact: `external-ai-manual-dry-run-25583503038`
+
+Use this run as proof that the dry-run skeleton works in GitHub Actions. Do not treat it as proof of provider-call readiness, do not add secrets based on this run, do not copy artifacts into production data, and do not use the dry-run artifact as external AI output.
+
+If operators rerun the workflow, keep it dry-run only with the default `fixture_sample` input or `local_compact`. Artifacts remain short-lived diagnostics only and must not be promoted.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：

@@ -29,6 +29,7 @@ External AI remains manual-only, artifact-only, validator-gated, quality-review-
 | Structural validator | ready | `check:external-ai-output` exists and detects invalid/failure artifacts. | No | Keep strict; do not weaken. |
 | Provider failure classification | ready | `provider_unavailable`, `provider_timeout`, and failure-artifact handling exist. | No | Preserve classification in future production path. |
 | Quality review gate | ready | `review:external-ai-artifact` exists and keeps `promotionEligible=false`. | No | Require quality result in future audit trail. |
+| L-3B dry-run workflow skeleton | ready | v28.0L-3B dry-run workflow skeleton has been validated once by manual GitHub Actions `workflow_dispatch` run `25583503038`. | No | Keep it dry-run-only; do not add provider-call behavior in audit-sync PRs. |
 | Baseline documentation | ready | v28.0K-4G and v28.0L-0 docs are present. | No | Keep docs linked before implementation. |
 | Production data contract | design_only | L-0 designs a future shape; current production remains disabled scaffold. | Yes | Implement only in later staged PR after disabled skeleton. |
 | Feature flags | design_only | L-0 defines required flags, but no implementation exists. | Yes | L-2 may add disabled flag shape without provider calls. |
@@ -278,6 +279,8 @@ v28.0L-2 adds the disabled skeleton only. Production integration remains `not_re
 v28.0L-3 is workflow design only. Production integration remains `not_ready`. The next implementation must be v28.0L-3B dry-run workflow skeleton, not a provider-call workflow.
 
 v28.0L-3B adds the dry-run workflow skeleton only. Production integration remains `not_ready`; provider-call workflow remains `not_ready`; GitHub secret readiness remains `not_ready` / `design_only` because no secret is added or referenced. The only allowed L-3B workflow behavior is no-secret, no-provider-call, dry-run diagnostics.
+
+v28.0L-3B-1 records one successful manual GitHub Actions `workflow_dispatch` validation of the L-3B dry-run workflow skeleton. The dry-run skeleton is `ready` for dry-run-only diagnostics. Provider-call workflow remains `not_ready`; GitHub secret usage remains `not_ready`; production integration remains `not_ready`.
 
 The next possible stage after L-3B is an L-3C provider-call workflow design or implementation PR, but it must be separate, protected, and reviewed. It must not be bundled with Daily integration, production data writes, frontend display, or scoring / decision / execution / position changes.
 

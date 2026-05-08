@@ -412,3 +412,37 @@ npm run check:external-ai-manual-workflow
 ```
 
 The next stage, if approved, must be a separate L-3C PR. L-3C must not be smuggled into this dry-run workflow by adding provider-call arguments, secrets, allow-network inputs, or provider output uploads.
+
+## v28.0L-3B-1 Manual dry-run workflow audit result
+
+One real GitHub Actions manual dispatch has validated the v28.0L-3B dry-run skeleton:
+
+- Run ID: `25583503038`
+- Commit: `2ae6e5e`
+- Trigger: `workflow_dispatch`
+- Input source: `fixture_sample`
+- Upload artifacts: `true`
+- Timeout metadata: `120000`
+- Result: `PASS`
+- Artifact name: `external-ai-manual-dry-run-25583503038`
+- Artifact ID: `6890255520`
+- Artifact final size: `5895 bytes`
+- Retention: `3 days`
+
+Validated safety findings:
+
+- workflow ran as dry-run only
+- provider stayed `none`
+- `networkAllowed=false`
+- `apiCalled=false`
+- `secretsRead=false`
+- `productionDataWritten=false`
+- `frontendDisplayChanged=false`
+- no DeepSeek call
+- no provider output artifact
+- no quality review artifact
+- post-run safety assertion passed
+
+This audit does not enable provider calls. It does not add or require `DEEPSEEK_API_KEY`, does not write production data, does not make external AI frontend-visible, and does not change scoring / decision / execution / position behavior.
+
+Artifacts from this run are dry-run diagnostics only. They are not production data, are not external AI output, and must not be copied into `data/radar-data.json` or any frontend-visible path.
