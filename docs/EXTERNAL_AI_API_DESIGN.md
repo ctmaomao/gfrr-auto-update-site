@@ -32,6 +32,8 @@ v28.0L-2 adds a no-network / no-secret production provider path skeleton. `provi
 
 v28.0L-3 designs a future manual `workflow_dispatch` provider test path. Any future workflow provider call must be artifact-only and manually triggered; no Daily/API production integration is allowed yet.
 
+v28.0L-3B adds a manual `workflow_dispatch` dry-run skeleton only. It does not call any API, does not use or reference a provider secret, and does not create API integration. Provider-call workflow remains a later reviewed stage.
+
 ## 2. Current Baseline / 当前基线
 
 当前稳定基线为：

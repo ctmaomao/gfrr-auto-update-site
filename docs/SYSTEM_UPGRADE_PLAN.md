@@ -205,6 +205,14 @@ v28.0L-3 adds [`EXTERNAL_AI_MANUAL_WORKFLOW_DISPATCH_DESIGN.md`](EXTERNAL_AI_MAN
 
 The next stage should be v28.0L-3B Manual Workflow Dispatch Dry-Run Skeleton — No Secret / No Provider Call. Do not jump from L-3 directly to provider-call workflow, Daily integration, production data write, or frontend display.
 
+## v28.0L-3B Manual Workflow Dispatch Dry-Run Skeleton
+
+v28.0L-3B adds `.github/workflows/external-ai-manual-dry-run.yml` and `npm run check:external-ai-manual-workflow`.
+
+The workflow is `workflow_dispatch` only and dry-run-only. It has no provider input, no allow-network input, no secret reference, no provider call, no production data write, no frontend change, no Worker change, and no Daily integration. It can run the external AI dry-run scaffold and upload only sanitized dry-run diagnostics with short retention.
+
+The next stage must be a separate L-3C PR if provider-call workflow behavior is ever considered.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

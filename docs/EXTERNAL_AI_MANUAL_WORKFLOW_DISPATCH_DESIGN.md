@@ -383,3 +383,32 @@ Do not proceed directly to:
 - Daily integration
 - production data write
 - frontend display
+
+## 17. v28.0L-3B dry-run workflow skeleton
+
+v28.0L-3B adds the first manual workflow skeleton: `.github/workflows/external-ai-manual-dry-run.yml`.
+
+This workflow is intentionally dry-run-only:
+
+- trigger is `workflow_dispatch` only
+- no schedule, push, pull request, or workflow_run trigger
+- no provider input
+- no allow_network input
+- no dry_run=false path
+- no GitHub secret
+- no provider call
+- no production data write
+- no frontend display
+- no Daily / Worker integration
+
+The workflow runs the existing no-network checks, optionally builds a local compact manual input from repository data, runs `scripts/run-external-ai-manual-test.mjs --dry-run`, writes a dry-run report under `manual-artifacts/`, and may upload only sanitized dry-run diagnostics with short retention.
+
+Uploaded artifacts are diagnostics only. They are not production data, are not valid DeepSeek output, and must not be copied into `data/radar-data.json`.
+
+The static guard is:
+
+```bash
+npm run check:external-ai-manual-workflow
+```
+
+The next stage, if approved, must be a separate L-3C PR. L-3C must not be smuggled into this dry-run workflow by adding provider-call arguments, secrets, allow-network inputs, or provider output uploads.

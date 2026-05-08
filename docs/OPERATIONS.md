@@ -368,6 +368,30 @@ Do not set `DEEPSEEK_API_KEY` for L-2 checks. L-2 does not use secrets or networ
 
 v28.0L-3 designs a future manual `workflow_dispatch` artifact-only path. Operators must not add `DEEPSEEK_API_KEY` to GitHub Secrets until a reviewed workflow implementation PR requires it. Current allowed provider usage remains local/manual only. Any future workflow should use short-lived artifacts and explicit manual dispatch.
 
+### External AI Manual Dry Run workflow
+
+v28.0L-3B adds `External AI Manual Dry Run` in GitHub Actions. It is safe dry-run only and does not call DeepSeek.
+
+How to run it:
+
+1. Open GitHub Actions.
+2. Select `External AI Manual Dry Run`.
+3. Choose `Run workflow`.
+4. Select `input_source=fixture_sample` for the default fixture dry-run, or `input_source=local_compact` to build a compact local input from repository data.
+5. Leave `upload_artifacts=true` only when dry-run diagnostics should be retained briefly.
+
+Expected behavior:
+
+- no `DEEPSEEK_API_KEY` is required
+- no GitHub secret is read
+- no provider call is made
+- no DeepSeek output is expected
+- no production data is written
+- no frontend output is changed
+- artifacts are dry-run diagnostics only
+
+If the workflow fails safety checks, do not bypass them. Do not edit the workflow to add provider-call arguments, provider inputs, allow-network inputs, or secret references. Any provider-call workflow requires a separate reviewed L-3C PR.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
