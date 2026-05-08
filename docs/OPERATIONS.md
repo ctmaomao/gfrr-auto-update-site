@@ -202,6 +202,8 @@ If a `sourceAttribution` warning appears, require `sourceAttribution` to be an a
 
 If validation fails with `sourceAttribution must include site structured data or sample input attribution`, check whether each `sourceAttribution.noteZh` includes validator-recognized wording such as `样例`, `站内结构化`, or `sample input`. For sample/manual fixture based outputs, prefer `来自提供的样例结构化输入`; do not use only `来自提供的结构化输入`.
 
+If validation fails because `modelJudgments`, `facts`, `inferences`, or another prose field contains unsafe wording such as `交易建议`, do not weaken the validator and do not repeatedly retry paid calls. Tighten the prompt globally so unsafe wording is excluded from every returned string field. Boundary statements belong in the `boundaries` booleans, not in prose text, and `modelJudgments` should stay limited to evidence strength, data sufficiency, uncertainty, and low-confidence / watch conditions.
+
 On Windows PowerShell, read the artifact as UTF-8 to avoid encoding confusion:
 
 ```powershell

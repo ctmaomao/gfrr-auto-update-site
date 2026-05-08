@@ -316,6 +316,14 @@ The default manual DeepSeek timeout is 90000 ms, with an upper limit of 180000 m
 
 This stage does not run DeepSeek automatically, does not add production external AI, does not write production data, does not display external AI output in the frontend, and does not affect scoring, `decisionModel`, execution, or position logic.
 
+### v28.0K-4E-2 Global Unsafe Wording Prompt Guard
+
+v28.0K-4E-2 tightens the manual DeepSeek prompt after compact live input reached DeepSeek and returned an artifact, but validation failed because `modelJudgments` contained `交易建议`. The compact input and timeout diagnostics path worked; the remaining failure was output wording contract.
+
+The prompt now applies the unsafe wording guard globally across all returned string fields, including `summaryZh`, `facts`, `inferences`, `modelJudgments`, `scenarioHypotheses`, `dataGaps`, `invalidationSignals`, `sourceAttribution.noteZh`, `auditFlags`, and `confidence.reasonZh`. Boundary statements must be expressed through the `boundaries` booleans instead of prose disclaimers.
+
+The validator remains strict and unchanged. This stage does not write production data, does not display external AI output in the frontend, and does not affect scoring, `decisionModel`, execution, or position logic.
+
 ## 13. Promotion Criteria / 晋升条件
 
 Before any external AI output becomes user-visible:
