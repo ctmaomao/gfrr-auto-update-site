@@ -168,6 +168,19 @@ v28.0K-4F adds an offline manual quality review gate for external AI artifacts. 
 
 This stage remains manual-only and artifact-only. `promotionEligible` stays false, provider failure artifacts cannot be promoted, and any future production or frontend integration still requires a separate reviewed PR.
 
+## v28.0K-4G External AI Manual Test Baseline Sync
+
+v28.0K-4G records the stable manual external AI baseline after v28.0K-4D / 4E / 4F:
+
+- v28.0K-4D provides the explicit DeepSeek manual artifact path, gated by `--allow-network`, `--validate-output`, a safe manual artifact path, and local `DEEPSEEK_API_KEY`.
+- v28.0K-4E provides local / allowlisted live / compact manual input artifacts for site-structured `radar-data.json`; compact live input reduced manual test size to roughly 13k-14k characters and one compact live DeepSeek artifact passed `check:external-ai-output` with warnings 0.
+- v28.0K-4E-4 provides normalized provider failure classification for diagnostic artifacts, including `provider_unavailable` and `provider_timeout`.
+- v28.0K-4F provides the offline artifact quality review gate and keeps `promotionEligible=false`.
+
+External AI remains manual-only, artifact-only, validator-gated, quality-review-gated, non-production, and non-user-visible. No Daily pipeline, frontend display, production data write, scoring, decision, execution, position, GitHub Actions automation, or Worker runtime integration exists.
+
+The next stage must be a separate reviewed design PR before any production integration. Passing `check:external-ai-output` or `review:external-ai-artifact` is not sufficient for production promotion.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

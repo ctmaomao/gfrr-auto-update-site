@@ -302,6 +302,54 @@ Interpret the recommendation:
 
 Promotion remains forbidden without a separate reviewed PR. Do not commit the quality review artifact, do not copy provider output into `data/radar-data.json`, and do not display external AI output in the frontend.
 
+### External AI manual test baseline and stop rules
+
+Stable v28.0K-4G manual test flow:
+
+1. Build compact input:
+
+```bash
+npm run manual:external-ai:build-input:compact
+```
+
+2. Run DeepSeek manually only when needed, with local `DEEPSEEK_API_KEY` and explicit network / validation flags:
+
+```bash
+node scripts/run-external-ai-manual-test.mjs --provider deepseek --input manual-artifacts/external-ai/manual-input-live-compact.json --output manual-artifacts/external-ai/deepseek-output-latest.json --allow-network --validate-output --timeout-ms 120000
+```
+
+3. Validate output:
+
+```bash
+npm run check:external-ai-output -- manual-artifacts/external-ai/deepseek-output-latest.json
+```
+
+4. Run quality review:
+
+```bash
+npm run review:external-ai-artifact
+```
+
+Interpretation:
+
+- `pass_for_manual_review`: may be considered in a later reviewed design PR, but is still not production.
+- `needs_prompt_revision`: do not promote.
+- `provider_failure_only`: provider issue, not valid output.
+- `reject_for_promotion`: do not promote.
+
+Stop rules:
+
+- If `provider_unavailable` / HTTP 503 appears, stop repeated paid calls and retry later.
+- If `provider_timeout` appears, retry at most once later with compact input and `--timeout-ms 120000`.
+- If the validator fails, do not promote and do not repeatedly retry paid calls.
+- If quality review returns `needs_prompt_revision` or `reject_for_promotion`, fix prompt/design first.
+
+Security:
+
+- Never paste API keys into chat, commits, docs, logs, or artifacts.
+- Clear `DEEPSEEK_API_KEY` from the local shell after manual tests.
+- Do not commit `manual-artifacts/`.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
