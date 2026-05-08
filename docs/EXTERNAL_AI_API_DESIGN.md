@@ -36,6 +36,8 @@ v28.0L-3B adds a manual `workflow_dispatch` dry-run skeleton only. It does not c
 
 v28.0L-3C is tracked in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md). It identifies the future DeepSeek provider-call command, explicit operator gates, secret-injection boundary, validation, quality review, artifact, exit-code, and cost-control policy. No API path is active in L-3C, no workflow file is added or modified, and no provider call is run.
 
+v28.0L-3D is tracked in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md). It is a documentation-only go/no-go checklist before provider-call implementation planning. Provider-call implementation, GitHub secret usage, production data writes, Daily integration, frontend display, and enabled `externalAiInterpretationLayer` remain not ready.
+
 ## 2. Current Baseline / 当前基线
 
 当前稳定基线为：

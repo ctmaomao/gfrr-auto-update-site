@@ -452,3 +452,9 @@ Artifacts from this run are dry-run diagnostics only. They are not production da
 v28.0L-3C is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md). It designs a future provider-call workflow path only.
 
 The existing v28.0L-3B workflow remains dry-run-only. Do not modify the dry-run workflow to call a provider, add provider inputs, add `allow_network`, add a `dry_run=false` path, reference secrets, or upload provider output in the L-3C design PR. Any implementation must be a separate reviewed PR.
+
+## v28.0L-3D provider-call readiness checklist note
+
+v28.0L-3D is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md). It is a documentation-only readiness checklist and does not change workflow behavior.
+
+The v28.0L-3B `External AI Manual Dry Run` workflow remains dry-run-only: no provider input, no `allow_network`, no `dry_run=false` path, no GitHub secret reference, no provider call, no provider output artifact, no production data write, no frontend display, and no Daily integration. L-3D is not approval to modify that workflow.

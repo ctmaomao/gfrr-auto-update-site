@@ -229,6 +229,16 @@ This stage makes no workflow change, adds no secret, runs no provider call, writ
 
 Any provider-call implementation must be a separate reviewed PR and remain artifact-only / non-production unless a later reviewed phase explicitly changes that boundary.
 
+## v28.0L-3D Provider-Call Workflow Readiness Checklist
+
+v28.0L-3D adds [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md). It is a documentation-only readiness checklist and go/no-go gate before any provider-call workflow implementation.
+
+This stage makes no workflow change, adds no secret, runs no provider call, writes no production data, changes no frontend, changes no Worker, changes no config/data/realtime files, and has no scoring / decision / execution / position impact. Existing v28.0L-3B dry-run workflow behavior remains dry-run-only.
+
+Current readiness decision: provider-call implementation is still `not_ready_until_missing_items_resolved`. Missing items include GitHub secret storage decision, secret rotation/revocation, provider-call workflow static checker, missing-secret failure test plan, artifact sanitization checker, operator approval process, cost budget, and concurrency policy.
+
+Recommended next PR is v28.0L-3E Provider-Call Workflow Implementation Plan — No Code. A faster missing-secret-safe workflow skeleton remains possible only if explicitly approved and must still avoid real provider calls.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

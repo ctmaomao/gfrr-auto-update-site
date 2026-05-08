@@ -30,7 +30,8 @@ External AI remains manual-only, artifact-only, validator-gated, quality-review-
 | Provider failure classification | ready | `provider_unavailable`, `provider_timeout`, and failure-artifact handling exist. | No | Preserve classification in future production path. |
 | Quality review gate | ready | `review:external-ai-artifact` exists and keeps `promotionEligible=false`. | No | Require quality result in future audit trail. |
 | L-3B dry-run workflow skeleton | ready | v28.0L-3B dry-run workflow skeleton has been validated once by manual GitHub Actions `workflow_dispatch` run `25583503038`. | No | Keep it dry-run-only; do not add provider-call behavior in audit-sync PRs. |
-| Provider-call workflow design | design_only / partially_ready | v28.0L-3C documents future provider-call gates, secret handling, artifacts, exit policy, and cost controls. | Yes | Implement only in a separate reviewed PR after secret and operator approval decisions. |
+| Provider-call workflow design | design_ready | v28.0L-3C documents future provider-call gates, secret handling, artifacts, exit policy, and cost controls. | No | Treat as design only; do not implement directly from L-3C. |
+| Provider-call readiness checklist | added | v28.0L-3D adds [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md) as the final no-code gate before implementation planning. | Yes | Resolve checklist blockers before any provider-call workflow implementation. |
 | Provider-call workflow implementation | not_ready | No provider-call workflow exists, and no workflow file references provider secrets. | Yes | Requires a later implementation PR with static guards and artifact-only boundaries. |
 | Baseline documentation | ready | v28.0K-4G and v28.0L-0 docs are present. | No | Keep docs linked before implementation. |
 | Production data contract | design_only | L-0 designs a future shape; current production remains disabled scaffold. | Yes | Implement only in later staged PR after disabled skeleton. |
@@ -284,9 +285,11 @@ v28.0L-3B adds the dry-run workflow skeleton only. Production integration remain
 
 v28.0L-3B-1 records one successful manual GitHub Actions `workflow_dispatch` validation of the L-3B dry-run workflow skeleton. The dry-run skeleton is `ready` for dry-run-only diagnostics. Provider-call workflow remains `not_ready`; GitHub secret usage remains `not_ready`; production integration remains `not_ready`.
 
-v28.0L-3C adds provider-call workflow design only. Provider-call workflow design becomes `design_only` / `partially_ready`, but provider-call implementation remains `not_ready`; GitHub secret usage remains `not_ready`; production integration remains `not_ready`.
+v28.0L-3C adds provider-call workflow design only. Provider-call workflow design becomes `design_ready`, but provider-call implementation remains `not_ready`; GitHub secret usage remains `not_ready`; production integration remains `not_ready`.
 
-The next possible stage after L-3B is an L-3C provider-call workflow design or implementation PR, but it must be separate, protected, and reviewed. It must not be bundled with Daily integration, production data writes, frontend display, or scoring / decision / execution / position changes.
+v28.0L-3D adds the provider-call readiness checklist. The checklist is documentation-only and records current provider-call implementation readiness as `not_ready_until_missing_items_resolved`; GitHub secret usage remains `not_ready`; production integration remains `not_ready`.
+
+The next possible stage after L-3D is an L-3E no-code implementation plan, or a separately approved missing-secret-safe workflow skeleton with no real provider call. It must not be bundled with Daily integration, production data writes, frontend display, or scoring / decision / execution / position changes.
 
 Do not proceed directly to:
 
