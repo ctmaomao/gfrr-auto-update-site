@@ -199,7 +199,7 @@ Manual API tests must not:
 - v28.0K-4A Design only
 - v28.0K-4B Local manual test scaffold, disabled and no network by default
 - v28.0K-4C Disabled provider adapter skeleton, no network and no provider calls
-- v28.0K-4D Manual sample input to manual output artifact, no production display
+- v28.0K-4D DeepSeek manual API test to validator-gated artifact, no production display
 - v28.0K-4E Validator-gated manual artifact review
 - v28.0K-4F Hidden diagnostic comparison, still no frontend
 - v28.0K-4G Separate frontend comparison design review
@@ -236,6 +236,28 @@ Current K-4C boundaries:
 
 Future real provider adapters require a separate reviewed PR. They must stay opt-in, validator-gated, isolated from production data, and must not affect scoring / decision / execution / position.
 
+### v28.0K-4D DeepSeek Manual Artifact Test
+
+v28.0K-4D adds the first real DeepSeek manual API call path. It is explicit opt-in only, artifact-only, validator-gated, and isolated from production.
+
+Manual command:
+
+```bash
+npm run manual:external-ai:deepseek
+```
+
+Required gates:
+
+- `--provider deepseek`
+- `--allow-network`
+- `--validate-output`
+- safe `--output` path outside production / frontend / workflow directories
+- `DEEPSEEK_API_KEY` present in the environment
+
+The command uses the sample input fixture as explicit manual input and writes only to a manual artifact path such as `manual-artifacts/external-ai/deepseek-output-latest.json`. The artifact must not be committed, must not be copied into `data/radar-data.json`, and must not be displayed in the frontend.
+
+OpenAI remains unsupported in v28.0K-4D. Production `externalAiInterpretationLayer` remains disabled and `provider=none`; the manual artifact path does not modify Daily, Worker, Pages deploy, scoring, decision, execution, or position logic.
+
 ## 13. Promotion Criteria / 晋升条件
 
 Before any external AI output becomes user-visible:
@@ -252,10 +274,9 @@ Before any external AI output becomes user-visible:
 
 ## 14. Non-goals / 非目标
 
-This PR does not:
+Outside the explicit v28.0K-4D DeepSeek manual artifact command, this work does not:
 
-- call API
-- add API client
+- add production API integration
 - add provider SDK
 - add secrets
 - add `.env`

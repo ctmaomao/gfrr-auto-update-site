@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {
+  assertManualProviderAllowed,
   assertProviderDisabled,
   buildDisabledProviderResult,
   createExternalAiProviderAdapter,
@@ -38,10 +39,43 @@ async function run() {
   assertDisabledMetadata(getExternalAiProviderMetadata('none'));
   assertDisabledMetadata(getExternalAiProviderMetadata('deepseek'));
   assertDisabledMetadata(getExternalAiProviderMetadata('openai'));
+  const readyDeepSeekMetadata = getExternalAiProviderMetadata('deepseek', null, {
+    allowNetwork: true,
+    apiKeyAvailable: true
+  });
+  assert.equal(readyDeepSeekMetadata.endpointType, 'chat_completions');
+  assert.equal(readyDeepSeekMetadata.sourceStatus, 'manual_api_test');
+  assert.equal(readyDeepSeekMetadata.networkAllowed, true);
+  assert.equal(readyDeepSeekMetadata.apiKeyRequired, true);
+  assert.equal(readyDeepSeekMetadata.apiKeyRead, true);
+  assert.equal(readyDeepSeekMetadata.usesExternalAiApi, true);
+  assert.equal(readyDeepSeekMetadata.externalAiGenerated, false);
+  assert.equal(
+    getExternalAiProviderMetadata('deepseek', null, {
+      allowNetwork: true,
+      apiKeyAvailable: true,
+      outputValidated: true
+    }).externalAiGenerated,
+    true
+  );
 
   assert.doesNotThrow(() => assertProviderDisabled('none'));
-  assert.throws(() => assertProviderDisabled('deepseek'), /provider adapters are disabled/);
-  assert.throws(() => assertProviderDisabled('openai'), /provider adapters are disabled/);
+  assert.throws(() => assertProviderDisabled('deepseek'), /only allows explicit DeepSeek manual artifact tests/);
+  assert.throws(() => assertProviderDisabled('openai'), /only allows explicit DeepSeek manual artifact tests/);
+  assert.doesNotThrow(() => assertManualProviderAllowed('none'));
+  assert.throws(() => assertManualProviderAllowed('deepseek'), /requires --allow-network/);
+  assert.throws(
+    () => assertManualProviderAllowed('deepseek', { allowNetwork: true }),
+    /requires DEEPSEEK_API_KEY/
+  );
+  assert.doesNotThrow(() => assertManualProviderAllowed('deepseek', {
+    allowNetwork: true,
+    apiKeyAvailable: true
+  }));
+  assert.throws(() => assertManualProviderAllowed('openai', {
+    allowNetwork: true,
+    apiKeyAvailable: true
+  }), /OpenAI manual tests are not supported/);
 
   const noneAdapter = createExternalAiProviderAdapter({ provider: 'none' });
   assert.equal(noneAdapter.provider, 'none');
@@ -57,10 +91,22 @@ async function run() {
   assertNotProviderOutput(disabledResult);
 
   const deepseekAdapter = createExternalAiProviderAdapter({ provider: 'deepseek' });
-  await assert.rejects(() => deepseekAdapter.runManualTest(), /provider adapters are disabled/);
+  await assert.rejects(() => deepseekAdapter.runManualTest(), /requires --allow-network/);
+  const readyDeepseekAdapter = createExternalAiProviderAdapter({
+    provider: 'deepseek',
+    allowNetwork: true,
+    apiKeyAvailable: true
+  });
+  const readyDeepseekResult = await readyDeepseekAdapter.runManualTest();
+  assert.equal(readyDeepseekResult.kind, 'external_ai_provider_manual_ready_result');
+  assert.equal(readyDeepseekResult.provider, 'deepseek');
+  assert.equal(readyDeepseekResult.networkAllowed, true);
+  assert.equal(readyDeepseekResult.apiCalled, false);
+  assert.equal(readyDeepseekResult.secretsRead, false);
+  assertNotProviderOutput(readyDeepseekResult);
 
   const openaiAdapter = createExternalAiProviderAdapter({ provider: 'openai' });
-  await assert.rejects(() => openaiAdapter.runManualTest(), /provider adapters are disabled/);
+  await assert.rejects(() => openaiAdapter.runManualTest(), /OpenAI manual tests are not supported/);
 
   console.log('External AI provider adapter skeleton: PASS');
 }

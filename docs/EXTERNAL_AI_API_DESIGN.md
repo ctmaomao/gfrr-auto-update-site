@@ -20,6 +20,8 @@ v28.0K-4B adds a local dry-run scaffold command only. It does not enable DeepSee
 
 v28.0K-4C adds a disabled provider adapter skeleton only. It recognizes `none`, `deepseek`, and `openai` as future provider values, but does not connect DeepSeek / OpenAI, does not call external APIs, does not read API keys, and keeps production `externalAiInterpretationLayer` disabled.
 
+v28.0K-4D introduces an explicit DeepSeek manual API test path only. It writes validator-gated manual artifacts outside production data and does not integrate with Daily, Worker, frontend display, scoring, decision, execution, or position systems. OpenAI remains disabled.
+
 ## 2. Current Baseline / 当前基线
 
 当前稳定基线为：
@@ -235,6 +237,7 @@ No direct scoring / decision integration. No direct execution / position impact.
 - v28.0K-3 External AI disabled-by-default scaffold
 - v28.0K-4 Manual-run design and disabled local scaffolds, no production display
 - v28.0K-4C Disabled provider adapter skeleton, no API and no network
+- v28.0K-4D DeepSeek manual artifact test, validator-gated and no production integration
 - v28.0K-5 Hidden diagnostic artifact
 - v28.0K-6 User-visible external AI comparison layer
 

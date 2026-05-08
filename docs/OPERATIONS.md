@@ -166,6 +166,30 @@ Expected result: `External AI provider adapter skeleton: PASS`.
 
 Non-`none` provider refusal is expected in v28.0K-4C. Do not treat `deepseek` / `openai` refusal as an incident; no API call is expected, no API key should be read, and production `externalAiInterpretationLayer` remains disabled.
 
+## External AI DeepSeek Manual Artifact Test
+
+v28.0K-4D adds an explicit DeepSeek manual API test command. Dry-run remains no-network:
+
+```bash
+npm run manual:external-ai:dry-run
+```
+
+Manual DeepSeek artifact test:
+
+```bash
+npm run manual:external-ai:deepseek
+```
+
+Expected artifact path:
+
+```text
+manual-artifacts/external-ai/deepseek-output-latest.json
+```
+
+The DeepSeek command requires `DEEPSEEK_API_KEY`, `--allow-network`, `--validate-output`, and a safe `--output` path. Do not paste or print the API key. The command writes only a manual artifact, runs `check:external-ai-output` against it, and must fail closed if the API call, JSON parse, or validator fails.
+
+Failure is a manual diagnostic event, not a production incident. Do not commit the artifact, do not copy it into `data/radar-data.json`, and do not use it to troubleshoot production `externalAiInterpretationLayer`. Production remains disabled and rule-based fallback remains unchanged.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
