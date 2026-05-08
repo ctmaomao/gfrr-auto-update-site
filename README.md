@@ -59,6 +59,7 @@
 - v28.0K-4D DeepSeek Manual Artifact Test：新增显式 opt-in 的 `npm run manual:external-ai:deepseek`，仅写 manual artifact 并通过 validator gate；不写生产数据、不显示前端、不影响 scoring / decision / execution / position。OpenAI 仍 disabled。
 - v28.0K-4E Live Site Data Manual Input Artifact：新增 `npm run manual:external-ai:build-input`，从本地或 allowlisted live `radar-data.json` 生成 ignored manual input artifact；不调用 DeepSeek、不读 API keys、不写生产数据、不显示前端。
 - v28.0K-4E-1 Live Input Compaction and Timeout Diagnostics：新增 compact manual input artifact 与 `--timeout-ms` 诊断，用于降低 live-data DeepSeek manual test 的输入体积；仍不自动调用 DeepSeek、不写生产数据、不显示前端。
+- v28.0K-4G External AI Manual Test Baseline：External AI API 仍未 production-enabled。当前只存在本地 / 手动 DeepSeek artifact path，输出必须先通过 `check:external-ai-output` 与 `review:external-ai-artifact`；尚无 frontend / Daily / Worker / workflow / production data integration。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。

@@ -22,6 +22,8 @@ v28.0K-4C adds a disabled provider adapter skeleton only. It recognizes `none`, 
 
 v28.0K-4D introduces an explicit DeepSeek manual API test path only. It writes validator-gated manual artifacts outside production data and does not integrate with Daily, Worker, frontend display, scoring, decision, execution, or position systems. OpenAI remains disabled.
 
+v28.0K-4G confirms that only manual artifact testing exists. There is no automated DeepSeek provider integration, no workflow provider call, no Daily provider call, no Worker provider call, and no frontend external AI display. The next production design must explicitly address scheduling, API key storage, retry/backoff, provider outage handling, cost control, validator gate, quality review gate, frontend display boundaries, rollback, and a disable switch before any integration PR is considered.
+
 ## 2. Current Baseline / 当前基线
 
 当前稳定基线为：

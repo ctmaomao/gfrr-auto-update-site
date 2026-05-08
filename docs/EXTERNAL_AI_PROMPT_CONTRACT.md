@@ -226,6 +226,8 @@ v28.0K-4E-3 distinguishes sample fixture input from live/local site-structured r
 
 v28.0K-4F adds a separate offline quality review gate. An external AI artifact can pass the structural validator and still fail quality review if it confuses live data with sample input, repeats execution / position language, claims unsupported external verification, has weak attribution, lacks useful synthesis, or uses unreasonable confidence. The quality gate is intentionally stricter about execution / position language and live/sample semantics, and it never promotes output to production.
 
+v28.0K-4G records the stable manual-test baseline. The prompt contract is stable enough for manual artifact testing only; both `check:external-ai-output` and `review:external-ai-artifact` are required before an artifact can even be considered for a later reviewed design PR. Output must avoid live/sample confusion, execution / position / exposure / cash-buffer language, unsupported external news or market verification claims, and overconfident conclusions. Source attribution must distinguish sample fixtures with `样例结构化输入` / `sample_input` from live or local site data with `站内结构化数据` / `site_structured_data`. Confidence should remain conservative unless a future reviewed metadata contract explicitly supports stronger evidence.
+
 ## 13. Non-goals / 非目标
 
 This stage does not:

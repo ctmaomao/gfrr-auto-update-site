@@ -354,6 +354,37 @@ This gate separates technical validation from product-quality eligibility. `chec
 
 The review artifact remains manual-only and ignored under `manual-artifacts/`. `promotionEligible` must remain `false`; no output is promoted to production, displayed in the frontend, copied into data files, or connected to scoring / decision / execution / position logic.
 
+### v28.0K-4G Stable Manual Test Baseline
+
+v28.0K-4G baseline commands:
+
+```bash
+npm run manual:external-ai:build-input
+npm run manual:external-ai:build-input:compact
+```
+
+The manual DeepSeek command remains explicit and paid; run only when an operator intentionally provides local `DEEPSEEK_API_KEY`:
+
+```bash
+node scripts/run-external-ai-manual-test.mjs --provider deepseek --input manual-artifacts/external-ai/manual-input-live-compact.json --output manual-artifacts/external-ai/deepseek-output-latest.json --allow-network --validate-output --timeout-ms 120000
+```
+
+Validate output:
+
+```bash
+npm run check:external-ai-output -- manual-artifacts/external-ai/deepseek-output-latest.json
+```
+
+Run quality review:
+
+```bash
+npm run review:external-ai-artifact
+```
+
+Provider-side failures are classified as diagnostic-only artifacts, including `provider_unavailable`, `provider_timeout`, and quality-review `provider_failure_only`.
+
+Passing `check:external-ai-output` is not enough for production. Passing `review:external-ai-artifact` is not enough for production. Any Daily, frontend, production data, scoring, decision, execution, position, workflow, or Worker integration requires a separate reviewed PR.
+
 ## 13. Promotion Criteria / 晋升条件
 
 Before any external AI output becomes user-visible:
