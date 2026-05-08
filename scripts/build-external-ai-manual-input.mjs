@@ -455,7 +455,11 @@ function buildManualInputArtifact(radarData, source, options) {
       type: source.type,
       path: source.path,
       url: source.url,
-      radarDataUpdatedAt
+      radarDataUpdatedAt,
+      dataSemantics: 'site_structured_data',
+      isSample: false,
+      isLiveSiteData: source.type === 'allowed_live_url',
+      isLocalSiteData: source.type === 'local_file'
     },
     siteData: options.compact ? extractCompactSiteData(radarData) : extractSiteData(radarData),
     boundaries: {
@@ -473,7 +477,8 @@ function buildManualInputArtifact(radarData, source, options) {
     },
     notesZh: [
       '该输入仅用于手动 external AI artifact 测试。',
-      '该输入来自站内结构化数据，不包含 API key 或私人数据。',
+      '该输入来自站内结构化数据。',
+      '该输入不包含 API key 或私人数据。',
       '该输入不得直接写入生产数据或前端展示。'
     ]
   };
@@ -481,6 +486,7 @@ function buildManualInputArtifact(radarData, source, options) {
     artifact.compaction = {
       enabled: true,
       maxListItems: DEFAULT_MAX_LIST_ITEMS,
+      sourceSemantics: 'site_structured_data_compact_summary',
       omittedLargeFields: [
         'historical arrays',
         'chart arrays',

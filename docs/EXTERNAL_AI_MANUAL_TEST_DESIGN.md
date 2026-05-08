@@ -324,6 +324,14 @@ The prompt now applies the unsafe wording guard globally across all returned str
 
 The validator remains strict and unchanged. This stage does not write production data, does not display external AI output in the frontend, and does not affect scoring, `decisionModel`, execution, or position logic.
 
+### v28.0K-4E-3 Live Data Semantics and Execution-Language Guard
+
+v28.0K-4E-3 tightens semantics after a compact live-site DeepSeek artifact passed validation but quality review found sample wording and repeated execution / position details. The input builder now marks local and allowlisted live `radar-data.json` artifacts as `site_structured_data`, with sample flags set to false and compact artifacts marked as site-structured summaries.
+
+The manual prompt now tells DeepSeek to use `来自站内结构化数据` and `claimType=site_structured_data` for live/local radar input, reserving sample wording only for sample fixtures. It also prevents repeating concrete execution / position fields from `decisionContext`; that layer may only be summarized as read-only system-state background. Confidence guidance is low but non-zero for live/local site structured input without external independent verification.
+
+The validator remains strict and unchanged. This stage does not write production data, does not display external AI output in the frontend, and does not affect scoring, `decisionModel`, execution, or position logic.
+
 ## 13. Promotion Criteria / 晋升条件
 
 Before any external AI output becomes user-visible:

@@ -222,6 +222,8 @@ v28.0K-4E-1 compact input artifacts are still site-structured context only. Comp
 
 v28.0K-4E-2 applies the unsafe wording guard globally across every returned string field, not only `auditFlags`. Manual external AI output must not use prose disclaimers containing `投资建议` or `交易建议`; boundary semantics belong only in boolean fields such as `boundaries.notInvestmentAdvice=true`, `boundaries.affectsScoring=false`, `boundaries.affectsDecisionModel=false`, `boundaries.affectsExecutionLock=false`, and `boundaries.affectsPositionGuidance=false`. `modelJudgments` must focus on evidence strength, data sufficiency, uncertainty, and watch / insufficient-data / low-confidence conditions, not trading, execution, portfolio action, or position language.
 
+v28.0K-4E-3 distinguishes sample fixture input from live/local site-structured radar input. Live or local `radar-data.json` input must use source attribution wording such as `来自站内结构化数据` and `claimType=site_structured_data`; only sample fixture input may use `样例结构化输入` or `claimType=sample_input`. External AI output must not repeat concrete execution / position fields such as execution-light labels, exposure bands, cash targets, or position details; `decisionContext` is read-only system-state background only.
+
 ## 13. Non-goals / 非目标
 
 This stage does not:

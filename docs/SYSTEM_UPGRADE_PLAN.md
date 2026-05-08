@@ -150,6 +150,12 @@ v28.0K-4E-2 tightens the manual DeepSeek prompt after compact live input success
 
 This stage does not weaken the validator, does not run a real DeepSeek call automatically, does not write production data, does not display external AI output, and does not affect scoring / decision / execution / position.
 
+## v28.0K-4E-3 Live Data Semantics and Execution-Language Guard
+
+v28.0K-4E-3 improves manual DeepSeek output semantics after compact live input passed validation but still used sample wording and repeated concrete execution / position fields. Manual input artifacts now mark local/live `radar-data.json` as site-structured data, and the prompt reserves sample attribution only for fixture inputs.
+
+This stage keeps `decisionContext` read-only, prevents concrete execution / position details from being repeated in external AI output, does not weaken the validator, does not run a real DeepSeek call automatically, does not write production data, and does not affect scoring / decision / execution / position.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。
