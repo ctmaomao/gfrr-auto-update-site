@@ -120,6 +120,12 @@ v28.0K-4C adds disabled provider adapter structure and `npm run check:external-a
 
 This stage does not connect API, does not read secrets or API keys, does not use network, does not add provider SDKs, does not write production data, and does not change frontend display or scoring / decision / execution / position. `deepseek` and `openai` remain refused placeholders until a separate reviewed PR explicitly changes that boundary.
 
+## v28.0K-4D DeepSeek Manual API Artifact Test
+
+v28.0K-4D adds the first real DeepSeek manual API path. It is explicit opt-in, artifact-only, and validator-gated via `check:external-ai-output`.
+
+This stage does not add scheduled external AI workflows, does not write production data, does not change frontend display, and does not affect scoring / decision / execution / position. OpenAI remains disabled. Production `externalAiInterpretationLayer` remains disabled and continues to fallback to the rule-based `aiInterpretationLayer`.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

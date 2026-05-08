@@ -210,6 +210,8 @@ v28.0K-4A adds the manual API test design in [`EXTERNAL_AI_MANUAL_TEST_DESIGN.md
 
 v28.0K-4B adds a dry-run readiness scaffold that reads the sample input fixture only as explicit local manual input. It does not produce provider output, does not replace `sample-output-v28.0K-1.json`, and does not create valid external AI commentary. Future real manual provider output must still pass `check:external-ai-output`.
 
+v28.0K-4D adds a DeepSeek manual artifact path. Any saved manual output artifact must still follow this prompt/output contract, must use Chinese restrained user-facing text, must include source attribution, and must pass `npm run check:external-ai-output -- <artifact-path>` before any future display review. The artifact is not production data.
+
 ## 13. Non-goals / 非目标
 
 This stage does not:

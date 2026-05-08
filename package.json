@@ -16,6 +16,7 @@
     "audit:daily-worker": "node scripts/audit-daily-vs-worker.mjs",
     "audit:stable-observation": "node scripts/audit-stable-observation.mjs",
     "manual:external-ai:dry-run": "node scripts/run-external-ai-manual-test.mjs --dry-run --input docs/fixtures/external-ai/sample-input-v28.0K-1.json",
+    "manual:external-ai:deepseek": "node scripts/run-external-ai-manual-test.mjs --provider deepseek --input docs/fixtures/external-ai/sample-input-v28.0K-1.json --output manual-artifacts/external-ai/deepseek-output-latest.json --allow-network --validate-output",
     "check:worker-health": "node scripts/check-worker-health.mjs",
     "review:worker-health-snapshot": "node scripts/review-worker-health-snapshot.mjs",
     "bump:frontend-asset-version": "node scripts/bump-frontend-asset-version.mjs",

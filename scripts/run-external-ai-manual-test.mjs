@@ -1,14 +1,19 @@
+import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import {
-  assertProviderDisabled,
+  DEFAULT_DEEPSEEK_MODEL,
+  DEEPSEEK_BASE_URL,
+  DEEPSEEK_CHAT_ENDPOINT,
+  assertManualProviderAllowed,
   createExternalAiProviderAdapter,
   normalizeExternalAiProvider
 } from './external-ai/provider-adapters.mjs';
 
-const CONTRACT_VERSION = 'v28.0K-4C';
+const CONTRACT_VERSION = 'v28.0K-4D';
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-input-v28.0K-1.json';
+const DEEPSEEK_TIMEOUT_MS = 30000;
 const UNSAFE_OUTPUT_DIRS = [
   'data',
   'realtime',
@@ -17,6 +22,10 @@ const UNSAFE_OUTPUT_DIRS = [
   'scripts/modules',
   '.github/workflows'
 ];
+const UNSAFE_OUTPUT_FILES = new Set([
+  'index.html',
+  'scripts/app.js'
+]);
 
 function fail(message) {
   console.error(message);
@@ -29,7 +38,9 @@ function parseArgs(argv) {
     input: DEFAULT_INPUT,
     provider: 'none',
     model: null,
-    output: null
+    output: null,
+    allowNetwork: false,
+    validateOutput: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -59,6 +70,10 @@ function parseArgs(argv) {
       options.output = nextValue();
     } else if (arg.startsWith('--output=')) {
       options.output = arg.slice('--output='.length);
+    } else if (arg === '--allow-network') {
+      options.allowNetwork = true;
+    } else if (arg === '--validate-output') {
+      options.validateOutput = true;
     } else {
       throw new Error(`unsupported argument: ${arg}`);
     }
@@ -122,16 +137,260 @@ function isUnsafeOutputPath(outputPath) {
   if (relative === '' || relative.startsWith('..') || path.isAbsolute(relative)) return false;
 
   const normalizedRelative = relative.split(path.sep).join('/');
-  return UNSAFE_OUTPUT_DIRS.some((unsafeDir) => normalizedRelative === unsafeDir || normalizedRelative.startsWith(`${unsafeDir}/`));
+  return (
+    UNSAFE_OUTPUT_FILES.has(normalizedRelative) ||
+    UNSAFE_OUTPUT_DIRS.some((unsafeDir) => normalizedRelative === unsafeDir || normalizedRelative.startsWith(`${unsafeDir}/`))
+  );
 }
 
-async function writeOutputIfRequested(outputPath, text) {
-  if (!outputPath) return;
+async function writeOutputFile(outputPath, text) {
   if (isUnsafeOutputPath(outputPath)) {
     throw new Error(`unsafe output path rejected: ${outputPath}`);
   }
   await fs.mkdir(path.dirname(path.resolve(outputPath)), { recursive: true });
   await fs.writeFile(outputPath, text, 'utf8');
+}
+
+function buildDeepSeekSystemPrompt() {
+  return [
+    'You are a display-only external AI explanation layer for Global Financial Risk Radar manual testing.',
+    'Use only the provided structured JSON input. Do not browse. Do not invent market data. Do not claim independent sources.',
+    'Return strict JSON only, with no markdown fences and no explanatory prose outside JSON.',
+    'User-facing text must be Chinese, professional, restrained, and non-sensational.',
+    'Separate facts, inferences, modelJudgments, scenarioHypotheses, dataGaps, invalidationSignals, sourceAttribution, auditFlags, confidence, and boundaries.',
+    'Do not provide investment advice, trading instructions, deterministic crisis claims, war probability, or world-war predictions.',
+    'Do not affect scoring, decisionModel, executionLock, positionGuidance, execution, or position.',
+    'The JSON must match the external AI output contract and include boundaries.displayOnly=true, boundaries.externalAiGenerated=true, boundaries.usesExternalAiApi=true, boundaries.affectsScoring=false, boundaries.affectsDecisionModel=false, boundaries.affectsExecutionLock=false, boundaries.affectsPositionGuidance=false, boundaries.notInvestmentAdvice=true.',
+    'If evidence is insufficient, state 数据不足 or 暂不足以判断.'
+  ].join('\n');
+}
+
+function buildDeepSeekUserPrompt(input) {
+  return [
+    'Return a JSON object with this shape:',
+    JSON.stringify({
+      contractVersion: 'v28.0K-4D-manual',
+      generatedAt: 'ISO string',
+      provider: 'deepseek',
+      model: DEFAULT_DEEPSEEK_MODEL,
+      mode: 'external_ai_manual_artifact_test',
+      summaryZh: 'string',
+      facts: [],
+      inferences: [],
+      modelJudgments: [],
+      scenarioHypotheses: [
+        {
+          titleZh: 'string',
+          triggerConditions: [],
+          invalidationConditions: []
+        }
+      ],
+      dataGaps: [],
+      invalidationSignals: [],
+      sourceAttribution: [],
+      auditFlags: [],
+      confidence: {
+        level: 'low',
+        score: 0,
+        reasonZh: 'string'
+      },
+      boundaries: {
+        displayOnly: true,
+        externalAiGenerated: true,
+        usesExternalAiApi: true,
+        affectsScoring: false,
+        affectsDecisionModel: false,
+        affectsExecutionLock: false,
+        affectsPositionGuidance: false,
+        notInvestmentAdvice: true
+      }
+    }, null, 2),
+    'Use only this structured input JSON:',
+    JSON.stringify(input, null, 2)
+  ].join('\n\n');
+}
+
+async function runDeepSeekRequest({ input, apiKey, model }) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEEPSEEK_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${DEEPSEEK_BASE_URL}${DEEPSEEK_CHAT_ENDPOINT}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        stream: false,
+        temperature: 0.2,
+        max_tokens: 1200,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: buildDeepSeekSystemPrompt() },
+          { role: 'user', content: buildDeepSeekUserPrompt(input) }
+        ]
+      }),
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      throw new Error(`DeepSeek API returned HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function extractProviderContent(responseJson) {
+  const content = responseJson?.choices?.[0]?.message?.content;
+  if (typeof content !== 'string' || content.trim().length === 0) {
+    throw new Error('DeepSeek response did not include message content');
+  }
+  return content.trim();
+}
+
+function runValidator(outputPath) {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, ['scripts/check-external-ai-output.mjs', outputPath], {
+      cwd: process.cwd(),
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+    child.on('close', (code) => {
+      resolve({ code, stdout, stderr });
+    });
+  });
+}
+
+async function writeFailureArtifact(outputPath, stage, message, providerMetadata) {
+  const artifact = {
+    contractVersion: CONTRACT_VERSION,
+    kind: 'external_ai_manual_test_failure_artifact',
+    generatedAt: new Date().toISOString(),
+    provider: 'deepseek',
+    status: 'failed',
+    stage,
+    message,
+    providerMetadata,
+    productionImpact: {
+      writesProductionData: false,
+      modifiesFrontend: false,
+      affectsScoring: false,
+      affectsDecisionModel: false,
+      affectsExecutionLock: false,
+      affectsPositionGuidance: false
+    },
+    noteZh: '该 artifact 仅用于手动诊断，不得进入生产数据或前端展示。'
+  };
+  await writeOutputFile(outputPath, `${JSON.stringify(artifact, null, 2)}\n`);
+}
+
+async function runDeepSeekManualTest(options, provider, environmentProvider) {
+  if (environmentProvider && environmentProvider !== 'none' && environmentProvider !== provider) {
+    fail('Provider environment variables are intentionally ignored unless they match the explicit provider.');
+    return;
+  }
+
+  if (options.dryRun) {
+    fail('DeepSeek manual test is not dry-run. Use --provider deepseek with --allow-network, --validate-output, and --output.');
+    return;
+  }
+  if (!options.allowNetwork) {
+    fail('DeepSeek manual test requires --allow-network.');
+    return;
+  }
+  if (!options.output) {
+    fail('DeepSeek manual test requires --output to a safe artifact path.');
+    return;
+  }
+  if (isUnsafeOutputPath(options.output)) {
+    fail(`unsafe output path rejected: ${options.output}`);
+    return;
+  }
+  if (!options.validateOutput) {
+    fail('DeepSeek manual test requires --validate-output.');
+    return;
+  }
+
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    fail('DeepSeek manual test requires DEEPSEEK_API_KEY.');
+    return;
+  }
+
+  const providerAdapter = createExternalAiProviderAdapter({
+    provider,
+    model: options.model || DEFAULT_DEEPSEEK_MODEL,
+    allowNetwork: true,
+    apiKeyAvailable: true
+  });
+
+  try {
+    await providerAdapter.runManualTest();
+  } catch (error) {
+    fail(error.message);
+    return;
+  }
+
+  let input;
+  try {
+    input = JSON.parse(await fs.readFile(options.input, 'utf8'));
+  } catch (error) {
+    fail(`failed to read input JSON: ${error.message}`);
+    return;
+  }
+
+  const validationErrors = validateInput(input);
+  if (validationErrors.length > 0) {
+    fail(`invalid manual scaffold input:\n- ${validationErrors.join('\n- ')}`);
+    return;
+  }
+
+  let providerOutput;
+  try {
+    const responseJson = await runDeepSeekRequest({
+      input,
+      apiKey,
+      model: providerAdapter.model
+    });
+    providerOutput = JSON.parse(extractProviderContent(responseJson));
+  } catch (error) {
+    await writeFailureArtifact(options.output, 'provider_response', error.message, providerAdapter.metadata);
+    fail(`DeepSeek manual test failed before validation: ${error.message}`);
+    return;
+  }
+
+  try {
+    await writeOutputFile(options.output, `${JSON.stringify(providerOutput, null, 2)}\n`);
+  } catch (error) {
+    fail(error.message);
+    return;
+  }
+
+  const validator = await runValidator(options.output);
+  if (validator.stdout) process.stdout.write(validator.stdout);
+  if (validator.stderr) process.stderr.write(validator.stderr);
+  if (validator.code !== 0) {
+    fail('DeepSeek manual output failed check:external-ai-output validation. Artifact must remain hidden and non-production.');
+    return;
+  }
+
+  console.log('DeepSeek manual API test: PASS');
+  console.log(`artifact: ${options.output}`);
+  console.log(`provider: ${providerAdapter.provider}`);
+  console.log(`model: ${providerAdapter.model}`);
+  console.log('productionDataWritten: false');
+  console.log('frontendDisplayChanged: false');
 }
 
 async function main() {
@@ -140,11 +399,6 @@ async function main() {
     options = parseArgs(process.argv.slice(2));
   } catch (error) {
     fail(error.message);
-    return;
-  }
-
-  if (!options.dryRun) {
-    fail('K-4C only supports --dry-run. No provider calls are available in this version.');
     return;
   }
 
@@ -164,18 +418,32 @@ async function main() {
     fail(error.message);
     return;
   }
+  if (provider === 'deepseek') {
+    await runDeepSeekManualTest(options, provider, normalizedEnvironmentProvider);
+    return;
+  }
+
+  if (provider === 'openai') {
+    fail('OpenAI manual tests are not supported in v28.0K-4D.');
+    return;
+  }
+
+  if (!options.dryRun) {
+    fail('K-4D provider=none only supports --dry-run. Use manual:external-ai:deepseek for explicit DeepSeek artifact tests.');
+    return;
+  }
+
   if (normalizedEnvironmentProvider !== 'none') {
-    fail('K-4C is no-network. Provider environment variables are intentionally ignored.');
+    fail('K-4D is no-network for dry-run. Provider environment variables are intentionally ignored.');
     return;
   }
 
   try {
-    assertProviderDisabled(provider);
+    assertManualProviderAllowed(provider);
   } catch (error) {
     fail(error.message);
     return;
   }
-
   const providerAdapter = createExternalAiProviderAdapter({ provider, model: options.model });
 
   let input;
@@ -227,7 +495,7 @@ async function main() {
 
   const outputText = `${JSON.stringify(report, null, 2)}\n`;
   try {
-    await writeOutputIfRequested(options.output, outputText);
+    if (options.output) await writeOutputFile(options.output, outputText);
   } catch (error) {
     fail(error.message);
     return;
