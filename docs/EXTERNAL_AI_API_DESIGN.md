@@ -28,6 +28,8 @@ v28.0L-0 production integration design is now tracked in [`EXTERNAL_AI_PRODUCTIO
 
 v28.0L-1 readiness audit is tracked in [`EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md`](EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md). It says production API integration is not ready; the first implementation must be a disabled skeleton that does not call providers, read secrets, add workflows, write production data, or display frontend output. Future API calls must wait until a later reviewed phase.
 
+v28.0L-2 adds a no-network / no-secret production provider path skeleton. `provider=none` remains the default, and no API call can occur in L-2.
+
 ## 2. Current Baseline / 当前基线
 
 当前稳定基线为：

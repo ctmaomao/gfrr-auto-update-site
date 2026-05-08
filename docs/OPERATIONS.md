@@ -358,6 +358,14 @@ Manual testing remains the only allowed provider usage. Production `externalAiIn
 
 v28.0L-1 readiness audit is documented in [`EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md`](EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md). Operators must not add `DEEPSEEK_API_KEY` to GitHub Secrets until a reviewed `workflow_dispatch` artifact-only PR is approved. Do not run provider calls from Daily. Continue manual-only testing unless a later phase explicitly changes this boundary.
 
+v28.0L-2 adds a disabled production provider path skeleton check:
+
+```bash
+npm run check:external-ai-production-provider-path
+```
+
+Do not set `DEEPSEEK_API_KEY` for L-2 checks. L-2 does not use secrets or network, and activation attempts must remain disabled.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：

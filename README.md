@@ -62,6 +62,7 @@
 - v28.0K-4G External AI Manual Test Baseline：External AI API 仍未 production-enabled。当前只存在本地 / 手动 DeepSeek artifact path，输出必须先通过 `check:external-ai-output` 与 `review:external-ai-artifact`；尚无 frontend / Daily / Worker / workflow / production data integration。
 - v28.0L-0 External AI Production Integration Design：新增 production integration design doc；当前仍无 production external AI、无 Daily provider call、无 frontend display、无 production data write。
 - v28.0L-1 External AI Implementation Readiness Audit：新增 readiness audit；结论为 production integration not ready，下一阶段只允许 disabled skeleton/no provider calls。
+- v28.0L-2 Disabled Production Provider Path Skeleton：新增 disabled production provider skeleton 与安全检查；无 production external AI active、无 provider call、无 secrets、无 frontend / Daily integration。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。
