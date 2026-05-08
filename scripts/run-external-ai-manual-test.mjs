@@ -13,7 +13,8 @@ import {
 
 const CONTRACT_VERSION = 'v28.0K-4D';
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-input-v28.0K-1.json';
-const DEEPSEEK_TIMEOUT_MS = 30000;
+const DEFAULT_DEEPSEEK_TIMEOUT_MS = 90000;
+const MAX_DEEPSEEK_TIMEOUT_MS = 180000;
 const UNSAFE_OUTPUT_DIRS = [
   'data',
   'realtime',
@@ -40,7 +41,8 @@ function parseArgs(argv) {
     model: null,
     output: null,
     allowNetwork: false,
-    validateOutput: false
+    validateOutput: false,
+    timeoutMs: DEFAULT_DEEPSEEK_TIMEOUT_MS
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -74,12 +76,26 @@ function parseArgs(argv) {
       options.allowNetwork = true;
     } else if (arg === '--validate-output') {
       options.validateOutput = true;
+    } else if (arg === '--timeout-ms') {
+      options.timeoutMs = parseTimeoutMs(nextValue());
+    } else if (arg.startsWith('--timeout-ms=')) {
+      options.timeoutMs = parseTimeoutMs(arg.slice('--timeout-ms='.length));
     } else {
       throw new Error(`unsupported argument: ${arg}`);
     }
   }
 
   return options;
+}
+
+function parseTimeoutMs(value) {
+  if (!/^\d+$/.test(value)) throw new Error(`invalid --timeout-ms value: ${value}`);
+  const timeoutMs = Number(value);
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0) throw new Error(`invalid --timeout-ms value: ${value}`);
+  if (timeoutMs > MAX_DEEPSEEK_TIMEOUT_MS) {
+    throw new Error(`--timeout-ms must be <= ${MAX_DEEPSEEK_TIMEOUT_MS}`);
+  }
+  return timeoutMs;
 }
 
 function assert(condition, errors, message) {
@@ -261,9 +277,9 @@ function buildDeepSeekUserPrompt(input) {
   ].join('\n\n');
 }
 
-async function runDeepSeekRequest({ input, apiKey, model }) {
+async function runDeepSeekRequest({ input, apiKey, model, timeoutMs }) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), DEEPSEEK_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${DEEPSEEK_BASE_URL}${DEEPSEEK_CHAT_ENDPOINT}`, {
       method: 'POST',
@@ -379,7 +395,7 @@ function runValidator(outputPath) {
   });
 }
 
-async function writeFailureArtifact(outputPath, stage, message, providerMetadata, responseDiagnostics = null) {
+async function writeFailureArtifact(outputPath, stage, message, providerMetadata, responseDiagnostics = null, requestDiagnostics = null) {
   const artifact = {
     contractVersion: CONTRACT_VERSION,
     kind: 'external_ai_manual_test_failure_artifact',
@@ -401,7 +417,26 @@ async function writeFailureArtifact(outputPath, stage, message, providerMetadata
     noteZh: '该 artifact 仅用于手动诊断，不得进入生产数据或前端展示。'
   };
   if (responseDiagnostics) artifact.responseDiagnostics = responseDiagnostics;
+  if (requestDiagnostics) artifact.requestDiagnostics = requestDiagnostics;
   await writeOutputFile(outputPath, `${JSON.stringify(artifact, null, 2)}\n`);
+}
+
+function isAbortError(error) {
+  return error?.name === 'AbortError' || /aborted/i.test(error?.message || '');
+}
+
+function buildRequestDiagnostics({ timeoutMs, inputText, model, provider, allowNetwork, validateOutput, outputPathSafe, likelyCause }) {
+  return {
+    timeoutMs,
+    inputApproxBytes: Buffer.byteLength(inputText, 'utf8'),
+    inputApproxChars: inputText.length,
+    model,
+    provider,
+    allowNetwork,
+    validateOutput,
+    outputPathSafe,
+    likelyCause
+  };
 }
 
 async function runDeepSeekManualTest(options, provider, environmentProvider) {
@@ -443,6 +478,7 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
     allowNetwork: true,
     apiKeyAvailable: true
   });
+  providerAdapter.metadata.timeoutMs = options.timeoutMs;
 
   try {
     await providerAdapter.runManualTest();
@@ -452,8 +488,10 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
   }
 
   let input;
+  let inputText;
   try {
-    input = JSON.parse(await fs.readFile(options.input, 'utf8'));
+    inputText = await fs.readFile(options.input, 'utf8');
+    input = JSON.parse(inputText);
   } catch (error) {
     fail(`failed to read input JSON: ${error.message}`);
     return;
@@ -471,19 +509,35 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
     const responseJson = await runDeepSeekRequest({
       input,
       apiKey,
-      model: providerAdapter.model
+      model: providerAdapter.model,
+      timeoutMs: options.timeoutMs
     });
     responseDiagnostics = buildResponseDiagnostics(responseJson);
     providerOutput = JSON.parse(extractProviderContent(responseJson));
   } catch (error) {
+    const aborted = isAbortError(error);
+    const requestDiagnostics = buildRequestDiagnostics({
+      timeoutMs: options.timeoutMs,
+      inputText,
+      model: providerAdapter.model,
+      provider,
+      allowNetwork: options.allowNetwork,
+      validateOutput: options.validateOutput,
+      outputPathSafe: !isUnsafeOutputPath(options.output),
+      likelyCause: aborted ? 'timeout_or_abort' : 'provider_response_error'
+    });
+    const message = aborted
+      ? 'DeepSeek manual request timed out or was aborted'
+      : error.message;
     await writeFailureArtifact(
       options.output,
       'provider_response',
-      error.message,
+      message,
       providerAdapter.metadata,
-      error.responseDiagnostics || responseDiagnostics
+      error.responseDiagnostics || responseDiagnostics,
+      requestDiagnostics
     );
-    fail(`DeepSeek manual test failed before validation: ${error.message}`);
+    fail(`DeepSeek manual test failed before validation: ${message}`);
     return;
   }
 

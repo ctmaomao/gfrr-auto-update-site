@@ -244,6 +244,24 @@ npm run check:external-ai-output -- manual-artifacts/external-ai/deepseek-output
 
 Do not commit manual artifacts. Do not copy input or output artifacts into `data/radar-data.json`. Do not display external AI output in the frontend. Remove `DEEPSEEK_API_KEY` from the local shell after a manual test.
 
+### DeepSeek timeout / aborted live-input troubleshooting
+
+If a live-input DeepSeek call fails with `This operation was aborted`, do not repeatedly retry paid calls. First build the compact input artifact:
+
+```bash
+npm run manual:external-ai:build-input:compact
+```
+
+Then use compact input for the next deliberate manual test:
+
+```bash
+node scripts/run-external-ai-manual-test.mjs --provider deepseek --input manual-artifacts/external-ai/manual-input-compact-latest.json --output manual-artifacts/external-ai/deepseek-output-latest.json --allow-network --validate-output --timeout-ms 90000
+```
+
+If it still fails, inspect the failure artifact `requestDiagnostics` before another retry. The diagnostics include timeout, approximate input size, provider/model, and whether output validation was requested. They do not include the raw request body, headers, or API keys.
+
+Artifacts remain manual-only and ignored. Do not copy compact input or provider output into production data, and do not display external AI output in the frontend.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：

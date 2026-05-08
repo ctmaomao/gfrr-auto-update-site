@@ -296,6 +296,26 @@ The generated input artifact remains manual-only, artifact-only, and non-product
 
 DeepSeek remains a separate explicit manual command. The input builder itself does not read `DEEPSEEK_API_KEY`, does not read `OPENAI_API_KEY`, does not call DeepSeek, and does not write production data. Any manual DeepSeek output generated from this input must still pass `check:external-ai-output` before review.
 
+### v28.0K-4E-1 Compact Live Input and Timeout Diagnostics
+
+v28.0K-4E-1 adds compact manual input mode for live site-structured data:
+
+```bash
+npm run manual:external-ai:build-input:compact
+```
+
+Compact input keeps the same manual-only / artifact-only boundary, but limits large lists and omits historical arrays, chart arrays, raw recovery dumps, raw realtime dumps, verbose diagnostics, and full action queues. It preserves the explanation layers, disabled external AI scaffold state, compact decision context, data-health summary, risk-module summaries, and boundary flags needed for manual external AI explanation tests. The artifact declares `inputVersion = v28.0K-4E-1-live-site-manual-input-compact` and includes `compaction` metadata documenting omissions.
+
+The manual DeepSeek runner also supports:
+
+```bash
+--timeout-ms 90000
+```
+
+The default manual DeepSeek timeout is 90000 ms, with an upper limit of 180000 ms. Timeout / abort failures must write a failure artifact with clearer wording and `requestDiagnostics`, including timeout, approximate input bytes/chars, provider, model, validation flag, and safe output status. Diagnostics must not include API keys, headers, or raw request bodies.
+
+This stage does not run DeepSeek automatically, does not add production external AI, does not write production data, does not display external AI output in the frontend, and does not affect scoring, `decisionModel`, execution, or position logic.
+
 ## 13. Promotion Criteria / 晋升条件
 
 Before any external AI output becomes user-visible:
