@@ -350,6 +350,8 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 
 v28.0K-4A does not change the production data contract. The live `externalAiInterpretationLayer` remains the disabled scaffold, and any future manual API test output must not overwrite live `data/radar-data.json` or the production scaffold field.
 
+v28.0L-3C provider-call workflow design does not change the production data contract. Future provider-call workflow artifacts, if implemented later, remain manual diagnostics and are not production data. They must not overwrite `data/radar-data.json`, `data/*.json`, `realtime/*.json`, config files, or the production disabled `externalAiInterpretationLayer` scaffold.
+
 #### externalAiInterpretationLayer disabled scaffold contract
 
 v28.0K-3A 在 Daily radar data 根级新增 future-only disabled scaffold；v28.0K-3B activation audit 通过后，该字段已进入 live data baseline：

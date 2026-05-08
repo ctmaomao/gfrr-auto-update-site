@@ -52,6 +52,7 @@
 - v28.0L-2 skeleton 必须保持 disabled；不得把它改成读取 env vars、调用 provider、连接 Daily / frontend，或让 `maybeCreateExternalAiProductionLayer` 激活 provider。未来 activation 必须另开 L-3+ reviewed PR。
 - v28.0L-3 是 workflow design only；不得在 L-3 添加 workflow / provider call / secrets。第一个 workflow implementation 必须是 dry-run-only 且 no-secret / no-provider；不得从 L-3 直接跳到 provider-call workflow 或 Daily。Workflow artifacts 不是 production data，绝不得上传 secrets 或 raw provider headers。
 - v28.0L-3B dry-run workflow 必须保持 dry-run-only；不得加入 provider call、provider input、allow_network input、dry_run=false path、secret reference 或 provider output upload。不得把该 workflow 改成 production workflow；任何 provider-call workflow 必须另开 reviewed L-3C PR。
+- v28.0L-3C 是 provider-call workflow design only；不得把 L-3C design 改成 implementation，不得添加 secrets、provider-call workflow、workflow secret reference、SDKs、dependencies 或真实 DeepSeek call。不得修改 L-3B dry-run workflow 让它调用 provider，除非另开 reviewed implementation PR。未来 provider-call artifacts 仍不是 production data；即使未来 provider-call 成功，也不代表 frontend、Daily、production data、scoring、decision、execution 或 position readiness。
 - v28.0I compact cockpit layout 不得被后续改动破坏，除非另开版本评审；Global Risk Heatmap 必须继续独立显示，World Order Stress Overlay 仍是独立 regime overlay，不是第七个底层风险模块。
 - World Order 外部源失败必须降级 status / confidence，而不是清空旧可用缓存；GDELT partial / stale / error 必须可解释，不得伪装成功或输出 NaN / undefined。
 - World Order UI 必须清楚显示低置信 / 数据限制，不得把 proxy、stale、manual_required 或 not_configured 数据包装成高确定性结论。
@@ -240,3 +241,9 @@ v28.0L-3B-1 only records that the `External AI Manual Dry Run` workflow passed o
 Audit-sync PRs must not add secrets, provider-call workflow behavior, provider inputs, `allow_network`, `dry_run=false`, SDKs, dependencies, production data writes, frontend visibility, or scoring / decision / execution / position changes.
 
 Dry-run artifacts remain diagnostics only. Do not promote them, copy them into `data/radar-data.json`, or treat them as external AI output.
+
+## 11. v28.0L-3C provider-call design reminder
+
+v28.0L-3C may document future provider-call workflow gates, but it must not implement them. Do not add or modify workflow files, do not add `DEEPSEEK_API_KEY` to secrets, do not read API keys, do not create `.env` files, and do not run a real DeepSeek call in an L-3C design PR.
+
+Provider-call artifacts remain non-production manual diagnostics. Provider-call success in a later implementation would still not imply frontend display readiness, Daily integration readiness, production data write readiness, or scoring / decision / execution / position readiness.

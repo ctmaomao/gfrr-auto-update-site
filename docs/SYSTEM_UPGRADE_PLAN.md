@@ -221,6 +221,14 @@ This stage changes documentation only. It makes no workflow change, no provider 
 
 The next possible stage remains L-3C as a separate reviewed PR if provider-call workflow behavior is pursued. L-3C must not be merged into this audit-sync PR.
 
+## v28.0L-3C External AI Provider-Call Workflow Design
+
+v28.0L-3C adds [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md). It is provider-call workflow design only.
+
+This stage makes no workflow change, adds no secret, runs no provider call, writes no production data, changes no frontend, changes no Worker, and has no scoring / decision / execution / position impact. Existing v28.0L-3B dry-run workflow behavior remains dry-run-only.
+
+Any provider-call implementation must be a separate reviewed PR and remain artifact-only / non-production unless a later reviewed phase explicitly changes that boundary.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。
