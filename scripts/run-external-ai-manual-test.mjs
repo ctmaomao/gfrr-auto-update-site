@@ -163,6 +163,15 @@ function buildDeepSeekSystemPrompt() {
     'User-facing text must be Chinese, professional, restrained, and non-sensational.',
     'Separate facts, inferences, modelJudgments, scenarioHypotheses, dataGaps, invalidationSignals, sourceAttribution, auditFlags, confidence, and boundaries.',
     'Do not provide investment advice, trading instructions, deterministic crisis claims, war probability, or world-war predictions.',
+    'Do not put 投资建议, 交易建议, 买入, 卖出, 加仓, 减仓, 执行, or 仓位 in auditFlags.',
+    'Express safety boundaries only through boundaries.notInvestmentAdvice=true and the other boolean boundaries.',
+    'auditFlags must contain short neutral diagnostic tags only, not prose sentences.',
+    'Allowed auditFlags vocabulary includes manual_artifact_only, sample_input_only, site_structured_data_only, validator_required, non_production_output, and no_frontend_display.',
+    'sourceAttribution must be an array of objects, not a string and not an array of strings.',
+    'Each sourceAttribution object must include sourceLayer, field, claimType, and noteZh.',
+    'Every factual claim should map to one provided structured input layer: dailyBrief, divergenceLayer, brentPricingLayer, macroDrivers.consumer, aiInterpretationLayer, dataHealth, or decisionContext.',
+    'Do not claim external web, news, or market verification.',
+    'generatedAt must be an ISO timestamp and is artifact metadata only. If you cannot know current time, use the input generatedAt; do not invent a market-data timestamp.',
     'Do not affect scoring, decisionModel, executionLock, positionGuidance, execution, or position.',
     'The JSON must match the external AI output contract and include boundaries.displayOnly=true, boundaries.externalAiGenerated=true, boundaries.usesExternalAiApi=true, boundaries.affectsScoring=false, boundaries.affectsDecisionModel=false, boundaries.affectsExecutionLock=false, boundaries.affectsPositionGuidance=false, boundaries.notInvestmentAdvice=true.',
     'If unsure, still return a JSON object using dataGaps and low confidence.',
@@ -192,8 +201,21 @@ function buildDeepSeekUserPrompt(input) {
       ],
       dataGaps: [],
       invalidationSignals: [],
-      sourceAttribution: [],
-      auditFlags: [],
+      sourceAttribution: [
+        {
+          sourceLayer: 'dailyBrief',
+          field: 'macroState',
+          claimType: 'sample_input',
+          noteZh: '来自提供的结构化输入'
+        }
+      ],
+      auditFlags: [
+        'manual_artifact_only',
+        'sample_input_only',
+        'site_structured_data_only',
+        'validator_required',
+        'non_production_output'
+      ],
       confidence: {
         level: 'low',
         score: 0,
@@ -210,6 +232,22 @@ function buildDeepSeekUserPrompt(input) {
         notInvestmentAdvice: true
       }
     }, null, 2),
+    'generatedAt requirements:',
+    '- generatedAt must be an ISO timestamp.',
+    '- If current time is unavailable, use the input generatedAt.',
+    '- Do not invent a market-data timestamp; generatedAt is artifact metadata only.',
+    'auditFlags requirements:',
+    '- Use only short neutral diagnostic tags such as manual_artifact_only, sample_input_only, site_structured_data_only, validator_required, non_production_output, and no_frontend_display.',
+    '- Do not use prose sentences in auditFlags.',
+    '- Do not put 投资建议, 交易建议, 买入, 卖出, 加仓, 减仓, 执行, or 仓位 in auditFlags.',
+    '- Express safety boundaries only through boundaries.notInvestmentAdvice=true and other boolean boundaries.',
+    'sourceAttribution requirements:',
+    '- sourceAttribution must be an array of objects, never a string and never an array of strings.',
+    '- Each object must include sourceLayer, field, claimType, and noteZh.',
+    '- sourceLayer must be one of dailyBrief, divergenceLayer, brentPricingLayer, macroDrivers.consumer, aiInterpretationLayer, dataHealth, or decisionContext.',
+    '- claimType must be one of site_structured_data, rule_based_interpretation, or sample_input.',
+    '- Every factual claim should map to one of the provided structured input layers.',
+    '- Do not claim external web, news, or market verification.',
     'Use only this structured input JSON:',
     JSON.stringify(input, null, 2)
   ].join('\n\n');

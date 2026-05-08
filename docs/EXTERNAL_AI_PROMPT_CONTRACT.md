@@ -212,6 +212,8 @@ v28.0K-4B adds a dry-run readiness scaffold that reads the sample input fixture 
 
 v28.0K-4D adds a DeepSeek manual artifact path. Any saved manual output artifact must still follow this prompt/output contract, must use Chinese restrained user-facing text, must include source attribution, and must pass `npm run check:external-ai-output -- <artifact-path>` before any future display review. The artifact is not production data.
 
+v28.0K-4D-2 tightens the manual DeepSeek output expectation. `auditFlags` must be neutral diagnostic tags only, not prose sentences and not investment / trading boundary text. Use boolean `boundaries` fields, including `boundaries.notInvestmentAdvice=true`, for safety boundaries. `sourceAttribution` must be an array of objects only; each item must include `sourceLayer`, `field`, `claimType`, and `noteZh`, and must map claims to the provided structured input rather than external web/news/market verification.
+
 ## 13. Non-goals / 非目标
 
 This stage does not:

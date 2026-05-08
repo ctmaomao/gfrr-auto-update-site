@@ -196,6 +196,10 @@ v28.0K-4D-1 hardens the DeepSeek JSON artifact request after the first real test
 
 Failure artifacts may include sanitized `responseDiagnostics` such as response id/model, choices length, finish reason, message keys, content length, reasoning-content presence, usage keys, and a redacted API error summary. They must not include API keys, request headers, or the full raw API response. Do not repeatedly retry paid calls before reviewing these diagnostics.
 
+v28.0K-4D-2 tightens the DeepSeek manual artifact prompt after a real provider response reached local validation but failed the output contract. If validation fails because `auditFlags` contains `投资建议`, similar investment / trading wording, or prose boundary sentences, do not weaken the validator. Tighten the prompt, keep `auditFlags` as neutral diagnostic tags such as `manual_artifact_only` or `sample_input_only`, and express boundary semantics through booleans such as `boundaries.notInvestmentAdvice=true`.
+
+If a `sourceAttribution` warning appears, require `sourceAttribution` to be an array of objects with `sourceLayer`, `field`, `claimType`, and `noteZh`. Do not allow a string or an array of strings. Review the failed artifact before rerunning to avoid repeated paid calls.
+
 On Windows PowerShell, read the artifact as UTF-8 to avoid encoding confusion:
 
 ```powershell
