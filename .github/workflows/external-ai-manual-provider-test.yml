@@ -1,0 +1,324 @@
+name: External AI Manual Provider Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: "Provider to test"
+        required: true
+        default: "deepseek"
+        type: choice
+        options:
+          - deepseek
+      input_source:
+        description: "Input source"
+        required: true
+        default: "fixture_sample"
+        type: choice
+        options:
+          - fixture_sample
+          - local_compact
+      dry_run:
+        description: "Run dry-run path only"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      allow_network:
+        description: "Allow provider network call if all gates pass"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      acknowledge_cost:
+        description: "Acknowledge this may spend provider credits in later phases"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      acknowledge_non_production:
+        description: "Acknowledge output is artifact-only and non-production"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      validate_output:
+        description: "Validate provider output if provider path runs"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+      timeout_ms:
+        description: "Provider timeout metadata"
+        required: true
+        default: "120000"
+      max_attempts:
+        description: "Max provider attempts; L-3F allows only 1"
+        required: true
+        default: "1"
+      upload_artifacts:
+        description: "Upload sanitized diagnostics"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: external-ai-manual-provider-test
+  cancel-in-progress: false
+
+jobs:
+  external-ai-manual-provider-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Preflight safety checks
+        run: |
+          npm run check:external-ai-manual-workflow
+          npm run check:external-ai-provider-workflow
+          npm run check:external-ai-production-provider-path
+
+      - name: Validate provider-test workflow inputs
+        run: |
+          set -euo pipefail
+
+          provider="${{ github.event.inputs.provider }}"
+          input_source="${{ github.event.inputs.input_source }}"
+          dry_run="${{ github.event.inputs.dry_run }}"
+          allow_network="${{ github.event.inputs.allow_network }}"
+          acknowledge_cost="${{ github.event.inputs.acknowledge_cost }}"
+          acknowledge_non_production="${{ github.event.inputs.acknowledge_non_production }}"
+          validate_output="${{ github.event.inputs.validate_output }}"
+          timeout_ms="${{ github.event.inputs.timeout_ms }}"
+          max_attempts="${{ github.event.inputs.max_attempts }}"
+          upload_artifacts="${{ github.event.inputs.upload_artifacts }}"
+
+          if [ "$provider" != "deepseek" ]; then
+            echo "Invalid provider"
+            exit 1
+          fi
+
+          case "$input_source" in
+            fixture_sample|local_compact) ;;
+            *)
+              echo "Invalid input_source"
+              exit 1
+              ;;
+          esac
+
+          for value in "$dry_run" "$allow_network" "$acknowledge_cost" "$acknowledge_non_production" "$validate_output" "$upload_artifacts"; do
+            case "$value" in
+              true|false) ;;
+              *)
+                echo "Boolean-like input must be true or false"
+                exit 1
+                ;;
+            esac
+          done
+
+          if [ "$validate_output" != "true" ]; then
+            echo "validate_output must remain true"
+            exit 1
+          fi
+
+          if [ "$max_attempts" != "1" ]; then
+            echo "max_attempts must be 1 in L-3F"
+            exit 1
+          fi
+
+          if ! printf '%s' "$timeout_ms" | grep -Eq '^[0-9]+$'; then
+            echo "timeout_ms must be numeric"
+            exit 1
+          fi
+
+          if [ "$timeout_ms" -gt 180000 ]; then
+            echo "timeout_ms must be <= 180000"
+            exit 1
+          fi
+
+      - name: Prepare provider-test artifact directory
+        run: mkdir -p manual-artifacts/external-ai
+
+      - name: Build local compact input
+        if: ${{ github.event.inputs.input_source == 'local_compact' }}
+        run: node scripts/build-external-ai-manual-input.mjs --compact --output manual-artifacts/external-ai/manual-input-compact-latest.json
+
+      - name: Run dry-run diagnostic with fixture input
+        if: ${{ github.event.inputs.input_source == 'fixture_sample' }}
+        run: node scripts/run-external-ai-manual-test.mjs --dry-run --input docs/fixtures/external-ai/sample-input-v28.0K-1.json > manual-artifacts/external-ai/workflow-dry-run-report.json
+
+      - name: Run dry-run diagnostic with local compact input
+        if: ${{ github.event.inputs.input_source == 'local_compact' }}
+        run: node scripts/run-external-ai-manual-test.mjs --dry-run --input manual-artifacts/external-ai/manual-input-compact-latest.json > manual-artifacts/external-ai/workflow-dry-run-report.json
+
+      - name: Evaluate provider gates
+        run: |
+          set -euo pipefail
+
+          dry_run="${{ github.event.inputs.dry_run }}"
+          allow_network="${{ github.event.inputs.allow_network }}"
+          acknowledge_cost="${{ github.event.inputs.acknowledge_cost }}"
+          acknowledge_non_production="${{ github.event.inputs.acknowledge_non_production }}"
+          validate_output="${{ github.event.inputs.validate_output }}"
+          max_attempts="${{ github.event.inputs.max_attempts }}"
+          provider="${{ github.event.inputs.provider }}"
+
+          provider_path_requested="false"
+          if [ "$dry_run" = "false" ] &&
+            [ "$allow_network" = "true" ] &&
+            [ "$acknowledge_cost" = "true" ] &&
+            [ "$acknowledge_non_production" = "true" ] &&
+            [ "$validate_output" = "true" ] &&
+            [ "$max_attempts" = "1" ] &&
+            [ "$provider" = "deepseek" ]; then
+            provider_path_requested="true"
+          fi
+
+          echo "PROVIDER_PATH_REQUESTED=$provider_path_requested" >> "$GITHUB_ENV"
+
+          if [ "$provider_path_requested" != "true" ]; then
+            cat > manual-artifacts/external-ai/provider-test-gate-status.json <<JSON
+          {
+            "kind": "external_ai_provider_test_gate_status",
+            "status": "provider_path_skipped",
+            "provider": "deepseek",
+            "dryRun": $dry_run,
+            "allowNetwork": $allow_network,
+            "acknowledgeCost": $acknowledge_cost,
+            "acknowledgeNonProduction": $acknowledge_non_production,
+            "validateOutput": $validate_output,
+            "maxAttempts": $max_attempts,
+            "apiCalled": false,
+            "secretsRead": false,
+            "networkUsed": false,
+            "productionDataWritten": false,
+            "frontendDisplayChanged": false,
+            "reason": "provider_gates_not_satisfied"
+          }
+          JSON
+          fi
+
+      - name: Missing-secret safe provider gate
+        if: ${{ env.PROVIDER_PATH_REQUESTED == 'true' }}
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DEEPSEEK_API_KEY:-}" ]; then
+            cat > manual-artifacts/external-ai/provider-test-missing-secret.json <<'JSON'
+          {
+            "kind": "external_ai_provider_test_missing_secret",
+            "status": "failed_before_provider_call",
+            "provider": "deepseek",
+            "reason": "missing_required_provider_secret",
+            "apiCalled": false,
+            "secretsRead": false,
+            "networkUsed": false,
+            "productionDataWritten": false,
+            "frontendDisplayChanged": false
+          }
+          JSON
+            exit 1
+          fi
+
+          cat > manual-artifacts/external-ai/provider-test-secret-present-blocked.json <<'JSON'
+          {
+            "kind": "external_ai_provider_test_secret_present_blocked",
+            "status": "failed_before_provider_call",
+            "provider": "deepseek",
+            "reason": "l3f_blocks_real_provider_call_even_when_secret_present",
+            "apiCalled": false,
+            "secretsRead": false,
+            "networkUsed": false,
+            "productionDataWritten": false,
+            "frontendDisplayChanged": false
+          }
+          JSON
+          exit 1
+
+      - name: Artifact sanitizer
+        if: ${{ always() }}
+        run: npm run check:external-ai-workflow-artifacts -- --workflow-provider-test
+
+      - name: Upload sanitized provider-test artifacts
+        if: ${{ always() && github.event.inputs.upload_artifacts == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: external-ai-manual-provider-test-${{ github.run_id }}
+          path: |
+            manual-artifacts/external-ai/workflow-dry-run-report.json
+            manual-artifacts/external-ai/manual-input-compact-latest.json
+            manual-artifacts/external-ai/provider-test-gate-status.json
+            manual-artifacts/external-ai/provider-test-missing-secret.json
+            manual-artifacts/external-ai/provider-test-secret-present-blocked.json
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: Post-run safety assertion
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+
+          forbidden_provider_output="deepseek-output-latest"".json"
+          forbidden_quality_review="external-ai-quality-review-latest"".json"
+          for forbidden_file in \
+            "manual-artifacts/external-ai/${forbidden_provider_output}" \
+            "manual-artifacts/external-ai/${forbidden_quality_review}"
+          do
+            if [ -e "$forbidden_file" ]; then
+              echo "Forbidden provider artifact was created"
+              exit 1
+            fi
+          done
+
+          app_path="scripts/app"".js"
+          index_path="index"".html"
+          module_path="scripts/modules"
+          git diff --exit-code -- data realtime config "$index_path" "$app_path" "$module_path" workers
+
+      - name: Write provider-test summary
+        if: ${{ always() }}
+        run: |
+          {
+            echo "## External AI Manual Provider Test"
+            echo ""
+            echo "External AI Manual Provider Test completed."
+            echo ""
+            echo "- dry_run input=${{ github.event.inputs.dry_run }}"
+            echo "- provider path requested=${PROVIDER_PATH_REQUESTED:-false}"
+            echo "- provider command executed: false"
+            echo "- apiCalled=false"
+            echo "- networkUsed=false"
+            echo "- productionDataWritten=false"
+            echo "- frontendDisplayChanged=false"
+            echo ""
+            echo "L-3F blocks real provider calls even if a secret is present."
+          } >> "$GITHUB_STEP_SUMMARY"

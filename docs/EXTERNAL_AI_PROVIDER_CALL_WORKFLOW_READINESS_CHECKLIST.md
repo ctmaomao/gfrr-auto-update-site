@@ -60,6 +60,15 @@ This checklist reviews and preserves the current baseline:
 | Daily integration | blocked / out_of_scope | No Daily provider call exists or is approved. | Yes | Keep blocked; separate future Daily phase required. |
 | Scoring / decision / execution / position impact | blocked / out_of_scope | External AI must remain display/commentary-only even in future phases. | Yes | Keep blocked permanently unless project contract is explicitly redesigned. |
 
+v28.0L-3F readiness update:
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Provider-call workflow skeleton | partially_ready / missing-secret-safe | L-3F adds `External AI Manual Provider Test` with default dry-run path and missing-secret fail-before-provider-command behavior. | Yes | Audit default dry-run PASS and provider-path-without-secret FAIL after merge. |
+| Real provider call | not_ready | L-3F intentionally blocks provider calls even if a secret is present. | Yes | Requires later reviewed PR after L-3F audit and explicit secret approval. |
+| GitHub secret usage | not_ready | No secret is configured by L-3F; the only future secret reference is scoped to the missing-secret gate. | Yes | Do not add `DEEPSEEK_API_KEY` until separate approval. |
+| Production integration | not_ready | L-3F writes no production data and keeps `externalAiInterpretationLayer` disabled. | Yes | Separate future production integration phase required. |
+
 ## 4. Go / no-go decision
 
 Current decision: **NO-GO for provider-call implementation** until the missing readiness items are resolved.

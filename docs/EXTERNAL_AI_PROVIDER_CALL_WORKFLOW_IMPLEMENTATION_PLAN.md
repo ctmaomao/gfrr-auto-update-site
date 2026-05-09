@@ -478,3 +478,38 @@ Do not proceed directly to:
 - production data write
 - Daily integration
 - frontend display
+
+## 16. v28.0L-3F implementation note
+
+v28.0L-3F adds the first `External AI Manual Provider Test` workflow skeleton and supporting checks.
+
+L-3F behavior:
+
+- provider-test workflow skeleton exists
+- trigger remains `workflow_dispatch` only
+- default path is dry-run only
+- provider path is missing-secret safe
+- provider path fails before provider command when `DEEPSEEK_API_KEY` is missing
+- L-3F blocks real provider calls even if a secret is present
+- no provider output artifact is produced
+- no production data is written
+- no frontend display is added
+- existing L-3B dry-run workflow remains dry-run-only
+
+New checks:
+
+- `npm run check:external-ai-provider-workflow`
+- `npm run check:external-ai-workflow-artifacts`
+
+Next audit should manually run, after merge:
+
+1. Default provider-test dry-run:
+   - expected PASS
+   - no secret
+   - no provider call
+2. Provider-path requested without secret:
+   - expected FAIL before provider command
+   - no DeepSeek call
+   - no provider output artifact
+
+Do not add `DEEPSEEK_API_KEY` or run a real provider call until the L-3F behavior is audited in a later PR.

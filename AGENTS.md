@@ -265,3 +265,11 @@ v28.0L-3E is a no-code implementation plan only. Do not jump from L-3E to a real
 The next implementation, if approved, must be v28.0L-3F Manual Provider-Call Workflow Skeleton — Missing-Secret Safe / No Real Provider Call. L-3F must first prove default dry-run behavior, missing-secret fail-before-provider-call behavior, static workflow checks, and artifact sanitization before any GitHub secret is added.
 
 Do not add GitHub secrets in L-3E. Do not read or print API keys. Do not use provider-call workflow output as production data. Do not copy manual or workflow artifacts into `data/radar-data.json`, frontend display paths, Daily, Worker, scoring, decision, execution, or position logic.
+
+## 14. v28.0L-3F provider-test workflow skeleton reminder
+
+v28.0L-3F adds a missing-secret-safe provider-test workflow skeleton only. Do not configure `DEEPSEEK_API_KEY` in L-3F or in an L-3F audit-sync PR.
+
+Do not modify the provider-test workflow to run a real provider call, remove the missing-secret gate, pass secrets as command-line arguments, add `--allow-network` to executable shell, or upload provider output artifacts. L-3F must keep blocking real provider calls even if a secret is present.
+
+After L-3F, the next step is audit only: run the default dry-run path expecting PASS, and run provider-path-without-secret expecting FAIL before provider command. Do not treat those results as production, frontend, Daily, scoring, decision, execution, or position readiness.

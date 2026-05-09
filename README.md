@@ -69,6 +69,7 @@
 - v28.0L-3C External AI Provider-Call Workflow Design：仅新增 future provider-call workflow design；当前仍无 DeepSeek workflow call、无 GitHub secret、无 provider artifact、无 production data write。
 - v28.0L-3D Provider-Call Workflow Readiness Checklist：仅新增 no-code readiness checklist；provider-call workflow 仍未实现，不添加 GitHub secret，不运行 DeepSeek，不写 production data，不显示 frontend，implementation 仍为 `not_ready_until_missing_items_resolved`。
 - v28.0L-3E Provider-Call Workflow Implementation Plan：仅新增 no-code implementation plan；provider-call implementation 已规划但仍未激活，下一步建议为 L-3F missing-secret-safe / no-real-provider-call skeleton。
+- v28.0L-3F Manual Provider-Call Workflow Skeleton：新增 manual provider-test workflow skeleton 与静态检查；默认 dry-run，provider path missing-secret safe，且即使 secret 存在也阻断真实 provider call。仍无 GitHub secret、无 DeepSeek call、无 provider output、无 production data、无 frontend display。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。
