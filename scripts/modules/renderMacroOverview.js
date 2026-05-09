@@ -1,4 +1,4 @@
-import { $ } from './config.js?v=28.0M-2';
+import { $ } from './config.js?v=28.0M-3';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -112,6 +112,68 @@ function hasPartialWorldOrder(worldOrderStressData) {
     || safeArray(worldOrderStressData?.warnings).length > 0;
 }
 
+function normalizeEvidenceList(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter(Boolean);
+  }
+  if (typeof value === 'string' && value.trim()) return [value.trim()];
+  return [];
+}
+
+function confidenceLabel(value, fallback = '等待校准') {
+  if (typeof value === 'string' && value.trim()) return value.trim();
+  return evidenceStrengthFromConfidence(value, fallback);
+}
+
+function dataCoverageLabel(value = '') {
+  if (typeof value === 'string' && value.trim()) return value.trim();
+  return '数据覆盖：等待校准';
+}
+
+function createJudgment(overrides = {}) {
+  return {
+    id: text(overrides.id, 'judgment'),
+    title: text(overrides.title, '判断项'),
+    group: text(overrides.group, 'macro-overview'),
+    status: text(overrides.status, UNDECIDED),
+    direction: text(overrides.direction, '方向待确认'),
+    stage: text(overrides.stage, ''),
+    score: overrides.score ?? null,
+    confidence: confidenceLabel(overrides.confidence),
+    dataCoverage: dataCoverageLabel(overrides.dataCoverage),
+    evidence: normalizeEvidenceList(overrides.evidence),
+    missingEvidence: normalizeEvidenceList(overrides.missingEvidence),
+    counterEvidence: normalizeEvidenceList(overrides.counterEvidence),
+    noiseWarning: normalizeEvidenceList(overrides.noiseWarning),
+    explanation: text(overrides.explanation, ''),
+    sourceType: text(overrides.sourceType, '数据推断'),
+    updatedAt: typeof overrides.updatedAt === 'string' && overrides.updatedAt.trim() ? overrides.updatedAt.trim() : null,
+    conclusion: text(overrides.conclusion, ''),
+    priority: finite(overrides.priority),
+  };
+}
+
+function createDataGapJudgment(overrides = {}) {
+  return createJudgment({
+    status: INSUFFICIENT,
+    direction: '方向待确认',
+    confidence: '偏低',
+    dataCoverage: '数据覆盖：关键数据不足',
+    sourceType: '数据不足',
+    ...overrides,
+  });
+}
+
+function normalizeJudgmentList(value) {
+  return safeArray(value).map((item, index) => createJudgment({
+    id: `judgment-${index + 1}`,
+    title: `判断 ${index + 1}`,
+    ...(isPlainObject(item) ? item : { evidence: item }),
+  }));
+}
+
 function buildTodayJudgment(data, healthDashboard, worldOrderStressData) {
   const brief = isPlainObject(data?.dailyBrief) ? data.dailyBrief : {};
   const confidence = isPlainObject(brief.confidence) ? brief.confidence : {};
@@ -134,17 +196,37 @@ function buildTodayJudgment(data, healthDashboard, worldOrderStressData) {
     hasValue(inputs.us10y) ? '长端利率需要继续观察' : '',
     hasValue(inputs.hyOas) && Number(inputs.hyOas) < 4 ? '信用压力暂未明显扩散' : '',
   ].filter(Boolean).join('；');
+  const dataCoverageText = Number.isFinite(Number(healthScore))
+    ? `${Math.round(Number(healthScore))}%；市场温度和实物能源证据仍需补齐`
+    : '等待数据校准';
 
   return {
+    ...createJudgment({
+      id: 'today-total-judgment',
+      title: '今日总判断',
+      group: 'today',
+      status: macroState,
+      direction: formatChange(data?.scoreChange1d),
+      stage,
+      score: score === null ? null : Math.round(score),
+      confidence: evidenceStrength,
+      dataCoverage: dataCoverageText,
+      evidence: [text(brief.oneLineConclusion, fallbackLine || '当前结论强度有限，仍需等待更多跨市场证据。')],
+      missingEvidence: [
+        '市场温度历史数据尚未接入。',
+        '实物能源证据仍需补齐。',
+      ],
+      explanation: macroState,
+      sourceType: '模型判断',
+      updatedAt: text(brief.generatedAt, text(data?.updatedAt, '')),
+    }),
     macroState,
     oneLine: text(brief.oneLineConclusion, fallbackLine || '当前结论强度有限，仍需等待更多跨市场证据。'),
     score: formatScore(score),
     stage,
     change: formatChange(data?.scoreChange1d),
     evidenceStrength,
-    dataCoverage: Number.isFinite(Number(healthScore))
-      ? `${Math.round(Number(healthScore))}%；市场温度和实物能源证据仍需补齐`
-      : '等待数据校准',
+    dataCoverage: dataCoverageText,
   };
 }
 
@@ -163,43 +245,76 @@ function buildPressureSources(data, worldOrderStressData) {
   const worldFreshness = text(worldOrderStressData?.freshness, INSUFFICIENT);
 
   return [
-    {
+    createJudgment({
+      id: 'pressure-energy-inflation',
       title: '能源与通胀压力',
+      group: 'pressure-source',
       status: brent === null ? INSUFFICIENT : brent >= 100 ? '主要压力' : '观察中',
-      evidence: `布伦特 ${formatNumber(brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`,
-      note: energyGaps.length
+      direction: brent === null ? '方向待确认' : brent >= 100 ? '压力上升' : '观察中',
+      confidence: brent === null ? '偏低' : '中等',
+      dataCoverage: energyGaps.length ? '数据覆盖：部分缺口' : '数据覆盖：等待校准',
+      evidence: [`布伦特 ${formatNumber(brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`],
+      missingEvidence: energyGaps.length ? ['Dated Brent、期限结构和裂解价差仍待验证。'] : [],
+      explanation: energyGaps.length
         ? '价格压力存在，但 Dated Brent、期限结构和裂解价差仍待验证。'
         : '能源压力仍需与通胀预期和实物端交叉确认。',
+      sourceType: brent === null ? '数据不足' : '数据推断',
       priority: brent === null ? 4 : brent >= 100 ? 1 : 2,
-    },
-    {
+    }),
+    createJudgment({
+      id: 'pressure-rates-liquidity',
       title: '长端利率与流动性',
+      group: 'pressure-source',
       status: us10y === null && real10y === null && dxy === null ? INSUFFICIENT : '观察中',
-      evidence: `10年期 ${formatNumber(us10y, 2, '%')}；实际利率 ${formatNumber(real10y, 2, '%')}；广义美元 ${formatNumber(dxy, 2)}`,
-      note: '长端利率和美元偏紧需要信用市场继续确认。',
+      direction: us10y !== null && us10y >= 4.25 ? '压力上升' : '观察中',
+      confidence: '中等',
+      dataCoverage: '数据覆盖：部分缺口',
+      evidence: [`10年期 ${formatNumber(us10y, 2, '%')}；实际利率 ${formatNumber(real10y, 2, '%')}；广义美元 ${formatNumber(dxy, 2)}`],
+      missingEvidence: ['信用市场扩散确认仍需观察。'],
+      explanation: '长端利率和美元偏紧需要信用市场继续确认。',
       priority: us10y !== null && us10y >= 4.25 ? 2 : 3,
-    },
-    {
+    }),
+    createJudgment({
+      id: 'pressure-credit',
       title: '信用压力',
+      group: 'pressure-source',
       status: hyOas === null && vix === null ? INSUFFICIENT : hyOas !== null && hyOas < 4 && vix !== null && vix < 22 ? '暂未扩散' : '观察中',
-      evidence: `高收益利差 ${formatNumber(hyOas, 2, '%')}；VIX ${formatNumber(vix, 2)}`,
-      note: '信用和波动率尚未给出同步扩散确认。',
+      direction: hyOas !== null && hyOas < 4 ? '基本平稳' : '方向待确认',
+      confidence: hyOas !== null && vix !== null ? '中等' : '偏低',
+      dataCoverage: hyOas !== null && vix !== null ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+      evidence: [`高收益利差 ${formatNumber(hyOas, 2, '%')}；VIX ${formatNumber(vix, 2)}`],
+      counterEvidence: hyOas !== null && hyOas < 4 && vix !== null && vix < 22 ? ['信用和波动率尚未给出同步扩散确认。'] : [],
+      explanation: '信用和波动率尚未给出同步扩散确认。',
       priority: hyOas !== null && hyOas < 4 ? 4 : 2,
-    },
-    {
+    }),
+    createJudgment({
+      id: 'pressure-world-order',
       title: '世界秩序压力',
+      group: 'pressure-source',
       status: worldScore === null ? INSUFFICIENT : hasPartialWorldOrder(worldOrderStressData) ? '观察中' : statusFromScore(worldScore),
-      evidence: worldScore === null ? '世界秩序压力数据不足。' : `结构性压力分数 ${Math.round(worldScore)}；freshness=${worldFreshness}`,
-      note: '结构性背景有参考价值，但来源新鲜度仍不完整。',
+      direction: hasPartialWorldOrder(worldOrderStressData) ? '方向待确认' : '观察中',
+      confidence: evidenceStrengthFromConfidence(worldOrderStressData?.confidence, '偏低'),
+      dataCoverage: hasPartialWorldOrder(worldOrderStressData) ? '数据覆盖：部分缺口' : '数据覆盖：等待校准',
+      evidence: [worldScore === null ? '世界秩序压力数据不足。' : `结构性压力分数 ${Math.round(worldScore)}；freshness=${worldFreshness}`],
+      missingEvidence: hasPartialWorldOrder(worldOrderStressData) ? ['部分外部来源仍为 stale / manual_required / not_configured。'] : [],
+      explanation: '结构性背景有参考价值，但来源新鲜度仍不完整。',
+      sourceType: worldScore === null ? '数据不足' : '数据推断',
       priority: worldScore === null ? 5 : 3,
-    },
-    {
+    }),
+    createJudgment({
+      id: 'pressure-consumer',
       title: '消费者体感',
+      group: 'pressure-source',
       status: finite(consumer.umichSentiment) === null ? WAITING : '观察中',
-      evidence: finite(consumer.umichSentiment) === null ? 'UMCSENT 等待接入或刷新。' : `UMCSENT ${formatNumber(consumer.umichSentiment, 1)}；三个月变化 ${formatNumber(consumer.threeMonthChange, 1)}`,
-      note: '月频慢变量只说明体感背景，不足以单独判断增长拐点。',
+      direction: directionFromDelta(consumer.threeMonthChange),
+      confidence: finite(consumer.umichSentiment) === null ? '偏低' : '中等',
+      dataCoverage: finite(consumer.umichSentiment) === null ? '数据覆盖：关键数据不足' : '数据覆盖：部分缺口',
+      evidence: [finite(consumer.umichSentiment) === null ? 'UMCSENT 等待接入或刷新。' : `UMCSENT ${formatNumber(consumer.umichSentiment, 1)}；三个月变化 ${formatNumber(consumer.threeMonthChange, 1)}`],
+      missingEvidence: ['PMI、就业广度和高频消费证据仍待接入。'],
+      explanation: '月频慢变量只说明体感背景，不足以单独判断增长拐点。',
+      sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '事实',
       priority: 5,
-    },
+    }),
   ].sort((a, b) => a.priority - b.priority).map(({ priority, ...item }) => item);
 }
 
@@ -221,34 +336,54 @@ function buildSignalLayers(data) {
   pending.push('能源价格处于观察区间，但实物端验证数据仍不足。');
 
   return [
-    {
+    createJudgment({
+      id: 'signal-verified',
       title: '已验证信号',
-      items: verified,
-      fallback: '暂无强验证信号。',
-    },
-    {
+      group: 'signal-layer',
+      status: verified.length ? '已有验证' : '暂无法判断',
+      confidence: verified.length ? '中等' : '偏低',
+      dataCoverage: verified.length ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+      evidence: verified,
+      conclusion: '暂无强验证信号。',
+      sourceType: verified.length ? '数据推断' : '数据不足',
+    }),
+    createJudgment({
+      id: 'signal-pending',
       title: '待验证信号',
-      items: pending,
-      fallback: '暂无待验证信号。',
-    },
-    {
+      group: 'signal-layer',
+      status: pending.length ? '观察中' : '暂无法判断',
+      confidence: '偏低',
+      dataCoverage: '数据覆盖：部分缺口',
+      evidence: pending,
+      conclusion: '暂无待验证信号。',
+      sourceType: '数据推断',
+    }),
+    createJudgment({
+      id: 'signal-noise',
       title: '噪音提示',
-      items: [
+      group: 'signal-layer',
+      status: '观察中',
+      confidence: '中等',
+      dataCoverage: '数据覆盖：部分缺口',
+      noiseWarning: [
         '单一价格变化不足以形成强结论。',
         '短期市场波动需要信用、利率、能源和风险资产之间的交叉确认。',
       ],
-      fallback: '暂无噪音提示。',
-    },
-    {
+      conclusion: '暂无噪音提示。',
+      sourceType: '数据推断',
+    }),
+    createDataGapJudgment({
+      id: 'signal-data-gap',
       title: '数据不足',
-      items: [
+      group: 'signal-layer',
+      evidence: [
         'Nasdaq / QQQ 周线历史尚未接入。',
         'Platts Dated Brent / 正式 Dated Brent 尚未接入。',
         'Brent 期限结构、crack spread / diesel stress、shipping / freight 仍待接入。',
         ...safeArray(brentLayer.dataGaps).slice(0, 1),
       ],
-      fallback: '暂无额外数据缺口。',
-    },
+      conclusion: '暂无额外数据缺口。',
+    }),
   ];
 }
 
@@ -260,54 +395,71 @@ function buildMacroDrivers(data) {
   const creditCalm = hyOas !== null && hyOas < 4 && vix !== null && vix < 22;
 
   return [
-    {
+    createJudgment({
+      id: 'driver-growth',
       title: '增长',
+      group: 'macro-driver',
       status: finite(consumer.umichSentiment) === null ? WAITING : '慢变量观察中',
       direction: directionFromDelta(consumer.threeMonthChange),
-      evidence: finite(consumer.umichSentiment) === null ? '消费者信心数据不足。' : `UMCSENT ${formatNumber(consumer.umichSentiment, 1)}；三个月变化 ${formatNumber(consumer.threeMonthChange, 1)}`,
-      missing: 'PMI、就业广度、盈利修正与高频消费证据等待接入。',
-      strength: finite(consumer.umichSentiment) === null ? '偏低' : '中等',
+      confidence: finite(consumer.umichSentiment) === null ? '偏低' : '中等',
+      dataCoverage: finite(consumer.umichSentiment) === null ? '数据覆盖：关键数据不足' : '数据覆盖：部分缺口',
+      evidence: [finite(consumer.umichSentiment) === null ? '消费者信心数据不足。' : `UMCSENT ${formatNumber(consumer.umichSentiment, 1)}；三个月变化 ${formatNumber(consumer.threeMonthChange, 1)}`],
+      missingEvidence: ['PMI、就业广度、盈利修正与高频消费证据等待接入。'],
       explanation: 'UMCSENT 是月频慢变量，只能提供体感背景，不能单独判断近端增长。',
-    },
-    {
+      sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '数据推断',
+    }),
+    createJudgment({
+      id: 'driver-inflation',
       title: '通胀',
+      group: 'macro-driver',
       status: finite(inputs.brent) === null ? INSUFFICIENT : Number(inputs.brent) >= 100 ? '压力上升' : '观察中',
       direction: finite(inputs.brent) !== null && Number(inputs.brent) >= 100 ? '压力上升' : '观察中',
-      evidence: `布伦特 ${formatNumber(inputs.brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`,
-      missing: 'Dated Brent、期限结构、裂解价差、柴油压力与库存数据等待接入。',
-      strength: finite(inputs.brent) === null ? '偏低' : '中等',
+      confidence: finite(inputs.brent) === null ? '偏低' : '中等',
+      dataCoverage: '数据覆盖：部分缺口',
+      evidence: [`布伦特 ${formatNumber(inputs.brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`],
+      missingEvidence: ['Dated Brent、期限结构、裂解价差、柴油压力与库存数据等待接入。'],
       explanation: 'Brent 偏高可以提示能源压力，但不能单独证明广义通胀重新加速。',
-    },
-    {
+      sourceType: finite(inputs.brent) === null ? '数据不足' : '数据推断',
+    }),
+    createJudgment({
+      id: 'driver-liquidity',
       title: '流动性',
+      group: 'macro-driver',
       status: statusFromScore(data?.modules?.liquidity),
       direction: finite(inputs.dxy) !== null && Number(inputs.dxy) >= 105 ? '约束偏强' : '观察中',
-      evidence: `广义美元 ${formatNumber(inputs.dxy, 2)}；10年期 ${formatNumber(inputs.us10y, 2, '%')}；高收益利差 ${formatNumber(inputs.hyOas, 2, '%')}`,
-      missing: '资金面、期限结构和更多信用分层证据等待接入。',
-      strength: creditCalm ? '中等' : '偏低',
+      confidence: creditCalm ? '中等' : '偏低',
+      dataCoverage: '数据覆盖：部分缺口',
+      evidence: [`广义美元 ${formatNumber(inputs.dxy, 2)}；10年期 ${formatNumber(inputs.us10y, 2, '%')}；高收益利差 ${formatNumber(inputs.hyOas, 2, '%')}`],
+      missingEvidence: ['资金面、期限结构和更多信用分层证据等待接入。'],
+      counterEvidence: creditCalm ? ['信用与波动率尚未明显确认扩散。'] : [],
       explanation: creditCalm
         ? '长端利率和美元偏紧，但信用与波动率尚未明显确认扩散。'
         : '流动性压力需要与信用利差和波动率共同确认。',
-    },
-    {
+    }),
+    createDataGapJudgment({
+      id: 'driver-policy',
       title: '政策',
+      group: 'macro-driver',
       status: WAITING,
       direction: '方向待确认',
-      evidence: '暂无直接 Fed 预期或政策路径指标。',
-      missing: 'Fed 预期、政策路径、市场隐含利率和政策沟通证据等待接入。',
-      strength: '偏低',
+      evidence: ['暂无直接 Fed 预期或政策路径指标。'],
+      missingEvidence: ['Fed 预期、政策路径、市场隐含利率和政策沟通证据等待接入。'],
       explanation: '当前不伪造政策立场；除非接入明确政策预期数据，否则政策不是强驱动。',
-    },
+    }),
   ];
 }
 
 function buildMarketTemperature() {
-  return {
+  return createDataGapJudgment({
+    id: 'market-pricing-temperature',
+    title: '市场定价温度计',
+    group: 'market-temperature',
     status: '等待历史周线数据接入',
-    description: '该指标将用于识别市场相对中期趋势的冷热程度，不构成单独买卖信号。',
-    requirements: ['Nasdaq / QQQ 周线历史', 'MA60', '标准差', 'z-score'],
+    evidence: ['Nasdaq / QQQ 周线历史', 'MA60', '标准差', 'z-score'],
+    missingEvidence: ['历史周线、MA60、标准差和 z-score 尚未接入。'],
+    explanation: '该指标将用于识别市场相对中期趋势的冷热程度，不构成单独买卖信号。',
     conclusion: UNDECIDED,
-  };
+  });
 }
 
 function findDivergenceCheck(data, key) {
@@ -323,50 +475,78 @@ function buildRiskEngines(data, worldOrderStressData) {
   const creditCalm = finite(inputs.hyOas) !== null && Number(inputs.hyOas) < 4 && finite(inputs.vix) !== null && Number(inputs.vix) < 22;
 
   return [
-    {
+    createJudgment({
+      id: 'engine-energy-inflation-transmission',
       title: '能源与通胀传导',
+      group: 'risk-engine',
       status: finite(inputs.brent) === null ? INSUFFICIENT : '压力上升',
-      evidence: text(brentLayer.summaryZh, `布伦特 ${formatNumber(inputs.brent, 1)}，通胀预期 ${formatNumber(inputs.breakeven10y, 2, '%')}。`),
-      missing: safeArray(brentLayer.dataGaps).slice(0, 3).join('；') || '实物端证据等待接入。',
-      strength: evidenceStrengthFromConfidence(brentLayer.confidence, '中等'),
+      direction: finite(inputs.brent) === null ? '方向待确认' : '压力上升',
+      confidence: evidenceStrengthFromConfidence(brentLayer.confidence, '中等'),
+      dataCoverage: '数据覆盖：部分缺口',
+      evidence: [text(brentLayer.summaryZh, `布伦特 ${formatNumber(inputs.brent, 1)}，通胀预期 ${formatNumber(inputs.breakeven10y, 2, '%')}。`)],
+      missingEvidence: safeArray(brentLayer.dataGaps).slice(0, 3).length
+        ? safeArray(brentLayer.dataGaps).slice(0, 3)
+        : ['实物端证据等待接入。'],
       explanation: '当前只能确认公开价格压力，尚不能确认真实实物供应冲击。',
-    },
-    {
+      sourceType: finite(inputs.brent) === null ? '数据不足' : '数据推断',
+    }),
+    createJudgment({
+      id: 'engine-rates-liquidity',
       title: '利率与流动性',
+      group: 'risk-engine',
       status: text(ratesCheck.status, statusFromScore(data?.modules?.liquidity)),
-      evidence: text(ratesCheck.summaryZh, `10年期 ${formatNumber(inputs.us10y, 2, '%')}；实际利率 ${formatNumber(inputs.real10y, 2, '%')}；广义美元 ${formatNumber(inputs.dxy, 2)}。`),
-      missing: safeArray(ratesCheck.limitations).slice(0, 1).join('；') || '资金面和期限结构证据等待接入。',
-      strength: '中等',
+      direction: '观察中',
+      confidence: '中等',
+      dataCoverage: '数据覆盖：部分缺口',
+      evidence: [text(ratesCheck.summaryZh, `10年期 ${formatNumber(inputs.us10y, 2, '%')}；实际利率 ${formatNumber(inputs.real10y, 2, '%')}；广义美元 ${formatNumber(inputs.dxy, 2)}。`)],
+      missingEvidence: safeArray(ratesCheck.limitations).slice(0, 1).length
+        ? safeArray(ratesCheck.limitations).slice(0, 1)
+        : ['资金面和期限结构证据等待接入。'],
+      counterEvidence: creditCalm ? ['信用市场尚未明显确认扩散。'] : [],
       explanation: creditCalm
         ? '长端压力存在，但信用市场尚未明显确认扩散。'
         : '需要观察利率、美元、信用和波动率是否同向收紧。',
-    },
-    {
+    }),
+    createJudgment({
+      id: 'engine-asset-pricing-mismatch',
       title: '资产定价错配',
+      group: 'risk-engine',
       status: text(pricingCheck.status, '观察中'),
-      evidence: text(pricingCheck.summaryZh, '风险资产定价仍需与利率、信用和历史温度框架交叉确认。'),
-      missing: 'Nasdaq / QQQ 周线历史、MA60、标准差和 z-score 等待接入。',
-      strength: '偏低',
+      direction: '方向待确认',
+      confidence: '偏低',
+      dataCoverage: '数据覆盖：关键数据不足',
+      evidence: [text(pricingCheck.summaryZh, '风险资产定价仍需与利率、信用和历史温度框架交叉确认。')],
+      missingEvidence: ['Nasdaq / QQQ 周线历史、MA60、标准差和 z-score 等待接入。'],
       explanation: '市场温度计尚未就绪，因此只能保留错配观察，不能给出冷热程度。',
-    },
-    {
+    }),
+    createJudgment({
+      id: 'engine-world-order',
       title: '世界秩序压力',
+      group: 'risk-engine',
       status: worldOrderStressData?.labelZh || text(worldOrderStressData?.state, INSUFFICIENT),
-      evidence: finite(worldOrderStressData?.score) === null ? '世界秩序压力数据不足。' : `结构性压力分数 ${Math.round(Number(worldOrderStressData.score))}；freshness=${text(worldOrderStressData?.freshness, INSUFFICIENT)}`,
-      missing: 'SIPRI / ACLED 等来源仍需补全或配置。',
-      strength: evidenceStrengthFromConfidence(worldOrderStressData?.confidence, '偏低'),
+      direction: hasPartialWorldOrder(worldOrderStressData) ? '方向待确认' : '观察中',
+      confidence: evidenceStrengthFromConfidence(worldOrderStressData?.confidence, '偏低'),
+      dataCoverage: hasPartialWorldOrder(worldOrderStressData) ? '数据覆盖：部分缺口' : '数据覆盖：等待校准',
+      evidence: [finite(worldOrderStressData?.score) === null ? '世界秩序压力数据不足。' : `结构性压力分数 ${Math.round(Number(worldOrderStressData.score))}；freshness=${text(worldOrderStressData?.freshness, INSUFFICIENT)}`],
+      missingEvidence: ['SIPRI / ACLED 等来源仍需补全或配置。'],
       explanation: '该引擎只识别结构性背景压力，不预测具体事件。',
-    },
-    {
+      sourceType: finite(worldOrderStressData?.score) === null ? '数据不足' : '数据推断',
+    }),
+    createJudgment({
+      id: 'engine-financial-fragility',
       title: '金融脆弱性',
+      group: 'risk-engine',
       status: text(liquidityCheck.status, statusFromScore(data?.modules?.banking)),
-      evidence: text(liquidityCheck.summaryZh, '金融脆弱性证据等待接入。'),
-      missing: '银行压力、私募信贷、CRE、融资成本与更细信用指标等待接入。',
-      strength: creditCalm ? '偏低' : '中等',
+      direction: creditCalm ? '观察中' : '方向待确认',
+      confidence: creditCalm ? '偏低' : '中等',
+      dataCoverage: '数据覆盖：部分缺口',
+      evidence: [text(liquidityCheck.summaryZh, '金融脆弱性证据等待接入。')],
+      missingEvidence: ['银行压力、私募信贷、CRE、融资成本与更细信用指标等待接入。'],
+      counterEvidence: creditCalm ? ['信用和波动率尚未显示系统性扩散。'] : [],
       explanation: creditCalm
         ? '信用和波动率尚未显示系统性扩散，金融脆弱性维持观察。'
         : '需要更细信用和银行压力数据才能提高结论强度。',
-    },
+    }),
   ];
 }
 
@@ -378,38 +558,55 @@ function buildCrossValidation(data) {
   const consumer = isPlainObject(data?.macroDrivers?.consumer) ? data.macroDrivers.consumer : {};
 
   return [
-    {
+    createJudgment({
+      id: 'cross-energy-shock',
       title: '能源冲击真实升级',
+      group: 'cross-validation',
       status: finite(inputs.brent) === null ? INSUFFICIENT : '观察中',
-      verified: text(energyCheck.summaryZh, '公开 Brent 价格提示能源压力。'),
-      missing: 'Platts Dated Brent、Brent 期限结构、裂解价差、库存和航运压力等待接入。',
-      noise: '单一 Brent 或代理价格不足以证明实物端冲击升级。',
+      direction: '待验证',
+      confidence: '偏低',
+      dataCoverage: '数据覆盖：部分缺口',
+      evidence: [text(energyCheck.summaryZh, '公开 Brent 价格提示能源压力。')],
+      missingEvidence: ['Platts Dated Brent、Brent 期限结构、裂解价差、库存和航运压力等待接入。'],
+      noiseWarning: ['单一 Brent 或代理价格不足以证明实物端冲击升级。'],
       conclusion: '待验证，未进入明显验证。',
-    },
-    {
+    }),
+    createJudgment({
+      id: 'cross-stagflation-pressure',
       title: '滞胀压力上升',
+      group: 'cross-validation',
       status: finite(inputs.brent) !== null && finite(consumer.umichSentiment) !== null ? '观察中' : INSUFFICIENT,
-      verified: text(data?.dailyBrief?.dominantRiskChain?.summaryZh, '能源、增长和利率链条等待同步确认。'),
-      missing: '增长数据目前偏依赖 UMCSENT；PMI、就业和政策预期仍缺位。',
-      noise: '月频慢变量可能滞后，不能单独确认滞胀。',
+      direction: '压力上升观察',
+      confidence: '偏低',
+      dataCoverage: '数据覆盖：部分缺口',
+      evidence: [text(data?.dailyBrief?.dominantRiskChain?.summaryZh, '能源、增长和利率链条等待同步确认。')],
+      missingEvidence: ['增长数据目前偏依赖 UMCSENT；PMI、就业和政策预期仍缺位。'],
+      noiseWarning: ['月频慢变量可能滞后，不能单独确认滞胀。'],
       conclusion: '证据不完整，保持压力上升观察。',
-    },
-    {
+    }),
+    createJudgment({
+      id: 'cross-risk-asset-mismatch',
       title: '风险资产错配',
+      group: 'cross-validation',
       status: text(ratesCheck.status, '观察中'),
-      verified: text(ratesCheck.summaryZh, '风险资产与利率证据等待接入。'),
-      missing: 'Nasdaq / QQQ 周线温度计和更长历史数据等待接入。',
-      noise: '短期价格强弱不等于宏观确认。',
+      direction: '方向待确认',
+      confidence: '偏低',
+      dataCoverage: '数据覆盖：关键数据不足',
+      evidence: [text(ratesCheck.summaryZh, '风险资产与利率证据等待接入。')],
+      missingEvidence: ['Nasdaq / QQQ 周线温度计和更长历史数据等待接入。'],
+      noiseWarning: ['短期价格强弱不等于宏观确认。'],
       conclusion: '框架未完全就绪，暂不做强结论。',
-    },
-    {
+    }),
+    createDataGapJudgment({
+      id: 'cross-overheat-confirmation',
       title: '风险资产过热是否被宏观确认',
+      group: 'cross-validation',
       status: '数据不足',
-      verified: text(pricingCheck.summaryZh, '宏观确认不足。'),
-      missing: 'MA60、标准差、z-score 与更长历史等待接入。',
-      noise: '没有 z-score 前不判断过热。',
+      evidence: [text(pricingCheck.summaryZh, '宏观确认不足。')],
+      missingEvidence: ['MA60、标准差、z-score 与更长历史等待接入。'],
+      noiseWarning: ['没有 z-score 前不判断过热。'],
       conclusion: '等待历史周线数据接入。',
-    },
+    }),
   ];
 }
 
@@ -450,16 +647,29 @@ function appendMiniMetric(root, label, value) {
   root.appendChild(box);
 }
 
+function stripLabelPrefix(value, label) {
+  const prefix = `${label}：`;
+  return typeof value === 'string' && value.startsWith(prefix) ? value.slice(prefix.length) : value;
+}
+
+function appendJudgmentList(root, label, values) {
+  const items = normalizeEvidenceList(values);
+  if (!items.length) return;
+  appendText(root, 'p', 'macro-overview-muted', `${label}：${items.map((item) => stripLabelPrefix(item, label)).join('；')}`);
+}
+
 function appendCard(root, item) {
   const card = document.createElement('article');
   card.className = 'macro-overview-card';
   appendText(card, 'h3', '', item.title);
-  appendText(card, 'p', 'macro-overview-status', item.status);
-  appendText(card, 'p', '', item.evidence || item.verified || UNDECIDED);
-  if (item.note) appendText(card, 'p', 'macro-overview-muted', item.note);
-  if (item.missing) appendText(card, 'p', 'macro-overview-muted', `缺失证据：${item.missing}`);
-  if (item.noise) appendText(card, 'p', 'macro-overview-muted', `噪音提示：${item.noise}`);
-  if (item.strength) appendText(card, 'p', 'macro-overview-muted', `证据强度：${item.strength}`);
+  appendText(card, 'p', 'macro-overview-status', item.status || UNDECIDED);
+  if (item.direction && item.direction !== '方向待确认') appendText(card, 'p', 'macro-overview-muted', `方向：${item.direction}`);
+  appendJudgmentList(card, '关键证据', item.evidence);
+  appendJudgmentList(card, '缺失证据', item.missingEvidence);
+  appendJudgmentList(card, '反向证据', item.counterEvidence);
+  appendJudgmentList(card, '噪音提示', item.noiseWarning);
+  if (item.confidence && item.confidence !== '等待校准') appendText(card, 'p', 'macro-overview-muted', `证据强度：${item.confidence}`);
+  if (item.dataCoverage) appendText(card, 'p', 'macro-overview-muted', `数据覆盖：${stripLabelPrefix(item.dataCoverage, '数据覆盖')}`);
   if (item.explanation) appendText(card, 'p', 'macro-overview-muted', item.explanation);
   if (item.conclusion) appendText(card, 'p', 'macro-overview-conclusion', `当前结论：${item.conclusion}`);
   root.appendChild(card);
@@ -503,7 +713,7 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
     const card = document.createElement('article');
     card.className = 'macro-overview-card';
     appendText(card, 'h3', '', group.title);
-    appendList(card, group.items, group.fallback);
+    appendList(card, [...group.evidence, ...group.noiseWarning], group.conclusion || '暂无可显示信号。');
     signalGrid.appendChild(card);
   });
   signals.appendChild(signalGrid);
@@ -518,8 +728,8 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   const tempPanel = document.createElement('article');
   tempPanel.className = 'macro-overview-card macro-temperature-card';
   appendText(tempPanel, 'p', 'macro-overview-status', `状态：${overview.marketTemperature.status}`);
-  appendText(tempPanel, 'p', '', `说明：${overview.marketTemperature.description}`);
-  appendList(tempPanel, overview.marketTemperature.requirements.map((item) => `数据需求：${item}`), '数据需求等待定义。');
+  appendText(tempPanel, 'p', '', `说明：${overview.marketTemperature.explanation}`);
+  appendList(tempPanel, overview.marketTemperature.evidence.map((item) => `数据需求：${item}`), '数据需求等待定义。');
   appendText(tempPanel, 'p', 'macro-overview-conclusion', `当前结论：${overview.marketTemperature.conclusion}`);
   temp.appendChild(tempPanel);
 

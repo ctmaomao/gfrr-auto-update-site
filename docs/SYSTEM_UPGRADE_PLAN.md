@@ -1278,3 +1278,26 @@ Recommended next step:
 ```text
 v28.0M-2-1 Homepage Judgment Calibration Audit Sync - No Code Change
 ```
+
+## v28.0M-3 Unified Judgment Data Structure
+
+v28.0M-3 normalizes the read-only macro overview derivation layer around one unified judgment object shape.
+
+This stage:
+
+- introduces a standard frontend judgment structure for macro overview cards.
+- normalizes current builders for today judgment, pressure sources, signal layers, macro drivers, market temperature, risk engines, and cross-validation.
+- standardizes card rendering around status, direction, evidence, missing evidence, counter evidence, noise warning, confidence, data coverage, explanation, and conclusion fields.
+- keeps market temperature in the waiting-for-history state.
+- changes no production data.
+- changes no AI-generated text.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not change scoring / decision / execution / position logic.
+- prepares future Market Pricing Temperature, Risk Engine, and Cross-Validation implementation rounds.
+
+Recommended next step:
+
+```text
+v28.0M-4 Macro Overview Structure Audit Sync - No Code Change
+```
