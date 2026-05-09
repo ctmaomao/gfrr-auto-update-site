@@ -1,5 +1,8 @@
 name: Check Worker Health
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   workflow_dispatch:
   schedule:
@@ -29,7 +32,7 @@ jobs:
         run: node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy --snapshot-file health-worker-snapshot.json
 
       - name: Upload Worker health snapshot
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: worker-health-snapshot
           path: health-worker-snapshot.json

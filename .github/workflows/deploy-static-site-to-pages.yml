@@ -1,5 +1,8 @@
 name: Deploy Static Site to Pages
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   workflow_dispatch:
   workflow_run:
@@ -56,6 +59,9 @@ jobs:
 
       - name: Check user-facing copy contract
         run: npm run check:copy
+
+      - name: Check Node runtime baseline
+        run: npm run check:node-runtime
 
       - name: Check workflow contract
         run: npm run check:workflows

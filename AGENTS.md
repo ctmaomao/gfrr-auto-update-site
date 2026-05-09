@@ -313,3 +313,9 @@ Do not treat L-3H-3 success as permission to write production data, display prov
 v28.0L-3I is documentation-only design for a future `local_compact` provider-call path. Do not run a `local_compact` provider call until a separate approved implementation PR exists and is merged.
 
 Do not treat local compact input or output as production data. Do not write local compact output to `data/`, do not display it on frontend, do not trigger Daily, and do not let it affect scoring / decision / execution / position logic. Future `local_compact` output must use `site_structured_data_only` semantics and remain artifact-only unless a later reviewed production integration PR explicitly changes that boundary.
+
+## 21. v28.0L-3I-0 Node 24 runtime baseline reminder
+
+Project runtime baseline is Node.js 24 LTS. `package.json` engines must remain `>=24 <25` or `24.x`; `.nvmrc` and `.node-version` must remain exactly `24`. Do not make Node 25 the default project runtime.
+
+All GitHub Actions workflows must use the Node 24 baseline: `actions/checkout@v6`, `actions/setup-node@v6` with `node-version: 24`, `actions/upload-artifact@v7`, and top-level `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`. Do not use Node 20, `node20` actions, `actions/checkout@v4` / `@v5`, `actions/setup-node@v4` / `@v5`, `actions/upload-artifact@v4`, `FORCE_JAVASCRIPT_ACTIONS_TO_NODE20`, or `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION`. Future Codex PRs must not regress runtime versions.

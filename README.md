@@ -190,6 +190,7 @@ npm run check:syntax
 npm run check:dom
 npm run check:modules
 npm run check:copy
+npm run check:node-runtime
 npm run check:workflows
 npm run check:docs
 npm run check:data
@@ -201,6 +202,7 @@ npm run check:data
 - `check:dom`：检查关键 DOM 挂载点。
 - `check:modules`：自动扫描 `scripts/modules/*.js` 并执行动态 import 检查。
 - `check:copy`：检查用户可见文案契约，防止“广义美元指数 / 亿美元 / 传导网络 Δ”等已修复文案回退。
+- `check:node-runtime`：检查 Node.js 24 LTS runtime baseline、`.nvmrc` / `.node-version`、GitHub Actions action majors 与 Node 24 opt-in。
 - `check:workflows`：检查 GitHub Actions workflow 合约，防止 Realtime / Daily / Pages 部署中的关键调度、Summary、校验和部署步骤被误删。
 - `check:docs`：检查 `README.md`、`AGENTS.md` 和 `docs/*.md` 中的本地 Markdown 链接，防止 DATA_CONTRACT / OPERATIONS 等文档入口失效。
 - `check:data`：检查数据契约、Brent validation、Decision Output Contract、Transmission Delta 等结构；底层运行 `node scripts/validate-data.mjs`。
@@ -240,6 +242,7 @@ npm run check:syntax
 npm run check:dom
 npm run check:modules
 npm run check:copy
+npm run check:node-runtime
 npm run check:workflows
 npm run check:docs
 npm run check:data
@@ -296,3 +299,5 @@ Provider-call workflow status: `External AI Manual Provider Test` is unlocked on
 Fixture sample provider-call status: v28.0L-3H-3 passed validator, quality review, and sanitizer for run `25593082968`; production integration remains disabled.
 
 Local compact provider-call status: v28.0L-3I documents the future design only; implementation and live/local execution remain pending.
+
+Runtime status: v28.0L-3I-0 standardizes local development and GitHub Actions on Node.js 24 LTS.

@@ -32,6 +32,8 @@ npm run check:data
 
 `check:copy` 检查用户可见文案契约，防止“广义美元指数 / 亿美元 / 传导网络 Δ”等已修复文案回退。
 
+`check:node-runtime` 检查本地 Node runtime 与 GitHub Actions runtime baseline，防止 Node 20 / Node 25 / 旧 action 版本回退。
+
 `check:workflows` 检查 GitHub Actions workflow 合约，防止 Realtime / Daily / Pages 部署中的关键调度、Summary、校验和部署步骤被误删。
 
 `check:docs` 检查 README.md、AGENTS.md 和 docs/*.md 中的本地 Markdown 链接是否指向不存在的文件；http / https / mailto / 纯锚点链接会跳过。
@@ -743,9 +745,42 @@ npm run check:data
 
 `check:syntax` 会自动扫描 `scripts/` 下的 `.js` / `.mjs`；`check:modules` 会自动扫描 `scripts/modules/*.js`。
 
-GitHub Actions workflow baseline 使用 Node 24-compatible official actions：`actions/checkout@v6` 和 `actions/setup-node@v6`；`setup-node` 使用 `node-version: 24`。不要用 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` 或 `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` 作为 workaround。
+GitHub Actions workflow baseline 使用 Node 24 LTS compatible official actions：`actions/checkout@v6`、`actions/setup-node@v6` 和 `actions/upload-artifact@v7`；`setup-node` 使用 `node-version: 24`。每个 workflow 必须设置 top-level `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`。不要使用 `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION`、`FORCE_JAVASCRIPT_ACTIONS_TO_NODE20`、Node 20 或 Node 25 作为默认项目 runtime。
 
 `validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 是分步骤运行上述检查，不运行 `check:all`。
+
+## v28.0L-3I-0 Workflow / runtime hygiene
+
+Node 20 GitHub Actions warnings are blocking workflow hygiene issues. The project baseline is Node.js 24 LTS across local development, package engines, and GitHub Actions.
+
+Required runtime baseline:
+
+- `package.json` engines: `>=24 <25` or `24.x`.
+- `.nvmrc`: `24`.
+- `.node-version`: `24`.
+- `actions/checkout@v6`.
+- `actions/setup-node@v6` with `node-version: 24`.
+- `actions/upload-artifact@v7`.
+- top-level workflow env `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`.
+
+Forbidden:
+
+- Node 20 setup or `node20` actions.
+- Node 25 as the default project runtime.
+- `actions/checkout@v4` / `actions/checkout@v5`.
+- `actions/setup-node@v4` / `actions/setup-node@v5`.
+- `actions/upload-artifact@v4`.
+- `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION`.
+- `FORCE_JAVASCRIPT_ACTIONS_TO_NODE20`.
+
+Future workflow PRs must pass:
+
+```bash
+npm run check:node-runtime
+npm run check:workflows
+```
+
+Runtime hygiene work does not approve provider calls, production data writes, frontend display, Daily integration, or `local_compact` implementation.
 
 ## 9. Cloudflare Worker realtime backend 规划
 

@@ -725,3 +725,9 @@ Recommended next implementation, only after L-3I is merged and audited:
 ```text
 v28.0L-3J Local Compact Provider-Call Workflow Path - Artifact-Only / No Production Data
 ```
+
+## 24. v28.0L-3I-0 Node 24 runtime baseline before L-3J
+
+v28.0L-3I-0 is a workflow hygiene prerequisite before any L-3J implementation.
+
+It standardizes local and GitHub Actions runtime on Node.js 24 LTS, updates action majors, adds `check:node-runtime`, and strengthens workflow checks. It does not implement `local_compact`, does not call DeepSeek, does not trigger workflows, does not read secrets, and does not change production data or frontend behavior.
