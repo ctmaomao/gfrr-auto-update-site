@@ -5,6 +5,8 @@ import path from 'node:path';
 const ARTIFACT_DIR = 'manual-artifacts/external-ai';
 const STRICT_MODE = process.argv.includes('--workflow-provider-test');
 const MAX_ARTIFACT_BYTES = 500 * 1024;
+const LOCAL_RADAR_DATA_SOURCE_PATH = 'data/radar-data.json';
+const COMPACT_INPUT_ARTIFACT = 'manual-input-compact-latest.json';
 
 const providerWorkflowAllowlist = new Set([
   'workflow-dry-run-report.json',
@@ -114,6 +116,80 @@ function scanFileContent(filePath, fileName, snippets = forbiddenContentSnippets
   return text;
 }
 
+function collectStringLocations(value, needle, pointer = '') {
+  if (value === needle) return [pointer || '/'];
+  if (!value || typeof value !== 'object') return [];
+
+  const locations = [];
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      locations.push(...collectStringLocations(item, needle, `${pointer}/${index}`));
+    });
+    return locations;
+  }
+
+  for (const [key, childValue] of Object.entries(value)) {
+    locations.push(...collectStringLocations(childValue, needle, `${pointer}/${key}`));
+  }
+  return locations;
+}
+
+function validateCompactInputSourceMetadata(data, fileName, text) {
+  const locations = collectStringLocations(data, LOCAL_RADAR_DATA_SOURCE_PATH);
+  const allowedLocations = new Set([
+    '/input',
+    '/source',
+    '/source/input',
+    '/source/path',
+    '/source/sourcePath',
+  ]);
+
+  if (!text.includes(LOCAL_RADAR_DATA_SOURCE_PATH)) return true;
+
+  if (locations.length === 0) {
+    addError(`artifact "${fileName}" contains ${LOCAL_RADAR_DATA_SOURCE_PATH} outside JSON string metadata`);
+    return false;
+  }
+
+  for (const location of locations) {
+    if (!allowedLocations.has(location)) {
+      addError(`artifact "${fileName}" contains ${LOCAL_RADAR_DATA_SOURCE_PATH} outside allowed source metadata at ${location}`);
+      return false;
+    }
+  }
+
+  const sourceType = data.sourceType ?? data.source?.type;
+  const compactEnabled = data.compact === true || data.compaction?.enabled === true;
+  const boundaries = data.boundaries && typeof data.boundaries === 'object' ? data.boundaries : {};
+  const source = data.source && typeof data.source === 'object' ? data.source : {};
+
+  const safetyChecks = [
+    [sourceType === 'local_file', 'sourceType/local source type must be local_file'],
+    [source.isLocalSiteData === true, 'source.isLocalSiteData must be true'],
+    [compactEnabled === true, 'compact input marker must be true'],
+    [data.productionDataWritten === false || boundaries.notProductionData === true, 'productionDataWritten must be false or notProductionData boundary must be true'],
+    [data.frontendDisplayChanged === false || boundaries.manualArtifactOnly === true, 'frontendDisplayChanged must be false or manualArtifactOnly boundary must be true'],
+    [data.secretsRead === false || boundaries.noSecrets === true, 'secretsRead must be false or noSecrets boundary must be true'],
+    [data.apiCalled === false || boundaries.noExternalMarketData === true, 'apiCalled must be false or noExternalMarketData boundary must be true'],
+    [boundaries.readOnlyContext === true, 'readOnlyContext boundary must be true'],
+  ];
+
+  let valid = true;
+  for (const [passed, message] of safetyChecks) {
+    if (!passed) {
+      valid = false;
+      addError(`artifact "${fileName}" may reference ${LOCAL_RADAR_DATA_SOURCE_PATH} only as safe local_compact source metadata: ${message}`);
+    }
+  }
+
+  return valid;
+}
+
+function strictForbiddenSnippetsForFile(fileName) {
+  if (fileName !== COMPACT_INPUT_ARTIFACT) return forbiddenContentSnippets;
+  return forbiddenContentSnippets.filter((snippet) => snippet !== LOCAL_RADAR_DATA_SOURCE_PATH);
+}
+
 function checkFileSize(filePath, fileName) {
   const stats = fs.statSync(filePath);
   if (stats.size > MAX_ARTIFACT_BYTES) {
@@ -161,8 +237,12 @@ function checkStrictFile(filePath, fileName) {
   }
 
   checkFileSize(filePath, fileName);
-  scanFileContent(filePath, fileName, forbiddenContentSnippets);
-  readJson(filePath, fileName);
+  const data = readJson(filePath, fileName);
+  const text = scanFileContent(filePath, fileName, strictForbiddenSnippetsForFile(fileName));
+
+  if (fileName === COMPACT_INPUT_ARTIFACT && data) {
+    validateCompactInputSourceMetadata(data, fileName, text);
+  }
 
   if (fileName === 'deepseek-output-latest.json') {
     checkProviderOutput(filePath, fileName);
@@ -171,6 +251,53 @@ function checkStrictFile(filePath, fileName) {
   if (fileName === 'external-ai-quality-review-latest.json') {
     checkQualityReviewArtifact(filePath, fileName);
   }
+}
+
+function runRegressionChecks() {
+  const validCompactInput = {
+    source: {
+      type: 'local_file',
+      path: LOCAL_RADAR_DATA_SOURCE_PATH,
+      isLocalSiteData: true,
+    },
+    boundaries: {
+      notProductionData: true,
+      manualArtifactOnly: true,
+      noSecrets: true,
+      noExternalMarketData: true,
+      readOnlyContext: true,
+    },
+    compaction: {
+      enabled: true,
+    },
+  };
+  const invalidCompactInput = {
+    ...validCompactInput,
+    siteData: {
+      copiedProductionPath: LOCAL_RADAR_DATA_SOURCE_PATH,
+    },
+  };
+
+  const before = errors.length;
+  validateCompactInputSourceMetadata(
+    validCompactInput,
+    COMPACT_INPUT_ARTIFACT,
+    JSON.stringify(validCompactInput),
+  );
+  if (errors.length !== before) {
+    addError('regression: compact input source metadata exception must allow safe source.path');
+  }
+
+  const invalidBefore = errors.length;
+  validateCompactInputSourceMetadata(
+    invalidCompactInput,
+    COMPACT_INPUT_ARTIFACT,
+    JSON.stringify(invalidCompactInput),
+  );
+  if (errors.length <= invalidBefore) {
+    addError('regression: compact input source metadata exception must reject non-source data path references');
+  }
+  errors.splice(invalidBefore);
 }
 
 function checkDefaultFile(filePath, fileName) {
@@ -201,6 +328,7 @@ function checkArtifacts() {
   }
 }
 
+runRegressionChecks();
 checkArtifacts();
 
 if (errors.length > 0) {

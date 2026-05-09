@@ -637,3 +637,23 @@ Recommended next stage:
 ```text
 v28.0L-3J-1 First Local Compact Provider-Call Audit
 ```
+
+## v28.0L-3J-1 Local Compact Sanitizer Source Path Fix
+
+v28.0L-3J-1 fixes the sanitizer false positive found by run `25598085025`.
+
+This stage:
+
+- records that run `25598085025` stopped safely before the provider-call job.
+- confirms no DeepSeek call occurred.
+- confirms no secret was read.
+- allows `manual-input-compact-latest.json` to reference `data/radar-data.json` only as read-only source metadata.
+- keeps actual `data/radar-data.json` upload/write/copy forbidden.
+- keeps provider output out of production data and frontend display.
+- keeps production integration, Daily integration, scoring, decision, execution, and position changes out of scope.
+
+Recommended next stage:
+
+```text
+v28.0L-3J-2 First Local Compact Provider-Call Audit Retry
+```
