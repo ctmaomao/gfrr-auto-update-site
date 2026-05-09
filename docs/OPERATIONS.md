@@ -1413,3 +1413,25 @@ Recommended next stage:
 ```text
 v28.0L-3O First Controlled Production Write Design - No Frontend Display
 ```
+
+### v28.0L-3O first controlled write guard operator note
+
+v28.0L-3O adds first controlled production write design and a read-only guard.
+
+Operator guidance:
+
+- Run `npm run check:external-ai-production-write-guard` before any future first-write task.
+- Do not manually edit `data/radar-data.json`.
+- Do not manually copy projection artifacts into `data/`.
+- The first write must be data-only, no frontend, no workflow change, no Daily integration, and no automatic provider call.
+- The first write must be a separate explicitly approved PR.
+- Rollback is reverting that isolated PR.
+- If the guard fails, stop and resolve the NO-GO signal before any further write planning.
+
+Recommended next stage:
+
+```text
+v28.0L-3P First Controlled Production Write - Data Only / No Frontend Display
+```
+
+only after explicit user approval.

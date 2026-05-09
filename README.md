@@ -308,4 +308,6 @@ External AI production contract validator status: v28.0L-3M adds a local validat
 
 External AI production projection dry-run status: v28.0L-3N adds an ignored manual-artifact projection validated by the production contract checker; production write remains disabled.
 
+External AI first production write guard status: v28.0L-3O adds a read-only write guard and design; production write remains disabled.
+
 Runtime status: v28.0L-3I-0 standardizes local development and GitHub Actions on Node.js 24 LTS.
