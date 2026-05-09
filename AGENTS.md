@@ -307,3 +307,9 @@ Do not bypass quality review. Do not weaken `review:external-ai-artifact`, `chec
 v28.0L-3H-3 only records that the second `fixture_sample` provider-call audit passed in run `25593082968`: provider transport, output validation, quality review, artifact sanitizer, and sanitized artifact upload all passed, with `promotionEligible=false`.
 
 Do not treat L-3H-3 success as permission to write production data, display provider output, enable `externalAiInterpretationLayer`, trigger Daily, or affect scoring / decision / execution / position logic. Live/local provider call requires a separate explicitly approved PR/task. Do not rerun `fixture_sample` unnecessarily.
+
+## 20. v28.0L-3I local compact provider-call design reminder
+
+v28.0L-3I is documentation-only design for a future `local_compact` provider-call path. Do not run a `local_compact` provider call until a separate approved implementation PR exists and is merged.
+
+Do not treat local compact input or output as production data. Do not write local compact output to `data/`, do not display it on frontend, do not trigger Daily, and do not let it affect scoring / decision / execution / position logic. Future `local_compact` output must use `site_structured_data_only` semantics and remain artifact-only unless a later reviewed production integration PR explicitly changes that boundary.

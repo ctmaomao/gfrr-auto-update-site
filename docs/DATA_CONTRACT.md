@@ -1265,3 +1265,18 @@ This does not change the production data contract:
 - production `externalAiInterpretationLayer` remains disabled and non-user-visible.
 - `promotionEligible=false` remains required.
 - no provider output may enter `data/*.json`, `realtime/*.json`, Worker payloads, config files, frontend display paths, Daily inputs, scoring, decision, execution, or position logic.
+
+## v28.0L-3I local_compact provider artifact data boundary
+
+v28.0L-3I designs a future `local_compact` provider-call path only. It does not change the production data contract.
+
+Future `local_compact` input and output artifacts remain non-production diagnostics:
+
+- `manual-artifacts/external-ai/manual-input-compact-latest.json` must stay ignored and artifact-only.
+- provider output must not enter `data/radar-data.json`.
+- provider output must not enter any `data/*.json` or `realtime/*.json` production path.
+- provider output must not modify Worker payloads or config files.
+- provider output must not enter Daily inputs.
+- provider output must not affect scoring, decision, execution, or position logic.
+- production `externalAiInterpretationLayer` remains disabled and non-user-visible.
+- `promotionEligible=false` remains required unless a separate reviewed production integration PR explicitly changes that boundary.

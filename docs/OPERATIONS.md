@@ -1157,3 +1157,17 @@ Operator rule:
 - Do not copy provider artifacts into `data/` or production data.
 - Do not display provider output in frontend, trigger Daily, or connect it to scoring / decision / execution / position logic.
 - The next real-call step must be separately approved and should likely be `local_compact` / live structured input under artifact-only mode.
+
+### v28.0L-3I local_compact design operator note
+
+L-3I is design-only. Do not run a `local_compact` provider call yet.
+
+Operator rule:
+
+- The next step is design/audit first.
+- Do not trigger the provider workflow for `local_compact` from L-3I.
+- Do not read, print, add, remove, or modify `DEEPSEEK_API_KEY` for L-3I.
+- When eventually allowed by a separate implementation PR, the first `local_compact` provider run should be one call only.
+- If that future run fails quality review, stop and revise prompt / source semantics before any retry.
+- Do not copy `local_compact` input or provider output into `data/`.
+- Do not display `local_compact` provider output in frontend, trigger Daily, or connect it to scoring / decision / execution / position logic.

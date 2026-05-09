@@ -255,7 +255,32 @@ For source semantics:
 
 The existing `sample-output-v28.0K-1.json` fixture remains a historical non-production fixture. L-3H-2 does not replace it with a fake DeepSeek success artifact. Local review diagnostics may be run against it, but a real second provider-call audit must still use `fixture_sample` only after this PR is merged and audited.
 
-## 14. Non-goals / 非目标
+## 14. v28.0L-3I Local Compact Source Semantics
+
+`fixture_sample` and future `local_compact` provider calls have different source semantics.
+
+For `fixture_sample` output:
+
+- `auditFlags` may include `sample_input_only`.
+- `sourceAttribution.claimType` may use `sample_input`.
+- `sourceAttribution.noteZh` may use `样例结构化输入`.
+
+For future `local_compact` output:
+
+- `sourceSemantics` should be `site_structured_data_compact_summary`.
+- `auditFlags` must use `site_structured_data_only`.
+- `auditFlags` must not include `sample_input_only`.
+- output must never include both `sample_input_only` and `site_structured_data_only`.
+- `sourceAttribution.claimType` must use `site_structured_data`.
+- `sourceAttribution.noteZh` should include `站内结构化数据`.
+- `sourceAttribution` must cite the provided site structured layers, such as `dailyBrief`, `divergenceLayer`, `brentPricingLayer`, `macroDrivers`, `dataHealth`, or `decisionContext`.
+- confidence should normally remain low or low-medium, with score 20-40 if structured input is usable.
+- confidence should not be 0 when the structured input is usable.
+- output must not claim external web, news, or market verification.
+- output must not repeat concrete execution, position, cash, exposure, target-band, or trade/action wording from `decisionContext`.
+- `decisionContext` remains read-only background only.
+
+## 15. Non-goals / 非目标
 
 This stage does not:
 

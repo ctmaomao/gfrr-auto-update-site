@@ -555,3 +555,29 @@ v28.0L-3I Live/Local Compact Provider-Call Design - No Provider Call
 ```
 
 Live/local provider execution, production integration, frontend display, Daily integration, and `externalAiInterpretationLayer` promotion remain `not_ready`.
+
+## v28.0L-3I Live/Local Compact Provider-Call Design
+
+v28.0L-3I adds design documentation for a future `local_compact` provider-call path.
+
+This stage:
+
+- documents local compact provider-call constraints.
+- uses the existing `manual-input-compact-latest.json` artifact style as the future input model.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not modify workflows.
+- does not modify scripts.
+- does not read or change secrets.
+- does not write production data.
+- does not modify frontend.
+- does not integrate with Daily.
+- does not affect scoring / decision / execution / position logic.
+
+The `fixture_sample` provider path is verified, but `local_compact` execution remains `not_ready`. Production integration, frontend display, Daily integration, and `externalAiInterpretationLayer` promotion remain `not_ready`.
+
+Recommended next stage, only after this design PR is merged and audited:
+
+```text
+v28.0L-3J Local Compact Provider-Call Workflow Path - Artifact-Only / No Production Data
+```
