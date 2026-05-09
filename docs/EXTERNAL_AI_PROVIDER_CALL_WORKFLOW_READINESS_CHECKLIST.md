@@ -497,7 +497,27 @@ Current L-3I decision:
 local_compact_design_ready_implementation_not_ready
 ```
 
-## 20. Historical v28.0L-3D final readiness decision
+## 20. v28.0L-3J readiness update
+
+v28.0L-3J implements the `local_compact` workflow path but does not run the provider call.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Fixture_sample provider path | verified | Run `25593082968` passed provider transport, validation, quality review, sanitizer, and artifact upload. | No | Keep fixture path available and gated. |
+| Local_compact workflow path | implemented / pending audit | The provider workflow can build `manual-input-compact-latest.json` and select it as the provider input behind the manual gates. | No | Run one manually approved audit after merge. |
+| Local_compact provider call | not_yet_audited | L-3J does not call DeepSeek and does not trigger GitHub Actions. | Yes | Complete `v28.0L-3J-1 First Local Compact Provider-Call Audit`. |
+| Production integration | not_ready | Provider artifacts remain `artifactOnly=true` and `promotionEligible=false`; no data promotion is connected. | Yes | Separate reviewed production integration phase required. |
+| Frontend display | not_ready | External AI output remains non-user-visible. | Yes | Separate reviewed display phase required. |
+| Daily integration | not_ready | No Daily provider-call integration exists. | Yes | Separate future Daily phase required. |
+| Scoring / decision / execution / position impact | blocked / out_of_scope | L-3J changes only provider workflow gating and docs. | Yes | Keep external AI output outside these paths. |
+
+Current L-3J decision:
+
+```text
+local_compact_workflow_path_implemented_provider_call_pending_audit
+```
+
+## 21. Historical v28.0L-3D final readiness decision
 
 Overall readiness:
 

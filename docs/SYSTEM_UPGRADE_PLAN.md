@@ -607,3 +607,33 @@ Recommended next stage remains:
 ```text
 v28.0L-3J Local Compact Provider-Call Workflow Path - Artifact-Only / No Production Data
 ```
+
+## v28.0L-3J Local Compact Provider-Call Workflow Path
+
+v28.0L-3J implements the `local_compact` provider-call workflow path as an artifact-only, non-production route.
+
+This stage:
+
+- keeps the workflow manual `workflow_dispatch` only.
+- preserves the Node 24 workflow baseline.
+- preserves the `external-ai-manual` environment gate.
+- keeps `DEEPSEEK_API_KEY` step-scoped to the provider-call step.
+- allows `input_source=local_compact` only behind the same explicit provider gates as `fixture_sample`.
+- builds `manual-artifacts/external-ai/manual-input-compact-latest.json` from local repository structured data.
+- uses no source URL live fetch in the provider workflow path.
+- keeps validator, quality review, artifact sanitizer, short retention, and post-run production safety assertion.
+- does not call DeepSeek during the PR.
+- does not trigger GitHub Actions during the PR.
+- does not read or modify secrets.
+- does not write production data.
+- does not modify frontend, Worker, config, `data/*.json`, or `realtime/*.json`.
+- does not integrate with Daily.
+- does not affect scoring / decision / execution / position logic.
+
+The `local_compact` provider call itself remains pending audit.
+
+Recommended next stage:
+
+```text
+v28.0L-3J-1 First Local Compact Provider-Call Audit
+```

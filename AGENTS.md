@@ -319,3 +319,9 @@ Do not treat local compact input or output as production data. Do not write loca
 Project runtime baseline is Node.js 24 LTS. `package.json` engines must remain `>=24 <25` or `24.x`; `.nvmrc` and `.node-version` must remain exactly `24`. Do not make Node 25 the default project runtime.
 
 All GitHub Actions workflows must use the Node 24 baseline: `actions/checkout@v6`, `actions/setup-node@v6` with `node-version: 24`, `actions/upload-artifact@v7`, and top-level `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`. Do not use Node 20, `node20` actions, `actions/checkout@v4` / `@v5`, `actions/setup-node@v4` / `@v5`, `actions/upload-artifact@v4`, `FORCE_JAVASCRIPT_ACTIONS_TO_NODE20`, or `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION`. Future Codex PRs must not regress runtime versions.
+
+## 22. v28.0L-3J local compact provider-call workflow reminder
+
+v28.0L-3J implements the `local_compact` provider-call workflow path, but it does not run the provider call and does not approve production integration.
+
+Do not run the `local_compact` provider call more than once without a recorded audit. Do not write local compact input or provider output to `data/`. Do not display local compact output on the frontend. Do not proceed to production integration before the `local_compact` audit passes and a separate reviewed production PR explicitly changes the boundary.

@@ -199,8 +199,18 @@ jobs:
           timeout_ms="${{ github.event.inputs.timeout_ms }}"
           max_attempts="${{ github.event.inputs.max_attempts }}"
 
+          input_artifact_path="docs/fixtures/external-ai/sample-input-v28.0K-1.json"
+          if [ "$input_source" = "local_compact" ]; then
+            input_artifact_path="manual-artifacts/external-ai/manual-input-compact-latest.json"
+          fi
+
           provider_path_requested="false"
           gate_reason="provider_gates_not_satisfied"
+          timeout_numeric="false"
+          if printf '%s' "$timeout_ms" | grep -Eq '^[0-9]+$'; then
+            timeout_numeric="true"
+          fi
+
           if [ "$provider" = "deepseek" ] &&
             [ "$dry_run" = "false" ] &&
             [ "$allow_network" = "true" ] &&
@@ -208,14 +218,10 @@ jobs:
             [ "$acknowledge_non_production" = "true" ] &&
             [ "$validate_output" = "true" ] &&
             [ "$max_attempts" = "1" ] &&
+            [ "$timeout_numeric" = "true" ] &&
             [ "$timeout_ms" -le 180000 ]; then
             provider_path_requested="true"
             gate_reason="provider_path_requested"
-          fi
-
-          if [ "$provider_path_requested" = "true" ] && [ "$input_source" != "fixture_sample" ]; then
-            provider_path_requested="false"
-            gate_reason="l3h_first_provider_call_requires_fixture_sample"
           fi
 
           echo "provider_path_requested=$provider_path_requested" >> "$GITHUB_OUTPUT"
@@ -226,6 +232,7 @@ jobs:
             "status": "$gate_reason",
             "provider": "deepseek",
             "inputSource": "$input_source",
+            "inputArtifactPath": "$input_artifact_path",
             "dryRun": $dry_run,
             "allowNetwork": $allow_network,
             "acknowledgeCost": $acknowledge_cost,
@@ -236,6 +243,8 @@ jobs:
             "providerPathRequested": $provider_path_requested,
             "providerCommandExecuted": false,
             "apiCalled": false,
+            "secretConfigured": false,
+            "secretReference": "environment_scoped_provider_key",
             "secretsRead": false,
             "networkUsed": false,
             "outputValidation": "skipped",
@@ -247,11 +256,6 @@ jobs:
             "reason": "$gate_reason"
           }
           JSON
-
-          if [ "$gate_reason" = "l3h_first_provider_call_requires_fixture_sample" ]; then
-            echo "$gate_reason"
-            exit 1
-          fi
 
       - name: Artifact sanitizer
         id: sanitize_dry_run_artifacts
@@ -350,8 +354,22 @@ jobs:
           timeout_ms="${{ github.event.inputs.timeout_ms }}"
           max_attempts="${{ github.event.inputs.max_attempts }}"
 
+          input_artifact_path="docs/fixtures/external-ai/sample-input-v28.0K-1.json"
+          case "$input_source" in
+            fixture_sample)
+              input_artifact_path="docs/fixtures/external-ai/sample-input-v28.0K-1.json"
+              ;;
+            local_compact)
+              input_artifact_path="manual-artifacts/external-ai/manual-input-compact-latest.json"
+              node scripts/build-external-ai-manual-input.mjs --compact --output "$input_artifact_path"
+              ;;
+            *)
+              echo "provider_call_gates_not_satisfied"
+              exit 1
+              ;;
+          esac
+
           if [ "$provider" != "deepseek" ] ||
-            [ "$input_source" != "fixture_sample" ] ||
             [ "$dry_run" != "false" ] ||
             [ "$allow_network" != "true" ] ||
             [ "$acknowledge_cost" != "true" ] ||
@@ -373,11 +391,13 @@ jobs:
           fi
 
           if [ -z "${DEEPSEEK_API_KEY:-}" ]; then
-            cat > manual-artifacts/external-ai/provider-test-missing-secret.json <<'JSON'
+            cat > manual-artifacts/external-ai/provider-test-missing-secret.json <<JSON
           {
             "kind": "external_ai_provider_test_missing_secret",
             "status": "failed_before_provider_call",
             "provider": "deepseek",
+            "inputSource": "$input_source",
+            "inputArtifactPath": "$input_artifact_path",
             "reason": "missing_required_environment_secret",
             "environment": "external-ai-manual",
             "secretConfigured": false,
@@ -405,7 +425,8 @@ jobs:
             "kind": "external_ai_provider_test_gate_status",
             "status": "provider_call_started",
             "provider": "deepseek",
-            "inputSource": "fixture_sample",
+            "inputSource": "$input_source",
+            "inputArtifactPath": "$input_artifact_path",
             "dryRun": false,
             "allowNetwork": true,
             "acknowledgeCost": true,
@@ -434,7 +455,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
           set +e
-          node scripts/run-external-ai-manual-test.mjs --provider deepseek --input docs/fixtures/external-ai/sample-input-v28.0K-1.json --output manual-artifacts/external-ai/deepseek-output-latest.json --allow-network --validate-output --timeout-ms "$timeout_ms"
+          node scripts/run-external-ai-manual-test.mjs --provider deepseek --input "$input_artifact_path" --output manual-artifacts/external-ai/deepseek-output-latest.json --allow-network --validate-output --timeout-ms "$timeout_ms"
           provider_status=$?
           set -e
           exit "$provider_status"
@@ -483,6 +504,7 @@ jobs:
         with:
           name: external-ai-manual-provider-test-provider-${{ github.run_id }}
           path: |
+            manual-artifacts/external-ai/manual-input-compact-latest.json
             manual-artifacts/external-ai/provider-test-gate-status.json
             manual-artifacts/external-ai/provider-test-missing-secret.json
             manual-artifacts/external-ai/deepseek-output-latest.json

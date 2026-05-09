@@ -1206,3 +1206,42 @@ Operator rule:
 - If that future run fails quality review, stop and revise prompt / source semantics before any retry.
 - Do not copy `local_compact` input or provider output into `data/`.
 - Do not display `local_compact` provider output in frontend, trigger Daily, or connect it to scoring / decision / execution / position logic.
+
+### v28.0L-3J first local_compact provider-call audit runbook
+
+L-3J implements the `local_compact` provider-call workflow path, but the implementation PR does not run DeepSeek and does not trigger GitHub Actions.
+
+First audit command after merge and approval:
+
+```powershell
+gh workflow run "External AI Manual Provider Test" `
+  -f provider=deepseek `
+  -f input_source=local_compact `
+  -f dry_run=false `
+  -f allow_network=true `
+  -f acknowledge_cost=true `
+  -f acknowledge_non_production=true `
+  -f validate_output=true `
+  -f timeout_ms=120000 `
+  -f max_attempts=1 `
+  -f upload_artifacts=true
+```
+
+Expected behavior:
+
+- The run requires `external-ai-manual` environment approval.
+- The provider-call job builds compact input from the repository local `data/radar-data.json`.
+- DeepSeek is called once, only after the manual gates, environment approval, and step-scoped Environment secret are present.
+- The output validator runs.
+- The quality review runs.
+- The artifact sanitizer runs before upload.
+- Artifacts upload only if sanitized.
+- No production data is written.
+- No frontend display is changed.
+- No Daily, Worker, scoring, decision, execution, or position path changes.
+
+Stop rule:
+
+- If the `local_compact` run fails validator, quality review, or sanitizer, do not rerun immediately.
+- Do not copy artifacts into `data/`.
+- Do not proceed to production integration or frontend display.
