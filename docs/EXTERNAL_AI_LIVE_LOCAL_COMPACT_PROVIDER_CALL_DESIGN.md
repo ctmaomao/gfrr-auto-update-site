@@ -254,3 +254,71 @@ Recommended next stage:
 ```text
 v28.0L-3J-2 First Local Compact Provider-Call Audit Retry
 ```
+
+## 15. v28.0L-3J-4 local_compact provider-call audit result
+
+Run `25598887574` recorded the successful `local_compact` DeepSeek provider-call audit for the `External AI Manual Provider Test` workflow at commit `ade9ca2`.
+
+Inputs:
+
+- `provider=deepseek`.
+- `input_source=local_compact`.
+- `dry_run=false`.
+- `allow_network=true`.
+- `acknowledge_cost=true`.
+- `acknowledge_non_production=true`.
+- `validate_output=true`.
+- `timeout_ms=120000`.
+- `max_attempts=1`.
+- `upload_artifacts=true`.
+
+Observed result:
+
+- workflow completed with success.
+- `provider-test-dry-run-and-gate` succeeded.
+- `provider-call-artifact-only` succeeded.
+- local compact input was built successfully as `manual-input-compact-latest.json`.
+- local compact input used local `data/radar-data.json` as read-only source metadata.
+- `sourceType=local_file`.
+- `compact=true`.
+- `radarDataUpdatedAt=2026-05-08T23:29:12.835Z`.
+- provider path entered through GitHub Environment `external-ai-manual`.
+- `DEEPSEEK_API_KEY` was injected by GitHub Actions as a masked step-scoped value.
+- provider command executed.
+- `apiCalled=true` and `networkUsed=true` during the provider step.
+- provider was `deepseek`.
+- model was `deepseek-v4-flash`.
+- DeepSeek manual API test passed.
+- External AI output validation passed.
+- warnings: 0.
+- External AI artifact quality review passed.
+- artifact sanitizer passed.
+- sanitized provider-call artifacts uploaded.
+- post-run safety assertion passed.
+- `promotionEligible=false`.
+- `artifactOnly=true`.
+- `productionDataWritten=false`.
+- `frontendDisplayChanged=false`.
+
+Uploaded artifacts:
+
+- `external-ai-manual-provider-test-provider-25598887574`, artifact ID `6894997771`, size `8636` bytes, expires `2026-05-12`.
+- `external-ai-manual-provider-test-gate-25598887574`, artifact ID `6894989939`, size `6502` bytes, expires `2026-05-12`.
+
+Interpretation:
+
+- The `local_compact` artifact-only provider-call path is audited.
+- Provider transport, output validation, quality review, artifact sanitizer, and sanitized artifact upload all passed for `local_compact`.
+- Production data write remains `not_ready`.
+- Frontend display remains `not_ready`.
+- Daily integration remains `not_ready`.
+- `externalAiInterpretationLayer` promotion remains `not_ready`.
+- Scoring / decision / execution / position changes remain out of scope.
+- No automatic scheduled provider call is approved.
+- Do not rerun `local_compact` repeatedly without a new approved task.
+
+Recommended next stage:
+
+```text
+v28.0L-3K External AI Production Integration Readiness Review - No Production Write
+```

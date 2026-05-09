@@ -797,3 +797,38 @@ Recommended next stage:
 ```text
 v28.0L-3J-4 Local Compact Provider-Call Audit Retry After Execution-Language Fix
 ```
+
+## 28. v28.0L-3J-4 local_compact provider-call audit sync
+
+Run `25598887574` completed the approved `local_compact` provider-call audit successfully.
+
+Status update:
+
+- The `fixture_sample` path is verified by run `25593082968`.
+- The `local_compact` path is now verified by run `25598887574`.
+- The `local_compact` input builder produced `manual-input-compact-latest.json` from local `data/radar-data.json` as read-only source metadata.
+- Provider transport passed for `provider=deepseek`, model `deepseek-v4-flash`.
+- External AI output validation passed.
+- External AI artifact quality review passed.
+- Artifact sanitizer passed.
+- Sanitized provider-call artifacts uploaded.
+- `promotionEligible=false`.
+- `productionDataWritten=false`.
+- `frontendDisplayChanged=false`.
+
+Implementation interpretation:
+
+- The manual provider-call workflow now has audited `fixture_sample` and `local_compact` artifact-only paths.
+- This does not approve a production write path.
+- This does not approve frontend display.
+- This does not approve Daily integration.
+- This does not approve automatic scheduled provider calls.
+- This does not approve `promotionEligible=true`.
+
+Next phase:
+
+```text
+v28.0L-3K External AI Production Integration Readiness Review - No Production Write
+```
+
+The next phase must be production integration design/readiness review only. It should not write production data, display provider output, trigger Daily, or connect provider output to scoring / decision / execution / position logic.

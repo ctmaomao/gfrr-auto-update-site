@@ -681,3 +681,34 @@ Recommended next stage:
 ```text
 v28.0L-3J-4 Local Compact Provider-Call Audit Retry After Execution-Language Fix
 ```
+
+## v28.0L-3J-4 Local Compact Provider-Call Audit Sync
+
+v28.0L-3J-4 records the successful `local_compact` provider-call audit from run `25598887574`.
+
+This stage:
+
+- records workflow success for `External AI Manual Provider Test`.
+- records successful local compact input build from local source metadata.
+- records DeepSeek manual API test PASS.
+- records External AI output validation PASS.
+- records External AI artifact quality review PASS.
+- records artifact sanitizer PASS.
+- records sanitized provider-call artifact upload.
+- keeps `promotionEligible=false`.
+- keeps `productionDataWritten=false`.
+- keeps `frontendDisplayChanged=false`.
+- writes no production data.
+- modifies no frontend.
+- modifies no Daily integration.
+- modifies no workflow or script.
+- does not call DeepSeek during this documentation PR.
+- does not trigger GitHub Actions during this documentation PR.
+- does not read or modify secrets.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3K External AI Production Integration Readiness Review - No Production Write
+```

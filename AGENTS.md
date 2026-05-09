@@ -339,3 +339,9 @@ v28.0L-3J-3 fixes prompt guidance after run `25598379612` passed provider transp
 Never allow provider output to repeat execution / operation / position / cash / exposure / trading terms from `decisionContext` in facts, summary, inferences, model judgments, scenario hypotheses, invalidation signals, source attribution notes, audit flags, or any user-facing output field.
 
 Never weaken `executionLanguageSafety`, `review:external-ai-artifact`, `check:external-ai-output`, or artifact sanitizer to make an artifact pass. Do not continue toward production integration, frontend display, Daily integration, data writes, scoring, decision, execution, or position changes until a `local_compact` quality review passes and a separate reviewed production PR explicitly changes the boundary.
+
+## 25. v28.0L-3J-4 local compact provider-call audit reminder
+
+v28.0L-3J-4 only records that run `25598887574` passed the `local_compact` provider-call audit: local compact input build, provider transport, output validation, quality review, artifact sanitizer, and sanitized artifact upload all passed with `promotionEligible=false`.
+
+Do not treat L-3J-4 success as permission to write production data, display provider output, enable `externalAiInterpretationLayer`, trigger Daily, schedule automatic provider calls, or affect scoring / decision / execution / position logic. Any production integration or frontend display requires a separate explicitly approved PR. Do not rerun `local_compact` provider calls unnecessarily.
