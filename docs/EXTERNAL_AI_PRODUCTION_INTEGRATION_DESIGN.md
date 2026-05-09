@@ -340,6 +340,8 @@ v28.0L-3C provider-call workflow design is documented in [`EXTERNAL_AI_PROVIDER_
 
 v28.0L-3D provider-call workflow readiness checklist is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md). It is the no-code go/no-go gate before provider-call implementation planning. The current readiness decision remains NO-GO for provider-call implementation until secret storage, rotation/revocation, static checks, missing-secret behavior, artifact sanitization, operator approval, cost budget, and concurrency policy are resolved.
 
+v28.0L-3E provider-call workflow implementation plan is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md). It remains no-code and plans a future L-3F missing-secret-safe skeleton only. L-3E does not make provider calls, add secrets, write production data, enable Daily integration, or change frontend visibility.
+
 ## 18. Non-goals
 
 v28.0L-0 does not:

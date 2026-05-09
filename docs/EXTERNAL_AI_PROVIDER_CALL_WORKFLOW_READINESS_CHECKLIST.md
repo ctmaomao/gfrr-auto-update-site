@@ -80,6 +80,8 @@ Allowed next step:
 v28.0L-3E Provider-Call Workflow Implementation Plan — No Code
 ```
 
+v28.0L-3E is tracked in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md). It resolves the missing readiness items as a plan only. Implementation itself remains separate, and secret setup plus any real provider call remain out of scope.
+
 Alternative faster path only if explicitly approved:
 
 ```text
@@ -346,6 +348,8 @@ Recommended next PR:
 ```text
 v28.0L-3E Provider-Call Workflow Implementation Plan — No Code
 ```
+
+v28.0L-3E documents the implementation plan but does not approve adding GitHub secrets or running a real provider call.
 
 Alternative faster path only if explicitly approved:
 

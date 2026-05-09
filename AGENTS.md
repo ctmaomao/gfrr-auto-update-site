@@ -257,3 +257,11 @@ Checklist PRs must not add secrets, provider-call workflow behavior, provider in
 Resolve the missing readiness items before implementation: GitHub secret storage decision, secret rotation/revocation, trigger permissions, missing-secret failure behavior, provider-call static checker, artifact sanitization checker, cost budget, concurrency policy, and operator approval process.
 
 Even if a future provider-call workflow succeeds, that success still will not imply production integration readiness, frontend display readiness, Daily integration readiness, production data write readiness, or scoring / decision / execution / position readiness.
+
+## 13. v28.0L-3E provider-call implementation plan reminder
+
+v28.0L-3E is a no-code implementation plan only. Do not jump from L-3E to a real provider call.
+
+The next implementation, if approved, must be v28.0L-3F Manual Provider-Call Workflow Skeleton — Missing-Secret Safe / No Real Provider Call. L-3F must first prove default dry-run behavior, missing-secret fail-before-provider-call behavior, static workflow checks, and artifact sanitization before any GitHub secret is added.
+
+Do not add GitHub secrets in L-3E. Do not read or print API keys. Do not use provider-call workflow output as production data. Do not copy manual or workflow artifacts into `data/radar-data.json`, frontend display paths, Daily, Worker, scoring, decision, execution, or position logic.

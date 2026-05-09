@@ -421,6 +421,14 @@ Current operator decision: provider-call implementation is still NO-GO. Do not a
 
 Before any future provider-call implementation, operators must finalize secret storage, rotation/revocation, trigger permissions, missing-secret failure behavior, artifact sanitization, cost budget, concurrency policy, and fail-closed exit policy. The first approved provider-call path must remain manual `workflow_dispatch`, artifact-only, non-production, and separate from Daily, frontend display, production data writes, and scoring / decision / execution / position logic.
 
+### External AI provider-call implementation plan
+
+v28.0L-3E is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md). It is a no-code implementation plan.
+
+Do not add `DEEPSEEK_API_KEY` to GitHub Secrets yet. If L-3F is pursued, it should first add a missing-secret-safe workflow skeleton and static checks only: default dry-run must pass, provider-path requested without a secret must fail before provider command, and no real DeepSeek call should run.
+
+Do not run a real provider call until L-3F is merged, audited, and followed by a separate approval that records secret location, rotation/revocation, cost acknowledgement, non-production acknowledgement, artifact sanitization, and operator approval. L-3F output must not be treated as production data.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
