@@ -1336,3 +1336,18 @@ This does not change the production data contract:
 - production data writes remain `not_ready`.
 - frontend display remains `not_ready`.
 - Daily integration remains `not_ready`.
+
+## v28.0L-3K production readiness data boundary
+
+v28.0L-3K reviews production integration readiness but does not change the production data contract.
+
+Current data contract decision:
+
+- External AI production data contract remains disabled / `not_ready`.
+- Production `externalAiInterpretationLayer` remains disabled and non-user-visible.
+- Provider artifacts remain non-production diagnostics.
+- Provider output must not be copied into `data/radar-data.json`.
+- Provider output must not enter `data/*.json`, `realtime/*.json`, Worker payloads, config files, Daily inputs, frontend display paths, scoring, decision, execution, or position logic.
+- `promotionEligible=false` remains required.
+
+Future production data contract design must be a separate reviewed phase.

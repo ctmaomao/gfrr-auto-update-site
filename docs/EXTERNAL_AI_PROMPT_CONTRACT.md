@@ -325,3 +325,16 @@ Prompt contract status:
 - `promotionEligible=false` remains required.
 
 This audit does not change production prompt contracts, enable frontend display, or approve provider output promotion.
+
+## 18. v28.0L-3K Production Readiness Prompt Boundary
+
+v28.0L-3K reviews production integration readiness only. It does not approve a production prompt, production write, or frontend display path.
+
+Future production data contract design must preserve these prompt boundaries:
+
+- output remains display-only.
+- `decisionContext` remains read-only background.
+- execution / operation / position / cash / exposure / trading terms remain forbidden in model string outputs.
+- source attribution must distinguish site-structured data from independent market verification.
+- `promotionEligible=false` remains required unless a separate explicit approval changes the boundary.
+- no prompt output may affect scoring / decision / execution / position logic.
