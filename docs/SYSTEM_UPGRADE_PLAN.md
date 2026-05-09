@@ -1253,3 +1253,28 @@ Recommended next step:
 ```text
 v28.0M-2 Homepage Judgment Content Calibration - Frontend Only / No Data Change
 ```
+
+## v28.0M-2 Homepage Judgment Content Calibration
+
+v28.0M-2 calibrates the read-only homepage macro judgment overview so it reads less like raw field output and more like a cautious macro risk judgment layer.
+
+This stage:
+
+- refines the top judgment copy and score/stage interpretation.
+- improves pressure source prioritization.
+- clarifies verified, pending, noise, and missing-data signal layers.
+- refines the four macro driver summaries.
+- keeps the market pricing temperature in a waiting-for-history state.
+- refines the five risk engine summaries.
+- calibrates cross-validation wording toward conservative states.
+- changes no production data.
+- changes no AI-generated text.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not change scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-2-1 Homepage Judgment Calibration Audit Sync - No Code Change
+```
