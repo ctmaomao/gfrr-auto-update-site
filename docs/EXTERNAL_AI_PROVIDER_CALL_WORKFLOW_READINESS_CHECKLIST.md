@@ -510,6 +510,25 @@ Recommended next step:
 v28.0L-4C Refresh Monitoring / Failure Notification Design - No Provider Call
 ```
 
+## v28.0L-4C readiness update
+
+v28.0L-4C documents refresh monitoring and failure-notification handling only. It does not add notification automation, trigger workflows, call DeepSeek, or change provider workflow behavior.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Refresh monitoring design | documented | `docs/EXTERNAL_AI_REFRESH_MONITORING_DESIGN.md` defines monitoring goals, failure classes, thresholds, and no-go rules. | No | Use as the design baseline. |
+| Native GitHub failure notification | recommended | GitHub native failed-workflow notifications are the recommended initial channel. | No | Configure repository or account notification settings outside this PR. |
+| Dedicated failure issue workflow | not_ready | Issue creation or comment automation is future optional only. | Yes | Separate reviewed PR required. |
+| External notification channel | not_ready | Slack, email, webhook, and external notification secrets are not approved. | Yes | Separate approval and design required. |
+| Provider auto-retry | not_allowed | Monitoring must not create repeat provider calls. | Yes | Keep manual review before any rerun. |
+| Additional refresh schedule | not_allowed | The existing daily `23:50 UTC` schedule remains the only scheduled refresh. | Yes | Explicit approval required for schedule changes. |
+
+Recommended next step:
+
+```text
+v28.0L-4D Issue-Based Failure Monitor - No Provider Call
+```
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:

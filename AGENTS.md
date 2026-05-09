@@ -453,3 +453,9 @@ Use capped summaries for optional external AI fields. Do not display raw provide
 External AI display coverage is complete for current safe production fields.
 
 Do not display raw provider output, raw provenance, run IDs, artifact IDs, or raw `decisionContext`. Do not edit AI text manually. Do not add provider automation outside the approved production refresh workflow. Preserve no scoring / decision / execution / position impact and preserve Global Risk Heatmap layout. Future display changes must pass frontend scaffold check, copy check, production contract validation, production write guard, and `check:all`.
+
+## 44. v28.0L-4C refresh monitoring design reminder
+
+v28.0L-4C is documentation-only monitoring and failure-notification design for the existing `External AI Production Refresh` workflow.
+
+Monitoring work must not call DeepSeek, write production data, trigger provider refresh, read secrets, modify workflows, add schedules, or change frontend files. Do not add auto-retry loops without explicit approval. Do not add extra schedules without explicit approval. Prefer GitHub native failed-workflow notifications before adding new alert workflows. Any issue, webhook, Slack, or email notification automation requires a separate reviewed PR and must not access `DEEPSEEK_API_KEY`.

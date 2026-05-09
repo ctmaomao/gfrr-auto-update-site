@@ -1204,3 +1204,28 @@ Optional future phase:
 ```text
 v28.0L-4C Refresh Monitoring / Failure Notification Design - No Provider Call
 ```
+
+## v28.0L-4C Refresh Monitoring / Failure Notification Design
+
+v28.0L-4C documents monitoring and failure-notification handling for the existing `External AI Production Refresh` workflow.
+
+This stage:
+
+- adds `docs/EXTERNAL_AI_REFRESH_MONITORING_DESIGN.md`.
+- defines refresh monitoring goals, failure classes, alert thresholds, and no-go rules.
+- recommends GitHub native failed-workflow notifications as the first operating approach.
+- leaves dedicated issue, webhook, Slack, and email notification automation unimplemented.
+- adds no provider retry loop.
+- adds no extra schedule.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- implements no workflow changes.
+- changes no production data.
+- changes no frontend code.
+- keeps scoring / decision / execution / position logic unchanged.
+
+Optional future phase:
+
+```text
+v28.0L-4D Issue-Based Failure Monitor - No Provider Call
+```
