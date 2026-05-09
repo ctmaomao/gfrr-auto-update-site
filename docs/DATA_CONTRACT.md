@@ -1546,3 +1546,19 @@ Current data contract boundary:
 - `boundaries.frontendDisplayApproved=true` is preserved from the current production layer.
 - `qualityReview.promotionEligible=false` remains required.
 - Scoring, `decisionModel`, `executionLock`, `positionGuidance`, Daily integration, and Global Risk Heatmap layout remain unaffected.
+
+## v28.0L-4A-1 externalAiInterpretationLayer refresh audit
+
+v28.0L-4A-1 records that the first `External AI Production Refresh` workflow update succeeded.
+
+Current data contract boundary:
+
+- `externalAiInterpretationLayer` can now be updated by the `External AI Production Refresh` workflow.
+- The first workflow update ran as run `25611392014` and committed `c32af65`.
+- The refresh workflow may commit only `data/radar-data.json`.
+- Production contract validation is required before commit.
+- Production write guard is required before commit.
+- Protected path assertion is required before commit.
+- The successful refresh changed only `data/radar-data.json`.
+- No manual artifact, frontend file, script, workflow file, package file, config file, realtime file, or Worker file was committed by the refresh.
+- `qualityReview.promotionEligible=false`, non-impact boundaries, and visible display gates remain required.

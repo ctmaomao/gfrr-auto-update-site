@@ -435,3 +435,9 @@ Do not change AI generated text manually. Do not add provider refresh automation
 v28.0L-4A adds `External AI Production Refresh` as the only approved automatic provider call path. It may run manually or once daily at `23:50 UTC` after the `external-ai-production-refresh` environment and `DEEPSEEK_API_KEY` environment secret are configured.
 
 Do not add additional schedules, retries beyond one provider attempt, or provider refresh automation outside this workflow without explicit approval. During refresh, commit only `data/radar-data.json` and only when `externalAiInterpretationLayer` changes. Preserve `displayEnabled=true`, `boundaries.frontendDisplayApproved=true`, `qualityReview.promotionEligible=false`, and all non-impact boundaries. Do not change frontend logic, Global Risk Heatmap layout, scoring, decision, execution, or position logic.
+
+## 41. v28.0L-4A-1 production refresh audit-sync reminder
+
+v28.0L-4A-1 records the first successful manual `External AI Production Refresh` run `25611392014`, which committed `c32af65` and changed only `data/radar-data.json`.
+
+`External AI Production Refresh` is the only approved automatic provider path. Do not add extra schedules, retry loops, alternate provider workflows, Daily provider integration, or other automatic provider calls without explicit approval. The refresh workflow may commit only `data/radar-data.json`; do not manually edit AI text or `externalAiInterpretationLayer`. Future changes must preserve production contract validation, production write guard, frontend scaffold check, protected path assertion, `check:data`, and `check:all`.
