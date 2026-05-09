@@ -247,6 +247,16 @@ This stage makes no workflow change, adds no secret, runs no provider call, writ
 
 The plan recommends v28.0L-3F Manual Provider-Call Workflow Skeleton — Missing-Secret Safe / No Real Provider Call. L-3F should test workflow structure, static checks, artifact sanitization, and missing-secret fail-before-provider-call behavior before any secret is configured or any real provider call is attempted.
 
+## v28.0L-3F Manual Provider-Call Workflow Skeleton
+
+v28.0L-3F adds `.github/workflows/external-ai-manual-provider-test.yml`, `npm run check:external-ai-provider-workflow`, and `npm run check:external-ai-workflow-artifacts`.
+
+The provider-test workflow is `workflow_dispatch` only and missing-secret safe. Default runs are dry-run only. Provider-path runs without a configured `DEEPSEEK_API_KEY` fail before any provider command, and L-3F also blocks real provider calls if a secret is accidentally present.
+
+This stage adds no GitHub secret, runs no real provider call, produces no provider output artifact, writes no production data, changes no frontend, changes no Worker, and has no scoring / decision / execution / position impact. Existing v28.0L-3B dry-run workflow behavior remains dry-run-only.
+
+The next stage should be an audit-sync PR that records default dry-run PASS and provider-path-without-secret FAIL before any secret setup or real provider call is considered.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

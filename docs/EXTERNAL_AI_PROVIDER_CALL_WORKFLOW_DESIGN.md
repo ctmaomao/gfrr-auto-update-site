@@ -483,3 +483,19 @@ v28.0L-3F Manual Provider-Call Workflow Skeleton - Missing-Secret Safe / No Real
 ```
 
 Any implementation PR must be separate and must preserve all artifact-only and non-production boundaries.
+
+## 18. v28.0L-3F provider-test skeleton note
+
+v28.0L-3F implements a provider-call-capable skeleton only. It adds `External AI Manual Provider Test` as a manual `workflow_dispatch` workflow, plus static workflow and artifact safety checks.
+
+The skeleton intentionally blocks real provider calls:
+
+- default path is dry-run only
+- provider path requires explicit gates
+- provider path fails before provider command when `DEEPSEEK_API_KEY` is missing
+- provider path also fails closed if a secret is present, because L-3F is no-real-provider-call
+- executable workflow shell does not run the DeepSeek provider command
+- no provider output artifact is uploaded
+- no production data, frontend, Daily, scoring, decision, execution, or position behavior changes
+
+The next step after L-3F is an audit-sync PR that records default dry-run PASS and provider-path-without-secret FAIL before any real provider call is considered.

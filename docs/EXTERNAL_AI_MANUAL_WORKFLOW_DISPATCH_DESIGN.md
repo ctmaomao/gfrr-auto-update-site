@@ -464,3 +464,19 @@ The v28.0L-3B `External AI Manual Dry Run` workflow remains dry-run-only: no pro
 v28.0L-3E is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md). It is a documentation-only plan for a future L-3F provider-test skeleton.
 
 L-3E does not change the v28.0L-3B dry-run workflow. If L-3F is pursued, it should use a missing-secret-safe / no-real-provider-call skeleton first and must keep the existing L-3B dry-run workflow behavior intact.
+
+## v28.0L-3F provider-test workflow skeleton
+
+v28.0L-3F adds a separate `External AI Manual Provider Test` workflow at `.github/workflows/external-ai-manual-provider-test.yml`.
+
+This new workflow does not change the v28.0L-3B `External AI Manual Dry Run` workflow. The L-3B workflow remains dry-run-only with no provider input, no `allow_network`, no `dry_run=false` path, no secret reference, no provider call, and no provider output upload.
+
+The L-3F provider-test workflow is also no-real-provider-call:
+
+- default run is dry-run only
+- provider path is structurally gated
+- missing `DEEPSEEK_API_KEY` fails before provider command
+- secret-present state also fails closed in L-3F
+- no DeepSeek command is executed
+- no provider output artifact is produced
+- artifacts remain diagnostics only

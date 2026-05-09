@@ -429,6 +429,26 @@ Do not add `DEEPSEEK_API_KEY` to GitHub Secrets yet. If L-3F is pursued, it shou
 
 Do not run a real provider call until L-3F is merged, audited, and followed by a separate approval that records secret location, rotation/revocation, cost acknowledgement, non-production acknowledgement, artifact sanitization, and operator approval. L-3F output must not be treated as production data.
 
+### External AI Manual Provider Test workflow
+
+v28.0L-3F adds `External AI Manual Provider Test` in GitHub Actions. It is a provider-call-capable skeleton, but L-3F intentionally blocks real provider calls.
+
+Default safe run:
+
+1. Open GitHub Actions.
+2. Select `External AI Manual Provider Test`.
+3. Choose `Run workflow`.
+4. Use `dry_run=true`, `allow_network=false`, `acknowledge_cost=false`, `acknowledge_non_production=false`, `input_source=fixture_sample`, `max_attempts=1`.
+5. Expected result: PASS, no secret read, no provider call, no DeepSeek output.
+
+Missing-secret safety run:
+
+1. Use `dry_run=false`, `allow_network=true`, `acknowledge_cost=true`, `acknowledge_non_production=true`, `validate_output=true`, `max_attempts=1`.
+2. Do not configure `DEEPSEEK_API_KEY`.
+3. Expected result: FAIL before provider command, no DeepSeek call, no provider output artifact, no production data write, no frontend display.
+
+L-3F also blocks real provider calls if a secret is accidentally present. Do not add `DEEPSEEK_API_KEY` yet. Do not rerun repeatedly. Do not treat this workflow as real provider-call readiness; first record default dry-run PASS and missing-secret-safe FAIL in a later audit-sync PR.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
