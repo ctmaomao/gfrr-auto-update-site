@@ -240,3 +240,25 @@ Recommended next step:
 ```text
 v28.0L-3N External AI Production Projection Dry-Run - No Production Write
 ```
+
+## 12. v28.0L-3N production projection dry-run note
+
+v28.0L-3N adds a deterministic dry-run projection path for the future production contract.
+
+Readiness update:
+
+- Production data contract design: done.
+- Production contract validator scaffold: done.
+- Production projection dry-run: scaffolded.
+- Projection artifact target: `manual-artifacts/external-ai/external-ai-production-projection-latest.json`.
+- Production contract validator passes on the projected output.
+- Production write: still NO-GO.
+- Frontend display: still NO-GO.
+- Daily integration: still NO-GO.
+- Automatic provider calls: still NO-GO.
+
+Recommended next phase:
+
+```text
+v28.0L-3O First Controlled Production Write Design - No Frontend Display
+```

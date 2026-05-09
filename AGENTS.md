@@ -363,3 +363,9 @@ Do not implement production write before an L-3M validator scaffold and later L-
 v28.0L-3M adds `check:external-ai-production-contract` and a safe fixture for the future production `externalAiInterpretationLayer` contract. Future `externalAiInterpretationLayer` changes must pass this check.
 
 Do not bypass the production contract validator. No production write is allowed before a later projection / dry-run stage is explicitly approved. Do not expose external AI output in the frontend, connect it to Daily, or let it affect scoring / decision / execution / position logic.
+
+## 29. v28.0L-3N production projection dry-run reminder
+
+v28.0L-3N adds a deterministic projection dry-run that writes only under ignored `manual-artifacts/external-ai/` and validates the result with `check:external-ai-production-contract`.
+
+Projection dry-run output must not be copied into `data/` or `data/radar-data.json`. No production write is allowed before explicit L-3O approval. Any future production projection or write stage must pass the production contract validator and must not expose `externalAiInterpretationLayer` in the frontend without separate approval.

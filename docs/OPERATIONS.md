@@ -1392,3 +1392,24 @@ Recommended next stage:
 ```text
 v28.0L-3N External AI Production Projection Dry-Run - No Production Write
 ```
+
+### v28.0L-3N production projection dry-run operator note
+
+v28.0L-3N adds a deterministic local projection dry-run for the future production `externalAiInterpretationLayer` contract.
+
+Operator guidance:
+
+- Run `npm run check:external-ai-production-projection` before any future production write design.
+- The projection artifact is for validation only.
+- Do not copy `manual-artifacts/external-ai/external-ai-production-projection-latest.json` into `data/`.
+- Do not manually insert `externalAiInterpretationLayer` into `data/radar-data.json`.
+- Do not enable frontend display from the projection artifact.
+- Production write remains NO-GO until a separate explicitly approved L-3O phase.
+- Frontend display remains NO-GO.
+- Daily and automatic provider calls remain NO-GO.
+
+Recommended next stage:
+
+```text
+v28.0L-3O First Controlled Production Write Design - No Frontend Display
+```

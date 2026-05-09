@@ -306,4 +306,6 @@ External AI production data contract status: v28.0L-3L designs the future `exter
 
 External AI production contract validator status: v28.0L-3M adds a local validator scaffold and valid fixture; production write remains disabled.
 
+External AI production projection dry-run status: v28.0L-3N adds an ignored manual-artifact projection validated by the production contract checker; production write remains disabled.
+
 Runtime status: v28.0L-3I-0 standardizes local development and GitHub Actions on Node.js 24 LTS.

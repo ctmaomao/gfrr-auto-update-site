@@ -377,3 +377,34 @@ Recommended next phase:
 ```text
 v28.0L-3N External AI Production Projection Dry-Run - No Production Write
 ```
+
+## 17. v28.0L-3N projection dry-run status
+
+v28.0L-3N adds a deterministic projection dry-run scaffold:
+
+- `scripts/project-external-ai-production-dry-run.mjs`.
+- `npm run project:external-ai-production:dry-run`.
+- `npm run check:external-ai-production-projection`.
+
+The dry-run projects a validated external AI artifact into the proposed `externalAiInterpretationLayer` contract shape and writes only to:
+
+```text
+manual-artifacts/external-ai/external-ai-production-projection-latest.json
+```
+
+The projection output remains an ignored manual artifact. It is not `data/radar-data.json`, not production data, and not frontend-visible. The production contract validator validates the projected output before this path can be considered usable for later design work.
+
+Current L-3N boundary:
+
+- Production write: NO-GO.
+- Frontend display: NO-GO.
+- Daily integration: NO-GO.
+- Automatic provider calls: NO-GO.
+- `promotionEligible=true`: NO-GO.
+- Scoring / decision / execution / position effect: NO-GO.
+
+Recommended next phase:
+
+```text
+v28.0L-3O First Controlled Production Write Design - No Frontend Display
+```
