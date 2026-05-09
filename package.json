@@ -31,6 +31,7 @@
     "check:workflows": "node scripts/check-workflows.mjs",
     "check:docs": "node scripts/check-doc-links.mjs",
     "check:external-ai-output": "node scripts/check-external-ai-output.mjs",
+    "check:external-ai-production-contract": "node --check scripts/check-external-ai-production-contract.mjs && node scripts/check-external-ai-production-contract.mjs",
     "check:external-ai-provider-adapters": "node scripts/check-external-ai-provider-adapters.mjs",
     "check:external-ai-manual-input": "node --check scripts/build-external-ai-manual-input.mjs && npm run manual:external-ai:build-input",
     "check:external-ai-manual-input:compact": "node --check scripts/build-external-ai-manual-input.mjs && npm run manual:external-ai:build-input:compact",
@@ -43,7 +44,7 @@
     "check:data": "node scripts/validate-data.mjs",
     "check:data:verbose": "node scripts/validate-data.mjs --verbose",
     "check:data:strict-live-alignment": "node scripts/validate-data.mjs --strict-live-alignment",
-    "check:all": "npm run check:syntax && npm run check:dom && npm run check:modules && npm run check:copy && npm run check:node-runtime && npm run check:workflows && npm run check:external-ai-manual-workflow && npm run check:external-ai-provider-workflow && npm run check:external-ai-workflow-artifacts && npm run check:docs && npm run check:external-ai-output && npm run check:external-ai-manual-scaffold && npm run check:external-ai-production-provider-path && npm run check:data && npm run check:world-order"
+    "check:all": "npm run check:syntax && npm run check:dom && npm run check:modules && npm run check:copy && npm run check:node-runtime && npm run check:workflows && npm run check:external-ai-manual-workflow && npm run check:external-ai-provider-workflow && npm run check:external-ai-workflow-artifacts && npm run check:docs && npm run check:external-ai-output && npm run check:external-ai-production-contract && npm run check:external-ai-manual-scaffold && npm run check:external-ai-production-provider-path && npm run check:data && npm run check:world-order"
   },
   "engines": {
     "node": ">=24 <25"

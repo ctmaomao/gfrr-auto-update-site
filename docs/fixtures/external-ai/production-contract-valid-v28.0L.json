@@ -1,0 +1,100 @@
+{
+  "externalAiInterpretationLayer": {
+    "schemaVersion": "v28.0L-external-ai-production-1",
+    "status": "valid",
+    "displayEnabled": false,
+    "generatedAt": "2026-05-09T10:00:00.000Z",
+    "updatedAt": "2026-05-09T10:00:00.000Z",
+    "sourceMode": "manual_local_compact",
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "inputSource": "local_compact",
+    "sourceSemantics": "site_structured_data_compact_summary",
+    "summaryZh": "站内结构化摘要显示，风险解释层信息可用于人工审阅，仍需保持低置信和展示隔离。",
+    "facts": [
+      "本对象来自手动审核过的站内结构化摘要。",
+      "输出通过离线结构校验、质量审阅和工件清理检查。"
+    ],
+    "inferences": [
+      "当前样例仅证明未来生产契约可被静态校验。"
+    ],
+    "modelJudgments": [
+      {
+        "labelZh": "证据有限",
+        "detailZh": "样例只覆盖合同形状和安全边界。"
+      }
+    ],
+    "scenarioHypotheses": [
+      {
+        "conditionZh": "如果后续样例过期",
+        "interpretationZh": "生产状态应降级为 stale 或 unavailable。"
+      }
+    ],
+    "dataGaps": [
+      "尚未实现生产投影 dry-run。"
+    ],
+    "invalidationSignals": [
+      "任何安全边界不匹配都应阻止生产写入。"
+    ],
+    "sourceAttribution": [
+      {
+        "sourceLayer": "dailyBrief",
+        "field": "summary",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化摘要，仅用于解释层审阅。"
+      }
+    ],
+    "confidence": {
+      "level": "low",
+      "score": 30,
+      "reasonZh": "样例为手动工件契约验证，不代表独立外部核验。"
+    },
+    "qualityReview": {
+      "status": "pass",
+      "recommendation": "pass_for_manual_review",
+      "promotionEligible": false,
+      "failedDimensions": [],
+      "warningDimensions": [],
+      "reviewedAt": "2026-05-09T10:05:00.000Z"
+    },
+    "provenance": {
+      "runId": "25598887574",
+      "artifactName": "external-ai-manual-provider-test-provider-25598887574",
+      "artifactId": "6894997771",
+      "artifactDigest": "sample-digest-for-contract-validation-only",
+      "sourceCommit": "ade9ca2",
+      "sourceDataUpdatedAt": "2026-05-08T23:29:12.835Z",
+      "inputArtifactPath": "manual-artifacts/external-ai/manual-input-compact-latest.json",
+      "outputArtifactPath": "manual-artifacts/external-ai/deepseek-output-latest.json",
+      "qualityReviewArtifactPath": "manual-artifacts/external-ai/external-ai-quality-review-latest.json",
+      "generatedBy": "manual_workflow",
+      "humanApproved": false
+    },
+    "freshness": {
+      "artifactGeneratedAt": "2026-05-09T10:00:00.000Z",
+      "sourceDataUpdatedAt": "2026-05-08T23:29:12.835Z",
+      "maxAgeHours": 24,
+      "isStale": false,
+      "staleReasonZh": null
+    },
+    "boundaries": {
+      "displayOnly": true,
+      "externalAiGenerated": true,
+      "usesExternalAiApi": true,
+      "affectsScoring": false,
+      "affectsDecisionModel": false,
+      "affectsExecutionLock": false,
+      "affectsPositionGuidance": false,
+      "notInvestmentAdvice": true,
+      "productionWriteApproved": false,
+      "frontendDisplayApproved": false
+    },
+    "auditFlags": [
+      "manual_artifact_only",
+      "site_structured_data_only",
+      "validator_required",
+      "non_production_output",
+      "no_frontend_display"
+    ]
+  }
+}

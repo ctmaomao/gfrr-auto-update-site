@@ -1372,3 +1372,23 @@ Recommended next stage:
 ```text
 v28.0L-3M External AI Production Contract Validator Scaffold - No Production Write
 ```
+
+### v28.0L-3M production contract validator operator note
+
+v28.0L-3M adds a local production contract validator scaffold.
+
+Operator guidance:
+
+- Run `npm run check:external-ai-production-contract` before any future production write design.
+- Do not manually insert `externalAiInterpretationLayer` into `data/radar-data.json`.
+- Do not copy provider artifacts into `data/radar-data.json`.
+- The next stage must be projection / dry-run only.
+- Production write remains NO-GO.
+- Frontend display remains NO-GO.
+- Daily and automatic provider calls remain NO-GO.
+
+Recommended next stage:
+
+```text
+v28.0L-3N External AI Production Projection Dry-Run - No Production Write
+```

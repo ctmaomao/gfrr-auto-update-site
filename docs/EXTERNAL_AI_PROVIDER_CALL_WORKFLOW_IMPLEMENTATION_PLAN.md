@@ -875,3 +875,26 @@ Next phase:
 ```text
 v28.0L-3M External AI Production Contract Validator Scaffold - No Production Write
 ```
+
+## 31. v28.0L-3M production contract validator scaffold
+
+v28.0L-3M adds a production contract validator scaffold and safe fixture:
+
+- `scripts/check-external-ai-production-contract.mjs`.
+- `docs/fixtures/external-ai/production-contract-valid-v28.0L.json`.
+- `npm run check:external-ai-production-contract`.
+
+Status update:
+
+- The proposed `externalAiInterpretationLayer` production contract can be validated from a fixture.
+- `check:all` now runs the production contract validator after `check:external-ai-output`.
+- No production write is implemented.
+- No frontend display is implemented.
+- No Daily integration or automatic provider call is implemented.
+- No provider call or workflow dispatch is part of this stage.
+
+Next phase:
+
+```text
+v28.0L-3N External AI Production Projection Dry-Run - No Production Write
+```
