@@ -319,5 +319,6 @@ External AI frontend hidden scaffold status: v28.0L-3R adds guarded read/render 
 External AI visible display approval status: v28.0L-3S designs the future data-flag approval path; visible display remains disabled.
 External AI visible display status: v28.0L-3T enables the read-only panel through data flags; no automatic provider calls are enabled.
 External AI visible display audit status: v28.0L-3T-1 records the display-enabled audit; no automatic provider calls are enabled.
+External AI visible display UX status: v28.0L-3U polishes the read-only panel; no provider call or automatic provider call is enabled.
 
 Runtime status: v28.0L-3I-0 standardizes local development and GitHub Actions on Node.js 24 LTS.

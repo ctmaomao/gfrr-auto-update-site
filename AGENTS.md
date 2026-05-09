@@ -417,3 +417,9 @@ Do not set `qualityReview.promotionEligible=true`. Do not modify external AI tex
 v28.0L-3T-1 records that visible display is enabled and audited for the current production data layer only.
 
 Do not modify external AI text manually. Do not add automatic provider calls, Daily integration, provider reruns, workflow schedules, scoring changes, decision changes, execution changes, or position changes. Preserve Global Risk Heatmap layout.
+
+## 38. v28.0L-3U visible display UX polish reminder
+
+v28.0L-3U polishes the visible external AI read-only panel only.
+
+Do not modify external AI generated text, provider data, `data/radar-data.json`, provider artifacts, or provider workflows for UX polish. Do not add trading/action copy, automatic provider calls, Daily integration, scoring changes, decision changes, execution changes, or position changes. Preserve Global Risk Heatmap layout.

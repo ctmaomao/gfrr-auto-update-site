@@ -27,6 +27,9 @@ const FORBIDDEN_VISIBLE_COPY = [
   '立即行动',
   '投资建议',
 ];
+const SAFE_NEGATED_COPY = [
+  '不构成投资建议',
+];
 
 function readText(filePath) {
   return fs.readFileSync(filePath, 'utf8');
@@ -134,7 +137,8 @@ function validateHiddenContainer(errors) {
 
   const panelSnippet = html.slice(Math.max(0, panelIndex - 250), panelIndex + panelMatch[0].length + 250);
   for (const forbidden of FORBIDDEN_VISIBLE_COPY) {
-    if (panelSnippet.includes(forbidden)) {
+    const safeSnippet = SAFE_NEGATED_COPY.reduce((text, safeCopy) => text.replaceAll(safeCopy, ''), panelSnippet);
+    if (safeSnippet.includes(forbidden)) {
       addError(errors, `external AI hidden panel snippet contains forbidden visible copy: ${forbidden}`);
     }
   }
@@ -167,8 +171,38 @@ function validateFrontendGates(errors) {
     if (!helper.includes(marker)) addError(errors, `renderExternalAi helper missing gate: ${marker}`);
   }
 
+  const requiredUxMarkers = [
+    'external-ai-card',
+    'external-ai-header',
+    'external-ai-badges',
+    'external-ai-summary',
+    'external-ai-grid',
+    'external-ai-section',
+    'external-ai-meta',
+    'FACT_LIMIT = 4',
+    'INFERENCE_LIMIT = 3',
+  ];
+  for (const marker of requiredUxMarkers) {
+    if (!helper.includes(marker)) addError(errors, `renderExternalAi helper missing UX marker: ${marker}`);
+  }
+
+  if (helper.includes('innerHTML')) {
+    addError(errors, 'renderExternalAi helper must not use innerHTML for external AI content');
+  }
+  if (!helper.includes('.textContent')) {
+    addError(errors, 'renderExternalAi helper must use textContent for rendered external AI content');
+  }
+  for (const rawMarker of ['provenance', 'artifactId', 'artifactName', 'runId', 'decisionContext']) {
+    if (helper.includes(rawMarker)) {
+      addError(errors, `renderExternalAi helper must not expose raw provider/provenance field: ${rawMarker}`);
+    }
+  }
+
   for (const forbidden of FORBIDDEN_VISIBLE_COPY) {
-    const helperWithoutTermList = helper.replaceAll(`'${forbidden}',`, '');
+    const helperWithoutTermList = SAFE_NEGATED_COPY.reduce(
+      (text, safeCopy) => text.replaceAll(safeCopy, ''),
+      helper.replaceAll(`'${forbidden}',`, ''),
+    );
     if (helperWithoutTermList.includes(forbidden)) {
       addError(errors, `renderExternalAi helper contains forbidden visible copy: ${forbidden}`);
     }

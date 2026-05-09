@@ -44,6 +44,93 @@
       grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
       margin-top: 18px;
     }
+    .external-ai-card {
+      border: 1px solid rgba(120, 172, 255, 0.22);
+      background: linear-gradient(180deg, rgba(20, 31, 48, 0.98), rgba(15, 23, 37, 0.98));
+    }
+    .external-ai-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .external-ai-kicker {
+      max-width: 720px;
+      margin-top: 6px;
+    }
+    .external-ai-badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      max-width: 360px;
+    }
+    .external-ai-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 4px 10px;
+      border: 1px solid rgba(150, 190, 240, 0.28);
+      border-radius: 999px;
+      color: #dbeafe;
+      background: rgba(82, 132, 185, 0.16);
+      font-size: 12px;
+      line-height: 1.35;
+      white-space: nowrap;
+    }
+    .external-ai-summary {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-left: 3px solid rgba(130, 217, 255, 0.72);
+      border-radius: 8px;
+      background: rgba(8, 16, 28, 0.42);
+    }
+    .external-ai-summary p {
+      margin: 0;
+      line-height: 1.75;
+    }
+    .external-ai-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .external-ai-section {
+      min-width: 0;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+    .external-ai-section h3 {
+      margin: 0 0 8px;
+      color: #f8fafc;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .external-ai-section-label {
+      margin: 8px 0 4px;
+      color: #bfd5ee;
+      font-size: 12px;
+    }
+    .external-ai-list {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      padding-left: 18px;
+    }
+    .external-ai-list li {
+      line-height: 1.65;
+    }
+    .external-ai-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin-top: 14px;
+      color: #a8c0da;
+      font-size: 12px;
+      line-height: 1.5;
+    }
     @media (max-width: 900px) {
       .world-order-grid,
       .world-order-status-grid {
@@ -51,6 +138,17 @@
       }
       .world-order-dimension-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .external-ai-header {
+        display: block;
+      }
+      .external-ai-badges {
+        justify-content: flex-start;
+        max-width: none;
+        margin-top: 12px;
+      }
+      .external-ai-grid {
+        grid-template-columns: 1fr;
       }
     }
     @media (max-width: 640px) {
@@ -1076,6 +1174,6 @@
     <footer class="footer">独立静态版 · 适配静态托管 · 数据由自动化流程每日生成</footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0L-3R"></script>
+  <script type="module" src="scripts/app.js?v=28.0L-3U"></script>
 </body>
 </html>
