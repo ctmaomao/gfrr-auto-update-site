@@ -23,34 +23,95 @@ function countOccurrences(text, needle) {
   return text.split(needle).length - 1;
 }
 
+function getBlock(text, startNeedle, endNeedles = []) {
+  const start = text.indexOf(startNeedle);
+  if (start === -1) return '';
+  const candidates = endNeedles
+    .map((needle) => text.indexOf(needle, start + startNeedle.length))
+    .filter((index) => index !== -1);
+  const end = candidates.length > 0 ? Math.min(...candidates) : text.length;
+  return text.slice(start, end);
+}
+
+function checkTriggerShape(text) {
+  assert(/^on:\s*\n\s+workflow_dispatch:/mu.test(text), 'workflow trigger must be workflow_dispatch only');
+  assert(!/^on:\s*\[[^\]]/mu.test(text), 'workflow must not use compact trigger array');
+
+  const forbiddenTriggers = ['schedule:', 'push:', 'pull_request:', 'workflow_run:'];
+  const triggerBlock = getBlock(text, 'on:', ['\npermissions:']);
+  for (const trigger of forbiddenTriggers) {
+    assert(!triggerBlock.includes(trigger), `workflow must not include ${trigger}`);
+  }
+}
+
+function checkPermissions(text) {
+  const permissionsBlock = getBlock(text, 'permissions:', ['\nconcurrency:']);
+  assert(permissionsBlock.includes('contents: read'), 'workflow permissions must include contents: read');
+  assert(permissionsBlock.includes('actions: read'), 'workflow permissions must include actions: read');
+
+  const forbiddenPermissions = [
+    'contents: write',
+    'actions: write',
+    'deployments: write',
+    'pages: write',
+    'id-token: write',
+    'packages: write',
+  ];
+  for (const permission of forbiddenPermissions) {
+    assert(!permissionsBlock.includes(permission), `workflow must not include write permission ${permission}`);
+  }
+}
+
 function checkRequiredText(text) {
   const requiredSnippets = [
-    'workflow_dispatch',
-    'permissions:',
-    'contents: read',
-    'actions: read',
-    'external-ai-manual-provider-test',
+    'name: External AI Manual Provider Test',
+    'group: external-ai-manual-provider-test',
     'cancel-in-progress: false',
+    'provider_test_dry_run_and_gate',
+    'provider_call_artifact_only',
+    'name: provider-test-dry-run-and-gate',
+    'name: provider-call-artifact-only',
+    'provider_path_requested',
     'dry_run',
     'allow_network',
     'acknowledge_cost',
     'acknowledge_non_production',
+    'validate_output',
+    'timeout_ms',
     'max_attempts',
-    'provider',
+    'upload_artifacts',
     'deepseek',
+    'fixture_sample',
+    'local_compact',
+    'l3h_first_provider_call_requires_fixture_sample',
     'npm run check:external-ai-manual-workflow',
+    'npm run check:external-ai-provider-workflow',
     'npm run check:external-ai-production-provider-path',
     'scripts/run-external-ai-manual-test.mjs --dry-run',
-    'npm run check:external-ai-workflow-artifacts',
+    'environment: external-ai-manual',
+    'missing_required_environment_secret',
+    'node scripts/run-external-ai-manual-test.mjs --provider deepseek',
+    '--input docs/fixtures/external-ai/sample-input-v28.0K-1.json',
+    '--output manual-artifacts/external-ai/deepseek-output-latest.json',
+    '--allow-network',
+    '--validate-output',
+    'npm run check:external-ai-output -- manual-artifacts/external-ai/deepseek-output-latest.json',
+    'npm run review:external-ai-artifact -- --input manual-artifacts/external-ai/deepseek-output-latest.json --output manual-artifacts/external-ai/external-ai-quality-review-latest.json',
+    'npm run check:external-ai-workflow-artifacts -- --workflow-provider-test',
     'actions/upload-artifact@v4',
     'retention-days: 3',
-    'provider command executed: false',
-    'apiCalled=false',
-    'networkUsed=false',
+    'external-ai-manual-provider-test-gate-${{ github.run_id }}',
+    'external-ai-manual-provider-test-provider-${{ github.run_id }}',
+    'git diff --exit-code -- data realtime config index.html scripts/app.js scripts/modules workers',
+    'provider command executed=',
+    'apiCalled=',
+    'networkUsed=',
+    'outputValidation=',
+    'qualityReview=',
     'productionDataWritten=false',
     'frontendDisplayChanged=false',
-    'Missing-secret safe provider gate',
-    'DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}',
+    'artifactOnly=true',
+    'promotionEligible=false',
   ];
 
   for (const snippet of requiredSnippets) {
@@ -60,120 +121,127 @@ function checkRequiredText(text) {
 
 function checkForbiddenText(text) {
   const forbiddenSnippets = [
-    'pull_request:',
-    'push:',
-    'schedule:',
-    'workflow_run:',
     'npm run build:data',
     'npm run build:realtime',
     'npm run build:world-order',
+    'build:data',
+    'build:realtime',
+    'build:world-order',
     'wrangler',
-    'contents: write',
-    'actions: write',
-    'deployments: write',
-    'pages: write',
-    'id-token: write',
-    'run-external-ai-manual-test.mjs --provider deepseek',
-    '--allow-network',
-    '--output manual-artifacts/external-ai/deepseek-output-latest.json',
+    'pages deploy',
+    'DEEPSEEK_API_KEY=',
+    '--api-key',
+    '--api_key',
+    '--deepseek-api-key',
     'echo $DEEPSEEK_API_KEY',
     'echo "$DEEPSEEK_API_KEY"',
+    'printenv',
+    'env |',
     'data/radar-data.json',
-    'realtime/**',
-    'config/**',
     '.env',
+    'GITHUB_TOKEN:',
+    'contents: write',
+    'actions: write',
   ];
 
   for (const snippet of forbiddenSnippets) {
     assert(!text.includes(snippet), `workflow must not contain "${snippet}"`);
   }
-
-  const directForbiddenArtifactNames = [
-    'deepseek-output-latest.json',
-    'external-ai-quality-review-latest.json',
-  ];
-
-  for (const artifactName of directForbiddenArtifactNames) {
-    assert(!text.includes(artifactName), `workflow must not directly contain "${artifactName}"`);
-  }
-}
-
-function checkTriggerShape(text) {
-  assert(/^on:\s*\n\s+workflow_dispatch:/mu.test(text), 'workflow trigger must be workflow_dispatch only');
-  assert(!/^on:\s*\[[^\]]/mu.test(text), 'workflow must not use compact trigger array');
 }
 
 function checkSecretPolicy(text) {
   const secretReferenceCount = countOccurrences(text, 'secrets.DEEPSEEK_API_KEY');
-  assert(secretReferenceCount <= 1, 'workflow may reference secrets.DEEPSEEK_API_KEY at most once');
-  assert(secretReferenceCount === 1, 'workflow must include exactly one future secret reference in the provider gate step');
+  assert(secretReferenceCount === 1, 'workflow must reference secrets.DEEPSEEK_API_KEY exactly once');
 
-  const envReferenceCount = countOccurrences(text, 'DEEPSEEK_API_KEY');
-  assert(envReferenceCount >= 2, 'workflow must define and test DEEPSEEK_API_KEY only in provider gate');
+  const secretReference = 'DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}';
+  assert(text.includes(secretReference), 'secret must be injected as a step env var');
 
-  const providerGateIndex = text.indexOf('name: Missing-secret safe provider gate');
-  const secretEnvIndex = text.indexOf('DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}');
-  assert(providerGateIndex !== -1, 'missing provider gate step');
-  assert(secretEnvIndex > providerGateIndex, 'secret env reference must appear inside provider gate step');
+  const providerJob = getBlock(text, 'provider_call_artifact_only:', []);
+  assert(providerJob.includes('environment: external-ai-manual'), 'provider-call job must use external-ai-manual environment');
+  assert(providerJob.includes(secretReference), 'secret reference must be inside provider-call job');
 
-  const lines = text.split(/\r?\n/u);
-  for (const line of lines) {
-    if (!line.includes('DEEPSEEK_API_KEY')) continue;
-    const trimmed = line.trim();
-    const allowed =
-      trimmed === 'DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}' ||
-      trimmed === 'if [ -z "${DEEPSEEK_API_KEY:-}" ]; then';
-    assert(allowed, `unexpected DEEPSEEK_API_KEY usage: ${trimmed}`);
+  const providerStep = getBlock(providerJob, 'name: Run DeepSeek provider call', ['\n      - name: Validate provider output artifact']);
+  assert(providerStep.includes(secretReference), 'secret reference must be inside provider-call step');
+  assert(!providerStep.includes('--api-key'), 'provider-call step must not pass API key by CLI arg');
+  assert(!providerStep.includes('echo $DEEPSEEK_API_KEY'), 'provider-call step must not echo the secret');
+  assert(!providerStep.includes('echo "$DEEPSEEK_API_KEY"'), 'provider-call step must not echo the secret');
+
+  const beforeProviderJob = text.slice(0, text.indexOf('provider_call_artifact_only:'));
+  assert(!beforeProviderJob.includes('secrets.DEEPSEEK_API_KEY'), 'dry-run/gate job must not read the secret');
+}
+
+function checkProviderJob(text) {
+  const providerJob = getBlock(text, 'provider_call_artifact_only:', []);
+  const dryRunJob = getBlock(text, 'provider_test_dry_run_and_gate:', ['\n  provider_call_artifact_only:']);
+
+  assert(!dryRunJob.includes('secrets.DEEPSEEK_API_KEY'), 'dry-run/gate job must not receive secret');
+  assert(!dryRunJob.includes('--provider deepseek'), 'dry-run/gate job must not contain provider command');
+
+  const providerCommandCount = countOccurrences(text, 'node scripts/run-external-ai-manual-test.mjs --provider deepseek');
+  assert(providerCommandCount === 1, 'provider command must appear exactly once');
+
+  const requiredGateChecks = [
+    '[ "$provider" != "deepseek" ]',
+    '[ "$input_source" != "fixture_sample" ]',
+    '[ "$dry_run" != "false" ]',
+    '[ "$allow_network" != "true" ]',
+    '[ "$acknowledge_cost" != "true" ]',
+    '[ "$acknowledge_non_production" != "true" ]',
+    '[ "$validate_output" != "true" ]',
+    '[ "$max_attempts" != "1" ]',
+    'timeout_ms must be numeric',
+    'timeout_ms must be <= 180000',
+    'if [ -z "${DEEPSEEK_API_KEY:-}" ]; then',
+  ];
+
+  for (const gateCheck of requiredGateChecks) {
+    assert(providerJob.includes(gateCheck), `provider-call job must enforce gate: ${gateCheck}`);
   }
+
+  const providerStep = getBlock(providerJob, 'name: Run DeepSeek provider call', ['\n      - name: Validate provider output artifact']);
+  const commandIndex = providerStep.indexOf('node scripts/run-external-ai-manual-test.mjs --provider deepseek');
+  const secretCheckIndex = providerStep.indexOf('if [ -z "${DEEPSEEK_API_KEY:-}" ]; then');
+  assert(secretCheckIndex !== -1 && commandIndex > secretCheckIndex, 'missing-secret check must happen before provider command');
 }
 
-function checkProviderGate(text) {
-  assert(text.includes('provider_path_requested="true"'), 'workflow must compute provider path request gate');
-  assert(text.includes('provider_gates_not_satisfied'), 'workflow must write skipped gate diagnostic');
-  assert(text.includes('missing_required_provider_secret'), 'workflow must write missing-secret diagnostic');
-  assert(
-    text.includes('l3f_blocks_real_provider_call_even_when_secret_present'),
-    'workflow must block real provider call even when a secret is present',
-  );
-  assert(text.includes('exit 1'), 'provider gate must fail closed for unsafe provider path');
-}
-
-function checkUploadPolicy(text) {
-  const uploadStepIndex = text.indexOf('name: Upload sanitized provider-test artifacts');
-  assert(uploadStepIndex !== -1, 'workflow must contain sanitized artifact upload step');
-  if (uploadStepIndex === -1) return;
-
-  const uploadBlock = text.slice(uploadStepIndex);
-  const requiredUploadPaths = [
+function checkArtifactPolicy(text) {
+  const uploadPaths = [
     'manual-artifacts/external-ai/workflow-dry-run-report.json',
-    'manual-artifacts/external-ai/manual-input-compact-latest.json',
     'manual-artifacts/external-ai/provider-test-gate-status.json',
     'manual-artifacts/external-ai/provider-test-missing-secret.json',
     'manual-artifacts/external-ai/provider-test-secret-present-blocked.json',
+    'manual-artifacts/external-ai/deepseek-output-latest.json',
+    'manual-artifacts/external-ai/external-ai-quality-review-latest.json',
   ];
 
-  for (const uploadPath of requiredUploadPaths) {
-    assert(uploadBlock.includes(uploadPath), `upload step must include ${uploadPath}`);
+  for (const uploadPath of uploadPaths) {
+    if (uploadPath.endsWith('provider-test-secret-present-blocked.json')) continue;
+    assert(text.includes(uploadPath), `workflow must include artifact path ${uploadPath}`);
   }
+
+  assert(countOccurrences(text, 'retention-days: 3') >= 2, 'artifact uploads must use retention-days: 3');
+  assert(text.includes('steps.sanitize_dry_run_artifacts.outcome == \'success\''), 'dry-run upload must be gated by sanitizer success');
+  assert(text.includes('steps.sanitize_provider_artifacts.outcome == \'success\''), 'provider upload must be gated by sanitizer success');
 }
 
 function checkWorkflow() {
   const text = readWorkflow();
   if (!text) return;
   checkTriggerShape(text);
+  checkPermissions(text);
   checkRequiredText(text);
   checkForbiddenText(text);
   checkSecretPolicy(text);
-  checkProviderGate(text);
-  checkUploadPolicy(text);
+  checkProviderJob(text);
+  checkArtifactPolicy(text);
 }
 
 checkWorkflow();
 
 if (errors.length > 0) {
-  console.error('External AI provider workflow skeleton: FAIL');
+  console.error('External AI provider workflow gate: FAIL');
   for (const error of errors) console.error(`- ${error}`);
   process.exitCode = 1;
 } else {
-  console.log('External AI provider workflow skeleton: PASS');
+  console.log('External AI provider workflow gate: PASS');
 }

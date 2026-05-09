@@ -463,3 +463,23 @@ v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data sca
 - 修改数据契约必须 `npm run check:data` 和 `npm run check:all`。
 - 修改 docs 必须 `npm run check:docs` 和 `npm run check:all`。
 - 不把 commit/push 混入开发指令。
+
+## v28.0L-3H Provider-Call Unlock Workflow
+
+v28.0L-3H updates `External AI Manual Provider Test` so the first real DeepSeek provider-call path can run only behind GitHub Environment `external-ai-manual` and Environment secret `DEEPSEEK_API_KEY`.
+
+This stage remains manual, artifact-only, and non-production:
+
+- workflow remains `workflow_dispatch` only.
+- default dry-run does not require environment approval and does not read secrets.
+- provider-call job uses environment `external-ai-manual`.
+- secret is step-scoped only and not passed as a CLI argument.
+- first real call is restricted to `fixture_sample`.
+- validator, quality review, artifact sanitizer, short retention, and post-run production safety assertions are required.
+- no production data write.
+- no frontend display.
+- no Daily integration.
+- no Worker change.
+- no scoring / decision / execution / position impact.
+
+After merge, the next step is manual audit: create the environment secret outside this PR, run default dry-run, run the first `fixture_sample` provider call with environment approval, inspect artifacts, and record the result in a follow-up audit PR.

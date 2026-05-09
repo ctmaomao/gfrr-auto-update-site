@@ -1218,3 +1218,15 @@ Daily history 新记录可保存轻量传导网络快照：
 - `decisionModel`
 
 删除或重命名前必须先确认所有消费方，包括页面渲染、运行时 overlay、校验脚本和历史数据兼容逻辑。
+
+## v28.0L-3H External AI provider artifact boundary
+
+The `External AI Manual Provider Test` workflow may produce a DeepSeek output artifact after the `external-ai-manual` environment gate is approved, but that artifact remains non-production.
+
+Contract boundary:
+
+- Provider output must not be copied into `data/radar-data.json`.
+- Provider output must not modify the live `externalAiInterpretationLayer`.
+- Production `externalAiInterpretationLayer` remains disabled / non-user-visible.
+- Provider output remains artifact-only, validator-gated, quality-review-gated, and `promotionEligible=false`.
+- No scoring, decision, execution, position, Worker, Daily, frontend, `values.*`, or `effectiveDisplayInputs` contract changes are introduced by L-3H.
