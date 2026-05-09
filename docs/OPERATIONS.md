@@ -1476,3 +1476,23 @@ Recommended next stage:
 ```text
 v28.0L-3Q External AI Frontend Display Design - No Display Yet
 ```
+
+### v28.0L-3Q frontend display design operator note
+
+v28.0L-3Q documents a future read-only frontend display design. It does not add frontend code and does not approve visible display.
+
+Operator guidance:
+
+- Do not set `displayEnabled=true` manually.
+- Do not set `boundaries.frontendDisplayApproved=true` manually.
+- Do not manually edit `externalAiInterpretationLayer`.
+- Frontend display must be a separate explicitly approved PR.
+- Future user-facing external AI copy must be Chinese and must remain non-actionable.
+- If an external AI panel appears before approval, revert the display change immediately.
+- Do not shrink or embed into Global Risk Heatmap.
+
+Recommended next stage:
+
+```text
+v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
+```

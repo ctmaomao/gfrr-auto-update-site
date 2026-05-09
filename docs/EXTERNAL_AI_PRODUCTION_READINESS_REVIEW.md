@@ -334,3 +334,29 @@ Recommended next step:
 ```text
 v28.0L-3Q External AI Frontend Display Design - No Display Yet
 ```
+
+## 16. v28.0L-3Q frontend display design readiness update
+
+v28.0L-3Q documents the future frontend display design without implementing frontend display.
+
+Readiness update:
+
+- Frontend display design: this PR.
+- Frontend implementation: `not_ready`.
+- Visible display: `not_ready`.
+- Production data write: already completed but display-disabled.
+- Daily integration: `not_ready`.
+- Automatic provider calls: `not_ready`.
+- Scoring / decision / execution / position impact: blocked / out_of_scope.
+
+Current decision:
+
+- Display design: ready / documented.
+- Hidden frontend scaffold: next phase only.
+- Visible display: NO-GO.
+
+Recommended next step:
+
+```text
+v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
+```

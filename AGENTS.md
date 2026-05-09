@@ -387,3 +387,9 @@ Future edits to `externalAiInterpretationLayer` must use the validator/write wor
 v28.0L-3P-1 records that the first controlled production write passed post-merge audit. `externalAiInterpretationLayer` now exists in `data/radar-data.json`, remains display-disabled, and remains non-impacting.
 
 Do not edit the layer manually. Future updates must pass `check:external-ai-production-contract` and `check:external-ai-production-write-guard`. Do not set `displayEnabled=true` without explicit frontend display approval. Frontend display remains a separate phase.
+
+## 33. v28.0L-3Q frontend display design reminder
+
+v28.0L-3Q is documentation-only and designs a future read-only frontend panel. It does not add frontend code, does not display `externalAiInterpretationLayer`, and does not change `data/radar-data.json`.
+
+Do not implement external AI frontend display without an explicit frontend display task. Do not set `displayEnabled=true` or `boundaries.frontendDisplayApproved=true`. Future user-facing copy must be Chinese-only, non-actionable, and must preserve Global Risk Heatmap layout.

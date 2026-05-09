@@ -1441,3 +1441,16 @@ Current data contract boundary:
 - No scoring, `decisionModel`, `executionLock`, or `positionGuidance` effect is approved.
 - Daily integration and automatic provider calls remain disabled.
 - Future edits to the layer must use the write script and production contract validator.
+
+## v28.0L-3Q externalAiInterpretationLayer frontend display design
+
+v28.0L-3Q adds [`EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md`](EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md) as a documentation-only design for a future read-only frontend panel.
+
+Current data contract boundary:
+
+- `externalAiInterpretationLayer` exists in `data/radar-data.json`, but it is not frontend-visible.
+- Future frontend display must require `displayEnabled=true`.
+- Future frontend display must require `boundaries.frontendDisplayApproved=true`.
+- Current production data keeps both values false.
+- The layer remains data-only and non-user-visible.
+- The layer must not affect scoring, `decisionModel`, `executionLock`, `positionGuidance`, Global Risk Heatmap layout, Daily integration, or automatic provider calls.

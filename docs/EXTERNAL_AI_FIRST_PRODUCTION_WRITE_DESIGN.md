@@ -243,3 +243,16 @@ Recommended next step:
 ```text
 v28.0L-3Q External AI Frontend Display Design - No Display Yet
 ```
+
+## 12. v28.0L-3Q frontend display design boundary
+
+v28.0L-3Q designs a future frontend display path, but the first production write remains data-only.
+
+Boundary:
+
+- `data/radar-data.json` is not modified by the display design PR.
+- `displayEnabled=false` remains the current production state.
+- `boundaries.frontendDisplayApproved=false` remains the current production state.
+- No frontend code is added.
+- No visible display is approved.
+- Any future display must be a separate explicitly approved frontend phase.

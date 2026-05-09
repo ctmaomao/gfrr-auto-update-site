@@ -314,4 +314,6 @@ External AI production data layer status: v28.0L-3P writes a display-disabled `e
 
 External AI production write audit status: v28.0L-3P-1 records the post-merge audit PASS for the display-disabled production data layer; frontend display remains disabled.
 
+External AI frontend display design status: v28.0L-3Q documents how the production data layer may later be displayed; frontend display remains disabled.
+
 Runtime status: v28.0L-3I-0 standardizes local development and GitHub Actions on Node.js 24 LTS.
