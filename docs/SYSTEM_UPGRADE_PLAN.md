@@ -767,3 +767,30 @@ Recommended next stage:
 ```text
 v28.0L-3M External AI Production Contract Validator Scaffold - No Production Write
 ```
+
+## v28.0L-3M External AI Production Contract Validator Scaffold
+
+v28.0L-3M adds a validator scaffold for the future production `externalAiInterpretationLayer` contract.
+
+This stage:
+
+- adds `scripts/check-external-ai-production-contract.mjs`.
+- adds a safe valid fixture at `docs/fixtures/external-ai/production-contract-valid-v28.0L.json`.
+- adds `npm run check:external-ai-production-contract`.
+- adds the validator to `check:all`.
+- keeps production write as NO-GO.
+- keeps frontend display as NO-GO.
+- keeps Daily integration as NO-GO.
+- keeps automatic provider calls as NO-GO.
+- keeps `promotionEligible=true` as NO-GO.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not read or modify secrets.
+- does not modify production data.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3N External AI Production Projection Dry-Run - No Production Write
+```

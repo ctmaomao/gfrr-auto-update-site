@@ -1368,3 +1368,17 @@ Current contract boundary:
 - `promotionEligible=false` remains required.
 
 Before any future write to `data/radar-data.json`, a production contract validator must exist and pass. The future validator must reject unsafe execution / investment / trading wording, secrets, headers, raw provider dumps, stale artifacts, malformed provenance, malformed freshness metadata, and any scoring / decision / execution / position effect.
+
+## v28.0L-3M externalAiInterpretationLayer validator scaffold
+
+v28.0L-3M adds `npm run check:external-ai-production-contract` and a valid fixture for the proposed production contract.
+
+Current data contract boundary:
+
+- The production contract validator scaffold exists.
+- `externalAiInterpretationLayer` is still not written to `data/radar-data.json`.
+- The layer remains disabled / absent / scaffold-only in production data.
+- Frontend display remains disabled.
+- Daily and automatic provider calls remain disabled.
+- Future write requires a projection / dry-run stage and explicit approval.
+- Future write must pass the production contract validator before any production data file is changed.

@@ -88,6 +88,30 @@ Recommended next PR:
 v28.0L-3M External AI Production Contract Validator Scaffold - No Production Write
 ```
 
+## v28.0L-3M readiness update
+
+v28.0L-3M adds the production contract validator scaffold and valid fixture.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Production contract validator | ready / scaffolded | `check:external-ai-production-contract` validates the proposed contract fixture and is included in `check:all`. | No | Keep required before any projection/write phase. |
+| Production contract valid fixture | ready | `production-contract-valid-v28.0L.json` passes the scaffold validator. | No | Use as a safe contract sample only. |
+| Production write dry-run / projection | not_ready | No dry-run projection exists in L-3M. | Yes | Next phase should be projection dry-run only. |
+| Production write | not_ready | No production data file write is approved. | Yes | Keep NO-GO. |
+| Frontend display | not_ready | No frontend display path is approved. | Yes | Keep hidden / absent. |
+
+Current L-3M decision:
+
+```text
+production_contract_validator_scaffolded_write_no_go
+```
+
+Recommended next PR:
+
+```text
+v28.0L-3N External AI Production Projection Dry-Run - No Production Write
+```
+
 - No provider-call workflow is added.
 - No workflow file is added or modified.
 - No GitHub secret is added.

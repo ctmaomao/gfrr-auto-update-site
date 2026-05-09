@@ -349,3 +349,31 @@ This next phase should:
 - Daily integration: NO-GO.
 - Automatic provider calls: NO-GO.
 - Recommended next step: validator scaffold only.
+
+## 16. v28.0L-3M validator scaffold status
+
+v28.0L-3M adds the production contract validator scaffold:
+
+- `scripts/check-external-ai-production-contract.mjs`.
+- `docs/fixtures/external-ai/production-contract-valid-v28.0L.json`.
+- `npm run check:external-ai-production-contract`.
+- `check:all` coverage after `check:external-ai-output` and before manual scaffold checks.
+
+This stage validates the proposed `externalAiInterpretationLayer` contract shape from a fixture only.
+
+It does not:
+
+- write `data/radar-data.json`.
+- display external AI output on the frontend.
+- call DeepSeek.
+- trigger a workflow.
+- read secrets.
+- integrate with Daily.
+- add automatic provider calls.
+- change scoring / decision / execution / position logic.
+
+Recommended next phase:
+
+```text
+v28.0L-3N External AI Production Projection Dry-Run - No Production Write
+```

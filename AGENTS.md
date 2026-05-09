@@ -357,3 +357,9 @@ Do not treat provider audit success as production approval. No production write 
 v28.0L-3L is documentation-only and designs the future production `externalAiInterpretationLayer` contract. It does not implement the validator, dry-run projection, production write, frontend display, Daily integration, or automatic provider calls.
 
 Do not implement production write before an L-3M validator scaffold and later L-3N dry-run projection are explicitly approved. Never write an external AI artifact directly into `data/radar-data.json` without a production contract validator. Do not expose `externalAiInterpretationLayer` in the frontend without separate approval.
+
+## 28. v28.0L-3M production contract validator reminder
+
+v28.0L-3M adds `check:external-ai-production-contract` and a safe fixture for the future production `externalAiInterpretationLayer` contract. Future `externalAiInterpretationLayer` changes must pass this check.
+
+Do not bypass the production contract validator. No production write is allowed before a later projection / dry-run stage is explicitly approved. Do not expose external AI output in the frontend, connect it to Daily, or let it affect scoring / decision / execution / position logic.
