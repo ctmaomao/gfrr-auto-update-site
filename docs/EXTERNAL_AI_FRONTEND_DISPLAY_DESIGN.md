@@ -329,3 +329,26 @@ Recommended next step:
 ```text
 v28.0L-3U External AI Visible Display UX Polish - No Provider Call
 ```
+
+## 17. v28.0L-3U visible display UX polish status
+
+v28.0L-3U improves the visible read-only panel layout without changing the production data layer or provider output.
+
+Status update:
+
+- Visible panel UX polish is implemented.
+- The panel now separates summary, main observations, AI inferences, uncertainty signals, confidence, and update time.
+- The panel remains read-only and secondary.
+- No `data/radar-data.json` change is made.
+- No AI text content is refreshed or edited.
+- No DeepSeek call or workflow trigger is introduced.
+- No provider artifact is refreshed.
+- No automatic provider call or Daily integration is added.
+- No scoring / decision / execution / position path is changed.
+- Global Risk Heatmap layout remains protected.
+
+Recommended next step:
+
+```text
+v28.0L-3U-1 Visible Display UX Audit Sync - No Provider Call
+```

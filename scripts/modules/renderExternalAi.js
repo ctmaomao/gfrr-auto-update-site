@@ -1,8 +1,10 @@
-import { $ } from './config.js?v=28.0L-3R';
+import { $ } from './config.js?v=28.0L-3U';
 
 const SCHEMA_VERSION = 'v28.0L-external-ai-production-1';
 const PANEL_ID = 'external-ai-display-panel';
-const SAFE_LIMIT = 4;
+const FACT_LIMIT = 4;
+const INFERENCE_LIMIT = 3;
+const COMPACT_LIMIT = 3;
 const UNSAFE_TEXT_VALUES = [
   '买入',
   '卖出',
@@ -22,7 +24,6 @@ const UNSAFE_TEXT_VALUES = [
   '操作建议',
   '配置建议',
   '立即行动',
-  '投资建议',
 ];
 
 function isPlainObject(value) {
@@ -31,6 +32,12 @@ function isPlainObject(value) {
 
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
+}
+
+function cleanStrings(value, limit) {
+  return safeArray(value)
+    .filter((item) => typeof item === 'string' && item.trim())
+    .slice(0, limit);
 }
 
 function hasUnsafeText(value) {
@@ -49,15 +56,83 @@ function setHidden(container) {
   container.replaceChildren();
 }
 
-function appendList(root, items) {
+function appendText(root, tagName, className, text) {
+  if (typeof text !== 'string' || !text.trim()) return null;
+  const element = document.createElement(tagName);
+  if (className) element.className = className;
+  element.textContent = text;
+  root.appendChild(element);
+  return element;
+}
+
+function appendBadge(root, text) {
+  appendText(root, 'span', 'external-ai-badge', text);
+}
+
+function appendList(root, items, limit) {
+  const values = cleanStrings(items, limit);
+  if (values.length === 0) return false;
+
   const list = document.createElement('ul');
-  list.className = 'bullet-list';
-  for (const item of safeArray(items).filter((value) => typeof value === 'string' && value.trim()).slice(0, SAFE_LIMIT)) {
-    const li = document.createElement('li');
-    li.textContent = item;
-    list.appendChild(li);
+  list.className = 'external-ai-list';
+  for (const value of values) {
+    const item = document.createElement('li');
+    item.textContent = value;
+    list.appendChild(item);
   }
-  if (list.children.length > 0) root.appendChild(list);
+  root.appendChild(list);
+  return true;
+}
+
+function appendSection(root, title, items, limit) {
+  const section = document.createElement('section');
+  section.className = 'external-ai-section';
+  appendText(section, 'h3', '', title);
+  const hasItems = appendList(section, items, limit);
+  if (hasItems) root.appendChild(section);
+  return hasItems;
+}
+
+function appendCompactSignals(root, dataGaps, invalidationSignals) {
+  const gapItems = cleanStrings(dataGaps, COMPACT_LIMIT);
+  const signalItems = cleanStrings(invalidationSignals, COMPACT_LIMIT);
+  if (gapItems.length === 0 && signalItems.length === 0) return false;
+
+  const section = document.createElement('section');
+  section.className = 'external-ai-section';
+  appendText(section, 'h3', '', '数据缺口 / 失效信号');
+
+  if (gapItems.length > 0) {
+    appendText(section, 'p', 'external-ai-section-label', '数据缺口');
+    appendList(section, gapItems, COMPACT_LIMIT);
+  }
+  if (signalItems.length > 0) {
+    appendText(section, 'p', 'external-ai-section-label', '失效信号');
+    appendList(section, signalItems, COMPACT_LIMIT);
+  }
+
+  root.appendChild(section);
+  return true;
+}
+
+function buildConfidenceText(confidence) {
+  if (!isPlainObject(confidence)) return '';
+  const level = typeof confidence.level === 'string' && confidence.level.trim()
+    ? confidence.level
+    : 'unknown';
+  const score = Number.isFinite(Number(confidence.score))
+    ? String(Math.round(Number(confidence.score)))
+    : '--';
+  return `置信度：${level} / ${score}`;
+}
+
+function buildTimestampText(layer) {
+  const timestamp = typeof layer.updatedAt === 'string' && layer.updatedAt.trim()
+    ? layer.updatedAt
+    : layer.generatedAt;
+  return typeof timestamp === 'string' && timestamp.trim()
+    ? `更新时间: ${timestamp}`
+    : '';
 }
 
 export function shouldDisplayExternalAiLayer(layer) {
@@ -104,28 +179,43 @@ export function renderExternalAiPanel(data, container = $(PANEL_ID)) {
   container.replaceChildren();
 
   const article = document.createElement('article');
-  article.className = 'card full-width-card';
+  article.className = 'card full-width-card external-ai-card';
 
-  const heading = document.createElement('h2');
-  heading.textContent = '外部 AI 解读（只读）';
-  article.appendChild(heading);
+  const header = document.createElement('div');
+  header.className = 'external-ai-header';
+  const titleGroup = document.createElement('div');
+  appendText(titleGroup, 'h2', '', '外部 AI 解读（只读）');
+  appendText(titleGroup, 'p', 'muted external-ai-kicker', '该内容仅解释站内结构化数据，不改变风险评分、决策模型或任何执行规则。');
 
-  const boundary = document.createElement('p');
-  boundary.className = 'muted';
-  boundary.textContent = '仅解释站内结构化数据，不改变风险评分、决策模型或任何执行规则。';
-  article.appendChild(boundary);
+  const badges = document.createElement('div');
+  badges.className = 'external-ai-badges';
+  appendBadge(badges, '只读');
+  appendBadge(badges, '不构成投资建议');
+  appendBadge(badges, '不影响评分');
+  appendBadge(badges, '站内结构化数据');
 
-  const summary = document.createElement('p');
-  summary.textContent = layer.summaryZh || '当前解读文本不足。';
+  header.appendChild(titleGroup);
+  header.appendChild(badges);
+  article.appendChild(header);
+
+  const summary = document.createElement('section');
+  summary.className = 'external-ai-summary';
+  appendText(summary, 'p', '', layer.summaryZh || '当前解读文本不足。');
   article.appendChild(summary);
 
-  appendList(article, layer.facts);
-  appendList(article, layer.inferences);
+  const grid = document.createElement('div');
+  grid.className = 'external-ai-grid';
+  appendSection(grid, '主要观察', layer.facts, FACT_LIMIT);
+  appendSection(grid, 'AI 推断', layer.inferences, INFERENCE_LIMIT);
+  appendCompactSignals(grid, layer.dataGaps, layer.invalidationSignals);
+  if (grid.children.length > 0) article.appendChild(grid);
 
-  const confidenceLine = document.createElement('p');
-  confidenceLine.className = 'muted';
-  confidenceLine.textContent = `置信度：${confidence.level || 'unknown'} / ${Number.isFinite(Number(confidence.score)) ? Math.round(Number(confidence.score)) : '--'}。${confidence.reasonZh || '暂不足以判断。'}`;
-  article.appendChild(confidenceLine);
+  const footer = document.createElement('div');
+  footer.className = 'external-ai-meta';
+  appendText(footer, 'span', '', buildConfidenceText(confidence));
+  appendText(footer, 'span', '', typeof confidence.reasonZh === 'string' ? confidence.reasonZh : '');
+  appendText(footer, 'span', '', buildTimestampText(layer));
+  if (footer.children.length > 0) article.appendChild(footer);
 
   container.appendChild(article);
 }

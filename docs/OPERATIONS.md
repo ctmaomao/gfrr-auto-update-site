@@ -1575,3 +1575,23 @@ Recommended next stage:
 ```text
 v28.0L-3U External AI Visible Display UX Polish - No Provider Call
 ```
+
+### v28.0L-3U visible display UX polish operator note
+
+v28.0L-3U polishes the external AI read-only panel UI only. It does not update provider content, production data, or provider automation.
+
+Operator guidance:
+
+- Treat this as visual-only polish.
+- Do not manually edit external AI text content.
+- Do not rerun the provider for UX polish.
+- Do not add automatic provider calls or Daily integration.
+- If the panel layout appears too large, adjust the UI only.
+- If Global Risk Heatmap layout changes, revert or adjust the UI immediately.
+- Keep scoring / decision / execution / position logic unchanged.
+
+Recommended next stage:
+
+```text
+v28.0L-3U-1 Visible Display UX Audit Sync - No Provider Call
+```

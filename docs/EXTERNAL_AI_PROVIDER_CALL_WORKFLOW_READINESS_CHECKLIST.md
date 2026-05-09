@@ -362,6 +362,31 @@ Recommended next step:
 v28.0L-3U External AI Visible Display UX Polish - No Provider Call
 ```
 
+## v28.0L-3U readiness update
+
+v28.0L-3U polishes the visible external AI read-only panel without changing provider output or production data.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Visible display | active | The existing scaffold may render the current production layer. | No | Keep guard checks active. |
+| Visible display UX polish | implemented | Panel structure now separates summary, observations, AI inferences, uncertainty, confidence, and timestamp. | No | Audit UX in L-3U-1. |
+| AI text content | unchanged | No generated external AI text is edited or refreshed. | No | Do not edit text manually. |
+| Daily integration | not_ready | No Daily integration is approved or implemented. | Yes | Keep disconnected. |
+| Automatic provider calls | not_ready | No scheduled or automatic provider calls are approved or implemented. | Yes | Keep manual-only unless a separate future phase approves otherwise. |
+| Scoring / decision / execution / position impact | blocked / out_of_scope | All affect flags remain false and no related logic changes. | Yes | Keep external AI out of these paths. |
+
+Current L-3U decision:
+
+```text
+visible_display_ux_polished_no_provider_call
+```
+
+Recommended next step:
+
+```text
+v28.0L-3U-1 Visible Display UX Audit Sync - No Provider Call
+```
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:

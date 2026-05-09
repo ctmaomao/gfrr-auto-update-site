@@ -1038,3 +1038,28 @@ Recommended next stage:
 ```text
 v28.0L-3U External AI Visible Display UX Polish - No Provider Call
 ```
+
+## v28.0L-3U External AI Visible Display UX Polish
+
+v28.0L-3U improves the visible external AI read-only panel presentation.
+
+This stage:
+
+- polishes only the already-visible read-only panel.
+- keeps `data/radar-data.json` unchanged.
+- keeps AI-generated text unchanged.
+- updates frontend asset cache version to `28.0L-3U`.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not refresh provider artifacts.
+- does not read or modify secrets.
+- keeps Global Risk Heatmap layout protected.
+- keeps Daily integration disabled.
+- keeps automatic provider calls disabled.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3U-1 Visible Display UX Audit Sync - No Provider Call
+```
