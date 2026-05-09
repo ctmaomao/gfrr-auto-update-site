@@ -299,3 +299,16 @@ Gate requirements remain:
 - no scoring / decision / execution / position changes.
 
 The successful `fixture_sample` audit does not authorize production use, live/local execution, provider output promotion, or frontend display.
+
+## 15. v28.0L-3I-0 Node 24 runtime hygiene boundary
+
+v28.0L-3I-0 updates workflow runtime hygiene before any future `local_compact` provider-call implementation.
+
+This does not change provider-call authorization:
+
+- environment `external-ai-manual` remains required for provider calls.
+- `DEEPSEEK_API_KEY` remains step-scoped only.
+- provider output remains artifact-only.
+- `promotionEligible=false` remains required.
+- fixture success does not authorize production use.
+- live/local provider execution remains blocked until a separate implementation PR is merged and audited.

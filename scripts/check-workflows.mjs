@@ -40,7 +40,6 @@ const contracts = [
       'npm run build:daily',
       'scripts/run-daily-pipeline.mjs',
       'data/radar-data.json',
-      'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24',
       'ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION'
     ]
   },
@@ -74,6 +73,7 @@ const contracts = [
       'npm run check:dom',
       'npm run check:modules',
       'npm run check:copy',
+      'npm run check:node-runtime',
       'npm run check:workflows',
       'npm run check:docs',
       'npm run check:data',
@@ -132,7 +132,7 @@ const contracts = [
       'package-manager-cache: false',
       'node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy',
       '--snapshot-file health-worker-snapshot.json',
-      'actions/upload-artifact@v6',
+      'actions/upload-artifact@v7',
       'worker-health-snapshot',
       'retention-days: 14'
     ],
@@ -198,11 +198,26 @@ const workflowFiles = fs.existsSync(workflowDir)
 
 const forbiddenRuntimePatterns = [
   [/actions\/checkout@v4/u, 'must not use actions/checkout@v4'],
+  [/actions\/checkout@v5/u, 'must not use actions/checkout@v5'],
   [/actions\/setup-node@v4/u, 'must not use actions/setup-node@v4'],
-  [/node-version:\s*['"]?20['"]?/u, 'must not use node-version 20'],
+  [/actions\/setup-node@v5/u, 'must not use actions/setup-node@v5'],
+  [/actions\/upload-artifact@v4/u, 'must not use actions/upload-artifact@v4'],
+  [/actions\/download-artifact@v4/u, 'must not use actions/download-artifact@v4'],
+  [/node-version:\s*['"]?20(?:\.x)?['"]?/u, 'must not use node-version 20'],
+  [/node20/u, 'must not use node20'],
   [/ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION/u, 'must not use ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION'],
-  [/FORCE_JAVASCRIPT_ACTIONS_TO_NODE24/u, 'must not use FORCE_JAVASCRIPT_ACTIONS_TO_NODE24']
+  [/FORCE_JAVASCRIPT_ACTIONS_TO_NODE20/u, 'must not use FORCE_JAVASCRIPT_ACTIONS_TO_NODE20']
 ];
+
+function hasNode24ActionsEnv(text) {
+  return /^env:\s*\r?\n(?:[ \t]+[^\r\n]*\r?\n)*[ \t]+FORCE_JAVASCRIPT_ACTIONS_TO_NODE24:\s*true\s*$/mu.test(text);
+}
+
+function getStepBlock(text, index) {
+  const rest = text.slice(index);
+  const nextStep = rest.slice(1).search(/\n\s+-\s+name:/u);
+  return nextStep === -1 ? rest : rest.slice(0, nextStep + 1);
+}
 
 const dailyWorkflowFile = '.github/workflows/build-daily-radar-data.yml';
 const auditScriptFile = 'scripts/audit-daily-vs-worker.mjs';
@@ -427,6 +442,10 @@ for (const file of workflowFiles) {
     if (pattern.test(text)) addRuntimeFailure(file, message);
   }
 
+  if (!hasNode24ActionsEnv(text)) {
+    addRuntimeFailure(file, 'must set top-level FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true');
+  }
+
   const checkoutMatches = text.match(/actions\/checkout@[^\s'"]+/gu) || [];
   for (const match of checkoutMatches) {
     if (match !== 'actions/checkout@v6') {
@@ -441,8 +460,18 @@ for (const file of workflowFiles) {
     }
   }
 
-  if (setupNodeMatches.length > 0 && !/node-version:\s*['"]?24['"]?/u.test(text)) {
-    addRuntimeFailure(file, 'uses setup-node but does not set node-version: 24');
+  for (const match of text.matchAll(/actions\/setup-node@[^\s'"]+/gu)) {
+    const stepBlock = getStepBlock(text, match.index);
+    if (!/node-version:\s*['"]?24['"]?/u.test(stepBlock)) {
+      addRuntimeFailure(file, 'uses setup-node but does not set node-version: 24');
+    }
+  }
+
+  const uploadArtifactMatches = text.match(/actions\/upload-artifact@[^\s'"]+/gu) || [];
+  for (const match of uploadArtifactMatches) {
+    if (match !== 'actions/upload-artifact@v7') {
+      addRuntimeFailure(file, `uses ${match}; expected actions/upload-artifact@v7`);
+    }
   }
 }
 

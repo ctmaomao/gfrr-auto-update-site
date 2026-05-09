@@ -98,7 +98,7 @@ function checkRequiredText(text) {
     'npm run check:external-ai-output -- manual-artifacts/external-ai/deepseek-output-latest.json',
     'npm run review:external-ai-artifact -- --input manual-artifacts/external-ai/deepseek-output-latest.json --output manual-artifacts/external-ai/external-ai-quality-review-latest.json',
     'npm run check:external-ai-workflow-artifacts -- --workflow-provider-test',
-    'actions/upload-artifact@v4',
+    'actions/upload-artifact@v7',
     'retention-days: 3',
     'external-ai-manual-provider-test-gate-${{ github.run_id }}',
     'external-ai-manual-provider-test-provider-${{ github.run_id }}',

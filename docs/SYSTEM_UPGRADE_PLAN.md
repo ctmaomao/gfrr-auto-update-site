@@ -581,3 +581,29 @@ Recommended next stage, only after this design PR is merged and audited:
 ```text
 v28.0L-3J Local Compact Provider-Call Workflow Path - Artifact-Only / No Production Data
 ```
+
+## v28.0L-3I-0 Node 24 Runtime Baseline Unification
+
+v28.0L-3I-0 unifies local and GitHub Actions runtime hygiene before any `local_compact` provider-call implementation.
+
+This stage:
+
+- standardizes the project on Node.js 24 LTS.
+- constrains package engines to Node 24 only.
+- adds `.nvmrc` and `.node-version` with `24`.
+- updates GitHub Actions to Node 24-compatible official action majors.
+- requires top-level `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`.
+- adds `check:node-runtime`.
+- strengthens workflow checks against Node 20 and outdated action versions.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not read or modify secrets.
+- does not write production data.
+- does not modify frontend.
+- does not implement L-3J.
+
+Recommended next stage remains:
+
+```text
+v28.0L-3J Local Compact Provider-Call Workflow Path - Artifact-Only / No Production Data
+```
