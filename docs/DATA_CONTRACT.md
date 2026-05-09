@@ -1410,3 +1410,19 @@ Current data contract boundary:
 - First production write must be a separate data-only PR with explicit approval.
 - First production write must not include frontend display, workflow schedule changes, Daily integration, or automatic provider calls.
 - Rollback for the future first write is reverting that isolated PR.
+
+## v28.0L-3P externalAiInterpretationLayer first controlled write
+
+v28.0L-3P writes the first validated production `externalAiInterpretationLayer` into `data/radar-data.json` from run `25598887574`.
+
+Current data contract boundary:
+
+- `externalAiInterpretationLayer` now exists in `data/radar-data.json`.
+- The layer is display-disabled: `displayEnabled=false`.
+- `boundaries.frontendDisplayApproved=false`.
+- `qualityReview.promotionEligible=false`.
+- The field is read-only metadata for now.
+- Frontend code must ignore the field until a separate frontend PR explicitly approves display.
+- The layer must not affect scoring, `decisionModel`, `executionLock`, or `positionGuidance`.
+- Daily integration and automatic provider calls remain disabled.
+- Future edits to the layer must use the write script and production contract validator.

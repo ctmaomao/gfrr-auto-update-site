@@ -284,3 +284,24 @@ v28.0L-3P First Controlled Production Write - Data Only / No Frontend Display
 ```
 
 only after explicit user approval.
+
+## 14. v28.0L-3P first controlled write readiness update
+
+v28.0L-3P completes the first controlled data-only production write from approved run `25598887574`.
+
+Readiness update:
+
+- Production data write: first data-only write completed.
+- Source artifact: `external-ai-manual-provider-test-provider-25598887574`.
+- Contract validator passed on `data/radar-data.json`.
+- Write guard passed after insertion.
+- Frontend display: not_ready.
+- Daily integration: not_ready.
+- Automatic provider calls: not_ready.
+- Scoring / decision / execution / position impact: blocked / out_of_scope.
+
+Recommended next step:
+
+```text
+v28.0L-3P-1 First Production Write Audit Sync - No Frontend Display
+```

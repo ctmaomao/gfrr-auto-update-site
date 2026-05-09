@@ -851,3 +851,31 @@ v28.0L-3P First Controlled Production Write - Data Only / No Frontend Display
 ```
 
 only after explicit user approval.
+
+## v28.0L-3P First Controlled Production Write
+
+v28.0L-3P performs the first controlled data-only write of the production `externalAiInterpretationLayer`.
+
+This stage:
+
+- uses approved source artifact run `25598887574`.
+- adds `scripts/write-external-ai-production-data.mjs`.
+- adds `npm run write:external-ai-production`.
+- writes `externalAiInterpretationLayer` into `data/radar-data.json`.
+- keeps `displayEnabled=false`.
+- keeps `boundaries.frontendDisplayApproved=false`.
+- keeps `qualityReview.promotionEligible=false`.
+- keeps production contract validation required.
+- keeps write guard validation required.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not read or modify secrets.
+- does not modify frontend files.
+- does not modify workflows.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3P-1 First Production Write Audit Sync - No Frontend Display
+```

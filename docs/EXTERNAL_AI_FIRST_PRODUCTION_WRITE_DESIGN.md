@@ -164,3 +164,39 @@ or, only after explicit user approval:
 ```text
 v28.0L-3P First Controlled Production Write - Data Only / No Frontend Display
 ```
+
+## 10. v28.0L-3P first controlled write status
+
+v28.0L-3P performs the first controlled production data write.
+
+Source:
+
+```text
+run 25598887574
+external-ai-manual-provider-test-provider-25598887574
+```
+
+Write result:
+
+- `data/radar-data.json` now contains the v28.0L production `externalAiInterpretationLayer`.
+- Source artifact: `manual-artifacts/external-ai/production-source-25598887574/deepseek-output-latest.json`.
+- Quality review artifact: `manual-artifacts/external-ai/production-source-25598887574/external-ai-quality-review-latest.json`.
+- Projection artifact: `manual-artifacts/external-ai/external-ai-production-projection-latest.json`.
+- Data-only write.
+- No frontend display.
+- No provider call by this PR.
+- No workflow trigger by this PR.
+- No scoring / decision / execution / position effect.
+- `productionDataWritten=true`.
+- `frontendDisplayChanged=false`.
+- `displayEnabled=false`.
+- `boundaries.frontendDisplayApproved=false`.
+- `qualityReview.promotionEligible=false`.
+
+This write does not approve frontend display. The next step should be audit sync only.
+
+Recommended next step:
+
+```text
+v28.0L-3P-1 First Production Write Audit Sync - No Frontend Display
+```

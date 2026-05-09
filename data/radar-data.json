@@ -1747,70 +1747,162 @@
     }
   },
   "externalAiInterpretationLayer": {
-    "contractVersion": "v28.0K-3A",
-    "generatedAt": "2026-05-08T23:29:12.835Z",
-    "enabled": false,
-    "status": "disabled",
-    "provider": "none",
-    "model": null,
-    "mode": "external_ai_disabled_scaffold",
-    "summaryZh": "外部 AI 解释层当前未启用。系统继续使用规则化 AI 解释层作为只读解释基线。",
-    "inputDigest": {
-      "inputVersion": "v27.0",
-      "siteStructuredDataOnly": true,
-      "layersAvailable": [
-        "dailyBrief",
-        "divergenceLayer",
-        "brentPricingLayer",
-        "macroDrivers.consumer",
-        "aiInterpretationLayer",
-        "decisionModel"
-      ],
-      "usesPrivateUserData": false,
-      "usesSecrets": false,
-      "usesExternalMarketData": false,
-      "noteZh": "该 scaffold 仅记录外部 AI 当前禁用；不读取外部 AI API、不读取样例 fixtures、不包含用户私有数据或 secrets。"
-    },
-    "output": null,
-    "audit": {
-      "outputValidated": false,
-      "validator": "check-external-ai-output",
-      "auditStatus": "not_applicable",
-      "auditFlags": [],
-      "bannedCopyPassed": null,
-      "sourceAttributionPresent": null,
-      "boundariesValid": true
-    },
-    "fallback": {
-      "used": true,
-      "fallbackLayer": "aiInterpretationLayer",
-      "reasonZh": "未启用外部 AI API，当前回退到规则化 aiInterpretationLayer。"
-    },
+    "schemaVersion": "v28.0L-external-ai-production-1",
+    "status": "valid",
+    "displayEnabled": false,
+    "generatedAt": "2026-05-09T18:21:38.853Z",
+    "updatedAt": "2026-05-09T18:21:38.853Z",
+    "sourceMode": "manual_local_compact",
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "inputSource": "local_compact",
+    "sourceSemantics": "site_structured_data_compact_summary",
+    "summaryZh": "站内结构化数据显示能源定价存在公开代理价差压力（现货与期货价差约17.77美元），但该压力仅来自公开代理审计层，不等同于正式实物成交数据。消费者信心月频慢变量（53.3）仍处于低位，但尚未与风险资产定价形成明确背离。整体证据强度中等，主要不确定性在于能源压力是否进一步扩散至信用利差和波动率，以及消费者数据后续走势。若布伦特回落且信用利差未扩张，当前观察性压力可能缓解。",
+    "facts": [
+      "布伦特主显示值为118.26美元，来源为fred:DCOILBRENTEU。",
+      "布伦特公开现货代理与期货代理价差为17.77美元，状态为压力。",
+      "美国10年期收益率为4.41%，10年盈亏平衡通胀为2.45%。",
+      "消费者信心指数（UMCSENT）为53.3，前值56.6，三个月变化0.4，六个月变化-1.8。",
+      "背离层总分为48，主要背离为能源定价背离观察，状态为压力。",
+      "流动性vs信用传导背离状态为压力，但信用利差和波动率尚未明显扩张。",
+      "风险自满观察背离状态为压力，综合风险偏高但波动率和信用利差相对平静。",
+      "消费者vs资产定价背离状态为正常，暂未形成明显背离。",
+      "数据健康评分为100，更新时间为2026-05-08T23:29:12.835Z。"
+    ],
+    "inferences": [
+      "能源定价的公开代理价差压力可能反映现货市场紧张，但该价差仅来自公开代理审计层，不能直接等同于实物现货溢价。",
+      "消费者信心指数持续低位但三个月变化小幅改善，表明消费者体感尚未进一步恶化，但月频数据存在延迟。",
+      "流动性压力与信用利差未扩张的组合暗示压力尚未传导至信用市场，但需持续观察。",
+      "综合风险偏高而波动率平静可能反映市场自满情绪，但该观察仅用于审计层。"
+    ],
+    "modelJudgments": [
+      "能源定价背离的证据强度中等，主要依赖公开代理价差，缺乏正式实物成交数据确认。",
+      "消费者数据为月频慢变量，数据充分性不足，难以实时判断消费者体感与资产定价的关系。",
+      "流动性vs信用传导背离的证据强度较低，信用利差和波动率尚未扩张，当前状态为观察性。",
+      "风险自满观察的证据强度中等，综合风险分数偏高但波动率平静，存在不确定性。"
+    ],
+    "scenarioHypotheses": [
+      {
+        "titleZh": "能源压力扩散至信用市场",
+        "triggerConditions": [
+          "布伦特公开代理价差持续扩大或维持压力",
+          "美国10年期收益率继续上行",
+          "高收益利差或VIX明显扩张"
+        ],
+        "invalidationConditions": [
+          "布伦特公开代理价差收敛",
+          "美国10年期收益率回落",
+          "高收益利差和VIX未扩张"
+        ]
+      },
+      {
+        "titleZh": "消费者信心改善缓解资产定价背离",
+        "triggerConditions": [
+          "消费者信心指数三个月变化转为正值",
+          "美国10年期收益率回落",
+          "高收益利差未扩张"
+        ],
+        "invalidationConditions": [
+          "消费者信心指数继续走弱",
+          "高收益利差或VIX扩张",
+          "风险资产定价与消费者体感持续背离"
+        ]
+      }
+    ],
+    "dataGaps": [
+      "Platts Dated Brent或正式实物成交数据未接入。",
+      "布伦特期限结构数据未接入。",
+      "裂解价差或柴油压力数据未接入。",
+      "消费者信心指数为月频数据，发布时间存在延迟，缺乏更高频的消费者体感数据。"
+    ],
+    "invalidationSignals": [
+      "布伦特回落且验证层不再提示压力。",
+      "美国10年期收益率回落。",
+      "VIX或高收益利差未扩张且综合风险分数下降。"
+    ],
+    "sourceAttribution": [
+      {
+        "sourceLayer": "local_compact",
+        "field": "dominantRiskChain",
+        "claimType": "site_structured_data",
+        "noteZh": "Site structured data only; non-production projection dry-run source."
+      },
+      {
+        "sourceLayer": "local_compact",
+        "field": "primaryDivergence",
+        "claimType": "site_structured_data",
+        "noteZh": "Site structured data only; non-production projection dry-run source."
+      },
+      {
+        "sourceLayer": "local_compact",
+        "field": "proxySpread",
+        "claimType": "site_structured_data",
+        "noteZh": "Site structured data only; non-production projection dry-run source."
+      },
+      {
+        "sourceLayer": "local_compact",
+        "field": "umichSentiment",
+        "claimType": "site_structured_data",
+        "noteZh": "Site structured data only; non-production projection dry-run source."
+      },
+      {
+        "sourceLayer": "local_compact",
+        "field": "modelJudgments",
+        "claimType": "rule_based_interpretation",
+        "noteZh": "Site structured data only; non-production projection dry-run source."
+      }
+    ],
     "confidence": {
       "level": "low",
-      "score": 0,
-      "reasonZh": "外部 AI 未启用且没有外部 AI 输出，因此该 scaffold 仅为低置信诊断状态。"
+      "score": 30,
+      "reasonZh": "基于站内结构化数据，尚未接入外部独立验证。能源定价依赖公开代理审计层，消费者数据为月频慢变量，整体证据强度中等但存在关键数据缺口。"
     },
-    "dataGaps": [
-      "DeepSeek / OpenAI / 外部 AI API 未接入",
-      "外部 AI 输出尚未生成",
-      "外部 AI 输出审计尚未适用于生产输出"
-    ],
-    "limitations": [
-      "该字段只是 disabled scaffold，不代表外部 AI 已接入。",
-      "该字段不参与评分、决策、仓位或执行灯。",
-      "前端不得把该字段显示成外部 AI 可用或正在运行。"
-    ],
+    "qualityReview": {
+      "status": "pass",
+      "recommendation": "pass_for_manual_review",
+      "promotionEligible": false,
+      "failedDimensions": [],
+      "warningDimensions": [],
+      "reviewedAt": "2026-05-09T18:21:38.853Z"
+    },
+    "provenance": {
+      "runId": null,
+      "artifactName": null,
+      "artifactId": null,
+      "artifactDigest": null,
+      "sourceCommit": null,
+      "sourceDataUpdatedAt": null,
+      "inputArtifactPath": "manual-artifacts/external-ai/production-source-25598887574/deepseek-output-latest.json",
+      "outputArtifactPath": "manual-artifacts/external-ai/external-ai-production-projection-latest.json",
+      "qualityReviewArtifactPath": "manual-artifacts/external-ai/production-source-25598887574/external-ai-quality-review-latest.json",
+      "generatedBy": "manual_workflow",
+      "humanApproved": false
+    },
+    "freshness": {
+      "artifactGeneratedAt": "2026-05-09T18:21:38.853Z",
+      "sourceDataUpdatedAt": null,
+      "maxAgeHours": 24,
+      "isStale": false,
+      "staleReasonZh": null
+    },
     "boundaries": {
       "displayOnly": true,
-      "diagnosticOnly": true,
-      "externalAiGenerated": false,
-      "usesExternalAiApi": false,
+      "externalAiGenerated": true,
+      "usesExternalAiApi": true,
       "affectsScoring": false,
       "affectsDecisionModel": false,
       "affectsExecutionLock": false,
       "affectsPositionGuidance": false,
-      "notInvestmentAdvice": true
-    }
+      "notInvestmentAdvice": true,
+      "productionWriteApproved": false,
+      "frontendDisplayApproved": false
+    },
+    "auditFlags": [
+      "manual_artifact_only",
+      "site_structured_data_only",
+      "validator_required",
+      "non_production_output",
+      "no_frontend_display"
+    ]
   }
 }

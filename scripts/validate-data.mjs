@@ -59,6 +59,7 @@ const AI_INTERPRETATION_EVIDENCE_LAYERS = new Set(['dailyBrief', 'divergenceLaye
 const EXTERNAL_AI_SCAFFOLD_CONTRACT_VERSION = 'v28.0K-3A';
 const EXTERNAL_AI_SCAFFOLD_MODE = 'external_ai_disabled_scaffold';
 const EXTERNAL_AI_SCAFFOLD_LAYERS = new Set(['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'macroDrivers.consumer', 'aiInterpretationLayer', 'decisionModel']);
+const EXTERNAL_AI_PRODUCTION_CONTRACT_VERSION = 'v28.0L-external-ai-production-1';
 const DAILY_BRIEF_FORBIDDEN_PHRASES = [
   '战争概率',
   '世界大战',
@@ -531,6 +532,108 @@ function validateStringArray(value, fieldName) {
   value.forEach((item, index) => assertString(item, `${fieldName}[${index}]`));
 }
 
+function validateExternalAiProductionLayer(layer) {
+  for (const key of [
+    'schemaVersion',
+    'status',
+    'displayEnabled',
+    'generatedAt',
+    'updatedAt',
+    'sourceMode',
+    'provider',
+    'model',
+    'inputSource',
+    'sourceSemantics',
+    'summaryZh',
+    'facts',
+    'inferences',
+    'modelJudgments',
+    'scenarioHypotheses',
+    'dataGaps',
+    'invalidationSignals',
+    'sourceAttribution',
+    'confidence',
+    'qualityReview',
+    'provenance',
+    'freshness',
+    'boundaries',
+    'auditFlags'
+  ]) {
+    assert(Object.hasOwn(layer, key), `externalAiInterpretationLayer.${key} is missing`);
+  }
+
+  assert(layer.schemaVersion === EXTERNAL_AI_PRODUCTION_CONTRACT_VERSION, `externalAiInterpretationLayer.schemaVersion must be ${EXTERNAL_AI_PRODUCTION_CONTRACT_VERSION}`);
+  assert(layer.status === 'valid', 'externalAiInterpretationLayer.status must be valid');
+  assert(layer.displayEnabled === false, 'externalAiInterpretationLayer.displayEnabled must be false');
+  parseIsoTime(layer.generatedAt, 'externalAiInterpretationLayer.generatedAt');
+  parseIsoTime(layer.updatedAt, 'externalAiInterpretationLayer.updatedAt');
+  assert(layer.sourceMode === 'manual_local_compact', 'externalAiInterpretationLayer.sourceMode must be manual_local_compact');
+  assert(layer.provider === 'deepseek', 'externalAiInterpretationLayer.provider must be deepseek');
+  assert(layer.model === 'deepseek-v4-flash', 'externalAiInterpretationLayer.model must be deepseek-v4-flash');
+  assert(layer.inputSource === 'local_compact', 'externalAiInterpretationLayer.inputSource must be local_compact');
+  assert(layer.sourceSemantics === 'site_structured_data_compact_summary', 'externalAiInterpretationLayer.sourceSemantics must be site_structured_data_compact_summary');
+  assertString(layer.summaryZh, 'externalAiInterpretationLayer.summaryZh');
+  validateStringArray(layer.facts, 'externalAiInterpretationLayer.facts');
+  validateStringArray(layer.inferences, 'externalAiInterpretationLayer.inferences');
+  assertArray(layer.modelJudgments, 'externalAiInterpretationLayer.modelJudgments');
+  assertArray(layer.scenarioHypotheses, 'externalAiInterpretationLayer.scenarioHypotheses');
+  validateStringArray(layer.dataGaps, 'externalAiInterpretationLayer.dataGaps');
+  validateStringArray(layer.invalidationSignals, 'externalAiInterpretationLayer.invalidationSignals');
+  validateStringArray(layer.auditFlags, 'externalAiInterpretationLayer.auditFlags');
+
+  assertArray(layer.sourceAttribution, 'externalAiInterpretationLayer.sourceAttribution');
+  layer.sourceAttribution.forEach((item, index) => {
+    assertPlainObject(item, `externalAiInterpretationLayer.sourceAttribution[${index}]`);
+    for (const key of ['sourceLayer', 'field', 'claimType', 'noteZh']) {
+      assertString(item[key], `externalAiInterpretationLayer.sourceAttribution[${index}].${key}`);
+    }
+  });
+
+  const confidence = layer.confidence;
+  assertPlainObject(confidence, 'externalAiInterpretationLayer.confidence');
+  assert(['low', 'medium'].includes(confidence.level), 'externalAiInterpretationLayer.confidence.level must be low or medium');
+  assert(Number.isFinite(confidence.score) && confidence.score >= 0 && confidence.score <= 100, 'externalAiInterpretationLayer.confidence.score must be 0-100');
+  assertString(confidence.reasonZh, 'externalAiInterpretationLayer.confidence.reasonZh');
+
+  const qualityReview = layer.qualityReview;
+  assertPlainObject(qualityReview, 'externalAiInterpretationLayer.qualityReview');
+  assert(['pass', 'warn'].includes(qualityReview.status), 'externalAiInterpretationLayer.qualityReview.status must be pass or warn');
+  assert(qualityReview.recommendation === 'pass_for_manual_review', 'externalAiInterpretationLayer.qualityReview.recommendation must be pass_for_manual_review');
+  assert(qualityReview.promotionEligible === false, 'externalAiInterpretationLayer.qualityReview.promotionEligible must be false');
+  assertArray(qualityReview.failedDimensions, 'externalAiInterpretationLayer.qualityReview.failedDimensions');
+  assertArray(qualityReview.warningDimensions, 'externalAiInterpretationLayer.qualityReview.warningDimensions');
+  parseIsoTime(qualityReview.reviewedAt, 'externalAiInterpretationLayer.qualityReview.reviewedAt');
+
+  const provenance = layer.provenance;
+  assertPlainObject(provenance, 'externalAiInterpretationLayer.provenance');
+  assert(provenance.generatedBy === 'manual_workflow', 'externalAiInterpretationLayer.provenance.generatedBy must be manual_workflow');
+  assert(provenance.humanApproved === false, 'externalAiInterpretationLayer.provenance.humanApproved must be false');
+
+  const freshness = layer.freshness;
+  assertPlainObject(freshness, 'externalAiInterpretationLayer.freshness');
+  parseIsoTime(freshness.artifactGeneratedAt, 'externalAiInterpretationLayer.freshness.artifactGeneratedAt');
+  assert(Number.isFinite(freshness.maxAgeHours) && freshness.maxAgeHours <= 24, 'externalAiInterpretationLayer.freshness.maxAgeHours must be <= 24');
+  assert(freshness.isStale === false, 'externalAiInterpretationLayer.freshness.isStale must be false');
+
+  const boundaries = layer.boundaries;
+  assertPlainObject(boundaries, 'externalAiInterpretationLayer.boundaries');
+  assert(boundaries.displayOnly === true, 'externalAiInterpretationLayer.boundaries.displayOnly must be true');
+  assert(boundaries.externalAiGenerated === true, 'externalAiInterpretationLayer.boundaries.externalAiGenerated must be true');
+  assert(boundaries.usesExternalAiApi === true, 'externalAiInterpretationLayer.boundaries.usesExternalAiApi must be true');
+  assert(boundaries.affectsScoring === false, 'externalAiInterpretationLayer.boundaries.affectsScoring must be false');
+  assert(boundaries.affectsDecisionModel === false, 'externalAiInterpretationLayer.boundaries.affectsDecisionModel must be false');
+  assert(boundaries.affectsExecutionLock === false, 'externalAiInterpretationLayer.boundaries.affectsExecutionLock must be false');
+  assert(boundaries.affectsPositionGuidance === false, 'externalAiInterpretationLayer.boundaries.affectsPositionGuidance must be false');
+  assert(boundaries.notInvestmentAdvice === true, 'externalAiInterpretationLayer.boundaries.notInvestmentAdvice must be true');
+  assert(boundaries.productionWriteApproved === false, 'externalAiInterpretationLayer.boundaries.productionWriteApproved must be false');
+  assert(boundaries.frontendDisplayApproved === false, 'externalAiInterpretationLayer.boundaries.frontendDisplayApproved must be false');
+
+  const serializedStrings = collectStrings(layer).join('\n');
+  for (const phrase of EXTERNAL_AI_FORBIDDEN_PHRASES) {
+    assert(!serializedStrings.includes(phrase), `externalAiInterpretationLayer must not contain forbidden phrase "${phrase}"`);
+  }
+}
+
 function validateAiInterpretationFacts(items, fieldName) {
   assertArray(items, fieldName);
   items.forEach((item, index) => {
@@ -678,6 +781,12 @@ function validateExternalAiInterpretationLayer(dataPayload) {
   }
 
   assertPlainObject(layer, 'externalAiInterpretationLayer');
+
+  if (layer.schemaVersion === EXTERNAL_AI_PRODUCTION_CONTRACT_VERSION) {
+    validateExternalAiProductionLayer(layer);
+    return;
+  }
+
   for (const key of [
     'contractVersion',
     'generatedAt',
