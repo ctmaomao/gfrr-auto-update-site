@@ -774,3 +774,26 @@ Recommended next stage:
 ```text
 v28.0L-3J-2 First Local Compact Provider-Call Audit Retry
 ```
+
+## 27. v28.0L-3J-3 local_compact execution-language prompt fix
+
+Run `25598379612` completed the `local_compact` provider-call retry through provider transport, output validation, artifact sanitizer, sanitized artifact upload, and non-production safety checks.
+
+Audit interpretation:
+
+- The `local_compact` workflow path works through validator and sanitizer.
+- The provider call executed only inside the approved manual provider-call path.
+- `productionDataWritten=false` and `frontendDisplayChanged=false`.
+- Quality review blocked promotion with `failedDimensions=executionLanguageSafety`.
+- The blocking error was `$.facts[5] contains operation-oriented language: 执行灯`.
+- `promotionEligible=false` remained correct.
+
+L-3J-3 revises prompt guidance before retry so `decisionContext` operation language is not repeated into facts, summary, inferences, model judgments, scenario hypotheses, invalidation signals, source attribution notes, or audit flags.
+
+This stage does not weaken the validator, quality review, artifact sanitizer, or promotion gate. It does not call DeepSeek, trigger workflows, add secrets, write production data, modify frontend, or change scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3J-4 Local Compact Provider-Call Audit Retry After Execution-Language Fix
+```

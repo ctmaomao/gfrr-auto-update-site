@@ -228,6 +228,27 @@ Run `25598085025` attempted the first `local_compact` provider-call audit and st
 
 L-3J-1 narrows the sanitizer rule: `manual-input-compact-latest.json` may reference `data/radar-data.json` only as read-only local source metadata. Actual production data upload, provider output copy, `data/*.json` artifact upload, frontend display, Daily integration, and scoring / decision / execution / position changes remain forbidden.
 
+## 14. v28.0L-3J-3 execution-language prompt fix
+
+Run `25598379612` completed the first `local_compact` provider-call audit retry far enough to prove the transport path:
+
+- `input_source=local_compact`.
+- `manual-input-compact-latest.json` built successfully with `sourceType=local_file` and `compact=true`.
+- `productionDataWritten=false` and `frontendDisplayChanged=false`.
+- `secretsRead=false` and `apiCalled=false` before the provider step.
+- DeepSeek provider call executed.
+- External AI output validation passed.
+- Artifact sanitizer passed and sanitized provider-call artifacts uploaded.
+- Quality review failed with `failedDimensions=executionLanguageSafety`.
+- The blocking error was `$.facts[5] contains operation-oriented language: 执行灯`.
+- `promotionEligible=false`.
+
+Interpretation: workflow transport, environment gate, provider call, validator, sanitizer, artifact upload, and non-production boundaries worked. Quality review correctly blocked operation-language leakage from `decisionContext`.
+
+L-3J-3 tightens the prompt so `decisionContext` is read-only background only, facts prefer non-decisionContext site layers, source attribution notes stay neutral, and model output must not repeat `执行灯` or equivalent execution / operation / trading language.
+
+The next audit should retry `local_compact` once after L-3J-3 is merged. If `executionLanguageSafety` fails again, stop and revise the prompt again before any further paid run.
+
 Recommended next stage:
 
 ```text

@@ -282,7 +282,21 @@ For future `local_compact` output:
 L-3J implements the `local_compact` workflow path but does not run the provider call. The first audited `local_compact` output must use `site_structured_data_only`, must not use `sample_input_only`, and must keep `decisionContext` as read-only background only.
 - `decisionContext` remains read-only background only.
 
-## 15. Non-goals / 非目标
+## 15. v28.0L-3J-3 Local Compact Execution-Language Prompt Fix
+
+The first `local_compact` provider-call audit retry reached the provider and passed structural validation, but quality review correctly rejected the artifact for `executionLanguageSafety` because `$.facts[5]` repeated the decisionContext phrase `执行灯`.
+
+L-3J-3 tightens prompt guidance before any retry:
+
+- `decisionContext` remains read-only background only and must not be quoted into user-facing output fields.
+- `facts` must avoid `decisionContext` operation fields and should prefer non-decisionContext layers such as `dailyBrief`, `divergenceLayer`, `brentPricingLayer`, `macroDrivers.consumer`, `dataHealth`, and `aiInterpretationLayer`.
+- `summaryZh`, `facts`, `inferences`, `modelJudgments`, `scenarioHypotheses`, `invalidationSignals`, `sourceAttribution.noteZh`, and `auditFlags` must not repeat execution / operation / position / cash / exposure language from `decisionContext`.
+- `sourceAttribution` may use `sourceLayer=decisionContext` only as neutral background; preferred `noteZh` is `只读系统状态背景，不作为解释层结论来源。`
+- `执行灯` is explicitly forbidden in any model string output.
+- Execution boundaries remain boolean-only through `boundaries.displayOnly=true`, `boundaries.affectsScoring=false`, `boundaries.affectsDecisionModel=false`, `boundaries.affectsExecutionLock=false`, `boundaries.affectsPositionGuidance=false`, and `boundaries.notInvestmentAdvice=true`.
+- Do not weaken `executionLanguageSafety`, the offline validator, quality review, artifact sanitizer, or `promotionEligible=false` to make a provider artifact pass.
+
+## 16. Non-goals / 非目标
 
 This stage does not:
 

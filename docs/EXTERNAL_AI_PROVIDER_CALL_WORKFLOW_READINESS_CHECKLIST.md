@@ -542,7 +542,33 @@ Recommended next PR:
 v28.0L-3J-2 First Local Compact Provider-Call Audit Retry
 ```
 
-## 22. Historical v28.0L-3D final readiness decision
+## 22. v28.0L-3J-3 readiness update
+
+Run `25598379612` verified the `local_compact` transport path through provider execution, validation, sanitizer, and artifact upload, but quality review blocked promotion on execution-language safety.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Local_compact transport | verified | Run `25598379612` built compact local input and executed the provider-call job. | No | Keep workflow manual and environment-gated. |
+| Local_compact validator | verified | External AI output validation passed. | No | Keep validator required. |
+| Local_compact sanitizer | verified | Artifact sanitizer passed and sanitized artifacts uploaded. | No | Keep sanitizer strict. |
+| Local_compact quality review | blocked_due_executionLanguageSafety | Quality review failed because `$.facts[5]` contained `执行灯`. | Yes | Merge L-3J-3 prompt revision before retry. |
+| Local_compact prompt revision | this_pr | Prompt now forbids repeating `decisionContext` operation language into user-facing output fields. | Yes | Retry once after merge and audit result. |
+| Production integration | not_ready | Provider output remains artifact-only and `promotionEligible=false`. | Yes | Separate reviewed production integration phase required. |
+| Frontend display | not_ready | External AI output remains non-user-visible. | Yes | Separate reviewed display phase required. |
+
+Current L-3J-3 decision:
+
+```text
+local_compact_transport_verified_quality_blocked_prompt_revision_required
+```
+
+Recommended next PR:
+
+```text
+v28.0L-3J-4 Local Compact Provider-Call Audit Retry After Execution-Language Fix
+```
+
+## 23. Historical v28.0L-3D final readiness decision
 
 Overall readiness:
 

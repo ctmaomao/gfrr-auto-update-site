@@ -331,3 +331,11 @@ Do not run the `local_compact` provider call more than once without a recorded a
 `manual-input-compact-latest.json` may reference `data/radar-data.json` only as read-only local source metadata. Do not treat that source metadata reference as a production data write.
 
 Never upload actual `data/radar-data.json` as an artifact. Never write provider output to `data/`, never copy provider output into `data/radar-data.json`, and never display local compact provider output on the frontend without a separate reviewed production/display PR.
+
+## 24. v28.0L-3J-3 local compact execution-language prompt reminder
+
+v28.0L-3J-3 fixes prompt guidance after run `25598379612` passed provider transport, validator, sanitizer, and artifact upload, but quality review rejected promotion because `$.facts[5]` repeated `执行灯` from `decisionContext`.
+
+Never allow provider output to repeat execution / operation / position / cash / exposure / trading terms from `decisionContext` in facts, summary, inferences, model judgments, scenario hypotheses, invalidation signals, source attribution notes, audit flags, or any user-facing output field.
+
+Never weaken `executionLanguageSafety`, `review:external-ai-artifact`, `check:external-ai-output`, or artifact sanitizer to make an artifact pass. Do not continue toward production integration, frontend display, Daily integration, data writes, scoring, decision, execution, or position changes until a `local_compact` quality review passes and a separate reviewed production PR explicitly changes the boundary.

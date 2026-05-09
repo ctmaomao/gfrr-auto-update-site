@@ -1270,6 +1270,25 @@ Operator rule:
 
 - Do not rerun `local_compact` until the sanitizer source metadata fix is merged.
 - After the fix is merged, rerun the `local_compact` provider-call audit once.
+
+### v28.0L-3J-3 local_compact execution-language prompt fix note
+
+Run `25598379612` reached the `local_compact` provider call and passed output validation plus artifact sanitizer, but quality review failed with `failedDimensions=executionLanguageSafety`.
+
+Blocking quality review error:
+
+```text
+$.facts[5] contains operation-oriented language: 执行灯
+```
+
+Operator guidance:
+
+- Do not rerun `local_compact` until L-3J-3 is merged and audited.
+- Do not weaken `review:external-ai-artifact`, `check:external-ai-output`, artifact sanitizer, or `executionLanguageSafety`.
+- Do not promote the failed artifact; `promotionEligible=false` is correct.
+- The next retry must be one run only.
+- If `executionLanguageSafety` fails again, stop and revise the prompt again before any further paid run.
+- Do not copy compact input or provider output into `data/`, frontend display paths, Daily, Worker, scoring, decision, execution, or position logic.
 - Treat `data/radar-data.json` inside `manual-input-compact-latest.json` as source metadata only.
 - Never upload actual `data/radar-data.json`.
 - Never copy provider output into `data/radar-data.json`.
