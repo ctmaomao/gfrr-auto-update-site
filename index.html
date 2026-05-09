@@ -8,6 +8,121 @@
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="assets/styles.css" />
   <style>
+    .macro-overview-shell {
+      display: grid;
+      gap: 18px;
+    }
+    .macro-overview-block {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.72);
+    }
+    .macro-overview-block h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.45;
+    }
+    .macro-overview-hero {
+      border-color: rgba(130, 217, 255, 0.3);
+      background: linear-gradient(180deg, rgba(20, 31, 48, 0.9), rgba(12, 20, 34, 0.9));
+    }
+    .macro-overview-kicker {
+      margin: 0;
+      color: #dbeafe;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.55;
+    }
+    .macro-overview-one-line {
+      margin: 0;
+      max-width: 980px;
+      color: #f8fafc;
+      font-size: 18px;
+      line-height: 1.7;
+    }
+    .macro-overview-mini-grid,
+    .macro-overview-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .macro-overview-mini-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    .macro-overview-grid.five-col {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    .macro-overview-grid.four-col {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .macro-overview-mini,
+    .macro-overview-card {
+      min-width: 0;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .macro-overview-mini {
+      display: grid;
+      gap: 5px;
+    }
+    .macro-overview-label,
+    .macro-overview-muted {
+      color: #aebed2;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .macro-overview-mini strong {
+      color: #f8fafc;
+      font-size: 18px;
+      line-height: 1.35;
+    }
+    .macro-overview-card {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+    }
+    .macro-overview-card h3 {
+      margin: 0;
+      color: #f8fafc;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .macro-overview-card p {
+      margin: 0;
+      line-height: 1.65;
+    }
+    .macro-overview-status {
+      color: #bfdbfe;
+      font-weight: 700;
+    }
+    .macro-overview-conclusion {
+      color: #e2e8f0;
+      font-weight: 700;
+    }
+    .macro-overview-list {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      padding-left: 18px;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+    .macro-temperature-card {
+      border-color: rgba(251, 191, 36, 0.28);
+      background: rgba(38, 31, 12, 0.24);
+    }
+    .secondary-ai-panel {
+      margin: 18px 0;
+    }
+    .secondary-ai-panel > summary {
+      cursor: pointer;
+      color: #dbeafe;
+      font-weight: 700;
+    }
     .world-order-grid {
       align-items: start;
       grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.35fr);
@@ -170,6 +285,11 @@
       line-height: 1.5;
     }
     @media (max-width: 900px) {
+      .macro-overview-mini-grid,
+      .macro-overview-grid.five-col,
+      .macro-overview-grid.four-col {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
       .world-order-grid,
       .world-order-status-grid {
         grid-template-columns: 1fr;
@@ -190,6 +310,14 @@
       }
     }
     @media (max-width: 640px) {
+      .macro-overview-mini-grid,
+      .macro-overview-grid.five-col,
+      .macro-overview-grid.four-col {
+        grid-template-columns: 1fr;
+      }
+      .macro-overview-block {
+        padding: 14px;
+      }
       .world-order-dimension-grid {
         grid-template-columns: 1fr;
       }
@@ -209,6 +337,7 @@
 
     <nav class="dashboard-jump-nav" aria-label="Dashboard sections">
       <a href="#core-dashboard">核心驾驶舱</a>
+      <a href="#macro-risk-overview">宏观风险判断</a>
       <a href="#world-order-stress-section">世界秩序压力层</a>
       <a href="#risk-explainer">风险解释层</a>
       <a href="#advanced-audit">高级分析与规则审计</a>
@@ -216,6 +345,17 @@
 
     <main>
       <h2 id="core-dashboard" class="section-group-title cockpit-layer">核心驾驶舱</h2>
+
+      <section class="full-width-section cockpit-section" id="macro-risk-overview">
+        <div class="card-head split-head">
+          <div>
+            <h2>宏观风险判断总览</h2>
+            <p class="muted">按结论、原因、证据、展开详情组织当前宏观风险判断。</p>
+          </div>
+          <span class="badge neutral">只读架构骨架</span>
+        </div>
+        <div class="macro-overview-shell" id="macro-risk-overview-root"></div>
+      </section>
 
       <section class="full-width-section cockpit-section" id="daily-brief-section">
         <article class="card full-width-card">
@@ -270,12 +410,13 @@
         </article>
       </section>
 
-      <section class="full-width-section cockpit-section" id="ai-interpretation-layer-section">
+      <details class="full-width-section cockpit-section advanced-panel secondary-ai-panel" id="ai-interpretation-layer-section">
+        <summary>规则化解释依据（可展开）</summary>
         <article class="card full-width-card">
           <div class="card-head split-head">
             <div>
-              <h2>规则化 AI 解释层</h2>
-              <p class="muted">将事实、数据推断、模型判断与情景假设分开显示；当前不调用外部 AI。本区不调用外部 AI；外部 AI 解读请查看下方“外部 AI 解读（只读）”。</p>
+              <h2>站内规则解释与证据说明</h2>
+              <p class="muted">原“规则化 AI 解释层”已降为站内规则化解释依据；当前不调用外部 AI。外部 AI 解读在下方独立只读模块中显示。</p>
             </div>
             <span class="badge neutral" id="ai-interpretation-confidence">加载中...</span>
           </div>
@@ -317,7 +458,7 @@
             </details>
           </div>
         </article>
-      </section>
+      </details>
 
       <section class="full-width-section cockpit-section" id="external-ai-display-panel" hidden aria-hidden="true"></section>
 
@@ -374,6 +515,8 @@
           </div>
         </article>
       </section>
+
+      <h2 id="detail-data" class="section-group-title advanced-layer">详细数据与图表</h2>
 
       <section class="full-width-section cockpit-section">
         <article class="card realtime-strip-card">
@@ -1212,6 +1355,6 @@
     <footer class="footer">独立静态版 · 适配静态托管 · 数据由自动化流程每日生成</footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0L-4B"></script>
+  <script type="module" src="scripts/app.js?v=28.0M-1"></script>
 </body>
 </html>

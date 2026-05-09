@@ -1,11 +1,12 @@
-import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0L-4B';
-import { buildHealthDashboardModel } from './modules/health.js?v=28.0L-4B';
-import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0L-4B';
-import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0L-4B';
-import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderAiInterpretationLayer, renderDivergenceLayer, renderBrentPricingLayer, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0L-4B';
-import { renderExternalAiPanel } from './modules/renderExternalAi.js?v=28.0L-4B';
+import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0M-1';
+import { buildHealthDashboardModel } from './modules/health.js?v=28.0M-1';
+import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0M-1';
+import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0M-1';
+import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderAiInterpretationLayer, renderDivergenceLayer, renderBrentPricingLayer, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0M-1';
+import { renderExternalAiPanel } from './modules/renderExternalAi.js?v=28.0M-1';
+import { renderMacroRiskOverview } from './modules/renderMacroOverview.js?v=28.0M-1';
 
-window.__GFRR_FRONTEND_VERSION__ = '28.0L-4B';
+window.__GFRR_FRONTEND_VERSION__ = '28.0M-1';
 
 async function main() {
   const [baseline, history, realtimeResult, worldOrderStressData] = await Promise.all([
@@ -65,6 +66,7 @@ async function main() {
     $('rt-source-mode').textContent = 'baseline only';
   }
   $('runtime-badge').textContent = metadata.realtimeStatusLabel;
+  renderMacroRiskOverview(data, healthDashboard, worldOrderStressData);
   renderDailyBrief(data.dailyBrief);
   renderAiInterpretationLayer(data.aiInterpretationLayer);
   renderExternalAiPanel(data);

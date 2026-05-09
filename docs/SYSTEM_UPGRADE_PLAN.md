@@ -1229,3 +1229,27 @@ Optional future phase:
 ```text
 v28.0L-4D Issue-Based Failure Monitor - No Provider Call
 ```
+
+## v28.0M-1 Homepage Information Architecture Skeleton
+
+v28.0M-1 starts the homepage transition from data modules toward a macro risk judgment system.
+
+This stage:
+
+- adds a read-only `宏观风险判断总览` section near the top of the homepage.
+- organizes the first screen around judgment, pressure sources, signal layers, macro drivers, market temperature placeholder, risk engine summaries, and cross-validation placeholders.
+- adds a market pricing temperature placeholder with `等待历史周线数据接入` instead of fabricating Nasdaq / QQQ, MA60, standard deviation, or z-score values.
+- demotes the rule-based AI layer to secondary evidence / method detail while preserving its DOM ids and render path.
+- keeps the external AI panel separate, gated, and read-only.
+- keeps Global Risk Heatmap standalone.
+- changes no production data.
+- changes no AI-generated text.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not change scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-2 Homepage Judgment Content Calibration - Frontend Only / No Data Change
+```

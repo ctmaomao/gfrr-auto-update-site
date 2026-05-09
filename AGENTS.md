@@ -459,3 +459,9 @@ Do not display raw provider output, raw provenance, run IDs, artifact IDs, or ra
 v28.0L-4C is documentation-only monitoring and failure-notification design for the existing `External AI Production Refresh` workflow.
 
 Monitoring work must not call DeepSeek, write production data, trigger provider refresh, read secrets, modify workflows, add schedules, or change frontend files. Do not add auto-retry loops without explicit approval. Do not add extra schedules without explicit approval. Prefer GitHub native failed-workflow notifications before adding new alert workflows. Any issue, webhook, Slack, or email notification automation requires a separate reviewed PR and must not access `DEEPSEEK_API_KEY`.
+
+## 45. v28.0M-1 homepage information architecture reminder
+
+Future homepage work should preserve the conclusion -> reason -> evidence -> detail reading path.
+
+Do not fabricate market temperature data, Nasdaq / QQQ history, MA60, standard deviation, or z-score values. Global Risk Heatmap must remain a standalone large section and must not be nested inside macro driver, risk engine, or cross-validation cards. The rule-based AI layer is secondary evidence / method detail, while the external AI panel remains separate, gated, and read-only. Homepage IA work must not change scoring, decision, execution, or position logic unless a separate reviewed task explicitly asks for that model change.
