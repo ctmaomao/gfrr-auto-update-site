@@ -1590,3 +1590,16 @@ Current data contract boundary:
 - Raw `decisionContext` remains a non-display field.
 - The production contract remains unchanged by display coverage polish.
 - Future data changes still require production contract validation and production write guard.
+
+## v28.0M-3H externalAiInterpretationLayer preservation
+
+`data/radar-data.json` must retain a contract-valid `externalAiInterpretationLayer` across ordinary radar data refreshes.
+
+Current data contract boundary:
+
+- Normal radar refresh may update market data, risk modules, daily brief, history inputs, and related radar fields.
+- Normal radar refresh must preserve the existing contract-valid `externalAiInterpretationLayer` unless the approved `External AI Production Refresh` workflow explicitly updates that layer.
+- Normal radar refresh must not delete `displayEnabled`, `boundaries.frontendDisplayApproved`, `qualityReview.promotionEligible`, or the non-impact boundary flags.
+- Normal radar refresh must not edit external AI generated text.
+- `External AI Production Refresh` remains the only approved automatic provider path for changing external AI content.
+- Future data updates still require production contract validation and production write guard.

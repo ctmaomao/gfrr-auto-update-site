@@ -1274,6 +1274,41 @@ function buildExternalAiInterpretationLayerScaffold(data) {
   };
 }
 
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isPreservableExternalAiLayer(layer) {
+  const qualityReview = isRecord(layer?.qualityReview) ? layer.qualityReview : null;
+  const boundaries = isRecord(layer?.boundaries) ? layer.boundaries : null;
+  return isRecord(layer)
+    && layer.schemaVersion === 'v28.0L-external-ai-production-1'
+    && layer.status === 'valid'
+    && typeof layer.displayEnabled === 'boolean'
+    && isRecord(qualityReview)
+    && qualityReview.promotionEligible === false
+    && isRecord(boundaries)
+    && boundaries.displayOnly === true
+    && boundaries.externalAiGenerated === true
+    && boundaries.usesExternalAiApi === true
+    && boundaries.affectsScoring === false
+    && boundaries.affectsDecisionModel === false
+    && boundaries.affectsExecutionLock === false
+    && boundaries.affectsPositionGuidance === false
+    && boundaries.notInvestmentAdvice === true
+    && boundaries.productionWriteApproved === false
+    && typeof boundaries.frontendDisplayApproved === 'boolean';
+}
+
+function preserveExternalAiInterpretationLayer(next, previous = prevData) {
+  const layer = previous?.externalAiInterpretationLayer;
+  if (!isPreservableExternalAiLayer(layer)) {
+    throw new Error('Refusing to build radar data because existing externalAiInterpretationLayer is missing or not production-contract compatible. Restore the last valid layer or run the approved External AI Production Refresh before normal radar refresh.');
+  }
+  next.externalAiInterpretationLayer = structuredClone(layer);
+  return next;
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -2199,7 +2234,7 @@ function buildFallback() {
   next.aiInterpretationLayer = prevData.aiInterpretationLayer && typeof prevData.aiInterpretationLayer === 'object'
     ? { ...prevData.aiInterpretationLayer, generatedAt: isoNow }
     : buildAiInterpretationLayer(next);
-  next.externalAiInterpretationLayer = buildExternalAiInterpretationLayerScaffold(next);
+  preserveExternalAiInterpretationLayer(next);
   return { data: next, history: prevHistory, historyFull: prevHistoryFull };
 }
 
@@ -2663,7 +2698,7 @@ async function build() {
   };
 
   data.aiInterpretationLayer = buildAiInterpretationLayer(data);
-  data.externalAiInterpretationLayer = buildExternalAiInterpretationLayerScaffold(data);
+  preserveExternalAiInterpretationLayer(data);
 
   const historyFull = appendHistoryFull(prevHistoryFull, risk, lock, macro, macroDrivers, transmissionSnapshot);
 
