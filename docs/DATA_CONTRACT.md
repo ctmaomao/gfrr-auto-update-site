@@ -1529,3 +1529,20 @@ Current data contract boundary:
 - AI-generated text was not edited or refreshed.
 - Future data updates still require the production contract validator, production write guard, frontend scaffold check, `check:data`, and `check:all`.
 - Provider refresh automation, Daily integration, and automatic provider calls remain unapproved.
+
+## v28.0L-4A externalAiInterpretationLayer production refresh
+
+v28.0L-4A adds the `External AI Production Refresh` workflow as the controlled update path for the production external AI layer.
+
+Current data contract boundary:
+
+- The workflow may update `externalAiInterpretationLayer` inside `data/radar-data.json`.
+- The workflow must not update other production data fields.
+- Production contract validation is required before commit.
+- Production write guard is required before commit.
+- Frontend scaffold check is required before commit.
+- `check:data` and `check:all` are required before commit.
+- `displayEnabled=true` is preserved from the current production layer.
+- `boundaries.frontendDisplayApproved=true` is preserved from the current production layer.
+- `qualityReview.promotionEligible=false` remains required.
+- Scoring, `decisionModel`, `executionLock`, `positionGuidance`, Daily integration, and Global Risk Heatmap layout remain unaffected.

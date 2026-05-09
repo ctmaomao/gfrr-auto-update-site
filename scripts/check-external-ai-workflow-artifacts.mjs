@@ -16,6 +16,7 @@ const providerWorkflowAllowlist = new Set([
   'provider-test-secret-present-blocked.json',
   'deepseek-output-latest.json',
   'external-ai-quality-review-latest.json',
+  'external-ai-production-projection-latest.json',
 ]);
 
 const defaultLocalAllowlist = new Set([
@@ -250,6 +251,16 @@ function checkStrictFile(filePath, fileName) {
 
   if (fileName === 'external-ai-quality-review-latest.json') {
     checkQualityReviewArtifact(filePath, fileName);
+  }
+
+  if (fileName === 'external-ai-production-projection-latest.json') {
+    const result = spawnSync(process.execPath, ['scripts/check-external-ai-production-contract.mjs', filePath], {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+    });
+    if (result.status !== 0) {
+      addError(`production projection artifact "${fileName}" must pass check:external-ai-production-contract before upload`);
+    }
   }
 }
 

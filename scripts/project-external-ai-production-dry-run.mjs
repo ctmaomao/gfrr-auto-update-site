@@ -67,6 +67,11 @@ const REQUIRED_BOUNDARIES = {
   frontendDisplayApproved: false,
 };
 
+const DEFAULT_DISPLAY_STATE = {
+  displayEnabled: false,
+  frontendDisplayApproved: false,
+};
+
 const FALLBACK_QUALITY_REVIEW = {
   status: 'pass',
   recommendation: 'pass_for_manual_review',
@@ -88,6 +93,7 @@ function parseArgs(argv) {
     input: DEFAULT_INPUT,
     output: DEFAULT_OUTPUT,
     review: null,
+    preserveDisplayStateFrom: null,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -98,18 +104,42 @@ function parseArgs(argv) {
       options.output = argv[++index];
     } else if (arg === '--review') {
       options.review = argv[++index];
+    } else if (arg === '--preserve-display-state-from') {
+      options.preserveDisplayStateFrom = argv[++index];
     } else {
       throw new Error(`unsupported argument: ${arg}`);
     }
   }
 
   for (const [key, value] of Object.entries(options)) {
-    if (key !== 'review' && (typeof value !== 'string' || value.trim() === '')) {
+    if (!['review', 'preserveDisplayStateFrom'].includes(key) && (typeof value !== 'string' || value.trim() === '')) {
       throw new Error(`--${key} must be a non-empty path`);
     }
   }
 
   return options;
+}
+
+function readDisplayStateFrom(filePath) {
+  if (!filePath) return DEFAULT_DISPLAY_STATE;
+
+  const data = readJson(filePath);
+  const layer = data?.externalAiInterpretationLayer;
+  const boundaries = layer?.boundaries;
+  if (!isPlainObject(layer) || !isPlainObject(boundaries)) {
+    throw new Error('--preserve-display-state-from requires externalAiInterpretationLayer with boundaries');
+  }
+  if (typeof layer.displayEnabled !== 'boolean' || typeof boundaries.frontendDisplayApproved !== 'boolean') {
+    throw new Error('preserved display state must use boolean displayEnabled and frontendDisplayApproved');
+  }
+  if (layer.displayEnabled !== boundaries.frontendDisplayApproved) {
+    throw new Error('preserved display state is invalid: displayEnabled and frontendDisplayApproved must match');
+  }
+
+  return {
+    displayEnabled: layer.displayEnabled,
+    frontendDisplayApproved: boundaries.frontendDisplayApproved,
+  };
 }
 
 function readJson(filePath) {
@@ -373,7 +403,7 @@ function projectAuditFlags(mapping) {
   ].filter((flag) => flag !== mapping.forbiddenSourceFlag);
 }
 
-function buildProjection({ input, inputPath, outputPath, reviewPath, generatedAt }) {
+function buildProjection({ input, inputPath, outputPath, reviewPath, generatedAt, displayState }) {
   const mapping = detectSourceMapping(input);
   const qualityReview = projectQualityReview(reviewPath, generatedAt, mapping);
   const facts = projectStringArray(input.facts, 'facts');
@@ -384,7 +414,7 @@ function buildProjection({ input, inputPath, outputPath, reviewPath, generatedAt
   const layer = {
     schemaVersion: 'v28.0L-external-ai-production-1',
     status: 'valid',
-    displayEnabled: false,
+    displayEnabled: displayState.displayEnabled,
     generatedAt,
     updatedAt: generatedAt,
     sourceMode: mapping.sourceMode,
@@ -422,7 +452,10 @@ function buildProjection({ input, inputPath, outputPath, reviewPath, generatedAt
       isStale: false,
       staleReasonZh: null,
     },
-    boundaries: REQUIRED_BOUNDARIES,
+    boundaries: {
+      ...REQUIRED_BOUNDARIES,
+      frontendDisplayApproved: displayState.frontendDisplayApproved,
+    },
     auditFlags: projectAuditFlags(mapping),
   };
 
@@ -440,6 +473,7 @@ function main() {
     const resolvedInput = path.resolve(options.input);
     const resolvedReview = options.review ? path.resolve(options.review) : null;
     const input = readJson(resolvedInput);
+    const displayState = readDisplayStateFrom(options.preserveDisplayStateFrom);
 
     validateInputArtifact(input);
 
@@ -450,6 +484,7 @@ function main() {
       outputPath: relativeToRepo,
       reviewPath: options.review,
       generatedAt,
+      displayState,
     });
 
     fs.mkdirSync(path.dirname(resolvedOutput), { recursive: true });

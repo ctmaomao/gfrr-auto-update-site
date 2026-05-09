@@ -429,3 +429,9 @@ Do not modify external AI generated text, provider data, `data/radar-data.json`,
 v28.0L-3U-1 records that the visible external AI display is live, polished, and audited for the current production data layer.
 
 Do not change AI generated text manually. Do not add provider refresh automation without explicit approval. Preserve Global Risk Heatmap layout and preserve no scoring / decision / execution / position impact. Future updates must pass `check:external-ai-production-contract`, `check:external-ai-production-write-guard`, `check:external-ai-frontend-hidden-scaffold`, and `check:all`.
+
+## 40. v28.0L-4A production refresh workflow reminder
+
+v28.0L-4A adds `External AI Production Refresh` as the only approved automatic provider call path. It may run manually or once daily at `23:50 UTC` after the `external-ai-production-refresh` environment and `DEEPSEEK_API_KEY` environment secret are configured.
+
+Do not add additional schedules, retries beyond one provider attempt, or provider refresh automation outside this workflow without explicit approval. During refresh, commit only `data/radar-data.json` and only when `externalAiInterpretationLayer` changes. Preserve `displayEnabled=true`, `boundaries.frontendDisplayApproved=true`, `qualityReview.promotionEligible=false`, and all non-impact boundaries. Do not change frontend logic, Global Risk Heatmap layout, scoring, decision, execution, or position logic.

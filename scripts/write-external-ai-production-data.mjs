@@ -3,12 +3,11 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const REQUIRED_FLAGS = new Set(['--confirm-production-write', '--data-only', '--no-frontend-display']);
+const OPTIONAL_FLAGS = new Set(['--preserve-visible-display']);
 const SAFE_TARGET = 'data/radar-data.json';
 
 const REQUIRED_FALSE_PATHS = [
-  'displayEnabled',
   'qualityReview.promotionEligible',
-  'boundaries.frontendDisplayApproved',
   'boundaries.affectsScoring',
   'boundaries.affectsDecisionModel',
   'boundaries.affectsExecutionLock',
@@ -39,7 +38,7 @@ function parseArgs(argv) {
       options.input = argv[++index];
     } else if (arg === '--target') {
       options.target = argv[++index];
-    } else if (REQUIRED_FLAGS.has(arg)) {
+    } else if (REQUIRED_FLAGS.has(arg) || OPTIONAL_FLAGS.has(arg)) {
       options.flags.add(arg);
     } else {
       throw new Error(`unsupported argument: ${arg}`);
@@ -53,6 +52,14 @@ function parseArgs(argv) {
   if (!options.target) throw new Error('missing required --target path');
 
   return options;
+}
+
+function getExpectedDisplayState(options) {
+  const preserveVisibleDisplay = options.flags.has('--preserve-visible-display');
+  return {
+    displayEnabled: preserveVisibleDisplay,
+    frontendDisplayApproved: preserveVisibleDisplay,
+  };
 }
 
 function normalizeRepoPath(filePath) {
@@ -99,7 +106,7 @@ function validateProjectionWithContract(inputPath) {
   }
 }
 
-function readProjection(inputPath) {
+function readProjection(inputPath, expectedDisplayState) {
   validateProjectionWithContract(inputPath);
   const projection = readJson(inputPath);
   if (!isPlainObject(projection) || !isPlainObject(projection.externalAiInterpretationLayer)) {
@@ -114,6 +121,8 @@ function readProjection(inputPath) {
   for (const fieldPath of REQUIRED_TRUE_PATHS) {
     requirePathValue(layer, fieldPath, true);
   }
+  requirePathValue(layer, 'displayEnabled', expectedDisplayState.displayEnabled);
+  requirePathValue(layer, 'boundaries.frontendDisplayApproved', expectedDisplayState.frontendDisplayApproved);
 
   if (layer.schemaVersion !== 'v28.0L-external-ai-production-1') {
     throw new Error('schemaVersion must be v28.0L-external-ai-production-1');
@@ -137,9 +146,24 @@ function readProjection(inputPath) {
   return layer;
 }
 
-function writeProductionData(targetPath, layer) {
+function assertTargetDisplayStateAllowsWrite(data, expectedDisplayState) {
+  const currentLayer = data.externalAiInterpretationLayer;
+  const currentBoundaries = currentLayer?.boundaries;
+  if (!isPlainObject(currentLayer) || !isPlainObject(currentBoundaries)) {
+    throw new Error('target data must already contain externalAiInterpretationLayer with boundaries');
+  }
+  if (currentLayer.displayEnabled !== expectedDisplayState.displayEnabled) {
+    throw new Error('target displayEnabled does not match requested preservation mode');
+  }
+  if (currentBoundaries.frontendDisplayApproved !== expectedDisplayState.frontendDisplayApproved) {
+    throw new Error('target frontendDisplayApproved does not match requested preservation mode');
+  }
+}
+
+function writeProductionData(targetPath, layer, expectedDisplayState) {
   const data = readJson(targetPath);
   if (!isPlainObject(data)) throw new Error('target data must be a JSON object');
+  assertTargetDisplayStateAllowsWrite(data, expectedDisplayState);
 
   const nextData = {
     ...data,
@@ -154,9 +178,10 @@ function main() {
     const options = parseArgs(process.argv.slice(2));
     const target = assertSafeTarget(options.target);
     const input = normalizeRepoPath(options.input);
-    const layer = readProjection(input);
+    const expectedDisplayState = getExpectedDisplayState(options);
+    const layer = readProjection(input, expectedDisplayState);
 
-    writeProductionData(target, layer);
+    writeProductionData(target, layer, expectedDisplayState);
 
     console.log('External AI production data write: PASS');
     console.log(`target: ${target}`);

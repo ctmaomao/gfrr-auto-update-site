@@ -378,3 +378,19 @@ Current display line decision:
 ```text
 visible_display_ux_audited_no_provider_call
 ```
+
+## 19. v28.0L-4A production refresh workflow status
+
+v28.0L-4A adds the production refresh workflow for the already-visible external AI read-only panel.
+
+Status update:
+
+- Production refresh workflow is implemented.
+- Manual refresh is available through `workflow_dispatch`.
+- Daily refresh is scheduled once per day at `23:50 UTC`.
+- The visible panel will continue to read refreshed production data from `externalAiInterpretationLayer`.
+- Refresh projection preserves the existing visible display flags.
+- No frontend logic change is made by the refresh workflow.
+- No Global Risk Heatmap layout change is made.
+- No scoring / decision / execution / position path is changed.
+- The refresh workflow is the only approved automatic provider call path.
