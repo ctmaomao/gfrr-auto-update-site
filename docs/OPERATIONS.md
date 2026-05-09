@@ -1827,3 +1827,17 @@ Operator guidance:
 - `External AI Production Refresh` remains the only approved automatic path for changing external AI content.
 - Allowed rollback path is reverting the faulty radar refresh or restoring the last valid `externalAiInterpretationLayer` only through an approved hotfix.
 - Continue treating the known `check:world-order` warning as non-blocking when `check:all` passes.
+
+### v28.0M-4 macro overview structure audit-sync operator note
+
+v28.0M-4 records that the Macro Overview structure line is stable after the M-1 skeleton, M-2 calibration, M-3 unified judgment structure, and M-3H preservation hotfix.
+
+Operator guidance:
+
+- The macro overview is now the first read path for judgment, pressure sources, signal layers, macro drivers, market temperature waiting state, risk engines, and cross-validation.
+- If future ordinary radar refresh fails external AI guards, inspect `externalAiInterpretationLayer` preservation first.
+- Do not manually edit external AI generated text.
+- Do not proceed to Market Pricing Temperature implementation until the historical weekly data source is separately designed.
+- Do not fabricate Nasdaq / QQQ / MA60 / standard deviation / z-score values.
+- Global Risk Heatmap must remain a standalone large section.
+- `External AI Production Refresh` remains the only approved automatic path for changing external AI content.

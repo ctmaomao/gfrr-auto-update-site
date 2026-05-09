@@ -1302,6 +1302,47 @@ Recommended next step:
 v28.0M-4 Macro Overview Structure Audit Sync - No Code Change
 ```
 
+## v28.0M-4 Macro Overview Structure Audit Sync
+
+v28.0M-4 records that the Macro Overview structure line is complete and audited through the preservation hotfix follow-up.
+
+Completed line:
+
+- v28.0M-1 homepage information architecture skeleton: completed and audited.
+- v28.0M-2 homepage judgment content calibration: completed and audited.
+- v28.0M-3 unified judgment data structure: completed and audited.
+- v28.0M-3H external AI layer preservation hotfix: completed and audited.
+- v28.0M-3H-1 preservation hotfix audit sync: completed and audited.
+
+Current macro overview structure:
+
+- 今日总判断.
+- 主要压力来源.
+- 信号分层.
+- 四大宏观驱动.
+- 市场定价温度计 waiting state.
+- 五大风险引擎摘要.
+- 风险交叉验证.
+
+Audit boundary:
+
+- Market Pricing Temperature remains waiting-for-history.
+- No fake Nasdaq / QQQ / MA60 / standard deviation / z-score values are present.
+- Global Risk Heatmap remains standalone.
+- Ordinary radar refresh preserves `externalAiInterpretationLayer`.
+- `External AI Production Refresh` remains the only approved path to update AI content.
+- `check:all` is restored to PASS.
+- No provider call was run.
+- No workflow changed.
+- No data, code, frontend, package, Worker, realtime, or config file changed during this audit sync.
+- Scoring / decision / execution / position logic remains unchanged.
+
+Recommended next step:
+
+```text
+v28.0M-5 Market Pricing Temperature Data Source Design - No Data Fetch / No Calculation
+```
+
 ## v28.0M-3H External AI Layer Preservation Hotfix
 
 v28.0M-3H restores the production external AI layer after an ordinary radar data refresh rewrote `externalAiInterpretationLayer` into a non-production scaffold shape.
