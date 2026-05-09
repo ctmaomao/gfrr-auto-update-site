@@ -528,3 +528,30 @@ v28.0L-3H-3 Second Fixture Sample Provider Call Audit
 ```
 
 Live/local provider input remains `not_ready` until `fixture_sample` quality review passes.
+
+## v28.0L-3H-3 Second Fixture Sample Provider Call Audit
+
+v28.0L-3H-3 records the successful second `fixture_sample` DeepSeek provider-call audit from run `25593082968`.
+
+Audit result:
+
+- provider-call path entered through GitHub Environment `external-ai-manual`.
+- provider was `deepseek`; model was `deepseek-v4-flash`.
+- output validation PASS.
+- DeepSeek manual API test PASS.
+- quality review PASS with `recommendation=pass_for_manual_review`.
+- `promotionEligible=false`.
+- artifact sanitizer PASS.
+- sanitized provider-call artifacts uploaded.
+- no production data write.
+- no frontend display.
+- no Daily integration.
+- no Worker, config, scoring, decision, execution, or position change.
+
+Next phase should be separately approved. Recommended next stage:
+
+```text
+v28.0L-3I Live/Local Compact Provider-Call Design - No Provider Call
+```
+
+Live/local provider execution, production integration, frontend display, Daily integration, and `externalAiInterpretationLayer` promotion remain `not_ready`.

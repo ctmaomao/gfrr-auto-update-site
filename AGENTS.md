@@ -301,3 +301,9 @@ Do not run live/local provider-call input before the `fixture_sample` workflow a
 v28.0L-3H-2 is prompt / quality guidance only. Do not run DeepSeek or trigger the provider workflow while making this change.
 
 Do not bypass quality review. Do not weaken `review:external-ai-artifact`, `check:external-ai-output`, or artifact sanitizer rules to make a provider artifact pass. Do not run live/local provider-call input until `fixture_sample` quality review passes in a later audit PR. Provider artifacts remain non-production and must not enter frontend, Daily, Worker, production data, scoring, decision, execution, or position logic.
+
+## 19. v28.0L-3H-3 fixture provider-call audit reminder
+
+v28.0L-3H-3 only records that the second `fixture_sample` provider-call audit passed in run `25593082968`: provider transport, output validation, quality review, artifact sanitizer, and sanitized artifact upload all passed, with `promotionEligible=false`.
+
+Do not treat L-3H-3 success as permission to write production data, display provider output, enable `externalAiInterpretationLayer`, trigger Daily, or affect scoring / decision / execution / position logic. Live/local provider call requires a separate explicitly approved PR/task. Do not rerun `fixture_sample` unnecessarily.
