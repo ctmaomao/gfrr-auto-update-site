@@ -489,3 +489,9 @@ Do not remove or malform `displayEnabled`, `boundaries.frontendDisplayApproved`,
 v28.0M-3H-1 records that the external AI layer preservation hotfix passed post-merge audit.
 
 Ordinary radar data refresh must preserve `externalAiInterpretationLayer`; do not replace it with the disabled scaffold. Do not remove `displayEnabled`, `boundaries.frontendDisplayApproved`, `qualityReview.promotionEligible=false`, or non-impact boundaries. Do not update external AI content outside the approved `External AI Production Refresh` workflow, and do not use repeated provider reruns to repair ordinary radar refresh damage.
+
+## 50. v28.0M-4 macro overview structure audit reminder
+
+v28.0M-4 records that the Macro Overview structure line is complete and audited.
+
+Macro overview judgment cards should continue to use the unified read-only judgment structure. Missing data must remain explicit, pending signals must not be promoted into verified signals, and ordinary radar refresh must preserve `externalAiInterpretationLayer`. Future Market Pricing Temperature work must not fabricate Nasdaq / QQQ history, MA60, standard deviation, or z-score data. Global Risk Heatmap remains standalone and must not be nested inside macro overview, risk engine, or cross-validation cards.

@@ -1618,3 +1618,16 @@ Current data contract boundary:
 - `qualityReview.promotionEligible=false` remains required.
 - Non-impact boundaries must remain valid: no scoring, decision, execution, or position impact.
 - Future data changes still require production contract validation, production write guard, frontend scaffold check, `check:data`, and `check:all`.
+
+## v28.0M-4 macro overview read-only derivation boundary
+
+The Macro Overview is a frontend read-only derivation layer.
+
+Current data contract boundary:
+
+- Macro overview rendering must not mutate `data/radar-data.json`.
+- It reads from existing site data and displays missing-data states when required inputs are unavailable.
+- Market Pricing Temperature remains a waiting state until historical weekly data exists.
+- Nasdaq / QQQ weekly history, MA60, standard deviation, and z-score values must not be fabricated.
+- Macro overview judgment cards must not change scoring, `decisionModel`, `executionLock`, or `positionGuidance`.
+- Global Risk Heatmap remains a separate display section, not nested inside macro overview cards.
