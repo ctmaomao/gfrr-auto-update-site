@@ -478,7 +478,26 @@ v28.0L-3I Live/Local Compact Provider-Call Design - No Provider Call
 
 L-3H-3 records fixture path audit success only. It does not approve live/local provider execution, production data writes, frontend display, Daily integration, `externalAiInterpretationLayer` promotion, or scoring / decision / execution / position changes.
 
-## 19. Historical v28.0L-3D final readiness decision
+## 19. v28.0L-3I readiness update
+
+v28.0L-3I documents the future live/local compact provider-call design without implementing it.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Fixture_sample provider path | verified | Run `25593082968` passed provider transport, validation, quality review, sanitizer, and artifact upload. | No | Keep fixture path available and gated. |
+| Local_compact design | ready / documented | [`EXTERNAL_AI_LIVE_LOCAL_COMPACT_PROVIDER_CALL_DESIGN.md`](EXTERNAL_AI_LIVE_LOCAL_COMPACT_PROVIDER_CALL_DESIGN.md) records constraints, input preparation, prompt semantics, gates, artifact policy, stop rules, and acceptance criteria. | No | Use as the implementation reference. |
+| Local_compact implementation | not_ready | No workflow or script change exists in L-3I. | Yes | Requires separate reviewed L-3J implementation PR. |
+| Live/local provider call | not_ready | L-3I does not execute a provider call. | Yes | Do not run until L-3J or later is merged and audited. |
+| Production integration | not_ready | Provider output remains artifact-only and `promotionEligible=false`. | Yes | Separate reviewed production phase required. |
+| Frontend display | not_ready | External AI output remains non-user-visible. | Yes | Separate reviewed display phase required. |
+
+Current L-3I decision:
+
+```text
+local_compact_design_ready_implementation_not_ready
+```
+
+## 20. Historical v28.0L-3D final readiness decision
 
 Overall readiness:
 

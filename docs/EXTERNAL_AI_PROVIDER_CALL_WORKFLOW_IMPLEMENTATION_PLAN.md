@@ -704,3 +704,24 @@ v28.0L-3I Live/Local Compact Provider-Call Design - No Provider Call
 ```
 
 The next step may design a live/local compact provider-call path, but it should not execute live/local provider input yet.
+
+## 23. v28.0L-3I live/local compact provider-call design
+
+v28.0L-3I is documented in [`EXTERNAL_AI_LIVE_LOCAL_COMPACT_PROVIDER_CALL_DESIGN.md`](EXTERNAL_AI_LIVE_LOCAL_COMPACT_PROVIDER_CALL_DESIGN.md).
+
+Design status:
+
+- The `fixture_sample` path is verified by run `25593082968`.
+- Provider transport, validator, quality review, sanitizer, and artifact upload are verified for the fixture path.
+- `local_compact` design is now documented.
+- `local_compact` implementation remains separate.
+- A future `local_compact` implementation must remain artifact-only.
+- A future `local_compact` implementation must not write production data.
+- A future `local_compact` implementation must not display output in frontend.
+- A future `local_compact` implementation must not trigger Daily or affect scoring / decision / execution / position logic.
+
+Recommended next implementation, only after L-3I is merged and audited:
+
+```text
+v28.0L-3J Local Compact Provider-Call Workflow Path - Artifact-Only / No Production Data
+```

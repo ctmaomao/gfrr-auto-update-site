@@ -279,3 +279,23 @@ Interpretation:
 - Production integration remains `not_ready`.
 - Frontend display remains `not_ready`.
 - No provider artifact may be promoted into `data/radar-data.json`, Daily, frontend display, Worker payloads, scoring, decision, execution, or position logic.
+
+## 14. v28.0L-3I local_compact provider-call gate design
+
+v28.0L-3I designs a future `local_compact` provider-call path without implementing it.
+
+Gate requirements remain:
+
+- GitHub Environment `external-ai-manual` remains required.
+- Environment secret `DEEPSEEK_API_KEY` remains required only for the provider-call step.
+- Secret must remain step-scoped and must not be passed as a command-line argument.
+- `local_compact` must still use the artifact-only route.
+- `max_attempts=1` remains required.
+- output validation, quality review, and artifact sanitizer remain required.
+- `promotionEligible=false` remains required.
+- no production data write.
+- no frontend display.
+- no Daily integration.
+- no scoring / decision / execution / position changes.
+
+The successful `fixture_sample` audit does not authorize production use, live/local execution, provider output promotion, or frontend display.

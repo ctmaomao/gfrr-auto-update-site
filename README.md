@@ -294,3 +294,5 @@ Realtime / Daily workflow 会在 GitHub Actions Summary 输出关键审计信息
 Provider-call workflow status: `External AI Manual Provider Test` is unlocked only behind GitHub Environment `external-ai-manual` approval and remains artifact-only / non-production.
 
 Fixture sample provider-call status: v28.0L-3H-3 passed validator, quality review, and sanitizer for run `25593082968`; production integration remains disabled.
+
+Local compact provider-call status: v28.0L-3I documents the future design only; implementation and live/local execution remain pending.
