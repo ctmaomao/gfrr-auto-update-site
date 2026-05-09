@@ -495,3 +495,24 @@ Recommended next step:
 ```text
 v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
 ```
+
+## 22. v28.0L-3S visible display flag design status
+
+v28.0L-3S documents that visible display requires explicit data flags in the production contract.
+
+Status update:
+
+- Display flags are part of the production contract.
+- Future visible display requires `displayEnabled=true`.
+- Future visible display requires `boundaries.frontendDisplayApproved=true`.
+- Current production data keeps both flags false.
+- Enabling visible display does not imply a provider rerun.
+- Enabling visible display does not imply new AI text content.
+- Enabling visible display does not imply scoring / decision / execution / position impact.
+- Automatic provider calls and Daily integration remain disabled.
+
+Recommended next step:
+
+```text
+v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
+```

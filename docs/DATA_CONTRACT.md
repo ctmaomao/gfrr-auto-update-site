@@ -1468,3 +1468,17 @@ Current data contract boundary:
 - The scaffold does not modify `data/radar-data.json`.
 - The scaffold does not affect scoring, `decisionModel`, `executionLock`, `positionGuidance`, Global Risk Heatmap layout, Daily integration, or automatic provider calls.
 - Visible frontend display remains not approved.
+
+## v28.0L-3S externalAiInterpretationLayer visible display flag design
+
+v28.0L-3S documents the future approval and data-flag process for making the existing hidden scaffold visible.
+
+Current data contract boundary:
+
+- Visible display will require `displayEnabled=true`.
+- Visible display will require `boundaries.frontendDisplayApproved=true`.
+- Current production data keeps both values false.
+- This PR does not change `data/radar-data.json`.
+- Future visible-display flag enablement should be data-only where possible if the hidden scaffold remains sufficient.
+- Future visible-display flag enablement must not update AI text content, rerun DeepSeek, refresh provider artifacts, add automatic provider calls, or change frontend code unless a separate approval requires it.
+- The layer must continue to have no scoring, `decisionModel`, `executionLock`, `positionGuidance`, Global Risk Heatmap, Daily, or automatic provider-call effect.

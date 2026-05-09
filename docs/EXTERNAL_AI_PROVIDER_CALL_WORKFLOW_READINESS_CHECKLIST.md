@@ -285,6 +285,32 @@ Recommended next step:
 v28.0L-3S External AI Visible Display Approval + Data Flag Design - No Automatic Provider Call
 ```
 
+## v28.0L-3S readiness update
+
+v28.0L-3S documents the visible-display approval and data flag process without enabling visible display.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Frontend hidden scaffold | ready | L-3R added guarded read/render logic and a hidden panel. | No | Keep hidden until flags are explicitly approved. |
+| Visible display approval design | documented | `EXTERNAL_AI_VISIBLE_DISPLAY_APPROVAL_DESIGN.md` defines flag changes, gates, guard strategy, copy constraints, placement constraints, and rollback. | No | Use as input for L-3T only. |
+| Visible display data flags | not_ready | Current data keeps `displayEnabled=false` and `boundaries.frontendDisplayApproved=false`. | Yes | Separate data-only flag PR required. |
+| Visible display | not_ready | No data flags are enabled and no visible display is approved. | Yes | Do not display in this PR. |
+| Daily integration | not_ready | No Daily integration is approved or implemented. | Yes | Keep disconnected. |
+| Automatic provider calls | not_ready | No scheduled or automatic provider calls are approved or implemented. | Yes | Keep manual-only unless a separate future phase approves otherwise. |
+| Scoring / decision / execution / position impact | blocked / out_of_scope | All affect flags remain false and no related logic may change. | Yes | Keep external AI out of these paths. |
+
+Current L-3S decision:
+
+```text
+visible_display_approval_design_ready_flag_enablement_no_go
+```
+
+Recommended next step:
+
+```text
+v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
+```
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:

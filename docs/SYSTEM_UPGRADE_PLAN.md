@@ -959,3 +959,28 @@ Recommended next stage:
 ```text
 v28.0L-3S External AI Visible Display Approval + Data Flag Design - No Automatic Provider Call
 ```
+
+## v28.0L-3S External AI Visible Display Approval + Data Flag Design
+
+v28.0L-3S adds [`EXTERNAL_AI_VISIBLE_DISPLAY_APPROVAL_DESIGN.md`](EXTERNAL_AI_VISIBLE_DISPLAY_APPROVAL_DESIGN.md) as documentation-only design for future visible-display approval.
+
+This stage:
+
+- documents the future data-flag process.
+- keeps `displayEnabled=false`.
+- keeps `boundaries.frontendDisplayApproved=false`.
+- does not modify `data/radar-data.json`.
+- does not modify frontend files.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not read or modify secrets.
+- keeps Global Risk Heatmap layout unchanged.
+- keeps Daily integration disabled.
+- keeps automatic provider calls disabled.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
+```

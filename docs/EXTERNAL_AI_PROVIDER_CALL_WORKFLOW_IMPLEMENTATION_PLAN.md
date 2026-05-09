@@ -1017,3 +1017,25 @@ Recommended next stage:
 ```text
 v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
 ```
+
+## 37. v28.0L-3S visible display approval and data flag design
+
+v28.0L-3S documents the approval and data-flag process for a future visible display step.
+
+Status update:
+
+- Visible display approval design is documented.
+- Future visible display is defined as a data-flag change plus guard update.
+- No production data is changed in this PR.
+- No frontend code is changed in this PR.
+- No provider call is added or run.
+- No workflow file is changed.
+- No automatic provider call or Daily integration is added.
+- Visible display remains NO-GO in this PR.
+- Scoring / decision / execution / position behavior remains unchanged.
+
+Recommended next stage:
+
+```text
+v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
+```

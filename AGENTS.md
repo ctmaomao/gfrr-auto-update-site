@@ -399,3 +399,9 @@ Do not implement external AI frontend display without an explicit frontend displ
 v28.0L-3R adds a hidden-by-default frontend scaffold for `externalAiInterpretationLayer`. The scaffold must remain non-visible while `displayEnabled=false` and `boundaries.frontendDisplayApproved=false`.
 
 Do not set `displayEnabled=true` or `boundaries.frontendDisplayApproved=true` without a separate explicitly approved visible-display PR. Future visible display requires a separate PR, must keep Global Risk Heatmap layout unchanged, and must keep scoring / decision / execution / position logic untouched.
+
+## 35. v28.0L-3S visible display approval design reminder
+
+v28.0L-3S is documentation-only and defines the future visible-display approval and data flag process. It does not enable visible display.
+
+Do not enable visible display without a separate explicit data-flag PR. Visible display does not require a provider call; do not add DeepSeek reruns, automatic provider calls, Daily integration, workflow schedules, scoring changes, decision changes, execution changes, or position changes for frontend display. Preserve Global Risk Heatmap layout.

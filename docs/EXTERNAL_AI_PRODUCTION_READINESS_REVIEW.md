@@ -360,3 +360,30 @@ Recommended next step:
 ```text
 v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
 ```
+
+## 17. v28.0L-3S visible display approval readiness update
+
+v28.0L-3S documents the approval and data-flag process for future visible display without enabling display.
+
+Readiness update:
+
+- Frontend hidden scaffold: complete.
+- Visible display approval design: this PR.
+- Visible display flag enablement: `not_ready`.
+- Production data write: already completed but display-disabled.
+- Daily integration: `not_ready`.
+- Automatic provider calls: `not_ready`.
+- Scoring / decision / execution / position impact: blocked / out_of_scope.
+
+Current decision:
+
+- Hidden scaffold: ready.
+- Visible display approval design: documented.
+- Visible display flag enablement: next phase only.
+- Visible display: NO-GO in this PR.
+
+Recommended next step:
+
+```text
+v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
+```

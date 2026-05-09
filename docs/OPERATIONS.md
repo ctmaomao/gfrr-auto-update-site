@@ -1515,3 +1515,23 @@ Recommended next stage:
 ```text
 v28.0L-3S External AI Visible Display Approval + Data Flag Design - No Automatic Provider Call
 ```
+
+### v28.0L-3S visible display approval operator note
+
+v28.0L-3S documents the approval and data-flag process for a future visible external AI panel. It does not enable visible display.
+
+Operator guidance:
+
+- Do not set `displayEnabled=true` manually.
+- Do not set `boundaries.frontendDisplayApproved=true` manually.
+- Future visible-display flag enablement should be data-only where possible.
+- No provider call is needed just to make the current layer visible.
+- Do not rerun DeepSeek for visible display flag enablement.
+- Do not add automatic provider calls or Daily integration for visible display.
+- Preserve Global Risk Heatmap layout.
+
+Recommended next stage:
+
+```text
+v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
+```
