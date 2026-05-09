@@ -1292,3 +1292,44 @@ Operator guidance:
 - Treat `data/radar-data.json` inside `manual-input-compact-latest.json` as source metadata only.
 - Never upload actual `data/radar-data.json`.
 - Never copy provider output into `data/radar-data.json`.
+
+### v28.0L-3J-4 local_compact provider-call audit note
+
+Run `25598887574` succeeded for the `local_compact` DeepSeek provider-call audit.
+
+Operator audit result:
+
+- workflow: `External AI Manual Provider Test`.
+- commit: `ade9ca2`.
+- `provider-test-dry-run-and-gate` succeeded.
+- `provider-call-artifact-only` succeeded.
+- local compact input was built successfully from local `data/radar-data.json` as read-only source metadata.
+- `manual-input-compact-latest.json` was created.
+- provider-call path entered through `external-ai-manual`.
+- provider was `deepseek`; model was `deepseek-v4-flash`.
+- DeepSeek manual API test passed.
+- output validation passed with `warnings=0`.
+- quality review passed.
+- artifact sanitizer passed.
+- sanitized provider-call artifacts uploaded.
+- `promotionEligible=false`.
+- `productionDataWritten=false`.
+- `frontendDisplayChanged=false`.
+- no data/radar-data.json write occurred.
+- no frontend display, Daily integration, scoring, decision, execution, or position change occurred.
+
+Operator guidance:
+
+- Use run `25598887574` as the `local_compact` artifact-only audit record.
+- Do not rerun `local_compact` repeatedly without a new approved task.
+- Do not copy artifacts into `data/`.
+- Do not enable frontend display.
+- Do not trigger Daily from provider output.
+- Any next step toward production must be a separate design/readiness PR.
+- If a future `local_compact` run fails validator, quality review, or sanitizer, stop and revise before retry.
+
+Recommended next stage:
+
+```text
+v28.0L-3K External AI Production Integration Readiness Review - No Production Write
+```

@@ -4,6 +4,39 @@
 
 This is a documentation-only readiness checklist.
 
+## v28.0L-3J-4 readiness update
+
+Run `25598887574` completed the `local_compact` DeepSeek provider-call audit successfully.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Fixture_sample provider path | verified | Run `25593082968` passed provider transport, validation, quality review, sanitizer, and artifact upload. | No | Keep fixture path available and gated. |
+| Local_compact provider path | verified | Run `25598887574` passed provider transport, validation, quality review, sanitizer, and artifact upload. | No | Do not rerun repeatedly without a new approved task. |
+| Provider transport | verified | Run `25598887574` entered through `external-ai-manual`, used step-scoped masked secret injection, and executed `provider=deepseek` / model `deepseek-v4-flash`. | No | Keep environment-gated and step-scoped. |
+| Local compact input build | verified | `manual-input-compact-latest.json` was created with `sourceType=local_file`, `compact=true`, and `radarDataUpdatedAt=2026-05-08T23:29:12.835Z`. | No | Keep local source metadata read-only. |
+| Output validator | verified | External AI output validation passed with `warnings=0`. | No | Keep validator required. |
+| Quality review | verified_for_local_compact | External AI artifact quality review passed. | No | Keep quality review required and keep `promotionEligible=false`. |
+| Artifact sanitizer | verified_for_local_compact | Artifact sanitizer passed. | No | Keep sanitizer strict before upload. |
+| Artifact upload | verified | Sanitized provider-call artifacts uploaded. | No | Continue artifact-only retention and review. |
+| Production data write | not_ready | `productionDataWritten=false`; no data promotion is approved. | Yes | Separate reviewed production integration phase required. |
+| Frontend display | not_ready | `frontendDisplayChanged=false`; external provider output remains non-user-visible. | Yes | Separate reviewed display phase required. |
+| Daily integration | not_ready | No Daily integration was added or approved. | Yes | Separate future Daily phase required. |
+| Automatic scheduled provider call | not_ready | L-3J-4 records one approved manual audit only. | Yes | Separate reviewed scheduling phase required, if ever. |
+| `promotionEligible=true` | not_ready | Run `25598887574` kept `promotionEligible=false`. | Yes | Keep false until a separate reviewed production integration PR changes the boundary. |
+| Scoring / decision / execution / position impact | blocked / out_of_scope | L-3J-4 changes no scoring, decision, execution, or position logic. | Yes | Keep external AI output outside these paths. |
+
+Current L-3J-4 decision:
+
+```text
+local_compact_provider_path_audited_production_integration_not_ready
+```
+
+Recommended next PR:
+
+```text
+v28.0L-3K External AI Production Integration Readiness Review - No Production Write
+```
+
 - No provider-call workflow is added.
 - No workflow file is added or modified.
 - No GitHub secret is added.

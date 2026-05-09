@@ -312,3 +312,14 @@ This does not change provider-call authorization:
 - `promotionEligible=false` remains required.
 - fixture success does not authorize production use.
 - live/local provider execution remains blocked until a separate implementation PR is merged and audited.
+
+## 16. v28.0L-3J-4 local_compact environment gate audit
+
+Run `25598887574` confirms that the `external-ai-manual` environment gate has now protected both audited provider-call paths:
+
+- `fixture_sample` passed in run `25593082968`.
+- `local_compact` passed in run `25598887574`.
+
+The Environment secret remains step-scoped to the provider-call step, and GitHub Actions injected it only as a masked value for the approved provider step.
+
+This success does not authorize production data writes, frontend display, Daily integration, `externalAiInterpretationLayer` promotion, automatic scheduled provider calls, or scoring / decision / execution / position changes.

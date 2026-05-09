@@ -309,3 +309,19 @@ This stage does not:
 - modify data contracts used by production
 - display external AI output
 - change scoring / decision / execution / position
+
+## 17. v28.0L-3J-4 Local Compact Prompt Quality Audit
+
+Run `25598887574` validated the L-3J-3 local compact execution-language prompt fix through a successful quality review.
+
+Prompt contract status:
+
+- `local_compact` output used site-structured data semantics.
+- `decisionContext` remains read-only background.
+- execution / operation / position / cash / exposure / trading terms remain forbidden in model string outputs.
+- output validation passed.
+- quality review passed.
+- artifact sanitizer passed.
+- `promotionEligible=false` remains required.
+
+This audit does not change production prompt contracts, enable frontend display, or approve provider output promotion.

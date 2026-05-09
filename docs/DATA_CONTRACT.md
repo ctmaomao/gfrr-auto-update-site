@@ -1321,3 +1321,18 @@ This does not change the production data contract:
 - production `externalAiInterpretationLayer` remains disabled and non-user-visible.
 - no provider output may enter `data/radar-data.json`, `data/*.json`, `realtime/*.json`, Worker payloads, config files, Daily inputs, or frontend display paths.
 - scoring, decision, execution, and position logic remain unchanged.
+
+## v28.0L-3J-4 local_compact provider-call audit data boundary
+
+Run `25598887574` successfully audited the `local_compact` provider-call path, including provider transport, output validation, quality review, artifact sanitizer, and sanitized artifact upload.
+
+This does not change the production data contract:
+
+- `local_compact` provider artifacts remain non-production diagnostics.
+- even quality-reviewed provider output cannot enter `data/radar-data.json` yet.
+- production `externalAiInterpretationLayer` remains disabled and non-user-visible.
+- `promotionEligible=false` remains required.
+- no provider output may enter `data/*.json`, `realtime/*.json`, Worker payloads, config files, frontend display paths, Daily inputs, scoring, decision, execution, or position logic.
+- production data writes remain `not_ready`.
+- frontend display remains `not_ready`.
+- Daily integration remains `not_ready`.
