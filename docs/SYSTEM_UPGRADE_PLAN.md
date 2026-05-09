@@ -1324,3 +1324,27 @@ Recommended next step:
 ```text
 v28.0M-3H-1 Preservation Hotfix Audit Sync - No Code Change
 ```
+
+## v28.0M-3H-1 Preservation Hotfix Audit Sync
+
+v28.0M-3H-1 records the successful post-merge audit for the external AI layer preservation hotfix.
+
+Audit result:
+
+- v28.0M-3H is merged at `368a851 Merge pull request #118`.
+- Ordinary radar refresh now preserves the existing valid `externalAiInterpretationLayer`.
+- `External AI Production Refresh` remains the only approved path to update external AI content.
+- `check:external-ai-production-contract -- data/radar-data.json`: PASS.
+- `check:external-ai-production-write-guard`: PASS.
+- `check:external-ai-frontend-hidden-scaffold`: PASS.
+- `check:all`: PASS.
+- No provider call was run.
+- No workflow changed.
+- No data, frontend, package, Worker, realtime, or config file changed during this audit sync.
+- Scoring / decision / execution / position logic remains unchanged.
+
+Recommended next step:
+
+```text
+v28.0M-4 Macro Overview Structure Audit Sync - No Code Change
+```

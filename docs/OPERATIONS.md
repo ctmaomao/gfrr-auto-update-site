@@ -1813,3 +1813,17 @@ Rollback and repair boundaries:
 - A normal radar refresh may update current market and radar fields, but must carry forward the existing valid external AI layer unchanged.
 - If unsafe copy appears or display gates are malformed, revert the damaging data refresh or restore the latest contract-valid layer.
 - Treat the known non-blocking `check:world-order` warning as separate from external AI preservation when `check:all` passes.
+
+### v28.0M-3H-1 preservation hotfix audit-sync operator note
+
+v28.0M-3H-1 records that the preservation hotfix passed post-merge audit after PR #118.
+
+Operator guidance:
+
+- If `check:external-ai-production-write-guard` fails after `chore: refresh radar data`, first inspect whether ordinary radar refresh preserved `externalAiInterpretationLayer`.
+- Ordinary radar refresh should not overwrite `externalAiInterpretationLayer` with the disabled scaffold.
+- Do not manually edit external AI generated text.
+- Do not rerun the provider repeatedly to repair ordinary radar refresh damage.
+- `External AI Production Refresh` remains the only approved automatic path for changing external AI content.
+- Allowed rollback path is reverting the faulty radar refresh or restoring the last valid `externalAiInterpretationLayer` only through an approved hotfix.
+- Continue treating the known `check:world-order` warning as non-blocking when `check:all` passes.

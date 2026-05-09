@@ -483,3 +483,9 @@ Missing data must remain explicit, pending signals must not be promoted into ver
 Ordinary radar data generation must preserve the current contract-valid `externalAiInterpretationLayer` in `data/radar-data.json`.
 
 Do not remove or malform `displayEnabled`, `boundaries.frontendDisplayApproved`, `qualityReview.promotionEligible=false`, or the non-impact boundary flags during normal radar refresh. Do not update external AI content, generated text, provider metadata, or display approval flags outside the approved `External AI Production Refresh` workflow. If a radar refresh breaks the external AI production contract, restore the latest valid production layer from git history or rerun the approved production refresh only after the preservation bug is fixed.
+
+## 49. v28.0M-3H-1 preservation audit-sync reminder
+
+v28.0M-3H-1 records that the external AI layer preservation hotfix passed post-merge audit.
+
+Ordinary radar data refresh must preserve `externalAiInterpretationLayer`; do not replace it with the disabled scaffold. Do not remove `displayEnabled`, `boundaries.frontendDisplayApproved`, `qualityReview.promotionEligible=false`, or non-impact boundaries. Do not update external AI content outside the approved `External AI Production Refresh` workflow, and do not use repeated provider reruns to repair ordinary radar refresh damage.

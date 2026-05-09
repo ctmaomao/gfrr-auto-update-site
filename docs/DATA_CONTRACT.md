@@ -1603,3 +1603,18 @@ Current data contract boundary:
 - Normal radar refresh must not edit external AI generated text.
 - `External AI Production Refresh` remains the only approved automatic provider path for changing external AI content.
 - Future data updates still require production contract validation and production write guard.
+
+## v28.0M-3H-1 externalAiInterpretationLayer preservation audit
+
+v28.0M-3H-1 records that the preservation hotfix passed post-merge audit.
+
+Current data contract boundary:
+
+- `data/radar-data.json` must retain a valid `externalAiInterpretationLayer` across ordinary radar refreshes.
+- Ordinary radar refresh must preserve the existing layer instead of replacing it with a disabled scaffold.
+- `External AI Production Refresh` remains the only approved path that updates external AI content.
+- `displayEnabled` must remain a boolean.
+- `boundaries.frontendDisplayApproved` must remain a boolean.
+- `qualityReview.promotionEligible=false` remains required.
+- Non-impact boundaries must remain valid: no scoring, decision, execution, or position impact.
+- Future data changes still require production contract validation, production write guard, frontend scaffold check, `check:data`, and `check:all`.
