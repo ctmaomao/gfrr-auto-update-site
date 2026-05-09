@@ -1455,3 +1455,24 @@ Recommended next stage:
 ```text
 v28.0L-3P-1 First Production Write Audit Sync - No Frontend Display
 ```
+
+### v28.0L-3P-1 first production write audit-sync operator note
+
+v28.0L-3P-1 records that the first controlled production write is stable after post-merge audit.
+
+Operator guidance:
+
+- Production `externalAiInterpretationLayer` now exists in `data/radar-data.json`.
+- The layer is not displayed: `displayEnabled=false` and `boundaries.frontendDisplayApproved=false`.
+- Do not manually edit `externalAiInterpretationLayer`.
+- Future updates must use the validator/write flow.
+- Run `npm run check:external-ai-production-contract -- data/radar-data.json` after any future layer edit.
+- Run `npm run check:external-ai-production-write-guard` after any future layer edit.
+- Frontend display requires a separate approved frontend PR.
+- Rollback remains reverting the first write PR.
+
+Recommended next stage:
+
+```text
+v28.0L-3Q External AI Frontend Display Design - No Display Yet
+```

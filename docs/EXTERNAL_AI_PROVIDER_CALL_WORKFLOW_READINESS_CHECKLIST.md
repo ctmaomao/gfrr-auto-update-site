@@ -206,6 +206,33 @@ Recommended next stage:
 v28.0L-3P-1 First Production Write Audit Sync - No Frontend Display
 ```
 
+## v28.0L-3P-1 readiness update
+
+v28.0L-3P-1 records the successful post-merge audit for the first controlled data-only layer.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Production data write | completed_for_first_data_only_layer | `data/radar-data.json` contains the contract-valid layer from run `25598887574`. | No | Keep future edits validator/write-guard gated. |
+| Production contract validator | passed | `check:external-ai-production-contract -- data/radar-data.json` passed in the post-merge audit. | No | Keep required for future edits. |
+| Production write guard | passed | `check:external-ai-production-write-guard` passed in the post-merge audit. | No | Keep required in `check:all`. |
+| Frontend display | not_ready | `displayEnabled=false`; no frontend display is approved. | Yes | Next phase is frontend display design only. |
+| Frontend display design | next_phase | Design must precede any display implementation. | Yes | Start v28.0L-3Q as no-display design. |
+| Daily integration | not_ready | No Daily integration is approved or implemented. | Yes | Keep disconnected. |
+| Automatic provider calls | not_ready | No scheduled or automatic provider calls are approved or implemented. | Yes | Keep manual-only unless a separate future phase approves otherwise. |
+| Scoring / decision / execution / position impact | blocked / out_of_scope | Inserted layer keeps all affect flags false. | Yes | Keep external AI out of these paths. |
+
+Current L-3P-1 decision:
+
+```text
+first_production_write_audited_frontend_display_design_next
+```
+
+Recommended next step:
+
+```text
+v28.0L-3Q External AI Frontend Display Design - No Display Yet
+```
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:

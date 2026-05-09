@@ -1424,5 +1424,20 @@ Current data contract boundary:
 - The field is read-only metadata for now.
 - Frontend code must ignore the field until a separate frontend PR explicitly approves display.
 - The layer must not affect scoring, `decisionModel`, `executionLock`, or `positionGuidance`.
+
+## v28.0L-3P-1 externalAiInterpretationLayer first write audit
+
+v28.0L-3P-1 records the successful post-merge audit of the first controlled data-only write.
+
+Current data contract boundary:
+
+- `externalAiInterpretationLayer` exists in production `data/radar-data.json`.
+- `displayEnabled=false`.
+- `boundaries.frontendDisplayApproved=false`.
+- `qualityReview.promotionEligible=false`.
+- The field is data-only and non-user-visible.
+- Frontend code must continue ignoring the field until a separate explicitly approved frontend PR changes that boundary.
+- Future edits must use the production contract validator and write guard flow.
+- No scoring, `decisionModel`, `executionLock`, or `positionGuidance` effect is approved.
 - Daily integration and automatic provider calls remain disabled.
 - Future edits to the layer must use the write script and production contract validator.
