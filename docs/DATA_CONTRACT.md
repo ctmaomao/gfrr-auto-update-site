@@ -1230,3 +1230,18 @@ Contract boundary:
 - Production `externalAiInterpretationLayer` remains disabled / non-user-visible.
 - Provider output remains artifact-only, validator-gated, quality-review-gated, and `promotionEligible=false`.
 - No scoring, decision, execution, position, Worker, Daily, frontend, `values.*`, or `effectiveDisplayInputs` contract changes are introduced by L-3H.
+
+## v28.0L-3H-1 provider-call audit data boundary
+
+Run `25592238444` produced the first real `fixture_sample` provider-call result, but it did not change the production data contract.
+
+Audit result:
+
+- output validation passed.
+- DeepSeek manual API test passed.
+- quality review failed with `needs_prompt_revision`.
+- `promotionEligible=false`.
+- provider artifacts remain non-production diagnostics.
+- artifact upload was blocked by the sanitizer because diagnostic JSON contained the forbidden marker `DEEPSEEK_API_KEY`.
+
+The sanitizer failure was a diagnostic marker issue, not approval to copy provider output into production. No provider output, quality review output, failure artifact, or provider-test diagnostic artifact may be copied into `data/radar-data.json`, `data/*.json`, `realtime/*.json`, Worker payloads, config files, frontend display paths, Daily inputs, scoring, decision, execution, or position logic.

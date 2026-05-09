@@ -614,3 +614,37 @@ First run sequence after merge:
 3. Manually run the first `fixture_sample` provider call with environment approval.
 4. Inspect sanitized artifacts, validator result, and quality review.
 5. Record the audit in a follow-up PR before considering any live/local input provider call.
+
+## 20. v28.0L-3H-1 provider-call audit and diagnostic fix
+
+Run `25592238444` executed the first real `fixture_sample` provider call after the `external-ai-manual` environment approval.
+
+Audit summary:
+
+- provider transport works for the approved fixture path.
+- provider was `deepseek`; model was `deepseek-v4-flash`.
+- exactly one provider call executed.
+- output validation passed.
+- DeepSeek manual API test passed.
+- warnings were 0.
+- quality review failed with recommendation `needs_prompt_revision`.
+- `promotionEligible=false`.
+- no production data was written.
+- no frontend display changed.
+- no Daily integration, Worker change, config change, scoring change, decision change, execution change, or position change occurred.
+- artifact upload was blocked because a diagnostic JSON artifact contained the literal marker `DEEPSEEK_API_KEY`.
+
+Implementation fix:
+
+- workflow diagnostic JSON must not write the literal secret name.
+- missing-secret diagnostics use `secretConfigured=false`.
+- provider-call diagnostics use `secretConfigured=true`.
+- diagnostics use `secretReference=environment_scoped_provider_key`.
+- strict artifact sanitizer remains strict and continues to reject forbidden markers.
+- failed quality review should still be inspectable through uploaded artifacts when the sanitizer passes.
+
+Operational decision:
+
+- do not rerun the provider-call workflow until this fix is merged.
+- do not run live/local input provider calls until `fixture_sample` quality review passes in a later audit.
+- next recommended PR is `v28.0L-3H-2 Fixture Sample Prompt/Quality Revision - No Provider Call`.

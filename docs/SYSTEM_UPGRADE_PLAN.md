@@ -483,3 +483,25 @@ This stage remains manual, artifact-only, and non-production:
 - no scoring / decision / execution / position impact.
 
 After merge, the next step is manual audit: create the environment secret outside this PR, run default dry-run, run the first `fixture_sample` provider call with environment approval, inspect artifacts, and record the result in a follow-up audit PR.
+
+## v28.0L-3H-1 Provider-Call Audit and Sanitizer Diagnostic Fix
+
+Run `25592238444` recorded the first real `fixture_sample` DeepSeek provider call behind the `external-ai-manual` environment gate.
+
+Observed status:
+
+- provider transport worked for the approved fixture path.
+- output validation passed.
+- DeepSeek manual API test passed.
+- quality review failed with `needs_prompt_revision`.
+- `promotionEligible=false`.
+- artifact sanitizer blocked upload because a diagnostic artifact contained the forbidden marker `DEEPSEEK_API_KEY`.
+- no production data, frontend, Daily, Worker, config, scoring, decision, execution, or position path changed.
+
+This is a safe failure. v28.0L-3H-1 fixes the diagnostic JSON so uploaded workflow artifacts do not contain the literal secret name, while keeping the sanitizer strict. Production integration remains `not_ready`, and frontend display remains `not_ready`.
+
+Next recommended stage:
+
+```text
+v28.0L-3H-2 Fixture Sample Prompt/Quality Revision - No Provider Call
+```
