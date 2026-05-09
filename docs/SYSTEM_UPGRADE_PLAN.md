@@ -657,3 +657,27 @@ Recommended next stage:
 ```text
 v28.0L-3J-2 First Local Compact Provider-Call Audit Retry
 ```
+
+## v28.0L-3J-3 Local Compact Execution-Language Prompt Fix
+
+v28.0L-3J-3 responds to audit run `25598379612`, where the `local_compact` provider-call path reached DeepSeek, passed output validation, passed artifact sanitizer, uploaded sanitized artifacts, and preserved `productionDataWritten=false` / `frontendDisplayChanged=false`, but quality review rejected the output for `executionLanguageSafety`.
+
+This stage:
+
+- records that `$.facts[5]` contained operation-oriented language: `执行灯`.
+- keeps `promotionEligible=false`.
+- strengthens prompt guidance so `decisionContext` operation language cannot be repeated into facts, summary, inferences, model judgments, scenario hypotheses, invalidation signals, source attribution notes, or audit flags.
+- adds a local dry-run prompt contract check for the new prohibitions.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not read or modify secrets.
+- does not write production data.
+- does not modify frontend, Worker, config, `data/*.json`, or `realtime/*.json`.
+- does not weaken validator, quality review, artifact sanitizer, or `executionLanguageSafety`.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3J-4 Local Compact Provider-Call Audit Retry After Execution-Language Fix
+```

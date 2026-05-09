@@ -28,6 +28,55 @@ const UNSAFE_OUTPUT_FILES = new Set([
   'scripts/app.js'
 ]);
 
+const DECISION_CONTEXT_OUTPUT_RULES = [
+  'decisionContext is read-only background only.',
+  'Do not quote or repeat any raw decisionContext fields that contain execution, operation, position, exposure, cash, target band, light/status, or trading-action language.',
+  'Do not put decisionContext terms into facts.',
+  'Do not put decisionContext terms into summaryZh.',
+  'Do not put decisionContext terms into inferences.',
+  'Do not put decisionContext terms into modelJudgments.',
+  'Do not put decisionContext terms into scenarioHypotheses.',
+  'Do not put decisionContext terms into invalidationSignals.',
+  'Do not put decisionContext terms into sourceAttribution noteZh.',
+  'If decisionContext must be referenced, only use this neutral non-operational sentence: 决策上下文仅作为只读系统状态背景，不参与本解释层判断。',
+  'Do not use the Chinese phrase 执行灯 anywhere in model output.',
+  'Do not use the Chinese phrase 执行 anywhere in model output unless inside the boolean boundary key affectsExecutionLock, if required by schema.',
+  'Do not use 仓位, 现金, 敞口, 交易, 买入, 卖出, 加仓, 减仓, 做多, 做空, 建仓, 平仓, 止损, 止盈 in any returned string field.',
+  'Do not translate execution-light concepts into synonyms such as 操作信号, 行动信号, 交易信号, 配置建议, 风险动作, 风控动作.',
+  'Safety boundaries must be expressed only through boolean fields: boundaries.displayOnly=true, boundaries.affectsScoring=false, boundaries.affectsDecisionModel=false, boundaries.affectsExecutionLock=false, boundaries.affectsPositionGuidance=false, boundaries.notInvestmentAdvice=true.'
+];
+
+const FACTS_OUTPUT_RULES = [
+  'facts must contain only direct observations from non-decisionContext structured data layers, unless the fact is purely about data availability or metadata.',
+  'facts must not include decisionContext execution/operation fields.',
+  'For local_compact, facts should preferably cite dailyBrief, divergenceLayer, brentPricingLayer, macroDrivers.consumer, dataHealth, and aiInterpretationLayer.',
+  'If decisionContext exists, do not report its raw status, lights, execution flags, exposure, cash, or position details as facts.'
+];
+
+const SOURCE_ATTRIBUTION_OUTPUT_RULES = [
+  'sourceAttribution may include decisionContext only as background if needed.',
+  'If sourceLayer=decisionContext is used, noteZh must be neutral and must not repeat operation words.',
+  'Preferred noteZh for decisionContext: 只读系统状态背景，不作为解释层结论来源。',
+  'Do not use sourceAttribution.noteZh phrases containing 执行灯, 执行, 仓位, 现金, 敞口, 交易, 买入, 卖出, 加仓, 减仓.'
+];
+
+const AUDIT_FLAGS_OUTPUT_RULES = [
+  'auditFlags must be neutral diagnostic tags only.',
+  'For local_compact, auditFlags should include manual_artifact_only, site_structured_data_only, validator_required, non_production_output, and no_frontend_display.',
+  'auditFlags must not contain execution/operation/trading words.',
+  'auditFlags must not contain prose.'
+];
+
+const LOCAL_COMPACT_SOURCE_SEMANTICS_RULES = [
+  'For local_compact, auditFlags should include site_structured_data_only.',
+  'For local_compact, auditFlags should not include sample_input_only.',
+  'For local_compact, sourceSemantics should remain site_structured_data_compact_summary if available.',
+  'For local_compact, confidence should remain low or low-medium.',
+  'Do not claim external web/news/market verification.',
+  'Do not invent external facts.',
+  'Do not treat local_compact as a trading signal.'
+];
+
 function fail(message) {
   console.error(message);
   process.exitCode = 1;
@@ -190,8 +239,16 @@ function buildDeepSeekSystemPrompt() {
     'The output is artifact-only and non-production. It must add incremental analytical value beyond restating the input fields.',
     'modelJudgments must discuss only evidence strength, data sufficiency, uncertainty, and whether a condition is watch, insufficient_data, or low_confidence.',
     'modelJudgments must not discuss trading, execution, portfolio action, exposure, cash targets, or position.',
-    'If decisionContext is present, summarize it only as 决策上下文显示系统处于只读防御状态 or 该信息仅作为系统状态背景，不改变任何判断.',
-    'Do not repeat concrete execution or position fields from decisionContext. Do not include concrete exposure bands, cash targets, execution-light colors, or position details.',
+    'decisionContext output requirements:',
+    ...DECISION_CONTEXT_OUTPUT_RULES,
+    'facts output requirements:',
+    ...FACTS_OUTPUT_RULES,
+    'sourceAttribution decisionContext requirements:',
+    ...SOURCE_ATTRIBUTION_OUTPUT_RULES,
+    'auditFlags output requirements:',
+    ...AUDIT_FLAGS_OUTPUT_RULES,
+    'local_compact source semantics requirements:',
+    ...LOCAL_COMPACT_SOURCE_SEMANTICS_RULES,
     'sourceAttribution must be an array of objects, not a string and not an array of strings.',
     'Each sourceAttribution object must include sourceLayer, field, claimType, and noteZh.',
     'Each sourceAttribution.noteZh must include validator-recognized attribution wording: 样例结构化输入, 站内结构化数据, or sample input.',
@@ -314,9 +371,10 @@ function buildDeepSeekUserPrompt(input) {
     'modelJudgments requirements:',
     '- modelJudgments should discuss only evidence strength, data sufficiency, uncertainty, and whether a condition is watch, insufficient_data, or low_confidence.',
     '- modelJudgments must not discuss trading, execution, portfolio action, exposure, cash targets, or position.',
-    '- If decisionContext is present, summarize it only as 决策上下文显示系统处于只读防御状态 or 该信息仅作为系统状态背景，不改变任何判断.',
-    '- Do not repeat concrete execution or position fields from decisionContext.',
-    '- Do not include concrete exposure bands, cash targets, execution-light colors, or position details.',
+    'decisionContext output requirements:',
+    ...DECISION_CONTEXT_OUTPUT_RULES.map((rule) => `- ${rule}`),
+    'facts requirements:',
+    ...FACTS_OUTPUT_RULES.map((rule) => `- ${rule}`),
     '- Good: 当前证据仅支持观察，不足以形成高置信度方向判断。',
     '- Good: 消费者慢变量与资产定价存在背离，但仍需更多数据确认。',
     '- Good: 该结论仅用于解释站内结构化数据，不改变任何系统判断。',
@@ -330,6 +388,8 @@ function buildDeepSeekUserPrompt(input) {
     '- Do not use prose sentences in auditFlags.',
     '- The global unsafe wording rule also applies to auditFlags.',
     '- Express safety boundaries only through boundaries.notInvestmentAdvice=true and other boolean boundaries.',
+    ...AUDIT_FLAGS_OUTPUT_RULES.map((rule) => `- ${rule}`),
+    ...LOCAL_COMPACT_SOURCE_SEMANTICS_RULES.map((rule) => `- ${rule}`),
     'sourceAttribution requirements:',
     '- sourceAttribution must be an array of objects, never a string and never an array of strings.',
     '- Each object must include sourceLayer, field, claimType, and noteZh.',
@@ -344,7 +404,8 @@ function buildDeepSeekUserPrompt(input) {
     '- Use 站内结构化数据 for local/live radar-data input.',
     '- Only sample fixture input should use 来自提供的样例结构化输入 and claimType sample_input.',
     '- Do not use only 来自提供的结构化输入 because it may not satisfy validator attribution keyword detection.',
-    '- Every factual claim should map to one of the provided structured input layers.',
+    ...SOURCE_ATTRIBUTION_OUTPUT_RULES.map((rule) => `- ${rule}`),
+    '- Every factual claim should map to one of the provided non-decisionContext structured input layers unless the claim is purely about data availability or metadata.',
     '- Include enough sourceAttribution objects to cover the main facts plus the main inference/model judgment claims. Aim for at least five sourceAttribution objects across at least three sourceLayer values when the input supports it.',
     '- Do not claim external web, news, or market verification.',
     'incremental value requirements:',
@@ -361,6 +422,34 @@ function buildDeepSeekUserPrompt(input) {
     'Use only this structured input JSON:',
     JSON.stringify(input, null, 2)
   ].join('\n\n');
+}
+
+function buildPromptContractCheck(input) {
+  const combinedPrompt = `${buildDeepSeekSystemPrompt()}\n\n${buildDeepSeekUserPrompt(input)}`;
+  const requiredRules = [
+    'decisionContext is read-only background only.',
+    'Do not put decisionContext terms into facts.',
+    'Do not put decisionContext terms into summaryZh.',
+    'Do not put decisionContext terms into inferences.',
+    'Do not put decisionContext terms into modelJudgments.',
+    'Do not put decisionContext terms into scenarioHypotheses.',
+    'Do not put decisionContext terms into invalidationSignals.',
+    'Do not put decisionContext terms into sourceAttribution noteZh.',
+    '决策上下文仅作为只读系统状态背景，不参与本解释层判断。',
+    '执行灯',
+    '操作信号',
+    'site_structured_data_only',
+    'sourceSemantics should remain site_structured_data_compact_summary',
+    'facts must contain only direct observations from non-decisionContext structured data layers',
+    'Preferred noteZh for decisionContext: 只读系统状态背景，不作为解释层结论来源。',
+    'auditFlags must be neutral diagnostic tags only.'
+  ];
+  const missingRules = requiredRules.filter((rule) => !combinedPrompt.includes(rule));
+  return {
+    status: missingRules.length === 0 ? 'pass' : 'fail',
+    checkedRules: requiredRules.length,
+    missingRules
+  };
 }
 
 async function runDeepSeekRequest({ input, apiKey, model, timeoutMs }) {
@@ -846,6 +935,12 @@ async function main() {
     return;
   }
 
+  const promptContractCheck = buildPromptContractCheck(input);
+  if (promptContractCheck.status !== 'pass') {
+    fail(`manual prompt contract check failed:\n- ${promptContractCheck.missingRules.join('\n- ')}`);
+    return;
+  }
+
   const report = {
     contractVersion: CONTRACT_VERSION,
     kind: 'external_ai_manual_test_scaffold_report',
@@ -863,6 +958,7 @@ async function main() {
       siteStructuredDataOnly: input.boundaries.siteStructuredDataOnly,
       layersAvailable: collectLayersAvailable(input)
     },
+    promptContractCheck,
     productionImpact: {
       writesProductionData: false,
       modifiesFrontend: false,

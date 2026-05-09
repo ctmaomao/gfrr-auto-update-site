@@ -1307,3 +1307,17 @@ This reference is not a production data write and is not approval to upload or c
 - provider output must not enter `data/*.json`, `realtime/*.json`, Worker payloads, config files, Daily inputs, or frontend display paths.
 - production `externalAiInterpretationLayer` remains disabled and non-user-visible.
 - scoring, decision, execution, and position logic remain unchanged.
+
+## v28.0L-3J-3 local_compact execution-language output boundary
+
+Run `25598379612` proved the `local_compact` provider-call path can reach validation and sanitizer, but quality review correctly blocked a provider artifact because a fact repeated the decisionContext phrase `执行灯`.
+
+This does not change the production data contract:
+
+- `decisionContext` remains read-only background.
+- `local_compact` provider output may not expose decision, execution, position, cash, exposure, target-band, light/status, or trading-action fields in display strings.
+- `facts`, `summaryZh`, `inferences`, `modelJudgments`, `scenarioHypotheses`, `invalidationSignals`, `sourceAttribution.noteZh`, and `auditFlags` must not repeat `decisionContext` operation language.
+- provider output remains artifact-only and non-production.
+- production `externalAiInterpretationLayer` remains disabled and non-user-visible.
+- no provider output may enter `data/radar-data.json`, `data/*.json`, `realtime/*.json`, Worker payloads, config files, Daily inputs, or frontend display paths.
+- scoring, decision, execution, and position logic remain unchanged.
