@@ -856,3 +856,22 @@ v28.0L-3L External AI Production Data Contract Design - No Production Write
 ```
 
 The next phase should design the production `externalAiInterpretationLayer` data contract only. It should not write production data.
+
+## 30. v28.0L-3L production data contract design
+
+v28.0L-3L adds [`EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md`](EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md) as a documentation-only contract design.
+
+Status update:
+
+- Future `externalAiInterpretationLayer` production schema is designed.
+- Required boundaries, statuses, provenance, freshness, quality review, content safety, validator checks, write gates, and frontend gates are documented.
+- No production write is implemented.
+- No frontend display is implemented.
+- No Daily integration or automatic provider call is implemented.
+- No workflow, script, package, data, realtime, config, frontend, or Worker file is changed by this design.
+
+Next phase:
+
+```text
+v28.0L-3M External AI Production Contract Validator Scaffold - No Production Write
+```

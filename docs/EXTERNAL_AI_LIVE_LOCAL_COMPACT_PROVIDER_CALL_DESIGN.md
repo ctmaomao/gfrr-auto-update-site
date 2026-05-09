@@ -337,3 +337,16 @@ This verification does not approve production integration:
 - `promotionEligible=true` remains `not_ready`.
 
 The next phase should be production data contract design only.
+
+## 17. v28.0L-3L production data contract design note
+
+v28.0L-3L designs how a future validated `local_compact` provider artifact could be projected into a production `externalAiInterpretationLayer` contract.
+
+This design does not change the `local_compact` provider-call boundary:
+
+- `local_compact` artifacts remain artifact-only.
+- `data/radar-data.json` must not be written.
+- frontend display remains unapproved.
+- Daily integration remains unapproved.
+- automatic provider calls remain unapproved.
+- `promotionEligible=false` remains required.

@@ -1353,3 +1353,22 @@ Recommended next stage:
 ```text
 v28.0L-3L External AI Production Data Contract Design - No Production Write
 ```
+
+### v28.0L-3L production data contract operator note
+
+v28.0L-3L designs the future production `externalAiInterpretationLayer` contract in [`EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md`](EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md). It does not approve production writes.
+
+Operator guidance:
+
+- Do not copy provider artifacts into `data/radar-data.json`.
+- Do not manually create or edit `externalAiInterpretationLayer` in production data.
+- Wait for the validator scaffold and later dry-run projection stages before any production data write is considered.
+- Do not enable frontend display.
+- Do not trigger Daily or scheduled provider calls.
+- Artifacts expire after 3 days; docs contain audit summaries only, not raw artifact copies.
+
+Recommended next stage:
+
+```text
+v28.0L-3M External AI Production Contract Validator Scaffold - No Production Write
+```

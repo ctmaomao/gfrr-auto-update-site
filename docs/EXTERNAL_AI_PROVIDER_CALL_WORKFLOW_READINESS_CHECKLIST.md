@@ -64,6 +64,30 @@ Recommended next PR:
 v28.0L-3L External AI Production Data Contract Design - No Production Write
 ```
 
+## v28.0L-3L readiness update
+
+v28.0L-3L is documented in [`EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md`](EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md). It designs the future production `externalAiInterpretationLayer` contract without implementing writes.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Production data contract design | ready / documented | L-3L defines the proposed schema, boundaries, status model, provenance, freshness, quality review, content safety, validator requirements, and write gates. | No | Use as validator scaffold input. |
+| Production contract validator | not_ready | No validator/checker is implemented in L-3L. | Yes | L-3M should add validator scaffold only. |
+| Production write dry-run | not_ready | No projection or dry-run writer exists. | Yes | Requires later reviewed phase after validator scaffold. |
+| Production write | not_ready | No production data file write is approved. | Yes | Keep NO-GO. |
+| Frontend display | not_ready | No frontend contract or display implementation is approved. | Yes | Keep hidden / absent. |
+
+Current L-3L decision:
+
+```text
+production_contract_design_ready_validator_not_ready_write_no_go
+```
+
+Recommended next PR:
+
+```text
+v28.0L-3M External AI Production Contract Validator Scaffold - No Production Write
+```
+
 - No provider-call workflow is added.
 - No workflow file is added or modified.
 - No GitHub secret is added.

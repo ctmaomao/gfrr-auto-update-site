@@ -338,3 +338,11 @@ Future production data contract design must preserve these prompt boundaries:
 - source attribution must distinguish site-structured data from independent market verification.
 - `promotionEligible=false` remains required unless a separate explicit approval changes the boundary.
 - no prompt output may affect scoring / decision / execution / position logic.
+
+## 19. v28.0L-3L Production Contract Prompt Constraints
+
+v28.0L-3L carries the prompt safety rules into the future production data contract design.
+
+Future production `externalAiInterpretationLayer` string fields must not include execution / operation / position / cash / exposure / trading wording. `decisionContext` remains read-only background, and raw `decisionContext` fields must not be surfaced as external AI prose.
+
+The production contract design does not approve production prompt use, production write, frontend display, or `promotionEligible=true`.

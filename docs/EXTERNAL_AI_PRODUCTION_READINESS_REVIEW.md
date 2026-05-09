@@ -199,3 +199,23 @@ Do not proceed directly to production implementation.
 - Daily integration: NO-GO.
 - Automatic provider calls: NO-GO.
 - Recommended next step: data contract design only.
+
+## 10. v28.0L-3L production data contract design note
+
+v28.0L-3L adds [`EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md`](EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md) as the future `externalAiInterpretationLayer` production contract design.
+
+Readiness update:
+
+- Production data contract design is documented.
+- Production contract validator is not yet implemented.
+- Production write dry-run is not yet implemented.
+- Production write remains NO-GO.
+- Frontend display remains NO-GO.
+- Daily integration remains NO-GO.
+- Automatic provider calls remain NO-GO.
+
+Recommended next step:
+
+```text
+v28.0L-3M External AI Production Contract Validator Scaffold - No Production Write
+```
