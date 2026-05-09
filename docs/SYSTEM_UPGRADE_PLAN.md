@@ -822,3 +822,32 @@ Recommended next stage:
 ```text
 v28.0L-3O First Controlled Production Write Design - No Frontend Display
 ```
+
+## v28.0L-3O First Controlled Production Write Design
+
+v28.0L-3O adds first controlled production write design and a read-only production write guard.
+
+This stage:
+
+- adds `docs/EXTERNAL_AI_FIRST_PRODUCTION_WRITE_DESIGN.md`.
+- adds `scripts/check-external-ai-production-write-guard.mjs`.
+- adds `npm run check:external-ai-production-write-guard`.
+- adds the guard to `check:all`.
+- keeps production write as NO-GO.
+- keeps frontend display as NO-GO.
+- keeps Daily integration as NO-GO.
+- keeps automatic provider calls as NO-GO.
+- keeps `promotionEligible=true` as NO-GO.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not read or modify secrets.
+- does not modify production data.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3P First Controlled Production Write - Data Only / No Frontend Display
+```
+
+only after explicit user approval.

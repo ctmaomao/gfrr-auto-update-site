@@ -408,3 +408,21 @@ Recommended next phase:
 ```text
 v28.0L-3O First Controlled Production Write Design - No Frontend Display
 ```
+
+## 18. v28.0L-3O first controlled write design status
+
+v28.0L-3O adds [`EXTERNAL_AI_FIRST_PRODUCTION_WRITE_DESIGN.md`](EXTERNAL_AI_FIRST_PRODUCTION_WRITE_DESIGN.md) and a read-only production write guard:
+
+- `scripts/check-external-ai-production-write-guard.mjs`.
+- `npm run check:external-ai-production-write-guard`.
+- `check:all` coverage after projection validation.
+
+This stage designs the future first controlled write only. It does not write `data/radar-data.json`, does not add a write command, does not display external AI output on the frontend, and does not approve production integration.
+
+Current L-3O boundary:
+
+- Production write: NO-GO.
+- Frontend display: NO-GO.
+- Daily integration: NO-GO.
+- Automatic provider calls: NO-GO.
+- Next step requires explicit approval before any data-only write phase.

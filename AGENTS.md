@@ -369,3 +369,9 @@ Do not bypass the production contract validator. No production write is allowed 
 v28.0L-3N adds a deterministic projection dry-run that writes only under ignored `manual-artifacts/external-ai/` and validates the result with `check:external-ai-production-contract`.
 
 Projection dry-run output must not be copied into `data/` or `data/radar-data.json`. No production write is allowed before explicit L-3O approval. Any future production projection or write stage must pass the production contract validator and must not expose `externalAiInterpretationLayer` in the frontend without separate approval.
+
+## 30. v28.0L-3O first controlled production write guard reminder
+
+v28.0L-3O adds first controlled production write design and `check:external-ai-production-write-guard`, but it does not approve or perform a production write.
+
+Do not write `externalAiInterpretationLayer` into `data/radar-data.json` without explicit user approval. Any first production write must be data-only, no frontend display, no workflow change, no Daily integration, and no automatic provider call. `check:external-ai-production-write-guard` must pass before and after any future first-write PR.

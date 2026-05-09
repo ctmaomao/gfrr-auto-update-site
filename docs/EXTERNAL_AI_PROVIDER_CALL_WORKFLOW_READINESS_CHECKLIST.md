@@ -152,6 +152,34 @@ This stage confirms:
 - `externalAiInterpretationLayer` remains the disabled scaffold.
 - Existing v28.0L-3B dry-run workflow remains dry-run-only.
 
+## v28.0L-3O readiness update
+
+v28.0L-3O adds first controlled production write design and a read-only production write guard.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Production projection dry-run | ready | `check:external-ai-production-projection` remains the source projection gate. | No | Keep required before any write design. |
+| Production write guard | ready / scaffolded | `check:external-ai-production-write-guard` confirms the current repo remains display-disabled and non-impacting. | No | Keep in `check:all`. |
+| First controlled write design | documented | `EXTERNAL_AI_FIRST_PRODUCTION_WRITE_DESIGN.md` records future target, source, gates, rollback, and acceptance criteria. | No | Requires explicit user approval before data-only write. |
+| Production write | not_ready | No production data file write is approved or implemented. | Yes | Separate explicitly approved data-only PR required. |
+| Frontend display | not_ready | No frontend display path is approved or implemented. | Yes | Keep hidden / absent. |
+| Daily integration | not_ready | No Daily integration or scheduled provider call is approved. | Yes | Keep disconnected. |
+| Automatic provider calls | not_ready | No automatic provider call is approved or implemented. | Yes | Separate scheduling and cost-control design required, if ever. |
+
+Current L-3O decision:
+
+```text
+first_write_design_ready_production_write_no_go
+```
+
+Recommended next stage:
+
+```text
+v28.0L-3P First Controlled Production Write - Data Only / No Frontend Display
+```
+
+only after explicit user approval.
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:

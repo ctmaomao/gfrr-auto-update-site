@@ -1397,3 +1397,16 @@ Current data contract boundary:
 - Daily and automatic provider calls remain disabled.
 - Production write remains NO-GO until a separate explicitly approved production write design and implementation phase.
 - Future writes must still pass `check:external-ai-production-contract` before any production data file is changed.
+
+## v28.0L-3O externalAiInterpretationLayer first write guard
+
+v28.0L-3O adds first controlled production write design and `npm run check:external-ai-production-write-guard`.
+
+Current data contract boundary:
+
+- `externalAiInterpretationLayer` production write remains not approved.
+- The write guard checks that current production data remains disabled / non-impacting.
+- The write guard fails on frontend display approval, `promotionEligible=true`, or scoring / decision / execution / position impact.
+- First production write must be a separate data-only PR with explicit approval.
+- First production write must not include frontend display, workflow schedule changes, Daily integration, or automatic provider calls.
+- Rollback for the future first write is reverting that isolated PR.
