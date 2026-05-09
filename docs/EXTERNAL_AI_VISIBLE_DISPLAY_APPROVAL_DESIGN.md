@@ -275,3 +275,16 @@ Recommended next step:
 ```text
 v28.0L-3U External AI Visible Display UX Polish - No Provider Call
 ```
+
+## 13. v28.0L-3U-1 visible display UX audit sync
+
+v28.0L-3U-1 records the post-merge audit for the visible display UX polish.
+
+Audit note:
+
+- Visible display data flags were already enabled in L-3T.
+- L-3U polished the visible panel without changing data flags.
+- L-3U did not change AI text content.
+- Visible display remains approved only for the current production layer.
+- No provider call, workflow trigger, automatic provider call, or Daily integration was introduced.
+- Global Risk Heatmap layout remains protected.

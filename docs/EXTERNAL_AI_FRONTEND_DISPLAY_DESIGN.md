@@ -352,3 +352,29 @@ Recommended next step:
 ```text
 v28.0L-3U-1 Visible Display UX Audit Sync - No Provider Call
 ```
+
+## 18. v28.0L-3U-1 visible display UX audit sync
+
+v28.0L-3U-1 records that the visible display UX polish completed and passed post-merge audit.
+
+Audit result:
+
+- Visible display UX polish completed.
+- Post-merge audit passed.
+- The external AI panel is now visible and polished.
+- The panel remains read-only.
+- Dynamic content uses safe rendering.
+- Raw provider output, run IDs, artifact IDs, and raw provenance remain hidden from normal display.
+- No AI text changed.
+- No provider call was run.
+- No workflow was triggered.
+- No automatic provider call was added.
+- No Daily integration was added.
+- No scoring / decision / execution / position impact was introduced.
+- Global Risk Heatmap layout remains protected.
+
+Current display line decision:
+
+```text
+visible_display_ux_audited_no_provider_call
+```

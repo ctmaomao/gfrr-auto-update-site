@@ -387,6 +387,34 @@ Recommended next step:
 v28.0L-3U-1 Visible Display UX Audit Sync - No Provider Call
 ```
 
+## v28.0L-3U-1 readiness update
+
+v28.0L-3U-1 records the successful post-merge audit for the visible display UX polish.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Production data write | completed | The first controlled data-only layer remains present and contract-valid. | No | Future data updates must use validator and guard flow. |
+| Frontend hidden scaffold | completed | The scaffold remains the guarded render path. | No | Keep guard checks active. |
+| Visible display flag enablement | completed | `displayEnabled=true` and `boundaries.frontendDisplayApproved=true` remain audited. | No | Keep display limited to the current production layer. |
+| Visible display UX polish | completed / audited | L-3U polish passed post-merge audit. | No | Use this as the current visible display baseline. |
+| AI text content | unchanged | No generated external AI text is edited or refreshed. | No | Do not edit text manually. |
+| Daily integration | not_ready | No Daily integration is approved or implemented. | Yes | Keep disconnected. |
+| Automatic provider calls | not_ready | No scheduled or automatic provider calls are approved or implemented. | Yes | Keep manual-only unless a separate future phase approves otherwise. |
+| Provider refresh automation | not_ready | No recurring provider refresh path is approved or implemented. | Yes | Separate design required before any refresh automation. |
+| Scoring / decision / execution / position impact | blocked / out_of_scope | All affect flags remain false and no related logic changes. | Yes | Keep external AI out of these paths. |
+
+Current L-3U-1 decision:
+
+```text
+visible_display_ux_audited_display_line_complete
+```
+
+Optional future phase:
+
+```text
+v28.0L-4A External AI Manual Refresh Workflow Design - No Automatic Provider Call
+```
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:

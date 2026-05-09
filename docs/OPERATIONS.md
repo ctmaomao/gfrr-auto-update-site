@@ -1595,3 +1595,24 @@ Recommended next stage:
 ```text
 v28.0L-3U-1 Visible Display UX Audit Sync - No Provider Call
 ```
+
+### v28.0L-3U-1 visible display UX audit-sync operator note
+
+v28.0L-3U-1 records that the external AI read-only panel is visible, polished, and audited.
+
+Operator guidance:
+
+- Do not manually edit external AI text content.
+- Do not rerun the provider just for UX polish.
+- Do not add automatic provider calls without a separate approved task.
+- Roll back a UX-only issue by reverting L-3U.
+- If display must be disabled, revert L-3T or set `displayEnabled=false` and `boundaries.frontendDisplayApproved=false` through an approved data update.
+- If unsafe copy appears, revert immediately.
+- If Global Risk Heatmap layout changes, revert immediately.
+- Keep scoring / decision / execution / position logic unchanged.
+
+Optional future stage:
+
+```text
+v28.0L-4A External AI Manual Refresh Workflow Design - No Automatic Provider Call
+```
