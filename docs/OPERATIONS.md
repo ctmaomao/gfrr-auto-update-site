@@ -449,6 +449,24 @@ Missing-secret safety run:
 
 L-3F also blocks real provider calls if a secret is accidentally present. Do not add `DEEPSEEK_API_KEY` yet. Do not rerun repeatedly. Do not treat this workflow as real provider-call readiness; first record default dry-run PASS and missing-secret-safe FAIL in a later audit-sync PR.
 
+### External AI Manual Provider Test audit result
+
+v28.0L-3F-1 records the required L-3F provider workflow skeleton audit:
+
+- Run `25591115649` = default dry-run PASS.
+- Run `25591202053` = provider path without secret failed safely before provider command.
+
+Operator interpretation:
+
+- `DEEPSEEK_API_KEY` was empty in the second run.
+- The second run failed in the missing-secret safe provider gate with `reason=missing_required_provider_secret` and `status=failed_before_provider_call`.
+- No DeepSeek call occurred.
+- No provider output artifact was produced.
+- No production data, frontend, Worker, config, Daily, scoring, decision, execution, or position behavior changed.
+- Do not add `DEEPSEEK_API_KEY` yet.
+- Do not rerun the provider path repeatedly.
+- The next step should be a separate decision PR before adding any secret or allowing any real provider call.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：

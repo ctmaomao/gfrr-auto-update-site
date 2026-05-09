@@ -480,3 +480,12 @@ The L-3F provider-test workflow is also no-real-provider-call:
 - no DeepSeek command is executed
 - no provider output artifact is produced
 - artifacts remain diagnostics only
+
+## v28.0L-3F-1 provider-test workflow audit
+
+The `External AI Manual Provider Test` workflow has passed the L-3F skeleton audit:
+
+- Run `25591115649` validated the default dry-run path as PASS.
+- Run `25591202053` validated the provider path without secret as an expected failure before provider command.
+
+The workflow remains no-real-provider-call. `DEEPSEEK_API_KEY` was empty in the missing-secret test, no DeepSeek call occurred, no provider output artifact was produced, and no production data or frontend path changed.
