@@ -466,7 +466,26 @@ first_production_refresh_manual_run_verified_daily_schedule_ready
 Optional future phase:
 
 ```text
-v28.0L-4B Refresh Monitoring / Failure Notification Design - No Provider Call
+v28.0L-4B External AI Display Coverage Polish - No Provider Call
+```
+
+## v28.0L-4B readiness update
+
+v28.0L-4B polishes frontend display coverage only. It does not change provider workflow readiness.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| External AI display coverage | polished | The visible read-only panel can show capped summaries for model judgments, scenario hypotheses, source attribution, and public review status. | No | Audit display coverage after merge. |
+| Provider call | not_run_in_this_pr | This phase does not call DeepSeek or refresh artifacts. | No | Do not rerun provider just for display coverage. |
+| Production data write | unchanged | No `data/radar-data.json` write is part of this phase. | No | Keep production writes inside the approved refresh workflow only. |
+| Automatic provider call | unchanged | No schedule, retry loop, or provider automation is added. | No | Keep `External AI Production Refresh` as the only approved automatic provider path. |
+| Daily integration | not_ready | The site Daily pipeline remains separate from provider calls. | Yes | Keep Daily pipeline disconnected. |
+| Scoring / decision / execution / position integration | not_allowed | Display coverage remains read-only and non-impacting. | Yes | Keep external AI out of these paths. |
+
+Recommended next step:
+
+```text
+v28.0L-4B-1 Display Coverage Audit Sync - No Provider Call
 ```
 
 ## 2. Baseline reviewed

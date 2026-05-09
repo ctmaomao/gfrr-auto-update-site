@@ -407,3 +407,25 @@ Status update:
 - The refresh committed only `data/radar-data.json` through workflow commit `c32af65`.
 - The workflow artifact was `external-ai-production-refresh-25611392014` with artifact ID `6898516584` and 3-day retention.
 - No Global Risk Heatmap layout, scoring, decision, execution, or position path changed.
+
+## 21. v28.0L-4B display coverage polish
+
+v28.0L-4B expands the already-visible external AI read-only panel coverage without changing provider output or production data.
+
+Status update:
+
+- The panel now shows capped, safe summaries for `modelJudgments`, `scenarioHypotheses`, `sourceAttribution`, and `qualityReview` when available.
+- Model judgments, scenario hypotheses, source attribution summary, and public review status remain read-only.
+- Raw provider output, raw provenance, run IDs, artifact IDs, and internal diagnostics remain hidden from normal display.
+- No provider call was run.
+- No production data changed.
+- No AI-generated text changed.
+- No automatic provider call or Daily integration was added.
+- No Global Risk Heatmap layout change was made.
+- No scoring / decision / execution / position path changed.
+
+Recommended next step:
+
+```text
+v28.0L-4B-1 Display Coverage Audit Sync - No Provider Call
+```

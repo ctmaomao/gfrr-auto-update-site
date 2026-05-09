@@ -193,9 +193,27 @@ function validateFrontendGates(errors) {
     'external-ai-summary',
     'external-ai-grid',
     'external-ai-section',
+    'external-ai-scenario',
+    'external-ai-scenario-title',
+    'external-ai-source-list',
+    'external-ai-review-status',
+    'external-ai-muted',
     'external-ai-meta',
     'FACT_LIMIT = 4',
     'INFERENCE_LIMIT = 3',
+    'MODEL_JUDGMENT_LIMIT = 4',
+    'SCENARIO_LIMIT = 2',
+    'SCENARIO_CONDITION_LIMIT = 3',
+    'SOURCE_ATTRIBUTION_LIMIT = 4',
+    '模型判断',
+    '情景假设',
+    '触发条件',
+    '反证条件',
+    '证据来源摘要',
+    '审查状态',
+    '输出校验通过',
+    '仅供人工阅读',
+    '不进入自动决策',
   ];
   for (const marker of requiredUxMarkers) {
     if (!helper.includes(marker)) addError(errors, `renderExternalAi helper missing UX marker: ${marker}`);
@@ -207,7 +225,18 @@ function validateFrontendGates(errors) {
   if (!helper.includes('.textContent')) {
     addError(errors, 'renderExternalAi helper must use textContent for rendered external AI content');
   }
-  for (const rawMarker of ['provenance', 'artifactId', 'artifactName', 'runId', 'decisionContext']) {
+  for (const rawMarker of [
+    'provenance',
+    'artifactId',
+    'artifactName',
+    'artifactPath',
+    'runId',
+    'rawProviderOutput',
+    'providerOutput',
+    'rawResponse',
+    'headers',
+    'decisionContext',
+  ]) {
     if (helper.includes(rawMarker)) {
       addError(errors, `renderExternalAi helper must not expose raw provider/provenance field: ${rawMarker}`);
     }

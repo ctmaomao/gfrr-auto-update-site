@@ -58,7 +58,7 @@ npm run check:data:strict-live-alignment
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。日常排查 cockpit 解释层时，优先按以下顺序：
 
-1. 先看页面 frontend version 是否为当前版本，当前应为 `28.0J-2`。
+1. 先看页面 frontend version 是否为当前版本，当前应为 `28.0L-4B`。
 2. 检查 live `data/radar-data.json` 是否包含 `dailyBrief`、`divergenceLayer` 与 `brentPricingLayer`。
 3. 检查 Worker Health；Check Worker Health 仍是 Worker-first runtime hard gate。
 4. 检查 Realtime Health；Check Realtime Health 仍是 GitHub `realtime-data` fallback / Daily baseline soft observer。
@@ -73,7 +73,7 @@ v28.0I / v28.0J 新增的 `dailyBrief`、`divergenceLayer`、`macroDrivers.consu
 
 v28.0J-2B post-deploy audit 已通过，当前 AI 解释层为 rule-based structured interpretation，不调用 DeepSeek / OpenAI / 外部 AI API。日常排查顺序：
 
-1. 检查 live frontend version 是否为当前版本，当前应为 `28.0J-2`。
+1. 检查 live frontend version 是否为当前版本，当前应为 `28.0L-4B`。
 2. 检查 live `data/radar-data.json` 是否包含 `aiInterpretationLayer`。
 3. 检查 `aiInterpretationLayer.contractVersion` 是否为 `v28.0J-0`。
 4. 检查 `generatedByExternalAi=false` 与 `usesExternalAiApi=false`。
@@ -505,14 +505,14 @@ window.__GFRR_RUNTIME__?.realtimeFetchAudit
 
 ### 2A. Android Chrome 旧前端缓存排查
 
-v28.0J-2 Frontend Asset Cache Busting 处理 Android Chrome cached old module graph：普通窗口可能缓存旧 `scripts/app.js` / ES module graph，导致页面仍显示 Actions/FRED 旧逻辑，例如 Brent 来源停留在 FRED 日度锚点；无痕窗口显示 Worker 独立生成 / 实时数据新鲜 / Yahoo + Trading Economics 双源确认，则说明线上 Worker-first runtime 正常，问题不在 Worker、DNS 或自定义域名。
+v28.0L-4B Frontend Asset Cache Busting 处理 Android Chrome cached old module graph：普通窗口可能缓存旧 `scripts/app.js` / ES module graph，导致页面仍显示 Actions/FRED 旧逻辑，例如 Brent 来源停留在 FRED 日度锚点；无痕窗口显示 Worker 独立生成 / 实时数据新鲜 / Yahoo + Trading Economics 双源确认，则说明线上 Worker-first runtime 正常，问题不在 Worker、DNS 或自定义域名。
 
 当前处理方式：
 
 ```text
-index.html app.js entry → ?v=28.0J-2
-scripts/app.js and scripts/modules/*.js local imports → ?v=28.0J-2
-window.__GFRR_FRONTEND_VERSION__ → 28.0J-2
+index.html app.js entry → ?v=28.0L-4B
+scripts/app.js and scripts/modules/*.js local imports → ?v=28.0L-4B
+window.__GFRR_FRONTEND_VERSION__ → 28.0L-4B
 ```
 
 浏览器 Console 可执行：
@@ -521,7 +521,7 @@ window.__GFRR_FRONTEND_VERSION__ → 28.0J-2
 window.__GFRR_FRONTEND_VERSION__
 ```
 
-应返回 `"28.0J-2"`。本轮不改 Worker runtime、不改数据源、不新增 KV、不 deploy Worker。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
+应返回 `"28.0L-4B"`。本轮不改 Worker runtime、不改数据源、不新增 KV、不 deploy Worker。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 
 v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
 
@@ -530,7 +530,7 @@ node scripts/bump-frontend-asset-version.mjs 28.0G-10
 npm run bump:frontend-asset-version -- 28.0G-10
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0J-2`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0L-4B`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 
 ## 3. Realtime workflow 排查
 
@@ -1726,3 +1726,17 @@ Operational notes:
 - Rollback is reverting commit `c32af65` or rerunning a validated refresh when that is the appropriate operator action.
 - Do not manually edit `externalAiInterpretationLayer` or any external AI generated text in `data/radar-data.json`.
 - Do not add extra schedules, retry loops, or provider refresh paths without explicit approval.
+
+### v28.0L-4B external AI display coverage polish operator note
+
+v28.0L-4B is frontend-only display coverage polish for the already-visible external AI read-only panel.
+
+Operator guidance:
+
+- The panel reveals more of the existing validated `externalAiInterpretationLayer` through capped, safe summaries.
+- It does not refresh, rewrite, or alter AI-generated text.
+- Do not rerun DeepSeek or `External AI Production Refresh` just for display coverage.
+- Do not edit `data/radar-data.json` to make the panel shorter or longer.
+- If the panel becomes too long, reduce caps in `scripts/modules/renderExternalAi.js` rather than editing AI text.
+- Keep raw provider output, raw provenance, run IDs, artifact IDs, and internal diagnostics hidden from normal display.
+- Keep Global Risk Heatmap layout, scoring, decision, execution, and position logic unchanged.

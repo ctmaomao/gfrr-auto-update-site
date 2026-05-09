@@ -1,10 +1,23 @@
-import { $ } from './config.js?v=28.0L-3U';
+import { $ } from './config.js?v=28.0L-4B';
 
 const SCHEMA_VERSION = 'v28.0L-external-ai-production-1';
 const PANEL_ID = 'external-ai-display-panel';
 const FACT_LIMIT = 4;
 const INFERENCE_LIMIT = 3;
 const COMPACT_LIMIT = 3;
+const MODEL_JUDGMENT_LIMIT = 4;
+const SCENARIO_LIMIT = 2;
+const SCENARIO_CONDITION_LIMIT = 3;
+const SOURCE_ATTRIBUTION_LIMIT = 4;
+const MODEL_JUDGMENT_SAFE_FIELDS = [
+  'titleZh',
+  'judgmentZh',
+  'summaryZh',
+  'descriptionZh',
+  'rationaleZh',
+  'reasonZh',
+  'noteZh',
+];
 const UNSAFE_TEXT_VALUES = [
   '买入',
   '卖出',
@@ -38,6 +51,10 @@ function cleanStrings(value, limit) {
   return safeArray(value)
     .filter((item) => typeof item === 'string' && item.trim())
     .slice(0, limit);
+}
+
+function cleanText(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : '';
 }
 
 function hasUnsafeText(value) {
@@ -84,6 +101,20 @@ function appendList(root, items, limit) {
   return true;
 }
 
+function appendStringItems(root, items) {
+  if (!Array.isArray(items) || items.length === 0) return false;
+
+  const list = document.createElement('ul');
+  list.className = 'external-ai-list';
+  for (const value of items) {
+    const item = document.createElement('li');
+    item.textContent = value;
+    list.appendChild(item);
+  }
+  root.appendChild(list);
+  return true;
+}
+
 function appendSection(root, title, items, limit) {
   const section = document.createElement('section');
   section.className = 'external-ai-section';
@@ -111,6 +142,119 @@ function appendCompactSignals(root, dataGaps, invalidationSignals) {
     appendList(section, signalItems, COMPACT_LIMIT);
   }
 
+  root.appendChild(section);
+  return true;
+}
+
+function buildModelJudgmentText(item) {
+  if (typeof item === 'string') return cleanText(item);
+  if (!isPlainObject(item)) return '';
+
+  const parts = [];
+  for (const field of MODEL_JUDGMENT_SAFE_FIELDS) {
+    const value = cleanText(item[field]);
+    if (value) parts.push(value);
+    if (parts.length >= 2) break;
+  }
+  return parts.join('；');
+}
+
+function appendModelJudgments(root, modelJudgments) {
+  const items = safeArray(modelJudgments)
+    .map(buildModelJudgmentText)
+    .filter(Boolean)
+    .slice(0, MODEL_JUDGMENT_LIMIT);
+  if (items.length === 0) return false;
+
+  const section = document.createElement('section');
+  section.className = 'external-ai-section';
+  appendText(section, 'h3', '', '模型判断');
+  appendStringItems(section, items);
+  root.appendChild(section);
+  return true;
+}
+
+function appendScenarioConditions(root, label, values) {
+  const items = cleanStrings(values, SCENARIO_CONDITION_LIMIT);
+  if (items.length === 0) return false;
+
+  appendText(root, 'p', 'external-ai-section-label', label);
+  appendStringItems(root, items);
+  return true;
+}
+
+function appendScenarioHypotheses(root, scenarioHypotheses) {
+  const scenarios = safeArray(scenarioHypotheses)
+    .filter(isPlainObject)
+    .slice(0, SCENARIO_LIMIT);
+  if (scenarios.length === 0) return false;
+
+  const section = document.createElement('section');
+  section.className = 'external-ai-section external-ai-scenario';
+  appendText(section, 'h3', '', '情景假设');
+
+  for (const scenario of scenarios) {
+    const scenarioBlock = document.createElement('div');
+    scenarioBlock.className = 'external-ai-scenario-item';
+    appendText(scenarioBlock, 'p', 'external-ai-scenario-title', cleanText(scenario.titleZh));
+    const hasTriggers = appendScenarioConditions(scenarioBlock, '触发条件', scenario.triggerConditions);
+    const hasInvalidations = appendScenarioConditions(scenarioBlock, '反证条件', scenario.invalidationConditions);
+    if (scenarioBlock.children.length > 0 && (hasTriggers || hasInvalidations || cleanText(scenario.titleZh))) {
+      section.appendChild(scenarioBlock);
+    }
+  }
+
+  if (section.children.length <= 1) return false;
+  root.appendChild(section);
+  return true;
+}
+
+function appendSourceAttributionSummary(root, sourceAttribution) {
+  const rows = safeArray(sourceAttribution)
+    .filter(isPlainObject)
+    .slice(0, SOURCE_ATTRIBUTION_LIMIT);
+  if (rows.length === 0) return false;
+
+  const section = document.createElement('section');
+  section.className = 'external-ai-section';
+  appendText(section, 'h3', '', '证据来源摘要');
+
+  const list = document.createElement('div');
+  list.className = 'external-ai-source-list';
+  for (const row of rows) {
+    const item = document.createElement('div');
+    item.className = 'external-ai-source-row';
+    const meta = [
+      cleanText(row.sourceLayer),
+      cleanText(row.field),
+      cleanText(row.claimType),
+    ].filter(Boolean).join(' / ');
+    appendText(item, 'p', 'external-ai-source-meta', meta);
+    appendText(item, 'p', 'external-ai-muted', cleanText(row.noteZh));
+    if (item.children.length > 0) list.appendChild(item);
+  }
+
+  if (list.children.length === 0) return false;
+  section.appendChild(list);
+  root.appendChild(section);
+  return true;
+}
+
+function appendQualityReviewStatus(root, qualityReview) {
+  if (!isPlainObject(qualityReview)) return false;
+
+  const reviewStatus = String(qualityReview.status || '').toLowerCase();
+  const recommendation = String(qualityReview.recommendation || '').toLowerCase();
+  const items = [];
+  if (reviewStatus === 'pass' || reviewStatus === 'warn') items.push('输出校验通过');
+  if (recommendation === 'pass_for_manual_review') items.push('仅供人工阅读');
+  if (qualityReview.promotionEligible === false) items.push('不进入自动决策');
+  if (items.length === 0) return false;
+
+  const section = document.createElement('section');
+  section.className = 'external-ai-section external-ai-review-status';
+  appendText(section, 'h3', '', '审查状态');
+  appendStringItems(section, items);
   root.appendChild(section);
   return true;
 }
@@ -207,6 +351,10 @@ export function renderExternalAiPanel(data, container = $(PANEL_ID)) {
   grid.className = 'external-ai-grid';
   appendSection(grid, '主要观察', layer.facts, FACT_LIMIT);
   appendSection(grid, 'AI 推断', layer.inferences, INFERENCE_LIMIT);
+  appendModelJudgments(grid, layer.modelJudgments);
+  appendScenarioHypotheses(grid, layer.scenarioHypotheses);
+  appendSourceAttributionSummary(grid, layer.sourceAttribution);
+  appendQualityReviewStatus(grid, layer.qualityReview);
   appendCompactSignals(grid, layer.dataGaps, layer.invalidationSignals);
   if (grid.children.length > 0) article.appendChild(grid);
 

@@ -113,6 +113,44 @@
       color: #bfd5ee;
       font-size: 12px;
     }
+    .external-ai-scenario-item,
+    .external-ai-source-row {
+      display: grid;
+      gap: 5px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .external-ai-scenario-item:first-of-type,
+    .external-ai-source-row:first-of-type {
+      padding-top: 0;
+      border-top: 0;
+    }
+    .external-ai-scenario-title {
+      margin: 0 0 2px;
+      color: #f8fafc;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+    .external-ai-source-list {
+      display: grid;
+      gap: 8px;
+    }
+    .external-ai-source-meta {
+      margin: 0;
+      color: #dbeafe;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .external-ai-muted {
+      margin: 0;
+      color: #9fb3cb;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .external-ai-review-status .external-ai-list {
+      list-style: none;
+      padding-left: 0;
+    }
     .external-ai-list {
       display: grid;
       gap: 6px;
@@ -237,7 +275,7 @@
           <div class="card-head split-head">
             <div>
               <h2>规则化 AI 解释层</h2>
-              <p class="muted">将事实、数据推断、模型判断与情景假设分开显示；当前不调用外部 AI。</p>
+              <p class="muted">将事实、数据推断、模型判断与情景假设分开显示；当前不调用外部 AI。本区不调用外部 AI；外部 AI 解读请查看下方“外部 AI 解读（只读）”。</p>
             </div>
             <span class="badge neutral" id="ai-interpretation-confidence">加载中...</span>
           </div>
@@ -1174,6 +1212,6 @@
     <footer class="footer">独立静态版 · 适配静态托管 · 数据由自动化流程每日生成</footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0L-3U"></script>
+  <script type="module" src="scripts/app.js?v=28.0L-4B"></script>
 </body>
 </html>
