@@ -1496,3 +1496,22 @@ Recommended next stage:
 ```text
 v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
 ```
+
+### v28.0L-3R hidden frontend scaffold operator note
+
+v28.0L-3R adds guarded frontend read/render scaffolding, but the external AI panel remains hidden because current production data has `displayEnabled=false` and `boundaries.frontendDisplayApproved=false`.
+
+Operator guidance:
+
+- Run `npm run check:external-ai-frontend-hidden-scaffold` after any future external AI frontend scaffold change.
+- Do not manually set `displayEnabled=true`.
+- Do not manually set `boundaries.frontendDisplayApproved=true`.
+- If an external AI panel appears before explicit visible-display approval, revert the display change immediately.
+- Keep Global Risk Heatmap layout unchanged.
+- Visible display requires a separate explicitly approved PR.
+
+Recommended next stage:
+
+```text
+v28.0L-3S External AI Visible Display Approval + Data Flag Design - No Automatic Provider Call
+```

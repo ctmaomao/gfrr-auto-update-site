@@ -259,6 +259,32 @@ Recommended next step:
 v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
 ```
 
+## v28.0L-3R readiness update
+
+v28.0L-3R adds a hidden-by-default frontend scaffold while keeping visible display disabled.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Production data write | done | First controlled data-only layer exists in `data/radar-data.json`. | No | Keep validator and write-guard checks. |
+| Frontend hidden scaffold | ready | `renderExternalAiPanel` reads the production layer defensively and hides unless all display gates pass. | No | Keep hidden until explicit visible-display approval. |
+| Hidden scaffold guard | ready | `check:external-ai-frontend-hidden-scaffold` verifies current flags remain false and the container is hidden by default. | No | Run with frontend checks. |
+| Visible display | not_ready | Current data has `displayEnabled=false` and `boundaries.frontendDisplayApproved=false`. | Yes | Separate L-3S approval / flag design required. |
+| Daily integration | not_ready | No Daily integration is approved or implemented. | Yes | Keep disconnected. |
+| Automatic provider calls | not_ready | No scheduled or automatic provider calls are approved or implemented. | Yes | Keep manual-only unless a separate future phase approves otherwise. |
+| Scoring / decision / execution / position impact | blocked / out_of_scope | All affect flags remain false and no scoring / decision / execution / position code is changed. | Yes | Keep external AI out of these paths. |
+
+Current L-3R decision:
+
+```text
+frontend_hidden_scaffold_ready_visible_display_no_go
+```
+
+Recommended next step:
+
+```text
+v28.0L-3S External AI Visible Display Approval + Data Flag Design - No Automatic Provider Call
+```
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:

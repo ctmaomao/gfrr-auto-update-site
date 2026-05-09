@@ -141,14 +141,29 @@ function validateFrontendNoDisplayMarkers(errors) {
     listFiles(target, (filePath) => filePath.endsWith('.html') || filePath.endsWith('.js')),
   );
 
+  const markerFindings = [];
   for (const filePath of files) {
     const text = readText(filePath);
     for (const marker of FRONTEND_DISPLAY_MARKERS) {
       if (text.includes(marker)) {
-        addError(errors, `${filePath} contains external AI frontend display marker: ${marker}`);
+        markerFindings.push(`${filePath} contains external AI frontend display marker: ${marker}`);
       }
     }
   }
+
+  if (markerFindings.length === 0) return;
+
+  const hiddenScaffoldCheck = spawnSync(
+    process.execPath,
+    ['scripts/check-external-ai-frontend-hidden-scaffold.mjs'],
+    { encoding: 'utf8', stdio: 'pipe' },
+  );
+  if (hiddenScaffoldCheck.status === 0) return;
+
+  for (const finding of markerFindings) addError(errors, finding);
+  addError(errors, 'external AI frontend hidden scaffold checker must pass before frontend markers are allowed');
+  if (hiddenScaffoldCheck.stderr.trim()) addError(errors, hiddenScaffoldCheck.stderr.trim());
+  if (hiddenScaffoldCheck.stdout.trim()) addError(errors, hiddenScaffoldCheck.stdout.trim());
 }
 
 function validateNoWorkflowProductionAutomation(errors) {

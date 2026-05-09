@@ -246,3 +246,25 @@ Recommended next step:
 ```text
 v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
 ```
+
+## 13. v28.0L-3R hidden scaffold status
+
+v28.0L-3R implements the guarded frontend scaffold for reading `externalAiInterpretationLayer`, but it keeps the panel hidden in the current production state.
+
+Status update:
+
+- Hidden scaffold implemented.
+- Hidden container `external-ai-display-panel` is hidden by default.
+- Frontend read logic requires both `displayEnabled=true` and `boundaries.frontendDisplayApproved=true` before any visible render.
+- Current production data keeps `displayEnabled=false` and `boundaries.frontendDisplayApproved=false`, so no visible panel is rendered.
+- No `data/radar-data.json` change is made.
+- No DeepSeek call or workflow trigger is introduced.
+- No scoring / decision / execution / position path is changed.
+- Global Risk Heatmap layout remains unchanged.
+- `check:external-ai-frontend-hidden-scaffold` guards the hidden scaffold.
+
+Recommended next step:
+
+```text
+v28.0L-3S External AI Visible Display Approval + Data Flag Design - No Automatic Provider Call
+```

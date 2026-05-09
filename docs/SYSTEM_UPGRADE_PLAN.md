@@ -933,3 +933,29 @@ Recommended next stage:
 ```text
 v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
 ```
+
+## v28.0L-3R External AI Frontend Display Scaffold
+
+v28.0L-3R adds a hidden-by-default frontend scaffold for the production `externalAiInterpretationLayer`.
+
+This stage:
+
+- adds guarded frontend read/render logic.
+- adds `external-ai-display-panel` as a hidden container.
+- adds `check:external-ai-frontend-hidden-scaffold`.
+- keeps the panel hidden because `displayEnabled=false`.
+- keeps the panel hidden because `boundaries.frontendDisplayApproved=false`.
+- does not modify `data/radar-data.json`.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not read or modify secrets.
+- keeps Global Risk Heatmap layout unchanged.
+- keeps Daily integration disabled.
+- keeps automatic provider calls disabled.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3S External AI Visible Display Approval + Data Flag Design - No Automatic Provider Call
+```

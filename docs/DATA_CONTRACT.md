@@ -1454,3 +1454,17 @@ Current data contract boundary:
 - Current production data keeps both values false.
 - The layer remains data-only and non-user-visible.
 - The layer must not affect scoring, `decisionModel`, `executionLock`, `positionGuidance`, Global Risk Heatmap layout, Daily integration, or automatic provider calls.
+
+## v28.0L-3R externalAiInterpretationLayer hidden frontend scaffold
+
+v28.0L-3R adds a defensive frontend scaffold that can read `externalAiInterpretationLayer` without making it visible.
+
+Current data contract boundary:
+
+- `externalAiInterpretationLayer` remains present in `data/radar-data.json`.
+- Current production data keeps `displayEnabled=false`.
+- Current production data keeps `boundaries.frontendDisplayApproved=false`.
+- The frontend scaffold hides and clears the panel unless both flags are explicitly true.
+- The scaffold does not modify `data/radar-data.json`.
+- The scaffold does not affect scoring, `decisionModel`, `executionLock`, `positionGuidance`, Global Risk Heatmap layout, Daily integration, or automatic provider calls.
+- Visible frontend display remains not approved.
