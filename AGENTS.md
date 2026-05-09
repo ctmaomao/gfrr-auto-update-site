@@ -477,3 +477,9 @@ Future calibration work may improve read-only wording and frontend derivation, b
 Macro overview judgment cards should use the unified read-only judgment object shape in `scripts/modules/renderMacroOverview.js`.
 
 Missing data must remain explicit, pending signals must not be promoted into verified signals, and market temperature must remain in a waiting state until real historical weekly data exists. Frontend judgment structure work must not alter scoring, decision, execution, position guidance, external AI gates, provider workflows, production data, or Global Risk Heatmap layout.
+
+## 48. v28.0M-3H external AI layer preservation reminder
+
+Ordinary radar data generation must preserve the current contract-valid `externalAiInterpretationLayer` in `data/radar-data.json`.
+
+Do not remove or malform `displayEnabled`, `boundaries.frontendDisplayApproved`, `qualityReview.promotionEligible=false`, or the non-impact boundary flags during normal radar refresh. Do not update external AI content, generated text, provider metadata, or display approval flags outside the approved `External AI Production Refresh` workflow. If a radar refresh breaks the external AI production contract, restore the latest valid production layer from git history or rerun the approved production refresh only after the preservation bug is fixed.

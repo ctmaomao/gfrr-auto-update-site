@@ -1301,3 +1301,26 @@ Recommended next step:
 ```text
 v28.0M-4 Macro Overview Structure Audit Sync - No Code Change
 ```
+
+## v28.0M-3H External AI Layer Preservation Hotfix
+
+v28.0M-3H restores the production external AI layer after an ordinary radar data refresh rewrote `externalAiInterpretationLayer` into a non-production scaffold shape.
+
+This hotfix:
+
+- preserves a contract-valid `externalAiInterpretationLayer` through normal radar data refreshes.
+- restores the current `data/radar-data.json` layer from the latest valid production layer in git history.
+- keeps `External AI Production Refresh` as the only approved path to update external AI content.
+- prevents ordinary radar refresh from deleting display flags or malforming the production external AI layer.
+- changes no external AI generated text beyond restoring the prior valid layer.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- changes no workflows.
+- does not change scoring / decision / execution / position logic.
+- restores `check:external-ai-production-contract`, `check:external-ai-production-write-guard`, `check:external-ai-frontend-hidden-scaffold`, and `check:all`.
+
+Recommended next step:
+
+```text
+v28.0M-3H-1 Preservation Hotfix Audit Sync - No Code Change
+```
