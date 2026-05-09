@@ -559,3 +559,23 @@ Recommended next stage:
 ```text
 v28.0L-3G Secret Decision and First Real Provider-Call Gate Design - No Secret Yet
 ```
+
+## 18. v28.0L-3G secret decision and first-call gate
+
+v28.0L-3G is documented in [`EXTERNAL_AI_SECRET_AND_FIRST_PROVIDER_CALL_GATE.md`](EXTERNAL_AI_SECRET_AND_FIRST_PROVIDER_CALL_GATE.md). It decides the future secret strategy only.
+
+Decision:
+
+- Preferred secret location: GitHub Environment secret.
+- Environment name: `external-ai-manual`.
+- Secret name: `DEEPSEEK_API_KEY`.
+- Required reviewer / approval should be used if available.
+- Repository Actions secret is fallback only if Environment secret approval is unavailable or intentionally rejected.
+
+L-3G does not add the environment, does not add `DEEPSEEK_API_KEY`, does not modify workflows, does not run DeepSeek, and does not produce provider output. The existing L-3F workflow still blocks real provider calls.
+
+Next implementation requires explicit approval. The next possible implementation PR is:
+
+```text
+v28.0L-3H Provider-Call Unlock Workflow - Environment Secret Gate / Artifact-Only / No Production Data
+```

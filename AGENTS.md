@@ -279,3 +279,9 @@ After L-3F, the next step is audit only: run the default dry-run path expecting 
 v28.0L-3F-1 only records successful L-3F skeleton audits: run `25591115649` default dry-run PASS and run `25591202053` provider path without secret expected FAIL before provider command. The second run confirmed `DEEPSEEK_API_KEY` was empty.
 
 Do not treat L-3F-1 audit success as approval to add secrets or run real provider calls. Any next real-provider step must be separate and explicitly approved; recommended next stage is v28.0L-3G Secret Decision and First Real Provider-Call Gate Design - No Secret Yet.
+
+## 16. v28.0L-3G secret decision reminder
+
+v28.0L-3G decides the future secret strategy only: prefer GitHub Environment `external-ai-manual` with Environment secret `DEEPSEEK_API_KEY`, using required reviewer approval if available. Repository Actions secret is fallback only.
+
+Do not add secrets or unlock provider calls unless the user explicitly asks. The first provider call, if later approved, must be `fixture_sample` first, artifact-only, `max_attempts=1`, validator-gated, quality-review-gated, sanitizer-gated, and non-production. It must not write production data, modify frontend, trigger Daily, or affect scoring / decision / execution / position.

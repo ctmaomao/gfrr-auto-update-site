@@ -467,6 +467,21 @@ Operator interpretation:
 - Do not rerun the provider path repeatedly.
 - The next step should be a separate decision PR before adding any secret or allowing any real provider call.
 
+### External AI secret strategy and first provider-call gate
+
+v28.0L-3G is documented in [`EXTERNAL_AI_SECRET_AND_FIRST_PROVIDER_CALL_GATE.md`](EXTERNAL_AI_SECRET_AND_FIRST_PROVIDER_CALL_GATE.md). It decides the future secret strategy but does not add any secret.
+
+Operator guidance:
+
+- Do not add `DEEPSEEK_API_KEY` yet.
+- When explicitly approved later, create GitHub Environment `external-ai-manual`.
+- Add Environment secret `DEEPSEEK_API_KEY` only after the approved unlock workflow is ready.
+- Prefer required reviewer approval on the environment if available.
+- Never paste the key into chat, logs, PR comments, artifacts, commits, `.env`, or terminal output.
+- Never pass the key as a command-line argument.
+- First provider call must use `input_source=fixture_sample`, not live data.
+- First provider call must remain artifact-only and must not write production data or change frontend.
+
 ## 2. 页面显示“实时数据已过期”
 
 排查顺序：
