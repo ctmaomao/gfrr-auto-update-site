@@ -274,6 +274,25 @@ The next stage requires explicit approval before any secret or real provider cal
 v28.0L-3G Secret Decision and First Real Provider-Call Gate Design - No Secret Yet
 ```
 
+## v28.0L-3G Secret Decision and First Real Provider-Call Gate
+
+v28.0L-3G adds [`EXTERNAL_AI_SECRET_AND_FIRST_PROVIDER_CALL_GATE.md`](EXTERNAL_AI_SECRET_AND_FIRST_PROVIDER_CALL_GATE.md). It documents the future secret strategy and first real provider-call gate requirements only.
+
+Decision:
+
+- Preferred secret path is GitHub Environment `external-ai-manual`.
+- Secret name is `DEEPSEEK_API_KEY`.
+- Required reviewer approval should be used if available.
+- Repository Actions secret remains fallback only.
+
+This stage changes documentation only. It adds no secret, changes no workflow, runs no provider call, writes no production data, changes no frontend, changes no Worker, changes no config/data/realtime files, and has no scoring / decision / execution / position impact.
+
+The next possible implementation requires explicit approval before any secret or real provider call:
+
+```text
+v28.0L-3H Provider-Call Unlock Workflow - Environment Secret Gate / Artifact-Only / No Production Data
+```
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

@@ -80,9 +80,20 @@ v28.0L-3F-1 audit update:
 | GitHub secret usage | not_ready | No `DEEPSEEK_API_KEY` was configured or approved; the missing-secret result was the expected safety outcome. | Yes | Do not add GitHub secret until separately approved. |
 | Production integration | not_ready | No production data, frontend, Worker, Daily, scoring, decision, execution, or position path changed. | Yes | Separate future production integration phase required. |
 
+v28.0L-3G readiness update:
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Secret strategy | decided | [`EXTERNAL_AI_SECRET_AND_FIRST_PROVIDER_CALL_GATE.md`](EXTERNAL_AI_SECRET_AND_FIRST_PROVIDER_CALL_GATE.md) selects GitHub Environment `external-ai-manual` with Environment secret `DEEPSEEK_API_KEY`; repository Actions secret is fallback only. | No | Use this decision in a later unlock PR only after explicit approval. |
+| Secret created | not_ready | L-3G does not create an environment or add `DEEPSEEK_API_KEY`. | Yes | Do not add secret until a separate approved step. |
+| Real provider call | not_ready | L-3G modifies no workflow and the L-3F skeleton still blocks real provider calls. | Yes | Requires separate approved unlock workflow PR. |
+| Production integration | not_ready | L-3G adds no production data, frontend, Daily, Worker, scoring, decision, execution, or position path. | Yes | Separate future production integration phase required. |
+
 ## 4. Go / no-go decision
 
 Current L-3F-1 decision: **GO for the no-real-provider-call provider workflow skeleton as audited; NO-GO for real provider call, GitHub secret usage, or production integration**.
+
+Current L-3G decision: **secret strategy decided; NO-GO for secret creation, real provider call, workflow unlock, or production integration**.
 
 Reasons:
 

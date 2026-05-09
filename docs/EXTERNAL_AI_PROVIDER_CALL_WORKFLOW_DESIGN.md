@@ -510,3 +510,20 @@ v28.0L-3F-1 records that the L-3F skeleton was tested through both required GitH
 Both safety outcomes matched expectations. The missing-secret run confirmed `DEEPSEEK_API_KEY` was empty and the workflow stopped in the missing-secret gate before any provider command.
 
 The real provider-call path remains blocked. This audit does not approve adding `DEEPSEEK_API_KEY`, running DeepSeek, uploading provider output artifacts, writing production data, changing frontend display, or integrating with Daily / Worker / scoring / decision / execution / position behavior.
+
+## 20. v28.0L-3G secret gate and first-call design note
+
+v28.0L-3G is documented in [`EXTERNAL_AI_SECRET_AND_FIRST_PROVIDER_CALL_GATE.md`](EXTERNAL_AI_SECRET_AND_FIRST_PROVIDER_CALL_GATE.md). It decides that the first real provider-call workflow, if separately approved later, should use GitHub Environment `external-ai-manual` and Environment secret `DEEPSEEK_API_KEY`.
+
+The first real provider-call path must:
+
+- remain manual `workflow_dispatch` only.
+- use the environment secret only in the provider-call step.
+- keep the key out of CLI arguments and logs.
+- run `fixture_sample` first, not live data.
+- remain artifact-only.
+- run validator, quality review, and artifact sanitizer gates.
+- keep `promotionEligible=false`.
+- write no production data and display nothing in frontend.
+
+L-3G does not add the secret, does not modify workflows, and does not run DeepSeek. The real provider-call path remains blocked until a separate approved implementation PR changes the workflow.
