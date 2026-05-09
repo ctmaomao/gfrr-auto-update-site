@@ -273,3 +273,9 @@ v28.0L-3F adds a missing-secret-safe provider-test workflow skeleton only. Do no
 Do not modify the provider-test workflow to run a real provider call, remove the missing-secret gate, pass secrets as command-line arguments, add `--allow-network` to executable shell, or upload provider output artifacts. L-3F must keep blocking real provider calls even if a secret is present.
 
 After L-3F, the next step is audit only: run the default dry-run path expecting PASS, and run provider-path-without-secret expecting FAIL before provider command. Do not treat those results as production, frontend, Daily, scoring, decision, execution, or position readiness.
+
+## 15. v28.0L-3F-1 provider workflow skeleton audit reminder
+
+v28.0L-3F-1 only records successful L-3F skeleton audits: run `25591115649` default dry-run PASS and run `25591202053` provider path without secret expected FAIL before provider command. The second run confirmed `DEEPSEEK_API_KEY` was empty.
+
+Do not treat L-3F-1 audit success as approval to add secrets or run real provider calls. Any next real-provider step must be separate and explicitly approved; recommended next stage is v28.0L-3G Secret Decision and First Real Provider-Call Gate Design - No Secret Yet.

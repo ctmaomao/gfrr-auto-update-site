@@ -499,3 +499,14 @@ The skeleton intentionally blocks real provider calls:
 - no production data, frontend, Daily, scoring, decision, execution, or position behavior changes
 
 The next step after L-3F is an audit-sync PR that records default dry-run PASS and provider-path-without-secret FAIL before any real provider call is considered.
+
+## 19. v28.0L-3F-1 provider-test skeleton audit note
+
+v28.0L-3F-1 records that the L-3F skeleton was tested through both required GitHub Actions paths:
+
+- Run `25591115649`: default dry-run PASS.
+- Run `25591202053`: provider path without secret failed safely before provider command.
+
+Both safety outcomes matched expectations. The missing-secret run confirmed `DEEPSEEK_API_KEY` was empty and the workflow stopped in the missing-secret gate before any provider command.
+
+The real provider-call path remains blocked. This audit does not approve adding `DEEPSEEK_API_KEY`, running DeepSeek, uploading provider output artifacts, writing production data, changing frontend display, or integrating with Daily / Worker / scoring / decision / execution / position behavior.

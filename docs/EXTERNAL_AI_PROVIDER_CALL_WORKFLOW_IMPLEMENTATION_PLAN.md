@@ -513,3 +513,49 @@ Next audit should manually run, after merge:
    - no provider output artifact
 
 Do not add `DEEPSEEK_API_KEY` or run a real provider call until the L-3F behavior is audited in a later PR.
+
+## 17. v28.0L-3F-1 Provider workflow skeleton audit result
+
+v28.0L-3F-1 records the post-merge GitHub Actions audit for the L-3F provider-test workflow skeleton.
+
+Default dry-run audit:
+
+- Workflow: `External AI Manual Provider Test`
+- Run ID: `25591115649`
+- Commit: `4df4fd6`
+- Inputs: `provider=deepseek`, `input_source=fixture_sample`, `dry_run=true`, `allow_network=false`, `acknowledge_cost=false`, `acknowledge_non_production=false`, `validate_output=true`, `timeout_ms=120000`, `max_attempts=1`, `upload_artifacts=true`
+- Result: `success` / `PASS`
+- Findings: `provider path requested=false`, `provider command executed=false`, `apiCalled=false`, `networkUsed=false`, `productionDataWritten=false`, `frontendDisplayChanged=false`, artifact safety check PASS, no DeepSeek call, no provider output artifact, no production data write, and no frontend change.
+
+Provider path without secret audit:
+
+- Workflow: `External AI Manual Provider Test`
+- Run ID: `25591202053`
+- Commit: `4df4fd6`
+- Inputs: `provider=deepseek`, `input_source=fixture_sample`, `dry_run=false`, `allow_network=true`, `acknowledge_cost=true`, `acknowledge_non_production=true`, `validate_output=true`, `timeout_ms=120000`, `max_attempts=1`, `upload_artifacts=true`
+- Result: expected `failure`, classified as safety `PASS`
+- Findings: `provider path requested=true`, `DEEPSEEK_API_KEY` was empty, failed in `Missing-secret safe provider gate`, `provider-test-missing-secret.json` was created with `reason=missing_required_provider_secret` and `status=failed_before_provider_call`, `apiCalled=false`, `secretsRead=false`, `networkUsed=false`, `productionDataWritten=false`, `frontendDisplayChanged=false`, artifact safety check PASS, `provider command executed=false`, no DeepSeek call, no provider output artifact, no production data write, and no frontend change.
+
+Important audit clarification:
+
+- Earlier log reading could confuse printed shell script text with an executed branch.
+- The actual GitHub Actions result showed `DEEPSEEK_API_KEY` empty.
+- The second test is correctly classified as a missing-secret safe failure before the provider command.
+
+L-3F skeleton audit decision:
+
+- L-3F workflow skeleton is validated.
+- Default dry-run path works.
+- Missing-secret gate works.
+- No DeepSeek call occurred.
+- No provider output artifact was produced.
+- No production data was written.
+- No frontend was changed.
+- This audit does not approve adding `DEEPSEEK_API_KEY`.
+- This audit does not approve a real provider call.
+
+Recommended next stage:
+
+```text
+v28.0L-3G Secret Decision and First Real Provider-Call Gate Design - No Secret Yet
+```

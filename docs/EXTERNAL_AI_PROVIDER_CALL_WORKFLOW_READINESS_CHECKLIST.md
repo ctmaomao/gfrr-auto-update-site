@@ -47,7 +47,7 @@ This checklist reviews and preserves the current baseline:
 | Quality review gate | ready | `review:external-ai-artifact` exists and `promotionEligible` remains false. | No | Require quality review for any future provider artifact. |
 | GitHub secret storage decision | not_ready | No environment/repository secret decision recorded. | Yes | Choose protected Environment secret vs repository Actions secret. |
 | Secret rotation / revocation procedure | not_ready | No final owner or emergency process recorded for GitHub workflow usage. | Yes | Document owner, rotation steps, and emergency revocation. |
-| Provider-call workflow implementation | not_ready | No provider-call workflow exists. | Yes | Implement only in a separate reviewed PR after readiness gaps close. |
+| Provider-call workflow implementation | skeleton_ready / real_call_not_ready | L-3F added a provider-test workflow skeleton, and L-3F-1 audited dry-run plus missing-secret safety. Real provider command execution remains blocked. | Yes | Keep no-real-provider-call; next step requires separate secret decision / first real provider-call gate design. |
 | Provider-call workflow static checker | not_ready | Existing checker covers dry-run workflow only. | Yes | Design and implement deterministic provider-call workflow checker in the implementation PR. |
 | Missing-secret failure test plan | not_ready | No GitHub Actions missing-secret behavior test is documented. | Yes | Document and test fail-before-provider-call behavior. |
 | Provider-call artifact sanitization checker | not_ready | No provider-call artifact upload sanitizer exists. | Yes | Define forbidden contents and fail upload when detected. |
@@ -69,9 +69,20 @@ v28.0L-3F readiness update:
 | GitHub secret usage | not_ready | No secret is configured by L-3F; the only future secret reference is scoped to the missing-secret gate. | Yes | Do not add `DEEPSEEK_API_KEY` until separate approval. |
 | Production integration | not_ready | L-3F writes no production data and keeps `externalAiInterpretationLayer` disabled. | Yes | Separate future production integration phase required. |
 
+v28.0L-3F-1 audit update:
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Provider workflow skeleton | ready / audited | Run `25591115649` default dry-run PASS and run `25591202053` missing-secret provider path expected FAIL before provider command. | No | Keep skeleton no-real-provider-call. |
+| Default dry-run path | ready | Run `25591115649` passed with `apiCalled=false`, `networkUsed=false`, no provider output artifact, no production data write, and no frontend change. | No | Continue using only for no-network diagnostics. |
+| Missing-secret safe failure | ready | Run `25591202053` showed `DEEPSEEK_API_KEY` empty and failed in `Missing-secret safe provider gate` with `status=failed_before_provider_call`. | No | Do not rerun repeatedly; use as the safety audit record. |
+| Real provider call | not_ready | L-3F-1 did not run DeepSeek and does not approve a provider command. | Yes | Requires a separate decision/design PR before any secret or real provider call. |
+| GitHub secret usage | not_ready | No `DEEPSEEK_API_KEY` was configured or approved; the missing-secret result was the expected safety outcome. | Yes | Do not add GitHub secret until separately approved. |
+| Production integration | not_ready | No production data, frontend, Worker, Daily, scoring, decision, execution, or position path changed. | Yes | Separate future production integration phase required. |
+
 ## 4. Go / no-go decision
 
-Current decision: **NO-GO for provider-call implementation** until the missing readiness items are resolved.
+Current L-3F-1 decision: **GO for the no-real-provider-call provider workflow skeleton as audited; NO-GO for real provider call, GitHub secret usage, or production integration**.
 
 Reasons:
 

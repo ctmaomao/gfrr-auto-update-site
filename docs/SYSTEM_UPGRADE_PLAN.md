@@ -257,6 +257,23 @@ This stage adds no GitHub secret, runs no real provider call, produces no provid
 
 The next stage should be an audit-sync PR that records default dry-run PASS and provider-path-without-secret FAIL before any secret setup or real provider call is considered.
 
+## v28.0L-3F-1 Provider Workflow Skeleton Audit Sync
+
+v28.0L-3F-1 records the L-3F workflow audit results:
+
+- Run `25591115649`: default dry-run PASS.
+- Run `25591202053`: provider path without secret failed safely before provider command.
+
+This stage changes documentation only. It adds no secret, runs no provider call, writes no production data, changes no frontend, changes no Worker, changes no config/data/realtime files, and has no scoring / decision / execution / position impact.
+
+The missing-secret run confirmed `DEEPSEEK_API_KEY` was empty. The safety gate produced a missing-secret diagnostic and stopped before provider command execution. No DeepSeek call occurred and no provider output artifact was produced.
+
+The next stage requires explicit approval before any secret or real provider call. Recommended next step:
+
+```text
+v28.0L-3G Secret Decision and First Real Provider-Call Gate Design - No Secret Yet
+```
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。
