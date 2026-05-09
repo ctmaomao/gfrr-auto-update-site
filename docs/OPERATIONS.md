@@ -1099,3 +1099,24 @@ Expected behavior:
 - `promotionEligible=false`.
 
 Stop and do not retry repeatedly if the provider returns unavailable, times out, validator fails, quality review fails, or sanitizer fails. Inspect the artifact diagnostics and record the run in a follow-up audit PR.
+
+### v28.0L-3H-1 provider-call audit handling
+
+Run `25592238444` is the first recorded real `fixture_sample` DeepSeek provider-call audit:
+
+- provider transport worked behind `external-ai-manual` environment approval.
+- output validation passed.
+- DeepSeek manual API test passed.
+- quality review failed with `needs_prompt_revision`.
+- `promotionEligible=false`.
+- artifact sanitizer blocked upload because diagnostic JSON contained the literal marker `DEEPSEEK_API_KEY`.
+- no production data was written.
+- no frontend, Daily, Worker, config, scoring, decision, execution, or position path changed.
+
+Operator rule:
+
+- If quality review fails, do not rerun immediately.
+- Inspect the uploaded quality review artifact if available.
+- If artifacts are blocked by sanitizer, fix diagnostic / sanitizer behavior before rerun.
+- Do not run live/local input provider calls until `fixture_sample` quality review passes.
+- Do not weaken the sanitizer to permit secret names, authorization markers, raw headers / responses, production data paths, realtime paths, or config paths.

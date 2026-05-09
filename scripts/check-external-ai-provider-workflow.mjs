@@ -138,6 +138,7 @@ function checkForbiddenText(text) {
     'printenv',
     'env |',
     'data/radar-data.json',
+    '"secretName":',
     '.env',
     'GITHUB_TOKEN:',
     'contents: write',
@@ -159,6 +160,9 @@ function checkSecretPolicy(text) {
   const providerJob = getBlock(text, 'provider_call_artifact_only:', []);
   assert(providerJob.includes('environment: external-ai-manual'), 'provider-call job must use external-ai-manual environment');
   assert(providerJob.includes(secretReference), 'secret reference must be inside provider-call job');
+  assert(providerJob.includes('"secretReference": "environment_scoped_provider_key"'), 'provider diagnostics must use a generic secret reference label');
+  assert(providerJob.includes('"secretConfigured": false'), 'missing-secret diagnostic must record secretConfigured=false');
+  assert(providerJob.includes('"secretConfigured": true'), 'provider-call diagnostic must record secretConfigured=true');
 
   const providerStep = getBlock(providerJob, 'name: Run DeepSeek provider call', ['\n      - name: Validate provider output artifact']);
   assert(providerStep.includes(secretReference), 'secret reference must be inside provider-call step');
@@ -222,6 +226,24 @@ function checkArtifactPolicy(text) {
   assert(countOccurrences(text, 'retention-days: 3') >= 2, 'artifact uploads must use retention-days: 3');
   assert(text.includes('steps.sanitize_dry_run_artifacts.outcome == \'success\''), 'dry-run upload must be gated by sanitizer success');
   assert(text.includes('steps.sanitize_provider_artifacts.outcome == \'success\''), 'provider upload must be gated by sanitizer success');
+
+  const providerJob = getBlock(text, 'provider_call_artifact_only:', []);
+  const qualityReviewIndex = providerJob.indexOf('name: Run external AI quality review');
+  const sanitizerIndex = providerJob.indexOf('id: sanitize_provider_artifacts');
+  const uploadIndex = providerJob.indexOf('name: Upload sanitized provider-call artifacts');
+  assert(
+    qualityReviewIndex !== -1 && sanitizerIndex > qualityReviewIndex && uploadIndex > sanitizerIndex,
+    'provider sanitizer and upload must run after quality review',
+  );
+
+  const providerSanitizerStep = getBlock(providerJob, 'id: sanitize_provider_artifacts', ['\n      - name: Upload sanitized provider-call artifacts']);
+  assert(providerSanitizerStep.includes('if: ${{ always() }}'), 'provider sanitizer must run even after quality review failure');
+
+  const providerUploadStep = getBlock(providerJob, 'name: Upload sanitized provider-call artifacts', ['\n      - name: Write provider-call summary']);
+  assert(
+    providerUploadStep.includes("if: ${{ always() && github.event.inputs.upload_artifacts == 'true' && steps.sanitize_provider_artifacts.outcome == 'success' }}"),
+    'provider artifact upload must stay sanitizer-gated and always-evaluated',
+  );
 }
 
 function checkWorkflow() {

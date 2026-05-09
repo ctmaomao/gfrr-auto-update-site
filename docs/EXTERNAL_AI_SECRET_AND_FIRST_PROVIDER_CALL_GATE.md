@@ -188,3 +188,40 @@ Implemented behavior:
 - No production data, frontend, Worker, Daily, scoring, decision, execution, or position path is changed.
 
 This PR does not create the GitHub Environment, does not add `DEEPSEEK_API_KEY`, and does not run DeepSeek. After merge, the next operator step is to create the environment secret, run the default dry-run, then run the first `fixture_sample` provider call with environment approval and record the audit in a follow-up PR.
+
+## 11. v28.0L-3H-1 first fixture provider-call audit
+
+GitHub Actions run `25592238444` recorded the first real `fixture_sample` DeepSeek provider call behind GitHub Environment `external-ai-manual`.
+
+Observed result:
+
+- `provider-test-dry-run-and-gate` passed.
+- `provider-call-artifact-only` entered after environment approval.
+- the provider key was injected by GitHub Actions as a masked value.
+- DeepSeek provider call executed once.
+- provider was `deepseek`.
+- model was `deepseek-v4-flash`.
+- External AI output validation passed.
+- DeepSeek manual API test passed.
+- warnings: 0.
+- `productionDataWritten=false`.
+- `frontendDisplayChanged=false`.
+- quality review failed with `needs_prompt_revision`.
+- `promotionEligible=false`.
+- artifact sanitizer blocked upload because `provider-test-gate-status.json` contained the diagnostic marker `DEEPSEEK_API_KEY`.
+
+Interpretation:
+
+- This was a safe failure.
+- The sanitizer correctly rejected a forbidden marker.
+- The blocked marker was the secret name in diagnostic JSON, not the secret value.
+- No production data, frontend, Daily, Worker, config, scoring, decision, execution, or position path changed.
+- Do not rerun the provider-call workflow until the diagnostic marker fix is merged.
+
+v28.0L-3H-1 removes the literal secret name from workflow diagnostic JSON artifacts and records safer fields such as `secretConfigured` and `secretReference=environment_scoped_provider_key`. The strict sanitizer must continue rejecting `DEEPSEEK_API_KEY`, `Authorization`, `Bearer`, `api_key`, `secrets.`, `GITHUB_TOKEN`, `.env`, raw headers / responses, `data/radar-data.json`, `realtime/`, and `config/`.
+
+Recommended next step after this PR:
+
+```text
+v28.0L-3H-2 Fixture Sample Prompt/Quality Revision - No Provider Call
+```

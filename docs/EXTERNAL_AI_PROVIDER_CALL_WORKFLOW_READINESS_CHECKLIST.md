@@ -385,7 +385,28 @@ Still not ready:
 - Daily integration
 - scoring / decision / execution / position impact
 
-## 15. Final readiness decision
+## 15. v28.0L-3H-1 readiness update
+
+Run `25592238444` changed the readiness picture without changing production readiness.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Provider-call transport | works_for_fixture_sample | Environment-gated `provider-call-artifact-only` entered and executed one DeepSeek call for `fixture_sample`. | No | Keep first-call path manual and fixture-only. |
+| Output validator | works | External AI output validation passed and DeepSeek manual API test passed. | No | Keep validator required before quality review. |
+| Quality review | blocked_promotion | Quality review failed with `needs_prompt_revision`; `promotionEligible=false`. | Yes | Revise fixture prompt / quality behavior in a no-provider-call PR before rerun. |
+| Artifact sanitizer | works_but_diagnostic_marker_fix_needed | Sanitizer blocked upload because diagnostic JSON contained the forbidden marker `DEEPSEEK_API_KEY`; this was the secret name, not the secret value. | Yes | Remove the literal marker from generated diagnostic artifacts and keep the sanitizer strict. |
+| Production integration | not_ready | No production data, frontend, Daily, Worker, config, scoring, decision, execution, or position path changed. | Yes | Separate reviewed production integration phase remains required. |
+| Frontend display | not_ready | Provider output remains artifact-only and failed quality review. | Yes | Do not display external AI output. |
+
+Current L-3H-1 decision:
+
+```text
+fixture_provider_transport_observed_quality_blocked_sanitizer_fix_required
+```
+
+Do not rerun the provider-call workflow until the diagnostic marker fix is merged. Do not run live/local input provider calls until a later `fixture_sample` quality review passes.
+
+## 16. Final readiness decision
 
 Overall readiness:
 
