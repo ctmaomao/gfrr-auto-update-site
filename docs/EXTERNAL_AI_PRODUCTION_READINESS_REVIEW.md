@@ -443,3 +443,26 @@ Recommended next step:
 ```text
 v28.0L-3U External AI Visible Display UX Polish - No Provider Call
 ```
+
+## 20. v28.0L-3U-1 visible display UX readiness update
+
+v28.0L-3U-1 records that visible display UX polish passed post-merge audit.
+
+Readiness update:
+
+- Visible frontend display: active.
+- Visible display UX polish: completed and audited.
+- AI text content: unchanged.
+- Provider calls: not run.
+- Recurring AI refresh: `not_ready`.
+- Daily integration: still `not_ready`.
+- Automatic provider calls: still `not_ready`.
+- Scoring / decision / execution / position impact: blocked / out_of_scope.
+
+Current decision:
+
+- Current production layer display: active and polished.
+- Provider rerun: NO-GO.
+- Daily integration: NO-GO.
+- Automatic provider calls: NO-GO.
+- Recurring AI refresh: NO-GO until separately designed.

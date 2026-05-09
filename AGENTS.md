@@ -423,3 +423,9 @@ Do not modify external AI text manually. Do not add automatic provider calls, Da
 v28.0L-3U polishes the visible external AI read-only panel only.
 
 Do not modify external AI generated text, provider data, `data/radar-data.json`, provider artifacts, or provider workflows for UX polish. Do not add trading/action copy, automatic provider calls, Daily integration, scoring changes, decision changes, execution changes, or position changes. Preserve Global Risk Heatmap layout.
+
+## 39. v28.0L-3U-1 visible display UX audit-sync reminder
+
+v28.0L-3U-1 records that the visible external AI display is live, polished, and audited for the current production data layer.
+
+Do not change AI generated text manually. Do not add provider refresh automation without explicit approval. Preserve Global Risk Heatmap layout and preserve no scoring / decision / execution / position impact. Future updates must pass `check:external-ai-production-contract`, `check:external-ai-production-write-guard`, `check:external-ai-frontend-hidden-scaffold`, and `check:all`.

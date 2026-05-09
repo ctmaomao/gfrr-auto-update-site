@@ -1516,3 +1516,16 @@ Current data contract boundary:
 - `boundaries.affectsExecutionLock=false`.
 - `boundaries.affectsPositionGuidance=false`.
 - Display approval does not approve provider reruns, AI text edits, Daily integration, automatic provider calls, or scoring / decision / execution / position impact.
+
+## v28.0L-3U-1 externalAiInterpretationLayer UX audit
+
+v28.0L-3U-1 records that the visible display UX polish passed post-merge audit without changing the data contract.
+
+Current data contract boundary:
+
+- `data/radar-data.json` was not modified during UX polish.
+- `externalAiInterpretationLayer` remains the production source for the panel.
+- The production data contract remained unchanged.
+- AI-generated text was not edited or refreshed.
+- Future data updates still require the production contract validator, production write guard, frontend scaffold check, `check:data`, and `check:all`.
+- Provider refresh automation, Daily integration, and automatic provider calls remain unapproved.
