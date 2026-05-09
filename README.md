@@ -312,4 +312,6 @@ External AI first production write guard status: v28.0L-3O adds a read-only writ
 
 External AI production data layer status: v28.0L-3P writes a display-disabled `externalAiInterpretationLayer` into `data/radar-data.json`; frontend display remains disabled.
 
+External AI production write audit status: v28.0L-3P-1 records the post-merge audit PASS for the display-disabled production data layer; frontend display remains disabled.
+
 Runtime status: v28.0L-3I-0 standardizes local development and GitHub Actions on Node.js 24 LTS.

@@ -200,3 +200,46 @@ Recommended next step:
 ```text
 v28.0L-3P-1 First Production Write Audit Sync - No Frontend Display
 ```
+
+## 11. v28.0L-3P-1 post-merge audit sync
+
+v28.0L-3P-1 records the successful post-merge audit for the first controlled production data write.
+
+Audit result:
+
+- First controlled production write completed.
+- `data/radar-data.json` contains `externalAiInterpretationLayer`.
+- Source run: `25598887574`.
+- Real provider artifact used: `external-ai-manual-provider-test-provider-25598887574`.
+- No fixture or sample output was used for the production write.
+- `check:external-ai-production-contract -- data/radar-data.json` passed.
+- `check:external-ai-production-write-guard` passed.
+- `check:data` passed.
+- `check:all` passed.
+- Post-merge working tree audit was clean.
+
+Inserted layer remains non-impacting:
+
+- `displayEnabled=false`.
+- `boundaries.frontendDisplayApproved=false`.
+- `qualityReview.promotionEligible=false`.
+- `boundaries.affectsScoring=false`.
+- `boundaries.affectsDecisionModel=false`.
+- `boundaries.affectsExecutionLock=false`.
+- `boundaries.affectsPositionGuidance=false`.
+- Frontend display remains disabled.
+- No scoring / decision / execution / position impact is approved.
+
+Known non-blocking observation from the audit:
+
+- `check:world-order` passed with `warnings=1`.
+- `freshness=partial`.
+- `gdeltStatus=stale`.
+- `sipriStatus=manual_required`.
+- `acledStatus=not_configured`.
+
+Recommended next step:
+
+```text
+v28.0L-3Q External AI Frontend Display Design - No Display Yet
+```

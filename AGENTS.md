@@ -381,3 +381,9 @@ Do not write `externalAiInterpretationLayer` into `data/radar-data.json` without
 v28.0L-3P writes a display-disabled production `externalAiInterpretationLayer` into `data/radar-data.json` from approved run `25598887574`.
 
 Future edits to `externalAiInterpretationLayer` must use the validator/write workflow. Do not set `displayEnabled=true` or `boundaries.frontendDisplayApproved=true` without a separate approved frontend PR. Do not connect this layer to frontend display, Daily, automatic provider calls, scoring, decision, execution, or position logic without separate explicit approval.
+
+## 32. v28.0L-3P-1 first production write audit-sync reminder
+
+v28.0L-3P-1 records that the first controlled production write passed post-merge audit. `externalAiInterpretationLayer` now exists in `data/radar-data.json`, remains display-disabled, and remains non-impacting.
+
+Do not edit the layer manually. Future updates must pass `check:external-ai-production-contract` and `check:external-ai-production-write-guard`. Do not set `displayEnabled=true` without explicit frontend display approval. Frontend display remains a separate phase.
