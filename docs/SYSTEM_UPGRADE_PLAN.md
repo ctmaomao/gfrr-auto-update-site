@@ -794,3 +794,31 @@ Recommended next stage:
 ```text
 v28.0L-3N External AI Production Projection Dry-Run - No Production Write
 ```
+
+## v28.0L-3N External AI Production Projection Dry-Run
+
+v28.0L-3N adds a deterministic dry-run projection path for the future production `externalAiInterpretationLayer` contract.
+
+This stage:
+
+- adds `scripts/project-external-ai-production-dry-run.mjs`.
+- adds `npm run project:external-ai-production:dry-run`.
+- adds `npm run check:external-ai-production-projection`.
+- writes projection output only under ignored `manual-artifacts/external-ai/`.
+- validates the projected output with `check:external-ai-production-contract`.
+- keeps production write as NO-GO.
+- keeps frontend display as NO-GO.
+- keeps Daily integration as NO-GO.
+- keeps automatic provider calls as NO-GO.
+- keeps `promotionEligible=true` as NO-GO.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not read or modify secrets.
+- does not modify production data.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3O First Controlled Production Write Design - No Frontend Display
+```

@@ -893,6 +893,36 @@ Status update:
 - No Daily integration or automatic provider call is implemented.
 - No provider call or workflow dispatch is part of this stage.
 
+Recommended next stage:
+
+```text
+v28.0L-3N External AI Production Projection Dry-Run - No Production Write
+```
+
+## 32. v28.0L-3N production projection dry-run scaffold
+
+v28.0L-3N adds a deterministic projection dry-run for the proposed production contract:
+
+- `scripts/project-external-ai-production-dry-run.mjs`.
+- `npm run project:external-ai-production:dry-run`.
+- `npm run check:external-ai-production-projection`.
+
+Status update:
+
+- A validated fixture external AI artifact can be projected into the future `externalAiInterpretationLayer` contract shape.
+- Projection writes only to ignored `manual-artifacts/external-ai/`.
+- Projected output is validated with `check:external-ai-production-contract`.
+- No production data write is implemented.
+- No frontend display is implemented.
+- No Daily integration or automatic provider call is implemented.
+- No provider call or workflow dispatch is part of this stage.
+
+Recommended next stage:
+
+```text
+v28.0L-3O First Controlled Production Write Design - No Frontend Display
+```
+
 Next phase:
 
 ```text

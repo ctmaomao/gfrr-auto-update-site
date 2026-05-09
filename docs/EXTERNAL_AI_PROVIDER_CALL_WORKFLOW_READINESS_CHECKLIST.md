@@ -112,6 +112,33 @@ Recommended next PR:
 v28.0L-3N External AI Production Projection Dry-Run - No Production Write
 ```
 
+## v28.0L-3N readiness update
+
+v28.0L-3N adds the production projection dry-run scaffold and validates its ignored output with the production contract validator.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Production contract validator | ready | `check:external-ai-production-contract` validates both the contract fixture and projected dry-run output. | No | Keep required for every future projection/write stage. |
+| Production projection dry-run | ready / scaffolded | `check:external-ai-production-projection` writes only `manual-artifacts/external-ai/external-ai-production-projection-latest.json` and validates it. | No | Use as dry-run evidence only. |
+| Production write | not_ready | No production data file write is approved or implemented. | Yes | Separate explicit L-3O design required before any write stage. |
+| Frontend display | not_ready | No frontend display path is approved or implemented. | Yes | Keep hidden / absent. |
+| Daily integration | not_ready | No Daily integration or scheduled provider call is approved. | Yes | Keep disconnected. |
+| Automatic provider calls | not_ready | Projection is local and deterministic; it does not call a provider. | Yes | Separate scheduling and cost-control design required, if ever. |
+
+Current L-3N decision:
+
+```text
+production_projection_dry_run_ready_production_write_no_go
+```
+
+Recommended next stage:
+
+```text
+v28.0L-3O First Controlled Production Write Design - No Frontend Display
+```
+
+This stage confirms:
+
 - No provider-call workflow is added.
 - No workflow file is added or modified.
 - No GitHub secret is added.

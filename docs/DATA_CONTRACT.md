@@ -1382,3 +1382,18 @@ Current data contract boundary:
 - Daily and automatic provider calls remain disabled.
 - Future write requires a projection / dry-run stage and explicit approval.
 - Future write must pass the production contract validator before any production data file is changed.
+
+## v28.0L-3N externalAiInterpretationLayer projection dry-run
+
+v28.0L-3N adds a local projection dry-run for the future production contract.
+
+Current data contract boundary:
+
+- `npm run check:external-ai-production-projection` generates and validates an ignored projection artifact.
+- Projection output is written only under `manual-artifacts/external-ai/`.
+- Projection output is not `data/radar-data.json`.
+- `externalAiInterpretationLayer` remains absent / disabled / scaffold-only in production data.
+- Frontend display remains disabled.
+- Daily and automatic provider calls remain disabled.
+- Production write remains NO-GO until a separate explicitly approved production write design and implementation phase.
+- Future writes must still pass `check:external-ai-production-contract` before any production data file is changed.
