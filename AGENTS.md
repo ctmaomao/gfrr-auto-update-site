@@ -447,3 +447,9 @@ v28.0L-4A-1 records the first successful manual `External AI Production Refresh`
 v28.0L-4B expands visible external AI panel coverage only. Display coverage changes must not alter `data/radar-data.json`, provider artifacts, or AI-generated text.
 
 Use capped summaries for optional external AI fields. Do not display raw provider output, raw provenance, run IDs, artifact IDs, artifact paths, raw headers, internal diagnostics, or `decisionContext` raw fields. Preserve strict display gates, no provider call, no Daily integration, no extra schedules, no Global Risk Heatmap layout change, and no scoring / decision / execution / position impact.
+
+## 43. v28.0L-4B-1 display coverage audit-sync reminder
+
+External AI display coverage is complete for current safe production fields.
+
+Do not display raw provider output, raw provenance, run IDs, artifact IDs, or raw `decisionContext`. Do not edit AI text manually. Do not add provider automation outside the approved production refresh workflow. Preserve no scoring / decision / execution / position impact and preserve Global Risk Heatmap layout. Future display changes must pass frontend scaffold check, copy check, production contract validation, production write guard, and `check:all`.

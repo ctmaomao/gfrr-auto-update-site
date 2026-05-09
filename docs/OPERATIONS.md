@@ -1740,3 +1740,18 @@ Operator guidance:
 - If the panel becomes too long, reduce caps in `scripts/modules/renderExternalAi.js` rather than editing AI text.
 - Keep raw provider output, raw provenance, run IDs, artifact IDs, and internal diagnostics hidden from normal display.
 - Keep Global Risk Heatmap layout, scoring, decision, execution, and position logic unchanged.
+
+### v28.0L-4B-1 display coverage audit-sync operator note
+
+v28.0L-4B-1 records that external AI panel display coverage is complete for the current safe fields.
+
+Operator guidance:
+
+- Display coverage remains frontend-only.
+- It reveals more of the existing validated production `externalAiInterpretationLayer`.
+- Do not edit AI text manually.
+- Do not rerun the provider just for display coverage.
+- If the panel becomes too long, reduce display caps in `scripts/modules/renderExternalAi.js` in a future frontend-only PR.
+- If unsafe copy appears, revert immediately.
+- If Global Risk Heatmap layout is affected, revert immediately.
+- `External AI Production Refresh` remains the only approved automatic provider path.

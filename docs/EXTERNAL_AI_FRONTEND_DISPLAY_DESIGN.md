@@ -429,3 +429,36 @@ Recommended next step:
 ```text
 v28.0L-4B-1 Display Coverage Audit Sync - No Provider Call
 ```
+
+## 22. v28.0L-4B-1 display coverage audit sync
+
+v28.0L-4B-1 records that the display coverage polish completed and passed post-merge audit.
+
+Audit result:
+
+- Display coverage polish completed.
+- Post-merge audit passed.
+- The external AI panel now shows broader safe summaries from `externalAiInterpretationLayer`.
+- `modelJudgments` are displayed as capped safe summaries.
+- `scenarioHypotheses` are displayed as capped safe summaries.
+- `sourceAttribution` is displayed as a compact source summary.
+- `qualityReview` is displayed only as public-safe status.
+- Raw provider output is not displayed.
+- Run IDs are not displayed to normal users.
+- Artifact IDs are not displayed to normal users.
+- Raw provenance is not displayed.
+- Raw `decisionContext` is not displayed.
+- Dynamic AI/data content uses `textContent`.
+- No AI text changed.
+- No provider call was run.
+- No workflow was triggered.
+- No automatic provider call was added.
+- No Daily integration was added.
+- No scoring / decision / execution / position impact was introduced.
+- Global Risk Heatmap layout remains protected.
+
+Current display coverage decision:
+
+```text
+display_coverage_audited_no_provider_call
+```

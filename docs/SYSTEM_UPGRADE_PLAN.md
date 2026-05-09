@@ -1177,3 +1177,30 @@ Recommended next step:
 ```text
 v28.0L-4B-1 Display Coverage Audit Sync - No Provider Call
 ```
+
+## v28.0L-4B-1 Display Coverage Audit Sync
+
+v28.0L-4B-1 records the successful post-merge audit for external AI display coverage polish.
+
+This stage:
+
+- records display coverage audit success.
+- confirms `modelJudgments` display coverage is complete.
+- confirms `scenarioHypotheses` display coverage is complete.
+- confirms `sourceAttribution` summary display coverage is complete.
+- confirms public `qualityReview` status display coverage is complete.
+- confirms no production data changed.
+- confirms no AI-generated text changed.
+- confirms no provider call was run.
+- confirms no workflow was triggered.
+- confirms no frontend logic change is made in this audit-sync PR.
+- confirms no automatic provider call or Daily integration was added.
+- keeps Global Risk Heatmap layout protected.
+- does not affect scoring / decision / execution / position logic.
+- considers the external AI integration, visible display, production refresh, and display coverage line complete.
+
+Optional future phase:
+
+```text
+v28.0L-4C Refresh Monitoring / Failure Notification Design - No Provider Call
+```
