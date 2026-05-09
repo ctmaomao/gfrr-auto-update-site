@@ -247,3 +247,13 @@ Dry-run artifacts remain diagnostics only. Do not promote them, copy them into `
 v28.0L-3C may document future provider-call workflow gates, but it must not implement them. Do not add or modify workflow files, do not add `DEEPSEEK_API_KEY` to secrets, do not read API keys, do not create `.env` files, and do not run a real DeepSeek call in an L-3C design PR.
 
 Provider-call artifacts remain non-production manual diagnostics. Provider-call success in a later implementation would still not imply frontend display readiness, Daily integration readiness, production data write readiness, or scoring / decision / execution / position readiness.
+
+## 12. v28.0L-3D provider-call readiness checklist reminder
+
+v28.0L-3D is a documentation-only readiness checklist and must not be treated as approval to implement a provider-call workflow.
+
+Checklist PRs must not add secrets, provider-call workflow behavior, provider inputs, `allow_network`, `dry_run=false`, SDKs, dependencies, production data writes, frontend visibility, or scoring / decision / execution / position changes. They must not add or modify workflow files.
+
+Resolve the missing readiness items before implementation: GitHub secret storage decision, secret rotation/revocation, trigger permissions, missing-secret failure behavior, provider-call static checker, artifact sanitization checker, cost budget, concurrency policy, and operator approval process.
+
+Even if a future provider-call workflow succeeds, that success still will not imply production integration readiness, frontend display readiness, Daily integration readiness, production data write readiness, or scoring / decision / execution / position readiness.

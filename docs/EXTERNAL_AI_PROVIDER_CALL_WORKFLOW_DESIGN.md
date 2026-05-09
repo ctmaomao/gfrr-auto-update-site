@@ -408,6 +408,7 @@ Future implementation PR must include static/deterministic checks proving:
 Before implementing provider-call workflow:
 
 - L-3C design merged and green.
+- v28.0L-3D readiness checklist reviewed and green.
 - Secret storage decision completed.
 - Secret rotation/revocation documented.
 - Exit policy selected.
@@ -471,10 +472,12 @@ Recommended next PR if this design is accepted:
 v28.0L-3D Provider-Call Workflow Readiness Checklist - No Code
 ```
 
-Alternative faster path, if explicitly approved:
+v28.0L-3D is the gate before implementation. L-3C design alone is not approval to add a provider-call workflow, add GitHub secrets, reference `DEEPSEEK_API_KEY`, or run DeepSeek from GitHub Actions.
+
+Alternative faster path after L-3D only if explicitly approved:
 
 ```text
-v28.0L-3D Manual Provider-Call Workflow Implementation - Artifact-Only / No Production Data
+v28.0L-3E Manual Provider-Call Workflow Skeleton - Missing-Secret Safe / No Real Provider Call
 ```
 
 Any implementation PR must be separate and must preserve all artifact-only and non-production boundaries.

@@ -338,6 +338,8 @@ v28.0L-3B adds that dry-run workflow skeleton only. It is `workflow_dispatch` on
 
 v28.0L-3C provider-call workflow design is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md). It remains design-only. A future provider-call workflow would still be artifact-only and would not be production integration. L-3C allows no Daily integration, frontend display, production data write, enabled `externalAiInterpretationLayer`, or scoring / decision / execution / position change.
 
+v28.0L-3D provider-call workflow readiness checklist is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md). It is the no-code go/no-go gate before provider-call implementation planning. The current readiness decision remains NO-GO for provider-call implementation until secret storage, rotation/revocation, static checks, missing-secret behavior, artifact sanitization, operator approval, cost budget, and concurrency policy are resolved.
+
 ## 18. Non-goals
 
 v28.0L-0 does not:
