@@ -225,3 +225,21 @@ Recommended next step after this PR:
 ```text
 v28.0L-3H-2 Fixture Sample Prompt/Quality Revision - No Provider Call
 ```
+
+## 12. v28.0L-3H-2 prompt revision before rerun
+
+L-3H-2 responds to run `25592238444` without running another provider call.
+
+Status:
+
+- the first call reached DeepSeek behind the environment gate.
+- output validation passed.
+- DeepSeek manual API test passed.
+- quality review blocked promotion with `needs_prompt_revision`.
+- `promotionEligible=false`.
+- production integration remains `not_ready`.
+- frontend display remains `not_ready`.
+
+L-3H-2 improves the fixture prompt contract before any rerun. It does not add secrets, does not read the provider key, does not trigger the workflow, and does not modify production data.
+
+After L-3H-2 is merged and audited, the next real provider-call run must still be `fixture_sample` only. Live/local input remains blocked until fixture quality review passes.

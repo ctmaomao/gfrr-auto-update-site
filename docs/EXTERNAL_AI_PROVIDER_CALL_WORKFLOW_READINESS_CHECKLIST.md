@@ -406,7 +406,27 @@ fixture_provider_transport_observed_quality_blocked_sanitizer_fix_required
 
 Do not rerun the provider-call workflow until the diagnostic marker fix is merged. Do not run live/local input provider calls until a later `fixture_sample` quality review passes.
 
-## 16. Final readiness decision
+## 16. v28.0L-3H-2 readiness update
+
+v28.0L-3H-2 updates prompt and quality guidance before any rerun.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Provider-call transport | verified_for_fixture_sample | Run `25592238444` reached DeepSeek once behind the environment gate. | No | Keep next run fixture-only. |
+| Output validator | verified | Run `25592238444` output validation passed. | No | Keep validator required. |
+| Quality review | needs_prompt_revision | Run `25592238444` failed offline quality review with `promotionEligible=false`. | Yes | Merge and audit L-3H-2 prompt guidance before rerun. |
+| Fixture_sample provider rerun | pending_l3h2_merge | Prompt now avoids mixed source markers and strengthens attribution / confidence / incremental-value guidance. | Yes | Next real run should be `v28.0L-3H-3 Second Fixture Sample Provider Call Audit`. |
+| Live/local provider call | not_ready | Fixture quality review has not passed yet. | Yes | Do not run live/local provider input. |
+| Production integration | not_ready | Output remains artifact-only; no production paths are connected. | Yes | Separate reviewed production integration phase required. |
+| Frontend display | not_ready | External AI output is still not approved for display. | Yes | Do not make `externalAiInterpretationLayer` visible. |
+
+Current L-3H-2 decision:
+
+```text
+fixture_prompt_quality_revised_no_provider_call
+```
+
+## 17. Final readiness decision
 
 Overall readiness:
 

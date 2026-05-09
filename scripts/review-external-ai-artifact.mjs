@@ -432,6 +432,12 @@ function finalizeReview(review) {
   const scores = Object.values(review.scores);
   const hasFail = scores.includes('fail');
   const hasWarn = scores.includes('warn');
+  review.failedDimensions = Object.entries(review.scores)
+    .filter(([, score]) => score === 'fail')
+    .map(([dimension]) => dimension);
+  review.warningDimensions = Object.entries(review.scores)
+    .filter(([, score]) => score === 'warn')
+    .map(([dimension]) => dimension);
 
   if (review.scores.executionLanguageSafety === 'fail' || review.scores.unsupportedExternalClaims === 'fail') {
     review.status = 'fail';
@@ -449,6 +455,25 @@ function finalizeReview(review) {
 
   review.promotionEligible = false;
   return review;
+}
+
+function printReviewDetails(review, stream) {
+  if (Array.isArray(review.failedDimensions) && review.failedDimensions.length > 0) {
+    stream.write(`failedDimensions: ${review.failedDimensions.join(',')}\n`);
+  }
+  if (Array.isArray(review.warningDimensions) && review.warningDimensions.length > 0) {
+    stream.write(`warningDimensions: ${review.warningDimensions.join(',')}\n`);
+  }
+
+  const errors = Array.isArray(review.errors) ? review.errors : [];
+  errors.slice(0, 5).forEach((error, index) => {
+    stream.write(`error[${index}]: ${error}\n`);
+  });
+
+  const warnings = Array.isArray(review.warnings) ? review.warnings : [];
+  warnings.slice(0, 5).forEach((warning, index) => {
+    stream.write(`warning[${index}]: ${warning}\n`);
+  });
 }
 
 function createFailureArtifactReview(inputPath, data) {
@@ -527,6 +552,7 @@ function printReviewResult(review, outputPath) {
     console.log('recommendation: needs_prompt_revision');
     console.log('promotionEligible: false');
     console.log(`warnings: ${review.warnings.length}`);
+    printReviewDetails(review, process.stdout);
     console.log(`output: ${outputPath}`);
     return;
   }
@@ -535,6 +561,7 @@ function printReviewResult(review, outputPath) {
   console.error(`recommendation: ${review.recommendation}`);
   console.error('promotionEligible: false');
   console.error(`errors: ${review.errors.length}`);
+  printReviewDetails(review, process.stderr);
   console.error(`output: ${outputPath}`);
 }
 
