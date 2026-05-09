@@ -536,3 +536,23 @@ Recommended next step:
 ```text
 v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
 ```
+
+## 24. v28.0L-3T-1 visible display contract audit
+
+v28.0L-3T-1 records that the production contract supports the current approved visible state.
+
+Audit result:
+
+- Current approved visible state is supported by the production contract.
+- `displayEnabled=true`.
+- `boundaries.frontendDisplayApproved=true`.
+- The data flags were enabled without provider refresh.
+- AI text content was not changed.
+- All non-impact boundaries remain required.
+- Automatic provider calls and Daily integration remain disabled.
+
+Recommended next step:
+
+```text
+v28.0L-3U External AI Visible Display UX Polish - No Provider Call
+```

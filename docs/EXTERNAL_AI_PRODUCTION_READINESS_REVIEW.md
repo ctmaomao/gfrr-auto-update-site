@@ -415,3 +415,31 @@ Recommended next step:
 ```text
 v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
 ```
+
+## 19. v28.0L-3T-1 visible display audit readiness update
+
+v28.0L-3T-1 records that visible display flag enablement passed post-merge audit.
+
+Readiness update:
+
+- Visible frontend display: enabled through the existing scaffold.
+- `displayEnabled=true` already audited.
+- `boundaries.frontendDisplayApproved=true` already audited.
+- AI text content: unchanged.
+- Provider calls: not run.
+- Daily integration: still `not_ready`.
+- Automatic provider calls: still `not_ready`.
+- Scoring / decision / execution / position impact: blocked / out_of_scope.
+
+Current decision:
+
+- Current production layer display: enabled and audited.
+- Provider rerun: NO-GO.
+- Daily integration: NO-GO.
+- Automatic provider calls: NO-GO.
+
+Recommended next step:
+
+```text
+v28.0L-3U External AI Visible Display UX Polish - No Provider Call
+```

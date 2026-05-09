@@ -337,6 +337,31 @@ Recommended next step:
 v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
 ```
 
+## v28.0L-3T-1 readiness update
+
+v28.0L-3T-1 records the post-merge audit for visible display flag enablement.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Visible display flags | enabled / audited | `displayEnabled=true` and `boundaries.frontendDisplayApproved=true` passed post-merge audit. | No | Keep guard checks active. |
+| Frontend scaffold | active | Existing scaffold may render the read-only panel. | No | Future UX changes require separate PR. |
+| AI text content | unchanged | L-3T did not change AI text content. | No | Do not edit text manually. |
+| Daily integration | not_ready | No Daily integration is approved or implemented. | Yes | Keep disconnected. |
+| Automatic provider calls | not_ready | No scheduled or automatic provider calls are approved or implemented. | Yes | Keep manual-only unless a separate future phase approves otherwise. |
+| Scoring / decision / execution / position impact | blocked / out_of_scope | All affect flags remain false and no related logic changes. | Yes | Keep external AI out of these paths. |
+
+Current L-3T-1 decision:
+
+```text
+visible_display_flags_audited_no_provider_call
+```
+
+Recommended next step:
+
+```text
+v28.0L-3U External AI Visible Display UX Polish - No Provider Call
+```
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:

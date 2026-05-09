@@ -411,3 +411,9 @@ Do not enable visible display without a separate explicit data-flag PR. Visible 
 v28.0L-3T approves visible display only for the current production `externalAiInterpretationLayer` by setting `displayEnabled=true` and `boundaries.frontendDisplayApproved=true`.
 
 Do not set `qualityReview.promotionEligible=true`. Do not modify external AI text manually. Do not add automatic provider calls, Daily integration, provider reruns, workflow schedules, scoring changes, decision changes, execution changes, or position changes. Preserve Global Risk Heatmap layout.
+
+## 37. v28.0L-3T-1 visible display audit-sync reminder
+
+v28.0L-3T-1 records that visible display is enabled and audited for the current production data layer only.
+
+Do not modify external AI text manually. Do not add automatic provider calls, Daily integration, provider reruns, workflow schedules, scoring changes, decision changes, execution changes, or position changes. Preserve Global Risk Heatmap layout.

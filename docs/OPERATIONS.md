@@ -1555,3 +1555,23 @@ Recommended next stage:
 ```text
 v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
 ```
+
+### v28.0L-3T-1 visible display audit-sync operator note
+
+v28.0L-3T-1 records that the visible display flags are enabled and post-merge checks passed.
+
+Operator guidance:
+
+- The external AI panel may now appear on the site.
+- Do not manually edit external AI text content.
+- Do not rerun the provider just for display.
+- Rollback is reverting the L-3T PR or setting `displayEnabled=false` and `boundaries.frontendDisplayApproved=false`.
+- If unsafe copy appears, revert immediately.
+- If Global Risk Heatmap layout changes, revert immediately.
+- Do not add automatic provider calls or Daily integration for visible display.
+
+Recommended next stage:
+
+```text
+v28.0L-3U External AI Visible Display UX Polish - No Provider Call
+```

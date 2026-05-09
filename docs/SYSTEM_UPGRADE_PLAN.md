@@ -1009,3 +1009,32 @@ Recommended next stage:
 ```text
 v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
 ```
+
+## v28.0L-3T-1 Visible Display Audit Sync
+
+v28.0L-3T-1 records the successful post-merge audit for visible display flag enablement.
+
+This stage:
+
+- records that `displayEnabled=true` is audited.
+- records that `boundaries.frontendDisplayApproved=true` is audited.
+- records `check:external-ai-production-contract -- data/radar-data.json` PASS.
+- records `check:external-ai-production-write-guard` PASS.
+- records `check:external-ai-frontend-hidden-scaffold` PASS.
+- records `check:data` PASS.
+- records `check:all` PASS.
+- changes no production data.
+- changes no frontend files.
+- changes no scripts or workflows.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- keeps Global Risk Heatmap layout protected.
+- keeps Daily integration disabled.
+- keeps automatic provider calls disabled.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3U External AI Visible Display UX Polish - No Provider Call
+```
