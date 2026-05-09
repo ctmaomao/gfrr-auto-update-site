@@ -288,3 +288,24 @@ Recommended next step:
 ```text
 v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
 ```
+
+## 15. v28.0L-3T visible display flag enablement status
+
+v28.0L-3T enables the existing read-only panel through data flags.
+
+Status update:
+
+- Visible display is now enabled through `displayEnabled=true`.
+- Visible display is now approved through `boundaries.frontendDisplayApproved=true`.
+- Rendering remains read-only and gated by the existing scaffold.
+- The panel remains outside Global Risk Heatmap.
+- No frontend code is changed.
+- No AI text content is changed.
+- No scoring / decision / execution / position impact is introduced.
+- No provider call, automatic provider call, or Daily integration is added.
+
+Recommended next step:
+
+```text
+v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
+```

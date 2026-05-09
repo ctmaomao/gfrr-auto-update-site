@@ -387,3 +387,31 @@ Recommended next step:
 ```text
 v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
 ```
+
+## 18. v28.0L-3T visible display readiness update
+
+v28.0L-3T enables visible display for the current production layer by setting only the approved data flags.
+
+Readiness update:
+
+- Frontend hidden scaffold: complete.
+- Visible frontend display: enabled for the current production layer.
+- Production data flags: `displayEnabled=true` and `boundaries.frontendDisplayApproved=true`.
+- AI text content: unchanged.
+- Provider calls: not run.
+- Daily integration: `not_ready`.
+- Automatic provider calls: `not_ready`.
+- Scoring / decision / execution / position impact: blocked / out_of_scope.
+
+Current decision:
+
+- Current production layer display: enabled through data flags.
+- Provider rerun: NO-GO.
+- Daily integration: NO-GO.
+- Automatic provider calls: NO-GO.
+
+Recommended next step:
+
+```text
+v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
+```

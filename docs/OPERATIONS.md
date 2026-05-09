@@ -1535,3 +1535,23 @@ Recommended next stage:
 ```text
 v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
 ```
+
+### v28.0L-3T visible display flag operator note
+
+v28.0L-3T enables the external AI panel through the approved data flags. The existing scaffold may now render the current production layer.
+
+Operator guidance:
+
+- Do not manually edit external AI text content.
+- Do not rerun the provider just for display.
+- Do not add automatic provider calls or Daily integration.
+- Rollback is reverting this PR or setting `displayEnabled=false` and `boundaries.frontendDisplayApproved=false`.
+- If unsafe copy appears, revert immediately.
+- If Global Risk Heatmap layout changes, revert immediately.
+- Future content refresh remains a separate provider/artifact/update phase.
+
+Recommended next stage:
+
+```text
+v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
+```

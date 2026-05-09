@@ -311,6 +311,32 @@ Recommended next step:
 v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
 ```
 
+## v28.0L-3T readiness update
+
+v28.0L-3T enables visible display flags for the current production layer without a provider call.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Frontend hidden scaffold | ready | L-3R scaffold remains the render path. | No | Keep guard checks active. |
+| Visible display flags | enabled | `displayEnabled=true` and `boundaries.frontendDisplayApproved=true`. | No | Audit the visible display in L-3T-1. |
+| AI text content | unchanged | This PR changes display flags only. | No | Do not edit text manually. |
+| Visible display | enabled_for_current_layer | Existing scaffold may render the read-only panel. | No | Monitor copy and layout through audit. |
+| Daily integration | not_ready | No Daily integration is approved or implemented. | Yes | Keep disconnected. |
+| Automatic provider calls | not_ready | No scheduled or automatic provider calls are approved or implemented. | Yes | Keep manual-only unless a separate future phase approves otherwise. |
+| Scoring / decision / execution / position impact | blocked / out_of_scope | All affect flags remain false and no related logic changes. | Yes | Keep external AI out of these paths. |
+
+Current L-3T decision:
+
+```text
+visible_display_flags_enabled_no_provider_call
+```
+
+Recommended next step:
+
+```text
+v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
+```
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:

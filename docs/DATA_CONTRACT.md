@@ -1482,3 +1482,21 @@ Current data contract boundary:
 - Future visible-display flag enablement should be data-only where possible if the hidden scaffold remains sufficient.
 - Future visible-display flag enablement must not update AI text content, rerun DeepSeek, refresh provider artifacts, add automatic provider calls, or change frontend code unless a separate approval requires it.
 - The layer must continue to have no scoring, `decisionModel`, `executionLock`, `positionGuidance`, Global Risk Heatmap, Daily, or automatic provider-call effect.
+
+## v28.0L-3T externalAiInterpretationLayer visible display flags
+
+v28.0L-3T enables the existing production external AI panel through data flags.
+
+Current data contract boundary:
+
+- `externalAiInterpretationLayer.displayEnabled=true`.
+- `externalAiInterpretationLayer.boundaries.frontendDisplayApproved=true`.
+- This approves display only.
+- This does not approve a provider rerun.
+- This does not approve AI text changes.
+- `qualityReview.promotionEligible=false` remains required.
+- `boundaries.affectsScoring=false` remains required.
+- `boundaries.affectsDecisionModel=false` remains required.
+- `boundaries.affectsExecutionLock=false` remains required.
+- `boundaries.affectsPositionGuidance=false` remains required.
+- Global Risk Heatmap, Daily integration, and automatic provider calls remain unaffected.
