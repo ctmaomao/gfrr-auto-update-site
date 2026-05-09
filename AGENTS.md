@@ -285,3 +285,13 @@ Do not treat L-3F-1 audit success as approval to add secrets or run real provide
 v28.0L-3G decides the future secret strategy only: prefer GitHub Environment `external-ai-manual` with Environment secret `DEEPSEEK_API_KEY`, using required reviewer approval if available. Repository Actions secret is fallback only.
 
 Do not add secrets or unlock provider calls unless the user explicitly asks. The first provider call, if later approved, must be `fixture_sample` first, artifact-only, `max_attempts=1`, validator-gated, quality-review-gated, sanitizer-gated, and non-production. It must not write production data, modify frontend, trigger Daily, or affect scoring / decision / execution / position.
+
+## 17. v28.0L-3H provider-call unlock reminder
+
+v28.0L-3H unlocks the provider-call workflow only behind GitHub Environment `external-ai-manual` and Environment secret `DEEPSEEK_API_KEY`.
+
+Do not bypass the `external-ai-manual` environment gate. Do not move `DEEPSEEK_API_KEY` to global env or job env; keep it step-scoped to the provider-call step only. Do not pass the secret as a CLI argument and do not print it.
+
+Provider output remains artifact-only and non-production. Do not write provider output to `data/radar-data.json`, do not display provider output in frontend, do not trigger Daily, and do not let provider output affect scoring / decision / execution / position logic.
+
+Do not run live/local provider-call input before the `fixture_sample` workflow audit passes and is recorded in a follow-up PR.

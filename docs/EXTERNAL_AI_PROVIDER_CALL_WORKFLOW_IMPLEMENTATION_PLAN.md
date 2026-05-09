@@ -579,3 +579,38 @@ Next implementation requires explicit approval. The next possible implementation
 ```text
 v28.0L-3H Provider-Call Unlock Workflow - Environment Secret Gate / Artifact-Only / No Production Data
 ```
+
+## 19. v28.0L-3H provider-call unlock implementation
+
+v28.0L-3H implements the approved unlock step for the existing `External AI Manual Provider Test` workflow.
+
+Implementation summary:
+
+- The workflow is split into a no-secret dry-run/gate job and an environment-gated provider-call job.
+- The dry-run/gate job has no environment, reads no secret, runs dry-run diagnostics, validates inputs, writes `provider-test-gate-status.json`, and exposes `provider_path_requested`.
+- The provider-call job runs only when all explicit gates are satisfied and uses environment `external-ai-manual`.
+- `DEEPSEEK_API_KEY` is injected only into the provider-call step environment and is never passed as a CLI argument.
+- L-3H allows real provider calls only with `input_source=fixture_sample`; `local_compact` is still dry-run-only.
+- The first provider command remains:
+
+```bash
+node scripts/run-external-ai-manual-test.mjs --provider deepseek --input docs/fixtures/external-ai/sample-input-v28.0K-1.json --output manual-artifacts/external-ai/deepseek-output-latest.json --allow-network --validate-output --timeout-ms 120000
+```
+
+The workflow uses the validated `timeout_ms` input, capped at `180000`.
+
+Required gates after provider output:
+
+- `npm run check:external-ai-output -- manual-artifacts/external-ai/deepseek-output-latest.json`
+- `npm run review:external-ai-artifact -- --input manual-artifacts/external-ai/deepseek-output-latest.json --output manual-artifacts/external-ai/external-ai-quality-review-latest.json`
+- `npm run check:external-ai-workflow-artifacts -- --workflow-provider-test`
+
+The output remains artifact-only. The workflow writes no production data, changes no frontend, triggers no Daily workflow, and does not affect scoring, decision, execution, or position logic.
+
+First run sequence after merge:
+
+1. Run the default dry-run path and confirm provider command executed=false.
+2. Create or confirm GitHub Environment `external-ai-manual` and Environment secret `DEEPSEEK_API_KEY`.
+3. Manually run the first `fixture_sample` provider call with environment approval.
+4. Inspect sanitized artifacts, validator result, and quality review.
+5. Record the audit in a follow-up PR before considering any live/local input provider call.

@@ -290,3 +290,5 @@ Realtime / Daily workflow 会在 GitHub Actions Summary 输出关键审计信息
 - Realtime 构建：`scripts/run-realtime.mjs`
 - Daily 构建：`scripts/run-daily-pipeline.mjs`
 - 数据校验：`scripts/validate-data.mjs`
+
+Provider-call workflow status: `External AI Manual Provider Test` is unlocked only behind GitHub Environment `external-ai-manual` approval and remains artifact-only / non-production.

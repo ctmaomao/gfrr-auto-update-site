@@ -360,7 +360,32 @@ v28.0L-3D does not:
 - enable `externalAiInterpretationLayer`
 - promote manual artifacts
 
-## 14. Final readiness decision
+## 14. v28.0L-3H readiness update
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Secret strategy | ready | v28.0L-3G selected GitHub Environment `external-ai-manual` and Environment secret `DEEPSEEK_API_KEY`. | No | Operator creates the environment secret after PR merge. |
+| Environment-gated workflow | implemented | v28.0L-3H splits dry-run/gate and provider-call jobs; the provider-call job uses `environment: external-ai-manual`. | No | Run default dry-run, then first approved fixture call after secret exists. |
+| Secret creation | operator_action_required | This PR does not add secrets. | Yes | Create Environment secret `DEEPSEEK_API_KEY`; prefer required reviewer approval if available. |
+| Real provider call | ready_after_environment_secret_and_approval | Provider command can run only with `provider=deepseek`, `input_source=fixture_sample`, `dry_run=false`, `allow_network=true`, cost and non-production acknowledgements, `validate_output=true`, `max_attempts=1`, valid timeout, environment approval, and non-empty secret. | Yes | Run manually after merge and record audit. |
+| Artifact gates | implemented | Validator, quality review, strict artifact sanitizer, short artifact retention, and post-run production safety assertion are required. | No | Inspect artifacts after first run. |
+| Production integration | not_ready | Provider output remains artifact-only and `promotionEligible=false`; no production data, frontend, Daily, Worker, scoring, decision, execution, or position path is changed. | Yes | Separate reviewed integration PR required. |
+
+Current L-3H decision:
+
+```text
+ready_for_manual_fixture_sample_provider_call_after_environment_secret_exists
+```
+
+Still not ready:
+
+- live/local provider-call input
+- production data write
+- frontend display
+- Daily integration
+- scoring / decision / execution / position impact
+
+## 15. Final readiness decision
 
 Overall readiness:
 

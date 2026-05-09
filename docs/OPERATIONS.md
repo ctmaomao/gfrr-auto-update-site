@@ -1056,3 +1056,46 @@ v28.0D-8B-lite **已上线运行并通过验证**。以下为一次典型线上 
 - 不要在 render 层重新推导 `executionLock` / `positionGuidance`。
 - 不要把 JSON 产物作为临时修复随意提交。
 - 不要用 UI 文案反向修改数据契约或评分逻辑。
+
+## v28.0L-3H External AI provider-call workflow runbook
+
+Before the first real provider call:
+
+1. Create GitHub Environment `external-ai-manual`.
+2. Add Environment secret `DEEPSEEK_API_KEY`.
+3. Prefer required reviewer approval if available.
+4. Do not add a repository-level secret unless that fallback is intentionally chosen.
+5. Do not paste, print, or pass the key as a command-line argument.
+
+Run the default dry-run first and confirm `provider command executed=false`.
+
+First real fixture-only provider call:
+
+```powershell
+gh workflow run "External AI Manual Provider Test" `
+  -f provider=deepseek `
+  -f input_source=fixture_sample `
+  -f dry_run=false `
+  -f allow_network=true `
+  -f acknowledge_cost=true `
+  -f acknowledge_non_production=true `
+  -f validate_output=true `
+  -f timeout_ms=120000 `
+  -f max_attempts=1 `
+  -f upload_artifacts=true
+```
+
+Expected behavior:
+
+- run may require `external-ai-manual` environment approval.
+- one provider call at most.
+- output remains artifact-only.
+- `check:external-ai-output` runs.
+- `review:external-ai-artifact` runs.
+- artifact sanitizer runs before upload.
+- no production data write.
+- no frontend change.
+- no Daily trigger.
+- `promotionEligible=false`.
+
+Stop and do not retry repeatedly if the provider returns unavailable, times out, validator fails, quality review fails, or sanitizer fails. Inspect the artifact diagnostics and record the run in a follow-up audit PR.

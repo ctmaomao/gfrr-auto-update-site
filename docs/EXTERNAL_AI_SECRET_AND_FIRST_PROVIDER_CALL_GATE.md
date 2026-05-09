@@ -167,3 +167,24 @@ Not allowed:
 - writing production data.
 - frontend display.
 - Daily integration.
+
+## 10. v28.0L-3H workflow unlock status
+
+v28.0L-3H implements the provider-call unlock workflow path, but only behind the GitHub Environment gate.
+
+Implemented behavior:
+
+- Workflow remains `workflow_dispatch` only.
+- Default dry-run still runs without environment approval, without secret access, and without provider call.
+- Provider-call path uses environment `external-ai-manual`.
+- Environment secret name remains `DEEPSEEK_API_KEY`.
+- Secret injection is scoped to the provider-call step only.
+- First real provider-call input is restricted to `fixture_sample`.
+- `local_compact` remains dry-run-only for L-3H; provider-call mode with `local_compact` fails before provider command with `l3h_first_provider_call_requires_fixture_sample`.
+- Provider output remains artifact-only and non-production.
+- Output must pass `check:external-ai-output`.
+- Quality review must run and keep `promotionEligible=false`.
+- Artifact sanitizer runs before upload.
+- No production data, frontend, Worker, Daily, scoring, decision, execution, or position path is changed.
+
+This PR does not create the GitHub Environment, does not add `DEEPSEEK_API_KEY`, and does not run DeepSeek. After merge, the next operator step is to create the environment secret, run the default dry-run, then run the first `fixture_sample` provider call with environment approval and record the audit in a follow-up PR.
