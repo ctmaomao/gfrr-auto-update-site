@@ -256,3 +256,16 @@ Boundary:
 - No frontend code is added.
 - No visible display is approved.
 - Any future display must be a separate explicitly approved frontend phase.
+
+## 13. v28.0L-3S visible display flag boundary
+
+v28.0L-3S documents the future visible-display approval and data flag process, but the first production write remains display-disabled.
+
+Boundary:
+
+- `displayEnabled=false` remains the current production state.
+- `boundaries.frontendDisplayApproved=false` remains the current production state.
+- Visible display requires a separate flag-approval PR.
+- Future flag enablement should be data-only where possible.
+- Future flag enablement must not rerun DeepSeek or refresh provider artifacts.
+- Future flag enablement must not add Daily integration, automatic provider calls, workflow schedules, scoring changes, decision changes, execution changes, or position changes.

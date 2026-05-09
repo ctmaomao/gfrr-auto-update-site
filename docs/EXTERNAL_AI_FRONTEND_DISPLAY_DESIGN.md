@@ -268,3 +268,23 @@ Recommended next step:
 ```text
 v28.0L-3S External AI Visible Display Approval + Data Flag Design - No Automatic Provider Call
 ```
+
+## 14. v28.0L-3S visible display approval design status
+
+v28.0L-3S adds [`EXTERNAL_AI_VISIBLE_DISPLAY_APPROVAL_DESIGN.md`](EXTERNAL_AI_VISIBLE_DISPLAY_APPROVAL_DESIGN.md) as the approval and data-flag design for a future visible display step.
+
+Status update:
+
+- Visible display approval and data flag design is documented.
+- Display remains disabled in this PR.
+- No frontend code is changed.
+- No `data/radar-data.json` change is made.
+- No DeepSeek call or workflow trigger is introduced.
+- The future visible-display step should be data-only where possible.
+- The future visible-display step should only flip `displayEnabled` and `boundaries.frontendDisplayApproved` after guard approval.
+
+Recommended next step:
+
+```text
+v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
+```
