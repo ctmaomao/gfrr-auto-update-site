@@ -209,3 +209,27 @@ L-3J implements the `local_compact` provider-call workflow path as an artifact-o
 - No scoring / decision / execution / position logic is changed.
 
 The next step after merge is one manually approved `local_compact` provider-call audit. If validator, quality review, or sanitizer fails, stop and revise before any rerun.
+
+## 13. v28.0L-3J-1 sanitizer source path fix
+
+Run `25598085025` attempted the first `local_compact` provider-call audit and stopped safely before the provider-call job.
+
+- `provider-test-dry-run-and-gate` built `manual-artifacts/external-ai/manual-input-compact-latest.json`.
+- The compact input source was local file metadata for `data/radar-data.json`.
+- `productionDataWritten=false`.
+- `frontendDisplayChanged=false`.
+- `secretsRead=false`.
+- `apiCalled=false`.
+- Provider gates were satisfied for `input_source=local_compact`.
+- The artifact sanitizer blocked upload because it treated the read-only source metadata string `data/radar-data.json` as a production path marker.
+- The provider-call job did not run.
+- No DeepSeek call occurred.
+- No secret was read.
+
+L-3J-1 narrows the sanitizer rule: `manual-input-compact-latest.json` may reference `data/radar-data.json` only as read-only local source metadata. Actual production data upload, provider output copy, `data/*.json` artifact upload, frontend display, Daily integration, and scoring / decision / execution / position changes remain forbidden.
+
+Recommended next stage:
+
+```text
+v28.0L-3J-2 First Local Compact Provider-Call Audit Retry
+```

@@ -325,3 +325,9 @@ All GitHub Actions workflows must use the Node 24 baseline: `actions/checkout@v6
 v28.0L-3J implements the `local_compact` provider-call workflow path, but it does not run the provider call and does not approve production integration.
 
 Do not run the `local_compact` provider call more than once without a recorded audit. Do not write local compact input or provider output to `data/`. Do not display local compact output on the frontend. Do not proceed to production integration before the `local_compact` audit passes and a separate reviewed production PR explicitly changes the boundary.
+
+## 23. v28.0L-3J-1 local compact source metadata reminder
+
+`manual-input-compact-latest.json` may reference `data/radar-data.json` only as read-only local source metadata. Do not treat that source metadata reference as a production data write.
+
+Never upload actual `data/radar-data.json` as an artifact. Never write provider output to `data/`, never copy provider output into `data/radar-data.json`, and never display local compact provider output on the frontend without a separate reviewed production/display PR.

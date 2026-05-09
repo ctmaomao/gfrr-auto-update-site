@@ -1294,3 +1294,16 @@ Contract boundary:
 - Production `externalAiInterpretationLayer` remains disabled and non-user-visible.
 - `promotionEligible=false` remains required.
 - Scoring, decision, execution, and position logic remain unchanged.
+
+## v28.0L-3J-1 local_compact source metadata exception
+
+`manual-artifacts/external-ai/manual-input-compact-latest.json` may reference `data/radar-data.json` as read-only local source metadata.
+
+This reference is not a production data write and is not approval to upload or copy production data:
+
+- the compact input artifact remains ignored and non-production.
+- actual `data/radar-data.json` must not be uploaded as a workflow artifact.
+- provider output must not be copied into `data/radar-data.json`.
+- provider output must not enter `data/*.json`, `realtime/*.json`, Worker payloads, config files, Daily inputs, or frontend display paths.
+- production `externalAiInterpretationLayer` remains disabled and non-user-visible.
+- scoring, decision, execution, and position logic remain unchanged.

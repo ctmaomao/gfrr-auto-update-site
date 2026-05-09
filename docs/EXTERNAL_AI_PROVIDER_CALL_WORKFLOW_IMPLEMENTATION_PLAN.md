@@ -752,3 +752,25 @@ Recommended next stage:
 ```text
 v28.0L-3J-1 First Local Compact Provider-Call Audit
 ```
+
+## 26. v28.0L-3J-1 local_compact sanitizer source path fix
+
+Run `25598085025` was the first attempted `local_compact` provider-call audit. It stopped safely in the dry-run/gate job because the sanitizer treated `data/radar-data.json` inside `manual-input-compact-latest.json` as a forbidden production path marker.
+
+Audit interpretation:
+
+- Compact input generation succeeded from local source metadata.
+- Provider gates were satisfied for `input_source=local_compact`.
+- The provider-call job did not run.
+- No DeepSeek call occurred.
+- No secret was read.
+- `apiCalled=false` and `networkUsed=false`.
+- `productionDataWritten=false` and `frontendDisplayChanged=false`.
+
+L-3J-1 narrows the sanitizer exception for `manual-input-compact-latest.json` only. The artifact may reference `data/radar-data.json` as read-only source metadata, while actual production data upload/write/copy remains forbidden.
+
+Recommended next stage:
+
+```text
+v28.0L-3J-2 First Local Compact Provider-Call Audit Retry
+```

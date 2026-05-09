@@ -1245,3 +1245,31 @@ Stop rule:
 - If the `local_compact` run fails validator, quality review, or sanitizer, do not rerun immediately.
 - Do not copy artifacts into `data/`.
 - Do not proceed to production integration or frontend display.
+
+### v28.0L-3J-1 local_compact sanitizer source path note
+
+Run `25598085025` stopped safely in `provider-test-dry-run-and-gate`.
+
+Observed result:
+
+- `manual-input-compact-latest.json` was built from local source metadata.
+- `sourceType=local_file`.
+- input was `data/radar-data.json`.
+- `compact=true`.
+- `productionDataWritten=false`.
+- `frontendDisplayChanged=false`.
+- `secretsRead=false`.
+- `apiCalled=false`.
+- Provider gates were satisfied for `local_compact`.
+- The artifact sanitizer blocked upload on the source metadata string `data/radar-data.json`.
+- The provider-call job did not run.
+- No DeepSeek call occurred.
+- No secret was read.
+
+Operator rule:
+
+- Do not rerun `local_compact` until the sanitizer source metadata fix is merged.
+- After the fix is merged, rerun the `local_compact` provider-call audit once.
+- Treat `data/radar-data.json` inside `manual-input-compact-latest.json` as source metadata only.
+- Never upload actual `data/radar-data.json`.
+- Never copy provider output into `data/radar-data.json`.

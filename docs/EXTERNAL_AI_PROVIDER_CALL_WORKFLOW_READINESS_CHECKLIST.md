@@ -517,7 +517,32 @@ Current L-3J decision:
 local_compact_workflow_path_implemented_provider_call_pending_audit
 ```
 
-## 21. Historical v28.0L-3D final readiness decision
+## 21. v28.0L-3J-1 readiness update
+
+Run `25598085025` attempted the first `local_compact` provider-call audit and stopped safely at artifact sanitization.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Local compact input generation | verified_for_gate_job | `manual-input-compact-latest.json` was built with `sourceType=local_file`, `compact=true`, `productionDataWritten=false`, `frontendDisplayChanged=false`, `secretsRead=false`, and `apiCalled=false`. | No | Keep builder read-only and artifact-only. |
+| Provider gates | satisfied | Run inputs satisfied the `local_compact` provider-call gates. | No | Keep the same explicit gates. |
+| Artifact sanitizer | false_positive_fix_needed | Sanitizer blocked read-only source metadata `data/radar-data.json` in the compact input artifact. | Yes | Merge L-3J-1 before retry. |
+| Provider call | not_run | `provider-call-artifact-only` did not run; no DeepSeek call occurred. | Yes | Retry once after sanitizer fix merges. |
+| Secret usage | not_read | Provider job did not run and no secret was read. | No | Keep Environment secret step-scoped. |
+| Production integration | not_ready | No production data, frontend, Daily, Worker, config, scoring, decision, execution, or position path changed. | Yes | Separate reviewed production phase required. |
+
+Current L-3J-1 decision:
+
+```text
+sanitizer_source_metadata_fix_needed_provider_call_pending_retry
+```
+
+Recommended next PR:
+
+```text
+v28.0L-3J-2 First Local Compact Provider-Call Audit Retry
+```
+
+## 22. Historical v28.0L-3D final readiness decision
 
 Overall readiness:
 
