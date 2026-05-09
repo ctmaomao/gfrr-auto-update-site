@@ -76,6 +76,17 @@ function stageFromScore(score, explicitStage = '') {
   return '正常观察';
 }
 
+function buildMacroStateText(score, stage) {
+  if (score === null) return UNDECIDED;
+  if (stage === '系统性危机') {
+    return '当前阶段显示为系统性危机；该结论必须由上游模型和多项证据明确支持。';
+  }
+  if (stage === '系统性风险观察') {
+    return '当前更接近系统性风险观察阶段，尚未进入系统性危机。';
+  }
+  return `当前更接近${stage}阶段，尚未进入系统性危机。`;
+}
+
 function directionFromDelta(value, positiveLabel = '边际上升', negativeLabel = '边际回落') {
   const number = finite(value);
   if (number === null) return '方向待确认';
@@ -117,9 +128,7 @@ function buildTodayJudgment(data, healthDashboard, worldOrderStressData) {
   const evidenceStrength = dataGapCount > 3 || hasPartialWorldOrder(worldOrderStressData)
     ? '中等'
     : evidenceStrengthFromConfidence(confidence, '中等');
-  const macroState = score === null
-    ? UNDECIDED
-    : `当前更接近${stage}阶段，尚未进入系统性危机。`;
+  const macroState = buildMacroStateText(score, stage);
   const fallbackLine = [
     hasValue(inputs.brent) ? '能源压力仍是主线' : '',
     hasValue(inputs.us10y) ? '长端利率需要继续观察' : '',
