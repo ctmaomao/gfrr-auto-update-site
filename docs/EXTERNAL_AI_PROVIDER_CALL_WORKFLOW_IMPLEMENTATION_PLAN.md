@@ -996,3 +996,24 @@ Recommended next stage:
 ```text
 v28.0L-3Q External AI Frontend Display Design - No Display Yet
 ```
+
+## 36. v28.0L-3Q frontend display design
+
+v28.0L-3Q adds a documentation-only design for future frontend display of the production `externalAiInterpretationLayer`.
+
+Status update:
+
+- Frontend display design is documented.
+- No frontend code is added.
+- No production data is changed.
+- No provider call is added or run.
+- No workflow file is changed.
+- Visible display remains NO-GO.
+- Daily integration and automatic provider calls remain unimplemented.
+- Scoring / decision / execution / position behavior remains unchanged.
+
+Recommended next stage:
+
+```text
+v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
+```

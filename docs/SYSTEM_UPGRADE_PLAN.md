@@ -907,3 +907,29 @@ Recommended next stage:
 ```text
 v28.0L-3Q External AI Frontend Display Design - No Display Yet
 ```
+
+## v28.0L-3Q External AI Frontend Display Design
+
+v28.0L-3Q adds [`EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md`](EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md) as documentation-only design for a future read-only AI interpretation panel.
+
+This stage:
+
+- designs frontend placement and display conditions.
+- requires Chinese-only user-facing copy.
+- requires `displayEnabled=true` and `boundaries.frontendDisplayApproved=true` before any future display.
+- keeps current display disabled.
+- keeps visible display as NO-GO.
+- does not modify frontend files.
+- does not modify `data/radar-data.json`.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not read or modify secrets.
+- keeps Daily integration disabled.
+- keeps automatic provider calls disabled.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
+```

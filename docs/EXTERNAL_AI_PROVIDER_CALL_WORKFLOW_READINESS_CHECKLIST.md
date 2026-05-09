@@ -233,6 +233,32 @@ Recommended next step:
 v28.0L-3Q External AI Frontend Display Design - No Display Yet
 ```
 
+## v28.0L-3Q readiness update
+
+v28.0L-3Q documents the future frontend display design without adding frontend code.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Production data write | done | First controlled data-only layer exists in `data/radar-data.json`. | No | Keep future edits validator/write-guard gated. |
+| Frontend display design | documented | `EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md` defines placement, display conditions, fallback states, safe copy, allowed fields, and guard strategy. | No | Use as input for hidden scaffold only. |
+| Frontend scaffold | not_ready | No frontend read logic is implemented in L-3Q. | Yes | Separate L-3R hidden-by-default scaffold required. |
+| Visible display | not_ready | `displayEnabled=false` and `boundaries.frontendDisplayApproved=false`. | Yes | Do not display until a later explicit approval. |
+| Daily integration | not_ready | No Daily integration is approved or implemented. | Yes | Keep disconnected. |
+| Automatic provider calls | not_ready | No scheduled or automatic provider calls are approved or implemented. | Yes | Keep manual-only unless a separate future phase approves otherwise. |
+| Scoring / decision / execution / position impact | blocked / out_of_scope | Display design preserves all affect flags as false. | Yes | Keep external AI out of these paths. |
+
+Current L-3Q decision:
+
+```text
+frontend_display_design_ready_visible_display_no_go
+```
+
+Recommended next step:
+
+```text
+v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
+```
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:

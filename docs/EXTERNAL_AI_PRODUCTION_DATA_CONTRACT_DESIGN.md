@@ -475,3 +475,23 @@ Recommended next step:
 ```text
 v28.0L-3Q External AI Frontend Display Design - No Display Yet
 ```
+
+## 21. v28.0L-3Q frontend display design status
+
+v28.0L-3Q adds [`EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md`](EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md) as a documentation-only design for a future read-only display panel.
+
+Status update:
+
+- Frontend display design is documented.
+- Display remains disabled: `displayEnabled=false`.
+- Frontend approval remains false: `boundaries.frontendDisplayApproved=false`.
+- No frontend code is added.
+- No production data is changed.
+- No provider call or workflow trigger is introduced.
+- Daily integration and automatic provider calls remain disabled.
+
+Recommended next step:
+
+```text
+v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
+```
