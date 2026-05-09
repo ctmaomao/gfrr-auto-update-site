@@ -1132,3 +1132,28 @@ Operator rule:
 - Do not run live/local provider input before `fixture_sample` quality review passes.
 - If the second fixture quality review fails, stop again; do not proceed to live/local, frontend display, Daily integration, or production data writes.
 - Do not weaken `review:external-ai-artifact`, `check:external-ai-output`, or the artifact sanitizer to make a provider output pass.
+
+### v28.0L-3H-3 second fixture provider-call audit note
+
+Run `25593082968` succeeded for the second `fixture_sample` DeepSeek provider-call audit.
+
+Operator audit result:
+
+- provider-call path entered through `external-ai-manual`.
+- provider was `deepseek`; model was `deepseek-v4-flash`.
+- output validation passed.
+- quality review passed with `recommendation=pass_for_manual_review`.
+- `promotionEligible=false`.
+- artifact sanitizer passed.
+- sanitized provider-call artifacts uploaded.
+- `productionDataWritten=false`.
+- `frontendDisplayChanged=false`.
+- output remained `artifactOnly=true`.
+
+Operator rule:
+
+- Do not rerun `fixture_sample` repeatedly now that the path is audited.
+- Do not proceed to live/local provider input without a separate PR.
+- Do not copy provider artifacts into `data/` or production data.
+- Do not display provider output in frontend, trigger Daily, or connect it to scoring / decision / execution / position logic.
+- The next real-call step must be separately approved and should likely be `local_compact` / live structured input under artifact-only mode.

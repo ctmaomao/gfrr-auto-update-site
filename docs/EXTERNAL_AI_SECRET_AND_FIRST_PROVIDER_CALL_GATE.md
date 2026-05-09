@@ -243,3 +243,39 @@ Status:
 L-3H-2 improves the fixture prompt contract before any rerun. It does not add secrets, does not read the provider key, does not trigger the workflow, and does not modify production data.
 
 After L-3H-2 is merged and audited, the next real provider-call run must still be `fixture_sample` only. Live/local input remains blocked until fixture quality review passes.
+
+## 13. v28.0L-3H-3 second fixture_sample provider-call audit
+
+GitHub Actions run `25593082968` recorded the successful second `fixture_sample` DeepSeek provider-call audit for the `External AI Manual Provider Test` workflow.
+
+Observed result:
+
+- workflow completed with success.
+- `provider-test-dry-run-and-gate` succeeded.
+- `provider-call-artifact-only` succeeded.
+- provider-call path entered through GitHub Environment `external-ai-manual`.
+- `DEEPSEEK_API_KEY` was injected by GitHub Actions as a masked value.
+- provider command executed once.
+- `apiCalled=true`.
+- `networkUsed=true`.
+- provider was `deepseek`.
+- model was `deepseek-v4-flash`.
+- DeepSeek manual API test passed.
+- External AI output validation passed.
+- warnings: 0.
+- External AI artifact quality review passed.
+- recommendation was `pass_for_manual_review`.
+- `promotionEligible=false`.
+- artifact sanitizer passed.
+- sanitized provider-call artifacts were uploaded.
+- `productionDataWritten=false`.
+- `frontendDisplayChanged=false`.
+- `artifactOnly=true`.
+
+Interpretation:
+
+- The `fixture_sample` provider path is now audited through provider transport, validator, quality review, sanitizer, and artifact upload.
+- Live/local provider path remains `not_ready`.
+- Production integration remains `not_ready`.
+- Frontend display remains `not_ready`.
+- No provider artifact may be promoted into `data/radar-data.json`, Daily, frontend display, Worker payloads, scoring, decision, execution, or position logic.

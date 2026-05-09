@@ -1253,3 +1253,15 @@ v28.0L-3H-2 changes prompt / quality guidance only. It does not change the produ
 No external AI provider artifact, quality review artifact, dry-run artifact, prompt diagnostic, or manual artifact may enter `data/radar-data.json`, `data/*.json`, `realtime/*.json`, Worker payloads, config files, frontend display paths, Daily inputs, scoring, decision, execution, or position logic.
 
 Production `externalAiInterpretationLayer` remains disabled and non-user-visible. Production integration remains `not_ready`.
+
+## v28.0L-3H-3 second fixture provider-call audit data boundary
+
+Run `25593082968` successfully audited the second `fixture_sample` provider-call path, including provider transport, output validation, quality review, artifact sanitizer, and sanitized artifact upload.
+
+This does not change the production data contract:
+
+- provider artifacts remain non-production diagnostics.
+- even quality-reviewed provider output cannot enter `data/radar-data.json` yet.
+- production `externalAiInterpretationLayer` remains disabled and non-user-visible.
+- `promotionEligible=false` remains required.
+- no provider output may enter `data/*.json`, `realtime/*.json`, Worker payloads, config files, frontend display paths, Daily inputs, scoring, decision, execution, or position logic.
