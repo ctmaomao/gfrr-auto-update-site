@@ -38,6 +38,8 @@ v28.0L-3C is tracked in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md`](EXTERNA
 
 v28.0L-3D is tracked in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md). It is a documentation-only go/no-go checklist before provider-call implementation planning. Provider-call implementation, GitHub secret usage, production data writes, Daily integration, frontend display, and enabled `externalAiInterpretationLayer` remain not ready.
 
+v28.0L-3E is tracked in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md). It is a documentation-only implementation plan for a future missing-secret-safe workflow skeleton. It does not add a workflow, secret, provider call, provider artifact, production data write, Daily integration, frontend display, or enabled `externalAiInterpretationLayer`.
+
 ## 2. Current Baseline / 当前基线
 
 当前稳定基线为：

@@ -239,6 +239,14 @@ Current readiness decision: provider-call implementation is still `not_ready_unt
 
 Recommended next PR is v28.0L-3E Provider-Call Workflow Implementation Plan — No Code. A faster missing-secret-safe workflow skeleton remains possible only if explicitly approved and must still avoid real provider calls.
 
+## v28.0L-3E Provider-Call Workflow Implementation Plan
+
+v28.0L-3E adds [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md). It is a documentation-only implementation plan that converts the L-3D readiness gaps into a concrete next-step plan.
+
+This stage makes no workflow change, adds no secret, runs no provider call, writes no production data, changes no frontend, changes no Worker, changes no config/data/realtime files, and has no scoring / decision / execution / position impact. Existing v28.0L-3B dry-run workflow behavior remains dry-run-only.
+
+The plan recommends v28.0L-3F Manual Provider-Call Workflow Skeleton — Missing-Secret Safe / No Real Provider Call. L-3F should test workflow structure, static checks, artifact sanitization, and missing-secret fail-before-provider-call behavior before any secret is configured or any real provider call is attempted.
+
 ## v28.0K-3 Disabled External AI Scaffold Baseline
 
 v28.0K-3A 已添加 disabled-by-default `externalAiInterpretationLayer` data scaffold。v28.0K-3B activation audit 已通过，live data 已包含 `externalAiInterpretationLayer.contractVersion = v28.0K-3A`。

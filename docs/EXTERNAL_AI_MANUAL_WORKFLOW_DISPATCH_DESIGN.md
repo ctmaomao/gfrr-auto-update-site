@@ -458,3 +458,9 @@ The existing v28.0L-3B workflow remains dry-run-only. Do not modify the dry-run 
 v28.0L-3D is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md). It is a documentation-only readiness checklist and does not change workflow behavior.
 
 The v28.0L-3B `External AI Manual Dry Run` workflow remains dry-run-only: no provider input, no `allow_network`, no `dry_run=false` path, no GitHub secret reference, no provider call, no provider output artifact, no production data write, no frontend display, and no Daily integration. L-3D is not approval to modify that workflow.
+
+## v28.0L-3E provider-call implementation plan note
+
+v28.0L-3E is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md). It is a documentation-only plan for a future L-3F provider-test skeleton.
+
+L-3E does not change the v28.0L-3B dry-run workflow. If L-3F is pursued, it should use a missing-secret-safe / no-real-provider-call skeleton first and must keep the existing L-3B dry-run workflow behavior intact.

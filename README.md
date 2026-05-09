@@ -68,6 +68,7 @@
 - v28.0L-3B-1 External AI Manual Dry Run Audit：已记录一次 GitHub Actions manual dispatch dry-run PASS（run `25583503038`）；这仍不调用 DeepSeek，也不代表 provider-call readiness。
 - v28.0L-3C External AI Provider-Call Workflow Design：仅新增 future provider-call workflow design；当前仍无 DeepSeek workflow call、无 GitHub secret、无 provider artifact、无 production data write。
 - v28.0L-3D Provider-Call Workflow Readiness Checklist：仅新增 no-code readiness checklist；provider-call workflow 仍未实现，不添加 GitHub secret，不运行 DeepSeek，不写 production data，不显示 frontend，implementation 仍为 `not_ready_until_missing_items_resolved`。
+- v28.0L-3E Provider-Call Workflow Implementation Plan：仅新增 no-code implementation plan；provider-call implementation 已规划但仍未激活，下一步建议为 L-3F missing-secret-safe / no-real-provider-call skeleton。
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。

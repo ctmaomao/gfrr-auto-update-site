@@ -474,10 +474,12 @@ v28.0L-3D Provider-Call Workflow Readiness Checklist - No Code
 
 v28.0L-3D is the gate before implementation. L-3C design alone is not approval to add a provider-call workflow, add GitHub secrets, reference `DEEPSEEK_API_KEY`, or run DeepSeek from GitHub Actions.
 
-Alternative faster path after L-3D only if explicitly approved:
+v28.0L-3E is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md). It is the no-code implementation plan; it still adds no workflow, no secret, and no provider call.
+
+Recommended next implementation PR after L-3E review:
 
 ```text
-v28.0L-3E Manual Provider-Call Workflow Skeleton - Missing-Secret Safe / No Real Provider Call
+v28.0L-3F Manual Provider-Call Workflow Skeleton - Missing-Secret Safe / No Real Provider Call
 ```
 
 Any implementation PR must be separate and must preserve all artifact-only and non-production boundaries.
