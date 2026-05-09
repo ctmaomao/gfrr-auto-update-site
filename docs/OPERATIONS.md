@@ -1755,3 +1755,41 @@ Operator guidance:
 - If unsafe copy appears, revert immediately.
 - If Global Risk Heatmap layout is affected, revert immediately.
 - `External AI Production Refresh` remains the only approved automatic provider path.
+
+### v28.0L-4C refresh monitoring / failure notification design
+
+v28.0L-4C documents monitoring and failure-notification handling for the existing `External AI Production Refresh` workflow. It does not add a workflow, trigger a run, call DeepSeek, read secrets, change production data, or change frontend behavior.
+
+Monitoring baseline:
+
+- `External AI Production Refresh` runs on the daily `23:50 UTC` schedule and by manual `workflow_dispatch`.
+- The first successful manual production refresh was run `25611392014`.
+- That run committed `c32af65` and changed only `data/radar-data.json`.
+- The recommended first notification channel is GitHub native failed-workflow notification.
+- Dedicated issue, webhook, Slack, or email notification automation is not implemented yet.
+
+Failure review procedure:
+
+- Open the failed `External AI Production Refresh` run in GitHub Actions.
+- Inspect the first failing step and determine whether the failure is configuration, provider transport, output safety, production write, check, or protected-path related.
+- Confirm whether a production commit was pushed. If failure happened before final checks, there should be no `data/radar-data.json` commit.
+- Check whether a sanitized artifact is available before reviewing output details.
+- Treat the known non-blocking `check:world-order` warning as not an external AI refresh failure when `check:all` still passes.
+
+Allowed rollback actions:
+
+- Revert the latest refresh commit if the refreshed production layer must be removed.
+- Rerun one validated manual refresh only when operator review says a rerun is appropriate.
+- Disable display flags through an approved data update if display must be hidden.
+
+Do not:
+
+- Manually edit AI text or `externalAiInterpretationLayer`.
+- Add provider auto-retry loops.
+- Add another refresh schedule.
+- Add issue, webhook, Slack, email, or external notification secrets without explicit approval.
+- Let monitoring write `data/radar-data.json`, call DeepSeek, trigger provider refresh, or change frontend files.
+
+Design reference:
+
+- `docs/EXTERNAL_AI_REFRESH_MONITORING_DESIGN.md`
