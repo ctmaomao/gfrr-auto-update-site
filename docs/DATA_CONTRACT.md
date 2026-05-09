@@ -1280,3 +1280,17 @@ Future `local_compact` input and output artifacts remain non-production diagnost
 - provider output must not affect scoring, decision, execution, or position logic.
 - production `externalAiInterpretationLayer` remains disabled and non-user-visible.
 - `promotionEligible=false` remains required unless a separate reviewed production integration PR explicitly changes that boundary.
+
+## v28.0L-3J local_compact workflow artifact data boundary
+
+v28.0L-3J implements the `local_compact` provider-call workflow path, but it does not change the production data contract and does not run the provider call in the PR.
+
+Contract boundary:
+
+- `manual-artifacts/external-ai/manual-input-compact-latest.json` remains an ignored diagnostic artifact.
+- Any future `local_compact` provider output remains non-production.
+- No provider output enters `data/radar-data.json`.
+- No provider output enters `data/*.json`, `realtime/*.json`, Worker payloads, config files, Daily inputs, or frontend display paths.
+- Production `externalAiInterpretationLayer` remains disabled and non-user-visible.
+- `promotionEligible=false` remains required.
+- Scoring, decision, execution, and position logic remain unchanged.

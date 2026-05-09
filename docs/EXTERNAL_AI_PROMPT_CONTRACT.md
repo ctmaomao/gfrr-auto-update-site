@@ -278,6 +278,8 @@ For future `local_compact` output:
 - confidence should not be 0 when the structured input is usable.
 - output must not claim external web, news, or market verification.
 - output must not repeat concrete execution, position, cash, exposure, target-band, or trade/action wording from `decisionContext`.
+
+L-3J implements the `local_compact` workflow path but does not run the provider call. The first audited `local_compact` output must use `site_structured_data_only`, must not use `sample_input_only`, and must keep `decisionContext` as read-only background only.
 - `decisionContext` remains read-only background only.
 
 ## 15. Non-goals / 非目标

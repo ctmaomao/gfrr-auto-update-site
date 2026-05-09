@@ -298,6 +298,6 @@ Provider-call workflow status: `External AI Manual Provider Test` is unlocked on
 
 Fixture sample provider-call status: v28.0L-3H-3 passed validator, quality review, and sanitizer for run `25593082968`; production integration remains disabled.
 
-Local compact provider-call status: v28.0L-3I documents the future design only; implementation and live/local execution remain pending.
+Local compact provider-call status: v28.0L-3J implements the artifact-only workflow path, but the first `local_compact` provider call remains pending audit.
 
 Runtime status: v28.0L-3I-0 standardizes local development and GitHub Actions on Node.js 24 LTS.

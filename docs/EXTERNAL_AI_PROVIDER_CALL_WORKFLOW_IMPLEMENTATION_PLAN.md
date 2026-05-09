@@ -731,3 +731,24 @@ v28.0L-3J Local Compact Provider-Call Workflow Path - Artifact-Only / No Product
 v28.0L-3I-0 is a workflow hygiene prerequisite before any L-3J implementation.
 
 It standardizes local and GitHub Actions runtime on Node.js 24 LTS, updates action majors, adds `check:node-runtime`, and strengthens workflow checks. It does not implement `local_compact`, does not call DeepSeek, does not trigger workflows, does not read secrets, and does not change production data or frontend behavior.
+
+## 25. v28.0L-3J local_compact workflow path
+
+v28.0L-3J implements the `local_compact` provider-call workflow path without running a provider call in the PR.
+
+Status update:
+
+- The `fixture_sample` provider-call path remains verified by run `25593082968`.
+- The `local_compact` workflow path is implemented behind the same manual `workflow_dispatch` and `external-ai-manual` environment gate.
+- `local_compact` input is built as `manual-artifacts/external-ai/manual-input-compact-latest.json` from repository local structured data.
+- The path remains artifact-only and non-production.
+- No production data write, frontend display, Daily integration, or scoring / decision / execution / position path is connected.
+- Validator, quality review, artifact sanitizer, short artifact retention, and post-run safety assertion remain required.
+
+The first `local_compact` provider call after merge must be one manually approved audit run only. If the validator, quality review, or sanitizer fails, stop; do not rerun immediately and do not proceed to production or frontend work.
+
+Recommended next stage:
+
+```text
+v28.0L-3J-1 First Local Compact Provider-Call Audit
+```

@@ -191,3 +191,21 @@ v28.0L-3J Local Compact Provider-Call Workflow Path - Artifact-Only / No Product
 ```
 
 Only consider L-3J after this design PR is merged and audited.
+
+## 12. v28.0L-3J implementation status
+
+L-3J implements the `local_compact` provider-call workflow path as an artifact-only route.
+
+- No DeepSeek call was run by this PR.
+- No GitHub Actions workflow was triggered by this PR.
+- The workflow path remains `workflow_dispatch` only.
+- The provider-call job remains gated by environment `external-ai-manual`.
+- `DEEPSEEK_API_KEY` remains an Environment secret reference and is step-scoped to the provider-call step.
+- `local_compact` input is built from the repository local data through `manual-artifacts/external-ai/manual-input-compact-latest.json`.
+- The provider output remains artifact-only and non-production.
+- No production data is written.
+- No frontend display is enabled.
+- No Daily integration is enabled.
+- No scoring / decision / execution / position logic is changed.
+
+The next step after merge is one manually approved `local_compact` provider-call audit. If validator, quality review, or sanitizer fails, stop and revise before any rerun.

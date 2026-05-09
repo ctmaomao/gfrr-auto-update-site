@@ -83,15 +83,22 @@ function checkRequiredText(text) {
     'deepseek',
     'fixture_sample',
     'local_compact',
-    'l3h_first_provider_call_requires_fixture_sample',
+    'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true',
+    'actions/checkout@v6',
+    'actions/setup-node@v6',
+    'node-version: 24',
     'npm run check:external-ai-manual-workflow',
     'npm run check:external-ai-provider-workflow',
     'npm run check:external-ai-production-provider-path',
     'scripts/run-external-ai-manual-test.mjs --dry-run',
+    'node scripts/build-external-ai-manual-input.mjs --compact --output "$input_artifact_path"',
     'environment: external-ai-manual',
     'missing_required_environment_secret',
     'node scripts/run-external-ai-manual-test.mjs --provider deepseek',
     '--input docs/fixtures/external-ai/sample-input-v28.0K-1.json',
+    'input_artifact_path="manual-artifacts/external-ai/manual-input-compact-latest.json"',
+    '--input "$input_artifact_path"',
+    '"inputArtifactPath": "$input_artifact_path"',
     '--output manual-artifacts/external-ai/deepseek-output-latest.json',
     '--allow-network',
     '--validate-output',
@@ -133,6 +140,8 @@ function checkForbiddenText(text) {
     '--api-key',
     '--api_key',
     '--deepseek-api-key',
+    '--source-url',
+    'source-url',
     'echo $DEEPSEEK_API_KEY',
     'echo "$DEEPSEEK_API_KEY"',
     'printenv',
@@ -143,6 +152,17 @@ function checkForbiddenText(text) {
     'GITHUB_TOKEN:',
     'contents: write',
     'actions: write',
+    'actions/upload-artifact@v4',
+    'actions/download-artifact@v4',
+    'actions/checkout@v4',
+    'actions/checkout@v5',
+    'actions/setup-node@v4',
+    'actions/setup-node@v5',
+    'node-version: 20',
+    'node20',
+    'ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION',
+    'FORCE_JAVASCRIPT_ACTIONS_TO_NODE20',
+    'l3h_first_provider_call_requires_fixture_sample',
   ];
 
   for (const snippet of forbiddenSnippets) {
@@ -186,7 +206,9 @@ function checkProviderJob(text) {
 
   const requiredGateChecks = [
     '[ "$provider" != "deepseek" ]',
-    '[ "$input_source" != "fixture_sample" ]',
+    'fixture_sample)',
+    'local_compact)',
+    'node scripts/build-external-ai-manual-input.mjs --compact --output "$input_artifact_path"',
     '[ "$dry_run" != "false" ]',
     '[ "$allow_network" != "true" ]',
     '[ "$acknowledge_cost" != "true" ]',
@@ -206,11 +228,14 @@ function checkProviderJob(text) {
   const commandIndex = providerStep.indexOf('node scripts/run-external-ai-manual-test.mjs --provider deepseek');
   const secretCheckIndex = providerStep.indexOf('if [ -z "${DEEPSEEK_API_KEY:-}" ]; then');
   assert(secretCheckIndex !== -1 && commandIndex > secretCheckIndex, 'missing-secret check must happen before provider command');
+  assert(providerStep.includes('--input "$input_artifact_path"'), 'provider command must use selected input artifact path');
+  assert(providerStep.includes('manual-artifacts/external-ai/manual-input-compact-latest.json'), 'provider-call job must support local_compact input artifact');
 }
 
 function checkArtifactPolicy(text) {
   const uploadPaths = [
     'manual-artifacts/external-ai/workflow-dry-run-report.json',
+    'manual-artifacts/external-ai/manual-input-compact-latest.json',
     'manual-artifacts/external-ai/provider-test-gate-status.json',
     'manual-artifacts/external-ai/provider-test-missing-secret.json',
     'manual-artifacts/external-ai/provider-test-secret-present-blocked.json',
