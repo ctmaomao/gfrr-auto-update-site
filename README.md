@@ -73,6 +73,7 @@
 - v28.0L-3F-1 Provider Workflow Skeleton Audit：provider workflow skeleton 已通过 default dry-run 与 missing-secret safety audit；real provider calls 仍保持 disabled，且不批准添加 `DEEPSEEK_API_KEY`。
 - v28.0L-3G Secret Decision and First Provider-Call Gate：已决定未来优先使用 GitHub Environment `external-ai-manual` 与 Environment secret `DEEPSEEK_API_KEY`；本阶段不添加 secret，real provider calls 仍保持 disabled。
 - v28.0L-4B External AI Display Coverage Polish：External AI panel now shows broader read-only coverage of validated AI output, including capped summaries for model judgments, scenario hypotheses, source attribution, and public review status.
+- v28.0L-4B-1 Display Coverage Audit Sync：External AI read-only panel is visible, refreshed, and now shows broader safe coverage of validated AI output.
 - Daily 成功刷新数据后触发 Pages deploy handoff。
 - GitHub Actions Summary 审计入口。
 - 数据契约保护与 DOM / module / syntax smoke check。

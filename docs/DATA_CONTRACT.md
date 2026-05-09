@@ -1574,3 +1574,19 @@ Current data contract boundary:
 - Display coverage polish must not edit AI-generated text or production data.
 - Raw provenance, provider artifacts, run IDs, artifact IDs, artifact paths, raw headers, and raw provider output remain hidden from normal display.
 - Display coverage must not affect scoring, `decisionModel`, `executionLock`, `positionGuidance`, Daily integration, or Global Risk Heatmap layout.
+
+## v28.0L-4B-1 externalAiInterpretationLayer display coverage audit
+
+v28.0L-4B-1 confirms that display coverage polish does not change the production contract.
+
+Current data contract boundary:
+
+- `externalAiInterpretationLayer` fields may be displayed as capped read-only summaries.
+- Displayed fields may include `modelJudgments`, `scenarioHypotheses`, `sourceAttribution` summary, and public `qualityReview` status.
+- Raw provenance remains a non-display field.
+- Artifact identifiers remain non-display fields.
+- Run IDs remain non-display fields.
+- Raw provider output remains a non-display field.
+- Raw `decisionContext` remains a non-display field.
+- The production contract remains unchanged by display coverage polish.
+- Future data changes still require production contract validation and production write guard.

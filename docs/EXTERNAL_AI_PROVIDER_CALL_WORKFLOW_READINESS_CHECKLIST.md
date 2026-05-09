@@ -488,6 +488,28 @@ Recommended next step:
 v28.0L-4B-1 Display Coverage Audit Sync - No Provider Call
 ```
 
+## v28.0L-4B-1 readiness update
+
+v28.0L-4B-1 records the successful display coverage audit and preserves provider workflow boundaries.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| External AI visible panel | complete | The read-only panel is visible and audited. | No | Use as current display baseline. |
+| Visible display UX polish | complete | The polished read-only panel remains live. | No | Keep future UX changes frontend-only unless separately approved. |
+| Display coverage polish | complete | The panel shows capped safe coverage for model judgments, scenario hypotheses, source attribution summary, and public quality review status. | No | Audit sync complete. |
+| Production refresh workflow | verified | `External AI Production Refresh` is merged and manually verified. | No | Keep as the only approved automatic provider path. |
+| Manual production refresh | verified | First manual refresh run `25611392014` succeeded and committed only `data/radar-data.json`. | No | Do not rerun just for display coverage. |
+| Daily scheduled refresh | ready | The configured `23:50 UTC` schedule remains ready. | No | Do not add another schedule. |
+| Additional provider automation | not_ready / not_allowed | No extra provider automation is approved. | Yes | Separate explicit approval required. |
+| Daily integration | not_ready | The site Daily pipeline remains separate unless explicitly approved. | Yes | Keep Daily pipeline disconnected from provider calls. |
+| Scoring / decision / execution / position integration | not_allowed | External AI display remains read-only and non-impacting. | Yes | Keep external AI out of these paths. |
+
+Recommended next step:
+
+```text
+v28.0L-4C Refresh Monitoring / Failure Notification Design - No Provider Call
+```
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:
