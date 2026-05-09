@@ -180,6 +180,32 @@ v28.0L-3P First Controlled Production Write - Data Only / No Frontend Display
 
 only after explicit user approval.
 
+## v28.0L-3P readiness update
+
+v28.0L-3P completes the first controlled data-only production write.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Production data write | first controlled data-only write done | `data/radar-data.json` now contains a contract-valid `externalAiInterpretationLayer` from run `25598887574`. | No | Audit sync next; no frontend display. |
+| Production contract validator | passed | `check:external-ai-production-contract -- data/radar-data.json` passes. | No | Keep required for future edits. |
+| Production write guard | passed | `check:external-ai-production-write-guard` passes after insertion. | No | Keep in `check:all`. |
+| Frontend display | not_ready | `displayEnabled=false` and frontend files are unchanged. | Yes | Separate frontend display design required. |
+| Daily integration | not_ready | No Daily integration is approved or implemented. | Yes | Keep disconnected. |
+| Automatic provider calls | not_ready | No automatic provider call is approved or implemented. | Yes | Separate scheduling and cost-control design required, if ever. |
+| Scoring / decision / execution / position impact | blocked / out_of_scope | Inserted layer has all affect flags false. | Yes | Keep external AI out of these paths. |
+
+Current L-3P decision:
+
+```text
+first_controlled_data_write_done_frontend_display_no_go
+```
+
+Recommended next stage:
+
+```text
+v28.0L-3P-1 First Production Write Audit Sync - No Frontend Display
+```
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:

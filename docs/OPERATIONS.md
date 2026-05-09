@@ -1435,3 +1435,23 @@ v28.0L-3P First Controlled Production Write - Data Only / No Frontend Display
 ```
 
 only after explicit user approval.
+
+### v28.0L-3P first controlled production write operator note
+
+v28.0L-3P writes the first production `externalAiInterpretationLayer` into `data/radar-data.json` from approved run `25598887574`.
+
+Operator guidance:
+
+- Do not manually edit `externalAiInterpretationLayer`.
+- Use `npm run write:external-ai-production` and validators for any future data-layer edit.
+- Run `npm run check:external-ai-production-contract -- data/radar-data.json` after any future edit.
+- Run `npm run check:external-ai-production-write-guard` after any future edit.
+- Frontend display remains disabled; do not set `displayEnabled=true`.
+- Do not copy new artifacts into `data/` by hand.
+- Rollback is reverting the first write PR.
+
+Recommended next stage:
+
+```text
+v28.0L-3P-1 First Production Write Audit Sync - No Frontend Display
+```

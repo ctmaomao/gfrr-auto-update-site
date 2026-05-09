@@ -375,3 +375,9 @@ Projection dry-run output must not be copied into `data/` or `data/radar-data.js
 v28.0L-3O adds first controlled production write design and `check:external-ai-production-write-guard`, but it does not approve or perform a production write.
 
 Do not write `externalAiInterpretationLayer` into `data/radar-data.json` without explicit user approval. Any first production write must be data-only, no frontend display, no workflow change, no Daily integration, and no automatic provider call. `check:external-ai-production-write-guard` must pass before and after any future first-write PR.
+
+## 31. v28.0L-3P first controlled production write reminder
+
+v28.0L-3P writes a display-disabled production `externalAiInterpretationLayer` into `data/radar-data.json` from approved run `25598887574`.
+
+Future edits to `externalAiInterpretationLayer` must use the validator/write workflow. Do not set `displayEnabled=true` or `boundaries.frontendDisplayApproved=true` without a separate approved frontend PR. Do not connect this layer to frontend display, Daily, automatic provider calls, scoring, decision, execution, or position logic without separate explicit approval.

@@ -310,4 +310,6 @@ External AI production projection dry-run status: v28.0L-3N adds an ignored manu
 
 External AI first production write guard status: v28.0L-3O adds a read-only write guard and design; production write remains disabled.
 
+External AI production data layer status: v28.0L-3P writes a display-disabled `externalAiInterpretationLayer` into `data/radar-data.json`; frontend display remains disabled.
+
 Runtime status: v28.0L-3I-0 standardizes local development and GitHub Actions on Node.js 24 LTS.
