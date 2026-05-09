@@ -309,3 +309,23 @@ Recommended next step:
 ```text
 v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
 ```
+
+## 16. v28.0L-3T-1 visible display audit sync
+
+v28.0L-3T-1 records the successful post-merge audit for visible display flag enablement.
+
+Status update:
+
+- The external AI panel is now eligible to render through the existing scaffold.
+- Display remains read-only.
+- The panel must not affect score / decision / execution / position logic.
+- The panel remains outside Global Risk Heatmap.
+- No AI text changed.
+- No provider call was run.
+- Future visual refinements require a separate PR.
+
+Recommended next step:
+
+```text
+v28.0L-3U External AI Visible Display UX Polish - No Provider Call
+```

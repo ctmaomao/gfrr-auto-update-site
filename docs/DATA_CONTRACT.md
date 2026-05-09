@@ -1500,3 +1500,19 @@ Current data contract boundary:
 - `boundaries.affectsExecutionLock=false` remains required.
 - `boundaries.affectsPositionGuidance=false` remains required.
 - Global Risk Heatmap, Daily integration, and automatic provider calls remain unaffected.
+
+## v28.0L-3T-1 externalAiInterpretationLayer visible display audit
+
+v28.0L-3T-1 records that the visible display flag state passed post-merge audit.
+
+Current data contract boundary:
+
+- `externalAiInterpretationLayer` is display-enabled.
+- `externalAiInterpretationLayer.displayEnabled=true`.
+- `externalAiInterpretationLayer.boundaries.frontendDisplayApproved=true`.
+- `qualityReview.promotionEligible=false`.
+- `boundaries.affectsScoring=false`.
+- `boundaries.affectsDecisionModel=false`.
+- `boundaries.affectsExecutionLock=false`.
+- `boundaries.affectsPositionGuidance=false`.
+- Display approval does not approve provider reruns, AI text edits, Daily integration, automatic provider calls, or scoring / decision / execution / position impact.
