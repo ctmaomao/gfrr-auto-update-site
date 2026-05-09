@@ -1351,3 +1351,20 @@ Current data contract decision:
 - `promotionEligible=false` remains required.
 
 Future production data contract design must be a separate reviewed phase.
+
+## v28.0L-3L externalAiInterpretationLayer production contract design
+
+v28.0L-3L designs the future production data contract in [`EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md`](EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md). It does not implement the contract and does not write production data.
+
+Current contract boundary:
+
+- `externalAiInterpretationLayer` remains disabled / absent / scaffold-only in production data.
+- The layer remains non-user-visible.
+- No data write is approved.
+- No frontend display is approved.
+- No Daily integration or automatic provider call is approved.
+- Provider artifacts remain non-production diagnostics.
+- Provider output must not be copied into `data/radar-data.json`.
+- `promotionEligible=false` remains required.
+
+Before any future write to `data/radar-data.json`, a production contract validator must exist and pass. The future validator must reject unsafe execution / investment / trading wording, secrets, headers, raw provider dumps, stale artifacts, malformed provenance, malformed freshness metadata, and any scoring / decision / execution / position effect.

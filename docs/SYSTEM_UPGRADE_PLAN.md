@@ -740,3 +740,30 @@ Recommended next stage:
 ```text
 v28.0L-3L External AI Production Data Contract Design - No Production Write
 ```
+
+## v28.0L-3L External AI Production Data Contract Design
+
+v28.0L-3L adds [`EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md`](EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md) as a documentation-only design for a future production `externalAiInterpretationLayer` contract.
+
+This stage:
+
+- designs the proposed production schema.
+- defines required display-only and non-investment-advice boundaries.
+- defines status, provenance, freshness, quality review, content safety, validator, write gate, and frontend gate requirements.
+- keeps production write as NO-GO.
+- keeps frontend display as NO-GO.
+- keeps Daily integration as NO-GO.
+- keeps automatic provider calls as NO-GO.
+- keeps `promotionEligible=true` as NO-GO.
+- does not modify workflows or scripts.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not read or modify secrets.
+- does not modify production data.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3M External AI Production Contract Validator Scaffold - No Production Write
+```

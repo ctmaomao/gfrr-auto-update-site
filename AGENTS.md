@@ -351,3 +351,9 @@ Do not treat L-3J-4 success as permission to write production data, display prov
 v28.0L-3K is documentation-only and reviews readiness for future production integration. It does not approve production write, frontend display, Daily integration, automatic provider calls, `externalAiInterpretationLayer` promotion, `promotionEligible=true`, or scoring / decision / execution / position changes.
 
 Do not treat provider audit success as production approval. No production write or frontend display may happen without a separate explicitly approved data contract/design PR. Keep `promotionEligible=false` unless a future explicit approval says otherwise.
+
+## 27. v28.0L-3L production data contract design reminder
+
+v28.0L-3L is documentation-only and designs the future production `externalAiInterpretationLayer` contract. It does not implement the validator, dry-run projection, production write, frontend display, Daily integration, or automatic provider calls.
+
+Do not implement production write before an L-3M validator scaffold and later L-3N dry-run projection are explicitly approved. Never write an external AI artifact directly into `data/radar-data.json` without a production contract validator. Do not expose `externalAiInterpretationLayer` in the frontend without separate approval.
