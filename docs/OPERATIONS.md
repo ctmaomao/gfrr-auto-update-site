@@ -1120,3 +1120,15 @@ Operator rule:
 - If artifacts are blocked by sanitizer, fix diagnostic / sanitizer behavior before rerun.
 - Do not run live/local input provider calls until `fixture_sample` quality review passes.
 - Do not weaken the sanitizer to permit secret names, authorization markers, raw headers / responses, production data paths, realtime paths, or config paths.
+
+### v28.0L-3H-2 fixture prompt rerun rule
+
+L-3H-2 is a no-provider-call prompt and quality guidance revision.
+
+Operator rule:
+
+- Do not rerun the provider-call workflow until L-3H-2 is merged and its local checks are audited.
+- The next rerun must use `fixture_sample` only.
+- Do not run live/local provider input before `fixture_sample` quality review passes.
+- If the second fixture quality review fails, stop again; do not proceed to live/local, frontend display, Daily integration, or production data writes.
+- Do not weaken `review:external-ai-artifact`, `check:external-ai-output`, or the artifact sanitizer to make a provider output pass.

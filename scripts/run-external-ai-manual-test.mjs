@@ -185,6 +185,9 @@ function buildDeepSeekSystemPrompt() {
     'Express safety boundaries only through boundaries.notInvestmentAdvice=true and the other boolean boundaries.',
     'auditFlags must contain short neutral diagnostic tags only, not prose sentences.',
     'Allowed auditFlags vocabulary includes manual_artifact_only, sample_input_only, site_structured_data_only, validator_required, non_production_output, and no_frontend_display.',
+    'Use source-appropriate auditFlags only: sample fixture output may include sample_input_only, while live/local site structured output may include site_structured_data_only.',
+    'Never include both sample_input_only and site_structured_data_only in the same output.',
+    'The output is artifact-only and non-production. It must add incremental analytical value beyond restating the input fields.',
     'modelJudgments must discuss only evidence strength, data sufficiency, uncertainty, and whether a condition is watch, insufficient_data, or low_confidence.',
     'modelJudgments must not discuss trading, execution, portfolio action, exposure, cash targets, or position.',
     'If decisionContext is present, summarize it only as 决策上下文显示系统处于只读防御状态 or 该信息仅作为系统状态背景，不改变任何判断.',
@@ -198,6 +201,10 @@ function buildDeepSeekSystemPrompt() {
     'Do not use only 来自提供的结构化输入 because it may not satisfy validator attribution keyword detection.',
     'Keep claimType as one of site_structured_data, rule_based_interpretation, or sample_input.',
     'Every factual claim should map to one provided structured input layer: dailyBrief, divergenceLayer, brentPricingLayer, macroDrivers.consumer, aiInterpretationLayer, dataHealth, or decisionContext.',
+    'sourceAttribution must cover the main factual claims and the main inference/model judgment claims.',
+    'summaryZh should synthesize what the site-structured data suggests, what remains uncertain, and which evidence would invalidate the interpretation.',
+    'scenarioHypotheses must be framed as watch conditions and invalidation logic, not predictions.',
+    'dataGaps must be specific and useful for a reviewer.',
     'Do not claim external web, news, or market verification.',
     'generatedAt must be an ISO timestamp and is artifact metadata only. If you cannot know current time, use the input generatedAt; do not invent a market-data timestamp.',
     'Do not affect scoring, decisionModel, executionLock, positionGuidance, execution, or position.',
@@ -221,14 +228,28 @@ function getInputPromptSemantics(input) {
       sourceKind: 'site_structured_data',
       claimType: 'site_structured_data',
       noteZh: '来自站内结构化数据',
-      confidenceGuidance: 'For live/local site structured input without external independent verification, confidence.score should usually be 20-40. Keep confidence.level low unless evidence is very strong. confidence.reasonZh should say 基于站内结构化数据，尚未接入外部独立验证.'
+      auditFlags: [
+        'manual_artifact_only',
+        'site_structured_data_only',
+        'validator_required',
+        'non_production_output',
+        'no_frontend_display'
+      ],
+      confidenceGuidance: 'For live/local site structured input without external independent verification, confidence.score should usually be 20-40. Keep confidence.level low unless evidence is very strong. Do not use score 0 when structured input is usable. confidence.reasonZh should say 基于站内结构化数据，尚未接入外部独立验证.'
     };
   }
   return {
     sourceKind: 'sample_fixture',
     claimType: 'sample_input',
     noteZh: '来自提供的样例结构化输入',
-    confidenceGuidance: 'For sample fixture input, confidence.score may be 0-20. confidence.reasonZh may mention 样例结构化输入.'
+    auditFlags: [
+      'manual_artifact_only',
+      'sample_input_only',
+      'validator_required',
+      'non_production_output',
+      'no_frontend_display'
+    ],
+    confidenceGuidance: 'For sample fixture input, confidence.score should usually be 10-30 when the structured fixture input is usable. Keep confidence.level low or low-medium. Do not use score 0 for usable structured fixture input, and do not overstate certainty. confidence.reasonZh may mention 样例结构化输入.'
   };
 }
 
@@ -263,13 +284,7 @@ function buildDeepSeekUserPrompt(input) {
           noteZh: promptSemantics.noteZh
         }
       ],
-      auditFlags: [
-        'manual_artifact_only',
-        'sample_input_only',
-        'site_structured_data_only',
-        'validator_required',
-        'non_production_output'
-      ],
+      auditFlags: promptSemantics.auditFlags,
       confidence: {
         level: 'low',
         score: promptSemantics.sourceKind === 'site_structured_data' ? 30 : 10,
@@ -309,6 +324,9 @@ function buildDeepSeekUserPrompt(input) {
     '- Bad: any sentence containing 买入, 卖出, 加仓, 减仓, 仓位, or 执行.',
     'auditFlags requirements:',
     '- Use only short neutral diagnostic tags such as manual_artifact_only, sample_input_only, site_structured_data_only, validator_required, non_production_output, and no_frontend_display.',
+    '- Use source-appropriate auditFlags only.',
+    '- For sample fixture input, include sample_input_only and do not include site_structured_data_only.',
+    '- For live/local site structured input, include site_structured_data_only and do not include sample_input_only.',
     '- Do not use prose sentences in auditFlags.',
     '- The global unsafe wording rule also applies to auditFlags.',
     '- Express safety boundaries only through boundaries.notInvestmentAdvice=true and other boolean boundaries.',
@@ -327,7 +345,16 @@ function buildDeepSeekUserPrompt(input) {
     '- Only sample fixture input should use 来自提供的样例结构化输入 and claimType sample_input.',
     '- Do not use only 来自提供的结构化输入 because it may not satisfy validator attribution keyword detection.',
     '- Every factual claim should map to one of the provided structured input layers.',
+    '- Include enough sourceAttribution objects to cover the main facts plus the main inference/model judgment claims. Aim for at least five sourceAttribution objects across at least three sourceLayer values when the input supports it.',
     '- Do not claim external web, news, or market verification.',
+    'incremental value requirements:',
+    '- Do not merely restate the input. Synthesize relationships across at least two provided layers when evidence exists.',
+    '- summaryZh should state what the structured data suggests, what remains uncertain, and what evidence would invalidate the interpretation.',
+    '- facts should be direct observations from the input.',
+    '- inferences should be clearly labeled as interpretations of those facts.',
+    '- modelJudgments should use evidence sufficiency language, not directional action language.',
+    '- scenarioHypotheses should be watch conditions with triggerConditions and invalidationConditions, not predictions.',
+    '- dataGaps should name specific missing or weak evidence.',
     'confidence requirements:',
     `- ${promptSemantics.confidenceGuidance}`,
     '- Keep confidence.level low unless evidence is very strong.',

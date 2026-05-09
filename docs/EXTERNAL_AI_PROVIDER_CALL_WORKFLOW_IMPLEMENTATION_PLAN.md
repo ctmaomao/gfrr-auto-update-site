@@ -648,3 +648,30 @@ Operational decision:
 - do not rerun the provider-call workflow until this fix is merged.
 - do not run live/local input provider calls until `fixture_sample` quality review passes in a later audit.
 - next recommended PR is `v28.0L-3H-2 Fixture Sample Prompt/Quality Revision - No Provider Call`.
+
+## 21. v28.0L-3H-2 fixture prompt and quality revision
+
+v28.0L-3H-2 is a prompt / quality guidance revision only.
+
+Scope:
+
+- no provider call.
+- no workflow dispatch.
+- no secret read or secret change.
+- no production data write.
+- no frontend, Worker, Daily, config, scoring, decision, execution, or position change.
+- no validator weakening.
+- no sanitizer weakening.
+- no quality review downgrade.
+
+Run `25592238444` proved that provider transport and output validation work for the approved `fixture_sample` path. The offline quality review still blocked promotion with `needs_prompt_revision` and `promotionEligible=false`.
+
+L-3H-2 tightens the prompt so the next fixture output should avoid mixed sample/live source markers, avoid execution / position repetition, provide stronger source attribution, keep confidence conservative but non-zero for usable structured input, and provide more incremental cross-layer synthesis.
+
+The next real provider-call run after this PR must be the second `fixture_sample` provider-call audit only. Do not run live/local input until `fixture_sample` quality review passes.
+
+Recommended next stage:
+
+```text
+v28.0L-3H-3 Second Fixture Sample Provider Call Audit
+```

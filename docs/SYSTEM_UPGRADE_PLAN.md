@@ -505,3 +505,26 @@ Next recommended stage:
 ```text
 v28.0L-3H-2 Fixture Sample Prompt/Quality Revision - No Provider Call
 ```
+
+## v28.0L-3H-2 Fixture Sample Prompt and Quality Revision
+
+v28.0L-3H-2 improves the prompt / quality guidance before any provider rerun.
+
+It records that run `25592238444` proved provider transport and output validation for `fixture_sample`, while the offline quality review blocked promotion with `needs_prompt_revision` and `promotionEligible=false`.
+
+This stage:
+
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not read or modify secrets.
+- does not write production data.
+- does not modify frontend, Worker, Daily, config, scoring, decision, execution, or position logic.
+- does not weaken the validator, sanitizer, or quality review.
+
+The next real provider-call run, if approved after merge and audit, should be:
+
+```text
+v28.0L-3H-3 Second Fixture Sample Provider Call Audit
+```
+
+Live/local provider input remains `not_ready` until `fixture_sample` quality review passes.

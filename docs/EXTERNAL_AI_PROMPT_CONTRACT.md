@@ -228,7 +228,34 @@ v28.0K-4F adds a separate offline quality review gate. An external AI artifact c
 
 v28.0K-4G records the stable manual-test baseline. The prompt contract is stable enough for manual artifact testing only; both `check:external-ai-output` and `review:external-ai-artifact` are required before an artifact can even be considered for a later reviewed design PR. Output must avoid live/sample confusion, execution / position / exposure / cash-buffer language, unsupported external news or market verification claims, and overconfident conclusions. Source attribution must distinguish sample fixtures with `样例结构化输入` / `sample_input` from live or local site data with `站内结构化数据` / `site_structured_data`. Confidence should remain conservative unless a future reviewed metadata contract explicitly supports stronger evidence.
 
-## 13. Non-goals / 非目标
+## 13. v28.0L-3H-2 Fixture Prompt Quality Contract
+
+v28.0L-3H-2 strengthens the real provider-call prompt for the next `fixture_sample` run only. It does not call DeepSeek, trigger a workflow, read secrets, or promote any artifact.
+
+The strengthened prompt must:
+
+- keep output artifact-only and non-production.
+- add incremental analytical value beyond restating input fields.
+- clearly separate `facts`, `inferences`, `modelJudgments`, `scenarioHypotheses`, `dataGaps`, `invalidationSignals`, `sourceAttribution`, `auditFlags`, `confidence`, and `boundaries`.
+- keep `decisionContext` as read-only background only.
+- avoid repeating concrete execution, cash, exposure, position, target-band, or trade/action wording from `decisionContext`.
+- use evidence sufficiency language in `modelJudgments`, not directional action language.
+- frame `scenarioHypotheses` as watch conditions and invalidation logic, not predictions.
+- make `dataGaps` specific enough for a reviewer to act on.
+- attribute the main factual claims and inference/model-judgment claims to provided structured input layers.
+- keep fixture confidence low or low-medium; do not use score `0` when structured input is usable, and do not overstate certainty.
+- explain in `summaryZh` what the site-structured data suggests, what remains uncertain, and what would invalidate the interpretation.
+- keep strict non-advice wording by avoiding investment/trading/action phrases in every string field.
+
+For source semantics:
+
+- `fixture_sample` output may include `sample_input_only` and `claimType=sample_input`.
+- live/local site-structured output may include `site_structured_data_only` and `claimType=site_structured_data`.
+- an output must not include both `sample_input_only` and `site_structured_data_only`.
+
+The existing `sample-output-v28.0K-1.json` fixture remains a historical non-production fixture. L-3H-2 does not replace it with a fake DeepSeek success artifact. Local review diagnostics may be run against it, but a real second provider-call audit must still use `fixture_sample` only after this PR is merged and audited.
+
+## 14. Non-goals / 非目标
 
 This stage does not:
 

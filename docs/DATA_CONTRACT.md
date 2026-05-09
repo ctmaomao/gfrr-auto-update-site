@@ -1245,3 +1245,11 @@ Audit result:
 - artifact upload was blocked by the sanitizer because diagnostic JSON contained the forbidden marker `DEEPSEEK_API_KEY`.
 
 The sanitizer failure was a diagnostic marker issue, not approval to copy provider output into production. No provider output, quality review output, failure artifact, or provider-test diagnostic artifact may be copied into `data/radar-data.json`, `data/*.json`, `realtime/*.json`, Worker payloads, config files, frontend display paths, Daily inputs, scoring, decision, execution, or position logic.
+
+## v28.0L-3H-2 prompt quality revision data boundary
+
+v28.0L-3H-2 changes prompt / quality guidance only. It does not change the production data contract.
+
+No external AI provider artifact, quality review artifact, dry-run artifact, prompt diagnostic, or manual artifact may enter `data/radar-data.json`, `data/*.json`, `realtime/*.json`, Worker payloads, config files, frontend display paths, Daily inputs, scoring, decision, execution, or position logic.
+
+Production `externalAiInterpretationLayer` remains disabled and non-user-visible. Production integration remains `not_ready`.

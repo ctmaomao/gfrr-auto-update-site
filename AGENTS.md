@@ -295,3 +295,9 @@ Do not bypass the `external-ai-manual` environment gate. Do not move `DEEPSEEK_A
 Provider output remains artifact-only and non-production. Do not write provider output to `data/radar-data.json`, do not display provider output in frontend, do not trigger Daily, and do not let provider output affect scoring / decision / execution / position logic.
 
 Do not run live/local provider-call input before the `fixture_sample` workflow audit passes and is recorded in a follow-up PR.
+
+## 18. v28.0L-3H-2 fixture prompt quality reminder
+
+v28.0L-3H-2 is prompt / quality guidance only. Do not run DeepSeek or trigger the provider workflow while making this change.
+
+Do not bypass quality review. Do not weaken `review:external-ai-artifact`, `check:external-ai-output`, or artifact sanitizer rules to make a provider artifact pass. Do not run live/local provider-call input until `fixture_sample` quality review passes in a later audit PR. Provider artifacts remain non-production and must not enter frontend, Daily, Worker, production data, scoring, decision, execution, or position logic.
