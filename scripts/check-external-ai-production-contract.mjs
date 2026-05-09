@@ -58,7 +58,6 @@ const REQUIRED_BOUNDARIES = {
   affectsPositionGuidance: false,
   notInvestmentAdvice: true,
   productionWriteApproved: false,
-  frontendDisplayApproved: false,
 };
 
 const REQUIRED_PROVENANCE_FIELDS = [
@@ -176,8 +175,6 @@ function validateRequiredFields(layer, errors) {
 
   if (typeof layer.displayEnabled !== 'boolean') {
     addError(errors, 'displayEnabled must be boolean');
-  } else if (layer.displayEnabled !== false) {
-    addError(errors, 'displayEnabled must be false');
   }
 
   for (const field of STRING_OR_NULL_FIELDS) {
@@ -223,6 +220,41 @@ function validateBoundaries(boundaries, errors) {
     if (boundaries[field] !== expected) {
       addError(errors, `boundaries.${field} must be ${expected}`);
     }
+  }
+}
+
+function validateDisplayApprovalPair(layer, errors) {
+  if (!isPlainObject(layer.boundaries)) return;
+  const frontendDisplayApproved = layer.boundaries.frontendDisplayApproved;
+
+  if (typeof frontendDisplayApproved !== 'boolean') {
+    addError(errors, 'boundaries.frontendDisplayApproved must be boolean');
+    return;
+  }
+
+  if (layer.displayEnabled !== frontendDisplayApproved) {
+    addError(errors, 'displayEnabled and boundaries.frontendDisplayApproved must be both false or both true');
+    return;
+  }
+
+  if (layer.displayEnabled !== true) return;
+
+  const qualityReview = isPlainObject(layer.qualityReview) ? layer.qualityReview : {};
+  const freshness = isPlainObject(layer.freshness) ? layer.freshness : {};
+  if (layer.status !== 'valid') {
+    addError(errors, 'visible display requires status=valid');
+  }
+  if (!['pass', 'warn'].includes(qualityReview.status)) {
+    addError(errors, 'visible display requires qualityReview.status pass or warn');
+  }
+  if (qualityReview.recommendation !== 'pass_for_manual_review') {
+    addError(errors, 'visible display requires qualityReview.recommendation pass_for_manual_review');
+  }
+  if (qualityReview.promotionEligible !== false) {
+    addError(errors, 'visible display requires qualityReview.promotionEligible=false');
+  }
+  if (freshness.isStale !== false) {
+    addError(errors, 'visible display requires freshness.isStale=false');
   }
 }
 
@@ -447,6 +479,7 @@ function validateLayer(layer) {
 
   validateRequiredFields(layer, errors);
   validateBoundaries(layer.boundaries, errors);
+  validateDisplayApprovalPair(layer, errors);
   validateQualityReview(layer, errors);
   validateProvenance(layer.provenance, errors);
   validateFreshness(layer, errors);

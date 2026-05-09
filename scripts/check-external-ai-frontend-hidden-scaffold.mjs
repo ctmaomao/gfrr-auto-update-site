@@ -71,9 +71,8 @@ function validateProductionLayer(errors) {
 
   const boundaries = isPlainObject(layer.boundaries) ? layer.boundaries : {};
   const qualityReview = isPlainObject(layer.qualityReview) ? layer.qualityReview : {};
+  const freshness = isPlainObject(layer.freshness) ? layer.freshness : {};
   const requiredFalse = [
-    ['displayEnabled', layer.displayEnabled],
-    ['boundaries.frontendDisplayApproved', boundaries.frontendDisplayApproved],
     ['qualityReview.promotionEligible', qualityReview.promotionEligible],
     ['boundaries.affectsScoring', boundaries.affectsScoring],
     ['boundaries.affectsDecisionModel', boundaries.affectsDecisionModel],
@@ -82,7 +81,32 @@ function validateProductionLayer(errors) {
   ];
 
   for (const [field, value] of requiredFalse) {
-    if (value !== false) addError(errors, `${field} must be false for hidden scaffold`);
+    if (value !== false) addError(errors, `${field} must be false for display scaffold`);
+  }
+
+  if (typeof layer.displayEnabled !== 'boolean') {
+    addError(errors, 'displayEnabled must be boolean');
+  }
+  if (typeof boundaries.frontendDisplayApproved !== 'boolean') {
+    addError(errors, 'boundaries.frontendDisplayApproved must be boolean');
+  }
+  if (layer.displayEnabled !== boundaries.frontendDisplayApproved) {
+    addError(errors, 'displayEnabled and boundaries.frontendDisplayApproved must be both false or both true');
+  }
+
+  if (layer.displayEnabled === true && boundaries.frontendDisplayApproved === true) {
+    const visibleRequirements = [
+      ['schemaVersion', layer.schemaVersion === 'v28.0L-external-ai-production-1'],
+      ['status', layer.status === 'valid'],
+      ['boundaries.displayOnly', boundaries.displayOnly === true],
+      ['boundaries.notInvestmentAdvice', boundaries.notInvestmentAdvice === true],
+      ['qualityReview.status', ['pass', 'warn'].includes(qualityReview.status)],
+      ['qualityReview.recommendation', qualityReview.recommendation === 'pass_for_manual_review'],
+      ['freshness.isStale', freshness.isStale === false],
+    ];
+    for (const [field, passed] of visibleRequirements) {
+      if (!passed) addError(errors, `approved visible display requires ${field} to remain safe`);
+    }
   }
 }
 

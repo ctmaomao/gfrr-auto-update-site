@@ -95,11 +95,12 @@ function validateLayerDisabledOrNonImpacting(layer, errors) {
     'affectsPositionGuidance',
     'boundaries.affectsPositionGuidance',
   ]);
+  const boundaries = isPlainObject(layer.boundaries) ? layer.boundaries : {};
+  const qualityReview = isPlainObject(layer.qualityReview) ? layer.qualityReview : {};
+  const freshness = isPlainObject(layer.freshness) ? layer.freshness : {};
 
   const forbiddenTrueFields = [
     ['enabled', enabled],
-    ['displayEnabled', displayEnabled],
-    ['frontendDisplayApproved', frontendDisplayApproved],
     ['promotionEligible', promotionEligible],
     ['affectsScoring', affectsScoring],
     ['affectsDecisionModel', affectsDecisionModel],
@@ -109,6 +110,26 @@ function validateLayerDisabledOrNonImpacting(layer, errors) {
 
   for (const [field, isForbidden] of forbiddenTrueFields) {
     if (isForbidden) addError(errors, `externalAiInterpretationLayer ${field} must not be true`);
+  }
+
+  if (displayEnabled !== frontendDisplayApproved) {
+    addError(errors, 'externalAiInterpretationLayer displayEnabled and frontendDisplayApproved must match');
+  }
+
+  if (displayEnabled === true && frontendDisplayApproved === true) {
+    const visibleRequirements = [
+      ['schemaVersion', layer.schemaVersion === 'v28.0L-external-ai-production-1'],
+      ['status', layer.status === 'valid'],
+      ['boundaries.displayOnly', boundaries.displayOnly === true],
+      ['boundaries.notInvestmentAdvice', boundaries.notInvestmentAdvice === true],
+      ['qualityReview.status', ['pass', 'warn'].includes(qualityReview.status)],
+      ['qualityReview.recommendation', qualityReview.recommendation === 'pass_for_manual_review'],
+      ['qualityReview.promotionEligible', qualityReview.promotionEligible === false],
+      ['freshness.isStale', freshness.isStale === false],
+    ];
+    for (const [field, passed] of visibleRequirements) {
+      if (!passed) addError(errors, `approved visible display requires ${field} to remain safe`);
+    }
   }
 
   if (layer.schemaVersion === 'v28.0L-external-ai-production-1') {

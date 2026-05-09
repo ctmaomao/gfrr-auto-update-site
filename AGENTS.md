@@ -405,3 +405,9 @@ Do not set `displayEnabled=true` or `boundaries.frontendDisplayApproved=true` wi
 v28.0L-3S is documentation-only and defines the future visible-display approval and data flag process. It does not enable visible display.
 
 Do not enable visible display without a separate explicit data-flag PR. Visible display does not require a provider call; do not add DeepSeek reruns, automatic provider calls, Daily integration, workflow schedules, scoring changes, decision changes, execution changes, or position changes for frontend display. Preserve Global Risk Heatmap layout.
+
+## 36. v28.0L-3T visible display flag enablement reminder
+
+v28.0L-3T approves visible display only for the current production `externalAiInterpretationLayer` by setting `displayEnabled=true` and `boundaries.frontendDisplayApproved=true`.
+
+Do not set `qualityReview.promotionEligible=true`. Do not modify external AI text manually. Do not add automatic provider calls, Daily integration, provider reruns, workflow schedules, scoring changes, decision changes, execution changes, or position changes. Preserve Global Risk Heatmap layout.

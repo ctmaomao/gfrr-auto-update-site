@@ -564,7 +564,7 @@ function validateExternalAiProductionLayer(layer) {
 
   assert(layer.schemaVersion === EXTERNAL_AI_PRODUCTION_CONTRACT_VERSION, `externalAiInterpretationLayer.schemaVersion must be ${EXTERNAL_AI_PRODUCTION_CONTRACT_VERSION}`);
   assert(layer.status === 'valid', 'externalAiInterpretationLayer.status must be valid');
-  assert(layer.displayEnabled === false, 'externalAiInterpretationLayer.displayEnabled must be false');
+  assert(typeof layer.displayEnabled === 'boolean', 'externalAiInterpretationLayer.displayEnabled must be boolean');
   parseIsoTime(layer.generatedAt, 'externalAiInterpretationLayer.generatedAt');
   parseIsoTime(layer.updatedAt, 'externalAiInterpretationLayer.updatedAt');
   assert(layer.sourceMode === 'manual_local_compact', 'externalAiInterpretationLayer.sourceMode must be manual_local_compact');
@@ -626,7 +626,11 @@ function validateExternalAiProductionLayer(layer) {
   assert(boundaries.affectsPositionGuidance === false, 'externalAiInterpretationLayer.boundaries.affectsPositionGuidance must be false');
   assert(boundaries.notInvestmentAdvice === true, 'externalAiInterpretationLayer.boundaries.notInvestmentAdvice must be true');
   assert(boundaries.productionWriteApproved === false, 'externalAiInterpretationLayer.boundaries.productionWriteApproved must be false');
-  assert(boundaries.frontendDisplayApproved === false, 'externalAiInterpretationLayer.boundaries.frontendDisplayApproved must be false');
+  assert(typeof boundaries.frontendDisplayApproved === 'boolean', 'externalAiInterpretationLayer.boundaries.frontendDisplayApproved must be boolean');
+  assert(
+    layer.displayEnabled === boundaries.frontendDisplayApproved,
+    'externalAiInterpretationLayer display flags must be both false or both true'
+  );
 
   const serializedStrings = collectStrings(layer).join('\n');
   for (const phrase of EXTERNAL_AI_FORBIDDEN_PHRASES) {

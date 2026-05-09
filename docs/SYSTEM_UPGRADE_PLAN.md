@@ -984,3 +984,28 @@ Recommended next stage:
 ```text
 v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
 ```
+
+## v28.0L-3T External AI Visible Display Flag Enablement
+
+v28.0L-3T enables the existing external AI read-only panel through data flags.
+
+This stage:
+
+- sets `displayEnabled=true`.
+- sets `boundaries.frontendDisplayApproved=true`.
+- changes no AI text content.
+- changes no frontend code.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not refresh provider artifacts.
+- does not read or modify secrets.
+- keeps Global Risk Heatmap layout unchanged.
+- keeps Daily integration disabled.
+- keeps automatic provider calls disabled.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
+```

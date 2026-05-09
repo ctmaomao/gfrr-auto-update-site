@@ -516,3 +516,23 @@ Recommended next step:
 ```text
 v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
 ```
+
+## 23. v28.0L-3T visible display contract status
+
+v28.0L-3T updates the production contract checks to support the approved visible state when both display flags are true.
+
+Status update:
+
+- The production contract supports hidden state: `displayEnabled=false` and `boundaries.frontendDisplayApproved=false`.
+- The production contract supports approved visible state: `displayEnabled=true` and `boundaries.frontendDisplayApproved=true`.
+- Mismatched display flags remain invalid.
+- All non-impact boundaries remain required.
+- `qualityReview.promotionEligible=false` remains required.
+- `freshness.isStale=false` remains required for the visible production layer.
+- Enabling visible display does not imply provider rerun, AI text changes, scoring impact, Daily integration, or automatic provider calls.
+
+Recommended next step:
+
+```text
+v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
+```
