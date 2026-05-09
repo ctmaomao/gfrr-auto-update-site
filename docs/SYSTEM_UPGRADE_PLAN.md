@@ -1147,5 +1147,33 @@ This stage:
 Optional future phase:
 
 ```text
-v28.0L-4B Refresh Monitoring / Failure Notification Design - No Provider Call
+v28.0L-4B External AI Display Coverage Polish - No Provider Call
+```
+
+## v28.0L-4B External AI Display Coverage Polish
+
+v28.0L-4B expands the already-visible external AI read-only panel coverage.
+
+This stage:
+
+- displays capped, safe summaries for `modelJudgments`.
+- displays capped, safe summaries for `scenarioHypotheses`.
+- displays capped, safe summaries for `sourceAttribution`.
+- displays public-safe `qualityReview` status.
+- preserves strict external AI display gates.
+- uses `textContent` for dynamic external AI content.
+- hides raw provider output, raw provenance, run IDs, artifact IDs, artifact paths, raw headers, and internal diagnostics.
+- bumps frontend asset version to `28.0L-4B`.
+- changes no production data.
+- changes no AI-generated text.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- adds no automatic provider call or Daily integration.
+- keeps Global Risk Heatmap layout protected.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0L-4B-1 Display Coverage Audit Sync - No Provider Call
 ```
