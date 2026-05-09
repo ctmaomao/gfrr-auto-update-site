@@ -394,3 +394,16 @@ Status update:
 - No Global Risk Heatmap layout change is made.
 - No scoring / decision / execution / position path is changed.
 - The refresh workflow is the only approved automatic provider call path.
+
+## 20. v28.0L-4A-1 production refresh workflow audit sync
+
+The visible external AI read-only panel is now backed by a successful `External AI Production Refresh` workflow output from run `25611392014`.
+
+Status update:
+
+- The panel remains read-only.
+- No frontend logic changed during the refresh.
+- Refreshed AI text still flows through the existing production contract, quality review, write guard, frontend scaffold check, and display gates.
+- The refresh committed only `data/radar-data.json` through workflow commit `c32af65`.
+- The workflow artifact was `external-ai-production-refresh-25611392014` with artifact ID `6898516584` and 3-day retention.
+- No Global Risk Heatmap layout, scoring, decision, execution, or position path changed.

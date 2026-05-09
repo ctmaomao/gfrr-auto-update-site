@@ -442,6 +442,33 @@ Recommended next step:
 v28.0L-4A-1 Production Refresh Workflow Audit Sync - No Manual Provider Call
 ```
 
+## v28.0L-4A-1 readiness update
+
+v28.0L-4A-1 records the first successful manual `External AI Production Refresh` workflow run without triggering any workflow or provider call from this documentation PR.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Manual production refresh workflow | verified | Run `25611392014` completed successfully through provider call, validation, quality review, sanitizer, projection, production write, final contract validation, write guard, frontend scaffold check, `check:data`, `check:all`, and protected path assertion. | No | Use as the first manual refresh audit baseline. |
+| Daily scheduled refresh | ready | The workflow has one daily schedule at `23:50 UTC`, and the first manual run passed. | No | Allow the configured schedule to operate; do not add another schedule. |
+| Automatic provider call | allowed_only_through_external_ai_production_refresh | `External AI Production Refresh` is the only approved automatic provider path. | No | Do not add provider automation elsewhere. |
+| Additional provider automation | not_ready / not_allowed | No extra schedules, retry loops, or refresh workflows are approved. | Yes | Separate explicit approval required before any additional automation. |
+| Daily integration | not_ready | The site Daily pipeline remains separate from the production refresh workflow. | Yes | Keep Daily pipeline disconnected from provider calls. |
+| Production data write | verified_guarded_refresh_only | Workflow commit `c32af65` changed only `data/radar-data.json`; artifact ID `6898516584` retained for 3 days. | No | Keep contract validation, write guard, and protected path assertion required. |
+| Frontend display | verified_read_only | `frontendDisplayChanged=false` and existing display gates remain in force. | No | Do not change frontend logic for refresh audit sync. |
+| Scoring / decision / execution / position integration | not_allowed | The refresh remains display/commentary-only and non-impacting. | Yes | Keep external AI out of these paths. |
+
+Current L-4A-1 decision:
+
+```text
+first_production_refresh_manual_run_verified_daily_schedule_ready
+```
+
+Optional future phase:
+
+```text
+v28.0L-4B Refresh Monitoring / Failure Notification Design - No Provider Call
+```
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:

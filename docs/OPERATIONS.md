@@ -1670,3 +1670,59 @@ Rollback:
 - If only display must be disabled, set `displayEnabled=false` and `boundaries.frontendDisplayApproved=false` through an approved data update.
 - If unsafe copy appears, revert immediately.
 - If Global Risk Heatmap layout changes, revert immediately.
+
+### v28.0L-4A-1 production refresh workflow audit sync
+
+v28.0L-4A-1 records the first successful manual run of `External AI Production Refresh`.
+
+Audit result:
+
+- Run ID: `25611392014`.
+- Trigger: `workflow_dispatch`.
+- Workflow status: success.
+- DeepSeek provider call: success.
+- External AI output validation: PASS.
+- DeepSeek manual API test: PASS.
+- Quality review: PASS with `recommendation=pass_for_manual_review` and `promotionEligible=false`.
+- Production projection: PASS.
+- Production contract validation on projection: PASS.
+- Artifact sanitizer: PASS.
+- Artifact upload: success.
+- Artifact name: `external-ai-production-refresh-25611392014`.
+- Artifact ID: `6898516584`.
+- Artifact retention: 3 days.
+- Production write: PASS with `productionDataWritten=true`.
+- Frontend display state: `frontendDisplayChanged=false`, `displayEnabled=true`, `promotionEligible=false`.
+- Final production contract validation: PASS.
+- Production write guard: PASS.
+- Frontend scaffold check: PASS.
+- `check:data`: PASS.
+- `check:all`: PASS.
+- Protected path assertion: PASS.
+- Commit back to main: success.
+
+Workflow commit:
+
+- Commit: `c32af65 chore: refresh external AI interpretation layer`.
+- Runtime diff: only `data/radar-data.json` changed.
+- Diff size: 1 file changed, 33 insertions, 37 deletions.
+- No `manual-artifacts/` files were committed.
+- No frontend, workflow, script, package, config, realtime, or Worker files changed.
+
+Post-refresh local audit:
+
+- `git pull` updated `main` from `a75728f` to `c32af65`.
+- `npm run check:external-ai-production-contract -- data/radar-data.json`: PASS.
+- `npm run check:external-ai-production-write-guard`: PASS.
+- `npm run check:external-ai-frontend-hidden-scaffold`: PASS.
+- `npm run check:data`: PASS.
+- `npm run check:all`: PASS.
+- `git diff --check`: PASS.
+- `git status --short`: clean.
+
+Operational notes:
+
+- The daily `23:50 UTC` production refresh schedule is ready to operate through `External AI Production Refresh`.
+- Rollback is reverting commit `c32af65` or rerunning a validated refresh when that is the appropriate operator action.
+- Do not manually edit `externalAiInterpretationLayer` or any external AI generated text in `data/radar-data.json`.
+- Do not add extra schedules, retry loops, or provider refresh paths without explicit approval.
