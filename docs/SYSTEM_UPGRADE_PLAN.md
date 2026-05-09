@@ -1088,3 +1088,33 @@ Optional future phase:
 ```text
 v28.0L-4A External AI Manual Refresh Workflow Design - No Automatic Provider Call
 ```
+
+## v28.0L-4A External AI Production Refresh Workflow
+
+v28.0L-4A adds the first production refresh workflow for the visible external AI read-only panel.
+
+This stage:
+
+- adds `External AI Production Refresh`.
+- supports manual `workflow_dispatch`.
+- supports one daily schedule at `23:50 UTC`.
+- uses the `external-ai-production-refresh` environment.
+- requires the `DEEPSEEK_API_KEY` environment secret after merge.
+- calls DeepSeek once per refresh run.
+- validates provider output.
+- runs quality review.
+- sanitizes workflow artifacts.
+- projects the provider output into the production contract.
+- writes only `externalAiInterpretationLayer` into `data/radar-data.json`.
+- commits only `data/radar-data.json` when the refreshed layer changes.
+- preserves visible display flags.
+- changes no frontend logic.
+- keeps Global Risk Heatmap layout protected.
+- keeps Daily pipeline integration separate and disabled.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-4A-1 Production Refresh Workflow Audit Sync - No Manual Provider Call
+```

@@ -6,6 +6,7 @@ const INDEX_PATH = 'index.html';
 const APP_PATH = 'scripts/app.js';
 const RENDER_EXTERNAL_AI_PATH = 'scripts/modules/renderExternalAi.js';
 const WORKFLOW_DIR = '.github/workflows';
+const APPROVED_PRODUCTION_REFRESH_WORKFLOW = '.github/workflows/external-ai-production-refresh.yml';
 const FORBIDDEN_VISIBLE_COPY = [
   '买入',
   '卖出',
@@ -62,6 +63,20 @@ function listFiles(root, predicate = () => true) {
     }
   }
   return results;
+}
+
+function normalizeRepoPath(filePath) {
+  return filePath.split(path.sep).join('/');
+}
+
+function isApprovedProductionRefreshWorkflow(filePath, text) {
+  if (normalizeRepoPath(filePath) !== APPROVED_PRODUCTION_REFRESH_WORKFLOW) return false;
+  return text.includes('name: External AI Production Refresh')
+    && text.includes('cron: "50 23 * * *"')
+    && text.includes('environment: external-ai-production-refresh')
+    && text.includes('npm run check:external-ai-production-refresh-workflow')
+    && text.includes('git add data/radar-data.json')
+    && text.includes('git push origin HEAD:main');
 }
 
 function validateProductionLayer(errors) {
@@ -219,6 +234,7 @@ function validateNoAutomation(errors) {
   const workflowFiles = listFiles(WORKFLOW_DIR, (filePath) => filePath.endsWith('.yml') || filePath.endsWith('.yaml'));
   for (const filePath of workflowFiles) {
     const text = readText(filePath);
+    if (isApprovedProductionRefreshWorkflow(filePath, text)) continue;
     if (/externalAiInterpretationLayer|external-ai-production-write|write:external-ai-production/iu.test(text)
       && (/^\s*schedule\s*:/im.test(text) || /provider\s*[:=]\s*deepseek/iu.test(text))) {
       addError(errors, `${filePath} must not add scheduled or automatic external AI provider/write behavior`);

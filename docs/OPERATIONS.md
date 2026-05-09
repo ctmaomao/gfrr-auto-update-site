@@ -1616,3 +1616,57 @@ Optional future stage:
 ```text
 v28.0L-4A External AI Manual Refresh Workflow Design - No Automatic Provider Call
 ```
+
+### v28.0L-4A production refresh workflow runbook
+
+v28.0L-4A adds the first production refresh workflow for the visible external AI read-only panel.
+
+Schedule:
+
+- Workflow: `External AI Production Refresh`.
+- Daily schedule: `23:50 UTC`.
+- The schedule is intended to run after the current data generation time around `23:29 UTC`.
+- Do not add additional schedules.
+
+Required GitHub environment:
+
+- Environment name: `external-ai-production-refresh`.
+- Environment secret: `DEEPSEEK_API_KEY`.
+- For true automatic daily refresh, this environment must not require manual reviewers. If required reviewers are configured, scheduled runs wait for approval and are not fully automatic.
+
+Manual refresh:
+
+```bash
+gh workflow run "External AI Production Refresh" \
+  -f input_source=local_compact \
+  -f allow_network=true \
+  -f acknowledge_cost=true \
+  -f validate_output=true \
+  -f timeout_ms=120000
+```
+
+Refresh behavior:
+
+- Builds local compact input from current site data.
+- Calls DeepSeek once.
+- Runs output validation.
+- Runs external AI artifact quality review.
+- Runs artifact sanitizer before upload.
+- Projects the output into the production `externalAiInterpretationLayer` contract.
+- Preserves `displayEnabled=true` and `boundaries.frontendDisplayApproved=true`.
+- Writes only `externalAiInterpretationLayer` into `data/radar-data.json`.
+- Runs production contract validation, write guard, frontend scaffold check, `check:data`, and `check:all`.
+- Commits only `data/radar-data.json` when the refreshed layer actually changes.
+
+Failure behavior:
+
+- Provider failure, validator failure, quality review failure, sanitizer failure, `check:data` failure, or `check:all` failure stops the workflow.
+- Failed runs must not write or commit production data.
+- Manual artifacts remain workflow artifacts only and must not be committed.
+
+Rollback:
+
+- Revert the latest `chore: refresh external AI interpretation layer` commit if the refreshed content should be removed.
+- If only display must be disabled, set `displayEnabled=false` and `boundaries.frontendDisplayApproved=false` through an approved data update.
+- If unsafe copy appears, revert immediately.
+- If Global Risk Heatmap layout changes, revert immediately.

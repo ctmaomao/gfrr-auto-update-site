@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 const DATA_PATH = 'data/radar-data.json';
 const FRONTEND_PATHS = ['index.html', 'scripts/app.js', 'scripts/modules'];
 const WORKFLOW_DIR = '.github/workflows';
+const APPROVED_PRODUCTION_REFRESH_WORKFLOW = '.github/workflows/external-ai-production-refresh.yml';
 const WRITE_SCRIPT_NAME_PATTERN = /write.*external.*ai.*production|external.*ai.*production.*write/i;
 
 const FRONTEND_DISPLAY_MARKERS = [
@@ -53,6 +54,20 @@ function listFiles(root, predicate = () => true) {
     }
   }
   return results;
+}
+
+function normalizeRepoPath(filePath) {
+  return filePath.split(path.sep).join('/');
+}
+
+function isApprovedProductionRefreshWorkflow(filePath, text) {
+  if (normalizeRepoPath(filePath) !== APPROVED_PRODUCTION_REFRESH_WORKFLOW) return false;
+  return text.includes('name: External AI Production Refresh')
+    && text.includes('cron: "50 23 * * *"')
+    && text.includes('environment: external-ai-production-refresh')
+    && text.includes('npm run check:external-ai-production-refresh-workflow')
+    && text.includes('git add data/radar-data.json')
+    && text.includes('git push origin HEAD:main');
 }
 
 function getNestedBoolean(root, paths) {
@@ -192,6 +207,7 @@ function validateNoWorkflowProductionAutomation(errors) {
 
   for (const filePath of workflowFiles) {
     const text = readText(filePath);
+    if (isApprovedProductionRefreshWorkflow(filePath, text)) continue;
     const lower = text.toLowerCase();
     const hasProductionWriteMarker = WORKFLOW_WRITE_MARKERS.some((marker) =>
       lower.includes(marker.toLowerCase()),

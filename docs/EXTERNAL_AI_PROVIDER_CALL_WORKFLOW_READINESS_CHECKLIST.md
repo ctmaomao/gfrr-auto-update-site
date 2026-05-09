@@ -415,6 +415,33 @@ Optional future phase:
 v28.0L-4A External AI Manual Refresh Workflow Design - No Automatic Provider Call
 ```
 
+## v28.0L-4A readiness update
+
+v28.0L-4A adds the first production refresh workflow for the visible external AI read-only panel.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Manual refresh workflow | ready | `External AI Production Refresh` supports `workflow_dispatch` with `input_source=local_compact`. | No | Use only with the required production refresh environment and secret. |
+| Daily scheduled refresh | ready | The workflow has one daily cron at `23:50 UTC`. | No | Do not add additional schedules. |
+| Automatic provider call | limited_to_once_daily_refresh | The only approved automatic provider call is this production refresh workflow. | No | Do not add automatic provider calls elsewhere. |
+| Production data write | guarded_refresh_only | The workflow can commit only `data/radar-data.json` when `externalAiInterpretationLayer` changes. | No | Keep protected path assertion active. |
+| Visible display flags | preserved | Projection/write path preserves current display flags. | No | Keep `displayEnabled=true` and `frontendDisplayApproved=true` unless a separate rollback/data task changes them. |
+| Daily integration | not_ready | This is not a separate site Daily pipeline integration. | Yes | Keep Daily pipeline disconnected. |
+| Provider refresh automation beyond this workflow | not_ready | No other scheduled or repeated refresh path is approved. | Yes | Separate design required before any additional refresh path. |
+| Scoring / decision / execution / position integration | not_allowed | All non-impact boundaries remain required. | Yes | Keep external AI out of these paths. |
+
+Current L-4A decision:
+
+```text
+production_refresh_workflow_ready_single_daily_schedule
+```
+
+Recommended next step:
+
+```text
+v28.0L-4A-1 Production Refresh Workflow Audit Sync - No Manual Provider Call
+```
+
 ## 2. Baseline reviewed
 
 This checklist reviews and preserves the current baseline:
