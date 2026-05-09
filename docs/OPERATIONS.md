@@ -1333,3 +1333,23 @@ Recommended next stage:
 ```text
 v28.0L-3K External AI Production Integration Readiness Review - No Production Write
 ```
+
+### v28.0L-3K production readiness operational note
+
+v28.0L-3K reviews production integration readiness in [`EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md`](EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md). It does not approve production integration.
+
+Operator guidance:
+
+- Do not run more provider calls unless tied to a specific approved task.
+- Do not copy artifacts into `data/`.
+- Do not enable frontend display.
+- Do not trigger Daily from provider output.
+- Do not add scheduled or automatic provider calls.
+- Production integration requires a new explicit design PR.
+- Artifacts expire after 3 days; keep audit summaries in docs, not raw artifact copies.
+
+Recommended next stage:
+
+```text
+v28.0L-3L External AI Production Data Contract Design - No Production Write
+```

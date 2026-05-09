@@ -345,3 +345,9 @@ Never weaken `executionLanguageSafety`, `review:external-ai-artifact`, `check:ex
 v28.0L-3J-4 only records that run `25598887574` passed the `local_compact` provider-call audit: local compact input build, provider transport, output validation, quality review, artifact sanitizer, and sanitized artifact upload all passed with `promotionEligible=false`.
 
 Do not treat L-3J-4 success as permission to write production data, display provider output, enable `externalAiInterpretationLayer`, trigger Daily, schedule automatic provider calls, or affect scoring / decision / execution / position logic. Any production integration or frontend display requires a separate explicitly approved PR. Do not rerun `local_compact` provider calls unnecessarily.
+
+## 26. v28.0L-3K production readiness review reminder
+
+v28.0L-3K is documentation-only and reviews readiness for future production integration. It does not approve production write, frontend display, Daily integration, automatic provider calls, `externalAiInterpretationLayer` promotion, `promotionEligible=true`, or scoring / decision / execution / position changes.
+
+Do not treat provider audit success as production approval. No production write or frontend display may happen without a separate explicitly approved data contract/design PR. Keep `promotionEligible=false` unless a future explicit approval says otherwise.

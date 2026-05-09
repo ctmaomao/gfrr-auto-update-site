@@ -37,6 +37,33 @@ Recommended next PR:
 v28.0L-3K External AI Production Integration Readiness Review - No Production Write
 ```
 
+## v28.0L-3K readiness update
+
+v28.0L-3K is documented in [`EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md`](EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md). It reviews whether the external AI path is ready for future production integration, without implementing production integration.
+
+| Area | Status | Evidence | Blocking? | Required next action |
+|---|---|---|---|---|
+| Manual artifact-only provider path | ready | `fixture_sample` and `local_compact` audits both passed through provider transport, validation, quality review, sanitizer, and artifact upload. | No | Keep manual, artifact-only, and environment-gated. |
+| Fixture_sample provider path | verified | Run `25593082968` passed validator, quality review, sanitizer, and artifact upload. | No | Use as fixture audit record. |
+| Local_compact provider path | verified | Run `25598887574` passed validator, quality review, sanitizer, and artifact upload. | No | Use as local compact audit record. |
+| Production write | not_ready | No production output target, schema, validator, promotion gate, or rollback plan is approved. | Yes | Next phase must be production data contract design only. |
+| Frontend display | not_ready | No reviewed UI copy, fallback behavior, freshness display, or display contract exists. | Yes | Separate frontend/display PR required after data contract design. |
+| Daily integration | not_ready | No Daily provider-call or production write path is approved. | Yes | Keep Daily disconnected. |
+| Automatic provider calls | not_ready | Manual audit success does not approve scheduled or repeated calls. | Yes | Separate scheduling and cost-control design required, if ever. |
+| `promotionEligible=true` | not_ready | All audited paths keep `promotionEligible=false`. | Yes | Keep false unless a separate explicit approval changes the boundary. |
+
+Current L-3K decision:
+
+```text
+manual_artifact_only_ready_production_write_no_go
+```
+
+Recommended next PR:
+
+```text
+v28.0L-3L External AI Production Data Contract Design - No Production Write
+```
+
 - No provider-call workflow is added.
 - No workflow file is added or modified.
 - No GitHub secret is added.

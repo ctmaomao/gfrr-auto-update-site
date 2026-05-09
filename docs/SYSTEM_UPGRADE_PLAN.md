@@ -712,3 +712,31 @@ Recommended next stage:
 ```text
 v28.0L-3K External AI Production Integration Readiness Review - No Production Write
 ```
+
+## v28.0L-3K External AI Production Integration Readiness Review
+
+v28.0L-3K adds [`EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md`](EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md) as a documentation-only readiness review.
+
+This stage:
+
+- records that manual artifact-only external AI paths are ready for audited manual use.
+- records that `fixture_sample` is verified by run `25593082968`.
+- records that `local_compact` is verified by run `25598887574`.
+- records that output validator, quality review, artifact sanitizer, short-retention artifact upload, Node 24 workflow baseline, and protected-path assertion are verified.
+- keeps production write as NO-GO.
+- keeps frontend display as NO-GO.
+- keeps Daily integration as NO-GO.
+- keeps automatic provider calls as NO-GO.
+- keeps `promotionEligible=true` as NO-GO.
+- does not modify workflows or scripts.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not read or modify secrets.
+- does not write production data.
+- does not affect scoring / decision / execution / position logic.
+
+Recommended next stage:
+
+```text
+v28.0L-3L External AI Production Data Contract Design - No Production Write
+```

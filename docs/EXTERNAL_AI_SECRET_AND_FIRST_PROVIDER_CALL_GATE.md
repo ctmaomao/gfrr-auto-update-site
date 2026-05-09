@@ -323,3 +323,16 @@ Run `25598887574` confirms that the `external-ai-manual` environment gate has no
 The Environment secret remains step-scoped to the provider-call step, and GitHub Actions injected it only as a masked value for the approved provider step.
 
 This success does not authorize production data writes, frontend display, Daily integration, `externalAiInterpretationLayer` promotion, automatic scheduled provider calls, or scoring / decision / execution / position changes.
+
+## 17. v28.0L-3K production readiness gate note
+
+v28.0L-3K confirms that the `external-ai-manual` environment gate has successfully protected both the `fixture_sample` and `local_compact` provider-call audits.
+
+Secret handling remains unchanged:
+
+- Environment gate remains required.
+- `DEEPSEEK_API_KEY` remains step-scoped to the provider-call step.
+- Secrets must not be passed as command-line arguments.
+- Secrets must not be printed or uploaded in artifacts.
+
+No production write, frontend display, Daily integration, automatic provider call, or provider artifact promotion is approved by this readiness review.
