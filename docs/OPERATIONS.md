@@ -1924,3 +1924,18 @@ Operator guidance:
 - External AI remains auxiliary read-only explanation and must keep display gates.
 - Global Risk Heatmap remains standalone, visible, and not collapsed.
 - If users report clutter, adjust grouping and anchors, not generated content.
+
+### v28.0M-7V-1 homepage reading path audit-sync operator note
+
+v28.0M-7V-1 records that the homepage reading path repair is merged and post-merge audited.
+
+Operator guidance:
+
+- The homepage primary reading path is the 10-step nav: 今日总判断 → 压力来源 → 信号分层 → 四大驱动 → 市场温度 → 风险引擎 → 交叉验证 → 风险热力图 → 详细数据 → 方法说明.
+- If users report confusing navigation, inspect `npm run check:homepage-ia-contract` before changing layout.
+- Do not fix homepage UX by manually editing generated AI text, Daily Brief output, external AI text, or radar data.
+- Macro Overview remains the primary conclusion / pressure / signal / driver / temperature / engine / cross-validation layer.
+- Daily Brief remains evidence / source detail.
+- External AI remains auxiliary read-only explanation.
+- Global Risk Heatmap must remain standalone and visible.
+- Known `check:world-order` warnings with partial freshness, stale GDELT, SIPRI manual-required, and ACLED not-configured remain non-blocking when `check:all` passes.

@@ -1715,3 +1715,14 @@ Current data contract boundary:
 - Global Risk Heatmap remains a standalone frontend section.
 - Market Pricing Temperature remains waiting-for-history; no Nasdaq / QQQ weekly history, MA60, standard deviation, z-score, market temperature calculation, or market-pricing fetch is introduced.
 - No scoring, `decisionModel`, `executionLock`, `positionGuidance`, Worker, workflow, or provider-call contract changes are introduced.
+
+## v28.0M-7V-1 homepage reading path audit-sync data boundary
+
+v28.0M-7V-1 is documentation-only and does not change data contracts.
+
+Current data contract boundary:
+
+- Macro Overview remains a read-only frontend derivation layer.
+- Homepage reading path updates must not mutate `data/radar-data.json`, `data/market-pricing-history.json`, `data/*.json`, `realtime/*.json`, or config data.
+- Market Pricing Temperature remains waiting-for-history and must not calculate or write history-derived values until a separate approved implementation exists.
+- External AI, scoring, `decisionModel`, `executionLock`, and `positionGuidance` contracts remain unchanged.
