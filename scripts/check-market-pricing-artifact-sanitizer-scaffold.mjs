@@ -47,7 +47,53 @@ const FORBIDDEN_SOURCE_PATTERNS = [
   '.github/workflows'
 ];
 
-const FORBIDDEN_FIXTURE_RECORD_FIELDS = new Set([
+const SENSITIVE_FIELD_KEYS = new Set([
+  'apikey',
+  'api_key',
+  'authorization',
+  'auth',
+  'bearer',
+  'token',
+  'accesstoken',
+  'refreshtoken',
+  'cookie',
+  'cookies',
+  'session',
+  'headers',
+  'requestheaders',
+  'responseheaders',
+  'secret',
+  'password',
+  'credential',
+  'credentials'
+]);
+
+const SOURCE_LEAKAGE_FIELD_KEYS = new Set([
+  'url',
+  'endpoint',
+  'queryurl',
+  'requesturl',
+  'rawurl',
+  'downloadurl',
+  'sourceurl',
+  'fullurl',
+  'finalurl'
+]);
+
+const TRADING_FIELD_KEYS = new Set([
+  'buy',
+  'sell',
+  'short',
+  'long',
+  'inverseetf',
+  'allocation',
+  'positionadvice',
+  'tradeadvice',
+  'recommendation',
+  'targetposition'
+]);
+
+const CALCULATION_FIELD_KEYS = new Set([
   'close',
   'adjustedclose',
   'ma60',
@@ -55,7 +101,15 @@ const FORBIDDEN_FIXTURE_RECORD_FIELDS = new Set([
   'standarddeviation',
   'upperband',
   'lowerband',
+  'temperature',
   'markettemperature'
+]);
+
+const PRODUCTION_WRITE_FLAGS = new Set([
+  'productiondatawritten',
+  'historyfilemodified',
+  'radardatamodified',
+  'readyforproductionwrite'
 ]);
 
 function assert(condition, message) {
@@ -89,27 +143,55 @@ function normalizeKey(key) {
   return key.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-function collectKeys(value, keys = []) {
+function collectEntries(value, entries = [], trail = '$') {
   if (Array.isArray(value)) {
-    value.forEach((item) => collectKeys(item, keys));
-    return keys;
+    value.forEach((item, index) => collectEntries(item, entries, `${trail}[${index}]`));
+    return entries;
   }
   if (!value || typeof value !== 'object') {
-    return keys;
+    return entries;
   }
   for (const [key, child] of Object.entries(value)) {
-    keys.push(normalizeKey(key));
-    collectKeys(child, keys);
+    entries.push({
+      key,
+      normalizedKey: normalizeKey(key),
+      path: `${trail}.${key}`,
+      value: child
+    });
+    collectEntries(child, entries, `${trail}.${key}`);
   }
-  return keys;
+  return entries;
 }
 
-function assertNoProductionLikeFixtureRecords() {
-  const validFixture = readJson(VALID_FIXTURE);
-  const invalidFixture = readJson(INVALID_FIXTURE);
+function assertValidFixtureHasNoForbiddenFields(validFixture) {
+  const entries = collectEntries(validFixture);
 
-  assert(Array.isArray(validFixture.records), 'Valid fixture records must be an array.');
-  assert(validFixture.records.length === 0, 'Valid fixture records must remain empty.');
+  for (const entry of entries) {
+    const { normalizedKey, path: fieldPath, value } = entry;
+    assert(
+      !SENSITIVE_FIELD_KEYS.has(normalizedKey),
+      `Valid fixture must not contain sensitive field: ${fieldPath}`
+    );
+    assert(
+      !SOURCE_LEAKAGE_FIELD_KEYS.has(normalizedKey),
+      `Valid fixture must not contain source leakage field: ${fieldPath}`
+    );
+    assert(
+      !TRADING_FIELD_KEYS.has(normalizedKey),
+      `Valid fixture must not contain trading/advice field: ${fieldPath}`
+    );
+    assert(
+      !CALCULATION_FIELD_KEYS.has(normalizedKey),
+      `Valid fixture must not contain price/calculation field: ${fieldPath}`
+    );
+    assert(
+      !(PRODUCTION_WRITE_FLAGS.has(normalizedKey) && value === true),
+      `Valid fixture must not set production-write flag true: ${fieldPath}`
+    );
+  }
+}
+
+function assertInvalidFixtureHasNoRealRecords(invalidFixture) {
   assert(
     Array.isArray(invalidFixture.records),
     'Invalid fixture records must be an array.'
@@ -126,14 +208,32 @@ function assertNoProductionLikeFixtureRecords() {
     invalidFixture.symbol === 'FIXTURE',
     'Invalid fixture symbol must stay non-production.'
   );
+  assert(
+    invalidFixture.fixtureOnly === true,
+    'Invalid fixture fixtureOnly must stay true.'
+  );
+  assert(
+    invalidFixture.syntheticOnly === true,
+    'Invalid fixture syntheticOnly must stay true.'
+  );
 
-  const fixtureKeys = collectKeys({ validFixture, invalidFixture });
-  for (const key of fixtureKeys) {
+  const invalidEntries = collectEntries(invalidFixture);
+  for (const entry of invalidEntries) {
     assert(
-      !FORBIDDEN_FIXTURE_RECORD_FIELDS.has(key),
-      `Fixture contains production-like or calculation field: ${key}`
+      entry.normalizedKey !== 'close' && entry.normalizedKey !== 'adjustedclose',
+      `Invalid fixture must not contain realistic price field: ${entry.path}`
     );
   }
+}
+
+function assertNoProductionLikeFixtureRecords() {
+  const validFixture = readJson(VALID_FIXTURE);
+  const invalidFixture = readJson(INVALID_FIXTURE);
+
+  assert(Array.isArray(validFixture.records), 'Valid fixture records must be an array.');
+  assert(validFixture.records.length === 0, 'Valid fixture records must remain empty.');
+  assertValidFixtureHasNoForbiddenFields(validFixture);
+  assertInvalidFixtureHasNoRealRecords(invalidFixture);
 }
 
 function assertStaticSourceContract() {
