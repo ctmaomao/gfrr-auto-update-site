@@ -326,5 +326,6 @@ External AI visible display UX audit status: v28.0L-3U-1 records the polished re
 External AI production refresh status: v28.0L-4A adds manual and once-daily production refresh for the visible panel; no frontend logic changes.
 External AI refresh monitoring status: v28.0L-4C documents monitoring design; GitHub native failed-workflow notifications are the recommended initial approach.
 Homepage IA status: v28.0M-3 uses a unified read-only judgment structure for the macro overview while preserving conservative missing-data handling.
+Market pricing status: v28.0M-8 documents artifact-only fetch design; live fetch and production writes remain disabled.
 
 Runtime status: v28.0L-3I-0 standardizes local development and GitHub Actions on Node.js 24 LTS.

@@ -365,3 +365,25 @@ Next recommended step:
 ```text
 v28.0M-8 Market Pricing Artifact-Only Fetch Design - No Production Data Write
 ```
+
+## 16. v28.0M-8 Artifact-Only Fetch Design Status
+
+v28.0M-8 documents the future artifact-only market pricing fetch path.
+
+Implemented boundary:
+
+- `docs/MARKET_PRICING_ARTIFACT_ONLY_FETCH_DESIGN.md` defines the artifact-only fetch architecture and source-compliance boundaries.
+- No live fetch is implemented.
+- No production data write is implemented.
+- Source selection is still pending.
+- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
+- No MA60, standard deviation, z-score, band, or temperature calculation is implemented.
+- `scripts/check-market-pricing-artifact-fetch-design.mjs` validates the design document, protected scaffold state, and no committed market-pricing manual artifacts.
+- `npm run check:market-pricing-artifact-fetch-design` is wired into `npm run check:all`.
+- Market Pricing Temperature remains waiting-for-history.
+
+Next recommended step:
+
+```text
+v28.0M-9 Market Pricing Artifact-Only Fetch Scaffold - No Production Data Write
+```

@@ -1672,3 +1672,17 @@ Current data contract boundary:
 - The source adapter dry-run must not write `data/market-pricing-history.json`.
 - The source adapter dry-run must not write `data/radar-data.json`.
 - Future source work must remain artifact-only until a separate approved production data write phase.
+
+## v28.0M-8 market pricing artifact-only fetch design boundary
+
+Future market pricing artifact-only fetch reports are not production data.
+
+Current data contract boundary:
+
+- `manual-artifacts/market-pricing/` reports must not be committed.
+- Future artifact fetch output must be validated and sanitized before any history write is considered.
+- `data/market-pricing-history.json` remains scaffold-only until a separate approved write PR.
+- `data/market-pricing-history.json` records must remain empty in this phase.
+- Derived MA60, standard deviation, z-score, band, and temperature fields remain absent.
+- Market Pricing Temperature remains waiting-for-history.
+- Artifact-only fetch reports must not affect scoring, `decisionModel`, `executionLock`, or `positionGuidance`.

@@ -513,3 +513,9 @@ Do not add market pricing records manually. Do not calculate MA60, standard devi
 Market pricing source adapters must start as dry-run or artifact-only.
 
 Do not add live fetch behavior to the dry-run scaffold. Do not write production data before validators and explicit approval. Do not add fake records. Do not calculate MA60, standard deviation, z-score, bands, or temperature until validated history exists. Dry-run reports under `manual-artifacts/market-pricing/` are not production data and must not be committed.
+
+## 54. v28.0M-8 market pricing artifact-only fetch design reminder
+
+Market pricing artifact-only fetch reports are not production data.
+
+Do not write production history before sanitizer validation and explicit approval. Do not add fake market records, fake close values, or fake adjusted close values. Do not commit `manual-artifacts/market-pricing/`. Do not calculate MA60, standard deviation, z-score, bands, or market temperature before sufficient validated weekly history exists. Market Pricing Temperature remains display-only and must not affect scoring, decision, execution, or position logic unless separately approved.

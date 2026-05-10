@@ -1,0 +1,148 @@
+# Market Pricing Artifact-Only Fetch Design - v28.0M-8
+
+## 1. Status
+
+This round is design / scaffold only.
+
+- No live fetch.
+- No production data write.
+- No `data/market-pricing-history.json` record change.
+- No MA60 / standard deviation / z-score calculation.
+- No frontend change.
+- No workflow change.
+- Market Pricing Temperature remains waiting-for-history.
+
+## 2. Purpose
+
+The future market pricing fetch path must first produce an artifact-only report. The artifact is manual diagnostic output only and must not be treated as production data.
+
+Before any future history write, the artifact must pass an explicit validator and sanitizer. Production history writes require a separate approved PR. Calculation requires at least 60 weekly observations and a separate approved PR.
+
+## 3. Candidate Source Hierarchy
+
+Future source selection should use this hierarchy:
+
+1. QQQ adjusted close weekly history, if a stable and compliant source is approved.
+2. NDX / Nasdaq 100 index weekly history, if QQQ adjusted close is unavailable or unsuitable.
+3. IXIC / Nasdaq Composite weekly history, if NDX / QQQ are unavailable.
+4. SPX only as fallback candidate, not as Nasdaq / QQQ temperature.
+
+SPX must not be mislabeled as Nasdaq / QQQ temperature. Source selection is not finalized in this PR. Live source use requires a future PR.
+
+## 4. Source Compliance Boundaries
+
+Yahoo Finance historical download is subject to availability and licensing / subscription constraints. Yahoo-style endpoints require compliance and stability review before implementation.
+
+FRED is suitable for macro / index series, but may not provide QQQ adjusted close. Stooq or public CSV-style sources require format validation and source reliability checks. Future licensed sources remain optional.
+
+This PR does not select or call any source. Docs may describe candidates textually, but no executable source URLs are included in code.
+
+## 5. Future Artifact Contract
+
+A future artifact-only fetch path may write a local ignored report such as:
+
+```text
+manual-artifacts/market-pricing/source-fetch-artifact-latest.json
+```
+
+This PR does not create a real fetched artifact.
+
+Intended future artifact contract:
+
+```json
+{
+  "contractVersion": "v28.0M-8-artifact-fetch-design",
+  "kind": "market_pricing_artifact_fetch_report",
+  "status": "artifact_only_design",
+  "generatedAt": "...",
+  "sourceMode": "artifact_only",
+  "networkAllowed": false,
+  "apiCalled": false,
+  "secretsRead": false,
+  "productionDataWritten": false,
+  "historyFileModified": false,
+  "calculationPerformed": false,
+  "assetKey": "qqq",
+  "symbol": "QQQ",
+  "candidateSource": "not_selected",
+  "records": [],
+  "recordsProduced": 0,
+  "weeklyRows": 0,
+  "hasAtLeast60Weeks": false,
+  "validation": {
+    "status": "design_only",
+    "recordsValidated": false,
+    "sourceComplianceReviewed": false
+  },
+  "boundaries": {
+    "artifactOnly": true,
+    "noProductionWrite": true,
+    "noCalculation": true,
+    "displayOnly": true,
+    "notInvestmentAdvice": true,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false
+  }
+}
+```
+
+Future artifact records must be validated before use. This PR does not create records. This PR does not create production history entries.
+
+## 6. Future Artifact Sanitizer Requirements
+
+Future sanitizer / checker coverage must reject:
+
+- secrets.
+- request headers.
+- API keys.
+- cookies.
+- raw auth tokens.
+- unexpected URLs if source is not approved.
+- records without date and close / adjusted close fields.
+- records with non-finite prices.
+- fewer than required fields in a real artifact.
+- records that are not sorted or have duplicate dates.
+- artifacts that contain MA60 / z-score / temperature fields before the calculation phase.
+- trading recommendation fields such as buy, sell, short, or inverseEtf.
+
+## 7. Future Fetch Failure Behavior
+
+If a future fetch fails, no production data is written. If artifact validation fails, no production data is written.
+
+If a source returns fewer than 60 weekly observations, keep waiting_for_history. If adjusted close is unavailable, label source limitations explicitly. If only SPX is available, keep SPX as fallback candidate and do not claim Nasdaq / QQQ temperature.
+
+There must be no automatic retry loop without approval.
+
+## 8. Future Staged Implementation
+
+Recommended staged path:
+
+- M-9: implement artifact-only fetch script behind explicit allow-network flag, output only to manual-artifacts, and perform no production write.
+- M-10: add artifact sanitizer / validator for real fetched records, with no production write.
+- M-11: write validated history to `data/market-pricing-history.json`, still with no calculation if fewer than 60 weekly rows exist.
+- M-12: implement calculation layer only after sufficient history exists; keep it display-only with no scoring impact.
+- M-13: integrate market temperature into asset pricing mismatch and cross-validation, still not trading advice.
+
+## 9. No-Go Rules
+
+- No live fetch in design / scaffold PR.
+- No production write before artifact validation.
+- No fake history.
+- No fake QQQ / NDX / IXIC records.
+- No calculation without at least 60 weekly observations.
+- No trading advice.
+- No long-term inverse ETF recommendation.
+- No Global Risk Heatmap layout change.
+- No scoring / decision / execution / position impact.
+
+## 10. Current Decision
+
+M-8 completes artifact-only fetch design. Market Pricing Temperature remains waiting-for-history.
+
+Recommended next step:
+
+```text
+v28.0M-9 Market Pricing Artifact-Only Fetch Scaffold - No Production Data Write
+```
