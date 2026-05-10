@@ -484,3 +484,17 @@ Implemented boundary:
 - SPX remains fallback-only and must not be treated as Nasdaq / QQQ temperature.
 - At least 60 validated weekly observations remain required before calculation review.
 - No live fetch, production write, history write, or calculation is approved.
+
+## 23. v28.0M-15 Source-Specific Artifact Fetch Scaffold Status
+
+v28.0M-15 does not activate Market Pricing Temperature.
+
+Implemented boundary:
+
+- The source-specific scaffold keeps network disabled.
+- QQQ target metadata is not price history.
+- Stooq / public CSV remains a design candidate only.
+- No 60-week history exists.
+- `data/market-pricing-history.json` remains scaffold-only and empty.
+- SPX remains fallback-only and must not be treated as Nasdaq / QQQ temperature.
+- No live fetch, source approval, production write, history write, or calculation is approved.

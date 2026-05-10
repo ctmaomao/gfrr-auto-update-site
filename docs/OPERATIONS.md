@@ -1985,6 +1985,20 @@ Operator guidance:
 - Do not treat SPX fallback review as Nasdaq / QQQ temperature.
 - `npm run check:market-pricing-proof-of-source-design` must pass.
 
+### v28.0M-15 market pricing source-specific artifact fetch scaffold operator note
+
+v28.0M-15 adds a local source-specific scaffold with network disabled. It does not approve or run Stooq / public CSV, Yahoo-style, FRED, or licensed-source fetches.
+
+Operator guidance:
+
+- `npm run market-pricing:source-specific-artifact-fetch:scaffold` is safe to run locally because network is disabled.
+- The scaffold writes only ignored reports under `manual-artifacts/market-pricing/`.
+- Do not pass `--allow-network` expecting a fetch; the current version rejects it.
+- Do not manually paste scaffold reports into `data/market-pricing-history.json` or `data/radar-data.json`.
+- Do not manually approve source candidates by editing fixtures or data files.
+- Do not add QQQ / NDX / IXIC / SPX prices or weekly records.
+- `npm run check:market-pricing-source-specific-artifact-fetch-scaffold` must pass.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.

@@ -266,3 +266,15 @@ Implemented boundary:
 - Future source-specific artifact scaffold must remain network-disabled unless a later approved PR explicitly changes that boundary.
 - No production source is selected.
 - No history write or calculation is approved.
+
+## 16. v28.0M-15 Source-Specific Artifact Fetch Scaffold Status
+
+v28.0M-15 keeps the real-record contract inactive.
+
+Implemented boundary:
+
+- The source-specific scaffold produces no records.
+- QQQ appears only as target metadata and not as price history.
+- The real-record sanitizer remains limited to synthetic fixtures.
+- No production record contract is activated.
+- No live fetch, source approval, production history write, or calculation is approved.

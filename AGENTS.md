@@ -556,6 +556,12 @@ Proof-of-source design is not source approval.
 
 Do not set `sourceApproved=true`, `liveFetchApproved=true`, `sourceSelectionFinalized=true`, `productionDataWriteApproved=true`, `historyWriteApproved=true`, or `marketTemperatureCalculationApproved=true` in a design-only PR. Do not add source URLs, endpoint URLs, executable endpoints, secrets, headers, cookies, or auth tokens. Do not fetch or write data. Keep QQQ target metadata separate from real records and prices. Keep SPX fallback-only and never label it as Nasdaq / QQQ temperature.
 
+## 54G. v28.0M-15 market pricing source-specific artifact fetch scaffold reminder
+
+The source-specific artifact fetch scaffold is not a live source adapter.
+
+Do not enable network in scaffold PRs, including through `--allow-network`. Do not set `sourceApproved=true`, `sourceSelectionFinalized=true`, `liveFetchApproved=true`, `networkAllowed=true`, `productionDataWriteApproved=true`, `historyWriteApproved=true`, or `readyForProductionWrite=true`. Do not add source URLs, endpoint URLs, executable endpoints, secrets, headers, cookies, or auth tokens. Do not write `data/market-pricing-history.json` records, do not write `data/radar-data.json`, and do not calculate MA60, standard deviation, z-score, bands, or market temperature.
+
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
 Keep Macro Risk Overview as the single primary homepage judgment entry.

@@ -1608,6 +1608,46 @@ Recommended next step:
 v28.0M-15 Market Pricing Source-Specific Artifact Fetch Scaffold - Network Disabled / No Production Data Write
 ```
 
+## v28.0M-15 Market Pricing Source-Specific Artifact Fetch Scaffold
+
+v28.0M-15 adds the first source-specific artifact fetch scaffold with network disabled.
+
+This stage:
+
+- adds `scripts/market-pricing/source-specific-artifact-fetch-scaffold.mjs`.
+- adds `docs/fixtures/market-pricing/source-specific-artifact-fetch-scaffold-v28.0M-15.json`.
+- adds `scripts/check-market-pricing-source-specific-artifact-fetch-scaffold.mjs`.
+- adds `npm run market-pricing:source-specific-artifact-fetch:scaffold`.
+- adds `npm run check:market-pricing-source-specific-artifact-fetch-scaffold`.
+- wires the source-specific scaffold checker into `npm run check:all`.
+- keeps QQQ as target metadata only.
+- keeps Stooq / public CSV as the source candidate label only.
+- keeps network disabled.
+- rejects `--allow-network`.
+- selects no production source.
+- sets `sourceSelectionFinalized=false`.
+- sets `sourceApproved=false`.
+- sets `liveFetchApproved=false`.
+- sets `networkAllowed=false`.
+- sets `productionDataWriteApproved=false`.
+- sets `historyWriteApproved=false`.
+- sets `marketTemperatureCalculationApproved=false`.
+- produces no records or prices.
+- performs no live fetch.
+- performs no production data write.
+- writes no `data/market-pricing-history.json` records.
+- changes no `data/radar-data.json`.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- changes no frontend behavior.
+- changes no workflow.
+- changes no scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-16 Market Pricing Source-Specific Network Gate Design - No Live Fetch / No Production Data Write
+```
+
 ## v28.0M-7U Homepage De-duplication and Detail Collapse
 
 v28.0M-7U refines the homepage information architecture without changing data or model logic.
