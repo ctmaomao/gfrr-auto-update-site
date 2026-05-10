@@ -1898,6 +1898,21 @@ Operator guidance:
 - Do not treat SPX fallback candidate output as Nasdaq / QQQ temperature.
 - `npm run check:market-pricing-artifact-fetch-design` must pass.
 
+### v28.0M-9 market pricing artifact fetch scaffold operator note
+
+v28.0M-9 adds a local scaffold command for future artifact fetch reporting. It still does not fetch market data and does not write production data.
+
+Operator guidance:
+
+- `npm run market-pricing:artifact-fetch:scaffold` is safe to run locally.
+- The scaffold writes only `manual-artifacts/market-pricing/artifact-fetch-scaffold-latest.json`.
+- If `--allow-network` is supplied, the script still rejects network access in v28.0M-9.
+- Do not manually paste scaffold output into `data/market-pricing-history.json` or `data/radar-data.json`.
+- Do not manually add QQQ / NDX / IXIC weekly records.
+- Do not treat SPX fallback candidate output as Nasdaq / QQQ temperature.
+- Future live fetch requires separate approval and an artifact sanitizer.
+- `npm run check:market-pricing-artifact-fetch-scaffold` must pass.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.

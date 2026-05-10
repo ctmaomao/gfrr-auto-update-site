@@ -387,3 +387,21 @@ Next recommended step:
 ```text
 v28.0M-9 Market Pricing Artifact-Only Fetch Scaffold - No Production Data Write
 ```
+
+## 17. v28.0M-9 Artifact Fetch Scaffold Status
+
+v28.0M-9 establishes a local scaffold only for the future artifact fetch path.
+
+Implemented boundary:
+
+- `scripts/market-pricing/artifact-fetch-scaffold.mjs` creates an ignored scaffold report under `manual-artifacts/market-pricing/`.
+- The command does not call Stooq, Yahoo-style sources, FRED, paid providers, or any other live source.
+- `--allow-network` is parsed only so the report can record and reject the request in this version.
+- Source selection remains pending.
+- QQQ remains the preferred primary candidate.
+- NDX and IXIC remain index candidates.
+- SPX remains fallback candidate only and must not be treated as Nasdaq / QQQ temperature.
+- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
+- No MA60, standard deviation, z-score, band, or market temperature calculation is implemented.
+- `scripts/check-market-pricing-artifact-fetch-scaffold.mjs` validates the scaffold report contract and no-production-write boundary.
+- `npm run check:market-pricing-artifact-fetch-scaffold` is wired into `npm run check:all`.

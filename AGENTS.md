@@ -520,6 +520,12 @@ Market pricing artifact-only fetch reports are not production data.
 
 Do not write production history before sanitizer validation and explicit approval. Do not add fake market records, fake close values, or fake adjusted close values. Do not commit `manual-artifacts/market-pricing/`. Do not calculate MA60, standard deviation, z-score, bands, or market temperature before sufficient validated weekly history exists. Market Pricing Temperature remains display-only and must not affect scoring, decision, execution, or position logic unless separately approved.
 
+## 54A. v28.0M-9 market pricing artifact fetch scaffold reminder
+
+The market pricing artifact fetch scaffold must remain no-live-fetch until a separate approved task explicitly enables source calls.
+
+Do not silently enable `--allow-network`; v28.0M-9 must reject network requests in the scaffold report. Do not commit `manual-artifacts/market-pricing/`. Do not write `data/market-pricing-history.json` records, do not write `data/radar-data.json`, and do not calculate MA60, standard deviation, z-score, bands, or market temperature. Do not label SPX fallback output as Nasdaq / QQQ temperature.
+
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
 Keep Macro Risk Overview as the single primary homepage judgment entry.
