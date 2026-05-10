@@ -1387,6 +1387,34 @@ Recommended next step:
 v28.0M-8 Market Pricing Artifact-Only Fetch Design - No Production Data Write
 ```
 
+## v28.0M-8 Market Pricing Artifact-Only Fetch Design
+
+v28.0M-8 adds a design and local checker for the future artifact-only market pricing fetch path.
+
+This stage:
+
+- adds `docs/MARKET_PRICING_ARTIFACT_ONLY_FETCH_DESIGN.md`.
+- adds `scripts/check-market-pricing-artifact-fetch-design.mjs`.
+- adds `npm run check:market-pricing-artifact-fetch-design`.
+- wires the artifact-only fetch design check into `npm run check:all`.
+- documents candidate source hierarchy and source-compliance boundaries.
+- documents the future artifact contract, sanitizer requirements, failure behavior, and staged implementation path.
+- performs no live fetch.
+- writes no production data.
+- changes no `data/market-pricing-history.json` records.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- changes no frontend behavior.
+- changes no workflows.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not change scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-9 Market Pricing Artifact-Only Fetch Scaffold - No Production Data Write
+```
+
 ## v28.0M-4 Macro Overview Structure Audit Sync
 
 v28.0M-4 records that the Macro Overview structure line is complete and audited through the preservation hotfix follow-up.

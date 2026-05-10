@@ -1883,3 +1883,17 @@ Operator guidance:
 - `npm run check:market-pricing-source-adapter-dry-run` must pass.
 - If a future adapter fetch is added, it must be artifact-only first.
 - Do not manually paste market data into `data/market-pricing-history.json` or `data/radar-data.json`.
+
+### v28.0M-8 market pricing artifact-only fetch design operator note
+
+v28.0M-8 documents the future artifact-only fetch path. It does not fetch market data and does not write production data.
+
+Operator guidance:
+
+- Future artifact-only fetch output must be validated before any history write.
+- If artifact fetch fails, do not manually paste data into `data/market-pricing-history.json`.
+- If artifact validation fails, keep Market Pricing Temperature waiting-for-history.
+- If fewer than 60 weekly observations are available, Market Pricing Temperature remains waiting.
+- Do not retry sources automatically or add automation without approval.
+- Do not treat SPX fallback candidate output as Nasdaq / QQQ temperature.
+- `npm run check:market-pricing-artifact-fetch-design` must pass.
