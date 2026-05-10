@@ -1415,6 +1415,34 @@ Recommended next step:
 v28.0M-9 Market Pricing Artifact-Only Fetch Scaffold - No Production Data Write
 ```
 
+## v28.0M-9 Market Pricing Artifact-Only Fetch Scaffold
+
+v28.0M-9 adds the first local artifact-only market pricing fetch scaffold.
+
+This stage:
+
+- adds `scripts/market-pricing/artifact-fetch-scaffold.mjs`.
+- adds `scripts/check-market-pricing-artifact-fetch-scaffold.mjs`.
+- adds `npm run market-pricing:artifact-fetch:scaffold`.
+- adds `npm run check:market-pricing-artifact-fetch-scaffold`.
+- wires the scaffold checker into `npm run check:all` after `check:market-pricing-artifact-fetch-design`.
+- writes only ignored scaffold reports under `manual-artifacts/market-pricing/`.
+- parses `--allow-network` only to record and reject network access in this version.
+- performs no live fetch.
+- performs no production data write.
+- writes no `data/market-pricing-history.json` records.
+- changes no `data/radar-data.json`.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- changes no frontend behavior.
+- changes no workflow.
+- changes no scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-10 Market Pricing Artifact Sanitizer Design / Scaffold - No Production Data Write
+```
+
 ## v28.0M-7U Homepage De-duplication and Detail Collapse
 
 v28.0M-7U refines the homepage information architecture without changing data or model logic.

@@ -1687,6 +1687,21 @@ Current data contract boundary:
 - Market Pricing Temperature remains waiting-for-history.
 - Artifact-only fetch reports must not affect scoring, `decisionModel`, `executionLock`, or `positionGuidance`.
 
+## v28.0M-9 market pricing artifact fetch scaffold boundary
+
+`manual-artifacts/market-pricing/artifact-fetch-scaffold-latest.json` is a local scaffold report, not production data.
+
+Current data contract boundary:
+
+- The scaffold report must not be committed.
+- The scaffold report must not contain fetched market records, close values, adjusted close values, MA60, standard deviation, z-score, bands, temperature, or trading signal outputs.
+- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
+- The artifact fetch scaffold must not write `data/market-pricing-history.json`.
+- The artifact fetch scaffold must not write `data/radar-data.json`.
+- If `--allow-network` is supplied, v28.0M-9 must still reject network access.
+- No fetched records may enter production without a future validator, sanitizer, and explicit approved write phase.
+- Market Pricing Temperature remains waiting-for-history and display-only.
+
 ## v28.0M-7U homepage IA frontend-only boundary
 
 v28.0M-7U changes homepage presentation only and does not alter the data contract.

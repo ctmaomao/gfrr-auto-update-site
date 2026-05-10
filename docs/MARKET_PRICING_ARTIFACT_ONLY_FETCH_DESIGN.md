@@ -146,3 +146,25 @@ Recommended next step:
 ```text
 v28.0M-9 Market Pricing Artifact-Only Fetch Scaffold - No Production Data Write
 ```
+
+## 11. v28.0M-9 Artifact Fetch Scaffold Status
+
+v28.0M-9 adds the first local artifact fetch scaffold command and checker.
+
+Implemented boundary:
+
+- `scripts/market-pricing/artifact-fetch-scaffold.mjs` writes only a local ignored scaffold report.
+- Default output is `manual-artifacts/market-pricing/artifact-fetch-scaffold-latest.json`.
+- The scaffold report uses `contractVersion=v28.0M-9` and `kind=market_pricing_artifact_fetch_scaffold_report`.
+- No live fetch is implemented.
+- If `--allow-network` is supplied, the scaffold records the request and rejects network access in this version.
+- No production data is written.
+- No `data/market-pricing-history.json` history records are written.
+- No `data/radar-data.json` write is performed.
+- No MA60, standard deviation, z-score, band, or market temperature calculation is performed.
+- QQQ remains the preferred primary candidate; SPX remains fallback candidate only.
+- Candidate sources are descriptive only and are not executable source selections.
+- `scripts/check-market-pricing-artifact-fetch-scaffold.mjs` validates the no-network static contract, report contract, allow-network rejection behavior, protected file state, and ignored artifact boundary.
+- `npm run check:market-pricing-artifact-fetch-scaffold` is wired into `npm run check:all`.
+
+Next step requires explicit approval before any live source call, sanitizer implementation, production history write, or calculation layer exists.
