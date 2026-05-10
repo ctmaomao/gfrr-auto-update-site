@@ -422,3 +422,19 @@ Implemented boundary:
 - `data/market-pricing-history.json` remains scaffold-only and records remain empty.
 - No MA60, standard deviation, z-score, band, or market temperature calculation is implemented.
 - `npm run check:market-pricing-artifact-sanitizer-scaffold` is wired into `npm run check:all`.
+
+## 19. v28.0M-11 Real-Record Contract Design Status
+
+v28.0M-11 defines the future weekly record contract before any real source implementation.
+
+Implemented boundary:
+
+- Future records require at least 60 validated weekly observations before any calculation review.
+- Source selection remains pending.
+- QQQ adjusted close remains preferred if an approved source can provide it.
+- NDX and IXIC remain index candidates.
+- SPX remains fallback candidate only and must not be treated as Nasdaq / QQQ temperature.
+- Future records must pass sanitizer and separate history-write approval before production history changes.
+- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
+- No MA60, standard deviation, z-score, band, or market temperature calculation is implemented in M-11.
+- `npm run check:market-pricing-real-record-contract-design` is wired into `npm run check:all`.

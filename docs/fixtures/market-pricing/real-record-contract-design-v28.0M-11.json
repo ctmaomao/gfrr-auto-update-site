@@ -1,0 +1,63 @@
+{
+  "contractVersion": "v28.0M-11-real-record-contract-1",
+  "kind": "market_pricing_real_record_contract_design",
+  "status": "design_only",
+  "artifactOnly": true,
+  "productionDataWritten": false,
+  "historyFileModified": false,
+  "calculationPerformed": false,
+  "records": [],
+  "recordContract": {
+    "requiredFields": [
+      "date",
+      "sourceStatus",
+      "sourceName",
+      "sourceType",
+      "currency",
+      "frequency"
+    ],
+    "priceFields": {
+      "preferred": "adjustedClose",
+      "fallback": "close",
+      "priceFieldUsedRequired": true,
+      "priceAdjustmentStatusRequired": true
+    },
+    "forbiddenFields": [
+      "ma60",
+      "zScore",
+      "standardDeviation",
+      "upperBand",
+      "lowerBand",
+      "temperature",
+      "buy",
+      "sell",
+      "short",
+      "inverseEtf",
+      "allocation",
+      "positionAdvice"
+    ]
+  },
+  "recordCountPolicy": {
+    "zeroRecords": "waiting_for_history",
+    "oneToFiftyNineRecords": "insufficient_history",
+    "sixtyOrMoreRecords": "enough_for_future_calculation_review"
+  },
+  "sourceSelection": {
+    "selected": false,
+    "qqqPreferredPrimary": true,
+    "spxFallbackOnly": true,
+    "sourceComplianceReviewed": false
+  },
+  "boundaries": {
+    "designOnly": true,
+    "noLiveFetch": true,
+    "noProductionWrite": true,
+    "noHistoryWrite": true,
+    "noCalculation": true,
+    "displayOnly": true,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false
+  }
+}
