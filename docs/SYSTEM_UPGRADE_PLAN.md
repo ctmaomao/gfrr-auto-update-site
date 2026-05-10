@@ -1473,6 +1473,35 @@ Recommended next step:
 v28.0M-11 Market Pricing Artifact Sanitizer Real-Record Contract Design - No Production Data Write
 ```
 
+## v28.0M-11 Market Pricing Artifact Sanitizer Real-Record Contract Design
+
+v28.0M-11 adds the future real-record contract design layer for market pricing artifact sanitization.
+
+This stage:
+
+- adds `docs/MARKET_PRICING_REAL_RECORD_CONTRACT_DESIGN.md`.
+- adds `docs/fixtures/market-pricing/real-record-contract-design-v28.0M-11.json`.
+- adds `scripts/check-market-pricing-real-record-contract-design.mjs`.
+- adds `npm run check:market-pricing-real-record-contract-design`.
+- wires the real-record contract checker into `npm run check:all`.
+- defines future artifact-level and record-level weekly record contracts.
+- documents future validation rules for sorted weekly records, duplicate dates, finite positive prices, `adjustedClose` / `close` usage, source compliance, forbidden fields, and record-count policy.
+- keeps the fixture schema-only with `records=[]`.
+- performs no live fetch.
+- performs no production data write.
+- writes no `data/market-pricing-history.json` records.
+- changes no `data/radar-data.json`.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- changes no frontend behavior.
+- changes no workflow.
+- changes no scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-12 Market Pricing Real-Record Sanitizer Scaffold - No Production Data Write
+```
+
 ## v28.0M-7U Homepage De-duplication and Detail Collapse
 
 v28.0M-7U refines the homepage information architecture without changing data or model logic.

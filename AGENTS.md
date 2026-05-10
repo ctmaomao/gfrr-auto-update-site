@@ -532,6 +532,12 @@ The market pricing artifact sanitizer scaffold must remain no-production-write u
 
 Do not accept artifacts with secrets, headers, cookies, source URL fields, calculation fields, trading advice fields, or production-write flags. Do not commit `manual-artifacts/market-pricing/`. Do not write `data/market-pricing-history.json` records, do not write `data/radar-data.json`, and do not calculate MA60, standard deviation, z-score, bands, or market temperature. Do not label SPX fallback output as Nasdaq / QQQ temperature.
 
+## 54C. v28.0M-11 market pricing real-record contract design reminder
+
+The market pricing real-record contract design is not production data.
+
+Do not add numeric market records in design fixtures. Source compliance must be documented before accepting real records. Do not write `data/market-pricing-history.json` records before explicit approval. Do not calculate MA60, standard deviation, z-score, bands, or market temperature before 60 validated weekly observations and a separate approved calculation PR. Do not label SPX fallback output as Nasdaq / QQQ temperature.
+
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
 Keep Macro Risk Overview as the single primary homepage judgment entry.

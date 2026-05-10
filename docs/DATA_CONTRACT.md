@@ -1716,6 +1716,20 @@ Current data contract boundary:
 - No artifact may be promoted to history without sanitizer approval and a separate production-write PR.
 - Market Pricing Temperature remains waiting-for-history and display-only.
 
+## v28.0M-11 market pricing real-record contract design boundary
+
+`docs/MARKET_PRICING_REAL_RECORD_CONTRACT_DESIGN.md` defines the future real-record contract for market pricing artifacts.
+
+Current data contract boundary:
+
+- The real-record contract design is not production data.
+- The schema-only fixture keeps `records=[]`.
+- No market pricing records are written.
+- `data/market-pricing-history.json` remains scaffold-only and empty.
+- Future real records must pass sanitizer checks and a separate history-write approval before production history changes.
+- Future calculation requires at least 60 validated weekly observations and a separate approved calculation PR.
+- Market Pricing Temperature remains `waiting_for_history`.
+
 ## v28.0M-7U homepage IA frontend-only boundary
 
 v28.0M-7U changes homepage presentation only and does not alter the data contract.

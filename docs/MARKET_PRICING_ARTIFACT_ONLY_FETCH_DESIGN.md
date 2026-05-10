@@ -121,9 +121,11 @@ Recommended staged path:
 
 - M-9: implement artifact-only fetch script behind explicit allow-network flag, output only to manual-artifacts, and perform no production write.
 - M-10: add artifact sanitizer scaffold and fixture rejection checks, with no production write.
-- M-11: write validated history to `data/market-pricing-history.json`, still with no calculation if fewer than 60 weekly rows exist.
-- M-12: implement calculation layer only after sufficient history exists; keep it display-only with no scoring impact.
-- M-13: integrate market temperature into asset pricing mismatch and cross-validation, still not trading advice.
+- M-11: add real-record contract design for future sanitizer inputs, with no production write.
+- M-12: add real-record sanitizer scaffold, with no production write.
+- M-13: write validated history to `data/market-pricing-history.json`, still with no calculation if fewer than 60 weekly rows exist.
+- M-14: implement calculation layer only after sufficient history exists; keep it display-only with no scoring impact.
+- M-15: integrate market temperature into asset pricing mismatch and cross-validation, still not trading advice.
 
 ## 9. No-Go Rules
 
@@ -187,3 +189,22 @@ Implemented boundary:
 - `npm run check:market-pricing-artifact-sanitizer-scaffold` is wired into `npm run check:all`.
 
 Next step requires explicit approval before any real fetched records can be sanitized for a later history writer, live source call, production history write, or calculation layer.
+
+## 13. v28.0M-11 Real-Record Contract Design Status
+
+v28.0M-11 adds the future real-record contract design layer for market pricing artifacts.
+
+Implemented boundary:
+
+- `docs/MARKET_PRICING_REAL_RECORD_CONTRACT_DESIGN.md` defines artifact-level and record-level contracts for future weekly records.
+- `docs/fixtures/market-pricing/real-record-contract-design-v28.0M-11.json` is schema-only and keeps `records=[]`.
+- `scripts/check-market-pricing-real-record-contract-design.mjs` validates the design document, schema-only fixture, existing sanitizer no-network boundary, and protected production data state.
+- Future sanitizer work must validate sorted weekly records, duplicate dates, finite positive price fields, `adjustedClose` / `close` usage, source compliance, forbidden fields, and record-count policy.
+- Source selection remains pending.
+- No live fetch is implemented.
+- No production data is written.
+- No `data/market-pricing-history.json` history records are written.
+- No MA60, standard deviation, z-score, band, or market temperature calculation is performed.
+- `npm run check:market-pricing-real-record-contract-design` is wired into `npm run check:all`.
+
+Next step requires explicit approval before a real-record sanitizer scaffold accepts any record-bearing artifact.

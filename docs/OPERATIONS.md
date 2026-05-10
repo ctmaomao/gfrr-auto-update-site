@@ -1929,6 +1929,19 @@ Operator guidance:
 - Future live fetch must remain artifact-only until sanitizer and history writer stages are separately approved.
 - `npm run check:market-pricing-artifact-sanitizer-scaffold` must pass.
 
+### v28.0M-11 market pricing real-record contract design operator note
+
+v28.0M-11 documents the future real-record contract for market pricing artifacts. It does not fetch market data and does not write production data.
+
+Operator guidance:
+
+- Do not manually add real records.
+- Do not paste QQQ / NDX / IXIC / SPX history into `data/market-pricing-history.json`.
+- Do not treat `docs/fixtures/market-pricing/real-record-contract-design-v28.0M-11.json` as data.
+- Future artifacts with real records must remain artifact-only until sanitizer and production-write PRs are approved.
+- Future calculation review requires at least 60 validated weekly observations and a separate approved PR.
+- `npm run check:market-pricing-real-record-contract-design` must pass.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.
