@@ -507,3 +507,9 @@ Do not fabricate market temperature values. Do not calculate MA60, standard devi
 `data/market-pricing-history.json` is scaffold-only until a separate approved fetch/data-write implementation.
 
 Do not add market pricing records manually. Do not calculate MA60, standard deviation, z-score, bands, or temperature until validated weekly history exists. Keep `check:market-pricing-history` passing. SPX fallback must not be mislabeled as Nasdaq / QQQ temperature. Market Pricing Temperature remains display-only and must not affect scoring, decision, execution, or position logic unless separately approved.
+
+## 53. v28.0M-7 market pricing source adapter dry-run reminder
+
+Market pricing source adapters must start as dry-run or artifact-only.
+
+Do not add live fetch behavior to the dry-run scaffold. Do not write production data before validators and explicit approval. Do not add fake records. Do not calculate MA60, standard deviation, z-score, bands, or temperature until validated history exists. Dry-run reports under `manual-artifacts/market-pricing/` are not production data and must not be committed.

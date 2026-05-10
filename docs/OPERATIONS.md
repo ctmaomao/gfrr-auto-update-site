@@ -1869,3 +1869,17 @@ Operator guidance:
 - SPX is fallback candidate only and must not be displayed as Nasdaq / QQQ temperature.
 - Market temperature UI should remain waiting-for-history.
 - Future source work should start as dry-run or artifact-only before any production data write.
+
+### v28.0M-7 market pricing source adapter dry-run operator note
+
+v28.0M-7 adds a local-only dry-run source adapter scaffold.
+
+Operator guidance:
+
+- `npm run market-pricing:source-adapter:dry-run` is safe to run locally.
+- The dry-run does not call external sources.
+- The dry-run does not write `data/market-pricing-history.json`.
+- The dry-run report is written under ignored `manual-artifacts/market-pricing/`.
+- `npm run check:market-pricing-source-adapter-dry-run` must pass.
+- If a future adapter fetch is added, it must be artifact-only first.
+- Do not manually paste market data into `data/market-pricing-history.json` or `data/radar-data.json`.

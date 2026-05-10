@@ -1357,6 +1357,36 @@ Recommended next step:
 v28.0M-7 Market Pricing Source Adapter Dry-Run Design - No Production Data Write
 ```
 
+## v28.0M-7 Market Pricing Source Adapter Dry-Run Design
+
+v28.0M-7 adds a local-only dry-run source adapter scaffold for future Market Pricing Temperature source work.
+
+This stage:
+
+- adds `scripts/market-pricing/source-adapter-dry-run.mjs`.
+- adds `scripts/check-market-pricing-source-adapter-dry-run.mjs`.
+- adds `npm run market-pricing:source-adapter:dry-run`.
+- adds `npm run check:market-pricing-source-adapter-dry-run`.
+- wires the source adapter dry-run check into `npm run check:all`.
+- defines candidate source roles for QQQ / NDX / IXIC / SPX.
+- keeps SPX as fallback candidate only.
+- writes only ignored dry-run reports under `manual-artifacts/market-pricing/`.
+- performs no live fetch.
+- writes no production data.
+- changes no `data/market-pricing-history.json` records.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- changes no frontend behavior.
+- changes no workflows.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not change scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-8 Market Pricing Artifact-Only Fetch Design - No Production Data Write
+```
+
 ## v28.0M-4 Macro Overview Structure Audit Sync
 
 v28.0M-4 records that the Macro Overview structure line is complete and audited through the preservation hotfix follow-up.
