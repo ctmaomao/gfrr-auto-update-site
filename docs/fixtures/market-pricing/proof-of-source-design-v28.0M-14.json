@@ -1,0 +1,87 @@
+{
+  "contractVersion": "v28.0M-14-proof-of-source-design-1",
+  "kind": "market_pricing_source_specific_proof_of_source_design",
+  "status": "design_only_no_live_fetch",
+  "generatedFor": "v28.0M-14",
+  "sourceSelectionFinalized": false,
+  "sourceApproved": false,
+  "liveFetchApproved": false,
+  "productionDataWriteApproved": false,
+  "historyWriteApproved": false,
+  "marketTemperatureCalculationApproved": false,
+  "targetAsset": "qqq",
+  "targetSymbol": "QQQ",
+  "primarySourceCandidate": "stooq_public_csv_candidate",
+  "comparisonCandidates": [
+    "yahoo_style_candidate",
+    "fred_candidate",
+    "future_licensed_candidate"
+  ],
+  "sourceCandidateReview": {
+    "stooq_public_csv_candidate": {
+      "proofRole": "first_public_csv_shape_review_candidate",
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "sourceComplianceReviewed": false,
+      "sourceFormatVerified": false,
+      "symbolMappingVerified": false,
+      "adjustedCloseAvailable": "unknown",
+      "weeklyAggregationPolicy": "not_implemented",
+      "artifactRecordsAllowed": false,
+      "proofRecordsAllowed": false,
+      "nextAllowedStep": "source_specific_artifact_fetch_scaffold_with_network_disabled"
+    },
+    "yahoo_style_candidate": {
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "sourceComplianceReviewed": false,
+      "adjustedClosePotential": true,
+      "downloadAvailabilityUncertain": true,
+      "licensingRestrictionRisk": true,
+      "endpointStabilityRisk": true
+    },
+    "fred_candidate": {
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "officialSeriesCandidate": true,
+      "qqqAdjustedCloseCandidate": false,
+      "frequencyAggregationSupportedForSomeSeries": true,
+      "exactSeriesAvailabilityReviewRequired": true
+    },
+    "future_licensed_candidate": {
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "contractualApprovalRequired": true,
+      "preferredLongTermForReliability": true
+    }
+  },
+  "records": [],
+  "expectedRecordContract": {
+    "date": "YYYY-MM-DD",
+    "frequency": "weekly",
+    "currency": "USD",
+    "priceFields": [
+      "adjustedClose",
+      "close"
+    ],
+    "priceFieldUsedRequired": true,
+    "priceAdjustmentStatusRequired": true
+  },
+  "boundaries": {
+    "designOnly": true,
+    "noLiveFetch": true,
+    "noProductionWrite": true,
+    "noHistoryWrite": true,
+    "noCalculation": true,
+    "displayOnly": true,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false
+  },
+  "nextAllowedStep": "source_specific_artifact_fetch_scaffold_with_network_disabled"
+}

@@ -1971,6 +1971,20 @@ Operator guidance:
 - Do not treat SPX fallback review as Nasdaq / QQQ temperature.
 - `npm run check:market-pricing-source-selection-review` must pass.
 
+### v28.0M-14 market pricing proof-of-source design operator note
+
+v28.0M-14 designs a future source-specific proof-of-source path. It does not approve or run Stooq, Yahoo-style, FRED, or licensed-source fetches.
+
+Operator guidance:
+
+- Do not run source fetch from proof-of-source design.
+- Do not manually approve Stooq, Yahoo-style, FRED, or future licensed sources.
+- Do not paste source-specific proof data into `data/market-pricing-history.json` or other data files.
+- The next source-specific artifact scaffold must keep network disabled unless a later approved task explicitly changes that boundary.
+- Keep QQQ target metadata separate from real records and prices.
+- Do not treat SPX fallback review as Nasdaq / QQQ temperature.
+- `npm run check:market-pricing-proof-of-source-design` must pass.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.

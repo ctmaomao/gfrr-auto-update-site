@@ -469,3 +469,18 @@ Implemented boundary:
 - SPX remains fallback candidate only and must not be treated as Nasdaq / QQQ temperature.
 - No production source is selected.
 - No live fetch, production write, or calculation is approved.
+
+## 22. v28.0M-14 Proof-of-Source Design Status
+
+v28.0M-14 adds source-specific proof-of-source design without activating Market Pricing Temperature.
+
+Implemented boundary:
+
+- Primary proof target is QQQ, but QQQ target metadata is not a production record.
+- QQQ adjustedClose remains preferred only after source approval.
+- Stooq / public CSV is the first proof-of-source design candidate only, not a production source.
+- Yahoo-style remains a comparison candidate.
+- FRED remains an official-series comparison candidate only.
+- SPX remains fallback-only and must not be treated as Nasdaq / QQQ temperature.
+- At least 60 validated weekly observations remain required before calculation review.
+- No live fetch, production write, history write, or calculation is approved.

@@ -203,3 +203,22 @@ Recommended next step:
 ```text
 v28.0M-14 Market Pricing Source-Specific Proof-of-Source Design - No Live Fetch / No Production Data Write
 ```
+
+## 10. v28.0M-14 Proof-of-Source Design Status
+
+v28.0M-14 adds source-specific proof-of-source design before any network-enabled source scaffold.
+
+Implemented boundary:
+
+- Primary proof target is QQQ.
+- Primary proof source candidate is Stooq/public CSV for design only.
+- Yahoo-style remains a comparison candidate.
+- FRED remains an official-series comparison candidate.
+- Future licensed source remains the long-term option.
+- No source is approved.
+- `sourceApproved=false`.
+- `liveFetchApproved=false`.
+- `productionDataWriteApproved=false`.
+- No live fetch is implemented.
+- No production data write is approved.
+- No MA60, standard deviation, z-score, band, or market temperature calculation is performed.
