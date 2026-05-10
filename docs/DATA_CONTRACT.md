@@ -1702,6 +1702,20 @@ Current data contract boundary:
 - No fetched records may enter production without a future validator, sanitizer, and explicit approved write phase.
 - Market Pricing Temperature remains waiting-for-history and display-only.
 
+## v28.0M-10 market pricing artifact sanitizer scaffold boundary
+
+`manual-artifacts/market-pricing/artifact-sanitizer-scaffold-latest.json` is a local sanitizer scaffold report, not production data.
+
+Current data contract boundary:
+
+- The sanitizer report must not be committed.
+- Sanitizer reports must not be copied into `data/market-pricing-history.json` or `data/radar-data.json`.
+- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
+- The sanitizer scaffold must reject secrets, headers, cookies, API tokens, source URL fields, calculation fields, trading advice fields, and production-write flags.
+- A scaffold sanitizer PASS does not approve production history writes; `readyForProductionWrite` remains false.
+- No artifact may be promoted to history without sanitizer approval and a separate production-write PR.
+- Market Pricing Temperature remains waiting-for-history and display-only.
+
 ## v28.0M-7U homepage IA frontend-only boundary
 
 v28.0M-7U changes homepage presentation only and does not alter the data contract.

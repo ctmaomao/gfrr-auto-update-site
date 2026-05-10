@@ -1443,6 +1443,36 @@ Recommended next step:
 v28.0M-10 Market Pricing Artifact Sanitizer Design / Scaffold - No Production Data Write
 ```
 
+## v28.0M-10 Market Pricing Artifact Sanitizer Design / Scaffold
+
+v28.0M-10 adds the first local sanitizer scaffold for future market pricing artifacts.
+
+This stage:
+
+- adds `scripts/market-pricing/artifact-sanitizer-scaffold.mjs`.
+- adds `scripts/check-market-pricing-artifact-sanitizer-scaffold.mjs`.
+- adds valid and invalid scaffold fixtures under `docs/fixtures/market-pricing/`.
+- adds `npm run market-pricing:artifact-sanitizer:scaffold`.
+- adds `npm run check:market-pricing-artifact-sanitizer-scaffold`.
+- wires the sanitizer checker into `npm run check:all` after `check:market-pricing-artifact-fetch-scaffold`.
+- validates the scaffold artifact boundary before any future history write.
+- rejects sensitive fields, source URL fields, calculation fields, trading advice fields, and production-write flags.
+- writes only ignored sanitizer reports under `manual-artifacts/market-pricing/`.
+- performs no live fetch.
+- performs no production data write.
+- writes no `data/market-pricing-history.json` records.
+- changes no `data/radar-data.json`.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- changes no frontend behavior.
+- changes no workflow.
+- changes no scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-11 Market Pricing Artifact Sanitizer Real-Record Contract Design - No Production Data Write
+```
+
 ## v28.0M-7U Homepage De-duplication and Detail Collapse
 
 v28.0M-7U refines the homepage information architecture without changing data or model logic.

@@ -1,0 +1,54 @@
+{
+  "contractVersion": "v28.0M-9",
+  "kind": "market_pricing_artifact_fetch_scaffold_report",
+  "generatedAt": "2026-05-10T00:00:00.000Z",
+  "status": "artifact_fetch_scaffold_only",
+  "sourceMode": "scaffold_no_live_fetch",
+  "assetKey": "qqq",
+  "symbol": "QQQ",
+  "candidateRole": "preferred_primary_candidate",
+  "candidateSource": "stooq_candidate",
+  "fixtureOnly": true,
+  "syntheticOnly": false,
+  "allowNetworkRequested": false,
+  "networkAllowed": false,
+  "networkRequestRejected": false,
+  "apiCalled": false,
+  "secretsRead": false,
+  "productionDataWritten": false,
+  "historyFileModified": false,
+  "radarDataModified": false,
+  "calculationPerformed": false,
+  "records": [],
+  "recordsProduced": 0,
+  "weeklyRows": 0,
+  "hasAtLeast60Weeks": false,
+  "validation": {
+    "status": "scaffold_only",
+    "recordsValidated": false,
+    "sourceComplianceReviewed": false,
+    "sourceSelected": false,
+    "readyForProductionWrite": false
+  },
+  "candidatePolicy": {
+    "qqqPreferredPrimary": true,
+    "spxFallbackOnly": true,
+    "sourceSelectionFinalized": false
+  },
+  "boundaries": {
+    "artifactOnly": true,
+    "noLiveFetch": true,
+    "noProductionWrite": true,
+    "noCalculation": true,
+    "displayOnly": true,
+    "notInvestmentAdvice": true,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false
+  },
+  "notesZh": [
+    "本 fixture 仅用于 market pricing sanitizer scaffold 检查。",
+    "本 fixture 不包含价格记录，不代表生产数据。"
+  ]
+}

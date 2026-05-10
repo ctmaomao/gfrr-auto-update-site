@@ -120,7 +120,7 @@ There must be no automatic retry loop without approval.
 Recommended staged path:
 
 - M-9: implement artifact-only fetch script behind explicit allow-network flag, output only to manual-artifacts, and perform no production write.
-- M-10: add artifact sanitizer / validator for real fetched records, with no production write.
+- M-10: add artifact sanitizer scaffold and fixture rejection checks, with no production write.
 - M-11: write validated history to `data/market-pricing-history.json`, still with no calculation if fewer than 60 weekly rows exist.
 - M-12: implement calculation layer only after sufficient history exists; keep it display-only with no scoring impact.
 - M-13: integrate market temperature into asset pricing mismatch and cross-validation, still not trading advice.
@@ -167,4 +167,23 @@ Implemented boundary:
 - `scripts/check-market-pricing-artifact-fetch-scaffold.mjs` validates the no-network static contract, report contract, allow-network rejection behavior, protected file state, and ignored artifact boundary.
 - `npm run check:market-pricing-artifact-fetch-scaffold` is wired into `npm run check:all`.
 
-Next step requires explicit approval before any live source call, sanitizer implementation, production history write, or calculation layer exists.
+## 12. v28.0M-10 Artifact Sanitizer Scaffold Status
+
+v28.0M-10 adds the first local sanitizer scaffold for market pricing artifacts.
+
+Implemented boundary:
+
+- `scripts/market-pricing/artifact-sanitizer-scaffold.mjs` validates scaffold artifact structure and writes only a local ignored sanitizer report.
+- Default output is `manual-artifacts/market-pricing/artifact-sanitizer-scaffold-latest.json`.
+- `docs/fixtures/market-pricing/artifact-sanitizer-scaffold-valid-v28.0M-10.json` is a valid scaffold fixture with no records.
+- `docs/fixtures/market-pricing/artifact-sanitizer-scaffold-invalid-v28.0M-10.json` tests rejection of sensitive fields, source leakage fields, premature calculation fields, trading advice fields, and production-write flags.
+- The sanitizer rejects secrets, headers, cookies, API tokens, source URL fields, MA60 / standard deviation / z-score / band / temperature fields, trading advice fields, and production-write flags.
+- A pass means scaffold structure is acceptable only; `readyForProductionWrite` remains false.
+- No production data is written.
+- No `data/market-pricing-history.json` history records are written.
+- No `data/radar-data.json` write is performed.
+- No MA60, standard deviation, z-score, band, or market temperature calculation is performed.
+- `scripts/check-market-pricing-artifact-sanitizer-scaffold.mjs` validates static no-network boundaries, valid fixture pass behavior, invalid fixture rejection behavior, protected file state, and ignored artifact boundary.
+- `npm run check:market-pricing-artifact-sanitizer-scaffold` is wired into `npm run check:all`.
+
+Next step requires explicit approval before any real fetched records can be sanitized for a later history writer, live source call, production history write, or calculation layer.

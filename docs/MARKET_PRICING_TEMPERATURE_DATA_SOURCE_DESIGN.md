@@ -405,3 +405,20 @@ Implemented boundary:
 - No MA60, standard deviation, z-score, band, or market temperature calculation is implemented.
 - `scripts/check-market-pricing-artifact-fetch-scaffold.mjs` validates the scaffold report contract and no-production-write boundary.
 - `npm run check:market-pricing-artifact-fetch-scaffold` is wired into `npm run check:all`.
+
+## 18. v28.0M-10 Artifact Sanitizer Scaffold Status
+
+v28.0M-10 establishes a local sanitizer scaffold before any live source implementation or production history write.
+
+Implemented boundary:
+
+- `scripts/market-pricing/artifact-sanitizer-scaffold.mjs` validates scaffold artifact boundaries only.
+- Valid scaffold fixtures can pass only with `readyForProductionWrite=false`.
+- Invalid fixtures verify rejection of sensitive fields, source URL fields, calculation fields, trading advice fields, and production-write flags.
+- Future records must pass a separately approved sanitizer before any history write is considered.
+- Source selection remains pending.
+- QQQ remains the preferred primary candidate.
+- SPX remains fallback candidate only and must not be treated as Nasdaq / QQQ temperature.
+- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
+- No MA60, standard deviation, z-score, band, or market temperature calculation is implemented.
+- `npm run check:market-pricing-artifact-sanitizer-scaffold` is wired into `npm run check:all`.

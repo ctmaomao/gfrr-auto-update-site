@@ -1913,6 +1913,22 @@ Operator guidance:
 - Future live fetch requires separate approval and an artifact sanitizer.
 - `npm run check:market-pricing-artifact-fetch-scaffold` must pass.
 
+### v28.0M-10 market pricing artifact sanitizer scaffold operator note
+
+v28.0M-10 adds a local sanitizer scaffold command for future market pricing artifacts. It does not fetch market data and does not write production data.
+
+Operator guidance:
+
+- `npm run market-pricing:artifact-sanitizer:scaffold` is safe to run locally.
+- The sanitizer writes only `manual-artifacts/market-pricing/artifact-sanitizer-scaffold-latest.json`.
+- A valid scaffold fixture can pass only with `readyForProductionWrite=false`.
+- Invalid fixtures must be rejected, not repaired by manually editing `data/market-pricing-history.json`.
+- Do not manually paste sanitizer reports into `data/market-pricing-history.json` or `data/radar-data.json`.
+- Do not manually add QQQ / NDX / IXIC weekly records.
+- If sanitizer rejects an artifact, do not override by editing data files.
+- Future live fetch must remain artifact-only until sanitizer and history writer stages are separately approved.
+- `npm run check:market-pricing-artifact-sanitizer-scaffold` must pass.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.
