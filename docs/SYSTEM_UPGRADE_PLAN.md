@@ -1461,10 +1461,33 @@ Recommended next step:
 v28.0M-7V-1 Homepage Reading Path UX Audit Sync - No Code Change
 ```
 
+## v28.0M-7V-1 Homepage Reading Path UX Audit Sync
+
+v28.0M-7V-1 records that v28.0M-7V is merged and post-merge audited.
+
+Audit result:
+
+- Homepage Reading Path UX Audit Sync completed.
+- v28.0M-7V is merged at `f9b1d4c Merge pull request #126`.
+- Post-merge audit passed for homepage IA, DOM, modules, copy, data, market-pricing scaffolds, external AI guards, Node runtime, docs, workflows, `check:all`, and `git diff --check`.
+- Top navigation follows: 今日总判断 → 压力来源 → 信号分层 → 四大驱动 → 市场温度 → 风险引擎 → 交叉验证 → 风险热力图 → 详细数据 → 方法说明.
+- Nav targets real content anchors, not empty headings.
+- Macro Overview generated anchors are stable: `homepage-today-judgment`, `homepage-pressure-sources`, `homepage-signal-layers`, `homepage-macro-drivers`, `homepage-market-temperature`, `homepage-risk-engines`, and `homepage-cross-validation`.
+- Daily Brief remains source / evidence detail, not a second primary judgment.
+- External AI remains auxiliary and read-only.
+- Global Risk Heatmap remains standalone.
+- Market Pricing Temperature remains waiting-for-history.
+- No data change, provider call, workflow change, AI text change, or scoring / decision / execution / position change was made.
+
+Known non-blocking warning:
+
+- `check:world-order` passed with `warnings=1`, `freshness=partial`, `gdeltStatus=stale`, `sipriStatus=manual_required`, and `acledStatus=not_configured`.
+
 Recommended next step:
 
 ```text
-v28.0M-7U-1 Homepage UX Audit Sync - No Code Change
+If UX is satisfactory, resume v28.0M-9 Market Pricing Artifact-Only Fetch Scaffold - No Production Data Write.
+If UX still needs adjustment, run a small Homepage Reading Path Polish round first.
 ```
 
 ## v28.0M-4 Macro Overview Structure Audit Sync

@@ -531,3 +531,9 @@ Treat Daily Brief as evidence/source detail rather than a second top-level judgm
 Homepage nav must follow the reading path labels: 今日总判断 → 压力来源 → 信号分层 → 四大驱动 → 市场温度 → 风险引擎 → 交叉验证 → 风险热力图 → 详细数据 → 方法说明.
 
 Add anchors to actual visible content blocks, not empty headings. The first seven anchors belong on the generated Macro Overview sections. Daily Brief belongs under method / evidence detail, not as a primary judgment. External AI is auxiliary read-only explanation, not the primary judgment, and its display gates must remain intact. Preserve Global Risk Heatmap as a standalone visible section. Do not edit generated content, AI-generated text, data files, scoring, decision, execution, or position logic for homepage UX fixes.
+
+## 57. v28.0M-7V-1 homepage reading path audit-sync reminder
+
+v28.0M-7V-1 records that the homepage reading path repair is merged and audited.
+
+Future homepage IA changes must keep the 10-step nav path, point nav anchors to real content rather than empty headings, keep Daily Brief under evidence / method detail, keep External AI auxiliary rather than primary, and preserve Global Risk Heatmap as standalone. Do not modify data or generated content for UX fixes. Run `npm run check:homepage-ia-contract` after homepage IA changes, alongside the usual scoped checks.

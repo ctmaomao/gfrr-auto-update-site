@@ -474,3 +474,13 @@ Placement boundary:
 - The panel must not replace Macro Overview as the primary judgment.
 - The panel must not be placed inside Global Risk Heatmap, `#detail-data`, or `#method-evidence`.
 - Homepage reading-path UX fixes must not edit AI-generated text, rerun a provider, trigger `External AI Production Refresh`, or change scoring / decision / execution / position logic.
+
+## 24. v28.0M-7V-1 homepage reading path audit-sync note
+
+v28.0M-7V-1 records the post-merge audit for the homepage reading path repair.
+
+External AI boundary:
+
+- External AI remains auxiliary read-only explanation outside the 10-step primary nav path.
+- The panel does not affect scoring, decision, execution, or position logic.
+- The audit sync does not change AI-generated text, provider output, display gates, frontend logic, production data, or provider workflows.
