@@ -1730,6 +1730,21 @@ Current data contract boundary:
 - Future calculation requires at least 60 validated weekly observations and a separate approved calculation PR.
 - Market Pricing Temperature remains `waiting_for_history`.
 
+## v28.0M-12 market pricing real-record sanitizer scaffold boundary
+
+M-12 synthetic real-record fixtures are not production data.
+
+Current data contract boundary:
+
+- `docs/fixtures/market-pricing/artifact-sanitizer-real-record-valid-synthetic-v28.0M-12.json` and `docs/fixtures/market-pricing/artifact-sanitizer-real-record-invalid-synthetic-v28.0M-12.json` are fixture-only / synthetic-only sanitizer inputs.
+- The fixtures use `assetKey=fixture_asset` and `symbol=FIXTURE`; they must not be treated as QQQ, NDX, IXIC, SPX, or any production candidate.
+- Sanitizer reports must not be copied into `data/market-pricing-history.json` or `data/radar-data.json`.
+- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
+- `recordsAcceptedForHistory` remains `0` until a separate approved history writer PR changes that boundary.
+- `readyForProductionWrite` remains `false` in M-12.
+- No MA60, standard deviation, z-score, band, or market temperature calculation is performed.
+- Market Pricing Temperature remains `waiting_for_history`.
+
 ## v28.0M-7U homepage IA frontend-only boundary
 
 v28.0M-7U changes homepage presentation only and does not alter the data contract.

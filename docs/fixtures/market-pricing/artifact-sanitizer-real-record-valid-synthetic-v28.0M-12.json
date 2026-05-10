@@ -1,0 +1,92 @@
+{
+  "contractVersion": "v28.0M-12-real-record-synthetic-1",
+  "kind": "market_pricing_real_record_artifact",
+  "status": "synthetic_fixture_only",
+  "artifactOnly": true,
+  "fixtureOnly": true,
+  "syntheticOnly": true,
+  "assetKey": "fixture_asset",
+  "symbol": "FIXTURE",
+  "frequency": "weekly",
+  "candidateSource": "manual_fixture",
+  "sourceComplianceReviewed": true,
+  "productionDataWritten": false,
+  "historyFileModified": false,
+  "radarDataModified": false,
+  "calculationPerformed": false,
+  "validation": {
+    "readyForProductionWrite": false
+  },
+  "records": [
+    {
+      "date": "2099-01-02",
+      "sourceStatus": "ok",
+      "sourceName": "synthetic_fixture_source",
+      "sourceType": "manual_fixture",
+      "currency": "USD",
+      "frequency": "weekly",
+      "adjustedClose": 10,
+      "priceFieldUsed": "adjustedClose",
+      "priceAdjustmentStatus": "adjusted",
+      "rawSourceDate": "2099-01-02",
+      "sourceTimezone": "UTC",
+      "providerSymbol": "FIXTURE",
+      "recordHash": "fixture-2099-01-02",
+      "validationNotes": [
+        "synthetic fixture only"
+      ]
+    },
+    {
+      "date": "2099-01-09",
+      "sourceStatus": "ok",
+      "sourceName": "synthetic_fixture_source",
+      "sourceType": "manual_fixture",
+      "currency": "USD",
+      "frequency": "weekly",
+      "adjustedClose": 11,
+      "priceFieldUsed": "adjustedClose",
+      "priceAdjustmentStatus": "adjusted",
+      "rawSourceDate": "2099-01-09",
+      "sourceTimezone": "UTC",
+      "providerSymbol": "FIXTURE",
+      "recordHash": "fixture-2099-01-09",
+      "validationNotes": [
+        "synthetic fixture only"
+      ]
+    },
+    {
+      "date": "2099-01-16",
+      "sourceStatus": "ok",
+      "sourceName": "synthetic_fixture_source",
+      "sourceType": "manual_fixture",
+      "currency": "USD",
+      "frequency": "weekly",
+      "adjustedClose": 12,
+      "priceFieldUsed": "adjustedClose",
+      "priceAdjustmentStatus": "adjusted",
+      "rawSourceDate": "2099-01-16",
+      "sourceTimezone": "UTC",
+      "providerSymbol": "FIXTURE",
+      "recordHash": "fixture-2099-01-16",
+      "validationNotes": [
+        "synthetic fixture only"
+      ]
+    }
+  ],
+  "boundaries": {
+    "artifactOnly": true,
+    "noLiveFetch": true,
+    "noProductionWrite": true,
+    "noCalculation": true,
+    "displayOnly": true,
+    "notInvestmentAdvice": true,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false
+  },
+  "notesZh": [
+    "本 fixture 仅用于合成 real-record sanitizer scaffold 检查。",
+    "本 fixture 不代表真实市场数据，不允许写入生产历史。"
+  ]
+}

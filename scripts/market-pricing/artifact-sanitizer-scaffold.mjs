@@ -77,6 +77,34 @@ const PRODUCTION_WRITE_FLAGS = new Set([
   'readyforproductionwrite'
 ]);
 
+const REAL_RECORD_SOURCE_STATUSES = new Set([
+  'ok',
+  'stale',
+  'fallback',
+  'rejected'
+]);
+
+const REAL_RECORD_SOURCE_TYPES = new Set([
+  'manual_fixture',
+  'scaffold_fixture',
+  'public_csv',
+  'official_api',
+  'licensed_provider'
+]);
+
+const REAL_RECORD_CANDIDATE_SOURCES = new Set([
+  'manual_fixture',
+  'scaffold_fixture'
+]);
+
+const REAL_RECORD_PRICE_FIELDS = new Set(['adjustedClose', 'close']);
+const REAL_RECORD_PRICE_FIELD_USED = new Set(['adjustedClose', 'close']);
+const REAL_RECORD_PRICE_ADJUSTMENT_STATUS = new Set([
+  'adjusted',
+  'unadjusted_labeled',
+  'index_level'
+]);
+
 function normalizeKey(key) {
   return key.toLowerCase().replace(/[^a-z0-9_]/g, '');
 }
@@ -172,12 +200,24 @@ function inspectObjectFields(value, findings, trail = '$') {
   }
 }
 
-function inspectArtifactShape(artifact, findings) {
-  if (!artifact || typeof artifact !== 'object' || Array.isArray(artifact)) {
-    addUnique(findings.recordsRejectedReasons, 'artifact_root_must_be_object');
-    return;
-  }
+function isNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
 
+function isIsoDate(value) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function isFinitePositiveNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+function addRecordRejection(findings, reason, recordIndex = null) {
+  const suffix = recordIndex === null ? reason : `record_${recordIndex}_${reason}`;
+  addUnique(findings.recordsRejectedReasons, suffix);
+}
+
+function inspectScaffoldArtifactShape(artifact, findings) {
   if (artifact.contractVersion !== 'v28.0M-9') {
     addUnique(findings.recordsRejectedReasons, 'artifact_contract_version_not_supported');
   }
@@ -232,12 +272,208 @@ function inspectArtifactShape(artifact, findings) {
   }
 }
 
+function inspectRecordForbiddenFields(record, findings, recordIndex) {
+  for (const [key, value] of Object.entries(record)) {
+    const normalized = normalizeKey(key);
+    if (CALCULATION_FIELD_KEYS.has(normalized)) {
+      addRecordRejection(findings, `forbidden_calculation_field_${key}`, recordIndex);
+    }
+    if (TRADING_FIELD_KEYS.has(normalized)) {
+      addRecordRejection(findings, `forbidden_trading_advice_field_${key}`, recordIndex);
+    }
+    if (SOURCE_LEAKAGE_FIELD_KEYS.has(normalized) || SENSITIVE_FIELD_KEYS.has(normalized)) {
+      addRecordRejection(findings, `forbidden_source_field_${key}`, recordIndex);
+    }
+    if (PRODUCTION_WRITE_FLAGS.has(normalized) && value === true) {
+      addRecordRejection(findings, `forbidden_production_write_flag_${key}`, recordIndex);
+    }
+  }
+}
+
+function inspectRealRecord(record, findings, recordIndex, artifactFrequency) {
+  const beforeReasonCount = findings.recordsRejectedReasons.length;
+
+  if (!record || typeof record !== 'object' || Array.isArray(record)) {
+    addRecordRejection(findings, 'record_must_be_object', recordIndex);
+    return false;
+  }
+
+  inspectRecordForbiddenFields(record, findings, recordIndex);
+
+  if (!isIsoDate(record.date)) {
+    addRecordRejection(findings, 'invalid_date_format', recordIndex);
+  }
+
+  const recordFrequency = record.frequency ?? artifactFrequency;
+  if (recordFrequency !== 'weekly') {
+    addRecordRejection(findings, 'frequency_must_be_weekly', recordIndex);
+  }
+  if (record.currency !== 'USD') {
+    addRecordRejection(findings, 'currency_must_be_usd', recordIndex);
+  }
+  if (!REAL_RECORD_SOURCE_STATUSES.has(record.sourceStatus)) {
+    addRecordRejection(findings, 'invalid_source_status', recordIndex);
+  }
+  if (!REAL_RECORD_SOURCE_TYPES.has(record.sourceType)) {
+    addRecordRejection(findings, 'invalid_source_type', recordIndex);
+  }
+  if (!isNonEmptyString(record.sourceName)) {
+    addRecordRejection(findings, 'source_name_required', recordIndex);
+  }
+  if (!REAL_RECORD_PRICE_FIELD_USED.has(record.priceFieldUsed)) {
+    addRecordRejection(findings, 'missing_or_invalid_price_field_used', recordIndex);
+  }
+  if (!REAL_RECORD_PRICE_ADJUSTMENT_STATUS.has(record.priceAdjustmentStatus)) {
+    addRecordRejection(findings, 'invalid_price_adjustment_status', recordIndex);
+  }
+
+  const presentPriceFields = [...REAL_RECORD_PRICE_FIELDS].filter((field) =>
+    Object.hasOwn(record, field)
+  );
+  if (presentPriceFields.length === 0) {
+    addRecordRejection(findings, 'missing_price_field', recordIndex);
+  }
+
+  for (const field of presentPriceFields) {
+    if (!isFinitePositiveNumber(record[field])) {
+      addRecordRejection(findings, `non_positive_price_${field}`, recordIndex);
+    }
+  }
+
+  if (record.priceFieldUsed === 'adjustedClose' && !isFinitePositiveNumber(record.adjustedClose)) {
+    addRecordRejection(findings, 'adjusted_close_required_for_price_field_used', recordIndex);
+  }
+  if (record.priceFieldUsed === 'close') {
+    if (!isFinitePositiveNumber(record.close)) {
+      addRecordRejection(findings, 'close_required_for_price_field_used', recordIndex);
+    }
+    if (record.priceAdjustmentStatus === 'adjusted') {
+      addRecordRejection(findings, 'close_price_cannot_use_adjusted_status', recordIndex);
+    }
+  }
+
+  return findings.recordsRejectedReasons.length === beforeReasonCount;
+}
+
+function inspectRealRecordArtifactShape(artifact, findings) {
+  if (artifact.contractVersion !== 'v28.0M-12-real-record-synthetic-1') {
+    addUnique(findings.recordsRejectedReasons, 'real_record_contract_version_not_supported');
+  }
+  if (
+    artifact.status !== 'synthetic_fixture_only' &&
+    artifact.status !== 'artifact_only_synthetic_fixture'
+  ) {
+    addUnique(findings.recordsRejectedReasons, 'real_record_status_not_synthetic_fixture');
+  }
+  if (artifact.fixtureOnly !== true) {
+    addUnique(findings.recordsRejectedReasons, 'real_record_fixture_only_required');
+  }
+  if (artifact.syntheticOnly !== true) {
+    addUnique(findings.recordsRejectedReasons, 'real_record_synthetic_only_required');
+  }
+  if (artifact.artifactOnly !== true) {
+    addUnique(findings.recordsRejectedReasons, 'real_record_artifact_only_required');
+  }
+  if (artifact.assetKey !== 'fixture_asset') {
+    addUnique(findings.recordsRejectedReasons, 'real_record_asset_key_must_be_fixture_asset');
+  }
+  if (artifact.symbol !== 'FIXTURE') {
+    addUnique(findings.recordsRejectedReasons, 'real_record_symbol_must_be_fixture');
+  }
+  if (artifact.frequency !== 'weekly') {
+    addUnique(findings.recordsRejectedReasons, 'real_record_frequency_must_be_weekly');
+  }
+  if (!REAL_RECORD_CANDIDATE_SOURCES.has(artifact.candidateSource)) {
+    addUnique(findings.recordsRejectedReasons, 'real_record_candidate_source_must_be_fixture');
+  }
+  if (
+    artifact.sourceComplianceReviewed !== true &&
+    artifact.sourceComplianceReviewed !== false
+  ) {
+    addUnique(findings.recordsRejectedReasons, 'source_compliance_reviewed_boolean_required');
+  }
+  if (artifact.productionDataWritten !== false) {
+    addUnique(findings.recordsRejectedReasons, 'production_data_written_must_be_false');
+  }
+  if (artifact.historyFileModified !== false) {
+    addUnique(findings.recordsRejectedReasons, 'history_file_modified_must_be_false');
+  }
+  if (artifact.radarDataModified !== false) {
+    addUnique(findings.recordsRejectedReasons, 'radar_data_modified_must_be_false');
+  }
+  if (artifact.calculationPerformed !== false) {
+    addUnique(findings.recordsRejectedReasons, 'calculation_performed_must_be_false');
+  }
+  if (artifact.validation?.readyForProductionWrite !== false) {
+    addUnique(findings.recordsRejectedReasons, 'ready_for_production_write_must_be_false');
+  }
+  if (!Array.isArray(artifact.records)) {
+    addUnique(findings.recordsRejectedReasons, 'records_must_be_array');
+    return;
+  }
+
+  const seenDates = new Set();
+  let previousDate = null;
+
+  artifact.records.forEach((record, recordIndex) => {
+    const validBeforeOrderChecks = inspectRealRecord(
+      record,
+      findings,
+      recordIndex,
+      artifact.frequency
+    );
+
+    if (isIsoDate(record?.date)) {
+      if (seenDates.has(record.date)) {
+        addRecordRejection(findings, 'duplicate_date', recordIndex);
+      }
+      if (previousDate !== null && record.date < previousDate) {
+        addRecordRejection(findings, 'unsorted_date', recordIndex);
+      }
+      seenDates.add(record.date);
+      previousDate = record.date;
+    }
+
+    const validAfterOrderChecks =
+      validBeforeOrderChecks &&
+      !findings.recordsRejectedReasons.some((reason) =>
+        reason.startsWith(`record_${recordIndex}_`)
+      );
+    if (validAfterOrderChecks) {
+      findings.recordsStructurallyValid += 1;
+    }
+  });
+
+  findings.recordsRejected += artifact.records.length - findings.recordsStructurallyValid;
+}
+
+function inspectArtifactShape(artifact, findings) {
+  if (!artifact || typeof artifact !== 'object' || Array.isArray(artifact)) {
+    addUnique(findings.recordsRejectedReasons, 'artifact_root_must_be_object');
+    return;
+  }
+
+  if (artifact.kind === 'market_pricing_artifact_fetch_scaffold_report') {
+    inspectScaffoldArtifactShape(artifact, findings);
+    return;
+  }
+  if (artifact.kind === 'market_pricing_real_record_artifact') {
+    inspectRealRecordArtifactShape(artifact, findings);
+    return;
+  }
+
+  if (artifact.kind !== 'market_pricing_artifact_fetch_scaffold_report') {
+    addUnique(findings.recordsRejectedReasons, 'artifact_kind_not_supported');
+  }
+}
+
 export function buildArtifactSanitizerScaffoldReport(inputPath, artifact) {
   const findings = {
     sensitiveFieldsRejected: [],
     sourceLeakageFieldsRejected: [],
     forbiddenFieldsRejected: [],
     recordsRejectedReasons: [],
+    recordsStructurallyValid: 0,
     recordsRejected: 0
   };
 
@@ -255,21 +491,31 @@ export function buildArtifactSanitizerScaffoldReport(inputPath, artifact) {
     contractVersion: CONTRACT_VERSION,
     kind: 'market_pricing_artifact_sanitizer_scaffold_report',
     generatedAt: new Date().toISOString(),
-    status: invalid ? 'invalid_artifact' : 'pass_scaffold_only',
+    status: invalid
+      ? 'invalid_artifact'
+      : artifact?.kind === 'market_pricing_real_record_artifact'
+        ? 'pass_synthetic_real_record_scaffold'
+        : 'pass_scaffold_only',
     inputPath,
     artifactKind: artifact?.kind ?? null,
     artifactContractVersion: artifact?.contractVersion ?? null,
     artifactStatus: artifact?.status ?? null,
     scaffoldOnly: true,
     fixtureOnly: artifact?.fixtureOnly === true,
+    syntheticOnly: artifact?.syntheticOnly === true,
     recordsInspected: records.length,
+    recordsStructurallyValid: findings.recordsStructurallyValid,
     recordsAcceptedForHistory: 0,
     recordsRejected: findings.recordsRejected,
     recordsRejectedReasons: findings.recordsRejectedReasons,
+    rejectionReasons: findings.recordsRejectedReasons,
     sensitiveFieldsRejected: findings.sensitiveFieldsRejected,
     sourceLeakageFieldsRejected: findings.sourceLeakageFieldsRejected,
     forbiddenFieldsRejected: findings.forbiddenFieldsRejected,
-    sourceComplianceReviewed: false,
+    sourceComplianceReviewed:
+      artifact?.kind === 'market_pricing_real_record_artifact'
+        ? artifact.sourceComplianceReviewed === true
+        : false,
     readyForProductionWrite: false,
     productionDataWritten: false,
     historyFileModified: false,
@@ -340,7 +586,11 @@ export function main(argv = process.argv.slice(2)) {
   const options = parseArgs(argv);
   const result = sanitizeArtifactFile(options.input, options.output);
   printSummary(result);
-  if (result.report.status !== 'pass_scaffold_only') {
+  const passStatuses = new Set([
+    'pass_scaffold_only',
+    'pass_synthetic_real_record_scaffold'
+  ]);
+  if (!passStatuses.has(result.report.status)) {
     process.exitCode = 1;
   }
   return result.report;

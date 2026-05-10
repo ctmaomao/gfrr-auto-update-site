@@ -538,6 +538,12 @@ The market pricing real-record contract design is not production data.
 
 Do not add numeric market records in design fixtures. Source compliance must be documented before accepting real records. Do not write `data/market-pricing-history.json` records before explicit approval. Do not calculate MA60, standard deviation, z-score, bands, or market temperature before 60 validated weekly observations and a separate approved calculation PR. Do not label SPX fallback output as Nasdaq / QQQ temperature.
 
+## 54D. v28.0M-12 market pricing real-record sanitizer scaffold reminder
+
+Synthetic real-record fixtures are not production data.
+
+Valid synthetic records may be structurally valid, but they must not be accepted for history: keep `recordsAcceptedForHistory=0` and `readyForProductionWrite=false`. Do not write `data/market-pricing-history.json` records, do not write `data/radar-data.json`, and do not calculate MA60, standard deviation, z-score, bands, or market temperature. Do not use QQQ / NDX / IXIC / SPX numeric fixture values; fixture records must stay `assetKey=fixture_asset` and `symbol=FIXTURE`. Keep SPX fallback-only and never label it as Nasdaq / QQQ temperature.
+
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
 Keep Macro Risk Overview as the single primary homepage judgment entry.
