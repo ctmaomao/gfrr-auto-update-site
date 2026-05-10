@@ -1415,6 +1415,32 @@ Recommended next step:
 v28.0M-9 Market Pricing Artifact-Only Fetch Scaffold - No Production Data Write
 ```
 
+## v28.0M-7U Homepage De-duplication and Detail Collapse
+
+v28.0M-7U refines the homepage information architecture without changing data or model logic.
+
+This stage:
+
+- keeps Macro Risk Overview as the single primary homepage judgment entry.
+- demotes Daily Brief to raw evidence / collapsible detail.
+- groups or collapses detail-heavy modules so the visible flow is conclusion, auxiliary explanation, global visualization, then supporting evidence.
+- keeps External AI as read-only auxiliary explanation with existing display gates.
+- keeps Global Risk Heatmap standalone and not collapsed.
+- bumps frontend asset cache version to `28.0M-7U`.
+- adds `scripts/check-homepage-ia-contract.mjs`.
+- adds `npm run check:homepage-ia-contract`.
+- wires the homepage IA contract into `npm run check:all`.
+- changes no `data/*.json`, `realtime/*.json`, config, Worker, workflow, or production data path.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not change scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-7U-1 Homepage UX Audit Sync - No Code Change
+```
+
 ## v28.0M-4 Macro Overview Structure Audit Sync
 
 v28.0M-4 records that the Macro Overview structure line is complete and audited through the preservation hotfix follow-up.

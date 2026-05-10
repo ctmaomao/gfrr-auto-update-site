@@ -26,6 +26,7 @@
     "review:worker-health-snapshot": "node scripts/review-worker-health-snapshot.mjs",
     "bump:frontend-asset-version": "node scripts/bump-frontend-asset-version.mjs",
     "check:dom": "node scripts/check-dom-ids.mjs",
+    "check:homepage-ia-contract": "node --check scripts/check-homepage-ia-contract.mjs && node scripts/check-homepage-ia-contract.mjs",
     "check:modules": "node scripts/check-module-imports.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",
     "check:copy": "node scripts/check-copy-contract.mjs",
@@ -55,7 +56,7 @@
     "check:data": "node scripts/validate-data.mjs",
     "check:data:verbose": "node scripts/validate-data.mjs --verbose",
     "check:data:strict-live-alignment": "node scripts/validate-data.mjs --strict-live-alignment",
-    "check:all": "npm run check:syntax && npm run check:dom && npm run check:modules && npm run check:copy && npm run check:node-runtime && npm run check:workflows && npm run check:external-ai-manual-workflow && npm run check:external-ai-provider-workflow && npm run check:external-ai-production-refresh-workflow && npm run check:external-ai-workflow-artifacts && npm run check:docs && npm run check:external-ai-output && npm run check:external-ai-production-contract && npm run check:external-ai-production-projection && npm run check:external-ai-production-write-guard && npm run check:external-ai-frontend-hidden-scaffold && npm run check:external-ai-production-data-write-script && npm run check:external-ai-manual-scaffold && npm run check:external-ai-production-provider-path && npm run check:data && npm run check:market-pricing-history && npm run check:market-pricing-source-adapter-dry-run && npm run check:market-pricing-artifact-fetch-design && npm run check:world-order"
+    "check:all": "npm run check:syntax && npm run check:dom && npm run check:homepage-ia-contract && npm run check:modules && npm run check:copy && npm run check:node-runtime && npm run check:workflows && npm run check:external-ai-manual-workflow && npm run check:external-ai-provider-workflow && npm run check:external-ai-production-refresh-workflow && npm run check:external-ai-workflow-artifacts && npm run check:docs && npm run check:external-ai-output && npm run check:external-ai-production-contract && npm run check:external-ai-production-projection && npm run check:external-ai-production-write-guard && npm run check:external-ai-frontend-hidden-scaffold && npm run check:external-ai-production-data-write-script && npm run check:external-ai-manual-scaffold && npm run check:external-ai-production-provider-path && npm run check:data && npm run check:market-pricing-history && npm run check:market-pricing-source-adapter-dry-run && npm run check:market-pricing-artifact-fetch-design && npm run check:world-order"
   },
   "engines": {
     "node": ">=24 <25"

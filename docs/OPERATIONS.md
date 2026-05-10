@@ -1897,3 +1897,16 @@ Operator guidance:
 - Do not retry sources automatically or add automation without approval.
 - Do not treat SPX fallback candidate output as Nasdaq / QQQ temperature.
 - `npm run check:market-pricing-artifact-fetch-design` must pass.
+
+### v28.0M-7U homepage IA de-duplication operator note
+
+v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.
+
+Operator guidance:
+
+- If users report duplicate judgment modules, run `npm run check:homepage-ia-contract`.
+- Do not manually edit generated Daily Brief, AI, decision, execution, or position content to fix UX confusion.
+- Use grouping, collapsible detail sections, or copy around static section headings instead.
+- External AI remains a read-only auxiliary explanation and must keep display gates.
+- Global Risk Heatmap remains standalone and not collapsed by default.
+- Current frontend asset cache version is `28.0M-7U`.
