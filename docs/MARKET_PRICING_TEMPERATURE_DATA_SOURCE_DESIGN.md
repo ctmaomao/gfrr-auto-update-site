@@ -498,3 +498,17 @@ Implemented boundary:
 - `data/market-pricing-history.json` remains scaffold-only and empty.
 - SPX remains fallback-only and must not be treated as Nasdaq / QQQ temperature.
 - No live fetch, source approval, production write, history write, or calculation is approved.
+
+## 24. v28.0M-15A Unified Data Pipeline Architecture Status
+
+v28.0M-15A assigns future Market Pricing work to the unified data architecture.
+
+Implemented boundary:
+
+- Market Pricing belongs to the Daily / history layer for production history.
+- Market Pricing must not be treated as a realtime Worker primary fetch.
+- Realtime may only provide cross-validation or current context if separately approved.
+- GitHub Actions backup validation may verify, audit, or detect fallback needs, but must not bypass sanitizer.
+- Market-pricing artifacts remain in the artifact sanitizer layer until an approved writer exists.
+- Market Pricing Temperature remains waiting-for-history.
+- No live fetch, production write, history write, or calculation is approved.

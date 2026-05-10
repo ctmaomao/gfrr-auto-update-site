@@ -562,6 +562,12 @@ The source-specific artifact fetch scaffold is not a live source adapter.
 
 Do not enable network in scaffold PRs, including through `--allow-network`. Do not set `sourceApproved=true`, `sourceSelectionFinalized=true`, `liveFetchApproved=true`, `networkAllowed=true`, `productionDataWriteApproved=true`, `historyWriteApproved=true`, or `readyForProductionWrite=true`. Do not add source URLs, endpoint URLs, executable endpoints, secrets, headers, cookies, or auth tokens. Do not write `data/market-pricing-history.json` records, do not write `data/radar-data.json`, and do not calculate MA60, standard deviation, z-score, bands, or market temperature.
 
+## 54H. v28.0M-15A unified data pipeline architecture reminder
+
+Every new data source must declare an `assignedLayer` before implementation.
+
+Allowed layers are `daily_history_layer`, `realtime_worker_layer`, `github_actions_backup_validation_layer`, `artifact_sanitizer_layer`, and `frontend_display_layer`. Do not create standalone or ad hoc data pipelines. Cloudflare Worker remains the realtime fast-variable primary path. Daily GitHub Actions remains the slow / historical production layer. GitHub Actions backup validation must not bypass sanitizer. Market-pricing-history belongs to `daily_history_layer`; market-pricing artifacts remain in `artifact_sanitizer_layer` until an approved writer exists. Do not write data files from artifact-only scripts.
+
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
 Keep Macro Risk Overview as the single primary homepage judgment entry.

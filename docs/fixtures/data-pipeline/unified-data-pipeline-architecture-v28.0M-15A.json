@@ -1,0 +1,62 @@
+{
+  "contractVersion": "v28.0M-15A-unified-data-pipeline-architecture-1",
+  "kind": "unified_data_pipeline_architecture",
+  "status": "architecture_sync_only",
+  "runtimeBehaviorChanged": false,
+  "dataWritten": false,
+  "workflowChanged": false,
+  "allowedLayers": [
+    "daily_history_layer",
+    "realtime_worker_layer",
+    "github_actions_backup_validation_layer",
+    "artifact_sanitizer_layer",
+    "frontend_display_layer"
+  ],
+  "sourceAssignments": {
+    "market_pricing_history": {
+      "assignedLayer": "daily_history_layer",
+      "primaryOwnerLayer": "daily_history_layer",
+      "artifactOnlyBeforeProduction": true,
+      "sanitizerRequired": true,
+      "productionWriterRequired": true,
+      "currentStatus": "scaffold_only_waiting_for_history",
+      "recordsPresent": false,
+      "calculationApproved": false
+    },
+    "market_pricing_source_specific_artifacts": {
+      "assignedLayer": "artifact_sanitizer_layer",
+      "primaryOwnerLayer": "artifact_sanitizer_layer",
+      "artifactOnlyBeforeProduction": true,
+      "sanitizerRequired": true,
+      "productionWriterRequired": true,
+      "currentStatus": "network_disabled_scaffold",
+      "sourceApproved": false,
+      "liveFetchApproved": false
+    },
+    "realtime_fast_variables": {
+      "assignedLayer": "realtime_worker_layer",
+      "primaryOwnerLayer": "realtime_worker_layer",
+      "workerCadence": "approximately_3_minutes",
+      "githubActionsBackupValidation": true
+    },
+    "github_actions_backup_validation": {
+      "assignedLayer": "github_actions_backup_validation_layer",
+      "primaryOwnerLayer": "github_actions_backup_validation_layer",
+      "approximateCadence": "six_times_per_hour_when_configured",
+      "mayBypassSanitizer": false,
+      "mayWriteMarketPricingHistoryDirectly": false
+    }
+  },
+  "boundaries": {
+    "noFetch": true,
+    "noProductionWrite": true,
+    "noHistoryWrite": true,
+    "noWorkflowChange": true,
+    "noCalculation": true,
+    "noFrontendChange": true,
+    "noScoringChange": true,
+    "noDecisionChange": true,
+    "noExecutionChange": true,
+    "noPositionChange": true
+  }
+}

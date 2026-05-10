@@ -265,3 +265,16 @@ Implemented boundary:
 - No `data/radar-data.json` write is performed.
 - No MA60, standard deviation, z-score, band, or market temperature calculation is performed.
 - Future live proof requires a separate approval and must remain artifact-only until later sanitizer and history-write approvals exist.
+
+## 18. v28.0M-15A Unified Data Pipeline Architecture Status
+
+v28.0M-15A records how artifact-only fetch work connects to the unified data pipeline.
+
+Implemented boundary:
+
+- Artifact-only fetch outputs are not production data.
+- Market-pricing artifact outputs belong to `artifact_sanitizer_layer`.
+- The artifact sanitizer layer is required before any `daily_history_layer` write.
+- Market-pricing-history writes require a separate approved writer.
+- Backup validation may inspect status but must not bypass sanitizer.
+- No standalone or ad hoc market-pricing pipeline is allowed.

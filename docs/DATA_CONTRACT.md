@@ -1793,6 +1793,21 @@ Current data contract boundary:
 - `data/radar-data.json` remains unchanged.
 - Market Pricing Temperature remains `waiting_for_history`.
 
+## v28.0M-15A unified data pipeline architecture boundary
+
+The unified data pipeline architecture sync does not change production data.
+
+Current data contract boundary:
+
+- `data/radar-data.json` remains Daily output / production display data.
+- `data/market-pricing-history.json` belongs to `daily_history_layer`.
+- realtime data belongs to `realtime_worker_layer`.
+- backup validation belongs to `github_actions_backup_validation_layer`.
+- market-pricing artifacts belong to `artifact_sanitizer_layer` until an approved history writer exists.
+- frontend market-pricing display belongs to `frontend_display_layer` and remains waiting-for-history until approved calculation exists.
+- no isolated data pipelines are allowed.
+- no data files are written by architecture-sync checks.
+
 ## v28.0M-7U homepage IA frontend-only boundary
 
 v28.0M-7U changes homepage presentation only and does not alter the data contract.
