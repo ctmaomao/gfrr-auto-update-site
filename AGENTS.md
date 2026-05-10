@@ -526,6 +526,12 @@ The market pricing artifact fetch scaffold must remain no-live-fetch until a sep
 
 Do not silently enable `--allow-network`; v28.0M-9 must reject network requests in the scaffold report. Do not commit `manual-artifacts/market-pricing/`. Do not write `data/market-pricing-history.json` records, do not write `data/radar-data.json`, and do not calculate MA60, standard deviation, z-score, bands, or market temperature. Do not label SPX fallback output as Nasdaq / QQQ temperature.
 
+## 54B. v28.0M-10 market pricing artifact sanitizer scaffold reminder
+
+The market pricing artifact sanitizer scaffold must remain no-production-write until a separate approved task explicitly enables a history writer.
+
+Do not accept artifacts with secrets, headers, cookies, source URL fields, calculation fields, trading advice fields, or production-write flags. Do not commit `manual-artifacts/market-pricing/`. Do not write `data/market-pricing-history.json` records, do not write `data/radar-data.json`, and do not calculate MA60, standard deviation, z-score, bands, or market temperature. Do not label SPX fallback output as Nasdaq / QQQ temperature.
+
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
 Keep Macro Risk Overview as the single primary homepage judgment entry.
