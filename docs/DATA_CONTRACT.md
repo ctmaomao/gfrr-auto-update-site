@@ -1658,3 +1658,17 @@ Current data contract boundary:
 - SPX may be listed only as fallback candidate and must not be mislabeled as Nasdaq / QQQ temperature.
 - The scaffold does not feed scoring, `decisionModel`, `executionLock`, or `positionGuidance`.
 - `marketPricingTemperatureLayer` remains not implemented / waiting.
+
+## v28.0M-7 market pricing source adapter dry-run boundary
+
+`manual-artifacts/market-pricing/source-adapter-dry-run-latest.json` is a local dry-run report, not production data.
+
+Current data contract boundary:
+
+- The dry-run report must not be committed.
+- The dry-run report must not contain price records.
+- The dry-run report must not contain MA60, standard deviation, z-score, band, temperature, or trading signal outputs.
+- `data/market-pricing-history.json` remains scaffold-only.
+- The source adapter dry-run must not write `data/market-pricing-history.json`.
+- The source adapter dry-run must not write `data/radar-data.json`.
+- Future source work must remain artifact-only until a separate approved production data write phase.

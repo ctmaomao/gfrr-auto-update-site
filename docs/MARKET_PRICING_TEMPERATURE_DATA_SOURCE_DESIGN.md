@@ -340,3 +340,28 @@ Next recommended step:
 ```text
 v28.0M-7 Market Pricing Source Adapter Dry-Run Design - No Production Data Write
 ```
+
+## 15. v28.0M-7 Source Adapter Dry-Run Status
+
+v28.0M-7 adds the first local-only source adapter dry-run scaffold.
+
+Implemented boundary:
+
+- `scripts/market-pricing/source-adapter-dry-run.mjs` generates a dry-run adapter report only.
+- Default report output is `manual-artifacts/market-pricing/source-adapter-dry-run-latest.json`.
+- The report is manual artifact output, not production data.
+- No live source fetch is implemented.
+- No production data write is implemented.
+- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
+- No MA60, standard deviation, z-score, band, or temperature calculation is implemented.
+- Candidate source roles are documented for QQQ / NDX / IXIC / SPX.
+- QQQ remains the preferred first candidate.
+- SPX remains fallback candidate only and must not be treated as Nasdaq / QQQ temperature.
+- `scripts/check-market-pricing-source-adapter-dry-run.mjs` validates static no-network boundaries and runtime dry-run report boundaries.
+- `npm run check:market-pricing-source-adapter-dry-run` is wired into `npm run check:all`.
+
+Next recommended step:
+
+```text
+v28.0M-8 Market Pricing Artifact-Only Fetch Design - No Production Data Write
+```
