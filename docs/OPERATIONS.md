@@ -1841,3 +1841,17 @@ Operator guidance:
 - Do not fabricate Nasdaq / QQQ / MA60 / standard deviation / z-score values.
 - Global Risk Heatmap must remain a standalone large section.
 - `External AI Production Refresh` remains the only approved automatic path for changing external AI content.
+
+### v28.0M-5 market pricing temperature design operator note
+
+v28.0M-5 documents the Market Pricing Temperature data-source plan only. The module is not active yet.
+
+Operator guidance:
+
+- Do not manually enter Nasdaq / QQQ / NDX values.
+- Do not use fake history.
+- Do not interpret the waiting-for-history state as bearish or bullish.
+- Do not calculate MA60, standard deviation, or z-score until validated weekly history exists.
+- Do not treat +2σ as a top or -2σ as a bottom in future UI copy.
+- Future data-source changes require a dedicated validator and audit trail.
+- Market Pricing Temperature must remain display-only until a separate approved phase changes that boundary.

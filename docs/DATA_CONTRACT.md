@@ -1631,3 +1631,16 @@ Current data contract boundary:
 - Nasdaq / QQQ weekly history, MA60, standard deviation, and z-score values must not be fabricated.
 - Macro overview judgment cards must not change scoring, `decisionModel`, `executionLock`, or `positionGuidance`.
 - Global Risk Heatmap remains a separate display section, not nested inside macro overview cards.
+
+## v28.0M-5 market pricing temperature design boundary
+
+v28.0M-5 is design-only and does not change production data.
+
+Future data contract boundary:
+
+- Future `marketPricingTemperatureLayer` must remain display-only.
+- Future market pricing history must require sufficient weekly observations before calculation.
+- Current production `data/radar-data.json` remains unchanged by this design.
+- Current macro overview must keep Market Pricing Temperature in waiting-for-history state until valid weekly history exists.
+- Nasdaq / QQQ / MA60 / standard deviation / z-score values must not be fabricated.
+- The temperature layer must not affect scoring, `decisionModel`, `executionLock`, or `positionGuidance` unless a separate approved phase changes that boundary.

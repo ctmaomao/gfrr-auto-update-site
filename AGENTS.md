@@ -495,3 +495,9 @@ Ordinary radar data refresh must preserve `externalAiInterpretationLayer`; do no
 v28.0M-4 records that the Macro Overview structure line is complete and audited.
 
 Macro overview judgment cards should continue to use the unified read-only judgment structure. Missing data must remain explicit, pending signals must not be promoted into verified signals, and ordinary radar refresh must preserve `externalAiInterpretationLayer`. Future Market Pricing Temperature work must not fabricate Nasdaq / QQQ history, MA60, standard deviation, or z-score data. Global Risk Heatmap remains standalone and must not be nested inside macro overview, risk engine, or cross-validation cards.
+
+## 51. v28.0M-5 market pricing temperature source design reminder
+
+v28.0M-5 is a documentation-only data-source design for future Market Pricing Temperature work.
+
+Do not fabricate market temperature values. Do not calculate MA60, standard deviation, or z-score until validated weekly history exists. Prefer staged implementation: history contract scaffold first, then source fetch dry-run, then validated history write, then display-only calculation. Market Pricing Temperature must remain display-only and must not affect scoring, decision, execution, or position logic unless separately approved.

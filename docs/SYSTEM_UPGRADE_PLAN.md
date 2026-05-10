@@ -1302,6 +1302,33 @@ Recommended next step:
 v28.0M-4 Macro Overview Structure Audit Sync - No Code Change
 ```
 
+## v28.0M-5 Market Pricing Temperature Data Source Design
+
+v28.0M-5 documents the future data-source plan for Market Pricing Temperature.
+
+This stage:
+
+- adds `docs/MARKET_PRICING_TEMPERATURE_DATA_SOURCE_DESIGN.md`.
+- records current data availability: S&P 500 / SPX is available, while Nasdaq / NDX / QQQ and Russell 2000 are not currently present in production data or history.
+- records that current history is insufficient for MA60, standard deviation, z-score, or Market Pricing Temperature calculation.
+- keeps Market Pricing Temperature in waiting-for-history state.
+- proposes future market pricing history storage and derived output contracts.
+- documents candidate sources such as Stooq, Yahoo Finance style endpoints, FRED, existing project data, and future licensed sources.
+- defines no-go rules against fake Nasdaq / QQQ / MA60 / z-score values.
+- performs no data fetch.
+- performs no calculation.
+- changes no production data.
+- changes no frontend behavior.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not change scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-6 Market Pricing History Contract Scaffold - No Fetch / No Calculation
+```
+
 ## v28.0M-4 Macro Overview Structure Audit Sync
 
 v28.0M-4 records that the Macro Overview structure line is complete and audited through the preservation hotfix follow-up.
