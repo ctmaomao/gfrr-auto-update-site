@@ -1,4 +1,4 @@
-import { $ } from './config.js?v=28.0M-3';
+import { $ } from './config.js?v=28.0M-7U';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';

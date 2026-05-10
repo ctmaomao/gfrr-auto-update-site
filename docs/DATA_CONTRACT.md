@@ -1686,3 +1686,16 @@ Current data contract boundary:
 - Derived MA60, standard deviation, z-score, band, and temperature fields remain absent.
 - Market Pricing Temperature remains waiting-for-history.
 - Artifact-only fetch reports must not affect scoring, `decisionModel`, `executionLock`, or `positionGuidance`.
+
+## v28.0M-7U homepage IA frontend-only boundary
+
+v28.0M-7U changes homepage presentation only and does not alter the data contract.
+
+Current data contract boundary:
+
+- Macro Risk Overview remains a read-only frontend derivation.
+- Daily Brief remains source data / evidence detail, not a duplicate primary homepage judgment.
+- External AI output remains governed by its production contract and display gates.
+- Global Risk Heatmap remains a standalone frontend section.
+- The frontend asset cache version is `28.0M-7U`.
+- No `data/*.json`, `realtime/*.json`, scoring, `decisionModel`, `executionLock`, or `positionGuidance` contract changes are introduced.

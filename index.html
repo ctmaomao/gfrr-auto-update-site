@@ -123,6 +123,27 @@
       color: #dbeafe;
       font-weight: 700;
     }
+    .ia-detail-panel {
+      margin: 16px 0;
+    }
+    .ia-detail-panel > summary {
+      cursor: pointer;
+      color: #dbeafe;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+    .ia-detail-panel > summary .summary-note {
+      display: block;
+      margin-top: 3px;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 400;
+    }
+    .auxiliary-explanation-heading,
+    .global-visualization-heading {
+      margin-top: 20px;
+    }
     .world-order-grid {
       align-items: start;
       grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.35fr);
@@ -336,15 +357,16 @@
     </header>
 
     <nav class="dashboard-jump-nav" aria-label="Dashboard sections">
-      <a href="#core-dashboard">核心驾驶舱</a>
+      <a href="#core-dashboard">核心判断</a>
       <a href="#macro-risk-overview">宏观风险判断</a>
-      <a href="#world-order-stress-section">世界秩序压力层</a>
-      <a href="#risk-explainer">风险解释层</a>
-      <a href="#advanced-audit">高级分析与规则审计</a>
+      <a href="#auxiliary-explanation">辅助解释</a>
+      <a href="#global-visualization">全局可视化</a>
+      <a href="#detail-data">详细数据与图表</a>
+      <a href="#advanced-audit">方法、证据与审计</a>
     </nav>
 
     <main>
-      <h2 id="core-dashboard" class="section-group-title cockpit-layer">核心驾驶舱</h2>
+      <h2 id="core-dashboard" class="section-group-title cockpit-layer">核心判断</h2>
 
       <section class="full-width-section cockpit-section" id="macro-risk-overview">
         <div class="card-head split-head">
@@ -357,12 +379,17 @@
         <div class="macro-overview-shell" id="macro-risk-overview-root"></div>
       </section>
 
-      <section class="full-width-section cockpit-section" id="daily-brief-section">
+      <h2 id="auxiliary-explanation" class="section-group-title cockpit-layer auxiliary-explanation-heading">辅助解释</h2>
+
+      <section class="full-width-section cockpit-section auxiliary-ai-panel" id="external-ai-display-panel" hidden aria-hidden="true"></section>
+
+      <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section" id="daily-brief-section">
+        <summary>Daily Brief 原始依据（可展开）<span class="summary-note">宏观风险判断总览是首页主判断；这里保留原始依据与来源细节。</span></summary>
         <article class="card full-width-card">
           <div class="card-head split-head">
             <div>
-              <h2>今日主判断</h2>
-              <p class="muted">将宏观状态、主导风险链、最大背离、触发器与反证条件压缩为一屏判断。</p>
+              <h2>今日主判断原始依据（可展开）</h2>
+              <p class="muted">该区块作为 Macro Risk Overview 的来源依据与细节补充，不作为第二个首页主判断。</p>
             </div>
             <span class="badge neutral" id="daily-brief-confidence">加载中...</span>
           </div>
@@ -408,10 +435,10 @@
           </div>
           <p class="muted" id="daily-brief-boundary">该区域仅为解释层展示，不参与评分、仓位、执行灯或交易建议。</p>
         </article>
-      </section>
+      </details>
 
-      <details class="full-width-section cockpit-section advanced-panel secondary-ai-panel" id="ai-interpretation-layer-section">
-        <summary>规则化解释依据（可展开）</summary>
+      <details class="full-width-section cockpit-section advanced-panel secondary-ai-panel ia-detail-panel evidence-detail-section" id="ai-interpretation-layer-section">
+        <summary>站内规则解释与证据说明（可展开）</summary>
         <article class="card full-width-card">
           <div class="card-head split-head">
             <div>
@@ -460,9 +487,30 @@
         </article>
       </details>
 
-      <section class="full-width-section cockpit-section" id="external-ai-display-panel" hidden aria-hidden="true"></section>
+      <h2 id="global-visualization" class="section-group-title risk-layer global-visualization-heading">全局可视化</h2>
 
-      <section class="full-width-section decision-header-section cockpit-section">
+      <section class="full-width-section risk-section">
+        <article class="card heatmap-card full-width-card">
+          <div class="card-head split-head">
+            <h2>全球风险热力图</h2>
+            <span class="muted">机构级区域热力图</span>
+          </div>
+          <div class="heatmap-layout">
+            <svg id="world-heatmap" viewBox="0 0 780 360" role="img" aria-label="全球风险热力图"></svg>
+            <div class="heatmap-legend">
+              <div class="legend-title">风险刻度</div>
+              <div class="legend-bar"></div>
+              <div class="legend-labels"><span>0</span><span>100</span></div>
+              <div id="heatmap-list"></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <h2 id="detail-data" class="section-group-title advanced-layer">详细数据与图表</h2>
+
+      <details class="full-width-section decision-header-section cockpit-section advanced-panel ia-detail-panel execution-detail-section">
+        <summary>执行与风控详情（高级，可展开）<span class="summary-note">保留决策、执行灯与仓位细节，但首页主判断以上方总览为准。</span></summary>
         <article class="card decision-header-card full-width-card">
           <div class="decision-header-layout">
             <div class="decision-header-main">
@@ -514,10 +562,10 @@
             </div>
           </div>
         </article>
-      </section>
+      </details>
 
-      <h2 id="detail-data" class="section-group-title advanced-layer">详细数据与图表</h2>
-
+      <details class="full-width-section cockpit-section advanced-panel ia-detail-panel data-detail-section">
+        <summary>实时输入与数据健康（可展开）</summary>
       <section class="full-width-section cockpit-section">
         <article class="card realtime-strip-card">
           <div class="card-head split-head">
@@ -626,8 +674,10 @@
           </div>
         </article>
       </section>
+      </details>
 
-      <section class="full-width-section cockpit-section" id="divergence-layer-section">
+      <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section" id="divergence-layer-section">
+        <summary>背离与能源审计详情（可展开）</summary>
         <article class="card full-width-card">
           <div class="card-head split-head">
             <div>
@@ -666,9 +716,10 @@
           </details>
           <p class="muted" id="divergence-boundary">该区域仅为解释层和审计层展示，不参与评分、仓位、执行灯或交易建议。</p>
         </article>
-      </section>
+      </details>
 
-      <section class="full-width-section cockpit-section" id="brent-pricing-layer-section">
+      <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section" id="brent-pricing-layer-section">
+        <summary>Brent 公开代理价格审计详情（可展开）</summary>
         <article class="card full-width-card">
           <div class="card-head split-head">
             <div>
@@ -724,9 +775,10 @@
           <p class="muted" id="brent-pricing-confidence">置信度：待确认</p>
           <p class="muted" id="brent-pricing-boundary">该区域仅为 Brent 公开代理价格审计层，不改变 Brent 主值、评分、仓位、执行灯或交易建议。</p>
         </article>
-      </section>
+      </details>
 
-      <section class="full-width-section cockpit-section" id="world-order-stress-section">
+      <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section" id="world-order-stress-section">
+        <summary>世界秩序压力详情（可展开）</summary>
         <article class="card full-width-card">
           <div class="card-head split-head">
             <div>
@@ -795,8 +847,10 @@
             </div>
           </div>
         </article>
-      </section>
+      </details>
 
+      <details class="advanced-panel ia-detail-panel evidence-detail-section">
+        <summary>站内总览与核心风险明细（可展开）</summary>
       <section class="grid two-col hero-grid cockpit-section">
         <article class="card">
           <div class="card-head split-head">
@@ -829,8 +883,10 @@
           <ul class="bullet-list" id="top-risks"></ul>
         </article>
       </section>
+      </details>
 
-      <section class="full-width-section main-lock-section cockpit-section">
+      <details class="full-width-section main-lock-section cockpit-section advanced-panel ia-detail-panel execution-detail-section">
+        <summary>执行状态灯详情（高级，可展开）</summary>
         <article class="card execution-lock-card full-width-card">
           <div class="card-head split-head">
             <h2>执行状态灯</h2>
@@ -856,10 +912,12 @@
             </div>
           </div>
         </article>
-      </section>
+      </details>
 
-      <h2 id="risk-explainer" class="section-group-title risk-layer">风险解释层</h2>
+      <h2 id="risk-explainer" class="section-group-title risk-layer">方法、证据与审计</h2>
 
+      <details class="advanced-panel ia-detail-panel evidence-detail-section">
+        <summary>风险趋势、宏观状态与危机阶段（可展开）</summary>
       <section class="grid three-col risk-section">
         <article class="card">
           <h2>风险趋势进化</h2>
@@ -906,8 +964,9 @@
           <ul class="bullet-list" id="phase-signals"></ul>
         </article>
       </section>
+      </details>
 
-      <h2 id="advanced-audit" class="section-group-title advanced-layer">高级分析与规则审计</h2>
+      <h2 id="advanced-audit" class="section-group-title advanced-layer">方法、证据与规则解释</h2>
 
       <details class="advanced-panel">
         <summary>30日时间维度、趋势解释与传导速度</summary>
@@ -965,6 +1024,8 @@
       </section>
       </details>
 
+      <details class="advanced-panel ia-detail-panel evidence-detail-section">
+      <summary>六大风险模块与流动性详情（可展开）</summary>
       <section class="grid two-col action-position-grid risk-section">
         <article class="card">
           <h2>六大底层风险模块</h2>
@@ -994,24 +1055,7 @@
           <ul class="bullet-list" id="liquidity-notes"></ul>
         </article>
       </section>
-
-      <section class="full-width-section risk-section">
-        <article class="card heatmap-card full-width-card">
-          <div class="card-head split-head">
-            <h2>全球风险热力图</h2>
-            <span class="muted">机构级区域热力图</span>
-          </div>
-          <div class="heatmap-layout">
-            <svg id="world-heatmap" viewBox="0 0 780 360" role="img" aria-label="全球风险热力图"></svg>
-            <div class="heatmap-legend">
-              <div class="legend-title">风险刻度</div>
-              <div class="legend-bar"></div>
-              <div class="legend-labels"><span>0</span><span>100</span></div>
-              <div id="heatmap-list"></div>
-            </div>
-          </div>
-        </article>
-      </section>
+      </details>
 
       <details class="advanced-panel">
         <summary>机构级宏观传导网络</summary>
@@ -1138,6 +1182,8 @@
       </section>
       </details>
 
+      <details class="advanced-panel ia-detail-panel data-detail-section">
+      <summary>原始数据表与历史图表（可展开）</summary>
       <section class="card risk-section">
         <h2>资产偏好矩阵</h2>
         <div class="table-wrap">
@@ -1154,6 +1200,7 @@
           </table>
         </div>
       </section>
+      </details>
 
       <details class="advanced-panel">
         <summary>四情景树与信号可信度</summary>
@@ -1211,6 +1258,8 @@
       </section>
       </details>
 
+      <details class="advanced-panel ia-detail-panel execution-detail-section">
+      <summary>执行与风控详情（高级，可展开）</summary>
       <section class="grid two-col trading-action-grid cockpit-section">
         <article class="card">
           <div class="card-head split-head">
@@ -1323,6 +1372,7 @@
           </div>
         </article>
       </section>
+      </details>
 
       <details class="advanced-panel">
         <summary>行为纪律</summary>
@@ -1355,6 +1405,6 @@
     <footer class="footer">独立静态版 · 适配静态托管 · 数据由自动化流程每日生成</footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0M-3"></script>
+  <script type="module" src="scripts/app.js?v=28.0M-7U"></script>
 </body>
 </html>
