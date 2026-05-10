@@ -1435,6 +1435,32 @@ This stage:
 - does not trigger GitHub Actions.
 - does not change scoring / decision / execution / position logic.
 
+## v28.0M-7V Homepage Reading Path Repair
+
+v28.0M-7V repairs the homepage reading path as a frontend-only information architecture update.
+
+This stage:
+
+- makes top navigation follow the client-facing path: 今日总判断 → 压力来源 → 信号分层 → 四大驱动 → 市场温度 → 风险引擎 → 交叉验证 → 风险热力图 → 详细数据 → 方法说明.
+- adds real generated Macro Overview anchors for the first seven reading-path blocks.
+- repairs empty or abstract nav targets so shortcuts land on visible content containers.
+- groups detailed data/chart modules under `#detail-data`.
+- groups Daily Brief, rule-based explanation, evidence, audit, world-order detail, and source notes under `#method-evidence`.
+- keeps Daily Brief as secondary evidence detail, not a second primary judgment.
+- keeps External AI as auxiliary read-only explanation outside the primary 10-step nav path.
+- keeps Global Risk Heatmap standalone, visible, and not collapsed.
+- bumps frontend asset cache version to `28.0M-7V`.
+- changes no `data/*.json`, `realtime/*.json`, config, Worker, workflow, market-pricing fetch, production data path, or AI generated text.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not change scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-7V-1 Homepage Reading Path UX Audit Sync - No Code Change
+```
+
 Recommended next step:
 
 ```text
