@@ -208,3 +208,16 @@ Implemented boundary:
 - `npm run check:market-pricing-real-record-contract-design` is wired into `npm run check:all`.
 
 Next step requires explicit approval before a real-record sanitizer scaffold accepts any record-bearing artifact.
+
+## 14. v28.0M-12 Real-Record Sanitizer Scaffold Status
+
+v28.0M-12 lets the sanitizer scaffold inspect synthetic real-record structure, but it still cannot promote records to production history.
+
+Implemented boundary:
+
+- Valid synthetic records can pass structural checks for date format, sorted weekly order, duplicate-date absence, finite positive price fields, `adjustedClose` / `close` consistency, source metadata, and forbidden-field absence.
+- Invalid synthetic fixtures verify rejection for duplicate dates, unsorted dates, non-positive prices, calculation fields, trading / advice fields, and source leakage fields.
+- Real fetched artifacts still require separate source implementation, source selection review, artifact-only fetch approval, sanitizer approval, and production-write approval.
+- `recordsAcceptedForHistory` remains `0`.
+- `readyForProductionWrite` remains `false`.
+- No live fetch, production history write, or market temperature calculation is implemented.

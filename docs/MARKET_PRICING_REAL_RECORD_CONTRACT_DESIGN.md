@@ -211,3 +211,28 @@ Next recommended step:
 ```text
 v28.0M-12 Market Pricing Real-Record Sanitizer Scaffold - No Production Data Write
 ```
+
+## 13. v28.0M-12 Real-Record Sanitizer Scaffold Status
+
+v28.0M-12 adds the first sanitizer scaffold path for synthetic real-record-like artifacts.
+
+Implemented boundary:
+
+- `scripts/market-pricing/artifact-sanitizer-scaffold.mjs` can inspect `market_pricing_real_record_artifact` inputs only when they are explicitly `fixtureOnly=true` and `syntheticOnly=true`.
+- `docs/fixtures/market-pricing/artifact-sanitizer-real-record-valid-synthetic-v28.0M-12.json` validates real-record-like structure with three clearly synthetic weekly records.
+- `docs/fixtures/market-pricing/artifact-sanitizer-real-record-invalid-synthetic-v28.0M-12.json` proves rejection behavior for duplicate dates, unsorted dates, non-positive prices, forbidden calculation fields, forbidden trading / advice fields, and source leakage fields.
+- Structurally valid synthetic records remain fixture-only and are not production data.
+- `recordsAcceptedForHistory` remains `0`.
+- `readyForProductionWrite` remains `false`.
+- No live fetch is implemented.
+- No production data is written.
+- No `data/market-pricing-history.json` history records are written.
+- No MA60, standard deviation, z-score, band, or market temperature calculation is performed.
+- `scripts/check-market-pricing-real-record-sanitizer-scaffold.mjs` validates the M-12 sanitizer path, fixture safety, M-10 compatibility, protected data state, and ignored manual artifact boundary.
+- `npm run check:market-pricing-real-record-sanitizer-scaffold` is wired into `npm run check:all`.
+
+Next recommended step:
+
+```text
+v28.0M-13 Market Pricing Source Selection Review - No Fetch / No Production Data Write
+```

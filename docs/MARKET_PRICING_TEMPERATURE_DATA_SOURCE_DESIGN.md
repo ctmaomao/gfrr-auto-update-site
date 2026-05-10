@@ -438,3 +438,19 @@ Implemented boundary:
 - `data/market-pricing-history.json` remains scaffold-only and records remain empty.
 - No MA60, standard deviation, z-score, band, or market temperature calculation is implemented in M-11.
 - `npm run check:market-pricing-real-record-contract-design` is wired into `npm run check:all`.
+
+## 20. v28.0M-12 Real-Record Sanitizer Scaffold Status
+
+v28.0M-12 adds synthetic fixture validation for future real-record-like artifacts.
+
+Implemented boundary:
+
+- Structurally valid synthetic records do not activate Market Pricing Temperature.
+- `recordsAcceptedForHistory` remains `0` and `readyForProductionWrite` remains `false`.
+- At least 60 validated production weekly observations and separate calculation approval are still required before any market temperature calculation review.
+- Source selection remains pending.
+- QQQ adjusted close remains the preferred future candidate if a compliant source is approved.
+- SPX remains fallback candidate only and must not be treated as Nasdaq / QQQ temperature.
+- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
+- No MA60, standard deviation, z-score, band, or market temperature calculation is implemented in M-12.
+- `npm run check:market-pricing-real-record-sanitizer-scaffold` is wired into `npm run check:all`.

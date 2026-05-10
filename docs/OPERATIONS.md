@@ -1942,6 +1942,21 @@ Operator guidance:
 - Future calculation review requires at least 60 validated weekly observations and a separate approved PR.
 - `npm run check:market-pricing-real-record-contract-design` must pass.
 
+### v28.0M-12 market pricing real-record sanitizer scaffold operator note
+
+v28.0M-12 extends the sanitizer scaffold so it can validate synthetic real-record-like fixtures only. It does not fetch market data and does not write production data.
+
+Operator guidance:
+
+- `npm run market-pricing:real-record-sanitizer:scaffold` is safe to run locally.
+- The sanitizer writes only ignored reports under `manual-artifacts/market-pricing/`.
+- Do not use the scaffold to import real market data.
+- If real artifacts appear, keep them under `manual-artifacts/market-pricing/` and do not write data files.
+- Do not manually add QQQ / NDX / IXIC / SPX weekly records.
+- If the sanitizer rejects an artifact, do not override it by editing production data.
+- No production history write is allowed until an explicit approved history writer PR exists.
+- `npm run check:market-pricing-real-record-sanitizer-scaffold` must pass.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.

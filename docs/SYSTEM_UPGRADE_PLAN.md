@@ -1502,6 +1502,38 @@ Recommended next step:
 v28.0M-12 Market Pricing Real-Record Sanitizer Scaffold - No Production Data Write
 ```
 
+## v28.0M-12 Market Pricing Real-Record Sanitizer Scaffold
+
+v28.0M-12 extends the local sanitizer scaffold so it can validate synthetic real-record-like artifacts without creating production eligibility.
+
+This stage:
+
+- extends `scripts/market-pricing/artifact-sanitizer-scaffold.mjs` for `market_pricing_real_record_artifact` inputs in fixture-only / synthetic-only mode.
+- adds `docs/fixtures/market-pricing/artifact-sanitizer-real-record-valid-synthetic-v28.0M-12.json`.
+- adds `docs/fixtures/market-pricing/artifact-sanitizer-real-record-invalid-synthetic-v28.0M-12.json`.
+- adds `scripts/check-market-pricing-real-record-sanitizer-scaffold.mjs`.
+- adds `npm run market-pricing:real-record-sanitizer:scaffold`.
+- adds `npm run check:market-pricing-real-record-sanitizer-scaffold`.
+- wires the real-record sanitizer scaffold checker into `npm run check:all`.
+- validates synthetic date format, ascending order, duplicate-date rejection, finite positive price fields, `adjustedClose` / `close` handling, source metadata, source compliance gating, and forbidden-field rejection.
+- preserves M-10 sanitizer scaffold compatibility.
+- keeps synthetic records out of production history with `recordsAcceptedForHistory=0`.
+- keeps `readyForProductionWrite=false`.
+- performs no live fetch.
+- performs no production data write.
+- writes no `data/market-pricing-history.json` records.
+- changes no `data/radar-data.json`.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- changes no frontend behavior.
+- changes no workflow.
+- changes no scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-13 Market Pricing Source Selection Review - No Fetch / No Production Data Write
+```
+
 ## v28.0M-7U Homepage De-duplication and Detail Collapse
 
 v28.0M-7U refines the homepage information architecture without changing data or model logic.
