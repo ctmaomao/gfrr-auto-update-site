@@ -1957,6 +1957,20 @@ Operator guidance:
 - No production history write is allowed until an explicit approved history writer PR exists.
 - `npm run check:market-pricing-real-record-sanitizer-scaffold` must pass.
 
+### v28.0M-13 market pricing source selection review operator note
+
+v28.0M-13 reviews candidate assets and sources only. It does not approve or run a source fetch.
+
+Operator guidance:
+
+- Do not run source fetch from source selection review.
+- Do not manually approve source candidates by editing fixtures or data files.
+- Source-specific proof-of-source requires a later approved PR.
+- If source licensing, compliance, stability, symbol mapping, or adjustedClose availability is uncertain, keep `liveFetchApproved=false`.
+- Do not paste market history into `data/market-pricing-history.json`.
+- Do not treat SPX fallback review as Nasdaq / QQQ temperature.
+- `npm run check:market-pricing-source-selection-review` must pass.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.

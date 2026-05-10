@@ -454,3 +454,18 @@ Implemented boundary:
 - `data/market-pricing-history.json` remains scaffold-only and records remain empty.
 - No MA60, standard deviation, z-score, band, or market temperature calculation is implemented in M-12.
 - `npm run check:market-pricing-real-record-sanitizer-scaffold` is wired into `npm run check:all`.
+
+## 21. v28.0M-13 Source Selection Review Status
+
+v28.0M-13 reviews source candidates without activating Market Pricing Temperature.
+
+Implemented boundary:
+
+- Source review does not activate Market Pricing Temperature.
+- At least 60 validated weekly observations are still required before any calculation review.
+- QQQ adjustedClose remains preferred only after source approval.
+- Yahoo-style and Stooq / public CSV remain future proof-of-source candidates.
+- FRED remains an official-series candidate only, not an automatic QQQ adjusted-close source.
+- SPX remains fallback candidate only and must not be treated as Nasdaq / QQQ temperature.
+- No production source is selected.
+- No live fetch, production write, or calculation is approved.

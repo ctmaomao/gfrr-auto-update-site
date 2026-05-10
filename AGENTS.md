@@ -544,6 +544,12 @@ Synthetic real-record fixtures are not production data.
 
 Valid synthetic records may be structurally valid, but they must not be accepted for history: keep `recordsAcceptedForHistory=0` and `readyForProductionWrite=false`. Do not write `data/market-pricing-history.json` records, do not write `data/radar-data.json`, and do not calculate MA60, standard deviation, z-score, bands, or market temperature. Do not use QQQ / NDX / IXIC / SPX numeric fixture values; fixture records must stay `assetKey=fixture_asset` and `symbol=FIXTURE`. Keep SPX fallback-only and never label it as Nasdaq / QQQ temperature.
 
+## 54E. v28.0M-13 market pricing source selection review reminder
+
+Source selection review is not source approval.
+
+Do not set `liveFetchApproved=true`, `sourceSelectionFinalized=true`, `productionDataWriteApproved=true`, `historyWriteApproved=true`, or `marketTemperatureCalculationApproved=true` without an explicit later approval. Do not select a production source in a review-only PR. Do not add source URLs, endpoint URLs, secrets, headers, cookies, or auth tokens. Keep SPX fallback-only. Do not fetch market data, write production data, write `data/market-pricing-history.json` records, or calculate MA60, standard deviation, z-score, bands, or market temperature.
+
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
 Keep Macro Risk Overview as the single primary homepage judgment entry.

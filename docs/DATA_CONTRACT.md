@@ -1745,6 +1745,21 @@ Current data contract boundary:
 - No MA60, standard deviation, z-score, band, or market temperature calculation is performed.
 - Market Pricing Temperature remains `waiting_for_history`.
 
+## v28.0M-13 market pricing source selection review boundary
+
+The source selection review fixture is not production data.
+
+Current data contract boundary:
+
+- `docs/fixtures/market-pricing/source-selection-review-v28.0M-13.json` records review status only.
+- No source is approved for live fetch.
+- `sourceSelectionFinalized=false`, `liveFetchApproved=false`, `productionDataWriteApproved=false`, and `historyWriteApproved=false`.
+- No source URLs, endpoints, records, prices, or secrets are part of the fixture.
+- No history records are written.
+- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
+- `data/radar-data.json` remains unchanged.
+- Market Pricing Temperature remains `waiting_for_history`.
+
 ## v28.0M-7U homepage IA frontend-only boundary
 
 v28.0M-7U changes homepage presentation only and does not alter the data contract.

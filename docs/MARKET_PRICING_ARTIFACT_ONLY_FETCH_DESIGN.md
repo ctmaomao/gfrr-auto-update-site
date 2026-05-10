@@ -221,3 +221,18 @@ Implemented boundary:
 - `recordsAcceptedForHistory` remains `0`.
 - `readyForProductionWrite` remains `false`.
 - No live fetch, production history write, or market temperature calculation is implemented.
+
+## 15. v28.0M-13 Source Selection Review Status
+
+v28.0M-13 adds a source selection review before any source-specific artifact-only proof-of-source step.
+
+Implemented boundary:
+
+- `docs/MARKET_PRICING_SOURCE_SELECTION_REVIEW.md` reviews QQQ, NDX, IXIC, and SPX asset candidates.
+- Yahoo-style and Stooq / public CSV candidates remain candidates for a future source-specific proof-of-source design.
+- FRED remains a candidate for official series only, not a QQQ adjusted-close source.
+- Future licensed source remains a long-term option.
+- Source implementation remains disabled until a later approved PR.
+- No live fetch is implemented in M-13.
+- No production source is selected.
+- No production write or calculation is approved.

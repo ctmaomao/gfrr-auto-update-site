@@ -236,3 +236,20 @@ Next recommended step:
 ```text
 v28.0M-13 Market Pricing Source Selection Review - No Fetch / No Production Data Write
 ```
+
+## 14. v28.0M-13 Source Selection Review Status
+
+v28.0M-13 adds a review-only source selection layer before any source-specific proof-of-source work.
+
+Implemented boundary:
+
+- `docs/MARKET_PRICING_SOURCE_SELECTION_REVIEW.md` reviews asset and source candidates without approving live use.
+- `docs/fixtures/market-pricing/source-selection-review-v28.0M-13.json` records the review outcome with all approval flags false.
+- `scripts/check-market-pricing-source-selection-review.mjs` validates the review document, review fixture, existing local-only market-pricing scripts, and protected production data state.
+- No production source is selected.
+- QQQ remains the preferred review target.
+- SPX remains fallback-only and must not be labeled as Nasdaq / QQQ temperature.
+- No live fetch is approved.
+- No production data write is approved.
+- No `data/market-pricing-history.json` history records are written.
+- No MA60, standard deviation, z-score, band, or market temperature calculation is performed.
