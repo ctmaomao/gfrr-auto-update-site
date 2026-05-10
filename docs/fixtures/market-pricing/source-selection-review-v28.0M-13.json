@@ -1,0 +1,104 @@
+{
+  "contractVersion": "v28.0M-13-source-selection-review-1",
+  "kind": "market_pricing_source_selection_review",
+  "status": "review_only_no_source_approved",
+  "generatedFor": "v28.0M-13",
+  "sourceSelectionFinalized": false,
+  "liveFetchApproved": false,
+  "productionDataWriteApproved": false,
+  "historyWriteApproved": false,
+  "marketTemperatureCalculationApproved": false,
+  "preferredAssetReviewTarget": "qqq",
+  "records": [],
+  "assetCandidates": [
+    {
+      "assetKey": "qqq",
+      "symbol": "QQQ",
+      "role": "preferred_primary_review_target",
+      "requiresAdjustedClose": true,
+      "approvalStatus": "not_approved_for_live_fetch"
+    },
+    {
+      "assetKey": "ndx",
+      "symbol": "NDX",
+      "role": "index_candidate",
+      "requiresAdjustedClose": false,
+      "approvalStatus": "not_approved_for_live_fetch"
+    },
+    {
+      "assetKey": "ixic",
+      "symbol": "IXIC",
+      "role": "index_candidate",
+      "requiresAdjustedClose": false,
+      "approvalStatus": "not_approved_for_live_fetch"
+    },
+    {
+      "assetKey": "spx",
+      "symbol": "SPX",
+      "role": "fallback_candidate_only",
+      "requiresAdjustedClose": false,
+      "approvalStatus": "not_approved_for_live_fetch"
+    }
+  ],
+  "sourceCandidates": [
+    {
+      "sourceKey": "yahoo_style_candidate",
+      "role": "qqq_adjusted_close_candidate",
+      "reviewStatus": "candidate_requires_compliance_review",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "risks": [
+        "download availability may depend on subscription or data licensing",
+        "automated endpoint use requires compliance review",
+        "field stability must be verified"
+      ]
+    },
+    {
+      "sourceKey": "stooq_public_csv_candidate",
+      "role": "public_csv_candidate",
+      "reviewStatus": "candidate_requires_format_and_stability_review",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "risks": [
+        "symbol mapping must be verified",
+        "adjusted-close availability must be verified",
+        "format stability must be verified"
+      ]
+    },
+    {
+      "sourceKey": "fred_candidate",
+      "role": "official_series_candidate",
+      "reviewStatus": "candidate_for_official_series_only",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "risks": [
+        "not automatically a QQQ adjusted-close source",
+        "exact series availability must be reviewed"
+      ]
+    },
+    {
+      "sourceKey": "future_licensed_candidate",
+      "role": "future_option",
+      "reviewStatus": "future_contractual_option",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "risks": [
+        "requires vendor selection",
+        "requires contractual approval"
+      ]
+    }
+  ],
+  "boundaries": {
+    "reviewOnly": true,
+    "noLiveFetch": true,
+    "noProductionWrite": true,
+    "noHistoryWrite": true,
+    "noCalculation": true,
+    "displayOnly": true,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false
+  },
+  "nextAllowedStep": "source_specific_artifact_only_proof_of_source_design"
+}

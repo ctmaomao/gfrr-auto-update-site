@@ -1534,6 +1534,42 @@ Recommended next step:
 v28.0M-13 Market Pricing Source Selection Review - No Fetch / No Production Data Write
 ```
 
+## v28.0M-13 Market Pricing Source Selection Review
+
+v28.0M-13 adds a governance-only source selection review for the future Market Pricing Temperature pipeline.
+
+This stage:
+
+- adds `docs/MARKET_PRICING_SOURCE_SELECTION_REVIEW.md`.
+- adds `docs/fixtures/market-pricing/source-selection-review-v28.0M-13.json`.
+- adds `scripts/check-market-pricing-source-selection-review.mjs`.
+- adds `npm run check:market-pricing-source-selection-review`.
+- wires the source selection review checker into `npm run check:all`.
+- reviews QQQ, NDX, IXIC, and SPX asset candidates.
+- keeps QQQ as the preferred review target.
+- keeps SPX fallback-only and not Nasdaq / QQQ temperature.
+- reviews Yahoo-style, Stooq / public CSV, FRED, and future licensed source candidates.
+- sets `sourceSelectionFinalized=false`.
+- sets `liveFetchApproved=false`.
+- sets `productionDataWriteApproved=false`.
+- sets `historyWriteApproved=false`.
+- sets `marketTemperatureCalculationApproved=false`.
+- selects no production source.
+- approves no live fetch.
+- performs no production data write.
+- writes no `data/market-pricing-history.json` records.
+- changes no `data/radar-data.json`.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- changes no frontend behavior.
+- changes no workflow.
+- changes no scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-14 Market Pricing Source-Specific Proof-of-Source Design - No Live Fetch / No Production Data Write
+```
+
 ## v28.0M-7U Homepage De-duplication and Detail Collapse
 
 v28.0M-7U refines the homepage information architecture without changing data or model logic.
