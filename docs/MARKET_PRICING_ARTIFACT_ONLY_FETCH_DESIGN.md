@@ -247,3 +247,21 @@ Implemented boundary:
 - Source-specific proof design does not approve Stooq, Yahoo-style, FRED, or any licensed provider for live use.
 - No live fetch is allowed until explicit approval.
 - No records, prices, production writes, history writes, or calculations are introduced.
+
+## 17. v28.0M-15 Source-Specific Artifact Fetch Scaffold Status
+
+v28.0M-15 adds a source-specific scaffold for the first proof target while keeping the artifact-only boundary closed.
+
+Implemented boundary:
+
+- `scripts/market-pricing/source-specific-artifact-fetch-scaffold.mjs` writes only an ignored local scaffold report.
+- The scaffold target is QQQ metadata and the source candidate is Stooq / public CSV metadata.
+- Network remains disabled.
+- `--allow-network` is parsed only so the request can be rejected in the report.
+- No live fetch is implemented.
+- No artifact records or prices are produced.
+- No production data is written.
+- No `data/market-pricing-history.json` records are written.
+- No `data/radar-data.json` write is performed.
+- No MA60, standard deviation, z-score, band, or market temperature calculation is performed.
+- Future live proof requires a separate approval and must remain artifact-only until later sanitizer and history-write approvals exist.

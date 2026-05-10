@@ -245,3 +245,24 @@ Recommended next step:
 ```text
 v28.0M-15 Market Pricing Source-Specific Artifact Fetch Scaffold - Network Disabled / No Production Data Write
 ```
+
+## 13. v28.0M-15 Source-Specific Artifact Fetch Scaffold Status
+
+v28.0M-15 adds a source-specific artifact fetch scaffold while keeping network disabled.
+
+Implemented boundary:
+
+- The scaffold uses QQQ as target metadata only.
+- The source candidate is Stooq / public CSV for design continuity only.
+- Stooq / public CSV is not approved as a production source.
+- `sourceSelectionFinalized=false`, `sourceApproved=false`, `liveFetchApproved=false`, and `productionDataWriteApproved=false`.
+- Network remains disabled.
+- If `--allow-network` is supplied, the scaffold records and rejects the request.
+- No source URL or endpoint is persisted.
+- No records, prices, production writes, history writes, or calculations are introduced.
+
+Recommended next step:
+
+```text
+v28.0M-16 Market Pricing Source-Specific Network Gate Design - No Live Fetch / No Production Data Write
+```

@@ -222,3 +222,18 @@ Implemented boundary:
 - No live fetch is implemented.
 - No production data write is approved.
 - No MA60, standard deviation, z-score, band, or market temperature calculation is performed.
+
+## 11. v28.0M-15 Source-Specific Artifact Fetch Scaffold Status
+
+v28.0M-15 adds a network-disabled source-specific scaffold after the proof-of-source design step.
+
+Implemented boundary:
+
+- The scaffold does not approve Stooq / public CSV.
+- `sourceSelectionFinalized=false`.
+- `sourceApproved=false`.
+- `liveFetchApproved=false`.
+- `productionDataWriteApproved=false`.
+- `historyWriteApproved=false`.
+- QQQ remains target metadata only.
+- No live fetch, source URL persistence, production data write, history write, records, prices, or calculation is introduced.

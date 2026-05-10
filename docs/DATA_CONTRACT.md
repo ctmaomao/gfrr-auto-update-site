@@ -1776,6 +1776,23 @@ Current data contract boundary:
 - `data/radar-data.json` remains unchanged.
 - Market Pricing Temperature remains `waiting_for_history`.
 
+## v28.0M-15 market pricing source-specific artifact fetch scaffold boundary
+
+The source-specific scaffold report is not production data.
+
+Current data contract boundary:
+
+- `docs/fixtures/market-pricing/source-specific-artifact-fetch-scaffold-v28.0M-15.json` records scaffold status only.
+- `manual-artifacts/market-pricing/source-specific-artifact-fetch-scaffold-latest.json` must not be committed.
+- QQQ appears only as target metadata.
+- Stooq / public CSV appears only as a source candidate label.
+- No source is approved for live fetch.
+- `sourceSelectionFinalized=false`, `sourceApproved=false`, `liveFetchApproved=false`, and `productionDataWriteApproved=false`.
+- No records, prices, source URLs, endpoints, secrets, headers, cookies, or auth tokens are part of the fixture.
+- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
+- `data/radar-data.json` remains unchanged.
+- Market Pricing Temperature remains `waiting_for_history`.
+
 ## v28.0M-7U homepage IA frontend-only boundary
 
 v28.0M-7U changes homepage presentation only and does not alter the data contract.
