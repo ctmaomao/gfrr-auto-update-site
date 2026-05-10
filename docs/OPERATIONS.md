@@ -1855,3 +1855,17 @@ Operator guidance:
 - Do not treat +2σ as a top or -2σ as a bottom in future UI copy.
 - Future data-source changes require a dedicated validator and audit trail.
 - Market Pricing Temperature must remain display-only until a separate approved phase changes that boundary.
+
+### v28.0M-6 market pricing history scaffold operator note
+
+v28.0M-6 adds a scaffold-only market pricing history contract and validator.
+
+Operator guidance:
+
+- Do not manually edit `data/market-pricing-history.json` records.
+- Do not paste Nasdaq / QQQ / NDX values manually.
+- `npm run check:market-pricing-history` must pass.
+- If the scaffold file has records before an approved fetch implementation, treat it as invalid.
+- SPX is fallback candidate only and must not be displayed as Nasdaq / QQQ temperature.
+- Market temperature UI should remain waiting-for-history.
+- Future source work should start as dry-run or artifact-only before any production data write.

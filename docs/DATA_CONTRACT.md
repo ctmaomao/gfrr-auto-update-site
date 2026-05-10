@@ -1644,3 +1644,17 @@ Future data contract boundary:
 - Current macro overview must keep Market Pricing Temperature in waiting-for-history state until valid weekly history exists.
 - Nasdaq / QQQ / MA60 / standard deviation / z-score values must not be fabricated.
 - The temperature layer must not affect scoring, `decisionModel`, `executionLock`, or `positionGuidance` unless a separate approved phase changes that boundary.
+
+## v28.0M-6 market pricing history scaffold contract
+
+`data/market-pricing-history.json` exists as a scaffold-only contract.
+
+Current data contract boundary:
+
+- The file must keep `status=waiting_for_history` and `sourceMode=scaffold_only`.
+- `records` arrays must remain empty until a future approved fetch/data-write PR.
+- `check:market-pricing-history` must pass.
+- At least 60 weekly observations are required before any MA60, standard deviation, z-score, band, or temperature calculation.
+- SPX may be listed only as fallback candidate and must not be mislabeled as Nasdaq / QQQ temperature.
+- The scaffold does not feed scoring, `decisionModel`, `executionLock`, or `positionGuidance`.
+- `marketPricingTemperatureLayer` remains not implemented / waiting.

@@ -317,3 +317,26 @@ Recommended next step:
 ```text
 v28.0M-6 Market Pricing History Contract Scaffold - No Fetch / No Calculation
 ```
+
+## 14. v28.0M-6 Scaffold Status
+
+v28.0M-6 creates the first market pricing history contract scaffold.
+
+Implemented boundary:
+
+- `data/market-pricing-history.json` exists as scaffold only.
+- The scaffold contains QQQ, NDX, IXIC, and SPX candidates.
+- QQQ / NDX / IXIC remain prioritized before SPX.
+- SPX is fallback candidate only and must not be labeled as Nasdaq / QQQ temperature.
+- All `records` arrays are empty.
+- No data fetch is implemented.
+- No MA60, standard deviation, z-score, band, or temperature calculation is implemented.
+- `scripts/check-market-pricing-history.mjs` validates the scaffold contract.
+- `npm run check:market-pricing-history` is wired into `npm run check:all`.
+- Market Pricing Temperature remains waiting-for-history.
+
+Next recommended step:
+
+```text
+v28.0M-7 Market Pricing Source Adapter Dry-Run Design - No Production Data Write
+```

@@ -501,3 +501,9 @@ Macro overview judgment cards should continue to use the unified read-only judgm
 v28.0M-5 is a documentation-only data-source design for future Market Pricing Temperature work.
 
 Do not fabricate market temperature values. Do not calculate MA60, standard deviation, or z-score until validated weekly history exists. Prefer staged implementation: history contract scaffold first, then source fetch dry-run, then validated history write, then display-only calculation. Market Pricing Temperature must remain display-only and must not affect scoring, decision, execution, or position logic unless separately approved.
+
+## 52. v28.0M-6 market pricing history scaffold reminder
+
+`data/market-pricing-history.json` is scaffold-only until a separate approved fetch/data-write implementation.
+
+Do not add market pricing records manually. Do not calculate MA60, standard deviation, z-score, bands, or temperature until validated weekly history exists. Keep `check:market-pricing-history` passing. SPX fallback must not be mislabeled as Nasdaq / QQQ temperature. Market Pricing Temperature remains display-only and must not affect scoring, decision, execution, or position logic unless separately approved.

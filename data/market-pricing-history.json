@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "v28.0M-market-pricing-history-1",
+  "status": "waiting_for_history",
+  "updatedAt": null,
+  "generatedAt": null,
+  "sourceMode": "scaffold_only",
+  "descriptionZh": "市场定价温度计历史数据脚手架。当前未接入历史周线数据，不计算 MA60、标准差或 z-score。",
+  "assets": {
+    "qqq": {
+      "symbol": "QQQ",
+      "labelZh": "纳斯达克100 ETF",
+      "priority": 1,
+      "status": "waiting_for_source",
+      "source": null,
+      "frequency": "weekly",
+      "currency": "USD",
+      "records": [],
+      "coverage": {
+        "weeklyRows": 0,
+        "hasAtLeast60Weeks": false,
+        "oldestDate": null,
+        "latestDate": null
+      },
+      "dataGaps": [
+        "历史周线数据尚未接入。",
+        "尚未选择最终数据源。",
+        "尚无 MA60 / 标准差 / z-score 计算输入。"
+      ]
+    },
+    "ndx": {
+      "symbol": "NDX",
+      "labelZh": "纳斯达克100指数",
+      "priority": 2,
+      "status": "waiting_for_source",
+      "source": null,
+      "frequency": "weekly",
+      "currency": "USD",
+      "records": [],
+      "coverage": {
+        "weeklyRows": 0,
+        "hasAtLeast60Weeks": false,
+        "oldestDate": null,
+        "latestDate": null
+      },
+      "dataGaps": [
+        "历史周线数据尚未接入。",
+        "尚未选择最终数据源。"
+      ]
+    },
+    "ixic": {
+      "symbol": "IXIC",
+      "labelZh": "纳斯达克综合指数",
+      "priority": 3,
+      "status": "waiting_for_source",
+      "source": null,
+      "frequency": "weekly",
+      "currency": "USD",
+      "records": [],
+      "coverage": {
+        "weeklyRows": 0,
+        "hasAtLeast60Weeks": false,
+        "oldestDate": null,
+        "latestDate": null
+      },
+      "dataGaps": [
+        "历史周线数据尚未接入。",
+        "尚未选择最终数据源。"
+      ]
+    },
+    "spx": {
+      "symbol": "SPX",
+      "labelZh": "标普500指数",
+      "priority": 4,
+      "status": "fallback_candidate_only",
+      "source": null,
+      "frequency": "weekly",
+      "currency": "USD",
+      "records": [],
+      "coverage": {
+        "weeklyRows": 0,
+        "hasAtLeast60Weeks": false,
+        "oldestDate": null,
+        "latestDate": null
+      },
+      "dataGaps": [
+        "可作为未来 fallback candidate，但不能冒充纳指 / QQQ 温度。"
+      ]
+    }
+  },
+  "boundaries": {
+    "scaffoldOnly": true,
+    "noFetch": true,
+    "noCalculation": true,
+    "displayOnly": true,
+    "notInvestmentAdvice": true,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false
+  }
+}

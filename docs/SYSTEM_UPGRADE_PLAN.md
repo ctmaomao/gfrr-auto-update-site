@@ -1329,6 +1329,34 @@ Recommended next step:
 v28.0M-6 Market Pricing History Contract Scaffold - No Fetch / No Calculation
 ```
 
+## v28.0M-6 Market Pricing History Contract Scaffold
+
+v28.0M-6 adds the first scaffold contract for future Market Pricing Temperature history.
+
+This stage:
+
+- creates `data/market-pricing-history.json` as scaffold-only.
+- defines QQQ, NDX, IXIC, and SPX candidate assets with empty records.
+- marks SPX as fallback candidate only.
+- adds `scripts/check-market-pricing-history.mjs`.
+- adds `npm run check:market-pricing-history`.
+- wires the market pricing history check into `npm run check:all`.
+- keeps all market pricing records empty.
+- performs no data fetch.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- changes no `data/radar-data.json` production data.
+- changes no frontend behavior.
+- changes no workflows.
+- does not call DeepSeek.
+- does not trigger GitHub Actions.
+- does not change scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-7 Market Pricing Source Adapter Dry-Run Design - No Production Data Write
+```
+
 ## v28.0M-4 Macro Overview Structure Audit Sync
 
 v28.0M-4 records that the Macro Overview structure line is complete and audited through the preservation hotfix follow-up.
