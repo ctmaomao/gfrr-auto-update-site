@@ -496,19 +496,19 @@ config/world-order-sipri-normalized.example.json
 
 ### Frontend asset cache version
 
-v28.0L-4B Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+v28.0M-7V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
 当前前端资源版本为：
 
 ```text
-28.0L-4B
+28.0M-7V
 ```
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=28.0L-4B`。
-- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0L-4B`。
-- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0L-4B"`。
+- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-7V`。
+- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-7V`。
+- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-7V"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
@@ -519,7 +519,7 @@ node scripts/bump-frontend-asset-version.mjs 28.0G-10
 npm run bump:frontend-asset-version -- 28.0G-10
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0L-4B`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-7V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
@@ -1697,5 +1697,21 @@ Current data contract boundary:
 - Daily Brief remains source data / evidence detail, not a duplicate primary homepage judgment.
 - External AI output remains governed by its production contract and display gates.
 - Global Risk Heatmap remains a standalone frontend section.
-- The frontend asset cache version is `28.0M-7U`.
+- The frontend asset cache version is `28.0M-7V`.
 - No `data/*.json`, `realtime/*.json`, scoring, `decisionModel`, `executionLock`, or `positionGuidance` contract changes are introduced.
+
+## v28.0M-7V homepage reading path frontend-only boundary
+
+v28.0M-7V repairs homepage navigation and section grouping only.
+
+Current data contract boundary:
+
+- No data contract changes are introduced.
+- No `data/radar-data.json`, `data/market-pricing-history.json`, `data/*.json`, `realtime/*.json`, or config data is changed.
+- Macro Overview remains a read-only frontend derivation layer over existing site data.
+- The first seven homepage reading-path anchors are generated on actual Macro Overview content sections, not data fields.
+- Daily Brief remains evidence detail under method / evidence grouping.
+- External AI remains auxiliary read-only explanation and keeps its display gates.
+- Global Risk Heatmap remains a standalone frontend section.
+- Market Pricing Temperature remains waiting-for-history; no Nasdaq / QQQ weekly history, MA60, standard deviation, z-score, market temperature calculation, or market-pricing fetch is introduced.
+- No scoring, `decisionModel`, `executionLock`, `positionGuidance`, Worker, workflow, or provider-call contract changes are introduced.

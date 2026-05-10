@@ -462,3 +462,15 @@ Current display coverage decision:
 ```text
 display_coverage_audited_no_provider_call
 ```
+
+## 23. v28.0M-7V homepage reading path placement note
+
+v28.0M-7V keeps External AI outside the primary 10-step homepage navigation path.
+
+Placement boundary:
+
+- External AI remains auxiliary read-only explanation.
+- The panel keeps `external-ai-display-panel` and the existing display gates.
+- The panel must not replace Macro Overview as the primary judgment.
+- The panel must not be placed inside Global Risk Heatmap, `#detail-data`, or `#method-evidence`.
+- Homepage reading-path UX fixes must not edit AI-generated text, rerun a provider, trigger `External AI Production Refresh`, or change scoring / decision / execution / position logic.

@@ -1,4 +1,4 @@
-import { $ } from './config.js?v=28.0M-7U';
+import { $ } from './config.js?v=28.0M-7V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -675,9 +675,10 @@ function appendCard(root, item) {
   root.appendChild(card);
 }
 
-function appendSection(root, title, className = '') {
+function appendSection(root, title, className = '', id = '') {
   const section = document.createElement('section');
   section.className = `macro-overview-block ${className}`.trim();
+  if (id) section.id = id;
   appendText(section, 'h2', '', title);
   root.appendChild(section);
   return section;
@@ -688,7 +689,7 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   const overview = buildMacroOverview(data, healthDashboard, worldOrderStressData);
   container.replaceChildren();
 
-  const today = appendSection(container, '今日总判断', 'macro-overview-hero');
+  const today = appendSection(container, '今日总判断', 'macro-overview-hero', 'homepage-today-judgment');
   appendText(today, 'p', 'macro-overview-kicker', overview.today.macroState);
   appendText(today, 'p', 'macro-overview-one-line', overview.today.oneLine);
   const todayGrid = document.createElement('div');
@@ -700,13 +701,13 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   appendMiniMetric(todayGrid, '数据覆盖度', overview.today.dataCoverage);
   today.appendChild(todayGrid);
 
-  const pressure = appendSection(container, '主要压力来源');
+  const pressure = appendSection(container, '主要压力来源', '', 'homepage-pressure-sources');
   const pressureGrid = document.createElement('div');
   pressureGrid.className = 'macro-overview-grid five-col';
   overview.pressures.forEach((item) => appendCard(pressureGrid, item));
   pressure.appendChild(pressureGrid);
 
-  const signals = appendSection(container, '信号分层');
+  const signals = appendSection(container, '信号分层', '', 'homepage-signal-layers');
   const signalGrid = document.createElement('div');
   signalGrid.className = 'macro-overview-grid four-col';
   overview.signalLayers.forEach((group) => {
@@ -718,13 +719,13 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   });
   signals.appendChild(signalGrid);
 
-  const drivers = appendSection(container, '四大宏观驱动');
+  const drivers = appendSection(container, '四大宏观驱动', '', 'homepage-macro-drivers');
   const driverGrid = document.createElement('div');
   driverGrid.className = 'macro-overview-grid four-col';
   overview.drivers.forEach((item) => appendCard(driverGrid, item));
   drivers.appendChild(driverGrid);
 
-  const temp = appendSection(container, '市场定价温度计');
+  const temp = appendSection(container, '市场定价温度计', '', 'homepage-market-temperature');
   const tempPanel = document.createElement('article');
   tempPanel.className = 'macro-overview-card macro-temperature-card';
   appendText(tempPanel, 'p', 'macro-overview-status', `状态：${overview.marketTemperature.status}`);
@@ -733,13 +734,13 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   appendText(tempPanel, 'p', 'macro-overview-conclusion', `当前结论：${overview.marketTemperature.conclusion}`);
   temp.appendChild(tempPanel);
 
-  const engines = appendSection(container, '五大风险引擎摘要');
+  const engines = appendSection(container, '五大风险引擎摘要', '', 'homepage-risk-engines');
   const engineGrid = document.createElement('div');
   engineGrid.className = 'macro-overview-grid five-col';
   overview.riskEngines.forEach((item) => appendCard(engineGrid, item));
   engines.appendChild(engineGrid);
 
-  const cross = appendSection(container, '风险交叉验证');
+  const cross = appendSection(container, '风险交叉验证', '', 'homepage-cross-validation');
   const crossGrid = document.createElement('div');
   crossGrid.className = 'macro-overview-grid four-col';
   overview.crossValidation.forEach((item) => appendCard(crossGrid, item));
