@@ -236,3 +236,14 @@ Implemented boundary:
 - No live fetch is implemented in M-13.
 - No production source is selected.
 - No production write or calculation is approved.
+
+## 16. v28.0M-14 Proof-of-Source Design Status
+
+v28.0M-14 defines the next source-specific proof-of-source design layer.
+
+Implemented boundary:
+
+- Future M-15 may model a source-specific artifact fetch scaffold with network disabled.
+- Source-specific proof design does not approve Stooq, Yahoo-style, FRED, or any licensed provider for live use.
+- No live fetch is allowed until explicit approval.
+- No records, prices, production writes, history writes, or calculations are introduced.

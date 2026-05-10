@@ -1570,6 +1570,44 @@ Recommended next step:
 v28.0M-14 Market Pricing Source-Specific Proof-of-Source Design - No Live Fetch / No Production Data Write
 ```
 
+## v28.0M-14 Market Pricing Source-Specific Proof-of-Source Design
+
+v28.0M-14 adds the first source-specific proof-of-source design layer for the future Market Pricing Temperature pipeline.
+
+This stage:
+
+- adds `docs/MARKET_PRICING_PROOF_OF_SOURCE_DESIGN.md`.
+- adds `docs/fixtures/market-pricing/proof-of-source-design-v28.0M-14.json`.
+- adds `scripts/check-market-pricing-proof-of-source-design.mjs`.
+- adds `npm run check:market-pricing-proof-of-source-design`.
+- wires the proof-of-source design checker into `npm run check:all`.
+- sets the primary proof target to QQQ.
+- sets the primary source candidate to Stooq / public CSV for design only.
+- keeps Yahoo-style as a comparison candidate.
+- keeps FRED as an official-series comparison candidate.
+- keeps future licensed source as the long-term option.
+- selects no production source.
+- sets `sourceSelectionFinalized=false`.
+- sets `sourceApproved=false`.
+- sets `liveFetchApproved=false`.
+- sets `productionDataWriteApproved=false`.
+- sets `historyWriteApproved=false`.
+- sets `marketTemperatureCalculationApproved=false`.
+- performs no live fetch.
+- performs no production data write.
+- writes no `data/market-pricing-history.json` records.
+- changes no `data/radar-data.json`.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- changes no frontend behavior.
+- changes no workflow.
+- changes no scoring / decision / execution / position logic.
+
+Recommended next step:
+
+```text
+v28.0M-15 Market Pricing Source-Specific Artifact Fetch Scaffold - Network Disabled / No Production Data Write
+```
+
 ## v28.0M-7U Homepage De-duplication and Detail Collapse
 
 v28.0M-7U refines the homepage information architecture without changing data or model logic.

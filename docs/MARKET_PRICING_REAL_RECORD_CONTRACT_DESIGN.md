@@ -253,3 +253,16 @@ Implemented boundary:
 - No production data write is approved.
 - No `data/market-pricing-history.json` history records are written.
 - No MA60, standard deviation, z-score, band, or market temperature calculation is performed.
+
+## 15. v28.0M-14 Proof-of-Source Design Status
+
+v28.0M-14 adds source-specific proof-of-source design for future artifact shape review.
+
+Implemented boundary:
+
+- Future proof-of-source artifacts must remain compatible with the real-record contract.
+- `docs/fixtures/market-pricing/proof-of-source-design-v28.0M-14.json` keeps `records=[]`.
+- No source-specific records exist in M-14.
+- Future source-specific artifact scaffold must remain network-disabled unless a later approved PR explicitly changes that boundary.
+- No production source is selected.
+- No history write or calculation is approved.

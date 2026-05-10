@@ -1760,6 +1760,22 @@ Current data contract boundary:
 - `data/radar-data.json` remains unchanged.
 - Market Pricing Temperature remains `waiting_for_history`.
 
+## v28.0M-14 market pricing proof-of-source design boundary
+
+The proof-of-source design fixture is not production data.
+
+Current data contract boundary:
+
+- `docs/fixtures/market-pricing/proof-of-source-design-v28.0M-14.json` records design metadata only.
+- It contains no records and no prices.
+- QQQ appears only as target metadata.
+- No source is approved.
+- `sourceSelectionFinalized=false`, `sourceApproved=false`, `liveFetchApproved=false`, `productionDataWriteApproved=false`, and `historyWriteApproved=false`.
+- No source URLs, endpoints, secrets, headers, cookies, or auth tokens are part of the fixture.
+- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
+- `data/radar-data.json` remains unchanged.
+- Market Pricing Temperature remains `waiting_for_history`.
+
 ## v28.0M-7U homepage IA frontend-only boundary
 
 v28.0M-7U changes homepage presentation only and does not alter the data contract.
