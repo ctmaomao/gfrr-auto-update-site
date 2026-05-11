@@ -6,6 +6,7 @@
   <meta name="description" content="全球金融风险雷达 v28.0C - 全中文机构级宏观风险驾驶舱，加入 Worker-first realtime、30日时间维度、机构级预警系统和资产收益/回撤映射。" />
   <title>全球金融风险雷达 v28.0C</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
   <link rel="stylesheet" href="assets/styles.css" />
   <style>
     .macro-overview-shell {
@@ -147,62 +148,82 @@
     }
 
     .wow-section {
+      position: relative;
       margin: 32px 0;
       padding: 32px 36px;
-      border: 1px solid #1A1815;
-      border-top: 4px solid #A8761A;
+      border: 1px solid var(--paper-line);
+      border-top: 4px solid var(--risk-yellow);
       border-radius: 0;
-      background: #1A1815;
-      color: #FBF7F0;
+      background: var(--paper-bg);
+      color: var(--paper-ink);
+    }
+
+    .wow-section::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: linear-gradient(180deg, rgba(168, 118, 26, 0.18) 0%, rgba(168, 118, 26, 0.04) 60%, rgba(168, 118, 26, 0) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wow-section > * {
+      position: relative;
+      z-index: 1;
     }
 
     .wow-section .wow-label,
     .wow-section .wow-title,
-    .wow-section .wow-intro,
     .wow-section h2,
-    .wow-section h3,
-    .wow-section p {
-      color: #FBF7F0;
+    .wow-section h3 {
+      color: var(--paper-ink);
     }
 
     .wow-section .wow-label {
       margin: 0 0 12px;
-      color: #FBF7F0;
-      font-family: "IBM Plex Mono", monospace;
+      color: var(--paper-ink);
+      font-family: var(--font-mono);
       font-size: 11px;
       font-weight: 600;
       letter-spacing: 0.2em;
       line-height: 1.45;
-      opacity: 0.7;
+      opacity: 0.8;
       text-transform: uppercase;
     }
 
     .wow-section .wow-intro {
-      margin: 0 0 20px;
-      color: #FBF7F0;
-      font-family: "Noto Serif SC", serif;
+      max-width: 900px;
+      margin: 0 0 24px;
+      color: var(--paper-muted);
+      font-family: var(--font-serif);
       font-size: 13px;
       line-height: 1.7;
-      opacity: 0.8;
     }
 
     .wow-section .wow-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-      gap: 32px;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+      gap: 24px;
     }
 
     .wow-section .wow-item {
-      padding: 0;
+      padding: 0 0 16px;
       border: none;
+      border-bottom: 1px solid var(--paper-line);
       background: transparent;
     }
 
     .wow-section .wow-item .wow-tag {
+      display: inline-block;
       margin-bottom: 8px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(251, 247, 240, 0.1);
-      font-family: "IBM Plex Mono", monospace;
+      padding: 4px 10px;
+      border-radius: 0;
+      background: var(--paper-ink);
+      color: var(--paper-bg);
+      font-family: var(--font-mono);
       font-size: 10px;
       font-weight: 600;
       letter-spacing: 0.12em;
@@ -212,23 +233,28 @@
 
     .wow-section .wow-item .wow-tag.up,
     .wow-section .wow-item .wow-tag.is-up {
-      color: #FFB347;
+      background: var(--risk-yellow);
+      color: var(--paper-bg);
     }
 
     .wow-section .wow-item .wow-tag.down,
     .wow-section .wow-item .wow-tag.is-down {
-      color: #7DB37C;
+      background: var(--risk-green);
+      color: var(--paper-bg);
     }
 
     .wow-section .wow-item .wow-tag.flat,
+    .wow-section .wow-item .wow-tag.gap,
     .wow-section .wow-item .wow-tag.is-flat,
     .wow-section .wow-item .wow-tag.is-gap {
-      color: #999999;
+      background: var(--paper-muted);
+      color: var(--paper-bg);
     }
 
-    .wow-section .wow-item .wow-text {
-      color: #FBF7F0;
-      font-family: "Noto Serif SC", serif;
+    .wow-section .wow-item .wow-text,
+    .wow-section .wow-item p {
+      color: var(--paper-ink);
+      font-family: var(--font-serif);
       font-size: 14px;
       line-height: 1.6;
     }
@@ -1351,7 +1377,7 @@
       <details class="full-width-section cockpit-section editorial-section-panel execution-detail-section" id="execution-risk-detail" style="--section-accent: var(--risk-red);">
         <summary class="editorial-section-header editorial-section-summary">
           <span class="section-kicker">EXECUTION & RISK DETAIL</span>
-          <span class="section-title">执行与风控详情（高级）</span>
+          <span class="section-title">执行与风控详情</span>
           <span class="section-note summary-note">决策头、执行灯、预警规则、动作、仓位、风控与行为纪律保留为高级详情。</span>
         </summary>
         <details class="editorial-subsection decision-header-section">
