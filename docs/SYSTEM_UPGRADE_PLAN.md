@@ -1712,6 +1712,26 @@ Recommended next step:
 v28.0M-17 Market Pricing Network Gate Scaffold - Network Still Disabled / No Production Data Write
 ```
 
+## v28.0N-1 Editorial First Fold
+
+v28.0N-1 introduces an editorial first-fold homepage skin.
+
+This stage:
+
+- converts the opening hero into a masthead-style briefing header.
+- strengthens the first Macro Overview block as the primary headline risk briefing.
+- adds a display-only risk stage scale using existing score and stage output.
+- preserves homepage IA order and anchors.
+- remains frontend display layer only.
+- does not change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
+- keeps Market Pricing Temperature waiting-for-history.
+
+Recommended next step:
+
+```text
+v28.0N-2 Editorial Pressure Source Reading Polish - Display Layer Only
+```
+
 ## v28.0M-7U Homepage De-duplication and Detail Collapse
 
 v28.0M-7U refines the homepage information architecture without changing data or model logic.

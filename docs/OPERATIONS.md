@@ -2070,3 +2070,14 @@ Operator guidance:
 - External AI remains auxiliary read-only explanation.
 - Global Risk Heatmap must remain standalone and visible.
 - Known `check:world-order` warnings with partial freshness, stale GDELT, SIPRI manual-required, and ACLED not-configured remain non-blocking when `check:all` passes.
+
+### v28.0N-1 editorial first-fold operator note
+
+v28.0N-1 introduces an editorial first-fold homepage skin. It is frontend display layer only.
+
+Operator guidance:
+
+- Preserve the homepage reading path order and anchors protected by `npm run check:homepage-ia-contract`.
+- Do not edit generated AI text, Daily Brief output, scoring, decision, execution, position, workflow, or data pipeline logic for the editorial skin.
+- Market Pricing Temperature remains waiting-for-history; do not add market-pricing records or calculate MA60, standard deviation, z-score, bands, or temperature.
+- External AI remains read-only auxiliary explanation and must keep its boundaries.

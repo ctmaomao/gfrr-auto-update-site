@@ -591,3 +591,9 @@ Add anchors to actual visible content blocks, not empty headings. The first seve
 v28.0M-7V-1 records that the homepage reading path repair is merged and audited.
 
 Future homepage IA changes must keep the 10-step nav path, point nav anchors to real content rather than empty headings, keep Daily Brief under evidence / method detail, keep External AI auxiliary rather than primary, and preserve Global Risk Heatmap as standalone. Do not modify data or generated content for UX fixes. Run `npm run check:homepage-ia-contract` after homepage IA changes, alongside the usual scoped checks.
+
+## 58. v28.0N-1 editorial first-fold reminder
+
+v28.0N-1 introduces an editorial first-fold homepage skin and remains frontend display layer only.
+
+Do not use editorial homepage work to change scoring, decision, execution, position, data pipeline, workflow, External AI, or Market Pricing behavior. Preserve the homepage jump-nav order and anchors. Do not edit generated AI text or production data. Market Pricing Temperature must remain waiting-for-history; do not add market-pricing records, live fetches, MA60, standard deviation, z-score, or market temperature calculations.

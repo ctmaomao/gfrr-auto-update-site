@@ -647,6 +647,69 @@ function appendMiniMetric(root, label, value) {
   root.appendChild(box);
 }
 
+function appendEditorialMeta(root, label, value) {
+  const item = document.createElement('div');
+  item.className = 'editorial-meta-item';
+  appendText(item, 'span', 'editorial-meta-label', label);
+  appendText(item, 'strong', 'editorial-meta-value', text(value, '等待数据校准'));
+  root.appendChild(item);
+}
+
+function appendRiskStageScale(root, today) {
+  const numericStages = [
+    { label: '正常观察', start: 0, end: 50 },
+    { label: '压力上升', start: 50, end: 65 },
+    { label: '局部冲击观察', start: 65, end: 85 },
+    { label: '系统性风险观察', start: 85, end: 100 },
+  ];
+  const score = finite(today.score);
+  const scale = document.createElement('div');
+  scale.className = 'editorial-risk-scale';
+
+  const header = document.createElement('div');
+  header.className = 'editorial-risk-scale-header';
+  appendText(header, 'span', '', 'display-only risk stage scale');
+  appendText(header, 'strong', '', today.stage || UNDECIDED);
+  scale.appendChild(header);
+
+  if (today.stage === '系统性危机') {
+    appendText(scale, 'p', 'editorial-risk-scale-override', '显式阶段：系统性危机，不由本标尺单独推断');
+  }
+
+  if (score === null) {
+    appendText(scale, 'p', 'editorial-risk-scale-empty', '数据不足，暂不绘制阶段位置');
+    root.appendChild(scale);
+    return;
+  }
+
+  const track = document.createElement('div');
+  track.className = 'editorial-risk-scale-track';
+  numericStages.forEach(({ label, start, end }) => {
+    const segment = document.createElement('span');
+    segment.className = `editorial-risk-scale-segment${label === today.stage ? ' is-active' : ''}`;
+    segment.style.flexBasis = `${end - start}%`;
+    segment.setAttribute('title', `${label}：${start}-${end}`);
+    segment.setAttribute('aria-label', `${label}：${start} 到 ${end}`);
+    track.appendChild(segment);
+  });
+
+  const marker = document.createElement('span');
+  marker.className = 'editorial-risk-scale-marker';
+  marker.style.left = `${Math.max(0, Math.min(100, score))}%`;
+  marker.setAttribute('aria-label', `当前分数 ${Math.round(score)}`);
+  track.appendChild(marker);
+  scale.appendChild(track);
+
+  const labels = document.createElement('div');
+  labels.className = 'editorial-risk-scale-labels';
+  numericStages.forEach(({ label, start, end }) => {
+    const className = label === today.stage ? 'is-active' : '';
+    appendText(labels, 'span', className, `${label} ${start}-${end}`);
+  });
+  scale.appendChild(labels);
+  root.appendChild(scale);
+}
+
 function stripLabelPrefix(value, label) {
   const prefix = `${label}：`;
   return typeof value === 'string' && value.startsWith(prefix) ? value.slice(prefix.length) : value;
@@ -689,17 +752,35 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   const overview = buildMacroOverview(data, healthDashboard, worldOrderStressData);
   container.replaceChildren();
 
-  const today = appendSection(container, '今日总判断', 'macro-overview-hero', 'homepage-today-judgment');
-  appendText(today, 'p', 'macro-overview-kicker', overview.today.macroState);
-  appendText(today, 'p', 'macro-overview-one-line', overview.today.oneLine);
-  const todayGrid = document.createElement('div');
-  todayGrid.className = 'macro-overview-mini-grid';
-  appendMiniMetric(todayGrid, '全球系统性风险', overview.today.score);
-  appendMiniMetric(todayGrid, '当前阶段', overview.today.stage);
-  appendMiniMetric(todayGrid, '较昨日变化', overview.today.change);
-  appendMiniMetric(todayGrid, '证据强度', overview.today.evidenceStrength);
-  appendMiniMetric(todayGrid, '数据覆盖度', overview.today.dataCoverage);
-  today.appendChild(todayGrid);
+  const today = appendSection(container, '今日总判断', 'macro-overview-hero editorial-first-fold', 'homepage-today-judgment');
+  appendText(today, 'p', 'editorial-risk-overline', 'GLOBAL RISK SCORE / SYSTEMIC RISK STAGE');
+  const headline = document.createElement('div');
+  headline.className = 'editorial-risk-headline';
+  const scorePanel = document.createElement('div');
+  scorePanel.className = 'editorial-risk-score';
+  appendText(scorePanel, 'span', 'editorial-risk-score-label', '全球系统性风险');
+  appendText(scorePanel, 'strong', 'editorial-risk-score-value', overview.today.score || '数据不足');
+  appendText(scorePanel, 'span', 'editorial-risk-stage-value', overview.today.stage || '暂无法判断');
+  headline.appendChild(scorePanel);
+  const conclusionPanel = document.createElement('div');
+  conclusionPanel.className = 'editorial-risk-conclusion';
+  appendText(conclusionPanel, 'span', 'editorial-risk-score-label', '今日总判断');
+  appendText(conclusionPanel, 'p', 'macro-overview-one-line', overview.today.oneLine);
+  appendText(conclusionPanel, 'p', 'macro-overview-kicker', overview.today.macroState);
+  headline.appendChild(conclusionPanel);
+  today.appendChild(headline);
+
+  const metaGrid = document.createElement('div');
+  metaGrid.className = 'editorial-meta-grid';
+  appendEditorialMeta(metaGrid, '阶段', overview.today.stage);
+  appendEditorialMeta(metaGrid, '1日变化', overview.today.change);
+  appendEditorialMeta(metaGrid, '证据强度', overview.today.evidenceStrength);
+  appendEditorialMeta(metaGrid, '数据覆盖', overview.today.dataCoverage);
+  appendEditorialMeta(metaGrid, '更新时间', overview.today.updatedAt || '等待数据校准');
+  today.appendChild(metaGrid);
+
+  appendJudgmentList(today, '缺失证据', overview.today.missingEvidence);
+  appendRiskStageScale(today, overview.today);
 
   const pressure = appendSection(container, '主要压力来源', '', 'homepage-pressure-sources');
   const pressureGrid = document.createElement('div');
