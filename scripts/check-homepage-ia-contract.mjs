@@ -15,9 +15,12 @@ const navContract = [
   ['市场温度', '#homepage-market-temperature'],
   ['风险引擎', '#homepage-risk-engines'],
   ['交叉验证', '#homepage-cross-validation'],
+  ['本期关键变化', '#wow-key-changes'],
   ['风险热力图', '#global-risk-heatmap'],
   ['详细数据', '#detail-data'],
   ['方法说明', '#method-evidence'],
+  ['外部 AI', '#external-ai-auxiliary'],
+  ['执行风控', '#execution-risk-detail'],
 ];
 
 const macroRuntimeIds = [
@@ -31,9 +34,12 @@ const macroRuntimeIds = [
 ];
 
 const staticRequiredIds = [
+  'wow-key-changes',
   'global-risk-heatmap',
   'detail-data',
   'method-evidence',
+  'external-ai-auxiliary',
+  'execution-risk-detail',
 ];
 
 function fail(message) {
@@ -154,7 +160,7 @@ function checkNav() {
   const actualPairs = links.map((link) => `${link.label}|${link.href}`).join('\n');
   const expectedPairs = navContract.map(([label, href]) => `${label}|${href}`).join('\n');
   if (actualPairs !== expectedPairs) {
-    fail('top nav must follow the exact 10-step reading-path order');
+    fail('top nav must follow the exact 13-step reading-path order');
   }
 
   for (const link of links) {
@@ -214,9 +220,12 @@ function checkOrdering() {
 
   const expectedOrder = [
     ...macroRuntimeIds,
+    'wow-key-changes',
     'global-risk-heatmap',
     'detail-data',
     'method-evidence',
+    'external-ai-auxiliary',
+    'execution-risk-detail',
   ];
 
   for (let index = 0; index < expectedOrder.length - 1; index += 1) {
