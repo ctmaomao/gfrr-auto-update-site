@@ -1870,6 +1870,25 @@ This stage:
 - keeps Market Pricing Temperature waiting-for-history.
 
 ```text
+v28.0N-15 Editorial Key Changes + Watch List - Display Layer Only
+```
+
+## v28.0N-15 Editorial Key Changes + Watch List
+
+v28.0N-15 introduces editorial Key Changes and Watch List narrative blocks.
+
+This stage:
+
+- adds a Bubble Watch-inspired `KEY CHANGES` block.
+- adds a `WHAT TO WATCH` / 下一步验证清单 block.
+- uses only existing structured data, missing evidence, counter-evidence, and pending confirmations.
+- remains frontend display layer only.
+- does not add data sources or change scoring, decision, execution, position logic, workflows, External AI, or Market Pricing calculations.
+- keeps Market Pricing Temperature waiting-for-history.
+
+Completed prior stage:
+
+```text
 v28.0N-14 Editorial Big Number + Threshold Scale Polish - Display Layer Only
 ```
 

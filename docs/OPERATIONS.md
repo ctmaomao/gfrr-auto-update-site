@@ -2228,3 +2228,14 @@ Operator guidance:
 - Keep threshold bands aligned to 0-50 / 50-65 / 65-85 / 85-100 unless the renderer semantics are separately changed in a reviewed logic PR.
 - Keep Market Pricing Temperature waiting-for-history.
 - Do not change data, workflows, External AI, Market Pricing, decision, execution, or position logic.
+
+### v28.0N-15 editorial Key Changes and Watch List operator note
+
+v28.0N-15 introduces editorial Key Changes and Watch List narrative blocks. It is frontend display layer only.
+
+Operator guidance:
+
+- Treat Key Changes and Watch List as narrative summaries of existing structured data, gaps, counter-evidence, and pending confirmations.
+- Do not add data sources or convert pending/gap items into conclusions.
+- Keep Market Pricing Temperature waiting-for-history.
+- Do not change data, scoring, decision, execution, position logic, workflows, External AI behavior, or Market Pricing calculations.

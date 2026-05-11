@@ -978,6 +978,166 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
   font-weight: 900;
   line-height: 1.45;
 }
+.editorial-key-changes {
+  border: 1px solid var(--editorial-ink);
+  border-radius: 2px;
+  background: var(--editorial-ink);
+  color: var(--editorial-paper);
+  box-shadow: none;
+}
+.editorial-key-changes h2 {
+  display: none;
+}
+.editorial-key-changes-label {
+  margin: 0;
+  color: rgba(251, 247, 240, 0.72);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+.editorial-key-changes-summary {
+  max-width: 940px;
+  margin: 0;
+  color: var(--editorial-paper);
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3.4vw, 42px);
+  font-weight: 900;
+  line-height: 1.18;
+}
+.editorial-key-changes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid rgba(251, 247, 240, 0.26);
+  background: rgba(251, 247, 240, 0.26);
+}
+.editorial-key-change-item {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: 17px;
+  background: var(--editorial-ink);
+}
+.editorial-key-change-item p {
+  margin: 0;
+  color: var(--editorial-paper);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.6;
+}
+.editorial-key-change-tag,
+.editorial-key-change-source {
+  color: rgba(251, 247, 240, 0.72);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+.editorial-key-change-tag.is-up {
+  color: var(--editorial-orange);
+}
+.editorial-key-change-tag.is-down {
+  color: #7db37c;
+}
+.editorial-key-change-tag.is-gap {
+  color: #d39a7a;
+}
+.editorial-key-change-tag.is-flat {
+  color: rgba(251, 247, 240, 0.68);
+}
+.editorial-watch-list {
+  border: 1px solid var(--editorial-line);
+  border-top: 4px double var(--editorial-ink);
+  border-radius: 2px;
+  background: rgba(255, 252, 245, 0.78);
+  color: var(--editorial-ink);
+  box-shadow: none;
+}
+.editorial-watch-kicker {
+  margin: 0;
+  color: var(--editorial-red);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  line-height: 1.45;
+}
+.editorial-watch-title {
+  margin: 0;
+  color: var(--editorial-ink);
+  font-family: var(--font-display);
+  font-size: clamp(30px, 5vw, 54px);
+  font-weight: 900;
+  line-height: 1.08;
+}
+.editorial-watch-summary {
+  max-width: 980px;
+  margin: 0;
+  color: var(--editorial-warm);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.65;
+}
+.editorial-watch-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.editorial-watch-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid rgba(26, 24, 21, 0.16);
+  border-left: 3px solid var(--editorial-red);
+  background: rgba(251, 247, 240, 0.82);
+}
+.editorial-watch-item.is-down {
+  border-left-color: var(--editorial-green);
+}
+.editorial-watch-icon {
+  color: var(--editorial-red);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+}
+.editorial-watch-item.is-down .editorial-watch-icon {
+  color: var(--editorial-green);
+}
+.editorial-watch-item-title {
+  margin: 0 0 6px;
+  color: var(--editorial-ink);
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+.editorial-watch-item-desc {
+  margin: 0;
+  color: var(--editorial-warm);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.6;
+}
+.editorial-watch-item-meta {
+  display: inline-flex;
+  margin-top: 9px;
+  color: var(--editorial-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
 .macro-overview-block.editorial-category {
   gap: 16px;
   border-color: var(--editorial-line);
@@ -3020,6 +3180,10 @@ article {
   .editorial-risk-scale-labels {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .editorial-key-changes-grid,
+  .editorial-watch-grid {
+    grid-template-columns: 1fr;
   }
   .editorial-pressure-grid,
   .editorial-signal-grid,
