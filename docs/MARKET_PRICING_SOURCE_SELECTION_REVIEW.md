@@ -237,3 +237,17 @@ Implemented boundary:
 - `historyWriteApproved=false`.
 - QQQ remains target metadata only.
 - No live fetch, source URL persistence, production data write, history write, records, prices, or calculation is introduced.
+
+## 12. v28.0M-16 Network Gate Design Status
+
+v28.0M-16 does not finalize source selection.
+
+Implemented boundary:
+
+- Source selection remains unfinalized.
+- Stooq / public CSV remains a design candidate only.
+- `sourceSelectionFinalized=false`.
+- `sourceApproved=false`.
+- `liveFetchApproved=false`.
+- `networkGateApproved=false`.
+- No source URL, endpoint, source approval, live fetch, production write, history write, workflow change, or calculation is introduced.

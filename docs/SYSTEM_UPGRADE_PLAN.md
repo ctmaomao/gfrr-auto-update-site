@@ -1678,6 +1678,40 @@ Recommended next step:
 v28.0M-16 Market Pricing Source-Specific Network Gate Design - No Live Fetch / No Production Data Write
 ```
 
+## v28.0M-16 Market Pricing Source-Specific Network Gate Design
+
+v28.0M-16 defines the future source-specific network gate without opening it.
+
+This stage:
+
+- adds `docs/MARKET_PRICING_NETWORK_GATE_DESIGN.md`.
+- adds `docs/fixtures/market-pricing/network-gate-design-v28.0M-16.json`.
+- adds `scripts/check-market-pricing-network-gate-design.mjs`.
+- adds `npm run check:market-pricing-network-gate-design`.
+- wires the network gate design checker into `npm run check:all`.
+- keeps `networkGateApproved=false`.
+- keeps `networkGateOpen=false`.
+- keeps `networkAllowed=false`.
+- keeps `sourceApproved=false`.
+- keeps `liveFetchApproved=false`.
+- keeps `sourceComplianceReviewed=false`.
+- defines required future rejection reasons.
+- keeps source-specific artifacts in `artifact_sanitizer_layer`.
+- keeps market-pricing-history in `daily_history_layer`.
+- performs no live fetch.
+- performs no production data write.
+- changes no workflow.
+- writes no `data/market-pricing-history.json` records.
+- changes no `data/radar-data.json`.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- changes no frontend behavior.
+
+Recommended next step:
+
+```text
+v28.0M-17 Market Pricing Network Gate Scaffold - Network Still Disabled / No Production Data Write
+```
+
 ## v28.0M-7U Homepage De-duplication and Detail Collapse
 
 v28.0M-7U refines the homepage information architecture without changing data or model logic.

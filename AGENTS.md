@@ -568,6 +568,12 @@ Every new data source must declare an `assignedLayer` before implementation.
 
 Allowed layers are `daily_history_layer`, `realtime_worker_layer`, `github_actions_backup_validation_layer`, `artifact_sanitizer_layer`, and `frontend_display_layer`. Do not create standalone or ad hoc data pipelines. Cloudflare Worker remains the realtime fast-variable primary path. Daily GitHub Actions remains the slow / historical production layer. GitHub Actions backup validation must not bypass sanitizer. Market-pricing-history belongs to `daily_history_layer`; market-pricing artifacts remain in `artifact_sanitizer_layer` until an approved writer exists. Do not write data files from artifact-only scripts.
 
+## 54I. v28.0M-16 market pricing network gate design reminder
+
+Network gate design is not permission to fetch.
+
+Do not set `networkAllowed=true`, `networkGateApproved=true`, `networkGateOpen=true`, `sourceApproved=true`, `liveFetchApproved=true`, or `readyForProductionWrite=true` in design or scaffold rounds. Do not add source URLs, endpoint URLs, secrets, headers, cookies, or auth tokens. Do not modify data files. Do not bypass sanitizer or writer approvals. Any future network-enabled source-specific fetch must be a separate approved PR and remain artifact-only until later approvals change that boundary.
+
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
 Keep Macro Risk Overview as the single primary homepage judgment entry.

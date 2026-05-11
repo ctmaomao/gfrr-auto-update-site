@@ -278,3 +278,17 @@ Implemented boundary:
 - Market-pricing-history writes require a separate approved writer.
 - Backup validation may inspect status but must not bypass sanitizer.
 - No standalone or ad hoc market-pricing pipeline is allowed.
+
+## 19. v28.0M-16 Network Gate Design Status
+
+v28.0M-16 keeps artifact-only live fetch disabled.
+
+Implemented boundary:
+
+- Network gate design does not implement fetch.
+- Artifact-only live fetch remains disabled until a later network gate scaffold and explicit approval.
+- `networkGateApproved=false`.
+- `networkGateOpen=false`.
+- `networkAllowed=false`.
+- Any source-specific artifact remains non-production and sanitizer-bound.
+- No records, prices, production writes, history writes, or calculations are introduced.

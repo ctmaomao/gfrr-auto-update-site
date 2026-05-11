@@ -2015,6 +2015,20 @@ Operator guidance:
 - Do not create standalone or ad hoc data pipelines.
 - `npm run check:unified-data-pipeline-architecture` must pass.
 
+### v28.0M-16 market pricing network gate design operator note
+
+v28.0M-16 defines the future source-specific network gate but does not allow network use.
+
+Operator guidance:
+
+- Do not set approval flags manually.
+- Do not set `networkGateApproved=true`, `networkGateOpen=true`, or `networkAllowed=true`.
+- Do not add source URLs, endpoints, secrets, headers, cookies, or auth tokens.
+- Do not write `data/market-pricing-history.json` from source-specific fetch.
+- Do not use the network gate to bypass sanitizer.
+- Future live fetch requires a separate approved PR.
+- `npm run check:market-pricing-network-gate-design` must pass.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.

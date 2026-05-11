@@ -1808,6 +1808,23 @@ Current data contract boundary:
 - no isolated data pipelines are allowed.
 - no data files are written by architecture-sync checks.
 
+## v28.0M-16 market pricing network gate design boundary
+
+The network gate design fixture is not production data.
+
+Current data contract boundary:
+
+- `docs/fixtures/market-pricing/network-gate-design-v28.0M-16.json` records design status only.
+- No network gate fixture may set approval flags true.
+- `networkGateApproved=false`.
+- `networkGateOpen=false`.
+- `networkAllowed=false`.
+- No history records are written.
+- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
+- `data/radar-data.json` remains unchanged.
+- No source URLs, endpoints, secrets, headers, cookies, or auth tokens are part of the fixture.
+- Market Pricing Temperature remains `waiting_for_history`.
+
 ## v28.0M-7U homepage IA frontend-only boundary
 
 v28.0M-7U changes homepage presentation only and does not alter the data contract.

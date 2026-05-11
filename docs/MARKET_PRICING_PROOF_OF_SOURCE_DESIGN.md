@@ -279,3 +279,18 @@ Implemented boundary:
 - Backup validation must not bypass sanitizer.
 - Realtime Worker context must not become the primary weekly-history builder.
 - No fetch, production write, history write, workflow change, or calculation is introduced.
+
+## 15. v28.0M-16 Network Gate Design Status
+
+v28.0M-16 defines network gate design only.
+
+Implemented boundary:
+
+- The source-specific proof target remains metadata.
+- Stooq / public CSV remains a design candidate only.
+- `sourceApproved=false`.
+- `liveFetchApproved=false`.
+- `networkGateApproved=false`.
+- `networkGateOpen=false`.
+- `networkAllowed=false`.
+- No source approval, live fetch, production write, history write, workflow change, or calculation is introduced.

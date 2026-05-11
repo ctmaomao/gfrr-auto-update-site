@@ -220,3 +220,18 @@ Recommended next step:
 ```text
 v28.0M-16 Market Pricing Source-Specific Network Gate Design - No Live Fetch / No Production Data Write
 ```
+
+## 10. v28.0M-16 Network Gate Design Status
+
+v28.0M-16 adds source-specific network gate design while keeping the gate closed.
+
+Implemented boundary:
+
+- `networkGateApproved=false`.
+- `networkGateOpen=false`.
+- `networkAllowed=false`.
+- Source-specific artifacts remain in `artifact_sanitizer_layer`.
+- Future market-pricing-history writes remain in `daily_history_layer` and require separate approval.
+- `realtime_worker_layer` remains non-primary for weekly-history building.
+- `github_actions_backup_validation_layer` still cannot bypass sanitizer or writer approval.
+- No live fetch, source approval, production write, workflow change, history write, or calculation is introduced.
