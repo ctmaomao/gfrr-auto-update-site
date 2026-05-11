@@ -1767,7 +1767,27 @@ This stage:
 Next recommended step:
 
 ```text
-v28.0N-4 Editorial Macro Driver Reading Polish - Display Layer Only
+v28.0N-4 Editorial Paper Background and Font Stack - Display Layer Only
+```
+
+## v28.0N-4 Editorial Paper Background and Font Stack
+
+v28.0N-4 introduces the editorial paper background and Bubble Watch-style font stack foundation.
+
+This stage:
+
+- changes the global page background to warm paper.
+- adds display, body serif, and mono font stack variables without external font/CDN URLs.
+- applies the font roles to the editorial homepage presentation.
+- preserves the v28.0N-1 first fold, the v28.0N-2 pressure source section, the v28.0N-3 signal layer section, homepage IA order, and anchors.
+- remains frontend display layer only.
+- does not change scoring, decision, execution, position logic, signal or pressure judgment calculation, data pipeline, workflows, External AI, or Market Pricing calculations.
+- keeps Market Pricing Temperature waiting-for-history.
+
+Next recommended step:
+
+```text
+v28.0N-5 Editorial Macro Driver Reading Polish - Display Layer Only
 ```
 
 ## v28.0M-7U Homepage De-duplication and Detail Collapse

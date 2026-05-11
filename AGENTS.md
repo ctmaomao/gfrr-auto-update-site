@@ -609,3 +609,9 @@ Pressure-source status classes, summaries, count pills, and cards are presentati
 v28.0N-3 introduces editorial signal-layer reading polish and remains frontend display layer only.
 
 Signal bucket classes, summaries, count pills, and cards are presentation only. Do not change how signal layer judgments are calculated. Preserve homepage IA order and anchors, including `homepage-signal-layers`. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
+
+## 61. v28.0N-4 editorial paper/font reminder
+
+v28.0N-4 introduces the editorial paper background and Bubble Watch-style font stack foundation and remains frontend display layer only.
+
+Do not add external font, CDN, image, or provider URLs for this foundation. Preserve homepage IA order and anchors, preserve the v28.0N-1 first fold, the v28.0N-2 pressure section, and the v28.0N-3 signal section. Keep dark legacy panels readable. Do not edit generated AI text, data files, scoring, pressure or signal judgment calculation, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
