@@ -1852,10 +1852,27 @@ This stage:
 - does not change cross-validation calculation, scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
 - keeps Market Pricing Temperature waiting-for-history.
 
+```text
+v28.0N-9 Editorial Global Risk Heatmap Polish - Display Layer Only
+```
+
+## v28.0N-9 Editorial Global Risk Heatmap Polish
+
+v28.0N-9 introduces editorial Global Risk Heatmap polish.
+
+This stage:
+
+- converts the Global Risk Heatmap into an editorial standalone visual evidence block.
+- keeps Global Risk Heatmap standalone and visually prominent.
+- preserves `global-risk-heatmap`, `world-heatmap`, `heatmap-list`, homepage IA order, and anchors.
+- remains frontend display layer only.
+- does not change heatmap scoring, region data calculation, data pipeline, workflows, External AI, Market Pricing, or decision / execution / position logic.
+- keeps Market Pricing Temperature waiting-for-history.
+
 Next recommended step:
 
 ```text
-v28.0N-5 Editorial Macro Driver Reading Polish - Display Layer Only
+Separate explicitly approved display-layer task
 ```
 
 ## v28.0M-7U Homepage De-duplication and Detail Collapse

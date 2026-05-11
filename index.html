@@ -384,19 +384,26 @@
         </div>
         <div class="macro-overview-shell" id="macro-risk-overview-root"></div>
       </section>
-      <section class="full-width-section risk-section" id="global-risk-heatmap">
-        <article class="card heatmap-card full-width-card">
-          <div class="card-head split-head">
-            <h2>全球风险热力图</h2>
-            <span class="muted">机构级区域热力图</span>
+      <section class="full-width-section risk-section editorial-heatmap-section" id="global-risk-heatmap">
+        <article class="card heatmap-card full-width-card editorial-heatmap-card">
+          <div class="card-head split-head editorial-heatmap-head">
+            <div class="editorial-heatmap-title-block">
+              <p class="editorial-heatmap-kicker">GLOBAL RISK HEATMAP</p>
+              <h2>全球风险热力图</h2>
+              <p class="editorial-heatmap-summary">区域热力图用于展示全球风险的地理分布，是证据层的一部分，不单独构成交易信号。</p>
+            </div>
+            <span class="editorial-heatmap-note">独立视觉证据层</span>
           </div>
-          <div class="heatmap-layout">
-            <svg id="world-heatmap" viewBox="0 0 780 360" role="img" aria-label="全球风险热力图"></svg>
-            <div class="heatmap-legend">
+          <div class="heatmap-layout editorial-heatmap-layout">
+            <div class="editorial-heatmap-frame">
+              <svg id="world-heatmap" viewBox="0 0 780 360" role="img" aria-label="全球风险热力图"></svg>
+            </div>
+            <div class="heatmap-legend editorial-heatmap-legend">
               <div class="legend-title">风险刻度</div>
               <div class="legend-bar"></div>
               <div class="legend-labels"><span>0</span><span>100</span></div>
               <div id="heatmap-list"></div>
+              <p class="editorial-heatmap-note">区域颜色与分数仅用于辅助阅读地理分布，应与上方主判断和证据链一起审阅。</p>
             </div>
           </div>
         </article>
