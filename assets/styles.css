@@ -1990,6 +1990,171 @@ main { display: grid; gap: 22px; }
     width: 100%;
   }
 }
+.editorial-method-section {
+  border: 1px solid var(--editorial-line);
+  border-top: 4px double var(--editorial-ink);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(251, 247, 240, 0.99), rgba(238, 231, 219, 0.95));
+  color: var(--editorial-ink);
+  box-shadow: none;
+}
+.editorial-method-section > .editorial-method-summary {
+  align-items: flex-start;
+  min-height: 0;
+  padding: 21px 22px;
+  color: var(--editorial-ink);
+}
+.editorial-method-section > .editorial-method-summary::after {
+  margin-top: 4px;
+  border: 1px solid var(--editorial-line);
+  border-radius: 999px;
+  background: rgba(26, 24, 21, 0.04);
+  color: var(--editorial-warm);
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.editorial-method-section[open] > .editorial-method-summary {
+  border-bottom: 1px solid var(--editorial-line);
+}
+.editorial-method-heading {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.editorial-method-kicker,
+.editorial-method-label {
+  color: var(--editorial-red);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.editorial-method-main-title {
+  color: var(--editorial-ink);
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+.editorial-method-note {
+  max-width: 940px;
+  color: var(--editorial-warm);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.65;
+}
+.editorial-method-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 20px 20px;
+}
+.editorial-method-card {
+  min-width: 0;
+  border: 1px solid rgba(26, 24, 21, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 252, 245, 0.76);
+  padding: 15px;
+  color: var(--editorial-ink);
+}
+.editorial-method-card p {
+  margin: 0;
+  color: var(--editorial-warm);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.65;
+}
+.editorial-method-card .editorial-method-label {
+  margin-bottom: 9px;
+  color: var(--editorial-red);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.editorial-method-card-title {
+  margin: 0 0 8px;
+  color: var(--editorial-ink);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+.editorial-method-list {
+  margin: 11px 0 0;
+  padding-left: 18px;
+  color: var(--editorial-warm);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.6;
+}
+.editorial-method-list.compact {
+  display: grid;
+  gap: 4px;
+}
+.editorial-method-boundary {
+  border-left: 4px solid var(--editorial-orange);
+  background: rgba(238, 231, 219, 0.86);
+}
+#method-evidence .editorial-method-panel {
+  margin: 16px 20px;
+  border: 1px solid rgba(26, 24, 21, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 252, 245, 0.72);
+  color: var(--editorial-ink);
+}
+#method-evidence .editorial-method-panel > summary {
+  min-height: 52px;
+  padding: 13px 15px;
+  color: var(--editorial-ink);
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1.35;
+}
+#method-evidence .editorial-method-panel > summary::after {
+  margin-left: auto;
+  border: 1px solid rgba(26, 24, 21, 0.18);
+  background: rgba(26, 24, 21, 0.04);
+  color: var(--editorial-warm);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+#method-evidence .editorial-method-panel[open] > summary {
+  border-bottom: 1px solid rgba(26, 24, 21, 0.14);
+}
+#method-evidence .editorial-method-panel > .card,
+#method-evidence .editorial-method-panel > section {
+  margin: 0 14px 14px;
+}
+#method-evidence .table-wrap,
+#method-evidence .chart-wrap,
+#method-evidence .svg-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 960px) {
+  .editorial-method-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .editorial-method-section > .editorial-method-summary {
+    padding: 17px 16px;
+  }
+  .editorial-method-main-title {
+    font-size: 25px;
+  }
+  .editorial-method-grid {
+    grid-template-columns: 1fr;
+    margin: 14px;
+  }
+  #method-evidence .editorial-method-panel {
+    margin: 14px;
+  }
+}
 .grid { display: grid; gap: 22px; }
 .two-col { grid-template-columns: 1.25fr 0.9fr; }
 .three-col { grid-template-columns: 1fr 1fr 1fr; }

@@ -1870,6 +1870,24 @@ This stage:
 - keeps Market Pricing Temperature waiting-for-history.
 
 ```text
+v28.0N-11 Editorial Method / Evidence / Boundary Appendix Polish - Display Layer Only
+```
+
+## v28.0N-11 Editorial Method / Evidence / Boundary Appendix Polish
+
+v28.0N-11 introduces editorial Method / Evidence / Boundary appendix polish.
+
+This stage:
+
+- converts Method into a secondary explanatory appendix for reading path, evidence layers, data boundaries, AI boundaries, non-advice language, and governance.
+- keeps method content after Detailed Data in the homepage reading path.
+- preserves `method-evidence`, homepage IA order, anchors, and existing method detail panels.
+- remains frontend display layer only.
+- does not change data, charts, calculations, workflows, External AI, Market Pricing, scoring, decision, execution, or position logic.
+
+Completed prior stage:
+
+```text
 v28.0N-10 Editorial Detailed Data Appendix Polish - Display Layer Only
 ```
 

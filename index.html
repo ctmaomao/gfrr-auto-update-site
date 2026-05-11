@@ -802,9 +802,54 @@
         <section class="full-width-section cockpit-section auxiliary-ai-panel" id="external-ai-display-panel" hidden aria-hidden="true"></section>
       </section>
 
-      <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section" id="method-evidence">
-        <summary id="advanced-audit">数据来源、证据与方法说明<span class="summary-note">Daily Brief、站内规则解释、背离审计、Brent 审计、世界秩序细节与系统说明集中在这里。</span></summary>
-        <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section" id="daily-brief-section">
+      <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section editorial-method-section" id="method-evidence">
+        <summary id="advanced-audit" class="editorial-method-summary">
+          <span class="editorial-method-heading">
+            <span class="editorial-method-kicker">METHOD / EVIDENCE / BOUNDARY</span>
+            <span class="editorial-method-main-title">方法说明</span>
+            <span class="summary-note editorial-method-note">本区说明本站如何把数据转化为结论、如何处理证据不足、反向证据和噪音，以及哪些内容不构成投资建议。</span>
+          </span>
+        </summary>
+        <section class="editorial-method-grid" aria-label="方法、证据与边界说明">
+          <article class="editorial-method-card">
+            <p class="editorial-method-label">READING PATH</p>
+            <h3 class="editorial-method-card-title">阅读路径</h3>
+            <p>首页先给出结论，再说明原因、证据与展开详情，让原始材料留在次级阅读路径中。</p>
+            <ul class="editorial-method-list">
+              <li>结论 → 原因 → 证据 → 展开详情</li>
+            </ul>
+          </article>
+          <article class="editorial-method-card">
+            <p class="editorial-method-label">EVIDENCE LAYERS</p>
+            <h3 class="editorial-method-card-title">证据分层</h3>
+            <p>证据会按性质区分，避免把推断、假设或噪音包装成已验证事实。</p>
+            <ul class="editorial-method-list compact">
+              <li>已验证事实 / 数据推断 / 模型判断</li>
+              <li>情景假设 / 数据不足 / 反向证据 / 噪音提示</li>
+            </ul>
+          </article>
+          <article class="editorial-method-card editorial-method-boundary">
+            <p class="editorial-method-label">DATA BOUNDARY</p>
+            <h3 class="editorial-method-card-title">数据边界</h3>
+            <p>Market Pricing Temperature 仍为 waiting-for-history；QQQ / Nasdaq weekly history、60+ weeks、MA60、标准差、z-score 尚未准备好。</p>
+          </article>
+          <article class="editorial-method-card">
+            <p class="editorial-method-label">AI BOUNDARY</p>
+            <h3 class="editorial-method-card-title">AI 边界</h3>
+            <p>External AI 是只读辅助解释，不改变 scoring、decision、execution 或 position guidance。</p>
+          </article>
+          <article class="editorial-method-card">
+            <p class="editorial-method-label">NOT ADVICE</p>
+            <h3 class="editorial-method-card-title">非投资建议</h3>
+            <p>本站用于风险观察与证据整理，不构成投资建议，也不生成直接交易指令。</p>
+          </article>
+          <article class="editorial-method-card">
+            <p class="editorial-method-label">GOVERNANCE</p>
+            <h3 class="editorial-method-card-title">数据治理</h3>
+            <p>Frontend display layer is read-only；本 PR 不改变 data pipeline、sanitizer、workflow 或 production data write 边界。</p>
+          </article>
+        </section>
+        <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section editorial-method-panel" id="daily-brief-section">
                 <summary>Daily Brief 原始依据（可展开）<span class="summary-note">宏观风险判断总览是首页主判断；这里保留原始依据与来源细节。</span></summary>
                 <article class="card full-width-card">
                   <div class="card-head split-head">
@@ -858,7 +903,7 @@
                 </article>
               </details>
 
-        <details class="full-width-section cockpit-section advanced-panel secondary-ai-panel ia-detail-panel evidence-detail-section" id="ai-interpretation-layer-section">
+        <details class="full-width-section cockpit-section advanced-panel secondary-ai-panel ia-detail-panel evidence-detail-section editorial-method-panel" id="ai-interpretation-layer-section">
                 <summary>站内规则解释与证据说明（可展开）</summary>
                 <article class="card full-width-card">
                   <div class="card-head split-head">
@@ -908,7 +953,7 @@
                 </article>
               </details>
 
-        <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section" id="divergence-layer-section">
+        <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section editorial-method-panel" id="divergence-layer-section">
                 <summary>背离与能源审计详情（可展开）</summary>
                 <article class="card full-width-card">
                   <div class="card-head split-head">
@@ -950,7 +995,7 @@
                 </article>
               </details>
 
-        <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section" id="brent-pricing-layer-section">
+        <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section editorial-method-panel" id="brent-pricing-layer-section">
                 <summary>Brent 公开代理价格审计详情（可展开）</summary>
                 <article class="card full-width-card">
                   <div class="card-head split-head">
@@ -1009,7 +1054,7 @@
                 </article>
               </details>
 
-        <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section" id="world-order-stress-section">
+        <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section editorial-method-panel" id="world-order-stress-section">
                 <summary>世界秩序压力详情（可展开）</summary>
                 <article class="card full-width-card">
                   <div class="card-head split-head">
@@ -1081,7 +1126,7 @@
                 </article>
               </details>
 
-        <details class="advanced-panel ia-detail-panel evidence-detail-section">
+        <details class="advanced-panel ia-detail-panel evidence-detail-section editorial-method-panel">
                 <summary>站内总览与核心风险明细（可展开）</summary>
               <section class="grid two-col hero-grid cockpit-section">
                 <article class="card">
