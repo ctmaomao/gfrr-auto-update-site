@@ -512,3 +512,16 @@ Implemented boundary:
 - Market-pricing artifacts remain in the artifact sanitizer layer until an approved writer exists.
 - Market Pricing Temperature remains waiting-for-history.
 - No live fetch, production write, history write, or calculation is approved.
+
+## 25. v28.0M-16 Network Gate Design Status
+
+v28.0M-16 does not activate Market Pricing Temperature.
+
+Implemented boundary:
+
+- Network gate design keeps `networkAllowed=false`.
+- Market Pricing Temperature remains waiting-for-history.
+- No 60-week history exists.
+- No source is approved.
+- No live fetch, production write, history write, or calculation is approved.
+- SPX remains fallback-only and must not be treated as Nasdaq / QQQ temperature.
