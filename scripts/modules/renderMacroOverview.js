@@ -780,6 +780,124 @@ function appendPressureCountPill(root, label, value) {
   root.appendChild(pill);
 }
 
+function signalStatusClass(judgment) {
+  const id = String(judgment?.id || '');
+  const title = String(judgment?.title || '');
+  const status = String(judgment?.status || '');
+  const sourceType = String(judgment?.sourceType || '');
+  const group = String(judgment?.group || '');
+  const identity = `${id} ${title} ${group}`;
+  if (identity.includes('verified') || identity.includes('已验证')) return 'is-verified';
+  if (identity.includes('pending') || identity.includes('待验证')) return 'is-pending';
+  if (identity.includes('noise') || identity.includes('噪音')) return 'is-noise';
+  if (identity.includes('data-gap') || identity.includes('数据不足')) return 'is-gap';
+  const combined = `${status} ${sourceType}`;
+  if (combined.includes('数据不足') || combined.includes('等待接入')) return 'is-gap';
+  return 'is-neutral';
+}
+
+function signalBucketLabel(judgment) {
+  const className = signalStatusClass(judgment);
+  if (className === 'is-verified') return '已验证';
+  if (className === 'is-pending') return '待验证';
+  if (className === 'is-noise') return '噪音提示';
+  if (className === 'is-gap') return '数据不足';
+  return '观察中';
+}
+
+function buildSignalCounts(judgments) {
+  const counts = {
+    verified: 0,
+    pending: 0,
+    noise: 0,
+    gap: 0,
+  };
+  safeArray(judgments).forEach((judgment) => {
+    const className = signalStatusClass(judgment);
+    const evidenceCount = normalizeEvidenceList(judgment?.evidence).length;
+    const noiseCount = normalizeEvidenceList(judgment?.noiseWarning).length;
+    if (className === 'is-verified' && evidenceCount) counts.verified += 1;
+    else if (className === 'is-pending' && evidenceCount) counts.pending += 1;
+    else if (className === 'is-noise' && noiseCount) counts.noise += 1;
+    else if (className === 'is-gap') counts.gap += 1;
+  });
+  return counts;
+}
+
+function buildSignalCategorySummary(judgments) {
+  const items = safeArray(judgments);
+  if (!items.length) return '信号分层数据不足，暂不强行形成证据结论。';
+  const counts = buildSignalCounts(items);
+  const gaps = items.filter((judgment) => signalStatusClass(judgment) === 'is-gap');
+  const hasMissing = items.some((judgment) => normalizeEvidenceList(judgment.missingEvidence).length);
+  const lines = [];
+  if (counts.verified) {
+    lines.push('已验证证据已有部分支持');
+  } else {
+    lines.push('已验证证据仍不足');
+  }
+  if (counts.pending || hasMissing) {
+    lines.push('待验证线索和缺失证据需继续分开展示');
+  }
+  if (counts.noise) {
+    lines.push('单一价格波动仍作为噪音提示处理');
+  }
+  if (gaps.length) {
+    lines.push('数据缺口保留为独立约束');
+  }
+  return `${lines.join('；')}。`;
+}
+
+function appendEditorialSignalSublist(root, label, values, modifier = '') {
+  const items = normalizeEvidenceList(values);
+  if (!items.length) return;
+  const group = document.createElement('div');
+  group.className = `editorial-signal-sublist ${modifier}`.trim();
+  appendText(group, 'span', 'editorial-signal-sublist-label', label);
+  const list = document.createElement('ul');
+  list.className = 'editorial-signal-evidence';
+  items.forEach((item) => appendText(list, 'li', '', stripLabelPrefix(item, label)));
+  group.appendChild(list);
+  root.appendChild(group);
+}
+
+function appendEditorialSignalCard(root, judgment) {
+  const className = signalStatusClass(judgment);
+  const card = document.createElement('article');
+  card.className = `editorial-signal-card ${className}`;
+  const strip = document.createElement('div');
+  strip.className = 'editorial-signal-card-status-strip';
+  strip.setAttribute('aria-hidden', 'true');
+  card.appendChild(strip);
+
+  const head = document.createElement('div');
+  head.className = 'editorial-signal-card-head';
+  appendText(head, 'span', 'editorial-signal-bucket', signalBucketLabel(judgment));
+  appendText(head, 'h3', 'editorial-signal-card-title', judgment.title);
+  appendText(head, 'span', 'editorial-signal-badge', judgment.status || UNDECIDED);
+  card.appendChild(head);
+
+  const direction = judgment.direction && judgment.direction !== '方向待确认'
+    ? ` / ${judgment.direction}`
+    : '';
+  appendText(card, 'p', 'editorial-signal-main', `${judgment.status || UNDECIDED}${direction}`);
+  const explanation = judgment.explanation || judgment.conclusion;
+  if (explanation) appendText(card, 'p', 'editorial-signal-explanation', explanation);
+  appendEditorialSignalSublist(card, '关键证据', judgment.evidence, 'is-evidence');
+  appendEditorialSignalSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
+  appendEditorialSignalSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
+  appendEditorialSignalSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
+
+  const footer = document.createElement('div');
+  footer.className = 'editorial-signal-footer';
+  if (judgment.confidence && judgment.confidence !== '等待校准') appendText(footer, 'span', '', `证据强度：${judgment.confidence}`);
+  if (judgment.dataCoverage) appendText(footer, 'span', '', `数据覆盖：${stripLabelPrefix(judgment.dataCoverage, '数据覆盖')}`);
+  if (judgment.sourceType) appendText(footer, 'span', '', `来源类型：${judgment.sourceType}`);
+  if (judgment.updatedAt) appendText(footer, 'span', '', `更新：${judgment.updatedAt}`);
+  if (footer.childNodes.length) card.appendChild(footer);
+  root.appendChild(card);
+}
+
 function appendEditorialPressureSublist(root, label, values, modifier = '') {
   const items = normalizeEvidenceList(values);
   if (!items.length) return;
@@ -905,16 +1023,20 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   overview.pressures.forEach((item) => appendEditorialPressureCard(pressureGrid, item));
   pressure.appendChild(pressureGrid);
 
-  const signals = appendSection(container, '信号分层', '', 'homepage-signal-layers');
+  const signals = appendSection(container, '信号分层', 'editorial-category editorial-signal-category', 'homepage-signal-layers');
+  appendText(signals, 'p', 'editorial-category-kicker', 'SIGNAL LAYERS');
+  appendText(signals, 'p', 'editorial-category-summary', buildSignalCategorySummary(overview.signalLayers));
+  const signalCounts = buildSignalCounts(overview.signalLayers);
+  const signalCountGrid = document.createElement('div');
+  signalCountGrid.className = 'editorial-category-counts';
+  appendPressureCountPill(signalCountGrid, '已验证', signalCounts.verified);
+  appendPressureCountPill(signalCountGrid, '待验证', signalCounts.pending);
+  appendPressureCountPill(signalCountGrid, '噪音提示', signalCounts.noise);
+  appendPressureCountPill(signalCountGrid, '数据不足', signalCounts.gap);
+  signals.appendChild(signalCountGrid);
   const signalGrid = document.createElement('div');
-  signalGrid.className = 'macro-overview-grid four-col';
-  overview.signalLayers.forEach((group) => {
-    const card = document.createElement('article');
-    card.className = 'macro-overview-card';
-    appendText(card, 'h3', '', group.title);
-    appendList(card, [...group.evidence, ...group.noiseWarning], group.conclusion || '暂无可显示信号。');
-    signalGrid.appendChild(card);
-  });
+  signalGrid.className = 'editorial-signal-grid';
+  overview.signalLayers.forEach((group) => appendEditorialSignalCard(signalGrid, group));
   signals.appendChild(signalGrid);
 
   const drivers = appendSection(container, '四大宏观驱动', '', 'homepage-macro-drivers');
