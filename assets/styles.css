@@ -972,10 +972,28 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
 }
 .editorial-pressure-main {
   margin: 0;
-  color: var(--editorial-red);
+  color: var(--editorial-warm);
   font-size: 15px;
   font-weight: 900;
   line-height: 1.45;
+}
+.editorial-pressure-card.is-major .editorial-pressure-main {
+  color: var(--editorial-red);
+}
+.editorial-pressure-card.is-rising .editorial-pressure-main {
+  color: var(--editorial-orange);
+}
+.editorial-pressure-card.is-watch .editorial-pressure-main {
+  color: var(--editorial-yellow);
+}
+.editorial-pressure-card.is-calm .editorial-pressure-main {
+  color: var(--editorial-green);
+}
+.editorial-pressure-card.is-gap .editorial-pressure-main {
+  color: #7a7167;
+}
+.editorial-pressure-card.is-neutral .editorial-pressure-main {
+  color: var(--editorial-warm);
 }
 .editorial-pressure-explanation {
   margin: 0;
