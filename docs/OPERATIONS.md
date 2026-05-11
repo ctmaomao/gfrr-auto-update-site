@@ -2162,3 +2162,14 @@ Operator guidance:
 - Preserve evidence, missing evidence, counter-evidence, noise warnings, and data gaps.
 - Do not force macro conclusions from partial validation or change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
 - Market Pricing Temperature remains waiting-for-history and must not be activated.
+
+### v28.0N-9 editorial Global Risk Heatmap operator note
+
+v28.0N-9 introduces editorial Global Risk Heatmap polish. It is frontend display layer only.
+
+Operator guidance:
+
+- Preserve `global-risk-heatmap`, `world-heatmap`, `heatmap-list`, and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Keep Global Risk Heatmap standalone and visually prominent as a visual evidence layer.
+- Do not change heatmap scoring, region data calculation, data pipeline, workflows, External AI, Market Pricing, or decision/execution/position logic.
+- Market Pricing Temperature remains waiting-for-history and must not be activated.

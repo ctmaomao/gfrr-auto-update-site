@@ -639,3 +639,9 @@ Risk-engine type/status classes, summaries, count pills, and cards are presentat
 v28.0N-8 introduces editorial cross-validation reading polish and remains frontend display layer only.
 
 Cross-validation type/status classes, summaries, count pills, and cards are presentation only. Do not change how cross-validation judgments are calculated. Preserve homepage IA order and anchors, including `homepage-cross-validation`, and keep evidence, missing evidence, counter-evidence, noise warnings, and data gaps visible. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
+
+## 66. v28.0N-9 editorial Global Risk Heatmap reminder
+
+v28.0N-9 introduces editorial Global Risk Heatmap polish and remains frontend display layer only.
+
+Global Risk Heatmap styling is presentation only. Keep `global-risk-heatmap`, `world-heatmap`, and `heatmap-list` standalone and visually prominent. Do not change heatmap scoring, region data calculation, data files, scoring, decision, execution, position, workflows, External AI, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
