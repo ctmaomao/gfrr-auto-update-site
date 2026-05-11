@@ -1870,6 +1870,28 @@ This stage:
 - keeps Market Pricing Temperature waiting-for-history.
 
 ```text
+v28.0N-16 Editorial Redesign Contract Guard - Display Layer Only
+```
+
+## v28.0N-16 Editorial Redesign Contract Guard
+
+v28.0N-16 adds an editorial redesign contract guard.
+
+This stage:
+
+- is guard / validation layer only.
+- protects the Bubble Watch-inspired editorial structures, paper theme, Market Pricing waiting state, External AI read-only boundary, and Global Risk Heatmap standalone status.
+- does not change UI rendering, data, scoring, decision, execution, position logic, workflows, External AI behavior, or Market Pricing calculations.
+
+Next recommended step:
+
+```text
+Separate explicitly approved display-layer or guard task
+```
+
+Completed prior stage:
+
+```text
 v28.0N-15 Editorial Key Changes + Watch List - Display Layer Only
 ```
 

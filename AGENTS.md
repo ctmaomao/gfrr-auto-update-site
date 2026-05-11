@@ -681,3 +681,9 @@ Big Number and threshold styling must not change score calculation, `stageFromSc
 v28.0N-15 introduces editorial Key Changes and Watch List narrative blocks. It remains frontend display layer only.
 
 Key Changes and Watch List must use only existing structured data, existing gaps, pending confirmations, and counter-evidence. Do not add data sources, invent unsupported changes, activate Market Pricing Temperature, modify generated AI text, or change scoring, decision, execution, position, workflows, External AI behavior, Market Pricing calculations, or data files.
+
+## 73. v28.0N-16 editorial redesign contract guard reminder
+
+v28.0N-16 adds an editorial redesign contract guard. It remains guard / validation layer only.
+
+Run `npm run check:editorial-redesign-contract` when changing the editorial homepage shell, macro overview renderer, or paper theme styles. The guard protects the Bubble Watch-inspired editorial structures, paper theme, Market Pricing waiting state, External AI read-only boundary, Global Risk Heatmap standalone status, Detail Data appendix, and Method appendix. Do not use this guard PR as permission to redesign UI or change data, scoring, decision, execution, position logic, workflows, External AI behavior, Market Pricing calculations, generated AI text, or data files.
