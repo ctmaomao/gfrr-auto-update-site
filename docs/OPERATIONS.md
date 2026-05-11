@@ -2103,3 +2103,15 @@ Operator guidance:
 - Treat signal bucket classes, summaries, count pills, and cards as display-only presentation.
 - Do not edit generated AI text, Daily Brief output, scoring, signal judgment calculation, decision, execution, position, workflow, or data pipeline logic for the signal-layer polish.
 - Market Pricing Temperature remains waiting-for-history and must not be activated.
+
+### v28.0N-4 editorial paper/font operator note
+
+v28.0N-4 introduces the editorial paper background and Bubble Watch-style font stack foundation. It is frontend display layer only.
+
+Operator guidance:
+
+- Do not add external font, CDN, image, or provider URLs for the paper/font foundation.
+- Preserve the homepage reading path and anchors protected by `npm run check:homepage-ia-contract`.
+- Preserve dark legacy panel readability while the lower dashboard remains only partially converted.
+- Do not edit generated AI text, Daily Brief output, scoring, pressure or signal judgment calculation, decision, execution, position, workflow, or data pipeline logic.
+- Market Pricing Temperature remains waiting-for-history and must not be activated.
