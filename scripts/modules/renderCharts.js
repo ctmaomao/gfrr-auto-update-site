@@ -1,5 +1,21 @@
-import { $, riskColor, fmtSignedArrow } from './config.js?v=28.0M-7V';
+import { $, fmtSignedArrow } from './config.js?v=28.0M-7V';
 import { renderList } from './renderTables.js?v=28.0M-7V';
+
+const CHART_COLORS = {
+  primary: '#7C1D1D',
+  heatLow: '#1F4D2C',
+  heatMid: '#A8761A',
+  heatHigh: '#7C1D1D',
+  heatSevere: '#5A0F0F'
+};
+
+function chartRiskColor(score) {
+  if (!Number.isFinite(score)) return '#E8E0D4';
+  if (score >= 85) return CHART_COLORS.heatSevere;
+  if (score >= 70) return CHART_COLORS.heatHigh;
+  if (score >= 50) return CHART_COLORS.heatMid;
+  return CHART_COLORS.heatLow;
+}
 
 const TRANSMISSION_CHAIN_ORDER = [
   '油价→通胀',
@@ -78,8 +94,8 @@ export function renderLineChart(svgId, history, opts = {}) {
   svg.innerHTML = `
     <defs>
       <linearGradient id="${svgId}-gradient" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#6ebeff"></stop>
-        <stop offset="100%" stop-color="#6ebeff" stop-opacity="0"></stop>
+        <stop offset="0%" stop-color="${CHART_COLORS.primary}"></stop>
+        <stop offset="100%" stop-color="${CHART_COLORS.primary}" stop-opacity="0"></stop>
       </linearGradient>
     </defs>
     <line class="axis" x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
@@ -113,14 +129,14 @@ export function renderHeatmap(regions) {
   };
   const heatmapKeyAliases = { middleeast: 'middleEast' };
   svg.innerHTML = `
-    <rect x="12" y="20" width="756" height="330" rx="24" fill="rgba(8, 20, 39, 0.65)" stroke="rgba(133,164,229,0.14)"></rect>
+    <rect x="12" y="20" width="756" height="330" rx="24" fill="transparent" stroke="rgba(26,24,21,0.08)"></rect>
     <text class="heat-label" x="44" y="48">区域风险集中度</text>
   `;
   regions.forEach((region) => {
     const normalizedKey = heatmapKeyAliases[region.key] || region.key;
     const spec = layout[normalizedKey];
     if (!spec) return;
-    const color = riskColor(region.risk);
+    const color = chartRiskColor(region.risk);
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.innerHTML = `
       <rect class="heat-region" x="${spec.x}" y="${spec.y}" width="${spec.w}" height="${spec.h}" rx="20" fill="${color}" fill-opacity="0.82"></rect>
@@ -157,7 +173,7 @@ export function renderTransmission(chain) {
   const flow = $('chain-flow');
   flow.innerHTML = '';
   chain.nodes.forEach((node) => {
-    const color = riskColor(node.score);
+    const color = chartRiskColor(node.score);
     const card = document.createElement('div');
     card.className = 'chain-node';
     const deltaClass = node.delta > 0 ? 'up' : node.delta < 0 ? 'down' : 'flat';

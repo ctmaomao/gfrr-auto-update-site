@@ -2652,11 +2652,11 @@ td{color:var(--paper-ink);font-family:var(--font-serif);font-size:13px}
 .badge.neutral{background:var(--paper-bg);color:var(--paper-ink)}
 .chart-wrap,.large-chart{min-height:220px;margin:12px 0;padding:12px;border:1px solid var(--paper-line);border-radius:0;background:var(--paper-bg)}
 #trend-chart text{fill:var(--paper-muted);font-size:12px}
-#trend-chart .axis{stroke:rgba(255,255,255,0.12);stroke-width:1}
-#trend-chart .gridline{stroke:rgba(255,255,255,0.08);stroke-width:1}
-#trend-chart .series{fill:none;stroke:#70b8ff;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
-#trend-chart .point{fill:#d9f0ff;stroke:#70b8ff;stroke-width:3}
-#trend-chart .area{fill:url(#chartGradient);opacity:0.24}
+#trend-chart .axis{stroke:rgba(26,24,21,0.08);stroke-width:1}
+#trend-chart .gridline{stroke:rgba(26,24,21,0.08);stroke-width:1}
+#trend-chart .series{fill:none;stroke:var(--risk-red);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+#trend-chart .point{fill:var(--paper-bg);stroke:var(--risk-red);stroke-width:3}
+#trend-chart .area{fill:url(#trend-chart-gradient);opacity:0.18}
 .heatmap-card{min-height:640px;overflow:hidden;padding:22px;border:1px solid var(--paper-line-strong);border-radius:0;background:var(--paper-bg);color:var(--paper-ink)}
 .heatmap-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:24px;align-items:start;padding:8px}
 #world-heatmap{width:100%;height:auto;min-height:460px;display:block}
@@ -2879,11 +2879,11 @@ code { color: var(--risk-red); }
   color: var(--text);
 }
 #trend-chart-30d text { fill: var(--paper-muted); font-size: 11px; }
-#trend-chart-30d .axis { stroke: rgba(255,255,255,0.12); stroke-width: 1; }
-#trend-chart-30d .gridline { stroke: rgba(255,255,255,0.08); stroke-width: 1; }
-#trend-chart-30d .series { fill: none; stroke: #70b8ff; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
-#trend-chart-30d .point { fill: #d9f0ff; stroke: #70b8ff; stroke-width: 2.5; }
-#trend-chart-30d .area { fill: url(#trend-chart-30d-gradient); opacity: 0.24; }
+#trend-chart-30d .axis { stroke: rgba(26,24,21,0.08); stroke-width: 1; }
+#trend-chart-30d .gridline { stroke: rgba(26,24,21,0.08); stroke-width: 1; }
+#trend-chart-30d .series { fill: none; stroke: var(--risk-red); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+#trend-chart-30d .point { fill: var(--paper-bg); stroke: var(--risk-red); stroke-width: 2.5; }
+#trend-chart-30d .area { fill: url(#trend-chart-30d-gradient); opacity: 0.18; }
 
 @media (max-width: 1280px) {
   .time-grid { grid-template-columns: 1fr; }
