@@ -1551,20 +1551,22 @@ function appendSection(root, title, className = '', id = '') {
 function appendEditorialKeyChanges(root, changes) {
   const items = safeArray(changes);
   const section = document.createElement('section');
-  section.className = 'macro-overview-block editorial-key-changes';
-  appendText(section, 'p', 'editorial-key-changes-label', '本期关键变化 · KEY CHANGES');
+  section.className = 'macro-overview-block editorial-key-changes wow-section';
+  appendText(section, 'p', 'editorial-key-changes-label wow-label', '本期关键变化 · KEY CHANGES');
   const summary = items.length
     ? '以下只汇总站内已有结构化数据能够支持的边际提示，未确认项继续保留为待验证。'
     : '暂无足够边际变化数据，本区仅展示已能确认的方向性提示。';
-  appendText(section, 'p', 'editorial-key-changes-summary', summary);
+  appendText(section, 'p', 'editorial-key-changes-summary wow-intro', summary);
 
   const grid = document.createElement('div');
-  grid.className = 'editorial-key-changes-grid';
+  grid.className = 'editorial-key-changes-grid wow-grid';
   (items.length ? items : [keyChange('gap', '暂无足够边际变化数据，本区仅展示已能确认的方向性提示。', 'fallback')]).forEach((item) => {
     const card = document.createElement('article');
-    card.className = `editorial-key-change-item is-${item.kind || 'flat'}`;
-    appendText(card, 'span', `editorial-key-change-tag is-${item.kind || 'flat'}`, item.tag || keyChangeTag(item.kind));
-    appendText(card, 'p', '', item.body || '方向性提示等待确认。');
+    const kind = item.kind || 'flat';
+    const tone = kind === 'up' ? 'up' : kind === 'down' ? 'down' : 'flat';
+    card.className = `editorial-key-change-item wow-item is-${kind}`;
+    appendText(card, 'span', `editorial-key-change-tag wow-tag ${tone} is-${kind}`, item.tag || keyChangeTag(item.kind));
+    appendText(card, 'p', 'wow-text', item.body || '方向性提示等待确认。');
     if (item.source) appendText(card, 'span', 'editorial-key-change-source', item.source);
     grid.appendChild(card);
   });
