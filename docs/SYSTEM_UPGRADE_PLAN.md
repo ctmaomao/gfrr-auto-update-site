@@ -1818,6 +1818,23 @@ This stage:
 - remains frontend display layer only.
 - does not add live fetch, market-pricing records, MA60, standard deviation, z-score, calculation, production write, workflows, External AI changes, or scoring/decision/execution/position logic changes.
 
+```text
+v28.0N-7 Editorial Risk Engines Reading Polish - Display Layer Only
+```
+
+## v28.0N-7 Editorial Risk Engines Reading Polish
+
+v28.0N-7 introduces editorial risk-engine reading polish.
+
+This stage:
+
+- converts the Risk Engines section into an editorial risk-transmission evidence category.
+- keeps evidence, missing evidence, and counter-evidence visibly separated.
+- preserves homepage IA order and anchors, plus the v28.0N-1 through v28.0N-6 editorial sections.
+- remains frontend display layer only.
+- does not change risk-engine calculation, scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
+- keeps Market Pricing Temperature waiting-for-history.
+
 Next recommended step:
 
 ```text

@@ -627,3 +627,9 @@ Macro-driver type/status classes, summaries, count pills, and cards are presenta
 v28.0N-6 introduces editorial Market Temperature waiting-state polish and remains frontend display layer only.
 
 The Market Temperature waiting-state block is presentation only. Do not activate Market Pricing Temperature, infer cold/normal/hot/overheated state, add market-pricing records, write `data/market-pricing-history.json`, fetch live data, calculate MA60, standard deviation, z-score, or market temperature. Preserve homepage IA order and anchors, including `homepage-market-temperature`, and keep Market Pricing Temperature waiting-for-history.
+
+## 64. v28.0N-7 editorial risk-engine reminder
+
+v28.0N-7 introduces editorial risk-engine reading polish and remains frontend display layer only.
+
+Risk-engine type/status classes, summaries, count pills, and cards are presentation only. Do not change how risk-engine judgments are calculated. Preserve homepage IA order and anchors, including `homepage-risk-engines`, and keep evidence, missing evidence, and counter-evidence visible. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.

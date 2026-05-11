@@ -2138,3 +2138,15 @@ Operator guidance:
 - Keep Market Pricing Temperature waiting-for-history; do not infer market cold, normal, hot, or overheated status.
 - Keep QQQ / Nasdaq weekly history, 60+ weeks, MA60, standard deviation, and z-score gaps visible.
 - Do not add live fetch, market-pricing records, history writes, MA60, standard deviation, z-score, calculation, production writes, workflows, External AI changes, or scoring/decision/execution/position logic changes.
+
+### v28.0N-7 editorial risk-engine operator note
+
+v28.0N-7 introduces editorial risk-engine reading polish. It is frontend display layer only.
+
+Operator guidance:
+
+- Preserve `homepage-risk-engines` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Keep risk-engine type/status classes, summaries, count pills, and cards as rendered evidence only; do not change risk-engine judgment calculation.
+- Preserve evidence, missing evidence, and counter-evidence visibility.
+- Do not convert risk mechanisms into trading advice or change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
+- Market Pricing Temperature remains waiting-for-history and must not be activated.
