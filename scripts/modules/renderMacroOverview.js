@@ -622,6 +622,150 @@ export function buildMacroOverview(data = {}, healthDashboard = {}, worldOrderSt
   };
 }
 
+function uniqueStrings(values, limit = 6) {
+  const seen = new Set();
+  return safeArray(values)
+    .map((value) => (typeof value === 'string' ? value.trim() : ''))
+    .filter((value) => {
+      if (!value || seen.has(value)) return false;
+      seen.add(value);
+      return true;
+    })
+    .slice(0, limit);
+}
+
+function directionType(value = '') {
+  const source = String(value || '');
+  if (source.includes('数据不足') || source.includes('等待') || source.includes('缺口')) return 'gap';
+  if (source.includes('回落') || source.includes('下降') || source.includes('降温') || source.includes('暂未扩散') || source.includes('相对平稳')) return 'down';
+  if (source.includes('上升') || source.includes('升高') || source.includes('主要压力') || source.includes('系统性风险观察')) return 'up';
+  return 'flat';
+}
+
+function keyChangeTag(kind) {
+  if (kind === 'up') return '▲ 风险升高';
+  if (kind === 'down') return '▼ 风险下降';
+  if (kind === 'gap') return '数据不足';
+  return '→ 暂未确认';
+}
+
+function keyChange(kind, body, source = '') {
+  return {
+    kind,
+    tag: keyChangeTag(kind),
+    body,
+    source,
+  };
+}
+
+function buildKeyChanges(overview, data = {}, healthDashboard = {}) {
+  const changes = [];
+  const scoreChange = overview.today.change || NO_HISTORY;
+  if (scoreChange && scoreChange !== NO_HISTORY) {
+    changes.push(keyChange(
+      directionType(scoreChange),
+      `总分边际${scoreChange}，当前阶段为${overview.today.stage || UNDECIDED}。`,
+      'scoreChange1d / 今日总判断'
+    ));
+  } else {
+    changes.push(keyChange('gap', '暂无足够边际变化数据，本区仅展示已能确认的方向性提示。', 'scoreChange1d'));
+  }
+
+  const mainPressure = safeArray(overview.pressures)[0];
+  if (mainPressure) {
+    changes.push(keyChange(
+      directionType(`${mainPressure.status} ${mainPressure.direction}`),
+      `${mainPressure.title}：${mainPressure.status || UNDECIDED}，${mainPressure.explanation || '等待更多交叉确认。'}`,
+      mainPressure.sourceType || 'pressure-source'
+    ));
+  }
+
+  const signalCounts = buildSignalCounts(overview.signalLayers);
+  if (signalCounts.gap > 0 || signalCounts.pending > 0) {
+    changes.push(keyChange(
+      signalCounts.gap > 0 ? 'gap' : 'flat',
+      `信号分层仍有 ${signalCounts.pending} 项待验证、${signalCounts.gap} 项数据不足，暂不放大结论强度。`,
+      'SIGNAL LAYERS'
+    ));
+  }
+
+  const engineCounts = buildEngineCounts(overview.riskEngines);
+  changes.push(keyChange(
+    engineCounts.rising > 0 ? 'up' : engineCounts.gap > 0 ? 'gap' : 'flat',
+    `风险引擎显示 ${engineCounts.rising} 项压力上升 / 主要观察，${engineCounts.counter} 项反向证据，${engineCounts.gap} 项数据不足。`,
+    'RISK ENGINES'
+  ));
+
+  const validationCounts = buildValidationCounts(overview.crossValidation);
+  changes.push(keyChange(
+    validationCounts.gap > 0 ? 'gap' : validationCounts.pending > 0 ? 'flat' : 'down',
+    `交叉验证仍有 ${validationCounts.pending} 项待验证、${validationCounts.gap} 项数据不足，反向证据不隐藏。`,
+    'CROSS VALIDATION'
+  ));
+
+  const healthScore = finite(healthDashboard?.score ?? data?.dailyRealtimeInput?.healthScore ?? data?.confidenceScore);
+  if (healthScore !== null) {
+    changes.push(keyChange(
+      healthScore >= 80 ? 'down' : healthScore >= 60 ? 'flat' : 'gap',
+      `数据健康约 ${Math.round(healthScore)}%，仍需结合缺失证据判断结论强度。`,
+      'data health'
+    ));
+  }
+
+  return changes.slice(0, 6);
+}
+
+function collectMissingEvidence(judgments, limit = 4) {
+  return uniqueStrings(safeArray(judgments).flatMap((judgment) => normalizeEvidenceList(judgment?.missingEvidence)), limit);
+}
+
+function watchItem(group, title, desc, meta = '') {
+  return { group, title, desc, meta };
+}
+
+function buildWatchList(overview, data = {}) {
+  const brief = isPlainObject(data?.dailyBrief) ? data.dailyBrief : {};
+  const triggers = uniqueStrings(brief.keyTriggers, 3);
+  const invalidations = uniqueStrings(brief.invalidationSignals, 3);
+  const pressureGaps = collectMissingEvidence(overview.pressures, 2);
+  const engineGaps = collectMissingEvidence(overview.riskEngines, 2);
+  const validationGaps = collectMissingEvidence(overview.crossValidation, 2);
+  const counterSignals = uniqueStrings([
+    ...safeArray(overview.pressures).flatMap((judgment) => normalizeEvidenceList(judgment.counterEvidence)),
+    ...safeArray(overview.riskEngines).flatMap((judgment) => normalizeEvidenceList(judgment.counterEvidence)),
+    ...safeArray(overview.crossValidation).flatMap((judgment) => normalizeEvidenceList(judgment.counterEvidence)),
+  ], 3);
+
+  const items = [];
+  triggers.slice(0, 3).forEach((item) => {
+    items.push(watchItem('up', '风险升级需要看到', item, 'Daily Brief keyTriggers'));
+  });
+  if (!triggers.length) {
+    const fallback = uniqueStrings([
+      ...pressureGaps,
+      ...engineGaps,
+      '信用利差是否扩散，并与 VIX / 风险资产形成同步确认。',
+      '能源/实物端证据是否继续确认，而不是只依赖单一价格。',
+    ], 3);
+    fallback.forEach((item) => items.push(watchItem('up', '风险升级需要看到', item, 'missingEvidence / pending confirmation')));
+  }
+
+  invalidations.slice(0, 3).forEach((item) => {
+    items.push(watchItem('down', '风险降温 / 反向验证需要看到', item, 'Daily Brief invalidationSignals'));
+  });
+  if (!invalidations.length) {
+    const fallback = uniqueStrings([
+      ...counterSignals,
+      '信用与波动率继续不确认扩散。',
+      'Market Pricing history 补齐前，价格温度仍保持等待而非结论。',
+      ...validationGaps,
+    ], 3);
+    fallback.forEach((item) => items.push(watchItem('down', '风险降温 / 反向验证需要看到', item, 'counterEvidence / data gap')));
+  }
+
+  return items.slice(0, 6);
+}
+
 function appendText(root, tag, className, value) {
   const el = document.createElement(tag);
   if (className) el.className = className;
@@ -1404,6 +1548,56 @@ function appendSection(root, title, className = '', id = '') {
   return section;
 }
 
+function appendEditorialKeyChanges(root, changes) {
+  const items = safeArray(changes);
+  const section = document.createElement('section');
+  section.className = 'macro-overview-block editorial-key-changes';
+  appendText(section, 'p', 'editorial-key-changes-label', '本期关键变化 · KEY CHANGES');
+  const summary = items.length
+    ? '以下只汇总站内已有结构化数据能够支持的边际提示，未确认项继续保留为待验证。'
+    : '暂无足够边际变化数据，本区仅展示已能确认的方向性提示。';
+  appendText(section, 'p', 'editorial-key-changes-summary', summary);
+
+  const grid = document.createElement('div');
+  grid.className = 'editorial-key-changes-grid';
+  (items.length ? items : [keyChange('gap', '暂无足够边际变化数据，本区仅展示已能确认的方向性提示。', 'fallback')]).forEach((item) => {
+    const card = document.createElement('article');
+    card.className = `editorial-key-change-item is-${item.kind || 'flat'}`;
+    appendText(card, 'span', `editorial-key-change-tag is-${item.kind || 'flat'}`, item.tag || keyChangeTag(item.kind));
+    appendText(card, 'p', '', item.body || '方向性提示等待确认。');
+    if (item.source) appendText(card, 'span', 'editorial-key-change-source', item.source);
+    grid.appendChild(card);
+  });
+  section.appendChild(grid);
+  root.appendChild(section);
+}
+
+function appendEditorialWatchList(root, items) {
+  const values = safeArray(items);
+  const section = document.createElement('section');
+  section.className = 'macro-overview-block editorial-watch-list';
+  appendText(section, 'p', 'editorial-watch-kicker', 'WHAT TO WATCH');
+  appendText(section, 'h2', 'editorial-watch-title', '下一步验证清单');
+  appendText(section, 'p', 'editorial-watch-summary', '验证清单只整理现有触发条件、反证条件、缺失证据和待确认项，不新增信号。');
+
+  const grid = document.createElement('div');
+  grid.className = 'editorial-watch-grid';
+  const numbers = ['①', '②', '③', '④', '⑤', '⑥'];
+  values.forEach((item, index) => {
+    const card = document.createElement('article');
+    card.className = `editorial-watch-item is-${item.group || 'up'}`;
+    appendText(card, 'span', 'editorial-watch-icon', numbers[index] || String(index + 1));
+    const body = document.createElement('div');
+    appendText(body, 'h3', 'editorial-watch-item-title', item.title || '下一步验证');
+    appendText(body, 'p', 'editorial-watch-item-desc', item.desc || '等待更多证据确认。');
+    if (item.meta) appendText(body, 'span', 'editorial-watch-item-meta', item.meta);
+    card.appendChild(body);
+    grid.appendChild(card);
+  });
+  section.appendChild(grid);
+  root.appendChild(section);
+}
+
 export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressData, container = $('macro-risk-overview-root')) {
   if (!container) return;
   const overview = buildMacroOverview(data, healthDashboard, worldOrderStressData);
@@ -1544,4 +1738,7 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   crossGrid.className = 'editorial-validation-grid';
   overview.crossValidation.forEach((item) => appendEditorialValidationCard(crossGrid, item));
   cross.appendChild(crossGrid);
+
+  appendEditorialKeyChanges(container, buildKeyChanges(overview, data, healthDashboard));
+  appendEditorialWatchList(container, buildWatchList(overview, data));
 }

@@ -675,3 +675,9 @@ Inline theme cleanup is presentation only. Preserve homepage IA order, anchors, 
 v28.0N-14 deepens the editorial first-fold Big Number and threshold scale presentation. It remains frontend display layer only.
 
 Big Number and threshold styling must not change score calculation, `stageFromScore` thresholds, judgment calculation, data files, data pipeline, workflows, External AI behavior, Market Pricing behavior, decision, execution, or position logic. Keep threshold bands aligned with existing stage semantics and keep Market Pricing Temperature waiting-for-history.
+
+## 72. v28.0N-15 editorial Key Changes and Watch List reminder
+
+v28.0N-15 introduces editorial Key Changes and Watch List narrative blocks. It remains frontend display layer only.
+
+Key Changes and Watch List must use only existing structured data, existing gaps, pending confirmations, and counter-evidence. Do not add data sources, invent unsupported changes, activate Market Pricing Temperature, modify generated AI text, or change scoring, decision, execution, position, workflows, External AI behavior, Market Pricing calculations, or data files.
