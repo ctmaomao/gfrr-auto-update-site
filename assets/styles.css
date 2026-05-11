@@ -1990,6 +1990,140 @@ main { display: grid; gap: 22px; }
     width: 100%;
   }
 }
+.editorial-external-ai-panel {
+  border: 1px solid var(--editorial-line);
+  border-top: 4px double var(--editorial-ink);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(251, 247, 240, 0.98), rgba(238, 231, 219, 0.94));
+  color: var(--editorial-ink);
+  box-shadow: none;
+}
+.editorial-external-ai-panel > .card-head {
+  margin: 0;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--editorial-line);
+  align-items: flex-start;
+}
+.editorial-external-ai-kicker,
+.editorial-external-ai-meta,
+.editorial-external-ai-panel .external-ai-badge,
+.editorial-external-ai-panel .external-ai-source-meta {
+  color: var(--editorial-red);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.editorial-external-ai-title {
+  margin: 6px 0 8px;
+  color: var(--editorial-ink);
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.editorial-external-ai-boundary {
+  max-width: 880px;
+  color: var(--editorial-warm);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.65;
+}
+.editorial-external-ai-meta {
+  border-color: rgba(26, 24, 21, 0.18);
+  background: rgba(26, 24, 21, 0.04);
+}
+#external-ai-display-panel[hidden] {
+  display: none;
+}
+.editorial-external-ai-card:not([hidden]) {
+  margin: 0;
+  padding: 18px 20px 20px;
+}
+.editorial-external-ai-panel .external-ai-card {
+  border: 1px solid rgba(26, 24, 21, 0.18);
+  border-left: 4px solid var(--editorial-red);
+  border-radius: 8px;
+  background: rgba(255, 252, 245, 0.76);
+  box-shadow: none;
+  color: var(--editorial-ink);
+}
+.editorial-external-ai-panel .external-ai-header {
+  gap: 16px;
+}
+.editorial-external-ai-panel .external-ai-header h2 {
+  color: var(--editorial-ink);
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.25;
+}
+.editorial-external-ai-panel .external-ai-kicker {
+  max-width: 820px;
+  color: var(--editorial-warm);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.65;
+}
+.editorial-external-ai-panel .external-ai-badge {
+  border-color: rgba(141, 42, 35, 0.22);
+  background: rgba(141, 42, 35, 0.06);
+  color: var(--editorial-red);
+  letter-spacing: 0.08em;
+}
+.editorial-external-ai-panel .external-ai-summary {
+  border-left: 4px solid var(--editorial-orange);
+  background: rgba(238, 231, 219, 0.78);
+}
+.editorial-external-ai-panel .external-ai-summary p {
+  color: var(--editorial-ink);
+  font-family: var(--font-body);
+  font-weight: 800;
+}
+.editorial-external-ai-panel .external-ai-section {
+  border: 1px solid rgba(26, 24, 21, 0.16);
+  background: rgba(251, 247, 240, 0.8);
+  color: var(--editorial-ink);
+}
+.editorial-external-ai-panel .external-ai-section h3,
+.editorial-external-ai-panel .external-ai-scenario-title {
+  color: var(--editorial-ink);
+  font-family: var(--font-display);
+  font-weight: 900;
+}
+.editorial-external-ai-panel .external-ai-section-label,
+.editorial-external-ai-panel .external-ai-muted,
+.editorial-external-ai-panel .external-ai-list,
+.editorial-external-ai-panel .external-ai-list li,
+.editorial-external-ai-panel .external-ai-meta {
+  color: var(--editorial-warm);
+}
+.editorial-external-ai-panel .external-ai-scenario-item,
+.editorial-external-ai-panel .external-ai-source-row {
+  border-top-color: rgba(26, 24, 21, 0.14);
+}
+.editorial-external-ai-panel .external-ai-meta {
+  border-top: 1px solid rgba(26, 24, 21, 0.14);
+  padding-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+}
+@media (max-width: 760px) {
+  .editorial-external-ai-panel > .card-head {
+    display: grid;
+    gap: 12px;
+    padding: 17px 16px;
+  }
+  .editorial-external-ai-title {
+    font-size: 24px;
+  }
+  .editorial-external-ai-card:not([hidden]) {
+    padding: 14px;
+  }
+}
 .editorial-method-section {
   border: 1px solid var(--editorial-line);
   border-top: 4px double var(--editorial-ink);

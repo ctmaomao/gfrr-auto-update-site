@@ -657,3 +657,9 @@ Detailed Data appendix styling is presentation only. Keep `detail-data`, `risk-e
 v28.0N-11 introduces editorial Method / Evidence / Boundary appendix polish and remains frontend display layer only.
 
 Method appendix styling is presentation only. Keep `method-evidence`, homepage IA order, anchors, and existing method detail panels. Keep method content as a secondary explanatory appendix, not the first reading path. Do not change data, chart calculations, scoring, decision, execution, position, workflows, External AI, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
+
+## 69. v28.0N-12 editorial External AI read-only panel reminder
+
+v28.0N-12 introduces editorial External AI read-only panel polish and remains frontend display layer only.
+
+External AI panel styling is presentation only. Keep `external-ai-display-panel`, hidden / aria-hidden behavior, homepage IA order, anchors, and External AI as auxiliary read-only explanation. Do not modify generated AI text, provider path, workflows, output schema, production write guard, hidden scaffold guard, data files, scoring, decision, execution, position, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
