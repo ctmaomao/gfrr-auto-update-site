@@ -597,3 +597,9 @@ Future homepage IA changes must keep the 10-step nav path, point nav anchors to 
 v28.0N-1 introduces an editorial first-fold homepage skin and remains frontend display layer only.
 
 Do not use editorial homepage work to change scoring, decision, execution, position, data pipeline, workflow, External AI, or Market Pricing behavior. Preserve the homepage jump-nav order and anchors. Do not edit generated AI text or production data. Market Pricing Temperature must remain waiting-for-history; do not add market-pricing records, live fetches, MA60, standard deviation, z-score, or market temperature calculations.
+
+## 59. v28.0N-2 editorial pressure-source reminder
+
+v28.0N-2 introduces editorial pressure-source reading polish and remains frontend display layer only.
+
+Pressure-source status classes, summaries, count pills, and cards are presentation only. Do not change how pressure source judgments are calculated. Preserve homepage IA order and anchors, including `homepage-pressure-sources`. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.

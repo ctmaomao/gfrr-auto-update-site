@@ -327,6 +327,7 @@ External AI production refresh status: v28.0L-4A adds manual and once-daily prod
 External AI refresh monitoring status: v28.0L-4C documents monitoring design; GitHub native failed-workflow notifications are the recommended initial approach.
 Homepage IA status: v28.0M-7V follows the conclusion → reason → evidence → detail reading path, with Macro Overview as the primary judgment and collapsible sections for detailed data, method evidence, and advanced execution/risk detail. v28.0M-7V-1 records that this repair is merged and audited.
 Homepage editorial skin status: v28.0N-1 introduces an editorial first-fold homepage skin. It is frontend display layer only and does not change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations. Market Pricing Temperature remains waiting-for-history.
+Homepage pressure-source polish status: v28.0N-2 introduces editorial pressure-source reading polish. It is frontend display layer only and does not change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations. Market Pricing Temperature remains waiting-for-history.
 Market pricing status: v28.0M-16 adds network gate design; network remains disabled and production history writes remain disabled.
 
 Runtime status: v28.0L-3I-0 standardizes local development and GitHub Actions on Node.js 24 LTS.

@@ -2081,3 +2081,14 @@ Operator guidance:
 - Do not edit generated AI text, Daily Brief output, scoring, decision, execution, position, workflow, or data pipeline logic for the editorial skin.
 - Market Pricing Temperature remains waiting-for-history; do not add market-pricing records or calculate MA60, standard deviation, z-score, bands, or temperature.
 - External AI remains read-only auxiliary explanation and must keep its boundaries.
+
+### v28.0N-2 editorial pressure-source operator note
+
+v28.0N-2 introduces editorial pressure-source reading polish. It is frontend display layer only.
+
+Operator guidance:
+
+- Preserve `homepage-pressure-sources` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Treat pressure-source status classes and count pills as display-only presentation.
+- Do not edit generated AI text, Daily Brief output, scoring, decision, execution, position, workflow, or data pipeline logic for the pressure-source polish.
+- Market Pricing Temperature remains waiting-for-history and must not be activated.

@@ -1732,6 +1732,25 @@ Recommended next step:
 v28.0N-2 Editorial Pressure Source Reading Polish - Display Layer Only
 ```
 
+## v28.0N-2 Editorial Pressure Source Reading Polish
+
+v28.0N-2 introduces editorial pressure-source reading polish.
+
+This stage:
+
+- converts the pressure sources section into an editorial evidence category.
+- adds status counts and indicator-style pressure source cards.
+- preserves the v28.0N-1 first fold, homepage IA order, and anchors.
+- remains frontend display layer only.
+- does not change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
+- keeps Market Pricing Temperature waiting-for-history.
+
+Recommended next step:
+
+```text
+v28.0N-3 Editorial Signal Layer Reading Polish - Display Layer Only
+```
+
 ## v28.0M-7U Homepage De-duplication and Detail Collapse
 
 v28.0M-7U refines the homepage information architecture without changing data or model logic.
