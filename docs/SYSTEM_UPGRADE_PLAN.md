@@ -1835,6 +1835,23 @@ This stage:
 - does not change risk-engine calculation, scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
 - keeps Market Pricing Temperature waiting-for-history.
 
+```text
+v28.0N-8 Editorial Cross-Validation Reading Polish - Display Layer Only
+```
+
+## v28.0N-8 Editorial Cross-Validation Reading Polish
+
+v28.0N-8 introduces editorial cross-validation reading polish.
+
+This stage:
+
+- converts the Cross Validation section into an editorial evidence-confirmation category.
+- keeps evidence, missing evidence, counter-evidence, and data gaps visibly separated.
+- preserves homepage IA order and anchors, plus the v28.0N-1 through v28.0N-7 editorial sections.
+- remains frontend display layer only.
+- does not change cross-validation calculation, scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
+- keeps Market Pricing Temperature waiting-for-history.
+
 Next recommended step:
 
 ```text

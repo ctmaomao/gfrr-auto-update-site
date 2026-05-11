@@ -2150,3 +2150,15 @@ Operator guidance:
 - Preserve evidence, missing evidence, and counter-evidence visibility.
 - Do not convert risk mechanisms into trading advice or change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
 - Market Pricing Temperature remains waiting-for-history and must not be activated.
+
+### v28.0N-8 editorial cross-validation operator note
+
+v28.0N-8 introduces editorial cross-validation reading polish. It is frontend display layer only.
+
+Operator guidance:
+
+- Preserve `homepage-cross-validation` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Keep cross-validation status classes, summaries, count pills, and cards as rendered evidence only; do not change cross-validation judgment calculation.
+- Preserve evidence, missing evidence, counter-evidence, noise warnings, and data gaps.
+- Do not force macro conclusions from partial validation or change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
+- Market Pricing Temperature remains waiting-for-history and must not be activated.

@@ -633,3 +633,9 @@ The Market Temperature waiting-state block is presentation only. Do not activate
 v28.0N-7 introduces editorial risk-engine reading polish and remains frontend display layer only.
 
 Risk-engine type/status classes, summaries, count pills, and cards are presentation only. Do not change how risk-engine judgments are calculated. Preserve homepage IA order and anchors, including `homepage-risk-engines`, and keep evidence, missing evidence, and counter-evidence visible. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
+
+## 65. v28.0N-8 editorial cross-validation reminder
+
+v28.0N-8 introduces editorial cross-validation reading polish and remains frontend display layer only.
+
+Cross-validation type/status classes, summaries, count pills, and cards are presentation only. Do not change how cross-validation judgments are calculated. Preserve homepage IA order and anchors, including `homepage-cross-validation`, and keep evidence, missing evidence, counter-evidence, noise warnings, and data gaps visible. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
