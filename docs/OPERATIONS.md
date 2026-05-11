@@ -2092,3 +2092,14 @@ Operator guidance:
 - Treat pressure-source status classes and count pills as display-only presentation.
 - Do not edit generated AI text, Daily Brief output, scoring, decision, execution, position, workflow, or data pipeline logic for the pressure-source polish.
 - Market Pricing Temperature remains waiting-for-history and must not be activated.
+
+### v28.0N-3 editorial signal-layer operator note
+
+v28.0N-3 introduces editorial signal-layer reading polish. It is frontend display layer only.
+
+Operator guidance:
+
+- Preserve `homepage-signal-layers` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Treat signal bucket classes, summaries, count pills, and cards as display-only presentation.
+- Do not edit generated AI text, Daily Brief output, scoring, signal judgment calculation, decision, execution, position, workflow, or data pipeline logic for the signal-layer polish.
+- Market Pricing Temperature remains waiting-for-history and must not be activated.

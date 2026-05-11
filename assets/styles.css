@@ -1043,6 +1043,149 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
   font-weight: 800;
   line-height: 1.45;
 }
+.editorial-signal-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.editorial-signal-card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 11px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 14px 14px;
+  border: 1px solid var(--editorial-line);
+  border-radius: 8px;
+  background: rgba(251, 247, 240, 0.94);
+  color: var(--editorial-ink);
+}
+.editorial-signal-card-status-strip {
+  height: 5px;
+  margin: 0 -14px;
+  background: var(--editorial-muted);
+}
+.editorial-signal-card.is-verified .editorial-signal-card-status-strip,
+.editorial-signal-card.is-verified .editorial-signal-badge,
+.editorial-signal-card.is-verified .editorial-signal-bucket {
+  background: var(--editorial-green);
+  color: #fffaf2;
+}
+.editorial-signal-card.is-pending .editorial-signal-card-status-strip,
+.editorial-signal-card.is-pending .editorial-signal-badge,
+.editorial-signal-card.is-pending .editorial-signal-bucket {
+  background: var(--editorial-yellow);
+  color: #fffaf2;
+}
+.editorial-signal-card.is-noise .editorial-signal-card-status-strip,
+.editorial-signal-card.is-noise .editorial-signal-badge,
+.editorial-signal-card.is-noise .editorial-signal-bucket {
+  background: #7a7167;
+  color: #fffaf2;
+}
+.editorial-signal-card.is-gap .editorial-signal-card-status-strip,
+.editorial-signal-card.is-gap .editorial-signal-badge,
+.editorial-signal-card.is-gap .editorial-signal-bucket {
+  background: #8d6f67;
+  color: #fffaf2;
+}
+.editorial-signal-card-head {
+  display: grid;
+  gap: 8px;
+}
+.editorial-signal-card-title {
+  margin: 0;
+  color: var(--editorial-ink);
+  font-size: 17px;
+  line-height: 1.35;
+}
+.editorial-signal-bucket,
+.editorial-signal-badge {
+  justify-self: start;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #fffaf2;
+  background: var(--editorial-muted);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+.editorial-signal-bucket {
+  color: var(--editorial-ink);
+  background: rgba(26, 24, 21, 0.10);
+}
+.editorial-signal-card.is-verified .editorial-signal-main {
+  color: var(--editorial-green);
+}
+.editorial-signal-card.is-pending .editorial-signal-main {
+  color: var(--editorial-yellow);
+}
+.editorial-signal-card.is-noise .editorial-signal-main {
+  color: #7a7167;
+}
+.editorial-signal-card.is-gap .editorial-signal-main {
+  color: #7a7167;
+}
+.editorial-signal-card.is-neutral .editorial-signal-main {
+  color: var(--editorial-warm);
+}
+.editorial-signal-main {
+  margin: 0;
+  color: var(--editorial-warm);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.45;
+}
+.editorial-signal-explanation {
+  margin: 0;
+  color: var(--editorial-warm);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.editorial-signal-sublist {
+  display: grid;
+  gap: 5px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(26, 24, 21, 0.14);
+}
+.editorial-signal-sublist-label {
+  color: var(--editorial-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+.editorial-signal-evidence {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--editorial-warm);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.editorial-signal-sublist.is-missing {
+  background: rgba(124, 29, 29, 0.06);
+  margin: 0 -6px;
+  padding: 9px 6px 0;
+}
+.editorial-signal-sublist.is-missing .editorial-signal-sublist-label,
+.editorial-signal-sublist.is-noise .editorial-signal-sublist-label {
+  color: var(--editorial-red);
+}
+.editorial-signal-sublist.is-counter .editorial-signal-sublist-label {
+  color: var(--editorial-green);
+}
+.editorial-signal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(26, 24, 21, 0.14);
+  color: var(--editorial-muted);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.45;
+}
 main { display: grid; gap: 22px; }
 .section-group-title {
   margin: 18px 0 2px;
@@ -1523,7 +1666,8 @@ article {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .editorial-pressure-grid {
+  .editorial-pressure-grid,
+  .editorial-signal-grid {
     grid-template-columns: 1fr;
   }
   .editorial-category-summary {

@@ -1751,6 +1751,25 @@ Recommended next step:
 v28.0N-3 Editorial Signal Layer Reading Polish - Display Layer Only
 ```
 
+## v28.0N-3 Editorial Signal Layer Reading Polish
+
+v28.0N-3 introduces editorial signal-layer reading polish.
+
+This stage:
+
+- converts the signal layers section into an editorial evidence taxonomy.
+- adds bucket counts and evidence cards for verified, pending, noise, and data-gap signals.
+- preserves the v28.0N-1 first fold, the v28.0N-2 pressure source section, homepage IA order, and anchors.
+- remains frontend display layer only.
+- does not change scoring, decision, execution, position logic, signal judgment calculation, data pipeline, workflows, External AI, or Market Pricing calculations.
+- keeps Market Pricing Temperature waiting-for-history.
+
+Next recommended step:
+
+```text
+v28.0N-4 Editorial Macro Driver Reading Polish - Display Layer Only
+```
+
 ## v28.0M-7U Homepage De-duplication and Detail Collapse
 
 v28.0M-7U refines the homepage information architecture without changing data or model logic.

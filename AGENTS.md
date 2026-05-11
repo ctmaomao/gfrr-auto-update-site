@@ -603,3 +603,9 @@ Do not use editorial homepage work to change scoring, decision, execution, posit
 v28.0N-2 introduces editorial pressure-source reading polish and remains frontend display layer only.
 
 Pressure-source status classes, summaries, count pills, and cards are presentation only. Do not change how pressure source judgments are calculated. Preserve homepage IA order and anchors, including `homepage-pressure-sources`. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
+
+## 60. v28.0N-3 editorial signal-layer reminder
+
+v28.0N-3 introduces editorial signal-layer reading polish and remains frontend display layer only.
+
+Signal bucket classes, summaries, count pills, and cards are presentation only. Do not change how signal layer judgments are calculated. Preserve homepage IA order and anchors, including `homepage-signal-layers`. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
