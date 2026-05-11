@@ -1870,6 +1870,25 @@ This stage:
 - keeps Market Pricing Temperature waiting-for-history.
 
 ```text
+v28.0N-14 Editorial Big Number + Threshold Scale Polish - Display Layer Only
+```
+
+## v28.0N-14 Editorial Big Number + Threshold Scale Polish
+
+v28.0N-14 deepens the editorial first-fold Big Number and threshold scale presentation.
+
+This stage:
+
+- strengthens the reverse `GLOBAL RISK SCORE` Big Number card.
+- strengthens the `TODAY'S VERDICT` / 今日总判断 card.
+- keeps the threshold bands aligned with existing `stageFromScore` semantics.
+- remains frontend display layer only.
+- does not change score calculation, `stageFromScore` thresholds, data, workflows, External AI, Market Pricing, decision, execution, or position logic.
+- keeps Market Pricing Temperature waiting-for-history.
+
+Completed prior stage:
+
+```text
 v28.0N-13 Editorial Inline Dark Theme Cleanup - Display Layer Only
 ```
 
