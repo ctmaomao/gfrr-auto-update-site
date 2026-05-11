@@ -615,3 +615,9 @@ Signal bucket classes, summaries, count pills, and cards are presentation only. 
 v28.0N-4 introduces the editorial paper background and Bubble Watch-style font stack foundation and remains frontend display layer only.
 
 Do not add external font, CDN, image, or provider URLs for this foundation. Preserve homepage IA order and anchors, preserve the v28.0N-1 first fold, the v28.0N-2 pressure section, and the v28.0N-3 signal section. Keep dark legacy panels readable. Do not edit generated AI text, data files, scoring, pressure or signal judgment calculation, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
+
+## 62. v28.0N-5 editorial macro-driver reminder
+
+v28.0N-5 introduces editorial macro-driver reading polish and remains frontend display layer only.
+
+Macro-driver type/status classes, summaries, count pills, and cards are presentation only. Do not change how macro driver judgments are calculated. Preserve homepage IA order and anchors, including `homepage-macro-drivers`. Preserve the v28.0N-1 first fold, v28.0N-2 pressure section, v28.0N-3 signal section, and v28.0N-4 paper/font foundation. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.

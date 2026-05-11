@@ -1784,6 +1784,23 @@ This stage:
 - does not change scoring, decision, execution, position logic, signal or pressure judgment calculation, data pipeline, workflows, External AI, or Market Pricing calculations.
 - keeps Market Pricing Temperature waiting-for-history.
 
+```text
+v28.0N-5 Editorial Macro Drivers Reading Polish - Display Layer Only
+```
+
+## v28.0N-5 Editorial Macro Drivers Reading Polish
+
+v28.0N-5 introduces editorial macro-driver reading polish.
+
+This stage:
+
+- converts the macro drivers section into an editorial evidence category with driver cards.
+- keeps growth, inflation, liquidity, and policy visibly separated.
+- preserves the v28.0N-1 first fold, the v28.0N-2 pressure source section, the v28.0N-3 signal layer section, the v28.0N-4 warm paper/font foundation, homepage IA order, and anchors.
+- remains frontend display layer only.
+- does not change scoring, decision, execution, position logic, macro driver judgment calculation, data pipeline, workflows, External AI, or Market Pricing calculations.
+- keeps Market Pricing Temperature waiting-for-history.
+
 Next recommended step:
 
 ```text

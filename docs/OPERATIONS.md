@@ -2115,3 +2115,15 @@ Operator guidance:
 - Preserve dark legacy panel readability while the lower dashboard remains only partially converted.
 - Do not edit generated AI text, Daily Brief output, scoring, pressure or signal judgment calculation, decision, execution, position, workflow, or data pipeline logic.
 - Market Pricing Temperature remains waiting-for-history and must not be activated.
+
+### v28.0N-5 editorial macro-driver operator note
+
+v28.0N-5 introduces editorial macro-driver reading polish. It is frontend display layer only.
+
+Operator guidance:
+
+- Preserve `homepage-macro-drivers` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Keep growth, inflation, liquidity, and policy driver cards as rendered evidence only; do not change macro driver judgment calculation.
+- Preserve the N-1 first fold, N-2 pressure section, N-3 signal section, N-4 paper/font foundation, homepage IA order, and anchors.
+- Do not change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
+- Market Pricing Temperature remains waiting-for-history and must not be activated.
