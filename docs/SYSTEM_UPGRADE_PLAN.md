@@ -1870,6 +1870,25 @@ This stage:
 - keeps Market Pricing Temperature waiting-for-history.
 
 ```text
+v28.0N-13 Editorial Inline Dark Theme Cleanup - Display Layer Only
+```
+
+## v28.0N-13 Editorial Inline Dark Theme Cleanup
+
+v28.0N-13 cleans up residual dark inline theme styles in index.html so the editorial paper theme can apply consistently.
+
+This stage:
+
+- aligns remaining macro overview, world-order, details, and External AI inline styles with the editorial paper theme.
+- removes residual dark-blue inline backgrounds, blue/white text values, and blue world-order score gradient from the touched style scope.
+- remains frontend display layer only.
+- adds no external font/CDN URLs.
+- does not change data, scoring, decision, execution, position logic, workflows, External AI behavior, or Market Pricing calculations.
+- keeps Market Pricing Temperature waiting-for-history.
+
+Completed prior stage:
+
+```text
 v28.0N-12 Editorial External AI Read-Only Panel Polish - Display Layer Only
 ```
 

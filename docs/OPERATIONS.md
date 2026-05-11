@@ -2206,3 +2206,14 @@ Operator guidance:
 - Keep External AI auxiliary and read-only.
 - Do not change External AI generated text, provider path, workflow, output schema, production write, scoring, decision, execution, position logic, data pipeline, or Market Pricing calculations.
 - Keep Market Pricing Temperature waiting-for-history.
+
+### v28.0N-13 editorial inline dark theme cleanup operator note
+
+v28.0N-13 cleans up residual dark inline theme styles in index.html so the editorial paper theme can apply consistently. It is frontend display layer only.
+
+Operator guidance:
+
+- Keep the warm paper background, Bubble Watch-style font stack variables, homepage IA order, and anchors intact.
+- Do not add external font/CDN URLs.
+- Keep External AI behavior and Market Pricing Temperature waiting-for-history unchanged.
+- Do not change data, scoring, decision, execution, position logic, workflows, External AI behavior, or Market Pricing calculations.
