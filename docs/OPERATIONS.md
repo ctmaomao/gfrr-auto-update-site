@@ -2184,3 +2184,14 @@ Operator guidance:
 - Keep detailed data as a secondary audit appendix, not the first reading path.
 - Keep realtime inputs, data health, charts, asset tables, execution/risk details, and collapsible panels available.
 - Do not change data, charts, calculations, workflows, External AI, Market Pricing, scoring, decision, execution, or position logic.
+
+### v28.0N-11 editorial Method / Evidence / Boundary appendix operator note
+
+v28.0N-11 introduces editorial Method / Evidence / Boundary appendix polish. It is frontend display layer only.
+
+Operator guidance:
+
+- Preserve `method-evidence` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Keep method content as a secondary explanatory appendix after Detailed Data.
+- Keep Market Pricing Temperature waiting-for-history and External AI as read-only auxiliary explanation.
+- Do not change data, charts, calculations, workflows, External AI, Market Pricing, scoring, decision, execution, or position logic.

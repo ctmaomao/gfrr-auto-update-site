@@ -651,3 +651,9 @@ Global Risk Heatmap styling is presentation only. Keep `global-risk-heatmap`, `w
 v28.0N-10 introduces editorial Detailed Data appendix polish and remains frontend display layer only.
 
 Detailed Data appendix styling is presentation only. Keep `detail-data`, `risk-explainer`, homepage IA order, anchors, and existing collapsible detailed data panels. Do not delete realtime inputs, data health, charts, tables, asset views, or advanced detail panels. Do not change data, chart calculations, scoring, decision, execution, position, workflows, External AI, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
+
+## 68. v28.0N-11 editorial Method / Evidence / Boundary appendix reminder
+
+v28.0N-11 introduces editorial Method / Evidence / Boundary appendix polish and remains frontend display layer only.
+
+Method appendix styling is presentation only. Keep `method-evidence`, homepage IA order, anchors, and existing method detail panels. Keep method content as a secondary explanatory appendix, not the first reading path. Do not change data, chart calculations, scoring, decision, execution, position, workflows, External AI, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
