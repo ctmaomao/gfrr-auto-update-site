@@ -791,15 +791,16 @@
               </details>
       </details>
 
-      <section class="full-width-section cockpit-section external-ai-auxiliary-section" id="external-ai-auxiliary">
+      <section class="full-width-section cockpit-section external-ai-auxiliary-section editorial-external-ai-panel" id="external-ai-auxiliary">
         <div class="card-head split-head">
           <div>
-            <h2>外部 AI 解读（只读辅助）</h2>
-            <p class="muted">外部 AI 解读为只读辅助解释，不改变评分、决策或执行规则。</p>
+            <p class="editorial-external-ai-kicker">READ-ONLY AUXILIARY INTERPRETATION</p>
+            <h2 class="editorial-external-ai-title">外部 AI 解读（只读辅助）</h2>
+            <p class="muted editorial-external-ai-boundary">该层只解释站内结构化数据，不改变评分、决策、执行锁或 position guidance。</p>
           </div>
-          <span class="badge neutral">辅助解释</span>
+          <span class="badge neutral editorial-external-ai-meta">辅助解释</span>
         </div>
-        <section class="full-width-section cockpit-section auxiliary-ai-panel" id="external-ai-display-panel" hidden aria-hidden="true"></section>
+        <section class="full-width-section cockpit-section auxiliary-ai-panel editorial-external-ai-card" id="external-ai-display-panel" hidden aria-hidden="true"></section>
       </section>
 
       <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section editorial-method-section" id="method-evidence">

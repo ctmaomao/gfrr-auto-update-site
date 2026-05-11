@@ -1870,6 +1870,25 @@ This stage:
 - keeps Market Pricing Temperature waiting-for-history.
 
 ```text
+v28.0N-12 Editorial External AI Read-Only Panel Polish - Display Layer Only
+```
+
+## v28.0N-12 Editorial External AI Read-Only Panel Polish
+
+v28.0N-12 introduces editorial External AI read-only panel polish.
+
+This stage:
+
+- applies paper-style editorial treatment to the visible External AI auxiliary display panel.
+- keeps External AI auxiliary and read-only.
+- preserves `external-ai-display-panel`, hidden / aria-hidden behavior, homepage IA order, and anchors.
+- remains frontend display layer only.
+- does not change External AI generated text, provider path, workflow, output schema, production write, scoring, decision, execution, position logic, data pipeline, or Market Pricing calculations.
+- keeps Market Pricing Temperature waiting-for-history.
+
+Completed prior stage:
+
+```text
 v28.0N-11 Editorial Method / Evidence / Boundary Appendix Polish - Display Layer Only
 ```
 

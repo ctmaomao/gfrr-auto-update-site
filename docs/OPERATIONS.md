@@ -2195,3 +2195,14 @@ Operator guidance:
 - Keep method content as a secondary explanatory appendix after Detailed Data.
 - Keep Market Pricing Temperature waiting-for-history and External AI as read-only auxiliary explanation.
 - Do not change data, charts, calculations, workflows, External AI, Market Pricing, scoring, decision, execution, or position logic.
+
+### v28.0N-12 editorial External AI read-only panel operator note
+
+v28.0N-12 introduces editorial External AI read-only panel polish. It is frontend display layer only.
+
+Operator guidance:
+
+- Preserve `external-ai-display-panel`, hidden / aria-hidden behavior, and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Keep External AI auxiliary and read-only.
+- Do not change External AI generated text, provider path, workflow, output schema, production write, scoring, decision, execution, position logic, data pipeline, or Market Pricing calculations.
+- Keep Market Pricing Temperature waiting-for-history.
