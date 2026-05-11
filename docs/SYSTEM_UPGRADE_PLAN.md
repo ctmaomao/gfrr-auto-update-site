@@ -1801,6 +1801,23 @@ This stage:
 - does not change scoring, decision, execution, position logic, macro driver judgment calculation, data pipeline, workflows, External AI, or Market Pricing calculations.
 - keeps Market Pricing Temperature waiting-for-history.
 
+```text
+v28.0N-6 Editorial Market Temperature Waiting-State Polish - Display Layer Only
+```
+
+## v28.0N-6 Editorial Market Temperature Waiting-State Polish
+
+v28.0N-6 introduces editorial Market Temperature waiting-state polish.
+
+This stage:
+
+- converts the Market Temperature section into an intentional editorial waiting-state evidence block.
+- keeps Market Pricing Temperature waiting-for-history.
+- keeps QQQ / Nasdaq weekly history, 60+ weeks, MA60, standard deviation, and z-score gaps visible.
+- preserves homepage IA order and anchors, plus the v28.0N-1 through v28.0N-5 editorial sections.
+- remains frontend display layer only.
+- does not add live fetch, market-pricing records, MA60, standard deviation, z-score, calculation, production write, workflows, External AI changes, or scoring/decision/execution/position logic changes.
+
 Next recommended step:
 
 ```text
