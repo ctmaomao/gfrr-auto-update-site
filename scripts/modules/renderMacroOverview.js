@@ -1035,6 +1035,132 @@ function appendEditorialMarketTemperature(root, judgment) {
   root.appendChild(panel);
 }
 
+function engineTypeClass(judgment) {
+  const identity = `${judgment?.id || ''} ${judgment?.title || ''} ${judgment?.group || ''}`.toLowerCase();
+  if (identity.includes('energy') || identity.includes('inflation') || identity.includes('能源') || identity.includes('通胀')) return 'is-energy';
+  if (identity.includes('rates') || identity.includes('liquidity') || identity.includes('利率') || identity.includes('流动性')) return 'is-rates';
+  if (identity.includes('pricing') || identity.includes('mismatch') || identity.includes('定价') || identity.includes('资产')) return 'is-pricing';
+  if (identity.includes('credit') || identity.includes('fragility') || identity.includes('信用') || identity.includes('脆弱')) return 'is-credit';
+  if (identity.includes('world-order') || identity.includes('world order') || identity.includes('external') || identity.includes('世界秩序')) return 'is-world-order';
+  return 'is-neutral';
+}
+
+function engineStatusClass(judgment) {
+  const status = String(judgment?.status || '');
+  const direction = String(judgment?.direction || '');
+  const sourceType = String(judgment?.sourceType || '');
+  const hasCounter = normalizeEvidenceList(judgment?.counterEvidence).length > 0;
+  const combined = `${status} ${direction} ${sourceType}`;
+  if (combined.includes('数据不足') || combined.includes('等待接入')) return 'is-gap';
+  if (hasCounter || combined.includes('暂未扩散') || combined.includes('相对平稳')) return 'is-counter';
+  if (combined.includes('主要压力') || combined.includes('压力上升') || combined.includes('压力较高')) return 'is-rising';
+  if (combined.includes('观察中')) return 'is-watch';
+  return 'is-neutral';
+}
+
+function engineTypeLabel(judgment) {
+  const className = engineTypeClass(judgment);
+  if (className === 'is-energy') return '能源 / 通胀';
+  if (className === 'is-rates') return '利率 / 流动性';
+  if (className === 'is-pricing') return '定价错配';
+  if (className === 'is-credit') return '信用 / 脆弱性';
+  if (className === 'is-world-order') return '世界秩序';
+  return '风险机制';
+}
+
+function buildEngineCounts(judgments) {
+  const counts = {
+    rising: 0,
+    watch: 0,
+    counter: 0,
+    gap: 0,
+  };
+  safeArray(judgments).forEach((judgment) => {
+    const className = engineStatusClass(judgment);
+    if (className === 'is-rising') counts.rising += 1;
+    else if (className === 'is-counter') counts.counter += 1;
+    else if (className === 'is-gap') counts.gap += 1;
+    else counts.watch += 1;
+  });
+  return counts;
+}
+
+function buildEngineCategorySummary(judgments) {
+  const items = safeArray(judgments);
+  if (!items.length) return '风险引擎数据不足，暂不解释压力传导机制。';
+  const counts = buildEngineCounts(items);
+  const risingTitles = items
+    .filter((judgment) => engineStatusClass(judgment) === 'is-rising')
+    .slice(0, 2)
+    .map((judgment) => `「${judgment.title}」`);
+  const hasMissing = items.some((judgment) => normalizeEvidenceList(judgment.missingEvidence).length);
+  const hasCounter = counts.counter > 0;
+  const lines = ['当前风险引擎用于解释压力如何传导，不等同于交易信号'];
+  if (risingTitles.length) lines.push(`${risingTitles.join('和')}存在观察信号，但仅按已有证据强度表达`);
+  if (hasCounter) lines.push('信用、波动率或扩散不足的反向证据继续保留');
+  if (hasMissing || counts.gap) lines.push('实物端、资金面或外部来源缺口仍需单独展示');
+  return `${lines.join('；')}。`;
+}
+
+function appendEngineCountPill(root, label, value) {
+  const pill = document.createElement('span');
+  pill.className = 'editorial-count-pill editorial-engine-count-pill';
+  appendText(pill, 'span', '', label);
+  appendText(pill, 'strong', '', String(value));
+  root.appendChild(pill);
+}
+
+function appendEditorialEngineSublist(root, label, values, modifier = '') {
+  const items = normalizeEvidenceList(values);
+  if (!items.length) return;
+  const group = document.createElement('div');
+  group.className = `editorial-engine-sublist ${modifier}`.trim();
+  appendText(group, 'span', 'editorial-engine-sublist-label', label);
+  const list = document.createElement('ul');
+  list.className = 'editorial-engine-evidence';
+  items.forEach((item) => appendText(list, 'li', '', stripLabelPrefix(item, label)));
+  group.appendChild(list);
+  root.appendChild(group);
+}
+
+function appendEditorialEngineCard(root, judgment) {
+  const typeClass = engineTypeClass(judgment);
+  const statusClass = engineStatusClass(judgment);
+  const card = document.createElement('article');
+  card.className = `editorial-engine-card ${typeClass} ${statusClass}`;
+  const strip = document.createElement('div');
+  strip.className = 'editorial-engine-card-status-strip';
+  strip.setAttribute('aria-hidden', 'true');
+  card.appendChild(strip);
+
+  const head = document.createElement('div');
+  head.className = 'editorial-engine-card-head';
+  appendText(head, 'span', 'editorial-engine-type', engineTypeLabel(judgment));
+  appendText(head, 'h3', 'editorial-engine-card-title', judgment.title);
+  appendText(head, 'span', 'editorial-engine-badge', judgment.status || UNDECIDED);
+  card.appendChild(head);
+
+  const direction = judgment.direction && judgment.direction !== '方向待确认'
+    ? ` / ${judgment.direction}`
+    : '';
+  appendText(card, 'p', 'editorial-engine-main', `${judgment.status || UNDECIDED}${direction}`);
+  const explanation = judgment.explanation || judgment.conclusion;
+  if (explanation) appendText(card, 'p', 'editorial-engine-explanation', explanation);
+  appendEditorialEngineSublist(card, '关键证据', judgment.evidence, 'is-evidence');
+  appendEditorialEngineSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
+  appendEditorialEngineSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
+  appendEditorialEngineSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
+
+  const footer = document.createElement('div');
+  footer.className = 'editorial-engine-footer';
+  if (judgment.confidence && judgment.confidence !== '等待校准') appendText(footer, 'span', '', `证据强度：${judgment.confidence}`);
+  if (judgment.dataCoverage) appendText(footer, 'span', '', `数据覆盖：${stripLabelPrefix(judgment.dataCoverage, '数据覆盖')}`);
+  if (judgment.sourceType) appendText(footer, 'span', '', `来源类型：${judgment.sourceType}`);
+  if (judgment.updatedAt) appendText(footer, 'span', '', `更新：${judgment.updatedAt}`);
+  if (footer.childNodes.length) card.appendChild(footer);
+  root.appendChild(card);
+}
+
 function appendEditorialSignalSublist(root, label, values, modifier = '') {
   const items = normalizeEvidenceList(values);
   if (!items.length) return;
@@ -1246,10 +1372,20 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   appendText(temp, 'p', 'editorial-category-summary', buildMarketTemperatureSummary(overview.marketTemperature));
   appendEditorialMarketTemperature(temp, overview.marketTemperature);
 
-  const engines = appendSection(container, '五大风险引擎摘要', '', 'homepage-risk-engines');
+  const engines = appendSection(container, '风险引擎', 'editorial-category editorial-engine-category', 'homepage-risk-engines');
+  appendText(engines, 'p', 'editorial-category-kicker', 'RISK ENGINES');
+  appendText(engines, 'p', 'editorial-category-summary', buildEngineCategorySummary(overview.riskEngines));
+  const engineCounts = buildEngineCounts(overview.riskEngines);
+  const engineCountGrid = document.createElement('div');
+  engineCountGrid.className = 'editorial-category-counts';
+  appendEngineCountPill(engineCountGrid, '压力上升 / 主要观察', engineCounts.rising);
+  appendEngineCountPill(engineCountGrid, '观察中', engineCounts.watch);
+  appendEngineCountPill(engineCountGrid, '反向证据', engineCounts.counter);
+  appendEngineCountPill(engineCountGrid, '数据不足', engineCounts.gap);
+  engines.appendChild(engineCountGrid);
   const engineGrid = document.createElement('div');
-  engineGrid.className = 'macro-overview-grid five-col';
-  overview.riskEngines.forEach((item) => appendCard(engineGrid, item));
+  engineGrid.className = 'editorial-engine-grid';
+  overview.riskEngines.forEach((item) => appendEditorialEngineCard(engineGrid, item));
   engines.appendChild(engineGrid);
 
   const cross = appendSection(container, '风险交叉验证', '', 'homepage-cross-validation');
