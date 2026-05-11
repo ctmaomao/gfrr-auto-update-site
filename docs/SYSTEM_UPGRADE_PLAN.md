@@ -1648,6 +1648,36 @@ Recommended next step:
 v28.0M-16 Market Pricing Source-Specific Network Gate Design - No Live Fetch / No Production Data Write
 ```
 
+## v28.0M-15A Unified Data Pipeline Architecture Sync
+
+v28.0M-15A connects the market-pricing workstream to the existing unified data management architecture.
+
+This stage:
+
+- adds `docs/UNIFIED_DATA_PIPELINE_ARCHITECTURE.md`.
+- adds `docs/fixtures/data-pipeline/unified-data-pipeline-architecture-v28.0M-15A.json`.
+- adds `scripts/check-unified-data-pipeline-architecture.mjs`.
+- adds `npm run check:unified-data-pipeline-architecture`.
+- wires the unified architecture checker into `npm run check:all`.
+- defines `daily_history_layer`, `realtime_worker_layer`, `github_actions_backup_validation_layer`, `artifact_sanitizer_layer`, and `frontend_display_layer`.
+- assigns market-pricing-history to `daily_history_layer`.
+- keeps source-specific market-pricing artifacts in `artifact_sanitizer_layer` until approved writer stages exist.
+- records Cloudflare Worker as the primary realtime fast-variable layer.
+- records Daily GitHub Actions as the slow / historical production layer.
+- records GitHub Actions backup validation as backup / verification, not a sanitizer bypass.
+- forbids standalone and ad hoc data pipelines.
+- performs no fetch.
+- performs no production data write.
+- changes no workflow.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- changes no frontend behavior.
+
+Recommended next step:
+
+```text
+v28.0M-16 Market Pricing Source-Specific Network Gate Design - No Live Fetch / No Production Data Write
+```
+
 ## v28.0M-7U Homepage De-duplication and Detail Collapse
 
 v28.0M-7U refines the homepage information architecture without changing data or model logic.

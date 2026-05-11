@@ -1999,6 +1999,22 @@ Operator guidance:
 - Do not add QQQ / NDX / IXIC / SPX prices or weekly records.
 - `npm run check:market-pricing-source-specific-artifact-fetch-scaffold` must pass.
 
+### v28.0M-15A unified data pipeline architecture operator note
+
+v28.0M-15A records that future market-pricing source work must join the existing unified data architecture.
+
+Operator guidance:
+
+- Daily GitHub Actions is the slow / historical / production write layer.
+- Cloudflare Worker is the primary realtime fast-variable layer, with approximately 3-minute cadence.
+- GitHub Actions backup validation is the backup / check layer, with approximately six checks per hour where configured.
+- Market Pricing History must not be manually written.
+- Backup checks must not bypass sanitizer.
+- New source requests must declare `assignedLayer` before implementation.
+- Valid `assignedLayer` values are `daily_history_layer`, `realtime_worker_layer`, `github_actions_backup_validation_layer`, `artifact_sanitizer_layer`, and `frontend_display_layer`.
+- Do not create standalone or ad hoc data pipelines.
+- `npm run check:unified-data-pipeline-architecture` must pass.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.

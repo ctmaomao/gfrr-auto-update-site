@@ -266,3 +266,16 @@ Recommended next step:
 ```text
 v28.0M-16 Market Pricing Source-Specific Network Gate Design - No Live Fetch / No Production Data Write
 ```
+
+## 14. v28.0M-15A Unified Data Pipeline Architecture Status
+
+v28.0M-15A records that proof-of-source design must integrate with the unified data architecture.
+
+Implemented boundary:
+
+- Source-specific artifacts remain assigned to `artifact_sanitizer_layer` until an approved writer exists.
+- Future market-pricing-history writes belong to `daily_history_layer`.
+- Proof-of-source work must not create a standalone or ad hoc pipeline.
+- Backup validation must not bypass sanitizer.
+- Realtime Worker context must not become the primary weekly-history builder.
+- No fetch, production write, history write, workflow change, or calculation is introduced.
