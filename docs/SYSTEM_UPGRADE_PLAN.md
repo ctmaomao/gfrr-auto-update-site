@@ -1869,6 +1869,22 @@ This stage:
 - does not change heatmap scoring, region data calculation, data pipeline, workflows, External AI, Market Pricing, or decision / execution / position logic.
 - keeps Market Pricing Temperature waiting-for-history.
 
+```text
+v28.0N-10 Editorial Detailed Data Appendix Polish - Display Layer Only
+```
+
+## v28.0N-10 Editorial Detailed Data Appendix Polish
+
+v28.0N-10 introduces editorial Detailed Data appendix polish.
+
+This stage:
+
+- converts Detailed Data into a secondary editorial data appendix.
+- keeps detailed data collapsible and available for auditing the homepage conclusion.
+- preserves `detail-data`, homepage IA order, anchors, realtime inputs, data health, charts, asset tables, and advanced detail panels.
+- remains frontend display layer only.
+- does not change data, charts, calculations, workflows, External AI, Market Pricing, scoring, decision, execution, or position logic.
+
 Next recommended step:
 
 ```text
