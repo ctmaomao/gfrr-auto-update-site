@@ -2239,3 +2239,13 @@ Operator guidance:
 - Do not add data sources or convert pending/gap items into conclusions.
 - Keep Market Pricing Temperature waiting-for-history.
 - Do not change data, scoring, decision, execution, position logic, workflows, External AI behavior, or Market Pricing calculations.
+
+### v28.0N-16 editorial redesign contract guard operator note
+
+v28.0N-16 adds an editorial redesign contract guard. It is guard / validation layer only.
+
+Operator guidance:
+
+- Use `npm run check:editorial-redesign-contract` when touching the editorial homepage shell, macro overview renderer, or paper theme styles.
+- The guard protects the Bubble Watch-inspired editorial structures, paper theme, Market Pricing waiting state, External AI read-only boundary, and Global Risk Heatmap standalone status.
+- Do not treat the guard as approval to redesign UI or change data, scoring, decision, execution, position logic, workflows, External AI behavior, or Market Pricing calculations.
