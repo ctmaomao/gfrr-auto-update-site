@@ -2127,3 +2127,14 @@ Operator guidance:
 - Preserve the N-1 first fold, N-2 pressure section, N-3 signal section, N-4 paper/font foundation, homepage IA order, and anchors.
 - Do not change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
 - Market Pricing Temperature remains waiting-for-history and must not be activated.
+
+### v28.0N-6 editorial market-temperature waiting-state operator note
+
+v28.0N-6 introduces editorial Market Temperature waiting-state polish. It is frontend display layer only.
+
+Operator guidance:
+
+- Preserve `homepage-market-temperature` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Keep Market Pricing Temperature waiting-for-history; do not infer market cold, normal, hot, or overheated status.
+- Keep QQQ / Nasdaq weekly history, 60+ weeks, MA60, standard deviation, and z-score gaps visible.
+- Do not add live fetch, market-pricing records, history writes, MA60, standard deviation, z-score, calculation, production writes, workflows, External AI changes, or scoring/decision/execution/position logic changes.

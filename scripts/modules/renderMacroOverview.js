@@ -970,6 +970,71 @@ function appendEditorialDriverCard(root, judgment) {
   root.appendChild(card);
 }
 
+function buildMarketTemperatureSummary(judgment) {
+  const status = judgment?.status || '等待历史周线数据接入';
+  return `当前市场温度计仍处于${status}阶段；在 QQQ / Nasdaq 周线历史、MA60、标准差和 z-score 未形成前，不判断市场偏冷、正常、偏热或过热。`;
+}
+
+function appendMarketTemperatureChecklist(root, judgment) {
+  const checklist = document.createElement('ul');
+  checklist.className = 'editorial-market-temp-checklist';
+  [
+    'QQQ / Nasdaq 已验证周线历史',
+    '60 周以上历史数据',
+    'MA60',
+    'standard deviation / 标准差',
+    'z-score',
+  ].forEach((item) => appendText(checklist, 'li', '', item));
+  normalizeEvidenceList(judgment?.missingEvidence).forEach((item) => {
+    appendText(checklist, 'li', '', stripLabelPrefix(item, '缺失证据'));
+  });
+  root.appendChild(checklist);
+}
+
+function appendMarketTemperatureDisabledScale(root) {
+  const scale = document.createElement('div');
+  scale.className = 'editorial-market-temp-scale';
+  appendText(scale, 'p', 'editorial-market-temp-scale-disabled', '数据不足，暂不绘制位置 / Waiting for validated weekly history');
+  const track = document.createElement('div');
+  track.className = 'editorial-market-temp-scale-track';
+  ['偏冷', '正常', '偏热', '过热'].forEach((label) => {
+    appendText(track, 'span', 'editorial-market-temp-scale-segment', label);
+  });
+  scale.appendChild(track);
+  root.appendChild(scale);
+}
+
+function appendEditorialMarketTemperature(root, judgment) {
+  const panel = document.createElement('article');
+  panel.className = 'editorial-market-temp-panel';
+  const strip = document.createElement('div');
+  strip.className = 'editorial-market-temp-status-strip';
+  strip.setAttribute('aria-hidden', 'true');
+  panel.appendChild(strip);
+
+  const head = document.createElement('div');
+  head.className = 'editorial-market-temp-head';
+  appendText(head, 'span', 'editorial-market-temp-kicker', 'WAITING STATE');
+  appendText(head, 'h3', 'editorial-market-temp-title', judgment.title || '市场定价温度计');
+  appendText(head, 'span', 'editorial-market-temp-badge', judgment.status || '等待历史周线数据接入');
+  panel.appendChild(head);
+
+  appendText(panel, 'p', 'editorial-market-temp-main', '暂无法判断市场偏冷 / 正常 / 偏热 / 过热');
+  appendText(panel, 'p', 'editorial-market-temp-note', judgment.explanation || '该模块用于未来识别市场相对中期趋势的冷热程度，但在历史周线和统计量不足前不能启用。');
+  appendMarketTemperatureChecklist(panel, judgment);
+  appendMarketTemperatureDisabledScale(panel);
+  appendText(panel, 'p', 'editorial-market-temp-boundary', '当前不计算，不写历史，不触发数据抓取，不构成买卖信号。');
+
+  const footer = document.createElement('div');
+  footer.className = 'editorial-market-temp-footer';
+  appendText(footer, 'span', '', `当前结论：${judgment.conclusion || UNDECIDED}`);
+  if (judgment.confidence && judgment.confidence !== '等待校准') appendText(footer, 'span', '', `证据强度：${judgment.confidence}`);
+  if (judgment.dataCoverage) appendText(footer, 'span', '', `数据覆盖：${stripLabelPrefix(judgment.dataCoverage, '数据覆盖')}`);
+  if (judgment.sourceType) appendText(footer, 'span', '', `来源类型：${judgment.sourceType}`);
+  panel.appendChild(footer);
+  root.appendChild(panel);
+}
+
 function appendEditorialSignalSublist(root, label, values, modifier = '') {
   const items = normalizeEvidenceList(values);
   if (!items.length) return;
@@ -1176,14 +1241,10 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   overview.drivers.forEach((item) => appendEditorialDriverCard(driverGrid, item));
   drivers.appendChild(driverGrid);
 
-  const temp = appendSection(container, '市场定价温度计', '', 'homepage-market-temperature');
-  const tempPanel = document.createElement('article');
-  tempPanel.className = 'macro-overview-card macro-temperature-card';
-  appendText(tempPanel, 'p', 'macro-overview-status', `状态：${overview.marketTemperature.status}`);
-  appendText(tempPanel, 'p', '', `说明：${overview.marketTemperature.explanation}`);
-  appendList(tempPanel, overview.marketTemperature.evidence.map((item) => `数据需求：${item}`), '数据需求等待定义。');
-  appendText(tempPanel, 'p', 'macro-overview-conclusion', `当前结论：${overview.marketTemperature.conclusion}`);
-  temp.appendChild(tempPanel);
+  const temp = appendSection(container, '市场定价温度计', 'editorial-category editorial-market-temp-category', 'homepage-market-temperature');
+  appendText(temp, 'p', 'editorial-category-kicker', 'MARKET TEMPERATURE');
+  appendText(temp, 'p', 'editorial-category-summary', buildMarketTemperatureSummary(overview.marketTemperature));
+  appendEditorialMarketTemperature(temp, overview.marketTemperature);
 
   const engines = appendSection(container, '五大风险引擎摘要', '', 'homepage-risk-engines');
   const engineGrid = document.createElement('div');

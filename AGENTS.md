@@ -621,3 +621,9 @@ Do not add external font, CDN, image, or provider URLs for this foundation. Pres
 v28.0N-5 introduces editorial macro-driver reading polish and remains frontend display layer only.
 
 Macro-driver type/status classes, summaries, count pills, and cards are presentation only. Do not change how macro driver judgments are calculated. Preserve homepage IA order and anchors, including `homepage-macro-drivers`. Preserve the v28.0N-1 first fold, v28.0N-2 pressure section, v28.0N-3 signal section, and v28.0N-4 paper/font foundation. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
+
+## 63. v28.0N-6 editorial market-temperature waiting-state reminder
+
+v28.0N-6 introduces editorial Market Temperature waiting-state polish and remains frontend display layer only.
+
+The Market Temperature waiting-state block is presentation only. Do not activate Market Pricing Temperature, infer cold/normal/hot/overheated state, add market-pricing records, write `data/market-pricing-history.json`, fetch live data, calculate MA60, standard deviation, z-score, or market temperature. Preserve homepage IA order and anchors, including `homepage-market-temperature`, and keep Market Pricing Temperature waiting-for-history.
