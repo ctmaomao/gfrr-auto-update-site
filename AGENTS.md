@@ -645,3 +645,9 @@ Cross-validation type/status classes, summaries, count pills, and cards are pres
 v28.0N-9 introduces editorial Global Risk Heatmap polish and remains frontend display layer only.
 
 Global Risk Heatmap styling is presentation only. Keep `global-risk-heatmap`, `world-heatmap`, and `heatmap-list` standalone and visually prominent. Do not change heatmap scoring, region data calculation, data files, scoring, decision, execution, position, workflows, External AI, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
+
+## 67. v28.0N-10 editorial Detailed Data appendix reminder
+
+v28.0N-10 introduces editorial Detailed Data appendix polish and remains frontend display layer only.
+
+Detailed Data appendix styling is presentation only. Keep `detail-data`, `risk-explainer`, homepage IA order, anchors, and existing collapsible detailed data panels. Do not delete realtime inputs, data health, charts, tables, asset views, or advanced detail panels. Do not change data, chart calculations, scoring, decision, execution, position, workflows, External AI, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.

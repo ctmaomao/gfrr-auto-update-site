@@ -2173,3 +2173,14 @@ Operator guidance:
 - Keep Global Risk Heatmap standalone and visually prominent as a visual evidence layer.
 - Do not change heatmap scoring, region data calculation, data pipeline, workflows, External AI, Market Pricing, or decision/execution/position logic.
 - Market Pricing Temperature remains waiting-for-history and must not be activated.
+
+### v28.0N-10 editorial Detailed Data appendix operator note
+
+v28.0N-10 introduces editorial Detailed Data appendix polish. It is frontend display layer only.
+
+Operator guidance:
+
+- Preserve `detail-data`, `risk-explainer`, and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Keep detailed data as a secondary audit appendix, not the first reading path.
+- Keep realtime inputs, data health, charts, asset tables, execution/risk details, and collapsible panels available.
+- Do not change data, charts, calculations, workflows, External AI, Market Pricing, scoring, decision, execution, or position logic.
