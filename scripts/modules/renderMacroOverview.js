@@ -848,6 +848,128 @@ function buildSignalCategorySummary(judgments) {
   return `${lines.join('；')}。`;
 }
 
+function driverTypeClass(judgment) {
+  const identity = `${judgment?.id || ''} ${judgment?.title || ''} ${judgment?.group || ''}`.toLowerCase();
+  if (identity.includes('增长') || identity.includes('growth')) return 'is-growth';
+  if (identity.includes('通胀') || identity.includes('inflation')) return 'is-inflation';
+  if (identity.includes('流动性') || identity.includes('liquidity')) return 'is-liquidity';
+  if (identity.includes('政策') || identity.includes('policy')) return 'is-policy';
+  return 'is-neutral';
+}
+
+function driverStatusClass(judgment) {
+  const status = String(judgment?.status || '');
+  const direction = String(judgment?.direction || '');
+  const sourceType = String(judgment?.sourceType || '');
+  const combined = `${status} ${direction} ${sourceType}`;
+  if (combined.includes('数据不足') || combined.includes('等待接入')) return 'is-gap';
+  if (combined.includes('压力上升') || combined.includes('约束偏强')) return 'is-rising';
+  if (combined.includes('观察中') || combined.includes('慢变量观察中')) return 'is-watch';
+  return 'is-neutral';
+}
+
+function driverTypeLabel(judgment) {
+  const className = driverTypeClass(judgment);
+  if (className === 'is-growth') return '增长';
+  if (className === 'is-inflation') return '通胀';
+  if (className === 'is-liquidity') return '流动性';
+  if (className === 'is-policy') return '政策';
+  return '宏观驱动';
+}
+
+function findDriverByType(judgments, className) {
+  return safeArray(judgments).find((judgment) => driverTypeClass(judgment) === className) || null;
+}
+
+function appendDriverTypePill(root, label, judgment) {
+  const pill = document.createElement('span');
+  pill.className = 'editorial-count-pill editorial-driver-type-pill';
+  appendText(pill, 'span', '', label);
+  appendText(pill, 'strong', '', judgment?.status || '未呈现');
+  root.appendChild(pill);
+}
+
+function buildDriverCategorySummary(judgments) {
+  const items = safeArray(judgments);
+  if (!items.length) return '四大宏观驱动数据不足，暂不强行形成驱动结论。';
+  const classed = items.map((judgment) => ({
+    judgment,
+    typeClass: driverTypeClass(judgment),
+    statusClass: driverStatusClass(judgment),
+  }));
+  const gaps = classed.filter(({ statusClass }) => statusClass === 'is-gap');
+  const rising = classed.filter(({ statusClass }) => statusClass === 'is-rising');
+  const watch = classed.filter(({ statusClass }) => statusClass === 'is-watch');
+  const hasCounterEvidence = items.some((judgment) => normalizeEvidenceList(judgment.counterEvidence).length);
+  if (gaps.length >= items.length) return '增长、通胀、流动性与政策证据均不足，当前不推断宏观驱动主线。';
+  const lines = ['当前四大驱动将增长、通胀、流动性与政策分开展示'];
+  if (rising.length) {
+    const titles = rising.slice(0, 2).map(({ judgment }) => `「${judgment.title}」`);
+    lines.push(`${titles.join('和')}显示压力或约束偏强，仅作为观察链条`);
+  }
+  if (watch.length) {
+    const titles = watch.slice(0, 2).map(({ judgment }) => `「${judgment.title}」`);
+    lines.push(`${titles.join('和')}维持观察`);
+  }
+  if (gaps.length) {
+    const titles = gaps.slice(0, 2).map(({ judgment }) => `「${judgment.title}」`);
+    lines.push(`${titles.join('和')}仍为等待接入或数据不足`);
+  }
+  if (hasCounterEvidence) lines.push('反向证据保留在对应卡片中');
+  return `${lines.join('；')}。`;
+}
+
+function appendEditorialDriverSublist(root, label, values, modifier = '') {
+  const items = normalizeEvidenceList(values);
+  if (!items.length) return;
+  const group = document.createElement('div');
+  group.className = `editorial-driver-sublist ${modifier}`.trim();
+  appendText(group, 'span', 'editorial-driver-sublist-label', label);
+  const list = document.createElement('ul');
+  list.className = 'editorial-driver-evidence';
+  items.forEach((item) => appendText(list, 'li', '', stripLabelPrefix(item, label)));
+  group.appendChild(list);
+  root.appendChild(group);
+}
+
+function appendEditorialDriverCard(root, judgment) {
+  const typeClass = driverTypeClass(judgment);
+  const statusClass = driverStatusClass(judgment);
+  const card = document.createElement('article');
+  card.className = `editorial-driver-card ${typeClass} ${statusClass}`;
+  const strip = document.createElement('div');
+  strip.className = 'editorial-driver-card-status-strip';
+  strip.setAttribute('aria-hidden', 'true');
+  card.appendChild(strip);
+
+  const head = document.createElement('div');
+  head.className = 'editorial-driver-card-head';
+  appendText(head, 'span', 'editorial-driver-type', driverTypeLabel(judgment));
+  appendText(head, 'h3', 'editorial-driver-card-title', judgment.title);
+  appendText(head, 'span', 'editorial-driver-badge', judgment.status || UNDECIDED);
+  card.appendChild(head);
+
+  const direction = judgment.direction && judgment.direction !== '方向待确认'
+    ? ` / ${judgment.direction}`
+    : '';
+  appendText(card, 'p', 'editorial-driver-main', `${judgment.status || UNDECIDED}${direction}`);
+  const explanation = judgment.explanation || judgment.conclusion;
+  if (explanation) appendText(card, 'p', 'editorial-driver-explanation', explanation);
+  appendEditorialDriverSublist(card, '关键证据', judgment.evidence, 'is-evidence');
+  appendEditorialDriverSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
+  appendEditorialDriverSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
+  appendEditorialDriverSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
+
+  const footer = document.createElement('div');
+  footer.className = 'editorial-driver-footer';
+  if (judgment.confidence && judgment.confidence !== '等待校准') appendText(footer, 'span', '', `证据强度：${judgment.confidence}`);
+  if (judgment.dataCoverage) appendText(footer, 'span', '', `数据覆盖：${stripLabelPrefix(judgment.dataCoverage, '数据覆盖')}`);
+  if (judgment.sourceType) appendText(footer, 'span', '', `来源类型：${judgment.sourceType}`);
+  if (judgment.updatedAt) appendText(footer, 'span', '', `更新：${judgment.updatedAt}`);
+  if (footer.childNodes.length) card.appendChild(footer);
+  root.appendChild(card);
+}
+
 function appendEditorialSignalSublist(root, label, values, modifier = '') {
   const items = normalizeEvidenceList(values);
   if (!items.length) return;
@@ -1039,10 +1161,19 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   overview.signalLayers.forEach((group) => appendEditorialSignalCard(signalGrid, group));
   signals.appendChild(signalGrid);
 
-  const drivers = appendSection(container, '四大宏观驱动', '', 'homepage-macro-drivers');
+  const drivers = appendSection(container, '四大宏观驱动', 'editorial-category editorial-driver-category', 'homepage-macro-drivers');
+  appendText(drivers, 'p', 'editorial-category-kicker', 'MACRO DRIVERS');
+  appendText(drivers, 'p', 'editorial-category-summary', buildDriverCategorySummary(overview.drivers));
+  const driverCountGrid = document.createElement('div');
+  driverCountGrid.className = 'editorial-category-counts';
+  appendDriverTypePill(driverCountGrid, '增长', findDriverByType(overview.drivers, 'is-growth'));
+  appendDriverTypePill(driverCountGrid, '通胀', findDriverByType(overview.drivers, 'is-inflation'));
+  appendDriverTypePill(driverCountGrid, '流动性', findDriverByType(overview.drivers, 'is-liquidity'));
+  appendDriverTypePill(driverCountGrid, '政策', findDriverByType(overview.drivers, 'is-policy'));
+  drivers.appendChild(driverCountGrid);
   const driverGrid = document.createElement('div');
-  driverGrid.className = 'macro-overview-grid four-col';
-  overview.drivers.forEach((item) => appendCard(driverGrid, item));
+  driverGrid.className = 'editorial-driver-grid';
+  overview.drivers.forEach((item) => appendEditorialDriverCard(driverGrid, item));
   drivers.appendChild(driverGrid);
 
   const temp = appendSection(container, '市场定价温度计', '', 'homepage-market-temperature');
