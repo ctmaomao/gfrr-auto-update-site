@@ -1415,13 +1415,18 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   headline.className = 'editorial-headline';
   const scorePanel = document.createElement('div');
   scorePanel.className = 'editorial-big-number';
+  const headlineScore = finite(overview.today.score);
+  const headlineScoreText = headlineScore === null ? '数据不足' : String(Math.round(headlineScore));
+  const headlineCoverage = overview.today.dataCoverage
+    ? stripLabelPrefix(overview.today.dataCoverage, '数据覆盖')
+    : '等待校准';
   appendText(scorePanel, 'span', 'editorial-big-number-label', 'GLOBAL RISK SCORE');
-  appendText(scorePanel, 'strong', 'editorial-big-number-value', overview.today.score || '数据不足');
+  appendText(scorePanel, 'strong', 'editorial-big-number-value', headlineScoreText);
   const scoreBreakdown = document.createElement('div');
   scoreBreakdown.className = 'editorial-big-number-breakdown';
   appendText(scoreBreakdown, 'span', '', overview.today.stage || '暂无法判断');
   appendText(scoreBreakdown, 'span', '', `证据强度：${overview.today.evidenceStrength || '等待校准'}`);
-  appendText(scoreBreakdown, 'span', '', `数据覆盖：${stripLabelPrefix(overview.today.dataCoverage, '数据覆盖')}`);
+  appendText(scoreBreakdown, 'span', '', `数据覆盖：${headlineCoverage}`);
   scorePanel.appendChild(scoreBreakdown);
   appendText(scorePanel, 'p', 'editorial-big-number-footer', `Updated: ${overview.today.updatedAt || '等待数据校准'}`);
   headline.appendChild(scorePanel);
