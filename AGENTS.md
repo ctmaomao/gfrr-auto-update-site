@@ -663,3 +663,9 @@ Method appendix styling is presentation only. Keep `method-evidence`, homepage I
 v28.0N-12 introduces editorial External AI read-only panel polish and remains frontend display layer only.
 
 External AI panel styling is presentation only. Keep `external-ai-display-panel`, hidden / aria-hidden behavior, homepage IA order, anchors, and External AI as auxiliary read-only explanation. Do not modify generated AI text, provider path, workflows, output schema, production write guard, hidden scaffold guard, data files, scoring, decision, execution, position, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
+
+## 70. v28.0N-13 editorial inline dark theme cleanup reminder
+
+v28.0N-13 cleans up residual dark inline theme styles in index.html so the editorial paper theme can apply consistently. It remains frontend display layer only.
+
+Inline theme cleanup is presentation only. Preserve homepage IA order, anchors, all current section IDs, `external-ai-display-panel`, `global-risk-heatmap`, `world-heatmap`, `heatmap-list`, `detail-data`, and `method-evidence`. Do not add external font/CDN/image URLs, modify generated AI text, provider paths, workflows, output schema, production write guards, hidden scaffold guards, data files, scoring, decision, execution, position, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
