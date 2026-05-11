@@ -669,3 +669,9 @@ External AI panel styling is presentation only. Keep `external-ai-display-panel`
 v28.0N-13 cleans up residual dark inline theme styles in index.html so the editorial paper theme can apply consistently. It remains frontend display layer only.
 
 Inline theme cleanup is presentation only. Preserve homepage IA order, anchors, all current section IDs, `external-ai-display-panel`, `global-risk-heatmap`, `world-heatmap`, `heatmap-list`, `detail-data`, and `method-evidence`. Do not add external font/CDN/image URLs, modify generated AI text, provider paths, workflows, output schema, production write guards, hidden scaffold guards, data files, scoring, decision, execution, position, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
+
+## 71. v28.0N-14 editorial Big Number and threshold scale reminder
+
+v28.0N-14 deepens the editorial first-fold Big Number and threshold scale presentation. It remains frontend display layer only.
+
+Big Number and threshold styling must not change score calculation, `stageFromScore` thresholds, judgment calculation, data files, data pipeline, workflows, External AI behavior, Market Pricing behavior, decision, execution, or position logic. Keep threshold bands aligned with existing stage semantics and keep Market Pricing Temperature waiting-for-history.

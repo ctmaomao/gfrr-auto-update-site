@@ -2217,3 +2217,14 @@ Operator guidance:
 - Do not add external font/CDN URLs.
 - Keep External AI behavior and Market Pricing Temperature waiting-for-history unchanged.
 - Do not change data, scoring, decision, execution, position logic, workflows, External AI behavior, or Market Pricing calculations.
+
+### v28.0N-14 editorial Big Number and threshold scale operator note
+
+v28.0N-14 deepens the editorial first-fold Big Number and threshold scale presentation. It is frontend display layer only.
+
+Operator guidance:
+
+- Preserve existing `stageFromScore` thresholds and score calculation.
+- Keep threshold bands aligned to 0-50 / 50-65 / 65-85 / 85-100 unless the renderer semantics are separately changed in a reviewed logic PR.
+- Keep Market Pricing Temperature waiting-for-history.
+- Do not change data, workflows, External AI, Market Pricing, decision, execution, or position logic.

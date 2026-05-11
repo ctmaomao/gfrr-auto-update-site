@@ -664,29 +664,29 @@ function appendRiskStageScale(root, today) {
   ];
   const score = finite(today.score);
   const scale = document.createElement('div');
-  scale.className = 'editorial-risk-scale';
+  scale.className = 'editorial-threshold';
 
   const header = document.createElement('div');
-  header.className = 'editorial-risk-scale-header';
-  appendText(header, 'span', '', 'display-only risk stage scale');
+  header.className = 'editorial-threshold-label';
+  appendText(header, 'span', '', 'THRESHOLD-ALIGNED RISK STAGE SCALE');
   appendText(header, 'strong', '', today.stage || UNDECIDED);
   scale.appendChild(header);
 
   if (today.stage === '系统性危机') {
-    appendText(scale, 'p', 'editorial-risk-scale-override', '显式阶段：系统性危机，不由本标尺单独推断');
+    appendText(scale, 'p', 'editorial-threshold-override', '显式阶段：系统性危机，不由本标尺单独推断');
   }
 
   if (score === null) {
-    appendText(scale, 'p', 'editorial-risk-scale-empty', '数据不足，暂不绘制阶段位置');
+    appendText(scale, 'p', 'editorial-threshold-caption', '数据不足，暂不绘制阶段位置');
     root.appendChild(scale);
     return;
   }
 
   const track = document.createElement('div');
-  track.className = 'editorial-risk-scale-track';
+  track.className = 'editorial-threshold-bar';
   numericStages.forEach(({ label, start, end }) => {
     const segment = document.createElement('span');
-    segment.className = `editorial-risk-scale-segment${label === today.stage ? ' is-active' : ''}`;
+    segment.className = `editorial-threshold-zone${label === today.stage ? ' is-active' : ''}`;
     segment.style.flexBasis = `${end - start}%`;
     segment.setAttribute('title', `${label}：${start}-${end}`);
     segment.setAttribute('aria-label', `${label}：${start} 到 ${end}`);
@@ -694,16 +694,17 @@ function appendRiskStageScale(root, today) {
   });
 
   const marker = document.createElement('span');
-  marker.className = 'editorial-risk-scale-marker';
+  marker.className = 'editorial-threshold-marker';
   marker.style.left = `${Math.max(0, Math.min(100, score))}%`;
-  marker.setAttribute('aria-label', `当前分数 ${Math.round(score)}`);
+  marker.setAttribute('aria-label', `当前分数 ${Math.round(score)}，${today.stage || UNDECIDED}`);
+  appendText(marker, 'span', 'editorial-threshold-marker-label', `${Math.round(score)} · ${today.stage || UNDECIDED}`);
   track.appendChild(marker);
   scale.appendChild(track);
 
   const labels = document.createElement('div');
-  labels.className = 'editorial-risk-scale-labels';
+  labels.className = 'editorial-threshold-caption';
   numericStages.forEach(({ label, start, end }) => {
-    const className = label === today.stage ? 'is-active' : '';
+    const className = `editorial-threshold-caption-item${label === today.stage ? ' is-active' : ''}`;
     appendText(labels, 'span', className, `${label} ${start}-${end}`);
   });
   scale.appendChild(labels);
@@ -1411,18 +1412,40 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   const today = appendSection(container, '今日总判断', 'macro-overview-hero editorial-first-fold', 'homepage-today-judgment');
   appendText(today, 'p', 'editorial-risk-overline', 'GLOBAL RISK SCORE / SYSTEMIC RISK STAGE');
   const headline = document.createElement('div');
-  headline.className = 'editorial-risk-headline';
+  headline.className = 'editorial-headline';
   const scorePanel = document.createElement('div');
-  scorePanel.className = 'editorial-risk-score';
-  appendText(scorePanel, 'span', 'editorial-risk-score-label', '全球系统性风险');
-  appendText(scorePanel, 'strong', 'editorial-risk-score-value', overview.today.score || '数据不足');
-  appendText(scorePanel, 'span', 'editorial-risk-stage-value', overview.today.stage || '暂无法判断');
+  scorePanel.className = 'editorial-big-number';
+  const headlineScore = finite(overview.today.score);
+  const headlineScoreText = headlineScore === null ? '数据不足' : String(Math.round(headlineScore));
+  const headlineCoverage = overview.today.dataCoverage
+    ? stripLabelPrefix(overview.today.dataCoverage, '数据覆盖')
+    : '等待校准';
+  appendText(scorePanel, 'span', 'editorial-big-number-label', 'GLOBAL RISK SCORE');
+  appendText(scorePanel, 'strong', 'editorial-big-number-value', headlineScoreText);
+  const scoreBreakdown = document.createElement('div');
+  scoreBreakdown.className = 'editorial-big-number-breakdown';
+  appendText(scoreBreakdown, 'span', '', overview.today.stage || '暂无法判断');
+  appendText(scoreBreakdown, 'span', '', `证据强度：${overview.today.evidenceStrength || '等待校准'}`);
+  appendText(scoreBreakdown, 'span', '', `数据覆盖：${headlineCoverage}`);
+  scorePanel.appendChild(scoreBreakdown);
+  appendText(scorePanel, 'p', 'editorial-big-number-footer', `Updated: ${overview.today.updatedAt || '等待数据校准'}`);
   headline.appendChild(scorePanel);
   const conclusionPanel = document.createElement('div');
-  conclusionPanel.className = 'editorial-risk-conclusion';
-  appendText(conclusionPanel, 'span', 'editorial-risk-score-label', '今日总判断');
-  appendText(conclusionPanel, 'p', 'macro-overview-one-line', overview.today.oneLine);
-  appendText(conclusionPanel, 'p', 'macro-overview-kicker', overview.today.macroState);
+  conclusionPanel.className = 'editorial-verdict';
+  appendText(conclusionPanel, 'span', 'editorial-verdict-label', 'TODAY\'S VERDICT · 今日总判断');
+  appendText(conclusionPanel, 'h3', 'editorial-verdict-title', overview.today.oneLine);
+  appendText(conclusionPanel, 'p', 'editorial-verdict-body', overview.today.macroState);
+  const primaryPressure = overview.pressures[0];
+  if (primaryPressure) {
+    appendText(conclusionPanel, 'p', 'editorial-verdict-body', `主要压力：${primaryPressure.title} / ${primaryPressure.status}`);
+  }
+  const verdictMeta = document.createElement('div');
+  verdictMeta.className = 'editorial-verdict-meta';
+  appendEditorialMeta(verdictMeta, '证据强度', overview.today.evidenceStrength);
+  appendEditorialMeta(verdictMeta, '数据覆盖', overview.today.dataCoverage);
+  conclusionPanel.appendChild(verdictMeta);
+  const missingNote = normalizeEvidenceList(overview.today.missingEvidence).slice(0, 2).join('；');
+  if (missingNote) appendText(conclusionPanel, 'p', 'editorial-verdict-footnote', `不确定性：${missingNote}`);
   headline.appendChild(conclusionPanel);
   today.appendChild(headline);
 
