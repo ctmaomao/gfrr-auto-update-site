@@ -148,8 +148,9 @@
 
     .wow-section {
       margin: 32px 0;
-      padding: 28px;
+      padding: 32px 36px;
       border: 1px solid #1A1815;
+      border-top: 4px solid #A8761A;
       border-radius: 0;
       background: #1A1815;
       color: #FBF7F0;
@@ -188,7 +189,7 @@
     .wow-section .wow-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-      gap: 20px;
+      gap: 32px;
     }
 
     .wow-section .wow-item {
@@ -198,7 +199,9 @@
     }
 
     .wow-section .wow-item .wow-tag {
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(251, 247, 240, 0.1);
       font-family: "IBM Plex Mono", monospace;
       font-size: 10px;
       font-weight: 600;
@@ -535,26 +538,21 @@
     </nav>
 
     <main>
-      <section class="full-width-section cockpit-section" id="macro-risk-overview">
-        <div class="card-head split-head">
-          <div>
-            <h2>宏观风险判断总览</h2>
-            <p class="muted" id="core-dashboard">本页先给出总判断，再展示压力来源、信号验证、宏观驱动、市场温度、风险引擎和交叉验证。详细数据与方法说明可在下方展开查看。</p>
-          </div>
-          <span class="badge neutral">结论 → 原因 → 证据 → 展开详情</span>
-        </div>
+      <section class="full-width-section cockpit-section editorial-section" id="macro-risk-overview" style="--section-accent: var(--risk-red);">
+        <header class="editorial-section-header">
+          <span class="section-kicker">MACRO RISK OVERVIEW</span>
+          <span class="section-title">宏观风险判断总览</span>
+          <span class="section-note" id="core-dashboard">本页先给出总判断，再展示压力来源、信号验证、宏观驱动、市场温度、风险引擎和交叉验证。详细数据与方法说明可在下方展开查看。</span>
+        </header>
         <div class="macro-overview-shell" id="macro-risk-overview-root"></div>
       </section>
-      <section class="full-width-section risk-section editorial-heatmap-section" id="global-risk-heatmap">
+      <section class="full-width-section risk-section editorial-section editorial-heatmap-section" id="global-risk-heatmap" style="--section-accent: var(--risk-red);">
+        <header class="editorial-section-header">
+          <span class="section-kicker">GLOBAL RISK HEATMAP</span>
+          <span class="section-title">全球风险热力图</span>
+          <span class="section-note">区域热力图用于展示全球风险的地理分布，是证据层的一部分，不单独构成交易信号。</span>
+        </header>
         <article class="card heatmap-card full-width-card editorial-heatmap-card">
-          <div class="card-head split-head editorial-heatmap-head">
-            <div class="editorial-heatmap-title-block">
-              <p class="editorial-heatmap-kicker">GLOBAL RISK HEATMAP</p>
-              <h2>全球风险热力图</h2>
-              <p class="editorial-heatmap-summary">区域热力图用于展示全球风险的地理分布，是证据层的一部分，不单独构成交易信号。</p>
-            </div>
-            <span class="editorial-heatmap-note">独立视觉证据层</span>
-          </div>
           <div class="heatmap-layout editorial-heatmap-layout">
             <div class="editorial-heatmap-frame">
               <svg id="world-heatmap" viewBox="0 0 780 360" role="img" aria-label="全球风险热力图"></svg>
@@ -570,15 +568,13 @@
         </article>
       </section>
 
-      <details class="full-width-section cockpit-section advanced-panel ia-detail-panel data-detail-section editorial-appendix-section" id="detail-data">
-        <summary id="risk-explainer" class="editorial-appendix-summary">
-          <span class="editorial-appendix-heading">
-            <span class="editorial-appendix-kicker">DATA APPENDIX</span>
-            <span class="editorial-appendix-title">详细数据与图表</span>
-            <span class="summary-note editorial-appendix-note">这里保留盘中输入、数据健康、趋势图表、资产表格和高级风险细节，用于审计上方结论，不作为首页第一阅读路径。</span>
-          </span>
+      <details class="full-width-section cockpit-section editorial-section-panel data-detail-section editorial-appendix-section" id="detail-data" style="--section-accent: var(--paper-ink);">
+        <summary id="risk-explainer" class="editorial-section-header editorial-section-summary">
+          <span class="section-kicker">DATA APPENDIX</span>
+          <span class="section-title">详细数据与图表</span>
+          <span class="section-note summary-note">这里保留盘中输入、数据健康、趋势图表、资产表格和高级风险细节，用于审计上方结论，不作为首页第一阅读路径。</span>
         </summary>
-        <details class="full-width-section cockpit-section advanced-panel ia-detail-panel data-detail-section editorial-appendix-panel">
+        <details class="editorial-subsection">
                 <summary><span class="editorial-appendix-meta">AUDIT INPUTS</span>实时输入与数据健康（可展开）</summary>
               <section class="full-width-section cockpit-section">
                 <article class="card realtime-strip-card">
@@ -690,7 +686,7 @@
               </section>
               </details>
 
-        <details class="advanced-panel ia-detail-panel evidence-detail-section editorial-appendix-panel">
+        <details class="editorial-subsection">
                 <summary><span class="editorial-appendix-meta">TREND REVIEW</span>风险趋势、宏观状态与危机阶段（可展开）</summary>
               <section class="grid three-col risk-section">
                 <article class="card">
@@ -740,7 +736,7 @@
               </section>
               </details>
 
-        <details class="advanced-panel editorial-appendix-panel">
+        <details class="editorial-subsection">
                 <summary><span class="editorial-appendix-meta">TIME SERIES</span>30日时间维度、趋势解释与传导速度</summary>
               <section class="full-width-section">
                 <article class="card">
@@ -796,7 +792,7 @@
               </section>
               </details>
 
-        <details class="advanced-panel ia-detail-panel evidence-detail-section editorial-appendix-panel">
+        <details class="editorial-subsection">
               <summary><span class="editorial-appendix-meta">MODULE DETAIL</span>六大风险模块与流动性详情（可展开）</summary>
               <section class="grid two-col action-position-grid risk-section">
                 <article class="card">
@@ -829,7 +825,7 @@
               </section>
               </details>
 
-        <details class="advanced-panel editorial-appendix-panel">
+        <details class="editorial-subsection">
                 <summary><span class="editorial-appendix-meta">TRANSMISSION</span>机构级宏观传导网络</summary>
               <section class="full-width-section">
                 <article class="card transmission-card full-width-card">
@@ -881,7 +877,7 @@
               </section>
               </details>
 
-        <details class="advanced-panel editorial-appendix-panel">
+        <details class="editorial-subsection">
                 <summary><span class="editorial-appendix-meta">ASSET TABLE</span>资产收益 / 回撤映射</summary>
               <section class="card">
                 <div class="card-head split-head">
@@ -907,7 +903,7 @@
               </section>
               </details>
 
-        <details class="advanced-panel ia-detail-panel data-detail-section editorial-appendix-panel">
+        <details class="editorial-subsection">
               <summary><span class="editorial-appendix-meta">RAW TABLES</span>原始数据表与历史图表（可展开）</summary>
               <section class="card risk-section">
                 <h2>资产偏好矩阵</h2>
@@ -927,7 +923,7 @@
               </section>
               </details>
 
-        <details class="advanced-panel editorial-appendix-panel">
+        <details class="editorial-subsection">
                 <summary><span class="editorial-appendix-meta">SCENARIOS</span>四情景树与信号可信度</summary>
               <section class="grid two-col">
                 <article class="card">
@@ -952,25 +948,20 @@
               </details>
       </details>
 
-      <section class="full-width-section cockpit-section external-ai-auxiliary-section editorial-external-ai-panel" id="external-ai-auxiliary">
-        <div class="card-head split-head">
-          <div>
-            <p class="editorial-external-ai-kicker">READ-ONLY AUXILIARY INTERPRETATION</p>
-            <h2 class="editorial-external-ai-title">外部 AI 解读（只读辅助）</h2>
-            <p class="muted editorial-external-ai-boundary">该层只解释站内结构化数据，不改变评分、决策、执行锁或 position guidance。</p>
-          </div>
-          <span class="badge neutral editorial-external-ai-meta">辅助解释</span>
-        </div>
+      <section class="full-width-section cockpit-section editorial-section external-ai-auxiliary-section editorial-external-ai-panel" id="external-ai-auxiliary" style="--section-accent: var(--paper-muted);">
+        <header class="editorial-section-header">
+          <span class="section-kicker">READ-ONLY AUXILIARY INTERPRETATION</span>
+          <span class="section-title">外部 AI 解读（只读辅助）</span>
+          <span class="section-note">该层只解释站内结构化数据，不改变评分、决策、执行锁或 position guidance。</span>
+        </header>
         <section class="full-width-section cockpit-section auxiliary-ai-panel editorial-external-ai-card" id="external-ai-display-panel" hidden aria-hidden="true"></section>
       </section>
 
-      <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section editorial-method-section" id="method-evidence">
-        <summary id="advanced-audit" class="editorial-method-summary">
-          <span class="editorial-method-heading">
-            <span class="editorial-method-kicker">METHOD / EVIDENCE / BOUNDARY</span>
-            <span class="editorial-method-main-title">方法说明</span>
-            <span class="summary-note editorial-method-note">本区说明本站如何把数据转化为结论、如何处理证据不足、反向证据和噪音，以及哪些内容不构成投资建议。</span>
-          </span>
+      <details class="full-width-section cockpit-section editorial-section-panel evidence-detail-section editorial-method-section" id="method-evidence" style="--section-accent: var(--paper-ink);">
+        <summary id="advanced-audit" class="editorial-section-header editorial-section-summary">
+          <span class="section-kicker">METHOD / EVIDENCE / BOUNDARY</span>
+          <span class="section-title">方法说明</span>
+          <span class="section-note summary-note">本区说明本站如何把数据转化为结论、如何处理证据不足、反向证据和噪音，以及哪些内容不构成投资建议。</span>
         </summary>
         <section class="editorial-method-grid" aria-label="方法、证据与边界说明">
           <article class="editorial-method-card">
@@ -1011,7 +1002,7 @@
             <p>Frontend display layer is read-only；本 PR 不改变 data pipeline、sanitizer、workflow 或 production data write 边界。</p>
           </article>
         </section>
-        <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section editorial-method-panel" id="daily-brief-section">
+        <details class="editorial-subsection" id="daily-brief-section">
                 <summary>Daily Brief 原始依据（可展开）<span class="summary-note">宏观风险判断总览是首页主判断；这里保留原始依据与来源细节。</span></summary>
                 <article class="card full-width-card">
                   <div class="card-head split-head">
@@ -1065,7 +1056,7 @@
                 </article>
               </details>
 
-        <details class="full-width-section cockpit-section advanced-panel secondary-ai-panel ia-detail-panel evidence-detail-section editorial-method-panel" id="ai-interpretation-layer-section">
+        <details class="editorial-subsection" id="ai-interpretation-layer-section">
                 <summary>站内规则解释与证据说明（可展开）</summary>
                 <article class="card full-width-card">
                   <div class="card-head split-head">
@@ -1115,7 +1106,7 @@
                 </article>
               </details>
 
-        <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section editorial-method-panel" id="divergence-layer-section">
+        <details class="editorial-subsection" id="divergence-layer-section">
                 <summary>背离与能源审计详情（可展开）</summary>
                 <article class="card full-width-card">
                   <div class="card-head split-head">
@@ -1146,7 +1137,7 @@
                     <p id="divergence-primary-summary">暂不足以判断。</p>
                     <ul class="bullet-list" id="divergence-primary-evidence"></ul>
                   </div>
-                  <details class="advanced-panel" id="divergence-details">
+                  <details class="editorial-subsection" id="divergence-details">
                     <summary>查看背离检查明细</summary>
                     <h3>背离检查</h3>
                     <div class="grid two-col" id="divergence-checks"></div>
@@ -1157,7 +1148,7 @@
                 </article>
               </details>
 
-        <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section editorial-method-panel" id="brent-pricing-layer-section">
+        <details class="editorial-subsection" id="brent-pricing-layer-section">
                 <summary>Brent 公开代理价格审计详情（可展开）</summary>
                 <article class="card full-width-card">
                   <div class="card-head split-head">
@@ -1189,16 +1180,16 @@
                     <div class="metric-label">代理价差 / 背离观察</div>
                     <div id="brent-proxy-spread">--</div>
                   </div>
-                  <details class="advanced-panel" id="brent-promotion-details">
+                  <details class="editorial-subsection" id="brent-promotion-details">
                     <summary>查看 Brent 主值审计</summary>
                     <div class="metric-box compact" id="brent-promotion-audit">--</div>
                   </details>
-                  <details class="advanced-panel" id="brent-confirmation-details">
+                  <details class="editorial-subsection" id="brent-confirmation-details">
                     <summary>查看验证源明细</summary>
                     <h3>验证来源</h3>
                     <div class="grid two-col" id="brent-confirmation-sources"></div>
                   </details>
-                  <details class="advanced-panel" id="brent-limitations-details">
+                  <details class="editorial-subsection" id="brent-limitations-details">
                     <summary>查看数据限制</summary>
                     <div class="grid two-col">
                       <div>
@@ -1216,7 +1207,7 @@
                 </article>
               </details>
 
-        <details class="full-width-section cockpit-section advanced-panel ia-detail-panel evidence-detail-section editorial-method-panel" id="world-order-stress-section">
+        <details class="editorial-subsection" id="world-order-stress-section">
                 <summary>世界秩序压力详情（可展开）</summary>
                 <article class="card full-width-card">
                   <div class="card-head split-head">
@@ -1288,7 +1279,7 @@
                 </article>
               </details>
 
-        <details class="advanced-panel ia-detail-panel evidence-detail-section editorial-method-panel">
+        <details class="editorial-subsection">
                 <summary>站内总览与核心风险明细（可展开）</summary>
               <section class="grid two-col hero-grid cockpit-section">
                 <article class="card">
@@ -1324,7 +1315,7 @@
               </section>
               </details>
 
-        <details class="advanced-panel">
+        <details class="editorial-subsection">
                 <summary>恢复状态与系统说明</summary>
               <section class="grid two-col footer-grid">
                 <article class="card">
@@ -1357,10 +1348,14 @@
               </details>
       </details>
 
-      <details class="full-width-section cockpit-section advanced-panel ia-detail-panel execution-detail-section" id="execution-risk-detail">
-        <summary>执行与风控详情（高级）<span class="summary-note">决策头、执行灯、预警规则、动作、仓位、风控与行为纪律保留为高级详情。</span></summary>
-        <details class="full-width-section decision-header-section cockpit-section advanced-panel ia-detail-panel execution-detail-section">
-                <summary>执行与风控详情（高级，可展开）<span class="summary-note">保留决策、执行灯与仓位细节，但首页主判断以上方总览为准。</span></summary>
+      <details class="full-width-section cockpit-section editorial-section-panel execution-detail-section" id="execution-risk-detail" style="--section-accent: var(--risk-red);">
+        <summary class="editorial-section-header editorial-section-summary">
+          <span class="section-kicker">EXECUTION & RISK DETAIL</span>
+          <span class="section-title">执行与风控详情（高级）</span>
+          <span class="section-note summary-note">决策头、执行灯、预警规则、动作、仓位、风控与行为纪律保留为高级详情。</span>
+        </summary>
+        <details class="editorial-subsection decision-header-section">
+                <summary>决策概览<span class="summary-note">保留决策、执行灯与仓位细节，但首页主判断以上方总览为准。</span></summary>
                 <article class="card decision-header-card full-width-card">
                   <div class="decision-header-layout">
                     <div class="decision-header-main">
@@ -1414,8 +1409,8 @@
                 </article>
               </details>
 
-        <details class="full-width-section main-lock-section cockpit-section advanced-panel ia-detail-panel execution-detail-section">
-                <summary>执行状态灯详情（高级，可展开）</summary>
+        <details class="editorial-subsection main-lock-section">
+                <summary>执行状态灯</summary>
                 <article class="card execution-lock-card full-width-card">
                   <div class="card-head split-head">
                     <h2>执行状态灯</h2>
@@ -1443,7 +1438,7 @@
                 </article>
               </details>
 
-        <details class="advanced-panel">
+        <details class="editorial-subsection">
                 <summary>预警规则与触发器审计</summary>
               <section class="grid two-col">
                 <article class="card">
@@ -1490,8 +1485,8 @@
               </section>
               </details>
 
-        <details class="advanced-panel ia-detail-panel execution-detail-section">
-              <summary>执行与风控详情（高级，可展开）</summary>
+        <details class="editorial-subsection">
+              <summary>交易信号 / 今日执行 / 目标仓位 / 硬阈值风控</summary>
               <section class="grid two-col trading-action-grid cockpit-section">
                 <article class="card">
                   <div class="card-head split-head">
@@ -1606,7 +1601,7 @@
               </section>
               </details>
 
-        <details class="advanced-panel">
+        <details class="editorial-subsection">
                 <summary>行为纪律</summary>
               <section class="full-width-section">
                 <article class="card">

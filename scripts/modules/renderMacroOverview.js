@@ -1552,11 +1552,16 @@ function appendEditorialKeyChanges(root, changes) {
   const items = safeArray(changes);
   const section = document.createElement('section');
   section.className = 'macro-overview-block editorial-key-changes wow-section';
-  appendText(section, 'p', 'editorial-key-changes-label wow-label', '本期关键变化 · KEY CHANGES');
+  section.style.setProperty('--section-accent', 'var(--risk-yellow)');
+  const header = document.createElement('header');
+  header.className = 'editorial-section-header editorial-key-changes-header';
+  appendText(header, 'span', 'section-kicker editorial-key-changes-label wow-label', '本期关键变化 · KEY CHANGES');
+  appendText(header, 'span', 'section-title wow-title', '本期关键变化');
   const summary = items.length
     ? '以下只汇总站内已有结构化数据能够支持的边际提示，未确认项继续保留为待验证。'
     : '暂无足够边际变化数据，本区仅展示已能确认的方向性提示。';
-  appendText(section, 'p', 'editorial-key-changes-summary wow-intro', summary);
+  appendText(header, 'span', 'section-note editorial-key-changes-summary wow-intro', summary);
+  section.appendChild(header);
 
   const grid = document.createElement('div');
   grid.className = 'editorial-key-changes-grid wow-grid';
