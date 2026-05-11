@@ -1161,6 +1161,124 @@ function appendEditorialEngineCard(root, judgment) {
   root.appendChild(card);
 }
 
+function validationStatusClass(judgment) {
+  const id = String(judgment?.id || '');
+  const title = String(judgment?.title || '');
+  const status = String(judgment?.status || '');
+  const direction = String(judgment?.direction || '');
+  const sourceType = String(judgment?.sourceType || '');
+  const hasCounter = normalizeEvidenceList(judgment?.counterEvidence).length > 0;
+  const combined = `${id} ${title} ${status} ${direction} ${sourceType}`.toLowerCase();
+  if (combined.includes('数据不足') || combined.includes('等待接入') || combined.includes('gap')) return 'is-gap';
+  if (hasCounter || combined.includes('反向证据') || combined.includes('反证') || combined.includes('暂未扩散') || combined.includes('counter')) return 'is-counter';
+  if (combined.includes('已验证') || combined.includes('互相验证') || combined.includes('相互确认') || combined.includes('confirmed') || combined.includes('validated')) return 'is-confirmed';
+  if (combined.includes('待验证') || combined.includes('观察中') || combined.includes('pending') || combined.includes('watch')) return 'is-pending';
+  return 'is-neutral';
+}
+
+function validationTypeLabel(judgment) {
+  const className = validationStatusClass(judgment);
+  if (className === 'is-confirmed') return '相互确认';
+  if (className === 'is-pending') return '待验证';
+  if (className === 'is-counter') return '反向证据';
+  if (className === 'is-gap') return '数据不足';
+  return '交叉验证';
+}
+
+function buildValidationCounts(judgments) {
+  const counts = {
+    confirmed: 0,
+    pending: 0,
+    counter: 0,
+    gap: 0,
+  };
+  safeArray(judgments).forEach((judgment) => {
+    const className = validationStatusClass(judgment);
+    if (className === 'is-confirmed') counts.confirmed += 1;
+    else if (className === 'is-counter') counts.counter += 1;
+    else if (className === 'is-gap') counts.gap += 1;
+    else counts.pending += 1;
+  });
+  return counts;
+}
+
+function buildValidationCategorySummary(judgments) {
+  const items = safeArray(judgments);
+  if (!items.length) return '交叉验证数据不足，暂不强行形成确认结论。';
+  const counts = buildValidationCounts(items);
+  const pendingTitles = items
+    .filter((judgment) => validationStatusClass(judgment) === 'is-pending')
+    .slice(0, 2)
+    .map((judgment) => `「${judgment.title}」`);
+  const hasMissing = items.some((judgment) => normalizeEvidenceList(judgment.missingEvidence).length);
+  const hasNoise = items.some((judgment) => normalizeEvidenceList(judgment.noiseWarning).length);
+  const lines = ['当前交叉验证用于判断多个指标是否互相确认，而不是单独制造结论'];
+  if (counts.confirmed) lines.push('已有部分互相确认信号，但仍按证据强度呈现');
+  if (pendingTitles.length) lines.push(`${pendingTitles.join('和')}仍需保留为待验证`);
+  if (counts.counter) lines.push('反向证据不隐藏');
+  if (counts.gap || hasMissing) lines.push('Market Pricing 历史、实物能源或其他关键数据缺口继续单独展示');
+  if (hasNoise) lines.push('噪音提示不转化为结论');
+  return `${lines.join('；')}。`;
+}
+
+function appendValidationCountPill(root, label, value) {
+  const pill = document.createElement('span');
+  pill.className = 'editorial-count-pill editorial-validation-count-pill';
+  appendText(pill, 'span', '', label);
+  appendText(pill, 'strong', '', String(value));
+  root.appendChild(pill);
+}
+
+function appendEditorialValidationSublist(root, label, values, modifier = '') {
+  const items = normalizeEvidenceList(values);
+  if (!items.length) return;
+  const group = document.createElement('div');
+  group.className = `editorial-validation-sublist ${modifier}`.trim();
+  appendText(group, 'span', 'editorial-validation-sublist-label', label);
+  const list = document.createElement('ul');
+  list.className = 'editorial-validation-evidence';
+  items.forEach((item) => appendText(list, 'li', '', stripLabelPrefix(item, label)));
+  group.appendChild(list);
+  root.appendChild(group);
+}
+
+function appendEditorialValidationCard(root, judgment) {
+  const className = validationStatusClass(judgment);
+  const card = document.createElement('article');
+  card.className = `editorial-validation-card ${className}`;
+  const strip = document.createElement('div');
+  strip.className = 'editorial-validation-card-status-strip';
+  strip.setAttribute('aria-hidden', 'true');
+  card.appendChild(strip);
+
+  const head = document.createElement('div');
+  head.className = 'editorial-validation-card-head';
+  appendText(head, 'span', 'editorial-validation-type', validationTypeLabel(judgment));
+  appendText(head, 'h3', 'editorial-validation-card-title', judgment.title);
+  appendText(head, 'span', 'editorial-validation-badge', judgment.status || UNDECIDED);
+  card.appendChild(head);
+
+  const direction = judgment.direction && judgment.direction !== '方向待确认'
+    ? ` / ${judgment.direction}`
+    : '';
+  appendText(card, 'p', 'editorial-validation-main', `${judgment.status || UNDECIDED}${direction}`);
+  const explanation = judgment.explanation || judgment.conclusion;
+  if (explanation) appendText(card, 'p', 'editorial-validation-explanation', explanation);
+  appendEditorialValidationSublist(card, '关键证据', judgment.evidence, 'is-evidence');
+  appendEditorialValidationSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
+  appendEditorialValidationSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
+  appendEditorialValidationSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
+
+  const footer = document.createElement('div');
+  footer.className = 'editorial-validation-footer';
+  if (judgment.confidence && judgment.confidence !== '等待校准') appendText(footer, 'span', '', `证据强度：${judgment.confidence}`);
+  if (judgment.dataCoverage) appendText(footer, 'span', '', `数据覆盖：${stripLabelPrefix(judgment.dataCoverage, '数据覆盖')}`);
+  if (judgment.sourceType) appendText(footer, 'span', '', `来源类型：${judgment.sourceType}`);
+  if (judgment.updatedAt) appendText(footer, 'span', '', `更新：${judgment.updatedAt}`);
+  if (footer.childNodes.length) card.appendChild(footer);
+  root.appendChild(card);
+}
+
 function appendEditorialSignalSublist(root, label, values, modifier = '') {
   const items = normalizeEvidenceList(values);
   if (!items.length) return;
@@ -1388,9 +1506,19 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   overview.riskEngines.forEach((item) => appendEditorialEngineCard(engineGrid, item));
   engines.appendChild(engineGrid);
 
-  const cross = appendSection(container, '风险交叉验证', '', 'homepage-cross-validation');
+  const cross = appendSection(container, '风险交叉验证', 'editorial-category editorial-validation-category', 'homepage-cross-validation');
+  appendText(cross, 'p', 'editorial-category-kicker', 'CROSS VALIDATION');
+  appendText(cross, 'p', 'editorial-category-summary', buildValidationCategorySummary(overview.crossValidation));
+  const validationCounts = buildValidationCounts(overview.crossValidation);
+  const validationCountGrid = document.createElement('div');
+  validationCountGrid.className = 'editorial-category-counts';
+  appendValidationCountPill(validationCountGrid, '相互确认', validationCounts.confirmed);
+  appendValidationCountPill(validationCountGrid, '待验证', validationCounts.pending);
+  appendValidationCountPill(validationCountGrid, '反向证据', validationCounts.counter);
+  appendValidationCountPill(validationCountGrid, '数据不足', validationCounts.gap);
+  cross.appendChild(validationCountGrid);
   const crossGrid = document.createElement('div');
-  crossGrid.className = 'macro-overview-grid four-col';
-  overview.crossValidation.forEach((item) => appendCard(crossGrid, item));
+  crossGrid.className = 'editorial-validation-grid';
+  overview.crossValidation.forEach((item) => appendEditorialValidationCard(crossGrid, item));
   cross.appendChild(crossGrid);
 }

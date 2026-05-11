@@ -1661,6 +1661,153 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
   font-weight: 800;
   line-height: 1.45;
 }
+.editorial-validation-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.editorial-validation-card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 11px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 14px 14px;
+  border: 1px solid var(--editorial-line);
+  border-radius: 8px;
+  background: rgba(251, 247, 240, 0.94);
+  color: var(--editorial-ink);
+}
+.editorial-validation-card-status-strip {
+  height: 5px;
+  margin: 0 -14px;
+  background: var(--editorial-muted);
+}
+.editorial-validation-card.is-confirmed .editorial-validation-card-status-strip,
+.editorial-validation-card.is-confirmed .editorial-validation-type,
+.editorial-validation-card.is-confirmed .editorial-validation-badge {
+  background: var(--editorial-green);
+  color: #fffaf2;
+}
+.editorial-validation-card.is-pending .editorial-validation-card-status-strip,
+.editorial-validation-card.is-pending .editorial-validation-type,
+.editorial-validation-card.is-pending .editorial-validation-badge {
+  background: var(--editorial-yellow);
+  color: #fffaf2;
+}
+.editorial-validation-card.is-counter .editorial-validation-card-status-strip,
+.editorial-validation-card.is-counter .editorial-validation-type,
+.editorial-validation-card.is-counter .editorial-validation-badge {
+  background: var(--editorial-green);
+  color: #fffaf2;
+}
+.editorial-validation-card.is-gap .editorial-validation-card-status-strip,
+.editorial-validation-card.is-gap .editorial-validation-type,
+.editorial-validation-card.is-gap .editorial-validation-badge {
+  background: #8d6f67;
+  color: #fffaf2;
+}
+.editorial-validation-card-head {
+  display: grid;
+  gap: 8px;
+}
+.editorial-validation-card-title {
+  margin: 0;
+  color: var(--editorial-ink);
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.35;
+}
+.editorial-validation-type,
+.editorial-validation-badge {
+  justify-self: start;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #fffaf2;
+  background: var(--editorial-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+.editorial-validation-badge {
+  color: var(--editorial-ink);
+  background: rgba(26, 24, 21, 0.10);
+}
+.editorial-validation-main {
+  margin: 0;
+  color: var(--editorial-warm);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.45;
+}
+.editorial-validation-card.is-confirmed .editorial-validation-main {
+  color: var(--editorial-green);
+}
+.editorial-validation-card.is-pending .editorial-validation-main {
+  color: var(--editorial-yellow);
+}
+.editorial-validation-card.is-counter .editorial-validation-main {
+  color: var(--editorial-green);
+}
+.editorial-validation-card.is-gap .editorial-validation-main {
+  color: #7a7167;
+}
+.editorial-validation-card.is-neutral .editorial-validation-main {
+  color: var(--editorial-warm);
+}
+.editorial-validation-explanation {
+  margin: 0;
+  color: var(--editorial-warm);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.editorial-validation-sublist {
+  display: grid;
+  gap: 5px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(26, 24, 21, 0.14);
+}
+.editorial-validation-sublist-label {
+  color: var(--editorial-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+.editorial-validation-evidence {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--editorial-warm);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.editorial-validation-sublist.is-missing,
+.editorial-validation-sublist.is-noise {
+  background: rgba(124, 29, 29, 0.06);
+  margin: 0 -6px;
+  padding: 9px 6px 0;
+}
+.editorial-validation-sublist.is-missing .editorial-validation-sublist-label,
+.editorial-validation-sublist.is-noise .editorial-validation-sublist-label {
+  color: var(--editorial-red);
+}
+.editorial-validation-sublist.is-counter .editorial-validation-sublist-label {
+  color: var(--editorial-green);
+}
+.editorial-validation-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(26, 24, 21, 0.14);
+  color: var(--editorial-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.45;
+}
 main { display: grid; gap: 22px; }
 .section-group-title {
   margin: 18px 0 2px;
@@ -2146,7 +2293,8 @@ article {
   .editorial-pressure-grid,
   .editorial-signal-grid,
   .editorial-driver-grid,
-  .editorial-engine-grid {
+  .editorial-engine-grid,
+  .editorial-validation-grid {
     grid-template-columns: 1fr;
   }
   .editorial-category-summary {
