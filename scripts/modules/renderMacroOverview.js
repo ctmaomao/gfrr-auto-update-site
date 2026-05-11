@@ -656,7 +656,12 @@ function appendEditorialMeta(root, label, value) {
 }
 
 function appendRiskStageScale(root, today) {
-  const stages = ['正常观察', '压力上升', '局部冲击观察', '系统性风险观察', '系统性危机'];
+  const numericStages = [
+    { label: '正常观察', start: 0, end: 50 },
+    { label: '压力上升', start: 50, end: 65 },
+    { label: '局部冲击观察', start: 65, end: 85 },
+    { label: '系统性风险观察', start: 85, end: 100 },
+  ];
   const score = finite(today.score);
   const scale = document.createElement('div');
   scale.className = 'editorial-risk-scale';
@@ -667,6 +672,10 @@ function appendRiskStageScale(root, today) {
   appendText(header, 'strong', '', today.stage || UNDECIDED);
   scale.appendChild(header);
 
+  if (today.stage === '系统性危机') {
+    appendText(scale, 'p', 'editorial-risk-scale-override', '显式阶段：系统性危机，不由本标尺单独推断');
+  }
+
   if (score === null) {
     appendText(scale, 'p', 'editorial-risk-scale-empty', '数据不足，暂不绘制阶段位置');
     root.appendChild(scale);
@@ -675,10 +684,12 @@ function appendRiskStageScale(root, today) {
 
   const track = document.createElement('div');
   track.className = 'editorial-risk-scale-track';
-  stages.forEach((stage) => {
+  numericStages.forEach(({ label, start, end }) => {
     const segment = document.createElement('span');
-    segment.className = `editorial-risk-scale-segment${stage === today.stage ? ' is-active' : ''}`;
-    segment.setAttribute('aria-hidden', 'true');
+    segment.className = `editorial-risk-scale-segment${label === today.stage ? ' is-active' : ''}`;
+    segment.style.flexBasis = `${end - start}%`;
+    segment.setAttribute('title', `${label}：${start}-${end}`);
+    segment.setAttribute('aria-label', `${label}：${start} 到 ${end}`);
     track.appendChild(segment);
   });
 
@@ -691,7 +702,10 @@ function appendRiskStageScale(root, today) {
 
   const labels = document.createElement('div');
   labels.className = 'editorial-risk-scale-labels';
-  stages.forEach((stage) => appendText(labels, 'span', stage === today.stage ? 'is-active' : '', stage));
+  numericStages.forEach(({ label, start, end }) => {
+    const className = label === today.stage ? 'is-active' : '';
+    appendText(labels, 'span', className, `${label} ${start}-${end}`);
+  });
   scale.appendChild(labels);
   root.appendChild(scale);
 }
