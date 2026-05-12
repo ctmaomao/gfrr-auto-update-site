@@ -1774,6 +1774,40 @@ This stage:
 - performs no MA60, standard deviation, z-score, band, or temperature calculation.
 - keeps Market Pricing Temperature waiting-for-history.
 
+```text
+v28.0M-19 Market Pricing Symbol Mapping Verification Design - No Mapping Approved / Design Layer Only
+```
+
+## v28.0M-19 Market Pricing Symbol Mapping Verification Design
+
+v28.0M-19 adds a Market Pricing symbol mapping verification design layer.
+
+This stage:
+
+- adds `docs/MARKET_PRICING_SYMBOL_MAPPING_VERIFICATION_DESIGN.md`.
+- adds `docs/fixtures/market-pricing/symbol-mapping-verification-design-v28.0M-19.json`.
+- adds `scripts/check-market-pricing-symbol-mapping-verification-design.mjs`.
+- adds `npm run check:market-pricing-symbol-mapping-verification-design`.
+- wires the design checker into `npm run check:all` to maintain the M-series coverage convention.
+- adds no executable scaffold script for M-19.
+- keeps `symbolMappingVerified=false`.
+- keeps `symbolMappingVerificationStatus="not_verified"`.
+- keeps `symbolMappingApproved=false`.
+- records QQQ as a candidate symbol without approving it.
+- keeps `symbolMappingDesignReviewed=true` as the design-layer completion flag.
+- enforces `noSpxSubstitution=true`; SPX must never substitute for Nasdaq / QQQ temperature.
+- keeps all six verification checklist items false.
+- keeps M-17 / M-18 inherited approval flags false.
+- keeps records empty.
+- performs no live fetch.
+- adds no provider URLs, source URLs, endpoints, secrets, or provider calls.
+- performs no production data write.
+- writes no `data/market-pricing-history.json` records.
+- changes no workflow.
+- changes no frontend rendering.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- keeps Market Pricing Temperature waiting-for-history.
+
 ## v28.0N-1 Editorial First Fold
 
 v28.0N-1 introduces an editorial first-fold homepage skin.

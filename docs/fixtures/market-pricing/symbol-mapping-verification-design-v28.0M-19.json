@@ -1,0 +1,106 @@
+{
+  "contractVersion": "v28.0M-19-symbol-mapping-verification-design-1",
+  "kind": "market_pricing_symbol_mapping_verification_design",
+  "generatedAt": "2099-01-01T00:00:00.000Z",
+  "status": "symbol_mapping_design_only_not_verified",
+  "targetAsset": "qqq",
+  "candidateSymbolDesign": {
+    "primarySymbol": "QQQ",
+    "primaryMarket": "NASDAQ",
+    "primaryExchange": "NASDAQ",
+    "primarySymbolFormat": "uppercase_ticker",
+    "fallbackCandidates": [
+      {
+        "symbol": "NDX",
+        "market": "NASDAQ",
+        "exchange": "NASDAQ",
+        "note": "Index, not the tradable ETF. Cannot be used as QQQ price."
+      },
+      {
+        "symbol": "IXIC",
+        "market": "NASDAQ",
+        "exchange": "NASDAQ",
+        "note": "Composite index. Cannot be used as QQQ price."
+      }
+    ],
+    "rejectedSubstitutes": [
+      {
+        "symbol": "SPX",
+        "market": "CBOE",
+        "reason": "S&P 500 is not Nasdaq. SPX must never be used as Nasdaq/QQQ temperature."
+      }
+    ]
+  },
+  "verificationChecklistDesign": {
+    "tickerCaseMatched": false,
+    "tickerCaseMatchedNote": "Future verification: confirm source returns uppercase QQQ, not qqq or Qqq.",
+    "marketIdentifierMatched": false,
+    "marketIdentifierMatchedNote": "Future verification: confirm source identifies the symbol as NASDAQ-listed.",
+    "exchangeIdentifierMatched": false,
+    "exchangeIdentifierMatchedNote": "Future verification: confirm source identifies the exchange as NASDAQ.",
+    "assetClassMatched": false,
+    "assetClassMatchedNote": "Future verification: confirm source returns ETF asset class, not index.",
+    "isinOrFigiCrossChecked": false,
+    "isinOrFigiCrossCheckedNote": "Future verification: cross-check ISIN US46090E1038 or FIGI BBG000BSWKH7 if source provides it.",
+    "timezoneAlignmentVerified": false,
+    "timezoneAlignmentVerifiedNote": "Future verification: confirm timestamps align with NY market timezone.",
+    "noSpxSubstitution": true,
+    "noSpxSubstitutionNote": "Hard rule: SPX must never substitute for Nasdaq/QQQ temperature, even temporarily."
+  },
+  "symbolMappingVerified": false,
+  "symbolMappingVerificationStatus": "not_verified",
+  "symbolMappingApproved": false,
+  "candidateSymbolRecorded": true,
+  "symbolMappingDesignReviewed": true,
+  "sourceComplianceReviewed": false,
+  "sourceComplianceReviewStatus": "not_reviewed",
+  "sourceFormatVerified": false,
+  "sourceSelectionFinalized": false,
+  "sourceApproved": false,
+  "liveFetchApproved": false,
+  "networkGateApproved": false,
+  "networkGateOpen": false,
+  "networkAllowed": false,
+  "sourceUrlPersistenceAllowed": false,
+  "secretsAllowed": false,
+  "productionDataWriteApproved": false,
+  "historyWriteApproved": false,
+  "marketTemperatureCalculationApproved": false,
+  "readyForProductionWrite": false,
+  "artifactOnly": true,
+  "designLayerOnly": true,
+  "scaffoldExecutableExists": false,
+  "verificationRequiresSeparateApproval": true,
+  "unifiedPipelineAssignment": {
+    "sourceArtifactsLayer": "artifact_sanitizer_layer",
+    "historyLayer": "daily_history_layer",
+    "realtimeWorkerPrimaryWeeklyHistoryBuilder": false,
+    "backupValidationMayBypassSanitizer": false
+  },
+  "records": [],
+  "apiCalled": false,
+  "secretsRead": false,
+  "productionDataWritten": false,
+  "historyFileModified": false,
+  "frontendChanged": false,
+  "workflowChanged": false,
+  "boundaries": {
+    "designLayerOnly": true,
+    "noScaffoldExecutable": true,
+    "noLiveFetch": true,
+    "noNetworkEnabled": true,
+    "noSourceApproval": true,
+    "noComplianceApproval": true,
+    "noSymbolMappingApproval": true,
+    "noProductionWrite": true,
+    "noHistoryWrite": true,
+    "noWorkflowChange": true,
+    "noCalculation": true,
+    "noFrontendChange": true,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false
+  },
+  "nextAllowedStep": "M-20 will add source format verification design layer. Symbol mapping verification will only become true under separate manual approval after M-21 network is opened and data can be inspected."
+}

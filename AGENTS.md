@@ -625,6 +625,12 @@ M-18 scaffold output must keep source compliance review in the initial `not_revi
 
 Do not set `sourceComplianceReviewed=true`, `sourceComplianceApproved=true`, any compliance checklist item to true, `sourceApproved=true`, `liveFetchApproved=true`, `networkGateApproved=true`, `networkGateOpen=true`, `networkAllowed=true`, `sourceFormatVerified=true`, `symbolMappingVerified=true`, `sourceSelectionFinalized=true`, `productionDataWriteApproved=true`, `historyWriteApproved=true`, `marketTemperatureCalculationApproved=true`, or `readyForProductionWrite=true`. `--mark-reviewed` requests must be rejected with `compliance_review_requires_manual_human_review`, `scaffold_cannot_auto_approve_compliance`, and `source_not_approved`. Do not persist actual compliance review answers, source URLs, endpoint URLs, provider calls, secrets, production writes, history writes, market-pricing records, Market Pricing Temperature activation, MA60, standard deviation, z-score, workflow changes, frontend rendering changes, scoring changes, decision changes, execution changes, or position changes.
 
+## 54L. v28.0M-19 market pricing symbol mapping verification design reminder
+
+M-19 is design layer only. Do not create `scripts/market-pricing/symbol-mapping-verification-design.mjs`.
+
+Keep `symbolMappingVerified=false`, `symbolMappingVerificationStatus="not_verified"`, `symbolMappingApproved=false`, and all mapping verification checklist items false. QQQ may be recorded as a candidate, but it is not approved. `noSpxSubstitution=true` is a hard rule: SPX must never substitute for Nasdaq / QQQ temperature. Do not approve source use, compliance, symbol mapping, live fetch, network access, production writes, history writes, market-pricing records, Market Pricing Temperature activation, MA60, standard deviation, z-score, workflow changes, frontend rendering changes, scoring changes, decision changes, execution changes, or position changes.
+
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
 Keep Macro Risk Overview as the single primary homepage judgment entry.
