@@ -2043,6 +2043,21 @@ Operator guidance:
 - Keep records empty and Market Pricing Temperature waiting-for-history.
 - `npm run check:market-pricing-network-gate-scaffold` must pass.
 
+### v28.0M-18 market pricing source compliance review scaffold operator note
+
+v28.0M-18 adds a local source compliance review scaffold. Compliance review status remains `not_reviewed`; the scaffold does not approve compliance, source use, live fetch, network access, production writes, history writes, or Market Pricing Temperature calculation.
+
+Operator guidance:
+
+- `npm run market-pricing:source-compliance-review:scaffold` is safe to run locally; it writes only under `manual-artifacts/market-pricing/`.
+- Passing `--mark-reviewed` must remain rejected in the scaffold report.
+- Required rejection reasons are `compliance_review_requires_manual_human_review`, `scaffold_cannot_auto_approve_compliance`, and `source_not_approved`.
+- Keep all seven compliance checklist items false.
+- Do not add actual compliance answers, source URLs, endpoints, secrets, headers, cookies, auth tokens, or provider calls.
+- Do not write `data/radar-data.json` or `data/market-pricing-history.json`.
+- Keep records empty and Market Pricing Temperature waiting-for-history.
+- `npm run check:market-pricing-source-compliance-review-scaffold` must pass.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.

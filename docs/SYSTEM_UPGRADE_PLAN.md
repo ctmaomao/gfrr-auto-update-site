@@ -1740,6 +1740,40 @@ This stage:
 - performs no MA60, standard deviation, z-score, band, or temperature calculation.
 - keeps Market Pricing Temperature waiting-for-history.
 
+```text
+v28.0M-18 Market Pricing Source Compliance Review Scaffold - No Source Approved / Network Still Disabled
+```
+
+## v28.0M-18 Market Pricing Source Compliance Review Scaffold
+
+v28.0M-18 adds a Market Pricing source compliance review scaffold.
+
+This stage:
+
+- adds `scripts/market-pricing/source-compliance-review-scaffold.mjs`.
+- adds `scripts/check-market-pricing-source-compliance-review-scaffold.mjs`.
+- adds `docs/MARKET_PRICING_SOURCE_COMPLIANCE_REVIEW_SCAFFOLD.md`.
+- adds `docs/fixtures/market-pricing/source-compliance-review-scaffold-v28.0M-18.json`.
+- adds `npm run market-pricing:source-compliance-review:scaffold`.
+- adds `npm run check:market-pricing-source-compliance-review-scaffold`.
+- wires the scaffold checker into `npm run check:all` to maintain the M-series coverage convention.
+- keeps `sourceComplianceReviewed=false`.
+- keeps `sourceComplianceReviewStatus="not_reviewed"`.
+- keeps all seven compliance checklist items false.
+- rejects `--mark-reviewed` requests.
+- keeps `networkGateApproved=false`, `networkGateOpen=false`, and `networkAllowed=false`.
+- keeps `sourceApproved=false` and `liveFetchApproved=false`.
+- keeps source format, symbol mapping, source selection, production write, history write, and market temperature calculation approvals false.
+- keeps records empty.
+- performs no live fetch.
+- adds no provider URLs, source URLs, endpoints, secrets, or provider calls.
+- performs no production data write.
+- writes no `data/market-pricing-history.json` records.
+- changes no workflow.
+- changes no frontend rendering.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- keeps Market Pricing Temperature waiting-for-history.
+
 ## v28.0N-1 Editorial First Fold
 
 v28.0N-1 introduces an editorial first-fold homepage skin.
