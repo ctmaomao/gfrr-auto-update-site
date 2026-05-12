@@ -1808,6 +1808,39 @@ This stage:
 - performs no MA60, standard deviation, z-score, band, or temperature calculation.
 - keeps Market Pricing Temperature waiting-for-history.
 
+```text
+v28.0M-20 Market Pricing Source Format Verification Design - No Format Approved / Design Layer Only
+```
+
+## v28.0M-20 Market Pricing Source Format Verification Design
+
+v28.0M-20 adds a Market Pricing source format verification design layer.
+
+This stage:
+
+- adds `docs/MARKET_PRICING_SOURCE_FORMAT_VERIFICATION_DESIGN.md`.
+- adds `docs/fixtures/market-pricing/source-format-verification-design-v28.0M-20.json`.
+- adds `scripts/check-market-pricing-source-format-verification-design.mjs`.
+- adds `npm run check:market-pricing-source-format-verification-design`.
+- wires the design checker into `npm run check:all` to maintain the M-series coverage convention.
+- adds no executable scaffold script for M-20.
+- keeps `sourceFormatVerified=false`.
+- keeps `sourceFormatVerificationStatus="not_verified"`.
+- keeps `sourceFormatApproved=false`.
+- keeps `sourceFormatDesignReviewed=true` as the design-layer completion flag.
+- enforces `noPriceFabrication=true` and `noHtmlErrorPageMasquerade=true`.
+- keeps all seven source format verification checklist items false.
+- keeps M-17 / M-18 / M-19 inherited approval flags false.
+- keeps records empty.
+- performs no live fetch.
+- adds no provider URLs, source URLs, endpoints, secrets, or provider calls.
+- performs no production data write.
+- writes no `data/market-pricing-history.json` records.
+- changes no workflow.
+- changes no frontend rendering.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- keeps Market Pricing Temperature waiting-for-history.
+
 ## v28.0N-1 Editorial First Fold
 
 v28.0N-1 introduces an editorial first-fold homepage skin.

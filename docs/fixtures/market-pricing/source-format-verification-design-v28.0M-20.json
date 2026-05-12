@@ -1,0 +1,163 @@
+{
+  "contractVersion": "v28.0M-20-source-format-verification-design-1",
+  "kind": "market_pricing_source_format_verification_design",
+  "generatedAt": "2099-01-01T00:00:00.000Z",
+  "status": "source_format_design_only_not_verified",
+  "targetAsset": "qqq",
+  "candidateSourceFormatDesign": {
+    "expectedDeliveryFormat": "csv",
+    "expectedContentType": "text/csv",
+    "expectedColumns": [
+      {
+        "name": "Date",
+        "dataType": "iso_date_yyyy_mm_dd",
+        "required": true,
+        "note": "Future verification: must be ISO YYYY-MM-DD; reject Excel serial dates, US M/D/YYYY, or empty."
+      },
+      {
+        "name": "Open",
+        "dataType": "decimal_price",
+        "required": false,
+        "note": "Optional. If present, must be positive decimal; reject NaN, empty, 'null', or negative."
+      },
+      {
+        "name": "High",
+        "dataType": "decimal_price",
+        "required": false,
+        "note": "Optional. If present, must be positive decimal >= Low."
+      },
+      {
+        "name": "Low",
+        "dataType": "decimal_price",
+        "required": false,
+        "note": "Optional. If present, must be positive decimal <= High."
+      },
+      {
+        "name": "Close",
+        "dataType": "decimal_price",
+        "required": true,
+        "note": "Required for weekly history. Must be positive decimal with 2-4 decimal places."
+      },
+      {
+        "name": "Volume",
+        "dataType": "non_negative_integer",
+        "required": false,
+        "note": "Optional. If present, must be non-negative integer; not used in temperature calculation."
+      }
+    ],
+    "expectedPriceRange": {
+      "minPlausibleClose": 10.0,
+      "maxPlausibleClose": 2000.0,
+      "note": "QQQ historical range bounds. Any value outside this range must be flagged for manual review, never auto-accepted."
+    },
+    "expectedRowCadence": "daily_or_weekly",
+    "expectedRowCadenceNote": "Source may deliver daily or weekly bars. Weekly history layer must downsample, not interpolate."
+  },
+  "verificationChecklistDesign": {
+    "contentTypeMatched": false,
+    "contentTypeMatchedNote": "Future verification: confirm Content-Type header is text/csv, not text/html (HTML error page must be rejected).",
+    "headerRowPresent": false,
+    "headerRowPresentNote": "Future verification: confirm first non-empty row contains expected column names.",
+    "columnSchemaMatched": false,
+    "columnSchemaMatchedNote": "Future verification: confirm column names and order match expectedColumns.",
+    "dateColumnFormatMatched": false,
+    "dateColumnFormatMatchedNote": "Future verification: confirm Date column is ISO YYYY-MM-DD across all rows.",
+    "priceColumnNumericityVerified": false,
+    "priceColumnNumericityVerifiedNote": "Future verification: confirm Close column is decimal across all rows; reject NaN, empty, negative.",
+    "priceRangePlausibilityChecked": false,
+    "priceRangePlausibilityCheckedNote": "Future verification: confirm Close values fall within expectedPriceRange.",
+    "rowCadenceClassified": false,
+    "rowCadenceClassifiedNote": "Future verification: confirm cadence is daily or weekly, document which.",
+    "noHtmlErrorPageMasquerade": true,
+    "noHtmlErrorPageMasqueradeNote": "Hard rule: if response is HTML (e.g. 404/403/500 error page) but Content-Length non-zero, must reject; never parse HTML as CSV.",
+    "noPriceFabrication": true,
+    "noPriceFabricationNote": "Hard rule: missing prices must remain missing. Never interpolate, never extrapolate, never copy forward."
+  },
+  "rejectedFormatScenarios": [
+    {
+      "scenario": "HTML error page returned with 200 status",
+      "reason": "Some sources return HTML error pages with HTTP 200; Content-Type check must catch this. Never parse HTML as CSV."
+    },
+    {
+      "scenario": "Empty body with 200 status",
+      "reason": "Empty CSV body is not valid history; must be rejected as transient source error."
+    },
+    {
+      "scenario": "CSV with NaN, 'null', '-', or empty Close values",
+      "reason": "Missing prices must remain missing. Never substitute with previous-day close or interpolation."
+    },
+    {
+      "scenario": "CSV with US M/D/YYYY date format",
+      "reason": "Ambiguous date format. Must require ISO YYYY-MM-DD or reject."
+    },
+    {
+      "scenario": "CSV with Excel serial date numbers (e.g. 45000)",
+      "reason": "Excel-style date serials require conversion; reject as ambiguous source delivery."
+    },
+    {
+      "scenario": "Close value outside expectedPriceRange (e.g. < 10 or > 2000)",
+      "reason": "QQQ is unlikely to be below $10 or above $2000 in foreseeable history. Out-of-range values require manual review, never auto-accept."
+    }
+  ],
+  "sourceFormatVerified": false,
+  "sourceFormatVerificationStatus": "not_verified",
+  "sourceFormatApproved": false,
+  "sourceFormatDesignReviewed": true,
+  "noPriceFabrication": true,
+  "noHtmlErrorPageMasquerade": true,
+  "symbolMappingVerified": false,
+  "symbolMappingVerificationStatus": "not_verified",
+  "sourceComplianceReviewed": false,
+  "sourceComplianceReviewStatus": "not_reviewed",
+  "sourceSelectionFinalized": false,
+  "sourceApproved": false,
+  "liveFetchApproved": false,
+  "networkGateApproved": false,
+  "networkGateOpen": false,
+  "networkAllowed": false,
+  "sourceUrlPersistenceAllowed": false,
+  "secretsAllowed": false,
+  "productionDataWriteApproved": false,
+  "historyWriteApproved": false,
+  "marketTemperatureCalculationApproved": false,
+  "readyForProductionWrite": false,
+  "artifactOnly": true,
+  "designLayerOnly": true,
+  "scaffoldExecutableExists": false,
+  "verificationRequiresSeparateApproval": true,
+  "unifiedPipelineAssignment": {
+    "sourceArtifactsLayer": "artifact_sanitizer_layer",
+    "historyLayer": "daily_history_layer",
+    "realtimeWorkerPrimaryWeeklyHistoryBuilder": false,
+    "backupValidationMayBypassSanitizer": false
+  },
+  "records": [],
+  "apiCalled": false,
+  "secretsRead": false,
+  "productionDataWritten": false,
+  "historyFileModified": false,
+  "frontendChanged": false,
+  "workflowChanged": false,
+  "boundaries": {
+    "designLayerOnly": true,
+    "noScaffoldExecutable": true,
+    "noLiveFetch": true,
+    "noNetworkEnabled": true,
+    "noSourceApproval": true,
+    "noComplianceApproval": true,
+    "noSymbolMappingApproval": true,
+    "noSourceFormatApproval": true,
+    "noPriceFabrication": true,
+    "noHtmlErrorPageMasquerade": true,
+    "noProductionWrite": true,
+    "noHistoryWrite": true,
+    "noWorkflowChange": true,
+    "noCalculation": true,
+    "noFrontendChange": true,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false
+  },
+  "nextAllowedStep": "M-21 will open network in throttled mode. Source format verification will only become true under separate manual approval after M-21 network is opened and actual CSV samples can be inspected."
+}

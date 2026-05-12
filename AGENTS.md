@@ -631,6 +631,12 @@ M-19 is design layer only. Do not create `scripts/market-pricing/symbol-mapping-
 
 Keep `symbolMappingVerified=false`, `symbolMappingVerificationStatus="not_verified"`, `symbolMappingApproved=false`, and all mapping verification checklist items false. QQQ may be recorded as a candidate, but it is not approved. `noSpxSubstitution=true` is a hard rule: SPX must never substitute for Nasdaq / QQQ temperature. Do not approve source use, compliance, symbol mapping, live fetch, network access, production writes, history writes, market-pricing records, Market Pricing Temperature activation, MA60, standard deviation, z-score, workflow changes, frontend rendering changes, scoring changes, decision changes, execution changes, or position changes.
 
+## 54M. v28.0M-20 market pricing source format verification design reminder
+
+M-20 is design layer only. Do not create `scripts/market-pricing/source-format-verification-design.mjs`.
+
+Keep `sourceFormatVerified=false`, `sourceFormatVerificationStatus="not_verified"`, `sourceFormatApproved=false`, and all source format verification checklist items false. `noPriceFabrication=true` is a hard rule: missing prices must remain missing and must never be interpolated, extrapolated, or copied forward. `noHtmlErrorPageMasquerade=true` is a hard rule: HTML error pages must never be parsed as CSV. Do not approve source use, compliance, symbol mapping, source format, live fetch, network access, production writes, history writes, market-pricing records, Market Pricing Temperature activation, MA60, standard deviation, z-score, workflow changes, frontend rendering changes, scoring changes, decision changes, execution changes, or position changes.
+
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
 Keep Macro Risk Overview as the single primary homepage judgment entry.
