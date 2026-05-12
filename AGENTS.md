@@ -96,6 +96,45 @@
 - `docs/EXTERNAL_AI_MANUAL_TEST_DESIGN.md`：未来 manual API test 设计入口；任何 API test 实现前必须确认 opt-in、disabled-by-default、validator-gated、no production data mutation。
 - `scripts/check-external-ai-output.mjs`：离线检查 external AI sample/future output artifacts；不得把它改成 API caller、runtime dependency 或 production data writer。
 
+## Frontend Design Contract — Mandatory Reading
+
+> **CRITICAL**: Before performing any frontend change (HTML / CSS / SVG / JS rendering modules), every AI agent (Codex, Cursor, Claude, or otherwise) MUST read `DESIGN.md` in full.
+
+### Required Acknowledgment in PR
+
+Every PR that touches `index.html`, `assets/styles.css`, `scripts/modules/render*.js`, or any SVG rendering code MUST include one of these statements in the PR description:
+
+- ✅ **"本 PR 符合 DESIGN.md 的所有规则"** — for routine changes
+- ⚠️ **"本 PR 申请变更 DESIGN.md 的 §X 节"** — for changes that modify the design contract itself
+
+### Required Pre-Change Research
+
+For non-trivial visual changes, the agent MUST:
+
+1. Read `DESIGN.md` and confirm which sections apply
+2. Generate a current-state inventory before making changes (e.g., color usage table, font-size baseline, className inventory)
+3. Cite specific DESIGN.md sections that govern the change
+
+### Boundary Reaffirmation
+
+`DESIGN.md` does NOT relax any data / business boundaries. The following remain absolutely prohibited:
+
+- Changing scoring / decision / execution / position logic
+- Modifying `data/` or `data/radar-data.json`
+- Enabling Market Pricing Temperature
+- Adding live fetch or production write
+- Modifying `.github/workflows/`
+
+When `DESIGN.md` and any other contract (e.g., Market Pricing governance) appear to conflict, **the more restrictive contract wins**.
+
+### Enforcement
+
+- `npm run check:editorial-redesign-contract` enforces font allowlist, IA structure, and `DESIGN.md` existence + anchor integrity
+- `npm run check:homepage-ia-contract` enforces section order
+- `npm run check:all` runs both as part of the 32-check baseline
+
+PRs that fail these contracts MUST NOT be merged, regardless of how good the visual result looks.
+
 ## 3. 严格禁止的高风险行为
 
 1. 不要把 `brentValidation.consensus.recommendedValue` 直接改成 Brent 主值。
