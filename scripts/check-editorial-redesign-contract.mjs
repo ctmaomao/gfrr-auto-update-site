@@ -5,12 +5,14 @@ const INDEX_PATH = 'index.html';
 const STYLES_PATH = 'assets/styles.css';
 const MACRO_OVERVIEW_PATH = 'scripts/modules/renderMacroOverview.js';
 const PACKAGE_PATH = 'package.json';
+const DESIGN_PATH = 'DESIGN.md';
 const MARKET_PRICING_HISTORY_PATH = 'data/market-pricing-history.json';
 
 const html = fs.readFileSync(INDEX_PATH, 'utf8');
 const styles = fs.readFileSync(STYLES_PATH, 'utf8');
 const macroOverview = fs.readFileSync(MACRO_OVERVIEW_PATH, 'utf8');
 const packageJson = JSON.parse(fs.readFileSync(PACKAGE_PATH, 'utf8'));
+const designContract = fs.readFileSync(DESIGN_PATH, 'utf8');
 const errors = [];
 
 function fail(message) {
@@ -106,6 +108,32 @@ function checkThemeFoundation() {
   ];
   for (const marker of requiredStyleMarkers) requireMarker(styles, STYLES_PATH, marker);
   requireAnyMarker(styles, STYLES_PATH, ['#FBF7F0', '#fbf7f0']);
+}
+
+function checkDesignContractDoc() {
+  const requiredMarkers = [
+    '本文档是设计合约',
+    'The Bubble Watch / AI 泡沫监测',
+    '--paper-bg: #FBF7F0',
+    '--paper-ink: #1A1815',
+    '--font-display',
+    '--font-serif',
+    '--font-mono',
+    'Playfair Display',
+    'Noto Serif SC',
+    'IBM Plex Mono',
+    'dashboard-jump-nav            (顶部跳转导航 13 项)',
+    '#macro-risk-overview',
+    '#wow-key-changes',
+    '#global-risk-heatmap',
+    '#detail-data',
+    '#method-evidence',
+    '#external-ai-auxiliary',
+    '#execution-risk-detail',
+    '本 PR 符合 DESIGN.md 的所有规则',
+    'PR #164（本 PR）',
+  ];
+  for (const marker of requiredMarkers) requireMarker(designContract, DESIGN_PATH, marker);
 }
 
 function checkExternalUrlGuard() {
@@ -319,6 +347,7 @@ function checkPackageScript() {
 
 checkHomepageIa();
 checkThemeFoundation();
+checkDesignContractDoc();
 checkExternalUrlGuard();
 checkEditorialStructures();
 checkMarketPricingWaitingState();
