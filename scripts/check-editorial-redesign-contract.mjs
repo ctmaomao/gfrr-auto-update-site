@@ -79,15 +79,18 @@ function checkHomepageIa() {
     ['市场温度', '#homepage-market-temperature'],
     ['风险引擎', '#homepage-risk-engines'],
     ['交叉验证', '#homepage-cross-validation'],
+    ['本期关键变化', '#wow-key-changes'],
     ['风险热力图', '#global-risk-heatmap'],
     ['详细数据', '#detail-data'],
     ['方法说明', '#method-evidence'],
+    ['外部 AI', '#external-ai-auxiliary'],
+    ['执行风控', '#execution-risk-detail'],
   ];
 
   const links = getNavLinks();
   const actual = links.map((link) => `${link.label}|${link.href}`).join('\n');
   const expected = expectedLinks.map(([label, href]) => `${label}|${href}`).join('\n');
-  if (actual !== expected) fail('homepage nav must keep the exact 10-item editorial IA order and labels');
+  if (actual !== expected) fail('homepage nav must keep the exact 13-item editorial IA order and labels');
 }
 
 function checkThemeFoundation() {
@@ -112,23 +115,58 @@ function checkExternalUrlGuard() {
     [MACRO_OVERVIEW_PATH, macroOverview],
   ];
   const forbiddenPatterns = [
-    [/fonts\.googleapis\.com/iu, 'Google Fonts stylesheet URL'],
     [/fonts\.gstatic\.com/iu, 'Google Fonts asset URL'],
     [/@import\s+url\s*\(/iu, '@import url()'],
     [/cdn\.jsdelivr/iu, 'jsDelivr CDN URL'],
     [/unpkg\.com/iu, 'unpkg CDN URL'],
-    [/https?:\/\//iu, 'external URL'],
   ];
 
   for (const [filePath, source] of scannedFiles) {
     for (const [pattern, label] of forbiddenPatterns) {
       if (pattern.test(source)) fail(`${filePath} must not introduce ${label} into the editorial theme surface`);
     }
+
+    for (const urlText of extractExternalUrls(source)) {
+      if (isAllowedGoogleFontsStylesheetUrl(urlText)) continue;
+      if (/fonts\.googleapis\.com/iu.test(urlText)) {
+        fail(`${filePath} must not introduce a non-allowlisted Google Fonts stylesheet URL into the editorial theme surface`);
+      } else {
+        fail(`${filePath} must not introduce external URL into the editorial theme surface: ${urlText}`);
+      }
+    }
   }
 }
 
+function extractExternalUrls(source) {
+  return [...source.matchAll(/https?:\/\/[^\s"'<>\\)]+/giu)].map((match) => match[0]);
+}
+
+function isAllowedGoogleFontsStylesheetUrl(urlText) {
+  let url;
+  try {
+    url = new URL(urlText);
+  } catch {
+    return false;
+  }
+
+  if (url.protocol !== 'https:' || url.hostname.toLowerCase() !== 'fonts.googleapis.com') return false;
+  if (!url.pathname.startsWith('/css')) return false;
+
+  const families = url.searchParams
+    .getAll('family')
+    .map((family) => family.split(':')[0].trim())
+    .filter(Boolean);
+
+  // Font allowlist: Bubble Watch editorial redesign adopted three-stack fonts
+  // (Playfair Display / Noto Serif SC / IBM Plex Mono) via Google Fonts CDN.
+  // Only these three families are permitted. Any other external font load
+  // (including other Google Fonts families) remains prohibited.
+  const allowedFamilies = new Set(['Playfair Display', 'Noto Serif SC', 'IBM Plex Mono']);
+  return families.length > 0 && families.every((family) => allowedFamilies.has(family));
+}
+
 function checkEditorialStructures() {
-  const combined = `${macroOverview}\n${styles}`;
+  const combined = `${html}\n${macroOverview}\n${styles}`;
   const requiredMarkers = [
     'editorial-big-number',
     'GLOBAL RISK SCORE',
@@ -140,7 +178,10 @@ function checkEditorialStructures() {
     '压力上升',
     '局部冲击观察',
     '系统性风险观察',
-    'editorial-key-changes',
+    'id="wow-key-changes"',
+    'editorial-section-wow',
+    'wow-key-changes-root',
+    'wow-grid',
     '本期关键变化',
     'KEY CHANGES',
     'editorial-watch-list',
@@ -235,10 +276,12 @@ function checkAppendices() {
   const requiredMarkers = [
     'id="detail-data"',
     'DATA APPENDIX',
-    'editorial-appendix-section',
+    'editorial-section-folded',
+    'editorial-folded-content',
     'id="method-evidence"',
     'METHOD / EVIDENCE / BOUNDARY',
-    'editorial-method-section',
+    'id="external-ai-auxiliary"',
+    'id="execution-risk-detail"',
   ];
   for (const marker of requiredMarkers) requireMarker(html, INDEX_PATH, marker);
 }
