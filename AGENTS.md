@@ -619,6 +619,12 @@ M-17 scaffold output must keep the network gate closed even when an allow-networ
 
 Do not set `networkAllowed=true`, `networkGateApproved=true`, `networkGateOpen=true`, `sourceApproved=true`, `liveFetchApproved=true`, `sourceComplianceReviewed=true`, `sourceFormatVerified=true`, `symbolMappingVerified=true`, `secretsAllowed=true`, `productionDataWriteApproved=true`, `historyWriteApproved=true`, `marketTemperatureCalculationApproved=true`, or `readyForProductionWrite=true`. Required rejection reasons are `source_not_approved`, `live_fetch_not_approved`, and `network_gate_not_approved`. Report `records` must stay empty. Do not add provider URLs, endpoint URLs, live fetch, secrets, production writes, history writes, market-pricing records, MA60, standard deviation, z-score, workflow changes, frontend rendering changes, scoring changes, decision changes, execution changes, or position changes.
 
+## 54K. v28.0M-18 market pricing source compliance review scaffold reminder
+
+M-18 scaffold output must keep source compliance review in the initial `not_reviewed` state.
+
+Do not set `sourceComplianceReviewed=true`, `sourceComplianceApproved=true`, any compliance checklist item to true, `sourceApproved=true`, `liveFetchApproved=true`, `networkGateApproved=true`, `networkGateOpen=true`, `networkAllowed=true`, `sourceFormatVerified=true`, `symbolMappingVerified=true`, `sourceSelectionFinalized=true`, `productionDataWriteApproved=true`, `historyWriteApproved=true`, `marketTemperatureCalculationApproved=true`, or `readyForProductionWrite=true`. `--mark-reviewed` requests must be rejected with `compliance_review_requires_manual_human_review`, `scaffold_cannot_auto_approve_compliance`, and `source_not_approved`. Do not persist actual compliance review answers, source URLs, endpoint URLs, provider calls, secrets, production writes, history writes, market-pricing records, Market Pricing Temperature activation, MA60, standard deviation, z-score, workflow changes, frontend rendering changes, scoring changes, decision changes, execution changes, or position changes.
+
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
 Keep Macro Risk Overview as the single primary homepage judgment entry.
