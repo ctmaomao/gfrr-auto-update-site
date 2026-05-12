@@ -2029,6 +2029,20 @@ Operator guidance:
 - Future live fetch requires a separate approved PR.
 - `npm run check:market-pricing-network-gate-design` must pass.
 
+### v28.0M-17 market pricing network gate scaffold operator note
+
+v28.0M-17 adds a local closed-gate scaffold report and checker. It still does not approve source use, live fetch, network access, production writes, history writes, or Market Pricing Temperature calculation.
+
+Operator guidance:
+
+- `npm run market-pricing:network-gate:scaffold` is safe to run locally; it writes only under `manual-artifacts/market-pricing/`.
+- Passing `--allow-network` must remain rejected in the scaffold report.
+- Required rejection reasons are `source_not_approved`, `live_fetch_not_approved`, and `network_gate_not_approved`.
+- Do not add source URLs, endpoints, secrets, headers, cookies, auth tokens, or provider calls.
+- Do not write `data/radar-data.json` or `data/market-pricing-history.json`.
+- Keep records empty and Market Pricing Temperature waiting-for-history.
+- `npm run check:market-pricing-network-gate-scaffold` must pass.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.
