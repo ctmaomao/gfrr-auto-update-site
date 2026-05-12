@@ -2073,6 +2073,21 @@ Operator guidance:
 - Do not add provider URLs, source URLs, endpoints, secrets, headers, cookies, auth tokens, provider calls, live fetch, production writes, or history writes.
 - Keep records empty and Market Pricing Temperature waiting-for-history.
 
+### v28.0M-20 market pricing source format verification design operator note
+
+v28.0M-20 adds a design layer for future source format verification. It does not add an executable scaffold script, and it does not verify or approve any source format.
+
+Operator guidance:
+
+- `npm run check:market-pricing-source-format-verification-design` must pass.
+- `scripts/market-pricing/source-format-verification-design.mjs` must not exist.
+- Keep `sourceFormatVerified=false`, `sourceFormatVerificationStatus="not_verified"`, and `sourceFormatApproved=false`.
+- Keep all seven source format verification checklist items false until separate manual approval.
+- Keep `noPriceFabrication=true`; missing prices must remain missing and must never be interpolated, extrapolated, or copied forward.
+- Keep `noHtmlErrorPageMasquerade=true`; HTML error pages must never be parsed as CSV.
+- Do not add provider URLs, source URLs, endpoints, secrets, headers, cookies, auth tokens, provider calls, live fetch, production writes, or history writes.
+- Keep records empty and Market Pricing Temperature waiting-for-history.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.
