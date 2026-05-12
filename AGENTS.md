@@ -2,9 +2,78 @@
 
 本文档供 Cursor、Codex 和其他 AI 工具接手本项目时优先阅读。目标是保护当前 v28.0J 稳定观察基线，避免误改核心数据链路、Worker-first 主链路、解释层边界、决策契约和部署保护网。
 
+## Documentation Authority Index
+
+> **Read this first.** This index tells AI agents (Codex, Cursor, Claude, etc.)
+> which documents to treat as current authority, which are conditional/scoped
+> authority, and which are historical background.
+
+### Current Authority (must follow)
+
+These documents define what the project is right now. All PRs must conform to them:
+
+- `DESIGN.md` — Frontend design contract (visual, IA, color, typography, components)
+- `AGENTS.md` — This file. AI development rules and required pre-read pointers.
+- `scripts/check-homepage-ia-contract.mjs` — Homepage IA order and anchor authority
+- `scripts/check-editorial-redesign-contract.mjs` — Font allowlist + IA + design anchor authority
+- `package.json` — Authoritative source of all check commands and check:all composition
+
+### Conditional Authority (authoritative only within their scope)
+
+These documents are authoritative for their specific subsystem, but should NOT
+be treated as governing rules for the whole project:
+
+- `docs/MARKET_PRICING_TEMPERATURE_DATA_SOURCE_DESIGN.md` — Authoritative within market-pricing scope only
+- `docs/MARKET_PRICING_REAL_RECORD_CONTRACT_DESIGN.md` — Conditional; not yet production-enabled
+- `docs/MARKET_PRICING_NETWORK_GATE_SCAFFOLD.md` — Authoritative within M-17 scope only
+- `docs/MARKET_PRICING_SOURCE_COMPLIANCE_REVIEW_SCAFFOLD.md` — Authoritative within M-18 scope only
+- `docs/MARKET_PRICING_SYMBOL_MAPPING_VERIFICATION_DESIGN.md` — Authoritative within M-19 scope only
+- `docs/MARKET_PRICING_SOURCE_FORMAT_VERIFICATION_DESIGN.md` — Authoritative within M-20 scope only
+- `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
+- `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
+- `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
+- `docs/WORLD_ORDER_STRESS.md` — Authoritative within world-order scope only
+- `docs/UNIFIED_DATA_PIPELINE_ARCHITECTURE.md` — Conditional; next-stage architecture, not current operating contract
+- `docs/SIGNAL_INTAKE.md` — Authoritative within signal-intake scope only
+- `workers/gfrr-realtime-worker/README.md` — Authoritative within realtime-worker scope only
+
+### Historical Background (not current authority)
+
+These documents are kept for context and audit history but should NOT be
+treated as current operating rules:
+
+- `docs/V27_BASELINE.md` — Historical v27 baseline
+- `docs/WORLD_ORDER_SOURCE_REVIEW.md` — Background source review
+- Other `EXTERNAL_AI_*.md` files not listed under Conditional Authority — Phase designs, readiness notes, audits
+- Other `MARKET_PRICING_*.md` files not listed under Conditional Authority — Phase scaffolds and reviews
+
+### Operating Document (large, mixed content; consult selectively)
+
+These documents contain both current operating procedures and accumulated
+historical content. When reading, look for the "current" section and ignore
+phase history unless explicitly relevant:
+
+- `README.md` — Project entry overview (current, but entry-level)
+- `docs/DATA_CONTRACT.md` — Data contract (large; current rules mixed with history)
+- `docs/OPERATIONS.md` — Operations and troubleshooting (large; current commands mixed with version history)
+- `docs/SYSTEM_UPGRADE_PLAN.md` — Upgrade plan and stable baseline (large; current rules mixed with completed phase records)
+
+### Rule of Conflict Resolution
+
+If two documents disagree:
+
+1. **Current Authority** beats everything else.
+2. Within Current Authority, the more specific/restrictive rule wins.
+3. Scope-conditional authority does NOT override Current Authority.
+4. Historical Background NEVER overrides anything current.
+5. When in doubt, check `package.json` for the actual check commands and run them.
+
+This index was added in PR audit-fixes (v28.0M-audit-cleanup) to reduce
+documentation drift risk identified in the v28.0M-audit.
+
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0L-4B`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-7V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -481,13 +550,13 @@ v28.0L-4A-1 records the first successful manual `External AI Production Refresh`
 
 `External AI Production Refresh` is the only approved automatic provider path. Do not add extra schedules, retry loops, alternate provider workflows, Daily provider integration, or other automatic provider calls without explicit approval. The refresh workflow may commit only `data/radar-data.json`; do not manually edit AI text or `externalAiInterpretationLayer`. Future changes must preserve production contract validation, production write guard, frontend scaffold check, protected path assertion, `check:data`, and `check:all`.
 
-## 42. v28.0L-4B external AI display coverage reminder
+## 42. v28.0M-7V external AI display coverage reminder
 
-v28.0L-4B expands visible external AI panel coverage only. Display coverage changes must not alter `data/radar-data.json`, provider artifacts, or AI-generated text.
+v28.0M-7V expands visible external AI panel coverage only. Display coverage changes must not alter `data/radar-data.json`, provider artifacts, or AI-generated text.
 
 Use capped summaries for optional external AI fields. Do not display raw provider output, raw provenance, run IDs, artifact IDs, artifact paths, raw headers, internal diagnostics, or `decisionContext` raw fields. Preserve strict display gates, no provider call, no Daily integration, no extra schedules, no Global Risk Heatmap layout change, and no scoring / decision / execution / position impact.
 
-## 43. v28.0L-4B-1 display coverage audit-sync reminder
+## 43. v28.0M-7V-1 display coverage audit-sync reminder
 
 External AI display coverage is complete for current safe production fields.
 
