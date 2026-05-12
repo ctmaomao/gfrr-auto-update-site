@@ -2058,6 +2058,21 @@ Operator guidance:
 - Keep records empty and Market Pricing Temperature waiting-for-history.
 - `npm run check:market-pricing-source-compliance-review-scaffold` must pass.
 
+### v28.0M-19 market pricing symbol mapping verification design operator note
+
+v28.0M-19 adds a design layer for future symbol mapping verification. It does not add an executable scaffold script, and it does not verify or approve any mapping.
+
+Operator guidance:
+
+- `npm run check:market-pricing-symbol-mapping-verification-design` must pass.
+- `scripts/market-pricing/symbol-mapping-verification-design.mjs` must not exist.
+- Keep `symbolMappingVerified=false`, `symbolMappingVerificationStatus="not_verified"`, and `symbolMappingApproved=false`.
+- Treat QQQ as a recorded candidate only, not an approved symbol.
+- Keep all six verification checklist items false until separate manual approval.
+- Keep `noSpxSubstitution=true`; SPX must never substitute for Nasdaq / QQQ temperature.
+- Do not add provider URLs, source URLs, endpoints, secrets, headers, cookies, auth tokens, provider calls, live fetch, production writes, or history writes.
+- Keep records empty and Market Pricing Temperature waiting-for-history.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.
