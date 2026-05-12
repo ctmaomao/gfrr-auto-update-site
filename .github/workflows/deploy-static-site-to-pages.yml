@@ -69,6 +69,12 @@ jobs:
       - name: Check documentation links
         run: npm run check:docs
 
+      - name: Check homepage IA contract
+        run: npm run check:homepage-ia-contract
+
+      - name: Check editorial redesign contract
+        run: npm run check:editorial-redesign-contract
+
       - name: Validate data contract
         run: npm run check:data
 
