@@ -1841,6 +1841,36 @@ This stage:
 - performs no MA60, standard deviation, z-score, band, or temperature calculation.
 - keeps Market Pricing Temperature waiting-for-history.
 
+```text
+v28.0M-21 Market Pricing Network Open (Throttled) - First Real Fetch / No Records Written / Audit-Only
+```
+
+## v28.0M-21 Market Pricing Network Open (Throttled)
+
+v28.0M-21 adds a Market Pricing throttled network open step. It is the FIRST M-series step where fetch() can run.
+
+This stage:
+
+- adds `scripts/market-pricing/network-open-throttled-scaffold.mjs`.
+- adds `scripts/check-market-pricing-network-open-throttled-scaffold.mjs`.
+- adds `docs/MARKET_PRICING_NETWORK_OPEN_THROTTLED.md`.
+- adds `docs/fixtures/market-pricing/network-open-throttled-design-v28.0M-21.json`.
+- adds `docs/fixtures/market-pricing/network-open-throttled-manifest-v28.0M-21.json`.
+- adds `npm run market-pricing:network-open-throttled:dry-run`.
+- adds `npm run check:market-pricing-network-open-throttled-scaffold`.
+- wires the checker into `npm run check:all` to maintain the M-series coverage convention.
+- keeps default mode dry-run; explicit `--network=open-throttled` is required to open the network.
+- enforces max 1 fetch per invocation, 30s timeout, and max 1 retry.
+- reads the source URL from the manifest, not from script code or environment variables.
+- writes response artifacts only under `manual-artifacts/market-pricing/network-fetch-attempts/`.
+- keeps `records=[]` in all reports.
+- performs no production data write.
+- writes no `data/market-pricing-history.json` records.
+- changes no workflow.
+- changes no frontend rendering.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- keeps Market Pricing Temperature waiting-for-history.
+
 ## v28.0N-1 Editorial First Fold
 
 v28.0N-1 introduces an editorial first-fold homepage skin.

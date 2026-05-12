@@ -1,0 +1,30 @@
+{
+  "manifestVersion": "v28.0M-21-network-open-throttled-manifest-1",
+  "generatedAt": "2099-01-01T00:00:00.000Z",
+  "kind": "market_pricing_network_open_throttled_manifest",
+  "allowedSources": [
+    {
+      "id": "stooq_public_csv_qqq",
+      "displayName": "Stooq Public CSV (QQQ)",
+      "url": "https://stooq.com/q/d/l/?s=qqq.us&i=d",
+      "expectedSymbol": "QQQ",
+      "expectedFormat": "csv",
+      "expectedContentTypePrefix": "text/",
+      "method": "GET",
+      "complianceReviewDone": false,
+      "complianceReviewNote": "URL is recorded in the manifest for the throttled-open step. The compliance review (M-18 checklist) has NOT been completed. M-21 opens the network for the first time to inspect real data; the compliance review remains an open prerequisite for M-22 and beyond."
+    }
+  ],
+  "policy": {
+    "maxFetchPerInvocation": 1,
+    "timeoutSeconds": 30,
+    "maxRetries": 1,
+    "followRedirectsAcrossHostnames": false,
+    "allowedHttpMethods": ["GET"]
+  },
+  "notes": [
+    "This manifest is the ONLY allowed source list for M-21.",
+    "Any URL not in allowedSources MUST be rejected by the M-21 script.",
+    "URL is intentionally recorded; this is the first M-series step where a real source URL appears in the repo."
+  ]
+}

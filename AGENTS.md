@@ -29,6 +29,7 @@ be treated as governing rules for the whole project:
 - `docs/MARKET_PRICING_SOURCE_COMPLIANCE_REVIEW_SCAFFOLD.md` — Authoritative within M-18 scope only
 - `docs/MARKET_PRICING_SYMBOL_MAPPING_VERIFICATION_DESIGN.md` — Authoritative within M-19 scope only
 - `docs/MARKET_PRICING_SOURCE_FORMAT_VERIFICATION_DESIGN.md` — Authoritative within M-20 scope only
+- `docs/MARKET_PRICING_NETWORK_OPEN_THROTTLED.md` — Authoritative within M-21 scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -705,6 +706,12 @@ Keep `symbolMappingVerified=false`, `symbolMappingVerificationStatus="not_verifi
 M-20 is design layer only. Do not create `scripts/market-pricing/source-format-verification-design.mjs`.
 
 Keep `sourceFormatVerified=false`, `sourceFormatVerificationStatus="not_verified"`, `sourceFormatApproved=false`, and all source format verification checklist items false. `noPriceFabrication=true` is a hard rule: missing prices must remain missing and must never be interpolated, extrapolated, or copied forward. `noHtmlErrorPageMasquerade=true` is a hard rule: HTML error pages must never be parsed as CSV. Do not approve source use, compliance, symbol mapping, source format, live fetch, network access, production writes, history writes, market-pricing records, Market Pricing Temperature activation, MA60, standard deviation, z-score, workflow changes, frontend rendering changes, scoring changes, decision changes, execution changes, or position changes.
+
+## 54N. v28.0M-21 market pricing network open throttled reminder
+
+M-21 is the FIRST M-series step where `fetch()` can run, but only when a human explicitly runs `--network=open-throttled`.
+
+Default mode remains dry-run with network closed. The source URL must come from `docs/fixtures/market-pricing/network-open-throttled-manifest-v28.0M-21.json`, not from script code or environment variables. Max 1 fetch per invocation, 30s timeout, and max 1 retry are the only approved runtime limits. Response artifacts must stay under `manual-artifacts/market-pricing/network-fetch-attempts/`; never write `data/*`, never write history records, keep `records=[]`, do not calculate MA60 / standard deviation / z-score, do not change workflows or frontend, and keep Market Pricing Temperature waiting-for-history.
 
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 

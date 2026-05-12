@@ -2088,6 +2088,24 @@ Operator guidance:
 - Do not add provider URLs, source URLs, endpoints, secrets, headers, cookies, auth tokens, provider calls, live fetch, production writes, or history writes.
 - Keep records empty and Market Pricing Temperature waiting-for-history.
 
+### v28.0M-21 market pricing network open throttled operator note
+
+v28.0M-21 adds the first M-series command that can run `fetch()`, but only for manual, throttled, audit-only source inspection.
+
+Operator guidance:
+
+- `npm run market-pricing:network-open-throttled:dry-run` is safe to run locally because the network stays closed.
+- Do not run `--network=open-throttled` from CI or automated workflows.
+- A manual throttled-open run may fetch only the manifest source at `docs/fixtures/market-pricing/network-open-throttled-manifest-v28.0M-21.json`.
+- The manifest contains exactly one allowed source: Stooq public CSV for QQQ.
+- Runtime limits are max 1 fetch per invocation, 30s timeout, and max 1 retry.
+- M-20 format validation must pass before the fetched body is written as an artifact.
+- Response artifacts must remain under `manual-artifacts/market-pricing/network-fetch-attempts/` and must not be committed.
+- Do not paste fetched CSV into `data/market-pricing-history.json` or `data/radar-data.json`.
+- Keep `records=[]`, `sourceApproved=false`, `liveFetchApproved=false`, `sourceComplianceReviewed=false`, `symbolMappingVerified=false`, and `sourceFormatVerified=false`.
+- Do not calculate MA60, standard deviation, z-score, bands, or Market Pricing Temperature.
+- `npm run check:market-pricing-network-open-throttled-scaffold` must pass and must not open the network.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.
