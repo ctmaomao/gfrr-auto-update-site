@@ -1712,6 +1712,34 @@ Recommended next step:
 v28.0M-17 Market Pricing Network Gate Scaffold - Network Still Disabled / No Production Data Write
 ```
 
+## v28.0M-17 Market Pricing Network Gate Scaffold
+
+v28.0M-17 adds a closed network gate scaffold for future Market Pricing Temperature source work.
+
+This stage:
+
+- adds `scripts/market-pricing/network-gate-scaffold.mjs`.
+- adds `scripts/check-market-pricing-network-gate-scaffold.mjs`.
+- adds `docs/MARKET_PRICING_NETWORK_GATE_SCAFFOLD.md`.
+- adds `docs/fixtures/market-pricing/network-gate-scaffold-v28.0M-17.json`.
+- adds `npm run market-pricing:network-gate:scaffold`.
+- adds `npm run check:market-pricing-network-gate-scaffold`.
+- wires the scaffold checker into `npm run check:all`.
+- keeps `networkGateApproved=false`.
+- keeps `networkGateOpen=false`.
+- keeps `networkAllowed=false`, including when `--allow-network` is requested.
+- keeps `sourceApproved=false` and `liveFetchApproved=false`.
+- keeps source compliance, source format, symbol mapping, secrets, production write, history write, and market temperature calculation approvals false.
+- keeps rejection reasons `source_not_approved`, `live_fetch_not_approved`, and `network_gate_not_approved`.
+- keeps records empty.
+- performs no live fetch.
+- performs no production data write.
+- writes no `data/market-pricing-history.json` records.
+- changes no workflow.
+- changes no frontend rendering.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- keeps Market Pricing Temperature waiting-for-history.
+
 ## v28.0N-1 Editorial First Fold
 
 v28.0N-1 introduces an editorial first-fold homepage skin.

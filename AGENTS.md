@@ -613,6 +613,12 @@ Network gate design is not permission to fetch.
 
 Do not set `networkAllowed=true`, `networkGateApproved=true`, `networkGateOpen=true`, `sourceApproved=true`, `liveFetchApproved=true`, or `readyForProductionWrite=true` in design or scaffold rounds. Do not add source URLs, endpoint URLs, secrets, headers, cookies, or auth tokens. Do not modify data files. Do not bypass sanitizer or writer approvals. Any future network-enabled source-specific fetch must be a separate approved PR and remain artifact-only until later approvals change that boundary.
 
+## 54J. v28.0M-17 market pricing network gate scaffold reminder
+
+M-17 scaffold output must keep the network gate closed even when an allow-network request is present.
+
+Do not set `networkAllowed=true`, `networkGateApproved=true`, `networkGateOpen=true`, `sourceApproved=true`, `liveFetchApproved=true`, `sourceComplianceReviewed=true`, `sourceFormatVerified=true`, `symbolMappingVerified=true`, `secretsAllowed=true`, `productionDataWriteApproved=true`, `historyWriteApproved=true`, `marketTemperatureCalculationApproved=true`, or `readyForProductionWrite=true`. Required rejection reasons are `source_not_approved`, `live_fetch_not_approved`, and `network_gate_not_approved`. Report `records` must stay empty. Do not add provider URLs, endpoint URLs, live fetch, secrets, production writes, history writes, market-pricing records, MA60, standard deviation, z-score, workflow changes, frontend rendering changes, scoring changes, decision changes, execution changes, or position changes.
+
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
 Keep Macro Risk Overview as the single primary homepage judgment entry.
