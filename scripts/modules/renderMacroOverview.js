@@ -1,5 +1,6 @@
-import { $ } from './config.js?v=28.0M-28V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-28V';
+import { $ } from './config.js?v=28.0M-29V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-29V';
+import { formatFiniteNumber } from './format.js?v=28.0M-29V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -54,6 +55,31 @@ function finite(value) {
 function formatNumber(value, digits = 1, suffix = '') {
   const number = finite(value);
   return number === null ? INSUFFICIENT : `${number.toFixed(digits)}${suffix}`;
+}
+
+function formatSignedPercent(value, digits = 2) {
+  const number = finite(value);
+  if (number === null) return INSUFFICIENT;
+  return `${number >= 0 ? '+' : '-'}${formatFiniteNumber(Math.abs(number), digits)}%`;
+}
+
+function formatUsdTrillions(value) {
+  const number = finite(value);
+  return number === null ? INSUFFICIENT : `$${formatFiniteNumber(number, 2)}T`;
+}
+
+function formatUsdBillionsFromFedChange(value) {
+  const number = finite(value);
+  if (number === null) return INSUFFICIENT;
+  return `${number >= 0 ? '+' : '-'}$${formatFiniteNumber(Math.abs(number) * 100, 0)}B`;
+}
+
+function findActiveSignal(activeSignals, key) {
+  return safeArray(activeSignals).find((signal) => signal?.key === key) || null;
+}
+
+function onRrpAnnotation(signal) {
+  return signal ? '（告急）' : '';
 }
 
 function formatScore(value) {
@@ -430,10 +456,27 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
 
 function buildMacroDrivers(data) {
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
-  const consumer = isPlainObject(data?.macroDrivers?.consumer) ? data.macroDrivers.consumer : {};
+  const macroDrivers = isPlainObject(data?.macroDrivers) ? data.macroDrivers : {};
+  const consumer = isPlainObject(macroDrivers.consumer) ? macroDrivers.consumer : {};
+  const fedLiquidity = isPlainObject(macroDrivers.fedLiquidity) ? macroDrivers.fedLiquidity : {};
+  const curve = isPlainObject(macroDrivers.curve) ? macroDrivers.curve : {};
+  const credit = isPlainObject(macroDrivers.credit) ? macroDrivers.credit : {};
+  const onRrpSignal = findActiveSignal(macroDrivers.activeSignals, 'onRrpCritical');
   const hyOas = finite(inputs.hyOas);
+  const igOas = finite(credit.igOas);
+  const igHyRatio = finite(credit.igHyRatio);
+  const t10y2y = finite(curve.t10y2y);
+  const onRrp = finite(fedLiquidity.onRrp);
+  const walcl4wChange = finite(fedLiquidity.walcl4wChange);
   const vix = finite(inputs.vix);
   const creditCalm = hyOas !== null && hyOas < 4 && vix !== null && vix < 22;
+  const policyProxyEvidence = [
+    onRrp === null ? null : `ON RRP ${formatUsdTrillions(onRrp)}${onRrpAnnotation(onRrpSignal)} — 流动性紧`,
+    finite(inputs.us10y) === null ? null : `10年期 ${formatNumber(inputs.us10y, 2, '%')} — 长端利率压力`,
+    finite(inputs.dxy) === null ? null : `广义美元 ${formatNumber(inputs.dxy, 2)} — 美元强势`,
+    '综合判断：隐含政策路径偏紧',
+  ].filter(Boolean);
+  const hasPolicyProxy = policyProxyEvidence.length > 1;
 
   return [
     createJudgment({
@@ -470,22 +513,31 @@ function buildMacroDrivers(data) {
       direction: finite(inputs.dxy) !== null && Number(inputs.dxy) >= 105 ? '约束偏强' : '观察中',
       confidence: creditCalm ? '中等' : '偏低',
       dataCoverage: '数据覆盖：部分缺口',
-      evidence: [`广义美元 ${formatNumber(inputs.dxy, 2)}；10年期 ${formatNumber(inputs.us10y, 2, '%')}；高收益利差 ${formatNumber(inputs.hyOas, 2, '%')}`],
-      missingEvidence: ['资金面、期限结构和更多信用分层证据等待接入。'],
+      evidence: [
+        `广义美元 ${formatNumber(inputs.dxy, 2)}；10年期 ${formatNumber(inputs.us10y, 2, '%')}；10Y-2Y 期限利差 ${formatSignedPercent(t10y2y)}`,
+        `ON RRP 余额 ${formatUsdTrillions(onRrp)}${onRrpAnnotation(onRrpSignal)}；Fed 资产负债表 4周变化 ${formatUsdBillionsFromFedChange(walcl4wChange)}`,
+        `高收益利差 (HY OAS) ${formatNumber(hyOas, 2, '%')}；投资级利差 (IG OAS) ${formatNumber(igOas, 2, '%')}；IG/HY 比率 ${formatNumber(igHyRatio, 2)}`,
+      ],
+      missingEvidence: ['SLOOS、回购市场压力、银行准备金和跨市场融资压力等待接入。'],
       counterEvidence: creditCalm ? ['信用与波动率尚未明显确认扩散。'] : [],
       explanation: creditCalm
         ? '长端利率和美元偏紧，但信用与波动率尚未明显确认扩散。'
         : '流动性压力需要与信用利差和波动率共同确认。',
     }),
-    createDataGapJudgment({
+    createJudgment({
       id: 'driver-policy',
       title: '政策',
       group: 'macro-driver',
-      status: WAITING,
-      direction: '方向待确认',
-      evidence: ['暂无直接 Fed 预期或政策路径指标。'],
-      missingEvidence: ['Fed 预期、政策路径、市场隐含利率和政策沟通证据等待接入。'],
-      explanation: '当前不伪造政策立场；除非接入明确政策预期数据，否则政策不是强驱动。',
+      status: hasPolicyProxy ? '基于代理信号观察' : WAITING,
+      direction: hasPolicyProxy ? '隐含偏紧' : '方向待确认',
+      confidence: hasPolicyProxy ? '中等' : '偏低',
+      dataCoverage: hasPolicyProxy ? '数据覆盖：代理信号' : '数据覆盖：关键数据不足',
+      evidence: hasPolicyProxy ? policyProxyEvidence : ['暂无直接 Fed 预期或政策路径指标。'],
+      missingEvidence: ['Fed 官方预期声明 / dot plot、政策路径 / 市场隐含利率、政策沟通文本分析仍缺位。'],
+      explanation: hasPolicyProxy
+        ? '基于 ON RRP / 长端利率 / 美元强势等代理信号，当前隐含的政策路径偏紧。（注意：本项不基于官方 Fed 预期数据）'
+        : '当前不伪造政策立场；除非接入明确政策预期数据，否则政策不是强驱动。',
+      sourceType: hasPolicyProxy ? '代理信号' : '数据不足',
     }),
   ];
 }
@@ -585,12 +637,18 @@ function findDivergenceCheck(data, key) {
 
 function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData = null) {
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
+  const macroDrivers = isPlainObject(data?.macroDrivers) ? data.macroDrivers : {};
+  const fedLiquidity = isPlainObject(macroDrivers.fedLiquidity) ? macroDrivers.fedLiquidity : {};
+  const credit = isPlainObject(macroDrivers.credit) ? macroDrivers.credit : {};
   const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
   const ratesCheck = findDivergenceCheck(data, 'rates_vs_risk_assets');
   const pricingCheck = findDivergenceCheck(data, 'risk_complacency_watch');
   const liquidityCheck = findDivergenceCheck(data, 'liquidity_vs_credit_transmission');
   const creditCalm = finite(inputs.hyOas) !== null && Number(inputs.hyOas) < 4 && finite(inputs.vix) !== null && Number(inputs.vix) < 22;
   const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
+  const onRrpSignal = findActiveSignal(macroDrivers.activeSignals, 'onRrpCritical');
+  const onRrp = finite(fedLiquidity.onRrp);
+  const igHyRatio = finite(credit.igHyRatio);
 
   return [
     createJudgment({
@@ -663,8 +721,12 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
       direction: creditCalm ? '观察中' : '方向待确认',
       confidence: creditCalm ? '偏低' : '中等',
       dataCoverage: '数据覆盖：部分缺口',
-      evidence: [text(liquidityCheck.summaryZh, '金融脆弱性证据等待接入。')],
-      missingEvidence: ['银行压力、私募信贷、CRE、融资成本与更细信用指标等待接入。'],
+      evidence: [
+        text(liquidityCheck.summaryZh, `HY OAS ${formatNumber(inputs.hyOas, 2, '%')}；VIX ${formatNumber(inputs.vix, 2)}。`),
+        `ON RRP ${formatUsdTrillions(onRrp)}${onRrpSignal ? '（历史低位告急）' : ''}`,
+        `IG/HY 比率 ${formatNumber(igHyRatio, 2)}（信用层次性收缩）`,
+      ],
+      missingEvidence: ['银行压力、私募信贷、CRE、融资成本、CDX 与更细信用指标等待接入。'],
       counterEvidence: creditCalm ? ['信用和波动率尚未显示系统性扩散。'] : [],
       explanation: creditCalm
         ? '信用和波动率尚未显示系统性扩散，金融脆弱性维持观察。'
