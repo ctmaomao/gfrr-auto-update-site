@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { buildFirstRealRecordWriteReport } from './market-pricing/first-real-record-write-scaffold.mjs';
+import {
+  buildCommittedHistory,
+  buildFirstRealRecordWriteReport
+} from './market-pricing/first-real-record-write-scaffold.mjs';
 
 const ROOT = process.cwd();
 const FIXTURE_PATH = path.join(
@@ -37,8 +40,18 @@ const FORBIDDEN_SOURCE_SUBSTRINGS = [
 ];
 const REQUIRED_SOURCE_SUBSTRINGS = [
   'data/market-pricing-history.json',
+  'assets.qqq',
+  'ndx',
   '--commit-to-history',
   '--dry-run-commit'
+];
+const FORBIDDEN_ASSET_WRITE_SUBSTRINGS = [
+  'assets.ndx =',
+  'assets.ixic =',
+  'assets.spx =',
+  "assets['ndx'] =",
+  "assets['ixic'] =",
+  "assets['spx'] ="
 ];
 
 const errors = [];
@@ -85,6 +98,10 @@ function assertCommitScriptSource() {
     assert(source.includes(pattern), `commit script must contain ${pattern}`);
   }
 
+  for (const pattern of FORBIDDEN_ASSET_WRITE_SUBSTRINGS) {
+    assert(!source.includes(pattern), `commit script must not write preserved asset via ${pattern}`);
+  }
+
   assert(
     source.includes('renameSync') || source.includes('rename('),
     'commit script must contain renameSync or rename('
@@ -108,9 +125,11 @@ function assertFixture(fixture) {
   assert(fixture.historyFileMayBeWritten === true, 'historyFileMayBeWritten must be true');
   assert(fixture.historyFileWillBeWrittenAtomically === true, 'historyFileWillBeWrittenAtomically must be true');
   assert(fixture.sanityChecksRunBeforeWrite === true, 'sanityChecksRunBeforeWrite must be true');
-  assert(fixture.sanityCheckCount === 5, 'sanityCheckCount must be 5');
+  assert(fixture.sanityCheckCount === 6, 'sanityCheckCount must be 6');
   assert(Array.isArray(fixture.sanityCheckCatalog), 'sanityCheckCatalog must be an array');
-  assert(fixture.sanityCheckCatalog.length === 5, 'sanityCheckCatalog length must be 5');
+  assert(fixture.sanityCheckCatalog.length === 6, 'sanityCheckCatalog length must be 6');
+  assert(fixture.historyWriteTarget === 'assets.qqq.records', 'historyWriteTarget must be assets.qqq.records');
+  assert(fixture.otherAssetsPreservedUnchanged === true, 'otherAssetsPreservedUnchanged must be true');
   assert(fixture.writeAtomicity?.method === 'tmp_file_plus_rename', 'writeAtomicity method mismatch');
   assert(fixture.marketTemperatureCalculationApproved === false, 'marketTemperatureCalculationApproved must remain false');
   assert(fixture.readyForFrontendDisplay === false, 'readyForFrontendDisplay must remain false');
@@ -136,6 +155,25 @@ function assertPureReport() {
   assert(report && typeof report === 'object', 'buildFirstRealRecordWriteReport must return an object');
   assert(report.dryRun === true, 'buildFirstRealRecordWriteReport must preserve dryRun true');
   assert(report.writePerformed === false, 'buildFirstRealRecordWriteReport must not write');
+
+  if (report.ok) {
+    assert(report.targetAssetPath === 'assets.qqq.records', 'report targetAssetPath must be assets.qqq.records');
+    assert(report.sanityCheckCount === 6, 'report sanityCheckCount must be 6');
+
+    const fixedTimestamp = '2099-01-01T00:00:00.000Z';
+    const committed = buildCommittedHistory(report, fixedTimestamp);
+    assert(Array.isArray(committed.assets.qqq.records), 'committed qqq records must be an array');
+    assert(committed.assets.qqq.records.length === report.recordsCount, 'committed qqq records count mismatch');
+    assert(committed.assets.qqq.status === 'active', 'committed qqq status must be active');
+    assert(committed.assets.qqq.source?.lastCommittedAt === fixedTimestamp, 'committed qqq timestamp mismatch');
+
+    for (const assetKey of ['ndx', 'ixic', 'spx']) {
+      assert(
+        JSON.stringify(committed.assets[assetKey]) === JSON.stringify(report.currentHistory.assets[assetKey]),
+        `committed assets.${assetKey} must be preserved unchanged`
+      );
+    }
+  }
 }
 
 function main() {

@@ -14,9 +14,11 @@
   "twoStageConfirmationEnforced": true,
   "historyFileMayBeWritten": true,
   "historyFileTarget": "data/market-pricing-history.json",
+  "historyWriteTarget": "assets.qqq.records",
+  "otherAssetsPreservedUnchanged": true,
   "historyFileWillBeWrittenAtomically": true,
   "sanityChecksRunBeforeWrite": true,
-  "sanityCheckCount": 5,
+  "sanityCheckCount": 6,
   "sanityCheckCatalog": [
     {
       "id": 1,
@@ -42,6 +44,11 @@
       "id": 5,
       "name": "plausibility_bounds_and_no_future",
       "description": "all close in [80, 1000], all date <= today"
+    },
+    {
+      "id": 6,
+      "name": "existing_history_schema_integrity",
+      "description": "existing data/market-pricing-history.json has assets.qqq.records and preserves assets.ndx/assets.ixic/assets.spx"
     }
   ],
   "writeAtomicity": {
@@ -50,10 +57,11 @@
     "renameImplementation": "fs.renameSync"
   },
   "idempotencyGuarantees": [
-    "Same sanitized input -> identical history file output after first commit",
+    "Same sanitized input -> identical history file output except for updatedAt, generatedAt, and assets.qqq.source.lastCommittedAt",
     "Stable key order in serialized JSON",
     "Records sorted ASCENDING by date",
-    "Only generatedAt timestamp changes on the first commit for a new input"
+    "Committed records target assets.qqq.records and omit sanitizer-only referenceFields",
+    "assets.ndx, assets.ixic, and assets.spx are preserved unchanged"
   ],
   "marketTemperatureCalculationApproved": false,
   "readyForFrontendDisplay": false,

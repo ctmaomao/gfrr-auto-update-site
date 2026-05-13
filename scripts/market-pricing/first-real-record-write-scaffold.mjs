@@ -13,8 +13,10 @@
  *   - No network calls
  *   - No environment-variable reads
  *   - No writes outside data/market-pricing-history.json
- *   - 5 sanity checks must all pass before any write
- *   - Idempotent: same input -> identical output after first commit
+ *   - 6 sanity checks must all pass before any write
+ *   - Commits target assets.qqq.records only
+ *   - assets.ndx, assets.ixic, and assets.spx are preserved unchanged
+ *   - Idempotent except for updatedAt, generatedAt, and assets.qqq.source.lastCommittedAt
  *   - No MA60, std, z-score calculation (that is M-26)
  *   - No frontend modification (that is M-27)
  *   - No scoring, decision, execution change
@@ -30,20 +32,20 @@ const ROOT = process.cwd();
 const DEFAULT_SANITIZED_OUTPUT_BASE = 'manual-artifacts/market-pricing/sanitized-output';
 const DEFAULT_HISTORY_FILE = 'data/market-pricing-history.json';
 const SOURCE_VENDOR = 'nasdaq_official_manual_download';
+const NASDAQ_DOWNLOAD_URL = ['https:', '', 'www.nasdaq.com', 'market-activity', 'etf', 'qqq', 'historical'].join('/');
+const TARGET_ASSET_KEY = 'qqq';
+const PRESERVED_ASSET_KEYS = ['ndx', 'ixic', 'spx'];
 const MIN_RECORD_COUNT = 50;
 const MIN_CLOSE = 80;
 const MAX_CLOSE = 1000;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const ISO_WEEK_PATTERN = /^\d{4}-W\d{2}$/;
 const SANITIZED_DIR_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z$/;
-const HISTORY_KEY_ORDER = [
-  'contractVersion',
-  'schemaVersion',
-  'kind',
-  'generatedAt',
-  'status',
-  'sourceVendor',
-  'recordsCount'
+const COMMITTED_DESCRIPTION_ZH =
+  '市场定价温度计历史数据。已通过 v28.0M-24 commit 写入 QQQ 周线历史。仍未启用 MA60 / 标准差 / z-score 计算（M-26），前端仍未激活真实数据显示（M-27）。';
+const QQQ_DATA_GAPS_AFTER_COMMIT = [
+  'MA60 / 标准差 / z-score 计算待 v28.0M-26 启用。',
+  '前端市场温度显示待 v28.0M-27 激活。'
 ];
 
 const SANITY_CHECKS = [
@@ -51,7 +53,8 @@ const SANITY_CHECKS = [
   'sanity check 2: record_count_minimum',
   'sanity check 3: required_fields_present',
   'sanity check 4: strict_ascending_unique_per_week',
-  'sanity check 5: plausibility_bounds_and_no_future'
+  'sanity check 5: plausibility_bounds_and_no_future',
+  'sanity check 6: existing_history_schema_integrity'
 ];
 
 function toProjectRelative(absolutePath) {
@@ -70,6 +73,10 @@ function cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
 function buildFailure({
   dryRun,
   inputDir,
@@ -86,6 +93,8 @@ function buildFailure({
     inputDir,
     sanitizedFile,
     historyFile,
+    targetAssetPath: 'assets.qqq.records',
+    preservedAssetKeys: PRESERVED_ASSET_KEYS,
     failedCheck,
     exitCode,
     reason,
@@ -256,30 +265,13 @@ function readSanitizedRecords(inputDir) {
 }
 
 function normalizeRecord(record) {
-  const normalized = {
+  return {
     date: record.date,
     isoWeek: record.isoWeek,
-    close: record.close
+    close: record.close,
+    sourceFile: typeof record.sourceFile === 'string' ? record.sourceFile : null,
+    sourceVendor: SOURCE_VENDOR
   };
-
-  if (Object.hasOwn(record, 'sourceVendor')) {
-    normalized.sourceVendor = record.sourceVendor;
-  }
-
-  if (Object.hasOwn(record, 'sourceFile')) {
-    normalized.sourceFile = record.sourceFile;
-  }
-
-  if (record.referenceFields && typeof record.referenceFields === 'object' && !Array.isArray(record.referenceFields)) {
-    normalized.referenceFields = {};
-    for (const key of ['open', 'high', 'low', 'volume', 'notUsedForTemperature']) {
-      if (Object.hasOwn(record.referenceFields, key)) {
-        normalized.referenceFields[key] = record.referenceFields[key];
-      }
-    }
-  }
-
-  return normalized;
 }
 
 function validateRecords(rawRecords, currentTodayIso) {
@@ -294,7 +286,7 @@ function validateRecords(rawRecords, currentTodayIso) {
 
   for (let index = 0; index < rawRecords.length; index += 1) {
     const record = rawRecords[index];
-    if (!record || typeof record !== 'object' || Array.isArray(record)) {
+    if (!isRecord(record)) {
       return {
         ok: false,
         failedCheck: 3,
@@ -381,53 +373,101 @@ function validateRecords(rawRecords, currentTodayIso) {
   };
 }
 
-function sameRecordsAlreadyCommitted(currentHistory, records) {
-  if (
-    currentHistory.status !== 'has_history' ||
-    currentHistory.sourceVendor !== SOURCE_VENDOR ||
-    currentHistory.recordsCount !== records.length ||
-    !Array.isArray(currentHistory.records)
-  ) {
-    return false;
+function readExistingHistory(historyFile, historyFileDisplay) {
+  try {
+    return {
+      ok: true,
+      history: JSON.parse(fs.readFileSync(historyFile, 'utf8'))
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: `existing_history_schema_invalid: ${historyFileDisplay} not readable JSON (${error.message})`
+    };
   }
-
-  return JSON.stringify(currentHistory.records.map(normalizeRecord)) === JSON.stringify(records);
 }
 
-function orderHistoryObject(source) {
-  const result = {};
-  const ordered = new Set([...HISTORY_KEY_ORDER, 'records']);
+function validateExistingHistorySchema(history) {
+  if (!isRecord(history)) {
+    return 'root must be an object';
+  }
 
-  for (const key of HISTORY_KEY_ORDER) {
-    if (Object.hasOwn(source, key)) {
-      result[key] = source[key];
+  if (!isRecord(history.assets)) {
+    return 'top-level assets must be an object';
+  }
+
+  if (!isRecord(history.assets.qqq)) {
+    return 'assets.qqq must be an object';
+  }
+
+  if (!Array.isArray(history.assets.qqq.records)) {
+    return 'assets.qqq.records must be an array';
+  }
+
+  for (const assetKey of PRESERVED_ASSET_KEYS) {
+    if (!isRecord(history.assets[assetKey])) {
+      return `assets.${assetKey} must be an object`;
     }
   }
 
-  for (const key of Object.keys(source)) {
-    if (!ordered.has(key)) {
-      result[key] = source[key];
-    }
-  }
-
-  if (Object.hasOwn(source, 'records')) {
-    result.records = source.records;
-  }
-
-  return result;
+  return null;
 }
 
-function buildNextHistory({ currentHistory, records, generatedAt }) {
-  const next = {
-    ...cloneJson(currentHistory),
-    generatedAt,
-    status: 'has_history',
-    sourceVendor: SOURCE_VENDOR,
-    recordsCount: records.length,
-    records
+function countAssetRecords(history, assetKey) {
+  const records = history.assets?.[assetKey]?.records;
+  return Array.isArray(records) ? records.length : 0;
+}
+
+function buildQqqCoverage(records) {
+  return {
+    weeklyRows: records.length,
+    hasAtLeast60Weeks: records.length >= 60,
+    oldestDate: records[0]?.date || null,
+    latestDate: records.at(-1)?.date || null
+  };
+}
+
+export function buildCommittedHistory(report, commitTimestamp) {
+  const currentHistory = cloneJson(report.currentHistory);
+  const records = cloneJson(report.records);
+  const assets = {
+    ...currentHistory.assets,
+    qqq: {
+      ...currentHistory.assets.qqq,
+      status: 'active',
+      source: {
+        vendor: SOURCE_VENDOR,
+        downloadUrl: NASDAQ_DOWNLOAD_URL,
+        lastCommittedAt: commitTimestamp,
+        committedRecordsCount: records.length
+      },
+      records,
+      coverage: buildQqqCoverage(records),
+      dataGaps: [...QQQ_DATA_GAPS_AFTER_COMMIT]
+    }
   };
 
-  return orderHistoryObject(next);
+  return {
+    ...currentHistory,
+    status: 'has_history',
+    updatedAt: commitTimestamp,
+    generatedAt: commitTimestamp,
+    sourceMode: 'manual_weekly_input_committed',
+    descriptionZh: COMMITTED_DESCRIPTION_ZH,
+    assets,
+    boundaries: {
+      ...currentHistory.boundaries,
+      scaffoldOnly: false,
+      noFetch: true,
+      noCalculation: true,
+      displayOnly: true,
+      notInvestmentAdvice: true,
+      affectsScoring: false,
+      affectsDecisionModel: false,
+      affectsExecutionLock: false,
+      affectsPositionGuidance: false
+    }
+  };
 }
 
 function serializeHistory(history) {
@@ -481,20 +521,34 @@ export function buildFirstRealRecordWriteReport(options = {}) {
     });
   }
 
-  let currentHistory;
-  try {
-    currentHistory = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
-  } catch (error) {
-    throw Object.assign(new Error(`Unable to read ${historyFileDisplay}: ${error.message}`), {
-      exitCode: 3
+  const historyResult = readExistingHistory(historyFile, historyFileDisplay);
+  if (!historyResult.ok) {
+    return buildFailure({
+      dryRun,
+      inputDir: inputDirDisplay,
+      sanitizedFile: sanitizedFileDisplay,
+      historyFile: historyFileDisplay,
+      failedCheck: 6,
+      exitCode: 16,
+      reason: historyResult.reason
+    });
+  }
+
+  const schemaError = validateExistingHistorySchema(historyResult.history);
+  if (schemaError) {
+    return buildFailure({
+      dryRun,
+      inputDir: inputDirDisplay,
+      sanitizedFile: sanitizedFileDisplay,
+      historyFile: historyFileDisplay,
+      failedCheck: 6,
+      exitCode: 16,
+      reason: `existing_history_schema_invalid: ${schemaError}`
     });
   }
 
   const records = sanityResult.records;
-  const generatedAt = sameRecordsAlreadyCommitted(currentHistory, records)
-    ? currentHistory.generatedAt || options.generatedAt || nowIso()
-    : options.generatedAt || nowIso();
-  const nextHistory = buildNextHistory({ currentHistory, records, generatedAt });
+  const plannedCoverage = buildQqqCoverage(records);
 
   return {
     ok: true,
@@ -503,20 +557,29 @@ export function buildFirstRealRecordWriteReport(options = {}) {
     inputDir: inputDirDisplay,
     sanitizedFile: sanitizedFileDisplay,
     historyFile: historyFileDisplay,
+    targetAssetPath: 'assets.qqq.records',
+    preservedAssetKeys: PRESERVED_ASSET_KEYS,
     sanityChecks: SANITY_CHECKS,
     sanityCheckCount: SANITY_CHECKS.length,
+    records,
     recordsCount: records.length,
+    qqqRecordsCount: records.length,
+    preservedRecordCounts: {
+      ndx: countAssetRecords(historyResult.history, 'ndx'),
+      ixic: countAssetRecords(historyResult.history, 'ixic'),
+      spx: countAssetRecords(historyResult.history, 'spx')
+    },
     earliestDate: records[0].date,
     latestDate: records.at(-1).date,
-    currentStatus: currentHistory.status ?? null,
+    currentStatus: historyResult.history.status ?? null,
     plannedStatus: 'has_history',
-    currentGeneratedAt: currentHistory.generatedAt ?? null,
-    plannedGeneratedAt: generatedAt,
+    currentQqqStatus: historyResult.history.assets.qqq.status ?? null,
+    plannedQqqStatus: 'active',
+    plannedQqqCoverage: plannedCoverage,
     sourceVendor: SOURCE_VENDOR,
     previewFirst3: records.slice(0, 3),
     previewLast3: records.slice(-3),
-    nextHistory,
-    serializedHistory: serializeHistory(nextHistory),
+    currentHistory: cloneJson(historyResult.history),
     noWritePerformed: true,
     boundaries: {
       noNetworkCall: true,
@@ -534,9 +597,12 @@ export function buildFirstRealRecordWriteReport(options = {}) {
 function writeHistoryAtomically(report) {
   const historyPath = path.resolve(ROOT, report.historyFile);
   const tmpPath = `${historyPath}.tmp`;
+  const commitTimestamp = nowIso();
+  const committedHistory = buildCommittedHistory(report, commitTimestamp);
+  const serializedHistory = serializeHistory(committedHistory);
 
   try {
-    fs.writeFileSync(tmpPath, report.serializedHistory, 'utf8');
+    fs.writeFileSync(tmpPath, serializedHistory, 'utf8');
     fs.renameSync(tmpPath, historyPath);
   } catch (error) {
     if (fs.existsSync(tmpPath)) {
@@ -556,10 +622,16 @@ function printFailure(report) {
 function printDryRun(report) {
   console.log('Market pricing first real record write scaffold: DRY-RUN OK');
   console.log(`would_write_records=${report.recordsCount}`);
-  console.log('would_write_status="has_history"');
+  console.log(`would_write_qqq_records=${report.qqqRecordsCount}`);
+  console.log(`would_preserve_ndx_records=${report.preservedRecordCounts.ndx}`);
+  console.log(`would_preserve_ixic_records=${report.preservedRecordCounts.ixic}`);
+  console.log(`would_preserve_spx_records=${report.preservedRecordCounts.spx}`);
+  console.log('would_update_status=has_history');
+  console.log('would_update_qqq_status=active');
+  console.log(`would_update_qqq_coverage_weeklyRows=${report.plannedQqqCoverage.weeklyRows}`);
+  console.log(`would_update_qqq_coverage_hasAtLeast60Weeks=${report.plannedQqqCoverage.hasAtLeast60Weeks}`);
   console.log(`earliest_date=${report.earliestDate}`);
   console.log(`latest_date=${report.latestDate}`);
-  console.log(`planned_generatedAt=${report.plannedGeneratedAt}`);
   console.log(`preview_first_3=${JSON.stringify(report.previewFirst3)}`);
   console.log(`preview_last_3=${JSON.stringify(report.previewLast3)}`);
   console.log(`history_file=${report.historyFile}`);
@@ -569,7 +641,11 @@ function printDryRun(report) {
 function printCommitted(report) {
   console.log('Market pricing first real record write scaffold: COMMITTED');
   console.log(`wrote_records=${report.recordsCount}`);
-  console.log('wrote_status="has_history"');
+  console.log(`wrote_qqq_records=${report.qqqRecordsCount}`);
+  console.log('wrote_status=has_history');
+  console.log('wrote_qqq_status=active');
+  console.log(`qqq_coverage_weeklyRows=${report.plannedQqqCoverage.weeklyRows}`);
+  console.log(`qqq_coverage_hasAtLeast60Weeks=${report.plannedQqqCoverage.hasAtLeast60Weeks}`);
   console.log(`earliest_date=${report.earliestDate}`);
   console.log(`latest_date=${report.latestDate}`);
   console.log(`history_file=${report.historyFile}`);
@@ -609,7 +685,7 @@ function main() {
   }
 }
 
-const isMain = import.meta.url === pathToFileURL(process.argv[1]).href;
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (isMain) {
   main();
