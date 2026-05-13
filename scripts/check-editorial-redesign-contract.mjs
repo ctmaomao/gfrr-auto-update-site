@@ -72,6 +72,11 @@ function extractHeadStyleBlocks() {
     .join('\n');
 }
 
+function extractCssRule(source, selector) {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  return source.match(new RegExp(`${escapedSelector}\\s*\\{[^}]*\\}`, 'u'))?.[0] ?? '';
+}
+
 function checkHomepageIa() {
   const expectedLinks = [
     ['今日总判断', '#homepage-today-judgment'],
@@ -345,6 +350,78 @@ function checkInlineDarkThemeCleanup() {
   }
 }
 
+function checkMethodCardBorderRadius() {
+  const methodCardRule = extractCssRule(styles, '.editorial-method-card');
+  if (!methodCardRule) {
+    fail('.editorial-method-card rule missing from assets/styles.css');
+    return;
+  }
+  if (/border-radius:\s*[1-9]/u.test(methodCardRule)) {
+    fail('.editorial-method-card must use border-radius: 0 per DESIGN.md §6.2 / §8.1 #1');
+  }
+}
+
+function checkMethodCardAccentConsistency() {
+  const methodCardRule = extractCssRule(styles, '.editorial-method-card');
+  if (!methodCardRule.includes('border-left:') || !methodCardRule.includes('--method-card-accent')) {
+    fail('.editorial-method-card must define a left accent stripe using --method-card-accent');
+  }
+
+  const methodGridMatch = html.match(/<section\b[^>]*class=["'][^"']*\beditorial-method-grid\b[^"']*["'][^>]*>([\s\S]*?)<\/section>/iu);
+  if (!methodGridMatch) {
+    fail('method evidence grid missing from index.html');
+    return;
+  }
+
+  const methodCards = [...methodGridMatch[1].matchAll(/<article\b(?=[^>]*class=["'][^"']*\beditorial-method-card\b[^"']*["'])([^>]*)>([\s\S]*?)<\/article>/giu)]
+    .map((match) => ({
+      attrs: match[1],
+      body: match[2],
+    }));
+
+  if (methodCards.length !== 6) {
+    fail(`method evidence grid must contain exactly 6 editorial-method-card articles; got ${methodCards.length}`);
+    return;
+  }
+
+  const expectedCards = [
+    ['READING PATH', 'var(--paper-ink)'],
+    ['EVIDENCE LAYERS', 'var(--paper-ink)'],
+    ['DATA BOUNDARY', 'var(--editorial-orange)'],
+    ['AI BOUNDARY', 'var(--paper-muted)'],
+    ['NOT ADVICE', 'var(--risk-red)'],
+    ['GOVERNANCE', 'var(--paper-ink)'],
+  ];
+
+  expectedCards.forEach(([label, accent], index) => {
+    const card = methodCards[index];
+    if (!card.body.includes(label)) {
+      fail(`method evidence card ${index + 1} must preserve label ${label}`);
+    }
+    if (!new RegExp(`style=["'][^"']*--method-card-accent:\\s*${accent.replace(/[()]/gu, '\\$&')}\\s*;?[^"']*["']`, 'u').test(card.attrs)) {
+      fail(`method evidence card ${label} must set --method-card-accent: ${accent}`);
+    }
+  });
+}
+
+function checkHeatmapFrameBorderStrength() {
+  const heatmapFrameRule = extractCssRule(styles, '.heatmap-frame');
+  if (!heatmapFrameRule) {
+    fail('.heatmap-frame rule missing from assets/styles.css');
+    return;
+  }
+  if (!/border\s*:\s*1px\s+solid\s+var\(--paper-line-strong\)/u.test(heatmapFrameRule)) {
+    fail('.heatmap-frame must use border: 1px solid var(--paper-line-strong)');
+  }
+}
+
+function checkInlineHeadStyleNoGradients() {
+  const inlineStyles = extractHeadStyleBlocks();
+  if (/linear-gradient\s*\(/iu.test(inlineStyles)) {
+    fail('inline <head><style> must not contain linear-gradient per DESIGN.md §8.1 #4 strict interpretation');
+  }
+}
+
 function checkPackageScript() {
   const expected = 'node --check scripts/check-editorial-redesign-contract.mjs && node scripts/check-editorial-redesign-contract.mjs';
   if (packageJson.scripts?.['check:editorial-redesign-contract'] !== expected) {
@@ -362,6 +439,10 @@ checkExternalAiBoundary();
 checkHeatmapStandalone();
 checkAppendices();
 checkInlineDarkThemeCleanup();
+checkMethodCardBorderRadius();
+checkMethodCardAccentConsistency();
+checkHeatmapFrameBorderStrength();
+checkInlineHeadStyleNoGradients();
 checkPackageScript();
 
 if (errors.length) {

@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-30V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-30V';
-import { formatFiniteNumber } from './format.js?v=28.0M-30V';
+import { $ } from './config.js?v=28.0M-31V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-31V';
+import { formatFiniteNumber } from './format.js?v=28.0M-31V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
