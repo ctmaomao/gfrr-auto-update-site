@@ -1,0 +1,81 @@
+{
+  "contractVersion": "v28.0M-26-metrics-calculation-scaffold-1",
+  "kind": "market_pricing_metrics_calculation_scaffold",
+  "generatedAt": "2099-01-01T00:00:00.000Z",
+  "status": "metrics_calculation_scaffold_two_stage_manual_commit",
+
+  "targetAsset": "qqq",
+  "targetSymbol": "QQQ",
+
+  "firstCalculationApproved": true,
+  "calculationLayerActive": true,
+  "displayLayerActive": false,
+
+  "windowSize": 60,
+  "stdDevFormula": "sample",
+  "stdDevDivisor": "N-1",
+  "zScoreCapped": false,
+  "firstFiftyNineRecordsOmitted": true,
+
+  "sourceFileTarget": "data/market-pricing-history.json",
+  "outputFileTarget": "data/market-pricing-metrics.json",
+
+  "commitFlagName": "--commit-metrics",
+  "dryRunFlagName": "--dry-run-calculate",
+  "twoStageConfirmationEnforced": true,
+
+  "sanityChecksRunBeforeWrite": true,
+  "sanityCheckCount": 6,
+  "sanityCheckCatalog": [
+    { "id": 1, "name": "history_file_valid_json", "description": "data/market-pricing-history.json exists and parses as JSON" },
+    { "id": 2, "name": "history_state_has_history", "description": "history.status === 'has_history'" },
+    { "id": 3, "name": "target_asset_active", "description": "assets.qqq.status === 'active'" },
+    { "id": 4, "name": "sufficient_records_for_window", "description": "qqq.records.length >= 60" },
+    { "id": 5, "name": "records_sorted_unique", "description": "records strictly ascending by date, no duplicate isoWeek" },
+    { "id": 6, "name": "records_close_finite_positive", "description": "every record has finite positive close" }
+  ],
+
+  "writeAtomicity": {
+    "method": "tmp_file_plus_rename",
+    "tempFileSuffix": ".tmp",
+    "renameImplementation": "fs.renameSync"
+  },
+
+  "idempotencyGuarantees": [
+    "Same source history -> identical metrics output (except generatedAt and sourceCommit)",
+    "Stable top-level key order in serialized JSON",
+    "Numeric precision: ma60/stdDev60/zScore rounded to 4 decimal places",
+    "Records sorted ascending by date matching source",
+    "Window slides by exactly 1 source record per output record"
+  ],
+
+  "boundaries": {
+    "noFetch": true,
+    "noFrontendChange": true,
+    "noHistoryWrite": true,
+    "noScoringChange": true,
+    "noDecisionChange": true,
+    "notInvestmentAdvice": true,
+    "noEnvironmentRead": true,
+    "noDependencyAdded": true,
+    "calculationLayerActive": true,
+    "displayLayerActive": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "twoStageConfirmation": true,
+    "atomicWriteEnforced": true,
+    "sanityChecksBeforeWrite": true,
+    "windowSizeLocked": true,
+    "stdDevFormulaLocked": "sample_N_minus_1",
+    "zScoreNotCapped": true
+  },
+
+  "readyForFrontendDisplay": false,
+  "marketPricingTemperatureDisplayActive": false,
+
+  "records": [],
+
+  "nextAllowedStep": "M-27 will activate the frontend display, reading from data/market-pricing-metrics.json and showing the Market Pricing Temperature widget. M-27 may apply a display cap on z-score (for example [-3, +3]) at the frontend layer; the raw values in metrics.json remain uncapped."
+}
