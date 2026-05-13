@@ -1,5 +1,5 @@
-import { fmtNumSafe, riskColor, trendClass } from './config.js?v=28.0M-28V';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=28.0M-28V';
+import { fmtNumSafe, riskColor, trendClass } from './config.js?v=28.0M-29V';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=28.0M-29V';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
