@@ -236,12 +236,10 @@ function checkEditorialStructures() {
 
 function checkMarketPricingTemperatureContract() {
   const requiredMarkers = [
-    '等待历史周线数据接入',
     'market-temperature-card-root',
     'classifyZScoreBucket',
     '本数据为统计描述，不构成投资建议。',
     'QQQ',
-    'Nasdaq',
     '60 周均值',
     '标准差',
     'z-score',
@@ -249,6 +247,12 @@ function checkMarketPricingTemperatureContract() {
   for (const marker of requiredMarkers) requireMarker(macroOverview, MACRO_OVERVIEW_PATH, marker);
   requireAnyMarker(macroOverview, MACRO_OVERVIEW_PATH, ['Market Temperature', '市场定价温度计']);
   requireAnyMarker(macroOverview, MACRO_OVERVIEW_PATH, ['market-temperature-card-active', 'data-market-temperature-fallback']);
+  for (const marker of ['buildCrossValidationMatrix', 'crossValidationMatrix', 'supportingEvidence', 'contradictingEvidence']) {
+    requireMarker(macroOverview, MACRO_OVERVIEW_PATH, marker);
+  }
+  for (const marker of ['editorial-consistency-score-display', 'editorial-evidence-supporting', 'editorial-assessment-strong-confirmation']) {
+    requireMarker(styles, STYLES_PATH, marker);
+  }
 
   const changedFiles = [
     ...gitDiffNames(['diff', '--name-only', '--', MARKET_PRICING_HISTORY_PATH]),

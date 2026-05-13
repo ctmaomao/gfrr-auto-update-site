@@ -1,4 +1,5 @@
-import { $ } from './config.js?v=28.0M-27V';
+import { $ } from './config.js?v=28.0M-28V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-28V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -141,7 +142,11 @@ function hasPartialWorldOrder(worldOrderStressData) {
 function normalizeEvidenceList(value) {
   if (Array.isArray(value)) {
     return value
-      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .map((item) => {
+        if (typeof item === 'string') return item.trim();
+        if (isPlainObject(item)) return formatStructuredEvidenceItem(item).trim();
+        return '';
+      })
       .filter(Boolean);
   }
   if (typeof value === 'string' && value.trim()) return [value.trim()];
@@ -200,11 +205,12 @@ function normalizeJudgmentList(value) {
   }));
 }
 
-function buildTodayJudgment(data, healthDashboard, worldOrderStressData) {
+function buildTodayJudgment(data, healthDashboard, worldOrderStressData, marketPricingMetricsData = null) {
   const brief = isPlainObject(data?.dailyBrief) ? data.dailyBrief : {};
   const confidence = isPlainObject(brief.confidence) ? brief.confidence : {};
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
   const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
+  const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
   const score = finite(data?.score);
   const healthScore = firstExisting(
     healthDashboard?.score,
@@ -223,8 +229,15 @@ function buildTodayJudgment(data, healthDashboard, worldOrderStressData) {
     hasValue(inputs.hyOas) && Number(inputs.hyOas) < 4 ? '信用压力暂未明显扩散' : '',
   ].filter(Boolean).join('；');
   const dataCoverageText = Number.isFinite(Number(healthScore))
-    ? `${Math.round(Number(healthScore))}%；市场温度和实物能源证据仍需补齐`
+    ? `${Math.round(Number(healthScore))}%；${marketMetric ? '市场温度已接入' : '市场温度仍需补齐'}，实物能源证据仍需补齐`
     : '等待数据校准';
+  const todayEvidence = [
+    text(brief.oneLineConclusion, fallbackLine || '当前结论强度有限，仍需等待更多跨市场证据。'),
+  ];
+  if (marketMetric) todayEvidence.push(marketMetric.evidenceLine);
+  const missingEvidence = marketMetric
+    ? ['实物能源证据仍需补齐。']
+    : ['市场温度历史数据尚未接入。', '实物能源证据仍需补齐。'];
 
   return {
     ...createJudgment({
@@ -237,11 +250,8 @@ function buildTodayJudgment(data, healthDashboard, worldOrderStressData) {
       score: score === null ? null : Math.round(score),
       confidence: evidenceStrength,
       dataCoverage: dataCoverageText,
-      evidence: [text(brief.oneLineConclusion, fallbackLine || '当前结论强度有限，仍需等待更多跨市场证据。')],
-      missingEvidence: [
-        '市场温度历史数据尚未接入。',
-        '实物能源证据仍需补齐。',
-      ],
+      evidence: todayEvidence,
+      missingEvidence,
       explanation: macroState,
       sourceType: '模型判断',
       updatedAt: text(brief.generatedAt, text(data?.updatedAt, '')),
@@ -344,11 +354,12 @@ function buildPressureSources(data, worldOrderStressData) {
   ].sort((a, b) => a.priority - b.priority).map(({ priority, ...item }) => item);
 }
 
-function buildSignalLayers(data) {
+function buildSignalLayers(data, marketPricingMetricsData = null) {
   const brief = isPlainObject(data?.dailyBrief) ? data.dailyBrief : {};
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
   const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
   const largestDivergence = isPlainObject(brief.largestDivergence) ? brief.largestDivergence : {};
+  const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
   const verified = [];
   const pending = [];
 
@@ -358,8 +369,17 @@ function buildSignalLayers(data) {
   if (hasValue(inputs.hyOas) && hasValue(inputs.vix) && Number(inputs.hyOas) < 4 && Number(inputs.vix) < 22) {
     verified.push('信用利差和波动率暂未显示明显扩散。');
   }
+  if (marketMetric) {
+    verified.push(`${marketMetric.evidenceLine} 市场温度已可作为当前主判断的价格层确认。`);
+  }
   if (largestDivergence.summaryZh) pending.push(largestDivergence.summaryZh);
   pending.push('能源价格处于观察区间，但实物端验证数据仍不足。');
+  const dataGapEvidence = [
+    'Platts Dated Brent / 正式 Dated Brent 尚未接入。',
+    'Brent 期限结构、crack spread / diesel stress、shipping / freight 仍待接入。',
+    ...safeArray(brentLayer.dataGaps).slice(0, 1),
+  ];
+  if (!marketMetric) dataGapEvidence.unshift('Nasdaq / QQQ 周线历史尚未接入。');
 
   return [
     createJudgment({
@@ -402,12 +422,7 @@ function buildSignalLayers(data) {
       id: 'signal-data-gap',
       title: '数据不足',
       group: 'signal-layer',
-      evidence: [
-        'Nasdaq / QQQ 周线历史尚未接入。',
-        'Platts Dated Brent / 正式 Dated Brent 尚未接入。',
-        'Brent 期限结构、crack spread / diesel stress、shipping / freight 仍待接入。',
-        ...safeArray(brentLayer.dataGaps).slice(0, 1),
-      ],
+      evidence: dataGapEvidence,
       conclusion: '暂无额外数据缺口。',
     }),
   ];
@@ -546,17 +561,36 @@ function getZScoreRange(records) {
   };
 }
 
+function getMarketPricingMetricContext(marketPricingMetricsData) {
+  const records = getMetricRecords(marketPricingMetricsData);
+  const latest = records[records.length - 1];
+  if (!latest) return null;
+  const bucket = getMarketTemperatureBucketInfo(latest.zScore);
+  const zScoreText = formatSignedDecimal(latest.zScore, 2);
+  const distance = Math.abs(finite(latest.zScore) || 0).toFixed(2);
+  return {
+    records,
+    latest,
+    bucket,
+    zScoreText,
+    distance,
+    evidenceLine: `QQQ 周线 z-score = ${zScoreText}（${bucket.label}），${bucket.interpretation(distance)}`,
+    metricLine: `QQQ close ${formatCurrency(latest.close)}；60 周均值 ${formatCurrency(latest.ma60)}；z-score ${zScoreText}（${bucket.label}）。`,
+  };
+}
+
 function findDivergenceCheck(data, key) {
   return safeArray(data?.divergenceLayer?.checks).find((item) => item?.key === key) || {};
 }
 
-function buildRiskEngines(data, worldOrderStressData) {
+function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData = null) {
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
   const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
   const ratesCheck = findDivergenceCheck(data, 'rates_vs_risk_assets');
   const pricingCheck = findDivergenceCheck(data, 'risk_complacency_watch');
   const liquidityCheck = findDivergenceCheck(data, 'liquidity_vs_credit_transmission');
   const creditCalm = finite(inputs.hyOas) !== null && Number(inputs.hyOas) < 4 && finite(inputs.vix) !== null && Number(inputs.vix) < 22;
+  const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
 
   return [
     createJudgment({
@@ -595,13 +629,18 @@ function buildRiskEngines(data, worldOrderStressData) {
       id: 'engine-asset-pricing-mismatch',
       title: '资产定价错配',
       group: 'risk-engine',
-      status: text(pricingCheck.status, '观察中'),
+      status: marketMetric ? marketMetric.bucket.label : text(pricingCheck.status, '观察中'),
       direction: '方向待确认',
-      confidence: '偏低',
-      dataCoverage: '数据覆盖：关键数据不足',
-      evidence: [text(pricingCheck.summaryZh, '风险资产定价仍需与利率、信用和历史温度框架交叉确认。')],
-      missingEvidence: ['Nasdaq / QQQ 周线历史、60 周均值、标准差和 z-score 等待接入。'],
-      explanation: '市场温度计尚未就绪，因此只能保留错配观察，不能给出冷热程度。',
+      confidence: marketMetric ? '中等' : '偏低',
+      dataCoverage: marketMetric ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+      evidence: [
+        text(pricingCheck.summaryZh, '风险资产定价仍需与利率、信用和历史温度框架交叉确认。'),
+        ...(marketMetric ? [marketMetric.metricLine] : []),
+      ],
+      missingEvidence: marketMetric ? [] : ['Nasdaq / QQQ 周线历史、60 周均值、标准差和 z-score 等待接入。'],
+      explanation: marketMetric
+        ? `市场温度计已接入：QQQ 当前为${marketMetric.bucket.label}，可与信用、利率和波动率共同观察错配。`
+        : '市场温度计尚未就绪，因此只能保留错配观察，不能给出冷热程度。',
     }),
     createJudgment({
       id: 'engine-world-order',
@@ -634,75 +673,21 @@ function buildRiskEngines(data, worldOrderStressData) {
   ];
 }
 
-function buildCrossValidation(data) {
-  const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
-  const energyCheck = findDivergenceCheck(data, 'energy_pricing_gap_watch');
-  const ratesCheck = findDivergenceCheck(data, 'rates_vs_risk_assets');
-  const pricingCheck = findDivergenceCheck(data, 'risk_complacency_watch');
-  const consumer = isPlainObject(data?.macroDrivers?.consumer) ? data.macroDrivers.consumer : {};
-
-  return [
-    createJudgment({
-      id: 'cross-energy-shock',
-      title: '能源冲击真实升级',
-      group: 'cross-validation',
-      status: finite(inputs.brent) === null ? INSUFFICIENT : '观察中',
-      direction: '待验证',
-      confidence: '偏低',
-      dataCoverage: '数据覆盖：部分缺口',
-      evidence: [text(energyCheck.summaryZh, '公开 Brent 价格提示能源压力。')],
-      missingEvidence: ['Platts Dated Brent、Brent 期限结构、裂解价差、库存和航运压力等待接入。'],
-      noiseWarning: ['单一 Brent 或代理价格不足以证明实物端冲击升级。'],
-      conclusion: '待验证，未进入明显验证。',
-    }),
-    createJudgment({
-      id: 'cross-stagflation-pressure',
-      title: '滞胀压力上升',
-      group: 'cross-validation',
-      status: finite(inputs.brent) !== null && finite(consumer.umichSentiment) !== null ? '观察中' : INSUFFICIENT,
-      direction: '压力上升观察',
-      confidence: '偏低',
-      dataCoverage: '数据覆盖：部分缺口',
-      evidence: [text(data?.dailyBrief?.dominantRiskChain?.summaryZh, '能源、增长和利率链条等待同步确认。')],
-      missingEvidence: ['增长数据目前偏依赖 UMCSENT；PMI、就业和政策预期仍缺位。'],
-      noiseWarning: ['月频慢变量可能滞后，不能单独确认滞胀。'],
-      conclusion: '证据不完整，保持压力上升观察。',
-    }),
-    createJudgment({
-      id: 'cross-risk-asset-mismatch',
-      title: '风险资产错配',
-      group: 'cross-validation',
-      status: text(ratesCheck.status, '观察中'),
-      direction: '方向待确认',
-      confidence: '偏低',
-      dataCoverage: '数据覆盖：关键数据不足',
-      evidence: [text(ratesCheck.summaryZh, '风险资产与利率证据等待接入。')],
-      missingEvidence: ['Nasdaq / QQQ 周线温度计和更长历史数据等待接入。'],
-      noiseWarning: ['短期价格强弱不等于宏观确认。'],
-      conclusion: '框架未完全就绪，暂不做强结论。',
-    }),
-    createDataGapJudgment({
-      id: 'cross-overheat-confirmation',
-      title: '风险资产过热是否被宏观确认',
-      group: 'cross-validation',
-      status: '数据不足',
-      evidence: [text(pricingCheck.summaryZh, '宏观确认不足。')],
-      missingEvidence: ['60 周均值、标准差、z-score 与更长历史等待接入。'],
-      noiseWarning: ['没有 z-score 前不判断过热。'],
-      conclusion: '等待历史周线数据接入。',
-    }),
-  ];
+function buildCrossValidation(data, worldOrderStressData, marketPricingMetricsData = null) {
+  return buildCrossValidationMatrix(data, worldOrderStressData, marketPricingMetricsData);
 }
 
-export function buildMacroOverview(data = {}, healthDashboard = {}, worldOrderStressData = {}) {
+export function buildMacroOverview(data = {}, healthDashboard = {}, worldOrderStressData = {}, marketPricingMetricsData = null) {
+  const crossValidationMatrix = buildCrossValidation(data, worldOrderStressData, marketPricingMetricsData);
   return {
-    today: buildTodayJudgment(data, healthDashboard, worldOrderStressData),
+    today: buildTodayJudgment(data, healthDashboard, worldOrderStressData, marketPricingMetricsData),
     pressures: buildPressureSources(data, worldOrderStressData),
-    signalLayers: buildSignalLayers(data),
+    signalLayers: buildSignalLayers(data, marketPricingMetricsData),
     drivers: buildMacroDrivers(data),
     marketTemperature: buildMarketTemperature(),
-    riskEngines: buildRiskEngines(data, worldOrderStressData),
-    crossValidation: buildCrossValidation(data),
+    riskEngines: buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData),
+    crossValidation: crossValidationMatrix.narratives,
+    crossValidationMatrix,
   };
 }
 
@@ -1468,6 +1453,11 @@ function appendEditorialEngineCard(root, judgment) {
 }
 
 function validationStatusClass(judgment) {
+  const assessment = String(judgment?.assessment || '');
+  if (assessment === 'strong_confirmation') return 'is-confirmed';
+  if (assessment === 'partial_confirmation') return 'is-pending';
+  if (assessment === 'contradiction') return 'is-counter';
+  if (assessment === 'insufficient_data') return 'is-gap';
   const id = String(judgment?.id || '');
   const title = String(judgment?.title || '');
   const status = String(judgment?.status || '');
@@ -1483,6 +1473,7 @@ function validationStatusClass(judgment) {
 }
 
 function validationTypeLabel(judgment) {
+  if (judgment?.assessment && ASSESSMENT_LABELS[judgment.assessment]) return ASSESSMENT_LABELS[judgment.assessment];
   const className = validationStatusClass(judgment);
   if (className === 'is-confirmed') return '相互确认';
   if (className === 'is-pending') return '待验证';
@@ -1511,6 +1502,17 @@ function buildValidationCounts(judgments) {
 function buildValidationCategorySummary(judgments) {
   const items = safeArray(judgments);
   if (!items.length) return '交叉验证数据不足，暂不强行形成确认结论。';
+  const matrixItems = items.filter((judgment) => judgment?.assessment);
+  if (matrixItems.length) {
+    const confirmed = matrixItems.filter((judgment) => ['strong_confirmation', 'partial_confirmation'].includes(judgment.assessment));
+    const contradictions = matrixItems.filter((judgment) => judgment.assessment === 'contradiction');
+    const gaps = matrixItems.filter((judgment) => judgment.assessment === 'insufficient_data' || safeArray(judgment.missingEvidence).length);
+    const lines = ['当前交叉验证以 7 个 narrative 形成结构化矩阵'];
+    if (confirmed.length) lines.push(`${confirmed.slice(0, 3).map((item) => `「${item.label || item.title}」`).join('、')}提供确认`);
+    if (contradictions.length) lines.push(`${contradictions.map((item) => `「${item.label || item.title}」`).join('、')}存在矛盾`);
+    if (gaps.length) lines.push(`${gaps.length} 个 narrative 仍有数据缺口`);
+    return `${lines.join('；')}。`;
+  }
   const counts = buildValidationCounts(items);
   const pendingTitles = items
     .filter((judgment) => validationStatusClass(judgment) === 'is-pending')
@@ -1535,6 +1537,23 @@ function appendValidationCountPill(root, label, value) {
   root.appendChild(pill);
 }
 
+function appendEditorialConsistencySummary(root, matrix) {
+  if (!isPlainObject(matrix)) return;
+  const summary = document.createElement('div');
+  summary.className = 'editorial-consistency-summary';
+  const scoreBox = document.createElement('div');
+  scoreBox.className = 'editorial-consistency-score-display';
+  appendText(scoreBox, 'span', '', 'CONSISTENCY SCORE');
+  appendText(scoreBox, 'strong', '', String(matrix.consistencyScore ?? '--'));
+  summary.appendChild(scoreBox);
+
+  const body = document.createElement('div');
+  appendText(body, 'p', 'editorial-consistency-state', matrix.consistencyState || '等待交叉验证');
+  appendText(body, 'p', 'editorial-consistency-line', matrix.oneLineSummary || '交叉验证矩阵等待数据。');
+  summary.appendChild(body);
+  root.appendChild(summary);
+}
+
 function appendEditorialValidationSublist(root, label, values, modifier = '') {
   const items = normalizeEvidenceList(values);
   if (!items.length) return;
@@ -1548,10 +1567,37 @@ function appendEditorialValidationSublist(root, label, values, modifier = '') {
   root.appendChild(group);
 }
 
+function formatStructuredEvidenceItem(item) {
+  if (!isPlainObject(item)) return String(item || '');
+  const source = text(item.source, 'source');
+  const value = item.value == null || item.value === '' ? '' : ` ${item.value}`;
+  const detail = text(item.detail, '');
+  return `${source}${value}：${detail}`;
+}
+
+function appendEditorialValidationEvidenceItems(root, label, values, modifier = '') {
+  const items = safeArray(values).filter((item) => item && (typeof item === 'string' || isPlainObject(item)));
+  if (!items.length) return;
+  const group = document.createElement('div');
+  group.className = `editorial-validation-sublist ${modifier}`.trim();
+  appendText(group, 'span', 'editorial-validation-sublist-label', label);
+  const list = document.createElement('ul');
+  list.className = 'editorial-validation-evidence';
+  items.forEach((item) => appendText(list, 'li', '', formatStructuredEvidenceItem(item)));
+  group.appendChild(list);
+  root.appendChild(group);
+}
+
 function appendEditorialValidationCard(root, judgment) {
   const className = validationStatusClass(judgment);
+  const isStructured = safeArray(judgment?.supportingEvidence).length
+    || safeArray(judgment?.missingEvidence).length
+    || safeArray(judgment?.contradictingEvidence).length;
   const card = document.createElement('article');
-  card.className = `editorial-validation-card ${className}`;
+  const assessmentClass = judgment?.assessment
+    ? `editorial-assessment-${String(judgment.assessment).replace(/_/gu, '-')}`
+    : '';
+  card.className = `editorial-validation-card ${className} ${assessmentClass}`.trim();
   const strip = document.createElement('div');
   strip.className = 'editorial-validation-card-status-strip';
   strip.setAttribute('aria-hidden', 'true');
@@ -1560,7 +1606,7 @@ function appendEditorialValidationCard(root, judgment) {
   const head = document.createElement('div');
   head.className = 'editorial-validation-card-head';
   appendText(head, 'span', 'editorial-validation-type', validationTypeLabel(judgment));
-  appendText(head, 'h3', 'editorial-validation-card-title', judgment.title);
+  appendText(head, 'h3', 'editorial-validation-card-title', judgment.label || judgment.title);
   appendText(head, 'span', 'editorial-validation-badge', judgment.status || UNDECIDED);
   card.appendChild(head);
 
@@ -1568,12 +1614,18 @@ function appendEditorialValidationCard(root, judgment) {
     ? ` / ${judgment.direction}`
     : '';
   appendText(card, 'p', 'editorial-validation-main', `${judgment.status || UNDECIDED}${direction}`);
-  const explanation = judgment.explanation || judgment.conclusion;
+  const explanation = judgment.interpretation || judgment.explanation || judgment.conclusion;
   if (explanation) appendText(card, 'p', 'editorial-validation-explanation', explanation);
-  appendEditorialValidationSublist(card, '关键证据', judgment.evidence, 'is-evidence');
-  appendEditorialValidationSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
-  appendEditorialValidationSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
-  appendEditorialValidationSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
+  if (isStructured) {
+    appendEditorialValidationEvidenceItems(card, '支持证据', judgment.supportingEvidence, 'editorial-evidence-supporting');
+    appendEditorialValidationEvidenceItems(card, '缺失证据', judgment.missingEvidence, 'editorial-evidence-missing');
+    appendEditorialValidationEvidenceItems(card, '矛盾证据', judgment.contradictingEvidence, 'editorial-evidence-contradicting');
+  } else {
+    appendEditorialValidationSublist(card, '关键证据', judgment.evidence, 'is-evidence');
+    appendEditorialValidationSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
+    appendEditorialValidationSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
+    appendEditorialValidationSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
+  }
 
   const footer = document.createElement('div');
   footer.className = 'editorial-validation-footer';
@@ -1754,7 +1806,7 @@ function appendEditorialWatchList(root, items) {
 
 export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressData, marketPricingMetricsData = null, container = $('macro-risk-overview-root')) {
   if (!container) return;
-  const overview = buildMacroOverview(data, healthDashboard, worldOrderStressData);
+  const overview = buildMacroOverview(data, healthDashboard, worldOrderStressData, marketPricingMetricsData);
   container.replaceChildren();
 
   const today = appendSection(container, '今日总判断', 'macro-overview-hero editorial-first-fold', 'homepage-today-judgment');
@@ -1888,6 +1940,7 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   appendValidationCountPill(validationCountGrid, '反向证据', validationCounts.counter);
   appendValidationCountPill(validationCountGrid, '数据不足', validationCounts.gap);
   cross.appendChild(validationCountGrid);
+  appendEditorialConsistencySummary(cross, overview.crossValidationMatrix);
   const crossGrid = document.createElement('div');
   crossGrid.className = 'editorial-validation-grid';
   overview.crossValidation.forEach((item) => appendEditorialValidationCard(crossGrid, item));

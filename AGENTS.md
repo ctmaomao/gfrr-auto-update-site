@@ -36,6 +36,7 @@ be treated as governing rules for the whole project:
 - `docs/MARKET_PRICING_WEEKLY_HISTORY_BUILDUP.md` — Authoritative within M-25 scope only
 - `docs/MARKET_PRICING_METRICS_CALCULATION.md` — Authoritative within M-26 scope only
 - `docs/MARKET_PRICING_TEMPERATURE_DISPLAY.md` — Authoritative within M-27 display scope only
+- `docs/MARKET_PRICING_FIRST_FOLD_AND_CROSS_VALIDATION.md` — Authoritative within M-28 first-fold display and cross-validation scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -81,7 +82,7 @@ documentation drift risk identified in the v28.0M-audit.
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-27V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-28V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -98,8 +99,8 @@ documentation drift risk identified in the v28.0M-audit.
 - v28.0G-6 Operations Runbook / Decision Matrix 是运维判断入口；看 `docs/OPERATIONS.md`。PR #53 superseded；KV write guard deferred，先观察，不在未另开版本时加入复杂 runtime guard。
 - v28.0G-7A 只增强 `Check Worker Health` 只读输出，生成 `worker-health-snapshot` artifact；不得把 snapshot 当作网站输入，不得写 KV 或 data/realtime，不得改变 Worker Health fail 边界。
 - v28.0G-7B 新增本地只读 `review:worker-health-snapshot` helper，用于审阅下载后的 snapshot 并输出 PASS / WARN / FAIL；不得让它访问网络、写 KV、写 data/realtime 或替代 scheduled hard gate。
-- v28.0M-27V Frontend Asset Cache Busting 用 `?v=28.0M-27V` 刷新 `index.html` 入口与前端 ES module graph，解决 Android Chrome cached old module graph 让普通窗口继续显示 Actions/FRED 旧逻辑的问题；`window.__GFRR_FRONTEND_VERSION__` 应返回 `28.0M-27V`。无痕窗口正常代表 Worker-first runtime 正常；不改 Worker runtime、数据源、KV，也不 deploy Worker。
-- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-27V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
+- v28.0M-28V Frontend Asset Cache Busting 用 `?v=28.0M-28V` 刷新 `index.html` 入口与前端 ES module graph，解决 Android Chrome cached old module graph 让普通窗口继续显示 Actions/FRED 旧逻辑的问题；`window.__GFRR_FRONTEND_VERSION__` 应返回 `28.0M-28V`。无痕窗口正常代表 Worker-first runtime 正常；不改 Worker runtime、数据源、KV，也不 deploy Worker。
+- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-28V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
 - v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。
@@ -208,7 +209,7 @@ When `DESIGN.md` and any other contract (e.g., Market Pricing governance) appear
 
 - `npm run check:editorial-redesign-contract` enforces font allowlist, IA structure, and `DESIGN.md` existence + anchor integrity
 - `npm run check:homepage-ia-contract` enforces section order
-- `npm run check:all` runs both as part of the 45-check baseline
+- `npm run check:all` runs both as part of the 46-check baseline
 
 PRs that fail these contracts MUST NOT be merged, regardless of how good the visual result looks.
 
@@ -749,6 +750,12 @@ This calculation layer reads committed QQQ history and writes only the separate 
 M-27 (PR #?): Market Pricing Temperature display activated — 5-bucket z-score classification, detailed editorial card, graceful degradation. Reads `data/market-pricing-metrics.json`.
 
 This is frontend display only. Preserve the `homepage-market-temperature` IA position, read only the local metrics file, keep the waiting-state fallback for degraded loads, and do not modify data files, workflows, scoring, decision, execution, position logic, External AI, or the M-26 calculation output.
+
+## 54T. v28.0M-28 first-fold and cross-validation matrix reminder
+
+M-28 (PR #?): First-fold M-27 metrics integration and cross-validation matrix — propagates `data/market-pricing-metrics.json` into today judgment, signal layers, risk engines, and cross-validation, then expands cross-validation to seven structured narratives with supporting / missing / contradicting evidence and a composite consistency score.
+
+This is frontend display only. Preserve homepage IA anchors, keep the matrix helper pure/read-only, do not modify data files, workflows, scoring, decision, execution, position logic, External AI, or M-26 calculation output, and do not calculate MA60 / standard deviation / z-score in the frontend.
 
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
