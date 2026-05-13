@@ -1,14 +1,33 @@
-import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0M-7V';
-import { buildHealthDashboardModel } from './modules/health.js?v=28.0M-7V';
-import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0M-7V';
-import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0M-7V';
-import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderAiInterpretationLayer, renderDivergenceLayer, renderBrentPricingLayer, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0M-7V';
-import { renderExternalAiPanel } from './modules/renderExternalAi.js?v=28.0M-7V';
-import { renderMacroRiskOverview } from './modules/renderMacroOverview.js?v=28.0M-7V';
+import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0M-27V';
+import { buildHealthDashboardModel } from './modules/health.js?v=28.0M-27V';
+import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0M-27V';
+import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0M-27V';
+import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderAiInterpretationLayer, renderDivergenceLayer, renderBrentPricingLayer, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0M-27V';
+import { renderExternalAiPanel } from './modules/renderExternalAi.js?v=28.0M-27V';
+import { renderMacroRiskOverview } from './modules/renderMacroOverview.js?v=28.0M-27V';
 
-window.__GFRR_FRONTEND_VERSION__ = '28.0M-7V';
+window.__GFRR_FRONTEND_VERSION__ = '28.0M-27V';
+
+function fetchMarketPricingMetricsData() {
+  return fetch('data/market-pricing-metrics.json', { cache: 'no-store' })
+    .then((response) => {
+      if (!response.ok) throw new Error(`market pricing metrics status ${response.status}`);
+      return response.json();
+    })
+    .then((payload) => {
+      if (!payload || !Array.isArray(payload.records)) {
+        throw new Error('market pricing metrics schema unavailable');
+      }
+      return payload;
+    })
+    .catch((error) => {
+      console.warn('Market pricing metrics unavailable; falling back to waiting-state.', error);
+      return null;
+    });
+}
 
 async function main() {
+  const marketPricingMetricsPromise = fetchMarketPricingMetricsData();
   const [baseline, history, realtimeResult, worldOrderStressData] = await Promise.all([
     fetchBaselineData(),
     fetchHistoryData(),
@@ -67,6 +86,10 @@ async function main() {
   }
   $('runtime-badge').textContent = metadata.realtimeStatusLabel;
   renderMacroRiskOverview(data, healthDashboard, worldOrderStressData);
+  marketPricingMetricsPromise.then((marketPricingMetricsData) => {
+    window.__GFRR_MARKET_PRICING_METRICS__ = marketPricingMetricsData;
+    renderMacroRiskOverview(data, healthDashboard, worldOrderStressData, marketPricingMetricsData);
+  });
   renderDailyBrief(data.dailyBrief);
   renderAiInterpretationLayer(data.aiInterpretationLayer);
   renderExternalAiPanel(data);
