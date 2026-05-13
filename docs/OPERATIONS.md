@@ -2356,3 +2356,14 @@ Operator guidance:
 - Use `npm run check:editorial-redesign-contract` when touching the editorial homepage shell, macro overview renderer, or paper theme styles.
 - The guard protects the Bubble Watch-inspired editorial structures, paper theme, Market Pricing waiting state, External AI read-only boundary, and Global Risk Heatmap standalone status.
 - Do not treat the guard as approval to redesign UI or change data, scoring, decision, execution, position logic, workflows, External AI behavior, or Market Pricing calculations.
+
+### v28.0M-24 market pricing first real record write operator note
+
+v28.0M-24 adds the First Real Record Write scaffold with two-stage manual confirmation. The script defaults to dry-run-commit mode. The --commit-to-history flag is required to actually write data/market-pricing-history.json. 5 sanity checks run before any write. Atomic write via .tmp + rename. Idempotent. CI never invokes the :commit path. Market Pricing Temperature remains waiting-for-history at the frontend level until M-27. No MA60 / std / z-score calculation (M-26). No scoring / decision / execution / position change. No workflow change. No frontend change.
+
+Operator guidance:
+
+- Run `npm run market-pricing:first-real-record-write:dry-run` first and review the record count, date range, and preview.
+- Run `npm run market-pricing:first-real-record-write:commit` only after the dry-run preview is accepted.
+- Do not run the :commit path from CI or an automatic workflow.
+- If a sanity check fails, do not manually patch data/market-pricing-history.json; fix the sanitized input and retry dry-run.

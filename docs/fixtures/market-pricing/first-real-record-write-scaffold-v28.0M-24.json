@@ -1,0 +1,99 @@
+{
+  "contractVersion": "v28.0M-24-first-real-record-write-scaffold-1",
+  "kind": "market_pricing_first_real_record_write_scaffold",
+  "generatedAt": "2099-01-01T00:00:00.000Z",
+  "status": "first_real_record_write_scaffold_two_stage_manual_commit",
+  "targetAsset": "qqq",
+  "targetSymbol": "QQQ",
+  "sourceVendor": "nasdaq_official_manual_download",
+  "firstRealRecordWriteApproved": true,
+  "firstRealRecordWriteScaffoldExists": true,
+  "commitScriptExecutable": true,
+  "commitRequiresExplicitFlag": true,
+  "commitFlagName": "--commit-to-history",
+  "twoStageConfirmationEnforced": true,
+  "historyFileMayBeWritten": true,
+  "historyFileTarget": "data/market-pricing-history.json",
+  "historyFileWillBeWrittenAtomically": true,
+  "sanityChecksRunBeforeWrite": true,
+  "sanityCheckCount": 5,
+  "sanityCheckCatalog": [
+    {
+      "id": 1,
+      "name": "sanitized_input_valid_json",
+      "description": "<input>/sanitized.json exists, parses as JSON, top-level is array"
+    },
+    {
+      "id": 2,
+      "name": "record_count_minimum",
+      "description": "records.length >= 50"
+    },
+    {
+      "id": 3,
+      "name": "required_fields_present",
+      "description": "every record has date (ISO YYYY-MM-DD), isoWeek (YYYY-Www), close (finite number)"
+    },
+    {
+      "id": 4,
+      "name": "strict_ascending_unique_per_week",
+      "description": "records strictly ascending by date, no duplicate isoWeek"
+    },
+    {
+      "id": 5,
+      "name": "plausibility_bounds_and_no_future",
+      "description": "all close in [80, 1000], all date <= today"
+    }
+  ],
+  "writeAtomicity": {
+    "method": "tmp_file_plus_rename",
+    "tempFileSuffix": ".tmp",
+    "renameImplementation": "fs.renameSync"
+  },
+  "idempotencyGuarantees": [
+    "Same sanitized input -> identical history file output after first commit",
+    "Stable key order in serialized JSON",
+    "Records sorted ASCENDING by date",
+    "Only generatedAt timestamp changes on the first commit for a new input"
+  ],
+  "marketTemperatureCalculationApproved": false,
+  "readyForFrontendDisplay": false,
+  "ma60CalculationImplemented": false,
+  "stdDevCalculationImplemented": false,
+  "zScoreCalculationImplemented": false,
+  "sourceApproved": false,
+  "liveFetchApproved": false,
+  "networkGateApproved": false,
+  "networkGateOpen": false,
+  "networkAllowed": false,
+  "networkOpenedThisRun": false,
+  "sourceComplianceReviewed": false,
+  "sourceFormatVerified": false,
+  "symbolMappingVerified": false,
+  "secretsAllowed": false,
+  "sourceUrlPersistenceAllowed": false,
+  "apiCalled": false,
+  "secretsRead": false,
+  "productionDataWritten": false,
+  "historyFileModified": false,
+  "boundaries": {
+    "twoStageConfirmation": true,
+    "ciCannotInvokeCommit": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noWritesOutsideHistoryFile": true,
+    "noFrontendChange": true,
+    "noScoringChange": true,
+    "noDecisionChange": true,
+    "noExecutionChange": true,
+    "noPositionChange": true,
+    "noExternalAiChange": true,
+    "noTemperatureCalculation": true,
+    "noMa60Calculation": true,
+    "noStdDevCalculation": true,
+    "noZScoreCalculation": true,
+    "atomicWriteEnforced": true,
+    "sanityChecksBeforeWrite": true
+  },
+  "records": [],
+  "nextAllowedStep": "M-25 will validate that history has accumulated at least 60 weeks of records (sufficient for MA60 calculation). M-26 will add the MA60 / std / z-score calculation layer. M-27 will activate frontend display."
+}
