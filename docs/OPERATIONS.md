@@ -2122,6 +2122,20 @@ Operator guidance:
 - Keep records empty and Market Pricing Temperature waiting-for-history.
 - Do not calculate MA60, standard deviation, z-score, bands, or Market Pricing Temperature.
 
+### v28.0M-23 market pricing manual weekly input sanitizer scaffold operator note
+
+v28.0M-23 adds the executable Manual Weekly Input Sanitizer scaffold. It reads NASDAQ CSV files placed in `manual-artifacts/market-pricing/manual-weekly-input/` and writes sanitized review artifacts only under `manual-artifacts/market-pricing/sanitized-output/`.
+
+Operator guidance:
+
+- Use `npm run market-pricing:manual-weekly-input-sanitizer:dry-run` first.
+- Use `npm run market-pricing:manual-weekly-input-sanitizer:run` only after dry-run output is acceptable.
+- Do not commit files under `manual-artifacts/`.
+- Do not copy scaffold output into `data/market-pricing-history.json`; M-24 is the first approved history-write step.
+- Do not add live fetch, workflow automation, MA60, standard deviation, z-score, bands, or Market Pricing Temperature calculation.
+- Keep records out of production data and Market Pricing Temperature waiting-for-history.
+- `npm run check:market-pricing-manual-weekly-input-sanitizer-scaffold` must pass.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.
