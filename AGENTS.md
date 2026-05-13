@@ -30,6 +30,7 @@ be treated as governing rules for the whole project:
 - `docs/MARKET_PRICING_SYMBOL_MAPPING_VERIFICATION_DESIGN.md` — Authoritative within M-19 scope only
 - `docs/MARKET_PRICING_SOURCE_FORMAT_VERIFICATION_DESIGN.md` — Authoritative within M-20 scope only
 - `docs/MARKET_PRICING_NETWORK_OPEN_THROTTLED.md` — Authoritative within M-21 scope only
+- `docs/MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_DESIGN.md` — Authoritative within M-22 scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -45,6 +46,7 @@ treated as current operating rules:
 
 - `docs/V27_BASELINE.md` — Historical v27 baseline
 - `docs/WORLD_ORDER_SOURCE_REVIEW.md` — Background source review
+- `docs/MARKET_PRICING_SOURCE_INCIDENT_LOG.md` — Market-pricing source incident history
 - Other `EXTERNAL_AI_*.md` files not listed under Conditional Authority — Phase designs, readiness notes, audits
 - Other `MARKET_PRICING_*.md` files not listed under Conditional Authority — Phase scaffolds and reviews
 
@@ -712,6 +714,12 @@ Keep `sourceFormatVerified=false`, `sourceFormatVerificationStatus="not_verified
 M-21 is the FIRST M-series step where `fetch()` can run, but only when a human explicitly runs `--network=open-throttled`.
 
 Default mode remains dry-run with network closed. The source URL must come from `docs/fixtures/market-pricing/network-open-throttled-manifest-v28.0M-21.json`, not from script code or environment variables. Max 1 fetch per invocation, 30s timeout, and max 1 retry are the only approved runtime limits. Response artifacts must stay under `manual-artifacts/market-pricing/network-fetch-attempts/`; never write `data/*`, never write history records, keep `records=[]`, do not calculate MA60 / standard deviation / z-score, do not change workflows or frontend, and keep Market Pricing Temperature waiting-for-history.
+
+## 54O. v28.0M-22 market pricing manual weekly input sanitizer design reminder
+
+M-22 adds the Manual Weekly Input Sanitizer Design layer. It is design only — no executable sanitizer is added.
+
+The M-21 auto-fetch path is formally deprecated following the 2026-05-12 Stooq endpoint change. M-21 script is retained for future reactivation. Future weekly QQQ history will come from manual NASDAQ downloads placed in `manual-artifacts/market-pricing/manual-weekly-input/`. Do not add records, do not write `data/market-pricing-history.json`, do not calculate MA60 / standard deviation / z-score, do not change workflows or frontend, and keep Market Pricing Temperature waiting-for-history.
 
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
