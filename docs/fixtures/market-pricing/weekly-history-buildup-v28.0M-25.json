@@ -1,0 +1,45 @@
+{
+  "contractVersion": "v28.0M-25",
+  "kind": "market_pricing_weekly_history_buildup_verifier",
+  "descriptionZh": "市场定价温度计周线历史积累校验器，用于确认 QQQ 历史记录已满足后续统计计算和前端激活前置条件。",
+  "checkedRules": [
+    {
+      "id": "has_history_state",
+      "description": "data/market-pricing-history.json status must be has_history"
+    },
+    {
+      "id": "qqq_active",
+      "description": "assets.qqq.status must be active"
+    },
+    {
+      "id": "minimum_weekly_rows",
+      "description": "assets.qqq.records.length must be at least 60"
+    },
+    {
+      "id": "coverage_consistency",
+      "description": "coverage.weeklyRows, oldestDate, latestDate, and hasAtLeast60Weeks must match records"
+    },
+    {
+      "id": "strict_ascending_dates",
+      "description": "records must be strictly ascending by date with no duplicates"
+    },
+    {
+      "id": "record_field_validity",
+      "description": "each record must have valid date, isoWeek, and finite positive close"
+    }
+  ],
+  "dependents": [
+    "M-26 MA60 / Std / Z-Score calculation",
+    "M-27 frontend display activation"
+  ],
+  "boundaries": {
+    "noFetch": true,
+    "noCalculation": true,
+    "displayOnly": true,
+    "notInvestmentAdvice": true,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false
+  }
+}
