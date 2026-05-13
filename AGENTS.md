@@ -32,6 +32,7 @@ be treated as governing rules for the whole project:
 - `docs/MARKET_PRICING_NETWORK_OPEN_THROTTLED.md` — Authoritative within M-21 scope only
 - `docs/MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_DESIGN.md` — Authoritative within M-22 scope only
 - `docs/MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_SCAFFOLD.md` — Authoritative within M-23 scope only
+- `docs/MARKET_PRICING_FIRST_REAL_RECORD_WRITE.md` — Authoritative within M-24 scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
