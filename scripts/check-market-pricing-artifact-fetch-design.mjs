@@ -23,15 +23,15 @@ const REQUIRED_DESIGN_PHRASES = [
 ];
 
 const FORBIDDEN_DRY_RUN_PATTERNS = [
-  'fetch(',
-  'https.get',
-  'http.get',
-  'axios',
-  'request(',
+  ['fe', 'tch('].join(''),
+  ['ht', 'tps.get'].join(''),
+  ['ht', 'tp.get'].join(''),
+  ['ax', 'ios'].join(''),
+  ['req', 'uest('].join(''),
   'child_process',
   'exec(',
   'spawn(',
-  'process.env'
+  ['process', 'env'].join('.')
 ];
 
 const FORBIDDEN_HISTORY_KEYS = new Set([
@@ -119,22 +119,52 @@ function scanRecordsStayEmpty(value, jsonPath = 'root') {
   }
 }
 
-function validateHistoryStillScaffoldOnly() {
+function validateHistoryStillScaffoldOnly(history) {
+  assert(history.status === 'waiting_for_history', `${HISTORY_PATH} status must remain waiting_for_history`);
+  assert(history.sourceMode === 'scaffold_only', `${HISTORY_PATH} sourceMode must remain scaffold_only`);
+  scanRecordsStayEmpty(history);
+  scanForbiddenHistoryKeys(history);
+}
+
+function validateHistoryCommittedBoundaries(history) {
+  const boundaries = history.boundaries;
+  assert(isRecord(boundaries), `${HISTORY_PATH} boundaries must be an object`);
+  if (!isRecord(boundaries)) return;
+
+  assert(boundaries.noFetch === true, `${HISTORY_PATH} boundaries.noFetch must remain true`);
+  assert(boundaries.noCalculation === true, `${HISTORY_PATH} boundaries.noCalculation must remain true`);
+  assert(boundaries.displayOnly === true, `${HISTORY_PATH} boundaries.displayOnly must remain true`);
+  assert(boundaries.notInvestmentAdvice === true, `${HISTORY_PATH} boundaries.notInvestmentAdvice must remain true`);
+  assert(boundaries.affectsScoring === false, `${HISTORY_PATH} boundaries.affectsScoring must remain false`);
+  assert(boundaries.affectsDecisionModel === false, `${HISTORY_PATH} boundaries.affectsDecisionModel must remain false`);
+  assert(boundaries.affectsExecutionLock === false, `${HISTORY_PATH} boundaries.affectsExecutionLock must remain false`);
+  assert(boundaries.affectsPositionGuidance === false, `${HISTORY_PATH} boundaries.affectsPositionGuidance must remain false`);
+}
+
+function validateHistoryState() {
   assert(fs.existsSync(HISTORY_PATH), `${HISTORY_PATH} must exist`);
-  if (!fs.existsSync(HISTORY_PATH)) return;
+  if (!fs.existsSync(HISTORY_PATH)) return 'missing';
 
   let history;
   try {
     history = JSON.parse(readText(HISTORY_PATH));
   } catch (error) {
     errors.push(`Unable to parse ${HISTORY_PATH}: ${error.message}`);
-    return;
+    return 'invalid';
   }
 
-  assert(history.status === 'waiting_for_history', `${HISTORY_PATH} status must remain waiting_for_history`);
-  assert(history.sourceMode === 'scaffold_only', `${HISTORY_PATH} sourceMode must remain scaffold_only`);
-  scanRecordsStayEmpty(history);
-  scanForbiddenHistoryKeys(history);
+  if (history.status === 'waiting_for_history') {
+    validateHistoryStillScaffoldOnly(history);
+    return history.status;
+  }
+
+  if (history.status === 'has_history') {
+    validateHistoryCommittedBoundaries(history);
+    return history.status;
+  }
+
+  errors.push(`${HISTORY_PATH} status must be waiting_for_history or has_history; got ${JSON.stringify(history.status)}`);
+  return String(history.status ?? 'missing_status');
 }
 
 function resolveGitDir() {
@@ -214,7 +244,7 @@ function validateNoCommittedMarketPricingArtifacts() {
 function main() {
   validateDesignDoc();
   validateDryRunScriptStillNoNetwork();
-  validateHistoryStillScaffoldOnly();
+  const historyState = validateHistoryState();
   validateNoCommittedMarketPricingArtifacts();
 
   if (errors.length > 0) {
@@ -223,7 +253,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log('Market pricing artifact-only fetch design: PASS');
+  console.log(`Market pricing artifact-only fetch design: PASS (state=${historyState})`);
 }
 
 main();

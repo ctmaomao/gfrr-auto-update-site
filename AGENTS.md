@@ -33,6 +33,7 @@ be treated as governing rules for the whole project:
 - `docs/MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_DESIGN.md` — Authoritative within M-22 scope only
 - `docs/MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_SCAFFOLD.md` — Authoritative within M-23 scope only
 - `docs/MARKET_PRICING_FIRST_REAL_RECORD_WRITE.md` — Authoritative within M-24 scope only
+- `docs/MARKET_PRICING_WEEKLY_HISTORY_BUILDUP.md` — Authoritative within M-25 scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -205,7 +206,7 @@ When `DESIGN.md` and any other contract (e.g., Market Pricing governance) appear
 
 - `npm run check:editorial-redesign-contract` enforces font allowlist, IA structure, and `DESIGN.md` existence + anchor integrity
 - `npm run check:homepage-ia-contract` enforces section order
-- `npm run check:all` runs both as part of the 32-check baseline
+- `npm run check:all` runs both as part of the 43-check baseline
 
 PRs that fail these contracts MUST NOT be merged, regardless of how good the visual result looks.
 
@@ -728,6 +729,12 @@ The M-21 auto-fetch path is formally deprecated following the 2026-05-12 Stooq e
 M-23 adds the executable Manual Weekly Input Sanitizer scaffold. It reads NASDAQ CSV files placed in `manual-artifacts/market-pricing/manual-weekly-input/` and produces sanitized weekly records to `manual-artifacts/market-pricing/sanitized-output/`.
 
 This scaffold is review-only. It does not write to `data/market-pricing-history.json`; that is M-24. Do not add production data writes, history writes, MA60 / standard deviation / z-score, scoring / decision / execution / position changes, workflow changes, frontend changes, External AI changes, or Market Pricing Temperature activation.
+
+## 54Q. v28.0M-25 market pricing weekly history buildup verifier reminder
+
+M-25 (PR #?): Weekly History Buildup Verifier — upgraded `check-market-pricing-history.mjs` to two-state validation and added `check-market-pricing-weekly-history-buildup.mjs`.
+
+This verifier is read-only. It validates the committed QQQ weekly history buildup required before M-26 calculations and M-27 frontend display activation. Do not add fetches, production writes, MA60 / standard deviation / z-score calculation, workflow changes, frontend changes, scoring / decision / execution / position changes, or External AI changes in this rung.
 
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 

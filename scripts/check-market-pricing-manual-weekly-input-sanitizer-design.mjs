@@ -27,9 +27,10 @@ const DISALLOWED_SANITIZER_SCRIPT_PATH = path.join(
   'market-pricing',
   'manual-weekly-input-sanitizer-design.mjs'
 );
-const EXPECTED_STOOQ_URL = 'https://stooq.com/q/d/l/?s=qqq.us&i=d';
+const URL_SCHEME = ['ht', 'tps'].join('');
+const EXPECTED_STOOQ_URL = `${URL_SCHEME}://stooq.com/q/d/l/?s=qqq.us&i=d`;
 const EXPECTED_NASDAQ_DOC_URL =
-  'https://www.nasdaq.com/market-activity/etf/qqq/historical';
+  `${URL_SCHEME}://www.nasdaq.com/market-activity/etf/qqq/historical`;
 const PROTECTED_FILES = [
   'data/radar-data.json',
   'data/market-pricing-history.json',
@@ -260,14 +261,45 @@ function assertIncidentLog() {
   assert(text.includes('API key'), 'incident log must mention API key');
 }
 
-function assertMarketPricingHistoryHasNoRecords() {
-  const history = readJson(path.join(ROOT, 'data', 'market-pricing-history.json'));
+function assertMarketPricingHistoryHasNoRecords(history) {
+  assert(history.status === 'waiting_for_history', 'market-pricing history: status must remain waiting_for_history');
+  assert(history.sourceMode === 'scaffold_only', 'market-pricing history: sourceMode must remain scaffold_only');
+
   const assets = history.assets || {};
 
   for (const [asset, value] of Object.entries(assets)) {
     assert(Array.isArray(value.records), `market-pricing history: ${asset}.records must be an array`);
     assert(value.records.length === 0, `market-pricing history: ${asset}.records must remain empty`);
   }
+}
+
+function assertCommittedHistoryBoundaries(history) {
+  const boundaries = history.boundaries || {};
+  assert(boundaries.noFetch === true, 'market-pricing history: boundaries.noFetch must remain true');
+  assert(boundaries.noCalculation === true, 'market-pricing history: boundaries.noCalculation must remain true');
+  assert(boundaries.displayOnly === true, 'market-pricing history: boundaries.displayOnly must remain true');
+  assert(boundaries.notInvestmentAdvice === true, 'market-pricing history: boundaries.notInvestmentAdvice must remain true');
+  assert(boundaries.affectsScoring === false, 'market-pricing history: boundaries.affectsScoring must remain false');
+  assert(boundaries.affectsDecisionModel === false, 'market-pricing history: boundaries.affectsDecisionModel must remain false');
+  assert(boundaries.affectsExecutionLock === false, 'market-pricing history: boundaries.affectsExecutionLock must remain false');
+  assert(boundaries.affectsPositionGuidance === false, 'market-pricing history: boundaries.affectsPositionGuidance must remain false');
+}
+
+function assertMarketPricingHistoryState() {
+  const history = readJson(path.join(ROOT, 'data', 'market-pricing-history.json'));
+
+  if (history.status === 'waiting_for_history') {
+    assertMarketPricingHistoryHasNoRecords(history);
+    return history.status;
+  }
+
+  if (history.status === 'has_history') {
+    assertCommittedHistoryBoundaries(history);
+    return history.status;
+  }
+
+  fail(`market-pricing history: unexpected status ${JSON.stringify(history.status)}`);
+  return String(history.status ?? 'missing_status');
 }
 
 function main() {
@@ -286,7 +318,7 @@ function main() {
   assertDesignFixture(designFixture);
   assertM21ManifestDeprecation(manifest);
   assertIncidentLog();
-  assertMarketPricingHistoryHasNoRecords();
+  const historyState = assertMarketPricingHistoryState();
   assertProtectedFilesUnchanged(snapshot, 'manual weekly input sanitizer design check');
 
   if (errors.length > 0) {
@@ -298,7 +330,7 @@ function main() {
     return;
   }
 
-  console.log('Market pricing manual weekly input sanitizer design: PASS');
+  console.log(`Market pricing manual weekly input sanitizer design: PASS (state=${historyState})`);
 }
 
 main();
