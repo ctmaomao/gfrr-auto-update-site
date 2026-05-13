@@ -2463,6 +2463,61 @@ transform: translateX(-50%);
   font-size: 14px;
   line-height: 1.65;
 }
+.editorial-cross-validation-education {
+  margin-top: 20px;
+  border-top: 1px solid var(--paper-line);
+}
+.editorial-cross-validation-education-body {
+  display: grid;
+  gap: 18px;
+  padding: 24px 28px;
+  background: var(--paper-bg);
+}
+.editorial-cross-validation-education-section {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--paper-line);
+}
+.editorial-cross-validation-education-section:last-child {
+  border-bottom: 0;
+}
+.editorial-cross-validation-education-section h3 {
+  margin: 0 0 10px;
+  color: var(--paper-ink);
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 800;
+}
+.editorial-cross-validation-education-section p,
+.editorial-cross-validation-education-section li {
+  color: var(--paper-warm);
+  font-size: 14px;
+  line-height: 1.75;
+}
+.editorial-cross-validation-education-section p {
+  margin: 0 0 10px;
+}
+.editorial-cross-validation-education-section ul {
+  margin: 8px 0 12px;
+  padding-left: 22px;
+}
+.editorial-cross-validation-education-reminder {
+  display: block;
+  margin-top: 8px;
+  color: var(--paper-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.editorial-cross-validation-education-section.is-boundary {
+  margin-top: 2px;
+  padding-top: 18px;
+  border-top: 3px double var(--paper-ink);
+}
+.editorial-cross-validation-education-section.is-boundary p,
+.editorial-cross-validation-education-section.is-boundary li {
+  color: var(--paper-ink);
+  font-weight: 600;
+}
 main { display: grid; gap: 22px; }
 .section-group-title {
   margin: 18px 0 2px;
@@ -3167,6 +3222,8 @@ code { color: var(--risk-red); }
 .editorial-pressure-grid,.editorial-signal-grid,.editorial-driver-grid,.editorial-engine-grid,.editorial-validation-grid{grid-template-columns:1fr}
 .editorial-consistency-summary{grid-template-columns:1fr}
 .editorial-consistency-score-display{border-right:0;border-bottom:1px solid var(--paper-line);padding-right:0;padding-bottom:12px}
+.editorial-cross-validation-education-body{padding:20px 18px}
+.editorial-cross-validation-education-section ul{padding-left:18px}
 .editorial-category-summary{font-size:15px}
 .editorial-count-pill{flex:1 1 180px;justify-content:space-between}
   .editorial-market-temp-checklist{grid-template-columns:1fr}

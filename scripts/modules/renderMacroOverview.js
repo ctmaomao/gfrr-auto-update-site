@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-29V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-29V';
-import { formatFiniteNumber } from './format.js?v=28.0M-29V';
+import { $ } from './config.js?v=28.0M-30V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-30V';
+import { formatFiniteNumber } from './format.js?v=28.0M-30V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -1616,6 +1616,117 @@ function appendEditorialConsistencySummary(root, matrix) {
   root.appendChild(summary);
 }
 
+function appendCrossValidationEducationParagraph(section, value, className = '') {
+  return appendText(section, className === 'editorial-cross-validation-education-reminder' ? 'small' : 'p', className, value);
+}
+
+function appendCrossValidationEducationList(section, values) {
+  const list = document.createElement('ul');
+  values.forEach((item) => appendText(list, 'li', '', item));
+  section.appendChild(list);
+}
+
+function appendCrossValidationEducationSection(root, heading, blocks, options = {}) {
+  const section = document.createElement('section');
+  section.className = `editorial-cross-validation-education-section${options.isBoundary ? ' is-boundary' : ''}`;
+  appendText(section, 'h3', '', heading);
+  blocks.forEach((block) => {
+    if (block.type === 'list') {
+      appendCrossValidationEducationList(section, block.items);
+      return;
+    }
+    appendCrossValidationEducationParagraph(section, block.text, block.className || '');
+  });
+  root.appendChild(section);
+}
+
+function appendCrossValidationEducationAppendix(root) {
+  const details = document.createElement('details');
+  details.className = 'editorial-folded-content editorial-cross-validation-education';
+
+  const summary = document.createElement('summary');
+  summary.className = 'editorial-folded-summary';
+  appendText(summary, 'span', 'fold-marker', '');
+  appendText(summary, 'span', 'fold-label', '📖 信号一致性如何解读');
+  details.appendChild(summary);
+
+  const body = document.createElement('div');
+  body.className = 'editorial-cross-validation-education-body';
+
+  appendCrossValidationEducationSection(body, '一致性分数', [
+    { text: '一致性分数衡量"多少个独立宏观信号在同向"。' },
+    { text: '刻度参考：' },
+    {
+      type: 'list',
+      items: [
+        '>70：高度一致（多数信号同方向）',
+        '40-70：中等一致（信号混杂，需要观察）',
+        '<40：严重不一致（信号矛盾，方向不明）',
+      ],
+    },
+    { text: '注意：高度一致不等于"市场风险高"或"应该担心"。分数只反映信号关系，不反映方向性结论。' },
+    { text: '本说明不针对当前数据。', className: 'editorial-cross-validation-education-reminder' },
+  ]);
+
+  appendCrossValidationEducationSection(body, '信号同向的金融常识', [
+    { text: '多个独立宏观信号同时确认在金融研究中通常被视为"趋势性较强"的特征。' },
+    { text: '但任何单一信号都可能误判。综合多个信号的目的是减少"假信号"风险，不是替代研究判断。' },
+    { text: '历史上，多信号同向之后市场结果不一致：' },
+    {
+      type: 'list',
+      items: [
+        '有时确认了趋势的延续',
+        '有时遇到反向冲击导致快速逆转',
+      ],
+    },
+    { text: '本说明不针对当前数据。', className: 'editorial-cross-validation-education-reminder' },
+  ]);
+
+  appendCrossValidationEducationSection(body, '矛盾信号的金融常识', [
+    { text: '信号矩阵中如果出现一个 narrative 显示"背离"（contradiction），金融研究界对这种"背离"的常见分析框架是：' },
+    {
+      type: 'list',
+      items: [
+        '估值类指标过热 + 信用市场紧张：多类压力指标同步发出，研究界常用"系统性压力"描述这种状态',
+        '估值类指标过热 + 信用市场平静：多类信号同向但信用市场未跟进，研究界常用"背离"（divergence）一词描述这种状态',
+      ],
+    },
+    { text: '注意："背离"是描述性词汇，不是预测。背离出现后的市场结果在历史上不一致。信用市场的反应可能领先或滞后于其他信号。' },
+    { text: '本说明不针对当前数据。', className: 'editorial-cross-validation-education-reminder' },
+  ]);
+
+  appendCrossValidationEducationSection(body, '数据缺口的影响', [
+    { text: '当 narrative 列出"缺失证据"时，该 narrative 的评估状态（strong / partial / contradiction / insufficient）的可靠性会下降。' },
+    { text: '数据缺口越多：' },
+    {
+      type: 'list',
+      items: [
+        '综合一致性分数的可靠性越低',
+        '"强确认"或"背离"判断的局限性越大',
+        '应该更谨慎地依赖这个综合分数',
+      ],
+    },
+    { text: '本说明不针对当前数据。', className: 'editorial-cross-validation-education-reminder' },
+  ]);
+
+  appendCrossValidationEducationSection(body, '边界声明', [
+    { text: '本说明仅介绍金融研究中的常见解读框架，不针对当前数据下结论。' },
+    { text: '不构成对以下任何判断：' },
+    {
+      type: 'list',
+      items: [
+        '当前是否过热',
+        '当前是否应该担心',
+        '当前应否采取任何投资行动',
+      ],
+    },
+    { text: '本网站从设计上就是"证据展示工具"，不是"投资判断工具"。' },
+  ], { isBoundary: true });
+
+  details.appendChild(body);
+  root.appendChild(details);
+}
+
 function appendEditorialValidationSublist(root, label, values, modifier = '') {
   const items = normalizeEvidenceList(values);
   if (!items.length) return;
@@ -2007,6 +2118,7 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   crossGrid.className = 'editorial-validation-grid';
   overview.crossValidation.forEach((item) => appendEditorialValidationCard(crossGrid, item));
   cross.appendChild(crossGrid);
+  appendCrossValidationEducationAppendix(cross);
 
   const keyChangesRoot = $('wow-key-changes-root');
   if (keyChangesRoot) {
