@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 v28.0C</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=28.0M-30V" />
+  <link rel="stylesheet" href="assets/styles.css?v=28.0M-31V" />
   <style>
     .macro-overview-shell {
       display: grid;
@@ -165,7 +165,7 @@
       left: 0;
       right: 0;
       height: 20px;
-      background: linear-gradient(180deg, rgba(168, 118, 26, 0.18) 0%, rgba(168, 118, 26, 0.04) 60%, rgba(168, 118, 26, 0) 100%);
+      background: rgba(168, 118, 26, 0.12);
       pointer-events: none;
       z-index: 0;
     }
@@ -1009,7 +1009,7 @@
           </summary>
           <div class="editorial-section-body">
             <section class="editorial-method-grid" aria-label="方法、证据与边界说明">
-                      <article class="editorial-method-card">
+                      <article class="editorial-method-card" style="--method-card-accent: var(--paper-ink);">
                         <p class="editorial-method-label">READING PATH</p>
                         <h3 class="editorial-method-card-title">阅读路径</h3>
                         <p>首页先给出结论，再说明原因、证据与展开详情，让原始材料留在次级阅读路径中。</p>
@@ -1017,7 +1017,7 @@
                           <li>结论 → 原因 → 证据 → 展开详情</li>
                         </ul>
                       </article>
-                      <article class="editorial-method-card">
+                      <article class="editorial-method-card" style="--method-card-accent: var(--paper-ink);">
                         <p class="editorial-method-label">EVIDENCE LAYERS</p>
                         <h3 class="editorial-method-card-title">证据分层</h3>
                         <p>证据会按性质区分，避免把推断、假设或噪音包装成已验证事实。</p>
@@ -1026,22 +1026,22 @@
                           <li>情景假设 / 数据不足 / 反向证据 / 噪音提示</li>
                         </ul>
                       </article>
-                      <article class="editorial-method-card editorial-method-boundary">
+                      <article class="editorial-method-card editorial-method-boundary" style="--method-card-accent: var(--editorial-orange);">
                         <p class="editorial-method-label">DATA BOUNDARY</p>
                         <h3 class="editorial-method-card-title">数据边界</h3>
                         <p>Market Pricing Temperature 已由本地 metrics 文件驱动；页面只读取统计结果并做分桶展示，不改变 scoring、decision、execution 或 position guidance。</p>
                       </article>
-                      <article class="editorial-method-card">
+                      <article class="editorial-method-card" style="--method-card-accent: var(--paper-muted);">
                         <p class="editorial-method-label">AI BOUNDARY</p>
                         <h3 class="editorial-method-card-title">AI 边界</h3>
                         <p>External AI 是只读辅助解释，不改变 scoring、decision、execution 或 position guidance。</p>
                       </article>
-                      <article class="editorial-method-card">
+                      <article class="editorial-method-card" style="--method-card-accent: var(--risk-red);">
                         <p class="editorial-method-label">NOT ADVICE</p>
                         <h3 class="editorial-method-card-title">非投资建议</h3>
                         <p>本站用于风险观察与证据整理，不构成投资建议，也不生成直接交易指令。</p>
                       </article>
-                      <article class="editorial-method-card">
+                      <article class="editorial-method-card" style="--method-card-accent: var(--paper-ink);">
                         <p class="editorial-method-label">GOVERNANCE</p>
                         <h3 class="editorial-method-card-title">数据治理</h3>
                         <p>Frontend display layer is read-only；本 PR 不改变 data pipeline、sanitizer、workflow 或 production data write 边界。</p>
@@ -1702,6 +1702,6 @@
     <footer class="footer">独立静态版 · 适配静态托管 · 数据由自动化流程每日生成</footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0M-30V"></script>
+  <script type="module" src="scripts/app.js?v=28.0M-31V"></script>
 </body>
 </html>

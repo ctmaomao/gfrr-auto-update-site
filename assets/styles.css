@@ -2777,9 +2777,10 @@ color: var(--editorial-ink);
 .editorial-method-card {
   min-width: 0;
   border: 1px solid rgba(26, 24, 21, 0.18);
-  border-radius: 8px;
+  border-left: 4px solid var(--method-card-accent, var(--paper-ink));
+  border-radius: 0;
   background: rgba(255, 252, 245, 0.76);
-  padding: 15px;
+  padding: 15px 15px 15px 11px;
   color: var(--editorial-ink);
 }
 .editorial-method-card p {
@@ -2818,7 +2819,6 @@ color: var(--editorial-ink);
   gap: 4px;
 }
 .editorial-method-boundary {
-  border-left: 4px solid var(--editorial-orange);
   background: rgba(238, 231, 219, 0.86);
 }
 #method-evidence .editorial-method-panel {
@@ -2936,7 +2936,7 @@ td{color:var(--paper-ink);font-family:var(--font-serif);font-size:13px}
 .heat-note{fill:var(--paper-muted);font-size:11px}
 .heat-note tspan{dominant-baseline:hanging}
 .heatmap-legend{display:grid;gap:10px;align-content:start;max-width:100%;font-family:var(--font-serif);color:var(--paper-ink)}
-.heatmap-frame{min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--paper-line);border-radius:0;background:var(--paper-bg);padding:12px}
+.heatmap-frame{min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--paper-line-strong);border-radius:0;background:var(--paper-bg);padding:12px}
 .heatmap-frame #world-heatmap{min-width:680px;min-height:430px;padding:0}
 .legend-note{margin-top:16px;color:var(--paper-muted);font-size:12px;line-height:1.6}
 .legend-title{margin-bottom:8px;color:var(--paper-muted);font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase}
