@@ -1899,6 +1899,33 @@ This stage:
 - performs no MA60, standard deviation, z-score, band, or temperature calculation.
 - keeps Market Pricing Temperature waiting-for-history.
 
+```text
+v28.0M-23 Market Pricing Manual Weekly Input Sanitizer Scaffold - Executable / No History Write
+```
+
+## v28.0M-23 Market Pricing Manual Weekly Input Sanitizer Scaffold
+
+v28.0M-23 adds the executable Manual Weekly Input Sanitizer scaffold.
+
+This stage:
+
+- adds `scripts/market-pricing/manual-weekly-input-sanitizer-scaffold.mjs`.
+- adds `scripts/check-market-pricing-manual-weekly-input-sanitizer-scaffold.mjs`.
+- adds `docs/MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_SCAFFOLD.md`.
+- adds `docs/fixtures/market-pricing/manual-weekly-input-sanitizer-scaffold-v28.0M-23.json`.
+- adds `npm run market-pricing:manual-weekly-input-sanitizer:dry-run`.
+- adds `npm run market-pricing:manual-weekly-input-sanitizer:run` for manual operator use only.
+- adds `npm run check:market-pricing-manual-weekly-input-sanitizer-scaffold`.
+- wires the checker into `npm run check:all` to maintain the M-series coverage convention.
+- reads NASDAQ CSV files placed in `manual-artifacts/market-pricing/manual-weekly-input/`.
+- produces sanitized weekly records to `manual-artifacts/market-pricing/sanitized-output/`.
+- writes no `data/market-pricing-history.json`; that is M-24.
+- changes no workflows.
+- changes no frontend rendering.
+- changes no scoring, decision, execution, or position logic.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- keeps Market Pricing Temperature waiting-for-history.
+
 ## v28.0N-1 Editorial First Fold
 
 v28.0N-1 introduces an editorial first-fold homepage skin.

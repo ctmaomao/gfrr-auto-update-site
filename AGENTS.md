@@ -31,6 +31,7 @@ be treated as governing rules for the whole project:
 - `docs/MARKET_PRICING_SOURCE_FORMAT_VERIFICATION_DESIGN.md` — Authoritative within M-20 scope only
 - `docs/MARKET_PRICING_NETWORK_OPEN_THROTTLED.md` — Authoritative within M-21 scope only
 - `docs/MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_DESIGN.md` — Authoritative within M-22 scope only
+- `docs/MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_SCAFFOLD.md` — Authoritative within M-23 scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -720,6 +721,12 @@ Default mode remains dry-run with network closed. The source URL must come from 
 M-22 adds the Manual Weekly Input Sanitizer Design layer. It is design only — no executable sanitizer is added.
 
 The M-21 auto-fetch path is formally deprecated following the 2026-05-12 Stooq endpoint change. M-21 script is retained for future reactivation. Future weekly QQQ history will come from manual NASDAQ downloads placed in `manual-artifacts/market-pricing/manual-weekly-input/`. Do not add records, do not write `data/market-pricing-history.json`, do not calculate MA60 / standard deviation / z-score, do not change workflows or frontend, and keep Market Pricing Temperature waiting-for-history.
+
+## 54P. v28.0M-23 market pricing manual weekly input sanitizer scaffold reminder
+
+M-23 adds the executable Manual Weekly Input Sanitizer scaffold. It reads NASDAQ CSV files placed in `manual-artifacts/market-pricing/manual-weekly-input/` and produces sanitized weekly records to `manual-artifacts/market-pricing/sanitized-output/`.
+
+This scaffold is review-only. It does not write to `data/market-pricing-history.json`; that is M-24. Do not add production data writes, history writes, MA60 / standard deviation / z-score, scoring / decision / execution / position changes, workflow changes, frontend changes, External AI changes, or Market Pricing Temperature activation.
 
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
