@@ -35,6 +35,7 @@ be treated as governing rules for the whole project:
 - `docs/MARKET_PRICING_FIRST_REAL_RECORD_WRITE.md` — Authoritative within M-24 scope only
 - `docs/MARKET_PRICING_WEEKLY_HISTORY_BUILDUP.md` — Authoritative within M-25 scope only
 - `docs/MARKET_PRICING_METRICS_CALCULATION.md` — Authoritative within M-26 scope only
+- `docs/MARKET_PRICING_TEMPERATURE_DISPLAY.md` — Authoritative within M-27 display scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -80,7 +81,7 @@ documentation drift risk identified in the v28.0M-audit.
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-7V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-27V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -97,8 +98,8 @@ documentation drift risk identified in the v28.0M-audit.
 - v28.0G-6 Operations Runbook / Decision Matrix 是运维判断入口；看 `docs/OPERATIONS.md`。PR #53 superseded；KV write guard deferred，先观察，不在未另开版本时加入复杂 runtime guard。
 - v28.0G-7A 只增强 `Check Worker Health` 只读输出，生成 `worker-health-snapshot` artifact；不得把 snapshot 当作网站输入，不得写 KV 或 data/realtime，不得改变 Worker Health fail 边界。
 - v28.0G-7B 新增本地只读 `review:worker-health-snapshot` helper，用于审阅下载后的 snapshot 并输出 PASS / WARN / FAIL；不得让它访问网络、写 KV、写 data/realtime 或替代 scheduled hard gate。
-- v28.0M-7V Frontend Asset Cache Busting 用 `?v=28.0M-7V` 刷新 `index.html` 入口与前端 ES module graph，解决 Android Chrome cached old module graph 让普通窗口继续显示 Actions/FRED 旧逻辑的问题；`window.__GFRR_FRONTEND_VERSION__` 应返回 `28.0M-7V`。无痕窗口正常代表 Worker-first runtime 正常；不改 Worker runtime、数据源、KV，也不 deploy Worker。
-- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-7V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
+- v28.0M-27V Frontend Asset Cache Busting 用 `?v=28.0M-27V` 刷新 `index.html` 入口与前端 ES module graph，解决 Android Chrome cached old module graph 让普通窗口继续显示 Actions/FRED 旧逻辑的问题；`window.__GFRR_FRONTEND_VERSION__` 应返回 `28.0M-27V`。无痕窗口正常代表 Worker-first runtime 正常；不改 Worker runtime、数据源、KV，也不 deploy Worker。
+- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-27V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
 - v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。
@@ -207,7 +208,7 @@ When `DESIGN.md` and any other contract (e.g., Market Pricing governance) appear
 
 - `npm run check:editorial-redesign-contract` enforces font allowlist, IA structure, and `DESIGN.md` existence + anchor integrity
 - `npm run check:homepage-ia-contract` enforces section order
-- `npm run check:all` runs both as part of the 44-check baseline
+- `npm run check:all` runs both as part of the 45-check baseline
 
 PRs that fail these contracts MUST NOT be merged, regardless of how good the visual result looks.
 
@@ -717,13 +718,13 @@ Keep `sourceFormatVerified=false`, `sourceFormatVerificationStatus="not_verified
 
 M-21 is the FIRST M-series step where `fetch()` can run, but only when a human explicitly runs `--network=open-throttled`.
 
-Default mode remains dry-run with network closed. The source URL must come from `docs/fixtures/market-pricing/network-open-throttled-manifest-v28.0M-21.json`, not from script code or environment variables. Max 1 fetch per invocation, 30s timeout, and max 1 retry are the only approved runtime limits. Response artifacts must stay under `manual-artifacts/market-pricing/network-fetch-attempts/`; never write `data/*`, never write history records, keep `records=[]`, do not calculate MA60 / standard deviation / z-score, do not change workflows or frontend, and keep Market Pricing Temperature waiting-for-history.
+Default mode remains dry-run with network closed. The source URL must come from `docs/fixtures/market-pricing/network-open-throttled-manifest-v28.0M-21.json`, not from script code or environment variables. Max 1 fetch per invocation, 30s timeout, and max 1 retry are the only approved runtime limits. Response artifacts must stay under `manual-artifacts/market-pricing/network-fetch-attempts/`; never write `data/*`, never write history records, keep `records=[]`, do not calculate MA60 / standard deviation / z-score, and do not alter the current metrics-backed M-27 display.
 
 ## 54O. v28.0M-22 market pricing manual weekly input sanitizer design reminder
 
 M-22 adds the Manual Weekly Input Sanitizer Design layer. It is design only — no executable sanitizer is added.
 
-The M-21 auto-fetch path is formally deprecated following the 2026-05-12 Stooq endpoint change. M-21 script is retained for future reactivation. Future weekly QQQ history will come from manual NASDAQ downloads placed in `manual-artifacts/market-pricing/manual-weekly-input/`. Do not add records, do not write `data/market-pricing-history.json`, do not calculate MA60 / standard deviation / z-score, do not change workflows or frontend, and keep Market Pricing Temperature waiting-for-history.
+The M-21 auto-fetch path is formally deprecated following the 2026-05-12 Stooq endpoint change. M-21 script is retained for future reactivation. Future weekly QQQ history will come from manual NASDAQ downloads placed in `manual-artifacts/market-pricing/manual-weekly-input/`. Do not add records, do not write `data/market-pricing-history.json`, do not calculate MA60 / standard deviation / z-score, and do not change workflows or the current metrics-backed M-27 display.
 
 ## 54P. v28.0M-23 market pricing manual weekly input sanitizer scaffold reminder
 
@@ -739,9 +740,15 @@ This verifier is read-only. It validates the committed QQQ weekly history buildu
 
 ## 54R. v28.0M-26 market pricing metrics calculation reminder
 
-M-26 (PR #?): Metrics Calculation Layer — MA60 / sample StdDev / Z-Score, two-stage manual confirmation, writes to `data/market-pricing-metrics.json`. Frontend display remains inactive until M-27.
+M-26 (PR #?): Metrics Calculation Layer — MA60 / sample StdDev / Z-Score, two-stage manual confirmation, writes to `data/market-pricing-metrics.json`. M-27 now reads this metrics file for the display layer.
 
 This calculation layer reads committed QQQ history and writes only the separate metrics file when manually invoked with the explicit commit flag. Do not modify `data/market-pricing-history.json`, add network calls, read environment variables, add frontend display, change scoring / decision / execution / position logic, or add non-MA60 indicators in this rung.
+
+## 54S. v28.0M-27 market pricing temperature display reminder
+
+M-27 (PR #?): Market Pricing Temperature display activated — 5-bucket z-score classification, detailed editorial card, graceful degradation. Reads `data/market-pricing-metrics.json`.
+
+This is frontend display only. Preserve the `homepage-market-temperature` IA position, read only the local metrics file, keep the waiting-state fallback for degraded loads, and do not modify data files, workflows, scoring, decision, execution, position logic, External AI, or the M-26 calculation output.
 
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
@@ -765,94 +772,94 @@ Future homepage IA changes must keep the 10-step nav path, point nav anchors to 
 
 v28.0N-1 introduces an editorial first-fold homepage skin and remains frontend display layer only.
 
-Do not use editorial homepage work to change scoring, decision, execution, position, data pipeline, workflow, External AI, or Market Pricing behavior. Preserve the homepage jump-nav order and anchors. Do not edit generated AI text or production data. Market Pricing Temperature must remain waiting-for-history; do not add market-pricing records, live fetches, MA60, standard deviation, z-score, or market temperature calculations.
+Do not use editorial homepage work to change scoring, decision, execution, position, data pipeline, workflow, External AI, or Market Pricing behavior. Preserve the homepage jump-nav order and anchors. Do not edit generated AI text or production data. Market Pricing Temperature must remain metrics-backed and display-only; do not fabricate records, add live fetches, or calculate MA / standard deviation / z-score in the frontend.
 
 ## 59. v28.0N-2 editorial pressure-source reminder
 
 v28.0N-2 introduces editorial pressure-source reading polish and remains frontend display layer only.
 
-Pressure-source status classes, summaries, count pills, and cards are presentation only. Do not change how pressure source judgments are calculated. Preserve homepage IA order and anchors, including `homepage-pressure-sources`. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
+Pressure-source status classes, summaries, count pills, and cards are presentation only. Do not change how pressure source judgments are calculated. Preserve homepage IA order and anchors, including `homepage-pressure-sources`. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain metrics-backed and display-only.
 
 ## 60. v28.0N-3 editorial signal-layer reminder
 
 v28.0N-3 introduces editorial signal-layer reading polish and remains frontend display layer only.
 
-Signal bucket classes, summaries, count pills, and cards are presentation only. Do not change how signal layer judgments are calculated. Preserve homepage IA order and anchors, including `homepage-signal-layers`. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
+Signal bucket classes, summaries, count pills, and cards are presentation only. Do not change how signal layer judgments are calculated. Preserve homepage IA order and anchors, including `homepage-signal-layers`. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain metrics-backed and display-only.
 
 ## 61. v28.0N-4 editorial paper/font reminder
 
 v28.0N-4 introduces the editorial paper background and Bubble Watch-style font stack foundation and remains frontend display layer only.
 
-Do not add external font, CDN, image, or provider URLs for this foundation. Preserve homepage IA order and anchors, preserve the v28.0N-1 first fold, the v28.0N-2 pressure section, and the v28.0N-3 signal section. Keep dark legacy panels readable. Do not edit generated AI text, data files, scoring, pressure or signal judgment calculation, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
+Do not add external font, CDN, image, or provider URLs for this foundation. Preserve homepage IA order and anchors, preserve the v28.0N-1 first fold, the v28.0N-2 pressure section, and the v28.0N-3 signal section. Keep dark legacy panels readable. Do not edit generated AI text, data files, scoring, pressure or signal judgment calculation, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain metrics-backed and display-only.
 
 ## 62. v28.0N-5 editorial macro-driver reminder
 
 v28.0N-5 introduces editorial macro-driver reading polish and remains frontend display layer only.
 
-Macro-driver type/status classes, summaries, count pills, and cards are presentation only. Do not change how macro driver judgments are calculated. Preserve homepage IA order and anchors, including `homepage-macro-drivers`. Preserve the v28.0N-1 first fold, v28.0N-2 pressure section, v28.0N-3 signal section, and v28.0N-4 paper/font foundation. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
+Macro-driver type/status classes, summaries, count pills, and cards are presentation only. Do not change how macro driver judgments are calculated. Preserve homepage IA order and anchors, including `homepage-macro-drivers`. Preserve the v28.0N-1 first fold, v28.0N-2 pressure section, v28.0N-3 signal section, and v28.0N-4 paper/font foundation. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain metrics-backed and display-only.
 
 ## 63. v28.0N-6 editorial market-temperature waiting-state reminder
 
-v28.0N-6 introduces editorial Market Temperature waiting-state polish and remains frontend display layer only.
+v28.0N-6 introduced editorial Market Temperature waiting-state polish before M-27 activation and remains historical frontend display context.
 
-The Market Temperature waiting-state block is presentation only. Do not activate Market Pricing Temperature, infer cold/normal/hot/overheated state, add market-pricing records, write `data/market-pricing-history.json`, fetch live data, calculate MA60, standard deviation, z-score, or market temperature. Preserve homepage IA order and anchors, including `homepage-market-temperature`, and keep Market Pricing Temperature waiting-for-history.
+The Market Temperature fallback block remains presentation only. M-27 supersedes the waiting-only state with a metrics-backed display. Do not fabricate market-pricing records, write `data/market-pricing-history.json`, fetch live data, calculate MA60 / standard deviation / z-score in the frontend, or move the `homepage-market-temperature` anchor.
 
 ## 64. v28.0N-7 editorial risk-engine reminder
 
 v28.0N-7 introduces editorial risk-engine reading polish and remains frontend display layer only.
 
-Risk-engine type/status classes, summaries, count pills, and cards are presentation only. Do not change how risk-engine judgments are calculated. Preserve homepage IA order and anchors, including `homepage-risk-engines`, and keep evidence, missing evidence, and counter-evidence visible. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
+Risk-engine type/status classes, summaries, count pills, and cards are presentation only. Do not change how risk-engine judgments are calculated. Preserve homepage IA order and anchors, including `homepage-risk-engines`, and keep evidence, missing evidence, and counter-evidence visible. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain metrics-backed and display-only.
 
 ## 65. v28.0N-8 editorial cross-validation reminder
 
 v28.0N-8 introduces editorial cross-validation reading polish and remains frontend display layer only.
 
-Cross-validation type/status classes, summaries, count pills, and cards are presentation only. Do not change how cross-validation judgments are calculated. Preserve homepage IA order and anchors, including `homepage-cross-validation`, and keep evidence, missing evidence, counter-evidence, noise warnings, and data gaps visible. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain waiting-for-history.
+Cross-validation type/status classes, summaries, count pills, and cards are presentation only. Do not change how cross-validation judgments are calculated. Preserve homepage IA order and anchors, including `homepage-cross-validation`, and keep evidence, missing evidence, counter-evidence, noise warnings, and data gaps visible. Do not edit generated AI text, data files, scoring, decision, execution, position, workflows, External AI, or Market Pricing behavior. Market Pricing Temperature must remain metrics-backed and display-only.
 
 ## 66. v28.0N-9 editorial Global Risk Heatmap reminder
 
 v28.0N-9 introduces editorial Global Risk Heatmap polish and remains frontend display layer only.
 
-Global Risk Heatmap styling is presentation only. Keep `global-risk-heatmap`, `world-heatmap`, and `heatmap-list` standalone and visually prominent. Do not change heatmap scoring, region data calculation, data files, scoring, decision, execution, position, workflows, External AI, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
+Global Risk Heatmap styling is presentation only. Keep `global-risk-heatmap`, `world-heatmap`, and `heatmap-list` standalone and visually prominent. Do not change heatmap scoring, region data calculation, data files, scoring, decision, execution, position, workflows, External AI, Market Pricing behavior, or Market Pricing Temperature display boundaries.
 
 ## 67. v28.0N-10 editorial Detailed Data appendix reminder
 
 v28.0N-10 introduces editorial Detailed Data appendix polish and remains frontend display layer only.
 
-Detailed Data appendix styling is presentation only. Keep `detail-data`, `risk-explainer`, homepage IA order, anchors, and existing collapsible detailed data panels. Do not delete realtime inputs, data health, charts, tables, asset views, or advanced detail panels. Do not change data, chart calculations, scoring, decision, execution, position, workflows, External AI, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
+Detailed Data appendix styling is presentation only. Keep `detail-data`, `risk-explainer`, homepage IA order, anchors, and existing collapsible detailed data panels. Do not delete realtime inputs, data health, charts, tables, asset views, or advanced detail panels. Do not change data, chart calculations, scoring, decision, execution, position, workflows, External AI, Market Pricing behavior, or Market Pricing Temperature display boundaries.
 
 ## 68. v28.0N-11 editorial Method / Evidence / Boundary appendix reminder
 
 v28.0N-11 introduces editorial Method / Evidence / Boundary appendix polish and remains frontend display layer only.
 
-Method appendix styling is presentation only. Keep `method-evidence`, homepage IA order, anchors, and existing method detail panels. Keep method content as a secondary explanatory appendix, not the first reading path. Do not change data, chart calculations, scoring, decision, execution, position, workflows, External AI, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
+Method appendix styling is presentation only. Keep `method-evidence`, homepage IA order, anchors, and existing method detail panels. Keep method content as a secondary explanatory appendix, not the first reading path. Do not change data, chart calculations, scoring, decision, execution, position, workflows, External AI, Market Pricing behavior, or Market Pricing Temperature display boundaries.
 
 ## 69. v28.0N-12 editorial External AI read-only panel reminder
 
 v28.0N-12 introduces editorial External AI read-only panel polish and remains frontend display layer only.
 
-External AI panel styling is presentation only. Keep `external-ai-display-panel`, hidden / aria-hidden behavior, homepage IA order, anchors, and External AI as auxiliary read-only explanation. Do not modify generated AI text, provider path, workflows, output schema, production write guard, hidden scaffold guard, data files, scoring, decision, execution, position, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
+External AI panel styling is presentation only. Keep `external-ai-display-panel`, hidden / aria-hidden behavior, homepage IA order, anchors, and External AI as auxiliary read-only explanation. Do not modify generated AI text, provider path, workflows, output schema, production write guard, hidden scaffold guard, data files, scoring, decision, execution, position, Market Pricing behavior, or Market Pricing Temperature display boundaries.
 
 ## 70. v28.0N-13 editorial inline dark theme cleanup reminder
 
 v28.0N-13 cleans up residual dark inline theme styles in index.html so the editorial paper theme can apply consistently. It remains frontend display layer only.
 
-Inline theme cleanup is presentation only. Preserve homepage IA order, anchors, all current section IDs, `external-ai-display-panel`, `global-risk-heatmap`, `world-heatmap`, `heatmap-list`, `detail-data`, and `method-evidence`. Do not add external font/CDN/image URLs, modify generated AI text, provider paths, workflows, output schema, production write guards, hidden scaffold guards, data files, scoring, decision, execution, position, Market Pricing behavior, or Market Pricing Temperature waiting-for-history boundaries.
+Inline theme cleanup is presentation only. Preserve homepage IA order, anchors, all current section IDs, `external-ai-display-panel`, `global-risk-heatmap`, `world-heatmap`, `heatmap-list`, `detail-data`, and `method-evidence`. Do not add external font/CDN/image URLs, modify generated AI text, provider paths, workflows, output schema, production write guards, hidden scaffold guards, data files, scoring, decision, execution, position, Market Pricing behavior, or Market Pricing Temperature display boundaries.
 
 ## 71. v28.0N-14 editorial Big Number and threshold scale reminder
 
 v28.0N-14 deepens the editorial first-fold Big Number and threshold scale presentation. It remains frontend display layer only.
 
-Big Number and threshold styling must not change score calculation, `stageFromScore` thresholds, judgment calculation, data files, data pipeline, workflows, External AI behavior, Market Pricing behavior, decision, execution, or position logic. Keep threshold bands aligned with existing stage semantics and keep Market Pricing Temperature waiting-for-history.
+Big Number and threshold styling must not change score calculation, `stageFromScore` thresholds, judgment calculation, data files, data pipeline, workflows, External AI behavior, Market Pricing behavior, decision, execution, or position logic. Keep threshold bands aligned with existing stage semantics and keep Market Pricing Temperature metrics-backed and display-only.
 
 ## 72. v28.0N-15 editorial Key Changes and Watch List reminder
 
 v28.0N-15 introduces editorial Key Changes and Watch List narrative blocks. It remains frontend display layer only.
 
-Key Changes and Watch List must use only existing structured data, existing gaps, pending confirmations, and counter-evidence. Do not add data sources, invent unsupported changes, activate Market Pricing Temperature, modify generated AI text, or change scoring, decision, execution, position, workflows, External AI behavior, Market Pricing calculations, or data files.
+Key Changes and Watch List must use only existing structured data, existing gaps, pending confirmations, and counter-evidence. Do not add data sources, invent unsupported changes, alter the metrics-backed Market Pricing Temperature display, modify generated AI text, or change scoring, decision, execution, position, workflows, External AI behavior, Market Pricing calculations, or data files.
 
 ## 73. v28.0N-16 editorial redesign contract guard reminder
 
 v28.0N-16 adds an editorial redesign contract guard. It remains guard / validation layer only.
 
-Run `npm run check:editorial-redesign-contract` when changing the editorial homepage shell, macro overview renderer, or paper theme styles. The guard protects the Bubble Watch-inspired editorial structures, paper theme, Market Pricing waiting state, External AI read-only boundary, Global Risk Heatmap standalone status, Detail Data appendix, and Method appendix. Do not use this guard PR as permission to redesign UI or change data, scoring, decision, execution, position logic, workflows, External AI behavior, Market Pricing calculations, generated AI text, or data files.
+Run `npm run check:editorial-redesign-contract` when changing the editorial homepage shell, macro overview renderer, or paper theme styles. The guard protects the Bubble Watch-inspired editorial structures, paper theme, Market Pricing display and fallback state, External AI read-only boundary, Global Risk Heatmap standalone status, Detail Data appendix, and Method appendix. Do not use this guard PR as permission to redesign UI or change data, scoring, decision, execution, position logic, workflows, External AI behavior, Market Pricing calculations, generated AI text, or data files.

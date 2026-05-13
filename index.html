@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 v28.0C</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="stylesheet" href="assets/styles.css?v=28.0M-27V" />
   <style>
     .macro-overview-shell {
       display: grid;
@@ -554,7 +554,23 @@
           <span class="section-title">宏观风险判断总览</span>
           <span class="section-note" id="core-dashboard">本页先给出总判断，再展示压力来源、信号验证、宏观驱动、市场温度、风险引擎和交叉验证。详细数据与方法说明可在下方展开查看。</span>
         </header>
-        <div class="macro-overview-shell" id="macro-risk-overview-root"></div>
+        <div class="macro-overview-shell" id="macro-risk-overview-root">
+          <section class="macro-overview-block editorial-category editorial-market-temp-category" id="homepage-market-temperature" aria-label="市场定价温度计初始状态">
+            <h2>市场温度</h2>
+            <p class="editorial-category-kicker">MARKET PRICING TEMPERATURE</p>
+            <p class="editorial-category-summary">QQQ 周线价格相对 60 周趋势的统计温度。页面脚本加载前先显示安全等待态。</p>
+            <div id="market-temperature-card-root" class="editorial-market-temp-panel macro-temperature-card" data-market-temperature-fallback="true">
+              <div class="editorial-market-temp-status-strip" aria-hidden="true"></div>
+              <div class="editorial-market-temp-head">
+                <span class="editorial-market-temp-kicker">WAITING STATE</span>
+                <h3 class="editorial-market-temp-title">市场温度</h3>
+                <span class="editorial-market-temp-badge">等待历史周线数据接入</span>
+              </div>
+              <p class="editorial-market-temp-main">暂无法判断市场偏冷 / 正常 / 偏热 / 过热</p>
+              <p class="editorial-market-temp-note">如果 metrics 文件暂不可用，本卡片保持等待状态，不影响其他首页模块加载。</p>
+            </div>
+          </section>
+        </div>
       </section>
       <section id="wow-key-changes" class="editorial-section editorial-section-wow" style="--section-accent: var(--risk-yellow);">
         <header class="editorial-section-header">
@@ -1013,7 +1029,7 @@
                       <article class="editorial-method-card editorial-method-boundary">
                         <p class="editorial-method-label">DATA BOUNDARY</p>
                         <h3 class="editorial-method-card-title">数据边界</h3>
-                        <p>Market Pricing Temperature 仍为 waiting-for-history；QQQ / Nasdaq weekly history、60+ weeks、MA60、标准差、z-score 尚未准备好。</p>
+                        <p>Market Pricing Temperature 已由本地 metrics 文件驱动；页面只读取统计结果并做分桶展示，不改变 scoring、decision、execution 或 position guidance。</p>
                       </article>
                       <article class="editorial-method-card">
                         <p class="editorial-method-label">AI BOUNDARY</p>
@@ -1686,6 +1702,6 @@
     <footer class="footer">独立静态版 · 适配静态托管 · 数据由自动化流程每日生成</footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0M-7V"></script>
+  <script type="module" src="scripts/app.js?v=28.0M-27V"></script>
 </body>
 </html>

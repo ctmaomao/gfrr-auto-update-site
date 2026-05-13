@@ -234,18 +234,21 @@ function checkEditorialStructures() {
   }
 }
 
-function checkMarketPricingWaitingState() {
+function checkMarketPricingTemperatureContract() {
   const requiredMarkers = [
     '等待历史周线数据接入',
+    'market-temperature-card-root',
+    'classifyZScoreBucket',
+    '本数据为统计描述，不构成投资建议。',
     'QQQ',
     'Nasdaq',
-    'MA60',
+    '60 周均值',
     '标准差',
     'z-score',
   ];
   for (const marker of requiredMarkers) requireMarker(macroOverview, MACRO_OVERVIEW_PATH, marker);
   requireAnyMarker(macroOverview, MACRO_OVERVIEW_PATH, ['Market Temperature', '市场定价温度计']);
-  requireAnyMarker(macroOverview, MACRO_OVERVIEW_PATH, ['standard deviation', '标准差']);
+  requireAnyMarker(macroOverview, MACRO_OVERVIEW_PATH, ['market-temperature-card-active', 'data-market-temperature-fallback']);
 
   const changedFiles = [
     ...gitDiffNames(['diff', '--name-only', '--', MARKET_PRICING_HISTORY_PATH]),
@@ -350,7 +353,7 @@ checkThemeFoundation();
 checkDesignContractDoc();
 checkExternalUrlGuard();
 checkEditorialStructures();
-checkMarketPricingWaitingState();
+checkMarketPricingTemperatureContract();
 checkExternalAiBoundary();
 checkHeatmapStandalone();
 checkAppendices();
