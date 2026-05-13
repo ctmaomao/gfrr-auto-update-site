@@ -34,6 +34,7 @@ be treated as governing rules for the whole project:
 - `docs/MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_SCAFFOLD.md` — Authoritative within M-23 scope only
 - `docs/MARKET_PRICING_FIRST_REAL_RECORD_WRITE.md` — Authoritative within M-24 scope only
 - `docs/MARKET_PRICING_WEEKLY_HISTORY_BUILDUP.md` — Authoritative within M-25 scope only
+- `docs/MARKET_PRICING_METRICS_CALCULATION.md` — Authoritative within M-26 scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -206,7 +207,7 @@ When `DESIGN.md` and any other contract (e.g., Market Pricing governance) appear
 
 - `npm run check:editorial-redesign-contract` enforces font allowlist, IA structure, and `DESIGN.md` existence + anchor integrity
 - `npm run check:homepage-ia-contract` enforces section order
-- `npm run check:all` runs both as part of the 43-check baseline
+- `npm run check:all` runs both as part of the 44-check baseline
 
 PRs that fail these contracts MUST NOT be merged, regardless of how good the visual result looks.
 
@@ -735,6 +736,12 @@ This scaffold is review-only. It does not write to `data/market-pricing-history.
 M-25 (PR #?): Weekly History Buildup Verifier — upgraded `check-market-pricing-history.mjs` to two-state validation and added `check-market-pricing-weekly-history-buildup.mjs`.
 
 This verifier is read-only. It validates the committed QQQ weekly history buildup required before M-26 calculations and M-27 frontend display activation. Do not add fetches, production writes, MA60 / standard deviation / z-score calculation, workflow changes, frontend changes, scoring / decision / execution / position changes, or External AI changes in this rung.
+
+## 54R. v28.0M-26 market pricing metrics calculation reminder
+
+M-26 (PR #?): Metrics Calculation Layer — MA60 / sample StdDev / Z-Score, two-stage manual confirmation, writes to `data/market-pricing-metrics.json`. Frontend display remains inactive until M-27.
+
+This calculation layer reads committed QQQ history and writes only the separate metrics file when manually invoked with the explicit commit flag. Do not modify `data/market-pricing-history.json`, add network calls, read environment variables, add frontend display, change scoring / decision / execution / position logic, or add non-MA60 indicators in this rung.
 
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
