@@ -12,9 +12,13 @@
       "expectedContentTypePrefix": "text/",
       "method": "GET",
       "complianceReviewDone": false,
-      "complianceReviewNote": "URL is recorded in the manifest for the throttled-open step. The compliance review (M-18 checklist) has NOT been completed. M-21 opens the network for the first time to inspect real data; the compliance review remains an open prerequisite for M-22 and beyond."
+      "complianceReviewNote": "URL is recorded in the manifest for the throttled-open step. The compliance review (M-18 checklist) has NOT been completed. M-21 opens the network for the first time to inspect real data; the compliance review remains an open prerequisite for M-22 and beyond.",
+      "status": "deprecated_2026-05-12",
+      "deprecationReason": "Stooq changed public CSV endpoint to require API key as of 2026-05. M-21 fetch returned API key instructions instead of CSV data. M-20 format validation correctly rejected the response. Source is retained in manifest for future reactivation if approved; the M-21 script remains usable but should not be invoked until a new source is approved.",
+      "deprecatedAt": "2026-05-12T23:27:15.535Z"
     }
   ],
+  "activeSources": [],
   "policy": {
     "maxFetchPerInvocation": 1,
     "timeoutSeconds": 30,

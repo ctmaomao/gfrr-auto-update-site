@@ -1,0 +1,190 @@
+{
+  "contractVersion": "v28.0M-22-manual-weekly-input-sanitizer-design-1",
+  "kind": "market_pricing_manual_weekly_input_sanitizer_design",
+  "generatedAt": "2099-01-01T00:00:00.000Z",
+  "status": "manual_weekly_input_sanitizer_design_only_not_implemented",
+  "targetAsset": "qqq",
+  "targetSymbol": "QQQ",
+  "manualInputDirectoryContract": {
+    "path": "manual-artifacts/market-pricing/manual-weekly-input/",
+    "filenamePattern": "<yyyy-mm-dd>.csv",
+    "filenameDateMeaning": "The date the user downloaded the CSV (not the data range).",
+    "exampleFilenames": [
+      "2026-05-18.csv",
+      "2026-05-25.csv"
+    ],
+    "isGitignored": true,
+    "notes": [
+      "Files in this directory are placed manually by the user.",
+      "Files are never committed to the repo (manual-artifacts/ is gitignored).",
+      "Each weekly download covers the most recent ~7 trading days, but may overlap with previous weeks.",
+      "The sanitizer must handle overlap gracefully (de-duplicate by date)."
+    ]
+  },
+  "expectedDownloadSource": {
+    "name": "NASDAQ official historical data",
+    "url": "https://www.nasdaq.com/market-activity/etf/qqq/historical",
+    "downloadFormat": "csv",
+    "supportedDateRanges": [
+      "1 month",
+      "3 months",
+      "6 months",
+      "YTD",
+      "1 year",
+      "5 years",
+      "10 years",
+      "MAX"
+    ],
+    "recommendedWeeklyRange": "1 month (covers last ~21 trading days; gives overlap for de-duplication)",
+    "recommendedInitialBackfillRange": "10 years (MAX) — one-time download to populate full history",
+    "notes": [
+      "NASDAQ is the authoritative source for QQQ (Invesco ETF listed on NASDAQ).",
+      "NASDAQ download UI allows custom date range selection.",
+      "URL is recorded here for documentation only — sanitizer reads files from manualInputDirectoryContract, not from this URL."
+    ]
+  },
+  "expectedCsvFormat": {
+    "exactHeaderRow": "Date,Close/Last,Volume,Open,High,Low",
+    "headerRowLineEnding": "CRLF (\\r\\n) per real NASDAQ CSV download",
+    "columnOrder": [
+      "Date",
+      "Close/Last",
+      "Volume",
+      "Open",
+      "High",
+      "Low"
+    ],
+    "columnDescriptions": {
+      "Date": "US MM/DD/YYYY format (e.g. 05/11/2026). Sanitizer converts to ISO YYYY-MM-DD at import boundary.",
+      "Close/Last": "Decimal price, 2 decimal places. NASDAQ column name contains a slash. Sanitizer maps this to internal name 'close'.",
+      "Volume": "Non-negative integer. Not used for temperature calculation. Sanitizer may store for reference.",
+      "Open": "Decimal price. May have up to 4 decimal places in real NASDAQ data (e.g. 198.0835). Not used for temperature calculation.",
+      "High": "Decimal price. Not used for temperature calculation.",
+      "Low": "Decimal price. Not used for temperature calculation."
+    },
+    "dataRowOrder": "descending (newest first) as delivered by NASDAQ",
+    "dataRowLineEnding": "CRLF (\\r\\n) per real NASDAQ CSV download; sanitizer must also tolerate LF (\\n) for files edited on Unix systems",
+    "encoding": "ASCII / UTF-8 without BOM"
+  },
+  "dateConversionRule": {
+    "inputFormat": "US MM/DD/YYYY (e.g. 05/11/2026)",
+    "outputFormat": "ISO YYYY-MM-DD (e.g. 2026-05-11)",
+    "interpretationLock": "MUST interpret first segment as MONTH, second as DAY (US convention). Never European DD/MM/YYYY.",
+    "rejectionRules": [
+      "If date does not match strict pattern ^\\d{2}/\\d{2}/\\d{4}$, reject",
+      "If month > 12, reject",
+      "If day > 31, reject",
+      "If year < 2000 or > current year + 1, reject (sanity check)"
+    ],
+    "rationale": "M-20 design requires history to store ISO dates. The sanitizer absorbs the format difference at the import boundary."
+  },
+  "columnMappingRule": {
+    "Close/Last": "close",
+    "Date": "date",
+    "Open": "open",
+    "High": "high",
+    "Low": "low",
+    "Volume": "volume",
+    "note": "Internal record uses lowercase keys with no slashes. Mapping happens during sanitization."
+  },
+  "weeklyExtractionRule": {
+    "frequency": "weekly",
+    "weekDefinition": "ISO 8601 week (Monday start, week 1 contains January 4)",
+    "extractionMethod": "For each ISO week present in the CSV, take the LAST trading day's Close (chronologically latest within that week)",
+    "outputRecordShape": {
+      "date": "ISO YYYY-MM-DD (the trading day used as week representative)",
+      "isoWeek": "YYYY-Www (e.g. 2026-W19)",
+      "close": "decimal number",
+      "sourceFile": "filename within manual-weekly-input/",
+      "sourceVendor": "nasdaq_official_manual_download"
+    },
+    "notes": [
+      "Sanitizer outputs ASCENDING by date (oldest first) for history accumulation.",
+      "Sanitizer de-duplicates by ISO week: if multiple weekly inputs cover the same week, the most recent download wins."
+    ]
+  },
+  "plausibilityBounds": {
+    "minPlausibleClose": 80.0,
+    "maxPlausibleClose": 1000.0,
+    "rationale": "10-year verified range: $102 - $713. Bounds set wider for future growth/decline tolerance. Out-of-range values must trigger manual review, never auto-accept.",
+    "behaviorOnOutOfRange": "Reject the row, log it for manual review, do not write to history."
+  },
+  "rejectionScenarios": [
+    {
+      "scenario": "Header row does not exactly match expected",
+      "action": "Reject entire file, log error"
+    },
+    {
+      "scenario": "Close/Last value is empty, NaN, or non-numeric",
+      "action": "Reject the row, log it, continue with other rows"
+    },
+    {
+      "scenario": "Close/Last value outside plausibility bounds",
+      "action": "Reject the row, log it for manual review"
+    },
+    {
+      "scenario": "Date does not match MM/DD/YYYY pattern",
+      "action": "Reject the row, log error"
+    },
+    {
+      "scenario": "Filename does not match yyyy-mm-dd.csv pattern",
+      "action": "Skip file, log warning"
+    },
+    {
+      "scenario": "File contains rows for date > today",
+      "action": "Reject those rows (future-dated data is invalid)"
+    }
+  ],
+  "noPriceFabrication": true,
+  "noHtmlErrorPageMasquerade": true,
+  "sanitizerImplementationExists": false,
+  "sanitizerDesignReviewed": true,
+  "manualInputDirectoryContractDefined": true,
+  "weeklyExtractionRuleDefined": true,
+  "isoConversionRuleDefined": true,
+  "nasdaqColumnMappingDefined": true,
+  "sourceComplianceReviewed": false,
+  "symbolMappingVerified": false,
+  "sourceFormatVerified": false,
+  "sourceSelectionFinalized": false,
+  "sourceApproved": false,
+  "liveFetchApproved": false,
+  "networkGateApproved": false,
+  "networkGateOpen": false,
+  "networkAllowed": false,
+  "sourceUrlPersistenceAllowed": true,
+  "secretsAllowed": false,
+  "productionDataWriteApproved": false,
+  "historyWriteApproved": false,
+  "marketTemperatureCalculationApproved": false,
+  "readyForProductionWrite": false,
+  "artifactOnly": true,
+  "designLayerOnly": true,
+  "scaffoldExecutableExists": false,
+  "verificationRequiresSeparateApproval": true,
+  "apiCalled": false,
+  "secretsRead": false,
+  "productionDataWritten": false,
+  "historyFileModified": false,
+  "frontendChanged": false,
+  "workflowChanged": false,
+  "boundaries": {
+    "designLayerOnly": true,
+    "noScaffoldExecutable": true,
+    "noLiveFetch": true,
+    "noNetworkEnabled": true,
+    "noProductionWrite": true,
+    "noHistoryWrite": true,
+    "noWorkflowChange": true,
+    "noCalculation": true,
+    "noFrontendChange": true,
+    "noPriceFabrication": true,
+    "noHtmlErrorPageMasquerade": true,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false
+  },
+  "records": [],
+  "nextAllowedStep": "M-23 will add the executable Manual Weekly Input Sanitizer scaffold. The scaffold will be runnable but will NOT write to data/market-pricing-history.json — it will only output sanitized records to manual-artifacts/ for review. M-24 is the first step that writes records to history."
+}

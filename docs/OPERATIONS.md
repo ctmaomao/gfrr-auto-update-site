@@ -2106,6 +2106,22 @@ Operator guidance:
 - Do not calculate MA60, standard deviation, z-score, bands, or Market Pricing Temperature.
 - `npm run check:market-pricing-network-open-throttled-scaffold` must pass and must not open the network.
 
+### v28.0M-22 market pricing manual weekly input sanitizer design operator note
+
+v28.0M-22 records the route fork after the 2026-05-12 Stooq endpoint change. The M-21 auto-fetch path is deprecated, and manual NASDAQ weekly download is the short-term source path.
+
+Operator guidance:
+
+- `npm run check:market-pricing-manual-weekly-input-sanitizer-design` must pass.
+- M-22 is design only; `scripts/market-pricing/manual-weekly-input-sanitizer-design.mjs` must not exist.
+- Future weekly QQQ history files should be placed manually under `manual-artifacts/market-pricing/manual-weekly-input/`.
+- The intended manual source is the NASDAQ official QQQ historical data page.
+- Do not paste downloaded files into `data/market-pricing-history.json` or `data/radar-data.json`.
+- Do not run M-21 Stooq auto-fetch unless a later approved source reactivation changes the manifest status.
+- Keep `sourceApproved=false`, `liveFetchApproved=false`, `sourceComplianceReviewed=false`, `symbolMappingVerified=false`, and `sourceFormatVerified=false`.
+- Keep records empty and Market Pricing Temperature waiting-for-history.
+- Do not calculate MA60, standard deviation, z-score, bands, or Market Pricing Temperature.
+
 ### v28.0M-7U homepage IA de-duplication operator note
 
 v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and moves Daily Brief into raw evidence / source detail.

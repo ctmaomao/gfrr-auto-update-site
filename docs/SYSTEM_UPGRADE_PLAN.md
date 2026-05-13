@@ -1871,6 +1871,34 @@ This stage:
 - performs no MA60, standard deviation, z-score, band, or temperature calculation.
 - keeps Market Pricing Temperature waiting-for-history.
 
+```text
+v28.0M-22 Market Pricing Manual Weekly Input Sanitizer Design - No Records Written / Design Layer Only
+```
+
+## v28.0M-22 Market Pricing Manual Weekly Input Sanitizer Design
+
+v28.0M-22 adds the Manual Weekly Input Sanitizer Design layer. It is design only — no executable sanitizer is added.
+
+This stage:
+
+- adds `docs/MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_DESIGN.md`.
+- adds `docs/MARKET_PRICING_SOURCE_INCIDENT_LOG.md`.
+- adds `docs/fixtures/market-pricing/manual-weekly-input-sanitizer-design-v28.0M-22.json`.
+- adds `scripts/check-market-pricing-manual-weekly-input-sanitizer-design.mjs`.
+- adds `npm run check:market-pricing-manual-weekly-input-sanitizer-design`.
+- wires the checker into `npm run check:all` to maintain the M-series coverage convention.
+- formally deprecates the M-21 Stooq auto-fetch path following the 2026-05-12 endpoint change.
+- retains the M-21 script for future reactivation.
+- defines future manual NASDAQ weekly downloads under `manual-artifacts/market-pricing/manual-weekly-input/`.
+- adds no executable sanitizer scaffold.
+- performs no live fetch.
+- performs no production data write.
+- writes no `data/market-pricing-history.json` records.
+- changes no workflow.
+- changes no frontend rendering.
+- performs no MA60, standard deviation, z-score, band, or temperature calculation.
+- keeps Market Pricing Temperature waiting-for-history.
+
 ## v28.0N-1 Editorial First Fold
 
 v28.0N-1 introduces an editorial first-fold homepage skin.
