@@ -36,6 +36,7 @@ GFRR 是一份**每日更新的机构级风险简报**，不是实时监控大�
 :root {
   /* 纸张主题 - 全站基底 */
   --paper-bg: #FBF7F0;        /* 暖纸张色，全站默认背景 */
+  --paper-bg-canvas: #F5F0E5; /* 图表 / 画布容器背景，略深于纸张主背景 */
   --paper-ink: #1A1815;       /* 深墨色，全站默认文字 + 强边框 */
   --paper-warm: #3A3530;      /* 暖墨色，正文重点 */
   --paper-muted: #666666;     /* 灰色，次要文字 + 元数据 */
@@ -51,11 +52,16 @@ GFRR 是一份**每日更新的机构级风险简报**，不是实时监控大�
 }
 ```
 
+`--paper-bg-canvas` 用于图表 / 画布容器的次级纸张底色。它与 `--paper-bg`
+保持同一暖纸张色相，但亮度约低 3%，用于在不引入阴影、冷色或卡片化处理的
+前提下，让 canvas / chart 容器与页面主纸张背景产生可感知分隔。
+
 ### 2.2 颜色使用规则
 
 | 用途 | 允许的 token | 禁止 |
 |---|---|---|
-| 所有 section / card 背景 | `--paper-bg` | 任何蓝色系、灰色渐变、box-shadow |
+| 所有 section / card 主背景 | `--paper-bg` | 任何蓝色系、灰色渐变、box-shadow |
+| 图表 / 画布容器背景 | `--paper-bg-canvas` | 冷色背景、阴影、渐变主背景 |
 | 所有正文文字 | `--paper-ink` | 蓝灰色、冷白色 |
 | 次要文字 / 元数据 | `--paper-muted` | 蓝灰、暗紫 |
 | 边框（强） | `--paper-line-strong` | 蓝色边框、彩色 box-shadow |
@@ -349,10 +355,17 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 1. ❌ 使用任何形式的圆角卡片（除 §6.2 例外）
 2. ❌ 使用任何 `box-shadow`
 3. ❌ 使用任何蓝色系颜色作为主色或装饰色
-4. ❌ 使用任何渐变作为大块背景（深色反白卡仅纯色 `#1A1815`）
+4. ❌ section / card 主背景使用任何渐变 (gradient as primary surface background)
+   ✅ 装饰性 ::before / ::after 伪元素允许使用透明度递减的 fade overlay 渐变 (decorative gradient overlays)
+   ✅ 数据可视化色阶 (如 .legend-bar) 允许使用功能性渐变
 5. ❌ 使用任何 sans-serif 系统字体（§2.3 禁用色清单）
 6. ❌ 使用 Unicode 装饰字符做折叠展开标记（用 ASCII `+` / `−`）
 7. ❌ 使用 `box-shadow` 或亮色作为 hover 反馈（用 border-bottom 下划线）
+
+说明 (M-32 修订): 区分"主背景"与"装饰层":
+  - 主背景: section / card / body 的 background 属性
+  - 装饰层: ::before / ::after 伪元素，或纯视觉性 z-index < 0 元素
+本规则只禁止主背景渐变；装饰性 fade overlay 不受限制。
 
 ### 8.2 结构禁令
 
@@ -405,6 +418,13 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 4. **静态分析代替临时测试**：不要在脚本中插入临时测试代码再删除
 5. **PR 描述要包含调研结果**
 
+### 9.3 DESIGN.md 修订历史
+
+- M-32 (PR #?): 首次修订 DESIGN.md。修订 §2.1 新增 `--paper-bg-canvas`;
+  修订 §2.2 允许图表 / 画布容器使用次级纸张背景; 修订 §8.1 #4，区分主背景
+  与装饰层，允许 `::before` / `::after` 装饰性 fade overlay 渐变，同时继续禁止
+  section / card 主背景使用渐变。
+
 ---
 
 ## 10. 字段引用速查表
@@ -414,6 +434,7 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 ```css
 /* 背景色 */
 var(--paper-bg)               /* #FBF7F0 */
+var(--paper-bg-canvas)        /* #F5F0E5 - chart / canvas container */
 var(--paper-ink)              /* #1A1815 - 反白卡背景 */
 
 /* 文字色 */

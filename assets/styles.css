@@ -334,6 +334,7 @@ h1{font-size:31px}
 :root {
   /* Paper theme palette */
   --paper-bg: #FBF7F0;
+  --paper-bg-canvas: #F5F0E5;
   --paper-ink: #1A1815;
   --paper-warm: #3A3530;
   --paper-muted: #666666;
@@ -822,6 +823,9 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
 }
 .editorial-folded-content > .editorial-section-body,
 .editorial-folded-content > div {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   padding: 24px 28px;
   background: var(--paper-bg);
 }
@@ -834,6 +838,7 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
 }
 .editorial-subsection {
   margin: 0;
+  /* Parent flex gap provides breathing room; border-bottom preserves the line-divider aesthetic. */
   border-bottom: 1px solid var(--paper-line);
 }
 .editorial-subsection:last-of-type {
@@ -893,7 +898,7 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
 .editorial-subsection > article,
 .editorial-subsection > section,
 .editorial-subsection > .editorial-subsection-body {
-  padding: 12px 0 20px 0;
+  padding: 12px 12px 20px 12px;
 }
 .editorial-subsection > .card {
   margin: 0 0 18px;
@@ -2936,7 +2941,7 @@ td{color:var(--paper-ink);font-family:var(--font-serif);font-size:13px}
 .heat-note{fill:var(--paper-muted);font-size:11px}
 .heat-note tspan{dominant-baseline:hanging}
 .heatmap-legend{display:grid;gap:10px;align-content:start;max-width:100%;font-family:var(--font-serif);color:var(--paper-ink)}
-.heatmap-frame{min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--paper-line-strong);border-radius:0;background:var(--paper-bg);padding:12px}
+.heatmap-frame{min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--paper-line-strong);border-radius:0;background:var(--paper-bg-canvas);padding:12px}
 .heatmap-frame #world-heatmap{min-width:680px;min-height:430px;padding:0}
 .legend-note{margin-top:16px;color:var(--paper-muted);font-size:12px;line-height:1.6}
 .legend-title{margin-bottom:8px;color:var(--paper-muted);font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase}

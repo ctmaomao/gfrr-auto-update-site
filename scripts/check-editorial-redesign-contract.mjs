@@ -141,6 +141,20 @@ function checkDesignContractDoc() {
   for (const marker of requiredMarkers) requireMarker(designContract, DESIGN_PATH, marker);
 }
 
+function checkDesignContractM32Amendments() {
+  const requiredMarkers = [
+    '--paper-bg-canvas: #F5F0E5',
+    '图表 / 画布容器背景',
+    'section / card 主背景使用任何渐变',
+    '装饰性 ::before / ::after',
+    '数据可视化色阶',
+    'M-32 修订',
+    '主背景: section / card / body 的 background 属性',
+    '装饰层: ::before / ::after 伪元素',
+  ];
+  for (const marker of requiredMarkers) requireMarker(designContract, DESIGN_PATH, marker);
+}
+
 function checkExternalUrlGuard() {
   const scannedFiles = [
     [INDEX_PATH, html],
@@ -415,10 +429,37 @@ function checkHeatmapFrameBorderStrength() {
   }
 }
 
-function checkInlineHeadStyleNoGradients() {
+function checkPaperCanvasToken() {
+  const rootRule = extractCssRule(styles, ':root');
+  if (!/--paper-bg-canvas\s*:\s*#F5F0E5\s*;/iu.test(rootRule)) {
+    fail(':root must define --paper-bg-canvas: #F5F0E5 for chart/canvas containers');
+  }
+}
+
+function checkHeatmapFrameCanvasBackground() {
+  const heatmapFrameRule = extractCssRule(styles, '.heatmap-frame');
+  if (!heatmapFrameRule) {
+    fail('.heatmap-frame rule missing from assets/styles.css');
+    return;
+  }
+  if (!/background\s*:\s*var\(--paper-bg-canvas\)/u.test(heatmapFrameRule)) {
+    fail('.heatmap-frame must use background: var(--paper-bg-canvas)');
+  }
+}
+
+function checkInlineHeadStyleGradientScope() {
   const inlineStyles = extractHeadStyleBlocks();
-  if (/linear-gradient\s*\(/iu.test(inlineStyles)) {
-    fail('inline <head><style> must not contain linear-gradient per DESIGN.md §8.1 #4 strict interpretation');
+  for (const match of inlineStyles.matchAll(/([^{}]+)\{[^{}]*linear-gradient\s*\([^{}]*\)[^{}]*\}/giu)) {
+    const selectorList = match[1]
+      .split(',')
+      .map((selector) => selector.trim())
+      .filter(Boolean);
+    const allDecorativePseudoElements = selectorList.length > 0
+      && selectorList.every((selector) => /::(?:before|after)\b/u.test(selector));
+
+    if (!allDecorativePseudoElements) {
+      fail(`inline <head><style> may use linear-gradient only on decorative ::before / ::after selectors; got ${selectorList.join(', ')}`);
+    }
   }
 }
 
@@ -432,6 +473,7 @@ function checkPackageScript() {
 checkHomepageIa();
 checkThemeFoundation();
 checkDesignContractDoc();
+checkDesignContractM32Amendments();
 checkExternalUrlGuard();
 checkEditorialStructures();
 checkMarketPricingTemperatureContract();
@@ -442,7 +484,9 @@ checkInlineDarkThemeCleanup();
 checkMethodCardBorderRadius();
 checkMethodCardAccentConsistency();
 checkHeatmapFrameBorderStrength();
-checkInlineHeadStyleNoGradients();
+checkPaperCanvasToken();
+checkHeatmapFrameCanvasBackground();
+checkInlineHeadStyleGradientScope();
 checkPackageScript();
 
 if (errors.length) {
