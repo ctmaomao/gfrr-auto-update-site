@@ -490,6 +490,36 @@ function checkBiasSemanticColors() {
   for (const marker of requiredRenderMarkers) requireMarker(renderTables, RENDER_TABLES_PATH, marker);
 }
 
+function checkGroupAArticleCardSpacing() {
+  const articleCardRule = extractCssRule(styles, '.editorial-subsection > article.card');
+  const metricRowResetRule = extractCssRule(styles, '.editorial-subsection > article.card > .metric-row');
+  const paragraphResetRule = extractCssRule(styles, '.editorial-subsection > article.card > p');
+
+  if (!/display\s*:\s*flex/u.test(articleCardRule)) {
+    fail('.editorial-subsection > article.card must use display: flex for Group A spacing governance');
+  }
+  if (!/flex-direction\s*:\s*column/u.test(articleCardRule)) {
+    fail('.editorial-subsection > article.card must use flex-direction: column');
+  }
+  if (!/gap\s*:\s*18px/u.test(articleCardRule)) {
+    fail('.editorial-subsection > article.card must use gap: 18px');
+  }
+  if (!/margin-top\s*:\s*0/u.test(metricRowResetRule)) {
+    fail('.editorial-subsection > article.card > .metric-row must reset margin-top to 0');
+  }
+  if (!/margin\s*:\s*0/u.test(paragraphResetRule)) {
+    fail('.editorial-subsection > article.card > p must reset paragraph margins to 0');
+  }
+  if (styles.includes('#ai-interpretation-layer-section .grid.hero-grid')) {
+    fail('M-33 ai-interpretation hero-grid case patch must be retired in favor of Group A article.card gap');
+  }
+
+  const worldOrderStatusRule = extractCssRule(extractHeadStyleBlocks(), '.world-order-status-grid');
+  if (/margin-top\s*:\s*18px/u.test(worldOrderStatusRule)) {
+    fail('.world-order-status-grid must not carry its own margin-top: 18px; parent flex gap governs spacing');
+  }
+}
+
 function checkInlineHeadStyleGradientScope() {
   const inlineStyles = extractHeadStyleBlocks();
   for (const match of inlineStyles.matchAll(/([^{}]+)\{[^{}]*linear-gradient\s*\([^{}]*\)[^{}]*\}/giu)) {
@@ -530,6 +560,7 @@ checkHeatmapFrameBorderStrength();
 checkPaperCanvasToken();
 checkHeatmapFrameCanvasBackground();
 checkBiasSemanticColors();
+checkGroupAArticleCardSpacing();
 checkInlineHeadStyleGradientScope();
 checkPackageScript();
 

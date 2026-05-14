@@ -253,9 +253,6 @@
   width: 100%;
   max-width: 100%;
 }
-#ai-interpretation-layer-section .grid.hero-grid {
-  margin-top: 18px;
-}
 .full-width-section {
   width: 100%;
   max-width: 100%;
@@ -903,6 +900,18 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
 .editorial-subsection > section,
 .editorial-subsection > .editorial-subsection-body {
   padding: 12px 12px 20px 12px;
+}
+/* M-34: unified spacing governance for Group A article.card; replaces M-33 case patch */
+.editorial-subsection > article.card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.editorial-subsection > article.card > .metric-row {
+  margin-top: 0;
+}
+.editorial-subsection > article.card > p {
+  margin: 0;
 }
 .editorial-subsection > .card {
   margin: 0 0 18px;
