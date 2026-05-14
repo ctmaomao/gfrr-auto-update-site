@@ -253,6 +253,9 @@
   width: 100%;
   max-width: 100%;
 }
+#ai-interpretation-layer-section .grid.hero-grid {
+  margin-top: 18px;
+}
 .full-width-section {
   width: 100%;
   max-width: 100%;
@@ -346,6 +349,7 @@ h1{font-size:31px}
   --risk-yellow: #A8761A;
   --risk-orange: #C25E2A;
   --risk-green: #1F4D2C;
+  --risk-green-soft: rgba(31, 77, 44, 0.78);
 
   /* Font stacks */
   --font-display: "Playfair Display", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
@@ -2784,7 +2788,7 @@ color: var(--editorial-ink);
   border: 1px solid rgba(26, 24, 21, 0.18);
   border-left: 4px solid var(--method-card-accent, var(--paper-ink));
   border-radius: 0;
-  background: rgba(255, 252, 245, 0.76);
+  background: rgba(238, 231, 219, 0.86);
   padding: 15px 15px 15px 11px;
   color: var(--editorial-ink);
 }
@@ -2823,9 +2827,7 @@ color: var(--editorial-ink);
   display: grid;
   gap: 4px;
 }
-.editorial-method-boundary {
-  background: rgba(238, 231, 219, 0.86);
-}
+.editorial-method-boundary {}
 #method-evidence .editorial-method-panel {
   margin: 16px 20px;
   border: 1px solid rgba(26, 24, 21, 0.18);
@@ -2920,10 +2922,12 @@ th,td{padding:10px 12px;border-bottom:1px solid var(--paper-line);text-align:lef
 th{border-bottom:2px solid var(--paper-line-strong);color:var(--paper-ink);font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase}
 td{color:var(--paper-ink);font-family:var(--font-serif);font-size:13px}
 .badge{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:0;font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:0.12em;border:1px solid var(--paper-line-strong)}
-.badge.strong,.badge.cautious,.badge.underweight{color:#FBF7F0}
-.badge.strong{background:var(--risk-red)}
+.badge.strong,.badge.strong-mid,.badge.cautious,.badge.cautious-bear,.badge.underweight{color:#FBF7F0}
+.badge.strong{background:var(--risk-green)}
+.badge.strong-mid{background:var(--risk-green-soft);color:#FBF7F0}
 .badge.cautious{background:var(--risk-yellow)}
-.badge.underweight{background:var(--risk-orange)}
+.badge.cautious-bear{background:var(--risk-orange);color:#FBF7F0}
+.badge.underweight{background:var(--risk-red)}
 .badge.neutral{background:var(--paper-bg);color:var(--paper-ink)}
 .chart-wrap,.large-chart{min-height:220px;margin:12px 0;padding:12px;border:1px solid var(--paper-line);border-radius:0;background:var(--paper-bg)}
 #trend-chart text{fill:var(--paper-muted);font-size:12px}
