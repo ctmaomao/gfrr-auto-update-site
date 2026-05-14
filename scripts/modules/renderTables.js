@@ -1,4 +1,4 @@
-import { $ } from './config.js?v=28.0M-32V';
+import { $ } from './config.js?v=28.0M-33V';
 
 export function renderList(id, items) {
   const root = $(id);
@@ -11,6 +11,28 @@ export function renderList(id, items) {
 }
 
 const ASSET_MATRIX_BIAS_ORDER = ['强配', '中性偏多', '谨慎偏多', '中性', '谨慎偏空', '低配'];
+
+function normalizeBias(bias) {
+  return typeof bias === 'string' ? bias.trim() : '';
+}
+
+function classifyBiasMatrix(bias) {
+  const value = normalizeBias(bias);
+  if (value.includes('强')) return 'strong';
+  if (value === '中性偏多') return 'strong-mid';
+  if (value.includes('谨慎')) return 'cautious';
+  if (value.includes('低配')) return 'underweight';
+  return 'neutral';
+}
+
+function classifyBiasReturnMap(bias) {
+  const value = normalizeBias(bias);
+  if (value === '偏多') return 'strong';
+  if (value === '中性偏多') return 'strong-mid';
+  if (value === '中性偏空') return 'cautious-bear';
+  if (value === '偏空') return 'underweight';
+  return 'neutral';
+}
 
 function sortAssetMatrixRows(rows) {
   if (!Array.isArray(rows)) return [];
@@ -41,10 +63,7 @@ export function renderAssetTable(rows) {
   const ordered = sortAssetMatrixRows(rows);
   ordered.forEach((row) => {
     const tr = document.createElement('tr');
-    const biasClass = row.bias.includes('强') ? 'strong'
-      : row.bias.includes('谨慎') ? 'cautious'
-      : row.bias.includes('低配') ? 'underweight'
-      : 'neutral';
+    const biasClass = classifyBiasMatrix(row.bias);
     tr.innerHTML = `
       <td>${row.asset}</td>
       <td>${row.score}</td>
@@ -74,9 +93,7 @@ export function renderAssetReturnMap(mapData) {
     return pb - pa;
   }).forEach((row) => {
     const tr = document.createElement('tr');
-    const biasClass = row.bias.includes('偏多') || row.bias.includes('多') ? 'strong'
-      : row.bias.includes('偏空') || row.bias.includes('空') ? 'underweight'
-      : 'neutral';
+    const biasClass = classifyBiasReturnMap(row.bias);
     const drivers = (row.drivers || []).map((d) => `<span class="asset-driver-chip">${d}</span>`).join('');
     tr.innerHTML = `
       <td>${row.asset}</td>

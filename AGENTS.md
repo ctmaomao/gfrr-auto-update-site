@@ -41,6 +41,7 @@ be treated as governing rules for the whole project:
 - `docs/CROSS_VALIDATION_EDUCATION_APPENDIX.md` — Authoritative within M-30 cross-validation education appendix scope only
 - `docs/EDITORIAL_DESIGN_CONTRACT_COMPLIANCE_M31.md` — Authoritative within M-31 editorial design compliance scope only
 - `docs/EDITORIAL_DESIGN_CONTRACT_AMENDMENT_M32.md` — Authoritative within M-32 DESIGN.md amendment and visual refinement scope only
+- `docs/BIAS_COLOR_SEMANTIC_FIX_M33.md` — Authoritative within M-33 bias color semantics and method-card background unification scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -86,7 +87,7 @@ documentation drift risk identified in the v28.0M-audit.
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-32V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-33V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -103,8 +104,8 @@ documentation drift risk identified in the v28.0M-audit.
 - v28.0G-6 Operations Runbook / Decision Matrix 是运维判断入口；看 `docs/OPERATIONS.md`。PR #53 superseded；KV write guard deferred，先观察，不在未另开版本时加入复杂 runtime guard。
 - v28.0G-7A 只增强 `Check Worker Health` 只读输出，生成 `worker-health-snapshot` artifact；不得把 snapshot 当作网站输入，不得写 KV 或 data/realtime，不得改变 Worker Health fail 边界。
 - v28.0G-7B 新增本地只读 `review:worker-health-snapshot` helper，用于审阅下载后的 snapshot 并输出 PASS / WARN / FAIL；不得让它访问网络、写 KV、写 data/realtime 或替代 scheduled hard gate。
-- v28.0M-32V Frontend Asset Cache Busting 用 `?v=28.0M-32V` 刷新 `index.html` 入口与前端 ES module graph，解决 Android Chrome cached old module graph 让普通窗口继续显示 Actions/FRED 旧逻辑的问题；`window.__GFRR_FRONTEND_VERSION__` 应返回 `28.0M-32V`。无痕窗口正常代表 Worker-first runtime 正常；不改 Worker runtime、数据源、KV，也不 deploy Worker。
-- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-32V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
+- v28.0M-33V Frontend Asset Cache Busting 用 `?v=28.0M-33V` 刷新 `index.html` 入口与前端 ES module graph，解决 Android Chrome cached old module graph 让普通窗口继续显示 Actions/FRED 旧逻辑的问题；`window.__GFRR_FRONTEND_VERSION__` 应返回 `28.0M-33V`。无痕窗口正常代表 Worker-first runtime 正常；不改 Worker runtime、数据源、KV，也不 deploy Worker。
+- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-33V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
 - v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。
@@ -784,6 +785,12 @@ M-32 (PR #?): First DESIGN.md amendment — adds `--paper-bg-canvas`, updates §
 M-32 supersedes the M-31 strict interpretation that disallowed every inline `linear-gradient`. Future work must keep gradients limited to decorative pseudo-elements or functional data visualization scales, never primary surface backgrounds.
 
 Maintainer interpretation of `DESIGN.md` §8.1 #4: all `linear-gradient(...)` usage in inline `<head><style>` blocks is disallowed, including decorative fade overlays. This is compliance-only; do not modify `DESIGN.md`, data files, workflows, scoring, decision, execution, or position logic.
+
+## 54Y. v28.0M-33 bias semantic color fix reminder
+
+M-33 (PR #?): Bias semantic color fix — maps bullish bias labels (`偏多` / `强配`) to green, mild bullish (`中性偏多`) to soft green, cautious bullish (`谨慎偏多`) to yellow, mild bearish (`中性偏空`) to orange, and bearish / underweight (`偏空` / `低配`) to red.
+
+M-33 also unifies the six `#method-evidence` sub-card backgrounds to the DATA BOUNDARY warm callout color and adds a scoped 18px top margin to `#ai-interpretation-layer-section .grid.hero-grid`. This is frontend display layer only; it does not change data, asset weights, scoring, decision, execution, or position logic.
 
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 

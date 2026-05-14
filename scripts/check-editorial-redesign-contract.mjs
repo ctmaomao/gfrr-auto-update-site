@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 const INDEX_PATH = 'index.html';
 const STYLES_PATH = 'assets/styles.css';
 const MACRO_OVERVIEW_PATH = 'scripts/modules/renderMacroOverview.js';
+const RENDER_TABLES_PATH = 'scripts/modules/renderTables.js';
 const PACKAGE_PATH = 'package.json';
 const DESIGN_PATH = 'DESIGN.md';
 const MARKET_PRICING_HISTORY_PATH = 'data/market-pricing-history.json';
@@ -11,6 +12,7 @@ const MARKET_PRICING_HISTORY_PATH = 'data/market-pricing-history.json';
 const html = fs.readFileSync(INDEX_PATH, 'utf8');
 const styles = fs.readFileSync(STYLES_PATH, 'utf8');
 const macroOverview = fs.readFileSync(MACRO_OVERVIEW_PATH, 'utf8');
+const renderTables = fs.readFileSync(RENDER_TABLES_PATH, 'utf8');
 const packageJson = JSON.parse(fs.readFileSync(PACKAGE_PATH, 'utf8'));
 const designContract = fs.readFileSync(DESIGN_PATH, 'utf8');
 const errors = [];
@@ -447,6 +449,47 @@ function checkHeatmapFrameCanvasBackground() {
   }
 }
 
+function checkBiasSemanticColors() {
+  const rootRule = extractCssRule(styles, ':root');
+  const strongRule = extractCssRule(styles, '.badge.strong');
+  const strongMidRule = extractCssRule(styles, '.badge.strong-mid');
+  const cautiousBearRule = extractCssRule(styles, '.badge.cautious-bear');
+  const methodCardRule = extractCssRule(styles, '.editorial-method-card');
+  const methodBoundaryRule = extractCssRule(styles, '.editorial-method-boundary');
+
+  if (!/--risk-green-soft\s*:\s*rgba\(31,\s*77,\s*44,\s*0\.78\)\s*;/u.test(rootRule)) {
+    fail(':root must define --risk-green-soft for mild bullish bias badges');
+  }
+  if (!/background\s*:\s*var\(--risk-green\)/u.test(strongRule)) {
+    fail('.badge.strong must use var(--risk-green) for bullish / strong allocation semantics');
+  }
+  if (!/background\s*:\s*var\(--risk-green-soft\)/u.test(strongMidRule)) {
+    fail('.badge.strong-mid must use var(--risk-green-soft)');
+  }
+  if (!/background\s*:\s*var\(--risk-orange\)/u.test(cautiousBearRule)) {
+    fail('.badge.cautious-bear must use var(--risk-orange)');
+  }
+  if (!/\.badge\.underweight\s*\{\s*background\s*:\s*var\(--risk-red\)\s*\}/u.test(styles)) {
+    fail('.badge.underweight must use var(--risk-red) for bearish / underweight semantics');
+  }
+  if (!/background\s*:\s*rgba\(238,\s*231,\s*219,\s*0\.86\)/u.test(methodCardRule)) {
+    fail('.editorial-method-card must use the unified DATA BOUNDARY warm background');
+  }
+  if (/background\s*:/u.test(methodBoundaryRule)) {
+    fail('.editorial-method-boundary must not override the unified method-card background');
+  }
+
+  const requiredRenderMarkers = [
+    'function classifyBiasMatrix',
+    'function classifyBiasReturnMap',
+    "return 'strong-mid'",
+    "return 'cautious-bear'",
+    'classifyBiasMatrix(row.bias)',
+    'classifyBiasReturnMap(row.bias)',
+  ];
+  for (const marker of requiredRenderMarkers) requireMarker(renderTables, RENDER_TABLES_PATH, marker);
+}
+
 function checkInlineHeadStyleGradientScope() {
   const inlineStyles = extractHeadStyleBlocks();
   for (const match of inlineStyles.matchAll(/([^{}]+)\{[^{}]*linear-gradient\s*\([^{}]*\)[^{}]*\}/giu)) {
@@ -486,6 +529,7 @@ checkMethodCardAccentConsistency();
 checkHeatmapFrameBorderStrength();
 checkPaperCanvasToken();
 checkHeatmapFrameCanvasBackground();
+checkBiasSemanticColors();
 checkInlineHeadStyleGradientScope();
 checkPackageScript();
 
