@@ -520,6 +520,90 @@ function checkGroupAArticleCardSpacing() {
   }
 }
 
+function checkGroupBSingleCardSpacing() {
+  const articleCardRule = extractCssRule(styles, '.editorial-subsection > section.full-width-section > article.card');
+  const metricRowResetRule = extractCssRule(styles, '.editorial-subsection > section.full-width-section > article.card > .metric-row');
+  const paragraphResetRule = extractCssRule(styles, '.editorial-subsection > section.full-width-section > article.card > p');
+  const listResetRule = extractCssRule(styles, '.editorial-subsection > section.full-width-section > article.card > ul');
+
+  if (!/display\s*:\s*flex/u.test(articleCardRule)) {
+    fail('.editorial-subsection > section.full-width-section > article.card must use display: flex for Group B spacing governance');
+  }
+  if (!/flex-direction\s*:\s*column/u.test(articleCardRule)) {
+    fail('.editorial-subsection > section.full-width-section > article.card must use flex-direction: column');
+  }
+  if (!/gap\s*:\s*18px/u.test(articleCardRule)) {
+    fail('.editorial-subsection > section.full-width-section > article.card must use gap: 18px');
+  }
+  if (!/margin-top\s*:\s*0/u.test(metricRowResetRule)) {
+    fail('.editorial-subsection > section.full-width-section > article.card > .metric-row must reset margin-top to 0');
+  }
+  if (!/margin\s*:\s*0/u.test(paragraphResetRule)) {
+    fail('.editorial-subsection > section.full-width-section > article.card > p must reset paragraph margins to 0');
+  }
+  if (!/margin-top\s*:\s*0/u.test(listResetRule) || !/margin-bottom\s*:\s*0/u.test(listResetRule)) {
+    fail('.editorial-subsection > section.full-width-section > article.card > ul must reset top and bottom margins to 0');
+  }
+}
+
+function checkFooterMethodStructure() {
+  const footerMatch = html.match(/<footer\b[^>]*class=["'][^"']*\bfooter-method\b[^"']*["'][^>]*>([\s\S]*?)<\/footer>/iu);
+  if (!footerMatch) {
+    fail('index.html must include footer.footer-method');
+    return;
+  }
+
+  const footer = footerMatch[0];
+  if (!footer.includes('footer-method-grid')) fail('footer.footer-method must include .footer-method-grid');
+  const blockCount = [...footer.matchAll(/\bfooter-method-block\b/giu)].length;
+  if (blockCount !== 2) fail(`footer.footer-method must include exactly 2 footer-method-block elements; got ${blockCount}`);
+  requireMarker(footer, 'footer.footer-method', '<h4>方法论</h4>');
+  requireMarker(footer, 'footer.footer-method', '<h4>免责</h4>');
+  requireMarker(footer, 'footer.footer-method', '本站采用三层风险框架');
+  requireMarker(footer, 'footer.footer-method', '不构成投资建议');
+  requireMarker(footer, 'footer.footer-method', '2026-05-14');
+
+  const forbiddenFooterMarkers = ['历史对照', 'dot-com', '1929', '2000', '2008', '1845', 'telecom', 'AI 泡沫'];
+  for (const marker of forbiddenFooterMarkers) {
+    if (footer.includes(marker)) fail(`footer.footer-method must not include historical comparison marker: ${marker}`);
+  }
+
+  const footerRule = extractCssRule(styles, '.footer-method');
+  const footerGridRule = extractCssRule(styles, '.footer-method-grid');
+  const footerHeadingRule = extractCssRule(styles, '.footer-method-block h4');
+  const footerParagraphRule = extractCssRule(styles, '.footer-method-block p');
+  const footerDateRule = extractCssRule(styles, '.footer-method-block .footer-date');
+  const footerStyles = [footerRule, footerGridRule, footerHeadingRule, footerParagraphRule, footerDateRule].join('\n');
+
+  if (!/border-top\s*:\s*3px\s+double\s+var\(--paper-ink\)/u.test(footerRule)) {
+    fail('.footer-method must use border-top: 3px double var(--paper-ink)');
+  }
+  if (!/font-family\s*:\s*var\(--font-mono\)/u.test(footerRule)) {
+    fail('.footer-method must use font-family: var(--font-mono)');
+  }
+  if (!/color\s*:\s*var\(--paper-muted\)/u.test(footerRule)) {
+    fail('.footer-method must use color: var(--paper-muted)');
+  }
+  if (!/display\s*:\s*grid/u.test(footerGridRule)) {
+    fail('.footer-method-grid must use display: grid');
+  }
+  if (!/color\s*:\s*var\(--paper-ink\)/u.test(footerHeadingRule) || !/font-family\s*:\s*var\(--font-mono\)/u.test(footerHeadingRule)) {
+    fail('.footer-method-block h4 must use paper-ink and font-mono tokens');
+  }
+  if (!/color\s*:\s*var\(--paper-muted\)/u.test(footerParagraphRule) || !/font-family\s*:\s*var\(--font-mono\)/u.test(footerParagraphRule)) {
+    fail('.footer-method-block p must use paper-muted and font-mono tokens');
+  }
+  if (!/color\s*:\s*var\(--paper-ink\)/u.test(footerDateRule)) {
+    fail('.footer-date must use color: var(--paper-ink)');
+  }
+  if (/var\(--ink\)/u.test(footerStyles)) {
+    fail('footer method CSS must use var(--paper-ink), not var(--ink)');
+  }
+  if (/IBM Plex Mono/u.test(footerStyles)) {
+    fail('footer method CSS must use var(--font-mono), not direct font strings');
+  }
+}
+
 function checkInlineHeadStyleGradientScope() {
   const inlineStyles = extractHeadStyleBlocks();
   for (const match of inlineStyles.matchAll(/([^{}]+)\{[^{}]*linear-gradient\s*\([^{}]*\)[^{}]*\}/giu)) {
@@ -561,6 +645,8 @@ checkPaperCanvasToken();
 checkHeatmapFrameCanvasBackground();
 checkBiasSemanticColors();
 checkGroupAArticleCardSpacing();
+checkGroupBSingleCardSpacing();
+checkFooterMethodStructure();
 checkInlineHeadStyleGradientScope();
 checkPackageScript();
 

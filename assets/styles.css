@@ -913,6 +913,22 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
 .editorial-subsection > article.card > p {
   margin: 0;
 }
+/* M-35: extend M-34 governance to single-card wrapper pattern */
+.editorial-subsection > section.full-width-section > article.card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.editorial-subsection > section.full-width-section > article.card > .metric-row {
+  margin-top: 0;
+}
+.editorial-subsection > section.full-width-section > article.card > p {
+  margin: 0;
+}
+.editorial-subsection > section.full-width-section > article.card > ul {
+  margin-top: 0;
+  margin-bottom: 0;
+}
 .editorial-subsection > .card {
   margin: 0 0 18px;
 }
@@ -2973,6 +2989,43 @@ td{color:var(--paper-ink);font-family:var(--font-serif);font-size:13px}
 .scenario-meta { color: var(--paper-muted); margin-bottom: 10px; }
 .trigger-block + .trigger-block { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
 .footer { color: var(--paper-muted); padding: 6px 4px 24px; }
+/* M-35: editorial method-style footer */
+.footer-method {
+  border-top: 3px double var(--paper-ink);
+  padding: 24px 16px;
+  margin-top: 48px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--paper-muted);
+  line-height: 1.7;
+}
+.footer-method-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 32px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.footer-method-block h4 {
+  margin: 0 0 8px 0;
+  color: var(--paper-ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.footer-method-block p {
+  margin: 0;
+  color: var(--paper-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.footer-method-block .footer-date {
+  color: var(--paper-ink);
+  font-weight: 500;
+}
 code { color: var(--risk-red); }
 .trend-strip { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); margin-bottom: 18px; }
 .liquidity-metrics { margin-bottom: 18px; }

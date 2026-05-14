@@ -43,6 +43,7 @@ be treated as governing rules for the whole project:
 - `docs/EDITORIAL_DESIGN_CONTRACT_AMENDMENT_M32.md` — Authoritative within M-32 DESIGN.md amendment and visual refinement scope only
 - `docs/BIAS_COLOR_SEMANTIC_FIX_M33.md` — Authoritative within M-33 bias color semantics and method-card background unification scope only
 - `docs/SPACING_GOVERNANCE_M34.md` — Authoritative within M-34 Group A article.card spacing governance scope only
+- `docs/SPACING_GOVERNANCE_M35_AND_FOOTER.md` — Authoritative within M-35 Group B single-card spacing and footer redesign scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -88,7 +89,7 @@ documentation drift risk identified in the v28.0M-audit.
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-34V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-35V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -105,8 +106,8 @@ documentation drift risk identified in the v28.0M-audit.
 - v28.0G-6 Operations Runbook / Decision Matrix 是运维判断入口；看 `docs/OPERATIONS.md`。PR #53 superseded；KV write guard deferred，先观察，不在未另开版本时加入复杂 runtime guard。
 - v28.0G-7A 只增强 `Check Worker Health` 只读输出，生成 `worker-health-snapshot` artifact；不得把 snapshot 当作网站输入，不得写 KV 或 data/realtime，不得改变 Worker Health fail 边界。
 - v28.0G-7B 新增本地只读 `review:worker-health-snapshot` helper，用于审阅下载后的 snapshot 并输出 PASS / WARN / FAIL；不得让它访问网络、写 KV、写 data/realtime 或替代 scheduled hard gate。
-- v28.0M-34V Frontend Asset Cache Busting 用 `?v=28.0M-34V` 刷新 `index.html` 入口与前端 ES module graph，解决 Android Chrome cached old module graph 让普通窗口继续显示 Actions/FRED 旧逻辑的问题；`window.__GFRR_FRONTEND_VERSION__` 应返回 `28.0M-34V`。无痕窗口正常代表 Worker-first runtime 正常；不改 Worker runtime、数据源、KV，也不 deploy Worker。
-- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-34V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
+- v28.0M-35V Frontend Asset Cache Busting 用 `?v=28.0M-35V` 刷新 `index.html` 入口与前端 ES module graph，解决 Android Chrome cached old module graph 让普通窗口继续显示 Actions/FRED 旧逻辑的问题；`window.__GFRR_FRONTEND_VERSION__` 应返回 `28.0M-35V`。无痕窗口正常代表 Worker-first runtime 正常；不改 Worker runtime、数据源、KV，也不 deploy Worker。
+- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-35V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
 - v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。
@@ -798,6 +799,12 @@ M-33 also unifies the six `#method-evidence` sub-card backgrounds to the DATA BO
 M-34 (PR #?): Group A article.card spacing governance — applies local `display:flex; flex-direction:column; gap:18px` to the seven `.editorial-subsection > article.card` containers and resets direct child `.metric-row` / `p` margins inside that scope to prevent double spacing.
 
 M-34 retires the M-33 one-off `#ai-interpretation-layer-section .grid.hero-grid { margin-top: 18px }` patch and removes the `world-order-status-grid` own 18px margin because Group A parent gap now governs the inner layer. This follows the same governance pattern as M-32's outer `.editorial-folded-content > .editorial-section-body { display:flex; gap:16px }` treatment. Group B / Group C remain out of scope.
+
+## 54AA. v28.0M-35 Group B single-card spacing and footer reminder
+
+M-35 (PR #?): Extends M-34 spacing governance to the single-card wrapper pattern `.editorial-subsection > section.full-width-section > article.card`, covering 实时输入与数据健康, 时间序列, 传导网络, and 行为纪律. The same local `display:flex; flex-direction:column; gap:18px` treatment applies with direct child `.metric-row` / `p` / `ul` margin resets.
+
+M-35 also replaces the minimal one-line footer with a two-column method + disclaimer footer using `var(--paper-ink)`, `var(--paper-muted)`, and `var(--font-mono)`. Do not add a 历史对照 column or historical bubble comparison references; the footer remains evidence-display / non-investment-advice copy only.
 
 ## 55. v28.0M-7U homepage IA de-duplication reminder
 
