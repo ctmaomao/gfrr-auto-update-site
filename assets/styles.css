@@ -649,6 +649,11 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
   max-width: 100%;
   margin: 40px 0;
   position: relative;
+  /* M-38: section border consistency governance — global ed-section border + macro-overview scoped reset */
+  border: 1px solid var(--paper-line-strong);
+}
+#macro-risk-overview {
+  border: none;
 }
 .editorial-section-header {
   position: relative;

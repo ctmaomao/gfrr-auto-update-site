@@ -620,6 +620,15 @@ function checkInlineHeadStyleGradientScope() {
   }
 }
 
+function checkEditorialSectionBorder() {
+  if (!/\.editorial-section\s*\{[^}]*border:\s*1px\s+solid\s+var\(--paper-line-strong\)/su.test(styles)) {
+    fail('.editorial-section must use border: 1px solid var(--paper-line-strong)');
+  }
+  if (!/#macro-risk-overview\s*\{[^}]*border:\s*none/su.test(styles)) {
+    fail('#macro-risk-overview must reset the global editorial-section border');
+  }
+}
+
 function checkPackageScript() {
   const expected = 'node --check scripts/check-editorial-redesign-contract.mjs && node scripts/check-editorial-redesign-contract.mjs';
   if (packageJson.scripts?.['check:editorial-redesign-contract'] !== expected) {
@@ -648,6 +657,7 @@ checkGroupAArticleCardSpacing();
 checkGroupBSingleCardSpacing();
 checkFooterMethodStructure();
 checkInlineHeadStyleGradientScope();
+checkEditorialSectionBorder();
 checkPackageScript();
 
 if (errors.length) {
