@@ -1423,7 +1423,8 @@ async function resolveFedLiquidity(prevFed) {
     walcl: 'missing',
     onRrp: 'missing',
     effectiveFedFundsRate: 'missing',
-    sofr: 'missing'
+    sofr: 'missing',
+    reserveBalances: 'missing'
   };
   let walcl = null;
   let walcl4wChange = null;
@@ -1431,6 +1432,8 @@ async function resolveFedLiquidity(prevFed) {
   let onRrpWeekChange = null;
   let effectiveFedFundsRate = null;
   let sofr = null;
+  let reserveBalances = null;
+  let reserveBalances4wChange = null;
 
   try {
     const rows = await fetchFredSeries('WALCL', 90);
@@ -1496,6 +1499,27 @@ async function resolveFedLiquidity(prevFed) {
     }
   }
 
+  // M-42: WRESBAL gives bank reserve-buffer quantity evidence; same weekly H.4.1 cadence as WALCL.
+  try {
+    const rows = await fetchFredSeries('WRESBAL', 90);
+    reserveBalances = latestValue(rows);
+    const ago = findValueAgo(rows, 28);
+    if (Number.isFinite(reserveBalances) && Number.isFinite(ago) && ago !== 0) {
+      reserveBalances4wChange = +(((reserveBalances - ago) / ago) * 100).toFixed(3);
+    }
+    status.reserveBalances = 'live';
+  } catch (_err) {
+    if (Number.isFinite(prevFed?.reserveBalances)) {
+      reserveBalances = prevFed.reserveBalances;
+      reserveBalances4wChange = Number.isFinite(prevFed.reserveBalances4wChange)
+        ? prevFed.reserveBalances4wChange
+        : null;
+      status.reserveBalances = 'fallback';
+    } else {
+      status.reserveBalances = 'missing';
+    }
+  }
+
   const regime = classifyFedAssetTrend(walcl4wChange);
   const rrpLevel = classifyOnRrpLevel(onRrp, onRrpWeekChange);
   const pressure = computeFedLiquidityPressure(walcl4wChange, onRrp, onRrpWeekChange);
@@ -1507,6 +1531,8 @@ async function resolveFedLiquidity(prevFed) {
     onRrpWeekChange: Number.isFinite(onRrpWeekChange) ? onRrpWeekChange : null,
     effectiveFedFundsRate: Number.isFinite(effectiveFedFundsRate) ? effectiveFedFundsRate : null,
     sofr: Number.isFinite(sofr) ? sofr : null,
+    reserveBalances: Number.isFinite(reserveBalances) ? reserveBalances : null,
+    reserveBalances4wChange: Number.isFinite(reserveBalances4wChange) ? reserveBalances4wChange : null,
     regime,
     onRrpLevel: rrpLevel,
     pressure,
@@ -1657,9 +1683,9 @@ async function fetchMacroDrivers(prev, hyOasLive) {
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
     walcl: null, walcl4wChange: null, onRrp: null, onRrpWeekChange: null,
-    effectiveFedFundsRate: null, sofr: null,
+    effectiveFedFundsRate: null, sofr: null, reserveBalances: null, reserveBalances4wChange: null,
     regime: '未知', onRrpLevel: '未知', pressure: 0,
-    sourceStatus: { walcl: 'missing', onRrp: 'missing', effectiveFedFundsRate: 'missing', sofr: 'missing' }
+    sourceStatus: { walcl: 'missing', onRrp: 'missing', effectiveFedFundsRate: 'missing', sofr: 'missing', reserveBalances: 'missing' }
   };
   const curve = results[1].status === 'fulfilled' ? results[1].value : {
     t10y2y: null, t10y2yWeekChange: null, regime: '未知', steepeningAlert: false,

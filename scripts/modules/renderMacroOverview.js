@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-41V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-41V';
-import { formatFiniteNumber } from './format.js?v=28.0M-41V';
+import { $ } from './config.js?v=28.0M-42V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-42V';
+import { formatFiniteNumber } from './format.js?v=28.0M-42V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -653,6 +653,8 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
   const onRrpSignal = findActiveSignal(macroDrivers.activeSignals, 'onRrpCritical');
   const onRrp = finite(fedLiquidity.onRrp);
   const sofr = finite(fedLiquidity.sofr);
+  const reserveBalances = finite(fedLiquidity.reserveBalances);
+  const reserveBalances4wChange = finite(fedLiquidity.reserveBalances4wChange);
   const igHyRatio = finite(credit.igHyRatio);
 
   return [
@@ -731,8 +733,9 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
         `ON RRP ${formatUsdTrillions(onRrp)}${onRrpSignal ? '（历史低位告急）' : ''}`,
         `IG/HY 比率 ${formatNumber(igHyRatio, 2)}（信用层次性收缩）`,
         sofr === null ? null : `SOFR ${formatNumber(sofr, 2, '%')} — 隔夜担保融资压力`,
+        reserveBalances === null ? null : `银行准备金 ${formatUsdTrillions(reserveBalances / 1_000_000)}，4 周变化 ${formatSignedPercent(reserveBalances4wChange)}（系统流动性缓冲）`,
       ].filter(Boolean),
-      missingEvidence: ['银行压力、私募信贷、CRE、CDX 与更细信用指标等待接入。'],
+      missingEvidence: ['SLOOS、私募信贷、CRE、bank-specific stress、CDX 与更细信用指标等待接入。'],
       counterEvidence: creditCalm ? ['信用和波动率尚未显示系统性扩散。'] : [],
       explanation: creditCalm
         ? '信用和波动率尚未显示系统性扩散，金融脆弱性维持观察。'
