@@ -17,7 +17,7 @@
 
 ## 当前版本状态
 
-当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-43V`。
+当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-45V`。
 
 当前主运行状态：
 
@@ -35,7 +35,7 @@
 - `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`consumer_vs_asset_pricing`、`brentPricingLayer` 和 `aiInterpretationLayer` 都是解释层 / 审计层 / 展示层。
 - External AI production panel 是只读辅助层；manual / provider artifacts 不等于 scoring、Daily、frontend 或 production write readiness。
 - Market Pricing Temperature 已进入 M-27 以后前端展示阶段，后续边界以对应 M-series docs 为准。
-- Frontend asset cache version 当前为 `28.0M-43V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
+- Frontend asset cache version 当前为 `28.0M-45V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
 - `npm run check:all` 当前由 `package.json` 定义，包含 51 个串联检查项。
 - Market Pricing first real record write scaffold 在任何写入前运行 6 sanity checks；细节以 `docs/OPERATIONS.md` 和 `docs/SYSTEM_UPGRADE_PLAN.md` 为准。
 
@@ -49,6 +49,7 @@
 - Fed liquidity triplet completion M-42 adds FRED:WRESBAL (bank reserve balances, weekly Wednesday, NSA, millions USD) to `resolveFedLiquidity` with 4-week change calculation. It completes the Fed liquidity triplet (M-41 DFF + SOFR rates, M-42 WRESBAL quantity). B4 financial fragility evidence grows from 4 to 5 lines. WRESBAL does not enter pressure score. Values populate on next scheduled daily-pipeline run.
 - External AI provenance metadata completion M-43 fills 6 provenance fields (`runId`, `artifactName`, `artifactId`, `artifactDigest`, `sourceCommit`, `sourceDataUpdatedAt`) in `externalAiInterpretationLayer` via GitHub Actions env vars and SHA256 hash. No AI behavior change. Completes the last remaining M-39 audit null fields. Values populate on next `external-ai-production-refresh.yml` workflow run.
 - Stable Observation Audit deprecation M-44: Removes the stale workflow and audit script that were hard-coded to v28.0K-3 phase expectations and have been failing daily for several months. v28.0L-aware checks (external-ai-production-contract, write-guard, provenance-completeness) already cover this functionality. Cleanup only — no behavior, schema, or data change.
+- Frontend field synchronization M-45: Completes the frontend integration of M-41 (DFF/SOFR) and M-42 (WRESBAL) by adding evidence lines to driver-liquidity, updating driver-policy explanation to acknowledge DFF as official policy rate, passing fedLiquidity into cross-validation matrix for policy_path field. Also corrects market-pricing data file descriptionZh and displayLayerActive flag to reflect actual M-26/M-27 completion state. Frontend display improves immediately after merge.
 
 ## 核心架构
 
@@ -203,6 +204,6 @@ README 只保留入口级说明。若 README 与 `AGENTS.md`、`DESIGN.md`、`pa
 
 - 页面公开标签：`v28.0C`。
 - 工程稳定观察基线：`v28.0J`。
-- 当前 frontend asset cache version：`28.0M-43V`。
+- 当前 frontend asset cache version：`28.0M-45V`。
 - 当前 runtime status：Node.js 24 LTS。
-- 当前 M-series note：M-44 deprecates the stale Stable Observation Audit workflow/script; M-43 completes External AI provenance metadata from GitHub Actions run context and DeepSeek output SHA256; M-40 已跳过且无 PR。
+- 当前 M-series note：M-45 completes frontend field synchronization for Fed liquidity and market-pricing metadata; M-44 deprecates the stale Stable Observation Audit workflow/script; M-43 completes External AI provenance metadata from GitHub Actions run context and DeepSeek output SHA256; M-40 已跳过且无 PR。

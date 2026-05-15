@@ -138,17 +138,29 @@ function buildEnergyShockNarrative(data) {
   });
 }
 
-function buildStagflationNarrative(data) {
+function buildStagflationNarrative(data, fedLiquidity = {}) {
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
   const consumer = isPlainObject(data?.macroDrivers?.consumer) ? data.macroDrivers.consumer : {};
+  const fed = isPlainObject(fedLiquidity) ? fedLiquidity : {};
   const brent = finite(inputs.brent);
   const us10y = finite(inputs.us10y);
   const sentiment = finite(consumer.umichSentiment);
   const inflationModule = finite(data?.modules?.inflation);
+  const effectiveFedFundsRate = finite(fed.effectiveFedFundsRate);
+  const sofr = finite(fed.sofr);
+  const policyPathEvidence = effectiveFedFundsRate === null
+    ? null
+    : evidence(
+      'policy_path',
+      formatNumber(effectiveFedFundsRate, 2, '%'),
+      `当前联邦基金有效利率已接入${sofr === null ? '' : `；SOFR ${formatNumber(sofr, 2, '%')} 提供近端融资状态`}；forward policy path 仍需 dot plot / Fed funds futures 验证`,
+    );
   const supportingEvidence = [];
   const missingEvidence = [
     evidence('pmi', null, 'PMI 与就业广度未接入'),
-    evidence('policy_path', null, '政策预期路径未接入'),
+    policyPathEvidence
+      ? evidence('policy_forward_path', null, 'Fed dot plot / Fed funds futures / OIS forward rates 未接入')
+      : evidence('policy_path', null, '当前政策利率与前瞻政策路径未接入'),
   ];
   const contradictingEvidence = [];
 
@@ -156,6 +168,7 @@ function buildStagflationNarrative(data) {
   if (us10y !== null && us10y >= 4.25) supportingEvidence.push(evidence('us10y', formatNumber(us10y, 2, '%'), '长端利率仍偏紧'));
   if (sentiment !== null && sentiment < 60) supportingEvidence.push(evidence('umich_sentiment', formatNumber(sentiment, 1), '消费者体感偏弱'));
   if (inflationModule !== null && inflationModule >= 60) supportingEvidence.push(evidence('inflation_module', formatNumber(inflationModule, 0), '通胀模块处于偏高区间'));
+  if (policyPathEvidence) supportingEvidence.push(policyPathEvidence);
   if (brent !== null && brent < 85 && us10y !== null && us10y < 4) {
     contradictingEvidence.push(evidence('brent_us10y', `${formatCurrency(brent)} / ${formatNumber(us10y, 2, '%')}`, '能源与利率未共同构成滞涨压力'));
   }
@@ -364,11 +377,14 @@ function buildOneLineSummary(narratives) {
   ].join('; ');
 }
 
-export function buildCrossValidationMatrix(data = {}, worldOrderStressData = {}, marketPricingMetricsData = null) {
+export function buildCrossValidationMatrix(data = {}, worldOrderStressData = {}, marketPricingMetricsData = null, fedLiquidity = null) {
   const metric = getLatestMetric(marketPricingMetricsData);
+  const matrixFedLiquidity = isPlainObject(fedLiquidity)
+    ? fedLiquidity
+    : isPlainObject(data?.macroDrivers?.fedLiquidity) ? data.macroDrivers.fedLiquidity : {};
   const narratives = [
     buildEnergyShockNarrative(data),
-    buildStagflationNarrative(data),
+    buildStagflationNarrative(data, matrixFedLiquidity),
     buildRiskAssetMismatchNarrative(data, metric),
     buildOverheatNarrative(metric, data),
     buildCreditSpreadNarrative(data, metric),

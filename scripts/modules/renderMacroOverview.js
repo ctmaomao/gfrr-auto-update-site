@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-43V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-43V';
-import { formatFiniteNumber } from './format.js?v=28.0M-43V';
+import { $ } from './config.js?v=28.0M-45V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-45V';
+import { formatFiniteNumber } from './format.js?v=28.0M-45V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -470,6 +470,8 @@ function buildMacroDrivers(data) {
   const effectiveFedFundsRate = finite(fedLiquidity.effectiveFedFundsRate);
   const sofr = finite(fedLiquidity.sofr);
   const walcl4wChange = finite(fedLiquidity.walcl4wChange);
+  const reserveBalances = finite(fedLiquidity.reserveBalances);
+  const reserveBalances4wChange = finite(fedLiquidity.reserveBalances4wChange);
   const vix = finite(inputs.vix);
   const creditCalm = hyOas !== null && hyOas < 4 && vix !== null && vix < 22;
   const policyProxyEvidence = [
@@ -521,8 +523,11 @@ function buildMacroDrivers(data) {
         `广义美元 ${formatNumber(inputs.dxy, 2)}；10年期 ${formatNumber(inputs.us10y, 2, '%')}；10Y-2Y 期限利差 ${formatSignedPercent(t10y2y)}`,
         `ON RRP 余额 ${formatUsdTrillions(onRrp)}${onRrpAnnotation(onRrpSignal)}；Fed 资产负债表 4周变化 ${formatUsdBillionsFromFedChange(walcl4wChange)}`,
         `高收益利差 (HY OAS) ${formatNumber(hyOas, 2, '%')}；投资级利差 (IG OAS) ${formatNumber(igOas, 2, '%')}；IG/HY 比率 ${formatNumber(igHyRatio, 2)}`,
-      ],
-      missingEvidence: ['SLOOS、回购市场压力、银行准备金和跨市场融资压力等待接入。'],
+        effectiveFedFundsRate === null ? null : `联邦基金利率 ${formatNumber(effectiveFedFundsRate, 2, '%')} — 当前官方政策利率`,
+        sofr === null ? null : `SOFR ${formatNumber(sofr, 2, '%')} — 隔夜担保融资利率`,
+        reserveBalances === null ? null : `银行准备金 ${formatUsdTrillions(reserveBalances / 1_000_000)}；4周变化 ${formatSignedPercent(reserveBalances4wChange)} — 储备缓冲数量`,
+      ].filter(Boolean),
+      missingEvidence: ['SLOOS、回购市场压力和跨市场融资压力等待接入。'],
       counterEvidence: creditCalm ? ['信用与波动率尚未明显确认扩散。'] : [],
       explanation: creditCalm
         ? '长端利率和美元偏紧，但信用与波动率尚未明显确认扩散。'
@@ -537,10 +542,10 @@ function buildMacroDrivers(data) {
       confidence: hasPolicyProxy ? '中等' : '偏低',
       dataCoverage: hasPolicyProxy ? '数据覆盖：代理信号' : '数据覆盖：关键数据不足',
       evidence: hasPolicyProxy ? policyProxyEvidence : ['暂无直接 Fed 预期或政策路径指标。'],
-      missingEvidence: ['Fed 官方预期声明 / dot plot、政策路径 / 市场隐含利率、政策沟通文本分析仍缺位。'],
+      missingEvidence: ['Fed dot plot、Fed funds futures / OIS forward rates 与政策沟通文本分析仍缺位。'],
       explanation: hasPolicyProxy
-        ? '基于 ON RRP / 长端利率 / 美元强势等代理信号，当前隐含的政策路径偏紧。（注意：本项不基于官方 Fed 预期数据）'
-        : '当前不伪造政策立场；除非接入明确政策预期数据，否则政策不是强驱动。',
+        ? 'ON RRP / 长端利率 / 美元强势仍是代理信号；联邦基金有效利率和 SOFR 已提供当前政策利率与隔夜融资状态，但前瞻政策路径仍需 dot plot 或 forward rates 验证。'
+        : '当前不伪造政策路径；除非接入 dot plot / forward rates 等明确前瞻数据，否则政策路径不是强驱动。',
       sourceType: hasPolicyProxy ? '代理信号' : '数据不足',
     }),
   ];
@@ -745,6 +750,9 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
 }
 
 function buildCrossValidation(data, worldOrderStressData, marketPricingMetricsData = null) {
+  const macroDrivers = isPlainObject(data?.macroDrivers) ? data.macroDrivers : {};
+  const fedLiquidity = isPlainObject(macroDrivers.fedLiquidity) ? macroDrivers.fedLiquidity : {};
+  data = { ...data, macroDrivers: { ...macroDrivers, fedLiquidity } };
   return buildCrossValidationMatrix(data, worldOrderStressData, marketPricingMetricsData);
 }
 
