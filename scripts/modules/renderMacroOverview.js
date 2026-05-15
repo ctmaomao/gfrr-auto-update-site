@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-39V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-39V';
-import { formatFiniteNumber } from './format.js?v=28.0M-39V';
+import { $ } from './config.js?v=28.0M-41V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-41V';
+import { formatFiniteNumber } from './format.js?v=28.0M-41V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -467,6 +467,8 @@ function buildMacroDrivers(data) {
   const igHyRatio = finite(credit.igHyRatio);
   const t10y2y = finite(curve.t10y2y);
   const onRrp = finite(fedLiquidity.onRrp);
+  const effectiveFedFundsRate = finite(fedLiquidity.effectiveFedFundsRate);
+  const sofr = finite(fedLiquidity.sofr);
   const walcl4wChange = finite(fedLiquidity.walcl4wChange);
   const vix = finite(inputs.vix);
   const creditCalm = hyOas !== null && hyOas < 4 && vix !== null && vix < 22;
@@ -474,6 +476,8 @@ function buildMacroDrivers(data) {
     onRrp === null ? null : `ON RRP ${formatUsdTrillions(onRrp)}${onRrpAnnotation(onRrpSignal)} — 流动性紧`,
     finite(inputs.us10y) === null ? null : `10年期 ${formatNumber(inputs.us10y, 2, '%')} — 长端利率压力`,
     finite(inputs.dxy) === null ? null : `广义美元 ${formatNumber(inputs.dxy, 2)} — 美元强势`,
+    effectiveFedFundsRate === null ? null : `联邦基金利率 ${formatNumber(effectiveFedFundsRate, 2, '%')} — 政策利率`,
+    sofr === null ? null : `SOFR ${formatNumber(sofr, 2, '%')} — 隔夜担保融资`,
     '综合判断：隐含政策路径偏紧',
   ].filter(Boolean);
   const hasPolicyProxy = policyProxyEvidence.length > 1;
@@ -648,6 +652,7 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
   const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
   const onRrpSignal = findActiveSignal(macroDrivers.activeSignals, 'onRrpCritical');
   const onRrp = finite(fedLiquidity.onRrp);
+  const sofr = finite(fedLiquidity.sofr);
   const igHyRatio = finite(credit.igHyRatio);
 
   return [
@@ -725,8 +730,9 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
         text(liquidityCheck.summaryZh, `HY OAS ${formatNumber(inputs.hyOas, 2, '%')}；VIX ${formatNumber(inputs.vix, 2)}。`),
         `ON RRP ${formatUsdTrillions(onRrp)}${onRrpSignal ? '（历史低位告急）' : ''}`,
         `IG/HY 比率 ${formatNumber(igHyRatio, 2)}（信用层次性收缩）`,
-      ],
-      missingEvidence: ['银行压力、私募信贷、CRE、融资成本、CDX 与更细信用指标等待接入。'],
+        sofr === null ? null : `SOFR ${formatNumber(sofr, 2, '%')} — 隔夜担保融资压力`,
+      ].filter(Boolean),
+      missingEvidence: ['银行压力、私募信贷、CRE、CDX 与更细信用指标等待接入。'],
       counterEvidence: creditCalm ? ['信用和波动率尚未显示系统性扩散。'] : [],
       explanation: creditCalm
         ? '信用和波动率尚未显示系统性扩散，金融脆弱性维持观察。'
