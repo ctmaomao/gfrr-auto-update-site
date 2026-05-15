@@ -165,6 +165,10 @@ jobs:
         run: npm run review:external-ai-artifact -- --input manual-artifacts/external-ai/deepseek-output-latest.json --output manual-artifacts/external-ai/external-ai-quality-review-latest.json
 
       - name: Project production contract object
+        env:
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GITHUB_SHA: ${{ github.sha }}
         run: |
           node scripts/project-external-ai-production-dry-run.mjs \
             --input manual-artifacts/external-ai/deepseek-output-latest.json \

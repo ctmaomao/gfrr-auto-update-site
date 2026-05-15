@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-output-v28.0K-1.json';
@@ -70,6 +71,7 @@ const REQUIRED_BOUNDARIES = {
 const DEFAULT_DISPLAY_STATE = {
   displayEnabled: false,
   frontendDisplayApproved: false,
+  sourceDataUpdatedAt: null,
 };
 
 const FALLBACK_QUALITY_REVIEW = {
@@ -139,11 +141,20 @@ function readDisplayStateFrom(filePath) {
   return {
     displayEnabled: layer.displayEnabled,
     frontendDisplayApproved: boundaries.frontendDisplayApproved,
+    sourceDataUpdatedAt: typeof data.updatedAt === 'string' ? data.updatedAt : null,
   };
 }
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+function readJsonWithRaw(filePath) {
+  const raw = fs.readFileSync(filePath, 'utf8');
+  return {
+    raw,
+    value: JSON.parse(raw),
+  };
 }
 
 function collectStrings(value, currentPath = '$', results = []) {
@@ -403,13 +414,37 @@ function projectAuditFlags(mapping) {
   ].filter((flag) => flag !== mapping.forbiddenSourceFlag);
 }
 
-function buildProjection({ input, inputPath, outputPath, reviewPath, generatedAt, displayState }) {
+function buildProvenance({ deepseekOutputJsonString, radarDataUpdatedAt }) {
+  const runId = process.env.GITHUB_RUN_ID || null;
+  const runAttempt = process.env.GITHUB_RUN_ATTEMPT || null;
+  const sourceCommit = process.env.GITHUB_SHA || null;
+  const artifactName = runId ? `external-ai-production-refresh-${runId}` : null;
+  const artifactId = runId && runAttempt ? `${runId}-${runAttempt}` : runId || null;
+  const artifactDigest = deepseekOutputJsonString
+    ? createHash('sha256').update(deepseekOutputJsonString).digest('hex')
+    : null;
+
+  return {
+    runId,
+    artifactName,
+    artifactId,
+    artifactDigest,
+    sourceCommit,
+    sourceDataUpdatedAt: radarDataUpdatedAt || null,
+  };
+}
+
+function buildProjection({ input, inputPath, outputPath, reviewPath, generatedAt, displayState, deepseekOutputJsonString }) {
   const mapping = detectSourceMapping(input);
   const qualityReview = projectQualityReview(reviewPath, generatedAt, mapping);
   const facts = projectStringArray(input.facts, 'facts');
   const inferences = projectStringArray(input.inferences, 'inferences');
   const dataGaps = projectStringArray(input.dataGaps, 'dataGaps');
   const invalidationSignals = projectStringArray(input.invalidationSignals, 'invalidationSignals');
+  const provenance = buildProvenance({
+    deepseekOutputJsonString,
+    radarDataUpdatedAt: displayState.sourceDataUpdatedAt,
+  });
 
   const layer = {
     schemaVersion: 'v28.0L-external-ai-production-1',
@@ -433,12 +468,7 @@ function buildProjection({ input, inputPath, outputPath, reviewPath, generatedAt
     confidence: projectConfidence(input.confidence, mapping),
     qualityReview,
     provenance: {
-      runId: null,
-      artifactName: null,
-      artifactId: null,
-      artifactDigest: null,
-      sourceCommit: null,
-      sourceDataUpdatedAt: null,
+      ...provenance,
       inputArtifactPath: normalizePathForReport(inputPath),
       outputArtifactPath: normalizePathForReport(outputPath),
       qualityReviewArtifactPath: reviewPath ? normalizePathForReport(reviewPath) : null,
@@ -472,7 +502,7 @@ function main() {
     const { resolvedOutput, relativeToRepo } = assertSafeOutputPath(options.output);
     const resolvedInput = path.resolve(options.input);
     const resolvedReview = options.review ? path.resolve(options.review) : null;
-    const input = readJson(resolvedInput);
+    const { raw: deepseekOutputJsonString, value: input } = readJsonWithRaw(resolvedInput);
     const displayState = readDisplayStateFrom(options.preserveDisplayStateFrom);
 
     validateInputArtifact(input);
@@ -485,6 +515,7 @@ function main() {
       reviewPath: options.review,
       generatedAt,
       displayState,
+      deepseekOutputJsonString,
     });
 
     fs.mkdirSync(path.dirname(resolvedOutput), { recursive: true });

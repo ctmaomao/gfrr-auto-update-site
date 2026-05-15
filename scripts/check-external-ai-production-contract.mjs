@@ -17,6 +17,10 @@ const ALLOWED_RECOMMENDATION = new Set([
 ]);
 const ALLOWED_GENERATED_BY = new Set(['manual_workflow', 'disabled']);
 const ALLOWED_CONFIDENCE_LEVEL = new Set(['low', 'medium', 'high']);
+const SHA256_HEX_PATTERN = /^[a-f0-9]{64}$/u;
+const SHA1_HEX_PATTERN = /^[a-f0-9]{40}$/u;
+const NUMERIC_STRING_PATTERN = /^\d+$/u;
+const ISO_TIMESTAMP_PREFIX_PATTERN = /^\d{4}-\d{2}-\d{2}T/u;
 
 const REQUIRED_LAYER_FIELDS = [
   'schemaVersion',
@@ -149,6 +153,13 @@ function isStringOrNull(value) {
 
 function addError(errors, message) {
   errors.push(message);
+}
+
+function validateOptionalStringPattern(value, pattern, message, errors) {
+  if (value === null) return;
+  if (typeof value !== 'string' || !pattern.test(value)) {
+    addError(errors, message);
+  }
 }
 
 function readJson(filePath) {
@@ -309,6 +320,30 @@ function validateProvenance(provenance, errors) {
   for (const field of REQUIRED_PROVENANCE_FIELDS.filter((field) => field !== 'generatedBy' && field !== 'humanApproved')) {
     if (!isStringOrNull(provenance[field])) addError(errors, `provenance.${field} must be string or null`);
   }
+  validateOptionalStringPattern(
+    provenance.runId,
+    NUMERIC_STRING_PATTERN,
+    'provenance.runId must be a numeric string when present',
+    errors,
+  );
+  validateOptionalStringPattern(
+    provenance.artifactDigest,
+    SHA256_HEX_PATTERN,
+    'provenance.artifactDigest must be a 64-character lowercase SHA256 hex string when present',
+    errors,
+  );
+  validateOptionalStringPattern(
+    provenance.sourceCommit,
+    SHA1_HEX_PATTERN,
+    'provenance.sourceCommit must be a 40-character lowercase SHA1 hex string when present',
+    errors,
+  );
+  validateOptionalStringPattern(
+    provenance.sourceDataUpdatedAt,
+    ISO_TIMESTAMP_PREFIX_PATTERN,
+    'provenance.sourceDataUpdatedAt must be an ISO timestamp string when present',
+    errors,
+  );
   if (!ALLOWED_GENERATED_BY.has(provenance.generatedBy)) {
     addError(errors, 'provenance.generatedBy must be manual_workflow or disabled');
   }
