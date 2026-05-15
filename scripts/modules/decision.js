@@ -1,5 +1,5 @@
-import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=28.0M-39V';
-import { formatOnRrpYiUsd } from './format.js?v=28.0M-39V';
+import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=28.0M-41V';
+import { formatOnRrpYiUsd } from './format.js?v=28.0M-41V';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

@@ -1419,11 +1419,18 @@ function computeFedLiquidityPressure(walcl4wChange, onRrp, onRrpWeekChange) {
 }
 
 async function resolveFedLiquidity(prevFed) {
-  const status = { walcl: 'missing', onRrp: 'missing' };
+  const status = {
+    walcl: 'missing',
+    onRrp: 'missing',
+    effectiveFedFundsRate: 'missing',
+    sofr: 'missing'
+  };
   let walcl = null;
   let walcl4wChange = null;
   let onRrp = null;
   let onRrpWeekChange = null;
+  let effectiveFedFundsRate = null;
+  let sofr = null;
 
   try {
     const rows = await fetchFredSeries('WALCL', 90);
@@ -1461,6 +1468,34 @@ async function resolveFedLiquidity(prevFed) {
     }
   }
 
+  // M-41: DFF gives direct Effective Federal Funds Rate evidence for the policy driver.
+  try {
+    const rows = await fetchFredSeries('DFF', 30);
+    effectiveFedFundsRate = latestValue(rows);
+    status.effectiveFedFundsRate = 'live';
+  } catch (_err) {
+    if (Number.isFinite(prevFed?.effectiveFedFundsRate)) {
+      effectiveFedFundsRate = prevFed.effectiveFedFundsRate;
+      status.effectiveFedFundsRate = 'fallback';
+    } else {
+      status.effectiveFedFundsRate = 'missing';
+    }
+  }
+
+  // M-41: SOFR gives direct overnight secured funding evidence for fragility review.
+  try {
+    const rows = await fetchFredSeries('SOFR', 30);
+    sofr = latestValue(rows);
+    status.sofr = 'live';
+  } catch (_err) {
+    if (Number.isFinite(prevFed?.sofr)) {
+      sofr = prevFed.sofr;
+      status.sofr = 'fallback';
+    } else {
+      status.sofr = 'missing';
+    }
+  }
+
   const regime = classifyFedAssetTrend(walcl4wChange);
   const rrpLevel = classifyOnRrpLevel(onRrp, onRrpWeekChange);
   const pressure = computeFedLiquidityPressure(walcl4wChange, onRrp, onRrpWeekChange);
@@ -1470,6 +1505,8 @@ async function resolveFedLiquidity(prevFed) {
     walcl4wChange: Number.isFinite(walcl4wChange) ? walcl4wChange : null,
     onRrp: Number.isFinite(onRrp) ? onRrp : null,
     onRrpWeekChange: Number.isFinite(onRrpWeekChange) ? onRrpWeekChange : null,
+    effectiveFedFundsRate: Number.isFinite(effectiveFedFundsRate) ? effectiveFedFundsRate : null,
+    sofr: Number.isFinite(sofr) ? sofr : null,
     regime,
     onRrpLevel: rrpLevel,
     pressure,
@@ -1620,8 +1657,9 @@ async function fetchMacroDrivers(prev, hyOasLive) {
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
     walcl: null, walcl4wChange: null, onRrp: null, onRrpWeekChange: null,
+    effectiveFedFundsRate: null, sofr: null,
     regime: '未知', onRrpLevel: '未知', pressure: 0,
-    sourceStatus: { walcl: 'missing', onRrp: 'missing' }
+    sourceStatus: { walcl: 'missing', onRrp: 'missing', effectiveFedFundsRate: 'missing', sofr: 'missing' }
   };
   const curve = results[1].status === 'fulfilled' ? results[1].value : {
     t10y2y: null, t10y2yWeekChange: null, regime: '未知', steepeningAlert: false,
