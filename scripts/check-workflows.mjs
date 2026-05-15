@@ -276,7 +276,7 @@ const worldOrderForbiddenPhrases = [
   ['13 步', '已走几步'].join(''),
   ['世界大战', '第几步'].join(''),
 ];
-const frontendAssetVersion = '28.0M-36V';
+const frontendAssetVersion = '28.0M-37V';
 const frontendAssetEntryFile = 'index.html';
 const frontendAssetAppFile = 'scripts/app.js';
 const frontendAssetModuleDir = 'scripts/modules';
@@ -1286,7 +1286,7 @@ for (const needle of [
   'v28.0G-9B',
   'Frontend Asset Version Bump Helper',
   'bump:frontend-asset-version',
-  'node scripts/bump-frontend-asset-version.mjs 28.0G-10',
+  'node scripts/bump-frontend-asset-version.mjs 28.0M-37V',
 ]) {
   if (!frontendAssetDocText.includes(needle)) {
     addRuntimeFailure('frontend asset cache busting docs', `missing marker "${needle}"`);
