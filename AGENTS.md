@@ -49,6 +49,7 @@ be treated as governing rules for the whole project:
 - `docs/SECTION_BORDER_CONSISTENCY_M38.md` — Authoritative within M-38 editorial section border consistency scope only
 - `docs/BRENT_PROMOTION_AUDIT_M39.md` — Authoritative within M-39 Brent promotionAudit field completeness scope only
 - `docs/M-41_FED_LIQUIDITY_EXTENDED_DRIVERS.md` — Authoritative within M-41 Fed liquidity DFF / SOFR extension scope only
+- `docs/M-42_FED_LIQUIDITY_RESERVE_BALANCES.md` — Authoritative within M-42 Fed liquidity WRESBAL reserve-balances scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -78,6 +79,10 @@ M-40 did not produce a PR. The planned interpretation-layer reason-field cleanup
 
 M-41 is documented in `docs/M-41_FED_LIQUIDITY_EXTENDED_DRIVERS.md`. It extends `resolveFedLiquidity` with FRED:DFF and FRED:SOFR and formalizes the first `macroDrivers.fedLiquidity` DATA_CONTRACT entry. It does not change scoring, decision, execution, position, workflow, Worker runtime, or data files.
 
+#### M-42 (Fed Liquidity Triplet Completion: WRESBAL)
+
+M-42 is documented in `docs/M-42_FED_LIQUIDITY_RESERVE_BALANCES.md`. It extends `resolveFedLiquidity` with FRED:WRESBAL (bank reserve balances, weekly Wednesday, NSA, millions USD) as B4 financial-fragility evidence. It completes the Fed liquidity triplet: M-41 DFF (policy rate) + M-41 SOFR (funding rate) + M-42 WRESBAL (reserve-buffer quantity). WRESBAL uses a WALCL-style 4-week change and does not enter `computeFedLiquidityPressure`.
+
 ### Operating Document (large, mixed content; consult selectively)
 
 These documents contain both current operating procedures and accumulated
@@ -104,7 +109,7 @@ documentation drift risk identified in the v28.0M-audit.
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-41V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-42V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -127,7 +132,8 @@ documentation drift risk identified in the v28.0M-audit.
 - v28.0M-39V Brent Promotion Audit Completeness 用 `?v=28.0M-39V` 刷新前端 asset graph；本轮只用现有 in-memory realtime 数据补齐 `promotionAudit.promotionReason` fallback 和 `anchorAgeHours` 衍生 fallback，不新增数据源、不改变 promotion 语义、不改 data files。
 - v28.0M-40 skipped：经精确诊断，原计划 3 个解释层 reason 字段 placeholder 修复均为 audit scanner false positive（中文 em-dash、`fallback 0` 计数标签、`0 个 check 数据不足` 形容短语均为真实内容）。未实施 PR；编号保留为跳过记录。
 - v28.0M-41V Fed Liquidity FRED Series Extension 用 `?v=28.0M-41V` 刷新前端 asset graph；本轮扩展 `resolveFedLiquidity` 拉取 FRED:DFF 与 FRED:SOFR，并首次正式化 `macroDrivers.fedLiquidity` DATA_CONTRACT。不改 scoring、decision、execution、position、workflow、Worker runtime 或 data files。
-- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0M-41V` / `npm run bump:frontend-asset-version -- 28.0M-41V`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-41V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
+- v28.0M-42V Fed Liquidity Triplet Completion 用 `?v=28.0M-42V` 刷新前端 asset graph；本轮扩展 `resolveFedLiquidity` 拉取 FRED:WRESBAL 并计算 4 周变化，完成 DFF + SOFR + WRESBAL triplet。不改 scoring、decision、execution、position、workflow、Worker runtime 或 data files。
+- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0M-42V` / `npm run bump:frontend-asset-version -- 28.0M-42V`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-42V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
 - v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。

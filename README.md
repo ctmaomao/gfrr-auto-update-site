@@ -17,7 +17,7 @@
 
 ## 当前版本状态
 
-当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-41V`。
+当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-42V`。
 
 当前主运行状态：
 
@@ -35,7 +35,7 @@
 - `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`consumer_vs_asset_pricing`、`brentPricingLayer` 和 `aiInterpretationLayer` 都是解释层 / 审计层 / 展示层。
 - External AI production panel 是只读辅助层；manual / provider artifacts 不等于 scoring、Daily、frontend 或 production write readiness。
 - Market Pricing Temperature 已进入 M-27 以后前端展示阶段，后续边界以对应 M-series docs 为准。
-- Frontend asset cache version 当前为 `28.0M-41V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
+- Frontend asset cache version 当前为 `28.0M-42V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
 - `npm run check:all` 当前由 `package.json` 定义，包含 50 个串联检查项。
 - Market Pricing first real record write scaffold 在任何写入前运行 6 sanity checks；细节以 `docs/OPERATIONS.md` 和 `docs/SYSTEM_UPGRADE_PLAN.md` 为准。
 
@@ -46,6 +46,7 @@
 - Section border consistency M-38 adds global `.editorial-section` border (`var(--paper-line-strong)`) to unify visual demarcation across 7 IA sections. `#macro-risk-overview` scoped reset prevents double-layer visual since its inner `.macro-overview-block` cards provide their own borders. Frontend display layer only.
 - Brent promotion audit completeness M-39 adds `consensus.reason` as third fallback for `promotionAudit.promotionReason` and derives `anchorAgeHours` from `sourceDetails.ageSeconds` or fred-anchor `observedAt`. Backend reading logic only; no new data source. Frontend display unaffected until next pipeline run.
 - Fed liquidity FRED extension M-41 adds FRED:DFF (effective federal funds rate) and FRED:SOFR (secured overnight financing rate) to `resolveFedLiquidity`. It formalizes `macroDrivers.fedLiquidity` DATA_CONTRACT for the first time. Backend pipeline only; visible in B3 政策代理 and B4 金融脆弱性 evidence after next scheduled daily-pipeline run.
+- Fed liquidity triplet completion M-42 adds FRED:WRESBAL (bank reserve balances, weekly Wednesday, NSA, millions USD) to `resolveFedLiquidity` with 4-week change calculation. It completes the Fed liquidity triplet (M-41 DFF + SOFR rates, M-42 WRESBAL quantity). B4 financial fragility evidence grows from 4 to 5 lines. WRESBAL does not enter pressure score. Values populate on next scheduled daily-pipeline run.
 
 ## 核心架构
 
@@ -200,6 +201,6 @@ README 只保留入口级说明。若 README 与 `AGENTS.md`、`DESIGN.md`、`pa
 
 - 页面公开标签：`v28.0C`。
 - 工程稳定观察基线：`v28.0J`。
-- 当前 frontend asset cache version：`28.0M-41V`。
+- 当前 frontend asset cache version：`28.0M-42V`。
 - 当前 runtime status：Node.js 24 LTS。
-- 当前 M-series note：M-41 扩展 Fed liquidity DFF / SOFR 读取，并首次正式化 `macroDrivers.fedLiquidity` contract；M-40 已跳过且无 PR。
+- 当前 M-series note：M-42 completes Fed liquidity triplet with WRESBAL reserve-buffer quantity evidence; M-40 已跳过且无 PR。

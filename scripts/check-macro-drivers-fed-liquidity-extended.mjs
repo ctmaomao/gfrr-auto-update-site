@@ -43,6 +43,13 @@ if (!fedLiquidity || typeof fedLiquidity !== 'object') {
       console.warn(`[M-41 soft warn] macroDrivers.fedLiquidity.${field} is null. Expected non-null after the corresponding FRED fetch succeeds.`);
     }
   }
+  for (const field of ['reserveBalances', 'reserveBalances4wChange']) {
+    if (!(field in fedLiquidity)) {
+      console.warn(`[M-42 soft warn] macroDrivers.fedLiquidity.${field} key is absent in committed data. Expected until next daily-pipeline refresh.`);
+    } else if (fedLiquidity[field] === null) {
+      console.warn(`[M-42 soft warn] macroDrivers.fedLiquidity.${field} is null. Expected non-null after FRED:WRESBAL fetch succeeds.`);
+    }
+  }
 
   const sourceStatus = fedLiquidity.sourceStatus;
   if (!sourceStatus || typeof sourceStatus !== 'object') {
@@ -58,15 +65,21 @@ if (!fedLiquidity || typeof fedLiquidity !== 'object') {
         console.warn(`[M-41 soft warn] macroDrivers.fedLiquidity.sourceStatus.${key} is absent in committed data. Expected until next daily-pipeline refresh.`);
       }
     }
+    if (!('reserveBalances' in sourceStatus)) {
+      console.warn('[M-42 soft warn] macroDrivers.fedLiquidity.sourceStatus.reserveBalances is absent in committed data. Expected until next daily-pipeline refresh.');
+    }
   }
 }
 
 const requiredSourceMarkers = [
   "fetchFredSeries('DFF', 30)",
   "fetchFredSeries('SOFR', 30)",
+  "fetchFredSeries('WRESBAL', 90)",
   'effectiveFedFundsRate: Number.isFinite(effectiveFedFundsRate) ? effectiveFedFundsRate : null',
   'sofr: Number.isFinite(sofr) ? sofr : null',
-  "sourceStatus: { walcl: 'missing', onRrp: 'missing', effectiveFedFundsRate: 'missing', sofr: 'missing' }"
+  'reserveBalances: Number.isFinite(reserveBalances) ? reserveBalances : null',
+  'reserveBalances4wChange: Number.isFinite(reserveBalances4wChange) ? reserveBalances4wChange : null',
+  "sourceStatus: { walcl: 'missing', onRrp: 'missing', effectiveFedFundsRate: 'missing', sofr: 'missing', reserveBalances: 'missing' }"
 ];
 for (const marker of requiredSourceMarkers) {
   if (!runDailyText.includes(marker)) {
@@ -76,9 +89,12 @@ for (const marker of requiredSourceMarkers) {
 
 const requiredRenderMarkers = [
   'fedLiquidity.effectiveFedFundsRate',
+  'fedLiquidity.reserveBalances',
   '联邦基金利率',
   'SOFR',
-  '隔夜担保融资压力'
+  '隔夜担保融资压力',
+  '银行准备金',
+  '系统流动性缓冲'
 ];
 for (const marker of requiredRenderMarkers) {
   if (!renderMacroText.includes(marker)) {
@@ -90,8 +106,12 @@ const requiredContractMarkers = [
   'macroDrivers.fedLiquidity',
   'FRED:DFF',
   'FRED:SOFR',
+  'FRED:WRESBAL',
   'effectiveFedFundsRate',
-  'RESBALNS'
+  'reserveBalances',
+  'reserveBalances4wChange',
+  'sourceStatus.reserveBalances',
+  'WRESBAL'
 ];
 for (const marker of requiredContractMarkers) {
   if (!dataContractText.includes(marker)) {
