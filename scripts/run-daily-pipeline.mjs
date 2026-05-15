@@ -676,6 +676,24 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
   );
   const spreadStatus = classifyProxySpreadStatus(spotMinusFutures, maxProxyDivergencePct);
   const confidenceLevel = spreadStatus === 'insufficient_data' ? 'low' : futuresProxy.status === 'ok' && publicSpotProxy.status === 'ok' ? 'medium' : 'low';
+  /* M-39: derive anchorAgeHours only from existing in-memory Brent timing data. */
+  const ageSecondsFallback = Number.isFinite(sourceDetails.ageSeconds)
+    ? sourceDetails.ageSeconds / 3600
+    : null;
+  const fredAnchorCandidate = findBrentCandidate(candidates, (source) => /fred|dcoilbrenteu|fred-anchor/u.test(source)) || {};
+  const fredAnchorObservedAt = brentCandidateObservedAt(fredAnchorCandidate);
+  let ageFromObservedAt = null;
+  if (fredAnchorObservedAt) {
+    const normalizedAt = /^\d{4}-\d{2}-\d{2}$/.test(fredAnchorObservedAt)
+      ? `${fredAnchorObservedAt}T00:00:00Z`
+      : fredAnchorObservedAt;
+    const parsedMs = Date.parse(normalizedAt);
+    const nowMs = Date.parse(isoNow);
+    if (Number.isFinite(parsedMs) && Number.isFinite(nowMs)) {
+      ageFromObservedAt = (nowMs - parsedMs) / 3600000;
+      if (ageFromObservedAt < 0) ageFromObservedAt = null;
+    }
+  }
 
   return {
     contractVersion: 'v28.0I-5A',
@@ -703,10 +721,17 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
     promotionAudit: {
       promotionApplied: typeof promotion.applied === 'boolean' ? promotion.applied : null,
       moveStatus: firstString(promotion.moveStatus, validation.moveStatus),
-      promotionReason: firstString(promotion.reason, validation.reason),
+      /* M-39: keep Worker promotion.reason priority, then fall back to realtime consensus.reason. */
+      promotionReason: firstString(promotion.reason, validation.reason, consensus.reason),
       selectedSource,
       anchorSource: publicSpotProxy.source,
-      anchorAgeHours: firstFinite(sourceDetails.ageHours, sourceDetails.observedAgeHours, validation.anchorAgeHours)
+      anchorAgeHours: firstFinite(
+        sourceDetails.ageHours,
+        sourceDetails.observedAgeHours,
+        validation.anchorAgeHours,
+        ageSecondsFallback,
+        Number.isFinite(ageFromObservedAt) ? Number(ageFromObservedAt.toFixed(2)) : null
+      )
     },
     dataGaps: [
       'Platts Dated Brent / 正式 Dated Brent 未接入。',

@@ -275,6 +275,21 @@ brentPricingLayer
 - `boundaries.displayOnly`、`boundaries.auditOnly` 必须为 `true`。
 - `boundaries.affectsValuesBrent`、`affectsBrentPromotion`、`affectsScoring`、`affectsDecisionModel`、`affectsExecutionLock`、`affectsPositionGuidance` 必须为 `false`。
 
+### `promotionAudit` 子字段 contract (v28.0M-39)
+
+`brentPricingLayer.promotionAudit` 必须为 object，记录以下字段：
+
+| 字段 | 类型 | 含义 | null 含义 |
+|---|---|---|---|
+| `promotionApplied` | boolean \| null | 上游 Worker 是否已 promote 副代理为主值 | null = 上游 realtime 源未提供 promotion 决定 |
+| `moveStatus` | string \| null | Brent 移动状态分类（如 `normal` / `volatility-watch`） | null = 当前 realtime 源无 move-vs-previous engine |
+| `promotionReason` | string \| null | promotion 判定的原因（中文叙述） | null = 所有 fallback (`promotion.reason` → `validation.reason` → `consensus.reason`) 都未提供 |
+| `selectedSource` | string | 当前选中的 Brent 源 | 不应为 null |
+| `anchorSource` | string | publicSpotProxy 的 anchor 源 | 不应为 null |
+| `anchorAgeHours` | number \| null | anchor 数据的年龄（小时） | null = sourceDetails 和 candidates 都未提供时间信息 |
+
+M-39 增加 `consensus.reason` 作为 `promotionReason` 的第三 fallback；增加 `sourceDetails.ageSeconds / 3600` 和 fred-anchor `observedAt` 衍生作为 `anchorAgeHours` 的衍生 fallback。
+
 `publicSpotProxy.limitationZh` 必须说明该字段只是公开 Brent 现货代理观察，不等同于 Platts Dated Brent 或正式实物现货成交价。`futuresProxy.limitationZh` 必须说明该字段是公开期货 / 市场报价代理，仅用于验证层观察。
 
 v28.0I-5C 前端展示只读消费 `brentPricingLayer`。v28.0I-8 起默认以 compact summary 展示，Brent 主值审计、验证源明细和数据限制放入折叠区。前端不得在 render 层反推 Brent 主值、Brent promotion、评分、仓位、执行灯或交易建议；当 `brentPricingLayer` 缺失时只显示温和 fallback。
@@ -496,30 +511,30 @@ config/world-order-sipri-normalized.example.json
 
 ### Frontend asset cache version
 
-v28.0M-38V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+v28.0M-39V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
 当前前端资源版本为：
 
 ```text
-28.0M-38V
+28.0M-39V
 ```
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-38V`。
-- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-38V`。
-- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-38V"`。
+- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-39V`。
+- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-39V`。
+- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-39V"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs 28.0M-38V
-npm run bump:frontend-asset-version -- 28.0M-38V
+node scripts/bump-frontend-asset-version.mjs 28.0M-39V
+npm run bump:frontend-asset-version -- 28.0M-39V
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-38V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-39V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
@@ -1839,7 +1854,7 @@ Current data contract boundary:
 - Daily Brief remains source data / evidence detail, not a duplicate primary homepage judgment.
 - External AI output remains governed by its production contract and display gates.
 - Global Risk Heatmap remains a standalone frontend section.
-- The frontend asset cache version is `28.0M-38V`.
+- The frontend asset cache version is `28.0M-39V`.
 - No `data/*.json`, `realtime/*.json`, scoring, `decisionModel`, `executionLock`, or `positionGuidance` contract changes are introduced.
 
 ## v28.0M-7V homepage reading path frontend-only boundary
