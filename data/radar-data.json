@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-14T23:27:34.080Z",
+  "updatedAt": "2026-05-15T23:27:53.395Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "b5c5c247cc6836317861a53675abccee6eed7928",
-    "updatedAt": "2026-05-14T22:55:11.756Z",
+    "commitSha": "d0ee7f6c715af6710815e3aedf8b5512f03464e0",
+    "updatedAt": "2026-05-15T23:14:37.890Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-14T23:27:34.080Z"
+    "capturedAt": "2026-05-15T23:27:53.395Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-14T23:27:34.080Z",
+    "generatedAt": "2026-05-15T23:27:53.395Z",
     "macroState": "滞胀冲击 / 通胀冲击",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
     "dominantRiskChain": {
@@ -31,15 +31,15 @@
           "source": "displayInputsBaseline",
           "key": "breakeven10y",
           "labelZh": "10年盈亏平衡通胀",
-          "value": 2.47,
-          "summaryZh": "10年盈亏平衡通胀 2.47%。"
+          "value": 2.49,
+          "summaryZh": "10年盈亏平衡通胀 2.49%。"
         },
         {
           "source": "displayInputsBaseline",
           "key": "us10y",
           "labelZh": "美国10年期收益率",
-          "value": 4.46,
-          "summaryZh": "美国10年期收益率 4.46%。"
+          "value": 4.47,
+          "summaryZh": "美国10年期收益率 4.47%。"
         }
       ]
     },
@@ -116,21 +116,21 @@
         "key": "topRisk3",
         "labelZh": "顶部风险摘要",
         "value": null,
-        "summaryZh": "高收益利差 2.82%，信用风险可控但需观察。"
+        "summaryZh": "高收益利差 2.76%，信用风险可控但需观察。"
       },
       {
         "source": "topRisks",
         "key": "topRisk4",
         "labelZh": "顶部风险摘要",
         "value": null,
-        "summaryZh": "10年期美债 4.46%，实际利率 1.99%。"
+        "summaryZh": "10年期美债 4.47%，实际利率 2.00%。"
       }
     ]
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-14T23:27:34.080Z",
-    "score": 44,
+    "generatedAt": "2026-05-15T23:27:53.395Z",
+    "score": 49,
     "state": "watch",
     "stateZh": "背离观察",
     "summaryZh": "当前背离层综合状态为背离观察，仅用于实体压力与金融定价的 audit-only 观察。",
@@ -145,8 +145,8 @@
           "source": "score",
           "key": "score",
           "labelZh": "综合风险分数",
-          "value": 55,
-          "summaryZh": "综合风险分数 55。"
+          "value": 54,
+          "summaryZh": "综合风险分数 54。"
         },
         {
           "source": "modules",
@@ -159,15 +159,15 @@
           "source": "displayInputsBaseline",
           "key": "vix",
           "labelZh": "VIX",
-          "value": 17.87,
-          "summaryZh": "VIX 17.87。"
+          "value": 17.26,
+          "summaryZh": "VIX 17.26。"
         },
         {
           "source": "displayInputsBaseline",
           "key": "hyOas",
           "labelZh": "高收益债信用利差",
-          "value": 2.82,
-          "summaryZh": "高收益债信用利差 2.82%。"
+          "value": 2.76,
+          "summaryZh": "高收益债信用利差 2.76%。"
         }
       ]
     },
@@ -217,37 +217,37 @@
         "key": "rates_vs_risk_assets",
         "labelZh": "长端利率与风险资产背离",
         "category": "rates_assets",
-        "status": "watch",
-        "score": 34,
-        "summaryZh": "暂未形成明确的长端利率与风险资产背离。",
+        "status": "stress",
+        "score": 58,
+        "summaryZh": "长端利率压力与风险资产定价之间存在观察性背离，但这不是崩盘预测。",
         "evidence": [
           {
             "source": "displayInputsBaseline",
             "key": "us10y",
             "labelZh": "美国10年期收益率",
-            "value": 4.46,
-            "summaryZh": "美国10年期收益率 4.46%。"
+            "value": 4.47,
+            "summaryZh": "美国10年期收益率 4.47%。"
           },
           {
             "source": "displayInputsBaseline",
             "key": "real10y",
             "labelZh": "美国10年期实际利率",
-            "value": 1.99,
-            "summaryZh": "美国10年期实际利率 1.99%。"
+            "value": 2,
+            "summaryZh": "美国10年期实际利率 2.00%。"
           },
           {
             "source": "displayInputsBaseline",
             "key": "spx",
             "labelZh": "标普500",
-            "value": 7444.25,
-            "summaryZh": "标普500 7444。"
+            "value": 7501.24,
+            "summaryZh": "标普500 7501。"
           },
           {
             "source": "displayInputsBaseline",
             "key": "vix",
             "labelZh": "VIX",
-            "value": 17.87,
-            "summaryZh": "VIX 17.87。"
+            "value": 17.26,
+            "summaryZh": "VIX 17.26。"
           }
         ],
         "dataUsed": [
@@ -280,22 +280,22 @@
             "source": "displayInputsBaseline",
             "key": "us10y",
             "labelZh": "美国10年期收益率",
-            "value": 4.46,
-            "summaryZh": "美国10年期收益率 4.46%。"
+            "value": 4.47,
+            "summaryZh": "美国10年期收益率 4.47%。"
           },
           {
             "source": "displayInputsBaseline",
             "key": "hyOas",
             "labelZh": "高收益债信用利差",
-            "value": 2.82,
-            "summaryZh": "高收益债信用利差 2.82%。"
+            "value": 2.76,
+            "summaryZh": "高收益债信用利差 2.76%。"
           },
           {
             "source": "displayInputsBaseline",
             "key": "vix",
             "labelZh": "VIX",
-            "value": 17.87,
-            "summaryZh": "VIX 17.87。"
+            "value": 17.26,
+            "summaryZh": "VIX 17.26。"
           }
         ],
         "dataUsed": [
@@ -320,8 +320,8 @@
             "source": "score",
             "key": "score",
             "labelZh": "综合风险分数",
-            "value": 55,
-            "summaryZh": "综合风险分数 55。"
+            "value": 54,
+            "summaryZh": "综合风险分数 54。"
           },
           {
             "source": "modules",
@@ -334,15 +334,15 @@
             "source": "displayInputsBaseline",
             "key": "vix",
             "labelZh": "VIX",
-            "value": 17.87,
-            "summaryZh": "VIX 17.87。"
+            "value": 17.26,
+            "summaryZh": "VIX 17.26。"
           },
           {
             "source": "displayInputsBaseline",
             "key": "hyOas",
             "labelZh": "高收益债信用利差",
-            "value": 2.82,
-            "summaryZh": "高收益债信用利差 2.82%。"
+            "value": 2.76,
+            "summaryZh": "高收益债信用利差 2.76%。"
           }
         ],
         "dataUsed": [
@@ -382,22 +382,22 @@
             "source": "displayInputsBaseline",
             "key": "spx",
             "labelZh": "标普500",
-            "value": 7444.25,
-            "summaryZh": "标普500 7444。"
+            "value": 7501.24,
+            "summaryZh": "标普500 7501。"
           },
           {
             "source": "displayInputsBaseline",
             "key": "vix",
             "labelZh": "VIX",
-            "value": 17.87,
-            "summaryZh": "VIX 17.87。"
+            "value": 17.26,
+            "summaryZh": "VIX 17.26。"
           },
           {
             "source": "displayInputsBaseline",
             "key": "hyOas",
             "labelZh": "高收益债信用利差",
-            "value": 2.82,
-            "summaryZh": "高收益债信用利差 2.82%。"
+            "value": 2.76,
+            "summaryZh": "高收益债信用利差 2.76%。"
           }
         ],
         "dataUsed": [
@@ -435,13 +435,13 @@
   },
   "brentPricingLayer": {
     "contractVersion": "v28.0I-5A",
-    "generatedAt": "2026-05-14T23:27:34.080Z",
+    "generatedAt": "2026-05-15T23:27:53.395Z",
     "mode": "public_proxy_observation",
-    "summaryZh": "Brent 公开代理价格层显示，当前主值与公开期货/确认源之间未形成明显异常背离。",
+    "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
     "selectedBrent": {
       "value": 106.11,
       "source": "fred:DCOILBRENTEU",
-      "observedAt": "2026-05-14T22:55:11.756Z",
+      "observedAt": "2026-05-15T23:14:37.890Z",
       "status": "ok",
       "noteZh": "当前主 Brent 显示值来自现有 Daily / realtime 输入；该层只做公开代理审计，不改变 values.brent。"
     },
@@ -456,8 +456,8 @@
     "futuresProxy": {
       "labelZh": "Brent 期货代理",
       "source": "yahoo",
-      "value": 106.2,
-      "observedAt": "2026-05-14T22:30:59.000Z",
+      "value": 109.24,
+      "observedAt": "2026-05-15T20:59:53.000Z",
       "status": "ok",
       "limitationZh": "该字段为公开期货/市场报价代理，仅用于验证层观察。"
     },
@@ -475,8 +475,8 @@
       {
         "source": "barchart",
         "labelZh": "barchart",
-        "value": 105.72,
-        "observedAt": "2026-05-14T22:08:00.000Z",
+        "value": 109.26,
+        "observedAt": "2026-05-15T22:08:00.000Z",
         "status": "excluded",
         "role": "diagnostic",
         "participatesInPromotion": false,
@@ -485,9 +485,9 @@
       {
         "source": "stooq",
         "labelZh": "Stooq Brent diagnostic",
-        "value": null,
-        "observedAt": null,
-        "status": "missing",
+        "value": 109.19,
+        "observedAt": "2026-05-15",
+        "status": "excluded",
         "role": "diagnostic",
         "participatesInPromotion": false,
         "noteZh": "该来源仅作为诊断观察，不参与 Brent promotion。"
@@ -505,7 +505,7 @@
       {
         "source": "oilprice",
         "labelZh": "oilprice",
-        "value": 105.72,
+        "value": 109.26,
         "observedAt": null,
         "status": "excluded",
         "role": "diagnostic",
@@ -515,8 +515,8 @@
       {
         "source": "yahoo",
         "labelZh": "Yahoo BZ=F",
-        "value": 106.2,
-        "observedAt": "2026-05-14T22:30:59.000Z",
+        "value": 109.24,
+        "observedAt": "2026-05-15T20:59:53.000Z",
         "status": "ok",
         "role": "futures_proxy",
         "participatesInPromotion": true,
@@ -534,20 +534,20 @@
       }
     ],
     "proxySpread": {
-      "spotMinusFutures": -0.09,
-      "selectedMinusFutures": -0.09,
-      "maxProxyDivergencePct": 0.085,
-      "status": "normal",
-      "statusZh": "公开代理价差正常",
+      "spotMinusFutures": -3.13,
+      "selectedMinusFutures": -3.13,
+      "maxProxyDivergencePct": 2.921,
+      "status": "watch",
+      "statusZh": "公开代理价差观察",
       "interpretationZh": "该价差只用于公开代理价格层审计，不改变 Brent 主值或 promotion。"
     },
     "promotionAudit": {
       "promotionApplied": null,
       "moveStatus": null,
-      "promotionReason": null,
+      "promotionReason": "barchart/oilprice 基本一致；Oilprice 缺少 observedAt，仅作为弱确认源参与，推荐优先采用 barchart；FRED 仅作低频锚点参考。",
       "selectedSource": "fred:DCOILBRENTEU",
       "anchorSource": "fred-anchor",
-      "anchorAgeHours": null
+      "anchorAgeHours": 119.24388888888889
     },
     "dataGaps": [
       "Platts Dated Brent / 正式 Dated Brent 未接入。",
@@ -575,43 +575,43 @@
       "affectsPositionGuidance": false
     }
   },
-  "score": 55,
-  "scoreChange1d": 0,
-  "scoreChange7d": 0,
-  "scoreChange30d": -25,
+  "score": 54,
+  "scoreChange1d": -1,
+  "scoreChange7d": -1,
+  "scoreChange30d": -27,
   "trendLabel": "高位震荡偏紧",
   "currentMacroRegime": "滞胀冲击",
   "currentCrisisPhase": "通胀冲击",
   "nextCrisisPhase": "风险缓和",
-  "transitionRisk": 33,
+  "transitionRisk": 31,
   "confidenceScore": 100,
   "confidenceLevel": "高",
   "displayInputsBaseline": {
     "brent": 106.11,
     "dxy": 118.0392,
-    "vix": 17.87,
-    "hyOas": 2.82,
-    "us10y": 4.46,
-    "real10y": 1.99,
-    "breakeven10y": 2.47,
-    "gold": 4662.100098,
-    "spx": 7444.25
+    "vix": 17.26,
+    "hyOas": 2.76,
+    "us10y": 4.47,
+    "real10y": 2,
+    "breakeven10y": 2.49,
+    "gold": 4541.200195,
+    "spx": 7501.24
   },
   "topRisks": [
     "布伦特 106.1 美元，能源链条仍在传导。",
     "广义美元指数 118.04，融资环境尚未明显放松。",
-    "高收益利差 2.82%，信用风险可控但需观察。",
-    "10年期美债 4.46%，实际利率 1.99%。"
+    "高收益利差 2.76%，信用风险可控但需观察。",
+    "10年期美债 4.47%，实际利率 2.00%。"
   ],
   "decisionLine": "当前已进入 v27.0 交易引擎模式：实时快变量实时，执行状态灯为红灯 / 禁止新增。已激活结构信号：逆回购准备金告急。先看状态灯，再决定能不能动。",
-  "summary": "v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 106.1、广义美元指数 118.04、波动率 17.87、高收益利差 2.82%。",
+  "summary": "v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 106.1、广义美元指数 118.04、波动率 17.26、高收益利差 2.76%。",
   "modules": {
-    "geopolitical": 78,
+    "geopolitical": 77,
     "energy": 81,
     "inflation": 59,
     "liquidity": 48,
     "debt": 27,
-    "banking": 36
+    "banking": 35
   },
   "moduleTrends": {
     "geopolitical": 5,
@@ -619,38 +619,45 @@
     "inflation": 0,
     "liquidity": 0,
     "debt": 0,
-    "banking": 0
+    "banking": -1
   },
   "regimeProbabilities": {
-    "disinflationaryGrowth": 6,
+    "disinflationaryGrowth": 7,
     "liquidityBull": 0,
-    "stagflationShock": 31,
-    "crisisLiquiditySqueeze": 29,
+    "stagflationShock": 32,
+    "crisisLiquiditySqueeze": 28,
     "monetaryDebasement": 24,
-    "deflationaryBust": 10
+    "deflationaryBust": 9
   },
   "phaseSignals": [
-    "实时输入：布伦特 106.1 / 波动率 17.87 / 高收益利差 2.82%。",
-    "利率输入：10年期 4.46 / 实际利率 1.99 / 盈亏平衡通胀 2.47%。",
+    "实时输入：布伦特 106.1 / 波动率 17.26 / 高收益利差 2.76%。",
+    "利率输入：10年期 4.47 / 实际利率 2.00 / 盈亏平衡通胀 2.49%。",
     "快变量状态：实时，健康度 100。"
   ],
   "macroDrivers": {
     "fedLiquidity": {
       "walcl": 6728502,
       "walcl4wChange": 0.34,
-      "onRrp": 2.034,
-      "onRrpWeekChange": 163.131,
+      "onRrp": 0.647,
+      "onRrpWeekChange": -17.789,
+      "effectiveFedFundsRate": 3.63,
+      "sofr": 3.56,
+      "reserveBalances": 3102810,
+      "reserveBalances4wChange": -0.856,
       "regime": "平稳",
       "onRrpLevel": "告急",
-      "pressure": 45,
+      "pressure": 60,
       "sourceStatus": {
         "walcl": "live",
-        "onRrp": "live"
+        "onRrp": "live",
+        "effectiveFedFundsRate": "live",
+        "sofr": "live",
+        "reserveBalances": "live"
       }
     },
     "curve": {
-      "t10y2y": 0.48,
-      "t10y2yWeekChange": -0.01,
+      "t10y2y": 0.5,
+      "t10y2yWeekChange": 0.02,
       "regime": "正常",
       "steepeningAlert": false,
       "sourceStatus": {
@@ -659,13 +666,13 @@
     },
     "credit": {
       "igOas": 0.76,
-      "igOas1dChange": -0.01,
-      "igHyRatio": 0.27,
+      "igOas1dChange": 0,
+      "igHyRatio": 0.275,
       "regime": "偏宽松",
       "sourceStatus": {
         "igOas": "live"
       },
-      "hyOas": 2.82
+      "hyOas": 2.76
     },
     "consumer": {
       "umichSentiment": 53.3,
@@ -686,7 +693,7 @@
       {
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
-        "detail": "ON RRP 20.34 亿美元",
+        "detail": "ON RRP 6.47 亿美元",
         "reliability": "live"
       }
     ],
@@ -708,7 +715,7 @@
     "change1d": 0,
     "directionLabel": "快变量实时覆盖",
     "notes": [
-      "广义美元指数 118.04 / 高收益利差 2.82 / 波动率 17.87 为三大流动性输入。",
+      "广义美元指数 118.04 / 高收益利差 2.76 / 波动率 17.26 为三大流动性输入。",
       "实时数据源刷新成功。"
     ],
     "pillars": [
@@ -719,40 +726,40 @@
       },
       {
         "label": "跨资产波动",
-        "value": 41,
-        "delta": 0
+        "value": 37,
+        "delta": -2
       },
       {
         "label": "信用 / 利差",
-        "value": 11,
-        "delta": 0
+        "value": 9,
+        "delta": -1
       },
       {
         "label": "利率敏感压力",
-        "value": 46,
+        "value": 47,
         "delta": 0
       }
     ],
     "structuralSignals": {
       "fedAssetTrend": "平稳",
       "onRrpLevel": "告急",
-      "structuralPressure": 45
+      "structuralPressure": 60
     }
   },
   "timeDimension": {
     "trend30d": "滚动风险曲线（混合实时驱动）",
-    "scoreChange30d": -25,
-    "avg30d": 60,
+    "scoreChange30d": -27,
+    "avg30d": 59,
     "peak30d": 81,
     "trough30d": 53,
-    "drawFromPeak": -26,
+    "drawFromPeak": -27,
     "transmissionSpeed": 63,
     "transmissionAcceleration": "平稳",
     "dominantPath": "油价 → 通胀 → 利率 → 股票",
     "pathChanges": [
       {
         "label": "油价→通胀",
-        "value": 84,
+        "value": 85,
         "delta": 8
       },
       {
@@ -762,22 +769,22 @@
       },
       {
         "label": "美元→信用",
-        "value": 56,
+        "value": 55,
         "delta": 0
       },
       {
         "label": "利率→股票",
         "value": 22,
-        "delta": -2
+        "delta": -3
       },
       {
         "label": "流动性→估值",
-        "value": 45,
-        "delta": 0
+        "value": 43,
+        "delta": -2
       }
     ],
     "notes": [
-      "当前综合风险分数 55。",
+      "当前综合风险分数 54。",
       "执行引擎状态：红灯 / 禁止新增。",
       "慢变量由实时快照与结构性数据共同驱动。"
     ]
@@ -788,20 +795,20 @@
       "label": "美国",
       "shortLabel": "美国",
       "risk": 45,
-      "note": "融资偏紧 + 实际利率 1.99%"
+      "note": "融资偏紧 + 实际利率 2.00%"
     },
     {
       "key": "europe",
       "label": "欧洲",
       "shortLabel": "欧洲",
-      "risk": 59,
+      "risk": 58,
       "note": "能源敏感 + 增长拖累"
     },
     {
       "key": "middleeast",
       "label": "中东",
       "shortLabel": "中东",
-      "risk": 78,
+      "risk": 77,
       "note": "原油与地缘仍是主风险源"
     },
     {
@@ -1042,7 +1049,7 @@
       "asset": "黄金",
       "score": 87,
       "bias": "中性偏多",
-      "reason": "金价 4662.1，通胀对冲仍在，但真实利率继续约束。"
+      "reason": "金价 4541.2，通胀对冲仍在，但真实利率继续约束。"
     },
     {
       "asset": "原油",
@@ -1060,7 +1067,7 @@
       "asset": "美债久期",
       "score": 38,
       "bias": "谨慎偏多",
-      "reason": "10年期 4.46 / 实际利率 1.99%。"
+      "reason": "10年期 4.47 / 实际利率 2.00%。"
     },
     {
       "asset": "科技股",
@@ -1076,7 +1083,7 @@
     },
     {
       "asset": "比特币",
-      "score": 23,
+      "score": 24,
       "bias": "低配",
       "reason": "高波动资产对流动性最敏感。"
     }
@@ -1195,26 +1202,26 @@
       "name": "基准情景",
       "probability": 30,
       "description": "快变量显示风险仍高位但未失控，市场以防守与分化为主。",
-      "triggers": "布伦特 106.1 / 广义美元指数 118.04 / 高收益利差 2.82",
+      "triggers": "布伦特 106.1 / 广义美元指数 118.04 / 高收益利差 2.76",
       "assets": "能源领先 / 美元与黄金保留 / 成长受限"
     },
     {
       "name": "风险情景",
-      "probability": 26,
+      "probability": 23,
       "description": "信用与波动率继续上行，执行引擎会切到红灯。",
       "triggers": "布伦特 > 110 或高收益利差 > 4.5% 或波动率 > 28",
       "assets": "只允许减仓 / 现金与美元提高 / 高波动回避"
     },
     {
       "name": "极端情景",
-      "probability": 45,
+      "probability": 43,
       "description": "多源关键快变量连续失效时，系统进入缓存模式并强制防守。",
       "triggers": "关键缺失 ≥ 4 或缓存模式启动",
       "assets": "停止加仓 / 保留现金 / 仅做风险控制"
     },
     {
       "name": "反转情景",
-      "probability": 3,
+      "probability": 4,
       "description": "美元走弱、波动率和利差收敛后，系统重新开放进攻窗口。",
       "triggers": "波动率 < 18 / 高收益利差 < 3.7 / 布伦特 < 95",
       "assets": "逐步恢复权益与质量成长配置"
@@ -1230,7 +1237,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-14T23:27:34.080Z",
+        "triggeredAgo": "2026-05-15T23:27:53.395Z",
         "condition": "结构性双压触发红灯（逆回购准备金临界告急）。系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -1238,15 +1245,15 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-14T23:27:34.080Z",
-        "condition": "ON RRP 20.34 亿美元",
+        "triggeredAgo": "2026-05-15T23:27:53.395Z",
+        "condition": "ON RRP 6.47 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
       {
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-14T23:27:34.080Z",
+        "triggeredAgo": "2026-05-15T23:27:53.395Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -1263,12 +1270,12 @@
     "critical": [
       "布伦特 106.1",
       "广义美元指数 118.04",
-      "高收益利差 2.82%"
+      "高收益利差 2.76%"
     ],
     "drivers": [
-      "波动率 17.87",
-      "10年期美债 4.46%",
-      "实际利率 1.99%"
+      "波动率 17.26",
+      "10年期美债 4.47%",
+      "实际利率 2.00%"
     ],
     "watchlist": [
       "下一次通胀数据",
@@ -1285,14 +1292,14 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-14T23:27:34.080Z",
+    "lastRun": "2026-05-15T23:27:53.395Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
   },
   "tradingSystem": {
     "signalEngine": {
-      "strength": 55,
+      "strength": 54,
       "direction": "只允许减仓/防守",
       "consistency": "高一致性",
       "macroSignal": "滞胀冲击",
@@ -1300,7 +1307,7 @@
       "chainSignal": "油价→通胀→利率→股票",
       "notes": [
         "执行引擎状态：红灯 / 禁止新增。",
-        "关键快变量：布伦特 106.1 / 广义美元指数 118.04 / 波动率 17.87 / 高收益利差 2.82。",
+        "关键快变量：布伦特 106.1 / 广义美元指数 118.04 / 波动率 17.26 / 高收益利差 2.76。",
         "健康度 100，关键缺失 0。",
         "结构信号：逆回购准备金告急。"
       ]
@@ -1403,11 +1410,11 @@
       "checkpoints": [
         "布伦特 当前 106.1",
         "广义美元指数 当前 118.04",
-        "波动率指数 当前 17.87",
-        "高收益利差 当前 2.82%",
-        "曲线 10年-2年 当前 0.48",
+        "波动率指数 当前 17.26",
+        "高收益利差 当前 2.76%",
+        "曲线 10年-2年 当前 0.50",
         "投资级信用利差 当前 0.76%",
-        "逆回购余额 当前 20.34 亿美元"
+        "逆回购余额 当前 6.47 亿美元"
       ]
     },
     "executionLock": {
@@ -1438,13 +1445,13 @@
     "contractVersion": "v27.0",
     "strategyState": "Defensive",
     "stateLabel": "红灯 / 禁止新增",
-    "stateScore": 55,
-    "stateReason": "红灯 / 禁止新增，风险分数 55。结构信号激活：逆回购准备金告急（ON RRP 20.34 亿美元）。 主导模块：能源、地缘政治、通胀。",
+    "stateScore": 54,
+    "stateReason": "红灯 / 禁止新增，风险分数 54。结构信号激活：逆回购准备金告急（ON RRP 6.47 亿美元）。 主导模块：能源、地缘政治、通胀。",
     "structuralSignals": [
       {
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
-        "detail": "ON RRP 20.34 亿美元",
+        "detail": "ON RRP 6.47 亿美元",
         "reliability": "live"
       }
     ],
@@ -1459,7 +1466,7 @@
       },
       {
         "key": "geopolitical",
-        "score": 78,
+        "score": 77,
         "label": "地缘政治",
         "trend": 0
       },
@@ -1485,7 +1492,7 @@
         "若总仓位高于 42%，必须先减到 38% 附近。",
         "若高波动资产 > 2%，立即降回 2% 以下。",
         "若现金缓冲 < 30%，立即补回。",
-        "关注结构信号：逆回购准备金告急（ON RRP 20.34 亿美元）。"
+        "关注结构信号：逆回购准备金告急（ON RRP 6.47 亿美元）。"
       ],
       "blockedActions": [
         "禁止新增股票与高波动仓位。",
@@ -1505,12 +1512,12 @@
       "upgradeTriggers": [
         "布伦特 106.1",
         "广义美元指数 118.04",
-        "高收益利差 2.82%",
-        "10年-2年利差 0.48",
+        "高收益利差 2.76%",
+        "10年-2年利差 0.50",
         "投资级信用利差 0.76%"
       ],
       "activeEscalationSignals": [
-        "逆回购准备金告急（ON RRP 20.34 亿美元）"
+        "逆回购准备金告急（ON RRP 6.47 亿美元）"
       ]
     },
     "invalidationRules": {
@@ -1524,7 +1531,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-05-14T23:27:34.080Z",
+    "generatedAt": "2026-05-15T23:27:53.395Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [
@@ -1591,7 +1598,7 @@
       {
         "key": "brent_proxy_spread_observation",
         "labelZh": "Brent 代理价差观察",
-        "statementZh": "公开 Brent 代理价格之间暂未显示需要升级处理的价差压力。",
+        "statementZh": "公开 Brent 代理价格之间显示观察性价差，需要结合验证源继续跟踪。",
         "basedOn": [
           "brentPricingLayer.proxySpread"
         ],
