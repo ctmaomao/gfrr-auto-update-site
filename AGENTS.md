@@ -47,6 +47,7 @@ be treated as governing rules for the whole project:
 - `docs/CODE_DEAD_WEIGHT_REMOVAL_M36.md` — Authoritative within M-36 dead weight removal scope only
 - `docs/DOCUMENTATION_VERSION_DRIFT_FIX_M37.md` — Authoritative within M-37 documentation version drift fix scope only
 - `docs/SECTION_BORDER_CONSISTENCY_M38.md` — Authoritative within M-38 editorial section border consistency scope only
+- `docs/BRENT_PROMOTION_AUDIT_M39.md` — Authoritative within M-39 Brent promotionAudit field completeness scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -92,7 +93,7 @@ documentation drift risk identified in the v28.0M-audit.
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-38V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-39V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -112,7 +113,8 @@ documentation drift risk identified in the v28.0M-audit.
 - v28.0M-36V Code Dead Weight Removal 用 `?v=28.0M-36V` 刷新前端 asset graph；本轮只删除已验证无依赖的 dead function、orphan CSS 和 README 重复说明，并保留 dynamic market-temperature bucket selectors 与 `.chain-impact-direction.positive` / `.negative` 复合选择器。不得把 M-36 解释为功能、数据、workflow、DESIGN.md 或业务逻辑变更。
 - v28.0M-37V Documentation Version Drift Fix 用 `?v=28.0M-37V` 刷新前端 asset graph；本轮只修正文档版本漂移、sanity check 数量漂移、historical marker 和 `data/market-pricing-history.json` 的 `descriptionZh` 元数据。不得把 M-37 解释为功能、数据逻辑、workflow、DESIGN.md 或业务逻辑变更。
 - v28.0M-38V Section Border Consistency Governance 用 `?v=28.0M-38V` 刷新前端 asset graph；本轮新增全局 `.editorial-section` 强边框与 `#macro-risk-overview` scoped reset，统一 IA section 视觉分隔并避免 macro overview 双层边框。不得把 M-38 解释为数据、workflow、scoring、decision、execution、position 或 DESIGN.md 变更。
-- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0M-38V` / `npm run bump:frontend-asset-version -- 28.0M-38V`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-38V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
+- v28.0M-39V Brent Promotion Audit Completeness 用 `?v=28.0M-39V` 刷新前端 asset graph；本轮只用现有 in-memory realtime 数据补齐 `promotionAudit.promotionReason` fallback 和 `anchorAgeHours` 衍生 fallback，不新增数据源、不改变 promotion 语义、不改 data files。
+- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0M-39V` / `npm run bump:frontend-asset-version -- 28.0M-39V`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-39V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
 - v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。

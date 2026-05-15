@@ -17,7 +17,7 @@
 
 ## 当前版本状态
 
-当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-38V`。
+当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-39V`。
 
 当前主运行状态：
 
@@ -35,8 +35,8 @@
 - `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`consumer_vs_asset_pricing`、`brentPricingLayer` 和 `aiInterpretationLayer` 都是解释层 / 审计层 / 展示层。
 - External AI production panel 是只读辅助层；manual / provider artifacts 不等于 scoring、Daily、frontend 或 production write readiness。
 - Market Pricing Temperature 已进入 M-27 以后前端展示阶段，后续边界以对应 M-series docs 为准。
-- Frontend asset cache version 当前为 `28.0M-38V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
-- `npm run check:all` 当前由 `package.json` 定义，包含 48 个串联检查项。
+- Frontend asset cache version 当前为 `28.0M-39V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
+- `npm run check:all` 当前由 `package.json` 定义，包含 49 个串联检查项。
 - Market Pricing first real record write scaffold 在任何写入前运行 6 sanity checks；细节以 `docs/OPERATIONS.md` 和 `docs/SYSTEM_UPGRADE_PLAN.md` 为准。
 
 最近维护节奏：
@@ -44,6 +44,7 @@
 - M-31 到 M-35 完成 editorial design contract compliance、DESIGN.md amendment、bias color semantics、Group A spacing governance、Group B spacing governance 和 footer redesign。
 - M-36 仅删除已验证无依赖的 dead weight，并同步前端 asset cache version；不改变数据、工作流、决策、执行、仓位或 DESIGN.md contract。
 - Section border consistency M-38 adds global `.editorial-section` border (`var(--paper-line-strong)`) to unify visual demarcation across 7 IA sections. `#macro-risk-overview` scoped reset prevents double-layer visual since its inner `.macro-overview-block` cards provide their own borders. Frontend display layer only.
+- Brent promotion audit completeness M-39 adds `consensus.reason` as third fallback for `promotionAudit.promotionReason` and derives `anchorAgeHours` from `sourceDetails.ageSeconds` or fred-anchor `observedAt`. Backend reading logic only; no new data source. Frontend display unaffected until next pipeline run.
 
 ## 核心架构
 
@@ -198,6 +199,6 @@ README 只保留入口级说明。若 README 与 `AGENTS.md`、`DESIGN.md`、`pa
 
 - 页面公开标签：`v28.0C`。
 - 工程稳定观察基线：`v28.0J`。
-- 当前 frontend asset cache version：`28.0M-38V`。
+- 当前 frontend asset cache version：`28.0M-39V`。
 - 当前 runtime status：Node.js 24 LTS。
-- 当前 M-series note：M-38 统一 editorial section 边框治理，不改变功能行为。
+- 当前 M-series note：M-39 补齐 Brent promotionAudit 可由现有 realtime 数据推导的两个审计字段，不改变数据源、promotion 语义、评分或前端展示。
