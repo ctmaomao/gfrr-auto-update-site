@@ -48,6 +48,7 @@
 - Fed liquidity FRED extension M-41 adds FRED:DFF (effective federal funds rate) and FRED:SOFR (secured overnight financing rate) to `resolveFedLiquidity`. It formalizes `macroDrivers.fedLiquidity` DATA_CONTRACT for the first time. Backend pipeline only; visible in B3 政策代理 and B4 金融脆弱性 evidence after next scheduled daily-pipeline run.
 - Fed liquidity triplet completion M-42 adds FRED:WRESBAL (bank reserve balances, weekly Wednesday, NSA, millions USD) to `resolveFedLiquidity` with 4-week change calculation. It completes the Fed liquidity triplet (M-41 DFF + SOFR rates, M-42 WRESBAL quantity). B4 financial fragility evidence grows from 4 to 5 lines. WRESBAL does not enter pressure score. Values populate on next scheduled daily-pipeline run.
 - External AI provenance metadata completion M-43 fills 6 provenance fields (`runId`, `artifactName`, `artifactId`, `artifactDigest`, `sourceCommit`, `sourceDataUpdatedAt`) in `externalAiInterpretationLayer` via GitHub Actions env vars and SHA256 hash. No AI behavior change. Completes the last remaining M-39 audit null fields. Values populate on next `external-ai-production-refresh.yml` workflow run.
+- Stable Observation Audit deprecation M-44: Removes the stale workflow and audit script that were hard-coded to v28.0K-3 phase expectations and have been failing daily for several months. v28.0L-aware checks (external-ai-production-contract, write-guard, provenance-completeness) already cover this functionality. Cleanup only — no behavior, schema, or data change.
 
 ## 核心架构
 
@@ -204,4 +205,4 @@ README 只保留入口级说明。若 README 与 `AGENTS.md`、`DESIGN.md`、`pa
 - 工程稳定观察基线：`v28.0J`。
 - 当前 frontend asset cache version：`28.0M-43V`。
 - 当前 runtime status：Node.js 24 LTS。
-- 当前 M-series note：M-43 completes External AI provenance metadata from GitHub Actions run context and DeepSeek output SHA256; M-40 已跳过且无 PR。
+- 当前 M-series note：M-44 deprecates the stale Stable Observation Audit workflow/script; M-43 completes External AI provenance metadata from GitHub Actions run context and DeepSeek output SHA256; M-40 已跳过且无 PR。

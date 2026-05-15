@@ -88,6 +88,26 @@ M-42 is documented in `docs/M-42_FED_LIQUIDITY_RESERVE_BALANCES.md`. It extends 
 
 M-43 is documented in `docs/EXTERNAL_AI_PROVENANCE_TRACKING_M43.md`. It fills external-AI provenance metadata from GitHub Actions run context and a SHA256 digest of the DeepSeek output artifact. It does not change AI prompt/provider behavior, quality review, write guard, frontend display, scoring, decision, execution, position, or committed data files.
 
+### M-44 (废弃 Stable Observation Audit 过期工作流)
+
+文档: 本节
+摘要: 删除 `.github/workflows/stable-observation-audit.yml` + `scripts/audit-stable-observation.mjs` + `package.json` 中 `audit:stable-observation` 入口。
+
+废弃理由:
+- audit 脚本写于 v28.0K-3 阶段，硬编码期望:
+  - `EXPECTED_FRONTEND_VERSION = '28.0J-2'`（当前 28.0M-44V）
+  - `externalAiInterpretationLayer.contractVersion === 'v28.0K-3A'`（当前 `v28.0L-external-ai-production-1`）
+  - External AI 应处于 disabled state（实际已生产化）
+- 项目自 v28.0L 起 External AI 已完全启用 DeepSeek API 生产调用
+- audit 与生产状态长期不匹配，每日 10:30 UTC 持续失败约数月
+- v28.0L-aware checks 已覆盖该 audit 的功能:
+  - `check:external-ai-production-contract`（in check:all）
+  - `check:external-ai-production-write-guard`（in check:all）
+  - `check:external-ai-provenance-completeness`（M-43, in check:all）
+  - `check:all` 全套 51 项 end-to-end 验证
+
+不再尝试维护或修复该 audit。
+
 ### Operating Document (large, mixed content; consult selectively)
 
 These documents contain both current operating procedures and accumulated
