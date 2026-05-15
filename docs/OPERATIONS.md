@@ -116,27 +116,9 @@ v28.0K-3A 后，如果 `externalAiInterpretationLayer.status="disabled"`，这�
 
 ## Stable Observation Audit
 
-v28.0K-3D adds a read-only stable observation gate for the v28.0K baseline.
+v28.0K-3D originally added a read-only stable observation gate for the v28.0K baseline. M-44 deprecates that legacy gate because it was hard-coded to the disabled external-AI scaffold era and no longer matches the v28.0L+ production External AI state.
 
-Local command:
-
-```bash
-npm run audit:stable-observation
-```
-
-GitHub Actions workflow:
-
-```text
-Stable Observation Audit
-```
-
-Status meaning:
-
-- PASS: live frontend, live data, disabled `externalAiInterpretationLayer`, rule-based `aiInterpretationLayer`, Worker Health, realtime-data health, and `check:external-ai-output` are stable enough. v28.0K-4 design planning may be considered.
-- WARN: non-blocking observation issue. Review warnings before proceeding to v28.0K-4.
-- FAIL: blocking issue. Do not proceed to v28.0K-4 until the issue is fixed.
-
-The workflow is observation-only. It must not auto-fix, auto-open issues, auto-commit, auto-push, deploy Worker, trigger recovery workflows, or hand-edit `data/radar-data.json`. A disabled scaffold is expected and must not be treated as an API failure.
+Do not restore or run the retired workflow/script. Use the v28.0L-aware checks for current coverage: `check:external-ai-production-contract`, `check:external-ai-production-write-guard`, `check:external-ai-provenance-completeness`, and the full `check:all` chain.
 
 ## v28.0K-4A Manual API Test Design
 
