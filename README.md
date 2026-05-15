@@ -17,68 +17,31 @@
 
 ## 当前版本状态
 
-当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-34V`。
+当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-36V`。
 
-已经具备：
+当前主运行状态：
 
-- Worker-first 实时主源，前端按 strict gate 选择 Worker generated preview。
-- GitHub `realtime-data` fallback 与本地 `./realtime/market.json` fallback。
-- realtime freshness / degraded / unavailable 状态展示。
-- daily baseline 构建与 `displayInputsBaseline` fallback。
-- 六大风险模块、热力图、传导网络、资产偏好矩阵和情景树。
-- 决策系统、执行灯、仓位建议、Action Queue、Trigger Monitor 和 Invalidation Rules。
-- secondary diagnostics 独立 endpoint `/market.secondary-preview.json`，当前接入 VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB`、US10Y via Yahoo `^TNX` 与 SPX via Yahoo `^GSPC` 诊断。
-- Brent audit、freshness-gated promotion、extreme-move confirmation guard、D-8B-lite sourceProbe 与 Brent source explainability UI。
-- D-8B findings 已确认 Google Finance / Stooq 当前不可升级为 Brent validation source，仍只保留 diagnostic sourceProbe。
-- Worker fetch timeout guard 已上线，外部免费源慢响应只进入 diagnostics，不改变主值选择。
-- Daily vs Worker Input Audit 已上线，用于观察 Daily 消费的 `realtime-data` payload 与当前 Worker preview 的差异；该审计不改变 Daily 输入或前端 Worker-first 选择逻辑。
-- Worker-first Health Check 已上线，定时只读检查主 `/market.worker-preview.json` 与独立 `/market.secondary-preview.json` 的健康、隔离和诊断字段。
-- Check Realtime Health 已对齐为 soft-fail：只观察 GitHub `realtime-data` fallback / Daily baseline freshness，stale / unavailable 只报告 warning 与 `shouldRecover`，Worker-first runtime hard gate 由 Check Worker Health 承担。
-- Recover Stale Realtime Market 只处理 fallback `realtime-data` 恢复，不回滚或修正 Worker-first runtime。
-- v28.0G-3 只清理健康检查 Summary 文案：Check Worker Health 明确为 hard gate，Check Realtime Health 明确为 fallback / Daily baseline soft observer；不改变数据源、Worker 或前端。
-- v28.0G-4A 增加 Trading Economics Brent observedAt audit-only：只在 Brent promotion / audit 输出中展示 observedAt freshness 诊断，不改变 `values.brent` 或 promotion hard gate。
-- v28.0G-4B decision：建议另开 G-4C 实现 Trading Economics freshness hard gate；G-4B does not change runtime behavior。G-4C 方案为 TE `observedAt` 可解析且 `ageHours <= 48` 小时，否则用 `tradingeconomics-observedAt-invalid` 或 `tradingeconomics-confirmation-stale` hold promotion；旧 PR #53 已 superseded，不再使用。
-- v28.0G-4C 实现 Trading Economics freshness hard gate：Brent promotion 要求 Yahoo fresh + TE observedAt fresh；TE observedAt 不可解析或超过 48 小时会 hold promotion。TE candidate 仍保留 value/audit，observedAt failure does not make candidate ok false；D-6 confirmed-extreme-move 也要求 TE freshness fresh。
-- v28.0G-6 Operations Runbook 已加入 `docs/OPERATIONS.md`：运维判断、rollback / No rollback、KV usage 和 development sequencing 以该 runbook 为准。PR #53 superseded；KV write guard deferred，先观察。
-- v28.0G-7A Health Summary Snapshot / Audit Export：`Check Worker Health` 生成 `worker-health-snapshot` artifact，用于回看 Worker / Brent TE freshness / sourceProbe / secondary / reasons；不写 KV，不写 data/realtime，不改变 fail 边界。
-- v28.0G-7B Health Snapshot Review Helper：`npm run review:worker-health-snapshot -- health-worker-snapshot.json` 本地只读审阅 artifact，输出 PASS / WARN / FAIL；不访问网络，不写 KV / data / realtime，不替代 hard gate。
-- v28.0H-2 / H-5 / H-5A World Order Stress Overlay UI Shell：前端资源版本统一为 `?v=28.0M-35V`，并新增“世界秩序压力层”独立展示区。H-5 会解释 confidence / data quality limitations；H-5A 使用中文趋势 / 来源标签和更清晰的 evidence attribution。前端只读取 `data/world-order-stress.json`，不直接调用外部 API，不接入 `decisionModel`，不改变 Worker runtime、数据源、KV 或 realtime / baseline 计算。
-- v28.0G-9B Frontend Asset Version Bump Helper：新增本地只读维护工具 `node scripts/bump-frontend-asset-version.mjs 28.0G-10` / `npm run bump:frontend-asset-version -- 28.0G-10`，用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-35V`；该工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
-- v28.0G-10 Data Check Expected-Skip Noise Cleanup：`npm run check:data` 默认不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 已是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要细节时运行 `npm run check:data:verbose`，需要把 mismatch 当作失败时运行 `npm run check:data:strict-live-alignment`。本轮不改 data/realtime、不改 Worker runtime、不改前端、不 deploy。
-- v28.0H-1 World Order Stress Overlay Data Pipeline MVP：新增 `data/world-order-stress.json` 与本地构建 / 检查脚本。该层只做结构性风险识别和市场交叉验证，不预测战争、不输出战争概率。`npm run check:world-order` 校验该数据产物，并已纳入 `npm run check:all`。H-2 已加入独立 UI shell；H-2B 起 market confirmation 会记录输入来源；H-2C 起 GDELT 支持 partial success 与 stale cache fallback；H-3 起支持 SIPRI manual normalized import；H-4 增强 `npm run build:world-order` / `npm run check:world-order` summary，并新增 `npm run review:world-order` 只读审阅。详细说明见 `docs/WORLD_ORDER_STRESS.md`。
-- v28.0I Cockpit Structure Upgrade：已上线 Daily Brief / 今日主判断、Divergence Layer / 实体压力与金融定价背离、Consumer vs Asset Divergence、Brent Public Proxy Pricing Layer 与 compact cockpit layout。当前 live data 包含 `dailyBrief.contractVersion = v28.0I-1`、`divergenceLayer.contractVersion = v28.0I-3A`、`macroDrivers.consumer`、`consumer_vs_asset_pricing` 与 `brentPricingLayer.contractVersion = v28.0I-5A`。这些字段均为 display-only / audit-only / interpretation-only，不接入 scoring / decision。详见 `docs/SYSTEM_UPGRADE_PLAN.md`、`docs/DATA_CONTRACT.md` 与 `docs/OPERATIONS.md`。
-- v28.0J AI Interpretation Layer：已上线 rule-based / non-external-AI display layer。当前 live data 包含 `aiInterpretationLayer.contractVersion = v28.0J-0`，mode 为 `rule_based_structured_interpretation`；该层只把站内结构化数据拆分为事实、推断、模型判断、情景假设、数据缺口、反证条件和证据链接，不调用 DeepSeek / OpenAI / 外部 AI API，不进入 scoring / decision / execution / position。详见 `docs/SYSTEM_UPGRADE_PLAN.md`、`docs/DATA_CONTRACT.md` 与 `docs/OPERATIONS.md`。
-- v28.0K-0 External AI API Design：新增 future DeepSeek / OpenAI / external AI API design and output audit plan；当前不接 API、不显示外部 AI 输出、不改变 rule-based `aiInterpretationLayer`。详见 `docs/EXTERNAL_AI_API_DESIGN.md`。
-- v28.0K-1 External AI Prompt Contract：新增 future prompt contract 与非生产 sample fixtures；当前不接 API、不写 secrets、不改变 runtime。详见 `docs/EXTERNAL_AI_PROMPT_CONTRACT.md`。
-- v28.0K-2 External AI Output Validator：新增 `npm run check:external-ai-output`，用于离线验证非生产 external AI output fixture / artifact 的 contract、source attribution、banned copy 与越权文案；不调用 API，不接入 runtime。
-- v28.0K-3 Disabled External AI Scaffold：live data 已包含 disabled `externalAiInterpretationLayer` scaffold。它是 diagnostic-only，不是 active external AI，不调用 DeepSeek / OpenAI / 外部 AI API，不进入 scoring / decision / execution / position。
-- v28.0K-3D Stable Observation Audit：新增只读 workflow 监控 v28.0K baseline，并作为是否考虑 v28.0K-4 design planning 的 gate。
-- v28.0K-4A External AI Manual API Test Design：新增 future manual external AI API test design；production 仍保持 disabled，不接 API、不写 secrets、不改变 runtime。
-- v28.0K-4B External AI Manual Dry-Run Scaffold：新增 `npm run manual:external-ai:dry-run`，仅输出 no-network scaffold report，不调用 provider。
-- v28.0K-4C External AI Provider Adapter Skeleton：新增 disabled provider adapter skeleton 与 `npm run check:external-ai-provider-adapters`；`deepseek` / `openai` 仍只是 refused placeholders，不联网、不读 API keys。
-- v28.0K-4D DeepSeek Manual Artifact Test：新增显式 opt-in 的 `npm run manual:external-ai:deepseek`，仅写 manual artifact 并通过 validator gate；不写生产数据、不显示前端、不影响 scoring / decision / execution / position。OpenAI 仍 disabled。
-- v28.0K-4E Live Site Data Manual Input Artifact：新增 `npm run manual:external-ai:build-input`，从本地或 allowlisted live `radar-data.json` 生成 ignored manual input artifact；不调用 DeepSeek、不读 API keys、不写生产数据、不显示前端。
-- v28.0K-4E-1 Live Input Compaction and Timeout Diagnostics：新增 compact manual input artifact 与 `--timeout-ms` 诊断，用于降低 live-data DeepSeek manual test 的输入体积；仍不自动调用 DeepSeek、不写生产数据、不显示前端。
-- v28.0K-4G External AI Manual Test Baseline：External AI API 仍未 production-enabled。当前只存在本地 / 手动 DeepSeek artifact path，输出必须先通过 `check:external-ai-output` 与 `review:external-ai-artifact`；尚无 frontend / Daily / Worker / workflow / production data integration。
-- v28.0L-0 External AI Production Integration Design：新增 production integration design doc；当前仍无 production external AI、无 Daily provider call、无 frontend display、无 production data write。
-- v28.0L-1 External AI Implementation Readiness Audit：新增 readiness audit；结论为 production integration not ready，下一阶段只允许 disabled skeleton/no provider calls。
-- v28.0L-2 Disabled Production Provider Path Skeleton：新增 disabled production provider skeleton 与安全检查；无 production external AI active、无 provider call、无 secrets、无 frontend / Daily integration。
-- v28.0L-3 Manual Workflow Dispatch Design：仅设计 future manual workflow testing；当前无 workflow、无 provider call、无 GitHub secret、无 production data write。
-- v28.0L-3B External AI Manual Dry Run Workflow：新增 manual `workflow_dispatch` dry-run workflow，仅跑安全检查和 dry-run diagnostics；不调用 DeepSeek，不使用 secrets，不写 production data。
-- v28.0L-3B-1 External AI Manual Dry Run Audit：已记录一次 GitHub Actions manual dispatch dry-run PASS（run `25583503038`）；这仍不调用 DeepSeek，也不代表 provider-call readiness。
-- v28.0L-3C External AI Provider-Call Workflow Design：仅新增 future provider-call workflow design；当前仍无 DeepSeek workflow call、无 GitHub secret、无 provider artifact、无 production data write。
-- v28.0L-3D Provider-Call Workflow Readiness Checklist：仅新增 no-code readiness checklist；provider-call workflow 仍未实现，不添加 GitHub secret，不运行 DeepSeek，不写 production data，不显示 frontend，implementation 仍为 `not_ready_until_missing_items_resolved`。
-- v28.0L-3E Provider-Call Workflow Implementation Plan：仅新增 no-code implementation plan；provider-call implementation 已规划但仍未激活，下一步建议为 L-3F missing-secret-safe / no-real-provider-call skeleton。
-- v28.0L-3F Manual Provider-Call Workflow Skeleton：新增 manual provider-test workflow skeleton 与静态检查；默认 dry-run，provider path missing-secret safe，且即使 secret 存在也阻断真实 provider call。仍无 GitHub secret、无 DeepSeek call、无 provider output、无 production data、无 frontend display。
-- v28.0L-3F-1 Provider Workflow Skeleton Audit：provider workflow skeleton 已通过 default dry-run 与 missing-secret safety audit；real provider calls 仍保持 disabled，且不批准添加 `DEEPSEEK_API_KEY`。
-- v28.0L-3G Secret Decision and First Provider-Call Gate：已决定未来优先使用 GitHub Environment `external-ai-manual` 与 Environment secret `DEEPSEEK_API_KEY`；本阶段不添加 secret，real provider calls 仍保持 disabled。
-- v28.0L-4B External AI Display Coverage Polish：External AI panel now shows broader read-only coverage of validated AI output, including capped summaries for model judgments, scenario hypotheses, source attribution, and public review status.
-- v28.0L-4B-1 Display Coverage Audit Sync：External AI read-only panel is visible, refreshed, and now shows broader safe coverage of validated AI output.
-- Daily 成功刷新数据后触发 Pages deploy handoff。
-- GitHub Actions Summary 审计入口。
-- 数据契约保护与 DOM / module / syntax smoke check。
+- Worker-first 是主运行路径，前端通过 strict gate 选择 `/market.worker-preview.json`。
+- `/market.secondary-preview.json` 是独立 secondary diagnostics endpoint，不污染主 preview。
+- `realtime-data` 分支和本地 `./realtime/market.json` 只作为 fallback / Daily baseline 输入观察。
+- Daily baseline 写入 `data/radar-data.json`、`data/radar-history.json` 和 `data/radar-history-full.json`。
+- `displayInputsBaseline` 是 baseline fallback 的结构化当前值来源。
+- 前端最终当前值由运行时 `effectiveDisplayInputs` 合成，渲染层不得绕过它改用 raw realtime values。
+- Brent 主逻辑为 FRED anchor + Yahoo fresh confirmation + Trading Economics freshness gate + extreme-move guard。
+- 当前 core secondary set 为 `vix` / `gold` / `dxy` / `us10y` / `spx`；VIX / Gold / DXY / US10Y / SPX secondary 当前只用于诊断，不进入主值、scoring 或 decision。
+- v28.0G-4C Trading Economics freshness hard gate 已实现；`tradingeconomics-observedAt-invalid` / `tradingeconomics-confirmation-stale` 会 hold promotion，且 observedAt failure does not make candidate ok false。
+- Operations Runbook 以 `docs/OPERATIONS.md` 为入口；`worker-health-snapshot` 和 `review:worker-health-snapshot` 只读审阅健康快照，PR #53 superseded，KV write guard deferred。
+- World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。
+- `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`consumer_vs_asset_pricing`、`brentPricingLayer` 和 `aiInterpretationLayer` 都是解释层 / 审计层 / 展示层。
+- External AI production panel 是只读辅助层；manual / provider artifacts 不等于 scoring、Daily、frontend 或 production write readiness。
+- Market Pricing Temperature 已进入 M-27 以后前端展示阶段，后续边界以对应 M-series docs 为准。
+- Frontend asset cache version 当前为 `28.0M-36V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
+- `npm run check:all` 当前由 `package.json` 定义，包含 48 个串联检查项。
 
-一句话演进：`v25` 看见风险，`v26` 知道该做什么，`v27` 将决策结构化，`v28` 将实时数据源、Worker-first、Brent promotion 与诊断隔离工程化。
+最近维护节奏：
+
+- M-31 到 M-35 完成 editorial design contract compliance、DESIGN.md amendment、bias color semantics、Group A spacing governance、Group B spacing governance 和 footer redesign。
+- M-36 仅删除已验证无依赖的 dead weight，并同步前端 asset cache version；不改变数据、工作流、决策、执行、仓位或 DESIGN.md contract。
 
 ## 核心架构
 
@@ -109,19 +72,7 @@ Cloudflare Worker generated preview
 → 页面渲染
 ```
 
-关键边界：
-
-- 前端 realtime 优先级为 `Worker generated preview → GitHub realtime-data → local fallback`。
-- Worker generated preview 必须通过 strict gate：HTTP 200、`workerGeneratedPreview.enabled === true`、freshness、`healthScore`、`criticalMissing` 与关键字段有限值检查。
-- `realtime-data` 是 Worker 不可用或被策略关闭时的远端 fallback。
-- Check Realtime Health 只观察 `realtime-data` fallback / Daily baseline freshness；即使 stale，也不代表 Worker-first runtime unhealthy。
-- `dailyRealtimeInput` 记录 Daily 构建实际消费的 realtime 版本。
-- `displayInputsBaseline` 是 baseline fallback 的结构化当前值来源。
-- 前端当前值最终使用 `effectiveDisplayInputs`，按“可用 realtime values → displayInputsBaseline → null”的顺序选择。
-- `effectiveDisplayInputs` 仅在前端运行时合成并挂到 `data.__effectiveDisplayInputs`；`radar-data.json` 根级不序列化该字段，也不要求根级 `values` 对象（详见 `docs/DATA_CONTRACT.md` 中「effectiveDisplayInputs 运行时合成说明」）。
-- 本地 `./realtime/market.json` 只是 fallback，不保证是最新 realtime。
-
-完整字段契约见 `docs/DATA_CONTRACT.md`。
+完整 Worker-first 数据流、fallback 优先级、`dailyRealtimeInput`、`displayInputsBaseline`、`effectiveDisplayInputs`、Brent validation、secondary diagnostics 与字段契约统一维护在 `docs/DATA_CONTRACT.md`。
 
 ## 决策系统
 
@@ -135,233 +86,116 @@ Cloudflare Worker generated preview
 
 渲染层只展示和格式化这些结构，不应重新推导执行灯、仓位建议或策略状态。
 
-## 页面结构
+## 前端与页面结构
 
-页面按三层信息架构组织：
+首页信息架构以 `DESIGN.md` 为准。当前一级顺序是 Hero / Masthead、dashboard jump nav、Macro Risk Overview、WoW Key Changes、Global Risk Heatmap，随后是折叠的 detail data、method evidence、External AI auxiliary 和 execution risk detail。
 
-- 核心驾驶舱：决策首屏、realtime strip、健康状态、总览和执行灯。
-- 风险解释层：风险模块、流动性、热力图、资产偏好和关键解释。
-- 高级分析与规则审计：30日时间维度、机构级传导网络、预警规则、情景树、恢复状态和行为纪律。
+前端约束：
 
-高级区默认折叠，避免首屏信息过载。
+- `DESIGN.md` 是视觉、IA、颜色、字体和组件 contract。
+- `scripts/check-homepage-ia-contract.mjs` 约束首页 IA 顺序和稳定锚点。
+- `scripts/check-editorial-redesign-contract.mjs` 约束字体 allowlist、DESIGN anchors 和 editorial structure。
+- 修改 `index.html`、`assets/styles.css`、`scripts/modules/render*.js` 或 SVG rendering code 前必须读完 `DESIGN.md`。
+- 触碰前端入口或本地 JS module graph 时必须 bump frontend asset cache version。
 
-## Brent 验证边界
+## 开发检查
 
-Brent 主显示值仍来自：
-
-```text
-values.brent
-```
-
-FRED `DCOILBRENTEU` 仍是 Brent anchor，但 v28.0D 起允许在严格条件下切换主值：
-
-- 当 FRED anchor stale，且 Yahoo `BZ=F` 与 Trading Economics Brent 均有效、fresh / 可用且 divergence 在阈值内时，允许 freshness-gated promotion。
-- `>3%` 的相邻周期大幅跳动不会默认视为错误；如果 Yahoo + Trading Economics 双源确认，可标记 `confirmed-extreme-move` 并进入 `values.brent`。
-- 未被双源确认的大幅跳动会 `hold`，保留上一轮 accepted Brent 或回退 FRED anchor。
-- Google Finance 的 `0`、failed / null 来源和未满足条件的 diagnostic candidate 不参与 promotion。
-- 页面“盘中快变量 / 布伦特”会显示 Brent 来源解释与 D-6 move status。
-
-`brentValidation.consensus.recommendedValue` 仍只是验证层推荐值，不得绕过 freshness-gated promotion 与 extreme-move confirmation guard 直接写入 `values.brent`。
-
-详细规则见 `docs/DATA_CONTRACT.md`。
-
-## Secondary diagnostics 边界
-
-secondary diagnostics 已从主 Worker preview 隔离：
-
-- 主 `/market.worker-preview.json` 不得包含 `secondarySources` / `secondaryDiagnostics` / `secondarySourceSummary`。
-- `/market.secondary-preview.json` 是独立诊断 endpoint，读取独立 KV key。
-- 当前接入 VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB`、US10Y via Yahoo `^TNX` 与 SPX via Yahoo `^GSPC` secondary diagnostics。
-- 当前 core secondary set 为 `vix` / `gold` / `dxy` / `us10y` / `spx`，只写 `/market.secondary-preview.json` 的 `diagnostics.sources.*`。
-- 前端主页面暂不消费 secondary diagnostics；它们只用于后台诊断，不影响 `effectiveDisplayInputs`、`values.*`、scoring、decision 或 Worker-first strict gate。
-- v28.0G-1 起，`check-worker-health` 会对 secondary `observedAt` 派生 `freshnessStatus` / `observedAgeHours` / `freshnessReason`；这是只读 health summary，不是 Worker payload 字段。market-closed 或节假日造成的 stale 初版只 warning，不阻断 workflow。
-- E-4 后暂停继续堆新 secondary source，先观察 Worker health workflow 与 secondary freshness；HY OAS、real10y、credit spread proxy、liquidity proxy 和其它 macro stress indicators 必须另开版本，且先进入 isolated secondary diagnostic。
-
-## 开发检查与提交前验收
-
-提交前推荐直接运行完整检查：
+推荐完整检查：
 
 ```bash
 npm run check:all
 ```
 
-该命令会依次运行：
+常用分项：
 
 ```bash
 npm run check:syntax
 npm run check:dom
+npm run check:homepage-ia-contract
+npm run check:editorial-redesign-contract
 npm run check:modules
 npm run check:copy
-npm run check:node-runtime
 npm run check:workflows
 npm run check:docs
 npm run check:data
 ```
 
-用途：
+`package.json` 是所有检查命令和 `check:all` 组成的权威来源。Pages deploy 的分步骤检查、Realtime / Daily workflow 审计和常见排查流程见 `docs/OPERATIONS.md`。
 
-- `check:syntax`：自动扫描 `scripts/` 下所有 `.js` / `.mjs` 文件并执行 `node --check`。
-- `check:dom`：检查关键 DOM 挂载点。
-- `check:modules`：自动扫描 `scripts/modules/*.js` 并执行动态 import 检查。
-- `check:copy`：检查用户可见文案契约，防止“广义美元指数 / 亿美元 / 传导网络 Δ”等已修复文案回退。
-- `check:node-runtime`：检查 Node.js 24 LTS runtime baseline、`.nvmrc` / `.node-version`、GitHub Actions action majors 与 Node 24 opt-in。
-- `check:workflows`：检查 GitHub Actions workflow 合约，防止 Realtime / Daily / Pages 部署中的关键调度、Summary、校验和部署步骤被误删。
-- `check:docs`：检查 `README.md`、`AGENTS.md` 和 `docs/*.md` 中的本地 Markdown 链接，防止 DATA_CONTRACT / OPERATIONS 等文档入口失效。
-- `check:data`：检查数据契约、Brent validation、Decision Output Contract、Transmission Delta 等结构；底层运行 `node scripts/validate-data.mjs`。
-- `check:data:verbose`：输出 live realtime / `displayInputsBaseline` alignment 的 expected skip reason。
-- `check:data:strict-live-alignment`：要求本地 `realtime/market.json.updatedAt` 与 `dailyRealtimeInput.updatedAt` 是同一快照，否则失败。
-- `build:world-order`：手动刷新 World Order Stress 外部数据并写入 `data/world-order-stress.json`。
-- `check:world-order`：只读检查现有 World Order Stress JSON，已纳入 `check:all`。
-- `review:world-order`：只读审阅现有 World Order Stress JSON，输出 PASS / WARN / FAIL 和建议动作。
-- `diagnose:gdelt`：只读诊断 GDELT timeout / 429，不修改生产数据。
-- `diagnose:reliefweb`：只读诊断 ReliefWeb 备用源可行性，不修改生产数据。
-
-新增 `scripts/` 脚本或 `scripts/modules/` 模块后，通常会自动纳入对应检查，无需手动维护检查列表。
-
-前端静态资源维护规则：frontend asset cache version must be bumped when index.html or frontend JS changes。以后只要修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`，必须同步 bump frontend asset cache version，并替换 `index.html` 入口脚本与所有本地 module import query。当前 frontend asset cache version 是 `28.0M-35V`。推荐使用：
-
-```bash
-node scripts/bump-frontend-asset-version.mjs 28.0G-10
-npm run bump:frontend-asset-version -- 28.0G-10
-```
-
-不需要 bump 的情况包括只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json`，或只 deploy Worker。
-
-v28.0G-10 起，默认 `check:data` 会安静跳过本地 realtime 与 `dailyRealtimeInput` 时间不一致时的 live alignment，这是 expected skip，不代表删除了 `validateRealtimeBaselineAlignment`。本地 fallback 可能不是 Daily 实际消费的 realtime 版本；若需要确认原因，用 `npm run check:data:verbose`，若需要强制同快照，用 `npm run check:data:strict-live-alignment`。
-
-## GitHub Actions 工作流
+## GitHub Actions 速览
 
 主要 workflow：
 
-- `Build Realtime Market`：定时生成 realtime payload，并发布到 `realtime-data` 分支。
-- `Build Daily Radar Data`：读取最新 `realtime-data` payload，生成 `data/radar-data.json` 与 history。
-- `Deploy Static Site to Pages`：Daily 成功提交 `data/*.json` 后，通过 `workflow_run` 触发并部署静态站点到 GitHub Pages。
+- `Build Realtime Market`：生成 realtime fallback payload 并发布到 `realtime-data` 分支。
+- `Build Daily Radar Data`：读取 Daily 输入并生成 baseline 数据。
+- `Deploy Static Site to Pages`：Daily 成功提交 `data/*.json` 后触发 Pages deploy。
+- `Check Worker Health`：只读检查 Worker-first 主 endpoint 与 secondary endpoint。
+- External AI manual / provider workflow families：仅按对应 reviewed phase 使用，artifact / provider / production write / frontend display 边界以 `AGENTS.md` 和 external-AI docs 为准。
 
-Pages deploy 前自动运行：
-
-```bash
-npm run check:syntax
-npm run check:dom
-npm run check:modules
-npm run check:copy
-npm run check:node-runtime
-npm run check:workflows
-npm run check:docs
-npm run check:data
-```
-
-这些步骤分别检查 JS / MJS 语法、关键 DOM 挂载点、模块 import / export、用户可见文案契约、GitHub Actions workflow 合约、文档本地链接和静态数据契约。Pages deploy 是分步骤运行这些检查，不运行 `npm run check:all`。
-
-其中数据契约检查等价于 `npm run check:data`。如果 `validate-data.mjs` 输出本地 realtime 与 `dailyRealtimeInput.updatedAt` 不匹配的 warning，但最终显示 `Validation passed (v27.0)`，属于可接受状态；只有校验进程以非 0 退出才会阻止部署。
-
-Realtime / Daily workflow 会在 GitHub Actions Summary 输出关键审计信息，包括 `sourceMode`、`healthScore`、Brent、`dailyRealtimeInput`、`displayInputsBaseline` 和 Decision Summary。
-
-## 关键数据契约
-
-详细数据契约统一维护在：
-
-- `docs/DATA_CONTRACT.md`
-
-其中记录：
-
-- 数据链路与 canonical 当前值。
-- `displayInputsBaseline` 与 `dailyRealtimeInput`。
-- Brent 主值与验证层边界。
-- Decision Output Contract。
-- `realtimeFetchAudit`。
-- Transmission Delta / 传导网络 Δ。
-- ON RRP 单位。
-- DXY / 广义美元指数命名。
-- realtime fallback 与 validate 规则。
+Workflow 合约、runbook、rollback / no-rollback 判断、known warning baseline 和 operator notes 见 `docs/OPERATIONS.md`。
 
 ## 当前维护原则
 
+- 单一目标、最小改动、可验证、可回滚。
 - 不把 validation 推荐值直接当作主显示值。
 - 不通过解析中文文案恢复结构化数据。
 - 不削弱 fallback 闸门来掩盖旧 realtime 文件。
 - 不在渲染层重算评分、决策状态或执行约束。
+- 不让 External AI 输出影响 scoring、decision、execution 或 position。
+- 不让 secondary diagnostics 覆盖或参与任何 `values.*` 主值。
+- 不在没有明确任务时大规模重构或重写站点结构。
 - 修改数据链路、决策契约或渲染结构时，必须运行对应检查。
 
 ## 文档入口
 
-- [AI 开发守则](AGENTS.md)
-- [v27 稳定化基线](docs/V27_BASELINE.md)：历史稳定基线与维护边界，不代表当前 v28.0E-0 工程进度。
-- 数据契约：`docs/DATA_CONTRACT.md`
-- 运行排查手册：`docs/OPERATIONS.md`
-- 系统升级路线：`docs/SYSTEM_UPGRADE_PLAN.md`
-- 新信号纳入框架：`docs/SIGNAL_INTAKE.md`
-- 核心入口：`index.html`
-- 前端入口：`scripts/app.js`
-- Realtime 构建：`scripts/run-realtime.mjs`
-- Daily 构建：`scripts/run-daily-pipeline.mjs`
-- 数据校验：`scripts/validate-data.mjs`
+先读 `AGENTS.md` 的 Documentation Authority Index；它定义 Current Authority、Conditional Authority、Historical Background 和冲突解决规则。
 
-Provider-call workflow status: `External AI Manual Provider Test` is unlocked only behind GitHub Environment `external-ai-manual` approval and remains artifact-only / non-production.
+常用入口：
 
-Fixture sample provider-call status: v28.0L-3H-3 passed validator, quality review, and sanitizer for run `25593082968`; production integration remains disabled.
+- `DESIGN.md`：前端设计 contract。
+- `AGENTS.md`：AI 开发守则、硬边界和文档权威索引。
+- `docs/DATA_CONTRACT.md`：数据字段、Brent、Decision Output、Transmission Delta、Market Pricing 和 External AI production data contract。
+- `docs/OPERATIONS.md`：运行排查、GitHub Actions、operator notes 和 validation baseline。
+- `docs/SYSTEM_UPGRADE_PLAN.md`：升级路线、稳定基线和阶段记录。
+- `docs/SIGNAL_INTAKE.md`：新信号纳入框架。
+- `docs/WORLD_ORDER_STRESS.md`：World Order Stress Overlay scope。
+- `workers/gfrr-realtime-worker/README.md`：Realtime Worker scope。
+- `docs/CODE_DEAD_WEIGHT_REMOVAL_M36.md`：M-36 dead weight removal audit note。
 
-Local compact provider-call status: v28.0L-3J-4 records run `25598887574` passing provider transport, validator, quality review, and sanitizer for the artifact-only `local_compact` path; production integration remains disabled.
+按任务类型优先查阅：
 
-External AI production readiness status: v28.0L-3K records the artifact-only path as verified for manual audits; production integration, frontend display, Daily integration, and automatic provider calls remain disabled.
+- 前端视觉、IA、字体、颜色：`DESIGN.md`。
+- 首页 section 顺序和锚点：`scripts/check-homepage-ia-contract.mjs`。
+- Editorial redesign guard：`scripts/check-editorial-redesign-contract.mjs`。
+- 数据字段、显示值和 validation：`docs/DATA_CONTRACT.md`。
+- Realtime / Daily / Pages deploy 排查：`docs/OPERATIONS.md`。
+- Worker runtime：`workers/gfrr-realtime-worker/README.md`。
+- World Order Stress：`docs/WORLD_ORDER_STRESS.md`。
+- External AI API / prompt / production integration：对应 `docs/EXTERNAL_AI_*.md` 条目，以 `AGENTS.md` Authority Index 为准。
+- Market Pricing Temperature：对应 `docs/MARKET_PRICING_*.md` 条目，以 `AGENTS.md` Authority Index 为准。
+- 新宏观信号：`docs/SIGNAL_INTAKE.md` 和 `docs/SYSTEM_UPGRADE_PLAN.md`。
+- 检查命令：`package.json`。
+- 历史背景：只在需要 audit context 时查阅，不覆盖 Current Authority。
 
-External AI production data contract status: v28.0L-3L designs the future `externalAiInterpretationLayer` contract; production write remains disabled.
+README 只保留入口级说明。若 README 与 `AGENTS.md`、`DESIGN.md`、`package.json` 或 scoped docs 冲突，按 `AGENTS.md` 的冲突解决规则处理。
 
-External AI production contract validator status: v28.0L-3M adds a local validator scaffold and valid fixture; production write remains disabled.
+不要把 README 的简化摘要当作替代 contract；实现前仍需阅读对应权威文档。
 
-External AI production projection dry-run status: v28.0L-3N adds an ignored manual-artifact projection validated by the production contract checker; production write remains disabled.
+## 关键文件
 
-External AI first production write guard status: v28.0L-3O adds a read-only write guard and design; production write remains disabled.
+- `index.html`：静态页面入口。
+- `assets/styles.css`：全站 CSS。
+- `scripts/app.js`：前端应用入口。
+- `scripts/modules/*.js`：前端渲染、数据选择和 UI helpers。
+- `scripts/run-realtime.mjs`：realtime fallback 构建。
+- `scripts/run-daily-pipeline.mjs`：Daily baseline 构建。
+- `scripts/validate-data.mjs`：数据契约校验。
+- `package.json`：检查命令权威来源。
 
-External AI production data layer status: v28.0L-3P writes a display-disabled `externalAiInterpretationLayer` into `data/radar-data.json`; frontend display remains disabled.
+## 版本标记
 
-External AI production write audit status: v28.0L-3P-1 records the post-merge audit PASS for the display-disabled production data layer; frontend display remains disabled.
-
-External AI frontend display design status: v28.0L-3Q documents how the production data layer may later be displayed; frontend display remains disabled.
-External AI frontend hidden scaffold status: v28.0L-3R adds guarded read/render logic and hidden `external-ai-display-panel`; visible display remains disabled.
-External AI visible display approval status: v28.0L-3S designs the future data-flag approval path; visible display remains disabled.
-External AI visible display status: v28.0L-3T enables the read-only panel through data flags; no automatic provider calls are enabled.
-External AI visible display audit status: v28.0L-3T-1 records the display-enabled audit; no automatic provider calls are enabled.
-External AI visible display UX status: v28.0L-3U polishes the read-only panel; no provider call or automatic provider call is enabled.
-External AI visible display UX audit status: v28.0L-3U-1 records the polished read-only panel audit; provider refresh remains manual / non-automatic.
-External AI production refresh status: v28.0L-4A adds manual and once-daily production refresh for the visible panel; no frontend logic changes.
-External AI refresh monitoring status: v28.0L-4C documents monitoring design; GitHub native failed-workflow notifications are the recommended initial approach.
-Homepage IA status: v28.0M-7V follows the conclusion → reason → evidence → detail reading path, with Macro Overview as the primary judgment and collapsible sections for detailed data, method evidence, and advanced execution/risk detail. v28.0M-7V-1 records that this repair is merged and audited.
-Homepage editorial skin status: v28.0N-1 introduces an editorial first-fold homepage skin. It is frontend display layer only and does not change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations. Market Pricing Temperature remains waiting-for-history.
-Homepage pressure-source polish status: v28.0N-2 introduces editorial pressure-source reading polish. It is frontend display layer only and does not change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations. Market Pricing Temperature remains waiting-for-history.
-Homepage signal-layer polish status: v28.0N-3 introduces editorial signal-layer reading polish. It is frontend display layer only and does not change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations. Market Pricing Temperature remains waiting-for-history.
-Homepage paper/font foundation status: v28.0N-4 introduces the editorial paper background and Bubble Watch-style font stack foundation. It is frontend display layer only, adds no external font/CDN URLs, and does not change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations. Market Pricing Temperature remains waiting-for-history.
-Homepage macro-driver polish status: v28.0N-5 introduces editorial macro-driver reading polish. It is frontend display layer only and does not change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations. Market Pricing Temperature remains waiting-for-history.
-Homepage market-temperature waiting-state status: v28.0N-6 introduces editorial Market Temperature waiting-state polish. It is frontend display layer only, keeps Market Pricing Temperature waiting-for-history, and does not add live fetch, market-pricing records, MA60, standard deviation, z-score, calculation, production write, workflows, External AI changes, or scoring/decision/execution/position logic changes.
-Homepage risk-engine polish status: v28.0N-7 introduces editorial risk-engine reading polish. It is frontend display layer only and does not change risk-engine calculation, scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations. Market Pricing Temperature remains waiting-for-history.
-Homepage cross-validation polish status: v28.0N-8 introduces editorial cross-validation reading polish. It is frontend display layer only and does not change cross-validation calculation, scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations. Market Pricing Temperature remains waiting-for-history.
-Homepage Global Risk Heatmap polish status: v28.0N-9 introduces editorial Global Risk Heatmap polish. It is frontend display layer only, keeps Global Risk Heatmap standalone and visually prominent, and does not change heatmap scoring, region data, workflows, External AI, Market Pricing, or decision/execution/position logic. Market Pricing Temperature remains waiting-for-history.
-Homepage Detailed Data appendix polish status: v28.0N-10 introduces editorial Detailed Data appendix polish. It is frontend display layer only, keeps detailed data as a secondary audit appendix rather than the first reading path, and does not change data, charts, calculations, workflows, External AI, Market Pricing, scoring, decision, execution, or position logic.
-Homepage Method appendix polish status: v28.0N-11 introduces editorial Method / Evidence / Boundary appendix polish. It is frontend display layer only, keeps method content as a secondary explanatory appendix, and does not change data, charts, calculations, workflows, External AI, Market Pricing, scoring, decision, execution, or position logic.
-Homepage External AI panel polish status: v28.0N-12 introduces editorial External AI read-only panel polish. It is frontend display layer only, keeps External AI auxiliary and read-only, keeps Market Pricing Temperature waiting-for-history, and does not change External AI generated text, provider path, workflow, output schema, production write, scoring, decision, execution, position logic, data pipeline, or Market Pricing calculations.
-Homepage inline theme cleanup status: v28.0N-13 cleans up residual dark inline theme styles in index.html so the editorial paper theme can apply consistently. It is frontend display layer only, adds no external font/CDN URLs, keeps Market Pricing Temperature waiting-for-history, and does not change data, scoring, decision, execution, position logic, workflows, External AI behavior, or Market Pricing calculations.
-Homepage Big Number polish status: v28.0N-14 deepens the editorial first-fold Big Number and threshold scale presentation. It is frontend display layer only, keeps threshold bands aligned with existing stageFromScore semantics, keeps Market Pricing Temperature waiting-for-history, and does not change score calculation, stageFromScore thresholds, data, workflows, External AI, Market Pricing, decision, execution, or position logic.
-Homepage narrative blocks status: v28.0N-15 introduces editorial Key Changes and Watch List narrative blocks. It is frontend display layer only, uses existing structured data and existing gaps/pending confirmations, keeps Market Pricing Temperature waiting-for-history, and does not add data sources or change scoring, decision, execution, position logic, workflows, External AI, or Market Pricing calculations.
-Homepage editorial contract guard status: v28.0N-16 adds an editorial redesign contract guard. It is guard/validation layer only, protects the Bubble Watch-inspired editorial structures, paper theme, Market Pricing waiting state, External AI read-only boundary, and Global Risk Heatmap standalone status, and does not change UI rendering, data, scoring, decision, execution, position logic, workflows, External AI behavior, or Market Pricing calculations.
-Market pricing status: v28.0M-16 adds network gate design; network remains disabled and production history writes remain disabled. v28.0M-17 adds a closed network gate scaffold and checker; any allow-network request remains rejected, no source is approved, no live fetch is added, no production data or history write occurs, and Market Pricing Temperature remains waiting-for-history. v28.0M-18 adds a source compliance review scaffold; compliance review status remains not_reviewed, --mark-reviewed requests are rejected, no compliance item or source is approved, network remains disabled, and Market Pricing Temperature remains waiting-for-history. v28.0M-19 adds a symbol mapping verification design layer only; symbol mapping remains not_verified, QQQ is recorded as an unapproved candidate, SPX substitution is prohibited, no executable scaffold script is added, and Market Pricing Temperature remains waiting-for-history. v28.0M-20 adds a source format verification design layer only; source format remains not_verified, hard rules noPriceFabrication=true and noHtmlErrorPageMasquerade=true are documented, no executable scaffold script is added, and Market Pricing Temperature remains waiting-for-history. v28.0M-21 adds a Market Pricing throttled network open step. It is the FIRST M-series step where fetch() can run. Default mode is dry-run; explicit --network=open-throttled flag required. Max 1 fetch per invocation, 30s timeout, max 1 retry. Source URL read from manifest, not hardcoded. Response written only to manual-artifacts/. records=[] in all reports. No production data write, no history write, no MA60 / std / z-score, no scoring / decision / execution / position change, no workflow change, no frontend change. Market Pricing Temperature remains waiting-for-history. v28.0M-22 adds the Manual Weekly Input Sanitizer Design layer. It is design only — no executable sanitizer is added. The M-21 auto-fetch path is formally deprecated following the 2026-05-12 stooq endpoint change. M-21 script is retained for future reactivation. Future weekly QQQ history will come from manual NASDAQ downloads placed in manual-artifacts/market-pricing/manual-weekly-input/. Market Pricing Temperature remains waiting-for-history. No production data write, no history write, no MA60 / std / z-score, no scoring / decision / execution / position change, no workflow change, no frontend change.
-Market pricing M-23 status: v28.0M-23 adds the executable Manual Weekly Input Sanitizer scaffold. The scaffold reads NASDAQ CSV files placed in manual-artifacts/market-pricing/manual-weekly-input/ and produces sanitized weekly records to manual-artifacts/market-pricing/sanitized-output/. It does NOT write to data/market-pricing-history.json — that is M-24. Market Pricing Temperature remains waiting-for-history. No production data write, no history write, no MA60 / std / z-score, no scoring / decision / execution / position change, no workflow change, no frontend change.
-
-Runtime status: v28.0L-3I-0 standardizes local development and GitHub Actions on Node.js 24 LTS.
-
-Market pricing M-24 status: v28.0M-24 adds the First Real Record Write scaffold with two-stage manual confirmation. The script defaults to dry-run-commit mode. The --commit-to-history flag is required to actually write data/market-pricing-history.json. 5 sanity checks run before any write. Atomic write via .tmp + rename. Idempotent. CI never invokes the :commit path. Market Pricing Temperature remains waiting-for-history at the frontend level until M-27. No MA60 / std / z-score calculation (M-26). No scoring / decision / execution / position change. No workflow change. No frontend change.
-
-Market pricing temperature display status: v28.0M-27 activates the editorial Market Pricing Temperature card reading from data/market-pricing-metrics.json. Frontend display layer only. Does not change data, calculation, workflows, External AI, scoring, decision, execution, or position logic.
-
-Market pricing first-fold integration status: v28.0M-28 propagates M-27 market pricing metrics into today-judgment, signal-layers, risk-engines, and cross-validation modules; cross-validation expanded from 4 to 7 narratives with structured evidence (supporting/missing/contradicting) and composite consistency score. Frontend display layer only. Does not change data, calculation, workflows, External AI, scoring, decision, execution, or position logic.
-
-Market pricing macroDrivers surfacing status: v28.0M-29 surfaces existing data/radar-data.json macroDrivers fields (fedLiquidity.onRrp / walcl4wChange / curve.t10y2y / credit.igOas / igHyRatio / activeSignals) into the first-fold liquidity, policy, credit, and financial fragility modules. Frontend display layer only. No data file changes. No new external data sources.
-
-Cross-validation education appendix status: v28.0M-30 adds a static educational appendix inside the cross-validation section. Fixed content explaining financial-research framing for consistency-score interpretation. Frontend display layer only. Does not consume backend data. Does not generate current-data judgments. Does not constitute investment advice.
-
-Editorial design contract compliance M-31: v28.0M-31 fixes hard violations (method-card border-radius and inconsistent left stripes) and edge violations (heatmap frame border strength, decorative gradient overlay). Strengthens check:editorial-redesign-contract with 4 new assertions. Frontend display layer only.
-Editorial design contract amendment M-32: v28.0M-32 adds --paper-bg-canvas token, relaxes §8.1 #4 to permit decorative gradient overlays, and applies CSS refinements (folded sub-module breathing room, heatmap canvas background, restored WOW decorative gradient). FIRST DESIGN.md amendment.
-
-Bias semantic color fix M-33: v28.0M-33 corrects bias tag colors (偏多/强配=green, 中性偏多=soft green, 谨慎偏多=yellow, 中性偏空=orange, 偏空/低配=red), unifies #method-evidence sub-card backgrounds to DATA BOUNDARY callout color, and adds 18px margin-top to #ai-interpretation-layer-section hero-grid. Frontend display layer only.
-
-Spacing governance M-34: v28.0M-34 applies unified flex+gap:18px to 7 article.card containers nested in .editorial-subsection (#daily-brief, #ai-interpretation, #divergence, #brent-pricing, #world-order, decision-header, main-lock). Fixes 8 zero-gap sibling pairs. Retires M-33 case patch. Removes world-order-status-grid inline mt:18. Frontend display layer only.
-
-Spacing governance M-35 + footer redesign: v28.0M-35 extends M-34 governance to Group B single-card wrapper pattern (4 subsections: 实时输入与数据健康 / 时间序列 / 传导网络 / 行为纪律). Replaces minimal one-line footer with editorial 2-column method+disclaimer footer (no historical bubble comparison content). Frontend display layer only.
+- 页面公开标签：`v28.0C`。
+- 工程稳定观察基线：`v28.0J`。
+- 当前 frontend asset cache version：`28.0M-36V`。
+- 当前 runtime status：Node.js 24 LTS。
+- 当前 M-series note：M-36 删除已验证 dead weight，不改变功能行为。
