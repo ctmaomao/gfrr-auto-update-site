@@ -1396,6 +1396,15 @@ function classifyOnRrpLevel(onRrp, weekChangePct) {
   return '充裕';
 }
 
+function classifyRepoSpreadRegime(bgcrSofrSpread) {
+  if (!Number.isFinite(bgcrSofrSpread)) return '未知';
+  const absBp = Math.abs(bgcrSofrSpread) * 100;
+  if (absBp < 5) return '正常';
+  if (absBp < 10) return '轻微偏离';
+  if (absBp < 25) return '压力';
+  return '危机水平';
+}
+
 function classifyCurveRegime(t10y2y) {
   if (!Number.isFinite(t10y2y)) return '未知';
   const md = R.macroDrivers.curve;
@@ -1480,7 +1489,9 @@ async function resolveFedLiquidity(prevFed) {
     onRrp: 'missing',
     effectiveFedFundsRate: 'missing',
     sofr: 'missing',
-    reserveBalances: 'missing'
+    reserveBalances: 'missing',
+    bgcr: 'missing',
+    tgcr: 'missing'
   };
   let walcl = null;
   let walcl4wChange = null;
@@ -1490,6 +1501,8 @@ async function resolveFedLiquidity(prevFed) {
   let sofr = null;
   let reserveBalances = null;
   let reserveBalances4wChange = null;
+  let bgcr = null;
+  let tgcr = null;
 
   try {
     const rows = await fetchFredSeries('WALCL', 90);
@@ -1576,6 +1589,41 @@ async function resolveFedLiquidity(prevFed) {
     }
   }
 
+  // M-50: BGCR (Broad General Collateral Rate, NY Fed, daily).
+  try {
+    const rows = await fetchFredSeries('BGCR', 30);
+    bgcr = latestValue(rows);
+    status.bgcr = 'live';
+  } catch (_err) {
+    if (Number.isFinite(prevFed?.bgcr)) {
+      bgcr = prevFed.bgcr;
+      status.bgcr = 'fallback';
+    } else {
+      status.bgcr = 'missing';
+    }
+  }
+
+  // M-50: TGCR (Tri-Party General Collateral Rate, NY Fed, daily).
+  try {
+    const rows = await fetchFredSeries('TGCR', 30);
+    tgcr = latestValue(rows);
+    status.tgcr = 'live';
+  } catch (_err) {
+    if (Number.isFinite(prevFed?.tgcr)) {
+      tgcr = prevFed.tgcr;
+      status.tgcr = 'fallback';
+    } else {
+      status.tgcr = 'missing';
+    }
+  }
+
+  const bgcrSofrSpread = Number.isFinite(bgcr) && Number.isFinite(sofr)
+    ? +(bgcr - sofr).toFixed(4)
+    : null;
+  const tgcrSofrSpread = Number.isFinite(tgcr) && Number.isFinite(sofr)
+    ? +(tgcr - sofr).toFixed(4)
+    : null;
+
   const regime = classifyFedAssetTrend(walcl4wChange);
   const rrpLevel = classifyOnRrpLevel(onRrp, onRrpWeekChange);
   const pressure = computeFedLiquidityPressure(walcl4wChange, onRrp, onRrpWeekChange);
@@ -1589,6 +1637,11 @@ async function resolveFedLiquidity(prevFed) {
     sofr: Number.isFinite(sofr) ? sofr : null,
     reserveBalances: Number.isFinite(reserveBalances) ? reserveBalances : null,
     reserveBalances4wChange: Number.isFinite(reserveBalances4wChange) ? reserveBalances4wChange : null,
+    bgcr: Number.isFinite(bgcr) ? bgcr : null,
+    tgcr: Number.isFinite(tgcr) ? tgcr : null,
+    bgcrSofrSpread,
+    tgcrSofrSpread,
+    repoSpreadRegime: classifyRepoSpreadRegime(bgcrSofrSpread),
     regime,
     onRrpLevel: rrpLevel,
     pressure,
