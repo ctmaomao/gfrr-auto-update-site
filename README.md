@@ -17,7 +17,7 @@
 
 ## 当前版本状态
 
-当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-52V`。
+当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-53V`。
 
 当前主运行状态：
 
@@ -35,8 +35,8 @@
 - `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`consumer_vs_asset_pricing`、`brentPricingLayer` 和 `aiInterpretationLayer` 都是解释层 / 审计层 / 展示层。
 - External AI production panel 是只读辅助层；manual / provider artifacts 不等于 scoring、Daily、frontend 或 production write readiness。
 - Market Pricing Temperature 已进入 M-27 以后前端展示阶段，后续边界以对应 M-series docs 为准。
-- Frontend asset cache version 当前为 `28.0M-52V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
-- `npm run check:all` 当前由 `package.json` 定义，包含 58 个串联检查项。
+- Frontend asset cache version 当前为 `28.0M-53V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
+- `npm run check:all` 当前由 `package.json` 定义，包含 59 个串联检查项。
 - Market Pricing first real record write scaffold 在任何写入前运行 6 sanity checks；细节以 `docs/OPERATIONS.md` 和 `docs/SYSTEM_UPGRADE_PLAN.md` 为准。
 
 最近维护节奏：
@@ -57,6 +57,7 @@
 - Repo Market Spread M-50: Adds FRED:BGCR + FRED:TGCR (NY Fed reference rates, daily) to resolveFedLiquidity. Extends macroDrivers.fedLiquidity with 5 new fields (bgcr, tgcr, bgcrSofrSpread, tgcrSofrSpread, repoSpreadRegime). Upgrades cross-validation liquidity_tightening narrative: repo_stress changes from hardcoded null to conditional 4-tier classification (>=25bp=crisis support, 10-25bp=pressure support, 5-10bp=mild stress support, <5bp=normal contradicting). Storage as %, display as bp (×100). Backend pipeline only; values populate on next scheduled daily-pipeline.yml run.
 - World Order narrative density M-51: Enhances the `world_order_pressure_crossing` cross-validation narrative using existing `data/world-order-stress.json` fields: state/labelZh, dominantDrivers[0], economicWeaponization, capitalControlRisk, blocFormation, multiTheaterConflict, marketConfirmation, GDELT toneProxy, OFAC recent action count, and decisionModifier.riskBias. No new data source, no FRED series, no schema change, no data regeneration, and no scoring/decision/execution/position change.
 - Risk Asset Mismatch Narrative Enhancement M-52: Enhances risk_asset_mismatch narrative density. Adds 5 cross-dimensional mismatch evidence types (NFCI vs HY, T10Y2Y vs QQQ, DXY vs QQQ, IG/HY vs VIX, BGCR-SOFR vs VIX). ALL thresholds reused 100% from M-46/47/48/50 already-merged code. Fixes qqq_zscore missing logic bug. Removes old vix_hy_oas contradicting evidence (replaced by ighy_vix_mismatch). Multi-level interpretation (6 levels based on supporting/contradicting/missing counts). No new FRED series. ZERO new data acquisition.
+- Overheat Confirmation Narrative Enhancement M-53: Enhances overheat_confirmation narrative density. Adds 6 macro evidence types (PMI, SLOOS, hyOas, NFCI, UMCSENT 3m change, BGCR-SOFR) with symmetric supporting/contradicting branches. Fixes contradictingEvidence-always-empty design bug. Replaces credit_confirmation missing with hyOas_qqq_complacency contradicting. Redesigns assessment field (null→undefined fallback). Multi-level interpretation (7 levels). 78% threshold reuse from M-46/47/48/50/52; 4 new thresholds are stricter versions of reviewed milestones. No new FRED series. THIS PR COMPLETES 7/7 CROSS-VALIDATION NARRATIVE UPGRADES.
 
 ## 核心架构
 
@@ -211,6 +212,6 @@ README 只保留入口级说明。若 README 与 `AGENTS.md`、`DESIGN.md`、`pa
 
 - 页面公开标签：`v28.0C`。
 - 工程稳定观察基线：`v28.0J`。
-- 当前 frontend asset cache version：`28.0M-52V`。
+- 当前 frontend asset cache version：`28.0M-53V`。
 - 当前 runtime status：Node.js 24 LTS。
-- 当前 M-series note：M-52 enhances risk_asset_mismatch narrative density with 5 cross-dimensional mismatch evidence types; M-51 enhances world_order_pressure_crossing narrative density from existing world-order JSON fields; M-50 adds BGCR/TGCR repo market spreads to macroDrivers.fedLiquidity; M-49 adds DHOILNYH diesel crack spread to brentPricingLayer; M-48 adds Chicago Fed NFCI bank stress index to macroDrivers.credit; M-47 adds ISM Manufacturing PMI to macroDrivers.consumer; M-46 adds SLOOS bank loan standards and the first formal macroDrivers.credit contract; M-45 completes frontend field synchronization for Fed liquidity and market-pricing metadata; M-44 deprecates the stale Stable Observation Audit workflow/script; M-43 completes External AI provenance metadata from GitHub Actions run context and DeepSeek output SHA256; M-40 已跳过且无 PR。
+- 当前 M-series note：M-53 enhances overheat_confirmation narrative density and completes 7/7 cross-validation narrative upgrades; M-52 enhances risk_asset_mismatch narrative density with 5 cross-dimensional mismatch evidence types; M-51 enhances world_order_pressure_crossing narrative density from existing world-order JSON fields; M-50 adds BGCR/TGCR repo market spreads to macroDrivers.fedLiquidity; M-49 adds DHOILNYH diesel crack spread to brentPricingLayer; M-48 adds Chicago Fed NFCI bank stress index to macroDrivers.credit; M-47 adds ISM Manufacturing PMI to macroDrivers.consumer; M-46 adds SLOOS bank loan standards and the first formal macroDrivers.credit contract; M-45 completes frontend field synchronization for Fed liquidity and market-pricing metadata; M-44 deprecates the stale Stable Observation Audit workflow/script; M-43 completes External AI provenance metadata from GitHub Actions run context and DeepSeek output SHA256; M-40 已跳过且无 PR。
