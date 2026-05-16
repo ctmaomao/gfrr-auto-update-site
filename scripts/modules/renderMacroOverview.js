@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-46V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-46V';
-import { formatFiniteNumber } from './format.js?v=28.0M-46V';
+import { $ } from './config.js?v=28.0M-47V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-47V';
+import { formatFiniteNumber } from './format.js?v=28.0M-47V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -371,8 +371,15 @@ function buildPressureSources(data, worldOrderStressData) {
       direction: directionFromDelta(consumer.threeMonthChange),
       confidence: finite(consumer.umichSentiment) === null ? '偏低' : '中等',
       dataCoverage: finite(consumer.umichSentiment) === null ? '数据覆盖：关键数据不足' : '数据覆盖：部分缺口',
-      evidence: [finite(consumer.umichSentiment) === null ? 'UMCSENT 等待接入或刷新。' : `UMCSENT ${formatNumber(consumer.umichSentiment, 1)}；三个月变化 ${formatNumber(consumer.threeMonthChange, 1)}`],
-      missingEvidence: ['PMI、就业广度和高频消费证据仍待接入。'],
+      evidence: [
+        finite(consumer.umichSentiment) === null
+          ? 'UMCSENT 等待接入或刷新。'
+          : `UMCSENT ${formatNumber(consumer.umichSentiment, 1)}；三个月变化 ${formatNumber(consumer.threeMonthChange, 1)}`,
+        consumer.ismManufacturingPmi === null || !Number.isFinite(consumer.ismManufacturingPmi)
+          ? null
+          : `ISM 制造业 PMI ${formatNumber(consumer.ismManufacturingPmi, 1)} — ${consumer.ismManufacturingPmi >= 50 ? '扩张区间' : '收缩区间'}；3个月变化 ${formatNumber(consumer.ismManufacturingPmi3mChange, 1)}`,
+      ].filter(Boolean),
+      missingEvidence: ['就业广度和高频消费证据仍待接入。'],
       explanation: '月频慢变量只说明体感背景，不足以单独判断增长拐点。',
       sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '事实',
       priority: 5,
@@ -493,8 +500,15 @@ function buildMacroDrivers(data) {
       direction: directionFromDelta(consumer.threeMonthChange),
       confidence: finite(consumer.umichSentiment) === null ? '偏低' : '中等',
       dataCoverage: finite(consumer.umichSentiment) === null ? '数据覆盖：关键数据不足' : '数据覆盖：部分缺口',
-      evidence: [finite(consumer.umichSentiment) === null ? '消费者信心数据不足。' : `UMCSENT ${formatNumber(consumer.umichSentiment, 1)}；三个月变化 ${formatNumber(consumer.threeMonthChange, 1)}`],
-      missingEvidence: ['PMI、就业广度、盈利修正与高频消费证据等待接入。'],
+      evidence: [
+        finite(consumer.umichSentiment) === null
+          ? '消费者信心数据不足。'
+          : `UMCSENT ${formatNumber(consumer.umichSentiment, 1)}；三个月变化 ${formatNumber(consumer.threeMonthChange, 1)}`,
+        consumer.ismManufacturingPmi === null || !Number.isFinite(consumer.ismManufacturingPmi)
+          ? null
+          : `ISM 制造业 PMI ${formatNumber(consumer.ismManufacturingPmi, 1)} — ${consumer.ismManufacturingPmi >= 50 ? '扩张区间' : '收缩区间'}；3个月变化 ${formatNumber(consumer.ismManufacturingPmi3mChange, 1)}`,
+      ].filter(Boolean),
+      missingEvidence: ['就业广度、盈利修正与高频消费证据等待接入。'],
       explanation: 'UMCSENT 是月频慢变量，只能提供体感背景，不能单独判断近端增长。',
       sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '数据推断',
     }),

@@ -145,6 +145,7 @@ function buildStagflationNarrative(data, fedLiquidity = {}) {
   const brent = finite(inputs.brent);
   const us10y = finite(inputs.us10y);
   const sentiment = finite(consumer.umichSentiment);
+  const ismPmi = finite(consumer.ismManufacturingPmi);
   const inflationModule = finite(data?.modules?.inflation);
   const effectiveFedFundsRate = finite(fed.effectiveFedFundsRate);
   const sofr = finite(fed.sofr);
@@ -157,7 +158,6 @@ function buildStagflationNarrative(data, fedLiquidity = {}) {
     );
   const supportingEvidence = [];
   const missingEvidence = [
-    evidence('pmi', null, 'PMI 与就业广度未接入'),
     policyPathEvidence
       ? evidence('policy_forward_path', null, 'Fed dot plot / Fed funds futures / OIS forward rates 未接入')
       : evidence('policy_path', null, '当前政策利率与前瞻政策路径未接入'),
@@ -169,6 +169,28 @@ function buildStagflationNarrative(data, fedLiquidity = {}) {
   if (sentiment !== null && sentiment < 60) supportingEvidence.push(evidence('umich_sentiment', formatNumber(sentiment, 1), '消费者体感偏弱'));
   if (inflationModule !== null && inflationModule >= 60) supportingEvidence.push(evidence('inflation_module', formatNumber(inflationModule, 0), '通胀模块处于偏高区间'));
   if (policyPathEvidence) supportingEvidence.push(policyPathEvidence);
+  // M-47: PMI moves from hardcoded missing evidence to dynamic manufacturing-cycle classification.
+  if (ismPmi === null) {
+    missingEvidence.push(evidence('pmi', null, 'ISM 制造业 PMI 未接入'));
+  } else if (ismPmi < 45) {
+    supportingEvidence.push(evidence(
+      'pmi',
+      formatNumber(ismPmi, 1),
+      `ISM 制造业 PMI ${formatNumber(ismPmi, 1)}，深度收缩，制造业景气与增长同步走弱`
+    ));
+  } else if (ismPmi < 50) {
+    supportingEvidence.push(evidence(
+      'pmi',
+      formatNumber(ismPmi, 1),
+      `ISM 制造业 PMI ${formatNumber(ismPmi, 1)}，制造业处于收缩区间`
+    ));
+  } else if (ismPmi > 55) {
+    contradictingEvidence.push(evidence(
+      'pmi',
+      formatNumber(ismPmi, 1),
+      `ISM 制造业 PMI ${formatNumber(ismPmi, 1)}，制造业明显扩张，不支持近端滞涨`
+    ));
+  }
   if (brent !== null && brent < 85 && us10y !== null && us10y < 4) {
     contradictingEvidence.push(evidence('brent_us10y', `${formatCurrency(brent)} / ${formatNumber(us10y, 2, '%')}`, '能源与利率未共同构成滞涨压力'));
   }

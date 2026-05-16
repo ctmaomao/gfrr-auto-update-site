@@ -1408,6 +1408,14 @@ function classifyConsumerRegime(threeMonthChange) {
   return '稳定';
 }
 
+function classifyPmiRegime(pmi) {
+  if (!Number.isFinite(pmi)) return '未知';
+  if (pmi >= 55) return '扩张';
+  if (pmi >= 50) return '中性偏扩张';
+  if (pmi >= 45) return '收缩';
+  return '深度收缩';
+}
+
 function computeFedLiquidityPressure(walcl4wChange, onRrp, onRrpWeekChange) {
   let pressure = 0;
   if (Number.isFinite(walcl4wChange)) {
@@ -1675,10 +1683,16 @@ function buildMissingConsumer() {
     threeMonthChange: null,
     sixMonthChange: null,
     regime: '未知',
-    sourceStatus: { umichSentiment: 'missing' },
+    ismManufacturingPmi: null,
+    ismManufacturingPmi3mChange: null,
+    ismPmiRegime: '未知',
+    sourceStatus: {
+      umichSentiment: 'missing',
+      pmi: 'missing'
+    },
     updatedAt: null,
-    source: 'FRED:UMCSENT',
-    notes: ['UMCSENT 为月频慢变量；当前数据不足，暂不足以判断消费者体感与风险资产背离。']
+    source: 'FRED:UMCSENT; FRED:NAPM',
+    notes: ['UMCSENT 与 NAPM 为 FRED 月频慢变量，用于消费者体感与制造业景气的 audit-only 观察。']
   };
 }
 
@@ -1691,10 +1705,16 @@ function normalizePreviousConsumer(prevConsumer) {
     threeMonthChange,
     sixMonthChange: Number.isFinite(prevConsumer.sixMonthChange) ? prevConsumer.sixMonthChange : null,
     regime: typeof prevConsumer.regime === 'string' && prevConsumer.regime.trim() ? prevConsumer.regime : classifyConsumerRegime(threeMonthChange),
-    sourceStatus: { umichSentiment: 'fallback' },
+    ismManufacturingPmi: Number.isFinite(prevConsumer.ismManufacturingPmi) ? prevConsumer.ismManufacturingPmi : null,
+    ismManufacturingPmi3mChange: Number.isFinite(prevConsumer.ismManufacturingPmi3mChange) ? prevConsumer.ismManufacturingPmi3mChange : null,
+    ismPmiRegime: typeof prevConsumer.ismPmiRegime === 'string' && prevConsumer.ismPmiRegime.trim() ? prevConsumer.ismPmiRegime : '未知',
+    sourceStatus: {
+      umichSentiment: 'fallback',
+      pmi: 'fallback'
+    },
     updatedAt: typeof prevConsumer.updatedAt === 'string' ? prevConsumer.updatedAt : null,
-    source: 'FRED:UMCSENT',
-    notes: ['FRED UMCSENT 当前抓取失败，沿用上一轮 Daily 数据作为 fallback；该指标为月频慢变量。']
+    source: 'FRED:UMCSENT; FRED:NAPM',
+    notes: ['UMCSENT 与 NAPM 为 FRED 月频慢变量，用于消费者体感与制造业景气的 audit-only 观察。']
   };
 }
 
@@ -1712,16 +1732,47 @@ async function resolveConsumerSentiment(prevConsumer) {
     const sixMonthChange = Number.isFinite(current) && Number.isFinite(sixMonthAgo)
       ? +(current - sixMonthAgo).toFixed(3)
       : null;
+    let ismManufacturingPmi = null;
+    let ismManufacturingPmi3mChange = null;
+    let pmiStatus = 'missing';
+
+    // M-47: ISM Manufacturing PMI (NAPM) — monthly growth-cycle evidence.
+    try {
+      const pmiRows = await fetchFredSeries('NAPM', 420);
+      const pmiLatest = pmiRows[pmiRows.length - 1] || null;
+      const pmiCurrent = pmiLatest?.value;
+      const pmi3mAgo = findValueAgo(pmiRows, 90);
+      ismManufacturingPmi = Number.isFinite(pmiCurrent) ? pmiCurrent : null;
+      ismManufacturingPmi3mChange = Number.isFinite(pmiCurrent) && Number.isFinite(pmi3mAgo)
+        ? +(pmiCurrent - pmi3mAgo).toFixed(1)
+        : null;
+      pmiStatus = 'live';
+    } catch (_err) {
+      if (Number.isFinite(prevConsumer?.ismManufacturingPmi)) {
+        ismManufacturingPmi = prevConsumer.ismManufacturingPmi;
+        ismManufacturingPmi3mChange = Number.isFinite(prevConsumer.ismManufacturingPmi3mChange)
+          ? prevConsumer.ismManufacturingPmi3mChange
+          : null;
+        pmiStatus = 'fallback';
+      }
+    }
+
     return {
       umichSentiment: Number.isFinite(current) ? current : null,
       previousValue: Number.isFinite(previous) ? previous : null,
       threeMonthChange,
       sixMonthChange,
       regime: classifyConsumerRegime(threeMonthChange),
-      sourceStatus: { umichSentiment: 'live' },
+      ismManufacturingPmi,
+      ismManufacturingPmi3mChange,
+      ismPmiRegime: classifyPmiRegime(ismManufacturingPmi),
+      sourceStatus: {
+        umichSentiment: 'live',
+        pmi: pmiStatus
+      },
       updatedAt: latest?.date ? `${latest.date}T00:00:00Z` : null,
-      source: 'FRED:UMCSENT',
-      notes: ['UMCSENT 为 FRED 月频慢变量，用于消费者体感与风险资产定价的 audit-only 观察。']
+      source: 'FRED:UMCSENT; FRED:NAPM',
+      notes: ['UMCSENT 与 NAPM 为 FRED 月频慢变量，用于消费者体感与制造业景气的 audit-only 观察。']
     };
   } catch (_err) {
     const fallback = normalizePreviousConsumer(prevConsumer);
