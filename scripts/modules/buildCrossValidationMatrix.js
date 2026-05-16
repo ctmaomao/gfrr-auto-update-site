@@ -471,6 +471,7 @@ function buildWorldOrderNarrative(data, worldOrderStressData) {
   const marketConfirmation = isPlainObject(dimensions.marketConfirmation) ? dimensions.marketConfirmation : {};
   const confirmationSource = world.marketConfirmationInput?.source;
   const externalSources = isPlainObject(world.externalSources) ? world.externalSources : {};
+  const gdeltStatus = typeof externalSources.gdelt?.status === 'string' ? externalSources.gdelt.status : null;
   const gdeltToneProxy = finite(externalSources.gdelt?.summary?.toneProxy);
   const ofacRecentActionsCount = finite(externalSources.ofac?.summary?.recentActionsCount);
   const decisionModifier = isPlainObject(world.decisionModifier) ? world.decisionModifier : {};
@@ -512,8 +513,16 @@ function buildWorldOrderNarrative(data, worldOrderStressData) {
   if (world.freshness === 'fresh') supportingEvidence.push(evidence('world_order_freshness', world.freshness, '外部来源新鲜'));
   if (confidence !== null && confidence >= 0.5) supportingEvidence.push(evidence('world_order_confidence', `${Math.round(confidence * 100)}%`, '置信度达到 50% 以上'));
   if (confirmationSource && confirmationSource !== 'no-confirmation') supportingEvidence.push(evidence('market_confirmation_source', confirmationSource, '存在市场确认输入'));
-  if (gdeltToneProxy !== null && gdeltToneProxy <= -0.1) {
-    supportingEvidence.push(evidence('gdelt_tone_proxy', formatSigned(gdeltToneProxy, 2), 'GDELT tone proxy 为负，新闻语调偏压力'));
+  // M-51 fix-up: Only use toneProxy as supporting evidence when GDELT status is 'ok'.
+  // When status === 'stale', the existing 'gdelt' missingEvidence applies instead.
+  // This prevents the contradictory state where a stale source provides both
+  // 'missing' AND 'supporting' evidence simultaneously.
+  if (gdeltStatus === 'ok' && gdeltToneProxy !== null && gdeltToneProxy <= -0.3) {
+    supportingEvidence.push(evidence(
+      'gdelt_tone_proxy',
+      formatSigned(gdeltToneProxy, 2),
+      `GDELT 媒体情绪 ${formatSigned(gdeltToneProxy, 2)}，负面情绪强烈`
+    ));
   }
   if (ofacRecentActionsCount !== null && ofacRecentActionsCount > 0) {
     supportingEvidence.push(evidence('ofac_recent_actions', formatNumber(ofacRecentActionsCount, 0), 'OFAC 近期行动为非零，经济金融武器化维度存在现实活动'));

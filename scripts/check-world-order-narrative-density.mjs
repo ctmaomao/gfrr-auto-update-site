@@ -70,7 +70,6 @@ if (!narrative) {
     'bloc_formation',
     'world_order_market_confirmation',
     'market_confirmation_source',
-    'gdelt_tone_proxy',
     'ofac_recent_actions',
   ]) {
     if (!supportingSources.has(source)) {
@@ -79,7 +78,28 @@ if (!narrative) {
   }
 
   const missingSources = new Set(narrative.missingEvidence.map((item) => item.source));
-  for (const source of ['gdelt', 'acled', 'sipri']) {
+  const gdeltStatus = worldOrder?.externalSources?.gdelt?.status;
+  const gdeltTone = worldOrder?.externalSources?.gdelt?.summary?.toneProxy;
+
+  // M-51 fix-up: gdelt_tone_proxy is conditional on healthy GDELT data.
+  // Stale GDELT should only appear as missingEvidence, not supportingEvidence.
+  if (gdeltStatus === 'ok') {
+    if (typeof gdeltTone === 'number' && gdeltTone <= -0.3 && !supportingSources.has('gdelt_tone_proxy')) {
+      fail('gdelt_tone_proxy expected in supportingEvidence (GDELT ok + toneProxy <= -0.3)');
+    }
+    if (missingSources.has('gdelt')) {
+      fail("'gdelt' should NOT be in missingEvidence when status === 'ok'");
+    }
+  } else if (gdeltStatus === 'stale') {
+    if (supportingSources.has('gdelt_tone_proxy')) {
+      fail("gdelt_tone_proxy should NOT be in supportingEvidence when GDELT status === 'stale'");
+    }
+    if (!missingSources.has('gdelt')) {
+      fail("'gdelt' expected in missingEvidence when status === 'stale'");
+    }
+  }
+
+  for (const source of ['acled', 'sipri']) {
     if (!missingSources.has(source)) {
       fail(`world_order_pressure_crossing missing source-status evidence: ${source}`);
     }
