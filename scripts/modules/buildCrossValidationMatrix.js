@@ -108,11 +108,14 @@ function narrative({ id, label, supportingEvidence = [], missingEvidence = [], c
 function buildEnergyShockNarrative(data) {
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
   const energyCheck = findDivergenceCheck(data, 'energy_pricing_gap_watch');
+  const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
   const brent = finite(inputs.brent);
+  const crackSpread = finite(brentLayer.crackSpread);
+  const crackSpreadRegime = typeof brentLayer.crackSpreadRegime === 'string' ? brentLayer.crackSpreadRegime : null;
   const supportingEvidence = [];
   const missingEvidence = [
     evidence('dated_brent', null, 'Platts Dated Brent 尚未接入'),
-    evidence('term_structure', null, 'Brent 期限结构、裂解价差、库存和航运压力等待接入'),
+    evidence('term_structure', null, 'Brent 期限结构、库存和航运压力等待接入'),
   ];
   const contradictingEvidence = [];
 
@@ -121,6 +124,27 @@ function buildEnergyShockNarrative(data) {
   }
   if (energyCheck.status === 'stress' || finite(energyCheck.score) >= 60) {
     supportingEvidence.push(evidence('energy_pricing_gap_watch', formatNumber(energyCheck.score, 0), energyCheck.summaryZh || '能源价格验证层提示压力'));
+  }
+  if (crackSpread === null) {
+    missingEvidence.push(evidence('crack_spread', null, '柴油裂解价差（DHOILNYH-Brent）尚未接入'));
+  } else if (crackSpread >= 45) {
+    supportingEvidence.push(evidence(
+      'crack_spread',
+      `$${crackSpread.toFixed(1)}/桶`,
+      `柴油裂解价差 $${crackSpread.toFixed(1)}/桶（${crackSpreadRegime}），实物供应紧张，确认能源冲击`
+    ));
+  } else if (crackSpread >= 25) {
+    supportingEvidence.push(evidence(
+      'crack_spread',
+      `$${crackSpread.toFixed(1)}/桶`,
+      `柴油裂解价差 $${crackSpread.toFixed(1)}/桶（${crackSpreadRegime}），偏高支持能源压力观察`
+    ));
+  } else if (crackSpread < 10) {
+    contradictingEvidence.push(evidence(
+      'crack_spread',
+      `$${crackSpread.toFixed(1)}/桶`,
+      `柴油裂解价差 $${crackSpread.toFixed(1)}/桶（${crackSpreadRegime}），经济需求疲软，反驳能源冲击叙事`
+    ));
   }
   if (brent !== null && brent < 85) {
     contradictingEvidence.push(evidence('brent', formatCurrency(brent), 'Brent 未显示能源冲击压力'));

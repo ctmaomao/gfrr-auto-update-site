@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-48V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-48V';
-import { formatFiniteNumber } from './format.js?v=28.0M-48V';
+import { $ } from './config.js?v=28.0M-49V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-49V';
+import { formatFiniteNumber } from './format.js?v=28.0M-49V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -316,9 +316,9 @@ function buildPressureSources(data, worldOrderStressData) {
       confidence: brent === null ? '偏低' : '中等',
       dataCoverage: energyGaps.length ? '数据覆盖：部分缺口' : '数据覆盖：等待校准',
       evidence: [`布伦特 ${formatNumber(brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`],
-      missingEvidence: energyGaps.length ? ['Dated Brent、期限结构和裂解价差仍待验证。'] : [],
+      missingEvidence: energyGaps.length ? ['Dated Brent、期限结构和实物端证据仍待验证。'] : [],
       explanation: energyGaps.length
-        ? '价格压力存在，但 Dated Brent、期限结构和裂解价差仍待验证。'
+        ? '价格压力存在，但 Dated Brent、期限结构和实物端证据仍待验证。'
         : '能源压力仍需与通胀预期和实物端交叉确认。',
       sourceType: brent === null ? '数据不足' : '数据推断',
       priority: brent === null ? 4 : brent >= 100 ? 1 : 2,
@@ -409,7 +409,7 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
   pending.push('能源价格处于观察区间，但实物端验证数据仍不足。');
   const dataGapEvidence = [
     'Platts Dated Brent / 正式 Dated Brent 尚未接入。',
-    'Brent 期限结构、crack spread / diesel stress、shipping / freight 仍待接入。',
+    'Brent 期限结构、shipping / freight 仍待接入。',
     ...safeArray(brentLayer.dataGaps).slice(0, 1),
   ];
   if (!marketMetric) dataGapEvidence.unshift('Nasdaq / QQQ 周线历史尚未接入。');
@@ -468,6 +468,7 @@ function buildMacroDrivers(data) {
   const fedLiquidity = isPlainObject(macroDrivers.fedLiquidity) ? macroDrivers.fedLiquidity : {};
   const curve = isPlainObject(macroDrivers.curve) ? macroDrivers.curve : {};
   const credit = isPlainObject(macroDrivers.credit) ? macroDrivers.credit : {};
+  const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
   const onRrpSignal = findActiveSignal(macroDrivers.activeSignals, 'onRrpCritical');
   const hyOas = finite(inputs.hyOas);
   const igOas = finite(credit.igOas);
@@ -520,8 +521,13 @@ function buildMacroDrivers(data) {
       direction: finite(inputs.brent) !== null && Number(inputs.brent) >= 100 ? '压力上升' : '观察中',
       confidence: finite(inputs.brent) === null ? '偏低' : '中等',
       dataCoverage: '数据覆盖：部分缺口',
-      evidence: [`布伦特 ${formatNumber(inputs.brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`],
-      missingEvidence: ['Dated Brent、期限结构、裂解价差、柴油压力与库存数据等待接入。'],
+      evidence: [
+        `布伦特 ${formatNumber(inputs.brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`,
+        brentLayer?.crackSpread === null || !Number.isFinite(brentLayer?.crackSpread)
+          ? null
+          : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶（${brentLayer.crackSpreadRegime}）`,
+      ].filter(Boolean),
+      missingEvidence: ['Dated Brent、期限结构、库存数据等待接入。'],
       explanation: 'Brent 偏高可以提示能源压力，但不能单独证明广义通胀重新加速。',
       sourceType: finite(inputs.brent) === null ? '数据不足' : '数据推断',
     }),
@@ -688,7 +694,12 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
       direction: finite(inputs.brent) === null ? '方向待确认' : '压力上升',
       confidence: evidenceStrengthFromConfidence(brentLayer.confidence, '中等'),
       dataCoverage: '数据覆盖：部分缺口',
-      evidence: [text(brentLayer.summaryZh, `布伦特 ${formatNumber(inputs.brent, 1)}，通胀预期 ${formatNumber(inputs.breakeven10y, 2, '%')}。`)],
+      evidence: [
+        text(brentLayer.summaryZh, `布伦特 ${formatNumber(inputs.brent, 1)}，通胀预期 ${formatNumber(inputs.breakeven10y, 2, '%')}。`),
+        brentLayer.crackSpread === null || !Number.isFinite(brentLayer.crackSpread)
+          ? null
+          : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶（${brentLayer.crackSpreadRegime}，日度更新）`,
+      ].filter(Boolean),
       missingEvidence: safeArray(brentLayer.dataGaps).slice(0, 3).length
         ? safeArray(brentLayer.dataGaps).slice(0, 3)
         : ['实物端证据等待接入。'],

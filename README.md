@@ -17,7 +17,7 @@
 
 ## 当前版本状态
 
-当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-48V`。
+当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-49V`。
 
 当前主运行状态：
 
@@ -35,8 +35,8 @@
 - `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`consumer_vs_asset_pricing`、`brentPricingLayer` 和 `aiInterpretationLayer` 都是解释层 / 审计层 / 展示层。
 - External AI production panel 是只读辅助层；manual / provider artifacts 不等于 scoring、Daily、frontend 或 production write readiness。
 - Market Pricing Temperature 已进入 M-27 以后前端展示阶段，后续边界以对应 M-series docs 为准。
-- Frontend asset cache version 当前为 `28.0M-48V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
-- `npm run check:all` 当前由 `package.json` 定义，包含 54 个串联检查项。
+- Frontend asset cache version 当前为 `28.0M-49V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
+- `npm run check:all` 当前由 `package.json` 定义，包含 55 个串联检查项。
 - Market Pricing first real record write scaffold 在任何写入前运行 6 sanity checks；细节以 `docs/OPERATIONS.md` 和 `docs/SYSTEM_UPGRADE_PLAN.md` 为准。
 
 最近维护节奏：
@@ -53,6 +53,7 @@
 - SLOOS bank loan standards M-46: Adds FRED:DRTSCILM (large/medium firms) and FRED:DRTSCIS (small firms) C&I loan tightening data to resolveCredit. Adds new fields to macroDrivers.credit with first formal DATA_CONTRACT section. Upgrades cross-validation liquidity_tightening narrative: SLOOS changes from hardcoded null to conditional supporting/contradicting/missing classification based on tightening level. Backend pipeline only; values populate on next scheduled daily-pipeline.yml run. Quarterly survey frequency means values update ~4 times per year.
 - ISM Manufacturing PMI M-47: Adds FRED:NAPM (monthly) to resolveConsumerSentiment. Extends macroDrivers.consumer with 3 new fields (ismManufacturingPmi, ismManufacturingPmi3mChange, ismPmiRegime). Upgrades DATA_CONTRACT consumer section to table format. Updates source field from single-source 'FRED:UMCSENT' to multi-source 'FRED:UMCSENT; FRED:NAPM'. Upgrades cross-validation stagflation_pressure narrative: PMI changes from hardcoded null to conditional supporting/contradicting/missing classification based on absolute value thresholds. Backend pipeline only; values populate on next scheduled daily-pipeline.yml run.
 - Chicago Fed NFCI Bank Stress Index M-48: Adds FRED:NFCI (Chicago Fed National Financial Conditions Index, weekly) to resolveCredit. Extends macroDrivers.credit with 3 new fields (nfci, nfci4wChange, nfciRegime). Upgrades cross-validation credit_spread_warning narrative: bank_stress_index changes from hardcoded null to conditional 5-tier classification (>0.5=significantly tight, 0.1-0.5=mildly tight, -0.1 to 0.1=neutral no-op, -0.5 to -0.1=mildly loose, <-0.5=significantly loose). Backend pipeline only; values populate on next scheduled daily-pipeline.yml run. NFCI 0-axis is OPPOSITE to igOas/hyOas (NFCI positive=tight=BAD).
+- Diesel Crack Spread M-49: Adds FRED:DHOILNYH (NY Harbor ULSD spot price, daily) and computes diesel crack spread as DHOILNYH × 42 - Brent inside brentPricingLayer. Extends brentPricingLayer with ulsdPrice, ulsd4wChange, crackSpread, crackSpread4wChange, crackSpreadRegime, and ulsdSourceStatus. Removes crack spread from brentPricingLayer.dataGaps and upgrades cross-validation energy_shock narrative to conditional crack_spread classification. Backend pipeline only; values populate on next scheduled daily-pipeline.yml run.
 
 ## 核心架构
 
@@ -207,6 +208,6 @@ README 只保留入口级说明。若 README 与 `AGENTS.md`、`DESIGN.md`、`pa
 
 - 页面公开标签：`v28.0C`。
 - 工程稳定观察基线：`v28.0J`。
-- 当前 frontend asset cache version：`28.0M-48V`。
+- 当前 frontend asset cache version：`28.0M-49V`。
 - 当前 runtime status：Node.js 24 LTS。
-- 当前 M-series note：M-48 adds Chicago Fed NFCI bank stress index to macroDrivers.credit; M-47 adds ISM Manufacturing PMI to macroDrivers.consumer; M-46 adds SLOOS bank loan standards and the first formal macroDrivers.credit contract; M-45 completes frontend field synchronization for Fed liquidity and market-pricing metadata; M-44 deprecates the stale Stable Observation Audit workflow/script; M-43 completes External AI provenance metadata from GitHub Actions run context and DeepSeek output SHA256; M-40 已跳过且无 PR。
+- 当前 M-series note：M-49 adds DHOILNYH diesel crack spread to brentPricingLayer; M-48 adds Chicago Fed NFCI bank stress index to macroDrivers.credit; M-47 adds ISM Manufacturing PMI to macroDrivers.consumer; M-46 adds SLOOS bank loan standards and the first formal macroDrivers.credit contract; M-45 completes frontend field synchronization for Fed liquidity and market-pricing metadata; M-44 deprecates the stale Stable Observation Audit workflow/script; M-43 completes External AI provenance metadata from GitHub Actions run context and DeepSeek output SHA256; M-40 已跳过且无 PR。
