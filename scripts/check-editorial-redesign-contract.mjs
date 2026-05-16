@@ -89,10 +89,10 @@ function checkHomepageIa() {
     ['风险引擎', '#homepage-risk-engines'],
     ['交叉验证', '#homepage-cross-validation'],
     ['本期关键变化', '#wow-key-changes'],
+    ['外部 AI', '#external-ai-auxiliary'],
     ['风险热力图', '#global-risk-heatmap'],
     ['详细数据', '#detail-data'],
     ['方法说明', '#method-evidence'],
-    ['外部 AI', '#external-ai-auxiliary'],
     ['执行风控', '#execution-risk-detail'],
   ];
 
