@@ -460,16 +460,78 @@ function buildWorldOrderNarrative(data, worldOrderStressData) {
   const score = finite(world.score);
   const confidence = finite(world.confidence);
   const mainScore = finite(data?.score);
+  const state = typeof world.state === 'string' ? world.state : null;
+  const labelZh = typeof world.labelZh === 'string' ? world.labelZh : null;
+  const dimensions = isPlainObject(world.dimensions) ? world.dimensions : {};
+  const dominantDriver = safeArray(world.dominantDrivers).find((item) => isPlainObject(item)) || null;
+  const economicWeaponization = isPlainObject(dimensions.economicWeaponization) ? dimensions.economicWeaponization : {};
+  const capitalControlRisk = isPlainObject(dimensions.capitalControlRisk) ? dimensions.capitalControlRisk : {};
+  const blocFormation = isPlainObject(dimensions.blocFormation) ? dimensions.blocFormation : {};
+  const multiTheaterConflict = isPlainObject(dimensions.multiTheaterConflict) ? dimensions.multiTheaterConflict : {};
+  const marketConfirmation = isPlainObject(dimensions.marketConfirmation) ? dimensions.marketConfirmation : {};
   const confirmationSource = world.marketConfirmationInput?.source;
   const externalSources = isPlainObject(world.externalSources) ? world.externalSources : {};
+  const gdeltStatus = typeof externalSources.gdelt?.status === 'string' ? externalSources.gdelt.status : null;
+  const gdeltToneProxy = finite(externalSources.gdelt?.summary?.toneProxy);
+  const ofacRecentActionsCount = finite(externalSources.ofac?.summary?.recentActionsCount);
+  const decisionModifier = isPlainObject(world.decisionModifier) ? world.decisionModifier : {};
+  const riskBias = typeof decisionModifier.riskBias === 'string' ? decisionModifier.riskBias : null;
   const supportingEvidence = [];
   const missingEvidence = [];
   const contradictingEvidence = [];
 
   if (score !== null && score >= 50) supportingEvidence.push(evidence('world_order_score', formatNumber(score, 0), '世界秩序压力接近或进入高压区间'));
+  if (state && state !== 'normal_globalization') {
+    supportingEvidence.push(evidence('world_order_state', labelZh || state, `结构性状态为 ${labelZh || state}，提示全球化摩擦已经进入可观察区间`));
+  }
+  if (dominantDriver) {
+    const driverScore = finite(dominantDriver.score);
+    const driverLabel = dominantDriver.labelZh || dominantDriver.key || '主导驱动';
+    if (driverScore !== null && driverScore >= 50) {
+      supportingEvidence.push(evidence('dominant_driver', `${driverLabel} ${formatNumber(driverScore, 0)}`, '世界秩序压力主导驱动已经高于 50 分'));
+    }
+  }
+  for (const [source, dimension] of [
+    ['economic_weaponization', economicWeaponization],
+    ['capital_control_risk', capitalControlRisk],
+    ['bloc_formation', blocFormation],
+    ['multi_theater_conflict', multiTheaterConflict],
+  ]) {
+    const dimensionScore = finite(dimension.score);
+    if (dimensionScore !== null && dimensionScore >= 50) {
+      supportingEvidence.push(evidence(source, `${dimension.labelZh || source} ${formatNumber(dimensionScore, 0)}`, `${dimension.labelZh || source} 维度高于 50 分，强化结构性世界秩序压力`));
+    }
+  }
+  if (marketConfirmation.state === 'confirmed' || marketConfirmation.state === 'partial_confirmed') {
+    const marketScore = finite(marketConfirmation.score);
+    supportingEvidence.push(evidence(
+      'world_order_market_confirmation',
+      marketScore === null ? marketConfirmation.state : `${marketConfirmation.state} ${formatNumber(marketScore, 0)}`,
+      `${marketConfirmation.labelZh || '市场确认'}维度为 ${marketConfirmation.state}，说明快变量对结构性压力有部分确认`
+    ));
+  }
   if (world.freshness === 'fresh') supportingEvidence.push(evidence('world_order_freshness', world.freshness, '外部来源新鲜'));
   if (confidence !== null && confidence >= 0.5) supportingEvidence.push(evidence('world_order_confidence', `${Math.round(confidence * 100)}%`, '置信度达到 50% 以上'));
   if (confirmationSource && confirmationSource !== 'no-confirmation') supportingEvidence.push(evidence('market_confirmation_source', confirmationSource, '存在市场确认输入'));
+  // M-51 fix-up: Only use toneProxy as supporting evidence when GDELT status is 'ok'.
+  // When status === 'stale', the existing 'gdelt' missingEvidence applies instead.
+  // This prevents the contradictory state where a stale source provides both
+  // 'missing' AND 'supporting' evidence simultaneously.
+  if (gdeltStatus === 'ok' && gdeltToneProxy !== null && gdeltToneProxy <= -0.3) {
+    supportingEvidence.push(evidence(
+      'gdelt_tone_proxy',
+      formatSigned(gdeltToneProxy, 2),
+      `GDELT 媒体情绪 ${formatSigned(gdeltToneProxy, 2)}，负面情绪强烈`
+    ));
+  }
+  if (ofacRecentActionsCount !== null && ofacRecentActionsCount > 0) {
+    supportingEvidence.push(evidence('ofac_recent_actions', formatNumber(ofacRecentActionsCount, 0), 'OFAC 近期行动为非零，经济金融武器化维度存在现实活动'));
+  }
+  if (riskBias === 'upward') {
+    supportingEvidence.push(evidence('decision_modifier_risk_bias', riskBias, 'World Order modifier 对结构性风险给出 upward bias'));
+  } else if (riskBias) {
+    missingEvidence.push(evidence('decision_modifier_risk_bias', riskBias, 'World Order modifier 当前未提高 riskBias，保持结构性解释层边界'));
+  }
   if (externalSources.gdelt?.status === 'stale') missingEvidence.push(evidence('gdelt', 'stale', 'GDELT 当前为 stale'));
   if (externalSources.acled?.status === 'not_configured') missingEvidence.push(evidence('acled', 'not_configured', 'ACLED 尚未配置'));
   if (externalSources.sipri?.status === 'manual_required') missingEvidence.push(evidence('sipri', 'manual_required', 'SIPRI 慢变量仍需手动导入'));
@@ -484,7 +546,7 @@ function buildWorldOrderNarrative(data, worldOrderStressData) {
     missingEvidence,
     contradictingEvidence,
     interpretation: supportingEvidence.length
-      ? '世界秩序压力提供结构性背景，但来源新鲜度和置信度仍限制结论强度。'
+      ? '世界秩序压力已能从状态、主导驱动、维度分项与外部源活动中形成结构性背景，但来源新鲜度和置信度仍限制结论强度。'
       : '世界秩序压力缺少足够新鲜和高置信确认。',
   });
 }

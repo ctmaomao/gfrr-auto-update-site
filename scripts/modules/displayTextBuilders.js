@@ -1,4 +1,4 @@
-import { fmtNumSafe } from './config.js?v=28.0M-50V';
+import { fmtNumSafe } from './config.js?v=28.0M-51V';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
