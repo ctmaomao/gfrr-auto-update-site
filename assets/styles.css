@@ -352,6 +352,16 @@ h1{font-size:31px}
   --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "PingFang SC", serif;
   --font-mono: "IBM Plex Mono", "SF Mono", Menlo, Consolas, monospace;
 
+  /* M-54: Typography type scale */
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-md: 17px;
+  --font-size-lg: 20px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 32px;
+
   /* Legacy aliases for backwards compatibility with older component selectors. */
   --bg: var(--paper-bg);
   --bg-2: var(--paper-bg);
@@ -2362,10 +2372,17 @@ transform: translateX(-50%);
   font-weight: 800;
   line-height: 1.45;
 }
+/* M-54: Evidence colors aligned with narrative-direction semantic. */
 .editorial-evidence-supporting {
-  border-top-color: var(--risk-green);
+  border-top-color: var(--risk-red);
 }
 .editorial-evidence-supporting .editorial-validation-sublist-label {
+  color: var(--risk-red);
+}
+.editorial-evidence-contradicting {
+  border-top-color: var(--risk-green);
+}
+.editorial-evidence-contradicting .editorial-validation-sublist-label {
   color: var(--risk-green);
 }
 .editorial-evidence-missing {
@@ -2373,12 +2390,6 @@ transform: translateX(-50%);
 }
 .editorial-evidence-missing .editorial-validation-sublist-label {
   color: var(--paper-muted);
-}
-.editorial-evidence-contradicting {
-  border-top-color: var(--risk-red);
-}
-.editorial-evidence-contradicting .editorial-validation-sublist-label {
-  color: var(--risk-red);
 }
 .editorial-assessment-strong-confirmation .editorial-validation-card-status-strip,
 .editorial-assessment-strong-confirmation .editorial-validation-type,

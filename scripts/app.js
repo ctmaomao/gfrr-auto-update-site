@@ -1,12 +1,12 @@
-import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0M-53V';
-import { buildHealthDashboardModel } from './modules/health.js?v=28.0M-53V';
-import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0M-53V';
-import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0M-53V';
-import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderAiInterpretationLayer, renderDivergenceLayer, renderBrentPricingLayer, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0M-53V';
-import { renderExternalAiPanel } from './modules/renderExternalAi.js?v=28.0M-53V';
-import { renderMacroRiskOverview } from './modules/renderMacroOverview.js?v=28.0M-53V';
+import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0M-54V';
+import { buildHealthDashboardModel } from './modules/health.js?v=28.0M-54V';
+import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0M-54V';
+import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0M-54V';
+import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderAiInterpretationLayer, renderDivergenceLayer, renderBrentPricingLayer, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0M-54V';
+import { renderExternalAiPanel } from './modules/renderExternalAi.js?v=28.0M-54V';
+import { renderMacroRiskOverview } from './modules/renderMacroOverview.js?v=28.0M-54V';
 
-window.__GFRR_FRONTEND_VERSION__ = '28.0M-53V';
+window.__GFRR_FRONTEND_VERSION__ = '28.0M-54V';
 
 function fetchMarketPricingMetricsData() {
   return fetch('data/market-pricing-metrics.json', { cache: 'no-store' })

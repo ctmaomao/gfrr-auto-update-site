@@ -12,7 +12,7 @@ const PROTECTED_PATHS = [
   'data/radar-data.json',
 ];
 const OLD_VERSION = '28.0M-7V';
-const NEW_VERSION = '28.0M-53V';
+const NEW_VERSION = '28.0M-54V';
 const DISCLAIMER = '本数据为统计描述，不构成投资建议。';
 const errors = [];
 
