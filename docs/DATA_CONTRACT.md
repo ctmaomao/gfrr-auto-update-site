@@ -275,6 +275,33 @@ macroDrivers.consumer
 - `onRrp` 存储为十亿美元（FRED 原始单位）。
 - 该差异保留 FRED native units 以便回测 / cross-reference；前端渲染层负责统一转换。
 
+### `macroDrivers.credit` 信用环境 contract (v28.0M-46)
+
+`macroDrivers.credit` 是信用环境层指标，汇总市场利差（FRED + worker）与银行贷款调查数据（SLOOS）。所有字段为 audit-only / display-only，不参与 scoring、decisionModel、executionLock 或 positionGuidance。
+
+字段 contract：
+
+| 字段 | 类型 | 单位 | 来源 | 含义 |
+|---|---|---|---|---|
+| `igOas` | number \| null | % | FRED:BAMLC0A0CM（日频） | 投资级 OAS 利差 |
+| `igOas1dChange` | number \| null | % | 派生 | IG OAS 1日变化 |
+| `hyOas` | number \| null | % | realtime worker（output assembly 注入） | 高收益 OAS 利差 |
+| `igHyRatio` | number \| null | 无量纲 | 派生：igOas ÷ hyOas | IG/HY 比率（信用分层） |
+| `regime` | string enum | n/a | 派生 | `扩张` \| `偏紧` \| `正常` \| `偏宽松` \| `未知` |
+| `sloosTighteningLargeFirms` | number \| null (optional) | 净百分比 | FRED:DRTSCILM（季度） | SLOOS 大型企业 C&I 净收紧度（v28.0M-46 起） |
+| `sloosTighteningSmallFirms` | number \| null (optional) | 净百分比 | FRED:DRTSCIS（季度） | SLOOS 小型企业 C&I 净收紧度（v28.0M-46 起） |
+| `sloosTighteningLargeQoQ` | number \| null (optional) | 百分点差 | 派生 | 大型企业 QoQ 变化（v28.0M-46 起） |
+| `sloosTighteningSmallQoQ` | number \| null (optional) | 百分点差 | 派生 | 小型企业 QoQ 变化（v28.0M-46 起） |
+| `sloosRegime` | string enum (optional) | n/a | 派生 | `显著收紧` \| `温和收紧` \| `中性` \| `放松` \| `未知` |
+| `sourceStatus` | object | n/a | 拉取状态 | `{ igOas: 'live'\|'fallback'\|'missing', sloos: 'live'\|'fallback'\|'missing' }` |
+
+边界：
+- 本字段层不改变 `values.*`、scoring、`decisionModel`、`executionLock`、`positionGuidance`
+- `sloos*` 字段标记为 optional 以保持向后兼容性
+- SLOOS 为季度频率慢变量（年发布 4 次），fallback 路径沿用上一季度数据
+- `sloosTighteningLargeFirms` 与 `sloosTighteningSmallFirms` 来自同一 SLOOS 调查，共享 `sourceStatus.sloos`
+- `regime`（信用市场制度）与 `sloosRegime`（贷款标准制度）独立分类，可同时显示
+
 ### brentPricingLayer 公开代理价格层 contract
 
 `v28.0I-5A` 在 `data/radar-data.json` 根级新增：
@@ -544,30 +571,30 @@ config/world-order-sipri-normalized.example.json
 
 ### Frontend asset cache version
 
-v28.0M-42V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+v28.0M-46V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
 当前前端资源版本为：
 
 ```text
-28.0M-42V
+28.0M-46V
 ```
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-42V`。
-- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-42V`。
-- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-42V"`。
+- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-46V`。
+- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-46V`。
+- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-46V"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs 28.0M-42V
-npm run bump:frontend-asset-version -- 28.0M-42V
+node scripts/bump-frontend-asset-version.mjs 28.0M-46V
+npm run bump:frontend-asset-version -- 28.0M-46V
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-42V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-46V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
@@ -1887,7 +1914,7 @@ Current data contract boundary:
 - Daily Brief remains source data / evidence detail, not a duplicate primary homepage judgment.
 - External AI output remains governed by its production contract and display gates.
 - Global Risk Heatmap remains a standalone frontend section.
-- The frontend asset cache version is `28.0M-42V`.
+- The frontend asset cache version is `28.0M-46V`.
 - No `data/*.json`, `realtime/*.json`, scoring, `decisionModel`, `executionLock`, or `positionGuidance` contract changes are introduced.
 
 ## v28.0M-7V homepage reading path frontend-only boundary

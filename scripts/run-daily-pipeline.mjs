@@ -1392,6 +1392,14 @@ function classifyCreditRegime(igOas) {
   return '偏宽松';
 }
 
+function classifySloosRegime(largeFirmsTightening) {
+  if (!Number.isFinite(largeFirmsTightening)) return '未知';
+  if (largeFirmsTightening >= 40) return '显著收紧';
+  if (largeFirmsTightening >= 15) return '温和收紧';
+  if (largeFirmsTightening >= -15) return '中性';
+  return '放松';
+}
+
 function classifyConsumerRegime(threeMonthChange) {
   if (!Number.isFinite(threeMonthChange)) return '未知';
   if (threeMonthChange <= -8) return '明显走弱';
@@ -1576,9 +1584,13 @@ async function resolveCurve(prevCurve) {
 }
 
 async function resolveCredit(prevCredit, hyOasLive) {
-  const status = { igOas: 'missing' };
+  const status = { igOas: 'missing', sloos: 'missing' };
   let igOas = null;
   let igOas1dChange = null;
+  let sloosTighteningLargeFirms = null;
+  let sloosTighteningSmallFirms = null;
+  let sloosTighteningLargeQoQ = null;
+  let sloosTighteningSmallQoQ = null;
   try {
     const rows = await fetchFredSeries('BAMLC0A0CM', 30);
     igOas = latestValue(rows);
@@ -1597,6 +1609,46 @@ async function resolveCredit(prevCredit, hyOasLive) {
     }
   }
 
+  // M-46: Series 2 — DRTSCILM (SLOOS Large/Medium C&I tightening, quarterly, net %)
+  // Uses 180-day lookback because SLOOS is quarterly (need to capture latest + previous quarter).
+  try {
+    const rows = await fetchFredSeries('DRTSCILM', 180);
+    sloosTighteningLargeFirms = latestValue(rows);
+    const ago = findValueAgo(rows, 90);
+    if (Number.isFinite(sloosTighteningLargeFirms) && Number.isFinite(ago)) {
+      sloosTighteningLargeQoQ = +(sloosTighteningLargeFirms - ago).toFixed(1);
+    }
+    status.sloos = 'live';
+  } catch (_err) {
+    if (Number.isFinite(prevCredit?.sloosTighteningLargeFirms)) {
+      sloosTighteningLargeFirms = prevCredit.sloosTighteningLargeFirms;
+      sloosTighteningLargeQoQ = Number.isFinite(prevCredit.sloosTighteningLargeQoQ)
+        ? prevCredit.sloosTighteningLargeQoQ
+        : null;
+      status.sloos = 'fallback';
+    } else {
+      status.sloos = 'missing';
+    }
+  }
+
+  // M-46: Series 3 — DRTSCIS (SLOOS Small Firms C&I tightening, quarterly, net %)
+  // Same SLOOS survey, separate series. If first fetch succeeded, this should too.
+  try {
+    const rows = await fetchFredSeries('DRTSCIS', 180);
+    sloosTighteningSmallFirms = latestValue(rows);
+    const ago = findValueAgo(rows, 90);
+    if (Number.isFinite(sloosTighteningSmallFirms) && Number.isFinite(ago)) {
+      sloosTighteningSmallQoQ = +(sloosTighteningSmallFirms - ago).toFixed(1);
+    }
+  } catch (_err) {
+    if (Number.isFinite(prevCredit?.sloosTighteningSmallFirms)) {
+      sloosTighteningSmallFirms = prevCredit.sloosTighteningSmallFirms;
+      sloosTighteningSmallQoQ = Number.isFinite(prevCredit.sloosTighteningSmallQoQ)
+        ? prevCredit.sloosTighteningSmallQoQ
+        : null;
+    }
+  }
+
   const regime = classifyCreditRegime(igOas);
   const igHyRatio = Number.isFinite(igOas) && Number.isFinite(hyOasLive) && hyOasLive !== 0
     ? +(igOas / hyOasLive).toFixed(3)
@@ -1607,6 +1659,11 @@ async function resolveCredit(prevCredit, hyOasLive) {
     igOas1dChange: Number.isFinite(igOas1dChange) ? igOas1dChange : null,
     igHyRatio,
     regime,
+    sloosTighteningLargeFirms: Number.isFinite(sloosTighteningLargeFirms) ? sloosTighteningLargeFirms : null,
+    sloosTighteningSmallFirms: Number.isFinite(sloosTighteningSmallFirms) ? sloosTighteningSmallFirms : null,
+    sloosTighteningLargeQoQ: Number.isFinite(sloosTighteningLargeQoQ) ? sloosTighteningLargeQoQ : null,
+    sloosTighteningSmallQoQ: Number.isFinite(sloosTighteningSmallQoQ) ? sloosTighteningSmallQoQ : null,
+    sloosRegime: classifySloosRegime(sloosTighteningLargeFirms),
     sourceStatus: status
   };
 }
@@ -1693,7 +1750,12 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   };
   const credit = results[2].status === 'fulfilled' ? results[2].value : {
     igOas: null, igOas1dChange: null, igHyRatio: null, regime: '未知',
-    sourceStatus: { igOas: 'missing' }
+    sloosTighteningLargeFirms: null,
+    sloosTighteningSmallFirms: null,
+    sloosTighteningLargeQoQ: null,
+    sloosTighteningSmallQoQ: null,
+    sloosRegime: '未知',
+    sourceStatus: { igOas: 'missing', sloos: 'missing' }
   };
   const consumer = results[3].status === 'fulfilled' ? results[3].value : buildMissingConsumer();
 
