@@ -38,6 +38,12 @@ function formatSigned(value, digits = 2) {
   return `${number >= 0 ? '+' : ''}${number.toFixed(digits)}`;
 }
 
+function formatSignedPercent(value, digits = 2) {
+  const number = finite(value);
+  if (number === null) return '--';
+  return `${number >= 0 ? '+' : ''}${number.toFixed(digits)}%`;
+}
+
 function formatCurrency(value) {
   const number = finite(value);
   if (number === null) return '--';
@@ -234,8 +240,19 @@ function buildStagflationNarrative(data, fedLiquidity = {}) {
 function buildRiskAssetMismatchNarrative(data, metric) {
   const pricingCheck = findDivergenceCheck(data, 'risk_complacency_watch');
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
+  const credit = isPlainObject(data?.macroDrivers?.credit) ? data.macroDrivers.credit : {};
+  const curve = isPlainObject(data?.macroDrivers?.curve) ? data.macroDrivers.curve : {};
+  const fedLiquidity = isPlainObject(data?.macroDrivers?.fedLiquidity) ? data.macroDrivers.fedLiquidity : {};
+
   const vix = finite(inputs.vix);
   const hyOas = finite(inputs.hyOas);
+  const dxy = finite(inputs.dxy);
+  const nfci = finite(credit.nfci);
+  const igHyRatio = finite(credit.igHyRatio);
+  const t10y2y = finite(curve.t10y2y);
+  const bgcrSofrSpread = finite(fedLiquidity.bgcrSofrSpread);
+  const bgcrSofrBp = bgcrSofrSpread !== null ? bgcrSofrSpread * 100 : null;
+
   const supportingEvidence = [];
   const missingEvidence = [];
   const contradictingEvidence = [];
@@ -243,13 +260,142 @@ function buildRiskAssetMismatchNarrative(data, metric) {
   if (pricingCheck.status === 'stress' || finite(pricingCheck.score) >= 50) {
     supportingEvidence.push(evidence('risk_complacency_watch', formatNumber(pricingCheck.score, 0), pricingCheck.summaryZh || '风险资产定价错配检查提示压力'));
   }
-  if (metric && metric.zScore >= 1.5) {
-    supportingEvidence.push(evidence('qqq_zscore', formatSigned(metric.zScore), `${metric.bucketLabel}，风险资产价格相对 60 周趋势偏热`));
-  } else {
+
+  if (!metric) {
     missingEvidence.push(evidence('qqq_zscore', null, 'QQQ 市场温度不可用'));
+  } else if (metric.zScore >= 1.5) {
+    supportingEvidence.push(evidence('qqq_zscore', formatSigned(metric.zScore), `${metric.bucketLabel}，风险资产价格相对 60 周趋势偏热`));
   }
-  if (vix !== null && vix < 16 && hyOas !== null && hyOas < 3.5 && !metric) {
-    contradictingEvidence.push(evidence('vix_hy_oas', `${formatNumber(vix, 2)} / ${formatNumber(hyOas, 2, '%')}`, '波动率与信用利差均偏平静'));
+
+  if (nfci !== null && hyOas !== null) {
+    if (nfci >= 0.5 && hyOas < 3.0) {
+      supportingEvidence.push(evidence(
+        'nfci_hy_mismatch',
+        `NFCI ${formatNumber(nfci, 2)} / HY ${formatNumber(hyOas, 2, '%')}`,
+        `金融状况显著收紧 (NFCI ${formatNumber(nfci, 2)}) 但 HY 信用利差仍极度平静 (${formatNumber(hyOas, 2, '%')})，信用市场未确认流动性收紧`
+      ));
+    } else if (nfci >= 0.1 && hyOas < 3.5) {
+      supportingEvidence.push(evidence(
+        'nfci_hy_mismatch',
+        `NFCI ${formatNumber(nfci, 2)} / HY ${formatNumber(hyOas, 2, '%')}`,
+        `金融状况温和收紧 (NFCI ${formatNumber(nfci, 2)}) 但 HY 信用利差仍偏窄 (${formatNumber(hyOas, 2, '%')})，错配迹象出现`
+      ));
+    } else if (nfci <= -0.5 && hyOas > 5.0) {
+      contradictingEvidence.push(evidence(
+        'nfci_hy_mismatch',
+        `NFCI ${formatNumber(nfci, 2)} / HY ${formatNumber(hyOas, 2, '%')}`,
+        `金融状况显著宽松 (NFCI ${formatNumber(nfci, 2)}) 且 HY 信用利差已警觉 (${formatNumber(hyOas, 2, '%')})，反向一致而非错配`
+      ));
+    }
+  }
+
+  if (t10y2y !== null && metric) {
+    if (t10y2y <= -0.5 && metric.zScore >= 1.5) {
+      supportingEvidence.push(evidence(
+        'curve_qqq_mismatch',
+        `T10Y2Y ${formatSignedPercent(t10y2y)} / QQQ z ${formatSigned(metric.zScore)}`,
+        `曲线深度倒挂 (${formatSignedPercent(t10y2y)}) 但风险资产显著偏热 (${metric.bucketLabel})，晚周期估值错配信号显著`
+      ));
+    } else if (t10y2y <= -0.2 && metric.zScore >= 1.0) {
+      supportingEvidence.push(evidence(
+        'curve_qqq_mismatch',
+        `T10Y2Y ${formatSignedPercent(t10y2y)} / QQQ z ${formatSigned(metric.zScore)}`,
+        `曲线轻度倒挂 (${formatSignedPercent(t10y2y)}) 同时风险资产偏热 (${metric.bucketLabel})，估值与基本面错配`
+      ));
+    } else if (t10y2y > 0.5 && metric.zScore <= -1.0) {
+      contradictingEvidence.push(evidence(
+        'curve_qqq_mismatch',
+        `T10Y2Y ${formatSignedPercent(t10y2y)} / QQQ z ${formatSigned(metric.zScore)}`,
+        `曲线明显陡峭 (${formatSignedPercent(t10y2y)}) 且风险资产偏冷 (${metric.bucketLabel})，方向一致非错配`
+      ));
+    }
+  }
+
+  if (dxy !== null && metric) {
+    if (dxy > 108 && metric.zScore >= 1.5) {
+      supportingEvidence.push(evidence(
+        'dxy_qqq_mismatch',
+        `DXY ${formatNumber(dxy, 2)} / QQQ z ${formatSigned(metric.zScore)}`,
+        `美元极端强势 (DXY ${formatNumber(dxy, 2)}) 但风险资产显著偏热 (${metric.bucketLabel})，美元紧缩与风险偏好显著错配`
+      ));
+    } else if (dxy > 105 && metric.zScore >= 1.0) {
+      supportingEvidence.push(evidence(
+        'dxy_qqq_mismatch',
+        `DXY ${formatNumber(dxy, 2)} / QQQ z ${formatSigned(metric.zScore)}`,
+        `美元强势 (DXY ${formatNumber(dxy, 2)}) 同时风险资产偏热 (${metric.bucketLabel})，美元与风险偏好错配迹象`
+      ));
+    } else if (dxy < 95 && metric.zScore <= -1.0) {
+      contradictingEvidence.push(evidence(
+        'dxy_qqq_mismatch',
+        `DXY ${formatNumber(dxy, 2)} / QQQ z ${formatSigned(metric.zScore)}`,
+        `美元弱势 (DXY ${formatNumber(dxy, 2)}) 且风险资产偏冷 (${metric.bucketLabel})，方向一致非错配`
+      ));
+    }
+  }
+
+  if (igHyRatio !== null && vix !== null) {
+    if (igHyRatio < 0.20 && vix < 16) {
+      supportingEvidence.push(evidence(
+        'ighy_vix_mismatch',
+        `IG/HY ${formatNumber(igHyRatio, 2)} / VIX ${formatNumber(vix, 2)}`,
+        `信用市场广度极度恶化 (IG/HY ${formatNumber(igHyRatio, 2)}) 但波动率市场极度平静 (VIX ${formatNumber(vix, 2)})，信用与波动显著错配`
+      ));
+    } else if (igHyRatio < 0.30 && vix < 20) {
+      supportingEvidence.push(evidence(
+        'ighy_vix_mismatch',
+        `IG/HY ${formatNumber(igHyRatio, 2)} / VIX ${formatNumber(vix, 2)}`,
+        `信用市场广度恶化 (IG/HY ${formatNumber(igHyRatio, 2)}) 但波动率市场平静 (VIX ${formatNumber(vix, 2)})，信用与波动错配迹象`
+      ));
+    } else if (igHyRatio > 0.40 && vix > 25) {
+      contradictingEvidence.push(evidence(
+        'ighy_vix_mismatch',
+        `IG/HY ${formatNumber(igHyRatio, 2)} / VIX ${formatNumber(vix, 2)}`,
+        `信用市场广度健康 (IG/HY ${formatNumber(igHyRatio, 2)}) 且波动率市场已警觉 (VIX ${formatNumber(vix, 2)})，方向一致非错配`
+      ));
+    }
+  }
+
+  if (bgcrSofrBp !== null && vix !== null) {
+    const absBp = Math.abs(bgcrSofrBp);
+    const bpDisplay = `${bgcrSofrBp >= 0 ? '+' : ''}${bgcrSofrBp.toFixed(1)}bp`;
+    if (absBp >= 15 && vix < 16) {
+      supportingEvidence.push(evidence(
+        'repo_vix_mismatch',
+        `BGCR-SOFR ${bpDisplay} / VIX ${formatNumber(vix, 2)}`,
+        `回购市场显著压力 (BGCR-SOFR ${bpDisplay}) 但波动率市场极度平静 (VIX ${formatNumber(vix, 2)})，融资紧张与波动率显著错配`
+      ));
+    } else if (absBp >= 5 && vix < 20) {
+      supportingEvidence.push(evidence(
+        'repo_vix_mismatch',
+        `BGCR-SOFR ${bpDisplay} / VIX ${formatNumber(vix, 2)}`,
+        `回购市场出现压力 (BGCR-SOFR ${bpDisplay}) 但波动率市场平静 (VIX ${formatNumber(vix, 2)})，融资与波动错配迹象`
+      ));
+    } else if (absBp < 3 && vix > 25) {
+      contradictingEvidence.push(evidence(
+        'repo_vix_mismatch',
+        `BGCR-SOFR ${bpDisplay} / VIX ${formatNumber(vix, 2)}`,
+        `回购市场正常 (BGCR-SOFR ${bpDisplay}) 且波动率市场已警觉 (VIX ${formatNumber(vix, 2)})，方向一致非错配`
+      ));
+    }
+  }
+
+  const supportingCount = supportingEvidence.length;
+  const contradictingCount = contradictingEvidence.length;
+  const missingCount = missingEvidence.length;
+
+  let interpretation;
+  if (supportingCount >= 4) {
+    interpretation = '多维错配同步出现（信用、利率、汇率、回购任意三项以上），估值层风险显著，建议持续观察是否扩散至信用利差或波动率市场。';
+  } else if (supportingCount >= 2) {
+    interpretation = `已出现 ${supportingCount} 个错配信号，估值层与基本面或资金面出现背离，单一指标不足以确认风险扩散。`;
+  } else if (supportingCount === 1) {
+    interpretation = '出现单一错配迹象，需观察是否与其他维度形成共振；当前尚不足以判断估值层压力扩大。';
+  } else if (contradictingCount > 0 && supportingCount === 0) {
+    interpretation = '风险资产温度与信用 / 利率 / 汇率方向一致，未形成错配；反向证据反而提示当前定价与基本面同步。';
+  } else if (missingCount > 0 && supportingCount === 0 && contradictingCount === 0) {
+    interpretation = '错配证据不足，部分关键数据（市场温度 / NFCI / 回购利差）尚未刷新或接入。';
+  } else {
+    interpretation = '风险资产错配证据不足，仅能保留为观察项。';
   }
 
   return narrative({
@@ -258,9 +404,7 @@ function buildRiskAssetMismatchNarrative(data, metric) {
     supportingEvidence,
     missingEvidence,
     contradictingEvidence,
-    interpretation: metric
-      ? '风险资产温度和错配检查已经可以共同观察估值层压力。'
-      : '缺少市场温度时，风险资产错配只能保留为观察项。',
+    interpretation,
   });
 }
 

@@ -58,6 +58,7 @@ be treated as governing rules for the whole project:
 - `docs/M-49_DIESEL_CRACK_SPREAD.md` — Authoritative within M-49 diesel crack spread and brentPricingLayer extension scope only
 - `docs/M-50_REPO_MARKET_SPREAD.md` — Authoritative within M-50 repo market spread and liquidity_tightening repo_stress classification scope only
 - `docs/M-51_WORLD_ORDER_NARRATIVE_ENHANCEMENT.md` — Authoritative within M-51 world_order_pressure_crossing narrative-density scope only
+- `docs/M-52_RISK_ASSET_MISMATCH_NARRATIVE_ENHANCEMENT.md` — Authoritative within M-52 risk_asset_mismatch narrative-density scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -143,6 +144,10 @@ M-50 is documented in `docs/M-50_REPO_MARKET_SPREAD.md`. It adds FRED:BGCR and F
 
 M-51 is documented in `docs/M-51_WORLD_ORDER_NARRATIVE_ENHANCEMENT.md`. It enhances only the `world_order_pressure_crossing` cross-validation narrative by reading existing `data/world-order-stress.json` fields: state/label, dominant driver, dimensions, market confirmation, GDELT tone, OFAC action count, and decisionModifier risk bias. It adds no new data source, no FRED series, no schema change, no data regeneration, and no scoring, decision, execution, position, workflow, Worker runtime, or world-order scoring/build change.
 
+#### M-52 (Risk Asset Mismatch Narrative Density)
+
+M-52 is documented in `docs/M-52_RISK_ASSET_MISMATCH_NARRATIVE_ENHANCEMENT.md`. It enhances only the `risk_asset_mismatch` cross-validation narrative by adding five cross-dimensional mismatch evidence types: NFCI vs HY, T10Y2Y vs QQQ, DXY vs QQQ, IG/HY vs VIX, and BGCR-SOFR vs VIX. It fixes the `qqq_zscore` missing-evidence bug, removes the old `vix_hy_oas` evidence, adds multi-level interpretation, and adds no new FRED series, no data acquisition, no schema change, no data regeneration, and no scoring, decision, execution, position, workflow, Worker runtime, or other narrative change.
+
 ### Operating Document (large, mixed content; consult selectively)
 
 These documents contain both current operating procedures and accumulated
@@ -169,7 +174,7 @@ documentation drift risk identified in the v28.0M-audit.
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-51V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-52V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -201,7 +206,8 @@ documentation drift risk identified in the v28.0M-audit.
 - v28.0M-49V Diesel Crack Spread 用 `?v=28.0M-49V` 刷新前端 asset graph；本轮新增 `resolveUlsd` 拉取 FRED:DHOILNYH，并在同步 `buildBrentPricingLayer` 内按 DHOILNYH × 42 - Brent 计算柴油裂解价差。仅扩展 `brentPricingLayer` 和 `energy_shock` cross-validation 分类；不改 data files、`values.brent`、Brent promotion、scoring、decision、execution、position、workflow、Worker runtime、External AI、M-46 SLOOS code、M-47 PMI code 或 M-48 NFCI code。
 - v28.0M-50V Repo Market Spread 用 `?v=28.0M-50V` 刷新前端 asset graph；本轮扩展 `resolveFedLiquidity` 拉取 FRED:BGCR / FRED:TGCR，并派生 BGCR-SOFR / TGCR-SOFR 回购利差。仅扩展 `macroDrivers.fedLiquidity` 和 `liquidity_tightening` 的 repo_stress cross-validation 分类；不改 data files、scoring、decision、execution、position、workflow、Worker runtime、External AI、M-46 SLOOS code、M-47 PMI code、M-48 NFCI code 或 M-49 crack-spread code。
 - v28.0M-51V World Order Narrative Density 用 `?v=28.0M-51V` 刷新前端 asset graph；本轮仅增强 `world_order_pressure_crossing` cross-validation narrative，从既有 `data/world-order-stress.json` 读取 state、dominantDrivers、dimensions、marketConfirmation、GDELT toneProxy、OFAC recentActionsCount 与 decisionModifier.riskBias。不新增数据源、不改 schema、不写 data files、不改 scoring、decision、execution、position、workflow、Worker runtime 或 world-order build/scoring code。
-- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0M-51V` / `npm run bump:frontend-asset-version -- 28.0M-51V`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-51V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
+- v28.0M-52V Risk Asset Mismatch Narrative Density 用 `?v=28.0M-52V` 刷新前端 asset graph；本轮仅增强 `risk_asset_mismatch` cross-validation narrative，新增 NFCI/HY、T10Y2Y/QQQ、DXY/QQQ、IG-HY/VIX、BGCR-SOFR/VIX 五类跨维度错配证据，并修复 `qqq_zscore` missingEvidence 中性值误报。不新增数据源、不改 schema、不写 data files、不改 scoring、decision、execution、position、workflow、Worker runtime 或其他 narrative。
+- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0M-52V` / `npm run bump:frontend-asset-version -- 28.0M-52V`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-52V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
 - v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。
