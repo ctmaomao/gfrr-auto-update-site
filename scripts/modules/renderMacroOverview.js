@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-49V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-49V';
-import { formatFiniteNumber } from './format.js?v=28.0M-49V';
+import { $ } from './config.js?v=28.0M-50V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-50V';
+import { formatFiniteNumber } from './format.js?v=28.0M-50V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -549,8 +549,11 @@ function buildMacroDrivers(data) {
         credit?.sloosTighteningLargeFirms === null || !Number.isFinite(credit?.sloosTighteningLargeFirms)
           ? null
           : `银行贷款标准 (SLOOS C&I 大型) ${formatSignedPercent(credit.sloosTighteningLargeFirms, 1)}（${credit.sloosTighteningLargeFirms >= 0 ? '净收紧' : '净放松'}，季度调查）`,
+        fedLiquidity?.bgcrSofrSpread === null || !Number.isFinite(fedLiquidity?.bgcrSofrSpread)
+          ? null
+          : `回购利差 (BGCR-SOFR) ${(fedLiquidity.bgcrSofrSpread * 100) >= 0 ? '+' : ''}${Math.round(fedLiquidity.bgcrSofrSpread * 100)}bp（${fedLiquidity.repoSpreadRegime}，日度更新）`,
       ].filter(Boolean),
-      missingEvidence: ['回购市场压力和跨市场融资压力等待接入。'],
+      missingEvidence: ['跨市场融资压力等待接入。'],
       counterEvidence: creditCalm ? ['信用与波动率尚未明显确认扩散。'] : [],
       explanation: creditCalm
         ? '长端利率和美元偏紧，但信用与波动率尚未明显确认扩散。'

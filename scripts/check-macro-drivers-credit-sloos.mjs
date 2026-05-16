@@ -82,7 +82,7 @@ const requiredRenderMarkers = [
   '银行贷款标准 (SLOOS C&I 大型)',
   '季度调查',
   '信用环境',
-  '回购市场压力和跨市场融资压力等待接入。',
+  '跨市场融资压力等待接入。',
   '私募信贷、CRE、CDX 与更细信用指标等待接入。'
 ];
 for (const marker of requiredRenderMarkers) {

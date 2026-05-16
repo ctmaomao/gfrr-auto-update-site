@@ -368,12 +368,12 @@ function buildLiquidityTighteningNarrative(data) {
   const dxy = finite(inputs.dxy);
   const t10y2y = finite(curve.t10y2y);
   const walcl4wChange = finite(fed.walcl4wChange);
+  const bgcrSofrSpread = finite(fed.bgcrSofrSpread);
+  const repoSpreadRegime = typeof fed.repoSpreadRegime === 'string' ? fed.repoSpreadRegime : null;
   const sloosTighteningLargeFirms = finite(credit.sloosTighteningLargeFirms);
   const sloosTighteningSmallFirms = finite(credit.sloosTighteningSmallFirms);
   const supportingEvidence = [];
-  const missingEvidence = [
-    evidence('repo_stress', null, 'repo 市场压力指标未接入'),
-  ];
+  const missingEvidence = [];
   const contradictingEvidence = [];
 
   // onRrp is stored in USD billions in the current data product; below 200B is treated as scarce reserve buffer.
@@ -383,6 +383,42 @@ function buildLiquidityTighteningNarrative(data) {
   if (walcl4wChange !== null && walcl4wChange < -50) supportingEvidence.push(evidence('walcl4wChange', formatNumber(walcl4wChange, 1), 'Fed 资产负债表 4 周收缩超过 50B'));
   if (onRrp !== null && onRrp > 1000) contradictingEvidence.push(evidence('on_rrp', `${formatNumber(onRrp, 1)}B`, 'ON RRP 高于 1T，流动性缓冲仍充裕'));
   if (walcl4wChange !== null && walcl4wChange > 50) contradictingEvidence.push(evidence('walcl4wChange', formatNumber(walcl4wChange, 1), 'Fed 资产负债表 4 周扩张超过 50B'));
+
+  // M-50: repo_stress moves from hardcoded missing evidence to BGCR-SOFR spread classification.
+  if (bgcrSofrSpread === null) {
+    missingEvidence.push(evidence('repo_stress', null, 'BGCR/TGCR 回购利差指标未接入'));
+  } else {
+    const bp = bgcrSofrSpread * 100;
+    const absBp = Math.abs(bp);
+    const bpDisplay = `${bp >= 0 ? '+' : ''}${bp.toFixed(1)}bp`;
+    const regimeText = repoSpreadRegime ? `（${repoSpreadRegime}）` : '';
+
+    if (absBp >= 25) {
+      supportingEvidence.push(evidence(
+        'repo_stress',
+        bpDisplay,
+        `BGCR-SOFR 利差 ${bpDisplay}${regimeText}，达到危机水平，回购市场压力显著确认流动性收紧`
+      ));
+    } else if (absBp >= 10) {
+      supportingEvidence.push(evidence(
+        'repo_stress',
+        bpDisplay,
+        `BGCR-SOFR 利差 ${bpDisplay}${regimeText}，回购市场出现压力分层，支持流动性收紧观察`
+      ));
+    } else if (absBp >= 5) {
+      supportingEvidence.push(evidence(
+        'repo_stress',
+        bpDisplay,
+        `BGCR-SOFR 利差 ${bpDisplay}${regimeText}，轻微偏离正常，回购市场有轻微摩擦`
+      ));
+    } else {
+      contradictingEvidence.push(evidence(
+        'repo_stress',
+        bpDisplay,
+        `BGCR-SOFR 利差 ${bpDisplay}${regimeText}，回购市场正常运行，不支持流动性收紧叙事`
+      ));
+    }
+  }
 
   // M-46: SLOOS moves from hardcoded missing evidence to dynamic bank-loan-standard confirmation.
   if (sloosTighteningLargeFirms === null) {

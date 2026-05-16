@@ -56,6 +56,7 @@ be treated as governing rules for the whole project:
 - `docs/M-47_ISM_PMI_GROWTH_LAYER.md` — Authoritative within M-47 ISM Manufacturing PMI and macroDrivers.consumer multi-source scope only
 - `docs/M-48_NFCI_BANK_STRESS_INDEX.md` — Authoritative within M-48 NFCI bank stress index and credit_spread_warning classification scope only
 - `docs/M-49_DIESEL_CRACK_SPREAD.md` — Authoritative within M-49 diesel crack spread and brentPricingLayer extension scope only
+- `docs/M-50_REPO_MARKET_SPREAD.md` — Authoritative within M-50 repo market spread and liquidity_tightening repo_stress classification scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -133,6 +134,10 @@ M-48 is documented in `docs/M-48_NFCI_BANK_STRESS_INDEX.md`. It adds FRED:NFCI t
 
 M-49 is documented in `docs/M-49_DIESEL_CRACK_SPREAD.md`. It adds FRED:DHOILNYH to a separate `resolveUlsd` resolver, keeps `buildBrentPricingLayer` synchronous, and computes diesel crack spread as DHOILNYH × 42 - Brent inside `brentPricingLayer`. It extends `brentPricingLayer` with `ulsdPrice`, `ulsd4wChange`, `crackSpread`, `crackSpread4wChange`, `crackSpreadRegime`, and `ulsdSourceStatus`, and changes only the `energy_shock` cross-validation narrative to conditional crack-spread supporting / contradicting / missing classification. It does not regenerate data files, change `values.brent`, alter Brent promotion, scoring, decision, execution, position, workflows, Worker runtime, M-46 SLOOS code, M-47 PMI code, or M-48 NFCI code.
 
+#### M-50 (Repo Market Spread)
+
+M-50 is documented in `docs/M-50_REPO_MARKET_SPREAD.md`. It adds FRED:BGCR and FRED:TGCR inside `resolveFedLiquidity`, extends `macroDrivers.fedLiquidity` with `bgcr`, `tgcr`, `bgcrSofrSpread`, `tgcrSofrSpread`, and `repoSpreadRegime`, and changes only the `liquidity_tightening` cross-validation narrative from hardcoded repo-stress missing evidence to conditional repo-spread supporting / contradicting / missing classification. Spread fields are stored as percent and displayed as basis points. It does not regenerate data files, change scoring, decision, execution, position, workflows, Worker runtime, M-46 SLOOS code, M-47 PMI code, M-48 NFCI code, or M-49 crack-spread code.
+
 ### Operating Document (large, mixed content; consult selectively)
 
 These documents contain both current operating procedures and accumulated
@@ -159,7 +164,7 @@ documentation drift risk identified in the v28.0M-audit.
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-49V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-50V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -189,7 +194,8 @@ documentation drift risk identified in the v28.0M-audit.
 - v28.0M-47V ISM Manufacturing PMI Growth Layer 用 `?v=28.0M-47V` 刷新前端 asset graph；本轮扩展 `resolveConsumerSentiment` 拉取 FRED:NAPM，升级 `macroDrivers.consumer` DATA_CONTRACT 为多源表格格式，并仅升级 `stagflation_pressure` 的 PMI cross-validation 分类。不改 data files、scoring、decision、execution、position、workflow、Worker runtime、External AI、M-46 SLOOS code 或 provider code；ISM Services PMI 与 employment indicators 延后。
 - v28.0M-48V NFCI Bank Stress Index 用 `?v=28.0M-48V` 刷新前端 asset graph；本轮扩展 `resolveCredit` 拉取 FRED:NFCI，升级 `macroDrivers.credit` DATA_CONTRACT，并仅升级 `credit_spread_warning` 的 bank_stress_index cross-validation 分类。NFCI 正值=金融状况收紧、负值=金融状况宽松，方向与 IG/HY OAS 不同；不改 data files、scoring、decision、execution、position、workflow、Worker runtime、External AI、M-46 SLOOS code 或 M-47 PMI code。
 - v28.0M-49V Diesel Crack Spread 用 `?v=28.0M-49V` 刷新前端 asset graph；本轮新增 `resolveUlsd` 拉取 FRED:DHOILNYH，并在同步 `buildBrentPricingLayer` 内按 DHOILNYH × 42 - Brent 计算柴油裂解价差。仅扩展 `brentPricingLayer` 和 `energy_shock` cross-validation 分类；不改 data files、`values.brent`、Brent promotion、scoring、decision、execution、position、workflow、Worker runtime、External AI、M-46 SLOOS code、M-47 PMI code 或 M-48 NFCI code。
-- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0M-49V` / `npm run bump:frontend-asset-version -- 28.0M-49V`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-49V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
+- v28.0M-50V Repo Market Spread 用 `?v=28.0M-50V` 刷新前端 asset graph；本轮扩展 `resolveFedLiquidity` 拉取 FRED:BGCR / FRED:TGCR，并派生 BGCR-SOFR / TGCR-SOFR 回购利差。仅扩展 `macroDrivers.fedLiquidity` 和 `liquidity_tightening` 的 repo_stress cross-validation 分类；不改 data files、scoring、decision、execution、position、workflow、Worker runtime、External AI、M-46 SLOOS code、M-47 PMI code、M-48 NFCI code 或 M-49 crack-spread code。
+- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0M-50V` / `npm run bump:frontend-asset-version -- 28.0M-50V`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-50V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
 - v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。
@@ -298,7 +304,7 @@ When `DESIGN.md` and any other contract (e.g., Market Pricing governance) appear
 
 - `npm run check:editorial-redesign-contract` enforces font allowlist, IA structure, and `DESIGN.md` existence + anchor integrity
 - `npm run check:homepage-ia-contract` enforces section order
-- `npm run check:all` runs both as part of the 55-check baseline
+- `npm run check:all` runs both as part of the 56-check baseline
 
 PRs that fail these contracts MUST NOT be merged, regardless of how good the visual result looks.
 

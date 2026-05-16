@@ -1,4 +1,4 @@
-import { $ } from './config.js?v=28.0M-49V';
+import { $ } from './config.js?v=28.0M-50V';
 
 const SCHEMA_VERSION = 'v28.0L-external-ai-production-1';
 const PANEL_ID = 'external-ai-display-panel';
