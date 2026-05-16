@@ -69,7 +69,7 @@ const requiredRunDailyMarkers = [
   'sloosTighteningLargeQoQ: Number.isFinite(sloosTighteningLargeQoQ) ? sloosTighteningLargeQoQ : null',
   'sloosTighteningSmallQoQ: Number.isFinite(sloosTighteningSmallQoQ) ? sloosTighteningSmallQoQ : null',
   'sloosRegime: classifySloosRegime(sloosTighteningLargeFirms)',
-  "sourceStatus: { igOas: 'missing', sloos: 'missing' }"
+  "sourceStatus: { igOas: 'missing', sloos: 'missing', nfci: 'missing' }"
 ];
 for (const marker of requiredRunDailyMarkers) {
   if (!runDailyText.includes(marker)) {
@@ -83,7 +83,7 @@ const requiredRenderMarkers = [
   '季度调查',
   '信用环境',
   '回购市场压力和跨市场融资压力等待接入。',
-  '私募信贷、CRE、bank-specific stress、CDX 与更细信用指标等待接入。'
+  '私募信贷、CRE、CDX 与更细信用指标等待接入。'
 ];
 for (const marker of requiredRenderMarkers) {
   if (!renderMacroText.includes(marker)) {

@@ -1400,6 +1400,15 @@ function classifySloosRegime(largeFirmsTightening) {
   return '放松';
 }
 
+function classifyNfciRegime(nfci) {
+  if (!Number.isFinite(nfci)) return '未知';
+  if (nfci >= 0.5) return '显著收紧';
+  if (nfci >= 0.1) return '温和收紧';
+  if (nfci >= -0.1) return '中性';
+  if (nfci >= -0.5) return '温和宽松';
+  return '显著宽松';
+}
+
 function classifyConsumerRegime(threeMonthChange) {
   if (!Number.isFinite(threeMonthChange)) return '未知';
   if (threeMonthChange <= -8) return '明显走弱';
@@ -1592,13 +1601,15 @@ async function resolveCurve(prevCurve) {
 }
 
 async function resolveCredit(prevCredit, hyOasLive) {
-  const status = { igOas: 'missing', sloos: 'missing' };
+  const status = { igOas: 'missing', sloos: 'missing', nfci: 'missing' };
   let igOas = null;
   let igOas1dChange = null;
   let sloosTighteningLargeFirms = null;
   let sloosTighteningSmallFirms = null;
   let sloosTighteningLargeQoQ = null;
   let sloosTighteningSmallQoQ = null;
+  let nfci = null;
+  let nfci4wChange = null;
   try {
     const rows = await fetchFredSeries('BAMLC0A0CM', 30);
     igOas = latestValue(rows);
@@ -1657,6 +1668,26 @@ async function resolveCredit(prevCredit, hyOasLive) {
     }
   }
 
+  // M-48: NFCI (Chicago Fed National Financial Conditions Index, weekly).
+  // 60-day lookback covers ~8 weeks for 4-week change calculation.
+  try {
+    const rows = await fetchFredSeries('NFCI', 60);
+    nfci = latestValue(rows);
+    const ago = findValueAgo(rows, 28);
+    if (Number.isFinite(nfci) && Number.isFinite(ago)) {
+      nfci4wChange = +(nfci - ago).toFixed(3);
+    }
+    status.nfci = 'live';
+  } catch (_err) {
+    if (Number.isFinite(prevCredit?.nfci)) {
+      nfci = prevCredit.nfci;
+      nfci4wChange = Number.isFinite(prevCredit.nfci4wChange) ? prevCredit.nfci4wChange : null;
+      status.nfci = 'fallback';
+    } else {
+      status.nfci = 'missing';
+    }
+  }
+
   const regime = classifyCreditRegime(igOas);
   const igHyRatio = Number.isFinite(igOas) && Number.isFinite(hyOasLive) && hyOasLive !== 0
     ? +(igOas / hyOasLive).toFixed(3)
@@ -1672,6 +1703,9 @@ async function resolveCredit(prevCredit, hyOasLive) {
     sloosTighteningLargeQoQ: Number.isFinite(sloosTighteningLargeQoQ) ? sloosTighteningLargeQoQ : null,
     sloosTighteningSmallQoQ: Number.isFinite(sloosTighteningSmallQoQ) ? sloosTighteningSmallQoQ : null,
     sloosRegime: classifySloosRegime(sloosTighteningLargeFirms),
+    nfci: Number.isFinite(nfci) ? nfci : null,
+    nfci4wChange: Number.isFinite(nfci4wChange) ? nfci4wChange : null,
+    nfciRegime: classifyNfciRegime(nfci),
     sourceStatus: status
   };
 }
@@ -1806,7 +1840,10 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     sloosTighteningLargeQoQ: null,
     sloosTighteningSmallQoQ: null,
     sloosRegime: '未知',
-    sourceStatus: { igOas: 'missing', sloos: 'missing' }
+    nfci: null,
+    nfci4wChange: null,
+    nfciRegime: '未知',
+    sourceStatus: { igOas: 'missing', sloos: 'missing', nfci: 'missing' }
   };
   const consumer = results[3].status === 'fulfilled' ? results[3].value : buildMissingConsumer();
 

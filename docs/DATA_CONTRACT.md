@@ -276,9 +276,9 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 - `onRrp` 存储为十亿美元（FRED 原始单位）。
 - 该差异保留 FRED native units 以便回测 / cross-reference；前端渲染层负责统一转换。
 
-### `macroDrivers.credit` 信用环境 contract (v28.0M-46)
+### `macroDrivers.credit` 信用环境 contract (v28.0M-48)
 
-`macroDrivers.credit` 是信用环境层指标，汇总市场利差（FRED + worker）与银行贷款调查数据（SLOOS）。所有字段为 audit-only / display-only，不参与 scoring、decisionModel、executionLock 或 positionGuidance。
+`macroDrivers.credit` 是信用环境层指标，汇总市场利差（FRED + worker）、银行贷款调查数据（SLOOS）与金融状况指数（NFCI）。所有字段为 audit-only / display-only，不参与 scoring、decisionModel、executionLock 或 positionGuidance。
 
 字段 contract：
 
@@ -294,7 +294,10 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 | `sloosTighteningLargeQoQ` | number \| null (optional) | 百分点差 | 派生 | 大型企业 QoQ 变化（v28.0M-46 起） |
 | `sloosTighteningSmallQoQ` | number \| null (optional) | 百分点差 | 派生 | 小型企业 QoQ 变化（v28.0M-46 起） |
 | `sloosRegime` | string enum (optional) | n/a | 派生 | `显著收紧` \| `温和收紧` \| `中性` \| `放松` \| `未知` |
-| `sourceStatus` | object | n/a | 拉取状态 | `{ igOas: 'live'\|'fallback'\|'missing', sloos: 'live'\|'fallback'\|'missing' }` |
+| `nfci` | number \| null (optional) | 标准分（0=历史均值） | FRED:NFCI（周频） | Chicago Fed 全国金融状况指数（v28.0M-48 起；正值=收紧，负值=宽松） |
+| `nfci4wChange` | number \| null (optional) | 标准分 | 派生 | NFCI 4周变化（v28.0M-48 起） |
+| `nfciRegime` | string enum (optional) | n/a | 派生（基于 NFCI 绝对值） | `显著收紧` \| `温和收紧` \| `中性` \| `温和宽松` \| `显著宽松` \| `未知`（v28.0M-48 起） |
+| `sourceStatus` | object | n/a | 拉取状态 | `{ igOas: 'live'\|'fallback'\|'missing', sloos: 'live'\|'fallback'\|'missing', nfci: 'live'\|'fallback'\|'missing' }` |
 
 边界：
 - 本字段层不改变 `values.*`、scoring、`decisionModel`、`executionLock`、`positionGuidance`
@@ -302,6 +305,8 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 - SLOOS 为季度频率慢变量（年发布 4 次），fallback 路径沿用上一季度数据
 - `sloosTighteningLargeFirms` 与 `sloosTighteningSmallFirms` 来自同一 SLOOS 调查，共享 `sourceStatus.sloos`
 - `regime`（信用市场制度）与 `sloosRegime`（贷款标准制度）独立分类，可同时显示
+- NFCI 0 轴方向与 igOas/hyOas 相反：NFCI 正值=金融状况收紧（不利于信用），NFCI 负值=金融状况宽松（有利于信用）。显示层应使用文字标签（`偏紧`/`偏松`）避免数值方向混淆。
+- NFCI 周频数据（每周三发布上周五数据），fallback 路径使用上轮值。
 
 ### brentPricingLayer 公开代理价格层 contract
 
@@ -572,30 +577,30 @@ config/world-order-sipri-normalized.example.json
 
 ### Frontend asset cache version
 
-v28.0M-47V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+v28.0M-48V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
 当前前端资源版本为：
 
 ```text
-28.0M-47V
+28.0M-48V
 ```
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-47V`。
-- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-47V`。
-- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-47V"`。
+- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-48V`。
+- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-48V`。
+- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-48V"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs 28.0M-47V
-npm run bump:frontend-asset-version -- 28.0M-47V
+node scripts/bump-frontend-asset-version.mjs 28.0M-48V
+npm run bump:frontend-asset-version -- 28.0M-48V
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-47V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-48V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
@@ -1915,7 +1920,7 @@ Current data contract boundary:
 - Daily Brief remains source data / evidence detail, not a duplicate primary homepage judgment.
 - External AI output remains governed by its production contract and display gates.
 - Global Risk Heatmap remains a standalone frontend section.
-- The frontend asset cache version is `28.0M-47V`.
+- The frontend asset cache version is `28.0M-48V`.
 - No `data/*.json`, `realtime/*.json`, scoring, `decisionModel`, `executionLock`, or `positionGuidance` contract changes are introduced.
 
 ## v28.0M-7V homepage reading path frontend-only boundary
