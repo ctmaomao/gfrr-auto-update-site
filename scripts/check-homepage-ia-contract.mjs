@@ -31,12 +31,12 @@ const macroRuntimeIds = [
   'homepage-market-temperature',
   'homepage-risk-engines',
   'homepage-cross-validation',
+  'wow-key-changes',
 ];
 
 const staticRequiredIds = [
   'homepage-realtime-band',
   'external-ai-auxiliary',
-  'wow-key-changes',
   'global-risk-heatmap',
   'detail-data',
   'method-evidence',
@@ -223,7 +223,6 @@ function checkOrdering() {
     ...macroRuntimeIds,
     'homepage-realtime-band',
     'external-ai-auxiliary',
-    'wow-key-changes',
     'global-risk-heatmap',
     'detail-data',
     'method-evidence',
