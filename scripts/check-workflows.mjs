@@ -276,7 +276,7 @@ const worldOrderForbiddenPhrases = [
   ['13 步', '已走几步'].join(''),
   ['世界大战', '第几步'].join(''),
 ];
-const frontendAssetVersion = '28.0M-50V';
+const frontendAssetVersion = '28.0M-51V';
 const frontendAssetEntryFile = 'index.html';
 const frontendAssetAppFile = 'scripts/app.js';
 const frontendAssetModuleDir = 'scripts/modules';
