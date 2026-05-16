@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-53V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-53V';
-import { formatFiniteNumber } from './format.js?v=28.0M-53V';
+import { $ } from './config.js?v=28.0M-54V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-54V';
+import { formatFiniteNumber } from './format.js?v=28.0M-54V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -9,6 +9,17 @@ const NO_HISTORY = '暂无历史对比';
 const MARKET_TEMPERATURE_WAITING_STATUS = '等待历史周线数据接入';
 const MARKET_TEMPERATURE_METRICS_PATH = 'data/market-pricing-metrics.json';
 const MARKET_TEMPERATURE_DISCLAIMER = '本数据为统计描述，不构成投资建议。';
+
+// M-54: Narrative emoji prefix mapping for visual identification.
+const NARRATIVE_EMOJI = {
+  energy_shock: '⚡',
+  stagflation_pressure: '⚖️',
+  risk_asset_mismatch: '📉',
+  overheat_confirmation: '🔥',
+  credit_spread_warning: '💰',
+  liquidity_tightening: '💧',
+  world_order_pressure_crossing: '🌐',
+};
 
 const MARKET_TEMPERATURE_BUCKETS = {
   'extreme-hot': {
@@ -1832,8 +1843,11 @@ function appendEditorialValidationCard(root, judgment) {
 
   const head = document.createElement('div');
   head.className = 'editorial-validation-card-head';
+  const narrativeEmoji = NARRATIVE_EMOJI[judgment?.id] || '';
+  const narrativeTitle = judgment.label || judgment.title;
+  const titleText = narrativeEmoji && narrativeTitle ? `${narrativeEmoji} ${narrativeTitle}` : narrativeTitle;
   appendText(head, 'span', 'editorial-validation-type', validationTypeLabel(judgment));
-  appendText(head, 'h3', 'editorial-validation-card-title', judgment.label || judgment.title);
+  appendText(head, 'h3', 'editorial-validation-card-title', titleText);
   appendText(head, 'span', 'editorial-validation-badge', judgment.status || UNDECIDED);
   card.appendChild(head);
 
@@ -1844,9 +1858,10 @@ function appendEditorialValidationCard(root, judgment) {
   const explanation = judgment.interpretation || judgment.explanation || judgment.conclusion;
   if (explanation) appendText(card, 'p', 'editorial-validation-explanation', explanation);
   if (isStructured) {
+    // M-54: Evidence order follows supporting (risk-up), contradicting (risk-down), missing (neutral).
     appendEditorialValidationEvidenceItems(card, '支持证据', judgment.supportingEvidence, 'editorial-evidence-supporting');
-    appendEditorialValidationEvidenceItems(card, '缺失证据', judgment.missingEvidence, 'editorial-evidence-missing');
     appendEditorialValidationEvidenceItems(card, '矛盾证据', judgment.contradictingEvidence, 'editorial-evidence-contradicting');
+    appendEditorialValidationEvidenceItems(card, '缺失证据', judgment.missingEvidence, 'editorial-evidence-missing');
   } else {
     appendEditorialValidationSublist(card, '关键证据', judgment.evidence, 'is-evidence');
     appendEditorialValidationSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
