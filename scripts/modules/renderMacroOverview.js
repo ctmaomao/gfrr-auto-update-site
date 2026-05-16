@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-47V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-47V';
-import { formatFiniteNumber } from './format.js?v=28.0M-47V';
+import { $ } from './config.js?v=28.0M-48V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-48V';
+import { formatFiniteNumber } from './format.js?v=28.0M-48V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -759,8 +759,11 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
         credit?.sloosTighteningLargeFirms === null || !Number.isFinite(credit?.sloosTighteningLargeFirms)
           ? null
           : `银行贷款标准 (SLOOS C&I 大型) ${formatSignedPercent(credit.sloosTighteningLargeFirms, 1)}（信用环境${credit.sloosTighteningLargeFirms >= 20 ? '收紧确认' : credit.sloosTighteningLargeFirms >= 0 ? '温和收紧' : '放松'}）`,
+        credit?.nfci === null || !Number.isFinite(credit?.nfci)
+          ? null
+          : `金融状况指数 (NFCI) ${credit.nfci >= 0 ? '+' : ''}${formatNumber(credit.nfci, 2)}（${credit.nfci > 0 ? '偏紧' : credit.nfci < 0 ? '偏松' : '中性'}，周度更新）`,
       ].filter(Boolean),
-      missingEvidence: ['私募信贷、CRE、bank-specific stress、CDX 与更细信用指标等待接入。'],
+      missingEvidence: ['私募信贷、CRE、CDX 与更细信用指标等待接入。'],
       counterEvidence: creditCalm ? ['信用和波动率尚未显示系统性扩散。'] : [],
       explanation: creditCalm
         ? '信用和波动率尚未显示系统性扩散，金融脆弱性维持观察。'

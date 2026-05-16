@@ -277,10 +277,11 @@ function buildCreditSpreadNarrative(data, metric) {
   const hyOas = finite(credit.hyOas ?? data?.displayInputsBaseline?.hyOas);
   const igOas = finite(credit.igOas);
   const igHyRatio = finite(credit.igHyRatio);
+  const nfci = finite(credit.nfci);
+  const nfciRegime = typeof credit.nfciRegime === 'string' ? credit.nfciRegime : null;
   const supportingEvidence = [];
   const missingEvidence = [
     evidence('cdx', null, 'CDX / CDS 数据尚未接入'),
-    evidence('bank_stress_index', null, '银行压力指数尚未接入'),
   ];
   const contradictingEvidence = [];
 
@@ -288,6 +289,34 @@ function buildCreditSpreadNarrative(data, metric) {
   if (igOas !== null && igOas > 1.5) supportingEvidence.push(evidence('ig_oas', formatNumber(igOas, 2, '%'), 'IG OAS 高于 1.5%'));
   if (igHyRatio !== null && igHyRatio < 0.25) supportingEvidence.push(evidence('ig_hy_ratio', formatNumber(igHyRatio, 2), 'IG/HY 比例低于 0.25，信用广度恶化'));
   if (ratesCheck.status === 'stress') supportingEvidence.push(evidence('rates_vs_risk_assets', formatNumber(ratesCheck.score, 0), ratesCheck.summaryZh || '利率与风险资产检查提示压力'));
+  // M-48: NFCI moves from hardcoded missing evidence to dynamic bank-stress classification.
+  if (nfci === null) {
+    missingEvidence.push(evidence('bank_stress_index', null, '银行压力指数（NFCI）尚未接入'));
+  } else if (nfci >= 0.5) {
+    supportingEvidence.push(evidence(
+      'nfci',
+      `${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}`,
+      `NFCI ${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}，金融状况显著收紧（${nfciRegime}），银行与同业压力同步信用利差预警`
+    ));
+  } else if (nfci >= 0.1) {
+    supportingEvidence.push(evidence(
+      'nfci',
+      `${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}`,
+      `NFCI ${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}，金融状况温和收紧（${nfciRegime}），支持信用压力观察`
+    ));
+  } else if (nfci <= -0.5) {
+    contradictingEvidence.push(evidence(
+      'nfci',
+      `${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}`,
+      `NFCI ${formatNumber(nfci, 2)}，金融状况显著宽松（${nfciRegime}），强烈反驳信用利差预警`
+    ));
+  } else if (nfci < -0.1) {
+    contradictingEvidence.push(evidence(
+      'nfci',
+      `${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}`,
+      `NFCI ${formatNumber(nfci, 2)}，金融状况温和宽松（${nfciRegime}），反驳信用压力扩散`
+    ));
+  }
   if (hyOas !== null && hyOas < 3.5 && metric?.zScore >= 1.5) {
     contradictingEvidence.push(evidence('hy_oas_vs_hot_assets', `${formatNumber(hyOas, 2, '%')} / ${formatSigned(metric.zScore)}`, '风险资产偏热但信用利差仍平静'));
   }
