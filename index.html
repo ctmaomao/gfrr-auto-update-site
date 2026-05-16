@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 v28.0C</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=28.0M-54V" />
+  <link rel="stylesheet" href="assets/styles.css?v=28.0M-55V" />
   <style>
     .macro-overview-shell {
       display: grid;
@@ -539,10 +539,10 @@
       <a href="#homepage-risk-engines">风险引擎</a>
       <a href="#homepage-cross-validation">交叉验证</a>
       <a href="#wow-key-changes">本期关键变化</a>
+      <a href="#external-ai-auxiliary">外部 AI</a>
       <a href="#global-risk-heatmap">风险热力图</a>
       <a href="#detail-data">详细数据</a>
       <a href="#method-evidence">方法说明</a>
-      <a href="#external-ai-auxiliary">外部 AI</a>
       <a href="#execution-risk-detail">执行风控</a>
     </nav>
 
@@ -570,6 +570,75 @@
             </div>
           </section>
         </div>
+      </section>
+      <aside id="homepage-realtime-band" class="editorial-subsection-equivalent realtime-band-wrapper" aria-label="实时盘中关键变量">
+        <section class="full-width-section cockpit-section">
+          <article class="card realtime-strip-card">
+            <div class="card-head split-head">
+              <h2>盘中快变量</h2>
+              <span class="muted" id="realtime-updated-at">--</span>
+            </div>
+            <div class="metric-row four">
+              <div class="metric-box compact">
+                <div class="metric-label">布伦特</div>
+                <div class="metric-value" id="rt-brent">--</div>
+                <div class="mini-delta" id="rt-brent-delta">--</div>
+                <div class="mini-delta" id="rt-brent-source">布伦特来源：--</div>
+                <div class="mini-delta" id="rt-brent-move">波动状态：--</div>
+              </div>
+              <div class="metric-box compact">
+                <div class="metric-label">广义美元指数</div>
+                <div class="metric-value" id="rt-dxy">--</div>
+                <div class="mini-delta" id="rt-dxy-delta">--</div>
+              </div>
+              <div class="metric-box compact">
+                <div class="metric-label">VIX（标普500隐含波动率）</div>
+                <div class="metric-value" id="rt-vix">--</div>
+                <div class="mini-delta" id="rt-vix-delta">--</div>
+              </div>
+              <div class="metric-box compact">
+                <div class="metric-label">HY OAS（高收益债信用利差）</div>
+                <div class="metric-value" id="rt-hy">--</div>
+                <div class="mini-delta" id="rt-hy-delta">--</div>
+              </div>
+            </div>
+            <div class="metric-row four">
+              <div class="metric-box compact">
+                <div class="metric-label">美债10Y</div>
+                <div class="metric-value" id="rt-us10y">--</div>
+              </div>
+              <div class="metric-box compact">
+                <div class="metric-label">黄金</div>
+                <div class="metric-value" id="rt-gold">--</div>
+              </div>
+              <div class="metric-box compact">
+                <div class="metric-label">标普500</div>
+                <div class="metric-value" id="rt-spx">--</div>
+              </div>
+              <div class="metric-box compact">
+                <div class="metric-label">快变量状态</div>
+                <div class="metric-value small" id="rt-source-mode">--</div>
+              </div>
+            </div>
+            <ul class="bullet-list" id="realtime-notes"></ul>
+          </article>
+        </section>
+      </aside>
+      <section id="external-ai-auxiliary" class="editorial-section editorial-section-folded external-ai-auxiliary-section editorial-external-ai-panel" style="--section-accent: var(--paper-muted);">
+        <header class="editorial-section-header">
+          <span class="section-kicker">READ-ONLY AUXILIARY INTERPRETATION</span>
+          <span class="section-title">外部 AI 解读（只读辅助）</span>
+          <span class="section-note">该层只解释站内结构化数据，不改变评分、决策、执行锁或 position guidance。</span>
+        </header>
+        <details class="editorial-folded-content">
+          <summary class="editorial-folded-summary">
+            <span class="fold-marker" aria-hidden="true"></span>
+            <span class="fold-label">展开外部 AI 解读</span>
+          </summary>
+          <div class="editorial-section-body">
+            <section class="full-width-section cockpit-section auxiliary-ai-panel editorial-external-ai-card" id="external-ai-display-panel" hidden aria-hidden="true"></section>
+          </div>
+        </details>
       </section>
       <section id="wow-key-changes" class="editorial-section editorial-section-wow" style="--section-accent: var(--risk-yellow);">
         <header class="editorial-section-header">
@@ -612,7 +681,7 @@
         <header id="risk-explainer" class="editorial-section-header">
           <span class="section-kicker">DATA APPENDIX</span>
           <span class="section-title">详细数据与图表</span>
-          <span class="section-note">这里保留盘中输入、数据健康、趋势图表、资产表格和高级风险细节，用于审计上方结论，不作为首页第一阅读路径。</span>
+          <span class="section-note">这里保留数据健康、趋势图表、资产表格和高级风险细节，用于审计上方结论，不作为首页第一阅读路径。</span>
         </header>
         <details class="editorial-folded-content">
           <summary class="editorial-folded-summary">
@@ -621,59 +690,7 @@
           </summary>
           <div class="editorial-section-body">
             <details class="editorial-subsection">
-                            <summary><span class="subsection-meta">AUDIT INPUTS</span>实时输入与数据健康（可展开）</summary>
-                          <section class="full-width-section cockpit-section">
-                            <article class="card realtime-strip-card">
-                              <div class="card-head split-head">
-                                <h2>盘中快变量</h2>
-                                <span class="muted" id="realtime-updated-at">--</span>
-                              </div>
-                              <div class="metric-row four">
-                                <div class="metric-box compact">
-                                  <div class="metric-label">布伦特</div>
-                                  <div class="metric-value" id="rt-brent">--</div>
-                                  <div class="mini-delta" id="rt-brent-delta">--</div>
-                                  <div class="mini-delta" id="rt-brent-source">布伦特来源：--</div>
-                                  <div class="mini-delta" id="rt-brent-move">波动状态：--</div>
-                                </div>
-                                <div class="metric-box compact">
-                                  <div class="metric-label">广义美元指数</div>
-                                  <div class="metric-value" id="rt-dxy">--</div>
-                                  <div class="mini-delta" id="rt-dxy-delta">--</div>
-                                </div>
-                                <div class="metric-box compact">
-                                  <div class="metric-label">VIX（标普500隐含波动率）</div>
-                                  <div class="metric-value" id="rt-vix">--</div>
-                                  <div class="mini-delta" id="rt-vix-delta">--</div>
-                                </div>
-                                <div class="metric-box compact">
-                                  <div class="metric-label">HY OAS（高收益债信用利差）</div>
-                                  <div class="metric-value" id="rt-hy">--</div>
-                                  <div class="mini-delta" id="rt-hy-delta">--</div>
-                                </div>
-                              </div>
-                              <div class="metric-row four">
-                                <div class="metric-box compact">
-                                  <div class="metric-label">美债10Y</div>
-                                  <div class="metric-value" id="rt-us10y">--</div>
-                                </div>
-                                <div class="metric-box compact">
-                                  <div class="metric-label">黄金</div>
-                                  <div class="metric-value" id="rt-gold">--</div>
-                                </div>
-                                <div class="metric-box compact">
-                                  <div class="metric-label">标普500</div>
-                                  <div class="metric-value" id="rt-spx">--</div>
-                                </div>
-                                <div class="metric-box compact">
-                                  <div class="metric-label">快变量状态</div>
-                                  <div class="metric-value small" id="rt-source-mode">--</div>
-                                </div>
-                              </div>
-                              <ul class="bullet-list" id="realtime-notes"></ul>
-                            </article>
-                          </section>
-
+                            <summary><span class="subsection-meta">DATA HEALTH</span>数据健康（可展开）</summary>
                           <section class="full-width-section cockpit-section">
                             <article class="card health-dashboard-card">
                               <div class="card-head split-head">
@@ -1393,22 +1410,6 @@
           </div>
         </details>
       </section>
-      <section id="external-ai-auxiliary" class="editorial-section editorial-section-folded external-ai-auxiliary-section editorial-external-ai-panel" style="--section-accent: var(--paper-muted);">
-        <header class="editorial-section-header">
-          <span class="section-kicker">READ-ONLY AUXILIARY INTERPRETATION</span>
-          <span class="section-title">外部 AI 解读（只读辅助）</span>
-          <span class="section-note">该层只解释站内结构化数据，不改变评分、决策、执行锁或 position guidance。</span>
-        </header>
-        <details class="editorial-folded-content">
-          <summary class="editorial-folded-summary">
-            <span class="fold-marker" aria-hidden="true"></span>
-            <span class="fold-label">展开外部 AI 解读</span>
-          </summary>
-          <div class="editorial-section-body">
-            <section class="full-width-section cockpit-section auxiliary-ai-panel editorial-external-ai-card" id="external-ai-display-panel" hidden aria-hidden="true"></section>
-          </div>
-        </details>
-      </section>
       <section id="execution-risk-detail" class="editorial-section editorial-section-folded execution-detail-section" style="--section-accent: var(--risk-red);">
         <header class="editorial-section-header">
           <span class="section-kicker">EXECUTION & RISK DETAIL</span>
@@ -1712,6 +1713,6 @@
     </footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0M-54V"></script>
+  <script type="module" src="scripts/app.js?v=28.0M-55V"></script>
 </body>
 </html>

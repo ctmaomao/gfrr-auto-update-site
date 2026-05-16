@@ -923,6 +923,29 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
   margin-top: 0;
   margin-bottom: 0;
 }
+/* M-55a: realtime band keeps Group B card spacing after moving out of detail-data. */
+.realtime-band-wrapper {
+  margin: 24px 0 40px;
+  padding: 0 8px;
+}
+.realtime-band-wrapper > section.full-width-section {
+  margin: 0;
+}
+.editorial-subsection-equivalent > section.full-width-section > article.card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.editorial-subsection-equivalent > section.full-width-section > article.card > .metric-row {
+  margin-top: 0;
+}
+.editorial-subsection-equivalent > section.full-width-section > article.card > p {
+  margin: 0;
+}
+.editorial-subsection-equivalent > section.full-width-section > article.card > ul {
+  margin-top: 0;
+  margin-bottom: 0;
+}
 .editorial-subsection > .card {
   margin: 0 0 18px;
 }

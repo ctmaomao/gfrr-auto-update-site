@@ -141,10 +141,15 @@ function validateHiddenContainer(errors) {
   }
 
   const panelIndex = html.indexOf(panelMatch[0]);
-  const heatmapIndex = html.indexOf('id="world-heatmap"');
+  const heatmapSectionIndex = html.indexOf('<section id="global-risk-heatmap"');
+  const nextSectionAfterHeatmap = heatmapSectionIndex >= 0
+    ? html.indexOf('<section id="detail-data"', heatmapSectionIndex)
+    : -1;
   const heatmapCardIndex = html.indexOf('heatmap-card');
-  if (heatmapIndex >= 0 && Math.abs(panelIndex - heatmapIndex) < 3000) {
-    addError(errors, 'external AI panel must not be placed inside or adjacent to Global Risk Heatmap');
+  if (heatmapSectionIndex >= 0
+    && panelIndex > heatmapSectionIndex
+    && (nextSectionAfterHeatmap < 0 || panelIndex < nextSectionAfterHeatmap)) {
+    addError(errors, 'external AI panel must not be placed inside Global Risk Heatmap');
   }
   if (heatmapCardIndex >= 0 && Math.abs(panelIndex - heatmapCardIndex) < 3000) {
     addError(errors, 'external AI panel must not be integrated with heatmap-card');
