@@ -212,33 +212,34 @@ Brent 相关观察只能说明公开 Brent proxy / validation 层状态，不等
 
 v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 compact summary 展示，检查明细和数据缺口放入折叠区。前端不得在 render 层反推评分、仓位、执行灯、Action Queue 或任何 decision contract；当 `divergenceLayer` 缺失时只显示温和 fallback。证据不足时必须显示“数据不足”或“暂不足以判断”，不得伪造不存在的数据。
 
-#### macroDrivers.consumer
+### `macroDrivers.consumer` 消费者与增长 contract (v28.0M-47)
 
-`v28.0I-4A` 在 `macroDrivers` 中新增：
-
-```text
-macroDrivers.consumer
-```
-
-该字段使用 FRED `UMCSENT`（University of Michigan: Consumer Sentiment）作为月频慢变量，只在 Daily pipeline 中抓取，用于消费者体感与风险资产定价背离的 audit-only 观察。
+`macroDrivers.consumer` 是消费者与增长层指标，汇总月频慢变量数据。所有字段为 audit-only / display-only，不参与 scoring、decisionModel、executionLock 或 positionGuidance。
 
 字段 contract：
 
-- `umichSentiment`、`previousValue`、`threeMonthChange`、`sixMonthChange` 为 finite number 或 `null`。
-- `sourceStatus.umichSentiment` 只能为 `live` / `fallback` / `missing`。
-- `updatedAt` 为可解析 ISO 字符串或 `null`。
-- `source` 必须为 `FRED:UMCSENT`。
-- `notes` 必须为数组，并说明 UMCSENT 是月频慢变量。
+| 字段 | 类型 | 单位 | 来源 | 含义 |
+|---|---|---|---|---|
+| `umichSentiment` | number \| null | 指数点（1966=100） | FRED:UMCSENT（月频） | 密歇根消费者信心指数 |
+| `previousValue` | number \| null | 指数点 | 派生 | 上月值 |
+| `threeMonthChange` | number \| null | 指数点 | 派生 | UMCSENT 3个月变化 |
+| `sixMonthChange` | number \| null | 指数点 | 派生 | UMCSENT 6个月变化 |
+| `regime` | string enum | n/a | 派生（基于 threeMonthChange） | `明显走弱` \| `走弱` \| `稳定` \| `改善` \| `未知` |
+| `ismManufacturingPmi` | number \| null (optional) | PMI 指数 0-100 | FRED:NAPM（月频） | ISM 制造业 PMI（v28.0M-47 起） |
+| `ismManufacturingPmi3mChange` | number \| null (optional) | 指数点 | 派生 | NAPM 3个月变化（v28.0M-47 起） |
+| `ismPmiRegime` | string enum (optional) | n/a | 派生（基于 PMI 绝对值） | `扩张` \| `中性偏扩张` \| `收缩` \| `深度收缩` \| `未知` |
+| `updatedAt` | string \| null | ISO 8601 | UMCSENT 最新数据点日期 | |
+| `source` | string | n/a | 多源（M-47 起） | `FRED:UMCSENT; FRED:NAPM`（v28.0M-47 起多源；之前为 `FRED:UMCSENT` 单源） |
+| `notes` | string[] | n/a | 固定 | 说明 UMCSENT 与 NAPM 为月频慢变量 |
+| `sourceStatus` | object | n/a | 拉取状态 | `{ umichSentiment: 'live'\|'fallback'\|'missing', pmi: 'live'\|'fallback'\|'missing' }` |
 
-严格边界：
-
-- 不进入 Worker。
-- 不进入 realtime overlay。
-- 不进入 Worker required fields。
-- 不参与 scoring。
-- 不参与 `decisionModel`。
-- 不参与 `executionLock` 或 `positionGuidance`。
-- 只用于 `divergenceLayer.checks[]` 中 `consumer_vs_asset_pricing` 的解释层 / 审计层观察。
+边界：
+- 本字段层不改变 `values.*`、scoring、`decisionModel`、`executionLock`、`positionGuidance`
+- 用于 `driver-growth` 和 `pressure-consumer` 渲染卡片的 audit-only 数据源
+- 用于 cross-validation `stagflation_pressure` narrative 的条件分类（v28.0M-47 起）
+- `regime`（基于 UMCSENT 变化率）与 `ismPmiRegime`（基于 PMI 绝对值）独立分类，可同时显示
+- `ismManufacturing*` 字段标记为 optional 以保持向后兼容性
+- 月频频率：两个 series 都是月频数据，pipeline 跑后即同步更新
 
 `consumer_vs_asset_pricing` 的 `category` 为 `consumer_assets`。该 check 只能说明消费者信心与 S&P 500、VIX、HY OAS 之间是否存在观察性错配；不得写成实时交易信号，不得声称消费崩盘已确认，也不得改变任何仓位或交易建议。
 
@@ -571,30 +572,30 @@ config/world-order-sipri-normalized.example.json
 
 ### Frontend asset cache version
 
-v28.0M-46V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+v28.0M-47V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
 当前前端资源版本为：
 
 ```text
-28.0M-46V
+28.0M-47V
 ```
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-46V`。
-- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-46V`。
-- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-46V"`。
+- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-47V`。
+- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-47V`。
+- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-47V"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs 28.0M-46V
-npm run bump:frontend-asset-version -- 28.0M-46V
+node scripts/bump-frontend-asset-version.mjs 28.0M-47V
+npm run bump:frontend-asset-version -- 28.0M-47V
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-46V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-47V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
@@ -1914,7 +1915,7 @@ Current data contract boundary:
 - Daily Brief remains source data / evidence detail, not a duplicate primary homepage judgment.
 - External AI output remains governed by its production contract and display gates.
 - Global Risk Heatmap remains a standalone frontend section.
-- The frontend asset cache version is `28.0M-46V`.
+- The frontend asset cache version is `28.0M-47V`.
 - No `data/*.json`, `realtime/*.json`, scoring, `decisionModel`, `executionLock`, or `positionGuidance` contract changes are introduced.
 
 ## v28.0M-7V homepage reading path frontend-only boundary
