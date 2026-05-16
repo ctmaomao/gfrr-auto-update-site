@@ -410,21 +410,181 @@ function buildRiskAssetMismatchNarrative(data, metric) {
 
 function buildOverheatNarrative(metric, data) {
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
+  const consumer = isPlainObject(data?.macroDrivers?.consumer) ? data.macroDrivers.consumer : {};
+  const credit = isPlainObject(data?.macroDrivers?.credit) ? data.macroDrivers.credit : {};
+  const fedLiquidity = isPlainObject(data?.macroDrivers?.fedLiquidity) ? data.macroDrivers.fedLiquidity : {};
+
+  const hyOas = finite(inputs.hyOas);
+  const pmi = finite(consumer.ismManufacturingPmi);
+  const umichChange = finite(consumer.threeMonthChange);
+  const sloos = finite(credit.sloosTighteningLargeFirms);
+  const nfci = finite(credit.nfci);
+  const bgcrSofrSpread = finite(fedLiquidity.bgcrSofrSpread);
+  const bgcrSofrBp = bgcrSofrSpread !== null ? bgcrSofrSpread * 100 : null;
+
   const supportingEvidence = [];
   const missingEvidence = [];
   const contradictingEvidence = [];
-  const hyOas = finite(inputs.hyOas);
 
+  // EXISTING evidence (preserved from pre-M-53): QQQ self-state signals
   if (metric) {
     supportingEvidence.push(evidence('qqq_zscore', formatSigned(metric.zScore), metric.bucketLabel));
-    supportingEvidence.push(evidence('qqq_close_vs_mean', `${formatCurrency(metric.latest.close)} / ${formatCurrency(metric.latest.ma60)}`, 'QQQ 最新收盘价高于 60 周均值'));
-    supportingEvidence.push(evidence('qqq_stddev', formatCurrency(metric.latest.stdDev60), '60 周离散度已由 M-26 指标文件提供'));
+    supportingEvidence.push(evidence('qqq_close_vs_mean',
+      `${formatCurrency(metric.latest.close)} / ${formatCurrency(metric.latest.ma60)}`,
+      'QQQ 最新收盘价高于 60 周均值'));
+    supportingEvidence.push(evidence('qqq_stddev', formatCurrency(metric.latest.stdDev60),
+      '60 周离散度已由 M-26 指标文件提供'));
   } else {
-    missingEvidence.push(evidence('qqq_zscore', null, '60 周均值、标准差、z-score 与更长历史等待接入'));
+    missingEvidence.push(evidence('qqq_zscore', null,
+      '60 周均值、标准差、z-score 与更长历史等待接入'));
   }
+
+  // M-53 NEW: hyOas_qqq_complacency contradicting (replaces old credit-confirmation missing)
+  // Semantics: QQQ extreme hot but HY OAS still calm = overheat not yet confirmed by credit market spread
   if (hyOas !== null && hyOas < 3.5 && metric?.zScore >= 2) {
-    missingEvidence.push(evidence('credit_confirmation', formatNumber(hyOas, 2, '%'), '信用利差仍平静，过热暂未被信用压力同步确认'));
+    contradictingEvidence.push(evidence('hyOas_qqq_complacency',
+      `${formatNumber(hyOas, 2, '%')} / ${formatSigned(metric.zScore)}`,
+      `信用利差仍平静 (HY ${formatNumber(hyOas, 2, '%')})，过热扩散尚未被信用市场同步确认`));
   }
+
+  // M-53 NEW: PMI overheat (4-tier)
+  // Strong supporting: PMI > 60 (deep expansion)
+  // Supporting: PMI > 55 (expansion)
+  // No-op: 50-55 (neutral)
+  // Contradicting: PMI < 50 (contraction)
+  // Strong contradicting: PMI < 45 (deep contraction)
+  if (pmi !== null) {
+    if (pmi > 60) {
+      supportingEvidence.push(evidence('pmi_overheat', formatNumber(pmi, 1),
+        `ISM 制造业 PMI ${formatNumber(pmi, 1)}，深度扩张过热`));
+    } else if (pmi > 55) {
+      supportingEvidence.push(evidence('pmi_overheat', formatNumber(pmi, 1),
+        `ISM 制造业 PMI ${formatNumber(pmi, 1)}，扩张支撑过热观察`));
+    } else if (pmi < 45) {
+      contradictingEvidence.push(evidence('pmi_overheat', formatNumber(pmi, 1),
+        `ISM 制造业 PMI ${formatNumber(pmi, 1)}，深度收缩，反驳过热`));
+    } else if (pmi < 50) {
+      contradictingEvidence.push(evidence('pmi_overheat', formatNumber(pmi, 1),
+        `ISM 制造业 PMI ${formatNumber(pmi, 1)}，收缩区间，反驳过热`));
+    }
+    // 50-55: no-op (neutral)
+  }
+
+  // M-53 NEW: SLOOS easing (4-tier)
+  // Strong supporting: SLOOS < -15 (significant easing)
+  // Supporting: SLOOS < 0 (mild easing)
+  // No-op: 0-20
+  // Contradicting: SLOOS > 20 (significant tightening)
+  if (sloos !== null) {
+    if (sloos < -15) {
+      supportingEvidence.push(evidence('sloos_easing', formatSigned(sloos, 1) + '%',
+        `银行显著放松信贷标准 (SLOOS ${formatSigned(sloos, 1)}%)，信贷宽松催生过热`));
+    } else if (sloos < 0) {
+      supportingEvidence.push(evidence('sloos_easing', formatSigned(sloos, 1) + '%',
+        `银行温和放松信贷标准 (SLOOS ${formatSigned(sloos, 1)}%)，支撑过热观察`));
+    } else if (sloos > 20) {
+      contradictingEvidence.push(evidence('sloos_easing', formatSigned(sloos, 1) + '%',
+        `银行显著收紧信贷标准 (SLOOS ${formatSigned(sloos, 1)}%)，反驳过热扩张`));
+    }
+    // 0-20: no-op
+  }
+
+  // M-53 NEW: hyOas complacency (4-tier, INDEPENDENT of hyOas_qqq_complacency)
+  // Strong supporting: hyOas < 3.0 (extreme risk appetite)
+  // Supporting: hyOas < 3.5 (high risk appetite)
+  // No-op: 3.5-5.0
+  // Contradicting: hyOas > 5.0 (credit warning)
+  if (hyOas !== null) {
+    if (hyOas < 3.0) {
+      supportingEvidence.push(evidence('hyoas_complacency', formatNumber(hyOas, 2, '%'),
+        `HY 信用利差极窄 (${formatNumber(hyOas, 2, '%')})，极度风险偏好`));
+    } else if (hyOas < 3.5) {
+      supportingEvidence.push(evidence('hyoas_complacency', formatNumber(hyOas, 2, '%'),
+        `HY 信用利差偏窄 (${formatNumber(hyOas, 2, '%')})，风险偏好高`));
+    } else if (hyOas > 5.0) {
+      contradictingEvidence.push(evidence('hyoas_complacency', formatNumber(hyOas, 2, '%'),
+        `HY 信用利差走宽 (${formatNumber(hyOas, 2, '%')})，信用市场警觉，反驳过热`));
+    }
+    // 3.5-5.0: no-op
+  }
+
+  // M-53 NEW: NFCI easing (4-tier)
+  // Strong supporting: NFCI <= -0.5 (significant easing)
+  // Supporting: NFCI <= -0.1 (mild easing)
+  // No-op: -0.1 to 0.5
+  // Contradicting: NFCI >= 0.5 (significant tightening)
+  if (nfci !== null) {
+    if (nfci <= -0.5) {
+      supportingEvidence.push(evidence('nfci_easing', formatSigned(nfci, 2),
+        `NFCI 显著宽松 (${formatSigned(nfci, 2)})，金融状况为过热提供土壤`));
+    } else if (nfci <= -0.1) {
+      supportingEvidence.push(evidence('nfci_easing', formatSigned(nfci, 2),
+        `NFCI 温和宽松 (${formatSigned(nfci, 2)})，支撑过热观察`));
+    } else if (nfci >= 0.5) {
+      contradictingEvidence.push(evidence('nfci_easing', formatSigned(nfci, 2),
+        `NFCI 显著收紧 (${formatSigned(nfci, 2)})，金融状况已警觉，反驳过热`));
+    }
+    // -0.1 to 0.5: no-op
+  }
+
+  // M-53 NEW: UMCSENT improving (3-tier)
+  // Supporting: 3m change > +6 (significant improvement)
+  // No-op: -8 to +6
+  // Contradicting: 3m change < -8 (significant weakening)
+  if (umichChange !== null) {
+    if (umichChange > 6) {
+      supportingEvidence.push(evidence('umich_improving', formatSigned(umichChange, 1),
+        `密歇根消费者信心 3 月变化 ${formatSigned(umichChange, 1)}，消费者明显改善`));
+    } else if (umichChange < -8) {
+      contradictingEvidence.push(evidence('umich_improving', formatSigned(umichChange, 1),
+        `密歇根消费者信心 3 月变化 ${formatSigned(umichChange, 1)}，消费者明显走弱，反驳过热`));
+    }
+    // -8 to +6: no-op
+  }
+
+  // M-53 NEW: BGCR-SOFR repo zero stress (3-tier)
+  // Supporting: |bp| < 3 (zero stress, abundant liquidity)
+  // No-op: 3-10 bp
+  // Contradicting: |bp| >= 10 (repo stress)
+  if (bgcrSofrBp !== null) {
+    const absBp = Math.abs(bgcrSofrBp);
+    const bpDisplay = `${bgcrSofrBp >= 0 ? '+' : ''}${bgcrSofrBp.toFixed(1)}bp`;
+    if (absBp < 3) {
+      supportingEvidence.push(evidence('repo_zero_stress', bpDisplay,
+        `回购市场零压力 (BGCR-SOFR ${bpDisplay})，流动性充裕，过热土壤`));
+    } else if (absBp >= 10) {
+      contradictingEvidence.push(evidence('repo_zero_stress', bpDisplay,
+        `回购市场压力 (BGCR-SOFR ${bpDisplay})，融资紧张，反驳过热`));
+    }
+    // 3-10 bp: no-op
+  }
+
+  // M-53: Multi-level interpretation based on actual evidence counts
+  const supportingCount = supportingEvidence.length;
+  const contradictingCount = contradictingEvidence.length;
+  const missingCount = missingEvidence.length;
+
+  let interpretation;
+  if (supportingCount >= 5) {
+    interpretation = '多维度过热同步出现（QQQ 温度、信贷、信用、金融状况、消费者、回购任意四项以上），估值层处于扩张顶部，建议持续观察是否扩散至通胀和就业。';
+  } else if (supportingCount >= 3) {
+    interpretation = `已出现 ${supportingCount} 个过热信号，估值层与基本面共振，过热扩散正在展开。`;
+  } else if (supportingCount === 1 || supportingCount === 2) {
+    interpretation = '出现过热迹象，需观察是否扩散到更多维度；当前尚不足以判断扩张顶部。';
+  } else if (contradictingCount >= 3) {
+    interpretation = '多维度经济疲软同步出现（信贷收紧 / 信用警觉 / 增长收缩任意三项以上），反向证据显著，未过热而是收缩。';
+  } else if (contradictingCount > 0 && supportingCount === 0) {
+    interpretation = '过热未确认；反向证据显示基本面与估值层方向不一致。';
+  } else if (missingCount > 0 && supportingCount === 0 && contradictingCount === 0) {
+    interpretation = '过热证据不足，部分关键数据（PMI / SLOOS / NFCI / 回购利差）尚未刷新或接入。';
+  } else {
+    interpretation = '过热证据不足，仅能保留为观察项。';
+  }
+
+  // M-53: assessment redesign
+  // Priority 1: metric?.zScore >= 2 forces 'strong_confirmation' (preserve pre-M-53 behavior)
+  // Priority 2: omitted assessment lets assessEvidence fallback evaluate supporting/contradicting balance
+  const explicitAssessment = metric?.zScore >= 2 ? 'strong_confirmation' : void 0;
 
   return narrative({
     id: 'overheat_confirmation',
@@ -432,10 +592,8 @@ function buildOverheatNarrative(metric, data) {
     supportingEvidence,
     missingEvidence,
     contradictingEvidence,
-    assessment: metric?.zScore >= 2 ? 'strong_confirmation' : null,
-    interpretation: metric?.zScore >= 2
-      ? '估值温度已确认过热，信用市场尚未同步反映压力。'
-      : '没有可用 z-score 前不判断风险资产过热。',
+    assessment: explicitAssessment,
+    interpretation,
   });
 }
 
