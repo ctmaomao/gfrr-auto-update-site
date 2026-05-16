@@ -474,7 +474,6 @@ function buildDivergenceLayer({ risk, realtimePayload, displayInputsBaseline, ma
     dataGaps: [
       'Platts Dated Brent / 真实 Dated Brent 数据未接入。',
       'Brent term structure 尚未正式接入。',
-      'Crack spread / diesel stress 尚未正式接入。',
       'UMCSENT 为月频慢变量，存在发布延迟。'
     ],
     confidence: {
@@ -617,7 +616,7 @@ function brentSpreadStatusZh(status) {
   }[status] || '状态待确认';
 }
 
-function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyRealtimeInput }) {
+function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyRealtimeInput, ulsdData = null }) {
   const validation = realtimePayload?.brentValidation || {};
   const promotion = validation.promotion || {};
   const consensus = validation.consensus || {};
@@ -695,6 +694,26 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
     }
   }
 
+  let crackSpread = null;
+  let crackSpread4wChange = null;
+  const ulsdPrice = Number.isFinite(ulsdData?.ulsdPrice) ? ulsdData.ulsdPrice : null;
+  const ulsd4wChange = Number.isFinite(ulsdData?.ulsd4wChange) ? ulsdData.ulsd4wChange : null;
+
+  if (ulsdPrice !== null && Number.isFinite(selectedBrent?.value)) {
+    const computed = +(ulsdPrice * 42 - selectedBrent.value).toFixed(2);
+    if (computed >= -30 && computed <= 120) {
+      crackSpread = computed;
+    }
+  }
+
+  // Approximation: ULSD 4-week change converted to barrel terms; Brent 4-week change is not available here.
+  if (ulsd4wChange !== null && Number.isFinite(ulsd4wChange)) {
+    crackSpread4wChange = +(ulsd4wChange * 42).toFixed(2);
+  }
+
+  const crackSpreadRegime = classifyCrackSpreadRegime(crackSpread);
+  const ulsdSourceStatus = ulsdData?.sourceStatus ?? 'missing';
+
   return {
     contractVersion: 'v28.0I-5A',
     generatedAt: isoNow,
@@ -708,6 +727,12 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
     publicSpotProxy,
     futuresProxy,
     confirmationSources,
+    ulsdPrice,
+    ulsd4wChange,
+    crackSpread,
+    crackSpread4wChange,
+    crackSpreadRegime,
+    ulsdSourceStatus,
     proxySpread: {
       spotMinusFutures,
       selectedMinusFutures,
@@ -736,7 +761,6 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
     dataGaps: [
       'Platts Dated Brent / 正式 Dated Brent 未接入。',
       'Brent 期限结构尚未正式接入。',
-      'Crack spread / 柴油裂解价差尚未正式接入。',
       '油轮运费 / 航运压力尚未正式接入。'
     ],
     limitations: [
@@ -910,7 +934,7 @@ function buildDailyBrief({
   const dataGaps = [
     '消费者信心与资产价格背离仍缺少稳定月频输入。',
     'Brent physical proxy / term structure 尚未纳入本数据产物。',
-    'Crack spread / diesel stress 与 shipping / freight stress 仍是候选观察项。'
+    'shipping / freight stress 仍是候选观察项。'
   ];
   if (allMacroMissing) dataGaps.unshift('结构性宏观驱动源当前不可用，相关判断只能低置信观察。');
 
@@ -974,7 +998,7 @@ function buildUnavailableDailyBrief() {
     },
     keyTriggers: ['数据健康状态恢复后重新生成今日触发器。'],
     invalidationSignals: ['数据健康恢复且风险判断不再获得交叉验证。'],
-    dataGaps: ['实时快变量暂不可用。', '消费者信心、Brent physical proxy、term structure、crack spread 等仍未纳入。'],
+    dataGaps: ['实时快变量暂不可用。', '消费者信心、Brent physical proxy、term structure、shipping / freight 等仍未纳入。'],
     confidence: {
       level: 'low',
       score: 0,
@@ -1167,7 +1191,6 @@ function buildAiInterpretationLayer(data) {
   const dataGaps = [
     'Platts Dated Brent / 正式 Dated Brent 未接入。',
     'Brent term structure 尚未接入。',
-    'crack spread / diesel stress 尚未接入。',
     'shipping / freight stress 尚未接入。',
     '世界秩序外部源质量需单独查看 World Order 模块。'
   ];
@@ -1407,6 +1430,14 @@ function classifyNfciRegime(nfci) {
   if (nfci >= -0.1) return '中性';
   if (nfci >= -0.5) return '温和宽松';
   return '显著宽松';
+}
+
+function classifyCrackSpreadRegime(crackSpread) {
+  if (!Number.isFinite(crackSpread)) return '未知';
+  if (crackSpread >= 45) return '供应紧张';
+  if (crackSpread >= 25) return '偏高';
+  if (crackSpread >= 10) return '正常';
+  return '需求疲软';
 }
 
 function classifyConsumerRegime(threeMonthChange) {
@@ -1706,6 +1737,39 @@ async function resolveCredit(prevCredit, hyOasLive) {
     nfci: Number.isFinite(nfci) ? nfci : null,
     nfci4wChange: Number.isFinite(nfci4wChange) ? nfci4wChange : null,
     nfciRegime: classifyNfciRegime(nfci),
+    sourceStatus: status
+  };
+}
+
+// M-49: NY Harbor ULSD Spot Price (FRED:DHOILNYH, daily, $/gallon)
+// Used to compute diesel crack spread = DHOILNYH x 42 - Brent ($/barrel).
+async function resolveUlsd(prevBrentPricingLayer) {
+  let ulsdPrice = null;
+  let ulsd4wChange = null;
+  let status = 'missing';
+
+  try {
+    // 60-day lookback covers about 43 trading days for 4-week change calculation.
+    const rows = await fetchFredSeries('DHOILNYH', 60);
+    ulsdPrice = latestValue(rows);
+    const ago = findValueAgo(rows, 28);
+    if (Number.isFinite(ulsdPrice) && Number.isFinite(ago)) {
+      ulsd4wChange = +(ulsdPrice - ago).toFixed(3);
+    }
+    status = 'live';
+  } catch (_err) {
+    if (Number.isFinite(prevBrentPricingLayer?.ulsdPrice)) {
+      ulsdPrice = prevBrentPricingLayer.ulsdPrice;
+      ulsd4wChange = Number.isFinite(prevBrentPricingLayer?.ulsd4wChange)
+        ? prevBrentPricingLayer.ulsd4wChange
+        : null;
+      status = 'fallback';
+    }
+  }
+
+  return {
+    ulsdPrice: Number.isFinite(ulsdPrice) ? ulsdPrice : null,
+    ulsd4wChange: Number.isFinite(ulsd4wChange) ? ulsd4wChange : null,
     sourceStatus: status
   };
 }
@@ -2511,10 +2575,12 @@ async function build() {
     macroDrivers,
     confidenceScore
   });
+  const ulsdData = await resolveUlsd(prevData?.brentPricingLayer);
   const brentPricingLayer = buildBrentPricingLayer({
     realtimePayload: realtime,
     displayInputsBaseline,
-    dailyRealtimeInput: buildDailyRealtimeInput(realtime)
+    dailyRealtimeInput: buildDailyRealtimeInput(realtime),
+    ulsdData
   });
 
   const data = {
