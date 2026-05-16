@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-45V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-45V';
-import { formatFiniteNumber } from './format.js?v=28.0M-45V';
+import { $ } from './config.js?v=28.0M-46V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-46V';
+import { formatFiniteNumber } from './format.js?v=28.0M-46V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -526,8 +526,11 @@ function buildMacroDrivers(data) {
         effectiveFedFundsRate === null ? null : `联邦基金利率 ${formatNumber(effectiveFedFundsRate, 2, '%')} — 当前官方政策利率`,
         sofr === null ? null : `SOFR ${formatNumber(sofr, 2, '%')} — 隔夜担保融资利率`,
         reserveBalances === null ? null : `银行准备金 ${formatUsdTrillions(reserveBalances / 1_000_000)}；4周变化 ${formatSignedPercent(reserveBalances4wChange)} — 储备缓冲数量`,
+        credit?.sloosTighteningLargeFirms === null || !Number.isFinite(credit?.sloosTighteningLargeFirms)
+          ? null
+          : `银行贷款标准 (SLOOS C&I 大型) ${formatSignedPercent(credit.sloosTighteningLargeFirms, 1)}（${credit.sloosTighteningLargeFirms >= 0 ? '净收紧' : '净放松'}，季度调查）`,
       ].filter(Boolean),
-      missingEvidence: ['SLOOS、回购市场压力和跨市场融资压力等待接入。'],
+      missingEvidence: ['回购市场压力和跨市场融资压力等待接入。'],
       counterEvidence: creditCalm ? ['信用与波动率尚未明显确认扩散。'] : [],
       explanation: creditCalm
         ? '长端利率和美元偏紧，但信用与波动率尚未明显确认扩散。'
@@ -739,8 +742,11 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
         `IG/HY 比率 ${formatNumber(igHyRatio, 2)}（信用层次性收缩）`,
         sofr === null ? null : `SOFR ${formatNumber(sofr, 2, '%')} — 隔夜担保融资压力`,
         reserveBalances === null ? null : `银行准备金 ${formatUsdTrillions(reserveBalances / 1_000_000)}，4 周变化 ${formatSignedPercent(reserveBalances4wChange)}（系统流动性缓冲）`,
+        credit?.sloosTighteningLargeFirms === null || !Number.isFinite(credit?.sloosTighteningLargeFirms)
+          ? null
+          : `银行贷款标准 (SLOOS C&I 大型) ${formatSignedPercent(credit.sloosTighteningLargeFirms, 1)}（信用环境${credit.sloosTighteningLargeFirms >= 20 ? '收紧确认' : credit.sloosTighteningLargeFirms >= 0 ? '温和收紧' : '放松'}）`,
       ].filter(Boolean),
-      missingEvidence: ['SLOOS、私募信贷、CRE、bank-specific stress、CDX 与更细信用指标等待接入。'],
+      missingEvidence: ['私募信贷、CRE、bank-specific stress、CDX 与更细信用指标等待接入。'],
       counterEvidence: creditCalm ? ['信用和波动率尚未显示系统性扩散。'] : [],
       explanation: creditCalm
         ? '信用和波动率尚未显示系统性扩散，金融脆弱性维持观察。'
