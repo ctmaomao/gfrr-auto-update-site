@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-55V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-55V';
-import { formatFiniteNumber } from './format.js?v=28.0M-55V';
+import { $ } from './config.js?v=28.0M-55bV';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-55bV';
+import { formatFiniteNumber } from './format.js?v=28.0M-55bV';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -2003,7 +2003,7 @@ function appendSection(root, title, className = '', id = '') {
   return section;
 }
 
-function appendEditorialKeyChanges(root, changes) {
+function appendEditorialKeyChangeItems(root, changes) {
   const items = safeArray(changes);
   const grid = document.createElement('div');
   grid.className = 'wow-grid';
@@ -2018,6 +2018,20 @@ function appendEditorialKeyChanges(root, changes) {
     grid.appendChild(card);
   });
   root.appendChild(grid);
+}
+
+function appendEditorialKeyChanges(root, changes) {
+  const section = appendSection(root, '本期关键变化', 'editorial-category editorial-wow-category', 'wow-key-changes');
+  section.style.setProperty('--section-accent', 'var(--risk-yellow)');
+  appendText(section, 'p', 'editorial-category-kicker', 'KEY CHANGES');
+  appendText(section, 'p', 'editorial-category-summary',
+    '以下只汇总站内已有结构化数据能够支持的边际提示，不预判市场方向。');
+
+  const body = document.createElement('div');
+  body.className = 'editorial-section-body wow-body';
+  body.id = 'wow-key-changes-root';
+  section.appendChild(body);
+  appendEditorialKeyChangeItems(body, changes);
 }
 
 function appendEditorialWatchList(root, items) {
@@ -2189,12 +2203,6 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   cross.appendChild(crossGrid);
   appendCrossValidationEducationAppendix(cross);
 
-  const keyChangesRoot = $('wow-key-changes-root');
-  if (keyChangesRoot) {
-    keyChangesRoot.replaceChildren();
-    appendEditorialKeyChanges(keyChangesRoot, buildKeyChanges(overview, data, healthDashboard));
-  } else {
-    appendEditorialKeyChanges(container, buildKeyChanges(overview, data, healthDashboard));
-  }
+  appendEditorialKeyChanges(container, buildKeyChanges(overview, data, healthDashboard));
   appendEditorialWatchList(container, buildWatchList(overview, data));
 }

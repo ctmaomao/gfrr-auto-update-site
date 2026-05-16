@@ -1,4 +1,4 @@
-import { fmtNumSafe } from './config.js?v=28.0M-55V';
+import { fmtNumSafe } from './config.js?v=28.0M-55bV';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

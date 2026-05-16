@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 v28.0C</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=28.0M-55V" />
+  <link rel="stylesheet" href="assets/styles.css?v=28.0M-55bV" />
   <style>
     .macro-overview-shell {
       display: grid;
@@ -571,59 +571,80 @@
           </section>
         </div>
       </section>
-      <aside id="homepage-realtime-band" class="editorial-subsection-equivalent realtime-band-wrapper" aria-label="实时盘中关键变量">
-        <section class="full-width-section cockpit-section">
-          <article class="card realtime-strip-card">
-            <div class="card-head split-head">
-              <h2>盘中快变量</h2>
-              <span class="muted" id="realtime-updated-at">--</span>
+      <section class="macro-overview-block editorial-category editorial-realtime-category" id="homepage-realtime-band" aria-label="实时盘中关键变量">
+        <h2>盘中快变量</h2>
+        <p class="editorial-category-kicker">REALTIME PIT</p>
+        <p class="editorial-category-summary">7 个核心实时变量，来源 Worker 或 Daily fallback；不构成信号，仅为评分背景参考。</p>
+        <div class="editorial-category-counts">
+          <span class="editorial-count-pill">更新 <strong id="realtime-updated-at">--</strong></span>
+          <span class="editorial-count-pill">来源 <strong id="rt-source-mode">--</strong></span>
+        </div>
+        <div class="editorial-realtime-grid">
+          <article class="editorial-realtime-card">
+            <div class="editorial-realtime-card-status-strip" aria-hidden="true"></div>
+            <div class="editorial-realtime-card-head">
+              <span class="editorial-realtime-kicker">BRENT</span>
+              <h3 class="editorial-realtime-card-title">布伦特</h3>
             </div>
-            <div class="metric-row four">
-              <div class="metric-box compact">
-                <div class="metric-label">布伦特</div>
-                <div class="metric-value" id="rt-brent">--</div>
-                <div class="mini-delta" id="rt-brent-delta">--</div>
-                <div class="mini-delta" id="rt-brent-source">布伦特来源：--</div>
-                <div class="mini-delta" id="rt-brent-move">波动状态：--</div>
-              </div>
-              <div class="metric-box compact">
-                <div class="metric-label">广义美元指数</div>
-                <div class="metric-value" id="rt-dxy">--</div>
-                <div class="mini-delta" id="rt-dxy-delta">--</div>
-              </div>
-              <div class="metric-box compact">
-                <div class="metric-label">VIX（标普500隐含波动率）</div>
-                <div class="metric-value" id="rt-vix">--</div>
-                <div class="mini-delta" id="rt-vix-delta">--</div>
-              </div>
-              <div class="metric-box compact">
-                <div class="metric-label">HY OAS（高收益债信用利差）</div>
-                <div class="metric-value" id="rt-hy">--</div>
-                <div class="mini-delta" id="rt-hy-delta">--</div>
-              </div>
-            </div>
-            <div class="metric-row four">
-              <div class="metric-box compact">
-                <div class="metric-label">美债10Y</div>
-                <div class="metric-value" id="rt-us10y">--</div>
-              </div>
-              <div class="metric-box compact">
-                <div class="metric-label">黄金</div>
-                <div class="metric-value" id="rt-gold">--</div>
-              </div>
-              <div class="metric-box compact">
-                <div class="metric-label">标普500</div>
-                <div class="metric-value" id="rt-spx">--</div>
-              </div>
-              <div class="metric-box compact">
-                <div class="metric-label">快变量状态</div>
-                <div class="metric-value small" id="rt-source-mode">--</div>
-              </div>
-            </div>
-            <ul class="bullet-list" id="realtime-notes"></ul>
+            <p class="editorial-realtime-value" id="rt-brent">--</p>
+            <p class="editorial-realtime-delta" id="rt-brent-delta">--</p>
+            <p class="editorial-realtime-source" id="rt-brent-source">布伦特来源：--</p>
+            <p class="editorial-realtime-move" id="rt-brent-move">波动状态：--</p>
           </article>
-        </section>
-      </aside>
+          <article class="editorial-realtime-card">
+            <div class="editorial-realtime-card-status-strip" aria-hidden="true"></div>
+            <div class="editorial-realtime-card-head">
+              <span class="editorial-realtime-kicker">DXY</span>
+              <h3 class="editorial-realtime-card-title">广义美元指数</h3>
+            </div>
+            <p class="editorial-realtime-value" id="rt-dxy">--</p>
+            <p class="editorial-realtime-delta" id="rt-dxy-delta">--</p>
+          </article>
+          <article class="editorial-realtime-card">
+            <div class="editorial-realtime-card-status-strip" aria-hidden="true"></div>
+            <div class="editorial-realtime-card-head">
+              <span class="editorial-realtime-kicker">VIX</span>
+              <h3 class="editorial-realtime-card-title">波动率指数</h3>
+            </div>
+            <p class="editorial-realtime-value" id="rt-vix">--</p>
+            <p class="editorial-realtime-delta" id="rt-vix-delta">--</p>
+          </article>
+          <article class="editorial-realtime-card">
+            <div class="editorial-realtime-card-status-strip" aria-hidden="true"></div>
+            <div class="editorial-realtime-card-head">
+              <span class="editorial-realtime-kicker">HY OAS</span>
+              <h3 class="editorial-realtime-card-title">高收益利差</h3>
+            </div>
+            <p class="editorial-realtime-value" id="rt-hy">--</p>
+            <p class="editorial-realtime-delta" id="rt-hy-delta">--</p>
+          </article>
+          <article class="editorial-realtime-card">
+            <div class="editorial-realtime-card-status-strip" aria-hidden="true"></div>
+            <div class="editorial-realtime-card-head">
+              <span class="editorial-realtime-kicker">US10Y</span>
+              <h3 class="editorial-realtime-card-title">美债10Y</h3>
+            </div>
+            <p class="editorial-realtime-value" id="rt-us10y">--</p>
+          </article>
+          <article class="editorial-realtime-card">
+            <div class="editorial-realtime-card-status-strip" aria-hidden="true"></div>
+            <div class="editorial-realtime-card-head">
+              <span class="editorial-realtime-kicker">GOLD</span>
+              <h3 class="editorial-realtime-card-title">黄金</h3>
+            </div>
+            <p class="editorial-realtime-value" id="rt-gold">--</p>
+          </article>
+          <article class="editorial-realtime-card">
+            <div class="editorial-realtime-card-status-strip" aria-hidden="true"></div>
+            <div class="editorial-realtime-card-head">
+              <span class="editorial-realtime-kicker">SPX</span>
+              <h3 class="editorial-realtime-card-title">标普500</h3>
+            </div>
+            <p class="editorial-realtime-value" id="rt-spx">--</p>
+          </article>
+        </div>
+        <ul class="editorial-realtime-notes bullet-list" id="realtime-notes"></ul>
+      </section>
       <section id="external-ai-auxiliary" class="editorial-section editorial-section-folded external-ai-auxiliary-section editorial-external-ai-panel" style="--section-accent: var(--paper-muted);">
         <header class="editorial-section-header">
           <span class="section-kicker">READ-ONLY AUXILIARY INTERPRETATION</span>
@@ -639,14 +660,6 @@
             <section class="full-width-section cockpit-section auxiliary-ai-panel editorial-external-ai-card" id="external-ai-display-panel" hidden aria-hidden="true"></section>
           </div>
         </details>
-      </section>
-      <section id="wow-key-changes" class="editorial-section editorial-section-wow" style="--section-accent: var(--risk-yellow);">
-        <header class="editorial-section-header">
-          <span class="section-kicker">KEY CHANGES · 本期关键变化</span>
-          <span class="section-title">本期关键变化</span>
-          <span class="section-note">以下只汇总站内已有结构化数据能够支持的边际提示，未确认项继续保留为待验证。</span>
-        </header>
-        <div class="editorial-section-body wow-body" id="wow-key-changes-root"></div>
       </section>
       <section id="global-risk-heatmap" class="editorial-section" style="--section-accent: var(--risk-red);">
         <header class="editorial-section-header">
@@ -1713,6 +1726,6 @@
     </footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0M-55V"></script>
+  <script type="module" src="scripts/app.js?v=28.0M-55bV"></script>
 </body>
 </html>
