@@ -60,6 +60,16 @@ The trend classifier already lives in `scripts/world-order/import-sipri.mjs`:
 The importer also applies `majorityTrend()` over major powers to determine
 `majorPowerMilitarySpendTrend`.
 
+> Note: the importer applies `classifyGrowthTrend` to
+> `militarySpendShareOfGdpPct`, which is a *level* (percent of GDP), not a
+> *delta*. As a result, `militarySpendShareOfGDPTrend` evaluates to `'stable'`
+> for any plausible level (since 2.5% < 8% threshold). The
+> `sipri_gdp_share_rising` narrative branch therefore fires only via its
+> OR-fallback condition (`sipriGlobalTrend === 'rising' && sipriGdpShare >= 2.5`),
+> never via the trend field directly. This is pre-existing importer behavior and
+> not introduced by M-61; flagged here so future reviewers do not interpret it
+> as a bug.
+
 ## Narrative Supporting Branches
 
 M-61 adds three SIPRI supporting branches to
@@ -83,12 +93,80 @@ same gap.
    top-10 major-power, and five-region data.
 4. Update `updatedYear`, `preparedAt`, `quality.publicationDate`, and `notesZh`
    if methodology or table coverage changes.
-5. Run `npm run build:world-order`.
+5. Run validation:
+   - `npm run build:world-order`
+   - `npm run check:world-order` — schema validation for
+     `data/world-order-stress.json`
+   - `npm run check:world-order-narrative-density` — narrative density floor
+     check
+   - `npm run check:all` — full battery; must still PASS 66 items after refresh
 6. Verify `externalSources.sipri.status === 'ok'` and the summary reflects the
    latest year.
 7. Trigger `Refresh World Order Stress` via workflow_dispatch if a production
    refresh is needed immediately. Pages auto-deploys via the M-60 workflow_run
    listener.
+
+### Computing fiveYearGrowthPct (not published in Fact Sheet)
+
+The SIPRI Fact Sheet PDF publishes 1-year and 10-year deltas only. The
+`fiveYearGrowthPct` field (on `global`, on each majorPower, and on each region)
+must be computed manually from the SIPRI Excel database. Use this procedure:
+
+1. Download the SIPRI Military Expenditure Database Excel from
+   https://www.sipri.org/research/armaments/milex/milex_database. The current
+   workbook (as of M-61) is `SIPRI-Milex-data-1949-2024.xlsx`.
+2. Use the "constant USD" sheet for country values, the regional totals sheet
+   for regions, and the world total sheet for `global`. Real terms (constant
+   2023 USD) is the correct basis for growth comparison — NOT current USD, NOT
+   local currency.
+3. For each entity, compute:
+   `((spending_{updatedYear} / spending_{updatedYear - 5}) - 1) * 100`,
+   rounded to 1 decimal place.
+4. Worked example for the M-61 refresh (2024 data): global computed as 26.0%
+   from constant-USD world totals; Russia 128.9% (post-Crimea baseline 2019
+   ~$65B vs 2024 ~$149B); Ukraine 896.7% (pre-war 2019 baseline ~$6.5B vs 2024
+   $64.7B); Saudi Arabia 8.0% (just crossed the `>=8% -> rising` trend threshold
+   from prior years).
+5. If an entity's `updatedYear - 5` baseline is unavailable or anomalous (e.g.
+   Ukraine pre-war data inconsistencies), document the substitution in the
+   JSON's `notesZh` field and use the closest stable baseline.
+6. Sanity-check guardrail: after computing all 16 values, the M-61 commit
+   `cb64cf2` found that an earlier round of values (committed before
+   verification against the Excel) was systematically wrong by 5-50pp per
+   entity. Always verify against the Excel before committing — Fact Sheet PDF
+   approximations and rough estimates are NOT acceptable.
+
+### Cross-file synchronization required
+
+When `militarySpendShareOfGdpPct` or related global burden values change in the
+JSON, the following hardcoded literals in
+`scripts/modules/buildCrossValidationMatrix.js` (within
+`buildWorldOrderNarrative`) must be reviewed:
+
+- The narrative text `"（2015 年为 2.3%）"` — the `2.3` is the baseline year's
+  burden value, hardcoded as a string literal. Update if the baseline year
+  shifts (e.g. next decade's Fact Sheet uses 2016 as the baseline) or if SIPRI
+  revises the 2015 historical value.
+- The fallback threshold `sipriGdpShare >= 2.5` in branch
+  `sipri_gdp_share_rising` — this is a defensive trigger so the branch can fire
+  even when the importer's `militarySpendShareOfGDPTrend` returns `'stable'`
+  (which it does for any reasonable GDP-share level — see footnote in
+  `## Trend Classification`). Adjust the threshold if SIPRI's global burden
+  drifts substantially.
+
+These literals are intentionally co-located with the narrative rendering in
+`buildCrossValidationMatrix.js`, not in the JSON, because they encode display
+copy rather than source data. They must be tracked as part of the annual refresh
+checklist.
+
+### Commit message convention
+
+Commit format: `chore(world-order): refresh SIPRI to <YEAR> Fact Sheet`
+
+The commit body should include: the source Fact Sheet PDF URL, the Excel
+database URL and filename, the Fact Sheet publication date, and a verification
+table showing old -> new values for all 16 entities (even unchanged ones, as
+audit evidence — see the `cb64cf2` commit for an example).
 
 Estimated annual effort: 20-30 minutes.
 
