@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-55bV';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-55bV';
-import { renderList } from './renderTables.js?v=28.0M-55bV';
+import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-57V';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-57V';
+import { renderList } from './renderTables.js?v=28.0M-57V';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0M-55bV';
+} from './renderCharts.js?v=28.0M-57V';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0M-55bV';
+} from './renderTables.js?v=28.0M-57V';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0M-55bV';
+} from './renderAudit.js?v=28.0M-57V';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',

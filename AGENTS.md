@@ -17,6 +17,7 @@ These documents define what the project is right now. All PRs must conform to th
 - `scripts/check-homepage-ia-contract.mjs` — Homepage IA order and anchor authority
 - `scripts/check-editorial-redesign-contract.mjs` — Font allowlist + IA + design anchor authority
 - `package.json` — Authoritative source of all check commands and check:all composition
+- `docs/PROJECT_BACKLOG.md` — Persistent project backlog and cross-session project self-memory
 
 ### Conditional Authority (authoritative only within their scope)
 
@@ -63,6 +64,7 @@ be treated as governing rules for the whole project:
 - `docs/M-54_FRONTEND_VISUAL_UPGRADE_PHASE1.md` — Authoritative within M-54 frontend visual upgrade Phase 1 scope only
 - `docs/M-55a_IA_RESTRUCTURE_PHASE2A.md` — Authoritative within M-55a IA restructure Phase 2a scope only
 - `docs/M-55b_IA_RESTRUCTURE_PHASE2B.md` — Authoritative within M-55b IA restructure Phase 2b scope only
+- `docs/M-57_MARKET_TEMPERATURE_FIX_AND_PROJECT_BACKLOG.md` — Authoritative within M-57 market-temperature judgment alignment and backlog contract scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -164,6 +166,10 @@ M-54 is documented in `docs/M-54_FRONTEND_VISUAL_UPGRADE_PHASE1.md`. It is front
 
 M-55b is documented in `docs/M-55b_IA_RESTRUCTURE_PHASE2B.md`. It is frontend IA / visual structure only: `wow-key-changes` is promoted from static HTML to a JS-runtime macro overview block positioned between cross-validation and the watch-list, and the realtime band is repainted from the old cockpit card into the main-module standard with 7 sub-cards. It preserves all 13 nav anchors, all 16 realtime DOM ids, `wow-key-changes`, and `wow-key-changes-root`. It removes only the M-55a legacy `.editorial-subsection-equivalent` wrapper rule and does not change data files, backend scripts, workflows, DESIGN.md, narrative builder logic, scoring, decision, execution, or position logic.
 
+#### M-57 (Market Temperature Judgment + Project Backlog)
+
+M-57 is documented in `docs/M-57_MARKET_TEMPERATURE_FIX_AND_PROJECT_BACKLOG.md`. It fixes only the market-temperature judgment stub so `buildMarketTemperature` returns an active QQQ z-score judgment when `data/market-pricing-metrics.json` has records, creates `docs/PROJECT_BACKLOG.md` as persistent project self-memory, and adds `check:project-backlog-format` to `check:all`. It does not change data files, workflows, backend pipeline scripts, `scripts/validate-data.mjs`, DESIGN.md, nav anchors, DOM ids, scoring, decision, execution, position, or cross-validation narrative builders.
+
 ### Operating Document (large, mixed content; consult selectively)
 
 These documents contain both current operating procedures and accumulated
@@ -190,7 +196,7 @@ documentation drift risk identified in the v28.0M-audit.
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-55bV`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-57V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -227,7 +233,8 @@ documentation drift risk identified in the v28.0M-audit.
 - v28.0M-54V Frontend Visual Upgrade Phase 1 用 `?v=28.0M-54V` 刷新前端 asset graph；本轮仅修复 cross-validation evidence 颜色语义（supporting -> red、contradicting -> green、missing -> gray）、添加七个 narrative emoji prefix、调整结构化 evidence 顺序为 supporting -> contradicting -> missing，并新增 typography scale CSS variables。不改 IA structure、narrative builder logic、data files、backend scripts、workflows、scoring、decision、execution 或 position。
 - v28.0M-55V IA Restructure Phase 2a 用 `?v=28.0M-55V` 刷新前端 asset graph；本轮仅移动 realtime band 至顶部 static aside、移动 External AI section 至 cross-validation 后、同步 13 项 nav contract，并将 detail-data audit inputs 改为数据健康。不改 data files、backend scripts、workflows、DESIGN.md、narrative builder logic、scoring、decision、execution 或 position。
 - v28.0M-55bV IA Restructure Phase 2b 用 `?v=28.0M-55bV` 刷新前端 asset graph；本轮仅将 `wow-key-changes` 从 static HTML 提升为 macro overview JS-runtime block（位于 cross-validation 与 watch-list 之间），并将 realtime band 重绘为 main-module standard（7 个 `editorial-realtime-card` 子卡）。13 项 nav anchor、16 个 realtime DOM id、M-54 emoji/evidence color、M-55a External AI 位置均保留。不改 data files、backend scripts、workflows、DESIGN.md、narrative builder logic、scoring、decision、execution 或 position。
-- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0M-55bV` / `npm run bump:frontend-asset-version -- 28.0M-55bV`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-55bV`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
+- v28.0M-57V Market Temperature + Project Backlog 用 `?v=28.0M-57V` 刷新前端 asset graph；本轮仅修复 `buildMarketTemperature` stub，使 judgment layer 在 `data/market-pricing-metrics.json` 有记录时返回 active QQQ z-score 状态，并新增 `docs/PROJECT_BACKLOG.md` 与 `check:project-backlog-format`。不改 data files、backend pipeline scripts、workflows、DESIGN.md、nav anchors、DOM ids、cross-validation narrative builders、scoring、decision、execution 或 position。
+- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0M-55bV` / `npm run bump:frontend-asset-version -- 28.0M-55bV`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-57V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
 - v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。

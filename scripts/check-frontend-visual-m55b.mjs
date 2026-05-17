@@ -87,11 +87,11 @@ if (cssContent.includes('.editorial-subsection-equivalent')) {
 }
 
 // Check 4: Cache version
-if (!htmlContent.includes('?v=28.0M-55bV')) {
-  fail('M-55b: cache version 28.0M-55bV not found in index.html');
+if (!htmlContent.includes('?v=28.0M-57V')) {
+  fail('M-55b: cache version 28.0M-57V not found in index.html');
 }
-if (htmlContent.includes('?v=28.0M-55V')) {
-  fail('M-55b: stale cache version 28.0M-55V still present in index.html');
+if (htmlContent.includes('?v=28.0M-55bV')) {
+  fail('M-55b: stale cache version 28.0M-55bV still present in index.html');
 }
 
 if (errors.length > 0) {

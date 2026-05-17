@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-55bV';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-55bV';
-import { formatFiniteNumber } from './format.js?v=28.0M-55bV';
+import { $ } from './config.js?v=28.0M-57V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-57V';
+import { formatFiniteNumber } from './format.js?v=28.0M-57V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -588,7 +588,43 @@ function buildMacroDrivers(data) {
   ];
 }
 
-function buildMarketTemperature() {
+function buildMarketTemperature(marketPricingMetricsData = null) {
+  const records = getMetricRecords(marketPricingMetricsData);
+  const latest = records[records.length - 1];
+
+  if (latest) {
+    const zScore = finite(latest.zScore);
+    const bucket = getMarketTemperatureBucketInfo(zScore);
+    const distance = Math.abs(zScore).toFixed(2);
+    const direction = bucket.key.includes('hot')
+      ? '风险偏热'
+      : bucket.key.includes('cold')
+        ? '风险偏冷'
+        : '中性观察';
+
+    return createJudgment({
+      id: 'market-pricing-temperature',
+      title: '市场定价温度计',
+      group: 'market-temperature',
+      status: bucket.label,
+      direction,
+      confidence: '偏高',
+      dataCoverage: '数据覆盖：QQQ 周线历史已接入',
+      evidence: [
+        `QQQ 周线 z-score: ${formatSignedDecimal(zScore, 2)}`,
+        `Bucket: ${bucket.label}`,
+        `历史记录数: ${records.length} 周`,
+        `最新周: ${latest.date} / ${latest.isoWeek}`,
+      ],
+      missingEvidence: [],
+      counterEvidence: [],
+      explanation: bucket.interpretation(distance),
+      sourceType: 'market-pricing-metrics',
+      updatedAt: latest.date,
+      conclusion: `当前 QQQ 周线 z-score = ${formatSignedDecimal(zScore, 2)}，市场温度处于「${bucket.label}」。`,
+    });
+  }
+
   return createDataGapJudgment({
     id: 'market-pricing-temperature',
     title: '市场定价温度计',
@@ -811,7 +847,7 @@ export function buildMacroOverview(data = {}, healthDashboard = {}, worldOrderSt
     pressures: buildPressureSources(data, worldOrderStressData),
     signalLayers: buildSignalLayers(data, marketPricingMetricsData),
     drivers: buildMacroDrivers(data),
-    marketTemperature: buildMarketTemperature(),
+    marketTemperature: buildMarketTemperature(marketPricingMetricsData),
     riskEngines: buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData),
     crossValidation: crossValidationMatrix.narratives,
     crossValidationMatrix,
