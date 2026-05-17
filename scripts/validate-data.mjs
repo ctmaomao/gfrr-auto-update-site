@@ -49,6 +49,10 @@ const DIVERGENCE_LAYER_STATES = new Set(['normal', 'watch', 'stress', 'high_stre
 const DIVERGENCE_CHECK_STATUSES = new Set(['normal', 'watch', 'stress', 'insufficient_data']);
 const DIVERGENCE_CHECK_CATEGORIES = new Set(['energy_pricing', 'rates_assets', 'liquidity_credit', 'risk_complacency', 'consumer_assets']);
 const CONSUMER_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_CONSUMER_SOURCES = new Set([
+  'FRED:UMCSENT',                  // legacy single-source (pre-M-47); kept for fixture/old-data compatibility
+  'FRED:UMCSENT; FRED:NAPM',       // M-47+ multi-source: UMCSENT + NAPM (ISM Manufacturing PMI)
+]);
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
@@ -391,7 +395,10 @@ function validateMacroDriversConsumer(dataPayload) {
     consumer.updatedAt === null || (typeof consumer.updatedAt === 'string' && Number.isFinite(Date.parse(consumer.updatedAt))),
     'macroDrivers.consumer.updatedAt must be null or parseable ISO string'
   );
-  assert(consumer.source === 'FRED:UMCSENT', 'macroDrivers.consumer.source must be FRED:UMCSENT');
+  assert(
+    VALID_CONSUMER_SOURCES.has(consumer.source),
+    `macroDrivers.consumer.source must be one of: ${[...VALID_CONSUMER_SOURCES].join(' | ')}`
+  );
   assertArray(consumer.notes, 'macroDrivers.consumer.notes');
   consumer.notes.forEach((item, index) => assertString(item, `macroDrivers.consumer.notes[${index}]`));
 }
