@@ -39,7 +39,6 @@ jobs:
       - run: npm run check:world-order
 
       - name: Commit
-        id: commit_step
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -47,14 +46,4 @@ jobs:
           if ! git diff --cached --quiet; then
             git commit -m "chore: refresh world order stress"
             git push
-            echo "committed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "committed=false" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Trigger Pages deploy
-        if: steps.commit_step.outputs.committed == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh workflow run deploy-static-site-to-pages.yml --ref main

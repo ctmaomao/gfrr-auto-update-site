@@ -8,6 +8,8 @@ on:
   workflow_run:
     workflows:
       - Build Daily Radar Data
+      - Refresh World Order Stress
+      - External AI Production Refresh
     types:
       - completed
   push:
