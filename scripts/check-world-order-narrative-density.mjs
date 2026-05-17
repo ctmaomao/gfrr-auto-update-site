@@ -90,6 +90,23 @@ if (!narrative) {
     if (missingSources.has('gdelt')) {
       fail("'gdelt' should NOT be in missingEvidence when status === 'ok'");
     }
+
+    // M-59: when GDELT Cloud is healthy, four density branches in
+    // buildWorldOrderNarrative may fire based on summary thresholds.
+    // Track each independently against the actual summary values to ensure
+    // the supporting branches are wired correctly.
+    const gdeltSummary = worldOrder?.externalSources?.gdelt?.summary ?? {};
+    const m59Gates = [
+      ['gdelt_event_density', Number(gdeltSummary.totalEvents) >= 200],
+      ['gdelt_multi_country', Number(gdeltSummary.countryCount) >= 30],
+      ['gdelt_fatalities', Number(gdeltSummary.fatalities) >= 100],
+      ['gdelt_key_regions', Array.isArray(gdeltSummary.keyConflictRegions) && gdeltSummary.keyConflictRegions.length >= 3],
+    ];
+    for (const [source, shouldFire] of m59Gates) {
+      if (shouldFire && !supportingSources.has(source)) {
+        fail(`${source} expected in supportingEvidence (GDELT ok + threshold met)`);
+      }
+    }
   } else if (gdeltStatus === 'stale') {
     if (supportingSources.has('gdelt_tone_proxy')) {
       fail("gdelt_tone_proxy should NOT be in supportingEvidence when GDELT status === 'stale'");
@@ -104,8 +121,21 @@ if (!narrative) {
       fail(`world_order_pressure_crossing missing source-status evidence: ${source}`);
     }
   }
-  if (!missingSources.has('decision_modifier_risk_bias')) {
-    fail('world_order_pressure_crossing should expose neutral decisionModifier.riskBias as boundary evidence');
+
+  // M-59 fix-up: decisionModifier.riskBias is conditional on upstream evidence
+  // density. When GDELT/OFAC/world-order dimensions cross thresholds, the
+  // modifier flips to 'upward' and the helper emits it as supportingEvidence;
+  // otherwise it stays as missingEvidence boundary. This mirrors assertion B's
+  // state-conditional pattern (M-51 fix-up).
+  const riskBias = worldOrder?.decisionModifier?.riskBias;
+  if (riskBias === 'upward') {
+    if (!supportingSources.has('decision_modifier_risk_bias')) {
+      fail("decision_modifier_risk_bias expected in supportingEvidence when riskBias === 'upward'");
+    }
+  } else if (typeof riskBias === 'string' && riskBias.length > 0) {
+    if (!missingSources.has('decision_modifier_risk_bias')) {
+      fail(`decision_modifier_risk_bias expected in missingEvidence when riskBias === '${riskBias}' (boundary state)`);
+    }
   }
 
   if (narrative.contradictingEvidence.length !== 0) {
