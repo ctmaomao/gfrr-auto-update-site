@@ -17,7 +17,7 @@
 
 ## 当前版本状态
 
-当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-57V`。
+当前处于 `v28.0J` 稳定观察基线；页面公开标签仍为 `v28.0C`，不要把工程内部版本同步误改成 UI 公开版本。v28.0J-2B post-deploy audit 已通过，当前前端版本为 `28.0M-58V`。
 
 当前主运行状态：
 
@@ -35,8 +35,8 @@
 - `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`consumer_vs_asset_pricing`、`brentPricingLayer` 和 `aiInterpretationLayer` 都是解释层 / 审计层 / 展示层。
 - External AI production panel 是只读辅助层；manual / provider artifacts 不等于 scoring、Daily、frontend 或 production write readiness。
 - Market Pricing Temperature 已进入 M-27 以后前端展示阶段，后续边界以对应 M-series docs 为准。
-- Frontend asset cache version 当前为 `28.0M-57V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
-- `npm run check:all` 当前由 `package.json` 定义，包含 63 个串联检查项。
+- Frontend asset cache version 当前为 `28.0M-58V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
+- `npm run check:all` 当前由 `package.json` 定义，包含 64 个串联检查项。
 - Market Pricing first real record write scaffold 在任何写入前运行 6 sanity checks；细节以 `docs/OPERATIONS.md` 和 `docs/SYSTEM_UPGRADE_PLAN.md` 为准。
 
 最近维护节奏：
@@ -63,6 +63,7 @@
 - IA Restructure Phase 2b M-55b: Visual consistency upgrade + wow-key-changes physical re-anchoring. Realtime band repainted from cockpit-style monolithic card to main-module standard (7 sub-cards in editorial-realtime-grid, matching pressure/signal/engine/cross-validation visual pattern). wow-key-changes promoted from static HTML section to JS-runtime block inside macro-risk-overview-root, positioned between cross-validation and watch-list (fixes M-55a hidden bug where nav order #8 wow-key-changes was physically AFTER nav #9 external-ai). All 13 nav anchors preserved (DESIGN.md "13 项" literal unchanged). All 16 realtime DOM ids preserved with new sub-card parents. .editorial-subsection-equivalent CSS legacy removed. Cache bumped to 28.0M-55bV.
 - M-56 validate-data consumer source whitelist: accepts both legacy `FRED:UMCSENT` and M-47+ `FRED:UMCSENT; FRED:NAPM`, unblocking Build #74 daily refresh and activating M-46~M-50 refreshed fields in `data/radar-data.json`. Backend validator fix only; no frontend cache bump.
 - M-57 Market Temperature + Project Backlog: fixes `buildMarketTemperature` stub so judgment-layer state reflects active QQQ market-pricing metrics when records exist; creates `docs/PROJECT_BACKLOG.md` as persistent project self-memory; adds `check:project-backlog-format` to `check:all` (63 items). Cache bumped to 28.0M-57V. No data/workflow/backend/DESIGN.md changes.
+- M-58 Realtime Band Field Completion: completes P1-6 from `docs/PROJECT_BACKLOG.md`. Adds delta + source fields to DXY/VIX/HY/US10Y/Gold/SPX realtime sub-cards, fixes Brent delta `|| 0` null-coercion, adds unit suffixes for all 7 deltas, and locks 9 new DOM ids with `check:realtime-band-completeness` (`check:all` = 64). Cache bumped to 28.0M-58V. No data/workflow/backend/DESIGN.md changes.
 
 ## 核心架构
 
@@ -217,6 +218,6 @@ README 只保留入口级说明。若 README 与 `AGENTS.md`、`DESIGN.md`、`pa
 
 - 页面公开标签：`v28.0C`。
 - 工程稳定观察基线：`v28.0J`。
-- 当前 frontend asset cache version：`28.0M-57V`。
+- 当前 frontend asset cache version：`28.0M-58V`。
 - 当前 runtime status：Node.js 24 LTS。
-- 当前 M-series note：M-57 aligns buildMarketTemperature judgment state with active QQQ market-pricing metrics and creates PROJECT_BACKLOG.md as checked project self-memory; M-56 fixes validate-data consumer source whitelist and Build #74 refresh activates M-46~M-50 data fields; M-55b repaints the realtime band to the main-module standard and promotes wow-key-changes to JS runtime before the watch-list while preserving 13 nav anchors; M-55a lifts the realtime band and External AI section for IA Phase 2a while preserving 13 nav anchors; M-54 fixes cross-validation evidence color semantics, adds narrative emoji prefixes, reorders evidence, and adds typography scale variables; M-53 enhances overheat_confirmation narrative density and completes 7/7 cross-validation narrative upgrades; M-52 enhances risk_asset_mismatch narrative density with 5 cross-dimensional mismatch evidence types; M-51 enhances world_order_pressure_crossing narrative density from existing world-order JSON fields; M-50 adds BGCR/TGCR repo market spreads to macroDrivers.fedLiquidity; M-49 adds DHOILNYH diesel crack spread to brentPricingLayer; M-48 adds Chicago Fed NFCI bank stress index to macroDrivers.credit; M-47 adds ISM Manufacturing PMI to macroDrivers.consumer; M-46 adds SLOOS bank loan standards and the first formal macroDrivers.credit contract; M-45 completes frontend field synchronization for Fed liquidity and market-pricing metadata; M-44 deprecates the stale Stable Observation Audit workflow/script; M-43 completes External AI provenance metadata from GitHub Actions run context and DeepSeek output SHA256; M-40 已跳过且无 PR。
+- 当前 M-series note：M-58 completes realtime band P1-6 by adding non-Brent delta/source fields, Brent null-safe delta formatting, unit suffixes, and `check:realtime-band-completeness`; M-57 aligns buildMarketTemperature judgment state with active QQQ market-pricing metrics and creates PROJECT_BACKLOG.md as checked project self-memory; M-56 fixes validate-data consumer source whitelist and Build #74 refresh activates M-46~M-50 data fields; M-55b repaints the realtime band to the main-module standard and promotes wow-key-changes to JS runtime before the watch-list while preserving 13 nav anchors; M-55a lifts the realtime band and External AI section for IA Phase 2a while preserving 13 nav anchors; M-54 fixes cross-validation evidence color semantics, adds narrative emoji prefixes, reorders evidence, and adds typography scale variables; M-53 enhances overheat_confirmation narrative density and completes 7/7 cross-validation narrative upgrades; M-52 enhances risk_asset_mismatch narrative density with 5 cross-dimensional mismatch evidence types; M-51 enhances world_order_pressure_crossing narrative density from existing world-order JSON fields; M-50 adds BGCR/TGCR repo market spreads to macroDrivers.fedLiquidity; M-49 adds DHOILNYH diesel crack spread to brentPricingLayer; M-48 adds Chicago Fed NFCI bank stress index to macroDrivers.credit; M-47 adds ISM Manufacturing PMI to macroDrivers.consumer; M-46 adds SLOOS bank loan standards and the first formal macroDrivers.credit contract; M-45 completes frontend field synchronization for Fed liquidity and market-pricing metadata; M-44 deprecates the stale Stable Observation Audit workflow/script; M-43 completes External AI provenance metadata from GitHub Actions run context and DeepSeek output SHA256; M-40 已跳过且无 PR。

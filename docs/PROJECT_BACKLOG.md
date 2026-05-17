@@ -9,10 +9,10 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-57 |
-| Cache version | `28.0M-57V` |
-| check:all 项数 | 63 |
-| 最后审计日期 | **2026-05-17** (M-55b audit + Build #74 refresh + M-57) |
+| 当前生产状态 | v28.0M-58 |
+| Cache version | `28.0M-58V` |
+| check:all 项数 | 64 |
+| 最后审计日期 | **2026-05-17** (M-55b audit + Build #74 refresh + M-57 + M-58) |
 | 最后 daily refresh | 2026-05-17 (Build #74, commit `e366b60`) |
 | 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
 
@@ -43,13 +43,6 @@
 - **数据源**: GDELT 2.0 (已存在 fetcher)
 - **类型**: 类型 2
 - **估计 PR**: ~50 行
-
-#### P1-6: Realtime band 字段补全 (视觉一致性)
-- **描述**: 7 个 sub-card 中 6 个仅有 value, 缺 delta/source/move
-- **数据/字段位置**: [index.html](../index.html) `#homepage-realtime-band`
-- **期望**: DXY/VIX/HY/US10Y/Gold/SPX 全部至少有 delta
-- **类型**: 类型 4 → 类型 1 (设计 placeholder → 真数据展示)
-- **估计 PR**: ~90 行
 
 ### P2 Items (Optional)
 
@@ -95,6 +88,7 @@
 | M-55b | IA Restructure Phase 2b | #206 | 2026-05 | ✅ main-module visual standard + wow-key-changes JS-runtime |
 | M-56 | validate-data consumer source whitelist | #207 | 2026-05-17 | ✅ Build #74 PASS, M-46~M-50 fields activated |
 | M-57 | buildMarketTemperature fix + PROJECT_BACKLOG.md creation | (this PR) | 2026-05-17 | ✅ judgment-render layer aligned + project memory established |
+| M-58 | Realtime band field completion (P1-6) + Brent null-check fix + unit suffixes | (this PR) | 2026-05-17 | ✅ 9 new DOM ids locked |
 
 ---
 
@@ -115,6 +109,7 @@
 | 2026-05-17 | 全项目数据完整性审计 | Claude (Opus 4.7) | 13 Open items 识别 (2 P0, 4 P1, 3 P2, 4 P3) | M-55b 后审计 |
 | 2026-05-17 | M-56 fix + Build #74 refresh | Claude Code 诊断 + Codex 实施 | P0-1 已完成 | validate-data.mjs 修复, refresh commit `e366b60` |
 | 2026-05-17 | M-57 buildMarketTemperature fix + PROJECT_BACKLOG | Codex | P0-2 解决, backlog 文件建立 | 本文件进入 check:all |
+| 2026-05-17 | P1-6 realtime band completion audit + M-58 implementation | Claude Code + Codex | P1-6 resolved | 9 new DOM ids + null-safe delta formatting |
 
 ---
 

@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, fmtSigned, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-57V';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-57V';
-import { renderList } from './renderTables.js?v=28.0M-57V';
+import { $, fmtNumSafe, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-58V';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-58V';
+import { renderList } from './renderTables.js?v=28.0M-58V';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0M-57V';
+} from './renderCharts.js?v=28.0M-58V';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0M-57V';
+} from './renderTables.js?v=28.0M-58V';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0M-57V';
+} from './renderAudit.js?v=28.0M-58V';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -55,6 +55,16 @@ const BRENT_MOVE_STATUS_CN = {
   'volatility-watch': '较大波动观察',
   'confirmed-extreme-move': '已确认极端波动',
   'unconfirmed-jump-hold': '未确认跳变，暂不采用新值'
+};
+
+const FRED_SERIES_CN = {
+  brent: 'DCOILBRENTEU',
+  dxy: 'DTWEXBGS',
+  vix: 'VIXCLS',
+  hyOas: 'BAMLH0A0HYM2',
+  us10y: 'DGS10',
+  gold: 'XAU',
+  spx: 'SP500'
 };
 
 const WORLD_ORDER_STATE_CN = {
@@ -298,6 +308,31 @@ function formatPercent(value) {
   return Number.isFinite(numeric) ? `${numeric.toFixed(2)}%` : null;
 }
 
+function fmtDeltaWithUnit(delta, options = {}) {
+  const { prefix = '', suffix = '', digits = 2 } = options;
+  if (delta == null || !Number.isFinite(Number(delta))) return '--';
+  const numeric = Number(delta);
+  const sign = numeric >= 0 ? '+' : '';
+  return `${sign}${prefix}${numeric.toFixed(digits)}${suffix}`;
+}
+
+function buildGenericSourceLabel(displayName, key, realtime) {
+  const detail = realtime?.sourceDetails?.[key];
+  const sourceValue = detail?.source || realtime?.sourceStatus?.[key];
+  if (!sourceValue) return `${displayName}来源：--`;
+  const source = String(sourceValue).toLowerCase();
+  if (source.includes('fred')) {
+    const seriesId = FRED_SERIES_CN[key] || '';
+    return seriesId ? `${displayName}来源：FRED ${seriesId}` : `${displayName}来源：FRED`;
+  }
+  if (source.includes('yahoo')) return `${displayName}来源：Yahoo`;
+  if (source.includes('stooq')) return `${displayName}来源：Stooq`;
+  if (source.includes('gold-api') || source.includes('gold')) return `${displayName}来源：Gold API`;
+  if (source.includes('worker')) return `${displayName}来源：Worker`;
+  if (source.includes('trading')) return `${displayName}来源：TradingEconomics`;
+  return `${displayName}来源：${sourceValue}`;
+}
+
 function buildBrentSourceLabel(realtime) {
   const validation = realtime?.brentValidation;
   if (!validation || typeof validation !== 'object') return '布伦特来源：实时源';
@@ -356,12 +391,21 @@ export function renderRealtimeStrip(realtime, metadata = null, effectiveDisplayI
     if (metadata.realtimeCacheOnly) modeParts.push('缓存模式');
     $('rt-source-mode').textContent = modeParts.join(' / ');
   }
-  $('rt-brent-delta').textContent = fmtSigned(realtime.changes?.brent1d || 0);
+  $('rt-brent-delta').textContent = fmtDeltaWithUnit(realtime.changes?.brent1d, { prefix: '$', digits: 2 });
   $('rt-brent-source').textContent = buildBrentSourceLabel(realtime);
   $('rt-brent-move').textContent = buildBrentMoveLabel(realtime);
-  $('rt-dxy-delta').textContent = fmtSigned(realtime.changes?.dxy1d || 0);
-  $('rt-vix-delta').textContent = fmtSigned(realtime.changes?.vix1d || 0);
-  $('rt-hy-delta').textContent = fmtSigned(realtime.changes?.hyOas1d || 0);
+  $('rt-dxy-delta').textContent = fmtDeltaWithUnit(realtime.changes?.dxy1d, { digits: 2 });
+  $('rt-dxy-source').textContent = buildGenericSourceLabel('广义美元指数', 'dxy', realtime);
+  $('rt-vix-delta').textContent = fmtDeltaWithUnit(realtime.changes?.vix1d, { digits: 2 });
+  $('rt-vix-source').textContent = buildGenericSourceLabel('VIX', 'vix', realtime);
+  $('rt-hy-delta').textContent = fmtDeltaWithUnit(realtime.changes?.hyOas1d, { suffix: '%', digits: 2 });
+  $('rt-hy-source').textContent = buildGenericSourceLabel('高收益利差', 'hyOas', realtime);
+  $('rt-us10y-delta').textContent = fmtDeltaWithUnit(realtime.changes?.us10y1d, { suffix: '%', digits: 2 });
+  $('rt-us10y-source').textContent = buildGenericSourceLabel('美债10Y', 'us10y', realtime);
+  $('rt-gold-delta').textContent = fmtDeltaWithUnit(realtime.changes?.gold1d, { prefix: '$', digits: 1 });
+  $('rt-gold-source').textContent = buildGenericSourceLabel('黄金', 'gold', realtime);
+  $('rt-spx-delta').textContent = fmtDeltaWithUnit(realtime.changes?.spx1d, { suffix: ' 点', digits: 0 });
+  $('rt-spx-source').textContent = buildGenericSourceLabel('标普500', 'spx', realtime);
   renderList('realtime-notes', realtime.notes || []);
 }
 
