@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { fetchGdeltSummary } from './world-order/fetch-gdelt.mjs';
+import { fetchGdeltCloudSummary } from './world-order/fetch-gdelt-cloud.mjs';
 import { fetchOfacSummary } from './world-order/fetch-ofac.mjs';
 import { importSipriSummary } from './world-order/import-sipri.mjs';
 import { fetchAcledSummary } from './world-order/fetch-acled.mjs';
@@ -140,7 +140,7 @@ async function main() {
   const realtimePayload = readJsonIfExists(realtimePath, {});
 
   const [gdelt, ofac, sipri, acled] = await Promise.all([
-    fetchGdeltSummary({ config: rules.gdelt, previousSource: previous?.externalSources?.gdelt }),
+    fetchGdeltCloudSummary({ config: rules.gdelt, previousSource: previous?.externalSources?.gdelt }),
     fetchOfacSummary({ config: rules.ofac, previousSource: previous?.externalSources?.ofac }),
     importSipriSummary({ config: rules.sipri, previousSource: previous?.externalSources?.sipri }),
     fetchAcledSummary({ config: rules.acled, previousSource: previous?.externalSources?.acled })

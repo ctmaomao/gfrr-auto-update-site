@@ -66,6 +66,7 @@ be treated as governing rules for the whole project:
 - `docs/M-55b_IA_RESTRUCTURE_PHASE2B.md` — Authoritative within M-55b IA restructure Phase 2b scope only
 - `docs/M-57_MARKET_TEMPERATURE_FIX_AND_PROJECT_BACKLOG.md` — Authoritative within M-57 market-temperature judgment alignment and backlog contract scope only
 - `docs/M-58_REALTIME_BAND_FIELD_COMPLETION.md` — Authoritative within M-58 realtime-band field completion and delta/source display scope only
+- `docs/M-59_GDELT_CLOUD_INTEGRATION.md` — Authoritative within M-59 GDELT Cloud v2 integration and world-order refresh workflow scope only
 - `docs/EXTERNAL_AI_API_DESIGN.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md` — Authoritative within external-ai scope only
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md` — Authoritative within external-ai scope only
@@ -175,6 +176,10 @@ M-57 is documented in `docs/M-57_MARKET_TEMPERATURE_FIX_AND_PROJECT_BACKLOG.md`.
 
 M-58 is documented in `docs/M-58_REALTIME_BAND_FIELD_COMPLETION.md`. It completes P1-6 from `docs/PROJECT_BACKLOG.md` by adding delta/source display fields to the six non-Brent realtime sub-cards, fixing the Brent delta null-coercion bug, and adding unit suffixes for currency, percentage-point, and index-point deltas. It preserves the 7 realtime sub-card count, all original 16 realtime DOM ids, 13 nav anchors, data files, workflows, backend scripts, `scripts/run-daily-pipeline.mjs`, `scripts/validate-data.mjs`, DESIGN.md, narrative builders, scoring, decision, execution, and position logic.
 
+#### M-59 (GDELT Cloud v2 Integration)
+
+M-59 is documented in `docs/M-59_GDELT_CLOUD_INTEGRATION.md`. It completes P1-5 from `docs/PROJECT_BACKLOG.md` by replacing the legacy anonymous GDELT DOC API fetcher with `scripts/world-order/fetch-gdelt-cloud.mjs`, adding the scheduled/manual `Refresh World Order Stress` workflow, and adding four `world_order_pressure_crossing` supporting evidence branches (`gdelt_event_density`, `gdelt_multi_country`, `gdelt_fatalities`, `gdelt_key_regions`). It preserves `externalSources.gdelt.summary` legacy schema fields for scoring compatibility and does not change frontend cache, nav, DOM ids, scoring, decision, execution, position, workers, `scripts/run-daily-pipeline.mjs`, `scripts/validate-data.mjs`, or DESIGN.md. ACLED remains deferred to M-60 pending Research/Partner tier.
+
 ### Operating Document (large, mixed content; consult selectively)
 
 These documents contain both current operating procedures and accumulated
@@ -240,6 +245,7 @@ documentation drift risk identified in the v28.0M-audit.
 - v28.0M-55bV IA Restructure Phase 2b 用 `?v=28.0M-55bV` 刷新前端 asset graph；本轮仅将 `wow-key-changes` 从 static HTML 提升为 macro overview JS-runtime block（位于 cross-validation 与 watch-list 之间），并将 realtime band 重绘为 main-module standard（7 个 `editorial-realtime-card` 子卡）。13 项 nav anchor、16 个 realtime DOM id、M-54 emoji/evidence color、M-55a External AI 位置均保留。不改 data files、backend scripts、workflows、DESIGN.md、narrative builder logic、scoring、decision、execution 或 position。
 - v28.0M-57V Market Temperature + Project Backlog 用 `?v=28.0M-57V` 刷新前端 asset graph；本轮仅修复 `buildMarketTemperature` stub，使 judgment layer 在 `data/market-pricing-metrics.json` 有记录时返回 active QQQ z-score 状态，并新增 `docs/PROJECT_BACKLOG.md` 与 `check:project-backlog-format`。不改 data files、backend pipeline scripts、workflows、DESIGN.md、nav anchors、DOM ids、cross-validation narrative builders、scoring、decision、execution 或 position。
 - v28.0M-58V Realtime Band Field Completion 用 `?v=28.0M-58V` 刷新前端 asset graph；本轮完成 P1-6，给 DXY/VIX/HY/US10Y/Gold/SPX realtime 子卡补齐 delta/source，修复 Brent delta `|| 0` null-coercion bug，并新增 `check:realtime-band-completeness`。不改 data files、workers、backend pipeline scripts、workflows、DESIGN.md、nav anchors、cross-validation narrative builders、scoring、decision、execution 或 position。
+- v28.0M-59 GDELT Cloud v2 Integration 不刷新前端 asset graph（仍为 `28.0M-58V`）；本轮完成 P1-5，删除 legacy GDELT DOC API fetcher / diagnostic，新增 GDELT Cloud v2 Bearer fetcher、daily world-order refresh workflow、`check:gdelt-cloud-fetcher-integration`，并仅给 `world_order_pressure_crossing` 增加 4 个 supporting evidence 分支。不改 frontend cache、workers、daily pipeline、validate-data、DESIGN.md、nav anchors、DOM ids、scoring、decision、execution 或 position。ACLED 延后到 M-60。
 - v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0M-55bV` / `npm run bump:frontend-asset-version -- 28.0M-55bV`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-58V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
 - v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。

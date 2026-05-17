@@ -146,6 +146,35 @@ const contracts = [
       'data/radar-data.json',
       'realtime/market.json'
     ]
+  },
+  {
+    file: '.github/workflows/refresh-world-order-stress.yml',
+    required: [
+      'name: Refresh World Order Stress',
+      'workflow_dispatch',
+      "cron: '0 23 * * *'",
+      'permissions:',
+      'contents: write',
+      'concurrency',
+      'gfrr-world-order',
+      'actions/checkout@v6',
+      'actions/setup-node@v6',
+      'node-version: 24',
+      'package-manager-cache: false',
+      'GDELT_CLOUD_API_KEY: ${{ secrets.GDELT_CLOUD_API_KEY }}',
+      'npm run build:world-order',
+      'continue-on-error: true',
+      'npm run check:world-order',
+      'data/world-order-stress.json',
+      'chore: refresh world order stress'
+    ],
+    forbidden: [
+      'ACLED_USERNAME: ${{ secrets.ACLED_USERNAME }}',
+      'ACLED_PASSWORD: ${{ secrets.ACLED_PASSWORD }}',
+      'npm run build:data',
+      'scripts/run-daily-pipeline.mjs',
+      'data/radar-data.json'
+    ]
   }
 ];
 
@@ -254,13 +283,12 @@ const worldOrderSipriExampleFile = 'config/world-order-sipri-normalized.example.
 const worldOrderBuildScriptFile = 'scripts/build-world-order-stress.mjs';
 const worldOrderCheckScriptFile = 'scripts/check-world-order-stress.mjs';
 const worldOrderReviewScriptFile = 'scripts/review-world-order-stress.mjs';
-const worldOrderGdeltDiagnosisFile = 'scripts/world-order/diagnose-gdelt-source.mjs';
 const worldOrderReliefWebDiagnosisFile = 'scripts/world-order/diagnose-reliefweb-source.mjs';
 const worldOrderSourceReviewFile = 'docs/WORLD_ORDER_SOURCE_REVIEW.md';
 const worldOrderRequiredFiles = [
   'scripts/build-world-order-stress.mjs',
   'scripts/check-world-order-stress.mjs',
-  'scripts/world-order/fetch-gdelt.mjs',
+  'scripts/world-order/fetch-gdelt-cloud.mjs',
   'scripts/world-order/fetch-ofac.mjs',
   'scripts/world-order/import-sipri.mjs',
   'scripts/world-order/fetch-acled.mjs',
@@ -775,9 +803,6 @@ if (fs.existsSync(packageFile)) {
   if (!packageText.includes('"review:world-order": "node scripts/review-world-order-stress.mjs data/world-order-stress.json"')) {
     addRuntimeFailure(packageFile, 'missing review:world-order package script');
   }
-  if (!packageText.includes('"diagnose:gdelt": "node scripts/world-order/diagnose-gdelt-source.mjs"')) {
-    addRuntimeFailure(packageFile, 'missing diagnose:gdelt package script');
-  }
   if (!packageText.includes('"diagnose:reliefweb": "node scripts/world-order/diagnose-reliefweb-source.mjs"')) {
     addRuntimeFailure(packageFile, 'missing diagnose:reliefweb package script');
   }
@@ -847,35 +872,6 @@ if (fs.existsSync(worldOrderReviewScriptFile)) {
   }
 } else {
   addRuntimeFailure(worldOrderReviewScriptFile, 'world order review helper missing');
-}
-if (fs.existsSync(worldOrderGdeltDiagnosisFile)) {
-  const text = fs.readFileSync(worldOrderGdeltDiagnosisFile, 'utf8');
-  for (const needle of [
-    'GDELT Diagnosis Summary',
-    'production-query-too-heavy',
-    'rate-limited',
-    'network-or-gdelt-availability',
-    'gdelt-currently-healthy',
-    'local-runtime-network-error',
-    'delay',
-    'timeout',
-  ]) {
-    if (!text.includes(needle)) {
-      addRuntimeFailure(worldOrderGdeltDiagnosisFile, `missing GDELT diagnosis marker "${needle}"`);
-    }
-  }
-  for (const forbiddenNeedle of [
-    'data/world-order-stress.json',
-    'writeFileSync',
-    'GFRR_MARKET_KV',
-    'wrangler',
-  ]) {
-    if (text.includes(forbiddenNeedle)) {
-      addRuntimeFailure(worldOrderGdeltDiagnosisFile, `diagnose:gdelt must remain diagnostic-only; found "${forbiddenNeedle}"`);
-    }
-  }
-} else {
-  addRuntimeFailure(worldOrderGdeltDiagnosisFile, 'GDELT diagnosis script missing');
 }
 if (fs.existsSync(worldOrderReliefWebDiagnosisFile)) {
   const text = fs.readFileSync(worldOrderReliefWebDiagnosisFile, 'utf8');
@@ -968,12 +964,13 @@ if (fs.existsSync(worldOrderMarketConfirmationFile)) {
 } else {
   addRuntimeFailure(worldOrderMarketConfirmationFile, 'world order market confirmation script missing');
 }
-const worldOrderGdeltFile = 'scripts/world-order/fetch-gdelt.mjs';
+const worldOrderGdeltFile = 'scripts/world-order/fetch-gdelt-cloud.mjs';
 if (fs.existsSync(worldOrderGdeltFile)) {
   const text = fs.readFileSync(worldOrderGdeltFile, 'utf8');
   for (const needle of [
-    'delay',
-    'rate_limited',
+    'GDELT_CLOUD_API_KEY',
+    'https://gdeltcloud.com/api/v2',
+    'KEY_CONFLICT_REGIONS',
     'successCount',
     'usedCachedSummary',
     'cacheReason',

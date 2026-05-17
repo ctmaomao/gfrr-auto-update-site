@@ -775,6 +775,10 @@ function buildWorldOrderNarrative(data, worldOrderStressData) {
   const externalSources = isPlainObject(world.externalSources) ? world.externalSources : {};
   const gdeltStatus = typeof externalSources.gdelt?.status === 'string' ? externalSources.gdelt.status : null;
   const gdeltToneProxy = finite(externalSources.gdelt?.summary?.toneProxy);
+  const gdeltTotalEvents = finite(externalSources.gdelt?.summary?.totalEvents);
+  const gdeltCountryCount = finite(externalSources.gdelt?.summary?.countryCount);
+  const gdeltFatalities = finite(externalSources.gdelt?.summary?.fatalities);
+  const gdeltKeyRegions = safeArray(externalSources.gdelt?.summary?.keyConflictRegions);
   const ofacRecentActionsCount = finite(externalSources.ofac?.summary?.recentActionsCount);
   const decisionModifier = isPlainObject(world.decisionModifier) ? world.decisionModifier : {};
   const riskBias = typeof decisionModifier.riskBias === 'string' ? decisionModifier.riskBias : null;
@@ -824,6 +828,34 @@ function buildWorldOrderNarrative(data, worldOrderStressData) {
       'gdelt_tone_proxy',
       formatSigned(gdeltToneProxy, 2),
       `GDELT 媒体情绪 ${formatSigned(gdeltToneProxy, 2)}，负面情绪强烈`
+    ));
+  }
+  if (gdeltStatus === 'ok' && gdeltTotalEvents !== null && gdeltTotalEvents >= 200) {
+    supportingEvidence.push(evidence(
+      'gdelt_event_density',
+      formatNumber(gdeltTotalEvents, 0),
+      `GDELT Cloud 近 7 天 ${gdeltTotalEvents} 起冲突事件，密度可观察`
+    ));
+  }
+  if (gdeltStatus === 'ok' && gdeltCountryCount !== null && gdeltCountryCount >= 30) {
+    supportingEvidence.push(evidence(
+      'gdelt_multi_country',
+      formatNumber(gdeltCountryCount, 0),
+      `GDELT Cloud 显示冲突事件跨 ${gdeltCountryCount} 个国家/地区分布`
+    ));
+  }
+  if (gdeltStatus === 'ok' && gdeltFatalities !== null && gdeltFatalities >= 100) {
+    supportingEvidence.push(evidence(
+      'gdelt_fatalities',
+      formatNumber(gdeltFatalities, 0),
+      `GDELT Cloud 近 7 天累计 ${gdeltFatalities} 起死亡事件，结构性压力显著`
+    ));
+  }
+  if (gdeltStatus === 'ok' && gdeltKeyRegions.length >= 3) {
+    supportingEvidence.push(evidence(
+      'gdelt_key_regions',
+      gdeltKeyRegions.slice(0, 5).join('、'),
+      `GDELT Cloud 显示关键冲突区域 ${gdeltKeyRegions.slice(0, 5).join('、')} 同时活跃`
     ));
   }
   if (ofacRecentActionsCount !== null && ofacRecentActionsCount > 0) {

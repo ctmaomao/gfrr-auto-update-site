@@ -9,11 +9,13 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-58 |
+| 当前生产状态 | v28.0M-59 |
 | Cache version | `28.0M-58V` |
-| check:all 项数 | 64 |
-| 最后审计日期 | **2026-05-17** (M-55b audit + Build #74 refresh + M-57 + M-58) |
+| check:all 项数 | 65 |
+| 最后审计日期 | **2026-05-17** (M-55b audit + Build #74 refresh + M-57 + M-58 + M-59) |
 | 最后 daily refresh | 2026-05-17 (Build #74, commit `e366b60`) |
+| GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
+| ACLED 状态 | 延后至 M-60；等待 Research/Partner tier |
 | 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
 
 ---
@@ -37,12 +39,6 @@
 - **数据源**: ACLED API (需 key)
 - **类型**: 类型 2
 - **估计 PR**: ~120 行
-
-#### P1-5: GDELT 修复
-- **描述**: `sources.gdelt.status = "stale"`, fetcher 已 configured 但 health 不通
-- **数据源**: GDELT 2.0 (已存在 fetcher)
-- **类型**: 类型 2
-- **估计 PR**: ~50 行
 
 ### P2 Items (Optional)
 
@@ -89,6 +85,7 @@
 | M-56 | validate-data consumer source whitelist | #207 | 2026-05-17 | ✅ Build #74 PASS, M-46~M-50 fields activated |
 | M-57 | buildMarketTemperature fix + PROJECT_BACKLOG.md creation | (this PR) | 2026-05-17 | ✅ judgment-render layer aligned + project memory established |
 | M-58 | Realtime band field completion (P1-6) + Brent null-check fix + unit suffixes | (this PR) | 2026-05-17 | ✅ 9 new DOM ids locked |
+| M-59 | GDELT Cloud v2 integration (P1-5) | (this PR) | 2026-05-17 | ✅ Replace legacy DOC API with Cloud v2; daily refresh; 4 new narrative supporting branches |
 
 ---
 
@@ -110,6 +107,7 @@
 | 2026-05-17 | M-56 fix + Build #74 refresh | Claude Code 诊断 + Codex 实施 | P0-1 已完成 | validate-data.mjs 修复, refresh commit `e366b60` |
 | 2026-05-17 | M-57 buildMarketTemperature fix + PROJECT_BACKLOG | Codex | P0-2 解决, backlog 文件建立 | 本文件进入 check:all |
 | 2026-05-17 | P1-6 realtime band completion audit + M-58 implementation | Claude Code + Codex | P1-6 resolved | 9 new DOM ids + null-safe delta formatting |
+| 2026-05-17 | P1-5 GDELT Cloud v2 integration | Claude Code + Codex | P1-5 resolved | Cloud v2 Bearer API + daily refresh workflow; ACLED deferred to M-60 |
 
 ---
 
