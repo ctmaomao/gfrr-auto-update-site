@@ -1,0 +1,72 @@
+name: SIPRI Annual Refresh Reminder
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  schedule:
+    # May 1 each year, 00:00 UTC. SIPRI Fact Sheets typically publish late April,
+    # so May 1 reminder catches the latest release reliably.
+    - cron: '0 0 1 5 *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  open-reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open SIPRI refresh reminder issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const year = new Date().getUTCFullYear();
+            const title = `M-61 SIPRI annual refresh due (${year} data)`;
+            const body = [
+              `SIPRI publishes the Military Expenditure Database update in late April each year. The ${year} Fact Sheet should now be available (or imminent).`,
+              ``,
+              `## Action`,
+              ``,
+              `1. Open https://www.sipri.org/databases/milex and confirm the ${year} Fact Sheet has been released.`,
+              `2. If yes, follow [\`docs/M-61_SIPRI_INTEGRATION.md\`](../blob/main/docs/M-61_SIPRI_INTEGRATION.md) "Annual Refresh Procedure".`,
+              `3. If not yet released, close this issue and the reminder will re-fire on May 1, ${year + 1}.`,
+              ``,
+              `## Critical reminders from prior refresh`,
+              ``,
+              `- \`fiveYearGrowthPct\` is NOT in the Fact Sheet PDF. Compute from the SIPRI Excel database (constant USD sheet).`,
+              `- The M-61 verification commit \`cb64cf2\` found that PDF-approximated values were systematically wrong by 5-50pp per entity. Always verify against the Excel.`,
+              `- Cross-file sync: when \`militarySpendShareOfGdpPct\` changes, review the hardcoded \`"2015 年为 2.3%"\` literal and \`>= 2.5\` threshold in \`scripts/modules/buildCrossValidationMatrix.js\`.`,
+              ``,
+              `## Validation checklist`,
+              ``,
+              `- [ ] \`npm run build:world-order\` produces \`externalSources.sipri.status === 'ok'\` with updated \`updatedYear\``,
+              `- [ ] \`npm run check:world-order\` PASS`,
+              `- [ ] \`npm run check:world-order-narrative-density\` PASS`,
+              `- [ ] \`npm run check:all\` PASS 66 items (or current count)`,
+              `- [ ] Commit follows \`chore(world-order): refresh SIPRI to ${year} Fact Sheet\` convention with verification table in body`,
+              ``,
+              `_This issue was opened automatically by \`.github/workflows/sipri-annual-refresh-reminder.yml\`. Closing this issue without action will silently age the SIPRI data — re-open or recreate manually if needed._`,
+            ].join('\n');
+
+            // Idempotency: check if an open issue with this title already exists
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'sipri-annual-refresh',
+            });
+            const duplicate = existing.find(i => i.title === title);
+            if (duplicate) {
+              console.log(`Issue already open: ${duplicate.html_url}`);
+              return;
+            }
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['sipri-annual-refresh', 'manual-data-refresh'],
+            });
