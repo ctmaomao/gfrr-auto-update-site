@@ -56,7 +56,7 @@ const SANITY_CHECKS = [
   'sanity check 4: strict_ascending_unique_per_week',
   'sanity check 5: plausibility_bounds_and_no_future',
   'sanity check 6: existing_history_schema_integrity',
-  'sanity check 7: cross_seam_monotonicity',
+  'sanity check 7: cross_seam_monotonicity - same-isoWeek overlaps must keep the same close date; same-seam-date overlaps must keep the same isoWeek',
   'sanity check 8: merged_record_count_minimum'
 ];
 
@@ -477,15 +477,6 @@ function validateCrossSeamMonotonicity(existingRecords, incomingRecords) {
 
   const latestExisting = existingRecords.at(-1);
   const earliestIncoming = incomingRecords[0];
-  if (earliestIncoming.date < latestExisting.date) {
-    return {
-      ok: false,
-      failedCheck: 7,
-      exitCode: 17,
-      reason: `cross_seam_monotonicity_invalid: existing latest ${latestExisting.isoWeek}/${latestExisting.date} is after incoming earliest ${earliestIncoming.isoWeek}/${earliestIncoming.date}`
-    };
-  }
-
   if (earliestIncoming.date === latestExisting.date && earliestIncoming.isoWeek !== latestExisting.isoWeek) {
     return {
       ok: false,

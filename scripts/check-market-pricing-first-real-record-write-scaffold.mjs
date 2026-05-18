@@ -246,6 +246,30 @@ function assertSyntheticMergeReport() {
   assert(report.updatedIsoWeeks.includes('2025-W50'), 'synthetic updatedIsoWeeks must include revised seam week');
   assert(report.addedIsoWeeks.includes('2025-W51'), 'synthetic addedIsoWeeks must include first new week');
   assert(report.records.find((record) => record.isoWeek === '2025-W50')?.sourceFile === 'revision.csv', 'synthetic updated record sourceFile must be overwritten');
+
+  const overlappingIncoming = [
+    makeSyntheticRecord(46, 246, 'overlap.csv'),
+    makeSyntheticRecord(47, 247, 'overlap.csv'),
+    makeSyntheticRecord(48, 248, 'overlap.csv'),
+    makeSyntheticRecord(49, 249, 'overlap.csv'),
+    makeSyntheticRecord(50, 150, 'overlap.csv')
+  ];
+  const overlapReport = buildFirstRealRecordWriteReport({
+    dryRun: true,
+    currentHistory: makeSyntheticHistory(existing),
+    records: overlappingIncoming,
+    todayIso: '2026-12-31'
+  });
+
+  assert(overlapReport.ok === true, 'overlapping batch with same-isoWeek same-date records must pass');
+  assert(overlapReport.existingRecordsCount === 50, 'overlap existingRecordsCount mismatch');
+  assert(overlapReport.incomingRecordsCount === 5, 'overlap incomingRecordsCount mismatch');
+  assert(overlapReport.addedRecordsCount === 1, 'overlap addedRecordsCount mismatch');
+  assert(overlapReport.updatedRecordsCount === 4, 'overlap updatedRecordsCount mismatch');
+  assert(overlapReport.mergedRecordsCount === 51, 'overlap mergedRecordsCount mismatch');
+  assert(overlapReport.addedIsoWeeks.includes('2025-W51'), 'overlap addedIsoWeeks must include new week');
+  assert(overlapReport.updatedIsoWeeks.includes('2025-W47'), 'overlap updatedIsoWeeks must include first overlap week');
+  assert(overlapReport.updatedIsoWeeks.includes('2025-W50'), 'overlap updatedIsoWeeks must include latest existing week');
 }
 
 function assertPureReport() {
