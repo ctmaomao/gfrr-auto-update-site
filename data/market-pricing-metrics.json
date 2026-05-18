@@ -1,25 +1,25 @@
 {
   "contractVersion": "v28.0M-26-metrics-calculation-1",
   "kind": "market_pricing_metrics_calculation",
-  "generatedAt": "2026-05-13T04:49:15.699Z",
+  "generatedAt": "2026-05-18T03:16:33.799Z",
   "sourceHistoryFile": "data/market-pricing-history.json",
-  "sourceCommit": "a29475b",
+  "sourceCommit": "73c90dd",
   "asset": "qqq",
   "windowSize": 60,
   "stdDevFormula": "sample",
   "stdDevDivisor": "N-1",
   "zScoreCapped": false,
-  "sourceRecordsCount": 523,
-  "metricsRecordsCount": 464,
+  "sourceRecordsCount": 522,
+  "metricsRecordsCount": 463,
   "earliestMetricDate": "2017-06-30",
-  "latestMetricDate": "2026-05-11",
+  "latestMetricDate": "2026-05-08",
   "ma60Range": {
     "min": 122.4263,
-    "max": 579.9158
+    "max": 576.0417
   },
   "stdDev60Range": {
     "min": 8.6112,
-    "max": 59.3931
+    "max": 58.1132
   },
   "zScoreRange": {
     "min": -2.6359,
@@ -33,7 +33,7 @@
     "noDecisionChange": true,
     "notInvestmentAdvice": true,
     "calculationLayerActive": true,
-    "displayLayerActive": true,
+    "displayLayerActive": false,
     "affectsScoring": false,
     "affectsDecisionModel": false,
     "affectsExecutionLock": false,
@@ -3743,14 +3743,6 @@
       "ma60": 576.0417,
       "stdDev60": 58.1132,
       "zScore": 2.3263
-    },
-    {
-      "date": "2026-05-11",
-      "isoWeek": "2026-W20",
-      "close": 713.29,
-      "ma60": 579.9158,
-      "stdDev60": 59.3931,
-      "zScore": 2.2456
     }
   ]
 }
