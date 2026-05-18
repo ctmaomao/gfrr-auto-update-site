@@ -106,6 +106,8 @@ same gap.
    refresh is needed immediately. Pages auto-deploys via the M-60 workflow_run
    listener.
 
+> An automated reminder issue is opened each May 1 by `.github/workflows/sipri-annual-refresh-reminder.yml`. The issue body contains the full action checklist and links back to this document.
+
 ### Computing fiveYearGrowthPct (not published in Fact Sheet)
 
 The SIPRI Fact Sheet PDF publishes 1-year and 10-year deltas only. The
