@@ -166,8 +166,32 @@ function assertPureReport() {
   assertEqual(report.status, 'dry_run', 'report status');
   assertEqual(report.writePerformed, false, 'report writePerformed');
   assert(Array.isArray(report.records) && report.records.length > 0, 'report records preview must be non-empty');
-  assertEqual(report.sourceRecordsCount, 523, 'report sourceRecordsCount');
-  assertEqual(report.metricsRecordsCount, 464, 'report metricsRecordsCount');
+
+  // Lower bound: history must have at least WINDOW_SIZE records to produce any metrics.
+  // 60 is a known-good floor from M-26's design; the previous hard-coded 523 was
+  // brittle and would have broken on every weekly refresh.
+  assert(
+    report.sourceRecordsCount >= 60,
+    `report sourceRecordsCount >= 60: expected at least 60, got ${JSON.stringify(report.sourceRecordsCount)}`
+  );
+
+  // Invariant: M-26 emits exactly (source - WINDOW_SIZE + 1) metrics records.
+  // This is the rolling window's mathematical guarantee, independent of absolute count.
+  const expectedMetricsCount = report.sourceRecordsCount - 60 + 1;
+  assertEqual(
+    report.metricsRecordsCount,
+    expectedMetricsCount,
+    'report metricsRecordsCount === sourceRecordsCount - WINDOW_SIZE + 1'
+  );
+
+  // Upper bound: 10 years of weekly records ~= 520. Set ceiling at 1500 (~30 years)
+  // to catch obvious corruption while never blocking legitimate growth in this
+  // project's lifetime.
+  assert(
+    report.sourceRecordsCount < 1500,
+    `report sourceRecordsCount < 1500 (corruption guard): expected below 1500, got ${JSON.stringify(report.sourceRecordsCount)}`
+  );
+
   assertEqual(report.windowSize, 60, 'report windowSize');
   assertEqual(report.asset, 'qqq', 'report asset');
   assertEqual(report.boundaries?.noFetch, true, 'report boundaries.noFetch');
