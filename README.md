@@ -70,6 +70,18 @@
 - M-61b SIPRI annual refresh reminder: adds `.github/workflows/sipri-annual-refresh-reminder.yml` which opens a GitHub issue each May 1 via `actions/github-script@v7` with the full Excel-verification checklist. Idempotent (skips if an open issue with the same title and `sipri-annual-refresh` label already exists). Operator-nudge only — no data, code, or workflow side effects.
 - M-62 enables weekly QQQ refresh by changing M-24 from integral replace to `isoWeek`-keyed merge. Adds 2 new sanity checks (cross-seam monotonicity and merged-count floor) while splitting incoming vs merged count checks. `check:all` stays 67. Preserves M-26 metrics, frontend, workers, scoring, decision, execution, and position. No data file changes.
 
+### Weekly QQQ refresh
+
+`scripts/refresh-qqq-data.ps1` is the manual operator wrapper for weekly QQQ market-pricing refresh. The operator still downloads `HistoricalData_*.csv` from Nasdaq in a browser, then the script validates the CSV header, moves it into `manual-artifacts/market-pricing/manual-weekly-input/`, runs the M-23 sanitizer, previews/commits the M-24 `isoWeek` merge, recomputes M-26 metrics, runs `check:all`, and commits/pushes the two refreshed data files.
+
+Prerequisites: Windows, PowerShell 5.1+ or PowerShell 7+, Node 24, git, and installed npm dependencies. Basic usage:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\refresh-qqq-data.ps1
+```
+
+This is a manual operator tool, not a CI workflow. Full runbook: `docs/MARKET_PRICING_WEEKLY_REFRESH.md`.
+
 ## 核心架构
 
 当前系统分为三层：
