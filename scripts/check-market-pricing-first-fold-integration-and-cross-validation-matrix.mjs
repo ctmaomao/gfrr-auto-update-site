@@ -4,9 +4,10 @@ import { buildCrossValidationMatrix } from './modules/buildCrossValidationMatrix
 
 const RENDER_PATH = 'scripts/modules/renderMacroOverview.js';
 const HELPER_PATH = 'scripts/modules/buildCrossValidationMatrix.js';
+const METRICS_PATH = 'data/market-pricing-metrics.json';
 const PROTECTED_PATHS = [
   'data/market-pricing-history.json',
-  'data/market-pricing-metrics.json',
+  METRICS_PATH,
   'data/radar-data.json',
   'data/world-order-stress.json',
 ];
@@ -51,6 +52,22 @@ function assertUnchanged(before) {
       : afterBytes !== null && Buffer.compare(beforeBytes, afterBytes) === 0;
     assert(same, `${filePath} must be unchanged by first-fold integration check`);
   }
+}
+
+function formatSigned(value, digits = 2) {
+  return `${value >= 0 ? '+' : ''}${value.toFixed(digits)}`;
+}
+
+function assertIsoDateNotFuture(dateValue, label) {
+  assert(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/u.test(dateValue), `${label} must be YYYY-MM-DD, got ${JSON.stringify(dateValue)}`);
+  const parsed = Date.parse(`${dateValue}T00:00:00.000Z`);
+  assert(Number.isFinite(parsed), `${label} must parse as a valid Date, got ${JSON.stringify(dateValue)}`);
+  assert(parsed <= Date.now() + 7 * 24 * 60 * 60 * 1000, `${label} must not be in the future, got ${JSON.stringify(dateValue)}`);
+}
+
+function getLatestMetric(metricsData) {
+  const records = Array.isArray(metricsData?.records) ? metricsData.records : [];
+  return records[records.length - 1] || null;
 }
 
 function extractFunctionSource(source, functionName) {
@@ -113,6 +130,7 @@ assert(renderSource.includes('supportingEvidence'), 'renderMacroOverview must re
 assert(renderSource.includes('contradictingEvidence'), 'renderMacroOverview must render contradicting evidence');
 
 assert(helperSource.includes('export function buildCrossValidationMatrix'), 'helper must export buildCrossValidationMatrix');
+assert(helperSource.includes("evidence('qqq_zscore', formatSigned(metric.zScore)"), 'helper must derive qqq_zscore evidence from latest metrics zScore');
 const forbiddenNetwork = [
   ['f', 'e', 't', 'c', 'h', '('].join(''),
   ['h', 't', 't', 'p'].join(''),
@@ -148,20 +166,43 @@ const testWorld = {
   marketConfirmationInput: { source: 'worker-generated-preview' },
   externalSources: {},
 };
+const syntheticClose = 100;
+const syntheticMa60 = 90;
+const syntheticStdDev60 = 5;
 const testMetrics = {
-  records: [{ date: '2026-05-11', isoWeek: '2026-W20', close: 713.29, ma60: 579.9158, stdDev60: 59.3931, zScore: 2.2456 }],
+  records: [{
+    date: '2025-01-03',
+    isoWeek: '2025-W01',
+    close: syntheticClose,
+    ma60: syntheticMa60,
+    stdDev60: syntheticStdDev60,
+    zScore: (syntheticClose - syntheticMa60) / syntheticStdDev60,
+  }],
 };
 const testMatrix = buildCrossValidationMatrix(testData, testWorld, testMetrics);
 assertMatrixShape(testMatrix);
 
 const radarData = readJson('data/radar-data.json');
 const worldOrder = readJson('data/world-order-stress.json');
-const metrics = readJson('data/market-pricing-metrics.json');
+const metrics = readJson(METRICS_PATH);
+const latestMetric = getLatestMetric(metrics);
+assert(latestMetric, `${METRICS_PATH} must contain at least one metrics record`);
+assertIsoDateNotFuture(latestMetric?.date, 'latest metrics record date');
+assert(metrics.latestMetricDate === latestMetric?.date, `metrics.latestMetricDate must match latest record date: expected ${JSON.stringify(latestMetric?.date)}, got ${JSON.stringify(metrics.latestMetricDate)}`);
+const latestZScore = Number(latestMetric?.zScore);
+assert(Number.isFinite(latestZScore), `latest metrics zScore must be finite, got ${JSON.stringify(latestMetric?.zScore)}`);
+assert(latestZScore >= -10 && latestZScore <= 10, `latest metrics zScore must be within [-10, 10], got ${JSON.stringify(latestMetric?.zScore)}`);
+const expectedQqqZScoreEvidenceValue = Number.isFinite(latestZScore) ? formatSigned(latestZScore) : null;
 const realMatrix = buildCrossValidationMatrix(radarData, worldOrder, metrics);
 assertMatrixShape(realMatrix);
 const overheat = realMatrix.narratives.find((item) => item.id === 'overheat_confirmation');
 assert(overheat?.assessment === 'strong_confirmation', `current overheat_confirmation must be strong_confirmation, got ${overheat?.assessment}`);
-assert(overheat?.supportingEvidence?.some((item) => item.source === 'qqq_zscore' && item.value === '+2.25'), 'overheat_confirmation must include QQQ z-score +2.25 supporting evidence');
+const qqqZScoreEvidence = overheat?.supportingEvidence?.find((item) => item.source === 'qqq_zscore');
+assert(qqqZScoreEvidence, 'overheat_confirmation must include QQQ z-score supporting evidence');
+assert(
+  qqqZScoreEvidence?.value === expectedQqqZScoreEvidenceValue,
+  `overheat_confirmation QQQ z-score evidence must match latest metrics zScore: expected ${JSON.stringify(expectedQqqZScoreEvidenceValue)}, got ${JSON.stringify(qqqZScoreEvidence?.value)}`
+);
 
 assertUnchanged(before);
 
