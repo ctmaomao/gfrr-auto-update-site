@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-05-18T12:14:38.188Z",
-  "asOf": "2026-05-18T12:14:38.188Z",
+  "updatedAt": "2026-05-18T12:16:51.142Z",
+  "asOf": "2026-05-18T12:16:51.142Z",
   "ageMinutes": 0,
   "freshnessLevel": "fresh",
   "unavailable": false,
@@ -11,8 +11,8 @@
   "criticalMissing": 0,
   "fallbackCount": 0,
   "secondarySourceCount": 0,
-  "lastSuccessAt": "2026-05-18T12:14:38.188Z",
-  "freshnessPreparedAt": "2026-05-18T12:14:38.188Z",
+  "lastSuccessAt": "2026-05-18T12:16:51.142Z",
+  "freshnessPreparedAt": "2026-05-18T12:16:51.142Z",
   "freshnessPending": true,
   "notes": [
     "实时数据源刷新成功。"
@@ -27,7 +27,7 @@
     "us2y": 4,
     "real10y": 2,
     "breakeven10y": 2.49,
-    "gold": 4554.399902
+    "gold": 4554.5
   },
   "changes": {
     "brent1d": 2.63,
@@ -62,7 +62,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 648878
+      "ageSeconds": 649011
     },
     "dxy": {
       "ok": true,
@@ -72,7 +72,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 908078
+      "ageSeconds": 908211
     },
     "hyOas": {
       "ok": true,
@@ -82,7 +82,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 389679
+      "ageSeconds": 389811
     },
     "vix": {
       "ok": true,
@@ -92,7 +92,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 389679
+      "ageSeconds": 389811
     },
     "spx": {
       "ok": true,
@@ -102,7 +102,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 303279
+      "ageSeconds": 303411
     },
     "us10y": {
       "ok": true,
@@ -112,7 +112,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 389679
+      "ageSeconds": 389811
     },
     "us2y": {
       "ok": true,
@@ -122,7 +122,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 389679
+      "ageSeconds": 389811
     },
     "real10y": {
       "ok": true,
@@ -132,7 +132,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 389678
+      "ageSeconds": 389811
     },
     "breakeven10y": {
       "ok": true,
@@ -142,23 +142,23 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 303279
+      "ageSeconds": 303411
     },
     "gold": {
       "ok": true,
-      "value": 4554.399902,
+      "value": 4554.5,
       "source": "goldapi:XAU",
       "timestamp": "2026-05-18",
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 44078
+      "ageSeconds": 44212
     }
   },
   "fieldFreshness": {
     "brent": {
       "observedAt": "2026-05-11",
-      "ageMinutes": 10815,
+      "ageMinutes": 10817,
       "freshnessLevel": "unavailable",
       "isStale": true
     }
@@ -169,7 +169,7 @@
         "source": "ice",
         "value": null,
         "observedAt": null,
-        "fetchedAt": "2026-05-18T12:14:38.188Z",
+        "fetchedAt": "2026-05-18T12:16:51.142Z",
         "delayClass": "delayed-15m",
         "available": false,
         "reason": "parse-failed:value",
@@ -183,9 +183,9 @@
       },
       {
         "source": "barchart",
-        "value": 109.15,
-        "observedAt": "2026-05-18T12:04:34.000Z",
-        "fetchedAt": "2026-05-18T12:14:38.188Z",
+        "value": 109.03,
+        "observedAt": "2026-05-18T12:06:51.000Z",
+        "fetchedAt": "2026-05-18T12:16:51.142Z",
         "delayClass": "delayed-10m",
         "available": true,
         "reason": null,
@@ -199,9 +199,9 @@
       },
       {
         "source": "stooq",
-        "value": 109.59,
+        "value": 109.87,
         "observedAt": "2026-05-18",
-        "fetchedAt": "2026-05-18T12:14:38.188Z",
+        "fetchedAt": "2026-05-18T12:16:51.142Z",
         "delayClass": "delayed-eod",
         "available": true,
         "reason": null,
@@ -215,25 +215,25 @@
       },
       {
         "source": "marketwatch",
-        "value": null,
+        "value": 76.9,
         "observedAt": null,
-        "fetchedAt": "2026-05-18T12:14:38.188Z",
+        "fetchedAt": "2026-05-18T12:16:51.142Z",
         "delayClass": "delayed-10m",
-        "available": false,
-        "reason": "fetch-failed:http-401",
+        "available": true,
+        "reason": null,
         "quality": "high",
         "ageMinutes": null,
         "weakConfirmation": false,
         "participatesInConsensus": false,
         "consensusRole": null,
-        "staleForConsensus": false,
-        "excludedFromConsensus": "unavailable"
+        "staleForConsensus": true,
+        "excludedFromConsensus": "observedAt-missing"
       },
       {
         "source": "oilprice",
-        "value": 109.06,
+        "value": 109.2,
         "observedAt": null,
-        "fetchedAt": "2026-05-18T12:14:38.188Z",
+        "fetchedAt": "2026-05-18T12:16:51.142Z",
         "delayClass": "delayed-web",
         "available": true,
         "reason": null,
@@ -248,9 +248,9 @@
       },
       {
         "source": "yahoo",
-        "value": 109.14,
-        "observedAt": "2026-05-18T12:04:36.000Z",
-        "fetchedAt": "2026-05-18T12:14:38.188Z",
+        "value": 109.05,
+        "observedAt": "2026-05-18T12:06:47.000Z",
+        "fetchedAt": "2026-05-18T12:16:51.142Z",
         "delayClass": "delayed-15m",
         "available": true,
         "reason": null,
@@ -266,7 +266,7 @@
         "source": "fred-anchor",
         "value": 106.11,
         "observedAt": "2026-05-11",
-        "fetchedAt": "2026-05-18T12:14:38.188Z",
+        "fetchedAt": "2026-05-18T12:16:51.142Z",
         "delayClass": "daily-anchor",
         "available": true,
         "reason": null,
@@ -280,11 +280,11 @@
       }
     ],
     "consensus": {
-      "recommendedValue": 109.15,
+      "recommendedValue": 109.03,
       "recommendedSource": "barchart",
       "confidence": "medium",
       "reason": "barchart/yahoo 基本一致，推荐优先采用 barchart；FRED 仅作低频锚点参考。",
-      "divergencePct": 0.009,
+      "divergencePct": 0.018,
       "canPromoteToPrimary": false,
       "excludedFromConsensus": [
         {
@@ -294,7 +294,7 @@
         },
         {
           "source": "marketwatch",
-          "reason": "unavailable",
+          "reason": "observedAt-missing",
           "ageMinutes": null
         },
         {
