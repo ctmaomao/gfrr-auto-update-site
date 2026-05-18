@@ -4,7 +4,7 @@
 
 This is the FIRST executable scaffold on the manual-input route. It reads NASDAQ CSV files placed in `manual-artifacts/market-pricing/manual-weekly-input/` and produces sanitized weekly records as JSON, plus a sanitization report.
 
-It does NOT write to `data/market-pricing-history.json`. That step is M-24.
+It does NOT write to `data/market-pricing-history.json`. M-24/M-62 performs the reviewed `isoWeek`-keyed merge into history.
 
 ## Usage
 
@@ -57,7 +57,7 @@ Output remains review-only and is not production history.
 
 ## What This Scaffold Does Not Do
 
-- Does not write to `data/*`; history insertion is M-24.
+- Does not write to `data/*`; history insertion / weekly merge is M-24/M-62.
 - Does not call any network endpoint.
 - Does not read `process.env`.
 - Does not activate Market Pricing Temperature.
@@ -77,4 +77,4 @@ If `close_out_of_plausibility_bounds` appears, inspect the row manually before a
 
 ## Next Step
 
-M-24 is the first record write to history. M-24 requires explicit human approval per import.
+M-24 is the reviewed history-write path, and M-62 makes it an ongoing weekly merge by `isoWeek`. It still requires explicit human approval per import.

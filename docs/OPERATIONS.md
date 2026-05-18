@@ -2341,11 +2341,11 @@ Operator guidance:
 
 ### v28.0M-24 market pricing first real record write operator note
 
-v28.0M-24 adds the First Real Record Write scaffold with two-stage manual confirmation. The script defaults to dry-run-commit mode. The --commit-to-history flag is required to actually write data/market-pricing-history.json. 6 sanity checks run before any write. Atomic write via .tmp + rename. Idempotent. CI never invokes the :commit path. Market Pricing Temperature remains waiting-for-history at the frontend level until M-27. No MA60 / std / z-score calculation (M-26). No scoring / decision / execution / position change. No workflow change. No frontend change.
+v28.0M-24 adds the First Real Record Write scaffold with two-stage manual confirmation; M-62 upgrades it from one-shot replacement to weekly `isoWeek`-keyed merge. The script defaults to dry-run-commit mode. The --commit-to-history flag is required to actually write data/market-pricing-history.json. 8 sanity checks run before any write, including incoming-count, merged-count, and cross-seam monotonicity gates. Atomic write via .tmp + rename. CI never invokes the :commit path. No MA60 / std / z-score calculation (M-26), no scoring / decision / execution / position change, no workflow change, and no frontend change.
 
 Operator guidance:
 
-- Run `npm run market-pricing:first-real-record-write:dry-run` first and review the record count, date range, and preview.
+- Run `npm run market-pricing:first-real-record-write:dry-run` first and review incoming/added/updated/total counts, updated ISO weeks, date range, and preview.
 - Run `npm run market-pricing:first-real-record-write:commit` only after the dry-run preview is accepted.
 - Do not run the :commit path from CI or an automatic workflow.
 - If a sanity check fails, do not manually patch data/market-pricing-history.json; fix the sanitized input and retry dry-run.

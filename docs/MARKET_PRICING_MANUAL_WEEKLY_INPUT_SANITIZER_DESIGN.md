@@ -50,7 +50,7 @@ M-23 may add the executable sanitizer scaffold. It must still write only to
 
 ## M-24 Scope
 
-M-24 is the first planned step that may write approved records to history.
+M-24 is the first planned step that may write approved records to history. M-62 updates that path to merge approved weekly records by `isoWeek` so 1-month refresh batches can extend history without replacing accumulated records.
 
 ## Boundaries
 

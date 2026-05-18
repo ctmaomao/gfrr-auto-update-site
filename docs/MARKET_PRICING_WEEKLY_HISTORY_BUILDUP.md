@@ -27,6 +27,6 @@ Calculation remains gated by M-26. Frontend display activation remains gated by 
 
 ## Relationship to M-24 and the upgraded history checker
 
-M-24 committed real QQQ weekly records into `assets.qqq.records` under the existing multi-asset history schema.
+M-24 commits and refreshes real QQQ weekly records into `assets.qqq.records` under the existing multi-asset history schema. M-62 changes that path to `isoWeek`-keyed merge so weekly 1-month NASDAQ batches extend history without replacing accumulated records.
 
 The upgraded general history checker, `scripts/check-market-pricing-history.mjs`, validates structural integrity in both `waiting_for_history` and `has_history` states. This M-25 buildup verifier adds the calculation-prerequisite gate: enough validated weekly QQQ history must exist before M-26 can add MA60 / standard deviation / z-score calculations.
