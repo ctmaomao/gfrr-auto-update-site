@@ -18,7 +18,7 @@
   "otherAssetsPreservedUnchanged": true,
   "historyFileWillBeWrittenAtomically": true,
   "sanityChecksRunBeforeWrite": true,
-  "sanityCheckCount": 6,
+  "sanityCheckCount": 8,
   "sanityCheckCatalog": [
     {
       "id": 1,
@@ -27,8 +27,8 @@
     },
     {
       "id": 2,
-      "name": "record_count_minimum",
-      "description": "records.length >= 50"
+      "name": "incoming_record_count_minimum",
+      "description": "incoming records.length >= 1"
     },
     {
       "id": 3,
@@ -49,6 +49,16 @@
       "id": 6,
       "name": "existing_history_schema_integrity",
       "description": "existing data/market-pricing-history.json has assets.qqq.records and preserves assets.ndx/assets.ixic/assets.spx"
+    },
+    {
+      "id": 7,
+      "name": "cross_seam_monotonicity",
+      "description": "existing latest date must be <= incoming earliest date; same-isoWeek overlaps must keep the same close date"
+    },
+    {
+      "id": 8,
+      "name": "merged_record_count_minimum",
+      "description": "merged assets.qqq.records.length >= 50"
     }
   ],
   "writeAtomicity": {
@@ -59,7 +69,8 @@
   "idempotencyGuarantees": [
     "Same sanitized input -> identical history file output except for updatedAt, generatedAt, and assets.qqq.source.lastCommittedAt",
     "Stable key order in serialized JSON",
-    "Records sorted ASCENDING by date",
+    "Merged records sorted ASCENDING by date",
+    "Incoming records merge into assets.qqq.records by isoWeek; incoming wins on same-isoWeek revision",
     "Committed records target assets.qqq.records and omit sanitizer-only referenceFields",
     "assets.ndx, assets.ixic, and assets.spx are preserved unchanged"
   ],

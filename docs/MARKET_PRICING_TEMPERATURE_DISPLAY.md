@@ -45,7 +45,7 @@ The card uses only the precomputed fields in the metrics file: `close`, `ma60`, 
 When QQQ history is updated weekly, the operator path remains:
 
 1. Run the M-23 manual weekly input sanitizer.
-2. Run the M-24 first real record write commit path.
+2. Run the M-24/M-62 history merge path (`isoWeek`-keyed, incoming wins on same-week revisions).
 3. Run the M-26 metrics calculation commit path.
 4. Commit the refreshed data files through the reviewed data-update route.
 

@@ -13,8 +13,8 @@
  *   - No network calls
  *   - No environment-variable reads
  *   - No writes outside data/market-pricing-history.json
- *   - 6 sanity checks must all pass before any write
- *   - Commits target assets.qqq.records only
+ *   - 8 sanity checks must all pass before any write
+ *   - Merges incoming records into assets.qqq.records by isoWeek
  *   - assets.ndx, assets.ixic, and assets.spx are preserved unchanged
  *   - Idempotent except for updatedAt, generatedAt, and assets.qqq.source.lastCommittedAt
  *   - No MA60, std, z-score calculation (that is M-26)
@@ -35,14 +35,15 @@ const SOURCE_VENDOR = 'nasdaq_official_manual_download';
 const NASDAQ_DOWNLOAD_URL = ['https:', '', 'www.nasdaq.com', 'market-activity', 'etf', 'qqq', 'historical'].join('/');
 const TARGET_ASSET_KEY = 'qqq';
 const PRESERVED_ASSET_KEYS = ['ndx', 'ixic', 'spx'];
-const MIN_RECORD_COUNT = 50;
+export const MIN_INCOMING_RECORD_COUNT = 1;
+export const MIN_MERGED_RECORD_COUNT = 50;
 const MIN_CLOSE = 80;
 const MAX_CLOSE = 1000;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const ISO_WEEK_PATTERN = /^\d{4}-W\d{2}$/;
 const SANITIZED_DIR_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z$/;
 const COMMITTED_DESCRIPTION_ZH =
-  '市场定价温度计历史数据。已通过 v28.0M-24 commit 写入 QQQ 周线历史。仍未启用 MA60 / 标准差 / z-score 计算（M-26），前端仍未激活真实数据显示（M-27）。';
+  '市场定价温度计历史数据。已通过 v28.0M-24 commit/refresh 以 isoWeek 合并方式维护 QQQ 周线历史；M-26 已启用 MA60 / 标准差 / z-score 计算；M-27 已激活前端温度展示；M-28 已接入 first-fold 与 cross-validation matrix。当前 status=has_history。';
 const QQQ_DATA_GAPS_AFTER_COMMIT = [
   'MA60 / 标准差 / z-score 计算待 v28.0M-26 启用。',
   '前端市场温度显示待 v28.0M-27 激活。'
@@ -50,11 +51,13 @@ const QQQ_DATA_GAPS_AFTER_COMMIT = [
 
 const SANITY_CHECKS = [
   'sanity check 1: sanitized_input_valid_json',
-  'sanity check 2: record_count_minimum',
+  'sanity check 2: incoming_record_count_minimum',
   'sanity check 3: required_fields_present',
   'sanity check 4: strict_ascending_unique_per_week',
   'sanity check 5: plausibility_bounds_and_no_future',
-  'sanity check 6: existing_history_schema_integrity'
+  'sanity check 6: existing_history_schema_integrity',
+  'sanity check 7: cross_seam_monotonicity',
+  'sanity check 8: merged_record_count_minimum'
 ];
 
 function toProjectRelative(absolutePath) {
@@ -275,12 +278,12 @@ function normalizeRecord(record) {
 }
 
 function validateRecords(rawRecords, currentTodayIso) {
-  if (rawRecords.length < MIN_RECORD_COUNT) {
+  if (rawRecords.length < MIN_INCOMING_RECORD_COUNT) {
     return {
       ok: false,
       failedCheck: 2,
       exitCode: 12,
-      reason: `record_count_too_low: got ${rawRecords.length} records, minimum is ${MIN_RECORD_COUNT}`
+      reason: `incoming_record_count_too_low: got ${rawRecords.length} records, minimum is ${MIN_INCOMING_RECORD_COUNT}`
     };
   }
 
@@ -427,9 +430,96 @@ function buildQqqCoverage(records) {
   };
 }
 
-export function buildCommittedHistory(report, commitTimestamp) {
+export function mergeByIsoWeek(existingRecords, incomingRecords) {
+  const byIsoWeek = new Map();
+
+  for (const record of existingRecords) {
+    byIsoWeek.set(record.isoWeek, cloneJson(record));
+  }
+
+  const addedIsoWeeks = [];
+  const updatedIsoWeeks = [];
+  for (const record of incomingRecords) {
+    if (byIsoWeek.has(record.isoWeek)) {
+      updatedIsoWeeks.push(record.isoWeek);
+    } else {
+      addedIsoWeeks.push(record.isoWeek);
+    }
+    byIsoWeek.set(record.isoWeek, cloneJson(record));
+  }
+
+  const merged = [...byIsoWeek.values()].sort((left, right) => {
+    if (left.date !== right.date) return left.date < right.date ? -1 : 1;
+    if (left.isoWeek === right.isoWeek) return 0;
+    return left.isoWeek < right.isoWeek ? -1 : 1;
+  });
+
+  return { merged, addedIsoWeeks, updatedIsoWeeks };
+}
+
+function validateCrossSeamMonotonicity(existingRecords, incomingRecords) {
+  if (existingRecords.length === 0 || incomingRecords.length === 0) {
+    return { ok: true };
+  }
+
+  const existingByIsoWeek = new Map(existingRecords.map((record) => [record.isoWeek, record]));
+  for (const incoming of incomingRecords) {
+    const existing = existingByIsoWeek.get(incoming.isoWeek);
+    if (existing && existing.date !== incoming.date) {
+      return {
+        ok: false,
+        failedCheck: 7,
+        exitCode: 17,
+        reason: `cross_seam_monotonicity_invalid: isoWeek ${incoming.isoWeek} has existing date ${existing.date} but incoming date ${incoming.date}`
+      };
+    }
+  }
+
+  const latestExisting = existingRecords.at(-1);
+  const earliestIncoming = incomingRecords[0];
+  if (earliestIncoming.date < latestExisting.date) {
+    return {
+      ok: false,
+      failedCheck: 7,
+      exitCode: 17,
+      reason: `cross_seam_monotonicity_invalid: existing latest ${latestExisting.isoWeek}/${latestExisting.date} is after incoming earliest ${earliestIncoming.isoWeek}/${earliestIncoming.date}`
+    };
+  }
+
+  if (earliestIncoming.date === latestExisting.date && earliestIncoming.isoWeek !== latestExisting.isoWeek) {
+    return {
+      ok: false,
+      failedCheck: 7,
+      exitCode: 17,
+      reason: `cross_seam_monotonicity_invalid: same seam date ${earliestIncoming.date} has existing ${latestExisting.isoWeek} but incoming ${earliestIncoming.isoWeek}`
+    };
+  }
+
+  return { ok: true };
+}
+
+function validateMergedRecordCount(mergedRecords) {
+  if (mergedRecords.length < MIN_MERGED_RECORD_COUNT) {
+    return {
+      ok: false,
+      failedCheck: 8,
+      exitCode: 18,
+      reason: `merged_record_count_too_low: got ${mergedRecords.length} records, minimum is ${MIN_MERGED_RECORD_COUNT}`
+    };
+  }
+
+  return { ok: true };
+}
+
+export function buildCommittedHistoryMerged(report, commitTimestamp) {
   const currentHistory = cloneJson(report.currentHistory);
-  const records = cloneJson(report.records);
+  const existingRecords = Array.isArray(currentHistory.assets?.qqq?.records)
+    ? currentHistory.assets.qqq.records
+    : [];
+  const incomingRecords = Array.isArray(report.incomingRecords)
+    ? cloneJson(report.incomingRecords)
+    : cloneJson(report.records || []);
+  const { merged: records } = mergeByIsoWeek(existingRecords, incomingRecords);
   const assets = {
     ...currentHistory.assets,
     qqq: {
@@ -470,6 +560,10 @@ export function buildCommittedHistory(report, commitTimestamp) {
   };
 }
 
+export function buildCommittedHistory(report, commitTimestamp) {
+  return buildCommittedHistoryMerged(report, commitTimestamp);
+}
+
 function serializeHistory(history) {
   return `${JSON.stringify(history, null, 2)}\n`;
 }
@@ -477,12 +571,16 @@ function serializeHistory(history) {
 export function buildFirstRealRecordWriteReport(options = {}) {
   const dryRun = options.dryRun !== false;
   const historyFile = resolveHistoryFile(options.historyFile || DEFAULT_HISTORY_FILE);
-  const inputLookup = findLatestSanitizedInputDir(options.sanitizedInput);
+  const hasInjectedRecords = Array.isArray(options.records);
+  const hasInjectedHistory = options.currentHistory !== undefined;
+  const inputLookup = hasInjectedRecords
+    ? { inputDir: options.inputDir ? path.resolve(ROOT, options.inputDir) : null, missingReason: null }
+    : findLatestSanitizedInputDir(options.sanitizedInput);
   const inputDir = inputLookup.inputDir;
   const historyFileDisplay = toProjectRelative(historyFile);
   const inputDirDisplay = inputDir ? toProjectRelative(inputDir) : null;
 
-  if (!inputDir) {
+  if (!inputDir && !hasInjectedRecords) {
     return buildFailure({
       dryRun,
       inputDir: inputDirDisplay,
@@ -494,8 +592,16 @@ export function buildFirstRealRecordWriteReport(options = {}) {
     });
   }
 
-  const inputResult = readSanitizedRecords(inputDir);
-  const sanitizedFileDisplay = inputResult.sanitizedFile ? toProjectRelative(inputResult.sanitizedFile) : null;
+  const inputResult = hasInjectedRecords
+    ? {
+      ok: true,
+      sanitizedFile: options.sanitizedFile || null,
+      records: options.records
+    }
+    : readSanitizedRecords(inputDir);
+  const sanitizedFileDisplay = inputResult.sanitizedFile
+    ? toProjectRelative(path.resolve(ROOT, inputResult.sanitizedFile))
+    : null;
   if (!inputResult.ok) {
     return buildFailure({
       dryRun,
@@ -521,7 +627,9 @@ export function buildFirstRealRecordWriteReport(options = {}) {
     });
   }
 
-  const historyResult = readExistingHistory(historyFile, historyFileDisplay);
+  const historyResult = hasInjectedHistory
+    ? { ok: true, history: cloneJson(options.currentHistory) }
+    : readExistingHistory(historyFile, historyFileDisplay);
   if (!historyResult.ok) {
     return buildFailure({
       dryRun,
@@ -547,7 +655,36 @@ export function buildFirstRealRecordWriteReport(options = {}) {
     });
   }
 
-  const records = sanityResult.records;
+  const incomingRecords = sanityResult.records;
+  const existingRecords = historyResult.history.assets.qqq.records;
+  const crossSeamResult = validateCrossSeamMonotonicity(existingRecords, incomingRecords);
+  if (!crossSeamResult.ok) {
+    return buildFailure({
+      dryRun,
+      inputDir: inputDirDisplay,
+      sanitizedFile: sanitizedFileDisplay,
+      historyFile: historyFileDisplay,
+      failedCheck: crossSeamResult.failedCheck,
+      exitCode: crossSeamResult.exitCode,
+      reason: crossSeamResult.reason
+    });
+  }
+
+  const mergeResult = mergeByIsoWeek(existingRecords, incomingRecords);
+  const records = mergeResult.merged;
+  const mergedRecordCountResult = validateMergedRecordCount(records);
+  if (!mergedRecordCountResult.ok) {
+    return buildFailure({
+      dryRun,
+      inputDir: inputDirDisplay,
+      sanitizedFile: sanitizedFileDisplay,
+      historyFile: historyFileDisplay,
+      failedCheck: mergedRecordCountResult.failedCheck,
+      exitCode: mergedRecordCountResult.exitCode,
+      reason: mergedRecordCountResult.reason
+    });
+  }
+
   const plannedCoverage = buildQqqCoverage(records);
 
   return {
@@ -564,6 +701,14 @@ export function buildFirstRealRecordWriteReport(options = {}) {
     records,
     recordsCount: records.length,
     qqqRecordsCount: records.length,
+    incomingRecords,
+    incomingRecordsCount: incomingRecords.length,
+    existingRecordsCount: existingRecords.length,
+    addedRecordsCount: mergeResult.addedIsoWeeks.length,
+    updatedRecordsCount: mergeResult.updatedIsoWeeks.length,
+    mergedRecordsCount: records.length,
+    addedIsoWeeks: mergeResult.addedIsoWeeks,
+    updatedIsoWeeks: mergeResult.updatedIsoWeeks,
     preservedRecordCounts: {
       ndx: countAssetRecords(historyResult.history, 'ndx'),
       ixic: countAssetRecords(historyResult.history, 'ixic'),
@@ -598,7 +743,7 @@ function writeHistoryAtomically(report) {
   const historyPath = path.resolve(ROOT, report.historyFile);
   const tmpPath = `${historyPath}.tmp`;
   const commitTimestamp = nowIso();
-  const committedHistory = buildCommittedHistory(report, commitTimestamp);
+  const committedHistory = buildCommittedHistoryMerged(report, commitTimestamp);
   const serializedHistory = serializeHistory(committedHistory);
 
   try {
@@ -612,6 +757,12 @@ function writeHistoryAtomically(report) {
   }
 }
 
+function formatIsoWeekList(isoWeeks) {
+  if (!Array.isArray(isoWeeks) || isoWeeks.length === 0) return '';
+  const visible = isoWeeks.slice(0, 10).join(',');
+  return isoWeeks.length > 10 ? `${visible},...` : visible;
+}
+
 function printFailure(report) {
   console.error('Market pricing first real record write scaffold: FAIL');
   console.error(`failed_check=${report.failedCheck}`);
@@ -621,6 +772,10 @@ function printFailure(report) {
 
 function printDryRun(report) {
   console.log('Market pricing first real record write scaffold: DRY-RUN OK');
+  console.log(`would_merge_summary=incoming=${report.incomingRecordsCount}, added=${report.addedRecordsCount}, updated=${report.updatedRecordsCount}, total=${report.mergedRecordsCount}`);
+  if (report.updatedRecordsCount > 0) {
+    console.log(`would_update_iso_weeks=${formatIsoWeekList(report.updatedIsoWeeks)}`);
+  }
   console.log(`would_write_records=${report.recordsCount}`);
   console.log(`would_write_qqq_records=${report.qqqRecordsCount}`);
   console.log(`would_preserve_ndx_records=${report.preservedRecordCounts.ndx}`);
@@ -640,6 +795,10 @@ function printDryRun(report) {
 
 function printCommitted(report) {
   console.log('Market pricing first real record write scaffold: COMMITTED');
+  console.log(`merge_summary=incoming=${report.incomingRecordsCount}, added=${report.addedRecordsCount}, updated=${report.updatedRecordsCount}, total=${report.mergedRecordsCount}`);
+  if (report.updatedRecordsCount > 0) {
+    console.log(`updated_iso_weeks=${formatIsoWeekList(report.updatedIsoWeeks)}`);
+  }
   console.log(`wrote_records=${report.recordsCount}`);
   console.log(`wrote_qqq_records=${report.qqqRecordsCount}`);
   console.log('wrote_status=has_history');

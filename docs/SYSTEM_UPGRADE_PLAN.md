@@ -1304,9 +1304,9 @@ v28.0M-4 Macro Overview Structure Audit Sync - No Code Change
 
 ## v28.0M-24 Market Pricing First Real Record Write
 
-v28.0M-24 adds the First Real Record Write scaffold with two-stage manual confirmation. The script defaults to dry-run-commit mode. The --commit-to-history flag is required to actually write data/market-pricing-history.json. 6 sanity checks run before any write. Atomic write via .tmp + rename. Idempotent. CI never invokes the :commit path. Market Pricing Temperature remains waiting-for-history at the frontend level until M-27. No MA60 / std / z-score calculation (M-26). No scoring / decision / execution / position change. No workflow change. No frontend change.
+v28.0M-24 adds the First Real Record Write scaffold with two-stage manual confirmation. M-62 upgrades this path from one-shot integral replacement to weekly `isoWeek`-keyed merge. The script defaults to dry-run-commit mode. The --commit-to-history flag is required to actually write data/market-pricing-history.json. 8 sanity checks run before any write, including incoming-count, merged-count, and cross-seam monotonicity gates. Atomic write via .tmp + rename. CI never invokes the :commit path. No MA60 / std / z-score calculation (M-26). No scoring / decision / execution / position change. No workflow change. No frontend change.
 
-This is the first approved Market Pricing step that can write to data/market-pricing-history.json, but the PR validation path runs dry-run only and leaves data/market-pricing-history.json unchanged. M-25 validates accumulated history length, M-26 adds calculations, and M-27 handles frontend display activation.
+This is the first approved Market Pricing step that can write to data/market-pricing-history.json, but the PR validation path runs dry-run/checker coverage only and leaves data/market-pricing-history.json unchanged. M-25 validates accumulated history length, M-26 adds calculations, and M-27 handles frontend display activation.
 
 ## v28.0M-5 Market Pricing Temperature Data Source Design
 

@@ -54,7 +54,7 @@ For the same source history, metrics output is identical except for `generatedAt
 
 ## Relationship to M-24, M-25, and M-27
 
-- M-24 wrote the 523 raw QQQ weekly records into the multi-asset history file.
+- M-24 commits and refreshes raw QQQ weekly records into the multi-asset history file via `isoWeek`-keyed merge. M-62 keeps this merge-safe for weekly history growth.
 - M-25 verifies that the QQQ history buildup satisfies the 60-week minimum.
 - M-26 computes rolling MA60 / sample StdDev60 / z-score metrics into a separate metrics file.
 - M-27 will read `data/market-pricing-metrics.json` and activate frontend display.
@@ -64,4 +64,4 @@ For the same source history, metrics output is identical except for `generatedAt
 1. After the M-26 PR is merged, run `npm run market-pricing:metrics-calculation:dry-run`.
 2. Review the preview output: sanity checks, record counts, date range, and MA60 / StdDev60 / z-score ranges.
 3. Run `npm run market-pricing:metrics-calculation:commit` to write `data/market-pricing-metrics.json`.
-4. Commit the generated metrics file manually, for example: `git add data/market-pricing-metrics.json && git commit -m "M-26 commit: QQQ rolling metrics (464 records)" && git push origin main`.
+4. Commit the generated metrics file manually, using the actual metrics record count from the dry-run/commit output rather than a hard-coded historical count.
