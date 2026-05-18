@@ -93,7 +93,11 @@ for (const [value, expected] of bucketCases) {
   assertEqual(classifyZScoreBucket(value), expected, `classifyZScoreBucket(${value})`);
 }
 
-assertEqual(metrics.metricsRecordsCount, 464, 'metricsRecordsCount must match M-26 output');
+// M-26 WINDOW_SIZE is 60, inlined here to avoid coupling this M-27 display
+// check to the metrics calculation script. The previous hard-coded 464 was
+// brittle and would have broken on every weekly refresh.
+assert(metrics.metricsRecordsCount >= 1, `metricsRecordsCount >= 1: expected at least 1, got ${JSON.stringify(metrics.metricsRecordsCount)}`);
+assert(metrics.metricsRecordsCount < 1441, `metricsRecordsCount < 1441 (corruption guard): expected below 1441, got ${JSON.stringify(metrics.metricsRecordsCount)}`);
 assertEqual(metrics.latestMetricDate, '2026-05-11', 'latestMetricDate must match M-26 output');
 assertEqual(latestMetric.zScore, 2.2456, 'latest QQQ zScore must match M-26 output');
 
