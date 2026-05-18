@@ -262,11 +262,14 @@ function Move-CsvToInputDir {
 
 function Validate-SanitizerReport($ReportPath) {
   $report = Read-JsonFile -Path $ReportPath -Label 'sanitization-report.json'
+  $expectedWeeksField = 'totalWeeksProduced'
+  if ($null -eq $report.PSObject.Properties[$expectedWeeksField]) {
+    Fail "Sanitizer report at $ReportPath missing expected field '$expectedWeeksField'. The sanitizer was updated without updating this wrapper - read scripts/market-pricing/manual-weekly-input-sanitizer-scaffold.mjs and update Validate-SanitizerReport."
+  }
+
   $weeksProduced = 0
-  if ($null -ne $report.totalWeeksProduced) {
-    $weeksProduced = [int]$report.totalWeeksProduced
-  } elseif ($null -ne $report.total_records_produced) {
-    $weeksProduced = [int]$report.total_records_produced
+  if (-not [int]::TryParse([string]$report.totalWeeksProduced, [ref]$weeksProduced)) {
+    Fail "Sanitizer report at $ReportPath has non-numeric expected field '$expectedWeeksField'. The sanitizer was updated without updating this wrapper - read scripts/market-pricing/manual-weekly-input-sanitizer-scaffold.mjs and update Validate-SanitizerReport."
   }
 
   $headerMismatch = 0
@@ -315,7 +318,8 @@ function Confirm-Commit($Summary) {
   }
 
   if ($AutoConfirm) {
-    Write-Warn "AutoConfirm is set. Skipping human confirmation."
+    Write-Warn "WARNING: -AutoConfirm enabled. Bypassing all operator review."
+    Write-Warn "Updated isoWeeks (if any) will be committed WITHOUT human inspection. Use only in trusted automation."
     return
   }
 
