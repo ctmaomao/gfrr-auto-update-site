@@ -156,3 +156,16 @@
 ---
 
 *本文档由 2026-05-17 全项目数据完整性审计 + M-57 实施。后续 milestone 必须维护本文件。*
+
+---
+
+## 🔄 Session Handoff (最新)
+
+> 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
+> 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
+
+- **上次会话结束于**: 2026-05-18, commit `b8bf616` (chore: refresh QQQ weekly market data, M-62 isoWeek merge 已合并)
+- **当前进行中**: Memory bank 定制完成 (CLAUDE.md / docs/INDEX.md / docs/MILESTONE_INDEX.md / docs/DATA_SOURCES.md / docs/ADR/* 全部新建,AGENTS.md 待拆分)
+- **下一步建议**: 拆分 AGENTS.md (移出 Doc Index + Milestone reminder 段);跑 `npm run check:all` 验证 67 项全绿
+- **阻塞或等待**: 无;等待 AGENTS.md 拆分完成后即可进入阶段 4 验证
+
