@@ -779,6 +779,15 @@ function buildWorldOrderNarrative(data, worldOrderStressData) {
   const gdeltCountryCount = finite(externalSources.gdelt?.summary?.countryCount);
   const gdeltFatalities = finite(externalSources.gdelt?.summary?.fatalities);
   const gdeltKeyRegions = safeArray(externalSources.gdelt?.summary?.keyConflictRegions);
+  const sipriStatus = typeof externalSources.sipri?.status === 'string' ? externalSources.sipri.status : null;
+  const sipriGlobalTrend = externalSources.sipri?.summary?.globalMilitarySpendTrend;
+  const sipriMajorPowerTrend = externalSources.sipri?.summary?.majorPowerMilitarySpendTrend;
+  const sipriGdpShareTrend = externalSources.sipri?.summary?.militarySpendShareOfGDPTrend;
+  const sipri5yrGrowth = finite(externalSources.sipri?.summary?.globalFiveYearGrowthPct);
+  const sipriGdpShare = finite(externalSources.sipri?.summary?.militarySpendShareOfGdpPct);
+  const sipriRisingPowers = finite(externalSources.sipri?.summary?.risingMajorPowers);
+  const sipriMajorPowersTracked = finite(externalSources.sipri?.summary?.majorPowersTracked);
+  const sipriUpdatedYear = finite(externalSources.sipri?.summary?.updatedYear);
   const ofacRecentActionsCount = finite(externalSources.ofac?.summary?.recentActionsCount);
   const decisionModifier = isPlainObject(world.decisionModifier) ? world.decisionModifier : {};
   const riskBias = typeof decisionModifier.riskBias === 'string' ? decisionModifier.riskBias : null;
@@ -858,6 +867,33 @@ function buildWorldOrderNarrative(data, worldOrderStressData) {
       `GDELT Cloud 显示关键冲突区域 ${gdeltKeyRegions.slice(0, 5).join('、')} 同时活跃`
     ));
   }
+  // M-61: SIPRI supporting branches (GDELT-style) + extended missing categories
+  if (sipriStatus === 'ok' && sipriGlobalTrend === 'rising' && sipri5yrGrowth !== null) {
+    supportingEvidence.push(evidence(
+      'sipri_global_arms_race',
+      `${formatNumber(sipri5yrGrowth, 1)}%`,
+      `SIPRI ${sipriUpdatedYear ?? ''} 显示全球军费 5 年累计增长 ${formatNumber(sipri5yrGrowth, 1)}%，达「rising」阈值，反映全球军备扩张周期`,
+    ));
+  }
+  if (sipriStatus === 'ok' && sipriMajorPowerTrend === 'rising' && sipriRisingPowers !== null && sipriMajorPowersTracked !== null) {
+    supportingEvidence.push(evidence(
+      'sipri_major_powers_rising',
+      `${sipriRisingPowers}/${sipriMajorPowersTracked}`,
+      `SIPRI 主要大国军费多数上升 (${sipriRisingPowers}/${sipriMajorPowersTracked})，多极军备升级趋势`,
+    ));
+  }
+  if (
+    sipriStatus === 'ok' &&
+    (sipriGdpShareTrend === 'rising' || (sipriGlobalTrend === 'rising' && sipriGdpShare !== null && sipriGdpShare >= 2.5))
+  ) {
+    supportingEvidence.push(evidence(
+      'sipri_gdp_share_rising',
+      sipriGdpShare === null ? 'rising' : `${formatNumber(sipriGdpShare, 1)}%`,
+      sipriGdpShare === null
+        ? 'SIPRI 全球军费占 GDP 比重上升，财政战备倾斜结构性强化'
+        : `SIPRI 全球军费占 GDP 比重升至 ${formatNumber(sipriGdpShare, 1)}%（2015 年为 2.3%），财政战备倾斜结构性强化`,
+    ));
+  }
   if (ofacRecentActionsCount !== null && ofacRecentActionsCount > 0) {
     supportingEvidence.push(evidence('ofac_recent_actions', formatNumber(ofacRecentActionsCount, 0), 'OFAC 近期行动为非零，经济金融武器化维度存在现实活动'));
   }
@@ -868,7 +904,9 @@ function buildWorldOrderNarrative(data, worldOrderStressData) {
   }
   if (externalSources.gdelt?.status === 'stale') missingEvidence.push(evidence('gdelt', 'stale', 'GDELT 当前为 stale'));
   if (externalSources.acled?.status === 'not_configured') missingEvidence.push(evidence('acled', 'not_configured', 'ACLED 尚未配置'));
-  if (externalSources.sipri?.status === 'manual_required') missingEvidence.push(evidence('sipri', 'manual_required', 'SIPRI 慢变量仍需手动导入'));
+  if (sipriStatus === 'manual_required') missingEvidence.push(evidence('sipri', 'manual_required', 'SIPRI 慢变量仍需手动导入'));
+  else if (sipriStatus === 'error') missingEvidence.push(evidence('sipri', 'error', 'SIPRI normalized 数据校验失败，请检查配置文件'));
+  else if (sipriStatus === 'disabled') missingEvidence.push(evidence('sipri', 'disabled', 'SIPRI 模块已禁用'));
   if (score !== null && score >= 60 && mainScore !== null && mainScore < 40) {
     contradictingEvidence.push(evidence('world_order_vs_main_score', `${formatNumber(score, 0)} / ${formatNumber(mainScore, 0)}`, '地缘压力未传导到主风险分数'));
   }

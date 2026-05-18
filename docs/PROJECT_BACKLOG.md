@@ -9,13 +9,14 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-60 |
+| 当前生产状态 | v28.0M-61 |
 | Cache version | `28.0M-58V` |
 | check:all 项数 | 66 |
-| 最后审计日期 | **2026-05-17** (M-55b audit + Build #74 refresh + M-57 + M-58 + M-59 + M-60) |
+| 最后审计日期 | **2026-05-18** (M-55b audit + Build #74 refresh + M-57 + M-58 + M-59 + M-60 + M-61) |
 | 最后 daily refresh | 2026-05-17 (Build #74, commit `e366b60`) |
 | GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
+| SIPRI 状态 | M-61 起 `config/world-order-sipri-normalized.json` 使用 SIPRI 2024 真实数据，world-order build 后为 `ok` |
 | ACLED 状态 | 延后至后续 M-series；等待 Research/Partner tier |
 | 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
 
@@ -28,12 +29,6 @@
 (All P0 items as of M-57 are resolved.)
 
 ### P1 Items (Recommended)
-
-#### P1-3: SIPRI 手动数据流程脚手架
-- **描述**: `world-order-stress.externalSources.sipri.status = "manual_required"` — 年度数据, 当前无更新流程
-- **数据源**: SIPRI 军费数据库 (每年 4/5 月发布)
-- **类型**: 类型 2
-- **估计 PR**: ~150 行 (manual-input scaffold + 文档)
 
 #### P1-4: ACLED 数据源配置
 - **描述**: `sources.acled.status = "not_configured"`
@@ -88,6 +83,7 @@
 | M-58 | Realtime band field completion (P1-6) + Brent null-check fix + unit suffixes | (this PR) | 2026-05-17 | ✅ 9 new DOM ids locked |
 | M-59 | GDELT Cloud v2 integration (P1-5) | (this PR) | 2026-05-17 | ✅ Replace legacy DOC API with Cloud v2; daily refresh; 4 new narrative supporting branches |
 | M-60 | Pages deploy trigger coverage (workflow_run centralization + heuristic guard) | (this PR) | 2026-05-17 | ✅ Centralize Pages auto-deploy via Pages workflow_run.workflows list; remove ad-hoc `gh workflow run` from refresh-world-order-stress; resolve latent external-ai-production-refresh hole; add heuristic contract check guarding all committing-to-main workflows |
+| M-61 | SIPRI manual-normalized integration (P1-3 close) | (this PR) | 2026-05-18 | ✅ Import verified 2024 SIPRI data (top 10 + 5 regions); add 3 narrative supporting branches (global arms race, major powers rising, GDP share rising); document annual refresh procedure; resolves last `manual_required` external source |
 
 ---
 
@@ -98,6 +94,7 @@
 - **NLP for FOMC**: 替代 P3-10, 用开源 FOMC minutes 文本分析做 hawkishness score
 - **Backtesting layer**: 历史 narrative 触发回放, 验证在 2008/2020/2022 危机解释力
 - **Worker reliability**: 当前 marketConfirmationInput 来源 single worker, 考虑双 worker fallback
+- **Annual SIPRI data refresh**: 每年 4/5 月 SIPRI Fact Sheet / Military Expenditure Database 发布后，更新 `config/world-order-sipri-normalized.json` 最新年度数据并触发 `Refresh World Order Stress`。估计每年 20-30 分钟。
 
 ---
 
@@ -111,6 +108,7 @@
 | 2026-05-17 | P1-6 realtime band completion audit + M-58 implementation | Claude Code + Codex | P1-6 resolved | 9 new DOM ids + null-safe delta formatting |
 | 2026-05-17 | P1-5 GDELT Cloud v2 integration | Claude Code + Codex | P1-5 resolved | Cloud v2 Bearer API + daily refresh workflow; ACLED deferred to later M-series |
 | 2026-05-17 | M-60 Pages trigger coverage audit + implementation | Codex | Pages deploy trigger hole resolved | Centralized workflow_run listener + heuristic check:pages-trigger-coverage |
+| 2026-05-18 | M-61 SIPRI manual-normalized integration | Codex | P1-3 resolved | SIPRI 2024 normalized data + 3 world-order narrative supporting branches |
 
 ---
 
