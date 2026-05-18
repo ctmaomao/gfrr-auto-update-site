@@ -98,8 +98,18 @@ for (const [value, expected] of bucketCases) {
 // brittle and would have broken on every weekly refresh.
 assert(metrics.metricsRecordsCount >= 1, `metricsRecordsCount >= 1: expected at least 1, got ${JSON.stringify(metrics.metricsRecordsCount)}`);
 assert(metrics.metricsRecordsCount < 1441, `metricsRecordsCount < 1441 (corruption guard): expected below 1441, got ${JSON.stringify(metrics.metricsRecordsCount)}`);
-assertEqual(metrics.latestMetricDate, '2026-05-11', 'latestMetricDate must match M-26 output');
-assertEqual(latestMetric.zScore, 2.2456, 'latest QQQ zScore must match M-26 output');
+
+// latestMetricDate advances with every weekly refresh, so exact-date matching is
+// brittle. Validate ISO date shape and plausible freshness instead.
+const latestMetricDateTime = Date.parse(`${metrics.latestMetricDate}T00:00:00.000Z`);
+assert(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/u.test(metrics.latestMetricDate), `latestMetricDate must be YYYY-MM-DD, got ${JSON.stringify(metrics.latestMetricDate)}`);
+assert(Number.isFinite(latestMetricDateTime), `latestMetricDate must parse as a valid Date, got ${JSON.stringify(metrics.latestMetricDate)}`);
+assert(latestMetricDateTime <= Date.now() + 7 * 24 * 60 * 60 * 1000, `latestMetricDate must not be in the future, got ${JSON.stringify(metrics.latestMetricDate)}`);
+
+// zScore is the weekly market-temperature output and moves every refresh.
+// Validate structural plausibility instead of the old brittle exact 2.2456.
+assert(Number.isFinite(latestMetric.zScore), `latest QQQ zScore must be finite, got ${JSON.stringify(latestMetric.zScore)}`);
+assert(latestMetric.zScore >= -10 && latestMetric.zScore <= 10, `latest QQQ zScore must be within [-10, 10], got ${JSON.stringify(latestMetric.zScore)}`);
 
 assert(appSource.includes('data/market-pricing-metrics.json'), 'app.js must reference market pricing metrics data file');
 assert(appSource.includes('catch((error)') && appSource.includes('console.warn') && appSource.includes('return null'), 'app.js must keep metrics graceful degradation path');
