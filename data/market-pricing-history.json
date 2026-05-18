@@ -1,10 +1,10 @@
 {
   "schemaVersion": "v28.0M-market-pricing-history-1",
   "status": "has_history",
-  "updatedAt": "2026-05-13T02:11:56.462Z",
-  "generatedAt": "2026-05-13T02:11:56.462Z",
+  "updatedAt": "2026-05-18T03:57:44.077Z",
+  "generatedAt": "2026-05-18T03:57:44.077Z",
   "sourceMode": "manual_weekly_input_committed",
-  "descriptionZh": "市场定价温度计历史数据。已通过 v28.0M-24 commit 写入 QQQ 周线历史；M-26 已启用 MA60 / 标准差 / z-score 计算；M-27 已激活前端温度展示；M-28 已接入 first-fold 与 cross-validation matrix。当前 status=has_history。",
+  "descriptionZh": "市场定价温度计历史数据。已通过 v28.0M-24 commit/refresh 以 isoWeek 合并方式维护 QQQ 周线历史；M-26 已启用 MA60 / 标准差 / z-score 计算；M-27 已激活前端温度展示；M-28 已接入 first-fold 与 cross-validation matrix。当前 status=has_history。",
   "assets": {
     "qqq": {
       "symbol": "QQQ",
@@ -14,7 +14,7 @@
       "source": {
         "vendor": "nasdaq_official_manual_download",
         "downloadUrl": "https://www.nasdaq.com/market-activity/etf/qqq/historical",
-        "lastCommittedAt": "2026-05-13T02:11:56.462Z",
+        "lastCommittedAt": "2026-05-18T03:57:44.077Z",
         "committedRecordsCount": 523
       },
       "frequency": "weekly",
@@ -3657,21 +3657,28 @@
           "date": "2026-04-24",
           "isoWeek": "2026-W17",
           "close": 663.88,
-          "sourceFile": "2026-05-13.csv",
+          "sourceFile": "2026-05-18.csv",
           "sourceVendor": "nasdaq_official_manual_download"
         },
         {
           "date": "2026-05-01",
           "isoWeek": "2026-W18",
           "close": 674.15,
-          "sourceFile": "2026-05-13.csv",
+          "sourceFile": "2026-05-18.csv",
           "sourceVendor": "nasdaq_official_manual_download"
         },
         {
           "date": "2026-05-08",
           "isoWeek": "2026-W19",
           "close": 711.23,
-          "sourceFile": "2026-05-13.csv",
+          "sourceFile": "2026-05-18.csv",
+          "sourceVendor": "nasdaq_official_manual_download"
+        },
+        {
+          "date": "2026-05-15",
+          "isoWeek": "2026-W20",
+          "close": 708.93,
+          "sourceFile": "2026-05-18.csv",
           "sourceVendor": "nasdaq_official_manual_download"
         }
       ],
@@ -3679,7 +3686,7 @@
         "weeklyRows": 523,
         "hasAtLeast60Weeks": true,
         "oldestDate": "2016-05-13",
-        "latestDate": "2026-05-11"
+        "latestDate": "2026-05-15"
       },
       "dataGaps": [
         "MA60 / 标准差 / z-score 计算待 v28.0M-26 启用。",
