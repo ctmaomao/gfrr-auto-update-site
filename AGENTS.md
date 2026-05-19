@@ -48,33 +48,6 @@
 - v28.0G-6 Operations Runbook / Decision Matrix 是运维判断入口；看 `docs/OPERATIONS.md`。PR #53 superseded；KV write guard deferred，先观察，不在未另开版本时加入复杂 runtime guard。
 - v28.0G-7A 只增强 `Check Worker Health` 只读输出，生成 `worker-health-snapshot` artifact；不得把 snapshot 当作网站输入，不得写 KV 或 data/realtime，不得改变 Worker Health fail 边界。
 - v28.0G-7B 新增本地只读 `review:worker-health-snapshot` helper，用于审阅下载后的 snapshot 并输出 PASS / WARN / FAIL；不得让它访问网络、写 KV、写 data/realtime 或替代 scheduled hard gate。
-- v28.0M-36V Code Dead Weight Removal 用 `?v=28.0M-36V` 刷新前端 asset graph；本轮只删除已验证无依赖的 dead function、orphan CSS 和 README 重复说明，并保留 dynamic market-temperature bucket selectors 与 `.chain-impact-direction.positive` / `.negative` 复合选择器。不得把 M-36 解释为功能、数据、workflow、DESIGN.md 或业务逻辑变更。
-- v28.0M-37V Documentation Version Drift Fix 用 `?v=28.0M-37V` 刷新前端 asset graph；本轮只修正文档版本漂移、sanity check 数量漂移、historical marker 和 `data/market-pricing-history.json` 的 `descriptionZh` 元数据。不得把 M-37 解释为功能、数据逻辑、workflow、DESIGN.md 或业务逻辑变更。
-- v28.0M-38V Section Border Consistency Governance 用 `?v=28.0M-38V` 刷新前端 asset graph；本轮新增全局 `.editorial-section` 强边框与 `#macro-risk-overview` scoped reset，统一 IA section 视觉分隔并避免 macro overview 双层边框。不得把 M-38 解释为数据、workflow、scoring、decision、execution、position 或 DESIGN.md 变更。
-- v28.0M-39V Brent Promotion Audit Completeness 用 `?v=28.0M-39V` 刷新前端 asset graph；本轮只用现有 in-memory realtime 数据补齐 `promotionAudit.promotionReason` fallback 和 `anchorAgeHours` 衍生 fallback，不新增数据源、不改变 promotion 语义、不改 data files。
-- v28.0M-40 skipped：经精确诊断，原计划 3 个解释层 reason 字段 placeholder 修复均为 audit scanner false positive（中文 em-dash、`fallback 0` 计数标签、`0 个 check 数据不足` 形容短语均为真实内容）。未实施 PR；编号保留为跳过记录。
-- v28.0M-41V Fed Liquidity FRED Series Extension 用 `?v=28.0M-41V` 刷新前端 asset graph；本轮扩展 `resolveFedLiquidity` 拉取 FRED:DFF 与 FRED:SOFR，并首次正式化 `macroDrivers.fedLiquidity` DATA_CONTRACT。不改 scoring、decision、execution、position、workflow、Worker runtime 或 data files。
-- v28.0M-42V Fed Liquidity Triplet Completion 用 `?v=28.0M-42V` 刷新前端 asset graph；本轮扩展 `resolveFedLiquidity` 拉取 FRED:WRESBAL 并计算 4 周变化，完成 DFF + SOFR + WRESBAL triplet。不改 scoring、decision、execution、position、workflow、Worker runtime 或 data files。
-- v28.0M-43V External AI Provenance Metadata Completion 用 `?v=28.0M-43V` 刷新前端 asset graph；本轮只从 GitHub Actions run context 与 DeepSeek output SHA256 digest 补齐 `externalAiInterpretationLayer.provenance` 元数据。不改 AI prompt/provider、quality review、write guard、frontend display、scoring、decision、execution、position 或 data files。
-- v28.0M-45V Frontend Field Synchronization 用 `?v=28.0M-45V` 刷新前端 asset graph；本轮只补齐 M-41/M-42 fedLiquidity 前端 evidence 与 cross-validation policy_path 展示，并修正 market-pricing metadata 的 `descriptionZh` / `displayLayerActive`。`28.0M-44V` 因 M-44 cleanup-only 未改前端而跳过；不新增 FRED series，不改 schema、scoring、decision、execution、position、workflow、Worker runtime 或 provider code。
-- v28.0M-46V SLOOS Bank Loan Standards 用 `?v=28.0M-46V` 刷新前端 asset graph；本轮扩展 `resolveCredit` 拉取 FRED:DRTSCILM / FRED:DRTSCIS，首次正式化 `macroDrivers.credit` DATA_CONTRACT，并仅升级 `liquidity_tightening` 的 SLOOS cross-validation 分类。不改 data files、scoring、decision、execution、position、workflow、Worker runtime、External AI 或 provider code；DRTSCLCC 与其他 SLOOS series 延后。
-- v28.0M-47V ISM Manufacturing PMI Growth Layer 用 `?v=28.0M-47V` 刷新前端 asset graph；本轮扩展 `resolveConsumerSentiment` 拉取 FRED:NAPM，升级 `macroDrivers.consumer` DATA_CONTRACT 为多源表格格式，并仅升级 `stagflation_pressure` 的 PMI cross-validation 分类。不改 data files、scoring、decision、execution、position、workflow、Worker runtime、External AI、M-46 SLOOS code 或 provider code；ISM Services PMI 与 employment indicators 延后。
-- v28.0M-48V NFCI Bank Stress Index 用 `?v=28.0M-48V` 刷新前端 asset graph；本轮扩展 `resolveCredit` 拉取 FRED:NFCI，升级 `macroDrivers.credit` DATA_CONTRACT，并仅升级 `credit_spread_warning` 的 bank_stress_index cross-validation 分类。NFCI 正值=金融状况收紧、负值=金融状况宽松，方向与 IG/HY OAS 不同；不改 data files、scoring、decision、execution、position、workflow、Worker runtime、External AI、M-46 SLOOS code 或 M-47 PMI code。
-- v28.0M-49V Diesel Crack Spread 用 `?v=28.0M-49V` 刷新前端 asset graph；本轮新增 `resolveUlsd` 拉取 FRED:DHOILNYH，并在同步 `buildBrentPricingLayer` 内按 DHOILNYH × 42 - Brent 计算柴油裂解价差。仅扩展 `brentPricingLayer` 和 `energy_shock` cross-validation 分类；不改 data files、`values.brent`、Brent promotion、scoring、decision、execution、position、workflow、Worker runtime、External AI、M-46 SLOOS code、M-47 PMI code 或 M-48 NFCI code。
-- v28.0M-50V Repo Market Spread 用 `?v=28.0M-50V` 刷新前端 asset graph；本轮扩展 `resolveFedLiquidity` 拉取 FRED:BGCR / FRED:TGCR，并派生 BGCR-SOFR / TGCR-SOFR 回购利差。仅扩展 `macroDrivers.fedLiquidity` 和 `liquidity_tightening` 的 repo_stress cross-validation 分类；不改 data files、scoring、decision、execution、position、workflow、Worker runtime、External AI、M-46 SLOOS code、M-47 PMI code、M-48 NFCI code 或 M-49 crack-spread code。
-- v28.0M-51V World Order Narrative Density 用 `?v=28.0M-51V` 刷新前端 asset graph；本轮仅增强 `world_order_pressure_crossing` cross-validation narrative，从既有 `data/world-order-stress.json` 读取 state、dominantDrivers、dimensions、marketConfirmation、GDELT toneProxy、OFAC recentActionsCount 与 decisionModifier.riskBias。不新增数据源、不改 schema、不写 data files、不改 scoring、decision、execution、position、workflow、Worker runtime 或 world-order build/scoring code。
-- v28.0M-52V Risk Asset Mismatch Narrative Density 用 `?v=28.0M-52V` 刷新前端 asset graph；本轮仅增强 `risk_asset_mismatch` cross-validation narrative，新增 NFCI/HY、T10Y2Y/QQQ、DXY/QQQ、IG-HY/VIX、BGCR-SOFR/VIX 五类跨维度错配证据，并修复 `qqq_zscore` missingEvidence 中性值误报。不新增数据源、不改 schema、不写 data files、不改 scoring、decision、execution、position、workflow、Worker runtime 或其他 narrative。
-- v28.0M-53V Overheat Confirmation Narrative Density 用 `?v=28.0M-53V` 刷新前端 asset graph；本轮仅增强 `overheat_confirmation` cross-validation narrative，新增 PMI、SLOOS、HY OAS、NFCI、UMCSENT 3m change、BGCR-SOFR 六类宏观证据，修复 contradictingEvidence 空数组与 assessment null fallback 设计问题，并以 `hyOas_qqq_complacency` 替换旧 `credit_confirmation` missing evidence。不新增数据源、不改 schema、不写 data files、不改 scoring、decision、execution、position、workflow、Worker runtime 或其他 narrative。M-53 完成 7/7 cross-validation narrative framework upgrade。
-- v28.0M-54V Frontend Visual Upgrade Phase 1 用 `?v=28.0M-54V` 刷新前端 asset graph；本轮仅修复 cross-validation evidence 颜色语义（supporting -> red、contradicting -> green、missing -> gray）、添加七个 narrative emoji prefix、调整结构化 evidence 顺序为 supporting -> contradicting -> missing，并新增 typography scale CSS variables。不改 IA structure、narrative builder logic、data files、backend scripts、workflows、scoring、decision、execution 或 position。
-- v28.0M-55V IA Restructure Phase 2a 用 `?v=28.0M-55V` 刷新前端 asset graph；本轮仅移动 realtime band 至顶部 static aside、移动 External AI section 至 cross-validation 后、同步 13 项 nav contract，并将 detail-data audit inputs 改为数据健康。不改 data files、backend scripts、workflows、DESIGN.md、narrative builder logic、scoring、decision、execution 或 position。
-- v28.0M-55bV IA Restructure Phase 2b 用 `?v=28.0M-55bV` 刷新前端 asset graph；本轮仅将 `wow-key-changes` 从 static HTML 提升为 macro overview JS-runtime block（位于 cross-validation 与 watch-list 之间），并将 realtime band 重绘为 main-module standard（7 个 `editorial-realtime-card` 子卡）。13 项 nav anchor、16 个 realtime DOM id、M-54 emoji/evidence color、M-55a External AI 位置均保留。不改 data files、backend scripts、workflows、DESIGN.md、narrative builder logic、scoring、decision、execution 或 position。
-- v28.0M-57V Market Temperature + Project Backlog 用 `?v=28.0M-57V` 刷新前端 asset graph；本轮仅修复 `buildMarketTemperature` stub，使 judgment layer 在 `data/market-pricing-metrics.json` 有记录时返回 active QQQ z-score 状态，并新增 `docs/PROJECT_BACKLOG.md` 与 `check:project-backlog-format`。不改 data files、backend pipeline scripts、workflows、DESIGN.md、nav anchors、DOM ids、cross-validation narrative builders、scoring、decision、execution 或 position。
-- v28.0M-58V Realtime Band Field Completion 用 `?v=28.0M-58V` 刷新前端 asset graph；本轮完成 P1-6，给 DXY/VIX/HY/US10Y/Gold/SPX realtime 子卡补齐 delta/source，修复 Brent delta `|| 0` null-coercion bug，并新增 `check:realtime-band-completeness`。不改 data files、workers、backend pipeline scripts、workflows、DESIGN.md、nav anchors、cross-validation narrative builders、scoring、decision、execution 或 position。
-- v28.0M-59 GDELT Cloud v2 Integration 不刷新前端 asset graph（仍为 `28.0M-58V`）；本轮完成 P1-5，删除 legacy GDELT DOC API fetcher / diagnostic，新增 GDELT Cloud v2 Bearer fetcher、daily world-order refresh workflow、`check:gdelt-cloud-fetcher-integration`，并仅给 `world_order_pressure_crossing` 增加 4 个 supporting evidence 分支。不改 frontend cache、workers、daily pipeline、validate-data、DESIGN.md、nav anchors、DOM ids、scoring、decision、execution 或 position。ACLED 延后到后续 M-series。
-- v28.0M-60 Pages Trigger Coverage 不刷新前端 asset graph（仍为 `28.0M-58V`）；本轮在 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表中加入 `Refresh World Order Stress` 与 `External AI Production Refresh`，移除 `refresh-world-order-stress.yml` 中 PR #213 加入的 explicit `gh workflow run` step，并新增 `check:pages-trigger-coverage`（启发式扫描 + 显式排除列表）守护 Pages 触发契约。check:all 65 → 66。不改 data files、workers、daily pipeline、validate-data、DESIGN.md、nav anchors、DOM ids、scoring、decision、execution 或 position。
-- v28.0M-61 SIPRI Integration 不刷新前端 asset graph（仍为 `28.0M-58V`）；本轮在 `config/world-order-sipri-normalized.json` 中加入 SIPRI 2024 真实数据（top 10 majorPowers + 5 regions），在 `scripts/modules/buildCrossValidationMatrix.js` 中加入 3 个 SIPRI supporting branches（global_arms_race / major_powers_rising / gdp_share_rising）与 2 个扩展 missing 分支（error / disabled），不改 import-sipri.mjs（已完整）、score-world-order-stress.mjs（peaceDividendRetreat 权重 0.45 不变）、check-world-order-stress.mjs（SIPRI schema 校验已存在），也不改 workers、daily pipeline、validate-data、DESIGN.md、nav anchors、DOM ids、scoring、decision、execution 或 position。check:all 保持 66。
-- v28.0M-62 QQQ Weekly History Merge 不刷新前端 asset graph（仍为 `28.0M-58V`）；本轮只把 M-24 history writer 从 integral replace 改为 `isoWeek` keyed merge，新增 incoming/merged count split、cross-seam monotonicity、added/updated/merged report fields 与 synthetic merge checker coverage。不改 data files、M-23 sanitizer、M-26 metrics、frontend、workers、daily pipeline、validate-data、DESIGN.md、nav anchors、DOM ids、scoring、decision、execution 或 position。check:all 保持 67。
-- v28.0G-9B Frontend Asset Version Bump Helper 新增 `node scripts/bump-frontend-asset-version.mjs 28.0M-55bV` / `npm run bump:frontend-asset-version -- 28.0M-55bV`，用于统一替换前端 asset cache version。当前正式版本仍是 `28.0M-58V`；工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。
 - v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
 - v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。
@@ -135,18 +108,6 @@
 - 可回滚。
 
 必须保留完整项目结构和现有主要模块，包括 realtime、health、decision、action queue、trigger monitor、invalidation rules、heatmap 和六大风险模块。
-
-## 2. AI 工具必须先读的文档
-
-- `README.md`：项目入口和当前运行方式概览。README 不应塞入过细字段细节。
-- `docs/V27_BASELINE.md`：历史 v27.x 稳定化基线。做架构或功能判断前可作为背景阅读，但当前运行边界以 README、DATA_CONTRACT 与 OPERATIONS 的 v28.0E 状态为准。
-- `docs/DATA_CONTRACT.md`：数据字段、显示值、Brent validation、Decision Output、Transmission Delta 等契约。改数据字段或显示值前，先读此文档。
-- `docs/OPERATIONS.md`：运行排查手册。排查 realtime stale、Daily、Brent、Transmission Delta、Pages deploy 等问题前，先读此文档。
-- `docs/SYSTEM_UPGRADE_PLAN.md` 与 `docs/SIGNAL_INTAKE.md`：后续新增宏观指标、背离指标、新数据源或解释层前必须先读；新信号默认不得直接进入 scoring / decision，默认先 audit-only / diagnostic-only / display-only。
-- `docs/EXTERNAL_AI_API_DESIGN.md`：未来 DeepSeek / OpenAI / external AI API 接入前必须先读；定义 external AI output audit、fallback、source attribution、禁用文案和 display-only 边界。
-- `docs/EXTERNAL_AI_PROMPT_CONTRACT.md`：未来外部 AI prompt contract 与 sample fixtures 入口；`docs/fixtures/external-ai/*.json` 不得导入 runtime，不得作为生产数据。
-- `docs/EXTERNAL_AI_MANUAL_TEST_DESIGN.md`：未来 manual API test 设计入口；任何 API test 实现前必须确认 opt-in、disabled-by-default、validator-gated、no production data mutation。
-- `scripts/check-external-ai-output.mjs`：离线检查 external AI sample/future output artifacts；不得把它改成 API caller、runtime dependency 或 production data writer。
 
 ## Frontend Design Contract — Mandatory Reading
 
@@ -329,10 +290,8 @@ AI 完成任务后只输出：
 
 ## 历史 milestone reminder
 
-v28.0L-3B-1 audit-sync、L-3C provider-call design、L-3D readiness checklist、
-L-3E implementation plan、L-3F provider-test workflow skeleton 等以及
-v28.0M / N 系列编辑式版面相关 60+ 段 reminder,已迁移至
-[`docs/MILESTONE_INDEX.md`](docs/MILESTONE_INDEX.md) 的 Archived 段。
+M-36V～M-62 逐版本 scope reminder、G-9B 工具描述、以及 v28.0L-3B-1 audit-sync、
+L-3C～L-3F 设计文档段落等已全部从本文件移出。查阅位置:
 
-需查特定 milestone 的完整 reminder 文字时,直接 `git show v28.0J-pre-split:AGENTS.md`
-取回完整快照。
+- **MILESTONE_INDEX.md Archived 段**: [`docs/MILESTONE_INDEX.md`](docs/MILESTONE_INDEX.md)
+- **完整快照**: `git show v28.0J-pre-split:AGENTS.md`
