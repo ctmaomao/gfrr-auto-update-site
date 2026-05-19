@@ -11,28 +11,33 @@
 
 当前未关闭、影响进行中工作的 milestone 与状态:
 
-- **当前生产**: v28.0M-62,frontend cache `28.0M-58V`,`check:all` = 67 项
+- **当前生产**: v28.0M-63a,frontend cache `28.0M-58V`,`check:all` = 68 项
 - **下一步**: 见 `docs/PROJECT_BACKLOG.md` Section 2 Open Backlog Items
-- **Open backlog 主线**: P1-4 ACLED 接入(延后等 Research/Partner tier)、P2-7/8/9 各类宏观指标扩展、P3-* 已明确 won't fix
+- **Open backlog 主线**: P1-4 ACLED 接入(M-63b/c 待启动)、P2-7/8/9 各类宏观指标扩展、P3-* 已明确 won't fix
 - **年度提醒**: M-61b SIPRI 每年 5 月 1 日 GitHub Actions issue (`sipri-annual-refresh-reminder.yml`)
 
 ## Recently Merged (最近 5 个,详细可读对应 doc)
 
 | # | 一句话 | 主要 doc |
 |---|---|---|
+| **M-63a** | ACLED weekly regional sanitizer + importer;xlsx devDep;`peaceDividendRetreat` 重加权;旧 API adapter 彻底移除 | (无独立 doc;见 README + PROJECT_BACKLOG M-63a) |
 | **M-62** | QQQ weekly history 从 integral replace 改为 `isoWeek`-keyed merge;新增 cross-seam monotonicity check | (无独立 doc;见 README) |
 | **M-61** | SIPRI 2024 真实数据(top 10 majorPowers + 5 regions)+ 3 个 world_order supporting branch | `docs/M-61_SIPRI_INTEGRATION.md` |
 | **M-60** | Pages auto-deploy 集中到 `workflow_run.workflows`;`check:pages-trigger-coverage` 守护 | `docs/M-60_PAGES_TRIGGER_COVERAGE.md` |
 | **M-59** | GDELT Cloud v2 Bearer fetcher 替换 legacy DOC API;daily refresh workflow | `docs/M-59_GDELT_CLOUD_INTEGRATION.md` |
-| **M-58** | Realtime band 补齐 DXY/VIX/HY/US10Y/Gold/SPX 子卡的 delta/source 字段 | `docs/M-58_REALTIME_BAND_FIELD_COMPLETION.md` |
 
 ## Archived (历史 milestone,scope-only,默认不加载)
 
 > 全部已合并,作为 Conditional Authority 仅在对应历史 PR 范围内权威。
 > 阅读它们前先确认任务边界是否真的需要历史细节;通常不需要。
 
-### M-series (M-31 → M-57)
+### M-series (M-31 → M-62)
 
+- M-62 QQQ weekly history isoWeek-keyed merge + cross-seam monotonicity check — (无独立 doc;见 README)
+- M-61 SIPRI 2024 真实数据 + 3 world_order supporting branch — `docs/M-61_SIPRI_INTEGRATION.md`
+- M-60 Pages auto-deploy workflow_run 集中 + check:pages-trigger-coverage — `docs/M-60_PAGES_TRIGGER_COVERAGE.md`
+- M-59 GDELT Cloud v2 Bearer fetcher + daily refresh workflow — `docs/M-59_GDELT_CLOUD_INTEGRATION.md`
+- M-58 Realtime band 补齐 6 子卡 delta/source 字段 — `docs/M-58_REALTIME_BAND_FIELD_COMPLETION.md`
 - M-31 editorial design contract compliance — `docs/EDITORIAL_DESIGN_CONTRACT_COMPLIANCE_M31.md`
 - M-32 DESIGN.md amendment + visual refinement — `docs/EDITORIAL_DESIGN_CONTRACT_AMENDMENT_M32.md`
 - M-33 bias color semantic fix — `docs/BIAS_COLOR_SEMANTIC_FIX_M33.md`
