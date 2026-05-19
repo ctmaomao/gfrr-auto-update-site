@@ -164,7 +164,7 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-- **上次会话结束于**: 2026-05-19, commit `06c804a` (docs(agents): complete AGENTS.md split)
+- **上次会话结束于**: 2026-05-19, commit `bbe28e4` (docs(agents): fix section numbering gap)
 - **当前进行中**: 无活跃任务。Memory bank 定制已全部完成;check:all 67 项全绿
 - **下一步建议**: 下一个功能任务从 Open Backlog 挑选 (P1-4 ACLED 或 P2-7/8/9);或直接等待下次 milestone 机会
 - **阻塞或等待**: 无
