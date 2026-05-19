@@ -18,7 +18,7 @@
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
 | SIPRI 状态 | M-61 起 `config/world-order-sipri-normalized.json` 使用 SIPRI 2024 真实数据，world-order build 后为 `ok` |
 | QQQ weekly refresh | M-62 起 M-24 history writer 由 integral replace 改为 `isoWeek` keyed merge；weekly sanitized batches 可增量延长历史 |
-| ACLED 状态 | 延后至后续 M-series；等待 Research/Partner tier |
+| ACLED 状态 | M-63 series planned；Open-license manual xlsx workflow,pre-M-63a baseline remains `not_configured` |
 | 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
 
 ---
@@ -33,9 +33,12 @@
 
 #### P1-4: ACLED 数据源配置
 - **描述**: `sources.acled.status = "not_configured"`
-- **数据源**: ACLED API (需 key)
+- **数据源**: ACLED Open-license aggregated xlsx downloads (manual download;no scraping/crawling)
 - **类型**: 类型 2
-- **估计 PR**: ~120 行
+- **估计 PR**: M-63 分 3 个小 PR 推进
+- **M-63a — ACLED weekly regional sanitizer + importer**: status `planned`;PR α/3 of M-63 series;weekly 6 regional files → `config/world-order-acled-regional-weekly.json`
+- **M-63b — ACLED monthly global aggregation**: status `planned`;PR β/3 of M-63 series;monthly 6 global files → `config/world-order-acled-global-monthly.json`
+- **M-63c — ACLED weekly + monthly reminder workflows**: status `planned`;PR γ/3 of M-63 series;GitHub reminder workflows only,after manual-ingestion contracts are reviewed
 
 ### P2 Items (Optional)
 
@@ -168,4 +171,3 @@
 - **当前进行中**: 无活跃任务。Memory bank 定制已全部完成;check:all 67 项全绿
 - **下一步建议**: 下一个功能任务从 Open Backlog 挑选 (P1-4 ACLED 或 P2-7/8/9);或直接等待下次 milestone 机会
 - **阻塞或等待**: 无
-
