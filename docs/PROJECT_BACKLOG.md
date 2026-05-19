@@ -9,16 +9,18 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-62 |
+| 当前生产状态 | v28.0M-63a |
 | Cache version | `28.0M-58V` |
-| check:all 项数 | 67 |
-| 最后审计日期 | **2026-05-18** (M-55b audit + Build #74 refresh + M-57 + M-58 + M-59 + M-60 + M-61 + M-62) |
+| check:all 项数 | 68 |
+| 最后审计日期 | **2026-05-19** (M-55b audit + Build #74 refresh + M-57 + M-58 + M-59 + M-60 + M-61 + M-62 + M-63a) |
 | 最后 daily refresh | 2026-05-17 (Build #74, commit `e366b60`) |
 | GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
 | SIPRI 状态 | M-61 起 `config/world-order-sipri-normalized.json` 使用 SIPRI 2024 真实数据，world-order build 后为 `ok` |
 | QQQ weekly refresh | M-62 起 M-24 history writer 由 integral replace 改为 `isoWeek` keyed merge；weekly sanitized batches 可增量延长历史 |
-| ACLED 状态 | M-63 series planned；Open-license manual xlsx workflow,pre-M-63a baseline remains `not_configured` |
+| ACLED 状态 | M-63a 起 weekly regional manual-xlsx sanitizer + importer 落地；无 xlsx 输入时 `manual_required`,有真实 `quality.isRealData=true` JSON 时 `ok`；M-63b monthly 待跟进 |
+| ADR-0013 | 2026-05-19 落地 (PR #231)；ADR-0001 zero-deps 精化为 runtime zero-dep,本地开发工具可在 ADR-0013 约束下使用 devDependencies |
+| First devDependency | M-63a 起 `xlsx@0.18.5` (SheetJS) 仅由 `scripts/world-order/sanitize-acled-weekly.mjs` 导入,runtime/check/workflow/frontend 不得引用 |
 | 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
 
 ---
@@ -31,12 +33,12 @@
 
 ### P1 Items (Recommended)
 
-#### P1-4: ACLED 数据源配置
-- **描述**: `sources.acled.status = "not_configured"`
-- **数据源**: ACLED Open-license aggregated xlsx downloads (manual download;no scraping/crawling)
+#### P1-4: ACLED 数据源配置 (in progress — M-63 series)
+- **描述**: `sources.acled.status` 已从 `not_configured` 升级为 `manual_required` / `ok` 双状态 (取决于是否有 weekly xlsx 导入)
+- **数据源**: ACLED Open-license aggregated xlsx downloads (manual download;no scraping/crawling per EULA §3.3)
 - **类型**: 类型 2
 - **估计 PR**: M-63 分 3 个小 PR 推进
-- **M-63a — ACLED weekly regional sanitizer + importer**: status `planned`;PR α/3 of M-63 series;weekly 6 regional files → `config/world-order-acled-regional-weekly.json`
+- **M-63a — ACLED weekly regional sanitizer + importer**: ✅ `done` (PR #232, merged 2026-05-19);weekly 6 regional files → `config/world-order-acled-regional-weekly.json`;API path removed;`xlsx@0.18.5` 进入 devDependencies
 - **M-63b — ACLED monthly global aggregation**: status `planned`;PR β/3 of M-63 series;monthly 6 global files → `config/world-order-acled-global-monthly.json`
 - **M-63c — ACLED weekly + monthly reminder workflows**: status `planned`;PR γ/3 of M-63 series;GitHub reminder workflows only,after manual-ingestion contracts are reviewed
 
@@ -89,6 +91,9 @@
 | M-60 | Pages deploy trigger coverage (workflow_run centralization + heuristic guard) | (this PR) | 2026-05-17 | ✅ Centralize Pages auto-deploy via Pages workflow_run.workflows list; remove ad-hoc `gh workflow run` from refresh-world-order-stress; resolve latent external-ai-production-refresh hole; add heuristic contract check guarding all committing-to-main workflows |
 | M-61 | SIPRI manual-normalized integration (P1-3 close) | (this PR) | 2026-05-18 | ✅ Import verified 2024 SIPRI data (top 10 + 5 regions); add 3 narrative supporting branches (global arms race, major powers rising, GDP share rising); document annual refresh procedure; resolves last `manual_required` external source |
 | M-62 | QQQ weekly history merge (M-24 replace → isoWeek merge) | (this PR) | 2026-05-18 | ✅ Enables incremental weekly QQQ refresh; incoming wins on same isoWeek; 8 sanity checks + synthetic merge coverage; no data file changes |
+| ADR-0013 prep-1 | DATA_SOURCES.md ACLED canonical metadata lock | #230 | 2026-05-19 | ✅ M-63a prep blocker A — ACLED 边界 doc 锁定 (manual-xlsx-only, EULA §3.3) |
+| ADR-0013 prep-2 | ADR-0013 Allow devDependencies for local development tools | #231 | 2026-05-19 | ✅ M-63a prep blocker B — refines ADR-0001 zero-deps scope; runtime 保持 zero-dep,local dev tools 可在 ADR-0013 约束下用 devDeps |
+| M-63a | ACLED weekly regional sanitizer + importer (API path removed) | #232 | 2026-05-19 | ✅ First consumer of ADR-0013 (`xlsx@0.18.5`); weekly 6 regional xlsx → normalized JSON; ACLED 进入 `peaceDividendRetreat` (SIPRI 0.35 + GDELT 0.20 + ACLED 0.25 + module 0.20); `check:all` 67 → 68; old API adapter (`ACLED_API_KEY`/`ACLED_EMAIL`/`api.acleddata.com`) wholesale-removed |
 
 ---
 
@@ -115,6 +120,7 @@
 | 2026-05-17 | M-60 Pages trigger coverage audit + implementation | Codex | Pages deploy trigger hole resolved | Centralized workflow_run listener + heuristic check:pages-trigger-coverage |
 | 2026-05-18 | M-61 SIPRI manual-normalized integration | Codex | P1-3 resolved | SIPRI 2024 normalized data + 3 world-order narrative supporting branches |
 | 2026-05-18 | M-62 QQQ weekly history merge | Codex | M-24 weekly refresh unblocked | Replaces integral history overwrite with isoWeek-keyed merge + cross-seam guard |
+| 2026-05-19 | M-63a ACLED weekly regional sanitizer + importer | Claude Code (review) + Codex (impl) | P1-4 partially resolved (weekly track done; monthly = M-63b) | First ADR-0013 consumer (`xlsx@0.18.5` devDep); API adapter wholesale-removed; `peaceDividendRetreat` reweighted; `check:all` 67 → 68 |
 
 ---
 
@@ -167,7 +173,7 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-- **上次会话结束于**: 2026-05-19, commit `bbe28e4` (docs(agents): fix section numbering gap)
-- **当前进行中**: 无活跃任务。Memory bank 定制已全部完成;check:all 67 项全绿
-- **下一步建议**: 下一个功能任务从 Open Backlog 挑选 (P1-4 ACLED 或 P2-7/8/9);或直接等待下次 milestone 机会
+- **上次会话结束于**: 2026-05-19, PR #232 (M-63a ACLED weekly regional sanitizer + importer) merged into `main`;prep PRs #230 (DATA_SOURCES.md ACLED lock) 和 #231 (ADR-0013) 已先于 #232 落地
+- **当前进行中**: 无活跃任务。M-63a 已合并;check:all 68 项;ACLED 进入 weekly manual-xlsx workflow,无 xlsx 输入时为 `manual_required`,有真实数据时为 `ok`
+- **下一步建议**: M-63b — ACLED monthly global aggregation (PR β/3 of M-63 series);沿用 M-63a 范式新增 `scripts/world-order/sanitize-acled-monthly.mjs` + `check:world-order-acled-monthly`,输出 `config/world-order-acled-global-monthly.json`,monthly 6 global files;不顺手加 reminder workflow (那是 M-63c)
 - **阻塞或等待**: 无
