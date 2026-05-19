@@ -21,6 +21,7 @@
 | [ADR-0010](0010-node-24-only.md) | Node.js 24 only across CI and local | Accepted |
 | [ADR-0011](0011-paper-not-dashboard-design.md) | UI is editorial paper aesthetic, not SaaS dashboard | Accepted |
 | [ADR-0012](0012-check-all-composed-in-package-json.md) | `check:all` is composed in `package.json`, not separate config | Accepted |
+| [ADR-0013](0013-dev-dependencies-allowed-for-local-tools.md) | devDependencies allowed for local development tools | Accepted |
 
 ## Superseded
 
