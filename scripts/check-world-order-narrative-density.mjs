@@ -116,10 +116,21 @@ if (!narrative) {
     }
   }
 
-  for (const source of ['acled', 'sipri']) {
-    if (!missingSources.has(source)) {
-      fail(`world_order_pressure_crossing missing source-status evidence: ${source}`);
+  // acled is always not_configured, so must appear in missingEvidence
+  if (!missingSources.has('acled')) {
+    fail('world_order_pressure_crossing missing source-status evidence: acled');
+  }
+
+  // M-61 fix-up: when SIPRI status is 'ok', evidence appears as sipri_* supporting
+  // branches rather than a single 'sipri' missingEvidence item.
+  const sipriStatusCheck = worldOrder?.externalSources?.sipri?.status;
+  if (sipriStatusCheck === 'ok') {
+    const sipriSupportingBranches = [...supportingSources].filter((s) => s.startsWith('sipri_'));
+    if (sipriSupportingBranches.length === 0) {
+      fail('world_order_pressure_crossing missing sipri supporting branches (sipriStatus ok but no sipri_* sources)');
     }
+  } else if (!missingSources.has('sipri')) {
+    fail('world_order_pressure_crossing missing source-status evidence: sipri');
   }
 
   // M-59 fix-up: decisionModifier.riskBias is conditional on upstream evidence
