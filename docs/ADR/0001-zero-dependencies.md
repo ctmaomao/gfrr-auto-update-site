@@ -33,3 +33,9 @@ Actions 每次 cold start 需要 `npm install`。
 - ❌ 新 contributor 上手陡峭 (无熟悉的脚手架)
 
 任何引入 npm 依赖的 PR 必须先开新 ADR 推翻本决策。
+
+---
+
+## Amendment (2026-05-19)
+
+ADR-0013 (devDependencies allowed for local development tools) refines this ADR's scope. Runtime production code remains zero-dep. Development-time tools (sanitizers, build helpers, future test frameworks) may declare `devDependencies` under the conditions specified in ADR-0013. See `docs/ADR/0013-dev-dependencies-allowed-for-local-tools.md`.
