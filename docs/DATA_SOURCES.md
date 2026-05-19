@@ -154,11 +154,53 @@
 
 | 字段 | 值 |
 |---|---|
-| **License** | 需 API key + Research/Partner tier 审批 |
-| **Quota** | 受 tier 限制 |
-| **状态** | **未配置** (`sources.acled.status = 'not_configured'`),延后至后续 M-series |
-| **影响 scoring?** | 暂无 — 见 PROJECT_BACKLOG P1-4 |
-| **fetcher** | `scripts/world-order/fetch-acled.mjs` (skeleton) |
+| **License level** | `open`;owner 曾申请 Research tier 但被拒。Open level 允许 aggregated downloads 的 unlimited public access、non-commercial use,并要求 attribution |
+| **Source URL** | `https://acleddata.com/conflict-data/download-data-files` |
+| **数据获取方式** | 手动下载 xlsx;**不得**由代码、workflow、script、crawler 或 scraper 自动访问 `acleddata.com` |
+| **EULA §3.3** | "Scraping and crawling the Site is prohibited." |
+| **Refresh 频率** | Weekly regional files:每周 Monday/Tuesday;Monthly global files:每月约 8 日 |
+| **状态** | **未配置** (`sources.acled.status = 'not_configured'`);M-63a 合并后转为 `manual_required`,operator 放入首批 xlsx 后才可转为 `ok` / `partial` |
+| **失败 fallback** | `manual_required` / `error` / `not_configured` 只影响 World Order overlay 可用性提示,不得阻断 `check:all`,不得进入 main scoring / decision / execution / position |
+| **影响 scoring?** | **overlay only** — M-63a 之后只允许进入 World Order `peaceDividendRetreat` 维度;不得影响主决策模型 |
+| **fetcher** | `scripts/world-order/fetch-acled.mjs` (currently skeleton;planned M-63a implementation) |
+| **weekly sanitizer** | `scripts/world-order/sanitize-acled-weekly.mjs` (planned M-63a) |
+| **monthly sanitizer** | `scripts/world-order/sanitize-acled-monthly.mjs` (planned M-63b) |
+| **提醒机制** | `.github/workflows/acled-{weekly,monthly}-refresh-reminder.yml` (planned M-63c) |
+| **derived JSON** | `config/world-order-acled-regional-weekly.json` (M-63a) + `config/world-order-acled-global-monthly.json` (M-63b) |
+| **raw xlsx storage** | `manual-artifacts/world-order/acled-input/{weekly,monthly}/` (gitignored) |
+
+**Canonical derived-metadata fields** (M-63a/M-63b implementation must match verbatim):
+
+```jsonc
+{
+  "sourceUrl":     "https://acleddata.com/conflict-data/download-data-files",
+  "licenseLevel":  "open",
+  "attribution":   "ACLED (Armed Conflict Location & Event Data) — https://acleddata.com"
+}
+```
+
+**Aggregated download tracks**:
+
+| Track | Files | Scope |
+|---|---:|---|
+| Weekly regional | 6 | Africa;Middle East;Europe and Central Asia;United States and Canada;Latin America and the Caribbean;Asia-Pacific |
+| Monthly global | 6 | political_violence_country_month;political_violence_country_year;demonstrations_country_year;civilians_targeted_country_year;fatalities_country_year;civilian_fatalities_country_year |
+
+**Status vocabulary**:
+
+| Status | 含义 |
+|---|---|
+| `ok` | Weekly and monthly data both ingested |
+| `partial` | Only weekly or only monthly data is available after M-63b lands |
+| `manual_required` | No data ingested;operator needs to download xlsx manually |
+| `error` | JSON parse failure or schema validation failure |
+| `not_configured` | Pre-M-63a baseline state |
+
+**Attribution requirement**:
+
+The frontend dashboard must display `ACLED (Armed Conflict Location & Event Data) — https://acleddata.com`
+wherever ACLED-derived signals are displayed. Implementation is deferred to a later PR, but any drift between this
+documented attribution string and code is a contract violation.
 
 ---
 
