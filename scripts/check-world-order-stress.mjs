@@ -19,6 +19,7 @@ const allowedMarketStates = new Set(['not_confirmed', 'weak', 'partial_confirmed
 const allowedMarketInputSources = new Set(['worker-generated-preview', 'local-realtime', 'daily-baseline', 'unavailable']);
 const allowedGdeltQueryStatuses = new Set(['ok', 'partial', 'error', 'rate_limited', 'skipped']);
 const allowedSipriStatuses = new Set(['ok', 'stale', 'error', 'manual_required']);
+const allowedAcledStatuses = new Set(['ok', 'manual_required', 'error', 'partial', 'not_configured']);
 const marketInputNumberFields = ['brent', 'gold', 'vix', 'dxy', 'hyOas', 'us10y', 'real10y', 'spx'];
 const sourceKeys = ['gdelt', 'ofac', 'sipri', 'acled'];
 const dimensionKeys = [
@@ -201,6 +202,43 @@ if (sipri.status === 'manual_required') {
   const note = String(sipriSummary.noteZh || '');
   if (!note.includes('手动导入') && !note.includes('尚未导入')) {
     fail('externalSources.sipri manual_required noteZh must mention manual import');
+  }
+}
+
+const acled = payload.externalSources.acled;
+const acledSummary = acled.summary;
+if (!allowedAcledStatuses.has(acled.status)) fail(`externalSources.acled.status invalid: ${acled.status}`);
+if (JSON.stringify(acledSummary).includes('exampleOnly') || JSON.stringify(acledSummary).includes('notForScoring')) {
+  fail('externalSources.acled summary must not expose exampleOnly or notForScoring as scoring data');
+}
+if (acled.status === 'ok') {
+  for (const key of [
+    'eventsLast4Weeks',
+    'eventsDelta4Vs12',
+    'latestWeek',
+    'regionsTracked',
+    'sourceFreshness',
+    'noteZh'
+  ]) {
+    if (!(key in acledSummary)) fail(`externalSources.acled.summary.${key} missing when ok`);
+  }
+  if (!Number.isFinite(acledSummary.eventsLast4Weeks)) {
+    fail('externalSources.acled.summary.eventsLast4Weeks required when ok');
+  }
+  if (!Number.isFinite(acledSummary.eventsDelta4Vs12)) {
+    fail('externalSources.acled.summary.eventsDelta4Vs12 required when ok');
+  }
+  if (typeof acledSummary.latestWeek !== 'string' || !/^\d{4}-\d{2}-\d{2}$/u.test(acledSummary.latestWeek)) {
+    fail('externalSources.acled.summary.latestWeek must be YYYY-MM-DD when ok');
+  }
+  if (!Number.isFinite(acledSummary.regionsTracked)) {
+    fail('externalSources.acled.summary.regionsTracked required when ok');
+  }
+  if (typeof acledSummary.sourceFreshness !== 'string' || acledSummary.sourceFreshness.length === 0) {
+    fail('externalSources.acled.summary.sourceFreshness required when ok');
+  }
+  if (typeof acledSummary.noteZh !== 'string' || acledSummary.noteZh.length === 0) {
+    fail('externalSources.acled.summary.noteZh required when ok');
   }
 }
 

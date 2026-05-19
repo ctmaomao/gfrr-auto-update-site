@@ -49,7 +49,21 @@ function sourceScore(sourceKey, source) {
     );
   }
   if (sourceKey === 'acled') {
-    return source?.status === 'ok' ? clampScore((summary.eventCount || 0) * 0.6) : 0;
+    if (source?.status === 'error') return 0;
+    if (source?.status === 'manual_required') return 10;
+    if (source?.status === 'partial') return 30;  // reserved for PR β
+    // status === 'ok'
+    const s = source.summary || {};
+    const deltaScore = Number.isFinite(s.eventsDelta4Vs12)
+      ? Math.max(0, Math.min(40, s.eventsDelta4Vs12 * 100))
+      : 0;
+    const fatalitiesScore = Number.isFinite(s.fatalitiesLast4Weeks)
+      ? Math.min(20, Math.log10(Math.max(1, s.fatalitiesLast4Weeks)) * 4)
+      : 0;
+    const civilianTargetingScore = Number.isFinite(s.civilianTargetingShareLast4Weeks)
+      ? s.civilianTargetingShareLast4Weeks * 30
+      : 0;
+    return clampScore(deltaScore + fatalitiesScore + civilianTargetingScore);
   }
   return 0;
 }
@@ -104,6 +118,61 @@ function buildSipriEvidence(source, sipriScore) {
   };
 }
 
+function buildAcledEvidence(source, acledScore) {
+  const summary = source?.summary || {};
+  if (source?.status === 'ok') {
+    const delta = Number.isFinite(summary.eventsDelta4Vs12)
+      ? `${Math.round(summary.eventsDelta4Vs12 * 100)}%`
+      : '不可比';
+    return {
+      labelZh: 'ACLED 周度冲突事件显示和平红利退潮压力',
+      source: 'acled',
+      summary: `ACLED 手动周度聚合更新至 ${summary.latestWeek}，覆盖 ${summary.regionsTracked} 个区域，近 4 周事件相对 12 周均值变化 ${delta}。`,
+      value: acledScore,
+      direction: acledScore >= 30 ? 'risk_up' : 'neutral',
+      confidence: source.confidence ?? 0.85
+    };
+  }
+  if (source?.status === 'manual_required') {
+    return {
+      labelZh: 'ACLED 周度冲突事件待手动导入',
+      source: 'acled',
+      summary: 'ACLED Open-license xlsx 尚未由 operator 手动下载并 sanitize；当前只给低权重占位，不把缺失数据当作真实冲突上升证据。',
+      value: acledScore,
+      direction: 'neutral',
+      confidence: 0.15
+    };
+  }
+  if (source?.status === 'error') {
+    return {
+      labelZh: 'ACLED 周度冲突事件数据源异常',
+      source: 'acled',
+      summary: 'ACLED weekly normalized JSON 解析或校验异常，本轮不参与和平红利退潮评分。',
+      value: 0,
+      direction: 'neutral',
+      confidence: 0.05
+    };
+  }
+  if (source?.status === 'partial') {
+    return {
+      labelZh: 'ACLED 周度/月度数据部分可用',
+      source: 'acled',
+      summary: 'ACLED partial 状态预留给 M-63b：weekly 或 monthly 仅一侧可用时进入低置信观察。',
+      value: acledScore,
+      direction: 'neutral',
+      confidence: source.confidence ?? 0.3
+    };
+  }
+  return {
+    labelZh: 'ACLED 周度冲突事件未配置',
+    source: 'acled',
+    summary: 'ACLED manual-xlsx importer 尚未产生可用数据，当前不作为真实事件层证据。',
+    value: acledScore,
+    direction: 'neutral',
+    confidence: 0.1
+  };
+}
+
 function existingRiskModuleScore(dataPayload) {
   const modules = dataPayload?.modules || {};
   const keys = ['geopolitical', 'energy', 'inflation', 'liquidity', 'debt', 'banking'];
@@ -140,11 +209,12 @@ export function scoreWorldOrderStress({ externalSources, marketConfirmation, dat
 
   const dimensions = {
     peaceDividendRetreat: {
-      score: clampScore((sipriScore * 0.45) + (gdeltScore * 0.25) + (moduleScore * 0.3)),
+      score: clampScore((sipriScore * 0.35) + (gdeltScore * 0.20) + (acledScore * 0.25) + (moduleScore * 0.20)),
       labelZh: DIMENSION_LABELS_ZH.peaceDividendRetreat,
       trend: 'watching',
       evidence: sanitizeEvidence([
-        buildSipriEvidence(externalSources.sipri, sipriScore)
+        buildSipriEvidence(externalSources.sipri, sipriScore),
+        buildAcledEvidence(externalSources.acled, acledScore)
       ])
     },
     blocFormation: {
@@ -156,11 +226,11 @@ export function scoreWorldOrderStress({ externalSources, marketConfirmation, dat
       ])
     },
     multiTheaterConflict: {
-      score: clampScore((gdeltScore * 0.55) + (acledScore * 0.25) + (moduleScore * 0.2)),
+      score: clampScore((gdeltScore * 0.7) + (moduleScore * 0.3)),
       labelZh: DIMENSION_LABELS_ZH.multiTheaterConflict,
       trend: 'watching',
       evidence: sanitizeEvidence([
-        buildEvidence('多区域冲突报道密度', 'GDELT/ACLED', 'ACLED 未配置时由 GDELT 代理估算冲突事件层。', Math.max(gdeltScore, acledScore), 0.55)
+        buildEvidence('多区域冲突报道密度', 'GDELT/modules', '由 GDELT 与既有地缘模块估算；ACLED 仅进入和平红利退潮维度。', gdeltScore, 0.55)
       ])
     },
     economicWeaponization: {
