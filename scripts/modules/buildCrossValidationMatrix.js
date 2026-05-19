@@ -891,7 +891,7 @@ function buildWorldOrderNarrative(data, worldOrderStressData) {
       sipriGdpShare === null ? 'rising' : `${formatNumber(sipriGdpShare, 1)}%`,
       sipriGdpShare === null
         ? 'SIPRI 全球军费占 GDP 比重上升，财政战备倾斜结构性强化'
-        : `SIPRI 全球军费占 GDP 比重升至 ${formatNumber(sipriGdpShare, 1)}%（2015 年为 2.3%），财政战备倾斜结构性强化`,
+        : `SIPRI 全球军费占 GDP 比重升至 ${formatNumber(sipriGdpShare, 1)}%（2016 年为 2.2%），财政战备倾斜结构性强化`,
     ));
   }
   if (ofacRecentActionsCount !== null && ofacRecentActionsCount > 0) {
