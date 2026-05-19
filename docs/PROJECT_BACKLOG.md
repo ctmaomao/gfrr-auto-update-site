@@ -173,7 +173,9 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-- **上次会话结束于**: 2026-05-19, PR #232 (M-63a ACLED weekly regional sanitizer + importer) merged into `main`;prep PRs #230 (DATA_SOURCES.md ACLED lock) 和 #231 (ADR-0013) 已先于 #232 落地
-- **当前进行中**: 无活跃任务。M-63a 已合并;check:all 68 项;ACLED 进入 weekly manual-xlsx workflow,无 xlsx 输入时为 `manual_required`,有真实数据时为 `ok`
-- **下一步建议**: M-63b — ACLED monthly global aggregation (PR β/3 of M-63 series);沿用 M-63a 范式新增 `scripts/world-order/sanitize-acled-monthly.mjs` + `check:world-order-acled-monthly`,输出 `config/world-order-acled-global-monthly.json`,monthly 6 global files;不顺手加 reminder workflow (那是 M-63c)
-- **阻塞或等待**: 无
+### Session Handoff (2026-05-19 晚)
+
+- **上次会话结束于**: M-63a ACLED weekly integration 系列完成。今晚 merge 7 个 PR (#225/#226/#230/#231/#232/#234/#235)。main HEAD 当前为 PR #235 的 merge commit (3673df0)。check:all PASS 68 items。
+- **当前进行中**: 无 active 任务。M-63a 主体已落地,等 owner 下首批 ACLED xlsx 跑真实数据验证。
+- **下一步建议**: Owner 下次开 session 第一句可以说 "今天下了首批 6 个 ACLED weekly xlsx,放到 manual-artifacts/world-order/acled-input/weekly/,帮我跑 acled:sanitize:weekly 看输出" — 或者 "开始做 PR β (M-63b ACLED monthly)"。
+- **阻塞或等待**: 无技术阻塞。Owner 需先在浏览器手动从 https://acleddata.com/conflict-data/download-data-files 下载 xlsx 文件 (ACLED EULA §3.3 禁止任何自动化下载,这是合规要求)。
