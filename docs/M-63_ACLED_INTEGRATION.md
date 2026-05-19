@@ -286,6 +286,92 @@ If the sanitizer reports missing regions, the operator may still commit a partia
 
 If the sanitizer reports stale or expired latest week, download a newer batch before committing.
 
+## Dependency CVE Disclosure & Risk Acceptance
+
+### Known CVEs in `xlsx@0.18.5`
+
+The `xlsx` (SheetJS Community Edition) library added in M-63a under ADR-0013 has two publicly disclosed high-severity vulnerabilities with **no fix available** in the Community Edition npm package. Fixes are only provided in SheetJS Pro (commercial license, $5k-$50k/year), which is out of scope for this project.
+
+| Advisory | Type | Severity | Status |
+|---|---|---|---|
+| [GHSA-4r6h-8v6p-xvw6](https://github.com/advisories/GHSA-4r6h-8v6p-xvw6) | Prototype Pollution | High | No fix in Community Edition |
+| [GHSA-5pgg-2g8v-p4x9](https://github.com/advisories/GHSA-5pgg-2g8v-p4x9) | ReDoS (Regular Expression DoS) | High | No fix in Community Edition |
+
+`npm audit` will report these as `1 high severity vulnerability` indefinitely on this repository.
+
+### Threat model
+
+**Attacker capability required:** A malicious actor would need to craft a specifically-poisoned `.xlsx` file and arrange for the operator to download and process it.
+
+**Realistic source of malicious xlsx:** The only xlsx files this project processes come from manual downloads at `https://acleddata.com/conflict-data/download-data-files`, performed by the operator while logged into a personal myACLED account. ACLED is a Wisconsin-registered research organization (ACLED Analysis, Incorporated) used by the UN, World Bank, and Carnegie Endowment. For an attack to succeed, ACLED itself would need to deliberately poison its publicly-published aggregated data files — an effectively zero-probability scenario given their institutional model.
+
+**Worst-case impact if exploit triggered:**
+- Local Node process running the sanitizer becomes unresponsive (ReDoS) or has its global object prototypes polluted (Prototype Pollution)
+- Operator kills the process (Ctrl+C) and the issue is resolved
+- **No data exfiltration** — sanitizer reads xlsx, writes derived JSON, has no network access
+- **No persistence** — sanitizer is a one-shot script, no resident process
+- **No lateral movement** — sanitizer does not access files outside `manual-artifacts/world-order/acled-input/` and `config/world-order-acled-regional-weekly.json`
+
+### Why ADR-0013 makes this acceptable
+
+ADR-0013 was designed exactly for this scenario. The vulnerable library is structurally prevented from reaching production paths:
+
+| Path | Imports xlsx? | Verified by |
+|---|---|---|
+| Dashboard frontend (`index.html`, dashboard JS) | No | Zero-dep policy (ADR-0001) |
+| GitHub Actions workflows (`refresh-world-order-stress.yml`, etc.) | No | `grep -r "from ['\"]xlsx" .github/` returns 0 |
+| `build:world-order` pipeline | No | `grep -r "from ['\"]xlsx" scripts/build-*` returns 0 |
+| `check:all` chain (68 items) | No | `grep -r "from ['\"]xlsx" scripts/check-*` returns 0 |
+| `scripts/world-order/fetch-acled.mjs` (importer) | No | M-63a explicitly forbade; verified by grep at merge time |
+| `scripts/world-order/sanitize-acled-weekly.mjs` (sanitizer) | Yes | **Only consumer** — runs manually on operator's local PowerShell |
+
+The vulnerable code path executes only when the operator manually runs `npm run acled:sanitize:weekly` against trusted xlsx files in `manual-artifacts/`. No production runtime path is exposed.
+
+`npm audit --omit=dev` (production-only audit) returns **0 vulnerabilities**, confirming the runtime surface is unaffected.
+
+### Risk acceptance decision
+
+**Date:** 2026-05-19
+**Decided by:** Project owner
+**Decision:** Accept the CVE risk.
+
+**Rationale:**
+1. Actual exploitation requires ACLED-as-attacker, which is implausible
+2. Worst-case impact (local process crash) has no data or persistence consequences
+3. Runtime production surface is structurally unaffected (ADR-0013 isolation)
+4. Alternatives evaluated:
+   - **Switch to `exceljs`** — viable but requires re-implementing the sanitizer's xlsx reading logic (~30-50 LoC); deferred unless circumstances change
+   - **SheetJS Pro** — $5k-$50k/year commercial license; not justified for a personal project
+
+### Monitoring and re-evaluation triggers
+
+This decision should be re-evaluated if any of the following occur:
+- `xlsx` is ever imported by code outside `scripts/world-order/sanitize-acled-weekly.mjs` (or its planned monthly sibling `sanitize-acled-monthly.mjs` in M-63b) — would violate ADR-0013 isolation
+- A new CVE in `xlsx` allows remote exploitation without a crafted file (extremely unlikely given the architecture)
+- The project pivots to processing untrusted xlsx files (e.g., user uploads) — this would invalidate the threat model entirely
+- ACLED experiences a compromise affecting their data distribution
+
+### Operator runbook for future `npm install`
+
+When the operator runs `npm install` (e.g., on a new machine clone or after dependency changes), `npm audit` will display:
+
+```
+1 high severity vulnerability
+Some issues need review, and may require choosing a different dependency.
+Run `npm audit` for details.
+```
+
+**This is expected.** Refer to this section to confirm the issue is known and accepted. Do not treat this as a regression.
+
+To verify nothing has changed in the threat model, run:
+
+```powershell
+npm audit --omit=dev    # Should return: 0 vulnerabilities
+grep -r "from ['\"]xlsx" scripts/    # Should return only sanitize-acled-weekly.mjs
+```
+
+Both checks passing means the CVE acceptance still holds.
+
 ## 10. Known Limitations
 
 Open-license access does not provide an API path for this project. The owner was denied Research/Partner tier API access, so M-63a removes the old API adapter and does not keep it as a fallback.
