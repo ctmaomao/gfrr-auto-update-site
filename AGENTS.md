@@ -109,7 +109,7 @@
 
 必须保留完整项目结构和现有主要模块，包括 realtime、health、decision、action queue、trigger monitor、invalidation rules、heatmap 和六大风险模块。
 
-## Frontend Design Contract — Mandatory Reading
+## 2. Frontend Design Contract — Mandatory Reading
 
 > **CRITICAL**: Before performing any frontend change (HTML / CSS / SVG / JS rendering modules), every AI agent (Codex, Cursor, Claude, or otherwise) MUST read `DESIGN.md` in full.
 
@@ -290,8 +290,10 @@ AI 完成任务后只输出：
 
 ## 历史 milestone reminder
 
-M-36V～M-62 逐版本 scope reminder、G-9B 工具描述、以及 v28.0L-3B-1 audit-sync、
-L-3C～L-3F 设计文档段落等已全部从本文件移出。查阅位置:
+M-36V～M-62 逐版本 scope reminder、G-9B 工具描述、以及更早的 v28.0L-3B-1 audit-sync、
+L-3D readiness / L-3E implementation plan / L-3F provider-test workflow skeleton 等
+设计文档段落已从本文件移出。Section 1 仍保留正在生效的 K-* 和 L-0~L-3C 等边界规则。
+查阅位置:
 
 - **MILESTONE_INDEX.md Archived 段**: [`docs/MILESTONE_INDEX.md`](docs/MILESTONE_INDEX.md)
 - **完整快照**: `git show v28.0J-pre-split:AGENTS.md`
