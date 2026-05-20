@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 v28.0C</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=28.0M-64V" />
+  <link rel="stylesheet" href="assets/styles.css?v=28.0M-65V" />
   <style>
     .macro-overview-shell {
       display: grid;
@@ -753,6 +753,37 @@
                                 </div>
                               </div>
                             </article>
+                            <details class="editorial-subsection">
+                              <summary>恢复状态与系统说明</summary>
+                              <section class="grid two-col footer-grid">
+                                <article class="card">
+                                  <h2>恢复状态</h2>
+                                  <div class="metric-row three">
+                                    <div class="metric-box compact">
+                                      <div class="metric-label">降级模式</div>
+                                      <div class="metric-value" id="degraded-mode">--</div>
+                                    </div>
+                                    <div class="metric-box compact">
+                                      <div class="metric-label">安全输出</div>
+                                      <div class="metric-value" id="safe-output">--</div>
+                                    </div>
+                                    <div class="metric-box compact">
+                                      <div class="metric-label">最近运行时间</div>
+                                      <div class="metric-value small" id="last-run">--</div>
+                                    </div>
+                                  </div>
+                                  <ul class="bullet-list" id="recovery-notes"></ul>
+                                </article>
+                                <article class="card">
+                                  <h2>系统说明</h2>
+                                  <ul class="bullet-list">
+                                    <li>v28.0C 为全中文 Worker-first 混合实时架构版，含决策引擎、执行状态灯与规则配置化。</li>
+                                    <li>页面保持全中文与全宽热力图布局。</li>
+                                    <li>静态托管，数据由自动化脚本每日生成并发布。</li>
+                                  </ul>
+                                </article>
+                              </section>
+                            </details>
                           </section>
                           </details>
 
@@ -1013,6 +1044,41 @@
                                 </div>
                               </div>
                               <ul class="bullet-list" id="confidence-notes"></ul>
+                            </article>
+                          </section>
+                          </details>
+                    <details class="editorial-subsection">
+                            <summary><span class="subsection-meta">SYSTEM OVERVIEW</span>站内总览与核心风险明细（可展开）</summary>
+                          <section class="grid two-col hero-grid cockpit-section">
+                            <article class="card">
+                              <div class="card-head split-head">
+                                <h2>系统总览</h2>
+                                <span class="muted" id="overview-date">--</span>
+                              </div>
+                              <div class="decision-line" id="decision-line">加载中...</div>
+                              <p id="summary-text">加载中...</p>
+                              <div class="metric-row">
+                                <div class="metric-box">
+                                  <div class="metric-label">全球风险评分</div>
+                                  <div class="metric-value" id="global-score">--</div>
+                                </div>
+                                <div class="metric-box">
+                                  <div class="metric-label">当前宏观状态</div>
+                                  <div class="metric-value" id="macro-regime">--</div>
+                                </div>
+                                <div class="metric-box">
+                                  <div class="metric-label">当前危机阶段</div>
+                                  <div class="metric-value" id="crisis-phase">--</div>
+                                </div>
+                                <div class="metric-box">
+                                  <div class="metric-label">信号置信度</div>
+                                  <div class="metric-value" id="confidence-level">--</div>
+                                </div>
+                              </div>
+                            </article>
+                            <article class="card">
+                              <h2>核心风险</h2>
+                              <ul class="bullet-list" id="top-risks"></ul>
                             </article>
                           </section>
                           </details>
@@ -1358,73 +1424,6 @@
                             </article>
                           </details>
 
-                    <details class="editorial-subsection">
-                            <summary>站内总览与核心风险明细（可展开）</summary>
-                          <section class="grid two-col hero-grid cockpit-section">
-                            <article class="card">
-                              <div class="card-head split-head">
-                                <h2>系统总览</h2>
-                                <span class="muted" id="overview-date">--</span>
-                              </div>
-                              <div class="decision-line" id="decision-line">加载中...</div>
-                              <p id="summary-text">加载中...</p>
-                              <div class="metric-row">
-                                <div class="metric-box">
-                                  <div class="metric-label">全球风险评分</div>
-                                  <div class="metric-value" id="global-score">--</div>
-                                </div>
-                                <div class="metric-box">
-                                  <div class="metric-label">当前宏观状态</div>
-                                  <div class="metric-value" id="macro-regime">--</div>
-                                </div>
-                                <div class="metric-box">
-                                  <div class="metric-label">当前危机阶段</div>
-                                  <div class="metric-value" id="crisis-phase">--</div>
-                                </div>
-                                <div class="metric-box">
-                                  <div class="metric-label">信号置信度</div>
-                                  <div class="metric-value" id="confidence-level">--</div>
-                                </div>
-                              </div>
-                            </article>
-                            <article class="card">
-                              <h2>核心风险</h2>
-                              <ul class="bullet-list" id="top-risks"></ul>
-                            </article>
-                          </section>
-                          </details>
-
-                    <details class="editorial-subsection">
-                            <summary>恢复状态与系统说明</summary>
-                          <section class="grid two-col footer-grid">
-                            <article class="card">
-                              <h2>恢复状态</h2>
-                              <div class="metric-row three">
-                                <div class="metric-box compact">
-                                  <div class="metric-label">降级模式</div>
-                                  <div class="metric-value" id="degraded-mode">--</div>
-                                </div>
-                                <div class="metric-box compact">
-                                  <div class="metric-label">安全输出</div>
-                                  <div class="metric-value" id="safe-output">--</div>
-                                </div>
-                                <div class="metric-box compact">
-                                  <div class="metric-label">最近运行时间</div>
-                                  <div class="metric-value small" id="last-run">--</div>
-                                </div>
-                              </div>
-                              <ul class="bullet-list" id="recovery-notes"></ul>
-                            </article>
-                            <article class="card">
-                              <h2>系统说明</h2>
-                              <ul class="bullet-list">
-                                <li>v28.0C 为全中文 Worker-first 混合实时架构版，含决策引擎、执行状态灯与规则配置化。</li>
-                                <li>页面保持全中文与全宽热力图布局。</li>
-                                <li>静态托管，数据由自动化脚本每日生成并发布。</li>
-                              </ul>
-                            </article>
-                          </section>
-                          </details>
           </div>
         </details>
       </section>
@@ -1747,6 +1746,6 @@
     </footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0M-64V"></script>
+  <script type="module" src="scripts/app.js?v=28.0M-65V"></script>
 </body>
 </html>

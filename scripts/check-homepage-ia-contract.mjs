@@ -314,6 +314,62 @@ function checkDailyBrief() {
   }
 }
 
+function checkMethodEvidenceCleanup() {
+  const methodSection = sliceElementById(html, 'method-evidence');
+  const detailSection = sliceElementById(html, 'detail-data');
+  if (!methodSection) {
+    fail('method-evidence must exist for misplaced subsection checks');
+    return;
+  }
+  if (!detailSection) {
+    fail('detail-data must exist for migrated subsection checks');
+    return;
+  }
+
+  const methodSummaryTexts = [...methodSection.matchAll(/<summary\b[^>]*>([\s\S]*?)<\/summary>/giu)]
+    .map((match) => textOnly(match[1]));
+  for (const forbiddenSummary of ['站内总览', '恢复状态']) {
+    if (methodSummaryTexts.some((summary) => summary.includes(forbiddenSummary))) {
+      fail(`#method-evidence must not contain migrated summary text: ${forbiddenSummary}`);
+    }
+  }
+
+  if (detailSection.indexOf('SCENARIOS') >= detailSection.indexOf('SYSTEM OVERVIEW')) {
+    fail('SYSTEM OVERVIEW subsection must live after SCENARIOS inside detail-data');
+  }
+  if (detailSection.indexOf('DATA HEALTH') >= detailSection.indexOf('恢复状态与系统说明')) {
+    fail('恢复状态与系统说明 must be merged under DATA HEALTH inside detail-data');
+  }
+
+  const migratedOverviewIds = [
+    'overview-date',
+    'decision-line',
+    'summary-text',
+    'global-score',
+    'macro-regime',
+    'crisis-phase',
+    'confidence-level',
+    'top-risks',
+  ];
+  const migratedHealthIds = [
+    'degraded-mode',
+    'safe-output',
+    'last-run',
+    'recovery-notes',
+  ];
+  for (const id of [...migratedOverviewIds, ...migratedHealthIds]) {
+    if (!findElementStartById(html, id)) {
+      fail(`migrated runtime id must be preserved: ${id}`);
+    }
+    if (!isElementInside('detail-data', id)) {
+      fail(`migrated runtime id must live inside detail-data: ${id}`);
+    }
+    if (isElementInside('method-evidence', id)) {
+      fail(`migrated runtime id must not remain inside method-evidence: ${id}`);
+    }
+  }
+}
+
 function checkExternalAi() {
   const panel = findElementStartById(html, 'external-ai-display-panel');
   if (!panel) {
@@ -388,6 +444,7 @@ function main() {
   checkOrdering();
   checkWorldOrderTopLevelSection();
   checkDailyBrief();
+  checkMethodEvidenceCleanup();
   checkExternalAi();
   checkHeatmap();
   checkMarketTemperature();

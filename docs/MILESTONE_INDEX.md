@@ -11,8 +11,8 @@
 
 当前未关闭、影响进行中工作的 milestone 与状态:
 
-- **当前生产**: v28.0M-64,frontend cache `28.0M-64V`,`check:all` = 68 项
-- **下一步**: M-65 `#method-evidence` 内部错放 subsection 清理;其他见 `docs/PROJECT_BACKLOG.md` Section 2 Open Backlog Items
+- **当前生产**: v28.0M-65,frontend cache `28.0M-65V`,`check:all` = 68 项
+- **下一步**: M-66 subsection-meta kicker / `risk-explainer` legacy id cleanup;其他见 `docs/PROJECT_BACKLOG.md` Section 2 Open Backlog Items
 - **Open backlog 主线**: P1-4 ACLED 接入(M-63b/c 待启动)、P2-7/8/9 各类宏观指标扩展、P3-* 已明确 won't fix
 - **年度提醒**: M-61b SIPRI 每年 5 月 1 日 GitHub Actions issue (`sipri-annual-refresh-reminder.yml`)
 
@@ -20,19 +20,20 @@
 
 | # | 一句话 | 主要 doc |
 |---|---|---|
+| **M-65** | `#method-evidence` 内容清理;系统总览迁入 `#detail-data`;恢复/系统状态合并入 DATA HEALTH | (无独立 doc;见 README + PROJECT_BACKLOG M-65) |
 | **M-64** | 首页 IA 三方契约对齐;World Order Stress 提升为顶级 regime overlay;External AI 回到 method 之后 | (无独立 doc;见 README + DESIGN.md §4.1) |
 | **M-63a** | ACLED weekly regional sanitizer + importer;xlsx devDep;`peaceDividendRetreat` 重加权;旧 API adapter 彻底移除 | (无独立 doc;见 README + PROJECT_BACKLOG M-63a) |
 | **M-62** | QQQ weekly history 从 integral replace 改为 `isoWeek`-keyed merge;新增 cross-seam monotonicity check | (无独立 doc;见 README) |
 | **M-61** | SIPRI 2024 真实数据(top 10 majorPowers + 5 regions)+ 3 个 world_order supporting branch | `docs/M-61_SIPRI_INTEGRATION.md` |
-| **M-60** | Pages auto-deploy 集中到 `workflow_run.workflows`;`check:pages-trigger-coverage` 守护 | `docs/M-60_PAGES_TRIGGER_COVERAGE.md` |
 
 ## Archived (历史 milestone,scope-only,默认不加载)
 
 > 全部已合并,作为 Conditional Authority 仅在对应历史 PR 范围内权威。
 > 阅读它们前先确认任务边界是否真的需要历史细节;通常不需要。
 
-### M-series (M-31 → M-63a)
+### M-series (M-31 → M-64)
 
+- M-64 IA contract reconciliation + top-level section restructure — (无独立 doc;见 README + DESIGN.md §4.1)
 - M-63a ACLED weekly regional sanitizer + importer;old API adapter removed — (无独立 doc;见 README + PROJECT_BACKLOG)
 - M-62 QQQ weekly history isoWeek-keyed merge + cross-seam monotonicity check — (无独立 doc;见 README)
 - M-61 SIPRI 2024 真实数据 + 3 world_order supporting branch — `docs/M-61_SIPRI_INTEGRATION.md`
