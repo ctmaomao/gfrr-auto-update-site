@@ -79,6 +79,77 @@ function extractCssRule(source, selector) {
   return source.match(new RegExp(`${escapedSelector}\\s*\\{[^}]*\\}`, 'u'))?.[0] ?? '';
 }
 
+function findElementStartById(source, id) {
+  const pattern = new RegExp(`<([a-z0-9-]+)\\b[^>]*\\bid=["']${id}["'][^>]*>`, 'iu');
+  const match = pattern.exec(source);
+  if (!match) return null;
+  return {
+    tagName: match[1].toLowerCase(),
+    index: match.index,
+    source: match[0],
+  };
+}
+
+function findMatchingCloseTag(source, startIndex, tagName) {
+  const pattern = new RegExp(`<\\/?${tagName}\\b[^>]*>`, 'giu');
+  pattern.lastIndex = startIndex;
+  let depth = 0;
+  let match;
+  while ((match = pattern.exec(source))) {
+    depth += match[0].startsWith('</') ? -1 : 1;
+    if (depth === 0) return pattern.lastIndex;
+  }
+  return -1;
+}
+
+function sliceElementById(source, id) {
+  const start = findElementStartById(source, id);
+  if (!start) return '';
+  const end = findMatchingCloseTag(source, start.index, start.tagName);
+  if (end === -1) {
+    fail(`${id} must have a matching </${start.tagName}>`);
+    return '';
+  }
+  return source.slice(start.index, end);
+}
+
+function topLevelEditorialSubsections(sectionHtml) {
+  const tagPattern = /<\/?([a-z0-9-]+)\b[^>]*>/giu;
+  const stack = [];
+  const subsections = [];
+  let match;
+  while ((match = tagPattern.exec(sectionHtml))) {
+    const tagName = match[1].toLowerCase();
+    const tagSource = match[0];
+
+    if (tagSource.startsWith('</')) {
+      for (let index = stack.length - 1; index >= 0; index -= 1) {
+        if (stack[index].tagName === tagName) {
+          stack.splice(index, 1);
+          break;
+        }
+      }
+      continue;
+    }
+
+    const isEditorialSubsection = tagName === 'details' && /\beditorial-subsection\b/u.test(tagSource);
+    const hasEditorialSubsectionAncestor = stack.some((entry) => entry.isEditorialSubsection);
+    if (isEditorialSubsection && !hasEditorialSubsectionAncestor) {
+      const end = findMatchingCloseTag(sectionHtml, match.index, tagName);
+      if (end === -1) {
+        fail(`editorial-subsection in ${sectionHtml.slice(0, 80)} must have a matching </details>`);
+      } else {
+        subsections.push(sectionHtml.slice(match.index, end));
+      }
+    }
+
+    if (!tagSource.endsWith('/>')) {
+      stack.push({ tagName, isEditorialSubsection });
+    }
+  }
+  return subsections;
+}
+
 function checkHomepageIa() {
   const expectedLinks = [
     ['今日总判断', '#homepage-today-judgment'],
@@ -334,6 +405,7 @@ function checkHeatmapStandalone() {
 function checkAppendices() {
   const requiredMarkers = [
     'id="detail-data"',
+    'id="detail-data-header"',
     'DATA APPENDIX',
     'editorial-section-folded',
     'editorial-folded-content',
@@ -345,6 +417,39 @@ function checkAppendices() {
     'id="execution-risk-detail"',
   ];
   for (const marker of requiredMarkers) requireMarker(html, INDEX_PATH, marker);
+}
+
+function checkTopLevelSubsectionKickers() {
+  const checkedSections = [
+    ['#detail-data', 'detail-data'],
+    ['#method-evidence', 'method-evidence'],
+    ['#execution-risk-detail', 'execution-risk-detail'],
+  ];
+  for (const [label, id] of checkedSections) {
+    const sectionHtml = sliceElementById(html, id);
+    if (!sectionHtml) {
+      fail(`${label} must exist for subsection kicker validation`);
+      continue;
+    }
+
+    const subsections = topLevelEditorialSubsections(sectionHtml);
+    if (subsections.length === 0) {
+      fail(`${label} must contain top-level editorial-subsection entries`);
+      continue;
+    }
+
+    for (const subsection of subsections) {
+      const summaryMatch = subsection.match(/<summary\b[^>]*>([\s\S]*?)<\/summary>/iu);
+      if (!summaryMatch) {
+        fail(`${label} top-level editorial-subsection missing summary`);
+        continue;
+      }
+      const summaryHtml = summaryMatch[1];
+      if (!/<span\b[^>]*class=["'][^"']*\bsubsection-meta\b[^"']*["'][^>]*>/iu.test(summaryHtml)) {
+        fail(`${label} top-level editorial-subsection summary missing .subsection-meta kicker: ${textOnly(summaryHtml)}`);
+      }
+    }
+  }
 }
 
 function checkInlineDarkThemeCleanup() {
@@ -651,6 +756,7 @@ checkMarketPricingTemperatureContract();
 checkExternalAiBoundary();
 checkHeatmapStandalone();
 checkAppendices();
+checkTopLevelSubsectionKickers();
 checkInlineDarkThemeCleanup();
 checkMethodCardBorderRadius();
 checkMethodCardAccentConsistency();

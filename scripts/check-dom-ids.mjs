@@ -24,7 +24,7 @@ const REQUIRED_IDS = [
   'world-heatmap',
   'heatmap-list',
   'core-dashboard',
-  'risk-explainer',
+  'detail-data-header',
   'advanced-audit'
 ];
 
