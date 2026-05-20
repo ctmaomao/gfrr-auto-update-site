@@ -9,16 +9,17 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-66 (+ M-63b ACLED monthly) |
-| Cache version | `28.0M-66V` (M-63b 不改前端,无 bump) |
+| 当前生产状态 | v28.0M-67 (+ ISM PMI source repair) |
+| Cache version | `28.0M-66V` (M-67 不改前端,无 bump) |
 | check:all 项数 | 69 |
-| 最后审计日期 | **2026-05-20** (M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
+| 最后审计日期 | **2026-05-20** (M-67 ISM PMI source repair; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
 | 最后 daily refresh | 2026-05-17 (Build #74, commit `e366b60`) |
 | GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
 | SIPRI 状态 | M-61 起 `config/world-order-sipri-normalized.json` 使用 SIPRI 2024 真实数据，world-order build 后为 `ok` |
 | QQQ weekly refresh | M-62 起 M-24 history writer 由 integral replace 改为 `isoWeek` keyed merge；weekly sanitized batches 可增量延长历史 |
 | ACLED 状态 | M-63a (weekly) + M-63b (monthly) 双 sanitizer + 联合 importer 落地；weekly/monthly 都 `isRealData=true` → `ok`；一边到位 → `partial`；两边都缺 → `manual_required`；evidence-only 进入 `peaceDividendRetreat`,不动权重 |
+| ISM PMI 状态 | M-67 起由 `scripts/run-daily-pipeline.mjs::fetchIsmManufacturingPmiReport` 低频解析 ismworld.org 公开报告页；audit-only/display-only；失败降级为 `fallback` / `source_unavailable` / `parse_error` |
 | ADR-0013 | 2026-05-19 落地 (PR #231)；ADR-0001 zero-deps 精化为 runtime zero-dep,本地开发工具可在 ADR-0013 约束下使用 devDependencies |
 | First devDependency | M-63a 起 `xlsx@0.18.5` (SheetJS) 仅由 `scripts/world-order/sanitize-acled-weekly.mjs` 导入,runtime/check/workflow/frontend 不得引用 |
 | 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
@@ -80,7 +81,7 @@
 | Milestone | 描述 | PR | 完成日期 | 验证状态 |
 |---|---|---|---|---|
 | M-46 | SLOOS Bank Loan Standards | #196 | 2026-05 | ✅ pipeline + data refreshed (Build #74) |
-| M-47 | ISM PMI Growth Layer | #197 | 2026-05-16 | ✅ pipeline + data refreshed (Build #74) |
+| M-47 | ISM PMI Growth Layer fields + narrative branches | #197 | 2026-05-16 | ⚠️ Source path superseded by M-67; fields/branches retained, active source is ISM public report parser |
 | M-48 | NFCI Bank Stress Index | #198 | 2026-05 | ✅ pipeline + data refreshed (Build #74) |
 | M-49 | Diesel Crack Spread | #199 | 2026-05 | ✅ pipeline + data refreshed (Build #74) |
 | M-50 | Repo Market Spread | #200 | 2026-05-16 | ✅ pipeline + data refreshed (Build #74) |
@@ -105,6 +106,7 @@
 | M-65 | method-evidence content cleanup | (this PR) | 2026-05-20 | ✅ "站内总览与核心风险明细" migrated to `#detail-data` SYSTEM OVERVIEW; "恢复状态与系统说明" merged into DATA HEALTH; all runtime DOM ids preserved; cache bumped to 28.0M-65V |
 | M-66 | legacy anchor + subsection kicker consistency polish | (this PR) | 2026-05-20 | ✅ Detail Data header anchor renamed to `detail-data-header`; top-level method/execution subsections now carry subsection-meta kickers; `check:editorial-redesign-contract` enforces kicker consistency; cache bumped to 28.0M-66V |
 | ADR-0014 | DESIGN.md §4.1 为 IA ground truth；appendix content boundaries codified；subsection-meta mandate enforced by check scripts | `6e99cee` | 2026-05-20 | ✅ IA authority hierarchy (ADR > DESIGN.md §4.1 > check scripts > HTML) established；top-down change direction mandated；M-64/65/66 三方漂移根因归档；`docs/ADR/0014-design-md-is-ia-ground-truth.md` |
+| M-67 | ISM PMI source repair | (this PR) | 2026-05-20 | ✅ Broken FRED PMI path replaced with low-frequency parser for ISM public Manufacturing PMI report page; `sourceStatus.pmi` four-state contract added; zero new deps; PMI remains audit-only/display-only; `check:all` stays 69 |
 
 ---
 
@@ -186,7 +188,7 @@
 
 ### Session Handoff (2026-05-20 晚)
 
-- **上次会话结束于**: M-63b ACLED monthly aggregation 完成（方案 A：evidence-only，无权重改动）。`scripts/world-order/sanitize-acled-monthly.mjs` + `scripts/check-world-order-acled-monthly.mjs` 新增，`scripts/world-order/fetch-acled.mjs` 改为联合 weekly+monthly 消费并引入 `partial` 状态。`config/world-order-acled-global-monthly.json` 由首批真实 xlsx 生成（asOfDate=2026-05-08, latestFullYear=2025, pvYoyDelta=+19.8%）。check:all 68 → 69。
-- **当前进行中**: 无 active 任务；等用户审 diff 后 commit/push。
-- **下一步建议**: M-63c (ACLED weekly + monthly reminder workflows) 或 P2-7 就业广度接入；或先做 M-63d source-review + backtest 决定 monthly 是否要纳入 `peaceDividendRetreat` 权重。
-- **阻塞或等待**: 无技术阻塞。M-63c 是 reminder workflow 性质，独立 PR 即可推进。
+- **上次会话结束于**: M-67 ISM PMI source repair 完成。M-47 的 broken FRED PMI path 已替换为 ismworld.org 公开 Manufacturing PMI report parser；`macroDrivers.consumer.source` 目标值为 `FRED:UMCSENT; ISM:ManufacturingPMI`；`sourceStatus.pmi` 为 `live` / `fallback` / `source_unavailable` / `parse_error`；PMI 仍 audit-only/display-only。
+- **当前进行中**: 等用户审 diff 后 commit/push。未改 `data/radar-data.json`、`realtime/`、workflow、frontend JS/HTML/CSS。
+- **下一步建议**: 等下一轮 Daily pipeline 观察 `consumer.diagnostics.pmi` 与 PMI 是否转为 `live`；之后可推进 M-63c reminder workflows 或 P2-7 就业广度接入。
+- **阻塞或等待**: 无技术阻塞。若 ISM 页面连续两个发布周期未能解析,按 `docs/M-67_ISM_PMI_SOURCE_REPAIR.md` runbook 做 source review。

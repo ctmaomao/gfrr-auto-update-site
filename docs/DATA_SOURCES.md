@@ -34,9 +34,24 @@
 | `NFCI` | Chicago Fed National Financial Conditions Index (weekly) | macroDrivers.credit, credit_spread_warning narrative | M-48 |
 | `DHOILNYH` | NY Harbor ULSD spot (daily);派生 diesel crack spread = ULSD×42 − Brent | brentPricingLayer, energy_shock narrative | M-49 |
 | `UMCSENT` | U Michigan consumer sentiment (monthly) | macroDrivers.consumer | 长期 |
-| `NAPM` | ISM Manufacturing PMI (monthly) | macroDrivers.consumer, stagflation_pressure narrative | M-47 |
 
 **注意**: NFCI 正值=收紧、负值=宽松,**方向与 IG/HY OAS 相反**。误判方向会让 cross-validation 完全反向。
+
+---
+
+### ISM — Institute for Supply Management
+
+| 字段 | 值 |
+|---|---|
+| **License** | Public web reports,no API |
+| **Source URL** | `https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/` |
+| **Quota** | 低;Daily pipeline only |
+| **Refresh 频率** | Monthly;ISM 通常每月第一个工作日发布 Manufacturing PMI report |
+| **失败 fallback** | `prevConsumer` carry-over 或 null + `source_unavailable` / `parse_error` |
+| **影响 scoring?** | **否** — audit-only / display-only |
+| **fetcher** | `scripts/run-daily-pipeline.mjs::fetchIsmManufacturingPmiReport` |
+
+M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使用 `User-Agent: GFRRBot/1.0`,不尝试 SSO/login/captcha 绕过,只提取 headline PMI 与 last-12-month table,不保存完整 HTML。失败只降级 `macroDrivers.consumer.sourceStatus.pmi`,不得伪造 PMI 或用相似指标冒充。
 
 ---
 
@@ -262,7 +277,7 @@ documented attribution string and code is a contract violation.
 | `values.vix` / `values.gold` / `values.dxy` / `values.us10y` / `values.spx` | 来自 GitHub realtime-data 或 displayInputsBaseline;**secondary preview 仅诊断,不覆盖** |
 | `macroDrivers.fedLiquidity` | FRED: DFF, SOFR, WRESBAL, BGCR, TGCR (+ 派生 spreads) |
 | `macroDrivers.credit` | FRED: BAMLH0A0HYM2 (HY OAS), BAMLC0A0CM (IG OAS), DRTSCILM, DRTSCIS, NFCI |
-| `macroDrivers.consumer` | FRED: UMCSENT, NAPM |
+| `macroDrivers.consumer` | FRED: UMCSENT + ISM: Manufacturing PMI public report parser |
 | `brentPricingLayer.crackSpread` | FRED `DHOILNYH` × 42 − Brent |
 | `externalAiInterpretationLayer` | DeepSeek (production) / OpenAI (alternate);只读展示 |
 | `worldOrderStress.marketConfirmation` | Worker preview → local realtime → Daily baseline (优先级) |

@@ -37,11 +37,26 @@ if (!consumer || typeof consumer !== 'object') {
   }
 
   const m47Fields = ['ismManufacturingPmi', 'ismManufacturingPmi3mChange', 'ismPmiRegime'];
+  const pmiStatus = consumer.sourceStatus && typeof consumer.sourceStatus === 'object'
+    ? consumer.sourceStatus.pmi
+    : undefined;
+  const validPmiStatuses = new Set(['live', 'fallback', 'source_unavailable', 'parse_error']);
+  const isLegacyMissingPmi = pmiStatus === undefined || pmiStatus === 'missing';
   for (const field of m47Fields) {
     if (!(field in consumer)) {
-      console.warn(`[M-47 soft warn] macroDrivers.consumer.${field} key is absent in committed data. Expected until next daily-pipeline refresh.`);
+      console.warn(`[M-67 soft warn] macroDrivers.consumer.${field} key is absent in committed data. Expected only for pre-M-67 committed snapshots.`);
     } else if (consumer[field] === null) {
-      console.warn(`[M-47 soft warn] macroDrivers.consumer.${field} is null. Expected non-null after the corresponding FRED:NAPM fetch succeeds.`);
+      if (pmiStatus === 'live') {
+        fail(`macroDrivers.consumer.${field} is null while sourceStatus.pmi is live`);
+      } else if (pmiStatus === 'fallback') {
+        console.warn(`[M-67 soft warn] macroDrivers.consumer.${field} is null while PMI fallback is active; previous report value was unavailable.`);
+      } else if (pmiStatus === 'source_unavailable') {
+        console.warn(`[M-67 soft warn] macroDrivers.consumer.${field} is null because ISM landing/report fetch failed; inspect consumer.diagnostics.pmi.`);
+      } else if (pmiStatus === 'parse_error') {
+        console.warn(`[M-67 soft warn] macroDrivers.consumer.${field} is null because ISM report HTML parsing failed; inspect consumer.diagnostics.pmi.`);
+      } else if (isLegacyMissingPmi) {
+        console.warn(`[M-67 soft warn] macroDrivers.consumer.${field} is null in a pre-M-67 committed snapshot; next Daily pipeline run should emit live/fallback/source_unavailable/parse_error.`);
+      }
     }
   }
 
@@ -50,14 +65,31 @@ if (!consumer || typeof consumer !== 'object') {
       fail('macroDrivers.consumer.sourceStatus.umichSentiment is missing');
     }
     if (!('pmi' in consumer.sourceStatus)) {
-      console.warn('[M-47 soft warn] macroDrivers.consumer.sourceStatus.pmi is absent in committed data. Expected until next daily-pipeline refresh.');
+      console.warn('[M-67 soft warn] macroDrivers.consumer.sourceStatus.pmi is absent in a pre-M-67 committed snapshot.');
+    } else if (!validPmiStatuses.has(consumer.sourceStatus.pmi) && consumer.sourceStatus.pmi !== 'missing') {
+      fail(`macroDrivers.consumer.sourceStatus.pmi must be live/fallback/source_unavailable/parse_error, got: ${consumer.sourceStatus.pmi}`);
     }
   } else if ('sourceStatus' in consumer) {
     fail('macroDrivers.consumer.sourceStatus must be an object');
   }
 
-  if (typeof consumer.source === 'string' && consumer.source !== 'FRED:UMCSENT; FRED:NAPM') {
-    console.warn(`[M-47 soft warn] consumer.source is '${consumer.source}', expected 'FRED:UMCSENT; FRED:NAPM' after next pipeline run.`);
+  if (typeof consumer.source === 'string' && consumer.source !== 'FRED:UMCSENT; ISM:ManufacturingPMI') {
+    if (consumer.source === 'FRED:UMCSENT' || (consumer.source.startsWith('FRED:UMCSENT; FRED:') && !consumer.source.includes('ISM:'))) {
+      console.warn(`[M-67 soft warn] consumer.source is legacy '${consumer.source}', expected 'FRED:UMCSENT; ISM:ManufacturingPMI' after next pipeline run.`);
+    } else {
+      fail(`consumer.source is '${consumer.source}', expected 'FRED:UMCSENT; ISM:ManufacturingPMI'`);
+    }
+  }
+
+  const pmiDiagnostics = consumer.diagnostics?.pmi;
+  if (!pmiDiagnostics || typeof pmiDiagnostics !== 'object' || Array.isArray(pmiDiagnostics)) {
+    if (isLegacyMissingPmi) {
+      console.warn('[M-67 soft warn] consumer.diagnostics.pmi is absent in the current pre-M-67 committed data.');
+    } else if (pmiStatus === 'source_unavailable') {
+      console.warn('[M-67 soft warn] consumer.diagnostics.pmi is absent while source_unavailable; next successful pipeline run should persist diagnostics.');
+    } else {
+      fail('consumer.diagnostics.pmi must exist and be an object for M-67 PMI statuses');
+    }
   }
 
   if ('ismManufacturingPmi' in consumer && consumer.ismManufacturingPmi !== null && !Number.isFinite(consumer.ismManufacturingPmi)) {
@@ -77,13 +109,17 @@ if (!consumer || typeof consumer !== 'object') {
 }
 
 const requiredRunDailyMarkers = [
-  "fetchFredSeries('NAPM', 420)",
+  'function fetchIsmManufacturingPmiReport',
+  "const ISM_PMI_USER_AGENT = 'GFRRBot/1.0'",
+  'https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/',
   'function classifyPmiRegime(pmi)',
-  'ismManufacturingPmi: Number.isFinite(prevConsumer.ismManufacturingPmi) ? prevConsumer.ismManufacturingPmi : null',
-  'ismManufacturingPmi3mChange: Number.isFinite(prevConsumer.ismManufacturingPmi3mChange) ? prevConsumer.ismManufacturingPmi3mChange : null',
+  'ismManufacturingPmi: hasPreviousPmi ? prevConsumer.ismManufacturingPmi : null',
+  'ismManufacturingPmi3mChange: hasPreviousPmi && Number.isFinite(prevConsumer.ismManufacturingPmi3mChange)',
   'ismPmiRegime: classifyPmiRegime(ismManufacturingPmi)',
-  "source: 'FRED:UMCSENT; FRED:NAPM'",
-  "pmi: pmiStatus"
+  "source: 'FRED:UMCSENT; ISM:ManufacturingPMI'",
+  "pmi: pmiStatus",
+  "'source_unavailable'",
+  "'parse_error'"
 ];
 for (const marker of requiredRunDailyMarkers) {
   if (!runDailyText.includes(marker)) {
@@ -119,11 +155,12 @@ for (const marker of requiredMatrixMarkers) {
 const requiredContractMarkers = [
   'macroDrivers.consumer',
   'FRED:UMCSENT',
-  'FRED:NAPM',
+  'ISM:ManufacturingPMI',
   'ismManufacturingPmi',
   'ismManufacturingPmi3mChange',
   'ismPmiRegime',
   'sourceStatus',
+  'consumer.diagnostics.pmi',
   '不参与 scoring、decisionModel、executionLock 或 positionGuidance'
 ];
 for (const marker of requiredContractMarkers) {

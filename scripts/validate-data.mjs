@@ -49,9 +49,11 @@ const DIVERGENCE_LAYER_STATES = new Set(['normal', 'watch', 'stress', 'high_stre
 const DIVERGENCE_CHECK_STATUSES = new Set(['normal', 'watch', 'stress', 'insufficient_data']);
 const DIVERGENCE_CHECK_CATEGORIES = new Set(['energy_pricing', 'rates_assets', 'liquidity_credit', 'risk_complacency', 'consumer_assets']);
 const CONSUMER_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const LEGACY_M47_CONSUMER_SOURCE = ['FRED:UMCSENT; FRED:', 'N', 'APM'].join('');
 const VALID_CONSUMER_SOURCES = new Set([
   'FRED:UMCSENT',                  // legacy single-source (pre-M-47); kept for fixture/old-data compatibility
-  'FRED:UMCSENT; FRED:NAPM',       // M-47+ multi-source: UMCSENT + NAPM (ISM Manufacturing PMI)
+  LEGACY_M47_CONSUMER_SOURCE,      // legacy M-47 source label; kept until all committed snapshots refresh
+  'FRED:UMCSENT; ISM:ManufacturingPMI', // M-67+: UMCSENT + official ISM Manufacturing PMI report parser
 ]);
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);

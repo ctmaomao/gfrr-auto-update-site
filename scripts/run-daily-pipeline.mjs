@@ -7,6 +7,7 @@ import { formatOnRrpYiUsd } from './modules/format.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
+const IS_MAIN = process.argv[1] && path.resolve(process.argv[1]) === __filename;
 const rulesPath = path.join(root, 'config', 'rules.json');
 const RULES = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
 const R = RULES;
@@ -42,6 +43,11 @@ const MACRO_FETCH_TIMEOUT_MS = 10000;
 const MACRO_FETCH_RETRIES = 2;
 const MACRO_FETCH_RETRY_DELAY_MS = 800;
 const MACRO_USER_AGENT = 'gfr-v27.0-macro/1.0';
+const ISM_PMI_LANDING_URL = 'https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/';
+const ISM_PMI_USER_AGENT = 'GFRRBot/1.0';
+const ISM_PMI_FETCH_TIMEOUT_MS = 8000;
+const ISM_PMI_RETRY_DELAY_MS = 1000;
+const ISM_REPORT_PATH_PATTERN = /href=["'](?<href>\/supply-management-news-and-reports\/reports\/ism-pmi-reports\/pmi\/(?<month>january|february|march|april|may|june|july|august|september|october|november|december)\/)["']/giu;
 
 function readJson(file, fallback = null) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
@@ -155,7 +161,7 @@ const prevData = readJson(dataPath, {});
 const prevHistory = readJson(histPath, []);
 const prevHistoryFull = readJson(histFullPath, []);
 const realtime = readJson(rtPath, null);
-runDailyRealtimeInputAudit(realtime);
+if (IS_MAIN) runDailyRealtimeInputAudit(realtime);
 
 function buildDailyRealtimeInput(realtimePayload) {
   return {
@@ -1295,13 +1301,16 @@ function stringifyFetchError(error) {
   return msg.replace(/\s+/g, ' ').slice(0, 160);
 }
 
-async function fetchWithTimeout(url, timeoutMs = MACRO_FETCH_TIMEOUT_MS) {
+async function fetchWithTimeout(url, timeoutMs = MACRO_FETCH_TIMEOUT_MS, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    const userAgent = options.userAgent === undefined ? MACRO_USER_AGENT : options.userAgent;
+    const headers = { ...(options.headers || {}) };
+    if (userAgent) headers['User-Agent'] = userAgent;
     const res = await fetch(url, {
       method: 'GET',
-      headers: { 'User-Agent': MACRO_USER_AGENT },
+      headers,
       signal: controller.signal
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1376,6 +1385,263 @@ function findValueAgo(rows, days) {
     }
   }
   return best;
+}
+
+function trimDiagnosticString(value, maxLength = 200) {
+  return String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
+}
+
+function decodeBasicHtmlEntities(value) {
+  return String(value ?? '')
+    .replace(/&nbsp;/gu, ' ')
+    .replace(/&amp;/gu, '&')
+    .replace(/&mdash;/gu, '-')
+    .replace(/&ndash;/gu, '-')
+    .replace(/&ldquo;|&rdquo;/gu, '"')
+    .replace(/&lsquo;|&rsquo;/gu, "'");
+}
+
+function htmlToPlainText(html) {
+  return decodeBasicHtmlEntities(html)
+    .replace(/<script[\s\S]*?<\/script>/giu, ' ')
+    .replace(/<style[\s\S]*?<\/style>/giu, ' ')
+    .replace(/<sup[^>]*>[\s\S]*?<\/sup>/giu, '')
+    .replace(/<[^>]+>/gu, ' ')
+    .replace(/\s+/gu, ' ')
+    .trim();
+}
+
+function capitalizeMonth(month) {
+  return typeof month === 'string' && month
+    ? `${month.slice(0, 1).toUpperCase()}${month.slice(1).toLowerCase()}`
+    : null;
+}
+
+function parseIsmReportLink(html) {
+  ISM_REPORT_PATH_PATTERN.lastIndex = 0;
+  const match = ISM_REPORT_PATH_PATTERN.exec(html);
+  if (!match?.groups?.href || !match?.groups?.month) return null;
+  return {
+    href: match.groups.href,
+    reportMonthLabel: capitalizeMonth(match.groups.month)
+  };
+}
+
+function parseIsmReportHtml(html, reportUrl, reportMonthLabel) {
+  const plain = htmlToPlainText(html);
+  if (/grecaptcha|captcha_form|SSO\/Login\.aspx|ecommerce\.ismworld\.org/iu.test(html)) {
+    return {
+      status: 'parse_error',
+      diagnostics: {
+        parseStep: 'non-public-content',
+        reportUrl,
+        snippetSample: trimDiagnosticString(plain)
+      }
+    };
+  }
+
+  const headlineMatch = plain.match(/Manufacturing\s+PMI\s+at\s+(\d+(?:\.\d+)?)%/iu);
+  if (!headlineMatch) {
+    return {
+      status: 'parse_error',
+      diagnostics: {
+        parseStep: 'report-no-headline-pmi',
+        reportUrl,
+        snippetSample: trimDiagnosticString(plain)
+      }
+    };
+  }
+
+  const latestPmi = Number(headlineMatch[1]);
+  if (!Number.isFinite(latestPmi) || latestPmi < 0 || latestPmi > 100) {
+    return {
+      status: 'parse_error',
+      diagnostics: {
+        parseStep: 'report-invalid-headline-pmi',
+        reportUrl,
+        snippetSample: trimDiagnosticString(headlineMatch[0])
+      }
+    };
+  }
+
+  const last12Segment = plain.match(/THE LAST 12 MONTHS(?<segment>[\s\S]+?)(?:Average for 12 months|Commodities|Buying Policy|WHAT RESPONDENTS ARE SAYING|$)/iu)?.groups?.segment || '';
+  const rows = [...last12Segment.matchAll(/([A-Z][a-z]{2}\s+\d{4})\s+(\d+(?:\.\d+)?)/gu)]
+    .map((match) => ({ label: match[1], value: Number(match[2]) }))
+    .filter((row) => Number.isFinite(row.value) && row.value >= 0 && row.value <= 100)
+    .slice(0, 12);
+
+  if (rows.length < 4) {
+    return {
+      status: 'parse_error',
+      diagnostics: {
+        parseStep: 'report-last-12-months-table',
+        reportUrl,
+        snippetSample: trimDiagnosticString(last12Segment || plain)
+      }
+    };
+  }
+
+  const value3MonthsAgo = rows[3]?.value;
+  return {
+    status: 'live',
+    latestPmi,
+    pmi3mChange: Number.isFinite(value3MonthsAgo) ? +(latestPmi - value3MonthsAgo).toFixed(1) : null,
+    reportUrl,
+    reportMonthLabel,
+    last12Months: rows
+  };
+}
+
+async function fetchIsmText(url, { userAgent, timeoutMs, label }) {
+  let lastFailure = null;
+  for (let attempt = 0; attempt <= 1; attempt += 1) {
+    const startedAt = Date.now();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const headers = {};
+      if (userAgent) headers['User-Agent'] = userAgent;
+      const res = await fetch(url, {
+        method: 'GET',
+        headers,
+        signal: controller.signal
+      });
+      const text = await res.text();
+      const latencyMs = Date.now() - startedAt;
+      if (res.ok) {
+        return {
+          ok: true,
+          text,
+          httpStatus: res.status,
+          finalUrl: res.url,
+          latencyMs
+        };
+      }
+      lastFailure = {
+        httpStatus: res.status,
+        latencyMs,
+        errorReason: `${label}: HTTP ${res.status}`
+      };
+    } catch (err) {
+      lastFailure = {
+        httpStatus: null,
+        latencyMs: Date.now() - startedAt,
+        errorReason: `${label}: ${err?.name === 'AbortError' ? `timeout ${timeoutMs}ms` : stringifyFetchError(err)}`
+      };
+    } finally {
+      clearTimeout(timer);
+    }
+    if (attempt === 0) await sleep(ISM_PMI_RETRY_DELAY_MS);
+  }
+  return {
+    ok: false,
+    diagnostics: lastFailure || {
+      httpStatus: null,
+      latencyMs: null,
+      errorReason: `${label}: unknown fetch failure`
+    }
+  };
+}
+
+export async function fetchIsmManufacturingPmiReport(options = {}) {
+  const userAgent = Object.hasOwn(options, 'userAgent') ? options.userAgent : ISM_PMI_USER_AGENT;
+  const timeoutMs = Number.isFinite(options.timeoutMs) ? options.timeoutMs : ISM_PMI_FETCH_TIMEOUT_MS;
+  const parsedAt = new Date().toISOString();
+
+  const landing = await fetchIsmText(ISM_PMI_LANDING_URL, {
+    userAgent,
+    timeoutMs,
+    label: 'ism-pmi-landing'
+  });
+  if (!landing.ok) {
+    return {
+      status: 'source_unavailable',
+      diagnostics: {
+        ...landing.diagnostics,
+        parseStep: 'landing-fetch',
+        parsedAt,
+        reportUrl: ISM_PMI_LANDING_URL
+      }
+    };
+  }
+  if (/grecaptcha|captcha_form|SSO\/Login\.aspx|ecommerce\.ismworld\.org/iu.test(landing.text) || /SSO\/Login\.aspx|ecommerce\.ismworld\.org/iu.test(landing.finalUrl || '')) {
+    return {
+      status: 'parse_error',
+      diagnostics: {
+        httpStatus: landing.httpStatus,
+        latencyMs: landing.latencyMs,
+        parseStep: 'landing-non-public-content',
+        parsedAt,
+        reportUrl: landing.finalUrl || ISM_PMI_LANDING_URL,
+        snippetSample: trimDiagnosticString(htmlToPlainText(landing.text))
+      }
+    };
+  }
+
+  const link = parseIsmReportLink(landing.text);
+  if (!link) {
+    return {
+      status: 'parse_error',
+      diagnostics: {
+        httpStatus: landing.httpStatus,
+        latencyMs: landing.latencyMs,
+        parseStep: 'landing-no-current-link',
+        parsedAt,
+        reportUrl: ISM_PMI_LANDING_URL,
+        snippetSample: trimDiagnosticString(htmlToPlainText(landing.text))
+      }
+    };
+  }
+
+  const reportUrl = new URL(link.href, ISM_PMI_LANDING_URL).toString();
+  const report = await fetchIsmText(reportUrl, {
+    userAgent,
+    timeoutMs,
+    label: 'ism-pmi-report'
+  });
+  if (!report.ok) {
+    return {
+      status: 'source_unavailable',
+      diagnostics: {
+        ...report.diagnostics,
+        landingHttpStatus: landing.httpStatus,
+        parseStep: 'report-fetch',
+        parsedAt,
+        reportUrl
+      }
+    };
+  }
+
+  const parsed = parseIsmReportHtml(report.text, report.finalUrl || reportUrl, link.reportMonthLabel);
+  if (parsed.status !== 'live') {
+    return {
+      status: parsed.status,
+      diagnostics: {
+        httpStatus: report.httpStatus,
+        landingHttpStatus: landing.httpStatus,
+        latencyMs: landing.latencyMs + report.latencyMs,
+        parsedAt,
+        ...parsed.diagnostics
+      }
+    };
+  }
+
+  return {
+    status: 'live',
+    latestPmi: parsed.latestPmi,
+    pmi3mChange: parsed.pmi3mChange,
+    reportUrl: parsed.reportUrl,
+    reportMonthLabel: parsed.reportMonthLabel,
+    last12Months: parsed.last12Months,
+    diagnostics: {
+      httpStatus: report.httpStatus,
+      landingHttpStatus: landing.httpStatus,
+      latencyMs: landing.latencyMs + report.latencyMs,
+      parsedAt,
+      reportUrl: parsed.reportUrl,
+      reportMonthLabel: parsed.reportMonthLabel
+    }
+  };
 }
 
 function classifyFedAssetTrend(pct4w) {
@@ -1839,33 +2105,49 @@ function buildMissingConsumer() {
     ismPmiRegime: '未知',
     sourceStatus: {
       umichSentiment: 'missing',
-      pmi: 'missing'
+      pmi: 'source_unavailable'
+    },
+    diagnostics: {
+      pmi: {
+        errorReason: 'consumer-sentiment-fetch-failed-before-pmi',
+        parsedAt: isoNow
+      }
     },
     updatedAt: null,
-    source: 'FRED:UMCSENT; FRED:NAPM',
-    notes: ['UMCSENT 与 NAPM 为 FRED 月频慢变量，用于消费者体感与制造业景气的 audit-only 观察。']
+    source: 'FRED:UMCSENT; ISM:ManufacturingPMI',
+    notes: ['UMCSENT 为 FRED 月频；ISM Manufacturing PMI 直接解析 ismworld.org 公开报告页，audit-only。']
   };
 }
 
 function normalizePreviousConsumer(prevConsumer) {
   if (!prevConsumer || typeof prevConsumer !== 'object') return buildMissingConsumer();
   const threeMonthChange = Number.isFinite(prevConsumer.threeMonthChange) ? prevConsumer.threeMonthChange : null;
+  const hasPreviousPmi = Number.isFinite(prevConsumer.ismManufacturingPmi);
   return {
     umichSentiment: Number.isFinite(prevConsumer.umichSentiment) ? prevConsumer.umichSentiment : null,
     previousValue: Number.isFinite(prevConsumer.previousValue) ? prevConsumer.previousValue : null,
     threeMonthChange,
     sixMonthChange: Number.isFinite(prevConsumer.sixMonthChange) ? prevConsumer.sixMonthChange : null,
     regime: typeof prevConsumer.regime === 'string' && prevConsumer.regime.trim() ? prevConsumer.regime : classifyConsumerRegime(threeMonthChange),
-    ismManufacturingPmi: Number.isFinite(prevConsumer.ismManufacturingPmi) ? prevConsumer.ismManufacturingPmi : null,
-    ismManufacturingPmi3mChange: Number.isFinite(prevConsumer.ismManufacturingPmi3mChange) ? prevConsumer.ismManufacturingPmi3mChange : null,
+    ismManufacturingPmi: hasPreviousPmi ? prevConsumer.ismManufacturingPmi : null,
+    ismManufacturingPmi3mChange: hasPreviousPmi && Number.isFinite(prevConsumer.ismManufacturingPmi3mChange) ? prevConsumer.ismManufacturingPmi3mChange : null,
     ismPmiRegime: typeof prevConsumer.ismPmiRegime === 'string' && prevConsumer.ismPmiRegime.trim() ? prevConsumer.ismPmiRegime : '未知',
     sourceStatus: {
       umichSentiment: 'fallback',
-      pmi: 'fallback'
+      pmi: hasPreviousPmi ? 'fallback' : 'source_unavailable'
+    },
+    diagnostics: {
+      ...(prevConsumer.diagnostics && typeof prevConsumer.diagnostics === 'object' ? prevConsumer.diagnostics : {}),
+      pmi: prevConsumer.diagnostics?.pmi && typeof prevConsumer.diagnostics.pmi === 'object'
+        ? prevConsumer.diagnostics.pmi
+        : {
+            errorReason: hasPreviousPmi ? 'previous-pmi-value-carried-forward' : 'consumer-sentiment-fallback-without-previous-pmi',
+            parsedAt: isoNow
+          }
     },
     updatedAt: typeof prevConsumer.updatedAt === 'string' ? prevConsumer.updatedAt : null,
-    source: 'FRED:UMCSENT; FRED:NAPM',
-    notes: ['UMCSENT 与 NAPM 为 FRED 月频慢变量，用于消费者体感与制造业景气的 audit-only 观察。']
+    source: 'FRED:UMCSENT; ISM:ManufacturingPMI',
+    notes: ['UMCSENT 为 FRED 月频；ISM Manufacturing PMI 直接解析 ismworld.org 公开报告页，audit-only。']
   };
 }
 
@@ -1885,26 +2167,25 @@ async function resolveConsumerSentiment(prevConsumer) {
       : null;
     let ismManufacturingPmi = null;
     let ismManufacturingPmi3mChange = null;
-    let pmiStatus = 'missing';
+    let pmiStatus = 'source_unavailable';
+    const pmiResult = await fetchIsmManufacturingPmiReport();
 
-    // M-47: ISM Manufacturing PMI (NAPM) — monthly growth-cycle evidence.
-    try {
-      const pmiRows = await fetchFredSeries('NAPM', 420);
-      const pmiLatest = pmiRows[pmiRows.length - 1] || null;
-      const pmiCurrent = pmiLatest?.value;
-      const pmi3mAgo = findValueAgo(pmiRows, 90);
-      ismManufacturingPmi = Number.isFinite(pmiCurrent) ? pmiCurrent : null;
-      ismManufacturingPmi3mChange = Number.isFinite(pmiCurrent) && Number.isFinite(pmi3mAgo)
-        ? +(pmiCurrent - pmi3mAgo).toFixed(1)
+    // M-67: true ISM Manufacturing PMI, parsed from the public ISM report page.
+    if (pmiResult.status === 'live') {
+      ismManufacturingPmi = Number.isFinite(pmiResult.latestPmi) ? pmiResult.latestPmi : null;
+      ismManufacturingPmi3mChange = Number.isFinite(pmiResult.pmi3mChange)
+        ? pmiResult.pmi3mChange
         : null;
       pmiStatus = 'live';
-    } catch (_err) {
+    } else {
       if (Number.isFinite(prevConsumer?.ismManufacturingPmi)) {
         ismManufacturingPmi = prevConsumer.ismManufacturingPmi;
         ismManufacturingPmi3mChange = Number.isFinite(prevConsumer.ismManufacturingPmi3mChange)
           ? prevConsumer.ismManufacturingPmi3mChange
           : null;
         pmiStatus = 'fallback';
+      } else {
+        pmiStatus = pmiResult.status;
       }
     }
 
@@ -1921,9 +2202,16 @@ async function resolveConsumerSentiment(prevConsumer) {
         umichSentiment: 'live',
         pmi: pmiStatus
       },
+      diagnostics: {
+        ...(prevConsumer?.diagnostics && typeof prevConsumer.diagnostics === 'object' ? prevConsumer.diagnostics : {}),
+        pmi: pmiResult.diagnostics || {
+          parsedAt: isoNow,
+          errorReason: 'ism-pmi-diagnostics-unavailable'
+        }
+      },
       updatedAt: latest?.date ? `${latest.date}T00:00:00Z` : null,
-      source: 'FRED:UMCSENT; FRED:NAPM',
-      notes: ['UMCSENT 与 NAPM 为 FRED 月频慢变量，用于消费者体感与制造业景气的 audit-only 观察。']
+      source: 'FRED:UMCSENT; ISM:ManufacturingPMI',
+      notes: ['UMCSENT 为 FRED 月频；ISM Manufacturing PMI 直接解析 ismworld.org 公开报告页，audit-only。']
     };
   } catch (_err) {
     const fallback = normalizePreviousConsumer(prevConsumer);
@@ -2992,9 +3280,15 @@ async function build() {
   return { data, history, historyFull };
 }
 
-const built = await build();
-fs.mkdirSync(dataDir, { recursive: true });
-fs.writeFileSync(dataPath, JSON.stringify(built.data, null, 2));
-fs.writeFileSync(histPath, JSON.stringify(built.history, null, 2));
-fs.writeFileSync(histFullPath, JSON.stringify(built.historyFull, null, 2));
-console.log('v27.0 雷达数据构建成功。');
+async function main() {
+  const built = await build();
+  fs.mkdirSync(dataDir, { recursive: true });
+  fs.writeFileSync(dataPath, JSON.stringify(built.data, null, 2));
+  fs.writeFileSync(histPath, JSON.stringify(built.history, null, 2));
+  fs.writeFileSync(histFullPath, JSON.stringify(built.historyFull, null, 2));
+  console.log('v27.0 雷达数据构建成功。');
+}
+
+if (IS_MAIN) {
+  await main();
+}

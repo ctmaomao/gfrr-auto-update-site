@@ -11,7 +11,7 @@
 
 当前未关闭、影响进行中工作的 milestone 与状态:
 
-- **当前生产**: v28.0M-66,frontend cache `28.0M-66V`,`check:all` = 69 项；ADR-0014 IA contract authority hierarchy 已落地；M-63b ACLED monthly evidence-only ingestion 已落地
+- **当前生产**: v28.0M-67,frontend cache `28.0M-66V`,`check:all` = 69 项；M-67 ISM PMI source repair 已落地；ADR-0014 IA contract authority hierarchy 已落地；M-63b ACLED monthly evidence-only ingestion 已落地
 - **下一步**: 见 `docs/PROJECT_BACKLOG.md` Section 2 Open Backlog Items
 - **Open backlog 主线**: P1-4 ACLED 接入剩 M-63c reminder workflows；P2-7/8/9 各类宏观指标扩展；P3-* 已明确 won't fix
 - **年度提醒**: M-61b SIPRI 每年 5 月 1 日 GitHub Actions issue (`sipri-annual-refresh-reminder.yml`)
@@ -20,19 +20,20 @@
 
 | # | 一句话 | 主要 doc |
 |---|---|---|
+| **M-67** | Broken FRED PMI path 替换为 ismworld.org 公开 Manufacturing PMI report parser;PMI 保持 audit-only/display-only | `docs/M-67_ISM_PMI_SOURCE_REPAIR.md` |
 | **M-63b** | ACLED monthly global sanitizer + 联合 importer;`partial` status 引入;evidence-only,`peaceDividendRetreat` 权重未改 | (无独立 doc;见 PROJECT_BACKLOG M-63b) |
 | **ADR-0014** | DESIGN.md §4.1 为 IA ground truth；authority hierarchy (ADR > DESIGN.md > checks > HTML)；appendix content boundaries codified | `docs/ADR/0014-design-md-is-ia-ground-truth.md` |
 | **M-66** | Detail Data header anchor 改名为 `detail-data-header`;三大 appendix 顶级 subsection kicker 一致性加 checker 守护 | (无独立 doc;见 README + PROJECT_BACKLOG M-66) |
 | **M-65** | `#method-evidence` 内容清理;系统总览迁入 `#detail-data`;恢复/系统状态合并入 DATA HEALTH | (无独立 doc;见 README + PROJECT_BACKLOG M-65) |
-| **M-64** | 首页 IA 三方契约对齐;World Order Stress 提升为顶级 regime overlay;External AI 回到 method 之后 | (无独立 doc;见 README + DESIGN.md §4.1) |
 
 ## Archived (历史 milestone,scope-only,默认不加载)
 
 > 全部已合并,作为 Conditional Authority 仅在对应历史 PR 范围内权威。
 > 阅读它们前先确认任务边界是否真的需要历史细节;通常不需要。
 
-### M-series (M-31 → M-63a)
+### M-series (M-31 → M-64)
 
+- M-64 首页 IA 三方契约对齐;World Order Stress 提升为顶级 regime overlay;External AI 回到 method 之后 — (无独立 doc;见 README + DESIGN.md §4.1)
 - M-63a ACLED weekly regional sanitizer + importer;`xlsx@0.18.5` devDep;`peaceDividendRetreat` 重加权;旧 API adapter 移除 — (无独立 doc;见 README + PROJECT_BACKLOG M-63a)
 - M-62 QQQ weekly history isoWeek-keyed merge + cross-seam monotonicity check — (无独立 doc;见 README)
 - M-61 SIPRI 2024 真实数据 + 3 world_order supporting branch — `docs/M-61_SIPRI_INTEGRATION.md`

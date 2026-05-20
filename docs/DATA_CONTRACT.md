@@ -225,18 +225,22 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 | `threeMonthChange` | number \| null | 指数点 | 派生 | UMCSENT 3个月变化 |
 | `sixMonthChange` | number \| null | 指数点 | 派生 | UMCSENT 6个月变化 |
 | `regime` | string enum | n/a | 派生（基于 threeMonthChange） | `明显走弱` \| `走弱` \| `稳定` \| `改善` \| `未知` |
-| `ismManufacturingPmi` | number \| null (optional) | PMI 指数 0-100 | FRED:NAPM（月频） | ISM 制造业 PMI（v28.0M-47 起） |
-| `ismManufacturingPmi3mChange` | number \| null (optional) | 指数点 | 派生 | NAPM 3个月变化（v28.0M-47 起） |
+| `ismManufacturingPmi` | number \| null (optional) | PMI 指数 0-100 | ISM:ManufacturingPMI（月频公开报告页） | ISM 制造业 PMI（v28.0M-47 起字段;M-67 起修正数据源） |
+| `ismManufacturingPmi3mChange` | number \| null (optional) | 指数点 | 派生 | ISM Manufacturing PMI 3个月变化（v28.0M-47 起字段;M-67 起修正数据源） |
 | `ismPmiRegime` | string enum (optional) | n/a | 派生（基于 PMI 绝对值） | `扩张` \| `中性偏扩张` \| `收缩` \| `深度收缩` \| `未知` |
 | `updatedAt` | string \| null | ISO 8601 | UMCSENT 最新数据点日期 | |
-| `source` | string | n/a | 多源（M-47 起） | `FRED:UMCSENT; FRED:NAPM`（v28.0M-47 起多源；之前为 `FRED:UMCSENT` 单源） |
-| `notes` | string[] | n/a | 固定 | 说明 UMCSENT 与 NAPM 为月频慢变量 |
-| `sourceStatus` | object | n/a | 拉取状态 | `{ umichSentiment: 'live'\|'fallback'\|'missing', pmi: 'live'\|'fallback'\|'missing' }` |
+| `source` | string | n/a | 多源（M-67 起） | `FRED:UMCSENT; ISM:ManufacturingPMI`（之前可见 legacy `FRED:UMCSENT` / M-47 source label） |
+| `notes` | string[] | n/a | 固定 | 说明 UMCSENT 为 FRED 月频,ISM Manufacturing PMI 来自公开报告页 |
+| `sourceStatus` | object | n/a | 拉取状态 | `{ umichSentiment: 'live'\|'fallback'\|'missing', pmi: 'live'\|'fallback'\|'source_unavailable'\|'parse_error' }` |
+| `diagnostics.pmi` | object (optional) | n/a | 派生 | 轻量诊断: `httpStatus`,`landingHttpStatus`,`latencyMs`,`parsedAt`,`reportUrl`,`reportMonthLabel`,`errorReason`,`parseStep`,`snippetSample` 均为可选;不保存完整 HTML |
+
+`consumer.diagnostics.pmi` 是 M-67 起的 PMI source repair 诊断入口;它只保存轻量 fetch / parse metadata,不保存原始 HTML。
 
 边界：
 - 本字段层不改变 `values.*`、scoring、`decisionModel`、`executionLock`、`positionGuidance`
 - 用于 `driver-growth` 和 `pressure-consumer` 渲染卡片的 audit-only 数据源
 - 用于 cross-validation `stagflation_pressure` narrative 的条件分类（v28.0M-47 起）
+- M-67 后 PMI fetcher 只解析 ismworld.org 公开报告页;若遇到 SSO/login/captcha 或 HTML schema drift,必须降级为 `parse_error`,不得伪造或用替代指标冒充 ISM PMI
 - `regime`（基于 UMCSENT 变化率）与 `ismPmiRegime`（基于 PMI 绝对值）独立分类，可同时显示
 - `ismManufacturing*` 字段标记为 optional 以保持向后兼容性
 - 月频频率：两个 series 都是月频数据，pipeline 跑后即同步更新
