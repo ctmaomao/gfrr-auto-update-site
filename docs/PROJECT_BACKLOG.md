@@ -12,7 +12,7 @@
 | 当前生产状态 | v28.0M-66 |
 | Cache version | `28.0M-66V` |
 | check:all 项数 | 68 |
-| 最后审计日期 | **2026-05-20** (M-66 legacy anchor + subsection kicker polish) |
+| 最后审计日期 | **2026-05-20** (M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy) |
 | 最后 daily refresh | 2026-05-17 (Build #74, commit `e366b60`) |
 | GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
@@ -103,6 +103,7 @@
 | M-64 | IA contract reconciliation + top-level section restructure | (this PR) | 2026-05-20 | ✅ DESIGN.md §4.1 / index.html / IA check scripts aligned; World Order Stress promoted to top-level regime overlay; External AI moved after method evidence; cache bumped to 28.0M-64V |
 | M-65 | method-evidence content cleanup | (this PR) | 2026-05-20 | ✅ "站内总览与核心风险明细" migrated to `#detail-data` SYSTEM OVERVIEW; "恢复状态与系统说明" merged into DATA HEALTH; all runtime DOM ids preserved; cache bumped to 28.0M-65V |
 | M-66 | legacy anchor + subsection kicker consistency polish | (this PR) | 2026-05-20 | ✅ Detail Data header anchor renamed to `detail-data-header`; top-level method/execution subsections now carry subsection-meta kickers; `check:editorial-redesign-contract` enforces kicker consistency; cache bumped to 28.0M-66V |
+| ADR-0014 | DESIGN.md §4.1 为 IA ground truth；appendix content boundaries codified；subsection-meta mandate enforced by check scripts | `6e99cee` | 2026-05-20 | ✅ IA authority hierarchy (ADR > DESIGN.md §4.1 > check scripts > HTML) established；top-down change direction mandated；M-64/65/66 三方漂移根因归档；`docs/ADR/0014-design-md-is-ia-ground-truth.md` |
 
 ---
 
@@ -182,9 +183,9 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-### Session Handoff (2026-05-19 晚)
+### Session Handoff (2026-05-20)
 
-- **上次会话结束于**: M-63a ACLED weekly integration 系列完成。今晚 merge 7 个 PR (#225/#226/#230/#231/#232/#234/#235)。main HEAD 当前为 PR #235 的 merge commit (3673df0)。check:all PASS 68 items。
-- **当前进行中**: 无 active 任务。M-63a 主体已落地,等 owner 下首批 ACLED xlsx 跑真实数据验证。
-- **下一步建议**: Owner 下次开 session 第一句可以说 "今天下了首批 6 个 ACLED weekly xlsx,放到 manual-artifacts/world-order/acled-input/weekly/,帮我跑 acled:sanitize:weekly 看输出" — 或者 "开始做 PR β (M-63b ACLED monthly)"。
-- **阻塞或等待**: 无技术阻塞。Owner 需先在浏览器手动从 https://acleddata.com/conflict-data/download-data-files 下载 xlsx 文件 (ACLED EULA §3.3 禁止任何自动化下载,这是合规要求)。
+- **上次会话结束于**: ADR-0014 落地 (commit `6e99cee`)。main HEAD = `6e99cee`。check:all PASS 68 items。M-64/65/66 IA 三方对齐完成，ADR-0014 codify authority hierarchy，补录进 PROJECT_BACKLOG + MILESTONE_INDEX。
+- **当前进行中**: 无 active 任务。
+- **下一步建议**: M-63b ACLED monthly aggregation (PR β/3)；或 P2-7 就业广度接入；或等 owner 下 ACLED weekly xlsx 后跑 `acled:sanitize:weekly` 验真实数据。
+- **阻塞或等待**: 无技术阻塞。ACLED xlsx 需 owner 在浏览器手动下载 (EULA §3.3 禁止自动化)。
