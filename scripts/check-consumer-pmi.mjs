@@ -130,8 +130,8 @@ for (const marker of requiredRunDailyMarkers) {
 const requiredRenderMarkers = [
   'consumer.ismManufacturingPmi',
   'ISM 制造业 PMI',
-  '就业广度和高频消费证据仍待接入。',
-  '就业广度、盈利修正与高频消费证据等待接入。'
+  '高频消费证据仍待接入。',
+  '盈利修正与高频消费证据等待接入。'
 ];
 for (const marker of requiredRenderMarkers) {
   if (!renderMacroText.includes(marker)) {

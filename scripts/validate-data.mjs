@@ -55,6 +55,12 @@ const VALID_CONSUMER_SOURCES = new Set([
   LEGACY_M47_CONSUMER_SOURCE,      // legacy M-47 source label; kept until all committed snapshots refresh
   'FRED:UMCSENT; ISM:ManufacturingPMI', // M-67+: UMCSENT + official ISM Manufacturing PMI report parser
 ]);
+const EMPLOYMENT_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_EMPLOYMENT_SOURCES = new Set([
+  'FRED:ICSA; FRED:CCSA; FRED:JTSJOL',
+]);
+const VALID_CLAIMS_REGIMES = new Set(['明显走弱', '走弱', '稳定', '改善', '未知']);
+const VALID_JOLTS_REGIMES = new Set(['紧张', '平衡', '宽松', '走弱', '未知']);
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
@@ -403,6 +409,54 @@ function validateMacroDriversConsumer(dataPayload) {
   );
   assertArray(consumer.notes, 'macroDrivers.consumer.notes');
   consumer.notes.forEach((item, index) => assertString(item, `macroDrivers.consumer.notes[${index}]`));
+}
+
+function validateMacroDriversEmployment(dataPayload) {
+  const employment = dataPayload?.macroDrivers?.employment;
+  if (employment === undefined) return;
+  assertPlainObject(employment, 'macroDrivers.employment');
+
+  for (const key of [
+    'initialClaims',
+    'initialClaims4wAverage',
+    'initialClaims4wChange',
+    'continuingClaims',
+    'continuingClaims4wAverage',
+    'joltsOpenings',
+    'joltsOpeningsYoY'
+  ]) {
+    assert(Object.hasOwn(employment, key), `macroDrivers.employment.${key} is missing`);
+    assert(isFiniteNumberOrNull(employment[key]), `macroDrivers.employment.${key} must be finite number or null`);
+  }
+
+  assertString(employment.claimsRegime, 'macroDrivers.employment.claimsRegime');
+  assert(VALID_CLAIMS_REGIMES.has(employment.claimsRegime), 'macroDrivers.employment.claimsRegime is not supported');
+  assertString(employment.joltsRegime, 'macroDrivers.employment.joltsRegime');
+  assert(VALID_JOLTS_REGIMES.has(employment.joltsRegime), 'macroDrivers.employment.joltsRegime is not supported');
+
+  assertPlainObject(employment.sourceStatus, 'macroDrivers.employment.sourceStatus');
+  for (const key of ['icsa', 'ccsa', 'jtsjol']) {
+    assert(Object.hasOwn(employment.sourceStatus, key), `macroDrivers.employment.sourceStatus.${key} is missing`);
+    assert(
+      EMPLOYMENT_SOURCE_STATUSES.has(employment.sourceStatus[key]),
+      `macroDrivers.employment.sourceStatus.${key} must be live, fallback, or missing`
+    );
+  }
+
+  assert(
+    employment.updatedAt === null || (typeof employment.updatedAt === 'string' && Number.isFinite(Date.parse(employment.updatedAt))),
+    'macroDrivers.employment.updatedAt must be null or parseable ISO string'
+  );
+  assert(
+    employment.joltsUpdatedAt === null || (typeof employment.joltsUpdatedAt === 'string' && Number.isFinite(Date.parse(employment.joltsUpdatedAt))),
+    'macroDrivers.employment.joltsUpdatedAt must be null or parseable ISO string'
+  );
+  assert(
+    VALID_EMPLOYMENT_SOURCES.has(employment.source),
+    `macroDrivers.employment.source must be one of: ${[...VALID_EMPLOYMENT_SOURCES].join(' | ')}`
+  );
+  assertArray(employment.notes, 'macroDrivers.employment.notes');
+  employment.notes.forEach((item, index) => assertString(item, `macroDrivers.employment.notes[${index}]`));
 }
 
 function validateNullableString(value, fieldName) {
@@ -1240,6 +1294,7 @@ validateDailyRealtimeInput(data);
 validateDailyBrief(data);
 validateDivergenceLayer(data);
 validateMacroDriversConsumer(data);
+validateMacroDriversEmployment(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);
 validateExternalAiInterpretationLayer(data);

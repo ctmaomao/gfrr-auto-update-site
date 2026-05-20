@@ -12,7 +12,7 @@
 | 字段 | 值 |
 |---|---|
 | **License** | 公开,需 API key (`FRED_API_KEY` env) |
-| **Quota** | ~120 req/min,Daily pipeline 一轮 ~15 次调用,余量充裕 |
+| **Quota** | ~120 req/min,Daily pipeline 一轮 ~18 次调用,余量充裕 |
 | **Refresh 频率** | Daily pipeline (`build-daily-radar-data.yml`) |
 | **失败 fallback** | `displayInputsBaseline` 保留上次值;`source: 'fred-stale'` 标记 |
 | **影响 scoring?** | **是** — Brent/Fed liquidity/credit/consumer 等核心 driver 都来自 FRED |
@@ -34,6 +34,9 @@
 | `NFCI` | Chicago Fed National Financial Conditions Index (weekly) | macroDrivers.credit, credit_spread_warning narrative | M-48 |
 | `DHOILNYH` | NY Harbor ULSD spot (daily);派生 diesel crack spread = ULSD×42 − Brent | brentPricingLayer, energy_shock narrative | M-49 |
 | `UMCSENT` | U Michigan consumer sentiment (monthly) | macroDrivers.consumer | 长期 |
+| `ICSA` | Initial Jobless Claims (SA, weekly) | macroDrivers.employment | M-68 |
+| `CCSA` | Continuing Claims (SA, weekly, 1w lag) | macroDrivers.employment | M-68 |
+| `JTSJOL` | JOLTS Job Openings (monthly, ~6w lag) | macroDrivers.employment | M-68 |
 
 **注意**: NFCI 正值=收紧、负值=宽松,**方向与 IG/HY OAS 相反**。误判方向会让 cross-validation 完全反向。
 
@@ -278,6 +281,7 @@ documented attribution string and code is a contract violation.
 | `macroDrivers.fedLiquidity` | FRED: DFF, SOFR, WRESBAL, BGCR, TGCR (+ 派生 spreads) |
 | `macroDrivers.credit` | FRED: BAMLH0A0HYM2 (HY OAS), BAMLC0A0CM (IG OAS), DRTSCILM, DRTSCIS, NFCI |
 | `macroDrivers.consumer` | FRED: UMCSENT + ISM: Manufacturing PMI public report parser |
+| `macroDrivers.employment` | FRED: ICSA, CCSA, JTSJOL |
 | `brentPricingLayer.crackSpread` | FRED `DHOILNYH` × 42 − Brent |
 | `externalAiInterpretationLayer` | DeepSeek (production) / OpenAI (alternate);只读展示 |
 | `worldOrderStress.marketConfirmation` | Worker preview → local realtime → Daily baseline (优先级) |

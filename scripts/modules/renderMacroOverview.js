@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-66V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-66V';
-import { formatFiniteNumber } from './format.js?v=28.0M-66V';
+import { $ } from './config.js?v=28.0M-68V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-68V';
+import { formatFiniteNumber } from './format.js?v=28.0M-68V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -83,6 +83,34 @@ function formatUsdBillionsFromFedChange(value) {
   const number = finite(value);
   if (number === null) return INSUFFICIENT;
   return `${number >= 0 ? '+' : '-'}$${formatFiniteNumber(Math.abs(number) * 100, 0)}B`;
+}
+
+function formatPeopleValue(value) {
+  const number = finite(value);
+  if (number === null) return INSUFFICIENT;
+  const abs = Math.abs(number);
+  if (abs >= 1_000_000) return `${formatFiniteNumber(number / 1_000_000, 2)}M`;
+  if (abs >= 1_000) return `${formatFiniteNumber(number / 1_000, 0)}k`;
+  return formatFiniteNumber(number, 0);
+}
+
+function formatSignedPeopleValue(value) {
+  const number = finite(value);
+  if (number === null) return INSUFFICIENT;
+  return `${number >= 0 ? '+' : '-'}${formatPeopleValue(Math.abs(number))}`;
+}
+
+function formatRatioAsPercent(value, digits = 1) {
+  const number = finite(value);
+  if (number === null) return INSUFFICIENT;
+  return `${number >= 0 ? '+' : '-'}${formatFiniteNumber(Math.abs(number) * 100, digits)}%`;
+}
+
+function formatMonthVintage(isoDate) {
+  if (typeof isoDate !== 'string' || !Number.isFinite(Date.parse(isoDate))) return 'vintage 待确认';
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
 function findActiveSignal(activeSignals, key) {
@@ -390,7 +418,7 @@ function buildPressureSources(data, worldOrderStressData) {
           ? null
           : `ISM 制造业 PMI ${formatNumber(consumer.ismManufacturingPmi, 1)} — ${consumer.ismManufacturingPmi >= 50 ? '扩张区间' : '收缩区间'}；3个月变化 ${formatNumber(consumer.ismManufacturingPmi3mChange, 1)}`,
       ].filter(Boolean),
-      missingEvidence: ['就业广度和高频消费证据仍待接入。'],
+      missingEvidence: ['高频消费证据仍待接入。'],
       explanation: '月频慢变量只说明体感背景，不足以单独判断增长拐点。',
       sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '事实',
       priority: 5,
@@ -476,6 +504,7 @@ function buildMacroDrivers(data) {
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
   const macroDrivers = isPlainObject(data?.macroDrivers) ? data.macroDrivers : {};
   const consumer = isPlainObject(macroDrivers.consumer) ? macroDrivers.consumer : {};
+  const employment = isPlainObject(macroDrivers.employment) ? macroDrivers.employment : {};
   const fedLiquidity = isPlainObject(macroDrivers.fedLiquidity) ? macroDrivers.fedLiquidity : {};
   const curve = isPlainObject(macroDrivers.curve) ? macroDrivers.curve : {};
   const credit = isPlainObject(macroDrivers.credit) ? macroDrivers.credit : {};
@@ -491,6 +520,15 @@ function buildMacroDrivers(data) {
   const walcl4wChange = finite(fedLiquidity.walcl4wChange);
   const reserveBalances = finite(fedLiquidity.reserveBalances);
   const reserveBalances4wChange = finite(fedLiquidity.reserveBalances4wChange);
+  const initialClaims = finite(employment.initialClaims);
+  const initialClaims4wAverage = finite(employment.initialClaims4wAverage);
+  const initialClaims4wChange = finite(employment.initialClaims4wChange);
+  const continuingClaims = finite(employment.continuingClaims);
+  const continuingClaims4wAverage = finite(employment.continuingClaims4wAverage);
+  const joltsOpenings = finite(employment.joltsOpenings);
+  const joltsOpeningsYoY = finite(employment.joltsOpeningsYoY);
+  const claimsRegime = text(employment.claimsRegime, '未知');
+  const joltsRegime = text(employment.joltsRegime, '未知');
   const vix = finite(inputs.vix);
   const creditCalm = hyOas !== null && hyOas < 4 && vix !== null && vix < 22;
   const policyProxyEvidence = [
@@ -520,9 +558,36 @@ function buildMacroDrivers(data) {
           ? null
           : `ISM 制造业 PMI ${formatNumber(consumer.ismManufacturingPmi, 1)} — ${consumer.ismManufacturingPmi >= 50 ? '扩张区间' : '收缩区间'}；3个月变化 ${formatNumber(consumer.ismManufacturingPmi3mChange, 1)}`,
       ].filter(Boolean),
-      missingEvidence: ['就业广度、盈利修正与高频消费证据等待接入。'],
+      missingEvidence: ['盈利修正与高频消费证据等待接入。'],
       explanation: 'UMCSENT 是月频慢变量，只能提供体感背景，不能单独判断近端增长。',
       sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '数据推断',
+    }),
+    createJudgment({
+      id: 'driver-employment',
+      title: '就业广度 LABOR BREADTH',
+      group: 'macro-driver',
+      status: initialClaims === null && continuingClaims === null && joltsOpenings === null ? WAITING : '慢变量观察中',
+      direction: claimsRegime === '明显走弱' || claimsRegime === '走弱' || joltsRegime === '走弱'
+        ? '劳动力降温'
+        : claimsRegime === '改善'
+          ? '裁员压力改善'
+          : '观察中',
+      confidence: initialClaims !== null && continuingClaims !== null && joltsOpenings !== null ? '中等' : '偏低',
+      dataCoverage: initialClaims !== null || continuingClaims !== null || joltsOpenings !== null ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+      evidence: [
+        initialClaims === null
+          ? 'ICSA 初请失业金人数等待接入或刷新。'
+          : `ICSA ${formatPeopleValue(initialClaims)}；4w-MA ${formatPeopleValue(initialClaims4wAverage)}；Δ ${formatSignedPeopleValue(initialClaims4wChange)}（${claimsRegime}）`,
+        continuingClaims === null
+          ? null
+          : `CCSA ${formatPeopleValue(continuingClaims)}；4w-MA ${formatPeopleValue(continuingClaims4wAverage)}`,
+        joltsOpenings === null
+          ? null
+          : `JOLTS:${formatMonthVintage(employment.joltsUpdatedAt)} ${formatPeopleValue(joltsOpenings)}；YoY ${formatRatioAsPercent(joltsOpeningsYoY)}（${joltsRegime}）`,
+      ].filter(Boolean),
+      missingEvidence: ['就业质量、工资增速与行业扩散仍待接入。'],
+      explanation: 'Claims 是周频裁员压力代理，JOLTS 是滞后职位空缺慢变量；仅用于就业广度观察。',
+      sourceType: initialClaims === null && continuingClaims === null && joltsOpenings === null ? '数据不足' : '事实',
     }),
     createJudgment({
       id: 'driver-inflation',

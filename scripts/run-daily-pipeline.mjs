@@ -1731,6 +1731,40 @@ function classifyPmiRegime(pmi) {
   return '深度收缩';
 }
 
+function classifyClaimsRegime(initialClaims4wAverage, initialClaims4wChange) {
+  if (!Number.isFinite(initialClaims4wAverage) && !Number.isFinite(initialClaims4wChange)) return '未知';
+  if ((Number.isFinite(initialClaims4wAverage) && initialClaims4wAverage >= 260_000)
+      || (Number.isFinite(initialClaims4wChange) && initialClaims4wChange >= 25_000)) {
+    return '明显走弱';
+  }
+  if ((Number.isFinite(initialClaims4wAverage) && initialClaims4wAverage >= 230_000)
+      || (Number.isFinite(initialClaims4wChange) && initialClaims4wChange >= 10_000)) {
+    return '走弱';
+  }
+  if (Number.isFinite(initialClaims4wChange) && initialClaims4wChange <= -10_000
+      && (!Number.isFinite(initialClaims4wAverage) || initialClaims4wAverage <= 225_000)) {
+    return '改善';
+  }
+  return '稳定';
+}
+
+function classifyJoltsRegime(joltsOpenings, joltsOpeningsYoY) {
+  if (!Number.isFinite(joltsOpenings) && !Number.isFinite(joltsOpeningsYoY)) return '未知';
+  if ((Number.isFinite(joltsOpenings) && joltsOpenings >= 9_000_000)
+      || (Number.isFinite(joltsOpeningsYoY) && joltsOpeningsYoY >= 0.08)) {
+    return '紧张';
+  }
+  if ((Number.isFinite(joltsOpenings) && joltsOpenings < 6_500_000)
+      || (Number.isFinite(joltsOpeningsYoY) && joltsOpeningsYoY <= -0.12)) {
+    return '走弱';
+  }
+  if ((Number.isFinite(joltsOpenings) && joltsOpenings < 7_200_000)
+      || (Number.isFinite(joltsOpeningsYoY) && joltsOpeningsYoY < -0.04)) {
+    return '宽松';
+  }
+  return '平衡';
+}
+
 function computeFedLiquidityPressure(walcl4wChange, onRrp, onRrpWeekChange) {
   let pressure = 0;
   if (Number.isFinite(walcl4wChange)) {
@@ -2119,6 +2153,96 @@ function buildMissingConsumer() {
   };
 }
 
+function averageRecentValues(rows, count, offset = 0) {
+  if (!Array.isArray(rows) || rows.length < count + offset) return null;
+  const slice = rows.slice(rows.length - count - offset, rows.length - offset);
+  if (slice.length !== count || slice.some((row) => !Number.isFinite(row.value))) return null;
+  return +(slice.reduce((sum, row) => sum + row.value, 0) / count).toFixed(3);
+}
+
+function latestDateIso(rows) {
+  const latest = Array.isArray(rows) ? rows[rows.length - 1] : null;
+  return latest?.date ? `${latest.date}T00:00:00Z` : null;
+}
+
+function latestIsoDate(...values) {
+  const valid = values
+    .filter((value) => typeof value === 'string' && Number.isFinite(Date.parse(value)))
+    .sort((a, b) => Date.parse(b) - Date.parse(a));
+  return valid[0] || null;
+}
+
+function findMonthlyValueAgo(rows, monthsBack) {
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  const latest = rows[rows.length - 1];
+  if (!latest?.date) return null;
+  const latestDate = new Date(`${latest.date}T00:00:00Z`);
+  const targetYear = latestDate.getUTCFullYear();
+  const targetMonth = latestDate.getUTCMonth() - monthsBack;
+  const target = new Date(Date.UTC(targetYear, targetMonth, 1));
+  const targetKey = target.toISOString().slice(0, 7);
+  const matched = rows.find((row) => typeof row.date === 'string' && row.date.slice(0, 7) === targetKey);
+  return Number.isFinite(matched?.value) ? matched.value : findValueAgo(rows, 365);
+}
+
+function buildMissingEmployment() {
+  return {
+    initialClaims: null,
+    initialClaims4wAverage: null,
+    initialClaims4wChange: null,
+    continuingClaims: null,
+    continuingClaims4wAverage: null,
+    joltsOpenings: null,
+    joltsOpeningsYoY: null,
+    joltsUpdatedAt: null,
+    claimsRegime: '未知',
+    joltsRegime: '未知',
+    sourceStatus: {
+      icsa: 'missing',
+      ccsa: 'missing',
+      jtsjol: 'missing'
+    },
+    updatedAt: null,
+    source: 'FRED:ICSA; FRED:CCSA; FRED:JTSJOL',
+    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS 为月频，发布滞后约 6 周；audit-only / display-only。']
+  };
+}
+
+function normalizePreviousEmployment(prevEmployment) {
+  if (!prevEmployment || typeof prevEmployment !== 'object') return buildMissingEmployment();
+  const initialClaims = Number.isFinite(prevEmployment.initialClaims) ? prevEmployment.initialClaims : null;
+  const initialClaims4wAverage = Number.isFinite(prevEmployment.initialClaims4wAverage) ? prevEmployment.initialClaims4wAverage : null;
+  const initialClaims4wChange = Number.isFinite(prevEmployment.initialClaims4wChange) ? prevEmployment.initialClaims4wChange : null;
+  const continuingClaims = Number.isFinite(prevEmployment.continuingClaims) ? prevEmployment.continuingClaims : null;
+  const continuingClaims4wAverage = Number.isFinite(prevEmployment.continuingClaims4wAverage) ? prevEmployment.continuingClaims4wAverage : null;
+  const joltsOpenings = Number.isFinite(prevEmployment.joltsOpenings) ? prevEmployment.joltsOpenings : null;
+  const joltsOpeningsYoY = Number.isFinite(prevEmployment.joltsOpeningsYoY) ? prevEmployment.joltsOpeningsYoY : null;
+  return {
+    initialClaims,
+    initialClaims4wAverage,
+    initialClaims4wChange,
+    continuingClaims,
+    continuingClaims4wAverage,
+    joltsOpenings,
+    joltsOpeningsYoY,
+    joltsUpdatedAt: typeof prevEmployment.joltsUpdatedAt === 'string' ? prevEmployment.joltsUpdatedAt : null,
+    claimsRegime: typeof prevEmployment.claimsRegime === 'string' && prevEmployment.claimsRegime.trim()
+      ? prevEmployment.claimsRegime
+      : classifyClaimsRegime(initialClaims4wAverage, initialClaims4wChange),
+    joltsRegime: typeof prevEmployment.joltsRegime === 'string' && prevEmployment.joltsRegime.trim()
+      ? prevEmployment.joltsRegime
+      : classifyJoltsRegime(joltsOpenings, joltsOpeningsYoY),
+    sourceStatus: {
+      icsa: initialClaims !== null ? 'fallback' : 'missing',
+      ccsa: continuingClaims !== null ? 'fallback' : 'missing',
+      jtsjol: joltsOpenings !== null ? 'fallback' : 'missing'
+    },
+    updatedAt: typeof prevEmployment.updatedAt === 'string' ? prevEmployment.updatedAt : null,
+    source: 'FRED:ICSA; FRED:CCSA; FRED:JTSJOL',
+    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS 为月频，发布滞后约 6 周；audit-only / display-only。']
+  };
+}
+
 function normalizePreviousConsumer(prevConsumer) {
   if (!prevConsumer || typeof prevConsumer !== 'object') return buildMissingConsumer();
   const threeMonthChange = Number.isFinite(prevConsumer.threeMonthChange) ? prevConsumer.threeMonthChange : null;
@@ -2219,13 +2343,104 @@ async function resolveConsumerSentiment(prevConsumer) {
   }
 }
 
+async function resolveEmploymentBreadth(prevEmployment) {
+  const fallback = normalizePreviousEmployment(prevEmployment);
+  const status = {
+    icsa: 'missing',
+    ccsa: 'missing',
+    jtsjol: 'missing'
+  };
+  let initialClaims = null;
+  let initialClaims4wAverage = null;
+  let initialClaims4wChange = null;
+  let initialClaimsUpdatedAt = null;
+  let continuingClaims = null;
+  let continuingClaims4wAverage = null;
+  let continuingClaimsUpdatedAt = null;
+  let joltsOpenings = null;
+  let joltsOpeningsYoY = null;
+  let joltsUpdatedAt = null;
+
+  const [icsaResult, ccsaResult, joltsResult] = await Promise.allSettled([
+    fetchFredSeries('ICSA', 420),
+    fetchFredSeries('CCSA', 420),
+    fetchFredSeries('JTSJOL', 1500)
+  ]);
+
+  if (icsaResult.status === 'fulfilled') {
+    const rows = icsaResult.value;
+    initialClaims = latestValue(rows);
+    initialClaims4wAverage = averageRecentValues(rows, 4);
+    const prior4wAverage = averageRecentValues(rows, 4, 4);
+    initialClaims4wChange = Number.isFinite(initialClaims4wAverage) && Number.isFinite(prior4wAverage)
+      ? +(initialClaims4wAverage - prior4wAverage).toFixed(0)
+      : null;
+    initialClaimsUpdatedAt = latestDateIso(rows);
+    status.icsa = 'live';
+  } else if (Number.isFinite(fallback.initialClaims)) {
+    initialClaims = fallback.initialClaims;
+    initialClaims4wAverage = fallback.initialClaims4wAverage;
+    initialClaims4wChange = fallback.initialClaims4wChange;
+    initialClaimsUpdatedAt = fallback.updatedAt;
+    status.icsa = 'fallback';
+  }
+
+  if (ccsaResult.status === 'fulfilled') {
+    const rows = ccsaResult.value;
+    continuingClaims = latestValue(rows);
+    continuingClaims4wAverage = averageRecentValues(rows, 4);
+    continuingClaimsUpdatedAt = latestDateIso(rows);
+    status.ccsa = 'live';
+  } else if (Number.isFinite(fallback.continuingClaims)) {
+    continuingClaims = fallback.continuingClaims;
+    continuingClaims4wAverage = fallback.continuingClaims4wAverage;
+    continuingClaimsUpdatedAt = fallback.updatedAt;
+    status.ccsa = 'fallback';
+  }
+
+  if (joltsResult.status === 'fulfilled') {
+    const rows = joltsResult.value;
+    const latestJolts = latestValue(rows);
+    const yearAgo = findMonthlyValueAgo(rows, 12);
+    joltsOpenings = Number.isFinite(latestJolts) ? +(latestJolts * 1000).toFixed(0) : null;
+    joltsOpeningsYoY = Number.isFinite(latestJolts) && Number.isFinite(yearAgo) && yearAgo !== 0
+      ? +(((latestJolts - yearAgo) / yearAgo)).toFixed(4)
+      : null;
+    joltsUpdatedAt = latestDateIso(rows);
+    status.jtsjol = 'live';
+  } else if (Number.isFinite(fallback.joltsOpenings)) {
+    joltsOpenings = fallback.joltsOpenings;
+    joltsOpeningsYoY = fallback.joltsOpeningsYoY;
+    joltsUpdatedAt = fallback.joltsUpdatedAt;
+    status.jtsjol = 'fallback';
+  }
+
+  return {
+    initialClaims: Number.isFinite(initialClaims) ? initialClaims : null,
+    initialClaims4wAverage: Number.isFinite(initialClaims4wAverage) ? +initialClaims4wAverage.toFixed(0) : null,
+    initialClaims4wChange: Number.isFinite(initialClaims4wChange) ? initialClaims4wChange : null,
+    continuingClaims: Number.isFinite(continuingClaims) ? continuingClaims : null,
+    continuingClaims4wAverage: Number.isFinite(continuingClaims4wAverage) ? +continuingClaims4wAverage.toFixed(0) : null,
+    joltsOpenings: Number.isFinite(joltsOpenings) ? joltsOpenings : null,
+    joltsOpeningsYoY: Number.isFinite(joltsOpeningsYoY) ? joltsOpeningsYoY : null,
+    joltsUpdatedAt,
+    claimsRegime: classifyClaimsRegime(initialClaims4wAverage, initialClaims4wChange),
+    joltsRegime: classifyJoltsRegime(joltsOpenings, joltsOpeningsYoY),
+    sourceStatus: status,
+    updatedAt: latestIsoDate(initialClaimsUpdatedAt, continuingClaimsUpdatedAt, joltsUpdatedAt),
+    source: 'FRED:ICSA; FRED:CCSA; FRED:JTSJOL',
+    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS 为月频，发布滞后约 6 周；audit-only / display-only。']
+  };
+}
+
 async function fetchMacroDrivers(prev, hyOasLive) {
   const prevMd = prev?.macroDrivers || {};
   const results = await Promise.allSettled([
     resolveFedLiquidity(prevMd.fedLiquidity),
     resolveCurve(prevMd.curve),
     resolveCredit(prevMd.credit, hyOasLive),
-    resolveConsumerSentiment(prevMd.consumer)
+    resolveConsumerSentiment(prevMd.consumer),
+    resolveEmploymentBreadth(prevMd.employment)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -2251,8 +2466,9 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     sourceStatus: { igOas: 'missing', sloos: 'missing', nfci: 'missing' }
   };
   const consumer = results[3].status === 'fulfilled' ? results[3].value : buildMissingConsumer();
+  const employment = results[4].status === 'fulfilled' ? results[4].value : buildMissingEmployment();
 
-  return { fedLiquidity, curve, credit, consumer };
+  return { fedLiquidity, curve, credit, consumer, employment };
 }
 
 // 判断结构信号数据源是否"全不可用"
@@ -2969,6 +3185,7 @@ async function build() {
         hyOas: Number.isFinite(hyOasLive) ? hyOasLive : null
       },
       consumer: macroDrivers.consumer,
+      employment: macroDrivers.employment,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

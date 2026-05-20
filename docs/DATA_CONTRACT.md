@@ -247,6 +247,42 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 
 `consumer_vs_asset_pricing` 的 `category` 为 `consumer_assets`。该 check 只能说明消费者信心与 S&P 500、VIX、HY OAS 之间是否存在观察性错配；不得写成实时交易信号，不得声称消费崩盘已确认，也不得改变任何仓位或交易建议。
 
+### `macroDrivers.employment` 就业广度 contract (v28.0M-68)
+
+`macroDrivers.employment` 是 FRED 劳动力市场 evidence 层，汇总 ICSA / CCSA 周频失业金申请数据与 JTSJOL 月频职位空缺数据。所有字段为 audit-only / display-only，不参与 scoring、decisionModel、executionLock 或 positionGuidance；不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation matrix。
+
+字段 contract：
+
+| 字段 | 类型 | 单位 | 来源 | 含义 |
+|---|---|---|---|---|
+| `initialClaims` | number \| null | 人次 | FRED:ICSA（周频 SA） | 最新初请失业金人数 |
+| `initialClaims4wAverage` | number \| null | 人次 | 派生 | ICSA 最近 4 个观测点平均 |
+| `initialClaims4wChange` | number \| null | 人次 | 派生 | 当前 4w-MA 相对前 4 个观测点 4w-MA 的变化 |
+| `continuingClaims` | number \| null | 人次 | FRED:CCSA（周频 SA，约 1 周滞后） | 最新续请失业金人数 |
+| `continuingClaims4wAverage` | number \| null | 人次 | 派生 | CCSA 最近 4 个观测点平均 |
+| `joltsOpenings` | number \| null | 人次 | FRED:JTSJOL（月频，约 6 周滞后） | 最新 JOLTS 职位空缺数；FRED 原始单位为 thousands，pipeline 存储时转换为人次 |
+| `joltsOpeningsYoY` | number \| null | 比例 | 派生 | JOLTS 相对 12 个月前同月变化率 |
+| `joltsUpdatedAt` | string \| null | ISO 8601 | JTSJOL 最新数据点日期 | 前端用于显示 JOLTS vintage，避免把月频滞后误读为实时数据 |
+| `claimsRegime` | string enum | n/a | 派生 | `明显走弱` \| `走弱` \| `稳定` \| `改善` \| `未知` |
+| `joltsRegime` | string enum | n/a | 派生 | `紧张` \| `平衡` \| `宽松` \| `走弱` \| `未知` |
+| `sourceStatus` | object | n/a | 拉取状态 | `sourceStatus.icsa` / `sourceStatus.ccsa` / `sourceStatus.jtsjol` 每项为 `live` \| `fallback` \| `missing` |
+| `updatedAt` | string \| null | ISO 8601 | 三个 series 中最新观测日期 | employment 子树更新时间 |
+| `source` | string | n/a | 固定 | `FRED:ICSA; FRED:CCSA; FRED:JTSJOL` |
+| `notes` | string[] | n/a | 固定 | 说明 ICSA/CCSA 为 FRED SA 周频，JOLTS 为月频滞后数据，且本层只用于展示 |
+
+分类阈值：
+
+- `claimsRegime`: `initialClaims4wAverage >= 260000` 或 `initialClaims4wChange >= 25000` → `明显走弱`；`initialClaims4wAverage >= 230000` 或 `initialClaims4wChange >= 10000` → `走弱`；`initialClaims4wChange <= -10000` 且 `initialClaims4wAverage <= 225000` → `改善`；否则 `稳定`。
+- `joltsRegime`: `joltsOpenings >= 9000000` 或 `joltsOpeningsYoY >= 0.08` → `紧张`；`joltsOpenings < 6500000` 或 `joltsOpeningsYoY <= -0.12` → `走弱`；`joltsOpenings < 7200000` 或 `joltsOpeningsYoY < -0.04` → `宽松`；否则 `平衡`。
+
+边界：
+
+- 本字段层不改变 `values.*`、scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
+- 本字段层不进入 `displayInputsBaseline` / `effectiveDisplayInputs`，前端只读 `data.macroDrivers.employment.*`。
+- 本字段层不进入 `divergenceLayer.checks[]` / cross-validation matrix，也不扩展 `AI_INTERPRETATION_EVIDENCE_LAYERS`。
+- 任一 FRED series 拉取失败必须逐 series 降级为 `fallback` 或 `missing`，不得伪造值，不得用非同义替代指标冒充 ICSA / CCSA / JTSJOL。
+- JTSJOL 为慢变量，前端必须展示 `joltsUpdatedAt` vintage，不得暗示它是实时就业信号。
+
 #### macroDrivers.fedLiquidity
 
 `macroDrivers.fedLiquidity` 是美联储资产负债表与利率层指标。所有字段为 audit-only / display-only，不参与 scoring、`decisionModel`、`executionLock` 或 `positionGuidance`。
@@ -615,30 +651,30 @@ config/world-order-sipri-normalized.example.json
 
 ### Frontend asset cache version
 
-v28.0M-66V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+v28.0M-68V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
 当前前端资源版本为：
 
 ```text
-28.0M-66V
+28.0M-68V
 ```
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-66V`。
-- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-66V`。
-- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-66V"`。
+- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-68V`。
+- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-68V`。
+- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-68V"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs 28.0M-66V
-npm run bump:frontend-asset-version -- 28.0M-66V
+node scripts/bump-frontend-asset-version.mjs 28.0M-68V
+npm run bump:frontend-asset-version -- 28.0M-68V
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-66V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-68V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
