@@ -186,9 +186,9 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-### Session Handoff (2026-05-20 深夜)
+### Session Handoff (2026-05-20 — M-67 CI observation closed)
 
-- **上次会话结束于**: M-63b (ACLED monthly evidence-only) 与 M-67 (ISM PMI source repair) 双 commit 已推到 `origin/main`。HEAD = `ad13ead`（M-67），前一笔 = `99529fe`（M-63b）。本地 ↔ origin `0 / 0` 同步。check:all 69 项全绿；working tree clean。M-63b 首次让 monthly real data (asOfDate=2026-05-08, latestFullYear=2025, pvYoyDelta=+19.8%) 进入 `peaceDividendRetreat` overlay 的 evidence 层；M-67 用 `fetchIsmManufacturingPmiReport()` 直接解析 ismworld.org 公开报告页（smoke test 已验 status=live, latestPmi=52.7, pmi3mChange=0.1），4-state `sourceStatus.pmi` 取代旧 FRED:NAPM 假设。
+- **上次会话结束于**: M-67 CI 观察窗口已关闭。手动触发 `Build Daily Radar Data` workflow run `26145627306`（基于 `69f9b45`）success；CI 自动 commit `5de8d4d chore: refresh radar data` 已推到 main，本地 `git pull --ff-only` 已同步,working tree clean。HEAD = `5de8d4d`,本地 ↔ origin `0 / 0`。CI 产物确认 `macroDrivers.consumer.sourceStatus.pmi = live`，`diagnostics.pmi.httpStatus=200 / landingHttpStatus=200 / latencyMs=545`，`reportUrl=https://www.ismworld.org/.../pmi/april/`，`reportMonthLabel=April`，`ismManufacturingPmi=52.7`，`ismManufacturingPmi3mChange=0.1`，`ismPmiRegime=中性偏扩张`，`source=FRED:UMCSENT; ISM:ManufacturingPMI`。`npm run check:consumer-pmi` + `npm run check:all` 69 项全绿。结论：GitHub-hosted runner（datacenter IP + UA `GFRRBot/1.0`）不触发 ismworld.org 反爬，M-67 fetcher 在 CI 环境同样可用，无需 source-review PR / 替代源 / parser 改动。唯一 workflow warning 是 Daily Realtime Audit 的 realtime freshness（与 PMI 无关）。
 - **当前进行中**: 无 active 任务。
-- **下一步建议**: (a) 等下一轮 `Build Daily Radar Data` workflow 观察 `consumer.diagnostics.pmi` 与 PMI 是否在 GitHub Actions runner 上转为 `live`（runner 网络 / UA 行为可能与本地不同）；(b) 等 `Refresh World Order Stress` 用 M-63b 联合 fetch-acled.mjs 重建 `data/world-order-stress.json`，看 `acledStatus` 是否仍 `ok` 且 evidence 中出现新 monthly 字段；(c) 之后可推进 M-63c (ACLED weekly + monthly reminder workflows) 或 P2-7 就业广度接入 (ICSA / CCSA / JTSJOL)。
-- **阻塞或等待**: 无技术阻塞。若 ISM 页面在 CI 环境连续两个发布周期未能解析,按 `docs/M-67_ISM_PMI_SOURCE_REPAIR.md` runbook 查 `diagnostics.pmi.httpStatus` / `parseStep` / `snippetSample` 做 source review。
+- **下一步建议**: (a) 观察 `Refresh World Order Stress` 用 M-63b 联合 `fetch-acled.mjs` 重建 `data/world-order-stress.json`，看 `acledStatus` 是否仍 `ok` 且 evidence 中出现新 monthly 字段（global YoY / last-12m vs prior-12m / top10 escalating / fatalities）；(b) 推进 M-63c（ACLED weekly + monthly reminder workflows，P1-4 收尾）；(c) 推进 P2-7 就业广度接入（ICSA / CCSA / JTSJOL，~100 行）。
+- **阻塞或等待**: 无技术阻塞。M-67 不再需要后续 CI 观察。下次 PMI 异常按 `docs/M-67_ISM_PMI_SOURCE_REPAIR.md` runbook 5 步处理即可（查 `sourceStatus.pmi` → `diagnostics.pmi.{httpStatus, parseStep, snippetSample}` → URL 复测 → 对比 ISM 页面结构 → 必要时开 source-review PR）。
