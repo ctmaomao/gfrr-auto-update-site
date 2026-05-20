@@ -48,9 +48,9 @@ if (realtimeBandIdx === -1) {
   fail(`M-55a: homepage-realtime-band (pos ${realtimeBandIdx}) must appear BEFORE external-ai-auxiliary (pos ${externalAiIdx})`);
 }
 
-// Verify cache version bumped
-if (!htmlContent.includes('?v=28.0M-58V')) {
-  fail('M-55a: cache version 28.0M-58V not found in index.html');
+// Verify cache version exists without pinning this historical guard to one release.
+if (!/scripts\/app\.js\?v=[A-Za-z0-9._-]+/u.test(htmlContent)) {
+  fail('M-55a: frontend asset cache version not found in index.html');
 }
 if (htmlContent.includes('?v=28.0M-55bV')) {
   fail('M-55a: stale cache version 28.0M-55bV still present in index.html');

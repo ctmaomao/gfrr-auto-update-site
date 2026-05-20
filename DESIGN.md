@@ -141,13 +141,22 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 ```text
 ═══ 第一层：核心阅读路径（不折叠，始终展开）═══
 1. Hero / Masthead              (顶部品牌 + 日期 + 数据健康)
-2. dashboard-jump-nav            (顶部跳转导航 13 项)
+2. dashboard-jump-nav            (顶部跳转导航 14 项)
 3. #macro-risk-overview          (宏观风险判断总览)
-4. #wow-key-changes              (本期关键变化)
-5. #global-risk-heatmap          (全球风险热力图)
+   ├─ runtime block: #homepage-today-judgment
+   ├─ runtime block: #homepage-pressure-sources
+   ├─ runtime block: #homepage-signal-layers
+   ├─ runtime block: #homepage-macro-drivers
+   ├─ runtime block: #homepage-market-temperature
+   ├─ runtime block: #homepage-risk-engines
+   ├─ runtime block: #homepage-cross-validation
+   ├─ runtime block: #wow-key-changes      (M-55b: JS runtime 注入，不是顶级 section)
+   └─ supporting strip: #homepage-realtime-band (盘中快变量，不是顶级 section)
+4. #global-risk-heatmap          (全球风险热力图)
 
 ═══ 第二层：附录区（可折叠，默认收起）═══
-6. #detail-data                  (详细数据与图表)
+5. #detail-data                  (详细数据与图表)
+6. #world-order-stress-section   (World Order regime overlay；独立 section，见 ADR-0004)
 7. #method-evidence              (方法说明)
 8. #external-ai-auxiliary        (外部 AI 解读 - 只读辅助)
 9. #execution-risk-detail        (执行与风控详情)
@@ -189,9 +198,11 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 | Section | 色带 token | 语义 |
 |---|---|---|
 | `#macro-risk-overview` | `var(--risk-red)` | 主判断 |
-| `#wow-key-changes` | `var(--risk-yellow)` | 变化语义 |
+| `#wow-key-changes` | `var(--risk-yellow)` | `#macro-risk-overview` 内 runtime block；变化语义 |
+| `#homepage-realtime-band` | n/a | `#macro-risk-overview` 内 supporting strip；盘中快变量 |
 | `#global-risk-heatmap` | `var(--risk-red)` | 风险数据 |
 | `#detail-data` | `var(--paper-ink)` | 中性 appendix |
+| `#world-order-stress-section` | `var(--risk-orange)` | regime overlay；独立结构性观察层 |
 | `#method-evidence` | `var(--paper-ink)` | 中性 appendix |
 | `#external-ai-auxiliary` | `var(--paper-muted)` | 辅助层 |
 | `#execution-risk-detail` | `var(--risk-red)` | 风控严重性 |
@@ -258,7 +269,7 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 
 ### 5.5 dashboard-jump-nav
 
-顶部跳转导航，13 项链接，每项对应一个 section 锚点。
+顶部跳转导航，14 项链接，对应首页核心 runtime anchors 与顶级 section 锚点。
 
 - 字体 mono 11px，`letter-spacing: 0.18em`，uppercase
 - 默认色 `var(--paper-muted)`
@@ -463,9 +474,11 @@ var(--font-mono)              /* IBM Plex Mono */
 
 ```text
 #macro-risk-overview          宏观风险判断总览（红色带）
-#wow-key-changes              本期关键变化（金棕色带）
+  #wow-key-changes            本期关键变化（runtime 注入，不是顶级 section）
+  #homepage-realtime-band     盘中快变量（supporting strip，不是顶级 section）
 #global-risk-heatmap          全球风险热力图（红色带）
 #detail-data                  详细数据与图表（墨色带，折叠）
+#world-order-stress-section   世界秩序压力层（regime overlay，橙色带，折叠）
 #method-evidence              方法说明（墨色带，折叠）
 #external-ai-auxiliary        外部 AI 解读（灰色带，折叠）
 #execution-risk-detail        执行与风控详情（红色带，折叠）

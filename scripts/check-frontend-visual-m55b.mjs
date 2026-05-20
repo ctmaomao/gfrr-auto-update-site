@@ -86,9 +86,9 @@ if (cssContent.includes('.editorial-subsection-equivalent')) {
   fail('M-55b: .editorial-subsection-equivalent should be REMOVED (M-55a legacy, no longer needed)');
 }
 
-// Check 4: Cache version
-if (!htmlContent.includes('?v=28.0M-58V')) {
-  fail('M-55b: cache version 28.0M-58V not found in index.html');
+// Check 4: Cache version exists without pinning this historical guard to one release.
+if (!/scripts\/app\.js\?v=[A-Za-z0-9._-]+/u.test(htmlContent)) {
+  fail('M-55b: frontend asset cache version not found in index.html');
 }
 if (htmlContent.includes('?v=28.0M-55bV')) {
   fail('M-55b: stale cache version 28.0M-55bV still present in index.html');

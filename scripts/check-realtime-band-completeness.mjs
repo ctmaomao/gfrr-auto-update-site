@@ -50,8 +50,9 @@ if (brentDeltaWithOrZero.test(renderContent)) {
   fail('M-58: Brent delta still uses || 0 fallback (should use fmtDeltaWithUnit with null-check)');
 }
 
-if (!htmlContent.includes('?v=28.0M-58V')) {
-  fail('M-58: cache version 28.0M-58V not found in index.html');
+if (!/assets\/styles\.css\?v=[A-Za-z0-9._-]+/u.test(htmlContent)
+  || !/scripts\/app\.js\?v=[A-Za-z0-9._-]+/u.test(htmlContent)) {
+  fail('M-58: index.html must keep versioned local stylesheet and app module assets');
 }
 if (htmlContent.includes('?v=28.0M-57V')) {
   fail('M-58: stale cache version 28.0M-57V still present in index.html');

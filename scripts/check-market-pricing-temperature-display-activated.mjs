@@ -12,7 +12,6 @@ const PROTECTED_PATHS = [
   'data/radar-data.json',
 ];
 const OLD_VERSION = '28.0M-7V';
-const NEW_VERSION = '28.0M-58V';
 const DISCLAIMER = '本数据为统计描述，不构成投资建议。';
 const errors = [];
 
@@ -54,7 +53,8 @@ const latestMetric = metricsRecords[metricsRecords.length - 1] || {};
 assert(html.includes('id="homepage-market-temperature"'), '#homepage-market-temperature section must still exist');
 assert(html.includes('id="market-temperature-card-root"'), 'market temperature card root must exist in index fallback');
 assert(!html.includes(`?v=${OLD_VERSION}`), 'index.html must not retain old frontend asset version');
-assert((html.match(new RegExp(`\\?v=${NEW_VERSION}`, 'gu')) || []).length >= 2, 'index.html must include new version for local stylesheet and script assets');
+assert(/assets\/styles\.css\?v=[A-Za-z0-9._-]+/u.test(html), 'index.html must include versioned local stylesheet asset');
+assert(/scripts\/app\.js\?v=[A-Za-z0-9._-]+/u.test(html), 'index.html must include versioned app module asset');
 assert(html.includes('等待历史周线数据接入'), 'waiting-state fallback copy must remain available');
 
 for (const className of [

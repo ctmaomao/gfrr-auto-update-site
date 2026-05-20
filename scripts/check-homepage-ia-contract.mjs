@@ -16,10 +16,11 @@ const navContract = [
   ['风险引擎', '#homepage-risk-engines'],
   ['交叉验证', '#homepage-cross-validation'],
   ['本期关键变化', '#wow-key-changes'],
-  ['外部 AI', '#external-ai-auxiliary'],
   ['风险热力图', '#global-risk-heatmap'],
   ['详细数据', '#detail-data'],
+  ['世界秩序', '#world-order-stress-section'],
   ['方法说明', '#method-evidence'],
+  ['外部 AI', '#external-ai-auxiliary'],
   ['执行风控', '#execution-risk-detail'],
 ];
 
@@ -36,10 +37,11 @@ const macroRuntimeIds = [
 
 const staticRequiredIds = [
   'homepage-realtime-band',
-  'external-ai-auxiliary',
   'global-risk-heatmap',
   'detail-data',
+  'world-order-stress-section',
   'method-evidence',
+  'external-ai-auxiliary',
   'execution-risk-detail',
 ];
 
@@ -65,6 +67,41 @@ function findElementStartById(source, id) {
     index: match.index,
     source: match[0],
   };
+}
+
+function findElementContextById(source, id) {
+  const tagPattern = /<\/?([a-z0-9-]+)\b[^>]*>/giu;
+  const stack = [];
+  let match;
+  while ((match = tagPattern.exec(source))) {
+    const tagName = match[1].toLowerCase();
+    const tagSource = match[0];
+    if (tagSource.startsWith('</')) {
+      for (let index = stack.length - 1; index >= 0; index -= 1) {
+        if (stack[index].tagName === tagName) {
+          stack.splice(index, 1);
+          break;
+        }
+      }
+      continue;
+    }
+
+    const idMatch = tagSource.match(/\bid=["']([^"']+)["']/iu);
+    if (idMatch?.[1] === id) {
+      return {
+        tagName,
+        source: tagSource,
+        parent: stack.at(-1) || null,
+        sectionAncestorCount: stack.filter((entry) => entry.tagName === 'section').length,
+      };
+    }
+
+    if (!tagSource.endsWith('/>')) {
+      const parentId = idMatch?.[1] || '';
+      stack.push({ tagName, id: parentId });
+    }
+  }
+  return null;
 }
 
 function findMatchingCloseTag(source, startIndex, tagName) {
@@ -161,7 +198,7 @@ function checkNav() {
   const actualPairs = links.map((link) => `${link.label}|${link.href}`).join('\n');
   const expectedPairs = navContract.map(([label, href]) => `${label}|${href}`).join('\n');
   if (actualPairs !== expectedPairs) {
-    fail('top nav must follow the exact 13-step reading-path order');
+    fail('top nav must follow the exact 14-step reading-path order');
   }
 
   for (const link of links) {
@@ -222,10 +259,11 @@ function checkOrdering() {
   const expectedOrder = [
     ...macroRuntimeIds,
     'homepage-realtime-band',
-    'external-ai-auxiliary',
     'global-risk-heatmap',
     'detail-data',
+    'world-order-stress-section',
     'method-evidence',
+    'external-ai-auxiliary',
     'execution-risk-detail',
   ];
 
@@ -235,6 +273,26 @@ function checkOrdering() {
     if ((orderIndex.get(current) ?? Infinity) >= (orderIndex.get(next) ?? -1)) {
       fail(`${current} must appear before ${next}`);
     }
+  }
+}
+
+function checkWorldOrderTopLevelSection() {
+  const worldOrder = findElementContextById(html, 'world-order-stress-section');
+  if (!worldOrder) {
+    fail('world-order-stress-section must exist');
+    return;
+  }
+  if (worldOrder.tagName !== 'section') {
+    fail(`world-order-stress-section must be a top-level <section>, found <${worldOrder.tagName}>`);
+  }
+  if (!/\beditorial-section\b/u.test(worldOrder.source)) {
+    fail('world-order-stress-section must use editorial-section class');
+  }
+  if (worldOrder.parent?.tagName !== 'main' || worldOrder.sectionAncestorCount !== 0) {
+    fail('world-order-stress-section must be a direct top-level child of <main>');
+  }
+  if (isElementInside('method-evidence', 'world-order-stress-section')) {
+    fail('world-order-stress-section must not be nested inside method-evidence');
   }
 }
 
@@ -328,6 +386,7 @@ function main() {
   checkRequiredIds();
   checkNoEmptyNavTargets();
   checkOrdering();
+  checkWorldOrderTopLevelSection();
   checkDailyBrief();
   checkExternalAi();
   checkHeatmap();
