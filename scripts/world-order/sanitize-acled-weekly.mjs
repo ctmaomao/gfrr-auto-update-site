@@ -17,9 +17,9 @@ const ATTRIBUTION = 'ACLED (Armed Conflict Location & Event Data) — https://ac
 const expectedRegions = [
   'Africa',
   'Middle-East',
-  'Europe-and-Central-Asia',
-  'United-States-and-Canada',
-  'Latin-America-and-the-Caribbean',
+  'Europe-Central-Asia',
+  'US-and-Canada',
+  'Latin-America-the-Caribbean',
   'Asia-Pacific'
 ];
 
@@ -39,7 +39,7 @@ const expectedColumns = [
   'CENTROID_LONGITUDE'
 ];
 
-const filenamePattern = /^(.+)_aggregated_data_up_to_week_of-(\d{4}-\d{2}-\d{2})_.*\.xlsx$/u;
+const filenamePattern = /^(.+)_aggregated_data_up_to_week_of-(\d{4}-\d{2}-\d{2})(?:_.*)?\.xlsx$/u;
 
 function warn(message) {
   console.warn(`ACLED weekly sanitizer warning: ${message}`);
