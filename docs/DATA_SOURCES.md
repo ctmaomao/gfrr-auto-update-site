@@ -37,8 +37,12 @@
 | `ICSA` | Initial Jobless Claims (SA, weekly) | macroDrivers.employment | M-68 |
 | `CCSA` | Continuing Claims (SA, weekly, 1w lag) | macroDrivers.employment | M-68 |
 | `JTSJOL` | JOLTS Job Openings (monthly, ~6w lag) | macroDrivers.employment | M-68 |
+| `CARTS` | Chicago Fed Advance Retail Trade Summary, nominal (SA, weekly) | macroDrivers.consumerRetail | M-69 |
+| `CARTSR` | Chicago Fed CARTS, real (inflation-adjusted, weekly) | macroDrivers.consumerRetail | M-69 |
 
 **注意**: NFCI 正值=收紧、负值=宽松,**方向与 IG/HY OAS 相反**。误判方向会让 cross-validation 完全反向。
+
+**M-69 注意**: `CARTSP` 价格指数 未接,future scope only；`macroDrivers.consumerRetail` 只使用 `CARTS` / `CARTSR`，不代表 Redbook 或 BoA Card 数据。
 
 ---
 
@@ -282,6 +286,7 @@ documented attribution string and code is a contract violation.
 | `macroDrivers.credit` | FRED: BAMLH0A0HYM2 (HY OAS), BAMLC0A0CM (IG OAS), DRTSCILM, DRTSCIS, NFCI |
 | `macroDrivers.consumer` | FRED: UMCSENT + ISM: Manufacturing PMI public report parser |
 | `macroDrivers.employment` | FRED: ICSA, CCSA, JTSJOL |
+| `macroDrivers.consumerRetail` | FRED: CARTS, CARTSR (Chicago Fed Advance Retail Trade Summary) |
 | `brentPricingLayer.crackSpread` | FRED `DHOILNYH` × 42 − Brent |
 | `externalAiInterpretationLayer` | DeepSeek (production) / OpenAI (alternate);只读展示 |
 | `worldOrderStress.marketConfirmation` | Worker preview → local realtime → Daily baseline (优先级) |

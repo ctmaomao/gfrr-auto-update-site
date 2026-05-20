@@ -61,6 +61,11 @@ const VALID_EMPLOYMENT_SOURCES = new Set([
 ]);
 const VALID_CLAIMS_REGIMES = new Set(['明显走弱', '走弱', '稳定', '改善', '未知']);
 const VALID_JOLTS_REGIMES = new Set(['紧张', '平衡', '宽松', '走弱', '未知']);
+const CONSUMER_RETAIL_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_CONSUMER_RETAIL_SOURCES = new Set([
+  'FRED:CARTS; FRED:CARTSR',
+]);
+const VALID_RETAIL_REGIMES = new Set(['明显走弱', '走弱', '稳定', '改善', '强劲', '未知']);
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
@@ -457,6 +462,47 @@ function validateMacroDriversEmployment(dataPayload) {
   );
   assertArray(employment.notes, 'macroDrivers.employment.notes');
   employment.notes.forEach((item, index) => assertString(item, `macroDrivers.employment.notes[${index}]`));
+}
+
+function validateMacroDriversConsumerRetail(dataPayload) {
+  const consumerRetail = dataPayload?.macroDrivers?.consumerRetail;
+  if (consumerRetail === undefined) return;
+  assertPlainObject(consumerRetail, 'macroDrivers.consumerRetail');
+
+  for (const key of [
+    'cartsNominal',
+    'cartsNominal4wAverage',
+    'cartsNominalYoY',
+    'cartsReal',
+    'cartsReal4wAverage',
+    'cartsRealYoY'
+  ]) {
+    assert(Object.hasOwn(consumerRetail, key), `macroDrivers.consumerRetail.${key} is missing`);
+    assert(isFiniteNumberOrNull(consumerRetail[key]), `macroDrivers.consumerRetail.${key} must be finite number or null`);
+  }
+
+  assertString(consumerRetail.retailRegime, 'macroDrivers.consumerRetail.retailRegime');
+  assert(VALID_RETAIL_REGIMES.has(consumerRetail.retailRegime), 'macroDrivers.consumerRetail.retailRegime is not supported');
+
+  assertPlainObject(consumerRetail.sourceStatus, 'macroDrivers.consumerRetail.sourceStatus');
+  for (const key of ['carts', 'cartsr']) {
+    assert(Object.hasOwn(consumerRetail.sourceStatus, key), `macroDrivers.consumerRetail.sourceStatus.${key} is missing`);
+    assert(
+      CONSUMER_RETAIL_SOURCE_STATUSES.has(consumerRetail.sourceStatus[key]),
+      `macroDrivers.consumerRetail.sourceStatus.${key} must be live, fallback, or missing`
+    );
+  }
+
+  assert(
+    consumerRetail.updatedAt === null || (typeof consumerRetail.updatedAt === 'string' && Number.isFinite(Date.parse(consumerRetail.updatedAt))),
+    'macroDrivers.consumerRetail.updatedAt must be null or parseable ISO string'
+  );
+  assert(
+    VALID_CONSUMER_RETAIL_SOURCES.has(consumerRetail.source),
+    `macroDrivers.consumerRetail.source must be one of: ${[...VALID_CONSUMER_RETAIL_SOURCES].join(' | ')}`
+  );
+  assertArray(consumerRetail.notes, 'macroDrivers.consumerRetail.notes');
+  consumerRetail.notes.forEach((item, index) => assertString(item, `macroDrivers.consumerRetail.notes[${index}]`));
 }
 
 function validateNullableString(value, fieldName) {
@@ -1295,6 +1341,7 @@ validateDailyBrief(data);
 validateDivergenceLayer(data);
 validateMacroDriversConsumer(data);
 validateMacroDriversEmployment(data);
+validateMacroDriversConsumerRetail(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);
 validateExternalAiInterpretationLayer(data);

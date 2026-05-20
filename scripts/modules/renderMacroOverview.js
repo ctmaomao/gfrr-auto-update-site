@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-68V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-68V';
-import { formatFiniteNumber } from './format.js?v=28.0M-68V';
+import { $ } from './config.js?v=28.0M-69V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-69V';
+import { formatFiniteNumber } from './format.js?v=28.0M-69V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -79,6 +79,11 @@ function formatUsdTrillions(value) {
   return number === null ? INSUFFICIENT : `$${formatFiniteNumber(number, 2)}T`;
 }
 
+function formatUsdBillions(value, digits = 1) {
+  const number = finite(value);
+  return number === null ? INSUFFICIENT : `$${formatFiniteNumber(number, digits)}B`;
+}
+
 function formatUsdBillionsFromFedChange(value) {
   const number = finite(value);
   if (number === null) return INSUFFICIENT;
@@ -111,6 +116,11 @@ function formatMonthVintage(isoDate) {
   const date = new Date(`${isoDate}T00:00:00Z`);
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+}
+
+function formatWeekVintage(isoDate) {
+  if (typeof isoDate !== 'string' || !Number.isFinite(Date.parse(isoDate))) return 'vintage 待确认';
+  return isoDate.slice(0, 10);
 }
 
 function findActiveSignal(activeSignals, key) {
@@ -418,7 +428,7 @@ function buildPressureSources(data, worldOrderStressData) {
           ? null
           : `ISM 制造业 PMI ${formatNumber(consumer.ismManufacturingPmi, 1)} — ${consumer.ismManufacturingPmi >= 50 ? '扩张区间' : '收缩区间'}；3个月变化 ${formatNumber(consumer.ismManufacturingPmi3mChange, 1)}`,
       ].filter(Boolean),
-      missingEvidence: ['高频消费证据仍待接入。'],
+      missingEvidence: ['更细分行业消费证据仍待接入。'],
       explanation: '月频慢变量只说明体感背景，不足以单独判断增长拐点。',
       sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '事实',
       priority: 5,
@@ -505,6 +515,7 @@ function buildMacroDrivers(data) {
   const macroDrivers = isPlainObject(data?.macroDrivers) ? data.macroDrivers : {};
   const consumer = isPlainObject(macroDrivers.consumer) ? macroDrivers.consumer : {};
   const employment = isPlainObject(macroDrivers.employment) ? macroDrivers.employment : {};
+  const consumerRetail = isPlainObject(macroDrivers.consumerRetail) ? macroDrivers.consumerRetail : {};
   const fedLiquidity = isPlainObject(macroDrivers.fedLiquidity) ? macroDrivers.fedLiquidity : {};
   const curve = isPlainObject(macroDrivers.curve) ? macroDrivers.curve : {};
   const credit = isPlainObject(macroDrivers.credit) ? macroDrivers.credit : {};
@@ -529,6 +540,11 @@ function buildMacroDrivers(data) {
   const joltsOpeningsYoY = finite(employment.joltsOpeningsYoY);
   const claimsRegime = text(employment.claimsRegime, '未知');
   const joltsRegime = text(employment.joltsRegime, '未知');
+  const cartsNominal = finite(consumerRetail.cartsNominal);
+  const cartsNominalYoY = finite(consumerRetail.cartsNominalYoY);
+  const cartsReal = finite(consumerRetail.cartsReal);
+  const cartsRealYoY = finite(consumerRetail.cartsRealYoY);
+  const retailRegime = text(consumerRetail.retailRegime, '未知');
   const vix = finite(inputs.vix);
   const creditCalm = hyOas !== null && hyOas < 4 && vix !== null && vix < 22;
   const policyProxyEvidence = [
@@ -558,7 +574,7 @@ function buildMacroDrivers(data) {
           ? null
           : `ISM 制造业 PMI ${formatNumber(consumer.ismManufacturingPmi, 1)} — ${consumer.ismManufacturingPmi >= 50 ? '扩张区间' : '收缩区间'}；3个月变化 ${formatNumber(consumer.ismManufacturingPmi3mChange, 1)}`,
       ].filter(Boolean),
-      missingEvidence: ['盈利修正与高频消费证据等待接入。'],
+      missingEvidence: ['盈利修正与更细分行业消费证据仍待接入。'],
       explanation: 'UMCSENT 是月频慢变量，只能提供体感背景，不能单独判断近端增长。',
       sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '数据推断',
     }),
@@ -588,6 +604,32 @@ function buildMacroDrivers(data) {
       missingEvidence: ['就业质量、工资增速与行业扩散仍待接入。'],
       explanation: 'Claims 是周频裁员压力代理，JOLTS 是滞后职位空缺慢变量；仅用于就业广度观察。',
       sourceType: initialClaims === null && continuingClaims === null && joltsOpenings === null ? '数据不足' : '事实',
+    }),
+    createJudgment({
+      id: 'driver-consumer-retail',
+      title: '高频零售消费 CONSUMER RETAIL',
+      group: 'macro-driver',
+      status: cartsNominal === null && cartsReal === null ? WAITING : '周频观察中',
+      direction: retailRegime === '明显走弱' || retailRegime === '走弱'
+        ? '消费降温'
+        : retailRegime === '改善' || retailRegime === '强劲'
+          ? '消费改善'
+          : '观察中',
+      confidence: cartsNominal !== null && cartsReal !== null ? '中等' : '偏低',
+      dataCoverage: cartsNominal !== null || cartsReal !== null ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+      evidence: [
+        cartsNominal === null
+          ? 'CARTS 名义零售消费 nowcast 等待刷新。'
+          : `CARTS 名义 ${formatUsdBillions(cartsNominal)}；YoY ${formatRatioAsPercent(cartsNominalYoY)}（名义）`,
+        cartsReal === null
+          ? null
+          : `CARTSR 实际 ${formatUsdBillions(cartsReal)}；YoY ${formatRatioAsPercent(cartsRealYoY)}（实际,通胀调整后；${retailRegime}）`,
+        `Chicago Fed CARTS:${formatWeekVintage(consumerRetail.updatedAt)}`,
+      ].filter(Boolean),
+      missingEvidence: ['更细分行业消费证据仍待接入。'],
+      explanation: 'CARTS / CARTSR 是 Chicago Fed via FRED 的周频零售+餐饮 nowcast；仅用于消费行为观察。',
+      sourceType: cartsNominal === null && cartsReal === null ? '数据不足' : '事实',
+      updatedAt: `Chicago Fed CARTS:${formatWeekVintage(consumerRetail.updatedAt)}`,
     }),
     createJudgment({
       id: 'driver-inflation',
@@ -1292,7 +1334,7 @@ function buildSignalCategorySummary(judgments) {
 
 function driverTypeClass(judgment) {
   const identity = `${judgment?.id || ''} ${judgment?.title || ''} ${judgment?.group || ''}`.toLowerCase();
-  if (identity.includes('增长') || identity.includes('growth')) return 'is-growth';
+  if (identity.includes('增长') || identity.includes('消费') || identity.includes('growth') || identity.includes('retail')) return 'is-growth';
   if (identity.includes('通胀') || identity.includes('inflation')) return 'is-inflation';
   if (identity.includes('流动性') || identity.includes('liquidity')) return 'is-liquidity';
   if (identity.includes('政策') || identity.includes('policy')) return 'is-policy';

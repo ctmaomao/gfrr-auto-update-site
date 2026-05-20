@@ -1731,6 +1731,15 @@ function classifyPmiRegime(pmi) {
   return '深度收缩';
 }
 
+function classifyRetailRegime(cartsRealYoY) {
+  if (!Number.isFinite(cartsRealYoY)) return '未知';
+  if (cartsRealYoY <= -0.03) return '明显走弱';
+  if (cartsRealYoY < 0) return '走弱';
+  if (cartsRealYoY >= 0.06) return '强劲';
+  if (cartsRealYoY >= 0.03) return '改善';
+  return '稳定';
+}
+
 function classifyClaimsRegime(initialClaims4wAverage, initialClaims4wChange) {
   if (!Number.isFinite(initialClaims4wAverage) && !Number.isFinite(initialClaims4wChange)) return '未知';
   if ((Number.isFinite(initialClaims4wAverage) && initialClaims4wAverage >= 260_000)
@@ -2185,6 +2194,18 @@ function findMonthlyValueAgo(rows, monthsBack) {
   return Number.isFinite(matched?.value) ? matched.value : findValueAgo(rows, 365);
 }
 
+function calculateWeeklyYoY(rows) {
+  const current = latestValue(rows);
+  const yearAgo = findValueAgo(rows, 52 * 7);
+  return Number.isFinite(current) && Number.isFinite(yearAgo) && yearAgo > 0
+    ? +(((current - yearAgo) / yearAgo)).toFixed(4)
+    : null;
+}
+
+function fredMillionsToBillions(value) {
+  return Number.isFinite(value) ? +(value / 1000).toFixed(3) : null;
+}
+
 function buildMissingEmployment() {
   return {
     initialClaims: null,
@@ -2205,6 +2226,25 @@ function buildMissingEmployment() {
     updatedAt: null,
     source: 'FRED:ICSA; FRED:CCSA; FRED:JTSJOL',
     notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS 为月频，发布滞后约 6 周；audit-only / display-only。']
+  };
+}
+
+function buildMissingConsumerRetail() {
+  return {
+    cartsNominal: null,
+    cartsNominal4wAverage: null,
+    cartsNominalYoY: null,
+    cartsReal: null,
+    cartsReal4wAverage: null,
+    cartsRealYoY: null,
+    retailRegime: '未知',
+    sourceStatus: {
+      carts: 'missing',
+      cartsr: 'missing'
+    },
+    updatedAt: null,
+    source: 'FRED:CARTS; FRED:CARTSR',
+    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast (不含汽车);CARTSR 为通胀调整实际值;audit-only / display-only;不代表 Redbook 或 BoA Card 数据。']
   };
 }
 
@@ -2240,6 +2280,34 @@ function normalizePreviousEmployment(prevEmployment) {
     updatedAt: typeof prevEmployment.updatedAt === 'string' ? prevEmployment.updatedAt : null,
     source: 'FRED:ICSA; FRED:CCSA; FRED:JTSJOL',
     notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS 为月频，发布滞后约 6 周；audit-only / display-only。']
+  };
+}
+
+function normalizePreviousConsumerRetail(prevConsumerRetail) {
+  if (!prevConsumerRetail || typeof prevConsumerRetail !== 'object') return buildMissingConsumerRetail();
+  const cartsNominal = Number.isFinite(prevConsumerRetail.cartsNominal) ? prevConsumerRetail.cartsNominal : null;
+  const cartsNominal4wAverage = Number.isFinite(prevConsumerRetail.cartsNominal4wAverage) ? prevConsumerRetail.cartsNominal4wAverage : null;
+  const cartsNominalYoY = Number.isFinite(prevConsumerRetail.cartsNominalYoY) ? prevConsumerRetail.cartsNominalYoY : null;
+  const cartsReal = Number.isFinite(prevConsumerRetail.cartsReal) ? prevConsumerRetail.cartsReal : null;
+  const cartsReal4wAverage = Number.isFinite(prevConsumerRetail.cartsReal4wAverage) ? prevConsumerRetail.cartsReal4wAverage : null;
+  const cartsRealYoY = Number.isFinite(prevConsumerRetail.cartsRealYoY) ? prevConsumerRetail.cartsRealYoY : null;
+  return {
+    cartsNominal,
+    cartsNominal4wAverage,
+    cartsNominalYoY,
+    cartsReal,
+    cartsReal4wAverage,
+    cartsRealYoY,
+    retailRegime: typeof prevConsumerRetail.retailRegime === 'string' && prevConsumerRetail.retailRegime.trim()
+      ? prevConsumerRetail.retailRegime
+      : classifyRetailRegime(cartsRealYoY),
+    sourceStatus: {
+      carts: cartsNominal !== null ? 'fallback' : 'missing',
+      cartsr: cartsReal !== null ? 'fallback' : 'missing'
+    },
+    updatedAt: typeof prevConsumerRetail.updatedAt === 'string' ? prevConsumerRetail.updatedAt : null,
+    source: 'FRED:CARTS; FRED:CARTSR',
+    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast (不含汽车);CARTSR 为通胀调整实际值;audit-only / display-only;不代表 Redbook 或 BoA Card 数据。']
   };
 }
 
@@ -2433,6 +2501,71 @@ async function resolveEmploymentBreadth(prevEmployment) {
   };
 }
 
+async function resolveConsumerRetail(prevConsumerRetail) {
+  const fallback = normalizePreviousConsumerRetail(prevConsumerRetail);
+  const status = {
+    carts: 'missing',
+    cartsr: 'missing'
+  };
+  let cartsNominal = null;
+  let cartsNominal4wAverage = null;
+  let cartsNominalYoY = null;
+  let cartsNominalUpdatedAt = null;
+  let cartsReal = null;
+  let cartsReal4wAverage = null;
+  let cartsRealYoY = null;
+  let cartsRealUpdatedAt = null;
+
+  const [cartsResult, cartsrResult] = await Promise.allSettled([
+    fetchFredSeries('CARTS', 1500),
+    fetchFredSeries('CARTSR', 1500)
+  ]);
+
+  if (cartsResult.status === 'fulfilled') {
+    const rows = cartsResult.value;
+    cartsNominal = fredMillionsToBillions(latestValue(rows));
+    cartsNominal4wAverage = fredMillionsToBillions(averageRecentValues(rows, 4));
+    cartsNominalYoY = calculateWeeklyYoY(rows);
+    cartsNominalUpdatedAt = latestDateIso(rows);
+    status.carts = 'live';
+  } else if (Number.isFinite(fallback.cartsNominal)) {
+    cartsNominal = fallback.cartsNominal;
+    cartsNominal4wAverage = fallback.cartsNominal4wAverage;
+    cartsNominalYoY = fallback.cartsNominalYoY;
+    cartsNominalUpdatedAt = fallback.updatedAt;
+    status.carts = 'fallback';
+  }
+
+  if (cartsrResult.status === 'fulfilled') {
+    const rows = cartsrResult.value;
+    cartsReal = fredMillionsToBillions(latestValue(rows));
+    cartsReal4wAverage = fredMillionsToBillions(averageRecentValues(rows, 4));
+    cartsRealYoY = calculateWeeklyYoY(rows);
+    cartsRealUpdatedAt = latestDateIso(rows);
+    status.cartsr = 'live';
+  } else if (Number.isFinite(fallback.cartsReal)) {
+    cartsReal = fallback.cartsReal;
+    cartsReal4wAverage = fallback.cartsReal4wAverage;
+    cartsRealYoY = fallback.cartsRealYoY;
+    cartsRealUpdatedAt = fallback.updatedAt;
+    status.cartsr = 'fallback';
+  }
+
+  return {
+    cartsNominal: Number.isFinite(cartsNominal) ? cartsNominal : null,
+    cartsNominal4wAverage: Number.isFinite(cartsNominal4wAverage) ? cartsNominal4wAverage : null,
+    cartsNominalYoY: Number.isFinite(cartsNominalYoY) ? cartsNominalYoY : null,
+    cartsReal: Number.isFinite(cartsReal) ? cartsReal : null,
+    cartsReal4wAverage: Number.isFinite(cartsReal4wAverage) ? cartsReal4wAverage : null,
+    cartsRealYoY: Number.isFinite(cartsRealYoY) ? cartsRealYoY : null,
+    retailRegime: classifyRetailRegime(cartsRealYoY),
+    sourceStatus: status,
+    updatedAt: latestIsoDate(cartsNominalUpdatedAt, cartsRealUpdatedAt),
+    source: 'FRED:CARTS; FRED:CARTSR',
+    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast (不含汽车);CARTSR 为通胀调整实际值;audit-only / display-only;不代表 Redbook 或 BoA Card 数据。']
+  };
+}
+
 async function fetchMacroDrivers(prev, hyOasLive) {
   const prevMd = prev?.macroDrivers || {};
   const results = await Promise.allSettled([
@@ -2440,7 +2573,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveCurve(prevMd.curve),
     resolveCredit(prevMd.credit, hyOasLive),
     resolveConsumerSentiment(prevMd.consumer),
-    resolveEmploymentBreadth(prevMd.employment)
+    resolveEmploymentBreadth(prevMd.employment),
+    resolveConsumerRetail(prevMd.consumerRetail)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -2467,8 +2601,9 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   };
   const consumer = results[3].status === 'fulfilled' ? results[3].value : buildMissingConsumer();
   const employment = results[4].status === 'fulfilled' ? results[4].value : buildMissingEmployment();
+  const consumerRetail = results[5].status === 'fulfilled' ? results[5].value : buildMissingConsumerRetail();
 
-  return { fedLiquidity, curve, credit, consumer, employment };
+  return { fedLiquidity, curve, credit, consumer, employment, consumerRetail };
 }
 
 // 判断结构信号数据源是否"全不可用"
@@ -3186,6 +3321,7 @@ async function build() {
       },
       consumer: macroDrivers.consumer,
       employment: macroDrivers.employment,
+      consumerRetail: macroDrivers.consumerRetail,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

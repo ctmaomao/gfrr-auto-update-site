@@ -9,10 +9,10 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-68 (+ employment breadth audit-only macro driver) |
-| Cache version | `28.0M-68V` |
-| check:all 项数 | 70 |
-| 最后审计日期 | **2026-05-20** (M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
+| 当前生产状态 | v28.0M-69 (+ consumerRetail CARTS audit-only macro driver) |
+| Cache version | `28.0M-69V` |
+| check:all 项数 | 71 |
+| 最后审计日期 | **2026-05-20** (M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
 | 最后 daily refresh | 2026-05-20 (Build Daily Radar Data run `26145627306`, commit `5de8d4d`) |
 | GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
@@ -21,6 +21,7 @@
 | ACLED 状态 | M-63a (weekly) + M-63b (monthly) 双 sanitizer + 联合 importer 落地；weekly/monthly 都 `isRealData=true` → `ok`；一边到位 → `partial`；两边都缺 → `manual_required`；evidence-only 进入 `peaceDividendRetreat`,不动权重；M-63c 起 weekly Tuesday / monthly 9th cron reminder workflows active |
 | ISM PMI 状态 | M-67 起由 `scripts/run-daily-pipeline.mjs::fetchIsmManufacturingPmiReport` 低频解析 ismworld.org 公开报告页；audit-only/display-only；失败降级为 `fallback` / `source_unavailable` / `parse_error` |
 | Employment 状态 | M-68 起 `macroDrivers.employment` 接入 FRED ICSA/CCSA/JTSJOL；audit-only/display-only；仅用于 Macro Drivers 前端卡片；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation |
+| Consumer Retail 状态 | M-69 起 `macroDrivers.consumerRetail` 接入 FRED CARTS/CARTSR (Chicago Fed weekly retail nowcast)；audit-only/display-only；仅用于 Macro Drivers 前端卡片；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation；不接 CARTSP |
 | ADR-0013 | 2026-05-19 落地 (PR #231)；ADR-0001 zero-deps 精化为 runtime zero-dep,本地开发工具可在 ADR-0013 约束下使用 devDependencies |
 | First devDependency | M-63a 起 `xlsx@0.18.5` (SheetJS) 仅由 `scripts/world-order/sanitize-acled-weekly.mjs` 导入,runtime/check/workflow/frontend 不得引用 |
 | 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
@@ -51,9 +52,11 @@
 - **状态**: ✅ `done` (this PR);新增 `macroDrivers.employment` 子树、`driver-employment` 前端卡片与 `check:macro-drivers-employment`
 - **边界**: audit-only/display-only;不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs`、cross-validation 或 worker/realtime
 
-#### P2-8: 高频消费证据
-- 字段: Redbook Same-Store Sales, BoA Card Data
-- 估计 PR: ~150 行
+#### P2-8: 高频消费证据 (closed — M-69; reframed to Chicago Fed CARTS)
+- **历史 spec**: 原写 Redbook + BoA Card,实施时发现公开 API 不可达 (Redbook 商业订阅;BoA Card PDF only),改走 Path ε (Chicago Fed CARTS via FRED)
+- **实际接入**: `macroDrivers.consumerRetail` 接 FRED `CARTS` + `CARTSR`;audit-only/display-only;不接 CARTSP
+- **Redbook + BoA Card**: 降级为 P3-14 source-review candidates,不在 runtime 自动 fetch
+- **状态**: ✅ `done` (this PR);新增 `macroDrivers.consumerRetail` 子树、`driver-consumer-retail` 前端卡片、`check:macro-drivers-consumer-retail`
 
 #### P2-9: CRE / CDX / 私募信贷
 - 字段: CDX HY/IG, CRE delinquency, private credit fundraising
@@ -75,6 +78,16 @@
 - **诊断日期**: 2026-05-20，本地 + CI 环境均复现，4 条查询全部 406
 - **解封路径**: 若未来有 UN HDX 合作意愿，联系 hdx@un.org 后另开版本评估；在此之前不再跟进
 - **前端状态**: `render.js` 限制提示已更新为"API 被 bot 封锁（HTTP 406），已列为 P3"
+
+#### P3-14: Redbook + BoA Card 高频消费证据 (source-review candidates)
+- **不修原因**:
+  - Redbook 为 proprietary/subscription 数据源;官方发行通过 email/fax/conference call;公开页面与第三方聚合 (Trading Economics 等) 虽可见最新值,但 ToS/版权未解锁,不构成稳定可签合规 API
+  - BoA Consumer Checkpoint 是月度公开 HTML/PDF 研究材料,PDF 含具体卡均消费数字,但属 BoA proprietary internal data,license/再分发未明,且 PDF layout 解析对版面变动敏感
+  - 月度公开零售替代(RSAFS / MARTSSM / PCE)频率与"高频"语义不符
+  - 商业 SDK 与 ADR-0001 0-prod-deps 边界硬冲突
+- **诊断日期**: 2026-05-20 (M-69 source-review)
+- **解封路径**: 若未来 Redbook 提供官方 API 或 BoA 提供机器可读授权 endpoint → 另开 source-review PR 评估接入
+- **前端状态**: 不展示;`macroDrivers.consumerRetail` (CARTS) 已通过 M-69 满足"高频零售/消费证据"的可达层需求,不冒充 Redbook/BoA
 
 ---
 
@@ -111,6 +124,7 @@
 | ADR-0014 | DESIGN.md §4.1 为 IA ground truth；appendix content boundaries codified；subsection-meta mandate enforced by check scripts | `6e99cee` | 2026-05-20 | ✅ IA authority hierarchy (ADR > DESIGN.md §4.1 > check scripts > HTML) established；top-down change direction mandated；M-64/65/66 三方漂移根因归档；`docs/ADR/0014-design-md-is-ia-ground-truth.md` |
 | M-67 | ISM PMI source repair | (this PR) | 2026-05-20 | ✅ Broken FRED PMI path replaced with low-frequency parser for ISM public Manufacturing PMI report page; `sourceStatus.pmi` four-state contract added; zero new deps; PMI remains audit-only/display-only; `check:all` stays 69 |
 | M-68 | macroDrivers.employment (ICSA/CCSA/JTSJOL) audit-only ingestion (P2-7) | (this PR) | 2026-05-20 | ✅ New employment breadth subtree with per-series fallback status; FRED ICSA/CCSA weekly SA + JTSJOL monthly (~6w lag); frontend `driver-employment` card; no scoring/decision/execution/position, worker/realtime, displayInputsBaseline/effectiveDisplayInputs, or cross-validation impact; `check:all` 69 → 70; cache bumped to 28.0M-68V |
+| M-69 | macroDrivers.consumerRetail (Chicago Fed CARTS/CARTSR) audit-only ingestion (P2-8 Path ε) | (this PR) | 2026-05-20 | ✅ New consumerRetail subtree with per-series fallback status; FRED CARTS nominal + CARTSR real weekly retail nowcast; frontend `driver-consumer-retail` card; no scoring/decision/execution/position, worker/realtime, displayInputsBaseline/effectiveDisplayInputs, or cross-validation impact; Redbook/BoA downgraded to P3-14 source-review candidates; `check:all` 70 → 71; cache bumped to 28.0M-69V |
 
 ---
 
@@ -140,6 +154,7 @@
 | 2026-05-19 | M-63a ACLED weekly regional sanitizer + importer | Claude Code (review) + Codex (impl) | P1-4 partially resolved (weekly track done; monthly = M-63b) | First ADR-0013 consumer (`xlsx@0.18.5` devDep); API adapter wholesale-removed; `peaceDividendRetreat` reweighted; `check:all` 67 → 68 |
 | 2026-05-20 | M-63c ACLED weekly + monthly reminder workflows | Claude Code (audit) + Codex (impl) | P1-4 closed | Reminder-only GitHub issue workflows added; B+ date-stamped idempotency; no checkout/install/sanitize/network to acleddata.com; `check:all` stays 69 |
 | 2026-05-20 | M-68 employment breadth | Claude Code (audit) + Codex (impl) | P2-7 closed | ICSA/CCSA/JTSJOL 接入 `macroDrivers.employment`; audit-only/display-only; frontend Macro Drivers 卡片; `check:all` 69 → 70 |
+| 2026-05-20 | M-69 consumerRetail CARTS Path ε | Claude Code (source audit) + Codex (impl) | P2-8 closed; P3-14 added | FRED CARTS/CARTSR 接入 `macroDrivers.consumerRetail`; Redbook/BoA 降级为 source-review candidates; audit-only/display-only; frontend Macro Drivers 卡片; `check:all` 70 → 71 |
 
 ---
 
@@ -192,9 +207,9 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-### Session Handoff (2026-05-20 — M-68 employment breadth landed)
+### Session Handoff (2026-05-20 — M-69 consumerRetail CARTS landed)
 
-- **上次会话结束于**: M-68 macroDrivers.employment 已落地并推送。HEAD = 本次 M-68 commit (见 `git log -1 --oneline`)；P2-7 就业广度接入闭合：FRED ICSA/CCSA/JTSJOL 进入 `macroDrivers.employment`，三条 series 独立 `live` / `fallback` / `missing`，JTSJOL 以 `joltsUpdatedAt` 显示 vintage。
+- **上次会话结束于**: M-69 macroDrivers.consumerRetail 已落地。HEAD = 本次 M-69 commit (见 `git log -1 --oneline`)；P2-8 高频消费证据闭合：FRED CARTS/CARTSR 进入 `macroDrivers.consumerRetail`，两条 series 独立 `live` / `fallback` / `missing`，前端以 `Chicago Fed CARTS:<date>` 显示 weekly vintage。
 - **当前进行中**: 无 active 任务。
-- **下一步建议**: (a) 等下一轮 Build Daily Radar Data 在 CI runner 上确认 employment 三条 FRED series 仍为 `live`；(b) 等 M-63c weekly cron 首次 fire，验证 issue title / labels / idempotency 行为；(c) 选择 P2-8 高频消费证据或 P2-9 CRE/CDX/私募信贷作为下一条可选扩展。
+- **下一步建议**: (a) 等下一轮 Build Daily Radar Data 在 CI runner 上确认 CARTS/CARTSR 与 employment 三条 FRED series 仍为 `live`；(b) 等 M-63c weekly cron 首次 fire，验证 issue title / labels / idempotency 行为；(c) 选择 P2-9 CRE/CDX/私募信贷作为下一条可选扩展。
 - **阻塞或等待**: 无技术阻塞。
