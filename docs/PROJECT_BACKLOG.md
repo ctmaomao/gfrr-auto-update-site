@@ -186,9 +186,9 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-### Session Handoff (2026-05-20 晚)
+### Session Handoff (2026-05-20 深夜)
 
-- **上次会话结束于**: M-67 ISM PMI source repair 完成。M-47 的 broken FRED PMI path 已替换为 ismworld.org 公开 Manufacturing PMI report parser；`macroDrivers.consumer.source` 目标值为 `FRED:UMCSENT; ISM:ManufacturingPMI`；`sourceStatus.pmi` 为 `live` / `fallback` / `source_unavailable` / `parse_error`；PMI 仍 audit-only/display-only。
-- **当前进行中**: 等用户审 diff 后 commit/push。未改 `data/radar-data.json`、`realtime/`、workflow、frontend JS/HTML/CSS。
-- **下一步建议**: 等下一轮 Daily pipeline 观察 `consumer.diagnostics.pmi` 与 PMI 是否转为 `live`；之后可推进 M-63c reminder workflows 或 P2-7 就业广度接入。
-- **阻塞或等待**: 无技术阻塞。若 ISM 页面连续两个发布周期未能解析,按 `docs/M-67_ISM_PMI_SOURCE_REPAIR.md` runbook 做 source review。
+- **上次会话结束于**: M-63b (ACLED monthly evidence-only) 与 M-67 (ISM PMI source repair) 双 commit 已推到 `origin/main`。HEAD = `ad13ead`（M-67），前一笔 = `99529fe`（M-63b）。本地 ↔ origin `0 / 0` 同步。check:all 69 项全绿；working tree clean。M-63b 首次让 monthly real data (asOfDate=2026-05-08, latestFullYear=2025, pvYoyDelta=+19.8%) 进入 `peaceDividendRetreat` overlay 的 evidence 层；M-67 用 `fetchIsmManufacturingPmiReport()` 直接解析 ismworld.org 公开报告页（smoke test 已验 status=live, latestPmi=52.7, pmi3mChange=0.1），4-state `sourceStatus.pmi` 取代旧 FRED:NAPM 假设。
+- **当前进行中**: 无 active 任务。
+- **下一步建议**: (a) 等下一轮 `Build Daily Radar Data` workflow 观察 `consumer.diagnostics.pmi` 与 PMI 是否在 GitHub Actions runner 上转为 `live`（runner 网络 / UA 行为可能与本地不同）；(b) 等 `Refresh World Order Stress` 用 M-63b 联合 fetch-acled.mjs 重建 `data/world-order-stress.json`，看 `acledStatus` 是否仍 `ok` 且 evidence 中出现新 monthly 字段；(c) 之后可推进 M-63c (ACLED weekly + monthly reminder workflows) 或 P2-7 就业广度接入 (ICSA / CCSA / JTSJOL)。
+- **阻塞或等待**: 无技术阻塞。若 ISM 页面在 CI 环境连续两个发布周期未能解析,按 `docs/M-67_ISM_PMI_SOURCE_REPAIR.md` runbook 查 `diagnostics.pmi.httpStatus` / `parseStep` / `snippetSample` 做 source review。
