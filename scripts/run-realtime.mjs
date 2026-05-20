@@ -326,6 +326,7 @@ function applyOilpriceWeakConfirmation(annotatedCandidates) {
     item.source !== 'yahoo' &&
     item.source !== 'oilprice'
   ));
+  if (strongHighQualityCandidates.length >= 2) return annotatedCandidates;
   return annotatedCandidates.map((candidate) => {
     if (
       candidate.source !== 'oilprice' ||
