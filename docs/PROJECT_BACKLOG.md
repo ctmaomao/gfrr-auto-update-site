@@ -67,6 +67,12 @@
 #### P3-12: signal-noise bucket 硬编码
 - **不修原因**: 设计为框架提醒
 
+#### P3-13: ReliefWeb 冲突人道主义报告接入
+- **不修原因**: API 被 bot 封锁（HTTP 406，"Blocked due to bot activity"）；解封须人工联系 hdx@un.org 申请白名单，性价比低；GDELT 已覆盖同类冲突信号
+- **诊断日期**: 2026-05-20，本地 + CI 环境均复现，4 条查询全部 406
+- **解封路径**: 若未来有 UN HDX 合作意愿，联系 hdx@un.org 后另开版本评估；在此之前不再跟进
+- **前端状态**: `render.js` 限制提示已更新为"API 被 bot 封锁（HTTP 406），已列为 P3"
+
 ---
 
 ## Section 3 · Completed Items

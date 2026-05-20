@@ -254,7 +254,7 @@ export function buildWorldOrderLimitations(payload) {
   if (marketSource === 'local-realtime' || marketSource === 'daily-baseline') {
     limitations.push('市场确认：当前使用 fallback / baseline，可能滞后。');
   }
-  limitations.push('ReliefWeb：当前环境访问受限，备用公开源仍在评估中，不参与评分。');
+  limitations.push('ReliefWeb：API 被 bot 封锁（HTTP 406），已列为 P3，不参与评分。');
   return limitations.slice(0, 5);
 }
 

@@ -116,8 +116,14 @@ if (!narrative) {
     }
   }
 
-  // acled is always not_configured, so must appear in missingEvidence
-  if (!missingSources.has('acled')) {
+  // M-63a fix-up: when ACLED status is 'ok', evidence appears as 'acled' in
+  // supportingEvidence; otherwise it must appear in missingEvidence.
+  const acledStatus = worldOrder?.externalSources?.acled?.status;
+  if (acledStatus === 'ok') {
+    if (!supportingSources.has('acled')) {
+      fail('world_order_pressure_crossing missing acled supporting evidence (acledStatus ok but acled not in supportingEvidence)');
+    }
+  } else if (!missingSources.has('acled')) {
     fail('world_order_pressure_crossing missing source-status evidence: acled');
   }
 

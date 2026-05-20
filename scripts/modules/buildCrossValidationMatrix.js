@@ -903,7 +903,18 @@ function buildWorldOrderNarrative(data, worldOrderStressData) {
     missingEvidence.push(evidence('decision_modifier_risk_bias', riskBias, 'World Order modifier 当前未提高 riskBias，保持结构性解释层边界'));
   }
   if (externalSources.gdelt?.status === 'stale') missingEvidence.push(evidence('gdelt', 'stale', 'GDELT 当前为 stale'));
-  if (externalSources.acled?.status === 'not_configured') missingEvidence.push(evidence('acled', 'not_configured', 'ACLED 尚未配置'));
+  // M-63a fix-up: handle all ACLED status values (was only not_configured)
+  if (externalSources.acled?.status === 'ok') {
+    const acledSummary = externalSources.acled?.summary || {};
+    const delta = Number.isFinite(acledSummary.eventsDelta4Vs12)
+      ? `${Math.round(acledSummary.eventsDelta4Vs12 * 100)}%`
+      : '不可比';
+    supportingEvidence.push(evidence('acled', `latestWeek=${acledSummary.latestWeek || '?'} delta=${delta}`, `ACLED 真实周度数据已导入，覆盖 ${acledSummary.regionsTracked || '?'} 个区域，4 周 vs 12 周冲突变化 ${delta}`));
+  } else if (externalSources.acled?.status === 'manual_required') {
+    missingEvidence.push(evidence('acled', 'manual_required', 'ACLED xlsx 尚未由 operator 手动导入'));
+  } else if (externalSources.acled?.status === 'not_configured') {
+    missingEvidence.push(evidence('acled', 'not_configured', 'ACLED 尚未配置'));
+  }
   if (sipriStatus === 'manual_required') missingEvidence.push(evidence('sipri', 'manual_required', 'SIPRI 慢变量仍需手动导入'));
   else if (sipriStatus === 'error') missingEvidence.push(evidence('sipri', 'error', 'SIPRI normalized 数据校验失败，请检查配置文件'));
   else if (sipriStatus === 'disabled') missingEvidence.push(evidence('sipri', 'disabled', 'SIPRI 模块已禁用'));
