@@ -66,6 +66,11 @@ const VALID_CONSUMER_RETAIL_SOURCES = new Set([
   'FRED:CARTS; FRED:CARTSR',
 ]);
 const VALID_RETAIL_REGIMES = new Set(['明显走弱', '走弱', '稳定', '改善', '强劲', '未知']);
+const CRE_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_CRE_SOURCES = new Set([
+  'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM',
+]);
+const VALID_CRE_STRESS_REGIMES = new Set(['恶化', '紧绷', '稳定', '宽松', '改善', '未知']);
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
@@ -503,6 +508,49 @@ function validateMacroDriversConsumerRetail(dataPayload) {
   );
   assertArray(consumerRetail.notes, 'macroDrivers.consumerRetail.notes');
   consumerRetail.notes.forEach((item, index) => assertString(item, `macroDrivers.consumerRetail.notes[${index}]`));
+}
+
+function validateMacroDriversCommercialRealEstate(dataPayload) {
+  const cre = dataPayload?.macroDrivers?.commercialRealEstate;
+  if (cre === undefined) return;
+  assertPlainObject(cre, 'macroDrivers.commercialRealEstate');
+
+  for (const key of [
+    'creDelinquencyRate',
+    'creDelinquencyRateQoQChange',
+    'creChargeOffRate',
+    'creChargeOffRateQoQChange',
+    'sloosCreNonfarmNonresidentialTightening',
+    'sloosCreConstructionTightening',
+    'sloosCreMultifamilyTightening',
+    'sloosCreTighteningMax'
+  ]) {
+    assert(Object.hasOwn(cre, key), `macroDrivers.commercialRealEstate.${key} is missing`);
+    assert(isFiniteNumberOrNull(cre[key]), `macroDrivers.commercialRealEstate.${key} must be finite number or null`);
+  }
+
+  assertString(cre.creStressRegime, 'macroDrivers.commercialRealEstate.creStressRegime');
+  assert(VALID_CRE_STRESS_REGIMES.has(cre.creStressRegime), 'macroDrivers.commercialRealEstate.creStressRegime is not supported');
+
+  assertPlainObject(cre.sourceStatus, 'macroDrivers.commercialRealEstate.sourceStatus');
+  for (const key of ['delinquency', 'chargeOff', 'sloosNonfarmNonresidential', 'sloosConstruction', 'sloosMultifamily']) {
+    assert(Object.hasOwn(cre.sourceStatus, key), `macroDrivers.commercialRealEstate.sourceStatus.${key} is missing`);
+    assert(
+      CRE_SOURCE_STATUSES.has(cre.sourceStatus[key]),
+      `macroDrivers.commercialRealEstate.sourceStatus.${key} must be live, fallback, or missing`
+    );
+  }
+
+  assert(
+    cre.updatedAt === null || (typeof cre.updatedAt === 'string' && Number.isFinite(Date.parse(cre.updatedAt))),
+    'macroDrivers.commercialRealEstate.updatedAt must be null or parseable ISO string'
+  );
+  assert(
+    VALID_CRE_SOURCES.has(cre.source),
+    `macroDrivers.commercialRealEstate.source must be one of: ${[...VALID_CRE_SOURCES].join(' | ')}`
+  );
+  assertArray(cre.notes, 'macroDrivers.commercialRealEstate.notes');
+  cre.notes.forEach((item, index) => assertString(item, `macroDrivers.commercialRealEstate.notes[${index}]`));
 }
 
 function validateNullableString(value, fieldName) {
@@ -1342,6 +1390,7 @@ validateDivergenceLayer(data);
 validateMacroDriversConsumer(data);
 validateMacroDriversEmployment(data);
 validateMacroDriversConsumerRetail(data);
+validateMacroDriversCommercialRealEstate(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);
 validateExternalAiInterpretationLayer(data);

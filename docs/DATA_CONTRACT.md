@@ -316,6 +316,42 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 - M-69 不接 `CARTSP` 价格指数；该价格 series 仅为 future scope，不能被本层前端或 validator 当作已接入数据。
 - `macroDrivers.consumerRetail` 不代表 Redbook 或 BoA Card 数据，字段名、notes 与前端文案不得暗示 CARTS 是 Redbook / BoA Card 的替代版本。
 
+### `macroDrivers.commercialRealEstate` 商业地产信用压力 contract (v28.0M-70)
+
+`macroDrivers.commercialRealEstate` 是 FRED 季频 CRE 信用压力 evidence 层，汇总商业地产贷款拖欠率、核销率与 SLOOS 三个 CRE 子类贷款标准收紧度。所有字段为 audit-only / display-only，不参与 scoring、decisionModel、executionLock 或 positionGuidance；不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation matrix。
+
+字段 contract：
+
+| 字段 | 类型 | 单位 | 来源 | 含义 |
+|---|---|---|---|---|
+| `creDelinquencyRate` | number \| null | % | FRED:DRCRELEXFACBS（季频） | CRE loan delinquency rate 最新观测 |
+| `creDelinquencyRateQoQChange` | number \| null | pp Δ | 派生 | CRE 拖欠率相对上一观测季度变化 |
+| `creChargeOffRate` | number \| null | % | FRED:CORCREXFACBS（季频） | CRE loan charge-off rate 最新观测 |
+| `creChargeOffRateQoQChange` | number \| null | pp Δ | 派生 | CRE 核销率相对上一观测季度变化 |
+| `sloosCreNonfarmNonresidentialTightening` | number \| null | net % | FRED:SUBLPDRCSN（季频） | SLOOS 非农非住宅 CRE 贷款标准净收紧 |
+| `sloosCreConstructionTightening` | number \| null | net % | FRED:SUBLPDRCSC（季频） | SLOOS 建设 / 土地开发 CRE 贷款标准净收紧 |
+| `sloosCreMultifamilyTightening` | number \| null | net % | FRED:SUBLPDRCSM（季频） | SLOOS multifamily CRE 贷款标准净收紧 |
+| `sloosCreTighteningMax` | number \| null | net % | 派生 | 三条 SLOOS CRE 子类中的最大净收紧值 |
+| `creStressRegime` | string enum | n/a | 派生 | `恶化` \| `紧绷` \| `稳定` \| `宽松` \| `改善` \| `未知` |
+| `sourceStatus` | object | n/a | 拉取状态 | `sourceStatus.delinquency` / `sourceStatus.chargeOff` / `sourceStatus.sloosNonfarmNonresidential` / `sourceStatus.sloosConstruction` / `sourceStatus.sloosMultifamily` 每项为 `live` \| `fallback` \| `missing` |
+| `updatedAt` | string \| null | ISO 8601 | 五个 series 中最新观测日期 | commercialRealEstate 子树更新时间；FRED 季频 observation date 为季度起始日 |
+| `source` | string | n/a | 固定 | `FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM` |
+| `notes` | string[] | n/a | 固定 | 必须包含 `不代表 CDX HY/IG 或 私募信贷 (Cliffwater / PitchBook / Preqin) 数据` 声明 |
+
+分类阈值：
+
+- `creStressRegime`: 任一核心压力项达到 `creDelinquencyRate >= 4.0`、`creChargeOffRate >= 1.0` 或 `sloosCreTighteningMax >= 35` → `恶化`；任一核心压力项达到 `creDelinquencyRate >= 2.0`、`creChargeOffRate >= 0.35` 或 `sloosCreTighteningMax >= 15` → `紧绷`；三项均可用且 `creDelinquencyRate <= 1.0`、`creChargeOffRate <= 0.10`、`sloosCreTighteningMax <= -10` → `改善`；三项均可用且 `creDelinquencyRate <= 1.25`、`creChargeOffRate <= 0.20`、`sloosCreTighteningMax <= 0` → `宽松`；否则 `稳定`；三项全部缺失时为 `未知`。
+
+边界：
+
+- 本字段层不改变 `values.*`、scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
+- 本字段层不进入 `displayInputsBaseline` / `effectiveDisplayInputs`，前端只读 `data.macroDrivers.commercialRealEstate.*`。
+- 本字段层不进入 `divergenceLayer.checks[]` / cross-validation matrix，也不扩展 `AI_INTERPRETATION_EVIDENCE_LAYERS`。
+- 本字段层不扩写 `macroDrivers.credit`；现有 credit 子树继续只覆盖 HY/IG cash-bond OAS、C&I SLOOS 与 NFCI。
+- 任一 FRED series 拉取失败必须逐 series 降级为 `fallback` 或 `missing`，不得伪造值，不得用 CDX、私募信贷或 CRE 余额存量 series 冒充 CRE 信用压力。
+- M-70 不接 CDX HY/IG 任何 series；不接 loan balance / CRE exposure stock series（如 `QBPBSTASLNREALNFRMRES`）；均为 future scope only。
+- `macroDrivers.commercialRealEstate` 不代表 CDX 或 私募信贷数据，字段名、notes 与前端文案不得暗示替代关系。
+
 #### macroDrivers.fedLiquidity
 
 `macroDrivers.fedLiquidity` 是美联储资产负债表与利率层指标。所有字段为 audit-only / display-only，不参与 scoring、`decisionModel`、`executionLock` 或 `positionGuidance`。
@@ -684,30 +720,30 @@ config/world-order-sipri-normalized.example.json
 
 ### Frontend asset cache version
 
-v28.0M-69V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+v28.0M-70V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
 当前前端资源版本为：
 
 ```text
-28.0M-69V
+28.0M-70V
 ```
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-69V`。
-- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-69V`。
-- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-69V"`。
+- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-70V`。
+- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-70V`。
+- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-70V"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs 28.0M-69V
-npm run bump:frontend-asset-version -- 28.0M-69V
+node scripts/bump-frontend-asset-version.mjs 28.0M-70V
+npm run bump:frontend-asset-version -- 28.0M-70V
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-69V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-70V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

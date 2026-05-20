@@ -9,10 +9,10 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-69 (+ consumerRetail CARTS audit-only macro driver) |
-| Cache version | `28.0M-69V` |
-| check:all 项数 | 71 |
-| 最后审计日期 | **2026-05-20** (M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
+| 当前生产状态 | v28.0M-70 (+ commercialRealEstate CRE audit-only macro driver; M-69 consumerRetail CARTS) |
+| Cache version | `28.0M-70V` |
+| check:all 项数 | 72 |
+| 最后审计日期 | **2026-05-20** (M-70 CRE FRED commercialRealEstate ingestion; M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
 | 最后 daily refresh | 2026-05-20 (Build Daily Radar Data run `26145627306`, commit `5de8d4d`) |
 | GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
@@ -22,6 +22,7 @@
 | ISM PMI 状态 | M-67 起由 `scripts/run-daily-pipeline.mjs::fetchIsmManufacturingPmiReport` 低频解析 ismworld.org 公开报告页；audit-only/display-only；失败降级为 `fallback` / `source_unavailable` / `parse_error` |
 | Employment 状态 | M-68 起 `macroDrivers.employment` 接入 FRED ICSA/CCSA/JTSJOL；audit-only/display-only；仅用于 Macro Drivers 前端卡片；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation |
 | Consumer Retail 状态 | M-69 起 `macroDrivers.consumerRetail` 接入 FRED CARTS/CARTSR (Chicago Fed weekly retail nowcast)；audit-only/display-only；仅用于 Macro Drivers 前端卡片；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation；不接 CARTSP |
+| CRE 状态 | M-70 起 `macroDrivers.commercialRealEstate` 接入 FRED DRCRELEXFACBS/CORCREXFACBS/SUBLPDRCSN/SUBLPDRCSC/SUBLPDRCSM 季频 CRE 信用压力 series；audit-only/display-only；独立于 `macroDrivers.credit`；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation |
 | ADR-0013 | 2026-05-19 落地 (PR #231)；ADR-0001 zero-deps 精化为 runtime zero-dep,本地开发工具可在 ADR-0013 约束下使用 devDependencies |
 | First devDependency | M-63a 起 `xlsx@0.18.5` (SheetJS) 仅由 `scripts/world-order/sanitize-acled-weekly.mjs` 导入,runtime/check/workflow/frontend 不得引用 |
 | 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
@@ -58,9 +59,14 @@
 - **Redbook + BoA Card**: 降级为 P3-14 source-review candidates,不在 runtime 自动 fetch
 - **状态**: ✅ `done` (this PR);新增 `macroDrivers.consumerRetail` 子树、`driver-consumer-retail` 前端卡片、`check:macro-drivers-consumer-retail`
 
-#### P2-9: CRE / CDX / 私募信贷
-- 字段: CDX HY/IG, CRE delinquency, private credit fundraising
-- 估计 PR: ~200 行
+#### P2-9: CRE / CDX / 私募信贷 (closed — M-70; reframed to CRE-only Path α)
+- **历史 spec**: 原写 "CDX HY/IG, CRE delinquency, private credit fundraising",实施时发现:
+  - CDX HY/IG = ICE/Markit 商业数据,无公开 API
+  - 私募信贷 fundraising = Cliffwater / PitchBook / Preqin 商业订阅 / ToS 未明
+  - CRE delinquency 是 FRED 公开,可直接 audit-only 接入
+- **实际接入**: `macroDrivers.commercialRealEstate` 接 5 个 FRED 季频公开 CRE 信用压力 series
+- **CDX + 私募信贷**: 降级为 **P3-15** source-review candidates,不在 runtime 自动 fetch
+- **状态**: ✅ `done` (this PR);新增 `macroDrivers.commercialRealEstate` 子树、`driver-cre` 前端卡片、`check:macro-drivers-commercial-real-estate`
 
 ### P3 Items (Won't Fix — 设计 placeholder)
 
@@ -88,6 +94,15 @@
 - **诊断日期**: 2026-05-20 (M-69 source-review)
 - **解封路径**: 若未来 Redbook 提供官方 API 或 BoA 提供机器可读授权 endpoint → 另开 source-review PR 评估接入
 - **前端状态**: 不展示;`macroDrivers.consumerRetail` (CARTS) 已通过 M-69 满足"高频零售/消费证据"的可达层需求,不冒充 Redbook/BoA
+
+#### P3-15: CDX HY/IG + 私募信贷 fundraising (source-review candidates)
+- **不修原因**:
+  - **CDX HY/IG**: ICE/Markit 商业数据,无公开 API;Bloomberg/FactSet/Refinitiv 全订阅;`macroDrivers.credit` 已通过 HY/IG cash-bond OAS (BAMLH0A0HYM2 / BAMLC0A0CM) 覆盖 cash-bond credit spreads,CDX 仅多 CDS-cash basis 边际信号,对 audit-only 价值低
+  - **私募信贷 fundraising**: Cliffwater Direct Lending Index 公开页面 ToS/license 未明;PitchBook / Preqin 全商业订阅;Fed Z.1 Q&A (2026-02-26) 明确说当前 Z.1 **不发布** domestic/foreign private credit loans to nonfinancial business 的 transactions/levels 估计 — 公开 aggregate 路径也不可达
+  - 商业 SDK 与 ADR-0001 0-prod-deps 边界硬冲突
+- **诊断日期**: 2026-05-20 (M-70 source-review,Codex live probe verified)
+- **解封路径**: CDX 需 ICE/Markit 提供官方 API + 评估订阅成本;私募信贷需 Cliffwater 或 Fed Z.1 公开 aggregate 出台 — 任一条件满足后另开 source-review PR
+- **前端状态**: 不展示;`macroDrivers.commercialRealEstate` (CRE) 已通过 M-70 满足 P2-9 范围内可达层,不冒充 CDX/私募信贷
 
 ---
 
@@ -125,6 +140,7 @@
 | M-67 | ISM PMI source repair | (this PR) | 2026-05-20 | ✅ Broken FRED PMI path replaced with low-frequency parser for ISM public Manufacturing PMI report page; `sourceStatus.pmi` four-state contract added; zero new deps; PMI remains audit-only/display-only; `check:all` stays 69 |
 | M-68 | macroDrivers.employment (ICSA/CCSA/JTSJOL) audit-only ingestion (P2-7) | (this PR) | 2026-05-20 | ✅ New employment breadth subtree with per-series fallback status; FRED ICSA/CCSA weekly SA + JTSJOL monthly (~6w lag); frontend `driver-employment` card; no scoring/decision/execution/position, worker/realtime, displayInputsBaseline/effectiveDisplayInputs, or cross-validation impact; `check:all` 69 → 70; cache bumped to 28.0M-68V |
 | M-69 | macroDrivers.consumerRetail (Chicago Fed CARTS/CARTSR) audit-only ingestion (P2-8 Path ε) | (this PR) | 2026-05-20 | ✅ New consumerRetail subtree with per-series fallback status; FRED CARTS nominal + CARTSR real weekly retail nowcast; frontend `driver-consumer-retail` card; no scoring/decision/execution/position, worker/realtime, displayInputsBaseline/effectiveDisplayInputs, or cross-validation impact; Redbook/BoA downgraded to P3-14 source-review candidates; `check:all` 70 → 71; cache bumped to 28.0M-69V |
+| M-70 | macroDrivers.commercialRealEstate (FRED CRE 5 series) audit-only ingestion (P2-9 CRE-only) | (this PR) | 2026-05-20 | ✅ New commercialRealEstate subtree with per-series fallback status; FRED CRE delinquency + charge-off + three SLOOS CRE tightening series; frontend `driver-cre` card; no scoring/decision/execution/position, worker/realtime, displayInputsBaseline/effectiveDisplayInputs, macroDrivers.credit, or cross-validation impact; CDX/private credit downgraded to P3-15 source-review candidates; `check:all` 71 → 72; cache bumped to 28.0M-70V |
 
 ---
 
@@ -155,6 +171,7 @@
 | 2026-05-20 | M-63c ACLED weekly + monthly reminder workflows | Claude Code (audit) + Codex (impl) | P1-4 closed | Reminder-only GitHub issue workflows added; B+ date-stamped idempotency; no checkout/install/sanitize/network to acleddata.com; `check:all` stays 69 |
 | 2026-05-20 | M-68 employment breadth | Claude Code (audit) + Codex (impl) | P2-7 closed | ICSA/CCSA/JTSJOL 接入 `macroDrivers.employment`; audit-only/display-only; frontend Macro Drivers 卡片; `check:all` 69 → 70 |
 | 2026-05-20 | M-69 consumerRetail CARTS Path ε | Claude Code (source audit) + Codex (impl) | P2-8 closed; P3-14 added | FRED CARTS/CARTSR 接入 `macroDrivers.consumerRetail`; Redbook/BoA 降级为 source-review candidates; audit-only/display-only; frontend Macro Drivers 卡片; `check:all` 70 → 71 |
+| 2026-05-20 | M-70 commercialRealEstate CRE Path α | Claude Code (source audit) + Codex (impl) | P2-9 closed; P3-15 added | FRED DRCRELEXFACBS/CORCREXFACBS/SUBLPDRCSN/SUBLPDRCSC/SUBLPDRCSM 接入 `macroDrivers.commercialRealEstate`; CDX/私募信贷降级为 source-review candidates; audit-only/display-only; frontend Macro Drivers 卡片; `check:all` 71 → 72 |
 
 ---
 
@@ -207,9 +224,9 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-### Session Handoff (2026-05-20 — M-69 consumerRetail CARTS landed + pushed)
+### Session Handoff (2026-05-20 — M-70 commercialRealEstate CRE landed)
 
-- **上次会话结束于**: HEAD = `6e8cc22 M-69: macroDrivers.consumerRetail CARTS audit-only ingestion`，已 push 到 `origin/main`，本地 ↔ origin `0 / 0`，working tree clean。`check:all` = **71 项** 全绿，frontend cache `28.0M-69V`。本次 session 累积成果（commit 顺序）：M-67 CI 观察关闭 `c94d11d` → M-63c ACLED reminder workflows `2077da6` → M-68 employment breadth `ad8f731` → Brent realtime 1 行 producer-side hotfix `6fa4f7d`（`strong-pair ≥ 2 时 oilprice 不入 weak-confirmation`，未放松 validator） → CI 完整 refresh `549cd69` → M-69 `6e8cc22`。M-69 接 FRED `CARTS` (nominal) + `CARTSR` (real, inflation-adjusted) 两条周频 series，单位 millions → billions 已在 [DATA_CONTRACT.md:294](docs/DATA_CONTRACT.md:294) 显式声明；CARTSP（价格指数）显式 future scope only；Redbook + BoA Card 降级为 P3-14 source-review candidates（与 P3-13 ReliefWeb 同模式）；前端 `driver-consumer-retail` 卡片显示 `Chicago Fed CARTS:2026-04-28` weekly vintage；audit-only/display-only，未进 scoring/decision/execution/position/displayInputsBaseline/effectiveDisplayInputs/cross-validation。
+- **上次会话结束于**: M-70 commit（本次提交）新增 `macroDrivers.commercialRealEstate`，本地基于 `main` / `origin/main` 干净起步。`check:all` = **72 项** 全绿，frontend cache `28.0M-70V`。M-70 接 FRED `DRCRELEXFACBS` (CRE delinquency)、`CORCREXFACBS` (CRE charge-off)、`SUBLPDRCSN` / `SUBLPDRCSC` / `SUBLPDRCSM` (SLOOS CRE 三子类净收紧) 五条季频 series；前端 `driver-cre` 卡片显示 FRED 季频 quarter vintage；audit-only/display-only，未进 scoring/decision/execution/position/displayInputsBaseline/effectiveDisplayInputs/cross-validation，也未扩写 `macroDrivers.credit`。
 - **当前进行中**: 无 active 任务。
-- **下一步建议**: (a) 观察本次 push 是否触发 `Deploy to GitHub Pages` workflow（per M-60 中心化设计），5-10 分钟内确认线上 `driver-consumer-retail` 卡片可见；(b) 等今晚 22:30 UTC `Build Daily Radar Data` 完整 CI 重写 `data/radar-data.json`，验证 `macroDrivers.{employment,consumerRetail}` 三条 FRED series（ICSA/CCSA/JTSJOL + CARTS/CARTSR）在 CI runner 上仍为 `live`；(c) 等 M-63c weekly cron 首次自动 fire（最近一个 Tuesday 00:00 UTC），验证 issue title + label + 跨周 idempotency 行为符合预期；(d) 推进 P2-9 CRE/CDX/私募信贷（参 P2-8 教训，需先做 source-availability 审计——CDX 是 ICE 商业数据，CRE 大概率走 FRED `DRTSCREL` / `DRCRELEXFACBS` 等公开 series）；或 (e) 给 Brent hotfix `6fa4f7d` 补一个 [ADR-0009](docs/ADR/0009-brent-freshness-gated-promotion.md) 增量段，记录 "strong-pair ≥ 2 时 oilprice 不入 weak-confirmation" 这条 invariant。
-- **阻塞或等待**: 无技术阻塞。若今晚 Daily CI 在 GitHub Actions runner 上 CARTS/CARTSR fetch 失败而本地 smoke 当时成功（Codex 已实测 2026-04-28 latest，rows=400 over 3200d 窗口），按 [scripts/run-daily-pipeline.mjs::resolveConsumerRetail](scripts/run-daily-pipeline.mjs) 的 per-series fallback ladder 处理，会自动降为 `fallback` / `missing`，不阻断 `check:all`。M-68 那次撞到的 Brent realtime contract bug 已 hotfix 闭合，未再出现。
+- **下一步建议**: (a) 观察 push 后 Pages workflow 是否完成并确认线上 `driver-cre` 卡片可见；(b) 等下一轮 `Build Daily Radar Data` 在 CI runner 上验证五条 CRE FRED series 仍为 `live`；(c) 推进下一个 P2 backlog 前先做 source-availability smoke，沿用 P2-8/P2-9 的 source-review → 可达公开路径 → audit-only 子树模式。
+- **阻塞或等待**: 无技术阻塞。M-70 smoke 已实测 DRCRELEXFACBS/CORCREXFACBS 各 141 行，SLOOS CRE 三子序列各 51 行；`fetchFredSeries` 未导出导致用户给的 import smoke 命令不可直接使用，执行时用等价 FRED CSV probe 完成验证，代码路径仍复用内部 `fetchFredSeries()`。

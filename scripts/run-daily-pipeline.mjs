@@ -1740,6 +1740,33 @@ function classifyRetailRegime(cartsRealYoY) {
   return '稳定';
 }
 
+function classifyCreStressRegime(creDelinquencyRate, creChargeOffRate, sloosCreTighteningMax) {
+  const hasAny = Number.isFinite(creDelinquencyRate)
+    || Number.isFinite(creChargeOffRate)
+    || Number.isFinite(sloosCreTighteningMax);
+  if (!hasAny) return '未知';
+  if ((Number.isFinite(creDelinquencyRate) && creDelinquencyRate >= 4)
+      || (Number.isFinite(creChargeOffRate) && creChargeOffRate >= 1)
+      || (Number.isFinite(sloosCreTighteningMax) && sloosCreTighteningMax >= 35)) {
+    return '恶化';
+  }
+  if ((Number.isFinite(creDelinquencyRate) && creDelinquencyRate >= 2)
+      || (Number.isFinite(creChargeOffRate) && creChargeOffRate >= 0.35)
+      || (Number.isFinite(sloosCreTighteningMax) && sloosCreTighteningMax >= 15)) {
+    return '紧绷';
+  }
+  const hasAll = Number.isFinite(creDelinquencyRate)
+    && Number.isFinite(creChargeOffRate)
+    && Number.isFinite(sloosCreTighteningMax);
+  if (hasAll && creDelinquencyRate <= 1 && creChargeOffRate <= 0.1 && sloosCreTighteningMax <= -10) {
+    return '改善';
+  }
+  if (hasAll && creDelinquencyRate <= 1.25 && creChargeOffRate <= 0.2 && sloosCreTighteningMax <= 0) {
+    return '宽松';
+  }
+  return '稳定';
+}
+
 function classifyClaimsRegime(initialClaims4wAverage, initialClaims4wChange) {
   if (!Number.isFinite(initialClaims4wAverage) && !Number.isFinite(initialClaims4wChange)) return '未知';
   if ((Number.isFinite(initialClaims4wAverage) && initialClaims4wAverage >= 260_000)
@@ -2206,6 +2233,15 @@ function fredMillionsToBillions(value) {
   return Number.isFinite(value) ? +(value / 1000).toFixed(3) : null;
 }
 
+function calculateLatestDelta(rows) {
+  if (!Array.isArray(rows) || rows.length < 2) return null;
+  const latest = rows[rows.length - 1]?.value;
+  const previous = rows[rows.length - 2]?.value;
+  return Number.isFinite(latest) && Number.isFinite(previous)
+    ? +(latest - previous).toFixed(3)
+    : null;
+}
+
 function buildMissingEmployment() {
   return {
     initialClaims: null,
@@ -2245,6 +2281,33 @@ function buildMissingConsumerRetail() {
     updatedAt: null,
     source: 'FRED:CARTS; FRED:CARTSR',
     notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast (不含汽车);CARTSR 为通胀调整实际值;audit-only / display-only;不代表 Redbook 或 BoA Card 数据。']
+  };
+}
+
+function buildMissingCommercialRealEstate() {
+  return {
+    creDelinquencyRate: null,
+    creDelinquencyRateQoQChange: null,
+    creChargeOffRate: null,
+    creChargeOffRateQoQChange: null,
+    sloosCreNonfarmNonresidentialTightening: null,
+    sloosCreConstructionTightening: null,
+    sloosCreMultifamilyTightening: null,
+    sloosCreTighteningMax: null,
+    creStressRegime: '未知',
+    sourceStatus: {
+      delinquency: 'missing',
+      chargeOff: 'missing',
+      sloosNonfarmNonresidential: 'missing',
+      sloosConstruction: 'missing',
+      sloosMultifamily: 'missing'
+    },
+    updatedAt: null,
+    source: 'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM',
+    notes: [
+      'CRE delinquency / charge-off / SLOOS CRE tightening (3 子类) 为 FRED 季频公开数据;observation date 为季度起始日;audit-only / display-only。',
+      '不代表 CDX HY/IG 或 私募信贷 (Cliffwater / PitchBook / Preqin) 数据。'
+    ]
   };
 }
 
@@ -2308,6 +2371,57 @@ function normalizePreviousConsumerRetail(prevConsumerRetail) {
     updatedAt: typeof prevConsumerRetail.updatedAt === 'string' ? prevConsumerRetail.updatedAt : null,
     source: 'FRED:CARTS; FRED:CARTSR',
     notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast (不含汽车);CARTSR 为通胀调整实际值;audit-only / display-only;不代表 Redbook 或 BoA Card 数据。']
+  };
+}
+
+function normalizePreviousCommercialRealEstate(prevCre) {
+  if (!prevCre || typeof prevCre !== 'object') return buildMissingCommercialRealEstate();
+  const creDelinquencyRate = Number.isFinite(prevCre.creDelinquencyRate) ? prevCre.creDelinquencyRate : null;
+  const creDelinquencyRateQoQChange = Number.isFinite(prevCre.creDelinquencyRateQoQChange) ? prevCre.creDelinquencyRateQoQChange : null;
+  const creChargeOffRate = Number.isFinite(prevCre.creChargeOffRate) ? prevCre.creChargeOffRate : null;
+  const creChargeOffRateQoQChange = Number.isFinite(prevCre.creChargeOffRateQoQChange) ? prevCre.creChargeOffRateQoQChange : null;
+  const sloosCreNonfarmNonresidentialTightening = Number.isFinite(prevCre.sloosCreNonfarmNonresidentialTightening)
+    ? prevCre.sloosCreNonfarmNonresidentialTightening
+    : null;
+  const sloosCreConstructionTightening = Number.isFinite(prevCre.sloosCreConstructionTightening)
+    ? prevCre.sloosCreConstructionTightening
+    : null;
+  const sloosCreMultifamilyTightening = Number.isFinite(prevCre.sloosCreMultifamilyTightening)
+    ? prevCre.sloosCreMultifamilyTightening
+    : null;
+  const sloosValues = [
+    sloosCreNonfarmNonresidentialTightening,
+    sloosCreConstructionTightening,
+    sloosCreMultifamilyTightening
+  ].filter(Number.isFinite);
+  const sloosCreTighteningMax = Number.isFinite(prevCre.sloosCreTighteningMax)
+    ? prevCre.sloosCreTighteningMax
+    : (sloosValues.length ? Math.max(...sloosValues) : null);
+  return {
+    creDelinquencyRate,
+    creDelinquencyRateQoQChange,
+    creChargeOffRate,
+    creChargeOffRateQoQChange,
+    sloosCreNonfarmNonresidentialTightening,
+    sloosCreConstructionTightening,
+    sloosCreMultifamilyTightening,
+    sloosCreTighteningMax,
+    creStressRegime: typeof prevCre.creStressRegime === 'string' && prevCre.creStressRegime.trim()
+      ? prevCre.creStressRegime
+      : classifyCreStressRegime(creDelinquencyRate, creChargeOffRate, sloosCreTighteningMax),
+    sourceStatus: {
+      delinquency: creDelinquencyRate !== null ? 'fallback' : 'missing',
+      chargeOff: creChargeOffRate !== null ? 'fallback' : 'missing',
+      sloosNonfarmNonresidential: sloosCreNonfarmNonresidentialTightening !== null ? 'fallback' : 'missing',
+      sloosConstruction: sloosCreConstructionTightening !== null ? 'fallback' : 'missing',
+      sloosMultifamily: sloosCreMultifamilyTightening !== null ? 'fallback' : 'missing'
+    },
+    updatedAt: typeof prevCre.updatedAt === 'string' ? prevCre.updatedAt : null,
+    source: 'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM',
+    notes: [
+      'CRE delinquency / charge-off / SLOOS CRE tightening (3 子类) 为 FRED 季频公开数据;observation date 为季度起始日;audit-only / display-only。',
+      '不代表 CDX HY/IG 或 私募信贷 (Cliffwater / PitchBook / Preqin) 数据。'
+    ]
   };
 }
 
@@ -2566,6 +2680,134 @@ async function resolveConsumerRetail(prevConsumerRetail) {
   };
 }
 
+async function resolveCommercialRealEstate(prevCre) {
+  const fallback = normalizePreviousCommercialRealEstate(prevCre);
+  const status = {
+    delinquency: 'missing',
+    chargeOff: 'missing',
+    sloosNonfarmNonresidential: 'missing',
+    sloosConstruction: 'missing',
+    sloosMultifamily: 'missing'
+  };
+  let creDelinquencyRate = null;
+  let creDelinquencyRateQoQChange = null;
+  let creDelinquencyUpdatedAt = null;
+  let creChargeOffRate = null;
+  let creChargeOffRateQoQChange = null;
+  let creChargeOffUpdatedAt = null;
+  let sloosCreNonfarmNonresidentialTightening = null;
+  let sloosCreNonfarmNonresidentialUpdatedAt = null;
+  let sloosCreConstructionTightening = null;
+  let sloosCreConstructionUpdatedAt = null;
+  let sloosCreMultifamilyTightening = null;
+  let sloosCreMultifamilyUpdatedAt = null;
+
+  const [
+    delinquencyResult,
+    chargeOffResult,
+    sloosNonfarmNonresidentialResult,
+    sloosConstructionResult,
+    sloosMultifamilyResult
+  ] = await Promise.allSettled([
+    fetchFredSeries('DRCRELEXFACBS', 13000),
+    fetchFredSeries('CORCREXFACBS', 13000),
+    fetchFredSeries('SUBLPDRCSN', 13000),
+    fetchFredSeries('SUBLPDRCSC', 13000),
+    fetchFredSeries('SUBLPDRCSM', 13000)
+  ]);
+
+  if (delinquencyResult.status === 'fulfilled') {
+    const rows = delinquencyResult.value;
+    creDelinquencyRate = latestValue(rows);
+    creDelinquencyRateQoQChange = calculateLatestDelta(rows);
+    creDelinquencyUpdatedAt = latestDateIso(rows);
+    status.delinquency = 'live';
+  } else if (Number.isFinite(fallback.creDelinquencyRate)) {
+    creDelinquencyRate = fallback.creDelinquencyRate;
+    creDelinquencyRateQoQChange = fallback.creDelinquencyRateQoQChange;
+    creDelinquencyUpdatedAt = fallback.updatedAt;
+    status.delinquency = 'fallback';
+  }
+
+  if (chargeOffResult.status === 'fulfilled') {
+    const rows = chargeOffResult.value;
+    creChargeOffRate = latestValue(rows);
+    creChargeOffRateQoQChange = calculateLatestDelta(rows);
+    creChargeOffUpdatedAt = latestDateIso(rows);
+    status.chargeOff = 'live';
+  } else if (Number.isFinite(fallback.creChargeOffRate)) {
+    creChargeOffRate = fallback.creChargeOffRate;
+    creChargeOffRateQoQChange = fallback.creChargeOffRateQoQChange;
+    creChargeOffUpdatedAt = fallback.updatedAt;
+    status.chargeOff = 'fallback';
+  }
+
+  if (sloosNonfarmNonresidentialResult.status === 'fulfilled') {
+    const rows = sloosNonfarmNonresidentialResult.value;
+    sloosCreNonfarmNonresidentialTightening = latestValue(rows);
+    sloosCreNonfarmNonresidentialUpdatedAt = latestDateIso(rows);
+    status.sloosNonfarmNonresidential = 'live';
+  } else if (Number.isFinite(fallback.sloosCreNonfarmNonresidentialTightening)) {
+    sloosCreNonfarmNonresidentialTightening = fallback.sloosCreNonfarmNonresidentialTightening;
+    sloosCreNonfarmNonresidentialUpdatedAt = fallback.updatedAt;
+    status.sloosNonfarmNonresidential = 'fallback';
+  }
+
+  if (sloosConstructionResult.status === 'fulfilled') {
+    const rows = sloosConstructionResult.value;
+    sloosCreConstructionTightening = latestValue(rows);
+    sloosCreConstructionUpdatedAt = latestDateIso(rows);
+    status.sloosConstruction = 'live';
+  } else if (Number.isFinite(fallback.sloosCreConstructionTightening)) {
+    sloosCreConstructionTightening = fallback.sloosCreConstructionTightening;
+    sloosCreConstructionUpdatedAt = fallback.updatedAt;
+    status.sloosConstruction = 'fallback';
+  }
+
+  if (sloosMultifamilyResult.status === 'fulfilled') {
+    const rows = sloosMultifamilyResult.value;
+    sloosCreMultifamilyTightening = latestValue(rows);
+    sloosCreMultifamilyUpdatedAt = latestDateIso(rows);
+    status.sloosMultifamily = 'live';
+  } else if (Number.isFinite(fallback.sloosCreMultifamilyTightening)) {
+    sloosCreMultifamilyTightening = fallback.sloosCreMultifamilyTightening;
+    sloosCreMultifamilyUpdatedAt = fallback.updatedAt;
+    status.sloosMultifamily = 'fallback';
+  }
+
+  const sloosValues = [
+    sloosCreNonfarmNonresidentialTightening,
+    sloosCreConstructionTightening,
+    sloosCreMultifamilyTightening
+  ].filter(Number.isFinite);
+  const sloosCreTighteningMax = sloosValues.length ? +Math.max(...sloosValues).toFixed(3) : null;
+
+  return {
+    creDelinquencyRate: Number.isFinite(creDelinquencyRate) ? +creDelinquencyRate.toFixed(3) : null,
+    creDelinquencyRateQoQChange: Number.isFinite(creDelinquencyRateQoQChange) ? creDelinquencyRateQoQChange : null,
+    creChargeOffRate: Number.isFinite(creChargeOffRate) ? +creChargeOffRate.toFixed(3) : null,
+    creChargeOffRateQoQChange: Number.isFinite(creChargeOffRateQoQChange) ? creChargeOffRateQoQChange : null,
+    sloosCreNonfarmNonresidentialTightening: Number.isFinite(sloosCreNonfarmNonresidentialTightening) ? +sloosCreNonfarmNonresidentialTightening.toFixed(3) : null,
+    sloosCreConstructionTightening: Number.isFinite(sloosCreConstructionTightening) ? +sloosCreConstructionTightening.toFixed(3) : null,
+    sloosCreMultifamilyTightening: Number.isFinite(sloosCreMultifamilyTightening) ? +sloosCreMultifamilyTightening.toFixed(3) : null,
+    sloosCreTighteningMax,
+    creStressRegime: classifyCreStressRegime(creDelinquencyRate, creChargeOffRate, sloosCreTighteningMax),
+    sourceStatus: status,
+    updatedAt: latestIsoDate(
+      creDelinquencyUpdatedAt,
+      creChargeOffUpdatedAt,
+      sloosCreNonfarmNonresidentialUpdatedAt,
+      sloosCreConstructionUpdatedAt,
+      sloosCreMultifamilyUpdatedAt
+    ),
+    source: 'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM',
+    notes: [
+      'CRE delinquency / charge-off / SLOOS CRE tightening (3 子类) 为 FRED 季频公开数据;observation date 为季度起始日;audit-only / display-only。',
+      '不代表 CDX HY/IG 或 私募信贷 (Cliffwater / PitchBook / Preqin) 数据。'
+    ]
+  };
+}
+
 async function fetchMacroDrivers(prev, hyOasLive) {
   const prevMd = prev?.macroDrivers || {};
   const results = await Promise.allSettled([
@@ -2574,7 +2816,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveCredit(prevMd.credit, hyOasLive),
     resolveConsumerSentiment(prevMd.consumer),
     resolveEmploymentBreadth(prevMd.employment),
-    resolveConsumerRetail(prevMd.consumerRetail)
+    resolveConsumerRetail(prevMd.consumerRetail),
+    resolveCommercialRealEstate(prevMd.commercialRealEstate)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -2602,8 +2845,9 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   const consumer = results[3].status === 'fulfilled' ? results[3].value : buildMissingConsumer();
   const employment = results[4].status === 'fulfilled' ? results[4].value : buildMissingEmployment();
   const consumerRetail = results[5].status === 'fulfilled' ? results[5].value : buildMissingConsumerRetail();
+  const commercialRealEstate = results[6].status === 'fulfilled' ? results[6].value : buildMissingCommercialRealEstate();
 
-  return { fedLiquidity, curve, credit, consumer, employment, consumerRetail };
+  return { fedLiquidity, curve, credit, consumer, employment, consumerRetail, commercialRealEstate };
 }
 
 // 判断结构信号数据源是否"全不可用"
@@ -3322,6 +3566,7 @@ async function build() {
       consumer: macroDrivers.consumer,
       employment: macroDrivers.employment,
       consumerRetail: macroDrivers.consumerRetail,
+      commercialRealEstate: macroDrivers.commercialRealEstate,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-69V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-69V';
-import { formatFiniteNumber } from './format.js?v=28.0M-69V';
+import { $ } from './config.js?v=28.0M-70V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-70V';
+import { formatFiniteNumber } from './format.js?v=28.0M-70V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -121,6 +121,19 @@ function formatMonthVintage(isoDate) {
 function formatWeekVintage(isoDate) {
   if (typeof isoDate !== 'string' || !Number.isFinite(Date.parse(isoDate))) return 'vintage 待确认';
   return isoDate.slice(0, 10);
+}
+
+function formatQuarterVintage(isoDate) {
+  if (typeof isoDate !== 'string' || !Number.isFinite(Date.parse(isoDate))) return 'vintage 待确认';
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  const quarter = Math.floor(date.getUTCMonth() / 3) + 1;
+  return `Q${quarter} ${date.getUTCFullYear()}`;
+}
+
+function formatSignedPoints(value, digits = 2) {
+  const number = finite(value);
+  if (number === null) return INSUFFICIENT;
+  return `${number >= 0 ? '+' : '-'}${formatFiniteNumber(Math.abs(number), digits)}pp`;
 }
 
 function findActiveSignal(activeSignals, key) {
@@ -516,6 +529,7 @@ function buildMacroDrivers(data) {
   const consumer = isPlainObject(macroDrivers.consumer) ? macroDrivers.consumer : {};
   const employment = isPlainObject(macroDrivers.employment) ? macroDrivers.employment : {};
   const consumerRetail = isPlainObject(macroDrivers.consumerRetail) ? macroDrivers.consumerRetail : {};
+  const commercialRealEstate = isPlainObject(macroDrivers.commercialRealEstate) ? macroDrivers.commercialRealEstate : {};
   const fedLiquidity = isPlainObject(macroDrivers.fedLiquidity) ? macroDrivers.fedLiquidity : {};
   const curve = isPlainObject(macroDrivers.curve) ? macroDrivers.curve : {};
   const credit = isPlainObject(macroDrivers.credit) ? macroDrivers.credit : {};
@@ -545,6 +559,15 @@ function buildMacroDrivers(data) {
   const cartsReal = finite(consumerRetail.cartsReal);
   const cartsRealYoY = finite(consumerRetail.cartsRealYoY);
   const retailRegime = text(consumerRetail.retailRegime, '未知');
+  const creDelinquencyRate = finite(commercialRealEstate.creDelinquencyRate);
+  const creDelinquencyRateQoQChange = finite(commercialRealEstate.creDelinquencyRateQoQChange);
+  const creChargeOffRate = finite(commercialRealEstate.creChargeOffRate);
+  const creChargeOffRateQoQChange = finite(commercialRealEstate.creChargeOffRateQoQChange);
+  const sloosCreNonfarmNonresidentialTightening = finite(commercialRealEstate.sloosCreNonfarmNonresidentialTightening);
+  const sloosCreConstructionTightening = finite(commercialRealEstate.sloosCreConstructionTightening);
+  const sloosCreMultifamilyTightening = finite(commercialRealEstate.sloosCreMultifamilyTightening);
+  const sloosCreTighteningMax = finite(commercialRealEstate.sloosCreTighteningMax);
+  const creStressRegime = text(commercialRealEstate.creStressRegime, '未知');
   const vix = finite(inputs.vix);
   const creditCalm = hyOas !== null && hyOas < 4 && vix !== null && vix < 22;
   const policyProxyEvidence = [
@@ -630,6 +653,50 @@ function buildMacroDrivers(data) {
       explanation: 'CARTS / CARTSR 是 Chicago Fed via FRED 的周频零售+餐饮 nowcast；仅用于消费行为观察。',
       sourceType: cartsNominal === null && cartsReal === null ? '数据不足' : '事实',
       updatedAt: `Chicago Fed CARTS:${formatWeekVintage(consumerRetail.updatedAt)}`,
+    }),
+    createJudgment({
+      id: 'driver-cre',
+      title: '商业地产信用 COMMERCIAL REAL ESTATE',
+      group: 'macro-driver',
+      status: creDelinquencyRate === null
+        && creChargeOffRate === null
+        && sloosCreNonfarmNonresidentialTightening === null
+        && sloosCreConstructionTightening === null
+        && sloosCreMultifamilyTightening === null ? WAITING : '季频观察中',
+      direction: creStressRegime === '恶化'
+        ? 'CRE 压力恶化'
+        : creStressRegime === '紧绷'
+          ? '信贷收紧'
+          : creStressRegime === '改善' || creStressRegime === '宽松'
+            ? '压力缓和'
+            : '观察中',
+      confidence: creDelinquencyRate !== null
+        && creChargeOffRate !== null
+        && sloosCreNonfarmNonresidentialTightening !== null
+        && sloosCreConstructionTightening !== null
+        && sloosCreMultifamilyTightening !== null ? '中等' : '偏低',
+      dataCoverage: creDelinquencyRate !== null
+        || creChargeOffRate !== null
+        || sloosCreTighteningMax !== null ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+      evidence: [
+        creDelinquencyRate === null
+          ? 'CRE 拖欠率等待 FRED 季频数据刷新。'
+          : `CRE 拖欠率 ${formatNumber(creDelinquencyRate, 2, '%')}；QoQ Δ ${formatSignedPoints(creDelinquencyRateQoQChange)}（拖欠率）`,
+        creChargeOffRate === null
+          ? null
+          : `CRE 核销率 ${formatNumber(creChargeOffRate, 2, '%')}；QoQ Δ ${formatSignedPoints(creChargeOffRateQoQChange)}（核销率）`,
+        sloosCreTighteningMax === null
+          ? null
+          : `SLOOS CRE 非农非住宅 ${formatSignedPercent(sloosCreNonfarmNonresidentialTightening, 1)}；建设土地 ${formatSignedPercent(sloosCreConstructionTightening, 1)}；多户住宅 ${formatSignedPercent(sloosCreMultifamilyTightening, 1)}`,
+        sloosCreTighteningMax === null
+          ? null
+          : `SLOOS CRE max ${formatSignedPercent(sloosCreTighteningMax, 1)}；${creStressRegime}`,
+        `FRED 季频 Commercial Real Estate:${formatQuarterVintage(commercialRealEstate.updatedAt)}`,
+      ].filter(Boolean),
+      missingEvidence: ['更细分商业地产与非公开信用市场证据不在本层接入。'],
+      explanation: 'CRE 拖欠率、核销率与 SLOOS CRE 贷款标准为季频慢变量；仅用于商业地产信用压力观察。',
+      sourceType: creDelinquencyRate === null && creChargeOffRate === null && sloosCreTighteningMax === null ? '数据不足' : '事实',
+      updatedAt: `FRED 季频 Commercial Real Estate:${formatQuarterVintage(commercialRealEstate.updatedAt)}`,
     }),
     createJudgment({
       id: 'driver-inflation',

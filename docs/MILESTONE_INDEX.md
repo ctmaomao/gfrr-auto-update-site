@@ -11,20 +11,20 @@
 
 当前未关闭、影响进行中工作的 milestone 与状态:
 
-- **当前生产**: v28.0M-69,frontend cache `28.0M-69V`,`check:all` = 71 项；M-69 consumerRetail (CARTS) 已落地；M-68 employment breadth 已落地；M-67 ISM PMI source repair 已落地；ADR-0014 IA contract authority hierarchy 已落地；M-63b ACLED monthly evidence-only ingestion 已落地；M-63c ACLED reminder workflows 已落地
+- **当前生产**: v28.0M-70,frontend cache `28.0M-70V`,`check:all` = 72 项；M-70 commercialRealEstate (CRE) 已落地；M-69 consumerRetail (CARTS) 已落地；M-68 employment breadth 已落地；M-67 ISM PMI source repair 已落地；ADR-0014 IA contract authority hierarchy 已落地；M-63b ACLED monthly evidence-only ingestion 已落地；M-63c ACLED reminder workflows 已落地
 - **下一步**: 见 `docs/PROJECT_BACKLOG.md` Section 2 Open Backlog Items
-- **Open backlog 主线**: P1-4 ACLED 接入完整闭合 (M-63a/b/c 全部落地)；P2-7 employment breadth 已落地；P2-8 high-frequency consumer evidence 已落地并关闭；P2-9 宏观指标扩展待评估；P3-* 已明确 won't fix
+- **Open backlog 主线**: P1-4 ACLED 接入完整闭合 (M-63a/b/c 全部落地)；P2-7 employment breadth 已落地；P2-8 high-frequency consumer evidence 已落地并关闭；P2-9 CRE/CDX/私募信贷已落地并关闭（M-70 CRE-only;CDX/私募信贷=P3-15）；P3-* 已明确 won't fix
 - **年度提醒**: M-61b SIPRI 每年 5 月 1 日 GitHub Actions issue (`sipri-annual-refresh-reminder.yml`)
 
 ## Recently Merged (最近 5 个,详细可读对应 doc)
 
 | # | 一句话 | 主要 doc |
 |---|---|---|
+| **M-70** | `macroDrivers.commercialRealEstate` 接入 FRED CRE delinquency/charge-off + SLOOS CRE 三子类季频信用压力 series;audit-only/display-only;frontend Macro Drivers 卡片;`check:all` 72 | `docs/DATA_CONTRACT.md` |
 | **M-69** | `macroDrivers.consumerRetail` 接入 FRED CARTS/CARTSR Chicago Fed weekly retail nowcast;audit-only/display-only;frontend Macro Drivers 卡片;`check:all` 71 | `docs/DATA_CONTRACT.md` |
 | **M-68** | `macroDrivers.employment` 接入 FRED ICSA/CCSA/JTSJOL;audit-only/display-only;frontend Macro Drivers 卡片;`check:all` 70 | `docs/DATA_CONTRACT.md` |
 | **M-63c** | ACLED weekly + monthly GitHub issue reminders;B+ date-stamped idempotency;reminder-only,不得 auto-fetch | `docs/M-63_ACLED_INTEGRATION.md` |
 | **M-67** | Broken FRED PMI path 替换为 ismworld.org 公开 Manufacturing PMI report parser;PMI 保持 audit-only/display-only | `docs/M-67_ISM_PMI_SOURCE_REPAIR.md` |
-| **M-63b** | ACLED monthly global sanitizer + 联合 importer;`partial` status 引入;evidence-only,`peaceDividendRetreat` 权重未改 | (无独立 doc;见 PROJECT_BACKLOG M-63b) |
 
 ## Archived (历史 milestone,scope-only,默认不加载)
 

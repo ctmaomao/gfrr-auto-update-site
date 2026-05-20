@@ -52,7 +52,7 @@
 - v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。
 - v28.0I 后，任何新增解释层 / 新信号 / 新数据源必须先检查 `docs/SYSTEM_UPGRADE_PLAN.md` 中的 v28.0I stable baseline 边界。
-- `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`macroDrivers.employment`、`macroDrivers.consumerRetail`、`consumer_vs_asset_pricing` 与 `brentPricingLayer` 均为解释层 / 审计层 / 展示层；不得直接接入 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
+- `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`macroDrivers.employment`、`macroDrivers.consumerRetail`、`macroDrivers.commercialRealEstate`、`consumer_vs_asset_pricing` 与 `brentPricingLayer` 均为解释层 / 审计层 / 展示层；不得直接接入 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
 - v28.0J 后，`aiInterpretationLayer` 不得被改成外部 AI 输出，除非另开版本并新增 API / output audit contract。当前 `generatedByExternalAi=false`、`usesExternalAiApi=false`，不调用 DeepSeek / OpenAI / 外部 AI API。
 - 不得让 AI 输出直接影响 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
 - 任何 DeepSeek / OpenAI 接入必须从设计文档和审计 contract 开始，并先定义 timeout、fallback、source attribution 与禁用文案检查。
@@ -89,6 +89,7 @@
 - M-67 后,ISM PMI 来自 ismworld.org 公开报告页 (low-frequency monthly HTML parse with UA 'GFRRBot/1.0');保持 audit-only,不进 scoring/decision/execution/position;失败必须降级为 fallback/source_unavailable/parse_error,不得伪造或冒充替代指标。
 - M-68 后,`macroDrivers.employment` (ICSA/CCSA/JTSJOL) 为 FRED 周频/月频劳动力 evidence 层；audit-only/display-only；不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules；不进 `displayInputsBaseline` / `effectiveDisplayInputs`；不进 cross-validation matrix；新源失败必须降级 `sourceStatus.{icsa,ccsa,jtsjol}` 为 `fallback` / `missing`,不得伪造或冒充替代指标。
 - M-69 后,`macroDrivers.consumerRetail` (Chicago Fed CARTS + CARTSR via FRED) 为周频零售/消费 nowcast evidence 层；audit-only/display-only；不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不接 CARTSP (价格指数,future scope only);**绝对不得**伪造为 Redbook 或 BoA Card 数据,字段名/前端文案/notes 都不得暗示替代关系;Redbook + BoA Card 为 P3-14 source-review candidates,不在 runtime 任何路径自动 fetch。
+- M-70 后,`macroDrivers.commercialRealEstate` (FRED DRCRELEXFACBS + CORCREXFACBS + SUBLPDRCSN/C/M) 为季频 CRE 信用压力 evidence 层;audit-only/display-only；不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不扩写 `macroDrivers.credit`;不接 CDX HY/IG (商业 ICE/Markit) 或 loan balance/CRE exposure stock series (future scope only);**绝对不得**伪造为 CDX 或 私募信贷数据,字段名/前端文案/notes 都不得暗示替代关系;CDX HY/IG + 私募信贷 fundraising 为 P3-15 source-review candidates,不在 runtime 任何路径自动 fetch。
 - World Order 外部数据刷新应先手动观察，再考虑 scheduled workflow；不要把 `build:world-order` 加入 `check:all`，H-4 的 `review:world-order` 只是本地只读人工审阅 helper。
 - World Order 新外部源不得直接进入 scoring；必须先通过 diagnosis / source review，再另开版本接入。
 - ReliefWeb 或任何新外部源不得直接进入 scoring；必须先通过 diagnosis / review，再另开 integration version。
@@ -150,7 +151,7 @@ When `DESIGN.md` and any other contract (e.g., Market Pricing governance) appear
 
 - `npm run check:editorial-redesign-contract` enforces font allowlist, IA structure, and `DESIGN.md` existence + anchor integrity
 - `npm run check:homepage-ia-contract` enforces section order
-- `npm run check:all` runs both as part of the 71-check baseline
+- `npm run check:all` runs both as part of the 72-check baseline
 
 PRs that fail these contracts MUST NOT be merged, regardless of how good the visual result looks.
 

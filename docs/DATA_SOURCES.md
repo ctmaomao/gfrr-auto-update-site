@@ -39,10 +39,17 @@
 | `JTSJOL` | JOLTS Job Openings (monthly, ~6w lag) | macroDrivers.employment | M-68 |
 | `CARTS` | Chicago Fed Advance Retail Trade Summary, nominal (SA, weekly) | macroDrivers.consumerRetail | M-69 |
 | `CARTSR` | Chicago Fed CARTS, real (inflation-adjusted, weekly) | macroDrivers.consumerRetail | M-69 |
+| `DRCRELEXFACBS` | CRE Loan Delinquency Rate (quarterly) | macroDrivers.commercialRealEstate | M-70 |
+| `CORCREXFACBS` | CRE Loan Charge-off Rate (quarterly) | macroDrivers.commercialRealEstate | M-70 |
+| `SUBLPDRCSN` | SLOOS Nonfarm Nonresidential CRE Tightening (quarterly) | macroDrivers.commercialRealEstate | M-70 |
+| `SUBLPDRCSC` | SLOOS Construction/Land Development CRE Tightening (quarterly) | macroDrivers.commercialRealEstate | M-70 |
+| `SUBLPDRCSM` | SLOOS Multifamily CRE Tightening (quarterly) | macroDrivers.commercialRealEstate | M-70 |
 
 **注意**: NFCI 正值=收紧、负值=宽松,**方向与 IG/HY OAS 相反**。误判方向会让 cross-validation 完全反向。
 
 **M-69 注意**: `CARTSP` 价格指数 未接,future scope only；`macroDrivers.consumerRetail` 只使用 `CARTS` / `CARTSR`，不代表 Redbook 或 BoA Card 数据。
+
+**M-70 注意**: 不接 CDX HY/IG (商业 ICE/Markit) 或 私募信贷 (Cliffwater / PitchBook / Preqin),详见 P3-15;不接 loan balance / CRE exposure stock series,future scope only;`macroDrivers.commercialRealEstate` 不代表 CDX 或 私募信贷数据。
 
 ---
 
@@ -287,6 +294,7 @@ documented attribution string and code is a contract violation.
 | `macroDrivers.consumer` | FRED: UMCSENT + ISM: Manufacturing PMI public report parser |
 | `macroDrivers.employment` | FRED: ICSA, CCSA, JTSJOL |
 | `macroDrivers.consumerRetail` | FRED: CARTS, CARTSR (Chicago Fed Advance Retail Trade Summary) |
+| `macroDrivers.commercialRealEstate` | FRED: DRCRELEXFACBS, CORCREXFACBS, SUBLPDRCSN, SUBLPDRCSC, SUBLPDRCSM |
 | `brentPricingLayer.crackSpread` | FRED `DHOILNYH` × 42 − Brent |
 | `externalAiInterpretationLayer` | DeepSeek (production) / OpenAI (alternate);只读展示 |
 | `worldOrderStress.marketConfirmation` | Worker preview → local realtime → Daily baseline (优先级) |
