@@ -1,9 +1,9 @@
-// ACLED data adapter — manual xlsx workflow (M-63a, 2026-05-19)
+// ACLED data adapter — manual xlsx workflow (M-63a weekly, M-63b monthly)
 //
 // This file used to contain an ACLED API adapter. That code path was removed in M-63a
 // because the project owner was denied Research/Partner tier API access. ACLED data is
 // now ingested via manual xlsx downloads sanitized by scripts/world-order/sanitize-acled-weekly.mjs
-// (and future sanitize-acled-monthly.mjs in M-63b).
+// (M-63a) and scripts/world-order/sanitize-acled-monthly.mjs (M-63b).
 //
 // To recover the API adapter code if Research tier access is ever obtained:
 //   git show <commit-prior-to-m-63a-merge>:scripts/world-order/fetch-acled.mjs
@@ -24,6 +24,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..', '..');
 const weeklyPath = path.join(root, 'config', 'world-order-acled-regional-weekly.json');
+const monthlyPath = path.join(root, 'config', 'world-order-acled-global-monthly.json');
 
 function emptySummary(overrides = {}) {
   return buildEmptySummary({
@@ -36,8 +37,15 @@ function emptySummary(overrides = {}) {
     latestWeek: null,
     regionsTracked: 0,
     hotZonesTopCount: 0,
+    politicalViolenceEventsLatestFullYear: null,
+    politicalViolenceYoyDelta: null,
+    civilianTargetingShareLatestFullYear: null,
+    fatalitiesLatestFullYear: null,
+    monthlyLatest12mVsPrior12mDelta: null,
+    monthlyAsOfDate: null,
+    monthlyLatestFullYear: null,
     sourceFreshness: 'not_configured',
-    noteZh: 'ACLED 周度 xlsx 尚未手动导入，当前仅保留数据源占位。',
+    noteZh: 'ACLED 周度/月度 xlsx 尚未手动导入，当前仅保留数据源占位。',
     ...overrides
   });
 }
@@ -46,7 +54,11 @@ function isObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
 }
 
-function freshnessFromLatestWeek(latestWeek) {
+function finiteOrNull(value) {
+  return Number.isFinite(value) ? value : null;
+}
+
+function weeklyFreshnessFromLatestWeek(latestWeek) {
   if (typeof latestWeek !== 'string' || !/^\d{4}-\d{2}-\d{2}$/u.test(latestWeek)) return 'expired';
   const latest = new Date(`${latestWeek}T00:00:00.000Z`);
   if (!Number.isFinite(latest.getTime())) return 'expired';
@@ -59,22 +71,82 @@ function freshnessFromLatestWeek(latestWeek) {
   return 'expired';
 }
 
-function finiteOrNull(value) {
-  return Number.isFinite(value) ? value : null;
+function monthlyFreshnessFromAsOfDate(asOfDate) {
+  if (typeof asOfDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/u.test(asOfDate)) return 'expired';
+  const target = new Date(`${asOfDate}T00:00:00.000Z`);
+  if (!Number.isFinite(target.getTime())) return 'expired';
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const ageDays = Math.floor((today.getTime() - target.getTime()) / 86_400_000);
+  if (ageDays <= 35) return 'fresh';
+  if (ageDays <= 60) return 'aging';
+  if (ageDays <= 120) return 'stale';
+  return 'expired';
 }
 
-function buildOkNote(summary) {
-  const delta = Number.isFinite(summary.eventsDelta4Vs12)
-    ? `${Math.round(summary.eventsDelta4Vs12 * 100)}%`
-    : '不可比';
-  return `ACLED 手动周度聚合已覆盖 ${summary.regionsTracked} 个区域，最新周 ${summary.latestWeek}，近4周事件相对12周均值变化 ${delta}。`;
+function loadJson(filePath) {
+  if (!fs.existsSync(filePath)) return { state: 'missing', value: null, error: null };
+  try {
+    const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    if (!isObject(parsed)) return { state: 'error', value: null, error: 'payload is not an object' };
+    if (parsed.quality?.isRealData !== true) return { state: 'manual_required', value: parsed, error: null };
+    return { state: 'ok', value: parsed, error: null };
+  } catch (err) {
+    return { state: 'error', value: null, error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
-function buildOkEvidence(summary, weekly) {
+function combineStatus(weeklyState, monthlyState) {
+  if (weeklyState === 'error') return 'error';
+  if (weeklyState === 'ok' && monthlyState === 'ok') return 'ok';
+  if (weeklyState === 'ok' && monthlyState === 'error') return 'partial';
+  if (weeklyState === 'ok') return 'partial';
+  if (monthlyState === 'ok') return 'partial';
+  return 'manual_required';
+}
+
+function combineConfidence(weeklyState, monthlyState, weeklyConfidence, monthlyConfidence) {
+  if (weeklyState !== 'ok' && monthlyState !== 'ok') return 0;
+  let confidence = 0;
+  if (weeklyState === 'ok') confidence = Math.max(confidence, weeklyConfidence ?? 0.85);
+  if (monthlyState === 'ok') confidence = Math.max(confidence, (monthlyConfidence ?? 0.85) * 0.95);
+  if (weeklyState === 'ok' && monthlyState === 'ok') confidence = Math.min(0.9, confidence + 0.05);
+  return confidence;
+}
+
+function buildWeeklySummary(weekly) {
+  return {
+    eventsLast4Weeks: finiteOrNull(weekly.global?.eventsLast4Weeks),
+    eventsLast12Weeks: finiteOrNull(weekly.global?.eventsLast12Weeks),
+    eventsDelta4Vs12: finiteOrNull(weekly.global?.eventsDelta4Vs12),
+    fatalitiesLast4Weeks: finiteOrNull(weekly.global?.fatalitiesLast4Weeks),
+    fatalitiesLast12Weeks: finiteOrNull(weekly.global?.fatalitiesLast12Weeks),
+    civilianTargetingShareLast4Weeks: finiteOrNull(weekly.global?.civilianTargetingShareLast4Weeks),
+    latestWeek: weekly.latestWeek,
+    regionsTracked: Array.isArray(weekly.regionalLast4Weeks) ? weekly.regionalLast4Weeks.length : 0,
+    hotZonesTopCount: Array.isArray(weekly.hotZonesLast4Weeks) ? weekly.hotZonesLast4Weeks.length : 0,
+    sourceFreshness: weeklyFreshnessFromLatestWeek(weekly.latestWeek)
+  };
+}
+
+function buildMonthlyFields(monthly) {
+  return {
+    politicalViolenceEventsLatestFullYear: finiteOrNull(monthly.global?.politicalViolenceEventsLatestFullYear),
+    politicalViolenceYoyDelta: finiteOrNull(monthly.global?.politicalViolenceYoyDelta),
+    civilianTargetingShareLatestFullYear: finiteOrNull(monthly.global?.civilianTargetingShareLatestFullYear),
+    fatalitiesLatestFullYear: finiteOrNull(monthly.global?.fatalitiesLatestFullYear),
+    monthlyLatest12mVsPrior12mDelta: finiteOrNull(monthly.monthlyTrend?.latest12mVsPrior12mDelta),
+    monthlyAsOfDate: typeof monthly.asOfDate === 'string' ? monthly.asOfDate : null,
+    monthlyLatestFullYear: Number.isInteger(monthly.latestFullYear) ? monthly.latestFullYear : null,
+    monthlySourceFreshness: monthlyFreshnessFromAsOfDate(monthly.asOfDate)
+  };
+}
+
+function buildWeeklyEvidence(weekly, summary) {
   return [
     {
       labelZh: 'ACLED 周度冲突事件聚合',
-      source: 'ACLED manual xlsx',
+      source: 'ACLED manual xlsx (weekly)',
       summary: `近 4 周事件 ${summary.eventsLast4Weeks ?? 'n/a'} 起，死亡 ${summary.fatalitiesLast4Weeks ?? 'n/a'}，覆盖 ${summary.regionsTracked} 个区域。`,
       value: summary.eventsLast4Weeks,
       direction: Number.isFinite(summary.eventsDelta4Vs12) && summary.eventsDelta4Vs12 > 0 ? 'risk_up' : 'neutral',
@@ -82,7 +154,7 @@ function buildOkEvidence(summary, weekly) {
     },
     {
       labelZh: 'ACLED 平民受害事件占比',
-      source: 'ACLED manual xlsx',
+      source: 'ACLED manual xlsx (weekly)',
       summary: `近 4 周平民受害事件占比 ${Number.isFinite(summary.civilianTargetingShareLast4Weeks) ? Math.round(summary.civilianTargetingShareLast4Weeks * 100) : 'n/a'}%。`,
       value: summary.civilianTargetingShareLast4Weeks,
       direction: Number.isFinite(summary.civilianTargetingShareLast4Weeks) && summary.civilianTargetingShareLast4Weeks >= 0.2 ? 'risk_up' : 'neutral',
@@ -91,63 +163,137 @@ function buildOkEvidence(summary, weekly) {
   ];
 }
 
-function loadWeeklyJson() {
-  if (!fs.existsSync(weeklyPath)) return { ok: false, missing: true, error: null, value: null };
-  try {
-    return {
-      ok: true,
-      missing: false,
-      error: null,
-      value: JSON.parse(fs.readFileSync(weeklyPath, 'utf8'))
-    };
-  } catch (err) {
-    return {
-      ok: false,
-      missing: false,
-      error: err instanceof Error ? err.message : String(err),
-      value: null
-    };
+function buildMonthlyEvidence(monthly, fields) {
+  const yoyText = Number.isFinite(fields.politicalViolenceYoyDelta)
+    ? `${(fields.politicalViolenceYoyDelta * 100).toFixed(1)}%`
+    : 'n/a';
+  const monthlyDeltaText = Number.isFinite(fields.monthlyLatest12mVsPrior12mDelta)
+    ? `${(fields.monthlyLatest12mVsPrior12mDelta * 100).toFixed(1)}%`
+    : 'n/a';
+  const civilianShareText = Number.isFinite(fields.civilianTargetingShareLatestFullYear)
+    ? `${Math.round(fields.civilianTargetingShareLatestFullYear * 100)}%`
+    : 'n/a';
+  return [
+    {
+      labelZh: 'ACLED 年度暴力事件（最新完整年）',
+      source: 'ACLED manual xlsx (monthly)',
+      summary: `${fields.monthlyLatestFullYear ?? 'n/a'} 年政治暴力事件 ${fields.politicalViolenceEventsLatestFullYear ?? 'n/a'} 起，相对前 3 年均值变化 ${yoyText}。`,
+      value: fields.politicalViolenceEventsLatestFullYear,
+      direction: Number.isFinite(fields.politicalViolenceYoyDelta) && fields.politicalViolenceYoyDelta > 0 ? 'risk_up' : 'neutral',
+      confidence: monthly.quality?.confidence ?? 0.85
+    },
+    {
+      labelZh: 'ACLED 最近 12 个月暴力事件趋势',
+      source: 'ACLED manual xlsx (monthly)',
+      summary: `last-12m vs prior-12m 事件变化 ${monthlyDeltaText}。`,
+      value: fields.monthlyLatest12mVsPrior12mDelta,
+      direction: Number.isFinite(fields.monthlyLatest12mVsPrior12mDelta) && fields.monthlyLatest12mVsPrior12mDelta > 0 ? 'risk_up' : 'neutral',
+      confidence: monthly.quality?.confidence ?? 0.85
+    },
+    {
+      labelZh: 'ACLED 年度平民受害事件占比',
+      source: 'ACLED manual xlsx (monthly)',
+      summary: `${fields.monthlyLatestFullYear ?? 'n/a'} 年平民受害事件占比 ${civilianShareText}。`,
+      value: fields.civilianTargetingShareLatestFullYear,
+      direction: Number.isFinite(fields.civilianTargetingShareLatestFullYear) && fields.civilianTargetingShareLatestFullYear >= 0.25 ? 'risk_up' : 'neutral',
+      confidence: monthly.quality?.confidence ?? 0.85
+    }
+  ];
+}
+
+function buildCombinedNote(state, weekly, monthly, summary) {
+  if (state.combinedStatus === 'manual_required') {
+    return 'ACLED 周度与月度 xlsx 均未导入；operator 需手动下载后运行 acled:sanitize:weekly / acled:sanitize:monthly。';
   }
+  if (state.combinedStatus === 'error') {
+    return 'ACLED weekly JSON 解析失败，本轮不使用该数据源。';
+  }
+  const parts = [];
+  if (state.weeklyState === 'ok') {
+    const delta = Number.isFinite(weekly.global?.eventsDelta4Vs12)
+      ? `${(weekly.global.eventsDelta4Vs12 * 100).toFixed(1)}%`
+      : '不可比';
+    parts.push(`周度覆盖 ${summary.regionsTracked} 个区域，最新周 ${summary.latestWeek}，近4周事件相对12周均值变化 ${delta}`);
+  } else {
+    parts.push('周度数据缺失或待导入');
+  }
+  if (state.monthlyState === 'ok') {
+    const yoy = Number.isFinite(monthly.global?.politicalViolenceYoyDelta)
+      ? `${(monthly.global.politicalViolenceYoyDelta * 100).toFixed(1)}%`
+      : '不可比';
+    parts.push(`月度最新完整年 ${monthly.latestFullYear} 年政治暴力事件相对前 3 年均值 ${yoy}`);
+  } else if (state.monthlyState === 'manual_required') {
+    parts.push('月度数据待导入');
+  } else if (state.monthlyState === 'error') {
+    parts.push('月度数据解析失败，本轮忽略');
+  }
+  return `${parts.join('；')}。`;
 }
 
 export async function fetchAcledSummary({ config = {}, previousSource = null } = {}) {
   void config;
   void previousSource;
 
-  const weekly = loadWeeklyJson();
-  if (weekly.missing) {
+  const weekly = loadJson(weeklyPath);
+  const monthly = loadJson(monthlyPath);
+
+  const combinedStatus = combineStatus(weekly.state, monthly.state);
+  const combinedConfidence = combineConfidence(
+    weekly.state,
+    monthly.state,
+    weekly.value?.quality?.confidence,
+    monthly.value?.quality?.confidence
+  );
+  const lastFetchedAt = weekly.value?.preparedAt || monthly.value?.preparedAt || null;
+  const warnings = [];
+
+  if (weekly.state === 'missing') warnings.push('ACLED weekly data not ingested. Run acled:sanitize:weekly after downloading from acleddata.com.');
+  else if (weekly.state === 'manual_required') warnings.push('ACLED weekly JSON quality.isRealData is not true; treated as missing.');
+  else if (weekly.state === 'error') warnings.push(`ACLED weekly JSON parse failed: ${weekly.error || 'unknown error'}`);
+  if (monthly.state === 'missing') warnings.push('ACLED monthly data not ingested. Run acled:sanitize:monthly after downloading from acleddata.com.');
+  else if (monthly.state === 'manual_required') warnings.push('ACLED monthly JSON quality.isRealData is not true; treated as missing.');
+  else if (monthly.state === 'error') warnings.push(`ACLED monthly JSON parse failed: ${monthly.error || 'unknown error'}`);
+
+  const weeklySummary = weekly.state === 'ok' ? buildWeeklySummary(weekly.value) : {};
+  const monthlyFields = monthly.state === 'ok' ? buildMonthlyFields(monthly.value) : {};
+
+  const evidence = [];
+  if (weekly.state === 'ok') evidence.push(...buildWeeklyEvidence(weekly.value, weeklySummary));
+  if (monthly.state === 'ok') evidence.push(...buildMonthlyEvidence(monthly.value, monthlyFields));
+
+  if (combinedStatus === 'manual_required') {
     return buildSourceResult({
       enabled: true,
       status: 'manual_required',
       lastFetchedAt: null,
       summary: emptySummary({
         sourceFreshness: 'not_configured',
-        noteZh: 'ACLED 周度 xlsx 尚未导入；operator 需手动下载区域聚合文件后运行 acled:sanitize:weekly。'
+        noteZh: 'ACLED 周度与月度 xlsx 均待导入；operator 需手动下载后运行 sanitizer。'
       }),
       evidence: [
         {
-          labelZh: 'ACLED 周度聚合数据',
+          labelZh: 'ACLED 周度/月度聚合数据',
           source: 'ACLED manual xlsx',
-          summary: '尚未发现本地 ACLED 周度标准化 JSON，等待 operator 手动下载 xlsx 并运行 sanitizer。',
+          summary: '尚未发现本地 ACLED 标准化 JSON，等待 operator 手动下载 xlsx 并运行 sanitizer。',
           value: null,
           direction: 'neutral',
           confidence: 0
         }
       ],
       confidence: 0,
-      warnings: ['No ACLED weekly data ingested. Run acled:sanitize:weekly after downloading from acleddata.com.']
+      warnings
     });
   }
 
-  if (!weekly.ok) {
+  if (combinedStatus === 'error') {
     return buildSourceResult({
       enabled: true,
       status: 'error',
       lastFetchedAt: null,
       summary: emptySummary({
         sourceFreshness: 'error',
-        noteZh: 'ACLED 周度标准化 JSON 解析失败，本轮不使用该数据源。',
-        errors: [weekly.error || 'unknown JSON parse error']
+        noteZh: 'ACLED weekly 标准化 JSON 解析失败，本轮不使用该数据源。',
+        errors: [weekly.error || 'unknown weekly error']
       }),
       evidence: [
         {
@@ -160,57 +306,33 @@ export async function fetchAcledSummary({ config = {}, previousSource = null } =
         }
       ],
       confidence: 0.05,
-      warnings: [`ACLED weekly JSON parse failed: ${weekly.error || 'unknown error'}`]
+      warnings
     });
   }
 
-  if (!isObject(weekly.value) || weekly.value.quality?.isRealData !== true) {
-    return buildSourceResult({
-      enabled: true,
-      status: 'manual_required',
-      lastFetchedAt: null,
-      summary: emptySummary({
-        sourceFreshness: 'not_configured',
-        noteZh: 'ACLED 周度 JSON 未标记为真实数据，等待 operator 重新导入真实 xlsx。'
-      }),
-      evidence: [
-        {
-          labelZh: 'ACLED 周度聚合数据未确认',
-          source: 'ACLED manual xlsx',
-          summary: 'ACLED weekly JSON quality.isRealData 不是 true，本轮按 manual_required 处理。',
-          value: null,
-          direction: 'neutral',
-          confidence: 0
-        }
-      ],
-      confidence: 0,
-      warnings: ['ACLED weekly data is missing quality.isRealData=true.']
-    });
-  }
-
-  const normalized = weekly.value;
   const summary = {
-    eventsLast4Weeks: finiteOrNull(normalized.global?.eventsLast4Weeks),
-    eventsLast12Weeks: finiteOrNull(normalized.global?.eventsLast12Weeks),
-    eventsDelta4Vs12: finiteOrNull(normalized.global?.eventsDelta4Vs12),
-    fatalitiesLast4Weeks: finiteOrNull(normalized.global?.fatalitiesLast4Weeks),
-    fatalitiesLast12Weeks: finiteOrNull(normalized.global?.fatalitiesLast12Weeks),
-    civilianTargetingShareLast4Weeks: finiteOrNull(normalized.global?.civilianTargetingShareLast4Weeks),
-    latestWeek: normalized.latestWeek,
-    regionsTracked: Array.isArray(normalized.regionalLast4Weeks) ? normalized.regionalLast4Weeks.length : 0,
-    hotZonesTopCount: Array.isArray(normalized.hotZonesLast4Weeks) ? normalized.hotZonesLast4Weeks.length : 0,
-    sourceFreshness: freshnessFromLatestWeek(normalized.latestWeek),
+    ...weeklySummary,
+    ...monthlyFields,
+    sourceFreshness: weeklySummary.sourceFreshness || monthlyFields.monthlySourceFreshness || 'not_configured',
     noteZh: ''
   };
-  summary.noteZh = buildOkNote(summary);
+  if (Array.isArray(summary.errors)) {
+    delete summary.errors;
+  }
+  summary.noteZh = buildCombinedNote(
+    { combinedStatus, weeklyState: weekly.state, monthlyState: monthly.state },
+    weekly.value || {},
+    monthly.value || {},
+    summary
+  );
 
   return buildSourceResult({
     enabled: true,
-    status: 'ok',
-    lastFetchedAt: normalized.preparedAt,
+    status: combinedStatus,
+    lastFetchedAt,
     summary,
-    evidence: buildOkEvidence(summary, normalized),
-    confidence: normalized.quality?.confidence ?? 0.85,
-    warnings: []
+    evidence,
+    confidence: combinedConfidence,
+    warnings
   });
 }

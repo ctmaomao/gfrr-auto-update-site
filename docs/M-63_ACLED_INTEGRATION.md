@@ -27,13 +27,19 @@ M-63 uses 12 ACLED aggregated downloads across two refresh tracks:
 - Weekly regional track: 6 regional files.
 - Monthly global track: 6 global aggregation files.
 
-M-63a implements only the weekly regional track. M-63b is reserved for monthly global aggregation. M-63c is reserved for reminder workflows.
+M-63a implements the weekly regional track. M-63b implements the monthly global aggregation track (evidence-only; no `peaceDividendRetreat` weight change). M-63c is reserved for reminder workflows.
 
 The weekly trio is:
 
 - Sanitizer: `scripts/world-order/sanitize-acled-weekly.mjs`
 - Check: `scripts/check-world-order-acled-weekly.mjs`
-- Importer: `scripts/world-order/fetch-acled.mjs`
+- Importer: `scripts/world-order/fetch-acled.mjs` (also reads monthly)
+
+The monthly trio is:
+
+- Sanitizer: `scripts/world-order/sanitize-acled-monthly.mjs`
+- Check: `scripts/check-world-order-acled-monthly.mjs`
+- Importer: `scripts/world-order/fetch-acled.mjs` (shared with weekly; combines both tracks)
 
 The sanitizer reads operator-downloaded xlsx files and overwrites derived JSON:
 
@@ -45,10 +51,11 @@ manual-artifacts/world-order/acled-input/weekly/*.xlsx
 
 The importer reads only the derived JSON. It does not import `xlsx`, does not read ACLED credentials, and does not call any ACLED network endpoint.
 
-`xlsx@0.18.5` is authorized by ADR-0013 only for local development tools. In M-63a it is imported only by:
+`xlsx@0.18.5` is authorized by ADR-0013 only for local development tools. In M-63a/M-63b it is imported only by:
 
 ```text
 scripts/world-order/sanitize-acled-weekly.mjs
+scripts/world-order/sanitize-acled-monthly.mjs
 ```
 
 Runtime production code remains zero-dep:
@@ -56,6 +63,7 @@ Runtime production code remains zero-dep:
 - `scripts/build-world-order-stress.mjs` does not import `xlsx`.
 - `scripts/world-order/fetch-acled.mjs` does not import `xlsx`.
 - `scripts/check-world-order-acled-weekly.mjs` does not import `xlsx`.
+- `scripts/check-world-order-acled-monthly.mjs` does not import `xlsx`.
 - Dashboard frontend code does not import `xlsx`.
 - GitHub Actions workflows do not import `xlsx`.
 
@@ -84,7 +92,7 @@ The sanitizer is strict about region spelling and capitalization. Unknown region
 
 Weekly cadence follows ACLED's Monday/Tuesday regional release rhythm. If the latest week is 30-90 days old, the sanitizer and check warn. If it is more than 90 days old, they fail. Future-dated input fails immediately.
 
-Monthly files are out of scope for M-63a. They are reserved for M-63b and must not be mixed into the weekly sanitizer.
+Monthly files are out of scope for M-63a's weekly sanitizer. The weekly sanitizer must not be made to read monthly files; the dedicated monthly sanitizer (`sanitize-acled-monthly.mjs`, M-63b) handles them.
 
 ## 4. Schema Reference
 
@@ -192,22 +200,22 @@ This is a near-term conflict-density lens. SIPRI remains the annual military-exp
 
 `fetch-acled.mjs` emits statuses for `externalSources.acled`.
 
-`ok` means a sanitized weekly JSON file exists, parses, and has `quality.isRealData === true`. In M-63a this means weekly data is available; M-63b will decide how weekly and monthly combine.
+`ok` (M-63b semantics) means **both** weekly and monthly sanitized JSON files exist, parse, and have `quality.isRealData === true`. Confidence caps at 0.90 when both tracks are present.
 
-`manual_required` means no weekly data has been ingested, or the local JSON is not marked as real data. This is non-blocking and does not fail `check:all`.
+`partial` (live since M-63b) means exactly one of weekly / monthly is `ok` and the other is missing, marked as not-real, or had a parse error. Weekly remains the priority signal; monthly errors degrade to `partial` rather than escalate to `error`.
 
-`error` means the local JSON exists but cannot be parsed or validated by the importer/check path. This degrades confidence and should be investigated, but it remains a World Order overlay issue rather than a main decision gate.
+`manual_required` means neither weekly nor monthly data has been ingested. This is non-blocking and does not fail `check:all`.
 
-`partial` is reserved for M-63b, when weekly or monthly data may be available without the other track.
+`error` means the weekly JSON exists but cannot be parsed. Monthly parse errors do not escalate to `error` (soft-degradation per M-63b decision).
 
-`not_configured` is the pre-M-63a baseline state retained for compatibility with already-committed `data/world-order-stress.json` until the next build emits `manual_required`.
+`not_configured` is the pre-M-63a baseline state retained for compatibility with already-committed `data/world-order-stress.json` until the next build emits a current status.
 
 Scoring impact:
 
 - `manual_required`: low placeholder score, not treated as evidence of conflict escalation.
 - `error`: zero ACLED score.
-- `partial`: reserved low-confidence value for M-63b.
-- `ok`: formula uses event acceleration, fatalities, and civilian-targeting share.
+- `partial`: low-confidence value; whichever track is `ok` provides evidence; the missing track does not contribute.
+- `ok`: scoring formula still uses weekly event acceleration, fatalities, and civilian-targeting share; monthly YoY vs prior-3y average and last-12m vs prior-12m trend surface only as summary/evidence.
 
 ## 7. Scoring Weight Change
 
@@ -236,7 +244,7 @@ Rationale:
 - ACLED adds direct event-density evidence from manually downloaded aggregated data.
 - Existing risk modules still provide market and macro context.
 
-ACLED only affects the `peaceDividendRetreat` World Order dimension in M-63a. It does not enter the main decision model and does not affect execution or position guidance.
+ACLED only affects the `peaceDividendRetreat` World Order dimension in M-63a/M-63b. M-63b is **evidence-only**: monthly metrics surface as evidence and summary fields via `fetch-acled.mjs` but do not change the M-63a weights above. Any future weight rebalance that includes monthly must come from a separate M-63d source-review/backtest PR. ACLED does not enter the main decision model and does not affect execution or position guidance.
 
 ## 8. Attribution
 
@@ -270,7 +278,7 @@ Weekly refresh:
 4. On first use after M-63a, run `npm install` so the `xlsx` devDependency is installed.
 5. Run `npm run acled:sanitize:weekly`.
 6. Run `npm run check:world-order-acled-weekly`.
-7. Run `npm run check:all`; M-63a expects 68 items to pass.
+7. Run `npm run check:all`; M-63b expects 69 items to pass.
 8. Review `config/world-order-acled-regional-weekly.json`.
 9. Commit the derived JSON with a focused operator refresh commit:
 
@@ -321,9 +329,10 @@ ADR-0013 was designed exactly for this scenario. The vulnerable library is struc
 | Dashboard frontend (`index.html`, dashboard JS) | No | Zero-dep policy (ADR-0001) |
 | GitHub Actions workflows (`refresh-world-order-stress.yml`, etc.) | No | `grep -r "from ['\"]xlsx" .github/` returns 0 |
 | `build:world-order` pipeline | No | `grep -r "from ['\"]xlsx" scripts/build-*` returns 0 |
-| `check:all` chain (68 items) | No | `grep -r "from ['\"]xlsx" scripts/check-*` returns 0 |
-| `scripts/world-order/fetch-acled.mjs` (importer) | No | M-63a explicitly forbade; verified by grep at merge time |
-| `scripts/world-order/sanitize-acled-weekly.mjs` (sanitizer) | Yes | **Only consumer** — runs manually on operator's local PowerShell |
+| `check:all` chain (69 items) | No | `grep -r "from ['\"]xlsx" scripts/check-*` returns 0 |
+| `scripts/world-order/fetch-acled.mjs` (importer) | No | M-63a/b explicitly forbade; verified by grep at merge time |
+| `scripts/world-order/sanitize-acled-weekly.mjs` (weekly sanitizer) | Yes | Runs manually on operator's local PowerShell |
+| `scripts/world-order/sanitize-acled-monthly.mjs` (monthly sanitizer, M-63b) | Yes | Runs manually on operator's local PowerShell |
 
 The vulnerable code path executes only when the operator manually runs `npm run acled:sanitize:weekly` against trusted xlsx files in `manual-artifacts/`. No production runtime path is exposed.
 
@@ -346,7 +355,7 @@ The vulnerable code path executes only when the operator manually runs `npm run 
 ### Monitoring and re-evaluation triggers
 
 This decision should be re-evaluated if any of the following occur:
-- `xlsx` is ever imported by code outside `scripts/world-order/sanitize-acled-weekly.mjs` (or its planned monthly sibling `sanitize-acled-monthly.mjs` in M-63b) — would violate ADR-0013 isolation
+- `xlsx` is ever imported by code outside `scripts/world-order/sanitize-acled-weekly.mjs` and `scripts/world-order/sanitize-acled-monthly.mjs` — would violate ADR-0013 isolation
 - A new CVE in `xlsx` allows remote exploitation without a crafted file (extremely unlikely given the architecture)
 - The project pivots to processing untrusted xlsx files (e.g., user uploads) — this would invalidate the threat model entirely
 - ACLED experiences a compromise affecting their data distribution
@@ -367,10 +376,105 @@ To verify nothing has changed in the threat model, run:
 
 ```powershell
 npm audit --omit=dev    # Should return: 0 vulnerabilities
-grep -r "from ['\"]xlsx" scripts/    # Should return only sanitize-acled-weekly.mjs
+grep -r "from ['\"]xlsx" scripts/    # Should return only sanitize-acled-weekly.mjs and sanitize-acled-monthly.mjs
 ```
 
 Both checks passing means the CVE acceptance still holds.
+
+## 9B. M-63b Monthly Refresh Procedure
+
+M-63b adds the monthly global aggregation track. The operator downloads exactly six aggregated xlsx files from `https://acleddata.com/conflict-data/download-data-files` (the "Aggregated data files" panel, monthly section):
+
+- `number_of_demonstration_events_by_country-year_as-of-<DD><Mmm><YYYY>.xlsx`
+- `number_of_events_targeting_civilians_by_country-year_as-of-<DD><Mmm><YYYY>.xlsx`
+- `number_of_political_violence_events_by_country-month-year_as-of-<DD><Mmm><YYYY>.xlsx`
+- `number_of_political_violence_events_by_country-year_as-of-<DD><Mmm><YYYY>.xlsx`
+- `number_of_reported_civilian_fatalities_by_country-year_as-of-<DD><Mmm><YYYY>.xlsx`
+- `number_of_reported_fatalities_by_country-year_as-of-<DD><Mmm><YYYY>.xlsx`
+
+The six files share the same `as-of-<DD><Mmm><YYYY>` date stamp (e.g. `08May2026`). Five files are yearly cadence; the `country-month-year` file is the only monthly-cadence file. The sanitizer is strict: **all 6 files must be present**. Missing any file fails the sanitizer (committed JSON must always reflect a complete monthly snapshot — partial monthly imports are not allowed because `fetch-acled.mjs` treats a present monthly JSON as authoritative evidence).
+
+Monthly refresh:
+
+1. Open `https://acleddata.com/conflict-data/download-data-files` manually in a browser.
+2. Download the 6 monthly aggregated xlsx files (one batch per refresh; all 6 must share the same `as-of` date).
+3. Place the files under `manual-artifacts/world-order/acled-input/monthly/`.
+4. Run `npm run acled:sanitize:monthly`.
+5. Run `npm run check:world-order-acled-monthly`.
+6. Run `npm run check:all`; M-63b expects 69 items to pass.
+7. Review `config/world-order-acled-global-monthly.json`.
+8. Commit the derived JSON with a focused operator refresh commit:
+
+```text
+git add config/world-order-acled-global-monthly.json
+git commit -m "data: refresh ACLED monthly global aggregate"
+git push
+```
+
+Raw xlsx files must remain untracked. Only the derived JSON should be committed during an operator refresh.
+
+Monthly freshness thresholds (based on `asOfDate`):
+
+- `≤ 35` days: `fresh`, no message
+- `≤ 60` days: `aging` warning
+- `≤ 120` days: `stale` warning
+- `≤ 180` days: approaching-expiration warning
+- `> 180` days: fail
+
+### Monthly schema reference
+
+M-63b writes:
+
+```text
+config/world-order-acled-global-monthly.json
+```
+
+Top-level fields:
+
+- `version`: schema version, currently `1.0.0`.
+- `source`: fixed literal `acled-aggregated-manual-normalized-monthly`.
+- `sourceName`: human-readable source name.
+- `preparedAt`: ISO timestamp when the sanitizer wrote the file.
+- `preparedBy`: fixed literal `manual`.
+- `asOfDate`: latest `as-of` date across the 6 input files (YYYY-MM-DD).
+- `latestFullYear`: most recent fully-complete year (typically `asOfDate.year - 1`).
+- `filesIngested`: 6 entries, one per file (exactly 6 required).
+- `global`: cross-country annual aggregates for `latestFullYear`.
+- `monthlyTrend`: last-12m vs prior-12m window derived from the country-month-year file.
+- `topEscalatingCountries`: up to 10 entries, sorted by YoY vs prior-3y average; noise floor `latestFullYearEvents >= 50`.
+- `topFatalitiesCountries`: up to 10 entries, sorted by latest-full-year fatalities.
+- `quality`: source metadata and confidence (same canonical strings as weekly).
+
+`global` fields:
+
+- `politicalViolenceEventsLatestFullYear`
+- `politicalViolenceEventsPrior3YearAverage`
+- `politicalViolenceYoyDelta` — `latest / prior3yAvg - 1`, or `null` if `prior3yAvg <= 0`
+- `demonstrationsLatestFullYear`
+- `civilianTargetingEventsLatestFullYear`
+- `civilianTargetingShareLatestFullYear` — civilian-targeting / political-violence in `latestFullYear`, clamped `[0, 1]` or `null`
+- `fatalitiesLatestFullYear`
+- `civilianFatalitiesLatestFullYear`
+- `civilianFatalitiesShareLatestFullYear` — civilian / total fatalities in `latestFullYear`, clamped `[0, 1]` or `null`
+
+`monthlyTrend` fields:
+
+- `latest12mWindow`: `[startYYYY-MM, endYYYY-MM]` or `null`
+- `prior12mWindow`: `[startYYYY-MM, endYYYY-MM]` or `null`
+- `latest12mEvents`, `prior12mEvents`: non-negative integers
+- `latest12mVsPrior12mDelta`: `latest12m / prior12m - 1`, or `null` if `prior12m === 0`
+
+`topEscalatingCountries[]` fields:
+
+- `country`
+- `latestFullYearEvents` — integer `>= 50` (noise floor; enforced by check)
+- `prior3YearAverageEvents`
+- `yoyDelta`
+
+`topFatalitiesCountries[]` fields:
+
+- `country`
+- `fatalities`
 
 ## 10. Known Limitations
 

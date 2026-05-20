@@ -83,8 +83,9 @@
 - World Order UI 必须清楚显示低置信 / 数据限制，不得把 proxy、stale、manual_required 或 not_configured 数据包装成高确定性结论。
 - World Order 用户可见 UI 文案必须中文化；source attribution 不得误导，多源 evidence 应尽量显示清楚来源组合。
 - SIPRI normalized example/template 数据不得当作真实宏观数据参与 scoring；只有 `quality.isRealData=true` 的真实手动标准化文件才能让 SIPRI 进入 `ok`。
-- M-63a 后，ACLED 仅走 Open-license manual-xlsx workflow：operator 手动下载 aggregated xlsx，`scripts/world-order/sanitize-acled-weekly.mjs` 本地读取并输出 `config/world-order-acled-regional-weekly.json`，`scripts/world-order/fetch-acled.mjs` 只读本地 JSON。旧 ACLED API adapter 已删除；不得恢复 `ACLED_API_KEY` / `ACLED_EMAIL` / `api.acleddata.com` / 自动访问 acleddata.com 的路径。`xlsx` 仅允许由 sanitizer 按 ADR-0013 作为 devDependency 使用，不得被 runtime、check、workflow 或 frontend 导入。
-- M-63b / M-63c 仍为 future scope：不得在 M-63a 后续修补中顺手加入 monthly ingestion 或 ACLED reminder workflows；monthly 全球聚合和提醒 workflow 必须另开 reviewed PR。
+- M-63a/M-63b 后，ACLED 仅走 Open-license manual-xlsx workflow：operator 手动下载 aggregated xlsx，`scripts/world-order/sanitize-acled-weekly.mjs` 输出 `config/world-order-acled-regional-weekly.json`、`scripts/world-order/sanitize-acled-monthly.mjs` 输出 `config/world-order-acled-global-monthly.json`，`scripts/world-order/fetch-acled.mjs` 只读本地 JSON 并联合 weekly+monthly 输出 `ok` / `partial` / `manual_required` / `error`。旧 ACLED API adapter 已删除；不得恢复 `ACLED_API_KEY` / `ACLED_EMAIL` / `api.acleddata.com` / 自动访问 acleddata.com 的路径。`xlsx` 仅允许由 weekly/monthly sanitizer 按 ADR-0013 作为 devDependency 使用，不得被 runtime、check、workflow 或 frontend 导入。
+- M-63b 是 evidence-only ingestion：monthly metrics 通过 `fetch-acled.mjs` 进入 World Order overlay 的 evidence/summary 字段，不修改 `peaceDividendRetreat` 权重 (SIPRI 0.35 + GDELT 0.20 + ACLED 0.25 + module 0.20 保持)；任何 monthly→scoring weight 改动必须另开 M-63d source-review/backtest PR。
+- M-63c 仍为 future scope：不得在 M-63a/M-63b 后续修补中顺手加入 ACLED reminder workflows；提醒 workflow 必须另开 reviewed PR。
 - World Order 外部数据刷新应先手动观察，再考虑 scheduled workflow；不要把 `build:world-order` 加入 `check:all`，H-4 的 `review:world-order` 只是本地只读人工审阅 helper。
 - World Order 新外部源不得直接进入 scoring；必须先通过 diagnosis / source review，再另开版本接入。
 - ReliefWeb 或任何新外部源不得直接进入 scoring；必须先通过 diagnosis / review，再另开 integration version。

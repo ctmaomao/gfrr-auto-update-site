@@ -36,7 +36,7 @@
 - External AI production panel 是只读辅助层；manual / provider artifacts 不等于 scoring、Daily、frontend 或 production write readiness。
 - Market Pricing Temperature 已进入 M-27 以后前端展示阶段，后续边界以对应 M-series docs 为准。
 - Frontend asset cache version 当前为 `28.0M-66V`；修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时必须同步 bump。
-- `npm run check:all` 当前由 `package.json` 定义，包含 68 个串联检查项。
+- `npm run check:all` 当前由 `package.json` 定义，包含 69 个串联检查项。
 - Market Pricing first real record write / weekly merge scaffold 在任何写入前运行 8 sanity checks；细节以 `docs/OPERATIONS.md` 和 `docs/SYSTEM_UPGRADE_PLAN.md` 为准。
 
 最近维护节奏：

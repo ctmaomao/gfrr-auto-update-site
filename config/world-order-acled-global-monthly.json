@@ -1,0 +1,219 @@
+{
+  "version": "1.0.0",
+  "source": "acled-aggregated-manual-normalized-monthly",
+  "sourceName": "ACLED Global Monthly Aggregated Data",
+  "preparedAt": "2026-05-20T04:45:47.119Z",
+  "preparedBy": "manual",
+  "asOfDate": "2026-05-08",
+  "latestFullYear": 2025,
+  "filesIngested": [
+    {
+      "slug": "demonstration_events_by_country-year",
+      "metric": "demonstrations",
+      "granularity": "country-year",
+      "filename": "number_of_demonstration_events_by_country-year_as-of-08May2026.xlsx",
+      "asOfDate": "2026-05-08",
+      "yearRange": [
+        1997,
+        2026
+      ],
+      "rowCount": 2915
+    },
+    {
+      "slug": "events_targeting_civilians_by_country-year",
+      "metric": "civilianTargeting",
+      "granularity": "country-year",
+      "filename": "number_of_events_targeting_civilians_by_country-year_as-of-08May2026.xlsx",
+      "asOfDate": "2026-05-08",
+      "yearRange": [
+        1997,
+        2026
+      ],
+      "rowCount": 2707
+    },
+    {
+      "slug": "political_violence_events_by_country-month-year",
+      "metric": "politicalViolenceMonthly",
+      "granularity": "country-month-year",
+      "filename": "number_of_political_violence_events_by_country-month-year_as-of-08May2026.xlsx",
+      "asOfDate": "2026-05-08",
+      "yearRange": [
+        1997,
+        2026
+      ],
+      "rowCount": 28934
+    },
+    {
+      "slug": "political_violence_events_by_country-year",
+      "metric": "politicalViolence",
+      "granularity": "country-year",
+      "filename": "number_of_political_violence_events_by_country-year_as-of-08May2026.xlsx",
+      "asOfDate": "2026-05-08",
+      "yearRange": [
+        1997,
+        2026
+      ],
+      "rowCount": 2747
+    },
+    {
+      "slug": "reported_civilian_fatalities_by_country-year",
+      "metric": "civilianFatalities",
+      "granularity": "country-year",
+      "filename": "number_of_reported_civilian_fatalities_by_country-year_as-of-08May2026.xlsx",
+      "asOfDate": "2026-05-08",
+      "yearRange": [
+        1997,
+        2026
+      ],
+      "rowCount": 2707
+    },
+    {
+      "slug": "reported_fatalities_by_country-year",
+      "metric": "fatalities",
+      "granularity": "country-year",
+      "filename": "number_of_reported_fatalities_by_country-year_as-of-08May2026.xlsx",
+      "asOfDate": "2026-05-08",
+      "yearRange": [
+        1997,
+        2026
+      ],
+      "rowCount": 2978
+    }
+  ],
+  "global": {
+    "politicalViolenceEventsLatestFullYear": 208686,
+    "politicalViolenceEventsPrior3YearAverage": 174251.333333,
+    "politicalViolenceYoyDelta": 0.197615,
+    "demonstrationsLatestFullYear": 160877,
+    "civilianTargetingEventsLatestFullYear": 64758,
+    "civilianTargetingShareLatestFullYear": 0.310313,
+    "fatalitiesLatestFullYear": 243556,
+    "civilianFatalitiesLatestFullYear": 73591,
+    "civilianFatalitiesShareLatestFullYear": 0.302152
+  },
+  "monthlyTrend": {
+    "latest12mWindow": [
+      "2025-06",
+      "2026-05"
+    ],
+    "prior12mWindow": [
+      "2024-06",
+      "2025-05"
+    ],
+    "latest12mEvents": 203393,
+    "prior12mEvents": 213231,
+    "latest12mVsPrior12mDelta": -0.046138
+  },
+  "topEscalatingCountries": [
+    {
+      "country": "Serbia",
+      "latestFullYearEvents": 125,
+      "prior3YearAverageEvents": 15.666667,
+      "yoyDelta": 6.978723
+    },
+    {
+      "country": "Tanzania",
+      "latestFullYearEvents": 190,
+      "prior3YearAverageEvents": 62.333333,
+      "yoyDelta": 2.048128
+    },
+    {
+      "country": "Russia",
+      "latestFullYearEvents": 16736,
+      "prior3YearAverageEvents": 5540.666667,
+      "yoyDelta": 2.020575
+    },
+    {
+      "country": "Iran",
+      "latestFullYearEvents": 619,
+      "prior3YearAverageEvents": 222,
+      "yoyDelta": 1.788288
+    },
+    {
+      "country": "Libya",
+      "latestFullYearEvents": 356,
+      "prior3YearAverageEvents": 141.333333,
+      "yoyDelta": 1.518868
+    },
+    {
+      "country": "Thailand",
+      "latestFullYearEvents": 290,
+      "prior3YearAverageEvents": 120,
+      "yoyDelta": 1.416667
+    },
+    {
+      "country": "Central African Republic",
+      "latestFullYearEvents": 668,
+      "prior3YearAverageEvents": 329.333333,
+      "yoyDelta": 1.02834
+    },
+    {
+      "country": "Indonesia",
+      "latestFullYearEvents": 629,
+      "prior3YearAverageEvents": 350.666667,
+      "yoyDelta": 0.793726
+    },
+    {
+      "country": "Pakistan",
+      "latestFullYearEvents": 3659,
+      "prior3YearAverageEvents": 2069.333333,
+      "yoyDelta": 0.768202
+    },
+    {
+      "country": "Ghana",
+      "latestFullYearEvents": 412,
+      "prior3YearAverageEvents": 252,
+      "yoyDelta": 0.634921
+    }
+  ],
+  "topFatalitiesCountries": [
+    {
+      "country": "Ukraine",
+      "fatalities": 78385
+    },
+    {
+      "country": "Sudan",
+      "fatalities": 20396
+    },
+    {
+      "country": "Palestine",
+      "fatalities": 16886
+    },
+    {
+      "country": "Myanmar",
+      "fatalities": 15700
+    },
+    {
+      "country": "Nigeria",
+      "fatalities": 12900
+    },
+    {
+      "country": "Somalia",
+      "fatalities": 9806
+    },
+    {
+      "country": "Mexico",
+      "fatalities": 8086
+    },
+    {
+      "country": "Brazil",
+      "fatalities": 7963
+    },
+    {
+      "country": "Syria",
+      "fatalities": 7952
+    },
+    {
+      "country": "Democratic Republic of Congo",
+      "fatalities": 7194
+    }
+  ],
+  "quality": {
+    "isRealData": true,
+    "sourceUrl": "https://acleddata.com/conflict-data/download-data-files",
+    "licenseLevel": "open",
+    "attribution": "ACLED (Armed Conflict Location & Event Data) — https://acleddata.com",
+    "methodologyNoteZh": "ACLED 全球年度/月度聚合由 operator 手动下载，本脚本只读取本地 xlsx。指标基于最近完整年份与 prior 3 年均值，配合 country-month-year 文件做 last-12m vs prior-12m 趋势，用于观察慢变量的年度结构性变化，与 weekly 高频信号互补。",
+    "confidence": 0.85
+  }
+}

@@ -159,12 +159,12 @@
 | **数据获取方式** | 手动下载 xlsx;**不得**由代码、workflow、script、crawler 或 scraper 自动访问 `acleddata.com` |
 | **EULA §3.3** | "Scraping and crawling the Site is prohibited." |
 | **Refresh 频率** | Weekly regional files:每周 Monday/Tuesday;Monthly global files:每月约 8 日 |
-| **状态** | M-63a 起为 `manual_required` / `ok` 双状态:无本地 weekly JSON 或 `quality.isRealData !== true` 时 `manual_required`;operator 手动下载 6 个 weekly regional xlsx 并运行 sanitizer 后为 `ok` |
+| **状态** | M-63a/M-63b 起为 `manual_required` / `partial` / `ok` 三态:weekly+monthly 均无或 `isRealData !== true` 时 `manual_required`;仅其中一种到位时 `partial`;两种 sanitized JSON 都 `isRealData=true` 时 `ok` |
 | **失败 fallback** | `manual_required` / `error` / legacy `not_configured` 只影响 World Order overlay 可用性提示,不得阻断 `check:all`,不得进入 main scoring / decision / execution / position |
 | **影响 scoring?** | **overlay only** — M-63a 起只允许进入 World Order `peaceDividendRetreat` 维度;不得影响主决策模型 |
 | **fetcher** | `scripts/world-order/fetch-acled.mjs` (M-63a local JSON importer;不访问网络、不读取 credentials、不导入 `xlsx`) |
 | **weekly sanitizer** | `scripts/world-order/sanitize-acled-weekly.mjs` (M-63a 已落地;唯一允许导入 `xlsx` 的 ACLED 路径) |
-| **monthly sanitizer** | `scripts/world-order/sanitize-acled-monthly.mjs` (planned M-63b) |
+| **monthly sanitizer** | `scripts/world-order/sanitize-acled-monthly.mjs` (M-63b 已落地;唯一允许导入 `xlsx` 的 ACLED monthly 路径) |
 | **提醒机制** | `.github/workflows/acled-{weekly,monthly}-refresh-reminder.yml` (planned M-63c) |
 | **derived JSON** | `config/world-order-acled-regional-weekly.json` (M-63a) + `config/world-order-acled-global-monthly.json` (M-63b) |
 | **raw xlsx storage** | `manual-artifacts/world-order/acled-input/{weekly,monthly}/` (gitignored) |
@@ -190,9 +190,9 @@
 
 | Status | 含义 |
 |---|---|
-| `ok` | M-63a:weekly regional data ingested from real manual xlsx (`quality.isRealData=true`). After M-63b, this may require both weekly and monthly tracks |
-| `partial` | Reserved for M-63b when only weekly or only monthly data is available |
-| `manual_required` | No usable weekly data ingested,or local JSON is not marked real;operator needs to download xlsx manually and run `npm run acled:sanitize:weekly` |
+| `ok` | M-63b 起要求 weekly + monthly 两份 sanitized JSON 都为真实数据 (`quality.isRealData=true`) |
+| `partial` | M-63b 起:仅 weekly 或仅 monthly 真实数据可用 (另一边 missing / `isRealData=false` / parse error) |
+| `manual_required` | weekly 与 monthly 都不可用;operator 需手动下载 xlsx 后运行 `npm run acled:sanitize:weekly` 与 `npm run acled:sanitize:monthly` |
 | `error` | JSON parse failure or schema validation failure |
 | `not_configured` | Pre-M-63a baseline state retained only for compatibility with already-committed historical JSON |
 
