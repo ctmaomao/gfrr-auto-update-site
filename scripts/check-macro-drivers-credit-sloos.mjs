@@ -83,7 +83,7 @@ const requiredRenderMarkers = [
   '季度调查',
   '信用环境',
   '跨市场融资压力等待接入。',
-  '私募信贷、CRE、CDX 与更细信用指标等待接入。'
+  '私募信贷、CDX 与更细信用指标等待接入。'
 ];
 for (const marker of requiredRenderMarkers) {
   if (!renderMacroText.includes(marker)) {

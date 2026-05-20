@@ -73,7 +73,7 @@ const requiredRenderMarkers = [
   '金融状况指数 (NFCI)',
   '偏紧',
   '偏松',
-  '私募信贷、CRE、CDX 与更细信用指标等待接入。'
+  '私募信贷、CDX 与更细信用指标等待接入。'
 ];
 for (const marker of requiredRenderMarkers) {
   if (!renderMacroText.includes(marker)) {

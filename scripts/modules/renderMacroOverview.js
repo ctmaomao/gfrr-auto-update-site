@@ -998,7 +998,7 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
           ? null
           : `金融状况指数 (NFCI) ${credit.nfci >= 0 ? '+' : ''}${formatNumber(credit.nfci, 2)}（${credit.nfci > 0 ? '偏紧' : credit.nfci < 0 ? '偏松' : '中性'}，周度更新）`,
       ].filter(Boolean),
-      missingEvidence: ['私募信贷、CRE、CDX 与更细信用指标等待接入。'],
+      missingEvidence: ['私募信贷、CDX 与更细信用指标等待接入。'],
       counterEvidence: creditCalm ? ['信用和波动率尚未显示系统性扩散。'] : [],
       explanation: creditCalm
         ? '信用和波动率尚未显示系统性扩散，金融脆弱性维持观察。'
