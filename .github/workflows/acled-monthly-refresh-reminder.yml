@@ -1,0 +1,103 @@
+name: ACLED Monthly Refresh Reminder
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  schedule:
+    # 9th of each month at 00:00 UTC. ACLED publishes monthly global aggregated
+    # files around the 8th; firing on the 9th catches the latest as-of batch.
+    - cron: '0 0 9 * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  open-reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open ACLED monthly refresh reminder issue
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const now = new Date();
+            const monthIso = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+            const title = `M-63c ACLED monthly global xlsx refresh due (${monthIso})`;
+            const body = [
+              `ACLED monthly global aggregate files must be downloaded manually by the operator. ACLED EULA Section 3.3 prohibits automated scraping/crawling; this reminder does not download files or contact acleddata.com.`,
+              ``,
+              `## Download`,
+              ``,
+              `- Download URL: https://acleddata.com/conflict-data/download-data-files`,
+              `- Target directory: \`manual-artifacts/world-order/acled-input/monthly/\` (gitignored)`,
+              ``,
+              `## Required monthly files`,
+              ``,
+              `- \`number_of_demonstration_events_by_country-year_as-of-<DD><Mmm><YYYY>.xlsx\``,
+              `- \`number_of_events_targeting_civilians_by_country-year_as-of-<DD><Mmm><YYYY>.xlsx\``,
+              `- \`number_of_political_violence_events_by_country-month-year_as-of-<DD><Mmm><YYYY>.xlsx\``,
+              `- \`number_of_political_violence_events_by_country-year_as-of-<DD><Mmm><YYYY>.xlsx\``,
+              `- \`number_of_reported_civilian_fatalities_by_country-year_as-of-<DD><Mmm><YYYY>.xlsx\``,
+              `- \`number_of_reported_fatalities_by_country-year_as-of-<DD><Mmm><YYYY>.xlsx\``,
+              ``,
+              `All 6 files must share the same \`as-of-<DD><Mmm><YYYY>\` date stamp. The sanitizer fails if any expected file is missing.`,
+              ``,
+              `## Commands`,
+              ``,
+              `\`\`\`powershell`,
+              `npm run acled:sanitize:monthly`,
+              `npm run check:world-order-acled-monthly`,
+              `npm run check:all`,
+              `\`\`\``,
+              ``,
+              `Expected final validation: \`npm run check:all\` PASS 69 items.`,
+              ``,
+              `## Commit pattern`,
+              ``,
+              `\`\`\`text`,
+              `data: refresh ACLED monthly global aggregate`,
+              `\`\`\``,
+              ``,
+              `Commit only \`config/world-order-acled-global-monthly.json\`; raw xlsx files must remain untracked under \`manual-artifacts/\`.`,
+              ``,
+              `## Runbook`,
+              ``,
+              `Follow [\`docs/M-63_ACLED_INTEGRATION.md\` Section 9B](../blob/main/docs/M-63_ACLED_INTEGRATION.md).`,
+              ``,
+              `## Freshness threshold`,
+              ``,
+              `- <=35 days: fresh`,
+              `- <=60 days: aging`,
+              `- <=120 days: stale`,
+              `- <=180 days: approaching fail`,
+              `- >180 days: fail`,
+              ``,
+              `## Idempotency`,
+              ``,
+              `This workflow skips only if an open issue already exists with this exact monthly title and the \`acled-monthly-refresh\` label. Different months open new reminders, so an old open issue will not silence this month's reminder.`,
+              ``,
+              `_Auto-opened by \`.github/workflows/acled-monthly-refresh-reminder.yml\`. Closing without action will silently age the ACLED monthly data — re-open or recreate manually if needed._`,
+            ].join('\n');
+
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'acled-monthly-refresh',
+            });
+            const duplicate = existing.find((issue) => issue.title === title);
+            if (duplicate) {
+              console.log(`Issue already open: ${duplicate.html_url}`);
+              return;
+            }
+
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['acled-monthly-refresh', 'manual-data-refresh'],
+            });
+            console.log(`Opened issue: ${issue.html_url}`);

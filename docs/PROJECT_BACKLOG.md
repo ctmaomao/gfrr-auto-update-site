@@ -9,16 +9,16 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-67 (+ ISM PMI source repair) |
+| 当前生产状态 | v28.0M-67 (+ ISM PMI source repair) + M-63c ACLED reminder workflows |
 | Cache version | `28.0M-66V` (M-67 不改前端,无 bump) |
 | check:all 项数 | 69 |
-| 最后审计日期 | **2026-05-20** (M-67 ISM PMI source repair; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
-| 最后 daily refresh | 2026-05-17 (Build #74, commit `e366b60`) |
+| 最后审计日期 | **2026-05-20** (M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
+| 最后 daily refresh | 2026-05-20 (Build Daily Radar Data run `26145627306`, commit `5de8d4d`) |
 | GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
 | SIPRI 状态 | M-61 起 `config/world-order-sipri-normalized.json` 使用 SIPRI 2024 真实数据，world-order build 后为 `ok` |
 | QQQ weekly refresh | M-62 起 M-24 history writer 由 integral replace 改为 `isoWeek` keyed merge；weekly sanitized batches 可增量延长历史 |
-| ACLED 状态 | M-63a (weekly) + M-63b (monthly) 双 sanitizer + 联合 importer 落地；weekly/monthly 都 `isRealData=true` → `ok`；一边到位 → `partial`；两边都缺 → `manual_required`；evidence-only 进入 `peaceDividendRetreat`,不动权重 |
+| ACLED 状态 | M-63a (weekly) + M-63b (monthly) 双 sanitizer + 联合 importer 落地；weekly/monthly 都 `isRealData=true` → `ok`；一边到位 → `partial`；两边都缺 → `manual_required`；evidence-only 进入 `peaceDividendRetreat`,不动权重；M-63c 起 weekly Tuesday / monthly 9th cron reminder workflows active |
 | ISM PMI 状态 | M-67 起由 `scripts/run-daily-pipeline.mjs::fetchIsmManufacturingPmiReport` 低频解析 ismworld.org 公开报告页；audit-only/display-only；失败降级为 `fallback` / `source_unavailable` / `parse_error` |
 | ADR-0013 | 2026-05-19 落地 (PR #231)；ADR-0001 zero-deps 精化为 runtime zero-dep,本地开发工具可在 ADR-0013 约束下使用 devDependencies |
 | First devDependency | M-63a 起 `xlsx@0.18.5` (SheetJS) 仅由 `scripts/world-order/sanitize-acled-weekly.mjs` 导入,runtime/check/workflow/frontend 不得引用 |
@@ -34,14 +34,14 @@
 
 ### P1 Items (Recommended)
 
-#### P1-4: ACLED 数据源配置 (in progress — M-63 series)
-- **描述**: `sources.acled.status` 已从 `not_configured` 升级为 `manual_required` / `ok` 双状态 (取决于是否有 weekly xlsx 导入)
+#### P1-4: ACLED 数据源配置 (closed — M-63 series)
+- **描述**: `sources.acled.status` 已从 `not_configured` 升级为 `manual_required` / `partial` / `ok` 三态 (取决于 weekly/monthly sanitized JSON 是否可用)
 - **数据源**: ACLED Open-license aggregated xlsx downloads (manual download;no scraping/crawling per EULA §3.3)
 - **类型**: 类型 2
 - **估计 PR**: M-63 分 3 个小 PR 推进
 - **M-63a — ACLED weekly regional sanitizer + importer**: ✅ `done` (PR #232, merged 2026-05-19);weekly 6 regional files → `config/world-order-acled-regional-weekly.json`;API path removed;`xlsx@0.18.5` 进入 devDependencies
 - **M-63b — ACLED monthly global aggregation**: ✅ `done` (this PR);monthly 6 global files → `config/world-order-acled-global-monthly.json`;`fetch-acled.mjs` 联合 weekly+monthly,引入 `partial` status;evidence-only,无 scoring 权重改动;`check:all` 68 → 69
-- **M-63c — ACLED weekly + monthly reminder workflows**: status `planned`;PR γ/3 of M-63 series;GitHub reminder workflows only,after manual-ingestion contracts are reviewed
+- **M-63c — ACLED weekly + monthly reminder workflows**: ✅ `done` (this PR);PR γ/3 of M-63 series;GitHub reminder workflows only;date-stamped issue idempotency;no checkout/install/sanitize/network to acleddata.com
 
 ### P2 Items (Optional)
 
@@ -102,6 +102,7 @@
 | ADR-0013 prep-2 | ADR-0013 Allow devDependencies for local development tools | #231 | 2026-05-19 | ✅ M-63a prep blocker B — refines ADR-0001 zero-deps scope; runtime 保持 zero-dep,local dev tools 可在 ADR-0013 约束下用 devDeps |
 | M-63a | ACLED weekly regional sanitizer + importer (API path removed) | #232 | 2026-05-19 | ✅ First consumer of ADR-0013 (`xlsx@0.18.5`); weekly 6 regional xlsx → normalized JSON; ACLED 进入 `peaceDividendRetreat` (SIPRI 0.35 + GDELT 0.20 + ACLED 0.25 + module 0.20); `check:all` 67 → 68; old API adapter (`ACLED_API_KEY`/`ACLED_EMAIL`/`api.acleddata.com`) wholesale-removed |
 | M-63b | ACLED monthly global sanitizer + 联合 importer (evidence-only) | (this PR) | 2026-05-20 | ✅ Monthly 6 global xlsx → `config/world-order-acled-global-monthly.json`; `fetch-acled.mjs` 联合 weekly+monthly,引入 `partial` 状态;global YoY (vs prior-3y avg) + last-12m vs prior-12m trend + top10 escalating/fatalities countries;`peaceDividendRetreat` 权重未改动 (方案 A);`check:all` 68 → 69 |
+| M-63c | ACLED weekly + monthly reminder workflows (B+ date-stamped idempotency) | (this PR) | 2026-05-20 | ✅ Two cron workflows (Tuesday 00:00 UTC weekly / 9th 00:00 UTC monthly); date-stamped titles allow new issues per week/month; reminder-only, no checkout/install/sanitize/network to acleddata.com; check:all stays 69 |
 | M-64 | IA contract reconciliation + top-level section restructure | (this PR) | 2026-05-20 | ✅ DESIGN.md §4.1 / index.html / IA check scripts aligned; World Order Stress promoted to top-level regime overlay; External AI moved after method evidence; cache bumped to 28.0M-64V |
 | M-65 | method-evidence content cleanup | (this PR) | 2026-05-20 | ✅ "站内总览与核心风险明细" migrated to `#detail-data` SYSTEM OVERVIEW; "恢复状态与系统说明" merged into DATA HEALTH; all runtime DOM ids preserved; cache bumped to 28.0M-65V |
 | M-66 | legacy anchor + subsection kicker consistency polish | (this PR) | 2026-05-20 | ✅ Detail Data header anchor renamed to `detail-data-header`; top-level method/execution subsections now carry subsection-meta kickers; `check:editorial-redesign-contract` enforces kicker consistency; cache bumped to 28.0M-66V |
@@ -134,6 +135,7 @@
 | 2026-05-18 | M-61 SIPRI manual-normalized integration | Codex | P1-3 resolved | SIPRI 2024 normalized data + 3 world-order narrative supporting branches |
 | 2026-05-18 | M-62 QQQ weekly history merge | Codex | M-24 weekly refresh unblocked | Replaces integral history overwrite with isoWeek-keyed merge + cross-seam guard |
 | 2026-05-19 | M-63a ACLED weekly regional sanitizer + importer | Claude Code (review) + Codex (impl) | P1-4 partially resolved (weekly track done; monthly = M-63b) | First ADR-0013 consumer (`xlsx@0.18.5` devDep); API adapter wholesale-removed; `peaceDividendRetreat` reweighted; `check:all` 67 → 68 |
+| 2026-05-20 | M-63c ACLED weekly + monthly reminder workflows | Claude Code (audit) + Codex (impl) | P1-4 closed | Reminder-only GitHub issue workflows added; B+ date-stamped idempotency; no checkout/install/sanitize/network to acleddata.com; `check:all` stays 69 |
 
 ---
 
@@ -186,9 +188,9 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-### Session Handoff (2026-05-20 — M-67 CI observation closed)
+### Session Handoff (2026-05-20 — M-63c ACLED reminders landed)
 
-- **上次会话结束于**: M-67 CI 观察窗口已关闭。手动触发 `Build Daily Radar Data` workflow run `26145627306`（基于 `69f9b45`）success；CI 自动 commit `5de8d4d chore: refresh radar data` 已推到 main，本地 `git pull --ff-only` 已同步,working tree clean。HEAD = `5de8d4d`,本地 ↔ origin `0 / 0`。CI 产物确认 `macroDrivers.consumer.sourceStatus.pmi = live`，`diagnostics.pmi.httpStatus=200 / landingHttpStatus=200 / latencyMs=545`，`reportUrl=https://www.ismworld.org/.../pmi/april/`，`reportMonthLabel=April`，`ismManufacturingPmi=52.7`，`ismManufacturingPmi3mChange=0.1`，`ismPmiRegime=中性偏扩张`，`source=FRED:UMCSENT; ISM:ManufacturingPMI`。`npm run check:consumer-pmi` + `npm run check:all` 69 项全绿。结论：GitHub-hosted runner（datacenter IP + UA `GFRRBot/1.0`）不触发 ismworld.org 反爬，M-67 fetcher 在 CI 环境同样可用，无需 source-review PR / 替代源 / parser 改动。唯一 workflow warning 是 Daily Realtime Audit 的 realtime freshness（与 PMI 无关）。
+- **上次会话结束于**: M-63c ACLED weekly + monthly reminder workflows 已落地并推送。HEAD = 本次 M-63c commit (见 `git log -1 --oneline`)；P1-4 ACLED 接入主线已完整闭合：M-63a weekly sanitizer/importer、M-63b monthly evidence-only importer、M-63c reminder-only workflows。M-63c 新增 `.github/workflows/acled-weekly-refresh-reminder.yml` (Tuesday 00:00 UTC) 与 `.github/workflows/acled-monthly-refresh-reminder.yml` (9th 00:00 UTC each month)，均为 `actions/github-script@v8` 单步 issue opener；date-stamped title 做 B+ 幂等；无 `actions/checkout`、无 `npm install`、无 sanitizer、无对 `acleddata.com` 的网络请求。
 - **当前进行中**: 无 active 任务。
-- **下一步建议**: (a) 观察 `Refresh World Order Stress` 用 M-63b 联合 `fetch-acled.mjs` 重建 `data/world-order-stress.json`，看 `acledStatus` 是否仍 `ok` 且 evidence 中出现新 monthly 字段（global YoY / last-12m vs prior-12m / top10 escalating / fatalities）；(b) 推进 M-63c（ACLED weekly + monthly reminder workflows，P1-4 收尾）；(c) 推进 P2-7 就业广度接入（ICSA / CCSA / JTSJOL，~100 行）。
-- **阻塞或等待**: 无技术阻塞。M-67 不再需要后续 CI 观察。下次 PMI 异常按 `docs/M-67_ISM_PMI_SOURCE_REPAIR.md` runbook 5 步处理即可（查 `sourceStatus.pmi` → `diagnostics.pmi.{httpStatus, parseStep, snippetSample}` → URL 复测 → 对比 ISM 页面结构 → 必要时开 source-review PR）。
+- **下一步建议**: (a) 等 weekly cron 首次 fire，验证 issue title / labels / idempotency 行为；(b) 推进 P2-7 employment breadth (ICSA / CCSA / JTSJOL)；(c) 观察 `Refresh World Order Stress` 用 M-63b 联合 `fetch-acled.mjs` 重建 `data/world-order-stress.json`，看 `acledStatus` 是否仍 `ok` 且 evidence 中出现新 monthly 字段。
+- **阻塞或等待**: 无技术阻塞。

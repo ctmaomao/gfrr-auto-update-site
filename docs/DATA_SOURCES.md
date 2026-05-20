@@ -180,7 +180,7 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 | **fetcher** | `scripts/world-order/fetch-acled.mjs` (M-63a local JSON importer;不访问网络、不读取 credentials、不导入 `xlsx`) |
 | **weekly sanitizer** | `scripts/world-order/sanitize-acled-weekly.mjs` (M-63a 已落地;唯一允许导入 `xlsx` 的 ACLED 路径) |
 | **monthly sanitizer** | `scripts/world-order/sanitize-acled-monthly.mjs` (M-63b 已落地;唯一允许导入 `xlsx` 的 ACLED monthly 路径) |
-| **提醒机制** | `.github/workflows/acled-{weekly,monthly}-refresh-reminder.yml` (planned M-63c) |
+| **提醒机制** | `.github/workflows/acled-weekly-refresh-reminder.yml` (cron Tuesday 00:00 UTC) + `.github/workflows/acled-monthly-refresh-reminder.yml` (cron 9th 00:00 UTC each month);M-63c 起 active;reminder-only,不得升级为 auto-fetch |
 | **derived JSON** | `config/world-order-acled-regional-weekly.json` (M-63a) + `config/world-order-acled-global-monthly.json` (M-63b) |
 | **raw xlsx storage** | `manual-artifacts/world-order/acled-input/{weekly,monthly}/` (gitignored) |
 

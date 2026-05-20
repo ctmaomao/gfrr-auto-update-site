@@ -1,0 +1,108 @@
+name: ACLED Weekly Refresh Reminder
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  schedule:
+    # Tuesday 00:00 UTC. ACLED publishes regional weekly aggregated files
+    # on Monday/Tuesday; firing Tuesday 00:00 UTC catches the latest release
+    # while giving the operator the full Tuesday/Wednesday window.
+    - cron: '0 0 * * 2'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  open-reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open ACLED weekly refresh reminder issue
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const formatIsoDate = (date) => date.toISOString().slice(0, 10);
+            const today = new Date();
+            const utcDate = new Date(Date.UTC(
+              today.getUTCFullYear(),
+              today.getUTCMonth(),
+              today.getUTCDate()
+            ));
+            const isoDay = utcDate.getUTCDay() === 0 ? 7 : utcDate.getUTCDay();
+            const monday = new Date(utcDate);
+            monday.setUTCDate(utcDate.getUTCDate() - isoDay + 1);
+            const mondayIso = formatIsoDate(monday);
+            const title = `M-63c ACLED weekly regional xlsx refresh due (week of ${mondayIso})`;
+            const body = [
+              `ACLED weekly regional aggregate files must be downloaded manually by the operator. ACLED EULA Section 3.3 prohibits automated scraping/crawling; this reminder does not download files or contact acleddata.com.`,
+              ``,
+              `## Download`,
+              ``,
+              `- Download URL: https://acleddata.com/conflict-data/download-data-files`,
+              `- Target directory: \`manual-artifacts/world-order/acled-input/weekly/\` (gitignored)`,
+              ``,
+              `## Required regional files`,
+              ``,
+              `- Africa`,
+              `- Middle-East`,
+              `- Europe-and-Central-Asia`,
+              `- United-States-and-Canada`,
+              `- Latin-America-and-the-Caribbean`,
+              `- Asia-Pacific`,
+              ``,
+              `## Commands`,
+              ``,
+              `\`\`\`powershell`,
+              `npm run acled:sanitize:weekly`,
+              `npm run check:world-order-acled-weekly`,
+              `npm run check:all`,
+              `\`\`\``,
+              ``,
+              `Expected final validation: \`npm run check:all\` PASS 69 items.`,
+              ``,
+              `## Commit pattern`,
+              ``,
+              `\`\`\`text`,
+              `data: refresh ACLED weekly regional aggregate`,
+              `\`\`\``,
+              ``,
+              `Commit only \`config/world-order-acled-regional-weekly.json\`; raw xlsx files must remain untracked under \`manual-artifacts/\`.`,
+              ``,
+              `## Runbook`,
+              ``,
+              `Follow [\`docs/M-63_ACLED_INTEGRATION.md\` Section 3 + Section 9](../blob/main/docs/M-63_ACLED_INTEGRATION.md).`,
+              ``,
+              `## Freshness threshold`,
+              ``,
+              `- Latest week 30-90 days old: warn`,
+              `- Latest week >90 days old: fail`,
+              ``,
+              `## Idempotency`,
+              ``,
+              `This workflow skips only if an open issue already exists with this exact weekly title and the \`acled-weekly-refresh\` label. Different weeks open new reminders, so an old open issue will not silence this week's reminder.`,
+              ``,
+              `_Auto-opened by \`.github/workflows/acled-weekly-refresh-reminder.yml\`. Closing without action will silently age the ACLED weekly data — re-open or recreate manually if needed._`,
+            ].join('\n');
+
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'acled-weekly-refresh',
+            });
+            const duplicate = existing.find((issue) => issue.title === title);
+            if (duplicate) {
+              console.log(`Issue already open: ${duplicate.html_url}`);
+              return;
+            }
+
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['acled-weekly-refresh', 'manual-data-refresh'],
+            });
+            console.log(`Opened issue: ${issue.html_url}`);
