@@ -22,6 +22,7 @@
 | [ADR-0011](0011-paper-not-dashboard-design.md) | UI is editorial paper aesthetic, not SaaS dashboard | Accepted |
 | [ADR-0012](0012-check-all-composed-in-package-json.md) | `check:all` is composed in `package.json`, not separate config | Accepted |
 | [ADR-0013](0013-dev-dependencies-allowed-for-local-tools.md) | devDependencies allowed for local development tools | Accepted |
+| [ADR-0014](0014-design-md-is-ia-ground-truth.md) | DESIGN.md §4.1 is the IA ground truth; appendix sections have content boundaries | Accepted |
 
 ## Superseded
 
