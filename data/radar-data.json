@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-20T06:31:32.492Z",
+  "updatedAt": "2026-05-20T08:02:11.195Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "142e7b3bddc96ef150c86c698887e9c0d39fbed9",
-    "updatedAt": "2026-05-20T04:41:22.635Z",
+    "commitSha": "0b8deae3417ddd0c3547bcc6953a2543e6fb3bbe",
+    "updatedAt": "2026-05-20T08:01:29.405Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-20T06:31:32.492Z"
+    "capturedAt": "2026-05-20T08:02:11.195Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-20T06:31:32.492Z",
+    "generatedAt": "2026-05-20T08:02:11.195Z",
     "macroState": "滞胀冲击 / 通胀冲击",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
     "dominantRiskChain": {
@@ -129,7 +129,7 @@
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-20T06:31:32.492Z",
+    "generatedAt": "2026-05-20T08:02:11.195Z",
     "score": 49,
     "state": "watch",
     "stateZh": "背离观察",
@@ -434,13 +434,13 @@
   },
   "brentPricingLayer": {
     "contractVersion": "v28.0I-5A",
-    "generatedAt": "2026-05-20T06:31:32.492Z",
+    "generatedAt": "2026-05-20T08:02:11.195Z",
     "mode": "public_proxy_observation",
     "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
     "selectedBrent": {
       "value": 106.11,
       "source": "fred:DCOILBRENTEU",
-      "observedAt": "2026-05-20T04:41:22.635Z",
+      "observedAt": "2026-05-20T08:01:29.405Z",
       "status": "ok",
       "noteZh": "当前主 Brent 显示值来自现有 Daily / realtime 输入；该层只做公开代理审计，不改变 values.brent。"
     },
@@ -455,8 +455,8 @@
     "futuresProxy": {
       "labelZh": "Brent 期货代理",
       "source": "yahoo",
-      "value": 110.54,
-      "observedAt": "2026-05-20T04:30:54.000Z",
+      "value": 110.09,
+      "observedAt": "2026-05-20T07:51:04.000Z",
       "status": "ok",
       "limitationZh": "该字段为公开期货/市场报价代理，仅用于验证层观察。"
     },
@@ -474,8 +474,8 @@
       {
         "source": "barchart",
         "labelZh": "barchart",
-        "value": 110.51,
-        "observedAt": "2026-05-20T04:31:07.000Z",
+        "value": 110.08,
+        "observedAt": "2026-05-20T07:51:14.000Z",
         "status": "excluded",
         "role": "diagnostic",
         "participatesInPromotion": false,
@@ -484,7 +484,7 @@
       {
         "source": "stooq",
         "labelZh": "Stooq Brent diagnostic",
-        "value": 110.75,
+        "value": 109.98,
         "observedAt": "2026-05-20",
         "status": "excluded",
         "role": "diagnostic",
@@ -504,7 +504,7 @@
       {
         "source": "oilprice",
         "labelZh": "oilprice",
-        "value": 110.46,
+        "value": 110.03,
         "observedAt": null,
         "status": "excluded",
         "role": "diagnostic",
@@ -514,8 +514,8 @@
       {
         "source": "yahoo",
         "labelZh": "Yahoo BZ=F",
-        "value": 110.54,
-        "observedAt": "2026-05-20T04:30:54.000Z",
+        "value": 110.09,
+        "observedAt": "2026-05-20T07:51:04.000Z",
         "status": "ok",
         "role": "futures_proxy",
         "participatesInPromotion": true,
@@ -539,9 +539,9 @@
     "crackSpreadRegime": "供应紧张",
     "ulsdSourceStatus": "live",
     "proxySpread": {
-      "spotMinusFutures": -4.43,
-      "selectedMinusFutures": -4.43,
-      "maxProxyDivergencePct": 4.118,
+      "spotMinusFutures": -3.98,
+      "selectedMinusFutures": -3.98,
+      "maxProxyDivergencePct": 3.705,
       "status": "watch",
       "statusZh": "公开代理价差观察",
       "interpretationZh": "该价差只用于公开代理价格层审计，不改变 Brent 主值或 promotion。"
@@ -552,7 +552,7 @@
       "promotionReason": "barchart/yahoo 基本一致，推荐优先采用 barchart；FRED 仅作低频锚点参考。",
       "selectedSource": "fred:DCOILBRENTEU",
       "anchorSource": "fred-anchor",
-      "anchorAgeHours": 220.68972222222223
+      "anchorAgeHours": 224.025
     },
     "dataGaps": [
       "Platts Dated Brent / 正式 Dated Brent 未接入。",
@@ -598,7 +598,7 @@
     "us10y": 4.61,
     "real10y": 2.13,
     "breakeven10y": 2.49,
-    "gold": 4466.299805,
+    "gold": 4480.200195,
     "spx": 7353.61
   },
   "topRisks": [
@@ -712,8 +712,8 @@
         "pmi": {
           "httpStatus": 200,
           "landingHttpStatus": 200,
-          "latencyMs": 545,
-          "parsedAt": "2026-05-20T06:31:32.781Z",
+          "latencyMs": 551,
+          "parsedAt": "2026-05-20T08:02:11.555Z",
           "reportUrl": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/april/",
           "reportMonthLabel": "April"
         }
@@ -724,25 +724,6 @@
         "UMCSENT 为 FRED 月频；ISM Manufacturing PMI 直接解析 ismworld.org 公开报告页，audit-only。"
       ]
     },
-    "activeSignals": [
-      {
-        "key": "onRrpCritical",
-        "label": "逆回购准备金告急",
-        "detail": "ON RRP 129.11 亿美元",
-        "reliability": "live"
-      }
-    ],
-    "gatingEvaluation": {
-      "structuralRed": true,
-      "structuralYellow": true,
-      "redReasons": [
-        "逆回购准备金临界告急"
-      ],
-      "yellowReasons": [
-        "逆回购余额告急"
-      ]
-    },
-    "allSourcesMissing": false,
     "employment": {
       "initialClaims": 211000,
       "initialClaims4wAverage": 203750,
@@ -764,7 +745,26 @@
       "notes": [
         "ICSA/CCSA 为 FRED SA 周频；JOLTS 为月频，发布滞后约 6 周；audit-only / display-only。"
       ]
-    }
+    },
+    "activeSignals": [
+      {
+        "key": "onRrpCritical",
+        "label": "逆回购准备金告急",
+        "detail": "ON RRP 129.11 亿美元",
+        "reliability": "live"
+      }
+    ],
+    "gatingEvaluation": {
+      "structuralRed": true,
+      "structuralYellow": true,
+      "redReasons": [
+        "逆回购准备金临界告急"
+      ],
+      "yellowReasons": [
+        "逆回购余额告急"
+      ]
+    },
+    "allSourcesMissing": false
   },
   "liquidityIndex": {
     "score": 49,
@@ -1106,7 +1106,7 @@
       "asset": "黄金",
       "score": 85,
       "bias": "中性偏多",
-      "reason": "金价 4466.3，通胀对冲仍在，但真实利率继续约束。"
+      "reason": "金价 4480.2，通胀对冲仍在，但真实利率继续约束。"
     },
     {
       "asset": "原油",
@@ -1294,7 +1294,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-20T06:31:32.492Z",
+        "triggeredAgo": "2026-05-20T08:02:11.195Z",
         "condition": "结构性双压触发红灯（逆回购准备金临界告急）。系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -1302,7 +1302,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-20T06:31:32.492Z",
+        "triggeredAgo": "2026-05-20T08:02:11.195Z",
         "condition": "ON RRP 129.11 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -1310,7 +1310,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-20T06:31:32.492Z",
+        "triggeredAgo": "2026-05-20T08:02:11.195Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -1349,7 +1349,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-20T06:31:32.492Z",
+    "lastRun": "2026-05-20T08:02:11.195Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
@@ -1588,7 +1588,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-05-20T06:31:32.492Z",
+    "generatedAt": "2026-05-20T08:02:11.195Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [
