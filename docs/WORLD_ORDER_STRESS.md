@@ -33,11 +33,11 @@
 
 ### GDELT
 
-GDELT DOC 2.0 提供无需 API key 的新闻报道代理指标。H-1 查询战争、冲突、制裁、封锁、台湾、乌克兰、俄罗斯、伊朗、中东、红海、南海和朝鲜等主题，并输出压缩后的摘要。ACLED 未配置时，冲突事件层由 GDELT 代理估算。
+GDELT Cloud v2 提供新闻报道代理指标。H-1 查询战争、冲突、制裁、封锁、台湾、乌克兰、俄罗斯、伊朗、中东、红海、南海和朝鲜等主题，并输出压缩后的摘要。ACLED weekly xlsx 未手动导入时，冲突事件层由 GDELT 代理估算。
 
 ### GDELT 稳定性与缓存策略
 
-v28.0H-2C 加入 GDELT query throttle / partial success / stale cache fallback / 429 handling。GDELT 是 ACLED 未配置时的冲突事件代理数据源，因此构建脚本使用少量组合 query、串行请求和轻量 throttle，降低 GDELT 429 风险。
+v28.0H-2C 加入 GDELT query throttle / partial success / stale cache fallback / 429 handling。GDELT 是 ACLED 未导入时的冲突事件代理数据源，因此构建脚本使用少量组合 query、串行请求和轻量 throttle，降低 GDELT 429 风险。
 
 GDELT status 规则：
 
@@ -78,20 +78,13 @@ config/world-order-sipri-normalized.example.json
 
 ### ACLED
 
-ACLED adapter 已预留。需要配置：
+M-63a 后 ACLED 只走 Open-license manual-xlsx workflow。operator 手动下载 6 个 weekly regional aggregated xlsx 后,本地运行:
 
 ```bash
-ACLED_EMAIL=<email>
-ACLED_API_KEY=<key>
+npm run acled:sanitize:weekly
 ```
 
-也支持：
-
-```bash
-ACLED_ACCESS_KEY=<key>
-```
-
-未配置时输出 `enabled=false`、`status=not_configured`，并说明当前冲突事件层由 GDELT 代理估算。
+sanitizer 读取 `manual-artifacts/world-order/acled-input/weekly/` 下的本地 xlsx,输出 `config/world-order-acled-regional-weekly.json`;`scripts/world-order/fetch-acled.mjs` 只读取该派生 JSON。旧 ACLED API adapter 已删除,不得恢复 `ACLED_EMAIL` / `ACLED_API_KEY` / `ACLED_ACCESS_KEY` 或任何自动访问 `acleddata.com` 的路径。未导入可用 weekly JSON 时输出 `status=manual_required`,并说明当前冲突事件层由 GDELT 代理估算。
 
 ## 缓存与失败策略
 
@@ -103,7 +96,7 @@ ACLED_ACCESS_KEY=<key>
 
 ## 构建与检查
 
-`npm run build:world-order` 用于显式刷新 World Order Stress 数据。它会访问 GDELT / OFAC / SIPRI / ACLED adapter，并写入 `data/world-order-stress.json`。因此 build:world-order is manual / explicit because it fetches external data and writes data/world-order-stress.json。
+`npm run build:world-order` 用于显式刷新 World Order Stress 数据。它会访问 GDELT / OFAC,读取 SIPRI / ACLED 本地派生文件,并写入 `data/world-order-stress.json`。因此 build:world-order is manual / explicit because it fetches external data and writes data/world-order-stress.json。
 
 `npm run check:world-order` 只验证现有 `data/world-order-stress.json` 的结构、枚举、分数范围、证据字段和禁止文案，不抓取外部数据，不重写数据文件。
 
@@ -119,7 +112,7 @@ ACLED_ACCESS_KEY=<key>
 npm run build:world-order
 ```
 
-`build:world-order` 会访问 GDELT / OFAC / SIPRI / ACLED adapter，并写入 `data/world-order-stress.json`。构建完成后会输出 World Order Stress Build Summary，包含 score、state、confidence、freshness、GDELT / OFAC / SIPRI / ACLED 状态、marketConfirmation 输入源和 warnings。
+`build:world-order` 会访问 GDELT / OFAC,读取 SIPRI / ACLED 本地派生文件,并写入 `data/world-order-stress.json`。构建完成后会输出 World Order Stress Build Summary，包含 score、state、confidence、freshness、GDELT / OFAC / SIPRI / ACLED 状态、marketConfirmation 输入源和 warnings。
 
 本地检查：
 
@@ -136,14 +129,14 @@ npm run check:all
 npm run review:world-order
 ```
 
-`review:world-order` 是只读 helper，不替代 `check:world-order`。它输出 PASS / WARN / FAIL 和建议动作，用于人工判断是否需要再次手动刷新、提供 SIPRI normalized data 或配置 ACLED credentials。
+`review:world-order` 是只读 helper，不替代 `check:world-order`。它输出 PASS / WARN / FAIL 和建议动作，用于人工判断是否需要再次手动刷新、提供 SIPRI normalized data 或导入 ACLED weekly xlsx。
 
 GDELT stale / partial 可接受条件：
 
 - `partial`：至少一个 query 成功，status 明确，使用成功 query 生成当前摘要，confidence 降低。
 - `stale`：当前全部 query 失败，但 `usedCachedSummary=true`，使用旧 summary，记录 cache reason，confidence 降低。
 
-SIPRI `manual_required` 可接受：真实 normalized 数据未导入时，不伪造慢变量。ACLED `not_configured` 可接受：未提供 API credentials 时，GDELT 作为代理冲突事件层。
+SIPRI `manual_required` 可接受：真实 normalized 数据未导入时，不伪造慢变量。ACLED `manual_required` 可接受：weekly xlsx 尚未由 operator 手动下载并 sanitize 时，GDELT 作为代理冲突事件层。`not_configured` 仅保留为 pre-M-63a 历史 JSON 兼容状态。
 
 ## v28.0H-4A GDELT 诊断与替代源评审
 
@@ -169,13 +162,13 @@ H-4B 增加 ReliefWeb public fallback feasibility probe。它是只读诊断，�
 npm run diagnose:reliefweb
 ```
 
-当前正式 World Order 数据仍来自 GDELT / OFAC / SIPRI / ACLED adapter / marketConfirmation。ReliefWeb 只用于评估未来是否适合作为公开备用冲突 / 人道事件 proxy。
+当前正式 World Order 数据仍来自 GDELT / OFAC / SIPRI / ACLED local importer / marketConfirmation。ReliefWeb 只用于评估未来是否适合作为公开备用冲突 / 人道事件 proxy。
 
 ## v28.0H-5 UI 证据透明度与置信度解释
 
 H-5 只增强前端 UI 解释，不改变 scoring，不修改 `data/world-order-stress.json`，不接入 `decisionModel`。
 
-页面会显示数据质量、置信度解释和当前数据限制。数据质量与置信度解释由展示层根据 `externalSources`、`confidence` 与 `marketConfirmationInput` 派生：GDELT stale / partial、SIPRI manual_required、ACLED not_configured 会降低 confidence，并在页面中说明哪些信号来自缓存、代理或未配置数据源。
+页面会显示数据质量、置信度解释和当前数据限制。数据质量与置信度解释由展示层根据 `externalSources`、`confidence` 与 `marketConfirmationInput` 派生：GDELT stale / partial、SIPRI manual_required、ACLED manual_required / legacy not_configured 会降低 confidence，并在页面中说明哪些信号来自缓存、代理或未导入数据源。
 
 `marketConfirmationInput.source` 会用于说明市场确认来自 Worker 快变量、local realtime fallback 或 Daily baseline。使用 fallback / baseline 时，页面会提示可能滞后。
 
