@@ -44,8 +44,24 @@ A 看起来更"工程化",但会:
 ⚠️ **NEVER** 让 `check:all` 通过削弱单个 check 的失败条件来通过 (违反 AGENTS.md
 "不要为了让检查通过而削弱 validate-data.mjs" 等条款)。
 
+## Amendment — M-73 check suite consolidation (2026-05-21)
+
+`check:all` may include explicit `check:*suite` entries when they consolidate
+stable historical / regression checks without deleting the underlying atomic
+scripts.
+
+Constraints:
+
+- `package.json` remains the authority for the top-level `check:all` chain.
+- Every atomic check wrapped by a suite must remain declared as an npm
+  `check:*` script and must stay independently runnable.
+- Suite runners must read the command text from `package.json` instead of
+  copying check commands into a separate config file.
+- Suite consolidation must not weaken or remove the underlying checker logic.
+
 ## References
 
 - `package.json` `scripts.check:all`
+- `scripts/run-check-suite.mjs`
 - AGENTS.md "Documentation Authority Index"
 - `docs/PROJECT_BACKLOG.md` "Section 1 维护状态" 的 `check:all 项数`
