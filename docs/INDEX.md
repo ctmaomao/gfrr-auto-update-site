@@ -89,6 +89,7 @@
 ### Brent / energy public proxy source review scope
 
 - `docs/BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md` (M-71)
+- `docs/BRENT_PHYSICAL_PROOF_OF_SOURCE_DESIGN.md` (M-74)
 
 ### Frontend visual + IA restructure scope (M-54 → M-55b)
 

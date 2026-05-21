@@ -162,6 +162,24 @@ source review and implementation PR explicitly changes that.
 
 See [`BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md`](BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md).
 
+### Brent physical / term / freight proof-of-source design (M-74 design only)
+
+| Proof target | Source key | Proof role | Status |
+|---|---|---|---|
+| Formal Platts Dated Brent | `sp_global_platts_dated_brent` | future licensed formal Dated Brent path | `sourceApproved=false`;`liveFetchApproved=false`;`formalPlattsDatedBrentConnected=false`;licensed-only |
+| Brent futures term structure | `ice_brent_futures_curve` | ICE Brent futures curve shape proof | `sourceApproved=false`;`liveFetchApproved=false`;`brentTermStructureConnected=false`;futures curve only |
+| Baltic freight benchmarks | `baltic_exchange_freight_benchmarks` | licensed freight benchmark proof, tanker routes preferred for crude review | `sourceApproved=false`;`liveFetchApproved=false`;`shippingFreightConnected=false`;licensed freight only |
+| Freightos Baltic Index | `freightos_baltic_index` | container freight public-proxy proof | `sourceApproved=false`;`liveFetchApproved=false`;`shippingFreightConnected=false`;container proxy only |
+
+M-74 proof-of-source design starts the three Brent physical / term / freight
+follow-up tracks after M-71. It still does **not** approve live fetch, does not
+write production data, does not modify Worker runtime, does not modify frontend,
+does not change `values.brent`, and does not change Brent promotion. It defines
+the required fields, license checks, sanitizer expectations, and no-go wording
+for a future artifact-only manual capture scaffold.
+
+See [`BRENT_PHYSICAL_PROOF_OF_SOURCE_DESIGN.md`](BRENT_PHYSICAL_PROOF_OF_SOURCE_DESIGN.md).
+
 ---
 
 ### GDELT Cloud v2
@@ -310,6 +328,7 @@ documented attribution string and code is a contract violation.
 |---|---|
 | `values.brent` | FRED `DCOILBRENTEU` (anchor) + Yahoo `BZ=F` (fresh confirmation) + TE (freshness gate) + D-6 extreme-move guard |
 | `brent public proxy candidates` | M-71 source-review only: EIA Europe Brent Spot Price FOB / ICE Brent futures curve / Baltic Exchange freight benchmarks / Freightos Baltic Index / future licensed S&P-Platts Dated Brent |
+| `brent physical proof-of-source targets` | M-74 design only: `sp_global_platts_dated_brent`, `ice_brent_futures_curve`, `baltic_exchange_freight_benchmarks`, `freightos_baltic_index`; no live fetch / no production write |
 | `values.vix` / `values.gold` / `values.dxy` / `values.us10y` / `values.spx` | 来自 GitHub realtime-data 或 displayInputsBaseline;**secondary preview 仅诊断,不覆盖** |
 | `macroDrivers.fedLiquidity` | FRED: DFF, SOFR, WRESBAL, BGCR, TGCR (+ 派生 spreads) |
 | `macroDrivers.credit` | FRED: BAMLH0A0HYM2 (HY OAS), BAMLC0A0CM (IG OAS), DRTSCILM, DRTSCIS, NFCI |

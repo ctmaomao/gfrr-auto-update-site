@@ -9,10 +9,10 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-71 (Brent public proxy source review; no runtime/data/frontend change; M-70 CRE audit-only macro driver) |
-| Cache version | `28.0M-70V` |
-| check:all 项数 | 73 |
-| 最后审计日期 | **2026-05-21** (M-71 Brent public proxy source review; M-70 CRE FRED commercialRealEstate ingestion; M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
+| 当前生产状态 | v28.0M-74 (Brent physical / term / freight proof-of-source design; no live fetch/runtime/data/frontend change) |
+| Cache version | `28.0M-72V` |
+| check:all 项数 | 74 |
+| 最后审计日期 | **2026-05-21** (M-74 Brent physical proof-of-source design; M-72 macro-driver date display fix; M-71 Brent public proxy source review; M-70 CRE FRED commercialRealEstate ingestion; M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
 | 最后 daily refresh | 2026-05-20 (Build Daily Radar Data run `26145627306`, commit `5de8d4d`) |
 | GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
@@ -24,6 +24,7 @@
 | Consumer Retail 状态 | M-69 起 `macroDrivers.consumerRetail` 接入 FRED CARTS/CARTSR (Chicago Fed weekly retail nowcast)；audit-only/display-only；仅用于 Macro Drivers 前端卡片；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation；不接 CARTSP |
 | CRE 状态 | M-70 起 `macroDrivers.commercialRealEstate` 接入 FRED DRCRELEXFACBS/CORCREXFACBS/SUBLPDRCSN/SUBLPDRCSC/SUBLPDRCSM 季频 CRE 信用压力 series；audit-only/display-only；独立于 `macroDrivers.credit`；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation |
 | Brent public proxy review | M-71 起完成 source-review only：EIA Europe Brent Spot Price FOB、ICE Brent futures curve、Baltic Exchange freight benchmarks、Freightos Baltic Index 与 future licensed S&P/Platts Dated Brent 已登记为候选；`sourceApproved=false` / `liveFetchApproved=false` / `productionDataWriteApproved=false`；Platts Dated Brent / 正式 Dated Brent 仍未接入 |
+| Brent physical proof-of-source | M-74 起完成 proof-of-source design only：`sp_global_platts_dated_brent` licensed-only、`ice_brent_futures_curve` term-structure proof、`baltic_exchange_freight_benchmarks` licensed freight proof、`freightos_baltic_index` container freight proxy proof；仍不 live fetch、不写 production data、不改 frontend/Worker/Brent promotion/scoring/decision |
 | ADR-0013 | 2026-05-19 落地 (PR #231)；ADR-0001 zero-deps 精化为 runtime zero-dep,本地开发工具可在 ADR-0013 约束下使用 devDependencies |
 | First devDependency | M-63a 起 `xlsx@0.18.5` (SheetJS) 仅由 `scripts/world-order/sanitize-acled-weekly.mjs` 导入,runtime/check/workflow/frontend 不得引用 |
 | 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
@@ -69,14 +70,14 @@
 - **CDX + 私募信贷**: 降级为 **P3-15** source-review candidates,不在 runtime 自动 fetch
 - **状态**: ✅ `done` (this PR);新增 `macroDrivers.commercialRealEstate` 子树、`driver-cre` 前端卡片、`check:macro-drivers-commercial-real-estate`
 
-#### P2-10: Macro driver 卡片日期渲染 bug (open — 2026-05-21 线上验证发现)
+#### P2-10: Macro driver 卡片日期渲染 bug (closed — M-72)
 - **描述**: M-68 / M-70 落地后线上验证发现两条 driver 卡片的日期字段渲染为 `undefined`/`NaN`:
   1. `driver-employment` 卡片证据行 `JOLTS:undefined NaN 6.87M` — 应为 `JOLTS 2026-03 6.87M`（或类似）;问题在 `joltsUpdatedAt` 的格式化路径 (`scripts/modules/renderMacroOverview.js` 第 600+ 行附近)
   2. `driver-cre` 卡片证据行 / footer 更新文案 `FRED 季频 Commercial Real Estate:QNaN NaN` — 应为 `FRED 季频 Commercial Real Estate: Q2 2026`（或类似）;问题在季频 asOfDate `2026-04-01` 格式化为 "QN YYYY" 的逻辑
 - **影响**: 仅显示层 (audit-only/display-only),不影响 scoring / decision / execution / position / cross-validation;数值本身正确(JOLTS 6.87M / CRE 季频值都对),只是时间戳/期数字段拼接错误
 - **数据源**: 不涉及外部数据,纯前端 format helper bug
 - **类型**: frontend display fix
-- **估计 PR**: 1 个小 PR (修 2 处 format helper + 1 个 frontend visual checker 补 regex 守护避免回归)
+- **状态**: ✅ `done` (M-72);修 2 处 format helper + 1 个 frontend visual checker regex 守护避免回归
 - **诊断日期**: 2026-05-21 (browse 线上 `https://ctmaomao.github.io/gfrr-auto-update-site/` 实测)
 
 ### P3 Items (Won't Fix — 设计 placeholder)
@@ -84,10 +85,12 @@
 #### P3-10: Fed dot plot / OIS forward rates / FOMC 文本分析
 - **不修原因**: 项目明确边界, 不接入官方预测路径
 
-#### P3-11: Brent 期限结构 / Platts Dated Brent / Shipping freight (partially reframed — M-71 source-review)
+#### P3-11: Brent 期限结构 / Platts Dated Brent / Shipping freight (source-review + proof-of-source design)
 - **正式源不修原因**: Platts Dated Brent / 正式 Dated Brent 与 Baltic / ICE / S&P commodity market data 仍需要商业订阅、授权与再展示条款评审；当前不能直接接入生产链路
 - **公开代理轨道**: ✅ M-71 source-review only 已完成，候选为 EIA Europe Brent Spot Price FOB、ICE Brent futures curve、Baltic Exchange freight benchmarks、Freightos Baltic Index，以及 future licensed S&P/Platts Dated Brent
+- **proof-of-source 轨道**: ✅ M-74 design only 已完成，锁定 Platts licensed-only、ICE Brent futures term-structure、Baltic licensed freight benchmark、Freightos FBX container freight proxy 的 artifact 字段、license 检查、sanitizer 失败条件与 no-go wording
 - **当前边界**: `sourceApproved=false` / `liveFetchApproved=false` / `productionDataWriteApproved=false`；不改 `values.brent`、Brent promotion、scoring、decision、execution、position、Worker、workflow、frontend 或 `data/radar-data.json`
+- **下一步**: artifact-only manual capture scaffold；no network by default；只写 ignored `manual-artifacts/brent-physical-proof-of-source/<timestamp>/`
 
 #### P3-12: signal-noise bucket 硬编码
 - **不修原因**: 设计为框架提醒
@@ -155,6 +158,8 @@
 | M-69 | macroDrivers.consumerRetail (Chicago Fed CARTS/CARTSR) audit-only ingestion (P2-8 Path ε) | (this PR) | 2026-05-20 | ✅ New consumerRetail subtree with per-series fallback status; FRED CARTS nominal + CARTSR real weekly retail nowcast; frontend `driver-consumer-retail` card; no scoring/decision/execution/position, worker/realtime, displayInputsBaseline/effectiveDisplayInputs, or cross-validation impact; Redbook/BoA downgraded to P3-14 source-review candidates; `check:all` 70 → 71; cache bumped to 28.0M-69V |
 | M-70 | macroDrivers.commercialRealEstate (FRED CRE 5 series) audit-only ingestion (P2-9 CRE-only) | (this PR) | 2026-05-20 | ✅ New commercialRealEstate subtree with per-series fallback status; FRED CRE delinquency + charge-off + three SLOOS CRE tightening series; frontend `driver-cre` card; no scoring/decision/execution/position, worker/realtime, displayInputsBaseline/effectiveDisplayInputs, macroDrivers.credit, or cross-validation impact; CDX/private credit downgraded to P3-15 source-review candidates; `check:all` 71 → 72; cache bumped to 28.0M-70V |
 | M-71 | Brent public proxy source review | (this PR) | 2026-05-21 | ✅ Review-only source intake for EIA Brent spot proxy, ICE Brent futures curve, Baltic Exchange freight benchmarks, Freightos Baltic Index, and future licensed S&P/Platts Dated Brent; no live fetch, no source approval, no production write, no frontend/workflow/runtime/data change; `check:all` 72 → 73 |
+| M-72 | Macro driver date display fix (P2-10) | `e9727dd` | 2026-05-21 | ✅ Fixes JOLTS month and CRE quarter rendering so ISO vintage strings no longer surface malformed period labels; cache bumped to 28.0M-72V |
+| M-74 | Brent physical proof-of-source design | (this PR) | 2026-05-21 | ✅ Defines proof contracts for licensed Platts Dated Brent, ICE Brent futures term structure, Baltic Exchange freight benchmarks, and Freightos FBX; adds `check:brent-physical-proof-of-source-design`; `check:all` 73 → 74; no live fetch/production write/frontend/workflow/Worker/Brent promotion/scoring/decision change |
 
 ---
 
@@ -187,6 +192,8 @@
 | 2026-05-20 | M-69 consumerRetail CARTS Path ε | Claude Code (source audit) + Codex (impl) | P2-8 closed; P3-14 added | FRED CARTS/CARTSR 接入 `macroDrivers.consumerRetail`; Redbook/BoA 降级为 source-review candidates; audit-only/display-only; frontend Macro Drivers 卡片; `check:all` 70 → 71 |
 | 2026-05-20 | M-70 commercialRealEstate CRE Path α | Claude Code (source audit) + Codex (impl) | P2-9 closed; P3-15 added | FRED DRCRELEXFACBS/CORCREXFACBS/SUBLPDRCSN/SUBLPDRCSC/SUBLPDRCSM 接入 `macroDrivers.commercialRealEstate`; CDX/私募信贷降级为 source-review candidates; audit-only/display-only; frontend Macro Drivers 卡片; `check:all` 71 → 72 |
 | 2026-05-21 | M-71 Brent public proxy source review | Codex | P3-11 reframed for public-proxy path | EIA / ICE / Baltic Exchange / Freightos / S&P-Platts source families reviewed as candidates only; Platts Dated Brent remains unconnected; no live fetch / production write / runtime / frontend / workflow change; `check:all` 72 → 73 |
+| 2026-05-21 | M-72 macro-driver date display fix | Codex | P2-10 closed | JOLTS / CRE vintage formatter no longer surfaces malformed period labels; cache 28.0M-72V |
+| 2026-05-21 | M-74 Brent physical proof-of-source design | Codex | P3-11 proof-of-source rung | Platts licensed-only, ICE term-structure, Baltic freight, and Freightos FBX proof contracts defined; no live fetch / production write / runtime / frontend / workflow change; `check:all` 73 → 74 |
 
 ---
 
@@ -239,9 +246,9 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-### Session Handoff (2026-05-21 — M-72 P2-10 fix landed + M-63c idempotency half-verified)
+### Session Handoff (2026-05-21 — M-74 Brent physical proof-of-source design ready)
 
-- **上次会话结束于**: HEAD = `e9727dd M-72: fix vintage formatter re-concat bug (P2-10)`，已 push 到 `origin/main`，本地 ↔ origin 0/0，working tree clean。`check:all` = **73 项** 全绿，frontend cache `28.0M-72V`。本 session (2026-05-21) 累积成果：(1) ADR-0009 Amendment / (2) PROJECT_BACKLOG ADR link 路径修 / (3) CI-side 10/10 live 验证 / (4) Pages 线上三卡 + engine-financial-fragility 验证 / (5) M-71 Brent public proxy source review (Codex push `8e9f472`) / (6) **M-72 P2-10 fix**：`formatMonthVintage` 和 `formatQuarterVintage` 不再对已含 `T00:00:00Z` 的 ISO 字符串再拼一次 T 后缀 (原 bug 导致 `Invalid Date` → `JOLTS:undefined NaN` 与 `FRED 季频 Commercial Real Estate:QNaN NaN`)；加 `check-macro-drivers-employment.mjs` regex 守护防回归；cache `28.0M-70V` → `28.0M-72V` (M-71 不动 frontend 故跳号)；/ (7) **M-63c idempotency 同周路径验证**：manual dispatch run `26219337740` log 输出 `Issue already open: .../issues/236`，issue 列表保持 1 个 `#236`，updatedAt 不变 → 同周 duplicate skip 工作正常；静态验证 monday 计算逻辑 (今日 2026-05-21 Thu → monday=2026-05-18 / 2026-05-26 Tue → monday=2026-05-25 / 2026-06-02 Tue → monday=2026-06-01) → 跨周会生成新 title。
-- **当前进行中**: 无 active 任务。
-- **下一步建议**: (a) **2026-05-26 00:00 UTC Tuesday 后做 M-63c 跨周 idempotency 验证 (剩余 50%)**：① 查 `acled-weekly-refresh-reminder.yml` 在 2026-05-26T00:00Z 附近有新 schedule-triggered run (非 workflow_dispatch)、② 新 issue title 为 `M-63c ACLED weekly regional xlsx refresh due (week of 2026-05-25)` 且带 `acled-weekly-refresh` + `manual-data-refresh` 双 label、③ 旧 `#236` 未被改动 (updatedAt 仍 2026-05-20T07:07:59Z)；(b) **2026-06-09 之前做 monthly cron 同步验证** (cron `0 0 9 * *`，每月 9 日 00:00 UTC，下次 2026-06-09)；(c) 等下次 daily/world-order workflow_run 触发的 Pages deploy 自愈，确认 M-72 cache + P2-10 fix 上线显示 `JOLTS: Mar 2026` / `FRED 季频 Commercial Real Estate: Q2 2026`；(d) 若推新 P2/P3 必先 source-availability smoke。
-- **阻塞或等待**: 无技术阻塞。M-63c 跨周 idempotency 待 2026-05-26 Tuesday cron 自然 fire 验证 (workflow 在 2026-05-20 才合入，2026-05-19 那个 Tuesday 还没 yml 文件)；monthly cron 待 2026-06-09 fire 验证；Pages deploy 链路本 session 已修 ADR link 但未真实重跑过，等下次 schedule 触发即自愈。M-71 source-review 与 M-72 frontend fix 两条独立轨道都已落地。
+- **上次会话结束于**: HEAD 待 PR。本 session (2026-05-21) 增量：(1) **M-74 Brent physical proof-of-source design**：新增 `docs/BRENT_PHYSICAL_PROOF_OF_SOURCE_DESIGN.md`、machine-readable fixture、`check:brent-physical-proof-of-source-design`；(2) 三条轨道均已开始但仍未生产接入：`sp_global_platts_dated_brent` = licensed-only formal Dated Brent proof path，`ice_brent_futures_curve` = Brent term-structure proof target，`baltic_exchange_freight_benchmarks` + `freightos_baltic_index` = shipping/freight proof targets；(3) `check:all` = **74 项**；(4) 本轮未改 frontend，所以 cache 仍为 `28.0M-72V`。未改 data/realtime/workflow/Worker/frontend/Brent promotion/scoring/decision/execution/position。
+- **当前进行中**: M-74 proof-of-source design PR 待 review / merge。
+- **下一步建议**: (a) 若要继续推进三项，下一 rung 做 `brent physical proof-of-source artifact-only manual capture scaffold`，默认 no network，只写 ignored `manual-artifacts/brent-physical-proof-of-source/<timestamp>/`；(b) Platts 正式 Dated Brent 必须先拿 license / redistribution / delivery channel 证据，不能用公开 proxy 冒充；(c) ICE term structure 与 Baltic/Freightos freight 先做 sanitizer + manual artifact 审查，再谈 runtime/display；(d) M-63c 跨周/monthly cron 仍按原时间点观察。
+- **阻塞或等待**: 无技术阻塞。真正生产接入仍被授权与 source compliance 阻塞：Platts / Baltic 需要 license；ICE / Freightos 需要 allowed-use 与字段稳定性审查；M-74 本身不拿生产数据、不写生产数据。

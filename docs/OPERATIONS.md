@@ -494,7 +494,7 @@ v28.0M-72V Frontend Asset Cache Busting 处理 Android Chrome cached old module 
 ```text
 index.html app.js entry → ?v=28.0M-72V
 scripts/app.js and scripts/modules/*.js local imports → ?v=28.0M-72V
-window.__GFRR_FRONTEND_VERSION__ → 28.0M-70V
+window.__GFRR_FRONTEND_VERSION__ → 28.0M-72V
 ```
 
 浏览器 Console 可执行：
@@ -503,7 +503,7 @@ window.__GFRR_FRONTEND_VERSION__ → 28.0M-70V
 window.__GFRR_FRONTEND_VERSION__
 ```
 
-应返回 `"28.0M-70V"`。本轮不改 Worker runtime、不改数据源、不新增 KV、不 deploy Worker。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
+应返回 `"28.0M-72V"`。本轮不改 Worker runtime、不改数据源、不新增 KV、不 deploy Worker。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 
 v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
 

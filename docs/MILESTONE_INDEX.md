@@ -11,20 +11,20 @@
 
 当前未关闭、影响进行中工作的 milestone 与状态:
 
-- **当前生产**: v28.0M-70,frontend cache `28.0M-70V`,`check:all` = 72 项；M-70 commercialRealEstate (CRE) 已落地；M-69 consumerRetail (CARTS) 已落地；M-68 employment breadth 已落地；M-67 ISM PMI source repair 已落地；ADR-0014 IA contract authority hierarchy 已落地；M-63b ACLED monthly evidence-only ingestion 已落地；M-63c ACLED reminder workflows 已落地
+- **当前生产**: v28.0M-74,frontend cache `28.0M-72V`,`check:all` = 74 项；M-74 Brent physical proof-of-source design 已落地；M-72 macro-driver date display fix 已落地；M-71 Brent public proxy source review 已落地；M-70 commercialRealEstate (CRE) 已落地；M-69 consumerRetail (CARTS) 已落地；M-68 employment breadth 已落地；M-67 ISM PMI source repair 已落地；ADR-0014 IA contract authority hierarchy 已落地；M-63b ACLED monthly evidence-only ingestion 已落地；M-63c ACLED reminder workflows 已落地
 - **下一步**: 见 `docs/PROJECT_BACKLOG.md` Section 2 Open Backlog Items
-- **Open backlog 主线**: P1-4 ACLED 接入完整闭合 (M-63a/b/c 全部落地)；P2-7 employment breadth 已落地；P2-8 high-frequency consumer evidence 已落地并关闭；P2-9 CRE/CDX/私募信贷已落地并关闭（M-70 CRE-only;CDX/私募信贷=P3-15）；P3-* 已明确 won't fix
+- **Open backlog 主线**: P1-4 ACLED 接入完整闭合 (M-63a/b/c 全部落地)；P2-7 employment breadth 已落地；P2-8 high-frequency consumer evidence 已落地并关闭；P2-9 CRE/CDX/私募信贷已落地并关闭（M-70 CRE-only;CDX/私募信贷=P3-15）；P2-10 macro-driver date display bug 已关闭 (M-72)；P3-11 Brent physical / term / freight 已推进到 M-74 proof-of-source design,下一步仍是 artifact-only manual capture scaffold；P3-* 已明确 won't fix
 - **年度提醒**: M-61b SIPRI 每年 5 月 1 日 GitHub Actions issue (`sipri-annual-refresh-reminder.yml`)
 
 ## Recently Merged (最近 5 个,详细可读对应 doc)
 
 | # | 一句话 | 主要 doc |
 |---|---|---|
+| **M-74** | Brent physical / term / freight proof-of-source design;Platts licensed-only,ICE term-structure proof,Baltic/Freightos freight proof;no live fetch/runtime/frontend/data write;`check:all` 74 | `docs/BRENT_PHYSICAL_PROOF_OF_SOURCE_DESIGN.md` |
+| **M-72** | Macro-driver date display fix;JOLTS / CRE vintage formatter no longer surfaces malformed period labels;frontend cache `28.0M-72V` | `docs/PROJECT_BACKLOG.md` |
+| **M-71** | Brent public proxy source review only;EIA / ICE / Baltic Exchange / Freightos / future licensed S&P/Platts candidates;no live fetch/runtime/frontend/data write;`check:all` 73 | `docs/BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md` |
 | **M-70** | `macroDrivers.commercialRealEstate` 接入 FRED CRE delinquency/charge-off + SLOOS CRE 三子类季频信用压力 series;audit-only/display-only;frontend Macro Drivers 卡片;`check:all` 72 | `docs/DATA_CONTRACT.md` |
 | **M-69** | `macroDrivers.consumerRetail` 接入 FRED CARTS/CARTSR Chicago Fed weekly retail nowcast;audit-only/display-only;frontend Macro Drivers 卡片;`check:all` 71 | `docs/DATA_CONTRACT.md` |
-| **M-68** | `macroDrivers.employment` 接入 FRED ICSA/CCSA/JTSJOL;audit-only/display-only;frontend Macro Drivers 卡片;`check:all` 70 | `docs/DATA_CONTRACT.md` |
-| **M-63c** | ACLED weekly + monthly GitHub issue reminders;B+ date-stamped idempotency;reminder-only,不得 auto-fetch | `docs/M-63_ACLED_INTEGRATION.md` |
-| **M-67** | Broken FRED PMI path 替换为 ismworld.org 公开 Manufacturing PMI report parser;PMI 保持 audit-only/display-only | `docs/M-67_ISM_PMI_SOURCE_REPAIR.md` |
 
 ## Archived (历史 milestone,scope-only,默认不加载)
 

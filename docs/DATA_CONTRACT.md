@@ -725,14 +725,14 @@ v28.0M-72V Frontend Asset Cache Busting 只定义前端静态资源版本契约�
 当前前端资源版本为：
 
 ```text
-28.0M-70V
+28.0M-72V
 ```
 
 要求：
 
 - `index.html` 入口 module script 必须指向 `app.js?v=28.0M-72V`。
 - `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-72V`。
-- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-70V"`。
+- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-72V"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
