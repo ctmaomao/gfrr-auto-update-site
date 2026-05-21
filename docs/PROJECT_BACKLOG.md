@@ -243,7 +243,7 @@
 
 ### Session Handoff (2026-05-21 — M-73 check:all suite slimming)
 
-- **上次会话结束于**: 当前分支 `codex/check-all-slimming` 基于 `origin/main`。M-73 将历史 frontend visual 三项与 Market Pricing / cross-validation 26 项原子检查聚合为两个 suite entry；原子 `check:*` 脚本仍保留可单跑，`check:all` 顶层项数 **73 → 46**，frontend cache 仍为 `28.0M-70V`，未改数据产物、workflow、frontend runtime、scoring、decision、execution 或 position。
-- **当前进行中**: M-73 validation / PR publication。
+- **上次会话结束于**: `codex/check-all-slimming` 已提交并 push 到 `origin/codex/check-all-slimming`，HEAD = `af231b2 chore(checks): consolidate check all suites`。M-73 将历史 frontend visual 三项与 Market Pricing / cross-validation 26 项原子检查聚合为两个 suite entry；原子 `check:*` 脚本仍保留可单跑，`check:all` 顶层项数 **73 → 46**，frontend cache 仍为 `28.0M-70V`，未改数据产物、workflow、frontend runtime、scoring、decision、execution 或 position。
+- **当前进行中**: 下一步准备从 `origin/main` 另开数据接入分支，优先处理公开/官方/可自动降级的数据源；商业授权或非公开源只做 source-review，不伪装为生产数据。
 - **下一步建议**: (a) **2026-05-26 00:00 UTC Tuesday 后做 M-63c 跨周 idempotency 验证 (剩余 50%)**：① 查 `acled-weekly-refresh-reminder.yml` 在 2026-05-26T00:00Z 附近有新 schedule-triggered run (非 workflow_dispatch)、② 新 issue title 为 `M-63c ACLED weekly regional xlsx refresh due (week of 2026-05-25)` 且带 `acled-weekly-refresh` + `manual-data-refresh` 双 label、③ 旧 `#236` 未被改动 (updatedAt 仍 2026-05-20T07:07:59Z)；(b) **2026-06-09 之前做 monthly cron 同步验证** (cron `0 0 9 * *`，每月 9 日 00:00 UTC，下次 2026-06-09)；(c) 等下次 daily/world-order workflow_run 触发的 Pages deploy 自愈，确认 M-72 cache + P2-10 fix 上线显示 `JOLTS: Mar 2026` / `FRED 季频 Commercial Real Estate: Q2 2026`；(d) 若推新 P2/P3 必先 source-availability smoke。
 - **阻塞或等待**: 无技术阻塞。M-63c 跨周 idempotency 待 2026-05-26 Tuesday cron 自然 fire 验证 (workflow 在 2026-05-20 才合入，2026-05-19 那个 Tuesday 还没 yml 文件)；monthly cron 待 2026-06-09 fire 验证；Pages deploy 链路本 session 已修 ADR link 但未真实重跑过，等下次 schedule 触发即自愈。M-71 source-review 与 M-72 frontend fix 两条独立轨道都已落地。
