@@ -162,6 +162,17 @@ if (!agentsText.includes('macroDrivers.employment') || !agentsText.includes('FRE
   fail('AGENTS.md missing M-68 employment boundary note');
 }
 
+// P2-10 回归守护:vintage formatter 不得对已含 T 后缀的 ISO 字符串再拼一次 T00:00:00Z
+// (否则 new Date("...T00:00:00ZT00:00:00Z") = Invalid Date → "undefined NaN" / "QNaN NaN")
+const reconcatBugPattern = /new Date\(`\$\{[^}]+\}T00:00:00Z`\)/g;
+const reconcatHits = renderMacroText.match(reconcatBugPattern);
+if (reconcatHits && reconcatHits.length > 0) {
+  fail(
+    `renderMacroOverview has ${reconcatHits.length} bad date concat(s) like new Date(\`\${iso}T00:00:00Z\`); ` +
+    'drop the T suffix concat — inputs are already full ISO datetime strings (P2-10 regression guard)'
+  );
+}
+
 if (errors.length > 0) {
   console.error('Macro drivers employment check FAILED:');
   for (const error of errors) {

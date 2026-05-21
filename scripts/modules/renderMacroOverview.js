@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-70V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-70V';
-import { formatFiniteNumber } from './format.js?v=28.0M-70V';
+import { $ } from './config.js?v=28.0M-72V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-72V';
+import { formatFiniteNumber } from './format.js?v=28.0M-72V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -113,7 +113,7 @@ function formatRatioAsPercent(value, digits = 1) {
 
 function formatMonthVintage(isoDate) {
   if (typeof isoDate !== 'string' || !Number.isFinite(Date.parse(isoDate))) return 'vintage 待确认';
-  const date = new Date(`${isoDate}T00:00:00Z`);
+  const date = new Date(isoDate);
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
@@ -125,7 +125,7 @@ function formatWeekVintage(isoDate) {
 
 function formatQuarterVintage(isoDate) {
   if (typeof isoDate !== 'string' || !Number.isFinite(Date.parse(isoDate))) return 'vintage 待确认';
-  const date = new Date(`${isoDate}T00:00:00Z`);
+  const date = new Date(isoDate);
   const quarter = Math.floor(date.getUTCMonth() / 3) + 1;
   return `Q${quarter} ${date.getUTCFullYear()}`;
 }
