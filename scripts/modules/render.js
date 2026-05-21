@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-72V';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-72V';
-import { renderList } from './renderTables.js?v=28.0M-72V';
+import { $, fmtNumSafe, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-75V';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-75V';
+import { renderList } from './renderTables.js?v=28.0M-75V';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0M-72V';
+} from './renderCharts.js?v=28.0M-75V';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0M-72V';
+} from './renderTables.js?v=28.0M-75V';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0M-72V';
+} from './renderAudit.js?v=28.0M-75V';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -881,9 +881,13 @@ function formatBrentValue(value, digits = 2) {
 function formatBrentStatus(status) {
   return {
     ok: '可用',
+    partial: '部分可用',
     fallback: '回退',
     missing: '缺失',
-    excluded: '排除'
+    excluded: '排除',
+    license_required: '需要授权',
+    source_unavailable: '来源不可用',
+    source_review_only: '仅源审查'
   }[String(status || '').toLowerCase()] || '待确认';
 }
 
@@ -927,6 +931,36 @@ function formatBrentPriceNode(node = {}) {
   const status = formatBrentStatus(node.status);
   const label = safeText(node.labelZh, '公开代理');
   return `${label}：${value} / 来源 ${source} / 状态 ${status}`;
+}
+
+function formatBrentStatusNode(node = {}) {
+  const label = safeText(node.labelZh, 'Brent 数据源');
+  const valueText = Number.isFinite(Number(node.value)) ? ` / 数值 ${formatBrentValue(node.value)}` : '';
+  const source = safeText(node.source, '--');
+  const status = formatBrentStatus(node.status);
+  const reason = safeText(node.statusReason, '');
+  return `${label}：${status}${valueText} / 来源 ${source}。${reason}`;
+}
+
+function formatBrentTermContract(contract = {}) {
+  const symbol = safeText(contract.symbol, '--');
+  const month = safeText(contract.contractMonth, '--');
+  const value = formatBrentValue(contract.value);
+  return `${symbol} ${month} ${value}`;
+}
+
+function formatBrentTermStructureProxy(proxy = {}) {
+  const status = formatBrentStatus(proxy.status);
+  const count = Number(proxy.contractCount);
+  const countLabel = Number.isFinite(count) ? `${Math.round(count)} 个合约` : '合约数待确认';
+  const slope = safeText(proxy.slopeStatusZh, '曲线状态待确认');
+  const spread = formatBrentValue(proxy.frontToBackSpread);
+  const spreadPct = formatBrentValue(proxy.frontToBackSpreadPct);
+  const observedAt = safeText(proxy.observedAt, '--');
+  const front = proxy.frontContract ? formatBrentTermContract(proxy.frontContract) : '--';
+  const back = proxy.backContract ? formatBrentTermContract(proxy.backContract) : '--';
+  const reason = safeText(proxy.statusReason, '');
+  return `状态：${status}；${countLabel}；${slope}；近-远价差 ${spread} / ${spreadPct}%；近月 ${front}；远端 ${back}；观察时间 ${observedAt}。${reason}`;
 }
 
 function formatBrentConfidence(confidence = {}) {
@@ -984,6 +1018,9 @@ function renderBrentPricingLayerFallback() {
   setTextIfPresent('brent-selected-note', '暂不足以判断。');
   setTextIfPresent('brent-spot-proxy', '暂不足以判断。');
   setTextIfPresent('brent-futures-proxy', '暂不足以判断。');
+  setTextIfPresent('brent-formal-dated', '需要授权源后才能显示正式 Dated Brent。');
+  setTextIfPresent('brent-term-structure-proxy', 'Brent 期限结构代理等待下一次 Daily 数据构建。');
+  setTextIfPresent('brent-shipping-freight-proxy', 'shipping / freight source 状态等待下一次 Daily 数据构建。');
   setTextIfPresent('brent-proxy-spread', '数据不足，暂不从前端反推 brentPricingLayer。');
   setTextIfPresent('brent-promotion-audit', '暂不足以判断。');
   renderBrentConfirmationSources([]);
@@ -1010,6 +1047,24 @@ export function renderBrentPricingLayer(brentPricingLayer) {
 
   setTextIfPresent('brent-spot-proxy', formatBrentPriceNode(brentPricingLayer.publicSpotProxy || {}));
   setTextIfPresent('brent-futures-proxy', formatBrentPriceNode(brentPricingLayer.futuresProxy || {}));
+  setTextIfPresent(
+    'brent-formal-dated',
+    brentPricingLayer.formalDatedBrent
+      ? formatBrentStatusNode(brentPricingLayer.formalDatedBrent)
+      : '需要授权源后才能显示正式 Dated Brent。'
+  );
+  setTextIfPresent(
+    'brent-term-structure-proxy',
+    brentPricingLayer.termStructureProxy
+      ? formatBrentTermStructureProxy(brentPricingLayer.termStructureProxy)
+      : 'Brent 期限结构代理等待下一次 Daily 数据构建。'
+  );
+  setTextIfPresent(
+    'brent-shipping-freight-proxy',
+    brentPricingLayer.shippingFreightProxy
+      ? formatBrentStatusNode(brentPricingLayer.shippingFreightProxy)
+      : 'shipping / freight source 状态等待下一次 Daily 数据构建。'
+  );
 
   const spread = brentPricingLayer.proxySpread && typeof brentPricingLayer.proxySpread === 'object' ? brentPricingLayer.proxySpread : {};
   setTextIfPresent(

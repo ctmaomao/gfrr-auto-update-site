@@ -22,7 +22,7 @@ Global Financial Risk Radar (GFRR) v28 — 每日更新的机构级宏观风险�
 ## Key commands
 
 ```powershell
-npm run check:all         # 74 项串联契约检查 (提交前必跑)
+npm run check:all         # 75 项串联契约检查 (提交前必跑)
 npm run build:data        # Daily pipeline → data/radar-data.json
 npm run build:realtime    # Realtime fallback → realtime/market.json
 npm run build:world-order # World Order Stress → data/world-order-stress.json
@@ -64,7 +64,7 @@ npm run check:dom         # DOM id 契约
 3. **World Order 是 regime overlay,不是第七个底层风险模块** — 不得加入 scoring/decision/execution/position (违反 → 风险模型被偷换概念)
 4. **External AI 是只读展示层** — 不得让其 output 影响 scoring/decision/execution/position (违反 → AI 漂移直接污染决策)
 5. **改 `index.html` / `scripts/app.js` / `scripts/modules/*.js` 必须同步 bump frontend asset cache version** — 用 `npm run bump:frontend-asset-version` 自动取当前值并 bump (违反 → 用户拿到旧 JS / 旧 CSS,debug 灾难)
-6. **提交前必跑 `npm run check:all`** — 74 项全绿才能提交 (违反 → CI 红,Pages 部署中断)
+6. **提交前必跑 `npm run check:all`** — 75 项全绿才能提交 (违反 → CI 红,Pages 部署中断)
 7. **Serial trunk mode** — 一次只推进一个逻辑任务,no stacked PR,旧 PR 不继续堆改
 
 ## NEVER

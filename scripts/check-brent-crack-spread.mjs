@@ -61,7 +61,7 @@ const runDailyMarkers = [
   'ulsdPrice * 42 - selectedBrent.value',
   'computed >= -30 && computed <= 120',
   'const crackSpreadRegime = classifyCrackSpreadRegime(crackSpread)',
-  'const ulsdData = await resolveUlsd(prevData?.brentPricingLayer)',
+  'resolveUlsd(prevData?.brentPricingLayer)',
   'ulsdData'
 ];
 
@@ -75,7 +75,7 @@ const renderMarkers = [
   'brentLayer.crackSpread',
   '柴油裂解价差',
   'Dated Brent、期限结构、库存数据等待接入。',
-  'Brent 期限结构、shipping / freight 仍待接入。'
+  'Dated Brent、库存与 shipping / freight 数据等待验证。'
 ];
 
 for (const marker of renderMarkers) {

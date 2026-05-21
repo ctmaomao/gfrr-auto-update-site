@@ -95,6 +95,7 @@
 - 需要稳定数据源后再接入。
 - M-71 public proxy source review: ICE Brent futures curve / ICE Data Services 是 Level 1/2 source-review candidate。任何 futures curve 接入必须先完成 source-specific proof-of-source design,不得直接进入 `values.brent`、Brent promotion、scoring 或 decision。
 - M-74 proof-of-source design: `ice_brent_futures_curve` 仅进入 proof contract,要求至少 front 6 contracts、contractMonth / priceType / observedAt / delayStatus 等字段定义;仍 `sourceApproved=false`、`liveFetchApproved=false`、`brentTermStructureConnected=false`。
+- M-75 production proxy display: `brentPricingLayer.termStructureProxy` 使用 Yahoo chart payload 的 Brent futures contract symbols (`BZ*.NYM`) 生成公开延迟期货曲线代理;只能 display-only / audit-only,不得写成 ICE 官方 settlement curve,不得进入 `values.brent`、Brent promotion、scoring 或 decision。
 
 ### E. Crack spread / diesel stress
 
@@ -107,6 +108,7 @@
 - 初始级别：candidate。
 - M-71 public proxy source review: Baltic Exchange freight benchmarks 与 Freightos Baltic Index 是 Level 1/2 source-review candidate。Baltic / Freightos 只能作为 shipping / freight stress public proxy review,不得写成 Platts Dated Brent、不得推断具体 crude cargo price、不得直接进入 scoring 或 decision。
 - M-74 proof-of-source design: `baltic_exchange_freight_benchmarks` 为 licensed freight benchmark proof target, crude review 优先 tanker routes;`freightos_baltic_index` 只能作为 container freight public proxy proof target,不得写成 crude tanker freight。两者仍 `sourceApproved=false`、`liveFetchApproved=false`、`shippingFreightConnected=false`。
+- M-75 production proxy display: `brentPricingLayer.shippingFreightProxy` 仅显示 source status;Baltic tanker freight 仍需授权,Freightos FBX 仍只能作为 container freight proxy review,当前不得输出 freight 数值。
 
 ### G. Platts Dated Brent / formal Dated Brent
 
@@ -114,6 +116,7 @@
 - 当前级别：future licensed source only。
 - M-71 public proxy source review: S&P / Platts Dated Brent 只登记为 future licensed source,不进入 public proxy implementation。
 - M-74 proof-of-source design: `sp_global_platts_dated_brent` 需要 license / redistribution terms / assessment identifier / publication timestamp policy 完整审查;仍 `formalPlattsDatedBrentConnected=false`,不得用 ICE/FRED/Yahoo/EIA/Freightos/Baltic proxy 冒充正式 Dated Brent。
+- M-75 production proxy display: `brentPricingLayer.formalDatedBrent` 只显示 licensed path 状态;无授权时必须 `value=null` / `status=license_required`,不得把任何 public proxy 显示为正式 Dated Brent 数值。
 
 ## 6. Rejection Rules / 拒绝或暂缓规则
 

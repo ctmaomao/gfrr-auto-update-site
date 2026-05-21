@@ -479,6 +479,32 @@ M-39 增加 `consensus.reason` 作为 `promotionReason` 的第三 fallback；增
 
 v28.0I-5C 前端展示只读消费 `brentPricingLayer`。v28.0I-8 起默认以 compact summary 展示，Brent 主值审计、验证源明细和数据限制放入折叠区。前端不得在 render 层反推 Brent 主值、Brent promotion、评分、仓位、执行灯或交易建议；当 `brentPricingLayer` 缺失时只显示温和 fallback。
 
+### brentPricingLayer Physical / Term / Freight 显示扩展 (v28.0M-75)
+
+M-75 在 `brentPricingLayer` 新增三组只读展示字段，用于把用户关心的
+正式 Dated Brent、Brent 期限结构、shipping / freight 状态放到网站前端。
+这些字段仍属于 audit-only / display-only，不改变 `values.brent`、Brent
+promotion、scoring、`decisionModel`、`executionLock` 或 `positionGuidance`。
+
+字段 contract：
+
+| 字段 | 类型 | 来源 | 含义 |
+|---|---|---|---|
+| `formalDatedBrent` | object | S&P Global Commodity Insights / Platts 授权路径状态 | 正式 Dated Brent 源状态；无授权时 `value=null`、`status=license_required` |
+| `termStructureProxy` | object | Yahoo chart Brent futures contracts (`BZ*.NYM`) | 公开延迟 Brent 期货合约曲线代理；不是 ICE 官方 settlement curve |
+| `shippingFreightProxy` | object | Baltic / Freightos source-family 状态 | freight 源状态；无授权或稳定公开接口时 `value=null` |
+
+`termStructureProxy` 必须记录 `source`、`sourceUrl`、`status`、
+`statusReason`、`observedAt`、`generatedAt`、`priceType`、`delayStatus`、
+`contractCount`、`frontContract`、`backContract`、`frontToBackSpread`、
+`frontToBackSpreadPct`、`slopeStatus`、`slopeStatusZh`、`contracts`、
+`diagnostics` 与 `limitationZh`。`status=ok|partial|fallback` 时至少需要
+2 个 finite 合约价格；缺失源不得在前端或数据层渲染为 `0.00`。
+
+`formalDatedBrent` 与 `shippingFreightProxy` 在没有授权或稳定公开数据通道时
+只能显示真实状态，不得使用 FRED / Yahoo / ICE futures / Freightos / Baltic proxy
+冒充正式 Dated Brent 或 crude tanker freight。
+
 ### brentPricingLayer Crack Spread 扩展 (v28.0M-49)
 
 M-49 在 brentPricingLayer 新增柴油裂解价差字段，扩展能源链条下游证据。
@@ -720,30 +746,30 @@ config/world-order-sipri-normalized.example.json
 
 ### Frontend asset cache version
 
-v28.0M-72V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+v28.0M-75V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
 当前前端资源版本为：
 
 ```text
-28.0M-72V
+28.0M-75V
 ```
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-72V`。
-- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-72V`。
-- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-72V"`。
+- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-75V`。
+- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-75V`。
+- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-75V"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs 28.0M-72V
-npm run bump:frontend-asset-version -- 28.0M-72V
+node scripts/bump-frontend-asset-version.mjs 28.0M-75V
+npm run bump:frontend-asset-version -- 28.0M-75V
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-72V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-75V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

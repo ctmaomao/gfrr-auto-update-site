@@ -180,6 +180,23 @@ for a future artifact-only manual capture scaffold.
 
 See [`BRENT_PHYSICAL_PROOF_OF_SOURCE_DESIGN.md`](BRENT_PHYSICAL_PROOF_OF_SOURCE_DESIGN.md).
 
+### Brent physical / term / freight production proxy display (M-75)
+
+M-75 connects the first production-populated Brent term-structure proxy inside
+`brentPricingLayer` and surfaces all three requested tracks on the frontend.
+
+| Field | Runtime source | Status | Boundary |
+|---|---|---|---|
+| `brentPricingLayer.formalDatedBrent` | S&P / Platts licensed path status only | `license_required` until contract / redistribution / delivery channel exists | no public proxy substitution |
+| `brentPricingLayer.termStructureProxy` | Yahoo chart payload for Brent futures contract symbols (`BZ*.NYM`) | live public delayed futures-curve proxy when at least two contracts parse | not ICE official settlement curve; not Platts Dated Brent |
+| `brentPricingLayer.shippingFreightProxy` | Baltic / Freightos source-family status only | `source_unavailable` unless licensed tanker benchmark or stable public endpoint is approved | no freight number fabrication |
+
+The M-75 Yahoo term-structure fetcher runs in `scripts/run-daily-pipeline.mjs`
+with an 8 second timeout and per-contract failure isolation. It writes only the
+Daily `brentPricingLayer` field on normal production data refresh. It does not
+change Worker runtime, `values.brent`, Brent promotion, scoring, decision,
+execution, position, Action Queue, Trigger Monitor, or Invalidation Rules.
+
 ---
 
 ### GDELT Cloud v2
@@ -329,6 +346,8 @@ documented attribution string and code is a contract violation.
 | `values.brent` | FRED `DCOILBRENTEU` (anchor) + Yahoo `BZ=F` (fresh confirmation) + TE (freshness gate) + D-6 extreme-move guard |
 | `brent public proxy candidates` | M-71 source-review only: EIA Europe Brent Spot Price FOB / ICE Brent futures curve / Baltic Exchange freight benchmarks / Freightos Baltic Index / future licensed S&P-Platts Dated Brent |
 | `brent physical proof-of-source targets` | M-74 design only: `sp_global_platts_dated_brent`, `ice_brent_futures_curve`, `baltic_exchange_freight_benchmarks`, `freightos_baltic_index`; no live fetch / no production write |
+| `brentPricingLayer.termStructureProxy` | M-75 Yahoo chart payload for Brent futures contract symbols (`BZ*.NYM`); public delayed futures-curve proxy only |
+| `brentPricingLayer.formalDatedBrent` / `shippingFreightProxy` | M-75 source-status display only; formal Dated Brent and freight values remain null until licensed/stable source approval |
 | `values.vix` / `values.gold` / `values.dxy` / `values.us10y` / `values.spx` | 来自 GitHub realtime-data 或 displayInputsBaseline;**secondary preview 仅诊断,不覆盖** |
 | `macroDrivers.fedLiquidity` | FRED: DFF, SOFR, WRESBAL, BGCR, TGCR (+ 派生 spreads) |
 | `macroDrivers.credit` | FRED: BAMLH0A0HYM2 (HY OAS), BAMLC0A0CM (IG OAS), DRTSCILM, DRTSCIS, NFCI |

@@ -50,6 +50,12 @@ function formatCurrency(value) {
   return `$${number.toFixed(2)}`;
 }
 
+function brentTermStructureProxyUsable(brentLayer) {
+  const proxy = isPlainObject(brentLayer?.termStructureProxy) ? brentLayer.termStructureProxy : null;
+  if (!proxy) return false;
+  return ['ok', 'partial', 'fallback'].includes(String(proxy.status || '')) && safeArray(proxy.contracts).length >= 2;
+}
+
 function evidence(source, value, detail) {
   return {
     source,
@@ -120,8 +126,10 @@ function buildEnergyShockNarrative(data) {
   const crackSpreadRegime = typeof brentLayer.crackSpreadRegime === 'string' ? brentLayer.crackSpreadRegime : null;
   const supportingEvidence = [];
   const missingEvidence = [
-    evidence('dated_brent', null, 'Platts Dated Brent 尚未接入'),
-    evidence('term_structure', null, 'Brent 期限结构、库存和航运压力等待接入'),
+    evidence('dated_brent', null, 'Platts Dated Brent 仍需授权源'),
+    brentTermStructureProxyUsable(brentLayer)
+      ? evidence('shipping_freight', null, 'shipping / freight 与库存数据等待授权或稳定公开源')
+      : evidence('term_structure', null, 'Brent 期限结构、库存和航运压力等待接入'),
   ];
   const contradictingEvidence = [];
 
@@ -130,6 +138,13 @@ function buildEnergyShockNarrative(data) {
   }
   if (energyCheck.status === 'stress' || finite(energyCheck.score) >= 60) {
     supportingEvidence.push(evidence('energy_pricing_gap_watch', formatNumber(energyCheck.score, 0), energyCheck.summaryZh || '能源价格验证层提示压力'));
+  }
+  if (brentTermStructureProxyUsable(brentLayer)) {
+    supportingEvidence.push(evidence(
+      'term_structure_proxy',
+      formatSigned(brentLayer.termStructureProxy.frontToBackSpread, 2),
+      `Brent 期限结构公开代理显示${brentLayer.termStructureProxy.slopeStatusZh || '曲线状态待确认'}，近-远价差 ${formatSigned(brentLayer.termStructureProxy.frontToBackSpread, 2)}`
+    ));
   }
   if (crackSpread === null) {
     missingEvidence.push(evidence('crack_spread', null, '柴油裂解价差（DHOILNYH-Brent）尚未接入'));

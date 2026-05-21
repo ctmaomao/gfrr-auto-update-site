@@ -90,6 +90,7 @@
 
 - `docs/BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md` (M-71)
 - `docs/BRENT_PHYSICAL_PROOF_OF_SOURCE_DESIGN.md` (M-74)
+- `docs/DATA_CONTRACT.md` (M-75 brentPricingLayer physical / term / freight display extension)
 
 ### Frontend visual + IA restructure scope (M-54 → M-55b)
 

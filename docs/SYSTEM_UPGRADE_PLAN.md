@@ -40,7 +40,7 @@ v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。v28.0I 已完�
 - Daily Brief / 今日主判断。
 - Divergence Layer / 实体压力与金融定价背离。
 - Consumer vs Asset Divergence / 消费者体感与风险资产背离。
-- Brent Public Proxy Pricing Layer / Brent 公开代理价格层。
+- Brent Public Proxy Pricing Layer / Brent 公开代理价格层；M-75 起包含 Yahoo delayed Brent futures contract chart payloads (`BZ*.NYM`) 生成的 `termStructureProxy` 公开期货曲线代理。
 - Compact cockpit layout，v28.0I release 对应前端版本为 `28.0I-8`。
 
 当前 live data 已包含 `dailyBrief.contractVersion = v28.0I-1`、`divergenceLayer.contractVersion = v28.0I-3A`、`macroDrivers.consumer`、`consumer_vs_asset_pricing` 与 `brentPricingLayer.contractVersion = v28.0I-5A`。
@@ -51,7 +51,7 @@ v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。v28.0I 已完�
 
 1. AI Interpretation Layer Contract。
 2. 页面解释文案进一步压缩。
-3. Brent term structure candidate。
+3. Official ICE settlement curve / licensed Platts Dated Brent / Baltic tanker freight source compliance。
 4. Crack spread / diesel stress candidate。
 5. World Order data quality improvement。
 

@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 v28.0C</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=28.0M-72V" />
+  <link rel="stylesheet" href="assets/styles.css?v=28.0M-75V" />
   <style>
     .macro-overview-shell {
       display: grid;
@@ -1393,6 +1393,20 @@
                                   <div class="metric-value small" id="brent-futures-proxy">--</div>
                                 </div>
                               </div>
+                              <div class="metric-row three">
+                                <div class="metric-box compact">
+                                  <div class="metric-label">正式 Dated Brent</div>
+                                  <div class="mini-delta" id="brent-formal-dated">--</div>
+                                </div>
+                                <div class="metric-box compact">
+                                  <div class="metric-label">Brent 期限结构代理</div>
+                                  <div class="mini-delta" id="brent-term-structure-proxy">--</div>
+                                </div>
+                                <div class="metric-box compact">
+                                  <div class="metric-label">shipping / freight</div>
+                                  <div class="mini-delta" id="brent-shipping-freight-proxy">--</div>
+                                </div>
+                              </div>
                               <div class="metric-box compact">
                                 <div class="metric-label">代理价差 / 背离观察</div>
                                 <div id="brent-proxy-spread">--</div>
@@ -1746,6 +1760,6 @@
     </footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0M-72V"></script>
+  <script type="module" src="scripts/app.js?v=28.0M-75V"></script>
 </body>
 </html>

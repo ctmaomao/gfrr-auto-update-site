@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-72V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-72V';
-import { formatFiniteNumber } from './format.js?v=28.0M-72V';
+import { $ } from './config.js?v=28.0M-75V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-75V';
+import { formatFiniteNumber } from './format.js?v=28.0M-75V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -66,6 +66,22 @@ function finite(value) {
 function formatNumber(value, digits = 1, suffix = '') {
   const number = finite(value);
   return number === null ? INSUFFICIENT : `${number.toFixed(digits)}${suffix}`;
+}
+
+function brentTermStructureProxyUsable(brentLayer) {
+  const proxy = isPlainObject(brentLayer?.termStructureProxy) ? brentLayer.termStructureProxy : null;
+  if (!proxy) return false;
+  const status = text(proxy.status, '');
+  return ['ok', 'partial', 'fallback'].includes(status) && safeArray(proxy.contracts).length >= 2;
+}
+
+function brentTermStructureEvidenceLine(brentLayer) {
+  const proxy = isPlainObject(brentLayer?.termStructureProxy) ? brentLayer.termStructureProxy : null;
+  if (!brentTermStructureProxyUsable(brentLayer)) return null;
+  const spread = formatNumber(proxy.frontToBackSpread, 2);
+  const slope = text(proxy.slopeStatusZh, '曲线状态待确认');
+  const count = finite(proxy.contractCount);
+  return `Brent 期限结构公开代理：${count === null ? '合约数待确认' : `${Math.round(count)}个合约`}，${slope}，近-远价差 ${spread}。`;
 }
 
 function formatSignedPercent(value, digits = 2) {
@@ -366,6 +382,10 @@ function buildPressureSources(data, worldOrderStressData) {
   const real10y = finite(inputs.real10y);
   const dxy = finite(inputs.dxy);
   const energyGaps = safeArray(brentLayer.dataGaps);
+  const termStructureLine = brentTermStructureEvidenceLine(brentLayer);
+  const energyMissingEvidence = brentTermStructureProxyUsable(brentLayer)
+    ? ['Dated Brent 与 shipping / freight 仍待授权或稳定公开源验证。']
+    : ['Dated Brent、期限结构和实物端证据仍待验证。'];
   const worldFreshness = text(worldOrderStressData?.freshness, INSUFFICIENT);
 
   return [
@@ -377,10 +397,15 @@ function buildPressureSources(data, worldOrderStressData) {
       direction: brent === null ? '方向待确认' : brent >= 100 ? '压力上升' : '观察中',
       confidence: brent === null ? '偏低' : '中等',
       dataCoverage: energyGaps.length ? '数据覆盖：部分缺口' : '数据覆盖：等待校准',
-      evidence: [`布伦特 ${formatNumber(brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`],
-      missingEvidence: energyGaps.length ? ['Dated Brent、期限结构和实物端证据仍待验证。'] : [],
+      evidence: [
+        `布伦特 ${formatNumber(brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`,
+        termStructureLine,
+      ].filter(Boolean),
+      missingEvidence: energyGaps.length ? energyMissingEvidence : [],
       explanation: energyGaps.length
-        ? '价格压力存在，但 Dated Brent、期限结构和实物端证据仍待验证。'
+        ? brentTermStructureProxyUsable(brentLayer)
+          ? '价格压力存在，期限结构已有公开代理观察，但 Dated Brent 与 shipping / freight 仍需源验证。'
+          : '价格压力存在，但 Dated Brent、期限结构和实物端证据仍待验证。'
         : '能源压力仍需与通胀预期和实物端交叉确认。',
       sourceType: brent === null ? '数据不足' : '数据推断',
       priority: brent === null ? 4 : brent >= 100 ? 1 : 2,
@@ -453,6 +478,7 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
   const brief = isPlainObject(data?.dailyBrief) ? data.dailyBrief : {};
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
   const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
+  const termStructureLine = brentTermStructureEvidenceLine(brentLayer);
   const largestDivergence = isPlainObject(brief.largestDivergence) ? brief.largestDivergence : {};
   const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
   const verified = [];
@@ -467,11 +493,17 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
   if (marketMetric) {
     verified.push(`${marketMetric.evidenceLine} 市场温度已可作为当前主判断的价格层确认。`);
   }
+  if (termStructureLine) {
+    verified.push(termStructureLine);
+  }
   if (largestDivergence.summaryZh) pending.push(largestDivergence.summaryZh);
   pending.push('能源价格处于观察区间，但实物端验证数据仍不足。');
   const dataGapEvidence = [
-    'Platts Dated Brent / 正式 Dated Brent 尚未接入。',
-    'Brent 期限结构、shipping / freight 仍待接入。',
+    'Platts Dated Brent / 正式 Dated Brent 仍需授权源。',
+    termStructureLine
+      ? 'ICE 官方 settlement curve 尚未接入；当前仅展示公开延迟期货曲线代理。'
+      : 'Brent 期限结构公开代理当前缺少足够合约报价。',
+    'shipping / freight 仍需授权或稳定公开源。',
     ...safeArray(brentLayer.dataGaps).slice(0, 1),
   ];
   if (!marketMetric) dataGapEvidence.unshift('Nasdaq / QQQ 周线历史尚未接入。');
@@ -711,8 +743,11 @@ function buildMacroDrivers(data) {
         brentLayer?.crackSpread === null || !Number.isFinite(brentLayer?.crackSpread)
           ? null
           : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶（${brentLayer.crackSpreadRegime}）`,
+        brentTermStructureEvidenceLine(brentLayer),
       ].filter(Boolean),
-      missingEvidence: ['Dated Brent、期限结构、库存数据等待接入。'],
+      missingEvidence: brentTermStructureProxyUsable(brentLayer)
+        ? ['Dated Brent、库存与 shipping / freight 数据等待验证。']
+        : ['Dated Brent、期限结构、库存数据等待接入。'],
       explanation: 'Brent 偏高可以提示能源压力，但不能单独证明广义通胀重新加速。',
       sourceType: finite(inputs.brent) === null ? '数据不足' : '数据推断',
     }),

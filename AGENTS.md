@@ -31,7 +31,7 @@
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-66V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-75V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -90,6 +90,7 @@
 - M-68 后,`macroDrivers.employment` (ICSA/CCSA/JTSJOL) 为 FRED 周频/月频劳动力 evidence 层；audit-only/display-only；不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules；不进 `displayInputsBaseline` / `effectiveDisplayInputs`；不进 cross-validation matrix；新源失败必须降级 `sourceStatus.{icsa,ccsa,jtsjol}` 为 `fallback` / `missing`,不得伪造或冒充替代指标。
 - M-69 后,`macroDrivers.consumerRetail` (Chicago Fed CARTS + CARTSR via FRED) 为周频零售/消费 nowcast evidence 层；audit-only/display-only；不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不接 CARTSP (价格指数,future scope only);**绝对不得**伪造为 Redbook 或 BoA Card 数据,字段名/前端文案/notes 都不得暗示替代关系;Redbook + BoA Card 为 P3-14 source-review candidates,不在 runtime 任何路径自动 fetch。
 - M-70 后,`macroDrivers.commercialRealEstate` (FRED DRCRELEXFACBS + CORCREXFACBS + SUBLPDRCSN/C/M) 为季频 CRE 信用压力 evidence 层;audit-only/display-only；不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不扩写 `macroDrivers.credit`;不接 CDX HY/IG (商业 ICE/Markit) 或 loan balance/CRE exposure stock series (future scope only);**绝对不得**伪造为 CDX 或 私募信贷数据,字段名/前端文案/notes 都不得暗示替代关系;CDX HY/IG + 私募信贷 fundraising 为 P3-15 source-review candidates,不在 runtime 任何路径自动 fetch。
+- M-75 后,`brentPricingLayer.termStructureProxy` 通过 Daily pipeline 抓取 Yahoo delayed Brent futures contract chart payloads (`BZ*.NYM`) 生成公开期货曲线代理;它只属于 audit-only/display-only,不得写成 ICE 官方 settlement curve、Platts Dated Brent 或正式实物价格;不得改变 `values.brent`、Brent promotion、scoring、decisionModel、executionLock、positionGuidance、Action Queue、Trigger Monitor 或 Invalidation Rules。`brentPricingLayer.formalDatedBrent` 与 `shippingFreightProxy` 当前只显示授权/来源状态,无授权或稳定公开源时 `value` 必须保持 `null`,不得渲染为 0 或伪造成已接入数值。
 - World Order 外部数据刷新应先手动观察，再考虑 scheduled workflow；不要把 `build:world-order` 加入 `check:all`，H-4 的 `review:world-order` 只是本地只读人工审阅 helper。
 - World Order 新外部源不得直接进入 scoring；必须先通过 diagnosis / source review，再另开版本接入。
 - ReliefWeb 或任何新外部源不得直接进入 scoring；必须先通过 diagnosis / review，再另开 integration version。
@@ -151,7 +152,7 @@ When `DESIGN.md` and any other contract (e.g., Market Pricing governance) appear
 
 - `npm run check:editorial-redesign-contract` enforces font allowlist, IA structure, and `DESIGN.md` existence + anchor integrity
 - `npm run check:homepage-ia-contract` enforces section order
-- `npm run check:all` runs both as part of the 74-check baseline
+- `npm run check:all` runs both as part of the 75-check baseline
 
 PRs that fail these contracts MUST NOT be merged, regardless of how good the visual result looks.
 

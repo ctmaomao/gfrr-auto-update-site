@@ -43,6 +43,9 @@ const MACRO_FETCH_TIMEOUT_MS = 10000;
 const MACRO_FETCH_RETRIES = 2;
 const MACRO_FETCH_RETRY_DELAY_MS = 800;
 const MACRO_USER_AGENT = 'gfr-v27.0-macro/1.0';
+const BRENT_TERM_STRUCTURE_FETCH_TIMEOUT_MS = 8000;
+const BRENT_TERM_STRUCTURE_USER_AGENT = 'GFRRBot/1.0 (+https://github.com/ctmaomao/gfrr-auto-update-site; brent-term-structure-proxy)';
+const BRENT_FUTURES_MONTH_CODES = ['F', 'G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z'];
 const ISM_PMI_LANDING_URL = 'https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/';
 const ISM_PMI_USER_AGENT = 'GFRRBot/1.0';
 const ISM_PMI_FETCH_TIMEOUT_MS = 8000;
@@ -622,7 +625,257 @@ function brentSpreadStatusZh(status) {
   }[status] || '状态待确认';
 }
 
-function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyRealtimeInput, ulsdData = null }) {
+function contractMonthForDate(date) {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+function brentContractSymbolForDate(date) {
+  const monthCode = BRENT_FUTURES_MONTH_CODES[date.getUTCMonth()];
+  const yearCode = String(date.getUTCFullYear()).slice(-2);
+  return `BZ${monthCode}${yearCode}.NYM`;
+}
+
+function buildBrentTermStructureCandidates(monthsAhead = 18) {
+  const nowDate = new Date(isoNow);
+  const start = Number.isFinite(nowDate.getTime())
+    ? new Date(Date.UTC(nowDate.getUTCFullYear(), nowDate.getUTCMonth(), 1))
+    : new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1));
+  return Array.from({ length: monthsAhead }, (_, index) => {
+    const date = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + index, 1));
+    return {
+      symbol: brentContractSymbolForDate(date),
+      contractMonth: contractMonthForDate(date)
+    };
+  });
+}
+
+function normalizeYahooBrentContractValue(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric < 20 || numeric > 250) return null;
+  return Number(numeric.toFixed(2));
+}
+
+function parseYahooBrentContractPayload(text, candidate) {
+  let payload = null;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    return {
+      ...candidate,
+      value: null,
+      observedAt: null,
+      status: 'missing',
+      reason: 'parse-failed:non-json'
+    };
+  }
+  const meta = payload?.chart?.result?.[0]?.meta;
+  const value = normalizeYahooBrentContractValue(meta?.regularMarketPrice ?? meta?.previousClose);
+  if (value === null) {
+    return {
+      ...candidate,
+      value: null,
+      observedAt: null,
+      status: 'missing',
+      reason: 'parse-failed:value'
+    };
+  }
+  const marketTime = Number(meta?.regularMarketTime);
+  const observedAt = Number.isFinite(marketTime) && marketTime > 0
+    ? new Date(marketTime * 1000).toISOString()
+    : null;
+  return {
+    ...candidate,
+    value,
+    observedAt,
+    status: 'ok',
+    delayStatus: 'delayed',
+    priceType: 'regularMarketPrice',
+    reason: null
+  };
+}
+
+async function fetchYahooBrentContract(candidate) {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(candidate.symbol)}?range=5d&interval=1d`;
+  try {
+    const text = await fetchWithTimeout(url, BRENT_TERM_STRUCTURE_FETCH_TIMEOUT_MS, {
+      userAgent: BRENT_TERM_STRUCTURE_USER_AGENT,
+      headers: {
+        Accept: 'application/json,text/plain,*/*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        Referer: 'https://finance.yahoo.com/quote/BZ=F/'
+      }
+    });
+    return parseYahooBrentContractPayload(text, candidate);
+  } catch (error) {
+    return {
+      ...candidate,
+      value: null,
+      observedAt: null,
+      status: 'missing',
+      reason: stringifyFetchError(error)
+    };
+  }
+}
+
+function latestObservedAt(contracts) {
+  const timestamps = contracts
+    .map((contract) => Date.parse(contract.observedAt))
+    .filter(Number.isFinite);
+  if (!timestamps.length) return null;
+  return new Date(Math.max(...timestamps)).toISOString();
+}
+
+function classifyBrentTermStructureSlope(frontToBackSpread) {
+  if (!Number.isFinite(frontToBackSpread)) return 'insufficient_data';
+  if (frontToBackSpread > 0.5) return 'backwardation';
+  if (frontToBackSpread < -0.5) return 'contango';
+  return 'flat';
+}
+
+function brentTermStructureSlopeZh(status) {
+  return {
+    backwardation: '近月升水',
+    contango: '远月升水',
+    flat: '曲线较平',
+    insufficient_data: '数据不足'
+  }[status] || '状态待确认';
+}
+
+function normalizePreviousTermStructureProxy(previous) {
+  if (!previous || typeof previous !== 'object') return null;
+  const contracts = Array.isArray(previous.contracts)
+    ? previous.contracts.filter((contract) => Number.isFinite(contract?.value))
+    : [];
+  if (contracts.length < 2) return null;
+  return {
+    ...previous,
+    status: 'fallback',
+    statusReason: '本轮 Yahoo Brent 合约曲线代理抓取不可用，临时保留上一轮已验证字段。',
+    generatedAt: isoNow,
+    limitationZh: '该字段为上一轮公开延迟期货报价代理，不是 ICE 官方 settlement curve，也不是 Platts Dated Brent。'
+  };
+}
+
+function buildBrentTermStructureProxyFromContracts(results, previousLayer = null) {
+  const okContracts = results
+    .filter((contract) => contract.status === 'ok' && Number.isFinite(contract.value))
+    .sort((a, b) => String(a.contractMonth).localeCompare(String(b.contractMonth)));
+  const contracts = okContracts.slice(0, 6);
+  if (contracts.length < 2) {
+    const fallback = normalizePreviousTermStructureProxy(previousLayer?.termStructureProxy);
+    if (fallback) return fallback;
+    return {
+      labelZh: 'Brent 期限结构代理',
+      source: 'yahoo:brent-futures-contract-chart',
+      sourceUrl: 'https://finance.yahoo.com/quote/BZ=F/',
+      status: 'missing',
+      statusReason: 'Yahoo Brent 合约曲线代理当前未取得足够合约报价。',
+      observedAt: null,
+      generatedAt: isoNow,
+      priceType: 'regularMarketPrice',
+      delayStatus: 'delayed',
+      contractCount: contracts.length,
+      frontContract: null,
+      backContract: null,
+      frontToBackSpread: null,
+      frontToBackSpreadPct: null,
+      slopeStatus: 'insufficient_data',
+      slopeStatusZh: brentTermStructureSlopeZh('insufficient_data'),
+      contracts,
+      diagnostics: {
+        attemptedSymbols: results.map((item) => item.symbol),
+        missingCount: results.filter((item) => item.status !== 'ok').length
+      },
+      limitationZh: '该字段为公开延迟期货报价代理，不是 ICE 官方 settlement curve，也不是 Platts Dated Brent。'
+    };
+  }
+
+  const frontContract = contracts[0];
+  const backContract = contracts[contracts.length - 1];
+  const frontToBackSpread = Number((frontContract.value - backContract.value).toFixed(2));
+  const frontToBackSpreadPct = frontContract.value
+    ? Number(((frontToBackSpread / frontContract.value) * 100).toFixed(2))
+    : null;
+  const slopeStatus = classifyBrentTermStructureSlope(frontToBackSpread);
+  return {
+    labelZh: 'Brent 期限结构代理',
+    source: 'yahoo:brent-futures-contract-chart',
+    sourceUrl: 'https://finance.yahoo.com/quote/BZ=F/',
+    status: contracts.length >= 6 ? 'ok' : 'partial',
+    statusReason: contracts.length >= 6
+      ? '已取得前 6 个可用 Brent 合约报价，作为期限结构公开代理。'
+      : '已取得至少 2 个 Brent 合约报价，但不足前 6 个，作为部分期限结构公开代理。',
+    observedAt: latestObservedAt(contracts),
+    generatedAt: isoNow,
+    priceType: 'regularMarketPrice',
+    delayStatus: 'delayed',
+    contractCount: contracts.length,
+    frontContract,
+    backContract,
+    frontToBackSpread,
+    frontToBackSpreadPct,
+    slopeStatus,
+    slopeStatusZh: brentTermStructureSlopeZh(slopeStatus),
+    contracts,
+    diagnostics: {
+      attemptedSymbols: results.map((item) => item.symbol),
+      missingCount: results.filter((item) => item.status !== 'ok').length
+    },
+    limitationZh: '该字段为公开延迟期货报价代理，不是 ICE 官方 settlement curve，也不是 Platts Dated Brent。'
+  };
+}
+
+async function resolveBrentTermStructureProxy(previousLayer = null) {
+  const candidates = buildBrentTermStructureCandidates();
+  const results = await Promise.all(candidates.map((candidate) => fetchYahooBrentContract(candidate)));
+  return buildBrentTermStructureProxyFromContracts(results, previousLayer);
+}
+
+function buildFormalDatedBrentStatus() {
+  return {
+    labelZh: 'Platts Dated Brent / 正式 Dated Brent',
+    source: 'S&P Global Commodity Insights / Platts',
+    sourceUrl: 'https://www.spglobal.com/energy/en/pricing-benchmarks/assessments/crude-oil/dated-brent-price-explained',
+    value: null,
+    observedAt: null,
+    status: 'license_required',
+    statusReason: '需要授权、redistribution 条款、assessment identifier 与发布时间字段后才能进入生产数据。',
+    limitationZh: '当前不使用 FRED、Yahoo、ICE 期货或 Freightos/Baltic proxy 冒充正式 Dated Brent。'
+  };
+}
+
+function buildShippingFreightProxyStatus() {
+  return {
+    labelZh: 'shipping / freight stress',
+    source: null,
+    sourceUrl: null,
+    value: null,
+    observedAt: null,
+    status: 'source_unavailable',
+    statusReason: 'Baltic crude tanker freight benchmark 需要授权数据通道；Freightos FBX 是 container freight proxy，当前未发现可稳定生产抓取的公开 JSON/CSV 接口。',
+    sourceFamilies: [
+      {
+        labelZh: 'Baltic Exchange freight benchmarks',
+        status: 'license_required',
+        limitationZh: '适合后续 crude tanker freight 审查，但需要授权数据通道。'
+      },
+      {
+        labelZh: 'Freightos Baltic Index',
+        status: 'source_review_only',
+        limitationZh: '只能作为 container freight proxy，不能写成 crude tanker freight 或 Dated Brent。'
+      }
+    ],
+    limitationZh: '当前仅展示源状态，不输出 freight 数值，不影响评分、决策、执行或仓位。'
+  };
+}
+
+function buildBrentPricingLayer({
+  realtimePayload,
+  displayInputsBaseline,
+  dailyRealtimeInput,
+  ulsdData = null,
+  termStructureProxy = null
+}) {
   const validation = realtimePayload?.brentValidation || {};
   const promotion = validation.promotion || {};
   const consensus = validation.consensus || {};
@@ -719,6 +972,34 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
 
   const crackSpreadRegime = classifyCrackSpreadRegime(crackSpread);
   const ulsdSourceStatus = ulsdData?.sourceStatus ?? 'missing';
+  const normalizedTermStructureProxy = termStructureProxy && typeof termStructureProxy === 'object'
+    ? termStructureProxy
+    : {
+      labelZh: 'Brent 期限结构代理',
+      source: 'yahoo:brent-futures-contract-chart',
+      sourceUrl: 'https://finance.yahoo.com/quote/BZ=F/',
+      status: 'missing',
+      statusReason: 'Brent 期限结构代理未生成。',
+      observedAt: null,
+      generatedAt: isoNow,
+      priceType: 'regularMarketPrice',
+      delayStatus: 'delayed',
+      contractCount: 0,
+      frontContract: null,
+      backContract: null,
+      frontToBackSpread: null,
+      frontToBackSpreadPct: null,
+      slopeStatus: 'insufficient_data',
+      slopeStatusZh: brentTermStructureSlopeZh('insufficient_data'),
+      contracts: [],
+      diagnostics: { attemptedSymbols: [], missingCount: 0 },
+      limitationZh: '该字段为公开延迟期货报价代理，不是 ICE 官方 settlement curve，也不是 Platts Dated Brent。'
+    };
+  const formalDatedBrent = buildFormalDatedBrentStatus();
+  const shippingFreightProxy = buildShippingFreightProxyStatus();
+  const termStructureHasData = ['ok', 'partial', 'fallback'].includes(normalizedTermStructureProxy.status)
+    && Array.isArray(normalizedTermStructureProxy.contracts)
+    && normalizedTermStructureProxy.contracts.length >= 2;
 
   return {
     contractVersion: 'v28.0I-5A',
@@ -733,6 +1014,9 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
     publicSpotProxy,
     futuresProxy,
     confirmationSources,
+    formalDatedBrent,
+    termStructureProxy: normalizedTermStructureProxy,
+    shippingFreightProxy,
     ulsdPrice,
     ulsd4wChange,
     crackSpread,
@@ -765,9 +1049,11 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
       )
     },
     dataGaps: [
-      'Platts Dated Brent / 正式 Dated Brent 未接入。',
-      'Brent 期限结构尚未正式接入。',
-      '油轮运费 / 航运压力尚未正式接入。'
+      'Platts Dated Brent / 正式 Dated Brent 仍需授权源，当前未以 proxy 冒充。',
+      termStructureHasData
+        ? 'ICE 官方 settlement curve 尚未接入；当前仅展示公开延迟期货曲线代理。'
+        : 'Brent 期限结构公开代理当前缺少足够合约报价。',
+      '油轮运费 / 航运压力仍需授权或稳定公开源，当前不输出 freight 数值。'
     ],
     limitations: [
       '当前仅为公开代理价格观察，不等同于付费 Dated Brent 或实物成交数据。',
@@ -1090,6 +1376,10 @@ function buildAiInterpretationLayer(data) {
   const confidenceLevel = confidenceLevelFromScore(confidenceScore);
   const primaryDivergence = divergenceLayer?.primaryDivergence || null;
   const brentSpread = brentPricingLayer?.proxySpread || null;
+  const termStructureProxy = brentPricingLayer?.termStructureProxy || null;
+  const termStructureProxyReady = ['ok', 'partial', 'fallback'].includes(termStructureProxy?.status)
+    && Array.isArray(termStructureProxy?.contracts)
+    && termStructureProxy.contracts.length >= 2;
   const consumerCheck = Array.isArray(divergenceLayer?.checks)
     ? divergenceLayer.checks.find((check) => check?.key === 'consumer_vs_asset_pricing')
     : null;
@@ -1195,9 +1485,11 @@ function buildAiInterpretationLayer(data) {
   ];
 
   const dataGaps = [
-    'Platts Dated Brent / 正式 Dated Brent 未接入。',
-    'Brent term structure 尚未接入。',
-    'shipping / freight stress 尚未接入。',
+    'Platts Dated Brent / 正式 Dated Brent 仍需授权源。',
+    termStructureProxyReady
+      ? 'ICE 官方 settlement curve 尚未接入；当前仅展示 Brent 公开延迟期货曲线代理。'
+      : 'Brent term structure 公开代理当前缺少足够合约报价。',
+    'shipping / freight stress 仍需授权或稳定公开源。',
     '世界秩序外部源质量需单独查看 World Order 模块。'
   ];
 
@@ -1215,6 +1507,7 @@ function buildAiInterpretationLayer(data) {
     dailyBrief ? aiEvidenceLink('dailyBrief', 'oneLineConclusion', '今日主判断来自 Daily Brief。') : null,
     divergenceLayer ? aiEvidenceLink('divergenceLayer', 'primaryDivergence', '主要背离来自 divergenceLayer。') : null,
     brentPricingLayer ? aiEvidenceLink('brentPricingLayer', 'proxySpread', 'Brent 代理价差来自 brentPricingLayer。') : null,
+    termStructureProxyReady ? aiEvidenceLink('brentPricingLayer', 'termStructureProxy', 'Brent 期限结构公开代理来自 brentPricingLayer。') : null,
     consumer ? aiEvidenceLink('macroDrivers.consumer', 'threeMonthChange', '消费者体感观察来自 FRED UMCSENT 月频数据。') : null,
     decisionModel ? aiEvidenceLink('decisionModel', 'strategyState', '策略状态仅作为上下文证据，不被 AI 解释层改写。') : null
   ].filter(Boolean);
@@ -3511,12 +3804,16 @@ async function build() {
     macroDrivers,
     confidenceScore
   });
-  const ulsdData = await resolveUlsd(prevData?.brentPricingLayer);
+  const [ulsdData, termStructureProxy] = await Promise.all([
+    resolveUlsd(prevData?.brentPricingLayer),
+    resolveBrentTermStructureProxy(prevData?.brentPricingLayer)
+  ]);
   const brentPricingLayer = buildBrentPricingLayer({
     realtimePayload: realtime,
     displayInputsBaseline,
     dailyRealtimeInput: buildDailyRealtimeInput(realtime),
-    ulsdData
+    ulsdData,
+    termStructureProxy
   });
 
   const data = {

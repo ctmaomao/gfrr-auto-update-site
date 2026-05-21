@@ -72,6 +72,8 @@ const VALID_CRE_SOURCES = new Set([
 ]);
 const VALID_CRE_STRESS_REGIMES = new Set(['恶化', '紧绷', '稳定', '宽松', '改善', '未知']);
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
+const BRENT_STATUS_NODE_STATUSES = new Set(['ok', 'partial', 'fallback', 'missing', 'license_required', 'source_unavailable', 'source_review_only']);
+const BRENT_TERM_SLOPE_STATUSES = new Set(['backwardation', 'contango', 'flat', 'insufficient_data']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
 const BRENT_PROXY_SPREAD_STATUSES = new Set(['normal', 'watch', 'stress', 'insufficient_data']);
@@ -578,6 +580,99 @@ function validateBrentLayerPriceNode(node, fieldName, expectedLabel = null) {
   assert(BRENT_LAYER_SOURCE_STATUSES.has(node.status), `${fieldName}.status is not supported`);
 }
 
+function validateBrentLayerStatusNode(node, fieldName) {
+  assertPlainObject(node, fieldName);
+  for (const key of ['labelZh', 'source', 'sourceUrl', 'value', 'observedAt', 'status', 'statusReason', 'limitationZh']) {
+    assert(Object.hasOwn(node, key), `${fieldName}.${key} is missing`);
+  }
+  assertString(node.labelZh, `${fieldName}.labelZh`);
+  validateNullableString(node.source, `${fieldName}.source`);
+  validateNullableString(node.sourceUrl, `${fieldName}.sourceUrl`);
+  assert(isFiniteNumberOrNull(node.value), `${fieldName}.value must be finite number or null`);
+  validateNullableIsoString(node.observedAt, `${fieldName}.observedAt`);
+  assert(BRENT_STATUS_NODE_STATUSES.has(node.status), `${fieldName}.status is not supported`);
+  assertString(node.statusReason, `${fieldName}.statusReason`);
+  assertString(node.limitationZh, `${fieldName}.limitationZh`);
+  assert(
+    node.status !== 'ok' || Number.isFinite(node.value),
+    `${fieldName}.status ok requires a finite value`
+  );
+}
+
+function validateBrentTermContract(contract, fieldName) {
+  assertPlainObject(contract, fieldName);
+  for (const key of ['symbol', 'contractMonth', 'value', 'observedAt', 'status']) {
+    assert(Object.hasOwn(contract, key), `${fieldName}.${key} is missing`);
+  }
+  assertString(contract.symbol, `${fieldName}.symbol`);
+  assert(/^\d{4}-\d{2}$/u.test(contract.contractMonth), `${fieldName}.contractMonth must be YYYY-MM`);
+  assert(isFiniteNumberOrNull(contract.value), `${fieldName}.value must be finite number or null`);
+  validateNullableIsoString(contract.observedAt, `${fieldName}.observedAt`);
+  assert(BRENT_STATUS_NODE_STATUSES.has(contract.status), `${fieldName}.status is not supported`);
+  if (contract.status === 'ok') {
+    assert(Number.isFinite(contract.value), `${fieldName}.status ok requires finite value`);
+    assert(contract.value > 0, `${fieldName}.value must not use 0 as a missing placeholder`);
+  }
+  validateStringIfPresent(contract, 'delayStatus', fieldName);
+  validateStringIfPresent(contract, 'priceType', fieldName);
+  if (contract.reason !== undefined) validateNullableString(contract.reason, `${fieldName}.reason`);
+}
+
+function validateBrentTermStructureProxy(proxy, fieldName) {
+  assertPlainObject(proxy, fieldName);
+  for (const key of [
+    'labelZh',
+    'source',
+    'sourceUrl',
+    'status',
+    'statusReason',
+    'observedAt',
+    'generatedAt',
+    'priceType',
+    'delayStatus',
+    'contractCount',
+    'frontContract',
+    'backContract',
+    'frontToBackSpread',
+    'frontToBackSpreadPct',
+    'slopeStatus',
+    'slopeStatusZh',
+    'contracts',
+    'diagnostics',
+    'limitationZh'
+  ]) {
+    assert(Object.hasOwn(proxy, key), `${fieldName}.${key} is missing`);
+  }
+  assertString(proxy.labelZh, `${fieldName}.labelZh`);
+  assertString(proxy.source, `${fieldName}.source`);
+  assertString(proxy.sourceUrl, `${fieldName}.sourceUrl`);
+  assert(BRENT_STATUS_NODE_STATUSES.has(proxy.status), `${fieldName}.status is not supported`);
+  assertString(proxy.statusReason, `${fieldName}.statusReason`);
+  validateNullableIsoString(proxy.observedAt, `${fieldName}.observedAt`);
+  parseIsoTime(proxy.generatedAt, `${fieldName}.generatedAt`);
+  assertString(proxy.priceType, `${fieldName}.priceType`);
+  assertString(proxy.delayStatus, `${fieldName}.delayStatus`);
+  assertFiniteNumber(proxy.contractCount, `${fieldName}.contractCount`);
+  assert(proxy.contractCount >= 0, `${fieldName}.contractCount must be non-negative`);
+  if (proxy.frontContract !== null) validateBrentTermContract(proxy.frontContract, `${fieldName}.frontContract`);
+  if (proxy.backContract !== null) validateBrentTermContract(proxy.backContract, `${fieldName}.backContract`);
+  assert(isFiniteNumberOrNull(proxy.frontToBackSpread), `${fieldName}.frontToBackSpread must be finite number or null`);
+  assert(isFiniteNumberOrNull(proxy.frontToBackSpreadPct), `${fieldName}.frontToBackSpreadPct must be finite number or null`);
+  assert(BRENT_TERM_SLOPE_STATUSES.has(proxy.slopeStatus), `${fieldName}.slopeStatus is not supported`);
+  assertString(proxy.slopeStatusZh, `${fieldName}.slopeStatusZh`);
+  assertArray(proxy.contracts, `${fieldName}.contracts`);
+  assert(proxy.contracts.length === proxy.contractCount, `${fieldName}.contractCount must equal contracts.length`);
+  proxy.contracts.forEach((contract, index) => validateBrentTermContract(contract, `${fieldName}.contracts[${index}]`));
+  assertPlainObject(proxy.diagnostics, `${fieldName}.diagnostics`);
+  validateArrayIfPresent(proxy.diagnostics, 'attemptedSymbols', `${fieldName}.diagnostics`);
+  validateFiniteNumberIfPresent(proxy.diagnostics, 'missingCount', `${fieldName}.diagnostics`);
+  assertString(proxy.limitationZh, `${fieldName}.limitationZh`);
+  assert(
+    !['ok', 'partial', 'fallback'].includes(proxy.status) || proxy.contracts.length >= 2,
+    `${fieldName}.status ${proxy.status} requires at least two contracts`
+  );
+}
+
 function validateBrentPricingLayer(dataPayload) {
   const layer = dataPayload.brentPricingLayer;
   if (layer === undefined) {
@@ -615,6 +710,15 @@ function validateBrentPricingLayer(dataPayload) {
   assertString(layer.publicSpotProxy.limitationZh, 'brentPricingLayer.publicSpotProxy.limitationZh');
   validateBrentLayerPriceNode(layer.futuresProxy, 'brentPricingLayer.futuresProxy', 'Brent 期货代理');
   assertString(layer.futuresProxy.limitationZh, 'brentPricingLayer.futuresProxy.limitationZh');
+  if (layer.formalDatedBrent !== undefined) {
+    validateBrentLayerStatusNode(layer.formalDatedBrent, 'brentPricingLayer.formalDatedBrent');
+  }
+  if (layer.termStructureProxy !== undefined) {
+    validateBrentTermStructureProxy(layer.termStructureProxy, 'brentPricingLayer.termStructureProxy');
+  }
+  if (layer.shippingFreightProxy !== undefined) {
+    validateBrentLayerStatusNode(layer.shippingFreightProxy, 'brentPricingLayer.shippingFreightProxy');
+  }
 
   assertArray(layer.confirmationSources, 'brentPricingLayer.confirmationSources');
   layer.confirmationSources.forEach((source, index) => {

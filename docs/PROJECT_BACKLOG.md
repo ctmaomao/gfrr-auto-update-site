@@ -9,10 +9,10 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-74 (Brent physical / term / freight proof-of-source design; no live fetch/runtime/data/frontend change) |
-| Cache version | `28.0M-72V` |
-| check:all 项数 | 74 |
-| 最后审计日期 | **2026-05-21** (M-74 Brent physical proof-of-source design; M-72 macro-driver date display fix; M-71 Brent public proxy source review; M-70 CRE FRED commercialRealEstate ingestion; M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
+| 当前生产状态 | v28.0M-75 (Brent term-structure production proxy display; formal Dated Brent / freight status-only display) |
+| Cache version | `28.0M-75V` |
+| check:all 项数 | 75 |
+| 最后审计日期 | **2026-05-21** (M-75 Brent production proxy display; M-74 Brent physical proof-of-source design; M-72 macro-driver date display fix; M-71 Brent public proxy source review; M-70 CRE FRED commercialRealEstate ingestion; M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
 | 最后 daily refresh | 2026-05-20 (Build Daily Radar Data run `26145627306`, commit `5de8d4d`) |
 | GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
@@ -24,7 +24,7 @@
 | Consumer Retail 状态 | M-69 起 `macroDrivers.consumerRetail` 接入 FRED CARTS/CARTSR (Chicago Fed weekly retail nowcast)；audit-only/display-only；仅用于 Macro Drivers 前端卡片；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation；不接 CARTSP |
 | CRE 状态 | M-70 起 `macroDrivers.commercialRealEstate` 接入 FRED DRCRELEXFACBS/CORCREXFACBS/SUBLPDRCSN/SUBLPDRCSC/SUBLPDRCSM 季频 CRE 信用压力 series；audit-only/display-only；独立于 `macroDrivers.credit`；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation |
 | Brent public proxy review | M-71 起完成 source-review only：EIA Europe Brent Spot Price FOB、ICE Brent futures curve、Baltic Exchange freight benchmarks、Freightos Baltic Index 与 future licensed S&P/Platts Dated Brent 已登记为候选；`sourceApproved=false` / `liveFetchApproved=false` / `productionDataWriteApproved=false`；Platts Dated Brent / 正式 Dated Brent 仍未接入 |
-| Brent physical proof-of-source | M-74 起完成 proof-of-source design only：`sp_global_platts_dated_brent` licensed-only、`ice_brent_futures_curve` term-structure proof、`baltic_exchange_freight_benchmarks` licensed freight proof、`freightos_baltic_index` container freight proxy proof；仍不 live fetch、不写 production data、不改 frontend/Worker/Brent promotion/scoring/decision |
+| Brent physical / term / freight | M-75 已将 `brentPricingLayer.termStructureProxy` 接为 Daily 生产公开延迟期货曲线代理并在前端展示；`formalDatedBrent` / `shippingFreightProxy` 只显示授权或来源状态，数值仍为 null；不改 Worker/Brent promotion/scoring/decision |
 | ADR-0013 | 2026-05-19 落地 (PR #231)；ADR-0001 zero-deps 精化为 runtime zero-dep,本地开发工具可在 ADR-0013 约束下使用 devDependencies |
 | First devDependency | M-63a 起 `xlsx@0.18.5` (SheetJS) 仅由 `scripts/world-order/sanitize-acled-weekly.mjs` 导入,runtime/check/workflow/frontend 不得引用 |
 | 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
@@ -89,6 +89,7 @@
 - **正式源不修原因**: Platts Dated Brent / 正式 Dated Brent 与 Baltic / ICE / S&P commodity market data 仍需要商业订阅、授权与再展示条款评审；当前不能直接接入生产链路
 - **公开代理轨道**: ✅ M-71 source-review only 已完成，候选为 EIA Europe Brent Spot Price FOB、ICE Brent futures curve、Baltic Exchange freight benchmarks、Freightos Baltic Index，以及 future licensed S&P/Platts Dated Brent
 - **proof-of-source 轨道**: ✅ M-74 design only 已完成，锁定 Platts licensed-only、ICE Brent futures term-structure、Baltic licensed freight benchmark、Freightos FBX container freight proxy 的 artifact 字段、license 检查、sanitizer 失败条件与 no-go wording
+- **production display 轨道**: ✅ M-75 已接 Yahoo delayed Brent futures contract chart payloads (`BZ*.NYM`) 作为 `termStructureProxy`；正式 Dated Brent 与 freight 仅显示真实 source status，不输出伪数值
 - **当前边界**: `sourceApproved=false` / `liveFetchApproved=false` / `productionDataWriteApproved=false`；不改 `values.brent`、Brent promotion、scoring、decision、execution、position、Worker、workflow、frontend 或 `data/radar-data.json`
 - **下一步**: artifact-only manual capture scaffold；no network by default；只写 ignored `manual-artifacts/brent-physical-proof-of-source/<timestamp>/`
 
@@ -160,6 +161,7 @@
 | M-71 | Brent public proxy source review | (this PR) | 2026-05-21 | ✅ Review-only source intake for EIA Brent spot proxy, ICE Brent futures curve, Baltic Exchange freight benchmarks, Freightos Baltic Index, and future licensed S&P/Platts Dated Brent; no live fetch, no source approval, no production write, no frontend/workflow/runtime/data change; `check:all` 72 → 73 |
 | M-72 | Macro driver date display fix (P2-10) | `e9727dd` | 2026-05-21 | ✅ Fixes JOLTS month and CRE quarter rendering so ISO vintage strings no longer surface malformed period labels; cache bumped to 28.0M-72V |
 | M-74 | Brent physical proof-of-source design | (this PR) | 2026-05-21 | ✅ Defines proof contracts for licensed Platts Dated Brent, ICE Brent futures term structure, Baltic Exchange freight benchmarks, and Freightos FBX; adds `check:brent-physical-proof-of-source-design`; `check:all` 73 → 74; no live fetch/production write/frontend/workflow/Worker/Brent promotion/scoring/decision change |
+| M-75 | Brent production proxy display | (this PR) | 2026-05-21 | ✅ Adds Daily `brentPricingLayer.termStructureProxy` from Yahoo delayed Brent futures contract chart payloads (`BZ*.NYM`), displays formal Dated Brent / term structure / shipping-freight in the existing Brent card, and adds `check:brent-production-proxy-display`; formal Dated Brent and freight remain null/status-only until licensed/stable sources are approved; `check:all` 74 → 75; cache bumped to 28.0M-75V |
 
 ---
 
@@ -194,6 +196,7 @@
 | 2026-05-21 | M-71 Brent public proxy source review | Codex | P3-11 reframed for public-proxy path | EIA / ICE / Baltic Exchange / Freightos / S&P-Platts source families reviewed as candidates only; Platts Dated Brent remains unconnected; no live fetch / production write / runtime / frontend / workflow change; `check:all` 72 → 73 |
 | 2026-05-21 | M-72 macro-driver date display fix | Codex | P2-10 closed | JOLTS / CRE vintage formatter no longer surfaces malformed period labels; cache 28.0M-72V |
 | 2026-05-21 | M-74 Brent physical proof-of-source design | Codex | P3-11 proof-of-source rung | Platts licensed-only, ICE term-structure, Baltic freight, and Freightos FBX proof contracts defined; no live fetch / production write / runtime / frontend / workflow change; `check:all` 73 → 74 |
+| 2026-05-21 | M-75 Brent production proxy display | Codex | P3-11 first production display rung | Yahoo delayed Brent futures contract chart payloads populate `brentPricingLayer.termStructureProxy`; formal Dated Brent and freight source status display without fabricated values; existing Brent frontend card now surfaces all three tracks; `check:all` 74 → 75 |
 
 ---
 
@@ -246,9 +249,9 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-### Session Handoff (2026-05-21 — M-74 Brent physical proof-of-source design ready)
+### Session Handoff (2026-05-21 — M-75 Brent production proxy display ready)
 
-- **上次会话结束于**: HEAD 待 PR。本 session (2026-05-21) 增量：(1) **M-74 Brent physical proof-of-source design**：新增 `docs/BRENT_PHYSICAL_PROOF_OF_SOURCE_DESIGN.md`、machine-readable fixture、`check:brent-physical-proof-of-source-design`；(2) 三条轨道均已开始但仍未生产接入：`sp_global_platts_dated_brent` = licensed-only formal Dated Brent proof path，`ice_brent_futures_curve` = Brent term-structure proof target，`baltic_exchange_freight_benchmarks` + `freightos_baltic_index` = shipping/freight proof targets；(3) `check:all` = **74 项**；(4) 本轮未改 frontend，所以 cache 仍为 `28.0M-72V`。未改 data/realtime/workflow/Worker/frontend/Brent promotion/scoring/decision/execution/position。
-- **当前进行中**: M-74 proof-of-source design PR 待 review / merge。
-- **下一步建议**: (a) 若要继续推进三项，下一 rung 做 `brent physical proof-of-source artifact-only manual capture scaffold`，默认 no network，只写 ignored `manual-artifacts/brent-physical-proof-of-source/<timestamp>/`；(b) Platts 正式 Dated Brent 必须先拿 license / redistribution / delivery channel 证据，不能用公开 proxy 冒充；(c) ICE term structure 与 Baltic/Freightos freight 先做 sanitizer + manual artifact 审查，再谈 runtime/display；(d) M-63c 跨周/monthly cron 仍按原时间点观察。
-- **阻塞或等待**: 无技术阻塞。真正生产接入仍被授权与 source compliance 阻塞：Platts / Baltic 需要 license；ICE / Freightos 需要 allowed-use 与字段稳定性审查；M-74 本身不拿生产数据、不写生产数据。
+- **上次会话结束于**: HEAD 待 PR。本 session (2026-05-21) 增量：(1) **M-74 Brent physical proof-of-source design**：新增 proof-of-source doc、fixture、checker；(2) **M-75 Brent production proxy display**：新增 Daily `brentPricingLayer.termStructureProxy` Yahoo delayed futures-contract chart fetcher，新增 `formalDatedBrent` / `shippingFreightProxy` status nodes，前端 Brent 卡片显示三条轨道；(3) `check:all` = **75 项**；(4) cache bumped to `28.0M-75V`。未改 data/realtime/workflow/Worker/Brent promotion/scoring/decision/execution/position。
+- **当前进行中**: M-74/M-75 Brent PR 待 review / merge。
+- **下一步建议**: (a) 若要让正式 Platts Dated Brent 产生数值，必须先拿 license / redistribution / delivery channel 证据，不能用公开 proxy 冒充；(b) 若要让 freight 产生数值，优先 Baltic tanker benchmark licensed path 或明确允许的稳定公开 endpoint；(c) 若要替换 Yahoo term-structure proxy 为 official ICE settlement curve，需另开 source compliance / licensed data rung；(d) M-63c 跨周/monthly cron 仍按原时间点观察。
+- **阻塞或等待**: Platts / Baltic 正式数值仍被授权与 source compliance 阻塞；当前可生产接入的是 Yahoo delayed futures-curve proxy，不是正式 Dated Brent 或 crude tanker freight。
