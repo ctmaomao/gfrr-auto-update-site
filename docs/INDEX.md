@@ -86,6 +86,10 @@
 - `docs/M-52_RISK_ASSET_MISMATCH_NARRATIVE_ENHANCEMENT.md`
 - `docs/M-53_OVERHEAT_CONFIRMATION_NARRATIVE_ENHANCEMENT.md`
 
+### Brent / energy public proxy source review scope
+
+- `docs/BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md` (M-71)
+
 ### Frontend visual + IA restructure scope (M-54 → M-55b)
 
 - `docs/M-54_FRONTEND_VISUAL_UPGRADE_PHASE1.md`

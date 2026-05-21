@@ -143,6 +143,27 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 
 ---
 
+### Brent physical / term / freight public proxy candidates (M-71 source review only)
+
+| Candidate | Source family | Review role | Status |
+|---|---|---|---|
+| EIA Europe Brent Spot Price FOB | `eia.gov` Open Data petroleum | public Brent spot proxy comparison | `sourceApproved=false`;`liveFetchApproved=false`;not Platts Dated Brent |
+| ICE Brent futures curve | `ice.com` Brent Crude Futures / ICE Data Services | Brent term structure candidate | `sourceApproved=false`;`liveFetchApproved=false`;futures curve only |
+| Baltic Exchange freight benchmarks | `balticexchange.com` data services / indices | shipping / freight stress source family | `sourceApproved=false`;`liveFetchApproved=false`;freight benchmark only |
+| Freightos Baltic Index | `freightos.com` / Freightos Terminal | container freight public proxy candidate | `sourceApproved=false`;`liveFetchApproved=false`;container proxy only |
+| S&P / Platts Dated Brent | S&P Global Commodity Insights / Platts Market Data | future licensed formal Dated Brent source | `sourceApproved=false`;`liveFetchApproved=false`;future licensed only |
+
+M-71 public proxy source review identifies websites and source families for a
+future audit-only/public-proxy rung. It does **not** approve live fetch, does not
+write production data, does not modify Worker runtime, does not modify frontend,
+does not change `values.brent`, and does not change Brent promotion. Platts
+Dated Brent / 正式 Dated Brent remains unconnected unless a future licensed
+source review and implementation PR explicitly changes that.
+
+See [`BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md`](BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md).
+
+---
+
 ### GDELT Cloud v2
 
 | 字段 | 值 |
@@ -288,6 +309,7 @@ documented attribution string and code is a contract violation.
 | 消费层 | 主要数据源 |
 |---|---|
 | `values.brent` | FRED `DCOILBRENTEU` (anchor) + Yahoo `BZ=F` (fresh confirmation) + TE (freshness gate) + D-6 extreme-move guard |
+| `brent public proxy candidates` | M-71 source-review only: EIA Europe Brent Spot Price FOB / ICE Brent futures curve / Baltic Exchange freight benchmarks / Freightos Baltic Index / future licensed S&P-Platts Dated Brent |
 | `values.vix` / `values.gold` / `values.dxy` / `values.us10y` / `values.spx` | 来自 GitHub realtime-data 或 displayInputsBaseline;**secondary preview 仅诊断,不覆盖** |
 | `macroDrivers.fedLiquidity` | FRED: DFF, SOFR, WRESBAL, BGCR, TGCR (+ 派生 spreads) |
 | `macroDrivers.credit` | FRED: BAMLH0A0HYM2 (HY OAS), BAMLC0A0CM (IG OAS), DRTSCILM, DRTSCIS, NFCI |
