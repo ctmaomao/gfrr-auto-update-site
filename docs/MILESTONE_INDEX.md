@@ -1,7 +1,7 @@
 # Milestone Index
 
-> Milestone (M-XX 与 vXX.XX) 一行索引。抽取自 `README.md` 末尾 milestone 段
-> 与 `AGENTS.md` "v28.0L / M / N reminder" 段 (v28.0J-pre-split tag)。
+> Milestone (M-XX 与 vXX.XX) 一行索引。本文件是 milestone 历史的默认入口;
+> `README.md` 只保留项目入口摘要,不再承载 milestone 流水账。
 >
 > **加载策略**:默认会话只读 ## Active 与 ## Recently Merged 段。
 > ## Archived 段仅在用户明确要求查阅历史时读取。
@@ -33,11 +33,11 @@
 ### M-series (M-31 → M-66)
 
 - ADR-0014 DESIGN.md §4.1 为 IA ground truth；authority hierarchy (ADR > DESIGN.md > checks > HTML)；appendix content boundaries codified — `docs/ADR/0014-design-md-is-ia-ground-truth.md`
-- M-66 Detail Data header anchor 改名为 `detail-data-header`;三大 appendix 顶级 subsection kicker 一致性加 checker 守护 — (无独立 doc;见 README + PROJECT_BACKLOG M-66)
-- M-65 `#method-evidence` 内容清理;系统总览迁入 `#detail-data`;恢复/系统状态合并入 DATA HEALTH — (无独立 doc;见 README + PROJECT_BACKLOG M-65)
-- M-64 首页 IA 三方契约对齐;World Order Stress 提升为顶级 regime overlay;External AI 回到 method 之后 — (无独立 doc;见 README + DESIGN.md §4.1)
-- M-63a ACLED weekly regional sanitizer + importer;`xlsx@0.18.5` devDep;`peaceDividendRetreat` 重加权;旧 API adapter 移除 — (无独立 doc;见 README + PROJECT_BACKLOG M-63a)
-- M-62 QQQ weekly history isoWeek-keyed merge + cross-seam monotonicity check — (无独立 doc;见 README)
+- M-66 Detail Data header anchor 改名为 `detail-data-header`;三大 appendix 顶级 subsection kicker 一致性加 checker 守护 — (无独立 doc;见 PR / git history)
+- M-65 `#method-evidence` 内容清理;系统总览迁入 `#detail-data`;恢复/系统状态合并入 DATA HEALTH — (无独立 doc;见 PR / git history)
+- M-64 首页 IA 三方契约对齐;World Order Stress 提升为顶级 regime overlay;External AI 回到 method 之后 — (见 DESIGN.md §4.1 + PR / git history)
+- M-63a ACLED weekly regional sanitizer + importer;`xlsx@0.18.5` devDep;`peaceDividendRetreat` 重加权;旧 API adapter 移除 — (见 PROJECT_BACKLOG 历史摘要 + PR / git history)
+- M-62 QQQ weekly history isoWeek-keyed merge + cross-seam monotonicity check — (无独立 doc;见 PR / git history)
 - M-61 SIPRI 2024 真实数据 + 3 world_order supporting branch — `docs/M-61_SIPRI_INTEGRATION.md`
 - M-60 Pages auto-deploy workflow_run 集中 + check:pages-trigger-coverage — `docs/M-60_PAGES_TRIGGER_COVERAGE.md`
 - M-59 GDELT Cloud v2 Bearer fetcher + daily refresh workflow — `docs/M-59_GDELT_CLOUD_INTEGRATION.md`
