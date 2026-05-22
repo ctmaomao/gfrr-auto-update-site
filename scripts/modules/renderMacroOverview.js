@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-77V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-77V';
-import { formatFiniteNumber } from './format.js?v=28.0M-77V';
+import { $ } from './config.js?v=28.0M-78V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-78V';
+import { formatFiniteNumber } from './format.js?v=28.0M-78V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -430,10 +430,19 @@ function buildPressureSources(data, worldOrderStressData) {
     .filter(isPlainObject)
     .slice(0, 3)
     .map((contract) => `${text(contract.contract, '--')}(${formatWeekVintage(contract.lastTrade)})`);
+  const brentFuturesPriceCurve = isPlainObject(brentLayer.futuresPriceCurve) ? brentLayer.futuresPriceCurve : {};
+  const brentFuturesPriceCurveContracts = safeArray(brentFuturesPriceCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 4)
+    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.price, 2)}`);
   const energyGaps = safeArray(brentLayer.dataGaps);
   const energyMissing = [
     'Platts Dated Brent / 正式 Dated Brent 和实物端证据仍待验证。',
-    brentFuturesCurveContracts.length ? 'ICE 合约结构已接入；可验证结算价期限曲线仍待接入。' : 'Brent futures curve structure 等待刷新。',
+    brentFuturesPriceCurveContracts.length
+      ? 'Yahoo priced futures proxy 已接入；正式 ICE settlement curve / Platts 期限结构仍待接入。'
+      : brentFuturesCurveContracts.length
+        ? 'ICE 合约结构已接入；priced proxy / 可验证结算价期限曲线仍待接入。'
+        : 'Brent futures curve structure 等待刷新。',
     dirtyTankerIndex === null ? '油轮运费压力等待 BDTI 刷新。' : null,
   ].filter(Boolean);
   const worldFreshness = text(worldOrderStressData?.freshness, INSUFFICIENT);
@@ -459,6 +468,9 @@ function buildPressureSources(data, worldOrderStressData) {
           : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶；4周变化 ${formatSignedDecimal(crackSpread4wChange, 2)}`,
         brentFuturesCurveContracts.length
           ? `ICE Brent futuresCurve structure-only: ${brentFuturesCurveContracts.join(' / ')}；status=${text(brentFuturesCurve.curveStatus, 'missing')}`
+          : null,
+        brentFuturesPriceCurveContracts.length
+          ? `Yahoo Brent priced futures proxy: ${brentFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentFuturesPriceCurve.frontMinusBack, 2)}`
           : null,
       ].filter(Boolean),
       missingEvidence: energyGaps.length || dirtyTankerIndex === null ? energyMissing : [],
@@ -543,6 +555,11 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
     .slice(0, 3)
     .map((contract) => text(contract.contract, null))
     .filter(Boolean);
+  const brentFuturesPriceCurve = isPlainObject(brentLayer.futuresPriceCurve) ? brentLayer.futuresPriceCurve : {};
+  const brentFuturesPriceCurveContracts = safeArray(brentFuturesPriceCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 4)
+    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.price, 2)}`);
   const largestDivergence = isPlainObject(brief.largestDivergence) ? brief.largestDivergence : {};
   const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
   const verified = [];
@@ -561,8 +578,10 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
   pending.push('能源价格处于观察区间，但实物端验证数据仍不足。');
   const dataGapEvidence = [
     'Platts Dated Brent / 正式 Dated Brent 尚未接入。',
-    brentFuturesCurveContracts.length
-      ? `ICE Brent futuresCurve structure-only 已显示 ${brentFuturesCurveContracts.join('/')}；可验证结算价期限曲线仍待接入。`
+    brentFuturesPriceCurveContracts.length
+      ? `Yahoo Brent priced futures proxy 已显示 ${brentFuturesPriceCurveContracts.join(' / ')}；正式 settlement curve 仍待接入。`
+      : brentFuturesCurveContracts.length
+        ? `ICE Brent futuresCurve structure-only 已显示 ${brentFuturesCurveContracts.join('/')}；priced proxy / 可验证结算价期限曲线仍待接入。`
       : 'Brent futures curve structure 等待刷新。',
     finite(shippingFreight.balticDirtyTankerIndex) === null
       ? 'shipping / freight 等待 BDTI/BCTI/BDI 刷新。'
@@ -709,6 +728,11 @@ function buildMacroDrivers(data) {
   const fedFundsFutureFrontPrice = finite(policyExpectations.fedFundsFutureFrontPrice);
   const fedFundsFutureImpliedRate = finite(policyExpectations.fedFundsFutureImpliedRate);
   const futureMinusTargetMid = finite(policyExpectations.futureMinusTargetMid);
+  const fedFundsFuturesCurve = isPlainObject(policyExpectations.fedFundsFuturesCurve) ? policyExpectations.fedFundsFuturesCurve : {};
+  const fedFundsFuturesCurveContracts = safeArray(fedFundsFuturesCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 4)
+    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.impliedRate, 2, '%')}`);
   const dotPlotMedianCurrentYear = finite(policyExpectations.dotPlotMedianCurrentYear);
   const dotPlotMedianNextYear = finite(policyExpectations.dotPlotMedianNextYear);
   const dotPlotMedianTwoYearsOut = finite(policyExpectations.dotPlotMedianTwoYearsOut);
@@ -722,6 +746,8 @@ function buildMacroDrivers(data) {
   const policyExpectationRegime = text(policyExpectations.policyExpectationRegime, '未知');
   const bdcEtfPrice = finite(privateCreditProxy.bdcEtfPrice);
   const bdcEtf4wChange = finite(privateCreditProxy.bdcEtf4wChange);
+  const privateCreditIgOas = finite(privateCreditProxy.igOas);
+  const privateCreditIgMinusHyOas = finite(privateCreditProxy.igMinusHyOas);
   const cdxHyStatus = text(privateCreditProxy.cdxHyStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxHy));
   const cdxIgStatus = text(privateCreditProxy.cdxIgStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxIg));
   const privateCreditMarksStatus = text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks));
@@ -738,6 +764,11 @@ function buildMacroDrivers(data) {
     .filter(isPlainObject)
     .slice(0, 4)
     .map((contract) => `${text(contract.contract, '--')}(${formatWeekVintage(contract.lastTrade)})`);
+  const brentFuturesPriceCurve = isPlainObject(brentLayer.futuresPriceCurve) ? brentLayer.futuresPriceCurve : {};
+  const brentFuturesPriceCurveContracts = safeArray(brentFuturesPriceCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 5)
+    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.price, 2)}`);
   const vix = finite(inputs.vix);
   const creditCalm = hyOas !== null && hyOas < 4 && vix !== null && vix < 22;
   const policyProxyEvidence = [
@@ -748,13 +779,16 @@ function buildMacroDrivers(data) {
     sofr === null ? null : `SOFR ${formatNumber(sofr, 2, '%')} — 隔夜担保融资`,
     targetMid === null ? null : `Fed target range ${formatRateRange(targetLower, targetUpper)}；midpoint ${formatNumber(targetMid, 3, '%')}`,
     fedFundsFutureImpliedRate === null ? null : `ZQ front price ${formatNumber(fedFundsFutureFrontPrice, 3)}；implied ${formatNumber(fedFundsFutureImpliedRate, 2, '%')}；相对目标中点 ${formatSignedPoints(futureMinusTargetMid)}（${policyExpectationRegime}）`,
+    fedFundsFuturesCurveContracts.length
+      ? `ZQ monthly futures curve proxy: ${fedFundsFuturesCurveContracts.join(' / ')}；front-back ${formatSignedPoints(fedFundsFuturesCurve.frontMinusBack)}；status=${text(fedFundsFuturesCurve.curveStatus, 'missing')}`
+      : null,
     dotPlotMedianCurrentYear === null ? null : `SEP ${formatWeekVintage(policyExpectations.sepProjectionDate)} federal funds median: current ${formatNumber(dotPlotMedianCurrentYear, 2, '%')} / next ${formatNumber(dotPlotMedianNextYear, 2, '%')} / two-year ${formatNumber(dotPlotMedianTwoYearsOut, 2, '%')} / longer-run ${formatNumber(dotPlotMedianLongerRun, 2, '%')} (${formatUrlReference(policyExpectations.sepUrl)})`,
     policyTone === '未知' ? null : `FOMC ${formatWeekVintage(policyExpectations.statementDate)} statement tone: ${policyTone}；hawkish ${formatNumber(hawkishTermCount, 0)} / dovish ${formatNumber(dovishTermCount, 0)} (${formatUrlReference(policyExpectations.statementUrl)})`,
     minutesPolicyTone === '未知' ? null : `FOMC minutes ${formatWeekVintage(policyExpectations.minutesDate)} NLP tone: ${minutesPolicyTone}；hawkish ${formatNumber(minutesHawkishTermCount, 0)} / dovish ${formatNumber(minutesDovishTermCount, 0)} (${formatUrlReference(policyExpectations.minutesUrl)})`,
     isPlainObject(policyExpectations.minutesTopicCounts)
       ? `minutes topics: inflation=${formatNumber(policyExpectations.minutesTopicCounts.inflation, 0)} / labor=${formatNumber(policyExpectations.minutesTopicCounts.laborMarket, 0)} / financial=${formatNumber(policyExpectations.minutesTopicCounts.financialConditions, 0)} / risks=${formatNumber(policyExpectations.minutesTopicCounts.risks, 0)}`
       : null,
-    formatSourceStatusMap(policyExpectations.sourceStatus, [['targetRange', 'target'], ['fedFundsFuture', 'ZQ'], ['sepDotPlot', 'SEP'], ['policyStatement', 'statement'], ['fomcMinutes', 'minutes'], ['oisForward', 'OIS']]),
+    formatSourceStatusMap(policyExpectations.sourceStatus, [['targetRange', 'target'], ['fedFundsFuture', 'ZQ'], ['fedFundsFuturesCurve', 'ZQ curve'], ['sepDotPlot', 'SEP'], ['policyStatement', 'statement'], ['fomcMinutes', 'minutes'], ['oisForward', 'OIS']]),
   ].filter(Boolean);
   const hasPolicyProxy = policyProxyEvidence.length > 1;
 
@@ -930,12 +964,13 @@ function buildMacroDrivers(data) {
           ? 'BIZD listed BDC proxy 等待刷新。'
           : `BIZD ${formatNumber(bdcEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(bdcEtf4wChange)} — listed BDC proxy`,
         hyOas === null ? null : `HY OAS ${formatNumber(hyOas, 2, '%')} — 公开信用利差代理`,
+        privateCreditIgOas === null ? null : `IG OAS ${formatNumber(privateCreditIgOas, 2, '%')}；IG-HY ${formatSignedPoints(privateCreditIgMinusHyOas)} — cash-bond proxy`,
         `CDX HY status: ${cdxHyStatus}；CDX IG status: ${cdxIgStatus}`,
         `private credit marks status: ${privateCreditMarksStatus}`,
-        formatSourceStatusMap(privateCreditProxy.sourceStatus, [['bdcEtf', 'BIZD'], ['hyOas', 'HY OAS'], ['cdxHy', 'CDX HY'], ['cdxIg', 'CDX IG'], ['privateCreditMarks', 'private marks']]),
+        formatSourceStatusMap(privateCreditProxy.sourceStatus, [['bdcEtf', 'BIZD'], ['hyOas', 'HY OAS'], ['igOas', 'IG OAS'], ['cdxHy', 'CDX HY'], ['cdxIg', 'CDX IG'], ['privateCreditMarks', 'private marks']]),
       ].filter(Boolean),
       missingEvidence: ['CDX HY/IG 与私募信用 marks 需要 manual/licensed input；不伪造成公开数据。'],
-      explanation: 'BIZD 和 HY OAS 只提供公开市场压力代理，不能替代 CDX 或私募信用估值。',
+      explanation: 'BIZD、HY OAS 与 IG OAS 只提供公开市场压力代理，不能替代 CDX 或私募信用估值。',
       sourceType: bdcEtfPrice === null && hyOas === null ? '数据不足' : '代理信号',
       updatedAt: `Yahoo/FRED:${formatWeekVintage(privateCreditProxy.updatedAt)}`,
     }),
@@ -955,11 +990,16 @@ function buildMacroDrivers(data) {
         brentFuturesCurveContracts.length
           ? `ICE Brent futuresCurve structure-only: ${brentFuturesCurveContracts.join(' / ')}；status=${text(brentFuturesCurve.curveStatus, 'missing')}`
           : null,
+        brentFuturesPriceCurveContracts.length
+          ? `Yahoo Brent priced futures proxy: ${brentFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentFuturesPriceCurve.frontMinusBack, 2)}；slope=${text(brentFuturesPriceCurve.slopeRegime, '未知')}`
+          : null,
       ].filter(Boolean),
       missingEvidence: [
         'Platts Dated Brent / 正式 Dated Brent 未接入。',
-        brentFuturesCurveContracts.length
-          ? 'ICE 合约月份/到期结构已接入；可验证结算价期限曲线仍待接入。'
+        brentFuturesPriceCurveContracts.length
+          ? 'Yahoo priced futures proxy 已接入；正式 ICE settlement curve / Platts 期限结构仍待接入。'
+          : brentFuturesCurveContracts.length
+            ? 'ICE 合约月份/到期结构已接入；priced proxy / 可验证结算价期限曲线仍待接入。'
           : 'Brent futures curve structure 等待刷新。',
         '库存数据等待接入。'
       ],
@@ -1207,9 +1247,21 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
   const targetMid = finite(policyExpectations.targetMid);
   const fedFundsFutureImpliedRate = finite(policyExpectations.fedFundsFutureImpliedRate);
   const dotPlotMedianCurrentYear = finite(policyExpectations.dotPlotMedianCurrentYear);
+  const fedFundsFuturesCurve = isPlainObject(policyExpectations.fedFundsFuturesCurve) ? policyExpectations.fedFundsFuturesCurve : {};
+  const fedFundsFuturesCurveContracts = safeArray(fedFundsFuturesCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 4)
+    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.impliedRate, 2, '%')}`);
   const ulsdPrice = finite(brentLayer.ulsdPrice);
   const ulsd4wChange = finite(brentLayer.ulsd4wChange);
   const crackSpread4wChange = finite(brentLayer.crackSpread4wChange);
+  const brentFuturesPriceCurve = isPlainObject(brentLayer.futuresPriceCurve) ? brentLayer.futuresPriceCurve : {};
+  const brentFuturesPriceCurveContracts = safeArray(brentFuturesPriceCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 4)
+    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.price, 2)}`);
+  const privateCreditIgOas = finite(privateCreditProxy.igOas);
+  const privateCreditIgMinusHyOas = finite(privateCreditProxy.igMinusHyOas);
 
   return [
     createJudgment({
@@ -1226,6 +1278,9 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
           ? null
           : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶；4周变化 ${formatSignedDecimal(crackSpread4wChange, 2)}（${brentLayer.crackSpreadRegime}，日度更新）`,
         ulsdPrice === null ? null : `ULSD ${formatNumber(ulsdPrice, 3)}；4周变化 ${formatSignedDecimal(ulsd4wChange, 3)} — 下游成品油压力`,
+        brentFuturesPriceCurveContracts.length
+          ? `Yahoo Brent priced futures proxy: ${brentFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentFuturesPriceCurve.frontMinusBack, 2)}`
+          : null,
         dirtyTankerIndex === null
           ? null
           : `BDTI ${formatNumber(dirtyTankerIndex, 0)}（${text(shippingFreight.tankerFreightRegime, '未知')}）`,
@@ -1254,6 +1309,9 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
         targetMid === null || fedFundsFutureImpliedRate === null
           ? null
           : `Policy path proxy: target midpoint ${formatNumber(targetMid, 3, '%')}；ZQ implied ${formatNumber(fedFundsFutureImpliedRate, 2, '%')}；SEP current median ${formatNumber(dotPlotMedianCurrentYear, 2, '%')}`,
+        fedFundsFuturesCurveContracts.length
+          ? `ZQ monthly futures curve proxy: ${fedFundsFuturesCurveContracts.join(' / ')}；front-back ${formatSignedPoints(fedFundsFuturesCurve.frontMinusBack)}`
+          : null,
       ].filter(Boolean),
       missingEvidence: safeArray(ratesCheck.limitations).slice(0, 1).length
         ? safeArray(ratesCheck.limitations).slice(0, 1)
@@ -1316,6 +1374,7 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
         bdcEtfPrice === null
           ? null
           : `BIZD ${formatNumber(bdcEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(bdcEtf4wChange)}（listed BDC proxy）`,
+        privateCreditIgOas === null ? null : `IG OAS ${formatNumber(privateCreditIgOas, 2, '%')}；IG-HY ${formatSignedPoints(privateCreditIgMinusHyOas)}（cash-bond proxy）`,
         `CDX/private marks status: HY=${text(privateCreditProxy.cdxHyStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxHy))} / IG=${text(privateCreditProxy.cdxIgStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxIg))} / marks=${text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks))}`,
       ].filter(Boolean),
       missingEvidence: ['CDX HY/IG 与私募信用 marks 需要 manual/licensed input。'],

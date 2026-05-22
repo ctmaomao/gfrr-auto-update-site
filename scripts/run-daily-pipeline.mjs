@@ -97,10 +97,12 @@ const SHIPPING_FREIGHT_SOURCE = 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI';
 const CONSUMER_RETAIL_SOURCE =
   'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html';
 const POLICY_EXPECTATIONS_SOURCE =
-  'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F; FederalReserve:FOMC statement/SEP/minutes';
-const PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; FRED:BAMLH0A0HYM2';
+  'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures; FederalReserve:FOMC statement/SEP/minutes';
+const PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM';
 const CRE_PUBLIC_MARKET_PROXY_SOURCE =
   'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; Yahoo:VNQ; Yahoo:REM';
+const FUTURES_MONTH_CODES = ['F', 'G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z'];
+const FUTURES_MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function readJson(file, fallback = null) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
@@ -675,7 +677,14 @@ function brentSpreadStatusZh(status) {
   }[status] || '状态待确认';
 }
 
-function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyRealtimeInput, ulsdData = null, futuresCurveData = null }) {
+function buildBrentPricingLayer({
+  realtimePayload,
+  displayInputsBaseline,
+  dailyRealtimeInput,
+  ulsdData = null,
+  futuresCurveData = null,
+  futuresPriceCurveData = null
+}) {
   const validation = realtimePayload?.brentValidation || {};
   const promotion = validation.promotion || {};
   const consensus = validation.consensus || {};
@@ -773,6 +782,7 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
   const crackSpreadRegime = classifyCrackSpreadRegime(crackSpread);
   const ulsdSourceStatus = ulsdData?.sourceStatus ?? 'missing';
   const futuresCurve = normalizePreviousBrentFuturesCurve(futuresCurveData);
+  const futuresPriceCurve = normalizePreviousBrentFuturesPriceCurve(futuresPriceCurveData);
 
   return {
     contractVersion: 'v28.0I-5A',
@@ -787,6 +797,7 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
     publicSpotProxy,
     futuresProxy,
     futuresCurve,
+    futuresPriceCurve,
     confirmationSources,
     ulsdPrice,
     ulsd4wChange,
@@ -821,14 +832,17 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
     },
     dataGaps: [
       'Platts Dated Brent / 正式 Dated Brent 未接入。',
-      futuresCurve.curveStatus === 'live_structure_only'
-        ? 'ICE Brent 合约月份/到期结构已接入；可验证结算价期限曲线仍待接入。'
-        : 'Brent 期限结构仍待接入。',
+      futuresPriceCurve.curveStatus === 'live_proxy_priced'
+        ? 'Yahoo Brent 月度期货 priced proxy 已接入；正式 ICE settlement curve / Platts 期限结构仍待接入。'
+        : futuresCurve.curveStatus === 'live_structure_only'
+          ? 'ICE Brent 合约月份/到期结构已接入；priced proxy / 可验证结算价期限曲线仍待接入。'
+          : 'Brent 期限结构仍待接入。',
       '实物库存、区域价差与正式实物成交证据仍待接入。'
     ],
     limitations: [
       '当前仅为公开代理价格观察，不等同于付费 Dated Brent 或实物成交数据。',
       'ICE futuresCurve 当前是 structure-only，不显示或推断缺失的结算价期限曲线。',
+      'Yahoo futuresPriceCurve 是公开月度期货报价代理，不是官方 settlement curve。',
       '该层不改变 Brent 主值、评分、仓位或执行灯。'
     ],
     confidence: {
@@ -1682,6 +1696,129 @@ async function resolveBrentFuturesCurve(prevBrentPricingLayer) {
   }
 }
 
+function buildMissingBrentFuturesPriceCurve() {
+  return {
+    source: 'Yahoo:BZ-monthly-futures',
+    sourceUrl: null,
+    curveStatus: 'missing',
+    updatedAt: null,
+    frontPrice: null,
+    backPrice: null,
+    frontMinusBack: null,
+    slopeRegime: '未知',
+    contracts: [],
+    limitationZh: 'Yahoo 月度 Brent 期货报价不可用；正式 ICE settlement curve / Platts Dated Brent 仍未接入。'
+  };
+}
+
+function normalizePreviousBrentFuturesPriceCurve(prevCurve) {
+  if (!prevCurve || typeof prevCurve !== 'object') return buildMissingBrentFuturesPriceCurve();
+  const contracts = Array.isArray(prevCurve.contracts)
+    ? prevCurve.contracts
+        .map((contract) => ({
+          symbol: typeof contract?.symbol === 'string' ? contract.symbol : null,
+          contractMonth: typeof contract?.contractMonth === 'string' ? contract.contractMonth : null,
+          price: Number.isFinite(contract?.price) ? contract.price : null,
+          updatedAt: typeof contract?.updatedAt === 'string' ? contract.updatedAt : null
+        }))
+        .filter((contract) => contract.symbol && contract.contractMonth)
+    : [];
+  return {
+    source: typeof prevCurve.source === 'string' ? prevCurve.source : 'Yahoo:BZ-monthly-futures',
+    sourceUrl: typeof prevCurve.sourceUrl === 'string' ? prevCurve.sourceUrl : null,
+    curveStatus: ['live_proxy_priced', 'fallback_proxy_priced', 'missing'].includes(prevCurve.curveStatus)
+      ? prevCurve.curveStatus
+      : (contracts.length ? 'fallback_proxy_priced' : 'missing'),
+    updatedAt: typeof prevCurve.updatedAt === 'string' ? prevCurve.updatedAt : null,
+    frontPrice: Number.isFinite(prevCurve.frontPrice) ? prevCurve.frontPrice : null,
+    backPrice: Number.isFinite(prevCurve.backPrice) ? prevCurve.backPrice : null,
+    frontMinusBack: Number.isFinite(prevCurve.frontMinusBack) ? prevCurve.frontMinusBack : null,
+    slopeRegime: typeof prevCurve.slopeRegime === 'string' ? prevCurve.slopeRegime : '未知',
+    contracts,
+    limitationZh: typeof prevCurve.limitationZh === 'string'
+      ? prevCurve.limitationZh
+      : 'Yahoo 月度 Brent 期货报价仅为公开 priced proxy；不是官方 ICE settlement curve 或 Platts Dated Brent。'
+  };
+}
+
+function padTwoDigitYear(year) {
+  return String(year).slice(-2).padStart(2, '0');
+}
+
+function buildMonthlyFuturesSymbols({ root, suffix, startOffsetMonths = 1, monthsToScan = 12 }) {
+  const base = new Date(isoNow);
+  const candidates = [];
+  for (let index = 0; index < monthsToScan; index += 1) {
+    const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + startOffsetMonths + index, 1));
+    const monthIndex = d.getUTCMonth();
+    const year = d.getUTCFullYear();
+    const code = FUTURES_MONTH_CODES[monthIndex];
+    const yy = padTwoDigitYear(year);
+    candidates.push({
+      symbol: `${root}${code}${yy}${suffix}`,
+      contractMonth: `${FUTURES_MONTH_LABELS[monthIndex]}${yy}`
+    });
+  }
+  return candidates;
+}
+
+async function fetchYahooMonthlyFuturesCurve({ root, suffix, startOffsetMonths = 1, monthsToScan = 12, maxContracts = 8 }) {
+  const candidates = buildMonthlyFuturesSymbols({ root, suffix, startOffsetMonths, monthsToScan });
+  const results = await Promise.allSettled(candidates.map(async (candidate) => {
+    const quote = await fetchYahooChartQuote(candidate.symbol, '5d', '1d');
+    return {
+      symbol: candidate.symbol,
+      contractMonth: candidate.contractMonth,
+      price: quote.price,
+      updatedAt: quote.updatedAt
+    };
+  }));
+  return results
+    .filter((result) => result.status === 'fulfilled' && Number.isFinite(result.value.price))
+    .map((result) => result.value)
+    .slice(0, maxContracts);
+}
+
+function classifyBrentFuturesSlope(frontMinusBack) {
+  if (!Number.isFinite(frontMinusBack)) return '未知';
+  if (frontMinusBack >= 1) return 'backwardation';
+  if (frontMinusBack <= -1) return 'contango';
+  return 'flat';
+}
+
+async function resolveBrentFuturesPriceCurve(prevBrentPricingLayer) {
+  const fallback = normalizePreviousBrentFuturesPriceCurve(prevBrentPricingLayer?.futuresPriceCurve);
+  try {
+    const contracts = await fetchYahooMonthlyFuturesCurve({
+      root: 'BZ',
+      suffix: '.NYM',
+      startOffsetMonths: 1,
+      monthsToScan: 14,
+      maxContracts: 8
+    });
+    if (contracts.length < 2) throw new Error('yahoo:brent-monthly-futures insufficient contracts');
+    const front = contracts[0];
+    const back = contracts[contracts.length - 1];
+    const frontMinusBack = Number.isFinite(front.price) && Number.isFinite(back.price)
+      ? +(front.price - back.price).toFixed(3)
+      : null;
+    return {
+      source: 'Yahoo:BZ-monthly-futures',
+      sourceUrl: 'https://finance.yahoo.com/quote/BZ=F',
+      curveStatus: 'live_proxy_priced',
+      updatedAt: latestIsoDate(...contracts.map((contract) => contract.updatedAt)),
+      frontPrice: Number.isFinite(front.price) ? front.price : null,
+      backPrice: Number.isFinite(back.price) ? back.price : null,
+      frontMinusBack,
+      slopeRegime: classifyBrentFuturesSlope(frontMinusBack),
+      contracts,
+      limitationZh: 'Yahoo 月度 Brent 期货报价仅为公开 priced proxy；不是官方 ICE settlement curve、Platts Dated Brent 或正式实物现货。'
+    };
+  } catch (_err) {
+    return fallback;
+  }
+}
+
 async function fetchYahooChartQuote(symbol, range = '1mo', interval = '1d') {
   const url = `${YAHOO_CHART_BASE}/${encodeURIComponent(symbol)}?range=${encodeURIComponent(range)}&interval=${encodeURIComponent(interval)}`;
   const payload = await fetchJsonText(url, `yahoo:${symbol}`, YAHOO_FETCH_TIMEOUT_MS, {
@@ -1698,7 +1835,7 @@ async function fetchYahooChartQuote(symbol, range = '1mo', interval = '1d') {
       value: Number(value),
       timestamp: Number(timestamps[index])
     }))
-    .filter((point) => Number.isFinite(point.value) && Number.isFinite(point.timestamp));
+    .filter((point) => Number.isFinite(point.value) && point.value > 0 && Number.isFinite(point.timestamp));
   const latest = points[points.length - 1] || null;
   if (!latest) throw new Error(`yahoo:${symbol} missing close values`);
   const first = points[0] || null;
@@ -2359,6 +2496,39 @@ function classifyPolicyExpectationRegime(futureMinusTargetMid, dotPlotMedianCurr
   return '区间震荡';
 }
 
+function buildFedFundsFuturesCurve(contracts, targetMid) {
+  const normalizedContracts = (Array.isArray(contracts) ? contracts : [])
+    .map((contract) => {
+      const impliedRate = Number.isFinite(contract.price) ? +(100 - contract.price).toFixed(3) : null;
+      return {
+        symbol: contract.symbol,
+        contractMonth: contract.contractMonth,
+        price: contract.price,
+        impliedRate,
+        impliedMinusTargetMid: Number.isFinite(impliedRate) && Number.isFinite(targetMid)
+          ? +(impliedRate - targetMid).toFixed(3)
+          : null,
+        updatedAt: contract.updatedAt
+      };
+    })
+    .filter((contract) => contract.symbol && contract.contractMonth && Number.isFinite(contract.price));
+  if (normalizedContracts.length < 2) return buildMissingFedFundsFuturesCurve();
+  const front = normalizedContracts[0];
+  const back = normalizedContracts[normalizedContracts.length - 1];
+  return {
+    source: 'Yahoo:ZQ-monthly-futures',
+    curveStatus: 'live_proxy_curve',
+    updatedAt: latestIsoDate(...normalizedContracts.map((contract) => contract.updatedAt)),
+    frontImpliedRate: Number.isFinite(front.impliedRate) ? front.impliedRate : null,
+    backImpliedRate: Number.isFinite(back.impliedRate) ? back.impliedRate : null,
+    frontMinusBack: Number.isFinite(front.impliedRate) && Number.isFinite(back.impliedRate)
+      ? +(front.impliedRate - back.impliedRate).toFixed(3)
+      : null,
+    contracts: normalizedContracts,
+    limitationZh: 'Yahoo 月度 Fed funds futures 为公开政策路径 proxy；不是 OIS forward rate。'
+  };
+}
+
 function classifyPrivateCreditProxyRegime(bdcEtf4wChange, hyOas) {
   if (!Number.isFinite(bdcEtf4wChange) && !Number.isFinite(hyOas)) return '未知';
   if ((Number.isFinite(bdcEtf4wChange) && bdcEtf4wChange <= -0.08)
@@ -2653,6 +2823,7 @@ async function resolvePolicyExpectations(prevPolicy) {
   const status = {
     targetRange: 'missing',
     fedFundsFuture: 'missing',
+    fedFundsFuturesCurve: 'missing',
     sepDotPlot: 'missing',
     policyStatement: 'missing',
     fomcMinutes: 'missing',
@@ -2667,15 +2838,23 @@ async function resolvePolicyExpectations(prevPolicy) {
   let fedFundsFutureImpliedRate = null;
   let futureMinusTargetMid = null;
   let futureUpdatedAt = null;
+  let fedFundsFuturesCurve = buildMissingFedFundsFuturesCurve();
   let sepData = null;
   let statementData = null;
   let minutesData = null;
 
-  const [targetLowerResult, targetUpperResult, effrResult, futureResult, calendarResult] = await Promise.allSettled([
+  const [targetLowerResult, targetUpperResult, effrResult, futureResult, futuresCurveResult, calendarResult] = await Promise.allSettled([
     fetchFredSeries('DFEDTARL', 30),
     fetchFredSeries('DFEDTARU', 30),
     fetchFredSeries('DFF', 30),
     fetchYahooChartQuote('ZQ=F', '1mo', '1d'),
+    fetchYahooMonthlyFuturesCurve({
+      root: 'ZQ',
+      suffix: '.CBT',
+      startOffsetMonths: 1,
+      monthsToScan: 12,
+      maxContracts: 8
+    }),
     fetchLatestFedCalendarContext()
   ]);
 
@@ -2717,6 +2896,17 @@ async function resolvePolicyExpectations(prevPolicy) {
     futureMinusTargetMid = +(fedFundsFutureImpliedRate - targetMid).toFixed(3);
   } else if (Number.isFinite(fallback.futureMinusTargetMid)) {
     futureMinusTargetMid = fallback.futureMinusTargetMid;
+  }
+
+  if (futuresCurveResult.status === 'fulfilled') {
+    fedFundsFuturesCurve = buildFedFundsFuturesCurve(futuresCurveResult.value, targetMid);
+    status.fedFundsFuturesCurve = fedFundsFuturesCurve.contracts.length ? 'live' : 'missing';
+  } else if (Array.isArray(fallback.fedFundsFuturesCurve?.contracts) && fallback.fedFundsFuturesCurve.contracts.length) {
+    fedFundsFuturesCurve = {
+      ...normalizePreviousFedFundsFuturesCurve(fallback.fedFundsFuturesCurve),
+      curveStatus: 'fallback_proxy_curve'
+    };
+    status.fedFundsFuturesCurve = 'fallback';
   }
 
   if (calendarResult.status === 'fulfilled') {
@@ -2808,6 +2998,7 @@ async function resolvePolicyExpectations(prevPolicy) {
     fedFundsFutureImpliedRate: Number.isFinite(fedFundsFutureImpliedRate) ? fedFundsFutureImpliedRate : null,
     futureMinusTargetMid: Number.isFinite(futureMinusTargetMid) ? futureMinusTargetMid : null,
     futureUpdatedAt,
+    fedFundsFuturesCurve,
     dotPlotMedianCurrentYear,
     dotPlotMedianNextYear: Number.isFinite(sepData?.dotPlotMedianNextYear) ? sepData.dotPlotMedianNextYear : null,
     dotPlotMedianTwoYearsOut: Number.isFinite(sepData?.dotPlotMedianTwoYearsOut) ? sepData.dotPlotMedianTwoYearsOut : null,
@@ -2833,11 +3024,11 @@ async function resolvePolicyExpectations(prevPolicy) {
     oisForwardRate: null,
     oisForwardStatus: 'manual_required',
     sourceStatus: status,
-    updatedAt: latestIsoDate(targetUpdatedAt, futureUpdatedAt, sepData?.sepProjectionDate, statementData?.statementDate, minutesData?.minutesDate),
+    updatedAt: latestIsoDate(targetUpdatedAt, futureUpdatedAt, fedFundsFuturesCurve?.updatedAt, sepData?.sepProjectionDate, statementData?.statementDate, minutesData?.minutesDate),
     source: POLICY_EXPECTATIONS_SOURCE,
     notes: [
       'Fed target range/DFF 来自 FRED；SEP federal funds median、statement 与 minutes 文本来自 federalreserve.gov。',
-      'ZQ=F 为 front Fed funds futures proxy；OIS forward rate 需要 licensed/manual input,不从未授权源抓取。'
+      'ZQ=F 与 ZQ 月度合约为 Fed funds futures proxy；OIS forward rate 需要 licensed/manual input,不从未授权源抓取。'
     ]
   };
 }
@@ -3345,6 +3536,49 @@ function buildMissingShippingFreight() {
   };
 }
 
+function buildMissingFedFundsFuturesCurve() {
+  return {
+    source: 'Yahoo:ZQ-monthly-futures',
+    curveStatus: 'missing',
+    updatedAt: null,
+    frontImpliedRate: null,
+    backImpliedRate: null,
+    frontMinusBack: null,
+    contracts: [],
+    limitationZh: 'Yahoo 月度 Fed funds futures 报价不可用；OIS forward rate 仍需 manual/licensed input。'
+  };
+}
+
+function normalizePreviousFedFundsFuturesCurve(prevCurve) {
+  if (!prevCurve || typeof prevCurve !== 'object') return buildMissingFedFundsFuturesCurve();
+  const contracts = Array.isArray(prevCurve.contracts)
+    ? prevCurve.contracts
+        .map((contract) => ({
+          symbol: typeof contract?.symbol === 'string' ? contract.symbol : null,
+          contractMonth: typeof contract?.contractMonth === 'string' ? contract.contractMonth : null,
+          price: Number.isFinite(contract?.price) ? contract.price : null,
+          impliedRate: Number.isFinite(contract?.impliedRate) ? contract.impliedRate : null,
+          impliedMinusTargetMid: Number.isFinite(contract?.impliedMinusTargetMid) ? contract.impliedMinusTargetMid : null,
+          updatedAt: typeof contract?.updatedAt === 'string' ? contract.updatedAt : null
+        }))
+        .filter((contract) => contract.symbol && contract.contractMonth)
+    : [];
+  return {
+    source: typeof prevCurve.source === 'string' ? prevCurve.source : 'Yahoo:ZQ-monthly-futures',
+    curveStatus: ['live_proxy_curve', 'fallback_proxy_curve', 'missing'].includes(prevCurve.curveStatus)
+      ? prevCurve.curveStatus
+      : (contracts.length ? 'fallback_proxy_curve' : 'missing'),
+    updatedAt: typeof prevCurve.updatedAt === 'string' ? prevCurve.updatedAt : null,
+    frontImpliedRate: Number.isFinite(prevCurve.frontImpliedRate) ? prevCurve.frontImpliedRate : null,
+    backImpliedRate: Number.isFinite(prevCurve.backImpliedRate) ? prevCurve.backImpliedRate : null,
+    frontMinusBack: Number.isFinite(prevCurve.frontMinusBack) ? prevCurve.frontMinusBack : null,
+    contracts,
+    limitationZh: typeof prevCurve.limitationZh === 'string'
+      ? prevCurve.limitationZh
+      : 'Yahoo 月度 Fed funds futures 为公开代理曲线；不是 OIS forward rate。'
+  };
+}
+
 function buildMissingPolicyExpectations() {
   return {
     targetLower: null,
@@ -3356,6 +3590,7 @@ function buildMissingPolicyExpectations() {
     fedFundsFutureImpliedRate: null,
     futureMinusTargetMid: null,
     futureUpdatedAt: null,
+    fedFundsFuturesCurve: buildMissingFedFundsFuturesCurve(),
     dotPlotMedianCurrentYear: null,
     dotPlotMedianNextYear: null,
     dotPlotMedianTwoYearsOut: null,
@@ -3381,6 +3616,7 @@ function buildMissingPolicyExpectations() {
     sourceStatus: {
       targetRange: 'missing',
       fedFundsFuture: 'missing',
+      fedFundsFuturesCurve: 'missing',
       sepDotPlot: 'missing',
       policyStatement: 'missing',
       fomcMinutes: 'missing',
@@ -3388,7 +3624,7 @@ function buildMissingPolicyExpectations() {
     },
     updatedAt: null,
     source: POLICY_EXPECTATIONS_SOURCE,
-    notes: ['FOMC statement/SEP/minutes 来自 federalreserve.gov；ZQ=F 为 front Fed funds futures proxy；OIS forward 未用未授权源抓取。']
+    notes: ['FOMC statement/SEP/minutes 来自 federalreserve.gov；ZQ=F 与 ZQ 月度合约为 Fed funds futures proxy；OIS forward 未用未授权源抓取。']
   };
 }
 
@@ -3398,6 +3634,9 @@ function buildMissingPrivateCreditProxy() {
     bdcEtf4wChange: null,
     bdcEtfUpdatedAt: null,
     hyOas: null,
+    igOas: null,
+    igOasUpdatedAt: null,
+    igMinusHyOas: null,
     cdxHyStatus: 'manual_required',
     cdxIgStatus: 'manual_required',
     privateCreditMarksStatus: 'manual_required',
@@ -3405,13 +3644,14 @@ function buildMissingPrivateCreditProxy() {
     sourceStatus: {
       bdcEtf: 'missing',
       hyOas: 'missing',
+      igOas: 'missing',
       cdxHy: 'manual_required',
       cdxIg: 'manual_required',
       privateCreditMarks: 'manual_required'
     },
     updatedAt: null,
     source: PRIVATE_CREDIT_PROXY_SOURCE,
-    notes: ['BIZD 为公开上市 BDC ETF 代理；CDX 与私募信用 marks 仅保留 manual/licensed 插槽,不伪造成公开数据。']
+    notes: ['BIZD 为公开上市 BDC ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；CDX 与私募信用 marks 仅保留 manual/licensed 插槽,不伪造成公开数据。']
   };
 }
 
@@ -3692,6 +3932,7 @@ function normalizePreviousPolicyExpectations(prevPolicy) {
     fedFundsFutureFrontPrice: Number.isFinite(prevPolicy.fedFundsFutureFrontPrice) ? prevPolicy.fedFundsFutureFrontPrice : null,
     fedFundsFutureImpliedRate: Number.isFinite(prevPolicy.fedFundsFutureImpliedRate) ? prevPolicy.fedFundsFutureImpliedRate : null,
     futureMinusTargetMid,
+    fedFundsFuturesCurve: normalizePreviousFedFundsFuturesCurve(prevPolicy.fedFundsFuturesCurve),
     dotPlotMedianCurrentYear,
     minutesDate: typeof prevPolicy.minutesDate === 'string' ? prevPolicy.minutesDate : null,
     minutesUrl: typeof prevPolicy.minutesUrl === 'string' ? prevPolicy.minutesUrl : null,
@@ -3709,6 +3950,9 @@ function normalizePreviousPolicyExpectations(prevPolicy) {
     sourceStatus: {
       targetRange: targetMid !== null ? 'fallback' : 'missing',
       fedFundsFuture: Number.isFinite(prevPolicy.fedFundsFutureImpliedRate) ? 'fallback' : 'missing',
+      fedFundsFuturesCurve: Array.isArray(prevPolicy.fedFundsFuturesCurve?.contracts) && prevPolicy.fedFundsFuturesCurve.contracts.length
+        ? 'fallback'
+        : 'missing',
       sepDotPlot: dotPlotMedianCurrentYear !== null ? 'fallback' : 'missing',
       policyStatement: typeof prevPolicy.statementUrl === 'string' ? 'fallback' : 'missing',
       fomcMinutes: typeof prevPolicy.minutesUrl === 'string' ? 'fallback' : 'missing',
@@ -3722,6 +3966,8 @@ function normalizePreviousPrivateCreditProxy(prevPrivateCredit) {
   const bdcEtfPrice = Number.isFinite(prevPrivateCredit.bdcEtfPrice) ? prevPrivateCredit.bdcEtfPrice : null;
   const bdcEtf4wChange = Number.isFinite(prevPrivateCredit.bdcEtf4wChange) ? prevPrivateCredit.bdcEtf4wChange : null;
   const hyOas = Number.isFinite(prevPrivateCredit.hyOas) ? prevPrivateCredit.hyOas : null;
+  const igOas = Number.isFinite(prevPrivateCredit.igOas) ? prevPrivateCredit.igOas : null;
+  const igMinusHyOas = Number.isFinite(prevPrivateCredit.igMinusHyOas) ? prevPrivateCredit.igMinusHyOas : null;
   return {
     ...buildMissingPrivateCreditProxy(),
     ...prevPrivateCredit,
@@ -3729,12 +3975,16 @@ function normalizePreviousPrivateCreditProxy(prevPrivateCredit) {
     bdcEtf4wChange,
     bdcEtfUpdatedAt: typeof prevPrivateCredit.bdcEtfUpdatedAt === 'string' ? prevPrivateCredit.bdcEtfUpdatedAt : null,
     hyOas,
+    igOas,
+    igOasUpdatedAt: typeof prevPrivateCredit.igOasUpdatedAt === 'string' ? prevPrivateCredit.igOasUpdatedAt : null,
+    igMinusHyOas,
     privateCreditProxyRegime: typeof prevPrivateCredit.privateCreditProxyRegime === 'string' && prevPrivateCredit.privateCreditProxyRegime.trim()
       ? prevPrivateCredit.privateCreditProxyRegime
       : classifyPrivateCreditProxyRegime(bdcEtf4wChange, hyOas),
     sourceStatus: {
       bdcEtf: bdcEtfPrice !== null ? 'fallback' : 'missing',
       hyOas: hyOas !== null ? 'fallback' : 'missing',
+      igOas: igOas !== null ? 'fallback' : 'missing',
       cdxHy: 'manual_required',
       cdxIg: 'manual_required',
       privateCreditMarks: 'manual_required'
@@ -3841,6 +4091,7 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
   const status = {
     bdcEtf: 'missing',
     hyOas: 'missing',
+    igOas: 'missing',
     cdxHy: 'manual_required',
     cdxIg: 'manual_required',
     privateCreditMarks: 'manual_required'
@@ -3849,6 +4100,8 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
   let bdcEtf4wChange = null;
   let bdcEtfUpdatedAt = null;
   let hyOas = Number.isFinite(hyOasLive) ? hyOasLive : null;
+  let igOas = null;
+  let igOasUpdatedAt = null;
 
   try {
     const quote = await fetchYahooChartQuote('BIZD', '1mo', '1d');
@@ -3880,19 +4133,39 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
     }
   }
 
+  try {
+    const rows = await fetchFredSeries('BAMLC0A0CM', 30);
+    igOas = latestValue(rows);
+    igOasUpdatedAt = latestDateIso(rows);
+    status.igOas = Number.isFinite(igOas) ? 'live' : 'missing';
+  } catch (_err) {
+    if (Number.isFinite(fallback.igOas)) {
+      igOas = fallback.igOas;
+      igOasUpdatedAt = fallback.igOasUpdatedAt;
+      status.igOas = 'fallback';
+    }
+  }
+
+  const igMinusHyOas = Number.isFinite(igOas) && Number.isFinite(hyOas)
+    ? +(igOas - hyOas).toFixed(3)
+    : null;
+
   return {
     bdcEtfPrice: Number.isFinite(bdcEtfPrice) ? bdcEtfPrice : null,
     bdcEtf4wChange: Number.isFinite(bdcEtf4wChange) ? bdcEtf4wChange : null,
     bdcEtfUpdatedAt,
     hyOas: Number.isFinite(hyOas) ? hyOas : null,
+    igOas: Number.isFinite(igOas) ? igOas : null,
+    igOasUpdatedAt,
+    igMinusHyOas,
     cdxHyStatus: 'manual_required',
     cdxIgStatus: 'manual_required',
     privateCreditMarksStatus: 'manual_required',
     privateCreditProxyRegime: classifyPrivateCreditProxyRegime(bdcEtf4wChange, hyOas),
     sourceStatus: status,
-    updatedAt: latestIsoDate(bdcEtfUpdatedAt, fallback.updatedAt),
+    updatedAt: latestIsoDate(bdcEtfUpdatedAt, igOasUpdatedAt, fallback.updatedAt),
     source: PRIVATE_CREDIT_PROXY_SOURCE,
-    notes: ['BIZD 为公开上市 BDC ETF 代理；CDX 与私募信用 marks 仅保留 manual/licensed 插槽,不伪造成公开数据。']
+    notes: ['BIZD 为公开上市 BDC ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；CDX 与私募信用 marks 仅保留 manual/licensed 插槽,不伪造成公开数据。']
   };
 }
 
@@ -5159,16 +5432,18 @@ async function build() {
     macroDrivers,
     confidenceScore
   });
-  const [ulsdData, brentFuturesCurve] = await Promise.all([
+  const [ulsdData, brentFuturesCurve, brentFuturesPriceCurve] = await Promise.all([
     resolveUlsd(prevData?.brentPricingLayer),
-    resolveBrentFuturesCurve(prevData?.brentPricingLayer)
+    resolveBrentFuturesCurve(prevData?.brentPricingLayer),
+    resolveBrentFuturesPriceCurve(prevData?.brentPricingLayer)
   ]);
   const brentPricingLayer = buildBrentPricingLayer({
     realtimePayload: realtime,
     displayInputsBaseline,
     dailyRealtimeInput: buildDailyRealtimeInput(realtime),
     ulsdData,
-    futuresCurveData: brentFuturesCurve
+    futuresCurveData: brentFuturesCurve,
+    futuresPriceCurveData: brentFuturesPriceCurve
   });
 
   const data = {

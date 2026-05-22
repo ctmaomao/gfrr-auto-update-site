@@ -85,18 +85,21 @@ if (isPlainObject(policy)) {
     'dovishTermCount',
     'oisForwardRate'
   ]);
-  assertStatusKeys(policy, 'macroDrivers.policyExpectations', ['targetRange', 'fedFundsFuture', 'sepDotPlot', 'policyStatement', 'fomcMinutes', 'oisForward']);
-  if (policy.source !== 'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F; FederalReserve:FOMC statement/SEP/minutes') {
-    fail('macroDrivers.policyExpectations.source is not the approved M-77 source string');
+  if (!isPlainObject(policy.fedFundsFuturesCurve) || !Array.isArray(policy.fedFundsFuturesCurve.contracts)) {
+    fail('macroDrivers.policyExpectations.fedFundsFuturesCurve is missing');
+  }
+  assertStatusKeys(policy, 'macroDrivers.policyExpectations', ['targetRange', 'fedFundsFuture', 'fedFundsFuturesCurve', 'sepDotPlot', 'policyStatement', 'fomcMinutes', 'oisForward']);
+  if (policy.source !== 'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures; FederalReserve:FOMC statement/SEP/minutes') {
+    fail('macroDrivers.policyExpectations.source is not the approved M-78 source string');
   }
 }
 
 const privateCredit = macroDrivers?.privateCreditProxy;
 assertLayer('macroDrivers.privateCreditProxy', privateCredit);
 if (isPlainObject(privateCredit)) {
-  assertFiniteOrNull(privateCredit, 'macroDrivers.privateCreditProxy', ['bdcEtfPrice', 'bdcEtf4wChange', 'hyOas']);
-  assertStatusKeys(privateCredit, 'macroDrivers.privateCreditProxy', ['bdcEtf', 'hyOas', 'cdxHy', 'cdxIg', 'privateCreditMarks']);
-  if (privateCredit.source !== 'Yahoo:BIZD; FRED:BAMLH0A0HYM2') fail('macroDrivers.privateCreditProxy.source is not the approved M-74 source string');
+  assertFiniteOrNull(privateCredit, 'macroDrivers.privateCreditProxy', ['bdcEtfPrice', 'bdcEtf4wChange', 'hyOas', 'igOas', 'igMinusHyOas']);
+  assertStatusKeys(privateCredit, 'macroDrivers.privateCreditProxy', ['bdcEtf', 'hyOas', 'igOas', 'cdxHy', 'cdxIg', 'privateCreditMarks']);
+  if (privateCredit.source !== 'Yahoo:BIZD; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM') fail('macroDrivers.privateCreditProxy.source is not the approved M-78 source string');
 }
 
 const consumerRetail = macroDrivers?.consumerRetail;
@@ -120,13 +123,16 @@ const requiredRunDailyMarkers = [
   "fetchStockqIndex('BDI', 'Baltic Dry Index')",
   'async function resolvePolicyExpectations(prevPolicy)',
   "fetchYahooChartQuote('ZQ=F', '1mo', '1d')",
+  "root: 'ZQ'",
   'parseFedSepMedians',
   'parseFedPolicyTone',
   'parseFedMinutesTone',
   'async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive)',
   "fetchYahooChartQuote('BIZD', '1mo', '1d')",
+  "fetchFredSeries('BAMLC0A0CM', 30)",
   'fetchBofaConsumerCheckpoint',
   'resolveBrentFuturesCurve',
+  'resolveBrentFuturesPriceCurve',
   'shippingFreight: macroDrivers.shippingFreight',
   'policyExpectations: macroDrivers.policyExpectations',
   'privateCreditProxy: macroDrivers.privateCreditProxy'
@@ -144,6 +150,7 @@ const requiredRenderMarkers = [
   'BDI',
   'TGCR-SOFR',
   'ZQ front price',
+  'ZQ monthly futures curve proxy',
   'two-year',
   'longer-run',
   'hawkish',
@@ -151,6 +158,7 @@ const requiredRenderMarkers = [
   'FOMC minutes',
   'BoA Consumer Checkpoint',
   'ICE Brent futuresCurve structure-only',
+  'Yahoo Brent priced futures proxy',
   'MRTS 细分 ${index + 1}:',
   'non-public CRE loan tape status',
   'CDX HY status',
@@ -159,7 +167,8 @@ const requiredRenderMarkers = [
   'NFCI',
   'Fed funds futures',
   'FOMC statement',
-  'BIZD'
+  'BIZD',
+  'IG OAS'
 ];
 for (const marker of requiredRenderMarkers) {
   if (!renderMacroText.includes(marker)) fail(`renderMacroOverview missing M-74 marker: ${marker}`);
@@ -180,8 +189,10 @@ for (const marker of [
   'macroDrivers.privateCreditProxy',
   'BDTI',
   'ZQ=F',
+  'ZQ-monthly-futures',
   'fomcminutesYYYYMMDD.htm',
   'BoA Consumer Checkpoint',
+  'BAMLC0A0CM',
   'BIZD'
 ]) {
   if (!dataContractText.includes(marker)) fail(`DATA_CONTRACT missing M-74 marker: ${marker}`);

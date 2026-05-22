@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-22T04:31:28.752Z",
+  "updatedAt": "2026-05-22T04:59:18.542Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
     "commitSha": null,
-    "updatedAt": "2026-05-22T04:31:19.305Z",
+    "updatedAt": "2026-05-22T04:58:35.667Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-22T04:31:28.752Z"
+    "capturedAt": "2026-05-22T04:59:18.542Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-22T04:31:28.752Z",
+    "generatedAt": "2026-05-22T04:59:18.542Z",
     "macroState": "滞胀冲击 / 通胀冲击",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
     "dominantRiskChain": {
@@ -129,7 +129,7 @@
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-22T04:31:28.752Z",
+    "generatedAt": "2026-05-22T04:59:18.542Z",
     "score": 53,
     "state": "stress",
     "stateZh": "背离压力",
@@ -427,13 +427,13 @@
   },
   "brentPricingLayer": {
     "contractVersion": "v28.0I-5A",
-    "generatedAt": "2026-05-22T04:31:28.752Z",
+    "generatedAt": "2026-05-22T04:59:18.542Z",
     "mode": "public_proxy_observation",
     "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
     "selectedBrent": {
       "value": 116.73,
       "source": "fred:DCOILBRENTEU",
-      "observedAt": "2026-05-22T04:31:19.305Z",
+      "observedAt": "2026-05-22T04:58:35.667Z",
       "status": "ok",
       "noteZh": "当前主 Brent 显示值来自现有 Daily / realtime 输入；该层只做公开代理审计，不改变 values.brent。"
     },
@@ -448,8 +448,8 @@
     "futuresProxy": {
       "labelZh": "Brent 期货代理",
       "source": "yahoo",
-      "value": 104.04,
-      "observedAt": "2026-05-22T04:18:42.000Z",
+      "value": 104.09,
+      "observedAt": "2026-05-22T04:47:47.000Z",
       "status": "ok",
       "limitationZh": "该字段为公开期货/市场报价代理，仅用于验证层观察。"
     },
@@ -457,7 +457,7 @@
       "source": "ICE:Brent-Crude-Futures-contract-data",
       "sourceUrl": "https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430",
       "curveStatus": "live_structure_only",
-      "fetchedAt": "2026-05-22T04:31:28.752Z",
+      "fetchedAt": "2026-05-22T04:59:18.542Z",
       "contracts": [
         {
           "contract": "Jul26",
@@ -522,6 +522,67 @@
       ],
       "limitationZh": "ICE 页面当前只提供可验证合约月份/到期结构；未把官方结算价期限曲线写入生产数据。"
     },
+    "futuresPriceCurve": {
+      "source": "Yahoo:BZ-monthly-futures",
+      "sourceUrl": "https://finance.yahoo.com/quote/BZ=F",
+      "curveStatus": "live_proxy_priced",
+      "updatedAt": "2026-05-22T04:00:00.000Z",
+      "frontPrice": 104.09,
+      "backPrice": 84.43,
+      "frontMinusBack": 19.66,
+      "slopeRegime": "backwardation",
+      "contracts": [
+        {
+          "symbol": "BZN26.NYM",
+          "contractMonth": "Jul26",
+          "price": 104.09,
+          "updatedAt": "2026-05-22T04:00:00.000Z"
+        },
+        {
+          "symbol": "BZQ26.NYM",
+          "contractMonth": "Aug26",
+          "price": 100.73,
+          "updatedAt": "2026-05-22T04:00:00.000Z"
+        },
+        {
+          "symbol": "BZU26.NYM",
+          "contractMonth": "Sep26",
+          "price": 96.67,
+          "updatedAt": "2026-05-22T04:00:00.000Z"
+        },
+        {
+          "symbol": "BZV26.NYM",
+          "contractMonth": "Oct26",
+          "price": 92.73,
+          "updatedAt": "2026-05-21T04:00:00.000Z"
+        },
+        {
+          "symbol": "BZX26.NYM",
+          "contractMonth": "Nov26",
+          "price": 90.04,
+          "updatedAt": "2026-05-21T04:00:00.000Z"
+        },
+        {
+          "symbol": "BZZ26.NYM",
+          "contractMonth": "Dec26",
+          "price": 87.81,
+          "updatedAt": "2026-05-21T04:00:00.000Z"
+        },
+        {
+          "symbol": "BZF27.NYM",
+          "contractMonth": "Jan27",
+          "price": 85.96,
+          "updatedAt": "2026-05-21T04:00:00.000Z"
+        },
+        {
+          "symbol": "BZG27.NYM",
+          "contractMonth": "Feb27",
+          "price": 84.43,
+          "updatedAt": "2026-05-21T04:00:00.000Z"
+        }
+      ],
+      "limitationZh": "Yahoo 月度 Brent 期货报价仅为公开 priced proxy；不是官方 ICE settlement curve、Platts Dated Brent 或正式实物现货。"
+    },
     "confirmationSources": [
       {
         "source": "ice",
@@ -536,8 +597,8 @@
       {
         "source": "barchart",
         "labelZh": "barchart",
-        "value": 100.56,
-        "observedAt": "2026-05-22T04:21:05.000Z",
+        "value": 100.71,
+        "observedAt": "2026-05-22T04:49:00.000Z",
         "status": "excluded",
         "role": "diagnostic",
         "participatesInPromotion": false,
@@ -546,7 +607,7 @@
       {
         "source": "stooq",
         "labelZh": "Stooq Brent diagnostic",
-        "value": 104.08,
+        "value": 104.24,
         "observedAt": "2026-05-22",
         "status": "excluded",
         "role": "diagnostic",
@@ -566,7 +627,7 @@
       {
         "source": "oilprice",
         "labelZh": "oilprice",
-        "value": 103.96,
+        "value": 104.13,
         "observedAt": null,
         "status": "excluded",
         "role": "diagnostic",
@@ -576,8 +637,8 @@
       {
         "source": "yahoo",
         "labelZh": "Yahoo BZ=F",
-        "value": 104.04,
-        "observedAt": "2026-05-22T04:18:42.000Z",
+        "value": 104.09,
+        "observedAt": "2026-05-22T04:47:47.000Z",
         "status": "ok",
         "role": "futures_proxy",
         "participatesInPromotion": true,
@@ -601,9 +662,9 @@
     "crackSpreadRegime": "供应紧张",
     "ulsdSourceStatus": "live",
     "proxySpread": {
-      "spotMinusFutures": 12.69,
-      "selectedMinusFutures": 12.69,
-      "maxProxyDivergencePct": 11.28,
+      "spotMinusFutures": 12.64,
+      "selectedMinusFutures": 12.64,
+      "maxProxyDivergencePct": 11.234,
       "status": "stress",
       "statusZh": "公开代理价差压力",
       "interpretationZh": "该价差只用于公开代理价格层审计，不改变 Brent 主值或 promotion。"
@@ -614,16 +675,17 @@
       "promotionReason": "stooq/yahoo 基本一致，推荐优先采用 stooq；FRED 仅作低频锚点参考。",
       "selectedSource": "fred:DCOILBRENTEU",
       "anchorSource": "fred-anchor",
-      "anchorAgeHours": 100.52222222222223
+      "anchorAgeHours": 100.97666666666667
     },
     "dataGaps": [
       "Platts Dated Brent / 正式 Dated Brent 未接入。",
-      "ICE Brent 合约月份/到期结构已接入；可验证结算价期限曲线仍待接入。",
+      "Yahoo Brent 月度期货 priced proxy 已接入；正式 ICE settlement curve / Platts 期限结构仍待接入。",
       "实物库存、区域价差与正式实物成交证据仍待接入。"
     ],
     "limitations": [
       "当前仅为公开代理价格观察，不等同于付费 Dated Brent 或实物成交数据。",
       "ICE futuresCurve 当前是 structure-only，不显示或推断缺失的结算价期限曲线。",
+      "Yahoo futuresPriceCurve 是公开月度期货报价代理，不是官方 settlement curve。",
       "该层不改变 Brent 主值、评分、仓位或执行灯。"
     ],
     "confidence": {
@@ -661,7 +723,7 @@
     "us10y": 4.57,
     "real10y": 2.13,
     "breakeven10y": 2.39,
-    "gold": 4533.299805,
+    "gold": 4530.100098,
     "spx": 7445.72
   },
   "topRisks": [
@@ -742,6 +804,81 @@
       "fedFundsFutureImpliedRate": 3.725,
       "futureMinusTargetMid": 0.1,
       "futureUpdatedAt": "2026-05-22T04:00:00.000Z",
+      "fedFundsFuturesCurve": {
+        "source": "Yahoo:ZQ-monthly-futures",
+        "curveStatus": "live_proxy_curve",
+        "updatedAt": "2026-05-22T04:00:00.000Z",
+        "frontImpliedRate": 3.625,
+        "backImpliedRate": 3.825,
+        "frontMinusBack": -0.2,
+        "contracts": [
+          {
+            "symbol": "ZQM26.CBT",
+            "contractMonth": "Jun26",
+            "price": 96.375,
+            "impliedRate": 3.625,
+            "impliedMinusTargetMid": 0,
+            "updatedAt": "2026-05-21T04:00:00.000Z"
+          },
+          {
+            "symbol": "ZQN26.CBT",
+            "contractMonth": "Jul26",
+            "price": 96.365,
+            "impliedRate": 3.635,
+            "impliedMinusTargetMid": 0.01,
+            "updatedAt": "2026-05-22T04:00:00.000Z"
+          },
+          {
+            "symbol": "ZQQ26.CBT",
+            "contractMonth": "Aug26",
+            "price": 96.335,
+            "impliedRate": 3.665,
+            "impliedMinusTargetMid": 0.04,
+            "updatedAt": "2026-05-22T04:00:00.000Z"
+          },
+          {
+            "symbol": "ZQU26.CBT",
+            "contractMonth": "Sep26",
+            "price": 96.3,
+            "impliedRate": 3.7,
+            "impliedMinusTargetMid": 0.075,
+            "updatedAt": "2026-05-21T04:00:00.000Z"
+          },
+          {
+            "symbol": "ZQV26.CBT",
+            "contractMonth": "Oct26",
+            "price": 96.275,
+            "impliedRate": 3.725,
+            "impliedMinusTargetMid": 0.1,
+            "updatedAt": "2026-05-22T04:00:00.000Z"
+          },
+          {
+            "symbol": "ZQX26.CBT",
+            "contractMonth": "Nov26",
+            "price": 96.245,
+            "impliedRate": 3.755,
+            "impliedMinusTargetMid": 0.13,
+            "updatedAt": "2026-05-22T04:00:00.000Z"
+          },
+          {
+            "symbol": "ZQZ26.CBT",
+            "contractMonth": "Dec26",
+            "price": 96.195,
+            "impliedRate": 3.805,
+            "impliedMinusTargetMid": 0.18,
+            "updatedAt": "2026-05-22T04:00:00.000Z"
+          },
+          {
+            "symbol": "ZQF27.CBT",
+            "contractMonth": "Jan27",
+            "price": 96.175,
+            "impliedRate": 3.825,
+            "impliedMinusTargetMid": 0.2,
+            "updatedAt": "2026-05-22T04:00:00.000Z"
+          }
+        ],
+        "limitationZh": "Yahoo 月度 Fed funds futures 为公开政策路径 proxy；不是 OIS forward rate。"
+      },
       "dotPlotMedianCurrentYear": 3.4,
       "dotPlotMedianNextYear": 3.1,
       "dotPlotMedianTwoYearsOut": 3.1,
@@ -774,16 +911,17 @@
       "sourceStatus": {
         "targetRange": "live",
         "fedFundsFuture": "live",
+        "fedFundsFuturesCurve": "live",
         "sepDotPlot": "live",
         "policyStatement": "live",
         "fomcMinutes": "live",
         "oisForward": "manual_required"
       },
       "updatedAt": "2026-05-22T04:00:00.000Z",
-      "source": "FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F; FederalReserve:FOMC statement/SEP/minutes",
+      "source": "FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures; FederalReserve:FOMC statement/SEP/minutes",
       "notes": [
         "Fed target range/DFF 来自 FRED；SEP federal funds median、statement 与 minutes 文本来自 federalreserve.gov。",
-        "ZQ=F 为 front Fed funds futures proxy；OIS forward rate 需要 licensed/manual input,不从未授权源抓取。"
+        "ZQ=F 与 ZQ 月度合约为 Fed funds futures proxy；OIS forward rate 需要 licensed/manual input,不从未授权源抓取。"
       ]
     },
     "curve": {
@@ -832,8 +970,8 @@
         "pmi": {
           "httpStatus": 200,
           "landingHttpStatus": 200,
-          "latencyMs": 500,
-          "parsedAt": "2026-05-22T04:31:28.962Z",
+          "latencyMs": 490,
+          "parsedAt": "2026-05-22T04:59:18.776Z",
           "reportUrl": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/april/",
           "reportMonthLabel": "April"
         }
@@ -1108,6 +1246,9 @@
       "bdcEtf4wChange": -0.0362,
       "bdcEtfUpdatedAt": "2026-05-21T13:30:00.000Z",
       "hyOas": 2.8,
+      "igOas": 0.75,
+      "igOasUpdatedAt": "2026-05-20T00:00:00Z",
+      "igMinusHyOas": -2.05,
       "cdxHyStatus": "manual_required",
       "cdxIgStatus": "manual_required",
       "privateCreditMarksStatus": "manual_required",
@@ -1115,14 +1256,15 @@
       "sourceStatus": {
         "bdcEtf": "live",
         "hyOas": "live",
+        "igOas": "live",
         "cdxHy": "manual_required",
         "cdxIg": "manual_required",
         "privateCreditMarks": "manual_required"
       },
       "updatedAt": "2026-05-21T13:30:00.000Z",
-      "source": "Yahoo:BIZD; FRED:BAMLH0A0HYM2",
+      "source": "Yahoo:BIZD; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM",
       "notes": [
-        "BIZD 为公开上市 BDC ETF 代理；CDX 与私募信用 marks 仅保留 manual/licensed 插槽,不伪造成公开数据。"
+        "BIZD 为公开上市 BDC ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；CDX 与私募信用 marks 仅保留 manual/licensed 插槽,不伪造成公开数据。"
       ]
     },
     "activeSignals": [
@@ -1485,7 +1627,7 @@
       "asset": "黄金",
       "score": 85,
       "bias": "中性偏多",
-      "reason": "金价 4533.3，通胀对冲仍在，但真实利率继续约束。"
+      "reason": "金价 4530.1，通胀对冲仍在，但真实利率继续约束。"
     },
     {
       "asset": "原油",
@@ -1673,7 +1815,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-22T04:31:28.752Z",
+        "triggeredAgo": "2026-05-22T04:59:18.542Z",
         "condition": "系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -1681,7 +1823,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-22T04:31:28.752Z",
+        "triggeredAgo": "2026-05-22T04:59:18.542Z",
         "condition": "ON RRP 32.81 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -1689,7 +1831,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-22T04:31:28.752Z",
+        "triggeredAgo": "2026-05-22T04:59:18.542Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -1728,7 +1870,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-22T04:31:28.752Z",
+    "lastRun": "2026-05-22T04:59:18.542Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
@@ -1967,7 +2109,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-05-22T04:31:28.752Z",
+    "generatedAt": "2026-05-22T04:59:18.542Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [

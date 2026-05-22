@@ -83,17 +83,19 @@ const SHIPPING_FREIGHT_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']
 const VALID_SHIPPING_FREIGHT_SOURCE = 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI';
 const VALID_FREIGHT_REGIMES = new Set(['高压', '观察', '快速回落', '正常', '未知']);
 const POLICY_EXPECTATIONS_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'manual_required']);
-const VALID_POLICY_EXPECTATIONS_SOURCE = 'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F; FederalReserve:FOMC statement/SEP/minutes';
+const VALID_POLICY_EXPECTATIONS_SOURCE = 'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures; FederalReserve:FOMC statement/SEP/minutes';
 const VALID_POLICY_TONES = new Set(['偏鹰', '偏鸽', '平衡', '未知']);
 const VALID_POLICY_EXPECTATION_REGIMES = new Set(['降息预期', '加息/更高更久', '区间震荡', '未知']);
+const FED_FUNDS_FUTURES_CURVE_STATUSES = new Set(['live_proxy_curve', 'fallback_proxy_curve', 'missing']);
 const PRIVATE_CREDIT_PROXY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'manual_required']);
-const VALID_PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; FRED:BAMLH0A0HYM2';
+const VALID_PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM';
 const VALID_PRIVATE_CREDIT_PROXY_REGIMES = new Set(['压力上升', '观察', '平稳', '未知']);
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
 const BRENT_PROXY_SPREAD_STATUSES = new Set(['normal', 'watch', 'stress', 'insufficient_data']);
 const BRENT_FUTURES_CURVE_STATUSES = new Set(['live_structure_only', 'fallback_structure_only', 'missing']);
+const BRENT_FUTURES_PRICE_CURVE_STATUSES = new Set(['live_proxy_priced', 'fallback_proxy_priced', 'missing']);
 const AI_INTERPRETATION_MODE = 'rule_based_structured_interpretation';
 const AI_INTERPRETATION_MODEL_SOURCES = new Set(['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'macroDrivers', 'decisionModel', 'combined']);
 const AI_INTERPRETATION_EVIDENCE_LAYERS = new Set(['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'macroDrivers.consumer', 'worldOrder', 'decisionModel']);
@@ -694,6 +696,34 @@ function validateMacroDriversShippingFreight(dataPayload) {
   freight.notes.forEach((item, index) => assertString(item, `macroDrivers.shippingFreight.notes[${index}]`));
 }
 
+function validateFedFundsFuturesCurve(curve) {
+  assertPlainObject(curve, 'macroDrivers.policyExpectations.fedFundsFuturesCurve');
+  for (const key of ['source', 'curveStatus', 'updatedAt', 'frontImpliedRate', 'backImpliedRate', 'frontMinusBack', 'contracts', 'limitationZh']) {
+    assert(Object.hasOwn(curve, key), `macroDrivers.policyExpectations.fedFundsFuturesCurve.${key} is missing`);
+  }
+  assertString(curve.source, 'macroDrivers.policyExpectations.fedFundsFuturesCurve.source');
+  assert(FED_FUNDS_FUTURES_CURVE_STATUSES.has(curve.curveStatus), 'macroDrivers.policyExpectations.fedFundsFuturesCurve.curveStatus is not supported');
+  validateNullableIsoString(curve.updatedAt, 'macroDrivers.policyExpectations.fedFundsFuturesCurve.updatedAt');
+  for (const key of ['frontImpliedRate', 'backImpliedRate', 'frontMinusBack']) {
+    assert(isFiniteNumberOrNull(curve[key]), `macroDrivers.policyExpectations.fedFundsFuturesCurve.${key} must be finite number or null`);
+  }
+  assertArray(curve.contracts, 'macroDrivers.policyExpectations.fedFundsFuturesCurve.contracts');
+  curve.contracts.forEach((contract, index) => {
+    const fieldName = `macroDrivers.policyExpectations.fedFundsFuturesCurve.contracts[${index}]`;
+    assertPlainObject(contract, fieldName);
+    for (const key of ['symbol', 'contractMonth', 'price', 'impliedRate', 'impliedMinusTargetMid', 'updatedAt']) {
+      assert(Object.hasOwn(contract, key), `${fieldName}.${key} is missing`);
+    }
+    assertString(contract.symbol, `${fieldName}.symbol`);
+    assertString(contract.contractMonth, `${fieldName}.contractMonth`);
+    for (const key of ['price', 'impliedRate', 'impliedMinusTargetMid']) {
+      assert(isFiniteNumberOrNull(contract[key]), `${fieldName}.${key} must be finite number or null`);
+    }
+    validateNullableIsoString(contract.updatedAt, `${fieldName}.updatedAt`);
+  });
+  assertString(curve.limitationZh, 'macroDrivers.policyExpectations.fedFundsFuturesCurve.limitationZh');
+}
+
 function validateMacroDriversPolicyExpectations(dataPayload) {
   const policy = dataPayload?.macroDrivers?.policyExpectations;
   if (policy === undefined) return;
@@ -727,6 +757,7 @@ function validateMacroDriversPolicyExpectations(dataPayload) {
     assert(Object.hasOwn(policy, key), `macroDrivers.policyExpectations.${key} is missing`);
     validateNullableString(policy[key], `macroDrivers.policyExpectations.${key}`);
   }
+  validateFedFundsFuturesCurve(policy.fedFundsFuturesCurve);
   assertString(policy.policyTone, 'macroDrivers.policyExpectations.policyTone');
   assert(VALID_POLICY_TONES.has(policy.policyTone), 'macroDrivers.policyExpectations.policyTone is not supported');
   assertString(policy.minutesPolicyTone, 'macroDrivers.policyExpectations.minutesPolicyTone');
@@ -744,7 +775,7 @@ function validateMacroDriversPolicyExpectations(dataPayload) {
   assertString(policy.oisForwardStatus, 'macroDrivers.policyExpectations.oisForwardStatus');
   assert(POLICY_EXPECTATIONS_SOURCE_STATUSES.has(policy.oisForwardStatus), 'macroDrivers.policyExpectations.oisForwardStatus is not supported');
   assertPlainObject(policy.sourceStatus, 'macroDrivers.policyExpectations.sourceStatus');
-  for (const key of ['targetRange', 'fedFundsFuture', 'sepDotPlot', 'policyStatement', 'fomcMinutes', 'oisForward']) {
+  for (const key of ['targetRange', 'fedFundsFuture', 'fedFundsFuturesCurve', 'sepDotPlot', 'policyStatement', 'fomcMinutes', 'oisForward']) {
     assert(Object.hasOwn(policy.sourceStatus, key), `macroDrivers.policyExpectations.sourceStatus.${key} is missing`);
     assert(POLICY_EXPECTATIONS_SOURCE_STATUSES.has(policy.sourceStatus[key]), `macroDrivers.policyExpectations.sourceStatus.${key} is not supported`);
   }
@@ -757,11 +788,12 @@ function validateMacroDriversPrivateCreditProxy(dataPayload) {
   const proxy = dataPayload?.macroDrivers?.privateCreditProxy;
   if (proxy === undefined) return;
   assertPlainObject(proxy, 'macroDrivers.privateCreditProxy');
-  for (const key of ['bdcEtfPrice', 'bdcEtf4wChange', 'hyOas']) {
+  for (const key of ['bdcEtfPrice', 'bdcEtf4wChange', 'hyOas', 'igOas', 'igMinusHyOas']) {
     assert(Object.hasOwn(proxy, key), `macroDrivers.privateCreditProxy.${key} is missing`);
     assert(isFiniteNumberOrNull(proxy[key]), `macroDrivers.privateCreditProxy.${key} must be finite number or null`);
   }
   validateNullableIsoString(proxy.bdcEtfUpdatedAt, 'macroDrivers.privateCreditProxy.bdcEtfUpdatedAt');
+  validateNullableIsoString(proxy.igOasUpdatedAt, 'macroDrivers.privateCreditProxy.igOasUpdatedAt');
   validateNullableIsoString(proxy.updatedAt, 'macroDrivers.privateCreditProxy.updatedAt');
   for (const key of ['cdxHyStatus', 'cdxIgStatus', 'privateCreditMarksStatus']) {
     assertString(proxy[key], `macroDrivers.privateCreditProxy.${key}`);
@@ -770,7 +802,7 @@ function validateMacroDriversPrivateCreditProxy(dataPayload) {
   assertString(proxy.privateCreditProxyRegime, 'macroDrivers.privateCreditProxy.privateCreditProxyRegime');
   assert(VALID_PRIVATE_CREDIT_PROXY_REGIMES.has(proxy.privateCreditProxyRegime), 'macroDrivers.privateCreditProxy.privateCreditProxyRegime is not supported');
   assertPlainObject(proxy.sourceStatus, 'macroDrivers.privateCreditProxy.sourceStatus');
-  for (const key of ['bdcEtf', 'hyOas', 'cdxHy', 'cdxIg', 'privateCreditMarks']) {
+  for (const key of ['bdcEtf', 'hyOas', 'igOas', 'cdxHy', 'cdxIg', 'privateCreditMarks']) {
     assert(Object.hasOwn(proxy.sourceStatus, key), `macroDrivers.privateCreditProxy.sourceStatus.${key} is missing`);
     assert(PRIVATE_CREDIT_PROXY_SOURCE_STATUSES.has(proxy.sourceStatus[key]), `macroDrivers.privateCreditProxy.sourceStatus.${key} is not supported`);
   }
@@ -827,6 +859,35 @@ function validateBrentFuturesCurve(curve) {
   assertString(curve.limitationZh, 'brentPricingLayer.futuresCurve.limitationZh');
 }
 
+function validateBrentFuturesPriceCurve(curve) {
+  assertPlainObject(curve, 'brentPricingLayer.futuresPriceCurve');
+  for (const key of ['source', 'sourceUrl', 'curveStatus', 'updatedAt', 'frontPrice', 'backPrice', 'frontMinusBack', 'slopeRegime', 'contracts', 'limitationZh']) {
+    assert(Object.hasOwn(curve, key), `brentPricingLayer.futuresPriceCurve.${key} is missing`);
+  }
+  assertString(curve.source, 'brentPricingLayer.futuresPriceCurve.source');
+  validateNullableString(curve.sourceUrl, 'brentPricingLayer.futuresPriceCurve.sourceUrl');
+  assert(BRENT_FUTURES_PRICE_CURVE_STATUSES.has(curve.curveStatus), 'brentPricingLayer.futuresPriceCurve.curveStatus is not supported');
+  validateNullableIsoString(curve.updatedAt, 'brentPricingLayer.futuresPriceCurve.updatedAt');
+  for (const key of ['frontPrice', 'backPrice', 'frontMinusBack']) {
+    assert(isFiniteNumberOrNull(curve[key]), `brentPricingLayer.futuresPriceCurve.${key} must be finite number or null`);
+  }
+  assertString(curve.slopeRegime, 'brentPricingLayer.futuresPriceCurve.slopeRegime');
+  assert(['backwardation', 'contango', 'flat', '未知'].includes(curve.slopeRegime), 'brentPricingLayer.futuresPriceCurve.slopeRegime is not supported');
+  assertArray(curve.contracts, 'brentPricingLayer.futuresPriceCurve.contracts');
+  curve.contracts.forEach((contract, index) => {
+    const fieldName = `brentPricingLayer.futuresPriceCurve.contracts[${index}]`;
+    assertPlainObject(contract, fieldName);
+    for (const key of ['symbol', 'contractMonth', 'price', 'updatedAt']) {
+      assert(Object.hasOwn(contract, key), `${fieldName}.${key} is missing`);
+    }
+    assertString(contract.symbol, `${fieldName}.symbol`);
+    assertString(contract.contractMonth, `${fieldName}.contractMonth`);
+    assert(isFiniteNumberOrNull(contract.price), `${fieldName}.price must be finite number or null`);
+    validateNullableIsoString(contract.updatedAt, `${fieldName}.updatedAt`);
+  });
+  assertString(curve.limitationZh, 'brentPricingLayer.futuresPriceCurve.limitationZh');
+}
+
 function validateBrentPricingLayer(dataPayload) {
   const layer = dataPayload.brentPricingLayer;
   if (layer === undefined) {
@@ -843,6 +904,7 @@ function validateBrentPricingLayer(dataPayload) {
     'publicSpotProxy',
     'futuresProxy',
     'futuresCurve',
+    'futuresPriceCurve',
     'confirmationSources',
     'proxySpread',
     'promotionAudit',
@@ -866,6 +928,7 @@ function validateBrentPricingLayer(dataPayload) {
   validateBrentLayerPriceNode(layer.futuresProxy, 'brentPricingLayer.futuresProxy', 'Brent 期货代理');
   assertString(layer.futuresProxy.limitationZh, 'brentPricingLayer.futuresProxy.limitationZh');
   validateBrentFuturesCurve(layer.futuresCurve);
+  validateBrentFuturesPriceCurve(layer.futuresPriceCurve);
 
   assertArray(layer.confirmationSources, 'brentPricingLayer.confirmationSources');
   layer.confirmationSources.forEach((source, index) => {

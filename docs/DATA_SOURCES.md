@@ -24,8 +24,8 @@
 |---|---|---|---|
 | `DCOILBRENTEU` | Brent crude oil spot (USD/bbl) | Brent main value (anchor) | 长期 |
 | `DGS10` / `DGS2` / `T10Y2Y` | US Treasury yields + 10y2y spread | macroDrivers.fedLiquidity | 长期 |
-| `BAMLH0A0HYM2` | HY OAS (high-yield bond spread) | macroDrivers.credit, cross-validation | 长期 |
-| `BAMLC0A0CM` | IG OAS (investment-grade spread) | macroDrivers.credit | 长期 |
+| `BAMLH0A0HYM2` | HY OAS (high-yield bond spread) | macroDrivers.credit, macroDrivers.privateCreditProxy, cross-validation | 长期 / M-74 |
+| `BAMLC0A0CM` | IG OAS (investment-grade spread) | macroDrivers.credit, macroDrivers.privateCreditProxy | 长期 / M-78 |
 | `DFF` | Effective federal funds rate | macroDrivers.fedLiquidity | M-41 |
 | `SOFR` | Secured overnight financing rate | macroDrivers.fedLiquidity | M-41 |
 | `WRESBAL` | Bank reserve balances (weekly Wed, NSA, M USD) | macroDrivers.fedLiquidity, B4 financial fragility | M-42 |
@@ -49,7 +49,7 @@
 | `SUBLPDRCSC` | SLOOS Construction/Land Development CRE Tightening (quarterly) | macroDrivers.commercialRealEstate | M-70 |
 | `SUBLPDRCSM` | SLOOS Multifamily CRE Tightening (quarterly) | macroDrivers.commercialRealEstate | M-70 |
 | `DFEDTARL` / `DFEDTARU` / `DFF` | Fed target range lower/upper and effective fed funds rate | macroDrivers.policyExpectations | M-74 |
-| `BAMLH0A0HYM2` | ICE BofA US High Yield OAS cash-bond spread proxy | macroDrivers.privateCreditProxy | M-74 |
+| `BAMLH0A0HYM2` / `BAMLC0A0CM` | ICE BofA US HY / IG OAS cash-bond spread proxy | macroDrivers.privateCreditProxy | M-74 / M-78 |
 
 **注意**: NFCI 正值=收紧、负值=宽松,**方向与 IG/HY OAS 相反**。误判方向会让 cross-validation 完全反向。
 
@@ -57,7 +57,7 @@
 
 **M-70 注意**: 不接 CDX HY/IG (商业 ICE/Markit) 或 私募信贷 (Cliffwater / PitchBook / Preqin),详见 P3-15;不接 loan balance / CRE exposure stock series,future scope only;`macroDrivers.commercialRealEstate` 不代表 CDX 或 私募信贷数据。
 
-**M-74/M-77 注意**: `macroDrivers.policyExpectations` 直接读取 FRED target range / DFF、Federal Reserve SEP accessible table + FOMC statement/minutes、Yahoo `ZQ=F` front Fed funds futures proxy；`macroDrivers.shippingFreight` 读取 StockQ `BDTI` / `BCTI` / `BDI` 公开页面；`macroDrivers.privateCreditProxy` 读取 Yahoo `BIZD` 与 FRED HY OAS；`macroDrivers.commercialRealEstate` 增加 Yahoo `VNQ` / `REM`。`OIS forward`、`CDX HY/IG` 与 private credit marks 保留 `manual_required`，不得伪造成公开自动源。
+**M-74/M-77/M-78 注意**: `macroDrivers.policyExpectations` 直接读取 FRED target range / DFF、Federal Reserve SEP accessible table + FOMC statement/minutes、Yahoo `ZQ=F` front Fed funds futures proxy 与 Yahoo ZQ monthly futures proxy curve；`macroDrivers.shippingFreight` 读取 StockQ `BDTI` / `BCTI` / `BDI` 公开页面；`macroDrivers.privateCreditProxy` 读取 Yahoo `BIZD` 与 FRED HY/IG OAS cash-bond proxies；`macroDrivers.commercialRealEstate` 增加 Yahoo `VNQ` / `REM`。`OIS forward`、`CDX HY/IG` 与 private credit marks 保留 `manual_required`，不得伪造成公开自动源。
 
 ---
 
@@ -151,11 +151,13 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 
 ---
 
-### Yahoo / StockQ / Federal Reserve / BoA public macro-driver inputs (M-74 / M-77)
+### Yahoo / StockQ / Federal Reserve / BoA public macro-driver inputs (M-74 / M-77 / M-78)
 
 | Source | Layer | Role |
 |---|---|---|
 | Yahoo `ZQ=F` | `macroDrivers.policyExpectations` | front Fed funds futures proxy |
+| Yahoo `ZQ-monthly-futures` (`ZQ{month}{year}.CBT`) | `macroDrivers.policyExpectations.fedFundsFuturesCurve` | Fed funds futures monthly proxy curve; not OIS forward |
+| Yahoo `BZ{month}{year}.NYM` | `brentPricingLayer.futuresPriceCurve` | Brent monthly futures priced proxy; not ICE official settlement curve or Platts |
 | Yahoo `BIZD` | `macroDrivers.privateCreditProxy` | listed BDC / private-credit public proxy |
 | Yahoo `VNQ` | `macroDrivers.commercialRealEstate` | public REIT market proxy |
 | Yahoo `REM` | `macroDrivers.commercialRealEstate` | mortgage REIT market proxy |
@@ -165,7 +167,7 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 | Federal Reserve `fomcminutesYYYYMMDD.htm` | `macroDrivers.policyExpectations` | FOMC minutes keyword NLP tone/topic count |
 | BoA Consumer Checkpoint public HTML | `macroDrivers.consumerRetail` | card spending per household YoY / ex-gas YoY public summary |
 
-These M-74/M-77 sources are audit-only / display-only. They must not change Brent promotion, scoring, decision, execution, position, Worker runtime, `displayInputsBaseline`, `effectiveDisplayInputs`, or cross-validation. `OIS forward`, `CDX HY/IG`, private credit marks, Redbook, and non-public CRE loan tape remain unconnected or `manual_required`.
+These M-74/M-77/M-78 sources are audit-only / display-only. They must not change Brent promotion, scoring, decision, execution, position, Worker runtime, `displayInputsBaseline`, `effectiveDisplayInputs`, or cross-validation. `OIS forward`, `CDX HY/IG`, private credit marks, Redbook, Platts Dated Brent, official ICE settlement curve, and non-public CRE loan tape remain unconnected or `manual_required`.
 
 ---
 
@@ -192,6 +194,11 @@ dates only. It does not fetch or infer official settlement prices, contango /
 backwardation, Platts Dated Brent, Brent promotion, scoring, decision, execution,
 position, Worker runtime, `displayInputsBaseline`, `effectiveDisplayInputs`, or
 cross-validation.
+
+M-78 implements Yahoo `BZ` monthly futures quotes into
+`brentPricingLayer.futuresPriceCurve` as `live_proxy_priced` when available.
+This is a public priced proxy only; it is not Platts Dated Brent, not formal
+Dated Brent, and not the official ICE settlement curve.
 
 See [`BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md`](BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md).
 
@@ -350,11 +357,12 @@ documented attribution string and code is a contract violation.
 | `macroDrivers.employment` | FRED: ICSA, CCSA, JTSJOL, CES0500000003, U6RATE, public industry payroll basket |
 | `macroDrivers.consumerRetail` | FRED: CARTS, CARTSR, MRTS monthly retail trade segment basket + BoA Consumer Checkpoint public HTML |
 | `macroDrivers.shippingFreight` | StockQ: BDTI, BCTI, BDI public index pages |
-| `macroDrivers.policyExpectations` | FRED: DFEDTARL/DFEDTARU/DFF + Yahoo: ZQ=F + Federal Reserve SEP/FOMC statement/minutes |
+| `macroDrivers.policyExpectations` | FRED: DFEDTARL/DFEDTARU/DFF + Yahoo: ZQ=F / ZQ monthly futures curve + Federal Reserve SEP/FOMC statement/minutes |
 | `macroDrivers.commercialRealEstate` | FRED: DRCRELEXFACBS, CORCREXFACBS, SUBLPDRCSN, SUBLPDRCSC, SUBLPDRCSM + Yahoo: VNQ, REM |
-| `macroDrivers.privateCreditProxy` | Yahoo: BIZD + FRED: BAMLH0A0HYM2; CDX/private marks = manual_required |
+| `macroDrivers.privateCreditProxy` | Yahoo: BIZD + FRED: BAMLH0A0HYM2 / BAMLC0A0CM; CDX/private marks = manual_required |
 | `brentPricingLayer.crackSpread` | FRED `DHOILNYH` × 42 − Brent |
 | `brentPricingLayer.futuresCurve` | ICE Brent futures public product page structure-only contracts |
+| `brentPricingLayer.futuresPriceCurve` | Yahoo: BZ monthly futures priced proxy; Platts/official ICE settlement = not connected |
 | `externalAiInterpretationLayer` | DeepSeek (production) / OpenAI (alternate);只读展示 |
 | `worldOrderStress.marketConfirmation` | Worker preview → local realtime → Daily baseline (优先级) |
 | `worldOrderStress.dimensions.economicWeaponization` | OFAC + (GDELT) |

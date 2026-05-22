@@ -45,6 +45,18 @@ if (!brentLayer || typeof brentLayer !== 'object') {
     }
   }
 
+  if (!brentLayer.futuresPriceCurve || typeof brentLayer.futuresPriceCurve !== 'object') {
+    fail('brentPricingLayer.futuresPriceCurve is missing or not an object');
+  } else {
+    const allowedPriceCurveStatuses = new Set(['live_proxy_priced', 'fallback_proxy_priced', 'missing']);
+    if (!allowedPriceCurveStatuses.has(brentLayer.futuresPriceCurve.curveStatus)) {
+      fail(`brentPricingLayer.futuresPriceCurve.curveStatus is not supported: ${brentLayer.futuresPriceCurve.curveStatus}`);
+    }
+    if (!Array.isArray(brentLayer.futuresPriceCurve.contracts)) {
+      fail('brentPricingLayer.futuresPriceCurve.contracts must be an array');
+    }
+  }
+
   if ('crackSpread' in brentLayer && brentLayer.crackSpread !== null && !Number.isFinite(brentLayer.crackSpread)) {
     fail(`brentPricingLayer.crackSpread must be number or null, got: ${typeof brentLayer.crackSpread}`);
   }
@@ -76,7 +88,9 @@ const runDailyMarkers = [
   'const crackSpreadRegime = classifyCrackSpreadRegime(crackSpread)',
   'resolveUlsd(prevData?.brentPricingLayer)',
   'async function resolveBrentFuturesCurve(prevBrentPricingLayer)',
+  'async function resolveBrentFuturesPriceCurve(prevBrentPricingLayer)',
   'ICE_BRENT_FUTURES_DATA_URL',
+  "root: 'BZ'",
   'parseIceBrentFuturesContracts',
   'ulsdData'
 ];
@@ -91,7 +105,8 @@ const renderMarkers = [
   'brentLayer.crackSpread',
   '柴油裂解价差',
   'Platts Dated Brent / 正式 Dated Brent 未接入。',
-  'ICE Brent futuresCurve structure-only'
+  'ICE Brent futuresCurve structure-only',
+  'Yahoo Brent priced futures proxy'
 ];
 
 for (const marker of renderMarkers) {
@@ -106,7 +121,8 @@ const brentDetailRenderMarkers = [
   'brentPricingLayer.ulsdPrice',
   'brentPricingLayer.ulsd4wChange',
   'brentPricingLayer.crackSpread4wChange',
-  'formatBrentFuturesCurve'
+  'formatBrentFuturesCurve',
+  'formatBrentFuturesPriceCurve'
 ];
 
 for (const marker of brentDetailRenderMarkers) {
@@ -133,7 +149,8 @@ const contractMarkers = [
   'DHOILNYH × 42',
   'crackSpread4wChange',
   'ulsdSourceStatus',
-  'futuresCurve'
+  'futuresCurve',
+  'futuresPriceCurve'
 ];
 
 for (const marker of contractMarkers) {
