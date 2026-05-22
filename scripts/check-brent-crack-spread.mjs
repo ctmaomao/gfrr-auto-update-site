@@ -69,6 +69,27 @@ if (!brentLayer || typeof brentLayer !== 'object') {
     }
   }
 
+  if (!brentLayer.eiaBrentSpotProxy || typeof brentLayer.eiaBrentSpotProxy !== 'object') {
+    fail('brentPricingLayer.eiaBrentSpotProxy is missing or not an object');
+  } else {
+    const allowedEiaStatuses = new Set(['live', 'fallback', 'missing']);
+    if (brentLayer.eiaBrentSpotProxy.source !== 'EIA:RBRTE') {
+      fail(`brentPricingLayer.eiaBrentSpotProxy.source must be EIA:RBRTE, got: ${brentLayer.eiaBrentSpotProxy.source}`);
+    }
+    if (!allowedEiaStatuses.has(brentLayer.eiaBrentSpotProxy.sourceStatus)) {
+      fail(`brentPricingLayer.eiaBrentSpotProxy.sourceStatus is not supported: ${brentLayer.eiaBrentSpotProxy.sourceStatus}`);
+    }
+    for (const field of ['price', 'dailyChange']) {
+      if (brentLayer.eiaBrentSpotProxy[field] !== null && !Number.isFinite(brentLayer.eiaBrentSpotProxy[field])) {
+        fail(`brentPricingLayer.eiaBrentSpotProxy.${field} must be number or null`);
+      }
+    }
+    const limitation = String(brentLayer.eiaBrentSpotProxy.limitationZh || '');
+    if (!limitation.includes('不是 Platts Dated Brent')) {
+      fail('brentPricingLayer.eiaBrentSpotProxy.limitationZh must disclose it is not Platts Dated Brent');
+    }
+  }
+
   if ('crackSpread' in brentLayer && brentLayer.crackSpread !== null && !Number.isFinite(brentLayer.crackSpread)) {
     fail(`brentPricingLayer.crackSpread must be number or null, got: ${typeof brentLayer.crackSpread}`);
   }
@@ -102,8 +123,11 @@ const runDailyMarkers = [
   'async function resolveBrentFuturesCurve(prevBrentPricingLayer)',
   'async function resolveBrentFuturesPriceCurve(prevBrentPricingLayer)',
   'async function resolveIceBrentFuturesPriceCurve(prevBrentPricingLayer)',
+  'async function resolveEiaBrentSpotProxy(prevBrentPricingLayer)',
+  'parseEiaBrentSpotHtml',
   'ICE_BRENT_FUTURES_DATA_URL',
   'ICE_BRENT_CONTRACT_DATA_API_URL',
+  'EIA_BRENT_SPOT_HTML_URL',
   "root: 'BZ'",
   'parseIceBrentFuturesContracts',
   'parseIceBrentContractDataRecord',
@@ -122,7 +146,8 @@ const renderMarkers = [
   'Platts Dated Brent / 正式 Dated Brent 未接入。',
   'ICE Brent futuresCurve structure-only',
   'ICE Brent public delayed price curve',
-  'Yahoo Brent priced futures proxy'
+  'Yahoo Brent priced futures proxy',
+  'EIA Brent Spot Price FOB'
 ];
 
 for (const marker of renderMarkers) {
@@ -139,7 +164,8 @@ const brentDetailRenderMarkers = [
   'brentPricingLayer.crackSpread4wChange',
   'formatBrentFuturesCurve',
   'formatIceBrentFuturesPriceCurve',
-  'formatBrentFuturesPriceCurve'
+  'formatBrentFuturesPriceCurve',
+  'formatEiaBrentSpotProxy'
 ];
 
 for (const marker of brentDetailRenderMarkers) {
@@ -168,7 +194,9 @@ const contractMarkers = [
   'ulsdSourceStatus',
   'futuresCurve',
   'futuresPriceCurve',
-  'iceFuturesPriceCurve'
+  'iceFuturesPriceCurve',
+  'eiaBrentSpotProxy',
+  'EIA:RBRTE'
 ];
 
 for (const marker of contractMarkers) {

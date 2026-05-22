@@ -9,11 +9,11 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-84 (public source tranche 10: FRED CRE loan balance aggregate proxy) |
-| Cache version | `28.0M-84V` |
+| 当前生产状态 | v28.0M-85 (public source tranche 11: EIA Brent spot public proxy) |
+| Cache version | `28.0M-85V` |
 | check:all 项数 | 23 |
-| 最后审计日期 | **2026-05-22** (M-84 public source tranche 10; M-83 public source tranche 9; M-82 public source tranche 8; M-81 public source tranche 7; M-80 public source tranche 6; M-79 public source tranche 5; M-78 public source tranche 4; M-77 public source tranche 3; M-76 frontend macro field surfacing; M-75 check suite compaction; M-74 expanded macro data auto ingestion; M-73 BGCR/TGCR NY Fed secured rates runtime fix + employment quality public FRED expansion; M-71 Brent public proxy source review; M-70 CRE FRED commercialRealEstate ingestion; M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
-| 最后 daily refresh | 2026-05-22 (local M-84 rebuild from `origin/realtime-data` baseline; local `realtime/market.json` unchanged) |
+| 最后审计日期 | **2026-05-22** (M-85 public source tranche 11; M-84 public source tranche 10; M-83 public source tranche 9; M-82 public source tranche 8; M-81 public source tranche 7; M-80 public source tranche 6; M-79 public source tranche 5; M-78 public source tranche 4; M-77 public source tranche 3; M-76 frontend macro field surfacing; M-75 check suite compaction; M-74 expanded macro data auto ingestion; M-73 BGCR/TGCR NY Fed secured rates runtime fix + employment quality public FRED expansion; M-71 Brent public proxy source review; M-70 CRE FRED commercialRealEstate ingestion; M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
+| 最后 daily refresh | 2026-05-22 (local M-85 rebuild from `origin/realtime-data` baseline; local `realtime/market.json` refreshed) |
 | GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
 | SIPRI 状态 | M-61 起 `config/world-order-sipri-normalized.json` 使用 SIPRI 2024 真实数据，world-order build 后为 `ok` |
@@ -23,8 +23,8 @@
 | Employment 状态 | M-73 起 `macroDrivers.employment` 在 ICSA/CCSA/JTSJOL 基础上接入 FRED 平均时薪 CES0500000003、U6RATE 与公开行业 payroll basket 扩散代理；audit-only/display-only；仅用于 Macro Drivers 前端卡片；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation |
 | Consumer Retail 状态 | M-69 起 `macroDrivers.consumerRetail` 接入 FRED CARTS/CARTSR (Chicago Fed weekly retail nowcast)；M-74 起加入 FRED MRTS 13 个细分零售行业 basket 和扩散指标；M-77 起加入 BoA Consumer Checkpoint 公开 HTML card-spending YoY 摘要；audit-only/display-only；仅用于 Macro Drivers 前端卡片；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation；不接 CARTSP、不冒充 Redbook 或 BoA raw card feed |
 | CRE 状态 | M-70 起 `macroDrivers.commercialRealEstate` 接入 FRED DRCRELEXFACBS/CORCREXFACBS/SUBLPDRCSN/SUBLPDRCSC/SUBLPDRCSM 季频 CRE 信用压力 series；M-74 起加入 Yahoo VNQ/REM public market proxy；M-80 起加入 Yahoo CMBS commercial MBS ETF public proxy；M-84 起加入 FRED CREACBW027SBOG weekly public aggregate bank CRE loan balance / exposure stock proxy；audit-only/display-only；独立于 `macroDrivers.credit`；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation；不冒充非公开 CRE loan tape |
-| Expanded macro 状态 | M-74 起 `macroDrivers.shippingFreight` 接入 StockQ BDTI/BCTI/BDI；`macroDrivers.policyExpectations` 接入 FRED DFEDTARL/DFEDTARU/DFF、Yahoo ZQ=F、Federal Reserve SEP/FOMC statement；M-77 起加入 FOMC minutes keyword NLP；M-78 起加入 Yahoo ZQ monthly Fed funds futures proxy curve；M-79 起加入 Yahoo SR3 monthly SOFR futures proxy curve；M-80 起加入 CheckMySwap USD OIS public curve；`macroDrivers.consumerRetail` M-79 起加入 Trading Economics Redbook public HTML 摘要；`macroDrivers.privateCreditProxy` 接入 Yahoo BIZD + FRED HY OAS，M-78 加入 FRED IG OAS，M-80 加入 Yahoo PBDC/SRLN public proxies，M-81 加入 ICE CDX public settlement prices，M-83 加入 Yahoo CCLFX public interval-fund NAV proxy；`macroDrivers.commercialRealEstate` M-84 加入 FRED CREACBW027SBOG aggregate CRE loan balance proxy；private marks/non-public CRE 保留 `manual_required`。M-76/M-81/M-83/M-84 起 Macro Drivers / Risk Engines / Brent detail 展开显示这些后端字段；仍为 display-only |
-| Brent public proxy review | M-71 起完成 source-review only：EIA Europe Brent Spot Price FOB、ICE Brent futures curve、Baltic Exchange freight benchmarks、Freightos Baltic Index 与 future licensed S&P/Platts Dated Brent 已登记为候选；M-77 起 `brentPricingLayer.futuresCurve` 只读取 ICE contract structure (`live_structure_only`)；M-78 起 `brentPricingLayer.futuresPriceCurve` 读取 Yahoo BZ monthly priced proxy (`live_proxy_priced`)；M-82 起 `brentPricingLayer.iceFuturesPriceCurve` 读取 ICE public delayed last-price curve (`live_delayed_priced`)；Platts Dated Brent / 正式 Dated Brent 与官方 ICE settlement curve 仍未接入 |
+| Expanded macro 状态 | M-74 起 `macroDrivers.shippingFreight` 接入 StockQ BDTI/BCTI/BDI；`macroDrivers.policyExpectations` 接入 FRED DFEDTARL/DFEDTARU/DFF、Yahoo ZQ=F、Federal Reserve SEP/FOMC statement；M-77 起加入 FOMC minutes keyword NLP；M-78 起加入 Yahoo ZQ monthly Fed funds futures proxy curve；M-79 起加入 Yahoo SR3 monthly SOFR futures proxy curve；M-80 起加入 CheckMySwap USD OIS public curve；`macroDrivers.consumerRetail` M-79 起加入 Trading Economics Redbook public HTML 摘要；`macroDrivers.privateCreditProxy` 接入 Yahoo BIZD + FRED HY OAS，M-78 加入 FRED IG OAS，M-80 加入 Yahoo PBDC/SRLN public proxies，M-81 加入 ICE CDX public settlement prices，M-83 加入 Yahoo CCLFX public interval-fund NAV proxy；`macroDrivers.commercialRealEstate` M-84 加入 FRED CREACBW027SBOG aggregate CRE loan balance proxy；private marks/non-public CRE 保留 `manual_required`。M-76/M-81/M-83/M-84/M-85 起 Macro Drivers / Risk Engines / Brent detail 展开显示这些后端字段；仍为 display-only |
+| Brent public proxy review | M-71 起完成 source-review only：EIA Europe Brent Spot Price FOB、ICE Brent futures curve、Baltic Exchange freight benchmarks、Freightos Baltic Index 与 future licensed S&P/Platts Dated Brent 已登记为候选；M-77 起 `brentPricingLayer.futuresCurve` 只读取 ICE contract structure (`live_structure_only`)；M-78 起 `brentPricingLayer.futuresPriceCurve` 读取 Yahoo BZ monthly priced proxy (`live_proxy_priced`)；M-82 起 `brentPricingLayer.iceFuturesPriceCurve` 读取 ICE public delayed last-price curve (`live_delayed_priced`)；M-85 起 `brentPricingLayer.eiaBrentSpotProxy` 读取 EIA Europe Brent Spot Price FOB public HTML (`live`/`fallback`/`missing`)；Platts Dated Brent / 正式 Dated Brent 与官方 ICE settlement curve 仍未接入 |
 | ADR-0013 | 2026-05-19 落地 (PR #231)；ADR-0001 zero-deps 精化为 runtime zero-dep,本地开发工具可在 ADR-0013 约束下使用 devDependencies |
 | First devDependency | M-63a 起 `xlsx@0.18.5` (SheetJS) 仅由 `scripts/world-order/sanitize-acled-weekly.mjs` 导入,runtime/check/workflow/frontend 不得引用 |
 | 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
@@ -87,13 +87,14 @@
 - **仍未接入**: proprietary dealer OIS forward curve 仍未接入；不得把 CheckMySwap public curve 写成 licensed dealer forward curve，也不得让 policy text tone 进入 scoring 或 decision。
 - **解封路径**: 若未来有 dealer screen /授权 OIS forward source 或用户提供 manual input file，另开 reviewed PR 定义 parser、source attribution、quality gate 与展示文案。
 
-#### P3-11: Brent 期限结构 / Platts Dated Brent / Shipping freight (partially connected — M-74/M-77/M-78/M-82)
+#### P3-11: Brent 期限结构 / Platts Dated Brent / Shipping freight (partially connected — M-74/M-77/M-78/M-82/M-85)
 - **正式源不修原因**: Platts Dated Brent / 正式 Dated Brent 与 Baltic / ICE / S&P commodity market data 仍需要商业订阅、授权与再展示条款评审；当前不能直接接入生产链路
 - **公开代理轨道**: ✅ M-71 source-review only 已完成，候选为 EIA Europe Brent Spot Price FOB、ICE Brent futures curve、Baltic Exchange freight benchmarks、Freightos Baltic Index，以及 future licensed S&P/Platts Dated Brent
 - **M-74 已接入**: shipping / freight / 油轮运费压力已通过 StockQ `BDTI` / `BCTI` / `BDI` public pages 写入 `macroDrivers.shippingFreight` 并显示到 Macro Drivers；这是航运/油轮压力 proxy，不是 Platts Dated Brent、不是 Brent 期限结构。
 - **M-77 已接入**: `brentPricingLayer.futuresCurve` 读取 ICE Brent futures public page 的合约月份、lastTrade 与 finalSettlement，状态为 `live_structure_only` / `fallback_structure_only` / `missing`；这是 structure-only，不是带价格的官方期限结构。
 - **M-78 已接入**: `brentPricingLayer.futuresPriceCurve` 读取 Yahoo `BZ` monthly futures priced proxy，状态为 `live_proxy_priced` / `fallback_proxy_priced` / `missing`；这是公开 priced proxy，不是 ICE official settlement curve、Platts Dated Brent 或正式 Dated Brent。
 - **M-82 已接入**: `brentPricingLayer.iceFuturesPriceCurve` 读取 ICE product-guide public contract-data delayed last price curve，状态为 `live_delayed_priced` / `fallback_delayed_priced` / `missing`；这是 ICE public delayed last-price futures curve，不是 official ICE settlement curve、Platts Dated Brent 或正式 Dated Brent。
+- **M-85 已接入**: `brentPricingLayer.eiaBrentSpotProxy` 读取 EIA Europe Brent Spot Price FOB public HTML，状态为 `live` / `fallback` / `missing`；这是公开 spot proxy，不是 Platts Dated Brent、正式 Dated Brent 或实物现货成交证据。
 - **当前边界**: 不改 `values.brent`、Brent promotion、scoring、decision、execution、position、Worker 或 workflow；Platts Dated Brent / 正式 Dated Brent 与官方 ICE settlement curve 仍未接入。
 
 #### P3-12: signal-noise bucket 硬编码
@@ -175,13 +176,14 @@
 | M-82 | public source tranche 8 | (this PR) | 2026-05-22 | ✅ ICE Brent public delayed last-price futures curve now feeds `brentPricingLayer.iceFuturesPriceCurve`; Platts/official ICE settlement/non-public sources remain unconnected/manual; `check:all` remains 23; cache bumped to 28.0M-82V |
 | M-83 | public source tranche 9 | (this PR) | 2026-05-22 | ✅ Yahoo CCLFX public interval-fund NAV proxy now feeds `macroDrivers.privateCreditProxy.intervalFundNavPrice`; true private marks/fundraising remain unconnected/manual; `check:all` remains 23; cache bumped to 28.0M-83V |
 | M-84 | public source tranche 10 | (this PR) | 2026-05-22 | ✅ FRED CREACBW027SBOG weekly public aggregate bank CRE loan balance now feeds `macroDrivers.commercialRealEstate.creLoanBalance`; non-public CRE loan tape/private marks remain manual_required; `check:all` remains 23; cache bumped to 28.0M-84V |
+| M-85 | public source tranche 11 | (this PR) | 2026-05-22 | ✅ EIA Europe Brent Spot Price FOB public HTML now feeds `brentPricingLayer.eiaBrentSpotProxy`; Platts Dated Brent/formal Dated Brent remains unconnected; `check:all` remains 23; cache bumped to 28.0M-85V |
 
 ---
 
 ## Section 4 · Future Considerations
 
 - **市场温度计扩展**: 当前仅 QQQ, 可考虑加入 SPY/IWM/EFA/EEM 多资产温度计 (需要各自 60 周历史)
-- **Brent 实物端**: 若未来项目预算允许, 接入 Platts Dated Brent 与 official ICE settlement curve；M-74 已接入 BDTI/BCTI/BDI shipping/freight proxy,M-78 已接入 Yahoo BZ priced proxy,M-82 已接入 ICE public delayed futures last-price curve
+- **Brent 实物端**: 若未来项目预算允许, 接入 Platts Dated Brent 与 official ICE settlement curve；M-74 已接入 BDTI/BCTI/BDI shipping/freight proxy,M-78 已接入 Yahoo BZ priced proxy,M-82 已接入 ICE public delayed futures last-price curve,M-85 已接入 EIA Europe Brent Spot Price FOB public spot proxy
 - **NLP for FOMC**: M-74 已接入 statement keyword tone count；M-77 已接入 FOMC minutes keyword NLP；未来可另开 hawkishness quality review
 - **Backtesting layer**: 历史 narrative 触发回放, 验证在 2008/2020/2022 危机解释力
 - **Worker reliability**: 当前 marketConfirmationInput 来源 single worker, 考虑双 worker fallback
@@ -218,6 +220,7 @@
 | 2026-05-22 | M-82 public source tranche 8 | Codex | sixth recommended public-source tranche connected | ICE product-guide public contract-data now feeds display-only `brentPricingLayer.iceFuturesPriceCurve`; Platts/official ICE settlement/non-public sources remain unconnected/manual |
 | 2026-05-22 | M-83 public source tranche 9 | Codex | seventh recommended public-source tranche connected | Yahoo CCLFX public interval-fund NAV proxy now feeds display-only `macroDrivers.privateCreditProxy`; true private marks/fundraising remain unconnected/manual |
 | 2026-05-22 | M-84 public source tranche 10 | Codex | eighth recommended public-source tranche connected | FRED CREACBW027SBOG weekly public aggregate bank CRE loan balance now feeds display-only `macroDrivers.commercialRealEstate`; non-public CRE loan tape/private marks remain manual_required |
+| 2026-05-22 | M-85 public source tranche 11 | Codex | ninth recommended public-source tranche connected | EIA Europe Brent Spot Price FOB public HTML now feeds display-only `brentPricingLayer.eiaBrentSpotProxy`; Platts Dated Brent/formal Dated Brent remains unconnected |
 | 2026-05-22 | M-76 frontend macro field surfacing | Codex | backend-present field display gap closed | Frontend display calculations now consume already-present policy/repo/retail/freight/private-credit/CRE/employment/credit/Brent detail fields in Macro Drivers, Risk Engines, and Brent Pricing Layer; no production data or decision-path behavior changed |
 
 ---
@@ -271,11 +274,11 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-### Session Handoff (2026-05-22 — M-84 public source tranche 10)
+### Session Handoff (2026-05-22 — M-85 public source tranche 11)
 
-- **本次会话结束状态**: 当前工作在 `codex/macro-data-auto-ingestion`；M-84 按顺序继续落地 FRED public aggregate CRE loan balance proxy。仍沿用 M-75 `check:all` 23 顶层 suite。
-- **已接入生产数据**: M-84 在 M-83 基础上新增 `macroDrivers.commercialRealEstate.creLoanBalance` / `creLoanBalance4wChange` / `creLoanBalanceYoY` / `creLoanBalanceUpdatedAt` / `creLoanBalanceStatus`。字段从 FRED `CREACBW027SBOG` 读取，单位为 USD billions，4w/YoY 为派生 ratio。字段均为 audit-only/display-only，不进 scoring/decision/execution/position、worker/realtime、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation。
-- **当前边界**: FRED `CREACBW027SBOG` 是 public weekly aggregate bank CRE loan balance / exposure stock proxy，不是 non-public CRE loan tape、private CRE marks、loan-level exposure、CDX 或 私募信贷数据。private credit marks、Platts/official Brent settlement、non-public CRE loan tape、BoA raw card feed、Redbook raw subscription feed 仍未接入。
-- **前端状态**: Macro Drivers `driver-cre` 显示 CRE loan balance、4w、YoY、vintage 与 source status；cache bumped to `28.0M-84V`。PR 描述需包含 `本 PR 符合 DESIGN.md 的所有规则`。
-- **验证结果**: M-84 已通过 `node --check scripts/run-daily-pipeline.mjs`、`node --check scripts/validate-data.mjs`、`node --check scripts/modules/renderMacroOverview.js`、`node --check scripts/check-macro-drivers-commercial-real-estate.mjs`、`node --check scripts/app.js`、`npm run build:realtime`、`npm run build:data`、`npm run check:data`、`npm run check:macro-drivers`、`npm run check:docs`、`npm run check:project-backlog-format`、`npm run check:all`，并通过一次 `buildMacroOverview` runtime smoke。
+- **本次会话结束状态**: 当前工作在 `codex/macro-data-auto-ingestion`；M-85 按顺序继续落地 EIA Europe Brent Spot Price FOB public spot proxy。仍沿用 M-75 `check:all` 23 顶层 suite。
+- **已接入生产数据**: M-85 在 M-84 基础上新增 `brentPricingLayer.eiaBrentSpotProxy`，包含 `source=EIA:RBRTE`、`sourceUrl`、`price`、`dailyChange`、`updatedAt`、`sourceStatus` 与 `limitationZh`。字段从 EIA public HTML table 读取，单位为 $/bbl，日变化为最新值减前一条可用日频值。字段均为 audit-only/display-only，不进 `values.brent`、Brent promotion、scoring/decision/execution/position、worker/realtime、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation。
+- **当前边界**: EIA Europe Brent Spot Price FOB 是 public spot proxy，不是 Platts Dated Brent、正式 Dated Brent 或实物现货成交证据。private credit marks、Platts/official Brent settlement、non-public CRE loan tape、BoA raw card feed、Redbook raw subscription feed 仍未接入。
+- **前端状态**: Brent Pricing Layer detail、Macro Drivers pressure source、Risk Engines energy transmission 均显示 EIA Brent Spot Price FOB proxy price、daily change、vintage 与 source status；cache bumped to `28.0M-85V`。PR 描述需包含 `本 PR 符合 DESIGN.md 的所有规则`。
+- **验证结果**: M-85 已通过 `node --check scripts/run-daily-pipeline.mjs`、`node --check scripts/validate-data.mjs`、`node --check scripts/modules/render.js`、`node --check scripts/modules/renderMacroOverview.js`、`node --check scripts/check-brent-crack-spread.mjs`、`node --check scripts/app.js`、`npm run build:realtime`、`npm run build:data`、`npm run check:data`、`npm run check:brent`、`npm run check:docs`、`npm run check:project-backlog-format`、`npm run check:all`，并通过一次 `buildMacroOverview` runtime smoke。
 - **下一步建议**: 剩余只适合 source-review/manual path：true private credit marks/fundraising、Platts/official Brent settlement、non-public CRE loan tape、BoA raw card feed、Redbook raw subscription feed。

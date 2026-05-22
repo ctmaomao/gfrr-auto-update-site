@@ -31,7 +31,7 @@
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-84V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-85V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -99,6 +99,7 @@
 - M-82 后,`brentPricingLayer.iceFuturesPriceCurve` 可读取 ICE product-guide public contract-data 的 Brent futures delayed last-price curve。该字段仍为 audit-only/display-only;不得接入 `values.brent`、Brent promotion、scoring、decisionModel、executionLock、positionGuidance、Action Queue、Trigger Monitor 或 Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得写成 Platts Dated Brent、正式 Dated Brent、official ICE settlement curve 或实物现货成交证据。
 - M-83 后,`macroDrivers.privateCreditProxy.intervalFundNavPrice` 可读取 Yahoo `CCLFX` public interval-fund NAV proxy (Cliffwater Corporate Lending Fund)。该字段仍为 audit-only/display-only;不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得写成 private credit marks、fundraising data、Cliffwater Direct Lending Index licensed dataset 或非公开私募贷款估值。
 - M-84 后,`macroDrivers.commercialRealEstate.creLoanBalance` 可读取 FRED `CREACBW027SBOG` public weekly aggregate bank CRE loan balance / exposure stock proxy。该字段仍为 audit-only/display-only;不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得写成 non-public CRE loan tape、private CRE marks、loan-level exposure、CDX 或 私募信贷数据。
+- M-85 后,`brentPricingLayer.eiaBrentSpotProxy` 可读取 EIA Europe Brent Spot Price FOB public HTML (`RBRTE`)。该字段仍为 audit-only/display-only;不得接入 `values.brent`、Brent promotion、scoring、decisionModel、executionLock、positionGuidance、Action Queue、Trigger Monitor 或 Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得写成 Platts Dated Brent、正式 Dated Brent 或实物现货成交证据。
 - World Order 外部数据刷新应先手动观察，再考虑 scheduled workflow；不要把 `build:world-order` 加入 `check:all`，H-4 的 `review:world-order` 只是本地只读人工审阅 helper。
 - World Order 新外部源不得直接进入 scoring；必须先通过 diagnosis / source review，再另开版本接入。
 - ReliefWeb 或任何新外部源不得直接进入 scoring；必须先通过 diagnosis / review，再另开 integration version。

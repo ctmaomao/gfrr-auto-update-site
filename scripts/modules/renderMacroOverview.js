@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-84V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-84V';
-import { formatFiniteNumber } from './format.js?v=28.0M-84V';
+import { $ } from './config.js?v=28.0M-85V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-85V';
+import { formatFiniteNumber } from './format.js?v=28.0M-85V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -425,6 +425,9 @@ function buildPressureSources(data, worldOrderStressData) {
   const cleanTankerIndex = finite(shippingFreight.balticCleanTankerIndex);
   const dryBulkIndex = finite(shippingFreight.balticDryIndex);
   const crackSpread4wChange = finite(brentLayer.crackSpread4wChange);
+  const eiaBrentSpotProxy = isPlainObject(brentLayer.eiaBrentSpotProxy) ? brentLayer.eiaBrentSpotProxy : {};
+  const eiaBrentSpotPrice = finite(eiaBrentSpotProxy.price);
+  const eiaBrentSpotDailyChange = finite(eiaBrentSpotProxy.dailyChange);
   const brentFuturesCurve = isPlainObject(brentLayer.futuresCurve) ? brentLayer.futuresCurve : {};
   const brentFuturesCurveContracts = safeArray(brentFuturesCurve.contracts)
     .filter(isPlainObject)
@@ -442,7 +445,9 @@ function buildPressureSources(data, worldOrderStressData) {
     .map((contract) => `${text(contract.contract, '--')} ${formatNumber(contract.price, 2)}`);
   const energyGaps = safeArray(brentLayer.dataGaps);
   const energyMissing = [
-    'Platts Dated Brent / 正式 Dated Brent 和实物端证据仍待验证。',
+    eiaBrentSpotPrice === null
+      ? 'Platts Dated Brent / 正式 Dated Brent 和实物端证据仍待验证。'
+      : 'EIA public Brent spot proxy 已接入；Platts Dated Brent / 正式 Dated Brent 和实物端证据仍待验证。',
     brentIceFuturesPriceCurveContracts.length
       ? 'ICE public delayed futures price curve 已接入；official settlement curve / Platts 期限结构仍待接入。'
       : brentFuturesPriceCurveContracts.length
@@ -465,6 +470,9 @@ function buildPressureSources(data, worldOrderStressData) {
       dataCoverage: energyGaps.length ? '数据覆盖：部分缺口' : '数据覆盖：等待校准',
       evidence: [
         `布伦特 ${formatNumber(brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`,
+        eiaBrentSpotPrice === null
+          ? null
+          : `EIA Brent Spot Price FOB ${formatNumber(eiaBrentSpotPrice, 2)}；日变化 ${formatSignedDecimal(eiaBrentSpotDailyChange, 2)}（${formatWeekVintage(eiaBrentSpotProxy.updatedAt)}；status=${formatSourceStatus(eiaBrentSpotProxy.sourceStatus)}）`,
         dirtyTankerIndex === null
           ? null
           : `BDTI ${formatNumber(dirtyTankerIndex, 0)}；日变化 ${formatRatioAsPercent(dirtyTankerChange)}（${text(shippingFreight.tankerFreightRegime, '未知')}）`,
@@ -1358,6 +1366,9 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
     .filter(isPlainObject)
     .filter((item) => ['1Y', '2Y', '5Y', '10Y'].includes(text(item.tenor, '')))
     .map((item) => `${text(item.tenor, '--')} ${formatNumber(item.rate, 2, '%')}`);
+  const eiaBrentSpotProxy = isPlainObject(brentLayer.eiaBrentSpotProxy) ? brentLayer.eiaBrentSpotProxy : {};
+  const eiaBrentSpotPrice = finite(eiaBrentSpotProxy.price);
+  const eiaBrentSpotDailyChange = finite(eiaBrentSpotProxy.dailyChange);
   const ulsdPrice = finite(brentLayer.ulsdPrice);
   const ulsd4wChange = finite(brentLayer.ulsd4wChange);
   const crackSpread4wChange = finite(brentLayer.crackSpread4wChange);
@@ -1385,6 +1396,9 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
       dataCoverage: '数据覆盖：部分缺口',
       evidence: [
         text(brentLayer.summaryZh, `布伦特 ${formatNumber(inputs.brent, 1)}，通胀预期 ${formatNumber(inputs.breakeven10y, 2, '%')}。`),
+        eiaBrentSpotPrice === null
+          ? null
+          : `EIA Brent Spot Price FOB ${formatNumber(eiaBrentSpotPrice, 2)}；日变化 ${formatSignedDecimal(eiaBrentSpotDailyChange, 2)}（${formatWeekVintage(eiaBrentSpotProxy.updatedAt)}；status=${formatSourceStatus(eiaBrentSpotProxy.sourceStatus)}）`,
         brentLayer.crackSpread === null || !Number.isFinite(brentLayer.crackSpread)
           ? null
           : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶；4周变化 ${formatSignedDecimal(crackSpread4wChange, 2)}（${brentLayer.crackSpreadRegime}，日度更新）`,

@@ -57,6 +57,9 @@ const FED_FETCH_TIMEOUT_MS = 10000;
 const ICE_BRENT_FUTURES_DATA_URL = 'https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430';
 const ICE_BRENT_CONTRACT_DATA_API_URL = 'https://www.ice.com/marketdata/api/productguide/charting/contract-data?productId=254&hubId=403';
 const ICE_BRENT_FETCH_TIMEOUT_MS = 10000;
+const EIA_BRENT_SPOT_HTML_URL = 'https://www.eia.gov/dnav/pet/hist/rbrted.htm';
+const EIA_BRENT_SPOT_SOURCE = 'EIA:RBRTE';
+const EIA_BRENT_SPOT_FETCH_TIMEOUT_MS = 10000;
 const BOFA_CONSUMER_CHECKPOINT_URL = 'https://institute.bankofamerica.com/consumer-checkpoint.html';
 const BOFA_CONSUMER_CHECKPOINT_BASE_URL = 'https://institute.bankofamerica.com';
 const BOFA_CONSUMER_FETCH_TIMEOUT_MS = 10000;
@@ -693,7 +696,8 @@ function buildBrentPricingLayer({
   ulsdData = null,
   futuresCurveData = null,
   futuresPriceCurveData = null,
-  iceFuturesPriceCurveData = null
+  iceFuturesPriceCurveData = null,
+  eiaBrentSpotProxyData = null
 }) {
   const validation = realtimePayload?.brentValidation || {};
   const promotion = validation.promotion || {};
@@ -794,6 +798,7 @@ function buildBrentPricingLayer({
   const futuresCurve = normalizePreviousBrentFuturesCurve(futuresCurveData);
   const futuresPriceCurve = normalizePreviousBrentFuturesPriceCurve(futuresPriceCurveData);
   const iceFuturesPriceCurve = normalizePreviousIceBrentFuturesPriceCurve(iceFuturesPriceCurveData);
+  const eiaBrentSpotProxy = normalizePreviousEiaBrentSpotProxy(eiaBrentSpotProxyData);
 
   return {
     contractVersion: 'v28.0I-5A',
@@ -807,6 +812,7 @@ function buildBrentPricingLayer({
     selectedBrent,
     publicSpotProxy,
     futuresProxy,
+    eiaBrentSpotProxy,
     futuresCurve,
     futuresPriceCurve,
     iceFuturesPriceCurve,
@@ -843,7 +849,9 @@ function buildBrentPricingLayer({
       )
     },
     dataGaps: [
-      'Platts Dated Brent / 正式 Dated Brent 未接入。',
+      eiaBrentSpotProxy.sourceStatus === 'live'
+        ? 'EIA Europe Brent Spot Price FOB public proxy 已接入；Platts Dated Brent / 正式 Dated Brent 仍未接入。'
+        : 'Platts Dated Brent / 正式 Dated Brent 未接入。',
       iceFuturesPriceCurve.curveStatus === 'live_delayed_priced'
         ? 'ICE public delayed Brent futures price curve 已接入；official settlement curve / Platts 期限结构仍待接入。'
         : futuresPriceCurve.curveStatus === 'live_proxy_priced'
@@ -855,6 +863,7 @@ function buildBrentPricingLayer({
     ],
     limitations: [
       '当前仅为公开代理价格观察，不等同于付费 Dated Brent 或实物成交数据。',
+      'EIA Europe Brent Spot Price FOB 是公开现货代理，不是 Platts Dated Brent 或正式 Dated Brent。',
       'ICE futuresCurve 当前是 structure-only，不显示或推断缺失的结算价期限曲线。',
       'ICE public delayed last-price curve 不是 official settlement curve。',
       'Yahoo futuresPriceCurve 是公开月度期货报价代理，不是官方 settlement curve。',
@@ -1835,6 +1844,97 @@ async function resolveIceBrentFuturesPriceCurve(prevBrentPricingLayer) {
   }
 }
 
+function buildMissingEiaBrentSpotProxy() {
+  return {
+    source: EIA_BRENT_SPOT_SOURCE,
+    sourceUrl: EIA_BRENT_SPOT_HTML_URL,
+    price: null,
+    dailyChange: null,
+    updatedAt: null,
+    sourceStatus: 'missing',
+    limitationZh: 'EIA Europe Brent Spot Price FOB 公开现货代理不可用；不得把缺失数据渲染为 0.00，也不得写成 Platts Dated Brent。'
+  };
+}
+
+function normalizePreviousEiaBrentSpotProxy(prevProxy) {
+  if (!prevProxy || typeof prevProxy !== 'object') return buildMissingEiaBrentSpotProxy();
+  return {
+    source: typeof prevProxy.source === 'string' ? prevProxy.source : EIA_BRENT_SPOT_SOURCE,
+    sourceUrl: typeof prevProxy.sourceUrl === 'string' ? prevProxy.sourceUrl : EIA_BRENT_SPOT_HTML_URL,
+    price: Number.isFinite(prevProxy.price) ? +prevProxy.price.toFixed(2) : null,
+    dailyChange: Number.isFinite(prevProxy.dailyChange) ? +prevProxy.dailyChange.toFixed(2) : null,
+    updatedAt: typeof prevProxy.updatedAt === 'string' ? prevProxy.updatedAt : null,
+    sourceStatus: ['live', 'fallback', 'missing'].includes(prevProxy.sourceStatus)
+      ? prevProxy.sourceStatus
+      : (Number.isFinite(prevProxy.price) ? 'fallback' : 'missing'),
+    limitationZh: typeof prevProxy.limitationZh === 'string'
+      ? prevProxy.limitationZh
+      : 'EIA Europe Brent Spot Price FOB 是公开 spot proxy；不是 Platts Dated Brent、正式 Dated Brent 或实物成交证据。'
+  };
+}
+
+function extractEiaHtmlCells(rowHtml) {
+  return [...String(rowHtml || '').matchAll(/<td[^>]*>([\s\S]*?)<\/td>/giu)]
+    .map((match) => htmlToPlainText(match[1]));
+}
+
+function parseEiaBrentWeekStart(label) {
+  const match = String(label || '').match(/(?<year>\d{4})\s+(?<month>[A-Za-z]+)-\s*(?<day>\d{1,2})\s+to\s+[A-Za-z]+-\s*\d{1,2}/u);
+  if (!match?.groups) return null;
+  const year = Number(match.groups.year);
+  const monthIndex = monthIndexFromName(match.groups.month);
+  const day = Number(match.groups.day);
+  if (!Number.isInteger(year) || !Number.isInteger(monthIndex) || !Number.isInteger(day)) return null;
+  const timestamp = Date.UTC(year, monthIndex, day);
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function parseEiaBrentSpotHtml(html) {
+  return extractHtmlRows(html)
+    .flatMap((rowHtml) => {
+      const cells = extractEiaHtmlCells(rowHtml);
+      if (cells.length < 6) return [];
+      const weekStartMs = parseEiaBrentWeekStart(cells[0]);
+      if (!Number.isFinite(weekStartMs)) return [];
+      return cells.slice(1, 6)
+        .map((cell, index) => {
+          const value = parseLooseNumber(cell);
+          if (!Number.isFinite(value)) return null;
+          const date = new Date(weekStartMs + index * 24 * 3600 * 1000);
+          return {
+            date: date.toISOString().slice(0, 10),
+            value
+          };
+        })
+        .filter(Boolean);
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+async function resolveEiaBrentSpotProxy(prevBrentPricingLayer) {
+  const fallback = normalizePreviousEiaBrentSpotProxy(prevBrentPricingLayer?.eiaBrentSpotProxy);
+  try {
+    const html = await retryFetch(EIA_BRENT_SPOT_HTML_URL, 'eia:brent-spot-html', EIA_BRENT_SPOT_FETCH_TIMEOUT_MS, {
+      userAgent: 'GFRRBot/1.0'
+    });
+    const rows = parseEiaBrentSpotHtml(html);
+    if (rows.length < 1) throw new Error('eia:brent-spot-html missing latest price rows');
+    const latest = rows[rows.length - 1];
+    const previous = rows[rows.length - 2] || null;
+    return {
+      source: EIA_BRENT_SPOT_SOURCE,
+      sourceUrl: EIA_BRENT_SPOT_HTML_URL,
+      price: +latest.value.toFixed(2),
+      dailyChange: previous ? +(latest.value - previous.value).toFixed(2) : null,
+      updatedAt: `${latest.date}T00:00:00Z`,
+      sourceStatus: 'live',
+      limitationZh: 'EIA Europe Brent Spot Price FOB 是公开现货代理；不是 Platts Dated Brent、正式 Dated Brent 或实物成交证据。'
+    };
+  } catch (_err) {
+    return fallback;
+  }
+}
+
 function normalizePreviousBrentFuturesCurve(prevCurve) {
   if (!prevCurve || typeof prevCurve !== 'object') {
     return {
@@ -2060,6 +2160,14 @@ const MONTH_INDEX_BY_NAME = new Map([
   ['november', 10],
   ['december', 11]
 ]);
+
+function monthIndexFromName(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return null;
+  if (MONTH_INDEX_BY_NAME.has(normalized)) return MONTH_INDEX_BY_NAME.get(normalized);
+  const match = [...MONTH_INDEX_BY_NAME.entries()].find(([name]) => name.startsWith(normalized.slice(0, 3)));
+  return match ? match[1] : null;
+}
 
 function parseBofaReportDateFromUrl(url) {
   const match = String(url || '').match(/consumer-checkpoint-(?<month>[a-z]+)-(?<year>\d{4})\.html/iu);
@@ -6212,11 +6320,12 @@ async function build() {
     macroDrivers,
     confidenceScore
   });
-  const [ulsdData, brentFuturesCurve, brentFuturesPriceCurve, iceBrentFuturesPriceCurve] = await Promise.all([
+  const [ulsdData, brentFuturesCurve, brentFuturesPriceCurve, iceBrentFuturesPriceCurve, eiaBrentSpotProxy] = await Promise.all([
     resolveUlsd(prevData?.brentPricingLayer),
     resolveBrentFuturesCurve(prevData?.brentPricingLayer),
     resolveBrentFuturesPriceCurve(prevData?.brentPricingLayer),
-    resolveIceBrentFuturesPriceCurve(prevData?.brentPricingLayer)
+    resolveIceBrentFuturesPriceCurve(prevData?.brentPricingLayer),
+    resolveEiaBrentSpotProxy(prevData?.brentPricingLayer)
   ]);
   const brentPricingLayer = buildBrentPricingLayer({
     realtimePayload: realtime,
@@ -6225,7 +6334,8 @@ async function build() {
     ulsdData,
     futuresCurveData: brentFuturesCurve,
     futuresPriceCurveData: brentFuturesPriceCurve,
-    iceFuturesPriceCurveData: iceBrentFuturesPriceCurve
+    iceFuturesPriceCurveData: iceBrentFuturesPriceCurve,
+    eiaBrentSpotProxyData: eiaBrentSpotProxy
   });
 
   const data = {

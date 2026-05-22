@@ -1,5 +1,5 @@
-import { $, fmtSignedArrow } from './config.js?v=28.0M-84V';
-import { renderList } from './renderTables.js?v=28.0M-84V';
+import { $, fmtSignedArrow } from './config.js?v=28.0M-85V';
+import { renderList } from './renderTables.js?v=28.0M-85V';
 
 const CHART_COLORS = {
   primary: '#7C1D1D',

@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-84V';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-84V';
-import { renderList } from './renderTables.js?v=28.0M-84V';
+import { $, fmtNumSafe, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-85V';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-85V';
+import { renderList } from './renderTables.js?v=28.0M-85V';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0M-84V';
+} from './renderCharts.js?v=28.0M-85V';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0M-84V';
+} from './renderTables.js?v=28.0M-85V';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0M-84V';
+} from './renderAudit.js?v=28.0M-85V';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -929,6 +929,14 @@ function formatBrentPriceNode(node = {}) {
   return `${label}：${value} / 来源 ${source} / 状态 ${status}`;
 }
 
+function formatEiaBrentSpotProxy(proxy = {}) {
+  if (!proxy || typeof proxy !== 'object') return 'EIA Brent Spot Price FOB：待确认';
+  const status = safeText(proxy.sourceStatus, 'missing');
+  const dailyChange = Number.isFinite(Number(proxy.dailyChange)) ? formatBrentValue(proxy.dailyChange) : '--';
+  const updatedAt = safeText(proxy.updatedAt, '--').slice(0, 10);
+  return `EIA Brent Spot Price FOB：${formatBrentValue(proxy.price)}；日变化 ${dailyChange}；vintage ${updatedAt}；status=${status}`;
+}
+
 function formatBrentFuturesCurve(curve = {}) {
   if (!curve || typeof curve !== 'object') return 'ICE 合约结构：待确认';
   const status = safeText(curve.curveStatus, 'missing');
@@ -1041,7 +1049,10 @@ export function renderBrentPricingLayer(brentPricingLayer) {
   setTextIfPresent('brent-selected-observed', `时间：${safeText(selected.observedAt, '--')}`);
   setTextIfPresent('brent-selected-note', selected.noteZh);
 
-  setTextIfPresent('brent-spot-proxy', formatBrentPriceNode(brentPricingLayer.publicSpotProxy || {}));
+  setTextIfPresent(
+    'brent-spot-proxy',
+    `${formatBrentPriceNode(brentPricingLayer.publicSpotProxy || {})}；${formatEiaBrentSpotProxy(brentPricingLayer.eiaBrentSpotProxy || {})}`
+  );
   setTextIfPresent(
     'brent-futures-proxy',
     `${formatBrentPriceNode(brentPricingLayer.futuresProxy || {})}；${formatBrentFuturesCurve(brentPricingLayer.futuresCurve || {})}；${formatIceBrentFuturesPriceCurve(brentPricingLayer.iceFuturesPriceCurve || {})}；${formatBrentFuturesPriceCurve(brentPricingLayer.futuresPriceCurve || {})}`

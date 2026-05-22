@@ -102,6 +102,7 @@ const BRENT_PROXY_SPREAD_STATUSES = new Set(['normal', 'watch', 'stress', 'insuf
 const BRENT_FUTURES_CURVE_STATUSES = new Set(['live_structure_only', 'fallback_structure_only', 'missing']);
 const BRENT_FUTURES_PRICE_CURVE_STATUSES = new Set(['live_proxy_priced', 'fallback_proxy_priced', 'missing']);
 const ICE_BRENT_FUTURES_PRICE_CURVE_STATUSES = new Set(['live_delayed_priced', 'fallback_delayed_priced', 'missing']);
+const EIA_BRENT_SPOT_PROXY_STATUSES = new Set(['live', 'fallback', 'missing']);
 const AI_INTERPRETATION_MODE = 'rule_based_structured_interpretation';
 const AI_INTERPRETATION_MODEL_SOURCES = new Set(['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'macroDrivers', 'decisionModel', 'combined']);
 const AI_INTERPRETATION_EVIDENCE_LAYERS = new Set(['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'macroDrivers.consumer', 'worldOrder', 'decisionModel']);
@@ -1010,6 +1011,28 @@ function validateIceBrentFuturesPriceCurve(curve) {
   assertString(curve.limitationZh, 'brentPricingLayer.iceFuturesPriceCurve.limitationZh');
 }
 
+function validateEiaBrentSpotProxy(proxy) {
+  assertPlainObject(proxy, 'brentPricingLayer.eiaBrentSpotProxy');
+  for (const key of ['source', 'sourceUrl', 'price', 'dailyChange', 'updatedAt', 'sourceStatus', 'limitationZh']) {
+    assert(Object.hasOwn(proxy, key), `brentPricingLayer.eiaBrentSpotProxy.${key} is missing`);
+  }
+  assert(proxy.source === 'EIA:RBRTE', 'brentPricingLayer.eiaBrentSpotProxy.source must be EIA:RBRTE');
+  assertString(proxy.sourceUrl, 'brentPricingLayer.eiaBrentSpotProxy.sourceUrl');
+  assert(isFiniteNumberOrNull(proxy.price), 'brentPricingLayer.eiaBrentSpotProxy.price must be finite number or null');
+  assert(isFiniteNumberOrNull(proxy.dailyChange), 'brentPricingLayer.eiaBrentSpotProxy.dailyChange must be finite number or null');
+  validateNullableIsoString(proxy.updatedAt, 'brentPricingLayer.eiaBrentSpotProxy.updatedAt');
+  assert(EIA_BRENT_SPOT_PROXY_STATUSES.has(proxy.sourceStatus), 'brentPricingLayer.eiaBrentSpotProxy.sourceStatus is not supported');
+  assertString(proxy.limitationZh, 'brentPricingLayer.eiaBrentSpotProxy.limitationZh');
+  assert(
+    proxy.price !== 0 || proxy.sourceStatus === 'missing',
+    'brentPricingLayer.eiaBrentSpotProxy.price must not render missing data as 0.00'
+  );
+  assert(
+    proxy.limitationZh.includes('不是 Platts Dated Brent') || proxy.limitationZh.includes('not Platts'),
+    'brentPricingLayer.eiaBrentSpotProxy.limitationZh must disclose it is not Platts Dated Brent'
+  );
+}
+
 function validateBrentPricingLayer(dataPayload) {
   const layer = dataPayload.brentPricingLayer;
   if (layer === undefined) {
@@ -1025,6 +1048,7 @@ function validateBrentPricingLayer(dataPayload) {
     'selectedBrent',
     'publicSpotProxy',
     'futuresProxy',
+    'eiaBrentSpotProxy',
     'futuresCurve',
     'futuresPriceCurve',
     'iceFuturesPriceCurve',
@@ -1050,6 +1074,7 @@ function validateBrentPricingLayer(dataPayload) {
   assertString(layer.publicSpotProxy.limitationZh, 'brentPricingLayer.publicSpotProxy.limitationZh');
   validateBrentLayerPriceNode(layer.futuresProxy, 'brentPricingLayer.futuresProxy', 'Brent 期货代理');
   assertString(layer.futuresProxy.limitationZh, 'brentPricingLayer.futuresProxy.limitationZh');
+  validateEiaBrentSpotProxy(layer.eiaBrentSpotProxy);
   validateBrentFuturesCurve(layer.futuresCurve);
   validateBrentFuturesPriceCurve(layer.futuresPriceCurve);
   validateIceBrentFuturesPriceCurve(layer.iceFuturesPriceCurve);
