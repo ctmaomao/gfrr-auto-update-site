@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-85V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-85V';
-import { formatFiniteNumber } from './format.js?v=28.0M-85V';
+import { $ } from './config.js?v=28.0M-86V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-86V';
+import { formatFiniteNumber } from './format.js?v=28.0M-86V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -317,6 +317,7 @@ function createJudgment(overrides = {}) {
     confidence: confidenceLabel(overrides.confidence),
     dataCoverage: dataCoverageLabel(overrides.dataCoverage),
     evidence: normalizeEvidenceList(overrides.evidence),
+    coverageNotes: normalizeEvidenceList(overrides.coverageNotes),
     missingEvidence: normalizeEvidenceList(overrides.missingEvidence),
     counterEvidence: normalizeEvidenceList(overrides.counterEvidence),
     noiseWarning: normalizeEvidenceList(overrides.noiseWarning),
@@ -351,6 +352,8 @@ function buildTodayJudgment(data, healthDashboard, worldOrderStressData, marketP
   const brief = isPlainObject(data?.dailyBrief) ? data.dailyBrief : {};
   const confidence = isPlainObject(brief.confidence) ? brief.confidence : {};
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
+  const macroDrivers = isPlainObject(data?.macroDrivers) ? data.macroDrivers : {};
+  const shippingFreight = isPlainObject(macroDrivers.shippingFreight) ? macroDrivers.shippingFreight : {};
   const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
   const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
   const score = finite(data?.score);
@@ -370,16 +373,28 @@ function buildTodayJudgment(data, healthDashboard, worldOrderStressData, marketP
     hasValue(inputs.us10y) ? '长端利率需要继续观察' : '',
     hasValue(inputs.hyOas) && Number(inputs.hyOas) < 4 ? '信用压力暂未明显扩散' : '',
   ].filter(Boolean).join('；');
+  const eiaBrentSpotProxy = isPlainObject(brentLayer.eiaBrentSpotProxy) ? brentLayer.eiaBrentSpotProxy : {};
+  const eiaSpotLive = eiaBrentSpotProxy.sourceStatus === 'live' && finite(eiaBrentSpotProxy.price) !== null;
+  const icePriceCurveLive = text(brentLayer.iceFuturesPriceCurve?.curveStatus, '') === 'live_delayed_priced';
+  const freightLive = ['dirtyTanker', 'cleanTanker', 'dryBulk']
+    .some((key) => text(shippingFreight.sourceStatus?.[key], '') === 'live');
+  const publicEnergyCoverage = [
+    eiaSpotLive ? 'EIA Brent spot proxy live' : null,
+    icePriceCurveLive ? 'ICE delayed futures curve live' : null,
+    freightLive ? 'StockQ BDTI/BCTI/BDI freight proxy live' : null,
+  ].filter(Boolean);
   const dataCoverageText = Number.isFinite(Number(healthScore))
-    ? `${Math.round(Number(healthScore))}%；${marketMetric ? '市场温度已接入' : '市场温度仍需补齐'}，实物能源证据仍需补齐`
+    ? `${Math.round(Number(healthScore))}%；${marketMetric ? '市场温度已接入' : '市场温度仍需补齐'}，${publicEnergyCoverage.length >= 2 ? '能源公开代理覆盖良好' : '能源公开代理部分覆盖'}`
     : '等待数据校准';
   const todayEvidence = [
     text(brief.oneLineConclusion, fallbackLine || '当前结论强度有限，仍需等待更多跨市场证据。'),
   ];
   if (marketMetric) todayEvidence.push(marketMetric.evidenceLine);
-  const missingEvidence = marketMetric
-    ? ['实物能源证据仍需补齐。']
-    : ['市场温度历史数据尚未接入。', '实物能源证据仍需补齐。'];
+  const coverageNotes = [
+    publicEnergyCoverage.length ? `公开能源代理已接入：${publicEnergyCoverage.join(' / ')}。` : null,
+    '正式 Platts / official settlement / 实物成交证据仍作为边界说明，不作为当前缺失主信号。',
+  ].filter(Boolean);
+  const missingEvidence = marketMetric ? [] : ['市场温度历史数据尚未接入。'];
 
   return {
     ...createJudgment({
@@ -393,6 +408,7 @@ function buildTodayJudgment(data, healthDashboard, worldOrderStressData, marketP
       confidence: evidenceStrength,
       dataCoverage: dataCoverageText,
       evidence: todayEvidence,
+      coverageNotes,
       missingEvidence,
       explanation: macroState,
       sourceType: '模型判断',
@@ -443,18 +459,22 @@ function buildPressureSources(data, worldOrderStressData) {
     .filter(isPlainObject)
     .slice(0, 4)
     .map((contract) => `${text(contract.contract, '--')} ${formatNumber(contract.price, 2)}`);
-  const energyGaps = safeArray(brentLayer.dataGaps);
-  const energyMissing = [
-    eiaBrentSpotPrice === null
-      ? 'Platts Dated Brent / 正式 Dated Brent 和实物端证据仍待验证。'
-      : 'EIA public Brent spot proxy 已接入；Platts Dated Brent / 正式 Dated Brent 和实物端证据仍待验证。',
-    brentIceFuturesPriceCurveContracts.length
-      ? 'ICE public delayed futures price curve 已接入；official settlement curve / Platts 期限结构仍待接入。'
-      : brentFuturesPriceCurveContracts.length
-      ? 'Yahoo priced futures proxy 已接入；正式 ICE settlement curve / Platts 期限结构仍待接入。'
-      : brentFuturesCurveContracts.length
-        ? 'ICE 合约结构已接入；priced proxy / 可验证结算价期限曲线仍待接入。'
-        : 'Brent futures curve structure 等待刷新。',
+  const energyProxyCoverage = [
+    eiaBrentSpotPrice !== null ? 'EIA Brent Spot Price FOB live' : null,
+    brentIceFuturesPriceCurveContracts.length ? 'ICE delayed Brent futures curve live' : null,
+    brentFuturesPriceCurveContracts.length ? 'Yahoo Brent priced futures proxy live' : null,
+    dirtyTankerIndex !== null ? 'StockQ BDTI tanker freight live' : null,
+    cleanTankerIndex !== null ? 'StockQ BCTI clean tanker live' : null,
+    dryBulkIndex !== null ? 'StockQ BDI dry bulk live' : null,
+  ].filter(Boolean);
+  const energyFormalBoundary = [
+    'Platts Dated Brent / 正式 Dated Brent 未接入。official settlement / 实物成交证据仍是边界说明，不作为公开代理层的主缺失项。',
+  ];
+  const energyRefreshMissing = [
+    eiaBrentSpotPrice === null ? 'EIA Brent spot proxy 等待刷新。' : null,
+    !brentIceFuturesPriceCurveContracts.length && !brentFuturesPriceCurveContracts.length && !brentFuturesCurveContracts.length
+      ? 'Brent futures curve 等待刷新。'
+      : null,
     dirtyTankerIndex === null ? '油轮运费压力等待 BDTI 刷新。' : null,
   ].filter(Boolean);
   const worldFreshness = text(worldOrderStressData?.freshness, INSUFFICIENT);
@@ -467,7 +487,7 @@ function buildPressureSources(data, worldOrderStressData) {
       status: brent === null ? INSUFFICIENT : brent >= 100 ? '主要压力' : '观察中',
       direction: brent === null ? '方向待确认' : brent >= 100 ? '压力上升' : '观察中',
       confidence: brent === null ? '偏低' : '中等',
-      dataCoverage: energyGaps.length ? '数据覆盖：部分缺口' : '数据覆盖：等待校准',
+      dataCoverage: energyProxyCoverage.length >= 4 ? '数据覆盖：公开能源代理覆盖良好' : energyProxyCoverage.length ? '数据覆盖：公开能源代理部分覆盖' : '数据覆盖：关键数据不足',
       evidence: [
         `布伦特 ${formatNumber(brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`,
         eiaBrentSpotPrice === null
@@ -491,10 +511,11 @@ function buildPressureSources(data, worldOrderStressData) {
           ? `Yahoo Brent priced futures proxy: ${brentFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentFuturesPriceCurve.frontMinusBack, 2)}`
           : null,
       ].filter(Boolean),
-      missingEvidence: energyGaps.length || dirtyTankerIndex === null ? energyMissing : [],
-      explanation: energyGaps.length
-        ? '价格压力存在，但正式 Dated Brent、结算价期限曲线和实物端证据仍待验证。'
-        : '能源压力仍需与通胀预期和实物端交叉确认。',
+      coverageNotes: [...energyProxyCoverage, ...energyFormalBoundary],
+      missingEvidence: energyRefreshMissing,
+      explanation: energyProxyCoverage.length
+        ? '公开现货、期货与运费代理已形成能源压力观察层；正式实物成交源作为边界保留。'
+        : '能源压力仍需等待公开代理刷新。',
       sourceType: brent === null ? '数据不足' : '数据推断',
       priority: brent === null ? 4 : brent >= 100 ? 1 : 2,
     }),
@@ -505,9 +526,10 @@ function buildPressureSources(data, worldOrderStressData) {
       status: us10y === null && real10y === null && dxy === null ? INSUFFICIENT : '观察中',
       direction: us10y !== null && us10y >= 4.25 ? '压力上升' : '观察中',
       confidence: '中等',
-      dataCoverage: '数据覆盖：部分缺口',
+      dataCoverage: us10y !== null || real10y !== null || dxy !== null ? '数据覆盖：核心利率与美元代理已覆盖' : '数据覆盖：关键数据不足',
       evidence: [`10年期 ${formatNumber(us10y, 2, '%')}；实际利率 ${formatNumber(real10y, 2, '%')}；广义美元 ${formatNumber(dxy, 2)}`],
-      missingEvidence: ['信用市场扩散确认仍需观察。'],
+      coverageNotes: ['信用市场扩散确认属于交叉验证条件，不作为当前利率压力卡的数据缺失。'],
+      missingEvidence: us10y !== null || real10y !== null || dxy !== null ? [] : ['利率与美元代理等待刷新。'],
       explanation: '长端利率和美元偏紧需要信用市场继续确认。',
       priority: us10y !== null && us10y >= 4.25 ? 2 : 3,
     }),
@@ -518,7 +540,7 @@ function buildPressureSources(data, worldOrderStressData) {
       status: hyOas === null && vix === null ? INSUFFICIENT : hyOas !== null && hyOas < 4 && vix !== null && vix < 22 ? '暂未扩散' : '观察中',
       direction: hyOas !== null && hyOas < 4 ? '基本平稳' : '方向待确认',
       confidence: hyOas !== null && vix !== null ? '中等' : '偏低',
-      dataCoverage: hyOas !== null && vix !== null ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+      dataCoverage: hyOas !== null && vix !== null ? '数据覆盖：核心信用与波动率已覆盖' : '数据覆盖：关键数据不足',
       evidence: [`高收益利差 ${formatNumber(hyOas, 2, '%')}；VIX ${formatNumber(vix, 2)}`],
       counterEvidence: hyOas !== null && hyOas < 4 && vix !== null && vix < 22 ? ['信用和波动率尚未给出同步扩散确认。'] : [],
       explanation: '信用和波动率尚未给出同步扩散确认。',
@@ -545,7 +567,7 @@ function buildPressureSources(data, worldOrderStressData) {
       status: finite(consumer.umichSentiment) === null ? WAITING : '观察中',
       direction: directionFromDelta(consumer.threeMonthChange),
       confidence: finite(consumer.umichSentiment) === null ? '偏低' : '中等',
-      dataCoverage: finite(consumer.umichSentiment) === null ? '数据覆盖：关键数据不足' : '数据覆盖：部分缺口',
+      dataCoverage: finite(consumer.umichSentiment) === null ? '数据覆盖：关键数据不足' : '数据覆盖：消费者慢变量已覆盖',
       evidence: [
         finite(consumer.umichSentiment) === null
           ? 'UMCSENT 等待接入或刷新。'
@@ -554,7 +576,8 @@ function buildPressureSources(data, worldOrderStressData) {
           ? null
           : `ISM 制造业 PMI ${formatNumber(consumer.ismManufacturingPmi, 1)} — ${consumer.ismManufacturingPmi >= 50 ? '扩张区间' : '收缩区间'}；3个月变化 ${formatNumber(consumer.ismManufacturingPmi3mChange, 1)}`,
       ].filter(Boolean),
-      missingEvidence: ['细分零售品类已在 Macro Drivers 展示；本压力卡仅保留消费者体感慢变量。'],
+      coverageNotes: ['细分零售品类已在 Macro Drivers 展示；本压力卡只保留消费者体感慢变量。'],
+      missingEvidence: finite(consumer.umichSentiment) === null ? ['消费者体感慢变量等待刷新。'] : [],
       explanation: '月频慢变量只说明体感背景，不足以单独判断增长拐点。',
       sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '事实',
       priority: 5,
@@ -583,6 +606,8 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
     .filter(isPlainObject)
     .slice(0, 4)
     .map((contract) => `${text(contract.contract, '--')} ${formatNumber(contract.price, 2)}`);
+  const eiaBrentSpotProxy = isPlainObject(brentLayer.eiaBrentSpotProxy) ? brentLayer.eiaBrentSpotProxy : {};
+  const eiaBrentSpotPrice = finite(eiaBrentSpotProxy.price);
   const largestDivergence = isPlainObject(brief.largestDivergence) ? brief.largestDivergence : {};
   const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
   const verified = [];
@@ -598,20 +623,21 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
     verified.push(`${marketMetric.evidenceLine} 市场温度已可作为当前主判断的价格层确认。`);
   }
   if (largestDivergence.summaryZh) pending.push(largestDivergence.summaryZh);
-  pending.push('能源价格处于观察区间，但实物端验证数据仍不足。');
+  pending.push('能源价格处于观察区间，公开代理已可观察，正式实物源作为边界继续标注。');
   const dataGapEvidence = [
-    'Platts Dated Brent / 正式 Dated Brent 尚未接入。',
+    eiaBrentSpotPrice === null
+      ? 'EIA Brent spot proxy 等待刷新；Platts 正式源作为边界保留。'
+      : `EIA Brent Spot Price FOB 已显示 ${formatNumber(eiaBrentSpotPrice, 2)}；Platts 正式源作为边界保留。`,
     brentIceFuturesPriceCurveContracts.length
-      ? `ICE Brent public delayed price curve 已显示 ${brentIceFuturesPriceCurveContracts.join(' / ')}；official settlement curve 仍待接入。`
+      ? `ICE Brent public delayed price curve 已显示 ${brentIceFuturesPriceCurveContracts.join(' / ')}；official settlement curve 作为边界保留。`
       : brentFuturesPriceCurveContracts.length
-      ? `Yahoo Brent priced futures proxy 已显示 ${brentFuturesPriceCurveContracts.join(' / ')}；正式 settlement curve 仍待接入。`
+      ? `Yahoo Brent priced futures proxy 已显示 ${brentFuturesPriceCurveContracts.join(' / ')}；正式 settlement curve 作为边界保留。`
       : brentFuturesCurveContracts.length
-        ? `ICE Brent futuresCurve structure-only 已显示 ${brentFuturesCurveContracts.join('/')}；priced proxy / 可验证结算价期限曲线仍待接入。`
+        ? `ICE Brent futuresCurve structure-only 已显示 ${brentFuturesCurveContracts.join('/')}；priced proxy / 可验证结算价期限曲线作为边界保留。`
       : 'Brent futures curve structure 等待刷新。',
     finite(shippingFreight.balticDirtyTankerIndex) === null
       ? 'shipping / freight 等待 BDTI/BCTI/BDI 刷新。'
       : 'shipping / freight 已接入 BDTI/BCTI/BDI 公开代理。',
-    ...safeArray(brentLayer.dataGaps).slice(0, 1),
   ];
   if (!marketMetric) dataGapEvidence.unshift('Nasdaq / QQQ 周线历史尚未接入。');
 
@@ -622,7 +648,7 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
       group: 'signal-layer',
       status: verified.length ? '已有验证' : '暂无法判断',
       confidence: verified.length ? '中等' : '偏低',
-      dataCoverage: verified.length ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+      dataCoverage: verified.length ? '数据覆盖：核心信号与公开代理已覆盖' : '数据覆盖：关键数据不足',
       evidence: verified,
       conclusion: '暂无强验证信号。',
       sourceType: verified.length ? '数据推断' : '数据不足',
@@ -633,7 +659,7 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
       group: 'signal-layer',
       status: pending.length ? '观察中' : '暂无法判断',
       confidence: '偏低',
-      dataCoverage: '数据覆盖：部分缺口',
+      dataCoverage: '数据覆盖：待确认项，不等同于缺失源',
       evidence: pending,
       conclusion: '暂无待验证信号。',
       sourceType: '数据推断',
@@ -644,7 +670,7 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
       group: 'signal-layer',
       status: '观察中',
       confidence: '中等',
-      dataCoverage: '数据覆盖：部分缺口',
+      dataCoverage: '数据覆盖：噪音提示为解释层说明',
       noiseWarning: [
         '单一价格变化不足以形成强结论。',
         '短期市场波动需要信用、利率、能源和风险资产之间的交叉确认。',
@@ -652,12 +678,16 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
       conclusion: '暂无噪音提示。',
       sourceType: '数据推断',
     }),
-    createDataGapJudgment({
+    createJudgment({
       id: 'signal-data-gap',
-      title: '数据不足',
+      title: '正式源边界',
       group: 'signal-layer',
+      status: '边界已标注',
+      confidence: '中等',
+      dataCoverage: '数据覆盖：公开代理已接入；正式源边界保留',
       evidence: dataGapEvidence,
-      conclusion: '暂无额外数据缺口。',
+      conclusion: '公开代理不冒充正式源。',
+      sourceType: '边界说明',
     }),
   ];
 }
@@ -811,6 +841,11 @@ function buildMacroDrivers(data) {
   const sloosTighteningLargeQoQ = finite(credit.sloosTighteningLargeQoQ);
   const sloosTighteningSmallQoQ = finite(credit.sloosTighteningSmallQoQ);
   const nfci4wChange = finite(credit.nfci4wChange);
+  const eiaBrentSpotProxy = isPlainObject(brentLayer.eiaBrentSpotProxy) ? brentLayer.eiaBrentSpotProxy : {};
+  const eiaBrentSpotPrice = finite(eiaBrentSpotProxy.price);
+  const eiaBrentSpotDailyChange = finite(eiaBrentSpotProxy.dailyChange);
+  const ulsdPrice = finite(brentLayer.ulsdPrice);
+  const ulsd4wChange = finite(brentLayer.ulsd4wChange);
   const brentFuturesCurve = isPlainObject(brentLayer.futuresCurve) ? brentLayer.futuresCurve : {};
   const brentFuturesCurveContracts = safeArray(brentFuturesCurve.contracts)
     .filter(isPlainObject)
@@ -854,6 +889,72 @@ function buildMacroDrivers(data) {
     formatSourceStatusMap(policyExpectations.sourceStatus, [['targetRange', 'target'], ['fedFundsFuture', 'ZQ'], ['fedFundsFuturesCurve', 'ZQ curve'], ['sofrFuturesCurve', 'SR3 SOFR futures'], ['sepDotPlot', 'SEP'], ['policyStatement', 'statement'], ['fomcMinutes', 'minutes'], ['oisForward', 'CheckMySwap OIS']]),
   ].filter(Boolean);
   const hasPolicyProxy = policyProxyEvidence.length > 1;
+  const consumerPublicCoverage = [
+    finite(consumer.umichSentiment) !== null ? 'UMCSENT public sentiment' : null,
+    cartsNominal !== null ? 'Chicago Fed CARTS nominal nowcast' : null,
+    cartsReal !== null ? 'Chicago Fed CARTSR real nowcast' : null,
+    retailSegmentDiffusionPct !== null ? 'MRTS 13-segment retail basket' : null,
+    bofaCardSpendingYoY !== null || bofaCardSpendingExGasYoY !== null ? 'BoA Consumer Checkpoint public summary' : null,
+    redbookRetailSalesYoY !== null ? 'Redbook public HTML summary' : null,
+  ].filter(Boolean);
+  const employmentPublicCoverage = [
+    initialClaims !== null ? 'ICSA weekly claims' : null,
+    continuingClaims !== null ? 'CCSA continuing claims' : null,
+    joltsOpenings !== null ? 'JOLTS openings' : null,
+    averageHourlyEarnings !== null ? 'AHE wage growth proxy' : null,
+    u6Rate !== null ? 'U-6 labor underutilization' : null,
+    industryPayrollDiffusionPct !== null ? 'industry payroll diffusion basket' : null,
+  ].filter(Boolean);
+  const crePublicCoverage = [
+    creDelinquencyRate !== null ? 'FRED CRE delinquency' : null,
+    creChargeOffRate !== null ? 'FRED CRE charge-off' : null,
+    sloosCreTighteningMax !== null ? 'SLOOS CRE lending standards' : null,
+    reitEtfPrice !== null ? 'VNQ public REIT proxy' : null,
+    mortgageReitEtfPrice !== null ? 'REM mortgage REIT proxy' : null,
+    cmbsEtfPrice !== null ? 'CMBS ETF public proxy' : null,
+    creLoanBalance !== null ? 'FRED aggregate CRE loan balance' : null,
+  ].filter(Boolean);
+  const privateCreditPublicCoverage = [
+    bdcEtfPrice !== null ? 'BIZD listed BDC proxy' : null,
+    pbdcEtfPrice !== null ? 'PBDC listed BDC proxy' : null,
+    seniorLoanEtfPrice !== null ? 'SRLN senior loan proxy' : null,
+    intervalFundNavPrice !== null ? 'CCLFX public interval-fund NAV proxy' : null,
+    hyOas !== null ? 'HY OAS cash-bond proxy' : null,
+    privateCreditIgOas !== null ? 'IG OAS cash-bond proxy' : null,
+    cdxHyPrice !== null ? 'ICE CDX HY public settlement' : null,
+    cdxIgPrice !== null ? 'ICE CDX IG public settlement' : null,
+  ].filter(Boolean);
+  const inflationPublicCoverage = [
+    eiaBrentSpotPrice !== null ? 'EIA Brent Spot Price FOB public proxy' : null,
+    ulsdPrice !== null ? 'ULSD public refined-products proxy' : null,
+    brentLayer?.crackSpread === null || !Number.isFinite(brentLayer?.crackSpread) ? null : 'diesel crack spread proxy',
+    brentIceFuturesPriceCurveContracts.length ? 'ICE delayed Brent futures curve' : null,
+    brentFuturesPriceCurveContracts.length ? 'Yahoo Brent priced futures proxy' : null,
+  ].filter(Boolean);
+  const shippingPublicCoverage = [
+    dirtyTankerIndex !== null ? 'StockQ BDTI dirty tanker' : null,
+    cleanTankerIndex !== null ? 'StockQ BCTI clean tanker' : null,
+    dryBulkIndex !== null ? 'StockQ BDI dry bulk' : null,
+  ].filter(Boolean);
+  const liquidityPublicCoverage = [
+    onRrp !== null ? 'ON RRP' : null,
+    bgcr !== null ? 'NY Fed BGCR' : null,
+    tgcr !== null ? 'NY Fed TGCR' : null,
+    sofr !== null ? 'SOFR' : null,
+    reserveBalances !== null ? 'reserve balances' : null,
+    credit?.nfci === null || !Number.isFinite(credit?.nfci) ? null : 'NFCI',
+    sloosTighteningSmallFirms !== null ? 'SLOOS small firms' : null,
+  ].filter(Boolean);
+  const policyPublicCoverage = [
+    targetMid !== null ? 'Fed target range' : null,
+    fedFundsFutureImpliedRate !== null ? 'ZQ front Fed funds future proxy' : null,
+    fedFundsFuturesCurveContracts.length ? 'ZQ monthly Fed funds futures curve proxy' : null,
+    sofrFuturesCurveContracts.length ? 'SR3 SOFR futures curve proxy' : null,
+    oisForwardCurveTenors.length ? 'CheckMySwap public OIS curve' : null,
+    dotPlotMedianCurrentYear !== null ? 'Fed SEP dot plot medians' : null,
+    policyTone !== '未知' ? 'FOMC statement keyword tone' : null,
+    minutesPolicyTone !== '未知' ? 'FOMC minutes keyword tone' : null,
+  ].filter(Boolean);
 
   return [
     createJudgment({
@@ -863,7 +964,7 @@ function buildMacroDrivers(data) {
       status: finite(consumer.umichSentiment) === null ? WAITING : '慢变量观察中',
       direction: directionFromDelta(consumer.threeMonthChange),
       confidence: finite(consumer.umichSentiment) === null ? '偏低' : '中等',
-      dataCoverage: finite(consumer.umichSentiment) === null ? '数据覆盖：关键数据不足' : '数据覆盖：部分缺口',
+      dataCoverage: consumerPublicCoverage.length ? '数据覆盖：公开消费代理已覆盖' : '数据覆盖：关键数据不足',
       evidence: [
         finite(consumer.umichSentiment) === null
           ? '消费者信心数据不足。'
@@ -872,7 +973,11 @@ function buildMacroDrivers(data) {
           ? null
           : `ISM 制造业 PMI ${formatNumber(consumer.ismManufacturingPmi, 1)} — ${consumer.ismManufacturingPmi >= 50 ? '扩张区间' : '收缩区间'}；3个月变化 ${formatNumber(consumer.ismManufacturingPmi3mChange, 1)}`,
       ].filter(Boolean),
-      missingEvidence: ['盈利修正、BoA raw card feed 等非公开或授权消费证据仍待接入。'],
+      coverageNotes: [
+        ...consumerPublicCoverage,
+        '盈利修正、BoA raw card feed 等非公开或授权消费证据仍待接入。此处作为边界说明保留，不作为当前公开代理缺失。',
+      ],
+      missingEvidence: consumerPublicCoverage.length ? [] : ['公开消费代理等待刷新。'],
       explanation: 'UMCSENT 是月频慢变量，只能提供体感背景，不能单独判断近端增长。',
       sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '数据推断',
     }),
@@ -891,7 +996,7 @@ function buildMacroDrivers(data) {
               ? '劳动力降温'
               : '观察中',
       confidence: initialClaims !== null && continuingClaims !== null && joltsOpenings !== null && employmentQualityEvidenceCount >= 2 ? '中等' : '偏低',
-      dataCoverage: initialClaims !== null || continuingClaims !== null || joltsOpenings !== null || employmentQualityEvidenceCount > 0 ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+      dataCoverage: employmentPublicCoverage.length ? '数据覆盖：公开就业质量代理已覆盖' : '数据覆盖：关键数据不足',
       evidence: [
         initialClaims === null
           ? 'ICSA 初请失业金人数等待接入或刷新。'
@@ -913,7 +1018,11 @@ function buildMacroDrivers(data) {
           : `行业就业扩散 ${formatNumber(industryPayrollDiffusionPct, 1, '%')}；${formatNumber(industryPayrollPositiveCount, 0)}/${formatNumber(industryPayrollSeriesCount, 0)} 个行业环比增加（${industryDiffusionRegime}；${formatMonthVintage(employment.industryPayrollUpdatedAt)}；status=${formatSourceStatus(employment.sourceStatus?.industryPayroll)}）`,
         formatSourceStatusMap(employment.sourceStatus, [['icsa', 'ICSA'], ['ccsa', 'CCSA'], ['jtsjol', 'JOLTS'], ['ahe', 'AHE'], ['u6', 'U-6'], ['industryPayroll', 'payroll diffusion']]),
       ].filter(Boolean),
-      missingEvidence: ['职位质量、工时结构与行业内部分布仍待接入；当前仅使用公开 FRED 代理。'],
+      coverageNotes: [
+        ...employmentPublicCoverage,
+        'AHE / U-6 / industry payroll diffusion 是公开就业质量代理；职位质量细项和工时结构保留为边界说明。',
+      ],
+      missingEvidence: employmentPublicCoverage.length ? [] : ['公开就业质量代理等待 FRED 刷新。'],
       explanation: 'Claims 是周频裁员压力代理，JOLTS、平均时薪、U-6 与行业 payroll 扩散是月频慢变量；仅用于就业质量与广度观察。',
       sourceType: initialClaims === null && continuingClaims === null && joltsOpenings === null && employmentQualityEvidenceCount === 0 ? '数据不足' : '事实',
     }),
@@ -928,7 +1037,7 @@ function buildMacroDrivers(data) {
           ? '消费改善'
           : '观察中',
       confidence: cartsNominal !== null && cartsReal !== null ? '中等' : '偏低',
-      dataCoverage: cartsNominal !== null || cartsReal !== null ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+      dataCoverage: consumerPublicCoverage.length ? '数据覆盖：公开零售消费代理已覆盖' : '数据覆盖：关键数据不足',
       evidence: [
         cartsNominal === null
           ? 'CARTS 名义零售消费 nowcast 等待刷新。'
@@ -957,6 +1066,10 @@ function buildMacroDrivers(data) {
         bofaCardSpendingYoY === null && bofaCardSpendingExGasYoY === null ? 'BoA Consumer Checkpoint 公开页等待刷新。' : null,
         redbookRetailSalesYoY === null ? 'Redbook public HTML 等待刷新；当前不冒充 Redbook raw feed。' : null
       ].filter(Boolean),
+      coverageNotes: [
+        ...consumerPublicCoverage,
+        'BoA Consumer Checkpoint / Redbook public HTML 是公开摘要代理，不冒充 raw card feed 或订阅 feed。',
+      ],
       explanation: 'CARTS / CARTSR 是 Chicago Fed via FRED 的周频零售+餐饮 nowcast；MRTS 细分品类为月频公开零售结构观察；BoA Consumer Checkpoint 与 Redbook public HTML 是第三方公开消费证据。',
       sourceType: cartsNominal === null && cartsReal === null && retailSegmentDiffusionPct === null ? '数据不足' : '事实',
       updatedAt: `Chicago Fed CARTS:${formatWeekVintage(consumerRetail.updatedAt)}`,
@@ -984,10 +1097,7 @@ function buildMacroDrivers(data) {
         && sloosCreConstructionTightening !== null
         && sloosCreMultifamilyTightening !== null
         && creLoanBalance !== null ? '中等' : '偏低',
-      dataCoverage: creDelinquencyRate !== null
-        || creChargeOffRate !== null
-        || sloosCreTighteningMax !== null
-        || creLoanBalance !== null ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+      dataCoverage: crePublicCoverage.length >= 4 ? '数据覆盖：公开 CRE 代理覆盖良好' : crePublicCoverage.length ? '数据覆盖：公开 CRE 代理部分覆盖' : '数据覆盖：关键数据不足',
       evidence: [
         creDelinquencyRate === null
           ? 'CRE 拖欠率等待 FRED 季频数据刷新。'
@@ -1017,7 +1127,11 @@ function buildMacroDrivers(data) {
         formatSourceStatusMap(commercialRealEstate.sourceStatus, [['delinquency', 'delinquency'], ['chargeOff', 'charge-off'], ['sloosNonfarmNonresidential', 'SLOOS NNR'], ['sloosConstruction', 'SLOOS construction'], ['sloosMultifamily', 'SLOOS multifamily'], ['reitEtf', 'VNQ'], ['mortgageReitEtf', 'REM'], ['cmbsEtf', 'CMBS'], ['creLoanBalance', 'CRE loan balance'], ['nonPublicCre', 'non-public CRE']]),
         `FRED 季频 Commercial Real Estate:${formatQuarterVintage(commercialRealEstate.updatedAt)}`,
       ].filter(Boolean),
-      missingEvidence: ['非公开 CRE loan tape / private marks 仍需要 manual/licensed input；FRED aggregate balance 不等于 loan tape。'],
+      coverageNotes: [
+        ...crePublicCoverage,
+        'non-public CRE loan tape / private marks 是边界说明；FRED aggregate balance 不等于 loan tape。',
+      ],
+      missingEvidence: crePublicCoverage.length ? [] : ['公开 CRE 代理等待刷新。'],
       explanation: 'CRE 拖欠率、核销率与 SLOOS CRE 贷款标准为季频慢变量；FRED CRE loan balance 是公开 aggregate exposure proxy，VNQ/REM/CMBS 只是公开市场代理。',
       sourceType: creDelinquencyRate === null && creChargeOffRate === null && sloosCreTighteningMax === null && creLoanBalance === null ? '数据不足' : '事实',
       updatedAt: creLoanBalance !== null
@@ -1035,7 +1149,7 @@ function buildMacroDrivers(data) {
           ? '观察'
           : '相对平稳',
       confidence: bdcEtfPrice !== null && hyOas !== null ? '中等' : '偏低',
-      dataCoverage: bdcEtfPrice !== null || hyOas !== null ? '数据覆盖：公开代理' : '数据覆盖：关键数据不足',
+      dataCoverage: privateCreditPublicCoverage.length >= 4 ? '数据覆盖：公开信用代理覆盖良好' : privateCreditPublicCoverage.length ? '数据覆盖：公开信用代理部分覆盖' : '数据覆盖：关键数据不足',
       evidence: [
         bdcEtfPrice === null
           ? 'BIZD listed BDC proxy 等待刷新。'
@@ -1060,7 +1174,11 @@ function buildMacroDrivers(data) {
         `private credit marks status: ${privateCreditMarksStatus}`,
         formatSourceStatusMap(privateCreditProxy.sourceStatus, [['bdcEtf', 'BIZD'], ['pbdcEtf', 'PBDC'], ['seniorLoanEtf', 'SRLN'], ['intervalFundNav', 'CCLFX NAV'], ['hyOas', 'HY OAS'], ['igOas', 'IG OAS'], ['cdxHy', 'CDX HY'], ['cdxIg', 'CDX IG'], ['privateCreditMarks', 'private marks']]),
       ].filter(Boolean),
-      missingEvidence: ['私募信用 marks 需要 manual/licensed input；ICE CDX public settlement 不替代私募信用估值。'],
+      coverageNotes: [
+        ...privateCreditPublicCoverage,
+        '私募信用 marks 需要 manual/licensed input；ICE CDX public settlement 不替代私募信用估值。',
+      ],
+      missingEvidence: privateCreditPublicCoverage.length ? [] : ['公开私募信用代理等待刷新。'],
       explanation: 'BIZD/PBDC、SRLN、CCLFX NAV、HY/IG OAS 与 ICE CDX public settlement 只提供公开压力观察，不能替代私募信用估值。',
       sourceType: bdcEtfPrice === null && hyOas === null ? '数据不足' : '代理信号',
       updatedAt: `Yahoo/FRED:${formatWeekVintage(privateCreditProxy.updatedAt)}`,
@@ -1072,12 +1190,16 @@ function buildMacroDrivers(data) {
       status: finite(inputs.brent) === null ? INSUFFICIENT : Number(inputs.brent) >= 100 ? '压力上升' : '观察中',
       direction: finite(inputs.brent) !== null && Number(inputs.brent) >= 100 ? '压力上升' : '观察中',
       confidence: finite(inputs.brent) === null ? '偏低' : '中等',
-      dataCoverage: '数据覆盖：部分缺口',
+      dataCoverage: inflationPublicCoverage.length >= 3 ? '数据覆盖：公开能源代理覆盖良好' : inflationPublicCoverage.length ? '数据覆盖：公开能源代理部分覆盖' : '数据覆盖：关键数据不足',
       evidence: [
         `布伦特 ${formatNumber(inputs.brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`,
+        eiaBrentSpotPrice === null
+          ? null
+          : `EIA Brent Spot Price FOB ${formatNumber(eiaBrentSpotPrice, 2)}；日变化 ${formatSignedDecimal(eiaBrentSpotDailyChange, 2)}（${formatWeekVintage(eiaBrentSpotProxy.updatedAt)}；status=${formatSourceStatus(eiaBrentSpotProxy.sourceStatus)}）`,
         brentLayer?.crackSpread === null || !Number.isFinite(brentLayer?.crackSpread)
           ? null
           : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶（${brentLayer.crackSpreadRegime}）`,
+        ulsdPrice === null ? null : `ULSD ${formatNumber(ulsdPrice, 3)}；4周变化 ${formatSignedDecimal(ulsd4wChange, 3)} — 下游成品油压力`,
         brentFuturesCurveContracts.length
           ? `ICE Brent futuresCurve structure-only: ${brentFuturesCurveContracts.join(' / ')}；status=${text(brentFuturesCurve.curveStatus, 'missing')}`
           : null,
@@ -1088,18 +1210,12 @@ function buildMacroDrivers(data) {
           ? `Yahoo Brent priced futures proxy: ${brentFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentFuturesPriceCurve.frontMinusBack, 2)}；slope=${text(brentFuturesPriceCurve.slopeRegime, '未知')}`
           : null,
       ].filter(Boolean),
-      missingEvidence: [
-        'Platts Dated Brent / 正式 Dated Brent 未接入。',
-        brentIceFuturesPriceCurveContracts.length
-          ? 'ICE public delayed futures price curve 已接入；official settlement curve / Platts 期限结构仍待接入。'
-          : brentFuturesPriceCurveContracts.length
-          ? 'Yahoo priced futures proxy 已接入；正式 ICE settlement curve / Platts 期限结构仍待接入。'
-          : brentFuturesCurveContracts.length
-            ? 'ICE 合约月份/到期结构已接入；priced proxy / 可验证结算价期限曲线仍待接入。'
-          : 'Brent futures curve structure 等待刷新。',
-        '库存数据等待接入。'
+      coverageNotes: [
+        ...inflationPublicCoverage,
+        'Platts Dated Brent / official settlement / 原油库存细项保留为正式源边界说明。',
       ],
-      explanation: 'Brent 偏高可以提示能源压力，但不能单独证明广义通胀重新加速。',
+      missingEvidence: inflationPublicCoverage.length ? [] : ['公开能源代理等待刷新。'],
+      explanation: 'Brent、EIA spot proxy、期货曲线和成品油代理可以提示能源压力，但不能单独证明广义通胀重新加速。',
       sourceType: finite(inputs.brent) === null ? '数据不足' : '数据推断',
     }),
     createJudgment({
@@ -1113,7 +1229,7 @@ function buildMacroDrivers(data) {
           ? '运费回落'
           : '观察中',
       confidence: dirtyTankerIndex !== null && cleanTankerIndex !== null ? '中等' : '偏低',
-      dataCoverage: dirtyTankerIndex !== null || cleanTankerIndex !== null || dryBulkIndex !== null ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+      dataCoverage: shippingPublicCoverage.length >= 3 ? '数据覆盖：StockQ BDTI/BCTI/BDI 已覆盖' : shippingPublicCoverage.length ? '数据覆盖：航运公开代理部分覆盖' : '数据覆盖：关键数据不足',
       evidence: [
         dirtyTankerIndex === null
           ? 'BDTI dirty tanker index 等待刷新。'
@@ -1126,7 +1242,11 @@ function buildMacroDrivers(data) {
           : `BDI ${formatNumber(dryBulkIndex, 0)}；日变化 ${formatRatioAsPercent(dryBulkChange)}（dry bulk，${text(shippingFreight.dryBulkFreightRegime, '未知')}；${formatWeekVintage(shippingFreight.balticDryUpdatedAt)}）`,
         formatSourceStatusMap(shippingFreight.sourceStatus, [['dirtyTanker', 'BDTI'], ['cleanTanker', 'BCTI'], ['dryBulk', 'BDI']]),
       ].filter(Boolean),
-      missingEvidence: ['单船型/航线级别 tanker freight 与 Baltic 原始 licensed feed 未直接写入。'],
+      coverageNotes: [
+        ...shippingPublicCoverage,
+        '单船型/航线级别 tanker freight 与 Baltic 原始 licensed feed 是边界说明。',
+      ],
+      missingEvidence: shippingPublicCoverage.length ? [] : ['StockQ Baltic indices 等待刷新。'],
       explanation: 'BDTI/BCTI/BDI 是航运/油轮运费压力代理；只用于实物端压力观察，不改变 Brent promotion。',
       sourceType: dirtyTankerIndex === null && cleanTankerIndex === null && dryBulkIndex === null ? '数据不足' : '事实',
       updatedAt: `StockQ Baltic indices:${formatWeekVintage(shippingFreight.updatedAt)}`,
@@ -1138,7 +1258,7 @@ function buildMacroDrivers(data) {
       status: statusFromScore(data?.modules?.liquidity),
       direction: finite(inputs.dxy) !== null && Number(inputs.dxy) >= 105 ? '约束偏强' : '观察中',
       confidence: creditCalm ? '中等' : '偏低',
-      dataCoverage: '数据覆盖：部分缺口',
+      dataCoverage: liquidityPublicCoverage.length >= 5 ? '数据覆盖：FRED + NY Fed repo + credit proxies 已覆盖' : liquidityPublicCoverage.length ? '数据覆盖：流动性公开代理部分覆盖' : '数据覆盖：关键数据不足',
       evidence: [
         `广义美元 ${formatNumber(inputs.dxy, 2)}；10年期 ${formatNumber(inputs.us10y, 2, '%')}；10Y-2Y 期限利差 ${formatSignedPercent(t10y2y)}`,
         `ON RRP 余额 ${formatUsdTrillions(onRrp)}${onRrpAnnotation(onRrpSignal)}；Fed 资产负债表 4周变化 ${formatUsdBillionsFromFedChange(walcl4wChange)}`,
@@ -1157,7 +1277,11 @@ function buildMacroDrivers(data) {
           : `回购利差 (BGCR-SOFR) ${formatBasisPoints(fedLiquidity.bgcrSofrSpread)} / TGCR-SOFR ${formatBasisPoints(tgcrSofrSpread)}；BGCR ${formatNumber(bgcr, 2, '%')} / TGCR ${formatNumber(tgcr, 2, '%')}（${fedLiquidity.repoSpreadRegime}；${text(fedLiquidity.repoRatesSource, 'repo source 待确认')}；BGCR ${formatWeekVintage(fedLiquidity.bgcrUpdatedAt)} / TGCR ${formatWeekVintage(fedLiquidity.tgcrUpdatedAt)}）`,
         formatSourceStatusMap(fedLiquidity.sourceStatus, [['walcl', 'WALCL'], ['onRrp', 'ON RRP'], ['effectiveFedFundsRate', 'DFF'], ['sofr', 'SOFR'], ['reserveBalances', 'reserves'], ['bgcr', 'BGCR'], ['tgcr', 'TGCR']]),
       ].filter(Boolean),
-      missingEvidence: ['跨市场融资压力等待接入。'],
+      coverageNotes: [
+        ...liquidityPublicCoverage,
+        '跨市场融资压力等待接入。此处作为边界说明保留；当前 FRED + NY Fed repo + credit proxies 已可用于公开代理观察。',
+      ],
+      missingEvidence: liquidityPublicCoverage.length ? [] : ['公开流动性代理等待刷新。'],
       counterEvidence: creditCalm ? ['信用与波动率尚未明显确认扩散。'] : [],
       explanation: creditCalm
         ? '长端利率和美元偏紧，但信用与波动率尚未明显确认扩散。'
@@ -1170,11 +1294,15 @@ function buildMacroDrivers(data) {
       status: hasPolicyProxy ? `基于代理信号观察 / ${policyExpectationRegime}` : WAITING,
       direction: hasPolicyProxy ? (policyExpectationRegime === '降息预期' ? '政策预期转松' : '政策预期偏紧') : '方向待确认',
       confidence: hasPolicyProxy ? '中等' : '偏低',
-      dataCoverage: hasPolicyProxy ? '数据覆盖：Fed statement / minutes / SEP / ZQ + SOFR futures 代理' : '数据覆盖：关键数据不足',
+      dataCoverage: hasPolicyProxy ? '数据覆盖：Fed statement / minutes / SEP / ZQ + SR3 + OIS 公开代理' : '数据覆盖：关键数据不足',
       evidence: hasPolicyProxy ? policyProxyEvidence : ['暂无直接 Fed 预期或政策路径指标。'],
-      missingEvidence: ['OIS forward rates 需要 manual/licensed input；当前不从未授权源抓取。'],
+      coverageNotes: [
+        ...policyPublicCoverage,
+        'CheckMySwap USD OIS public curve 已接入；proprietary dealer OIS forward 仍作为边界说明。',
+      ],
+      missingEvidence: hasPolicyProxy ? [] : ['政策预期公开代理等待刷新。'],
       explanation: hasPolicyProxy
-        ? 'Fed target range、SEP median、FOMC statement/minutes 文本、Fed funds futures 与 SOFR futures proxy 已接入；OIS forward 仍保留为 manual/licensed 插槽。'
+        ? 'Fed target range、SEP median、FOMC statement/minutes 文本、Fed funds futures、SOFR futures 与 public OIS curve 已接入；proprietary dealer OIS 仍保留为边界插槽。'
         : '当前不伪造政策路径；除非接入 dot plot / forward rates 等明确前瞻数据，否则政策路径不是强驱动。',
       sourceType: hasPolicyProxy ? '事实 + 代理信号' : '数据不足',
     }),
@@ -1384,6 +1512,34 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
     .map((contract) => `${text(contract.contract, '--')} ${formatNumber(contract.price, 2)}`);
   const privateCreditIgOas = finite(privateCreditProxy.igOas);
   const privateCreditIgMinusHyOas = finite(privateCreditProxy.igMinusHyOas);
+  const riskEnergyCoverage = [
+    eiaBrentSpotPrice !== null ? 'EIA Brent Spot Price FOB public proxy' : null,
+    brentLayer.crackSpread === null || !Number.isFinite(brentLayer.crackSpread) ? null : 'diesel crack spread proxy',
+    ulsdPrice !== null ? 'ULSD public refined-products proxy' : null,
+    brentIceFuturesPriceCurveContracts.length ? 'ICE delayed Brent futures curve' : null,
+    brentFuturesPriceCurveContracts.length ? 'Yahoo Brent priced futures proxy' : null,
+    dirtyTankerIndex !== null ? 'BDTI tanker freight proxy' : null,
+    cleanTankerIndex !== null ? 'BCTI clean tanker proxy' : null,
+    dryBulkIndex !== null ? 'BDI dry bulk proxy' : null,
+  ].filter(Boolean);
+  const riskRatesCoverage = [
+    bgcr !== null ? 'NY Fed BGCR' : null,
+    tgcr !== null ? 'NY Fed TGCR' : null,
+    targetMid !== null ? 'Fed target range' : null,
+    fedFundsFutureImpliedRate !== null ? 'ZQ front Fed funds future proxy' : null,
+    fedFundsFuturesCurveContracts.length ? 'ZQ monthly futures curve proxy' : null,
+    sofrFuturesCurveContracts.length ? 'SR3 SOFR futures curve proxy' : null,
+    oisForwardCurveTenors.length ? 'CheckMySwap public OIS curve' : null,
+  ].filter(Boolean);
+  const riskPrivateCreditCoverage = [
+    bdcEtfPrice !== null ? 'BIZD listed BDC proxy' : null,
+    pbdcEtfPrice !== null ? 'PBDC listed BDC proxy' : null,
+    seniorLoanEtfPrice !== null ? 'SRLN senior loan proxy' : null,
+    intervalFundNavPrice !== null ? 'CCLFX public interval-fund NAV proxy' : null,
+    privateCreditIgOas !== null ? 'IG OAS cash-bond proxy' : null,
+    cdxHyPrice !== null ? 'ICE CDX HY public settlement' : null,
+    cdxIgPrice !== null ? 'ICE CDX IG public settlement' : null,
+  ].filter(Boolean);
 
   return [
     createJudgment({
@@ -1393,7 +1549,7 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
       status: finite(inputs.brent) === null ? INSUFFICIENT : '压力上升',
       direction: finite(inputs.brent) === null ? '方向待确认' : '压力上升',
       confidence: evidenceStrengthFromConfidence(brentLayer.confidence, '中等'),
-      dataCoverage: '数据覆盖：部分缺口',
+      dataCoverage: riskEnergyCoverage.length >= 5 ? '数据覆盖：公开能源代理覆盖良好' : riskEnergyCoverage.length ? '数据覆盖：公开能源代理部分覆盖' : '数据覆盖：关键数据不足',
       evidence: [
         text(brentLayer.summaryZh, `布伦特 ${formatNumber(inputs.brent, 1)}，通胀预期 ${formatNumber(inputs.breakeven10y, 2, '%')}。`),
         eiaBrentSpotPrice === null
@@ -1415,10 +1571,12 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
         cleanTankerIndex === null ? null : `BCTI ${formatNumber(cleanTankerIndex, 0)}（${text(shippingFreight.cleanTankerFreightRegime, '未知')}）`,
         dryBulkIndex === null ? null : `BDI ${formatNumber(dryBulkIndex, 0)}（${text(shippingFreight.dryBulkFreightRegime, '未知')}）`,
       ].filter(Boolean),
-      missingEvidence: safeArray(brentLayer.dataGaps).slice(0, 3).length
-        ? safeArray(brentLayer.dataGaps).slice(0, 3)
-        : ['实物端证据等待接入。'],
-      explanation: '当前只能确认公开价格压力，尚不能确认真实实物供应冲击。',
+      coverageNotes: [
+        ...riskEnergyCoverage,
+        'Platts Dated Brent / official settlement / 实物成交证据是正式源边界；公开代理不冒充正式源。',
+      ],
+      missingEvidence: riskEnergyCoverage.length ? [] : ['公开能源代理等待刷新。'],
+      explanation: '当前已能观察公开价格、期限曲线、成品油和运费代理；正式实物供应冲击仍作为边界保留。',
       sourceType: finite(inputs.brent) === null ? '数据不足' : '数据推断',
     }),
     createJudgment({
@@ -1428,7 +1586,7 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
       status: text(ratesCheck.status, statusFromScore(data?.modules?.liquidity)),
       direction: '观察中',
       confidence: '中等',
-      dataCoverage: '数据覆盖：部分缺口',
+      dataCoverage: riskRatesCoverage.length >= 5 ? '数据覆盖：利率与政策公开代理覆盖良好' : riskRatesCoverage.length ? '数据覆盖：利率与政策公开代理部分覆盖' : '数据覆盖：关键数据不足',
       evidence: [
         text(ratesCheck.summaryZh, `10年期 ${formatNumber(inputs.us10y, 2, '%')}；实际利率 ${formatNumber(inputs.real10y, 2, '%')}；广义美元 ${formatNumber(inputs.dxy, 2)}。`),
         bgcr === null || tgcr === null
@@ -1447,9 +1605,11 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
           ? `CheckMySwap USD OIS public curve: ${oisForwardCurveTenors.join(' / ')}；10Y-2Y ${formatSignedPoints(oisForwardCurve.tenMinusTwo)}`
           : null,
       ].filter(Boolean),
-      missingEvidence: safeArray(ratesCheck.limitations).slice(0, 1).length
-        ? safeArray(ratesCheck.limitations).slice(0, 1)
-        : ['资金面和期限结构证据等待接入。'],
+      coverageNotes: [
+        ...riskRatesCoverage,
+        'dealer OIS / proprietary funding screens 是边界说明；public OIS curve 不冒充授权终端数据。',
+      ],
+      missingEvidence: riskRatesCoverage.length ? [] : ['利率与政策公开代理等待刷新。'],
       counterEvidence: creditCalm ? ['信用市场尚未明显确认扩散。'] : [],
       explanation: creditCalm
         ? '长端压力存在，但信用市场尚未明显确认扩散。'
@@ -1462,7 +1622,7 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
       status: marketMetric ? marketMetric.bucket.label : text(pricingCheck.status, '观察中'),
       direction: '方向待确认',
       confidence: marketMetric ? '中等' : '偏低',
-      dataCoverage: marketMetric ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+      dataCoverage: marketMetric ? '数据覆盖：市场温度历史已覆盖' : '数据覆盖：关键数据不足',
       evidence: [
         text(pricingCheck.summaryZh, '风险资产定价仍需与利率、信用和历史温度框架交叉确认。'),
         ...(marketMetric ? [marketMetric.metricLine] : []),
@@ -1479,9 +1639,9 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
       status: worldOrderStressData?.labelZh || text(worldOrderStressData?.state, INSUFFICIENT),
       direction: hasPartialWorldOrder(worldOrderStressData) ? '方向待确认' : '观察中',
       confidence: evidenceStrengthFromConfidence(worldOrderStressData?.confidence, '偏低'),
-      dataCoverage: hasPartialWorldOrder(worldOrderStressData) ? '数据覆盖：部分缺口' : '数据覆盖：等待校准',
+      dataCoverage: hasPartialWorldOrder(worldOrderStressData) ? '数据覆盖：部分外部来源受限' : '数据覆盖：世界秩序公开源已覆盖',
       evidence: [finite(worldOrderStressData?.score) === null ? '世界秩序压力数据不足。' : `结构性压力分数 ${Math.round(Number(worldOrderStressData.score))}；freshness=${text(worldOrderStressData?.freshness, INSUFFICIENT)}`],
-      missingEvidence: ['SIPRI / ACLED 等来源仍需补全或配置。'],
+      missingEvidence: hasPartialWorldOrder(worldOrderStressData) ? ['SIPRI / ACLED 等来源仍需补全或配置。'] : [],
       explanation: '该引擎只识别结构性背景压力，不预测具体事件。',
       sourceType: finite(worldOrderStressData?.score) === null ? '数据不足' : '数据推断',
     }),
@@ -1492,7 +1652,7 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
       status: text(liquidityCheck.status, statusFromScore(data?.modules?.banking)),
       direction: creditCalm ? '观察中' : '方向待确认',
       confidence: creditCalm ? '偏低' : '中等',
-      dataCoverage: '数据覆盖：部分缺口',
+      dataCoverage: riskPrivateCreditCoverage.length >= 4 ? '数据覆盖：公开信用代理覆盖良好' : riskPrivateCreditCoverage.length ? '数据覆盖：公开信用代理部分覆盖' : '数据覆盖：关键数据不足',
       evidence: [
         text(liquidityCheck.summaryZh, `HY OAS ${formatNumber(inputs.hyOas, 2, '%')}；VIX ${formatNumber(inputs.vix, 2)}。`),
         `ON RRP ${formatUsdTrillions(onRrp)}${onRrpSignal ? '（历史低位告急）' : ''}`,
@@ -1522,7 +1682,11 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
           ? `CDX/private marks status: HY=${text(privateCreditProxy.cdxHyStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxHy))} / IG=${text(privateCreditProxy.cdxIgStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxIg))} / marks=${text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks))}`
           : `ICE CDX public settlement: HY ${formatNumber(cdxHyPrice, 4)} / IG ${formatNumber(cdxIgPrice, 4)}；marks=${text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks))}`,
       ].filter(Boolean),
-      missingEvidence: ['私募信用 marks 需要 manual/licensed input；CCLFX NAV 与 ICE CDX public settlement 不能替代 private marks。'],
+      coverageNotes: [
+        ...riskPrivateCreditCoverage,
+        'private credit marks 是边界说明；CCLFX NAV 与 ICE CDX public settlement 不能替代 private marks。',
+      ],
+      missingEvidence: riskPrivateCreditCoverage.length ? [] : ['公开私募信用代理等待刷新。'],
       counterEvidence: creditCalm ? ['信用和波动率尚未显示系统性扩散。'] : [],
       explanation: creditCalm
         ? '信用和波动率尚未显示系统性扩散，金融脆弱性维持观察。'
@@ -2031,6 +2195,7 @@ function appendEditorialDriverCard(root, judgment) {
   const explanation = judgment.explanation || judgment.conclusion;
   if (explanation) appendText(card, 'p', 'editorial-driver-explanation', explanation);
   appendEditorialDriverSublist(card, '关键证据', judgment.evidence, 'is-evidence');
+  appendEditorialDriverSublist(card, '公开代理覆盖', judgment.coverageNotes, 'is-evidence');
   appendEditorialDriverSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
   appendEditorialDriverSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
   appendEditorialDriverSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
@@ -2299,6 +2464,7 @@ function appendEditorialEngineCard(root, judgment) {
   const explanation = judgment.explanation || judgment.conclusion;
   if (explanation) appendText(card, 'p', 'editorial-engine-explanation', explanation);
   appendEditorialEngineSublist(card, '关键证据', judgment.evidence, 'is-evidence');
+  appendEditorialEngineSublist(card, '公开代理覆盖', judgment.coverageNotes, 'is-evidence');
   appendEditorialEngineSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
   appendEditorialEngineSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
   appendEditorialEngineSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
@@ -2649,6 +2815,7 @@ function appendEditorialSignalCard(root, judgment) {
   const explanation = judgment.explanation || judgment.conclusion;
   if (explanation) appendText(card, 'p', 'editorial-signal-explanation', explanation);
   appendEditorialSignalSublist(card, '关键证据', judgment.evidence, 'is-evidence');
+  appendEditorialSignalSublist(card, '公开代理覆盖', judgment.coverageNotes, 'is-evidence');
   appendEditorialSignalSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
   appendEditorialSignalSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
   appendEditorialSignalSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
@@ -2697,6 +2864,7 @@ function appendEditorialPressureCard(root, judgment) {
   appendText(card, 'p', 'editorial-pressure-main', `${judgment.status || UNDECIDED}${direction}`);
   if (judgment.explanation) appendText(card, 'p', 'editorial-pressure-explanation', judgment.explanation);
   appendEditorialPressureSublist(card, '关键证据', judgment.evidence, 'is-evidence');
+  appendEditorialPressureSublist(card, '公开代理覆盖', judgment.coverageNotes, 'is-evidence');
   appendEditorialPressureSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
   appendEditorialPressureSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
   appendEditorialPressureSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
@@ -2848,6 +3016,7 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   appendEditorialMeta(metaGrid, '更新时间', overview.today.updatedAt || '等待数据校准');
   today.appendChild(metaGrid);
 
+  appendJudgmentList(today, '公开代理覆盖', overview.today.coverageNotes);
   appendJudgmentList(today, '缺失证据', overview.today.missingEvidence);
   appendRiskStageScale(today, overview.today);
 
