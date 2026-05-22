@@ -59,6 +59,8 @@ const ICE_BRENT_FETCH_TIMEOUT_MS = 10000;
 const BOFA_CONSUMER_CHECKPOINT_URL = 'https://institute.bankofamerica.com/consumer-checkpoint.html';
 const BOFA_CONSUMER_CHECKPOINT_BASE_URL = 'https://institute.bankofamerica.com';
 const BOFA_CONSUMER_FETCH_TIMEOUT_MS = 10000;
+const REDBOOK_INDEX_URL = 'https://tradingeconomics.com/united-states/redbook-index';
+const REDBOOK_FETCH_TIMEOUT_MS = 10000;
 const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
 const YAHOO_FETCH_TIMEOUT_MS = 9000;
 const STOCKQ_INDEX_BASE = 'https://en.stockq.org/index';
@@ -95,9 +97,9 @@ const CONSUMER_RETAIL_SEGMENT_SERIES = [
 ];
 const SHIPPING_FREIGHT_SOURCE = 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI';
 const CONSUMER_RETAIL_SOURCE =
-  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html';
+  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html; TradingEconomics:Redbook-public-html';
 const POLICY_EXPECTATIONS_SOURCE =
-  'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures; FederalReserve:FOMC statement/SEP/minutes';
+  'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; FederalReserve:FOMC statement/SEP/minutes';
 const PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM';
 const CRE_PUBLIC_MARKET_PROXY_SOURCE =
   'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; Yahoo:VNQ; Yahoo:REM';
@@ -1918,6 +1920,49 @@ async function fetchBofaConsumerCheckpoint() {
   return parseBofaConsumerCheckpointReport(reportHtml, reportUrl);
 }
 
+function parseMonthDayYearToIso(month, day, year) {
+  const monthIndex = MONTH_INDEX_BY_NAME.get(String(month || '').toLowerCase());
+  const dayNumber = Number(day);
+  const yearNumber = Number(year);
+  if (!Number.isInteger(monthIndex) || !Number.isInteger(dayNumber) || !Number.isInteger(yearNumber)) return null;
+  const date = new Date(Date.UTC(yearNumber, monthIndex, dayNumber));
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+}
+
+function parseTradingEconomicsRedbookIndex(html) {
+  const plain = htmlToPlainText(html);
+  const match = plain.match(
+    /Redbook Index in the United States\s+(?<verb>increased|decreased)\s+by\s+(?<value>[-+]?\d+(?:\.\d+)?)\s+percent\s+in the week ending\s+(?<month>[A-Za-z]+)\s+(?<day>\d{1,2})\s+of\s+(?<year>\d{4})/iu
+  );
+  if (!match?.groups) throw new Error('tradingeconomics:redbook-index missing latest value');
+  const rawValue = Number(match.groups.value);
+  const valuePct = match.groups.verb.toLowerCase() === 'decreased' && rawValue > 0 ? -rawValue : rawValue;
+  const redbookDate = parseMonthDayYearToIso(match.groups.month, match.groups.day, match.groups.year);
+  if (!Number.isFinite(valuePct) || !redbookDate) {
+    throw new Error('tradingeconomics:redbook-index invalid latest value');
+  }
+  const averageMatch = plain.match(/Redbook Index in the United States averaged\s+(?<average>[-+]?\d+(?:\.\d+)?)\s+percent/iu);
+  const averagePct = Number(averageMatch?.groups?.average);
+  return {
+    redbookRetailSalesYoY: +(valuePct / 100).toFixed(4),
+    redbookHistoricalAverageYoY: Number.isFinite(averagePct) ? +(averagePct / 100).toFixed(4) : null,
+    redbookRetailSalesDate: redbookDate,
+    redbookReportUrl: REDBOOK_INDEX_URL,
+    redbookStatus: 'live',
+    redbookSummary: `Trading Economics public HTML reports Redbook same-store sales YoY ${valuePct.toFixed(2)}% for week ending ${redbookDate.slice(0, 10)}; this is not the Redbook raw subscription feed.`
+  };
+}
+
+async function fetchTradingEconomicsRedbookIndex() {
+  const html = await retryFetch(
+    REDBOOK_INDEX_URL,
+    'tradingeconomics:redbook-index',
+    REDBOOK_FETCH_TIMEOUT_MS,
+    { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
+  );
+  return parseTradingEconomicsRedbookIndex(html);
+}
+
 function latestValue(rows) {
   return rows[rows.length - 1]?.value;
 }
@@ -2439,12 +2484,13 @@ function classifyPmiRegime(pmi) {
   return '深度收缩';
 }
 
-function classifyRetailRegime(cartsRealYoY) {
-  if (!Number.isFinite(cartsRealYoY)) return '未知';
-  if (cartsRealYoY <= -0.03) return '明显走弱';
-  if (cartsRealYoY < 0) return '走弱';
-  if (cartsRealYoY >= 0.06) return '强劲';
-  if (cartsRealYoY >= 0.03) return '改善';
+function classifyRetailRegime(cartsRealYoY, redbookRetailSalesYoY = null) {
+  const primaryYoY = Number.isFinite(cartsRealYoY) ? cartsRealYoY : redbookRetailSalesYoY;
+  if (!Number.isFinite(primaryYoY)) return '未知';
+  if (primaryYoY <= -0.03) return '明显走弱';
+  if (primaryYoY < 0) return '走弱';
+  if (primaryYoY >= 0.06) return '强劲';
+  if (primaryYoY >= 0.03) return '改善';
   return '稳定';
 }
 
@@ -2526,6 +2572,39 @@ function buildFedFundsFuturesCurve(contracts, targetMid) {
       : null,
     contracts: normalizedContracts,
     limitationZh: 'Yahoo 月度 Fed funds futures 为公开政策路径 proxy；不是 OIS forward rate。'
+  };
+}
+
+function buildSofrFuturesCurve(contracts, targetMid) {
+  const normalizedContracts = (Array.isArray(contracts) ? contracts : [])
+    .map((contract) => {
+      const impliedRate = Number.isFinite(contract.price) ? +(100 - contract.price).toFixed(3) : null;
+      return {
+        symbol: contract.symbol,
+        contractMonth: contract.contractMonth,
+        price: contract.price,
+        impliedRate,
+        impliedMinusTargetMid: Number.isFinite(impliedRate) && Number.isFinite(targetMid)
+          ? +(impliedRate - targetMid).toFixed(3)
+          : null,
+        updatedAt: contract.updatedAt
+      };
+    })
+    .filter((contract) => contract.symbol && contract.contractMonth && Number.isFinite(contract.price));
+  if (normalizedContracts.length < 2) return buildMissingSofrFuturesCurve();
+  const front = normalizedContracts[0];
+  const back = normalizedContracts[normalizedContracts.length - 1];
+  return {
+    source: 'Yahoo:SR3-monthly-SOFR-futures',
+    curveStatus: 'live_proxy_curve',
+    updatedAt: latestIsoDate(...normalizedContracts.map((contract) => contract.updatedAt)),
+    frontImpliedRate: Number.isFinite(front.impliedRate) ? front.impliedRate : null,
+    backImpliedRate: Number.isFinite(back.impliedRate) ? back.impliedRate : null,
+    frontMinusBack: Number.isFinite(front.impliedRate) && Number.isFinite(back.impliedRate)
+      ? +(front.impliedRate - back.impliedRate).toFixed(3)
+      : null,
+    contracts: normalizedContracts,
+    limitationZh: 'Yahoo 月度 SR3 Three-Month SOFR futures 为公开担保融资利率曲线 proxy；不是 OIS forward rate。'
   };
 }
 
@@ -2824,6 +2903,7 @@ async function resolvePolicyExpectations(prevPolicy) {
     targetRange: 'missing',
     fedFundsFuture: 'missing',
     fedFundsFuturesCurve: 'missing',
+    sofrFuturesCurve: 'missing',
     sepDotPlot: 'missing',
     policyStatement: 'missing',
     fomcMinutes: 'missing',
@@ -2839,11 +2919,12 @@ async function resolvePolicyExpectations(prevPolicy) {
   let futureMinusTargetMid = null;
   let futureUpdatedAt = null;
   let fedFundsFuturesCurve = buildMissingFedFundsFuturesCurve();
+  let sofrFuturesCurve = buildMissingSofrFuturesCurve();
   let sepData = null;
   let statementData = null;
   let minutesData = null;
 
-  const [targetLowerResult, targetUpperResult, effrResult, futureResult, futuresCurveResult, calendarResult] = await Promise.allSettled([
+  const [targetLowerResult, targetUpperResult, effrResult, futureResult, futuresCurveResult, sofrFuturesCurveResult, calendarResult] = await Promise.allSettled([
     fetchFredSeries('DFEDTARL', 30),
     fetchFredSeries('DFEDTARU', 30),
     fetchFredSeries('DFF', 30),
@@ -2851,6 +2932,13 @@ async function resolvePolicyExpectations(prevPolicy) {
     fetchYahooMonthlyFuturesCurve({
       root: 'ZQ',
       suffix: '.CBT',
+      startOffsetMonths: 1,
+      monthsToScan: 12,
+      maxContracts: 8
+    }),
+    fetchYahooMonthlyFuturesCurve({
+      root: 'SR3',
+      suffix: '.CME',
       startOffsetMonths: 1,
       monthsToScan: 12,
       maxContracts: 8
@@ -2907,6 +2995,17 @@ async function resolvePolicyExpectations(prevPolicy) {
       curveStatus: 'fallback_proxy_curve'
     };
     status.fedFundsFuturesCurve = 'fallback';
+  }
+
+  if (sofrFuturesCurveResult.status === 'fulfilled') {
+    sofrFuturesCurve = buildSofrFuturesCurve(sofrFuturesCurveResult.value, targetMid);
+    status.sofrFuturesCurve = sofrFuturesCurve.contracts.length ? 'live' : 'missing';
+  } else if (Array.isArray(fallback.sofrFuturesCurve?.contracts) && fallback.sofrFuturesCurve.contracts.length) {
+    sofrFuturesCurve = {
+      ...normalizePreviousSofrFuturesCurve(fallback.sofrFuturesCurve),
+      curveStatus: 'fallback_proxy_curve'
+    };
+    status.sofrFuturesCurve = 'fallback';
   }
 
   if (calendarResult.status === 'fulfilled') {
@@ -2999,6 +3098,7 @@ async function resolvePolicyExpectations(prevPolicy) {
     futureMinusTargetMid: Number.isFinite(futureMinusTargetMid) ? futureMinusTargetMid : null,
     futureUpdatedAt,
     fedFundsFuturesCurve,
+    sofrFuturesCurve,
     dotPlotMedianCurrentYear,
     dotPlotMedianNextYear: Number.isFinite(sepData?.dotPlotMedianNextYear) ? sepData.dotPlotMedianNextYear : null,
     dotPlotMedianTwoYearsOut: Number.isFinite(sepData?.dotPlotMedianTwoYearsOut) ? sepData.dotPlotMedianTwoYearsOut : null,
@@ -3024,11 +3124,11 @@ async function resolvePolicyExpectations(prevPolicy) {
     oisForwardRate: null,
     oisForwardStatus: 'manual_required',
     sourceStatus: status,
-    updatedAt: latestIsoDate(targetUpdatedAt, futureUpdatedAt, fedFundsFuturesCurve?.updatedAt, sepData?.sepProjectionDate, statementData?.statementDate, minutesData?.minutesDate),
+    updatedAt: latestIsoDate(targetUpdatedAt, futureUpdatedAt, fedFundsFuturesCurve?.updatedAt, sofrFuturesCurve?.updatedAt, sepData?.sepProjectionDate, statementData?.statementDate, minutesData?.minutesDate),
     source: POLICY_EXPECTATIONS_SOURCE,
     notes: [
       'Fed target range/DFF 来自 FRED；SEP federal funds median、statement 与 minutes 文本来自 federalreserve.gov。',
-      'ZQ=F 与 ZQ 月度合约为 Fed funds futures proxy；OIS forward rate 需要 licensed/manual input,不从未授权源抓取。'
+      'ZQ=F、ZQ 月度合约与 SR3 月度 SOFR futures 为公开政策/融资曲线 proxy；OIS forward rate 需要 licensed/manual input,不从未授权源抓取。'
     ]
   };
 }
@@ -3459,16 +3559,23 @@ function buildMissingConsumerRetail() {
     bofaPdfUrl: null,
     bofaStatus: 'missing',
     bofaSummary: null,
+    redbookRetailSalesYoY: null,
+    redbookHistoricalAverageYoY: null,
+    redbookRetailSalesDate: null,
+    redbookReportUrl: null,
+    redbookStatus: 'missing',
+    redbookSummary: null,
     retailRegime: '未知',
     sourceStatus: {
       carts: 'missing',
       cartsr: 'missing',
       retailSegments: 'missing',
-      bofaConsumerCheckpoint: 'missing'
+      bofaConsumerCheckpoint: 'missing',
+      redbookPublicHtml: 'missing'
     },
     updatedAt: null,
     source: CONSUMER_RETAIL_SOURCE,
-    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；BoA Consumer Checkpoint 为公开 HTML 第三方消费证据；audit-only / display-only。']
+    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；BoA Consumer Checkpoint 与 Redbook public HTML 为第三方公开消费证据；audit-only / display-only。']
   };
 }
 
@@ -3579,6 +3686,49 @@ function normalizePreviousFedFundsFuturesCurve(prevCurve) {
   };
 }
 
+function buildMissingSofrFuturesCurve() {
+  return {
+    source: 'Yahoo:SR3-monthly-SOFR-futures',
+    curveStatus: 'missing',
+    updatedAt: null,
+    frontImpliedRate: null,
+    backImpliedRate: null,
+    frontMinusBack: null,
+    contracts: [],
+    limitationZh: 'Yahoo 月度 SR3 Three-Month SOFR futures 报价不可用；OIS forward rate 仍需 manual/licensed input。'
+  };
+}
+
+function normalizePreviousSofrFuturesCurve(prevCurve) {
+  if (!prevCurve || typeof prevCurve !== 'object') return buildMissingSofrFuturesCurve();
+  const contracts = Array.isArray(prevCurve.contracts)
+    ? prevCurve.contracts
+        .map((contract) => ({
+          symbol: typeof contract?.symbol === 'string' ? contract.symbol : null,
+          contractMonth: typeof contract?.contractMonth === 'string' ? contract.contractMonth : null,
+          price: Number.isFinite(contract?.price) ? contract.price : null,
+          impliedRate: Number.isFinite(contract?.impliedRate) ? contract.impliedRate : null,
+          impliedMinusTargetMid: Number.isFinite(contract?.impliedMinusTargetMid) ? contract.impliedMinusTargetMid : null,
+          updatedAt: typeof contract?.updatedAt === 'string' ? contract.updatedAt : null
+        }))
+        .filter((contract) => contract.symbol && contract.contractMonth)
+    : [];
+  return {
+    source: typeof prevCurve.source === 'string' ? prevCurve.source : 'Yahoo:SR3-monthly-SOFR-futures',
+    curveStatus: ['live_proxy_curve', 'fallback_proxy_curve', 'missing'].includes(prevCurve.curveStatus)
+      ? prevCurve.curveStatus
+      : (contracts.length ? 'fallback_proxy_curve' : 'missing'),
+    updatedAt: typeof prevCurve.updatedAt === 'string' ? prevCurve.updatedAt : null,
+    frontImpliedRate: Number.isFinite(prevCurve.frontImpliedRate) ? prevCurve.frontImpliedRate : null,
+    backImpliedRate: Number.isFinite(prevCurve.backImpliedRate) ? prevCurve.backImpliedRate : null,
+    frontMinusBack: Number.isFinite(prevCurve.frontMinusBack) ? prevCurve.frontMinusBack : null,
+    contracts,
+    limitationZh: typeof prevCurve.limitationZh === 'string'
+      ? prevCurve.limitationZh
+      : 'Yahoo 月度 SR3 Three-Month SOFR futures 为公开代理曲线；不是 OIS forward rate。'
+  };
+}
+
 function buildMissingPolicyExpectations() {
   return {
     targetLower: null,
@@ -3591,6 +3741,7 @@ function buildMissingPolicyExpectations() {
     futureMinusTargetMid: null,
     futureUpdatedAt: null,
     fedFundsFuturesCurve: buildMissingFedFundsFuturesCurve(),
+    sofrFuturesCurve: buildMissingSofrFuturesCurve(),
     dotPlotMedianCurrentYear: null,
     dotPlotMedianNextYear: null,
     dotPlotMedianTwoYearsOut: null,
@@ -3617,6 +3768,7 @@ function buildMissingPolicyExpectations() {
       targetRange: 'missing',
       fedFundsFuture: 'missing',
       fedFundsFuturesCurve: 'missing',
+      sofrFuturesCurve: 'missing',
       sepDotPlot: 'missing',
       policyStatement: 'missing',
       fomcMinutes: 'missing',
@@ -3624,7 +3776,7 @@ function buildMissingPolicyExpectations() {
     },
     updatedAt: null,
     source: POLICY_EXPECTATIONS_SOURCE,
-    notes: ['FOMC statement/SEP/minutes 来自 federalreserve.gov；ZQ=F 与 ZQ 月度合约为 Fed funds futures proxy；OIS forward 未用未授权源抓取。']
+    notes: ['FOMC statement/SEP/minutes 来自 federalreserve.gov；ZQ=F、ZQ 月度合约与 SR3 月度 SOFR futures 为公开政策/融资曲线 proxy；OIS forward 未用未授权源抓取。']
   };
 }
 
@@ -3746,6 +3898,9 @@ function normalizePreviousConsumerRetail(prevConsumerRetail) {
   const bofaCardSpendingExGasYoY = Number.isFinite(prevConsumerRetail.bofaCardSpendingExGasYoY)
     ? prevConsumerRetail.bofaCardSpendingExGasYoY
     : null;
+  const redbookRetailSalesYoY = Number.isFinite(prevConsumerRetail.redbookRetailSalesYoY)
+    ? prevConsumerRetail.redbookRetailSalesYoY
+    : null;
   return {
     cartsNominal,
     cartsNominal4wAverage,
@@ -3781,18 +3936,27 @@ function normalizePreviousConsumerRetail(prevConsumerRetail) {
     bofaPdfUrl: typeof prevConsumerRetail.bofaPdfUrl === 'string' ? prevConsumerRetail.bofaPdfUrl : null,
     bofaStatus: bofaCardSpendingYoY !== null || bofaCardSpendingExGasYoY !== null ? 'fallback' : 'missing',
     bofaSummary: typeof prevConsumerRetail.bofaSummary === 'string' ? prevConsumerRetail.bofaSummary : null,
+    redbookRetailSalesYoY,
+    redbookHistoricalAverageYoY: Number.isFinite(prevConsumerRetail.redbookHistoricalAverageYoY)
+      ? prevConsumerRetail.redbookHistoricalAverageYoY
+      : null,
+    redbookRetailSalesDate: typeof prevConsumerRetail.redbookRetailSalesDate === 'string' ? prevConsumerRetail.redbookRetailSalesDate : null,
+    redbookReportUrl: typeof prevConsumerRetail.redbookReportUrl === 'string' ? prevConsumerRetail.redbookReportUrl : null,
+    redbookStatus: redbookRetailSalesYoY !== null ? 'fallback' : 'missing',
+    redbookSummary: typeof prevConsumerRetail.redbookSummary === 'string' ? prevConsumerRetail.redbookSummary : null,
     retailRegime: typeof prevConsumerRetail.retailRegime === 'string' && prevConsumerRetail.retailRegime.trim()
       ? prevConsumerRetail.retailRegime
-      : classifyRetailRegime(cartsRealYoY),
+      : classifyRetailRegime(cartsRealYoY, redbookRetailSalesYoY),
     sourceStatus: {
       carts: cartsNominal !== null ? 'fallback' : 'missing',
       cartsr: cartsReal !== null ? 'fallback' : 'missing',
       retailSegments: segmentDiffusionPct !== null ? 'fallback' : 'missing',
-      bofaConsumerCheckpoint: bofaCardSpendingYoY !== null || bofaCardSpendingExGasYoY !== null ? 'fallback' : 'missing'
+      bofaConsumerCheckpoint: bofaCardSpendingYoY !== null || bofaCardSpendingExGasYoY !== null ? 'fallback' : 'missing',
+      redbookPublicHtml: redbookRetailSalesYoY !== null ? 'fallback' : 'missing'
     },
     updatedAt: typeof prevConsumerRetail.updatedAt === 'string' ? prevConsumerRetail.updatedAt : null,
     source: CONSUMER_RETAIL_SOURCE,
-    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；BoA Consumer Checkpoint 为公开 HTML 第三方消费证据；audit-only / display-only。']
+    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；BoA Consumer Checkpoint 与 Redbook public HTML 为第三方公开消费证据；audit-only / display-only。']
   };
 }
 
@@ -3933,6 +4097,7 @@ function normalizePreviousPolicyExpectations(prevPolicy) {
     fedFundsFutureImpliedRate: Number.isFinite(prevPolicy.fedFundsFutureImpliedRate) ? prevPolicy.fedFundsFutureImpliedRate : null,
     futureMinusTargetMid,
     fedFundsFuturesCurve: normalizePreviousFedFundsFuturesCurve(prevPolicy.fedFundsFuturesCurve),
+    sofrFuturesCurve: normalizePreviousSofrFuturesCurve(prevPolicy.sofrFuturesCurve),
     dotPlotMedianCurrentYear,
     minutesDate: typeof prevPolicy.minutesDate === 'string' ? prevPolicy.minutesDate : null,
     minutesUrl: typeof prevPolicy.minutesUrl === 'string' ? prevPolicy.minutesUrl : null,
@@ -3951,6 +4116,9 @@ function normalizePreviousPolicyExpectations(prevPolicy) {
       targetRange: targetMid !== null ? 'fallback' : 'missing',
       fedFundsFuture: Number.isFinite(prevPolicy.fedFundsFutureImpliedRate) ? 'fallback' : 'missing',
       fedFundsFuturesCurve: Array.isArray(prevPolicy.fedFundsFuturesCurve?.contracts) && prevPolicy.fedFundsFuturesCurve.contracts.length
+        ? 'fallback'
+        : 'missing',
+      sofrFuturesCurve: Array.isArray(prevPolicy.sofrFuturesCurve?.contracts) && prevPolicy.sofrFuturesCurve.contracts.length
         ? 'fallback'
         : 'missing',
       sepDotPlot: dotPlotMedianCurrentYear !== null ? 'fallback' : 'missing',
@@ -4409,7 +4577,8 @@ async function resolveConsumerRetail(prevConsumerRetail) {
     carts: 'missing',
     cartsr: 'missing',
     retailSegments: 'missing',
-    bofaConsumerCheckpoint: 'missing'
+    bofaConsumerCheckpoint: 'missing',
+    redbookPublicHtml: 'missing'
   };
   let cartsNominal = null;
   let cartsNominal4wAverage = null;
@@ -4420,11 +4589,13 @@ async function resolveConsumerRetail(prevConsumerRetail) {
   let cartsRealYoY = null;
   let cartsRealUpdatedAt = null;
   let bofaData = null;
+  let redbookData = null;
 
-  const [cartsResult, cartsrResult, bofaResult, ...segmentResults] = await Promise.allSettled([
+  const [cartsResult, cartsrResult, bofaResult, redbookResult, ...segmentResults] = await Promise.allSettled([
     fetchFredSeries('CARTS', 1500),
     fetchFredSeries('CARTSR', 1500),
     fetchBofaConsumerCheckpoint(),
+    fetchTradingEconomicsRedbookIndex(),
     ...CONSUMER_RETAIL_SEGMENT_SERIES.map((series) => fetchFredSeries(series.id, 1500))
   ]);
 
@@ -4496,6 +4667,21 @@ async function resolveConsumerRetail(prevConsumerRetail) {
     status.bofaConsumerCheckpoint = 'fallback';
   }
 
+  if (redbookResult.status === 'fulfilled') {
+    redbookData = redbookResult.value;
+    status.redbookPublicHtml = 'live';
+  } else if (Number.isFinite(fallback.redbookRetailSalesYoY)) {
+    redbookData = {
+      redbookRetailSalesYoY: fallback.redbookRetailSalesYoY,
+      redbookHistoricalAverageYoY: fallback.redbookHistoricalAverageYoY,
+      redbookRetailSalesDate: fallback.redbookRetailSalesDate,
+      redbookReportUrl: fallback.redbookReportUrl,
+      redbookStatus: 'fallback',
+      redbookSummary: fallback.redbookSummary
+    };
+    status.redbookPublicHtml = 'fallback';
+  }
+
   return {
     cartsNominal: Number.isFinite(cartsNominal) ? cartsNominal : null,
     cartsNominal4wAverage: Number.isFinite(cartsNominal4wAverage) ? cartsNominal4wAverage : null,
@@ -4519,11 +4705,17 @@ async function resolveConsumerRetail(prevConsumerRetail) {
     bofaPdfUrl: typeof bofaData?.bofaPdfUrl === 'string' ? bofaData.bofaPdfUrl : null,
     bofaStatus: typeof bofaData?.bofaStatus === 'string' ? bofaData.bofaStatus : status.bofaConsumerCheckpoint,
     bofaSummary: typeof bofaData?.bofaSummary === 'string' ? bofaData.bofaSummary : null,
-    retailRegime: classifyRetailRegime(cartsRealYoY),
+    redbookRetailSalesYoY: Number.isFinite(redbookData?.redbookRetailSalesYoY) ? redbookData.redbookRetailSalesYoY : null,
+    redbookHistoricalAverageYoY: Number.isFinite(redbookData?.redbookHistoricalAverageYoY) ? redbookData.redbookHistoricalAverageYoY : null,
+    redbookRetailSalesDate: typeof redbookData?.redbookRetailSalesDate === 'string' ? redbookData.redbookRetailSalesDate : null,
+    redbookReportUrl: typeof redbookData?.redbookReportUrl === 'string' ? redbookData.redbookReportUrl : null,
+    redbookStatus: typeof redbookData?.redbookStatus === 'string' ? redbookData.redbookStatus : status.redbookPublicHtml,
+    redbookSummary: typeof redbookData?.redbookSummary === 'string' ? redbookData.redbookSummary : null,
+    retailRegime: classifyRetailRegime(cartsRealYoY, redbookData?.redbookRetailSalesYoY),
     sourceStatus: status,
-    updatedAt: latestIsoDate(cartsNominalUpdatedAt, cartsRealUpdatedAt, segmentUpdatedAt, bofaData?.bofaReportDate),
+    updatedAt: latestIsoDate(cartsNominalUpdatedAt, cartsRealUpdatedAt, segmentUpdatedAt, bofaData?.bofaReportDate, redbookData?.redbookRetailSalesDate),
     source: CONSUMER_RETAIL_SOURCE,
-    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；BoA Consumer Checkpoint 为公开 HTML 第三方消费证据；audit-only / display-only。']
+    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；BoA Consumer Checkpoint 与 Redbook public HTML 为第三方公开消费证据；audit-only / display-only。']
   };
 }
 

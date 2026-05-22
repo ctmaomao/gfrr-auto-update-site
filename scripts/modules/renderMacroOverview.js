@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-78V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-78V';
-import { formatFiniteNumber } from './format.js?v=28.0M-78V';
+import { $ } from './config.js?v=28.0M-79V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-79V';
+import { formatFiniteNumber } from './format.js?v=28.0M-79V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -700,6 +700,8 @@ function buildMacroDrivers(data) {
   const bofaCardSpendingYoY = finite(consumerRetail.bofaCardSpendingYoY);
   const bofaCardSpendingPriorYoY = finite(consumerRetail.bofaCardSpendingPriorYoY);
   const bofaCardSpendingExGasYoY = finite(consumerRetail.bofaCardSpendingExGasYoY);
+  const redbookRetailSalesYoY = finite(consumerRetail.redbookRetailSalesYoY);
+  const redbookHistoricalAverageYoY = finite(consumerRetail.redbookHistoricalAverageYoY);
   const retailRegime = text(consumerRetail.retailRegime, '未知');
   const creDelinquencyRate = finite(commercialRealEstate.creDelinquencyRate);
   const creDelinquencyRateQoQChange = finite(commercialRealEstate.creDelinquencyRateQoQChange);
@@ -730,6 +732,11 @@ function buildMacroDrivers(data) {
   const futureMinusTargetMid = finite(policyExpectations.futureMinusTargetMid);
   const fedFundsFuturesCurve = isPlainObject(policyExpectations.fedFundsFuturesCurve) ? policyExpectations.fedFundsFuturesCurve : {};
   const fedFundsFuturesCurveContracts = safeArray(fedFundsFuturesCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 4)
+    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.impliedRate, 2, '%')}`);
+  const sofrFuturesCurve = isPlainObject(policyExpectations.sofrFuturesCurve) ? policyExpectations.sofrFuturesCurve : {};
+  const sofrFuturesCurveContracts = safeArray(sofrFuturesCurve.contracts)
     .filter(isPlainObject)
     .slice(0, 4)
     .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.impliedRate, 2, '%')}`);
@@ -782,13 +789,16 @@ function buildMacroDrivers(data) {
     fedFundsFuturesCurveContracts.length
       ? `ZQ monthly futures curve proxy: ${fedFundsFuturesCurveContracts.join(' / ')}；front-back ${formatSignedPoints(fedFundsFuturesCurve.frontMinusBack)}；status=${text(fedFundsFuturesCurve.curveStatus, 'missing')}`
       : null,
+    sofrFuturesCurveContracts.length
+      ? `SR3 SOFR futures proxy: ${sofrFuturesCurveContracts.join(' / ')}；front-back ${formatSignedPoints(sofrFuturesCurve.frontMinusBack)}；status=${text(sofrFuturesCurve.curveStatus, 'missing')}`
+      : null,
     dotPlotMedianCurrentYear === null ? null : `SEP ${formatWeekVintage(policyExpectations.sepProjectionDate)} federal funds median: current ${formatNumber(dotPlotMedianCurrentYear, 2, '%')} / next ${formatNumber(dotPlotMedianNextYear, 2, '%')} / two-year ${formatNumber(dotPlotMedianTwoYearsOut, 2, '%')} / longer-run ${formatNumber(dotPlotMedianLongerRun, 2, '%')} (${formatUrlReference(policyExpectations.sepUrl)})`,
     policyTone === '未知' ? null : `FOMC ${formatWeekVintage(policyExpectations.statementDate)} statement tone: ${policyTone}；hawkish ${formatNumber(hawkishTermCount, 0)} / dovish ${formatNumber(dovishTermCount, 0)} (${formatUrlReference(policyExpectations.statementUrl)})`,
     minutesPolicyTone === '未知' ? null : `FOMC minutes ${formatWeekVintage(policyExpectations.minutesDate)} NLP tone: ${minutesPolicyTone}；hawkish ${formatNumber(minutesHawkishTermCount, 0)} / dovish ${formatNumber(minutesDovishTermCount, 0)} (${formatUrlReference(policyExpectations.minutesUrl)})`,
     isPlainObject(policyExpectations.minutesTopicCounts)
       ? `minutes topics: inflation=${formatNumber(policyExpectations.minutesTopicCounts.inflation, 0)} / labor=${formatNumber(policyExpectations.minutesTopicCounts.laborMarket, 0)} / financial=${formatNumber(policyExpectations.minutesTopicCounts.financialConditions, 0)} / risks=${formatNumber(policyExpectations.minutesTopicCounts.risks, 0)}`
       : null,
-    formatSourceStatusMap(policyExpectations.sourceStatus, [['targetRange', 'target'], ['fedFundsFuture', 'ZQ'], ['fedFundsFuturesCurve', 'ZQ curve'], ['sepDotPlot', 'SEP'], ['policyStatement', 'statement'], ['fomcMinutes', 'minutes'], ['oisForward', 'OIS']]),
+    formatSourceStatusMap(policyExpectations.sourceStatus, [['targetRange', 'target'], ['fedFundsFuture', 'ZQ'], ['fedFundsFuturesCurve', 'ZQ curve'], ['sofrFuturesCurve', 'SR3 SOFR futures'], ['sepDotPlot', 'SEP'], ['policyStatement', 'statement'], ['fomcMinutes', 'minutes'], ['oisForward', 'OIS']]),
   ].filter(Boolean);
   const hasPolicyProxy = policyProxyEvidence.length > 1;
 
@@ -809,7 +819,7 @@ function buildMacroDrivers(data) {
           ? null
           : `ISM 制造业 PMI ${formatNumber(consumer.ismManufacturingPmi, 1)} — ${consumer.ismManufacturingPmi >= 50 ? '扩张区间' : '收缩区间'}；3个月变化 ${formatNumber(consumer.ismManufacturingPmi3mChange, 1)}`,
       ].filter(Boolean),
-      missingEvidence: ['盈利修正、Redbook / BoA raw card feed 等非公开或授权消费证据仍待接入。'],
+      missingEvidence: ['盈利修正、BoA raw card feed 等非公开或授权消费证据仍待接入。'],
       explanation: 'UMCSENT 是月频慢变量，只能提供体感背景，不能单独判断近端增长。',
       sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '数据推断',
     }),
@@ -882,16 +892,19 @@ function buildMacroDrivers(data) {
         bofaCardSpendingYoY === null && bofaCardSpendingExGasYoY === null
           ? null
           : `BoA Consumer Checkpoint ${formatMonthVintage(consumerRetail.bofaReportDate)}: card spend YoY ${formatRatioAsPercent(bofaCardSpendingYoY)} / ex-gas ${formatRatioAsPercent(bofaCardSpendingExGasYoY)}；prior ${formatRatioAsPercent(bofaCardSpendingPriorYoY)}（status=${formatSourceStatus(consumerRetail.sourceStatus?.bofaConsumerCheckpoint)}；${formatUrlReference(consumerRetail.bofaReportUrl)}）`,
+        redbookRetailSalesYoY === null
+          ? null
+          : `Redbook public HTML ${formatWeekVintage(consumerRetail.redbookRetailSalesDate)}: same-store sales YoY ${formatRatioAsPercent(redbookRetailSalesYoY)}；historical avg ${formatRatioAsPercent(redbookHistoricalAverageYoY)}（status=${formatSourceStatus(consumerRetail.sourceStatus?.redbookPublicHtml)}；${formatUrlReference(consumerRetail.redbookReportUrl)}）`,
         ...retailSegmentLines,
-        formatSourceStatusMap(consumerRetail.sourceStatus, [['carts', 'CARTS'], ['cartsr', 'CARTSR'], ['retailSegments', 'MRTS'], ['bofaConsumerCheckpoint', 'BoA Consumer Checkpoint']]),
+        formatSourceStatusMap(consumerRetail.sourceStatus, [['carts', 'CARTS'], ['cartsr', 'CARTSR'], ['retailSegments', 'MRTS'], ['bofaConsumerCheckpoint', 'BoA Consumer Checkpoint'], ['redbookPublicHtml', 'Redbook public HTML']]),
         `Chicago Fed CARTS:${formatWeekVintage(consumerRetail.updatedAt)}`,
       ].filter(Boolean),
       missingEvidence: [
         retailSegmentDiffusionPct === null ? 'MRTS 细分零售品类等待 FRED 月频刷新。' : null,
         bofaCardSpendingYoY === null && bofaCardSpendingExGasYoY === null ? 'BoA Consumer Checkpoint 公开页等待刷新。' : null,
-        'Redbook 仍未接入；当前不冒充 Redbook。'
+        redbookRetailSalesYoY === null ? 'Redbook public HTML 等待刷新；当前不冒充 Redbook raw feed。' : null
       ].filter(Boolean),
-      explanation: 'CARTS / CARTSR 是 Chicago Fed via FRED 的周频零售+餐饮 nowcast；MRTS 细分品类为月频公开零售结构观察；BoA Consumer Checkpoint 是第三方公开月度卡消费摘要。',
+      explanation: 'CARTS / CARTSR 是 Chicago Fed via FRED 的周频零售+餐饮 nowcast；MRTS 细分品类为月频公开零售结构观察；BoA Consumer Checkpoint 与 Redbook public HTML 是第三方公开消费证据。',
       sourceType: cartsNominal === null && cartsReal === null && retailSegmentDiffusionPct === null ? '数据不足' : '事实',
       updatedAt: `Chicago Fed CARTS:${formatWeekVintage(consumerRetail.updatedAt)}`,
     }),
@@ -1074,11 +1087,11 @@ function buildMacroDrivers(data) {
       status: hasPolicyProxy ? `基于代理信号观察 / ${policyExpectationRegime}` : WAITING,
       direction: hasPolicyProxy ? (policyExpectationRegime === '降息预期' ? '政策预期转松' : '政策预期偏紧') : '方向待确认',
       confidence: hasPolicyProxy ? '中等' : '偏低',
-      dataCoverage: hasPolicyProxy ? '数据覆盖：Fed statement / minutes / SEP / futures 代理' : '数据覆盖：关键数据不足',
+      dataCoverage: hasPolicyProxy ? '数据覆盖：Fed statement / minutes / SEP / ZQ + SOFR futures 代理' : '数据覆盖：关键数据不足',
       evidence: hasPolicyProxy ? policyProxyEvidence : ['暂无直接 Fed 预期或政策路径指标。'],
       missingEvidence: ['OIS forward rates 需要 manual/licensed input；当前不从未授权源抓取。'],
       explanation: hasPolicyProxy
-        ? 'Fed target range、SEP median、FOMC statement/minutes 文本和 front Fed funds futures 已接入；OIS forward 仍保留为 manual/licensed 插槽。'
+        ? 'Fed target range、SEP median、FOMC statement/minutes 文本、Fed funds futures 与 SOFR futures proxy 已接入；OIS forward 仍保留为 manual/licensed 插槽。'
         : '当前不伪造政策路径；除非接入 dot plot / forward rates 等明确前瞻数据，否则政策路径不是强驱动。',
       sourceType: hasPolicyProxy ? '事实 + 代理信号' : '数据不足',
     }),
@@ -1252,6 +1265,11 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
     .filter(isPlainObject)
     .slice(0, 4)
     .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.impliedRate, 2, '%')}`);
+  const sofrFuturesCurve = isPlainObject(policyExpectations.sofrFuturesCurve) ? policyExpectations.sofrFuturesCurve : {};
+  const sofrFuturesCurveContracts = safeArray(sofrFuturesCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 4)
+    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.impliedRate, 2, '%')}`);
   const ulsdPrice = finite(brentLayer.ulsdPrice);
   const ulsd4wChange = finite(brentLayer.ulsd4wChange);
   const crackSpread4wChange = finite(brentLayer.crackSpread4wChange);
@@ -1311,6 +1329,9 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
           : `Policy path proxy: target midpoint ${formatNumber(targetMid, 3, '%')}；ZQ implied ${formatNumber(fedFundsFutureImpliedRate, 2, '%')}；SEP current median ${formatNumber(dotPlotMedianCurrentYear, 2, '%')}`,
         fedFundsFuturesCurveContracts.length
           ? `ZQ monthly futures curve proxy: ${fedFundsFuturesCurveContracts.join(' / ')}；front-back ${formatSignedPoints(fedFundsFuturesCurve.frontMinusBack)}`
+          : null,
+        sofrFuturesCurveContracts.length
+          ? `SR3 SOFR futures proxy: ${sofrFuturesCurveContracts.join(' / ')}；front-back ${formatSignedPoints(sofrFuturesCurve.frontMinusBack)}`
           : null,
       ].filter(Boolean),
       missingEvidence: safeArray(ratesCheck.limitations).slice(0, 1).length

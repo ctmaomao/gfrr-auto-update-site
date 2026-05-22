@@ -88,9 +88,12 @@ if (isPlainObject(policy)) {
   if (!isPlainObject(policy.fedFundsFuturesCurve) || !Array.isArray(policy.fedFundsFuturesCurve.contracts)) {
     fail('macroDrivers.policyExpectations.fedFundsFuturesCurve is missing');
   }
-  assertStatusKeys(policy, 'macroDrivers.policyExpectations', ['targetRange', 'fedFundsFuture', 'fedFundsFuturesCurve', 'sepDotPlot', 'policyStatement', 'fomcMinutes', 'oisForward']);
-  if (policy.source !== 'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures; FederalReserve:FOMC statement/SEP/minutes') {
-    fail('macroDrivers.policyExpectations.source is not the approved M-78 source string');
+  if (!isPlainObject(policy.sofrFuturesCurve) || !Array.isArray(policy.sofrFuturesCurve.contracts)) {
+    fail('macroDrivers.policyExpectations.sofrFuturesCurve is missing');
+  }
+  assertStatusKeys(policy, 'macroDrivers.policyExpectations', ['targetRange', 'fedFundsFuture', 'fedFundsFuturesCurve', 'sofrFuturesCurve', 'sepDotPlot', 'policyStatement', 'fomcMinutes', 'oisForward']);
+  if (policy.source !== 'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; FederalReserve:FOMC statement/SEP/minutes') {
+    fail('macroDrivers.policyExpectations.source is not the approved M-79 source string');
   }
 }
 
@@ -108,11 +111,13 @@ if (isPlainObject(consumerRetail)) {
   assertFiniteOrNull(consumerRetail, 'macroDrivers.consumerRetail', [
     'bofaCardSpendingYoY',
     'bofaCardSpendingPriorYoY',
-    'bofaCardSpendingExGasYoY'
+    'bofaCardSpendingExGasYoY',
+    'redbookRetailSalesYoY',
+    'redbookHistoricalAverageYoY'
   ]);
-  assertStatusKeys(consumerRetail, 'macroDrivers.consumerRetail', ['carts', 'cartsr', 'retailSegments', 'bofaConsumerCheckpoint'], new Set(['live', 'fallback', 'missing']));
-  if (consumerRetail.source !== 'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html') {
-    fail('macroDrivers.consumerRetail.source is not the approved M-77 source string');
+  assertStatusKeys(consumerRetail, 'macroDrivers.consumerRetail', ['carts', 'cartsr', 'retailSegments', 'bofaConsumerCheckpoint', 'redbookPublicHtml'], new Set(['live', 'fallback', 'missing']));
+  if (consumerRetail.source !== 'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html; TradingEconomics:Redbook-public-html') {
+    fail('macroDrivers.consumerRetail.source is not the approved M-79 source string');
   }
 }
 
@@ -124,6 +129,7 @@ const requiredRunDailyMarkers = [
   'async function resolvePolicyExpectations(prevPolicy)',
   "fetchYahooChartQuote('ZQ=F', '1mo', '1d')",
   "root: 'ZQ'",
+  "root: 'SR3'",
   'parseFedSepMedians',
   'parseFedPolicyTone',
   'parseFedMinutesTone',
@@ -131,6 +137,7 @@ const requiredRunDailyMarkers = [
   "fetchYahooChartQuote('BIZD', '1mo', '1d')",
   "fetchFredSeries('BAMLC0A0CM', 30)",
   'fetchBofaConsumerCheckpoint',
+  'fetchTradingEconomicsRedbookIndex',
   'resolveBrentFuturesCurve',
   'resolveBrentFuturesPriceCurve',
   'shippingFreight: macroDrivers.shippingFreight',
@@ -166,9 +173,11 @@ const requiredRenderMarkers = [
   'sourceStatus:',
   'NFCI',
   'Fed funds futures',
+  'SR3 SOFR futures',
   'FOMC statement',
   'BIZD',
-  'IG OAS'
+  'IG OAS',
+  'Redbook public HTML'
 ];
 for (const marker of requiredRenderMarkers) {
   if (!renderMacroText.includes(marker)) fail(`renderMacroOverview missing M-74 marker: ${marker}`);
@@ -190,8 +199,10 @@ for (const marker of [
   'BDTI',
   'ZQ=F',
   'ZQ-monthly-futures',
+  'SR3-monthly-SOFR-futures',
   'fomcminutesYYYYMMDD.htm',
   'BoA Consumer Checkpoint',
+  'Redbook public HTML',
   'BAMLC0A0CM',
   'BIZD'
 ]) {

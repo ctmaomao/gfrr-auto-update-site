@@ -33,7 +33,8 @@ const retailRegimes = new Set(['明显走弱', '走弱', '稳定', '改善', '�
 const segmentRegimes = new Set(['广泛改善', '温和改善', '分化', '广泛走弱', '未知']);
 const expectedSources = new Set([
   'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments',
-  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html'
+  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html',
+  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html; TradingEconomics:Redbook-public-html'
 ]);
 
 if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consumerRetail)) {
@@ -62,6 +63,12 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
     'bofaPdfUrl',
     'bofaStatus',
     'bofaSummary',
+    'redbookRetailSalesYoY',
+    'redbookHistoricalAverageYoY',
+    'redbookRetailSalesDate',
+    'redbookReportUrl',
+    'redbookStatus',
+    'redbookSummary',
     'retailRegime',
     'sourceStatus',
     'updatedAt',
@@ -86,7 +93,9 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
     'segmentDiffusionPct',
     'bofaCardSpendingYoY',
     'bofaCardSpendingPriorYoY',
-    'bofaCardSpendingExGasYoY'
+    'bofaCardSpendingExGasYoY',
+    'redbookRetailSalesYoY',
+    'redbookHistoricalAverageYoY'
   ]) {
     if (field in consumerRetail && !isFiniteNumberOrNull(consumerRetail[field])) {
       fail(`macroDrivers.consumerRetail.${field} must be finite number or null`);
@@ -106,7 +115,7 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
   if (!consumerRetail.sourceStatus || typeof consumerRetail.sourceStatus !== 'object' || Array.isArray(consumerRetail.sourceStatus)) {
     fail('macroDrivers.consumerRetail.sourceStatus must be an object');
   } else {
-    for (const key of ['carts', 'cartsr', 'retailSegments', 'bofaConsumerCheckpoint']) {
+    for (const key of ['carts', 'cartsr', 'retailSegments', 'bofaConsumerCheckpoint', 'redbookPublicHtml']) {
       if (!sourceStatuses.has(consumerRetail.sourceStatus[key])) {
         fail(`macroDrivers.consumerRetail.sourceStatus.${key} must be live/fallback/missing`);
       }
@@ -125,13 +134,14 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
 }
 
 const requiredRunDailyMarkers = [
-  'function classifyRetailRegime(cartsRealYoY)',
+  'function classifyRetailRegime(cartsRealYoY, redbookRetailSalesYoY = null)',
   'function classifyRetailSegmentRegime(segmentDiffusionPct)',
   'CONSUMER_RETAIL_SEGMENT_SERIES',
   'function calculateRetailSegmentSnapshot(seriesResults)',
   'async function resolveConsumerRetail(prevConsumerRetail)',
   "fetchFredSeries('CARTS', 1500)",
   "fetchFredSeries('CARTSR', 1500)",
+  'fetchTradingEconomicsRedbookIndex',
   'const CONSUMER_RETAIL_SOURCE =',
   'consumerRetail: macroDrivers.consumerRetail'
 ];
@@ -147,6 +157,7 @@ const requiredRenderMarkers = [
   'CARTS 名义',
   'CARTSR 实际',
   'MRTS 细分零售扩散',
+  'Redbook public HTML',
   'Chicago Fed CARTS:'
 ];
 for (const marker of requiredRenderMarkers) {
@@ -164,6 +175,7 @@ const requiredContractMarkers = [
   'segmentDiffusionPct',
   'retailRegime',
   'MRTS',
+  'Redbook public HTML',
   'audit-only / display-only',
   '不参与 scoring、decisionModel、executionLock 或 positionGuidance'
 ];
@@ -177,6 +189,7 @@ const requiredSourceMarkers = [
   '`CARTS`',
   '`CARTSR`',
   '`MRTSSM441USN`',
+  'Trading Economics Redbook public HTML',
   'macroDrivers.consumerRetail'
 ];
 for (const marker of requiredSourceMarkers) {
@@ -187,7 +200,8 @@ for (const marker of requiredSourceMarkers) {
 
 const hasConsumerRetailBoundary = agentsText.includes('macroDrivers.consumerRetail')
   && (
-    agentsText.includes('Redbook + BoA Card 为 P3-14 source-review candidates')
+    agentsText.includes('Redbook public HTML')
+    || agentsText.includes('Redbook + BoA Card 为 P3-14 source-review candidates')
     || agentsText.includes('BoA Consumer Checkpoint 公开 HTML 摘要')
   );
 if (!hasConsumerRetailBoundary) {
@@ -211,6 +225,7 @@ console.log(
   `Macro drivers consumerRetail check: PASS (CARTS=${formatValue(consumerRetail.cartsNominal)}, ` +
   `CARTSR=${formatValue(consumerRetail.cartsReal)}, cartsNominalYoY=${formatValue(consumerRetail.cartsNominalYoY)}, ` +
   `cartsRealYoY=${formatValue(consumerRetail.cartsRealYoY)}, segmentDiffusion=${formatValue(consumerRetail.segmentDiffusionPct)}, ` +
+  `redbook=${formatValue(consumerRetail.redbookRetailSalesYoY)}, ` +
   `retailRegime=${consumerRetail.retailRegime}, ` +
   `sourceStatus=${JSON.stringify(consumerRetail.sourceStatus)})`
 );

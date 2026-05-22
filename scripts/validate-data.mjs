@@ -69,6 +69,7 @@ const VALID_CONSUMER_RETAIL_SOURCES = new Set([
   'FRED:CARTS; FRED:CARTSR',
   'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments',
   'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html',
+  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html; TradingEconomics:Redbook-public-html',
 ]);
 const VALID_RETAIL_REGIMES = new Set(['明显走弱', '走弱', '稳定', '改善', '强劲', '未知']);
 const VALID_RETAIL_SEGMENT_REGIMES = new Set(['广泛改善', '温和改善', '分化', '广泛走弱', '未知']);
@@ -83,10 +84,11 @@ const SHIPPING_FREIGHT_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']
 const VALID_SHIPPING_FREIGHT_SOURCE = 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI';
 const VALID_FREIGHT_REGIMES = new Set(['高压', '观察', '快速回落', '正常', '未知']);
 const POLICY_EXPECTATIONS_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'manual_required']);
-const VALID_POLICY_EXPECTATIONS_SOURCE = 'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures; FederalReserve:FOMC statement/SEP/minutes';
+const VALID_POLICY_EXPECTATIONS_SOURCE = 'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; FederalReserve:FOMC statement/SEP/minutes';
 const VALID_POLICY_TONES = new Set(['偏鹰', '偏鸽', '平衡', '未知']);
 const VALID_POLICY_EXPECTATION_REGIMES = new Set(['降息预期', '加息/更高更久', '区间震荡', '未知']);
 const FED_FUNDS_FUTURES_CURVE_STATUSES = new Set(['live_proxy_curve', 'fallback_proxy_curve', 'missing']);
+const SOFR_FUTURES_CURVE_STATUSES = new Set(['live_proxy_curve', 'fallback_proxy_curve', 'missing']);
 const PRIVATE_CREDIT_PROXY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'manual_required']);
 const VALID_PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM';
 const VALID_PRIVATE_CREDIT_PROXY_REGIMES = new Set(['压力上升', '观察', '平稳', '未知']);
@@ -539,22 +541,27 @@ function validateMacroDriversConsumerRetail(dataPayload) {
     'segmentDiffusionPct',
     'bofaCardSpendingYoY',
     'bofaCardSpendingPriorYoY',
-    'bofaCardSpendingExGasYoY'
+    'bofaCardSpendingExGasYoY',
+    'redbookRetailSalesYoY',
+    'redbookHistoricalAverageYoY'
   ]) {
     assert(Object.hasOwn(consumerRetail, key), `macroDrivers.consumerRetail.${key} is missing`);
     assert(isFiniteNumberOrNull(consumerRetail[key]), `macroDrivers.consumerRetail.${key} must be finite number or null`);
   }
 
-  for (const key of ['bofaReportDate']) {
+  for (const key of ['bofaReportDate', 'redbookRetailSalesDate']) {
     assert(Object.hasOwn(consumerRetail, key), `macroDrivers.consumerRetail.${key} is missing`);
     validateNullableIsoString(consumerRetail[key], `macroDrivers.consumerRetail.${key}`);
   }
-  for (const key of ['bofaReportUrl', 'bofaPdfUrl', 'bofaStatus', 'bofaSummary']) {
+  for (const key of ['bofaReportUrl', 'bofaPdfUrl', 'bofaStatus', 'bofaSummary', 'redbookReportUrl', 'redbookStatus', 'redbookSummary']) {
     assert(Object.hasOwn(consumerRetail, key), `macroDrivers.consumerRetail.${key} is missing`);
     validateNullableString(consumerRetail[key], `macroDrivers.consumerRetail.${key}`);
   }
   if (consumerRetail.bofaStatus !== null) {
     assert(CONSUMER_RETAIL_SOURCE_STATUSES.has(consumerRetail.bofaStatus), 'macroDrivers.consumerRetail.bofaStatus must be live, fallback, or missing');
+  }
+  if (consumerRetail.redbookStatus !== null) {
+    assert(CONSUMER_RETAIL_SOURCE_STATUSES.has(consumerRetail.redbookStatus), 'macroDrivers.consumerRetail.redbookStatus must be live, fallback, or missing');
   }
 
   assertString(consumerRetail.retailRegime, 'macroDrivers.consumerRetail.retailRegime');
@@ -581,7 +588,7 @@ function validateMacroDriversConsumerRetail(dataPayload) {
   validateNullableIsoString(consumerRetail.segmentUpdatedAt, 'macroDrivers.consumerRetail.segmentUpdatedAt');
 
   assertPlainObject(consumerRetail.sourceStatus, 'macroDrivers.consumerRetail.sourceStatus');
-  for (const key of ['carts', 'cartsr', 'retailSegments', 'bofaConsumerCheckpoint']) {
+  for (const key of ['carts', 'cartsr', 'retailSegments', 'bofaConsumerCheckpoint', 'redbookPublicHtml']) {
     assert(Object.hasOwn(consumerRetail.sourceStatus, key), `macroDrivers.consumerRetail.sourceStatus.${key} is missing`);
     assert(
       CONSUMER_RETAIL_SOURCE_STATUSES.has(consumerRetail.sourceStatus[key]),
@@ -724,6 +731,34 @@ function validateFedFundsFuturesCurve(curve) {
   assertString(curve.limitationZh, 'macroDrivers.policyExpectations.fedFundsFuturesCurve.limitationZh');
 }
 
+function validateSofrFuturesCurve(curve) {
+  assertPlainObject(curve, 'macroDrivers.policyExpectations.sofrFuturesCurve');
+  for (const key of ['source', 'curveStatus', 'updatedAt', 'frontImpliedRate', 'backImpliedRate', 'frontMinusBack', 'contracts', 'limitationZh']) {
+    assert(Object.hasOwn(curve, key), `macroDrivers.policyExpectations.sofrFuturesCurve.${key} is missing`);
+  }
+  assertString(curve.source, 'macroDrivers.policyExpectations.sofrFuturesCurve.source');
+  assert(SOFR_FUTURES_CURVE_STATUSES.has(curve.curveStatus), 'macroDrivers.policyExpectations.sofrFuturesCurve.curveStatus is not supported');
+  validateNullableIsoString(curve.updatedAt, 'macroDrivers.policyExpectations.sofrFuturesCurve.updatedAt');
+  for (const key of ['frontImpliedRate', 'backImpliedRate', 'frontMinusBack']) {
+    assert(isFiniteNumberOrNull(curve[key]), `macroDrivers.policyExpectations.sofrFuturesCurve.${key} must be finite number or null`);
+  }
+  assertArray(curve.contracts, 'macroDrivers.policyExpectations.sofrFuturesCurve.contracts');
+  curve.contracts.forEach((contract, index) => {
+    const fieldName = `macroDrivers.policyExpectations.sofrFuturesCurve.contracts[${index}]`;
+    assertPlainObject(contract, fieldName);
+    for (const key of ['symbol', 'contractMonth', 'price', 'impliedRate', 'impliedMinusTargetMid', 'updatedAt']) {
+      assert(Object.hasOwn(contract, key), `${fieldName}.${key} is missing`);
+    }
+    assertString(contract.symbol, `${fieldName}.symbol`);
+    assertString(contract.contractMonth, `${fieldName}.contractMonth`);
+    for (const key of ['price', 'impliedRate', 'impliedMinusTargetMid']) {
+      assert(isFiniteNumberOrNull(contract[key]), `${fieldName}.${key} must be finite number or null`);
+    }
+    validateNullableIsoString(contract.updatedAt, `${fieldName}.updatedAt`);
+  });
+  assertString(curve.limitationZh, 'macroDrivers.policyExpectations.sofrFuturesCurve.limitationZh');
+}
+
 function validateMacroDriversPolicyExpectations(dataPayload) {
   const policy = dataPayload?.macroDrivers?.policyExpectations;
   if (policy === undefined) return;
@@ -758,6 +793,7 @@ function validateMacroDriversPolicyExpectations(dataPayload) {
     validateNullableString(policy[key], `macroDrivers.policyExpectations.${key}`);
   }
   validateFedFundsFuturesCurve(policy.fedFundsFuturesCurve);
+  validateSofrFuturesCurve(policy.sofrFuturesCurve);
   assertString(policy.policyTone, 'macroDrivers.policyExpectations.policyTone');
   assert(VALID_POLICY_TONES.has(policy.policyTone), 'macroDrivers.policyExpectations.policyTone is not supported');
   assertString(policy.minutesPolicyTone, 'macroDrivers.policyExpectations.minutesPolicyTone');
@@ -775,7 +811,7 @@ function validateMacroDriversPolicyExpectations(dataPayload) {
   assertString(policy.oisForwardStatus, 'macroDrivers.policyExpectations.oisForwardStatus');
   assert(POLICY_EXPECTATIONS_SOURCE_STATUSES.has(policy.oisForwardStatus), 'macroDrivers.policyExpectations.oisForwardStatus is not supported');
   assertPlainObject(policy.sourceStatus, 'macroDrivers.policyExpectations.sourceStatus');
-  for (const key of ['targetRange', 'fedFundsFuture', 'fedFundsFuturesCurve', 'sepDotPlot', 'policyStatement', 'fomcMinutes', 'oisForward']) {
+  for (const key of ['targetRange', 'fedFundsFuture', 'fedFundsFuturesCurve', 'sofrFuturesCurve', 'sepDotPlot', 'policyStatement', 'fomcMinutes', 'oisForward']) {
     assert(Object.hasOwn(policy.sourceStatus, key), `macroDrivers.policyExpectations.sourceStatus.${key} is missing`);
     assert(POLICY_EXPECTATIONS_SOURCE_STATUSES.has(policy.sourceStatus[key]), `macroDrivers.policyExpectations.sourceStatus.${key} is not supported`);
   }
