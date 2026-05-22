@@ -254,21 +254,18 @@ const workerHealthScriptFile = 'scripts/check-worker-health.mjs';
 const workerHealthSnapshotReviewScriptFile = 'scripts/review-worker-health-snapshot.mjs';
 const packageFile = 'package.json';
 const secondaryConsolidationDocs = [
-  'README.md',
   'AGENTS.md',
   'docs/DATA_CONTRACT.md',
   'docs/OPERATIONS.md',
   'workers/gfrr-realtime-worker/README.md',
 ];
 const g4cRuntimeDocs = [
-  'README.md',
   'AGENTS.md',
   'docs/DATA_CONTRACT.md',
   'docs/OPERATIONS.md',
   'workers/gfrr-realtime-worker/README.md',
 ];
 const releaseStateDocs = [
-  'README.md',
   'AGENTS.md',
   'docs/DATA_CONTRACT.md',
   'docs/OPERATIONS.md',
