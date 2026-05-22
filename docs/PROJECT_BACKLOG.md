@@ -9,10 +9,10 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-74 (expanded macro data auto ingestion: shipping/freight, Fed policy expectations, MRTS retail segments, BIZD private-credit proxy, VNQ/REM CRE proxy) |
+| 当前生产状态 | v28.0M-75 (check:all suite compaction; M-74 macro data state unchanged) |
 | Cache version | `28.0M-74V` |
-| check:all 项数 | 74 |
-| 最后审计日期 | **2026-05-22** (M-74 expanded macro data auto ingestion; M-73 BGCR/TGCR NY Fed secured rates runtime fix + employment quality public FRED expansion; M-71 Brent public proxy source review; M-70 CRE FRED commercialRealEstate ingestion; M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
+| check:all 项数 | 23 |
+| 最后审计日期 | **2026-05-22** (M-75 check suite compaction; M-74 expanded macro data auto ingestion; M-73 BGCR/TGCR NY Fed secured rates runtime fix + employment quality public FRED expansion; M-71 Brent public proxy source review; M-70 CRE FRED commercialRealEstate ingestion; M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
 | 最后 daily refresh | 2026-05-22 (local M-74 rebuild from `origin/realtime-data` commit `c10c8578`; local `realtime/market.json` restored after build) |
 | GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
@@ -162,6 +162,7 @@
 | M-71 | Brent public proxy source review | (this PR) | 2026-05-21 | ✅ Review-only source intake for EIA Brent spot proxy, ICE Brent futures curve, Baltic Exchange freight benchmarks, Freightos Baltic Index, and future licensed S&P/Platts Dated Brent; no live fetch, no source approval, no production write, no frontend/workflow/runtime/data change; `check:all` 72 → 73 |
 | M-73 | macro data auto ingestion tranche 1 | (this PR) | 2026-05-21 | ✅ BGCR/TGCR repo spread fetch repaired to NY Fed secured rates API; `macroDrivers.employment` extended with FRED CES0500000003 / U6RATE / public industry payroll basket; frontend employment driver surfaces wage/U-6/diffusion; no scoring/decision/execution/position, worker/realtime, displayInputsBaseline/effectiveDisplayInputs, or cross-validation expansion; `check:all` remains 73; cache bumped to 28.0M-73V |
 | M-74 | expanded macro data auto ingestion tranche 2 | (this PR) | 2026-05-22 | ✅ `macroDrivers.shippingFreight` from StockQ BDTI/BCTI/BDI; `macroDrivers.policyExpectations` from FRED target/DFF + Yahoo ZQ=F + Fed SEP/FOMC statement; `macroDrivers.privateCreditProxy` from Yahoo BIZD + FRED HY OAS; FRED MRTS retail segment diffusion; Yahoo VNQ/REM CRE public proxy; OIS/CDX/private marks/non-public CRE remain `manual_required`; no scoring/decision/execution/position, worker/realtime, displayInputsBaseline/effectiveDisplayInputs, or cross-validation expansion; `check:all` 73 → 74; cache bumped to 28.0M-74V |
+| M-75 | check:all suite compaction | (this PR) | 2026-05-22 | ✅ Added `scripts/check-suite.mjs` and grouped same-family checks into top-level suites; `check:all` top-level entries 74 → 23 while preserving all atomic check scripts; no runtime/frontend/workflow/data/scoring/decision/execution/position change; no cache bump |
 
 ---
 
@@ -196,6 +197,7 @@
 | 2026-05-21 | M-71 Brent public proxy source review | Codex | P3-11 reframed for public-proxy path | EIA / ICE / Baltic Exchange / Freightos / S&P-Platts source families reviewed as candidates only; Platts Dated Brent remains unconnected; no live fetch / production write / runtime / frontend / workflow change; `check:all` 72 → 73 |
 | 2026-05-21 | M-73 macro data auto ingestion tranche 1 | Codex | BGCR/TGCR missing fixed; employment quality partially connected | NY Fed secured rates API supplies BGCR/TGCR; FRED CES0500000003/U6RATE/industry payroll basket supplies wage/U-6/diffusion; at M-73 close commercial freight, dot plot/OIS, and CDX/private credit still remained source-review, later partly superseded by M-74 |
 | 2026-05-22 | M-74 expanded macro data auto ingestion tranche 2 | Codex | shipping/freight, policy expectations, retail segments, private-credit public proxy, CRE public-market proxy partially connected | StockQ BDTI/BCTI/BDI, FRED target/DFF, Yahoo ZQ=F, Fed SEP/FOMC statement, FRED MRTS segments, Yahoo BIZD/VNQ/REM, and FRED HY OAS now feed audit-only/display-only macro drivers; OIS/CDX/private marks/non-public CRE remain `manual_required`; `check:all` 73 → 74 |
+| 2026-05-22 | M-75 check:all suite compaction | Codex | check runner noise reduced without dropping coverage | `scripts/check-suite.mjs` preserves every atomic check while `check:all` top-level entries shrink 74 → 23; grouped suites cover frontend visual history, external AI, Brent, macro drivers, narrative density, market pricing, and ACLED |
 
 ---
 
@@ -248,12 +250,13 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-### Session Handoff (2026-05-22 — M-74 expanded macro data auto ingestion tranche 2 ready)
+### Session Handoff (2026-05-22 — M-75 check:all suite compaction ready)
 
-- **本次会话结束状态**: 当前工作在 `codex/macro-data-auto-ingestion`，已 rebase 到最新 `origin/main`；M-73 + M-74 自动接入已本地实现并完成验证。`data/radar-data.json` 已用 `origin/realtime-data` commit `c10c8578e96aff6061c021f939f58fbb3bd7d2c0` 临时输入重建，随后本地 `realtime/market.json` 已还原，避免提交 realtime fallback 文件。
+- **本次会话结束状态**: 当前工作在 `codex/macro-data-auto-ingestion`；M-73 + M-74 自动接入已实现并推送，M-75 又完成 `check:all` 顶层 suite compaction。`data/radar-data.json` 仍来自 `origin/realtime-data` commit `c10c8578e96aff6061c021f939f58fbb3bd7d2c0` 的 M-74 本地重建，`realtime/market.json` 已还原，避免提交 realtime fallback 文件。
 - **已接入生产数据**: BGCR/TGCR repo spread 改走 NY Fed secured rates API；employment 增加 FRED AHE/U-6/行业 payroll 扩散；M-74 增加 `macroDrivers.shippingFreight` (StockQ BDTI/BCTI/BDI)、`macroDrivers.policyExpectations` (FRED target/DFF + Yahoo ZQ=F + Fed SEP/FOMC statement)、`macroDrivers.privateCreditProxy` (Yahoo BIZD + FRED HY OAS)、consumerRetail MRTS 细分零售扩散、commercialRealEstate VNQ/REM public proxies。
 - **当前 M-74 数据快照**: BDTI `2215`、BCTI `1674`、BDI `2964`，freight stress `高压`；Fed target midpoint `3.625`、ZQ implied `3.735`、SEP current-year median `3.4`、statement tone `偏鹰`；MRTS segment diffusion `84.6% (11/13)`；BIZD `12.52`、HY OAS `2.8`；VNQ `96.67`、REM `21.82`。
 - **前端状态**: Macro Drivers 新增 shipping/freight 与 private-credit public proxy 卡片；policy 卡片展示 Fed target、ZQ、SEP、FOMC statement tone；consumerRetail 展示 MRTS diffusion；CRE 展示 VNQ/REM；cache bumped to `28.0M-74V`。PR 描述需包含 `本 PR 符合 DESIGN.md 的所有规则`。
 - **仍未接入 / manual_required**: Platts Dated Brent / 正式 Dated Brent 与 Brent term structure 仍未接入；OIS forward curve、CDX HY/IG、private credit marks、non-public CRE loan tape 保持 `manual_required`，不得用 ZQ/BIZD/HY OAS/VNQ/REM 冒充。
-- **验证结果**: 本地已通过 `node --check scripts/run-daily-pipeline.mjs`、`node --check scripts/validate-data.mjs`、`node --check scripts/modules/renderMacroOverview.js`、`npm run check:data`。最终提交前仍需跑 `npm run check:macro-drivers-expanded-auto-ingestion`、`npm run check:modules`、`npm run check:docs`、`npm run check:all`。
-- **下一步建议**: 若用户确认提交，先 review diff 中 `data/radar-history*.json` 的新增记录是否接受，再提交/push `codex/macro-data-auto-ingestion` 并开 draft PR；后续若要接真正 OIS/CDX/private marks/non-public CRE，需要用户提供授权/manual input 文件并另开 reviewed parser/contract PR。
+- **M-75 check 精简**: 新增 `scripts/check-suite.mjs`；`check:all` 顶层项从 74 降到 23，suite 内继续运行原本所有 atomic checks。新增顶层 suite: `check:frontend-visual-history`、`check:external-ai`、`check:brent`、`check:macro-drivers`、`check:narrative-density`、`check:market-pricing`、`check:world-order-acled`。
+- **验证结果**: 本地已通过 M-74 的 pipeline/data/module checks；M-75 已通过 `node --check scripts/check-suite.mjs`、`npm run check:workflows-node24-only` (`check:all = 23 items`)、`npm run check:docs`、`npm run check:all`。
+- **下一步建议**: 若后续要进一步“真正加速” CI，需要单独 audit 哪些 market-pricing 历史 marker 可以物理删除；本轮只做 suite 化，覆盖不减少。若要接真正 OIS/CDX/private marks/non-public CRE，需要用户提供授权/manual input 文件并另开 reviewed parser/contract PR。

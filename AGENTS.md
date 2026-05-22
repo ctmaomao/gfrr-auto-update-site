@@ -152,7 +152,7 @@ When `DESIGN.md` and any other contract (e.g., Market Pricing governance) appear
 
 - `npm run check:editorial-redesign-contract` enforces font allowlist, IA structure, and `DESIGN.md` existence + anchor integrity
 - `npm run check:homepage-ia-contract` enforces section order
-- `npm run check:all` runs both as part of the 74-check baseline
+- `npm run check:all` runs both as part of the 23-item top-level suite baseline
 
 PRs that fail these contracts MUST NOT be merged, regardless of how good the visual result looks.
 
