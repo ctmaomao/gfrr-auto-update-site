@@ -21,7 +21,7 @@ Global Financial Risk Radar 是一个静态部署的宏观风险驾驶舱。它�
 - `realtime-data` 分支和本地 `realtime/market.json` 仅作为 fallback / Daily baseline 输入观察。
 - Daily pipeline 写入 `data/radar-data.json`、`data/radar-history.json` 和 `data/radar-history-full.json`。
 - `displayInputsBaseline` 是 baseline fallback 的结构化当前值来源。
-- 前端最终当前值由 `effectiveDisplayInputs` 合成;渲染层不得绕过它直接使用 raw realtime values。
+- 前端最终当前值由运行时 `data.__effectiveDisplayInputs` 合成;渲染层不得绕过它直接使用 raw realtime values。
 - `/market.secondary-preview.json` 是独立 secondary diagnostics endpoint,不得污染主 preview 或覆盖 `values.*`。
 
 ## 数据边界
@@ -30,7 +30,7 @@ Global Financial Risk Radar 是一个静态部署的宏观风险驾驶舱。它�
 - Public proxy 只能写成 public proxy,不得写成 Platts Dated Brent、formal Dated Brent、official ICE settlement、private credit marks、non-public CRE loan tape 或 BoA raw card feed。
 - `dailyBrief`、`divergenceLayer`、`macroDrivers.*`、`consumer_vs_asset_pricing`、`brentPricingLayer` 和 `aiInterpretationLayer` 是解释层 / 审计层 / 展示层。
 - 解释层不得进入 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
-- External AI 仍受 staged workflow 和 artifact review 约束;任何 AI 输出不得影响 scoring、decision、execution 或 position。
+- External AI 当前可作为只读解释层展示,仍受 workflow / review gate 约束;任何 AI 输出不得影响 scoring、decision、execution 或 position。
 - World Order Stress Overlay 是 regime overlay,不是第七个底层风险模块;用户可见文案必须保持克制和可归因。
 
 ## 本地使用
