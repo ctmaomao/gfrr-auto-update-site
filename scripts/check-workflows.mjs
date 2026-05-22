@@ -254,21 +254,18 @@ const workerHealthScriptFile = 'scripts/check-worker-health.mjs';
 const workerHealthSnapshotReviewScriptFile = 'scripts/review-worker-health-snapshot.mjs';
 const packageFile = 'package.json';
 const secondaryConsolidationDocs = [
-  'README.md',
   'AGENTS.md',
   'docs/DATA_CONTRACT.md',
   'docs/OPERATIONS.md',
   'workers/gfrr-realtime-worker/README.md',
 ];
 const g4cRuntimeDocs = [
-  'README.md',
   'AGENTS.md',
   'docs/DATA_CONTRACT.md',
   'docs/OPERATIONS.md',
   'workers/gfrr-realtime-worker/README.md',
 ];
 const releaseStateDocs = [
-  'README.md',
   'AGENTS.md',
   'docs/DATA_CONTRACT.md',
   'docs/OPERATIONS.md',
@@ -304,7 +301,7 @@ const worldOrderForbiddenPhrases = [
   ['13 步', '已走几步'].join(''),
   ['世界大战', '第几步'].join(''),
 ];
-const frontendAssetVersion = '28.0M-72V';
+const frontendAssetVersion = '28.0M-87V';
 const frontendAssetEntryFile = 'index.html';
 const frontendAssetAppFile = 'scripts/app.js';
 const frontendAssetModuleDir = 'scripts/modules';

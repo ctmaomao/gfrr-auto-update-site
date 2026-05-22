@@ -30,7 +30,12 @@ const backlogText = readText('docs/PROJECT_BACKLOG.md');
 const consumerRetail = radarData?.macroDrivers?.consumerRetail;
 const sourceStatuses = new Set(['live', 'fallback', 'missing']);
 const retailRegimes = new Set(['明显走弱', '走弱', '稳定', '改善', '强劲', '未知']);
-const expectedSource = 'FRED:CARTS; FRED:CARTSR';
+const segmentRegimes = new Set(['广泛改善', '温和改善', '分化', '广泛走弱', '未知']);
+const expectedSources = new Set([
+  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments',
+  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html',
+  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html; TradingEconomics:Redbook-public-html'
+]);
 
 if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consumerRetail)) {
   fail('macroDrivers.consumerRetail is missing or not an object');
@@ -42,6 +47,28 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
     'cartsReal',
     'cartsReal4wAverage',
     'cartsRealYoY',
+    'retailSegments',
+    'segmentPositiveCount',
+    'segmentSeriesCount',
+    'segmentDiffusionPct',
+    'segmentRegime',
+    'strongestSegment',
+    'weakestSegment',
+    'segmentUpdatedAt',
+    'bofaCardSpendingYoY',
+    'bofaCardSpendingPriorYoY',
+    'bofaCardSpendingExGasYoY',
+    'bofaReportDate',
+    'bofaReportUrl',
+    'bofaPdfUrl',
+    'bofaStatus',
+    'bofaSummary',
+    'redbookRetailSalesYoY',
+    'redbookHistoricalAverageYoY',
+    'redbookRetailSalesDate',
+    'redbookReportUrl',
+    'redbookStatus',
+    'redbookSummary',
     'retailRegime',
     'sourceStatus',
     'updatedAt',
@@ -60,7 +87,15 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
     'cartsNominalYoY',
     'cartsReal',
     'cartsReal4wAverage',
-    'cartsRealYoY'
+    'cartsRealYoY',
+    'segmentPositiveCount',
+    'segmentSeriesCount',
+    'segmentDiffusionPct',
+    'bofaCardSpendingYoY',
+    'bofaCardSpendingPriorYoY',
+    'bofaCardSpendingExGasYoY',
+    'redbookRetailSalesYoY',
+    'redbookHistoricalAverageYoY'
   ]) {
     if (field in consumerRetail && !isFiniteNumberOrNull(consumerRetail[field])) {
       fail(`macroDrivers.consumerRetail.${field} must be finite number or null`);
@@ -70,19 +105,25 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
   if (!retailRegimes.has(consumerRetail.retailRegime)) {
     fail(`macroDrivers.consumerRetail.retailRegime must be one of ${[...retailRegimes].join('/')}`);
   }
+  if (!segmentRegimes.has(consumerRetail.segmentRegime)) {
+    fail(`macroDrivers.consumerRetail.segmentRegime must be one of ${[...segmentRegimes].join('/')}`);
+  }
+  if (!Array.isArray(consumerRetail.retailSegments)) {
+    fail('macroDrivers.consumerRetail.retailSegments must be an array');
+  }
 
   if (!consumerRetail.sourceStatus || typeof consumerRetail.sourceStatus !== 'object' || Array.isArray(consumerRetail.sourceStatus)) {
     fail('macroDrivers.consumerRetail.sourceStatus must be an object');
   } else {
-    for (const key of ['carts', 'cartsr']) {
+    for (const key of ['carts', 'cartsr', 'retailSegments', 'bofaConsumerCheckpoint', 'redbookPublicHtml']) {
       if (!sourceStatuses.has(consumerRetail.sourceStatus[key])) {
         fail(`macroDrivers.consumerRetail.sourceStatus.${key} must be live/fallback/missing`);
       }
     }
   }
 
-  if (consumerRetail.source !== expectedSource) {
-    fail(`macroDrivers.consumerRetail.source must be ${expectedSource}`);
+  if (!expectedSources.has(consumerRetail.source)) {
+    fail(`macroDrivers.consumerRetail.source must be one of ${[...expectedSources].join(' | ')}`);
   }
   if (!Array.isArray(consumerRetail.notes) || consumerRetail.notes.some((note) => typeof note !== 'string')) {
     fail('macroDrivers.consumerRetail.notes must be a string array');
@@ -93,11 +134,15 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
 }
 
 const requiredRunDailyMarkers = [
-  'function classifyRetailRegime(cartsRealYoY)',
+  'function classifyRetailRegime(cartsRealYoY, redbookRetailSalesYoY = null)',
+  'function classifyRetailSegmentRegime(segmentDiffusionPct)',
+  'CONSUMER_RETAIL_SEGMENT_SERIES',
+  'function calculateRetailSegmentSnapshot(seriesResults)',
   'async function resolveConsumerRetail(prevConsumerRetail)',
   "fetchFredSeries('CARTS', 1500)",
   "fetchFredSeries('CARTSR', 1500)",
-  "source: 'FRED:CARTS; FRED:CARTSR'",
+  'fetchTradingEconomicsRedbookIndex',
+  'const CONSUMER_RETAIL_SOURCE =',
   'consumerRetail: macroDrivers.consumerRetail'
 ];
 for (const marker of requiredRunDailyMarkers) {
@@ -111,6 +156,8 @@ const requiredRenderMarkers = [
   '高频零售消费 CONSUMER RETAIL',
   'CARTS 名义',
   'CARTSR 实际',
+  'MRTS 细分零售扩散',
+  'Redbook public HTML',
   'Chicago Fed CARTS:'
 ];
 for (const marker of requiredRenderMarkers) {
@@ -125,8 +172,10 @@ const requiredContractMarkers = [
   'FRED:CARTSR',
   'cartsNominal4wAverage',
   'cartsRealYoY',
+  'segmentDiffusionPct',
   'retailRegime',
-  '不代表 Redbook 或 BoA Card 数据',
+  'MRTS',
+  'Redbook public HTML',
   'audit-only / display-only',
   '不参与 scoring、decisionModel、executionLock 或 positionGuidance'
 ];
@@ -139,6 +188,8 @@ for (const marker of requiredContractMarkers) {
 const requiredSourceMarkers = [
   '`CARTS`',
   '`CARTSR`',
+  '`MRTSSM441USN`',
+  'Trading Economics Redbook public HTML',
   'macroDrivers.consumerRetail'
 ];
 for (const marker of requiredSourceMarkers) {
@@ -147,11 +198,18 @@ for (const marker of requiredSourceMarkers) {
   }
 }
 
-if (!agentsText.includes('macroDrivers.consumerRetail') || !agentsText.includes('Redbook + BoA Card 为 P3-14 source-review candidates')) {
+const hasConsumerRetailBoundary = agentsText.includes('macroDrivers.consumerRetail')
+  && (
+    agentsText.includes('Redbook public HTML')
+    || agentsText.includes('Redbook + BoA Card 为 P3-14 source-review candidates')
+    || agentsText.includes('BoA Consumer Checkpoint 公开 HTML 摘要')
+  );
+if (!hasConsumerRetailBoundary) {
   fail('AGENTS.md missing M-69 consumerRetail boundary note');
 }
 
-if (!backlogText.includes('P3-14: Redbook + BoA Card 高频消费证据')) {
+if (!backlogText.includes('P3-14: Redbook + BoA Card 高频消费证据')
+    && !backlogText.includes('P3-14: Redbook + BoA raw card 高频消费证据')) {
   fail('PROJECT_BACKLOG missing P3-14 Redbook + BoA source-review note');
 }
 
@@ -166,6 +224,8 @@ if (errors.length > 0) {
 console.log(
   `Macro drivers consumerRetail check: PASS (CARTS=${formatValue(consumerRetail.cartsNominal)}, ` +
   `CARTSR=${formatValue(consumerRetail.cartsReal)}, cartsNominalYoY=${formatValue(consumerRetail.cartsNominalYoY)}, ` +
-  `cartsRealYoY=${formatValue(consumerRetail.cartsRealYoY)}, retailRegime=${consumerRetail.retailRegime}, ` +
+  `cartsRealYoY=${formatValue(consumerRetail.cartsRealYoY)}, segmentDiffusion=${formatValue(consumerRetail.segmentDiffusionPct)}, ` +
+  `redbook=${formatValue(consumerRetail.redbookRetailSalesYoY)}, ` +
+  `retailRegime=${consumerRetail.retailRegime}, ` +
   `sourceStatus=${JSON.stringify(consumerRetail.sourceStatus)})`
 );

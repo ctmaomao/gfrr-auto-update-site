@@ -61,8 +61,10 @@ if (!fedLiquidity || typeof fedLiquidity !== 'object') {
 }
 
 const runDailyMarkers = [
-  "fetchFredSeries('BGCR', 30)",
-  "fetchFredSeries('TGCR', 30)",
+  'NY_FED_SECURED_RATES_LATEST_URL',
+  'async function fetchNyFedSecuredRatesLatest()',
+  'const bgcrRecord = nyFedSecuredRates?.BGCR || null;',
+  'const tgcrRecord = nyFedSecuredRates?.TGCR || null;',
   'function classifyRepoSpreadRegime(bgcrSofrSpread)',
   "bgcr: 'missing'",
   "tgcr: 'missing'",
@@ -105,8 +107,8 @@ for (const marker of matrixMarkers) {
 
 const contractMarkers = [
   '字段 contract (v28.0M-50)',
-  'FRED:BGCR',
-  'FRED:TGCR',
+  'NY Fed Markets secured rates API',
+  'NYFED:secured-rates-latest',
   'bgcrSofrSpread',
   'repoSpreadRegime',
   '显示层渲染为 bp'

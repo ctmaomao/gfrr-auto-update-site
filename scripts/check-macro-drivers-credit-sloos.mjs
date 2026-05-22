@@ -83,7 +83,9 @@ const requiredRenderMarkers = [
   '季度调查',
   '信用环境',
   '跨市场融资压力等待接入。',
-  '私募信贷、CDX 与更细信用指标等待接入。'
+  "id: 'driver-private-credit-proxy'",
+  'BIZD listed BDC proxy',
+  '私募信用 marks 需要 manual/licensed input；ICE CDX public settlement 不替代私募信用估值。'
 ];
 for (const marker of requiredRenderMarkers) {
   if (!renderMacroText.includes(marker)) {

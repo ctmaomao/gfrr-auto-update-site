@@ -48,6 +48,73 @@ const ISM_PMI_USER_AGENT = 'GFRRBot/1.0';
 const ISM_PMI_FETCH_TIMEOUT_MS = 8000;
 const ISM_PMI_RETRY_DELAY_MS = 1000;
 const ISM_REPORT_PATH_PATTERN = /href=["'](?<href>\/supply-management-news-and-reports\/reports\/ism-pmi-reports\/pmi\/(?<month>january|february|march|april|may|june|july|august|september|october|november|december)\/)["']/giu;
+const NY_FED_SECURED_RATES_LATEST_URL = 'https://markets.newyorkfed.org/api/rates/secured/all/latest.json';
+const NY_FED_SECURED_RATES_TIMEOUT_MS = 8000;
+const NY_FED_SECURED_RATES_SOURCE = 'NYFED:secured-rates-latest';
+const FED_CALENDAR_URL = 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm';
+const FED_BASE_URL = 'https://www.federalreserve.gov';
+const FED_FETCH_TIMEOUT_MS = 10000;
+const ICE_BRENT_FUTURES_DATA_URL = 'https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430';
+const ICE_BRENT_CONTRACT_DATA_API_URL = 'https://www.ice.com/marketdata/api/productguide/charting/contract-data?productId=254&hubId=403';
+const ICE_BRENT_FETCH_TIMEOUT_MS = 10000;
+const EIA_BRENT_SPOT_HTML_URL = 'https://www.eia.gov/dnav/pet/hist/rbrted.htm';
+const EIA_BRENT_SPOT_SOURCE = 'EIA:RBRTE';
+const EIA_BRENT_SPOT_FETCH_TIMEOUT_MS = 10000;
+const BOFA_CONSUMER_CHECKPOINT_URL = 'https://institute.bankofamerica.com/consumer-checkpoint.html';
+const BOFA_CONSUMER_CHECKPOINT_BASE_URL = 'https://institute.bankofamerica.com';
+const BOFA_CONSUMER_FETCH_TIMEOUT_MS = 10000;
+const REDBOOK_INDEX_URL = 'https://tradingeconomics.com/united-states/redbook-index';
+const REDBOOK_FETCH_TIMEOUT_MS = 10000;
+const CHECKMYSWAP_USD_OIS_CURVE_URL = 'https://www.checkmyswap.com/api/curves/USD';
+const CHECKMYSWAP_RATES_URL = 'https://www.checkmyswap.com/rates';
+const CHECKMYSWAP_FETCH_TIMEOUT_MS = 10000;
+const ICE_CDX_INDEX_SETTLEMENT_URL = 'https://www.ice.com/api/cds-settlement-prices/icc-indexes';
+const ICE_CDX_INDEX_SETTLEMENT_PAGE_URL = 'https://www.ice.com/cds-settlement-prices/icc/index-instruments';
+const ICE_CDX_FETCH_TIMEOUT_MS = 10000;
+const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
+const YAHOO_FETCH_TIMEOUT_MS = 9000;
+const STOCKQ_INDEX_BASE = 'https://en.stockq.org/index';
+const STOCKQ_FETCH_TIMEOUT_MS = 9000;
+const EMPLOYMENT_SOURCE =
+  'FRED:ICSA; FRED:CCSA; FRED:JTSJOL; FRED:CES0500000003; FRED:U6RATE; FRED:industry-payroll-basket';
+const EMPLOYMENT_INDUSTRY_PAYROLL_SERIES = [
+  { id: 'MANEMP', label: 'Manufacturing' },
+  { id: 'USCONS', label: 'Construction' },
+  { id: 'USTRADE', label: 'Retail and wholesale trade' },
+  { id: 'USTPU', label: 'Transportation and utilities' },
+  { id: 'USPBS', label: 'Professional and business services' },
+  { id: 'USEHS', label: 'Education and health services' },
+  { id: 'USLAH', label: 'Leisure and hospitality' },
+  { id: 'USFIRE', label: 'Financial activities' },
+  { id: 'USINFO', label: 'Information' },
+  { id: 'USMINE', label: 'Mining and logging' },
+  { id: 'USGOVT', label: 'Government' }
+];
+const CONSUMER_RETAIL_SEGMENT_SERIES = [
+  { key: 'motorVehicles', id: 'MRTSSM441USN', labelZh: '汽车及零部件' },
+  { key: 'furniture', id: 'MRTSSM442USN', labelZh: '家具家居' },
+  { key: 'electronics', id: 'MRTSSM443USN', labelZh: '电子家电' },
+  { key: 'buildingMaterials', id: 'MRTSSM444USN', labelZh: '建材园艺' },
+  { key: 'foodBeverage', id: 'MRTSSM445USN', labelZh: '食品饮料' },
+  { key: 'healthPersonalCare', id: 'MRTSSM446USN', labelZh: '健康护理' },
+  { key: 'gasolineStations', id: 'MRTSSM447USN', labelZh: '加油站' },
+  { key: 'clothing', id: 'MRTSSM448USN', labelZh: '服装' },
+  { key: 'sportingGoods', id: 'MRTSSM451USN', labelZh: '运动文娱' },
+  { key: 'generalMerchandise', id: 'MRTSSM452USN', labelZh: '综合商超' },
+  { key: 'miscellaneous', id: 'MRTSSM453USN', labelZh: '其他零售' },
+  { key: 'nonstore', id: 'MRTSSM454USN', labelZh: '无店铺零售' },
+  { key: 'foodServices', id: 'MRTSSM722USN', labelZh: '餐饮服务' }
+];
+const SHIPPING_FREIGHT_SOURCE = 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI';
+const CONSUMER_RETAIL_SOURCE =
+  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html; TradingEconomics:Redbook-public-html';
+const POLICY_EXPECTATIONS_SOURCE =
+  'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; CheckMySwap:USD-OIS-public-curve; FederalReserve:FOMC statement/SEP/minutes';
+const PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; Yahoo:CCLFX; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public';
+const CRE_PUBLIC_MARKET_PROXY_SOURCE =
+  'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; FRED:CREACBW027SBOG; Yahoo:VNQ; Yahoo:REM; Yahoo:CMBS';
+const FUTURES_MONTH_CODES = ['F', 'G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z'];
+const FUTURES_MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function readJson(file, fallback = null) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
@@ -622,7 +689,16 @@ function brentSpreadStatusZh(status) {
   }[status] || '状态待确认';
 }
 
-function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyRealtimeInput, ulsdData = null }) {
+function buildBrentPricingLayer({
+  realtimePayload,
+  displayInputsBaseline,
+  dailyRealtimeInput,
+  ulsdData = null,
+  futuresCurveData = null,
+  futuresPriceCurveData = null,
+  iceFuturesPriceCurveData = null,
+  eiaBrentSpotProxyData = null
+}) {
   const validation = realtimePayload?.brentValidation || {};
   const promotion = validation.promotion || {};
   const consensus = validation.consensus || {};
@@ -719,6 +795,10 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
 
   const crackSpreadRegime = classifyCrackSpreadRegime(crackSpread);
   const ulsdSourceStatus = ulsdData?.sourceStatus ?? 'missing';
+  const futuresCurve = normalizePreviousBrentFuturesCurve(futuresCurveData);
+  const futuresPriceCurve = normalizePreviousBrentFuturesPriceCurve(futuresPriceCurveData);
+  const iceFuturesPriceCurve = normalizePreviousIceBrentFuturesPriceCurve(iceFuturesPriceCurveData);
+  const eiaBrentSpotProxy = normalizePreviousEiaBrentSpotProxy(eiaBrentSpotProxyData);
 
   return {
     contractVersion: 'v28.0I-5A',
@@ -732,6 +812,10 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
     selectedBrent,
     publicSpotProxy,
     futuresProxy,
+    eiaBrentSpotProxy,
+    futuresCurve,
+    futuresPriceCurve,
+    iceFuturesPriceCurve,
     confirmationSources,
     ulsdPrice,
     ulsd4wChange,
@@ -765,12 +849,24 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
       )
     },
     dataGaps: [
-      'Platts Dated Brent / 正式 Dated Brent 未接入。',
-      'Brent 期限结构尚未正式接入。',
-      '油轮运费 / 航运压力尚未正式接入。'
+      eiaBrentSpotProxy.sourceStatus === 'live'
+        ? 'EIA Europe Brent Spot Price FOB public proxy 已接入；Platts Dated Brent / 正式 Dated Brent 仍未接入。'
+        : 'Platts Dated Brent / 正式 Dated Brent 未接入。',
+      iceFuturesPriceCurve.curveStatus === 'live_delayed_priced'
+        ? 'ICE public delayed Brent futures price curve 已接入；official settlement curve / Platts 期限结构仍待接入。'
+        : futuresPriceCurve.curveStatus === 'live_proxy_priced'
+        ? 'Yahoo Brent 月度期货 priced proxy 已接入；正式 ICE settlement curve / Platts 期限结构仍待接入。'
+        : futuresCurve.curveStatus === 'live_structure_only'
+          ? 'ICE Brent 合约月份/到期结构已接入；priced proxy / 可验证结算价期限曲线仍待接入。'
+          : 'Brent 期限结构仍待接入。',
+      '实物库存、区域价差与正式实物成交证据仍待接入。'
     ],
     limitations: [
       '当前仅为公开代理价格观察，不等同于付费 Dated Brent 或实物成交数据。',
+      'EIA Europe Brent Spot Price FOB 是公开现货代理，不是 Platts Dated Brent 或正式 Dated Brent。',
+      'ICE futuresCurve 当前是 structure-only，不显示或推断缺失的结算价期限曲线。',
+      'ICE public delayed last-price curve 不是 official settlement curve。',
+      'Yahoo futuresPriceCurve 是公开月度期货报价代理，不是官方 settlement curve。',
       '该层不改变 Brent 主值、评分、仓位或执行灯。'
     ],
     confidence: {
@@ -940,7 +1036,7 @@ function buildDailyBrief({
   const dataGaps = [
     '消费者信心与资产价格背离仍缺少稳定月频输入。',
     'Brent physical proxy / term structure 尚未纳入本数据产物。',
-    'shipping / freight stress 仍是候选观察项。'
+    'shipping / freight stress 已进入 macroDrivers.shippingFreight 审计观察层。'
   ];
   if (allMacroMissing) dataGaps.unshift('结构性宏观驱动源当前不可用，相关判断只能低置信观察。');
 
@@ -1004,7 +1100,7 @@ function buildUnavailableDailyBrief() {
     },
     keyTriggers: ['数据健康状态恢复后重新生成今日触发器。'],
     invalidationSignals: ['数据健康恢复且风险判断不再获得交叉验证。'],
-    dataGaps: ['实时快变量暂不可用。', '消费者信心、Brent physical proxy、term structure、shipping / freight 等仍未纳入。'],
+    dataGaps: ['实时快变量暂不可用。', '消费者信心、Brent physical proxy 与 term structure 等仍未纳入。'],
     confidence: {
       level: 'low',
       score: 0,
@@ -1197,7 +1293,7 @@ function buildAiInterpretationLayer(data) {
   const dataGaps = [
     'Platts Dated Brent / 正式 Dated Brent 未接入。',
     'Brent term structure 尚未接入。',
-    'shipping / freight stress 尚未接入。',
+    'shipping / freight stress 已进入 macroDrivers.shippingFreight 审计观察层。',
     '世界秩序外部源质量需单独查看 World Order 模块。'
   ];
 
@@ -1323,12 +1419,12 @@ async function fetchWithTimeout(url, timeoutMs = MACRO_FETCH_TIMEOUT_MS, options
   }
 }
 
-async function retryFetch(url, label) {
+async function retryFetch(url, label, timeoutMs = MACRO_FETCH_TIMEOUT_MS, options = {}) {
   let attempt = 0;
   let lastErr = null;
   while (attempt <= MACRO_FETCH_RETRIES) {
     try {
-      return await fetchWithTimeout(url);
+      return await fetchWithTimeout(url, timeoutMs, options);
     } catch (e) {
       lastErr = e;
       if (attempt === MACRO_FETCH_RETRIES) break;
@@ -1362,6 +1458,812 @@ async function fetchFredSeries(seriesId, daysBack = 90) {
   const rows = parseFredCsv(text);
   if (rows.length < 2) throw new Error(`fred:${seriesId} insufficient rows`);
   return rows;
+}
+
+function parseNyFedRateRecord(record) {
+  if (!record || typeof record !== 'object') return null;
+  const type = typeof record.type === 'string' ? record.type.trim().toUpperCase() : '';
+  const percentRate = Number(record.percentRate);
+  const effectiveDate = typeof record.effectiveDate === 'string' ? record.effectiveDate.trim() : '';
+  const volumeInBillions = Number(record.volumeInBillions);
+  if (!type || !Number.isFinite(percentRate) || percentRate < 0 || percentRate > 20) return null;
+  if (!effectiveDate || !Number.isFinite(Date.parse(`${effectiveDate}T00:00:00Z`))) return null;
+  return {
+    type,
+    percentRate: +percentRate.toFixed(4),
+    effectiveDate,
+    volumeInBillions: Number.isFinite(volumeInBillions) ? volumeInBillions : null
+  };
+}
+
+async function fetchNyFedSecuredRatesLatest() {
+  const text = await retryFetch(
+    NY_FED_SECURED_RATES_LATEST_URL,
+    'nyfed:secured-rates-latest',
+    NY_FED_SECURED_RATES_TIMEOUT_MS,
+    {
+      userAgent: 'GFRRBot/1.0',
+      headers: { Accept: 'application/json' }
+    }
+  );
+  let payload = null;
+  try {
+    payload = JSON.parse(text);
+  } catch (err) {
+    throw new Error(`nyfed:secured-rates-latest invalid JSON: ${stringifyFetchError(err)}`);
+  }
+  const records = Array.isArray(payload?.refRates) ? payload.refRates : [];
+  const out = {};
+  for (const record of records) {
+    const parsed = parseNyFedRateRecord(record);
+    if (parsed) out[parsed.type] = parsed;
+  }
+  if (!out.BGCR && !out.TGCR && !out.SOFR) {
+    throw new Error('nyfed:secured-rates-latest missing BGCR/TGCR/SOFR records');
+  }
+  return out;
+}
+
+async function fetchJsonText(url, label, timeoutMs = MACRO_FETCH_TIMEOUT_MS, options = {}) {
+  const text = await retryFetch(url, label, timeoutMs, {
+    ...options,
+    headers: { Accept: 'application/json', ...(options.headers || {}) }
+  });
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    throw new Error(`${label} invalid JSON: ${stringifyFetchError(err)}`);
+  }
+}
+
+function parseIceCdxIndexRecord(record) {
+  if (!record || typeof record !== 'object') return null;
+  const clearingDate = typeof record.clearingDate === 'string' ? record.clearingDate.trim() : '';
+  const instrumentName = typeof record.instrumentName === 'string' ? record.instrumentName.trim() : '';
+  const eodPrice = Number(record.eodPrice);
+  if (!clearingDate || !Number.isFinite(Date.parse(`${clearingDate}T00:00:00Z`))) return null;
+  if (!instrumentName || !Number.isFinite(eodPrice) || eodPrice <= 0) return null;
+  return {
+    clearingDate,
+    instrumentName,
+    eodPrice: +eodPrice.toFixed(4)
+  };
+}
+
+function parseCdxNaFiveYearInstrument(instrumentName, family) {
+  const match = String(instrumentName || '').match(/^CDX-NA(HY|IG)S(\d+)V(\d+)-5Y$/);
+  if (!match || match[1] !== family) return null;
+  return {
+    family,
+    series: Number(match[2]),
+    version: Number(match[3])
+  };
+}
+
+function pickLatestCdxNaFiveYear(records, family) {
+  const candidates = records
+    .map(parseIceCdxIndexRecord)
+    .filter(Boolean)
+    .map((record) => ({ record, meta: parseCdxNaFiveYearInstrument(record.instrumentName, family) }))
+    .filter((item) => item.meta);
+  candidates.sort((a, b) => {
+    const dateCompare = Date.parse(`${b.record.clearingDate}T00:00:00Z`) - Date.parse(`${a.record.clearingDate}T00:00:00Z`);
+    if (dateCompare !== 0) return dateCompare;
+    if (b.meta.series !== a.meta.series) return b.meta.series - a.meta.series;
+    return b.meta.version - a.meta.version;
+  });
+  const picked = candidates[0];
+  if (!picked) return null;
+  return {
+    price: picked.record.eodPrice,
+    instrument: picked.record.instrumentName,
+    clearingDate: picked.record.clearingDate,
+    updatedAt: `${picked.record.clearingDate}T00:00:00.000Z`,
+    sourceUrl: ICE_CDX_INDEX_SETTLEMENT_PAGE_URL
+  };
+}
+
+async function fetchIceCdxIndexSettlements() {
+  const rows = await fetchJsonText(
+    ICE_CDX_INDEX_SETTLEMENT_URL,
+    'ice:cdx-index-settlements',
+    ICE_CDX_FETCH_TIMEOUT_MS,
+    {
+      userAgent: 'Mozilla/5.0 GFRRBot/1.0',
+      headers: {
+        Referer: ICE_CDX_INDEX_SETTLEMENT_PAGE_URL
+      }
+    }
+  );
+  if (!Array.isArray(rows) || rows.length === 0) throw new Error('ice:cdx-index-settlements empty payload');
+  const hy = pickLatestCdxNaFiveYear(rows, 'HY');
+  const ig = pickLatestCdxNaFiveYear(rows, 'IG');
+  if (!hy && !ig) throw new Error('ice:cdx-index-settlements missing CDX NA HY/IG 5Y records');
+  return { hy, ig };
+}
+
+function parseDateToIso(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const normalized = value.trim().replace(/\//gu, '-');
+  const timestamp = Date.parse(`${normalized}T00:00:00Z`);
+  return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
+}
+
+function extractHtmlRows(html) {
+  return [...String(html || '').matchAll(/<tr[^>]*>[\s\S]*?<\/tr>/giu)].map((match) => match[0]);
+}
+
+function extractHtmlCells(rowHtml) {
+  return [...String(rowHtml || '').matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/giu)]
+    .map((match) => htmlToPlainText(match[1]))
+    .filter(Boolean);
+}
+
+function parseLooseNumber(value) {
+  const cleaned = String(value ?? '').replace(/,/gu, '').replace(/%/gu, '').trim();
+  if (!cleaned || cleaned === '-' || cleaned === 'N/D') return null;
+  const number = Number(cleaned);
+  return Number.isFinite(number) ? number : null;
+}
+
+function parsePercentRatio(value) {
+  const number = parseLooseNumber(value);
+  return Number.isFinite(number) ? +(number / 100).toFixed(4) : null;
+}
+
+function resolveAbsoluteUrl(href, baseUrl) {
+  if (typeof href !== 'string' || !href.trim()) return null;
+  try {
+    return new URL(href, baseUrl).toString();
+  } catch {
+    return null;
+  }
+}
+
+function timestampMsToIso(value) {
+  const timestamp = Number(value);
+  if (!Number.isFinite(timestamp)) return null;
+  const date = new Date(timestamp);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+}
+
+function extractJsonValueAfterKey(text, key) {
+  const source = String(text || '');
+  const keyNeedle = `"${key}":`;
+  const keyIndex = source.indexOf(keyNeedle);
+  if (keyIndex < 0) return null;
+  const start = source.slice(keyIndex + keyNeedle.length).search(/[\[{]/u);
+  if (start < 0) return null;
+  const valueStart = keyIndex + keyNeedle.length + start;
+  const open = source[valueStart];
+  const close = open === '[' ? ']' : '}';
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = valueStart; index < source.length; index += 1) {
+    const char = source[index];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+    if (char === open) depth += 1;
+    else if (char === close) {
+      depth -= 1;
+      if (depth === 0) {
+        try {
+          return JSON.parse(source.slice(valueStart, index + 1));
+        } catch {
+          return null;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function classifyFreightIndexRegime(value, dailyChangePct, highThreshold, watchThreshold) {
+  if (!Number.isFinite(value) && !Number.isFinite(dailyChangePct)) return '未知';
+  if ((Number.isFinite(value) && value >= highThreshold)
+      || (Number.isFinite(dailyChangePct) && dailyChangePct >= 3)) {
+    return '高压';
+  }
+  if ((Number.isFinite(value) && value >= watchThreshold)
+      || (Number.isFinite(dailyChangePct) && dailyChangePct >= 1)) {
+    return '观察';
+  }
+  if (Number.isFinite(dailyChangePct) && dailyChangePct <= -3) return '快速回落';
+  return '正常';
+}
+
+function classifyCompositeFreightRegime(...regimes) {
+  if (regimes.includes('高压')) return '高压';
+  if (regimes.includes('观察')) return '观察';
+  if (regimes.includes('快速回落')) return '快速回落';
+  if (regimes.some((item) => item && item !== '未知')) return '正常';
+  return '未知';
+}
+
+async function fetchStockqIndex(symbol, label) {
+  const url = `${STOCKQ_INDEX_BASE}/${symbol}.php`;
+  const html = await retryFetch(url, `stockq:${symbol}`, STOCKQ_FETCH_TIMEOUT_MS, {
+    userAgent: 'Mozilla/5.0 GFRRBot/1.0'
+  });
+  const historyRow = extractHtmlRows(html)
+    .map(extractHtmlCells)
+    .find((cells) => /^\d{4}\/\d{2}\/\d{2}$/u.test(cells[0] || '') && Number.isFinite(parseLooseNumber(cells[1])));
+  const summaryRow = extractHtmlRows(html)
+    .map(extractHtmlCells)
+    .find((cells) => cells.length >= 3 && Number.isFinite(parseLooseNumber(cells[0])) && /%$/u.test(cells[2] || ''));
+  const value = parseLooseNumber(historyRow?.[1] ?? summaryRow?.[0]);
+  const dailyChangePct = parseLooseNumber(historyRow?.[2] ?? summaryRow?.[2]);
+  const updatedAt = parseDateToIso(historyRow?.[0]);
+  if (!Number.isFinite(value)) throw new Error(`stockq:${symbol} missing latest value`);
+  return {
+    symbol,
+    label,
+    value: +value.toFixed(2),
+    dailyChangePct: Number.isFinite(dailyChangePct) ? +(dailyChangePct / 100).toFixed(4) : null,
+    updatedAt,
+    url
+  };
+}
+
+function parseIceBrentFuturesContracts(html) {
+  const contracts = extractJsonValueAfterKey(html, 'contracts');
+  if (!Array.isArray(contracts)) return [];
+  return contracts
+    .map((contract) => ({
+      contract: typeof contract?.description === 'string' ? contract.description.trim() : null,
+      lastTrade: timestampMsToIso(contract?.lastTrade),
+      finalSettlement: timestampMsToIso(contract?.finalSettlement)
+    }))
+    .filter((contract) => contract.contract && contract.lastTrade)
+    .sort((a, b) => Date.parse(a.lastTrade) - Date.parse(b.lastTrade))
+    .slice(0, 12);
+}
+
+function parseIceBrentLastTime(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const normalized = value.trim().replace(/\s+GMT$/u, ' UTC');
+  const timestamp = Date.parse(normalized);
+  if (!Number.isFinite(timestamp)) return null;
+  return new Date(timestamp).toISOString();
+}
+
+function parseIceBrentContractDataRecord(record) {
+  if (!record || typeof record !== 'object') return null;
+  const contract = typeof record.marketStrip === 'string' ? record.marketStrip.trim() : '';
+  const marketId = Number(record.marketId);
+  const price = Number(record.lastPrice);
+  const volume = Number(record.volume);
+  const changePct = Number(record.change);
+  const updatedAt = parseIceBrentLastTime(record.lastTime);
+  if (!contract || !Number.isFinite(marketId) || !Number.isFinite(price) || price <= 0) return null;
+  return {
+    marketId: Math.round(marketId),
+    contract,
+    price: +price.toFixed(2),
+    volume: Number.isFinite(volume) ? Math.round(volume) : null,
+    updatedAt,
+    changePct: Number.isFinite(changePct) ? +(changePct / 100).toFixed(4) : null
+  };
+}
+
+function buildMissingIceBrentFuturesPriceCurve() {
+  return {
+    source: 'ICE:Brent-Crude-Futures-public-contract-data',
+    sourceUrl: ICE_BRENT_FUTURES_DATA_URL,
+    curveStatus: 'missing',
+    updatedAt: null,
+    frontPrice: null,
+    backPrice: null,
+    frontMinusBack: null,
+    slopeRegime: '未知',
+    contracts: [],
+    limitationZh: 'ICE public contract-data delayed last price 不可用；不得把缺失数据渲染为官方 settlement curve 或 Platts Dated Brent。'
+  };
+}
+
+function normalizePreviousIceBrentFuturesPriceCurve(prevCurve) {
+  if (!prevCurve || typeof prevCurve !== 'object') return buildMissingIceBrentFuturesPriceCurve();
+  const contracts = Array.isArray(prevCurve.contracts)
+    ? prevCurve.contracts
+        .map((contract) => ({
+          marketId: Number.isFinite(contract?.marketId) ? Math.round(contract.marketId) : null,
+          contract: typeof contract?.contract === 'string' ? contract.contract : null,
+          price: Number.isFinite(contract?.price) ? contract.price : null,
+          volume: Number.isFinite(contract?.volume) ? Math.round(contract.volume) : null,
+          updatedAt: typeof contract?.updatedAt === 'string' ? contract.updatedAt : null,
+          changePct: Number.isFinite(contract?.changePct) ? contract.changePct : null
+        }))
+        .filter((contract) => contract.contract && contract.marketId !== null)
+    : [];
+  return {
+    source: typeof prevCurve.source === 'string' ? prevCurve.source : 'ICE:Brent-Crude-Futures-public-contract-data',
+    sourceUrl: typeof prevCurve.sourceUrl === 'string' ? prevCurve.sourceUrl : ICE_BRENT_FUTURES_DATA_URL,
+    curveStatus: ['live_delayed_priced', 'fallback_delayed_priced', 'missing'].includes(prevCurve.curveStatus)
+      ? prevCurve.curveStatus
+      : (contracts.length ? 'fallback_delayed_priced' : 'missing'),
+    updatedAt: typeof prevCurve.updatedAt === 'string' ? prevCurve.updatedAt : null,
+    frontPrice: Number.isFinite(prevCurve.frontPrice) ? prevCurve.frontPrice : null,
+    backPrice: Number.isFinite(prevCurve.backPrice) ? prevCurve.backPrice : null,
+    frontMinusBack: Number.isFinite(prevCurve.frontMinusBack) ? prevCurve.frontMinusBack : null,
+    slopeRegime: typeof prevCurve.slopeRegime === 'string' ? prevCurve.slopeRegime : '未知',
+    contracts,
+    limitationZh: typeof prevCurve.limitationZh === 'string'
+      ? prevCurve.limitationZh
+      : 'ICE public contract-data lastPrice 是 delayed/last quote，不是官方 settlement curve 或 Platts Dated Brent。'
+  };
+}
+
+async function resolveIceBrentFuturesPriceCurve(prevBrentPricingLayer) {
+  const fallback = normalizePreviousIceBrentFuturesPriceCurve(prevBrentPricingLayer?.iceFuturesPriceCurve);
+  try {
+    const rows = await fetchJsonText(
+      ICE_BRENT_CONTRACT_DATA_API_URL,
+      'ice:brent-public-contract-data',
+      ICE_BRENT_FETCH_TIMEOUT_MS,
+      {
+        userAgent: 'Mozilla/5.0 GFRRBot/1.0',
+        headers: {
+          Referer: ICE_BRENT_FUTURES_DATA_URL
+        }
+      }
+    );
+    if (!Array.isArray(rows) || rows.length < 2) throw new Error('ice:brent-public-contract-data insufficient contracts');
+    const contracts = rows
+      .map(parseIceBrentContractDataRecord)
+      .filter(Boolean)
+      .slice(0, 12);
+    if (contracts.length < 2) throw new Error('ice:brent-public-contract-data missing priced contracts');
+    const front = contracts[0];
+    const back = contracts[contracts.length - 1];
+    const frontMinusBack = Number.isFinite(front.price) && Number.isFinite(back.price)
+      ? +(front.price - back.price).toFixed(3)
+      : null;
+    return {
+      source: 'ICE:Brent-Crude-Futures-public-contract-data',
+      sourceUrl: ICE_BRENT_FUTURES_DATA_URL,
+      curveStatus: 'live_delayed_priced',
+      updatedAt: latestIsoDate(...contracts.map((contract) => contract.updatedAt)),
+      frontPrice: Number.isFinite(front.price) ? front.price : null,
+      backPrice: Number.isFinite(back.price) ? back.price : null,
+      frontMinusBack,
+      slopeRegime: classifyBrentFuturesSlope(frontMinusBack),
+      contracts,
+      limitationZh: 'ICE public contract-data lastPrice 是 delayed/last quote；不是 official settlement curve、Platts Dated Brent 或正式实物现货。'
+    };
+  } catch (_err) {
+    return fallback;
+  }
+}
+
+function buildMissingEiaBrentSpotProxy() {
+  return {
+    source: EIA_BRENT_SPOT_SOURCE,
+    sourceUrl: EIA_BRENT_SPOT_HTML_URL,
+    price: null,
+    dailyChange: null,
+    updatedAt: null,
+    sourceStatus: 'missing',
+    limitationZh: 'EIA Europe Brent Spot Price FOB 公开现货代理不可用；不得把缺失数据渲染为 0.00，也不得写成 Platts Dated Brent。'
+  };
+}
+
+function normalizePreviousEiaBrentSpotProxy(prevProxy) {
+  if (!prevProxy || typeof prevProxy !== 'object') return buildMissingEiaBrentSpotProxy();
+  return {
+    source: typeof prevProxy.source === 'string' ? prevProxy.source : EIA_BRENT_SPOT_SOURCE,
+    sourceUrl: typeof prevProxy.sourceUrl === 'string' ? prevProxy.sourceUrl : EIA_BRENT_SPOT_HTML_URL,
+    price: Number.isFinite(prevProxy.price) ? +prevProxy.price.toFixed(2) : null,
+    dailyChange: Number.isFinite(prevProxy.dailyChange) ? +prevProxy.dailyChange.toFixed(2) : null,
+    updatedAt: typeof prevProxy.updatedAt === 'string' ? prevProxy.updatedAt : null,
+    sourceStatus: ['live', 'fallback', 'missing'].includes(prevProxy.sourceStatus)
+      ? prevProxy.sourceStatus
+      : (Number.isFinite(prevProxy.price) ? 'fallback' : 'missing'),
+    limitationZh: typeof prevProxy.limitationZh === 'string'
+      ? prevProxy.limitationZh
+      : 'EIA Europe Brent Spot Price FOB 是公开 spot proxy；不是 Platts Dated Brent、正式 Dated Brent 或实物成交证据。'
+  };
+}
+
+function extractEiaHtmlCells(rowHtml) {
+  return [...String(rowHtml || '').matchAll(/<td[^>]*>([\s\S]*?)<\/td>/giu)]
+    .map((match) => htmlToPlainText(match[1]));
+}
+
+function parseEiaBrentWeekStart(label) {
+  const match = String(label || '').match(/(?<year>\d{4})\s+(?<month>[A-Za-z]+)-\s*(?<day>\d{1,2})\s+to\s+[A-Za-z]+-\s*\d{1,2}/u);
+  if (!match?.groups) return null;
+  const year = Number(match.groups.year);
+  const monthIndex = monthIndexFromName(match.groups.month);
+  const day = Number(match.groups.day);
+  if (!Number.isInteger(year) || !Number.isInteger(monthIndex) || !Number.isInteger(day)) return null;
+  const timestamp = Date.UTC(year, monthIndex, day);
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function parseEiaBrentSpotHtml(html) {
+  return extractHtmlRows(html)
+    .flatMap((rowHtml) => {
+      const cells = extractEiaHtmlCells(rowHtml);
+      if (cells.length < 6) return [];
+      const weekStartMs = parseEiaBrentWeekStart(cells[0]);
+      if (!Number.isFinite(weekStartMs)) return [];
+      return cells.slice(1, 6)
+        .map((cell, index) => {
+          const value = parseLooseNumber(cell);
+          if (!Number.isFinite(value)) return null;
+          const date = new Date(weekStartMs + index * 24 * 3600 * 1000);
+          return {
+            date: date.toISOString().slice(0, 10),
+            value
+          };
+        })
+        .filter(Boolean);
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+async function resolveEiaBrentSpotProxy(prevBrentPricingLayer) {
+  const fallback = normalizePreviousEiaBrentSpotProxy(prevBrentPricingLayer?.eiaBrentSpotProxy);
+  try {
+    const html = await retryFetch(EIA_BRENT_SPOT_HTML_URL, 'eia:brent-spot-html', EIA_BRENT_SPOT_FETCH_TIMEOUT_MS, {
+      userAgent: 'GFRRBot/1.0'
+    });
+    const rows = parseEiaBrentSpotHtml(html);
+    if (rows.length < 1) throw new Error('eia:brent-spot-html missing latest price rows');
+    const latest = rows[rows.length - 1];
+    const previous = rows[rows.length - 2] || null;
+    return {
+      source: EIA_BRENT_SPOT_SOURCE,
+      sourceUrl: EIA_BRENT_SPOT_HTML_URL,
+      price: +latest.value.toFixed(2),
+      dailyChange: previous ? +(latest.value - previous.value).toFixed(2) : null,
+      updatedAt: `${latest.date}T00:00:00Z`,
+      sourceStatus: 'live',
+      limitationZh: 'EIA Europe Brent Spot Price FOB 是公开现货代理；不是 Platts Dated Brent、正式 Dated Brent 或实物成交证据。'
+    };
+  } catch (_err) {
+    return fallback;
+  }
+}
+
+function normalizePreviousBrentFuturesCurve(prevCurve) {
+  if (!prevCurve || typeof prevCurve !== 'object') {
+    return {
+      source: 'ICE:Brent-Crude-Futures-contract-data',
+      sourceUrl: ICE_BRENT_FUTURES_DATA_URL,
+      curveStatus: 'missing',
+      fetchedAt: null,
+      contracts: [],
+      limitationZh: 'ICE 合约结构尚未成功读取；不得把缺失期限结构渲染为价格曲线。'
+    };
+  }
+  const contracts = Array.isArray(prevCurve.contracts)
+    ? prevCurve.contracts
+        .map((contract) => ({
+          contract: typeof contract?.contract === 'string' ? contract.contract : null,
+          lastTrade: typeof contract?.lastTrade === 'string' ? contract.lastTrade : null,
+          finalSettlement: typeof contract?.finalSettlement === 'string' ? contract.finalSettlement : null
+        }))
+        .filter((contract) => contract.contract && contract.lastTrade)
+    : [];
+  return {
+    source: typeof prevCurve.source === 'string' ? prevCurve.source : 'ICE:Brent-Crude-Futures-contract-data',
+    sourceUrl: typeof prevCurve.sourceUrl === 'string' ? prevCurve.sourceUrl : ICE_BRENT_FUTURES_DATA_URL,
+    curveStatus: ['live_structure_only', 'fallback_structure_only', 'missing'].includes(prevCurve.curveStatus)
+      ? prevCurve.curveStatus
+      : (contracts.length ? 'fallback_structure_only' : 'missing'),
+    fetchedAt: typeof prevCurve.fetchedAt === 'string' ? prevCurve.fetchedAt : null,
+    contracts,
+    limitationZh: typeof prevCurve.limitationZh === 'string'
+      ? prevCurve.limitationZh
+      : 'ICE 页面当前只提供可验证合约月份/到期结构；未把官方结算价期限曲线写入生产数据。'
+  };
+}
+
+async function resolveBrentFuturesCurve(prevBrentPricingLayer) {
+  const fallback = normalizePreviousBrentFuturesCurve(prevBrentPricingLayer?.futuresCurve);
+  try {
+    const html = await retryFetch(
+      ICE_BRENT_FUTURES_DATA_URL,
+      'ice:brent-futures-contract-data',
+      ICE_BRENT_FETCH_TIMEOUT_MS,
+      { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
+    );
+    const contracts = parseIceBrentFuturesContracts(html);
+    if (!contracts.length) throw new Error('ice:brent-futures-contract-data missing contracts array');
+    return {
+      source: 'ICE:Brent-Crude-Futures-contract-data',
+      sourceUrl: ICE_BRENT_FUTURES_DATA_URL,
+      curveStatus: 'live_structure_only',
+      fetchedAt: isoNow,
+      contracts,
+      limitationZh: 'ICE 页面当前只提供可验证合约月份/到期结构；未把官方结算价期限曲线写入生产数据。'
+    };
+  } catch (_err) {
+    return fallback;
+  }
+}
+
+function buildMissingBrentFuturesPriceCurve() {
+  return {
+    source: 'Yahoo:BZ-monthly-futures',
+    sourceUrl: null,
+    curveStatus: 'missing',
+    updatedAt: null,
+    frontPrice: null,
+    backPrice: null,
+    frontMinusBack: null,
+    slopeRegime: '未知',
+    contracts: [],
+    limitationZh: 'Yahoo 月度 Brent 期货报价不可用；正式 ICE settlement curve / Platts Dated Brent 仍未接入。'
+  };
+}
+
+function normalizePreviousBrentFuturesPriceCurve(prevCurve) {
+  if (!prevCurve || typeof prevCurve !== 'object') return buildMissingBrentFuturesPriceCurve();
+  const contracts = Array.isArray(prevCurve.contracts)
+    ? prevCurve.contracts
+        .map((contract) => ({
+          symbol: typeof contract?.symbol === 'string' ? contract.symbol : null,
+          contractMonth: typeof contract?.contractMonth === 'string' ? contract.contractMonth : null,
+          price: Number.isFinite(contract?.price) ? contract.price : null,
+          updatedAt: typeof contract?.updatedAt === 'string' ? contract.updatedAt : null
+        }))
+        .filter((contract) => contract.symbol && contract.contractMonth)
+    : [];
+  return {
+    source: typeof prevCurve.source === 'string' ? prevCurve.source : 'Yahoo:BZ-monthly-futures',
+    sourceUrl: typeof prevCurve.sourceUrl === 'string' ? prevCurve.sourceUrl : null,
+    curveStatus: ['live_proxy_priced', 'fallback_proxy_priced', 'missing'].includes(prevCurve.curveStatus)
+      ? prevCurve.curveStatus
+      : (contracts.length ? 'fallback_proxy_priced' : 'missing'),
+    updatedAt: typeof prevCurve.updatedAt === 'string' ? prevCurve.updatedAt : null,
+    frontPrice: Number.isFinite(prevCurve.frontPrice) ? prevCurve.frontPrice : null,
+    backPrice: Number.isFinite(prevCurve.backPrice) ? prevCurve.backPrice : null,
+    frontMinusBack: Number.isFinite(prevCurve.frontMinusBack) ? prevCurve.frontMinusBack : null,
+    slopeRegime: typeof prevCurve.slopeRegime === 'string' ? prevCurve.slopeRegime : '未知',
+    contracts,
+    limitationZh: typeof prevCurve.limitationZh === 'string'
+      ? prevCurve.limitationZh
+      : 'Yahoo 月度 Brent 期货报价仅为公开 priced proxy；不是官方 ICE settlement curve 或 Platts Dated Brent。'
+  };
+}
+
+function padTwoDigitYear(year) {
+  return String(year).slice(-2).padStart(2, '0');
+}
+
+function buildMonthlyFuturesSymbols({ root, suffix, startOffsetMonths = 1, monthsToScan = 12 }) {
+  const base = new Date(isoNow);
+  const candidates = [];
+  for (let index = 0; index < monthsToScan; index += 1) {
+    const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + startOffsetMonths + index, 1));
+    const monthIndex = d.getUTCMonth();
+    const year = d.getUTCFullYear();
+    const code = FUTURES_MONTH_CODES[monthIndex];
+    const yy = padTwoDigitYear(year);
+    candidates.push({
+      symbol: `${root}${code}${yy}${suffix}`,
+      contractMonth: `${FUTURES_MONTH_LABELS[monthIndex]}${yy}`
+    });
+  }
+  return candidates;
+}
+
+async function fetchYahooMonthlyFuturesCurve({ root, suffix, startOffsetMonths = 1, monthsToScan = 12, maxContracts = 8 }) {
+  const candidates = buildMonthlyFuturesSymbols({ root, suffix, startOffsetMonths, monthsToScan });
+  const results = await Promise.allSettled(candidates.map(async (candidate) => {
+    const quote = await fetchYahooChartQuote(candidate.symbol, '5d', '1d');
+    return {
+      symbol: candidate.symbol,
+      contractMonth: candidate.contractMonth,
+      price: quote.price,
+      updatedAt: quote.updatedAt
+    };
+  }));
+  return results
+    .filter((result) => result.status === 'fulfilled' && Number.isFinite(result.value.price))
+    .map((result) => result.value)
+    .slice(0, maxContracts);
+}
+
+function classifyBrentFuturesSlope(frontMinusBack) {
+  if (!Number.isFinite(frontMinusBack)) return '未知';
+  if (frontMinusBack >= 1) return 'backwardation';
+  if (frontMinusBack <= -1) return 'contango';
+  return 'flat';
+}
+
+async function resolveBrentFuturesPriceCurve(prevBrentPricingLayer) {
+  const fallback = normalizePreviousBrentFuturesPriceCurve(prevBrentPricingLayer?.futuresPriceCurve);
+  try {
+    const contracts = await fetchYahooMonthlyFuturesCurve({
+      root: 'BZ',
+      suffix: '.NYM',
+      startOffsetMonths: 1,
+      monthsToScan: 14,
+      maxContracts: 8
+    });
+    if (contracts.length < 2) throw new Error('yahoo:brent-monthly-futures insufficient contracts');
+    const front = contracts[0];
+    const back = contracts[contracts.length - 1];
+    const frontMinusBack = Number.isFinite(front.price) && Number.isFinite(back.price)
+      ? +(front.price - back.price).toFixed(3)
+      : null;
+    return {
+      source: 'Yahoo:BZ-monthly-futures',
+      sourceUrl: 'https://finance.yahoo.com/quote/BZ=F',
+      curveStatus: 'live_proxy_priced',
+      updatedAt: latestIsoDate(...contracts.map((contract) => contract.updatedAt)),
+      frontPrice: Number.isFinite(front.price) ? front.price : null,
+      backPrice: Number.isFinite(back.price) ? back.price : null,
+      frontMinusBack,
+      slopeRegime: classifyBrentFuturesSlope(frontMinusBack),
+      contracts,
+      limitationZh: 'Yahoo 月度 Brent 期货报价仅为公开 priced proxy；不是官方 ICE settlement curve、Platts Dated Brent 或正式实物现货。'
+    };
+  } catch (_err) {
+    return fallback;
+  }
+}
+
+async function fetchYahooChartQuote(symbol, range = '1mo', interval = '1d') {
+  const url = `${YAHOO_CHART_BASE}/${encodeURIComponent(symbol)}?range=${encodeURIComponent(range)}&interval=${encodeURIComponent(interval)}`;
+  const payload = await fetchJsonText(url, `yahoo:${symbol}`, YAHOO_FETCH_TIMEOUT_MS, {
+    userAgent: 'Mozilla/5.0 GFRRBot/1.0'
+  });
+  const result = payload?.chart?.result?.[0];
+  if (!result || payload?.chart?.error) throw new Error(`yahoo:${symbol} unavailable`);
+  const closes = Array.isArray(result.indicators?.quote?.[0]?.close)
+    ? result.indicators.quote[0].close
+    : [];
+  const timestamps = Array.isArray(result.timestamp) ? result.timestamp : [];
+  const points = closes
+    .map((value, index) => ({
+      value: Number(value),
+      timestamp: Number(timestamps[index])
+    }))
+    .filter((point) => Number.isFinite(point.value) && point.value > 0 && Number.isFinite(point.timestamp));
+  const latest = points[points.length - 1] || null;
+  if (!latest) throw new Error(`yahoo:${symbol} missing close values`);
+  const first = points[0] || null;
+  const changePct = first && first.value !== 0 ? +(((latest.value - first.value) / first.value)).toFixed(4) : null;
+  return {
+    symbol,
+    price: +latest.value.toFixed(4),
+    changePct,
+    updatedAt: new Date(latest.timestamp * 1000).toISOString(),
+    source: `Yahoo:${symbol}`
+  };
+}
+
+const MONTH_INDEX_BY_NAME = new Map([
+  ['january', 0],
+  ['february', 1],
+  ['march', 2],
+  ['april', 3],
+  ['may', 4],
+  ['june', 5],
+  ['july', 6],
+  ['august', 7],
+  ['september', 8],
+  ['october', 9],
+  ['november', 10],
+  ['december', 11]
+]);
+
+function monthIndexFromName(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return null;
+  if (MONTH_INDEX_BY_NAME.has(normalized)) return MONTH_INDEX_BY_NAME.get(normalized);
+  const match = [...MONTH_INDEX_BY_NAME.entries()].find(([name]) => name.startsWith(normalized.slice(0, 3)));
+  return match ? match[1] : null;
+}
+
+function parseBofaReportDateFromUrl(url) {
+  const match = String(url || '').match(/consumer-checkpoint-(?<month>[a-z]+)-(?<year>\d{4})\.html/iu);
+  const month = match?.groups?.month?.toLowerCase();
+  const year = Number(match?.groups?.year);
+  if (!MONTH_INDEX_BY_NAME.has(month) || !Number.isInteger(year)) return null;
+  return new Date(Date.UTC(year, MONTH_INDEX_BY_NAME.get(month), 1)).toISOString();
+}
+
+function parseBofaConsumerCheckpointReport(html, reportUrl) {
+  const plain = htmlToPlainText(html);
+  const spendingMatch = plain.match(
+    /Total credit and debit card spending per household rose\s+(?<current>[-+]?\d+(?:\.\d+)?)%[^.]*?from\s+(?<previous>[-+]?\d+(?:\.\d+)?)%/iu
+  );
+  const exGasMatch = plain.match(/Excluding gasoline[^.]*?\s(?<exGas>[-+]?\d+(?:\.\d+)?)%\s+YoY/iu);
+  const pdfMatch = String(html || '').match(/href=["'](?<href>[^"']*consumer-checkpoint[^"']+\.pdf)["']/iu);
+  const currentYoY = parsePercentRatio(spendingMatch?.groups?.current);
+  const previousYoY = parsePercentRatio(spendingMatch?.groups?.previous);
+  const exGasYoY = parsePercentRatio(exGasMatch?.groups?.exGas);
+  if (!Number.isFinite(currentYoY) && !Number.isFinite(exGasYoY)) {
+    throw new Error('bofa:consumer-checkpoint missing card spending metrics');
+  }
+  return {
+    bofaCardSpendingYoY: Number.isFinite(currentYoY) ? currentYoY : null,
+    bofaCardSpendingPriorYoY: Number.isFinite(previousYoY) ? previousYoY : null,
+    bofaCardSpendingExGasYoY: Number.isFinite(exGasYoY) ? exGasYoY : null,
+    bofaReportDate: parseBofaReportDateFromUrl(reportUrl),
+    bofaReportUrl: reportUrl,
+    bofaPdfUrl: resolveAbsoluteUrl(pdfMatch?.groups?.href, BOFA_CONSUMER_CHECKPOINT_BASE_URL),
+    bofaStatus: 'live',
+    bofaSummary: 'Bank of America Institute Consumer Checkpoint 公开 HTML 摘要提供 card spending per household YoY 与 ex-gas YoY；作为第三方消费证据观察，不等同于 Redbook。'
+  };
+}
+
+async function fetchBofaConsumerCheckpoint() {
+  const landingHtml = await retryFetch(
+    BOFA_CONSUMER_CHECKPOINT_URL,
+    'bofa:consumer-checkpoint-landing',
+    BOFA_CONSUMER_FETCH_TIMEOUT_MS,
+    { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
+  );
+  const latestLink = [...String(landingHtml || '').matchAll(/href=["'](?<href>\/economic-insights\/consumer-checkpoint-[^"']+\.html)["']/giu)]
+    .map((match) => match.groups?.href)
+    .filter(Boolean)[0];
+  const reportUrl = resolveAbsoluteUrl(latestLink, BOFA_CONSUMER_CHECKPOINT_BASE_URL);
+  if (!reportUrl) throw new Error('bofa:consumer-checkpoint missing report link');
+  const reportHtml = await retryFetch(
+    reportUrl,
+    'bofa:consumer-checkpoint-report',
+    BOFA_CONSUMER_FETCH_TIMEOUT_MS,
+    { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
+  );
+  return parseBofaConsumerCheckpointReport(reportHtml, reportUrl);
+}
+
+function parseMonthDayYearToIso(month, day, year) {
+  const monthIndex = MONTH_INDEX_BY_NAME.get(String(month || '').toLowerCase());
+  const dayNumber = Number(day);
+  const yearNumber = Number(year);
+  if (!Number.isInteger(monthIndex) || !Number.isInteger(dayNumber) || !Number.isInteger(yearNumber)) return null;
+  const date = new Date(Date.UTC(yearNumber, monthIndex, dayNumber));
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+}
+
+function parseTradingEconomicsRedbookIndex(html) {
+  const plain = htmlToPlainText(html);
+  const match = plain.match(
+    /Redbook Index in the United States\s+(?<verb>increased|decreased)\s+by\s+(?<value>[-+]?\d+(?:\.\d+)?)\s+percent\s+in the week ending\s+(?<month>[A-Za-z]+)\s+(?<day>\d{1,2})\s+of\s+(?<year>\d{4})/iu
+  );
+  if (!match?.groups) throw new Error('tradingeconomics:redbook-index missing latest value');
+  const rawValue = Number(match.groups.value);
+  const valuePct = match.groups.verb.toLowerCase() === 'decreased' && rawValue > 0 ? -rawValue : rawValue;
+  const redbookDate = parseMonthDayYearToIso(match.groups.month, match.groups.day, match.groups.year);
+  if (!Number.isFinite(valuePct) || !redbookDate) {
+    throw new Error('tradingeconomics:redbook-index invalid latest value');
+  }
+  const averageMatch = plain.match(/Redbook Index in the United States averaged\s+(?<average>[-+]?\d+(?:\.\d+)?)\s+percent/iu);
+  const averagePct = Number(averageMatch?.groups?.average);
+  return {
+    redbookRetailSalesYoY: +(valuePct / 100).toFixed(4),
+    redbookHistoricalAverageYoY: Number.isFinite(averagePct) ? +(averagePct / 100).toFixed(4) : null,
+    redbookRetailSalesDate: redbookDate,
+    redbookReportUrl: REDBOOK_INDEX_URL,
+    redbookStatus: 'live',
+    redbookSummary: `Trading Economics public HTML reports Redbook same-store sales YoY ${valuePct.toFixed(2)}% for week ending ${redbookDate.slice(0, 10)}; this is not the Redbook raw subscription feed.`
+  };
+}
+
+async function fetchTradingEconomicsRedbookIndex() {
+  const html = await retryFetch(
+    REDBOOK_INDEX_URL,
+    'tradingeconomics:redbook-index',
+    REDBOOK_FETCH_TIMEOUT_MS,
+    { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
+  );
+  return parseTradingEconomicsRedbookIndex(html);
 }
 
 function latestValue(rows) {
@@ -1409,6 +2311,160 @@ function htmlToPlainText(html) {
     .replace(/<[^>]+>/gu, ' ')
     .replace(/\s+/gu, ' ')
     .trim();
+}
+
+function resolveFedUrl(pathOrUrl) {
+  if (typeof pathOrUrl !== 'string' || !pathOrUrl.trim()) return null;
+  if (/^https?:\/\//iu.test(pathOrUrl)) return pathOrUrl;
+  return `${FED_BASE_URL}${pathOrUrl.startsWith('/') ? '' : '/'}${pathOrUrl}`;
+}
+
+function latestDatedFedLink(html, pattern) {
+  const todayKey = isoNow.slice(0, 10).replace(/-/gu, '');
+  const links = [...String(html || '').matchAll(pattern)]
+    .map((match) => ({ href: match.groups?.href || null, date: match.groups?.date || null }))
+    .filter((item) => item.href && /^\d{8}$/u.test(item.date) && item.date <= todayKey);
+  if (!links.length) return null;
+  links.sort((a, b) => a.date.localeCompare(b.date));
+  return links[links.length - 1];
+}
+
+async function fetchLatestFedCalendarContext() {
+  const html = await retryFetch(FED_CALENDAR_URL, 'federalreserve:fomc-calendar', FED_FETCH_TIMEOUT_MS, {
+    userAgent: 'GFRRBot/1.0'
+  });
+  const statement = latestDatedFedLink(
+    html,
+    /href=["'](?<href>[^"']*newsevents\/pressreleases\/monetary(?<date>\d{8})a\.htm)["']/giu
+  );
+  const sep = latestDatedFedLink(
+    html,
+    /href=["'](?<href>[^"']*monetarypolicy\/fomcprojtabl(?<date>\d{8})\.htm)["']/giu
+  );
+  const minutes = latestDatedFedLink(
+    html,
+    /href=["'](?<href>[^"']*monetarypolicy\/fomcminutes(?<date>\d{8})\.htm)["']/giu
+  );
+  return { statement, sep, minutes };
+}
+
+function countTermMatches(text, terms) {
+  const value = String(text || '').toLowerCase();
+  return terms.reduce((count, term) => {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&').toLowerCase();
+    return count + (value.match(new RegExp(`\\b${escaped}\\b`, 'gu')) || []).length;
+  }, 0);
+}
+
+function parseFedPolicyTone(html, statementUrl, statementDate) {
+  const plain = htmlToPlainText(html);
+  const targetRangeText = plain.match(/target range for the federal funds rate at [^.]+percent/iu)?.[0] || null;
+  const hawkishTermCount = countTermMatches(plain, [
+    'inflation',
+    'elevated',
+    'uncertainty',
+    'risks',
+    'restrictive',
+    'returning',
+    'strongly committed'
+  ]);
+  const dovishTermCount = countTermMatches(plain, [
+    'unemployment',
+    'employment',
+    'job gains',
+    'low',
+    'easing',
+    'weakened',
+    'softening'
+  ]);
+  let policyTone = '平衡';
+  if (hawkishTermCount >= dovishTermCount + 4) policyTone = '偏鹰';
+  else if (dovishTermCount >= hawkishTermCount + 4) policyTone = '偏鸽';
+  return {
+    statementDate: parseDateToIso(statementDate?.replace(/^(\d{4})(\d{2})(\d{2})$/u, '$1-$2-$3')) || null,
+    statementUrl,
+    targetRangeText,
+    hawkishTermCount,
+    dovishTermCount,
+    policyTone
+  };
+}
+
+function buildFedMinutesSummary(tone, topicCounts) {
+  const topics = Object.entries(topicCounts || {})
+    .filter(([, value]) => Number.isFinite(value))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([key, value]) => `${key}:${value}`);
+  return `FOMC minutes keyword NLP 显示语气${tone}；高频主题 ${topics.join(' / ') || '待确认'}。`;
+}
+
+function parseFedMinutesTone(html, minutesUrl, minutesDate) {
+  const plain = htmlToPlainText(html);
+  const hawkishTermCount = countTermMatches(plain, [
+    'inflation',
+    'elevated',
+    'upside risks',
+    'restrictive',
+    'tightening',
+    'firming',
+    'price pressures',
+    'above 2 percent',
+    'vigilant'
+  ]);
+  const dovishTermCount = countTermMatches(plain, [
+    'unemployment',
+    'downside risks',
+    'weakened',
+    'softening',
+    'easing',
+    'slowing',
+    'lower inflation',
+    'below trend',
+    'labor market cooled'
+  ]);
+  const topicCounts = {
+    inflation: countTermMatches(plain, ['inflation', 'prices', 'price pressures']),
+    laborMarket: countTermMatches(plain, ['employment', 'unemployment', 'labor market', 'job gains']),
+    growth: countTermMatches(plain, ['economic activity', 'growth', 'spending', 'output']),
+    financialConditions: countTermMatches(plain, ['financial conditions', 'credit', 'funding', 'market conditions']),
+    balanceSheet: countTermMatches(plain, ['balance sheet', 'treasury securities', 'agency debt', 'mortgage-backed securities']),
+    risks: countTermMatches(plain, ['risks', 'uncertainty', 'downside risks', 'upside risks'])
+  };
+  let minutesPolicyTone = '平衡';
+  if (hawkishTermCount >= dovishTermCount + 8) minutesPolicyTone = '偏鹰';
+  else if (dovishTermCount >= hawkishTermCount + 8) minutesPolicyTone = '偏鸽';
+  return {
+    minutesDate: parseDateToIso(minutesDate?.replace(/^(\d{4})(\d{2})(\d{2})$/u, '$1-$2-$3')) || null,
+    minutesUrl,
+    minutesHawkishTermCount: hawkishTermCount,
+    minutesDovishTermCount: dovishTermCount,
+    minutesPolicyTone,
+    minutesTopicCounts: topicCounts,
+    minutesSummaryZh: buildFedMinutesSummary(minutesPolicyTone, topicCounts)
+  };
+}
+
+function parseFedSepMedians(html, sepUrl, sepDate) {
+  const fedFundsRow = extractHtmlRows(html)
+    .map(extractHtmlCells)
+    .find((cells) => /Federal funds rate/iu.test(cells[0] || ''));
+  if (!fedFundsRow) throw new Error('federalreserve:SEP missing federal funds row');
+  const medianCurrentYear = parseLooseNumber(fedFundsRow[1]);
+  const medianNextYear = parseLooseNumber(fedFundsRow[2]);
+  const medianTwoYearsOut = parseLooseNumber(fedFundsRow[3]);
+  const medianLongerRun = parseLooseNumber(fedFundsRow[4]);
+  if (![medianCurrentYear, medianNextYear, medianLongerRun].some(Number.isFinite)) {
+    throw new Error('federalreserve:SEP federal funds medians unavailable');
+  }
+  return {
+    sepProjectionDate: parseDateToIso(sepDate?.replace(/^(\d{4})(\d{2})(\d{2})$/u, '$1-$2-$3')) || null,
+    sepUrl,
+    dotPlotMedianCurrentYear: Number.isFinite(medianCurrentYear) ? medianCurrentYear : null,
+    dotPlotMedianNextYear: Number.isFinite(medianNextYear) ? medianNextYear : null,
+    dotPlotMedianTwoYearsOut: Number.isFinite(medianTwoYearsOut) ? medianTwoYearsOut : null,
+    dotPlotMedianLongerRun: Number.isFinite(medianLongerRun) ? medianLongerRun : null
+  };
 }
 
 function capitalizeMonth(month) {
@@ -1731,12 +2787,13 @@ function classifyPmiRegime(pmi) {
   return '深度收缩';
 }
 
-function classifyRetailRegime(cartsRealYoY) {
-  if (!Number.isFinite(cartsRealYoY)) return '未知';
-  if (cartsRealYoY <= -0.03) return '明显走弱';
-  if (cartsRealYoY < 0) return '走弱';
-  if (cartsRealYoY >= 0.06) return '强劲';
-  if (cartsRealYoY >= 0.03) return '改善';
+function classifyRetailRegime(cartsRealYoY, redbookRetailSalesYoY = null) {
+  const primaryYoY = Number.isFinite(cartsRealYoY) ? cartsRealYoY : redbookRetailSalesYoY;
+  if (!Number.isFinite(primaryYoY)) return '未知';
+  if (primaryYoY <= -0.03) return '明显走弱';
+  if (primaryYoY < 0) return '走弱';
+  if (primaryYoY >= 0.06) return '强劲';
+  if (primaryYoY >= 0.03) return '改善';
   return '稳定';
 }
 
@@ -1765,6 +2822,121 @@ function classifyCreStressRegime(creDelinquencyRate, creChargeOffRate, sloosCreT
     return '宽松';
   }
   return '稳定';
+}
+
+function classifyRetailSegmentRegime(segmentDiffusionPct) {
+  if (!Number.isFinite(segmentDiffusionPct)) return '未知';
+  if (segmentDiffusionPct >= 70) return '广泛改善';
+  if (segmentDiffusionPct >= 55) return '温和改善';
+  if (segmentDiffusionPct >= 40) return '分化';
+  return '广泛走弱';
+}
+
+function classifyPolicyExpectationRegime(futureMinusTargetMid, dotPlotMedianCurrentYear, targetMid) {
+  const hasFuture = Number.isFinite(futureMinusTargetMid);
+  const hasSep = Number.isFinite(dotPlotMedianCurrentYear) && Number.isFinite(targetMid);
+  if (!hasFuture && !hasSep) return '未知';
+  if ((hasFuture && futureMinusTargetMid <= -0.35) || (hasSep && dotPlotMedianCurrentYear <= targetMid - 0.35)) {
+    return '降息预期';
+  }
+  if ((hasFuture && futureMinusTargetMid >= 0.35) || (hasSep && dotPlotMedianCurrentYear >= targetMid + 0.35)) {
+    return '加息/更高更久';
+  }
+  return '区间震荡';
+}
+
+function buildFedFundsFuturesCurve(contracts, targetMid) {
+  const normalizedContracts = (Array.isArray(contracts) ? contracts : [])
+    .map((contract) => {
+      const impliedRate = Number.isFinite(contract.price) ? +(100 - contract.price).toFixed(3) : null;
+      return {
+        symbol: contract.symbol,
+        contractMonth: contract.contractMonth,
+        price: contract.price,
+        impliedRate,
+        impliedMinusTargetMid: Number.isFinite(impliedRate) && Number.isFinite(targetMid)
+          ? +(impliedRate - targetMid).toFixed(3)
+          : null,
+        updatedAt: contract.updatedAt
+      };
+    })
+    .filter((contract) => contract.symbol && contract.contractMonth && Number.isFinite(contract.price));
+  if (normalizedContracts.length < 2) return buildMissingFedFundsFuturesCurve();
+  const front = normalizedContracts[0];
+  const back = normalizedContracts[normalizedContracts.length - 1];
+  return {
+    source: 'Yahoo:ZQ-monthly-futures',
+    curveStatus: 'live_proxy_curve',
+    updatedAt: latestIsoDate(...normalizedContracts.map((contract) => contract.updatedAt)),
+    frontImpliedRate: Number.isFinite(front.impliedRate) ? front.impliedRate : null,
+    backImpliedRate: Number.isFinite(back.impliedRate) ? back.impliedRate : null,
+    frontMinusBack: Number.isFinite(front.impliedRate) && Number.isFinite(back.impliedRate)
+      ? +(front.impliedRate - back.impliedRate).toFixed(3)
+      : null,
+    contracts: normalizedContracts,
+    limitationZh: 'Yahoo 月度 Fed funds futures 为公开政策路径 proxy；不是 OIS forward rate。'
+  };
+}
+
+function buildSofrFuturesCurve(contracts, targetMid) {
+  const normalizedContracts = (Array.isArray(contracts) ? contracts : [])
+    .map((contract) => {
+      const impliedRate = Number.isFinite(contract.price) ? +(100 - contract.price).toFixed(3) : null;
+      return {
+        symbol: contract.symbol,
+        contractMonth: contract.contractMonth,
+        price: contract.price,
+        impliedRate,
+        impliedMinusTargetMid: Number.isFinite(impliedRate) && Number.isFinite(targetMid)
+          ? +(impliedRate - targetMid).toFixed(3)
+          : null,
+        updatedAt: contract.updatedAt
+      };
+    })
+    .filter((contract) => contract.symbol && contract.contractMonth && Number.isFinite(contract.price));
+  if (normalizedContracts.length < 2) return buildMissingSofrFuturesCurve();
+  const front = normalizedContracts[0];
+  const back = normalizedContracts[normalizedContracts.length - 1];
+  return {
+    source: 'Yahoo:SR3-monthly-SOFR-futures',
+    curveStatus: 'live_proxy_curve',
+    updatedAt: latestIsoDate(...normalizedContracts.map((contract) => contract.updatedAt)),
+    frontImpliedRate: Number.isFinite(front.impliedRate) ? front.impliedRate : null,
+    backImpliedRate: Number.isFinite(back.impliedRate) ? back.impliedRate : null,
+    frontMinusBack: Number.isFinite(front.impliedRate) && Number.isFinite(back.impliedRate)
+      ? +(front.impliedRate - back.impliedRate).toFixed(3)
+      : null,
+    contracts: normalizedContracts,
+    limitationZh: 'Yahoo 月度 SR3 Three-Month SOFR futures 为公开担保融资利率曲线 proxy；不是 OIS forward rate。'
+  };
+}
+
+function classifyPrivateCreditProxyRegime(bdcEtf4wChange, hyOas) {
+  if (!Number.isFinite(bdcEtf4wChange) && !Number.isFinite(hyOas)) return '未知';
+  if ((Number.isFinite(bdcEtf4wChange) && bdcEtf4wChange <= -0.08)
+      || (Number.isFinite(hyOas) && hyOas >= 5.5)) {
+    return '压力上升';
+  }
+  if ((Number.isFinite(bdcEtf4wChange) && bdcEtf4wChange <= -0.03)
+      || (Number.isFinite(hyOas) && hyOas >= 4.5)) {
+    return '观察';
+  }
+  return '平稳';
+}
+
+function classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, intervalFundNav4wChange, hyOas) {
+  const publicProxyChanges = [bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, intervalFundNav4wChange].filter(Number.isFinite);
+  const worst = publicProxyChanges.length ? Math.min(...publicProxyChanges) : null;
+  return classifyPrivateCreditProxyRegime(worst, hyOas);
+}
+
+function classifyCrePublicMarketProxyRegime(reitEtf4wChange, mortgageReitEtf4wChange, cmbsEtf4wChange = null) {
+  const values = [reitEtf4wChange, mortgageReitEtf4wChange, cmbsEtf4wChange].filter(Number.isFinite);
+  if (!values.length) return '未知';
+  const worst = Math.min(...values);
+  if (worst <= -0.08) return '市场压力上升';
+  if (worst <= -0.03) return '观察';
+  return '平稳';
 }
 
 function classifyClaimsRegime(initialClaims4wAverage, initialClaims4wChange) {
@@ -1797,6 +2969,31 @@ function classifyJoltsRegime(joltsOpenings, joltsOpeningsYoY) {
   if ((Number.isFinite(joltsOpenings) && joltsOpenings < 7_200_000)
       || (Number.isFinite(joltsOpeningsYoY) && joltsOpeningsYoY < -0.04)) {
     return '宽松';
+  }
+  return '平衡';
+}
+
+function classifyIndustryDiffusionRegime(industryPayrollDiffusionPct) {
+  if (!Number.isFinite(industryPayrollDiffusionPct)) return '未知';
+  if (industryPayrollDiffusionPct >= 70) return '广泛扩张';
+  if (industryPayrollDiffusionPct >= 55) return '温和扩张';
+  if (industryPayrollDiffusionPct >= 40) return '分化';
+  return '收缩扩散';
+}
+
+function classifyLaborQualityRegime(averageHourlyEarningsYoY, u6Rate3mChange, industryPayrollDiffusionPct) {
+  const hasWage = Number.isFinite(averageHourlyEarningsYoY);
+  const hasU6 = Number.isFinite(u6Rate3mChange);
+  const hasDiffusion = Number.isFinite(industryPayrollDiffusionPct);
+  if (!hasWage && !hasU6 && !hasDiffusion) return '未知';
+  if ((hasU6 && u6Rate3mChange >= 0.4) || (hasDiffusion && industryPayrollDiffusionPct < 40)) {
+    return '降温';
+  }
+  if ((hasWage && averageHourlyEarningsYoY >= 0.04) && (!hasU6 || u6Rate3mChange <= 0.2)) {
+    return '工资韧性';
+  }
+  if (hasDiffusion && industryPayrollDiffusionPct >= 55 && (!hasU6 || u6Rate3mChange <= 0.2)) {
+    return '扩散改善';
   }
   return '平衡';
 }
@@ -1839,6 +3036,10 @@ async function resolveFedLiquidity(prevFed) {
   let reserveBalances4wChange = null;
   let bgcr = null;
   let tgcr = null;
+  let bgcrUpdatedAt = null;
+  let tgcrUpdatedAt = null;
+  let repoRatesSource = null;
+  let nyFedSecuredRates = null;
 
   try {
     const rows = await fetchFredSeries('WALCL', 90);
@@ -1925,32 +3126,49 @@ async function resolveFedLiquidity(prevFed) {
     }
   }
 
-  // M-50: BGCR (Broad General Collateral Rate, NY Fed, daily).
+  // M-73: BGCR/TGCR are published through the NY Fed Markets secured rates API.
+  // The old FRED BGCR/TGCR ids are not stable CSV ids, so missing must not render as 0bp.
   try {
-    const rows = await fetchFredSeries('BGCR', 30);
-    bgcr = latestValue(rows);
-    status.bgcr = 'live';
+    nyFedSecuredRates = await fetchNyFedSecuredRatesLatest();
   } catch (_err) {
-    if (Number.isFinite(prevFed?.bgcr)) {
-      bgcr = prevFed.bgcr;
-      status.bgcr = 'fallback';
-    } else {
-      status.bgcr = 'missing';
-    }
+    nyFedSecuredRates = null;
   }
 
-  // M-50: TGCR (Tri-Party General Collateral Rate, NY Fed, daily).
-  try {
-    const rows = await fetchFredSeries('TGCR', 30);
-    tgcr = latestValue(rows);
+  const bgcrRecord = nyFedSecuredRates?.BGCR || null;
+  const tgcrRecord = nyFedSecuredRates?.TGCR || null;
+  const nyFedSofrRecord = nyFedSecuredRates?.SOFR || null;
+
+  if (bgcrRecord) {
+    bgcr = bgcrRecord.percentRate;
+    bgcrUpdatedAt = `${bgcrRecord.effectiveDate}T00:00:00Z`;
+    repoRatesSource = NY_FED_SECURED_RATES_SOURCE;
+    status.bgcr = 'live';
+  } else if (Number.isFinite(prevFed?.bgcr)) {
+    bgcr = prevFed.bgcr;
+    bgcrUpdatedAt = typeof prevFed.bgcrUpdatedAt === 'string' ? prevFed.bgcrUpdatedAt : null;
+    repoRatesSource = typeof prevFed.repoRatesSource === 'string' ? prevFed.repoRatesSource : null;
+    status.bgcr = 'fallback';
+  } else {
+    status.bgcr = 'missing';
+  }
+
+  if (tgcrRecord) {
+    tgcr = tgcrRecord.percentRate;
+    tgcrUpdatedAt = `${tgcrRecord.effectiveDate}T00:00:00Z`;
+    repoRatesSource = NY_FED_SECURED_RATES_SOURCE;
     status.tgcr = 'live';
-  } catch (_err) {
-    if (Number.isFinite(prevFed?.tgcr)) {
-      tgcr = prevFed.tgcr;
-      status.tgcr = 'fallback';
-    } else {
-      status.tgcr = 'missing';
-    }
+  } else if (Number.isFinite(prevFed?.tgcr)) {
+    tgcr = prevFed.tgcr;
+    tgcrUpdatedAt = typeof prevFed.tgcrUpdatedAt === 'string' ? prevFed.tgcrUpdatedAt : null;
+    repoRatesSource = typeof prevFed.repoRatesSource === 'string' ? prevFed.repoRatesSource : repoRatesSource;
+    status.tgcr = 'fallback';
+  } else {
+    status.tgcr = 'missing';
+  }
+
+  if (!Number.isFinite(sofr) && nyFedSofrRecord) {
+    sofr = nyFedSofrRecord.percentRate;
+    status.sofr = 'live';
   }
 
   const bgcrSofrSpread = Number.isFinite(bgcr) && Number.isFinite(sofr)
@@ -1975,6 +3193,9 @@ async function resolveFedLiquidity(prevFed) {
     reserveBalances4wChange: Number.isFinite(reserveBalances4wChange) ? reserveBalances4wChange : null,
     bgcr: Number.isFinite(bgcr) ? bgcr : null,
     tgcr: Number.isFinite(tgcr) ? tgcr : null,
+    bgcrUpdatedAt,
+    tgcrUpdatedAt,
+    repoRatesSource,
     bgcrSofrSpread,
     tgcrSofrSpread,
     repoSpreadRegime: classifyRepoSpreadRegime(bgcrSofrSpread),
@@ -1982,6 +3203,260 @@ async function resolveFedLiquidity(prevFed) {
     onRrpLevel: rrpLevel,
     pressure,
     sourceStatus: status
+  };
+}
+
+async function resolvePolicyExpectations(prevPolicy) {
+  const fallback = normalizePreviousPolicyExpectations(prevPolicy);
+  const status = {
+    targetRange: 'missing',
+    fedFundsFuture: 'missing',
+    fedFundsFuturesCurve: 'missing',
+    sofrFuturesCurve: 'missing',
+    sepDotPlot: 'missing',
+    policyStatement: 'missing',
+    fomcMinutes: 'missing',
+    oisForward: 'manual_required'
+  };
+  let targetLower = null;
+  let targetUpper = null;
+  let targetMid = null;
+  let effectiveFedFundsRate = null;
+  let targetUpdatedAt = null;
+  let fedFundsFutureFrontPrice = null;
+  let fedFundsFutureImpliedRate = null;
+  let futureMinusTargetMid = null;
+  let futureUpdatedAt = null;
+  let fedFundsFuturesCurve = buildMissingFedFundsFuturesCurve();
+  let sofrFuturesCurve = buildMissingSofrFuturesCurve();
+  let oisForwardCurve = buildMissingOisForwardCurve();
+  let sepData = null;
+  let statementData = null;
+  let minutesData = null;
+
+  const [targetLowerResult, targetUpperResult, effrResult, futureResult, futuresCurveResult, sofrFuturesCurveResult, oisForwardCurveResult, calendarResult] = await Promise.allSettled([
+    fetchFredSeries('DFEDTARL', 30),
+    fetchFredSeries('DFEDTARU', 30),
+    fetchFredSeries('DFF', 30),
+    fetchYahooChartQuote('ZQ=F', '1mo', '1d'),
+    fetchYahooMonthlyFuturesCurve({
+      root: 'ZQ',
+      suffix: '.CBT',
+      startOffsetMonths: 1,
+      monthsToScan: 12,
+      maxContracts: 8
+    }),
+    fetchYahooMonthlyFuturesCurve({
+      root: 'SR3',
+      suffix: '.CME',
+      startOffsetMonths: 1,
+      monthsToScan: 12,
+      maxContracts: 8
+    }),
+    fetchCheckMySwapUsdOisCurve(),
+    fetchLatestFedCalendarContext()
+  ]);
+
+  if (targetLowerResult.status === 'fulfilled' && targetUpperResult.status === 'fulfilled') {
+    targetLower = latestValue(targetLowerResult.value);
+    targetUpper = latestValue(targetUpperResult.value);
+    targetMid = Number.isFinite(targetLower) && Number.isFinite(targetUpper)
+      ? +(((targetLower + targetUpper) / 2)).toFixed(3)
+      : null;
+    targetUpdatedAt = latestIsoDate(latestDateIso(targetLowerResult.value), latestDateIso(targetUpperResult.value));
+    status.targetRange = Number.isFinite(targetMid) ? 'live' : 'missing';
+  } else if (Number.isFinite(fallback.targetMid)) {
+    targetLower = fallback.targetLower;
+    targetUpper = fallback.targetUpper;
+    targetMid = fallback.targetMid;
+    targetUpdatedAt = fallback.targetUpdatedAt;
+    status.targetRange = 'fallback';
+  }
+
+  if (effrResult.status === 'fulfilled') {
+    effectiveFedFundsRate = latestValue(effrResult.value);
+  } else if (Number.isFinite(fallback.effectiveFedFundsRate)) {
+    effectiveFedFundsRate = fallback.effectiveFedFundsRate;
+  }
+
+  if (futureResult.status === 'fulfilled') {
+    fedFundsFutureFrontPrice = futureResult.value.price;
+    fedFundsFutureImpliedRate = +(100 - fedFundsFutureFrontPrice).toFixed(3);
+    futureUpdatedAt = futureResult.value.updatedAt;
+    status.fedFundsFuture = 'live';
+  } else if (Number.isFinite(fallback.fedFundsFutureImpliedRate)) {
+    fedFundsFutureFrontPrice = fallback.fedFundsFutureFrontPrice;
+    fedFundsFutureImpliedRate = fallback.fedFundsFutureImpliedRate;
+    futureUpdatedAt = fallback.futureUpdatedAt;
+    status.fedFundsFuture = 'fallback';
+  }
+
+  if (Number.isFinite(fedFundsFutureImpliedRate) && Number.isFinite(targetMid)) {
+    futureMinusTargetMid = +(fedFundsFutureImpliedRate - targetMid).toFixed(3);
+  } else if (Number.isFinite(fallback.futureMinusTargetMid)) {
+    futureMinusTargetMid = fallback.futureMinusTargetMid;
+  }
+
+  if (futuresCurveResult.status === 'fulfilled') {
+    fedFundsFuturesCurve = buildFedFundsFuturesCurve(futuresCurveResult.value, targetMid);
+    status.fedFundsFuturesCurve = fedFundsFuturesCurve.contracts.length ? 'live' : 'missing';
+  } else if (Array.isArray(fallback.fedFundsFuturesCurve?.contracts) && fallback.fedFundsFuturesCurve.contracts.length) {
+    fedFundsFuturesCurve = {
+      ...normalizePreviousFedFundsFuturesCurve(fallback.fedFundsFuturesCurve),
+      curveStatus: 'fallback_proxy_curve'
+    };
+    status.fedFundsFuturesCurve = 'fallback';
+  }
+
+  if (sofrFuturesCurveResult.status === 'fulfilled') {
+    sofrFuturesCurve = buildSofrFuturesCurve(sofrFuturesCurveResult.value, targetMid);
+    status.sofrFuturesCurve = sofrFuturesCurve.contracts.length ? 'live' : 'missing';
+  } else if (Array.isArray(fallback.sofrFuturesCurve?.contracts) && fallback.sofrFuturesCurve.contracts.length) {
+    sofrFuturesCurve = {
+      ...normalizePreviousSofrFuturesCurve(fallback.sofrFuturesCurve),
+      curveStatus: 'fallback_proxy_curve'
+    };
+    status.sofrFuturesCurve = 'fallback';
+  }
+
+  if (oisForwardCurveResult.status === 'fulfilled') {
+    try {
+      oisForwardCurve = buildOisForwardCurve(oisForwardCurveResult.value, targetMid);
+      status.oisForward = oisForwardCurve.tenors.length ? 'live' : 'missing';
+    } catch (_err) {
+      oisForwardCurve = buildMissingOisForwardCurve();
+    }
+  } else if (Array.isArray(fallback.oisForwardCurve?.tenors) && fallback.oisForwardCurve.tenors.length) {
+    oisForwardCurve = {
+      ...normalizePreviousOisForwardCurve(fallback.oisForwardCurve),
+      curveStatus: 'fallback_public_curve'
+    };
+    status.oisForward = 'fallback';
+  }
+
+  if (calendarResult.status === 'fulfilled') {
+    const { sep, statement, minutes } = calendarResult.value;
+    if (sep?.href) {
+      try {
+        const sepUrl = resolveFedUrl(sep.href);
+        const sepHtml = await retryFetch(sepUrl, 'federalreserve:sep', FED_FETCH_TIMEOUT_MS, {
+          userAgent: 'GFRRBot/1.0'
+        });
+        sepData = parseFedSepMedians(sepHtml, sepUrl, sep.date);
+        status.sepDotPlot = 'live';
+      } catch (_err) {
+        sepData = null;
+      }
+    }
+    if (statement?.href) {
+      try {
+        const statementUrl = resolveFedUrl(statement.href);
+        const statementHtml = await retryFetch(statementUrl, 'federalreserve:fomc-statement', FED_FETCH_TIMEOUT_MS, {
+          userAgent: 'GFRRBot/1.0'
+        });
+        statementData = parseFedPolicyTone(statementHtml, statementUrl, statement.date);
+        status.policyStatement = 'live';
+      } catch (_err) {
+        statementData = null;
+      }
+    }
+    if (minutes?.href) {
+      try {
+        const minutesUrl = resolveFedUrl(minutes.href);
+        const minutesHtml = await retryFetch(minutesUrl, 'federalreserve:fomc-minutes', FED_FETCH_TIMEOUT_MS, {
+          userAgent: 'GFRRBot/1.0'
+        });
+        minutesData = parseFedMinutesTone(minutesHtml, minutesUrl, minutes.date);
+        status.fomcMinutes = 'live';
+      } catch (_err) {
+        minutesData = null;
+      }
+    }
+  }
+
+  if (!sepData && Number.isFinite(fallback.dotPlotMedianCurrentYear)) {
+    sepData = {
+      sepProjectionDate: fallback.sepProjectionDate,
+      sepUrl: fallback.sepUrl,
+      dotPlotMedianCurrentYear: fallback.dotPlotMedianCurrentYear,
+      dotPlotMedianNextYear: fallback.dotPlotMedianNextYear,
+      dotPlotMedianTwoYearsOut: fallback.dotPlotMedianTwoYearsOut,
+      dotPlotMedianLongerRun: fallback.dotPlotMedianLongerRun
+    };
+    status.sepDotPlot = 'fallback';
+  }
+  if (!statementData && typeof fallback.statementUrl === 'string') {
+    statementData = {
+      statementDate: fallback.statementDate,
+      statementUrl: fallback.statementUrl,
+      targetRangeText: fallback.statementTargetRangeText,
+      hawkishTermCount: fallback.hawkishTermCount,
+      dovishTermCount: fallback.dovishTermCount,
+      policyTone: fallback.policyTone
+    };
+    status.policyStatement = 'fallback';
+  }
+  if (!minutesData && typeof fallback.minutesUrl === 'string') {
+    minutesData = {
+      minutesDate: fallback.minutesDate,
+      minutesUrl: fallback.minutesUrl,
+      minutesHawkishTermCount: fallback.minutesHawkishTermCount,
+      minutesDovishTermCount: fallback.minutesDovishTermCount,
+      minutesPolicyTone: fallback.minutesPolicyTone,
+      minutesTopicCounts: fallback.minutesTopicCounts,
+      minutesSummaryZh: fallback.minutesSummaryZh
+    };
+    status.fomcMinutes = 'fallback';
+  }
+
+  const dotPlotMedianCurrentYear = Number.isFinite(sepData?.dotPlotMedianCurrentYear)
+    ? sepData.dotPlotMedianCurrentYear
+    : null;
+
+  return {
+    targetLower: Number.isFinite(targetLower) ? targetLower : null,
+    targetUpper: Number.isFinite(targetUpper) ? targetUpper : null,
+    targetMid: Number.isFinite(targetMid) ? targetMid : null,
+    effectiveFedFundsRate: Number.isFinite(effectiveFedFundsRate) ? effectiveFedFundsRate : null,
+    targetUpdatedAt,
+    fedFundsFutureFrontPrice: Number.isFinite(fedFundsFutureFrontPrice) ? fedFundsFutureFrontPrice : null,
+    fedFundsFutureImpliedRate: Number.isFinite(fedFundsFutureImpliedRate) ? fedFundsFutureImpliedRate : null,
+    futureMinusTargetMid: Number.isFinite(futureMinusTargetMid) ? futureMinusTargetMid : null,
+    futureUpdatedAt,
+    fedFundsFuturesCurve,
+    sofrFuturesCurve,
+    oisForwardCurve,
+    dotPlotMedianCurrentYear,
+    dotPlotMedianNextYear: Number.isFinite(sepData?.dotPlotMedianNextYear) ? sepData.dotPlotMedianNextYear : null,
+    dotPlotMedianTwoYearsOut: Number.isFinite(sepData?.dotPlotMedianTwoYearsOut) ? sepData.dotPlotMedianTwoYearsOut : null,
+    dotPlotMedianLongerRun: Number.isFinite(sepData?.dotPlotMedianLongerRun) ? sepData.dotPlotMedianLongerRun : null,
+    sepProjectionDate: sepData?.sepProjectionDate || null,
+    sepUrl: sepData?.sepUrl || null,
+    statementDate: statementData?.statementDate || null,
+    statementUrl: statementData?.statementUrl || null,
+    statementTargetRangeText: statementData?.targetRangeText || null,
+    hawkishTermCount: Number.isFinite(statementData?.hawkishTermCount) ? statementData.hawkishTermCount : null,
+    dovishTermCount: Number.isFinite(statementData?.dovishTermCount) ? statementData.dovishTermCount : null,
+    policyTone: typeof statementData?.policyTone === 'string' ? statementData.policyTone : '未知',
+    minutesDate: minutesData?.minutesDate || null,
+    minutesUrl: minutesData?.minutesUrl || null,
+    minutesHawkishTermCount: Number.isFinite(minutesData?.minutesHawkishTermCount) ? minutesData.minutesHawkishTermCount : null,
+    minutesDovishTermCount: Number.isFinite(minutesData?.minutesDovishTermCount) ? minutesData.minutesDovishTermCount : null,
+    minutesPolicyTone: typeof minutesData?.minutesPolicyTone === 'string' ? minutesData.minutesPolicyTone : '未知',
+    minutesTopicCounts: minutesData?.minutesTopicCounts && typeof minutesData.minutesTopicCounts === 'object'
+      ? minutesData.minutesTopicCounts
+      : null,
+    minutesSummaryZh: typeof minutesData?.minutesSummaryZh === 'string' ? minutesData.minutesSummaryZh : null,
+    policyExpectationRegime: classifyPolicyExpectationRegime(futureMinusTargetMid, dotPlotMedianCurrentYear, targetMid),
+    oisForwardRate: Number.isFinite(oisForwardCurve.oneYearRate) ? oisForwardCurve.oneYearRate : null,
+    oisForwardStatus: status.oisForward,
+    sourceStatus: status,
+    updatedAt: latestIsoDate(targetUpdatedAt, futureUpdatedAt, fedFundsFuturesCurve?.updatedAt, sofrFuturesCurve?.updatedAt, oisForwardCurve?.updatedAt, sepData?.sepProjectionDate, statementData?.statementDate, minutesData?.minutesDate),
+    source: POLICY_EXPECTATIONS_SOURCE,
+    notes: [
+      'Fed target range/DFF 来自 FRED；SEP federal funds median、statement 与 minutes 文本来自 federalreserve.gov。',
+      'ZQ=F、ZQ 月度合约、SR3 月度 SOFR futures 与 CheckMySwap USD OIS public curve 为公开政策/融资曲线证据；不是 proprietary dealer forward curve。'
+    ]
   };
 }
 
@@ -2229,6 +3704,105 @@ function calculateWeeklyYoY(rows) {
     : null;
 }
 
+function calculateMonthlyYoY(rows) {
+  const current = latestValue(rows);
+  const yearAgo = findMonthlyValueAgo(rows, 12);
+  return Number.isFinite(current) && Number.isFinite(yearAgo) && yearAgo !== 0
+    ? +(((current - yearAgo) / yearAgo)).toFixed(4)
+    : null;
+}
+
+function calculateMonthlyDelta(rows, monthsBack) {
+  const current = latestValue(rows);
+  const ago = findMonthlyValueAgo(rows, monthsBack);
+  return Number.isFinite(current) && Number.isFinite(ago)
+    ? +(current - ago).toFixed(3)
+    : null;
+}
+
+function calculateIndustryPayrollDiffusion(seriesResults) {
+  const valid = [];
+  const positive = [];
+  const updatedAtValues = [];
+  seriesResults.forEach((result, index) => {
+    if (result.status !== 'fulfilled') return;
+    const rows = result.value;
+    if (!Array.isArray(rows) || rows.length < 2) return;
+    const latest = rows[rows.length - 1]?.value;
+    const previous = rows[rows.length - 2]?.value;
+    if (!Number.isFinite(latest) || !Number.isFinite(previous)) return;
+    const series = EMPLOYMENT_INDUSTRY_PAYROLL_SERIES[index];
+    valid.push(series.id);
+    if (latest > previous) positive.push(series.id);
+    const updatedAt = latestDateIso(rows);
+    if (updatedAt) updatedAtValues.push(updatedAt);
+  });
+  const validCount = valid.length;
+  const positiveCount = positive.length;
+  return {
+    industryPayrollDiffusionPct: validCount ? +((positiveCount / validCount) * 100).toFixed(1) : null,
+    industryPayrollPositiveCount: validCount ? positiveCount : null,
+    industryPayrollSeriesCount: validCount || null,
+    industryPayrollUpdatedAt: latestIsoDate(...updatedAtValues),
+    positiveSeries: positive
+  };
+}
+
+function calculateRetailSegmentSnapshot(seriesResults) {
+  const segments = [];
+  const updatedAtValues = [];
+  seriesResults.forEach((result, index) => {
+    const series = CONSUMER_RETAIL_SEGMENT_SERIES[index];
+    if (!series) return;
+    if (result.status !== 'fulfilled') {
+      segments.push({
+        key: series.key,
+        seriesId: series.id,
+        labelZh: series.labelZh,
+        value: null,
+        yoy: null,
+        updatedAt: null,
+        sourceStatus: 'missing'
+      });
+      return;
+    }
+    const rows = result.value;
+    const latest = latestValue(rows);
+    const yoy = calculateMonthlyYoY(rows);
+    const updatedAt = latestDateIso(rows);
+    if (updatedAt) updatedAtValues.push(updatedAt);
+    segments.push({
+      key: series.key,
+      seriesId: series.id,
+      labelZh: series.labelZh,
+      value: Number.isFinite(latest) ? fredMillionsToBillions(latest) : null,
+      yoy: Number.isFinite(yoy) ? yoy : null,
+      updatedAt,
+      sourceStatus: Number.isFinite(latest) ? 'live' : 'missing'
+    });
+  });
+  const validSegments = segments.filter((segment) => Number.isFinite(segment.yoy));
+  const positiveSegments = validSegments.filter((segment) => segment.yoy > 0);
+  const strongest = validSegments.length
+    ? [...validSegments].sort((a, b) => b.yoy - a.yoy)[0]
+    : null;
+  const weakest = validSegments.length
+    ? [...validSegments].sort((a, b) => a.yoy - b.yoy)[0]
+    : null;
+  const segmentDiffusionPct = validSegments.length
+    ? +((positiveSegments.length / validSegments.length) * 100).toFixed(1)
+    : null;
+  return {
+    segments,
+    segmentPositiveCount: validSegments.length ? positiveSegments.length : null,
+    segmentSeriesCount: validSegments.length || null,
+    segmentDiffusionPct,
+    strongestSegment: strongest ? { key: strongest.key, labelZh: strongest.labelZh, yoy: strongest.yoy } : null,
+    weakestSegment: weakest ? { key: weakest.key, labelZh: weakest.labelZh, yoy: weakest.yoy } : null,
+    segmentUpdatedAt: latestIsoDate(...updatedAtValues)
+  };
+}
+
 function fredMillionsToBillions(value) {
   return Number.isFinite(value) ? +(value / 1000).toFixed(3) : null;
 }
@@ -2252,16 +3826,31 @@ function buildMissingEmployment() {
     joltsOpenings: null,
     joltsOpeningsYoY: null,
     joltsUpdatedAt: null,
+    averageHourlyEarnings: null,
+    averageHourlyEarningsYoY: null,
+    averageHourlyEarningsUpdatedAt: null,
+    u6Rate: null,
+    u6Rate3mChange: null,
+    u6UpdatedAt: null,
+    industryPayrollDiffusionPct: null,
+    industryPayrollPositiveCount: null,
+    industryPayrollSeriesCount: null,
+    industryPayrollUpdatedAt: null,
     claimsRegime: '未知',
     joltsRegime: '未知',
+    laborQualityRegime: '未知',
+    industryDiffusionRegime: '未知',
     sourceStatus: {
       icsa: 'missing',
       ccsa: 'missing',
-      jtsjol: 'missing'
+      jtsjol: 'missing',
+      ahe: 'missing',
+      u6: 'missing',
+      industryPayroll: 'missing'
     },
     updatedAt: null,
-    source: 'FRED:ICSA; FRED:CCSA; FRED:JTSJOL',
-    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS 为月频，发布滞后约 6 周；audit-only / display-only。']
+    source: EMPLOYMENT_SOURCE,
+    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS、AHE、U-6 与行业 payroll basket 为月频；audit-only / display-only。']
   };
 }
 
@@ -2273,14 +3862,47 @@ function buildMissingConsumerRetail() {
     cartsReal: null,
     cartsReal4wAverage: null,
     cartsRealYoY: null,
+    retailSegments: CONSUMER_RETAIL_SEGMENT_SERIES.map((series) => ({
+      key: series.key,
+      seriesId: series.id,
+      labelZh: series.labelZh,
+      value: null,
+      yoy: null,
+      updatedAt: null,
+      sourceStatus: 'missing'
+    })),
+    segmentPositiveCount: null,
+    segmentSeriesCount: null,
+    segmentDiffusionPct: null,
+    segmentRegime: '未知',
+    strongestSegment: null,
+    weakestSegment: null,
+    segmentUpdatedAt: null,
+    bofaCardSpendingYoY: null,
+    bofaCardSpendingPriorYoY: null,
+    bofaCardSpendingExGasYoY: null,
+    bofaReportDate: null,
+    bofaReportUrl: null,
+    bofaPdfUrl: null,
+    bofaStatus: 'missing',
+    bofaSummary: null,
+    redbookRetailSalesYoY: null,
+    redbookHistoricalAverageYoY: null,
+    redbookRetailSalesDate: null,
+    redbookReportUrl: null,
+    redbookStatus: 'missing',
+    redbookSummary: null,
     retailRegime: '未知',
     sourceStatus: {
       carts: 'missing',
-      cartsr: 'missing'
+      cartsr: 'missing',
+      retailSegments: 'missing',
+      bofaConsumerCheckpoint: 'missing',
+      redbookPublicHtml: 'missing'
     },
     updatedAt: null,
-    source: 'FRED:CARTS; FRED:CARTSR',
-    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast (不含汽车);CARTSR 为通胀调整实际值;audit-only / display-only;不代表 Redbook 或 BoA Card 数据。']
+    source: CONSUMER_RETAIL_SOURCE,
+    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；BoA Consumer Checkpoint 与 Redbook public HTML 为第三方公开消费证据；audit-only / display-only。']
   };
 }
 
@@ -2294,20 +3916,366 @@ function buildMissingCommercialRealEstate() {
     sloosCreConstructionTightening: null,
     sloosCreMultifamilyTightening: null,
     sloosCreTighteningMax: null,
+    reitEtfPrice: null,
+    reitEtf4wChange: null,
+    reitEtfUpdatedAt: null,
+    mortgageReitEtfPrice: null,
+    mortgageReitEtf4wChange: null,
+    mortgageReitEtfUpdatedAt: null,
+    cmbsEtfPrice: null,
+    cmbsEtf4wChange: null,
+    cmbsEtfUpdatedAt: null,
+    creLoanBalance: null,
+    creLoanBalance4wChange: null,
+    creLoanBalanceYoY: null,
+    creLoanBalanceUpdatedAt: null,
+    creLoanBalanceStatus: 'missing',
+    crePublicMarketProxyRegime: '未知',
+    nonPublicCreStatus: 'manual_required',
     creStressRegime: '未知',
     sourceStatus: {
       delinquency: 'missing',
       chargeOff: 'missing',
       sloosNonfarmNonresidential: 'missing',
       sloosConstruction: 'missing',
-      sloosMultifamily: 'missing'
+      sloosMultifamily: 'missing',
+      reitEtf: 'missing',
+      mortgageReitEtf: 'missing',
+      cmbsEtf: 'missing',
+      creLoanBalance: 'missing',
+      nonPublicCre: 'manual_required'
     },
     updatedAt: null,
-    source: 'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM',
+    source: CRE_PUBLIC_MARKET_PROXY_SOURCE,
     notes: [
       'CRE delinquency / charge-off / SLOOS CRE tightening (3 子类) 为 FRED 季频公开数据;observation date 为季度起始日;audit-only / display-only。',
-      '不代表 CDX HY/IG 或 私募信贷 (Cliffwater / PitchBook / Preqin) 数据。'
+      'FRED CREACBW027SBOG 为周频银行 CRE loan balance aggregate exposure proxy;VNQ / REM / CMBS 为公开市场代理,均不代表非公开 CRE loan tape 或私募信用 marks。'
     ]
+  };
+}
+
+function buildMissingShippingFreight() {
+  return {
+    balticDirtyTankerIndex: null,
+    balticDirtyTankerDailyChangePct: null,
+    balticDirtyTankerUpdatedAt: null,
+    balticCleanTankerIndex: null,
+    balticCleanTankerDailyChangePct: null,
+    balticCleanTankerUpdatedAt: null,
+    balticDryIndex: null,
+    balticDryDailyChangePct: null,
+    balticDryUpdatedAt: null,
+    tankerFreightRegime: '未知',
+    cleanTankerFreightRegime: '未知',
+    dryBulkFreightRegime: '未知',
+    freightStressRegime: '未知',
+    sourceStatus: {
+      dirtyTanker: 'missing',
+      cleanTanker: 'missing',
+      dryBulk: 'missing'
+    },
+    updatedAt: null,
+    source: SHIPPING_FREIGHT_SOURCE,
+    notes: ['BDTI/BCTI/BDI 来自公开 StockQ 页面转引 Baltic index；shipping/freight audit-only / display-only。']
+  };
+}
+
+function buildMissingFedFundsFuturesCurve() {
+  return {
+    source: 'Yahoo:ZQ-monthly-futures',
+    curveStatus: 'missing',
+    updatedAt: null,
+    frontImpliedRate: null,
+    backImpliedRate: null,
+    frontMinusBack: null,
+    contracts: [],
+    limitationZh: 'Yahoo 月度 Fed funds futures 报价不可用；OIS forward rate 仍需 manual/licensed input。'
+  };
+}
+
+function normalizePreviousFedFundsFuturesCurve(prevCurve) {
+  if (!prevCurve || typeof prevCurve !== 'object') return buildMissingFedFundsFuturesCurve();
+  const contracts = Array.isArray(prevCurve.contracts)
+    ? prevCurve.contracts
+        .map((contract) => ({
+          symbol: typeof contract?.symbol === 'string' ? contract.symbol : null,
+          contractMonth: typeof contract?.contractMonth === 'string' ? contract.contractMonth : null,
+          price: Number.isFinite(contract?.price) ? contract.price : null,
+          impliedRate: Number.isFinite(contract?.impliedRate) ? contract.impliedRate : null,
+          impliedMinusTargetMid: Number.isFinite(contract?.impliedMinusTargetMid) ? contract.impliedMinusTargetMid : null,
+          updatedAt: typeof contract?.updatedAt === 'string' ? contract.updatedAt : null
+        }))
+        .filter((contract) => contract.symbol && contract.contractMonth)
+    : [];
+  return {
+    source: typeof prevCurve.source === 'string' ? prevCurve.source : 'Yahoo:ZQ-monthly-futures',
+    curveStatus: ['live_proxy_curve', 'fallback_proxy_curve', 'missing'].includes(prevCurve.curveStatus)
+      ? prevCurve.curveStatus
+      : (contracts.length ? 'fallback_proxy_curve' : 'missing'),
+    updatedAt: typeof prevCurve.updatedAt === 'string' ? prevCurve.updatedAt : null,
+    frontImpliedRate: Number.isFinite(prevCurve.frontImpliedRate) ? prevCurve.frontImpliedRate : null,
+    backImpliedRate: Number.isFinite(prevCurve.backImpliedRate) ? prevCurve.backImpliedRate : null,
+    frontMinusBack: Number.isFinite(prevCurve.frontMinusBack) ? prevCurve.frontMinusBack : null,
+    contracts,
+    limitationZh: typeof prevCurve.limitationZh === 'string'
+      ? prevCurve.limitationZh
+      : 'Yahoo 月度 Fed funds futures 为公开代理曲线；不是 OIS forward rate。'
+  };
+}
+
+function buildMissingSofrFuturesCurve() {
+  return {
+    source: 'Yahoo:SR3-monthly-SOFR-futures',
+    curveStatus: 'missing',
+    updatedAt: null,
+    frontImpliedRate: null,
+    backImpliedRate: null,
+    frontMinusBack: null,
+    contracts: [],
+    limitationZh: 'Yahoo 月度 SR3 Three-Month SOFR futures 报价不可用；OIS forward rate 仍需 manual/licensed input。'
+  };
+}
+
+function normalizePreviousSofrFuturesCurve(prevCurve) {
+  if (!prevCurve || typeof prevCurve !== 'object') return buildMissingSofrFuturesCurve();
+  const contracts = Array.isArray(prevCurve.contracts)
+    ? prevCurve.contracts
+        .map((contract) => ({
+          symbol: typeof contract?.symbol === 'string' ? contract.symbol : null,
+          contractMonth: typeof contract?.contractMonth === 'string' ? contract.contractMonth : null,
+          price: Number.isFinite(contract?.price) ? contract.price : null,
+          impliedRate: Number.isFinite(contract?.impliedRate) ? contract.impliedRate : null,
+          impliedMinusTargetMid: Number.isFinite(contract?.impliedMinusTargetMid) ? contract.impliedMinusTargetMid : null,
+          updatedAt: typeof contract?.updatedAt === 'string' ? contract.updatedAt : null
+        }))
+        .filter((contract) => contract.symbol && contract.contractMonth)
+    : [];
+  return {
+    source: typeof prevCurve.source === 'string' ? prevCurve.source : 'Yahoo:SR3-monthly-SOFR-futures',
+    curveStatus: ['live_proxy_curve', 'fallback_proxy_curve', 'missing'].includes(prevCurve.curveStatus)
+      ? prevCurve.curveStatus
+      : (contracts.length ? 'fallback_proxy_curve' : 'missing'),
+    updatedAt: typeof prevCurve.updatedAt === 'string' ? prevCurve.updatedAt : null,
+    frontImpliedRate: Number.isFinite(prevCurve.frontImpliedRate) ? prevCurve.frontImpliedRate : null,
+    backImpliedRate: Number.isFinite(prevCurve.backImpliedRate) ? prevCurve.backImpliedRate : null,
+    frontMinusBack: Number.isFinite(prevCurve.frontMinusBack) ? prevCurve.frontMinusBack : null,
+    contracts,
+    limitationZh: typeof prevCurve.limitationZh === 'string'
+      ? prevCurve.limitationZh
+      : 'Yahoo 月度 SR3 Three-Month SOFR futures 为公开代理曲线；不是 OIS forward rate。'
+  };
+}
+
+function buildMissingOisForwardCurve() {
+  return {
+    source: 'CheckMySwap:USD-OIS-public-curve',
+    sourceUrl: CHECKMYSWAP_RATES_URL,
+    curveStatus: 'missing',
+    date: null,
+    updatedAt: null,
+    oneYearRate: null,
+    twoYearRate: null,
+    fiveYearRate: null,
+    tenYearRate: null,
+    twoMinusTargetMid: null,
+    tenMinusTwo: null,
+    tenors: [],
+    limitationZh: 'CheckMySwap USD OIS public curve 不可用；OIS forward rate 需要 manual/licensed input。'
+  };
+}
+
+function normalizePreviousOisForwardCurve(prevCurve) {
+  if (!prevCurve || typeof prevCurve !== 'object') return buildMissingOisForwardCurve();
+  const tenors = Array.isArray(prevCurve.tenors)
+    ? prevCurve.tenors
+        .map((item) => ({
+          tenor: typeof item?.tenor === 'string' ? item.tenor : null,
+          days: Number.isFinite(item?.days) ? item.days : null,
+          rate: Number.isFinite(item?.rate) ? item.rate : null,
+          rateBps: Number.isFinite(item?.rateBps) ? item.rateBps : null,
+          trades: Number.isFinite(item?.trades) ? item.trades : null,
+          closeTrades: Number.isFinite(item?.closeTrades) ? item.closeTrades : null,
+          method: typeof item?.method === 'string' ? item.method : null,
+          source: typeof item?.source === 'string' ? item.source : null,
+          date: typeof item?.date === 'string' ? item.date : null
+        }))
+        .filter((item) => item.tenor)
+    : [];
+  return {
+    source: typeof prevCurve.source === 'string' ? prevCurve.source : 'CheckMySwap:USD-OIS-public-curve',
+    sourceUrl: typeof prevCurve.sourceUrl === 'string' ? prevCurve.sourceUrl : CHECKMYSWAP_RATES_URL,
+    curveStatus: ['live_public_curve', 'fallback_public_curve', 'missing'].includes(prevCurve.curveStatus)
+      ? prevCurve.curveStatus
+      : (tenors.length ? 'fallback_public_curve' : 'missing'),
+    date: typeof prevCurve.date === 'string' ? prevCurve.date : null,
+    updatedAt: typeof prevCurve.updatedAt === 'string' ? prevCurve.updatedAt : null,
+    oneYearRate: Number.isFinite(prevCurve.oneYearRate) ? prevCurve.oneYearRate : null,
+    twoYearRate: Number.isFinite(prevCurve.twoYearRate) ? prevCurve.twoYearRate : null,
+    fiveYearRate: Number.isFinite(prevCurve.fiveYearRate) ? prevCurve.fiveYearRate : null,
+    tenYearRate: Number.isFinite(prevCurve.tenYearRate) ? prevCurve.tenYearRate : null,
+    twoMinusTargetMid: Number.isFinite(prevCurve.twoMinusTargetMid) ? prevCurve.twoMinusTargetMid : null,
+    tenMinusTwo: Number.isFinite(prevCurve.tenMinusTwo) ? prevCurve.tenMinusTwo : null,
+    tenors,
+    limitationZh: typeof prevCurve.limitationZh === 'string'
+      ? prevCurve.limitationZh
+      : 'CheckMySwap USD OIS curve 为免费公开曲线,来自 DTCC/CFTC public swap data；不是 dealer screen 或专有 forward curve。'
+  };
+}
+
+function getOisTenorRate(curve, tenor) {
+  const found = Array.isArray(curve?.tenors)
+    ? curve.tenors.find((item) => item?.tenor === tenor)
+    : null;
+  return Number.isFinite(found?.rate) ? found.rate : null;
+}
+
+function buildOisForwardCurve(payload, targetMid) {
+  const rows = Array.isArray(payload?.curve) ? payload.curve : [];
+  const tenors = rows
+    .map((item) => ({
+      tenor: typeof item?.tenor === 'string' ? item.tenor.trim() : null,
+      days: Number.isFinite(Number(item?.days)) ? Number(item.days) : null,
+      rate: Number.isFinite(Number(item?.rate)) ? +Number(item.rate).toFixed(3) : null,
+      rateBps: Number.isFinite(Number(item?.rateBps)) ? +Number(item.rateBps).toFixed(3) : null,
+      trades: Number.isFinite(Number(item?.trades)) ? Number(item.trades) : null,
+      closeTrades: Number.isFinite(Number(item?.closeTrades)) ? Number(item.closeTrades) : null,
+      method: typeof item?.method === 'string' ? item.method.trim() : null,
+      source: typeof item?.source === 'string' ? item.source.trim() : null,
+      date: typeof item?.date === 'string' ? item.date.trim() : null
+    }))
+    .filter((item) => item.tenor && Number.isFinite(item.rate));
+  if (!tenors.length) throw new Error('checkmyswap:usd-ois missing tenor rates');
+  const date = typeof payload?.date === 'string' ? payload.date : (tenors.find((item) => item.date)?.date || null);
+  const updatedAt = typeof payload?.fetchedAt === 'string' && Number.isFinite(Date.parse(payload.fetchedAt))
+    ? new Date(Date.parse(payload.fetchedAt)).toISOString()
+    : (date ? `${date}T00:00:00Z` : isoNow);
+  const oneYearRate = getOisTenorRate({ tenors }, '1Y');
+  const twoYearRate = getOisTenorRate({ tenors }, '2Y');
+  const fiveYearRate = getOisTenorRate({ tenors }, '5Y');
+  const tenYearRate = getOisTenorRate({ tenors }, '10Y');
+  return {
+    source: 'CheckMySwap:USD-OIS-public-curve',
+    sourceUrl: CHECKMYSWAP_RATES_URL,
+    curveStatus: 'live_public_curve',
+    date,
+    updatedAt,
+    oneYearRate,
+    twoYearRate,
+    fiveYearRate,
+    tenYearRate,
+    twoMinusTargetMid: Number.isFinite(twoYearRate) && Number.isFinite(targetMid)
+      ? +(twoYearRate - targetMid).toFixed(3)
+      : null,
+    tenMinusTwo: Number.isFinite(tenYearRate) && Number.isFinite(twoYearRate)
+      ? +(tenYearRate - twoYearRate).toFixed(3)
+      : null,
+    tenors: tenors.slice(0, 12),
+    limitationZh: 'CheckMySwap USD OIS curve 为免费公开曲线,来自 DTCC/CFTC public swap data；不是 dealer screen、licensed OIS forward curve 或交易建议。'
+  };
+}
+
+async function fetchCheckMySwapUsdOisCurve() {
+  return fetchJsonText(CHECKMYSWAP_USD_OIS_CURVE_URL, 'checkmyswap:usd-ois-curve', CHECKMYSWAP_FETCH_TIMEOUT_MS, {
+    userAgent: 'GFRRBot/1.0'
+  });
+}
+
+function buildMissingPolicyExpectations() {
+  return {
+    targetLower: null,
+    targetUpper: null,
+    targetMid: null,
+    effectiveFedFundsRate: null,
+    targetUpdatedAt: null,
+    fedFundsFutureFrontPrice: null,
+    fedFundsFutureImpliedRate: null,
+    futureMinusTargetMid: null,
+    futureUpdatedAt: null,
+    fedFundsFuturesCurve: buildMissingFedFundsFuturesCurve(),
+    sofrFuturesCurve: buildMissingSofrFuturesCurve(),
+    oisForwardCurve: buildMissingOisForwardCurve(),
+    dotPlotMedianCurrentYear: null,
+    dotPlotMedianNextYear: null,
+    dotPlotMedianTwoYearsOut: null,
+    dotPlotMedianLongerRun: null,
+    sepProjectionDate: null,
+    sepUrl: null,
+    statementDate: null,
+    statementUrl: null,
+    statementTargetRangeText: null,
+    hawkishTermCount: null,
+    dovishTermCount: null,
+    policyTone: '未知',
+    minutesDate: null,
+    minutesUrl: null,
+    minutesHawkishTermCount: null,
+    minutesDovishTermCount: null,
+    minutesPolicyTone: '未知',
+    minutesTopicCounts: null,
+    minutesSummaryZh: null,
+    policyExpectationRegime: '未知',
+    oisForwardRate: null,
+    oisForwardStatus: 'manual_required',
+    sourceStatus: {
+      targetRange: 'missing',
+      fedFundsFuture: 'missing',
+      fedFundsFuturesCurve: 'missing',
+      sofrFuturesCurve: 'missing',
+      sepDotPlot: 'missing',
+      policyStatement: 'missing',
+      fomcMinutes: 'missing',
+      oisForward: 'manual_required'
+    },
+    updatedAt: null,
+    source: POLICY_EXPECTATIONS_SOURCE,
+    notes: ['FOMC statement/SEP/minutes 来自 federalreserve.gov；ZQ=F、ZQ 月度合约、SR3 月度 SOFR futures 与 CheckMySwap USD OIS public curve 为公开政策/融资曲线证据。']
+  };
+}
+
+function buildMissingPrivateCreditProxy() {
+  return {
+    bdcEtfPrice: null,
+    bdcEtf4wChange: null,
+    bdcEtfUpdatedAt: null,
+    pbdcEtfPrice: null,
+    pbdcEtf4wChange: null,
+    pbdcEtfUpdatedAt: null,
+    seniorLoanEtfPrice: null,
+    seniorLoanEtf4wChange: null,
+    seniorLoanEtfUpdatedAt: null,
+    intervalFundNavPrice: null,
+    intervalFundNav4wChange: null,
+    intervalFundNavUpdatedAt: null,
+    intervalFundNavSymbol: 'CCLFX',
+    intervalFundNavStatus: 'missing',
+    hyOas: null,
+    igOas: null,
+    igOasUpdatedAt: null,
+    igMinusHyOas: null,
+    cdxHyPrice: null,
+    cdxHyInstrument: null,
+    cdxHyUpdatedAt: null,
+    cdxIgPrice: null,
+    cdxIgInstrument: null,
+    cdxIgUpdatedAt: null,
+    cdxHyStatus: 'manual_required',
+    cdxIgStatus: 'manual_required',
+    privateCreditMarksStatus: 'manual_required',
+    privateCreditProxyRegime: '未知',
+    sourceStatus: {
+      bdcEtf: 'missing',
+      pbdcEtf: 'missing',
+      seniorLoanEtf: 'missing',
+      intervalFundNav: 'missing',
+      hyOas: 'missing',
+      igOas: 'missing',
+      cdxHy: 'manual_required',
+      cdxIg: 'manual_required',
+      privateCreditMarks: 'manual_required'
+    },
+    updatedAt: null,
+    source: PRIVATE_CREDIT_PROXY_SOURCE,
+    notes: ['BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；CCLFX 为公开 interval-fund NAV proxy；HY/IG OAS 为 FRED cash-bond spread proxy；ICE CDX 为公开 EOD settlement price；私募信用 marks 仍保留 manual/licensed 插槽。']
   };
 }
 
@@ -2320,6 +4288,19 @@ function normalizePreviousEmployment(prevEmployment) {
   const continuingClaims4wAverage = Number.isFinite(prevEmployment.continuingClaims4wAverage) ? prevEmployment.continuingClaims4wAverage : null;
   const joltsOpenings = Number.isFinite(prevEmployment.joltsOpenings) ? prevEmployment.joltsOpenings : null;
   const joltsOpeningsYoY = Number.isFinite(prevEmployment.joltsOpeningsYoY) ? prevEmployment.joltsOpeningsYoY : null;
+  const averageHourlyEarnings = Number.isFinite(prevEmployment.averageHourlyEarnings) ? prevEmployment.averageHourlyEarnings : null;
+  const averageHourlyEarningsYoY = Number.isFinite(prevEmployment.averageHourlyEarningsYoY) ? prevEmployment.averageHourlyEarningsYoY : null;
+  const u6Rate = Number.isFinite(prevEmployment.u6Rate) ? prevEmployment.u6Rate : null;
+  const u6Rate3mChange = Number.isFinite(prevEmployment.u6Rate3mChange) ? prevEmployment.u6Rate3mChange : null;
+  const industryPayrollDiffusionPct = Number.isFinite(prevEmployment.industryPayrollDiffusionPct)
+    ? prevEmployment.industryPayrollDiffusionPct
+    : null;
+  const industryPayrollPositiveCount = Number.isFinite(prevEmployment.industryPayrollPositiveCount)
+    ? prevEmployment.industryPayrollPositiveCount
+    : null;
+  const industryPayrollSeriesCount = Number.isFinite(prevEmployment.industryPayrollSeriesCount)
+    ? prevEmployment.industryPayrollSeriesCount
+    : null;
   return {
     initialClaims,
     initialClaims4wAverage,
@@ -2329,20 +4310,43 @@ function normalizePreviousEmployment(prevEmployment) {
     joltsOpenings,
     joltsOpeningsYoY,
     joltsUpdatedAt: typeof prevEmployment.joltsUpdatedAt === 'string' ? prevEmployment.joltsUpdatedAt : null,
+    averageHourlyEarnings,
+    averageHourlyEarningsYoY,
+    averageHourlyEarningsUpdatedAt: typeof prevEmployment.averageHourlyEarningsUpdatedAt === 'string'
+      ? prevEmployment.averageHourlyEarningsUpdatedAt
+      : null,
+    u6Rate,
+    u6Rate3mChange,
+    u6UpdatedAt: typeof prevEmployment.u6UpdatedAt === 'string' ? prevEmployment.u6UpdatedAt : null,
+    industryPayrollDiffusionPct,
+    industryPayrollPositiveCount,
+    industryPayrollSeriesCount,
+    industryPayrollUpdatedAt: typeof prevEmployment.industryPayrollUpdatedAt === 'string'
+      ? prevEmployment.industryPayrollUpdatedAt
+      : null,
     claimsRegime: typeof prevEmployment.claimsRegime === 'string' && prevEmployment.claimsRegime.trim()
       ? prevEmployment.claimsRegime
       : classifyClaimsRegime(initialClaims4wAverage, initialClaims4wChange),
     joltsRegime: typeof prevEmployment.joltsRegime === 'string' && prevEmployment.joltsRegime.trim()
       ? prevEmployment.joltsRegime
       : classifyJoltsRegime(joltsOpenings, joltsOpeningsYoY),
+    laborQualityRegime: typeof prevEmployment.laborQualityRegime === 'string' && prevEmployment.laborQualityRegime.trim()
+      ? prevEmployment.laborQualityRegime
+      : classifyLaborQualityRegime(averageHourlyEarningsYoY, u6Rate3mChange, industryPayrollDiffusionPct),
+    industryDiffusionRegime: typeof prevEmployment.industryDiffusionRegime === 'string' && prevEmployment.industryDiffusionRegime.trim()
+      ? prevEmployment.industryDiffusionRegime
+      : classifyIndustryDiffusionRegime(industryPayrollDiffusionPct),
     sourceStatus: {
       icsa: initialClaims !== null ? 'fallback' : 'missing',
       ccsa: continuingClaims !== null ? 'fallback' : 'missing',
-      jtsjol: joltsOpenings !== null ? 'fallback' : 'missing'
+      jtsjol: joltsOpenings !== null ? 'fallback' : 'missing',
+      ahe: averageHourlyEarnings !== null ? 'fallback' : 'missing',
+      u6: u6Rate !== null ? 'fallback' : 'missing',
+      industryPayroll: industryPayrollDiffusionPct !== null ? 'fallback' : 'missing'
     },
     updatedAt: typeof prevEmployment.updatedAt === 'string' ? prevEmployment.updatedAt : null,
-    source: 'FRED:ICSA; FRED:CCSA; FRED:JTSJOL',
-    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS 为月频，发布滞后约 6 周；audit-only / display-only。']
+    source: EMPLOYMENT_SOURCE,
+    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS、AHE、U-6 与行业 payroll basket 为月频；audit-only / display-only。']
   };
 }
 
@@ -2354,6 +4358,21 @@ function normalizePreviousConsumerRetail(prevConsumerRetail) {
   const cartsReal = Number.isFinite(prevConsumerRetail.cartsReal) ? prevConsumerRetail.cartsReal : null;
   const cartsReal4wAverage = Number.isFinite(prevConsumerRetail.cartsReal4wAverage) ? prevConsumerRetail.cartsReal4wAverage : null;
   const cartsRealYoY = Number.isFinite(prevConsumerRetail.cartsRealYoY) ? prevConsumerRetail.cartsRealYoY : null;
+  const retailSegments = Array.isArray(prevConsumerRetail.retailSegments)
+    ? prevConsumerRetail.retailSegments
+    : buildMissingConsumerRetail().retailSegments;
+  const segmentDiffusionPct = Number.isFinite(prevConsumerRetail.segmentDiffusionPct)
+    ? prevConsumerRetail.segmentDiffusionPct
+    : null;
+  const bofaCardSpendingYoY = Number.isFinite(prevConsumerRetail.bofaCardSpendingYoY)
+    ? prevConsumerRetail.bofaCardSpendingYoY
+    : null;
+  const bofaCardSpendingExGasYoY = Number.isFinite(prevConsumerRetail.bofaCardSpendingExGasYoY)
+    ? prevConsumerRetail.bofaCardSpendingExGasYoY
+    : null;
+  const redbookRetailSalesYoY = Number.isFinite(prevConsumerRetail.redbookRetailSalesYoY)
+    ? prevConsumerRetail.redbookRetailSalesYoY
+    : null;
   return {
     cartsNominal,
     cartsNominal4wAverage,
@@ -2361,16 +4380,55 @@ function normalizePreviousConsumerRetail(prevConsumerRetail) {
     cartsReal,
     cartsReal4wAverage,
     cartsRealYoY,
+    retailSegments,
+    segmentPositiveCount: Number.isFinite(prevConsumerRetail.segmentPositiveCount)
+      ? prevConsumerRetail.segmentPositiveCount
+      : null,
+    segmentSeriesCount: Number.isFinite(prevConsumerRetail.segmentSeriesCount)
+      ? prevConsumerRetail.segmentSeriesCount
+      : null,
+    segmentDiffusionPct,
+    segmentRegime: typeof prevConsumerRetail.segmentRegime === 'string' && prevConsumerRetail.segmentRegime.trim()
+      ? prevConsumerRetail.segmentRegime
+      : classifyRetailSegmentRegime(segmentDiffusionPct),
+    strongestSegment: prevConsumerRetail.strongestSegment && typeof prevConsumerRetail.strongestSegment === 'object'
+      ? prevConsumerRetail.strongestSegment
+      : null,
+    weakestSegment: prevConsumerRetail.weakestSegment && typeof prevConsumerRetail.weakestSegment === 'object'
+      ? prevConsumerRetail.weakestSegment
+      : null,
+    segmentUpdatedAt: typeof prevConsumerRetail.segmentUpdatedAt === 'string' ? prevConsumerRetail.segmentUpdatedAt : null,
+    bofaCardSpendingYoY,
+    bofaCardSpendingPriorYoY: Number.isFinite(prevConsumerRetail.bofaCardSpendingPriorYoY)
+      ? prevConsumerRetail.bofaCardSpendingPriorYoY
+      : null,
+    bofaCardSpendingExGasYoY,
+    bofaReportDate: typeof prevConsumerRetail.bofaReportDate === 'string' ? prevConsumerRetail.bofaReportDate : null,
+    bofaReportUrl: typeof prevConsumerRetail.bofaReportUrl === 'string' ? prevConsumerRetail.bofaReportUrl : null,
+    bofaPdfUrl: typeof prevConsumerRetail.bofaPdfUrl === 'string' ? prevConsumerRetail.bofaPdfUrl : null,
+    bofaStatus: bofaCardSpendingYoY !== null || bofaCardSpendingExGasYoY !== null ? 'fallback' : 'missing',
+    bofaSummary: typeof prevConsumerRetail.bofaSummary === 'string' ? prevConsumerRetail.bofaSummary : null,
+    redbookRetailSalesYoY,
+    redbookHistoricalAverageYoY: Number.isFinite(prevConsumerRetail.redbookHistoricalAverageYoY)
+      ? prevConsumerRetail.redbookHistoricalAverageYoY
+      : null,
+    redbookRetailSalesDate: typeof prevConsumerRetail.redbookRetailSalesDate === 'string' ? prevConsumerRetail.redbookRetailSalesDate : null,
+    redbookReportUrl: typeof prevConsumerRetail.redbookReportUrl === 'string' ? prevConsumerRetail.redbookReportUrl : null,
+    redbookStatus: redbookRetailSalesYoY !== null ? 'fallback' : 'missing',
+    redbookSummary: typeof prevConsumerRetail.redbookSummary === 'string' ? prevConsumerRetail.redbookSummary : null,
     retailRegime: typeof prevConsumerRetail.retailRegime === 'string' && prevConsumerRetail.retailRegime.trim()
       ? prevConsumerRetail.retailRegime
-      : classifyRetailRegime(cartsRealYoY),
+      : classifyRetailRegime(cartsRealYoY, redbookRetailSalesYoY),
     sourceStatus: {
       carts: cartsNominal !== null ? 'fallback' : 'missing',
-      cartsr: cartsReal !== null ? 'fallback' : 'missing'
+      cartsr: cartsReal !== null ? 'fallback' : 'missing',
+      retailSegments: segmentDiffusionPct !== null ? 'fallback' : 'missing',
+      bofaConsumerCheckpoint: bofaCardSpendingYoY !== null || bofaCardSpendingExGasYoY !== null ? 'fallback' : 'missing',
+      redbookPublicHtml: redbookRetailSalesYoY !== null ? 'fallback' : 'missing'
     },
     updatedAt: typeof prevConsumerRetail.updatedAt === 'string' ? prevConsumerRetail.updatedAt : null,
-    source: 'FRED:CARTS; FRED:CARTSR',
-    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast (不含汽车);CARTSR 为通胀调整实际值;audit-only / display-only;不代表 Redbook 或 BoA Card 数据。']
+    source: CONSUMER_RETAIL_SOURCE,
+    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；BoA Consumer Checkpoint 与 Redbook public HTML 为第三方公开消费证据；audit-only / display-only。']
   };
 }
 
@@ -2397,6 +4455,15 @@ function normalizePreviousCommercialRealEstate(prevCre) {
   const sloosCreTighteningMax = Number.isFinite(prevCre.sloosCreTighteningMax)
     ? prevCre.sloosCreTighteningMax
     : (sloosValues.length ? Math.max(...sloosValues) : null);
+  const reitEtfPrice = Number.isFinite(prevCre.reitEtfPrice) ? prevCre.reitEtfPrice : null;
+  const reitEtf4wChange = Number.isFinite(prevCre.reitEtf4wChange) ? prevCre.reitEtf4wChange : null;
+  const mortgageReitEtfPrice = Number.isFinite(prevCre.mortgageReitEtfPrice) ? prevCre.mortgageReitEtfPrice : null;
+  const mortgageReitEtf4wChange = Number.isFinite(prevCre.mortgageReitEtf4wChange) ? prevCre.mortgageReitEtf4wChange : null;
+  const cmbsEtfPrice = Number.isFinite(prevCre.cmbsEtfPrice) ? prevCre.cmbsEtfPrice : null;
+  const cmbsEtf4wChange = Number.isFinite(prevCre.cmbsEtf4wChange) ? prevCre.cmbsEtf4wChange : null;
+  const creLoanBalance = Number.isFinite(prevCre.creLoanBalance) ? prevCre.creLoanBalance : null;
+  const creLoanBalance4wChange = Number.isFinite(prevCre.creLoanBalance4wChange) ? prevCre.creLoanBalance4wChange : null;
+  const creLoanBalanceYoY = Number.isFinite(prevCre.creLoanBalanceYoY) ? prevCre.creLoanBalanceYoY : null;
   return {
     creDelinquencyRate,
     creDelinquencyRateQoQChange,
@@ -2406,6 +4473,28 @@ function normalizePreviousCommercialRealEstate(prevCre) {
     sloosCreConstructionTightening,
     sloosCreMultifamilyTightening,
     sloosCreTighteningMax,
+    reitEtfPrice,
+    reitEtf4wChange,
+    reitEtfUpdatedAt: typeof prevCre.reitEtfUpdatedAt === 'string' ? prevCre.reitEtfUpdatedAt : null,
+    mortgageReitEtfPrice,
+    mortgageReitEtf4wChange,
+    mortgageReitEtfUpdatedAt: typeof prevCre.mortgageReitEtfUpdatedAt === 'string'
+      ? prevCre.mortgageReitEtfUpdatedAt
+      : null,
+    cmbsEtfPrice,
+    cmbsEtf4wChange,
+    cmbsEtfUpdatedAt: typeof prevCre.cmbsEtfUpdatedAt === 'string' ? prevCre.cmbsEtfUpdatedAt : null,
+    creLoanBalance,
+    creLoanBalance4wChange,
+    creLoanBalanceYoY,
+    creLoanBalanceUpdatedAt: typeof prevCre.creLoanBalanceUpdatedAt === 'string' ? prevCre.creLoanBalanceUpdatedAt : null,
+    creLoanBalanceStatus: typeof prevCre.creLoanBalanceStatus === 'string'
+      ? prevCre.creLoanBalanceStatus
+      : (creLoanBalance !== null ? 'fallback' : 'missing'),
+    crePublicMarketProxyRegime: typeof prevCre.crePublicMarketProxyRegime === 'string' && prevCre.crePublicMarketProxyRegime.trim()
+      ? prevCre.crePublicMarketProxyRegime
+      : classifyCrePublicMarketProxyRegime(reitEtf4wChange, mortgageReitEtf4wChange, cmbsEtf4wChange),
+    nonPublicCreStatus: typeof prevCre.nonPublicCreStatus === 'string' ? prevCre.nonPublicCreStatus : 'manual_required',
     creStressRegime: typeof prevCre.creStressRegime === 'string' && prevCre.creStressRegime.trim()
       ? prevCre.creStressRegime
       : classifyCreStressRegime(creDelinquencyRate, creChargeOffRate, sloosCreTighteningMax),
@@ -2414,14 +4503,181 @@ function normalizePreviousCommercialRealEstate(prevCre) {
       chargeOff: creChargeOffRate !== null ? 'fallback' : 'missing',
       sloosNonfarmNonresidential: sloosCreNonfarmNonresidentialTightening !== null ? 'fallback' : 'missing',
       sloosConstruction: sloosCreConstructionTightening !== null ? 'fallback' : 'missing',
-      sloosMultifamily: sloosCreMultifamilyTightening !== null ? 'fallback' : 'missing'
+      sloosMultifamily: sloosCreMultifamilyTightening !== null ? 'fallback' : 'missing',
+      reitEtf: reitEtfPrice !== null ? 'fallback' : 'missing',
+      mortgageReitEtf: mortgageReitEtfPrice !== null ? 'fallback' : 'missing',
+      cmbsEtf: cmbsEtfPrice !== null ? 'fallback' : 'missing',
+      creLoanBalance: creLoanBalance !== null ? 'fallback' : 'missing',
+      nonPublicCre: 'manual_required'
     },
     updatedAt: typeof prevCre.updatedAt === 'string' ? prevCre.updatedAt : null,
-    source: 'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM',
+    source: CRE_PUBLIC_MARKET_PROXY_SOURCE,
     notes: [
       'CRE delinquency / charge-off / SLOOS CRE tightening (3 子类) 为 FRED 季频公开数据;observation date 为季度起始日;audit-only / display-only。',
-      '不代表 CDX HY/IG 或 私募信贷 (Cliffwater / PitchBook / Preqin) 数据。'
+      'FRED CREACBW027SBOG 为周频银行 CRE loan balance aggregate exposure proxy;VNQ / REM / CMBS 为公开市场代理,均不代表非公开 CRE loan tape 或私募信用 marks。'
     ]
+  };
+}
+
+function normalizePreviousShippingFreight(prevShippingFreight) {
+  if (!prevShippingFreight || typeof prevShippingFreight !== 'object') return buildMissingShippingFreight();
+  const dirty = Number.isFinite(prevShippingFreight.balticDirtyTankerIndex) ? prevShippingFreight.balticDirtyTankerIndex : null;
+  const clean = Number.isFinite(prevShippingFreight.balticCleanTankerIndex) ? prevShippingFreight.balticCleanTankerIndex : null;
+  const dry = Number.isFinite(prevShippingFreight.balticDryIndex) ? prevShippingFreight.balticDryIndex : null;
+  const dirtyChange = Number.isFinite(prevShippingFreight.balticDirtyTankerDailyChangePct)
+    ? prevShippingFreight.balticDirtyTankerDailyChangePct
+    : null;
+  const cleanChange = Number.isFinite(prevShippingFreight.balticCleanTankerDailyChangePct)
+    ? prevShippingFreight.balticCleanTankerDailyChangePct
+    : null;
+  const dryChange = Number.isFinite(prevShippingFreight.balticDryDailyChangePct)
+    ? prevShippingFreight.balticDryDailyChangePct
+    : null;
+  const tankerFreightRegime = classifyFreightIndexRegime(dirty, dirtyChange, 1800, 1200);
+  const cleanTankerFreightRegime = classifyFreightIndexRegime(clean, cleanChange, 1200, 850);
+  const dryBulkFreightRegime = classifyFreightIndexRegime(dry, dryChange, 3000, 1800);
+  return {
+    balticDirtyTankerIndex: dirty,
+    balticDirtyTankerDailyChangePct: dirtyChange,
+    balticDirtyTankerUpdatedAt: typeof prevShippingFreight.balticDirtyTankerUpdatedAt === 'string' ? prevShippingFreight.balticDirtyTankerUpdatedAt : null,
+    balticCleanTankerIndex: clean,
+    balticCleanTankerDailyChangePct: cleanChange,
+    balticCleanTankerUpdatedAt: typeof prevShippingFreight.balticCleanTankerUpdatedAt === 'string' ? prevShippingFreight.balticCleanTankerUpdatedAt : null,
+    balticDryIndex: dry,
+    balticDryDailyChangePct: dryChange,
+    balticDryUpdatedAt: typeof prevShippingFreight.balticDryUpdatedAt === 'string' ? prevShippingFreight.balticDryUpdatedAt : null,
+    tankerFreightRegime,
+    cleanTankerFreightRegime,
+    dryBulkFreightRegime,
+    freightStressRegime: classifyCompositeFreightRegime(tankerFreightRegime, cleanTankerFreightRegime, dryBulkFreightRegime),
+    sourceStatus: {
+      dirtyTanker: dirty !== null ? 'fallback' : 'missing',
+      cleanTanker: clean !== null ? 'fallback' : 'missing',
+      dryBulk: dry !== null ? 'fallback' : 'missing'
+    },
+    updatedAt: typeof prevShippingFreight.updatedAt === 'string' ? prevShippingFreight.updatedAt : null,
+    source: SHIPPING_FREIGHT_SOURCE,
+    notes: ['BDTI/BCTI/BDI 来自公开 StockQ 页面转引 Baltic index；shipping/freight audit-only / display-only。']
+  };
+}
+
+function normalizePreviousPolicyExpectations(prevPolicy) {
+  if (!prevPolicy || typeof prevPolicy !== 'object') return buildMissingPolicyExpectations();
+  const targetLower = Number.isFinite(prevPolicy.targetLower) ? prevPolicy.targetLower : null;
+  const targetUpper = Number.isFinite(prevPolicy.targetUpper) ? prevPolicy.targetUpper : null;
+  const targetMid = Number.isFinite(prevPolicy.targetMid)
+    ? prevPolicy.targetMid
+    : (Number.isFinite(targetLower) && Number.isFinite(targetUpper) ? +(((targetLower + targetUpper) / 2)).toFixed(3) : null);
+  const futureMinusTargetMid = Number.isFinite(prevPolicy.futureMinusTargetMid) ? prevPolicy.futureMinusTargetMid : null;
+  const dotPlotMedianCurrentYear = Number.isFinite(prevPolicy.dotPlotMedianCurrentYear) ? prevPolicy.dotPlotMedianCurrentYear : null;
+  const minutesHawkishTermCount = Number.isFinite(prevPolicy.minutesHawkishTermCount) ? prevPolicy.minutesHawkishTermCount : null;
+  const minutesDovishTermCount = Number.isFinite(prevPolicy.minutesDovishTermCount) ? prevPolicy.minutesDovishTermCount : null;
+  const minutesTopicCounts = prevPolicy.minutesTopicCounts && typeof prevPolicy.minutesTopicCounts === 'object'
+    ? prevPolicy.minutesTopicCounts
+    : null;
+  return {
+    ...buildMissingPolicyExpectations(),
+    ...prevPolicy,
+    targetLower,
+    targetUpper,
+    targetMid,
+    effectiveFedFundsRate: Number.isFinite(prevPolicy.effectiveFedFundsRate) ? prevPolicy.effectiveFedFundsRate : null,
+    fedFundsFutureFrontPrice: Number.isFinite(prevPolicy.fedFundsFutureFrontPrice) ? prevPolicy.fedFundsFutureFrontPrice : null,
+    fedFundsFutureImpliedRate: Number.isFinite(prevPolicy.fedFundsFutureImpliedRate) ? prevPolicy.fedFundsFutureImpliedRate : null,
+    futureMinusTargetMid,
+    fedFundsFuturesCurve: normalizePreviousFedFundsFuturesCurve(prevPolicy.fedFundsFuturesCurve),
+    sofrFuturesCurve: normalizePreviousSofrFuturesCurve(prevPolicy.sofrFuturesCurve),
+    oisForwardCurve: normalizePreviousOisForwardCurve(prevPolicy.oisForwardCurve),
+    dotPlotMedianCurrentYear,
+    minutesDate: typeof prevPolicy.minutesDate === 'string' ? prevPolicy.minutesDate : null,
+    minutesUrl: typeof prevPolicy.minutesUrl === 'string' ? prevPolicy.minutesUrl : null,
+    minutesHawkishTermCount,
+    minutesDovishTermCount,
+    minutesPolicyTone: typeof prevPolicy.minutesPolicyTone === 'string' && prevPolicy.minutesPolicyTone.trim()
+      ? prevPolicy.minutesPolicyTone
+      : '未知',
+    minutesTopicCounts,
+    minutesSummaryZh: typeof prevPolicy.minutesSummaryZh === 'string' ? prevPolicy.minutesSummaryZh : null,
+    policyExpectationRegime: typeof prevPolicy.policyExpectationRegime === 'string' && prevPolicy.policyExpectationRegime.trim()
+      ? prevPolicy.policyExpectationRegime
+      : classifyPolicyExpectationRegime(futureMinusTargetMid, dotPlotMedianCurrentYear, targetMid),
+    updatedAt: typeof prevPolicy.updatedAt === 'string' ? prevPolicy.updatedAt : null,
+    sourceStatus: {
+      targetRange: targetMid !== null ? 'fallback' : 'missing',
+      fedFundsFuture: Number.isFinite(prevPolicy.fedFundsFutureImpliedRate) ? 'fallback' : 'missing',
+      fedFundsFuturesCurve: Array.isArray(prevPolicy.fedFundsFuturesCurve?.contracts) && prevPolicy.fedFundsFuturesCurve.contracts.length
+        ? 'fallback'
+        : 'missing',
+      sofrFuturesCurve: Array.isArray(prevPolicy.sofrFuturesCurve?.contracts) && prevPolicy.sofrFuturesCurve.contracts.length
+        ? 'fallback'
+        : 'missing',
+      sepDotPlot: dotPlotMedianCurrentYear !== null ? 'fallback' : 'missing',
+      policyStatement: typeof prevPolicy.statementUrl === 'string' ? 'fallback' : 'missing',
+      fomcMinutes: typeof prevPolicy.minutesUrl === 'string' ? 'fallback' : 'missing',
+      oisForward: Array.isArray(prevPolicy.oisForwardCurve?.tenors) && prevPolicy.oisForwardCurve.tenors.length
+        ? 'fallback'
+        : 'manual_required'
+    }
+  };
+}
+
+function normalizePreviousPrivateCreditProxy(prevPrivateCredit) {
+  if (!prevPrivateCredit || typeof prevPrivateCredit !== 'object') return buildMissingPrivateCreditProxy();
+  const bdcEtfPrice = Number.isFinite(prevPrivateCredit.bdcEtfPrice) ? prevPrivateCredit.bdcEtfPrice : null;
+  const bdcEtf4wChange = Number.isFinite(prevPrivateCredit.bdcEtf4wChange) ? prevPrivateCredit.bdcEtf4wChange : null;
+  const pbdcEtfPrice = Number.isFinite(prevPrivateCredit.pbdcEtfPrice) ? prevPrivateCredit.pbdcEtfPrice : null;
+  const pbdcEtf4wChange = Number.isFinite(prevPrivateCredit.pbdcEtf4wChange) ? prevPrivateCredit.pbdcEtf4wChange : null;
+  const seniorLoanEtfPrice = Number.isFinite(prevPrivateCredit.seniorLoanEtfPrice) ? prevPrivateCredit.seniorLoanEtfPrice : null;
+  const seniorLoanEtf4wChange = Number.isFinite(prevPrivateCredit.seniorLoanEtf4wChange) ? prevPrivateCredit.seniorLoanEtf4wChange : null;
+  const intervalFundNavPrice = Number.isFinite(prevPrivateCredit.intervalFundNavPrice) ? prevPrivateCredit.intervalFundNavPrice : null;
+  const intervalFundNav4wChange = Number.isFinite(prevPrivateCredit.intervalFundNav4wChange) ? prevPrivateCredit.intervalFundNav4wChange : null;
+  const hyOas = Number.isFinite(prevPrivateCredit.hyOas) ? prevPrivateCredit.hyOas : null;
+  const igOas = Number.isFinite(prevPrivateCredit.igOas) ? prevPrivateCredit.igOas : null;
+  const igMinusHyOas = Number.isFinite(prevPrivateCredit.igMinusHyOas) ? prevPrivateCredit.igMinusHyOas : null;
+  const cdxHyPrice = Number.isFinite(prevPrivateCredit.cdxHyPrice) ? prevPrivateCredit.cdxHyPrice : null;
+  const cdxIgPrice = Number.isFinite(prevPrivateCredit.cdxIgPrice) ? prevPrivateCredit.cdxIgPrice : null;
+  return {
+    ...buildMissingPrivateCreditProxy(),
+    ...prevPrivateCredit,
+    bdcEtfPrice,
+    bdcEtf4wChange,
+    bdcEtfUpdatedAt: typeof prevPrivateCredit.bdcEtfUpdatedAt === 'string' ? prevPrivateCredit.bdcEtfUpdatedAt : null,
+    pbdcEtfPrice,
+    pbdcEtf4wChange,
+    pbdcEtfUpdatedAt: typeof prevPrivateCredit.pbdcEtfUpdatedAt === 'string' ? prevPrivateCredit.pbdcEtfUpdatedAt : null,
+    seniorLoanEtfPrice,
+    seniorLoanEtf4wChange,
+    seniorLoanEtfUpdatedAt: typeof prevPrivateCredit.seniorLoanEtfUpdatedAt === 'string' ? prevPrivateCredit.seniorLoanEtfUpdatedAt : null,
+    intervalFundNavPrice,
+    intervalFundNav4wChange,
+    intervalFundNavUpdatedAt: typeof prevPrivateCredit.intervalFundNavUpdatedAt === 'string' ? prevPrivateCredit.intervalFundNavUpdatedAt : null,
+    intervalFundNavSymbol: typeof prevPrivateCredit.intervalFundNavSymbol === 'string' ? prevPrivateCredit.intervalFundNavSymbol : 'CCLFX',
+    intervalFundNavStatus: intervalFundNavPrice !== null ? 'fallback' : 'missing',
+    hyOas,
+    igOas,
+    igOasUpdatedAt: typeof prevPrivateCredit.igOasUpdatedAt === 'string' ? prevPrivateCredit.igOasUpdatedAt : null,
+    igMinusHyOas,
+    cdxHyPrice,
+    cdxHyInstrument: typeof prevPrivateCredit.cdxHyInstrument === 'string' ? prevPrivateCredit.cdxHyInstrument : null,
+    cdxHyUpdatedAt: typeof prevPrivateCredit.cdxHyUpdatedAt === 'string' ? prevPrivateCredit.cdxHyUpdatedAt : null,
+    cdxIgPrice,
+    cdxIgInstrument: typeof prevPrivateCredit.cdxIgInstrument === 'string' ? prevPrivateCredit.cdxIgInstrument : null,
+    cdxIgUpdatedAt: typeof prevPrivateCredit.cdxIgUpdatedAt === 'string' ? prevPrivateCredit.cdxIgUpdatedAt : null,
+    privateCreditProxyRegime: typeof prevPrivateCredit.privateCreditProxyRegime === 'string' && prevPrivateCredit.privateCreditProxyRegime.trim()
+      ? prevPrivateCredit.privateCreditProxyRegime
+      : classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, intervalFundNav4wChange, hyOas),
+    sourceStatus: {
+      bdcEtf: bdcEtfPrice !== null ? 'fallback' : 'missing',
+      pbdcEtf: pbdcEtfPrice !== null ? 'fallback' : 'missing',
+      seniorLoanEtf: seniorLoanEtfPrice !== null ? 'fallback' : 'missing',
+      intervalFundNav: intervalFundNavPrice !== null ? 'fallback' : 'missing',
+      hyOas: hyOas !== null ? 'fallback' : 'missing',
+      igOas: igOas !== null ? 'fallback' : 'missing',
+      cdxHy: cdxHyPrice !== null ? 'fallback' : 'manual_required',
+      cdxIg: cdxIgPrice !== null ? 'fallback' : 'manual_required',
+      privateCreditMarks: 'manual_required'
+    },
+    updatedAt: typeof prevPrivateCredit.updatedAt === 'string' ? prevPrivateCredit.updatedAt : null
   };
 }
 
@@ -2454,6 +4710,267 @@ function normalizePreviousConsumer(prevConsumer) {
     updatedAt: typeof prevConsumer.updatedAt === 'string' ? prevConsumer.updatedAt : null,
     source: 'FRED:UMCSENT; ISM:ManufacturingPMI',
     notes: ['UMCSENT 为 FRED 月频；ISM Manufacturing PMI 直接解析 ismworld.org 公开报告页，audit-only。']
+  };
+}
+
+async function resolveShippingFreight(prevShippingFreight) {
+  const fallback = normalizePreviousShippingFreight(prevShippingFreight);
+  const status = {
+    dirtyTanker: 'missing',
+    cleanTanker: 'missing',
+    dryBulk: 'missing'
+  };
+  const [dirtyResult, cleanResult, dryResult] = await Promise.allSettled([
+    fetchStockqIndex('BDTI', 'Baltic Dirty Tanker Index'),
+    fetchStockqIndex('BCTI', 'Baltic Clean Tanker Index'),
+    fetchStockqIndex('BDI', 'Baltic Dry Index')
+  ]);
+
+  const dirty = dirtyResult.status === 'fulfilled' ? dirtyResult.value : null;
+  const clean = cleanResult.status === 'fulfilled' ? cleanResult.value : null;
+  const dry = dryResult.status === 'fulfilled' ? dryResult.value : null;
+
+  if (dirty) status.dirtyTanker = 'live';
+  else if (Number.isFinite(fallback.balticDirtyTankerIndex)) status.dirtyTanker = 'fallback';
+  if (clean) status.cleanTanker = 'live';
+  else if (Number.isFinite(fallback.balticCleanTankerIndex)) status.cleanTanker = 'fallback';
+  if (dry) status.dryBulk = 'live';
+  else if (Number.isFinite(fallback.balticDryIndex)) status.dryBulk = 'fallback';
+
+  const balticDirtyTankerIndex = Number.isFinite(dirty?.value) ? dirty.value : fallback.balticDirtyTankerIndex;
+  const balticDirtyTankerDailyChangePct = Number.isFinite(dirty?.dailyChangePct)
+    ? dirty.dailyChangePct
+    : fallback.balticDirtyTankerDailyChangePct;
+  const balticCleanTankerIndex = Number.isFinite(clean?.value) ? clean.value : fallback.balticCleanTankerIndex;
+  const balticCleanTankerDailyChangePct = Number.isFinite(clean?.dailyChangePct)
+    ? clean.dailyChangePct
+    : fallback.balticCleanTankerDailyChangePct;
+  const balticDryIndex = Number.isFinite(dry?.value) ? dry.value : fallback.balticDryIndex;
+  const balticDryDailyChangePct = Number.isFinite(dry?.dailyChangePct)
+    ? dry.dailyChangePct
+    : fallback.balticDryDailyChangePct;
+  const tankerFreightRegime = classifyFreightIndexRegime(balticDirtyTankerIndex, balticDirtyTankerDailyChangePct, 1800, 1200);
+  const cleanTankerFreightRegime = classifyFreightIndexRegime(balticCleanTankerIndex, balticCleanTankerDailyChangePct, 1200, 850);
+  const dryBulkFreightRegime = classifyFreightIndexRegime(balticDryIndex, balticDryDailyChangePct, 3000, 1800);
+
+  return {
+    balticDirtyTankerIndex: Number.isFinite(balticDirtyTankerIndex) ? balticDirtyTankerIndex : null,
+    balticDirtyTankerDailyChangePct: Number.isFinite(balticDirtyTankerDailyChangePct) ? balticDirtyTankerDailyChangePct : null,
+    balticDirtyTankerUpdatedAt: dirty?.updatedAt || fallback.balticDirtyTankerUpdatedAt,
+    balticCleanTankerIndex: Number.isFinite(balticCleanTankerIndex) ? balticCleanTankerIndex : null,
+    balticCleanTankerDailyChangePct: Number.isFinite(balticCleanTankerDailyChangePct) ? balticCleanTankerDailyChangePct : null,
+    balticCleanTankerUpdatedAt: clean?.updatedAt || fallback.balticCleanTankerUpdatedAt,
+    balticDryIndex: Number.isFinite(balticDryIndex) ? balticDryIndex : null,
+    balticDryDailyChangePct: Number.isFinite(balticDryDailyChangePct) ? balticDryDailyChangePct : null,
+    balticDryUpdatedAt: dry?.updatedAt || fallback.balticDryUpdatedAt,
+    tankerFreightRegime,
+    cleanTankerFreightRegime,
+    dryBulkFreightRegime,
+    freightStressRegime: classifyCompositeFreightRegime(tankerFreightRegime, cleanTankerFreightRegime, dryBulkFreightRegime),
+    sourceStatus: status,
+    updatedAt: latestIsoDate(dirty?.updatedAt, clean?.updatedAt, dry?.updatedAt, fallback.updatedAt),
+    source: SHIPPING_FREIGHT_SOURCE,
+    notes: ['BDTI/BCTI/BDI 来自公开 StockQ 页面转引 Baltic index；shipping/freight audit-only / display-only。']
+  };
+}
+
+async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
+  const fallback = normalizePreviousPrivateCreditProxy(prevPrivateCredit);
+  const status = {
+    bdcEtf: 'missing',
+    pbdcEtf: 'missing',
+    seniorLoanEtf: 'missing',
+    intervalFundNav: 'missing',
+    hyOas: 'missing',
+    igOas: 'missing',
+    cdxHy: 'missing',
+    cdxIg: 'missing',
+    privateCreditMarks: 'manual_required'
+  };
+  let bdcEtfPrice = null;
+  let bdcEtf4wChange = null;
+  let bdcEtfUpdatedAt = null;
+  let pbdcEtfPrice = null;
+  let pbdcEtf4wChange = null;
+  let pbdcEtfUpdatedAt = null;
+  let seniorLoanEtfPrice = null;
+  let seniorLoanEtf4wChange = null;
+  let seniorLoanEtfUpdatedAt = null;
+  let intervalFundNavPrice = null;
+  let intervalFundNav4wChange = null;
+  let intervalFundNavUpdatedAt = null;
+  let intervalFundNavSymbol = 'CCLFX';
+  let intervalFundNavStatus = 'missing';
+  let hyOas = Number.isFinite(hyOasLive) ? hyOasLive : null;
+  let igOas = null;
+  let igOasUpdatedAt = null;
+  let cdxHyPrice = null;
+  let cdxHyInstrument = null;
+  let cdxHyUpdatedAt = null;
+  let cdxIgPrice = null;
+  let cdxIgInstrument = null;
+  let cdxIgUpdatedAt = null;
+
+  const [bdcEtfResult, pbdcEtfResult, seniorLoanEtfResult, intervalFundNavResult, cdxResult] = await Promise.allSettled([
+    fetchYahooChartQuote('BIZD', '1mo', '1d'),
+    fetchYahooChartQuote('PBDC', '1mo', '1d'),
+    fetchYahooChartQuote('SRLN', '1mo', '1d'),
+    fetchYahooChartQuote('CCLFX', '1mo', '1d'),
+    fetchIceCdxIndexSettlements()
+  ]);
+
+  if (bdcEtfResult.status === 'fulfilled') {
+    bdcEtfPrice = bdcEtfResult.value.price;
+    bdcEtf4wChange = bdcEtfResult.value.changePct;
+    bdcEtfUpdatedAt = bdcEtfResult.value.updatedAt;
+    status.bdcEtf = 'live';
+  } else if (Number.isFinite(fallback.bdcEtfPrice)) {
+    bdcEtfPrice = fallback.bdcEtfPrice;
+    bdcEtf4wChange = fallback.bdcEtf4wChange;
+    bdcEtfUpdatedAt = fallback.bdcEtfUpdatedAt;
+    status.bdcEtf = 'fallback';
+  }
+
+  if (pbdcEtfResult.status === 'fulfilled') {
+    pbdcEtfPrice = pbdcEtfResult.value.price;
+    pbdcEtf4wChange = pbdcEtfResult.value.changePct;
+    pbdcEtfUpdatedAt = pbdcEtfResult.value.updatedAt;
+    status.pbdcEtf = 'live';
+  } else if (Number.isFinite(fallback.pbdcEtfPrice)) {
+    pbdcEtfPrice = fallback.pbdcEtfPrice;
+    pbdcEtf4wChange = fallback.pbdcEtf4wChange;
+    pbdcEtfUpdatedAt = fallback.pbdcEtfUpdatedAt;
+    status.pbdcEtf = 'fallback';
+  }
+
+  if (seniorLoanEtfResult.status === 'fulfilled') {
+    seniorLoanEtfPrice = seniorLoanEtfResult.value.price;
+    seniorLoanEtf4wChange = seniorLoanEtfResult.value.changePct;
+    seniorLoanEtfUpdatedAt = seniorLoanEtfResult.value.updatedAt;
+    status.seniorLoanEtf = 'live';
+  } else if (Number.isFinite(fallback.seniorLoanEtfPrice)) {
+    seniorLoanEtfPrice = fallback.seniorLoanEtfPrice;
+    seniorLoanEtf4wChange = fallback.seniorLoanEtf4wChange;
+    seniorLoanEtfUpdatedAt = fallback.seniorLoanEtfUpdatedAt;
+    status.seniorLoanEtf = 'fallback';
+  }
+
+  if (intervalFundNavResult.status === 'fulfilled') {
+    intervalFundNavPrice = intervalFundNavResult.value.price;
+    intervalFundNav4wChange = intervalFundNavResult.value.changePct;
+    intervalFundNavUpdatedAt = intervalFundNavResult.value.updatedAt;
+    intervalFundNavSymbol = intervalFundNavResult.value.symbol || 'CCLFX';
+    intervalFundNavStatus = 'live';
+    status.intervalFundNav = 'live';
+  } else if (Number.isFinite(fallback.intervalFundNavPrice)) {
+    intervalFundNavPrice = fallback.intervalFundNavPrice;
+    intervalFundNav4wChange = fallback.intervalFundNav4wChange;
+    intervalFundNavUpdatedAt = fallback.intervalFundNavUpdatedAt;
+    intervalFundNavSymbol = fallback.intervalFundNavSymbol || 'CCLFX';
+    intervalFundNavStatus = 'fallback';
+    status.intervalFundNav = 'fallback';
+  }
+
+  if (cdxResult.status === 'fulfilled') {
+    if (Number.isFinite(cdxResult.value.hy?.price)) {
+      cdxHyPrice = cdxResult.value.hy.price;
+      cdxHyInstrument = cdxResult.value.hy.instrument;
+      cdxHyUpdatedAt = cdxResult.value.hy.updatedAt;
+      status.cdxHy = 'live';
+    }
+    if (Number.isFinite(cdxResult.value.ig?.price)) {
+      cdxIgPrice = cdxResult.value.ig.price;
+      cdxIgInstrument = cdxResult.value.ig.instrument;
+      cdxIgUpdatedAt = cdxResult.value.ig.updatedAt;
+      status.cdxIg = 'live';
+    }
+  }
+  if (status.cdxHy !== 'live') {
+    if (Number.isFinite(fallback.cdxHyPrice)) {
+      cdxHyPrice = fallback.cdxHyPrice;
+      cdxHyInstrument = fallback.cdxHyInstrument;
+      cdxHyUpdatedAt = fallback.cdxHyUpdatedAt;
+      status.cdxHy = 'fallback';
+    } else {
+      status.cdxHy = 'manual_required';
+    }
+  }
+  if (status.cdxIg !== 'live') {
+    if (Number.isFinite(fallback.cdxIgPrice)) {
+      cdxIgPrice = fallback.cdxIgPrice;
+      cdxIgInstrument = fallback.cdxIgInstrument;
+      cdxIgUpdatedAt = fallback.cdxIgUpdatedAt;
+      status.cdxIg = 'fallback';
+    } else {
+      status.cdxIg = 'manual_required';
+    }
+  }
+
+  if (Number.isFinite(hyOas)) {
+    status.hyOas = 'live';
+  } else {
+    try {
+      const rows = await fetchFredSeries('BAMLH0A0HYM2', 30);
+      hyOas = latestValue(rows);
+      status.hyOas = Number.isFinite(hyOas) ? 'live' : 'missing';
+    } catch (_err) {
+      if (Number.isFinite(fallback.hyOas)) {
+        hyOas = fallback.hyOas;
+        status.hyOas = 'fallback';
+      }
+    }
+  }
+
+  try {
+    const rows = await fetchFredSeries('BAMLC0A0CM', 30);
+    igOas = latestValue(rows);
+    igOasUpdatedAt = latestDateIso(rows);
+    status.igOas = Number.isFinite(igOas) ? 'live' : 'missing';
+  } catch (_err) {
+    if (Number.isFinite(fallback.igOas)) {
+      igOas = fallback.igOas;
+      igOasUpdatedAt = fallback.igOasUpdatedAt;
+      status.igOas = 'fallback';
+    }
+  }
+
+  const igMinusHyOas = Number.isFinite(igOas) && Number.isFinite(hyOas)
+    ? +(igOas - hyOas).toFixed(3)
+    : null;
+
+  return {
+    bdcEtfPrice: Number.isFinite(bdcEtfPrice) ? bdcEtfPrice : null,
+    bdcEtf4wChange: Number.isFinite(bdcEtf4wChange) ? bdcEtf4wChange : null,
+    bdcEtfUpdatedAt,
+    pbdcEtfPrice: Number.isFinite(pbdcEtfPrice) ? pbdcEtfPrice : null,
+    pbdcEtf4wChange: Number.isFinite(pbdcEtf4wChange) ? pbdcEtf4wChange : null,
+    pbdcEtfUpdatedAt,
+    seniorLoanEtfPrice: Number.isFinite(seniorLoanEtfPrice) ? seniorLoanEtfPrice : null,
+    seniorLoanEtf4wChange: Number.isFinite(seniorLoanEtf4wChange) ? seniorLoanEtf4wChange : null,
+    seniorLoanEtfUpdatedAt,
+    intervalFundNavPrice: Number.isFinite(intervalFundNavPrice) ? intervalFundNavPrice : null,
+    intervalFundNav4wChange: Number.isFinite(intervalFundNav4wChange) ? intervalFundNav4wChange : null,
+    intervalFundNavUpdatedAt,
+    intervalFundNavSymbol,
+    intervalFundNavStatus,
+    hyOas: Number.isFinite(hyOas) ? hyOas : null,
+    igOas: Number.isFinite(igOas) ? igOas : null,
+    igOasUpdatedAt,
+    igMinusHyOas,
+    cdxHyPrice: Number.isFinite(cdxHyPrice) ? cdxHyPrice : null,
+    cdxHyInstrument,
+    cdxHyUpdatedAt,
+    cdxIgPrice: Number.isFinite(cdxIgPrice) ? cdxIgPrice : null,
+    cdxIgInstrument,
+    cdxIgUpdatedAt,
+    cdxHyStatus: status.cdxHy,
+    cdxIgStatus: status.cdxIg,
+    privateCreditMarksStatus: 'manual_required',
+    privateCreditProxyRegime: classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, intervalFundNav4wChange, hyOas),
+    sourceStatus: status,
+    updatedAt: latestIsoDate(bdcEtfUpdatedAt, pbdcEtfUpdatedAt, seniorLoanEtfUpdatedAt, intervalFundNavUpdatedAt, igOasUpdatedAt, cdxHyUpdatedAt, cdxIgUpdatedAt, fallback.updatedAt),
+    source: PRIVATE_CREDIT_PROXY_SOURCE,
+    notes: ['BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；CCLFX 为公开 interval-fund NAV proxy；HY/IG OAS 为 FRED cash-bond spread proxy；ICE CDX 为公开 EOD settlement price；私募信用 marks 仍保留 manual/licensed 插槽。']
   };
 }
 
@@ -2530,7 +5047,10 @@ async function resolveEmploymentBreadth(prevEmployment) {
   const status = {
     icsa: 'missing',
     ccsa: 'missing',
-    jtsjol: 'missing'
+    jtsjol: 'missing',
+    ahe: 'missing',
+    u6: 'missing',
+    industryPayroll: 'missing'
   };
   let initialClaims = null;
   let initialClaims4wAverage = null;
@@ -2542,11 +5062,24 @@ async function resolveEmploymentBreadth(prevEmployment) {
   let joltsOpenings = null;
   let joltsOpeningsYoY = null;
   let joltsUpdatedAt = null;
+  let averageHourlyEarnings = null;
+  let averageHourlyEarningsYoY = null;
+  let averageHourlyEarningsUpdatedAt = null;
+  let u6Rate = null;
+  let u6Rate3mChange = null;
+  let u6UpdatedAt = null;
+  let industryPayrollDiffusionPct = null;
+  let industryPayrollPositiveCount = null;
+  let industryPayrollSeriesCount = null;
+  let industryPayrollUpdatedAt = null;
 
-  const [icsaResult, ccsaResult, joltsResult] = await Promise.allSettled([
+  const [icsaResult, ccsaResult, joltsResult, aheResult, u6Result, ...industryResults] = await Promise.allSettled([
     fetchFredSeries('ICSA', 420),
     fetchFredSeries('CCSA', 420),
-    fetchFredSeries('JTSJOL', 1500)
+    fetchFredSeries('JTSJOL', 1500),
+    fetchFredSeries('CES0500000003', 1500),
+    fetchFredSeries('U6RATE', 1500),
+    ...EMPLOYMENT_INDUSTRY_PAYROLL_SERIES.map((series) => fetchFredSeries(series.id, 420))
   ]);
 
   if (icsaResult.status === 'fulfilled') {
@@ -2597,6 +5130,47 @@ async function resolveEmploymentBreadth(prevEmployment) {
     status.jtsjol = 'fallback';
   }
 
+  if (aheResult.status === 'fulfilled') {
+    const rows = aheResult.value;
+    averageHourlyEarnings = latestValue(rows);
+    averageHourlyEarningsYoY = calculateMonthlyYoY(rows);
+    averageHourlyEarningsUpdatedAt = latestDateIso(rows);
+    status.ahe = 'live';
+  } else if (Number.isFinite(fallback.averageHourlyEarnings)) {
+    averageHourlyEarnings = fallback.averageHourlyEarnings;
+    averageHourlyEarningsYoY = fallback.averageHourlyEarningsYoY;
+    averageHourlyEarningsUpdatedAt = fallback.averageHourlyEarningsUpdatedAt;
+    status.ahe = 'fallback';
+  }
+
+  if (u6Result.status === 'fulfilled') {
+    const rows = u6Result.value;
+    u6Rate = latestValue(rows);
+    u6Rate3mChange = calculateMonthlyDelta(rows, 3);
+    u6UpdatedAt = latestDateIso(rows);
+    status.u6 = 'live';
+  } else if (Number.isFinite(fallback.u6Rate)) {
+    u6Rate = fallback.u6Rate;
+    u6Rate3mChange = fallback.u6Rate3mChange;
+    u6UpdatedAt = fallback.u6UpdatedAt;
+    status.u6 = 'fallback';
+  }
+
+  const industryDiffusion = calculateIndustryPayrollDiffusion(industryResults);
+  if (Number.isFinite(industryDiffusion.industryPayrollDiffusionPct)) {
+    industryPayrollDiffusionPct = industryDiffusion.industryPayrollDiffusionPct;
+    industryPayrollPositiveCount = industryDiffusion.industryPayrollPositiveCount;
+    industryPayrollSeriesCount = industryDiffusion.industryPayrollSeriesCount;
+    industryPayrollUpdatedAt = industryDiffusion.industryPayrollUpdatedAt;
+    status.industryPayroll = 'live';
+  } else if (Number.isFinite(fallback.industryPayrollDiffusionPct)) {
+    industryPayrollDiffusionPct = fallback.industryPayrollDiffusionPct;
+    industryPayrollPositiveCount = fallback.industryPayrollPositiveCount;
+    industryPayrollSeriesCount = fallback.industryPayrollSeriesCount;
+    industryPayrollUpdatedAt = fallback.industryPayrollUpdatedAt;
+    status.industryPayroll = 'fallback';
+  }
+
   return {
     initialClaims: Number.isFinite(initialClaims) ? initialClaims : null,
     initialClaims4wAverage: Number.isFinite(initialClaims4wAverage) ? +initialClaims4wAverage.toFixed(0) : null,
@@ -2606,12 +5180,31 @@ async function resolveEmploymentBreadth(prevEmployment) {
     joltsOpenings: Number.isFinite(joltsOpenings) ? joltsOpenings : null,
     joltsOpeningsYoY: Number.isFinite(joltsOpeningsYoY) ? joltsOpeningsYoY : null,
     joltsUpdatedAt,
+    averageHourlyEarnings: Number.isFinite(averageHourlyEarnings) ? +averageHourlyEarnings.toFixed(2) : null,
+    averageHourlyEarningsYoY: Number.isFinite(averageHourlyEarningsYoY) ? averageHourlyEarningsYoY : null,
+    averageHourlyEarningsUpdatedAt,
+    u6Rate: Number.isFinite(u6Rate) ? +u6Rate.toFixed(1) : null,
+    u6Rate3mChange: Number.isFinite(u6Rate3mChange) ? u6Rate3mChange : null,
+    u6UpdatedAt,
+    industryPayrollDiffusionPct: Number.isFinite(industryPayrollDiffusionPct) ? industryPayrollDiffusionPct : null,
+    industryPayrollPositiveCount: Number.isFinite(industryPayrollPositiveCount) ? industryPayrollPositiveCount : null,
+    industryPayrollSeriesCount: Number.isFinite(industryPayrollSeriesCount) ? industryPayrollSeriesCount : null,
+    industryPayrollUpdatedAt,
     claimsRegime: classifyClaimsRegime(initialClaims4wAverage, initialClaims4wChange),
     joltsRegime: classifyJoltsRegime(joltsOpenings, joltsOpeningsYoY),
+    laborQualityRegime: classifyLaborQualityRegime(averageHourlyEarningsYoY, u6Rate3mChange, industryPayrollDiffusionPct),
+    industryDiffusionRegime: classifyIndustryDiffusionRegime(industryPayrollDiffusionPct),
     sourceStatus: status,
-    updatedAt: latestIsoDate(initialClaimsUpdatedAt, continuingClaimsUpdatedAt, joltsUpdatedAt),
-    source: 'FRED:ICSA; FRED:CCSA; FRED:JTSJOL',
-    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS 为月频，发布滞后约 6 周；audit-only / display-only。']
+    updatedAt: latestIsoDate(
+      initialClaimsUpdatedAt,
+      continuingClaimsUpdatedAt,
+      joltsUpdatedAt,
+      averageHourlyEarningsUpdatedAt,
+      u6UpdatedAt,
+      industryPayrollUpdatedAt
+    ),
+    source: EMPLOYMENT_SOURCE,
+    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS、AHE、U-6 与行业 payroll basket 为月频；audit-only / display-only。']
   };
 }
 
@@ -2619,7 +5212,10 @@ async function resolveConsumerRetail(prevConsumerRetail) {
   const fallback = normalizePreviousConsumerRetail(prevConsumerRetail);
   const status = {
     carts: 'missing',
-    cartsr: 'missing'
+    cartsr: 'missing',
+    retailSegments: 'missing',
+    bofaConsumerCheckpoint: 'missing',
+    redbookPublicHtml: 'missing'
   };
   let cartsNominal = null;
   let cartsNominal4wAverage = null;
@@ -2629,10 +5225,15 @@ async function resolveConsumerRetail(prevConsumerRetail) {
   let cartsReal4wAverage = null;
   let cartsRealYoY = null;
   let cartsRealUpdatedAt = null;
+  let bofaData = null;
+  let redbookData = null;
 
-  const [cartsResult, cartsrResult] = await Promise.allSettled([
+  const [cartsResult, cartsrResult, bofaResult, redbookResult, ...segmentResults] = await Promise.allSettled([
     fetchFredSeries('CARTS', 1500),
-    fetchFredSeries('CARTSR', 1500)
+    fetchFredSeries('CARTSR', 1500),
+    fetchBofaConsumerCheckpoint(),
+    fetchTradingEconomicsRedbookIndex(),
+    ...CONSUMER_RETAIL_SEGMENT_SERIES.map((series) => fetchFredSeries(series.id, 1500))
   ]);
 
   if (cartsResult.status === 'fulfilled') {
@@ -2665,6 +5266,59 @@ async function resolveConsumerRetail(prevConsumerRetail) {
     status.cartsr = 'fallback';
   }
 
+  const segmentSnapshot = calculateRetailSegmentSnapshot(segmentResults);
+  let retailSegments = segmentSnapshot.segments;
+  let segmentPositiveCount = segmentSnapshot.segmentPositiveCount;
+  let segmentSeriesCount = segmentSnapshot.segmentSeriesCount;
+  let segmentDiffusionPct = segmentSnapshot.segmentDiffusionPct;
+  let strongestSegment = segmentSnapshot.strongestSegment;
+  let weakestSegment = segmentSnapshot.weakestSegment;
+  let segmentUpdatedAt = segmentSnapshot.segmentUpdatedAt;
+  if (Number.isFinite(segmentDiffusionPct)) {
+    status.retailSegments = 'live';
+  } else if (Number.isFinite(fallback.segmentDiffusionPct)) {
+    retailSegments = fallback.retailSegments;
+    segmentPositiveCount = fallback.segmentPositiveCount;
+    segmentSeriesCount = fallback.segmentSeriesCount;
+    segmentDiffusionPct = fallback.segmentDiffusionPct;
+    strongestSegment = fallback.strongestSegment;
+    weakestSegment = fallback.weakestSegment;
+    segmentUpdatedAt = fallback.segmentUpdatedAt;
+    status.retailSegments = 'fallback';
+  }
+
+  if (bofaResult.status === 'fulfilled') {
+    bofaData = bofaResult.value;
+    status.bofaConsumerCheckpoint = 'live';
+  } else if (Number.isFinite(fallback.bofaCardSpendingYoY) || Number.isFinite(fallback.bofaCardSpendingExGasYoY)) {
+    bofaData = {
+      bofaCardSpendingYoY: fallback.bofaCardSpendingYoY,
+      bofaCardSpendingPriorYoY: fallback.bofaCardSpendingPriorYoY,
+      bofaCardSpendingExGasYoY: fallback.bofaCardSpendingExGasYoY,
+      bofaReportDate: fallback.bofaReportDate,
+      bofaReportUrl: fallback.bofaReportUrl,
+      bofaPdfUrl: fallback.bofaPdfUrl,
+      bofaStatus: 'fallback',
+      bofaSummary: fallback.bofaSummary
+    };
+    status.bofaConsumerCheckpoint = 'fallback';
+  }
+
+  if (redbookResult.status === 'fulfilled') {
+    redbookData = redbookResult.value;
+    status.redbookPublicHtml = 'live';
+  } else if (Number.isFinite(fallback.redbookRetailSalesYoY)) {
+    redbookData = {
+      redbookRetailSalesYoY: fallback.redbookRetailSalesYoY,
+      redbookHistoricalAverageYoY: fallback.redbookHistoricalAverageYoY,
+      redbookRetailSalesDate: fallback.redbookRetailSalesDate,
+      redbookReportUrl: fallback.redbookReportUrl,
+      redbookStatus: 'fallback',
+      redbookSummary: fallback.redbookSummary
+    };
+    status.redbookPublicHtml = 'fallback';
+  }
+
   return {
     cartsNominal: Number.isFinite(cartsNominal) ? cartsNominal : null,
     cartsNominal4wAverage: Number.isFinite(cartsNominal4wAverage) ? cartsNominal4wAverage : null,
@@ -2672,11 +5326,33 @@ async function resolveConsumerRetail(prevConsumerRetail) {
     cartsReal: Number.isFinite(cartsReal) ? cartsReal : null,
     cartsReal4wAverage: Number.isFinite(cartsReal4wAverage) ? cartsReal4wAverage : null,
     cartsRealYoY: Number.isFinite(cartsRealYoY) ? cartsRealYoY : null,
-    retailRegime: classifyRetailRegime(cartsRealYoY),
+    retailSegments,
+    segmentPositiveCount: Number.isFinite(segmentPositiveCount) ? segmentPositiveCount : null,
+    segmentSeriesCount: Number.isFinite(segmentSeriesCount) ? segmentSeriesCount : null,
+    segmentDiffusionPct: Number.isFinite(segmentDiffusionPct) ? segmentDiffusionPct : null,
+    segmentRegime: classifyRetailSegmentRegime(segmentDiffusionPct),
+    strongestSegment,
+    weakestSegment,
+    segmentUpdatedAt,
+    bofaCardSpendingYoY: Number.isFinite(bofaData?.bofaCardSpendingYoY) ? bofaData.bofaCardSpendingYoY : null,
+    bofaCardSpendingPriorYoY: Number.isFinite(bofaData?.bofaCardSpendingPriorYoY) ? bofaData.bofaCardSpendingPriorYoY : null,
+    bofaCardSpendingExGasYoY: Number.isFinite(bofaData?.bofaCardSpendingExGasYoY) ? bofaData.bofaCardSpendingExGasYoY : null,
+    bofaReportDate: typeof bofaData?.bofaReportDate === 'string' ? bofaData.bofaReportDate : null,
+    bofaReportUrl: typeof bofaData?.bofaReportUrl === 'string' ? bofaData.bofaReportUrl : null,
+    bofaPdfUrl: typeof bofaData?.bofaPdfUrl === 'string' ? bofaData.bofaPdfUrl : null,
+    bofaStatus: typeof bofaData?.bofaStatus === 'string' ? bofaData.bofaStatus : status.bofaConsumerCheckpoint,
+    bofaSummary: typeof bofaData?.bofaSummary === 'string' ? bofaData.bofaSummary : null,
+    redbookRetailSalesYoY: Number.isFinite(redbookData?.redbookRetailSalesYoY) ? redbookData.redbookRetailSalesYoY : null,
+    redbookHistoricalAverageYoY: Number.isFinite(redbookData?.redbookHistoricalAverageYoY) ? redbookData.redbookHistoricalAverageYoY : null,
+    redbookRetailSalesDate: typeof redbookData?.redbookRetailSalesDate === 'string' ? redbookData.redbookRetailSalesDate : null,
+    redbookReportUrl: typeof redbookData?.redbookReportUrl === 'string' ? redbookData.redbookReportUrl : null,
+    redbookStatus: typeof redbookData?.redbookStatus === 'string' ? redbookData.redbookStatus : status.redbookPublicHtml,
+    redbookSummary: typeof redbookData?.redbookSummary === 'string' ? redbookData.redbookSummary : null,
+    retailRegime: classifyRetailRegime(cartsRealYoY, redbookData?.redbookRetailSalesYoY),
     sourceStatus: status,
-    updatedAt: latestIsoDate(cartsNominalUpdatedAt, cartsRealUpdatedAt),
-    source: 'FRED:CARTS; FRED:CARTSR',
-    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast (不含汽车);CARTSR 为通胀调整实际值;audit-only / display-only;不代表 Redbook 或 BoA Card 数据。']
+    updatedAt: latestIsoDate(cartsNominalUpdatedAt, cartsRealUpdatedAt, segmentUpdatedAt, bofaData?.bofaReportDate, redbookData?.redbookRetailSalesDate),
+    source: CONSUMER_RETAIL_SOURCE,
+    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；BoA Consumer Checkpoint 与 Redbook public HTML 为第三方公开消费证据；audit-only / display-only。']
   };
 }
 
@@ -2687,7 +5363,12 @@ async function resolveCommercialRealEstate(prevCre) {
     chargeOff: 'missing',
     sloosNonfarmNonresidential: 'missing',
     sloosConstruction: 'missing',
-    sloosMultifamily: 'missing'
+    sloosMultifamily: 'missing',
+    reitEtf: 'missing',
+    mortgageReitEtf: 'missing',
+    cmbsEtf: 'missing',
+    creLoanBalance: 'missing',
+    nonPublicCre: 'manual_required'
   };
   let creDelinquencyRate = null;
   let creDelinquencyRateQoQChange = null;
@@ -2701,19 +5382,41 @@ async function resolveCommercialRealEstate(prevCre) {
   let sloosCreConstructionUpdatedAt = null;
   let sloosCreMultifamilyTightening = null;
   let sloosCreMultifamilyUpdatedAt = null;
+  let reitEtfPrice = null;
+  let reitEtf4wChange = null;
+  let reitEtfUpdatedAt = null;
+  let mortgageReitEtfPrice = null;
+  let mortgageReitEtf4wChange = null;
+  let mortgageReitEtfUpdatedAt = null;
+  let cmbsEtfPrice = null;
+  let cmbsEtf4wChange = null;
+  let cmbsEtfUpdatedAt = null;
+  let creLoanBalance = null;
+  let creLoanBalance4wChange = null;
+  let creLoanBalanceYoY = null;
+  let creLoanBalanceUpdatedAt = null;
+  let creLoanBalanceStatus = 'missing';
 
   const [
     delinquencyResult,
     chargeOffResult,
     sloosNonfarmNonresidentialResult,
     sloosConstructionResult,
-    sloosMultifamilyResult
+    sloosMultifamilyResult,
+    creLoanBalanceResult,
+    reitEtfResult,
+    mortgageReitEtfResult,
+    cmbsEtfResult
   ] = await Promise.allSettled([
     fetchFredSeries('DRCRELEXFACBS', 13000),
     fetchFredSeries('CORCREXFACBS', 13000),
     fetchFredSeries('SUBLPDRCSN', 13000),
     fetchFredSeries('SUBLPDRCSC', 13000),
-    fetchFredSeries('SUBLPDRCSM', 13000)
+    fetchFredSeries('SUBLPDRCSM', 13000),
+    fetchFredSeries('CREACBW027SBOG', 760),
+    fetchYahooChartQuote('VNQ', '1mo', '1d'),
+    fetchYahooChartQuote('REM', '1mo', '1d'),
+    fetchYahooChartQuote('CMBS', '1mo', '1d')
   ]);
 
   if (delinquencyResult.status === 'fulfilled') {
@@ -2775,6 +5478,65 @@ async function resolveCommercialRealEstate(prevCre) {
     status.sloosMultifamily = 'fallback';
   }
 
+  if (creLoanBalanceResult.status === 'fulfilled') {
+    const rows = creLoanBalanceResult.value;
+    creLoanBalance = latestValue(rows);
+    const fourWeeksAgo = findValueAgo(rows, 28);
+    const yearAgo = findValueAgo(rows, 52 * 7);
+    creLoanBalance4wChange = Number.isFinite(creLoanBalance) && Number.isFinite(fourWeeksAgo) && fourWeeksAgo !== 0
+      ? +(((creLoanBalance - fourWeeksAgo) / fourWeeksAgo)).toFixed(4)
+      : null;
+    creLoanBalanceYoY = Number.isFinite(creLoanBalance) && Number.isFinite(yearAgo) && yearAgo !== 0
+      ? +(((creLoanBalance - yearAgo) / yearAgo)).toFixed(4)
+      : null;
+    creLoanBalanceUpdatedAt = latestDateIso(rows);
+    creLoanBalanceStatus = 'live';
+    status.creLoanBalance = 'live';
+  } else if (Number.isFinite(fallback.creLoanBalance)) {
+    creLoanBalance = fallback.creLoanBalance;
+    creLoanBalance4wChange = fallback.creLoanBalance4wChange;
+    creLoanBalanceYoY = fallback.creLoanBalanceYoY;
+    creLoanBalanceUpdatedAt = fallback.creLoanBalanceUpdatedAt;
+    creLoanBalanceStatus = 'fallback';
+    status.creLoanBalance = 'fallback';
+  }
+
+  if (reitEtfResult.status === 'fulfilled') {
+    reitEtfPrice = reitEtfResult.value.price;
+    reitEtf4wChange = reitEtfResult.value.changePct;
+    reitEtfUpdatedAt = reitEtfResult.value.updatedAt;
+    status.reitEtf = 'live';
+  } else if (Number.isFinite(fallback.reitEtfPrice)) {
+    reitEtfPrice = fallback.reitEtfPrice;
+    reitEtf4wChange = fallback.reitEtf4wChange;
+    reitEtfUpdatedAt = fallback.reitEtfUpdatedAt;
+    status.reitEtf = 'fallback';
+  }
+
+  if (mortgageReitEtfResult.status === 'fulfilled') {
+    mortgageReitEtfPrice = mortgageReitEtfResult.value.price;
+    mortgageReitEtf4wChange = mortgageReitEtfResult.value.changePct;
+    mortgageReitEtfUpdatedAt = mortgageReitEtfResult.value.updatedAt;
+    status.mortgageReitEtf = 'live';
+  } else if (Number.isFinite(fallback.mortgageReitEtfPrice)) {
+    mortgageReitEtfPrice = fallback.mortgageReitEtfPrice;
+    mortgageReitEtf4wChange = fallback.mortgageReitEtf4wChange;
+    mortgageReitEtfUpdatedAt = fallback.mortgageReitEtfUpdatedAt;
+    status.mortgageReitEtf = 'fallback';
+  }
+
+  if (cmbsEtfResult.status === 'fulfilled') {
+    cmbsEtfPrice = cmbsEtfResult.value.price;
+    cmbsEtf4wChange = cmbsEtfResult.value.changePct;
+    cmbsEtfUpdatedAt = cmbsEtfResult.value.updatedAt;
+    status.cmbsEtf = 'live';
+  } else if (Number.isFinite(fallback.cmbsEtfPrice)) {
+    cmbsEtfPrice = fallback.cmbsEtfPrice;
+    cmbsEtf4wChange = fallback.cmbsEtf4wChange;
+    cmbsEtfUpdatedAt = fallback.cmbsEtfUpdatedAt;
+    status.cmbsEtf = 'fallback';
+  }
+
   const sloosValues = [
     sloosCreNonfarmNonresidentialTightening,
     sloosCreConstructionTightening,
@@ -2791,6 +5553,22 @@ async function resolveCommercialRealEstate(prevCre) {
     sloosCreConstructionTightening: Number.isFinite(sloosCreConstructionTightening) ? +sloosCreConstructionTightening.toFixed(3) : null,
     sloosCreMultifamilyTightening: Number.isFinite(sloosCreMultifamilyTightening) ? +sloosCreMultifamilyTightening.toFixed(3) : null,
     sloosCreTighteningMax,
+    reitEtfPrice: Number.isFinite(reitEtfPrice) ? reitEtfPrice : null,
+    reitEtf4wChange: Number.isFinite(reitEtf4wChange) ? reitEtf4wChange : null,
+    reitEtfUpdatedAt,
+    mortgageReitEtfPrice: Number.isFinite(mortgageReitEtfPrice) ? mortgageReitEtfPrice : null,
+    mortgageReitEtf4wChange: Number.isFinite(mortgageReitEtf4wChange) ? mortgageReitEtf4wChange : null,
+    mortgageReitEtfUpdatedAt,
+    cmbsEtfPrice: Number.isFinite(cmbsEtfPrice) ? cmbsEtfPrice : null,
+    cmbsEtf4wChange: Number.isFinite(cmbsEtf4wChange) ? cmbsEtf4wChange : null,
+    cmbsEtfUpdatedAt,
+    creLoanBalance: Number.isFinite(creLoanBalance) ? +creLoanBalance.toFixed(4) : null,
+    creLoanBalance4wChange: Number.isFinite(creLoanBalance4wChange) ? creLoanBalance4wChange : null,
+    creLoanBalanceYoY: Number.isFinite(creLoanBalanceYoY) ? creLoanBalanceYoY : null,
+    creLoanBalanceUpdatedAt,
+    creLoanBalanceStatus,
+    crePublicMarketProxyRegime: classifyCrePublicMarketProxyRegime(reitEtf4wChange, mortgageReitEtf4wChange, cmbsEtf4wChange),
+    nonPublicCreStatus: 'manual_required',
     creStressRegime: classifyCreStressRegime(creDelinquencyRate, creChargeOffRate, sloosCreTighteningMax),
     sourceStatus: status,
     updatedAt: latestIsoDate(
@@ -2798,12 +5576,16 @@ async function resolveCommercialRealEstate(prevCre) {
       creChargeOffUpdatedAt,
       sloosCreNonfarmNonresidentialUpdatedAt,
       sloosCreConstructionUpdatedAt,
-      sloosCreMultifamilyUpdatedAt
+      sloosCreMultifamilyUpdatedAt,
+      creLoanBalanceUpdatedAt,
+      reitEtfUpdatedAt,
+      mortgageReitEtfUpdatedAt,
+      cmbsEtfUpdatedAt
     ),
-    source: 'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM',
+    source: CRE_PUBLIC_MARKET_PROXY_SOURCE,
     notes: [
       'CRE delinquency / charge-off / SLOOS CRE tightening (3 子类) 为 FRED 季频公开数据;observation date 为季度起始日;audit-only / display-only。',
-      '不代表 CDX HY/IG 或 私募信贷 (Cliffwater / PitchBook / Preqin) 数据。'
+      'FRED CREACBW027SBOG 为周频银行 CRE loan balance aggregate exposure proxy;VNQ / REM / CMBS 为公开市场代理,均不代表非公开 CRE loan tape 或私募信用 marks。'
     ]
   };
 }
@@ -2812,25 +5594,39 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   const prevMd = prev?.macroDrivers || {};
   const results = await Promise.allSettled([
     resolveFedLiquidity(prevMd.fedLiquidity),
+    resolvePolicyExpectations(prevMd.policyExpectations),
     resolveCurve(prevMd.curve),
     resolveCredit(prevMd.credit, hyOasLive),
     resolveConsumerSentiment(prevMd.consumer),
+    resolveShippingFreight(prevMd.shippingFreight),
     resolveEmploymentBreadth(prevMd.employment),
     resolveConsumerRetail(prevMd.consumerRetail),
-    resolveCommercialRealEstate(prevMd.commercialRealEstate)
+    resolveCommercialRealEstate(prevMd.commercialRealEstate),
+    resolvePrivateCreditProxy(prevMd.privateCreditProxy, hyOasLive)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
     walcl: null, walcl4wChange: null, onRrp: null, onRrpWeekChange: null,
     effectiveFedFundsRate: null, sofr: null, reserveBalances: null, reserveBalances4wChange: null,
+    bgcr: null, tgcr: null, bgcrUpdatedAt: null, tgcrUpdatedAt: null, repoRatesSource: null,
+    bgcrSofrSpread: null, tgcrSofrSpread: null, repoSpreadRegime: '未知',
     regime: '未知', onRrpLevel: '未知', pressure: 0,
-    sourceStatus: { walcl: 'missing', onRrp: 'missing', effectiveFedFundsRate: 'missing', sofr: 'missing', reserveBalances: 'missing' }
+    sourceStatus: {
+      walcl: 'missing',
+      onRrp: 'missing',
+      effectiveFedFundsRate: 'missing',
+      sofr: 'missing',
+      reserveBalances: 'missing',
+      bgcr: 'missing',
+      tgcr: 'missing'
+    }
   };
-  const curve = results[1].status === 'fulfilled' ? results[1].value : {
+  const policyExpectations = results[1].status === 'fulfilled' ? results[1].value : buildMissingPolicyExpectations();
+  const curve = results[2].status === 'fulfilled' ? results[2].value : {
     t10y2y: null, t10y2yWeekChange: null, regime: '未知', steepeningAlert: false,
     sourceStatus: { t10y2y: 'missing' }
   };
-  const credit = results[2].status === 'fulfilled' ? results[2].value : {
+  const credit = results[3].status === 'fulfilled' ? results[3].value : {
     igOas: null, igOas1dChange: null, igHyRatio: null, regime: '未知',
     sloosTighteningLargeFirms: null,
     sloosTighteningSmallFirms: null,
@@ -2842,12 +5638,25 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     nfciRegime: '未知',
     sourceStatus: { igOas: 'missing', sloos: 'missing', nfci: 'missing' }
   };
-  const consumer = results[3].status === 'fulfilled' ? results[3].value : buildMissingConsumer();
-  const employment = results[4].status === 'fulfilled' ? results[4].value : buildMissingEmployment();
-  const consumerRetail = results[5].status === 'fulfilled' ? results[5].value : buildMissingConsumerRetail();
-  const commercialRealEstate = results[6].status === 'fulfilled' ? results[6].value : buildMissingCommercialRealEstate();
+  const consumer = results[4].status === 'fulfilled' ? results[4].value : buildMissingConsumer();
+  const shippingFreight = results[5].status === 'fulfilled' ? results[5].value : buildMissingShippingFreight();
+  const employment = results[6].status === 'fulfilled' ? results[6].value : buildMissingEmployment();
+  const consumerRetail = results[7].status === 'fulfilled' ? results[7].value : buildMissingConsumerRetail();
+  const commercialRealEstate = results[8].status === 'fulfilled' ? results[8].value : buildMissingCommercialRealEstate();
+  const privateCreditProxy = results[9].status === 'fulfilled' ? results[9].value : buildMissingPrivateCreditProxy();
 
-  return { fedLiquidity, curve, credit, consumer, employment, consumerRetail, commercialRealEstate };
+  return {
+    fedLiquidity,
+    policyExpectations,
+    curve,
+    credit,
+    consumer,
+    shippingFreight,
+    employment,
+    consumerRetail,
+    commercialRealEstate,
+    privateCreditProxy
+  };
 }
 
 // 判断结构信号数据源是否"全不可用"
@@ -3511,12 +6320,22 @@ async function build() {
     macroDrivers,
     confidenceScore
   });
-  const ulsdData = await resolveUlsd(prevData?.brentPricingLayer);
+  const [ulsdData, brentFuturesCurve, brentFuturesPriceCurve, iceBrentFuturesPriceCurve, eiaBrentSpotProxy] = await Promise.all([
+    resolveUlsd(prevData?.brentPricingLayer),
+    resolveBrentFuturesCurve(prevData?.brentPricingLayer),
+    resolveBrentFuturesPriceCurve(prevData?.brentPricingLayer),
+    resolveIceBrentFuturesPriceCurve(prevData?.brentPricingLayer),
+    resolveEiaBrentSpotProxy(prevData?.brentPricingLayer)
+  ]);
   const brentPricingLayer = buildBrentPricingLayer({
     realtimePayload: realtime,
     displayInputsBaseline,
     dailyRealtimeInput: buildDailyRealtimeInput(realtime),
-    ulsdData
+    ulsdData,
+    futuresCurveData: brentFuturesCurve,
+    futuresPriceCurveData: brentFuturesPriceCurve,
+    iceFuturesPriceCurveData: iceBrentFuturesPriceCurve,
+    eiaBrentSpotProxyData: eiaBrentSpotProxy
   });
 
   const data = {
@@ -3558,15 +6377,18 @@ async function build() {
     ],
     macroDrivers: {
       fedLiquidity: macroDrivers.fedLiquidity,
+      policyExpectations: macroDrivers.policyExpectations,
       curve: macroDrivers.curve,
       credit: {
         ...macroDrivers.credit,
         hyOas: Number.isFinite(hyOasLive) ? hyOasLive : null
       },
       consumer: macroDrivers.consumer,
+      shippingFreight: macroDrivers.shippingFreight,
       employment: macroDrivers.employment,
       consumerRetail: macroDrivers.consumerRetail,
       commercialRealEstate: macroDrivers.commercialRealEstate,
+      privateCreditProxy: macroDrivers.privateCreditProxy,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

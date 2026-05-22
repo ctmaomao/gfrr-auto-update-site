@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-72V';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-72V';
-import { renderList } from './renderTables.js?v=28.0M-72V';
+import { $, fmtNumSafe, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-87V';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-87V';
+import { renderList } from './renderTables.js?v=28.0M-87V';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0M-72V';
+} from './renderCharts.js?v=28.0M-87V';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0M-72V';
+} from './renderTables.js?v=28.0M-87V';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0M-72V';
+} from './renderAudit.js?v=28.0M-87V';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -874,6 +874,8 @@ export function renderDivergenceLayer(divergenceLayer) {
 }
 
 function formatBrentValue(value, digits = 2) {
+  if (value === null || value === void 0) return '--';
+  if (typeof value === 'string' && value.trim() === '') return '--';
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric.toFixed(digits) : '--';
 }
@@ -927,6 +929,47 @@ function formatBrentPriceNode(node = {}) {
   const status = formatBrentStatus(node.status);
   const label = safeText(node.labelZh, '公开代理');
   return `${label}：${value} / 来源 ${source} / 状态 ${status}`;
+}
+
+function formatEiaBrentSpotProxy(proxy = {}) {
+  if (!proxy || typeof proxy !== 'object') return 'EIA Brent Spot Price FOB：待确认';
+  const status = safeText(proxy.sourceStatus, 'missing');
+  const dailyChange = Number.isFinite(Number(proxy.dailyChange)) ? formatBrentValue(proxy.dailyChange) : '--';
+  const updatedAt = safeText(proxy.updatedAt, '--').slice(0, 10);
+  return `EIA Brent Spot Price FOB：${formatBrentValue(proxy.price)}；日变化 ${dailyChange}；vintage ${updatedAt}；status=${status}`;
+}
+
+function formatBrentFuturesCurve(curve = {}) {
+  if (!curve || typeof curve !== 'object') return 'ICE 合约结构：待确认';
+  const status = safeText(curve.curveStatus, 'missing');
+  const contracts = safeArray(curve.contracts)
+    .filter((contract) => contract && typeof contract === 'object')
+    .slice(0, 4)
+    .map((contract) => `${safeText(contract.contract, '--')}(${safeText(contract.lastTrade, '--').slice(0, 10)})`);
+  if (!contracts.length) return `ICE 合约结构：${status}`;
+  return `ICE futuresCurve structure-only：${contracts.join(' / ')}；status=${status}`;
+}
+
+function formatBrentFuturesPriceCurve(curve = {}) {
+  if (!curve || typeof curve !== 'object') return 'Yahoo priced futures proxy：待确认';
+  const status = safeText(curve.curveStatus, 'missing');
+  const contracts = safeArray(curve.contracts)
+    .filter((contract) => contract && typeof contract === 'object')
+    .slice(0, 5)
+    .map((contract) => `${safeText(contract.contractMonth, '--')} ${formatBrentValue(contract.price, 2)}`);
+  if (!contracts.length) return `Yahoo priced futures proxy：${status}`;
+  return `Yahoo priced futures proxy：${contracts.join(' / ')}；front-back ${formatBrentValue(curve.frontMinusBack, 2)}；slope=${safeText(curve.slopeRegime, '未知')}；status=${status}`;
+}
+
+function formatIceBrentFuturesPriceCurve(curve = {}) {
+  if (!curve || typeof curve !== 'object') return 'ICE public delayed price curve：待确认';
+  const status = safeText(curve.curveStatus, 'missing');
+  const contracts = safeArray(curve.contracts)
+    .filter((contract) => contract && typeof contract === 'object')
+    .slice(0, 5)
+    .map((contract) => `${safeText(contract.contract, '--')} ${formatBrentValue(contract.price, 2)}`);
+  if (!contracts.length) return `ICE public delayed price curve：${status}`;
+  return `ICE public delayed price curve：${contracts.join(' / ')}；front-back ${formatBrentValue(curve.frontMinusBack, 2)}；slope=${safeText(curve.slopeRegime, '未知')}；status=${status}`;
 }
 
 function formatBrentConfidence(confidence = {}) {
@@ -1008,13 +1051,19 @@ export function renderBrentPricingLayer(brentPricingLayer) {
   setTextIfPresent('brent-selected-observed', `时间：${safeText(selected.observedAt, '--')}`);
   setTextIfPresent('brent-selected-note', selected.noteZh);
 
-  setTextIfPresent('brent-spot-proxy', formatBrentPriceNode(brentPricingLayer.publicSpotProxy || {}));
-  setTextIfPresent('brent-futures-proxy', formatBrentPriceNode(brentPricingLayer.futuresProxy || {}));
+  setTextIfPresent(
+    'brent-spot-proxy',
+    `${formatBrentPriceNode(brentPricingLayer.publicSpotProxy || {})}；${formatEiaBrentSpotProxy(brentPricingLayer.eiaBrentSpotProxy || {})}`
+  );
+  setTextIfPresent(
+    'brent-futures-proxy',
+    `${formatBrentPriceNode(brentPricingLayer.futuresProxy || {})}；${formatBrentFuturesCurve(brentPricingLayer.futuresCurve || {})}；${formatIceBrentFuturesPriceCurve(brentPricingLayer.iceFuturesPriceCurve || {})}；${formatBrentFuturesPriceCurve(brentPricingLayer.futuresPriceCurve || {})}`
+  );
 
   const spread = brentPricingLayer.proxySpread && typeof brentPricingLayer.proxySpread === 'object' ? brentPricingLayer.proxySpread : {};
   setTextIfPresent(
     'brent-proxy-spread',
-    `现货-期货：${formatBrentValue(spread.spotMinusFutures)}；主值-期货：${formatBrentValue(spread.selectedMinusFutures)}；最大代理背离：${formatBrentValue(spread.maxProxyDivergencePct)}%；状态：${safeText(spread.statusZh, '暂不足以判断')}。${safeText(spread.interpretationZh, '')}`
+    `现货-期货：${formatBrentValue(spread.spotMinusFutures)}；主值-期货：${formatBrentValue(spread.selectedMinusFutures)}；最大代理背离：${formatBrentValue(spread.maxProxyDivergencePct)}%；ULSD：${formatBrentValue(brentPricingLayer.ulsdPrice, 3)}；ULSD 4周变化：${formatBrentValue(brentPricingLayer.ulsd4wChange, 3)}；crack spread 4周变化：${formatBrentValue(brentPricingLayer.crackSpread4wChange)}；状态：${safeText(spread.statusZh, '暂不足以判断')}。${safeText(spread.interpretationZh, '')}`
   );
 
   const audit = brentPricingLayer.promotionAudit && typeof brentPricingLayer.promotionAudit === 'object' ? brentPricingLayer.promotionAudit : {};

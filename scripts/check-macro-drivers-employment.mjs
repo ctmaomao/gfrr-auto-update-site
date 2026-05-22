@@ -30,7 +30,9 @@ const employment = radarData?.macroDrivers?.employment;
 const sourceStatuses = new Set(['live', 'fallback', 'missing']);
 const claimsRegimes = new Set(['明显走弱', '走弱', '稳定', '改善', '未知']);
 const joltsRegimes = new Set(['紧张', '平衡', '宽松', '走弱', '未知']);
-const expectedSource = 'FRED:ICSA; FRED:CCSA; FRED:JTSJOL';
+const laborQualityRegimes = new Set(['工资韧性', '扩散改善', '降温', '平衡', '未知']);
+const industryDiffusionRegimes = new Set(['广泛扩张', '温和扩张', '分化', '收缩扩散', '未知']);
+const expectedSource = 'FRED:ICSA; FRED:CCSA; FRED:JTSJOL; FRED:CES0500000003; FRED:U6RATE; FRED:industry-payroll-basket';
 
 if (!employment || typeof employment !== 'object' || Array.isArray(employment)) {
   fail('macroDrivers.employment is missing or not an object');
@@ -44,8 +46,20 @@ if (!employment || typeof employment !== 'object' || Array.isArray(employment)) 
     'joltsOpenings',
     'joltsOpeningsYoY',
     'joltsUpdatedAt',
+    'averageHourlyEarnings',
+    'averageHourlyEarningsYoY',
+    'averageHourlyEarningsUpdatedAt',
+    'u6Rate',
+    'u6Rate3mChange',
+    'u6UpdatedAt',
+    'industryPayrollDiffusionPct',
+    'industryPayrollPositiveCount',
+    'industryPayrollSeriesCount',
+    'industryPayrollUpdatedAt',
     'claimsRegime',
     'joltsRegime',
+    'laborQualityRegime',
+    'industryDiffusionRegime',
     'sourceStatus',
     'updatedAt',
     'source',
@@ -64,7 +78,14 @@ if (!employment || typeof employment !== 'object' || Array.isArray(employment)) 
     'continuingClaims',
     'continuingClaims4wAverage',
     'joltsOpenings',
-    'joltsOpeningsYoY'
+    'joltsOpeningsYoY',
+    'averageHourlyEarnings',
+    'averageHourlyEarningsYoY',
+    'u6Rate',
+    'u6Rate3mChange',
+    'industryPayrollDiffusionPct',
+    'industryPayrollPositiveCount',
+    'industryPayrollSeriesCount'
   ]) {
     if (field in employment && !isFiniteNumberOrNull(employment[field])) {
       fail(`macroDrivers.employment.${field} must be finite number or null`);
@@ -77,11 +98,17 @@ if (!employment || typeof employment !== 'object' || Array.isArray(employment)) 
   if (!joltsRegimes.has(employment.joltsRegime)) {
     fail(`macroDrivers.employment.joltsRegime must be one of ${[...joltsRegimes].join('/')}`);
   }
+  if (!laborQualityRegimes.has(employment.laborQualityRegime)) {
+    fail(`macroDrivers.employment.laborQualityRegime must be one of ${[...laborQualityRegimes].join('/')}`);
+  }
+  if (!industryDiffusionRegimes.has(employment.industryDiffusionRegime)) {
+    fail(`macroDrivers.employment.industryDiffusionRegime must be one of ${[...industryDiffusionRegimes].join('/')}`);
+  }
 
   if (!employment.sourceStatus || typeof employment.sourceStatus !== 'object' || Array.isArray(employment.sourceStatus)) {
     fail('macroDrivers.employment.sourceStatus must be an object');
   } else {
-    for (const key of ['icsa', 'ccsa', 'jtsjol']) {
+    for (const key of ['icsa', 'ccsa', 'jtsjol', 'ahe', 'u6', 'industryPayroll']) {
       if (!sourceStatuses.has(employment.sourceStatus[key])) {
         fail(`macroDrivers.employment.sourceStatus.${key} must be live/fallback/missing`);
       }
@@ -94,21 +121,35 @@ if (!employment || typeof employment !== 'object' || Array.isArray(employment)) 
   if (!Array.isArray(employment.notes) || employment.notes.some((note) => typeof note !== 'string')) {
     fail('macroDrivers.employment.notes must be a string array');
   }
-  for (const field of ['updatedAt', 'joltsUpdatedAt']) {
+  for (const field of ['updatedAt', 'joltsUpdatedAt', 'averageHourlyEarningsUpdatedAt', 'u6UpdatedAt', 'industryPayrollUpdatedAt']) {
     if (employment[field] !== null && (!employment[field] || !Number.isFinite(Date.parse(employment[field])))) {
       fail(`macroDrivers.employment.${field} must be null or parseable ISO string`);
     }
+  }
+  if (Number.isFinite(employment.industryPayrollDiffusionPct)
+      && (employment.industryPayrollDiffusionPct < 0 || employment.industryPayrollDiffusionPct > 100)) {
+    fail('macroDrivers.employment.industryPayrollDiffusionPct must be 0-100');
+  }
+  if (Number.isFinite(employment.industryPayrollPositiveCount)
+      && Number.isFinite(employment.industryPayrollSeriesCount)
+      && employment.industryPayrollPositiveCount > employment.industryPayrollSeriesCount) {
+    fail('macroDrivers.employment industry positive count cannot exceed series count');
   }
 }
 
 const requiredRunDailyMarkers = [
   'function classifyClaimsRegime(initialClaims4wAverage, initialClaims4wChange)',
   'function classifyJoltsRegime(joltsOpenings, joltsOpeningsYoY)',
+  'function classifyLaborQualityRegime(averageHourlyEarningsYoY, u6Rate3mChange, industryPayrollDiffusionPct)',
+  'function calculateIndustryPayrollDiffusion(seriesResults)',
   'async function resolveEmploymentBreadth(prevEmployment)',
   "fetchFredSeries('ICSA', 420)",
   "fetchFredSeries('CCSA', 420)",
   "fetchFredSeries('JTSJOL', 1500)",
-  "source: 'FRED:ICSA; FRED:CCSA; FRED:JTSJOL'",
+  "fetchFredSeries('CES0500000003', 1500)",
+  "fetchFredSeries('U6RATE', 1500)",
+  'EMPLOYMENT_INDUSTRY_PAYROLL_SERIES',
+  'source: EMPLOYMENT_SOURCE',
   'employment: macroDrivers.employment'
 ];
 for (const marker of requiredRunDailyMarkers) {
@@ -119,8 +160,10 @@ for (const marker of requiredRunDailyMarkers) {
 
 const requiredRenderMarkers = [
   "id: 'driver-employment'",
-  '就业广度 LABOR BREADTH',
+  '就业质量与广度 LABOR QUALITY',
   'JOLTS:',
+  '平均时薪',
+  '行业就业扩散',
   'Claims 是周频裁员压力代理'
 ];
 for (const marker of requiredRenderMarkers) {
@@ -134,8 +177,12 @@ const requiredContractMarkers = [
   'FRED:ICSA',
   'FRED:CCSA',
   'FRED:JTSJOL',
+  'FRED:CES0500000003',
+  'FRED:U6RATE',
   'initialClaims4wAverage',
   'joltsOpeningsYoY',
+  'averageHourlyEarningsYoY',
+  'industryPayrollDiffusionPct',
   'sourceStatus.icsa',
   'audit-only / display-only',
   '不参与 scoring、decisionModel、executionLock 或 positionGuidance'
@@ -150,6 +197,8 @@ const requiredSourceMarkers = [
   '`ICSA`',
   '`CCSA`',
   '`JTSJOL`',
+  '`CES0500000003`',
+  '`U6RATE`',
   'macroDrivers.employment'
 ];
 for (const marker of requiredSourceMarkers) {
@@ -158,8 +207,10 @@ for (const marker of requiredSourceMarkers) {
   }
 }
 
-if (!agentsText.includes('macroDrivers.employment') || !agentsText.includes('FRED 周频/月频劳动力 evidence 层')) {
-  fail('AGENTS.md missing M-68 employment boundary note');
+if (!agentsText.includes('macroDrivers.employment')
+    || !agentsText.includes('FRED CES0500000003 平均时薪')
+    || !agentsText.includes('sourceStatus.{icsa,ccsa,jtsjol,ahe,u6,industryPayroll}')) {
+  fail('AGENTS.md missing M-73 employment boundary note');
 }
 
 // P2-10 回归守护:vintage formatter 不得对已含 T 后缀的 ISO 字符串再拼一次 T00:00:00Z
@@ -184,6 +235,8 @@ if (errors.length > 0) {
 console.log(
   `Macro drivers employment check: PASS (ICSA=${formatValue(employment.initialClaims)}, ` +
   `CCSA=${formatValue(employment.continuingClaims)}, JTSJOL=${formatValue(employment.joltsOpenings)}, ` +
+  `AHE=${formatValue(employment.averageHourlyEarnings)}, U6=${formatValue(employment.u6Rate)}, ` +
+  `industryDiffusion=${formatValue(employment.industryPayrollDiffusionPct)}, ` +
   `claimsRegime=${employment.claimsRegime}, joltsRegime=${employment.joltsRegime}, ` +
   `sourceStatus=${JSON.stringify(employment.sourceStatus)})`
 );

@@ -247,9 +247,9 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 
 `consumer_vs_asset_pricing` 的 `category` 为 `consumer_assets`。该 check 只能说明消费者信心与 S&P 500、VIX、HY OAS 之间是否存在观察性错配；不得写成实时交易信号，不得声称消费崩盘已确认，也不得改变任何仓位或交易建议。
 
-### `macroDrivers.employment` 就业广度 contract (v28.0M-68)
+### `macroDrivers.employment` 就业质量与广度 contract (v28.0M-68 / M-73)
 
-`macroDrivers.employment` 是 FRED 劳动力市场 evidence 层，汇总 ICSA / CCSA 周频失业金申请数据与 JTSJOL 月频职位空缺数据。所有字段为 audit-only / display-only，不参与 scoring、decisionModel、executionLock 或 positionGuidance；不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation matrix。
+`macroDrivers.employment` 是 FRED 劳动力市场 evidence 层，汇总 ICSA / CCSA 周频失业金申请、JTSJOL 月频职位空缺、CES0500000003 平均时薪、U6RATE 劳动力低利用率与公开行业 payroll basket 扩散代理。所有字段为 audit-only / display-only，不参与 scoring、decisionModel、executionLock 或 positionGuidance；不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation matrix。
 
 字段 contract：
 
@@ -263,29 +263,44 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 | `joltsOpenings` | number \| null | 人次 | FRED:JTSJOL（月频，约 6 周滞后） | 最新 JOLTS 职位空缺数；FRED 原始单位为 thousands，pipeline 存储时转换为人次 |
 | `joltsOpeningsYoY` | number \| null | 比例 | 派生 | JOLTS 相对 12 个月前同月变化率 |
 | `joltsUpdatedAt` | string \| null | ISO 8601 | JTSJOL 最新数据点日期 | 前端用于显示 JOLTS vintage，避免把月频滞后误读为实时数据 |
+| `averageHourlyEarnings` | number \| null | USD/hour | FRED:CES0500000003（月频） | Total private average hourly earnings，公开工资增速代理 |
+| `averageHourlyEarningsYoY` | number \| null | 比例 | 派生 | 平均时薪相对 12 个月前同月变化率 |
+| `averageHourlyEarningsUpdatedAt` | string \| null | ISO 8601 | CES0500000003 最新数据点日期 | 工资数据 vintage |
+| `u6Rate` | number \| null | % | FRED:U6RATE（月频） | U-6 劳动力低利用率 |
+| `u6Rate3mChange` | number \| null | pp | 派生 | U-6 相对 3 个月前变化 |
+| `u6UpdatedAt` | string \| null | ISO 8601 | U6RATE 最新数据点日期 | U-6 数据 vintage |
+| `industryPayrollDiffusionPct` | number \| null | % | FRED industry payroll basket | 公开行业 payroll series 中环比增加的比例 |
+| `industryPayrollPositiveCount` | number \| null | count | 派生 | 环比增加的行业 series 数量 |
+| `industryPayrollSeriesCount` | number \| null | count | 派生 | 本次有效参与扩散计算的行业 series 数量 |
+| `industryPayrollUpdatedAt` | string \| null | ISO 8601 | 行业 payroll basket 最新数据点日期 | 行业扩散 vintage |
 | `claimsRegime` | string enum | n/a | 派生 | `明显走弱` \| `走弱` \| `稳定` \| `改善` \| `未知` |
 | `joltsRegime` | string enum | n/a | 派生 | `紧张` \| `平衡` \| `宽松` \| `走弱` \| `未知` |
-| `sourceStatus` | object | n/a | 拉取状态 | `sourceStatus.icsa` / `sourceStatus.ccsa` / `sourceStatus.jtsjol` 每项为 `live` \| `fallback` \| `missing` |
-| `updatedAt` | string \| null | ISO 8601 | 三个 series 中最新观测日期 | employment 子树更新时间 |
-| `source` | string | n/a | 固定 | `FRED:ICSA; FRED:CCSA; FRED:JTSJOL` |
-| `notes` | string[] | n/a | 固定 | 说明 ICSA/CCSA 为 FRED SA 周频，JOLTS 为月频滞后数据，且本层只用于展示 |
+| `laborQualityRegime` | string enum | n/a | 派生 | `工资韧性` \| `扩散改善` \| `降温` \| `平衡` \| `未知` |
+| `industryDiffusionRegime` | string enum | n/a | 派生 | `广泛扩张` \| `温和扩张` \| `分化` \| `收缩扩散` \| `未知` |
+| `sourceStatus` | object | n/a | 拉取状态 | `sourceStatus.icsa` / `ccsa` / `jtsjol` / `ahe` / `u6` / `industryPayroll` 每项为 `live` \| `fallback` \| `missing` |
+| `updatedAt` | string \| null | ISO 8601 | 各 series 中最新观测日期 | employment 子树更新时间 |
+| `source` | string | n/a | 固定 | `FRED:ICSA; FRED:CCSA; FRED:JTSJOL; FRED:CES0500000003; FRED:U6RATE; FRED:industry-payroll-basket` |
+| `notes` | string[] | n/a | 固定 | 说明本层为周频/月频公开 FRED evidence，且只用于展示 |
 
 分类阈值：
 
 - `claimsRegime`: `initialClaims4wAverage >= 260000` 或 `initialClaims4wChange >= 25000` → `明显走弱`；`initialClaims4wAverage >= 230000` 或 `initialClaims4wChange >= 10000` → `走弱`；`initialClaims4wChange <= -10000` 且 `initialClaims4wAverage <= 225000` → `改善`；否则 `稳定`。
 - `joltsRegime`: `joltsOpenings >= 9000000` 或 `joltsOpeningsYoY >= 0.08` → `紧张`；`joltsOpenings < 6500000` 或 `joltsOpeningsYoY <= -0.12` → `走弱`；`joltsOpenings < 7200000` 或 `joltsOpeningsYoY < -0.04` → `宽松`；否则 `平衡`。
+- `industryDiffusionRegime`: `industryPayrollDiffusionPct >= 70` → `广泛扩张`；`>= 55` → `温和扩张`；`>= 40` → `分化`；`< 40` → `收缩扩散`；缺失时为 `未知`。
+- `laborQualityRegime`: U-6 三个月变化 `>= 0.4pp` 或行业扩散 `< 40%` → `降温`；工资 YoY `>= 4%` 且 U-6 未明显上行 → `工资韧性`；行业扩散 `>= 55%` 且 U-6 未明显上行 → `扩散改善`；否则 `平衡`。
 
 边界：
 
 - 本字段层不改变 `values.*`、scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
 - 本字段层不进入 `displayInputsBaseline` / `effectiveDisplayInputs`，前端只读 `data.macroDrivers.employment.*`。
 - 本字段层不进入 `divergenceLayer.checks[]` / cross-validation matrix，也不扩展 `AI_INTERPRETATION_EVIDENCE_LAYERS`。
-- 任一 FRED series 拉取失败必须逐 series 降级为 `fallback` 或 `missing`，不得伪造值，不得用非同义替代指标冒充 ICSA / CCSA / JTSJOL。
-- JTSJOL 为慢变量，前端必须展示 `joltsUpdatedAt` vintage，不得暗示它是实时就业信号。
+- 任一 FRED series 拉取失败必须逐 series 降级为 `fallback` 或 `missing`，不得伪造值，不得用非同义替代指标冒充 ICSA / CCSA / JTSJOL / AHE / U-6 / industry payroll basket。
+- JTSJOL、AHE、U-6 与行业 payroll basket 均为月频慢变量，前端必须展示或暗示 vintage/慢变量语义，不得暗示它们是实时就业信号。
+- 行业扩散只使用公开 FRED payroll basket 代理，不等于 BLS proprietary diffusion index 或职位质量明细。
 
-### `macroDrivers.consumerRetail` 高频零售消费 contract (v28.0M-69)
+### `macroDrivers.consumerRetail` 高频零售消费 contract (v28.0M-69 / M-74 / M-77 / M-79)
 
-`macroDrivers.consumerRetail` 是 Chicago Fed CARTS via FRED 的周频零售/消费 nowcast evidence 层，汇总名义与实际零售+餐饮销售（不含汽车）。所有字段为 audit-only / display-only，不参与 scoring、decisionModel、executionLock 或 positionGuidance；不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation matrix。
+`macroDrivers.consumerRetail` 是 Chicago Fed CARTS via FRED 的周频零售/消费 nowcast evidence 层，并在 M-74 增加 FRED MRTS 月频细分零售品类扩散，在 M-77 增加 Bank of America Institute Consumer Checkpoint 公开 HTML 摘要解析，在 M-79 增加 Trading Economics Redbook public HTML same-store sales YoY 摘要解析。所有字段为 audit-only / display-only，不参与 scoring、decisionModel、executionLock 或 positionGuidance；不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation matrix。
 
 字段 contract：
 
@@ -297,28 +312,43 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 | `cartsReal` | number \| null | USD billions | FRED:CARTSR（周频 SA） | Chicago Fed CARTS 实际（通胀调整后）零售+餐饮销售最新观测 |
 | `cartsReal4wAverage` | number \| null | USD billions | 派生 | CARTSR 最近 4 个观测点平均 |
 | `cartsRealYoY` | number \| null | 比例 (-1 至 +∞) | 派生 | CARTSR 相对 52 周前的 YoY 变化率 |
-| `retailRegime` | string enum | n/a | 派生（基于 cartsRealYoY） | `明显走弱` \| `走弱` \| `稳定` \| `改善` \| `强劲` \| `未知` |
-| `sourceStatus` | object | n/a | 拉取状态 | `sourceStatus.carts` / `sourceStatus.cartsr` 每项为 `live` \| `fallback` \| `missing` |
+| `retailSegments` | object[] | mixed | FRED:MRTS monthly retail trade segments | `MRTSSM441USN` 等 13 个细分零售品类，包含 `key` / `seriesId` / `labelZh` / `value` / `yoy` / `updatedAt` / `sourceStatus` |
+| `segmentDiffusionPct` | number \| null | % | 派生 | 13 个 MRTS 细分品类中 YoY 为正的比例 |
+| `segmentPositiveCount` / `segmentSeriesCount` | number \| null | count | 派生 | YoY 为正品类数 / 有效细分品类数 |
+| `segmentRegime` | string enum | n/a | 派生 | `广泛改善` \| `温和改善` \| `分化` \| `广泛走弱` \| `未知` |
+| `bofaCardSpendingYoY` | number \| null | ratio | BoA Consumer Checkpoint public HTML | Bank of America Institute card spending per household YoY |
+| `bofaCardSpendingPriorYoY` | number \| null | ratio | BoA Consumer Checkpoint public HTML | 同一 report 中上一月 YoY 对比 |
+| `bofaCardSpendingExGasYoY` | number \| null | ratio | BoA Consumer Checkpoint public HTML | Ex-gas card spending per household YoY |
+| `bofaReportDate` / `bofaReportUrl` / `bofaPdfUrl` | string \| null | ISO / URL | BoA Consumer Checkpoint | report 月份、HTML URL 与 PDF URL |
+| `bofaStatus` | string enum | n/a | 拉取状态 | `live` \| `fallback` \| `missing` |
+| `redbookRetailSalesYoY` | number \| null | ratio | TradingEconomics:Redbook-public-html | Redbook same-store sales YoY public HTML summary |
+| `redbookHistoricalAverageYoY` | number \| null | ratio | TradingEconomics:Redbook-public-html | Trading Economics page summary 中的长期均值 |
+| `redbookRetailSalesDate` / `redbookReportUrl` | string \| null | ISO / URL | TradingEconomics Redbook page | Redbook 周频观测日期与公开页面 URL |
+| `redbookStatus` | string enum | n/a | 拉取状态 | `live` \| `fallback` \| `missing` |
+| `retailRegime` | string enum | n/a | 派生（优先 cartsRealYoY，缺失时使用 redbookRetailSalesYoY） | `明显走弱` \| `走弱` \| `稳定` \| `改善` \| `强劲` \| `未知` |
+| `sourceStatus` | object | n/a | 拉取状态 | `sourceStatus.carts` / `sourceStatus.cartsr` / `sourceStatus.retailSegments` / `sourceStatus.bofaConsumerCheckpoint` / `sourceStatus.redbookPublicHtml` 每项为 `live` \| `fallback` \| `missing` |
 | `updatedAt` | string \| null | ISO 8601 | 两个 series 中最新观测日期 | consumerRetail 子树更新时间；前端必须显示 vintage |
-| `source` | string | n/a | 固定 | `FRED:CARTS; FRED:CARTSR` |
-| `notes` | string[] | n/a | 固定 | 必须包含 `不代表 Redbook 或 BoA Card 数据` 声明 |
+| `source` | string | n/a | 固定 | `FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html; TradingEconomics:Redbook-public-html` |
+| `notes` | string[] | n/a | 固定 | 必须说明 CARTS/CARTSR + MRTS + BoA Consumer Checkpoint + Redbook public HTML 均为 audit-only / display-only |
 
 分类阈值：
 
-- `retailRegime`: `cartsRealYoY <= -0.03` → `明显走弱`；`cartsRealYoY < 0` → `走弱`；`cartsRealYoY >= 0.06` → `强劲`；`cartsRealYoY >= 0.03` → `改善`；否则 `稳定`；缺失时为 `未知`。
+- `retailRegime`: 优先使用 `cartsRealYoY`；若缺失则使用 `redbookRetailSalesYoY`。`<= -0.03` → `明显走弱`；`< 0` → `走弱`；`>= 0.06` → `强劲`；`>= 0.03` → `改善`；否则 `稳定`；缺失时为 `未知`。
+- `segmentDiffusionPct`: `>= 70` → `广泛改善`；`>= 55` → `温和改善`；`>= 40` → `分化`；`< 40` → `广泛走弱`；缺失时为 `未知`。
 
 边界：
 
 - 本字段层不改变 `values.*`、scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
 - 本字段层不进入 `displayInputsBaseline` / `effectiveDisplayInputs`，前端只读 `data.macroDrivers.consumerRetail.*`。
 - 本字段层不进入 `divergenceLayer.checks[]` / cross-validation matrix，也不扩展 `AI_INTERPRETATION_EVIDENCE_LAYERS`。
-- 任一 FRED series 拉取失败必须逐 series 降级为 `fallback` 或 `missing`，不得伪造值，不得用月度 RSAFS / MARTSSM / PCE 冒充 CARTS / CARTSR。
+- 任一 FRED / public HTML source 拉取失败必须逐 source 降级为 `fallback` 或 `missing`，不得伪造值，不得用月度 RSAFS / PCE 冒充 CARTS / CARTSR；MRTS 细分品类只能作为月频结构观察，不得写成 Redbook raw feed / BoA raw card feed。
 - M-69 不接 `CARTSP` 价格指数；该价格 series 仅为 future scope，不能被本层前端或 validator 当作已接入数据。
-- `macroDrivers.consumerRetail` 不代表 Redbook 或 BoA Card 数据，字段名、notes 与前端文案不得暗示 CARTS 是 Redbook / BoA Card 的替代版本。
+- `macroDrivers.consumerRetail.redbookRetailSalesYoY` 只代表 Trading Economics public HTML 页面中的 Redbook same-store sales YoY 摘要，不代表 Redbook raw subscription feed、完整历史授权数据或 BoA raw card feed。
+- M-77 的 BoA Consumer Checkpoint 只解析公开 HTML 摘要中的 card spending per household YoY / ex-gas YoY；它不是 Redbook，也不是 BoA 原始卡明细或非公开 raw feed。
 
-### `macroDrivers.commercialRealEstate` 商业地产信用压力 contract (v28.0M-70)
+### `macroDrivers.commercialRealEstate` 商业地产信用压力 contract (v28.0M-70 / M-74 / M-80 / M-84)
 
-`macroDrivers.commercialRealEstate` 是 FRED 季频 CRE 信用压力 evidence 层，汇总商业地产贷款拖欠率、核销率与 SLOOS 三个 CRE 子类贷款标准收紧度。所有字段为 audit-only / display-only，不参与 scoring、decisionModel、executionLock 或 positionGuidance；不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation matrix。
+`macroDrivers.commercialRealEstate` 是 FRED 季频 CRE 信用压力 evidence 层，汇总商业地产贷款拖欠率、核销率与 SLOOS 三个 CRE 子类贷款标准收紧度；M-74 增加 Yahoo `VNQ` / `REM` 公开市场代理；M-80 增加 Yahoo `CMBS` commercial MBS ETF public proxy；M-84 增加 FRED `CREACBW027SBOG` 周频银行 CRE loan balance aggregate exposure proxy。所有字段为 audit-only / display-only，不参与 scoring、decisionModel、executionLock 或 positionGuidance；不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation matrix。
 
 字段 contract：
 
@@ -332,11 +362,21 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 | `sloosCreConstructionTightening` | number \| null | net % | FRED:SUBLPDRCSC（季频） | SLOOS 建设 / 土地开发 CRE 贷款标准净收紧 |
 | `sloosCreMultifamilyTightening` | number \| null | net % | FRED:SUBLPDRCSM（季频） | SLOOS multifamily CRE 贷款标准净收紧 |
 | `sloosCreTighteningMax` | number \| null | net % | 派生 | 三条 SLOOS CRE 子类中的最大净收紧值 |
+| `reitEtfPrice` / `reitEtf4wChange` | number \| null | price / ratio | Yahoo:VNQ | 公开 REIT ETF 代理的价格与 4 周变化 |
+| `mortgageReitEtfPrice` / `mortgageReitEtf4wChange` | number \| null | price / ratio | Yahoo:REM | mortgage REIT ETF 代理的价格与 4 周变化 |
+| `cmbsEtfPrice` / `cmbsEtf4wChange` | number \| null | price / ratio | Yahoo:CMBS | commercial mortgage-backed securities ETF public proxy 的价格与 4 周变化 |
+| `creLoanBalance` | number \| null | USD billions | FRED:CREACBW027SBOG（周频） | All commercial banks CRE loans aggregate exposure stock proxy |
+| `creLoanBalance4wChange` | number \| null | ratio | 派生 | `creLoanBalance` 相对约 4 周前变化 |
+| `creLoanBalanceYoY` | number \| null | ratio | 派生 | `creLoanBalance` 相对约 52 周前变化 |
+| `creLoanBalanceUpdatedAt` | string \| null | ISO 8601 | FRED:CREACBW027SBOG | 银行 CRE loan balance 最新 observation date |
+| `creLoanBalanceStatus` | string enum | n/a | 拉取状态 | `live` \| `fallback` \| `missing` \| `manual_required` |
+| `crePublicMarketProxyRegime` | string enum | n/a | 派生 | `市场压力上升` \| `观察` \| `平稳` \| `未知` |
+| `nonPublicCreStatus` | string enum | n/a | 固定 | `manual_required`，非公开 CRE loan tape / private marks 不从 runtime 抓取 |
 | `creStressRegime` | string enum | n/a | 派生 | `恶化` \| `紧绷` \| `稳定` \| `宽松` \| `改善` \| `未知` |
-| `sourceStatus` | object | n/a | 拉取状态 | `sourceStatus.delinquency` / `sourceStatus.chargeOff` / `sourceStatus.sloosNonfarmNonresidential` / `sourceStatus.sloosConstruction` / `sourceStatus.sloosMultifamily` 每项为 `live` \| `fallback` \| `missing` |
-| `updatedAt` | string \| null | ISO 8601 | 五个 series 中最新观测日期 | commercialRealEstate 子树更新时间；FRED 季频 observation date 为季度起始日 |
-| `source` | string | n/a | 固定 | `FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM` |
-| `notes` | string[] | n/a | 固定 | 必须包含 `不代表 CDX HY/IG 或 私募信贷 (Cliffwater / PitchBook / Preqin) 数据` 声明 |
+| `sourceStatus` | object | n/a | 拉取状态 | FRED 子项与 `reitEtf` / `mortgageReitEtf` / `cmbsEtf` / `creLoanBalance` 为 `live` \| `fallback` \| `missing`；`nonPublicCre` 固定 `manual_required` |
+| `updatedAt` | string \| null | ISO 8601 | 子源中最新观测日期 | commercialRealEstate 子树更新时间；FRED 季频 observation date 为季度起始日，`CREACBW027SBOG` 为周频 |
+| `source` | string | n/a | 固定 | `FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; FRED:CREACBW027SBOG; Yahoo:VNQ; Yahoo:REM; Yahoo:CMBS` |
+| `notes` | string[] | n/a | 固定 | 必须说明 `CREACBW027SBOG` 是 public aggregate exposure proxy，`VNQ` / `REM` / `CMBS` 是公开市场代理，不代表非公开 CRE loan tape 或 private marks |
 
 分类阈值：
 
@@ -348,9 +388,31 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 - 本字段层不进入 `displayInputsBaseline` / `effectiveDisplayInputs`，前端只读 `data.macroDrivers.commercialRealEstate.*`。
 - 本字段层不进入 `divergenceLayer.checks[]` / cross-validation matrix，也不扩展 `AI_INTERPRETATION_EVIDENCE_LAYERS`。
 - 本字段层不扩写 `macroDrivers.credit`；现有 credit 子树继续只覆盖 HY/IG cash-bond OAS、C&I SLOOS 与 NFCI。
-- 任一 FRED series 拉取失败必须逐 series 降级为 `fallback` 或 `missing`，不得伪造值，不得用 CDX、私募信贷或 CRE 余额存量 series 冒充 CRE 信用压力。
-- M-70 不接 CDX HY/IG 任何 series；不接 loan balance / CRE exposure stock series（如 `QBPBSTASLNREALNFRMRES`）；均为 future scope only。
-- `macroDrivers.commercialRealEstate` 不代表 CDX 或 私募信贷数据，字段名、notes 与前端文案不得暗示替代关系。
+- 任一 FRED series 拉取失败必须逐 series 降级为 `fallback` 或 `missing`，不得伪造值，不得用 CDX、私募信贷或非公开 loan tape 冒充 CRE 信用压力。
+- `CREACBW027SBOG` 只可显示为公开 aggregate exposure proxy；`VNQ` / `REM` / `CMBS` 只可显示为公开市场代理；均不得写成非公开 CRE 贷款、私募信用 marks、CDX 或 loan tape。
+
+### `macroDrivers.shippingFreight` / `policyExpectations` / `privateCreditProxy` expanded ingestion contract (v28.0M-74 / M-77 / M-78 / M-79 / M-80 / M-81 / M-83)
+
+M-74 新增三条 audit-only / display-only 生产数据层，均不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor、Invalidation Rules 或 cross-validation matrix。
+
+| Layer | Source | Required fields | Notes |
+|---|---|---|---|
+| `macroDrivers.shippingFreight` | StockQ:BDTI; StockQ:BCTI; StockQ:BDI | `balticDirtyTankerIndex`, `balticCleanTankerIndex`, `balticDryIndex`, per-index daily change, `tankerFreightRegime`, `freightStressRegime`, `sourceStatus` | BDTI / BCTI / BDI 是 shipping / freight pressure proxy；不得影响 Brent promotion |
+| `macroDrivers.policyExpectations` | FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; CheckMySwap:USD-OIS-public-curve; FederalReserve:FOMC statement/SEP/minutes | `targetLower`, `targetUpper`, `targetMid`, `effectiveFedFundsRate`, `fedFundsFutureImpliedRate`, `fedFundsFuturesCurve`, `sofrFuturesCurve`, `oisForwardCurve`, `dotPlotMedianCurrentYear`, `statementUrl`, `policyTone`, `minutesUrl`, `minutesPolicyTone`, `minutesTopicCounts`, `policyExpectationRegime`, `oisForwardStatus` | Fed dot plot 使用 federalreserve.gov SEP accessible table 的 federal funds median；ZQ=F 与 ZQ monthly futures 是 Fed funds futures proxy；SR3 monthly SOFR futures 是担保融资利率曲线 proxy；CheckMySwap USD OIS public curve 来自 DTCC/CFTC public swap data；`fomcminutesYYYYMMDD.htm` 只做 keyword NLP 计数 |
+| `macroDrivers.privateCreditProxy` | Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; Yahoo:CCLFX; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public | `bdcEtfPrice`, `bdcEtf4wChange`, `pbdcEtfPrice`, `pbdcEtf4wChange`, `seniorLoanEtfPrice`, `seniorLoanEtf4wChange`, `intervalFundNavPrice`, `intervalFundNav4wChange`, `intervalFundNavUpdatedAt`, `intervalFundNavSymbol`, `intervalFundNavStatus`, `hyOas`, `igOas`, `igMinusHyOas`, `cdxHyPrice`, `cdxHyInstrument`, `cdxHyUpdatedAt`, `cdxIgPrice`, `cdxIgInstrument`, `cdxIgUpdatedAt`, `cdxHyStatus`, `cdxIgStatus`, `privateCreditMarksStatus`, `privateCreditProxyRegime`, `sourceStatus` | BIZD/PBDC 是 listed BDC public proxy；SRLN 是 senior loan ETF proxy；CCLFX 是 public interval-fund NAV proxy；HY/IG OAS 是 cash-bond spread proxy；ICE CDX 是 public EOD settlement price；private credit marks 仍只保留 manual/licensed input 状态 |
+
+失败边界：
+
+- 网络或解析失败必须降级为 `fallback` 或 `missing`，不得把缺失值渲染为 `0.00`、`+0.0bp` 或其它假零。
+- `sourceStatus.* = manual_required` 只说明需要人工/自有 licensed input，不得阻塞默认 `check:data`。
+- 前端必须用明确标签区分事实源、公开代理与 manual/licensed 缺口。
+- M-78 的 `fedFundsFuturesCurve` 只能标注为 Fed funds futures proxy curve，不得写成 OIS forward rate。
+- M-79 的 `sofrFuturesCurve` 只能标注为 SR3 SOFR futures proxy curve，不得写成 OIS forward rate。
+- M-80 的 `oisForwardCurve` 只能标注为 CheckMySwap USD OIS public curve / public swap-data curve，不得写成 proprietary dealer OIS forward。
+- M-78 的 `igOas` / `hyOas` 只能标注为 cash-bond spread proxy，不得写成 CDX HY/IG。
+- M-80 的 `PBDC` / `SRLN` 只能标注为 listed BDC / senior loan ETF public proxy，不得写成 CDX HY/IG 或 private credit marks。
+- M-81 的 `cdxHyPrice` / `cdxIgPrice` 只能标注为 ICE public CDX index EOD settlement price，不得写成 private credit marks、full licensed Markit historical database、Bloomberg/FactSet/Refinitiv feed 或私募信贷估值。
+- M-83 的 `intervalFundNavPrice` / `intervalFundNav4wChange` 只能标注为 CCLFX public interval-fund NAV proxy，不得写成 private credit marks、fundraising data、Cliffwater Direct Lending Index licensed dataset 或非公开私募贷款估值。
 
 #### macroDrivers.fedLiquidity
 
@@ -368,8 +430,11 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 | `sofr` | number \| null (optional) | % | FRED:SOFR（业务日） | 担保隔夜融资利率（v28.0M-41 起） |
 | `reserveBalances` | number \| null (optional) | 百万美元 | FRED:WRESBAL（周频 Wed，NSA） | 银行存放在 Fed 的准备金（v28.0M-42 起） |
 | `reserveBalances4wChange` | number \| null (optional) | % | 派生 | 4 周百分比变化（v28.0M-42 起） |
-| `bgcr` | number \| null (optional) | % | FRED:BGCR（日频） | Broad General Collateral Rate（v28.0M-50 起） |
-| `tgcr` | number \| null (optional) | % | FRED:TGCR（日频） | Tri-Party General Collateral Rate（v28.0M-50 起） |
+| `bgcr` | number \| null (optional) | % | NY Fed Markets secured rates API（日频） | Broad General Collateral Rate（v28.0M-50 起；M-73 改为官方 NY Fed API） |
+| `tgcr` | number \| null (optional) | % | NY Fed Markets secured rates API（日频） | Tri-Party General Collateral Rate（v28.0M-50 起；M-73 改为官方 NY Fed API） |
+| `bgcrUpdatedAt` | string \| null (optional) | ISO 8601 | NYFED:secured-rates-latest | BGCR observation date |
+| `tgcrUpdatedAt` | string \| null (optional) | ISO 8601 | NYFED:secured-rates-latest | TGCR observation date |
+| `repoRatesSource` | string \| null (optional) | n/a | 固定 | `NYFED:secured-rates-latest` 或 fallback 来源标记 |
 | `bgcrSofrSpread` | number \| null (optional) | % | 派生（bgcr − sofr） | BGCR 相对 SOFR 利差（v28.0M-50 起，存储为 %，显示为 bp） |
 | `tgcrSofrSpread` | number \| null (optional) | % | 派生（tgcr − sofr） | TGCR 相对 SOFR 利差（v28.0M-50 起，存储为 %，显示为 bp） |
 | `repoSpreadRegime` | string enum (optional) | n/a | 派生（基于 \|bgcrSofrSpread\|） | `正常` \| `轻微偏离` \| `压力` \| `危机水平` \| `未知`（v28.0M-50 起） |
@@ -386,6 +451,8 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 - `bgcr` / `tgcr` / `bgcrSofrSpread` / `tgcrSofrSpread` / `repoSpreadRegime` 字段标记为 optional 以保持向后兼容性。
 - `sourceStatus.bgcr` 与 `sourceStatus.tgcr` 只能为 `live` / `fallback` / `missing`。
 - `bgcrSofrSpread` 和 `tgcrSofrSpread` 内部存储为 %（4 位小数），显示层渲染为 bp（× 100，整数）。
+- M-73 起 BGCR/TGCR runtime source 为 `https://markets.newyorkfed.org/api/rates/secured/all/latest.json`；不得继续把不可用的 FRED `BGCR` / `TGCR` CSV id 当作 live source。
+- 若 NY Fed API 不可用且无 fallback，`bgcr` / `tgcr` / spread 必须保持 `null`，前端不得渲染为 `0.00` 或 `+0bp`。
 - BGCR/TGCR 历史从 2018-04 起，作为 NY Fed 与 SOFR 同步发布的回购参考利率。
 - 正常市场中 `|bgcrSofrSpread|` 长期 < 5bp，`repoSpreadRegime` 通常显示 `正常`，仅压力事件期间跳出。
 
@@ -435,7 +502,7 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 brentPricingLayer
 ```
 
-`brentPricingLayer` 是 Brent 公开代理价格层，用于把当前主 Brent 显示值、公开 Brent 现货代理、公开 Brent 期货代理、Brent validation / confirmation sources 与公开代理价差分开记录。它是 audit-only / display-only 字段。
+`brentPricingLayer` 是 Brent 公开代理价格层，用于把当前主 Brent 显示值、公开 Brent 现货代理、EIA Brent Spot Price FOB public proxy、公开 Brent 期货代理、ICE public delayed futures curve、Brent validation / confirmation sources 与公开代理价差分开记录。它是 audit-only / display-only 字段。
 
 严格边界：
 
@@ -454,6 +521,9 @@ brentPricingLayer
 - `contractVersion` 必须为 `v28.0I-5A`。
 - `mode` 必须为 `public_proxy_observation`。
 - `selectedBrent`、`publicSpotProxy`、`futuresProxy` 必须记录 `source`、`value`、`observedAt`、`status` 与中文说明。
+- `eiaBrentSpotProxy` 必须记录 EIA Europe Brent Spot Price FOB public HTML proxy: `source`、`sourceUrl`、`price`、`dailyChange`、`updatedAt`、`sourceStatus` 与 `limitationZh`。
+- `futuresCurve` 必须记录 ICE Brent futures contract structure: `source`、`sourceUrl`、`curveStatus`、`fetchedAt`、`contracts[]` 与 `limitationZh`。
+- `iceFuturesPriceCurve` 必须记录 ICE public delayed contract-data: `source`、`sourceUrl`、`curveStatus`、`updatedAt`、`frontPrice`、`backPrice`、`frontMinusBack`、`slopeRegime`、`contracts[]` 与 `limitationZh`。
 - `confirmationSources` 必须为数组；每项记录 `source`、`labelZh`、`value`、`observedAt`、`status`、`role`、`participatesInPromotion`、`noteZh`。
 - `proxySpread.status` 只能为 `normal` / `watch` / `stress` / `insufficient_data`。
 - `confidence.level` 只能为 `low` / `medium` / `high`。
@@ -478,6 +548,99 @@ M-39 增加 `consensus.reason` 作为 `promotionReason` 的第三 fallback；增
 `publicSpotProxy.limitationZh` 必须说明该字段只是公开 Brent 现货代理观察，不等同于 Platts Dated Brent 或正式实物现货成交价。`futuresProxy.limitationZh` 必须说明该字段是公开期货 / 市场报价代理，仅用于验证层观察。
 
 v28.0I-5C 前端展示只读消费 `brentPricingLayer`。v28.0I-8 起默认以 compact summary 展示，Brent 主值审计、验证源明细和数据限制放入折叠区。前端不得在 render 层反推 Brent 主值、Brent promotion、评分、仓位、执行灯或交易建议；当 `brentPricingLayer` 缺失时只显示温和 fallback。
+
+### brentPricingLayer EIA Brent Spot Proxy 扩展 (v28.0M-85)
+
+M-85 在 brentPricingLayer 新增 EIA Europe Brent Spot Price FOB public HTML 读取。该字段提供公开日频 Brent spot proxy 价格与日变化，用于前端审计显示；它不是 Platts Dated Brent、不是正式 Dated Brent，也不是实物现货成交证据。
+
+字段 contract：
+
+| 字段 | 类型 | 单位 | 来源 | 含义 |
+|---|---|---|---|---|
+| `eiaBrentSpotProxy.source` | string | n/a | EIA | 固定为 `EIA:RBRTE` |
+| `eiaBrentSpotProxy.sourceUrl` | string | URL | EIA | `https://www.eia.gov/dnav/pet/hist/rbrted.htm` |
+| `eiaBrentSpotProxy.price` | number \| null | $/bbl | EIA table | 最新可解析 Europe Brent Spot Price FOB |
+| `eiaBrentSpotProxy.dailyChange` | number \| null | $/bbl | 派生 | 最新价格减前一条可用日频价格 |
+| `eiaBrentSpotProxy.updatedAt` | string \| null | ISO | EIA table date | 最新可解析价格日期 |
+| `eiaBrentSpotProxy.sourceStatus` | enum | n/a | 管道 | `live` \| `fallback` \| `missing` |
+| `eiaBrentSpotProxy.limitationZh` | string | n/a | 固定 | 必须说明当前不是 Platts Dated Brent |
+
+边界：
+
+- 不得把 `eiaBrentSpotProxy` 写成 Platts Dated Brent、正式 Dated Brent 或实物现货成交证据。
+- 不得让 `eiaBrentSpotProxy` 改变 `values.brent`、Brent promotion、scoring、decision、execution 或 position。
+- EIA HTML 返回空表、解析失败或网络失败时必须降级为 `fallback` / `missing`，不得把缺失价格渲染为 0.00。
+
+### brentPricingLayer Futures Curve Structure 扩展 (v28.0M-77)
+
+M-77 在 brentPricingLayer 新增 ICE Brent futures contract structure 读取。当前 ICE public product page 可验证 `contracts` 合约月份、`lastTrade` 与 `finalSettlement`，但未提供可稳定解析的官方 settlement/price ladder，因此本字段是 structure-only，不是 priced term structure。
+
+字段 contract：
+
+| 字段 | 类型 | 单位 | 来源 | 含义 |
+|---|---|---|---|---|
+| `futuresCurve.source` | string | n/a | ICE public page | 固定为 `ICE:Brent-Crude-Futures-contract-data` |
+| `futuresCurve.sourceUrl` | string | URL | ICE | `https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430` |
+| `futuresCurve.curveStatus` | enum | n/a | 管道 | `live_structure_only` \| `fallback_structure_only` \| `missing` |
+| `futuresCurve.fetchedAt` | string \| null | ISO | 管道 | 本次公开页面读取时间 |
+| `futuresCurve.contracts[]` | object[] | n/a | ICE HTML embedded contracts array | 前 12 个合约月份，每项含 `contract` / `lastTrade` / `finalSettlement` |
+| `futuresCurve.limitationZh` | string | n/a | 固定 | 必须说明当前不是官方结算价期限结构 |
+
+边界：
+
+- 不得把 `futuresCurve` 写成 Platts Dated Brent 或正式 Dated Brent。
+- 不得把 structure-only 合约月份列表渲染为价格曲线、backwardation/contango 结论或 Brent promotion 输入。
+- 网络或解析失败必须降级为 `fallback_structure_only` 或 `missing`，不得把缺失价格渲染为 0。
+
+### brentPricingLayer ICE Public Delayed Futures Price Curve 扩展 (v28.0M-82)
+
+M-82 在 brentPricingLayer 新增 ICE product-guide `contract-data` public JSON 读取。该字段提供 ICE Brent futures 各合约的 delayed / last price、volume、last time 与 front/back 价差，用于前端审计显示；它不是 official ICE settlement curve、不是 Platts Dated Brent、不是正式 Dated Brent，也不是实物现货成交证据。
+
+字段 contract：
+
+| 字段 | 类型 | 单位 | 来源 | 含义 |
+|---|---|---|---|---|
+| `iceFuturesPriceCurve.source` | string | n/a | ICE public contract-data | 固定为 `ICE:Brent-Crude-Futures-public-contract-data` |
+| `iceFuturesPriceCurve.sourceUrl` | string | URL | ICE | `https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430` |
+| `iceFuturesPriceCurve.curveStatus` | enum | n/a | 管道 | `live_delayed_priced` \| `fallback_delayed_priced` \| `missing` |
+| `iceFuturesPriceCurve.updatedAt` | string \| null | ISO | ICE `lastTime` | 最新成功合约报价时间 |
+| `iceFuturesPriceCurve.frontPrice` | number \| null | $/bbl | ICE `lastPrice` | 第一个可用合约 delayed last price |
+| `iceFuturesPriceCurve.backPrice` | number \| null | $/bbl | ICE `lastPrice` | 采样窗口最后一个可用合约 delayed last price |
+| `iceFuturesPriceCurve.frontMinusBack` | number \| null | $/bbl | 派生 | frontPrice - backPrice |
+| `iceFuturesPriceCurve.slopeRegime` | enum | n/a | 派生 | `backwardation` \| `contango` \| `flat` \| `未知` |
+| `iceFuturesPriceCurve.contracts[]` | object[] | n/a | ICE public contract-data | 每项含 `marketId` / `contract` / `price` / `volume` / `updatedAt` / `changePct` |
+| `iceFuturesPriceCurve.limitationZh` | string | n/a | 固定 | 必须说明当前只是 ICE public delayed last-price curve |
+
+边界：
+
+- 不得把 `iceFuturesPriceCurve` 写成 Platts Dated Brent、正式 Dated Brent 或 official ICE settlement curve。
+- 不得让 `iceFuturesPriceCurve` 改变 `values.brent`、Brent promotion、scoring、decision、execution 或 position。
+- ICE contract-data 返回 0、缺失价格或 Cloudflare HTML 时必须丢弃/降级，不得渲染为真实 0.00 价格。
+
+### brentPricingLayer Futures Price Proxy 扩展 (v28.0M-78)
+
+M-78 在 brentPricingLayer 新增 Yahoo `BZ` 月度 Brent futures priced proxy。该字段提供公开月度合约报价、front/back 价差与简单斜率标签，用于前端审计显示；它不是 ICE official settlement curve、Platts Dated Brent、正式 Dated Brent 或实物现货成交证据。
+
+字段 contract：
+
+| 字段 | 类型 | 单位 | 来源 | 含义 |
+|---|---|---|---|---|
+| `futuresPriceCurve.source` | string | n/a | Yahoo Finance | 固定为 `Yahoo:BZ-monthly-futures` |
+| `futuresPriceCurve.sourceUrl` | string \| null | URL | Yahoo | `https://finance.yahoo.com/quote/BZ=F` |
+| `futuresPriceCurve.curveStatus` | enum | n/a | 管道 | `live_proxy_priced` \| `fallback_proxy_priced` \| `missing` |
+| `futuresPriceCurve.updatedAt` | string \| null | ISO | Yahoo chart timestamp | 最新成功合约报价时间 |
+| `futuresPriceCurve.frontPrice` | number \| null | $/bbl | Yahoo | 第一个可用月度合约价格 |
+| `futuresPriceCurve.backPrice` | number \| null | $/bbl | Yahoo | 采样窗口最后一个可用月度合约价格 |
+| `futuresPriceCurve.frontMinusBack` | number \| null | $/bbl | 派生 | frontPrice - backPrice |
+| `futuresPriceCurve.slopeRegime` | enum | n/a | 派生 | `backwardation` \| `contango` \| `flat` \| `未知` |
+| `futuresPriceCurve.contracts[]` | object[] | n/a | Yahoo monthly symbols | 每项含 `symbol` / `contractMonth` / `price` / `updatedAt` |
+| `futuresPriceCurve.limitationZh` | string | n/a | 固定 | 必须说明当前只是公开 priced proxy |
+
+边界：
+
+- 不得把 `futuresPriceCurve` 写成 Platts Dated Brent、正式 Dated Brent 或 ICE official settlement curve。
+- 不得让 `futuresPriceCurve` 改变 `values.brent`、Brent promotion、scoring、decision、execution 或 position。
+- Yahoo chart 返回 0 或缺失价格时必须丢弃该点，不得渲染为真实 0.00 价格。
 
 ### brentPricingLayer Crack Spread 扩展 (v28.0M-49)
 
@@ -542,7 +705,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`，当前前端版本为 `28.0L-4B`。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`，当前前端版本为 `28.0M-87V`。
 
 稳定边界：
 
@@ -718,32 +881,43 @@ config/world-order-sipri-normalized.example.json
 - 当 `status="manual_required"` 时，`noteZh` 必须说明“手动导入”或“尚未导入”。
 - example/template 数据不得以 `ok` 状态进入 `data/world-order-stress.json`。
 
+### Macro Overview public proxy coverage display boundary (M-86)
+
+M-86 只调整前端 Macro Overview 的解释语义，不改变 production data contract、Daily/Worker runtime、Brent promotion、source fetch、scoring、decision、execution、position、workflow、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation。
+
+前端 judgment object 可包含：
+
+- `coverageNotes`: 已接入公开代理覆盖与正式源边界说明，例如 EIA Brent spot proxy、ICE delayed futures curve、StockQ BDTI/BCTI/BDI、ZQ/SR3/OIS public curve、ICE CDX public settlement、CCLFX/VNQ/REM/CMBS/FRED public proxies。
+- `missingEvidence`: 仅保留真正未刷到的公开数据或 World Order 外部源限制。不得把 live public proxy 边界重新渲染成 `missingEvidence`。
+
+Platts Dated Brent、official ICE settlement、private credit marks、non-public CRE loan tape、BoA raw card feed、Redbook raw subscription feed 等仍是边界说明；不得冒充正式/非公开源，也不得进入 scoring / decision / execution / position。
+
 ### Frontend asset cache version
 
-v28.0M-72V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+v28.0M-87V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
 当前前端资源版本为：
 
 ```text
-28.0M-70V
+28.0M-87V
 ```
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-72V`。
-- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-72V`。
-- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-70V"`。
+- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-87V`。
+- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-87V`。
+- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-87V"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs 28.0M-72V
-npm run bump:frontend-asset-version -- 28.0M-72V
+node scripts/bump-frontend-asset-version.mjs 28.0M-87V
+npm run bump:frontend-asset-version -- 28.0M-87V
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-72V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-87V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
