@@ -14,6 +14,7 @@ function readText(pathname) {
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
 const renderMacroText = readText('scripts/modules/renderMacroOverview.js');
+const renderText = readText('scripts/modules/render.js');
 const matrixText = readText('scripts/modules/buildCrossValidationMatrix.js');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 
@@ -81,6 +82,20 @@ const renderMarkers = [
 for (const marker of renderMarkers) {
   if (!renderMacroText.includes(marker)) {
     fail(`scripts/modules/renderMacroOverview.js missing M-49 marker: ${marker}`);
+  }
+}
+
+const brentDetailRenderMarkers = [
+  'ULSD 4周变化',
+  'crack spread 4周变化',
+  'brentPricingLayer.ulsdPrice',
+  'brentPricingLayer.ulsd4wChange',
+  'brentPricingLayer.crackSpread4wChange'
+];
+
+for (const marker of brentDetailRenderMarkers) {
+  if (!renderText.includes(marker)) {
+    fail(`scripts/modules/render.js missing Brent detail render marker: ${marker}`);
   }
 }
 

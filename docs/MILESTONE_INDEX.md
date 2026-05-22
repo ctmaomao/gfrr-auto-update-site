@@ -11,7 +11,7 @@
 
 当前未关闭、影响进行中工作的 milestone 与状态:
 
-- **当前生产**: v28.0M-75,frontend cache `28.0M-74V`,`check:all` = 23 项；M-75 check suite compaction 已落地；M-74 expanded macro data auto ingestion 已落地；M-73 BGCR/TGCR NY Fed secured rates runtime fix + employment quality public FRED expansion 已落地；M-71 Brent public proxy source review 已落地；M-70 commercialRealEstate (CRE) 已落地；M-69 consumerRetail (CARTS) 已落地；M-68 employment breadth 已落地；M-67 ISM PMI source repair 已落地；ADR-0014 IA contract authority hierarchy 已落地；M-63b ACLED monthly evidence-only ingestion 已落地；M-63c ACLED reminder workflows 已落地
+- **当前生产**: v28.0M-76,frontend cache `28.0M-76V`,`check:all` = 23 项；M-76 frontend macro field surfacing 已落地；M-75 check suite compaction 已落地；M-74 expanded macro data auto ingestion 已落地；M-73 BGCR/TGCR NY Fed secured rates runtime fix + employment quality public FRED expansion 已落地；M-71 Brent public proxy source review 已落地；M-70 commercialRealEstate (CRE) 已落地；M-69 consumerRetail (CARTS) 已落地；M-68 employment breadth 已落地；M-67 ISM PMI source repair 已落地；ADR-0014 IA contract authority hierarchy 已落地；M-63b ACLED monthly evidence-only ingestion 已落地；M-63c ACLED reminder workflows 已落地
 - **下一步**: 见 `docs/PROJECT_BACKLOG.md` Section 2 Open Backlog Items
 - **Open backlog 主线**: P1-4 ACLED 接入完整闭合 (M-63a/b/c 全部落地)；P2-7 employment breadth 已落地；P2-8 high-frequency consumer evidence 已落地并关闭；P2-9 CRE/CDX/私募信贷已落地并关闭（M-70 CRE-only;CDX/私募信贷=P3-15）；P3-* 已明确 won't fix
 - **年度提醒**: M-61b SIPRI 每年 5 月 1 日 GitHub Actions issue (`sipri-annual-refresh-reminder.yml`)
@@ -20,6 +20,7 @@
 
 | # | 一句话 | 主要 doc |
 |---|---|---|
+| **M-76** | Frontend Macro Field Surfacing: Macro Drivers / Risk Engines / Brent detail 展开显示已存在后端字段(policy target/ZQ/SEP/FOMC tone,BGCR/TGCR,MRTS segments,BCTI/BDI,CDX/private marks status,VNQ/REM timestamps,employment source status,NFCI/SLOOS/IG deltas,ULSD/crack 4w);display-only;cache 28.0M-76V | `scripts/modules/renderMacroOverview.js` |
 | **M-75** | `check:all` 顶层 suite compaction: 74 → 23; all atomic checks preserved via `scripts/check-suite.mjs`; no runtime/frontend/workflow/data behavior change | `package.json` |
 | **M-74** | `macroDrivers.shippingFreight` (StockQ BDTI/BCTI/BDI),`macroDrivers.policyExpectations` (FRED target/DFF + Yahoo ZQ=F + Fed SEP/FOMC),`macroDrivers.privateCreditProxy` (BIZD + HY OAS),MRTS retail segments,VNQ/REM CRE public proxies; audit-only/display-only;`check:all` 74 | `docs/DATA_CONTRACT.md` |
 | **M-73** | BGCR/TGCR 改用 NY Fed secured rates API；`macroDrivers.employment` 增加 FRED 平均时薪、U-6 与行业 payroll 扩散代理；audit-only/display-only;frontend Macro Drivers 卡片;`check:all` 73 | `docs/DATA_CONTRACT.md` |

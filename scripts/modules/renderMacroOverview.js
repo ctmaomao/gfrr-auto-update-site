@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-74V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-74V';
-import { formatFiniteNumber } from './format.js?v=28.0M-74V';
+import { $ } from './config.js?v=28.0M-76V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-76V';
+import { formatFiniteNumber } from './format.js?v=28.0M-76V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -128,6 +128,60 @@ function formatQuarterVintage(isoDate) {
   const date = new Date(isoDate);
   const quarter = Math.floor(date.getUTCMonth() / 3) + 1;
   return `Q${quarter} ${date.getUTCFullYear()}`;
+}
+
+function formatSourceStatus(value) {
+  const status = String(value || '').trim();
+  return status || 'missing';
+}
+
+function formatSourceStatusMap(sourceStatus, pairs) {
+  if (!isPlainObject(sourceStatus)) return null;
+  const parts = pairs
+    .map(([key, label]) => `${label}=${formatSourceStatus(sourceStatus[key])}`)
+    .filter(Boolean);
+  return parts.length ? `sourceStatus: ${parts.join(' / ')}` : null;
+}
+
+function formatRateRange(lower, upper) {
+  const low = finite(lower);
+  const high = finite(upper);
+  if (low === null || high === null) return INSUFFICIENT;
+  return `${formatFiniteNumber(low, 2)}%-${formatFiniteNumber(high, 2)}%`;
+}
+
+function formatBasisPoints(value, digits = 0) {
+  const number = finite(value);
+  if (number === null) return INSUFFICIENT;
+  return `${number >= 0 ? '+' : '-'}${formatFiniteNumber(Math.abs(number) * 100, digits)}bp`;
+}
+
+function formatUrlReference(url) {
+  if (typeof url !== 'string' || !url.trim()) return 'url 待确认';
+  try {
+    const parsed = new URL(url);
+    return `${parsed.hostname}${parsed.pathname}`;
+  } catch {
+    return url;
+  }
+}
+
+function chunkItems(items, size) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
+function formatRetailSegmentLines(segments) {
+  const items = safeArray(segments)
+    .filter(isPlainObject)
+    .map((segment) => {
+      const label = text(segment.labelZh, text(segment.key, 'segment'));
+      return `${label} ${formatRatioAsPercent(segment.yoy)} (${formatMonthVintage(segment.updatedAt)})`;
+    });
+  return chunkItems(items, 4).map((chunk, index) => `MRTS 细分 ${index + 1}: ${chunk.join('；')}`);
 }
 
 function formatSignedPoints(value, digits = 2) {
@@ -368,6 +422,9 @@ function buildPressureSources(data, worldOrderStressData) {
   const dxy = finite(inputs.dxy);
   const dirtyTankerIndex = finite(shippingFreight.balticDirtyTankerIndex);
   const dirtyTankerChange = finite(shippingFreight.balticDirtyTankerDailyChangePct);
+  const cleanTankerIndex = finite(shippingFreight.balticCleanTankerIndex);
+  const dryBulkIndex = finite(shippingFreight.balticDryIndex);
+  const crackSpread4wChange = finite(brentLayer.crackSpread4wChange);
   const energyGaps = safeArray(brentLayer.dataGaps);
   const energyMissing = [
     'Dated Brent、期限结构和实物端证据仍待验证。',
@@ -389,6 +446,11 @@ function buildPressureSources(data, worldOrderStressData) {
         dirtyTankerIndex === null
           ? null
           : `BDTI ${formatNumber(dirtyTankerIndex, 0)}；日变化 ${formatRatioAsPercent(dirtyTankerChange)}（${text(shippingFreight.tankerFreightRegime, '未知')}）`,
+        cleanTankerIndex === null ? null : `BCTI ${formatNumber(cleanTankerIndex, 0)}（${text(shippingFreight.cleanTankerFreightRegime, '未知')}）`,
+        dryBulkIndex === null ? null : `BDI ${formatNumber(dryBulkIndex, 0)}（${text(shippingFreight.dryBulkFreightRegime, '未知')}）`,
+        brentLayer?.crackSpread === null || !Number.isFinite(brentLayer?.crackSpread)
+          ? null
+          : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶；4周变化 ${formatSignedDecimal(crackSpread4wChange, 2)}`,
       ].filter(Boolean),
       missingEvidence: energyGaps.length || dirtyTankerIndex === null ? energyMissing : [],
       explanation: energyGaps.length
@@ -558,6 +620,8 @@ function buildMacroDrivers(data) {
   const igHyRatio = finite(credit.igHyRatio);
   const t10y2y = finite(curve.t10y2y);
   const onRrp = finite(fedLiquidity.onRrp);
+  const us10y = finite(inputs.us10y);
+  const dxy = finite(inputs.dxy);
   const effectiveFedFundsRate = finite(fedLiquidity.effectiveFedFundsRate);
   const sofr = finite(fedLiquidity.sofr);
   const walcl4wChange = finite(fedLiquidity.walcl4wChange);
@@ -595,6 +659,7 @@ function buildMacroDrivers(data) {
   const retailSegmentSeriesCount = finite(consumerRetail.segmentSeriesCount);
   const strongestRetailSegment = isPlainObject(consumerRetail.strongestSegment) ? consumerRetail.strongestSegment : null;
   const weakestRetailSegment = isPlainObject(consumerRetail.weakestSegment) ? consumerRetail.weakestSegment : null;
+  const retailSegmentLines = formatRetailSegmentLines(consumerRetail.retailSegments);
   const retailRegime = text(consumerRetail.retailRegime, '未知');
   const creDelinquencyRate = finite(commercialRealEstate.creDelinquencyRate);
   const creDelinquencyRateQoQChange = finite(commercialRealEstate.creDelinquencyRateQoQChange);
@@ -609,29 +674,54 @@ function buildMacroDrivers(data) {
   const reitEtf4wChange = finite(commercialRealEstate.reitEtf4wChange);
   const mortgageReitEtfPrice = finite(commercialRealEstate.mortgageReitEtfPrice);
   const mortgageReitEtf4wChange = finite(commercialRealEstate.mortgageReitEtf4wChange);
+  const crePublicMarketProxyRegime = text(commercialRealEstate.crePublicMarketProxyRegime, '未知');
+  const nonPublicCreStatus = text(commercialRealEstate.nonPublicCreStatus, formatSourceStatus(commercialRealEstate.sourceStatus?.nonPublicCre));
   const dirtyTankerIndex = finite(shippingFreight.balticDirtyTankerIndex);
   const dirtyTankerChange = finite(shippingFreight.balticDirtyTankerDailyChangePct);
   const cleanTankerIndex = finite(shippingFreight.balticCleanTankerIndex);
+  const cleanTankerChange = finite(shippingFreight.balticCleanTankerDailyChangePct);
   const dryBulkIndex = finite(shippingFreight.balticDryIndex);
+  const dryBulkChange = finite(shippingFreight.balticDryDailyChangePct);
+  const targetLower = finite(policyExpectations.targetLower);
+  const targetUpper = finite(policyExpectations.targetUpper);
+  const targetMid = finite(policyExpectations.targetMid);
+  const fedFundsFutureFrontPrice = finite(policyExpectations.fedFundsFutureFrontPrice);
   const fedFundsFutureImpliedRate = finite(policyExpectations.fedFundsFutureImpliedRate);
   const futureMinusTargetMid = finite(policyExpectations.futureMinusTargetMid);
   const dotPlotMedianCurrentYear = finite(policyExpectations.dotPlotMedianCurrentYear);
   const dotPlotMedianNextYear = finite(policyExpectations.dotPlotMedianNextYear);
+  const dotPlotMedianTwoYearsOut = finite(policyExpectations.dotPlotMedianTwoYearsOut);
+  const dotPlotMedianLongerRun = finite(policyExpectations.dotPlotMedianLongerRun);
+  const hawkishTermCount = finite(policyExpectations.hawkishTermCount);
+  const dovishTermCount = finite(policyExpectations.dovishTermCount);
   const policyTone = text(policyExpectations.policyTone, '未知');
   const policyExpectationRegime = text(policyExpectations.policyExpectationRegime, '未知');
   const bdcEtfPrice = finite(privateCreditProxy.bdcEtfPrice);
   const bdcEtf4wChange = finite(privateCreditProxy.bdcEtf4wChange);
+  const cdxHyStatus = text(privateCreditProxy.cdxHyStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxHy));
+  const cdxIgStatus = text(privateCreditProxy.cdxIgStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxIg));
+  const privateCreditMarksStatus = text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks));
+  const bgcr = finite(fedLiquidity.bgcr);
+  const tgcr = finite(fedLiquidity.tgcr);
+  const tgcrSofrSpread = finite(fedLiquidity.tgcrSofrSpread);
+  const igOas1dChange = finite(credit.igOas1dChange);
+  const sloosTighteningSmallFirms = finite(credit.sloosTighteningSmallFirms);
+  const sloosTighteningLargeQoQ = finite(credit.sloosTighteningLargeQoQ);
+  const sloosTighteningSmallQoQ = finite(credit.sloosTighteningSmallQoQ);
+  const nfci4wChange = finite(credit.nfci4wChange);
   const vix = finite(inputs.vix);
   const creditCalm = hyOas !== null && hyOas < 4 && vix !== null && vix < 22;
   const policyProxyEvidence = [
     onRrp === null ? null : `ON RRP ${formatUsdTrillions(onRrp)}${onRrpAnnotation(onRrpSignal)} — 流动性紧`,
-    finite(inputs.us10y) === null ? null : `10年期 ${formatNumber(inputs.us10y, 2, '%')} — 长端利率压力`,
-    finite(inputs.dxy) === null ? null : `广义美元 ${formatNumber(inputs.dxy, 2)} — 美元强势`,
+    us10y === null ? null : `10年期 ${formatNumber(us10y, 2, '%')} — 长端利率压力`,
+    dxy === null ? null : `广义美元 ${formatNumber(dxy, 2)} — 美元强势`,
     effectiveFedFundsRate === null ? null : `联邦基金利率 ${formatNumber(effectiveFedFundsRate, 2, '%')} — 政策利率`,
     sofr === null ? null : `SOFR ${formatNumber(sofr, 2, '%')} — 隔夜担保融资`,
-    fedFundsFutureImpliedRate === null ? null : `Fed funds futures ${formatNumber(fedFundsFutureImpliedRate, 2, '%')}；相对目标中点 ${formatSignedPoints(futureMinusTargetMid)}（${policyExpectationRegime}）`,
-    dotPlotMedianCurrentYear === null ? null : `SEP federal funds median ${formatNumber(dotPlotMedianCurrentYear, 2, '%')} / next ${formatNumber(dotPlotMedianNextYear, 2, '%')}`,
-    policyTone === '未知' ? null : `FOMC statement tone: ${policyTone}`,
+    targetMid === null ? null : `Fed target range ${formatRateRange(targetLower, targetUpper)}；midpoint ${formatNumber(targetMid, 3, '%')}`,
+    fedFundsFutureImpliedRate === null ? null : `ZQ front price ${formatNumber(fedFundsFutureFrontPrice, 3)}；implied ${formatNumber(fedFundsFutureImpliedRate, 2, '%')}；相对目标中点 ${formatSignedPoints(futureMinusTargetMid)}（${policyExpectationRegime}）`,
+    dotPlotMedianCurrentYear === null ? null : `SEP ${formatWeekVintage(policyExpectations.sepProjectionDate)} federal funds median: current ${formatNumber(dotPlotMedianCurrentYear, 2, '%')} / next ${formatNumber(dotPlotMedianNextYear, 2, '%')} / two-year ${formatNumber(dotPlotMedianTwoYearsOut, 2, '%')} / longer-run ${formatNumber(dotPlotMedianLongerRun, 2, '%')} (${formatUrlReference(policyExpectations.sepUrl)})`,
+    policyTone === '未知' ? null : `FOMC ${formatWeekVintage(policyExpectations.statementDate)} statement tone: ${policyTone}；hawkish ${formatNumber(hawkishTermCount, 0)} / dovish ${formatNumber(dovishTermCount, 0)} (${formatUrlReference(policyExpectations.statementUrl)})`,
+    formatSourceStatusMap(policyExpectations.sourceStatus, [['targetRange', 'target'], ['fedFundsFuture', 'ZQ'], ['sepDotPlot', 'SEP'], ['policyStatement', 'statement'], ['oisForward', 'OIS']]),
   ].filter(Boolean);
   const hasPolicyProxy = policyProxyEvidence.length > 1;
 
@@ -684,13 +774,14 @@ function buildMacroDrivers(data) {
           : `JOLTS:${formatMonthVintage(employment.joltsUpdatedAt)} ${formatPeopleValue(joltsOpenings)}；YoY ${formatRatioAsPercent(joltsOpeningsYoY)}（${joltsRegime}）`,
         averageHourlyEarnings === null
           ? null
-          : `平均时薪 $${formatNumber(averageHourlyEarnings, 2)}/小时；YoY ${formatRatioAsPercent(averageHourlyEarningsYoY)}（${laborQualityRegime}）`,
+          : `平均时薪 $${formatNumber(averageHourlyEarnings, 2)}/小时；YoY ${formatRatioAsPercent(averageHourlyEarningsYoY)}（${laborQualityRegime}；${formatMonthVintage(employment.averageHourlyEarningsUpdatedAt)}；status=${formatSourceStatus(employment.sourceStatus?.ahe)}）`,
         u6Rate === null
           ? null
-          : `U-6 ${formatNumber(u6Rate, 1, '%')}；3个月变化 ${formatSignedPoints(u6Rate3mChange)} — 劳动力低利用率`,
+          : `U-6 ${formatNumber(u6Rate, 1, '%')}；3个月变化 ${formatSignedPoints(u6Rate3mChange)} — 劳动力低利用率（${formatMonthVintage(employment.u6UpdatedAt)}；status=${formatSourceStatus(employment.sourceStatus?.u6)}）`,
         industryPayrollDiffusionPct === null
           ? null
-          : `行业就业扩散 ${formatNumber(industryPayrollDiffusionPct, 1, '%')}；${formatNumber(industryPayrollPositiveCount, 0)}/${formatNumber(industryPayrollSeriesCount, 0)} 个行业环比增加（${industryDiffusionRegime}）`,
+          : `行业就业扩散 ${formatNumber(industryPayrollDiffusionPct, 1, '%')}；${formatNumber(industryPayrollPositiveCount, 0)}/${formatNumber(industryPayrollSeriesCount, 0)} 个行业环比增加（${industryDiffusionRegime}；${formatMonthVintage(employment.industryPayrollUpdatedAt)}；status=${formatSourceStatus(employment.sourceStatus?.industryPayroll)}）`,
+        formatSourceStatusMap(employment.sourceStatus, [['icsa', 'ICSA'], ['ccsa', 'CCSA'], ['jtsjol', 'JOLTS'], ['ahe', 'AHE'], ['u6', 'U-6'], ['industryPayroll', 'payroll diffusion']]),
       ].filter(Boolean),
       missingEvidence: ['职位质量、工时结构与行业内部分布仍待接入；当前仅使用公开 FRED 代理。'],
       explanation: 'Claims 是周频裁员压力代理，JOLTS、平均时薪、U-6 与行业 payroll 扩散是月频慢变量；仅用于就业质量与广度观察。',
@@ -711,16 +802,18 @@ function buildMacroDrivers(data) {
       evidence: [
         cartsNominal === null
           ? 'CARTS 名义零售消费 nowcast 等待刷新。'
-          : `CARTS 名义 ${formatUsdBillions(cartsNominal)}；YoY ${formatRatioAsPercent(cartsNominalYoY)}（名义）`,
+          : `CARTS 名义 ${formatUsdBillions(cartsNominal)}；4w-MA ${formatUsdBillions(consumerRetail.cartsNominal4wAverage)}；YoY ${formatRatioAsPercent(cartsNominalYoY)}（名义）`,
         cartsReal === null
           ? null
-          : `CARTSR 实际 ${formatUsdBillions(cartsReal)}；YoY ${formatRatioAsPercent(cartsRealYoY)}（实际,通胀调整后；${retailRegime}）`,
+          : `CARTSR 实际 ${formatUsdBillions(cartsReal)}；4w-MA ${formatUsdBillions(consumerRetail.cartsReal4wAverage)}；YoY ${formatRatioAsPercent(cartsRealYoY)}（实际,通胀调整后；${retailRegime}）`,
         retailSegmentDiffusionPct === null
           ? null
           : `MRTS 细分零售扩散 ${formatNumber(retailSegmentDiffusionPct, 1, '%')}；${formatNumber(retailSegmentPositiveCount, 0)}/${formatNumber(retailSegmentSeriesCount, 0)} 个品类 YoY 为正（${text(consumerRetail.segmentRegime, '未知')}）`,
         strongestRetailSegment
           ? `最强品类：${text(strongestRetailSegment.labelZh, strongestRetailSegment.key)} ${formatRatioAsPercent(strongestRetailSegment.yoy)}；最弱品类：${text(weakestRetailSegment?.labelZh, weakestRetailSegment?.key)} ${formatRatioAsPercent(weakestRetailSegment?.yoy)}`
           : null,
+        ...retailSegmentLines,
+        formatSourceStatusMap(consumerRetail.sourceStatus, [['carts', 'CARTS'], ['cartsr', 'CARTSR'], ['retailSegments', 'MRTS']]),
         `Chicago Fed CARTS:${formatWeekVintage(consumerRetail.updatedAt)}`,
       ].filter(Boolean),
       missingEvidence: retailSegmentDiffusionPct === null ? ['MRTS 细分零售品类等待 FRED 月频刷新。'] : [],
@@ -767,10 +860,12 @@ function buildMacroDrivers(data) {
           : `SLOOS CRE max ${formatSignedPercent(sloosCreTighteningMax, 1)}；${creStressRegime}`,
         reitEtfPrice === null
           ? null
-          : `VNQ ${formatNumber(reitEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(reitEtf4wChange)} — 公开 REIT 代理`,
+          : `VNQ ${formatNumber(reitEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(reitEtf4wChange)} — 公开 REIT 代理（${crePublicMarketProxyRegime}；${formatWeekVintage(commercialRealEstate.reitEtfUpdatedAt)}）`,
         mortgageReitEtfPrice === null
           ? null
-          : `REM ${formatNumber(mortgageReitEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(mortgageReitEtf4wChange)} — mortgage REIT 代理`,
+          : `REM ${formatNumber(mortgageReitEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(mortgageReitEtf4wChange)} — mortgage REIT 代理（${crePublicMarketProxyRegime}；${formatWeekVintage(commercialRealEstate.mortgageReitEtfUpdatedAt)}）`,
+        `non-public CRE loan tape status: ${nonPublicCreStatus}`,
+        formatSourceStatusMap(commercialRealEstate.sourceStatus, [['delinquency', 'delinquency'], ['chargeOff', 'charge-off'], ['sloosNonfarmNonresidential', 'SLOOS NNR'], ['sloosConstruction', 'SLOOS construction'], ['sloosMultifamily', 'SLOOS multifamily'], ['reitEtf', 'VNQ'], ['mortgageReitEtf', 'REM'], ['nonPublicCre', 'non-public CRE']]),
         `FRED 季频 Commercial Real Estate:${formatQuarterVintage(commercialRealEstate.updatedAt)}`,
       ].filter(Boolean),
       missingEvidence: ['非公开 CRE loan tape / private marks 需要 manual/licensed input。'],
@@ -795,6 +890,9 @@ function buildMacroDrivers(data) {
           ? 'BIZD listed BDC proxy 等待刷新。'
           : `BIZD ${formatNumber(bdcEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(bdcEtf4wChange)} — listed BDC proxy`,
         hyOas === null ? null : `HY OAS ${formatNumber(hyOas, 2, '%')} — 公开信用利差代理`,
+        `CDX HY status: ${cdxHyStatus}；CDX IG status: ${cdxIgStatus}`,
+        `private credit marks status: ${privateCreditMarksStatus}`,
+        formatSourceStatusMap(privateCreditProxy.sourceStatus, [['bdcEtf', 'BIZD'], ['hyOas', 'HY OAS'], ['cdxHy', 'CDX HY'], ['cdxIg', 'CDX IG'], ['privateCreditMarks', 'private marks']]),
       ].filter(Boolean),
       missingEvidence: ['CDX HY/IG 与私募信用 marks 需要 manual/licensed input；不伪造成公开数据。'],
       explanation: 'BIZD 和 HY OAS 只提供公开市场压力代理，不能替代 CDX 或私募信用估值。',
@@ -834,13 +932,14 @@ function buildMacroDrivers(data) {
       evidence: [
         dirtyTankerIndex === null
           ? 'BDTI dirty tanker index 等待刷新。'
-          : `BDTI ${formatNumber(dirtyTankerIndex, 0)}；日变化 ${formatRatioAsPercent(dirtyTankerChange)}（${text(shippingFreight.tankerFreightRegime, '未知')}）`,
+          : `BDTI ${formatNumber(dirtyTankerIndex, 0)}；日变化 ${formatRatioAsPercent(dirtyTankerChange)}（${text(shippingFreight.tankerFreightRegime, '未知')}；${formatWeekVintage(shippingFreight.balticDirtyTankerUpdatedAt)}）`,
         cleanTankerIndex === null
           ? null
-          : `BCTI ${formatNumber(cleanTankerIndex, 0)}（clean tanker，${text(shippingFreight.cleanTankerFreightRegime, '未知')}）`,
+          : `BCTI ${formatNumber(cleanTankerIndex, 0)}；日变化 ${formatRatioAsPercent(cleanTankerChange)}（clean tanker，${text(shippingFreight.cleanTankerFreightRegime, '未知')}；${formatWeekVintage(shippingFreight.balticCleanTankerUpdatedAt)}）`,
         dryBulkIndex === null
           ? null
-          : `BDI ${formatNumber(dryBulkIndex, 0)}（dry bulk，${text(shippingFreight.dryBulkFreightRegime, '未知')}）`,
+          : `BDI ${formatNumber(dryBulkIndex, 0)}；日变化 ${formatRatioAsPercent(dryBulkChange)}（dry bulk，${text(shippingFreight.dryBulkFreightRegime, '未知')}；${formatWeekVintage(shippingFreight.balticDryUpdatedAt)}）`,
+        formatSourceStatusMap(shippingFreight.sourceStatus, [['dirtyTanker', 'BDTI'], ['cleanTanker', 'BCTI'], ['dryBulk', 'BDI']]),
       ].filter(Boolean),
       missingEvidence: ['单船型/航线级别 tanker freight 与 Baltic 原始 licensed feed 未直接写入。'],
       explanation: 'BDTI/BCTI/BDI 是航运/油轮运费压力代理；只用于实物端压力观察，不改变 Brent promotion。',
@@ -858,16 +957,20 @@ function buildMacroDrivers(data) {
       evidence: [
         `广义美元 ${formatNumber(inputs.dxy, 2)}；10年期 ${formatNumber(inputs.us10y, 2, '%')}；10Y-2Y 期限利差 ${formatSignedPercent(t10y2y)}`,
         `ON RRP 余额 ${formatUsdTrillions(onRrp)}${onRrpAnnotation(onRrpSignal)}；Fed 资产负债表 4周变化 ${formatUsdBillionsFromFedChange(walcl4wChange)}`,
-        `高收益利差 (HY OAS) ${formatNumber(hyOas, 2, '%')}；投资级利差 (IG OAS) ${formatNumber(igOas, 2, '%')}；IG/HY 比率 ${formatNumber(igHyRatio, 2)}`,
+        `高收益利差 (HY OAS) ${formatNumber(hyOas, 2, '%')}；投资级利差 (IG OAS) ${formatNumber(igOas, 2, '%')}；1d ${formatSignedPoints(igOas1dChange)}；IG/HY 比率 ${formatNumber(igHyRatio, 2)}`,
         effectiveFedFundsRate === null ? null : `联邦基金利率 ${formatNumber(effectiveFedFundsRate, 2, '%')} — 当前官方政策利率`,
         sofr === null ? null : `SOFR ${formatNumber(sofr, 2, '%')} — 隔夜担保融资利率`,
         reserveBalances === null ? null : `银行准备金 ${formatUsdTrillions(reserveBalances / 1_000_000)}；4周变化 ${formatSignedPercent(reserveBalances4wChange)} — 储备缓冲数量`,
         credit?.sloosTighteningLargeFirms === null || !Number.isFinite(credit?.sloosTighteningLargeFirms)
           ? null
-          : `银行贷款标准 (SLOOS C&I 大型) ${formatSignedPercent(credit.sloosTighteningLargeFirms, 1)}（${credit.sloosTighteningLargeFirms >= 0 ? '净收紧' : '净放松'}，季度调查）`,
+          : `银行贷款标准 (SLOOS C&I 大型) ${formatSignedPercent(credit.sloosTighteningLargeFirms, 1)} / 小型 ${formatSignedPercent(sloosTighteningSmallFirms, 1)}；QoQ 大型 ${formatSignedPercent(sloosTighteningLargeQoQ, 1)} / 小型 ${formatSignedPercent(sloosTighteningSmallQoQ, 1)}（季度调查；${text(credit.sloosRegime, '未知')}）`,
+        credit?.nfci === null || !Number.isFinite(credit?.nfci)
+          ? null
+          : `NFCI ${credit.nfci >= 0 ? '+' : ''}${formatNumber(credit.nfci, 2)}；4w ${formatSignedDecimal(nfci4wChange, 3)}（${text(credit.nfciRegime, '未知')}）`,
         fedLiquidity?.bgcrSofrSpread === null || !Number.isFinite(fedLiquidity?.bgcrSofrSpread)
           ? null
-          : `回购利差 (BGCR-SOFR) ${(fedLiquidity.bgcrSofrSpread * 100) >= 0 ? '+' : ''}${Math.round(fedLiquidity.bgcrSofrSpread * 100)}bp（${fedLiquidity.repoSpreadRegime}，日度更新）`,
+          : `回购利差 (BGCR-SOFR) ${formatBasisPoints(fedLiquidity.bgcrSofrSpread)} / TGCR-SOFR ${formatBasisPoints(tgcrSofrSpread)}；BGCR ${formatNumber(bgcr, 2, '%')} / TGCR ${formatNumber(tgcr, 2, '%')}（${fedLiquidity.repoSpreadRegime}；${text(fedLiquidity.repoRatesSource, 'repo source 待确认')}；BGCR ${formatWeekVintage(fedLiquidity.bgcrUpdatedAt)} / TGCR ${formatWeekVintage(fedLiquidity.tgcrUpdatedAt)}）`,
+        formatSourceStatusMap(fedLiquidity.sourceStatus, [['walcl', 'WALCL'], ['onRrp', 'ON RRP'], ['effectiveFedFundsRate', 'DFF'], ['sofr', 'SOFR'], ['reserveBalances', 'reserves'], ['bgcr', 'BGCR'], ['tgcr', 'TGCR']]),
       ].filter(Boolean),
       missingEvidence: ['跨市场融资压力等待接入。'],
       counterEvidence: creditCalm ? ['信用与波动率尚未明显确认扩散。'] : [],
@@ -1027,6 +1130,7 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
   const macroDrivers = isPlainObject(data?.macroDrivers) ? data.macroDrivers : {};
   const fedLiquidity = isPlainObject(macroDrivers.fedLiquidity) ? macroDrivers.fedLiquidity : {};
   const credit = isPlainObject(macroDrivers.credit) ? macroDrivers.credit : {};
+  const policyExpectations = isPlainObject(macroDrivers.policyExpectations) ? macroDrivers.policyExpectations : {};
   const shippingFreight = isPlainObject(macroDrivers.shippingFreight) ? macroDrivers.shippingFreight : {};
   const privateCreditProxy = isPlainObject(macroDrivers.privateCreditProxy) ? macroDrivers.privateCreditProxy : {};
   const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
@@ -1040,10 +1144,23 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
   const sofr = finite(fedLiquidity.sofr);
   const reserveBalances = finite(fedLiquidity.reserveBalances);
   const reserveBalances4wChange = finite(fedLiquidity.reserveBalances4wChange);
+  const bgcr = finite(fedLiquidity.bgcr);
+  const tgcr = finite(fedLiquidity.tgcr);
+  const tgcrSofrSpread = finite(fedLiquidity.tgcrSofrSpread);
   const igHyRatio = finite(credit.igHyRatio);
+  const sloosTighteningSmallFirms = finite(credit.sloosTighteningSmallFirms);
+  const nfci4wChange = finite(credit.nfci4wChange);
   const dirtyTankerIndex = finite(shippingFreight.balticDirtyTankerIndex);
+  const cleanTankerIndex = finite(shippingFreight.balticCleanTankerIndex);
+  const dryBulkIndex = finite(shippingFreight.balticDryIndex);
   const bdcEtfPrice = finite(privateCreditProxy.bdcEtfPrice);
   const bdcEtf4wChange = finite(privateCreditProxy.bdcEtf4wChange);
+  const targetMid = finite(policyExpectations.targetMid);
+  const fedFundsFutureImpliedRate = finite(policyExpectations.fedFundsFutureImpliedRate);
+  const dotPlotMedianCurrentYear = finite(policyExpectations.dotPlotMedianCurrentYear);
+  const ulsdPrice = finite(brentLayer.ulsdPrice);
+  const ulsd4wChange = finite(brentLayer.ulsd4wChange);
+  const crackSpread4wChange = finite(brentLayer.crackSpread4wChange);
 
   return [
     createJudgment({
@@ -1058,10 +1175,13 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
         text(brentLayer.summaryZh, `布伦特 ${formatNumber(inputs.brent, 1)}，通胀预期 ${formatNumber(inputs.breakeven10y, 2, '%')}。`),
         brentLayer.crackSpread === null || !Number.isFinite(brentLayer.crackSpread)
           ? null
-          : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶（${brentLayer.crackSpreadRegime}，日度更新）`,
+          : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶；4周变化 ${formatSignedDecimal(crackSpread4wChange, 2)}（${brentLayer.crackSpreadRegime}，日度更新）`,
+        ulsdPrice === null ? null : `ULSD ${formatNumber(ulsdPrice, 3)}；4周变化 ${formatSignedDecimal(ulsd4wChange, 3)} — 下游成品油压力`,
         dirtyTankerIndex === null
           ? null
           : `BDTI ${formatNumber(dirtyTankerIndex, 0)}（${text(shippingFreight.tankerFreightRegime, '未知')}）`,
+        cleanTankerIndex === null ? null : `BCTI ${formatNumber(cleanTankerIndex, 0)}（${text(shippingFreight.cleanTankerFreightRegime, '未知')}）`,
+        dryBulkIndex === null ? null : `BDI ${formatNumber(dryBulkIndex, 0)}（${text(shippingFreight.dryBulkFreightRegime, '未知')}）`,
       ].filter(Boolean),
       missingEvidence: safeArray(brentLayer.dataGaps).slice(0, 3).length
         ? safeArray(brentLayer.dataGaps).slice(0, 3)
@@ -1077,7 +1197,15 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
       direction: '观察中',
       confidence: '中等',
       dataCoverage: '数据覆盖：部分缺口',
-      evidence: [text(ratesCheck.summaryZh, `10年期 ${formatNumber(inputs.us10y, 2, '%')}；实际利率 ${formatNumber(inputs.real10y, 2, '%')}；广义美元 ${formatNumber(inputs.dxy, 2)}。`)],
+      evidence: [
+        text(ratesCheck.summaryZh, `10年期 ${formatNumber(inputs.us10y, 2, '%')}；实际利率 ${formatNumber(inputs.real10y, 2, '%')}；广义美元 ${formatNumber(inputs.dxy, 2)}。`),
+        bgcr === null || tgcr === null
+          ? null
+          : `NY Fed repo rates: BGCR ${formatNumber(bgcr, 2, '%')} / TGCR ${formatNumber(tgcr, 2, '%')}；TGCR-SOFR ${formatBasisPoints(tgcrSofrSpread)}（${text(fedLiquidity.repoRatesSource, 'repo source 待确认')}）`,
+        targetMid === null || fedFundsFutureImpliedRate === null
+          ? null
+          : `Policy path proxy: target midpoint ${formatNumber(targetMid, 3, '%')}；ZQ implied ${formatNumber(fedFundsFutureImpliedRate, 2, '%')}；SEP current median ${formatNumber(dotPlotMedianCurrentYear, 2, '%')}`,
+      ].filter(Boolean),
       missingEvidence: safeArray(ratesCheck.limitations).slice(0, 1).length
         ? safeArray(ratesCheck.limitations).slice(0, 1)
         : ['资金面和期限结构证据等待接入。'],
@@ -1132,13 +1260,14 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
         reserveBalances === null ? null : `银行准备金 ${formatUsdTrillions(reserveBalances / 1_000_000)}，4 周变化 ${formatSignedPercent(reserveBalances4wChange)}（系统流动性缓冲）`,
         credit?.sloosTighteningLargeFirms === null || !Number.isFinite(credit?.sloosTighteningLargeFirms)
           ? null
-          : `银行贷款标准 (SLOOS C&I 大型) ${formatSignedPercent(credit.sloosTighteningLargeFirms, 1)}（信用环境${credit.sloosTighteningLargeFirms >= 20 ? '收紧确认' : credit.sloosTighteningLargeFirms >= 0 ? '温和收紧' : '放松'}）`,
+          : `银行贷款标准 (SLOOS C&I) 大型 ${formatSignedPercent(credit.sloosTighteningLargeFirms, 1)} / 小型 ${formatSignedPercent(sloosTighteningSmallFirms, 1)}（信用环境${credit.sloosTighteningLargeFirms >= 20 ? '收紧确认' : credit.sloosTighteningLargeFirms >= 0 ? '温和收紧' : '放松'}）`,
         credit?.nfci === null || !Number.isFinite(credit?.nfci)
           ? null
-          : `金融状况指数 (NFCI) ${credit.nfci >= 0 ? '+' : ''}${formatNumber(credit.nfci, 2)}（${credit.nfci > 0 ? '偏紧' : credit.nfci < 0 ? '偏松' : '中性'}，周度更新）`,
+          : `金融状况指数 (NFCI) ${credit.nfci >= 0 ? '+' : ''}${formatNumber(credit.nfci, 2)}；4w ${formatSignedDecimal(nfci4wChange, 3)}（${text(credit.nfciRegime, credit.nfci > 0 ? '偏紧' : credit.nfci < 0 ? '偏松' : '中性')}，周度更新）`,
         bdcEtfPrice === null
           ? null
           : `BIZD ${formatNumber(bdcEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(bdcEtf4wChange)}（listed BDC proxy）`,
+        `CDX/private marks status: HY=${text(privateCreditProxy.cdxHyStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxHy))} / IG=${text(privateCreditProxy.cdxIgStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxIg))} / marks=${text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks))}`,
       ].filter(Boolean),
       missingEvidence: ['CDX HY/IG 与私募信用 marks 需要 manual/licensed input。'],
       counterEvidence: creditCalm ? ['信用和波动率尚未显示系统性扩散。'] : [],
