@@ -79,7 +79,11 @@ const requiredSourceMarkers = [
   'sofr: Number.isFinite(sofr) ? sofr : null',
   'reserveBalances: Number.isFinite(reserveBalances) ? reserveBalances : null',
   'reserveBalances4wChange: Number.isFinite(reserveBalances4wChange) ? reserveBalances4wChange : null',
-  "sourceStatus: { walcl: 'missing', onRrp: 'missing', effectiveFedFundsRate: 'missing', sofr: 'missing', reserveBalances: 'missing' }"
+  "walcl: 'missing'",
+  "onRrp: 'missing'",
+  "effectiveFedFundsRate: 'missing'",
+  "sofr: 'missing'",
+  "reserveBalances: 'missing'"
 ];
 for (const marker of requiredSourceMarkers) {
   if (!runDailyText.includes(marker)) {

@@ -73,7 +73,9 @@ const requiredRenderMarkers = [
   '金融状况指数 (NFCI)',
   '偏紧',
   '偏松',
-  '私募信贷、CDX 与更细信用指标等待接入。'
+  "id: 'driver-private-credit-proxy'",
+  'BIZD listed BDC proxy',
+  'CDX HY/IG 与私募信用 marks 需要 manual/licensed input；不伪造成公开数据。'
 ];
 for (const marker of requiredRenderMarkers) {
   if (!renderMacroText.includes(marker)) {

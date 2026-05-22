@@ -75,7 +75,7 @@ const renderMarkers = [
   'brentLayer.crackSpread',
   '柴油裂解价差',
   'Dated Brent、期限结构、库存数据等待接入。',
-  'Brent 期限结构、shipping / freight 仍待接入。'
+  'Brent 期限结构仍待接入；shipping / freight 已接入 BDTI/BCTI/BDI 公开代理。'
 ];
 
 for (const marker of renderMarkers) {

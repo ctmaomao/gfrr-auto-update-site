@@ -30,7 +30,8 @@ const backlogText = readText('docs/PROJECT_BACKLOG.md');
 const consumerRetail = radarData?.macroDrivers?.consumerRetail;
 const sourceStatuses = new Set(['live', 'fallback', 'missing']);
 const retailRegimes = new Set(['明显走弱', '走弱', '稳定', '改善', '强劲', '未知']);
-const expectedSource = 'FRED:CARTS; FRED:CARTSR';
+const segmentRegimes = new Set(['广泛改善', '温和改善', '分化', '广泛走弱', '未知']);
+const expectedSource = 'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments';
 
 if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consumerRetail)) {
   fail('macroDrivers.consumerRetail is missing or not an object');
@@ -42,6 +43,14 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
     'cartsReal',
     'cartsReal4wAverage',
     'cartsRealYoY',
+    'retailSegments',
+    'segmentPositiveCount',
+    'segmentSeriesCount',
+    'segmentDiffusionPct',
+    'segmentRegime',
+    'strongestSegment',
+    'weakestSegment',
+    'segmentUpdatedAt',
     'retailRegime',
     'sourceStatus',
     'updatedAt',
@@ -60,7 +69,10 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
     'cartsNominalYoY',
     'cartsReal',
     'cartsReal4wAverage',
-    'cartsRealYoY'
+    'cartsRealYoY',
+    'segmentPositiveCount',
+    'segmentSeriesCount',
+    'segmentDiffusionPct'
   ]) {
     if (field in consumerRetail && !isFiniteNumberOrNull(consumerRetail[field])) {
       fail(`macroDrivers.consumerRetail.${field} must be finite number or null`);
@@ -70,11 +82,17 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
   if (!retailRegimes.has(consumerRetail.retailRegime)) {
     fail(`macroDrivers.consumerRetail.retailRegime must be one of ${[...retailRegimes].join('/')}`);
   }
+  if (!segmentRegimes.has(consumerRetail.segmentRegime)) {
+    fail(`macroDrivers.consumerRetail.segmentRegime must be one of ${[...segmentRegimes].join('/')}`);
+  }
+  if (!Array.isArray(consumerRetail.retailSegments)) {
+    fail('macroDrivers.consumerRetail.retailSegments must be an array');
+  }
 
   if (!consumerRetail.sourceStatus || typeof consumerRetail.sourceStatus !== 'object' || Array.isArray(consumerRetail.sourceStatus)) {
     fail('macroDrivers.consumerRetail.sourceStatus must be an object');
   } else {
-    for (const key of ['carts', 'cartsr']) {
+    for (const key of ['carts', 'cartsr', 'retailSegments']) {
       if (!sourceStatuses.has(consumerRetail.sourceStatus[key])) {
         fail(`macroDrivers.consumerRetail.sourceStatus.${key} must be live/fallback/missing`);
       }
@@ -94,10 +112,13 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
 
 const requiredRunDailyMarkers = [
   'function classifyRetailRegime(cartsRealYoY)',
+  'function classifyRetailSegmentRegime(segmentDiffusionPct)',
+  'CONSUMER_RETAIL_SEGMENT_SERIES',
+  'function calculateRetailSegmentSnapshot(seriesResults)',
   'async function resolveConsumerRetail(prevConsumerRetail)',
   "fetchFredSeries('CARTS', 1500)",
   "fetchFredSeries('CARTSR', 1500)",
-  "source: 'FRED:CARTS; FRED:CARTSR'",
+  "source: 'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments'",
   'consumerRetail: macroDrivers.consumerRetail'
 ];
 for (const marker of requiredRunDailyMarkers) {
@@ -111,6 +132,7 @@ const requiredRenderMarkers = [
   '高频零售消费 CONSUMER RETAIL',
   'CARTS 名义',
   'CARTSR 实际',
+  'MRTS 细分零售扩散',
   'Chicago Fed CARTS:'
 ];
 for (const marker of requiredRenderMarkers) {
@@ -125,8 +147,9 @@ const requiredContractMarkers = [
   'FRED:CARTSR',
   'cartsNominal4wAverage',
   'cartsRealYoY',
+  'segmentDiffusionPct',
   'retailRegime',
-  '不代表 Redbook 或 BoA Card 数据',
+  'MRTS',
   'audit-only / display-only',
   '不参与 scoring、decisionModel、executionLock 或 positionGuidance'
 ];
@@ -139,6 +162,7 @@ for (const marker of requiredContractMarkers) {
 const requiredSourceMarkers = [
   '`CARTS`',
   '`CARTSR`',
+  '`MRTSSM441USN`',
   'macroDrivers.consumerRetail'
 ];
 for (const marker of requiredSourceMarkers) {
@@ -166,6 +190,7 @@ if (errors.length > 0) {
 console.log(
   `Macro drivers consumerRetail check: PASS (CARTS=${formatValue(consumerRetail.cartsNominal)}, ` +
   `CARTSR=${formatValue(consumerRetail.cartsReal)}, cartsNominalYoY=${formatValue(consumerRetail.cartsNominalYoY)}, ` +
-  `cartsRealYoY=${formatValue(consumerRetail.cartsRealYoY)}, retailRegime=${consumerRetail.retailRegime}, ` +
+  `cartsRealYoY=${formatValue(consumerRetail.cartsRealYoY)}, segmentDiffusion=${formatValue(consumerRetail.segmentDiffusionPct)}, ` +
+  `retailRegime=${consumerRetail.retailRegime}, ` +
   `sourceStatus=${JSON.stringify(consumerRetail.sourceStatus)})`
 );

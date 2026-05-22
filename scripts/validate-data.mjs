@@ -58,19 +58,36 @@ const VALID_CONSUMER_SOURCES = new Set([
 const EMPLOYMENT_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_EMPLOYMENT_SOURCES = new Set([
   'FRED:ICSA; FRED:CCSA; FRED:JTSJOL',
+  'FRED:ICSA; FRED:CCSA; FRED:JTSJOL; FRED:CES0500000003; FRED:U6RATE; FRED:industry-payroll-basket',
 ]);
 const VALID_CLAIMS_REGIMES = new Set(['明显走弱', '走弱', '稳定', '改善', '未知']);
 const VALID_JOLTS_REGIMES = new Set(['紧张', '平衡', '宽松', '走弱', '未知']);
+const VALID_LABOR_QUALITY_REGIMES = new Set(['工资韧性', '扩散改善', '降温', '平衡', '未知']);
+const VALID_INDUSTRY_DIFFUSION_REGIMES = new Set(['广泛扩张', '温和扩张', '分化', '收缩扩散', '未知']);
 const CONSUMER_RETAIL_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_CONSUMER_RETAIL_SOURCES = new Set([
   'FRED:CARTS; FRED:CARTSR',
+  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments',
 ]);
 const VALID_RETAIL_REGIMES = new Set(['明显走弱', '走弱', '稳定', '改善', '强劲', '未知']);
-const CRE_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_RETAIL_SEGMENT_REGIMES = new Set(['广泛改善', '温和改善', '分化', '广泛走弱', '未知']);
+const CRE_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'manual_required']);
 const VALID_CRE_SOURCES = new Set([
   'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM',
+  'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; Yahoo:VNQ; Yahoo:REM',
 ]);
 const VALID_CRE_STRESS_REGIMES = new Set(['恶化', '紧绷', '稳定', '宽松', '改善', '未知']);
+const VALID_CRE_PUBLIC_MARKET_PROXY_REGIMES = new Set(['市场压力上升', '观察', '平稳', '未知']);
+const SHIPPING_FREIGHT_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_SHIPPING_FREIGHT_SOURCE = 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI';
+const VALID_FREIGHT_REGIMES = new Set(['高压', '观察', '快速回落', '正常', '未知']);
+const POLICY_EXPECTATIONS_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'manual_required']);
+const VALID_POLICY_EXPECTATIONS_SOURCE = 'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F; FederalReserve:FOMC statement/SEP';
+const VALID_POLICY_TONES = new Set(['偏鹰', '偏鸽', '平衡', '未知']);
+const VALID_POLICY_EXPECTATION_REGIMES = new Set(['降息预期', '加息/更高更久', '区间震荡', '未知']);
+const PRIVATE_CREDIT_PROXY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'manual_required']);
+const VALID_PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; FRED:BAMLH0A0HYM2';
+const VALID_PRIVATE_CREDIT_PROXY_REGIMES = new Set(['压力上升', '观察', '平稳', '未知']);
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
@@ -433,7 +450,14 @@ function validateMacroDriversEmployment(dataPayload) {
     'continuingClaims',
     'continuingClaims4wAverage',
     'joltsOpenings',
-    'joltsOpeningsYoY'
+    'joltsOpeningsYoY',
+    'averageHourlyEarnings',
+    'averageHourlyEarningsYoY',
+    'u6Rate',
+    'u6Rate3mChange',
+    'industryPayrollDiffusionPct',
+    'industryPayrollPositiveCount',
+    'industryPayrollSeriesCount'
   ]) {
     assert(Object.hasOwn(employment, key), `macroDrivers.employment.${key} is missing`);
     assert(isFiniteNumberOrNull(employment[key]), `macroDrivers.employment.${key} must be finite number or null`);
@@ -443,9 +467,13 @@ function validateMacroDriversEmployment(dataPayload) {
   assert(VALID_CLAIMS_REGIMES.has(employment.claimsRegime), 'macroDrivers.employment.claimsRegime is not supported');
   assertString(employment.joltsRegime, 'macroDrivers.employment.joltsRegime');
   assert(VALID_JOLTS_REGIMES.has(employment.joltsRegime), 'macroDrivers.employment.joltsRegime is not supported');
+  assertString(employment.laborQualityRegime, 'macroDrivers.employment.laborQualityRegime');
+  assert(VALID_LABOR_QUALITY_REGIMES.has(employment.laborQualityRegime), 'macroDrivers.employment.laborQualityRegime is not supported');
+  assertString(employment.industryDiffusionRegime, 'macroDrivers.employment.industryDiffusionRegime');
+  assert(VALID_INDUSTRY_DIFFUSION_REGIMES.has(employment.industryDiffusionRegime), 'macroDrivers.employment.industryDiffusionRegime is not supported');
 
   assertPlainObject(employment.sourceStatus, 'macroDrivers.employment.sourceStatus');
-  for (const key of ['icsa', 'ccsa', 'jtsjol']) {
+  for (const key of ['icsa', 'ccsa', 'jtsjol', 'ahe', 'u6', 'industryPayroll']) {
     assert(Object.hasOwn(employment.sourceStatus, key), `macroDrivers.employment.sourceStatus.${key} is missing`);
     assert(
       EMPLOYMENT_SOURCE_STATUSES.has(employment.sourceStatus[key]),
@@ -461,6 +489,27 @@ function validateMacroDriversEmployment(dataPayload) {
     employment.joltsUpdatedAt === null || (typeof employment.joltsUpdatedAt === 'string' && Number.isFinite(Date.parse(employment.joltsUpdatedAt))),
     'macroDrivers.employment.joltsUpdatedAt must be null or parseable ISO string'
   );
+  for (const key of ['averageHourlyEarningsUpdatedAt', 'u6UpdatedAt', 'industryPayrollUpdatedAt']) {
+    assert(
+      employment[key] === null || (typeof employment[key] === 'string' && Number.isFinite(Date.parse(employment[key]))),
+      `macroDrivers.employment.${key} must be null or parseable ISO string`
+    );
+  }
+  if (Number.isFinite(employment.averageHourlyEarningsYoY)) {
+    assert(employment.averageHourlyEarningsYoY > -0.5 && employment.averageHourlyEarningsYoY < 0.5, 'macroDrivers.employment.averageHourlyEarningsYoY is out of expected range');
+  }
+  if (Number.isFinite(employment.u6Rate)) {
+    assert(employment.u6Rate >= 0 && employment.u6Rate <= 30, 'macroDrivers.employment.u6Rate is out of expected range');
+  }
+  if (Number.isFinite(employment.industryPayrollDiffusionPct)) {
+    assert(
+      employment.industryPayrollDiffusionPct >= 0 && employment.industryPayrollDiffusionPct <= 100,
+      'macroDrivers.employment.industryPayrollDiffusionPct must be 0-100'
+    );
+  }
+  if (Number.isFinite(employment.industryPayrollPositiveCount) && Number.isFinite(employment.industryPayrollSeriesCount)) {
+    assert(employment.industryPayrollPositiveCount <= employment.industryPayrollSeriesCount, 'macroDrivers.employment industry positive count cannot exceed series count');
+  }
   assert(
     VALID_EMPLOYMENT_SOURCES.has(employment.source),
     `macroDrivers.employment.source must be one of: ${[...VALID_EMPLOYMENT_SOURCES].join(' | ')}`
@@ -480,7 +529,10 @@ function validateMacroDriversConsumerRetail(dataPayload) {
     'cartsNominalYoY',
     'cartsReal',
     'cartsReal4wAverage',
-    'cartsRealYoY'
+    'cartsRealYoY',
+    'segmentPositiveCount',
+    'segmentSeriesCount',
+    'segmentDiffusionPct'
   ]) {
     assert(Object.hasOwn(consumerRetail, key), `macroDrivers.consumerRetail.${key} is missing`);
     assert(isFiniteNumberOrNull(consumerRetail[key]), `macroDrivers.consumerRetail.${key} must be finite number or null`);
@@ -488,9 +540,29 @@ function validateMacroDriversConsumerRetail(dataPayload) {
 
   assertString(consumerRetail.retailRegime, 'macroDrivers.consumerRetail.retailRegime');
   assert(VALID_RETAIL_REGIMES.has(consumerRetail.retailRegime), 'macroDrivers.consumerRetail.retailRegime is not supported');
+  assertString(consumerRetail.segmentRegime, 'macroDrivers.consumerRetail.segmentRegime');
+  assert(VALID_RETAIL_SEGMENT_REGIMES.has(consumerRetail.segmentRegime), 'macroDrivers.consumerRetail.segmentRegime is not supported');
+  assertArray(consumerRetail.retailSegments, 'macroDrivers.consumerRetail.retailSegments');
+  consumerRetail.retailSegments.forEach((segment, index) => {
+    const fieldName = `macroDrivers.consumerRetail.retailSegments[${index}]`;
+    assertPlainObject(segment, fieldName);
+    for (const key of ['key', 'seriesId', 'labelZh', 'value', 'yoy', 'updatedAt', 'sourceStatus']) {
+      assert(Object.hasOwn(segment, key), `${fieldName}.${key} is missing`);
+    }
+    assertString(segment.key, `${fieldName}.key`);
+    assertString(segment.seriesId, `${fieldName}.seriesId`);
+    assertString(segment.labelZh, `${fieldName}.labelZh`);
+    assert(isFiniteNumberOrNull(segment.value), `${fieldName}.value must be finite number or null`);
+    assert(isFiniteNumberOrNull(segment.yoy), `${fieldName}.yoy must be finite number or null`);
+    validateNullableIsoString(segment.updatedAt, `${fieldName}.updatedAt`);
+    assert(CONSUMER_RETAIL_SOURCE_STATUSES.has(segment.sourceStatus), `${fieldName}.sourceStatus must be live, fallback, or missing`);
+  });
+  if (consumerRetail.strongestSegment !== null) assertPlainObject(consumerRetail.strongestSegment, 'macroDrivers.consumerRetail.strongestSegment');
+  if (consumerRetail.weakestSegment !== null) assertPlainObject(consumerRetail.weakestSegment, 'macroDrivers.consumerRetail.weakestSegment');
+  validateNullableIsoString(consumerRetail.segmentUpdatedAt, 'macroDrivers.consumerRetail.segmentUpdatedAt');
 
   assertPlainObject(consumerRetail.sourceStatus, 'macroDrivers.consumerRetail.sourceStatus');
-  for (const key of ['carts', 'cartsr']) {
+  for (const key of ['carts', 'cartsr', 'retailSegments']) {
     assert(Object.hasOwn(consumerRetail.sourceStatus, key), `macroDrivers.consumerRetail.sourceStatus.${key} is missing`);
     assert(
       CONSUMER_RETAIL_SOURCE_STATUSES.has(consumerRetail.sourceStatus[key]),
@@ -523,21 +595,40 @@ function validateMacroDriversCommercialRealEstate(dataPayload) {
     'sloosCreNonfarmNonresidentialTightening',
     'sloosCreConstructionTightening',
     'sloosCreMultifamilyTightening',
-    'sloosCreTighteningMax'
+    'sloosCreTighteningMax',
+    'reitEtfPrice',
+    'reitEtf4wChange',
+    'mortgageReitEtfPrice',
+    'mortgageReitEtf4wChange'
   ]) {
     assert(Object.hasOwn(cre, key), `macroDrivers.commercialRealEstate.${key} is missing`);
     assert(isFiniteNumberOrNull(cre[key]), `macroDrivers.commercialRealEstate.${key} must be finite number or null`);
   }
+  validateNullableIsoString(cre.reitEtfUpdatedAt, 'macroDrivers.commercialRealEstate.reitEtfUpdatedAt');
+  validateNullableIsoString(cre.mortgageReitEtfUpdatedAt, 'macroDrivers.commercialRealEstate.mortgageReitEtfUpdatedAt');
+  assertString(cre.crePublicMarketProxyRegime, 'macroDrivers.commercialRealEstate.crePublicMarketProxyRegime');
+  assert(VALID_CRE_PUBLIC_MARKET_PROXY_REGIMES.has(cre.crePublicMarketProxyRegime), 'macroDrivers.commercialRealEstate.crePublicMarketProxyRegime is not supported');
+  assertString(cre.nonPublicCreStatus, 'macroDrivers.commercialRealEstate.nonPublicCreStatus');
+  assert(CRE_SOURCE_STATUSES.has(cre.nonPublicCreStatus), 'macroDrivers.commercialRealEstate.nonPublicCreStatus is not supported');
 
   assertString(cre.creStressRegime, 'macroDrivers.commercialRealEstate.creStressRegime');
   assert(VALID_CRE_STRESS_REGIMES.has(cre.creStressRegime), 'macroDrivers.commercialRealEstate.creStressRegime is not supported');
 
   assertPlainObject(cre.sourceStatus, 'macroDrivers.commercialRealEstate.sourceStatus');
-  for (const key of ['delinquency', 'chargeOff', 'sloosNonfarmNonresidential', 'sloosConstruction', 'sloosMultifamily']) {
+  for (const key of [
+    'delinquency',
+    'chargeOff',
+    'sloosNonfarmNonresidential',
+    'sloosConstruction',
+    'sloosMultifamily',
+    'reitEtf',
+    'mortgageReitEtf',
+    'nonPublicCre'
+  ]) {
     assert(Object.hasOwn(cre.sourceStatus, key), `macroDrivers.commercialRealEstate.sourceStatus.${key} is missing`);
     assert(
       CRE_SOURCE_STATUSES.has(cre.sourceStatus[key]),
-      `macroDrivers.commercialRealEstate.sourceStatus.${key} must be live, fallback, or missing`
+      `macroDrivers.commercialRealEstate.sourceStatus.${key} must be live, fallback, missing, or manual_required`
     );
   }
 
@@ -551,6 +642,112 @@ function validateMacroDriversCommercialRealEstate(dataPayload) {
   );
   assertArray(cre.notes, 'macroDrivers.commercialRealEstate.notes');
   cre.notes.forEach((item, index) => assertString(item, `macroDrivers.commercialRealEstate.notes[${index}]`));
+}
+
+function validateMacroDriversShippingFreight(dataPayload) {
+  const freight = dataPayload?.macroDrivers?.shippingFreight;
+  if (freight === undefined) return;
+  assertPlainObject(freight, 'macroDrivers.shippingFreight');
+  for (const key of [
+    'balticDirtyTankerIndex',
+    'balticDirtyTankerDailyChangePct',
+    'balticCleanTankerIndex',
+    'balticCleanTankerDailyChangePct',
+    'balticDryIndex',
+    'balticDryDailyChangePct'
+  ]) {
+    assert(Object.hasOwn(freight, key), `macroDrivers.shippingFreight.${key} is missing`);
+    assert(isFiniteNumberOrNull(freight[key]), `macroDrivers.shippingFreight.${key} must be finite number or null`);
+  }
+  for (const key of ['balticDirtyTankerUpdatedAt', 'balticCleanTankerUpdatedAt', 'balticDryUpdatedAt', 'updatedAt']) {
+    assert(Object.hasOwn(freight, key), `macroDrivers.shippingFreight.${key} is missing`);
+    validateNullableIsoString(freight[key], `macroDrivers.shippingFreight.${key}`);
+  }
+  for (const key of ['tankerFreightRegime', 'cleanTankerFreightRegime', 'dryBulkFreightRegime', 'freightStressRegime']) {
+    assertString(freight[key], `macroDrivers.shippingFreight.${key}`);
+    assert(VALID_FREIGHT_REGIMES.has(freight[key]), `macroDrivers.shippingFreight.${key} is not supported`);
+  }
+  assertPlainObject(freight.sourceStatus, 'macroDrivers.shippingFreight.sourceStatus');
+  for (const key of ['dirtyTanker', 'cleanTanker', 'dryBulk']) {
+    assert(Object.hasOwn(freight.sourceStatus, key), `macroDrivers.shippingFreight.sourceStatus.${key} is missing`);
+    assert(SHIPPING_FREIGHT_SOURCE_STATUSES.has(freight.sourceStatus[key]), `macroDrivers.shippingFreight.sourceStatus.${key} must be live, fallback, or missing`);
+  }
+  assert(freight.source === VALID_SHIPPING_FREIGHT_SOURCE, `macroDrivers.shippingFreight.source must be ${VALID_SHIPPING_FREIGHT_SOURCE}`);
+  assertArray(freight.notes, 'macroDrivers.shippingFreight.notes');
+  freight.notes.forEach((item, index) => assertString(item, `macroDrivers.shippingFreight.notes[${index}]`));
+}
+
+function validateMacroDriversPolicyExpectations(dataPayload) {
+  const policy = dataPayload?.macroDrivers?.policyExpectations;
+  if (policy === undefined) return;
+  assertPlainObject(policy, 'macroDrivers.policyExpectations');
+  for (const key of [
+    'targetLower',
+    'targetUpper',
+    'targetMid',
+    'effectiveFedFundsRate',
+    'fedFundsFutureFrontPrice',
+    'fedFundsFutureImpliedRate',
+    'futureMinusTargetMid',
+    'dotPlotMedianCurrentYear',
+    'dotPlotMedianNextYear',
+    'dotPlotMedianTwoYearsOut',
+    'dotPlotMedianLongerRun',
+    'hawkishTermCount',
+    'dovishTermCount',
+    'oisForwardRate'
+  ]) {
+    assert(Object.hasOwn(policy, key), `macroDrivers.policyExpectations.${key} is missing`);
+    assert(isFiniteNumberOrNull(policy[key]), `macroDrivers.policyExpectations.${key} must be finite number or null`);
+  }
+  for (const key of ['targetUpdatedAt', 'futureUpdatedAt', 'sepProjectionDate', 'statementDate', 'updatedAt']) {
+    assert(Object.hasOwn(policy, key), `macroDrivers.policyExpectations.${key} is missing`);
+    validateNullableIsoString(policy[key], `macroDrivers.policyExpectations.${key}`);
+  }
+  for (const key of ['sepUrl', 'statementUrl', 'statementTargetRangeText']) {
+    assert(Object.hasOwn(policy, key), `macroDrivers.policyExpectations.${key} is missing`);
+    validateNullableString(policy[key], `macroDrivers.policyExpectations.${key}`);
+  }
+  assertString(policy.policyTone, 'macroDrivers.policyExpectations.policyTone');
+  assert(VALID_POLICY_TONES.has(policy.policyTone), 'macroDrivers.policyExpectations.policyTone is not supported');
+  assertString(policy.policyExpectationRegime, 'macroDrivers.policyExpectations.policyExpectationRegime');
+  assert(VALID_POLICY_EXPECTATION_REGIMES.has(policy.policyExpectationRegime), 'macroDrivers.policyExpectations.policyExpectationRegime is not supported');
+  assertString(policy.oisForwardStatus, 'macroDrivers.policyExpectations.oisForwardStatus');
+  assert(POLICY_EXPECTATIONS_SOURCE_STATUSES.has(policy.oisForwardStatus), 'macroDrivers.policyExpectations.oisForwardStatus is not supported');
+  assertPlainObject(policy.sourceStatus, 'macroDrivers.policyExpectations.sourceStatus');
+  for (const key of ['targetRange', 'fedFundsFuture', 'sepDotPlot', 'policyStatement', 'oisForward']) {
+    assert(Object.hasOwn(policy.sourceStatus, key), `macroDrivers.policyExpectations.sourceStatus.${key} is missing`);
+    assert(POLICY_EXPECTATIONS_SOURCE_STATUSES.has(policy.sourceStatus[key]), `macroDrivers.policyExpectations.sourceStatus.${key} is not supported`);
+  }
+  assert(policy.source === VALID_POLICY_EXPECTATIONS_SOURCE, `macroDrivers.policyExpectations.source must be ${VALID_POLICY_EXPECTATIONS_SOURCE}`);
+  assertArray(policy.notes, 'macroDrivers.policyExpectations.notes');
+  policy.notes.forEach((item, index) => assertString(item, `macroDrivers.policyExpectations.notes[${index}]`));
+}
+
+function validateMacroDriversPrivateCreditProxy(dataPayload) {
+  const proxy = dataPayload?.macroDrivers?.privateCreditProxy;
+  if (proxy === undefined) return;
+  assertPlainObject(proxy, 'macroDrivers.privateCreditProxy');
+  for (const key of ['bdcEtfPrice', 'bdcEtf4wChange', 'hyOas']) {
+    assert(Object.hasOwn(proxy, key), `macroDrivers.privateCreditProxy.${key} is missing`);
+    assert(isFiniteNumberOrNull(proxy[key]), `macroDrivers.privateCreditProxy.${key} must be finite number or null`);
+  }
+  validateNullableIsoString(proxy.bdcEtfUpdatedAt, 'macroDrivers.privateCreditProxy.bdcEtfUpdatedAt');
+  validateNullableIsoString(proxy.updatedAt, 'macroDrivers.privateCreditProxy.updatedAt');
+  for (const key of ['cdxHyStatus', 'cdxIgStatus', 'privateCreditMarksStatus']) {
+    assertString(proxy[key], `macroDrivers.privateCreditProxy.${key}`);
+    assert(PRIVATE_CREDIT_PROXY_SOURCE_STATUSES.has(proxy[key]), `macroDrivers.privateCreditProxy.${key} is not supported`);
+  }
+  assertString(proxy.privateCreditProxyRegime, 'macroDrivers.privateCreditProxy.privateCreditProxyRegime');
+  assert(VALID_PRIVATE_CREDIT_PROXY_REGIMES.has(proxy.privateCreditProxyRegime), 'macroDrivers.privateCreditProxy.privateCreditProxyRegime is not supported');
+  assertPlainObject(proxy.sourceStatus, 'macroDrivers.privateCreditProxy.sourceStatus');
+  for (const key of ['bdcEtf', 'hyOas', 'cdxHy', 'cdxIg', 'privateCreditMarks']) {
+    assert(Object.hasOwn(proxy.sourceStatus, key), `macroDrivers.privateCreditProxy.sourceStatus.${key} is missing`);
+    assert(PRIVATE_CREDIT_PROXY_SOURCE_STATUSES.has(proxy.sourceStatus[key]), `macroDrivers.privateCreditProxy.sourceStatus.${key} is not supported`);
+  }
+  assert(proxy.source === VALID_PRIVATE_CREDIT_PROXY_SOURCE, `macroDrivers.privateCreditProxy.source must be ${VALID_PRIVATE_CREDIT_PROXY_SOURCE}`);
+  assertArray(proxy.notes, 'macroDrivers.privateCreditProxy.notes');
+  proxy.notes.forEach((item, index) => assertString(item, `macroDrivers.privateCreditProxy.notes[${index}]`));
 }
 
 function validateNullableString(value, fieldName) {
@@ -1388,9 +1585,12 @@ validateDailyRealtimeInput(data);
 validateDailyBrief(data);
 validateDivergenceLayer(data);
 validateMacroDriversConsumer(data);
+validateMacroDriversShippingFreight(data);
+validateMacroDriversPolicyExpectations(data);
 validateMacroDriversEmployment(data);
 validateMacroDriversConsumerRetail(data);
 validateMacroDriversCommercialRealEstate(data);
+validateMacroDriversPrivateCreditProxy(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);
 validateExternalAiInterpretationLayer(data);

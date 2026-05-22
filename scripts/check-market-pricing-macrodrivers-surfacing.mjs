@@ -41,7 +41,7 @@ function assertProtectedFilesUnchanged() {
 }
 
 const renderSource = readText(RENDER_PATH);
-const macroDriversSource = sliceFrom(renderSource, 'function buildMacroDrivers', 5200);
+const macroDriversSource = sliceFrom(renderSource, 'function buildMacroDrivers', 7600);
 const policySource = sliceFrom(renderSource, "id: 'driver-policy'", 1300);
 const financialFragilitySource = sliceFrom(renderSource, "id: 'engine-financial-fragility'", 1600);
 const radarData = JSON.parse(readText('data/radar-data.json'));
