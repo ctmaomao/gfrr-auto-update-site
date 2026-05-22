@@ -79,13 +79,15 @@ if (isPlainObject(policy)) {
     'futureMinusTargetMid',
     'dotPlotMedianCurrentYear',
     'dotPlotMedianNextYear',
+    'minutesHawkishTermCount',
+    'minutesDovishTermCount',
     'hawkishTermCount',
     'dovishTermCount',
     'oisForwardRate'
   ]);
-  assertStatusKeys(policy, 'macroDrivers.policyExpectations', ['targetRange', 'fedFundsFuture', 'sepDotPlot', 'policyStatement', 'oisForward']);
-  if (policy.source !== 'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F; FederalReserve:FOMC statement/SEP') {
-    fail('macroDrivers.policyExpectations.source is not the approved M-74 source string');
+  assertStatusKeys(policy, 'macroDrivers.policyExpectations', ['targetRange', 'fedFundsFuture', 'sepDotPlot', 'policyStatement', 'fomcMinutes', 'oisForward']);
+  if (policy.source !== 'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F; FederalReserve:FOMC statement/SEP/minutes') {
+    fail('macroDrivers.policyExpectations.source is not the approved M-77 source string');
   }
 }
 
@@ -97,6 +99,20 @@ if (isPlainObject(privateCredit)) {
   if (privateCredit.source !== 'Yahoo:BIZD; FRED:BAMLH0A0HYM2') fail('macroDrivers.privateCreditProxy.source is not the approved M-74 source string');
 }
 
+const consumerRetail = macroDrivers?.consumerRetail;
+assertLayer('macroDrivers.consumerRetail', consumerRetail);
+if (isPlainObject(consumerRetail)) {
+  assertFiniteOrNull(consumerRetail, 'macroDrivers.consumerRetail', [
+    'bofaCardSpendingYoY',
+    'bofaCardSpendingPriorYoY',
+    'bofaCardSpendingExGasYoY'
+  ]);
+  assertStatusKeys(consumerRetail, 'macroDrivers.consumerRetail', ['carts', 'cartsr', 'retailSegments', 'bofaConsumerCheckpoint'], new Set(['live', 'fallback', 'missing']));
+  if (consumerRetail.source !== 'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html') {
+    fail('macroDrivers.consumerRetail.source is not the approved M-77 source string');
+  }
+}
+
 const requiredRunDailyMarkers = [
   'async function resolveShippingFreight(prevShippingFreight)',
   "fetchStockqIndex('BDTI', 'Baltic Dirty Tanker Index')",
@@ -106,8 +122,11 @@ const requiredRunDailyMarkers = [
   "fetchYahooChartQuote('ZQ=F', '1mo', '1d')",
   'parseFedSepMedians',
   'parseFedPolicyTone',
+  'parseFedMinutesTone',
   'async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive)',
   "fetchYahooChartQuote('BIZD', '1mo', '1d')",
+  'fetchBofaConsumerCheckpoint',
+  'resolveBrentFuturesCurve',
   'shippingFreight: macroDrivers.shippingFreight',
   'policyExpectations: macroDrivers.policyExpectations',
   'privateCreditProxy: macroDrivers.privateCreditProxy'
@@ -129,6 +148,9 @@ const requiredRenderMarkers = [
   'longer-run',
   'hawkish',
   'dovish',
+  'FOMC minutes',
+  'BoA Consumer Checkpoint',
+  'ICE Brent futuresCurve structure-only',
   'MRTS 细分 ${index + 1}:',
   'non-public CRE loan tape status',
   'CDX HY status',
@@ -158,6 +180,8 @@ for (const marker of [
   'macroDrivers.privateCreditProxy',
   'BDTI',
   'ZQ=F',
+  'fomcminutesYYYYMMDD.htm',
+  'BoA Consumer Checkpoint',
   'BIZD'
 ]) {
   if (!dataContractText.includes(marker)) fail(`DATA_CONTRACT missing M-74 marker: ${marker}`);
@@ -175,5 +199,5 @@ if (errors.length > 0) {
 console.log(
   'Expanded macro-driver auto-ingestion check: PASS ' +
   `(BDTI=${freight.balticDirtyTankerIndex}, ZQ=${policy.fedFundsFutureImpliedRate}, ` +
-  `dot=${policy.dotPlotMedianCurrentYear}, BIZD=${privateCredit.bdcEtfPrice})`
+  `dot=${policy.dotPlotMedianCurrentYear}, minutes=${policy.minutesPolicyTone}, BIZD=${privateCredit.bdcEtfPrice})`
 );

@@ -1,4 +1,4 @@
-import { $ } from './config.js?v=28.0M-76V';
+import { $ } from './config.js?v=28.0M-77V';
 
 export function renderScenarioTree(items) {
   const root = $('scenario-list');

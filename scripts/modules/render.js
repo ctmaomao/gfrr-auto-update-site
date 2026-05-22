@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-76V';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-76V';
-import { renderList } from './renderTables.js?v=28.0M-76V';
+import { $, fmtNumSafe, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-77V';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-77V';
+import { renderList } from './renderTables.js?v=28.0M-77V';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0M-76V';
+} from './renderCharts.js?v=28.0M-77V';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0M-76V';
+} from './renderTables.js?v=28.0M-77V';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0M-76V';
+} from './renderAudit.js?v=28.0M-77V';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -929,6 +929,17 @@ function formatBrentPriceNode(node = {}) {
   return `${label}：${value} / 来源 ${source} / 状态 ${status}`;
 }
 
+function formatBrentFuturesCurve(curve = {}) {
+  if (!curve || typeof curve !== 'object') return 'ICE 合约结构：待确认';
+  const status = safeText(curve.curveStatus, 'missing');
+  const contracts = safeArray(curve.contracts)
+    .filter((contract) => contract && typeof contract === 'object')
+    .slice(0, 4)
+    .map((contract) => `${safeText(contract.contract, '--')}(${safeText(contract.lastTrade, '--').slice(0, 10)})`);
+  if (!contracts.length) return `ICE 合约结构：${status}`;
+  return `ICE futuresCurve structure-only：${contracts.join(' / ')}；status=${status}`;
+}
+
 function formatBrentConfidence(confidence = {}) {
   const level = {
     low: '低',
@@ -1009,7 +1020,10 @@ export function renderBrentPricingLayer(brentPricingLayer) {
   setTextIfPresent('brent-selected-note', selected.noteZh);
 
   setTextIfPresent('brent-spot-proxy', formatBrentPriceNode(brentPricingLayer.publicSpotProxy || {}));
-  setTextIfPresent('brent-futures-proxy', formatBrentPriceNode(brentPricingLayer.futuresProxy || {}));
+  setTextIfPresent(
+    'brent-futures-proxy',
+    `${formatBrentPriceNode(brentPricingLayer.futuresProxy || {})}；${formatBrentFuturesCurve(brentPricingLayer.futuresCurve || {})}`
+  );
 
   const spread = brentPricingLayer.proxySpread && typeof brentPricingLayer.proxySpread === 'object' ? brentPricingLayer.proxySpread : {};
   setTextIfPresent(

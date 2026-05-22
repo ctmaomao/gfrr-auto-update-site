@@ -31,7 +31,10 @@ const consumerRetail = radarData?.macroDrivers?.consumerRetail;
 const sourceStatuses = new Set(['live', 'fallback', 'missing']);
 const retailRegimes = new Set(['明显走弱', '走弱', '稳定', '改善', '强劲', '未知']);
 const segmentRegimes = new Set(['广泛改善', '温和改善', '分化', '广泛走弱', '未知']);
-const expectedSource = 'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments';
+const expectedSources = new Set([
+  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments',
+  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html'
+]);
 
 if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consumerRetail)) {
   fail('macroDrivers.consumerRetail is missing or not an object');
@@ -51,6 +54,14 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
     'strongestSegment',
     'weakestSegment',
     'segmentUpdatedAt',
+    'bofaCardSpendingYoY',
+    'bofaCardSpendingPriorYoY',
+    'bofaCardSpendingExGasYoY',
+    'bofaReportDate',
+    'bofaReportUrl',
+    'bofaPdfUrl',
+    'bofaStatus',
+    'bofaSummary',
     'retailRegime',
     'sourceStatus',
     'updatedAt',
@@ -72,7 +83,10 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
     'cartsRealYoY',
     'segmentPositiveCount',
     'segmentSeriesCount',
-    'segmentDiffusionPct'
+    'segmentDiffusionPct',
+    'bofaCardSpendingYoY',
+    'bofaCardSpendingPriorYoY',
+    'bofaCardSpendingExGasYoY'
   ]) {
     if (field in consumerRetail && !isFiniteNumberOrNull(consumerRetail[field])) {
       fail(`macroDrivers.consumerRetail.${field} must be finite number or null`);
@@ -92,15 +106,15 @@ if (!consumerRetail || typeof consumerRetail !== 'object' || Array.isArray(consu
   if (!consumerRetail.sourceStatus || typeof consumerRetail.sourceStatus !== 'object' || Array.isArray(consumerRetail.sourceStatus)) {
     fail('macroDrivers.consumerRetail.sourceStatus must be an object');
   } else {
-    for (const key of ['carts', 'cartsr', 'retailSegments']) {
+    for (const key of ['carts', 'cartsr', 'retailSegments', 'bofaConsumerCheckpoint']) {
       if (!sourceStatuses.has(consumerRetail.sourceStatus[key])) {
         fail(`macroDrivers.consumerRetail.sourceStatus.${key} must be live/fallback/missing`);
       }
     }
   }
 
-  if (consumerRetail.source !== expectedSource) {
-    fail(`macroDrivers.consumerRetail.source must be ${expectedSource}`);
+  if (!expectedSources.has(consumerRetail.source)) {
+    fail(`macroDrivers.consumerRetail.source must be one of ${[...expectedSources].join(' | ')}`);
   }
   if (!Array.isArray(consumerRetail.notes) || consumerRetail.notes.some((note) => typeof note !== 'string')) {
     fail('macroDrivers.consumerRetail.notes must be a string array');
@@ -118,7 +132,7 @@ const requiredRunDailyMarkers = [
   'async function resolveConsumerRetail(prevConsumerRetail)',
   "fetchFredSeries('CARTS', 1500)",
   "fetchFredSeries('CARTSR', 1500)",
-  "source: 'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments'",
+  'const CONSUMER_RETAIL_SOURCE =',
   'consumerRetail: macroDrivers.consumerRetail'
 ];
 for (const marker of requiredRunDailyMarkers) {
@@ -171,11 +185,17 @@ for (const marker of requiredSourceMarkers) {
   }
 }
 
-if (!agentsText.includes('macroDrivers.consumerRetail') || !agentsText.includes('Redbook + BoA Card 为 P3-14 source-review candidates')) {
+const hasConsumerRetailBoundary = agentsText.includes('macroDrivers.consumerRetail')
+  && (
+    agentsText.includes('Redbook + BoA Card 为 P3-14 source-review candidates')
+    || agentsText.includes('BoA Consumer Checkpoint 公开 HTML 摘要')
+  );
+if (!hasConsumerRetailBoundary) {
   fail('AGENTS.md missing M-69 consumerRetail boundary note');
 }
 
-if (!backlogText.includes('P3-14: Redbook + BoA Card 高频消费证据')) {
+if (!backlogText.includes('P3-14: Redbook + BoA Card 高频消费证据')
+    && !backlogText.includes('P3-14: Redbook + BoA raw card 高频消费证据')) {
   fail('PROJECT_BACKLOG missing P3-14 Redbook + BoA source-review note');
 }
 

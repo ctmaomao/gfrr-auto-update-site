@@ -9,10 +9,10 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-76 (frontend macro field surfacing; M-74 macro data state unchanged) |
-| Cache version | `28.0M-76V` |
+| 当前生产状态 | v28.0M-77 (public source tranche 3: FOMC minutes, BoA Consumer Checkpoint, ICE Brent structure-only) |
+| Cache version | `28.0M-77V` |
 | check:all 项数 | 23 |
-| 最后审计日期 | **2026-05-22** (M-76 frontend macro field surfacing; M-75 check suite compaction; M-74 expanded macro data auto ingestion; M-73 BGCR/TGCR NY Fed secured rates runtime fix + employment quality public FRED expansion; M-71 Brent public proxy source review; M-70 CRE FRED commercialRealEstate ingestion; M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
+| 最后审计日期 | **2026-05-22** (M-77 public source tranche 3; M-76 frontend macro field surfacing; M-75 check suite compaction; M-74 expanded macro data auto ingestion; M-73 BGCR/TGCR NY Fed secured rates runtime fix + employment quality public FRED expansion; M-71 Brent public proxy source review; M-70 CRE FRED commercialRealEstate ingestion; M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
 | 最后 daily refresh | 2026-05-22 (local M-74 rebuild from `origin/realtime-data` commit `c10c8578`; local `realtime/market.json` restored after build) |
 | GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
@@ -21,10 +21,10 @@
 | ACLED 状态 | M-63a (weekly) + M-63b (monthly) 双 sanitizer + 联合 importer 落地；weekly/monthly 都 `isRealData=true` → `ok`；一边到位 → `partial`；两边都缺 → `manual_required`；evidence-only 进入 `peaceDividendRetreat`,不动权重；M-63c 起 weekly Tuesday / monthly 9th cron reminder workflows active |
 | ISM PMI 状态 | M-67 起由 `scripts/run-daily-pipeline.mjs::fetchIsmManufacturingPmiReport` 低频解析 ismworld.org 公开报告页；audit-only/display-only；失败降级为 `fallback` / `source_unavailable` / `parse_error` |
 | Employment 状态 | M-73 起 `macroDrivers.employment` 在 ICSA/CCSA/JTSJOL 基础上接入 FRED 平均时薪 CES0500000003、U6RATE 与公开行业 payroll basket 扩散代理；audit-only/display-only；仅用于 Macro Drivers 前端卡片；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation |
-| Consumer Retail 状态 | M-69 起 `macroDrivers.consumerRetail` 接入 FRED CARTS/CARTSR (Chicago Fed weekly retail nowcast)；M-74 起加入 FRED MRTS 13 个细分零售行业 basket 和扩散指标；audit-only/display-only；仅用于 Macro Drivers 前端卡片；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation；不接 CARTSP、不冒充 Redbook/BoA Card |
+| Consumer Retail 状态 | M-69 起 `macroDrivers.consumerRetail` 接入 FRED CARTS/CARTSR (Chicago Fed weekly retail nowcast)；M-74 起加入 FRED MRTS 13 个细分零售行业 basket 和扩散指标；M-77 起加入 BoA Consumer Checkpoint 公开 HTML card-spending YoY 摘要；audit-only/display-only；仅用于 Macro Drivers 前端卡片；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation；不接 CARTSP、不冒充 Redbook 或 BoA raw card feed |
 | CRE 状态 | M-70 起 `macroDrivers.commercialRealEstate` 接入 FRED DRCRELEXFACBS/CORCREXFACBS/SUBLPDRCSN/SUBLPDRCSC/SUBLPDRCSM 季频 CRE 信用压力 series；M-74 起加入 Yahoo VNQ/REM public market proxy；audit-only/display-only；独立于 `macroDrivers.credit`；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation；不冒充非公开 CRE loan tape |
-| Expanded macro 状态 | M-74 起 `macroDrivers.shippingFreight` 接入 StockQ BDTI/BCTI/BDI；`macroDrivers.policyExpectations` 接入 FRED DFEDTARL/DFEDTARU/DFF、Yahoo ZQ=F、Federal Reserve SEP/FOMC statement；`macroDrivers.privateCreditProxy` 接入 Yahoo BIZD + FRED HY OAS；OIS/CDX/private marks/non-public CRE 保留 `manual_required`。M-76 起 Macro Drivers / Risk Engines / Brent detail 展开显示这些已存在后端细字段；仍为 frontend display-only |
-| Brent public proxy review | M-71 起完成 source-review only：EIA Europe Brent Spot Price FOB、ICE Brent futures curve、Baltic Exchange freight benchmarks、Freightos Baltic Index 与 future licensed S&P/Platts Dated Brent 已登记为候选；`sourceApproved=false` / `liveFetchApproved=false` / `productionDataWriteApproved=false`；Platts Dated Brent / 正式 Dated Brent 仍未接入 |
+| Expanded macro 状态 | M-74 起 `macroDrivers.shippingFreight` 接入 StockQ BDTI/BCTI/BDI；`macroDrivers.policyExpectations` 接入 FRED DFEDTARL/DFEDTARU/DFF、Yahoo ZQ=F、Federal Reserve SEP/FOMC statement；M-77 起加入 FOMC minutes keyword NLP；`macroDrivers.privateCreditProxy` 接入 Yahoo BIZD + FRED HY OAS；OIS/CDX/private marks/non-public CRE 保留 `manual_required`。M-76/M-77 起 Macro Drivers / Risk Engines / Brent detail 展开显示这些后端字段；仍为 display-only |
+| Brent public proxy review | M-71 起完成 source-review only：EIA Europe Brent Spot Price FOB、ICE Brent futures curve、Baltic Exchange freight benchmarks、Freightos Baltic Index 与 future licensed S&P/Platts Dated Brent 已登记为候选；M-77 起 `brentPricingLayer.futuresCurve` 只读取 ICE contract structure (`live_structure_only`)；Platts Dated Brent / 正式 Dated Brent 与官方可验证结算价期限曲线仍未接入 |
 | ADR-0013 | 2026-05-19 落地 (PR #231)；ADR-0001 zero-deps 精化为 runtime zero-dep,本地开发工具可在 ADR-0013 约束下使用 devDependencies |
 | First devDependency | M-63a 起 `xlsx@0.18.5` (SheetJS) 仅由 `scripts/world-order/sanitize-acled-weekly.mjs` 导入,runtime/check/workflow/frontend 不得引用 |
 | 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
@@ -55,10 +55,10 @@
 - **状态**: ✅ `done` (this PR);新增 `macroDrivers.employment` 子树、`driver-employment` 前端卡片与 `check:macro-drivers-employment`
 - **边界**: audit-only/display-only;不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs`、cross-validation 或 worker/realtime
 
-#### P2-8: 高频消费证据 (closed — M-69; reframed to Chicago Fed CARTS)
+#### P2-8: 高频消费证据 (closed — M-69/M-77; reframed to public sources)
 - **历史 spec**: 原写 Redbook + BoA Card,实施时发现公开 API 不可达 (Redbook 商业订阅;BoA Card PDF only),改走 Path ε (Chicago Fed CARTS via FRED)
-- **实际接入**: `macroDrivers.consumerRetail` 接 FRED `CARTS` + `CARTSR`;audit-only/display-only;不接 CARTSP
-- **Redbook + BoA Card**: 降级为 P3-14 source-review candidates,不在 runtime 自动 fetch
+- **实际接入**: `macroDrivers.consumerRetail` 接 FRED `CARTS` + `CARTSR`;M-74 接 MRTS 13 个细分零售行业 basket;M-77 接 BoA Consumer Checkpoint 公开 HTML 摘要; audit-only/display-only;不接 CARTSP
+- **Redbook + BoA raw card feed**: Redbook 仍为 P3-14 source-review candidate;BoA 原始卡明细/非公开 feed 不在 runtime 自动 fetch
 - **状态**: ✅ `done` (this PR);新增 `macroDrivers.consumerRetail` 子树、`driver-consumer-retail` 前端卡片、`check:macro-drivers-consumer-retail`
 
 #### P2-9: CRE / CDX / 私募信贷 (closed — M-70; reframed to CRE-only Path α)
@@ -82,16 +82,17 @@
 
 ### P3 Items (Deferred / Source-Review / Partially Connected)
 
-#### P3-10: Fed dot plot / OIS forward rates / FOMC 文本分析 (partially connected — M-74)
-- **当前状态**: M-74 已把可公开自动化部分接入 `macroDrivers.policyExpectations`：FRED `DFEDTARL` / `DFEDTARU` / `DFF`、Yahoo `ZQ=F` front Fed funds futures proxy、Federal Reserve SEP accessible table 的 fed funds median，以及最新 FOMC statement 的 keyword tone count；前端 `driver-policy` 已展示这些 audit-only/display-only 字段。
+#### P3-10: Fed dot plot / OIS forward rates / FOMC 文本分析 (partially connected — M-74/M-77)
+- **当前状态**: M-74 已把可公开自动化部分接入 `macroDrivers.policyExpectations`：FRED `DFEDTARL` / `DFEDTARU` / `DFF`、Yahoo `ZQ=F` front Fed funds futures proxy、Federal Reserve SEP accessible table 的 fed funds median，以及最新 FOMC statement 的 keyword tone count；M-77 增加最新 FOMC minutes keyword NLP tone/topic count；前端 `driver-policy` 已展示这些 audit-only/display-only 字段。
 - **仍未接入**: OIS forward curve 仍为 `manual_required`；不得把 `ZQ=F` 写成 OIS forward，也不得让 policy text tone 进入 scoring 或 decision。
 - **解封路径**: 若未来有可复现 OIS source 或用户提供授权/manual input file，另开 reviewed PR 定义 parser、source attribution、quality gate 与展示文案。
 
-#### P3-11: Brent 期限结构 / Platts Dated Brent / Shipping freight (partially connected — M-74)
+#### P3-11: Brent 期限结构 / Platts Dated Brent / Shipping freight (partially connected — M-74/M-77)
 - **正式源不修原因**: Platts Dated Brent / 正式 Dated Brent 与 Baltic / ICE / S&P commodity market data 仍需要商业订阅、授权与再展示条款评审；当前不能直接接入生产链路
 - **公开代理轨道**: ✅ M-71 source-review only 已完成，候选为 EIA Europe Brent Spot Price FOB、ICE Brent futures curve、Baltic Exchange freight benchmarks、Freightos Baltic Index，以及 future licensed S&P/Platts Dated Brent
 - **M-74 已接入**: shipping / freight / 油轮运费压力已通过 StockQ `BDTI` / `BCTI` / `BDI` public pages 写入 `macroDrivers.shippingFreight` 并显示到 Macro Drivers；这是航运/油轮压力 proxy，不是 Platts Dated Brent、不是 Brent 期限结构。
-- **当前边界**: 不改 `values.brent`、Brent promotion、scoring、decision、execution、position、Worker 或 workflow；Platts Dated Brent / 正式 Dated Brent 与 Brent term structure 仍未接入。
+- **M-77 已接入**: `brentPricingLayer.futuresCurve` 读取 ICE Brent futures public page 的合约月份、lastTrade 与 finalSettlement，状态为 `live_structure_only` / `fallback_structure_only` / `missing`；这是 structure-only，不是带价格的官方期限结构。
+- **当前边界**: 不改 `values.brent`、Brent promotion、scoring、decision、execution、position、Worker 或 workflow；Platts Dated Brent / 正式 Dated Brent 与可验证结算价 Brent term structure 仍未接入。
 
 #### P3-12: signal-noise bucket 硬编码
 - **不修原因**: 设计为框架提醒
@@ -102,15 +103,15 @@
 - **解封路径**: 若未来有 UN HDX 合作意愿，联系 hdx@un.org 后另开版本评估；在此之前不再跟进
 - **前端状态**: `render.js` 限制提示已更新为"API 被 bot 封锁（HTTP 406），已列为 P3"
 
-#### P3-14: Redbook + BoA Card 高频消费证据 (source-review candidates)
+#### P3-14: Redbook + BoA raw card 高频消费证据 (partially connected — BoA public HTML in M-77)
 - **不修原因**:
   - Redbook 为 proprietary/subscription 数据源;官方发行通过 email/fax/conference call;公开页面与第三方聚合 (Trading Economics 等) 虽可见最新值,但 ToS/版权未解锁,不构成稳定可签合规 API
-  - BoA Consumer Checkpoint 是月度公开 HTML/PDF 研究材料,PDF 含具体卡均消费数字,但属 BoA proprietary internal data,license/再分发未明,且 PDF layout 解析对版面变动敏感
+  - BoA Consumer Checkpoint 是月度公开 HTML/PDF 研究材料;M-77 只解析公开 HTML 摘要中的 card spending per household YoY / ex-gas YoY;PDF layout 与 raw card feed 不在 runtime 抓取
   - 月度公开零售替代(RSAFS / MARTSSM / PCE)频率与"高频"语义不符
   - 商业 SDK 与 ADR-0001 0-prod-deps 边界硬冲突
 - **诊断日期**: 2026-05-20 (M-69 source-review)
-- **解封路径**: 若未来 Redbook 提供官方 API 或 BoA 提供机器可读授权 endpoint → 另开 source-review PR 评估接入
-- **前端状态**: M-74 起展示 `macroDrivers.consumerRetail` 的 CARTS/CARTSR 与 FRED MRTS 细分零售扩散；仍不展示/不冒充 Redbook 或 BoA Card
+- **解封路径**: 若未来 Redbook 提供官方 API 或 BoA 提供机器可读 raw feed endpoint → 另开 source-review PR 评估接入
+- **前端状态**: M-77 起展示 `macroDrivers.consumerRetail` 的 CARTS/CARTSR、FRED MRTS 细分零售扩散与 BoA Consumer Checkpoint public HTML 摘要；仍不展示/不冒充 Redbook 或 BoA raw card feed
 
 #### P3-15: CDX HY/IG + 私募信贷 fundraising (source-review candidates)
 - **不修原因**:
@@ -164,6 +165,7 @@
 | M-74 | expanded macro data auto ingestion tranche 2 | (this PR) | 2026-05-22 | ✅ `macroDrivers.shippingFreight` from StockQ BDTI/BCTI/BDI; `macroDrivers.policyExpectations` from FRED target/DFF + Yahoo ZQ=F + Fed SEP/FOMC statement; `macroDrivers.privateCreditProxy` from Yahoo BIZD + FRED HY OAS; FRED MRTS retail segment diffusion; Yahoo VNQ/REM CRE public proxy; OIS/CDX/private marks/non-public CRE remain `manual_required`; no scoring/decision/execution/position, worker/realtime, displayInputsBaseline/effectiveDisplayInputs, or cross-validation expansion; `check:all` 73 → 74; cache bumped to 28.0M-74V |
 | M-75 | check:all suite compaction | (this PR) | 2026-05-22 | ✅ Added `scripts/check-suite.mjs` and grouped same-family checks into top-level suites; `check:all` top-level entries 74 → 23 while preserving all atomic check scripts; no runtime/frontend/workflow/data/scoring/decision/execution/position change; no cache bump |
 | M-76 | frontend macro field surfacing | (this PR) | 2026-05-22 | ✅ Macro Drivers / Risk Engines / Brent detail now display already-present backend fields for policy expectations, Fed repo liquidity, MRTS retail segments, shipping freight, private-credit status, CRE public/private proxy status, employment source status, credit/NFCI/SLOOS deltas, and ULSD/crack-spread 4w fields; no data/workflow/scoring/decision/execution/position/cross-validation behavior change; cache bumped to 28.0M-76V |
+| M-77 | public source tranche 3 | (this PR) | 2026-05-22 | ✅ Fed FOMC minutes keyword NLP, BoA Consumer Checkpoint public HTML summary, and ICE Brent futures contract structure-only; audit-only/display-only; no scoring/decision/execution/position, worker/realtime, displayInputsBaseline/effectiveDisplayInputs, or cross-validation expansion; `check:all` remains 23; cache bumped to 28.0M-77V |
 
 ---
 
@@ -199,6 +201,7 @@
 | 2026-05-21 | M-73 macro data auto ingestion tranche 1 | Codex | BGCR/TGCR missing fixed; employment quality partially connected | NY Fed secured rates API supplies BGCR/TGCR; FRED CES0500000003/U6RATE/industry payroll basket supplies wage/U-6/diffusion; at M-73 close commercial freight, dot plot/OIS, and CDX/private credit still remained source-review, later partly superseded by M-74 |
 | 2026-05-22 | M-74 expanded macro data auto ingestion tranche 2 | Codex | shipping/freight, policy expectations, retail segments, private-credit public proxy, CRE public-market proxy partially connected | StockQ BDTI/BCTI/BDI, FRED target/DFF, Yahoo ZQ=F, Fed SEP/FOMC statement, FRED MRTS segments, Yahoo BIZD/VNQ/REM, and FRED HY OAS now feed audit-only/display-only macro drivers; OIS/CDX/private marks/non-public CRE remain `manual_required`; `check:all` 73 → 74 |
 | 2026-05-22 | M-75 check:all suite compaction | Codex | check runner noise reduced without dropping coverage | `scripts/check-suite.mjs` preserves every atomic check while `check:all` top-level entries shrink 74 → 23; grouped suites cover frontend visual history, external AI, Brent, macro drivers, narrative density, market pricing, and ACLED |
+| 2026-05-22 | M-77 public source tranche 3 | Codex | first recommended public-source tranche connected | Federal Reserve minutes keyword NLP, BoA Consumer Checkpoint public HTML card spending YoY, and ICE Brent contract structure-only now feed display-only layers; priced Brent term structure/Platts/OIS/CDX/private marks remain unconnected/manual |
 | 2026-05-22 | M-76 frontend macro field surfacing | Codex | backend-present field display gap closed | Frontend display calculations now consume already-present policy/repo/retail/freight/private-credit/CRE/employment/credit/Brent detail fields in Macro Drivers, Risk Engines, and Brent Pricing Layer; no production data or decision-path behavior changed |
 
 ---
@@ -252,13 +255,11 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-### Session Handoff (2026-05-22 — M-76 frontend macro field surfacing)
+### Session Handoff (2026-05-22 — M-77 public source tranche 3)
 
-- **本次会话结束状态**: 当前工作在 `codex/macro-data-auto-ingestion`；M-73 + M-74 自动接入已实现并推送，M-75 完成 `check:all` 顶层 suite compaction，M-76 继续补齐“后端已有字段 → 前端未完整展示”的显示缺口。`data/radar-data.json` 与 `realtime/market.json` 未在 M-76 修改。
-- **已接入生产数据**: BGCR/TGCR repo spread 改走 NY Fed secured rates API；employment 增加 FRED AHE/U-6/行业 payroll 扩散；M-74 增加 `macroDrivers.shippingFreight` (StockQ BDTI/BCTI/BDI)、`macroDrivers.policyExpectations` (FRED target/DFF + Yahoo ZQ=F + Fed SEP/FOMC statement)、`macroDrivers.privateCreditProxy` (Yahoo BIZD + FRED HY OAS)、consumerRetail MRTS 细分零售扩散、commercialRealEstate VNQ/REM public proxies。
-- **当前 M-74 数据快照**: BDTI `2215`、BCTI `1674`、BDI `2964`，freight stress `高压`；Fed target midpoint `3.625`、ZQ implied `3.735`、SEP current-year median `3.4`、statement tone `偏鹰`；MRTS segment diffusion `84.6% (11/13)`；BIZD `12.52`、HY OAS `2.8`；VNQ `96.67`、REM `21.82`。
-- **M-76 前端状态**: Macro Drivers / Risk Engines / Brent detail 已展开显示 policy target range、ZQ front price、SEP full medians、FOMC tone counts、raw BGCR/TGCR、TGCR-SOFR、MRTS 13 细分、BCTI/BDI daily change、CDX/private marks explicit status、VNQ/REM timestamps、employment source status、NFCI/SLOOS/IG deltas、ULSD 与 crack-spread 4w fields；cache bumped to `28.0M-76V`。PR 描述需包含 `本 PR 符合 DESIGN.md 的所有规则`。
-- **仍未接入 / manual_required**: Platts Dated Brent / 正式 Dated Brent 与 Brent term structure 仍未接入；OIS forward curve、CDX HY/IG、private credit marks、non-public CRE loan tape 保持 `manual_required`，不得用 ZQ/BIZD/HY OAS/VNQ/REM 冒充。
-- **M-75 check 精简**: `scripts/check-suite.mjs` 继续把 `check:all` 顶层项保持在 23，suite 内运行原本 atomic checks；M-76 只扩展 checker 对前端字段显示 marker 的守护。
-- **验证结果**: M-76 已通过 `node --check scripts/app.js`、`node --check scripts/modules/renderMacroOverview.js`、`node --check scripts/modules/render.js`、`npm run check:dom`、`npm run check:modules`、`npm run check:editorial-redesign-contract`、`npm run check:homepage-ia-contract`、`npm run check:copy`、`npm run check:docs`、`npm run check:workflows`、`npm run check:macro-drivers-expanded-auto-ingestion`、`npm run check:brent-crack-spread`、`npm run check:all`。
-- **下一步建议**: 若要接真正 OIS/CDX/private marks/non-public CRE，需要另开 reviewed parser/contract PR 并提供可复现输入；M-76 只把已存在或明确 `manual_required` 的字段完整展示到前端模块，不改变生产数据或决策路径。
+- **本次会话结束状态**: 当前工作在 `codex/macro-data-auto-ingestion`；M-77 按建议顺序先落地三项高确定性公开源：Fed FOMC minutes keyword NLP、BoA Consumer Checkpoint public HTML、ICE Brent futures contract structure-only。仍沿用 M-75 `check:all` 23 顶层 suite。
+- **已接入生产数据**: M-77 在 M-74/M-76 基础上新增 `macroDrivers.policyExpectations` 的 `minutes*` 字段、`macroDrivers.consumerRetail` 的 `bofa*` 字段、`brentPricingLayer.futuresCurve`。字段均为 audit-only/display-only，不进 scoring/decision/execution/position、worker/realtime、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation。
+- **当前边界**: ICE 只接 contract structure (`live_structure_only`)；不是 official priced term structure、contango/backwardation 或 Brent promotion 输入。BoA 只接公开 HTML 摘要；不是 Redbook 或 BoA raw card feed。OIS forward、CDX HY/IG、private credit marks、non-public CRE loan tape 继续 `manual_required`。
+- **前端状态**: Macro Drivers policy card 展示 FOMC minutes tone/topic count；consumerRetail card 展示 BoA Consumer Checkpoint card-spending YoY / ex-gas YoY；energy/Brent detail 展示 ICE futuresCurve structure-only 合约月份。cache bumped to `28.0M-77V`。PR 描述需包含 `本 PR 符合 DESIGN.md 的所有规则`。
+- **验证结果**: M-77 已通过 `node --check scripts/run-daily-pipeline.mjs`、`node --check scripts/validate-data.mjs`、`node --check scripts/modules/renderMacroOverview.js`、`node --check scripts/modules/render.js`、`npm run build:realtime`、`npm run build:data`、`npm run check:data`、`npm run check:macro-drivers-expanded-auto-ingestion`、`npm run check:brent-crack-spread`、`npm run check:macro-drivers-consumer-retail`、`npm run check:all`。
+- **下一步建议**: 第二批可评估 OIS / CME-derived futures path、Redbook public aggregator、CDX indicative；每项需单独 parser/contract，继续避免把 proxy 冒充成正式数据。

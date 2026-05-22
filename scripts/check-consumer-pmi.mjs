@@ -131,8 +131,8 @@ const requiredRenderMarkers = [
   'consumer.ismManufacturingPmi',
   'ISM 制造业 PMI',
   'MRTS 细分零售扩散',
-  'CARTS / CARTSR 是 Chicago Fed via FRED 的周频零售+餐饮 nowcast；MRTS 细分品类为月频公开零售结构观察。',
-  '盈利修正、Redbook / BoA Card 等非公开或授权消费证据仍待接入。'
+  'CARTS / CARTSR 是 Chicago Fed via FRED 的周频零售+餐饮 nowcast；MRTS 细分品类为月频公开零售结构观察；BoA Consumer Checkpoint 是第三方公开月度卡消费摘要。',
+  '盈利修正、Redbook / BoA raw card feed 等非公开或授权消费证据仍待接入。'
 ];
 for (const marker of requiredRenderMarkers) {
   if (!renderMacroText.includes(marker)) {

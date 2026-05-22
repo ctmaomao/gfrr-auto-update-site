@@ -54,6 +54,11 @@ const NY_FED_SECURED_RATES_SOURCE = 'NYFED:secured-rates-latest';
 const FED_CALENDAR_URL = 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm';
 const FED_BASE_URL = 'https://www.federalreserve.gov';
 const FED_FETCH_TIMEOUT_MS = 10000;
+const ICE_BRENT_FUTURES_DATA_URL = 'https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430';
+const ICE_BRENT_FETCH_TIMEOUT_MS = 10000;
+const BOFA_CONSUMER_CHECKPOINT_URL = 'https://institute.bankofamerica.com/consumer-checkpoint.html';
+const BOFA_CONSUMER_CHECKPOINT_BASE_URL = 'https://institute.bankofamerica.com';
+const BOFA_CONSUMER_FETCH_TIMEOUT_MS = 10000;
 const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
 const YAHOO_FETCH_TIMEOUT_MS = 9000;
 const STOCKQ_INDEX_BASE = 'https://en.stockq.org/index';
@@ -89,8 +94,10 @@ const CONSUMER_RETAIL_SEGMENT_SERIES = [
   { key: 'foodServices', id: 'MRTSSM722USN', labelZh: '餐饮服务' }
 ];
 const SHIPPING_FREIGHT_SOURCE = 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI';
+const CONSUMER_RETAIL_SOURCE =
+  'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html';
 const POLICY_EXPECTATIONS_SOURCE =
-  'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F; FederalReserve:FOMC statement/SEP';
+  'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F; FederalReserve:FOMC statement/SEP/minutes';
 const PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; FRED:BAMLH0A0HYM2';
 const CRE_PUBLIC_MARKET_PROXY_SOURCE =
   'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; Yahoo:VNQ; Yahoo:REM';
@@ -668,7 +675,7 @@ function brentSpreadStatusZh(status) {
   }[status] || '状态待确认';
 }
 
-function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyRealtimeInput, ulsdData = null }) {
+function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyRealtimeInput, ulsdData = null, futuresCurveData = null }) {
   const validation = realtimePayload?.brentValidation || {};
   const promotion = validation.promotion || {};
   const consensus = validation.consensus || {};
@@ -765,6 +772,7 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
 
   const crackSpreadRegime = classifyCrackSpreadRegime(crackSpread);
   const ulsdSourceStatus = ulsdData?.sourceStatus ?? 'missing';
+  const futuresCurve = normalizePreviousBrentFuturesCurve(futuresCurveData);
 
   return {
     contractVersion: 'v28.0I-5A',
@@ -778,6 +786,7 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
     selectedBrent,
     publicSpotProxy,
     futuresProxy,
+    futuresCurve,
     confirmationSources,
     ulsdPrice,
     ulsd4wChange,
@@ -812,11 +821,14 @@ function buildBrentPricingLayer({ realtimePayload, displayInputsBaseline, dailyR
     },
     dataGaps: [
       'Platts Dated Brent / 正式 Dated Brent 未接入。',
-      'Brent 期限结构尚未正式接入。',
-      '油轮运费 / 航运压力尚未正式接入。'
+      futuresCurve.curveStatus === 'live_structure_only'
+        ? 'ICE Brent 合约月份/到期结构已接入；可验证结算价期限曲线仍待接入。'
+        : 'Brent 期限结构仍待接入。',
+      '实物库存、区域价差与正式实物成交证据仍待接入。'
     ],
     limitations: [
       '当前仅为公开代理价格观察，不等同于付费 Dated Brent 或实物成交数据。',
+      'ICE futuresCurve 当前是 structure-only，不显示或推断缺失的结算价期限曲线。',
       '该层不改变 Brent 主值、评分、仓位或执行灯。'
     ],
     confidence: {
@@ -1490,6 +1502,67 @@ function parseLooseNumber(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+function parsePercentRatio(value) {
+  const number = parseLooseNumber(value);
+  return Number.isFinite(number) ? +(number / 100).toFixed(4) : null;
+}
+
+function resolveAbsoluteUrl(href, baseUrl) {
+  if (typeof href !== 'string' || !href.trim()) return null;
+  try {
+    return new URL(href, baseUrl).toString();
+  } catch {
+    return null;
+  }
+}
+
+function timestampMsToIso(value) {
+  const timestamp = Number(value);
+  if (!Number.isFinite(timestamp)) return null;
+  const date = new Date(timestamp);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+}
+
+function extractJsonValueAfterKey(text, key) {
+  const source = String(text || '');
+  const keyNeedle = `"${key}":`;
+  const keyIndex = source.indexOf(keyNeedle);
+  if (keyIndex < 0) return null;
+  const start = source.slice(keyIndex + keyNeedle.length).search(/[\[{]/u);
+  if (start < 0) return null;
+  const valueStart = keyIndex + keyNeedle.length + start;
+  const open = source[valueStart];
+  const close = open === '[' ? ']' : '}';
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = valueStart; index < source.length; index += 1) {
+    const char = source[index];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+    if (char === open) depth += 1;
+    else if (char === close) {
+      depth -= 1;
+      if (depth === 0) {
+        try {
+          return JSON.parse(source.slice(valueStart, index + 1));
+        } catch {
+          return null;
+        }
+      }
+    }
+  }
+  return null;
+}
+
 function classifyFreightIndexRegime(value, dailyChangePct, highThreshold, watchThreshold) {
   if (!Number.isFinite(value) && !Number.isFinite(dailyChangePct)) return '未知';
   if ((Number.isFinite(value) && value >= highThreshold)
@@ -1537,6 +1610,78 @@ async function fetchStockqIndex(symbol, label) {
   };
 }
 
+function parseIceBrentFuturesContracts(html) {
+  const contracts = extractJsonValueAfterKey(html, 'contracts');
+  if (!Array.isArray(contracts)) return [];
+  return contracts
+    .map((contract) => ({
+      contract: typeof contract?.description === 'string' ? contract.description.trim() : null,
+      lastTrade: timestampMsToIso(contract?.lastTrade),
+      finalSettlement: timestampMsToIso(contract?.finalSettlement)
+    }))
+    .filter((contract) => contract.contract && contract.lastTrade)
+    .sort((a, b) => Date.parse(a.lastTrade) - Date.parse(b.lastTrade))
+    .slice(0, 12);
+}
+
+function normalizePreviousBrentFuturesCurve(prevCurve) {
+  if (!prevCurve || typeof prevCurve !== 'object') {
+    return {
+      source: 'ICE:Brent-Crude-Futures-contract-data',
+      sourceUrl: ICE_BRENT_FUTURES_DATA_URL,
+      curveStatus: 'missing',
+      fetchedAt: null,
+      contracts: [],
+      limitationZh: 'ICE 合约结构尚未成功读取；不得把缺失期限结构渲染为价格曲线。'
+    };
+  }
+  const contracts = Array.isArray(prevCurve.contracts)
+    ? prevCurve.contracts
+        .map((contract) => ({
+          contract: typeof contract?.contract === 'string' ? contract.contract : null,
+          lastTrade: typeof contract?.lastTrade === 'string' ? contract.lastTrade : null,
+          finalSettlement: typeof contract?.finalSettlement === 'string' ? contract.finalSettlement : null
+        }))
+        .filter((contract) => contract.contract && contract.lastTrade)
+    : [];
+  return {
+    source: typeof prevCurve.source === 'string' ? prevCurve.source : 'ICE:Brent-Crude-Futures-contract-data',
+    sourceUrl: typeof prevCurve.sourceUrl === 'string' ? prevCurve.sourceUrl : ICE_BRENT_FUTURES_DATA_URL,
+    curveStatus: ['live_structure_only', 'fallback_structure_only', 'missing'].includes(prevCurve.curveStatus)
+      ? prevCurve.curveStatus
+      : (contracts.length ? 'fallback_structure_only' : 'missing'),
+    fetchedAt: typeof prevCurve.fetchedAt === 'string' ? prevCurve.fetchedAt : null,
+    contracts,
+    limitationZh: typeof prevCurve.limitationZh === 'string'
+      ? prevCurve.limitationZh
+      : 'ICE 页面当前只提供可验证合约月份/到期结构；未把官方结算价期限曲线写入生产数据。'
+  };
+}
+
+async function resolveBrentFuturesCurve(prevBrentPricingLayer) {
+  const fallback = normalizePreviousBrentFuturesCurve(prevBrentPricingLayer?.futuresCurve);
+  try {
+    const html = await retryFetch(
+      ICE_BRENT_FUTURES_DATA_URL,
+      'ice:brent-futures-contract-data',
+      ICE_BRENT_FETCH_TIMEOUT_MS,
+      { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
+    );
+    const contracts = parseIceBrentFuturesContracts(html);
+    if (!contracts.length) throw new Error('ice:brent-futures-contract-data missing contracts array');
+    return {
+      source: 'ICE:Brent-Crude-Futures-contract-data',
+      sourceUrl: ICE_BRENT_FUTURES_DATA_URL,
+      curveStatus: 'live_structure_only',
+      fetchedAt: isoNow,
+      contracts,
+      limitationZh: 'ICE 页面当前只提供可验证合约月份/到期结构；未把官方结算价期限曲线写入生产数据。'
+    };
+  } catch (_err) {
+    return fallback;
+  }
+}
+
 async function fetchYahooChartQuote(symbol, range = '1mo', interval = '1d') {
   const url = `${YAHOO_CHART_BASE}/${encodeURIComponent(symbol)}?range=${encodeURIComponent(range)}&interval=${encodeURIComponent(interval)}`;
   const payload = await fetchJsonText(url, `yahoo:${symbol}`, YAHOO_FETCH_TIMEOUT_MS, {
@@ -1565,6 +1710,75 @@ async function fetchYahooChartQuote(symbol, range = '1mo', interval = '1d') {
     updatedAt: new Date(latest.timestamp * 1000).toISOString(),
     source: `Yahoo:${symbol}`
   };
+}
+
+const MONTH_INDEX_BY_NAME = new Map([
+  ['january', 0],
+  ['february', 1],
+  ['march', 2],
+  ['april', 3],
+  ['may', 4],
+  ['june', 5],
+  ['july', 6],
+  ['august', 7],
+  ['september', 8],
+  ['october', 9],
+  ['november', 10],
+  ['december', 11]
+]);
+
+function parseBofaReportDateFromUrl(url) {
+  const match = String(url || '').match(/consumer-checkpoint-(?<month>[a-z]+)-(?<year>\d{4})\.html/iu);
+  const month = match?.groups?.month?.toLowerCase();
+  const year = Number(match?.groups?.year);
+  if (!MONTH_INDEX_BY_NAME.has(month) || !Number.isInteger(year)) return null;
+  return new Date(Date.UTC(year, MONTH_INDEX_BY_NAME.get(month), 1)).toISOString();
+}
+
+function parseBofaConsumerCheckpointReport(html, reportUrl) {
+  const plain = htmlToPlainText(html);
+  const spendingMatch = plain.match(
+    /Total credit and debit card spending per household rose\s+(?<current>[-+]?\d+(?:\.\d+)?)%[^.]*?from\s+(?<previous>[-+]?\d+(?:\.\d+)?)%/iu
+  );
+  const exGasMatch = plain.match(/Excluding gasoline[^.]*?\s(?<exGas>[-+]?\d+(?:\.\d+)?)%\s+YoY/iu);
+  const pdfMatch = String(html || '').match(/href=["'](?<href>[^"']*consumer-checkpoint[^"']+\.pdf)["']/iu);
+  const currentYoY = parsePercentRatio(spendingMatch?.groups?.current);
+  const previousYoY = parsePercentRatio(spendingMatch?.groups?.previous);
+  const exGasYoY = parsePercentRatio(exGasMatch?.groups?.exGas);
+  if (!Number.isFinite(currentYoY) && !Number.isFinite(exGasYoY)) {
+    throw new Error('bofa:consumer-checkpoint missing card spending metrics');
+  }
+  return {
+    bofaCardSpendingYoY: Number.isFinite(currentYoY) ? currentYoY : null,
+    bofaCardSpendingPriorYoY: Number.isFinite(previousYoY) ? previousYoY : null,
+    bofaCardSpendingExGasYoY: Number.isFinite(exGasYoY) ? exGasYoY : null,
+    bofaReportDate: parseBofaReportDateFromUrl(reportUrl),
+    bofaReportUrl: reportUrl,
+    bofaPdfUrl: resolveAbsoluteUrl(pdfMatch?.groups?.href, BOFA_CONSUMER_CHECKPOINT_BASE_URL),
+    bofaStatus: 'live',
+    bofaSummary: 'Bank of America Institute Consumer Checkpoint 公开 HTML 摘要提供 card spending per household YoY 与 ex-gas YoY；作为第三方消费证据观察，不等同于 Redbook。'
+  };
+}
+
+async function fetchBofaConsumerCheckpoint() {
+  const landingHtml = await retryFetch(
+    BOFA_CONSUMER_CHECKPOINT_URL,
+    'bofa:consumer-checkpoint-landing',
+    BOFA_CONSUMER_FETCH_TIMEOUT_MS,
+    { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
+  );
+  const latestLink = [...String(landingHtml || '').matchAll(/href=["'](?<href>\/economic-insights\/consumer-checkpoint-[^"']+\.html)["']/giu)]
+    .map((match) => match.groups?.href)
+    .filter(Boolean)[0];
+  const reportUrl = resolveAbsoluteUrl(latestLink, BOFA_CONSUMER_CHECKPOINT_BASE_URL);
+  if (!reportUrl) throw new Error('bofa:consumer-checkpoint missing report link');
+  const reportHtml = await retryFetch(
+    reportUrl,
+    'bofa:consumer-checkpoint-report',
+    BOFA_CONSUMER_FETCH_TIMEOUT_MS,
+    { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
+  );
+  return parseBofaConsumerCheckpointReport(reportHtml, reportUrl);
 }
 
 function latestValue(rows) {
@@ -1642,7 +1856,11 @@ async function fetchLatestFedCalendarContext() {
     html,
     /href=["'](?<href>[^"']*monetarypolicy\/fomcprojtabl(?<date>\d{8})\.htm)["']/giu
   );
-  return { statement, sep };
+  const minutes = latestDatedFedLink(
+    html,
+    /href=["'](?<href>[^"']*monetarypolicy\/fomcminutes(?<date>\d{8})\.htm)["']/giu
+  );
+  return { statement, sep, minutes };
 }
 
 function countTermMatches(text, terms) {
@@ -1684,6 +1902,61 @@ function parseFedPolicyTone(html, statementUrl, statementDate) {
     hawkishTermCount,
     dovishTermCount,
     policyTone
+  };
+}
+
+function buildFedMinutesSummary(tone, topicCounts) {
+  const topics = Object.entries(topicCounts || {})
+    .filter(([, value]) => Number.isFinite(value))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([key, value]) => `${key}:${value}`);
+  return `FOMC minutes keyword NLP 显示语气${tone}；高频主题 ${topics.join(' / ') || '待确认'}。`;
+}
+
+function parseFedMinutesTone(html, minutesUrl, minutesDate) {
+  const plain = htmlToPlainText(html);
+  const hawkishTermCount = countTermMatches(plain, [
+    'inflation',
+    'elevated',
+    'upside risks',
+    'restrictive',
+    'tightening',
+    'firming',
+    'price pressures',
+    'above 2 percent',
+    'vigilant'
+  ]);
+  const dovishTermCount = countTermMatches(plain, [
+    'unemployment',
+    'downside risks',
+    'weakened',
+    'softening',
+    'easing',
+    'slowing',
+    'lower inflation',
+    'below trend',
+    'labor market cooled'
+  ]);
+  const topicCounts = {
+    inflation: countTermMatches(plain, ['inflation', 'prices', 'price pressures']),
+    laborMarket: countTermMatches(plain, ['employment', 'unemployment', 'labor market', 'job gains']),
+    growth: countTermMatches(plain, ['economic activity', 'growth', 'spending', 'output']),
+    financialConditions: countTermMatches(plain, ['financial conditions', 'credit', 'funding', 'market conditions']),
+    balanceSheet: countTermMatches(plain, ['balance sheet', 'treasury securities', 'agency debt', 'mortgage-backed securities']),
+    risks: countTermMatches(plain, ['risks', 'uncertainty', 'downside risks', 'upside risks'])
+  };
+  let minutesPolicyTone = '平衡';
+  if (hawkishTermCount >= dovishTermCount + 8) minutesPolicyTone = '偏鹰';
+  else if (dovishTermCount >= hawkishTermCount + 8) minutesPolicyTone = '偏鸽';
+  return {
+    minutesDate: parseDateToIso(minutesDate?.replace(/^(\d{4})(\d{2})(\d{2})$/u, '$1-$2-$3')) || null,
+    minutesUrl,
+    minutesHawkishTermCount: hawkishTermCount,
+    minutesDovishTermCount: dovishTermCount,
+    minutesPolicyTone,
+    minutesTopicCounts: topicCounts,
+    minutesSummaryZh: buildFedMinutesSummary(minutesPolicyTone, topicCounts)
   };
 }
 
@@ -2382,6 +2655,7 @@ async function resolvePolicyExpectations(prevPolicy) {
     fedFundsFuture: 'missing',
     sepDotPlot: 'missing',
     policyStatement: 'missing',
+    fomcMinutes: 'missing',
     oisForward: 'manual_required'
   };
   let targetLower = null;
@@ -2395,6 +2669,7 @@ async function resolvePolicyExpectations(prevPolicy) {
   let futureUpdatedAt = null;
   let sepData = null;
   let statementData = null;
+  let minutesData = null;
 
   const [targetLowerResult, targetUpperResult, effrResult, futureResult, calendarResult] = await Promise.allSettled([
     fetchFredSeries('DFEDTARL', 30),
@@ -2445,7 +2720,7 @@ async function resolvePolicyExpectations(prevPolicy) {
   }
 
   if (calendarResult.status === 'fulfilled') {
-    const { sep, statement } = calendarResult.value;
+    const { sep, statement, minutes } = calendarResult.value;
     if (sep?.href) {
       try {
         const sepUrl = resolveFedUrl(sep.href);
@@ -2468,6 +2743,18 @@ async function resolvePolicyExpectations(prevPolicy) {
         status.policyStatement = 'live';
       } catch (_err) {
         statementData = null;
+      }
+    }
+    if (minutes?.href) {
+      try {
+        const minutesUrl = resolveFedUrl(minutes.href);
+        const minutesHtml = await retryFetch(minutesUrl, 'federalreserve:fomc-minutes', FED_FETCH_TIMEOUT_MS, {
+          userAgent: 'GFRRBot/1.0'
+        });
+        minutesData = parseFedMinutesTone(minutesHtml, minutesUrl, minutes.date);
+        status.fomcMinutes = 'live';
+      } catch (_err) {
+        minutesData = null;
       }
     }
   }
@@ -2493,6 +2780,18 @@ async function resolvePolicyExpectations(prevPolicy) {
       policyTone: fallback.policyTone
     };
     status.policyStatement = 'fallback';
+  }
+  if (!minutesData && typeof fallback.minutesUrl === 'string') {
+    minutesData = {
+      minutesDate: fallback.minutesDate,
+      minutesUrl: fallback.minutesUrl,
+      minutesHawkishTermCount: fallback.minutesHawkishTermCount,
+      minutesDovishTermCount: fallback.minutesDovishTermCount,
+      minutesPolicyTone: fallback.minutesPolicyTone,
+      minutesTopicCounts: fallback.minutesTopicCounts,
+      minutesSummaryZh: fallback.minutesSummaryZh
+    };
+    status.fomcMinutes = 'fallback';
   }
 
   const dotPlotMedianCurrentYear = Number.isFinite(sepData?.dotPlotMedianCurrentYear)
@@ -2521,14 +2820,23 @@ async function resolvePolicyExpectations(prevPolicy) {
     hawkishTermCount: Number.isFinite(statementData?.hawkishTermCount) ? statementData.hawkishTermCount : null,
     dovishTermCount: Number.isFinite(statementData?.dovishTermCount) ? statementData.dovishTermCount : null,
     policyTone: typeof statementData?.policyTone === 'string' ? statementData.policyTone : '未知',
+    minutesDate: minutesData?.minutesDate || null,
+    minutesUrl: minutesData?.minutesUrl || null,
+    minutesHawkishTermCount: Number.isFinite(minutesData?.minutesHawkishTermCount) ? minutesData.minutesHawkishTermCount : null,
+    minutesDovishTermCount: Number.isFinite(minutesData?.minutesDovishTermCount) ? minutesData.minutesDovishTermCount : null,
+    minutesPolicyTone: typeof minutesData?.minutesPolicyTone === 'string' ? minutesData.minutesPolicyTone : '未知',
+    minutesTopicCounts: minutesData?.minutesTopicCounts && typeof minutesData.minutesTopicCounts === 'object'
+      ? minutesData.minutesTopicCounts
+      : null,
+    minutesSummaryZh: typeof minutesData?.minutesSummaryZh === 'string' ? minutesData.minutesSummaryZh : null,
     policyExpectationRegime: classifyPolicyExpectationRegime(futureMinusTargetMid, dotPlotMedianCurrentYear, targetMid),
     oisForwardRate: null,
     oisForwardStatus: 'manual_required',
     sourceStatus: status,
-    updatedAt: latestIsoDate(targetUpdatedAt, futureUpdatedAt, sepData?.sepProjectionDate, statementData?.statementDate),
+    updatedAt: latestIsoDate(targetUpdatedAt, futureUpdatedAt, sepData?.sepProjectionDate, statementData?.statementDate, minutesData?.minutesDate),
     source: POLICY_EXPECTATIONS_SOURCE,
     notes: [
-      'Fed target range/DFF 来自 FRED；SEP federal funds median 和 statement 文本来自 federalreserve.gov。',
+      'Fed target range/DFF 来自 FRED；SEP federal funds median、statement 与 minutes 文本来自 federalreserve.gov。',
       'ZQ=F 为 front Fed funds futures proxy；OIS forward rate 需要 licensed/manual input,不从未授权源抓取。'
     ]
   };
@@ -2952,15 +3260,24 @@ function buildMissingConsumerRetail() {
     strongestSegment: null,
     weakestSegment: null,
     segmentUpdatedAt: null,
+    bofaCardSpendingYoY: null,
+    bofaCardSpendingPriorYoY: null,
+    bofaCardSpendingExGasYoY: null,
+    bofaReportDate: null,
+    bofaReportUrl: null,
+    bofaPdfUrl: null,
+    bofaStatus: 'missing',
+    bofaSummary: null,
     retailRegime: '未知',
     sourceStatus: {
       carts: 'missing',
       cartsr: 'missing',
-      retailSegments: 'missing'
+      retailSegments: 'missing',
+      bofaConsumerCheckpoint: 'missing'
     },
     updatedAt: null,
-    source: 'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments',
-    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；audit-only / display-only。']
+    source: CONSUMER_RETAIL_SOURCE,
+    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；BoA Consumer Checkpoint 为公开 HTML 第三方消费证据；audit-only / display-only。']
   };
 }
 
@@ -3051,6 +3368,13 @@ function buildMissingPolicyExpectations() {
     hawkishTermCount: null,
     dovishTermCount: null,
     policyTone: '未知',
+    minutesDate: null,
+    minutesUrl: null,
+    minutesHawkishTermCount: null,
+    minutesDovishTermCount: null,
+    minutesPolicyTone: '未知',
+    minutesTopicCounts: null,
+    minutesSummaryZh: null,
     policyExpectationRegime: '未知',
     oisForwardRate: null,
     oisForwardStatus: 'manual_required',
@@ -3059,11 +3383,12 @@ function buildMissingPolicyExpectations() {
       fedFundsFuture: 'missing',
       sepDotPlot: 'missing',
       policyStatement: 'missing',
+      fomcMinutes: 'missing',
       oisForward: 'manual_required'
     },
     updatedAt: null,
     source: POLICY_EXPECTATIONS_SOURCE,
-    notes: ['FOMC statement/SEP 来自 federalreserve.gov；ZQ=F 为 front Fed funds futures proxy；OIS forward 未用未授权源抓取。']
+    notes: ['FOMC statement/SEP/minutes 来自 federalreserve.gov；ZQ=F 为 front Fed funds futures proxy；OIS forward 未用未授权源抓取。']
   };
 }
 
@@ -3175,6 +3500,12 @@ function normalizePreviousConsumerRetail(prevConsumerRetail) {
   const segmentDiffusionPct = Number.isFinite(prevConsumerRetail.segmentDiffusionPct)
     ? prevConsumerRetail.segmentDiffusionPct
     : null;
+  const bofaCardSpendingYoY = Number.isFinite(prevConsumerRetail.bofaCardSpendingYoY)
+    ? prevConsumerRetail.bofaCardSpendingYoY
+    : null;
+  const bofaCardSpendingExGasYoY = Number.isFinite(prevConsumerRetail.bofaCardSpendingExGasYoY)
+    ? prevConsumerRetail.bofaCardSpendingExGasYoY
+    : null;
   return {
     cartsNominal,
     cartsNominal4wAverage,
@@ -3200,17 +3531,28 @@ function normalizePreviousConsumerRetail(prevConsumerRetail) {
       ? prevConsumerRetail.weakestSegment
       : null,
     segmentUpdatedAt: typeof prevConsumerRetail.segmentUpdatedAt === 'string' ? prevConsumerRetail.segmentUpdatedAt : null,
+    bofaCardSpendingYoY,
+    bofaCardSpendingPriorYoY: Number.isFinite(prevConsumerRetail.bofaCardSpendingPriorYoY)
+      ? prevConsumerRetail.bofaCardSpendingPriorYoY
+      : null,
+    bofaCardSpendingExGasYoY,
+    bofaReportDate: typeof prevConsumerRetail.bofaReportDate === 'string' ? prevConsumerRetail.bofaReportDate : null,
+    bofaReportUrl: typeof prevConsumerRetail.bofaReportUrl === 'string' ? prevConsumerRetail.bofaReportUrl : null,
+    bofaPdfUrl: typeof prevConsumerRetail.bofaPdfUrl === 'string' ? prevConsumerRetail.bofaPdfUrl : null,
+    bofaStatus: bofaCardSpendingYoY !== null || bofaCardSpendingExGasYoY !== null ? 'fallback' : 'missing',
+    bofaSummary: typeof prevConsumerRetail.bofaSummary === 'string' ? prevConsumerRetail.bofaSummary : null,
     retailRegime: typeof prevConsumerRetail.retailRegime === 'string' && prevConsumerRetail.retailRegime.trim()
       ? prevConsumerRetail.retailRegime
       : classifyRetailRegime(cartsRealYoY),
     sourceStatus: {
       carts: cartsNominal !== null ? 'fallback' : 'missing',
       cartsr: cartsReal !== null ? 'fallback' : 'missing',
-      retailSegments: segmentDiffusionPct !== null ? 'fallback' : 'missing'
+      retailSegments: segmentDiffusionPct !== null ? 'fallback' : 'missing',
+      bofaConsumerCheckpoint: bofaCardSpendingYoY !== null || bofaCardSpendingExGasYoY !== null ? 'fallback' : 'missing'
     },
     updatedAt: typeof prevConsumerRetail.updatedAt === 'string' ? prevConsumerRetail.updatedAt : null,
-    source: 'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments',
-    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；audit-only / display-only。']
+    source: CONSUMER_RETAIL_SOURCE,
+    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；BoA Consumer Checkpoint 为公开 HTML 第三方消费证据；audit-only / display-only。']
   };
 }
 
@@ -3335,6 +3677,11 @@ function normalizePreviousPolicyExpectations(prevPolicy) {
     : (Number.isFinite(targetLower) && Number.isFinite(targetUpper) ? +(((targetLower + targetUpper) / 2)).toFixed(3) : null);
   const futureMinusTargetMid = Number.isFinite(prevPolicy.futureMinusTargetMid) ? prevPolicy.futureMinusTargetMid : null;
   const dotPlotMedianCurrentYear = Number.isFinite(prevPolicy.dotPlotMedianCurrentYear) ? prevPolicy.dotPlotMedianCurrentYear : null;
+  const minutesHawkishTermCount = Number.isFinite(prevPolicy.minutesHawkishTermCount) ? prevPolicy.minutesHawkishTermCount : null;
+  const minutesDovishTermCount = Number.isFinite(prevPolicy.minutesDovishTermCount) ? prevPolicy.minutesDovishTermCount : null;
+  const minutesTopicCounts = prevPolicy.minutesTopicCounts && typeof prevPolicy.minutesTopicCounts === 'object'
+    ? prevPolicy.minutesTopicCounts
+    : null;
   return {
     ...buildMissingPolicyExpectations(),
     ...prevPolicy,
@@ -3346,6 +3693,15 @@ function normalizePreviousPolicyExpectations(prevPolicy) {
     fedFundsFutureImpliedRate: Number.isFinite(prevPolicy.fedFundsFutureImpliedRate) ? prevPolicy.fedFundsFutureImpliedRate : null,
     futureMinusTargetMid,
     dotPlotMedianCurrentYear,
+    minutesDate: typeof prevPolicy.minutesDate === 'string' ? prevPolicy.minutesDate : null,
+    minutesUrl: typeof prevPolicy.minutesUrl === 'string' ? prevPolicy.minutesUrl : null,
+    minutesHawkishTermCount,
+    minutesDovishTermCount,
+    minutesPolicyTone: typeof prevPolicy.minutesPolicyTone === 'string' && prevPolicy.minutesPolicyTone.trim()
+      ? prevPolicy.minutesPolicyTone
+      : '未知',
+    minutesTopicCounts,
+    minutesSummaryZh: typeof prevPolicy.minutesSummaryZh === 'string' ? prevPolicy.minutesSummaryZh : null,
     policyExpectationRegime: typeof prevPolicy.policyExpectationRegime === 'string' && prevPolicy.policyExpectationRegime.trim()
       ? prevPolicy.policyExpectationRegime
       : classifyPolicyExpectationRegime(futureMinusTargetMid, dotPlotMedianCurrentYear, targetMid),
@@ -3355,6 +3711,7 @@ function normalizePreviousPolicyExpectations(prevPolicy) {
       fedFundsFuture: Number.isFinite(prevPolicy.fedFundsFutureImpliedRate) ? 'fallback' : 'missing',
       sepDotPlot: dotPlotMedianCurrentYear !== null ? 'fallback' : 'missing',
       policyStatement: typeof prevPolicy.statementUrl === 'string' ? 'fallback' : 'missing',
+      fomcMinutes: typeof prevPolicy.minutesUrl === 'string' ? 'fallback' : 'missing',
       oisForward: 'manual_required'
     }
   };
@@ -3778,7 +4135,8 @@ async function resolveConsumerRetail(prevConsumerRetail) {
   const status = {
     carts: 'missing',
     cartsr: 'missing',
-    retailSegments: 'missing'
+    retailSegments: 'missing',
+    bofaConsumerCheckpoint: 'missing'
   };
   let cartsNominal = null;
   let cartsNominal4wAverage = null;
@@ -3788,10 +4146,12 @@ async function resolveConsumerRetail(prevConsumerRetail) {
   let cartsReal4wAverage = null;
   let cartsRealYoY = null;
   let cartsRealUpdatedAt = null;
+  let bofaData = null;
 
-  const [cartsResult, cartsrResult, ...segmentResults] = await Promise.allSettled([
+  const [cartsResult, cartsrResult, bofaResult, ...segmentResults] = await Promise.allSettled([
     fetchFredSeries('CARTS', 1500),
     fetchFredSeries('CARTSR', 1500),
+    fetchBofaConsumerCheckpoint(),
     ...CONSUMER_RETAIL_SEGMENT_SERIES.map((series) => fetchFredSeries(series.id, 1500))
   ]);
 
@@ -3846,6 +4206,23 @@ async function resolveConsumerRetail(prevConsumerRetail) {
     status.retailSegments = 'fallback';
   }
 
+  if (bofaResult.status === 'fulfilled') {
+    bofaData = bofaResult.value;
+    status.bofaConsumerCheckpoint = 'live';
+  } else if (Number.isFinite(fallback.bofaCardSpendingYoY) || Number.isFinite(fallback.bofaCardSpendingExGasYoY)) {
+    bofaData = {
+      bofaCardSpendingYoY: fallback.bofaCardSpendingYoY,
+      bofaCardSpendingPriorYoY: fallback.bofaCardSpendingPriorYoY,
+      bofaCardSpendingExGasYoY: fallback.bofaCardSpendingExGasYoY,
+      bofaReportDate: fallback.bofaReportDate,
+      bofaReportUrl: fallback.bofaReportUrl,
+      bofaPdfUrl: fallback.bofaPdfUrl,
+      bofaStatus: 'fallback',
+      bofaSummary: fallback.bofaSummary
+    };
+    status.bofaConsumerCheckpoint = 'fallback';
+  }
+
   return {
     cartsNominal: Number.isFinite(cartsNominal) ? cartsNominal : null,
     cartsNominal4wAverage: Number.isFinite(cartsNominal4wAverage) ? cartsNominal4wAverage : null,
@@ -3861,11 +4238,19 @@ async function resolveConsumerRetail(prevConsumerRetail) {
     strongestSegment,
     weakestSegment,
     segmentUpdatedAt,
+    bofaCardSpendingYoY: Number.isFinite(bofaData?.bofaCardSpendingYoY) ? bofaData.bofaCardSpendingYoY : null,
+    bofaCardSpendingPriorYoY: Number.isFinite(bofaData?.bofaCardSpendingPriorYoY) ? bofaData.bofaCardSpendingPriorYoY : null,
+    bofaCardSpendingExGasYoY: Number.isFinite(bofaData?.bofaCardSpendingExGasYoY) ? bofaData.bofaCardSpendingExGasYoY : null,
+    bofaReportDate: typeof bofaData?.bofaReportDate === 'string' ? bofaData.bofaReportDate : null,
+    bofaReportUrl: typeof bofaData?.bofaReportUrl === 'string' ? bofaData.bofaReportUrl : null,
+    bofaPdfUrl: typeof bofaData?.bofaPdfUrl === 'string' ? bofaData.bofaPdfUrl : null,
+    bofaStatus: typeof bofaData?.bofaStatus === 'string' ? bofaData.bofaStatus : status.bofaConsumerCheckpoint,
+    bofaSummary: typeof bofaData?.bofaSummary === 'string' ? bofaData.bofaSummary : null,
     retailRegime: classifyRetailRegime(cartsRealYoY),
     sourceStatus: status,
-    updatedAt: latestIsoDate(cartsNominalUpdatedAt, cartsRealUpdatedAt, segmentUpdatedAt),
-    source: 'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments',
-    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；audit-only / display-only。']
+    updatedAt: latestIsoDate(cartsNominalUpdatedAt, cartsRealUpdatedAt, segmentUpdatedAt, bofaData?.bofaReportDate),
+    source: CONSUMER_RETAIL_SOURCE,
+    notes: ['CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；BoA Consumer Checkpoint 为公开 HTML 第三方消费证据；audit-only / display-only。']
   };
 }
 
@@ -4774,12 +5159,16 @@ async function build() {
     macroDrivers,
     confidenceScore
   });
-  const ulsdData = await resolveUlsd(prevData?.brentPricingLayer);
+  const [ulsdData, brentFuturesCurve] = await Promise.all([
+    resolveUlsd(prevData?.brentPricingLayer),
+    resolveBrentFuturesCurve(prevData?.brentPricingLayer)
+  ]);
   const brentPricingLayer = buildBrentPricingLayer({
     realtimePayload: realtime,
     displayInputsBaseline,
     dailyRealtimeInput: buildDailyRealtimeInput(realtime),
-    ulsdData
+    ulsdData,
+    futuresCurveData: brentFuturesCurve
   });
 
   const data = {

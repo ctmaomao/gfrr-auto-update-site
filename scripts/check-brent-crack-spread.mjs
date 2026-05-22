@@ -33,6 +33,18 @@ if (!brentLayer || typeof brentLayer !== 'object') {
     console.warn('[M-49 soft warn] brentPricingLayer.ulsdSourceStatus key is absent in committed data. Expected until next daily-pipeline refresh.');
   }
 
+  if (!brentLayer.futuresCurve || typeof brentLayer.futuresCurve !== 'object') {
+    fail('brentPricingLayer.futuresCurve is missing or not an object');
+  } else {
+    const allowedCurveStatuses = new Set(['live_structure_only', 'fallback_structure_only', 'missing']);
+    if (!allowedCurveStatuses.has(brentLayer.futuresCurve.curveStatus)) {
+      fail(`brentPricingLayer.futuresCurve.curveStatus is not supported: ${brentLayer.futuresCurve.curveStatus}`);
+    }
+    if (!Array.isArray(brentLayer.futuresCurve.contracts)) {
+      fail('brentPricingLayer.futuresCurve.contracts must be an array');
+    }
+  }
+
   if ('crackSpread' in brentLayer && brentLayer.crackSpread !== null && !Number.isFinite(brentLayer.crackSpread)) {
     fail(`brentPricingLayer.crackSpread must be number or null, got: ${typeof brentLayer.crackSpread}`);
   }
@@ -62,7 +74,10 @@ const runDailyMarkers = [
   'ulsdPrice * 42 - selectedBrent.value',
   'computed >= -30 && computed <= 120',
   'const crackSpreadRegime = classifyCrackSpreadRegime(crackSpread)',
-  'const ulsdData = await resolveUlsd(prevData?.brentPricingLayer)',
+  'resolveUlsd(prevData?.brentPricingLayer)',
+  'async function resolveBrentFuturesCurve(prevBrentPricingLayer)',
+  'ICE_BRENT_FUTURES_DATA_URL',
+  'parseIceBrentFuturesContracts',
   'ulsdData'
 ];
 
@@ -75,8 +90,8 @@ for (const marker of runDailyMarkers) {
 const renderMarkers = [
   'brentLayer.crackSpread',
   '柴油裂解价差',
-  'Dated Brent、期限结构、库存数据等待接入。',
-  'Brent 期限结构仍待接入；shipping / freight 已接入 BDTI/BCTI/BDI 公开代理。'
+  'Platts Dated Brent / 正式 Dated Brent 未接入。',
+  'ICE Brent futuresCurve structure-only'
 ];
 
 for (const marker of renderMarkers) {
@@ -90,7 +105,8 @@ const brentDetailRenderMarkers = [
   'crack spread 4周变化',
   'brentPricingLayer.ulsdPrice',
   'brentPricingLayer.ulsd4wChange',
-  'brentPricingLayer.crackSpread4wChange'
+  'brentPricingLayer.crackSpread4wChange',
+  'formatBrentFuturesCurve'
 ];
 
 for (const marker of brentDetailRenderMarkers) {
@@ -116,7 +132,8 @@ const contractMarkers = [
   'FRED:DHOILNYH',
   'DHOILNYH × 42',
   'crackSpread4wChange',
-  'ulsdSourceStatus'
+  'ulsdSourceStatus',
+  'futuresCurve'
 ];
 
 for (const marker of contractMarkers) {

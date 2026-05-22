@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-22T00:39:03.831Z",
+  "updatedAt": "2026-05-22T04:31:28.752Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "c10c8578e96aff6061c021f939f58fbb3bd7d2c0",
-    "updatedAt": "2026-05-22T00:13:38.066Z",
+    "commitSha": null,
+    "updatedAt": "2026-05-22T04:31:19.305Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-22T00:39:03.831Z"
+    "capturedAt": "2026-05-22T04:31:28.752Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-22T00:39:03.831Z",
+    "generatedAt": "2026-05-22T04:31:28.752Z",
     "macroState": "滞胀冲击 / 通胀冲击",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
     "dominantRiskChain": {
@@ -129,7 +129,7 @@
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-22T00:39:03.831Z",
+    "generatedAt": "2026-05-22T04:31:28.752Z",
     "score": 53,
     "state": "stress",
     "stateZh": "背离压力",
@@ -427,13 +427,13 @@
   },
   "brentPricingLayer": {
     "contractVersion": "v28.0I-5A",
-    "generatedAt": "2026-05-22T00:39:03.831Z",
+    "generatedAt": "2026-05-22T04:31:28.752Z",
     "mode": "public_proxy_observation",
     "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
     "selectedBrent": {
       "value": 116.73,
       "source": "fred:DCOILBRENTEU",
-      "observedAt": "2026-05-22T00:13:38.066Z",
+      "observedAt": "2026-05-22T04:31:19.305Z",
       "status": "ok",
       "noteZh": "当前主 Brent 显示值来自现有 Daily / realtime 输入；该层只做公开代理审计，不改变 values.brent。"
     },
@@ -448,10 +448,79 @@
     "futuresProxy": {
       "labelZh": "Brent 期货代理",
       "source": "yahoo",
-      "value": 104.63,
-      "observedAt": "2026-05-22T00:02:53.000Z",
+      "value": 104.04,
+      "observedAt": "2026-05-22T04:18:42.000Z",
       "status": "ok",
       "limitationZh": "该字段为公开期货/市场报价代理，仅用于验证层观察。"
+    },
+    "futuresCurve": {
+      "source": "ICE:Brent-Crude-Futures-contract-data",
+      "sourceUrl": "https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430",
+      "curveStatus": "live_structure_only",
+      "fetchedAt": "2026-05-22T04:31:28.752Z",
+      "contracts": [
+        {
+          "contract": "Jul26",
+          "lastTrade": "2026-05-29T04:00:00.000Z",
+          "finalSettlement": "2026-06-01T04:00:00.000Z"
+        },
+        {
+          "contract": "Aug26",
+          "lastTrade": "2026-06-30T04:00:00.000Z",
+          "finalSettlement": "2026-07-01T04:00:00.000Z"
+        },
+        {
+          "contract": "Sep26",
+          "lastTrade": "2026-07-31T04:00:00.000Z",
+          "finalSettlement": "2026-08-03T04:00:00.000Z"
+        },
+        {
+          "contract": "Oct26",
+          "lastTrade": "2026-08-28T04:00:00.000Z",
+          "finalSettlement": "2026-08-31T04:00:00.000Z"
+        },
+        {
+          "contract": "Nov26",
+          "lastTrade": "2026-09-30T04:00:00.000Z",
+          "finalSettlement": "2026-10-01T04:00:00.000Z"
+        },
+        {
+          "contract": "Dec26",
+          "lastTrade": "2026-10-30T04:00:00.000Z",
+          "finalSettlement": "2026-11-02T05:00:00.000Z"
+        },
+        {
+          "contract": "Jan27",
+          "lastTrade": "2026-11-30T05:00:00.000Z",
+          "finalSettlement": "2026-12-01T05:00:00.000Z"
+        },
+        {
+          "contract": "Feb27",
+          "lastTrade": "2026-12-30T05:00:00.000Z",
+          "finalSettlement": "2026-12-31T05:00:00.000Z"
+        },
+        {
+          "contract": "Mar27",
+          "lastTrade": "2027-01-29T05:00:00.000Z",
+          "finalSettlement": "2027-02-01T05:00:00.000Z"
+        },
+        {
+          "contract": "Apr27",
+          "lastTrade": "2027-02-26T05:00:00.000Z",
+          "finalSettlement": "2027-03-01T05:00:00.000Z"
+        },
+        {
+          "contract": "May27",
+          "lastTrade": "2027-03-31T04:00:00.000Z",
+          "finalSettlement": "2027-04-01T04:00:00.000Z"
+        },
+        {
+          "contract": "Jun27",
+          "lastTrade": "2027-04-30T04:00:00.000Z",
+          "finalSettlement": "2027-05-03T04:00:00.000Z"
+        }
+      ],
+      "limitationZh": "ICE 页面当前只提供可验证合约月份/到期结构；未把官方结算价期限曲线写入生产数据。"
     },
     "confirmationSources": [
       {
@@ -467,8 +536,8 @@
       {
         "source": "barchart",
         "labelZh": "barchart",
-        "value": 104.62,
-        "observedAt": "2026-05-22T00:03:25.000Z",
+        "value": 100.56,
+        "observedAt": "2026-05-22T04:21:05.000Z",
         "status": "excluded",
         "role": "diagnostic",
         "participatesInPromotion": false,
@@ -477,7 +546,7 @@
       {
         "source": "stooq",
         "labelZh": "Stooq Brent diagnostic",
-        "value": 104.45,
+        "value": 104.08,
         "observedAt": "2026-05-22",
         "status": "excluded",
         "role": "diagnostic",
@@ -487,9 +556,9 @@
       {
         "source": "marketwatch",
         "labelZh": "marketwatch",
-        "value": null,
+        "value": 97.11,
         "observedAt": null,
-        "status": "missing",
+        "status": "excluded",
         "role": "diagnostic",
         "participatesInPromotion": false,
         "noteZh": "该来源仅作为诊断观察，不参与 Brent promotion。"
@@ -497,7 +566,7 @@
       {
         "source": "oilprice",
         "labelZh": "oilprice",
-        "value": 102.58,
+        "value": 103.96,
         "observedAt": null,
         "status": "excluded",
         "role": "diagnostic",
@@ -507,8 +576,8 @@
       {
         "source": "yahoo",
         "labelZh": "Yahoo BZ=F",
-        "value": 104.63,
-        "observedAt": "2026-05-22T00:02:53.000Z",
+        "value": 104.04,
+        "observedAt": "2026-05-22T04:18:42.000Z",
         "status": "ok",
         "role": "futures_proxy",
         "participatesInPromotion": true,
@@ -532,9 +601,9 @@
     "crackSpreadRegime": "供应紧张",
     "ulsdSourceStatus": "live",
     "proxySpread": {
-      "spotMinusFutures": 12.1,
-      "selectedMinusFutures": 12.1,
-      "maxProxyDivergencePct": 10.737,
+      "spotMinusFutures": 12.69,
+      "selectedMinusFutures": 12.69,
+      "maxProxyDivergencePct": 11.28,
       "status": "stress",
       "statusZh": "公开代理价差压力",
       "interpretationZh": "该价差只用于公开代理价格层审计，不改变 Brent 主值或 promotion。"
@@ -542,18 +611,19 @@
     "promotionAudit": {
       "promotionApplied": null,
       "moveStatus": null,
-      "promotionReason": "barchart/yahoo 基本一致，推荐优先采用 barchart；FRED 仅作低频锚点参考。",
+      "promotionReason": "stooq/yahoo 基本一致，推荐优先采用 stooq；FRED 仅作低频锚点参考。",
       "selectedSource": "fred:DCOILBRENTEU",
       "anchorSource": "fred-anchor",
-      "anchorAgeHours": 96.22722222222222
+      "anchorAgeHours": 100.52222222222223
     },
     "dataGaps": [
       "Platts Dated Brent / 正式 Dated Brent 未接入。",
-      "Brent 期限结构尚未正式接入。",
-      "油轮运费 / 航运压力尚未正式接入。"
+      "ICE Brent 合约月份/到期结构已接入；可验证结算价期限曲线仍待接入。",
+      "实物库存、区域价差与正式实物成交证据仍待接入。"
     ],
     "limitations": [
       "当前仅为公开代理价格观察，不等同于付费 Dated Brent 或实物成交数据。",
+      "ICE futuresCurve 当前是 structure-only，不显示或推断缺失的结算价期限曲线。",
       "该层不改变 Brent 主值、评分、仓位或执行灯。"
     ],
     "confidence": {
@@ -591,7 +661,7 @@
     "us10y": 4.57,
     "real10y": 2.13,
     "breakeven10y": 2.39,
-    "gold": 4533.100098,
+    "gold": 4533.299805,
     "spx": 7445.72
   },
   "topRisks": [
@@ -668,10 +738,10 @@
       "targetMid": 3.625,
       "effectiveFedFundsRate": 3.62,
       "targetUpdatedAt": "2026-05-21T00:00:00Z",
-      "fedFundsFutureFrontPrice": 96.265,
-      "fedFundsFutureImpliedRate": 3.735,
-      "futureMinusTargetMid": 0.11,
-      "futureUpdatedAt": "2026-05-22T00:23:03.000Z",
+      "fedFundsFutureFrontPrice": 96.275,
+      "fedFundsFutureImpliedRate": 3.725,
+      "futureMinusTargetMid": 0.1,
+      "futureUpdatedAt": "2026-05-22T04:00:00.000Z",
       "dotPlotMedianCurrentYear": 3.4,
       "dotPlotMedianNextYear": 3.1,
       "dotPlotMedianTwoYearsOut": 3.1,
@@ -684,6 +754,20 @@
       "hawkishTermCount": 13,
       "dovishTermCount": 7,
       "policyTone": "偏鹰",
+      "minutesDate": "2026-04-29T00:00:00.000Z",
+      "minutesUrl": "https://www.federalreserve.gov/monetarypolicy/fomcminutes20260429.htm",
+      "minutesHawkishTermCount": 91,
+      "minutesDovishTermCount": 13,
+      "minutesPolicyTone": "偏鹰",
+      "minutesTopicCounts": {
+        "inflation": 100,
+        "laborMarket": 33,
+        "growth": 30,
+        "financialConditions": 35,
+        "balanceSheet": 9,
+        "risks": 36
+      },
+      "minutesSummaryZh": "FOMC minutes keyword NLP 显示语气偏鹰；高频主题 inflation:100 / risks:36 / financialConditions:35。",
       "policyExpectationRegime": "区间震荡",
       "oisForwardRate": null,
       "oisForwardStatus": "manual_required",
@@ -692,12 +776,13 @@
         "fedFundsFuture": "live",
         "sepDotPlot": "live",
         "policyStatement": "live",
+        "fomcMinutes": "live",
         "oisForward": "manual_required"
       },
-      "updatedAt": "2026-05-22T00:23:03.000Z",
-      "source": "FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F; FederalReserve:FOMC statement/SEP",
+      "updatedAt": "2026-05-22T04:00:00.000Z",
+      "source": "FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F; FederalReserve:FOMC statement/SEP/minutes",
       "notes": [
-        "Fed target range/DFF 来自 FRED；SEP federal funds median 和 statement 文本来自 federalreserve.gov。",
+        "Fed target range/DFF 来自 FRED；SEP federal funds median、statement 与 minutes 文本来自 federalreserve.gov。",
         "ZQ=F 为 front Fed funds futures proxy；OIS forward rate 需要 licensed/manual input,不从未授权源抓取。"
       ]
     },
@@ -747,8 +832,8 @@
         "pmi": {
           "httpStatus": 200,
           "landingHttpStatus": 200,
-          "latencyMs": 706,
-          "parsedAt": "2026-05-22T00:39:04.688Z",
+          "latencyMs": 500,
+          "parsedAt": "2026-05-22T04:31:28.962Z",
           "reportUrl": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/april/",
           "reportMonthLabel": "April"
         }
@@ -962,16 +1047,25 @@
         "yoy": -0.02
       },
       "segmentUpdatedAt": "2026-03-01T00:00:00Z",
+      "bofaCardSpendingYoY": 0.048,
+      "bofaCardSpendingPriorYoY": 0.043,
+      "bofaCardSpendingExGasYoY": 0.04,
+      "bofaReportDate": "2026-05-01T00:00:00.000Z",
+      "bofaReportUrl": "https://institute.bankofamerica.com/economic-insights/consumer-checkpoint-may-2026.html",
+      "bofaPdfUrl": "https://institute.bankofamerica.com/content/dam/economic-insights/consumer-checkpoint-may-2026.pdf",
+      "bofaStatus": "live",
+      "bofaSummary": "Bank of America Institute Consumer Checkpoint 公开 HTML 摘要提供 card spending per household YoY 与 ex-gas YoY；作为第三方消费证据观察，不等同于 Redbook。",
       "retailRegime": "稳定",
       "sourceStatus": {
         "carts": "live",
         "cartsr": "live",
-        "retailSegments": "live"
+        "retailSegments": "live",
+        "bofaConsumerCheckpoint": "live"
       },
-      "updatedAt": "2026-04-28T00:00:00Z",
-      "source": "FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments",
+      "updatedAt": "2026-05-01T00:00:00.000Z",
+      "source": "FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html",
       "notes": [
-        "CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；audit-only / display-only。"
+        "CARTS / CARTSR 为 Chicago Fed via FRED 周频零售+餐饮 nowcast；MRTS 细分零售为月频公开数据；BoA Consumer Checkpoint 为公开 HTML 第三方消费证据；audit-only / display-only。"
       ]
     },
     "commercialRealEstate": {
@@ -1391,7 +1485,7 @@
       "asset": "黄金",
       "score": 85,
       "bias": "中性偏多",
-      "reason": "金价 4533.1，通胀对冲仍在，但真实利率继续约束。"
+      "reason": "金价 4533.3，通胀对冲仍在，但真实利率继续约束。"
     },
     {
       "asset": "原油",
@@ -1579,7 +1673,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-22T00:39:03.831Z",
+        "triggeredAgo": "2026-05-22T04:31:28.752Z",
         "condition": "系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -1587,7 +1681,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-22T00:39:03.831Z",
+        "triggeredAgo": "2026-05-22T04:31:28.752Z",
         "condition": "ON RRP 32.81 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -1595,7 +1689,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-22T00:39:03.831Z",
+        "triggeredAgo": "2026-05-22T04:31:28.752Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -1634,7 +1728,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-22T00:39:03.831Z",
+    "lastRun": "2026-05-22T04:31:28.752Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
@@ -1873,7 +1967,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-05-22T00:39:03.831Z",
+    "generatedAt": "2026-05-22T04:31:28.752Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [

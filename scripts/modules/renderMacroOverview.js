@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-76V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-76V';
-import { formatFiniteNumber } from './format.js?v=28.0M-76V';
+import { $ } from './config.js?v=28.0M-77V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-77V';
+import { formatFiniteNumber } from './format.js?v=28.0M-77V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -425,9 +425,15 @@ function buildPressureSources(data, worldOrderStressData) {
   const cleanTankerIndex = finite(shippingFreight.balticCleanTankerIndex);
   const dryBulkIndex = finite(shippingFreight.balticDryIndex);
   const crackSpread4wChange = finite(brentLayer.crackSpread4wChange);
+  const brentFuturesCurve = isPlainObject(brentLayer.futuresCurve) ? brentLayer.futuresCurve : {};
+  const brentFuturesCurveContracts = safeArray(brentFuturesCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 3)
+    .map((contract) => `${text(contract.contract, '--')}(${formatWeekVintage(contract.lastTrade)})`);
   const energyGaps = safeArray(brentLayer.dataGaps);
   const energyMissing = [
-    'Dated Brent、期限结构和实物端证据仍待验证。',
+    'Platts Dated Brent / 正式 Dated Brent 和实物端证据仍待验证。',
+    brentFuturesCurveContracts.length ? 'ICE 合约结构已接入；可验证结算价期限曲线仍待接入。' : 'Brent futures curve structure 等待刷新。',
     dirtyTankerIndex === null ? '油轮运费压力等待 BDTI 刷新。' : null,
   ].filter(Boolean);
   const worldFreshness = text(worldOrderStressData?.freshness, INSUFFICIENT);
@@ -451,10 +457,13 @@ function buildPressureSources(data, worldOrderStressData) {
         brentLayer?.crackSpread === null || !Number.isFinite(brentLayer?.crackSpread)
           ? null
           : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶；4周变化 ${formatSignedDecimal(crackSpread4wChange, 2)}`,
+        brentFuturesCurveContracts.length
+          ? `ICE Brent futuresCurve structure-only: ${brentFuturesCurveContracts.join(' / ')}；status=${text(brentFuturesCurve.curveStatus, 'missing')}`
+          : null,
       ].filter(Boolean),
       missingEvidence: energyGaps.length || dirtyTankerIndex === null ? energyMissing : [],
       explanation: energyGaps.length
-        ? '价格压力存在，但 Dated Brent、期限结构和实物端证据仍待验证。'
+        ? '价格压力存在，但正式 Dated Brent、结算价期限曲线和实物端证据仍待验证。'
         : '能源压力仍需与通胀预期和实物端交叉确认。',
       sourceType: brent === null ? '数据不足' : '数据推断',
       priority: brent === null ? 4 : brent >= 100 ? 1 : 2,
@@ -528,6 +537,12 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
   const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
   const shippingFreight = isPlainObject(data?.macroDrivers?.shippingFreight) ? data.macroDrivers.shippingFreight : {};
+  const brentFuturesCurve = isPlainObject(brentLayer.futuresCurve) ? brentLayer.futuresCurve : {};
+  const brentFuturesCurveContracts = safeArray(brentFuturesCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 3)
+    .map((contract) => text(contract.contract, null))
+    .filter(Boolean);
   const largestDivergence = isPlainObject(brief.largestDivergence) ? brief.largestDivergence : {};
   const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
   const verified = [];
@@ -546,9 +561,12 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
   pending.push('能源价格处于观察区间，但实物端验证数据仍不足。');
   const dataGapEvidence = [
     'Platts Dated Brent / 正式 Dated Brent 尚未接入。',
+    brentFuturesCurveContracts.length
+      ? `ICE Brent futuresCurve structure-only 已显示 ${brentFuturesCurveContracts.join('/')}；可验证结算价期限曲线仍待接入。`
+      : 'Brent futures curve structure 等待刷新。',
     finite(shippingFreight.balticDirtyTankerIndex) === null
-      ? 'Brent 期限结构仍待接入；shipping / freight 等待 BDTI/BCTI/BDI 刷新。'
-      : 'Brent 期限结构仍待接入；shipping / freight 已接入 BDTI/BCTI/BDI 公开代理。',
+      ? 'shipping / freight 等待 BDTI/BCTI/BDI 刷新。'
+      : 'shipping / freight 已接入 BDTI/BCTI/BDI 公开代理。',
     ...safeArray(brentLayer.dataGaps).slice(0, 1),
   ];
   if (!marketMetric) dataGapEvidence.unshift('Nasdaq / QQQ 周线历史尚未接入。');
@@ -660,6 +678,9 @@ function buildMacroDrivers(data) {
   const strongestRetailSegment = isPlainObject(consumerRetail.strongestSegment) ? consumerRetail.strongestSegment : null;
   const weakestRetailSegment = isPlainObject(consumerRetail.weakestSegment) ? consumerRetail.weakestSegment : null;
   const retailSegmentLines = formatRetailSegmentLines(consumerRetail.retailSegments);
+  const bofaCardSpendingYoY = finite(consumerRetail.bofaCardSpendingYoY);
+  const bofaCardSpendingPriorYoY = finite(consumerRetail.bofaCardSpendingPriorYoY);
+  const bofaCardSpendingExGasYoY = finite(consumerRetail.bofaCardSpendingExGasYoY);
   const retailRegime = text(consumerRetail.retailRegime, '未知');
   const creDelinquencyRate = finite(commercialRealEstate.creDelinquencyRate);
   const creDelinquencyRateQoQChange = finite(commercialRealEstate.creDelinquencyRateQoQChange);
@@ -694,7 +715,10 @@ function buildMacroDrivers(data) {
   const dotPlotMedianLongerRun = finite(policyExpectations.dotPlotMedianLongerRun);
   const hawkishTermCount = finite(policyExpectations.hawkishTermCount);
   const dovishTermCount = finite(policyExpectations.dovishTermCount);
+  const minutesHawkishTermCount = finite(policyExpectations.minutesHawkishTermCount);
+  const minutesDovishTermCount = finite(policyExpectations.minutesDovishTermCount);
   const policyTone = text(policyExpectations.policyTone, '未知');
+  const minutesPolicyTone = text(policyExpectations.minutesPolicyTone, '未知');
   const policyExpectationRegime = text(policyExpectations.policyExpectationRegime, '未知');
   const bdcEtfPrice = finite(privateCreditProxy.bdcEtfPrice);
   const bdcEtf4wChange = finite(privateCreditProxy.bdcEtf4wChange);
@@ -709,6 +733,11 @@ function buildMacroDrivers(data) {
   const sloosTighteningLargeQoQ = finite(credit.sloosTighteningLargeQoQ);
   const sloosTighteningSmallQoQ = finite(credit.sloosTighteningSmallQoQ);
   const nfci4wChange = finite(credit.nfci4wChange);
+  const brentFuturesCurve = isPlainObject(brentLayer.futuresCurve) ? brentLayer.futuresCurve : {};
+  const brentFuturesCurveContracts = safeArray(brentFuturesCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 4)
+    .map((contract) => `${text(contract.contract, '--')}(${formatWeekVintage(contract.lastTrade)})`);
   const vix = finite(inputs.vix);
   const creditCalm = hyOas !== null && hyOas < 4 && vix !== null && vix < 22;
   const policyProxyEvidence = [
@@ -721,7 +750,11 @@ function buildMacroDrivers(data) {
     fedFundsFutureImpliedRate === null ? null : `ZQ front price ${formatNumber(fedFundsFutureFrontPrice, 3)}；implied ${formatNumber(fedFundsFutureImpliedRate, 2, '%')}；相对目标中点 ${formatSignedPoints(futureMinusTargetMid)}（${policyExpectationRegime}）`,
     dotPlotMedianCurrentYear === null ? null : `SEP ${formatWeekVintage(policyExpectations.sepProjectionDate)} federal funds median: current ${formatNumber(dotPlotMedianCurrentYear, 2, '%')} / next ${formatNumber(dotPlotMedianNextYear, 2, '%')} / two-year ${formatNumber(dotPlotMedianTwoYearsOut, 2, '%')} / longer-run ${formatNumber(dotPlotMedianLongerRun, 2, '%')} (${formatUrlReference(policyExpectations.sepUrl)})`,
     policyTone === '未知' ? null : `FOMC ${formatWeekVintage(policyExpectations.statementDate)} statement tone: ${policyTone}；hawkish ${formatNumber(hawkishTermCount, 0)} / dovish ${formatNumber(dovishTermCount, 0)} (${formatUrlReference(policyExpectations.statementUrl)})`,
-    formatSourceStatusMap(policyExpectations.sourceStatus, [['targetRange', 'target'], ['fedFundsFuture', 'ZQ'], ['sepDotPlot', 'SEP'], ['policyStatement', 'statement'], ['oisForward', 'OIS']]),
+    minutesPolicyTone === '未知' ? null : `FOMC minutes ${formatWeekVintage(policyExpectations.minutesDate)} NLP tone: ${minutesPolicyTone}；hawkish ${formatNumber(minutesHawkishTermCount, 0)} / dovish ${formatNumber(minutesDovishTermCount, 0)} (${formatUrlReference(policyExpectations.minutesUrl)})`,
+    isPlainObject(policyExpectations.minutesTopicCounts)
+      ? `minutes topics: inflation=${formatNumber(policyExpectations.minutesTopicCounts.inflation, 0)} / labor=${formatNumber(policyExpectations.minutesTopicCounts.laborMarket, 0)} / financial=${formatNumber(policyExpectations.minutesTopicCounts.financialConditions, 0)} / risks=${formatNumber(policyExpectations.minutesTopicCounts.risks, 0)}`
+      : null,
+    formatSourceStatusMap(policyExpectations.sourceStatus, [['targetRange', 'target'], ['fedFundsFuture', 'ZQ'], ['sepDotPlot', 'SEP'], ['policyStatement', 'statement'], ['fomcMinutes', 'minutes'], ['oisForward', 'OIS']]),
   ].filter(Boolean);
   const hasPolicyProxy = policyProxyEvidence.length > 1;
 
@@ -742,7 +775,7 @@ function buildMacroDrivers(data) {
           ? null
           : `ISM 制造业 PMI ${formatNumber(consumer.ismManufacturingPmi, 1)} — ${consumer.ismManufacturingPmi >= 50 ? '扩张区间' : '收缩区间'}；3个月变化 ${formatNumber(consumer.ismManufacturingPmi3mChange, 1)}`,
       ].filter(Boolean),
-      missingEvidence: ['盈利修正、Redbook / BoA Card 等非公开或授权消费证据仍待接入。'],
+      missingEvidence: ['盈利修正、Redbook / BoA raw card feed 等非公开或授权消费证据仍待接入。'],
       explanation: 'UMCSENT 是月频慢变量，只能提供体感背景，不能单独判断近端增长。',
       sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '数据推断',
     }),
@@ -812,12 +845,19 @@ function buildMacroDrivers(data) {
         strongestRetailSegment
           ? `最强品类：${text(strongestRetailSegment.labelZh, strongestRetailSegment.key)} ${formatRatioAsPercent(strongestRetailSegment.yoy)}；最弱品类：${text(weakestRetailSegment?.labelZh, weakestRetailSegment?.key)} ${formatRatioAsPercent(weakestRetailSegment?.yoy)}`
           : null,
+        bofaCardSpendingYoY === null && bofaCardSpendingExGasYoY === null
+          ? null
+          : `BoA Consumer Checkpoint ${formatMonthVintage(consumerRetail.bofaReportDate)}: card spend YoY ${formatRatioAsPercent(bofaCardSpendingYoY)} / ex-gas ${formatRatioAsPercent(bofaCardSpendingExGasYoY)}；prior ${formatRatioAsPercent(bofaCardSpendingPriorYoY)}（status=${formatSourceStatus(consumerRetail.sourceStatus?.bofaConsumerCheckpoint)}；${formatUrlReference(consumerRetail.bofaReportUrl)}）`,
         ...retailSegmentLines,
-        formatSourceStatusMap(consumerRetail.sourceStatus, [['carts', 'CARTS'], ['cartsr', 'CARTSR'], ['retailSegments', 'MRTS']]),
+        formatSourceStatusMap(consumerRetail.sourceStatus, [['carts', 'CARTS'], ['cartsr', 'CARTSR'], ['retailSegments', 'MRTS'], ['bofaConsumerCheckpoint', 'BoA Consumer Checkpoint']]),
         `Chicago Fed CARTS:${formatWeekVintage(consumerRetail.updatedAt)}`,
       ].filter(Boolean),
-      missingEvidence: retailSegmentDiffusionPct === null ? ['MRTS 细分零售品类等待 FRED 月频刷新。'] : [],
-      explanation: 'CARTS / CARTSR 是 Chicago Fed via FRED 的周频零售+餐饮 nowcast；MRTS 细分品类为月频公开零售结构观察。',
+      missingEvidence: [
+        retailSegmentDiffusionPct === null ? 'MRTS 细分零售品类等待 FRED 月频刷新。' : null,
+        bofaCardSpendingYoY === null && bofaCardSpendingExGasYoY === null ? 'BoA Consumer Checkpoint 公开页等待刷新。' : null,
+        'Redbook 仍未接入；当前不冒充 Redbook。'
+      ].filter(Boolean),
+      explanation: 'CARTS / CARTSR 是 Chicago Fed via FRED 的周频零售+餐饮 nowcast；MRTS 细分品类为月频公开零售结构观察；BoA Consumer Checkpoint 是第三方公开月度卡消费摘要。',
       sourceType: cartsNominal === null && cartsReal === null && retailSegmentDiffusionPct === null ? '数据不足' : '事实',
       updatedAt: `Chicago Fed CARTS:${formatWeekVintage(consumerRetail.updatedAt)}`,
     }),
@@ -912,8 +952,17 @@ function buildMacroDrivers(data) {
         brentLayer?.crackSpread === null || !Number.isFinite(brentLayer?.crackSpread)
           ? null
           : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶（${brentLayer.crackSpreadRegime}）`,
+        brentFuturesCurveContracts.length
+          ? `ICE Brent futuresCurve structure-only: ${brentFuturesCurveContracts.join(' / ')}；status=${text(brentFuturesCurve.curveStatus, 'missing')}`
+          : null,
       ].filter(Boolean),
-      missingEvidence: ['Dated Brent、期限结构、库存数据等待接入。'],
+      missingEvidence: [
+        'Platts Dated Brent / 正式 Dated Brent 未接入。',
+        brentFuturesCurveContracts.length
+          ? 'ICE 合约月份/到期结构已接入；可验证结算价期限曲线仍待接入。'
+          : 'Brent futures curve structure 等待刷新。',
+        '库存数据等待接入。'
+      ],
       explanation: 'Brent 偏高可以提示能源压力，但不能单独证明广义通胀重新加速。',
       sourceType: finite(inputs.brent) === null ? '数据不足' : '数据推断',
     }),
@@ -985,11 +1034,11 @@ function buildMacroDrivers(data) {
       status: hasPolicyProxy ? `基于代理信号观察 / ${policyExpectationRegime}` : WAITING,
       direction: hasPolicyProxy ? (policyExpectationRegime === '降息预期' ? '政策预期转松' : '政策预期偏紧') : '方向待确认',
       confidence: hasPolicyProxy ? '中等' : '偏低',
-      dataCoverage: hasPolicyProxy ? '数据覆盖：Fed statement / SEP / futures 代理' : '数据覆盖：关键数据不足',
+      dataCoverage: hasPolicyProxy ? '数据覆盖：Fed statement / minutes / SEP / futures 代理' : '数据覆盖：关键数据不足',
       evidence: hasPolicyProxy ? policyProxyEvidence : ['暂无直接 Fed 预期或政策路径指标。'],
       missingEvidence: ['OIS forward rates 需要 manual/licensed input；当前不从未授权源抓取。'],
       explanation: hasPolicyProxy
-        ? 'Fed target range、SEP median、FOMC statement 文本和 front Fed funds futures 已接入；OIS forward 仍保留为 manual/licensed 插槽。'
+        ? 'Fed target range、SEP median、FOMC statement/minutes 文本和 front Fed funds futures 已接入；OIS forward 仍保留为 manual/licensed 插槽。'
         : '当前不伪造政策路径；除非接入 dot plot / forward rates 等明确前瞻数据，否则政策路径不是强驱动。',
       sourceType: hasPolicyProxy ? '事实 + 代理信号' : '数据不足',
     }),
