@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-80V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-80V';
-import { formatFiniteNumber } from './format.js?v=28.0M-80V';
+import { $ } from './config.js?v=28.0M-81V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-81V';
+import { formatFiniteNumber } from './format.js?v=28.0M-81V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -766,6 +766,8 @@ function buildMacroDrivers(data) {
   const seniorLoanEtf4wChange = finite(privateCreditProxy.seniorLoanEtf4wChange);
   const privateCreditIgOas = finite(privateCreditProxy.igOas);
   const privateCreditIgMinusHyOas = finite(privateCreditProxy.igMinusHyOas);
+  const cdxHyPrice = finite(privateCreditProxy.cdxHyPrice);
+  const cdxIgPrice = finite(privateCreditProxy.cdxIgPrice);
   const cdxHyStatus = text(privateCreditProxy.cdxHyStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxHy));
   const cdxIgStatus = text(privateCreditProxy.cdxIgStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxIg));
   const privateCreditMarksStatus = text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks));
@@ -1001,12 +1003,17 @@ function buildMacroDrivers(data) {
           : `SRLN ${formatNumber(seniorLoanEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(seniorLoanEtf4wChange)} — senior loan ETF proxy`,
         hyOas === null ? null : `HY OAS ${formatNumber(hyOas, 2, '%')} — 公开信用利差代理`,
         privateCreditIgOas === null ? null : `IG OAS ${formatNumber(privateCreditIgOas, 2, '%')}；IG-HY ${formatSignedPoints(privateCreditIgMinusHyOas)} — cash-bond proxy`,
-        `CDX HY status: ${cdxHyStatus}；CDX IG status: ${cdxIgStatus}`,
+        cdxHyPrice === null
+          ? `CDX HY status: ${cdxHyStatus}`
+          : `ICE CDX HY ${formatNumber(cdxHyPrice, 4)}；${text(privateCreditProxy.cdxHyInstrument, 'CDX-NAHY-5Y')}（${formatWeekVintage(privateCreditProxy.cdxHyUpdatedAt)}；status=${cdxHyStatus}）`,
+        cdxIgPrice === null
+          ? `CDX IG status: ${cdxIgStatus}`
+          : `ICE CDX IG ${formatNumber(cdxIgPrice, 4)}；${text(privateCreditProxy.cdxIgInstrument, 'CDX-NAIG-5Y')}（${formatWeekVintage(privateCreditProxy.cdxIgUpdatedAt)}；status=${cdxIgStatus}）`,
         `private credit marks status: ${privateCreditMarksStatus}`,
         formatSourceStatusMap(privateCreditProxy.sourceStatus, [['bdcEtf', 'BIZD'], ['pbdcEtf', 'PBDC'], ['seniorLoanEtf', 'SRLN'], ['hyOas', 'HY OAS'], ['igOas', 'IG OAS'], ['cdxHy', 'CDX HY'], ['cdxIg', 'CDX IG'], ['privateCreditMarks', 'private marks']]),
       ].filter(Boolean),
-      missingEvidence: ['CDX HY/IG 与私募信用 marks 需要 manual/licensed input；不伪造成公开数据。'],
-      explanation: 'BIZD/PBDC、SRLN、HY OAS 与 IG OAS 只提供公开市场压力代理，不能替代 CDX 或私募信用估值。',
+      missingEvidence: ['私募信用 marks 需要 manual/licensed input；ICE CDX public settlement 不替代私募信用估值。'],
+      explanation: 'BIZD/PBDC、SRLN、HY/IG OAS 与 ICE CDX public settlement 只提供公开市场压力观察，不能替代私募信用估值。',
       sourceType: bdcEtfPrice === null && hyOas === null ? '数据不足' : '代理信号',
       updatedAt: `Yahoo/FRED:${formatWeekVintage(privateCreditProxy.updatedAt)}`,
     }),
@@ -1280,6 +1287,12 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
   const dryBulkIndex = finite(shippingFreight.balticDryIndex);
   const bdcEtfPrice = finite(privateCreditProxy.bdcEtfPrice);
   const bdcEtf4wChange = finite(privateCreditProxy.bdcEtf4wChange);
+  const pbdcEtfPrice = finite(privateCreditProxy.pbdcEtfPrice);
+  const pbdcEtf4wChange = finite(privateCreditProxy.pbdcEtf4wChange);
+  const seniorLoanEtfPrice = finite(privateCreditProxy.seniorLoanEtfPrice);
+  const seniorLoanEtf4wChange = finite(privateCreditProxy.seniorLoanEtf4wChange);
+  const cdxHyPrice = finite(privateCreditProxy.cdxHyPrice);
+  const cdxIgPrice = finite(privateCreditProxy.cdxIgPrice);
   const targetMid = finite(policyExpectations.targetMid);
   const fedFundsFutureImpliedRate = finite(policyExpectations.fedFundsFutureImpliedRate);
   const dotPlotMedianCurrentYear = finite(policyExpectations.dotPlotMedianCurrentYear);
@@ -1433,9 +1446,11 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
           ? null
           : `SRLN ${formatNumber(seniorLoanEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(seniorLoanEtf4wChange)}（senior loan ETF proxy）`,
         privateCreditIgOas === null ? null : `IG OAS ${formatNumber(privateCreditIgOas, 2, '%')}；IG-HY ${formatSignedPoints(privateCreditIgMinusHyOas)}（cash-bond proxy）`,
-        `CDX/private marks status: HY=${text(privateCreditProxy.cdxHyStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxHy))} / IG=${text(privateCreditProxy.cdxIgStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxIg))} / marks=${text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks))}`,
+        cdxHyPrice === null && cdxIgPrice === null
+          ? `CDX/private marks status: HY=${text(privateCreditProxy.cdxHyStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxHy))} / IG=${text(privateCreditProxy.cdxIgStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxIg))} / marks=${text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks))}`
+          : `ICE CDX public settlement: HY ${formatNumber(cdxHyPrice, 4)} / IG ${formatNumber(cdxIgPrice, 4)}；marks=${text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks))}`,
       ].filter(Boolean),
-      missingEvidence: ['CDX HY/IG 与私募信用 marks 需要 manual/licensed input。'],
+      missingEvidence: ['私募信用 marks 需要 manual/licensed input；ICE CDX public settlement 不能替代 private marks。'],
       counterEvidence: creditCalm ? ['信用和波动率尚未显示系统性扩散。'] : [],
       explanation: creditCalm
         ? '信用和波动率尚未显示系统性扩散，金融脆弱性维持观察。'

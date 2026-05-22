@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-22T05:56:54.473Z",
+  "updatedAt": "2026-05-22T06:26:39.057Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
     "commitSha": null,
     "updatedAt": "2026-05-22T04:58:35.667Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-22T05:56:54.473Z"
+    "capturedAt": "2026-05-22T06:26:39.057Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-22T05:56:54.473Z",
+    "generatedAt": "2026-05-22T06:26:39.057Z",
     "macroState": "滞胀冲击 / 通胀冲击",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
     "dominantRiskChain": {
@@ -129,7 +129,7 @@
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-22T05:56:54.473Z",
+    "generatedAt": "2026-05-22T06:26:39.057Z",
     "score": 53,
     "state": "stress",
     "stateZh": "背离压力",
@@ -427,7 +427,7 @@
   },
   "brentPricingLayer": {
     "contractVersion": "v28.0I-5A",
-    "generatedAt": "2026-05-22T05:56:54.473Z",
+    "generatedAt": "2026-05-22T06:26:39.057Z",
     "mode": "public_proxy_observation",
     "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
     "selectedBrent": {
@@ -457,7 +457,7 @@
       "source": "ICE:Brent-Crude-Futures-contract-data",
       "sourceUrl": "https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430",
       "curveStatus": "live_structure_only",
-      "fetchedAt": "2026-05-22T05:56:54.473Z",
+      "fetchedAt": "2026-05-22T06:26:39.057Z",
       "contracts": [
         {
           "contract": "Jul26",
@@ -527,33 +527,33 @@
       "sourceUrl": "https://finance.yahoo.com/quote/BZ=F",
       "curveStatus": "live_proxy_priced",
       "updatedAt": "2026-05-22T04:00:00.000Z",
-      "frontPrice": 104.66,
+      "frontPrice": 104.99,
       "backPrice": 84.43,
-      "frontMinusBack": 20.23,
+      "frontMinusBack": 20.56,
       "slopeRegime": "backwardation",
       "contracts": [
         {
           "symbol": "BZN26.NYM",
           "contractMonth": "Jul26",
-          "price": 104.66,
+          "price": 104.99,
           "updatedAt": "2026-05-22T04:00:00.000Z"
         },
         {
           "symbol": "BZQ26.NYM",
           "contractMonth": "Aug26",
-          "price": 101.25,
+          "price": 101.41,
           "updatedAt": "2026-05-22T04:00:00.000Z"
         },
         {
           "symbol": "BZU26.NYM",
           "contractMonth": "Sep26",
-          "price": 97.4,
+          "price": 97.78,
           "updatedAt": "2026-05-22T04:00:00.000Z"
         },
         {
           "symbol": "BZV26.NYM",
           "contractMonth": "Oct26",
-          "price": 93.86,
+          "price": 94.09,
           "updatedAt": "2026-05-22T04:00:00.000Z"
         },
         {
@@ -839,9 +839,9 @@
           {
             "symbol": "ZQU26.CBT",
             "contractMonth": "Sep26",
-            "price": 96.305,
-            "impliedRate": 3.695,
-            "impliedMinusTargetMid": 0.07,
+            "price": 96.3,
+            "impliedRate": 3.7,
+            "impliedMinusTargetMid": 0.075,
             "updatedAt": "2026-05-22T04:00:00.000Z"
           },
           {
@@ -882,10 +882,10 @@
       "sofrFuturesCurve": {
         "source": "Yahoo:SR3-monthly-SOFR-futures",
         "curveStatus": "live_proxy_curve",
-        "updatedAt": "2026-05-22T05:46:07.000Z",
+        "updatedAt": "2026-05-22T06:16:35.000Z",
         "frontImpliedRate": 3.675,
-        "backImpliedRate": 3.985,
-        "frontMinusBack": -0.31,
+        "backImpliedRate": 3.98,
+        "frontMinusBack": -0.305,
         "contracts": [
           {
             "symbol": "SR3M26.CME",
@@ -893,7 +893,7 @@
             "price": 96.325,
             "impliedRate": 3.675,
             "impliedMinusTargetMid": 0.05,
-            "updatedAt": "2026-05-22T05:45:20.000Z"
+            "updatedAt": "2026-05-22T06:12:44.000Z"
           },
           {
             "symbol": "SR3N26.CME",
@@ -901,7 +901,7 @@
             "price": 96.28,
             "impliedRate": 3.72,
             "impliedMinusTargetMid": 0.095,
-            "updatedAt": "2026-05-22T02:57:24.000Z"
+            "updatedAt": "2026-05-22T05:57:48.000Z"
           },
           {
             "symbol": "SR3U26.CME",
@@ -909,7 +909,7 @@
             "price": 96.22,
             "impliedRate": 3.78,
             "impliedMinusTargetMid": 0.155,
-            "updatedAt": "2026-05-22T05:46:07.000Z"
+            "updatedAt": "2026-05-22T06:14:27.000Z"
           },
           {
             "symbol": "SR3Z26.CME",
@@ -917,15 +917,15 @@
             "price": 96.11,
             "impliedRate": 3.89,
             "impliedMinusTargetMid": 0.265,
-            "updatedAt": "2026-05-22T05:35:04.000Z"
+            "updatedAt": "2026-05-22T06:16:22.000Z"
           },
           {
             "symbol": "SR3H27.CME",
             "contractMonth": "Mar27",
-            "price": 96.015,
-            "impliedRate": 3.985,
-            "impliedMinusTargetMid": 0.36,
-            "updatedAt": "2026-05-22T05:45:24.000Z"
+            "price": 96.02,
+            "impliedRate": 3.98,
+            "impliedMinusTargetMid": 0.355,
+            "updatedAt": "2026-05-22T06:16:35.000Z"
           }
         ],
         "limitationZh": "Yahoo 月度 SR3 Three-Month SOFR futures 为公开担保融资利率曲线 proxy；不是 OIS forward rate。"
@@ -1095,7 +1095,7 @@
         "fomcMinutes": "live",
         "oisForward": "live"
       },
-      "updatedAt": "2026-05-22T05:46:07.000Z",
+      "updatedAt": "2026-05-22T06:16:35.000Z",
       "source": "FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; CheckMySwap:USD-OIS-public-curve; FederalReserve:FOMC statement/SEP/minutes",
       "notes": [
         "Fed target range/DFF 来自 FRED；SEP federal funds median、statement 与 minutes 文本来自 federalreserve.gov。",
@@ -1148,8 +1148,8 @@
         "pmi": {
           "httpStatus": 200,
           "landingHttpStatus": 200,
-          "latencyMs": 500,
-          "parsedAt": "2026-05-22T05:56:55.693Z",
+          "latencyMs": 856,
+          "parsedAt": "2026-05-22T06:26:39.716Z",
           "reportUrl": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/april/",
           "reportMonthLabel": "April"
         }
@@ -1444,8 +1444,14 @@
       "igOas": 0.75,
       "igOasUpdatedAt": "2026-05-20T00:00:00Z",
       "igMinusHyOas": -2.05,
-      "cdxHyStatus": "manual_required",
-      "cdxIgStatus": "manual_required",
+      "cdxHyPrice": 107.9132,
+      "cdxHyInstrument": "CDX-NAHYS46V2-5Y",
+      "cdxHyUpdatedAt": "2026-05-21T00:00:00.000Z",
+      "cdxIgPrice": 102.1539,
+      "cdxIgInstrument": "CDX-NAIGS46V1-5Y",
+      "cdxIgUpdatedAt": "2026-05-21T00:00:00.000Z",
+      "cdxHyStatus": "live",
+      "cdxIgStatus": "live",
       "privateCreditMarksStatus": "manual_required",
       "privateCreditProxyRegime": "观察",
       "sourceStatus": {
@@ -1454,14 +1460,14 @@
         "seniorLoanEtf": "live",
         "hyOas": "live",
         "igOas": "live",
-        "cdxHy": "manual_required",
-        "cdxIg": "manual_required",
+        "cdxHy": "live",
+        "cdxIg": "live",
         "privateCreditMarks": "manual_required"
       },
       "updatedAt": "2026-05-21T13:30:00.000Z",
-      "source": "Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM",
+      "source": "Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public",
       "notes": [
-        "BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；CDX 与私募信用 marks 仅保留 manual/licensed 插槽,不伪造成公开数据。"
+        "BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；ICE CDX 为公开 EOD settlement price；私募信用 marks 仍保留 manual/licensed 插槽。"
       ]
     },
     "activeSignals": [
@@ -2012,7 +2018,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-22T05:56:54.473Z",
+        "triggeredAgo": "2026-05-22T06:26:39.057Z",
         "condition": "系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -2020,7 +2026,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-22T05:56:54.473Z",
+        "triggeredAgo": "2026-05-22T06:26:39.057Z",
         "condition": "ON RRP 32.81 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -2028,7 +2034,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-22T05:56:54.473Z",
+        "triggeredAgo": "2026-05-22T06:26:39.057Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -2067,7 +2073,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-22T05:56:54.473Z",
+    "lastRun": "2026-05-22T06:26:39.057Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
@@ -2306,7 +2312,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-05-22T05:56:54.473Z",
+    "generatedAt": "2026-05-22T06:26:39.057Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [

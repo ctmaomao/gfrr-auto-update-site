@@ -85,7 +85,7 @@ const requiredRenderMarkers = [
   '跨市场融资压力等待接入。',
   "id: 'driver-private-credit-proxy'",
   'BIZD listed BDC proxy',
-  'CDX HY/IG 与私募信用 marks 需要 manual/licensed input；不伪造成公开数据。'
+  '私募信用 marks 需要 manual/licensed input；ICE CDX public settlement 不替代私募信用估值。'
 ];
 for (const marker of requiredRenderMarkers) {
   if (!renderMacroText.includes(marker)) {

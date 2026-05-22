@@ -195,7 +195,7 @@ for (const marker of requiredSourceMarkers) {
   }
 }
 
-if (!agentsText.includes('macroDrivers.commercialRealEstate') || !agentsText.includes('CDX HY/IG + 私募信贷 fundraising 为 P3-15 source-review candidates')) {
+if (!agentsText.includes('macroDrivers.commercialRealEstate') || !agentsText.includes('伪造为 CDX、私募信贷数据或非公开 CRE loan tape')) {
   fail('AGENTS.md missing M-70 commercialRealEstate boundary note');
 }
 

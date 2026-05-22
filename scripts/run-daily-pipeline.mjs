@@ -64,6 +64,9 @@ const REDBOOK_FETCH_TIMEOUT_MS = 10000;
 const CHECKMYSWAP_USD_OIS_CURVE_URL = 'https://www.checkmyswap.com/api/curves/USD';
 const CHECKMYSWAP_RATES_URL = 'https://www.checkmyswap.com/rates';
 const CHECKMYSWAP_FETCH_TIMEOUT_MS = 10000;
+const ICE_CDX_INDEX_SETTLEMENT_URL = 'https://www.ice.com/api/cds-settlement-prices/icc-indexes';
+const ICE_CDX_INDEX_SETTLEMENT_PAGE_URL = 'https://www.ice.com/cds-settlement-prices/icc/index-instruments';
+const ICE_CDX_FETCH_TIMEOUT_MS = 10000;
 const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
 const YAHOO_FETCH_TIMEOUT_MS = 9000;
 const STOCKQ_INDEX_BASE = 'https://en.stockq.org/index';
@@ -103,7 +106,7 @@ const CONSUMER_RETAIL_SOURCE =
   'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html; TradingEconomics:Redbook-public-html';
 const POLICY_EXPECTATIONS_SOURCE =
   'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; CheckMySwap:USD-OIS-public-curve; FederalReserve:FOMC statement/SEP/minutes';
-const PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM';
+const PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public';
 const CRE_PUBLIC_MARKET_PROXY_SOURCE =
   'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; Yahoo:VNQ; Yahoo:REM; Yahoo:CMBS';
 const FUTURES_MONTH_CODES = ['F', 'G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z'];
@@ -1495,6 +1498,72 @@ async function fetchJsonText(url, label, timeoutMs = MACRO_FETCH_TIMEOUT_MS, opt
   } catch (err) {
     throw new Error(`${label} invalid JSON: ${stringifyFetchError(err)}`);
   }
+}
+
+function parseIceCdxIndexRecord(record) {
+  if (!record || typeof record !== 'object') return null;
+  const clearingDate = typeof record.clearingDate === 'string' ? record.clearingDate.trim() : '';
+  const instrumentName = typeof record.instrumentName === 'string' ? record.instrumentName.trim() : '';
+  const eodPrice = Number(record.eodPrice);
+  if (!clearingDate || !Number.isFinite(Date.parse(`${clearingDate}T00:00:00Z`))) return null;
+  if (!instrumentName || !Number.isFinite(eodPrice) || eodPrice <= 0) return null;
+  return {
+    clearingDate,
+    instrumentName,
+    eodPrice: +eodPrice.toFixed(4)
+  };
+}
+
+function parseCdxNaFiveYearInstrument(instrumentName, family) {
+  const match = String(instrumentName || '').match(/^CDX-NA(HY|IG)S(\d+)V(\d+)-5Y$/);
+  if (!match || match[1] !== family) return null;
+  return {
+    family,
+    series: Number(match[2]),
+    version: Number(match[3])
+  };
+}
+
+function pickLatestCdxNaFiveYear(records, family) {
+  const candidates = records
+    .map(parseIceCdxIndexRecord)
+    .filter(Boolean)
+    .map((record) => ({ record, meta: parseCdxNaFiveYearInstrument(record.instrumentName, family) }))
+    .filter((item) => item.meta);
+  candidates.sort((a, b) => {
+    const dateCompare = Date.parse(`${b.record.clearingDate}T00:00:00Z`) - Date.parse(`${a.record.clearingDate}T00:00:00Z`);
+    if (dateCompare !== 0) return dateCompare;
+    if (b.meta.series !== a.meta.series) return b.meta.series - a.meta.series;
+    return b.meta.version - a.meta.version;
+  });
+  const picked = candidates[0];
+  if (!picked) return null;
+  return {
+    price: picked.record.eodPrice,
+    instrument: picked.record.instrumentName,
+    clearingDate: picked.record.clearingDate,
+    updatedAt: `${picked.record.clearingDate}T00:00:00.000Z`,
+    sourceUrl: ICE_CDX_INDEX_SETTLEMENT_PAGE_URL
+  };
+}
+
+async function fetchIceCdxIndexSettlements() {
+  const rows = await fetchJsonText(
+    ICE_CDX_INDEX_SETTLEMENT_URL,
+    'ice:cdx-index-settlements',
+    ICE_CDX_FETCH_TIMEOUT_MS,
+    {
+      userAgent: 'Mozilla/5.0 GFRRBot/1.0',
+      headers: {
+        Referer: ICE_CDX_INDEX_SETTLEMENT_PAGE_URL
+      }
+    }
+  );
+  if (!Array.isArray(rows) || rows.length === 0) throw new Error('ice:cdx-index-settlements empty payload');
+  const hy = pickLatestCdxNaFiveYear(rows, 'HY');
+  const ig = pickLatestCdxNaFiveYear(rows, 'IG');
+  if (!hy && !ig) throw new Error('ice:cdx-index-settlements missing CDX NA HY/IG 5Y records');
+  return { hy, ig };
 }
 
 function parseDateToIso(value) {
@@ -3941,6 +4010,12 @@ function buildMissingPrivateCreditProxy() {
     igOas: null,
     igOasUpdatedAt: null,
     igMinusHyOas: null,
+    cdxHyPrice: null,
+    cdxHyInstrument: null,
+    cdxHyUpdatedAt: null,
+    cdxIgPrice: null,
+    cdxIgInstrument: null,
+    cdxIgUpdatedAt: null,
     cdxHyStatus: 'manual_required',
     cdxIgStatus: 'manual_required',
     privateCreditMarksStatus: 'manual_required',
@@ -3957,7 +4032,7 @@ function buildMissingPrivateCreditProxy() {
     },
     updatedAt: null,
     source: PRIVATE_CREDIT_PROXY_SOURCE,
-    notes: ['BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；CDX 与私募信用 marks 仅保留 manual/licensed 插槽,不伪造成公开数据。']
+    notes: ['BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；ICE CDX 为公开 EOD settlement price；私募信用 marks 仍保留 manual/licensed 插槽。']
   };
 }
 
@@ -4303,6 +4378,8 @@ function normalizePreviousPrivateCreditProxy(prevPrivateCredit) {
   const hyOas = Number.isFinite(prevPrivateCredit.hyOas) ? prevPrivateCredit.hyOas : null;
   const igOas = Number.isFinite(prevPrivateCredit.igOas) ? prevPrivateCredit.igOas : null;
   const igMinusHyOas = Number.isFinite(prevPrivateCredit.igMinusHyOas) ? prevPrivateCredit.igMinusHyOas : null;
+  const cdxHyPrice = Number.isFinite(prevPrivateCredit.cdxHyPrice) ? prevPrivateCredit.cdxHyPrice : null;
+  const cdxIgPrice = Number.isFinite(prevPrivateCredit.cdxIgPrice) ? prevPrivateCredit.cdxIgPrice : null;
   return {
     ...buildMissingPrivateCreditProxy(),
     ...prevPrivateCredit,
@@ -4319,6 +4396,12 @@ function normalizePreviousPrivateCreditProxy(prevPrivateCredit) {
     igOas,
     igOasUpdatedAt: typeof prevPrivateCredit.igOasUpdatedAt === 'string' ? prevPrivateCredit.igOasUpdatedAt : null,
     igMinusHyOas,
+    cdxHyPrice,
+    cdxHyInstrument: typeof prevPrivateCredit.cdxHyInstrument === 'string' ? prevPrivateCredit.cdxHyInstrument : null,
+    cdxHyUpdatedAt: typeof prevPrivateCredit.cdxHyUpdatedAt === 'string' ? prevPrivateCredit.cdxHyUpdatedAt : null,
+    cdxIgPrice,
+    cdxIgInstrument: typeof prevPrivateCredit.cdxIgInstrument === 'string' ? prevPrivateCredit.cdxIgInstrument : null,
+    cdxIgUpdatedAt: typeof prevPrivateCredit.cdxIgUpdatedAt === 'string' ? prevPrivateCredit.cdxIgUpdatedAt : null,
     privateCreditProxyRegime: typeof prevPrivateCredit.privateCreditProxyRegime === 'string' && prevPrivateCredit.privateCreditProxyRegime.trim()
       ? prevPrivateCredit.privateCreditProxyRegime
       : classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, hyOas),
@@ -4328,8 +4411,8 @@ function normalizePreviousPrivateCreditProxy(prevPrivateCredit) {
       seniorLoanEtf: seniorLoanEtfPrice !== null ? 'fallback' : 'missing',
       hyOas: hyOas !== null ? 'fallback' : 'missing',
       igOas: igOas !== null ? 'fallback' : 'missing',
-      cdxHy: 'manual_required',
-      cdxIg: 'manual_required',
+      cdxHy: cdxHyPrice !== null ? 'fallback' : 'manual_required',
+      cdxIg: cdxIgPrice !== null ? 'fallback' : 'manual_required',
       privateCreditMarks: 'manual_required'
     },
     updatedAt: typeof prevPrivateCredit.updatedAt === 'string' ? prevPrivateCredit.updatedAt : null
@@ -4437,8 +4520,8 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
     seniorLoanEtf: 'missing',
     hyOas: 'missing',
     igOas: 'missing',
-    cdxHy: 'manual_required',
-    cdxIg: 'manual_required',
+    cdxHy: 'missing',
+    cdxIg: 'missing',
     privateCreditMarks: 'manual_required'
   };
   let bdcEtfPrice = null;
@@ -4453,11 +4536,18 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
   let hyOas = Number.isFinite(hyOasLive) ? hyOasLive : null;
   let igOas = null;
   let igOasUpdatedAt = null;
+  let cdxHyPrice = null;
+  let cdxHyInstrument = null;
+  let cdxHyUpdatedAt = null;
+  let cdxIgPrice = null;
+  let cdxIgInstrument = null;
+  let cdxIgUpdatedAt = null;
 
-  const [bdcEtfResult, pbdcEtfResult, seniorLoanEtfResult] = await Promise.allSettled([
+  const [bdcEtfResult, pbdcEtfResult, seniorLoanEtfResult, cdxResult] = await Promise.allSettled([
     fetchYahooChartQuote('BIZD', '1mo', '1d'),
     fetchYahooChartQuote('PBDC', '1mo', '1d'),
-    fetchYahooChartQuote('SRLN', '1mo', '1d')
+    fetchYahooChartQuote('SRLN', '1mo', '1d'),
+    fetchIceCdxIndexSettlements()
   ]);
 
   if (bdcEtfResult.status === 'fulfilled') {
@@ -4494,6 +4584,41 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
     seniorLoanEtf4wChange = fallback.seniorLoanEtf4wChange;
     seniorLoanEtfUpdatedAt = fallback.seniorLoanEtfUpdatedAt;
     status.seniorLoanEtf = 'fallback';
+  }
+
+  if (cdxResult.status === 'fulfilled') {
+    if (Number.isFinite(cdxResult.value.hy?.price)) {
+      cdxHyPrice = cdxResult.value.hy.price;
+      cdxHyInstrument = cdxResult.value.hy.instrument;
+      cdxHyUpdatedAt = cdxResult.value.hy.updatedAt;
+      status.cdxHy = 'live';
+    }
+    if (Number.isFinite(cdxResult.value.ig?.price)) {
+      cdxIgPrice = cdxResult.value.ig.price;
+      cdxIgInstrument = cdxResult.value.ig.instrument;
+      cdxIgUpdatedAt = cdxResult.value.ig.updatedAt;
+      status.cdxIg = 'live';
+    }
+  }
+  if (status.cdxHy !== 'live') {
+    if (Number.isFinite(fallback.cdxHyPrice)) {
+      cdxHyPrice = fallback.cdxHyPrice;
+      cdxHyInstrument = fallback.cdxHyInstrument;
+      cdxHyUpdatedAt = fallback.cdxHyUpdatedAt;
+      status.cdxHy = 'fallback';
+    } else {
+      status.cdxHy = 'manual_required';
+    }
+  }
+  if (status.cdxIg !== 'live') {
+    if (Number.isFinite(fallback.cdxIgPrice)) {
+      cdxIgPrice = fallback.cdxIgPrice;
+      cdxIgInstrument = fallback.cdxIgInstrument;
+      cdxIgUpdatedAt = fallback.cdxIgUpdatedAt;
+      status.cdxIg = 'fallback';
+    } else {
+      status.cdxIg = 'manual_required';
+    }
   }
 
   if (Number.isFinite(hyOas)) {
@@ -4542,14 +4667,20 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
     igOas: Number.isFinite(igOas) ? igOas : null,
     igOasUpdatedAt,
     igMinusHyOas,
-    cdxHyStatus: 'manual_required',
-    cdxIgStatus: 'manual_required',
+    cdxHyPrice: Number.isFinite(cdxHyPrice) ? cdxHyPrice : null,
+    cdxHyInstrument,
+    cdxHyUpdatedAt,
+    cdxIgPrice: Number.isFinite(cdxIgPrice) ? cdxIgPrice : null,
+    cdxIgInstrument,
+    cdxIgUpdatedAt,
+    cdxHyStatus: status.cdxHy,
+    cdxIgStatus: status.cdxIg,
     privateCreditMarksStatus: 'manual_required',
     privateCreditProxyRegime: classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, hyOas),
     sourceStatus: status,
-    updatedAt: latestIsoDate(bdcEtfUpdatedAt, pbdcEtfUpdatedAt, seniorLoanEtfUpdatedAt, igOasUpdatedAt, fallback.updatedAt),
+    updatedAt: latestIsoDate(bdcEtfUpdatedAt, pbdcEtfUpdatedAt, seniorLoanEtfUpdatedAt, igOasUpdatedAt, cdxHyUpdatedAt, cdxIgUpdatedAt, fallback.updatedAt),
     source: PRIVATE_CREDIT_PROXY_SOURCE,
-    notes: ['BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；CDX 与私募信用 marks 仅保留 manual/licensed 插槽,不伪造成公开数据。']
+    notes: ['BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；ICE CDX 为公开 EOD settlement price；私募信用 marks 仍保留 manual/licensed 插槽。']
   };
 }
 

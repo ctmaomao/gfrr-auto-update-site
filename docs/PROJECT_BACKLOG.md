@@ -9,11 +9,11 @@
 
 | 项 | 值 |
 |---|---|
-| 当前生产状态 | v28.0M-80 (public source tranche 6: CheckMySwap OIS public curve, CMBS/PBDC/SRLN public proxies) |
-| Cache version | `28.0M-80V` |
+| 当前生产状态 | v28.0M-81 (public source tranche 7: ICE CDX public settlement prices) |
+| Cache version | `28.0M-81V` |
 | check:all 项数 | 23 |
-| 最后审计日期 | **2026-05-22** (M-80 public source tranche 6; M-79 public source tranche 5; M-78 public source tranche 4; M-77 public source tranche 3; M-76 frontend macro field surfacing; M-75 check suite compaction; M-74 expanded macro data auto ingestion; M-73 BGCR/TGCR NY Fed secured rates runtime fix + employment quality public FRED expansion; M-71 Brent public proxy source review; M-70 CRE FRED commercialRealEstate ingestion; M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
-| 最后 daily refresh | 2026-05-22 (local M-74 rebuild from `origin/realtime-data` commit `c10c8578`; local `realtime/market.json` restored after build) |
+| 最后审计日期 | **2026-05-22** (M-81 public source tranche 7; M-80 public source tranche 6; M-79 public source tranche 5; M-78 public source tranche 4; M-77 public source tranche 3; M-76 frontend macro field surfacing; M-75 check suite compaction; M-74 expanded macro data auto ingestion; M-73 BGCR/TGCR NY Fed secured rates runtime fix + employment quality public FRED expansion; M-71 Brent public proxy source review; M-70 CRE FRED commercialRealEstate ingestion; M-69 Chicago Fed CARTS consumerRetail ingestion; M-68 employment breadth; M-67 ISM PMI source repair; M-63c ACLED reminder workflows; M-66 legacy anchor + subsection kicker polish; ADR-0014 IA contract authority hierarchy; M-63b ACLED monthly ingestion) |
+| 最后 daily refresh | 2026-05-22 (local M-81 rebuild from `origin/realtime-data` baseline; local `realtime/market.json` unchanged) |
 | GDELT 刷新 | M-59 起由 `Refresh World Order Stress` daily workflow 维护 |
 | Pages auto-deploy | M-60 起集中由 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows` 列表维护，并由 `check:pages-trigger-coverage` 守护 |
 | SIPRI 状态 | M-61 起 `config/world-order-sipri-normalized.json` 使用 SIPRI 2024 真实数据，world-order build 后为 `ok` |
@@ -23,7 +23,7 @@
 | Employment 状态 | M-73 起 `macroDrivers.employment` 在 ICSA/CCSA/JTSJOL 基础上接入 FRED 平均时薪 CES0500000003、U6RATE 与公开行业 payroll basket 扩散代理；audit-only/display-only；仅用于 Macro Drivers 前端卡片；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation |
 | Consumer Retail 状态 | M-69 起 `macroDrivers.consumerRetail` 接入 FRED CARTS/CARTSR (Chicago Fed weekly retail nowcast)；M-74 起加入 FRED MRTS 13 个细分零售行业 basket 和扩散指标；M-77 起加入 BoA Consumer Checkpoint 公开 HTML card-spending YoY 摘要；audit-only/display-only；仅用于 Macro Drivers 前端卡片；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation；不接 CARTSP、不冒充 Redbook 或 BoA raw card feed |
 | CRE 状态 | M-70 起 `macroDrivers.commercialRealEstate` 接入 FRED DRCRELEXFACBS/CORCREXFACBS/SUBLPDRCSN/SUBLPDRCSC/SUBLPDRCSM 季频 CRE 信用压力 series；M-74 起加入 Yahoo VNQ/REM public market proxy；M-80 起加入 Yahoo CMBS commercial MBS ETF public proxy；audit-only/display-only；独立于 `macroDrivers.credit`；不进 scoring/decision/execution/position、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation；不冒充非公开 CRE loan tape |
-| Expanded macro 状态 | M-74 起 `macroDrivers.shippingFreight` 接入 StockQ BDTI/BCTI/BDI；`macroDrivers.policyExpectations` 接入 FRED DFEDTARL/DFEDTARU/DFF、Yahoo ZQ=F、Federal Reserve SEP/FOMC statement；M-77 起加入 FOMC minutes keyword NLP；M-78 起加入 Yahoo ZQ monthly Fed funds futures proxy curve；M-79 起加入 Yahoo SR3 monthly SOFR futures proxy curve；M-80 起加入 CheckMySwap USD OIS public curve；`macroDrivers.consumerRetail` M-79 起加入 Trading Economics Redbook public HTML 摘要；`macroDrivers.privateCreditProxy` 接入 Yahoo BIZD + FRED HY OAS，M-78 加入 FRED IG OAS，M-80 加入 Yahoo PBDC/SRLN public proxies；CDX/private marks/non-public CRE 保留 `manual_required`。M-76/M-80 起 Macro Drivers / Risk Engines / Brent detail 展开显示这些后端字段；仍为 display-only |
+| Expanded macro 状态 | M-74 起 `macroDrivers.shippingFreight` 接入 StockQ BDTI/BCTI/BDI；`macroDrivers.policyExpectations` 接入 FRED DFEDTARL/DFEDTARU/DFF、Yahoo ZQ=F、Federal Reserve SEP/FOMC statement；M-77 起加入 FOMC minutes keyword NLP；M-78 起加入 Yahoo ZQ monthly Fed funds futures proxy curve；M-79 起加入 Yahoo SR3 monthly SOFR futures proxy curve；M-80 起加入 CheckMySwap USD OIS public curve；`macroDrivers.consumerRetail` M-79 起加入 Trading Economics Redbook public HTML 摘要；`macroDrivers.privateCreditProxy` 接入 Yahoo BIZD + FRED HY OAS，M-78 加入 FRED IG OAS，M-80 加入 Yahoo PBDC/SRLN public proxies，M-81 加入 ICE CDX public settlement prices；private marks/non-public CRE 保留 `manual_required`。M-76/M-81 起 Macro Drivers / Risk Engines / Brent detail 展开显示这些后端字段；仍为 display-only |
 | Brent public proxy review | M-71 起完成 source-review only：EIA Europe Brent Spot Price FOB、ICE Brent futures curve、Baltic Exchange freight benchmarks、Freightos Baltic Index 与 future licensed S&P/Platts Dated Brent 已登记为候选；M-77 起 `brentPricingLayer.futuresCurve` 只读取 ICE contract structure (`live_structure_only`)；M-78 起 `brentPricingLayer.futuresPriceCurve` 读取 Yahoo BZ monthly priced proxy (`live_proxy_priced`)；Platts Dated Brent / 正式 Dated Brent 与官方 ICE settlement curve 仍未接入 |
 | ADR-0013 | 2026-05-19 落地 (PR #231)；ADR-0001 zero-deps 精化为 runtime zero-dep,本地开发工具可在 ADR-0013 约束下使用 devDependencies |
 | First devDependency | M-63a 起 `xlsx@0.18.5` (SheetJS) 仅由 `scripts/world-order/sanitize-acled-weekly.mjs` 导入,runtime/check/workflow/frontend 不得引用 |
@@ -63,11 +63,11 @@
 
 #### P2-9: CRE / CDX / 私募信贷 (closed — M-70; reframed to CRE-only Path α)
 - **历史 spec**: 原写 "CDX HY/IG, CRE delinquency, private credit fundraising",实施时发现:
-  - CDX HY/IG = ICE/Markit 商业数据,无公开 API
+  - CDX HY/IG 当时未接 runtime；M-81 后改从 ICE Clear Credit public settlement endpoint 读取最新 EOD index price
   - 私募信贷 fundraising = Cliffwater / PitchBook / Preqin 商业订阅 / ToS 未明
   - CRE delinquency 是 FRED 公开,可直接 audit-only 接入
 - **实际接入**: `macroDrivers.commercialRealEstate` 接 5 个 FRED 季频公开 CRE 信用压力 series
-- **CDX + 私募信贷**: 降级为 **P3-15** source-review candidates,不在 runtime 自动 fetch
+- **CDX + 私募信贷**: CDX public settlement 已在 M-81 接入 `macroDrivers.privateCreditProxy`；私募信贷 marks / fundraising 仍为 **P3-15** source-review/manual candidates
 - **状态**: ✅ `done` (this PR);新增 `macroDrivers.commercialRealEstate` 子树、`driver-cre` 前端卡片、`check:macro-drivers-commercial-real-estate`
 
 #### P2-10: Macro driver 卡片日期渲染 bug (open — 2026-05-21 线上验证发现)
@@ -114,15 +114,15 @@
 - **解封路径**: 若未来 Redbook 提供官方 API / raw subscription export 或 BoA 提供机器可读 raw feed endpoint → 另开 source-review PR 评估接入
 - **前端状态**: M-77 起展示 `macroDrivers.consumerRetail` 的 CARTS/CARTSR、FRED MRTS 细分零售扩散与 BoA Consumer Checkpoint public HTML 摘要；M-79 起展示 Trading Economics Redbook public HTML same-store sales YoY 摘要；仍不展示/不冒充 Redbook raw subscription feed 或 BoA raw card feed
 
-#### P3-15: CDX HY/IG + 私募信贷 fundraising (source-review candidates)
+#### P3-15: CDX HY/IG + 私募信贷 fundraising (partially connected — M-81 CDX public settlement)
 - **不修原因**:
-  - **CDX HY/IG**: ICE/Markit 商业数据,无公开 API;Bloomberg/FactSet/Refinitiv 全订阅;`macroDrivers.credit` 已通过 HY/IG cash-bond OAS (BAMLH0A0HYM2 / BAMLC0A0CM) 覆盖 cash-bond credit spreads,CDX 仅多 CDS-cash basis 边际信号,对 audit-only 价值低
+  - **CDX HY/IG**: M-81 已接入 ICE Clear Credit public index instruments endpoint 的最新 CDX NA HY/IG 5Y EOD settlement price；完整 licensed Markit history database、intraday quotes 与 Bloomberg/FactSet/Refinitiv feed 仍不接
   - **私募信贷 fundraising**: Cliffwater Direct Lending Index 公开页面 ToS/license 未明;PitchBook / Preqin 全商业订阅;Fed Z.1 Q&A (2026-02-26) 明确说当前 Z.1 **不发布** domestic/foreign private credit loans to nonfinancial business 的 transactions/levels 估计 — 公开 aggregate 路径也不可达
   - 商业 SDK 与 ADR-0001 0-prod-deps 边界硬冲突
 - **诊断日期**: 2026-05-20 (M-70 source-review,Codex live probe verified)
-- **解封路径**: CDX 需 ICE/Markit 提供官方 API + 评估订阅成本;私募信贷需 Cliffwater 或 Fed Z.1 公开 aggregate 出台 — 任一条件满足后另开 source-review PR
-- **M-74/M-78/M-80 已接入**: `macroDrivers.privateCreditProxy` 已展示 Yahoo `BIZD` / `PBDC` listed BDC ETF、Yahoo `SRLN` senior-loan ETF、FRED `BAMLH0A0HYM2` HY OAS 与 FRED `BAMLC0A0CM` IG OAS；这是公开 cash-bond / listed proxy，不是 CDX 或 private marks。
-- **前端状态**: M-78 起展示 BIZD/HY OAS/IG OAS public proxy；CDX HY/IG、private credit marks 与 non-public CRE loan tape 继续显示/校验为 `manual_required`，不冒充真实非公开源。
+- **解封路径**: 私募信贷需 Cliffwater / PitchBook / Preqin / Fed Z.1 公开 aggregate 或用户自有 manual file；完整 CDX history 或 intraday quote 需另开 licensed feed parser
+- **M-74/M-78/M-80/M-81 已接入**: `macroDrivers.privateCreditProxy` 已展示 Yahoo `BIZD` / `PBDC` listed BDC ETF、Yahoo `SRLN` senior-loan ETF、FRED `BAMLH0A0HYM2` HY OAS、FRED `BAMLC0A0CM` IG OAS 与 ICE CDX NA HY/IG public settlement prices。
+- **前端状态**: M-81 起展示 ICE CDX HY/IG public settlement price；private credit marks 与 non-public CRE loan tape 继续显示/校验为 `manual_required`，不冒充真实非公开源。
 
 ---
 
@@ -169,7 +169,8 @@
 | M-77 | public source tranche 3 | (this PR) | 2026-05-22 | ✅ Fed FOMC minutes keyword NLP, BoA Consumer Checkpoint public HTML summary, and ICE Brent futures contract structure-only; audit-only/display-only; no scoring/decision/execution/position, worker/realtime, displayInputsBaseline/effectiveDisplayInputs, or cross-validation expansion; `check:all` remains 23; cache bumped to 28.0M-77V |
 | M-78 | public source tranche 4 | (this PR) | 2026-05-22 | ✅ Yahoo ZQ monthly Fed funds futures proxy curve, FRED IG OAS inside privateCreditProxy, and Yahoo BZ monthly Brent priced futures proxy; audit-only/display-only; OIS/CDX/private marks/Platts/official ICE settlement/non-public CRE remain unconnected/manual; `check:all` remains 23; cache bumped to 28.0M-78V |
 | M-79 | public source tranche 5 | (this PR) | 2026-05-22 | ✅ Trading Economics Redbook public HTML same-store sales YoY summary and Yahoo SR3 monthly Three-Month SOFR futures proxy curve; audit-only/display-only; OIS forward, Redbook raw subscription feed, BoA raw card feed, CDX/private marks/Platts/non-public CRE remain unconnected/manual; `check:all` remains 23; cache bumped to 28.0M-79V |
-| M-80 | public source tranche 6 | (this PR) | 2026-05-22 | ✅ CheckMySwap USD OIS public curve, Yahoo CMBS ETF public CRE proxy, and Yahoo PBDC/SRLN listed private-credit / senior-loan proxies; audit-only/display-only; proprietary dealer OIS, CDX/private marks/Platts/non-public CRE remain unconnected/manual; `check:all` remains 23; cache bumped to 28.0M-80V |
+| M-80 | public source tranche 6 | (this PR) | 2026-05-22 | ✅ CheckMySwap USD OIS public curve, Yahoo CMBS ETF public CRE proxy, and Yahoo PBDC/SRLN listed private-credit / senior-loan proxies; audit-only/display-only; at M-80 close proprietary dealer OIS, CDX/private marks/Platts/non-public CRE remained unconnected/manual; `check:all` remains 23; cache bumped to 28.0M-80V |
+| M-81 | public source tranche 7 | (this PR) | 2026-05-22 | ✅ ICE Clear Credit public CDX NA HY/IG 5Y EOD settlement prices now feed `macroDrivers.privateCreditProxy`; private marks/Platts/non-public CRE remain unconnected/manual; `check:all` remains 23; cache bumped to 28.0M-81V |
 
 ---
 
@@ -209,6 +210,7 @@
 | 2026-05-22 | M-78 public source tranche 4 | Codex | second recommended public-source tranche connected | Yahoo ZQ monthly Fed funds futures proxy curve, FRED IG OAS cash-bond proxy, and Yahoo BZ monthly Brent priced futures proxy now feed display-only layers; OIS/CDX/private marks/Platts/official ICE settlement/non-public CRE remain unconnected/manual |
 | 2026-05-22 | M-79 public source tranche 5 | Codex | third recommended public-source tranche connected | Trading Economics Redbook public HTML same-store sales YoY and Yahoo SR3 monthly SOFR futures proxy curve now feed display-only layers; OIS forward, Redbook raw feed, BoA raw card feed, CDX/private marks/Platts/non-public CRE remain unconnected/manual |
 | 2026-05-22 | M-80 public source tranche 6 | Codex | fourth recommended public-source tranche connected | CheckMySwap USD OIS public curve, Yahoo CMBS ETF proxy, and Yahoo PBDC/SRLN public credit proxies now feed display-only layers; proprietary dealer OIS, CDX/private marks/Platts/non-public CRE remain unconnected/manual |
+| 2026-05-22 | M-81 public source tranche 7 | Codex | fifth recommended public-source tranche connected | ICE Clear Credit public CDX NA HY/IG 5Y EOD settlement prices now feed display-only privateCreditProxy; private marks/Platts/non-public CRE remain unconnected/manual |
 | 2026-05-22 | M-76 frontend macro field surfacing | Codex | backend-present field display gap closed | Frontend display calculations now consume already-present policy/repo/retail/freight/private-credit/CRE/employment/credit/Brent detail fields in Macro Drivers, Risk Engines, and Brent Pricing Layer; no production data or decision-path behavior changed |
 
 ---
@@ -262,11 +264,11 @@
 > 本段在每个会话结束时由 Claude 主动更新。新会话启动时优先读本段,快速对齐"上次到哪了"。
 > 只保留**最新一次** handoff 状态;不要堆历史(历史看 git log)。
 
-### Session Handoff (2026-05-22 — M-80 public source tranche 6)
+### Session Handoff (2026-05-22 — M-81 public source tranche 7)
 
-- **本次会话结束状态**: 当前工作在 `codex/macro-data-auto-ingestion`；M-80 按顺序继续落地三项公开代理源：CheckMySwap USD OIS public curve、Yahoo CMBS ETF public CRE proxy、Yahoo PBDC/SRLN listed private-credit / senior-loan proxies。仍沿用 M-75 `check:all` 23 顶层 suite。
-- **已接入生产数据**: M-80 在 M-79 基础上新增 `macroDrivers.policyExpectations.oisForwardCurve`、`macroDrivers.commercialRealEstate.cmbsEtfPrice/cmbsEtf4wChange` 与 `macroDrivers.privateCreditProxy.pbdcEtfPrice/seniorLoanEtfPrice`。字段均为 audit-only/display-only，不进 scoring/decision/execution/position、worker/realtime、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation。
-- **当前边界**: CheckMySwap public curve 来自 DTCC/CFTC public swap data,不是 proprietary dealer OIS forward。CMBS 是 commercial MBS ETF public proxy,不是 non-public CRE loan tape。BIZD/PBDC/SRLN 是 listed public proxies,不是 CDX HY/IG 或 private credit marks。
-- **前端状态**: Macro Drivers policy card / rates-liquidity engine 展示 CheckMySwap USD OIS public curve；CRE card 展示 CMBS；private-credit card / financial-fragility engine 展示 PBDC/SRLN。cache bumped to `28.0M-80V`。PR 描述需包含 `本 PR 符合 DESIGN.md 的所有规则`。
-- **验证结果**: M-80 已通过 `node --check scripts/run-daily-pipeline.mjs`、`node --check scripts/validate-data.mjs`、`node --check scripts/modules/renderMacroOverview.js`、`node --check scripts/app.js`、`npm run build:data`、`npm run check:data`、`npm run check:macro-drivers-expanded-auto-ingestion`、`npm run check:macro-drivers-commercial-real-estate`、`npm run check:macro-drivers`、`npm run check:docs`、`npm run check:all`。
-- **下一步建议**: 剩余只适合 source-review/manual path：CDX HY/IG、Platts/official settlement、private credit marks、non-public CRE loan tape、BoA raw card feed、Redbook raw subscription feed。
+- **本次会话结束状态**: 当前工作在 `codex/macro-data-auto-ingestion`；M-81 按顺序继续落地 ICE Clear Credit public CDX index settlement prices。仍沿用 M-75 `check:all` 23 顶层 suite。
+- **已接入生产数据**: M-81 在 M-80 基础上新增 `macroDrivers.privateCreditProxy.cdxHyPrice/cdxHyInstrument/cdxHyUpdatedAt` 与 `macroDrivers.privateCreditProxy.cdxIgPrice/cdxIgInstrument/cdxIgUpdatedAt`。当前本地 refresh 已拿到 CDX HY `CDX-NAHYS46V2-5Y` 和 CDX IG `CDX-NAIGS46V1-5Y` 的 2026-05-21 EOD settlement price。字段均为 audit-only/display-only，不进 scoring/decision/execution/position、worker/realtime、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation。
+- **当前边界**: ICE CDX public settlement 是 ICE Clear Credit 网站公开 EOD index instruments 数据，不是 private credit marks、完整 licensed Markit historical database、Bloomberg/FactSet/Refinitiv feed 或私募信贷估值。private credit marks、Platts/official Brent settlement、non-public CRE loan tape、BoA raw card feed、Redbook raw subscription feed 仍未接入。
+- **前端状态**: Macro Drivers private-credit card / financial-fragility engine 展示 ICE CDX HY/IG public settlement price；cache bumped to `28.0M-81V`。PR 描述需包含 `本 PR 符合 DESIGN.md 的所有规则`。
+- **验证结果**: M-81 已通过 `node --check scripts/run-daily-pipeline.mjs`、`node --check scripts/validate-data.mjs`、`node --check scripts/modules/renderMacroOverview.js`、`node --check scripts/app.js`、`node --check scripts/check-macro-drivers-expanded-auto-ingestion.mjs`、`npm run build:data`、`npm run check:data`、`npm run check:macro-drivers-expanded-auto-ingestion`、`npm run check:macro-drivers`、`npm run check:docs`、`npm run check:all`，并通过一次 `buildMacroOverview` 运行时 smoke。
+- **下一步建议**: 剩余只适合 source-review/manual path：private credit marks、Platts/official Brent settlement、non-public CRE loan tape、BoA raw card feed、Redbook raw subscription feed。

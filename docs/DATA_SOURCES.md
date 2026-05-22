@@ -53,14 +53,15 @@
 | `CheckMySwap USD OIS public curve` | USD OIS curve from DTCC/CFTC public swap data | macroDrivers.policyExpectations.oisForwardCurve | M-80 |
 | `PBDC` / `SRLN` | Listed BDC / senior-loan ETF public proxies | macroDrivers.privateCreditProxy | M-80 |
 | `CMBS` | iShares CMBS ETF public proxy | macroDrivers.commercialRealEstate | M-80 |
+| `ICE:CDX-index-settlement-public` | ICE Clear Credit public CDX index EOD settlement price | macroDrivers.privateCreditProxy | M-81 |
 
 **注意**: NFCI 正值=收紧、负值=宽松,**方向与 IG/HY OAS 相反**。误判方向会让 cross-validation 完全反向。
 
 **M-69/M-77/M-79 注意**: `CARTSP` 价格指数 未接,future scope only；`macroDrivers.consumerRetail` 使用 `CARTS` / `CARTSR`、MRTS 细分零售、BoA Consumer Checkpoint 公开 HTML 摘要与 Trading Economics Redbook public HTML 摘要。BoA Consumer Checkpoint 不是 Redbook；Redbook public HTML 不是 Redbook raw subscription feed；两者都不是 BoA 原始卡明细或非公开 raw feed。
 
-**M-70 注意**: 不接 CDX HY/IG (商业 ICE/Markit) 或 私募信贷 (Cliffwater / PitchBook / Preqin),详见 P3-15;不接 loan balance / CRE exposure stock series,future scope only;`macroDrivers.commercialRealEstate` 不代表 CDX 或 私募信贷数据。
+**M-70/M-81 注意**: `macroDrivers.commercialRealEstate` 不接 loan balance / CRE exposure stock series,不代表 CDX 或 私募信贷数据。M-81 起 `macroDrivers.privateCreditProxy` 可读取 ICE Clear Credit public CDX index EOD settlement price,但不得写成 private credit marks 或完整 licensed Markit history database。
 
-**M-74/M-77/M-78/M-79/M-80 注意**: `macroDrivers.policyExpectations` 直接读取 FRED target range / DFF、Federal Reserve SEP accessible table + FOMC statement/minutes、Yahoo `ZQ=F` front Fed funds futures proxy、Yahoo ZQ monthly futures proxy curve、Yahoo SR3 monthly SOFR futures proxy curve 与 CheckMySwap USD OIS public curve；`macroDrivers.shippingFreight` 读取 StockQ `BDTI` / `BCTI` / `BDI` 公开页面；`macroDrivers.privateCreditProxy` 读取 Yahoo `BIZD` / `PBDC` / `SRLN` 与 FRED HY/IG OAS cash-bond proxies；`macroDrivers.commercialRealEstate` 增加 Yahoo `VNQ` / `REM` / `CMBS`。CheckMySwap 是 public OIS curve,不得写成 proprietary dealer forward curve；`CDX HY/IG` 与 private credit marks 仍保留 `manual_required`，不得伪造成公开自动源。
+**M-74/M-77/M-78/M-79/M-80/M-81 注意**: `macroDrivers.policyExpectations` 直接读取 FRED target range / DFF、Federal Reserve SEP accessible table + FOMC statement/minutes、Yahoo `ZQ=F` front Fed funds futures proxy、Yahoo ZQ monthly futures proxy curve、Yahoo SR3 monthly SOFR futures proxy curve 与 CheckMySwap USD OIS public curve；`macroDrivers.shippingFreight` 读取 StockQ `BDTI` / `BCTI` / `BDI` 公开页面；`macroDrivers.privateCreditProxy` 读取 Yahoo `BIZD` / `PBDC` / `SRLN`、FRED HY/IG OAS cash-bond proxies 与 ICE public CDX index settlement；`macroDrivers.commercialRealEstate` 增加 Yahoo `VNQ` / `REM` / `CMBS`。CheckMySwap 是 public OIS curve,不得写成 proprietary dealer forward curve；ICE CDX public settlement 不得写成 private credit marks。
 
 ---
 
@@ -154,7 +155,7 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 
 ---
 
-### Yahoo / StockQ / Federal Reserve / BoA / Redbook / CheckMySwap public macro-driver inputs (M-74 / M-77 / M-78 / M-79 / M-80)
+### Yahoo / StockQ / Federal Reserve / BoA / Redbook / CheckMySwap / ICE public macro-driver inputs (M-74 / M-77 / M-78 / M-79 / M-80 / M-81)
 
 | Source | Layer | Role |
 |---|---|---|
@@ -166,6 +167,7 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 | Yahoo `BIZD` | `macroDrivers.privateCreditProxy` | listed BDC / private-credit public proxy |
 | Yahoo `PBDC` | `macroDrivers.privateCreditProxy` | second listed BDC public proxy; not private marks |
 | Yahoo `SRLN` | `macroDrivers.privateCreditProxy` | senior loan ETF public proxy; not CDX or private marks |
+| ICE `CDX-NAHY*-5Y` / `CDX-NAIG*-5Y` public index settlements | `macroDrivers.privateCreditProxy` | CDX NA HY/IG 5Y public EOD settlement price; not private credit marks or full licensed Markit history |
 | Yahoo `VNQ` | `macroDrivers.commercialRealEstate` | public REIT market proxy |
 | Yahoo `REM` | `macroDrivers.commercialRealEstate` | mortgage REIT market proxy |
 | Yahoo `CMBS` | `macroDrivers.commercialRealEstate` | commercial MBS ETF public proxy; not non-public CRE loan tape |
@@ -176,7 +178,7 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 | BoA Consumer Checkpoint public HTML | `macroDrivers.consumerRetail` | card spending per household YoY / ex-gas YoY public summary |
 | Trading Economics Redbook public HTML | `macroDrivers.consumerRetail.redbookRetailSalesYoY` | Redbook same-store sales YoY public summary; not Redbook raw subscription feed |
 
-These M-74/M-77/M-78/M-79/M-80 sources are audit-only / display-only. They must not change Brent promotion, scoring, decision, execution, position, Worker runtime, `displayInputsBaseline`, `effectiveDisplayInputs`, or cross-validation. CDX HY/IG, private credit marks, Redbook raw subscription feed, BoA raw card feed, Platts Dated Brent, official ICE settlement curve, proprietary dealer OIS forward, and non-public CRE loan tape remain unconnected or `manual_required`.
+These M-74/M-77/M-78/M-79/M-80/M-81 sources are audit-only / display-only. They must not change Brent promotion, scoring, decision, execution, position, Worker runtime, `displayInputsBaseline`, `effectiveDisplayInputs`, or cross-validation. Private credit marks, Redbook raw subscription feed, BoA raw card feed, Platts Dated Brent, official ICE Brent settlement curve, proprietary dealer OIS forward, and non-public CRE loan tape remain unconnected or `manual_required`.
 
 ---
 
@@ -368,7 +370,7 @@ documented attribution string and code is a contract violation.
 | `macroDrivers.shippingFreight` | StockQ: BDTI, BCTI, BDI public index pages |
 | `macroDrivers.policyExpectations` | FRED: DFEDTARL/DFEDTARU/DFF + Yahoo: ZQ=F / ZQ monthly futures curve / SR3 monthly SOFR futures curve + CheckMySwap USD OIS public curve + Federal Reserve SEP/FOMC statement/minutes |
 | `macroDrivers.commercialRealEstate` | FRED: DRCRELEXFACBS, CORCREXFACBS, SUBLPDRCSN, SUBLPDRCSC, SUBLPDRCSM + Yahoo: VNQ, REM, CMBS |
-| `macroDrivers.privateCreditProxy` | Yahoo: BIZD, PBDC, SRLN + FRED: BAMLH0A0HYM2 / BAMLC0A0CM; CDX/private marks = manual_required |
+| `macroDrivers.privateCreditProxy` | Yahoo: BIZD, PBDC, SRLN + FRED: BAMLH0A0HYM2 / BAMLC0A0CM + ICE public CDX index settlement; private marks = manual_required |
 | `brentPricingLayer.crackSpread` | FRED `DHOILNYH` × 42 − Brent |
 | `brentPricingLayer.futuresCurve` | ICE Brent futures public product page structure-only contracts |
 | `brentPricingLayer.futuresPriceCurve` | Yahoo: BZ monthly futures priced proxy; Platts/official ICE settlement = not connected |
