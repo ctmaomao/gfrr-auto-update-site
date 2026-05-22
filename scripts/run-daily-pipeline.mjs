@@ -55,6 +55,7 @@ const FED_CALENDAR_URL = 'https://www.federalreserve.gov/monetarypolicy/fomccale
 const FED_BASE_URL = 'https://www.federalreserve.gov';
 const FED_FETCH_TIMEOUT_MS = 10000;
 const ICE_BRENT_FUTURES_DATA_URL = 'https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430';
+const ICE_BRENT_CONTRACT_DATA_API_URL = 'https://www.ice.com/marketdata/api/productguide/charting/contract-data?productId=254&hubId=403';
 const ICE_BRENT_FETCH_TIMEOUT_MS = 10000;
 const BOFA_CONSUMER_CHECKPOINT_URL = 'https://institute.bankofamerica.com/consumer-checkpoint.html';
 const BOFA_CONSUMER_CHECKPOINT_BASE_URL = 'https://institute.bankofamerica.com';
@@ -691,7 +692,8 @@ function buildBrentPricingLayer({
   dailyRealtimeInput,
   ulsdData = null,
   futuresCurveData = null,
-  futuresPriceCurveData = null
+  futuresPriceCurveData = null,
+  iceFuturesPriceCurveData = null
 }) {
   const validation = realtimePayload?.brentValidation || {};
   const promotion = validation.promotion || {};
@@ -791,6 +793,7 @@ function buildBrentPricingLayer({
   const ulsdSourceStatus = ulsdData?.sourceStatus ?? 'missing';
   const futuresCurve = normalizePreviousBrentFuturesCurve(futuresCurveData);
   const futuresPriceCurve = normalizePreviousBrentFuturesPriceCurve(futuresPriceCurveData);
+  const iceFuturesPriceCurve = normalizePreviousIceBrentFuturesPriceCurve(iceFuturesPriceCurveData);
 
   return {
     contractVersion: 'v28.0I-5A',
@@ -806,6 +809,7 @@ function buildBrentPricingLayer({
     futuresProxy,
     futuresCurve,
     futuresPriceCurve,
+    iceFuturesPriceCurve,
     confirmationSources,
     ulsdPrice,
     ulsd4wChange,
@@ -840,7 +844,9 @@ function buildBrentPricingLayer({
     },
     dataGaps: [
       'Platts Dated Brent / 正式 Dated Brent 未接入。',
-      futuresPriceCurve.curveStatus === 'live_proxy_priced'
+      iceFuturesPriceCurve.curveStatus === 'live_delayed_priced'
+        ? 'ICE public delayed Brent futures price curve 已接入；official settlement curve / Platts 期限结构仍待接入。'
+        : futuresPriceCurve.curveStatus === 'live_proxy_priced'
         ? 'Yahoo Brent 月度期货 priced proxy 已接入；正式 ICE settlement curve / Platts 期限结构仍待接入。'
         : futuresCurve.curveStatus === 'live_structure_only'
           ? 'ICE Brent 合约月份/到期结构已接入；priced proxy / 可验证结算价期限曲线仍待接入。'
@@ -850,6 +856,7 @@ function buildBrentPricingLayer({
     limitations: [
       '当前仅为公开代理价格观察，不等同于付费 Dated Brent 或实物成交数据。',
       'ICE futuresCurve 当前是 structure-only，不显示或推断缺失的结算价期限曲线。',
+      'ICE public delayed last-price curve 不是 official settlement curve。',
       'Yahoo futuresPriceCurve 是公开月度期货报价代理，不是官方 settlement curve。',
       '该层不改变 Brent 主值、评分、仓位或执行灯。'
     ],
@@ -1710,6 +1717,122 @@ function parseIceBrentFuturesContracts(html) {
     .filter((contract) => contract.contract && contract.lastTrade)
     .sort((a, b) => Date.parse(a.lastTrade) - Date.parse(b.lastTrade))
     .slice(0, 12);
+}
+
+function parseIceBrentLastTime(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const normalized = value.trim().replace(/\s+GMT$/u, ' UTC');
+  const timestamp = Date.parse(normalized);
+  if (!Number.isFinite(timestamp)) return null;
+  return new Date(timestamp).toISOString();
+}
+
+function parseIceBrentContractDataRecord(record) {
+  if (!record || typeof record !== 'object') return null;
+  const contract = typeof record.marketStrip === 'string' ? record.marketStrip.trim() : '';
+  const marketId = Number(record.marketId);
+  const price = Number(record.lastPrice);
+  const volume = Number(record.volume);
+  const changePct = Number(record.change);
+  const updatedAt = parseIceBrentLastTime(record.lastTime);
+  if (!contract || !Number.isFinite(marketId) || !Number.isFinite(price) || price <= 0) return null;
+  return {
+    marketId: Math.round(marketId),
+    contract,
+    price: +price.toFixed(2),
+    volume: Number.isFinite(volume) ? Math.round(volume) : null,
+    updatedAt,
+    changePct: Number.isFinite(changePct) ? +(changePct / 100).toFixed(4) : null
+  };
+}
+
+function buildMissingIceBrentFuturesPriceCurve() {
+  return {
+    source: 'ICE:Brent-Crude-Futures-public-contract-data',
+    sourceUrl: ICE_BRENT_FUTURES_DATA_URL,
+    curveStatus: 'missing',
+    updatedAt: null,
+    frontPrice: null,
+    backPrice: null,
+    frontMinusBack: null,
+    slopeRegime: '未知',
+    contracts: [],
+    limitationZh: 'ICE public contract-data delayed last price 不可用；不得把缺失数据渲染为官方 settlement curve 或 Platts Dated Brent。'
+  };
+}
+
+function normalizePreviousIceBrentFuturesPriceCurve(prevCurve) {
+  if (!prevCurve || typeof prevCurve !== 'object') return buildMissingIceBrentFuturesPriceCurve();
+  const contracts = Array.isArray(prevCurve.contracts)
+    ? prevCurve.contracts
+        .map((contract) => ({
+          marketId: Number.isFinite(contract?.marketId) ? Math.round(contract.marketId) : null,
+          contract: typeof contract?.contract === 'string' ? contract.contract : null,
+          price: Number.isFinite(contract?.price) ? contract.price : null,
+          volume: Number.isFinite(contract?.volume) ? Math.round(contract.volume) : null,
+          updatedAt: typeof contract?.updatedAt === 'string' ? contract.updatedAt : null,
+          changePct: Number.isFinite(contract?.changePct) ? contract.changePct : null
+        }))
+        .filter((contract) => contract.contract && contract.marketId !== null)
+    : [];
+  return {
+    source: typeof prevCurve.source === 'string' ? prevCurve.source : 'ICE:Brent-Crude-Futures-public-contract-data',
+    sourceUrl: typeof prevCurve.sourceUrl === 'string' ? prevCurve.sourceUrl : ICE_BRENT_FUTURES_DATA_URL,
+    curveStatus: ['live_delayed_priced', 'fallback_delayed_priced', 'missing'].includes(prevCurve.curveStatus)
+      ? prevCurve.curveStatus
+      : (contracts.length ? 'fallback_delayed_priced' : 'missing'),
+    updatedAt: typeof prevCurve.updatedAt === 'string' ? prevCurve.updatedAt : null,
+    frontPrice: Number.isFinite(prevCurve.frontPrice) ? prevCurve.frontPrice : null,
+    backPrice: Number.isFinite(prevCurve.backPrice) ? prevCurve.backPrice : null,
+    frontMinusBack: Number.isFinite(prevCurve.frontMinusBack) ? prevCurve.frontMinusBack : null,
+    slopeRegime: typeof prevCurve.slopeRegime === 'string' ? prevCurve.slopeRegime : '未知',
+    contracts,
+    limitationZh: typeof prevCurve.limitationZh === 'string'
+      ? prevCurve.limitationZh
+      : 'ICE public contract-data lastPrice 是 delayed/last quote，不是官方 settlement curve 或 Platts Dated Brent。'
+  };
+}
+
+async function resolveIceBrentFuturesPriceCurve(prevBrentPricingLayer) {
+  const fallback = normalizePreviousIceBrentFuturesPriceCurve(prevBrentPricingLayer?.iceFuturesPriceCurve);
+  try {
+    const rows = await fetchJsonText(
+      ICE_BRENT_CONTRACT_DATA_API_URL,
+      'ice:brent-public-contract-data',
+      ICE_BRENT_FETCH_TIMEOUT_MS,
+      {
+        userAgent: 'Mozilla/5.0 GFRRBot/1.0',
+        headers: {
+          Referer: ICE_BRENT_FUTURES_DATA_URL
+        }
+      }
+    );
+    if (!Array.isArray(rows) || rows.length < 2) throw new Error('ice:brent-public-contract-data insufficient contracts');
+    const contracts = rows
+      .map(parseIceBrentContractDataRecord)
+      .filter(Boolean)
+      .slice(0, 12);
+    if (contracts.length < 2) throw new Error('ice:brent-public-contract-data missing priced contracts');
+    const front = contracts[0];
+    const back = contracts[contracts.length - 1];
+    const frontMinusBack = Number.isFinite(front.price) && Number.isFinite(back.price)
+      ? +(front.price - back.price).toFixed(3)
+      : null;
+    return {
+      source: 'ICE:Brent-Crude-Futures-public-contract-data',
+      sourceUrl: ICE_BRENT_FUTURES_DATA_URL,
+      curveStatus: 'live_delayed_priced',
+      updatedAt: latestIsoDate(...contracts.map((contract) => contract.updatedAt)),
+      frontPrice: Number.isFinite(front.price) ? front.price : null,
+      backPrice: Number.isFinite(back.price) ? back.price : null,
+      frontMinusBack,
+      slopeRegime: classifyBrentFuturesSlope(frontMinusBack),
+      contracts,
+      limitationZh: 'ICE public contract-data lastPrice 是 delayed/last quote；不是 official settlement curve、Platts Dated Brent 或正式实物现货。'
+    };
+  } catch (_err) {
+    return fallback;
+  }
 }
 
 function normalizePreviousBrentFuturesCurve(prevCurve) {
@@ -5993,10 +6116,11 @@ async function build() {
     macroDrivers,
     confidenceScore
   });
-  const [ulsdData, brentFuturesCurve, brentFuturesPriceCurve] = await Promise.all([
+  const [ulsdData, brentFuturesCurve, brentFuturesPriceCurve, iceBrentFuturesPriceCurve] = await Promise.all([
     resolveUlsd(prevData?.brentPricingLayer),
     resolveBrentFuturesCurve(prevData?.brentPricingLayer),
-    resolveBrentFuturesPriceCurve(prevData?.brentPricingLayer)
+    resolveBrentFuturesPriceCurve(prevData?.brentPricingLayer),
+    resolveIceBrentFuturesPriceCurve(prevData?.brentPricingLayer)
   ]);
   const brentPricingLayer = buildBrentPricingLayer({
     realtimePayload: realtime,
@@ -6004,7 +6128,8 @@ async function build() {
     dailyRealtimeInput: buildDailyRealtimeInput(realtime),
     ulsdData,
     futuresCurveData: brentFuturesCurve,
-    futuresPriceCurveData: brentFuturesPriceCurve
+    futuresPriceCurveData: brentFuturesPriceCurve,
+    iceFuturesPriceCurveData: iceBrentFuturesPriceCurve
   });
 
   const data = {

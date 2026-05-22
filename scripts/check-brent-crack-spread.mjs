@@ -57,6 +57,18 @@ if (!brentLayer || typeof brentLayer !== 'object') {
     }
   }
 
+  if (!brentLayer.iceFuturesPriceCurve || typeof brentLayer.iceFuturesPriceCurve !== 'object') {
+    fail('brentPricingLayer.iceFuturesPriceCurve is missing or not an object');
+  } else {
+    const allowedIcePriceCurveStatuses = new Set(['live_delayed_priced', 'fallback_delayed_priced', 'missing']);
+    if (!allowedIcePriceCurveStatuses.has(brentLayer.iceFuturesPriceCurve.curveStatus)) {
+      fail(`brentPricingLayer.iceFuturesPriceCurve.curveStatus is not supported: ${brentLayer.iceFuturesPriceCurve.curveStatus}`);
+    }
+    if (!Array.isArray(brentLayer.iceFuturesPriceCurve.contracts)) {
+      fail('brentPricingLayer.iceFuturesPriceCurve.contracts must be an array');
+    }
+  }
+
   if ('crackSpread' in brentLayer && brentLayer.crackSpread !== null && !Number.isFinite(brentLayer.crackSpread)) {
     fail(`brentPricingLayer.crackSpread must be number or null, got: ${typeof brentLayer.crackSpread}`);
   }
@@ -89,9 +101,12 @@ const runDailyMarkers = [
   'resolveUlsd(prevData?.brentPricingLayer)',
   'async function resolveBrentFuturesCurve(prevBrentPricingLayer)',
   'async function resolveBrentFuturesPriceCurve(prevBrentPricingLayer)',
+  'async function resolveIceBrentFuturesPriceCurve(prevBrentPricingLayer)',
   'ICE_BRENT_FUTURES_DATA_URL',
+  'ICE_BRENT_CONTRACT_DATA_API_URL',
   "root: 'BZ'",
   'parseIceBrentFuturesContracts',
+  'parseIceBrentContractDataRecord',
   'ulsdData'
 ];
 
@@ -106,6 +121,7 @@ const renderMarkers = [
   '柴油裂解价差',
   'Platts Dated Brent / 正式 Dated Brent 未接入。',
   'ICE Brent futuresCurve structure-only',
+  'ICE Brent public delayed price curve',
   'Yahoo Brent priced futures proxy'
 ];
 
@@ -122,6 +138,7 @@ const brentDetailRenderMarkers = [
   'brentPricingLayer.ulsd4wChange',
   'brentPricingLayer.crackSpread4wChange',
   'formatBrentFuturesCurve',
+  'formatIceBrentFuturesPriceCurve',
   'formatBrentFuturesPriceCurve'
 ];
 
@@ -150,7 +167,8 @@ const contractMarkers = [
   'crackSpread4wChange',
   'ulsdSourceStatus',
   'futuresCurve',
-  'futuresPriceCurve'
+  'futuresPriceCurve',
+  'iceFuturesPriceCurve'
 ];
 
 for (const marker of contractMarkers) {

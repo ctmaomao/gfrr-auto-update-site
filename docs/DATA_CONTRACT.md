@@ -496,7 +496,7 @@ M-74 新增三条 audit-only / display-only 生产数据层，均不进入 `valu
 brentPricingLayer
 ```
 
-`brentPricingLayer` 是 Brent 公开代理价格层，用于把当前主 Brent 显示值、公开 Brent 现货代理、公开 Brent 期货代理、Brent validation / confirmation sources 与公开代理价差分开记录。它是 audit-only / display-only 字段。
+`brentPricingLayer` 是 Brent 公开代理价格层，用于把当前主 Brent 显示值、公开 Brent 现货代理、公开 Brent 期货代理、ICE public delayed futures curve、Brent validation / confirmation sources 与公开代理价差分开记录。它是 audit-only / display-only 字段。
 
 严格边界：
 
@@ -516,6 +516,7 @@ brentPricingLayer
 - `mode` 必须为 `public_proxy_observation`。
 - `selectedBrent`、`publicSpotProxy`、`futuresProxy` 必须记录 `source`、`value`、`observedAt`、`status` 与中文说明。
 - `futuresCurve` 必须记录 ICE Brent futures contract structure: `source`、`sourceUrl`、`curveStatus`、`fetchedAt`、`contracts[]` 与 `limitationZh`。
+- `iceFuturesPriceCurve` 必须记录 ICE public delayed contract-data: `source`、`sourceUrl`、`curveStatus`、`updatedAt`、`frontPrice`、`backPrice`、`frontMinusBack`、`slopeRegime`、`contracts[]` 与 `limitationZh`。
 - `confirmationSources` 必须为数组；每项记录 `source`、`labelZh`、`value`、`observedAt`、`status`、`role`、`participatesInPromotion`、`noteZh`。
 - `proxySpread.status` 只能为 `normal` / `watch` / `stress` / `insufficient_data`。
 - `confidence.level` 只能为 `low` / `medium` / `high`。
@@ -561,6 +562,31 @@ M-77 在 brentPricingLayer 新增 ICE Brent futures contract structure 读取。
 - 不得把 `futuresCurve` 写成 Platts Dated Brent 或正式 Dated Brent。
 - 不得把 structure-only 合约月份列表渲染为价格曲线、backwardation/contango 结论或 Brent promotion 输入。
 - 网络或解析失败必须降级为 `fallback_structure_only` 或 `missing`，不得把缺失价格渲染为 0。
+
+### brentPricingLayer ICE Public Delayed Futures Price Curve 扩展 (v28.0M-82)
+
+M-82 在 brentPricingLayer 新增 ICE product-guide `contract-data` public JSON 读取。该字段提供 ICE Brent futures 各合约的 delayed / last price、volume、last time 与 front/back 价差，用于前端审计显示；它不是 official ICE settlement curve、不是 Platts Dated Brent、不是正式 Dated Brent，也不是实物现货成交证据。
+
+字段 contract：
+
+| 字段 | 类型 | 单位 | 来源 | 含义 |
+|---|---|---|---|---|
+| `iceFuturesPriceCurve.source` | string | n/a | ICE public contract-data | 固定为 `ICE:Brent-Crude-Futures-public-contract-data` |
+| `iceFuturesPriceCurve.sourceUrl` | string | URL | ICE | `https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430` |
+| `iceFuturesPriceCurve.curveStatus` | enum | n/a | 管道 | `live_delayed_priced` \| `fallback_delayed_priced` \| `missing` |
+| `iceFuturesPriceCurve.updatedAt` | string \| null | ISO | ICE `lastTime` | 最新成功合约报价时间 |
+| `iceFuturesPriceCurve.frontPrice` | number \| null | $/bbl | ICE `lastPrice` | 第一个可用合约 delayed last price |
+| `iceFuturesPriceCurve.backPrice` | number \| null | $/bbl | ICE `lastPrice` | 采样窗口最后一个可用合约 delayed last price |
+| `iceFuturesPriceCurve.frontMinusBack` | number \| null | $/bbl | 派生 | frontPrice - backPrice |
+| `iceFuturesPriceCurve.slopeRegime` | enum | n/a | 派生 | `backwardation` \| `contango` \| `flat` \| `未知` |
+| `iceFuturesPriceCurve.contracts[]` | object[] | n/a | ICE public contract-data | 每项含 `marketId` / `contract` / `price` / `volume` / `updatedAt` / `changePct` |
+| `iceFuturesPriceCurve.limitationZh` | string | n/a | 固定 | 必须说明当前只是 ICE public delayed last-price curve |
+
+边界：
+
+- 不得把 `iceFuturesPriceCurve` 写成 Platts Dated Brent、正式 Dated Brent 或 official ICE settlement curve。
+- 不得让 `iceFuturesPriceCurve` 改变 `values.brent`、Brent promotion、scoring、decision、execution 或 position。
+- ICE contract-data 返回 0、缺失价格或 Cloudflare HTML 时必须丢弃/降级，不得渲染为真实 0.00 价格。
 
 ### brentPricingLayer Futures Price Proxy 扩展 (v28.0M-78)
 
@@ -650,7 +676,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`，当前前端版本为 `28.0M-81V`。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`，当前前端版本为 `28.0M-82V`。
 
 稳定边界：
 
@@ -828,30 +854,30 @@ config/world-order-sipri-normalized.example.json
 
 ### Frontend asset cache version
 
-v28.0M-81V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+v28.0M-82V Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
 当前前端资源版本为：
 
 ```text
-28.0M-81V
+28.0M-82V
 ```
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-81V`。
-- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-81V`。
-- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-81V"`。
+- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-82V`。
+- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-82V`。
+- `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-82V"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs 28.0M-81V
-npm run bump:frontend-asset-version -- 28.0M-81V
+node scripts/bump-frontend-asset-version.mjs 28.0M-82V
+npm run bump:frontend-asset-version -- 28.0M-82V
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-81V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-82V`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

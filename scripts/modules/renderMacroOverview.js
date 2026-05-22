@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-81V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-81V';
-import { formatFiniteNumber } from './format.js?v=28.0M-81V';
+import { $ } from './config.js?v=28.0M-82V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-82V';
+import { formatFiniteNumber } from './format.js?v=28.0M-82V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -435,10 +435,17 @@ function buildPressureSources(data, worldOrderStressData) {
     .filter(isPlainObject)
     .slice(0, 4)
     .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.price, 2)}`);
+  const brentIceFuturesPriceCurve = isPlainObject(brentLayer.iceFuturesPriceCurve) ? brentLayer.iceFuturesPriceCurve : {};
+  const brentIceFuturesPriceCurveContracts = safeArray(brentIceFuturesPriceCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 4)
+    .map((contract) => `${text(contract.contract, '--')} ${formatNumber(contract.price, 2)}`);
   const energyGaps = safeArray(brentLayer.dataGaps);
   const energyMissing = [
     'Platts Dated Brent / 正式 Dated Brent 和实物端证据仍待验证。',
-    brentFuturesPriceCurveContracts.length
+    brentIceFuturesPriceCurveContracts.length
+      ? 'ICE public delayed futures price curve 已接入；official settlement curve / Platts 期限结构仍待接入。'
+      : brentFuturesPriceCurveContracts.length
       ? 'Yahoo priced futures proxy 已接入；正式 ICE settlement curve / Platts 期限结构仍待接入。'
       : brentFuturesCurveContracts.length
         ? 'ICE 合约结构已接入；priced proxy / 可验证结算价期限曲线仍待接入。'
@@ -468,6 +475,9 @@ function buildPressureSources(data, worldOrderStressData) {
           : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶；4周变化 ${formatSignedDecimal(crackSpread4wChange, 2)}`,
         brentFuturesCurveContracts.length
           ? `ICE Brent futuresCurve structure-only: ${brentFuturesCurveContracts.join(' / ')}；status=${text(brentFuturesCurve.curveStatus, 'missing')}`
+          : null,
+        brentIceFuturesPriceCurveContracts.length
+          ? `ICE Brent public delayed price curve: ${brentIceFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentIceFuturesPriceCurve.frontMinusBack, 2)}`
           : null,
         brentFuturesPriceCurveContracts.length
           ? `Yahoo Brent priced futures proxy: ${brentFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentFuturesPriceCurve.frontMinusBack, 2)}`
@@ -560,6 +570,11 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
     .filter(isPlainObject)
     .slice(0, 4)
     .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.price, 2)}`);
+  const brentIceFuturesPriceCurve = isPlainObject(brentLayer.iceFuturesPriceCurve) ? brentLayer.iceFuturesPriceCurve : {};
+  const brentIceFuturesPriceCurveContracts = safeArray(brentIceFuturesPriceCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 4)
+    .map((contract) => `${text(contract.contract, '--')} ${formatNumber(contract.price, 2)}`);
   const largestDivergence = isPlainObject(brief.largestDivergence) ? brief.largestDivergence : {};
   const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
   const verified = [];
@@ -578,7 +593,9 @@ function buildSignalLayers(data, marketPricingMetricsData = null) {
   pending.push('能源价格处于观察区间，但实物端验证数据仍不足。');
   const dataGapEvidence = [
     'Platts Dated Brent / 正式 Dated Brent 尚未接入。',
-    brentFuturesPriceCurveContracts.length
+    brentIceFuturesPriceCurveContracts.length
+      ? `ICE Brent public delayed price curve 已显示 ${brentIceFuturesPriceCurveContracts.join(' / ')}；official settlement curve 仍待接入。`
+      : brentFuturesPriceCurveContracts.length
       ? `Yahoo Brent priced futures proxy 已显示 ${brentFuturesPriceCurveContracts.join(' / ')}；正式 settlement curve 仍待接入。`
       : brentFuturesCurveContracts.length
         ? `ICE Brent futuresCurve structure-only 已显示 ${brentFuturesCurveContracts.join('/')}；priced proxy / 可验证结算价期限曲线仍待接入。`
@@ -789,6 +806,11 @@ function buildMacroDrivers(data) {
     .filter(isPlainObject)
     .slice(0, 5)
     .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.price, 2)}`);
+  const brentIceFuturesPriceCurve = isPlainObject(brentLayer.iceFuturesPriceCurve) ? brentLayer.iceFuturesPriceCurve : {};
+  const brentIceFuturesPriceCurveContracts = safeArray(brentIceFuturesPriceCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 5)
+    .map((contract) => `${text(contract.contract, '--')} ${formatNumber(contract.price, 2)}`);
   const vix = finite(inputs.vix);
   const creditCalm = hyOas !== null && hyOas < 4 && vix !== null && vix < 22;
   const policyProxyEvidence = [
@@ -1033,13 +1055,18 @@ function buildMacroDrivers(data) {
         brentFuturesCurveContracts.length
           ? `ICE Brent futuresCurve structure-only: ${brentFuturesCurveContracts.join(' / ')}；status=${text(brentFuturesCurve.curveStatus, 'missing')}`
           : null,
+        brentIceFuturesPriceCurveContracts.length
+          ? `ICE Brent public delayed price curve: ${brentIceFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentIceFuturesPriceCurve.frontMinusBack, 2)}；slope=${text(brentIceFuturesPriceCurve.slopeRegime, '未知')}`
+          : null,
         brentFuturesPriceCurveContracts.length
           ? `Yahoo Brent priced futures proxy: ${brentFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentFuturesPriceCurve.frontMinusBack, 2)}；slope=${text(brentFuturesPriceCurve.slopeRegime, '未知')}`
           : null,
       ].filter(Boolean),
       missingEvidence: [
         'Platts Dated Brent / 正式 Dated Brent 未接入。',
-        brentFuturesPriceCurveContracts.length
+        brentIceFuturesPriceCurveContracts.length
+          ? 'ICE public delayed futures price curve 已接入；official settlement curve / Platts 期限结构仍待接入。'
+          : brentFuturesPriceCurveContracts.length
           ? 'Yahoo priced futures proxy 已接入；正式 ICE settlement curve / Platts 期限结构仍待接入。'
           : brentFuturesCurveContracts.length
             ? 'ICE 合约月份/到期结构已接入；priced proxy / 可验证结算价期限曲线仍待接入。'
@@ -1319,6 +1346,11 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
     .filter(isPlainObject)
     .slice(0, 4)
     .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.price, 2)}`);
+  const brentIceFuturesPriceCurve = isPlainObject(brentLayer.iceFuturesPriceCurve) ? brentLayer.iceFuturesPriceCurve : {};
+  const brentIceFuturesPriceCurveContracts = safeArray(brentIceFuturesPriceCurve.contracts)
+    .filter(isPlainObject)
+    .slice(0, 4)
+    .map((contract) => `${text(contract.contract, '--')} ${formatNumber(contract.price, 2)}`);
   const privateCreditIgOas = finite(privateCreditProxy.igOas);
   const privateCreditIgMinusHyOas = finite(privateCreditProxy.igMinusHyOas);
 
@@ -1337,6 +1369,9 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
           ? null
           : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶；4周变化 ${formatSignedDecimal(crackSpread4wChange, 2)}（${brentLayer.crackSpreadRegime}，日度更新）`,
         ulsdPrice === null ? null : `ULSD ${formatNumber(ulsdPrice, 3)}；4周变化 ${formatSignedDecimal(ulsd4wChange, 3)} — 下游成品油压力`,
+        brentIceFuturesPriceCurveContracts.length
+          ? `ICE Brent public delayed price curve: ${brentIceFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentIceFuturesPriceCurve.frontMinusBack, 2)}`
+          : null,
         brentFuturesPriceCurveContracts.length
           ? `Yahoo Brent priced futures proxy: ${brentFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentFuturesPriceCurve.frontMinusBack, 2)}`
           : null,

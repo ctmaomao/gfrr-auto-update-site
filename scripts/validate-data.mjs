@@ -100,6 +100,7 @@ const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmati
 const BRENT_PROXY_SPREAD_STATUSES = new Set(['normal', 'watch', 'stress', 'insufficient_data']);
 const BRENT_FUTURES_CURVE_STATUSES = new Set(['live_structure_only', 'fallback_structure_only', 'missing']);
 const BRENT_FUTURES_PRICE_CURVE_STATUSES = new Set(['live_proxy_priced', 'fallback_proxy_priced', 'missing']);
+const ICE_BRENT_FUTURES_PRICE_CURVE_STATUSES = new Set(['live_delayed_priced', 'fallback_delayed_priced', 'missing']);
 const AI_INTERPRETATION_MODE = 'rule_based_structured_interpretation';
 const AI_INTERPRETATION_MODEL_SOURCES = new Set(['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'macroDrivers', 'decisionModel', 'combined']);
 const AI_INTERPRETATION_EVIDENCE_LAYERS = new Set(['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'macroDrivers.consumer', 'worldOrder', 'decisionModel']);
@@ -968,6 +969,37 @@ function validateBrentFuturesPriceCurve(curve) {
   assertString(curve.limitationZh, 'brentPricingLayer.futuresPriceCurve.limitationZh');
 }
 
+function validateIceBrentFuturesPriceCurve(curve) {
+  assertPlainObject(curve, 'brentPricingLayer.iceFuturesPriceCurve');
+  for (const key of ['source', 'sourceUrl', 'curveStatus', 'updatedAt', 'frontPrice', 'backPrice', 'frontMinusBack', 'slopeRegime', 'contracts', 'limitationZh']) {
+    assert(Object.hasOwn(curve, key), `brentPricingLayer.iceFuturesPriceCurve.${key} is missing`);
+  }
+  assertString(curve.source, 'brentPricingLayer.iceFuturesPriceCurve.source');
+  validateNullableString(curve.sourceUrl, 'brentPricingLayer.iceFuturesPriceCurve.sourceUrl');
+  assert(ICE_BRENT_FUTURES_PRICE_CURVE_STATUSES.has(curve.curveStatus), 'brentPricingLayer.iceFuturesPriceCurve.curveStatus is not supported');
+  validateNullableIsoString(curve.updatedAt, 'brentPricingLayer.iceFuturesPriceCurve.updatedAt');
+  for (const key of ['frontPrice', 'backPrice', 'frontMinusBack']) {
+    assert(isFiniteNumberOrNull(curve[key]), `brentPricingLayer.iceFuturesPriceCurve.${key} must be finite number or null`);
+  }
+  assertString(curve.slopeRegime, 'brentPricingLayer.iceFuturesPriceCurve.slopeRegime');
+  assert(['backwardation', 'contango', 'flat', '未知'].includes(curve.slopeRegime), 'brentPricingLayer.iceFuturesPriceCurve.slopeRegime is not supported');
+  assertArray(curve.contracts, 'brentPricingLayer.iceFuturesPriceCurve.contracts');
+  curve.contracts.forEach((contract, index) => {
+    const fieldName = `brentPricingLayer.iceFuturesPriceCurve.contracts[${index}]`;
+    assertPlainObject(contract, fieldName);
+    for (const key of ['marketId', 'contract', 'price', 'volume', 'updatedAt', 'changePct']) {
+      assert(Object.hasOwn(contract, key), `${fieldName}.${key} is missing`);
+    }
+    assert(Number.isInteger(contract.marketId) || contract.marketId === null, `${fieldName}.marketId must be integer or null`);
+    assertString(contract.contract, `${fieldName}.contract`);
+    assert(isFiniteNumberOrNull(contract.price), `${fieldName}.price must be finite number or null`);
+    assert(Number.isInteger(contract.volume) || contract.volume === null, `${fieldName}.volume must be integer or null`);
+    validateNullableIsoString(contract.updatedAt, `${fieldName}.updatedAt`);
+    assert(isFiniteNumberOrNull(contract.changePct), `${fieldName}.changePct must be finite number or null`);
+  });
+  assertString(curve.limitationZh, 'brentPricingLayer.iceFuturesPriceCurve.limitationZh');
+}
+
 function validateBrentPricingLayer(dataPayload) {
   const layer = dataPayload.brentPricingLayer;
   if (layer === undefined) {
@@ -985,6 +1017,7 @@ function validateBrentPricingLayer(dataPayload) {
     'futuresProxy',
     'futuresCurve',
     'futuresPriceCurve',
+    'iceFuturesPriceCurve',
     'confirmationSources',
     'proxySpread',
     'promotionAudit',
@@ -1009,6 +1042,7 @@ function validateBrentPricingLayer(dataPayload) {
   assertString(layer.futuresProxy.limitationZh, 'brentPricingLayer.futuresProxy.limitationZh');
   validateBrentFuturesCurve(layer.futuresCurve);
   validateBrentFuturesPriceCurve(layer.futuresPriceCurve);
+  validateIceBrentFuturesPriceCurve(layer.iceFuturesPriceCurve);
 
   assertArray(layer.confirmationSources, 'brentPricingLayer.confirmationSources');
   layer.confirmationSources.forEach((source, index) => {
