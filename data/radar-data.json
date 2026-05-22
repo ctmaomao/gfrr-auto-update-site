@@ -1855,76 +1855,78 @@
     "schemaVersion": "v28.0L-external-ai-production-1",
     "status": "valid",
     "displayEnabled": true,
-    "generatedAt": "2026-05-20T01:51:39.076Z",
-    "updatedAt": "2026-05-20T01:51:39.076Z",
+    "generatedAt": "2026-05-22T01:52:35.648Z",
+    "updatedAt": "2026-05-22T01:52:35.648Z",
     "sourceMode": "manual_local_compact",
     "provider": "deepseek",
     "model": "deepseek-v4-flash",
     "inputSource": "local_compact",
     "sourceSemantics": "site_structured_data_compact_summary",
-    "summaryZh": "站内结构化数据显示能源-通胀-利率压力链持续，布伦特106.1美元，10年期美债4.61%，但波动率与信用利差相对平静，存在风险定价低波动观察性背离。消费者信心月频数据走弱但尚未形成明显背离。当前证据仅支持观察，不足以形成高置信度方向判断。若布伦特回落且利率压力缓解，则当前压力链可能失效。",
+    "summaryZh": "站内结构化数据显示能源定价背离压力（公开代理价差12.15美元）与长端利率压力（10年期美债4.57%）并存，但信用利差和波动率尚未明显扩张。消费者信心月频数据走弱（53.3，前值56.6），但尚未形成与资产定价的明确背离。当前证据仅支持观察，不足以形成高置信度方向判断。若布伦特回落且利率压力缓解，则当前压力情景可能失效。",
     "facts": [
-      "布伦特原油价格为106.11美元，来源为FRED。",
-      "10年期美债收益率为4.61%。",
-      "10年期盈亏平衡通胀率为2.49%。",
-      "VIX为17.82，高收益债信用利差为2.83%。",
+      "布伦特主显示值为116.73美元，来源fred:DCOILBRENTEU。",
+      "布伦特公开现货代理与期货代理价差为12.15美元，状态为背离压力。",
+      "美国10年期收益率为4.57%，10年盈亏平衡通胀为2.39%。",
       "广义美元指数为119.28。",
+      "高收益利差为2.80%。",
       "消费者信心指数（UMCSENT）为53.3，前值56.6，三个月变化0.4，六个月变化-1.8。",
-      "背离层综合风险分数为55，高于70的底层模块数量为2。",
-      "能源定价缺口观察得分为52，利率与风险资产背离观察得分为58，流动性信用传导观察得分为54，风险自满观察得分为62，消费者与资产定价背离观察得分为18。",
-      "Brent现货代理与期货代理价差为-4.99，最大代理价差百分比为4.63%，状态为watch。",
-      "地缘政治风险模块得分78，能源模块得分81，通胀模块得分60，流动性模块得分49，债务模块得分29，银行业模块得分37。"
+      "背离层综合分数为53，状态为压力。",
+      "能源定价背离检查分数为72，状态为压力。",
+      "利率与风险资产背离检查分数为58，状态为压力。",
+      "流动性信用传导背离检查分数为54，状态为压力。",
+      "风险自满观察检查分数为62，状态为压力。",
+      "消费者与资产定价背离检查分数为18，状态为正常。",
+      "数据健康分数为100。"
     ],
     "inferences": [
-      "能源价格高企与长端利率上行共同指向通胀传导压力，但波动率与信用利差尚未明显扩张，表明市场尚未充分定价该压力。",
-      "消费者信心指数月频走弱，但三个月变化仍为正，六个月变化为负，显示消费者体感边际恶化但尚未形成趋势性背离。",
-      "Brent现货与期货价差为负且处于watch状态，提示公开代理价格之间存在分歧，但该观察不等同于实物现货溢价。"
+      "布伦特现货与期货价差显著，暗示公开代理价格层面存在验证压力，但不等同于实物现货溢价。",
+      "长端利率上行与信用利差相对平静并存，表明压力尚未明显扩散至信用市场。",
+      "消费者信心走弱但资产定价尚未反映，可能形成滞后背离，但月频数据延迟限制了实时判断。"
     ],
     "modelJudgments": [
-      "能源-通胀-利率压力链证据强度中等，布伦特与美债收益率均处于高位，但缺乏多源确认（如航运压力、期限结构）。",
-      "风险定价低波动背离观察证据充分，综合风险分数偏高而波动率与利差偏低，但该背离是否持续需更多数据。",
-      "消费者与资产定价背离观察证据不足，消费者信心为月频慢变量且存在发布延迟，当前得分18表明暂未形成明显背离。",
-      "整体数据充分性中等，部分关键数据（如Platts Dated Brent、Brent期限结构）缺失，置信度受限。"
+      "能源定价背离证据强度中等，价差数据充分但缺乏实物成交验证，置信度受限。",
+      "利率与风险资产背离证据充分，但信用利差未扩张降低了传导确认度，属于低置信度观察。",
+      "消费者数据为月频慢变量，时效性不足，不足以支持实时背离判断。",
+      "综合来看，当前数据支持压力观察，但不足以确认系统性风险。"
     ],
     "scenarioHypotheses": [
       {
-        "titleZh": "能源-利率-资产重定价观察",
+        "titleZh": "能源利率资产重定价观察",
         "triggerConditions": [
-          "Brent公开代理价差状态进入watch或stress",
-          "10年期美债收益率继续上行",
-          "VIX或高收益债利差扩张"
+          "布伦特公开代理价差持续处于压力状态",
+          "美国10年期收益率继续上行",
+          "VIX或高收益利差扩张"
         ],
         "invalidationConditions": [
-          "Brent公开代理价差收敛",
-          "10年期美债收益率回落",
-          "VIX与高收益债利差未扩张"
+          "布伦特公开代理价差收敛",
+          "美国10年期收益率回落",
+          "VIX与高收益利差未扩张"
         ]
       },
       {
-        "titleZh": "消费者-资产背离缓和观察",
+        "titleZh": "消费者资产背离缓和观察",
         "triggerConditions": [
           "消费者信心三个月变化改善",
-          "10年期美债收益率回落",
-          "高收益债利差未扩张"
+          "美国10年期收益率回落",
+          "高收益利差未扩张"
         ],
         "invalidationConditions": [
           "消费者信心继续走弱",
-          "高收益债利差或VIX扩张",
+          "高收益利差或VIX扩张",
           "风险资产定价继续与体感数据背离"
         ]
       }
     ],
     "dataGaps": [
       "Platts Dated Brent / 正式Dated Brent未接入",
-      "Brent期限结构未接入",
-      "航运/货运压力指标未接入",
-      "消费者信心数据为月频慢变量，发布时间存在延迟",
-      "PMI制造业数据缺失"
+      "布伦特期限结构未接入",
+      "航运/货运压力数据未接入",
+      "消费者信心数据为月频，发布时间存在延迟"
     ],
     "invalidationSignals": [
-      "Brent回落且验证层不再提示压力",
-      "10年期美债收益率回落",
-      "VIX与高收益债利差未扩张且综合风险分数下降"
+      "布伦特回落且验证层不再提示压力",
+      "美国10年期收益率回落",
+      "VIX / 高收益利差未扩张且综合风险分数下降"
     ],
     "sourceAttribution": [
       {
@@ -1947,7 +1949,7 @@
       },
       {
         "sourceLayer": "local_compact",
-        "field": "selectedBrent",
+        "field": "proxySpread",
         "claimType": "site_structured_data",
         "noteZh": "Site structured data only; non-production projection dry-run source."
       },
@@ -1959,15 +1961,15 @@
       },
       {
         "sourceLayer": "local_compact",
-        "field": "energy",
-        "claimType": "site_structured_data",
+        "field": "modelJudgments",
+        "claimType": "rule_based_interpretation",
         "noteZh": "Site structured data only; non-production projection dry-run source."
       }
     ],
     "confidence": {
       "level": "low",
       "score": 30,
-      "reasonZh": "基于站内结构化数据，尚未接入外部独立验证，部分关键数据缺失，证据充分性中等。"
+      "reasonZh": "基于站内结构化数据，尚未接入外部独立验证"
     },
     "qualityReview": {
       "status": "pass",
@@ -1975,15 +1977,15 @@
       "promotionEligible": false,
       "failedDimensions": [],
       "warningDimensions": [],
-      "reviewedAt": "2026-05-20T01:51:39.076Z"
+      "reviewedAt": "2026-05-22T01:52:35.648Z"
     },
     "provenance": {
-      "runId": "26136366249",
-      "artifactName": "external-ai-production-refresh-26136366249",
-      "artifactId": "26136366249-1",
-      "artifactDigest": "73ca1f567028cf918d63b56f1d5522977fc0a8d751ca82a85d5f74234f7ce473",
-      "sourceCommit": "5c2e584b76efc062a5d221946b08614fbb36670e",
-      "sourceDataUpdatedAt": "2026-05-19T23:39:59.162Z",
+      "runId": "26263814224",
+      "artifactName": "external-ai-production-refresh-26263814224",
+      "artifactId": "26263814224-1",
+      "artifactDigest": "3f72938e97776c5f53bed6daa0e3cb1f7a223f50d1abffa51af9c8c960183f6f",
+      "sourceCommit": "db69606ffd23188a6a65b7f7131e0ddfcab6684f",
+      "sourceDataUpdatedAt": "2026-05-21T23:34:31.280Z",
       "inputArtifactPath": "manual-artifacts/external-ai/deepseek-output-latest.json",
       "outputArtifactPath": "manual-artifacts/external-ai/external-ai-production-projection-latest.json",
       "qualityReviewArtifactPath": "manual-artifacts/external-ai/external-ai-quality-review-latest.json",
@@ -1991,7 +1993,7 @@
       "humanApproved": false
     },
     "freshness": {
-      "artifactGeneratedAt": "2026-05-20T01:51:39.076Z",
+      "artifactGeneratedAt": "2026-05-22T01:52:35.648Z",
       "sourceDataUpdatedAt": null,
       "maxAgeHours": 24,
       "isStale": false,
