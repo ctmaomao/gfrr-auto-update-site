@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-83V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-83V';
-import { formatFiniteNumber } from './format.js?v=28.0M-83V';
+import { $ } from './config.js?v=28.0M-84V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-84V';
+import { formatFiniteNumber } from './format.js?v=28.0M-84V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -735,6 +735,10 @@ function buildMacroDrivers(data) {
   const mortgageReitEtf4wChange = finite(commercialRealEstate.mortgageReitEtf4wChange);
   const cmbsEtfPrice = finite(commercialRealEstate.cmbsEtfPrice);
   const cmbsEtf4wChange = finite(commercialRealEstate.cmbsEtf4wChange);
+  const creLoanBalance = finite(commercialRealEstate.creLoanBalance);
+  const creLoanBalance4wChange = finite(commercialRealEstate.creLoanBalance4wChange);
+  const creLoanBalanceYoY = finite(commercialRealEstate.creLoanBalanceYoY);
+  const creLoanBalanceStatus = text(commercialRealEstate.creLoanBalanceStatus, formatSourceStatus(commercialRealEstate.sourceStatus?.creLoanBalance));
   const crePublicMarketProxyRegime = text(commercialRealEstate.crePublicMarketProxyRegime, '未知');
   const nonPublicCreStatus = text(commercialRealEstate.nonPublicCreStatus, formatSourceStatus(commercialRealEstate.sourceStatus?.nonPublicCre));
   const dirtyTankerIndex = finite(shippingFreight.balticDirtyTankerIndex);
@@ -957,7 +961,8 @@ function buildMacroDrivers(data) {
         && creChargeOffRate === null
         && sloosCreNonfarmNonresidentialTightening === null
         && sloosCreConstructionTightening === null
-        && sloosCreMultifamilyTightening === null ? WAITING : '季频观察中',
+        && sloosCreMultifamilyTightening === null
+        && creLoanBalance === null ? WAITING : '季频观察中',
       direction: creStressRegime === '恶化'
         ? 'CRE 压力恶化'
         : creStressRegime === '紧绷'
@@ -969,10 +974,12 @@ function buildMacroDrivers(data) {
         && creChargeOffRate !== null
         && sloosCreNonfarmNonresidentialTightening !== null
         && sloosCreConstructionTightening !== null
-        && sloosCreMultifamilyTightening !== null ? '中等' : '偏低',
+        && sloosCreMultifamilyTightening !== null
+        && creLoanBalance !== null ? '中等' : '偏低',
       dataCoverage: creDelinquencyRate !== null
         || creChargeOffRate !== null
-        || sloosCreTighteningMax !== null ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
+        || sloosCreTighteningMax !== null
+        || creLoanBalance !== null ? '数据覆盖：部分缺口' : '数据覆盖：关键数据不足',
       evidence: [
         creDelinquencyRate === null
           ? 'CRE 拖欠率等待 FRED 季频数据刷新。'
@@ -995,14 +1002,19 @@ function buildMacroDrivers(data) {
         cmbsEtfPrice === null
           ? null
           : `CMBS ${formatNumber(cmbsEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(cmbsEtf4wChange)} — commercial MBS ETF public proxy（${formatWeekVintage(commercialRealEstate.cmbsEtfUpdatedAt)}）`,
+        creLoanBalance === null
+          ? null
+          : `CRE loan balance ${formatUsdTrillions(creLoanBalance / 1000)}；4周变化 ${formatRatioAsPercent(creLoanBalance4wChange)}；YoY ${formatRatioAsPercent(creLoanBalanceYoY)} — FRED public aggregate exposure proxy（${formatWeekVintage(commercialRealEstate.creLoanBalanceUpdatedAt)}；status=${formatSourceStatus(creLoanBalanceStatus)}）`,
         `non-public CRE loan tape status: ${nonPublicCreStatus}`,
-        formatSourceStatusMap(commercialRealEstate.sourceStatus, [['delinquency', 'delinquency'], ['chargeOff', 'charge-off'], ['sloosNonfarmNonresidential', 'SLOOS NNR'], ['sloosConstruction', 'SLOOS construction'], ['sloosMultifamily', 'SLOOS multifamily'], ['reitEtf', 'VNQ'], ['mortgageReitEtf', 'REM'], ['cmbsEtf', 'CMBS'], ['nonPublicCre', 'non-public CRE']]),
+        formatSourceStatusMap(commercialRealEstate.sourceStatus, [['delinquency', 'delinquency'], ['chargeOff', 'charge-off'], ['sloosNonfarmNonresidential', 'SLOOS NNR'], ['sloosConstruction', 'SLOOS construction'], ['sloosMultifamily', 'SLOOS multifamily'], ['reitEtf', 'VNQ'], ['mortgageReitEtf', 'REM'], ['cmbsEtf', 'CMBS'], ['creLoanBalance', 'CRE loan balance'], ['nonPublicCre', 'non-public CRE']]),
         `FRED 季频 Commercial Real Estate:${formatQuarterVintage(commercialRealEstate.updatedAt)}`,
       ].filter(Boolean),
-      missingEvidence: ['非公开 CRE loan tape / private marks 需要 manual/licensed input。'],
-      explanation: 'CRE 拖欠率、核销率与 SLOOS CRE 贷款标准为季频慢变量；VNQ/REM/CMBS 只是公开市场代理。',
-      sourceType: creDelinquencyRate === null && creChargeOffRate === null && sloosCreTighteningMax === null ? '数据不足' : '事实',
-      updatedAt: `FRED 季频 Commercial Real Estate:${formatQuarterVintage(commercialRealEstate.updatedAt)}`,
+      missingEvidence: ['非公开 CRE loan tape / private marks 仍需要 manual/licensed input；FRED aggregate balance 不等于 loan tape。'],
+      explanation: 'CRE 拖欠率、核销率与 SLOOS CRE 贷款标准为季频慢变量；FRED CRE loan balance 是公开 aggregate exposure proxy，VNQ/REM/CMBS 只是公开市场代理。',
+      sourceType: creDelinquencyRate === null && creChargeOffRate === null && sloosCreTighteningMax === null && creLoanBalance === null ? '数据不足' : '事实',
+      updatedAt: creLoanBalance !== null
+        ? `FRED CRE loan balance:${formatWeekVintage(commercialRealEstate.creLoanBalanceUpdatedAt)}`
+        : `FRED 季频 Commercial Real Estate:${formatQuarterVintage(commercialRealEstate.updatedAt)}`,
     }),
     createJudgment({
       id: 'driver-private-credit-proxy',

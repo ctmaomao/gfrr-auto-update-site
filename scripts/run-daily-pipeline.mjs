@@ -109,7 +109,7 @@ const POLICY_EXPECTATIONS_SOURCE =
   'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; CheckMySwap:USD-OIS-public-curve; FederalReserve:FOMC statement/SEP/minutes';
 const PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; Yahoo:CCLFX; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public';
 const CRE_PUBLIC_MARKET_PROXY_SOURCE =
-  'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; Yahoo:VNQ; Yahoo:REM; Yahoo:CMBS';
+  'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; FRED:CREACBW027SBOG; Yahoo:VNQ; Yahoo:REM; Yahoo:CMBS';
 const FUTURES_MONTH_CODES = ['F', 'G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z'];
 const FUTURES_MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -3817,6 +3817,11 @@ function buildMissingCommercialRealEstate() {
     cmbsEtfPrice: null,
     cmbsEtf4wChange: null,
     cmbsEtfUpdatedAt: null,
+    creLoanBalance: null,
+    creLoanBalance4wChange: null,
+    creLoanBalanceYoY: null,
+    creLoanBalanceUpdatedAt: null,
+    creLoanBalanceStatus: 'missing',
     crePublicMarketProxyRegime: '未知',
     nonPublicCreStatus: 'manual_required',
     creStressRegime: '未知',
@@ -3829,13 +3834,14 @@ function buildMissingCommercialRealEstate() {
       reitEtf: 'missing',
       mortgageReitEtf: 'missing',
       cmbsEtf: 'missing',
+      creLoanBalance: 'missing',
       nonPublicCre: 'manual_required'
     },
     updatedAt: null,
     source: CRE_PUBLIC_MARKET_PROXY_SOURCE,
     notes: [
       'CRE delinquency / charge-off / SLOOS CRE tightening (3 子类) 为 FRED 季频公开数据;observation date 为季度起始日;audit-only / display-only。',
-      'VNQ / REM / CMBS 为公开市场代理,不代表非公开 CRE loan tape 或私募信用 marks。'
+      'FRED CREACBW027SBOG 为周频银行 CRE loan balance aggregate exposure proxy;VNQ / REM / CMBS 为公开市场代理,均不代表非公开 CRE loan tape 或私募信用 marks。'
     ]
   };
 }
@@ -4347,6 +4353,9 @@ function normalizePreviousCommercialRealEstate(prevCre) {
   const mortgageReitEtf4wChange = Number.isFinite(prevCre.mortgageReitEtf4wChange) ? prevCre.mortgageReitEtf4wChange : null;
   const cmbsEtfPrice = Number.isFinite(prevCre.cmbsEtfPrice) ? prevCre.cmbsEtfPrice : null;
   const cmbsEtf4wChange = Number.isFinite(prevCre.cmbsEtf4wChange) ? prevCre.cmbsEtf4wChange : null;
+  const creLoanBalance = Number.isFinite(prevCre.creLoanBalance) ? prevCre.creLoanBalance : null;
+  const creLoanBalance4wChange = Number.isFinite(prevCre.creLoanBalance4wChange) ? prevCre.creLoanBalance4wChange : null;
+  const creLoanBalanceYoY = Number.isFinite(prevCre.creLoanBalanceYoY) ? prevCre.creLoanBalanceYoY : null;
   return {
     creDelinquencyRate,
     creDelinquencyRateQoQChange,
@@ -4367,6 +4376,13 @@ function normalizePreviousCommercialRealEstate(prevCre) {
     cmbsEtfPrice,
     cmbsEtf4wChange,
     cmbsEtfUpdatedAt: typeof prevCre.cmbsEtfUpdatedAt === 'string' ? prevCre.cmbsEtfUpdatedAt : null,
+    creLoanBalance,
+    creLoanBalance4wChange,
+    creLoanBalanceYoY,
+    creLoanBalanceUpdatedAt: typeof prevCre.creLoanBalanceUpdatedAt === 'string' ? prevCre.creLoanBalanceUpdatedAt : null,
+    creLoanBalanceStatus: typeof prevCre.creLoanBalanceStatus === 'string'
+      ? prevCre.creLoanBalanceStatus
+      : (creLoanBalance !== null ? 'fallback' : 'missing'),
     crePublicMarketProxyRegime: typeof prevCre.crePublicMarketProxyRegime === 'string' && prevCre.crePublicMarketProxyRegime.trim()
       ? prevCre.crePublicMarketProxyRegime
       : classifyCrePublicMarketProxyRegime(reitEtf4wChange, mortgageReitEtf4wChange, cmbsEtf4wChange),
@@ -4383,13 +4399,14 @@ function normalizePreviousCommercialRealEstate(prevCre) {
       reitEtf: reitEtfPrice !== null ? 'fallback' : 'missing',
       mortgageReitEtf: mortgageReitEtfPrice !== null ? 'fallback' : 'missing',
       cmbsEtf: cmbsEtfPrice !== null ? 'fallback' : 'missing',
+      creLoanBalance: creLoanBalance !== null ? 'fallback' : 'missing',
       nonPublicCre: 'manual_required'
     },
     updatedAt: typeof prevCre.updatedAt === 'string' ? prevCre.updatedAt : null,
     source: CRE_PUBLIC_MARKET_PROXY_SOURCE,
     notes: [
       'CRE delinquency / charge-off / SLOOS CRE tightening (3 子类) 为 FRED 季频公开数据;observation date 为季度起始日;audit-only / display-only。',
-      'VNQ / REM / CMBS 为公开市场代理,不代表非公开 CRE loan tape 或私募信用 marks。'
+      'FRED CREACBW027SBOG 为周频银行 CRE loan balance aggregate exposure proxy;VNQ / REM / CMBS 为公开市场代理,均不代表非公开 CRE loan tape 或私募信用 marks。'
     ]
   };
 }
@@ -5242,6 +5259,7 @@ async function resolveCommercialRealEstate(prevCre) {
     reitEtf: 'missing',
     mortgageReitEtf: 'missing',
     cmbsEtf: 'missing',
+    creLoanBalance: 'missing',
     nonPublicCre: 'manual_required'
   };
   let creDelinquencyRate = null;
@@ -5265,6 +5283,11 @@ async function resolveCommercialRealEstate(prevCre) {
   let cmbsEtfPrice = null;
   let cmbsEtf4wChange = null;
   let cmbsEtfUpdatedAt = null;
+  let creLoanBalance = null;
+  let creLoanBalance4wChange = null;
+  let creLoanBalanceYoY = null;
+  let creLoanBalanceUpdatedAt = null;
+  let creLoanBalanceStatus = 'missing';
 
   const [
     delinquencyResult,
@@ -5272,6 +5295,7 @@ async function resolveCommercialRealEstate(prevCre) {
     sloosNonfarmNonresidentialResult,
     sloosConstructionResult,
     sloosMultifamilyResult,
+    creLoanBalanceResult,
     reitEtfResult,
     mortgageReitEtfResult,
     cmbsEtfResult
@@ -5281,6 +5305,7 @@ async function resolveCommercialRealEstate(prevCre) {
     fetchFredSeries('SUBLPDRCSN', 13000),
     fetchFredSeries('SUBLPDRCSC', 13000),
     fetchFredSeries('SUBLPDRCSM', 13000),
+    fetchFredSeries('CREACBW027SBOG', 760),
     fetchYahooChartQuote('VNQ', '1mo', '1d'),
     fetchYahooChartQuote('REM', '1mo', '1d'),
     fetchYahooChartQuote('CMBS', '1mo', '1d')
@@ -5345,6 +5370,29 @@ async function resolveCommercialRealEstate(prevCre) {
     status.sloosMultifamily = 'fallback';
   }
 
+  if (creLoanBalanceResult.status === 'fulfilled') {
+    const rows = creLoanBalanceResult.value;
+    creLoanBalance = latestValue(rows);
+    const fourWeeksAgo = findValueAgo(rows, 28);
+    const yearAgo = findValueAgo(rows, 52 * 7);
+    creLoanBalance4wChange = Number.isFinite(creLoanBalance) && Number.isFinite(fourWeeksAgo) && fourWeeksAgo !== 0
+      ? +(((creLoanBalance - fourWeeksAgo) / fourWeeksAgo)).toFixed(4)
+      : null;
+    creLoanBalanceYoY = Number.isFinite(creLoanBalance) && Number.isFinite(yearAgo) && yearAgo !== 0
+      ? +(((creLoanBalance - yearAgo) / yearAgo)).toFixed(4)
+      : null;
+    creLoanBalanceUpdatedAt = latestDateIso(rows);
+    creLoanBalanceStatus = 'live';
+    status.creLoanBalance = 'live';
+  } else if (Number.isFinite(fallback.creLoanBalance)) {
+    creLoanBalance = fallback.creLoanBalance;
+    creLoanBalance4wChange = fallback.creLoanBalance4wChange;
+    creLoanBalanceYoY = fallback.creLoanBalanceYoY;
+    creLoanBalanceUpdatedAt = fallback.creLoanBalanceUpdatedAt;
+    creLoanBalanceStatus = 'fallback';
+    status.creLoanBalance = 'fallback';
+  }
+
   if (reitEtfResult.status === 'fulfilled') {
     reitEtfPrice = reitEtfResult.value.price;
     reitEtf4wChange = reitEtfResult.value.changePct;
@@ -5406,6 +5454,11 @@ async function resolveCommercialRealEstate(prevCre) {
     cmbsEtfPrice: Number.isFinite(cmbsEtfPrice) ? cmbsEtfPrice : null,
     cmbsEtf4wChange: Number.isFinite(cmbsEtf4wChange) ? cmbsEtf4wChange : null,
     cmbsEtfUpdatedAt,
+    creLoanBalance: Number.isFinite(creLoanBalance) ? +creLoanBalance.toFixed(4) : null,
+    creLoanBalance4wChange: Number.isFinite(creLoanBalance4wChange) ? creLoanBalance4wChange : null,
+    creLoanBalanceYoY: Number.isFinite(creLoanBalanceYoY) ? creLoanBalanceYoY : null,
+    creLoanBalanceUpdatedAt,
+    creLoanBalanceStatus,
     crePublicMarketProxyRegime: classifyCrePublicMarketProxyRegime(reitEtf4wChange, mortgageReitEtf4wChange, cmbsEtf4wChange),
     nonPublicCreStatus: 'manual_required',
     creStressRegime: classifyCreStressRegime(creDelinquencyRate, creChargeOffRate, sloosCreTighteningMax),
@@ -5416,6 +5469,7 @@ async function resolveCommercialRealEstate(prevCre) {
       sloosCreNonfarmNonresidentialUpdatedAt,
       sloosCreConstructionUpdatedAt,
       sloosCreMultifamilyUpdatedAt,
+      creLoanBalanceUpdatedAt,
       reitEtfUpdatedAt,
       mortgageReitEtfUpdatedAt,
       cmbsEtfUpdatedAt
@@ -5423,7 +5477,7 @@ async function resolveCommercialRealEstate(prevCre) {
     source: CRE_PUBLIC_MARKET_PROXY_SOURCE,
     notes: [
       'CRE delinquency / charge-off / SLOOS CRE tightening (3 子类) 为 FRED 季频公开数据;observation date 为季度起始日;audit-only / display-only。',
-      'VNQ / REM / CMBS 为公开市场代理,不代表非公开 CRE loan tape 或私募信用 marks。'
+      'FRED CREACBW027SBOG 为周频银行 CRE loan balance aggregate exposure proxy;VNQ / REM / CMBS 为公开市场代理,均不代表非公开 CRE loan tape 或私募信用 marks。'
     ]
   };
 }

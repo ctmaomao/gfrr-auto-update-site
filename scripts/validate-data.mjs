@@ -78,6 +78,7 @@ const VALID_CRE_SOURCES = new Set([
   'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM',
   'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; Yahoo:VNQ; Yahoo:REM',
   'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; Yahoo:VNQ; Yahoo:REM; Yahoo:CMBS',
+  'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; FRED:CREACBW027SBOG; Yahoo:VNQ; Yahoo:REM; Yahoo:CMBS',
 ]);
 const VALID_CRE_STRESS_REGIMES = new Set(['恶化', '紧绷', '稳定', '宽松', '改善', '未知']);
 const VALID_CRE_PUBLIC_MARKET_PROXY_REGIMES = new Set(['市场压力上升', '观察', '平稳', '未知']);
@@ -630,7 +631,10 @@ function validateMacroDriversCommercialRealEstate(dataPayload) {
     'mortgageReitEtfPrice',
     'mortgageReitEtf4wChange',
     'cmbsEtfPrice',
-    'cmbsEtf4wChange'
+    'cmbsEtf4wChange',
+    'creLoanBalance',
+    'creLoanBalance4wChange',
+    'creLoanBalanceYoY'
   ]) {
     assert(Object.hasOwn(cre, key), `macroDrivers.commercialRealEstate.${key} is missing`);
     assert(isFiniteNumberOrNull(cre[key]), `macroDrivers.commercialRealEstate.${key} must be finite number or null`);
@@ -638,6 +642,9 @@ function validateMacroDriversCommercialRealEstate(dataPayload) {
   validateNullableIsoString(cre.reitEtfUpdatedAt, 'macroDrivers.commercialRealEstate.reitEtfUpdatedAt');
   validateNullableIsoString(cre.mortgageReitEtfUpdatedAt, 'macroDrivers.commercialRealEstate.mortgageReitEtfUpdatedAt');
   validateNullableIsoString(cre.cmbsEtfUpdatedAt, 'macroDrivers.commercialRealEstate.cmbsEtfUpdatedAt');
+  validateNullableIsoString(cre.creLoanBalanceUpdatedAt, 'macroDrivers.commercialRealEstate.creLoanBalanceUpdatedAt');
+  assertString(cre.creLoanBalanceStatus, 'macroDrivers.commercialRealEstate.creLoanBalanceStatus');
+  assert(CRE_SOURCE_STATUSES.has(cre.creLoanBalanceStatus), 'macroDrivers.commercialRealEstate.creLoanBalanceStatus is not supported');
   assertString(cre.crePublicMarketProxyRegime, 'macroDrivers.commercialRealEstate.crePublicMarketProxyRegime');
   assert(VALID_CRE_PUBLIC_MARKET_PROXY_REGIMES.has(cre.crePublicMarketProxyRegime), 'macroDrivers.commercialRealEstate.crePublicMarketProxyRegime is not supported');
   assertString(cre.nonPublicCreStatus, 'macroDrivers.commercialRealEstate.nonPublicCreStatus');
@@ -656,6 +663,7 @@ function validateMacroDriversCommercialRealEstate(dataPayload) {
     'reitEtf',
     'mortgageReitEtf',
     'cmbsEtf',
+    'creLoanBalance',
     'nonPublicCre'
   ]) {
     assert(Object.hasOwn(cre.sourceStatus, key), `macroDrivers.commercialRealEstate.sourceStatus.${key} is missing`);
