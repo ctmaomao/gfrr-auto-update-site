@@ -11,7 +11,7 @@
 
 当前未关闭、影响进行中工作的 milestone 与状态:
 
-- **当前生产**: v28.0M-79,frontend cache `28.0M-79V`,`check:all` = 23 项；M-79 public source tranche 5 已落地；M-78 public source tranche 4 已落地；M-77 public source tranche 3 已落地；M-76 frontend macro field surfacing 已落地；M-75 check suite compaction 已落地；M-74 expanded macro data auto ingestion 已落地；M-73 BGCR/TGCR NY Fed secured rates runtime fix + employment quality public FRED expansion 已落地；M-71 Brent public proxy source review 已落地；M-70 commercialRealEstate (CRE) 已落地；M-69 consumerRetail (CARTS) 已落地；M-68 employment breadth 已落地；M-67 ISM PMI source repair 已落地；ADR-0014 IA contract authority hierarchy 已落地；M-63b ACLED monthly evidence-only ingestion 已落地；M-63c ACLED reminder workflows 已落地
+- **当前生产**: v28.0M-80,frontend cache `28.0M-80V`,`check:all` = 23 项；M-80 public source tranche 6 已落地；M-79 public source tranche 5 已落地；M-78 public source tranche 4 已落地；M-77 public source tranche 3 已落地；M-76 frontend macro field surfacing 已落地；M-75 check suite compaction 已落地；M-74 expanded macro data auto ingestion 已落地；M-73 BGCR/TGCR NY Fed secured rates runtime fix + employment quality public FRED expansion 已落地；M-71 Brent public proxy source review 已落地；M-70 commercialRealEstate (CRE) 已落地；M-69 consumerRetail (CARTS) 已落地；M-68 employment breadth 已落地；M-67 ISM PMI source repair 已落地；ADR-0014 IA contract authority hierarchy 已落地；M-63b ACLED monthly evidence-only ingestion 已落地；M-63c ACLED reminder workflows 已落地
 - **下一步**: 见 `docs/PROJECT_BACKLOG.md` Section 2 Open Backlog Items
 - **Open backlog 主线**: P1-4 ACLED 接入完整闭合 (M-63a/b/c 全部落地)；P2-7 employment breadth 已落地；P2-8 high-frequency consumer evidence 已落地并关闭；P2-9 CRE/CDX/私募信贷已落地并关闭（M-70 CRE-only;CDX/私募信贷=P3-15）；P3-* 已明确 won't fix
 - **年度提醒**: M-61b SIPRI 每年 5 月 1 日 GitHub Actions issue (`sipri-annual-refresh-reminder.yml`)
@@ -20,11 +20,11 @@
 
 | # | 一句话 | 主要 doc |
 |---|---|---|
+| **M-80** | Public Source Tranche 6: CheckMySwap USD OIS public curve + Yahoo CMBS/PBDC/SRLN public proxies; audit-only/display-only;cache 28.0M-80V | `docs/DATA_CONTRACT.md` |
 | **M-79** | Public Source Tranche 5: Trading Economics Redbook public HTML same-store sales YoY summary + Yahoo SR3 monthly SOFR futures proxy curve; audit-only/display-only;cache 28.0M-79V | `docs/DATA_CONTRACT.md` |
 | **M-78** | Public Source Tranche 4: Yahoo ZQ monthly Fed funds futures proxy curve, FRED IG OAS private-credit cash-bond proxy, Yahoo BZ monthly Brent priced proxy; audit-only/display-only;cache 28.0M-78V | `docs/DATA_CONTRACT.md` |
 | **M-77** | Public Source Tranche 3: Fed FOMC minutes keyword NLP, BoA Consumer Checkpoint public HTML card-spending summary, ICE Brent futures contract structure-only; audit-only/display-only;cache 28.0M-77V | `docs/DATA_CONTRACT.md` |
 | **M-76** | Frontend Macro Field Surfacing: Macro Drivers / Risk Engines / Brent detail 展开显示已存在后端字段(policy target/ZQ/SEP/FOMC tone,BGCR/TGCR,MRTS segments,BCTI/BDI,CDX/private marks status,VNQ/REM timestamps,employment source status,NFCI/SLOOS/IG deltas,ULSD/crack 4w);display-only;cache 28.0M-76V | `scripts/modules/renderMacroOverview.js` |
-| **M-75** | `check:all` 顶层 suite compaction: 74 → 23; all atomic checks preserved via `scripts/check-suite.mjs`; no runtime/frontend/workflow/data behavior change | `package.json` |
 ## Archived (历史 milestone,scope-only,默认不加载)
 
 > 全部已合并,作为 Conditional Authority 仅在对应历史 PR 范围内权威。

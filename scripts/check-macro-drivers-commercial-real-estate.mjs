@@ -31,7 +31,7 @@ const cre = radarData?.macroDrivers?.commercialRealEstate;
 const sourceStatuses = new Set(['live', 'fallback', 'missing', 'manual_required']);
 const creStressRegimes = new Set(['恶化', '紧绷', '稳定', '宽松', '改善', '未知']);
 const crePublicMarketRegimes = new Set(['市场压力上升', '观察', '平稳', '未知']);
-const expectedSource = 'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; Yahoo:VNQ; Yahoo:REM';
+const expectedSource = 'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; Yahoo:VNQ; Yahoo:REM; Yahoo:CMBS';
 
 if (!cre || typeof cre !== 'object' || Array.isArray(cre)) {
   fail('macroDrivers.commercialRealEstate is missing or not an object');
@@ -51,6 +51,9 @@ if (!cre || typeof cre !== 'object' || Array.isArray(cre)) {
     'mortgageReitEtfPrice',
     'mortgageReitEtf4wChange',
     'mortgageReitEtfUpdatedAt',
+    'cmbsEtfPrice',
+    'cmbsEtf4wChange',
+    'cmbsEtfUpdatedAt',
     'crePublicMarketProxyRegime',
     'nonPublicCreStatus',
     'creStressRegime',
@@ -77,7 +80,9 @@ if (!cre || typeof cre !== 'object' || Array.isArray(cre)) {
     'reitEtfPrice',
     'reitEtf4wChange',
     'mortgageReitEtfPrice',
-    'mortgageReitEtf4wChange'
+    'mortgageReitEtf4wChange',
+    'cmbsEtfPrice',
+    'cmbsEtf4wChange'
   ]) {
     if (field in cre && !isFiniteNumberOrNull(cre[field])) {
       fail(`macroDrivers.commercialRealEstate.${field} must be finite number or null`);
@@ -94,7 +99,7 @@ if (!cre || typeof cre !== 'object' || Array.isArray(cre)) {
   if (!cre.sourceStatus || typeof cre.sourceStatus !== 'object' || Array.isArray(cre.sourceStatus)) {
     fail('macroDrivers.commercialRealEstate.sourceStatus must be an object');
   } else {
-    for (const key of ['delinquency', 'chargeOff', 'sloosNonfarmNonresidential', 'sloosConstruction', 'sloosMultifamily', 'reitEtf', 'mortgageReitEtf', 'nonPublicCre']) {
+    for (const key of ['delinquency', 'chargeOff', 'sloosNonfarmNonresidential', 'sloosConstruction', 'sloosMultifamily', 'reitEtf', 'mortgageReitEtf', 'cmbsEtf', 'nonPublicCre']) {
       if (!sourceStatuses.has(cre.sourceStatus[key])) {
         fail(`macroDrivers.commercialRealEstate.sourceStatus.${key} must be live/fallback/missing/manual_required`);
       }
@@ -122,6 +127,7 @@ const requiredRunDailyMarkers = [
   "fetchFredSeries('SUBLPDRCSM', 13000)",
   "fetchYahooChartQuote('VNQ', '1mo', '1d')",
   "fetchYahooChartQuote('REM', '1mo', '1d')",
+  "fetchYahooChartQuote('CMBS', '1mo', '1d')",
   'source: CRE_PUBLIC_MARKET_PROXY_SOURCE',
   'commercialRealEstate: macroDrivers.commercialRealEstate'
 ];
@@ -138,7 +144,8 @@ const requiredRenderMarkers = [
   'Commercial Real Estate',
   'FRED 季频',
   'VNQ',
-  'REM'
+  'REM',
+  'CMBS'
 ];
 for (const marker of requiredRenderMarkers) {
   if (!renderMacroText.includes(marker)) {
@@ -157,9 +164,11 @@ const requiredContractMarkers = [
   'sloosCreTighteningMax',
   'reitEtfPrice',
   'mortgageReitEtfPrice',
+  'cmbsEtfPrice',
   'creStressRegime',
   'VNQ',
   'REM',
+  'CMBS',
   'audit-only / display-only',
   '不参与 scoring、decisionModel、executionLock 或 positionGuidance'
 ];
@@ -177,6 +186,7 @@ const requiredSourceMarkers = [
   '`SUBLPDRCSM`',
   '`VNQ`',
   '`REM`',
+  '`CMBS`',
   'macroDrivers.commercialRealEstate'
 ];
 for (const marker of requiredSourceMarkers) {
@@ -204,6 +214,6 @@ if (errors.length > 0) {
 console.log(
   `Macro drivers commercialRealEstate check: PASS (delinquency=${formatValue(cre.creDelinquencyRate)}, ` +
   `chargeOff=${formatValue(cre.creChargeOffRate)}, sloosMax=${formatValue(cre.sloosCreTighteningMax)}, ` +
-  `VNQ=${formatValue(cre.reitEtfPrice)}, REM=${formatValue(cre.mortgageReitEtfPrice)}, ` +
+  `VNQ=${formatValue(cre.reitEtfPrice)}, REM=${formatValue(cre.mortgageReitEtfPrice)}, CMBS=${formatValue(cre.cmbsEtfPrice)}, ` +
   `creStressRegime=${cre.creStressRegime}, sourceStatus=${JSON.stringify(cre.sourceStatus)})`
 );

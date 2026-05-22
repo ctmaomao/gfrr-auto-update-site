@@ -61,6 +61,9 @@ const BOFA_CONSUMER_CHECKPOINT_BASE_URL = 'https://institute.bankofamerica.com';
 const BOFA_CONSUMER_FETCH_TIMEOUT_MS = 10000;
 const REDBOOK_INDEX_URL = 'https://tradingeconomics.com/united-states/redbook-index';
 const REDBOOK_FETCH_TIMEOUT_MS = 10000;
+const CHECKMYSWAP_USD_OIS_CURVE_URL = 'https://www.checkmyswap.com/api/curves/USD';
+const CHECKMYSWAP_RATES_URL = 'https://www.checkmyswap.com/rates';
+const CHECKMYSWAP_FETCH_TIMEOUT_MS = 10000;
 const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
 const YAHOO_FETCH_TIMEOUT_MS = 9000;
 const STOCKQ_INDEX_BASE = 'https://en.stockq.org/index';
@@ -99,10 +102,10 @@ const SHIPPING_FREIGHT_SOURCE = 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI';
 const CONSUMER_RETAIL_SOURCE =
   'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html; TradingEconomics:Redbook-public-html';
 const POLICY_EXPECTATIONS_SOURCE =
-  'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; FederalReserve:FOMC statement/SEP/minutes';
-const PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM';
+  'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; CheckMySwap:USD-OIS-public-curve; FederalReserve:FOMC statement/SEP/minutes';
+const PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM';
 const CRE_PUBLIC_MARKET_PROXY_SOURCE =
-  'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; Yahoo:VNQ; Yahoo:REM';
+  'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; Yahoo:VNQ; Yahoo:REM; Yahoo:CMBS';
 const FUTURES_MONTH_CODES = ['F', 'G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z'];
 const FUTURES_MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -2621,8 +2624,14 @@ function classifyPrivateCreditProxyRegime(bdcEtf4wChange, hyOas) {
   return '平稳';
 }
 
-function classifyCrePublicMarketProxyRegime(reitEtf4wChange, mortgageReitEtf4wChange) {
-  const values = [reitEtf4wChange, mortgageReitEtf4wChange].filter(Number.isFinite);
+function classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, hyOas) {
+  const publicProxyChanges = [bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange].filter(Number.isFinite);
+  const worst = publicProxyChanges.length ? Math.min(...publicProxyChanges) : null;
+  return classifyPrivateCreditProxyRegime(worst, hyOas);
+}
+
+function classifyCrePublicMarketProxyRegime(reitEtf4wChange, mortgageReitEtf4wChange, cmbsEtf4wChange = null) {
+  const values = [reitEtf4wChange, mortgageReitEtf4wChange, cmbsEtf4wChange].filter(Number.isFinite);
   if (!values.length) return '未知';
   const worst = Math.min(...values);
   if (worst <= -0.08) return '市场压力上升';
@@ -2920,11 +2929,12 @@ async function resolvePolicyExpectations(prevPolicy) {
   let futureUpdatedAt = null;
   let fedFundsFuturesCurve = buildMissingFedFundsFuturesCurve();
   let sofrFuturesCurve = buildMissingSofrFuturesCurve();
+  let oisForwardCurve = buildMissingOisForwardCurve();
   let sepData = null;
   let statementData = null;
   let minutesData = null;
 
-  const [targetLowerResult, targetUpperResult, effrResult, futureResult, futuresCurveResult, sofrFuturesCurveResult, calendarResult] = await Promise.allSettled([
+  const [targetLowerResult, targetUpperResult, effrResult, futureResult, futuresCurveResult, sofrFuturesCurveResult, oisForwardCurveResult, calendarResult] = await Promise.allSettled([
     fetchFredSeries('DFEDTARL', 30),
     fetchFredSeries('DFEDTARU', 30),
     fetchFredSeries('DFF', 30),
@@ -2943,6 +2953,7 @@ async function resolvePolicyExpectations(prevPolicy) {
       monthsToScan: 12,
       maxContracts: 8
     }),
+    fetchCheckMySwapUsdOisCurve(),
     fetchLatestFedCalendarContext()
   ]);
 
@@ -3006,6 +3017,21 @@ async function resolvePolicyExpectations(prevPolicy) {
       curveStatus: 'fallback_proxy_curve'
     };
     status.sofrFuturesCurve = 'fallback';
+  }
+
+  if (oisForwardCurveResult.status === 'fulfilled') {
+    try {
+      oisForwardCurve = buildOisForwardCurve(oisForwardCurveResult.value, targetMid);
+      status.oisForward = oisForwardCurve.tenors.length ? 'live' : 'missing';
+    } catch (_err) {
+      oisForwardCurve = buildMissingOisForwardCurve();
+    }
+  } else if (Array.isArray(fallback.oisForwardCurve?.tenors) && fallback.oisForwardCurve.tenors.length) {
+    oisForwardCurve = {
+      ...normalizePreviousOisForwardCurve(fallback.oisForwardCurve),
+      curveStatus: 'fallback_public_curve'
+    };
+    status.oisForward = 'fallback';
   }
 
   if (calendarResult.status === 'fulfilled') {
@@ -3099,6 +3125,7 @@ async function resolvePolicyExpectations(prevPolicy) {
     futureUpdatedAt,
     fedFundsFuturesCurve,
     sofrFuturesCurve,
+    oisForwardCurve,
     dotPlotMedianCurrentYear,
     dotPlotMedianNextYear: Number.isFinite(sepData?.dotPlotMedianNextYear) ? sepData.dotPlotMedianNextYear : null,
     dotPlotMedianTwoYearsOut: Number.isFinite(sepData?.dotPlotMedianTwoYearsOut) ? sepData.dotPlotMedianTwoYearsOut : null,
@@ -3121,14 +3148,14 @@ async function resolvePolicyExpectations(prevPolicy) {
       : null,
     minutesSummaryZh: typeof minutesData?.minutesSummaryZh === 'string' ? minutesData.minutesSummaryZh : null,
     policyExpectationRegime: classifyPolicyExpectationRegime(futureMinusTargetMid, dotPlotMedianCurrentYear, targetMid),
-    oisForwardRate: null,
-    oisForwardStatus: 'manual_required',
+    oisForwardRate: Number.isFinite(oisForwardCurve.oneYearRate) ? oisForwardCurve.oneYearRate : null,
+    oisForwardStatus: status.oisForward,
     sourceStatus: status,
-    updatedAt: latestIsoDate(targetUpdatedAt, futureUpdatedAt, fedFundsFuturesCurve?.updatedAt, sofrFuturesCurve?.updatedAt, sepData?.sepProjectionDate, statementData?.statementDate, minutesData?.minutesDate),
+    updatedAt: latestIsoDate(targetUpdatedAt, futureUpdatedAt, fedFundsFuturesCurve?.updatedAt, sofrFuturesCurve?.updatedAt, oisForwardCurve?.updatedAt, sepData?.sepProjectionDate, statementData?.statementDate, minutesData?.minutesDate),
     source: POLICY_EXPECTATIONS_SOURCE,
     notes: [
       'Fed target range/DFF 来自 FRED；SEP federal funds median、statement 与 minutes 文本来自 federalreserve.gov。',
-      'ZQ=F、ZQ 月度合约与 SR3 月度 SOFR futures 为公开政策/融资曲线 proxy；OIS forward rate 需要 licensed/manual input,不从未授权源抓取。'
+      'ZQ=F、ZQ 月度合约、SR3 月度 SOFR futures 与 CheckMySwap USD OIS public curve 为公开政策/融资曲线证据；不是 proprietary dealer forward curve。'
     ]
   };
 }
@@ -3595,6 +3622,9 @@ function buildMissingCommercialRealEstate() {
     mortgageReitEtfPrice: null,
     mortgageReitEtf4wChange: null,
     mortgageReitEtfUpdatedAt: null,
+    cmbsEtfPrice: null,
+    cmbsEtf4wChange: null,
+    cmbsEtfUpdatedAt: null,
     crePublicMarketProxyRegime: '未知',
     nonPublicCreStatus: 'manual_required',
     creStressRegime: '未知',
@@ -3606,13 +3636,14 @@ function buildMissingCommercialRealEstate() {
       sloosMultifamily: 'missing',
       reitEtf: 'missing',
       mortgageReitEtf: 'missing',
+      cmbsEtf: 'missing',
       nonPublicCre: 'manual_required'
     },
     updatedAt: null,
     source: CRE_PUBLIC_MARKET_PROXY_SOURCE,
     notes: [
       'CRE delinquency / charge-off / SLOOS CRE tightening (3 子类) 为 FRED 季频公开数据;observation date 为季度起始日;audit-only / display-only。',
-      'VNQ / REM 为公开市场代理,不代表非公开 CRE loan tape 或私募信用 marks。'
+      'VNQ / REM / CMBS 为公开市场代理,不代表非公开 CRE loan tape 或私募信用 marks。'
     ]
   };
 }
@@ -3729,6 +3760,120 @@ function normalizePreviousSofrFuturesCurve(prevCurve) {
   };
 }
 
+function buildMissingOisForwardCurve() {
+  return {
+    source: 'CheckMySwap:USD-OIS-public-curve',
+    sourceUrl: CHECKMYSWAP_RATES_URL,
+    curveStatus: 'missing',
+    date: null,
+    updatedAt: null,
+    oneYearRate: null,
+    twoYearRate: null,
+    fiveYearRate: null,
+    tenYearRate: null,
+    twoMinusTargetMid: null,
+    tenMinusTwo: null,
+    tenors: [],
+    limitationZh: 'CheckMySwap USD OIS public curve 不可用；OIS forward rate 需要 manual/licensed input。'
+  };
+}
+
+function normalizePreviousOisForwardCurve(prevCurve) {
+  if (!prevCurve || typeof prevCurve !== 'object') return buildMissingOisForwardCurve();
+  const tenors = Array.isArray(prevCurve.tenors)
+    ? prevCurve.tenors
+        .map((item) => ({
+          tenor: typeof item?.tenor === 'string' ? item.tenor : null,
+          days: Number.isFinite(item?.days) ? item.days : null,
+          rate: Number.isFinite(item?.rate) ? item.rate : null,
+          rateBps: Number.isFinite(item?.rateBps) ? item.rateBps : null,
+          trades: Number.isFinite(item?.trades) ? item.trades : null,
+          closeTrades: Number.isFinite(item?.closeTrades) ? item.closeTrades : null,
+          method: typeof item?.method === 'string' ? item.method : null,
+          source: typeof item?.source === 'string' ? item.source : null,
+          date: typeof item?.date === 'string' ? item.date : null
+        }))
+        .filter((item) => item.tenor)
+    : [];
+  return {
+    source: typeof prevCurve.source === 'string' ? prevCurve.source : 'CheckMySwap:USD-OIS-public-curve',
+    sourceUrl: typeof prevCurve.sourceUrl === 'string' ? prevCurve.sourceUrl : CHECKMYSWAP_RATES_URL,
+    curveStatus: ['live_public_curve', 'fallback_public_curve', 'missing'].includes(prevCurve.curveStatus)
+      ? prevCurve.curveStatus
+      : (tenors.length ? 'fallback_public_curve' : 'missing'),
+    date: typeof prevCurve.date === 'string' ? prevCurve.date : null,
+    updatedAt: typeof prevCurve.updatedAt === 'string' ? prevCurve.updatedAt : null,
+    oneYearRate: Number.isFinite(prevCurve.oneYearRate) ? prevCurve.oneYearRate : null,
+    twoYearRate: Number.isFinite(prevCurve.twoYearRate) ? prevCurve.twoYearRate : null,
+    fiveYearRate: Number.isFinite(prevCurve.fiveYearRate) ? prevCurve.fiveYearRate : null,
+    tenYearRate: Number.isFinite(prevCurve.tenYearRate) ? prevCurve.tenYearRate : null,
+    twoMinusTargetMid: Number.isFinite(prevCurve.twoMinusTargetMid) ? prevCurve.twoMinusTargetMid : null,
+    tenMinusTwo: Number.isFinite(prevCurve.tenMinusTwo) ? prevCurve.tenMinusTwo : null,
+    tenors,
+    limitationZh: typeof prevCurve.limitationZh === 'string'
+      ? prevCurve.limitationZh
+      : 'CheckMySwap USD OIS curve 为免费公开曲线,来自 DTCC/CFTC public swap data；不是 dealer screen 或专有 forward curve。'
+  };
+}
+
+function getOisTenorRate(curve, tenor) {
+  const found = Array.isArray(curve?.tenors)
+    ? curve.tenors.find((item) => item?.tenor === tenor)
+    : null;
+  return Number.isFinite(found?.rate) ? found.rate : null;
+}
+
+function buildOisForwardCurve(payload, targetMid) {
+  const rows = Array.isArray(payload?.curve) ? payload.curve : [];
+  const tenors = rows
+    .map((item) => ({
+      tenor: typeof item?.tenor === 'string' ? item.tenor.trim() : null,
+      days: Number.isFinite(Number(item?.days)) ? Number(item.days) : null,
+      rate: Number.isFinite(Number(item?.rate)) ? +Number(item.rate).toFixed(3) : null,
+      rateBps: Number.isFinite(Number(item?.rateBps)) ? +Number(item.rateBps).toFixed(3) : null,
+      trades: Number.isFinite(Number(item?.trades)) ? Number(item.trades) : null,
+      closeTrades: Number.isFinite(Number(item?.closeTrades)) ? Number(item.closeTrades) : null,
+      method: typeof item?.method === 'string' ? item.method.trim() : null,
+      source: typeof item?.source === 'string' ? item.source.trim() : null,
+      date: typeof item?.date === 'string' ? item.date.trim() : null
+    }))
+    .filter((item) => item.tenor && Number.isFinite(item.rate));
+  if (!tenors.length) throw new Error('checkmyswap:usd-ois missing tenor rates');
+  const date = typeof payload?.date === 'string' ? payload.date : (tenors.find((item) => item.date)?.date || null);
+  const updatedAt = typeof payload?.fetchedAt === 'string' && Number.isFinite(Date.parse(payload.fetchedAt))
+    ? new Date(Date.parse(payload.fetchedAt)).toISOString()
+    : (date ? `${date}T00:00:00Z` : isoNow);
+  const oneYearRate = getOisTenorRate({ tenors }, '1Y');
+  const twoYearRate = getOisTenorRate({ tenors }, '2Y');
+  const fiveYearRate = getOisTenorRate({ tenors }, '5Y');
+  const tenYearRate = getOisTenorRate({ tenors }, '10Y');
+  return {
+    source: 'CheckMySwap:USD-OIS-public-curve',
+    sourceUrl: CHECKMYSWAP_RATES_URL,
+    curveStatus: 'live_public_curve',
+    date,
+    updatedAt,
+    oneYearRate,
+    twoYearRate,
+    fiveYearRate,
+    tenYearRate,
+    twoMinusTargetMid: Number.isFinite(twoYearRate) && Number.isFinite(targetMid)
+      ? +(twoYearRate - targetMid).toFixed(3)
+      : null,
+    tenMinusTwo: Number.isFinite(tenYearRate) && Number.isFinite(twoYearRate)
+      ? +(tenYearRate - twoYearRate).toFixed(3)
+      : null,
+    tenors: tenors.slice(0, 12),
+    limitationZh: 'CheckMySwap USD OIS curve 为免费公开曲线,来自 DTCC/CFTC public swap data；不是 dealer screen、licensed OIS forward curve 或交易建议。'
+  };
+}
+
+async function fetchCheckMySwapUsdOisCurve() {
+  return fetchJsonText(CHECKMYSWAP_USD_OIS_CURVE_URL, 'checkmyswap:usd-ois-curve', CHECKMYSWAP_FETCH_TIMEOUT_MS, {
+    userAgent: 'GFRRBot/1.0'
+  });
+}
+
 function buildMissingPolicyExpectations() {
   return {
     targetLower: null,
@@ -3742,6 +3887,7 @@ function buildMissingPolicyExpectations() {
     futureUpdatedAt: null,
     fedFundsFuturesCurve: buildMissingFedFundsFuturesCurve(),
     sofrFuturesCurve: buildMissingSofrFuturesCurve(),
+    oisForwardCurve: buildMissingOisForwardCurve(),
     dotPlotMedianCurrentYear: null,
     dotPlotMedianNextYear: null,
     dotPlotMedianTwoYearsOut: null,
@@ -3776,7 +3922,7 @@ function buildMissingPolicyExpectations() {
     },
     updatedAt: null,
     source: POLICY_EXPECTATIONS_SOURCE,
-    notes: ['FOMC statement/SEP/minutes 来自 federalreserve.gov；ZQ=F、ZQ 月度合约与 SR3 月度 SOFR futures 为公开政策/融资曲线 proxy；OIS forward 未用未授权源抓取。']
+    notes: ['FOMC statement/SEP/minutes 来自 federalreserve.gov；ZQ=F、ZQ 月度合约、SR3 月度 SOFR futures 与 CheckMySwap USD OIS public curve 为公开政策/融资曲线证据。']
   };
 }
 
@@ -3785,6 +3931,12 @@ function buildMissingPrivateCreditProxy() {
     bdcEtfPrice: null,
     bdcEtf4wChange: null,
     bdcEtfUpdatedAt: null,
+    pbdcEtfPrice: null,
+    pbdcEtf4wChange: null,
+    pbdcEtfUpdatedAt: null,
+    seniorLoanEtfPrice: null,
+    seniorLoanEtf4wChange: null,
+    seniorLoanEtfUpdatedAt: null,
     hyOas: null,
     igOas: null,
     igOasUpdatedAt: null,
@@ -3795,6 +3947,8 @@ function buildMissingPrivateCreditProxy() {
     privateCreditProxyRegime: '未知',
     sourceStatus: {
       bdcEtf: 'missing',
+      pbdcEtf: 'missing',
+      seniorLoanEtf: 'missing',
       hyOas: 'missing',
       igOas: 'missing',
       cdxHy: 'manual_required',
@@ -3803,7 +3957,7 @@ function buildMissingPrivateCreditProxy() {
     },
     updatedAt: null,
     source: PRIVATE_CREDIT_PROXY_SOURCE,
-    notes: ['BIZD 为公开上市 BDC ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；CDX 与私募信用 marks 仅保留 manual/licensed 插槽,不伪造成公开数据。']
+    notes: ['BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；CDX 与私募信用 marks 仅保留 manual/licensed 插槽,不伪造成公开数据。']
   };
 }
 
@@ -3987,6 +4141,8 @@ function normalizePreviousCommercialRealEstate(prevCre) {
   const reitEtf4wChange = Number.isFinite(prevCre.reitEtf4wChange) ? prevCre.reitEtf4wChange : null;
   const mortgageReitEtfPrice = Number.isFinite(prevCre.mortgageReitEtfPrice) ? prevCre.mortgageReitEtfPrice : null;
   const mortgageReitEtf4wChange = Number.isFinite(prevCre.mortgageReitEtf4wChange) ? prevCre.mortgageReitEtf4wChange : null;
+  const cmbsEtfPrice = Number.isFinite(prevCre.cmbsEtfPrice) ? prevCre.cmbsEtfPrice : null;
+  const cmbsEtf4wChange = Number.isFinite(prevCre.cmbsEtf4wChange) ? prevCre.cmbsEtf4wChange : null;
   return {
     creDelinquencyRate,
     creDelinquencyRateQoQChange,
@@ -4004,9 +4160,12 @@ function normalizePreviousCommercialRealEstate(prevCre) {
     mortgageReitEtfUpdatedAt: typeof prevCre.mortgageReitEtfUpdatedAt === 'string'
       ? prevCre.mortgageReitEtfUpdatedAt
       : null,
+    cmbsEtfPrice,
+    cmbsEtf4wChange,
+    cmbsEtfUpdatedAt: typeof prevCre.cmbsEtfUpdatedAt === 'string' ? prevCre.cmbsEtfUpdatedAt : null,
     crePublicMarketProxyRegime: typeof prevCre.crePublicMarketProxyRegime === 'string' && prevCre.crePublicMarketProxyRegime.trim()
       ? prevCre.crePublicMarketProxyRegime
-      : classifyCrePublicMarketProxyRegime(reitEtf4wChange, mortgageReitEtf4wChange),
+      : classifyCrePublicMarketProxyRegime(reitEtf4wChange, mortgageReitEtf4wChange, cmbsEtf4wChange),
     nonPublicCreStatus: typeof prevCre.nonPublicCreStatus === 'string' ? prevCre.nonPublicCreStatus : 'manual_required',
     creStressRegime: typeof prevCre.creStressRegime === 'string' && prevCre.creStressRegime.trim()
       ? prevCre.creStressRegime
@@ -4019,13 +4178,14 @@ function normalizePreviousCommercialRealEstate(prevCre) {
       sloosMultifamily: sloosCreMultifamilyTightening !== null ? 'fallback' : 'missing',
       reitEtf: reitEtfPrice !== null ? 'fallback' : 'missing',
       mortgageReitEtf: mortgageReitEtfPrice !== null ? 'fallback' : 'missing',
+      cmbsEtf: cmbsEtfPrice !== null ? 'fallback' : 'missing',
       nonPublicCre: 'manual_required'
     },
     updatedAt: typeof prevCre.updatedAt === 'string' ? prevCre.updatedAt : null,
     source: CRE_PUBLIC_MARKET_PROXY_SOURCE,
     notes: [
       'CRE delinquency / charge-off / SLOOS CRE tightening (3 子类) 为 FRED 季频公开数据;observation date 为季度起始日;audit-only / display-only。',
-      'VNQ / REM 为公开市场代理,不代表非公开 CRE loan tape 或私募信用 marks。'
+      'VNQ / REM / CMBS 为公开市场代理,不代表非公开 CRE loan tape 或私募信用 marks。'
     ]
   };
 }
@@ -4098,6 +4258,7 @@ function normalizePreviousPolicyExpectations(prevPolicy) {
     futureMinusTargetMid,
     fedFundsFuturesCurve: normalizePreviousFedFundsFuturesCurve(prevPolicy.fedFundsFuturesCurve),
     sofrFuturesCurve: normalizePreviousSofrFuturesCurve(prevPolicy.sofrFuturesCurve),
+    oisForwardCurve: normalizePreviousOisForwardCurve(prevPolicy.oisForwardCurve),
     dotPlotMedianCurrentYear,
     minutesDate: typeof prevPolicy.minutesDate === 'string' ? prevPolicy.minutesDate : null,
     minutesUrl: typeof prevPolicy.minutesUrl === 'string' ? prevPolicy.minutesUrl : null,
@@ -4124,7 +4285,9 @@ function normalizePreviousPolicyExpectations(prevPolicy) {
       sepDotPlot: dotPlotMedianCurrentYear !== null ? 'fallback' : 'missing',
       policyStatement: typeof prevPolicy.statementUrl === 'string' ? 'fallback' : 'missing',
       fomcMinutes: typeof prevPolicy.minutesUrl === 'string' ? 'fallback' : 'missing',
-      oisForward: 'manual_required'
+      oisForward: Array.isArray(prevPolicy.oisForwardCurve?.tenors) && prevPolicy.oisForwardCurve.tenors.length
+        ? 'fallback'
+        : 'manual_required'
     }
   };
 }
@@ -4133,6 +4296,10 @@ function normalizePreviousPrivateCreditProxy(prevPrivateCredit) {
   if (!prevPrivateCredit || typeof prevPrivateCredit !== 'object') return buildMissingPrivateCreditProxy();
   const bdcEtfPrice = Number.isFinite(prevPrivateCredit.bdcEtfPrice) ? prevPrivateCredit.bdcEtfPrice : null;
   const bdcEtf4wChange = Number.isFinite(prevPrivateCredit.bdcEtf4wChange) ? prevPrivateCredit.bdcEtf4wChange : null;
+  const pbdcEtfPrice = Number.isFinite(prevPrivateCredit.pbdcEtfPrice) ? prevPrivateCredit.pbdcEtfPrice : null;
+  const pbdcEtf4wChange = Number.isFinite(prevPrivateCredit.pbdcEtf4wChange) ? prevPrivateCredit.pbdcEtf4wChange : null;
+  const seniorLoanEtfPrice = Number.isFinite(prevPrivateCredit.seniorLoanEtfPrice) ? prevPrivateCredit.seniorLoanEtfPrice : null;
+  const seniorLoanEtf4wChange = Number.isFinite(prevPrivateCredit.seniorLoanEtf4wChange) ? prevPrivateCredit.seniorLoanEtf4wChange : null;
   const hyOas = Number.isFinite(prevPrivateCredit.hyOas) ? prevPrivateCredit.hyOas : null;
   const igOas = Number.isFinite(prevPrivateCredit.igOas) ? prevPrivateCredit.igOas : null;
   const igMinusHyOas = Number.isFinite(prevPrivateCredit.igMinusHyOas) ? prevPrivateCredit.igMinusHyOas : null;
@@ -4142,15 +4309,23 @@ function normalizePreviousPrivateCreditProxy(prevPrivateCredit) {
     bdcEtfPrice,
     bdcEtf4wChange,
     bdcEtfUpdatedAt: typeof prevPrivateCredit.bdcEtfUpdatedAt === 'string' ? prevPrivateCredit.bdcEtfUpdatedAt : null,
+    pbdcEtfPrice,
+    pbdcEtf4wChange,
+    pbdcEtfUpdatedAt: typeof prevPrivateCredit.pbdcEtfUpdatedAt === 'string' ? prevPrivateCredit.pbdcEtfUpdatedAt : null,
+    seniorLoanEtfPrice,
+    seniorLoanEtf4wChange,
+    seniorLoanEtfUpdatedAt: typeof prevPrivateCredit.seniorLoanEtfUpdatedAt === 'string' ? prevPrivateCredit.seniorLoanEtfUpdatedAt : null,
     hyOas,
     igOas,
     igOasUpdatedAt: typeof prevPrivateCredit.igOasUpdatedAt === 'string' ? prevPrivateCredit.igOasUpdatedAt : null,
     igMinusHyOas,
     privateCreditProxyRegime: typeof prevPrivateCredit.privateCreditProxyRegime === 'string' && prevPrivateCredit.privateCreditProxyRegime.trim()
       ? prevPrivateCredit.privateCreditProxyRegime
-      : classifyPrivateCreditProxyRegime(bdcEtf4wChange, hyOas),
+      : classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, hyOas),
     sourceStatus: {
       bdcEtf: bdcEtfPrice !== null ? 'fallback' : 'missing',
+      pbdcEtf: pbdcEtfPrice !== null ? 'fallback' : 'missing',
+      seniorLoanEtf: seniorLoanEtfPrice !== null ? 'fallback' : 'missing',
       hyOas: hyOas !== null ? 'fallback' : 'missing',
       igOas: igOas !== null ? 'fallback' : 'missing',
       cdxHy: 'manual_required',
@@ -4258,6 +4433,8 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
   const fallback = normalizePreviousPrivateCreditProxy(prevPrivateCredit);
   const status = {
     bdcEtf: 'missing',
+    pbdcEtf: 'missing',
+    seniorLoanEtf: 'missing',
     hyOas: 'missing',
     igOas: 'missing',
     cdxHy: 'manual_required',
@@ -4267,23 +4444,56 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
   let bdcEtfPrice = null;
   let bdcEtf4wChange = null;
   let bdcEtfUpdatedAt = null;
+  let pbdcEtfPrice = null;
+  let pbdcEtf4wChange = null;
+  let pbdcEtfUpdatedAt = null;
+  let seniorLoanEtfPrice = null;
+  let seniorLoanEtf4wChange = null;
+  let seniorLoanEtfUpdatedAt = null;
   let hyOas = Number.isFinite(hyOasLive) ? hyOasLive : null;
   let igOas = null;
   let igOasUpdatedAt = null;
 
-  try {
-    const quote = await fetchYahooChartQuote('BIZD', '1mo', '1d');
-    bdcEtfPrice = quote.price;
-    bdcEtf4wChange = quote.changePct;
-    bdcEtfUpdatedAt = quote.updatedAt;
+  const [bdcEtfResult, pbdcEtfResult, seniorLoanEtfResult] = await Promise.allSettled([
+    fetchYahooChartQuote('BIZD', '1mo', '1d'),
+    fetchYahooChartQuote('PBDC', '1mo', '1d'),
+    fetchYahooChartQuote('SRLN', '1mo', '1d')
+  ]);
+
+  if (bdcEtfResult.status === 'fulfilled') {
+    bdcEtfPrice = bdcEtfResult.value.price;
+    bdcEtf4wChange = bdcEtfResult.value.changePct;
+    bdcEtfUpdatedAt = bdcEtfResult.value.updatedAt;
     status.bdcEtf = 'live';
-  } catch (_err) {
-    if (Number.isFinite(fallback.bdcEtfPrice)) {
-      bdcEtfPrice = fallback.bdcEtfPrice;
-      bdcEtf4wChange = fallback.bdcEtf4wChange;
-      bdcEtfUpdatedAt = fallback.bdcEtfUpdatedAt;
-      status.bdcEtf = 'fallback';
-    }
+  } else if (Number.isFinite(fallback.bdcEtfPrice)) {
+    bdcEtfPrice = fallback.bdcEtfPrice;
+    bdcEtf4wChange = fallback.bdcEtf4wChange;
+    bdcEtfUpdatedAt = fallback.bdcEtfUpdatedAt;
+    status.bdcEtf = 'fallback';
+  }
+
+  if (pbdcEtfResult.status === 'fulfilled') {
+    pbdcEtfPrice = pbdcEtfResult.value.price;
+    pbdcEtf4wChange = pbdcEtfResult.value.changePct;
+    pbdcEtfUpdatedAt = pbdcEtfResult.value.updatedAt;
+    status.pbdcEtf = 'live';
+  } else if (Number.isFinite(fallback.pbdcEtfPrice)) {
+    pbdcEtfPrice = fallback.pbdcEtfPrice;
+    pbdcEtf4wChange = fallback.pbdcEtf4wChange;
+    pbdcEtfUpdatedAt = fallback.pbdcEtfUpdatedAt;
+    status.pbdcEtf = 'fallback';
+  }
+
+  if (seniorLoanEtfResult.status === 'fulfilled') {
+    seniorLoanEtfPrice = seniorLoanEtfResult.value.price;
+    seniorLoanEtf4wChange = seniorLoanEtfResult.value.changePct;
+    seniorLoanEtfUpdatedAt = seniorLoanEtfResult.value.updatedAt;
+    status.seniorLoanEtf = 'live';
+  } else if (Number.isFinite(fallback.seniorLoanEtfPrice)) {
+    seniorLoanEtfPrice = fallback.seniorLoanEtfPrice;
+    seniorLoanEtf4wChange = fallback.seniorLoanEtf4wChange;
+    seniorLoanEtfUpdatedAt = fallback.seniorLoanEtfUpdatedAt;
+    status.seniorLoanEtf = 'fallback';
   }
 
   if (Number.isFinite(hyOas)) {
@@ -4322,6 +4532,12 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
     bdcEtfPrice: Number.isFinite(bdcEtfPrice) ? bdcEtfPrice : null,
     bdcEtf4wChange: Number.isFinite(bdcEtf4wChange) ? bdcEtf4wChange : null,
     bdcEtfUpdatedAt,
+    pbdcEtfPrice: Number.isFinite(pbdcEtfPrice) ? pbdcEtfPrice : null,
+    pbdcEtf4wChange: Number.isFinite(pbdcEtf4wChange) ? pbdcEtf4wChange : null,
+    pbdcEtfUpdatedAt,
+    seniorLoanEtfPrice: Number.isFinite(seniorLoanEtfPrice) ? seniorLoanEtfPrice : null,
+    seniorLoanEtf4wChange: Number.isFinite(seniorLoanEtf4wChange) ? seniorLoanEtf4wChange : null,
+    seniorLoanEtfUpdatedAt,
     hyOas: Number.isFinite(hyOas) ? hyOas : null,
     igOas: Number.isFinite(igOas) ? igOas : null,
     igOasUpdatedAt,
@@ -4329,11 +4545,11 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
     cdxHyStatus: 'manual_required',
     cdxIgStatus: 'manual_required',
     privateCreditMarksStatus: 'manual_required',
-    privateCreditProxyRegime: classifyPrivateCreditProxyRegime(bdcEtf4wChange, hyOas),
+    privateCreditProxyRegime: classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, hyOas),
     sourceStatus: status,
-    updatedAt: latestIsoDate(bdcEtfUpdatedAt, igOasUpdatedAt, fallback.updatedAt),
+    updatedAt: latestIsoDate(bdcEtfUpdatedAt, pbdcEtfUpdatedAt, seniorLoanEtfUpdatedAt, igOasUpdatedAt, fallback.updatedAt),
     source: PRIVATE_CREDIT_PROXY_SOURCE,
-    notes: ['BIZD 为公开上市 BDC ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；CDX 与私募信用 marks 仅保留 manual/licensed 插槽,不伪造成公开数据。']
+    notes: ['BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；CDX 与私募信用 marks 仅保留 manual/licensed 插槽,不伪造成公开数据。']
   };
 }
 
@@ -4729,6 +4945,7 @@ async function resolveCommercialRealEstate(prevCre) {
     sloosMultifamily: 'missing',
     reitEtf: 'missing',
     mortgageReitEtf: 'missing',
+    cmbsEtf: 'missing',
     nonPublicCre: 'manual_required'
   };
   let creDelinquencyRate = null;
@@ -4749,6 +4966,9 @@ async function resolveCommercialRealEstate(prevCre) {
   let mortgageReitEtfPrice = null;
   let mortgageReitEtf4wChange = null;
   let mortgageReitEtfUpdatedAt = null;
+  let cmbsEtfPrice = null;
+  let cmbsEtf4wChange = null;
+  let cmbsEtfUpdatedAt = null;
 
   const [
     delinquencyResult,
@@ -4757,7 +4977,8 @@ async function resolveCommercialRealEstate(prevCre) {
     sloosConstructionResult,
     sloosMultifamilyResult,
     reitEtfResult,
-    mortgageReitEtfResult
+    mortgageReitEtfResult,
+    cmbsEtfResult
   ] = await Promise.allSettled([
     fetchFredSeries('DRCRELEXFACBS', 13000),
     fetchFredSeries('CORCREXFACBS', 13000),
@@ -4765,7 +4986,8 @@ async function resolveCommercialRealEstate(prevCre) {
     fetchFredSeries('SUBLPDRCSC', 13000),
     fetchFredSeries('SUBLPDRCSM', 13000),
     fetchYahooChartQuote('VNQ', '1mo', '1d'),
-    fetchYahooChartQuote('REM', '1mo', '1d')
+    fetchYahooChartQuote('REM', '1mo', '1d'),
+    fetchYahooChartQuote('CMBS', '1mo', '1d')
   ]);
 
   if (delinquencyResult.status === 'fulfilled') {
@@ -4851,6 +5073,18 @@ async function resolveCommercialRealEstate(prevCre) {
     status.mortgageReitEtf = 'fallback';
   }
 
+  if (cmbsEtfResult.status === 'fulfilled') {
+    cmbsEtfPrice = cmbsEtfResult.value.price;
+    cmbsEtf4wChange = cmbsEtfResult.value.changePct;
+    cmbsEtfUpdatedAt = cmbsEtfResult.value.updatedAt;
+    status.cmbsEtf = 'live';
+  } else if (Number.isFinite(fallback.cmbsEtfPrice)) {
+    cmbsEtfPrice = fallback.cmbsEtfPrice;
+    cmbsEtf4wChange = fallback.cmbsEtf4wChange;
+    cmbsEtfUpdatedAt = fallback.cmbsEtfUpdatedAt;
+    status.cmbsEtf = 'fallback';
+  }
+
   const sloosValues = [
     sloosCreNonfarmNonresidentialTightening,
     sloosCreConstructionTightening,
@@ -4873,7 +5107,10 @@ async function resolveCommercialRealEstate(prevCre) {
     mortgageReitEtfPrice: Number.isFinite(mortgageReitEtfPrice) ? mortgageReitEtfPrice : null,
     mortgageReitEtf4wChange: Number.isFinite(mortgageReitEtf4wChange) ? mortgageReitEtf4wChange : null,
     mortgageReitEtfUpdatedAt,
-    crePublicMarketProxyRegime: classifyCrePublicMarketProxyRegime(reitEtf4wChange, mortgageReitEtf4wChange),
+    cmbsEtfPrice: Number.isFinite(cmbsEtfPrice) ? cmbsEtfPrice : null,
+    cmbsEtf4wChange: Number.isFinite(cmbsEtf4wChange) ? cmbsEtf4wChange : null,
+    cmbsEtfUpdatedAt,
+    crePublicMarketProxyRegime: classifyCrePublicMarketProxyRegime(reitEtf4wChange, mortgageReitEtf4wChange, cmbsEtf4wChange),
     nonPublicCreStatus: 'manual_required',
     creStressRegime: classifyCreStressRegime(creDelinquencyRate, creChargeOffRate, sloosCreTighteningMax),
     sourceStatus: status,
@@ -4884,12 +5121,13 @@ async function resolveCommercialRealEstate(prevCre) {
       sloosCreConstructionUpdatedAt,
       sloosCreMultifamilyUpdatedAt,
       reitEtfUpdatedAt,
-      mortgageReitEtfUpdatedAt
+      mortgageReitEtfUpdatedAt,
+      cmbsEtfUpdatedAt
     ),
     source: CRE_PUBLIC_MARKET_PROXY_SOURCE,
     notes: [
       'CRE delinquency / charge-off / SLOOS CRE tightening (3 子类) 为 FRED 季频公开数据;observation date 为季度起始日;audit-only / display-only。',
-      'VNQ / REM 为公开市场代理,不代表非公开 CRE loan tape 或私募信用 marks。'
+      'VNQ / REM / CMBS 为公开市场代理,不代表非公开 CRE loan tape 或私募信用 marks。'
     ]
   };
 }

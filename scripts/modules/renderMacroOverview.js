@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-79V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-79V';
-import { formatFiniteNumber } from './format.js?v=28.0M-79V';
+import { $ } from './config.js?v=28.0M-80V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-80V';
+import { formatFiniteNumber } from './format.js?v=28.0M-80V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -716,6 +716,8 @@ function buildMacroDrivers(data) {
   const reitEtf4wChange = finite(commercialRealEstate.reitEtf4wChange);
   const mortgageReitEtfPrice = finite(commercialRealEstate.mortgageReitEtfPrice);
   const mortgageReitEtf4wChange = finite(commercialRealEstate.mortgageReitEtf4wChange);
+  const cmbsEtfPrice = finite(commercialRealEstate.cmbsEtfPrice);
+  const cmbsEtf4wChange = finite(commercialRealEstate.cmbsEtf4wChange);
   const crePublicMarketProxyRegime = text(commercialRealEstate.crePublicMarketProxyRegime, '未知');
   const nonPublicCreStatus = text(commercialRealEstate.nonPublicCreStatus, formatSourceStatus(commercialRealEstate.sourceStatus?.nonPublicCre));
   const dirtyTankerIndex = finite(shippingFreight.balticDirtyTankerIndex);
@@ -740,6 +742,11 @@ function buildMacroDrivers(data) {
     .filter(isPlainObject)
     .slice(0, 4)
     .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.impliedRate, 2, '%')}`);
+  const oisForwardCurve = isPlainObject(policyExpectations.oisForwardCurve) ? policyExpectations.oisForwardCurve : {};
+  const oisForwardCurveTenors = safeArray(oisForwardCurve.tenors)
+    .filter(isPlainObject)
+    .filter((item) => ['1Y', '2Y', '5Y', '10Y'].includes(text(item.tenor, '')))
+    .map((item) => `${text(item.tenor, '--')} ${formatNumber(item.rate, 2, '%')}`);
   const dotPlotMedianCurrentYear = finite(policyExpectations.dotPlotMedianCurrentYear);
   const dotPlotMedianNextYear = finite(policyExpectations.dotPlotMedianNextYear);
   const dotPlotMedianTwoYearsOut = finite(policyExpectations.dotPlotMedianTwoYearsOut);
@@ -753,6 +760,10 @@ function buildMacroDrivers(data) {
   const policyExpectationRegime = text(policyExpectations.policyExpectationRegime, '未知');
   const bdcEtfPrice = finite(privateCreditProxy.bdcEtfPrice);
   const bdcEtf4wChange = finite(privateCreditProxy.bdcEtf4wChange);
+  const pbdcEtfPrice = finite(privateCreditProxy.pbdcEtfPrice);
+  const pbdcEtf4wChange = finite(privateCreditProxy.pbdcEtf4wChange);
+  const seniorLoanEtfPrice = finite(privateCreditProxy.seniorLoanEtfPrice);
+  const seniorLoanEtf4wChange = finite(privateCreditProxy.seniorLoanEtf4wChange);
   const privateCreditIgOas = finite(privateCreditProxy.igOas);
   const privateCreditIgMinusHyOas = finite(privateCreditProxy.igMinusHyOas);
   const cdxHyStatus = text(privateCreditProxy.cdxHyStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxHy));
@@ -792,13 +803,16 @@ function buildMacroDrivers(data) {
     sofrFuturesCurveContracts.length
       ? `SR3 SOFR futures proxy: ${sofrFuturesCurveContracts.join(' / ')}；front-back ${formatSignedPoints(sofrFuturesCurve.frontMinusBack)}；status=${text(sofrFuturesCurve.curveStatus, 'missing')}`
       : null,
+    oisForwardCurveTenors.length
+      ? `CheckMySwap USD OIS public curve: ${oisForwardCurveTenors.join(' / ')}；10Y-2Y ${formatSignedPoints(oisForwardCurve.tenMinusTwo)}；status=${text(oisForwardCurve.curveStatus, 'missing')}`
+      : null,
     dotPlotMedianCurrentYear === null ? null : `SEP ${formatWeekVintage(policyExpectations.sepProjectionDate)} federal funds median: current ${formatNumber(dotPlotMedianCurrentYear, 2, '%')} / next ${formatNumber(dotPlotMedianNextYear, 2, '%')} / two-year ${formatNumber(dotPlotMedianTwoYearsOut, 2, '%')} / longer-run ${formatNumber(dotPlotMedianLongerRun, 2, '%')} (${formatUrlReference(policyExpectations.sepUrl)})`,
     policyTone === '未知' ? null : `FOMC ${formatWeekVintage(policyExpectations.statementDate)} statement tone: ${policyTone}；hawkish ${formatNumber(hawkishTermCount, 0)} / dovish ${formatNumber(dovishTermCount, 0)} (${formatUrlReference(policyExpectations.statementUrl)})`,
     minutesPolicyTone === '未知' ? null : `FOMC minutes ${formatWeekVintage(policyExpectations.minutesDate)} NLP tone: ${minutesPolicyTone}；hawkish ${formatNumber(minutesHawkishTermCount, 0)} / dovish ${formatNumber(minutesDovishTermCount, 0)} (${formatUrlReference(policyExpectations.minutesUrl)})`,
     isPlainObject(policyExpectations.minutesTopicCounts)
       ? `minutes topics: inflation=${formatNumber(policyExpectations.minutesTopicCounts.inflation, 0)} / labor=${formatNumber(policyExpectations.minutesTopicCounts.laborMarket, 0)} / financial=${formatNumber(policyExpectations.minutesTopicCounts.financialConditions, 0)} / risks=${formatNumber(policyExpectations.minutesTopicCounts.risks, 0)}`
       : null,
-    formatSourceStatusMap(policyExpectations.sourceStatus, [['targetRange', 'target'], ['fedFundsFuture', 'ZQ'], ['fedFundsFuturesCurve', 'ZQ curve'], ['sofrFuturesCurve', 'SR3 SOFR futures'], ['sepDotPlot', 'SEP'], ['policyStatement', 'statement'], ['fomcMinutes', 'minutes'], ['oisForward', 'OIS']]),
+    formatSourceStatusMap(policyExpectations.sourceStatus, [['targetRange', 'target'], ['fedFundsFuture', 'ZQ'], ['fedFundsFuturesCurve', 'ZQ curve'], ['sofrFuturesCurve', 'SR3 SOFR futures'], ['sepDotPlot', 'SEP'], ['policyStatement', 'statement'], ['fomcMinutes', 'minutes'], ['oisForward', 'CheckMySwap OIS']]),
   ].filter(Boolean);
   const hasPolicyProxy = policyProxyEvidence.length > 1;
 
@@ -951,12 +965,15 @@ function buildMacroDrivers(data) {
         mortgageReitEtfPrice === null
           ? null
           : `REM ${formatNumber(mortgageReitEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(mortgageReitEtf4wChange)} — mortgage REIT 代理（${crePublicMarketProxyRegime}；${formatWeekVintage(commercialRealEstate.mortgageReitEtfUpdatedAt)}）`,
+        cmbsEtfPrice === null
+          ? null
+          : `CMBS ${formatNumber(cmbsEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(cmbsEtf4wChange)} — commercial MBS ETF public proxy（${formatWeekVintage(commercialRealEstate.cmbsEtfUpdatedAt)}）`,
         `non-public CRE loan tape status: ${nonPublicCreStatus}`,
-        formatSourceStatusMap(commercialRealEstate.sourceStatus, [['delinquency', 'delinquency'], ['chargeOff', 'charge-off'], ['sloosNonfarmNonresidential', 'SLOOS NNR'], ['sloosConstruction', 'SLOOS construction'], ['sloosMultifamily', 'SLOOS multifamily'], ['reitEtf', 'VNQ'], ['mortgageReitEtf', 'REM'], ['nonPublicCre', 'non-public CRE']]),
+        formatSourceStatusMap(commercialRealEstate.sourceStatus, [['delinquency', 'delinquency'], ['chargeOff', 'charge-off'], ['sloosNonfarmNonresidential', 'SLOOS NNR'], ['sloosConstruction', 'SLOOS construction'], ['sloosMultifamily', 'SLOOS multifamily'], ['reitEtf', 'VNQ'], ['mortgageReitEtf', 'REM'], ['cmbsEtf', 'CMBS'], ['nonPublicCre', 'non-public CRE']]),
         `FRED 季频 Commercial Real Estate:${formatQuarterVintage(commercialRealEstate.updatedAt)}`,
       ].filter(Boolean),
       missingEvidence: ['非公开 CRE loan tape / private marks 需要 manual/licensed input。'],
-      explanation: 'CRE 拖欠率、核销率与 SLOOS CRE 贷款标准为季频慢变量；VNQ/REM 只是公开市场代理。',
+      explanation: 'CRE 拖欠率、核销率与 SLOOS CRE 贷款标准为季频慢变量；VNQ/REM/CMBS 只是公开市场代理。',
       sourceType: creDelinquencyRate === null && creChargeOffRate === null && sloosCreTighteningMax === null ? '数据不足' : '事实',
       updatedAt: `FRED 季频 Commercial Real Estate:${formatQuarterVintage(commercialRealEstate.updatedAt)}`,
     }),
@@ -976,14 +993,20 @@ function buildMacroDrivers(data) {
         bdcEtfPrice === null
           ? 'BIZD listed BDC proxy 等待刷新。'
           : `BIZD ${formatNumber(bdcEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(bdcEtf4wChange)} — listed BDC proxy`,
+        pbdcEtfPrice === null
+          ? null
+          : `PBDC ${formatNumber(pbdcEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(pbdcEtf4wChange)} — second listed BDC proxy`,
+        seniorLoanEtfPrice === null
+          ? null
+          : `SRLN ${formatNumber(seniorLoanEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(seniorLoanEtf4wChange)} — senior loan ETF proxy`,
         hyOas === null ? null : `HY OAS ${formatNumber(hyOas, 2, '%')} — 公开信用利差代理`,
         privateCreditIgOas === null ? null : `IG OAS ${formatNumber(privateCreditIgOas, 2, '%')}；IG-HY ${formatSignedPoints(privateCreditIgMinusHyOas)} — cash-bond proxy`,
         `CDX HY status: ${cdxHyStatus}；CDX IG status: ${cdxIgStatus}`,
         `private credit marks status: ${privateCreditMarksStatus}`,
-        formatSourceStatusMap(privateCreditProxy.sourceStatus, [['bdcEtf', 'BIZD'], ['hyOas', 'HY OAS'], ['igOas', 'IG OAS'], ['cdxHy', 'CDX HY'], ['cdxIg', 'CDX IG'], ['privateCreditMarks', 'private marks']]),
+        formatSourceStatusMap(privateCreditProxy.sourceStatus, [['bdcEtf', 'BIZD'], ['pbdcEtf', 'PBDC'], ['seniorLoanEtf', 'SRLN'], ['hyOas', 'HY OAS'], ['igOas', 'IG OAS'], ['cdxHy', 'CDX HY'], ['cdxIg', 'CDX IG'], ['privateCreditMarks', 'private marks']]),
       ].filter(Boolean),
       missingEvidence: ['CDX HY/IG 与私募信用 marks 需要 manual/licensed input；不伪造成公开数据。'],
-      explanation: 'BIZD、HY OAS 与 IG OAS 只提供公开市场压力代理，不能替代 CDX 或私募信用估值。',
+      explanation: 'BIZD/PBDC、SRLN、HY OAS 与 IG OAS 只提供公开市场压力代理，不能替代 CDX 或私募信用估值。',
       sourceType: bdcEtfPrice === null && hyOas === null ? '数据不足' : '代理信号',
       updatedAt: `Yahoo/FRED:${formatWeekVintage(privateCreditProxy.updatedAt)}`,
     }),
@@ -1270,6 +1293,11 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
     .filter(isPlainObject)
     .slice(0, 4)
     .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.impliedRate, 2, '%')}`);
+  const oisForwardCurve = isPlainObject(policyExpectations.oisForwardCurve) ? policyExpectations.oisForwardCurve : {};
+  const oisForwardCurveTenors = safeArray(oisForwardCurve.tenors)
+    .filter(isPlainObject)
+    .filter((item) => ['1Y', '2Y', '5Y', '10Y'].includes(text(item.tenor, '')))
+    .map((item) => `${text(item.tenor, '--')} ${formatNumber(item.rate, 2, '%')}`);
   const ulsdPrice = finite(brentLayer.ulsdPrice);
   const ulsd4wChange = finite(brentLayer.ulsd4wChange);
   const crackSpread4wChange = finite(brentLayer.crackSpread4wChange);
@@ -1333,6 +1361,9 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
         sofrFuturesCurveContracts.length
           ? `SR3 SOFR futures proxy: ${sofrFuturesCurveContracts.join(' / ')}；front-back ${formatSignedPoints(sofrFuturesCurve.frontMinusBack)}`
           : null,
+        oisForwardCurveTenors.length
+          ? `CheckMySwap USD OIS public curve: ${oisForwardCurveTenors.join(' / ')}；10Y-2Y ${formatSignedPoints(oisForwardCurve.tenMinusTwo)}`
+          : null,
       ].filter(Boolean),
       missingEvidence: safeArray(ratesCheck.limitations).slice(0, 1).length
         ? safeArray(ratesCheck.limitations).slice(0, 1)
@@ -1395,6 +1426,12 @@ function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData =
         bdcEtfPrice === null
           ? null
           : `BIZD ${formatNumber(bdcEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(bdcEtf4wChange)}（listed BDC proxy）`,
+        pbdcEtfPrice === null
+          ? null
+          : `PBDC ${formatNumber(pbdcEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(pbdcEtf4wChange)}（listed BDC proxy）`,
+        seniorLoanEtfPrice === null
+          ? null
+          : `SRLN ${formatNumber(seniorLoanEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(seniorLoanEtf4wChange)}（senior loan ETF proxy）`,
         privateCreditIgOas === null ? null : `IG OAS ${formatNumber(privateCreditIgOas, 2, '%')}；IG-HY ${formatSignedPoints(privateCreditIgMinusHyOas)}（cash-bond proxy）`,
         `CDX/private marks status: HY=${text(privateCreditProxy.cdxHyStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxHy))} / IG=${text(privateCreditProxy.cdxIgStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxIg))} / marks=${text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks))}`,
       ].filter(Boolean),
