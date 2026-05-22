@@ -107,7 +107,7 @@ const CONSUMER_RETAIL_SOURCE =
   'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html; TradingEconomics:Redbook-public-html';
 const POLICY_EXPECTATIONS_SOURCE =
   'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; CheckMySwap:USD-OIS-public-curve; FederalReserve:FOMC statement/SEP/minutes';
-const PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public';
+const PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; Yahoo:CCLFX; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public';
 const CRE_PUBLIC_MARKET_PROXY_SOURCE =
   'FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; Yahoo:VNQ; Yahoo:REM; Yahoo:CMBS';
 const FUTURES_MONTH_CODES = ['F', 'G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z'];
@@ -2816,8 +2816,8 @@ function classifyPrivateCreditProxyRegime(bdcEtf4wChange, hyOas) {
   return '平稳';
 }
 
-function classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, hyOas) {
-  const publicProxyChanges = [bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange].filter(Number.isFinite);
+function classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, intervalFundNav4wChange, hyOas) {
+  const publicProxyChanges = [bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, intervalFundNav4wChange].filter(Number.isFinite);
   const worst = publicProxyChanges.length ? Math.min(...publicProxyChanges) : null;
   return classifyPrivateCreditProxyRegime(worst, hyOas);
 }
@@ -4129,6 +4129,11 @@ function buildMissingPrivateCreditProxy() {
     seniorLoanEtfPrice: null,
     seniorLoanEtf4wChange: null,
     seniorLoanEtfUpdatedAt: null,
+    intervalFundNavPrice: null,
+    intervalFundNav4wChange: null,
+    intervalFundNavUpdatedAt: null,
+    intervalFundNavSymbol: 'CCLFX',
+    intervalFundNavStatus: 'missing',
     hyOas: null,
     igOas: null,
     igOasUpdatedAt: null,
@@ -4147,6 +4152,7 @@ function buildMissingPrivateCreditProxy() {
       bdcEtf: 'missing',
       pbdcEtf: 'missing',
       seniorLoanEtf: 'missing',
+      intervalFundNav: 'missing',
       hyOas: 'missing',
       igOas: 'missing',
       cdxHy: 'manual_required',
@@ -4155,7 +4161,7 @@ function buildMissingPrivateCreditProxy() {
     },
     updatedAt: null,
     source: PRIVATE_CREDIT_PROXY_SOURCE,
-    notes: ['BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；ICE CDX 为公开 EOD settlement price；私募信用 marks 仍保留 manual/licensed 插槽。']
+    notes: ['BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；CCLFX 为公开 interval-fund NAV proxy；HY/IG OAS 为 FRED cash-bond spread proxy；ICE CDX 为公开 EOD settlement price；私募信用 marks 仍保留 manual/licensed 插槽。']
   };
 }
 
@@ -4498,6 +4504,8 @@ function normalizePreviousPrivateCreditProxy(prevPrivateCredit) {
   const pbdcEtf4wChange = Number.isFinite(prevPrivateCredit.pbdcEtf4wChange) ? prevPrivateCredit.pbdcEtf4wChange : null;
   const seniorLoanEtfPrice = Number.isFinite(prevPrivateCredit.seniorLoanEtfPrice) ? prevPrivateCredit.seniorLoanEtfPrice : null;
   const seniorLoanEtf4wChange = Number.isFinite(prevPrivateCredit.seniorLoanEtf4wChange) ? prevPrivateCredit.seniorLoanEtf4wChange : null;
+  const intervalFundNavPrice = Number.isFinite(prevPrivateCredit.intervalFundNavPrice) ? prevPrivateCredit.intervalFundNavPrice : null;
+  const intervalFundNav4wChange = Number.isFinite(prevPrivateCredit.intervalFundNav4wChange) ? prevPrivateCredit.intervalFundNav4wChange : null;
   const hyOas = Number.isFinite(prevPrivateCredit.hyOas) ? prevPrivateCredit.hyOas : null;
   const igOas = Number.isFinite(prevPrivateCredit.igOas) ? prevPrivateCredit.igOas : null;
   const igMinusHyOas = Number.isFinite(prevPrivateCredit.igMinusHyOas) ? prevPrivateCredit.igMinusHyOas : null;
@@ -4515,6 +4523,11 @@ function normalizePreviousPrivateCreditProxy(prevPrivateCredit) {
     seniorLoanEtfPrice,
     seniorLoanEtf4wChange,
     seniorLoanEtfUpdatedAt: typeof prevPrivateCredit.seniorLoanEtfUpdatedAt === 'string' ? prevPrivateCredit.seniorLoanEtfUpdatedAt : null,
+    intervalFundNavPrice,
+    intervalFundNav4wChange,
+    intervalFundNavUpdatedAt: typeof prevPrivateCredit.intervalFundNavUpdatedAt === 'string' ? prevPrivateCredit.intervalFundNavUpdatedAt : null,
+    intervalFundNavSymbol: typeof prevPrivateCredit.intervalFundNavSymbol === 'string' ? prevPrivateCredit.intervalFundNavSymbol : 'CCLFX',
+    intervalFundNavStatus: intervalFundNavPrice !== null ? 'fallback' : 'missing',
     hyOas,
     igOas,
     igOasUpdatedAt: typeof prevPrivateCredit.igOasUpdatedAt === 'string' ? prevPrivateCredit.igOasUpdatedAt : null,
@@ -4527,11 +4540,12 @@ function normalizePreviousPrivateCreditProxy(prevPrivateCredit) {
     cdxIgUpdatedAt: typeof prevPrivateCredit.cdxIgUpdatedAt === 'string' ? prevPrivateCredit.cdxIgUpdatedAt : null,
     privateCreditProxyRegime: typeof prevPrivateCredit.privateCreditProxyRegime === 'string' && prevPrivateCredit.privateCreditProxyRegime.trim()
       ? prevPrivateCredit.privateCreditProxyRegime
-      : classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, hyOas),
+      : classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, intervalFundNav4wChange, hyOas),
     sourceStatus: {
       bdcEtf: bdcEtfPrice !== null ? 'fallback' : 'missing',
       pbdcEtf: pbdcEtfPrice !== null ? 'fallback' : 'missing',
       seniorLoanEtf: seniorLoanEtfPrice !== null ? 'fallback' : 'missing',
+      intervalFundNav: intervalFundNavPrice !== null ? 'fallback' : 'missing',
       hyOas: hyOas !== null ? 'fallback' : 'missing',
       igOas: igOas !== null ? 'fallback' : 'missing',
       cdxHy: cdxHyPrice !== null ? 'fallback' : 'manual_required',
@@ -4641,6 +4655,7 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
     bdcEtf: 'missing',
     pbdcEtf: 'missing',
     seniorLoanEtf: 'missing',
+    intervalFundNav: 'missing',
     hyOas: 'missing',
     igOas: 'missing',
     cdxHy: 'missing',
@@ -4656,6 +4671,11 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
   let seniorLoanEtfPrice = null;
   let seniorLoanEtf4wChange = null;
   let seniorLoanEtfUpdatedAt = null;
+  let intervalFundNavPrice = null;
+  let intervalFundNav4wChange = null;
+  let intervalFundNavUpdatedAt = null;
+  let intervalFundNavSymbol = 'CCLFX';
+  let intervalFundNavStatus = 'missing';
   let hyOas = Number.isFinite(hyOasLive) ? hyOasLive : null;
   let igOas = null;
   let igOasUpdatedAt = null;
@@ -4666,10 +4686,11 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
   let cdxIgInstrument = null;
   let cdxIgUpdatedAt = null;
 
-  const [bdcEtfResult, pbdcEtfResult, seniorLoanEtfResult, cdxResult] = await Promise.allSettled([
+  const [bdcEtfResult, pbdcEtfResult, seniorLoanEtfResult, intervalFundNavResult, cdxResult] = await Promise.allSettled([
     fetchYahooChartQuote('BIZD', '1mo', '1d'),
     fetchYahooChartQuote('PBDC', '1mo', '1d'),
     fetchYahooChartQuote('SRLN', '1mo', '1d'),
+    fetchYahooChartQuote('CCLFX', '1mo', '1d'),
     fetchIceCdxIndexSettlements()
   ]);
 
@@ -4707,6 +4728,22 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
     seniorLoanEtf4wChange = fallback.seniorLoanEtf4wChange;
     seniorLoanEtfUpdatedAt = fallback.seniorLoanEtfUpdatedAt;
     status.seniorLoanEtf = 'fallback';
+  }
+
+  if (intervalFundNavResult.status === 'fulfilled') {
+    intervalFundNavPrice = intervalFundNavResult.value.price;
+    intervalFundNav4wChange = intervalFundNavResult.value.changePct;
+    intervalFundNavUpdatedAt = intervalFundNavResult.value.updatedAt;
+    intervalFundNavSymbol = intervalFundNavResult.value.symbol || 'CCLFX';
+    intervalFundNavStatus = 'live';
+    status.intervalFundNav = 'live';
+  } else if (Number.isFinite(fallback.intervalFundNavPrice)) {
+    intervalFundNavPrice = fallback.intervalFundNavPrice;
+    intervalFundNav4wChange = fallback.intervalFundNav4wChange;
+    intervalFundNavUpdatedAt = fallback.intervalFundNavUpdatedAt;
+    intervalFundNavSymbol = fallback.intervalFundNavSymbol || 'CCLFX';
+    intervalFundNavStatus = 'fallback';
+    status.intervalFundNav = 'fallback';
   }
 
   if (cdxResult.status === 'fulfilled') {
@@ -4786,6 +4823,11 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
     seniorLoanEtfPrice: Number.isFinite(seniorLoanEtfPrice) ? seniorLoanEtfPrice : null,
     seniorLoanEtf4wChange: Number.isFinite(seniorLoanEtf4wChange) ? seniorLoanEtf4wChange : null,
     seniorLoanEtfUpdatedAt,
+    intervalFundNavPrice: Number.isFinite(intervalFundNavPrice) ? intervalFundNavPrice : null,
+    intervalFundNav4wChange: Number.isFinite(intervalFundNav4wChange) ? intervalFundNav4wChange : null,
+    intervalFundNavUpdatedAt,
+    intervalFundNavSymbol,
+    intervalFundNavStatus,
     hyOas: Number.isFinite(hyOas) ? hyOas : null,
     igOas: Number.isFinite(igOas) ? igOas : null,
     igOasUpdatedAt,
@@ -4799,11 +4841,11 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
     cdxHyStatus: status.cdxHy,
     cdxIgStatus: status.cdxIg,
     privateCreditMarksStatus: 'manual_required',
-    privateCreditProxyRegime: classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, hyOas),
+    privateCreditProxyRegime: classifyPrivateCreditProxyRegimeExpanded(bdcEtf4wChange, pbdcEtf4wChange, seniorLoanEtf4wChange, intervalFundNav4wChange, hyOas),
     sourceStatus: status,
-    updatedAt: latestIsoDate(bdcEtfUpdatedAt, pbdcEtfUpdatedAt, seniorLoanEtfUpdatedAt, igOasUpdatedAt, cdxHyUpdatedAt, cdxIgUpdatedAt, fallback.updatedAt),
+    updatedAt: latestIsoDate(bdcEtfUpdatedAt, pbdcEtfUpdatedAt, seniorLoanEtfUpdatedAt, intervalFundNavUpdatedAt, igOasUpdatedAt, cdxHyUpdatedAt, cdxIgUpdatedAt, fallback.updatedAt),
     source: PRIVATE_CREDIT_PROXY_SOURCE,
-    notes: ['BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；HY/IG OAS 为 FRED cash-bond spread proxy；ICE CDX 为公开 EOD settlement price；私募信用 marks 仍保留 manual/licensed 插槽。']
+    notes: ['BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；CCLFX 为公开 interval-fund NAV proxy；HY/IG OAS 为 FRED cash-bond spread proxy；ICE CDX 为公开 EOD settlement price；私募信用 marks 仍保留 manual/licensed 插槽。']
   };
 }
 

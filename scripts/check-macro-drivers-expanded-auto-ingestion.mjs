@@ -103,9 +103,9 @@ if (isPlainObject(policy)) {
 const privateCredit = macroDrivers?.privateCreditProxy;
 assertLayer('macroDrivers.privateCreditProxy', privateCredit);
 if (isPlainObject(privateCredit)) {
-  assertFiniteOrNull(privateCredit, 'macroDrivers.privateCreditProxy', ['bdcEtfPrice', 'bdcEtf4wChange', 'pbdcEtfPrice', 'pbdcEtf4wChange', 'seniorLoanEtfPrice', 'seniorLoanEtf4wChange', 'hyOas', 'igOas', 'igMinusHyOas', 'cdxHyPrice', 'cdxIgPrice']);
-  assertStatusKeys(privateCredit, 'macroDrivers.privateCreditProxy', ['bdcEtf', 'pbdcEtf', 'seniorLoanEtf', 'hyOas', 'igOas', 'cdxHy', 'cdxIg', 'privateCreditMarks']);
-  if (privateCredit.source !== 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public') fail('macroDrivers.privateCreditProxy.source is not the approved M-81 source string');
+  assertFiniteOrNull(privateCredit, 'macroDrivers.privateCreditProxy', ['bdcEtfPrice', 'bdcEtf4wChange', 'pbdcEtfPrice', 'pbdcEtf4wChange', 'seniorLoanEtfPrice', 'seniorLoanEtf4wChange', 'intervalFundNavPrice', 'intervalFundNav4wChange', 'hyOas', 'igOas', 'igMinusHyOas', 'cdxHyPrice', 'cdxIgPrice']);
+  assertStatusKeys(privateCredit, 'macroDrivers.privateCreditProxy', ['bdcEtf', 'pbdcEtf', 'seniorLoanEtf', 'intervalFundNav', 'hyOas', 'igOas', 'cdxHy', 'cdxIg', 'privateCreditMarks']);
+  if (privateCredit.source !== 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; Yahoo:CCLFX; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public') fail('macroDrivers.privateCreditProxy.source is not the approved M-83 source string');
 }
 
 const consumerRetail = macroDrivers?.consumerRetail;
@@ -141,6 +141,7 @@ const requiredRunDailyMarkers = [
   "fetchYahooChartQuote('BIZD', '1mo', '1d')",
   "fetchYahooChartQuote('PBDC', '1mo', '1d')",
   "fetchYahooChartQuote('SRLN', '1mo', '1d')",
+  "fetchYahooChartQuote('CCLFX', '1mo', '1d')",
   'fetchIceCdxIndexSettlements',
   'ICE_CDX_INDEX_SETTLEMENT_URL',
   "fetchFredSeries('BAMLC0A0CM', 30)",
@@ -187,6 +188,7 @@ const requiredRenderMarkers = [
   'BIZD',
   'PBDC',
   'SRLN',
+  'CCLFX',
   'ICE CDX',
   'IG OAS',
   'Redbook public HTML'
@@ -220,6 +222,7 @@ for (const marker of [
   'BIZD',
   'PBDC',
   'SRLN',
+  'CCLFX',
   'ICE:CDX-index-settlement-public'
 ]) {
   if (!dataContractText.includes(marker)) fail(`DATA_CONTRACT missing M-74 marker: ${marker}`);
@@ -237,5 +240,5 @@ if (errors.length > 0) {
 console.log(
   'Expanded macro-driver auto-ingestion check: PASS ' +
   `(BDTI=${freight.balticDirtyTankerIndex}, ZQ=${policy.fedFundsFutureImpliedRate}, ` +
-  `dot=${policy.dotPlotMedianCurrentYear}, minutes=${policy.minutesPolicyTone}, BIZD=${privateCredit.bdcEtfPrice}, CDXHY=${privateCredit.cdxHyPrice})`
+  `dot=${policy.dotPlotMedianCurrentYear}, minutes=${policy.minutesPolicyTone}, BIZD=${privateCredit.bdcEtfPrice}, CCLFX=${privateCredit.intervalFundNavPrice}, CDXHY=${privateCredit.cdxHyPrice})`
 );

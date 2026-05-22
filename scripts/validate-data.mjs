@@ -92,7 +92,7 @@ const FED_FUNDS_FUTURES_CURVE_STATUSES = new Set(['live_proxy_curve', 'fallback_
 const SOFR_FUTURES_CURVE_STATUSES = new Set(['live_proxy_curve', 'fallback_proxy_curve', 'missing']);
 const OIS_FORWARD_CURVE_STATUSES = new Set(['live_public_curve', 'fallback_public_curve', 'missing']);
 const PRIVATE_CREDIT_PROXY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'manual_required']);
-const VALID_PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public';
+const VALID_PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; Yahoo:CCLFX; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public';
 const VALID_PRIVATE_CREDIT_PROXY_REGIMES = new Set(['压力上升', '观察', '平稳', '未知']);
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
@@ -863,27 +863,29 @@ function validateMacroDriversPrivateCreditProxy(dataPayload) {
   const proxy = dataPayload?.macroDrivers?.privateCreditProxy;
   if (proxy === undefined) return;
   assertPlainObject(proxy, 'macroDrivers.privateCreditProxy');
-  for (const key of ['bdcEtfPrice', 'bdcEtf4wChange', 'pbdcEtfPrice', 'pbdcEtf4wChange', 'seniorLoanEtfPrice', 'seniorLoanEtf4wChange', 'hyOas', 'igOas', 'igMinusHyOas', 'cdxHyPrice', 'cdxIgPrice']) {
+  for (const key of ['bdcEtfPrice', 'bdcEtf4wChange', 'pbdcEtfPrice', 'pbdcEtf4wChange', 'seniorLoanEtfPrice', 'seniorLoanEtf4wChange', 'intervalFundNavPrice', 'intervalFundNav4wChange', 'hyOas', 'igOas', 'igMinusHyOas', 'cdxHyPrice', 'cdxIgPrice']) {
     assert(Object.hasOwn(proxy, key), `macroDrivers.privateCreditProxy.${key} is missing`);
     assert(isFiniteNumberOrNull(proxy[key]), `macroDrivers.privateCreditProxy.${key} must be finite number or null`);
   }
   validateNullableIsoString(proxy.bdcEtfUpdatedAt, 'macroDrivers.privateCreditProxy.bdcEtfUpdatedAt');
   validateNullableIsoString(proxy.pbdcEtfUpdatedAt, 'macroDrivers.privateCreditProxy.pbdcEtfUpdatedAt');
   validateNullableIsoString(proxy.seniorLoanEtfUpdatedAt, 'macroDrivers.privateCreditProxy.seniorLoanEtfUpdatedAt');
+  validateNullableIsoString(proxy.intervalFundNavUpdatedAt, 'macroDrivers.privateCreditProxy.intervalFundNavUpdatedAt');
+  assertString(proxy.intervalFundNavSymbol, 'macroDrivers.privateCreditProxy.intervalFundNavSymbol');
   validateNullableIsoString(proxy.igOasUpdatedAt, 'macroDrivers.privateCreditProxy.igOasUpdatedAt');
   validateNullableString(proxy.cdxHyInstrument, 'macroDrivers.privateCreditProxy.cdxHyInstrument');
   validateNullableString(proxy.cdxIgInstrument, 'macroDrivers.privateCreditProxy.cdxIgInstrument');
   validateNullableIsoString(proxy.cdxHyUpdatedAt, 'macroDrivers.privateCreditProxy.cdxHyUpdatedAt');
   validateNullableIsoString(proxy.cdxIgUpdatedAt, 'macroDrivers.privateCreditProxy.cdxIgUpdatedAt');
   validateNullableIsoString(proxy.updatedAt, 'macroDrivers.privateCreditProxy.updatedAt');
-  for (const key of ['cdxHyStatus', 'cdxIgStatus', 'privateCreditMarksStatus']) {
+  for (const key of ['intervalFundNavStatus', 'cdxHyStatus', 'cdxIgStatus', 'privateCreditMarksStatus']) {
     assertString(proxy[key], `macroDrivers.privateCreditProxy.${key}`);
     assert(PRIVATE_CREDIT_PROXY_SOURCE_STATUSES.has(proxy[key]), `macroDrivers.privateCreditProxy.${key} is not supported`);
   }
   assertString(proxy.privateCreditProxyRegime, 'macroDrivers.privateCreditProxy.privateCreditProxyRegime');
   assert(VALID_PRIVATE_CREDIT_PROXY_REGIMES.has(proxy.privateCreditProxyRegime), 'macroDrivers.privateCreditProxy.privateCreditProxyRegime is not supported');
   assertPlainObject(proxy.sourceStatus, 'macroDrivers.privateCreditProxy.sourceStatus');
-  for (const key of ['bdcEtf', 'pbdcEtf', 'seniorLoanEtf', 'hyOas', 'igOas', 'cdxHy', 'cdxIg', 'privateCreditMarks']) {
+  for (const key of ['bdcEtf', 'pbdcEtf', 'seniorLoanEtf', 'intervalFundNav', 'hyOas', 'igOas', 'cdxHy', 'cdxIg', 'privateCreditMarks']) {
     assert(Object.hasOwn(proxy.sourceStatus, key), `macroDrivers.privateCreditProxy.sourceStatus.${key} is missing`);
     assert(PRIVATE_CREDIT_PROXY_SOURCE_STATUSES.has(proxy.sourceStatus[key]), `macroDrivers.privateCreditProxy.sourceStatus.${key} is not supported`);
   }
