@@ -31,7 +31,7 @@
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-86V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-87V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -101,6 +101,7 @@
 - M-84 后,`macroDrivers.commercialRealEstate.creLoanBalance` 可读取 FRED `CREACBW027SBOG` public weekly aggregate bank CRE loan balance / exposure stock proxy。该字段仍为 audit-only/display-only;不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得写成 non-public CRE loan tape、private CRE marks、loan-level exposure、CDX 或 私募信贷数据。
 - M-85 后,`brentPricingLayer.eiaBrentSpotProxy` 可读取 EIA Europe Brent Spot Price FOB public HTML (`RBRTE`)。该字段仍为 audit-only/display-only;不得接入 `values.brent`、Brent promotion、scoring、decisionModel、executionLock、positionGuidance、Action Queue、Trigger Monitor 或 Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得写成 Platts Dated Brent、正式 Dated Brent 或实物现货成交证据。
 - M-86 后,Macro Overview 前端必须把已接入的公开代理覆盖与正式/非公开源边界分开显示：`coverageNotes` 可说明 EIA/ICE/StockQ/ZQ/SR3/OIS/CDX/CRE/public retail 等公开代理已覆盖，`missingEvidence` 只保留真正未刷到的公开数据或 World Order 外部源限制；不得把 live public proxy 重新渲染成“缺失证据”，也不得把正式源边界写成高确定性真实源。
+- M-87 后,缺失源的 `null` / `undefined` / empty string 不得在 Brent display 或 cross-validation evidence 中被 `Number(...)` 隐式转成 `0.00` / `+0.0bp`;`check:null-zero-display-guards` 必须保留在 frontend visual suite 中。
 - World Order 外部数据刷新应先手动观察，再考虑 scheduled workflow；不要把 `build:world-order` 加入 `check:all`，H-4 的 `review:world-order` 只是本地只读人工审阅 helper。
 - World Order 新外部源不得直接进入 scoring；必须先通过 diagnosis / source review，再另开版本接入。
 - ReliefWeb 或任何新外部源不得直接进入 scoring；必须先通过 diagnosis / review，再另开 integration version。

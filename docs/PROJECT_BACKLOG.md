@@ -8,8 +8,8 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 | 项 | 当前值 |
 |---|---|
-| 当前生产状态 | v28.0M-86 frontend public proxy coverage semantics |
-| Cache version | `28.0M-86V` |
+| 当前生产状态 | v28.0M-87 null-zero display guards |
+| Cache version | `28.0M-87V` |
 | check:all 项数 | 23 top-level suites |
 | 最后审计日期 | 2026-05-22 |
 | 主 runtime | Worker-first `/market.worker-preview.json` |
@@ -78,6 +78,7 @@ Recent completed context only; full milestone archive is [MILESTONE_INDEX.md](MI
 
 | Milestone | 一句话 |
 |---|---|
+| M-87 | Null-to-zero display guards prevent missing sources from rendering as `0.00` or `+0.0bp`. |
 | M-86 | Macro Overview separates public proxy coverage from formal / non-public boundary notes. |
 | M-85 | EIA Europe Brent Spot Price FOB public HTML proxy added to `brentPricingLayer`. |
 | M-84 | FRED aggregate bank CRE loan balance proxy added to `commercialRealEstate`. |
@@ -109,6 +110,7 @@ Compact current audit trail:
 
 | Date | Scope | Outcome |
 |---|---|---|
+| 2026-05-22 | M-87 null-zero display guards | Missing Brent / repo source values stay missing instead of rendering as zero. |
 | 2026-05-22 | M-74 to M-86 macro public-source and frontend display work | Public proxies connected and displayed; formal/non-public boundaries preserved. |
 | 2026-05-22 | M-75 check-suite compaction | Top-level `check:all` reduced to 23 suites; atomic checks retained. |
 | 2026-05-20 to 2026-05-21 | M-67 to M-73 macro-driver and Brent source review | Employment, consumer retail, CRE, BGCR/TGCR, ISM PMI and Brent source-review tracks advanced. |

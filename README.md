@@ -21,13 +21,13 @@ Global Financial Risk Radar 是一个静态部署的宏观风险驾驶舱。它�
 |---|---|
 | 公开页面标签 | `v28.0C` |
 | 稳定观察基线 | `v28.0J` |
-| 前端资源版本 | `28.0M-86V` |
+| 前端资源版本 | `28.0M-87V` |
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |
 | Node.js | 24 LTS |
 | 完整检查 | `npm run check:all` |
 
-当前 M-series 摘要: M-86 已把 Macro Overview 中的 live public proxy coverage 与 formal / non-public source boundary notes 分开;`missingEvidence` 只用于实际缺失的公开数据或 World Order source limitation。M-85 已把 EIA Europe Brent Spot Price FOB public HTML proxy 接入 `brentPricingLayer.eiaBrentSpotProxy`,但不改变 `values.brent`、Brent promotion、scoring、decision、execution 或 position。
+当前 M-series 摘要: M-87 补上 null-to-zero display guards,防止缺失源被渲染成 `0.00` 或 `+0.0bp`;M-86 已把 Macro Overview 中的 live public proxy coverage 与 formal / non-public source boundary notes 分开;M-85 已把 EIA Europe Brent Spot Price FOB public HTML proxy 接入 `brentPricingLayer.eiaBrentSpotProxy`,但不改变 `values.brent`、Brent promotion、scoring、decision、execution 或 position。
 
 ## 运行结构
 
@@ -76,11 +76,11 @@ npm run check:workflows
 
 Frontend Asset Cache Busting 用于处理 Android Chrome cached old module graph。修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时,frontend asset cache version must be bumped when index.html or frontend JS changes。
 
-当前版本标记为 `v28.0M-86V`,前端入口也有 `__GFRR_FRONTEND_VERSION__`。Frontend Asset Version Bump Helper:
+当前版本标记为 `v28.0M-87V`,前端入口也有 `__GFRR_FRONTEND_VERSION__`。Frontend Asset Version Bump Helper:
 
 ```bash
-npm run bump:frontend-asset-version -- 28.0M-86V
-node scripts/bump-frontend-asset-version.mjs 28.0M-86V
+npm run bump:frontend-asset-version -- 28.0M-87V
+node scripts/bump-frontend-asset-version.mjs 28.0M-87V
 ```
 
 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` 或 `realtime/*.json` 时,通常不需要 bump 前端资源版本。

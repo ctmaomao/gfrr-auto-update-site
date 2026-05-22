@@ -4,7 +4,8 @@ const SUITES = {
   'frontend-visual-history': [
     'check:frontend-visual-m54',
     'check:frontend-visual-m55a',
-    'check:frontend-visual-m55b'
+    'check:frontend-visual-m55b',
+    'check:null-zero-display-guards'
   ],
   'external-ai': [
     'check:external-ai-manual-workflow',

@@ -49,6 +49,7 @@
     "check:modules": "node scripts/check-module-imports.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",
     "check:copy": "node scripts/check-copy-contract.mjs",
+    "check:null-zero-display-guards": "node --check scripts/check-null-zero-display-guards.mjs && node scripts/check-null-zero-display-guards.mjs",
     "check:node-runtime": "node --check scripts/check-node-runtime.mjs && node scripts/check-node-runtime.mjs",
     "check:workflows-node24-only": "node --check scripts/check-workflows-node24-only.mjs && node scripts/check-workflows-node24-only.mjs",
     "check:workflows": "node scripts/check-workflows.mjs",
