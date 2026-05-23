@@ -8,10 +8,10 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 | 项 | 当前值 |
 |---|---|
-| 当前生产状态 | v28.0M-90 backend/frontend coverage display patch |
-| Cache version | `28.0M-90V` |
+| 当前生产状态 | v28.0M-91 Market Pricing NDX/IXIC auxiliary implementation |
+| Cache version | `28.0M-91V` |
 | check:all 项数 | 23 top-level suites |
-| 最后审计日期 | 2026-05-22 |
+| 最后审计日期 | 2026-05-23 |
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |
 | 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
@@ -37,14 +37,7 @@ No active P1 item. ACLED/SIPRI/GDELT、Pages trigger coverage、World Order refr
 
 ### P2 Items
 
-#### P2-12: M-91 Market Pricing Temperature 扩展到 NDX/IXIC
-
-- 状态: source review + contract design; implementation not started.
-- 边界: 在 source review + contract review 完成并由 owner 拍板前,不接入 NDX (`^NDX`) 或 IXIC (`^IXIC`) 任何 fetcher、sanitizer、history write 或 metrics 计算路径;不改 Worker runtime;不改 displayInputsBaseline / effectiveDisplayInputs;不改 Brent promotion 或 scoring/decision/execution/position 主链。
-- 现状基线: Market Pricing Temperature 当前只覆盖 QQQ;Yahoo `^GSPC` 已在 secondary diagnostics 但状态为 `fallback_candidate_only`,未进入 metrics;NDX 和 IXIC 在 `data/market-pricing-history.json` 里仍为 `waiting_for_source`。
-- Source review 输出: `docs/MARKET_PRICING_NDX_IXIC_SOURCE_REVIEW_M91.md` 给出 7 个关键决策点的推荐答案与 M-91 implementation spec 草案。
-- Contract guard: `npm run check:market-pricing-ndx-ixic-source-review-design` 锁定当前阶段仍为 source-review-only,并确认 NDX/IXIC 未写入 history 或 metrics、未进入 Worker runtime。
-- 下一步: 等 owner review 决定是否进入独立 implementation PR;implementation 阶段必须另做 checker、cache bump、Playwright DOM verification 与 Yahoo Finance spot check。
+No active P2 item. M-91 / P2-12 implementation complete;history kept below in Section 3 and Section 5.
 
 ### P3 Items
 
@@ -80,6 +73,7 @@ Recent completed context only; full milestone archive is [MILESTONE_INDEX.md](MI
 
 | Milestone | 一句话 |
 |---|---|
+| M-91 / P2-12 | Market Pricing keeps QQQ primary and adds Yahoo `^NDX` / `^IXIC` as Daily/manual display-only auxiliary comparison metrics;Worker/scoring/decision boundaries unchanged. |
 | P2-11 | Backend/frontend coverage display completion merged to main; External AI raw runtime fields remain explicit ignore rather than frontend display. |
 | P2-10 | Macro driver card date rendering rechecked; employment / CRE frontend output is guarded against `undefined` / `NaN` / `Invalid Date` date text. |
 | M-87 | Null-to-zero display guards prevent missing sources from rendering as `0.00` or `+0.0bp`. |
@@ -99,7 +93,6 @@ Recent completed context only; full milestone archive is [MILESTONE_INDEX.md](MI
 
 ## Section 4 · Future Considerations
 
-- Market Pricing Temperature: extend beyond QQQ only after history and contract review.
 - Brent physical side: pursue formal Platts / ICE settlement only through a separate reviewed source contract.
 - Policy text: improve FOMC tone quality review without turning it into a decision engine.
 - Backtesting: replay historical narrative triggers around 2008 / 2020 / 2022.
@@ -114,6 +107,7 @@ Compact current audit trail:
 
 | Date | Scope | Outcome |
 |---|---|---|
+| 2026-05-23 | M-91 / P2-12 Market Pricing NDX/IXIC implementation | Yahoo `^NDX` / `^IXIC` added as Daily/manual auxiliary history + metrics;QQQ primary, SPX fallback, Worker/scoring/decision boundaries preserved;self-audit required by AGENTS.md Section 10 completed in delivery. |
 | 2026-05-22 | M-87 null-zero display guards | Missing Brent / repo source values stay missing instead of rendering as zero. |
 | 2026-05-22 | M-74 to M-86 macro public-source and frontend display work | Public proxies connected and displayed; formal/non-public boundaries preserved. |
 | 2026-05-22 | M-75 check-suite compaction | Top-level `check:all` reduced to 23 suites; atomic checks retained. |

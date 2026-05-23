@@ -2103,6 +2103,85 @@ transform: translateX(-50%);
   font-size: 18px;
   line-height: 1.2;
 }
+.market-temperature-auxiliary-section {
+  display: grid;
+  gap: 10px;
+  padding-top: 4px;
+}
+.market-temperature-auxiliary-heading {
+  margin: 0;
+  color: var(--paper-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  line-height: 1.4;
+}
+.market-temperature-auxiliary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.market-temperature-auxiliary-card {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--paper-line);
+  background: var(--paper-bg);
+}
+.market-temperature-auxiliary-role,
+.market-temperature-auxiliary-meta,
+.market-temperature-auxiliary-boundary,
+.market-temperature-auxiliary-progress {
+  margin: 0;
+  color: var(--paper-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.market-temperature-auxiliary-title {
+  margin: 0;
+  color: var(--paper-ink);
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+.market-temperature-auxiliary-zscore {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+}
+.market-temperature-auxiliary-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.market-temperature-auxiliary-metrics span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid var(--paper-line);
+}
+.market-temperature-auxiliary-metrics small {
+  color: var(--paper-muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.market-temperature-auxiliary-metrics strong {
+  color: var(--paper-ink);
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.15;
+}
 .market-temperature-history-range {
   margin: 0;
   color: var(--paper-muted);
@@ -3170,6 +3249,8 @@ code { color: var(--risk-red); }
   .editorial-market-temp-scale-track{grid-template-columns:1fr 1fr;border-radius:0}
   .editorial-market-temp-scale-segment:nth-child(2){border-right:0}
   .market-temperature-secondary-metrics{grid-template-columns:1fr}
+  .market-temperature-auxiliary-grid{grid-template-columns:1fr}
+  .market-temperature-auxiliary-metrics{grid-template-columns:1fr}
   .market-temperature-sparkline{grid-template-columns:repeat(7,minmax(38px,1fr));overflow-x:auto;-webkit-overflow-scrolling:touch}
 .card{padding:14px}
 .bullet-list{padding-left:18px}

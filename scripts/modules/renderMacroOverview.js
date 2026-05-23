@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-90V';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-90V';
-import { formatFiniteNumber } from './format.js?v=28.0M-90V';
+﻿import { $ } from './config.js?v=28.0M-91V';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-91V';
+import { formatFiniteNumber } from './format.js?v=28.0M-91V';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -9,6 +9,10 @@ const NO_HISTORY = '暂无历史对比';
 const MARKET_TEMPERATURE_WAITING_STATUS = '等待历史周线数据接入';
 const MARKET_TEMPERATURE_METRICS_PATH = 'data/market-pricing-metrics.json';
 const MARKET_TEMPERATURE_DISCLAIMER = '本数据为统计描述，不构成投资建议。';
+const AUXILIARY_MARKET_LABELS = {
+  ndx: '纳斯达克 100 — 横向对照',
+  ixic: '纳斯达克综合指数 — 广度参照',
+};
 
 // M-54: Narrative emoji prefix mapping for visual identification.
 const NARRATIVE_EMOJI = {
@@ -1407,6 +1411,36 @@ function getMetricRecords(metricsData) {
   return records;
 }
 
+function getAssetMetricContext(metricsData, assetKey) {
+  if (!isPlainObject(metricsData?.assets?.[assetKey])) return null;
+  const asset = metricsData.assets[assetKey];
+  const records = safeArray(asset.records).filter(isValidMetricRecord);
+  const progress = isPlainObject(asset.progress) ? asset.progress : {};
+  return {
+    assetKey,
+    symbol: typeof asset.symbol === 'string' ? asset.symbol : assetKey.toUpperCase(),
+    labelZh: typeof asset.labelZh === 'string' ? asset.labelZh : assetKey.toUpperCase(),
+    displayLabelZh: typeof asset.displayLabelZh === 'string' ? asset.displayLabelZh : AUXILIARY_MARKET_LABELS[assetKey] || assetKey.toUpperCase(),
+    role: typeof asset.role === 'string' ? asset.role : 'auxiliary_comparison',
+    status: typeof asset.status === 'string' ? asset.status : 'unknown',
+    sourceRecordsCount: Number.isFinite(Number(asset.sourceRecordsCount)) ? Number(asset.sourceRecordsCount) : records.length,
+    metricsRecordsCount: Number.isFinite(Number(asset.metricsRecordsCount)) ? Number(asset.metricsRecordsCount) : records.length,
+    progress: {
+      recordsCollected: Number.isFinite(Number(progress.recordsCollected)) ? Number(progress.recordsCollected) : 0,
+      recordsRequired: Number.isFinite(Number(progress.recordsRequired)) ? Number(progress.recordsRequired) : 60,
+      remainingRecords: Number.isFinite(Number(progress.remainingRecords)) ? Number(progress.remainingRecords) : null,
+    },
+    records,
+    latest: records[records.length - 1] || null,
+  };
+}
+
+function getAuxiliaryMarketPricingContexts(metricsData) {
+  return ['ndx', 'ixic']
+    .map((assetKey) => getAssetMetricContext(metricsData, assetKey))
+    .filter(Boolean);
+}
+
 function getZScoreRange(records) {
   const values = records.map((record) => finite(record.zScore)).filter((value) => value !== null);
   if (!values.length) return null;
@@ -2215,7 +2249,11 @@ function buildMarketTemperatureSummary(judgment, metricsData) {
   const latest = records[records.length - 1];
   if (latest) {
     const bucket = getMarketTemperatureBucketInfo(latest.zScore);
-    return `QQQ 最新周线 z-score 为 ${formatSignedDecimal(latest.zScore, 2)}，市场温度处于「${bucket.label}」；本区只展示统计描述，不进入评分或决策。`;
+    const auxiliaryCount = getAuxiliaryMarketPricingContexts(metricsData)
+      .filter((asset) => asset.records.length > 0 || asset.status === 'insufficient_history')
+      .length;
+    const auxiliaryText = auxiliaryCount > 0 ? 'NDX / IXIC 仅作为横向对照与广度参照。' : '';
+    return `QQQ 最新周线 z-score 为 ${formatSignedDecimal(latest.zScore, 2)}，市场温度处于「${bucket.label}」；${auxiliaryText}本区只展示统计描述，不进入评分或决策。`;
   }
   const status = judgment?.status || MARKET_TEMPERATURE_WAITING_STATUS;
   return `当前市场温度计仍处于${status}阶段；在 QQQ / Nasdaq 周线历史、60 周均值、标准差和 z-score 未形成前，不判断市场偏冷、正常、偏热或过热。`;
@@ -2289,6 +2327,52 @@ function appendMetricValue(root, label, value) {
   root.appendChild(item);
 }
 
+function appendAuxiliaryMarketTemperatureCard(root, asset) {
+  const card = document.createElement('article');
+  card.className = 'market-temperature-auxiliary-card';
+  card.setAttribute('data-market-temperature-auxiliary-asset', asset.assetKey);
+
+  appendText(card, 'span', 'market-temperature-auxiliary-role', 'AUXILIARY · DISPLAY ONLY');
+  appendText(card, 'h4', 'market-temperature-auxiliary-title', asset.displayLabelZh);
+
+  if (asset.latest) {
+    const bucket = getMarketTemperatureBucketInfo(asset.latest.zScore);
+    const bucketClass = `market-temperature-bucket-${bucket.key}`;
+    appendText(card, 'p', `market-temperature-auxiliary-zscore ${bucketClass}`, formatSignedDecimal(asset.latest.zScore, 2));
+    appendText(card, 'p', 'market-temperature-auxiliary-meta', `${asset.latest.date} · ${asset.latest.isoWeek} · ${asset.metricsRecordsCount} metric weeks`);
+
+    const metrics = document.createElement('div');
+    metrics.className = 'market-temperature-auxiliary-metrics';
+    appendMetricValue(metrics, 'Close', formatCurrency(asset.latest.close));
+    appendMetricValue(metrics, '60 周均值', formatCurrency(asset.latest.ma60));
+    appendMetricValue(metrics, '60 周标准差', formatCurrency(asset.latest.stdDev60));
+    card.appendChild(metrics);
+  } else {
+    const collected = asset.progress.recordsCollected || asset.sourceRecordsCount || 0;
+    const required = asset.progress.recordsRequired || 60;
+    appendText(card, 'p', 'market-temperature-auxiliary-progress', `累计 ${collected}/${required} 周`);
+    appendText(card, 'p', 'market-temperature-auxiliary-meta', asset.status === 'insufficient_history' ? 'insufficient_history' : asset.status);
+  }
+
+  appendText(card, 'p', 'market-temperature-auxiliary-boundary', '辅助对照，不计入主风险评分。');
+  root.appendChild(card);
+}
+
+function appendAuxiliaryMarketTemperature(rootEl, metricsData) {
+  const auxiliaryAssets = getAuxiliaryMarketPricingContexts(metricsData);
+  if (!auxiliaryAssets.length) return;
+
+  const section = document.createElement('div');
+  section.className = 'market-temperature-auxiliary-section';
+  appendText(section, 'p', 'market-temperature-auxiliary-heading', 'AUXILIARY COMPARISON');
+
+  const grid = document.createElement('div');
+  grid.className = 'market-temperature-auxiliary-grid';
+  auxiliaryAssets.forEach((asset) => appendAuxiliaryMarketTemperatureCard(grid, asset));
+  section.appendChild(grid);
+  rootEl.appendChild(section);
+}
+
 export function renderMarketTemperatureCard(rootEl, metricsData, judgment = buildMarketTemperature()) {
   if (!rootEl) return;
   const records = getMetricRecords(metricsData);
@@ -2337,6 +2421,8 @@ export function renderMarketTemperatureCard(rootEl, metricsData, judgment = buil
     appendText(sparkline, 'span', `market-temperature-bucket-${classifyZScoreBucket(record.zScore)}`, formatSignedDecimal(record.zScore, 2));
   });
   rootEl.appendChild(sparkline);
+
+  appendAuxiliaryMarketTemperature(rootEl, metricsData);
 
   const sourceCommit = typeof metricsData?.sourceCommit === 'string' && metricsData.sourceCommit.trim()
     ? metricsData.sourceCommit.trim()

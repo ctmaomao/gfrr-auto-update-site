@@ -70,7 +70,8 @@ const SUITES = {
     'check:market-pricing-weekly-history-buildup',
     'check:market-pricing-metrics-calculation-scaffold',
     'check:market-pricing-temperature-display-activated',
-    'check:market-pricing-ndx-ixic-source-review-design',
+    'check:market-pricing-multi-asset',
+    'check:market-pricing-ndx-ixic-implementation',
     'check:market-pricing-first-fold-integration-and-cross-validation-matrix',
     'check:market-pricing-macrodrivers-surfacing'
   ],

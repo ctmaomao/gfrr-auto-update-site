@@ -3,6 +3,7 @@ import fs from 'node:fs';
 const CONTRACT_PATH = 'data/market-pricing-history.json';
 const EXPECTED_SCHEMA_VERSION = 'v28.0M-market-pricing-history-1';
 const REQUIRED_ASSETS = ['qqq', 'ndx', 'ixic', 'spx'];
+const DISPLAY_ONLY_HISTORY_STATUSES = new Set(['history_active_display_only']);
 const REQUIRED_TRUE_BOUNDARIES = [
   'noFetch',
   'noCalculation',
@@ -112,10 +113,11 @@ function validateEmptyAsset(key, asset, label) {
   }
 }
 
-function validateActiveAsset(key, asset) {
+function validateActiveAsset(key, asset, expectedStatus = 'active') {
   validateSharedAssetShape(key, asset);
   if (!isRecord(asset) || !Array.isArray(asset.records) || !isRecord(asset.coverage)) return;
 
+  assertEqual(asset.status, expectedStatus, `assets.${key}.status`);
   const records = asset.records;
   assert(records.length > 0, `assets.${key}.records.length must be greater than 0 when active`);
   assertEqual(records.length, asset.coverage.weeklyRows, `assets.${key}.records.length vs coverage.weeklyRows`);
@@ -157,6 +159,9 @@ function validateHasHistory(data) {
     if (asset?.status === 'active') {
       activeAssetCount += 1;
       validateActiveAsset(assetKey, asset);
+    } else if (DISPLAY_ONLY_HISTORY_STATUSES.has(asset?.status)) {
+      activeAssetCount += 1;
+      validateActiveAsset(assetKey, asset, asset.status);
     } else {
       validateEmptyAsset(assetKey, asset, 'has_history inactive asset');
     }
