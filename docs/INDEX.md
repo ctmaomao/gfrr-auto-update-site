@@ -38,7 +38,7 @@
 
 仅在对应 PR / 子系统范围内权威。**默认会话不应将其作为全项目规则。**
 
-### Market Pricing scope (M-14 → M-29)
+### Market Pricing scope (M-14 → M-91)
 
 - `docs/MARKET_PRICING_TEMPERATURE_DATA_SOURCE_DESIGN.md`
 - `docs/MARKET_PRICING_REAL_RECORD_CONTRACT_DESIGN.md` (尚未 production-enabled)
@@ -55,6 +55,7 @@
 - `docs/MARKET_PRICING_TEMPERATURE_DISPLAY.md` (M-27)
 - `docs/MARKET_PRICING_FIRST_FOLD_AND_CROSS_VALIDATION.md` (M-28)
 - `docs/MARKET_PRICING_MACRODRIVERS_SURFACING.md` (M-29)
+- `docs/MARKET_PRICING_NDX_IXIC_SOURCE_REVIEW_M91.md` (M-91 source review only)
 - `docs/CROSS_VALIDATION_EDUCATION_APPENDIX.md` (M-30)
 
 ### Editorial / Visual scope (M-31 → M-39)

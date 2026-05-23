@@ -37,14 +37,14 @@ No active P1 item. ACLED/SIPRI/GDELT、Pages trigger coverage、World Order refr
 
 ### P2 Items
 
-#### P2-11: Backend/frontend coverage display completion
+#### P2-12: M-91 Market Pricing Temperature 扩展到 NDX/IXIC
 
-- 状态: local presentation-only patch implemented; awaiting human review / commit.
-- 边界: 只补 `data/radar-data.json` 已有字段的前端展示与 checker;不改数据生成、不接新源、不加 provider/workflow、不改变 scoring/decision/execution/position。
-- Gap 清单: `dailyRealtimeInput.branch`, `dailyRealtimeInput.commitSha`, `dailyRealtimeInput.capturedAt`, `brentPricingLayer.ulsdSourceStatus`, `timeDimension.trend30d`, `transmissionDeltaMeta.source`, `transmissionDeltaMeta.matchedNodes`, `transmissionDeltaMeta.totalNodes`, `externalAiInterpretationLayer.provider`, `externalAiInterpretationLayer.inputSource`, `externalAiInterpretationLayer.sourceSemantics`, `externalAiInterpretationLayer.provenance`, `externalAiInterpretationLayer.auditFlags`.
-- 实施清单: data health 追加 Daily 输入 provenance;Brent 代理价差行追加 ULSD source status;30日时间维度趋势解释改为真实 `timeDimension.trend30d`;传导网络追加 delta metadata;External AI 这 5 个字段（provider / inputSource / sourceSemantics / provenance / auditFlags）按 External AI raw provenance display guard 显式 ignore,不直接前端展示;ignore 理由写入 `check-backend-frontend-coverage.mjs` 的 `IGNORED_BACKEND_FIELDS` 注释;unlock 需独立 reviewed PR + ADR;新增 `check:backend-frontend-coverage` 扫 `data/radar-data.json` 顶层和二级字段并要求前端引用或显式 ignore。
-- 验证路径: `npm run check:backend-frontend-coverage`, `npm run check:frontend-visual-history`, `npm run check:all`, Playwright DOM verification.
-- Self-audit history: 2026-05-23 self-audit: 初版误将本任务做成路线 2（直接展示 raw runtime metadata）,并放宽 `check-external-ai-frontend-hidden-scaffold` contract。已按 AGENTS.md Section 10 /goal review 守则回滚到路线 1。
+- 状态: source review + contract design; implementation not started.
+- 边界: 在 source review + contract review 完成并由 owner 拍板前,不接入 NDX (`^NDX`) 或 IXIC (`^IXIC`) 任何 fetcher、sanitizer、history write 或 metrics 计算路径;不改 Worker runtime;不改 displayInputsBaseline / effectiveDisplayInputs;不改 Brent promotion 或 scoring/decision/execution/position 主链。
+- 现状基线: Market Pricing Temperature 当前只覆盖 QQQ;Yahoo `^GSPC` 已在 secondary diagnostics 但状态为 `fallback_candidate_only`,未进入 metrics;NDX 和 IXIC 在 `data/market-pricing-history.json` 里仍为 `waiting_for_source`。
+- Source review 输出: `docs/MARKET_PRICING_NDX_IXIC_SOURCE_REVIEW_M91.md` 给出 7 个关键决策点的推荐答案与 M-91 implementation spec 草案。
+- Contract guard: `npm run check:market-pricing-ndx-ixic-source-review-design` 锁定当前阶段仍为 source-review-only,并确认 NDX/IXIC 未写入 history 或 metrics、未进入 Worker runtime。
+- 下一步: 等 owner review 决定是否进入独立 implementation PR;implementation 阶段必须另做 checker、cache bump、Playwright DOM verification 与 Yahoo Finance spot check。
 
 ### P3 Items
 
@@ -80,6 +80,7 @@ Recent completed context only; full milestone archive is [MILESTONE_INDEX.md](MI
 
 | Milestone | 一句话 |
 |---|---|
+| P2-11 | Backend/frontend coverage display completion merged to main; External AI raw runtime fields remain explicit ignore rather than frontend display. |
 | P2-10 | Macro driver card date rendering rechecked; employment / CRE frontend output is guarded against `undefined` / `NaN` / `Invalid Date` date text. |
 | M-87 | Null-to-zero display guards prevent missing sources from rendering as `0.00` or `+0.0bp`. |
 | M-86 | Macro Overview separates public proxy coverage from formal / non-public boundary notes. |
