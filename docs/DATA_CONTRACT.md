@@ -1,4 +1,4 @@
-﻿# Global Financial Risk Radar 数据契约说明
+# Global Financial Risk Radar 数据契约说明
 
 本文档定义 Global Financial Risk Radar 当前数据链路中的 canonical 字段、fallback 字段与验证/调试字段。后续升级应优先遵守这些契约，避免显示值、验证层、历史兼容字段被误用或误删。
 
