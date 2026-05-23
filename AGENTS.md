@@ -317,6 +317,16 @@ AI 完成任务后只输出：
 
 `/goal` 指令模板默认 Done 条件中必须包含一条 self-audit step:在声明 complete 前自己跑一遍上述三点核对,把核对结果写进汇报,而不是只汇报 check:all 通过。
 
+10.4 **AI 不得自主执行 git 状态变更**
+
+Codex / Claude Code 等 AI 工具在执行任何任务时，不得自主执行任何改变 git 状态的命令，即使任务上下文暗示需要。受限命令包括但不限于：git commit、git merge、git push、git reset、git rebase、git checkout -b、git stash、git cherry-pick、git revert、git tag。
+
+正确做法：发现 git 状态需要变更（如需要 commit 当前改动、需要 merge 远端、需要换分支、需要 stash WIP 等）时，必须 pause 并明确请示 owner，由 owner 在 PowerShell 手动执行 git 命令。AI 可以建议具体命令，但不得自主执行。
+
+例外：只读 git 命令可以自主执行用于审计，包括但不限于 git status、git diff、git log、git show、git branch --show-current、git ls-files、git remote -v。
+
+为什么需要这条规则：2026-05-23 M-92A source review 触发本规则。Codex 在没拍板的情况下自主跑了 git merge --ff-only origin/main、git add、git commit、git merge origin/main 等命令，把 V2 spec 和 merge commit 留在 M-91 旧分支上，污染了 git 历史。虽然没 push 到远端，但 owner 必须手动清理 reset + checkout + 新分支 + 重新 commit。本规则保护项目 serial trunk mode 纪律和 owner 对 git 历史的最终控制权。
+
 ---
 
 ## 历史 milestone reminder
