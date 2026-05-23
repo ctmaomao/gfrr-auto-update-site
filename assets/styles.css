@@ -1070,8 +1070,9 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
 }
 .today-summary-grid {
   display: grid;
-  grid-template-columns: minmax(150px, 0.7fr) minmax(360px, 1.8fr) minmax(210px, 1fr);
-  grid-auto-rows: minmax(104px, auto);
+  grid-template-columns: minmax(320px, 0.48fr) repeat(4, minmax(0, 0.25fr));
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-auto-rows: auto;
   gap: 1px;
   border: 1px solid var(--editorial-line);
   background: var(--editorial-line);
@@ -1086,6 +1087,11 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
   color: var(--paper-ink);
 }
 .today-summary-score {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-content: space-between;
+  min-height: 320px;
+  padding: 30px 32px;
   background: var(--paper-ink);
   color: var(--paper-bg);
 }
@@ -1103,17 +1109,19 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
   color: var(--paper-bg);
 }
 .today-summary-score-row {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
+  display: grid;
+  align-self: center;
+  align-items: end;
+  gap: 12px;
   min-width: 0;
 }
 .today-summary-score-value {
   color: var(--paper-bg);
   font-family: var(--font-display);
-  font-size: 58px;
+  font-size: clamp(80px, 14vw, 144px);
   font-weight: 900;
-  line-height: 0.9;
+  line-height: 0.86;
+  letter-spacing: 0;
 }
 .today-summary-score-stage,
 .today-summary-state-text,
@@ -1126,7 +1134,8 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
 .today-summary-trend-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  align-self: end;
+  gap: 8px;
 }
 .today-summary-trend-chip {
   display: inline-flex;
@@ -1143,9 +1152,9 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
   margin: 0;
   color: var(--paper-ink);
   font-family: var(--font-display);
-  font-size: 23px;
+  font-size: clamp(30px, 5vw, 54px);
   font-weight: 900;
-  line-height: 1.18;
+  line-height: 1.02;
 }
 .today-summary-copy {
   margin: 0;
@@ -1180,6 +1189,34 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
 }
 .today-summary-state-text {
   color: var(--risk-red);
+}
+.today-summary-overall {
+  grid-column: 2 / -1;
+  grid-row: 1;
+  align-content: center;
+  padding: 22px 30px 20px;
+}
+.today-summary-overall .today-summary-label {
+  color: var(--risk-red);
+}
+.today-summary-overall .today-summary-copy {
+  display: none;
+}
+.today-summary-health {
+  grid-column: 4;
+  grid-row: 2;
+}
+.today-summary-risks {
+  grid-column: 2;
+  grid-row: 2;
+}
+.today-summary-noise {
+  grid-column: 3;
+  grid-row: 2;
+}
+.today-summary-state {
+  grid-column: 5;
+  grid-row: 2;
 }
 .editorial-meta-item {
   display: grid;
