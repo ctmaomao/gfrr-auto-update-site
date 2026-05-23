@@ -1,4 +1,4 @@
-﻿import { $ } from './config.js?v=28.0M-91V';
+﻿import { $ } from './config.js?v=28.0M-92AV';
 
 export function renderList(id, items) {
   const root = $(id);

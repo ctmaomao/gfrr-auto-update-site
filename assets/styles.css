@@ -948,6 +948,10 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
+.macro-overview-block.macro-overview-hero.editorial-first-fold > h2,
+.macro-overview-block.macro-overview-hero.editorial-first-fold > .editorial-risk-overline {
+  display: none;
+}
 .editorial-risk-overline,
 .editorial-meta-label {
   margin: 0;
@@ -1063,6 +1067,119 @@ h1 { margin: 0; font-size: 56px; line-height: 1.05; }
   gap: 1px;
   border: 1px solid var(--editorial-line);
   background: var(--editorial-line);
+}
+.today-summary-grid {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.7fr) minmax(360px, 1.8fr) minmax(210px, 1fr);
+  grid-auto-rows: minmax(104px, auto);
+  gap: 1px;
+  border: 1px solid var(--editorial-line);
+  background: var(--editorial-line);
+}
+.today-summary-cell {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-width: 0;
+  padding: 12px 13px;
+  background: var(--paper-bg);
+  color: var(--paper-ink);
+}
+.today-summary-score {
+  background: var(--paper-ink);
+  color: var(--paper-bg);
+}
+.today-summary-label {
+  color: var(--paper-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+.today-summary-score .today-summary-label,
+.today-summary-score-stage {
+  color: var(--paper-bg);
+}
+.today-summary-score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+.today-summary-score-value {
+  color: var(--paper-bg);
+  font-family: var(--font-display);
+  font-size: 58px;
+  font-weight: 900;
+  line-height: 0.9;
+}
+.today-summary-score-stage,
+.today-summary-state-text,
+.today-summary-health-pill {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+.today-summary-trend-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.today-summary-trend-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--paper-line);
+  padding: 3px 6px;
+  color: var(--paper-bg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.today-summary-title {
+  margin: 0;
+  color: var(--paper-ink);
+  font-family: var(--font-display);
+  font-size: 23px;
+  font-weight: 900;
+  line-height: 1.18;
+}
+.today-summary-copy {
+  margin: 0;
+  color: var(--paper-warm);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.42;
+}
+.today-summary-list,
+.today-summary-update-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--paper-warm);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.38;
+}
+.today-summary-list li,
+.today-summary-update-list li {
+  min-width: 0;
+}
+.today-summary-health-pill {
+  color: var(--risk-green);
+}
+.today-summary-health.is-watch .today-summary-health-pill {
+  color: var(--risk-yellow);
+}
+.today-summary-health.is-degraded .today-summary-health-pill {
+  color: var(--risk-orange);
+}
+.today-summary-state-text {
+  color: var(--risk-red);
 }
 .editorial-meta-item {
   display: grid;
@@ -3263,6 +3380,41 @@ code { color: var(--risk-red); }
 }
 @media (max-width:520px){.dashboard-jump-nav a{flex-basis:auto}
 .table-wrap table{min-width:620px}
+}
+/* M-92A+ mobile first-fold compaction: desktop chrome selectors stay unchanged outside this bounded block. */
+@media (max-width:640px){
+.hero{gap:7px;padding:10px 12px 8px;margin-bottom:10px}
+.hero-masthead{gap:3px}
+.hero .eyebrow{font-size:10px;letter-spacing:0.18em;margin:0 0 2px}
+.hero h1{font-size:26px;line-height:1.05;gap:0;letter-spacing:0}
+.hero h1 small{font-size:9px;letter-spacing:0.08em;margin-top:2px}
+.hero .hero-subtitle,.hero-version{display:none}
+.hero-status{align-self:flex-start;width:auto;min-width:0;padding:4px 8px;font-size:10px;line-height:1.2;text-align:left}
+.dashboard-jump-nav{flex-wrap:nowrap;gap:10px;margin:8px 0 10px;padding:6px 0;max-height:72px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.dashboard-jump-nav a{flex:0 0 auto;white-space:nowrap;padding:4px 6px;font-size:10px;letter-spacing:0.08em}
+#macro-risk-overview.editorial-section{margin:10px 0 32px}
+#macro-risk-overview > .editorial-section-header{padding:8px 12px;margin-bottom:8px}
+#macro-risk-overview > .editorial-section-header .section-kicker{font-size:9px;letter-spacing:0.16em;line-height:1.15;margin-bottom:2px}
+#macro-risk-overview > .editorial-section-header .section-title{font-size:20px;line-height:1.05;letter-spacing:0;margin-bottom:2px}
+#macro-risk-overview > .editorial-section-header .section-note{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;line-height:1.25}
+.macro-overview-block.macro-overview-hero.editorial-first-fold{padding:8px;gap:0}
+.macro-overview-block.macro-overview-hero.editorial-first-fold h2,.macro-overview-block.macro-overview-hero.editorial-first-fold .editorial-risk-overline{display:none}
+.today-summary-grid{grid-template-columns:1fr;grid-auto-rows:auto;gap:0}
+.today-summary-cell{gap:3px;padding:5px 7px}
+.today-summary-label{font-size:9px;letter-spacing:0.08em;line-height:1.1}
+.today-summary-score{grid-template-columns:auto 1fr;align-items:center;gap:4px 8px}
+.today-summary-score .today-summary-label{grid-column:1 / -1}
+.today-summary-score-row{gap:6px}
+.today-summary-score-value{font-size:30px;line-height:0.9}
+.today-summary-score-stage,.today-summary-state-text,.today-summary-health-pill{font-size:14px;line-height:1.1}
+.today-summary-trend-row{justify-content:flex-start;gap:4px}
+.today-summary-trend-chip{padding:2px 4px;font-size:9px}
+.today-summary-title{font-size:15px;line-height:1.16}
+.today-summary-copy{font-size:10px;line-height:1.22}
+.today-summary-list,.today-summary-update-list{gap:1px;padding-left:15px;font-size:10px;line-height:1.2}
+.today-summary-update-list{display:none}
+.today-summary-list li{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.today-summary-overall .today-summary-copy,.today-summary-state .today-summary-copy{display:none}
 }
 
 /* 7B visual system font enforcement. */
