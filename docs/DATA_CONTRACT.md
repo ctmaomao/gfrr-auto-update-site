@@ -905,7 +905,7 @@ Data contract:
 - `data/market-pricing-metrics.json.assets.qqq` mirrors the top-level QQQ records with `role="primary"`.
 - `data/market-pricing-metrics.json.assets.ndx` uses `displayLabelZh="纳斯达克 100 — 横向对照"` and `role="auxiliary_comparison"`.
 - `data/market-pricing-metrics.json.assets.ixic` uses `displayLabelZh="纳斯达克综合指数 — 广度参照"` and `role="auxiliary_breadth_reference"`.
-- Auxiliary assets use the same 60-week rolling mean, sample standard deviation (`N-1`), uncapped z-score method as QQQ; if fewer than 60 weekly records exist, their status must be `insufficient_history` and the frontend must show cumulative progress.
+- Auxiliary assets use the same 60-week rolling mean, sample standard deviation (`N-1`), uncapped z-score method as QQQ, but each auxiliary z-score is computed independently from that asset's own weekly record series; NDX / IXIC must never reuse or mix QQQ's rolling window. If fewer than 60 weekly records exist, their status must be `insufficient_history` and the frontend must show cumulative progress.
 
 Boundaries:
 
