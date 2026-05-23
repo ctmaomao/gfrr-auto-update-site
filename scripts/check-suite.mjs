@@ -2,6 +2,8 @@ import { spawnSync } from 'node:child_process';
 
 const SUITES = {
   'frontend-visual-history': [
+    'check:today-summary-card-contract',
+    'check:mobile-first-fold-compaction',
     'check:frontend-visual-m54',
     'check:frontend-visual-m55a',
     'check:frontend-visual-m55b',
