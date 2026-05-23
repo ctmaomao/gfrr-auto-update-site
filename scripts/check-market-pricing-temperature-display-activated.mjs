@@ -75,6 +75,9 @@ for (const bucket of ['extreme-hot', 'hot', 'neutral', 'cold', 'extreme-cold']) 
   assert(renderSource.includes(bucket), `bucket return value ${bucket} must exist in render source`);
 }
 assert(renderSource.includes(DISCLAIMER), 'disclaimer string must be rendered by the market temperature card');
+assert(renderSource.includes('纳斯达克 100 — 横向对照'), 'NDX auxiliary label must be rendered');
+assert(renderSource.includes('纳斯达克综合指数 — 广度参照'), 'IXIC auxiliary label must be rendered');
+assert(renderSource.includes('AUXILIARY · DISPLAY ONLY'), 'auxiliary market temperature cards must be marked display-only');
 
 const { classifyZScoreBucket } = await import('./modules/renderMacroOverview.js');
 const bucketCases = [
@@ -110,6 +113,9 @@ assert(latestMetricDateTime <= Date.now() + 7 * 24 * 60 * 60 * 1000, `latestMetr
 // Validate structural plausibility instead of the old brittle exact 2.2456.
 assert(Number.isFinite(latestMetric.zScore), `latest QQQ zScore must be finite, got ${JSON.stringify(latestMetric.zScore)}`);
 assert(latestMetric.zScore >= -10 && latestMetric.zScore <= 10, `latest QQQ zScore must be within [-10, 10], got ${JSON.stringify(latestMetric.zScore)}`);
+assert(metrics.assets?.qqq?.role === 'primary', 'metrics.assets.qqq.role must remain primary');
+assert(metrics.assets?.ndx?.displayLabelZh === '纳斯达克 100 — 横向对照', 'metrics.assets.ndx display label must be auxiliary comparison');
+assert(metrics.assets?.ixic?.displayLabelZh === '纳斯达克综合指数 — 广度参照', 'metrics.assets.ixic display label must be breadth reference');
 
 assert(appSource.includes('data/market-pricing-metrics.json'), 'app.js must reference market pricing metrics data file');
 assert(appSource.includes('catch((error)') && appSource.includes('console.warn') && appSource.includes('return null'), 'app.js must keep metrics graceful degradation path');

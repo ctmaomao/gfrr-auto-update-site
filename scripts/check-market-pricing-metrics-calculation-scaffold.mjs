@@ -198,7 +198,7 @@ function assertPureReport() {
   assertEqual(report.boundaries?.noHistoryWrite, true, 'report boundaries.noHistoryWrite');
   assertEqual(report.boundaries?.noFrontendChange, true, 'report boundaries.noFrontendChange');
   assertEqual(report.boundaries?.calculationLayerActive, true, 'report boundaries.calculationLayerActive');
-  assertEqual(report.boundaries?.displayLayerActive, false, 'report boundaries.displayLayerActive');
+  assertEqual(report.boundaries?.displayLayerActive, true, 'report boundaries.displayLayerActive');
   assertProtectedFilesUnchanged(snapshot, 'buildMetricsCalculationReport dry-run');
 }
 

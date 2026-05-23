@@ -55,7 +55,7 @@
 - `docs/MARKET_PRICING_TEMPERATURE_DISPLAY.md` (M-27)
 - `docs/MARKET_PRICING_FIRST_FOLD_AND_CROSS_VALIDATION.md` (M-28)
 - `docs/MARKET_PRICING_MACRODRIVERS_SURFACING.md` (M-29)
-- `docs/MARKET_PRICING_NDX_IXIC_SOURCE_REVIEW_M91.md` (M-91 source review only)
+- `docs/MARKET_PRICING_NDX_IXIC_SOURCE_REVIEW_M91.md` (M-91 implementation reference; source review completed, implementation landed)
 - `docs/CROSS_VALIDATION_EDUCATION_APPENDIX.md` (M-30)
 
 ### Editorial / Visual scope (M-31 → M-39)

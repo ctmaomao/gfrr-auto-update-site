@@ -89,10 +89,10 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 |---|---|
 | **License** | 公开;非官方 API,需 User-Agent + Referer 头 |
 | **Quota** | 无明确限制,但建议 < 1 req/sec |
-| **Refresh 频率** | Realtime worker (high freq) + Daily pipeline 兜底 |
+| **Refresh 频率** | Realtime worker (high freq) + Daily pipeline 兜底；Market Pricing NDX/IXIC 仅走 Daily/manual history refresh |
 | **失败 fallback** | 失败时记录 `previewFetchStatus`,主 worker preview 不写入;前端通过 strict gate 回退 |
 | **影响 scoring?** | **仅 Brent**:Yahoo `BZ=F` 作为 Brent fresh confirmation(M-D-5+);**其他 secondary 不影响 scoring** |
-| **fetcher** | `workers/gfrr-realtime-worker/src/worker-market-preview.js` |
+| **fetcher** | Worker secondary: `workers/gfrr-realtime-worker/src/worker-market-preview.js`;Market Pricing NDX/IXIC: `scripts/market-pricing/ndx-ixic-yahoo-history-refresh.mjs` |
 
 **当前消费的 symbol**:
 
@@ -100,6 +100,8 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 |---|---|---|
 | `BZ=F` | Brent crude futures | Brent fresh confirmation (D-5),与 FRED + TE 取一致 |
 | `^GSPC` | S&P 500 index | secondary diagnostics only (不影响 scoring,M-E-4) |
+| `^NDX` | Nasdaq 100 index | `marketPricingHistory.assets.ndx` Daily/manual history refresh;QQQ primary 的辅助横向对照,不进 Worker/scoring |
+| `^IXIC` | Nasdaq Composite index | `marketPricingHistory.assets.ixic` Daily/manual history refresh;Nasdaq 广度参照,不进 Worker/scoring |
 | `^TNX` | US 10Y treasury yield | secondary diagnostics only;`rawValue > 20` 时按 `divide-by-10` 归一化 (E-3A) |
 | `GC=F` | Gold futures | secondary diagnostics only (E-1) |
 | `DX-Y.NYB` | DXY 美元指数 | secondary diagnostics only (E-2) |
@@ -379,6 +381,7 @@ documented attribution string and code is a contract violation.
 | `values.brent` | FRED `DCOILBRENTEU` (anchor) + Yahoo `BZ=F` (fresh confirmation) + TE (freshness gate) + D-6 extreme-move guard |
 | `brent public proxy candidates` | M-71 source-review only: EIA Europe Brent Spot Price FOB / ICE Brent futures curve / Baltic Exchange freight benchmarks / Freightos Baltic Index / future licensed S&P-Platts Dated Brent |
 | `values.vix` / `values.gold` / `values.dxy` / `values.us10y` / `values.spx` | 来自 GitHub realtime-data 或 displayInputsBaseline;**secondary preview 仅诊断,不覆盖** |
+| `marketPricingHistory.assets.ndx` / `marketPricingHistory.assets.ixic` | Yahoo chart `^NDX` / `^IXIC`;Daily/manual Market Pricing history only;display-only auxiliary,QQQ remains primary |
 | `macroDrivers.fedLiquidity` | FRED: DFF, SOFR, WRESBAL + NY Fed secured rates API: BGCR/TGCR (+ 派生 spreads) |
 | `macroDrivers.credit` | FRED: BAMLH0A0HYM2 (HY OAS), BAMLC0A0CM (IG OAS), DRTSCILM, DRTSCIS, NFCI |
 | `macroDrivers.consumer` | FRED: UMCSENT + ISM: Manufacturing PMI public report parser |

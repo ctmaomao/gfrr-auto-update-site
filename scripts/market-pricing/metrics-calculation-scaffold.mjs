@@ -1,8 +1,9 @@
 /*
  * v28.0M-26 Market Pricing Metrics Calculation Scaffold
  *
- * Reads weekly close records from data/market-pricing-history.json (asset=qqq)
- * and computes rolling 60-week MA, sample stdDev, and z-score per record.
+ * Reads weekly close records from data/market-pricing-history.json.
+ * QQQ remains the top-level backward-compatible primary asset; M-91 adds
+ * display-only auxiliary metrics under assets.ndx and assets.ixic.
  * Writes to data/market-pricing-metrics.json under two-stage manual confirmation.
  *
  * Stage 1 (default): --dry-run-calculate. Preview only. No file write.
@@ -20,7 +21,7 @@
  *   - Window size locked to 60 (rejects other values)
  *   - Output records correspond to source records 60..N (first 59 omitted)
  *   - Idempotent: same input -> identical output (except generatedAt and sourceCommit)
- *   - No frontend modification (that is M-27)
+ *   - No frontend modification performed by this script
  *   - No scoring, decision, execution, position change
  *
  * CI MUST NOT invoke --commit-metrics. The npm script is manual-only.
@@ -35,9 +36,32 @@ const ROOT = process.cwd();
 const DEFAULT_INPUT_HISTORY = 'data/market-pricing-history.json';
 const DEFAULT_OUTPUT_METRICS = 'data/market-pricing-metrics.json';
 const TARGET_ASSET = 'qqq';
+const AUXILIARY_ASSETS = ['ndx', 'ixic'];
+const SUPPORTED_ASSETS = [TARGET_ASSET, ...AUXILIARY_ASSETS];
 const WINDOW_SIZE = 60;
-const CONTRACT_VERSION = 'v28.0M-26-metrics-calculation-1';
+const CONTRACT_VERSION = 'v28.0M-91-multi-asset-metrics-1';
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const ASSET_DISPLAY = {
+  qqq: {
+    symbol: 'QQQ',
+    labelZh: '纳斯达克100 ETF',
+    displayLabelZh: 'QQQ primary',
+    role: 'primary'
+  },
+  ndx: {
+    symbol: 'NDX',
+    labelZh: '纳斯达克100指数',
+    displayLabelZh: '纳斯达克 100 — 横向对照',
+    role: 'auxiliary_comparison'
+  },
+  ixic: {
+    symbol: 'IXIC',
+    labelZh: '纳斯达克综合指数',
+    displayLabelZh: '纳斯达克综合指数 — 广度参照',
+    role: 'auxiliary_breadth_reference'
+  }
+};
 
 const SANITY_CHECKS = [
   'sanity check 1: history_file_valid_json',
@@ -236,45 +260,7 @@ function readHistory(inputHistoryPath, inputHistoryDisplay) {
   }
 }
 
-function validateHistoryForMetrics(history, asset, windowSize) {
-  if (!isRecord(history)) {
-    return {
-      ok: false,
-      failedCheck: 1,
-      exitCode: 11,
-      reason: 'history_file_not_valid_json'
-    };
-  }
-
-  if (history.status !== 'has_history') {
-    return {
-      ok: false,
-      failedCheck: 2,
-      exitCode: 12,
-      reason: `history_state_not_ready: got ${history.status}`
-    };
-  }
-
-  const targetAsset = history.assets?.[asset];
-  if (!isRecord(targetAsset) || targetAsset.status !== 'active') {
-    return {
-      ok: false,
-      failedCheck: 3,
-      exitCode: 13,
-      reason: `asset_not_active: ${asset}`
-    };
-  }
-
-  const records = Array.isArray(targetAsset.records) ? targetAsset.records : [];
-  if (records.length < windowSize) {
-    return {
-      ok: false,
-      failedCheck: 4,
-      exitCode: 14,
-      reason: `insufficient_records_for_window: got ${records.length}, need >= ${windowSize}`
-    };
-  }
-
+function validateRecordSeries(records) {
   const seenDates = new Set();
   const seenWeeks = new Set();
   for (let index = 0; index < records.length; index += 1) {
@@ -322,10 +308,75 @@ function validateHistoryForMetrics(history, asset, windowSize) {
     }
   }
 
+  return { ok: true };
+}
+
+function expectedHistoryStatus(asset) {
+  return asset === TARGET_ASSET ? 'active' : 'history_active_display_only';
+}
+
+function validateAssetForMetrics(history, asset, windowSize, { allowInsufficientHistory = false } = {}) {
+  const targetAsset = history.assets?.[asset];
+  const expectedStatus = expectedHistoryStatus(asset);
+  if (!isRecord(targetAsset) || targetAsset.status !== expectedStatus) {
+    return {
+      ok: false,
+      failedCheck: 3,
+      exitCode: 13,
+      reason: `asset_not_ready: ${asset}`
+    };
+  }
+
+  const records = Array.isArray(targetAsset.records) ? targetAsset.records : [];
+  const validation = validateRecordSeries(records);
+  if (!validation.ok) return validation;
+
+  if (records.length < windowSize) {
+    if (allowInsufficientHistory) {
+      return {
+        ok: true,
+        insufficientHistory: true,
+        records,
+        historyAsset: targetAsset
+      };
+    }
+
+    return {
+      ok: false,
+      failedCheck: 4,
+      exitCode: 14,
+      reason: `insufficient_records_for_window: got ${records.length}, need >= ${windowSize}`
+    };
+  }
+
   return {
     ok: true,
-    records
+    insufficientHistory: false,
+    records,
+    historyAsset: targetAsset
   };
+}
+
+function validateHistoryForMetrics(history, asset, windowSize) {
+  if (!isRecord(history)) {
+    return {
+      ok: false,
+      failedCheck: 1,
+      exitCode: 11,
+      reason: 'history_file_not_valid_json'
+    };
+  }
+
+  if (history.status !== 'has_history') {
+    return {
+      ok: false,
+      failedCheck: 2,
+      exitCode: 12,
+      reason: `history_state_not_ready: got ${history.status}`
+    };
+  }
+
+  return validateAssetForMetrics(history, asset, windowSize);
 }
 
 export function computeRollingMetrics(records, windowSize = WINDOW_SIZE) {
@@ -356,6 +407,9 @@ export function computeRollingMetrics(records, windowSize = WINDOW_SIZE) {
 
 function rangeFor(records, key) {
   const values = records.map((record) => record[key]);
+  if (values.length === 0) {
+    return { min: null, max: null };
+  }
   return {
     min: round4(Math.min(...values)),
     max: round4(Math.max(...values))
@@ -383,11 +437,93 @@ function buildBoundaries() {
     noDecisionChange: true,
     notInvestmentAdvice: true,
     calculationLayerActive: true,
-    displayLayerActive: false,
+    displayLayerActive: true,
+    multiAssetAuxiliaryDisplayOnly: true,
     affectsScoring: false,
     affectsDecisionModel: false,
     affectsExecutionLock: false,
     affectsPositionGuidance: false
+  };
+}
+
+function buildInsufficientAssetMetrics(assetKey, records, historyAsset, windowSize) {
+  const display = ASSET_DISPLAY[assetKey];
+  return {
+    asset: assetKey,
+    symbol: historyAsset?.symbol || display.symbol,
+    labelZh: historyAsset?.labelZh || display.labelZh,
+    displayLabelZh: display.displayLabelZh,
+    role: display.role,
+    status: 'insufficient_history',
+    historyStatus: historyAsset?.status || null,
+    windowSize,
+    stdDevFormula: 'sample',
+    stdDevDivisor: 'N-1',
+    zScoreCapped: false,
+    sourceRecordsCount: records.length,
+    metricsRecordsCount: 0,
+    earliestMetricDate: null,
+    latestMetricDate: null,
+    ma60Range: { min: null, max: null },
+    stdDev60Range: { min: null, max: null },
+    zScoreRange: { min: null, max: null },
+    progress: {
+      recordsCollected: records.length,
+      recordsRequired: windowSize,
+      remainingRecords: Math.max(0, windowSize - records.length)
+    },
+    boundaries: buildBoundaries(),
+    records: []
+  };
+}
+
+function buildAssetMetrics(assetKey, history, windowSize, { allowInsufficientHistory = false } = {}) {
+  const validation = validateAssetForMetrics(history, assetKey, windowSize, { allowInsufficientHistory });
+  if (!validation.ok) {
+    return {
+      ok: false,
+      error: validation
+    };
+  }
+
+  if (validation.insufficientHistory) {
+    return {
+      ok: true,
+      metrics: buildInsufficientAssetMetrics(assetKey, validation.records, validation.historyAsset, windowSize)
+    };
+  }
+
+  const metricsRecords = computeRollingMetrics(validation.records, windowSize);
+  const display = ASSET_DISPLAY[assetKey];
+  return {
+    ok: true,
+    metrics: {
+      asset: assetKey,
+      symbol: validation.historyAsset?.symbol || display.symbol,
+      labelZh: validation.historyAsset?.labelZh || display.labelZh,
+      displayLabelZh: display.displayLabelZh,
+      role: display.role,
+      status: 'metrics_active_display_only',
+      historyStatus: validation.historyAsset?.status || null,
+      windowSize,
+      stdDevFormula: 'sample',
+      stdDevDivisor: 'N-1',
+      zScoreCapped: false,
+      sourceRecordsCount: validation.records.length,
+      metricsRecordsCount: metricsRecords.length,
+      earliestMetricDate: metricsRecords[0]?.date || null,
+      latestMetricDate: metricsRecords.at(-1)?.date || null,
+      ma60Range: rangeFor(metricsRecords, 'ma60'),
+      stdDev60Range: rangeFor(metricsRecords, 'stdDev60'),
+      zScoreRange: rangeFor(metricsRecords, 'zScore'),
+      progress: {
+        recordsCollected: validation.records.length,
+        recordsRequired: windowSize,
+        remainingRecords: 0
+      },
+      boundaries: buildBoundaries(),
+      records: metricsRecords
+    }
   };
 }
 
@@ -410,6 +546,10 @@ function buildMetricsOutput(report, generatedAt, sourceCommit) {
     ma60Range: report.ma60Range,
     stdDev60Range: report.stdDev60Range,
     zScoreRange: report.zScoreRange,
+    primaryAsset: TARGET_ASSET,
+    auxiliaryAssets: [...AUXILIARY_ASSETS],
+    assetOrder: [...SUPPORTED_ASSETS],
+    assets: cloneJson(report.assets),
     boundaries: buildBoundaries(),
     records: cloneJson(report.records)
   };
@@ -473,7 +613,27 @@ export function buildMetricsCalculationReport(options = {}) {
     });
   }
 
-  const metricsRecords = computeRollingMetrics(sanityResult.records, windowSize);
+  const assetMetrics = {};
+  for (const assetKey of SUPPORTED_ASSETS) {
+    const result = buildAssetMetrics(assetKey, historyRead.history, windowSize, {
+      allowInsufficientHistory: assetKey !== TARGET_ASSET
+    });
+    if (!result.ok) {
+      return buildFailure({
+        dryRun,
+        inputHistory: inputHistoryDisplay,
+        outputMetrics: outputMetricsDisplay,
+        asset: assetKey,
+        windowSize,
+        failedCheck: result.error.failedCheck,
+        exitCode: result.error.exitCode,
+        reason: result.error.reason
+      });
+    }
+    assetMetrics[assetKey] = result.metrics;
+  }
+
+  const metricsRecords = assetMetrics[TARGET_ASSET].records;
   const report = {
     ok: true,
     status: dryRun ? 'dry_run' : 'committed',
@@ -493,6 +653,10 @@ export function buildMetricsCalculationReport(options = {}) {
     ma60Range: rangeFor(metricsRecords, 'ma60'),
     stdDev60Range: rangeFor(metricsRecords, 'stdDev60'),
     zScoreRange: rangeFor(metricsRecords, 'zScore'),
+    primaryAsset: TARGET_ASSET,
+    auxiliaryAssets: [...AUXILIARY_ASSETS],
+    assetOrder: [...SUPPORTED_ASSETS],
+    assets: assetMetrics,
     boundaries: buildBoundaries(),
     records: metricsRecords,
     previewFirst3: metricsRecords.slice(0, 3),
@@ -527,6 +691,13 @@ function printDryRun(report) {
   console.log('Market pricing metrics calculation: DRY-RUN OK');
   console.log(`would_write_records=${report.metricsRecordsCount}`);
   console.log(`asset=${report.asset}`);
+  for (const assetKey of report.assetOrder || []) {
+    const metrics = report.assets?.[assetKey];
+    if (metrics) {
+      console.log(`${assetKey}_status=${metrics.status}`);
+      console.log(`${assetKey}_metrics_records=${metrics.metricsRecordsCount}`);
+    }
+  }
   console.log(`window_size=${report.windowSize}`);
   console.log(`earliest_metric_date=${report.earliestMetricDate}`);
   console.log(`latest_metric_date=${report.latestMetricDate}`);
@@ -543,6 +714,13 @@ function printCommitted(report) {
   console.log('Market pricing metrics calculation: COMMITTED');
   console.log(`wrote_records=${report.metricsRecordsCount}`);
   console.log(`asset=${report.asset}`);
+  for (const assetKey of report.assetOrder || []) {
+    const metrics = report.assets?.[assetKey];
+    if (metrics) {
+      console.log(`${assetKey}_status=${metrics.status}`);
+      console.log(`${assetKey}_metrics_records=${metrics.metricsRecordsCount}`);
+    }
+  }
   console.log(`window_size=${report.windowSize}`);
   console.log(`earliest_metric_date=${report.earliestMetricDate}`);
   console.log(`latest_metric_date=${report.latestMetricDate}`);
