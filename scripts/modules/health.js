@@ -1,5 +1,5 @@
-import { fmtNumSafe, riskColor, trendClass } from './config.js?v=28.0M-87V';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=28.0M-87V';
+import { fmtNumSafe, riskColor, trendClass } from './config.js?v=28.0M-90V';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=28.0M-90V';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
@@ -78,6 +78,7 @@ export function buildSourceSummary(sourceDetails = {}, sourceStatus = {}) {
 export function buildHealthDashboardModel(runtimeState) {
   const metadata = runtimeState.runtimeMetadata || {};
   const realtime = runtimeState.realtimePayload || null;
+  const dailyRealtimeInput = runtimeState.data?.dailyRealtimeInput || runtimeState.baseline?.dailyRealtimeInput || {};
   const workerCandidate = metadata.workerGeneratedCandidate || null;
   const healthScore = Number.isFinite(realtime?.healthScore) ? Math.round(realtime.healthScore) : null;
   const criticalMissing = Number.isFinite(realtime?.criticalMissing) ? realtime.criticalMissing : 0;
@@ -160,6 +161,9 @@ export function buildHealthDashboardModel(runtimeState) {
     flagsLabel: flags.join(' / '),
     criticalMissing,
     sourceSummaryLabel: sourceSummary.summaryLabel,
+    dailyInputBranch: dailyRealtimeInput.branch || '',
+    dailyInputCommitSha: dailyRealtimeInput.commitSha || '',
+    dailyInputCapturedAt: dailyRealtimeInput.capturedAt || '',
     issues: issues.length ? issues : ['实时数据状态健康。'],
     sourceLines: [
       ...sourceSummary.issueLines,

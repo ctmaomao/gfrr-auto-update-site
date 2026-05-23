@@ -302,8 +302,11 @@ function checkDailyBrief() {
     fail('daily-brief-section must exist');
     return;
   }
-  if (!isElementInside('method-evidence', 'daily-brief-section')) {
-    fail('daily-brief-section must live inside method-evidence as secondary evidence detail');
+  if (!isElementInside('detail-data', 'daily-brief-section')) {
+    fail('daily-brief-section must live inside detail-data as secondary evidence detail');
+  }
+  if (isElementInside('method-evidence', 'daily-brief-section')) {
+    fail('daily-brief-section must not be parsed inside method-evidence');
   }
   if (daily.tagName !== 'details') {
     fail('daily-brief-section must remain collapsible details');

@@ -1,12 +1,12 @@
-import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0M-87V';
-import { buildHealthDashboardModel } from './modules/health.js?v=28.0M-87V';
-import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0M-87V';
-import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0M-87V';
-import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderAiInterpretationLayer, renderDivergenceLayer, renderBrentPricingLayer, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0M-87V';
-import { renderExternalAiPanel } from './modules/renderExternalAi.js?v=28.0M-87V';
-import { renderMacroRiskOverview } from './modules/renderMacroOverview.js?v=28.0M-87V';
+import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0M-90V';
+import { buildHealthDashboardModel } from './modules/health.js?v=28.0M-90V';
+import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0M-90V';
+import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0M-90V';
+import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderAiInterpretationLayer, renderDivergenceLayer, renderBrentPricingLayer, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0M-90V';
+import { renderExternalAiPanel } from './modules/renderExternalAi.js?v=28.0M-90V';
+import { renderMacroRiskOverview } from './modules/renderMacroOverview.js?v=28.0M-90V';
 
-window.__GFRR_FRONTEND_VERSION__ = '28.0M-87V';
+window.__GFRR_FRONTEND_VERSION__ = '28.0M-90V';
 
 function fetchMarketPricingMetricsData() {
   return fetch('data/market-pricing-metrics.json', { cache: 'no-store' })
@@ -130,7 +130,7 @@ async function main() {
   $('transmission-speed').textContent = data.timeDimension.transmissionSpeed;
   $('transmission-acceleration').textContent = data.timeDimension.transmissionAcceleration;
   $('time-dominant-path').textContent = data.timeDimension.dominantPath;
-  $('trend-explanation').textContent = data.timeDimension.trendExplanation;
+  $('trend-explanation').textContent = `${data.timeDimension.trend30d || '趋势待确认'}（字段：timeDimension.trend30d）`;
 
   renderList('top-risks', data.topRisks);
   renderList('phase-signals', data.phaseSignals);
@@ -182,7 +182,7 @@ async function main() {
     renderLineChart('trend-chart-30d', history, { width: 980, height: 260, pad: { top: 18, right: 18, bottom: 34, left: 46 } });
   });
   renderNonCriticalSection('heatmap', () => renderHeatmap(data.heatmap));
-  renderNonCriticalSection('transmission', () => renderTransmission(data.transmissionChain));
+  renderNonCriticalSection('transmission', () => renderTransmission(data.transmissionChain, data.transmissionDeltaMeta));
   renderNonCriticalSection('execution-lock', () => renderExecutionLock(data.tradingSystem.executionLock));
   renderNonCriticalSection('signal-engine', () => renderSignalEngine(data.tradingSystem.signalEngine));
   renderNonCriticalSection('action-layer', () => renderActionLayer(data.tradingSystem.actionLayer));

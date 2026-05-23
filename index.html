@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 v28.0C</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=28.0M-87V" />
+  <link rel="stylesheet" href="assets/styles.css?v=28.0M-90V" />
   <style>
     .macro-overview-shell {
       display: grid;
@@ -742,6 +742,23 @@
                                   <div class="metric-value small" id="health-source-summary">--</div>
                                 </div>
                               </div>
+                              <div class="metric-row three">
+                                <div class="metric-box compact">
+                                  <div class="metric-label">Daily 输入分支</div>
+                                  <div class="metric-value small" id="daily-input-branch">--</div>
+                                  <div class="mini-delta">字段：dailyRealtimeInput.branch</div>
+                                </div>
+                                <div class="metric-box compact">
+                                  <div class="metric-label">Daily 输入提交</div>
+                                  <div class="metric-value small" id="daily-input-commit">--</div>
+                                  <div class="mini-delta">字段：dailyRealtimeInput.commitSha</div>
+                                </div>
+                                <div class="metric-box compact">
+                                  <div class="metric-label">Daily 捕获时间</div>
+                                  <div class="metric-value small" id="daily-input-captured-at">--</div>
+                                  <div class="mini-delta">字段：dailyRealtimeInput.capturedAt</div>
+                                </div>
+                              </div>
                               <div class="grid two-col health-dashboard-grid">
                                 <div>
                                   <h3>问题摘要</h3>
@@ -851,6 +868,7 @@
                                     <div class="metric-box compact trend-explainer">
                                       <div class="metric-label">趋势解释</div>
                                       <div class="metric-value small" id="trend-explanation">--</div>
+                                      <div class="mini-delta">字段：timeDimension.trend30d</div>
                                     </div>
                                     <div class="metric-box compact">
                                       <div class="metric-label">30日总变化</div>
@@ -952,6 +970,11 @@
                                   <div class="metric-label">主导资产影响</div>
                                   <div class="metric-value" id="chain-dominant-impact">--</div>
                                 </div>
+                              </div>
+                              <div class="metric-box compact">
+                                <div class="metric-label">传导 Δ 元数据</div>
+                                <div class="metric-value small" id="chain-delta-meta">--</div>
+                                <div class="mini-delta">字段：transmissionDeltaMeta.source / transmissionDeltaMeta.matchedNodes / transmissionDeltaMeta.totalNodes</div>
                               </div>
                               <div class="chain-flow" id="chain-flow"></div>
                               <div class="network-grid">
@@ -1082,143 +1105,6 @@
                             </article>
                           </section>
                           </details>
-          </div>
-        </details>
-      </section>
-      <section id="world-order-stress-section" class="editorial-section editorial-section-folded world-order-stress-section" style="--section-accent: var(--risk-orange);">
-        <header class="editorial-section-header">
-          <span class="section-kicker">REGIME OVERLAY</span>
-          <span class="section-title">世界秩序压力层</span>
-          <span class="section-note">World Order Stress 是 regime overlay / 结构性状态修正器，依据 ADR-0004 独立展示；它不是第七个底层风险模块，不参与 scoring、decision、execution 或 position guidance。</span>
-        </header>
-        <details class="editorial-folded-content">
-          <summary class="editorial-folded-summary">
-            <span class="fold-marker" aria-hidden="true"></span>
-            <span class="fold-label">展开世界秩序压力层</span>
-          </summary>
-          <div class="editorial-section-body">
-            <article class="card full-width-card">
-              <div class="card-head split-head">
-                <div>
-                  <h2>世界秩序压力层</h2>
-                  <p class="muted">和平红利退潮、阵营化与多战区风险监测</p>
-                </div>
-                <span class="badge neutral" id="world-order-state">加载中...</span>
-              </div>
-              <div class="grid world-order-grid">
-                <div>
-                  <div class="metric-row two">
-                    <div class="metric-box compact">
-                      <div class="metric-label">压力分数</div>
-                      <div class="metric-value" id="world-order-score">--</div>
-                      <div class="world-order-score-track" aria-label="世界秩序压力分数进度条">
-                        <div class="world-order-score-fill" id="world-order-score-bar"></div>
-                      </div>
-                    </div>
-                    <div class="metric-box compact">
-                      <div class="metric-label">市场确认度</div>
-                      <div class="metric-value small" id="world-order-market-confirmation">--</div>
-                    </div>
-                  </div>
-                  <div class="metric-row two">
-                    <div class="metric-box compact">
-                      <div class="metric-label">置信度</div>
-                      <div class="metric-value" id="world-order-confidence">--</div>
-                    </div>
-                    <div class="metric-box compact">
-                      <div class="metric-label">数据质量</div>
-                      <div class="metric-value small" id="world-order-data-quality">--</div>
-                    </div>
-                  </div>
-                  <div class="metric-box compact" style="margin-top: 14px;">
-                    <div class="metric-label">置信度解释</div>
-                    <p class="muted" id="world-order-confidence-explanation">置信度反映当前外部数据完整度、数据新鲜度和市场确认一致性。</p>
-                  </div>
-                  <div class="metric-box compact" style="margin-top: 14px;">
-                    <div class="metric-label">更新时间</div>
-                    <div class="metric-value small" id="world-order-updated-at">--</div>
-                  </div>
-                  <div class="metric-box compact" style="margin-top: 14px;">
-                    <div class="metric-label">主导驱动</div>
-                    <div class="world-order-driver-list" id="world-order-dominant-drivers"></div>
-                  </div>
-                </div>
-                <div>
-                  <div class="metric-label">六维度观察</div>
-                  <div class="world-order-dimension-grid" id="world-order-dimensions"></div>
-                </div>
-              </div>
-              <div class="world-order-status-grid">
-                <div>
-                  <h3>数据源状态</h3>
-                  <ul class="bullet-list" id="world-order-source-status"></ul>
-                  <h3>当前数据限制</h3>
-                  <ul class="bullet-list" id="world-order-limitations"></ul>
-                </div>
-                <div>
-                  <h3>系统解读</h3>
-                  <p id="world-order-interpretation">世界秩序压力层数据加载中...</p>
-                  <h3>免责声明</h3>
-                  <ul class="bullet-list" id="world-order-warnings">
-                    <li>该模块用于结构性风险识别，不构成战争预测或投资建议。</li>
-                  </ul>
-                </div>
-              </div>
-            </article>
-          </div>
-        </details>
-      </section>
-      <section id="method-evidence" class="editorial-section editorial-section-folded evidence-detail-section" style="--section-accent: var(--paper-ink);">
-        <header id="advanced-audit" class="editorial-section-header">
-          <span class="section-kicker">METHOD / EVIDENCE / BOUNDARY</span>
-          <span class="section-title">方法说明</span>
-          <span class="section-note">本区说明本站如何把数据转化为结论、如何处理证据不足、反向证据和噪音，以及哪些内容不构成投资建议。</span>
-        </header>
-        <details class="editorial-folded-content">
-          <summary class="editorial-folded-summary">
-            <span class="fold-marker" aria-hidden="true"></span>
-            <span class="fold-label">展开方法说明</span>
-          </summary>
-          <div class="editorial-section-body">
-            <section class="editorial-method-grid" aria-label="方法、证据与边界说明">
-                      <article class="editorial-method-card" style="--method-card-accent: var(--paper-ink);">
-                        <p class="editorial-method-label">READING PATH</p>
-                        <h3 class="editorial-method-card-title">阅读路径</h3>
-                        <p>首页先给出结论，再说明原因、证据与展开详情，让原始材料留在次级阅读路径中。</p>
-                        <ul class="editorial-method-list">
-                          <li>结论 → 原因 → 证据 → 展开详情</li>
-                        </ul>
-                      </article>
-                      <article class="editorial-method-card" style="--method-card-accent: var(--paper-ink);">
-                        <p class="editorial-method-label">EVIDENCE LAYERS</p>
-                        <h3 class="editorial-method-card-title">证据分层</h3>
-                        <p>证据会按性质区分，避免把推断、假设或噪音包装成已验证事实。</p>
-                        <ul class="editorial-method-list compact">
-                          <li>已验证事实 / 数据推断 / 模型判断</li>
-                          <li>情景假设 / 数据不足 / 反向证据 / 噪音提示</li>
-                        </ul>
-                      </article>
-                      <article class="editorial-method-card editorial-method-boundary" style="--method-card-accent: var(--editorial-orange);">
-                        <p class="editorial-method-label">DATA BOUNDARY</p>
-                        <h3 class="editorial-method-card-title">数据边界</h3>
-                        <p>Market Pricing Temperature 已由本地 metrics 文件驱动；页面只读取统计结果并做分桶展示，不改变 scoring、decision、execution 或 position guidance。</p>
-                      </article>
-                      <article class="editorial-method-card" style="--method-card-accent: var(--paper-muted);">
-                        <p class="editorial-method-label">AI BOUNDARY</p>
-                        <h3 class="editorial-method-card-title">AI 边界</h3>
-                        <p>External AI 是只读辅助解释，不改变 scoring、decision、execution 或 position guidance。</p>
-                      </article>
-                      <article class="editorial-method-card" style="--method-card-accent: var(--risk-red);">
-                        <p class="editorial-method-label">NOT ADVICE</p>
-                        <h3 class="editorial-method-card-title">非投资建议</h3>
-                        <p>本站用于风险观察与证据整理，不构成投资建议，也不生成直接交易指令。</p>
-                      </article>
-                      <article class="editorial-method-card" style="--method-card-accent: var(--paper-ink);">
-                        <p class="editorial-method-label">GOVERNANCE</p>
-                        <h3 class="editorial-method-card-title">数据治理</h3>
-                        <p>Frontend display layer is read-only；本 PR 不改变 data pipeline、sanitizer、workflow 或 production data write 边界。</p>
-                      </article>
-                    </section>
                     <details class="editorial-subsection" id="daily-brief-section">
                             <summary><span class="subsection-meta">EVIDENCE TRAIL</span>Daily Brief 原始依据（可展开）<span class="summary-note">宏观风险判断总览是首页主判断；这里保留原始依据与来源细节。</span></summary>
                             <article class="card full-width-card">
@@ -1423,7 +1309,143 @@
                               <p class="muted" id="brent-pricing-boundary">该区域仅为 Brent 公开代理价格审计层，不改变 Brent 主值、评分、仓位、执行灯或交易建议。</p>
                             </article>
                           </details>
-
+          </div>
+        </details>
+      </section>
+      <section id="world-order-stress-section" class="editorial-section editorial-section-folded world-order-stress-section" style="--section-accent: var(--risk-orange);">
+        <header class="editorial-section-header">
+          <span class="section-kicker">REGIME OVERLAY</span>
+          <span class="section-title">世界秩序压力层</span>
+          <span class="section-note">World Order Stress 是 regime overlay / 结构性状态修正器，依据 ADR-0004 独立展示；它不是第七个底层风险模块，不参与 scoring、decision、execution 或 position guidance。</span>
+        </header>
+        <details class="editorial-folded-content">
+          <summary class="editorial-folded-summary">
+            <span class="fold-marker" aria-hidden="true"></span>
+            <span class="fold-label">展开世界秩序压力层</span>
+          </summary>
+          <div class="editorial-section-body">
+            <article class="card full-width-card">
+              <div class="card-head split-head">
+                <div>
+                  <h2>世界秩序压力层</h2>
+                  <p class="muted">和平红利退潮、阵营化与多战区风险监测</p>
+                </div>
+                <span class="badge neutral" id="world-order-state">加载中...</span>
+              </div>
+              <div class="grid world-order-grid">
+                <div>
+                  <div class="metric-row two">
+                    <div class="metric-box compact">
+                      <div class="metric-label">压力分数</div>
+                      <div class="metric-value" id="world-order-score">--</div>
+                      <div class="world-order-score-track" aria-label="世界秩序压力分数进度条">
+                        <div class="world-order-score-fill" id="world-order-score-bar"></div>
+                      </div>
+                    </div>
+                    <div class="metric-box compact">
+                      <div class="metric-label">市场确认度</div>
+                      <div class="metric-value small" id="world-order-market-confirmation">--</div>
+                    </div>
+                  </div>
+                  <div class="metric-row two">
+                    <div class="metric-box compact">
+                      <div class="metric-label">置信度</div>
+                      <div class="metric-value" id="world-order-confidence">--</div>
+                    </div>
+                    <div class="metric-box compact">
+                      <div class="metric-label">数据质量</div>
+                      <div class="metric-value small" id="world-order-data-quality">--</div>
+                    </div>
+                  </div>
+                  <div class="metric-box compact" style="margin-top: 14px;">
+                    <div class="metric-label">置信度解释</div>
+                    <p class="muted" id="world-order-confidence-explanation">置信度反映当前外部数据完整度、数据新鲜度和市场确认一致性。</p>
+                  </div>
+                  <div class="metric-box compact" style="margin-top: 14px;">
+                    <div class="metric-label">更新时间</div>
+                    <div class="metric-value small" id="world-order-updated-at">--</div>
+                  </div>
+                  <div class="metric-box compact" style="margin-top: 14px;">
+                    <div class="metric-label">主导驱动</div>
+                    <div class="world-order-driver-list" id="world-order-dominant-drivers"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="metric-label">六维度观察</div>
+                  <div class="world-order-dimension-grid" id="world-order-dimensions"></div>
+                </div>
+              </div>
+              <div class="world-order-status-grid">
+                <div>
+                  <h3>数据源状态</h3>
+                  <ul class="bullet-list" id="world-order-source-status"></ul>
+                  <h3>当前数据限制</h3>
+                  <ul class="bullet-list" id="world-order-limitations"></ul>
+                </div>
+                <div>
+                  <h3>系统解读</h3>
+                  <p id="world-order-interpretation">世界秩序压力层数据加载中...</p>
+                  <h3>免责声明</h3>
+                  <ul class="bullet-list" id="world-order-warnings">
+                    <li>该模块用于结构性风险识别，不构成战争预测或投资建议。</li>
+                  </ul>
+                </div>
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+      <section id="method-evidence" class="editorial-section editorial-section-folded evidence-detail-section" style="--section-accent: var(--paper-ink);">
+        <header id="advanced-audit" class="editorial-section-header">
+          <span class="section-kicker">METHOD / EVIDENCE / BOUNDARY</span>
+          <span class="section-title">方法说明</span>
+          <span class="section-note">本区说明本站如何把数据转化为结论、如何处理证据不足、反向证据和噪音，以及哪些内容不构成投资建议。</span>
+        </header>
+        <details class="editorial-folded-content">
+          <summary class="editorial-folded-summary">
+            <span class="fold-marker" aria-hidden="true"></span>
+            <span class="fold-label">展开方法说明</span>
+          </summary>
+          <div class="editorial-section-body">
+            <section class="editorial-method-grid" aria-label="方法、证据与边界说明">
+                      <article class="editorial-method-card" style="--method-card-accent: var(--paper-ink);">
+                        <p class="editorial-method-label">READING PATH</p>
+                        <h3 class="editorial-method-card-title">阅读路径</h3>
+                        <p>首页先给出结论，再说明原因、证据与展开详情，让原始材料留在次级阅读路径中。</p>
+                        <ul class="editorial-method-list">
+                          <li>结论 → 原因 → 证据 → 展开详情</li>
+                        </ul>
+                      </article>
+                      <article class="editorial-method-card" style="--method-card-accent: var(--paper-ink);">
+                        <p class="editorial-method-label">EVIDENCE LAYERS</p>
+                        <h3 class="editorial-method-card-title">证据分层</h3>
+                        <p>证据会按性质区分，避免把推断、假设或噪音包装成已验证事实。</p>
+                        <ul class="editorial-method-list compact">
+                          <li>已验证事实 / 数据推断 / 模型判断</li>
+                          <li>情景假设 / 数据不足 / 反向证据 / 噪音提示</li>
+                        </ul>
+                      </article>
+                      <article class="editorial-method-card editorial-method-boundary" style="--method-card-accent: var(--editorial-orange);">
+                        <p class="editorial-method-label">DATA BOUNDARY</p>
+                        <h3 class="editorial-method-card-title">数据边界</h3>
+                        <p>Market Pricing Temperature 已由本地 metrics 文件驱动；页面只读取统计结果并做分桶展示，不改变 scoring、decision、execution 或 position guidance。</p>
+                      </article>
+                      <article class="editorial-method-card" style="--method-card-accent: var(--paper-muted);">
+                        <p class="editorial-method-label">AI BOUNDARY</p>
+                        <h3 class="editorial-method-card-title">AI 边界</h3>
+                        <p>External AI 是只读辅助解释，不改变 scoring、decision、execution 或 position guidance。</p>
+                      </article>
+                      <article class="editorial-method-card" style="--method-card-accent: var(--risk-red);">
+                        <p class="editorial-method-label">NOT ADVICE</p>
+                        <h3 class="editorial-method-card-title">非投资建议</h3>
+                        <p>本站用于风险观察与证据整理，不构成投资建议，也不生成直接交易指令。</p>
+                      </article>
+                      <article class="editorial-method-card" style="--method-card-accent: var(--paper-ink);">
+                        <p class="editorial-method-label">GOVERNANCE</p>
+                        <h3 class="editorial-method-card-title">数据治理</h3>
+                        <p>Frontend display layer is read-only；本 PR 不改变 data pipeline、sanitizer、workflow 或 production data write 边界。</p>
+                      </article>
+                    </section>
           </div>
         </details>
       </section>
@@ -1746,6 +1768,6 @@
     </footer>
   </div>
 
-  <script type="module" src="scripts/app.js?v=28.0M-87V"></script>
+  <script type="module" src="scripts/app.js?v=28.0M-90V"></script>
 </body>
 </html>

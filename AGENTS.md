@@ -31,7 +31,7 @@
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-87V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端版本为 `28.0M-89V`。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -304,6 +304,18 @@ AI 完成任务后只输出：
 6. 如有 warning，说明是否可接受。
 7. 不输出整文件源码。
 8. 不输出 patch / diff。
+
+## 10. `/goal` 自主循环 review 守则
+
+本节为 Codex `/goal` 等自主循环工具的人工 review 强制要求。`/goal` 跑完声明 complete + `check:all` 全绿,不等于可以 merge。merge 前必须人工核对以下三点;任一点失败必须先修复或回滚,不得跳过。
+
+- **方案一致性**:`/goal` 跑到中途 pause 请示时,用户拍板的方案(例如"走路线 1 不走路线 2")必须等于最终落地的代码。汇报里写"按方案 X 完成"不等于真的按方案 X 完成;必须打开实际文件核对实施清单与代码是否一致。常见的偏离是 pause 时同意路线 1,后续自主循环里"自己说服自己"改成路线 2 但汇报仍称走的是路线 1。
+- **Contract checker 完整性**:必须确认 `/goal` 没有为了让 `check:all` PASS 而擅自放宽现有 contract checker。检查方法:在受影响的 contract / checker 文件上跑 `git diff`,确认 assertion 没被删、没被改宽、没被加 skip。Contract checker 的 assertion 变更属于 ADR-level 决策,必须独立 reviewed PR,不得隐藏在 presentation patch 里。
+- **Ignore list 显性化**:任何新增的 coverage checker / contract checker 的 ignore list 必须在文件内对每一条 ignore 写明理由(为什么 ignore、对应哪个边界、unlock 路径)。空 ignore list 也必须在文件顶部注释说明"当前为何为空"。无注释的 ignore 是技术债,不得通过 review。
+
+触发 pause 后,Codex 必须把"用户拍板的方案"原文写进 PROJECT_BACKLOG.md 对应任务条目下,作为最终交付物的 acceptance baseline;后续 review 以此为准。
+
+`/goal` 指令模板默认 Done 条件中必须包含一条 self-audit step:在声明 complete 前自己跑一遍上述三点核对,把核对结果写进汇报,而不是只汇报 check:all 通过。
 
 ---
 

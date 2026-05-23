@@ -5,6 +5,9 @@ const SUITES = {
     'check:frontend-visual-m54',
     'check:frontend-visual-m55a',
     'check:frontend-visual-m55b',
+    'check:macro-driver-date-rendering',
+    'check:detail-data-dom-containment',
+    'check:backend-frontend-coverage',
     'check:null-zero-display-guards'
   ],
   'external-ai': [

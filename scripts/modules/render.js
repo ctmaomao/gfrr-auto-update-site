@@ -1,6 +1,6 @@
-import { $, fmtNumSafe, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-87V';
-import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-87V';
-import { renderList } from './renderTables.js?v=28.0M-87V';
+import { $, fmtNumSafe, trendClass, fmtDeltaSafe, deltaArrow, riskColor } from './config.js?v=28.0M-90V';
+import { buildRealtimeStatusLabel } from './freshness.js?v=28.0M-90V';
+import { renderList } from './renderTables.js?v=28.0M-90V';
 
 export {
   renderBars,
@@ -8,7 +8,7 @@ export {
   renderLineChart,
   renderTransmission,
   wrapSvgText
-} from './renderCharts.js?v=28.0M-87V';
+} from './renderCharts.js?v=28.0M-90V';
 
 export {
   renderActionLayer,
@@ -19,11 +19,11 @@ export {
   renderPositioning,
   renderRiskControl,
   renderWarningSystem
-} from './renderTables.js?v=28.0M-87V';
+} from './renderTables.js?v=28.0M-90V';
 
 export {
   renderScenarioTree
-} from './renderAudit.js?v=28.0M-87V';
+} from './renderAudit.js?v=28.0M-90V';
 
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
@@ -428,6 +428,9 @@ export function renderHealthDashboard(model) {
   $('health-flags').textContent = model.flagsLabel;
   $('health-critical-missing').textContent = model.criticalMissing;
   $('health-source-summary').textContent = model.sourceSummaryLabel;
+  $('daily-input-branch').textContent = model.dailyInputBranch || '未记录';
+  $('daily-input-commit').textContent = model.dailyInputCommitSha || '未记录';
+  $('daily-input-captured-at').textContent = model.dailyInputCapturedAt || '未记录';
   $('health-summary-text').textContent = model.summary;
   renderList('health-issues', model.issues);
   renderList('health-source-list', model.sourceLines);
@@ -987,7 +990,7 @@ function renderBrentConfirmationSources(sources) {
   const root = $('brent-confirmation-sources');
   if (!root) return;
   root.innerHTML = '';
-  const items = safeArray(sources).slice(0, 5);
+  const items = safeArray(sources);
   if (!items.length) {
     const fallback = document.createElement('div');
     fallback.className = 'metric-box compact';
@@ -1063,7 +1066,7 @@ export function renderBrentPricingLayer(brentPricingLayer) {
   const spread = brentPricingLayer.proxySpread && typeof brentPricingLayer.proxySpread === 'object' ? brentPricingLayer.proxySpread : {};
   setTextIfPresent(
     'brent-proxy-spread',
-    `现货-期货：${formatBrentValue(spread.spotMinusFutures)}；主值-期货：${formatBrentValue(spread.selectedMinusFutures)}；最大代理背离：${formatBrentValue(spread.maxProxyDivergencePct)}%；ULSD：${formatBrentValue(brentPricingLayer.ulsdPrice, 3)}；ULSD 4周变化：${formatBrentValue(brentPricingLayer.ulsd4wChange, 3)}；crack spread 4周变化：${formatBrentValue(brentPricingLayer.crackSpread4wChange)}；状态：${safeText(spread.statusZh, '暂不足以判断')}。${safeText(spread.interpretationZh, '')}`
+    `现货-期货：${formatBrentValue(spread.spotMinusFutures)}；主值-期货：${formatBrentValue(spread.selectedMinusFutures)}；最大代理背离：${formatBrentValue(spread.maxProxyDivergencePct)}%；ULSD：${formatBrentValue(brentPricingLayer.ulsdPrice, 3)}；ULSD 4周变化：${formatBrentValue(brentPricingLayer.ulsd4wChange, 3)}；ULSD source status：${safeText(brentPricingLayer.ulsdSourceStatus, '--')}（字段：brentPricingLayer.ulsdSourceStatus）；crack spread 4周变化：${formatBrentValue(brentPricingLayer.crackSpread4wChange)}；状态：${safeText(spread.statusZh, '暂不足以判断')}。${safeText(spread.interpretationZh, '')}`
   );
 
   const audit = brentPricingLayer.promotionAudit && typeof brentPricingLayer.promotionAudit === 'object' ? brentPricingLayer.promotionAudit : {};

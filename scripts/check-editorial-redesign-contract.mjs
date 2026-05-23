@@ -422,7 +422,6 @@ function checkAppendices() {
 function checkTopLevelSubsectionKickers() {
   const checkedSections = [
     ['#detail-data', 'detail-data'],
-    ['#method-evidence', 'method-evidence'],
     ['#execution-risk-detail', 'execution-risk-detail'],
   ];
   for (const [label, id] of checkedSections) {
@@ -448,6 +447,18 @@ function checkTopLevelSubsectionKickers() {
       if (!/<span\b[^>]*class=["'][^"']*\bsubsection-meta\b[^"']*["'][^>]*>/iu.test(summaryHtml)) {
         fail(`${label} top-level editorial-subsection summary missing .subsection-meta kicker: ${textOnly(summaryHtml)}`);
       }
+    }
+  }
+
+  const methodSection = sliceElementById(html, 'method-evidence');
+  if (!methodSection) {
+    fail('#method-evidence must exist for method-grid validation');
+  } else {
+    if (!/\beditorial-method-grid\b/u.test(methodSection)) {
+      fail('#method-evidence must keep the editorial method grid');
+    }
+    if (topLevelEditorialSubsections(methodSection).length > 0) {
+      fail('#method-evidence must not contain top-level editorial-subsection data details');
     }
   }
 }

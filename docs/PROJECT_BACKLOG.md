@@ -8,8 +8,8 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 | 项 | 当前值 |
 |---|---|
-| 当前生产状态 | v28.0M-87 null-zero display guards |
-| Cache version | `28.0M-87V` |
+| 当前生产状态 | v28.0M-90 backend/frontend coverage display patch |
+| Cache version | `28.0M-90V` |
 | check:all 项数 | 23 top-level suites |
 | 最后审计日期 | 2026-05-22 |
 | 主 runtime | Worker-first `/market.worker-preview.json` |
@@ -37,12 +37,14 @@ No active P1 item. ACLED/SIPRI/GDELT、Pages trigger coverage、World Order refr
 
 ### P2 Items
 
-#### P2-10: Macro driver 卡片日期渲染回归复查
+#### P2-11: Backend/frontend coverage display completion
 
-- 状态: open / needs browser recheck。
-- 范围: frontend display only。
-- 历史现象: `driver-employment` 与 `driver-cre` 卡片曾出现 `undefined` / `NaN` 日期文本。
-- 期望处理: 如果线上或本地仍可复现,修 format helper 并补 checker;不得改数据链路、scoring、decision、execution 或 position。
+- 状态: local presentation-only patch implemented; awaiting human review / commit.
+- 边界: 只补 `data/radar-data.json` 已有字段的前端展示与 checker;不改数据生成、不接新源、不加 provider/workflow、不改变 scoring/decision/execution/position。
+- Gap 清单: `dailyRealtimeInput.branch`, `dailyRealtimeInput.commitSha`, `dailyRealtimeInput.capturedAt`, `brentPricingLayer.ulsdSourceStatus`, `timeDimension.trend30d`, `transmissionDeltaMeta.source`, `transmissionDeltaMeta.matchedNodes`, `transmissionDeltaMeta.totalNodes`, `externalAiInterpretationLayer.provider`, `externalAiInterpretationLayer.inputSource`, `externalAiInterpretationLayer.sourceSemantics`, `externalAiInterpretationLayer.provenance`, `externalAiInterpretationLayer.auditFlags`.
+- 实施清单: data health 追加 Daily 输入 provenance;Brent 代理价差行追加 ULSD source status;30日时间维度趋势解释改为真实 `timeDimension.trend30d`;传导网络追加 delta metadata;External AI 这 5 个字段（provider / inputSource / sourceSemantics / provenance / auditFlags）按 External AI raw provenance display guard 显式 ignore,不直接前端展示;ignore 理由写入 `check-backend-frontend-coverage.mjs` 的 `IGNORED_BACKEND_FIELDS` 注释;unlock 需独立 reviewed PR + ADR;新增 `check:backend-frontend-coverage` 扫 `data/radar-data.json` 顶层和二级字段并要求前端引用或显式 ignore。
+- 验证路径: `npm run check:backend-frontend-coverage`, `npm run check:frontend-visual-history`, `npm run check:all`, Playwright DOM verification.
+- Self-audit history: 2026-05-23 self-audit: 初版误将本任务做成路线 2（直接展示 raw runtime metadata）,并放宽 `check-external-ai-frontend-hidden-scaffold` contract。已按 AGENTS.md Section 10 /goal review 守则回滚到路线 1。
 
 ### P3 Items
 
@@ -78,6 +80,7 @@ Recent completed context only; full milestone archive is [MILESTONE_INDEX.md](MI
 
 | Milestone | 一句话 |
 |---|---|
+| P2-10 | Macro driver card date rendering rechecked; employment / CRE frontend output is guarded against `undefined` / `NaN` / `Invalid Date` date text. |
 | M-87 | Null-to-zero display guards prevent missing sources from rendering as `0.00` or `+0.0bp`. |
 | M-86 | Macro Overview separates public proxy coverage from formal / non-public boundary notes. |
 | M-85 | EIA Europe Brent Spot Price FOB public HTML proxy added to `brentPricingLayer`. |

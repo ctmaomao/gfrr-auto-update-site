@@ -1,5 +1,5 @@
-import { $, fmtSignedArrow } from './config.js?v=28.0M-87V';
-import { renderList } from './renderTables.js?v=28.0M-87V';
+import { $, fmtSignedArrow } from './config.js?v=28.0M-90V';
+import { renderList } from './renderTables.js?v=28.0M-90V';
 
 const CHART_COLORS = {
   primary: '#7C1D1D',
@@ -164,12 +164,23 @@ function formatTransmissionDelta(delta) {
   return '持平';
 }
 
-export function renderTransmission(chain) {
+function formatTransmissionDeltaMeta(meta = {}) {
+  if (!meta || typeof meta !== 'object') {
+    return 'Delta 来源：待确认（字段：transmissionDeltaMeta）';
+  }
+  const source = meta.source || '--';
+  const matched = Number.isFinite(Number(meta.matchedNodes)) ? Number(meta.matchedNodes) : '--';
+  const total = Number.isFinite(Number(meta.totalNodes)) ? Number(meta.totalNodes) : '--';
+  return `Delta 来源：${source}；匹配节点：${matched} / ${total}（字段：transmissionDeltaMeta.source / transmissionDeltaMeta.matchedNodes / transmissionDeltaMeta.totalNodes）`;
+}
+
+export function renderTransmission(chain, deltaMeta = {}) {
   $('chain-regime-tag').textContent = chain.regimeTag;
   $('chain-stress-score').textContent = chain.stressScore;
   $('chain-lead-shock').textContent = chain.leadShock;
   $('chain-confidence').textContent = `${chain.pathConfidence}%`;
   $('chain-dominant-impact').textContent = chain.dominantImpact;
+  $('chain-delta-meta').textContent = formatTransmissionDeltaMeta(deltaMeta);
   const flow = $('chain-flow');
   flow.innerHTML = '';
   chain.nodes.forEach((node) => {
