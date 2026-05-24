@@ -53,6 +53,8 @@ function replaceFrontendAssetVersion(text) {
     .replace(/(正式版本仍保持\s*[`'"]?)[A-Za-z0-9._-]+/gu, `$1${version}`)
     .replace(/(当前 frontend asset cache version 是\s*[`'"]?)[A-Za-z0-9._-]+/giu, `$1${version}`)
     .replace(/(Current frontend asset cache version\s*[:：]\s*[`'"]?)[A-Za-z0-9._-]+/giu, `$1${version}`)
+    .replace(/(node\s+scripts\/bump-frontend-asset-version\.mjs\s+)[A-Za-z0-9._-]+/gu, `$1${version}`)
+    .replace(/(npm\s+run\s+bump:frontend-asset-version\s+--\s+)[A-Za-z0-9._-]+/gu, `$1${version}`)
     .replace(/((?:应返回|should return)\s+[`'"])[A-Za-z0-9._-]+([`'"])/giu, `$1${version}$2`);
 }
 
