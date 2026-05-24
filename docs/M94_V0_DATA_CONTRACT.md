@@ -1,7 +1,7 @@
-# M-94 V0 — Data Consumption Contract v2.1
+# M-94 V0 — Data Consumption Contract v2.2
 
-> **Status**: V0 Draft v2.1 (基于真实代码读取重写 + Codex 第三轮审核字段精校)
-> **PR 路径**: PR 1 = 本契约文档 + DESIGN.md / checker 更新 · PR 2 = implementation
+> **Status**: V0 Draft v2.2 (Codex 第四轮反馈:PR 1 范围与 checker enforcement 不可同步问题修正)
+> **PR 路径**: PR 1 = 本契约 + DESIGN.md + checker + index.html 容器骨架 · PR 2 = render logic implementation
 > **Scope**: 前端展示 only · 不动 scoring / decision / execution / position / Worker / data pipeline / JSON 生产结构
 > **Approach**: Path C 结构(保留 14 项 IA + 新增 1 项 `#macro-thematic-cards`) + Path B 卡片密度
 > **Visual Reference**: `manual-artifacts/m94-v0/m94-v0-FINAL-mock.html` 是本契约的视觉权威基准
@@ -9,9 +9,30 @@
 
 ---
 
+## v2.1 → v2.2 关键变更(给读过 v2.1 的人快速过)
+
+v2.1 的 PR 1 范围设计有"先有鸡还是先有蛋"陷阱:
+
+- v2.1 让 PR 1 改两个 IA checker 到 15 项,但 `index.html` 仍是 14 项 nav + 没有 `#macro-thematic-cards` section
+- 结果:`npm run check:all` 必挂(checker 强制要求 15 项但 index 没有)
+- 必须把 enforcement 和 implementation 同步,不能拆
+
+**v2.2 修正方案**(Codex 第四轮提交时发现并报告,Robert 选项 A):
+
+PR 1 范围**扩到包含 `index.html` 的 nav + 空 section 容器骨架**,但仍**不引入 render logic**。具体:
+- PR 1 改 `index.html`:nav 加第 9 项 + 加空 `<section id="macro-thematic-cards">` 容器(类似 M-93A0 中 `#plain-summary-card` 先到位、`renderPlainSummary.js` 后填充的模式)
+- PR 1 **不动**:`scripts/modules/render*.js` 任何文件、`assets/styles.css`、`data/*`、`workers/*`
+- PR 2 才填:`scripts/modules/renderThematicCards.js` + `renderMacroOverview.js` 视觉重写 + styles.css 补充 + `scripts/modules/render.js` 调用
+
+这个拆分和 M-93A0 当年的处理一致:**IA + 容器骨架先到位,内容渲染随后**。
+
+**改动范围**:契约改 8 处,主要在 §0.1 / §0.3 / §2.1 / §4.1 / §4.2 / §9。0 字段层面改动,0 视觉规范改动。
+
+---
+
 ## 与 v2 相比的关键变更(给读过 v2 的人快速过)
 
-v2.1 是 Codex 第三轮审核后的字段精校版。Codex 6 段审核结论 100% 消化。
+v2 是 Codex 第三轮审核后的字段精校版。Codex 6 段审核结论 100% 消化。
 
 **5 个硬错误已修正**:
 1. `data.modules.geopolitical` 是扁平数字,不是 `.score` 子字段
@@ -51,6 +72,11 @@ v2.1 是 Codex 第三轮审核后的字段精校版。Codex 6 段审核结论 10
 ### §0.1 目标一句话
 
 **让 index.html 首页渲染遵守已有 DESIGN.md,把 renderMacroOverview.js 的输出从工程术语堆积改成 Bubble Watch 报纸节奏,并新增一个"宏观主题卡阵"section 提供按读者类别组织的入口。**
+
+**PR 拆分**:M-94 用 2 个 PR 实施,严格按 M-93A0 的拆分模式(IA 与容器骨架先到位,渲染逻辑后填充):
+
+- **PR 1**:契约文档 + DESIGN.md + 2 个 IA checker + **`index.html` nav 第 15 项 + 空 `#macro-thematic-cards` section 容器骨架**。零 render logic 改动。
+- **PR 2**:`scripts/modules/renderThematicCards.js` 新建 + `renderMacroOverview.js` 视觉重写 + `assets/styles.css` 补充 + `scripts/modules/render.js` 调用。
 
 ### §0.2 路径选择(已锁)
 
@@ -681,6 +707,50 @@ Codex 第三轮在源码中找到 **5 处硬编码"14 项"字面量**,改 IA 到
 
 **Codex 实施提醒**:这 6 处字面量必须**完整同步**才能让 PR 1 全绿。任何遗漏一处,`npm run check:all` 必挂。Codex 在实施时建议先全文 grep `14 项` 和 `14-step` / `14-item` 确认无遗漏。
 
+### §2.7 PR 1 阶段 `#macro-thematic-cards` 空容器骨架规范
+
+**关键约束**(v2.2 新增):PR 1 改 IA checker 后,checker 会要求 `index.html` 包含 `id="macro-thematic-cards"` 元素 + nav 第 9 项指向它。**两者必须同步 PR 1 落地**,否则 `npm run check:all` 必挂(`check-homepage-ia-contract.mjs:checkRequiredIds()` 和 `checkOrdering()` 会同时报错)。
+
+**PR 1 阶段空容器 HTML**(放在 `index.html` 内,`#macro-risk-overview` 闭合标签之后、`#global-risk-heatmap` 之前):
+
+```html
+<section id="macro-thematic-cards" class="editorial-section" style="--section-accent: var(--risk-green);">
+  <header class="editorial-section-header">
+    <span class="section-kicker">MACRO THEMATIC CARDS · 宏观主题卡阵</span>
+    <span class="section-title">8 读者类别 红黄绿指标卡</span>
+    <span class="section-note">本 section 容器骨架由 M-94 PR 1 落地,内容由 PR 2 通过 renderThematicCards.js 填充。</span>
+  </header>
+  <div class="editorial-section-body" id="macro-thematic-cards-root">
+    <!-- PR 2 在此插入 8 个读者类别 block + 38 张指标卡 -->
+  </div>
+</section>
+```
+
+**为什么这样设计**:
+- 用 `editorial-section` 类,自动继承 DESIGN.md §5.1 标准结构,无需 `assets/styles.css` 新增任何 selector(PR 1 不改 styles.css 的硬约束保留)
+- `--section-accent: var(--risk-green)` 用 inline style 设定,符合 DESIGN.md §5.1 规范
+- `editorial-section-body` 内有空 `<div id="macro-thematic-cards-root">` 作为 PR 2 的 mount 锚点,模仿现有 `#macro-risk-overview-root` 模式
+- section-note 明示"内容由 PR 2 填充",PR 1 后页面上会显示这一行说明,但不影响主路径阅读
+
+**nav 第 9 项 HTML**(放在 `<a href="#wow-key-changes">本期关键变化</a>` 之后、`<a href="#global-risk-heatmap">风险热力图</a>` 之前):
+
+```html
+<a href="#macro-thematic-cards">宏观主题卡阵</a>
+```
+
+**PR 1 完成后的视觉效果**:
+- jump nav 从 14 项变成 15 项
+- 首页中段(`#macro-risk-overview` 之后、`#global-risk-heatmap` 之前)多一个**绿色色带的空 section**,header 显示标题 + "PR 2 填充" 说明
+- 主路径其他部分**完全不变**(因为 `renderMacroOverview.js` / 8 个 runtime block 都不动)
+- 视觉上是"占位章节",和 M-93A0 PR 1 时 `#plain-summary-card` 刚到位但还没有数据的状态等价
+
+**Codex 实施 PR 1 时禁止做**:
+- ❌ 在 `#macro-thematic-cards-root` 内填任何卡片 / 内容(那是 PR 2 范围)
+- ❌ 改 `scripts/modules/*` 任何文件
+- ❌ 改 `assets/styles.css`(空容器用现有 token,无需新 selector)
+- ❌ bump cache version(没有 implementation 改动,无需 bump)
+- ❌ 引入 `renderThematicCards.js` 或它的引用
+
 ---
 
 ## §3 8 大主题卡片清单与字段映射
@@ -848,10 +918,10 @@ Codex 第三轮在源码中找到 **5 处硬编码"14 项"字面量**,改 IA 到
 
 ## §4 文件改动清单(implementation 范围,PR 1 + PR 2)
 
-### §4.1 PR 1:契约 + DESIGN.md + checker 更新(本契约)
+### §4.1 PR 1:契约 + DESIGN.md + checker + index.html 容器骨架(v2.2 范围扩大)
 
 **新增**:
-- `docs/M94_V0_DATA_CONTRACT.md`(本文档 v2.1)
+- `docs/M94_V0_DATA_CONTRACT.md`(本文档 v2.2)
 - `manual-artifacts/m94-v0/m94-v0-FINAL-mock.html`(视觉权威基准)
 
 **修改**:
@@ -864,14 +934,34 @@ Codex 第三轮在源码中找到 **5 处硬编码"14 项"字面量**,改 IA 到
 | `DESIGN.md` §12 文档历史 | 追加一行 M-94 修订记录 | — |
 | `scripts/check-homepage-ia-contract.mjs` | `navContract` 14 → 15 项,`staticRequiredIds` 增加 `'macro-thematic-cards'`,`expectedOrder` 同步;**报错文案 14-step → 15-step**(§2.6 表 #4) | 文案 grep 确认无 `14-step` 残留 |
 | `scripts/check-editorial-redesign-contract.mjs` | `checkHomepageIa()` 内 `expectedLinks` 14 → 15 项;`checkDesignContractDoc()` 内 `requiredMarkers` 数组追加 `'#macro-thematic-cards'` **并把 `'dashboard-jump-nav            (顶部跳转导航 14 项)'` 字面量改 15 项**(§2.6 表 #5-6);报错文案 14-item → 15-item | 文案 grep 确认无 `14-item` 残留 |
+| **`index.html` nav 区**(v2.2 新增) | 在 `<a href="#wow-key-changes">本期关键变化</a>` 之后、`<a href="#global-risk-heatmap">风险热力图</a>` 之前,插入 `<a href="#macro-thematic-cards">宏观主题卡阵</a>` | 让 IA checker 通过 |
+| **`index.html` body 主区**(v2.2 新增) | 在 `<section id="macro-risk-overview">` 闭合 `</section>` 之后、`<section id="global-risk-heatmap">` 起始之前,插入 §2.7 规范的**空 `#macro-thematic-cards` section 容器骨架**(包含 header + 空 body + `id="macro-thematic-cards-root"` mount 锚点) | 让 IA checker 通过 |
 
-### §4.2 PR 2:implementation
+**PR 1 不改的 implementation 文件**(v2.2 明确):
+
+| 文件 | 理由 |
+|---|---|
+| `scripts/modules/render*.js` 任何文件 | render logic 全部留 PR 2 |
+| `scripts/modules/buildCrossValidationMatrix.js` | 算法不动 |
+| `scripts/modules/realtime.js` | Worker / runtime 派生不动 |
+| `assets/styles.css` | 空容器用现有 `--paper-* / --risk-*` token,无需新 selector |
+| `data/*` 任何文件 | 数据生产不动 |
+| `workers/*` | 不动 |
+| `.github/workflows/*` | 不动 |
+| `package.json` | PR 1 不新增 npm script(`check:thematic-cards-contract` 留 PR 2 引入) |
+| `index.html` `<head><style>` 区 | 不删除现有硬编码色值,只动 nav 和 body 区 |
+
+**PR 1 验收**:`npm run check:all` 必须全绿(因 nav + section 容器同步到位,IA checker 不会再 fail)。具体见 §9.6。
+
+### §4.2 PR 2:render logic implementation(v2.2 范围调整)
+
+**v2.2 关键说明**:nav 第 15 项 + 空 `#macro-thematic-cards` section 容器骨架已在 PR 1 落地。PR 2 只需填充内容,不再改 nav 或新建 section 容器。
 
 **新增**:
 
 | 文件 | 用途 |
 |---|---|
-| `scripts/modules/renderThematicCards.js` | 渲染 `#macro-thematic-cards` section 全部内容(8 主题块 + 38 张卡片 — 注:v2 误写为 37,实际 v2.1 是 5+7+5+2+5+7+3+4=**38 张卡**,其中信用类含 CRE 新卡 + 市场情绪类 NDX 换字段不增减数量) |
+| `scripts/modules/renderThematicCards.js` | 渲染 `#macro-thematic-cards` section 全部内容(8 主题块 + 38 张卡片 — 注:v2 误写为 37,实际 v2.1+ 是 5+7+5+2+5+7+3+4=**38 张卡**,其中信用类含 CRE 新卡 + 市场情绪类 NDX 换字段不增减数量) |
 | `scripts/modules/displayStatusThresholds.js` | 卡片状态判定阈值常量(red/yellow/green/orange)**仅常量,不含计算逻辑** |
 | `scripts/check-thematic-cards-contract.mjs` | 新 section 内容契约 checker(类似 check-plain-summary-card-contract 模式)**必须在 `package.json` 注册并加入 `check:suite.mjs`**(Codex 第三轮提醒) |
 
@@ -879,12 +969,17 @@ Codex 第三轮在源码中找到 **5 处硬编码"14 项"字面量**,改 IA 到
 
 | 文件 | 改动 |
 |---|---|
-| `index.html` | (1) `<head><style>` 块删除所有 `.macro-overview-*` 类的硬编码色值,改用 `var(--paper-*) / var(--risk-*)` token;(2) `<body>` 内 jump nav 由 14 项扩为 15 项;(3) 新增 `<section id="macro-thematic-cards" class="editorial-section">` 容器(在 #macro-risk-overview 与 #global-risk-heatmap 之间);(4) `<body>` 末尾引入 `renderThematicCards.js` 模块;(5) **bump cache version `28.0M-93AV` → `28.0M-94`** |
+| `index.html` | (1) `<head><style>` 块删除所有 `.macro-overview-*` 类的硬编码色值,改用 `var(--paper-*) / var(--risk-*)` token;(2) **PR 1 已落地的空 `#macro-thematic-cards-root` mount 锚点不再改动**,renderThematicCards.js 通过 `document.getElementById('macro-thematic-cards-root')` 填充内容;(3) `<body>` 末尾引入 `renderThematicCards.js` 模块;(4) **bump cache version `28.0M-93AV` → `28.0M-94`** |
 | `scripts/modules/renderMacroOverview.js` | 重写 8 个 build 函数的 **HTML 生成部分**,改为 Bubble Watch 风格(参考 §8 详细指引)。**Codex 第三轮警告**:`buildPressureSources`(160 行)+ `buildMacroDrivers`(616 行)总共 776 行,改写时必须**保留所有现有字段消费**,只改外壳,不要"简化成 mini card / 四列摘要"导致字段被绕过(详见 §8) |
 | `scripts/modules/render.js` | 在主渲染流程加入 `renderThematicCards(data, root)` 调用 |
-| `assets/styles.css` | 补充新选择器(用现有 `--paper-* / --risk-*` token,无新 token 创建);**注**:当前 styles.css 是 `--paper-*` 与 `--editorial-*` 两套并存,M-94 沿用,不动旧 `--editorial-*` |
+| `assets/styles.css` | 补充新选择器(`.reader-cat-block / .reader-cat-header / .indicator-card / .agg-rows / .badge.{red,yellow,green,orange,pending} / .indicator-card.pending / .cat-intro` 等),用现有 `--paper-* / --risk-*` token,无新 token 创建;**注**:当前 styles.css 是 `--paper-*` 与 `--editorial-*` 两套并存,M-94 沿用,不动旧 `--editorial-*` |
 | `package.json` `scripts` | 新增 `"check:thematic-cards-contract": "node --check scripts/check-thematic-cards-contract.mjs && node scripts/check-thematic-cards-contract.mjs"`;**`check:all` 必须加入此项**(否则即使 checker 写对也不会被执行)|
 | `scripts/check-suite.mjs`(如存在)| 注册 thematic-cards 检查 |
+
+**v2.2 PR 2 不再做的事**(原本 v2.1 PR 2 范围,已迁移到 PR 1):
+- ~~`index.html` jump nav 14 → 15 项~~ → 已在 PR 1
+- ~~`index.html` 新增 `<section id="macro-thematic-cards">` 容器~~ → 已在 PR 1
+- ~~更新 PR 1 阶段 section-note "PR 2 填充" 说明文字~~ → PR 2 在 renderThematicCards.js 首次成功渲染后,移除 PR 1 留下的 "本 section 容器骨架由 M-94 PR 1 落地,内容由 PR 2 通过 renderThematicCards.js 填充" 这段 placeholder note(或保留作为方法说明,Codex 实施时和 Robert 确认)
 
 **不修改**(铁律):
 
@@ -1131,7 +1226,53 @@ CSS:
 
 ## §9 验收清单(PR 2 合并条件)
 
-### §9.1 必须全绿的检查
+### §9.6 PR 1 专属验收(v2.2 新增)
+
+PR 1 范围:契约 + DESIGN.md + 2 个 IA checker + index.html nav + 空 section 容器。
+
+**必须全绿的检查**:
+```
+npm run check:all
+npm run check:homepage-ia-contract
+npm run check:editorial-redesign-contract
+npm run check:plain-summary-card-contract
+```
+
+**PR 1 视觉验收**:
+- jump nav 显示 15 项,新增"宏观主题卡阵"位于第 9 位
+- 首页中段(#macro-risk-overview 之后、#global-risk-heatmap 之前)出现绿色色带的空 section
+- 该 section header 显示"MACRO THEMATIC CARDS · 宏观主题卡阵 / 8 读者类别 红黄绿指标卡 / 本 section 容器骨架由 M-94 PR 1 落地,内容由 PR 2 通过 renderThematicCards.js 填充"
+- section body 为空(<div id="macro-thematic-cards-root"> 不含任何子元素)
+- 其他所有 section 视觉**完全不变**(因为没动 styles.css / renderMacroOverview.js / index.html `<head><style>`)
+
+**PR 1 不验收的事**(留 PR 2):
+- 8 个 runtime block 视觉是否升级 Bubble Watch 风格 → PR 2
+- 38 张主题卡是否填充 → PR 2
+- styles.css 是否补充 .reader-cat-block 等 selector → PR 2
+- cache version 是否 bump → PR 2
+
+**PR 1 边界验收**:
+- `git diff --name-only main..m94-v0-contract` 必须只含:
+  ```
+  docs/M94_V0_DATA_CONTRACT.md
+  manual-artifacts/m94-v0/m94-v0-FINAL-mock.html
+  .gitignore
+  DESIGN.md
+  scripts/check-homepage-ia-contract.mjs
+  scripts/check-editorial-redesign-contract.mjs
+  index.html
+  ```
+- 不能出现任何 `scripts/modules/*` / `assets/styles.css` / `data/*` / `workers/*` / `.github/workflows/*` 改动
+
+**PR 1 PR 描述必须声明**:
+- "本 PR 实施 M-94 V0 PR 1:契约 + DESIGN.md + IA checker + index.html nav 与空 section 容器骨架"
+- "本 PR 不动任何 render logic,所有 render 改动留 PR 2"
+- "字面量同步:DESIGN.md 内 X 处'14 项→15 项',checker 内 Y 处'14-step/item→15-step/item'"
+- "`npm run check:all` 通过(贴截图或日志片段)"
+
+### §9.1-§9.5 PR 2 验收清单(沿用 v2.1)
+
+### §9.1 必须全绿的检查(PR 2 合并)
 
 ```
 npm run check:all
@@ -1179,31 +1320,32 @@ npm run check:editorial-redesign-contract
 
 ---
 
-## §10 与契约 v1 / v2 关键差异(供 Robert 一目了然)
+## §10 与契约 v1 / v2 / v2.1 关键差异(供 Robert 一目了然)
 
-| 维度 | v1 | v2 | v2.1 |
-|---|---|---|---|
-| IA 结构 | 8 类读者类别完全替换 14 项 | 14 项 IA 保留 + 新增 1 项 = 15 项 | 同 v2 + checker 字面量同步硬约束 |
-| token | 拟新建 `--gfrr-*` | 沿用现有 `--paper-* / --risk-* / --font-*` | 同 v2 + 明确 `--editorial-*` 旧 token 不动 |
-| 字体 CDN | 拟禁用 | 保留 Google Fonts 三家族 | 同 v2 |
-| MacroRiskOverview | 拟下沉到 Appendix | 内核保留,视觉重写,仍是主路径核心 | 同 v2 + §8 措辞改"保留所有字段消费" |
-| plainSummaryCard | 拟吸收翻译表 | M-93A0 完整保留不动 | 同 v2 |
-| 商业付费数据清理 | 第 5 章占大篇幅 | 完全移出 M-94,独立 M-XX | 同 v2 |
-| 字段名 | 60% 虚构 | 100% 真实(基于直接读 radar-data.json) | **100% Codex 第三轮代码层确认** |
-| CrossValidationMatrix | 漏识别 | 进 #homepage-cross-validation 主路径 | 同 v2 |
-| marketPricingTemperature | 浅识别 | 完整保留 | 同 v2 |
-| 24 派生模块 | 漏 10 个 | 全部纳入 | 同 v2 + commercialRealEstate 升主路径(决策 A) |
-| 卡片密度 | 全 HIGH | 三档分级 | 4 档(HIGHEST/HIGH/MEDIUM/LOW)+ HIGHEST 卡数量增多(Brent / Fed Liquidity / Fed Path / Employment / Consumer / CRE) |
-| 主题级 intro 段 | 无 | 8 主题块全部加 | 同 v2 |
-| Codex 5 节审核(第二轮) | 未消化 | 100% 消化 | 同 v2 |
-| Codex 第三轮审核 | — | — | **100% 消化:5 硬错误修正 + 17 处补充 + 6 个 Q 全部解决** |
-| 字段路径错误 | 60% 错 | 仍有 9 处需 Codex 校 | **0 处(Codex 第三轮全部校实)** |
-| §6 待办 | — | 5 个 TODO | **0 个 TODO** |
-| modules 字段结构 | — | 误以为有 `.score` 子字段 | **修正为扁平数字 + moduleTrends 趋势符号** |
-| privateCreditProxy 6-proxy z-score | — | 拟新建派生 | **数据不足,降级为 8 字段直显 + 接口预留** |
-| NDX 卡 | — | 30 日 vs SPX 相对强弱 | **NDX 60w z-score(复用 classifyZScoreBucket)** |
-| 信用类卡数 | — | 4 张 | **5 张(新增 CRE)** |
-| checker 字面量同步 | — | 未明确 | **§2.6 列 6 处字面量必须同步改 15** |
+| 维度 | v1 | v2 | v2.1 | v2.2 |
+|---|---|---|---|---|
+| IA 结构 | 8 类读者类别完全替换 14 项 | 14 项 IA 保留 + 新增 1 项 = 15 项 | 同 v2 + checker 字面量同步 | 同 v2.1 + PR 1 容器骨架明确 |
+| token | 拟新建 `--gfrr-*` | 沿用 `--paper-*` | 同 v2 | 同 v2.1 |
+| 字体 CDN | 拟禁用 | 保留 Google Fonts 三家族 | 同 v2 | 同 v2.1 |
+| MacroRiskOverview | 拟下沉 Appendix | 内核保留视觉重写 | 同 v2 + §8 措辞修正 | 同 v2.1 |
+| plainSummaryCard | 拟吸收翻译表 | M-93A0 不动 | 同 v2 | 同 v2.1 |
+| 商业付费数据清理 | 第 5 章占大篇幅 | 移出 M-94 | 同 v2 | 同 v2.1 |
+| 字段名 | 60% 虚构 | 100% 真实 | **100% Codex 第三轮代码层确认** | 同 v2.1 |
+| CrossValidationMatrix | 漏识别 | 主路径 + consistency bar | 同 v2 | 同 v2.1 |
+| marketPricingTemperature | 浅识别 | 完整保留 | 同 v2 | 同 v2.1 |
+| 24 派生模块 | 漏 10 | 全部纳入 | 同 v2 + CRE 升主路径 | 同 v2.1 |
+| 卡片密度 | 全 HIGH | 三档 | 4 档 + HIGHEST 增多 | 同 v2.1 |
+| Codex 5 节审核(2 轮) | 未消化 | 100% 消化 | 同 v2 | 同 v2.1 |
+| Codex 第三轮 | — | — | **100% 消化** | 同 v2.1 |
+| 字段路径错误 | 60% 错 | 9 处需校 | **0 错** | 同 v2.1 |
+| §6 待办 | — | 5 TODO | **0 TODO** | 同 v2.1 |
+| modules 字段 | — | 误以为有 `.score` | 修正扁平数字 | 同 v2.1 |
+| privateCreditProxy z-score | — | 拟新建派生 | 数据不足降级 | 同 v2.1 |
+| NDX 卡 | — | NDX vs SPX 30 日差 | NDX 60w z-score | 同 v2.1 |
+| 信用类卡数 | — | 4 张 | 5 张(新增 CRE) | 同 v2.1 |
+| checker 字面量同步 | — | 未明确 | §2.6 列 6 处 | 同 v2.1 |
+| **PR 1 范围** | — | — | 仅契约 + DESIGN.md + checker | **加 index.html nav + 空 section 容器骨架(避免 checker 与 implementation 不同步)** |
+| **Codex 第四轮反馈** | — | — | — | **PR 1 范围与 enforcement 不同步问题,选项 A 修正** |
 
 ---
 
@@ -1213,18 +1355,18 @@ npm run check:editorial-redesign-contract
 |---|---|---|
 | 2026-05-23 | v1 初稿,53KB,80% 字段虚构 | Robert 启动 M-94 |
 | 2026-05-24 | v2 重写,基于直接读取项目源码,5 个 TODO | Codex 2 轮审核 + 5 决策点拍板 + Path C+B 混合选择 + Filesystem 直读权限 |
-| 2026-05-24 | **v2.1 字段精校**,0 个 TODO,5 硬错误修正,17 处字段补充 | Codex 第三轮代码层审核 + Robert 视觉确认 FINAL mock + 3 决策(CRE / NDX z-score / Private Credit 降级) |
+| 2026-05-24 | v2.1 字段精校,0 TODO,5 硬错误修正,17 处字段补充 | Codex 第三轮代码层审核 + Robert 视觉确认 FINAL mock + 3 决策(CRE / NDX z-score / Private Credit 降级) |
+| 2026-05-24 | **v2.2 PR 范围修正**:PR 1 加 index.html nav + 空 section 容器骨架(避免 checker enforcement 与 implementation 不同步) | Codex 第四轮 PR 1 实施时识别"先有鸡先有蛋"陷阱并报告;Robert 选项 A 拍板 |
 
 ---
 
-**契约 v2.1 结束。**
+**契约 v2.2 结束。**
 
 下一步:
-1. Robert 审阅本契约 v2.1
-2. 把契约 + FINAL mock 提交到项目仓库新分支:
-   - `docs/M94_V0_DATA_CONTRACT.md` ← 本文档 v2.1
-   - `manual-artifacts/m94-v0/m94-v0-FINAL-mock.html` ← 视觉权威基准
-3. 让 Codex 基于本契约 + FINAL mock + 现有代码,开 PR 1(契约 + DESIGN.md + checker 更新)
-4. Codex 实施 PR 1 通过 `npm run check:all` 后,开 PR 2(implementation)
-5. PR 2 严格按 §4.2 改动清单 + §7 卡片密度规范 + §8 8 runtime block 视觉重写要点执行
-6. 验收按 §9 清单(全绿 + 视觉 + 数据 + 边界 + PR 描述声明)
+1. Robert 审阅本契约 v2.2(主要看 §0.1 / §2.7 / §4.1 / §4.2 / §9.6 这 5 节是否符合预期)
+2. 把 v2.2 替换覆盖仓库中的 `docs/M94_V0_DATA_CONTRACT.md`,push 到 `m94-v0-contract` 分支
+3. 让 Codex 基于 v2.2 + FINAL mock + 现有代码,开 PR 1(契约 + DESIGN.md + checker + index.html 容器骨架)
+4. Codex 实施 PR 1 通过 `npm run check:all` 后,Claude review 远程 diff
+5. Robert 在 GitHub web review 后 merge PR 1
+6. 开 PR 2(render logic implementation),严格按 §4.2 改动清单 + §7 卡片密度规范 + §8 8 runtime block 视觉重写要点
+7. PR 2 验收按 §9.1-§9.5 清单
