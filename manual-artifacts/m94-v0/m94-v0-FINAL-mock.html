@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>M-94 V0 Final Mock · 视觉确认版</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<style>
+  /* DESIGN.md token (§2.1) */
+  :root {
+    --paper-bg: #FBF7F0;
+    --paper-bg-canvas: #F5F0E5;
+    --paper-ink: #1A1815;
+    --paper-warm: #3A3530;
+    --paper-muted: #666666;
+    --paper-line: rgba(26, 24, 21, 0.16);
+    --paper-line-strong: #1A1815;
+    --risk-red: #7C1D1D;
+    --risk-yellow: #A8761A;
+    --risk-orange: #C25E2A;
+    --risk-green: #1F4D2C;
+    --risk-severe: #5A0F0F;
+    --font-display: "Playfair Display", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+    --font-serif:   "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+    --font-mono:    "IBM Plex Mono", "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper-bg); color: var(--paper-ink);
+    font-family: var(--font-serif); line-height: 1.55;
+  }
+  .container { max-width: 1280px; margin: 0 auto; padding: clamp(20px, 4vw, 48px); }
+
+  .path-tag {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--paper-ink); color: var(--paper-bg);
+    padding: 10px 16px; text-align: center;
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.15em; border-bottom: 2px solid var(--paper-bg);
+  }
+  .path-tag strong { font-size: 13px; letter-spacing: 0.2em; color: var(--risk-yellow); }
+
+  /* Masthead */
+  header.masthead { border-bottom: 3px double var(--paper-ink); padding-bottom: 20px; margin-bottom: 24px; }
+  .masthead-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+  .kicker {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.28em; color: var(--risk-red);
+    margin-bottom: 8px; text-transform: uppercase;
+  }
+  h1.title {
+    font-family: var(--font-display); font-size: clamp(36px, 6vw, 56px);
+    font-weight: 900; line-height: 1.05; margin: 0; letter-spacing: -0.02em;
+  }
+  h1.title em { font-style: italic; font-weight: 400; }
+  .issue-meta { text-align: right; font-family: var(--font-mono); font-size: 12px; line-height: 1.8; color: var(--paper-muted); }
+  .issue-meta strong { color: var(--paper-ink); }
+
+  /* Jump nav · 15 项,新增第 9 项标绿色 .new */
+  .dashboard-jump-nav {
+    margin-bottom: 32px; padding: 12px 0;
+    border-top: 1px solid var(--paper-line);
+    border-bottom: 1px solid var(--paper-line);
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    display: flex; gap: 22px; flex-wrap: wrap;
+  }
+  .dashboard-jump-nav a {
+    color: var(--paper-muted); text-decoration: none;
+    padding: 2px 0; border-bottom: 1px solid transparent;
+  }
+  .dashboard-jump-nav a:hover {
+    color: var(--paper-ink); border-bottom-color: var(--risk-red);
+  }
+  .dashboard-jump-nav a.new {
+    color: var(--risk-green); font-weight: 600;
+  }
+
+  /* plain-summary preface (M-93A0) */
+  .plain-summary-section {
+    padding: 24px 28px; background: var(--paper-bg);
+    border: 1px solid var(--paper-line);
+    border-left: 4px solid var(--risk-red);
+    margin-bottom: 32px;
+  }
+  .ps-kicker {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.28em; color: var(--risk-red);
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .ps-story {
+    font-family: var(--font-serif); font-size: 16px;
+    line-height: 1.75; color: var(--paper-warm); margin: 0 0 12px 0;
+  }
+  .ps-meta {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--paper-muted);
+    display: flex; gap: 24px; flex-wrap: wrap;
+    padding-top: 10px; border-top: 1px solid var(--paper-line);
+  }
+
+  /* editorial-section (DESIGN.md §5.1) */
+  .editorial-section {
+    margin: 40px 0;
+    border-top: 4px solid var(--section-accent, var(--risk-red));
+    border-bottom: 1px solid var(--paper-line);
+    padding: 24px 28px 20px 28px;
+    background: var(--paper-bg);
+  }
+  .editorial-section-header { margin-bottom: 18px; }
+  .section-kicker {
+    display: block; font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.28em;
+    color: var(--paper-muted); text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .section-title {
+    display: block; font-family: var(--font-display);
+    font-size: clamp(22px, 3vw, 30px); font-weight: 700;
+    line-height: 1.2; color: var(--paper-ink);
+  }
+  .section-note {
+    display: block; font-family: var(--font-serif);
+    font-size: 13px; line-height: 1.7;
+    color: var(--paper-muted); margin-top: 6px;
+  }
+  .editorial-section-body { padding: 0 8px; }
+
+  /* macro-overview-shell */
+  .macro-overview-shell { display: grid; gap: 22px; }
+
+  /* HERO (today-judgment) */
+  .editorial-big-number {
+    background: var(--paper-ink); color: var(--paper-bg);
+    padding: 32px;
+    display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: 32px; align-items: stretch; min-height: 240px;
+  }
+  @media (max-width: 720px) { .editorial-big-number { grid-template-columns: 1fr; } }
+  .big-left { display: flex; flex-direction: column; justify-content: space-between; }
+  .big-left .label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.22em; opacity: 0.6; }
+  .big-left .value {
+    font-family: var(--font-display); font-size: clamp(80px, 12vw, 128px);
+    font-weight: 900; line-height: 0.9; letter-spacing: -0.04em;
+  }
+  .big-left .value sup { font-size: 0.4em; vertical-align: super; opacity: 0.7; }
+  .big-left .breakdown {
+    font-family: var(--font-mono); font-size: 12px;
+    margin-top: 12px; opacity: 0.75; line-height: 1.7;
+  }
+  .big-right .verdict-kicker {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.22em; color: var(--risk-orange);
+    margin-bottom: 12px;
+  }
+  .big-right h2 {
+    font-family: var(--font-serif); font-size: clamp(22px, 3vw, 32px);
+    font-weight: 700; line-height: 1.3; margin: 0 0 16px 0;
+    color: var(--paper-bg);
+  }
+  .big-right p {
+    font-family: var(--font-serif); font-size: 15px;
+    line-height: 1.8; margin: 0; opacity: 0.85;
+  }
+  .big-footer {
+    grid-column: 1 / -1;
+    border-top: 1px solid rgba(251,247,240,0.18);
+    padding-top: 14px; margin-top: 12px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.1em; opacity: 0.7;
+  }
+  .big-footer .k { opacity: 0.5; text-transform: uppercase; }
+  .big-footer .v { color: var(--paper-bg); opacity: 1; margin-top: 3px; }
+
+  /* runtime block(原 8 个保留 + 视觉重写) */
+  .runtime-block {
+    background: var(--paper-bg);
+    border: 1px solid var(--paper-line);
+    padding: 16px 18px;
+  }
+  .runtime-block-header {
+    border-bottom: 1px solid var(--paper-line);
+    padding-bottom: 8px; margin-bottom: 12px;
+  }
+  .runtime-block-header h3 {
+    font-family: var(--font-display);
+    font-size: 18px; font-weight: 700; margin: 0;
+    color: var(--paper-ink);
+  }
+  .runtime-block-header .en {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.22em; color: var(--paper-muted);
+    text-transform: uppercase; margin-left: 8px;
+  }
+  .runtime-block-header .meta {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--paper-muted); margin-top: 4px;
+  }
+  .runtime-block-body {
+    font-family: var(--font-serif); font-size: 13.5px;
+    line-height: 1.7; color: var(--paper-warm);
+  }
+
+  /* pressure-sources mini cards */
+  .mini-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+    gap: 10px;
+  }
+  .mini-card {
+    padding: 10px 12px;
+    border: 1px solid var(--paper-line);
+    background: var(--paper-bg);
+    display: grid; gap: 4px;
+  }
+  .mini-card .label {
+    font-family: var(--font-mono); font-size: 9px;
+    letter-spacing: 0.15em; color: var(--paper-muted);
+    text-transform: uppercase;
+  }
+  .mini-card .num {
+    font-family: var(--font-display); font-size: 20px;
+    font-weight: 700; line-height: 1.2;
+    color: var(--paper-ink);
+  }
+  .mini-card .status {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--paper-muted);
+  }
+  .mini-card.red .num { color: var(--risk-red); }
+  .mini-card.yellow .num { color: var(--risk-yellow); }
+  .mini-card.green .num { color: var(--risk-green); }
+
+  /* signal-layers narrative */
+  .narrative-list { display: grid; gap: 10px; }
+  .narrative-item {
+    border-left: 3px solid var(--paper-line);
+    padding: 8px 14px; background: var(--paper-bg-canvas);
+  }
+  .narrative-item.active { border-left-color: var(--risk-red); }
+  .narrative-item .head {
+    display: flex; gap: 10px; align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .narrative-item .emoji { font-size: 16px; }
+  .narrative-item .name {
+    font-family: var(--font-serif); font-size: 14px;
+    font-weight: 600; color: var(--paper-ink);
+  }
+  .narrative-item .score {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--paper-muted); margin-left: auto;
+  }
+  .narrative-item p {
+    font-family: var(--font-serif); font-size: 12.5px;
+    line-height: 1.6; color: var(--paper-warm); margin: 0;
+  }
+
+  /* === reader-category-cards section (Path C 新增的核心) === */
+  .reader-cat-grid { display: grid; gap: 18px; }
+  .reader-cat-block {
+    background: var(--paper-bg);
+    border: 1px solid var(--paper-line-strong);
+    padding: 18px 20px;
+  }
+  .reader-cat-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
+    border-bottom: 2px solid var(--paper-ink);
+    padding-bottom: 8px; margin-bottom: 14px;
+  }
+  .reader-cat-header h3 {
+    font-family: var(--font-display);
+    font-size: 22px; font-weight: 900;
+    margin: 0; letter-spacing: -0.01em;
+    color: var(--paper-ink);
+  }
+  .reader-cat-header .en {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.22em; color: var(--paper-muted);
+    text-transform: uppercase;
+  }
+  .reader-cat-header .counts {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--paper-muted);
+  }
+  .counts .red { color: var(--risk-red); font-weight: 600; }
+  .counts .yellow { color: var(--risk-yellow); font-weight: 600; }
+  .counts .green { color: var(--risk-green); font-weight: 600; }
+  .counts .pending { color: var(--paper-muted); font-weight: 600; font-style: italic; }
+
+  /* cat-intro (主题级 intro,Path B 密度借鉴) */
+  .cat-intro {
+    font-family: var(--font-serif); font-size: 13px;
+    background: var(--paper-bg-canvas);
+    border-left: 3px solid var(--paper-ink);
+    padding: 10px 14px; color: var(--paper-warm);
+    line-height: 1.7; margin: 0 0 14px 0;
+  }
+  .cat-intro.orange-edge { border-left-color: var(--risk-orange); }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 14px;
+  }
+  .indicator-card {
+    border: 1px solid var(--paper-line-strong);
+    background: var(--paper-bg);
+    padding: 14px 14px 12px 14px;
+    position: relative;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .indicator-card .status-bar {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 4px;
+  }
+  .status-bar.red { background: var(--risk-red); }
+  .status-bar.yellow { background: var(--risk-yellow); }
+  .status-bar.green { background: var(--risk-green); }
+  .status-bar.orange { background: var(--risk-orange); }
+  .status-bar.pending { background: var(--paper-line); }
+  .indicator-card.pending {
+    background: repeating-linear-gradient(
+      135deg, var(--paper-bg) 0px, var(--paper-bg) 10px,
+      var(--paper-bg-canvas) 10px, var(--paper-bg-canvas) 20px
+    );
+    border-style: dashed;
+  }
+  .indicator-card .head {
+    display: flex; justify-content: space-between;
+    align-items: flex-start; gap: 8px; margin-top: 4px;
+  }
+  .indicator-card .name-en {
+    font-family: var(--font-mono); font-size: 9px;
+    letter-spacing: 0.18em; color: var(--paper-muted);
+    text-transform: uppercase;
+  }
+  .indicator-card .name-zh {
+    font-family: var(--font-serif); font-size: 14px;
+    font-weight: 600; margin-top: 2px; color: var(--paper-ink);
+  }
+  .badge {
+    font-family: var(--font-mono); font-size: 9px;
+    padding: 3px 7px; letter-spacing: 0.1em;
+    font-weight: 600; white-space: nowrap;
+    color: var(--paper-bg); text-transform: uppercase;
+  }
+  .badge.red { background: var(--risk-red); }
+  .badge.yellow { background: var(--risk-yellow); }
+  .badge.green { background: var(--risk-green); }
+  .badge.orange { background: var(--risk-orange); }
+  .badge.pending { background: var(--paper-muted); }
+  .indicator-card .number {
+    font-family: var(--font-display); font-size: 28px;
+    font-weight: 700; line-height: 1; letter-spacing: -0.02em;
+    color: var(--paper-ink);
+  }
+  .indicator-card .number .unit {
+    font-size: 0.45em; font-weight: 400; margin-left: 3px;
+    font-family: var(--font-mono); color: var(--paper-muted);
+  }
+  .indicator-card .aux {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--paper-warm); line-height: 1.55;
+  }
+  .indicator-card .note {
+    font-family: var(--font-serif); font-size: 12px;
+    color: var(--paper-warm); line-height: 1.65; font-style: italic;
+  }
+  .indicator-card .meta {
+    border-top: 1px dashed #999; padding-top: 6px;
+    font-family: var(--font-mono); font-size: 9px;
+    color: var(--paper-muted); line-height: 1.5;
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;
+  }
+  /* agg-rows (Path B 密度) */
+  .indicator-card .agg-rows {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--paper-muted); line-height: 1.7;
+    border-top: 1px dotted #aaa; padding-top: 6px;
+  }
+  .indicator-card .agg-rows div { display: flex; gap: 6px; flex-wrap: wrap; }
+  .indicator-card .agg-rows .k { color: var(--paper-muted); }
+  .indicator-card .agg-rows .v { color: var(--paper-ink); font-weight: 600; }
+
+  .indicator-card .corner {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--font-mono); font-size: 8px;
+    padding: 2px 4px; letter-spacing: 0.1em;
+    background: var(--paper-muted); color: var(--paper-bg);
+  }
+  .indicator-card .corner.p1 { background: var(--risk-orange); }
+  .indicator-card .corner.p2 { background: #c79b54; }
+  .indicator-card .corner.manual { background: #d9d3c5; color: var(--paper-warm); }
+  .indicator-card .corner.overlay { background: var(--risk-orange); }
+
+  /* 阈值尺 / 趋势 / 一致性 / WoW / heatmap */
+  .threshold-block { padding: 6px 0; }
+  .threshold-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 18px; flex-wrap: wrap; gap: 8px;
+  }
+  .threshold-header h4 {
+    font-family: var(--font-display); font-size: 18px; font-weight: 700; margin: 0;
+  }
+  .threshold-header h4 em {
+    font-family: var(--font-display); font-style: italic;
+    font-weight: 400; font-size: 0.78em;
+  }
+  .threshold-header .now {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--paper-muted); letter-spacing: 0.1em;
+  }
+  .threshold-bar-wrap { position: relative; padding-top: 28px; padding-bottom: 30px; }
+  .threshold-bar {
+    position: relative; height: 56px;
+    border: 1px solid var(--paper-ink);
+    display: flex; overflow: visible;
+  }
+  .threshold-bar .zone {
+    height: 100%; display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 4px; text-align: center;
+    color: var(--paper-bg); gap: 2px; min-width: 0;
+  }
+  .threshold-bar .zone.t-green  { background: var(--risk-green); }
+  .threshold-bar .zone.t-yellow { background: var(--risk-yellow); }
+  .threshold-bar .zone.t-orange { background: var(--risk-orange); }
+  .threshold-bar .zone.t-red    { background: var(--risk-red); }
+  .zone-label { font-family: var(--font-serif); font-size: 12px; font-weight: 700; line-height: 1.1; }
+  .zone-pct { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; opacity: 0.9; }
+  .threshold-bar .marker {
+    position: absolute; top: -8px; bottom: -8px;
+    width: 2px; background: var(--paper-ink);
+    transform: translateX(-50%); z-index: 2;
+  }
+  .threshold-bar .marker::after {
+    content: ""; position: absolute; bottom: -6px; left: 50%;
+    transform: translateX(-50%);
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 8px solid var(--paper-ink);
+  }
+  .threshold-bar .marker .marker-label {
+    position: absolute; top: -24px; left: 50%; transform: translateX(-50%);
+    font-family: var(--font-mono); font-size: 10px;
+    background: var(--paper-ink); color: var(--paper-bg);
+    padding: 3px 7px; white-space: nowrap; font-weight: 600;
+  }
+  .threshold-bar .marker.override { background: var(--risk-orange); }
+  .threshold-bar .marker.override::after {
+    bottom: auto; top: -6px; border-top: none;
+    border-bottom: 8px solid var(--risk-orange);
+  }
+  .threshold-bar .marker.override .marker-label {
+    top: auto; bottom: -24px; background: var(--risk-orange);
+  }
+
+  .trend-block { border-top: 1px solid var(--paper-line); padding-top: 18px; }
+  .trend-block-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .trend-block-header h4 { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin: 0; }
+  .trend-block-header h4 em { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 0.78em; }
+  .trend-svg-wrap { height: 200px; }
+  .trend-svg-wrap svg { width: 100%; height: 100%; display: block; }
+
+  .consistency-block {
+    border-top: 1px solid var(--paper-line); padding-top: 16px;
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  }
+  .consistency-label {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.2em; color: var(--paper-muted); text-transform: uppercase;
+  }
+  .consistency-bar-wrap { flex: 1; min-width: 280px; }
+  .consistency-bar { height: 8px; background: var(--paper-line); position: relative; }
+  .consistency-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--risk-red) 0%, var(--risk-yellow) 50%, var(--risk-green) 100%);
+    width: 72%;
+  }
+  .consistency-value { font-family: var(--font-display); font-size: 24px; font-weight: 700; }
+  .consistency-detail { font-family: var(--font-mono); font-size: 11px; color: var(--paper-muted); line-height: 1.7; }
+
+  .wow-section { background: var(--paper-ink); color: var(--paper-bg); padding: 28px 32px; margin-top: 22px; }
+  .wow-section .wow-label {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.22em; opacity: 0.6;
+    margin-bottom: 14px; text-transform: uppercase;
+  }
+  .wow-section h3 { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin: 0 0 18px 0; }
+  .wow-section h3 em { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 0.7em; }
+  .wow-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 18px;
+  }
+  .wow-item .wow-tag {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.12em; margin-bottom: 6px;
+    font-weight: 600; padding: 3px 8px; display: inline-block;
+  }
+  .wow-tag.is-up   { background: var(--risk-yellow); color: var(--paper-bg); }
+  .wow-tag.is-down { background: var(--risk-green);  color: var(--paper-bg); }
+  .wow-tag.is-flat { background: var(--paper-muted); color: var(--paper-bg); }
+  .wow-item .wow-text { font-family: var(--font-serif); font-size: 13.5px; line-height: 1.7; }
+  .wow-item .wow-source { font-family: var(--font-mono); font-size: 10px; opacity: 0.65; display: block; margin-top: 6px; }
+
+  .heatmap-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+  .heatmap-cell { padding: 14px 12px; color: var(--paper-bg); display: flex; flex-direction: column; gap: 4px; }
+  .heatmap-cell.high   { background: var(--risk-red); }
+  .heatmap-cell.med    { background: var(--risk-yellow); }
+  .heatmap-cell.low    { background: var(--risk-green); }
+  .heatmap-cell.severe { background: var(--risk-severe); }
+  .heatmap-cell .region { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+  .heatmap-cell .risk-score { font-family: var(--font-mono); font-size: 11px; opacity: 0.85; }
+  .heatmap-cell .note { font-family: var(--font-serif); font-size: 11px; line-height: 1.5; opacity: 0.9; }
+
+  details.editorial-folded-content {
+    margin: 32px 0; padding: 24px 28px;
+    border-top: 4px solid var(--paper-ink);
+    border-bottom: 1px solid var(--paper-line);
+    background: var(--paper-bg);
+  }
+  details.editorial-folded-content > summary {
+    cursor: pointer; list-style: none;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--font-display); font-size: 18px; font-weight: 700;
+  }
+  details.editorial-folded-content > summary::-webkit-details-marker { display: none; }
+  details.editorial-folded-content > summary em {
+    font-family: var(--font-display); font-style: italic;
+    font-weight: 400; font-size: 0.7em; margin-left: 8px; color: var(--paper-muted);
+  }
+  details.editorial-folded-content .fold-marker { font-family: var(--font-mono); font-weight: 600; color: var(--paper-muted); }
+  details.editorial-folded-content[open] .fold-marker::before { content: "−"; }
+  details.editorial-folded-content:not([open]) .fold-marker::before { content: "+"; }
+  details.editorial-folded-content .fold-label {
+    font-family: var(--font-mono); font-size: 12px;
+    letter-spacing: 0.15em; color: var(--paper-muted); text-transform: uppercase;
+  }
+  details.editorial-folded-content .editorial-section-body { padding-top: 18px; }
+  .appendix-chapter {
+    margin-bottom: 22px; padding: 14px;
+    background: var(--paper-bg-canvas); border: 1px solid var(--paper-line);
+  }
+  .appendix-chapter h5 { font-family: var(--font-serif); font-size: 14px; font-weight: 700; margin: 0 0 4px 0; }
+  .appendix-chapter .desc { font-family: var(--font-serif); font-size: 12px; color: var(--paper-warm); margin-bottom: 8px; }
+  .appendix-chapter ul { font-family: var(--font-mono); font-size: 10.5px; line-height: 1.85; color: var(--paper-warm); margin: 0; padding-left: 16px; }
+  .appendix-chapter code { background: rgba(26,24,21,0.06); padding: 1px 3px; }
+
+  footer.method { border-top: 3px double var(--paper-ink); padding-top: 22px; margin-top: 32px; font-family: var(--font-mono); font-size: 11px; color: var(--paper-muted); line-height: 1.75; }
+  .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px; }
+  .method-grid h4 { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; color: var(--paper-ink); margin: 0 0 6px 0; }
+
+  /* Codex TODO 区(只在 mock 显示,真实站点不会有) */
+  .codex-todo-section {
+    margin-top: 60px; padding: 24px 28px;
+    background: #f8e9d4; border: 2px dashed var(--risk-orange);
+  }
+  .codex-todo-section h3 {
+    font-family: var(--font-mono); font-size: 14px;
+    letter-spacing: 0.2em; color: var(--risk-red);
+    margin: 0 0 12px 0; text-transform: uppercase;
+  }
+  .codex-todo-section .desc {
+    font-family: var(--font-serif); font-size: 13px;
+    color: var(--paper-warm); line-height: 1.7;
+    margin: 0 0 14px 0;
+  }
+  .codex-todo-section table {
+    width: 100%; border-collapse: collapse;
+    font-family: var(--font-mono); font-size: 11px;
+    background: var(--paper-bg);
+  }
+  .codex-todo-section th, .codex-todo-section td {
+    text-align: left; padding: 8px 10px;
+    border: 1px solid var(--paper-line);
+    vertical-align: top;
+  }
+  .codex-todo-section th {
+    background: var(--paper-ink); color: var(--paper-bg);
+    font-size: 10px; letter-spacing: 0.15em;
+    text-transform: uppercase; font-weight: 600;
+  }
+  .codex-todo-section td .src {
+    color: var(--paper-muted); font-size: 10px;
+    display: block; margin-top: 3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="path-tag">
+  <strong>M-94 V0 FINAL MOCK</strong> · Path C 结构 + Path B 密度 + Codex 5 硬错误修正 + 11 处改动 · 视觉确认版 · 2026-05-24
+</div>
+
+<div class="container">
+
+  <!-- Masthead -->
+  <header class="masthead">
+    <div class="masthead-row">
+      <div>
+        <div class="kicker">每日更新 · 机构级宏观风险简报</div>
+        <h1 class="title">全球金融风险雷达<br/><em>Global Financial Risk Radar</em></h1>
+      </div>
+      <div class="issue-meta">
+        <div><strong>ISSUE M-94 V0 · FINAL MOCK</strong></div>
+        <div>AS OF 2026-05-23 UTC</div>
+        <div>CACHE 28.0M-94V · DATA HEALTH 23/23 OK</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Jump nav · 15 项,第 9 项标绿色 .new -->
+  <nav class="dashboard-jump-nav" aria-label="顶部跳转导航">
+    <a href="#homepage-today-judgment">今日判断</a>
+    <a href="#homepage-pressure-sources">压力来源</a>
+    <a href="#homepage-signal-layers">信号分层</a>
+    <a href="#homepage-macro-drivers">四大驱动</a>
+    <a href="#homepage-market-temperature">市场温度</a>
+    <a href="#homepage-risk-engines">风险引擎</a>
+    <a href="#homepage-cross-validation">交叉验证</a>
+    <a href="#wow-key-changes">本期变化</a>
+    <a href="#macro-thematic-cards" class="new">主题卡阵 NEW</a>
+    <a href="#global-risk-heatmap">风险热力图</a>
+    <a href="#detail-data">详细数据</a>
+    <a href="#world-order-stress-section">世界秩序</a>
+    <a href="#method-evidence">方法说明</a>
+    <a href="#external-ai-auxiliary">外部 AI</a>
+    <a href="#execution-risk-detail">执行风控</a>
+  </nav>
+
+  <!-- plain-summary-card preface (M-93A0) -->
+  <section class="plain-summary-section" id="plain-summary-card" aria-label="今天全球金融风险一览">
+    <div class="ps-kicker">本期速读 · for general reader</div>
+    <p class="ps-story">
+      能源与世界秩序压力把总风险推到 56 分,落在"高风险预警"带。
+      <strong>HY OAS 仍低、VIX 没有同步恐慌</strong>,信用市场暂时没验证全面危机——
+      因此本期判读保持观察语气而非定性危机。Brent 周内涨 6 美元、crack spread 同步走阔,
+      能源向下游商品传导的链条正在被实际数据压实。
+    </p>
+    <div class="ps-meta">
+      <span>风险等级:风险偏高</span>
+      <span>分数变化:比一周前高 2 分</span>
+      <span>数据状态:数据正常</span>
+      <span>主线:油价变贵推高物价</span>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       macro-risk-overview · 保留原 8 runtime block(视觉重写)
+       ============================================================ -->
+  <section class="editorial-section" id="macro-risk-overview" style="--section-accent: var(--risk-red);">
+    <header class="editorial-section-header">
+      <span class="section-kicker">MACRO RISK OVERVIEW · 宏观风险判断总览</span>
+      <span class="section-title">本期判读 · 项目原 8 大分析层</span>
+      <span class="section-note">
+        保留原 IA 8 个 runtime block,以 Bubble Watch 报纸风格重写视觉。
+        内部金融逻辑(7 narrative + 5 market temp 分桶 + 8 today states)全部保留。
+      </span>
+    </header>
+    <div class="editorial-section-body">
+    <div class="macro-overview-shell">
+
+      <!-- HERO (homepage-today-judgment) -->
+      <article class="editorial-big-number" id="homepage-today-judgment">
+        <div class="big-left">
+          <div class="label">TODAY JUDGMENT · 今日总判断</div>
+          <div>
+            <div class="value">56<sup>/100</sup></div>
+            <div class="breakdown">
+              6 底层模块中 <strong>2 红 / 2 黄 / 2 绿</strong><br/>
+              World Order overlay: 70(升档提示)
+            </div>
+          </div>
+        </div>
+        <div class="big-right">
+          <div class="verdict-kicker">THIS ISSUE · 滞胀冲击 / 通胀冲击</div>
+          <h2>今日主线是能源 → 通胀 → 利率压力;最大背离为能源定价背离观察。</h2>
+          <p>原始 56 落在 40–60 高风险预警带。World Order overlay 70 触发橙色升档指针。
+            HY OAS 仍在 4% 以下、VIX 16.8 没有同步恐慌,判读保持观察语气而非危机定性。</p>
+        </div>
+        <div class="big-footer">
+          <div><div class="k">DOMINANT RISK CHAIN</div><div class="v">能源 → 通胀 → 利率压力</div></div>
+          <div><div class="k">WEEKLY CHANGE</div><div class="v">+2 (WoW)</div></div>
+          <div><div class="k">DATA HEALTH</div><div class="v">23/23 OK · 数据正常</div></div>
+        </div>
+      </article>
+
+      <!-- 阈值尺 + 8 周趋势 -->
+      <div class="threshold-block">
+        <div class="threshold-header">
+          <h4>触发阈值标尺 <em>· Threshold Scale</em></h4>
+          <div class="now">原始 56(高风险预警) · overlay 升档 → 系统性顶部带</div>
+        </div>
+        <div class="threshold-bar-wrap">
+          <div class="threshold-bar">
+            <div class="zone t-green"  style="flex:25"><span class="zone-label">观察期</span><span class="zone-pct">0–25</span></div>
+            <div class="zone t-yellow" style="flex:15"><span class="zone-label">中度警戒</span><span class="zone-pct">25–40</span></div>
+            <div class="zone t-orange" style="flex:20"><span class="zone-label">高风险预警</span><span class="zone-pct">40–60</span></div>
+            <div class="zone t-red"    style="flex:40"><span class="zone-label">系统性顶部</span><span class="zone-pct">≥60</span></div>
+            <div class="marker" style="left:56%"><span class="marker-label">原始 56</span></div>
+            <div class="marker override" style="left:80%"><span class="marker-label">overlay 70</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="trend-block">
+        <div class="trend-block-header">
+          <h4>8 周趋势 <em>· 8-Week Trend</em></h4>
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">
+            <span style="color:var(--risk-red)">●</span> Score
+            <span style="margin-left:14px;color:var(--risk-orange)">● ●</span> Overlay
+            · y 0-70 · 阈值线 25/40/60
+          </div>
+        </div>
+        <div class="trend-svg-wrap">
+          <svg viewBox="0 0 800 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="800" height="200" fill="#F5F0E5"/>
+            <line x1="40" y1="128.57" x2="780" y2="128.57" stroke="#1F4D2C" stroke-width="1" stroke-dasharray="4,3" opacity="0.45"/>
+            <text x="784" y="132" font-family="IBM Plex Mono" font-size="9" fill="#1F4D2C">25</text>
+            <line x1="40" y1="85.71" x2="780" y2="85.71" stroke="#A8761A" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
+            <text x="784" y="89" font-family="IBM Plex Mono" font-size="9" fill="#A8761A">40</text>
+            <line x1="40" y1="28.57" x2="780" y2="28.57" stroke="#7C1D1D" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
+            <text x="784" y="32" font-family="IBM Plex Mono" font-size="9" fill="#7C1D1D">60</text>
+            <polyline points="80,62.86 177.14,60.0 274.29,54.29 371.43,57.14 468.57,48.57 565.71,45.71 662.86,48.57 760,40.0"
+              fill="none" stroke="#7C1D1D" stroke-width="2.5"/>
+            <polyline points="80,22.86 177.14,17.14 274.29,14.29 371.43,14.29 468.57,8.57 565.71,5.71 662.86,2.86 760,0"
+              fill="none" stroke="#C25E2A" stroke-width="2" stroke-dasharray="5,3"/>
+            <circle cx="760" cy="40.0" r="5" fill="#7C1D1D" stroke="#1A1815" stroke-width="1.5"/>
+            <circle cx="760" cy="0" r="4" fill="#C25E2A" stroke="#1A1815" stroke-width="1"/>
+            <text x="80" y="195" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#666">W-7</text>
+            <text x="274.29" y="195" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#666">W-5</text>
+            <text x="468.57" y="195" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#666">W-3</text>
+            <text x="662.86" y="195" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#666">W-1</text>
+            <text x="760" y="195" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#1A1815" font-weight="700">NOW</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- pressure-sources runtime block(扁平数字,源自 data.modules) -->
+      <div class="runtime-block" id="homepage-pressure-sources">
+        <div class="runtime-block-header">
+          <h3>压力来源 <span class="en">PRESSURE SOURCES</span></h3>
+          <div class="meta">六大底层模块 · data.modules 扁平数字 · data.moduleTrends 趋势</div>
+        </div>
+        <div class="mini-grid">
+          <div class="mini-card red"><div class="label">Energy 能源</div><div class="num">82</div><div class="status">↑ 能源传导主线</div></div>
+          <div class="mini-card red"><div class="label">Geopolitical 地缘</div><div class="num">78</div><div class="status">↑ multi_theater</div></div>
+          <div class="mini-card yellow"><div class="label">Inflation 通胀</div><div class="num">52</div><div class="status">→ 横盘观察</div></div>
+          <div class="mini-card yellow"><div class="label">Liquidity 流动性</div><div class="num">48</div><div class="status">↑ 边际收紧</div></div>
+          <div class="mini-card green"><div class="label">Debt 债务</div><div class="num">31</div><div class="status">→ 杠杆稳定</div></div>
+          <div class="mini-card green"><div class="label">Banking 银行</div><div class="num">29</div><div class="status">↓ 持续改善</div></div>
+        </div>
+      </div>
+
+      <!-- signal-layers runtime block -->
+      <div class="runtime-block" id="homepage-signal-layers">
+        <div class="runtime-block-header">
+          <h3>信号分层 <span class="en">SIGNAL LAYERS · 7 NARRATIVES</span></h3>
+          <div class="meta">7 个 active narratives 中:3 active / 4 latent · NARRATIVE_EMOJI 映射</div>
+        </div>
+        <div class="narrative-list">
+          <div class="narrative-item active">
+            <div class="head"><span class="emoji">⚡</span><span class="name">energy_shock 能源冲击</span><span class="score">score 78 · ACTIVE</span></div>
+            <p>Brent + crack spread 同步走阔,2022 模式重演。下一节是是否传导至 CPI / breakeven。</p>
+          </div>
+          <div class="narrative-item active">
+            <div class="head"><span class="emoji">⚖️</span><span class="name">stagflation_pressure 滞胀压力</span><span class="score">score 62 · ACTIVE</span></div>
+            <p>ISM PMI 48.7 收缩 + 能源涨价 + 实际工资压制。三件套均已出现,但信用未验证。</p>
+          </div>
+          <div class="narrative-item active">
+            <div class="head"><span class="emoji">🌐</span><span class="name">world_order_pressure_crossing 世界秩序压力穿越</span><span class="score">score 70 · ACTIVE</span></div>
+            <p>multi_theater_stress 连续 2 周,触发橙色升档指针。OFAC + GDELT 双印证。</p>
+          </div>
+          <div class="narrative-item"><div class="head"><span class="emoji">📉</span><span class="name">risk_asset_mismatch 风险资产错配</span><span class="score">score 38 · LATENT</span></div>
+            <p>SPX 仍在高位但 NDX 跑赢,内部分化未到危机程度。</p></div>
+          <div class="narrative-item"><div class="head"><span class="emoji">🔥</span><span class="name">overheat_confirmation 过热确认</span><span class="score">score 55 · LATENT</span></div>
+            <p>QQQ z-score +2.18σ 极度过热,但信用 + 波动率没有验证,缺少同步证据。</p></div>
+          <div class="narrative-item"><div class="head"><span class="emoji">💰</span><span class="name">credit_spread_warning 信用利差告警</span><span class="score">score 22 · LATENT</span></div>
+            <p>HY OAS / IG OAS 双绿,NFCI 刚转正。压力初现但远未到告警阈值。</p></div>
+          <div class="narrative-item"><div class="head"><span class="emoji">💧</span><span class="name">liquidity_tightening 流动性收紧</span><span class="score">score 18 · LATENT</span></div>
+            <p>水位 / 回购 / 隔夜三层均无压力。2019-09 信号目前不存在。</p></div>
+        </div>
+      </div>
+
+      <!-- macro-drivers runtime block(保留所有字段消费,4 组重新视觉分组) -->
+      <div class="runtime-block" id="homepage-macro-drivers">
+        <div class="runtime-block-header">
+          <h3>四大驱动 <span class="en">MACRO DRIVERS · 13 SUB-MODULES IN 4 PILLARS</span></h3>
+          <div class="meta">fedLiquidity / policyExpectations / curve / credit + consumer/shippingFreight/employment/consumerRetail/commercialRealEstate/privateCreditProxy 等</div>
+        </div>
+        <div class="runtime-block-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+          <div>
+            <strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Fed Liquidity</strong>
+            <p style="margin:0;font-size:12.5px;">三层均无压力。WALCL / reserveBalances 3.62T / repo BGCR-SOFR +2bp / SOFR-EFFR 锚定。</p>
+          </div>
+          <div>
+            <strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Policy Expectations</strong>
+            <p style="margin:0;font-size:12.5px;">market vs 委员分歧。futureMinusTargetMid +38bp,市场比 Fed 鹰。</p>
+          </div>
+          <div>
+            <strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Curve</strong>
+            <p style="margin:0;font-size:12.5px;">t10y2y +18bp,curve.regime 从倒挂转正。通常领先衰退 6-18 月。</p>
+          </div>
+          <div>
+            <strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Credit</strong>
+            <p style="margin:0;font-size:12.5px;">HY OAS 2.78% / IG OAS 1.05% / NFCI +0.18 刚转正 / SLOOS 紧缩。</p>
+          </div>
+          <div style="grid-column: 1 / -1;border-top:1px dashed #aaa;padding-top:10px;margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">
+            子模块完整列表:fedLiquidity / policyExpectations / curve / credit / consumer / shippingFreight / employment / consumerRetail / commercialRealEstate / privateCreditProxy / activeSignals / gatingEvaluation
+          </div>
+        </div>
+      </div>
+
+      <!-- market-temperature runtime block(必须保留 checker 锁定字段) -->
+      <div class="runtime-block" id="homepage-market-temperature">
+        <div class="runtime-block-header">
+          <h3>市场温度 <span class="en">MARKET PRICING TEMPERATURE</span></h3>
+          <div class="meta">QQQ 60 周均值 + z-score · NDX/IXIC 广度对照 · 本数据为统计描述,不构成投资建议</div>
+        </div>
+        <div class="runtime-block-body">
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start;">
+            <div>
+              <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;color:var(--paper-muted);text-transform:uppercase;">极度过热 · extreme-hot</div>
+              <div style="font-family:var(--font-display);font-size:48px;font-weight:900;line-height:1;color:var(--risk-yellow);margin-top:4px;">+2.18<span style="font-size:0.4em;color:var(--paper-muted);">σ</span></div>
+              <div style="font-family:var(--font-mono);font-size:10px;color:var(--paper-muted);margin-top:6px;">QQQ vs 60 周均值 · 历史第二极端</div>
+            </div>
+            <div>
+              <p style="margin:0 0 8px 0;font-size:13.5px;">QQQ 当前价格距 60 周均值 2.18 个标准差,处于历史第二极端区间。NDX +2.22σ / IXIC +1.92σ,整个美国成长股板块同步极端。</p>
+              <div style="font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 16px;">
+                <div>close: <span style="color:var(--paper-ink);">$708.93</span></div>
+                <div>ma60: <span style="color:var(--paper-ink);">$579.84</span></div>
+                <div>stdDev60: <span style="color:var(--paper-ink);">$59.23</span></div>
+                <div>zScoreRange: <span style="color:var(--paper-ink);">[-2.64, +2.83]</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- risk-engines runtime block(多源,不只 data.modules) -->
+      <div class="runtime-block" id="homepage-risk-engines">
+        <div class="runtime-block-header">
+          <h3>风险引擎 <span class="en">RISK ENGINES · 6 ENGINES + AUXILIARY</span></h3>
+          <div class="meta">data.modules 6 引擎 + divergenceLayer + privateCreditProxy + worldOrderStress + marketTemperature 等多源派生</div>
+        </div>
+        <div class="mini-grid">
+          <div class="mini-card red"><div class="label">B1 Energy</div><div class="num">RED</div><div class="status">能源冲击主导</div></div>
+          <div class="mini-card yellow"><div class="label">B2 Liquidity</div><div class="num">YEL</div><div class="status">流动性边际收紧</div></div>
+          <div class="mini-card green"><div class="label">B3 Credit</div><div class="num">GRN</div><div class="status">信用反向证据</div></div>
+          <div class="mini-card green"><div class="label">B4 Debt</div><div class="num">GRN</div><div class="status">杠杆稳定</div></div>
+          <div class="mini-card yellow"><div class="label">B5 Consumer</div><div class="num">YEL</div><div class="status">实际工资压制</div></div>
+          <div class="mini-card red"><div class="label">B6 Geopolitical</div><div class="num">RED</div><div class="status">multi_theater</div></div>
+        </div>
+      </div>
+
+      <!-- cross-validation runtime block -->
+      <div class="runtime-block" id="homepage-cross-validation">
+        <div class="runtime-block-header">
+          <h3>交叉验证 <span class="en">CROSS VALIDATION MATRIX</span></h3>
+          <div class="meta">buildCrossValidationMatrix() · narratives + consistencyScore + oneLineSummary</div>
+        </div>
+        <div class="consistency-block" style="border-top:none;padding-top:0;">
+          <div class="consistency-label">一致性 / Consistency</div>
+          <div class="consistency-bar-wrap">
+            <div class="consistency-bar"><div class="fill"></div></div>
+          </div>
+          <div class="consistency-value">72<span style="font-size:0.5em;color:var(--paper-muted);"> /100</span></div>
+          <div class="consistency-detail">
+            5 strong_confirmation / 2 contradiction / 1 insufficient_data<br/>
+            能源 + 通胀 + Fed 路径同向支持;HY OAS + VIX 提供反向证据。
+          </div>
+        </div>
+      </div>
+
+      <!-- wow-key-changes runtime block -->
+      <section class="wow-section" id="wow-key-changes">
+        <div class="wow-label">本期关键变化 · Week-over-Week</div>
+        <h3>能源链加压,信用反向证据,地缘 overlay 升档 <em>· this issue's deltas</em></h3>
+        <div class="wow-grid">
+          <div class="wow-item">
+            <span class="wow-tag is-up">▲ 风险升高 · 通胀与能源</span>
+            <div class="wow-text">Brent 周内 +6.2,crack spread 同步走阔到 48.37。<span class="wow-source">brentPricingLayer.crackSpread4wChange +19.87</span></div>
+          </div>
+          <div class="wow-item">
+            <span class="wow-tag is-down">▼ 风险下降 · 信用</span>
+            <div class="wow-text">HY OAS 周内收窄,与 VIX 同步走低。信用市场不验证恐慌。<span class="wow-source">divergenceLayer 提供反向证据</span></div>
+          </div>
+          <div class="wow-item">
+            <span class="wow-tag is-up">▲ 风险升高 · 地缘</span>
+            <div class="wow-text">World Order overlay 升档至 multi_theater_stress 持续第 2 周。<span class="wow-source">worldOrderStress.state transition</span></div>
+          </div>
+          <div class="wow-item">
+            <span class="wow-tag is-up">▲ 风险升高 · 流动性</span>
+            <div class="wow-text">Fed 政策路径分歧扩至 +38bp,市场比委员鹰。<span class="wow-source">macroDrivers.policyExpectations.futureMinusTargetMid</span></div>
+          </div>
+          <div class="wow-item">
+            <span class="wow-tag is-flat">━ 持平 · 美国就业</span>
+            <div class="wow-text">首次申请稳在 238k,扩张产业占比 70% → 63%。<span class="wow-source">macroDrivers.employment.diffusion</span></div>
+          </div>
+          <div class="wow-item">
+            <span class="wow-tag is-down">▼ 风险下降 · 消费 vs 资产</span>
+            <div class="wow-text">consumer_vs_asset_pricing 背离收敛。<span class="wow-source">divergenceLayer.checks[consumer_vs_asset_pricing]</span></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       NEW SECTION: #macro-thematic-cards · 8 读者类别红黄绿卡阵
+       Codex 11 处修正全部落地
+       ============================================================ -->
+  <section class="editorial-section" id="macro-thematic-cards" style="--section-accent: var(--risk-green);">
+    <header class="editorial-section-header">
+      <span class="section-kicker">MACRO THEMATIC CARDS · 宏观主题卡阵 · NEW</span>
+      <span class="section-title">8 读者类别 红黄绿指标卡</span>
+      <span class="section-note">
+        将上方分析层证据按"读者最容易理解的主题"重新组织。中国宏观为 P1 占位区,M-95/M-96 起填充。
+        部分 aux 字段标 P2 等待数据接入。本 section 为 Path C 在原 IA 外新增的唯一 section。
+      </span>
+    </header>
+    <div class="editorial-section-body">
+      <div class="reader-cat-grid">
+
+        <!-- C1: 通胀与能源 -->
+        <div class="reader-cat-block">
+          <div class="reader-cat-header">
+            <h3>通胀与能源</h3>
+            <span class="en">INFLATION & ENERGY</span>
+            <span class="counts">5 张 · <span class="red">2 红</span> · <span class="yellow">1 黄</span> · <span class="pending">2 P1</span></span>
+          </div>
+          <p class="cat-intro">
+            能源是当前主线第一环。Brent 主值与公开代理价格的距离反映现货溢价压力;
+            crack spread 是能源向下游柴油 / 汽油传导的中间证据;ISM PMI 看美国制造业能否消化能源成本。
+            CPI / WTI 后续 milestone 接入。
+          </p>
+          <div class="card-grid">
+            <!-- Brent · agg-rows 三层证据链 + Codex 5 字段补充 -->
+            <article class="indicator-card">
+              <div class="status-bar red"></div>
+              <div class="head"><div><div class="name-en">Brent</div><div class="name-zh">布伦特原油</div></div><span class="badge red">RED</span></div>
+              <div class="number">116.73<span class="unit">USD/bbl</span></div>
+              <div class="aux">主值 selectedBrent · status: public_proxy_observation</div>
+              <div class="agg-rows">
+                <div><span class="k">公开现货代理 EIA</span> · <span class="v">$116.50</span></div>
+                <div><span class="k">期货 front Yahoo</span> · <span class="v">$115.80</span></div>
+                <div><span class="k">期货 ICE</span> · <span class="v">$115.95</span></div>
+                <div><span class="k">spotMinusFutures</span> · <span class="v">+$0.70</span></div>
+                <div><span class="k">maxProxyDivergencePct</span> · <span class="v">0.6%</span></div>
+              </div>
+              <p class="note">三层证据链(主值 / 现货代理 / 期货代理)显示价差收敛,能源主线传导正在被实际定价压实。</p>
+              <div class="meta"><span>阈值 &gt;100 红</span><span>brentPricingLayer.{selectedBrent, publicSpotProxy, futuresProxy, eiaBrentSpotProxy, futuresCurve}</span></div>
+            </article>
+
+            <!-- Crack spread -->
+            <article class="indicator-card">
+              <div class="status-bar red"></div>
+              <div class="head"><div><div class="name-en">Crack spread</div><div class="name-zh">炼油利润压力</div></div><span class="badge red">RED</span></div>
+              <div class="number">48.37<span class="unit">USD/bbl</span></div>
+              <div class="aux">ULSD × 42 − Brent · crackSpread4wChange +19.87</div>
+              <p class="note">炼油利润扩张说明能源向汽油 / 柴油传导。Brent → CPI 的中间证据。regime: 供应紧张。</p>
+              <div class="meta"><span>阈值 &gt;40 红</span><span>brentPricingLayer.{crackSpread, crackSpread4wChange, crackSpreadRegime}</span></div>
+            </article>
+
+            <!-- ISM PMI -->
+            <article class="indicator-card">
+              <div class="status-bar yellow"></div>
+              <div class="head"><div><div class="name-en">ISM PMI</div><div class="name-zh">美国制造业景气</div></div><span class="badge yellow">YELLOW</span></div>
+              <div class="number">48.7</div>
+              <div class="aux">3 月动量 -0.4 · regime: 收缩</div>
+              <p class="note">制造业读数跌破扩张 / 收缩线,经济活动温度走弱,能源成本难被需求消化。</p>
+              <div class="meta"><span>阈值 &lt;45 红</span><span>macroDrivers.consumer.{ismManufacturingPmi, ismManufacturingPmi3mChange, ismPmiRegime}</span></div>
+            </article>
+
+            <!-- US CPI · P1 -->
+            <article class="indicator-card pending"><span class="corner p1">P1</span>
+              <div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">US CPI</div><div class="name-zh">美国通胀直接证据</div></div><span class="badge pending">P1 待接入</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">M-95 后接入。FRED CPIAUCSL + CPILFESL。</p>
+              <div class="meta"><span>next: P1</span><span>FRED CPI series</span></div>
+            </article>
+
+            <!-- WTI · P1 -->
+            <article class="indicator-card pending"><span class="corner p1">P1</span>
+              <div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">WTI</div><div class="name-zh">美国油价基准</div></div><span class="badge pending">P1 待接入</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">配 Brent 看美欧能源分化。</p>
+              <div class="meta"><span>next: P1</span><span>FRED DCOILWTICO</span></div>
+            </article>
+          </div>
+        </div>
+
+        <!-- C2: 全球流动性 -->
+        <div class="reader-cat-block">
+          <div class="reader-cat-header">
+            <h3>全球流动性</h3>
+            <span class="en">GLOBAL LIQUIDITY</span>
+            <span class="counts">7 张 · <span class="yellow">3 黄</span> · <span class="green">1 绿</span> · <span class="pending">1 P2 + 2 P1</span></span>
+          </div>
+          <p class="cat-intro">
+            全球流动性来自四条管线:美元 / 黄金 / 利率 / 美联储资产负债表。任意管线收紧都会向风险资产传导。
+            当前美联储流动性三层(水位 / 回购 / 隔夜)均无 2019-09 形态信号。
+          </p>
+          <div class="card-grid">
+            <!-- DXY -->
+            <article class="indicator-card">
+              <div class="status-bar yellow"></div>
+              <div class="head"><div><div class="name-en">DXY</div><div class="name-zh">广义美元指数</div></div><span class="badge yellow">YELLOW</span></div>
+              <div class="number">119.28</div>
+              <div class="aux">12 周高位 · <span style="color:#c79b54">P2 待接入</span></div>
+              <p class="note">强美元说明全球融资环境收紧,尚未到单独危机程度。</p>
+              <div class="meta"><span>阈值 &gt;115 红</span><span>__effectiveDisplayInputs.dxy · 12w high P2</span></div>
+            </article>
+
+            <!-- Gold -->
+            <article class="indicator-card">
+              <div class="status-bar yellow"></div>
+              <div class="head"><div><div class="name-en">Gold</div><div class="name-zh">黄金</div></div><span class="badge yellow">YELLOW</span></div>
+              <div class="number">4510.50<span class="unit">USD/oz</span></div>
+              <div class="aux">趋势 +</div>
+              <p class="note">避险需求 + 通胀对冲并存,与强美元共强 = 金融压力与安全资产需求并存。</p>
+              <div class="meta"><span>趋势驱动</span><span>__effectiveDisplayInputs.gold</span></div>
+            </article>
+
+            <!-- US 10Y + 2s10s -->
+            <article class="indicator-card">
+              <div class="status-bar yellow"></div>
+              <div class="head"><div><div class="name-en">US 10Y + 2s10s</div><div class="name-zh">美元利率曲线</div></div><span class="badge yellow">YELLOW</span></div>
+              <div class="number">4.57<span class="unit">%</span></div>
+              <div class="aux">10Y · 2s10s spread +18bp · 从倒挂转正</div>
+              <div class="agg-rows">
+                <div><span class="k">t10y2y</span> · <span class="v">+0.18%</span></div>
+                <div><span class="k">t10y2yWeekChange</span> · <span class="v">+3bp</span></div>
+                <div><span class="k">regime</span> · <span class="v">陡峭化</span></div>
+                <div><span class="k">steepeningAlert</span> · <span class="v">true</span></div>
+              </div>
+              <p class="note">曲线从倒挂转正通常领先衰退 6-18 个月。</p>
+              <div class="meta"><span>阈值 &gt;5% 红</span><span>__effectiveDisplayInputs.us10y + macroDrivers.curve.*</span></div>
+            </article>
+
+            <!-- Fed liquidity 三层聚合(Codex 字段补充) -->
+            <article class="indicator-card">
+              <div class="status-bar green"></div>
+              <div class="head"><div><div class="name-en">USD Liquidity Agg</div><div class="name-zh">美元流动性聚合</div></div><span class="badge green">GREEN</span></div>
+              <div class="number">3.62<span class="unit">T USD</span></div>
+              <div class="aux">银行准备金 reserveBalances · 12 周高位</div>
+              <div class="agg-rows">
+                <div><span class="k">水位 WALCL</span> · <span class="v">7.18T · 4w +$36B</span></div>
+                <div><span class="k">准备金 reserveBalances</span> · <span class="v">3.62T · 4w +$58B</span></div>
+                <div><span class="k">ON RRP</span> · <span class="v">$320B · WoW -$8B</span></div>
+                <div><span class="k">隔夜 SOFR / EFFR</span> · <span class="v">5.31% / 5.33%</span></div>
+                <div><span class="k">回购 BGCR / TGCR</span> · <span class="v">5.29% / 5.28%</span></div>
+                <div><span class="k">repoSpreadRegime</span> · <span class="v">normal</span></div>
+              </div>
+              <p class="note">三层递进结构均无压力。2019-09 回购市场最早信号目前不存在。</p>
+              <div class="meta"><span>display-only 派生</span><span>macroDrivers.fedLiquidity + liquidityIndex</span></div>
+            </article>
+
+            <!-- Fed Path Agg(Codex 字段补充) -->
+            <article class="indicator-card">
+              <div class="status-bar yellow"></div>
+              <div class="head"><div><div class="name-en">Fed Path Agg</div><div class="name-zh">Fed 政策路径分歧</div></div><span class="badge yellow">YELLOW</span></div>
+              <div class="number">+38<span class="unit">bp</span></div>
+              <div class="aux">market 比委员鹰 · futureMinusTargetMid</div>
+              <div class="agg-rows">
+                <div><span class="k">targetMid (DFF)</span> · <span class="v">5.33%</span></div>
+                <div><span class="k">fedFundsFutureFront</span> · <span class="v">94.27 → 5.73%</span></div>
+                <div><span class="k">ZQ futures curve</span> · <span class="v">front +50bp</span></div>
+                <div><span class="k">SR3 futures curve</span> · <span class="v">front +42bp</span></div>
+                <div><span class="k">OIS forward 12M</span> · <span class="v">4.88%</span></div>
+                <div><span class="k">SEP dot mid 2026</span> · <span class="v">4.50%</span></div>
+                <div><span class="k">statement / minutes tone</span> · <span class="v">hawkish</span></div>
+              </div>
+              <p class="note">市场比 Fed 委员预期更鹰。这种分歧是 1999-2000 / 2022 顶部前的同构信号。</p>
+              <div class="meta"><span>阈值 |分歧|&gt;50bp 红</span><span>macroDrivers.policyExpectations.*</span></div>
+            </article>
+
+            <!-- Cu/Au · P1 -->
+            <article class="indicator-card pending"><span class="corner p1">P1</span>
+              <div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">Cu / Au</div><div class="name-zh">铜金比</div></div><span class="badge pending">P1</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">铜代表实体经济,黄金代表金融避险。比值升=经济强 / 降=金融避险。</p>
+              <div class="meta"><span>next: P2</span><span>Yahoo HG=F / GC=F</span></div>
+            </article>
+
+            <!-- CFETS · P1 -->
+            <article class="indicator-card pending"><span class="corner p1">P1</span>
+              <div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">CFETS RMB</div><div class="name-zh">人民币篮子指数</div></div><span class="badge pending">P1</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">人民币对一篮子货币强弱,反映中国央行汇率意图。</p>
+              <div class="meta"><span>next: P2</span><span>Stooq / TE 公开 HTML</span></div>
+            </article>
+          </div>
+        </div>
+
+        <!-- C3: 信用与企业债 · 加 CRE 第 5 卡(决策 A) -->
+        <div class="reader-cat-block">
+          <div class="reader-cat-header">
+            <h3>信用与企业债</h3>
+            <span class="en">CREDIT & CORPORATE</span>
+            <span class="counts">5 张 · <span class="green">2 绿</span> · <span class="yellow">3 黄</span></span>
+          </div>
+          <p class="cat-intro">
+            信用层回答的不是"压力高不高",而是"压力有没有从价格变成融资约束"。
+            HY OAS / IG OAS 是企业借钱难易的市场定价;NFCI 综合 100+ 跨市场信号;
+            私募代理用上市 BDC ETF 篮子近似公开市场看不见的私募信贷;CRE 看商业地产融资压力。
+          </p>
+          <div class="card-grid">
+            <!-- HY OAS -->
+            <article class="indicator-card">
+              <div class="status-bar green"></div>
+              <div class="head"><div><div class="name-en">HY OAS</div><div class="name-zh">高收益债利差</div></div><span class="badge green">GREEN</span></div>
+              <div class="number">2.78<span class="unit">%</span></div>
+              <div class="aux">WoW 收窄 · 与 VIX 同步走低</div>
+              <p class="note">企业信用风险可控。与 VIX 同步背离,信用市场不验证恐慌。</p>
+              <div class="meta"><span>阈值 &gt;5% 红</span><span>__effectiveDisplayInputs.hyOas · WoW 待接入</span></div>
+            </article>
+
+            <!-- IG OAS -->
+            <article class="indicator-card">
+              <div class="status-bar green"></div>
+              <div class="head"><div><div class="name-en">IG OAS</div><div class="name-zh">投资级利差</div></div><span class="badge green">GREEN</span></div>
+              <div class="number">1.05<span class="unit">%</span></div>
+              <div class="aux">igOas1dChange -2bp · igHyRatio 0.38</div>
+              <p class="note">优质企业融资几乎无压力。"信用相对耐压"的最强反向证据。</p>
+              <div class="meta"><span>阈值 &gt;1.5% 红</span><span>macroDrivers.credit.{igOas, igOas1dChange, igHyRatio}</span></div>
+            </article>
+
+            <!-- NFCI(Codex Q1 确认,字段补充) -->
+            <article class="indicator-card">
+              <div class="status-bar yellow"></div>
+              <div class="head"><div><div class="name-en">NFCI</div><div class="name-zh">芝加哥联储 FCI</div></div><span class="badge yellow">YELLOW</span></div>
+              <div class="number">+0.18</div>
+              <div class="aux">nfci4wChange +0.05 · regime: 收紧</div>
+              <p class="note">NFCI 汇总 100+ 跨市场信号(信用 / 流动性 / 杠杆)。<strong>方向反转:正值=收紧</strong>。当前刚转正,边际收紧。</p>
+              <div class="meta"><span>阈值 &gt;0.5 红 / &gt;0 黄</span><span>macroDrivers.credit.{nfci, nfci4wChange, nfciRegime}</span></div>
+            </article>
+
+            <!-- Private Credit Proxy · 降级(决策 B) -->
+            <article class="indicator-card">
+              <div class="status-bar yellow"></div>
+              <div class="head"><div><div class="name-en">Private Credit Proxy</div><div class="name-zh">私募信贷公开代理</div></div><span class="badge yellow">YELLOW</span></div>
+              <div class="number">$11.08<span class="unit">NAV</span></div>
+              <div class="aux">CCLFX intervalFundNav · WoW -0.3%</div>
+              <div class="agg-rows">
+                <div><span class="k">BIZD ETF</span> · <span class="v">$16.42 · 4w -2.1%</span></div>
+                <div><span class="k">PBDC ETF</span> · <span class="v">$18.85 · 4w -1.8%</span></div>
+                <div><span class="k">SRLN ETF</span> · <span class="v">$41.22 · 4w -0.9%</span></div>
+                <div><span class="k">privateCreditProxyRegime</span> · <span class="v">caution</span></div>
+              </div>
+              <p class="note"><strong>公开代理覆盖,不是 private marks。</strong>当前以 ETF 价格 + 4w change 展示;
+              6-proxy z-score 等待 12 周历史窗口接入后启用(M-96+)。</p>
+              <div class="meta"><span>display-only · 不进 scoring</span><span>macroDrivers.privateCreditProxy.* · 6-proxy z-score 待接入</span></div>
+            </article>
+
+            <!-- CRE · 新增卡(决策 A) -->
+            <article class="indicator-card">
+              <div class="status-bar yellow"></div>
+              <div class="head"><div><div class="name-en">Commercial RE</div><div class="name-zh">商业地产风险</div></div><span class="badge yellow">YELLOW</span></div>
+              <div class="number">1.18<span class="unit">%</span></div>
+              <div class="aux">creDelinquencyRate · QoQ +5bp · 持续上行</div>
+              <div class="agg-rows">
+                <div><span class="k">违约率</span> · <span class="v">creDelinquencyRate 1.18%</span></div>
+                <div><span class="k">核销率</span> · <span class="v">creChargeOffRate 0.42%</span></div>
+                <div><span class="k">SLOOS 非农非住宅</span> · <span class="v">+18 (净紧缩)</span></div>
+                <div><span class="k">SLOOS 建筑</span> · <span class="v">+22 (净紧缩)</span></div>
+                <div><span class="k">SLOOS 多家庭</span> · <span class="v">+12 (净紧缩)</span></div>
+                <div><span class="k">sloosCreTighteningMax</span> · <span class="v">+22</span></div>
+              </div>
+              <p class="note">CRE 风险用银行账面压力(违约 / 核销 / SLOOS 紧缩)+ 公开市场代理一起看,不假装有私有贷款 tape。</p>
+              <div class="meta"><span>阈值 &gt;1.5% 红</span><span>macroDrivers.commercialRealEstate.*</span></div>
+            </article>
+          </div>
+        </div>
+
+        <!-- C4: 美国经济温度(Codex 字段补充) -->
+        <div class="reader-cat-block">
+          <div class="reader-cat-header">
+            <h3>美国经济温度</h3>
+            <span class="en">US ECONOMIC TEMPERATURE</span>
+            <span class="counts">2 聚合 + 四象限</span>
+          </div>
+          <p class="cat-intro orange-edge">
+            <strong>四象限 · 就业 × 消费:</strong>就业供给端 + 消费需求端,只有同向才是真趋势。
+            当前位 = 就业偏强 / 消费偏弱 → 实际工资被通胀压制(2022-2023 模式)。
+          </p>
+          <div class="card-grid">
+            <!-- Employment(Codex 字段补充) -->
+            <article class="indicator-card">
+              <div class="status-bar yellow"></div>
+              <div class="head"><div><div class="name-en">Employment Agg</div><div class="name-zh">就业温度聚合</div></div><span class="badge yellow">YELLOW</span></div>
+              <div class="number">238<span class="unit">k</span></div>
+              <div class="aux">initialClaims · 4w average 232k · WoW +6k</div>
+              <div class="agg-rows">
+                <div><span class="k">initialClaims4wChange</span> · <span class="v">+6k</span></div>
+                <div><span class="k">continuingClaims</span> · <span class="v">1.82M · 4w +4k</span></div>
+                <div><span class="k">JOLTS openings</span> · <span class="v">7.4M · YoY -8.2%</span></div>
+                <div><span class="k">U-6 失业率</span> · <span class="v">7.4%</span></div>
+                <div><span class="k">AHE YoY</span> · <span class="v">+4.1%</span></div>
+                <div><span class="k">industry diffusion</span> · <span class="v">63% (11 行业扩张占比)</span></div>
+                <div><span class="k">diffusion regime</span> · <span class="v">narrowing</span></div>
+              </div>
+              <p class="note">从最快(ICSA)到最慢(时薪)的综合判读。市场偏强但边际松动。</p>
+              <div class="meta"><span>阈值 &gt;280k 红</span><span>macroDrivers.employment.*</span></div>
+            </article>
+
+            <!-- Consumer(Codex 字段补充) -->
+            <article class="indicator-card">
+              <div class="status-bar yellow"></div>
+              <div class="head"><div><div class="name-en">Consumer Agg</div><div class="name-zh">消费温度聚合</div></div><span class="badge yellow">YELLOW</span></div>
+              <div class="number">+1.9<span class="unit">% YoY</span></div>
+              <div class="aux">cartsNominal · 4w +0.4% · WoW -0.4pp</div>
+              <div class="agg-rows">
+                <div><span class="k">cartsReal YoY</span> · <span class="v">-1.2%</span></div>
+                <div><span class="k">segmentDiffusionPct</span> · <span class="v">54% (13 类品类正增长占比)</span></div>
+                <div><span class="k">strongest segment</span> · <span class="v">非店铺零售 +8.2% YoY</span></div>
+                <div><span class="k">weakest segment</span> · <span class="v">家具家装 -4.6% YoY</span></div>
+                <div><span class="k">UMich Sentiment</span> · <span class="v">52.4 · 3m -3.1</span></div>
+                <div><span class="k">BoA card spending ex-gas</span> · <span class="v">+2.4% YoY</span></div>
+                <div><span class="k">Redbook YoY</span> · <span class="v">+3.8%</span></div>
+              </div>
+              <p class="note">名义零售仍正、扣通胀转负。消费动能被通胀吃掉的典型形态。</p>
+              <div class="meta"><span>阈值 cartsReal YoY &lt;0 红</span><span>macroDrivers.consumerRetail.* + macroDrivers.consumer.*</span></div>
+            </article>
+          </div>
+        </div>
+
+        <!-- C5: 世界经济 -->
+        <div class="reader-cat-block">
+          <div class="reader-cat-header">
+            <h3>世界经济</h3>
+            <span class="en">WORLD ECONOMY</span>
+            <span class="counts">1 暂代 · <span class="pending">4 P1</span></span>
+          </div>
+          <p class="cat-intro">
+            M-94 阶段世界经济维度仅有 overlay 可填。后续 milestone 接入欧 / 日 / 德 / 欧 VIX 后退场。
+          </p>
+          <div class="card-grid">
+            <article class="indicator-card">
+              <span class="corner overlay">暂代</span>
+              <div class="status-bar orange"></div>
+              <div class="head"><div><div class="name-en">Placeholder</div><div class="name-zh">本类暂用 World Order overlay</div></div><span class="badge orange">OVERLAY</span></div>
+              <div class="number">70</div>
+              <p class="note">M-94 阶段世界经济维度仅有 overlay 可填。M-95 接入欧 / 日 / 德 / 欧 VIX 后退场。</p>
+              <div class="meta"><span>暂时复用</span><span>worldOrderStress.{score, state, labelZh}</span></div>
+            </article>
+            <article class="indicator-card pending"><span class="corner p1">P1</span><div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">STOXX 50</div><div class="name-zh">欧元区大盘</div></div><span class="badge pending">P1</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">欧股 vs 美股相对强弱反映全球资金分配。</p>
+              <div class="meta"><span>next: P1</span><span>Yahoo ^STOXX50E</span></div>
+            </article>
+            <article class="indicator-card pending"><span class="corner p1">P1</span><div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">Nikkei 225</div><div class="name-zh">日经 225</div></div><span class="badge pending">P1</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">日股是日元 carry 与全球流动性的重要观察点。</p>
+              <div class="meta"><span>next: P1</span><span>Yahoo ^N225</span></div>
+            </article>
+            <article class="indicator-card pending"><span class="corner p1">P1</span><div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">DAX</div><div class="name-zh">德国 DAX</div></div><span class="badge pending">P1</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">德股代表欧洲制造业核心。</p>
+              <div class="meta"><span>next: P1</span><span>Yahoo ^GDAXI</span></div>
+            </article>
+            <article class="indicator-card pending"><span class="corner p1">P1</span><div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">V2X</div><div class="name-zh">欧元区波动率</div></div><span class="badge pending">P1</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">欧 VIX vs 美 VIX 反映地区性恐慌差异。</p>
+              <div class="meta"><span>next: P1</span><span>Yahoo ^V2TX</span></div>
+            </article>
+          </div>
+        </div>
+
+        <!-- C6: 中国宏观(平铺,不折叠) -->
+        <div class="reader-cat-block">
+          <div class="reader-cat-header">
+            <h3>中国宏观</h3>
+            <span class="en">CHINA MACRO · NEW CATEGORY</span>
+            <span class="counts"><span class="pending">7 P1 占位 · 后续 milestone 填充</span></span>
+          </div>
+          <p class="cat-intro orange-edge">
+            <strong>类别整体 P1 占位。</strong>M-94 阶段无任何数据接入。M-95/M-96 起接入公开数据
+            (Yahoo 股指 + TE 公开 PMI/CPI/10Y + Stooq CFETS)。央行 SLO/MLF/OMO 原始 tape、社融组件分项、70 城房价原始数据均不可达。
+          </p>
+          <div class="card-grid">
+            <article class="indicator-card pending"><span class="corner p1">P1</span><div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">SSE Composite</div><div class="name-zh">上证综指</div></div><span class="badge pending">P1</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">A 股大盘风险情绪基准。</p>
+              <div class="meta"><span>next: P1</span><span>Yahoo 000001.SS</span></div>
+            </article>
+            <article class="indicator-card pending"><span class="corner p1">P1</span><div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">Hang Seng</div><div class="name-zh">恒生指数</div></div><span class="badge pending">P1</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">中国资本市场对外开放窗口。</p>
+              <div class="meta"><span>next: P1</span><span>Yahoo ^HSI</span></div>
+            </article>
+            <article class="indicator-card pending"><span class="corner p1">P1</span><div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">CSI 300</div><div class="name-zh">沪深 300</div></div><span class="badge pending">P1</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">A 股蓝筹组合。</p>
+              <div class="meta"><span>next: P1</span><span>Yahoo 000300.SS</span></div>
+            </article>
+            <article class="indicator-card pending"><span class="corner p1">P1</span><div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">China PMI</div><div class="name-zh">中国制造业 PMI</div></div><span class="badge pending">P1</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">中国经济活动温度。月频。</p>
+              <div class="meta"><span>next: P2</span><span>TE 公开 HTML</span></div>
+            </article>
+            <article class="indicator-card pending"><span class="corner p1">P1</span><div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">China CPI / PPI</div><div class="name-zh">中国通胀</div></div><span class="badge pending">P1</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">中国通缩 / 通胀压力 vs 美国分化。</p>
+              <div class="meta"><span>next: P2</span><span>TE + FRED mirror</span></div>
+            </article>
+            <article class="indicator-card pending"><span class="corner p1">P1</span><div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">China 10Y</div><div class="name-zh">中国 10 年国债</div></div><span class="badge pending">P1</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">中国长端利率反映增长预期 vs 美国利差。</p>
+              <div class="meta"><span>next: P2</span><span>TE 公开 HTML</span></div>
+            </article>
+            <article class="indicator-card pending"><span class="corner p1">P1</span><div class="status-bar pending"></div>
+              <div class="head"><div><div class="name-en">CFETS RMB</div><div class="name-zh">人民币篮子指数</div></div><span class="badge pending">P1</span></div>
+              <div class="number" style="color:var(--paper-muted)">—</div>
+              <p class="note">(同时在全球流动性类) 汇率政策意图。</p>
+              <div class="meta"><span>next: P2</span><span>Stooq / TE</span></div>
+            </article>
+          </div>
+        </div>
+
+        <!-- C7: 市场情绪 · NDX 改为 60w z-score(决策 C) -->
+        <div class="reader-cat-block">
+          <div class="reader-cat-header">
+            <h3>市场情绪</h3>
+            <span class="en">MARKET SENTIMENT</span>
+            <span class="counts">3 张 · <span class="green">2 绿</span> · <span class="yellow">1 黄</span></span>
+          </div>
+          <p class="cat-intro">
+            注:Market Temperature 主卡(QQQ z-score)已在上方 #homepage-market-temperature 完整展示。
+            此处放 VIX / SPX / NDX 60w z-score(广度参照),不与上方重复。
+          </p>
+          <div class="card-grid">
+            <article class="indicator-card">
+              <div class="status-bar green"></div>
+              <div class="head"><div><div class="name-en">VIX</div><div class="name-zh">S&P 隐含波动率</div></div><span class="badge green">GREEN</span></div>
+              <div class="number">16.76</div>
+              <div class="aux">12 周低位</div>
+              <p class="note">波动率没有同步扩张,是当前形势不能写成全面危机的关键反证。</p>
+              <div class="meta"><span>阈值 &gt;25 红</span><span>__effectiveDisplayInputs.vix</span></div>
+            </article>
+
+            <article class="indicator-card">
+              <div class="status-bar yellow"></div>
+              <div class="head"><div><div class="name-en">SPX</div><div class="name-zh">标普 500</div></div><span class="badge yellow">MIXED</span></div>
+              <div class="number">7473</div>
+              <div class="aux">52 周高位参照 · <span style="color:#c79b54">P2 待接入</span></div>
+              <p class="note">风险资产仍强,结构压力尚未完全进入价格。</p>
+              <div class="meta"><span>距高 -15%+ 红</span><span>__effectiveDisplayInputs.spx · 52w high P2</span></div>
+            </article>
+
+            <!-- NDX 60w z-score · 决策 C 换字段 -->
+            <article class="indicator-card">
+              <div class="status-bar yellow"></div>
+              <div class="head"><div><div class="name-en">NDX 60w z-score</div><div class="name-zh">纳斯达克 100 温度对照</div></div><span class="badge yellow">+2.22σ</span></div>
+              <div class="number">+2.22<span class="unit">σ</span></div>
+              <div class="aux">NDX vs 60 周均值 · 与 QQQ 同步极端</div>
+              <p class="note">NDX 60 周 z-score +2.22σ,与 QQQ +2.18σ 同步,确认整个美国成长股板块同步过热。
+              不是 QQQ 个体过热。<strong>本数据为统计描述,不构成投资建议。</strong></p>
+              <div class="meta"><span>display-only · 不进 scoring</span><span>data/market-pricing-metrics.json.assets.ndx.records[]</span></div>
+            </article>
+          </div>
+        </div>
+
+        <!-- C8: 地缘 · Geopolitical 字段路径修正(Codex 硬错误 1) -->
+        <div class="reader-cat-block">
+          <div class="reader-cat-header">
+            <h3>地缘与世界秩序</h3>
+            <span class="en">GEOPOLITICS & WORLD ORDER</span>
+            <span class="counts">4 张 · <span class="red">2 红</span> · <span class="yellow">1 黄</span> · 1 OVERLAY</span>
+          </div>
+          <p class="cat-intro">
+            底层地缘评分(进 scoring)+ World Order overlay(regime overlay 不进 scoring)+ 经济武器化 + 军备冲突。
+          </p>
+          <div class="card-grid">
+            <!-- Geopolitical(修正:data.modules.geopolitical 是扁平数字) -->
+            <article class="indicator-card">
+              <div class="status-bar red"></div>
+              <div class="head"><div><div class="name-en">Geopolitical Module</div><div class="name-zh">底层地缘风险评分</div></div><span class="badge red">RED</span></div>
+              <div class="number">78</div>
+              <div class="aux">6 底层模块之一 · moduleTrends 显示 ↑</div>
+              <p class="note">底层地缘评分 78,直接进入主评分链。和 World Order overlay 不是同一回事。</p>
+              <div class="meta"><span>阈值 &gt;70 红</span><span>data.modules.geopolitical (扁平) + data.moduleTrends.geopolitical</span></div>
+            </article>
+
+            <article class="indicator-card">
+              <span class="corner overlay">OVERLAY</span>
+              <div class="status-bar orange"></div>
+              <div class="head"><div><div class="name-en">World Order Overlay</div><div class="name-zh">结构性世界秩序压力</div></div><span class="badge orange">OVERLAY</span></div>
+              <div class="number">70</div>
+              <div class="aux">state: multi_theater_stress · labelZh: 多战区压力期</div>
+              <p class="note"><strong>regime overlay,不进 scoring</strong>(项目宪法第 3 条)。提供阅读强度修正。</p>
+              <div class="meta"><span>不进主评分</span><span>worldOrderStress.{score, state, labelZh}</span></div>
+            </article>
+
+            <article class="indicator-card">
+              <div class="status-bar red"></div>
+              <div class="head"><div><div class="name-en">Economic Weaponization</div><div class="name-zh">经济武器化</div></div><span class="badge red">RED</span></div>
+              <div class="number">+2.3<span class="unit">σ</span></div>
+              <div class="aux">OFAC 30d + GDELT 制裁事件 z-score</div>
+              <p class="note">制裁与经济武器化处于历史高位区间。trend: rising。</p>
+              <div class="meta"><span>OFAC + GDELT</span><span>worldOrderStress.dimensions.economicWeaponization.{score, labelZh, trend}</span></div>
+            </article>
+
+            <article class="indicator-card">
+              <span class="corner manual">MANUAL · ANNUAL</span>
+              <div class="status-bar yellow"></div>
+              <div class="head"><div><div class="name-en">Arms & Conflict</div><div class="name-zh">军备与冲突</div></div><span class="badge yellow">YELLOW</span></div>
+              <div class="number">+1.2<span class="unit">σ</span></div>
+              <div class="aux">ACLED 30d + SIPRI 全球军费 2.4% GDP</div>
+              <p class="note">手动 + 年度数据。不当成实时高频信号读。</p>
+              <div class="meta"><span>ACLED weekly + SIPRI annual</span><span>worldOrderStress.dimensions.peaceDividendRetreat.*</span></div>
+            </article>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Global Risk Heatmap -->
+  <section class="editorial-section" id="global-risk-heatmap" style="--section-accent: var(--risk-red);">
+    <header class="editorial-section-header">
+      <span class="section-kicker">GLOBAL RISK HEATMAP · 全球风险热力图</span>
+      <span class="section-title">区域风险扩散</span>
+      <span class="section-note">六大模块加权映射为区域风险。地理投影层。</span>
+    </header>
+    <div class="editorial-section-body">
+      <div class="heatmap-grid">
+        <div class="heatmap-cell high"><span class="region">North America</span><span class="risk-score">RISK 62</span><span class="note">能源 + Fed 路径分歧主导</span></div>
+        <div class="heatmap-cell med"><span class="region">Europe</span><span class="risk-score">RISK 55</span><span class="note">能源敏感 + 制造业放缓</span></div>
+        <div class="heatmap-cell high"><span class="region">Middle East</span><span class="risk-score">RISK 78</span><span class="note">multi_theater 主战场</span></div>
+        <div class="heatmap-cell med"><span class="region">East Asia</span><span class="risk-score">RISK 52</span><span class="note">中国数据缺失</span></div>
+        <div class="heatmap-cell low"><span class="region">Latin America</span><span class="risk-score">RISK 38</span><span class="note">大宗商品出口受益</span></div>
+        <div class="heatmap-cell med"><span class="region">South Asia</span><span class="risk-score">RISK 48</span><span class="note">能源进口压力</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Appendix (#detail-data) -->
+  <details class="editorial-folded-content" id="detail-data">
+    <summary>
+      <span><span class="fold-marker"></span> 详细数据与图表 <em>· Appendix detail-data</em></span>
+      <span class="fold-label">展开详细数据</span>
+    </summary>
+    <div class="editorial-section-body">
+      <div class="appendix-chapter">
+        <h5>Macro 详情</h5>
+        <ul>
+          <li>就业 11 industry diffusion + AHE / U-6 / JOLTS YoY 完整字段</li>
+          <li>消费 13 MRTS segments + segmentDiffusionPct / strongest / weakest 完整</li>
+          <li>SLOOS C&amp;I + CRE 三类紧缩字段</li>
+          <li>shippingFreight BDTI/BCTI/BDI 完整</li>
+          <li>aiInterpretationLayer 站内规则化解读(facts / dataInferences / modelJudgments / scenarioHypotheses)</li>
+        </ul>
+      </div>
+      <div class="appendix-chapter">
+        <h5>时间维度 / 情景概率 / 资产投影</h5>
+        <ul>
+          <li>timeDimension(trend30d / 传导速度 / 路径变化)</li>
+          <li>transmissionChain(nodes / layers / decomposition)</li>
+          <li>regimeProbabilities(6 regime 归一化概率)</li>
+          <li>assetMatrix · assetReturnMap · scenarioTree</li>
+        </ul>
+      </div>
+      <div class="appendix-chapter">
+        <h5>系统状态</h5>
+        <ul>
+          <li>__effectiveDisplayInputs runtime 快照</li>
+          <li>Worker preview / heartbeat / source health</li>
+          <li>recovery.{degradedMode, safeOutput, lastRun, notes}</li>
+        </ul>
+      </div>
+    </div>
+  </details>
+
+  <!-- World Order Stress -->
+  <details class="editorial-folded-content" id="world-order-stress-section">
+    <summary>
+      <span><span class="fold-marker"></span> 世界秩序压力层 <em>· World Order Stress (regime overlay)</em></span>
+      <span class="fold-label">展开</span>
+    </summary>
+    <div class="editorial-section-body">
+      <div class="appendix-chapter">
+        <h5>6 维度详情</h5>
+        <ul>
+          <li>peaceDividendRetreat · blocFormation · multiTheaterConflict · economicWeaponization · capitalControlRisk · marketConfirmation</li>
+          <li>marketConfirmationInput 详情</li>
+          <li>externalSources(gdelt / ofac / sipri / acled)</li>
+          <li>decisionModifier.riskBias</li>
+        </ul>
+      </div>
+    </div>
+  </details>
+
+  <details class="editorial-folded-content" id="method-evidence">
+    <summary>
+      <span><span class="fold-marker"></span> 方法说明 <em>· Method Evidence</em></span>
+      <span class="fold-label">展开</span>
+    </summary>
+    <div class="editorial-section-body">
+      <div class="appendix-chapter"><h5>评分方法</h5><div class="desc">6 底层模块加权 0-100。每模块阈值 RED/YELLOW/GREEN。World Order = regime overlay,不进 scoring。</div></div>
+    </div>
+  </details>
+
+  <details class="editorial-folded-content" id="external-ai-auxiliary">
+    <summary>
+      <span><span class="fold-marker"></span> 外部 AI 解读 <em>· External AI Auxiliary</em></span>
+      <span class="fold-label">展开</span>
+    </summary>
+    <div class="editorial-section-body">
+      <div class="appendix-chapter" style="background:var(--paper-ink);color:var(--paper-bg);">
+        <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.1em;">
+          ⚠ DeepSeek / OpenAI 自动生成,<strong>不影响平台评分</strong>(项目宪法第 4 条)。
+          qualityReview.promotionEligible === false 时显示占位。sourceAttribution / provenance 完整可审计。
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="editorial-folded-content" id="execution-risk-detail">
+    <summary>
+      <span><span class="fold-marker"></span> 执行与风控详情 <em>· Execution Risk Detail</em></span>
+      <span class="fold-label">展开</span>
+    </summary>
+    <div class="editorial-section-body">
+      <div class="appendix-chapter"><h5>warningSystem + triggerPanel</h5><ul>
+        <li>当前 status / criticalCount / warningCount / watchCount / alerts / rules</li>
+        <li>triggerPanel.{critical, drivers, watchlist}</li>
+        <li>注:M-94 不改 watchList 数据源,warningSystem/triggerPanel 仍独立在此 section</li>
+      </ul></div>
+    </div>
+  </details>
+
+  <!-- Method footer -->
+  <footer class="method">
+    <div class="method-grid">
+      <div>
+        <h4>METHOD · 方法论</h4>
+        <div>6 底层模块加权 0-100。每模块阈值 RED/YELLOW/GREEN。World Order = regime overlay,不进 scoring。</div>
+      </div>
+      <div>
+        <h4>BOUNDARY · 边界</h4>
+        <div>公开数据 + 公开代理。不含 Platts / Markit / private credit raw / Redbook raw / BoA raw / 中国央行原始数据。</div>
+      </div>
+      <div>
+        <h4>M-94 · IA 变更</h4>
+        <div>DESIGN.md §4.1 追加 1 项 · checker 追加 1 项断言 · jump nav 14 → 15 项 · 原 8 runtime block 保留(视觉重写)。</div>
+      </div>
+      <div>
+        <h4>DISCLAIMER · 免责</h4>
+        <div>框架研究,非投资建议。M-94 V0 Final Mock · 2026-05-24。</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================================
+       Codex 审核遗留待办区(只在 mock 显示,真实站点不会有)
+       ============================================================ -->
+  <section class="codex-todo-section">
+    <h3>⚠ Codex 审核遗留待办 · 仅 Mock 可见 · 真实站点不出现</h3>
+    <p class="desc">
+      Codex 在第二轮审核后,本 mock 已修正 5 个硬错误 + 11 处字段补充。
+      但以下 6 项问题在契约 v2.1 还需进一步定夺。Codex 已给出方向但仍需 Robert / Codex 确认实施细节。
+    </p>
+    <table>
+      <thead>
+        <tr><th>编号</th><th>事项</th><th>当前 mock 处理</th><th>v2.1 契约需做</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>T1</td>
+          <td>DXY 12 周高位 / SPX 52 周高位<br/><span class="src">Codex 实证:无现成字段</span></td>
+          <td>mock 中标 P2 占位,主数字仍显示</td>
+          <td>契约 §3 注明 12w/52w high 计算需新前端派生 helper,放 `displayStatusThresholds.js` 或单独 statsHelpers.js;P2 时机由后续 milestone 决定</td>
+        </tr>
+        <tr>
+          <td>T2</td>
+          <td>HY OAS WoW 变化<br/><span class="src">Codex 实证:无现成字段</span></td>
+          <td>mock aux 显示"WoW 收窄"但无具体数值</td>
+          <td>契约 §3.3 HY OAS 卡 aux 写为"等待 history WoW 接入";或新建前端派生从 effectiveDisplayInputs 历史快照计算</td>
+        </tr>
+        <tr>
+          <td>T3</td>
+          <td>NDX 60w z-score 渲染来源<br/><span class="src">Codex 实证:assets.ndx.records[] 存在,但前端可能未派生 z-score 字段</span></td>
+          <td>mock 直接用 +2.22σ 数字</td>
+          <td>契约 §3.7 NDX 卡注明:渲染时调用 `classifyZScoreBucket(getLatestMetric(ndxAssetData).zScore)`(复用 buildCrossValidationMatrix 已有 helper)</td>
+        </tr>
+        <tr>
+          <td>T4</td>
+          <td>checker 字面量同步<br/><span class="src">Codex 实证:DESIGN.md:144/285/520 + 2 处 checker 报错文案均硬编码"14 项"</span></td>
+          <td>mock 不涉及</td>
+          <td>契约 §4.1 PR 1 文件改动清单必须明确列出"14 项 → 15 项"的 5 处字面量同步,任何遗漏会让 npm run check:all 必挂</td>
+        </tr>
+        <tr>
+          <td>T5</td>
+          <td>buildPressureSources / buildMacroDrivers 视觉重写策略<br/><span class="src">Codex 实证:这两个 build 函数总计 776 行,Claude §8 写"简化成 mini card / 四列摘要"会损失字段消费</span></td>
+          <td>mock 中 pressure-sources 已改为 data.modules 6 mini card;macro-drivers 已改为 4 pillar 摘要 + 子模块完整列表</td>
+          <td>契约 §8 必须改为"保留所有字段消费,仅改外壳;不要让 4 pillar 摘要绕过现有金融判读逻辑"</td>
+        </tr>
+        <tr>
+          <td>T6</td>
+          <td>contractVersion 等元数据是否前端展示<br/><span class="src">Codex 答案:不进主路径,只进 Appendix/方法审计</span></td>
+          <td>mock 不显示</td>
+          <td>契约 §1 + Appendix 章节明确:contractVersion / generatedAt / sourceCommit 仅 Appendix `detail-data` 章节可展示,主路径与主题卡不显示</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+</body>
+</html>
