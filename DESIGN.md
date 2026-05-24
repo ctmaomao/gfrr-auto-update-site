@@ -142,6 +142,18 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 ═══ 第一层：核心阅读路径（不折叠，始终展开）═══
 1. Hero / Masthead              (顶部品牌 + 日期 + 数据健康)
 2. dashboard-jump-nav            (顶部跳转导航 14 项)
+
+═══ Non-nav preface block（可选，不计入 IA 编号）═══
+#plain-summary-card           普通用户 preface block
+   - 位于 <main> 内、dashboard-jump-nav 后、#macro-risk-overview 前
+   - 不计入 14 项 jump-nav IA section
+   - 不改变现有 IA section 顺序与编号
+   - 可使用 editorial-section plain-summary-section 类
+   - 不要求标准 editorial-section-header / English kicker / 色带
+   - 必须保留为可选（optional）：缺失时不构成 IA 违规
+   - 如出现，必须严格位于上述位置
+   - V3 implementation 由独立 contract checker 强制其存在性
+
 3. #macro-risk-overview          (宏观风险判断总览)
    ├─ runtime block: #homepage-today-judgment
    ├─ runtime block: #homepage-pressure-sources
@@ -206,6 +218,7 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 | `#method-evidence` | `var(--paper-ink)` | 中性 appendix |
 | `#external-ai-auxiliary` | `var(--paper-muted)` | 辅助层 |
 | `#execution-risk-detail` | `var(--risk-red)` | 风控严重性 |
+| `#plain-summary-card` | n/a (preface, no accent band required) | non-nav preface block |
 
 **视觉规范**：
 - 顶部 `border-top: 4px solid var(--section-accent)`
@@ -482,6 +495,9 @@ var(--font-mono)              /* IBM Plex Mono */
 #method-evidence              方法说明（墨色带，折叠）
 #external-ai-auxiliary        外部 AI 解读（灰色带，折叠）
 #execution-risk-detail        执行与风控详情（红色带，折叠）
+
+─── non-nav preface（可选，不进 jump nav，不计入 IA 编号）───
+#plain-summary-card           普通用户 preface block（M-93A0 / 优化路径 3）
 ```
 
 ---
@@ -501,3 +517,4 @@ var(--font-mono)              /* IBM Plex Mono */
 | 日期 | 变更 | PR |
 |---|---|---|
 | 2026-05 | 初版创建。基于 PR #153-#163 完成的 editorial redesign 改造，确立 Bubble Watch 风格设计合约 | PR #164（本 PR） |
+| 2026-05 | M-93A0: 引入 `#plain-summary-card` 非 nav preface block 概念；jump nav 14 项与 IA section 编号均不变；同步更新 `scripts/check-homepage-ia-contract.mjs` 和 `scripts/check-editorial-redesign-contract.mjs` | PR #<待 owner 填> |
