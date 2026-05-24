@@ -160,6 +160,7 @@ function checkHomepageIa() {
     ['风险引擎', '#homepage-risk-engines'],
     ['交叉验证', '#homepage-cross-validation'],
     ['本期关键变化', '#wow-key-changes'],
+    ['宏观主题卡阵', '#macro-thematic-cards'],
     ['风险热力图', '#global-risk-heatmap'],
     ['详细数据', '#detail-data'],
     ['世界秩序', '#world-order-stress-section'],
@@ -171,7 +172,7 @@ function checkHomepageIa() {
   const links = getNavLinks();
   const actual = links.map((link) => `${link.label}|${link.href}`).join('\n');
   const expected = expectedLinks.map(([label, href]) => `${label}|${href}`).join('\n');
-  if (actual !== expected) fail('homepage nav must keep the exact 14-item editorial IA order and labels');
+  if (actual !== expected) fail('homepage nav must keep the exact 15-item editorial IA order and labels');
 }
 
 function checkThemeFoundation() {
@@ -201,10 +202,11 @@ function checkDesignContractDoc() {
     'Playfair Display',
     'Noto Serif SC',
     'IBM Plex Mono',
-    'dashboard-jump-nav            (顶部跳转导航 14 项)',
+    'dashboard-jump-nav            (顶部跳转导航 15 项)',
     '#macro-risk-overview',
     '#wow-key-changes',
     '#homepage-realtime-band',
+    '#macro-thematic-cards',
     '#global-risk-heatmap',
     '#detail-data',
     '#world-order-stress-section',

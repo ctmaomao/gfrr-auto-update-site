@@ -16,6 +16,7 @@ const navContract = [
   ['风险引擎', '#homepage-risk-engines'],
   ['交叉验证', '#homepage-cross-validation'],
   ['本期关键变化', '#wow-key-changes'],
+  ['宏观主题卡阵', '#macro-thematic-cards'],
   ['风险热力图', '#global-risk-heatmap'],
   ['详细数据', '#detail-data'],
   ['世界秩序', '#world-order-stress-section'],
@@ -37,6 +38,7 @@ const macroRuntimeIds = [
 
 const staticRequiredIds = [
   'homepage-realtime-band',
+  'macro-thematic-cards',
   'global-risk-heatmap',
   'detail-data',
   'world-order-stress-section',
@@ -198,7 +200,7 @@ function checkNav() {
   const actualPairs = links.map((link) => `${link.label}|${link.href}`).join('\n');
   const expectedPairs = navContract.map(([label, href]) => `${label}|${href}`).join('\n');
   if (actualPairs !== expectedPairs) {
-    fail('top nav must follow the exact 14-step reading-path order');
+    fail('top nav must follow the exact 15-step reading-path order');
   }
 
   for (const link of links) {
@@ -259,6 +261,7 @@ function checkOrdering() {
   const expectedOrder = [
     ...macroRuntimeIds,
     'homepage-realtime-band',
+    'macro-thematic-cards',
     'global-risk-heatmap',
     'detail-data',
     'world-order-stress-section',

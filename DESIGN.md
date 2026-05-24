@@ -141,12 +141,12 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 ```text
 ═══ 第一层：核心阅读路径（不折叠，始终展开）═══
 1. Hero / Masthead              (顶部品牌 + 日期 + 数据健康)
-2. dashboard-jump-nav            (顶部跳转导航 14 项)
+2. dashboard-jump-nav            (顶部跳转导航 15 项)
 
 ═══ Non-nav preface block（可选，不计入 IA 编号）═══
 #plain-summary-card           普通用户 preface block
    - 位于 <main> 内、dashboard-jump-nav 后、#macro-risk-overview 前
-   - 不计入 14 项 jump-nav IA section
+   - 不计入 15 项 jump-nav IA section
    - 不改变现有 IA section 顺序与编号
    - 可使用 editorial-section plain-summary-section 类
    - 不要求标准 editorial-section-header / English kicker / 色带
@@ -164,14 +164,15 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
    ├─ runtime block: #homepage-cross-validation
    ├─ runtime block: #wow-key-changes      (M-55b: JS runtime 注入，不是顶级 section)
    └─ supporting strip: #homepage-realtime-band (盘中快变量，不是顶级 section)
-4. #global-risk-heatmap          (全球风险热力图)
+4. #macro-thematic-cards         (宏观主题卡阵；绿色带，内容由 PR 2 填充)
+5. #global-risk-heatmap          (全球风险热力图)
 
 ═══ 第二层：附录区（可折叠，默认收起）═══
-5. #detail-data                  (详细数据与图表)
-6. #world-order-stress-section   (World Order regime overlay；独立 section，见 ADR-0004)
-7. #method-evidence              (方法说明)
-8. #external-ai-auxiliary        (外部 AI 解读 - 只读辅助)
-9. #execution-risk-detail        (执行与风控详情)
+6. #detail-data                  (详细数据与图表)
+7. #world-order-stress-section   (World Order regime overlay；独立 section，见 ADR-0004)
+8. #method-evidence              (方法说明)
+9. #external-ai-auxiliary        (外部 AI 解读 - 只读辅助)
+10. #execution-risk-detail       (执行与风控详情)
 ```
 
 ### 4.2 修改 IA 顺序的流程
@@ -212,6 +213,7 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 | `#macro-risk-overview` | `var(--risk-red)` | 主判断 |
 | `#wow-key-changes` | `var(--risk-yellow)` | `#macro-risk-overview` 内 runtime block；变化语义 |
 | `#homepage-realtime-band` | n/a | `#macro-risk-overview` 内 supporting strip；盘中快变量 |
+| `#macro-thematic-cards` | `var(--risk-green)` | 主题汇编，跨分析层的读者类别入口 |
 | `#global-risk-heatmap` | `var(--risk-red)` | 风险数据 |
 | `#detail-data` | `var(--paper-ink)` | 中性 appendix |
 | `#world-order-stress-section` | `var(--risk-orange)` | regime overlay；独立结构性观察层 |
@@ -282,7 +284,7 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 
 ### 5.5 dashboard-jump-nav
 
-顶部跳转导航，14 项链接，对应首页核心 runtime anchors 与顶级 section 锚点。
+顶部跳转导航，15 项链接，对应首页核心 runtime anchors 与顶级 section 锚点。
 
 - 字体 mono 11px，`letter-spacing: 0.18em`，uppercase
 - 默认色 `var(--paper-muted)`
@@ -489,6 +491,7 @@ var(--font-mono)              /* IBM Plex Mono */
 #macro-risk-overview          宏观风险判断总览（红色带）
   #wow-key-changes            本期关键变化（runtime 注入，不是顶级 section）
   #homepage-realtime-band     盘中快变量（supporting strip，不是顶级 section）
+#macro-thematic-cards         宏观主题卡阵（绿色带）
 #global-risk-heatmap          全球风险热力图（红色带）
 #detail-data                  详细数据与图表（墨色带，折叠）
 #world-order-stress-section   世界秩序压力层（regime overlay，橙色带，折叠）
@@ -517,4 +520,5 @@ var(--font-mono)              /* IBM Plex Mono */
 | 日期 | 变更 | PR |
 |---|---|---|
 | 2026-05 | 初版创建。基于 PR #153-#163 完成的 editorial redesign 改造，确立 Bubble Watch 风格设计合约 | PR #164（本 PR） |
-| 2026-05 | M-93A0: 引入 `#plain-summary-card` 非 nav preface block 概念；jump nav 14 项与 IA section 编号均不变；同步更新 `scripts/check-homepage-ia-contract.mjs` 和 `scripts/check-editorial-redesign-contract.mjs` | PR #<待 owner 填> |
+| 2026-05 | M-93A0: 引入 `#plain-summary-card` 非 nav preface block 概念；jump nav 15 项与 IA section 编号均不变；同步更新 `scripts/check-homepage-ia-contract.mjs` 和 `scripts/check-editorial-redesign-contract.mjs` | PR #<待 owner 填> |
+| 2026-05 | M-94 V0 PR 1: IA 扩为 15 项，新增 `#macro-thematic-cards` 绿色带 section 容器骨架，并同步 DESIGN.md 与 IA checker 契约 | PR #<待 owner 填> |
