@@ -8,13 +8,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 | 项 | 当前值 |
 |---|---|
-| 当前生产状态 | v28.0M-91 Market Pricing NDX/IXIC auxiliary implementation |
-| Cache version | `28.0M-91V` |
+| 当前生产状态 | v28.0N-1 editorial first-fold + M-93A plain user summary card |
+| Cache version | `28.0M-93AV` |
 | check:all 项数 | 23 top-level suites |
-| 最后审计日期 | 2026-05-23 |
+| 最后审计日期 | 2026-05-24 |
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |
-| 下次审计建议 | 2026-05-25 或下一次 milestone 合并时 |
+| 下次审计建议 | 2026-05-26 或下一次 milestone 合并时 |
 
 当前边界摘要:
 
@@ -73,6 +73,10 @@ Recent completed context only; full milestone archive is [MILESTONE_INDEX.md](MI
 
 | Milestone | 一句话 |
 |---|---|
+| M-93A V3 | `#plain-summary-card` editorial section 上线;9 narrative + 31 evidence 翻译表 + 5 risk-level / 3 data-health enum;bounded checker + bump 工具命令示例 marker 覆盖;frontend display-only,不动 scoring/decision/execution/position guidance。 |
+| M-93A0 | Homepage IA contract 新增 non-nav plain summary preface slot;DESIGN.md §4.1/§5.1/§10.2/§12 正式引入 `#plain-summary-card` 概念;`check-homepage-ia-contract.mjs` 添加 `checkOptionalPlainSummaryPreface()` 提供 optional allow + position guard。 |
+| M-93A V2 | Plain User Summary section source review spec 落地 docs/PLAIN_SUMMARY_M93A_V2_SOURCE_REVIEW.md;12 sections 覆盖翻译表、bounded checker、cache marker 豁免边界、V3 实施清单。 |
+| M-93 V1 | User Language Audit 完成,docs/USER_LANGUAGE_AUDIT_M93_V1.md 落地禁词清单与术语翻译基线。 |
 | M-91 / P2-12 | Market Pricing keeps QQQ primary and adds Yahoo `^NDX` / `^IXIC` as Daily/manual display-only auxiliary comparison metrics;Worker/scoring/decision boundaries unchanged. |
 | P2-11 | Backend/frontend coverage display completion merged to main; External AI raw runtime fields remain explicit ignore rather than frontend display. |
 | P2-10 | Macro driver card date rendering rechecked; employment / CRE frontend output is guarded against `undefined` / `NaN` / `Invalid Date` date text. |
@@ -107,6 +111,7 @@ Compact current audit trail:
 
 | Date | Scope | Outcome |
 |---|---|---|
+| 2026-05-24 | M-93 4 阶段全流程 (V1 audit / V2 spec / M-93A0 IA / V3 implementation) | PR #244/#245/#247/#248 全部 merged;新增 `#plain-summary-card` editorial section + bounded checker (`check-plain-summary-card-contract.mjs`) + `renderPlainSummary.js` 翻译表;cache version bump 28.0M-91V → 28.0M-93AV via 官方工具,工具同时扩展正则覆盖命令示例 marker;`check:all` 23 suites PASS;无 data/realtime/workers runtime/workflows 改动。 |
 | 2026-05-23 | M-91 / P2-12 Market Pricing NDX/IXIC implementation | Yahoo `^NDX` / `^IXIC` added as Daily/manual auxiliary history + metrics;QQQ primary, SPX fallback, Worker/scoring/decision boundaries preserved;self-audit required by AGENTS.md Section 10 completed in delivery. |
 | 2026-05-22 | M-87 null-zero display guards | Missing Brent / repo source values stay missing instead of rendering as zero. |
 | 2026-05-22 | M-74 to M-86 macro public-source and frontend display work | Public proxies connected and displayed; formal/non-public boundaries preserved. |
