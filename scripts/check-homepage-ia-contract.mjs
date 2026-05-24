@@ -276,6 +276,42 @@ function checkOrdering() {
   }
 }
 
+function checkOptionalPlainSummaryPreface() {
+  const card = findElementStartById(html, 'plain-summary-card');
+  if (!card) return;
+
+  const navLinks = getNavLinks();
+  for (const link of navLinks) {
+    if (link.href === '#plain-summary-card') {
+      fail('plain-summary-card must not appear in dashboard-jump-nav (it is a non-nav preface block)');
+    }
+  }
+
+  const navMatch = html.match(/<nav\b[^>]*class=["'][^"']*\bdashboard-jump-nav\b[^"']*["']/iu);
+  if (!navMatch) {
+    fail('plain-summary-card requires dashboard-jump-nav as positional anchor');
+    return;
+  }
+  if (card.index <= navMatch.index) {
+    fail('plain-summary-card must appear after dashboard-jump-nav');
+  }
+
+  const macro = findElementStartById(html, 'macro-risk-overview');
+  if (!macro) {
+    fail('plain-summary-card requires #macro-risk-overview as positional anchor');
+    return;
+  }
+  if (card.index >= macro.index) {
+    fail('plain-summary-card must appear before #macro-risk-overview');
+  }
+
+  const ctx = findElementContextById(html, 'plain-summary-card');
+  if (!ctx) return;
+  if (ctx.parent?.tagName !== 'main' || ctx.sectionAncestorCount !== 0) {
+    fail('plain-summary-card must be a direct top-level child of <main>, not nested inside another section');
+  }
+}
+
 function checkWorldOrderTopLevelSection() {
   const worldOrder = findElementContextById(html, 'world-order-stress-section');
   if (!worldOrder) {
@@ -445,6 +481,7 @@ function main() {
   checkRequiredIds();
   checkNoEmptyNavTargets();
   checkOrdering();
+  checkOptionalPlainSummaryPreface();
   checkWorldOrderTopLevelSection();
   checkDailyBrief();
   checkMethodEvidenceCleanup();

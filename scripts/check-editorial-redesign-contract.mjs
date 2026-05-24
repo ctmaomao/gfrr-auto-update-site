@@ -212,6 +212,8 @@ function checkDesignContractDoc() {
     '#external-ai-auxiliary',
     '#execution-risk-detail',
     '本 PR 符合 DESIGN.md 的所有规则',
+    '#plain-summary-card',
+    'non-nav preface block',
     'PR #164（本 PR）',
   ];
   for (const marker of requiredMarkers) requireMarker(designContract, DESIGN_PATH, marker);
