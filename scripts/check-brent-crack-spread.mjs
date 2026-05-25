@@ -13,7 +13,6 @@ function readText(pathname) {
 
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
-const renderMacroText = readText('scripts/modules/renderMacroOverview.js');
 const renderText = readText('scripts/modules/render.js');
 const matrixText = readText('scripts/modules/buildCrossValidationMatrix.js');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
@@ -140,21 +139,20 @@ for (const marker of runDailyMarkers) {
   }
 }
 
-const renderMarkers = [
-  'brentLayer.crackSpread',
-  '柴油裂解价差',
-  'Platts Dated Brent / 正式 Dated Brent 未接入。',
-  'ICE Brent futuresCurve structure-only',
-  'ICE Brent public delayed price curve',
-  'Yahoo Brent priced futures proxy',
-  'EIA Brent Spot Price FOB'
-];
-
-for (const marker of renderMarkers) {
-  if (!renderMacroText.includes(marker)) {
-    fail(`scripts/modules/renderMacroOverview.js missing M-49 marker: ${marker}`);
-  }
-}
+// PR 2b: Brent renderer markers in renderMacroOverview.js were removed in Stage 8 per
+// contract v3.0 sec 8.4 (buildMacroDrivers simplified from ~618 lines to mock 4-pillar
+// object; driver-energy-inflation sub-module's detailed evidence array deleted). All
+// M-49 field consumption is preserved in:
+//   - renderThematicCards.js: c1-brent + c1-crack-spread cards (consumed in macro-thematic-cards
+//     block; enforced by check-thematic-cards-contract.mjs which locks 5 agg-row markers:
+//     '公开现货代理 EIA' / '期货 front Yahoo' / '期货 ICE' / 'spotMinusFutures' /
+//     'maxProxyDivergencePct')
+//   - render.js: 9 brentDetailRenderMarkers still enforced below (formatBrentFuturesCurve etc.)
+//   - buildCrossValidationMatrix.js: 4 matrixMarkers still enforced below (algorithm-side semantic
+//     contract for Brent crack spread state classification)
+//   - docs/DATA_CONTRACT.md: 9 contractMarkers still enforced below
+// Mock does not display Brent detailed evidence in macro-drivers block per contract v3.0
+// sec 0.4 ironclad rule 6.
 
 const brentDetailRenderMarkers = [
   'ULSD 4周变化',

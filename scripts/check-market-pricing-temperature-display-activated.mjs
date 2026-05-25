@@ -51,33 +51,52 @@ const metricsRecords = Array.isArray(metrics.records) ? metrics.records : [];
 const latestMetric = metricsRecords[metricsRecords.length - 1] || {};
 
 assert(html.includes('id="homepage-market-temperature"'), '#homepage-market-temperature section must still exist');
-assert(html.includes('id="market-temperature-card-root"'), 'market temperature card root must exist in index fallback');
 assert(!html.includes(`?v=${OLD_VERSION}`), 'index.html must not retain old frontend asset version');
 assert(/assets\/styles\.css\?v=[A-Za-z0-9._-]+/u.test(html), 'index.html must include versioned local stylesheet asset');
 assert(/scripts\/app\.js\?v=[A-Za-z0-9._-]+/u.test(html), 'index.html must include versioned app module asset');
 assert(html.includes('等待历史周线数据接入'), 'waiting-state fallback copy must remain available');
 
 for (const className of [
-  '.market-temperature-bucket-extreme-hot',
-  '.market-temperature-bucket-hot',
-  '.market-temperature-bucket-neutral',
-  '.market-temperature-bucket-cold',
-  '.market-temperature-bucket-extreme-cold',
+  '.runtime-block',
+  '.runtime-block-header',
+  '.runtime-block-body',
+  '.market-temp-layout',
+  '.market-temp-bucket',
+  '.market-temp-zscore',
+  '.market-temp-sub',
+  '.market-temp-detail',
+  '.market-temp-metrics',
 ]) {
   assert(styles.includes(className), `${className} must exist`);
 }
-assert(styles.includes('.market-temperature-disclaimer'), '.market-temperature-disclaimer must exist');
 assert(!/@font-face/u.test(styles), 'temperature display must not add @font-face');
 assert(!new RegExp(`url\\(\\s*${EXTERNAL_URL_PROTOCOL}:\\/\\/`, 'iu').test(styles), 'temperature display must not add external stylesheet URLs');
 
 assert(renderSource.includes('classifyZScoreBucket'), 'classifyZScoreBucket function must exist');
+assert(renderSource.includes('appendMarketTemperatureBody'), 'market temperature must render through appendMarketTemperatureBody');
+assert(renderSource.includes('appendRuntimeBlock'), 'market temperature must use mock runtime-block shell');
+assert(renderSource.includes('market-temp-layout'), 'market temperature must render mock two-column layout');
+assert(renderSource.includes('market-temp-zscore'), 'market temperature must render mock z-score display');
+assert(renderSource.includes('market-temp-metrics'), 'market temperature must render mock metric grid');
 for (const bucket of ['extreme-hot', 'hot', 'neutral', 'cold', 'extreme-cold']) {
   assert(renderSource.includes(bucket), `bucket return value ${bucket} must exist in render source`);
 }
 assert(renderSource.includes(DISCLAIMER), 'disclaimer string must be rendered by the market temperature card');
+assert(renderSource.includes('60 周均值'), 'market temperature must preserve 60-week mean copy');
+assert(renderSource.includes('z-score'), 'market temperature must preserve z-score copy');
+assert(renderSource.includes('等待历史周线数据接入'), 'market temperature must preserve waiting-state copy');
 assert(renderSource.includes('纳斯达克 100 — 横向对照'), 'NDX auxiliary label must be rendered');
 assert(renderSource.includes('纳斯达克综合指数 — 广度参照'), 'IXIC auxiliary label must be rendered');
-assert(renderSource.includes('AUXILIARY · DISPLAY ONLY'), 'auxiliary market temperature cards must be marked display-only');
+for (const legacyMarker of [
+  'appendMarketTemperatureChecklist',
+  'appendMarketTemperatureDisabledScale',
+  'appendAuxiliaryMarketTemperatureCard',
+  'appendAuxiliaryMarketTemperature',
+  'appendMetricValue',
+  'appendEditorialMarketTemperature',
+]) {
+  assert(!renderSource.includes(legacyMarker), `${legacyMarker} must be removed in PR 2b mock runtime block`);
+}
 
 const { classifyZScoreBucket } = await import('./modules/renderMacroOverview.js');
 const bucketCases = [

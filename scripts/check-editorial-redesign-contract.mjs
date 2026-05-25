@@ -296,37 +296,137 @@ function checkEditorialStructures() {
   const combined = `${html}\n${macroOverview}\n${styles}`;
   const requiredMarkers = [
     'editorial-big-number',
-    'GLOBAL RISK SCORE',
-    'editorial-verdict',
-    "TODAY\\'S VERDICT",
-    'editorial-threshold',
-    'THRESHOLD-ALIGNED RISK STAGE SCALE',
-    '正常观察',
-    '压力上升',
-    '局部冲击观察',
-    '系统性风险观察',
+    'appendEditorialBigNumber',
+    'appendThresholdBlock',
+    'appendTrendBlock',
+    'TODAY JUDGMENT · 今日总判断',
+    'big-left',
+    'big-right',
+    'big-footer',
+    'DOMINANT RISK CHAIN',
+    'WEEKLY CHANGE',
+    'DATA HEALTH',
+    'threshold-block',
+    'threshold-bar',
+    'zone t-green',
+    'zone t-yellow',
+    'zone t-orange',
+    'zone t-red',
+    'marker override',
+    'trend-block',
+    'trend-svg-wrap',
     "'wow-key-changes'",
-    'editorial-wow-category',
-    'wow-key-changes-root',
+    'wow-section',
+    '本期关键变化 · Week-over-Week',
     'wow-grid',
+    'wow-item',
+    'wow-source',
     '本期关键变化',
-    'KEY CHANGES',
-    'editorial-watch-list',
-    '下一步验证清单',
-    'WHAT TO WATCH',
+    'this issue\\\'s deltas',
+    "'homepage-pressure-sources'",
+    'PRESSURE SOURCES',
+    '六大底层模块 · data.modules 扁平数字 · data.moduleTrends 趋势',
+    'appendMiniGrid',
+    'appendMiniCard',
+    'mini-grid',
+    'mini-card',
+    'Energy 能源',
+    'Geopolitical 地缘',
+    'Inflation 通胀',
+    'Liquidity 流动性',
+    'Debt 债务',
+    'Banking 银行',
+    "'homepage-signal-layers'",
+    'SIGNAL LAYERS · 7 NARRATIVES',
+    'deriveSignalMeta',
+    'appendNarrativeList',
+    'appendNarrativeItem',
+    'narrative-list',
+    'narrative-item',
+    'energy_shock',
+    '能源冲击',
+    'stagflation_pressure',
+    '滞胀压力',
+    'risk_asset_mismatch',
+    '风险资产错配',
+    'overheat_confirmation',
+    '过热确认',
+    'credit_spread_warning',
+    '信用利差告警',
+    'liquidity_tightening',
+    '流动性收紧',
+    'world_order_pressure_crossing',
+    '世界秩序压力穿越',
+    "'homepage-macro-drivers'",
+    'MACRO DRIVERS · 13 SUB-MODULES IN 4 PILLARS',
+    'appendDriverPillarGrid',
+    'driver-pillar-grid',
+    'driver-submodules',
+    'Fed Liquidity',
+    'Policy Expectations',
+    'Curve',
+    'Credit',
+    '子模块完整列表:',
+    "'homepage-risk-engines'",
+    'RISK ENGINES · 6 ENGINES + AUXILIARY',
+    'data.modules 6 引擎 + divergenceLayer + privateCreditProxy + worldOrderStress + marketTemperature 等多源派生',
+    'B1 Energy',
+    'B2 Liquidity',
+    'B3 Credit',
+    'B4 Debt',
+    'B5 Consumer',
+    'B6 Geopolitical',
+    "'homepage-cross-validation'",
+    'CROSS VALIDATION MATRIX',
+    'consistency-block',
   ];
   for (const marker of requiredMarkers) requireMarker(combined, 'editorial redesign structures', marker);
+  for (const marker of [
+    'appendEditorialPressureCard',
+    'appendEditorialPressureSublist',
+    ['editorial-', 'pressure-grid'].join(''),
+    'appendEditorialSignalCard',
+    'appendEditorialSignalSublist',
+    ['editorial-', 'signal-grid'].join(''),
+    'buildSignalCategorySummary',
+    'buildSignalCounts',
+    'signalStatusClass',
+    'signalBucketLabel',
+    'appendEditorialDriverCard',
+    'appendEditorialDriverSublist',
+    ['editorial-', 'driver-grid'].join(''),
+    'buildDriverCategorySummary',
+    'driverTypeClass',
+    'driverStatusClass',
+    'driverTypeLabel',
+    'findDriverByType',
+    'appendDriverTypePill',
+    'appendEditorialEngineCard',
+    'appendEditorialEngineSublist',
+    ['editorial-', 'engine-grid'].join(''),
+    'TODAY_SUMMARY_STATE_PHRASES',
+    'today-summary-grid',
+    'today-summary-cell',
+    'appendTodaySummaryList',
+    'appendRiskStageScale',
+    'selectTodayStateConclusion',
+  ]) {
+    if (macroOverview.includes(marker)) fail(`legacy runtime marker must be removed from ${MACRO_OVERVIEW_PATH}: ${marker}`);
+  }
+  for (const marker of ['.wow-tag.is-up', '.wow-tag.is-down', '.wow-tag.is-flat', '.mini-card.red', '.mini-card.yellow', '.mini-card.green', '.narrative-list', '.narrative-item', '.narrative-item.active']) {
+    requireMarker(styles, STYLES_PATH, marker);
+  }
 
-  const stageAreaStart = macroOverview.indexOf('function stageFromScore');
+  const stageAreaStart = macroOverview.indexOf('function thresholdStateLabel');
   const thresholdAreaStart = firstIndexOfAny(macroOverview, [
-    'function appendRiskStageScale',
-    'function appendThresholdScale',
-    'editorial-threshold',
+    'function appendThresholdBlock',
+    'threshold-block',
+    'threshold-bar',
   ]);
   const stageArea = stageAreaStart >= 0 ? macroOverview.slice(stageAreaStart, stageAreaStart + 900) : '';
   const thresholdArea = thresholdAreaStart >= 0 ? macroOverview.slice(thresholdAreaStart, thresholdAreaStart + 2600) : '';
   const thresholdSource = `${stageArea}\n${thresholdArea}`;
-  for (const value of ['0', '50', '65', '85', '100']) {
+  for (const value of ['0', '25', '40', '60', '100']) {
     if (!new RegExp(`\\b${value}\\b`, 'u').test(thresholdSource)) {
       fail(`threshold/stage source must preserve ${value} semantic marker`);
     }
@@ -335,21 +435,36 @@ function checkEditorialStructures() {
 
 function checkMarketPricingTemperatureContract() {
   const requiredMarkers = [
-    'market-temperature-card-root',
+    'appendMarketTemperatureBody',
+    'homepage-market-temperature',
+    'runtime-block',
+    'market-temp-layout',
+    'market-temp-zscore',
+    'market-temp-metrics',
     'classifyZScoreBucket',
     '本数据为统计描述，不构成投资建议。',
     'QQQ',
+    'NDX/IXIC',
     '60 周均值',
     '标准差',
     'z-score',
   ];
   for (const marker of requiredMarkers) requireMarker(macroOverview, MACRO_OVERVIEW_PATH, marker);
-  requireAnyMarker(macroOverview, MACRO_OVERVIEW_PATH, ['Market Temperature', '市场定价温度计']);
-  requireAnyMarker(macroOverview, MACRO_OVERVIEW_PATH, ['market-temperature-card-active', 'data-market-temperature-fallback']);
-  for (const marker of ['buildCrossValidationMatrix', 'crossValidationMatrix', 'supportingEvidence', 'contradictingEvidence']) {
+  requireAnyMarker(macroOverview, MACRO_OVERVIEW_PATH, ['MARKET PRICING TEMPERATURE', '市场温度']);
+  for (const marker of [
+    'market-temp-layout',
+    'market-temp-bucket',
+    'market-temp-zscore',
+    'market-temp-sub',
+    'market-temp-detail',
+    'market-temp-metrics',
+  ]) {
+    requireMarker(styles, STYLES_PATH, marker);
+  }
+  for (const marker of ['buildCrossValidationMatrix', 'crossValidationMatrix', 'consistencyScore', 'oneLineSummary']) {
     requireMarker(macroOverview, MACRO_OVERVIEW_PATH, marker);
   }
-  for (const marker of ['editorial-consistency-score-display', 'editorial-evidence-supporting', 'editorial-assessment-strong-confirmation']) {
+  for (const marker of ['consistency-block', 'consistency-bar', 'consistency-detail']) {
     requireMarker(styles, STYLES_PATH, marker);
   }
 

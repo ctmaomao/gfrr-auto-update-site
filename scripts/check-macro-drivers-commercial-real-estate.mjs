@@ -21,7 +21,6 @@ function formatValue(value) {
 
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
-const renderMacroText = readText('scripts/modules/renderMacroOverview.js');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 const dataSourcesText = readText('docs/DATA_SOURCES.md');
 const agentsText = readText('AGENTS.md');
@@ -149,22 +148,12 @@ for (const marker of requiredRunDailyMarkers) {
   }
 }
 
-const requiredRenderMarkers = [
-  "id: 'driver-cre'",
-  '商业地产信用 COMMERCIAL REAL ESTATE',
-  'creDelinquencyRate',
-  'Commercial Real Estate',
-  'FRED 季频',
-  'CRE loan balance',
-  'VNQ',
-  'REM',
-  'CMBS'
-];
-for (const marker of requiredRenderMarkers) {
-  if (!renderMacroText.includes(marker)) {
-    fail(`renderMacroOverview missing M-70 marker: ${marker}`);
-  }
-}
+// PR 2b: M-70 CRE renderer markers in renderMacroOverview.js were removed in Stage 8
+// per contract v3.0 sec 8.4 (buildMacroDrivers simplified to mock 4-pillar object;
+// driver-cre sub-module's detailed evidence deleted).
+// CRE field consumption preserved in renderThematicCards.js c3-commercial-re card
+// (consumes macroDrivers.commercialRealEstate). Data field validation + 13 runDailyMarkers +
+// 19 contractMarkers + 10 sourceMarkers + AGENTS + backlog markers all preserved.
 
 const requiredContractMarkers = [
   'macroDrivers.commercialRealEstate',

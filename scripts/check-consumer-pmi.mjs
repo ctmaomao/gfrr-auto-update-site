@@ -13,7 +13,6 @@ function readText(filePath) {
 
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
-const renderMacroText = readText('scripts/modules/renderMacroOverview.js');
 const matrixText = readText('scripts/modules/buildCrossValidationMatrix.js');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 
@@ -127,19 +126,16 @@ for (const marker of requiredRunDailyMarkers) {
   }
 }
 
-const requiredRenderMarkers = [
-  'consumer.ismManufacturingPmi',
-  'ISM 制造业 PMI',
-  'MRTS 细分零售扩散',
-  'CARTS / CARTSR 是 Chicago Fed via FRED 的周频零售+餐饮 nowcast；MRTS 细分品类为月频公开零售结构观察；BoA Consumer Checkpoint 与 Redbook public HTML 是第三方公开消费证据。',
-  '盈利修正、BoA raw card feed 等非公开或授权消费证据仍待接入。',
-  'Redbook public HTML'
-];
-for (const marker of requiredRenderMarkers) {
-  if (!renderMacroText.includes(marker)) {
-    fail(`renderMacroOverview missing M-47 marker: ${marker}`);
-  }
-}
+// PR 2b: M-47/M-67 PMI renderer markers in renderMacroOverview.js were removed in Stage 8
+// per contract v3.0 sec 8.4 (buildMacroDrivers simplified to mock 4-pillar object;
+// consumer sub-module's detailed evidence including ISM PMI / Redbook / CARTS narrative
+// deleted from driver-consumer-retail and driver-employment nodes).
+// Consumer PMI field consumption preserved in:
+//   - renderThematicCards.js c1-ism-pmi card (consumes macroDrivers.consumer.ismManufacturingPmi)
+//   - renderThematicCards.js c4-consumer-agg card (consumes broader consumer fields)
+// PMI semantic contract is enforced in buildCrossValidationMatrix.js matrixMarkers
+// (preserved below). Data field validation + 11 runDailyMarkers + 5 matrixMarkers +
+// 9 contractMarkers all preserved.
 
 const requiredMatrixMarkers = [
   'const ismPmi = finite(consumer.ismManufacturingPmi);',

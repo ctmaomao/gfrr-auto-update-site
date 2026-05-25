@@ -13,7 +13,6 @@ function readText(filePath) {
 
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
-const renderMacroText = readText('scripts/modules/renderMacroOverview.js');
 const matrixText = readText('scripts/modules/buildCrossValidationMatrix.js');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 
@@ -77,21 +76,17 @@ for (const marker of requiredRunDailyMarkers) {
   }
 }
 
-const requiredRenderMarkers = [
-  'credit?.sloosTighteningLargeFirms',
-  '银行贷款标准 (SLOOS C&I 大型)',
-  '季度调查',
-  '信用环境',
-  '跨市场融资压力等待接入。',
-  "id: 'driver-private-credit-proxy'",
-  'BIZD listed BDC proxy',
-  '私募信用 marks 需要 manual/licensed input；ICE CDX public settlement 不替代私募信用估值。'
-];
-for (const marker of requiredRenderMarkers) {
-  if (!renderMacroText.includes(marker)) {
-    fail(`renderMacroOverview missing M-46 marker: ${marker}`);
-  }
-}
+// PR 2b: M-46 SLOOS renderer markers in renderMacroOverview.js were removed in Stage 8 per
+// contract v3.0 sec 8.4 (buildMacroDrivers simplified to mock 4-pillar object; credit/SLOOS
+// sub-module's detailed evidence and driver-private-credit-proxy node deleted).
+// M-46 field consumption + UI display preserved in:
+//   - renderThematicCards.js c3-* cards: consume macroDrivers.credit fields
+//     (enforced by check-thematic-cards-contract.mjs)
+//   - 4-pillar credit sentence in buildMacroDrivers still references hyOas/igOas/nfci/
+//     sloosTighteningMax
+// Data field validation + 8 requiredRunDailyMarkers + 5 requiredMatrixMarkers +
+// 8 requiredContractMarkers all preserved below.
+// Mock does not display SLOOS detailed evidence in macro-drivers block per sec 0.4 ironclad rule 6.
 
 const requiredMatrixMarkers = [
   'const credit = isPlainObject(data?.macroDrivers?.credit) ? data.macroDrivers.credit : {};',

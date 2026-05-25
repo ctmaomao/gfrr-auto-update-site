@@ -21,7 +21,6 @@ function formatValue(value) {
 
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
-const renderMacroText = readText('scripts/modules/renderMacroOverview.js');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 const dataSourcesText = readText('docs/DATA_SOURCES.md');
 const agentsText = readText('AGENTS.md');
@@ -151,20 +150,12 @@ for (const marker of requiredRunDailyMarkers) {
   }
 }
 
-const requiredRenderMarkers = [
-  "id: 'driver-consumer-retail'",
-  '高频零售消费 CONSUMER RETAIL',
-  'CARTS 名义',
-  'CARTSR 实际',
-  'MRTS 细分零售扩散',
-  'Redbook public HTML',
-  'Chicago Fed CARTS:'
-];
-for (const marker of requiredRenderMarkers) {
-  if (!renderMacroText.includes(marker)) {
-    fail(`renderMacroOverview missing M-69 marker: ${marker}`);
-  }
-}
+// PR 2b: M-69 consumerRetail renderer markers in renderMacroOverview.js were removed in
+// Stage 8 per contract v3.0 sec 8.4 (buildMacroDrivers simplified to mock 4-pillar object;
+// driver-consumer-retail sub-module's detailed evidence deleted).
+// Consumer retail field consumption preserved in renderThematicCards.js c4-consumer-agg card
+// (consumes macroDrivers.consumerRetail). Data field validation + 10 runDailyMarkers +
+// 11 contractMarkers + 5 sourceMarkers + AGENTS + backlog markers all preserved.
 
 const requiredContractMarkers = [
   'macroDrivers.consumerRetail',

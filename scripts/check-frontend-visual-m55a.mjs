@@ -7,6 +7,8 @@ function fail(msg) { errors.push(msg); }
 // Check 1: index.html structure
 const htmlPath = resolve('index.html');
 const htmlContent = readFileSync(htmlPath, 'utf8');
+const renderPath = resolve('scripts/modules/renderMacroOverview.js');
+const renderContent = readFileSync(renderPath, 'utf8');
 
 // Verify realtime band wrapper exists
 if (!htmlContent.includes('id="homepage-realtime-band"')) {
@@ -56,9 +58,22 @@ if (htmlContent.includes('?v=28.0M-55bV')) {
   fail('M-55a: stale cache version 28.0M-55bV still present in index.html');
 }
 
+// M-94 PR 2b Stage 9: Today Judgment must use the mock editorial-big-number hero,
+// threshold scale, and 8-week SVG trend, not the legacy M-92A 6-cell grid.
+for (const marker of ['appendEditorialBigNumber', 'appendThresholdBlock', 'appendTrendBlock', 'editorial-big-number', 'threshold-block', 'trend-block']) {
+  if (!renderContent.includes(marker)) {
+    fail(`M-55a PR 2b: mock today-judgment marker not found in renderMacroOverview.js: ${marker}`);
+  }
+}
+for (const marker of ['today-summary-grid', 'today-summary-cell', 'TODAY_SUMMARY_STATE_PHRASES']) {
+  if (renderContent.includes(marker)) {
+    fail(`M-55a PR 2b: legacy today-summary marker must be removed from renderMacroOverview.js: ${marker}`);
+  }
+}
+
 if (errors.length > 0) {
   console.error('Frontend visual M-55a check FAILED:');
   errors.forEach(err => console.error('  -', err));
   process.exit(1);
 }
-console.log('Frontend visual M-55a check: PASS (realtime band uplift + external-ai uplift + nav contract sync + 16 realtime DOM ids preserved)');
+console.log('Frontend visual M-55a check: PASS (realtime band uplift + external-ai uplift + nav contract sync + today-judgment mock hero + 16 realtime DOM ids preserved)');

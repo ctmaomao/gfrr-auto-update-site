@@ -42,7 +42,6 @@ function assertStatusKeys(layer, path, keys, allowed = new Set(['live', 'fallbac
 
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
-const renderMacroText = readText('scripts/modules/renderMacroOverview.js');
 const validateText = readText('scripts/validate-data.mjs');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 const dataSourcesText = readText('docs/DATA_SOURCES.md');
@@ -157,45 +156,21 @@ for (const marker of requiredRunDailyMarkers) {
   if (!runDailyText.includes(marker)) fail(`run-daily-pipeline missing M-74 marker: ${marker}`);
 }
 
-const requiredRenderMarkers = [
-  "id: 'driver-shipping-freight'",
-  "id: 'driver-policy'",
-  "id: 'driver-private-credit-proxy'",
-  'BDTI',
-  'BCTI',
-  'BDI',
-  'TGCR-SOFR',
-  'ZQ front price',
-  'ZQ monthly futures curve proxy',
-  'two-year',
-  'longer-run',
-  'hawkish',
-  'dovish',
-  'FOMC minutes',
-  'BoA Consumer Checkpoint',
-  'ICE Brent futuresCurve structure-only',
-  'Yahoo Brent priced futures proxy',
-  'MRTS 细分 ${index + 1}:',
-  'non-public CRE loan tape status',
-  'CDX HY status',
-  'private credit marks status',
-  'sourceStatus:',
-  'NFCI',
-  'Fed funds futures',
-  'SR3 SOFR futures',
-  'CheckMySwap USD OIS public curve',
-  'FOMC statement',
-  'BIZD',
-  'PBDC',
-  'SRLN',
-  'CCLFX',
-  'ICE CDX',
-  'IG OAS',
-  'Redbook public HTML'
-];
-for (const marker of requiredRenderMarkers) {
-  if (!renderMacroText.includes(marker)) fail(`renderMacroOverview missing M-74 marker: ${marker}`);
-}
+// PR 2b: M-74/M-79/M-80/M-83 expanded auto-ingestion renderer markers in renderMacroOverview.js
+// were removed in Stage 8 per contract v3.0 sec 8.4 (buildMacroDrivers simplified to mock
+// 4-pillar object; driver-shipping-freight, driver-policy, driver-private-credit-proxy nodes
+// and their detailed evidence all deleted).
+// Field consumption status:
+//   - macroDrivers.policyExpectations: preserved in renderThematicCards.js (2 references,
+//     c2-fed-path card consumes targetMid/effectiveFedFundsRate/ZQ futures curve)
+//   - macroDrivers.privateCreditProxy: preserved in renderThematicCards.js (2 references,
+//     c3-private-credit-proxy card consumes bdcEtfPrice/pbdcEtfPrice/seniorLoanEtfPrice etc.)
+//   - macroDrivers.shippingFreight: 0 references in renderThematicCards.js (matches its
+//     milestone design: BDTI/BCTI/BDI are audit-only / display-only data and were never
+//     intended for primary UI display; data field validation + runDaily contract still enforce
+//     the field exists in radar-data.json)
+// Data field validation + 29 runDailyMarkers + 17 contractMarkers (+ same in DATA_SOURCES) +
+// validate-data markers + AGENTS marker all preserved.
 
 const requiredValidateMarkers = [
   'validateMacroDriversShippingFreight(data)',

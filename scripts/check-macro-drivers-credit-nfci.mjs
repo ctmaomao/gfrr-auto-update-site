@@ -13,7 +13,6 @@ function readText(filePath) {
 
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
-const renderMacroText = readText('scripts/modules/renderMacroOverview.js');
 const matrixText = readText('scripts/modules/buildCrossValidationMatrix.js');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 
@@ -68,20 +67,12 @@ for (const marker of requiredRunDailyMarkers) {
   }
 }
 
-const requiredRenderMarkers = [
-  'credit?.nfci',
-  '金融状况指数 (NFCI)',
-  '偏紧',
-  '偏松',
-  "id: 'driver-private-credit-proxy'",
-  'BIZD listed BDC proxy',
-  '私募信用 marks 需要 manual/licensed input；ICE CDX public settlement 不替代私募信用估值。'
-];
-for (const marker of requiredRenderMarkers) {
-  if (!renderMacroText.includes(marker)) {
-    fail(`renderMacroOverview missing M-48 marker: ${marker}`);
-  }
-}
+// PR 2b: M-48 NFCI renderer markers in renderMacroOverview.js were removed in Stage 8 per
+// contract v3.0 sec 8.4. Same migration pattern as M-46 SLOOS (above): credit fields
+// consumed in renderThematicCards.js c3-nfci card and buildMacroDrivers 4-pillar credit
+// sentence. NFCI regime semantic contract is enforced in buildCrossValidationMatrix.js
+// matrixMarkers (preserved below). Data field + 6 runDailyMarkers + 7 matrixMarkers +
+// 9 contractMarkers all preserved.
 
 const requiredMatrixMarkers = [
   'const nfci = finite(credit.nfci);',

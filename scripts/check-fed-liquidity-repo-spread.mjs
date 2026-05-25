@@ -13,7 +13,6 @@ function readText(pathname) {
 
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
-const renderMacroText = readText('scripts/modules/renderMacroOverview.js');
 const matrixText = readText('scripts/modules/buildCrossValidationMatrix.js');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 
@@ -79,17 +78,28 @@ for (const marker of runDailyMarkers) {
   }
 }
 
-const renderMarkers = [
-  'fedLiquidity?.bgcrSofrSpread',
-  '回购利差 (BGCR-SOFR)',
-  '跨市场融资压力等待接入。'
-];
-
-for (const marker of renderMarkers) {
-  if (!renderMacroText.includes(marker)) {
-    fail(`scripts/modules/renderMacroOverview.js missing M-50 marker: ${marker}`);
-  }
-}
+// PR 2b: M-50 repo spread renderer markers in renderMacroOverview.js were removed in
+// Stage 8 per contract v3.0 sec 8.4 (buildMacroDrivers simplified from ~618 lines to
+// mock 4-pillar object; driver-liquidity sub-module's detailed evidence array and
+// coverageNotes deleted). The 3 markers ('fedLiquidity?.bgcrSofrSpread' optional-chain
+// literal, '回购利差 (BGCR-SOFR)' Chinese label, '跨市场融资压力等待接入。' boundary
+// declaration) lived in the driver-liquidity node and are no longer rendered there.
+//
+// M-50 field consumption + semantic protection is preserved in:
+//   - renderMacroOverview.js 4-pillar fed sentence: consumes fedLiquidity.bgcrSofrSpread
+//     and renders inline as 'BGCR-SOFR ${spread}bp'
+//   - renderThematicCards.js c2-usd-liquidity card: consumes fedLiquidity.bgcr /
+//     fedLiquidity.tgcr / fedLiquidity.repoSpreadRegime via agg-rows '回购 BGCR / TGCR'
+//     and 'repoSpreadRegime'. Enforced by check-thematic-cards-contract.mjs.
+//   - matrixMarkers below: 5 markers still enforce buildCrossValidationMatrix.js
+//     algorithm-side semantic contract (bgcrSofrSpread field consumption + repo
+//     market pressure state classification phrases)
+//   - runDailyMarkers below: 10 markers still enforce NY Fed secured rates API
+//     ingestion + classifyRepoSpreadRegime function
+//   - data field validation above: bgcr / tgcr / bgcrSofrSpread type + range +
+//     sourceStatus validation all preserved
+// Mock does not display repo spread detailed evidence in macro-drivers block per
+// contract v3.0 sec 0.4 ironclad rule 6.
 
 const matrixMarkers = [
   'const bgcrSofrSpread = finite(fed.bgcrSofrSpread);',

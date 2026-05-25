@@ -50,17 +50,38 @@ if (htmlContent.includes('id="wow-key-changes"')) {
   fail('M-55b: static wow-key-changes id should not remain in index.html');
 }
 
-// Check 2: renderMacroOverview.js has appendEditorialKeyChanges runtime section
+// Check 2: renderMacroOverview.js has mock-compliant wow-key-changes runtime section
 const renderPath = resolve('scripts/modules/renderMacroOverview.js');
 const renderContent = readFileSync(renderPath, 'utf8');
 
-if (!renderContent.includes('appendEditorialKeyChanges')) {
-  fail('M-55b: appendEditorialKeyChanges function not found in renderMacroOverview.js');
+if (!renderContent.includes('appendWowSection')) {
+  fail('M-55b: appendWowSection function not found in renderMacroOverview.js (PR 2b: wow-key-changes mock landing)');
 }
 
 // Verify wow-key-changes literal is referenced in renderMacroOverview.js
 if (!renderContent.includes("'wow-key-changes'")) {
   fail('M-55b: wow-key-changes literal not found in renderMacroOverview.js');
+}
+
+// M-94 PR 2b: wow-key-changes must use mock wow-section style (not legacy editorial-wow-category)
+if (renderContent.includes('appendEditorialKeyChanges')) {
+  fail('M-55b: legacy appendEditorialKeyChanges must be removed (replaced by appendWowSection in PR 2b)');
+}
+if (!renderContent.includes('wow-section')) {
+  fail('M-55b: wow-section CSS class not found in renderMacroOverview.js (mock-compliant WoW rendering)');
+}
+
+// M-94 PR 2b Stage 9: Today Judgment must use the mock editorial-big-number hero,
+// threshold scale, and 8-week SVG trend, not the legacy M-92A 6-cell grid.
+for (const marker of ['appendEditorialBigNumber', 'appendThresholdBlock', 'appendTrendBlock', 'editorial-big-number', 'threshold-block', 'trend-block']) {
+  if (!renderContent.includes(marker)) {
+    fail(`M-55b PR 2b: mock today-judgment marker not found in renderMacroOverview.js: ${marker}`);
+  }
+}
+for (const marker of ['today-summary-grid', 'today-summary-cell', 'TODAY_SUMMARY_STATE_PHRASES']) {
+  if (renderContent.includes(marker)) {
+    fail(`M-55b PR 2b: legacy today-summary marker must be removed from renderMacroOverview.js: ${marker}`);
+  }
 }
 
 // Check 3: assets/styles.css has new realtime classes
@@ -99,4 +120,4 @@ if (errors.length > 0) {
   errors.forEach(err => console.error('  -', err));
   process.exit(1);
 }
-console.log('Frontend visual M-55b check: PASS (realtime band repainted to main-module standard + wow-key-changes JS-runtime + .editorial-subsection-equivalent removed + 16 realtime ids preserved)');
+console.log('Frontend visual M-55b check: PASS (realtime band repainted to main-module standard + wow-key-changes mock wow-section landing + today-judgment mock hero + .editorial-subsection-equivalent removed + 16 realtime ids preserved)');
