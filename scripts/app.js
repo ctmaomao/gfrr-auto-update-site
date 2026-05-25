@@ -1,13 +1,14 @@
-﻿import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0M-93AV';
-import { buildHealthDashboardModel } from './modules/health.js?v=28.0M-93AV';
-import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0M-93AV';
-import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0M-93AV';
-import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderAiInterpretationLayer, renderDivergenceLayer, renderBrentPricingLayer, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0M-93AV';
-import { renderExternalAiPanel } from './modules/renderExternalAi.js?v=28.0M-93AV';
-import { renderMacroRiskOverview } from './modules/renderMacroOverview.js?v=28.0M-93AV';
-import { renderPlainSummary } from './modules/renderPlainSummary.js?v=28.0M-93AV';
+﻿import { $, fmtSignedArrow, trendClass, REMOTE_REALTIME_URL } from './modules/config.js?v=28.0M-94';
+import { buildHealthDashboardModel } from './modules/health.js?v=28.0M-94';
+import { fetchBaselineData, fetchHistoryData, fetchRealtimePayload, fetchWorldOrderStressData, buildRuntimeState } from './modules/realtime.js?v=28.0M-94';
+import { createDecisionFallback, buildPositionGuidanceFallback, buildActionQueueFallback, buildTriggerMonitorFallback, buildInvalidationRulesFallback } from './modules/decision.js?v=28.0M-94';
+import { renderRealtimeStrip, renderHealthDashboard, renderDailyBrief, renderAiInterpretationLayer, renderDivergenceLayer, renderBrentPricingLayer, renderWorldOrderStressOverlay, buildDecisionHeaderModel, renderDecisionHeader, renderBars, renderList, renderLineChart, renderHeatmap, renderTransmission, renderExecutionLock, renderSignalEngine, renderActionLayer, renderPositioning, renderRiskControl, renderDiscipline, renderWarningSystem, renderAssetReturnMap, renderAssetTable, renderScenarioTree, renderNonCriticalSection } from './modules/render.js?v=28.0M-94';
+import { renderExternalAiPanel } from './modules/renderExternalAi.js?v=28.0M-94';
+import { renderMacroRiskOverview } from './modules/renderMacroOverview.js?v=28.0M-94';
+import { renderPlainSummary } from './modules/renderPlainSummary.js?v=28.0M-94';
+import { renderThematicCards } from './modules/renderThematicCards.js?v=28.0M-94';
 
-window.__GFRR_FRONTEND_VERSION__ = '28.0M-93AV';
+window.__GFRR_FRONTEND_VERSION__ = '28.0M-94';
 
 function fetchMarketPricingMetricsData() {
   return fetch('data/market-pricing-metrics.json', { cache: 'no-store' })
@@ -91,6 +92,7 @@ async function main() {
   marketPricingMetricsPromise.then((marketPricingMetricsData) => {
     window.__GFRR_MARKET_PRICING_METRICS__ = marketPricingMetricsData;
     renderMacroRiskOverview(data, healthDashboard, worldOrderStressData, marketPricingMetricsData);
+    renderThematicCards(data, document.getElementById('macro-thematic-cards-root'), marketPricingMetricsData);
   });
   renderDailyBrief(data.dailyBrief);
   renderAiInterpretationLayer(data.aiInterpretationLayer);
