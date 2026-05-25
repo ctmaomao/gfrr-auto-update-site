@@ -122,12 +122,16 @@ const renderSource = readText(RENDER_PATH);
 const helperSource = readText(HELPER_PATH);
 
 for (const functionName of ['buildTodayJudgment', 'buildSignalLayers', 'buildRiskEngines', 'buildCrossValidation']) {
-  assertBuilderUsesMetrics(renderSource, functionName);
+assertBuilderUsesMetrics(renderSource, functionName);
 }
 assert(renderSource.includes('buildCrossValidationMatrix'), 'renderMacroOverview must import/use buildCrossValidationMatrix');
-assert(renderSource.includes('editorial-consistency-score-display'), 'renderMacroOverview must render composite consistency score');
-assert(renderSource.includes('supportingEvidence'), 'renderMacroOverview must render supporting evidence');
-assert(renderSource.includes('contradictingEvidence'), 'renderMacroOverview must render contradicting evidence');
+// PR 2b: cross-validation renders mock consistency-block (consistency-bar + consistency-value + consistency-detail).
+// Detailed supporting/contradicting evidence is no longer rendered per mock; matrix algorithm still produces them (see matrix shape checks below).
+assert(renderSource.includes('appendConsistencyBlock'), 'renderMacroOverview must call appendConsistencyBlock helper (PR 2b mock-compliant cross-validation)');
+assert(renderSource.includes('consistency-bar'), 'renderMacroOverview must render mock consistency-bar (PR 2b)');
+assert(renderSource.includes('consistency-value'), 'renderMacroOverview must render mock consistency-value (PR 2b)');
+assert(!renderSource.includes('editorial-consistency-score-display'), 'renderMacroOverview must not retain legacy editorial-consistency-score-display (replaced by mock consistency-block in PR 2b)');
+assert(!renderSource.includes('appendEditorialValidationCard'), 'renderMacroOverview must not retain legacy appendEditorialValidationCard (replaced by appendConsistencyBlock in PR 2b)');
 
 assert(helperSource.includes('export function buildCrossValidationMatrix'), 'helper must export buildCrossValidationMatrix');
 assert(helperSource.includes("evidence('qqq_zscore', formatSigned(metric.zScore)"), 'helper must derive qqq_zscore evidence from latest metrics zScore');

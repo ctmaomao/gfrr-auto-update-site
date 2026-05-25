@@ -67,8 +67,8 @@ if (!renderContent.includes("'wow-key-changes'")) {
 if (renderContent.includes('appendEditorialKeyChanges')) {
   fail('M-55b: legacy appendEditorialKeyChanges must be removed (replaced by appendWowSection in PR 2b)');
 }
-if (!renderContent.includes("'wow-section'")) {
-  fail('M-55b: wow-section CSS class literal not found in renderMacroOverview.js (mock-compliant WoW rendering)');
+if (!renderContent.includes('wow-section')) {
+  fail('M-55b: wow-section CSS class not found in renderMacroOverview.js (mock-compliant WoW rendering)');
 }
 
 // Check 3: assets/styles.css has new realtime classes

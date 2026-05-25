@@ -61,23 +61,16 @@ for (const { id, emoji } of expectedEmojis) {
   }
 }
 
-// Check 3: evidence order in renderMacroOverview.js
-// supporting must come before contradicting must come before missing
-const cardStart = renderContent.indexOf('function appendEditorialValidationCard');
-const cardEnd = renderContent.indexOf('function appendEditorialSignalSublist', cardStart);
-const cardContent = cardStart >= 0 && cardEnd > cardStart
-  ? renderContent.slice(cardStart, cardEnd)
-  : '';
-const supportingIdx = cardContent.indexOf("'支持证据'");
-const contradictingIdx = cardContent.indexOf("'矛盾证据'");
-const missingIdx = cardContent.indexOf("'缺失证据'");
-
-if (!cardContent || supportingIdx === -1 || contradictingIdx === -1 || missingIdx === -1) {
-  fail('M-54 evidence order: not all 3 evidence labels found');
-} else {
-  if (!(supportingIdx < contradictingIdx && contradictingIdx < missingIdx)) {
-    fail(`M-54 evidence order: expected supporting < contradicting < missing, got positions ${supportingIdx}, ${contradictingIdx}, ${missingIdx}`);
-  }
+// Check 3 (PR 2b rewrite): cross-validation must use mock consistency-block style.
+// Legacy appendEditorialValidationCard removed per contract v3.0 sec 8.7.
+if (renderContent.includes('appendEditorialValidationCard')) {
+  fail('M-54 PR 2b: legacy appendEditorialValidationCard must be removed (replaced by appendConsistencyBlock)');
+}
+if (!renderContent.includes('appendConsistencyBlock')) {
+  fail('M-54 PR 2b: appendConsistencyBlock function not found in renderMacroOverview.js (mock-compliant cross-validation rendering)');
+}
+if (!renderContent.includes('consistency-block')) {
+  fail('M-54 PR 2b: consistency-block CSS class not found in renderMacroOverview.js');
 }
 
 if (errors.length > 0) {
@@ -85,4 +78,4 @@ if (errors.length > 0) {
   errors.forEach(err => console.error('  -', err));
   process.exit(1);
 }
-console.log('Frontend visual M-54 check: PASS (evidence colors fixed + emoji prefix added + evidence reordered + typography scale)');
+console.log('Frontend visual M-54 check: PASS (evidence colors fixed + emoji prefix preserved for narrative-list + cross-validation migrated to mock consistency-block + typography scale)');

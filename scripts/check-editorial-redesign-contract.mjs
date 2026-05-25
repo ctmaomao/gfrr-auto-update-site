@@ -316,6 +316,9 @@ function checkEditorialStructures() {
     'wow-source',
     '本期关键变化',
     'this issue\\\'s deltas',
+    "'homepage-cross-validation'",
+    'CROSS VALIDATION MATRIX',
+    'consistency-block',
   ];
   for (const marker of requiredMarkers) requireMarker(combined, 'editorial redesign structures', marker);
 
@@ -348,10 +351,10 @@ function checkMarketPricingTemperatureContract() {
   for (const marker of requiredMarkers) requireMarker(macroOverview, MACRO_OVERVIEW_PATH, marker);
   requireAnyMarker(macroOverview, MACRO_OVERVIEW_PATH, ['Market Temperature', '市场定价温度计']);
   requireAnyMarker(macroOverview, MACRO_OVERVIEW_PATH, ['market-temperature-card-active', 'data-market-temperature-fallback']);
-  for (const marker of ['buildCrossValidationMatrix', 'crossValidationMatrix', 'supportingEvidence', 'contradictingEvidence']) {
+  for (const marker of ['buildCrossValidationMatrix', 'crossValidationMatrix', 'consistencyScore', 'oneLineSummary']) {
     requireMarker(macroOverview, MACRO_OVERVIEW_PATH, marker);
   }
-  for (const marker of ['editorial-consistency-score-display', 'editorial-evidence-supporting', 'editorial-assessment-strong-confirmation']) {
+  for (const marker of ['consistency-block', 'consistency-bar', 'consistency-detail']) {
     requireMarker(styles, STYLES_PATH, marker);
   }
 
