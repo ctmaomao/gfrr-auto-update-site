@@ -310,17 +310,33 @@ function checkEditorialStructures() {
     '本期关键变化 · Week-over-Week',
     'wow-grid',
     'wow-item',
-    'wow-tag is-up',
-    'wow-tag is-down',
-    'wow-tag is-flat',
     'wow-source',
     '本期关键变化',
     'this issue\\\'s deltas',
+    "'homepage-pressure-sources'",
+    'PRESSURE SOURCES',
+    '六大底层模块 · data.modules 扁平数字 · data.moduleTrends 趋势',
+    'appendMiniGrid',
+    'appendMiniCard',
+    'mini-grid',
+    'mini-card',
+    'Energy 能源',
+    'Geopolitical 地缘',
+    'Inflation 通胀',
+    'Liquidity 流动性',
+    'Debt 债务',
+    'Banking 银行',
     "'homepage-cross-validation'",
     'CROSS VALIDATION MATRIX',
     'consistency-block',
   ];
   for (const marker of requiredMarkers) requireMarker(combined, 'editorial redesign structures', marker);
+  for (const marker of ['appendEditorialPressureCard', 'appendEditorialPressureSublist', 'editorial-pressure-grid']) {
+    if (macroOverview.includes(marker)) fail(`legacy pressure marker must be removed from ${MACRO_OVERVIEW_PATH}: ${marker}`);
+  }
+  for (const marker of ['.wow-tag.is-up', '.wow-tag.is-down', '.wow-tag.is-flat', '.mini-card.red', '.mini-card.yellow', '.mini-card.green']) {
+    requireMarker(styles, STYLES_PATH, marker);
+  }
 
   const stageAreaStart = macroOverview.indexOf('function stageFromScore');
   const thresholdAreaStart = firstIndexOfAny(macroOverview, [

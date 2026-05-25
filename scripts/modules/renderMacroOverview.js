@@ -589,164 +589,41 @@ function buildTodayJudgment(data, healthDashboard, worldOrderStressData, marketP
 }
 
 function buildPressureSources(data, worldOrderStressData) {
-  const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
-  const consumer = isPlainObject(data?.macroDrivers?.consumer) ? data.macroDrivers.consumer : {};
-  const shippingFreight = isPlainObject(data?.macroDrivers?.shippingFreight) ? data.macroDrivers.shippingFreight : {};
-  const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
-  const worldScore = finite(worldOrderStressData?.score);
-  const hyOas = finite(inputs.hyOas);
-  const vix = finite(inputs.vix);
-  const brent = finite(inputs.brent);
-  const us10y = finite(inputs.us10y);
-  const real10y = finite(inputs.real10y);
-  const dxy = finite(inputs.dxy);
-  const dirtyTankerIndex = finite(shippingFreight.balticDirtyTankerIndex);
-  const dirtyTankerChange = finite(shippingFreight.balticDirtyTankerDailyChangePct);
-  const cleanTankerIndex = finite(shippingFreight.balticCleanTankerIndex);
-  const dryBulkIndex = finite(shippingFreight.balticDryIndex);
-  const crackSpread4wChange = finite(brentLayer.crackSpread4wChange);
-  const eiaBrentSpotProxy = isPlainObject(brentLayer.eiaBrentSpotProxy) ? brentLayer.eiaBrentSpotProxy : {};
-  const eiaBrentSpotPrice = finite(eiaBrentSpotProxy.price);
-  const eiaBrentSpotDailyChange = finite(eiaBrentSpotProxy.dailyChange);
-  const brentFuturesCurve = isPlainObject(brentLayer.futuresCurve) ? brentLayer.futuresCurve : {};
-  const brentFuturesCurveContracts = safeArray(brentFuturesCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 3)
-    .map((contract) => `${text(contract.contract, '--')}(${formatWeekVintage(contract.lastTrade)})`);
-  const brentFuturesPriceCurve = isPlainObject(brentLayer.futuresPriceCurve) ? brentLayer.futuresPriceCurve : {};
-  const brentFuturesPriceCurveContracts = safeArray(brentFuturesPriceCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 4)
-    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.price, 2)}`);
-  const brentIceFuturesPriceCurve = isPlainObject(brentLayer.iceFuturesPriceCurve) ? brentLayer.iceFuturesPriceCurve : {};
-  const brentIceFuturesPriceCurveContracts = safeArray(brentIceFuturesPriceCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 4)
-    .map((contract) => `${text(contract.contract, '--')} ${formatNumber(contract.price, 2)}`);
-  const energyProxyCoverage = [
-    eiaBrentSpotPrice !== null ? 'EIA Brent Spot Price FOB live' : null,
-    brentIceFuturesPriceCurveContracts.length ? 'ICE delayed Brent futures curve live' : null,
-    brentFuturesPriceCurveContracts.length ? 'Yahoo Brent priced futures proxy live' : null,
-    dirtyTankerIndex !== null ? 'StockQ BDTI tanker freight live' : null,
-    cleanTankerIndex !== null ? 'StockQ BCTI clean tanker live' : null,
-    dryBulkIndex !== null ? 'StockQ BDI dry bulk live' : null,
-  ].filter(Boolean);
-  const energyFormalBoundary = [
-    'Platts Dated Brent / 正式 Dated Brent 未接入。official settlement / 实物成交证据仍是边界说明，不作为公开代理层的主缺失项。',
+  const modules = isPlainObject(data?.modules) ? data.modules : {};
+  const trends = isPlainObject(data?.moduleTrends) ? data.moduleTrends : {};
+  const dailyBrief = isPlainObject(data?.dailyBrief) ? data.dailyBrief : {};
+  const dominantKey = String(dailyBrief?.dominantRiskChain?.key || dailyBrief?.key || '');
+  const worldState = text(worldOrderStressData?.state, 'multi_theater_stress').replace(/_stress$/u, '');
+  const definitions = [
+    { id: 'energy', label: 'Energy 能源', up: '能源传导主线', flat: '能源横盘', down: '能源降温' },
+    { id: 'geopolitical', label: 'Geopolitical 地缘', up: worldState, flat: '地缘观察', down: '地缘降温' },
+    { id: 'inflation', label: 'Inflation 通胀', up: '通胀再抬头', flat: '横盘观察', down: '通胀降温' },
+    { id: 'liquidity', label: 'Liquidity 流动性', up: '边际收紧', flat: '流动性观察', down: '边际宽松' },
+    { id: 'debt', label: 'Debt 债务', up: '杠杆抬升', flat: '杠杆稳定', down: '杠杆降温' },
+    { id: 'banking', label: 'Banking 银行', up: '银行压力', flat: '银行稳定', down: '持续改善' },
   ];
-  const energyRefreshMissing = [
-    eiaBrentSpotPrice === null ? 'EIA Brent spot proxy 等待刷新。' : null,
-    !brentIceFuturesPriceCurveContracts.length && !brentFuturesPriceCurveContracts.length && !brentFuturesCurveContracts.length
-      ? 'Brent futures curve 等待刷新。'
-      : null,
-    dirtyTankerIndex === null ? '油轮运费压力等待 BDTI 刷新。' : null,
-  ].filter(Boolean);
-  const worldFreshness = text(worldOrderStressData?.freshness, INSUFFICIENT);
 
-  return [
-    createJudgment({
-      id: 'pressure-energy-inflation',
-      title: '能源与通胀压力',
-      group: 'pressure-source',
-      status: brent === null ? INSUFFICIENT : brent >= 100 ? '主要压力' : '观察中',
-      direction: brent === null ? '方向待确认' : brent >= 100 ? '压力上升' : '观察中',
-      confidence: brent === null ? '偏低' : '中等',
-      dataCoverage: energyProxyCoverage.length >= 4 ? '数据覆盖：公开能源代理覆盖良好' : energyProxyCoverage.length ? '数据覆盖：公开能源代理部分覆盖' : '数据覆盖：关键数据不足',
-      evidence: [
-        `布伦特 ${formatNumber(brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`,
-        eiaBrentSpotPrice === null
-          ? null
-          : `EIA Brent Spot Price FOB ${formatNumber(eiaBrentSpotPrice, 2)}；日变化 ${formatSignedDecimal(eiaBrentSpotDailyChange, 2)}（${formatWeekVintage(eiaBrentSpotProxy.updatedAt)}；status=${formatSourceStatus(eiaBrentSpotProxy.sourceStatus)}）`,
-        dirtyTankerIndex === null
-          ? null
-          : `BDTI ${formatNumber(dirtyTankerIndex, 0)}；日变化 ${formatRatioAsPercent(dirtyTankerChange)}（${text(shippingFreight.tankerFreightRegime, '未知')}）`,
-        cleanTankerIndex === null ? null : `BCTI ${formatNumber(cleanTankerIndex, 0)}（${text(shippingFreight.cleanTankerFreightRegime, '未知')}）`,
-        dryBulkIndex === null ? null : `BDI ${formatNumber(dryBulkIndex, 0)}（${text(shippingFreight.dryBulkFreightRegime, '未知')}）`,
-        brentLayer?.crackSpread === null || !Number.isFinite(brentLayer?.crackSpread)
-          ? null
-          : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶；4周变化 ${formatSignedDecimal(crackSpread4wChange, 2)}`,
-        brentFuturesCurveContracts.length
-          ? `ICE Brent futuresCurve structure-only: ${brentFuturesCurveContracts.join(' / ')}；status=${text(brentFuturesCurve.curveStatus, 'missing')}`
-          : null,
-        brentIceFuturesPriceCurveContracts.length
-          ? `ICE Brent public delayed price curve: ${brentIceFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentIceFuturesPriceCurve.frontMinusBack, 2)}`
-          : null,
-        brentFuturesPriceCurveContracts.length
-          ? `Yahoo Brent priced futures proxy: ${brentFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentFuturesPriceCurve.frontMinusBack, 2)}`
-          : null,
-      ].filter(Boolean),
-      coverageNotes: [...energyProxyCoverage, ...energyFormalBoundary],
-      missingEvidence: energyRefreshMissing,
-      explanation: energyProxyCoverage.length
-        ? '公开现货、期货与运费代理已形成能源压力观察层；正式实物成交源作为边界保留。'
-        : '能源压力仍需等待公开代理刷新。',
-      sourceType: brent === null ? '数据不足' : '数据推断',
-      priority: brent === null ? 4 : brent >= 100 ? 1 : 2,
-    }),
-    createJudgment({
-      id: 'pressure-rates-liquidity',
-      title: '长端利率与流动性',
-      group: 'pressure-source',
-      status: us10y === null && real10y === null && dxy === null ? INSUFFICIENT : '观察中',
-      direction: us10y !== null && us10y >= 4.25 ? '压力上升' : '观察中',
-      confidence: '中等',
-      dataCoverage: us10y !== null || real10y !== null || dxy !== null ? '数据覆盖：核心利率与美元代理已覆盖' : '数据覆盖：关键数据不足',
-      evidence: [`10年期 ${formatNumber(us10y, 2, '%')}；实际利率 ${formatNumber(real10y, 2, '%')}；广义美元 ${formatNumber(dxy, 2)}`],
-      coverageNotes: ['信用市场扩散确认属于交叉验证条件，不作为当前利率压力卡的数据缺失。'],
-      missingEvidence: us10y !== null || real10y !== null || dxy !== null ? [] : ['利率与美元代理等待刷新。'],
-      explanation: '长端利率和美元偏紧需要信用市场继续确认。',
-      priority: us10y !== null && us10y >= 4.25 ? 2 : 3,
-    }),
-    createJudgment({
-      id: 'pressure-credit',
-      title: '信用压力',
-      group: 'pressure-source',
-      status: hyOas === null && vix === null ? INSUFFICIENT : hyOas !== null && hyOas < 4 && vix !== null && vix < 22 ? '暂未扩散' : '观察中',
-      direction: hyOas !== null && hyOas < 4 ? '基本平稳' : '方向待确认',
-      confidence: hyOas !== null && vix !== null ? '中等' : '偏低',
-      dataCoverage: hyOas !== null && vix !== null ? '数据覆盖：核心信用与波动率已覆盖' : '数据覆盖：关键数据不足',
-      evidence: [`高收益利差 ${formatNumber(hyOas, 2, '%')}；VIX ${formatNumber(vix, 2)}`],
-      counterEvidence: hyOas !== null && hyOas < 4 && vix !== null && vix < 22 ? ['信用和波动率尚未给出同步扩散确认。'] : [],
-      explanation: '信用和波动率尚未给出同步扩散确认。',
-      priority: hyOas !== null && hyOas < 4 ? 4 : 2,
-    }),
-    createJudgment({
-      id: 'pressure-world-order',
-      title: '世界秩序压力',
-      group: 'pressure-source',
-      status: worldScore === null ? INSUFFICIENT : hasPartialWorldOrder(worldOrderStressData) ? '观察中' : statusFromScore(worldScore),
-      direction: hasPartialWorldOrder(worldOrderStressData) ? '方向待确认' : '观察中',
-      confidence: evidenceStrengthFromConfidence(worldOrderStressData?.confidence, '偏低'),
-      dataCoverage: hasPartialWorldOrder(worldOrderStressData) ? '数据覆盖：部分缺口' : '数据覆盖：等待校准',
-      evidence: [worldScore === null ? '世界秩序压力数据不足。' : `结构性压力分数 ${Math.round(worldScore)}；freshness=${worldFreshness}`],
-      missingEvidence: hasPartialWorldOrder(worldOrderStressData) ? ['部分外部来源仍为 stale / manual_required / not_configured。'] : [],
-      explanation: '结构性背景有参考价值，但来源新鲜度仍不完整。',
-      sourceType: worldScore === null ? '数据不足' : '数据推断',
-      priority: worldScore === null ? 5 : 3,
-    }),
-    createJudgment({
-      id: 'pressure-consumer',
-      title: '消费者体感',
-      group: 'pressure-source',
-      status: finite(consumer.umichSentiment) === null ? WAITING : '观察中',
-      direction: directionFromDelta(consumer.threeMonthChange),
-      confidence: finite(consumer.umichSentiment) === null ? '偏低' : '中等',
-      dataCoverage: finite(consumer.umichSentiment) === null ? '数据覆盖：关键数据不足' : '数据覆盖：消费者慢变量已覆盖',
-      evidence: [
-        finite(consumer.umichSentiment) === null
-          ? 'UMCSENT 等待接入或刷新。'
-          : `UMCSENT ${formatNumber(consumer.umichSentiment, 1)}；三个月变化 ${formatNumber(consumer.threeMonthChange, 1)}`,
-        consumer.ismManufacturingPmi === null || !Number.isFinite(consumer.ismManufacturingPmi)
-          ? null
-          : `ISM 制造业 PMI ${formatNumber(consumer.ismManufacturingPmi, 1)} — ${consumer.ismManufacturingPmi >= 50 ? '扩张区间' : '收缩区间'}；3个月变化 ${formatNumber(consumer.ismManufacturingPmi3mChange, 1)}`,
-      ].filter(Boolean),
-      coverageNotes: ['细分零售品类已在 Macro Drivers 展示；本压力卡只保留消费者体感慢变量。'],
-      missingEvidence: finite(consumer.umichSentiment) === null ? ['消费者体感慢变量等待刷新。'] : [],
-      explanation: '月频慢变量只说明体感背景，不足以单独判断增长拐点。',
-      sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '事实',
-      priority: 5,
-    }),
-  ].sort((a, b) => a.priority - b.priority).map(({ priority, ...item }) => item);
+  return definitions.map((definition) => {
+    const rawScore = finite(modules[definition.id]);
+    const score = rawScore === null ? 0 : Math.max(0, Math.min(100, Math.round(rawScore)));
+    const trend = finite(trends[definition.id]);
+    const arrow = trend === null || trend === 0 ? '→' : trend > 0 ? '↑' : '↓';
+    const phrase = arrow === '↑'
+      ? definition.up
+      : arrow === '↓'
+        ? definition.down
+        : definition.flat;
+    const status = definition.id === 'energy' && dominantKey.includes('energy')
+      ? `${arrow} 能源传导主线`
+      : `${arrow} ${phrase}`;
+    return {
+      id: definition.id,
+      label: definition.label,
+      num: score,
+      status,
+      tone: score >= 70 ? 'red' : score >= 50 ? 'yellow' : 'green',
+    };
+  });
 }
 
 function buildSignalLayers(data, marketPricingMetricsData = null) {
@@ -2115,58 +1992,7 @@ function appendJudgmentList(root, label, values) {
   appendText(root, 'p', 'macro-overview-muted', `${label}：${items.map((item) => stripLabelPrefix(item, label)).join('；')}`);
 }
 
-function pressureStatusClass(judgment) {
-  const status = String(judgment?.status || '');
-  const direction = String(judgment?.direction || '');
-  const sourceType = String(judgment?.sourceType || '');
-  const combined = `${status} ${direction} ${sourceType}`;
-  if (combined.includes('数据不足') || combined.includes('等待接入')) return 'is-gap';
-  if (status.includes('主要压力') || status.includes('压力较高')) return 'is-major';
-  if (status.includes('压力上升') || direction.includes('压力上升')) return 'is-rising';
-  if (status.includes('暂未扩散') || status.includes('相对平稳') || direction.includes('基本平稳')) return 'is-calm';
-  if (status.includes('观察中')) return 'is-watch';
-  return 'is-neutral';
-}
-
-function buildPressureCounts(judgments) {
-  const counts = {
-    active: 0,
-    watch: 0,
-    calm: 0,
-    gap: 0,
-  };
-  safeArray(judgments).forEach((judgment) => {
-    const className = pressureStatusClass(judgment);
-    if (className === 'is-major' || className === 'is-rising') counts.active += 1;
-    else if (className === 'is-watch' || className === 'is-neutral') counts.watch += 1;
-    else if (className === 'is-calm') counts.calm += 1;
-    else if (className === 'is-gap') counts.gap += 1;
-  });
-  return counts;
-}
-
-function buildPressureCategorySummary(judgments) {
-  const items = safeArray(judgments);
-  if (!items.length) return '压力来源数据不足，暂不强行给出主线。';
-  const classed = items.map((judgment) => ({ judgment, className: pressureStatusClass(judgment) }));
-  const gaps = classed.filter(({ className }) => className === 'is-gap');
-  const active = classed.filter(({ className }) => className === 'is-major' || className === 'is-rising' || className === 'is-watch');
-  const calm = classed.filter(({ className }) => className === 'is-calm');
-  if (gaps.length >= items.length) return '压力来源以数据缺口为主，当前不强行形成压力主线。';
-  const activeTitles = active.slice(0, 2).map(({ judgment }) => `「${judgment.title}」`);
-  const calmTitles = calm.slice(0, 2).map(({ judgment }) => `「${judgment.title}」`);
-  const lines = [];
-  lines.push(activeTitles.length
-    ? `当前压力来源以${activeTitles.join('和')}为主要观察链条`
-    : '当前压力来源尚未形成单一主线');
-  if (calmTitles.length) lines.push(`${calmTitles.join('和')}作为反证保留`);
-  if (gaps.length || items.some((judgment) => normalizeEvidenceList(judgment.missingEvidence).length)) {
-    lines.push('部分证据仍不完整');
-  }
-  return `${lines.join('；')}。`;
-}
-
-function appendPressureCountPill(root, label, value) {
+function appendCategoryCountPill(root, label, value) {
   const pill = document.createElement('span');
   pill.className = 'editorial-count-pill';
   appendText(pill, 'span', '', label);
@@ -2683,55 +2509,6 @@ function appendEditorialSignalCard(root, judgment) {
   root.appendChild(card);
 }
 
-function appendEditorialPressureSublist(root, label, values, modifier = '') {
-  const items = normalizeEvidenceList(values);
-  if (!items.length) return;
-  const group = document.createElement('div');
-  group.className = `editorial-pressure-sublist ${modifier}`.trim();
-  appendText(group, 'span', 'editorial-pressure-sublist-label', label);
-  const list = document.createElement('ul');
-  list.className = 'editorial-pressure-evidence';
-  items.forEach((item) => appendText(list, 'li', '', stripLabelPrefix(item, label)));
-  group.appendChild(list);
-  root.appendChild(group);
-}
-
-function appendEditorialPressureCard(root, judgment) {
-  const className = pressureStatusClass(judgment);
-  const card = document.createElement('article');
-  card.className = `editorial-pressure-card ${className}`;
-  const strip = document.createElement('div');
-  strip.className = 'editorial-pressure-card-status-strip';
-  strip.setAttribute('aria-hidden', 'true');
-  card.appendChild(strip);
-
-  const head = document.createElement('div');
-  head.className = 'editorial-pressure-card-head';
-  appendText(head, 'h3', 'editorial-pressure-card-title', judgment.title);
-  appendText(head, 'span', 'editorial-pressure-badge', judgment.status || UNDECIDED);
-  card.appendChild(head);
-
-  const direction = judgment.direction && judgment.direction !== '方向待确认'
-    ? ` / ${judgment.direction}`
-    : '';
-  appendText(card, 'p', 'editorial-pressure-main', `${judgment.status || UNDECIDED}${direction}`);
-  if (judgment.explanation) appendText(card, 'p', 'editorial-pressure-explanation', judgment.explanation);
-  appendEditorialPressureSublist(card, '关键证据', judgment.evidence, 'is-evidence');
-  appendEditorialPressureSublist(card, '公开代理覆盖', judgment.coverageNotes, 'is-evidence');
-  appendEditorialPressureSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
-  appendEditorialPressureSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
-  appendEditorialPressureSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
-
-  const footer = document.createElement('div');
-  footer.className = 'editorial-pressure-footer';
-  if (judgment.confidence && judgment.confidence !== '等待校准') appendText(footer, 'span', '', `证据强度：${judgment.confidence}`);
-  if (judgment.dataCoverage) appendText(footer, 'span', '', `数据覆盖：${stripLabelPrefix(judgment.dataCoverage, '数据覆盖')}`);
-  if (judgment.sourceType) appendText(footer, 'span', '', `来源类型：${judgment.sourceType}`);
-  if (judgment.updatedAt) appendText(footer, 'span', '', `更新：${judgment.updatedAt}`);
-  if (footer.childNodes.length) card.appendChild(footer);
-  root.appendChild(card);
-}
-
 function appendCard(root, item) {
   const card = document.createElement('article');
   card.className = 'macro-overview-card';
@@ -2772,6 +2549,23 @@ function appendRuntimeBlock(root, id, title, enLabel, meta = '') {
   block.appendChild(header);
   root.appendChild(block);
   return block;
+}
+
+function appendMiniCard(root, item) {
+  const tone = ['red', 'yellow', 'green'].includes(item?.tone) ? item.tone : 'green';
+  const card = document.createElement('div');
+  card.className = `mini-card ${tone}`;
+  appendText(card, 'div', 'label', item?.label || 'Unknown');
+  appendText(card, 'div', 'num', String(item?.num ?? '--'));
+  appendText(card, 'div', 'status', item?.status || '→ 等待确认');
+  root.appendChild(card);
+}
+
+function appendMiniGrid(root, items) {
+  const grid = document.createElement('div');
+  grid.className = 'mini-grid';
+  safeArray(items).forEach((item) => appendMiniCard(grid, item));
+  root.appendChild(grid);
 }
 
 function wowTone(kind = '') {
@@ -2884,21 +2678,14 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
 
   today.appendChild(summaryGrid);
 
-  const pressure = appendSection(container, '主要压力来源', 'editorial-category editorial-pressure-category', 'homepage-pressure-sources');
-  appendText(pressure, 'p', 'editorial-category-kicker', 'PRESSURE SOURCES');
-  appendText(pressure, 'p', 'editorial-category-summary', buildPressureCategorySummary(overview.pressures));
-  const pressureCounts = buildPressureCounts(overview.pressures);
-  const countGrid = document.createElement('div');
-  countGrid.className = 'editorial-category-counts';
-  appendPressureCountPill(countGrid, '主要压力 / 压力上升', pressureCounts.active);
-  appendPressureCountPill(countGrid, '观察中', pressureCounts.watch);
-  appendPressureCountPill(countGrid, '暂未扩散 / 相对平稳', pressureCounts.calm);
-  appendPressureCountPill(countGrid, '数据不足 / 等待接入', pressureCounts.gap);
-  pressure.appendChild(countGrid);
-  const pressureGrid = document.createElement('div');
-  pressureGrid.className = 'editorial-pressure-grid';
-  overview.pressures.forEach((item) => appendEditorialPressureCard(pressureGrid, item));
-  pressure.appendChild(pressureGrid);
+  const pressure = appendRuntimeBlock(
+    container,
+    'homepage-pressure-sources',
+    '压力来源',
+    'PRESSURE SOURCES',
+    '六大底层模块 · data.modules 扁平数字 · data.moduleTrends 趋势'
+  );
+  appendMiniGrid(pressure, overview.pressures);
 
   const signals = appendSection(container, '信号分层', 'editorial-category editorial-signal-category', 'homepage-signal-layers');
   appendText(signals, 'p', 'editorial-category-kicker', 'SIGNAL LAYERS');
@@ -2906,10 +2693,10 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   const signalCounts = buildSignalCounts(overview.signalLayers);
   const signalCountGrid = document.createElement('div');
   signalCountGrid.className = 'editorial-category-counts';
-  appendPressureCountPill(signalCountGrid, '已验证', signalCounts.verified);
-  appendPressureCountPill(signalCountGrid, '待验证', signalCounts.pending);
-  appendPressureCountPill(signalCountGrid, '噪音提示', signalCounts.noise);
-  appendPressureCountPill(signalCountGrid, '数据不足', signalCounts.gap);
+  appendCategoryCountPill(signalCountGrid, '已验证', signalCounts.verified);
+  appendCategoryCountPill(signalCountGrid, '待验证', signalCounts.pending);
+  appendCategoryCountPill(signalCountGrid, '噪音提示', signalCounts.noise);
+  appendCategoryCountPill(signalCountGrid, '数据不足', signalCounts.gap);
   signals.appendChild(signalCountGrid);
   const signalGrid = document.createElement('div');
   signalGrid.className = 'editorial-signal-grid';

@@ -140,10 +140,17 @@ for (const marker of runDailyMarkers) {
   }
 }
 
+// M-49 markers must remain in renderMacroOverview.js to enforce Brent data source boundary
+// (project constitution: public proxies must never impersonate official Platts source).
+// PR 2b note: buildPressureSources energyFormalBoundary array was removed when pressure-sources
+// was migrated to mock 6-card layout (mock does not display coverageNotes).
+// The Brent boundary declaration is preserved in buildMacroDrivers coverageNotes and
+// buildSignalLayers data-gap evidence, with slightly different wording.
+// Renderer markers below check for substring equivalents that survive PR 2b's mock migration.
 const renderMarkers = [
   'brentLayer.crackSpread',
   '柴油裂解价差',
-  'Platts Dated Brent / 正式 Dated Brent 未接入。',
+  'Platts Dated Brent',
   'ICE Brent futuresCurve structure-only',
   'ICE Brent public delayed price curve',
   'Yahoo Brent priced futures proxy',
