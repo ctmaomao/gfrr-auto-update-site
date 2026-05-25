@@ -1,11 +1,62 @@
-# M-94 V0 — Data Consumption Contract v2.3
+# M-94 V0 — Data Consumption Contract v2.4
 
-> **Status**: V0 Draft v2.3 (PR 1 merged · 整合 PR 1 全部教训 + 拆分 PR 2 为 PR 2a + PR 2b)
-> **PR 路径**: PR 1 ✅ merged · PR 2a = Thematic Cards 填充 · PR 2b = 8 Runtime Block 视觉重写
+> **Status**: V0 Draft v2.4 (PR 2a 阶段 1 基线检查期间发现 2 个契约/代码失配,微修)
+> **PR 路径**: PR 1 ✅ merged · PR 2a = Thematic Cards 填充(本次微修) · PR 2b = 8 Runtime Block 视觉重写
 > **Scope**: 前端展示 only · 不动 scoring / decision / execution / position / Worker / data pipeline / JSON 生产结构
 > **Approach**: Path C 结构(保留 14 项 IA + 新增 1 项 `#macro-thematic-cards`) + Path B 卡片密度
 > **Visual Reference**: `manual-artifacts/m94-v0/m94-v0-FINAL-mock.html` 是本契约的视觉权威基准
-> **Date**: 2026-05-24
+> **Date**: 2026-05-25
+
+---
+
+## v2.3 → v2.4 关键变更(给读过 v2.3 的人快速过)
+
+PR 2a 启动阶段 1 基线检查期间,Codex 按契约 §4.3 铁律 3 + §2.6.1 铁律 1 严格执行,发现 **2 个契约 v2.3 假设错误**,在动文件前停下报告。Claude 直读源码确认 100% 是契约问题,不是 Codex 误判。
+
+### 错误 1 — `classifyZScoreBucket` 没被 export
+
+**契约 v2.3 假设**(§3.7 NDX 卡 + §9.7 PR 2a 验收):
+```js
+import { classifyZScoreBucket } from './buildCrossValidationMatrix.js';
+```
+
+**真实代码状态**(`scripts/modules/buildCrossValidationMatrix.js` line 67 + line 末尾):
+- `classifyZScoreBucket` 在 line 67 定义,但**只是模块内私有函数**
+- 文件末尾只 `export { ASSESSMENT_LABELS }` + `export function buildCrossValidationMatrix`
+- 上述 import 会 fail
+
+**根因**:Codex 第三轮审核(v2.1 期间)给出"复用建议",我当时没核实 export 状态,契约 v2.1 / v2.2 / v2.3 全部沿袭这个错误假设。
+
+**v2.4 修复**:在 §4.2a 修改文件清单中**显式打开**对 `scripts/modules/buildCrossValidationMatrix.js` 的 1 行精确改动 — 在文件末尾追加 `export { classifyZScoreBucket };` (或合并到 line `export { ASSESSMENT_LABELS };`)。其他全文不动。
+
+### 错误 2 — Render 主流程在 `scripts/app.js` 不在 `scripts/modules/render.js`
+
+**契约 v2.3 假设**(§4.2a 修改文件清单):
+> `scripts/modules/render.js` — 在主渲染流程加入 `renderThematicCards(data, root)` 调用
+
+**真实代码状态**(`scripts/app.js` line 88-104):
+- `scripts/app.js` 的 `main()` 函数才是 render orchestrator
+- `app.js` line 7 显式 `import { renderMacroRiskOverview } from './modules/renderMacroOverview.js'`
+- `app.js` line 88-95 直接 call `renderPlainSummary / renderMacroRiskOverview / renderDailyBrief` 等
+- `scripts/modules/render.js` 只 export helper render 函数(`renderRealtimeStrip / renderHealthDashboard` 等),**不是主入口**
+- 契约 v2.3 让 Codex 改 render.js 加 `renderThematicCards` 调用,会被挂错位置(没人调它)
+
+**根因**:Claude 写契约 v2.3 时凭模块名假设,没读 `app.js` 实际结构。
+
+**v2.4 修复**:在 §4.2a 修改文件清单中把 `scripts/modules/render.js` 替换为 `scripts/app.js`,并明确改动内容:
+- line 1-9 import 区追加 `import { renderThematicCards } from './modules/renderThematicCards.js?v=28.0M-94'`
+- line 88-104 main() 渲染序列追加 `renderThematicCards(data, ...)` 调用(具体位置看 marketPricingMetricsPromise 后)
+- cache version 同步 bump
+
+### 同步连带改动
+
+- §9.7 PR 2a 边界验收清单:7 文件 → 8 文件(加 `scripts/modules/buildCrossValidationMatrix.js` 仅 1 行)+ `scripts/modules/render.js` 替换为 `scripts/app.js`
+- §0.3 不做范围:`scripts/modules/buildCrossValidationMatrix.js` 严格"不动"约束放宽为"只允许追加 export 一行,严禁改其他任何行"
+- §11 文档历史加 v2.4 行
+
+**改动范围统计**:契约改 5 处。0 字段层面改动,0 视觉规范改动,0 工作流改动。
+
+**好消息**:这是 PR 2a 阶段 1(基线检查)就发现的问题,**还没有任何文件改动**,工作区干净。修契约 → push v2.4 → 重启 PR 2a 阶段 1,影响极小。
 
 ---
 
@@ -141,6 +192,7 @@ v2 是 Codex 第三轮审核后的字段精校版。Codex 6 段审核结论 100%
 | 清理商业付费数据 docs(独立 M-XX) | Codex 审核第五节 |
 | 接入未来数据源(P1+ 独立 milestone) | M-94 仅做架构槽位 |
 | **改 `.gitignore` 内 `manual-artifacts/` 字面量写法**(v2.3 新增) | `scripts/check-market-pricing-network-open-throttled-scaffold.mjs:assertManualArtifactsIgnored()` 的 regex `(^|\r?\n)manual-artifacts\/?(\r?\n|$)` 强制要求 `manual-artifacts/` 必须**单独成行**,前后必须是换行/文件边界。让 mock / 后续 manual artifact 入库时**必须**用 `!manual-artifacts/<sub>/` 例外子目录,**禁止**改成 `manual-artifacts/*` 写法 |
+| **改 `scripts/modules/buildCrossValidationMatrix.js` 任何函数 / 任何算法**(v2.4 放宽) | 项目核心一致性矩阵算法,不动。**唯一例外**:PR 2a 允许在文件末尾追加 `export { classifyZScoreBucket };`(把已有的内部函数升级为 module export),以让 `renderThematicCards.js` 能 import 复用。这是契约 v2.3 假设但实际未落地的 export。其他任何函数体 / 命名 / 顺序 / 注释 / import 一律不动 |
 
 ### §0.4 取舍方向回顾
 
@@ -1046,13 +1098,14 @@ DESIGN.md §5.1 表格追加:
 | `scripts/modules/displayStatusThresholds.js` | 阈值常量导出(`THRESHOLDS.brent / hyOas / vix / nfci / ...`)+ `classifyByThreshold(value, key)` helper。**仅常量与纯函数**,不调用 worker / data | ~80-150 行 |
 | `scripts/check-thematic-cards-contract.mjs` | 内容契约 checker(类似 `check-plain-summary-card-contract.mjs`)。校验:8 个 reader-cat-block 存在 + 38 张卡 + 每张卡有 status badge + intro 段非空 + 阈值常量复用 | ~200-400 行 |
 
-**修改文件**(4 个):
+**修改文件**(v2.4 调整 — 4 个改为 5 个):
 
 | 文件 | 改动 | 边界 |
 |---|---|---|
-| `index.html` | (1) `<body>` 末尾在 `<script type="module" src="scripts/app.js?v=28.0M-93AV"></script>` 之前(或后)引入 `renderThematicCards.js` 模块(或者改 `app.js` 引用,看 render.js 实际 import 模式);(2) cache version `28.0M-93AV` → `28.0M-94`(2 处:CSS link + script src) | **不动 `<head><style>` 区任何硬编码色值**(留给 PR 2b);**不动**其他 nav 项 / 其他 section 容器 |
-| `scripts/modules/render.js` | 在主渲染流程加入 `renderThematicCards(data, root)` 调用,挂载到 `document.getElementById('macro-thematic-cards-root')` | **不改 `render.js` 其他渲染调用顺序**;**不改 `renderPlainSummary.js / renderMacroOverview.js` 任何字段** |
-| `assets/styles.css` | **仅新增**主题卡阵相关 selector:`.reader-cat-block / .reader-cat-header / .cat-intro / .indicator-card / .indicator-card.pending / .agg-rows / .agg-rows .k / .agg-rows .v / .badge.red / .badge.yellow / .badge.green / .badge.orange / .badge.pending`,全部用 `var(--paper-* / --risk-* / --font-*)` token。**禁止删除或修改任何现有 selector**;**禁止新建 `--*` token** | 不动 `--editorial-*` 旧 token 体系 |
+| `index.html` | (1) cache version `28.0M-93AV` → `28.0M-94`(2 处:CSS link 与 script src);(2) **是否需要单独引入 `renderThematicCards.js` 模块,取决于 `scripts/app.js` 的 import 模式** — 当前 app.js 直接 import 所有 module(line 1-9 显式列出),所以 PR 2a 在 `app.js` 顶部 import 区追加 `import { renderThematicCards }` 即可,**index.html 不需要单独 script tag**。Codex 实施时先确认 app.js 是否仍是 ES module 入口 | **不动 `<head><style>` 区任何硬编码色值**(留给 PR 2b);**不动**已 PR 1 落地的 nav / section 容器 |
+| **`scripts/app.js`**(v2.4 替换原 render.js) | (1) line 1-9 import 区追加:`import { renderThematicCards } from './modules/renderThematicCards.js?v=28.0M-94';`(2)`main()` 函数渲染序列追加 `renderThematicCards(data, document.getElementById('macro-thematic-cards-root'), marketPricingMetricsData)` 调用 — **挂载位置**:看 `app.js` line 88-104 的 marketPricingMetricsPromise.then(...) 块,因为 thematic-cards 需要 marketPricingMetricsData(NDX 60w z-score 卡用),应放在 `.then()` 回调内,与第二次 `renderMacroRiskOverview` 调用同步;(3) 顶部 `window.__GFRR_FRONTEND_VERSION__ = '28.0M-93AV'` → `'28.0M-94'`;(4) 各 import 路径上的 `?v=28.0M-93AV` 全部同步改为 `?v=28.0M-94`(精确数字,grep 不能有遗漏) | **不改 `main()` 其他渲染调用顺序**;**不改 fetchBaselineData / fetchHistoryData / fetchRealtimePayload / fetchWorldOrderStressData 任何函数**;**不动**任何 decision / position / action 设置代码 |
+| **`scripts/modules/buildCrossValidationMatrix.js`**(v2.4 新增 — 精确 1 行) | 在文件末尾 `export { ASSESSMENT_LABELS };` 一行**之后**追加新一行 `export { classifyZScoreBucket };`;或合并为 `export { ASSESSMENT_LABELS, classifyZScoreBucket };`。**禁止**改任何函数体 / 算法 / 注释 / 顺序 / 其他 export | 文件其他 1100+ 行一字不动 |
+| `assets/styles.css` | **仅新增**主题卡阵相关 selector:`.reader-cat-block / .reader-cat-header / .cat-intro / .indicator-card / .indicator-card.pending / .agg-rows / .agg-rows .k / .agg-rows .v / .badge.red / .badge.yellow / .badge.green / .badge.orange / .badge.pending`,全部用 `var(--paper-* / --risk-* / --font-*)` token。**禁止删除或修改任何现有 selector**(包括 `check-editorial-redesign-contract.mjs:579-598` 锁的 `.badge.strong / .badge.strong-mid / .badge.cautious-bear / .badge.underweight` 4 个旧 badge);**禁止新建 `--*` token** | 不动 `--editorial-*` 旧 token 体系 |
 | `package.json` `scripts` | 新增 `"check:thematic-cards-contract": "node --check scripts/check-thematic-cards-contract.mjs && node scripts/check-thematic-cards-contract.mjs"`;**`check:all` 必须把这一项加入序列** | 不改其他 script |
 
 **PR 2a 不改文件**(铁律,与契约 §0.3 一致):
@@ -1488,21 +1541,24 @@ npm run check:market-pricing-network-open-throttled-scaffold
 - `classifyZScoreBucket` 从 `buildCrossValidationMatrix.js` import 复用,**不复制**
 - 阈值常量从 `displayStatusThresholds.js` import 复用,**不写死在 renderThematicCards.js**
 
-**PR 2a 边界验收**:
+**PR 2a 边界验收**(v2.4 调整):
 - `git diff --name-only main..pr-2a-branch` 必须只含:
   ```
   scripts/modules/renderThematicCards.js                  (new)
   scripts/modules/displayStatusThresholds.js              (new)
   scripts/check-thematic-cards-contract.mjs               (new)
-  scripts/modules/render.js                               (modified, 仅加调用)
+  scripts/app.js                                          (modified, 加 import + main() 内 call + cache bump)
+  scripts/modules/buildCrossValidationMatrix.js           (modified, 仅追加 1 行 export classifyZScoreBucket)
   assets/styles.css                                       (modified, 仅加 selector)
-  index.html                                              (modified, 仅引入 module + bump cache)
+  index.html                                              (modified, 仅 bump cache;若需引入 module 看 app.js import 模式)
   package.json                                            (modified, 仅加 script)
   ```
-- **不能出现** `scripts/modules/renderMacroOverview.js / decision.js / realtime.js / buildCrossValidationMatrix.js / renderPlainSummary.js / renderExternalAi.js / health.js / freshness.js` 任何改动
+- **8 个文件**(v2.3 原列 7 个,v2.4 加 `buildCrossValidationMatrix.js`,把 `render.js` 改为 `app.js`)
+- **不能出现** `scripts/modules/renderMacroOverview.js / decision.js / realtime.js / render.js / renderPlainSummary.js / renderExternalAi.js / health.js / freshness.js / renderAudit.js / renderCharts.js / renderTables.js / displayTextBuilders.js / format.js / config.js` 任何改动
 - **不能出现** `data/* / workers/* / .github/workflows/* / DESIGN.md / .gitignore` 任何改动
 - **不能出现** `index.html` `<head><style>` 块改动(留给 PR 2b)
-- `git diff scripts/modules/buildCrossValidationMatrix.js` 必须为 0(只 import,不改)
+- `git diff scripts/modules/buildCrossValidationMatrix.js` 必须**精确显示**只新增一行 `export { classifyZScoreBucket };`(或合并 export 改动),无其他变化
+- `git diff scripts/app.js` 必须精确显示:1 个 import 追加 + 1 个 main() 内 call + 1 个 `__GFRR_FRONTEND_VERSION__` bump + 若干 `?v=28.0M-93AV → 28.0M-94` 同步
 
 **PR 2a PR 描述必须声明**:
 - "本 PR 实施 M-94 V0 PR 2a:Thematic Cards 填充 — 8 主题块 + 38 张指标卡 + 3 新建文件 + 4 改文件"
@@ -1603,16 +1659,17 @@ npm run check:editorial-redesign-contract
 | 2026-05-24 | v2.1 字段精校,0 TODO,5 硬错误修正,17 处字段补充 | Codex 第三轮代码层审核 + Robert 视觉确认 FINAL mock + 3 决策(CRE / NDX z-score / Private Credit 降级) |
 | 2026-05-24 | v2.2 PR 范围修正:PR 1 加 index.html nav + 空 section 容器骨架(避免 checker enforcement 与 implementation 不同步) | Codex 第四轮 PR 1 实施时识别"先有鸡先有蛋"陷阱并报告;Robert 选项 A 拍板 |
 | 2026-05-24 | **v2.3 整合 PR 1 全部教训 + 拆分 PR 2 为 PR 2a + PR 2b**:§2.6 列全 3 个 IA-enforcement checker(增加 `mobile-first-fold-compaction`)、§0.3 加 `.gitignore` 单行约束、§2.6.1 / §2.8 / §4.3 三条方法论铁律、§4.2 拆为 §4.2a + §4.2b、§9.7 新增 PR 2a 验收 | PR 1 ✅ merged(commit `9b8e91f` + PR #250);Robert 选 PR 2 拆分选项 B(2a + 2b) |
+| 2026-05-25 | **v2.4 PR 2a 启动期间的契约 / 代码失配微修**:(1) §4.2a 把 `scripts/modules/render.js` 改为 `scripts/app.js`(实际 render orchestrator 在 app.js 不在 render.js);(2) §4.2a 加 `scripts/modules/buildCrossValidationMatrix.js` 精确 1 行 export 改动(因 `classifyZScoreBucket` 在 v2.1-v2.3 假设 export 但实际未 export);(3) §0.3 放宽 buildCrossValidationMatrix.js 约束为"只允许追加 export 一行";(4) §9.7 边界验收 7 文件 → 8 文件 | Codex 在 PR 2a 阶段 1 基线检查期间严格按 §4.3 铁律 + §2.6.1 铁律执行,在动文件前直读源码确认 2 个契约假设错误,**没有产生坏 commit**。Claude 直读源码 100% 确认。工作区干净,可直接换 v2.4 重启 PR 2a |
 
 ---
 
-**契约 v2.3 结束。**
+**契约 v2.4 结束。**
 
 下一步:
-1. Robert 审阅本契约 v2.3(主要看 §0.1 / §2.6 / §2.6.1 / §2.8 / §4.2a / §4.2b / §4.3 / §9.7 / §10 / §11 这 10 节)
-2. 把 v2.3 替换覆盖仓库中的 `docs/M94_V0_DATA_CONTRACT.md`,push 到新分支(例如 `m94-v23-pr2a`)
-3. 让 Codex 基于 v2.3 + FINAL mock + 现有代码,开 PR 2a(按 §4.2a 改动清单 + §4.3 铁律 3 分阶段实施)
-4. Codex 实施 PR 2a 通过 `npm run check:all` 后,Claude review 远程 diff(对照 §9.7)
+1. Robert 审阅本契约 v2.4(主要看顶部"v2.3 → v2.4 关键变更"导读段 + §0.3 / §4.2a / §9.7 这 4 节)
+2. 把 v2.4 替换覆盖仓库中的 `docs/M94_V0_DATA_CONTRACT.md`,**仍在 `m94-v23-pr2a` 分支上 commit**(因为还没动 PR 2a 实施文件,工作区干净,契约 v2.4 可以直接 push 到当前分支,Codex 重新读契约后继续 PR 2a 阶段 1)
+3. 让 Codex 基于 v2.4 重启 PR 2a 阶段 1 基线检查 → 阶段 2 开始改文件
+4. Codex 实施 PR 2a 通过 `npm run check:all` 后,Claude review 远程 diff(对照 §9.7 v2.4 版 8 文件清单)
 5. Robert 在 GitHub web review 后 merge PR 2a
 6. PR 2a merge 后,开新分支 `m94-v23-pr2b`,开 PR 2b(按 §4.2b 改动清单)
 7. Codex 实施 PR 2b 严格按 §8.1-§8.8 + Codex 第三轮警告(`buildMacroDrivers` 616 行保留全部字段消费)
