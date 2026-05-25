@@ -340,17 +340,32 @@ function checkEditorialStructures() {
 
 function checkMarketPricingTemperatureContract() {
   const requiredMarkers = [
-    'market-temperature-card-root',
+    'appendMarketTemperatureBody',
+    'homepage-market-temperature',
+    'runtime-block',
+    'market-temp-layout',
+    'market-temp-zscore',
+    'market-temp-metrics',
     'classifyZScoreBucket',
     '本数据为统计描述，不构成投资建议。',
     'QQQ',
+    'NDX/IXIC',
     '60 周均值',
     '标准差',
     'z-score',
   ];
   for (const marker of requiredMarkers) requireMarker(macroOverview, MACRO_OVERVIEW_PATH, marker);
-  requireAnyMarker(macroOverview, MACRO_OVERVIEW_PATH, ['Market Temperature', '市场定价温度计']);
-  requireAnyMarker(macroOverview, MACRO_OVERVIEW_PATH, ['market-temperature-card-active', 'data-market-temperature-fallback']);
+  requireAnyMarker(macroOverview, MACRO_OVERVIEW_PATH, ['MARKET PRICING TEMPERATURE', '市场温度']);
+  for (const marker of [
+    'market-temp-layout',
+    'market-temp-bucket',
+    'market-temp-zscore',
+    'market-temp-sub',
+    'market-temp-detail',
+    'market-temp-metrics',
+  ]) {
+    requireMarker(styles, STYLES_PATH, marker);
+  }
   for (const marker of ['buildCrossValidationMatrix', 'crossValidationMatrix', 'consistencyScore', 'oneLineSummary']) {
     requireMarker(macroOverview, MACRO_OVERVIEW_PATH, marker);
   }

@@ -188,9 +188,11 @@ function assertNoScoringBoundaryChange() {
 
 function assertFrontendLabels() {
   const render = readText(RENDER_PATH);
-  assert(render.includes('纳斯达克 100 — 横向对照'), 'frontend must render NDX auxiliary label');
-  assert(render.includes('纳斯达克综合指数 — 广度参照'), 'frontend must render IXIC auxiliary label');
-  assert(render.includes('AUXILIARY · DISPLAY ONLY'), 'frontend must mark auxiliary display-only status');
+  // PR 2b: NDX/IXIC σ values now render inline in the market-temperature
+  // mock layout rather than through legacy auxiliary cards.
+  assert(render.includes('appendMarketTemperatureBody'), 'frontend must use mock appendMarketTemperatureBody (PR 2b mock-compliant market-temperature)');
+  assert(render.includes('ndx') && render.includes('ixic'), 'frontend must reference NDX and IXIC auxiliary metrics (consumed in mock mono field grid)');
+  assert(!render.includes('AUXILIARY · DISPLAY ONLY'), 'legacy auxiliary card label must be removed (PR 2b mock-compliant)');
 }
 
 function assertDataBoundary() {

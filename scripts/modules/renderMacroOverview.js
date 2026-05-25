@@ -2365,198 +2365,98 @@ function appendEditorialDriverCard(root, judgment) {
   root.appendChild(card);
 }
 
-function buildMarketTemperatureSummary(judgment, metricsData) {
-  const records = getMetricRecords(metricsData);
-  const latest = records[records.length - 1];
-  if (latest) {
-    const bucket = getMarketTemperatureBucketInfo(latest.zScore);
-    const auxiliaryCount = getAuxiliaryMarketPricingContexts(metricsData)
-      .filter((asset) => asset.records.length > 0 || asset.status === 'insufficient_history')
-      .length;
-    const auxiliaryText = auxiliaryCount > 0 ? 'NDX / IXIC 仅作为横向对照与广度参照。' : '';
-    return `QQQ 最新周线 z-score 为 ${formatSignedDecimal(latest.zScore, 2)}，市场温度处于「${bucket.label}」；${auxiliaryText}本区只展示统计描述，不进入评分或决策。`;
-  }
-  const status = judgment?.status || MARKET_TEMPERATURE_WAITING_STATUS;
-  return `当前市场温度计仍处于${status}阶段；在 QQQ / Nasdaq 周线历史、60 周均值、标准差和 z-score 未形成前，不判断市场偏冷、正常、偏热或过热。`;
+function formatAuxiliaryTemperatureLine(metricsData) {
+  const assets = getAuxiliaryMarketPricingContexts(metricsData)
+    .map((asset) => {
+      if (!asset?.latest) return null;
+      return `${String(asset.assetKey || '').toUpperCase()} ${formatSignedDecimal(asset.latest.zScore, 2)}σ`;
+    })
+    .filter(Boolean);
+  return assets.length ? `${assets.join(' / ')}，用于横向对照与广度参照。` : '';
 }
 
-function appendMarketTemperatureChecklist(root, judgment) {
-  const checklist = document.createElement('ul');
-  checklist.className = 'editorial-market-temp-checklist';
-  [
-    'QQQ / Nasdaq 已验证周线历史',
-    '60 周以上历史数据',
-    '60 周均值',
-    '标准差',
-    'z-score',
-  ].forEach((item) => appendText(checklist, 'li', '', item));
-  normalizeEvidenceList(judgment?.missingEvidence).forEach((item) => {
-    appendText(checklist, 'li', '', stripLabelPrefix(item, '缺失证据'));
-  });
-  root.appendChild(checklist);
-}
-
-function appendMarketTemperatureDisabledScale(root) {
-  const scale = document.createElement('div');
-  scale.className = 'editorial-market-temp-scale';
-  appendText(scale, 'p', 'editorial-market-temp-scale-disabled', '数据不足，暂不绘制位置 / Waiting for validated weekly history');
-  const track = document.createElement('div');
-  track.className = 'editorial-market-temp-scale-track';
-  ['偏冷', '正常', '偏热', '过热'].forEach((label) => {
-    appendText(track, 'span', 'editorial-market-temp-scale-segment', label);
-  });
-  scale.appendChild(track);
-  root.appendChild(scale);
-}
-
-function renderMarketTemperatureWaitingState(rootEl, judgment = buildMarketTemperature()) {
-  rootEl.className = 'editorial-market-temp-panel macro-temperature-card';
-  rootEl.setAttribute('data-market-temperature-fallback', 'true');
-  rootEl.replaceChildren();
-
-  const strip = document.createElement('div');
-  strip.className = 'editorial-market-temp-status-strip';
-  strip.setAttribute('aria-hidden', 'true');
-  rootEl.appendChild(strip);
-
-  const head = document.createElement('div');
-  head.className = 'editorial-market-temp-head';
-  appendText(head, 'span', 'editorial-market-temp-kicker', 'WAITING STATE');
-  appendText(head, 'h3', 'editorial-market-temp-title', judgment.title || '市场定价温度计');
-  appendText(head, 'span', 'editorial-market-temp-badge', judgment.status || MARKET_TEMPERATURE_WAITING_STATUS);
-  rootEl.appendChild(head);
-
-  appendText(rootEl, 'p', 'editorial-market-temp-main', '暂无法判断市场偏冷 / 正常 / 偏热 / 过热');
-  appendText(rootEl, 'p', 'editorial-market-temp-note', judgment.explanation || '该模块用于未来识别市场相对中期趋势的冷热程度，但在历史周线和统计量不足前不能启用。');
-  appendMarketTemperatureChecklist(rootEl, judgment);
-  appendMarketTemperatureDisabledScale(rootEl);
-  appendText(rootEl, 'p', 'editorial-market-temp-boundary', '当前不计算，不写历史，不触发数据抓取，不构成买卖信号。');
-
-  const footer = document.createElement('div');
-  footer.className = 'editorial-market-temp-footer';
-  appendText(footer, 'span', '', `当前结论：${judgment.conclusion || UNDECIDED}`);
-  if (judgment.confidence && judgment.confidence !== '等待校准') appendText(footer, 'span', '', `证据强度：${judgment.confidence}`);
-  if (judgment.dataCoverage) appendText(footer, 'span', '', `数据覆盖：${stripLabelPrefix(judgment.dataCoverage, '数据覆盖')}`);
-  if (judgment.sourceType) appendText(footer, 'span', '', `来源类型：${judgment.sourceType}`);
-  rootEl.appendChild(footer);
-}
-
-function appendMetricValue(root, label, value) {
-  const item = document.createElement('span');
-  appendText(item, 'small', '', label);
-  appendText(item, 'strong', '', value);
-  root.appendChild(item);
-}
-
-function appendAuxiliaryMarketTemperatureCard(root, asset) {
-  const card = document.createElement('article');
-  card.className = 'market-temperature-auxiliary-card';
-  card.setAttribute('data-market-temperature-auxiliary-asset', asset.assetKey);
-
-  appendText(card, 'span', 'market-temperature-auxiliary-role', 'AUXILIARY · DISPLAY ONLY');
-  appendText(card, 'h4', 'market-temperature-auxiliary-title', asset.displayLabelZh);
-
-  if (asset.latest) {
-    const bucket = getMarketTemperatureBucketInfo(asset.latest.zScore);
-    const bucketClass = `market-temperature-bucket-${bucket.key}`;
-    appendText(card, 'p', `market-temperature-auxiliary-zscore ${bucketClass}`, formatSignedDecimal(asset.latest.zScore, 2));
-    appendText(card, 'p', 'market-temperature-auxiliary-meta', `${asset.latest.date} · ${asset.latest.isoWeek} · ${asset.metricsRecordsCount} metric weeks`);
-
-    const metrics = document.createElement('div');
-    metrics.className = 'market-temperature-auxiliary-metrics';
-    appendMetricValue(metrics, 'Close', formatCurrency(asset.latest.close));
-    appendMetricValue(metrics, '60 周均值', formatCurrency(asset.latest.ma60));
-    appendMetricValue(metrics, '60 周标准差', formatCurrency(asset.latest.stdDev60));
-    card.appendChild(metrics);
-  } else {
-    const collected = asset.progress.recordsCollected || asset.sourceRecordsCount || 0;
-    const required = asset.progress.recordsRequired || 60;
-    appendText(card, 'p', 'market-temperature-auxiliary-progress', `累计 ${collected}/${required} 周`);
-    appendText(card, 'p', 'market-temperature-auxiliary-meta', asset.status === 'insufficient_history' ? 'insufficient_history' : asset.status);
-  }
-
-  appendText(card, 'p', 'market-temperature-auxiliary-boundary', '辅助对照，不计入主风险评分。');
-  root.appendChild(card);
-}
-
-function appendAuxiliaryMarketTemperature(rootEl, metricsData) {
-  const auxiliaryAssets = getAuxiliaryMarketPricingContexts(metricsData);
-  if (!auxiliaryAssets.length) return;
-
-  const section = document.createElement('div');
-  section.className = 'market-temperature-auxiliary-section';
-  appendText(section, 'p', 'market-temperature-auxiliary-heading', 'AUXILIARY COMPARISON');
-
-  const grid = document.createElement('div');
-  grid.className = 'market-temperature-auxiliary-grid';
-  auxiliaryAssets.forEach((asset) => appendAuxiliaryMarketTemperatureCard(grid, asset));
-  section.appendChild(grid);
-  rootEl.appendChild(section);
-}
-
-export function renderMarketTemperatureCard(rootEl, metricsData, judgment = buildMarketTemperature()) {
-  if (!rootEl) return;
+function appendMarketTemperatureBody(rootEl, judgment, metricsData) {
   const records = getMetricRecords(metricsData);
   const latest = records[records.length - 1];
   const zRange = getZScoreRange(records);
+  const body = document.createElement('div');
+  body.className = 'runtime-block-body';
   if (!latest || !zRange) {
-    renderMarketTemperatureWaitingState(rootEl, judgment);
+    const layout = document.createElement('div');
+    layout.className = 'market-temp-layout';
+    const left = document.createElement('div');
+    appendText(left, 'div', 'market-temp-bucket', `${MARKET_TEMPERATURE_WAITING_STATUS} · waiting`);
+    const value = appendText(left, 'div', 'market-temp-zscore', '--');
+    appendText(value, 'span', '', 'σ');
+    appendText(left, 'div', 'market-temp-sub', 'QQQ vs 60 周均值 · z-score 等待');
+    const right = document.createElement('div');
+    appendText(right, 'p', 'market-temp-detail', judgment?.explanation || '历史周线数据不足，暂无法判断市场偏冷 / 正常 / 偏热 / 过热。');
+    const metrics = document.createElement('div');
+    metrics.className = 'market-temp-metrics';
+    [
+      ['status', MARKET_TEMPERATURE_WAITING_STATUS],
+      ['ma60', '60 周均值'],
+      ['metric', 'z-score'],
+      ['disclaimer', MARKET_TEMPERATURE_DISCLAIMER],
+    ].forEach(([label, valueText]) => {
+      const item = document.createElement('div');
+      item.textContent = `${label}: `;
+      appendText(item, 'strong', '', valueText);
+      metrics.appendChild(item);
+    });
+    right.appendChild(metrics);
+    layout.append(left, right);
+    body.appendChild(layout);
+    rootEl.appendChild(body);
     return;
   }
 
   const bucket = getMarketTemperatureBucketInfo(latest.zScore);
-  const bucketClass = `market-temperature-bucket-${bucket.key}`;
   const distance = Math.abs(finite(latest.zScore) || 0).toFixed(2);
-  rootEl.className = 'editorial-market-temp-panel macro-temperature-card market-temperature-card-active';
-  rootEl.removeAttribute('data-market-temperature-fallback');
-  rootEl.replaceChildren();
+  const layout = document.createElement('div');
+  layout.className = 'market-temp-layout';
+  const left = document.createElement('div');
+  appendText(left, 'div', 'market-temp-bucket', `${bucket.label} · ${bucket.key}`);
+  const zScoreDisplay = appendText(left, 'div', 'market-temp-zscore', formatSignedDecimal(latest.zScore, 2));
+  appendText(zScoreDisplay, 'span', '', 'σ');
+  appendText(left, 'div', 'market-temp-sub', 'QQQ vs 60 周均值 · 历史第二极端');
 
-  const strip = document.createElement('div');
-  strip.className = 'editorial-market-temp-status-strip';
-  strip.setAttribute('aria-hidden', 'true');
-  rootEl.appendChild(strip);
-
-  const head = document.createElement('div');
-  head.className = 'editorial-market-temp-head';
-  appendText(head, 'span', 'editorial-market-temp-kicker', 'MARKET PRICING TEMPERATURE');
-  appendText(head, 'h3', 'editorial-market-temp-title', '市场温度');
-  appendText(head, 'span', `editorial-market-temp-badge ${bucketClass}`, bucket.label);
-  rootEl.appendChild(head);
-
-  appendText(rootEl, 'p', 'market-temperature-zscore-label', `LATEST WEEK · ${latest.date} · ${latest.isoWeek}`);
-  appendText(rootEl, 'p', `market-temperature-zscore-large ${bucketClass}`, formatSignedDecimal(latest.zScore, 2));
-  appendText(rootEl, 'p', 'editorial-market-temp-main', bucket.interpretation(distance));
-
+  const right = document.createElement('div');
+  const auxiliaryLine = formatAuxiliaryTemperatureLine(metricsData);
+  appendText(right, 'p', 'market-temp-detail', [
+    bucket.interpretation(distance),
+    auxiliaryLine,
+    MARKET_TEMPERATURE_DISCLAIMER,
+  ].filter(Boolean).join(' '));
   const metricGrid = document.createElement('div');
-  metricGrid.className = 'market-temperature-secondary-metrics';
-  appendMetricValue(metricGrid, 'Current close', formatCurrency(latest.close));
-  appendMetricValue(metricGrid, '60 周均值', formatCurrency(latest.ma60));
-  appendMetricValue(metricGrid, '60 周标准差', formatCurrency(latest.stdDev60));
-  rootEl.appendChild(metricGrid);
-
-  appendText(rootEl, 'p', 'market-temperature-history-range', `历史区间 [${formatSignedDecimal(zRange.min, 2)}, ${formatSignedDecimal(zRange.max, 2)}]`);
-
-  const sparkline = document.createElement('div');
-  sparkline.className = 'market-temperature-sparkline';
-  records.slice(-7).forEach((record) => {
-    appendText(sparkline, 'span', `market-temperature-bucket-${classifyZScoreBucket(record.zScore)}`, formatSignedDecimal(record.zScore, 2));
+  metricGrid.className = 'market-temp-metrics';
+  [
+    ['close', formatCurrency(latest.close)],
+    ['ma60', formatCurrency(latest.ma60)],
+    ['stdDev60', formatCurrency(latest.stdDev60)],
+    ['zScoreRange', `[${formatSignedDecimal(zRange.min, 2)}, ${formatSignedDecimal(zRange.max, 2)}]`],
+  ].forEach(([label, valueText]) => {
+    const item = document.createElement('div');
+    item.textContent = `${label}: `;
+    appendText(item, 'strong', '', valueText);
+    metricGrid.appendChild(item);
   });
-  rootEl.appendChild(sparkline);
-
-  appendAuxiliaryMarketTemperature(rootEl, metricsData);
-
-  const sourceCommit = typeof metricsData?.sourceCommit === 'string' && metricsData.sourceCommit.trim()
-    ? metricsData.sourceCommit.trim()
-    : 'unknown';
-  appendText(rootEl, 'p', 'market-temperature-source-line', `${MARKET_TEMPERATURE_METRICS_PATH} · sourceCommit=${sourceCommit}`);
-  appendText(rootEl, 'p', 'market-temperature-disclaimer', MARKET_TEMPERATURE_DISCLAIMER);
+  right.appendChild(metricGrid);
+  layout.append(left, right);
+  body.appendChild(layout);
+  rootEl.appendChild(body);
 }
 
-function appendEditorialMarketTemperature(root, judgment, metricsData) {
-  const panel = document.createElement('div');
-  panel.id = 'market-temperature-card-root';
-  root.appendChild(panel);
-  renderMarketTemperatureCard(panel, metricsData, judgment);
+export function renderMarketTemperatureWaitingState(rootEl, judgment = buildMarketTemperature()) {
+  if (!rootEl) return;
+  rootEl.replaceChildren();
+  appendMarketTemperatureBody(rootEl, judgment, null);
+}
+
+export function renderMarketTemperatureCard(rootEl, metricsData, judgment = buildMarketTemperature()) {
+  if (!rootEl) return;
+  rootEl.replaceChildren();
+  appendMarketTemperatureBody(rootEl, judgment, metricsData);
 }
 
 function engineTypeClass(judgment) {
@@ -3031,10 +2931,14 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   overview.drivers.forEach((item) => appendEditorialDriverCard(driverGrid, item));
   drivers.appendChild(driverGrid);
 
-  const temp = appendSection(container, '市场温度', 'editorial-category editorial-market-temp-category', 'homepage-market-temperature');
-  appendText(temp, 'p', 'editorial-category-kicker', 'MARKET PRICING TEMPERATURE');
-  appendText(temp, 'p', 'editorial-category-summary', buildMarketTemperatureSummary(overview.marketTemperature, marketPricingMetricsData));
-  appendEditorialMarketTemperature(temp, overview.marketTemperature, marketPricingMetricsData);
+  const temp = appendRuntimeBlock(
+    container,
+    'homepage-market-temperature',
+    '市场温度',
+    'MARKET PRICING TEMPERATURE',
+    'QQQ 60 周均值 + z-score · NDX/IXIC 广度对照 · 本数据为统计描述，不构成投资建议'
+  );
+  appendMarketTemperatureBody(temp, overview.marketTemperature, marketPricingMetricsData);
 
   const engines = appendSection(container, '风险引擎', 'editorial-category editorial-engine-category', 'homepage-risk-engines');
   appendText(engines, 'p', 'editorial-category-kicker', 'RISK ENGINES');
