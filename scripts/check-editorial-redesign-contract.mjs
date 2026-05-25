@@ -306,14 +306,16 @@ function checkEditorialStructures() {
     '局部冲击观察',
     '系统性风险观察',
     "'wow-key-changes'",
-    'editorial-wow-category',
-    'wow-key-changes-root',
+    'wow-section',
+    '本期关键变化 · Week-over-Week',
     'wow-grid',
+    'wow-item',
+    'wow-tag is-up',
+    'wow-tag is-down',
+    'wow-tag is-flat',
+    'wow-source',
     '本期关键变化',
-    'KEY CHANGES',
-    'editorial-watch-list',
-    '下一步验证清单',
-    'WHAT TO WATCH',
+    'this issue\\\'s deltas',
   ];
   for (const marker of requiredMarkers) requireMarker(combined, 'editorial redesign structures', marker);
 

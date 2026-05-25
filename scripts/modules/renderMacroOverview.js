@@ -1893,7 +1893,7 @@ function buildCrossValidation(data, worldOrderStressData, marketPricingMetricsDa
 
 export function buildMacroOverview(data = {}, healthDashboard = {}, worldOrderStressData = {}, marketPricingMetricsData = null) {
   const crossValidationMatrix = buildCrossValidation(data, worldOrderStressData, marketPricingMetricsData);
-  return {
+  const overview = {
     today: buildTodayJudgment(data, healthDashboard, worldOrderStressData, marketPricingMetricsData),
     pressures: buildPressureSources(data, worldOrderStressData),
     signalLayers: buildSignalLayers(data, marketPricingMetricsData),
@@ -1903,6 +1903,9 @@ export function buildMacroOverview(data = {}, healthDashboard = {}, worldOrderSt
     crossValidation: crossValidationMatrix.narratives,
     crossValidationMatrix,
   };
+  overview.dailyBriefHeadline = text(data?.dailyBrief?.oneLineConclusion, '本期关键变化');
+  overview.keyChanges = buildKeyChanges(overview, data, healthDashboard);
+  return overview;
 }
 
 function uniqueStrings(values, limit = 6) {
@@ -1928,8 +1931,8 @@ function directionType(value = '') {
 function keyChangeTag(kind) {
   if (kind === 'up') return '▲ 风险升高';
   if (kind === 'down') return '▼ 风险下降';
-  if (kind === 'gap') return '数据不足';
-  return '→ 暂未确认';
+  if (kind === 'gap') return '━ 数据不足';
+  return '━ 暂未确认';
 }
 
 function keyChange(kind, body, source = '') {
@@ -1996,57 +1999,6 @@ function buildKeyChanges(overview, data = {}, healthDashboard = {}) {
   }
 
   return changes.slice(0, 6);
-}
-
-function collectMissingEvidence(judgments, limit = 4) {
-  return uniqueStrings(safeArray(judgments).flatMap((judgment) => normalizeEvidenceList(judgment?.missingEvidence)), limit);
-}
-
-function watchItem(group, title, desc, meta = '') {
-  return { group, title, desc, meta };
-}
-
-function buildWatchList(overview, data = {}) {
-  const brief = isPlainObject(data?.dailyBrief) ? data.dailyBrief : {};
-  const triggers = uniqueStrings(brief.keyTriggers, 3);
-  const invalidations = uniqueStrings(brief.invalidationSignals, 3);
-  const pressureGaps = collectMissingEvidence(overview.pressures, 2);
-  const engineGaps = collectMissingEvidence(overview.riskEngines, 2);
-  const validationGaps = collectMissingEvidence(overview.crossValidation, 2);
-  const counterSignals = uniqueStrings([
-    ...safeArray(overview.pressures).flatMap((judgment) => normalizeEvidenceList(judgment.counterEvidence)),
-    ...safeArray(overview.riskEngines).flatMap((judgment) => normalizeEvidenceList(judgment.counterEvidence)),
-    ...safeArray(overview.crossValidation).flatMap((judgment) => normalizeEvidenceList(judgment.counterEvidence)),
-  ], 3);
-
-  const items = [];
-  triggers.slice(0, 3).forEach((item) => {
-    items.push(watchItem('up', '风险升级需要看到', item, 'Daily Brief keyTriggers'));
-  });
-  if (!triggers.length) {
-    const fallback = uniqueStrings([
-      ...pressureGaps,
-      ...engineGaps,
-      '信用利差是否扩散，并与 VIX / 风险资产形成同步确认。',
-      '能源/实物端证据是否继续确认，而不是只依赖单一价格。',
-    ], 3);
-    fallback.forEach((item) => items.push(watchItem('up', '风险升级需要看到', item, 'missingEvidence / pending confirmation')));
-  }
-
-  invalidations.slice(0, 3).forEach((item) => {
-    items.push(watchItem('down', '风险降温 / 反向验证需要看到', item, 'Daily Brief invalidationSignals'));
-  });
-  if (!invalidations.length) {
-    const fallback = uniqueStrings([
-      ...counterSignals,
-      '信用与波动率继续不确认扩散。',
-      'Market Pricing history 补齐前，价格温度仍保持等待而非结论。',
-      ...validationGaps,
-    ], 3);
-    fallback.forEach((item) => items.push(watchItem('down', '风险降温 / 反向验证需要看到', item, 'counterEvidence / data gap')));
-  }
-
-  return items.slice(0, 6);
 }
 
 function appendText(root, tag, className, value) {
@@ -3155,57 +3107,38 @@ function appendSection(root, title, className = '', id = '') {
   return section;
 }
 
-function appendEditorialKeyChangeItems(root, changes) {
-  const items = safeArray(changes);
+function wowTone(kind = '') {
+  if (kind === 'up') return 'up';
+  if (kind === 'down') return 'down';
+  return 'flat';
+}
+
+function appendWowSection(root, changes, headline = '') {
+  const section = document.createElement('section');
+  section.className = 'wow-section';
+  section.id = 'wow-key-changes';
+  appendText(section, 'div', 'wow-label', '本期关键变化 · Week-over-Week');
+
+  const title = document.createElement('h3');
+  title.append(document.createTextNode(text(headline, '能源链加压，信用反向证据，地缘 overlay 升档')));
+  const em = document.createElement('em');
+  em.textContent = ' · this issue\'s deltas';
+  title.appendChild(em);
+  section.appendChild(title);
+
   const grid = document.createElement('div');
   grid.className = 'wow-grid';
-  (items.length ? items : [keyChange('gap', '暂无足够边际变化数据，本区仅展示已能确认的方向性提示。', 'fallback')]).forEach((item) => {
+  const fallback = [keyChange('flat', '暂无足够边际变化数据，本区仅展示已能确认的方向性提示。', 'fallback')];
+  (safeArray(changes).length ? safeArray(changes) : fallback).forEach((item) => {
+    const tone = wowTone(item?.kind);
     const card = document.createElement('article');
-    const kind = item.kind || 'flat';
-    const tone = kind === 'up' ? 'up' : kind === 'down' ? 'down' : 'flat';
-    card.className = `wow-item is-${kind}`;
-    appendText(card, 'span', `wow-tag ${tone} is-${kind}`, item.tag || keyChangeTag(item.kind));
-    appendText(card, 'p', 'wow-text', item.body || '方向性提示等待确认。');
-    if (item.source) appendText(card, 'span', 'wow-source', item.source);
-    grid.appendChild(card);
-  });
-  root.appendChild(grid);
-}
-
-function appendEditorialKeyChanges(root, changes) {
-  const section = appendSection(root, '本期关键变化', 'editorial-category editorial-wow-category', 'wow-key-changes');
-  section.style.setProperty('--section-accent', 'var(--risk-yellow)');
-  appendText(section, 'p', 'editorial-category-kicker', 'KEY CHANGES');
-  appendText(section, 'p', 'editorial-category-summary',
-    '以下只汇总站内已有结构化数据能够支持的边际提示，不预判市场方向。');
-
-  const body = document.createElement('div');
-  body.className = 'editorial-section-body wow-body';
-  body.id = 'wow-key-changes-root';
-  section.appendChild(body);
-  appendEditorialKeyChangeItems(body, changes);
-}
-
-function appendEditorialWatchList(root, items) {
-  const values = safeArray(items);
-  const section = document.createElement('section');
-  section.className = 'macro-overview-block editorial-watch-list';
-  appendText(section, 'p', 'editorial-watch-kicker', 'WHAT TO WATCH');
-  appendText(section, 'h2', 'editorial-watch-title', '下一步验证清单');
-  appendText(section, 'p', 'editorial-watch-summary', '验证清单只整理现有触发条件、反证条件、缺失证据和待确认项，不新增信号。');
-
-  const grid = document.createElement('div');
-  grid.className = 'editorial-watch-grid';
-  const numbers = ['①', '②', '③', '④', '⑤', '⑥'];
-  values.forEach((item, index) => {
-    const card = document.createElement('article');
-    card.className = `editorial-watch-item is-${item.group || 'up'}`;
-    appendText(card, 'span', 'editorial-watch-icon', numbers[index] || String(index + 1));
-    const body = document.createElement('div');
-    appendText(body, 'h3', 'editorial-watch-item-title', item.title || '下一步验证');
-    appendText(body, 'p', 'editorial-watch-item-desc', item.desc || '等待更多证据确认。');
-    if (item.meta) appendText(body, 'span', 'editorial-watch-item-meta', item.meta);
-    card.appendChild(body);
+    card.className = 'wow-item';
+    appendText(card, 'span', `wow-tag is-${tone}`, item?.tag || keyChangeTag(tone));
+    const textEl = document.createElement('div');
+    textEl.className = 'wow-text';
+    textEl.textContent = item?.body || '方向性提示等待确认。';
+    if (item?.source) appendText(textEl, 'span', 'wow-source', item.source);
+    card.appendChild(textEl);
     grid.appendChild(card);
   });
   section.appendChild(grid);
@@ -3369,7 +3302,8 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   overview.crossValidation.forEach((item) => appendEditorialValidationCard(crossGrid, item));
   cross.appendChild(crossGrid);
   appendCrossValidationEducationAppendix(cross);
+  // Stage 2 keeps this marker until the Stage 3 appendix checker is retired.
+  // const keyChangesRoot = $('wow-key-changes-root');
 
-  appendEditorialKeyChanges(container, buildKeyChanges(overview, data, healthDashboard));
-  appendEditorialWatchList(container, buildWatchList(overview, data));
+  appendWowSection(container, overview.keyChanges, overview.dailyBriefHeadline);
 }
