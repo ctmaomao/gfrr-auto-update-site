@@ -3638,3 +3638,107 @@ main > .editorial-section,
 main > .editorial-appendix-divider {
   order: initial;
 }
+
+.reader-cat-block {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 14px;
+  margin: 0 0 24px;
+  padding: 18px 20px;
+  border: 1px solid var(--paper-line-strong);
+  background: var(--paper-bg);
+  color: var(--paper-ink);
+}
+
+.reader-cat-header {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--paper-line);
+}
+
+.cat-intro {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--paper-ink);
+  background: var(--paper-bg-canvas);
+  color: var(--paper-warm);
+  font-family: var(--font-serif);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.indicator-card {
+  min-width: 0;
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-height: 214px;
+  padding: 14px;
+  border: 1px solid var(--paper-line-strong);
+  border-top: 4px solid var(--paper-line-strong);
+  background: var(--paper-bg);
+  color: var(--paper-ink);
+}
+
+.indicator-card.pending {
+  border-style: dashed;
+  background: var(--paper-bg-canvas);
+  color: var(--paper-muted);
+}
+
+.agg-rows {
+  display: grid;
+  gap: 5px;
+  padding-top: 6px;
+  border-top: 1px dotted var(--paper-line);
+  color: var(--paper-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.agg-rows .k {
+  color: var(--paper-muted);
+}
+
+.agg-rows .v {
+  color: var(--paper-ink);
+  font-weight: 700;
+}
+
+.badge.red {
+  border-color: var(--risk-red);
+  background: var(--risk-red);
+  color: var(--paper-bg);
+}
+
+.badge.yellow {
+  border-color: var(--risk-yellow);
+  background: var(--risk-yellow);
+  color: var(--paper-bg);
+}
+
+.badge.green {
+  border-color: var(--risk-green);
+  background: var(--risk-green);
+  color: var(--paper-bg);
+}
+
+.badge.orange {
+  border-color: var(--risk-orange);
+  background: var(--risk-orange);
+  color: var(--paper-bg);
+}
+
+.badge.pending {
+  border-color: var(--paper-line);
+  background: var(--paper-bg-canvas);
+  color: var(--paper-muted);
+}
