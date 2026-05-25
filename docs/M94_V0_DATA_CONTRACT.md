@@ -1,11 +1,61 @@
-# M-94 V0 — Data Consumption Contract v2.4
+# M-94 V0 — Data Consumption Contract v2.5
 
-> **Status**: V0 Draft v2.4 (PR 2a 阶段 1 基线检查期间发现 2 个契约/代码失配,微修)
-> **PR 路径**: PR 1 ✅ merged · PR 2a = Thematic Cards 填充(本次微修) · PR 2b = 8 Runtime Block 视觉重写
+> **Status**: V0 Draft v2.5 (PR 2a 阶段 4 发现 cache version bump 是 13+ 文件同步,契约把项目惯例 bump helper 正式纳入)
+> **PR 路径**: PR 1 ✅ merged · PR 2a = Thematic Cards 填充(本次扩范围) · PR 2b = 8 Runtime Block 视觉重写
 > **Scope**: 前端展示 only · 不动 scoring / decision / execution / position / Worker / data pipeline / JSON 生产结构
 > **Approach**: Path C 结构(保留 14 项 IA + 新增 1 项 `#macro-thematic-cards`) + Path B 卡片密度
 > **Visual Reference**: `manual-artifacts/m94-v0/m94-v0-FINAL-mock.html` 是本契约的视觉权威基准
 > **Date**: 2026-05-25
+
+---
+
+## v2.4 → v2.5 关键变更(给读过 v2.4 的人快速过)
+
+PR 2a 进入阶段 4(`scripts/app.js` import + cache version bump)期间,Codex 严格按契约 v2.4 §9.7 边界验收 + §2.6.1 铁律 1 + §4.3 铁律 3 执行,**第三次在动文件前停下报告**。这次发现的不是契约假设错误,而是契约范围错误 — cache version bump 在项目里是 **13+ 文件同步动作**,远超 v2.4 §9.7 列的 8 文件。
+
+### 错误 — Cache version bump 是 13+ 文件同步,不是手动逐个改
+
+**契约 v2.4 假设**(§4.2a 修改 index.html / scripts/app.js 行):
+- 在 `scripts/app.js` 内手动改 `__GFRR_FRONTEND_VERSION__` + 所有 `?v=28.0M-93AV → 28.0M-94`
+- 在 `index.html` 内手动 bump 2 处 cache version
+- 通过手动同步保证 8 文件清单完整
+
+**真实代码状态**(`scripts/bump-frontend-asset-version.mjs` 与 `scripts/check-workflows.mjs:263+`):
+- 项目设有官方 helper:`npm run bump:frontend-asset-version <new-version>`
+- 该 helper 一次性同步以下 **8 个固定文件 + 全部 `scripts/modules/*.js`**:
+  ```
+  index.html
+  scripts/app.js
+  scripts/check-workflows.mjs         ← 内部硬编码 frontendAssetVersion = '28.0M-93AV'
+  README.md
+  AGENTS.md
+  docs/OPERATIONS.md
+  docs/DATA_CONTRACT.md
+  workers/gfrr-realtime-worker/README.md
+  + scripts/modules/*.js (新加的 renderThematicCards.js / displayStatusThresholds.js 也会包括)
+  ```
+- `scripts/check-workflows.mjs` 同时是 enforcement(line 第 263 行硬编码 `frontendAssetVersion = '28.0M-93AV'`)和需要同步的文件
+- 它会扫描 index.html / app.js / scripts/modules/*.js 的所有 `?v=` 字面量,要求与 `frontendAssetVersion` 常量一致
+
+**根因**:Claude 写契约 v2.1-v2.4 时没读 `bump-frontend-asset-version.mjs` 源码,完全错过这条项目惯例,把 cache bump 误以为是"手动 grep 替换"动作。
+
+**v2.5 修复**:
+1. §4.2a 加新条目 §4.2a.1 "**cache version bump 用项目惯例 helper,不要手动改**":Codex 在阶段 4 必须跑 `npm run bump:frontend-asset-version 28.0M-94`,**让 helper 同步全部 8 固定文件 + 全部 modules**
+2. §9.7 边界验收 8 文件 → 17 文件清单(原 8 文件 + 5 文档 + 3 个被 bump helper 间接改的文件,实际数量看 helper 输出)
+3. §0.3 加新硬约束:**禁止手动编辑 cache version 字面量**,必须用 bump helper
+4. §11 文档历史加 v2.5 行
+
+### 同步连带改动
+
+- §0.3 不做范围:`scripts/check-workflows.mjs` 整体仍不许改,但 **bump:frontend-asset-version helper 对其的精确同步行为是允许的例外**(只动 `frontendAssetVersion` 常量值,不动其他)
+- §4.3 阶段 4 实施顺序细化:bump helper 跑完后必须立即 `npm run check:all` 验证全部文件同步成功
+
+**改动范围统计**:契约改 4 处。0 字段层面改动,0 视觉规范改动。
+
+**好消息**:这次 PR 2a 已经做了 3 个新文件(displayStatusThresholds.js / check-thematic-cards-contract.mjs / renderThematicCards.js 骨架)+ buildCrossValidationMatrix.js 一行 export + scripts/app.js 部分改动,但因为 check:all 没绿,**这些改动还在 working tree,尚未 commit**。Codex 可以:
+1. 把 scripts/app.js / index.html 的手动 cache bump 改动撤销(`git checkout -- scripts/app.js index.html`)
+2. 重新做阶段 4:加 import + 加 main() call(不动 cache),然后跑 `npm run bump:frontend-asset-version 28.0M-94`
+3. helper 会自动同步所有 13+ 文件
 
 ---
 
@@ -193,6 +243,7 @@ v2 是 Codex 第三轮审核后的字段精校版。Codex 6 段审核结论 100%
 | 接入未来数据源(P1+ 独立 milestone) | M-94 仅做架构槽位 |
 | **改 `.gitignore` 内 `manual-artifacts/` 字面量写法**(v2.3 新增) | `scripts/check-market-pricing-network-open-throttled-scaffold.mjs:assertManualArtifactsIgnored()` 的 regex `(^|\r?\n)manual-artifacts\/?(\r?\n|$)` 强制要求 `manual-artifacts/` 必须**单独成行**,前后必须是换行/文件边界。让 mock / 后续 manual artifact 入库时**必须**用 `!manual-artifacts/<sub>/` 例外子目录,**禁止**改成 `manual-artifacts/*` 写法 |
 | **改 `scripts/modules/buildCrossValidationMatrix.js` 任何函数 / 任何算法**(v2.4 放宽) | 项目核心一致性矩阵算法,不动。**唯一例外**:PR 2a 允许在文件末尾追加 `export { classifyZScoreBucket };`(把已有的内部函数升级为 module export),以让 `renderThematicCards.js` 能 import 复用。这是契约 v2.3 假设但实际未落地的 export。其他任何函数体 / 命名 / 顺序 / 注释 / import 一律不动 |
+| **手动编辑任何 cache version 字面量**(v2.5 新增) | 项目设有官方 helper `npm run bump:frontend-asset-version <new-version>`(源码:`scripts/bump-frontend-asset-version.mjs`),它会一次性同步 8 固定文件(`index.html / scripts/app.js / scripts/check-workflows.mjs / README.md / AGENTS.md / docs/OPERATIONS.md / docs/DATA_CONTRACT.md / workers/gfrr-realtime-worker/README.md`)+ 全部 `scripts/modules/*.js`。**禁止**手动 grep 替换 `?v=` 字面量或 `frontendAssetVersion` / `__GFRR_FRONTEND_VERSION__` 常量。**禁止**手动改 `scripts/check-workflows.mjs` 任何代码,**唯一例外**是 bump helper 同步它的 `frontendAssetVersion` 常量值 |
 
 ### §0.4 取舍方向回顾
 
@@ -1102,11 +1153,74 @@ DESIGN.md §5.1 表格追加:
 
 | 文件 | 改动 | 边界 |
 |---|---|---|
-| `index.html` | (1) cache version `28.0M-93AV` → `28.0M-94`(2 处:CSS link 与 script src);(2) **是否需要单独引入 `renderThematicCards.js` 模块,取决于 `scripts/app.js` 的 import 模式** — 当前 app.js 直接 import 所有 module(line 1-9 显式列出),所以 PR 2a 在 `app.js` 顶部 import 区追加 `import { renderThematicCards }` 即可,**index.html 不需要单独 script tag**。Codex 实施时先确认 app.js 是否仍是 ES module 入口 | **不动 `<head><style>` 区任何硬编码色值**(留给 PR 2b);**不动**已 PR 1 落地的 nav / section 容器 |
-| **`scripts/app.js`**(v2.4 替换原 render.js) | (1) line 1-9 import 区追加:`import { renderThematicCards } from './modules/renderThematicCards.js?v=28.0M-94';`(2)`main()` 函数渲染序列追加 `renderThematicCards(data, document.getElementById('macro-thematic-cards-root'), marketPricingMetricsData)` 调用 — **挂载位置**:看 `app.js` line 88-104 的 marketPricingMetricsPromise.then(...) 块,因为 thematic-cards 需要 marketPricingMetricsData(NDX 60w z-score 卡用),应放在 `.then()` 回调内,与第二次 `renderMacroRiskOverview` 调用同步;(3) 顶部 `window.__GFRR_FRONTEND_VERSION__ = '28.0M-93AV'` → `'28.0M-94'`;(4) 各 import 路径上的 `?v=28.0M-93AV` 全部同步改为 `?v=28.0M-94`(精确数字,grep 不能有遗漏) | **不改 `main()` 其他渲染调用顺序**;**不改 fetchBaselineData / fetchHistoryData / fetchRealtimePayload / fetchWorldOrderStressData 任何函数**;**不动**任何 decision / position / action 设置代码 |
+| `index.html` | (1) **cache version `28.0M-93AV` → `28.0M-94` 由 `npm run bump:frontend-asset-version 28.0M-94` 自动完成,Codex 不要手动改**(详见 §4.2a.1);(2) **是否需要单独引入 `renderThematicCards.js` 模块,取决于 `scripts/app.js` 的 import 模式** — 当前 app.js 直接 import 所有 module(line 1-9 显式列出),所以 PR 2a 在 `app.js` 顶部 import 区追加 `import { renderThematicCards }` 即可,**index.html 不需要单独 script tag** | **不动 `<head><style>` 区任何硬编码色值**(留给 PR 2b);**不动**已 PR 1 落地的 nav / section 容器;**不动**已 PR 1 落地的 `#macro-thematic-cards` section header / mount 锚点 |
+| **`scripts/app.js`**(v2.4 替换原 render.js · v2.5 去掉手动 cache bump 描述) | (1) line 1-9 import 区追加:`import { renderThematicCards } from './modules/renderThematicCards.js?v=28.0M-94';`(2)`main()` 函数渲染序列追加 `renderThematicCards(data, document.getElementById('macro-thematic-cards-root'), marketPricingMetricsData)` 调用 — **挂载位置**:看 `app.js` line 88-104 的 marketPricingMetricsPromise.then(...) 块,因为 thematic-cards 需要 marketPricingMetricsData(NDX 60w z-score 卡用),应放在 `.then()` 回调内,与第二次 `renderMacroRiskOverview` 调用同步;(3) **`__GFRR_FRONTEND_VERSION__` 常量值以及所有 `?v=28.0M-93AV` → `?v=28.0M-94` 同步,统一由 `npm run bump:frontend-asset-version 28.0M-94` 完成**(详见 §4.2a.1)。Codex 不需要手动 grep 替换 cache version 字面量 | **不改 `main()` 其他渲染调用顺序**;**不改 fetchBaselineData / fetchHistoryData / fetchRealtimePayload / fetchWorldOrderStressData 任何函数**;**不动**任何 decision / position / action 设置代码 |
 | **`scripts/modules/buildCrossValidationMatrix.js`**(v2.4 新增 — 精确 1 行) | 在文件末尾 `export { ASSESSMENT_LABELS };` 一行**之后**追加新一行 `export { classifyZScoreBucket };`;或合并为 `export { ASSESSMENT_LABELS, classifyZScoreBucket };`。**禁止**改任何函数体 / 算法 / 注释 / 顺序 / 其他 export | 文件其他 1100+ 行一字不动 |
 | `assets/styles.css` | **仅新增**主题卡阵相关 selector:`.reader-cat-block / .reader-cat-header / .cat-intro / .indicator-card / .indicator-card.pending / .agg-rows / .agg-rows .k / .agg-rows .v / .badge.red / .badge.yellow / .badge.green / .badge.orange / .badge.pending`,全部用 `var(--paper-* / --risk-* / --font-*)` token。**禁止删除或修改任何现有 selector**(包括 `check-editorial-redesign-contract.mjs:579-598` 锁的 `.badge.strong / .badge.strong-mid / .badge.cautious-bear / .badge.underweight` 4 个旧 badge);**禁止新建 `--*` token** | 不动 `--editorial-*` 旧 token 体系 |
 | `package.json` `scripts` | 新增 `"check:thematic-cards-contract": "node --check scripts/check-thematic-cards-contract.mjs && node scripts/check-thematic-cards-contract.mjs"`;**`check:all` 必须把这一项加入序列** | 不改其他 script |
+
+### §4.2a.1 Cache version bump 实施步骤(v2.5 新增 — 项目惯例)
+
+**重要**:Cache version `28.0M-93AV → 28.0M-94` bump 在项目里是 **8 固定文件 + 全部 scripts/modules/*.js 同步**,不是手动 grep 替换。**必须**用项目惯例 helper:
+
+```powershell
+npm run bump:frontend-asset-version 28.0M-94
+```
+
+**这个 helper 会同步以下文件**(来自 `scripts/bump-frontend-asset-version.mjs` 第 8-17 行的 `fixedFiles` 数组 + listModuleFiles):
+
+```
+固定文件(8 个):
+1. index.html                                          (改 ?v= 字面量)
+2. scripts/app.js                                      (改 ?v= + __GFRR_FRONTEND_VERSION__ 常量)
+3. scripts/check-workflows.mjs                         (改 frontendAssetVersion 常量值,这是唯一允许的 check-workflows.mjs 改动)
+4. README.md                                           (改文档内 cache version 提示)
+5. AGENTS.md                                           (同上)
+6. docs/OPERATIONS.md                                  (同上)
+7. docs/DATA_CONTRACT.md                               (同上)
+8. workers/gfrr-realtime-worker/README.md              (同上)
+
+scripts/modules/*.js 全部(改各文件内 ?v= 字面量):
+- scripts/modules/buildCrossValidationMatrix.js
+- scripts/modules/config.js
+- scripts/modules/decision.js
+- scripts/modules/displayStatusThresholds.js          ← PR 2a 新建,bump 时会被一起改
+- scripts/modules/displayTextBuilders.js
+- scripts/modules/format.js
+- scripts/modules/freshness.js
+- scripts/modules/health.js
+- scripts/modules/realtime.js
+- scripts/modules/render.js
+- scripts/modules/renderAudit.js
+- scripts/modules/renderCharts.js
+- scripts/modules/renderExternalAi.js
+- scripts/modules/renderMacroOverview.js
+- scripts/modules/renderPlainSummary.js
+- scripts/modules/renderTables.js
+- scripts/modules/renderThematicCards.js              ← PR 2a 新建,bump 时会被一起改
+```
+
+总计 8 + ~17 = **25 个文件被 bump helper 同步**。其中大部分文件(modules/*.js 多个 + 5 个文档)**当前并不含 `?v=28.0M-93AV` 字面量,bump 后也仍不含**,所以这些文件 git diff 中不会出现改动 — 实际 git diff 出现改动的文件是 8-13 个之间(取决于哪些 modules 现在含 `?v=` 字面量)。
+
+**实施流程**(放在 §4.3 阶段 4 末尾):
+1. 在 `scripts/app.js` 顶部 import 区追加新 import `import { renderThematicCards } from './modules/renderThematicCards.js?v=28.0M-93AV';`(**注意:暂用当前 cache version `28.0M-93AV`**,因为 bump 前要全文件一致;bump helper 会自动改为 `28.0M-94`)
+2. 在 `scripts/app.js` `main()` 的 `marketPricingMetricsPromise.then(...)` 内追加 `renderThematicCards(...)` 调用
+3. `npm run check:all` 必须绿(此时所有文件仍是 `28.0M-93AV`,一致)
+4. 跑 `npm run bump:frontend-asset-version 28.0M-94`
+5. 看 helper 输出 — 列出所有被改的文件,记录(用于 PR 描述)
+6. `npm run check:all` 必须绿(所有文件已同步到 `28.0M-94`)
+7. `git status` 看实际 diff 影响哪些文件,把它们加入 PR 边界验收(§9.7)
+
+**为什么这样设计**:
+- 项目历史上吃过亏(`frontendAssetDocText` enforcement 里写着 "Android Chrome cached old module graph"),原因是 cache version 漏改某个文件,导致 Android Chrome 用旧 module graph 加载新代码,JS 错乱
+- 所以项目设计了 `check-workflows.mjs:frontendAssetVersion` 全局校验 + `bump-frontend-asset-version.mjs` 一键同步 helper
+- helper 用正则 `?v=[A-Za-z0-9._-]+` 全文件扫描替换,**任何手动改都可能漏文件,任何手动改都禁止**
+
+**Codex 实施 §4.2a.1 时禁止做**:
+- ❌ 手动 grep 替换 `?v=28.0M-93AV → 28.0M-94`(会漏文件)
+- ❌ 手动改 `scripts/check-workflows.mjs` 的 `frontendAssetVersion` 常量(让 bump helper 来做)
+- ❌ 手动改文档(README.md / AGENTS.md / docs/* / workers/* README)中的 cache version(让 bump helper 来做)
+- ❌ 跑 bump helper 前没先在 `app.js` 加好新 import(`renderThematicCards.js` import 必须先加,bump 才能把它的 `?v=` 也改到 28.0M-94)
 
 **PR 2a 不改文件**(铁律,与契约 §0.3 一致):
 
@@ -1541,30 +1655,64 @@ npm run check:market-pricing-network-open-throttled-scaffold
 - `classifyZScoreBucket` 从 `buildCrossValidationMatrix.js` import 复用,**不复制**
 - 阈值常量从 `displayStatusThresholds.js` import 复用,**不写死在 renderThematicCards.js**
 
-**PR 2a 边界验收**(v2.4 调整):
-- `git diff --name-only main..pr-2a-branch` 必须只含:
-  ```
-  scripts/modules/renderThematicCards.js                  (new)
-  scripts/modules/displayStatusThresholds.js              (new)
-  scripts/check-thematic-cards-contract.mjs               (new)
-  scripts/app.js                                          (modified, 加 import + main() 内 call + cache bump)
-  scripts/modules/buildCrossValidationMatrix.js           (modified, 仅追加 1 行 export classifyZScoreBucket)
-  assets/styles.css                                       (modified, 仅加 selector)
-  index.html                                              (modified, 仅 bump cache;若需引入 module 看 app.js import 模式)
-  package.json                                            (modified, 仅加 script)
-  ```
-- **8 个文件**(v2.3 原列 7 个,v2.4 加 `buildCrossValidationMatrix.js`,把 `render.js` 改为 `app.js`)
-- **不能出现** `scripts/modules/renderMacroOverview.js / decision.js / realtime.js / render.js / renderPlainSummary.js / renderExternalAi.js / health.js / freshness.js / renderAudit.js / renderCharts.js / renderTables.js / displayTextBuilders.js / format.js / config.js` 任何改动
-- **不能出现** `data/* / workers/* / .github/workflows/* / DESIGN.md / .gitignore` 任何改动
+**PR 2a 边界验收**(v2.5 重写 — 把 bump helper 同步范围正式纳入):
+
+`git diff --name-only main..pr-2a-branch` 应包含以下两组文件:
+
+**A 组 — PR 2a 功能性新建/修改**(8 个,与 v2.4 一致):
+```
+scripts/modules/renderThematicCards.js                  (new)
+scripts/modules/displayStatusThresholds.js              (new)
+scripts/check-thematic-cards-contract.mjs               (new)
+scripts/app.js                                          (modified, 加 import + main() 内 call)
+scripts/modules/buildCrossValidationMatrix.js           (modified, 仅追加 1 行 export classifyZScoreBucket)
+assets/styles.css                                       (modified, 仅加 selector)
+index.html                                              (modified, 仅 ?v= bump,无其他改动)
+package.json                                            (modified, 仅加 check:thematic-cards-contract script)
+```
+
+**B 组 — bump:frontend-asset-version helper 同步**(预计 ~5-9 个,由 helper 自动产生):
+```
+scripts/check-workflows.mjs                             (modified, ONLY frontendAssetVersion 常量值)
+README.md                                               (modified, ONLY 文档内 cache version 提示)
+AGENTS.md                                               (modified, ONLY 文档内 cache version 提示)
+docs/OPERATIONS.md                                      (modified, ONLY 文档内 cache version 提示)
+docs/DATA_CONTRACT.md                                   (modified, ONLY 文档内 cache version 提示)
+workers/gfrr-realtime-worker/README.md                  (modified, ONLY 文档内 cache version 提示)
+scripts/modules/<现有 modules 内含 ?v=28.0M-93AV 字面量的 js 文件>  (modified, ONLY ?v= 同步)
+```
+
+**B 组实际数量取决于哪些文档/模块当前含 `?v=28.0M-93AV` 字面量,bump helper 跑完后看 `git status` 输出确认。**
+
+**预计总文件数:13-17 个**(A 组 8 个 + B 组 5-9 个)。
+
+**bump helper 同步行为允许例外**(v2.5 加):
+- `scripts/check-workflows.mjs` 改动**必须**只是 `frontendAssetVersion = '28.0M-93AV'` → `'28.0M-94'` 一行,**严禁**其他逻辑改动
+- 5 个文档(README / AGENTS / OPERATIONS / DATA_CONTRACT / workers README)改动**必须**只是 cache version 字面量 + bump 命令例句更新,**严禁**其他内容改动
+- `scripts/modules/*.js` 改动**必须**只是 `?v=28.0M-93AV` → `?v=28.0M-94`,**严禁**其他 import 路径 / 代码改动
+
+**严禁出现的改动**(与 v2.4 一致):
+- **不能出现** `scripts/modules/renderMacroOverview.js / decision.js / realtime.js / render.js / renderPlainSummary.js / renderExternalAi.js / health.js / freshness.js / renderAudit.js / renderCharts.js / renderTables.js / displayTextBuilders.js / format.js / config.js` 的 **业务逻辑** 改动(只有上面 §0.3 允许的 cache version 同步行为是例外)
+- **不能出现** `data/* / workers/*` 业务代码 / `.github/workflows/* / DESIGN.md / .gitignore` 任何改动(`workers/gfrr-realtime-worker/README.md` 是 cache version 同步文档,允许)
 - **不能出现** `index.html` `<head><style>` 块改动(留给 PR 2b)
-- `git diff scripts/modules/buildCrossValidationMatrix.js` 必须**精确显示**只新增一行 `export { classifyZScoreBucket };`(或合并 export 改动),无其他变化
-- `git diff scripts/app.js` 必须精确显示:1 个 import 追加 + 1 个 main() 内 call + 1 个 `__GFRR_FRONTEND_VERSION__` bump + 若干 `?v=28.0M-93AV → 28.0M-94` 同步
+- **不能出现** `scripts/check-workflows.mjs` 除 `frontendAssetVersion` 常量值外的任何改动
+- `git diff scripts/modules/buildCrossValidationMatrix.js` 必须**精确显示**:1 行新增 `export { classifyZScoreBucket };` + ?v= 字面量同步,无其他变化
+- `git diff scripts/app.js` 必须**精确显示**:1 个 import 追加 + 1 个 main() 内 call + 1 个 `__GFRR_FRONTEND_VERSION__` 常量值 bump + 若干 `?v=` 同步
+
+**review 命令**(Claude 用来验收):
+```powershell
+git diff --name-only main..HEAD                          # 看完整文件清单
+git diff scripts/check-workflows.mjs                     # 必须只有 frontendAssetVersion 一行
+git diff scripts/modules/buildCrossValidationMatrix.js   # 必须只有 1 行 export 追加 + ?v= 同步
+git diff README.md AGENTS.md docs/OPERATIONS.md docs/DATA_CONTRACT.md workers/gfrr-realtime-worker/README.md  # 必须只有 cache version 字面量改动
+```
 
 **PR 2a PR 描述必须声明**:
-- "本 PR 实施 M-94 V0 PR 2a:Thematic Cards 填充 — 8 主题块 + 38 张指标卡 + 3 新建文件 + 4 改文件"
+- "本 PR 实施 M-94 V0 PR 2a:Thematic Cards 填充 — 8 主题块 + 38 张指标卡 + 3 新建文件 + 5 改文件(功能)+ ~5-9 个 bump helper 同步文件"
 - "本 PR 不动 `renderMacroOverview.js` 与 `index.html` `<head><style>` 块,留 PR 2b 处理"
 - "本 PR 不改 scoring / decision / execution / position / Worker / data pipeline / JSON 生产结构"
-- "符合契约 v2.3 §4.2a + §9.7 + §4.3 铁律 3 分阶段验证"
+- "符合契约 v2.5 §4.2a + §4.2a.1 + §9.7 + §4.3 铁律 3 分阶段验证"
+- "cache version `28.0M-93AV → 28.0M-94` 通过 `npm run bump:frontend-asset-version 28.0M-94` helper 同步,未手动改任何 cache version 字面量"
 - "实施期间已 grep `Select-String -Path "scripts\check-*.mjs" -Pattern "<关键字段>"` 确认无遗漏 enforcement"
 - "`npm run check:all` 通过(贴日志片段)"
 - "已对照 FINAL mock 完成视觉一致性检查"
@@ -1660,18 +1808,28 @@ npm run check:editorial-redesign-contract
 | 2026-05-24 | v2.2 PR 范围修正:PR 1 加 index.html nav + 空 section 容器骨架(避免 checker enforcement 与 implementation 不同步) | Codex 第四轮 PR 1 实施时识别"先有鸡先有蛋"陷阱并报告;Robert 选项 A 拍板 |
 | 2026-05-24 | **v2.3 整合 PR 1 全部教训 + 拆分 PR 2 为 PR 2a + PR 2b**:§2.6 列全 3 个 IA-enforcement checker(增加 `mobile-first-fold-compaction`)、§0.3 加 `.gitignore` 单行约束、§2.6.1 / §2.8 / §4.3 三条方法论铁律、§4.2 拆为 §4.2a + §4.2b、§9.7 新增 PR 2a 验收 | PR 1 ✅ merged(commit `9b8e91f` + PR #250);Robert 选 PR 2 拆分选项 B(2a + 2b) |
 | 2026-05-25 | **v2.4 PR 2a 启动期间的契约 / 代码失配微修**:(1) §4.2a 把 `scripts/modules/render.js` 改为 `scripts/app.js`(实际 render orchestrator 在 app.js 不在 render.js);(2) §4.2a 加 `scripts/modules/buildCrossValidationMatrix.js` 精确 1 行 export 改动(因 `classifyZScoreBucket` 在 v2.1-v2.3 假设 export 但实际未 export);(3) §0.3 放宽 buildCrossValidationMatrix.js 约束为"只允许追加 export 一行";(4) §9.7 边界验收 7 文件 → 8 文件 | Codex 在 PR 2a 阶段 1 基线检查期间严格按 §4.3 铁律 + §2.6.1 铁律执行,在动文件前直读源码确认 2 个契约假设错误,**没有产生坏 commit**。Claude 直读源码 100% 确认。工作区干净,可直接换 v2.4 重启 PR 2a |
+| 2026-05-25 | **v2.5 PR 2a 阶段 4 cache version bump 项目惯例发现**:(1) §0.3 加新硬约束"禁止手动编辑 cache version 字面量,必须用 bump helper";(2) §4.2a `scripts/app.js` 行去掉手动 cache bump 描述,改为引用 §4.2a.1;(3) §4.2a `index.html` 行去掉手动 cache bump 描述,改为引用 §4.2a.1;(4) §4.2a 后新增 §4.2a.1 "Cache version bump 实施步骤(项目惯例)",详细说明 `npm run bump:frontend-asset-version 28.0M-94` helper 同步 8 固定文件 + scripts/modules/*.js 全部,共 25 个潜在文件,实际 git diff 8-13 个;(5) §9.7 边界验收 8 文件 → 13-17 文件(A 组 8 个功能改动 + B 组 5-9 个 bump helper 同步);(6) §9.7 加 review 命令清单 | Codex 在 PR 2a 阶段 4 第三次停下报告 — `scripts/check-workflows.mjs:263` 硬编码 `frontendAssetVersion = '28.0M-93AV'` 强制全 frontend asset 文件 cache version 一致,Codex 改动 app.js / index.html 后 `check:workflows` 失败但不能改 check-workflows.mjs(超出 v2.4 §9.7 允许)。Claude 读 `scripts/bump-frontend-asset-version.mjs` 源码后发现项目早就有官方 helper,fixedFiles 数组列了 8 个文件 + listModuleFiles 扫所有 modules。**契约 v2.1-v2.4 完全错过这条惯例,根因是 Claude 没读 bump helper 源码**。Robert 选方案 C(契约 v2.5 + 用 bump helper) |
 
 ---
 
-**契约 v2.4 结束。**
+**契约 v2.5 结束。**
 
 下一步:
-1. Robert 审阅本契约 v2.4(主要看顶部"v2.3 → v2.4 关键变更"导读段 + §0.3 / §4.2a / §9.7 这 4 节)
-2. 把 v2.4 替换覆盖仓库中的 `docs/M94_V0_DATA_CONTRACT.md`,**仍在 `m94-v23-pr2a` 分支上 commit**(因为还没动 PR 2a 实施文件,工作区干净,契约 v2.4 可以直接 push 到当前分支,Codex 重新读契约后继续 PR 2a 阶段 1)
-3. 让 Codex 基于 v2.4 重启 PR 2a 阶段 1 基线检查 → 阶段 2 开始改文件
-4. Codex 实施 PR 2a 通过 `npm run check:all` 后,Claude review 远程 diff(对照 §9.7 v2.4 版 8 文件清单)
-5. Robert 在 GitHub web review 后 merge PR 2a
-6. PR 2a merge 后,开新分支 `m94-v23-pr2b`,开 PR 2b(按 §4.2b 改动清单)
-7. Codex 实施 PR 2b 严格按 §8.1-§8.8 + Codex 第三轮警告(`buildMacroDrivers` 616 行保留全部字段消费)
-8. PR 2b 验收按 §9.1-§9.5 清单
-9. PR 2b merge 后 M-94 完成度 100%,开 M-95 接入 P1 占位卡片真实数据
+1. Robert 审阅本契约 v2.5(主要看顶部"v2.4 → v2.5 关键变更"导读段 + §0.3 / §4.2a / §4.2a.1 / §9.7 这 5 节)
+2. 把 v2.5 替换覆盖仓库中的 `docs/M94_V0_DATA_CONTRACT.md`,**仍在 `m94-v23-pr2a` 分支上 commit**(因为 PR 2a 实施还在进行中,工作区可能有未 commit 的 app.js / index.html 改动 — 这些改动需要先 revert,因为新流程用 bump helper 而不是手动改)
+3. **PR 2a 阶段 4 重做**:Codex 先 `git checkout -- scripts/app.js index.html`(撤销手动 cache bump 改动),然后:
+   a. 在 `scripts/app.js` 加新 import,**用 OLD cache version `?v=28.0M-93AV`**(让全文件保持一致)
+   b. 加 `renderThematicCards(...)` 调用到 marketPricingMetricsPromise.then 内
+   c. `npm run check:all` 应该绿(所有文件仍是 `28.0M-93AV`,一致)
+   d. 跑 `npm run bump:frontend-asset-version 28.0M-94`
+   e. helper 输出列出被改的文件
+   f. `npm run check:all` 必须绿(全部同步到 `28.0M-94`)
+   g. `git status` 看实际 diff 文件清单,贴给 Claude review
+4. Codex 继续阶段 5-9(styles.css 主题卡 selector → 8 主题块逐个填卡 → 字段消费完整性自查 → 完成 check-thematic-cards-contract.mjs assert → 视觉对照 + commit + push)
+5. Claude review 远程 diff(对照 §9.7 v2.5 版 A 组 + B 组清单)
+6. Robert 在 GitHub web review 后 merge PR 2a
+7. PR 2a merge 后,开新分支 `m94-v25-pr2b`,开 PR 2b(按 §4.2b 改动清单)
+8. Codex 实施 PR 2b 严格按 §8.1-§8.8 + Codex 第三轮警告(`buildMacroDrivers` 616 行保留全部字段消费)
+9. PR 2b 验收按 §9.1-§9.5 清单
+10. PR 2b merge 后 M-94 完成度 100%,开 M-95 接入 P1 占位卡片真实数据
+11. (可选)M-CLEANUP-1:checker 退役清扫(82 → 35-45 个),按 Robert 问及 checker 数量过多的讨论结果安排
