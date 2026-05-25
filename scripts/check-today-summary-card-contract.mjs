@@ -1,28 +1,69 @@
 import fs from 'node:fs';
 
-// M-94 PR 2b: legacy M-92A 6-cell today-summary visual replaced by mock editorial-big-number hero.
-// - Stage 5 (current): minimal rewrite to unblock pressure-sources entry refactor.
-//   M-92A assertions (today-summary-grid / today-summary-cell / TODAY_SUMMARY_STATE_PHRASES /
-//   selectTodayStateConclusion / 8 state phrases / 6 summary elements / scoreChange7d marker)
-//   all removed per contract v3.0 sec 0.4 ironclad rule 6 (mock = unchanging contract).
-// - Stage 9 (todo): rewrite this checker to lock mock editorial-big-number visual:
-//     #homepage-today-judgment.editorial-big-number exists
-//     .big-left .value contains numeric score
-//     .big-left .breakdown contains '红' / '黄' / '绿' counts
-//     .big-right .verdict-kicker exists
-//     .big-right h2 exists
-//     .big-footer contains 3 .k/.v columns (DOMINANT RISK CHAIN / WEEKLY CHANGE / DATA HEALTH)
-//     sibling .threshold-block exists + .threshold-bar + 4 .zone (t-green/t-yellow/t-orange/t-red)
-//     sibling .trend-block exists + .trend-svg-wrap svg
-//   See contract v3.0 sec 8.1 for full mock specification.
-
 const RENDER_PATH = 'scripts/modules/renderMacroOverview.js';
 const source = fs.readFileSync(RENDER_PATH, 'utf8');
 const errors = [];
 
+const requiredMarkers = [
+  'function buildTodayJudgment',
+  'buildModuleColorCounts',
+  'buildVerdictBody',
+  'scoreHistory8w',
+  'overlayHistory8w',
+  'appendEditorialBigNumber',
+  'appendThresholdBlock',
+  'appendTrendBlock',
+  "today.className = 'editorial-big-number'",
+  "today.id = 'homepage-today-judgment'",
+  "'big-left'",
+  "'TODAY JUDGMENT · 今日总判断'",
+  "'value'",
+  "'breakdown'",
+  "'big-right'",
+  "'verdict-kicker'",
+  "'big-footer'",
+  'DOMINANT RISK CHAIN',
+  'WEEKLY CHANGE',
+  'DATA HEALTH',
+  "'threshold-block'",
+  "'threshold-header'",
+  "'threshold-bar-wrap'",
+  "'threshold-bar'",
+  "'zone t-green'",
+  "'zone t-yellow'",
+  "'zone t-orange'",
+  "'zone t-red'",
+  "'marker override'",
+  "'trend-block'",
+  "'trend-block-header'",
+  "'trend-svg-wrap'",
+  "appendSvgNode(wrap, 'svg'",
+];
+
+const forbiddenLegacyMarkers = [
+  'TODAY_SUMMARY_STATE_PHRASES',
+  'today-summary-grid',
+  'today-summary-cell',
+  'today-summary-score',
+  'today-summary-overall',
+  'today-summary-health',
+  'today-summary-risks',
+  'today-summary-noise',
+  'today-summary-state',
+  'appendTodaySummaryList',
+  'appendRiskStageScale',
+  'selectTodayStateConclusion',
+  'buildTodayTopRisks',
+  'buildTodayNoiseDivergences',
+  'buildTodayDataHealth(',
+  'formatTodayEvidenceLine',
+  'compactSummaryText',
+  'score-change-7d',
+];
+
 // PR 2b forbidden markers preserved - these guard project constitution boundaries
 // (no decision / position / action language leaking into renderer).
-const forbiddenMarkers = [
+const forbiddenConstitutionMarkers = [
   'decisionModel',
   'executionLock',
   'positionGuidance',
@@ -43,17 +84,24 @@ function fail(message) {
   errors.push(message);
 }
 
-// Minimal PR 2b stage 5 contract: today-judgment block still exists in renderer.
-// Full mock visual assertions (editorial-big-number / threshold-block / trend-block)
-// land in stage 9 when today-judgment is rewritten per contract v3.0 sec 8.1.
-function checkTodayBlockExists() {
-  if (!source.includes('homepage-today-judgment')) {
-    fail('renderMacroOverview must still produce a homepage-today-judgment block (mock visual to be enforced in stage 9 per contract v3.0 sec 8.1)');
+function checkRequiredMarkers() {
+  for (const marker of requiredMarkers) {
+    if (!source.includes(marker)) {
+      fail(`renderMacroOverview missing mock today-judgment marker: ${marker}`);
+    }
   }
 }
 
-function checkForbiddenMarkers() {
-  for (const marker of forbiddenMarkers) {
+function checkLegacyRemoved() {
+  for (const marker of forbiddenLegacyMarkers) {
+    if (source.includes(marker)) {
+      fail(`renderMacroOverview must not retain legacy M-92A today-summary marker: ${marker}`);
+    }
+  }
+}
+
+function checkForbiddenConstitutionMarkers() {
+  for (const marker of forbiddenConstitutionMarkers) {
     if (source.includes(marker)) {
       fail(`renderMacroOverview must not reference forbidden marker: ${marker}`);
     }
@@ -61,8 +109,9 @@ function checkForbiddenMarkers() {
 }
 
 function main() {
-  checkTodayBlockExists();
-  checkForbiddenMarkers();
+  checkRequiredMarkers();
+  checkLegacyRemoved();
+  checkForbiddenConstitutionMarkers();
 
   if (errors.length > 0) {
     console.error('Today summary card contract: FAIL');
@@ -70,7 +119,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log('Today summary card contract: PASS (PR 2b stage 5 minimal contract; full mock editorial-big-number assertions to land in stage 9)');
+  console.log('Today summary card contract: PASS (PR 2b mock editorial-big-number + threshold-block + trend-block)');
 }
 
 main();

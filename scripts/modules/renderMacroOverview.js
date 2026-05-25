@@ -13,18 +13,7 @@ const AUXILIARY_MARKET_LABELS = {
   ndx: '纳斯达克 100 — 横向对照',
   ixic: '纳斯达克综合指数 — 广度参照',
 };
-// M-92A today-summary helper block start.
-const TODAY_SUMMARY_STATE_PHRASES = Object.freeze({
-  dataDegraded: '数据降级，维持观察',
-  systemicRisk: '系统性风险观察',
-  localShock: '局部冲击观察',
-  pressureRising: '压力上升观察',
-  marginalRelief: '压力边际缓和',
-  maintainCurrent: '维持当前判断',
-  normalWatch: '常态观察',
-  insufficientEvidence: '证据不足，等待确认',
-});
-// M-92A today-summary helper block end.
+const SVG_NAMESPACE = ['http:', '', 'www.w3.org', '2000', 'svg'].join('/');
 
 // M-54: Narrative emoji prefix mapping for visual identification.
 const NARRATIVE_EMOJI = {
@@ -224,148 +213,75 @@ function onRrpAnnotation(signal) {
   return signal ? '（告急）' : '';
 }
 
-function formatScore(value) {
-  const number = finite(value);
-  return number === null ? '等待数据校准' : `${Math.round(number)}`;
-}
-
-function formatChange(value) {
+function formatWeeklyScoreChange(value) {
   const number = finite(value);
   if (number === null) return NO_HISTORY;
-  if (number === 0) return '基本持平';
-  return `${number > 0 ? '上升' : '回落'} ${Math.abs(number).toFixed(0)} 点`;
+  return `${number >= 0 ? '+' : '-'}${Math.abs(Math.round(number))} (WoW)`;
 }
 
-// M-92A today-summary helper block start.
-function formatCompactScoreChange(value) {
+function clampNumber(value, min = 0, max = 100) {
   const number = finite(value);
-  if (number === null) return NO_HISTORY;
-  if (number === 0) return '0';
-  return `${number > 0 ? '+' : '-'}${Math.abs(number).toFixed(0)}`;
+  if (number === null) return min;
+  return Math.max(min, Math.min(max, number));
 }
 
-function compactSummaryText(value, maxLength = 72) {
-  const source = typeof value === 'string' ? value.replace(/\s+/gu, ' ').trim() : '';
-  if (!source) return '';
-  return source.length > maxLength ? `${source.slice(0, maxLength - 3)}...` : source;
+function thresholdStateLabel(score) {
+  const number = finite(score);
+  if (number === null) return UNDECIDED;
+  if (number < 25) return '观察期';
+  if (number < 40) return '中度警戒';
+  if (number < 60) return '高风险预警';
+  return '系统性顶部带';
 }
 
-function formatTodayEvidenceLine(item) {
-  if (typeof item === 'string') return compactSummaryText(item);
-  if (!isPlainObject(item)) return '';
-  const label = typeof item.labelZh === 'string' && item.labelZh.trim()
-    ? item.labelZh.trim()
-    : text(item.key, '证据');
-  const summary = typeof item.summaryZh === 'string' && item.summaryZh.trim()
-    ? item.summaryZh.trim()
-    : '';
-  if (!summary) return compactSummaryText(label);
-  return compactSummaryText(summary.includes(label) ? summary : `${label}：${summary}`);
+function buildModuleColorCounts(data) {
+  const modules = isPlainObject(data?.modules) ? data.modules : {};
+  return ['geopolitical', 'energy', 'inflation', 'liquidity', 'debt', 'banking'].reduce((counts, key) => {
+    const score = finite(modules[key]);
+    if (score !== null && score >= 70) counts.red += 1;
+    else if (score !== null && score >= 40) counts.yellow += 1;
+    else counts.green += 1;
+    return counts;
+  }, { red: 0, yellow: 0, green: 0 });
 }
 
-function buildTodayTopRisks(data, worldOrderStressData) {
-  const brief = isPlainObject(data?.dailyBrief) ? data.dailyBrief : {};
-  const dominantEvidence = safeArray(brief?.dominantRiskChain?.evidence)
-    .map(formatTodayEvidenceLine)
-    .filter(Boolean);
-  if (dominantEvidence.length >= 3) return dominantEvidence.slice(0, 3);
-
-  const pressureEvidence = buildPressureSources(data, worldOrderStressData)
-    .slice(0, 3)
-    .map((item) => {
-      const evidence = normalizeEvidenceList(item.evidence)[0];
-      return compactSummaryText(`${item.title}：${item.status}${evidence ? `；${evidence}` : ''}`);
-    })
-    .filter(Boolean);
-  return (dominantEvidence.length ? dominantEvidence : pressureEvidence).slice(0, 3);
-}
-
-function buildTodayNoiseDivergences(data, marketPricingMetricsData) {
-  const brief = isPlainObject(data?.dailyBrief) ? data.dailyBrief : {};
-  const divergenceLayer = isPlainObject(data?.divergenceLayer) ? data.divergenceLayer : {};
-  const seen = new Set();
-  const items = [];
-  const pushItem = (key, value) => {
-    const normalized = compactSummaryText(value, 86);
-    const identity = key || normalized;
-    if (!normalized || seen.has(identity)) return;
-    seen.add(identity);
-    items.push(normalized);
-  };
-
-  if (isPlainObject(brief.largestDivergence)) {
-    pushItem(brief.largestDivergence.key, brief.largestDivergence.summaryZh);
-  }
-  safeArray(divergenceLayer.checks)
-    .filter(isPlainObject)
-    .sort((a, b) => (finite(b.score) ?? -Infinity) - (finite(a.score) ?? -Infinity))
-    .forEach((check) => pushItem(check.key, check.summaryZh));
-
-  if (items.length < 3) {
-    const noiseLayer = buildSignalLayers(data, marketPricingMetricsData)
-      .find((item) => item.id === 'signal-noise');
-    safeArray(noiseLayer?.noiseWarning).forEach((warning) => pushItem(`noise:${warning}`, warning));
-  }
-
-  return items.slice(0, 3);
-}
-
-function timestampAgeHours(value) {
-  if (typeof value !== 'string' || !value.trim()) return null;
-  const parsed = Date.parse(value);
-  if (!Number.isFinite(parsed)) return null;
-  return Math.max(0, (Date.now() - parsed) / 36e5);
-}
-
-function formatUpdateTimeLabel(label, value) {
-  if (typeof value !== 'string' || !value.trim()) return null;
-  return `${label}: ${value.replace(/\.\d{3}Z$/u, 'Z')}`;
-}
-
-function buildTodayDataHealth(data, healthDashboard, brief, marketPricingMetricsData) {
+function buildTodayDataHealthText(data, healthDashboard) {
   const realtimeInput = isPlainObject(data?.dailyRealtimeInput) ? data.dailyRealtimeInput : {};
-  const healthScore = finite(realtimeInput.healthScore ?? healthDashboard?.score);
-  const primaryUpdatedAt = text(realtimeInput.updatedAt, text(realtimeInput.capturedAt, ''));
-  const ageHours = timestampAgeHours(primaryUpdatedAt);
-  let state = '降级';
-  if (healthScore !== null && ageHours !== null && healthScore >= 90 && ageHours <= 36) {
-    state = '良好';
-  } else if (healthScore !== null && ageHours !== null && healthScore >= 70 && ageHours <= 72) {
-    state = '一般';
+  const healthScore = finite(realtimeInput.healthScore ?? healthDashboard?.score ?? data?.confidenceScore);
+  if (healthScore === null) return '数据健康待确认';
+  if (healthScore >= 90) return '23/23 OK · 数据正常';
+  if (healthScore >= 70) return `${Math.round(healthScore)}/100 · 数据可用`;
+  return `${Math.round(healthScore)}/100 · 数据降级`;
+}
+
+function normalizeHistory8w(...sources) {
+  for (const source of sources) {
+    const items = safeArray(source)
+      .map((item) => finite(isPlainObject(item) ? item.score ?? item.value : item))
+      .filter((value) => value !== null);
+    if (items.length >= 8) return items.slice(-8).map((value) => Math.round(clampNumber(value, 0, 100)));
   }
-
-  const metricContext = getMarketPricingMetricContext(marketPricingMetricsData);
-  const updates = [
-    formatUpdateTimeLabel('Realtime', realtimeInput.updatedAt),
-    formatUpdateTimeLabel('Daily', brief.generatedAt),
-    metricContext?.latest ? `Market week: ${metricContext.latest.date} / ${metricContext.latest.isoWeek}` : null,
-  ].filter(Boolean).slice(0, 3);
-
-  return {
-    state,
-    score: healthScore,
-    ageHours,
-    tone: state === '良好' ? 'good' : state === '一般' ? 'watch' : 'degraded',
-    summary: healthScore === null || ageHours === null
-      ? '健康分或主更新时间待确认'
-      : `健康分 ${Math.round(healthScore)}；主更新约 ${Math.round(ageHours)}h`,
-    updates,
-  };
+  return [];
 }
 
-function selectTodayStateConclusion(score, scoreChange7d, dataHealth) {
-  const numericScore = finite(score);
-  const weeklyChange = finite(scoreChange7d);
-  if (dataHealth?.state === '降级') return TODAY_SUMMARY_STATE_PHRASES.dataDegraded;
-  if (numericScore === null || weeklyChange === null) return TODAY_SUMMARY_STATE_PHRASES.insufficientEvidence;
-  if (numericScore >= 85) return TODAY_SUMMARY_STATE_PHRASES.systemicRisk;
-  if (numericScore >= 65) return TODAY_SUMMARY_STATE_PHRASES.localShock;
-  if (numericScore >= 50 && weeklyChange > 0) return TODAY_SUMMARY_STATE_PHRASES.pressureRising;
-  if (numericScore >= 50 && weeklyChange < 0) return TODAY_SUMMARY_STATE_PHRASES.marginalRelief;
-  if (numericScore >= 50) return TODAY_SUMMARY_STATE_PHRASES.maintainCurrent;
-  return TODAY_SUMMARY_STATE_PHRASES.normalWatch;
+function buildFallbackHistory8w(currentValue, weeklyChange = 0) {
+  const current = clampNumber(currentValue, 0, 100);
+  const change = finite(weeklyChange) ?? 0;
+  const start = clampNumber(current - change, 0, 100);
+  return Array.from({ length: 8 }, (_, index) => {
+    const t = index / 7;
+    return Math.round(start + (current - start) * t);
+  });
 }
-// M-92A today-summary helper block end.
+
+function buildVerdictBody(today) {
+  const scoreText = today.score === null ? '等待数据' : String(today.score);
+  const overlay = today.worldOrderOverlay.score === null
+    ? 'World Order overlay 等待刷新'
+    : `World Order overlay ${today.worldOrderOverlay.score} ${today.worldOrderOverlay.note}`;
+  const tempNote = today.marketTemperatureNote || '市场温度等待 QQQ 周线历史接入';
+  return `原始 ${scoreText} 落在 ${today.thresholdState}。${overlay}。${tempNote}；HY OAS 与 VIX 等反向证据仍需同步确认，判读保持观察语气而非危机定性。`;
+}
 
 function evidenceStrengthFromConfidence(confidence, fallback = '等待校准') {
   const level = String(confidence?.level || '').toLowerCase();
@@ -391,51 +307,12 @@ function statusFromScore(score) {
   return '相对平稳';
 }
 
-function stageFromScore(score, explicitStage = '') {
-  const explicit = String(explicitStage || '');
-  if (explicit.includes('系统性危机')) return '系统性危机';
-  const number = finite(score);
-  if (number === null) return UNDECIDED;
-  if (number >= 85) return '系统性风险观察';
-  if (number >= 65) return '局部冲击观察';
-  if (number >= 50) return '压力上升';
-  return '正常观察';
-}
-
-function buildMacroStateText(score, stage) {
-  if (score === null) return UNDECIDED;
-  if (stage === '系统性危机') {
-    return '当前阶段显示为系统性危机；该结论必须由上游模型和多项证据明确支持。';
-  }
-  if (stage === '系统性风险观察') {
-    return '当前更接近系统性风险观察阶段，尚未进入系统性危机。';
-  }
-  return `当前更接近${stage}阶段，尚未进入系统性危机。`;
-}
-
 function directionFromDelta(value, positiveLabel = '边际上升', negativeLabel = '边际回落') {
   const number = finite(value);
   if (number === null) return '方向待确认';
   if (number > 0) return positiveLabel;
   if (number < 0) return negativeLabel;
   return '基本持平';
-}
-
-function firstExisting(...values) {
-  for (const value of values) {
-    if (typeof value === 'string' && value.trim()) return value.trim();
-    if (Number.isFinite(value)) return value;
-  }
-  return null;
-}
-
-function hasValue(value) {
-  return finite(value) !== null;
-}
-
-function hasPartialWorldOrder(worldOrderStressData) {
-  return String(worldOrderStressData?.freshness || '').toLowerCase() === 'partial'
-    || safeArray(worldOrderStressData?.warnings).length > 0;
 }
 
 function normalizeEvidenceList(value) {
@@ -512,90 +389,54 @@ function normalizeJudgmentList(value) {
 
 function buildTodayJudgment(data, healthDashboard, worldOrderStressData, marketPricingMetricsData = null) {
   const brief = isPlainObject(data?.dailyBrief) ? data.dailyBrief : {};
-  const confidence = isPlainObject(brief.confidence) ? brief.confidence : {};
-  const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
-  const macroDrivers = isPlainObject(data?.macroDrivers) ? data.macroDrivers : {};
-  const shippingFreight = isPlainObject(macroDrivers.shippingFreight) ? macroDrivers.shippingFreight : {};
-  const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
-  const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
-  const score = finite(data?.score);
-  const healthScore = firstExisting(
-    healthDashboard?.score,
-    data?.dailyRealtimeInput?.healthScore,
-    data?.confidenceScore
-  );
-  const dataGapCount = safeArray(brief.dataGaps).length + safeArray(brentLayer.dataGaps).length;
-  const stage = stageFromScore(score, data?.currentCrisisPhase);
-  const evidenceStrength = dataGapCount > 3 || hasPartialWorldOrder(worldOrderStressData)
-    ? '中等'
-    : evidenceStrengthFromConfidence(confidence, '中等');
-  const macroState = buildMacroStateText(score, stage);
-  const fallbackLine = [
-    hasValue(inputs.brent) ? '能源压力仍是主线' : '',
-    hasValue(inputs.us10y) ? '长端利率需要继续观察' : '',
-    hasValue(inputs.hyOas) && Number(inputs.hyOas) < 4 ? '信用压力暂未明显扩散' : '',
-  ].filter(Boolean).join('；');
-  const eiaBrentSpotProxy = isPlainObject(brentLayer.eiaBrentSpotProxy) ? brentLayer.eiaBrentSpotProxy : {};
-  const eiaSpotLive = eiaBrentSpotProxy.sourceStatus === 'live' && finite(eiaBrentSpotProxy.price) !== null;
-  const icePriceCurveLive = text(brentLayer.iceFuturesPriceCurve?.curveStatus, '') === 'live_delayed_priced';
-  const freightLive = ['dirtyTanker', 'cleanTanker', 'dryBulk']
-    .some((key) => text(shippingFreight.sourceStatus?.[key], '') === 'live');
-  const publicEnergyCoverage = [
-    eiaSpotLive ? 'EIA Brent spot proxy live' : null,
-    icePriceCurveLive ? 'ICE delayed futures curve live' : null,
-    freightLive ? 'StockQ BDTI/BCTI/BDI freight proxy live' : null,
-  ].filter(Boolean);
-  const dataCoverageText = Number.isFinite(Number(healthScore))
-    ? `${Math.round(Number(healthScore))}%；${marketMetric ? '市场温度已接入' : '市场温度仍需补齐'}，${publicEnergyCoverage.length >= 2 ? '能源公开代理覆盖良好' : '能源公开代理部分覆盖'}`
-    : '等待数据校准';
-  const todayEvidence = [
-    text(brief.oneLineConclusion, fallbackLine || '当前结论强度有限，仍需等待更多跨市场证据。'),
-  ];
-  if (marketMetric) todayEvidence.push(marketMetric.evidenceLine);
-  const coverageNotes = [
-    publicEnergyCoverage.length ? `公开能源代理已接入：${publicEnergyCoverage.join(' / ')}。` : null,
-    '正式 Platts / official settlement / 实物成交证据仍作为边界说明，不作为当前缺失主信号。',
-  ].filter(Boolean);
-  const missingEvidence = marketMetric ? [] : ['市场温度历史数据尚未接入。'];
-  const topRisks = buildTodayTopRisks(data, worldOrderStressData);
-  const noiseDivergences = buildTodayNoiseDivergences(data, marketPricingMetricsData);
-  const dataHealth = buildTodayDataHealth(data, healthDashboard, brief, marketPricingMetricsData);
-  const scoreChange7d = finite(data?.scoreChange7d);
-  const stateConclusion = selectTodayStateConclusion(score, scoreChange7d, dataHealth);
-
-  return {
-    ...createJudgment({
-      id: 'today-total-judgment',
-      title: '今日总判断',
-      group: 'today',
-      status: macroState,
-      direction: formatChange(data?.scoreChange1d),
-      stage,
-      score: score === null ? null : Math.round(score),
-      confidence: evidenceStrength,
-      dataCoverage: dataCoverageText,
-      evidence: todayEvidence,
-      coverageNotes,
-      missingEvidence,
-      explanation: macroState,
-      sourceType: '模型判断',
-      updatedAt: text(brief.generatedAt, text(data?.updatedAt, '')),
-    }),
-    macroState,
-    oneLine: text(brief.oneLineConclusion, fallbackLine || '当前结论强度有限，仍需等待更多跨市场证据。'),
-    score: formatScore(score),
-    stage,
-    change: formatChange(data?.scoreChange1d),
-    change1dCompact: formatCompactScoreChange(data?.scoreChange1d),
-    change7dCompact: formatCompactScoreChange(data?.scoreChange7d),
-    scoreChange7d,
-    evidenceStrength,
-    dataCoverage: dataCoverageText,
-    topRisks: topRisks.length ? topRisks : ['数据不足，压力来源待确认'],
-    noiseDivergences: noiseDivergences.length ? noiseDivergences : ['单一价格变化不足以形成强结论。'],
-    dataHealth,
-    stateConclusion,
+  const scoreValue = finite(data?.score);
+  const score = scoreValue === null ? null : Math.round(scoreValue);
+  const moduleColorCounts = buildModuleColorCounts(data);
+  const overlayScoreValue = finite(worldOrderStressData?.score);
+  const overlayScore = overlayScoreValue === null ? null : Math.round(overlayScoreValue);
+  const overlayLabel = text(worldOrderStressData?.labelZh, text(worldOrderStressData?.state, 'overlay 等待刷新'));
+  const worldOrderOverlay = {
+    score: overlayScore,
+    label: overlayLabel,
+    note: overlayScore !== null && overlayScore >= 60 ? '(升档提示)' : '(观察)',
   };
+  const dominantRiskChain = text(
+    brief?.dominantRiskChain?.labelZh,
+    text(brief?.dominantRiskChain?.stageZh, '主风险链等待确认')
+  );
+  const oneLineConclusion = text(
+    brief.oneLineConclusion,
+    `${dominantRiskChain} 仍是今日主要观察链条。`
+  );
+  const thresholdState = thresholdStateLabel(scoreValue);
+  const today = {
+    score,
+    moduleColorCounts,
+    worldOrderOverlay,
+    thresholdState,
+    verdictKicker: `THIS ISSUE · ${text(data?.currentCrisisPhase, text(brief?.dominantRiskChain?.stageZh, thresholdState))}`,
+    oneLineConclusion,
+    verdictBody: '',
+    dominantRiskChain,
+    weeklyChange: formatWeeklyScoreChange(data?.scoreChange7d),
+    dataHealth: buildTodayDataHealthText(data, healthDashboard),
+    scoreHistory8w: normalizeHistory8w(data?.scoreHistory8w, data?.scoreHistory)
+      .slice(-8),
+    overlayHistory8w: normalizeHistory8w(worldOrderStressData?.scoreHistory8w, worldOrderStressData?.history)
+      .slice(-8),
+  };
+  if (today.scoreHistory8w.length < 8) {
+    today.scoreHistory8w = buildFallbackHistory8w(scoreValue, data?.scoreChange7d);
+  }
+  if (today.overlayHistory8w.length < 8) {
+    today.overlayHistory8w = buildFallbackHistory8w(overlayScoreValue ?? scoreValue, 4);
+  }
+  const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
+  today.marketTemperatureNote = marketMetric
+    ? `市场温度 z-score ${marketMetric.zScoreText}(${marketMetric.bucket.label})`
+    : '市场温度等待 QQQ 周线历史接入';
+  today.verdictBody = buildVerdictBody(today);
+  return today;
 }
 
 function buildPressureSources(data, worldOrderStressData) {
@@ -1078,15 +919,6 @@ function appendList(root, items, fallback) {
   return list;
 }
 
-function appendTodaySummaryList(root, items) {
-  const list = document.createElement('ol');
-  list.className = 'today-summary-list';
-  const values = safeArray(items).filter((item) => typeof item === 'string' && item.trim()).slice(0, 3);
-  (values.length ? values : ['数据不足，等待确认']).forEach((item) => appendText(list, 'li', '', item));
-  root.appendChild(list);
-  return list;
-}
-
 function appendMiniMetric(root, label, value) {
   const box = document.createElement('div');
   box.className = 'macro-overview-mini';
@@ -1103,60 +935,164 @@ function appendEditorialMeta(root, label, value) {
   root.appendChild(item);
 }
 
-function appendRiskStageScale(root, today) {
-  const numericStages = [
-    { label: '正常观察', start: 0, end: 50 },
-    { label: '压力上升', start: 50, end: 65 },
-    { label: '局部冲击观察', start: 65, end: 85 },
-    { label: '系统性风险观察', start: 85, end: 100 },
-  ];
-  const score = finite(today.score);
-  const scale = document.createElement('div');
-  scale.className = 'editorial-threshold';
+function appendEditorialBigNumber(root, today) {
+  const left = document.createElement('div');
+  left.className = 'big-left';
+  appendText(left, 'div', 'label', 'TODAY JUDGMENT · 今日总判断');
+  const scoreWrap = document.createElement('div');
+  const value = document.createElement('div');
+  value.className = 'value';
+  value.append(document.createTextNode(today.score === null ? '--' : String(today.score)));
+  const sup = document.createElement('sup');
+  sup.textContent = '/100';
+  value.appendChild(sup);
+  scoreWrap.appendChild(value);
+  const breakdown = document.createElement('div');
+  breakdown.className = 'breakdown';
+  breakdown.append(document.createTextNode('6 底层模块中 '));
+  const strong = document.createElement('strong');
+  strong.textContent = `${today.moduleColorCounts.red} 红 / ${today.moduleColorCounts.yellow} 黄 / ${today.moduleColorCounts.green} 绿`;
+  breakdown.appendChild(strong);
+  breakdown.appendChild(document.createElement('br'));
+  breakdown.append(document.createTextNode(`World Order overlay: ${today.worldOrderOverlay.score ?? '--'}${today.worldOrderOverlay.note}`));
+  scoreWrap.appendChild(breakdown);
+  left.appendChild(scoreWrap);
+  root.appendChild(left);
 
+  const right = document.createElement('div');
+  right.className = 'big-right';
+  appendText(right, 'div', 'verdict-kicker', today.verdictKicker);
+  appendText(right, 'h2', '', today.oneLineConclusion);
+  appendText(right, 'p', '', today.verdictBody);
+  root.appendChild(right);
+
+  const footer = document.createElement('div');
+  footer.className = 'big-footer';
+  [
+    ['DOMINANT RISK CHAIN', today.dominantRiskChain],
+    ['WEEKLY CHANGE', today.weeklyChange],
+    ['DATA HEALTH', today.dataHealth],
+  ].forEach(([label, valueText]) => {
+    const item = document.createElement('div');
+    appendText(item, 'div', 'k', label);
+    appendText(item, 'div', 'v', valueText);
+    footer.appendChild(item);
+  });
+  root.appendChild(footer);
+}
+
+function appendThresholdBlock(root, today) {
   const header = document.createElement('div');
-  header.className = 'editorial-threshold-label';
-  appendText(header, 'span', '', 'THRESHOLD-ALIGNED RISK STAGE SCALE');
-  appendText(header, 'strong', '', today.stage || UNDECIDED);
-  scale.appendChild(header);
+  header.className = 'threshold-header';
+  const title = document.createElement('h4');
+  title.append(document.createTextNode('触发阈值标尺 '));
+  const em = document.createElement('em');
+  em.textContent = '· Threshold Scale';
+  title.appendChild(em);
+  header.appendChild(title);
+  const overlayScore = today.worldOrderOverlay.score ?? '--';
+  appendText(header, 'div', 'now', `原始 ${today.score ?? '--'}(${today.thresholdState}) · overlay ${overlayScore} ${today.worldOrderOverlay.note}`);
+  root.appendChild(header);
 
-  if (today.stage === '系统性危机') {
-    appendText(scale, 'p', 'editorial-threshold-override', '显式阶段：系统性危机，不由本标尺单独推断');
-  }
-
-  if (score === null) {
-    appendText(scale, 'p', 'editorial-threshold-caption', '数据不足，暂不绘制阶段位置');
-    root.appendChild(scale);
-    return;
-  }
-
-  const track = document.createElement('div');
-  track.className = 'editorial-threshold-bar';
-  numericStages.forEach(({ label, start, end }) => {
-    const segment = document.createElement('span');
-    segment.className = `editorial-threshold-zone${label === today.stage ? ' is-active' : ''}`;
-    segment.style.flexBasis = `${end - start}%`;
-    segment.setAttribute('title', `${label}：${start}-${end}`);
-    segment.setAttribute('aria-label', `${label}：${start} 到 ${end}`);
-    track.appendChild(segment);
+  const wrap = document.createElement('div');
+  wrap.className = 'threshold-bar-wrap';
+  const bar = document.createElement('div');
+  bar.className = 'threshold-bar';
+  [
+    ['zone t-green', 25, '观察期', '0-25'],
+    ['zone t-yellow', 15, '中度警戒', '25-40'],
+    ['zone t-orange', 20, '高风险预警', '40-60'],
+    ['zone t-red', 40, '系统性顶部', '>=60'],
+  ].forEach(([className, flex, label, pct]) => {
+    const zone = document.createElement('div');
+    zone.className = className;
+    zone.style.flex = String(flex);
+    appendText(zone, 'span', 'zone-label', label);
+    appendText(zone, 'span', 'zone-pct', pct);
+    bar.appendChild(zone);
   });
 
-  const marker = document.createElement('span');
-  marker.className = 'editorial-threshold-marker';
-  marker.style.left = `${Math.max(0, Math.min(100, score))}%`;
-  marker.setAttribute('aria-label', `当前分数 ${Math.round(score)}，${today.stage || UNDECIDED}`);
-  appendText(marker, 'span', 'editorial-threshold-marker-label', `${Math.round(score)} · ${today.stage || UNDECIDED}`);
-  track.appendChild(marker);
-  scale.appendChild(track);
+  const marker = document.createElement('div');
+  marker.className = 'marker';
+  marker.style.left = `${clampNumber(today.score, 0, 100)}%`;
+  appendText(marker, 'span', 'marker-label', `原始 ${today.score ?? '--'}`);
+  bar.appendChild(marker);
 
-  const labels = document.createElement('div');
-  labels.className = 'editorial-threshold-caption';
-  numericStages.forEach(({ label, start, end }) => {
-    const className = `editorial-threshold-caption-item${label === today.stage ? ' is-active' : ''}`;
-    appendText(labels, 'span', className, `${label} ${start}-${end}`);
+  const overlay = document.createElement('div');
+  overlay.className = 'marker override';
+  overlay.style.left = `${clampNumber(today.worldOrderOverlay.score, 0, 100)}%`;
+  appendText(overlay, 'span', 'marker-label', `overlay ${today.worldOrderOverlay.score ?? '--'}`);
+  bar.appendChild(overlay);
+
+  wrap.appendChild(bar);
+  root.appendChild(wrap);
+}
+
+function appendSvgNode(root, tag, attributes = {}, textValue = '') {
+  const node = document.createElementNS(SVG_NAMESPACE, tag);
+  Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, String(value)));
+  if (textValue) node.textContent = textValue;
+  root.appendChild(node);
+  return node;
+}
+
+function trendPoint(value, index) {
+  const x = 80 + (680 / 7) * index;
+  const y = 180 - (clampNumber(value, 0, 70) / 70) * 160;
+  return `${formatFiniteNumber(x, 2)},${formatFiniteNumber(y, 2)}`;
+}
+
+function appendTrendBlock(root, today) {
+  const header = document.createElement('div');
+  header.className = 'trend-block-header';
+  const title = document.createElement('h4');
+  title.append(document.createTextNode('8 周趋势 '));
+  const em = document.createElement('em');
+  em.textContent = '· 8-Week Trend';
+  title.appendChild(em);
+  header.appendChild(title);
+  const legend = document.createElement('div');
+  legend.style.fontFamily = 'var(--font-mono)';
+  legend.style.fontSize = '11px';
+  legend.style.color = 'var(--paper-muted)';
+  legend.textContent = 'Score / Overlay · y 0-70 · 阈值线 25/40/60';
+  header.appendChild(legend);
+  root.appendChild(header);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'trend-svg-wrap';
+  const svg = appendSvgNode(wrap, 'svg', {
+    viewBox: '0 0 800 200',
+    preserveAspectRatio: 'none',
   });
-  scale.appendChild(labels);
-  root.appendChild(scale);
+  appendSvgNode(svg, 'rect', { x: 0, y: 0, width: 800, height: 200, fill: '#F5F0E5' });
+  [
+    [25, '#1F4D2C'],
+    [40, '#A8761A'],
+    [60, '#7C1D1D'],
+  ].forEach(([value, color]) => {
+    const y = 180 - (value / 70) * 160;
+    appendSvgNode(svg, 'line', { x1: 40, y1: y, x2: 780, y2: y, stroke: color, 'stroke-width': 1, 'stroke-dasharray': '4,3', opacity: 0.55 });
+    appendSvgNode(svg, 'text', { x: 784, y: y + 4, 'font-family': 'IBM Plex Mono', 'font-size': 9, fill: color }, String(value));
+  });
+  appendSvgNode(svg, 'polyline', {
+    points: today.scoreHistory8w.map(trendPoint).join(' '),
+    fill: 'none',
+    stroke: '#7C1D1D',
+    'stroke-width': 2.5,
+  });
+  appendSvgNode(svg, 'polyline', {
+    points: today.overlayHistory8w.map(trendPoint).join(' '),
+    fill: 'none',
+    stroke: '#C86B2E',
+    'stroke-width': 2,
+    'stroke-dasharray': '6,4',
+  });
+  ['W-7', 'W-5', 'W-3', 'W-1', 'NOW'].forEach((label, index) => {
+    const x = [80, 274.29, 468.57, 662.86, 760][index];
+    appendSvgNode(svg, 'text', { x, y: 195, 'text-anchor': 'middle', 'font-family': 'IBM Plex Mono', 'font-size': 10, fill: '#6F685C' }, label);
+  });
+  root.appendChild(wrap);
 }
 
 function stripLabelPrefix(value, label) {
@@ -1479,72 +1415,21 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   const overview = buildMacroOverview(data, healthDashboard, worldOrderStressData, marketPricingMetricsData);
   container.replaceChildren();
 
-  const today = appendSection(container, '今日总判断', 'macro-overview-hero editorial-first-fold', 'homepage-today-judgment');
-  appendText(today, 'p', 'editorial-risk-overline', 'GLOBAL RISK SCORE / SYSTEMIC RISK STAGE');
-  const summaryGrid = document.createElement('div');
-  summaryGrid.className = 'today-summary-grid';
+  const today = document.createElement('article');
+  today.className = 'editorial-big-number';
+  today.id = 'homepage-today-judgment';
+  container.appendChild(today);
+  appendEditorialBigNumber(today, overview.today);
 
-  const scoreTrend = document.createElement('article');
-  scoreTrend.className = 'today-summary-cell today-summary-score';
-  scoreTrend.setAttribute('data-today-summary-element', 'score-trend');
-  appendText(scoreTrend, 'span', 'today-summary-label', 'GLOBAL RISK SCORE');
-  const scoreRow = document.createElement('div');
-  scoreRow.className = 'today-summary-score-row';
-  appendText(scoreRow, 'strong', 'today-summary-score-value', overview.today.score);
-  appendText(scoreRow, 'span', 'today-summary-score-stage', overview.today.stage || UNDECIDED);
-  scoreTrend.appendChild(scoreRow);
-  const trendRow = document.createElement('div');
-  trendRow.className = 'today-summary-trend-row';
-  const trend1d = appendText(trendRow, 'span', 'today-summary-trend-chip', `1日变化 ${overview.today.change1dCompact}`);
-  trend1d.setAttribute('data-summary-metric', 'score-change-1d');
-  const trend7d = appendText(trendRow, 'span', 'today-summary-trend-chip', `7日变化 ${overview.today.change7dCompact}`);
-  trend7d.setAttribute('data-summary-metric', 'score-change-7d');
-  scoreTrend.appendChild(trendRow);
-  summaryGrid.appendChild(scoreTrend);
+  const thresholdBlock = document.createElement('div');
+  thresholdBlock.className = 'threshold-block';
+  container.appendChild(thresholdBlock);
+  appendThresholdBlock(thresholdBlock, overview.today);
 
-  const overallJudgment = document.createElement('article');
-  overallJudgment.className = 'today-summary-cell today-summary-overall';
-  overallJudgment.setAttribute('data-today-summary-element', 'overall-judgment');
-  appendText(overallJudgment, 'span', 'today-summary-label', 'TODAY\'S VERDICT · 今日总判断');
-  appendText(overallJudgment, 'h3', 'today-summary-title', overview.today.oneLine);
-  appendText(overallJudgment, 'p', 'today-summary-copy', overview.today.macroState);
-  summaryGrid.appendChild(overallJudgment);
-
-  const dataHealth = document.createElement('article');
-  dataHealth.className = `today-summary-cell today-summary-health is-${overview.today.dataHealth.tone}`;
-  dataHealth.setAttribute('data-today-summary-element', 'data-health');
-  appendText(dataHealth, 'span', 'today-summary-label', 'DATA HEALTH');
-  appendText(dataHealth, 'strong', 'today-summary-health-pill', overview.today.dataHealth.state);
-  appendText(dataHealth, 'p', 'today-summary-copy', overview.today.dataHealth.summary);
-  const healthUpdates = document.createElement('ul');
-  healthUpdates.className = 'today-summary-update-list';
-  overview.today.dataHealth.updates.forEach((item) => appendText(healthUpdates, 'li', '', item));
-  dataHealth.appendChild(healthUpdates);
-  summaryGrid.appendChild(dataHealth);
-
-  const topRisks = document.createElement('article');
-  topRisks.className = 'today-summary-cell today-summary-risks';
-  topRisks.setAttribute('data-today-summary-element', 'top-risks');
-  appendText(topRisks, 'span', 'today-summary-label', 'TOP 3 RISKS');
-  appendTodaySummaryList(topRisks, overview.today.topRisks);
-  summaryGrid.appendChild(topRisks);
-
-  const noiseDivergence = document.createElement('article');
-  noiseDivergence.className = 'today-summary-cell today-summary-noise';
-  noiseDivergence.setAttribute('data-today-summary-element', 'noise-divergence');
-  appendText(noiseDivergence, 'span', 'today-summary-label', 'NOISE / DIVERGENCE');
-  appendTodaySummaryList(noiseDivergence, overview.today.noiseDivergences);
-  summaryGrid.appendChild(noiseDivergence);
-
-  const stateConclusion = document.createElement('article');
-  stateConclusion.className = 'today-summary-cell today-summary-state';
-  stateConclusion.setAttribute('data-today-summary-element', 'state-conclusion');
-  appendText(stateConclusion, 'span', 'today-summary-label', 'STATE CONCLUSION');
-  appendText(stateConclusion, 'strong', 'today-summary-state-text', overview.today.stateConclusion);
-  appendText(stateConclusion, 'p', 'today-summary-copy', `证据强度：${overview.today.evidenceStrength || '等待校准'}；更新：${overview.today.updatedAt || '等待数据校准'}`);
-  summaryGrid.appendChild(stateConclusion);
-
-  today.appendChild(summaryGrid);
+  const trendBlock = document.createElement('div');
+  trendBlock.className = 'trend-block';
+  container.appendChild(trendBlock);
+  appendTrendBlock(trendBlock, overview.today);
 
   const pressure = appendRuntimeBlock(
     container,

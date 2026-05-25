@@ -296,15 +296,25 @@ function checkEditorialStructures() {
   const combined = `${html}\n${macroOverview}\n${styles}`;
   const requiredMarkers = [
     'editorial-big-number',
-    'GLOBAL RISK SCORE',
-    'editorial-verdict',
-    "TODAY\\'S VERDICT",
-    'editorial-threshold',
-    'THRESHOLD-ALIGNED RISK STAGE SCALE',
-    '正常观察',
-    '压力上升',
-    '局部冲击观察',
-    '系统性风险观察',
+    'appendEditorialBigNumber',
+    'appendThresholdBlock',
+    'appendTrendBlock',
+    'TODAY JUDGMENT · 今日总判断',
+    'big-left',
+    'big-right',
+    'big-footer',
+    'DOMINANT RISK CHAIN',
+    'WEEKLY CHANGE',
+    'DATA HEALTH',
+    'threshold-block',
+    'threshold-bar',
+    'zone t-green',
+    'zone t-yellow',
+    'zone t-orange',
+    'zone t-red',
+    'marker override',
+    'trend-block',
+    'trend-svg-wrap',
     "'wow-key-changes'",
     'wow-section',
     '本期关键变化 · Week-over-Week',
@@ -394,6 +404,12 @@ function checkEditorialStructures() {
     'appendEditorialEngineCard',
     'appendEditorialEngineSublist',
     'editorial-engine-grid',
+    'TODAY_SUMMARY_STATE_PHRASES',
+    'today-summary-grid',
+    'today-summary-cell',
+    'appendTodaySummaryList',
+    'appendRiskStageScale',
+    'selectTodayStateConclusion',
   ]) {
     if (macroOverview.includes(marker)) fail(`legacy runtime marker must be removed from ${MACRO_OVERVIEW_PATH}: ${marker}`);
   }
@@ -401,16 +417,16 @@ function checkEditorialStructures() {
     requireMarker(styles, STYLES_PATH, marker);
   }
 
-  const stageAreaStart = macroOverview.indexOf('function stageFromScore');
+  const stageAreaStart = macroOverview.indexOf('function thresholdStateLabel');
   const thresholdAreaStart = firstIndexOfAny(macroOverview, [
-    'function appendRiskStageScale',
-    'function appendThresholdScale',
-    'editorial-threshold',
+    'function appendThresholdBlock',
+    'threshold-block',
+    'threshold-bar',
   ]);
   const stageArea = stageAreaStart >= 0 ? macroOverview.slice(stageAreaStart, stageAreaStart + 900) : '';
   const thresholdArea = thresholdAreaStart >= 0 ? macroOverview.slice(thresholdAreaStart, thresholdAreaStart + 2600) : '';
   const thresholdSource = `${stageArea}\n${thresholdArea}`;
-  for (const value of ['0', '50', '65', '85', '100']) {
+  for (const value of ['0', '25', '40', '60', '100']) {
     if (!new RegExp(`\\b${value}\\b`, 'u').test(thresholdSource)) {
       fail(`threshold/stage source must preserve ${value} semantic marker`);
     }

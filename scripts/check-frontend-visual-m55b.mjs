@@ -71,6 +71,19 @@ if (!renderContent.includes('wow-section')) {
   fail('M-55b: wow-section CSS class not found in renderMacroOverview.js (mock-compliant WoW rendering)');
 }
 
+// M-94 PR 2b Stage 9: Today Judgment must use the mock editorial-big-number hero,
+// threshold scale, and 8-week SVG trend, not the legacy M-92A 6-cell grid.
+for (const marker of ['appendEditorialBigNumber', 'appendThresholdBlock', 'appendTrendBlock', 'editorial-big-number', 'threshold-block', 'trend-block']) {
+  if (!renderContent.includes(marker)) {
+    fail(`M-55b PR 2b: mock today-judgment marker not found in renderMacroOverview.js: ${marker}`);
+  }
+}
+for (const marker of ['today-summary-grid', 'today-summary-cell', 'TODAY_SUMMARY_STATE_PHRASES']) {
+  if (renderContent.includes(marker)) {
+    fail(`M-55b PR 2b: legacy today-summary marker must be removed from renderMacroOverview.js: ${marker}`);
+  }
+}
+
 // Check 3: assets/styles.css has new realtime classes
 const cssPath = resolve('assets/styles.css');
 const cssContent = readFileSync(cssPath, 'utf8');
@@ -107,4 +120,4 @@ if (errors.length > 0) {
   errors.forEach(err => console.error('  -', err));
   process.exit(1);
 }
-console.log('Frontend visual M-55b check: PASS (realtime band repainted to main-module standard + wow-key-changes mock wow-section landing + .editorial-subsection-equivalent removed + 16 realtime ids preserved)');
+console.log('Frontend visual M-55b check: PASS (realtime band repainted to main-module standard + wow-key-changes mock wow-section landing + today-judgment mock hero + .editorial-subsection-equivalent removed + 16 realtime ids preserved)');
