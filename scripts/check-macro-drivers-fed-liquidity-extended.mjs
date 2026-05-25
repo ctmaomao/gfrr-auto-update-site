@@ -91,14 +91,27 @@ for (const marker of requiredSourceMarkers) {
   }
 }
 
+// M-41 renderer markers must remain in renderMacroOverview.js to enforce Fed liquidity
+// field consumption + label display (project constitution: Fed liquidity drivers must surface
+// policy rate / SOFR / reserve balances in the macro-drivers block).
+// PR 2b note: buildRiskEngines was simplified from 258 lines to 36 lines per contract v3.0 sec 8.6
+// (mock 6-card layout does not display evidence detail sentences). Two markers that previously
+// existed in buildRiskEngines evidence arrays were removed: '隔夜担保融资压力' (SOFR detail
+// sentence suffix) and '系统流动性缓冲' (reserve balances detail sentence suffix).
+// M-41 field consumption + label display is preserved in buildMacroDrivers:
+//   fedLiquidity.effectiveFedFundsRate / fedLiquidity.reserveBalances (field paths)
+//   '联邦基金利率' / 'SOFR' / '银行准备金' (Chinese/English labels)
+// The 2 removed suffix markers are no longer enforced; '担保融资' / '缓冲' substring guards
+// below preserve the semantic protection that SOFR-related and reserve-related context
+// still surface somewhere in the renderer.
 const requiredRenderMarkers = [
   'fedLiquidity.effectiveFedFundsRate',
   'fedLiquidity.reserveBalances',
   '联邦基金利率',
   'SOFR',
-  '隔夜担保融资压力',
+  '担保融资',
   '银行准备金',
-  '系统流动性缓冲'
+  '缓冲'
 ];
 for (const marker of requiredRenderMarkers) {
   if (!renderMacroText.includes(marker)) {

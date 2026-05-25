@@ -68,11 +68,20 @@ for (const marker of requiredRunDailyMarkers) {
   }
 }
 
+// M-48 renderer markers must remain in renderMacroOverview.js to enforce NFCI surfacing
+// in the macro-drivers block (project: NFCI value + regime narrative + private-credit boundary).
+// PR 2b note: buildRiskEngines was rewritten from 258 lines to mock 6-card form per
+// contract v3.0 sec 8.6. M-48 implementation-era specific phrasings were replaced or absent:
+//   - '金融状况指数 (NFCI)' (Chinese label) -> bare 'NFCI' (current renderer uses English-only
+//     'NFCI ${value};4w ${change}（${regime}）' in buildMacroDrivers driver-liquidity evidence)
+//   - '偏紧' / '偏松' (M-48-era regime phrasing) -> data field credit.nfciRegime actually uses
+//     '显著收紧' / '温和收紧' / '显著宽松' / '温和宽松' (see buildCrossValidationMatrix.js
+//     matrixMarkers — the authoritative regime semantics are enforced there, not here)
+// M-48 field consumption + node + boundary declaration preserved via 5 remaining markers below.
 const requiredRenderMarkers = [
   'credit?.nfci',
-  '金融状况指数 (NFCI)',
-  '偏紧',
-  '偏松',
+  'NFCI',
+  'nfciRegime',
   "id: 'driver-private-credit-proxy'",
   'BIZD listed BDC proxy',
   '私募信用 marks 需要 manual/licensed input；ICE CDX public settlement 不替代私募信用估值。'

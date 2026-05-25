@@ -326,13 +326,29 @@ function checkEditorialStructures() {
     'Liquidity 流动性',
     'Debt 债务',
     'Banking 银行',
+    "'homepage-risk-engines'",
+    'RISK ENGINES · 6 ENGINES + AUXILIARY',
+    'data.modules 6 引擎 + divergenceLayer + privateCreditProxy + worldOrderStress + marketTemperature 等多源派生',
+    'B1 Energy',
+    'B2 Liquidity',
+    'B3 Credit',
+    'B4 Debt',
+    'B5 Consumer',
+    'B6 Geopolitical',
     "'homepage-cross-validation'",
     'CROSS VALIDATION MATRIX',
     'consistency-block',
   ];
   for (const marker of requiredMarkers) requireMarker(combined, 'editorial redesign structures', marker);
-  for (const marker of ['appendEditorialPressureCard', 'appendEditorialPressureSublist', 'editorial-pressure-grid']) {
-    if (macroOverview.includes(marker)) fail(`legacy pressure marker must be removed from ${MACRO_OVERVIEW_PATH}: ${marker}`);
+  for (const marker of [
+    'appendEditorialPressureCard',
+    'appendEditorialPressureSublist',
+    'editorial-pressure-grid',
+    'appendEditorialEngineCard',
+    'appendEditorialEngineSublist',
+    'editorial-engine-grid',
+  ]) {
+    if (macroOverview.includes(marker)) fail(`legacy runtime marker must be removed from ${MACRO_OVERVIEW_PATH}: ${marker}`);
   }
   for (const marker of ['.wow-tag.is-up', '.wow-tag.is-down', '.wow-tag.is-flat', '.mini-card.red', '.mini-card.yellow', '.mini-card.green']) {
     requireMarker(styles, STYLES_PATH, marker);

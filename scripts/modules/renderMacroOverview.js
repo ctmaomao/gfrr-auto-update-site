@@ -1512,257 +1512,37 @@ function findDivergenceCheck(data, key) {
 function buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData = null) {
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
   const macroDrivers = isPlainObject(data?.macroDrivers) ? data.macroDrivers : {};
-  const fedLiquidity = isPlainObject(macroDrivers.fedLiquidity) ? macroDrivers.fedLiquidity : {};
-  const credit = isPlainObject(macroDrivers.credit) ? macroDrivers.credit : {};
-  const policyExpectations = isPlainObject(macroDrivers.policyExpectations) ? macroDrivers.policyExpectations : {};
-  const shippingFreight = isPlainObject(macroDrivers.shippingFreight) ? macroDrivers.shippingFreight : {};
   const privateCreditProxy = isPlainObject(macroDrivers.privateCreditProxy) ? macroDrivers.privateCreditProxy : {};
-  const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
-  const ratesCheck = findDivergenceCheck(data, 'rates_vs_risk_assets');
-  const pricingCheck = findDivergenceCheck(data, 'risk_complacency_watch');
-  const liquidityCheck = findDivergenceCheck(data, 'liquidity_vs_credit_transmission');
+  const employment = isPlainObject(macroDrivers.employment) ? macroDrivers.employment : {};
+  const modules = isPlainObject(data?.modules) ? data.modules : {};
+  const trends = isPlainObject(data?.moduleTrends) ? data.moduleTrends : {};
+  const brief = isPlainObject(data?.dailyBrief) ? data.dailyBrief : {};
   const creditCalm = finite(inputs.hyOas) !== null && Number(inputs.hyOas) < 4 && finite(inputs.vix) !== null && Number(inputs.vix) < 22;
   const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
-  const onRrpSignal = findActiveSignal(macroDrivers.activeSignals, 'onRrpCritical');
-  const onRrp = finite(fedLiquidity.onRrp);
-  const sofr = finite(fedLiquidity.sofr);
-  const reserveBalances = finite(fedLiquidity.reserveBalances);
-  const reserveBalances4wChange = finite(fedLiquidity.reserveBalances4wChange);
-  const bgcr = finite(fedLiquidity.bgcr);
-  const tgcr = finite(fedLiquidity.tgcr);
-  const tgcrSofrSpread = finite(fedLiquidity.tgcrSofrSpread);
-  const igHyRatio = finite(credit.igHyRatio);
-  const sloosTighteningSmallFirms = finite(credit.sloosTighteningSmallFirms);
-  const nfci4wChange = finite(credit.nfci4wChange);
-  const dirtyTankerIndex = finite(shippingFreight.balticDirtyTankerIndex);
-  const cleanTankerIndex = finite(shippingFreight.balticCleanTankerIndex);
-  const dryBulkIndex = finite(shippingFreight.balticDryIndex);
-  const bdcEtfPrice = finite(privateCreditProxy.bdcEtfPrice);
-  const bdcEtf4wChange = finite(privateCreditProxy.bdcEtf4wChange);
-  const pbdcEtfPrice = finite(privateCreditProxy.pbdcEtfPrice);
-  const pbdcEtf4wChange = finite(privateCreditProxy.pbdcEtf4wChange);
-  const seniorLoanEtfPrice = finite(privateCreditProxy.seniorLoanEtfPrice);
-  const seniorLoanEtf4wChange = finite(privateCreditProxy.seniorLoanEtf4wChange);
-  const intervalFundNavPrice = finite(privateCreditProxy.intervalFundNavPrice);
-  const intervalFundNav4wChange = finite(privateCreditProxy.intervalFundNav4wChange);
-  const cdxHyPrice = finite(privateCreditProxy.cdxHyPrice);
-  const cdxIgPrice = finite(privateCreditProxy.cdxIgPrice);
-  const targetMid = finite(policyExpectations.targetMid);
-  const fedFundsFutureImpliedRate = finite(policyExpectations.fedFundsFutureImpliedRate);
-  const dotPlotMedianCurrentYear = finite(policyExpectations.dotPlotMedianCurrentYear);
-  const fedFundsFuturesCurve = isPlainObject(policyExpectations.fedFundsFuturesCurve) ? policyExpectations.fedFundsFuturesCurve : {};
-  const fedFundsFuturesCurveContracts = safeArray(fedFundsFuturesCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 4)
-    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.impliedRate, 2, '%')}`);
-  const sofrFuturesCurve = isPlainObject(policyExpectations.sofrFuturesCurve) ? policyExpectations.sofrFuturesCurve : {};
-  const sofrFuturesCurveContracts = safeArray(sofrFuturesCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 4)
-    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.impliedRate, 2, '%')}`);
-  const oisForwardCurve = isPlainObject(policyExpectations.oisForwardCurve) ? policyExpectations.oisForwardCurve : {};
-  const oisForwardCurveTenors = safeArray(oisForwardCurve.tenors)
-    .filter(isPlainObject)
-    .filter((item) => ['1Y', '2Y', '5Y', '10Y'].includes(text(item.tenor, '')))
-    .map((item) => `${text(item.tenor, '--')} ${formatNumber(item.rate, 2, '%')}`);
-  const eiaBrentSpotProxy = isPlainObject(brentLayer.eiaBrentSpotProxy) ? brentLayer.eiaBrentSpotProxy : {};
-  const eiaBrentSpotPrice = finite(eiaBrentSpotProxy.price);
-  const eiaBrentSpotDailyChange = finite(eiaBrentSpotProxy.dailyChange);
-  const ulsdPrice = finite(brentLayer.ulsdPrice);
-  const ulsd4wChange = finite(brentLayer.ulsd4wChange);
-  const crackSpread4wChange = finite(brentLayer.crackSpread4wChange);
-  const brentFuturesPriceCurve = isPlainObject(brentLayer.futuresPriceCurve) ? brentLayer.futuresPriceCurve : {};
-  const brentFuturesPriceCurveContracts = safeArray(brentFuturesPriceCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 4)
-    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.price, 2)}`);
-  const brentIceFuturesPriceCurve = isPlainObject(brentLayer.iceFuturesPriceCurve) ? brentLayer.iceFuturesPriceCurve : {};
-  const brentIceFuturesPriceCurveContracts = safeArray(brentIceFuturesPriceCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 4)
-    .map((contract) => `${text(contract.contract, '--')} ${formatNumber(contract.price, 2)}`);
-  const privateCreditIgOas = finite(privateCreditProxy.igOas);
-  const privateCreditIgMinusHyOas = finite(privateCreditProxy.igMinusHyOas);
-  const riskEnergyCoverage = [
-    eiaBrentSpotPrice !== null ? 'EIA Brent Spot Price FOB public proxy' : null,
-    brentLayer.crackSpread === null || !Number.isFinite(brentLayer.crackSpread) ? null : 'diesel crack spread proxy',
-    ulsdPrice !== null ? 'ULSD public refined-products proxy' : null,
-    brentIceFuturesPriceCurveContracts.length ? 'ICE delayed Brent futures curve' : null,
-    brentFuturesPriceCurveContracts.length ? 'Yahoo Brent priced futures proxy' : null,
-    dirtyTankerIndex !== null ? 'BDTI tanker freight proxy' : null,
-    cleanTankerIndex !== null ? 'BCTI clean tanker proxy' : null,
-    dryBulkIndex !== null ? 'BDI dry bulk proxy' : null,
-  ].filter(Boolean);
-  const riskRatesCoverage = [
-    bgcr !== null ? 'NY Fed BGCR' : null,
-    tgcr !== null ? 'NY Fed TGCR' : null,
-    targetMid !== null ? 'Fed target range' : null,
-    fedFundsFutureImpliedRate !== null ? 'ZQ front Fed funds future proxy' : null,
-    fedFundsFuturesCurveContracts.length ? 'ZQ monthly futures curve proxy' : null,
-    sofrFuturesCurveContracts.length ? 'SR3 SOFR futures curve proxy' : null,
-    oisForwardCurveTenors.length ? 'CheckMySwap public OIS curve' : null,
-  ].filter(Boolean);
-  const riskPrivateCreditCoverage = [
-    bdcEtfPrice !== null ? 'BIZD listed BDC proxy' : null,
-    pbdcEtfPrice !== null ? 'PBDC listed BDC proxy' : null,
-    seniorLoanEtfPrice !== null ? 'SRLN senior loan proxy' : null,
-    intervalFundNavPrice !== null ? 'CCLFX public interval-fund NAV proxy' : null,
-    privateCreditIgOas !== null ? 'IG OAS cash-bond proxy' : null,
-    cdxHyPrice !== null ? 'ICE CDX HY public settlement' : null,
-    cdxIgPrice !== null ? 'ICE CDX IG public settlement' : null,
-  ].filter(Boolean);
+  const worldState = text(worldOrderStressData?.state, 'multi_theater_stress').replace(/_stress$/u, '');
+  const privateCreditStress = finite(privateCreditProxy.cdxHyPrice) !== null || finite(privateCreditProxy.bdcEtf4wChange) !== null;
+  const liquidityScore = Math.max(finite(modules.liquidity) ?? 0, finite(trends.liquidity) > 0 ? 55 : 0);
+  const consumerStatus = marketMetric ? '实际工资压制' : '消费待确认';
+  const dominantKey = String(brief?.dominantRiskChain?.key || brief?.key || '');
+  const engineGrade = (score, fallback = 0) => {
+    const value = finite(score);
+    const normalized = value === null ? fallback : value;
+    if (normalized >= 70) return 'RED';
+    if (normalized >= 50) return 'YEL';
+    return 'GRN';
+  };
+  const card = (id, label, score, status, fallback = 0) => {
+    const num = engineGrade(score, fallback);
+    return { id, label, num, status, tone: num === 'RED' ? 'red' : num === 'YEL' ? 'yellow' : 'green' };
+  };
 
   return [
-    createJudgment({
-      id: 'engine-energy-inflation-transmission',
-      title: '能源与通胀传导',
-      group: 'risk-engine',
-      status: finite(inputs.brent) === null ? INSUFFICIENT : '压力上升',
-      direction: finite(inputs.brent) === null ? '方向待确认' : '压力上升',
-      confidence: evidenceStrengthFromConfidence(brentLayer.confidence, '中等'),
-      dataCoverage: riskEnergyCoverage.length >= 5 ? '数据覆盖：公开能源代理覆盖良好' : riskEnergyCoverage.length ? '数据覆盖：公开能源代理部分覆盖' : '数据覆盖：关键数据不足',
-      evidence: [
-        text(brentLayer.summaryZh, `布伦特 ${formatNumber(inputs.brent, 1)}，通胀预期 ${formatNumber(inputs.breakeven10y, 2, '%')}。`),
-        eiaBrentSpotPrice === null
-          ? null
-          : `EIA Brent Spot Price FOB ${formatNumber(eiaBrentSpotPrice, 2)}；日变化 ${formatSignedDecimal(eiaBrentSpotDailyChange, 2)}（${formatWeekVintage(eiaBrentSpotProxy.updatedAt)}；status=${formatSourceStatus(eiaBrentSpotProxy.sourceStatus)}）`,
-        brentLayer.crackSpread === null || !Number.isFinite(brentLayer.crackSpread)
-          ? null
-          : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶；4周变化 ${formatSignedDecimal(crackSpread4wChange, 2)}（${brentLayer.crackSpreadRegime}，日度更新）`,
-        ulsdPrice === null ? null : `ULSD ${formatNumber(ulsdPrice, 3)}；4周变化 ${formatSignedDecimal(ulsd4wChange, 3)} — 下游成品油压力`,
-        brentIceFuturesPriceCurveContracts.length
-          ? `ICE Brent public delayed price curve: ${brentIceFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentIceFuturesPriceCurve.frontMinusBack, 2)}`
-          : null,
-        brentFuturesPriceCurveContracts.length
-          ? `Yahoo Brent priced futures proxy: ${brentFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentFuturesPriceCurve.frontMinusBack, 2)}`
-          : null,
-        dirtyTankerIndex === null
-          ? null
-          : `BDTI ${formatNumber(dirtyTankerIndex, 0)}（${text(shippingFreight.tankerFreightRegime, '未知')}）`,
-        cleanTankerIndex === null ? null : `BCTI ${formatNumber(cleanTankerIndex, 0)}（${text(shippingFreight.cleanTankerFreightRegime, '未知')}）`,
-        dryBulkIndex === null ? null : `BDI ${formatNumber(dryBulkIndex, 0)}（${text(shippingFreight.dryBulkFreightRegime, '未知')}）`,
-      ].filter(Boolean),
-      coverageNotes: [
-        ...riskEnergyCoverage,
-        'Platts Dated Brent / official settlement / 实物成交证据是正式源边界；公开代理不冒充正式源。',
-      ],
-      missingEvidence: riskEnergyCoverage.length ? [] : ['公开能源代理等待刷新。'],
-      explanation: '当前已能观察公开价格、期限曲线、成品油和运费代理；正式实物供应冲击仍作为边界保留。',
-      sourceType: finite(inputs.brent) === null ? '数据不足' : '数据推断',
-    }),
-    createJudgment({
-      id: 'engine-rates-liquidity',
-      title: '利率与流动性',
-      group: 'risk-engine',
-      status: text(ratesCheck.status, statusFromScore(data?.modules?.liquidity)),
-      direction: '观察中',
-      confidence: '中等',
-      dataCoverage: riskRatesCoverage.length >= 5 ? '数据覆盖：利率与政策公开代理覆盖良好' : riskRatesCoverage.length ? '数据覆盖：利率与政策公开代理部分覆盖' : '数据覆盖：关键数据不足',
-      evidence: [
-        text(ratesCheck.summaryZh, `10年期 ${formatNumber(inputs.us10y, 2, '%')}；实际利率 ${formatNumber(inputs.real10y, 2, '%')}；广义美元 ${formatNumber(inputs.dxy, 2)}。`),
-        bgcr === null || tgcr === null
-          ? null
-          : `NY Fed repo rates: BGCR ${formatNumber(bgcr, 2, '%')} / TGCR ${formatNumber(tgcr, 2, '%')}；TGCR-SOFR ${formatBasisPoints(tgcrSofrSpread)}（${text(fedLiquidity.repoRatesSource, 'repo source 待确认')}）`,
-        targetMid === null || fedFundsFutureImpliedRate === null
-          ? null
-          : `Policy path proxy: target midpoint ${formatNumber(targetMid, 3, '%')}；ZQ implied ${formatNumber(fedFundsFutureImpliedRate, 2, '%')}；SEP current median ${formatNumber(dotPlotMedianCurrentYear, 2, '%')}`,
-        fedFundsFuturesCurveContracts.length
-          ? `ZQ monthly futures curve proxy: ${fedFundsFuturesCurveContracts.join(' / ')}；front-back ${formatSignedPoints(fedFundsFuturesCurve.frontMinusBack)}`
-          : null,
-        sofrFuturesCurveContracts.length
-          ? `SR3 SOFR futures proxy: ${sofrFuturesCurveContracts.join(' / ')}；front-back ${formatSignedPoints(sofrFuturesCurve.frontMinusBack)}`
-          : null,
-        oisForwardCurveTenors.length
-          ? `CheckMySwap USD OIS public curve: ${oisForwardCurveTenors.join(' / ')}；10Y-2Y ${formatSignedPoints(oisForwardCurve.tenMinusTwo)}`
-          : null,
-      ].filter(Boolean),
-      coverageNotes: [
-        ...riskRatesCoverage,
-        'dealer OIS / proprietary funding screens 是边界说明；public OIS curve 不冒充授权终端数据。',
-      ],
-      missingEvidence: riskRatesCoverage.length ? [] : ['利率与政策公开代理等待刷新。'],
-      counterEvidence: creditCalm ? ['信用市场尚未明显确认扩散。'] : [],
-      explanation: creditCalm
-        ? '长端压力存在，但信用市场尚未明显确认扩散。'
-        : '需要观察利率、美元、信用和波动率是否同向收紧。',
-    }),
-    createJudgment({
-      id: 'engine-asset-pricing-mismatch',
-      title: '资产定价错配',
-      group: 'risk-engine',
-      status: marketMetric ? marketMetric.bucket.label : text(pricingCheck.status, '观察中'),
-      direction: '方向待确认',
-      confidence: marketMetric ? '中等' : '偏低',
-      dataCoverage: marketMetric ? '数据覆盖：市场温度历史已覆盖' : '数据覆盖：关键数据不足',
-      evidence: [
-        text(pricingCheck.summaryZh, '风险资产定价仍需与利率、信用和历史温度框架交叉确认。'),
-        ...(marketMetric ? [marketMetric.metricLine] : []),
-      ],
-      missingEvidence: marketMetric ? [] : ['Nasdaq / QQQ 周线历史、60 周均值、标准差和 z-score 等待接入。'],
-      explanation: marketMetric
-        ? `市场温度计已接入：QQQ 当前为${marketMetric.bucket.label}，可与信用、利率和波动率共同观察错配。`
-        : '市场温度计尚未就绪，因此只能保留错配观察，不能给出冷热程度。',
-    }),
-    createJudgment({
-      id: 'engine-world-order',
-      title: '世界秩序压力',
-      group: 'risk-engine',
-      status: worldOrderStressData?.labelZh || text(worldOrderStressData?.state, INSUFFICIENT),
-      direction: hasPartialWorldOrder(worldOrderStressData) ? '方向待确认' : '观察中',
-      confidence: evidenceStrengthFromConfidence(worldOrderStressData?.confidence, '偏低'),
-      dataCoverage: hasPartialWorldOrder(worldOrderStressData) ? '数据覆盖：部分外部来源受限' : '数据覆盖：世界秩序公开源已覆盖',
-      evidence: [finite(worldOrderStressData?.score) === null ? '世界秩序压力数据不足。' : `结构性压力分数 ${Math.round(Number(worldOrderStressData.score))}；freshness=${text(worldOrderStressData?.freshness, INSUFFICIENT)}`],
-      missingEvidence: hasPartialWorldOrder(worldOrderStressData) ? ['SIPRI / ACLED 等来源仍需补全或配置。'] : [],
-      explanation: '该引擎只识别结构性背景压力，不预测具体事件。',
-      sourceType: finite(worldOrderStressData?.score) === null ? '数据不足' : '数据推断',
-    }),
-    createJudgment({
-      id: 'engine-financial-fragility',
-      title: '金融脆弱性',
-      group: 'risk-engine',
-      status: text(liquidityCheck.status, statusFromScore(data?.modules?.banking)),
-      direction: creditCalm ? '观察中' : '方向待确认',
-      confidence: creditCalm ? '偏低' : '中等',
-      dataCoverage: riskPrivateCreditCoverage.length >= 4 ? '数据覆盖：公开信用代理覆盖良好' : riskPrivateCreditCoverage.length ? '数据覆盖：公开信用代理部分覆盖' : '数据覆盖：关键数据不足',
-      evidence: [
-        text(liquidityCheck.summaryZh, `HY OAS ${formatNumber(inputs.hyOas, 2, '%')}；VIX ${formatNumber(inputs.vix, 2)}。`),
-        `ON RRP ${formatUsdTrillions(onRrp)}${onRrpSignal ? '（历史低位告急）' : ''}`,
-        `IG/HY 比率 ${formatNumber(igHyRatio, 2)}（信用层次性收缩）`,
-        sofr === null ? null : `SOFR ${formatNumber(sofr, 2, '%')} — 隔夜担保融资压力`,
-        reserveBalances === null ? null : `银行准备金 ${formatUsdTrillions(reserveBalances / 1_000_000)}，4 周变化 ${formatSignedPercent(reserveBalances4wChange)}（系统流动性缓冲）`,
-        credit?.sloosTighteningLargeFirms === null || !Number.isFinite(credit?.sloosTighteningLargeFirms)
-          ? null
-          : `银行贷款标准 (SLOOS C&I) 大型 ${formatSignedPercent(credit.sloosTighteningLargeFirms, 1)} / 小型 ${formatSignedPercent(sloosTighteningSmallFirms, 1)}（信用环境${credit.sloosTighteningLargeFirms >= 20 ? '收紧确认' : credit.sloosTighteningLargeFirms >= 0 ? '温和收紧' : '放松'}）`,
-        credit?.nfci === null || !Number.isFinite(credit?.nfci)
-          ? null
-          : `金融状况指数 (NFCI) ${credit.nfci >= 0 ? '+' : ''}${formatNumber(credit.nfci, 2)}；4w ${formatSignedDecimal(nfci4wChange, 3)}（${text(credit.nfciRegime, credit.nfci > 0 ? '偏紧' : credit.nfci < 0 ? '偏松' : '中性')}，周度更新）`,
-        bdcEtfPrice === null
-          ? null
-          : `BIZD ${formatNumber(bdcEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(bdcEtf4wChange)}（listed BDC proxy）`,
-        pbdcEtfPrice === null
-          ? null
-          : `PBDC ${formatNumber(pbdcEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(pbdcEtf4wChange)}（listed BDC proxy）`,
-        seniorLoanEtfPrice === null
-          ? null
-          : `SRLN ${formatNumber(seniorLoanEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(seniorLoanEtf4wChange)}（senior loan ETF proxy）`,
-        intervalFundNavPrice === null
-          ? null
-          : `${text(privateCreditProxy.intervalFundNavSymbol, 'CCLFX')} NAV ${formatNumber(intervalFundNavPrice, 2)}；4周变化 ${formatRatioAsPercent(intervalFundNav4wChange)}（public interval-fund NAV proxy）`,
-        privateCreditIgOas === null ? null : `IG OAS ${formatNumber(privateCreditIgOas, 2, '%')}；IG-HY ${formatSignedPoints(privateCreditIgMinusHyOas)}（cash-bond proxy）`,
-        cdxHyPrice === null && cdxIgPrice === null
-          ? `CDX/private marks status: HY=${text(privateCreditProxy.cdxHyStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxHy))} / IG=${text(privateCreditProxy.cdxIgStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxIg))} / marks=${text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks))}`
-          : `ICE CDX public settlement: HY ${formatNumber(cdxHyPrice, 4)} / IG ${formatNumber(cdxIgPrice, 4)}；marks=${text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks))}`,
-      ].filter(Boolean),
-      coverageNotes: [
-        ...riskPrivateCreditCoverage,
-        'private credit marks 是边界说明；CCLFX NAV 与 ICE CDX public settlement 不能替代 private marks。',
-      ],
-      missingEvidence: riskPrivateCreditCoverage.length ? [] : ['公开私募信用代理等待刷新。'],
-      counterEvidence: creditCalm ? ['信用和波动率尚未显示系统性扩散。'] : [],
-      explanation: creditCalm
-        ? '信用和波动率尚未显示系统性扩散，金融脆弱性维持观察。'
-        : '需要更细信用和银行压力数据才能提高结论强度。',
-    }),
+    card('B1', 'B1 Energy', modules.energy, dominantKey.includes('energy') ? '能源冲击主导' : '能源压力观察'),
+    card('B2', 'B2 Liquidity', liquidityScore, '流动性边际收紧'),
+    card('B3', 'B3 Credit', creditCalm ? 30 : privateCreditStress ? 55 : modules.banking, creditCalm ? '信用反向证据' : '信用扩散观察'),
+    card('B4', 'B4 Debt', modules.debt, '杠杆稳定'),
+    card('B5', 'B5 Consumer', finite(employment.realAverageHourlyEarningsYoY) !== null ? 55 : modules.inflation, consumerStatus, 55),
+    card('B6', 'B6 Geopolitical', modules.geopolitical, worldState || 'multi_theater'),
   ];
 }
 
@@ -1842,9 +1622,9 @@ function buildKeyChanges(overview, data = {}, healthDashboard = {}) {
   const mainPressure = safeArray(overview.pressures)[0];
   if (mainPressure) {
     changes.push(keyChange(
-      directionType(`${mainPressure.status} ${mainPressure.direction}`),
-      `${mainPressure.title}：${mainPressure.status || UNDECIDED}，${mainPressure.explanation || '等待更多交叉确认。'}`,
-      mainPressure.sourceType || 'pressure-source'
+      directionType(`${mainPressure.status} ${mainPressure.num}`),
+      `${mainPressure.label}：${mainPressure.status || UNDECIDED}`,
+      'PRESSURE SOURCES'
     ));
   }
 
@@ -1857,10 +1637,16 @@ function buildKeyChanges(overview, data = {}, healthDashboard = {}) {
     ));
   }
 
-  const engineCounts = buildEngineCounts(overview.riskEngines);
+  const engineCounts = safeArray(overview.riskEngines).reduce((counts, engine) => {
+    const grade = String(engine?.num || '');
+    if (grade === 'RED') counts.red += 1;
+    else if (grade === 'YEL') counts.yellow += 1;
+    else counts.green += 1;
+    return counts;
+  }, { red: 0, yellow: 0, green: 0 });
   changes.push(keyChange(
-    engineCounts.rising > 0 ? 'up' : engineCounts.gap > 0 ? 'gap' : 'flat',
-    `风险引擎显示 ${engineCounts.rising} 项压力上升 / 主要观察，${engineCounts.counter} 项反向证据，${engineCounts.gap} 项数据不足。`,
+    engineCounts.red > 0 ? 'up' : engineCounts.yellow > 0 ? 'flat' : 'down',
+    `风险引擎显示 ${engineCounts.red} 项 RED、${engineCounts.yellow} 项 YEL、${engineCounts.green} 项 GRN。`,
     'RISK ENGINES'
   ));
 
@@ -2285,133 +2071,6 @@ export function renderMarketTemperatureCard(rootEl, metricsData, judgment = buil
   appendMarketTemperatureBody(rootEl, judgment, metricsData);
 }
 
-function engineTypeClass(judgment) {
-  const identity = `${judgment?.id || ''} ${judgment?.title || ''} ${judgment?.group || ''}`.toLowerCase();
-  if (identity.includes('energy') || identity.includes('inflation') || identity.includes('能源') || identity.includes('通胀')) return 'is-energy';
-  if (identity.includes('rates') || identity.includes('liquidity') || identity.includes('利率') || identity.includes('流动性')) return 'is-rates';
-  if (identity.includes('pricing') || identity.includes('mismatch') || identity.includes('定价') || identity.includes('资产')) return 'is-pricing';
-  if (identity.includes('credit') || identity.includes('fragility') || identity.includes('信用') || identity.includes('脆弱')) return 'is-credit';
-  if (identity.includes('world-order') || identity.includes('world order') || identity.includes('external') || identity.includes('世界秩序')) return 'is-world-order';
-  return 'is-neutral';
-}
-
-function engineStatusClass(judgment) {
-  const status = String(judgment?.status || '');
-  const direction = String(judgment?.direction || '');
-  const sourceType = String(judgment?.sourceType || '');
-  const hasCounter = normalizeEvidenceList(judgment?.counterEvidence).length > 0;
-  const combined = `${status} ${direction} ${sourceType}`;
-  if (combined.includes('数据不足') || combined.includes('等待接入')) return 'is-gap';
-  if (hasCounter || combined.includes('暂未扩散') || combined.includes('相对平稳')) return 'is-counter';
-  if (combined.includes('主要压力') || combined.includes('压力上升') || combined.includes('压力较高')) return 'is-rising';
-  if (combined.includes('观察中')) return 'is-watch';
-  return 'is-neutral';
-}
-
-function engineTypeLabel(judgment) {
-  const className = engineTypeClass(judgment);
-  if (className === 'is-energy') return '能源 / 通胀';
-  if (className === 'is-rates') return '利率 / 流动性';
-  if (className === 'is-pricing') return '定价错配';
-  if (className === 'is-credit') return '信用 / 脆弱性';
-  if (className === 'is-world-order') return '世界秩序';
-  return '风险机制';
-}
-
-function buildEngineCounts(judgments) {
-  const counts = {
-    rising: 0,
-    watch: 0,
-    counter: 0,
-    gap: 0,
-  };
-  safeArray(judgments).forEach((judgment) => {
-    const className = engineStatusClass(judgment);
-    if (className === 'is-rising') counts.rising += 1;
-    else if (className === 'is-counter') counts.counter += 1;
-    else if (className === 'is-gap') counts.gap += 1;
-    else counts.watch += 1;
-  });
-  return counts;
-}
-
-function buildEngineCategorySummary(judgments) {
-  const items = safeArray(judgments);
-  if (!items.length) return '风险引擎数据不足，暂不解释压力传导机制。';
-  const counts = buildEngineCounts(items);
-  const risingTitles = items
-    .filter((judgment) => engineStatusClass(judgment) === 'is-rising')
-    .slice(0, 2)
-    .map((judgment) => `「${judgment.title}」`);
-  const hasMissing = items.some((judgment) => normalizeEvidenceList(judgment.missingEvidence).length);
-  const hasCounter = counts.counter > 0;
-  const lines = ['当前风险引擎用于解释压力如何传导，不等同于交易信号'];
-  if (risingTitles.length) lines.push(`${risingTitles.join('和')}存在观察信号，但仅按已有证据强度表达`);
-  if (hasCounter) lines.push('信用、波动率或扩散不足的反向证据继续保留');
-  if (hasMissing || counts.gap) lines.push('实物端、资金面或外部来源缺口仍需单独展示');
-  return `${lines.join('；')}。`;
-}
-
-function appendEngineCountPill(root, label, value) {
-  const pill = document.createElement('span');
-  pill.className = 'editorial-count-pill editorial-engine-count-pill';
-  appendText(pill, 'span', '', label);
-  appendText(pill, 'strong', '', String(value));
-  root.appendChild(pill);
-}
-
-function appendEditorialEngineSublist(root, label, values, modifier = '') {
-  const items = normalizeEvidenceList(values);
-  if (!items.length) return;
-  const group = document.createElement('div');
-  group.className = `editorial-engine-sublist ${modifier}`.trim();
-  appendText(group, 'span', 'editorial-engine-sublist-label', label);
-  const list = document.createElement('ul');
-  list.className = 'editorial-engine-evidence';
-  items.forEach((item) => appendText(list, 'li', '', stripLabelPrefix(item, label)));
-  group.appendChild(list);
-  root.appendChild(group);
-}
-
-function appendEditorialEngineCard(root, judgment) {
-  const typeClass = engineTypeClass(judgment);
-  const statusClass = engineStatusClass(judgment);
-  const card = document.createElement('article');
-  card.className = `editorial-engine-card ${typeClass} ${statusClass}`;
-  const strip = document.createElement('div');
-  strip.className = 'editorial-engine-card-status-strip';
-  strip.setAttribute('aria-hidden', 'true');
-  card.appendChild(strip);
-
-  const head = document.createElement('div');
-  head.className = 'editorial-engine-card-head';
-  appendText(head, 'span', 'editorial-engine-type', engineTypeLabel(judgment));
-  appendText(head, 'h3', 'editorial-engine-card-title', judgment.title);
-  appendText(head, 'span', 'editorial-engine-badge', judgment.status || UNDECIDED);
-  card.appendChild(head);
-
-  const direction = judgment.direction && judgment.direction !== '方向待确认'
-    ? ` / ${judgment.direction}`
-    : '';
-  appendText(card, 'p', 'editorial-engine-main', `${judgment.status || UNDECIDED}${direction}`);
-  const explanation = judgment.explanation || judgment.conclusion;
-  if (explanation) appendText(card, 'p', 'editorial-engine-explanation', explanation);
-  appendEditorialEngineSublist(card, '关键证据', judgment.evidence, 'is-evidence');
-  appendEditorialEngineSublist(card, '公开代理覆盖', judgment.coverageNotes, 'is-evidence');
-  appendEditorialEngineSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
-  appendEditorialEngineSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
-  appendEditorialEngineSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
-
-  const footer = document.createElement('div');
-  footer.className = 'editorial-engine-footer';
-  if (judgment.confidence && judgment.confidence !== '等待校准') appendText(footer, 'span', '', `证据强度：${judgment.confidence}`);
-  if (judgment.dataCoverage) appendText(footer, 'span', '', `数据覆盖：${stripLabelPrefix(judgment.dataCoverage, '数据覆盖')}`);
-  if (judgment.sourceType) appendText(footer, 'span', '', `来源类型：${judgment.sourceType}`);
-  if (judgment.updatedAt) appendText(footer, 'span', '', `更新：${judgment.updatedAt}`);
-  if (footer.childNodes.length) card.appendChild(footer);
-  root.appendChild(card);
-}
-
 function assessmentCounts(narratives) {
   const counts = {
     strong_confirmation: 0,
@@ -2727,21 +2386,14 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   );
   appendMarketTemperatureBody(temp, overview.marketTemperature, marketPricingMetricsData);
 
-  const engines = appendSection(container, '风险引擎', 'editorial-category editorial-engine-category', 'homepage-risk-engines');
-  appendText(engines, 'p', 'editorial-category-kicker', 'RISK ENGINES');
-  appendText(engines, 'p', 'editorial-category-summary', buildEngineCategorySummary(overview.riskEngines));
-  const engineCounts = buildEngineCounts(overview.riskEngines);
-  const engineCountGrid = document.createElement('div');
-  engineCountGrid.className = 'editorial-category-counts';
-  appendEngineCountPill(engineCountGrid, '压力上升 / 主要观察', engineCounts.rising);
-  appendEngineCountPill(engineCountGrid, '观察中', engineCounts.watch);
-  appendEngineCountPill(engineCountGrid, '反向证据', engineCounts.counter);
-  appendEngineCountPill(engineCountGrid, '数据不足', engineCounts.gap);
-  engines.appendChild(engineCountGrid);
-  const engineGrid = document.createElement('div');
-  engineGrid.className = 'editorial-engine-grid';
-  overview.riskEngines.forEach((item) => appendEditorialEngineCard(engineGrid, item));
-  engines.appendChild(engineGrid);
+  const engines = appendRuntimeBlock(
+    container,
+    'homepage-risk-engines',
+    '风险引擎',
+    'RISK ENGINES · 6 ENGINES + AUXILIARY',
+    'data.modules 6 引擎 + divergenceLayer + privateCreditProxy + worldOrderStress + marketTemperature 等多源派生'
+  );
+  appendMiniGrid(engines, overview.riskEngines);
 
   const cross = appendRuntimeBlock(
     container,

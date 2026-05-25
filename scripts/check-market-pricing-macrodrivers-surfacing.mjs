@@ -43,7 +43,6 @@ function assertProtectedFilesUnchanged() {
 const renderSource = readText(RENDER_PATH);
 const macroDriversSource = sliceFrom(renderSource, 'function buildMacroDrivers', 7600);
 const policySource = sliceFrom(renderSource, "id: 'driver-policy'", 1300);
-const financialFragilitySource = sliceFrom(renderSource, "id: 'engine-financial-fragility'", 1600);
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const macroDrivers = radarData.macroDrivers || {};
 
@@ -58,7 +57,14 @@ assert(policySource && countMatches(policySource, /等待接入/gu) === 0, 'B3 p
 assert(policySource.includes('基于代理信号观察'), 'B3 policy card must show proxy-signal observation status');
 assert(macroDriversSource.includes('onRrp') && macroDriversSource.includes('us10y') && macroDriversSource.includes('dxy'), 'B3 policy card must reference ON RRP, US10Y, and DXY proxy signals');
 
-assert(financialFragilitySource.includes('onRrp') || financialFragilitySource.includes('ON RRP'), 'B4 financial fragility card must reference ON RRP');
+// PR 2b: B4 was renamed from 'engine-financial-fragility' to 'B4 Debt' per contract v3.0
+// sec 8.6 mock spec (6-card mini-grid: B1 Energy / B2 Liquidity / B3 Credit / B4 Debt /
+// B5 Consumer / B6 Geopolitical). Mock does not display evidence detail on mini-cards;
+// ON RRP field consumption is preserved in buildMacroDrivers driver-liquidity node.
+// The macroDriversSource check below preserves the project-constitution protection that
+// ON RRP must surface somewhere in the macro-drivers block.
+assert(macroDriversSource.includes('onRrp') || macroDriversSource.includes('ON RRP'),
+  'ON RRP must surface in macro-drivers block (PR 2b: was previously locked to engine-financial-fragility B4 card; now consumed in driver-liquidity evidence per mock sec 8.6)');
 
 assert(countMatches(renderSource, new RegExp(['fe', 'tch\\('].join(''), 'gu')) === 0, 'renderMacroOverview.js must not add browser data fetches');
 assert(!renderSource.includes(['process', 'env'].join('.')), 'renderMacroOverview.js must not read environment variables');

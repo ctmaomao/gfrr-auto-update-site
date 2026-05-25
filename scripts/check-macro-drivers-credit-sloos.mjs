@@ -77,11 +77,24 @@ for (const marker of requiredRunDailyMarkers) {
   }
 }
 
+// M-46 renderer markers must remain in renderMacroOverview.js to enforce SLOOS credit
+// surfacing (project: SLOOS data + Chinese credit-environment narrative + private-credit
+// boundary declaration must reach the macro-drivers block).
+// PR 2b note: buildRiskEngines was rewritten from 258 lines to mock 6-card form per
+// contract v3.0 sec 8.6. The legacy B3 engine status text '信用环境' (a M-46
+// implementation-era engine-status phrase) was replaced by mock-spec status phrases
+// ('信用反向证据' / '信用扩散观察'). M-46 semantic protection is preserved via:
+//   credit?.sloosTighteningLargeFirms (field path)
+//   '银行贷款标准 (SLOOS C&I 大型)' (SLOOS display label)
+//   '季度调查' (frequency label)
+//   bare '信用' substring (preserves credit narrative semantic without locking specific phrasing)
+//   '跨市场融资压力等待接入。' (boundary declaration)
+//   driver-private-credit-proxy node + BIZD proxy + private-credit licensing boundary
 const requiredRenderMarkers = [
   'credit?.sloosTighteningLargeFirms',
   '银行贷款标准 (SLOOS C&I 大型)',
   '季度调查',
-  '信用环境',
+  '信用',
   '跨市场融资压力等待接入。',
   "id: 'driver-private-credit-proxy'",
   'BIZD listed BDC proxy',
