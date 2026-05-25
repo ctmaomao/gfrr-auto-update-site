@@ -1,6 +1,6 @@
-import { $ } from './config.js?v=28.0M-94';
-import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-94';
-import { formatFiniteNumber } from './format.js?v=28.0M-94';
+import { $ } from './config.js?v=28.0M-95';
+import { ASSESSMENT_LABELS, buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=28.0M-95';
+import { formatFiniteNumber } from './format.js?v=28.0M-95';
 
 const WAITING = '等待接入';
 const INSUFFICIENT = '数据不足';
@@ -1237,8 +1237,6 @@ function assessmentCounts(narratives) {
 }
 
 function appendConsistencyBlock(root, matrix) {
-  const body = document.createElement('div');
-  body.className = 'runtime-block-body';
   const block = document.createElement('div');
   block.className = 'consistency-block is-primary';
   const score = finite(matrix?.consistencyScore);
@@ -1263,8 +1261,7 @@ function appendConsistencyBlock(root, matrix) {
     matrix?.oneLineSummary || '交叉验证矩阵等待数据。',
     `${counts.strong_confirmation} strong_confirmation / ${counts.contradiction} contradiction / ${counts.insufficient_data} insufficient_data`,
   ].join(' · '));
-  body.appendChild(block);
-  root.appendChild(body);
+  root.appendChild(block);
 }
 
 function appendNarrativeItem(root, item) {

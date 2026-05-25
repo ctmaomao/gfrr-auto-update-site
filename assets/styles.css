@@ -2779,8 +2779,15 @@ main > .editorial-appendix-divider {
   gap: 22px;
 }
 
+#macro-risk-overview {
+  padding-inline: clamp(28px, 5vw, 64px);
+  line-height: 1.55;
+}
+
 .editorial-big-number {
   background: var(--paper-ink);
+  border: 0;
+  border-radius: 0;
   color: var(--paper-bg);
   padding: 32px;
   display: grid;
@@ -3325,6 +3332,14 @@ main > .editorial-appendix-divider {
   color: var(--paper-bg);
 }
 
+.wow-section .wow-item {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
 .wow-section .wow-label {
   margin-bottom: 14px;
   font-family: var(--font-mono);
@@ -3380,6 +3395,7 @@ main > .editorial-appendix-divider {
 }
 
 .wow-item .wow-text {
+  color: var(--paper-bg);
   font-family: var(--font-serif);
   font-size: 13.5px;
   line-height: 1.7;
@@ -3388,6 +3404,7 @@ main > .editorial-appendix-divider {
 .wow-item .wow-source {
   display: block;
   margin-top: 6px;
+  color: var(--paper-bg);
   font-family: var(--font-mono);
   font-size: 10px;
   opacity: 0.65;
