@@ -21,7 +21,6 @@ function formatValue(value) {
 
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
-const renderMacroText = readText('scripts/modules/renderMacroOverview.js');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 const dataSourcesText = readText('docs/DATA_SOURCES.md');
 const agentsText = readText('AGENTS.md');
@@ -158,19 +157,16 @@ for (const marker of requiredRunDailyMarkers) {
   }
 }
 
-const requiredRenderMarkers = [
-  "id: 'driver-employment'",
-  '就业质量与广度 LABOR QUALITY',
-  'JOLTS:',
-  '平均时薪',
-  '行业就业扩散',
-  'Claims 是周频裁员压力代理'
-];
-for (const marker of requiredRenderMarkers) {
-  if (!renderMacroText.includes(marker)) {
-    fail(`renderMacroOverview missing M-68 marker: ${marker}`);
-  }
-}
+// PR 2b: M-68/M-73 employment renderer markers in renderMacroOverview.js were removed in
+// Stage 8 per contract v3.0 sec 8.4 (buildMacroDrivers simplified to mock 4-pillar object;
+// driver-employment sub-module's detailed evidence deleted).
+// Employment field consumption preserved in renderThematicCards.js c4-employment-agg card
+// (consumes macroDrivers.employment). Data field validation + 13 runDailyMarkers +
+// 13 contractMarkers + 6 sourceMarkers + AGENTS marker all preserved.
+// P2-10 reconcat regression guard (was checking renderMacroText for new Date(`${iso}T00:00:00Z`)
+// bug pattern) is also removed: buildMacroDrivers 4-pillar no longer performs date
+// concatenation; if employment date rendering bugs re-emerge they will be caught in
+// renderThematicCards.js via separate enforcement (or future check additions).
 
 const requiredContractMarkers = [
   'macroDrivers.employment',
@@ -211,17 +207,6 @@ if (!agentsText.includes('macroDrivers.employment')
     || !agentsText.includes('FRED CES0500000003 平均时薪')
     || !agentsText.includes('sourceStatus.{icsa,ccsa,jtsjol,ahe,u6,industryPayroll}')) {
   fail('AGENTS.md missing M-73 employment boundary note');
-}
-
-// P2-10 回归守护:vintage formatter 不得对已含 T 后缀的 ISO 字符串再拼一次 T00:00:00Z
-// (否则 new Date("...T00:00:00ZT00:00:00Z") = Invalid Date → "undefined NaN" / "QNaN NaN")
-const reconcatBugPattern = /new Date\(`\$\{[^}]+\}T00:00:00Z`\)/g;
-const reconcatHits = renderMacroText.match(reconcatBugPattern);
-if (reconcatHits && reconcatHits.length > 0) {
-  fail(
-    `renderMacroOverview has ${reconcatHits.length} bad date concat(s) like new Date(\`\${iso}T00:00:00Z\`); ` +
-    'drop the T suffix concat — inputs are already full ISO datetime strings (P2-10 regression guard)'
-  );
 }
 
 if (errors.length > 0) {

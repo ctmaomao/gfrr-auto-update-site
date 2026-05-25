@@ -13,7 +13,6 @@ function readText(filePath) {
 
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
-const renderMacroText = readText('scripts/modules/renderMacroOverview.js');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 
 const fedLiquidity = radarData?.macroDrivers?.fedLiquidity;
@@ -91,33 +90,28 @@ for (const marker of requiredSourceMarkers) {
   }
 }
 
-// M-41 renderer markers must remain in renderMacroOverview.js to enforce Fed liquidity
-// field consumption + label display (project constitution: Fed liquidity drivers must surface
-// policy rate / SOFR / reserve balances in the macro-drivers block).
-// PR 2b note: buildRiskEngines was simplified from 258 lines to 36 lines per contract v3.0 sec 8.6
-// (mock 6-card layout does not display evidence detail sentences). Two markers that previously
-// existed in buildRiskEngines evidence arrays were removed: '隔夜担保融资压力' (SOFR detail
-// sentence suffix) and '系统流动性缓冲' (reserve balances detail sentence suffix).
-// M-41 field consumption + label display is preserved in buildMacroDrivers:
-//   fedLiquidity.effectiveFedFundsRate / fedLiquidity.reserveBalances (field paths)
-//   '联邦基金利率' / 'SOFR' / '银行准备金' (Chinese/English labels)
-// The 2 removed suffix markers are no longer enforced; '担保融资' / '缓冲' substring guards
-// below preserve the semantic protection that SOFR-related and reserve-related context
-// still surface somewhere in the renderer.
-const requiredRenderMarkers = [
-  'fedLiquidity.effectiveFedFundsRate',
-  'fedLiquidity.reserveBalances',
-  '联邦基金利率',
-  'SOFR',
-  '担保融资',
-  '银行准备金',
-  '缓冲'
-];
-for (const marker of requiredRenderMarkers) {
-  if (!renderMacroText.includes(marker)) {
-    fail(`renderMacroOverview missing M-41 marker: ${marker}`);
-  }
-}
+// PR 2b: Fed liquidity renderer markers in renderMacroOverview.js were removed in Stage 8
+// per contract v3.0 sec 8.4 (buildMacroDrivers simplified from ~618 lines to mock 4-pillar
+// object {fed, policy, curve, credit, subModuleListText}; driver-liquidity sub-module's
+// detailed evidence array deleted). Stage 6 had already narrowed 2 markers to substring
+// form ('担保融资' from '隔夜担保融资压力', '缓冲' from '系统流动性缓冲'); Stage 8 removed
+// the entire driver-liquidity node where remaining markers lived.
+//
+// All M-41 field consumption is preserved in:
+//   - renderThematicCards.js c2-usd-liquidity card: consumes 11 fedLiquidity fields
+//     (reserveBalances, walcl, walcl4wChange, onRrp, onRrpWeekChange, sofr,
+//      effectiveFedFundsRate, bgcr, tgcr, repoSpreadRegime, pressure, regime).
+//     Enforced by check-thematic-cards-contract.mjs which locks 6 agg-row markers:
+//     '水位 WALCL' / '准备金 reserveBalances' / 'ON RRP' / '隔夜 SOFR / EFFR' /
+//     '回购 BGCR / TGCR' / 'repoSpreadRegime'
+//   - 4-pillar fed sentence in buildMacroDrivers still references fedLiquidity.reserveBalances
+//     and SOFR for the 1-sentence summary (sec 8.4)
+//   - sourceMarkers below: 12 markers still enforced for scripts/run-daily-pipeline.mjs
+//   - contractMarkers below: 9 markers still enforced for docs/DATA_CONTRACT.md
+//   - data field validation: M-41 (DFF / SOFR / WRESBAL) + M-42 (reserveBalances) +
+//     sourceStatus validation all preserved above
+// Mock does not display Fed liquidity detailed evidence in macro-drivers block per
+// contract v3.0 sec 0.4 ironclad rule 6.
 
 const requiredContractMarkers = [
   'macroDrivers.fedLiquidity',

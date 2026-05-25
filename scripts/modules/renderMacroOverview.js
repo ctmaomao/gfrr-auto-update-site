@@ -678,618 +678,66 @@ function buildSignalLayers(data, marketPricingMetricsData = null, crossValidatio
 function buildMacroDrivers(data) {
   const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
   const macroDrivers = isPlainObject(data?.macroDrivers) ? data.macroDrivers : {};
-  const consumer = isPlainObject(macroDrivers.consumer) ? macroDrivers.consumer : {};
-  const employment = isPlainObject(macroDrivers.employment) ? macroDrivers.employment : {};
-  const consumerRetail = isPlainObject(macroDrivers.consumerRetail) ? macroDrivers.consumerRetail : {};
-  const commercialRealEstate = isPlainObject(macroDrivers.commercialRealEstate) ? macroDrivers.commercialRealEstate : {};
-  const shippingFreight = isPlainObject(macroDrivers.shippingFreight) ? macroDrivers.shippingFreight : {};
-  const policyExpectations = isPlainObject(macroDrivers.policyExpectations) ? macroDrivers.policyExpectations : {};
-  const privateCreditProxy = isPlainObject(macroDrivers.privateCreditProxy) ? macroDrivers.privateCreditProxy : {};
   const fedLiquidity = isPlainObject(macroDrivers.fedLiquidity) ? macroDrivers.fedLiquidity : {};
+  const policyExpectations = isPlainObject(macroDrivers.policyExpectations) ? macroDrivers.policyExpectations : {};
   const curve = isPlainObject(macroDrivers.curve) ? macroDrivers.curve : {};
   const credit = isPlainObject(macroDrivers.credit) ? macroDrivers.credit : {};
-  const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
-  const onRrpSignal = findActiveSignal(macroDrivers.activeSignals, 'onRrpCritical');
-  const hyOas = finite(inputs.hyOas);
-  const igOas = finite(credit.igOas);
-  const igHyRatio = finite(credit.igHyRatio);
-  const t10y2y = finite(curve.t10y2y);
+
   const onRrp = finite(fedLiquidity.onRrp);
-  const us10y = finite(inputs.us10y);
-  const dxy = finite(inputs.dxy);
-  const effectiveFedFundsRate = finite(fedLiquidity.effectiveFedFundsRate);
-  const sofr = finite(fedLiquidity.sofr);
   const walcl4wChange = finite(fedLiquidity.walcl4wChange);
   const reserveBalances = finite(fedLiquidity.reserveBalances);
   const reserveBalances4wChange = finite(fedLiquidity.reserveBalances4wChange);
-  const initialClaims = finite(employment.initialClaims);
-  const initialClaims4wAverage = finite(employment.initialClaims4wAverage);
-  const initialClaims4wChange = finite(employment.initialClaims4wChange);
-  const continuingClaims = finite(employment.continuingClaims);
-  const continuingClaims4wAverage = finite(employment.continuingClaims4wAverage);
-  const joltsOpenings = finite(employment.joltsOpenings);
-  const joltsOpeningsYoY = finite(employment.joltsOpeningsYoY);
-  const claimsRegime = text(employment.claimsRegime, '未知');
-  const joltsRegime = text(employment.joltsRegime, '未知');
-  const averageHourlyEarnings = finite(employment.averageHourlyEarnings);
-  const averageHourlyEarningsYoY = finite(employment.averageHourlyEarningsYoY);
-  const u6Rate = finite(employment.u6Rate);
-  const u6Rate3mChange = finite(employment.u6Rate3mChange);
-  const industryPayrollDiffusionPct = finite(employment.industryPayrollDiffusionPct);
-  const industryPayrollPositiveCount = finite(employment.industryPayrollPositiveCount);
-  const industryPayrollSeriesCount = finite(employment.industryPayrollSeriesCount);
-  const laborQualityRegime = text(employment.laborQualityRegime, '未知');
-  const industryDiffusionRegime = text(employment.industryDiffusionRegime, '未知');
-  const employmentQualityEvidenceCount = [
-    averageHourlyEarnings,
-    u6Rate,
-    industryPayrollDiffusionPct
-  ].filter((value) => value !== null).length;
-  const cartsNominal = finite(consumerRetail.cartsNominal);
-  const cartsNominalYoY = finite(consumerRetail.cartsNominalYoY);
-  const cartsReal = finite(consumerRetail.cartsReal);
-  const cartsRealYoY = finite(consumerRetail.cartsRealYoY);
-  const retailSegmentDiffusionPct = finite(consumerRetail.segmentDiffusionPct);
-  const retailSegmentPositiveCount = finite(consumerRetail.segmentPositiveCount);
-  const retailSegmentSeriesCount = finite(consumerRetail.segmentSeriesCount);
-  const strongestRetailSegment = isPlainObject(consumerRetail.strongestSegment) ? consumerRetail.strongestSegment : null;
-  const weakestRetailSegment = isPlainObject(consumerRetail.weakestSegment) ? consumerRetail.weakestSegment : null;
-  const retailSegmentLines = formatRetailSegmentLines(consumerRetail.retailSegments);
-  const bofaCardSpendingYoY = finite(consumerRetail.bofaCardSpendingYoY);
-  const bofaCardSpendingPriorYoY = finite(consumerRetail.bofaCardSpendingPriorYoY);
-  const bofaCardSpendingExGasYoY = finite(consumerRetail.bofaCardSpendingExGasYoY);
-  const redbookRetailSalesYoY = finite(consumerRetail.redbookRetailSalesYoY);
-  const redbookHistoricalAverageYoY = finite(consumerRetail.redbookHistoricalAverageYoY);
-  const retailRegime = text(consumerRetail.retailRegime, '未知');
-  const creDelinquencyRate = finite(commercialRealEstate.creDelinquencyRate);
-  const creDelinquencyRateQoQChange = finite(commercialRealEstate.creDelinquencyRateQoQChange);
-  const creChargeOffRate = finite(commercialRealEstate.creChargeOffRate);
-  const creChargeOffRateQoQChange = finite(commercialRealEstate.creChargeOffRateQoQChange);
-  const sloosCreNonfarmNonresidentialTightening = finite(commercialRealEstate.sloosCreNonfarmNonresidentialTightening);
-  const sloosCreConstructionTightening = finite(commercialRealEstate.sloosCreConstructionTightening);
-  const sloosCreMultifamilyTightening = finite(commercialRealEstate.sloosCreMultifamilyTightening);
-  const sloosCreTighteningMax = finite(commercialRealEstate.sloosCreTighteningMax);
-  const creStressRegime = text(commercialRealEstate.creStressRegime, '未知');
-  const reitEtfPrice = finite(commercialRealEstate.reitEtfPrice);
-  const reitEtf4wChange = finite(commercialRealEstate.reitEtf4wChange);
-  const mortgageReitEtfPrice = finite(commercialRealEstate.mortgageReitEtfPrice);
-  const mortgageReitEtf4wChange = finite(commercialRealEstate.mortgageReitEtf4wChange);
-  const cmbsEtfPrice = finite(commercialRealEstate.cmbsEtfPrice);
-  const cmbsEtf4wChange = finite(commercialRealEstate.cmbsEtf4wChange);
-  const creLoanBalance = finite(commercialRealEstate.creLoanBalance);
-  const creLoanBalance4wChange = finite(commercialRealEstate.creLoanBalance4wChange);
-  const creLoanBalanceYoY = finite(commercialRealEstate.creLoanBalanceYoY);
-  const creLoanBalanceStatus = text(commercialRealEstate.creLoanBalanceStatus, formatSourceStatus(commercialRealEstate.sourceStatus?.creLoanBalance));
-  const crePublicMarketProxyRegime = text(commercialRealEstate.crePublicMarketProxyRegime, '未知');
-  const nonPublicCreStatus = text(commercialRealEstate.nonPublicCreStatus, formatSourceStatus(commercialRealEstate.sourceStatus?.nonPublicCre));
-  const dirtyTankerIndex = finite(shippingFreight.balticDirtyTankerIndex);
-  const dirtyTankerChange = finite(shippingFreight.balticDirtyTankerDailyChangePct);
-  const cleanTankerIndex = finite(shippingFreight.balticCleanTankerIndex);
-  const cleanTankerChange = finite(shippingFreight.balticCleanTankerDailyChangePct);
-  const dryBulkIndex = finite(shippingFreight.balticDryIndex);
-  const dryBulkChange = finite(shippingFreight.balticDryDailyChangePct);
-  const targetLower = finite(policyExpectations.targetLower);
-  const targetUpper = finite(policyExpectations.targetUpper);
-  const targetMid = finite(policyExpectations.targetMid);
-  const fedFundsFutureFrontPrice = finite(policyExpectations.fedFundsFutureFrontPrice);
-  const fedFundsFutureImpliedRate = finite(policyExpectations.fedFundsFutureImpliedRate);
+  const effectiveFedFundsRate = finite(fedLiquidity.effectiveFedFundsRate);
+  const sofr = finite(fedLiquidity.sofr);
+  const bgcrSofrSpread = finite(fedLiquidity.bgcrSofrSpread);
   const futureMinusTargetMid = finite(policyExpectations.futureMinusTargetMid);
-  const fedFundsFuturesCurve = isPlainObject(policyExpectations.fedFundsFuturesCurve) ? policyExpectations.fedFundsFuturesCurve : {};
-  const fedFundsFuturesCurveContracts = safeArray(fedFundsFuturesCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 4)
-    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.impliedRate, 2, '%')}`);
-  const sofrFuturesCurve = isPlainObject(policyExpectations.sofrFuturesCurve) ? policyExpectations.sofrFuturesCurve : {};
-  const sofrFuturesCurveContracts = safeArray(sofrFuturesCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 4)
-    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.impliedRate, 2, '%')}`);
-  const oisForwardCurve = isPlainObject(policyExpectations.oisForwardCurve) ? policyExpectations.oisForwardCurve : {};
-  const oisForwardCurveTenors = safeArray(oisForwardCurve.tenors)
-    .filter(isPlainObject)
-    .filter((item) => ['1Y', '2Y', '5Y', '10Y'].includes(text(item.tenor, '')))
-    .map((item) => `${text(item.tenor, '--')} ${formatNumber(item.rate, 2, '%')}`);
-  const dotPlotMedianCurrentYear = finite(policyExpectations.dotPlotMedianCurrentYear);
-  const dotPlotMedianNextYear = finite(policyExpectations.dotPlotMedianNextYear);
-  const dotPlotMedianTwoYearsOut = finite(policyExpectations.dotPlotMedianTwoYearsOut);
-  const dotPlotMedianLongerRun = finite(policyExpectations.dotPlotMedianLongerRun);
-  const hawkishTermCount = finite(policyExpectations.hawkishTermCount);
-  const dovishTermCount = finite(policyExpectations.dovishTermCount);
-  const minutesHawkishTermCount = finite(policyExpectations.minutesHawkishTermCount);
-  const minutesDovishTermCount = finite(policyExpectations.minutesDovishTermCount);
-  const policyTone = text(policyExpectations.policyTone, '未知');
-  const minutesPolicyTone = text(policyExpectations.minutesPolicyTone, '未知');
-  const policyExpectationRegime = text(policyExpectations.policyExpectationRegime, '未知');
-  const bdcEtfPrice = finite(privateCreditProxy.bdcEtfPrice);
-  const bdcEtf4wChange = finite(privateCreditProxy.bdcEtf4wChange);
-  const pbdcEtfPrice = finite(privateCreditProxy.pbdcEtfPrice);
-  const pbdcEtf4wChange = finite(privateCreditProxy.pbdcEtf4wChange);
-  const seniorLoanEtfPrice = finite(privateCreditProxy.seniorLoanEtfPrice);
-  const seniorLoanEtf4wChange = finite(privateCreditProxy.seniorLoanEtf4wChange);
-  const intervalFundNavPrice = finite(privateCreditProxy.intervalFundNavPrice);
-  const intervalFundNav4wChange = finite(privateCreditProxy.intervalFundNav4wChange);
-  const intervalFundNavStatus = text(privateCreditProxy.intervalFundNavStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.intervalFundNav));
-  const privateCreditIgOas = finite(privateCreditProxy.igOas);
-  const privateCreditIgMinusHyOas = finite(privateCreditProxy.igMinusHyOas);
-  const cdxHyPrice = finite(privateCreditProxy.cdxHyPrice);
-  const cdxIgPrice = finite(privateCreditProxy.cdxIgPrice);
-  const cdxHyStatus = text(privateCreditProxy.cdxHyStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxHy));
-  const cdxIgStatus = text(privateCreditProxy.cdxIgStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.cdxIg));
-  const privateCreditMarksStatus = text(privateCreditProxy.privateCreditMarksStatus, formatSourceStatus(privateCreditProxy.sourceStatus?.privateCreditMarks));
-  const bgcr = finite(fedLiquidity.bgcr);
-  const tgcr = finite(fedLiquidity.tgcr);
-  const tgcrSofrSpread = finite(fedLiquidity.tgcrSofrSpread);
-  const igOas1dChange = finite(credit.igOas1dChange);
-  const sloosTighteningSmallFirms = finite(credit.sloosTighteningSmallFirms);
-  const sloosTighteningLargeQoQ = finite(credit.sloosTighteningLargeQoQ);
-  const sloosTighteningSmallQoQ = finite(credit.sloosTighteningSmallQoQ);
-  const nfci4wChange = finite(credit.nfci4wChange);
-  const eiaBrentSpotProxy = isPlainObject(brentLayer.eiaBrentSpotProxy) ? brentLayer.eiaBrentSpotProxy : {};
-  const eiaBrentSpotPrice = finite(eiaBrentSpotProxy.price);
-  const eiaBrentSpotDailyChange = finite(eiaBrentSpotProxy.dailyChange);
-  const ulsdPrice = finite(brentLayer.ulsdPrice);
-  const ulsd4wChange = finite(brentLayer.ulsd4wChange);
-  const brentFuturesCurve = isPlainObject(brentLayer.futuresCurve) ? brentLayer.futuresCurve : {};
-  const brentFuturesCurveContracts = safeArray(brentFuturesCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 4)
-    .map((contract) => `${text(contract.contract, '--')}(${formatWeekVintage(contract.lastTrade)})`);
-  const brentFuturesPriceCurve = isPlainObject(brentLayer.futuresPriceCurve) ? brentLayer.futuresPriceCurve : {};
-  const brentFuturesPriceCurveContracts = safeArray(brentFuturesPriceCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 5)
-    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.price, 2)}`);
-  const brentIceFuturesPriceCurve = isPlainObject(brentLayer.iceFuturesPriceCurve) ? brentLayer.iceFuturesPriceCurve : {};
-  const brentIceFuturesPriceCurveContracts = safeArray(brentIceFuturesPriceCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 5)
-    .map((contract) => `${text(contract.contract, '--')} ${formatNumber(contract.price, 2)}`);
-  const vix = finite(inputs.vix);
-  const creditCalm = hyOas !== null && hyOas < 4 && vix !== null && vix < 22;
-  const policyProxyEvidence = [
-    onRrp === null ? null : `ON RRP ${formatUsdTrillions(onRrp)}${onRrpAnnotation(onRrpSignal)} — 流动性紧`,
-    us10y === null ? null : `10年期 ${formatNumber(us10y, 2, '%')} — 长端利率压力`,
-    dxy === null ? null : `广义美元 ${formatNumber(dxy, 2)} — 美元强势`,
-    effectiveFedFundsRate === null ? null : `联邦基金利率 ${formatNumber(effectiveFedFundsRate, 2, '%')} — 政策利率`,
-    sofr === null ? null : `SOFR ${formatNumber(sofr, 2, '%')} — 隔夜担保融资`,
-    targetMid === null ? null : `Fed target range ${formatRateRange(targetLower, targetUpper)}；midpoint ${formatNumber(targetMid, 3, '%')}`,
-    fedFundsFutureImpliedRate === null ? null : `ZQ front price ${formatNumber(fedFundsFutureFrontPrice, 3)}；implied ${formatNumber(fedFundsFutureImpliedRate, 2, '%')}；相对目标中点 ${formatSignedPoints(futureMinusTargetMid)}（${policyExpectationRegime}）`,
-    fedFundsFuturesCurveContracts.length
-      ? `ZQ monthly futures curve proxy: ${fedFundsFuturesCurveContracts.join(' / ')}；front-back ${formatSignedPoints(fedFundsFuturesCurve.frontMinusBack)}；status=${text(fedFundsFuturesCurve.curveStatus, 'missing')}`
-      : null,
-    sofrFuturesCurveContracts.length
-      ? `SR3 SOFR futures proxy: ${sofrFuturesCurveContracts.join(' / ')}；front-back ${formatSignedPoints(sofrFuturesCurve.frontMinusBack)}；status=${text(sofrFuturesCurve.curveStatus, 'missing')}`
-      : null,
-    oisForwardCurveTenors.length
-      ? `CheckMySwap USD OIS public curve: ${oisForwardCurveTenors.join(' / ')}；10Y-2Y ${formatSignedPoints(oisForwardCurve.tenMinusTwo)}；status=${text(oisForwardCurve.curveStatus, 'missing')}`
-      : null,
-    dotPlotMedianCurrentYear === null ? null : `SEP ${formatWeekVintage(policyExpectations.sepProjectionDate)} federal funds median: current ${formatNumber(dotPlotMedianCurrentYear, 2, '%')} / next ${formatNumber(dotPlotMedianNextYear, 2, '%')} / two-year ${formatNumber(dotPlotMedianTwoYearsOut, 2, '%')} / longer-run ${formatNumber(dotPlotMedianLongerRun, 2, '%')} (${formatUrlReference(policyExpectations.sepUrl)})`,
-    policyTone === '未知' ? null : `FOMC ${formatWeekVintage(policyExpectations.statementDate)} statement tone: ${policyTone}；hawkish ${formatNumber(hawkishTermCount, 0)} / dovish ${formatNumber(dovishTermCount, 0)} (${formatUrlReference(policyExpectations.statementUrl)})`,
-    minutesPolicyTone === '未知' ? null : `FOMC minutes ${formatWeekVintage(policyExpectations.minutesDate)} NLP tone: ${minutesPolicyTone}；hawkish ${formatNumber(minutesHawkishTermCount, 0)} / dovish ${formatNumber(minutesDovishTermCount, 0)} (${formatUrlReference(policyExpectations.minutesUrl)})`,
-    isPlainObject(policyExpectations.minutesTopicCounts)
-      ? `minutes topics: inflation=${formatNumber(policyExpectations.minutesTopicCounts.inflation, 0)} / labor=${formatNumber(policyExpectations.minutesTopicCounts.laborMarket, 0)} / financial=${formatNumber(policyExpectations.minutesTopicCounts.financialConditions, 0)} / risks=${formatNumber(policyExpectations.minutesTopicCounts.risks, 0)}`
-      : null,
-    formatSourceStatusMap(policyExpectations.sourceStatus, [['targetRange', 'target'], ['fedFundsFuture', 'ZQ'], ['fedFundsFuturesCurve', 'ZQ curve'], ['sofrFuturesCurve', 'SR3 SOFR futures'], ['sepDotPlot', 'SEP'], ['policyStatement', 'statement'], ['fomcMinutes', 'minutes'], ['oisForward', 'CheckMySwap OIS']]),
-  ].filter(Boolean);
-  const hasPolicyProxy = policyProxyEvidence.length > 1;
-  const consumerPublicCoverage = [
-    finite(consumer.umichSentiment) !== null ? 'UMCSENT public sentiment' : null,
-    cartsNominal !== null ? 'Chicago Fed CARTS nominal nowcast' : null,
-    cartsReal !== null ? 'Chicago Fed CARTSR real nowcast' : null,
-    retailSegmentDiffusionPct !== null ? 'MRTS 13-segment retail basket' : null,
-    bofaCardSpendingYoY !== null || bofaCardSpendingExGasYoY !== null ? 'BoA Consumer Checkpoint public summary' : null,
-    redbookRetailSalesYoY !== null ? 'Redbook public HTML summary' : null,
-  ].filter(Boolean);
-  const employmentPublicCoverage = [
-    initialClaims !== null ? 'ICSA weekly claims' : null,
-    continuingClaims !== null ? 'CCSA continuing claims' : null,
-    joltsOpenings !== null ? 'JOLTS openings' : null,
-    averageHourlyEarnings !== null ? 'AHE wage growth proxy' : null,
-    u6Rate !== null ? 'U-6 labor underutilization' : null,
-    industryPayrollDiffusionPct !== null ? 'industry payroll diffusion basket' : null,
-  ].filter(Boolean);
-  const crePublicCoverage = [
-    creDelinquencyRate !== null ? 'FRED CRE delinquency' : null,
-    creChargeOffRate !== null ? 'FRED CRE charge-off' : null,
-    sloosCreTighteningMax !== null ? 'SLOOS CRE lending standards' : null,
-    reitEtfPrice !== null ? 'VNQ public REIT proxy' : null,
-    mortgageReitEtfPrice !== null ? 'REM mortgage REIT proxy' : null,
-    cmbsEtfPrice !== null ? 'CMBS ETF public proxy' : null,
-    creLoanBalance !== null ? 'FRED aggregate CRE loan balance' : null,
-  ].filter(Boolean);
-  const privateCreditPublicCoverage = [
-    bdcEtfPrice !== null ? 'BIZD listed BDC proxy' : null,
-    pbdcEtfPrice !== null ? 'PBDC listed BDC proxy' : null,
-    seniorLoanEtfPrice !== null ? 'SRLN senior loan proxy' : null,
-    intervalFundNavPrice !== null ? 'CCLFX public interval-fund NAV proxy' : null,
-    hyOas !== null ? 'HY OAS cash-bond proxy' : null,
-    privateCreditIgOas !== null ? 'IG OAS cash-bond proxy' : null,
-    cdxHyPrice !== null ? 'ICE CDX HY public settlement' : null,
-    cdxIgPrice !== null ? 'ICE CDX IG public settlement' : null,
-  ].filter(Boolean);
-  const inflationPublicCoverage = [
-    eiaBrentSpotPrice !== null ? 'EIA Brent Spot Price FOB public proxy' : null,
-    ulsdPrice !== null ? 'ULSD public refined-products proxy' : null,
-    brentLayer?.crackSpread === null || !Number.isFinite(brentLayer?.crackSpread) ? null : 'diesel crack spread proxy',
-    brentIceFuturesPriceCurveContracts.length ? 'ICE delayed Brent futures curve' : null,
-    brentFuturesPriceCurveContracts.length ? 'Yahoo Brent priced futures proxy' : null,
-  ].filter(Boolean);
-  const shippingPublicCoverage = [
-    dirtyTankerIndex !== null ? 'StockQ BDTI dirty tanker' : null,
-    cleanTankerIndex !== null ? 'StockQ BCTI clean tanker' : null,
-    dryBulkIndex !== null ? 'StockQ BDI dry bulk' : null,
-  ].filter(Boolean);
-  const liquidityPublicCoverage = [
-    onRrp !== null ? 'ON RRP' : null,
-    bgcr !== null ? 'NY Fed BGCR' : null,
-    tgcr !== null ? 'NY Fed TGCR' : null,
-    sofr !== null ? 'SOFR' : null,
-    reserveBalances !== null ? 'reserve balances' : null,
-    credit?.nfci === null || !Number.isFinite(credit?.nfci) ? null : 'NFCI',
-    sloosTighteningSmallFirms !== null ? 'SLOOS small firms' : null,
-  ].filter(Boolean);
-  const policyPublicCoverage = [
-    targetMid !== null ? 'Fed target range' : null,
-    fedFundsFutureImpliedRate !== null ? 'ZQ front Fed funds future proxy' : null,
-    fedFundsFuturesCurveContracts.length ? 'ZQ monthly Fed funds futures curve proxy' : null,
-    sofrFuturesCurveContracts.length ? 'SR3 SOFR futures curve proxy' : null,
-    oisForwardCurveTenors.length ? 'CheckMySwap public OIS curve' : null,
-    dotPlotMedianCurrentYear !== null ? 'Fed SEP dot plot medians' : null,
-    policyTone !== '未知' ? 'FOMC statement keyword tone' : null,
-    minutesPolicyTone !== '未知' ? 'FOMC minutes keyword tone' : null,
-  ].filter(Boolean);
+  const fedFundsFutureImpliedRate = finite(policyExpectations.fedFundsFutureImpliedRate);
+  const targetMid = finite(policyExpectations.targetMid);
+  const t10y2y = finite(curve.t10y2y);
+  const t10y2yWeekChange = finite(curve.t10y2yWeekChange);
+  const hyOas = finite(credit.hyOas ?? inputs.hyOas);
+  const igOas = finite(credit.igOas);
+  const nfci = finite(credit.nfci);
+  const sloosLarge = finite(credit.sloosTighteningLargeFirms);
+  const sloosSmall = finite(credit.sloosTighteningSmallFirms);
+  const sloosMax = [sloosLarge, sloosSmall].filter((value) => value !== null).reduce((max, value) => Math.max(max, value), null);
 
-  return [
-    createJudgment({
-      id: 'driver-growth',
-      title: '增长',
-      group: 'macro-driver',
-      status: finite(consumer.umichSentiment) === null ? WAITING : '慢变量观察中',
-      direction: directionFromDelta(consumer.threeMonthChange),
-      confidence: finite(consumer.umichSentiment) === null ? '偏低' : '中等',
-      dataCoverage: consumerPublicCoverage.length ? '数据覆盖：公开消费代理已覆盖' : '数据覆盖：关键数据不足',
-      evidence: [
-        finite(consumer.umichSentiment) === null
-          ? '消费者信心数据不足。'
-          : `UMCSENT ${formatNumber(consumer.umichSentiment, 1)}；三个月变化 ${formatNumber(consumer.threeMonthChange, 1)}`,
-        consumer.ismManufacturingPmi === null || !Number.isFinite(consumer.ismManufacturingPmi)
-          ? null
-          : `ISM 制造业 PMI ${formatNumber(consumer.ismManufacturingPmi, 1)} — ${consumer.ismManufacturingPmi >= 50 ? '扩张区间' : '收缩区间'}；3个月变化 ${formatNumber(consumer.ismManufacturingPmi3mChange, 1)}`,
-      ].filter(Boolean),
-      coverageNotes: [
-        ...consumerPublicCoverage,
-        '盈利修正、BoA raw card feed 等非公开或授权消费证据仍待接入。此处作为边界说明保留，不作为当前公开代理缺失。',
-      ],
-      missingEvidence: consumerPublicCoverage.length ? [] : ['公开消费代理等待刷新。'],
-      explanation: 'UMCSENT 是月频慢变量，只能提供体感背景，不能单独判断近端增长。',
-      sourceType: finite(consumer.umichSentiment) === null ? '数据不足' : '数据推断',
-    }),
-    createJudgment({
-      id: 'driver-employment',
-      title: '就业质量与广度 LABOR QUALITY',
-      group: 'macro-driver',
-      status: initialClaims === null && continuingClaims === null && joltsOpenings === null && employmentQualityEvidenceCount === 0 ? WAITING : '慢变量观察中',
-      direction: claimsRegime === '明显走弱' || claimsRegime === '走弱' || joltsRegime === '走弱'
-        ? '劳动力降温'
-        : claimsRegime === '改善'
-          ? '裁员压力改善'
-          : laborQualityRegime === '工资韧性' || laborQualityRegime === '扩散改善'
-            ? '质量韧性'
-            : laborQualityRegime === '降温'
-              ? '劳动力降温'
-              : '观察中',
-      confidence: initialClaims !== null && continuingClaims !== null && joltsOpenings !== null && employmentQualityEvidenceCount >= 2 ? '中等' : '偏低',
-      dataCoverage: employmentPublicCoverage.length ? '数据覆盖：公开就业质量代理已覆盖' : '数据覆盖：关键数据不足',
-      evidence: [
-        initialClaims === null
-          ? 'ICSA 初请失业金人数等待接入或刷新。'
-          : `ICSA ${formatPeopleValue(initialClaims)}；4w-MA ${formatPeopleValue(initialClaims4wAverage)}；Δ ${formatSignedPeopleValue(initialClaims4wChange)}（${claimsRegime}）`,
-        continuingClaims === null
-          ? null
-          : `CCSA ${formatPeopleValue(continuingClaims)}；4w-MA ${formatPeopleValue(continuingClaims4wAverage)}`,
-        joltsOpenings === null
-          ? null
-          : `JOLTS:${formatMonthVintage(employment.joltsUpdatedAt)} ${formatPeopleValue(joltsOpenings)}；YoY ${formatRatioAsPercent(joltsOpeningsYoY)}（${joltsRegime}）`,
-        averageHourlyEarnings === null
-          ? null
-          : `平均时薪 $${formatNumber(averageHourlyEarnings, 2)}/小时；YoY ${formatRatioAsPercent(averageHourlyEarningsYoY)}（${laborQualityRegime}；${formatMonthVintage(employment.averageHourlyEarningsUpdatedAt)}；status=${formatSourceStatus(employment.sourceStatus?.ahe)}）`,
-        u6Rate === null
-          ? null
-          : `U-6 ${formatNumber(u6Rate, 1, '%')}；3个月变化 ${formatSignedPoints(u6Rate3mChange)} — 劳动力低利用率（${formatMonthVintage(employment.u6UpdatedAt)}；status=${formatSourceStatus(employment.sourceStatus?.u6)}）`,
-        industryPayrollDiffusionPct === null
-          ? null
-          : `行业就业扩散 ${formatNumber(industryPayrollDiffusionPct, 1, '%')}；${formatNumber(industryPayrollPositiveCount, 0)}/${formatNumber(industryPayrollSeriesCount, 0)} 个行业环比增加（${industryDiffusionRegime}；${formatMonthVintage(employment.industryPayrollUpdatedAt)}；status=${formatSourceStatus(employment.sourceStatus?.industryPayroll)}）`,
-        formatSourceStatusMap(employment.sourceStatus, [['icsa', 'ICSA'], ['ccsa', 'CCSA'], ['jtsjol', 'JOLTS'], ['ahe', 'AHE'], ['u6', 'U-6'], ['industryPayroll', 'payroll diffusion']]),
-      ].filter(Boolean),
-      coverageNotes: [
-        ...employmentPublicCoverage,
-        'AHE / U-6 / industry payroll diffusion 是公开就业质量代理；职位质量细项和工时结构保留为边界说明。',
-      ],
-      missingEvidence: employmentPublicCoverage.length ? [] : ['公开就业质量代理等待 FRED 刷新。'],
-      explanation: 'Claims 是周频裁员压力代理，JOLTS、平均时薪、U-6 与行业 payroll 扩散是月频慢变量；仅用于就业质量与广度观察。',
-      sourceType: initialClaims === null && continuingClaims === null && joltsOpenings === null && employmentQualityEvidenceCount === 0 ? '数据不足' : '事实',
-    }),
-    createJudgment({
-      id: 'driver-consumer-retail',
-      title: '高频零售消费 CONSUMER RETAIL',
-      group: 'macro-driver',
-      status: cartsNominal === null && cartsReal === null ? WAITING : '周频观察中',
-      direction: retailRegime === '明显走弱' || retailRegime === '走弱'
-        ? '消费降温'
-        : retailRegime === '改善' || retailRegime === '强劲'
-          ? '消费改善'
-          : '观察中',
-      confidence: cartsNominal !== null && cartsReal !== null ? '中等' : '偏低',
-      dataCoverage: consumerPublicCoverage.length ? '数据覆盖：公开零售消费代理已覆盖' : '数据覆盖：关键数据不足',
-      evidence: [
-        cartsNominal === null
-          ? 'CARTS 名义零售消费 nowcast 等待刷新。'
-          : `CARTS 名义 ${formatUsdBillions(cartsNominal)}；4w-MA ${formatUsdBillions(consumerRetail.cartsNominal4wAverage)}；YoY ${formatRatioAsPercent(cartsNominalYoY)}（名义）`,
-        cartsReal === null
-          ? null
-          : `CARTSR 实际 ${formatUsdBillions(cartsReal)}；4w-MA ${formatUsdBillions(consumerRetail.cartsReal4wAverage)}；YoY ${formatRatioAsPercent(cartsRealYoY)}（实际,通胀调整后；${retailRegime}）`,
-        retailSegmentDiffusionPct === null
-          ? null
-          : `MRTS 细分零售扩散 ${formatNumber(retailSegmentDiffusionPct, 1, '%')}；${formatNumber(retailSegmentPositiveCount, 0)}/${formatNumber(retailSegmentSeriesCount, 0)} 个品类 YoY 为正（${text(consumerRetail.segmentRegime, '未知')}）`,
-        strongestRetailSegment
-          ? `最强品类：${text(strongestRetailSegment.labelZh, strongestRetailSegment.key)} ${formatRatioAsPercent(strongestRetailSegment.yoy)}；最弱品类：${text(weakestRetailSegment?.labelZh, weakestRetailSegment?.key)} ${formatRatioAsPercent(weakestRetailSegment?.yoy)}`
-          : null,
-        bofaCardSpendingYoY === null && bofaCardSpendingExGasYoY === null
-          ? null
-          : `BoA Consumer Checkpoint ${formatMonthVintage(consumerRetail.bofaReportDate)}: card spend YoY ${formatRatioAsPercent(bofaCardSpendingYoY)} / ex-gas ${formatRatioAsPercent(bofaCardSpendingExGasYoY)}；prior ${formatRatioAsPercent(bofaCardSpendingPriorYoY)}（status=${formatSourceStatus(consumerRetail.sourceStatus?.bofaConsumerCheckpoint)}；${formatUrlReference(consumerRetail.bofaReportUrl)}）`,
-        redbookRetailSalesYoY === null
-          ? null
-          : `Redbook public HTML ${formatWeekVintage(consumerRetail.redbookRetailSalesDate)}: same-store sales YoY ${formatRatioAsPercent(redbookRetailSalesYoY)}；historical avg ${formatRatioAsPercent(redbookHistoricalAverageYoY)}（status=${formatSourceStatus(consumerRetail.sourceStatus?.redbookPublicHtml)}；${formatUrlReference(consumerRetail.redbookReportUrl)}）`,
-        ...retailSegmentLines,
-        formatSourceStatusMap(consumerRetail.sourceStatus, [['carts', 'CARTS'], ['cartsr', 'CARTSR'], ['retailSegments', 'MRTS'], ['bofaConsumerCheckpoint', 'BoA Consumer Checkpoint'], ['redbookPublicHtml', 'Redbook public HTML']]),
-        `Chicago Fed CARTS:${formatWeekVintage(consumerRetail.updatedAt)}`,
-      ].filter(Boolean),
-      missingEvidence: [
-        retailSegmentDiffusionPct === null ? 'MRTS 细分零售品类等待 FRED 月频刷新。' : null,
-        bofaCardSpendingYoY === null && bofaCardSpendingExGasYoY === null ? 'BoA Consumer Checkpoint 公开页等待刷新。' : null,
-        redbookRetailSalesYoY === null ? 'Redbook public HTML 等待刷新；当前不冒充 Redbook raw feed。' : null
-      ].filter(Boolean),
-      coverageNotes: [
-        ...consumerPublicCoverage,
-        'BoA Consumer Checkpoint / Redbook public HTML 是公开摘要代理，不冒充 raw card feed 或订阅 feed。',
-      ],
-      explanation: 'CARTS / CARTSR 是 Chicago Fed via FRED 的周频零售+餐饮 nowcast；MRTS 细分品类为月频公开零售结构观察；BoA Consumer Checkpoint 与 Redbook public HTML 是第三方公开消费证据。',
-      sourceType: cartsNominal === null && cartsReal === null && retailSegmentDiffusionPct === null ? '数据不足' : '事实',
-      updatedAt: `Chicago Fed CARTS:${formatWeekVintage(consumerRetail.updatedAt)}`,
-    }),
-    createJudgment({
-      id: 'driver-cre',
-      title: '商业地产信用 COMMERCIAL REAL ESTATE',
-      group: 'macro-driver',
-      status: creDelinquencyRate === null
-        && creChargeOffRate === null
-        && sloosCreNonfarmNonresidentialTightening === null
-        && sloosCreConstructionTightening === null
-        && sloosCreMultifamilyTightening === null
-        && creLoanBalance === null ? WAITING : '季频观察中',
-      direction: creStressRegime === '恶化'
-        ? 'CRE 压力恶化'
-        : creStressRegime === '紧绷'
-          ? '信贷收紧'
-          : creStressRegime === '改善' || creStressRegime === '宽松'
-            ? '压力缓和'
-            : '观察中',
-      confidence: creDelinquencyRate !== null
-        && creChargeOffRate !== null
-        && sloosCreNonfarmNonresidentialTightening !== null
-        && sloosCreConstructionTightening !== null
-        && sloosCreMultifamilyTightening !== null
-        && creLoanBalance !== null ? '中等' : '偏低',
-      dataCoverage: crePublicCoverage.length >= 4 ? '数据覆盖：公开 CRE 代理覆盖良好' : crePublicCoverage.length ? '数据覆盖：公开 CRE 代理部分覆盖' : '数据覆盖：关键数据不足',
-      evidence: [
-        creDelinquencyRate === null
-          ? 'CRE 拖欠率等待 FRED 季频数据刷新。'
-          : `CRE 拖欠率 ${formatNumber(creDelinquencyRate, 2, '%')}；QoQ Δ ${formatSignedPoints(creDelinquencyRateQoQChange)}（拖欠率）`,
-        creChargeOffRate === null
-          ? null
-          : `CRE 核销率 ${formatNumber(creChargeOffRate, 2, '%')}；QoQ Δ ${formatSignedPoints(creChargeOffRateQoQChange)}（核销率）`,
-        sloosCreTighteningMax === null
-          ? null
-          : `SLOOS CRE 非农非住宅 ${formatSignedPercent(sloosCreNonfarmNonresidentialTightening, 1)}；建设土地 ${formatSignedPercent(sloosCreConstructionTightening, 1)}；多户住宅 ${formatSignedPercent(sloosCreMultifamilyTightening, 1)}`,
-        sloosCreTighteningMax === null
-          ? null
-          : `SLOOS CRE max ${formatSignedPercent(sloosCreTighteningMax, 1)}；${creStressRegime}`,
-        reitEtfPrice === null
-          ? null
-          : `VNQ ${formatNumber(reitEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(reitEtf4wChange)} — 公开 REIT 代理（${crePublicMarketProxyRegime}；${formatWeekVintage(commercialRealEstate.reitEtfUpdatedAt)}）`,
-        mortgageReitEtfPrice === null
-          ? null
-          : `REM ${formatNumber(mortgageReitEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(mortgageReitEtf4wChange)} — mortgage REIT 代理（${crePublicMarketProxyRegime}；${formatWeekVintage(commercialRealEstate.mortgageReitEtfUpdatedAt)}）`,
-        cmbsEtfPrice === null
-          ? null
-          : `CMBS ${formatNumber(cmbsEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(cmbsEtf4wChange)} — commercial MBS ETF public proxy（${formatWeekVintage(commercialRealEstate.cmbsEtfUpdatedAt)}）`,
-        creLoanBalance === null
-          ? null
-          : `CRE loan balance ${formatUsdTrillions(creLoanBalance / 1000)}；4周变化 ${formatRatioAsPercent(creLoanBalance4wChange)}；YoY ${formatRatioAsPercent(creLoanBalanceYoY)} — FRED public aggregate exposure proxy（${formatWeekVintage(commercialRealEstate.creLoanBalanceUpdatedAt)}；status=${formatSourceStatus(creLoanBalanceStatus)}）`,
-        `non-public CRE loan tape status: ${nonPublicCreStatus}`,
-        formatSourceStatusMap(commercialRealEstate.sourceStatus, [['delinquency', 'delinquency'], ['chargeOff', 'charge-off'], ['sloosNonfarmNonresidential', 'SLOOS NNR'], ['sloosConstruction', 'SLOOS construction'], ['sloosMultifamily', 'SLOOS multifamily'], ['reitEtf', 'VNQ'], ['mortgageReitEtf', 'REM'], ['cmbsEtf', 'CMBS'], ['creLoanBalance', 'CRE loan balance'], ['nonPublicCre', 'non-public CRE']]),
-        `FRED 季频 Commercial Real Estate:${formatQuarterVintage(commercialRealEstate.updatedAt)}`,
-      ].filter(Boolean),
-      coverageNotes: [
-        ...crePublicCoverage,
-        'non-public CRE loan tape / private marks 是边界说明；FRED aggregate balance 不等于 loan tape。',
-      ],
-      missingEvidence: crePublicCoverage.length ? [] : ['公开 CRE 代理等待刷新。'],
-      explanation: 'CRE 拖欠率、核销率与 SLOOS CRE 贷款标准为季频慢变量；FRED CRE loan balance 是公开 aggregate exposure proxy，VNQ/REM/CMBS 只是公开市场代理。',
-      sourceType: creDelinquencyRate === null && creChargeOffRate === null && sloosCreTighteningMax === null && creLoanBalance === null ? '数据不足' : '事实',
-      updatedAt: creLoanBalance !== null
-        ? `FRED CRE loan balance:${formatWeekVintage(commercialRealEstate.creLoanBalanceUpdatedAt)}`
-        : `FRED 季频 Commercial Real Estate:${formatQuarterVintage(commercialRealEstate.updatedAt)}`,
-    }),
-    createJudgment({
-      id: 'driver-private-credit-proxy',
-      title: '私募信用公开代理 PRIVATE CREDIT PROXY',
-      group: 'macro-driver',
-      status: bdcEtfPrice === null && hyOas === null ? WAITING : text(privateCreditProxy.privateCreditProxyRegime, '观察中'),
-      direction: text(privateCreditProxy.privateCreditProxyRegime, '未知') === '压力上升'
-        ? '信用压力上升'
-        : text(privateCreditProxy.privateCreditProxyRegime, '未知') === '观察'
-          ? '观察'
-          : '相对平稳',
-      confidence: bdcEtfPrice !== null && hyOas !== null ? '中等' : '偏低',
-      dataCoverage: privateCreditPublicCoverage.length >= 4 ? '数据覆盖：公开信用代理覆盖良好' : privateCreditPublicCoverage.length ? '数据覆盖：公开信用代理部分覆盖' : '数据覆盖：关键数据不足',
-      evidence: [
-        bdcEtfPrice === null
-          ? 'BIZD listed BDC proxy 等待刷新。'
-          : `BIZD ${formatNumber(bdcEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(bdcEtf4wChange)} — listed BDC proxy`,
-        pbdcEtfPrice === null
-          ? null
-          : `PBDC ${formatNumber(pbdcEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(pbdcEtf4wChange)} — second listed BDC proxy`,
-        seniorLoanEtfPrice === null
-          ? null
-          : `SRLN ${formatNumber(seniorLoanEtfPrice, 2)}；4周变化 ${formatRatioAsPercent(seniorLoanEtf4wChange)} — senior loan ETF proxy`,
-        intervalFundNavPrice === null
-          ? `CCLFX interval-fund NAV proxy status: ${intervalFundNavStatus}`
-          : `${text(privateCreditProxy.intervalFundNavSymbol, 'CCLFX')} ${formatNumber(intervalFundNavPrice, 2)}；4周变化 ${formatRatioAsPercent(intervalFundNav4wChange)} — public interval-fund NAV proxy（${formatWeekVintage(privateCreditProxy.intervalFundNavUpdatedAt)}；status=${intervalFundNavStatus}）`,
-        hyOas === null ? null : `HY OAS ${formatNumber(hyOas, 2, '%')} — 公开信用利差代理`,
-        privateCreditIgOas === null ? null : `IG OAS ${formatNumber(privateCreditIgOas, 2, '%')}；IG-HY ${formatSignedPoints(privateCreditIgMinusHyOas)} — cash-bond proxy`,
-        cdxHyPrice === null
-          ? `CDX HY status: ${cdxHyStatus}`
-          : `ICE CDX HY ${formatNumber(cdxHyPrice, 4)}；${text(privateCreditProxy.cdxHyInstrument, 'CDX-NAHY-5Y')}（${formatWeekVintage(privateCreditProxy.cdxHyUpdatedAt)}；status=${cdxHyStatus}）`,
-        cdxIgPrice === null
-          ? `CDX IG status: ${cdxIgStatus}`
-          : `ICE CDX IG ${formatNumber(cdxIgPrice, 4)}；${text(privateCreditProxy.cdxIgInstrument, 'CDX-NAIG-5Y')}（${formatWeekVintage(privateCreditProxy.cdxIgUpdatedAt)}；status=${cdxIgStatus}）`,
-        `private credit marks status: ${privateCreditMarksStatus}`,
-        formatSourceStatusMap(privateCreditProxy.sourceStatus, [['bdcEtf', 'BIZD'], ['pbdcEtf', 'PBDC'], ['seniorLoanEtf', 'SRLN'], ['intervalFundNav', 'CCLFX NAV'], ['hyOas', 'HY OAS'], ['igOas', 'IG OAS'], ['cdxHy', 'CDX HY'], ['cdxIg', 'CDX IG'], ['privateCreditMarks', 'private marks']]),
-      ].filter(Boolean),
-      coverageNotes: [
-        ...privateCreditPublicCoverage,
-        '私募信用 marks 需要 manual/licensed input；ICE CDX public settlement 不替代私募信用估值。',
-      ],
-      missingEvidence: privateCreditPublicCoverage.length ? [] : ['公开私募信用代理等待刷新。'],
-      explanation: 'BIZD/PBDC、SRLN、CCLFX NAV、HY/IG OAS 与 ICE CDX public settlement 只提供公开压力观察，不能替代私募信用估值。',
-      sourceType: bdcEtfPrice === null && hyOas === null ? '数据不足' : '代理信号',
-      updatedAt: `Yahoo/FRED:${formatWeekVintage(privateCreditProxy.updatedAt)}`,
-    }),
-    createJudgment({
-      id: 'driver-inflation',
-      title: '通胀',
-      group: 'macro-driver',
-      status: finite(inputs.brent) === null ? INSUFFICIENT : Number(inputs.brent) >= 100 ? '压力上升' : '观察中',
-      direction: finite(inputs.brent) !== null && Number(inputs.brent) >= 100 ? '压力上升' : '观察中',
-      confidence: finite(inputs.brent) === null ? '偏低' : '中等',
-      dataCoverage: inflationPublicCoverage.length >= 3 ? '数据覆盖：公开能源代理覆盖良好' : inflationPublicCoverage.length ? '数据覆盖：公开能源代理部分覆盖' : '数据覆盖：关键数据不足',
-      evidence: [
-        `布伦特 ${formatNumber(inputs.brent, 1)}；盈亏平衡通胀 ${formatNumber(inputs.breakeven10y, 2, '%')}`,
-        eiaBrentSpotPrice === null
-          ? null
-          : `EIA Brent Spot Price FOB ${formatNumber(eiaBrentSpotPrice, 2)}；日变化 ${formatSignedDecimal(eiaBrentSpotDailyChange, 2)}（${formatWeekVintage(eiaBrentSpotProxy.updatedAt)}；status=${formatSourceStatus(eiaBrentSpotProxy.sourceStatus)}）`,
-        brentLayer?.crackSpread === null || !Number.isFinite(brentLayer?.crackSpread)
-          ? null
-          : `柴油裂解价差 $${brentLayer.crackSpread.toFixed(1)}/桶（${brentLayer.crackSpreadRegime}）`,
-        ulsdPrice === null ? null : `ULSD ${formatNumber(ulsdPrice, 3)}；4周变化 ${formatSignedDecimal(ulsd4wChange, 3)} — 下游成品油压力`,
-        brentFuturesCurveContracts.length
-          ? `ICE Brent futuresCurve structure-only: ${brentFuturesCurveContracts.join(' / ')}；status=${text(brentFuturesCurve.curveStatus, 'missing')}`
-          : null,
-        brentIceFuturesPriceCurveContracts.length
-          ? `ICE Brent public delayed price curve: ${brentIceFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentIceFuturesPriceCurve.frontMinusBack, 2)}；slope=${text(brentIceFuturesPriceCurve.slopeRegime, '未知')}`
-          : null,
-        brentFuturesPriceCurveContracts.length
-          ? `Yahoo Brent priced futures proxy: ${brentFuturesPriceCurveContracts.join(' / ')}；front-back ${formatNumber(brentFuturesPriceCurve.frontMinusBack, 2)}；slope=${text(brentFuturesPriceCurve.slopeRegime, '未知')}`
-          : null,
-      ].filter(Boolean),
-      coverageNotes: [
-        ...inflationPublicCoverage,
-        'Platts Dated Brent / official settlement / 原油库存细项保留为正式源边界说明。',
-      ],
-      missingEvidence: inflationPublicCoverage.length ? [] : ['公开能源代理等待刷新。'],
-      explanation: 'Brent、EIA spot proxy、期货曲线和成品油代理可以提示能源压力，但不能单独证明广义通胀重新加速。',
-      sourceType: finite(inputs.brent) === null ? '数据不足' : '数据推断',
-    }),
-    createJudgment({
-      id: 'driver-shipping-freight',
-      title: '油轮运费与航运 SHIPPING FREIGHT',
-      group: 'macro-driver',
-      status: dirtyTankerIndex === null && cleanTankerIndex === null && dryBulkIndex === null ? WAITING : text(shippingFreight.freightStressRegime, '观察中'),
-      direction: text(shippingFreight.tankerFreightRegime, '未知') === '高压'
-        ? '油轮运费压力高'
-        : text(shippingFreight.tankerFreightRegime, '未知') === '快速回落'
-          ? '运费回落'
-          : '观察中',
-      confidence: dirtyTankerIndex !== null && cleanTankerIndex !== null ? '中等' : '偏低',
-      dataCoverage: shippingPublicCoverage.length >= 3 ? '数据覆盖：StockQ BDTI/BCTI/BDI 已覆盖' : shippingPublicCoverage.length ? '数据覆盖：航运公开代理部分覆盖' : '数据覆盖：关键数据不足',
-      evidence: [
-        dirtyTankerIndex === null
-          ? 'BDTI dirty tanker index 等待刷新。'
-          : `BDTI ${formatNumber(dirtyTankerIndex, 0)}；日变化 ${formatRatioAsPercent(dirtyTankerChange)}（${text(shippingFreight.tankerFreightRegime, '未知')}；${formatWeekVintage(shippingFreight.balticDirtyTankerUpdatedAt)}）`,
-        cleanTankerIndex === null
-          ? null
-          : `BCTI ${formatNumber(cleanTankerIndex, 0)}；日变化 ${formatRatioAsPercent(cleanTankerChange)}（clean tanker，${text(shippingFreight.cleanTankerFreightRegime, '未知')}；${formatWeekVintage(shippingFreight.balticCleanTankerUpdatedAt)}）`,
-        dryBulkIndex === null
-          ? null
-          : `BDI ${formatNumber(dryBulkIndex, 0)}；日变化 ${formatRatioAsPercent(dryBulkChange)}（dry bulk，${text(shippingFreight.dryBulkFreightRegime, '未知')}；${formatWeekVintage(shippingFreight.balticDryUpdatedAt)}）`,
-        formatSourceStatusMap(shippingFreight.sourceStatus, [['dirtyTanker', 'BDTI'], ['cleanTanker', 'BCTI'], ['dryBulk', 'BDI']]),
-      ].filter(Boolean),
-      coverageNotes: [
-        ...shippingPublicCoverage,
-        '单船型/航线级别 tanker freight 与 Baltic 原始 licensed feed 是边界说明。',
-      ],
-      missingEvidence: shippingPublicCoverage.length ? [] : ['StockQ Baltic indices 等待刷新。'],
-      explanation: 'BDTI/BCTI/BDI 是航运/油轮运费压力代理；只用于实物端压力观察，不改变 Brent promotion。',
-      sourceType: dirtyTankerIndex === null && cleanTankerIndex === null && dryBulkIndex === null ? '数据不足' : '事实',
-      updatedAt: `StockQ Baltic indices:${formatWeekVintage(shippingFreight.updatedAt)}`,
-    }),
-    createJudgment({
-      id: 'driver-liquidity',
-      title: '流动性',
-      group: 'macro-driver',
-      status: statusFromScore(data?.modules?.liquidity),
-      direction: finite(inputs.dxy) !== null && Number(inputs.dxy) >= 105 ? '约束偏强' : '观察中',
-      confidence: creditCalm ? '中等' : '偏低',
-      dataCoverage: liquidityPublicCoverage.length >= 5 ? '数据覆盖：FRED + NY Fed repo + credit proxies 已覆盖' : liquidityPublicCoverage.length ? '数据覆盖：流动性公开代理部分覆盖' : '数据覆盖：关键数据不足',
-      evidence: [
-        `广义美元 ${formatNumber(inputs.dxy, 2)}；10年期 ${formatNumber(inputs.us10y, 2, '%')}；10Y-2Y 期限利差 ${formatSignedPercent(t10y2y)}`,
-        `ON RRP 余额 ${formatUsdTrillions(onRrp)}${onRrpAnnotation(onRrpSignal)}；Fed 资产负债表 4周变化 ${formatUsdBillionsFromFedChange(walcl4wChange)}`,
-        `高收益利差 (HY OAS) ${formatNumber(hyOas, 2, '%')}；投资级利差 (IG OAS) ${formatNumber(igOas, 2, '%')}；1d ${formatSignedPoints(igOas1dChange)}；IG/HY 比率 ${formatNumber(igHyRatio, 2)}`,
-        effectiveFedFundsRate === null ? null : `联邦基金利率 ${formatNumber(effectiveFedFundsRate, 2, '%')} — 当前官方政策利率`,
-        sofr === null ? null : `SOFR ${formatNumber(sofr, 2, '%')} — 隔夜担保融资利率`,
-        reserveBalances === null ? null : `银行准备金 ${formatUsdTrillions(reserveBalances / 1_000_000)}；4周变化 ${formatSignedPercent(reserveBalances4wChange)} — 储备缓冲数量`,
-        credit?.sloosTighteningLargeFirms === null || !Number.isFinite(credit?.sloosTighteningLargeFirms)
-          ? null
-          : `银行贷款标准 (SLOOS C&I 大型) ${formatSignedPercent(credit.sloosTighteningLargeFirms, 1)} / 小型 ${formatSignedPercent(sloosTighteningSmallFirms, 1)}；QoQ 大型 ${formatSignedPercent(sloosTighteningLargeQoQ, 1)} / 小型 ${formatSignedPercent(sloosTighteningSmallQoQ, 1)}（季度调查；${text(credit.sloosRegime, '未知')}）`,
-        credit?.nfci === null || !Number.isFinite(credit?.nfci)
-          ? null
-          : `NFCI ${credit.nfci >= 0 ? '+' : ''}${formatNumber(credit.nfci, 2)}；4w ${formatSignedDecimal(nfci4wChange, 3)}（${text(credit.nfciRegime, '未知')}）`,
-        fedLiquidity?.bgcrSofrSpread === null || !Number.isFinite(fedLiquidity?.bgcrSofrSpread)
-          ? null
-          : `回购利差 (BGCR-SOFR) ${formatBasisPoints(fedLiquidity.bgcrSofrSpread)} / TGCR-SOFR ${formatBasisPoints(tgcrSofrSpread)}；BGCR ${formatNumber(bgcr, 2, '%')} / TGCR ${formatNumber(tgcr, 2, '%')}（${fedLiquidity.repoSpreadRegime}；${text(fedLiquidity.repoRatesSource, 'repo source 待确认')}；BGCR ${formatWeekVintage(fedLiquidity.bgcrUpdatedAt)} / TGCR ${formatWeekVintage(fedLiquidity.tgcrUpdatedAt)}）`,
-        formatSourceStatusMap(fedLiquidity.sourceStatus, [['walcl', 'WALCL'], ['onRrp', 'ON RRP'], ['effectiveFedFundsRate', 'DFF'], ['sofr', 'SOFR'], ['reserveBalances', 'reserves'], ['bgcr', 'BGCR'], ['tgcr', 'TGCR']]),
-      ].filter(Boolean),
-      coverageNotes: [
-        ...liquidityPublicCoverage,
-        '跨市场融资压力等待接入。此处作为边界说明保留；当前 FRED + NY Fed repo + credit proxies 已可用于公开代理观察。',
-      ],
-      missingEvidence: liquidityPublicCoverage.length ? [] : ['公开流动性代理等待刷新。'],
-      counterEvidence: creditCalm ? ['信用与波动率尚未明显确认扩散。'] : [],
-      explanation: creditCalm
-        ? '长端利率和美元偏紧，但信用与波动率尚未明显确认扩散。'
-        : '流动性压力需要与信用利差和波动率共同确认。',
-    }),
-    createJudgment({
-      id: 'driver-policy',
-      title: '政策',
-      group: 'macro-driver',
-      status: hasPolicyProxy ? `基于代理信号观察 / ${policyExpectationRegime}` : WAITING,
-      direction: hasPolicyProxy ? (policyExpectationRegime === '降息预期' ? '政策预期转松' : '政策预期偏紧') : '方向待确认',
-      confidence: hasPolicyProxy ? '中等' : '偏低',
-      dataCoverage: hasPolicyProxy ? '数据覆盖：Fed statement / minutes / SEP / ZQ + SR3 + OIS 公开代理' : '数据覆盖：关键数据不足',
-      evidence: hasPolicyProxy ? policyProxyEvidence : ['暂无直接 Fed 预期或政策路径指标。'],
-      coverageNotes: [
-        ...policyPublicCoverage,
-        'CheckMySwap USD OIS public curve 已接入；proprietary dealer OIS forward 仍作为边界说明。',
-      ],
-      missingEvidence: hasPolicyProxy ? [] : ['政策预期公开代理等待刷新。'],
-      explanation: hasPolicyProxy
-        ? 'Fed target range、SEP median、FOMC statement/minutes 文本、Fed funds futures、SOFR futures 与 public OIS curve 已接入；proprietary dealer OIS 仍保留为边界插槽。'
-        : '当前不伪造政策路径；除非接入 dot plot / forward rates 等明确前瞻数据，否则政策路径不是强驱动。',
-      sourceType: hasPolicyProxy ? '事实 + 代理信号' : '数据不足',
-    }),
-  ];
+  const fedSentence = [
+    onRrp === null ? 'ON RRP 等待刷新' : `ON RRP ${formatUsdTrillions(onRrp)}`,
+    walcl4wChange === null ? null : `WALCL 4w ${formatUsdBillionsFromFedChange(walcl4wChange)}`,
+    reserveBalances === null ? null : `reserve balances ${formatUsdTrillions(reserveBalances / 1_000_000)} (${formatSignedPercent(reserveBalances4wChange)})`,
+    effectiveFedFundsRate === null ? null : `DFF ${formatNumber(effectiveFedFundsRate, 2, '%')}` ,
+    sofr === null ? null : `SOFR ${formatNumber(sofr, 2, '%')}` ,
+    bgcrSofrSpread === null ? null : `BGCR-SOFR ${formatBasisPoints(bgcrSofrSpread)}` ,
+  ].filter(Boolean).join(' / ');
+
+  const policySentence = [
+    targetMid === null ? 'Fed target midpoint 等待刷新' : `target midpoint ${formatNumber(targetMid, 2, '%')}` ,
+    fedFundsFutureImpliedRate === null ? null : `ZQ implied ${formatNumber(fedFundsFutureImpliedRate, 2, '%')}` ,
+    futureMinusTargetMid === null ? null : `market vs Fed ${formatSignedPoints(futureMinusTargetMid)}` ,
+    `regime ${text(policyExpectations.policyExpectationRegime, '未知')}` ,
+  ].filter(Boolean).join(' / ');
+
+  const curveSentence = [
+    t10y2y === null ? '10Y-2Y 期限利差等待刷新' : `10Y-2Y ${formatSignedPercent(t10y2y)}` ,
+    t10y2yWeekChange === null ? null : `weekly ${formatSignedPercent(t10y2yWeekChange)}` ,
+    `regime ${text(curve.regime, '未知')}` ,
+  ].filter(Boolean).join(' / ');
+
+  const creditSentence = [
+    hyOas === null ? 'HY OAS 等待刷新' : `HY OAS ${formatNumber(hyOas, 2, '%')}` ,
+    igOas === null ? null : `IG OAS ${formatNumber(igOas, 2, '%')}` ,
+    nfci === null ? null : `NFCI ${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)} (${text(credit.nfciRegime, '未知')})` ,
+    sloosMax === null ? null : `SLOOS max ${formatSignedPercent(sloosMax, 1)} (${text(credit.sloosRegime, '未知')})` ,
+  ].filter(Boolean).join(' / ');
+
+  return {
+    fed: { label: 'Fed Liquidity', sentence: fedSentence || 'Fed liquidity data waiting for refresh.' },
+    policy: { label: 'Policy Expectations', sentence: policySentence || 'Policy expectations waiting for public proxy refresh.' },
+    curve: { label: 'Curve', sentence: curveSentence || 'Curve data waiting for refresh.' },
+    credit: { label: 'Credit', sentence: creditSentence || 'Credit data waiting for refresh.' },
+    subModuleListText: '子模块完整列表:fedLiquidity / policyExpectations / curve / credit / consumer / shippingFreight / employment / consumerRetail / commercialRealEstate / privateCreditProxy / activeSignals / gatingEvaluation',
+  };
 }
 
 function buildMarketTemperature(marketPricingMetricsData = null) {
@@ -1497,11 +945,13 @@ function buildCrossValidation(data, worldOrderStressData, marketPricingMetricsDa
 
 export function buildMacroOverview(data = {}, healthDashboard = {}, worldOrderStressData = {}, marketPricingMetricsData = null) {
   const crossValidationMatrix = buildCrossValidation(data, worldOrderStressData, marketPricingMetricsData);
+  const drivers4Pillars = buildMacroDrivers(data);
   const overview = {
     today: buildTodayJudgment(data, healthDashboard, worldOrderStressData, marketPricingMetricsData),
     pressures: buildPressureSources(data, worldOrderStressData),
     signalLayers: buildSignalLayers(data, marketPricingMetricsData, crossValidationMatrix),
-    drivers: buildMacroDrivers(data),
+    drivers: drivers4Pillars,
+    drivers4Pillars,
     marketTemperature: buildMarketTemperature(marketPricingMetricsData),
     riskEngines: buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData),
     crossValidation: crossValidationMatrix.narratives,
@@ -1733,128 +1183,13 @@ function deriveSignalMeta(items) {
   return `7 个 narratives 中:${counts.active} active / ${counts.latent} latent · NARRATIVE_EMOJI 映射`;
 }
 
-function driverTypeClass(judgment) {
-  const identity = `${judgment?.id || ''} ${judgment?.title || ''} ${judgment?.group || ''}`.toLowerCase();
-  if (identity.includes('增长') || identity.includes('消费') || identity.includes('growth') || identity.includes('retail')) return 'is-growth';
-  if (identity.includes('通胀') || identity.includes('inflation')) return 'is-inflation';
-  if (identity.includes('流动性') || identity.includes('liquidity')) return 'is-liquidity';
-  if (identity.includes('政策') || identity.includes('policy')) return 'is-policy';
-  return 'is-neutral';
-}
 
-function driverStatusClass(judgment) {
-  const status = String(judgment?.status || '');
-  const direction = String(judgment?.direction || '');
-  const sourceType = String(judgment?.sourceType || '');
-  const combined = `${status} ${direction} ${sourceType}`;
-  if (combined.includes('数据不足') || combined.includes('等待接入')) return 'is-gap';
-  if (combined.includes('压力上升') || combined.includes('约束偏强')) return 'is-rising';
-  if (combined.includes('观察中') || combined.includes('慢变量观察中')) return 'is-watch';
-  return 'is-neutral';
-}
 
-function driverTypeLabel(judgment) {
-  const className = driverTypeClass(judgment);
-  if (className === 'is-growth') return '增长';
-  if (className === 'is-inflation') return '通胀';
-  if (className === 'is-liquidity') return '流动性';
-  if (className === 'is-policy') return '政策';
-  return '宏观驱动';
-}
 
-function findDriverByType(judgments, className) {
-  return safeArray(judgments).find((judgment) => driverTypeClass(judgment) === className) || null;
-}
 
-function appendDriverTypePill(root, label, judgment) {
-  const pill = document.createElement('span');
-  pill.className = 'editorial-count-pill editorial-driver-type-pill';
-  appendText(pill, 'span', '', label);
-  appendText(pill, 'strong', '', judgment?.status || '未呈现');
-  root.appendChild(pill);
-}
 
-function buildDriverCategorySummary(judgments) {
-  const items = safeArray(judgments);
-  if (!items.length) return '四大宏观驱动数据不足，暂不强行形成驱动结论。';
-  const classed = items.map((judgment) => ({
-    judgment,
-    typeClass: driverTypeClass(judgment),
-    statusClass: driverStatusClass(judgment),
-  }));
-  const gaps = classed.filter(({ statusClass }) => statusClass === 'is-gap');
-  const rising = classed.filter(({ statusClass }) => statusClass === 'is-rising');
-  const watch = classed.filter(({ statusClass }) => statusClass === 'is-watch');
-  const hasCounterEvidence = items.some((judgment) => normalizeEvidenceList(judgment.counterEvidence).length);
-  if (gaps.length >= items.length) return '增长、通胀、流动性与政策证据均不足，当前不推断宏观驱动主线。';
-  const lines = ['当前四大驱动将增长、通胀、流动性与政策分开展示'];
-  if (rising.length) {
-    const titles = rising.slice(0, 2).map(({ judgment }) => `「${judgment.title}」`);
-    lines.push(`${titles.join('和')}显示压力或约束偏强，仅作为观察链条`);
-  }
-  if (watch.length) {
-    const titles = watch.slice(0, 2).map(({ judgment }) => `「${judgment.title}」`);
-    lines.push(`${titles.join('和')}维持观察`);
-  }
-  if (gaps.length) {
-    const titles = gaps.slice(0, 2).map(({ judgment }) => `「${judgment.title}」`);
-    lines.push(`${titles.join('和')}仍为等待接入或数据不足`);
-  }
-  if (hasCounterEvidence) lines.push('反向证据保留在对应卡片中');
-  return `${lines.join('；')}。`;
-}
 
-function appendEditorialDriverSublist(root, label, values, modifier = '') {
-  const items = normalizeEvidenceList(values);
-  if (!items.length) return;
-  const group = document.createElement('div');
-  group.className = `editorial-driver-sublist ${modifier}`.trim();
-  appendText(group, 'span', 'editorial-driver-sublist-label', label);
-  const list = document.createElement('ul');
-  list.className = 'editorial-driver-evidence';
-  items.forEach((item) => appendText(list, 'li', '', stripLabelPrefix(item, label)));
-  group.appendChild(list);
-  root.appendChild(group);
-}
 
-function appendEditorialDriverCard(root, judgment) {
-  const typeClass = driverTypeClass(judgment);
-  const statusClass = driverStatusClass(judgment);
-  const card = document.createElement('article');
-  card.className = `editorial-driver-card ${typeClass} ${statusClass}`;
-  const strip = document.createElement('div');
-  strip.className = 'editorial-driver-card-status-strip';
-  strip.setAttribute('aria-hidden', 'true');
-  card.appendChild(strip);
-
-  const head = document.createElement('div');
-  head.className = 'editorial-driver-card-head';
-  appendText(head, 'span', 'editorial-driver-type', driverTypeLabel(judgment));
-  appendText(head, 'h3', 'editorial-driver-card-title', judgment.title);
-  appendText(head, 'span', 'editorial-driver-badge', judgment.status || UNDECIDED);
-  card.appendChild(head);
-
-  const direction = judgment.direction && judgment.direction !== '方向待确认'
-    ? ` / ${judgment.direction}`
-    : '';
-  appendText(card, 'p', 'editorial-driver-main', `${judgment.status || UNDECIDED}${direction}`);
-  const explanation = judgment.explanation || judgment.conclusion;
-  if (explanation) appendText(card, 'p', 'editorial-driver-explanation', explanation);
-  appendEditorialDriverSublist(card, '关键证据', judgment.evidence, 'is-evidence');
-  appendEditorialDriverSublist(card, '公开代理覆盖', judgment.coverageNotes, 'is-evidence');
-  appendEditorialDriverSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
-  appendEditorialDriverSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
-  appendEditorialDriverSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
-
-  const footer = document.createElement('div');
-  footer.className = 'editorial-driver-footer';
-  if (judgment.confidence && judgment.confidence !== '等待校准') appendText(footer, 'span', '', `证据强度：${judgment.confidence}`);
-  if (judgment.dataCoverage) appendText(footer, 'span', '', `数据覆盖：${stripLabelPrefix(judgment.dataCoverage, '数据覆盖')}`);
-  if (judgment.sourceType) appendText(footer, 'span', '', `来源类型：${judgment.sourceType}`);
-  if (judgment.updatedAt) appendText(footer, 'span', '', `更新：${judgment.updatedAt}`);
-  if (footer.childNodes.length) card.appendChild(footer);
-  root.appendChild(card);
-}
 
 function formatAuxiliaryTemperatureLine(metricsData) {
   const assets = getAuxiliaryMarketPricingContexts(metricsData)
@@ -2075,6 +1410,32 @@ function appendMiniGrid(root, items) {
   root.appendChild(grid);
 }
 
+function appendDriverPillarGrid(root, pillars) {
+  const body = document.createElement('div');
+  body.className = 'runtime-block-body';
+  const grid = document.createElement('div');
+  grid.className = 'driver-pillar-grid';
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = 'repeat(auto-fit,minmax(220px,1fr))';
+  grid.style.gap = '14px';
+  ['fed', 'policy', 'curve', 'credit'].forEach((key) => {
+    const item = pillars?.[key] || {};
+    const pillar = document.createElement('div');
+    const label = appendText(pillar, 'strong', '', item.label || key);
+    label.style.display = 'block';
+    label.style.marginBottom = '4px';
+    const copy = appendText(pillar, 'p', '', item.sentence || '等待数据刷新。');
+    copy.style.margin = '0';
+    grid.appendChild(pillar);
+  });
+  body.appendChild(grid);
+  const submodules = appendText(body, 'div', 'driver-submodules', pillars?.subModuleListText || '子模块完整列表:等待数据刷新');
+  submodules.style.marginTop = '14px';
+  submodules.style.paddingTop = '10px';
+  submodules.style.borderTop = '1px dashed var(--paper-line-strong)';
+  root.appendChild(body);
+}
+
 function wowTone(kind = '') {
   if (kind === 'up') return 'up';
   if (kind === 'down') return 'down';
@@ -2203,20 +1564,14 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   );
   appendNarrativeList(signals, overview.signalLayers);
 
-  const drivers = appendSection(container, '四大宏观驱动', 'editorial-category editorial-driver-category', 'homepage-macro-drivers');
-  appendText(drivers, 'p', 'editorial-category-kicker', 'MACRO DRIVERS');
-  appendText(drivers, 'p', 'editorial-category-summary', buildDriverCategorySummary(overview.drivers));
-  const driverCountGrid = document.createElement('div');
-  driverCountGrid.className = 'editorial-category-counts';
-  appendDriverTypePill(driverCountGrid, '增长', findDriverByType(overview.drivers, 'is-growth'));
-  appendDriverTypePill(driverCountGrid, '通胀', findDriverByType(overview.drivers, 'is-inflation'));
-  appendDriverTypePill(driverCountGrid, '流动性', findDriverByType(overview.drivers, 'is-liquidity'));
-  appendDriverTypePill(driverCountGrid, '政策', findDriverByType(overview.drivers, 'is-policy'));
-  drivers.appendChild(driverCountGrid);
-  const driverGrid = document.createElement('div');
-  driverGrid.className = 'editorial-driver-grid';
-  overview.drivers.forEach((item) => appendEditorialDriverCard(driverGrid, item));
-  drivers.appendChild(driverGrid);
+  const drivers = appendRuntimeBlock(
+    container,
+    'homepage-macro-drivers',
+    '四大驱动',
+    'MACRO DRIVERS · 13 SUB-MODULES IN 4 PILLARS',
+    'fedLiquidity / policyExpectations / curve / credit + consumer / shippingFreight / employment / consumerRetail / commercialRealEstate / privateCreditProxy 等'
+  );
+  appendDriverPillarGrid(drivers, overview.drivers4Pillars);
 
   const temp = appendRuntimeBlock(
     container,

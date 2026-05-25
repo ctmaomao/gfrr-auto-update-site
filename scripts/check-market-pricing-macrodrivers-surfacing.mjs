@@ -42,20 +42,40 @@ function assertProtectedFilesUnchanged() {
 
 const renderSource = readText(RENDER_PATH);
 const macroDriversSource = sliceFrom(renderSource, 'function buildMacroDrivers', 7600);
-const policySource = sliceFrom(renderSource, "id: 'driver-policy'", 1300);
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const macroDrivers = radarData.macroDrivers || {};
 
 assert(renderSource.includes('投资级利差') || renderSource.includes('igOas'), 'B1 must surface investment-grade credit spread / igOas');
-assert(renderSource.includes('IG/HY 比率') || renderSource.includes('igHyRatio'), 'B1 must surface IG/HY ratio');
+// PR 2b: igHyRatio field consumption migrated to renderThematicCards.js c3-ig-oas card
+// per contract v3.0 sec 8.4 (mock 4-pillar credit sentence in buildMacroDrivers uses
+// hyOas/igOas/nfci/sloosMax, does not display igHyRatio). The field consumption + UI
+// display is enforced by check-thematic-cards-contract.mjs c3-ig-oas card.
 
 assert(renderSource.includes('onRrp') || renderSource.includes('ON RRP'), 'B2 must surface ON RRP');
 assert(renderSource.includes('t10y2y') || renderSource.includes('10Y-2Y') || renderSource.includes('期限利差'), 'B2 must surface 10Y-2Y term spread');
 assert(renderSource.includes('walcl4wChange') || renderSource.includes('Fed 资产负债表'), 'B2 must surface Fed balance sheet 4-week change');
 
-assert(policySource && countMatches(policySource, /等待接入/gu) === 0, 'B3 policy card context must not keep waiting-state wording');
-assert(policySource.includes('基于代理信号观察'), 'B3 policy card must show proxy-signal observation status');
-assert(macroDriversSource.includes('onRrp') && macroDriversSource.includes('us10y') && macroDriversSource.includes('dxy'), 'B3 policy card must reference ON RRP, US10Y, and DXY proxy signals');
+// PR 2b: driver-policy node was removed in Stage 8 per contract v3.0 sec 8.4
+// (buildMacroDrivers simplified to mock 4-pillar object). The 4-pillar policy sentence
+// uses '等待刷新' (not legacy '等待接入') when data is missing. This assertion now scans
+// the entire macroDriversSource for any '等待接入' regression in the 4-pillar block.
+assert(macroDriversSource && countMatches(macroDriversSource, /等待接入/gu) === 0,
+  'B3 policy 4-pillar sentence must not regress to legacy "等待接入" wording (PR 2b: was previously locked to driver-policy node which was removed in Stage 8 per contract v3.0 sec 8.4; now scans macroDriversSource for the 4-pillar block)');
+
+// PR 2b: '基于代理信号观察' was legacy driver-policy node status text wording (M-92A era).
+// Stage 8 mock 4-pillar policy sentence uses structured format
+// 'target midpoint X% / ZQ implied Y% / market vs Fed Zpp / regime ...', which more
+// precisely expresses proxy-signal observation status. Enforcement migrated to
+// check-thematic-cards-contract.mjs c2-fed-path card which locks structured policy markers.
+
+// PR 2b: Stage 8 4-pillar macroDrivers sentences consume:
+//   - onRrp (4-pillar fed sentence)
+//   - t10y2y (4-pillar curve sentence; macroDrivers.curve.t10y2y is the project curve field)
+//   - dxy belongs to displayInputsBaseline, not macroDrivers, and is rendered in c2-dxy.
+// The us10y / dxy field consumption enforcement is preserved in
+// check-thematic-cards-contract.mjs c2-us10y-curve / c2-dxy cards.
+assert(macroDriversSource.includes('onRrp') || macroDriversSource.includes('ON RRP'),
+  'B3 policy/liquidity ON RRP must surface in macro-drivers block (PR 2b: us10y/dxy enforcement migrated to check-thematic-cards-contract.mjs c2-us10y-curve / c2-dxy cards per contract v3.0 sec 8.4)');
 
 // PR 2b: B4 was renamed from 'engine-financial-fragility' to 'B4 Debt' per contract v3.0
 // sec 8.6 mock spec (6-card mini-grid: B1 Energy / B2 Liquidity / B3 Credit / B4 Debt /
