@@ -37,6 +37,16 @@ const NARRATIVE_EMOJI = {
   world_order_pressure_crossing: '🌐',
 };
 
+const NARRATIVE_LABELS = {
+  energy_shock: '能源冲击',
+  stagflation_pressure: '滞胀压力',
+  risk_asset_mismatch: '风险资产错配',
+  overheat_confirmation: '过热确认',
+  credit_spread_warning: '信用利差告警',
+  liquidity_tightening: '流动性收紧',
+  world_order_pressure_crossing: '世界秩序压力穿越',
+};
+
 const MARKET_TEMPERATURE_BUCKETS = {
   'extreme-hot': {
     label: '极度过热',
@@ -626,111 +636,43 @@ function buildPressureSources(data, worldOrderStressData) {
   });
 }
 
-function buildSignalLayers(data, marketPricingMetricsData = null) {
-  const brief = isPlainObject(data?.dailyBrief) ? data.dailyBrief : {};
-  const inputs = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
-  const brentLayer = isPlainObject(data?.brentPricingLayer) ? data.brentPricingLayer : {};
-  const shippingFreight = isPlainObject(data?.macroDrivers?.shippingFreight) ? data.macroDrivers.shippingFreight : {};
-  const brentFuturesCurve = isPlainObject(brentLayer.futuresCurve) ? brentLayer.futuresCurve : {};
-  const brentFuturesCurveContracts = safeArray(brentFuturesCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 3)
-    .map((contract) => text(contract.contract, null))
-    .filter(Boolean);
-  const brentFuturesPriceCurve = isPlainObject(brentLayer.futuresPriceCurve) ? brentLayer.futuresPriceCurve : {};
-  const brentFuturesPriceCurveContracts = safeArray(brentFuturesPriceCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 4)
-    .map((contract) => `${text(contract.contractMonth, '--')} ${formatNumber(contract.price, 2)}`);
-  const brentIceFuturesPriceCurve = isPlainObject(brentLayer.iceFuturesPriceCurve) ? brentLayer.iceFuturesPriceCurve : {};
-  const brentIceFuturesPriceCurveContracts = safeArray(brentIceFuturesPriceCurve.contracts)
-    .filter(isPlainObject)
-    .slice(0, 4)
-    .map((contract) => `${text(contract.contract, '--')} ${formatNumber(contract.price, 2)}`);
-  const eiaBrentSpotProxy = isPlainObject(brentLayer.eiaBrentSpotProxy) ? brentLayer.eiaBrentSpotProxy : {};
-  const eiaBrentSpotPrice = finite(eiaBrentSpotProxy.price);
-  const largestDivergence = isPlainObject(brief.largestDivergence) ? brief.largestDivergence : {};
+function narrativeScore(narrative) {
+  const supporting = safeArray(narrative?.supportingEvidence).length;
+  const missing = safeArray(narrative?.missingEvidence).length;
+  const contradicting = safeArray(narrative?.contradictingEvidence).length;
+  if (narrative?.assessment === 'strong_confirmation') return Math.min(88, 68 + supporting * 4);
+  if (narrative?.assessment === 'partial_confirmation') return Math.min(64, 50 + supporting * 3);
+  if (narrative?.assessment === 'contradiction') return Math.max(18, 38 - contradicting * 4);
+  return Math.max(12, 28 - missing * 2);
+}
+
+function narrativeBody(narrative, marketMetric) {
+  const base = text(narrative?.interpretation, '该 narrative 等待交叉验证矩阵补齐。');
+  if (narrative?.id === 'overheat_confirmation') {
+    return marketMetric
+      ? `${base} ${marketMetric.evidenceLine}`
+      : `${base} 市场温度等待 QQQ 周线历史确认。`;
+  }
+  return base;
+}
+
+function buildSignalLayers(data, marketPricingMetricsData = null, crossValidationMatrix = null) {
   const marketMetric = getMarketPricingMetricContext(marketPricingMetricsData);
-  const verified = [];
-  const pending = [];
-
-  if (hasValue(inputs.brent) && hasValue(inputs.breakeven10y) && hasValue(inputs.us10y)) {
-    verified.push('能源、通胀预期与长端利率同时构成当前主观察链条。');
-  }
-  if (hasValue(inputs.hyOas) && hasValue(inputs.vix) && Number(inputs.hyOas) < 4 && Number(inputs.vix) < 22) {
-    verified.push('信用利差和波动率暂未显示明显扩散。');
-  }
-  if (marketMetric) {
-    verified.push(`${marketMetric.evidenceLine} 市场温度已可作为当前主判断的价格层确认。`);
-  }
-  if (largestDivergence.summaryZh) pending.push(largestDivergence.summaryZh);
-  pending.push('能源价格处于观察区间，公开代理已可观察，正式实物源作为边界继续标注。');
-  const dataGapEvidence = [
-    eiaBrentSpotPrice === null
-      ? 'EIA Brent spot proxy 等待刷新；Platts 正式源作为边界保留。'
-      : `EIA Brent Spot Price FOB 已显示 ${formatNumber(eiaBrentSpotPrice, 2)}；Platts 正式源作为边界保留。`,
-    brentIceFuturesPriceCurveContracts.length
-      ? `ICE Brent public delayed price curve 已显示 ${brentIceFuturesPriceCurveContracts.join(' / ')}；official settlement curve 作为边界保留。`
-      : brentFuturesPriceCurveContracts.length
-      ? `Yahoo Brent priced futures proxy 已显示 ${brentFuturesPriceCurveContracts.join(' / ')}；正式 settlement curve 作为边界保留。`
-      : brentFuturesCurveContracts.length
-        ? `ICE Brent futuresCurve structure-only 已显示 ${brentFuturesCurveContracts.join('/')}；priced proxy / 可验证结算价期限曲线作为边界保留。`
-      : 'Brent futures curve structure 等待刷新。',
-    finite(shippingFreight.balticDirtyTankerIndex) === null
-      ? 'shipping / freight 等待 BDTI/BCTI/BDI 刷新。'
-      : 'shipping / freight 已接入 BDTI/BCTI/BDI 公开代理。',
-  ];
-  if (!marketMetric) dataGapEvidence.unshift('Nasdaq / QQQ 周线历史尚未接入。');
-
-  return [
-    createJudgment({
-      id: 'signal-verified',
-      title: '已验证信号',
-      group: 'signal-layer',
-      status: verified.length ? '已有验证' : '暂无法判断',
-      confidence: verified.length ? '中等' : '偏低',
-      dataCoverage: verified.length ? '数据覆盖：核心信号与公开代理已覆盖' : '数据覆盖：关键数据不足',
-      evidence: verified,
-      conclusion: '暂无强验证信号。',
-      sourceType: verified.length ? '数据推断' : '数据不足',
-    }),
-    createJudgment({
-      id: 'signal-pending',
-      title: '待验证信号',
-      group: 'signal-layer',
-      status: pending.length ? '观察中' : '暂无法判断',
-      confidence: '偏低',
-      dataCoverage: '数据覆盖：待确认项，不等同于缺失源',
-      evidence: pending,
-      conclusion: '暂无待验证信号。',
-      sourceType: '数据推断',
-    }),
-    createJudgment({
-      id: 'signal-noise',
-      title: '噪音提示',
-      group: 'signal-layer',
-      status: '观察中',
-      confidence: '中等',
-      dataCoverage: '数据覆盖：噪音提示为解释层说明',
-      noiseWarning: [
-        '单一价格变化不足以形成强结论。',
-        '短期市场波动需要信用、利率、能源和风险资产之间的交叉确认。',
-      ],
-      conclusion: '暂无噪音提示。',
-      sourceType: '数据推断',
-    }),
-    createJudgment({
-      id: 'signal-data-gap',
-      title: '正式源边界',
-      group: 'signal-layer',
-      status: '边界已标注',
-      confidence: '中等',
-      dataCoverage: '数据覆盖：公开代理已接入；正式源边界保留',
-      evidence: dataGapEvidence,
-      conclusion: '公开代理不冒充正式源。',
-      sourceType: '边界说明',
-    }),
-  ];
+  const matrix = isPlainObject(crossValidationMatrix)
+    ? crossValidationMatrix
+    : buildCrossValidationMatrix(data, {}, marketPricingMetricsData);
+  const byId = new Map(safeArray(matrix.narratives).map((item) => [item?.id, item]));
+  return Object.keys(NARRATIVE_EMOJI).map((key) => {
+    const narrative = byId.get(key) || { id: key, label: NARRATIVE_LABELS[key], assessment: 'insufficient_data' };
+    const score = narrativeScore(narrative);
+    return {
+      key,
+      name: `${key} ${NARRATIVE_LABELS[key] || narrative.label || key}`,
+      score,
+      body: narrativeBody(narrative, marketMetric),
+      isActive: score >= 50,
+    };
+  });
 }
 
 function buildMacroDrivers(data) {
@@ -1558,7 +1500,7 @@ export function buildMacroOverview(data = {}, healthDashboard = {}, worldOrderSt
   const overview = {
     today: buildTodayJudgment(data, healthDashboard, worldOrderStressData, marketPricingMetricsData),
     pressures: buildPressureSources(data, worldOrderStressData),
-    signalLayers: buildSignalLayers(data, marketPricingMetricsData),
+    signalLayers: buildSignalLayers(data, marketPricingMetricsData, crossValidationMatrix),
     drivers: buildMacroDrivers(data),
     marketTemperature: buildMarketTemperature(marketPricingMetricsData),
     riskEngines: buildRiskEngines(data, worldOrderStressData, marketPricingMetricsData),
@@ -1628,11 +1570,11 @@ function buildKeyChanges(overview, data = {}, healthDashboard = {}) {
     ));
   }
 
-  const signalCounts = buildSignalCounts(overview.signalLayers);
-  if (signalCounts.gap > 0 || signalCounts.pending > 0) {
+  const signalCounts = countSignalStates(overview.signalLayers);
+  if (signalCounts.latent > 0) {
     changes.push(keyChange(
-      signalCounts.gap > 0 ? 'gap' : 'flat',
-      `信号分层仍有 ${signalCounts.pending} 项待验证、${signalCounts.gap} 项数据不足，暂不放大结论强度。`,
+      signalCounts.active > signalCounts.latent ? 'up' : 'flat',
+      `信号分层显示 ${signalCounts.active} 项 ACTIVE、${signalCounts.latent} 项 LATENT。`,
       'SIGNAL LAYERS'
     ));
   }
@@ -1778,80 +1720,17 @@ function appendJudgmentList(root, label, values) {
   appendText(root, 'p', 'macro-overview-muted', `${label}：${items.map((item) => stripLabelPrefix(item, label)).join('；')}`);
 }
 
-function appendCategoryCountPill(root, label, value) {
-  const pill = document.createElement('span');
-  pill.className = 'editorial-count-pill';
-  appendText(pill, 'span', '', label);
-  appendText(pill, 'strong', '', String(value));
-  root.appendChild(pill);
+function countSignalStates(items) {
+  return safeArray(items).reduce((counts, item) => {
+    if (item?.isActive) counts.active += 1;
+    else counts.latent += 1;
+    return counts;
+  }, { active: 0, latent: 0 });
 }
 
-function signalStatusClass(judgment) {
-  const id = String(judgment?.id || '');
-  const title = String(judgment?.title || '');
-  const status = String(judgment?.status || '');
-  const sourceType = String(judgment?.sourceType || '');
-  const group = String(judgment?.group || '');
-  const identity = `${id} ${title} ${group}`;
-  if (identity.includes('verified') || identity.includes('已验证')) return 'is-verified';
-  if (identity.includes('pending') || identity.includes('待验证')) return 'is-pending';
-  if (identity.includes('noise') || identity.includes('噪音')) return 'is-noise';
-  if (identity.includes('data-gap') || identity.includes('数据不足')) return 'is-gap';
-  const combined = `${status} ${sourceType}`;
-  if (combined.includes('数据不足') || combined.includes('等待接入')) return 'is-gap';
-  return 'is-neutral';
-}
-
-function signalBucketLabel(judgment) {
-  const className = signalStatusClass(judgment);
-  if (className === 'is-verified') return '已验证';
-  if (className === 'is-pending') return '待验证';
-  if (className === 'is-noise') return '噪音提示';
-  if (className === 'is-gap') return '数据不足';
-  return '观察中';
-}
-
-function buildSignalCounts(judgments) {
-  const counts = {
-    verified: 0,
-    pending: 0,
-    noise: 0,
-    gap: 0,
-  };
-  safeArray(judgments).forEach((judgment) => {
-    const className = signalStatusClass(judgment);
-    const evidenceCount = normalizeEvidenceList(judgment?.evidence).length;
-    const noiseCount = normalizeEvidenceList(judgment?.noiseWarning).length;
-    if (className === 'is-verified' && evidenceCount) counts.verified += 1;
-    else if (className === 'is-pending' && evidenceCount) counts.pending += 1;
-    else if (className === 'is-noise' && noiseCount) counts.noise += 1;
-    else if (className === 'is-gap') counts.gap += 1;
-  });
-  return counts;
-}
-
-function buildSignalCategorySummary(judgments) {
-  const items = safeArray(judgments);
-  if (!items.length) return '信号分层数据不足，暂不强行形成证据结论。';
-  const counts = buildSignalCounts(items);
-  const gaps = items.filter((judgment) => signalStatusClass(judgment) === 'is-gap');
-  const hasMissing = items.some((judgment) => normalizeEvidenceList(judgment.missingEvidence).length);
-  const lines = [];
-  if (counts.verified) {
-    lines.push('已验证证据已有部分支持');
-  } else {
-    lines.push('已验证证据仍不足');
-  }
-  if (counts.pending || hasMissing) {
-    lines.push('待验证线索和缺失证据需继续分开展示');
-  }
-  if (counts.noise) {
-    lines.push('单一价格波动仍作为噪音提示处理');
-  }
-  if (gaps.length) {
-    lines.push('数据缺口保留为独立约束');
-  }
-  return `${lines.join('；')}。`;
+function deriveSignalMeta(items) {
+  const counts = countSignalStates(items);
+  return `7 个 narratives 中:${counts.active} active / ${counts.latent} latent · NARRATIVE_EMOJI 映射`;
 }
 
 function driverTypeClass(judgment) {
@@ -2117,55 +1996,24 @@ function appendConsistencyBlock(root, matrix) {
   root.appendChild(body);
 }
 
-function appendEditorialSignalSublist(root, label, values, modifier = '') {
-  const items = normalizeEvidenceList(values);
-  if (!items.length) return;
-  const group = document.createElement('div');
-  group.className = `editorial-signal-sublist ${modifier}`.trim();
-  appendText(group, 'span', 'editorial-signal-sublist-label', label);
-  const list = document.createElement('ul');
-  list.className = 'editorial-signal-evidence';
-  items.forEach((item) => appendText(list, 'li', '', stripLabelPrefix(item, label)));
-  group.appendChild(list);
-  root.appendChild(group);
+function appendNarrativeItem(root, item) {
+  const card = document.createElement('div');
+  card.className = `narrative-item${item?.isActive ? ' active' : ''}`;
+  const head = document.createElement('div');
+  head.className = 'head';
+  appendText(head, 'span', 'emoji', NARRATIVE_EMOJI[item?.key] || '·');
+  appendText(head, 'span', 'name', item?.name || item?.key || 'unknown narrative');
+  appendText(head, 'span', 'score', `score ${Math.round(finite(item?.score) ?? 0)} · ${item?.isActive ? 'ACTIVE' : 'LATENT'}`);
+  card.appendChild(head);
+  appendText(card, 'p', '', item?.body || '该 narrative 等待交叉验证矩阵补齐。');
+  root.appendChild(card);
 }
 
-function appendEditorialSignalCard(root, judgment) {
-  const className = signalStatusClass(judgment);
-  const card = document.createElement('article');
-  card.className = `editorial-signal-card ${className}`;
-  const strip = document.createElement('div');
-  strip.className = 'editorial-signal-card-status-strip';
-  strip.setAttribute('aria-hidden', 'true');
-  card.appendChild(strip);
-
-  const head = document.createElement('div');
-  head.className = 'editorial-signal-card-head';
-  appendText(head, 'span', 'editorial-signal-bucket', signalBucketLabel(judgment));
-  appendText(head, 'h3', 'editorial-signal-card-title', judgment.title);
-  appendText(head, 'span', 'editorial-signal-badge', judgment.status || UNDECIDED);
-  card.appendChild(head);
-
-  const direction = judgment.direction && judgment.direction !== '方向待确认'
-    ? ` / ${judgment.direction}`
-    : '';
-  appendText(card, 'p', 'editorial-signal-main', `${judgment.status || UNDECIDED}${direction}`);
-  const explanation = judgment.explanation || judgment.conclusion;
-  if (explanation) appendText(card, 'p', 'editorial-signal-explanation', explanation);
-  appendEditorialSignalSublist(card, '关键证据', judgment.evidence, 'is-evidence');
-  appendEditorialSignalSublist(card, '公开代理覆盖', judgment.coverageNotes, 'is-evidence');
-  appendEditorialSignalSublist(card, '缺失证据', judgment.missingEvidence, 'is-missing');
-  appendEditorialSignalSublist(card, '反向证据', judgment.counterEvidence, 'is-counter');
-  appendEditorialSignalSublist(card, '噪音提示', judgment.noiseWarning, 'is-noise');
-
-  const footer = document.createElement('div');
-  footer.className = 'editorial-signal-footer';
-  if (judgment.confidence && judgment.confidence !== '等待校准') appendText(footer, 'span', '', `证据强度：${judgment.confidence}`);
-  if (judgment.dataCoverage) appendText(footer, 'span', '', `数据覆盖：${stripLabelPrefix(judgment.dataCoverage, '数据覆盖')}`);
-  if (judgment.sourceType) appendText(footer, 'span', '', `来源类型：${judgment.sourceType}`);
-  if (judgment.updatedAt) appendText(footer, 'span', '', `更新：${judgment.updatedAt}`);
-  if (footer.childNodes.length) card.appendChild(footer);
-  root.appendChild(card);
+function appendNarrativeList(root, items) {
+  const list = document.createElement('div');
+  list.className = 'narrative-list';
+  safeArray(items).forEach((item) => appendNarrativeItem(list, item));
+  root.appendChild(list);
 }
 
 function appendCard(root, item) {
@@ -2346,21 +2194,14 @@ export function renderMacroRiskOverview(data, healthDashboard, worldOrderStressD
   );
   appendMiniGrid(pressure, overview.pressures);
 
-  const signals = appendSection(container, '信号分层', 'editorial-category editorial-signal-category', 'homepage-signal-layers');
-  appendText(signals, 'p', 'editorial-category-kicker', 'SIGNAL LAYERS');
-  appendText(signals, 'p', 'editorial-category-summary', buildSignalCategorySummary(overview.signalLayers));
-  const signalCounts = buildSignalCounts(overview.signalLayers);
-  const signalCountGrid = document.createElement('div');
-  signalCountGrid.className = 'editorial-category-counts';
-  appendCategoryCountPill(signalCountGrid, '已验证', signalCounts.verified);
-  appendCategoryCountPill(signalCountGrid, '待验证', signalCounts.pending);
-  appendCategoryCountPill(signalCountGrid, '噪音提示', signalCounts.noise);
-  appendCategoryCountPill(signalCountGrid, '数据不足', signalCounts.gap);
-  signals.appendChild(signalCountGrid);
-  const signalGrid = document.createElement('div');
-  signalGrid.className = 'editorial-signal-grid';
-  overview.signalLayers.forEach((group) => appendEditorialSignalCard(signalGrid, group));
-  signals.appendChild(signalGrid);
+  const signals = appendRuntimeBlock(
+    container,
+    'homepage-signal-layers',
+    '信号分层',
+    'SIGNAL LAYERS · 7 NARRATIVES',
+    deriveSignalMeta(overview.signalLayers)
+  );
+  appendNarrativeList(signals, overview.signalLayers);
 
   const drivers = appendSection(container, '四大宏观驱动', 'editorial-category editorial-driver-category', 'homepage-macro-drivers');
   appendText(drivers, 'p', 'editorial-category-kicker', 'MACRO DRIVERS');

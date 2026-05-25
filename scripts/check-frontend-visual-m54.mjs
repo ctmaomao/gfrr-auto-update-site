@@ -61,6 +61,19 @@ for (const { id, emoji } of expectedEmojis) {
   }
 }
 
+if (!renderContent.includes('appendNarrativeList')) {
+  fail('M-54 PR 2b: appendNarrativeList function not found for mock narrative-list rendering');
+}
+if (!renderContent.includes('appendNarrativeItem')) {
+  fail('M-54 PR 2b: appendNarrativeItem function not found for mock narrative-item rendering');
+}
+if (!renderContent.includes('narrative-item') || !renderContent.includes("'emoji'") || !renderContent.includes('NARRATIVE_EMOJI[item?.key]')) {
+  fail('M-54 PR 2b: NARRATIVE_EMOJI must render through .narrative-item .emoji');
+}
+if (renderContent.includes('appendEditorialSignalCard')) {
+  fail('M-54 PR 2b: legacy appendEditorialSignalCard must be removed (replaced by appendNarrativeList)');
+}
+
 // Check 3 (PR 2b rewrite): cross-validation must use mock consistency-block style.
 // Legacy appendEditorialValidationCard removed per contract v3.0 sec 8.7.
 if (renderContent.includes('appendEditorialValidationCard')) {

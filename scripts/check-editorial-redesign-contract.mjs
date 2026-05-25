@@ -326,6 +326,27 @@ function checkEditorialStructures() {
     'Liquidity 流动性',
     'Debt 债务',
     'Banking 银行',
+    "'homepage-signal-layers'",
+    'SIGNAL LAYERS · 7 NARRATIVES',
+    'deriveSignalMeta',
+    'appendNarrativeList',
+    'appendNarrativeItem',
+    'narrative-list',
+    'narrative-item',
+    'energy_shock',
+    '能源冲击',
+    'stagflation_pressure',
+    '滞胀压力',
+    'risk_asset_mismatch',
+    '风险资产错配',
+    'overheat_confirmation',
+    '过热确认',
+    'credit_spread_warning',
+    '信用利差告警',
+    'liquidity_tightening',
+    '流动性收紧',
+    'world_order_pressure_crossing',
+    '世界秩序压力穿越',
     "'homepage-risk-engines'",
     'RISK ENGINES · 6 ENGINES + AUXILIARY',
     'data.modules 6 引擎 + divergenceLayer + privateCreditProxy + worldOrderStress + marketTemperature 等多源派生',
@@ -344,13 +365,20 @@ function checkEditorialStructures() {
     'appendEditorialPressureCard',
     'appendEditorialPressureSublist',
     'editorial-pressure-grid',
+    'appendEditorialSignalCard',
+    'appendEditorialSignalSublist',
+    'editorial-signal-grid',
+    'buildSignalCategorySummary',
+    'buildSignalCounts',
+    'signalStatusClass',
+    'signalBucketLabel',
     'appendEditorialEngineCard',
     'appendEditorialEngineSublist',
     'editorial-engine-grid',
   ]) {
     if (macroOverview.includes(marker)) fail(`legacy runtime marker must be removed from ${MACRO_OVERVIEW_PATH}: ${marker}`);
   }
-  for (const marker of ['.wow-tag.is-up', '.wow-tag.is-down', '.wow-tag.is-flat', '.mini-card.red', '.mini-card.yellow', '.mini-card.green']) {
+  for (const marker of ['.wow-tag.is-up', '.wow-tag.is-down', '.wow-tag.is-flat', '.mini-card.red', '.mini-card.yellow', '.mini-card.green', '.narrative-list', '.narrative-item', '.narrative-item.active']) {
     requireMarker(styles, STYLES_PATH, marker);
   }
 
