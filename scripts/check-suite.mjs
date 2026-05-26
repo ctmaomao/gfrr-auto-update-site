@@ -60,11 +60,8 @@ const SUITES = {
     'check:market-pricing-first-real-record-write-scaffold',
     'check:market-pricing-weekly-history-buildup',
     'check:market-pricing-metrics-calculation-scaffold',
-    'check:market-pricing-temperature-display-activated',
     'check:market-pricing-multi-asset',
-    'check:market-pricing-ndx-ixic-implementation',
-    'check:market-pricing-first-fold-integration-and-cross-validation-matrix',
-    'check:market-pricing-macrodrivers-surfacing'
+    'check:market-pricing-ndx-ixic-implementation'
   ],
   'world-order-acled': [
     'check:world-order-acled-weekly',

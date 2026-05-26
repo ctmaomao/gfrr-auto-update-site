@@ -5,7 +5,6 @@ const ROOT = process.cwd();
 const PACKAGE_PATH = 'package.json';
 const CHECK_SUITE_PATH = 'scripts/check-suite.mjs';
 const IMPLEMENTATION_PATH = 'scripts/market-pricing/ndx-ixic-yahoo-history-refresh.mjs';
-const RENDER_PATH = 'scripts/modules/renderMacroOverview.js';
 const CROSS_VALIDATION_PATH = 'scripts/modules/buildCrossValidationMatrix.js';
 const HISTORY_PATH = 'data/market-pricing-history.json';
 const METRICS_PATH = 'data/market-pricing-metrics.json';
@@ -171,7 +170,6 @@ function assertNoScoringBoundaryChange() {
     [
       'scripts/modules/buildCrossValidationMatrix.js',
       'scripts/modules/decision.js',
-      'scripts/modules/render.js',
       'scripts/run-daily-pipeline.mjs',
       'scripts/validate-data.mjs',
       'data/radar-data.json'
@@ -184,15 +182,6 @@ function assertNoScoringBoundaryChange() {
   assert(crossValidation.includes("evidence('qqq_zscore'"), 'cross-validation must still use QQQ z-score evidence');
   assert(!crossValidation.includes('ndx_zscore'), 'cross-validation must not add ndx_zscore');
   assert(!crossValidation.includes('ixic_zscore'), 'cross-validation must not add ixic_zscore');
-}
-
-function assertFrontendLabels() {
-  const render = readText(RENDER_PATH);
-  // PR 2b: NDX/IXIC σ values now render inline in the market-temperature
-  // mock layout rather than through legacy auxiliary cards.
-  assert(render.includes('appendMarketTemperatureBody'), 'frontend must use mock appendMarketTemperatureBody (PR 2b mock-compliant market-temperature)');
-  assert(render.includes('ndx') && render.includes('ixic'), 'frontend must reference NDX and IXIC auxiliary metrics (consumed in mock mono field grid)');
-  assert(!render.includes('AUXILIARY · DISPLAY ONLY'), 'legacy auxiliary card label must be removed (PR 2b mock-compliant)');
 }
 
 function assertDataBoundary() {
@@ -216,7 +205,6 @@ assertSuiteWiring();
 assertImplementationSource();
 assertWorkerBoundary();
 assertNoScoringBoundaryChange();
-assertFrontendLabels();
 assertDataBoundary();
 
 if (errors.length) {

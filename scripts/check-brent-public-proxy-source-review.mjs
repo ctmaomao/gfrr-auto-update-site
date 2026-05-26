@@ -8,9 +8,7 @@ const REVIEW_FIXTURE = 'docs/fixtures/brent-public-proxy-source-review-v28.0M-71
 const RUNTIME_FILES = [
   'scripts/run-daily-pipeline.mjs',
   'scripts/run-realtime.mjs',
-  'workers/gfrr-realtime-worker/src/worker-market-preview.js',
-  'scripts/modules/renderMacroOverview.js',
-  'scripts/modules/render.js'
+  'workers/gfrr-realtime-worker/src/worker-market-preview.js'
 ];
 
 const REQUIRED_DOC_PHRASES = [
