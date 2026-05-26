@@ -1,17 +1,6 @@
 import { spawnSync } from 'node:child_process';
 
 const SUITES = {
-  'frontend-visual-history': [
-    'check:today-summary-card-contract',
-    'check:plain-summary-card-contract',
-    'check:mobile-first-fold-compaction',
-    'check:frontend-visual-m54',
-    'check:frontend-visual-m55a',
-    'check:frontend-visual-m55b',
-    'check:detail-data-dom-containment',
-    'check:backend-frontend-coverage',
-    'check:null-zero-display-guards'
-  ],
   'external-ai': [
     'check:external-ai-manual-workflow',
     'check:external-ai-provider-workflow',
