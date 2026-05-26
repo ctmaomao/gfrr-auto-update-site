@@ -3,11 +3,186 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="全球金融风险雷达 - M-94 V0 路径 C 重建中 / Frontend rebuild in progress (M94 V0 Path C, Stage 2-7)" />
-  <title>全球金融风险雷达 · 重建中</title>
+  <meta name="description" content="全球金融风险雷达 - 机构级宏观风险简报 / Global Financial Risk Radar - institutional macro risk briefing" />
+  <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="assets/styles.css?v=stage-3a-1" />
 </head>
 <body>
-  <div id="root"></div>
+  <div class="container">
+    <header class="masthead">
+      <div class="masthead-row">
+        <div>
+          <div class="kicker">每日更新 · 机构级宏观风险简报</div>
+          <h1 class="title">全球金融风险雷达<br/><em>Global Financial Risk Radar</em></h1>
+        </div>
+        <div class="issue-meta">
+          <div><strong>ISSUE —</strong></div>
+          <div>AS OF — UTC</div>
+          <div>CACHE — · DATA HEALTH — / —</div>
+        </div>
+      </div>
+    </header>
+
+    <nav class="dashboard-jump-nav" aria-label="顶部跳转导航">
+      <a href="#homepage-today-judgment">今日判断</a>
+      <a href="#homepage-pressure-sources">压力来源</a>
+      <a href="#homepage-signal-layers">信号分层</a>
+      <a href="#homepage-macro-drivers">四大驱动</a>
+      <a href="#homepage-market-temperature">市场温度</a>
+      <a href="#homepage-risk-engines">风险引擎</a>
+      <a href="#homepage-cross-validation">交叉验证</a>
+      <a href="#wow-key-changes">本期变化</a>
+      <a href="#macro-thematic-cards" class="new">主题卡阵 NEW</a>
+      <a href="#global-risk-heatmap">风险热力图</a>
+      <a href="#detail-data">详细数据</a>
+      <a href="#world-order-stress-section">世界秩序</a>
+      <a href="#method-evidence">方法说明</a>
+      <a href="#external-ai-auxiliary">外部 AI</a>
+      <a href="#execution-risk-detail">执行风控</a>
+    </nav>
+
+    <section class="plain-summary-section" id="plain-summary-card" aria-label="今天全球金融风险一览">
+      <div class="ps-kicker">本期速读 · for general reader</div>
+      <p class="ps-story">
+        能源与世界秩序压力把总风险推到 56 分,落在"高风险预警"带。
+        <strong>HY OAS 仍低、VIX 没有同步恐慌</strong>,信用市场暂时没验证全面危机——
+        因此本期判读保持观察语气而非定性危机。Brent 周内涨 6 美元、crack spread 同步走阔,
+        能源向下游商品传导的链条正在被实际数据压实。
+      </p>
+      <div class="ps-meta">
+        <span>风险等级:风险偏高</span>
+        <span>分数变化:比一周前高 2 分</span>
+        <span>数据状态:数据正常</span>
+        <span>主线:油价变贵推高物价</span>
+      </div>
+    </section>
+
+    <section class="editorial-section" id="macro-risk-overview" style="--section-accent: var(--risk-red);">
+      <header class="editorial-section-header">
+        <span class="section-kicker">MACRO RISK OVERVIEW · 宏观风险判断总览</span>
+        <span class="section-title">本期判读 · 项目原 8 大分析层</span>
+        <span class="section-note">保留原 IA 8 个 runtime block,以 Bubble Watch 报纸风格重写视觉。内部金融逻辑(7 narrative + 5 market temp 分桶 + 8 today states)全部保留。</span>
+      </header>
+      <div class="editorial-section-body">
+        <div class="macro-overview-shell">
+          <!-- Stage 3b 将注入:editorial-big-number Hero + threshold-block + trend-block + 8 runtime block + wow-section -->
+        </div>
+      </div>
+    </section>
+
+    <section class="editorial-section" id="macro-thematic-cards" style="--section-accent: var(--risk-green);">
+      <header class="editorial-section-header">
+        <span class="section-kicker">MACRO THEMATIC CARDS · 宏观主题卡阵 · NEW</span>
+        <span class="section-title">8 读者类别 红黄绿指标卡</span>
+        <span class="section-note">将上方分析层证据按"读者最容易理解的主题"重新组织。中国宏观为 P1 占位区,M-95/M-96 起填充。部分 aux 字段标 P2 等待数据接入。本 section 为 Path C 在原 IA 外新增的唯一 section。</span>
+      </header>
+      <div class="editorial-section-body">
+        <div class="reader-cat-grid">
+          <!-- Stage 3b 将注入:8 个 reader-cat-block × 38 张 indicator-card -->
+        </div>
+      </div>
+    </section>
+
+    <section class="editorial-section" id="global-risk-heatmap" style="--section-accent: var(--risk-red);">
+      <header class="editorial-section-header">
+        <span class="section-kicker">GLOBAL RISK HEATMAP · 全球风险热力图</span>
+        <span class="section-title">区域风险扩散</span>
+        <span class="section-note">六大模块加权映射为区域风险。地理投影层。</span>
+      </header>
+      <div class="editorial-section-body">
+        <div class="heatmap-grid">
+          <div class="heatmap-cell med"><span class="region">美国</span><span class="risk-score">RISK 45</span><span class="note">融资偏紧 + 实际利率 2.18%</span></div>
+          <div class="heatmap-cell high"><span class="region">欧洲</span><span class="risk-score">RISK 62</span><span class="note">能源敏感 + 增长拖累</span></div>
+          <div class="heatmap-cell severe"><span class="region">中东</span><span class="risk-score">RISK 81</span><span class="note">原油与地缘仍是主风险源</span></div>
+          <div class="heatmap-cell low"><span class="region">中国</span><span class="risk-score">RISK 20</span><span class="note">外需与美元约束</span></div>
+          <div class="heatmap-cell med"><span class="region">日韩</span><span class="risk-score">RISK 33</span><span class="note">输入型压力 + 美元波动</span></div>
+          <div class="heatmap-cell low"><span class="region">拉美</span><span class="risk-score">RISK 31</span><span class="note">商品支撑但外部融资受限</span></div>
+        </div>
+      </div>
+    </section>
+
+    <details class="editorial-folded-content" id="detail-data">
+      <summary>
+        <span><span class="fold-marker"></span> 详细数据与图表 <em>· Appendix detail-data</em></span>
+        <span class="fold-label">展开/收起 · 4 章节</span>
+      </summary>
+      <div class="editorial-section-body">
+        <div class="appendix-content">
+          <!-- Stage 3c 将注入 -->
+        </div>
+      </div>
+    </details>
+
+    <details class="editorial-folded-content" id="world-order-stress-section">
+      <summary>
+        <span><span class="fold-marker"></span> 世界秩序压力层 <em>· World Order Stress (regime overlay)</em></span>
+        <span class="fold-label">展开/收起 · 6 维度详情</span>
+      </summary>
+      <div class="editorial-section-body">
+        <div class="appendix-content">
+          <!-- Stage 3c 将注入 -->
+        </div>
+      </div>
+    </details>
+
+    <details class="editorial-folded-content" id="method-evidence">
+      <summary>
+        <span><span class="fold-marker"></span> 方法说明 <em>· Method Evidence</em></span>
+        <span class="fold-label">展开/收起 · 评分方法 + 证据分层 + 边界</span>
+      </summary>
+      <div class="editorial-section-body">
+        <div class="appendix-content">
+          <!-- Stage 3c 将注入 -->
+        </div>
+      </div>
+    </details>
+
+    <details class="editorial-folded-content" id="external-ai-auxiliary">
+      <summary>
+        <span><span class="fold-marker"></span> 外部 AI 解读 <em>· External AI Auxiliary (read-only)</em></span>
+        <span class="fold-label">展开/收起 · AI 摘要 + 证据来源</span>
+      </summary>
+      <div class="editorial-section-body">
+        <div class="appendix-content">
+          <!-- Stage 3c 将注入 -->
+        </div>
+      </div>
+    </details>
+
+    <details class="editorial-folded-content" id="execution-risk-detail">
+      <summary>
+        <span><span class="fold-marker"></span> 执行与风控详情 <em>· Execution Risk Detail</em></span>
+        <span class="fold-label">展开/收起 · 执行灯 + 触发器 + 目标仓位 + 行为纪律</span>
+      </summary>
+      <div class="editorial-section-body">
+        <div class="appendix-content">
+          <!-- Stage 3c 将注入 -->
+        </div>
+      </div>
+    </details>
+
+    <footer class="method">
+      <div class="method-grid">
+        <div>
+          <h4>METHOD · 方法论</h4>
+          <div>6 底层模块加权 0-100。每模块阈值 RED/YELLOW/GREEN。World Order = regime overlay,不进 scoring。详见上方"方法说明"附录(默认折叠,点击展开)。</div>
+        </div>
+        <div>
+          <h4>BOUNDARY · 边界</h4>
+          <div>公开数据 + 公开代理。不含 Platts / Markit / private credit raw / Redbook raw / BoA raw / 中国央行原始数据。</div>
+        </div>
+        <div>
+          <h4>M-94 · IA 变更</h4>
+          <div>DESIGN.md v2 对齐 mock 视觉契约。jump nav 14 → 15 项;新增 8 主题卡阵;附录 5 details 默认全折叠,用户主动点击展开。</div>
+        </div>
+        <div>
+          <h4>DISCLAIMER · 免责</h4>
+          <div>框架研究,非投资建议。所有"动作清单 / 目标仓位 / 风控阈值"仅供作者本人使用。</div>
+        </div>
+      </div>
+    </footer>
+  </div>
 </body>
 </html>
