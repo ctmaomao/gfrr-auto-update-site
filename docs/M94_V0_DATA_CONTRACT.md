@@ -1,13 +1,47 @@
-# M-94 V0 — Data Consumption Contract v3.0
+# M-94 V0 — Data Consumption Contract v3.1
 
-> **Status**: V0 Draft v3.0 (PR 2b 启动前重大范围调整 — Mock 成为唯一不变契约)
-> **PR 路径**: PR 1 ✅ merged · PR 2a ✅ merged(commit `ec5b462`) · PR 2b = **Mock 视觉 1:1 落地(8 runtime block + index.html 大清理)**
+> **Status**: V0 Draft v3.1 (PR 2b ✅ merged + 路径 C 启动 — Mock v2.1 成为唯一权威视觉基准)
+> **PR 路径**: PR 1 ✅ merged · PR 2a ✅ merged · PR 2b ✅ merged · PR 2c = **路径 C 前台从零重写(7 stages,详见 docs/m94-v0/M94_V0_FRONTEND_REBUILD_PLAN.md)**
 > **Scope**: 前端展示 only · 不动 scoring / decision / execution / position / Worker / data pipeline / JSON 生产结构
 > **Approach**: Mock 视觉 = 不变契约。任何当前实现与 mock 冲突,以 mock 为准。
-> **Visual Reference**: `manual-artifacts/m94-v0/m94-v0-FINAL-mock.html` 是本契约的视觉权威基准
+> **Visual Reference**: `manual-artifacts/m94-v0/m94-v0-FINAL-mock-v2.html` (v2.1, 121.05 KB) — 自 PR 2c 起,本文件取代 v1 mock 作为唯一视觉权威基准
 > **Date**: 2026-05-25
 
 ---
+
+## §0.5 路径 C 序列说明(2026-05-26 新增)
+
+PR 2b 把 mock 8 runtime block + 8 主题卡阵注入了新 section,但旧 `<body>` 一行没动,导致两套 IA 同时渲染。Robert 决定走**路径 C**:前台从零重写 + 后台一行不动。
+
+### 路径 C 与本契约的关系
+
+- 本契约(M94_V0_DATA_CONTRACT.md)定义**数据消费契约**(JSON 字段 → 前端展示),保持有效
+- 路径 C 的 7-stages 实施计划在 `docs/m94-v0/M94_V0_FRONTEND_REBUILD_PLAN.md`
+- 视觉权威基准从 `mock v1`(91.59 KB)升级为 `mock v2.1`(121.05 KB):
+  - 主路径(masthead / plain summary / 8 runtime block / 8 主题卡阵 / 6 cells heatmap)= v1 完全保留
+  - 附录区(5 details)= v2 重写为报纸式叙事(完整保留原有数据消费,只改外观)
+  - 5 details 默认折叠态 = v2.1 新增硬约束
+
+### 路径 C 不动清单(后台)
+
+本契约定义的所有数据生产 / 算法 / pipeline / Worker 部分**全部不动**。具体清单:
+- `data/*.json` 全部
+- `scripts/run-daily-pipeline.mjs` / `run-realtime.mjs` / `build-world-order-stress.mjs` / `write-external-ai-production-data.mjs` / `validate-data.mjs`
+- `scripts/market-pricing/*` / `scripts/world-order/*` / `scripts/external-ai/*`
+- `workers/` 全部
+- `.github/workflows/` 全部
+- `scripts/modules/buildCrossValidationMatrix.js`(算法保留,渲染壳重写)
+- `scripts/modules/displayStatusThresholds.js` / `health.js` / `decision.js` / `realtime.js` / `freshness.js` / `config.js` / `format.js`
+
+### 路径 C 删除清单(前端)
+
+详见 `docs/m94-v0/M94_V0_FRONTEND_REBUILD_PLAN.md` §1.2 与 §3。
+
+### 折叠态硬约束(2026-05-26 Robert 新增)
+
+mock v2.1 的 5 个 appendix `<details class="editorial-folded-content">` 元素**全部不带 `open` 属性**,初始为收起状态。Stage 3 落地 `index.html` 时必须保持此约束,Stage 6 写专门 checker 拦截违规。
+
+详见 DESIGN.md v2 §5.4。
 
 ## v2.5 → v3.0 关键变更(给读过 v2.5 的人快速过)
 
@@ -1194,6 +1228,7 @@ npm run check:frontend-visual-m55b                   ← 已重写
 | 2026-05-25 | v2.4 PR 2a 启动期间的契约 / 代码失配微修 | Codex 在 PR 2a 阶段 1 严格按铁律执行,直读源码确认 2 个契约假设错误 |
 | 2026-05-25 | v2.5 PR 2a 阶段 4 cache version bump 项目惯例发现 | Codex 在 PR 2a 阶段 4 第三次停下报告,Claude 读 bump helper 源码后发现项目早就有官方 helper |
 | 2026-05-25 | **v3.0 PR 2b 启动前的全面重写 — Mock = 不变契约**:(1) 顶部新增 v2.5 → v3.0 关键变更导读,详述 5 个契约 v2.5 与代码现状的失配;(2) §0.3 新增 §0.3.1 PR 2b 特殊不动项 + §0.3.2 允许动但严格限制项 + §0.4 铁律 6 Mock 是不变契约;(3) §4.2b 完全重写为"Mock 视觉 1:1 落地",改动文件清单 12 个 + cache version `28.0M-95`;(4) §8 完全重写,8 个 block 每个含 mock 设计引用 / 当前代码 before / 目标代码 after / 字段消费裁剪 / checker 改动;(5) §9 完全重写,新增视觉对照清单 + 字段消费验收 + 12 stage 实施顺序 | Claude 在 PR 2b 启动前做完整侦察(读完 mock 1631 行 + renderMacroOverview.js 3375 行 + styles.css 3744 行 + index.html `<head><style>` 506 行),发现 5 个失配:(1) 8 runtime block 视觉已用 editorial-* 体系 render,不是契约 v2.5 §8 描述的"工程术语堆积";(2) mock 比当前实现更轻量,方向相反;(3) index.html `<head><style>` 块 506 行 inline style 在 mock 全不用;(4) M-92A 6 格视觉与 mock editorial-big-number 不兼容;(5) 字段消费现状远超 mock。Robert 选 "完全推翻以前的样子,完全按 mock 落地"。Claude 根据"mock 是不变契约"原则自行拍板 8 项技术决策,推翻 M-92A / M-93 / M-54 / M-55a / M-55b 几个 milestone 的视觉成果,重写 5 个 checker,共 ~3200 行净删 |
+| 2026-05-26 | v3.1 / 2026-05-26 / 路径 C 启动,视觉基准升级到 mock v2.1 | PR 2b merged 后,Robert 决定 PR 2c 走路径 C:前台从零重写 + 后台一行不动;新增 §0.5 说明 7-stage 序列、后台不动清单与 5 details 默认折叠硬约束 |
 
 ---
 
