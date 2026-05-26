@@ -2,7 +2,7 @@
 
 > **Version**: v2.0 (M-94 V0 路径 C 启动,2026-05-26)
 >
-> **本文档是设计合约。** 任何前端改动（无论由人工、Codex、Cursor、Claude 或其他 AI 执行）在动手之前都必须读完本文档，并在 PR 描述中声明"本 PR 符合 DESIGN.md 的所有规则"。违反本合约的视觉改动会被 `check:editorial-redesign-contract` 拦截。
+> **本文档是设计合约。** 任何前端改动（无论由人工、Codex、Cursor、Claude 或其他 AI 执行）在动手之前都必须读完本文档，并在 PR 描述中声明"本 PR 符合 DESIGN.md 的所有规则"。M-94 V0 路径 C 启动后,违反本合约的视觉改动会被 Stage 6 新写的 frontend checker(`check-frontend-ia-m94v0` + `check-frontend-folded-default`)拦截。
 >
 > 本合约的视觉真实基准是参考网站 **The Bubble Watch / AI 泡沫监测**（Editorial Data Journalism 风格），不是任何 SaaS dashboard 或交易终端。
 
@@ -397,7 +397,7 @@ tag 颜色:
 
 ---
 
-## X. M-94 V0 路径 C 视觉契约
+## 5.6 M-94 V0 路径 C 视觉契约
 
 M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mock-v2.html`(简称 mock v2.1,121.05 KB)。
 
@@ -546,8 +546,8 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
 2. **如果是 DESIGN.md 变更**：必须先开 issue 讨论，PR 同时更新本文档
 3. **必须通过的检查**：
    - `npm run check:all` 全绿
-   - `npm run check:editorial-redesign-contract` 全绿
-   - `npm run check:homepage-ia-contract` 全绿
+   - M-94 V0 路径 C 期间(Stage 1-5):只需 `npm run check:all` 全绿
+   - M-94 V0 路径 C 完成后(Stage 6+):`npm run check:all` 全绿 + 新 frontend checker(`check-frontend-ia-m94v0` + `check-frontend-folded-default`)全绿
 4. **必须包含的 PR 描述内容**：
    - 视觉对比截图（before / after）
    - Headless Chrome 实测取样（关键 selector 的 background / color / font-family）
@@ -609,7 +609,6 @@ var(--font-mono)              /* IBM Plex Mono */
 ```text
 #macro-risk-overview          宏观风险判断总览（红色带）
   #wow-key-changes            本期关键变化（runtime 注入，不是顶级 section）
-  #homepage-realtime-band     盘中快变量（supporting strip，不是顶级 section）
 #macro-thematic-cards         宏观主题卡阵（绿色带）
 #global-risk-heatmap          全球风险热力图（红色带）
 #detail-data                  详细数据与图表（墨色带，折叠）
