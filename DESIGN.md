@@ -1,5 +1,7 @@
 # DESIGN.md — Editorial Design Contract
 
+> **Version**: v2.0 (M-94 V0 路径 C 启动,2026-05-26)
+>
 > **本文档是设计合约。** 任何前端改动（无论由人工、Codex、Cursor、Claude 或其他 AI 执行）在动手之前都必须读完本文档，并在 PR 描述中声明"本 PR 符合 DESIGN.md 的所有规则"。违反本合约的视觉改动会被 `check:editorial-redesign-contract` 拦截。
 >
 > 本合约的视觉真实基准是参考网站 **The Bubble Watch / AI 泡沫监测**（Editorial Data Journalism 风格），不是任何 SaaS dashboard 或交易终端。
@@ -136,53 +138,80 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 
 ## 4. 信息架构（IA 合约，section 顺序不可随意改动）
 
-### 4.1 一级 section 顺序（不可变更）
+### 4.1 M-94 V0 路径 C 一级阅读顺序（不可变更）
+
+M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不折叠,附录区默认折叠。
 
 ```text
 ═══ 第一层：核心阅读路径（不折叠，始终展开）═══
-1. Hero / Masthead              (顶部品牌 + 日期 + 数据健康)
-2. dashboard-jump-nav            (顶部跳转导航 15 项)
+1. <header class="masthead">              顶部品牌 / 日期 / 数据健康 / 观察边界
+2. <nav class="dashboard-jump-nav">       顶部跳转导航 15 项
 
-═══ Non-nav preface block（可选，不计入 IA 编号）═══
-#plain-summary-card           普通用户 preface block
+═══ Non-nav preface block（不计入 nav 编号）═══
+#plain-summary-card                       普通用户 preface block
    - 位于 <main> 内、dashboard-jump-nav 后、#macro-risk-overview 前
+   - 使用 plain-summary-section 叙事结构
    - 不计入 15 项 jump-nav IA section
-   - 不改变现有 IA section 顺序与编号
-   - 可使用 editorial-section plain-summary-section 类
-   - 不要求标准 editorial-section-header / English kicker / 色带
-   - 必须保留为可选（optional）：缺失时不构成 IA 违规
-   - 如出现，必须严格位于上述位置
-   - V3 implementation 由独立 contract checker 强制其存在性
 
-3. #macro-risk-overview          (宏观风险判断总览)
-   ├─ runtime block: #homepage-today-judgment
-   ├─ runtime block: #homepage-pressure-sources
-   ├─ runtime block: #homepage-signal-layers
-   ├─ runtime block: #homepage-macro-drivers
-   ├─ runtime block: #homepage-market-temperature
-   ├─ runtime block: #homepage-risk-engines
-   ├─ runtime block: #homepage-cross-validation
-   ├─ runtime block: #wow-key-changes      (M-55b: JS runtime 注入，不是顶级 section)
-   └─ supporting strip: #homepage-realtime-band (盘中快变量，不是顶级 section)
-4. #macro-thematic-cards         (宏观主题卡阵；绿色带，内容由 PR 2 填充)
-5. #global-risk-heatmap          (全球风险热力图)
+═══ Macro runtime path（8 runtime block + WoW）═══
+3. #macro-risk-overview                   宏观风险判断总览
+   └─ .macro-overview-shell
+      ├─ #homepage-today-judgment         Hero / 今日判断
+      ├─ .threshold-block                 风险阈值尺
+      ├─ .trend-block                     8 周趋势
+      ├─ #homepage-pressure-sources       压力来源
+      ├─ #homepage-signal-layers          信号层
+      ├─ #homepage-macro-drivers          宏观驱动
+      ├─ #homepage-market-temperature     Market Pricing Temperature
+      ├─ #homepage-risk-engines           六大风险引擎
+      ├─ #homepage-cross-validation       交叉验证矩阵
+      └─ #wow-key-changes                 本期关键变化
 
-═══ 第二层：附录区（可折叠，默认收起）═══
-6. #detail-data                  (详细数据与图表)
-7. #world-order-stress-section   (World Order regime overlay；独立 section，见 ADR-0004)
-8. #method-evidence              (方法说明)
-9. #external-ai-auxiliary        (外部 AI 解读 - 只读辅助)
-10. #execution-risk-detail       (执行与风控详情)
+═══ Thematic reader path（8 主题卡阵）═══
+4. #macro-thematic-cards                  C1-C8 主题卡阵,38 张 indicator-card
+
+═══ Static risk map（M-94 静态,M-95+ 再接真实区域算法）═══
+5. #global-risk-heatmap                   6 cells 静态 heatmap
+
+═══ 第二层：附录区（5 个 details,默认收起）═══
+6. #detail-data                           详细数据与图表
+7. #world-order-stress-section            World Order regime overlay
+8. #method-evidence                       方法说明与证据链
+9. #external-ai-auxiliary                 外部 AI 解读 - 只读辅助
+10. #execution-risk-detail                执行与风控详情
+
+═══ Footer（不进 jump nav）═══
+<footer class="method">                   method-grid 4 项
 ```
 
-### 4.2 修改 IA 顺序的流程
+### 4.2 dashboard-jump-nav 15 项（顺序锁定）
+
+顶部跳转导航必须是 15 项,按以下顺序指向主路径锚点:
+
+1. `#homepage-today-judgment`
+2. `#homepage-pressure-sources`
+3. `#homepage-signal-layers`
+4. `#homepage-macro-drivers`
+5. `#homepage-market-temperature`
+6. `#homepage-risk-engines`
+7. `#homepage-cross-validation`
+8. `#wow-key-changes`
+9. `#macro-thematic-cards`（`.new` 主题卡阵入口）
+10. `#global-risk-heatmap`
+11. `#detail-data`
+12. `#world-order-stress-section`
+13. `#method-evidence`
+14. `#external-ai-auxiliary`
+15. `#execution-risk-detail`
+
+### 4.3 修改 IA 顺序的流程
 
 若需要新增 section 或调整顺序：
 
 1. 必须先开 issue 讨论变更理由
-2. 同步更新 `scripts/check-homepage-ia-contract.mjs`（IA 合约脚本）
-3. 同步更新本文档 §4.1
-4. 同步更新 `scripts/check-editorial-redesign-contract.mjs` 中的 nav 顺序断言
+2. 同步更新 `DESIGN.md` §4 与 M-94 数据契约
+3. 同步更新当前生效的 frontend IA checker
+4. 同步更新 `index.html` 静态骨架与对应 render module
 5. PR 必须包含 IA 变更的视觉对比截图
 
 ---
@@ -210,13 +239,11 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 
 | Section | 色带 token | 语义 |
 |---|---|---|
-| `#macro-risk-overview` | `var(--risk-red)` | 主判断 |
-| `#wow-key-changes` | `var(--risk-yellow)` | `#macro-risk-overview` 内 runtime block；变化语义 |
-| `#homepage-realtime-band` | n/a | `#macro-risk-overview` 内 supporting strip；盘中快变量 |
-| `#macro-thematic-cards` | `var(--risk-green)` | 主题汇编，跨分析层的读者类别入口 |
-| `#global-risk-heatmap` | `var(--risk-red)` | 风险数据 |
+| `#macro-risk-overview` | `var(--risk-red)` | 主判断与 8 runtime block |
+| `#macro-thematic-cards` | `var(--risk-green)` | 主题汇编,跨分析层的读者类别入口 |
+| `#global-risk-heatmap` | `var(--risk-red)` | 6 cells 静态风险热力图 |
 | `#detail-data` | `var(--paper-ink)` | 中性 appendix |
-| `#world-order-stress-section` | `var(--risk-orange)` | regime overlay；独立结构性观察层 |
+| `#world-order-stress-section` | `var(--risk-orange)` | regime overlay;独立结构性观察层 |
 | `#method-evidence` | `var(--paper-ink)` | 中性 appendix |
 | `#external-ai-auxiliary` | `var(--paper-muted)` | 辅助层 |
 | `#execution-risk-detail` | `var(--risk-red)` | 风控严重性 |
@@ -226,14 +253,81 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 - 顶部 `border-top: 4px solid var(--section-accent)`
 - 底部 `border-bottom: 1px solid var(--paper-line)`
 - 内边距 `padding: 24px 28px 20px 28px`
-- `section-kicker`：mono 字体，11px，letter-spacing 0.28em，uppercase
-- `section-title`：display 字体，22-30px clamp，font-weight 700
-- `section-note`：serif 字体，13px，line-height 1.7
+- `section-kicker`:mono 字体,11px,letter-spacing 0.28em,uppercase
+- `section-title`:display 字体,22-30px clamp,font-weight 700
+- `section-note`:serif 字体,13px,line-height 1.7
 
-### 5.2 editorial-folded-content（折叠容器）
+### 5.2 macro-overview-shell 与 8 runtime block
+
+`#macro-risk-overview` 内部必须使用 `.macro-overview-shell` 包裹所有 runtime 内容。顺序固定:
 
 ```html
-<details class="editorial-folded-content">
+<section class="editorial-section" id="macro-risk-overview">
+  <div class="macro-overview-shell">
+    <article id="homepage-today-judgment" class="editorial-big-number">...</article>
+    <section class="threshold-block">...</section>
+    <section class="trend-block">...</section>
+    <section id="homepage-pressure-sources" class="runtime-block">...</section>
+    <section id="homepage-signal-layers" class="runtime-block">...</section>
+    <section id="homepage-macro-drivers" class="runtime-block">...</section>
+    <section id="homepage-market-temperature" class="runtime-block">...</section>
+    <section id="homepage-risk-engines" class="runtime-block">...</section>
+    <section id="homepage-cross-validation" class="runtime-block">...</section>
+    <section id="wow-key-changes" class="wow-section">...</section>
+  </div>
+</section>
+```
+
+runtime block 的基准结构:
+
+```html
+<section id="homepage-pressure-sources" class="runtime-block">
+  <header class="runtime-block-header">
+    <span class="runtime-kicker">PRESSURE SOURCES</span>
+    <h3>压力来源</h3>
+    <p>一段叙事说明...</p>
+  </header>
+  <div class="runtime-block-body">
+    <!-- mini-grid / narrative-list / consistency-block / themed body -->
+  </div>
+</section>
+```
+
+### 5.3 editorial-big-number（Hero 反白卡）
+
+```html
+<article class="editorial-big-number" id="homepage-today-judgment">
+  <div class="big-left">
+    <div class="label">GLOBAL RISK SCORE</div>
+    <div class="value">59</div>
+    <div class="breakdown">压力上升 · 证据强度: 中等</div>
+  </div>
+  <div class="big-right">
+    <div class="verdict-kicker">TODAY'S JUDGMENT</div>
+    <h2>今日判断标题</h2>
+    <p>今日判断叙事...</p>
+  </div>
+  <div class="big-footer">...</div>
+</article>
+```
+
+**视觉规范**：
+- 背景 `var(--paper-ink)` 深墨
+- 文字 `var(--paper-bg)` 反白
+- 数值字号 `clamp(80px, 14vw, 144px)`,Playfair Display 900 weight
+- 数值 `line-height: 0.9`
+- `big-footer` 为 3 列元数据:DOMINANT RISK CHAIN / WEEKLY CHANGE / DATA HEALTH
+
+### 5.4 折叠态硬约束（appendix details）
+
+5 个 appendix `<details class="editorial-folded-content">` 元素**全部不带 `open` 属性**,初始渲染时全部为收起状态。任何把 `open` 属性加进 `index.html` 的改动都视为视觉契约违规。
+
+适用范围:`#detail-data` / `#world-order-stress-section` / `#method-evidence` / `#external-ai-auxiliary` / `#execution-risk-detail`,以及 M-95+ 将来新增的任何 `<details class="editorial-folded-content">`。
+
+执行机制:`scripts/check-frontend-folded-default.mjs`(Stage 6 写)在 CI 中拦截任何包含 `<details ... open>` 的提交。
+
+```html
+<details id="detail-data" class="editorial-folded-content">
   <summary class="editorial-folded-summary">
     <span class="fold-marker">+</span>
     <span class="fold-label">展开详细数据</span>
@@ -245,51 +339,76 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 ```
 
 **规则**：
-- 默认收起（不加 `open` 属性）
-- 展开标记用 ASCII `+` / `−`（不用 Unicode 装饰字符）
+- 默认收起,不加 `open` 属性
+- 展开标记用 ASCII `+` / `−`
 - 后缀 "· 展开" / "· 收起" 由 CSS `::after` 自动生成
 - 字体 mono 12-13px
 
-### 5.3 editorial-big-number（Hero 反白卡）
+### 5.5 mock v2.1 专属组件族
+
+**8 主题卡阵**:
+- `#macro-thematic-cards` 内必须有 8 个 `.reader-cat-block`
+- 标题顺序为 C1 通胀与能源 / C2 全球流动性 / C3 信用与企业债 / C4 美国经济温度 / C5 世界经济 / C6 中国宏观 / C7 市场情绪 / C8 地缘与世界秩序
+- 总计 38 个 `article.indicator-card`
+- 每张卡必须只显示公开代理 / 审计层 / 展示层证据,不得暗示正式源或非公开数据已接入
+
+**mini-grid / mini-card**:
+- `#homepage-pressure-sources` 与 `#homepage-risk-engines` 使用 `.mini-grid`
+- `.mini-card.red/.yellow/.green` 仅使用 `--risk-*` 语义色
+- mini-card 只承载 label / num / status 一行,避免旧 dossier sublist 回流
+
+**narrative-list / narrative-item**:
+- `#homepage-signal-layers` 使用 `.narrative-list`
+- 每个 `.narrative-item` 含 `.emoji` / `.name` / `.score` / 一段 body
+- `.narrative-item.active` 仅表达当前重点,不得替代 scoring 或 decision
+
+**consistency-block**:
+- `#homepage-cross-validation` 使用 `.consistency-block`
+- `.consistency-bar .fill` 只展示一致性百分比
+- 详细矩阵算法仍来自 `buildCrossValidationMatrix.js`,render 层不得重算核心逻辑
+
+**wow-section / wow-item**:
 
 ```html
-<article class="editorial-big-number">
-  <div class="label">GLOBAL RISK SCORE</div>
-  <div class="value">59</div>
-  <div class="breakdown">压力上升 · 证据强度: 中等</div>
-  <div class="footer">UPDATED: ...</div>
-</article>
+<section class="wow-section" id="wow-key-changes">
+  <div class="wow-label">本期关键变化 · Week-over-Week</div>
+  <h3>变化标题 <em>· this issue's deltas</em></h3>
+  <div class="wow-grid">
+    <article class="wow-item">
+      <span class="wow-tag is-up">风险升高</span>
+      <div class="wow-text">变化描述...<span class="wow-source">字段来源</span></div>
+    </article>
+  </div>
+</section>
 ```
 
-**视觉规范**：
-- 背景 `#1A1815` 深墨
-- 文字 `#FBF7F0` 反白
-- 数值字号 `clamp(80px, 14vw, 144px)`，Playfair Display 900 weight
-- `letter-spacing: -0.04em`，`line-height: 0.9`
-
-### 5.4 wow-item（本期关键变化条目）
-
-```html
-<article class="wow-item">
-  <span class="wow-tag is-up">▲ 风险升高</span>
-  <p class="wow-text">变化描述...</p>
-  <span class="wow-source">数据来源</span>
-</article>
-```
-
-**tag 颜色**：
+tag 颜色:
 - `.is-up` → `var(--risk-yellow)` 背景 + 反白文字
 - `.is-down` → `var(--risk-green)` 背景 + 反白文字
 - `.is-flat`, `.is-gap` → `var(--paper-muted)` 背景 + 反白文字
 
-### 5.5 dashboard-jump-nav
-
-顶部跳转导航，15 项链接，对应首页核心 runtime anchors 与顶级 section 锚点。
-
-- 字体 mono 11px，`letter-spacing: 0.18em`，uppercase
+**dashboard-jump-nav**:
+- 顶部跳转导航固定 15 项
+- 第 9 项 `#macro-thematic-cards` 必须带 `.new`
+- 字体 mono 11px,`letter-spacing: 0.18em`,uppercase
 - 默认色 `var(--paper-muted)`
 - hover 时 `color: var(--paper-ink)` + `border-bottom: 1px solid var(--risk-red)`
 - 上下边框 `1px solid var(--paper-line)`
+
+---
+
+## X. M-94 V0 路径 C 视觉契约
+
+M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mock-v2.html`(简称 mock v2.1,121.05 KB)。
+
+任何视觉合约疑问以 mock v2.1 为准。本 DESIGN.md v2 是 mock v2.1 的文字化描述。
+
+**永久禁用的旧 IA 元素**(任何 PR 不得引入):
+- 旧 `<section id="homepage-realtime-band">` 及其内部所有元素(`#rt-brent-source` / `#rt-brent-delta` 等 16 个子 ID)
+- 旧 `<section id="world-heatmap">` SVG 投影层(由 6 cells 静态 grid 替代)
+- 旧 jump nav 14 项结构(由 15 项 + .new 主题卡阵替代)
+- 旧 `#core-dashboard` / 旧 hero `.hero-*` selector 全套
+- `<head>` 内联 `<style>` 块(M94_V0_DATA_CONTRACT.md §I.6 禁止)
 
 ---
 
