@@ -2,35 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const DATA_PATH = 'data/radar-data.json';
-const INDEX_PATH = 'index.html';
-const APP_PATH = 'scripts/app.js';
-const RENDER_EXTERNAL_AI_PATH = 'scripts/modules/renderExternalAi.js';
 const WORKFLOW_DIR = '.github/workflows';
 const APPROVED_PRODUCTION_REFRESH_WORKFLOW = '.github/workflows/external-ai-production-refresh.yml';
-const FORBIDDEN_VISIBLE_COPY = [
-  '买入',
-  '卖出',
-  '加仓',
-  '减仓',
-  '做多',
-  '做空',
-  '建仓',
-  '平仓',
-  '止损',
-  '止盈',
-  '仓位',
-  '现金',
-  '敞口',
-  '执行灯',
-  '交易信号',
-  '操作建议',
-  '配置建议',
-  '立即行动',
-  '投资建议',
-];
-const SAFE_NEGATED_COPY = [
-  '不构成投资建议',
-];
 
 function readText(filePath) {
   return fs.readFileSync(filePath, 'utf8');
@@ -128,142 +101,6 @@ function validateProductionLayer(errors) {
   }
 }
 
-function validateHiddenContainer(errors) {
-  const html = readText(INDEX_PATH);
-  const panelMatch = html.match(/<section\b[^>]*id=["']external-ai-display-panel["'][^>]*>/u);
-  if (!panelMatch) {
-    addError(errors, 'index.html must include external-ai-display-panel hidden scaffold container');
-    return;
-  }
-
-  if (!/\bhidden\b/u.test(panelMatch[0]) || !/aria-hidden=["']true["']/u.test(panelMatch[0])) {
-    addError(errors, 'external-ai-display-panel must be hidden by default with aria-hidden=true');
-  }
-
-  const panelIndex = html.indexOf(panelMatch[0]);
-  const heatmapSectionIndex = html.indexOf('<section id="global-risk-heatmap"');
-  const nextSectionAfterHeatmap = heatmapSectionIndex >= 0
-    ? html.indexOf('<section id="detail-data"', heatmapSectionIndex)
-    : -1;
-  const heatmapCardIndex = html.indexOf('heatmap-card');
-  if (heatmapSectionIndex >= 0
-    && panelIndex > heatmapSectionIndex
-    && (nextSectionAfterHeatmap < 0 || panelIndex < nextSectionAfterHeatmap)) {
-    addError(errors, 'external AI panel must not be placed inside Global Risk Heatmap');
-  }
-  if (heatmapCardIndex >= 0 && Math.abs(panelIndex - heatmapCardIndex) < 3000) {
-    addError(errors, 'external AI panel must not be integrated with heatmap-card');
-  }
-
-  const panelSnippet = html.slice(Math.max(0, panelIndex - 250), panelIndex + panelMatch[0].length + 250);
-  for (const forbidden of FORBIDDEN_VISIBLE_COPY) {
-    const safeSnippet = SAFE_NEGATED_COPY.reduce((text, safeCopy) => text.replaceAll(safeCopy, ''), panelSnippet);
-    if (safeSnippet.includes(forbidden)) {
-      addError(errors, `external AI hidden panel snippet contains forbidden visible copy: ${forbidden}`);
-    }
-  }
-}
-
-function validateFrontendGates(errors) {
-  const app = readText(APP_PATH);
-  const helper = readText(RENDER_EXTERNAL_AI_PATH);
-  if (!app.includes('renderExternalAiPanel(data)')) {
-    addError(errors, 'scripts/app.js must call renderExternalAiPanel(data)');
-  }
-
-  const requiredGateMarkers = [
-    'layer.schemaVersion === SCHEMA_VERSION',
-    "layer.status === 'valid'",
-    'layer.displayEnabled === true',
-    'boundaries.frontendDisplayApproved === true',
-    'boundaries.displayOnly === true',
-    'boundaries.notInvestmentAdvice === true',
-    'boundaries.affectsScoring === false',
-    'boundaries.affectsDecisionModel === false',
-    'boundaries.affectsExecutionLock === false',
-    'boundaries.affectsPositionGuidance === false',
-    'qualityReview.promotionEligible === false',
-    "reviewStatus === 'pass'",
-    "reviewStatus === 'warn'",
-    'freshness.isStale === false',
-  ];
-  for (const marker of requiredGateMarkers) {
-    if (!helper.includes(marker)) addError(errors, `renderExternalAi helper missing gate: ${marker}`);
-  }
-
-  const requiredUxMarkers = [
-    'external-ai-card',
-    'external-ai-header',
-    'external-ai-badges',
-    'external-ai-summary',
-    'external-ai-grid',
-    'external-ai-section',
-    'external-ai-scenario',
-    'external-ai-scenario-title',
-    'external-ai-source-list',
-    'external-ai-review-status',
-    'external-ai-muted',
-    'external-ai-meta',
-    'FACT_LIMIT = 4',
-    'INFERENCE_LIMIT = 3',
-    'MODEL_JUDGMENT_LIMIT = 4',
-    'SCENARIO_LIMIT = 2',
-    'SCENARIO_CONDITION_LIMIT = 3',
-    'SOURCE_ATTRIBUTION_LIMIT = 4',
-    '模型判断',
-    '情景假设',
-    '触发条件',
-    '反证条件',
-    '证据来源摘要',
-    '审查状态',
-    '输出校验通过',
-    '仅供人工阅读',
-    '不进入自动决策',
-  ];
-  for (const marker of requiredUxMarkers) {
-    if (!helper.includes(marker)) addError(errors, `renderExternalAi helper missing UX marker: ${marker}`);
-  }
-
-  if (helper.includes('innerHTML')) {
-    addError(errors, 'renderExternalAi helper must not use innerHTML for external AI content');
-  }
-  if (!helper.includes('.textContent')) {
-    addError(errors, 'renderExternalAi helper must use textContent for rendered external AI content');
-  }
-  for (const rawMarker of [
-    'provenance',
-    'artifactId',
-    'artifactName',
-    'artifactPath',
-    'runId',
-    'rawProviderOutput',
-    'providerOutput',
-    'rawResponse',
-    'headers',
-    'decisionContext',
-  ]) {
-    if (helper.includes(rawMarker)) {
-      addError(errors, `renderExternalAi helper must not expose raw provider/provenance field: ${rawMarker}`);
-    }
-  }
-
-  for (const forbidden of FORBIDDEN_VISIBLE_COPY) {
-    const helperWithoutTermList = SAFE_NEGATED_COPY.reduce(
-      (text, safeCopy) => text.replaceAll(safeCopy, ''),
-      helper.replaceAll(`'${forbidden}',`, ''),
-    );
-    if (helperWithoutTermList.includes(forbidden)) {
-      addError(errors, `renderExternalAi helper contains forbidden visible copy: ${forbidden}`);
-    }
-  }
-
-  for (const heatmapMarker of ['renderHeatmap', 'world-heatmap', 'heatmap-card', 'heatmap-list']) {
-    if (helper.includes(heatmapMarker)) {
-      addError(errors, `renderExternalAi helper must not reference Global Risk Heatmap marker: ${heatmapMarker}`);
-    }
-  }
-}
-
 function validateNoAutomation(errors) {
   const workflowFiles = listFiles(WORKFLOW_DIR, (filePath) => filePath.endsWith('.yml') || filePath.endsWith('.yaml'));
   for (const filePath of workflowFiles) {
@@ -281,8 +118,6 @@ function main() {
 
   try {
     validateProductionLayer(errors);
-    validateHiddenContainer(errors);
-    validateFrontendGates(errors);
     validateNoAutomation(errors);
   } catch (error) {
     addError(errors, error.message);

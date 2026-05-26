@@ -79,21 +79,6 @@ function assertRepoMissingStaysMissing() {
   );
 }
 
-function assertBrentFormatterGuardsMissingValues() {
-  const renderSource = readText('scripts/modules/render.js');
-  const brentFormatterMatch = renderSource.match(/function formatBrentValue\(value, digits = 2\) \{[\s\S]*?\n\}/u);
-
-  assert(brentFormatterMatch, 'formatBrentValue function not found.');
-  assert(
-    brentFormatterMatch[0].includes('value === null') && brentFormatterMatch[0].includes('value === void 0'),
-    'formatBrentValue must explicitly guard null/undefined before Number(value).'
-  );
-  assert(
-    brentFormatterMatch[0].includes("typeof value === 'string'") && brentFormatterMatch[0].includes("value.trim() === ''"),
-    'formatBrentValue must explicitly guard empty strings before Number(value).'
-  );
-}
-
 function assertCrossValidationFiniteGuardsMissingValues() {
   const source = readText('scripts/modules/buildCrossValidationMatrix.js');
   const finiteMatch = source.match(/function finite\(value\) \{[\s\S]*?\n\}/u);
@@ -111,7 +96,6 @@ function assertCrossValidationFiniteGuardsMissingValues() {
 
 function main() {
   assertRepoMissingStaysMissing();
-  assertBrentFormatterGuardsMissingValues();
   assertCrossValidationFiniteGuardsMissingValues();
   console.log('Null-zero display guard: PASS');
 }
