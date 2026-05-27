@@ -377,9 +377,264 @@ function renderWowSection({ radarData, worldOrderStressData }) {
   }
 }
 
+// ---------- Stage 4b-2 shared helpers ----------
+
+const TREND_X = [80, 177.14, 274.29, 371.43, 468.57, 565.71, 662.86, 760];
+
+function signedFixedWithZero(value, digits = 1) {
+  const n = asNumber(value);
+  if (n === null) return '—';
+  const fixed = n.toFixed(digits);
+  return n >= 0 ? `+${fixed}` : fixed;
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function trendY(score) {
+  const n = asNumber(score);
+  if (n === null) return null;
+  return clamp(200 * (1 - n / 70), 0, 200);
+}
+
+function pointPair(x, y) {
+  return `${Number(x.toFixed(2))},${Number(y.toFixed(2))}`;
+}
+
+function pickEightWeeklyPoints(history) {
+  if (!Array.isArray(history) || history.length < 8) return [];
+  const points = [];
+  for (let i = 7; i >= 0; i--) {
+    const idx = history.length - 1 - i * 7;
+    if (idx < 0 || !history[idx]) return [];
+    points.push(history[idx]);
+  }
+  return points;
+}
+
+function latestQqqZ(marketPricingMetricsData) {
+  const qqq = latestRecord(marketPricingMetricsData?.assets?.qqq?.records);
+  return asNumber(qqq?.zScore);
+}
+
+function formatStatus(score, isActive) {
+  return `score ${score} · ${isActive ? 'ACTIVE' : 'LATENT'}`;
+}
+
+function setNarrative(index, item) {
+  const root = $(`narrative-${index}`);
+  if (root) root.classList.toggle('active', item.isActive);
+  setLeafText(`narrative-${index}-name`, item.name);
+  setLeafText(`narrative-${index}-score`, formatStatus(item.score, item.isActive));
+  setLeafText(`narrative-${index}-desc`, item.description);
+}
+
+function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetricsData }) {
+  const energy = asNumber(radarData?.modules?.energy);
+  const inflation = asNumber(radarData?.modules?.inflation);
+  const liquidity = asNumber(radarData?.modules?.liquidity);
+  const brent = asNumber(radarData?.displayInputsBaseline?.brent ?? radarData?.__effectiveDisplayInputs?.brent ?? radarData?.brentPricingLayer?.selectedBrent?.value);
+  const crackSpread = asNumber(radarData?.brentPricingLayer?.crackSpread);
+  const sentiment = asNumber(radarData?.macroDrivers?.consumer?.umichSentiment);
+  const ismPmi = asNumber(radarData?.macroDrivers?.consumer?.ismManufacturingPmi);
+  const woScore = asNumber(worldOrderStressData?.score);
+  const woState = worldOrderStressData?.state || 'unknown';
+  const woLabel = worldOrderStressData?.labelZh || '';
+  const qqqZ = latestQqqZ(marketPricingMetricsData);
+  const hyOas = asNumber(radarData?.macroDrivers?.credit?.hyOas);
+  const igOas = asNumber(radarData?.macroDrivers?.credit?.igOas);
+  const nfci = asNumber(radarData?.macroDrivers?.credit?.nfci);
+  const onRrpLevel = radarData?.macroDrivers?.fedLiquidity?.onRrpLevel || '';
+  const repoSpreadRegime = radarData?.macroDrivers?.fedLiquidity?.repoSpreadRegime || '';
+  const has2019Signal = onRrpLevel === '告急' && repoSpreadRegime !== '正常';
+
+  const n1Score = Math.round(energy ?? 0);
+  const n1Active = n1Score >= 65;
+  const n2Score = Math.round(((energy ?? 0) + (inflation ?? 0) + (100 - (sentiment ?? 100))) / 3);
+  const n2Active = n2Score >= 55;
+  const n3Score = Math.round(woScore ?? 0);
+  const n3Active = n3Score >= 65;
+  const n4Score = Math.round((qqqZ ?? 0) * 15 + 50);
+  const n4Active = n4Score >= 65;
+  const n5Score = Math.round((qqqZ ?? 0) * 15 + 30);
+  const n5Active = n5Score >= 65;
+  const n6Raw = ((hyOas ?? 2) - 2) * 25 + ((nfci ?? -0.5) + 0.5) * 30;
+  const n6Score = Math.round(clamp(n6Raw, 0, 100));
+  const n6Active = n6Score >= 50;
+  const n7Score = Math.round(liquidity ?? 0);
+  const n7Active = n7Score >= 60;
+
+  return [
+    {
+      shortName: '能源冲击',
+      name: '⚡ energy_shock 能源冲击',
+      score: n1Score,
+      isActive: n1Active,
+      description: n1Active
+        ? `Brent ${(brent ?? 0).toFixed(2)} + crack spread 走阔到 ${(crackSpread ?? 0).toFixed(2)},2022 模式重演。下一节是是否传导至 CPI / breakeven。`
+        : `Brent ${(brent ?? 0).toFixed(2)} + crack spread ${(crackSpread ?? 0).toFixed(2)},暂未触发能源传导主线条件。`,
+    },
+    {
+      shortName: '滞胀压力',
+      name: '⚖️ stagflation_pressure 滞胀压力',
+      score: n2Score,
+      isActive: n2Active,
+      description: n2Active
+        ? `ISM PMI ${(ismPmi ?? 0).toFixed(1)} ${(ismPmi ?? 0) < 50 ? '收缩' : '扩张'} + 能源涨价 + 实际工资压制。三件套均已出现,但信用未验证。`
+        : `ISM PMI ${(ismPmi ?? 0).toFixed(1)} ${(ismPmi ?? 0) < 50 ? '收缩' : '扩张'} + 能源涨价。三件套尚未集结,观察中。`,
+    },
+    {
+      shortName: '世界秩序压力穿越',
+      name: '🌐 world_order_pressure_crossing 世界秩序压力穿越',
+      score: n3Score,
+      isActive: n3Active,
+      description: n3Active
+        ? `${woState}${woLabel ? `(${woLabel})` : ''} 持续,触发橙色升档指针。OFAC + GDELT 双印证。`
+        : `${woState}${woLabel ? `(${woLabel})` : ''} 未触发升档阈值。OFAC + GDELT 双印证。`,
+    },
+    {
+      shortName: '风险资产错配',
+      name: '📉 risk_asset_mismatch 风险资产错配',
+      score: n4Score,
+      isActive: n4Active,
+      description: n4Active
+        ? 'SPX 仍在高位但 NDX 跑赢,内部分化已达高警戒。'
+        : 'SPX 仍在高位但 NDX 跑赢,内部分化未到危机程度。',
+    },
+    {
+      shortName: '过热确认',
+      name: '🔥 overheat_confirmation 过热确认',
+      score: n5Score,
+      isActive: n5Active,
+      description: n5Active
+        ? `QQQ z-score ${signedFixed(qqqZ ?? 0, 2)}σ ${(qqqZ ?? 0) > 2 ? '极度过热' : '偏热'},波动率与信用未同步,缺少印证。`
+        : `QQQ z-score ${signedFixed(qqqZ ?? 0, 2)}σ ${(qqqZ ?? 0) > 2 ? '极度过热' : '偏热'},但信用 + 波动率没有验证,缺少同步证据。`,
+    },
+    {
+      shortName: '信用利差告警',
+      name: '💰 credit_spread_warning 信用利差告警',
+      score: n6Score,
+      isActive: n6Active,
+      description: n6Active
+        ? `HY OAS ${(hyOas ?? 0).toFixed(2)}% / IG OAS ${(igOas ?? 0).toFixed(2)}% / NFCI ${signedFixed(nfci ?? 0, 2)}。信用层进入边际收紧。`
+        : `HY OAS ${(hyOas ?? 0).toFixed(2)}% / IG OAS ${(igOas ?? 0).toFixed(2)}% / NFCI ${signedFixed(nfci ?? 0, 2)}。压力初现但远未到告警阈值。`,
+    },
+    {
+      shortName: '流动性收紧',
+      name: '💧 liquidity_tightening 流动性收紧',
+      score: n7Score,
+      isActive: n7Active,
+      description: n7Active
+        ? `水位 / 回购 / 隔夜出现压力。${has2019Signal ? '2019-09 信号目前存在' : '2019-09 信号目前不存在'}。`
+        : `水位 / 回购 / 隔夜三层均无压力。${has2019Signal ? '2019-09 信号目前存在' : '2019-09 信号目前不存在'}。`,
+    },
+  ];
+}
+
+// ---------- Block 4: Trend SVG ----------
+
+function renderTrendSvg({ radarHistoryData, worldOrderStressData }) {
+  try {
+    const weekly = pickEightWeeklyPoints(radarHistoryData);
+    if (weekly.length !== 8) return;
+    const scorePoints = weekly.map((item, index) => {
+      const y = trendY(item.score);
+      return y === null ? null : pointPair(TREND_X[index], y);
+    });
+    if (scorePoints.some((p) => p === null)) return;
+    const scoreLine = $('trend-line-score');
+    if (scoreLine) scoreLine.setAttribute('points', scorePoints.join(' '));
+    const lastY = trendY(weekly[weekly.length - 1].score);
+    const scoreDot = $('trend-dot-score');
+    if (scoreDot && lastY !== null) {
+      scoreDot.setAttribute('cx', String(TREND_X[TREND_X.length - 1]));
+      scoreDot.setAttribute('cy', Number(lastY.toFixed(2)).toString());
+    }
+
+    const overlayScore = asNumber(worldOrderStressData?.score);
+    if (overlayScore === null) return;
+    const overlayY = trendY(overlayScore);
+    if (overlayY === null) return;
+    const overlayPoints = TREND_X.map((x) => pointPair(x, overlayY));
+    const overlayLine = $('trend-line-overlay');
+    if (overlayLine) overlayLine.setAttribute('points', overlayPoints.join(' '));
+    const overlayDot = $('trend-dot-overlay');
+    if (overlayDot) {
+      overlayDot.setAttribute('cx', String(TREND_X[TREND_X.length - 1]));
+      overlayDot.setAttribute('cy', Number(overlayY.toFixed(2)).toString());
+    }
+  } catch (error) {
+    console.error('[renderMacroOverview] renderTrendSvg failed:', error);
+  }
+}
+
+// ---------- Block 5: Signal Layers ----------
+
+function renderSignalLayers({ radarData, worldOrderStressData, marketPricingMetricsData }) {
+  try {
+    const narratives = deriveNarratives({ radarData, worldOrderStressData, marketPricingMetricsData });
+    narratives.forEach((item, index) => setNarrative(index + 1, item));
+  } catch (error) {
+    console.error('[renderMacroOverview] renderSignalLayers failed:', error);
+  }
+}
+
+// ---------- Block 6: Macro Drivers ----------
+
+function renderMacroDriversPillars({ radarData }) {
+  try {
+    const fed = radarData?.macroDrivers?.fedLiquidity || {};
+    const policy = radarData?.macroDrivers?.policyExpectations || {};
+    const curve = radarData?.macroDrivers?.curve || {};
+    const credit = radarData?.macroDrivers?.credit || {};
+
+    const reserveT = asNumber(fed.reserveBalances) !== null ? (asNumber(fed.reserveBalances) / 1000000).toFixed(2) : '—';
+    const repoBp = signedFixedWithZero(asNumber(fed.bgcrSofrSpread) ?? 0, 0);
+    setLeafText('pillar-1-text', `${fed.regime || '—'}。WALCL / reserveBalances ${reserveT}T / repo BGCR-SOFR ${repoBp}bp / SOFR-EFFR 锚定。ON RRP: ${fed.onRrpLevel || '—'}。`);
+
+    const policyBp = signedFixedWithZero((asNumber(policy.futureMinusTargetMid) ?? 0) * 100, 1);
+    setLeafText('pillar-2-text', `market vs 委员分歧。futureMinusTargetMid ${policyBp}bp,policy tone: ${policy.policyTone || '—'}。`);
+
+    const curveBp = signedFixedWithZero((asNumber(curve.t10y2y) ?? 0) * 100, 0);
+    setLeafText('pillar-3-text', `t10y2y ${curveBp}bp,curve.regime ${curve.regime || '—'}。${curve.steepeningAlert ? '陡峭化告警激活,通常领先衰退 6-18 月' : '未触发陡峭化告警'}。`);
+
+    const hy = asNumber(credit.hyOas);
+    const ig = asNumber(credit.igOas);
+    const nfci = asNumber(credit.nfci);
+    setLeafText('pillar-4-text', `HY OAS ${(hy ?? 0).toFixed(2)}% / IG OAS ${(ig ?? 0).toFixed(2)}% / NFCI ${signedFixed(nfci ?? 0, 2)} (${credit.nfciRegime || '—'}) / SLOOS ${credit.sloosRegime || '—'}。`);
+  } catch (error) {
+    console.error('[renderMacroOverview] renderMacroDriversPillars failed:', error);
+  }
+}
+
+// ---------- Block 9: Cross Validation ----------
+
+function renderCrossValidation({ radarData, worldOrderStressData, marketPricingMetricsData }) {
+  try {
+    const narratives = deriveNarratives({ radarData, worldOrderStressData, marketPricingMetricsData });
+    const active = narratives.filter((item) => item.isActive);
+    const checks = Array.isArray(radarData?.divergenceLayer?.checks) ? radarData.divergenceLayer.checks : [];
+    const contradictionCount = checks.filter((item) => item?.status === 'stress').length;
+    const insufficientCount = checks.filter((item) => item?.status === 'insufficient_data').length;
+    const consistencyScore = Math.round(clamp(active.length * 12 - contradictionCount * 5 + 30, 0, 100));
+    setLeafText('cv-consistency-value', String(consistencyScore));
+    const fill = $('cv-bar-fill');
+    if (fill) fill.style.width = `${consistencyScore}%`;
+    setLeafText('cv-breakdown-counts', `${active.length} strong_confirmation / ${contradictionCount} contradiction / ${insufficientCount} insufficient_data`);
+
+    const activeNames = active.slice(0, 3).map((item) => item.shortName).join(' + ');
+    const hyOas = asNumber(radarData?.macroDrivers?.credit?.hyOas);
+    const creditEvidence = hyOas !== null && hyOas < 3 ? '提供反向证据' : '不提供反向证据';
+    setLeafText('cv-summary-line', `${activeNames} ${active.length >= 3 ? '同向支持' : '尚未集结'};HY OAS + VIX ${creditEvidence}。`);
+  } catch (error) {
+    console.error('[renderMacroOverview] renderCrossValidation failed:', error);
+  }
+}
+
 // ---------- 主入口 ----------
 
-export function renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData }) {
+export function renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData }) {
   // Stage 4b-1A: Hero + threshold + pressure-sources
   renderHero({ radarData, worldOrderStressData });
   renderThresholdBlock({ radarData, worldOrderStressData });
@@ -390,5 +645,11 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   renderRiskEngines({ radarData });
   renderWowSection({ radarData, worldOrderStressData });
 
-  console.log('[renderMacroOverview] Stage 4b-1B renders complete (Hero + threshold + pressure-sources + market-temperature + risk-engines + wow-section)');
+  // Stage 4b-2: trend SVG + signal-layers + macro-drivers + cross-validation
+  renderTrendSvg({ radarHistoryData, worldOrderStressData });
+  renderSignalLayers({ radarData, worldOrderStressData, marketPricingMetricsData });
+  renderMacroDriversPillars({ radarData });
+  renderCrossValidation({ radarData, worldOrderStressData, marketPricingMetricsData });
+
+  console.log('[renderMacroOverview] Stage 4b-2 renders complete (all macro-overview runtime blocks)');
 }
