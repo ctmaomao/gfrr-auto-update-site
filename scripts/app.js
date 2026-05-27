@@ -7,7 +7,7 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'stage-4b-2-1';
+const APP_VERSION = 'stage-5d2-1';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
 
@@ -126,7 +126,7 @@ async function main() {
 
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=stage-4b-2-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=stage-5d2-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData });
   } catch (error) {
     console.error('[app] Failed to import / run renderMacroOverview:', error);
@@ -138,7 +138,7 @@ async function main() {
   //   renderPlainSummary({ radarData });
   // });
 
-  console.log(`[app] Stage 4b-2 init complete. APP_VERSION=${APP_VERSION}`);
+  console.log(`[app] Stage 5d-2 init complete. APP_VERSION=${APP_VERSION}`);
   console.log('[app] Data loaded:', {
     radarDataPresent: radarData !== null,
     worldOrderStressDataPresent: worldOrderStressData !== null,
