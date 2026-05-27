@@ -403,7 +403,132 @@
       </summary>
       <div class="editorial-section-body">
         <div class="appendix-content">
-          <!-- Stage 3c 将注入 -->
+      <div class="appendix-narrative">
+        <div class="appendix-narrative-intro">本附录为今日主判断的支撑层。所有数据来自 <code>data/radar-data.json</code>，每天自动更新。读取顺序：数据健康 → 时间维度 → 传导网络 → 资产投影。</div>
+
+        <h4>1. 数据健康 <em>· Data Health</em></h4>
+        <p>本期数据综合健康状态<strong>正常</strong>。<code class="ok">healthScore 100/100</code>，数据来源为 <code>worker-realtime</code>，0 项关键缺失，0 项 fallback。Daily 输入来自 <code>realtime-data</code> 分支，提交 <code>75b982d4</code>，采集时间 <code>23:29 UTC</code>。实时数据源刷新成功，无需进入降级模式或缓存模式。</p>
+        <div class="appendix-twocol">
+          <div>
+            <p>快变量层 7 个数据源(<code>brent / dxy / vix / hyOas / us10y / gold / spx</code>) 全部 <code class="ok">live</code>。慢变量层 macroDrivers 下 12 个子模块的 <code>sourceStatus</code> 字段显示，FRED 系列(8 项)、Yahoo 系列(NDX/QQQ/IXIC/BIZD/PBDC/SRLN/CCLFX 等)、ISM(PMI)、StockQ(BDTI/BCTI/BDI)、ICE(CDX HY/IG)、Bank of America Consumer Checkpoint 均处于 live 状态。</p>
+            <p>结构信号层激活 1 项：<code class="warn">逆回购准备金告急</code>(ON RRP 9.65 亿美元)。该信号已纳入决策层门控，但 fedLiquidity 三层主流仍处于 <code class="ok">平稳</code> regime，WALCL 6.71T、reserveBalances 3.13T、SOFR/EFFR 锚定 3.51%/3.62%，repoSpreadRegime 为<code class="ok">正常</code>。</p>
+          </div>
+          <aside class="appendix-sidebar">
+            <div class="sidebar-kicker">健康度快照</div>
+            <div class="sidebar-title">23/23 源 OK</div>
+            <dl>
+              <dt>healthScore</dt><dd>100 / 100</dd>
+              <dt>关键缺失</dt><dd>0 项</dd>
+              <dt>降级模式</dt><dd>false</dd>
+              <dt>安全输出</dt><dd>true</dd>
+              <dt>最近运行</dt><dd>2026-05-24 23:32 UTC</dd>
+              <dt>结构信号</dt><dd>onRrpCritical (1)</dd>
+            </dl>
+          </aside>
+        </div>
+        <div class="appendix-callout ok">
+          <div class="callout-kicker">现状判读</div>
+          <p>数据健康正常，无需触发 fallback 机制。</p>
+          <p>系统所有关键数据源处于 live 状态，今日主判断的所有证据均可被审计追溯。唯一需要观察的是 onRrpCritical 结构信号，它已自动把决策层 stateScore 提升 10 分。</p>
+        </div>
+
+        <h4>2. 30 日时间维度与传导速度 <em>· Time Dimension</em></h4>
+        <p>过去 30 天综合风险分数总变化 <code>0</code>，均值 <code>55</code>，高低区间 <code>[53, 58]</code>，距 30 日高点回撤 <code>−2</code>。这是典型的<strong>高位震荡</strong>形态：分数没有继续上行，但也没有显著回落到 40 分以下的"中度警戒"带。</p>
+        <p>趋势解释字段写的是<strong>滚动风险曲线(混合实时驱动)</strong>，说明本期分数的稳定不是因为数据停滞，而是快变量(实时)与慢变量(月度/季度)在<strong>同向支撑</strong>当前的 56 分判读。传导速度 <code class="warn">65</code>(0-100 标尺)，加速度判断<code class="ok">平稳</code>。这意味着冲击虽然在向下游传导，但传导节奏没有再加速。</p>
+
+        <div class="micro-chart">
+          <div class="mc-kicker">5 条主传导链 · 30 日 delta</div>
+          <div class="mc-title">主链条压力分布</div>
+          <div class="mc-svg-wrap">
+            <svg viewBox="0 0 800 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <g font-family="IBM Plex Mono" font-size="9">
+                <text x="0" y="12" fill="#666">油价→通胀</text>
+                <rect x="100" y="4" width="528" height="10" fill="#7C1D1D"/>
+                <text x="640" y="12" fill="#1A1815">88 (+8)</text>
+                <text x="0" y="28" fill="#666">通胀→利率</text>
+                <rect x="100" y="20" width="366" height="10" fill="#A8761A"/>
+                <text x="478" y="28" fill="#1A1815">61 (0)</text>
+                <text x="0" y="44" fill="#666">美元→信用</text>
+                <rect x="100" y="36" width="330" height="10" fill="#A8761A"/>
+                <text x="442" y="44" fill="#1A1815">55 (+5)</text>
+                <text x="0" y="60" fill="#666">利率→股票</text>
+                <rect x="100" y="52" width="138" height="10" fill="#1F4D2C"/>
+                <text x="250" y="60" fill="#1A1815">23 (−1)</text>
+                <text x="0" y="76" fill="#666">流动性→估值</text>
+                <rect x="100" y="68" width="246" height="10" fill="#A8761A"/>
+                <text x="358" y="76" fill="#1A1815">41 (−2)</text>
+              </g>
+            </svg>
+          </div>
+          <div class="mc-note">主导路径：<strong>油价 → 通胀 → 利率 → 股票</strong>。油价→通胀链条 30 日累计 +8，是本期唯一加速链条；利率→股票链条反而 −1，说明高油价压力暂未充分映射到风险资产。</div>
+        </div>
+
+        <p>上图显示，能源向通胀的传导(<code class="danger">88, +8</code>)是本期唯一明显加速的链条。通胀向利率(<code class="warn">61, 0</code>)和美元向信用(<code class="warn">55, +5</code>)处于中等压力但变化平缓。利率向股票(<code class="ok">23, −1</code>)和流动性向估值(<code class="warn">41, −2</code>)两条链条都在 30 日内回落，这也是当前主判断保留"观察语气"而非"危机定性"的关键证据。</p>
+
+        <h4>3. 机构级宏观传导网络 <em>· Transmission Network</em></h4>
+        <p>系统通过 6 个节点把宏观冲击从源头追到资产层。当前传导压力综合分 <code class="danger">79</code>，路径置信度 <code>88</code>，主导冲击为<strong>战争 / 油价</strong>，主导资产影响为<strong>全球股票承压</strong>。</p>
+
+        <div class="flow-strip">
+          <div class="flow-node high"><div class="fn-label">SHOCK</div><div class="fn-name">战争冲击</div><div class="fn-value">score 82 · 冲击上行</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node high"><div class="fn-label">PRICE</div><div class="fn-name">油价压力</div><div class="fn-value">score 81 · 推升油价</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node high"><div class="fn-label">MACRO</div><div class="fn-name">通胀传导</div><div class="fn-value">score 81 · 抬高通胀</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node high"><div class="fn-label">RATE</div><div class="fn-name">利率压力</div><div class="fn-value">score 78 · 压制宽松</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node med"><div class="fn-label">ASSET</div><div class="fn-name">股票影响</div><div class="fn-value">score 79 · 偏空</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin:-8px 0 8px 0;font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">+ 中期对冲：<strong style="color:var(--paper-ink);">黄金影响 score 64 · 中期偏多</strong>(对冲通胀，但短线受真实利率压制)</div>
+
+        <p>网络第二层把"价格变量层"(原油 / 商品 / 美元，综合 76) → "宏观变量层"(通胀预期 / 真实利率 / 流动性，综合 77) → "市场传导层"(融资条件 / 波动率 / 相关性，综合 72) → "资产结果层"(股票 / 债券 / 黄金 / 能源，综合 75)。四层得分接近，说明压力在每一层都被 partial 验证，<strong>没有出现"上游强、下游弱"</strong>那种典型的"市场不信"形态。</p>
+
+        <div class="appendix-twocol">
+          <div>
+            <p>资产冲击分解层显示六类资产的方向：</p>
+            <ul style="font-family:var(--font-serif);font-size:13.5px;line-height:1.85;color:var(--paper-warm);margin:8px 0 0 0;padding-left:18px;">
+              <li>能源 <code class="danger">score 84 · 正面</code> — 地缘冲击 (52) + 供给约束 (29) + 库存/需求 (19)</li>
+              <li>美元 / 短票 <code class="ok">score 72 · 正面</code> — 融资偏紧 + 防御需求</li>
+              <li>科技股 <code class="danger">score 82 · 阶段偏空</code> — 真实利率 + 流动性最敏感</li>
+              <li>全球股票 <code class="danger">score 79 · 负面</code> — 利率 (47) + 流动性 (31) + 风险偏好 (22)</li>
+              <li>长久期债券 <code class="danger">score 76 · 负面</code> — 通胀黏性 + 政策路径</li>
+              <li>黄金 <code class="warn">score 63 · 中性偏多</code> — 通胀对冲 (41) + 真实利率 (34) + 流动性扰动 (25)</li>
+            </ul>
+          </div>
+          <aside class="appendix-sidebar">
+            <div class="sidebar-kicker">系统自动结论</div>
+            <div class="sidebar-title">4 句话总结</div>
+            <p style="font-family:var(--font-serif);font-size:12.5px;line-height:1.7;color:var(--paper-warm);margin:0;">① 主链条仍由战争冲击驱动，经油价与通胀传导到利率和估值端。<br/>② 过去 30 天传导速度先升后缓，风险并未解除，而是转入高位震荡阶段。<br/>③ 流动性偏紧并未打断主链，反而放大了股票和久期资产的回撤弹性。<br/>④ 黄金保留中期对冲属性，但短线受真实利率和美元阶段性压制。</p>
+          </aside>
+        </div>
+
+        <h4>4. 资产收益矩阵与情景概率 <em>· Asset Map & Scenarios</em></h4>
+        <p>未来 1 个月决策区间(按当前确定性排序)，系统给出 8 类资产的预期收益区间和回撤风险：</p>
+
+        <table class="asset-table">
+          <thead><tr><th>资产</th><th>倾向</th><th>预期收益区间</th><th>回撤风险</th><th>把握度</th><th>主导驱动</th></tr></thead>
+          <tbody>
+            <tr><td class="asset-name">原油</td><td class="asset-bias up">偏多</td><td class="asset-range">+3% ~ +9%</td><td class="asset-range">−7%</td><td class="asset-conviction">高</td><td>地缘冲击 / 供给约束</td></tr>
+            <tr><td class="asset-name">美元 / 短票</td><td class="asset-bias up">偏多</td><td class="asset-range">+1% ~ +3%</td><td class="asset-range">−2%</td><td class="asset-conviction">中高</td><td>融资偏紧 / 防御需求</td></tr>
+            <tr><td class="asset-name">能源股</td><td class="asset-bias up">偏多</td><td class="asset-range">+2% ~ +8%</td><td class="asset-range">−8%</td><td class="asset-conviction">高</td><td>油价 / 现金流弹性</td></tr>
+            <tr><td class="asset-name">黄金</td><td class="asset-bias mixed">中性偏多</td><td class="asset-range">−1% ~ +4%</td><td class="asset-range">−6%</td><td class="asset-conviction">中高</td><td>通胀对冲 / 真实利率放缓</td></tr>
+            <tr><td class="asset-name">美国国债</td><td class="asset-bias mixed">中性偏空</td><td class="asset-range">−2% ~ +2%</td><td class="asset-range">−5%</td><td class="asset-conviction">中</td><td>通胀黏性 / 政策路径</td></tr>
+            <tr><td class="asset-name">全球股票</td><td class="asset-bias down">偏空</td><td class="asset-range">−6% ~ +2%</td><td class="asset-range">−11%</td><td class="asset-conviction">高</td><td>利率压力 / 融资条件</td></tr>
+            <tr><td class="asset-name">科技股</td><td class="asset-bias down">偏空</td><td class="asset-range">−8% ~ +3%</td><td class="asset-range">−14%</td><td class="asset-conviction">高</td><td>真实利率 / 流动性</td></tr>
+            <tr><td class="asset-name">比特币</td><td class="asset-bias down">偏空</td><td class="asset-range">−10% ~ +6%</td><td class="asset-range">−18%</td><td class="asset-conviction">中</td><td>流动性 / 风险偏好</td></tr>
+          </tbody>
+        </table>
+
+        <h5>四情景概率分布</h5>
+        <p>系统按 4 个情景给出概率：<strong>基准情景 31%</strong>(风险高位但未失控，防守与分化为主)、<strong>风险情景 22%</strong>(信用与波动率继续上行，红灯执行)、<strong>极端情景 41%</strong>(多源关键快变量连续失效，缓存模式强制防守)、<strong>反转情景 4%</strong>(美元走弱、波动率和利差收敛，重新开放进攻窗口)。</p>
+
+        <div class="appendix-callout warn">
+          <div class="callout-kicker">情景概率注意</div>
+          <p>极端情景占 41% 不是"危机概率 41%"。</p>
+          <p>这是"数据健康层面"的极端情景：指 4 项以上关键快变量同时失效、系统切换到缓存模式的概率。它不等同于市场崩盘概率。真实的"市场风险情景"是 22%。两个概率是不同维度的判断，不要相加为"危机率 63%"。</p>
+        </div>
+
+      </div>
         </div>
       </div>
     </details>
@@ -415,7 +540,49 @@
       </summary>
       <div class="editorial-section-body">
         <div class="appendix-content">
-          <!-- Stage 3c 将注入 -->
+      <div class="appendix-narrative">
+        <div class="appendix-narrative-intro">World Order Stress 是 regime overlay / 结构性状态修正器(ADR-0004)。它不进入 scoring、decision、execution 或 position，但会通过 overlay 系数为今日判读添加"升档指针"。本期 overlay 升至 70，触发橙色升档。</div>
+
+        <h4>1. 总体状态 <em>· Overall Regime</em></h4>
+
+        <div class="wo-regime-banner">
+          <div class="wo-kicker">CURRENT REGIME</div>
+          <div class="wo-state">多战区压力期 · multi_theater_stress</div>
+          <p class="wo-desc">压力分数 70 / 置信度 medium / 市场确认度 stress / 已持续 2 周。决策层修正系数 +5 分应用于今日判读，体现为本期 hero 的 "overlay 70" 升档指针。</p>
+        </div>
+
+        <p>本层数据来自 4 个外部源：<code>GDELT</code>(全球新闻情绪与冲突)、<code>OFAC</code>(经济制裁)、<code>SIPRI</code>(全球军费，年频)、<code>ACLED</code>(冲突事件，周频)，以及 1 个市场确认层(VIX / Gold / DXY 跨资产同步性)。当前所有外部源 <code class="ok">live</code>，marketConfirmation 输入显示<strong>stress</strong>状态。</p>
+
+        <h4>2. 六维度详情 <em>· Six Dimensions</em></h4>
+
+        <div class="wo-dim-grid">
+          <div class="wo-dim med"><div class="wd-label">DIM 1</div><div class="wd-name">和平红利退潮</div><div class="wd-score">+1.2σ</div><div class="wd-trend">ACLED + SIPRI · rising</div></div>
+          <div class="wo-dim high"><div class="wd-label">DIM 2</div><div class="wd-name">阵营化形成</div><div class="wd-score">68</div><div class="wd-trend">GDELT bloc 信号 · rising</div></div>
+          <div class="wo-dim severe"><div class="wd-label">DIM 3</div><div class="wd-name">多战区冲突</div><div class="wd-score">85</div><div class="wd-trend">ACLED 30d · rising 2 周</div></div>
+          <div class="wo-dim high"><div class="wd-label">DIM 4</div><div class="wd-name">经济武器化</div><div class="wd-score">+2.3σ</div><div class="wd-trend">OFAC 30d + GDELT · rising</div></div>
+          <div class="wo-dim med"><div class="wd-label">DIM 5</div><div class="wd-name">资本管制风险</div><div class="wd-score">52</div><div class="wd-trend">CFETS / capital flow · stable</div></div>
+          <div class="wo-dim high"><div class="wd-label">DIM 6</div><div class="wd-name">市场确认度</div><div class="wd-score">stress</div><div class="wd-trend">VIX/Gold/DXY 同步性 · rising</div></div>
+        </div>
+
+        <p>六个维度中，<strong>多战区冲突</strong> (85, 严重) 和 <strong>经济武器化</strong> (+2.3σ, 高) 是本期压力的核心驱动。这两个维度都是 <code>rising</code> 状态，叠加产生了 multi_theater_stress regime。市场确认度从中性升至 stress，说明<strong>市场已经开始定价</strong>这种结构性压力——这是 overlay 从 unconfirmed 升档到 confirmed 的关键证据。</p>
+
+        <h4>3. 主导驱动与降级条件 <em>· Drivers & De-escalation</em></h4>
+
+        <p>本期主导驱动有 3 个：<code>multi_theater_stress 持续 2 周</code>、<code>OFAC 制裁事件 z-score +2.3σ</code>、<code>GDELT bloc 信号 rising</code>。这三项都来自高频数据源(GDELT 每日、OFAC 每日、ACLED 每周)，说明本期 overlay 升档不是基于年频数据(如 SIPRI 军费)的滞后判读，而是基于<strong>近 30 天的实际事件</strong>。</p>
+
+        <ul class="trigger-list watch">
+          <li><strong>降级路径 A</strong>：multi_theater_stress 持续 &lt; 1 周 + OFAC 30d z-score 回落到 +1σ 以下。</li>
+          <li><strong>降级路径 B</strong>：marketConfirmation 从 stress 回到 normal，跨资产同步性消散。</li>
+          <li><strong>升档路径</strong>：若 SIPRI 年度军费 + ACLED 冲突事件同时进入历史高位，可能从 multi_theater_stress 升至 war_economy_stress。</li>
+        </ul>
+
+        <div class="appendix-callout warn">
+          <div class="callout-kicker">边界说明</div>
+          <p>该模块用于结构性风险识别，不构成战争预测或投资建议。</p>
+          <p>regime overlay 只通过 decisionModifier.riskBias 影响判读的强度修正，<strong>不直接进入 scoring 或 executionLock</strong>。即使 overlay 升至 war_economy_stress，系统主分数仍然由 6 大底层模块决定。</p>
+        </div>
+
+      </div>
         </div>
       </div>
     </details>
@@ -427,7 +594,40 @@
       </summary>
       <div class="editorial-section-body">
         <div class="appendix-content">
-          <!-- Stage 3c 将注入 -->
+      <div class="appendix-narrative">
+        <div class="appendix-narrative-intro">本附录说明本站如何把数据转化为结论、如何处理证据不足、反向证据和噪音，以及哪些内容不构成投资建议。</div>
+
+        <h4>1. 阅读路径 <em>· Reading Path</em></h4>
+        <p>首页采用四层结构：<strong>结论 → 原因 → 证据 → 展开详情</strong>。上方 8 runtime block 是<strong>结论层</strong>，给出今日总判断、压力来源、信号分层、四大驱动、市场温度、风险引擎、交叉验证和本期变化。8 主题卡阵是<strong>证据层</strong>，把同样的信息按"读者最容易理解的主题"重新组织。本附录区是<strong>原始材料层</strong>，保留所有可审计的细节字段。</p>
+
+        <h4>2. 评分方法 <em>· Scoring Method</em></h4>
+        <p>综合风险分数 = 6 底层模块加权(<code>Energy / Geopolitical / Inflation / Liquidity / Debt / Banking</code>)，每模块 0-100。当前权重：能源 0.25 / 地缘 0.20 / 通胀 0.15 / 流动性 0.15 / 债务 0.15 / 银行 0.10。每模块的阈值分为 RED (≥70) / YELLOW (40-69) / GREEN (&lt;40)。</p>
+        <p>World Order Stress 是 <strong>regime overlay</strong>，不进入 scoring。它通过 decisionModifier.riskBias 为 stateScore 应用 +0 / +5 / +10 的升档修正系数。</p>
+
+        <h4>3. 证据分层 <em>· Evidence Layers</em></h4>
+        <p>所有证据按性质分 5 类，避免把推断、假设或噪音包装成已验证事实：</p>
+        <ul style="font-family:var(--font-serif);font-size:13.5px;line-height:1.85;color:var(--paper-warm);margin:8px 0 0 0;padding-left:20px;">
+          <li><strong>已验证事实</strong>(facts)：可直接审计的字段，如<code>brent=116.73</code>。</li>
+          <li><strong>数据推断</strong>(dataInferences)：基于多字段派生的观察，如"消费者三个月信心变化 -6.6 → 体感走弱"。</li>
+          <li><strong>模型判断</strong>(modelJudgments)：基于算法门控的判断，如"信号一致性 72 → 中等支持"。</li>
+          <li><strong>情景假设</strong>(scenarioHypotheses)：带触发条件 / 失效条件的 if-then 假设。</li>
+          <li><strong>反向证据 / 数据不足 / 噪音</strong>(counter / gaps / noise)：必须显式列出。</li>
+        </ul>
+
+        <h4>4. 数据边界 <em>· Data Boundary</em></h4>
+        <p><strong>Market Pricing Temperature</strong> 已由本地 metrics 文件驱动(M-95+)；页面只读取统计结果并做分桶展示，不改变 scoring / decision / execution / position。</p>
+        <p><strong>Brent 公开代理价格层</strong>仅用于审计观察，<code>不等同于 Platts Dated Brent</code>。mode 字段当前为 <code class="warn">public_proxy_observation</code>，publicSpotProxy / futuresProxy 之间的价差仅作为反向证据呈现，不改变 values.brent 主显示值。</p>
+        <p><strong>External AI</strong> 是只读辅助解释，不改变 scoring / decision / execution / position。frontendDisplayApproved / promotionEligible 双开关都为 false 时，前端只显示占位。</p>
+        <p><strong>所有数据治理</strong>：Frontend display layer is read-only。本前端不写 data pipeline、sanitizer、workflow，也不进行 production data write。</p>
+
+        <h4>5. 非投资建议声明 <em>· Not Advice</em></h4>
+        <div class="appendix-callout">
+          <div class="callout-kicker">郑重声明</div>
+          <p>本站用于风险观察与证据整理，不构成投资建议，也不生成直接交易指令。</p>
+          <p>所有"动作清单"、"目标仓位"、"硬阈值风控"等执行层信息，是本站作者基于个人交易框架的自我约束规则，仅供作者本人参考。指标阈值与方法论可能随研究演进调整。</p>
+        </div>
+
+      </div>
         </div>
       </div>
     </details>
@@ -439,7 +639,57 @@
       </summary>
       <div class="editorial-section-body">
         <div class="appendix-content">
-          <!-- Stage 3c 将注入 -->
+      <div class="appendix-narrative">
+
+        <div class="ai-warning-block">
+          <div class="aw-kicker">⚠ READ-ONLY AUXILIARY INTERPRETATION</div>
+          <p>本层为 <strong>DeepSeek</strong> / <strong>OpenAI</strong> 自动生成的解释层，<strong>不影响平台评分</strong>(项目宪法第 4 条)。当前 provider <code>deepseek</code> / model <code>deepseek-v4-flash</code>，qualityReview 通过 (<code>pass_for_manual_review</code>)，但 promotionEligible 为 <code>false</code>，因此不晋升为生产证据。sourceAttribution / provenance 完整可审计：runId <code>26379224068</code>，generatedAt <code>2026-05-25 01:55 UTC</code>。</p>
+        </div>
+
+        <h4>1. AI 摘要 <em>· Summary</em></h4>
+        <p>站内结构化数据显示<strong>能源定价背离压力持续</strong>，布伦特公开代理价差达 <code class="danger">16.52 美元</code>，但不等同于正式实物成交价。消费者信心月频走弱(<code class="warn">UMCSENT 49.8</code>，三个月变化 −6.6)，与风险资产定价存在观察性背离。当前证据仅支持观察，<strong>不足以形成高置信度方向判断</strong>。若布伦特回落且验证层压力解除，或消费者信心改善，则当前背离观察可能失效。</p>
+
+        <h4>2. AI 已验证事实 <em>· Facts</em></h4>
+        <p>AI 从站内结构化数据中提取 10 项可验证事实：布伦特主显示值 <code>116.73</code> 来源 <code>fred:DCOILBRENTEU</code>；布伦特公开代理价差(现货减期货)<code>16.52</code> 状态为压力；消费者信心指数 <code>UMCSENT 49.8</code>，前值 <code>53.3</code>，三个月变化 <code>−6.6</code>；美国 10 年期收益率 <code>4.57%</code>，10 年盈亏平衡通胀 <code>2.40%</code>；广义美元指数 <code>119.28</code>；高收益利差 <code>2.78%</code>；背离层整体状态<strong>压力</strong>(得分 60)；能源定价背离检查得分 <code>72</code>(压力)；消费者与资产定价背离检查得分 <code>54</code>(压力)；数据健康评分 <code>100</code>。</p>
+
+        <h4>3. AI 数据推断 <em>· Data Inferences</em></h4>
+        <p>AI 在已验证事实之上给出 3 项观察性推断：(1) <strong>能源定价背离压力</strong>主要源于公开代理价差扩大，但该价差仅用于审计观察，不改变布伦特主值；(2) <strong>消费者信心持续走弱</strong>，而风险资产定价尚未充分反映，存在观察性错配——但该信号为月频慢变量；(3) <strong>长端利率压力与风险资产定价之间的背离</strong>处于压力状态，但信用利差和波动率尚未明显扩张，表明压力尚未广泛扩散。</p>
+
+        <h4>4. AI 模型判断 <em>· Model Judgments</em></h4>
+        <p>AI 给出的 3 项模型判断，每项都附带置信度声明：(1) 能源定价背离的证据强度<strong>中等</strong>，数据充分但来源为公开代理，不足以确认实物现货溢价；(2) 消费者信心数据为月频，存在发布延迟，时效性不足，属于<strong>低置信度观察</strong>；(3) 综合背离层得分 60，多个维度存在压力，但信用和波动率指标相对平静，<strong>整体不确定性较高</strong>。</p>
+
+        <h4>5. AI 情景假设 <em>· Scenario Hypotheses</em></h4>
+        <p>AI 给出 2 个 if-then 假设(均附触发条件和失效条件)：</p>
+        <ul style="font-family:var(--font-serif);font-size:13.5px;line-height:1.85;color:var(--paper-warm);margin:8px 0 0 0;padding-left:20px;">
+          <li><strong>能源利率资产重定价观察</strong>：若布伦特公开代理价差持续压力、US10Y 上行、VIX 或 HY OAS 扩张，则升级；若价差收敛、US10Y 回落、VIX 与 HY OAS 不扩张，则降级。</li>
+          <li><strong>消费者资产背离缓解观察</strong>：若消费者信心三个月变化改善、US10Y 回落、HY OAS 不扩张，则缓解；若消费者信心继续走弱、HY OAS 或 VIX 扩张，则继续。</li>
+        </ul>
+
+        <h4>6. 边界与审计字段 <em>· Boundary & Audit</em></h4>
+        <div class="appendix-twocol">
+          <div>
+            <p>本 AI 解读层<strong>不进入 scoring、decisionModel、executionLock、positionGuidance</strong>。displayOnly = true / externalAiGenerated = true / usesExternalAiApi = true / notInvestmentAdvice = true。</p>
+            <p>auditFlags 显式标记：<code>manual_artifact_only</code> / <code>site_structured_data_only</code> / <code>validator_required</code> / <code>non_production_output</code> / <code>no_frontend_display</code>。</p>
+          </div>
+          <aside class="appendix-sidebar">
+            <div class="sidebar-kicker">Provenance</div>
+            <div class="sidebar-title">runId 26379224068</div>
+            <dl>
+              <dt>provider</dt><dd>deepseek</dd>
+              <dt>model</dt><dd>deepseek-v4-flash</dd>
+              <dt>inputSource</dt><dd>local_compact</dd>
+              <dt>sourceMode</dt><dd>manual_local_compact</dd>
+              <dt>generatedAt</dt><dd>2026-05-25 01:55 UTC</dd>
+              <dt>artifactDigest</dt><dd>47b3303a88...</dd>
+              <dt>sourceCommit</dt><dd>8a4464bf...</dd>
+              <dt>humanApproved</dt><dd>false</dd>
+              <dt>promotionEligible</dt><dd>false</dd>
+              <dt>confidence</dt><dd>low (30/100)</dd>
+            </dl>
+          </aside>
+        </div>
+
+      </div>
         </div>
       </div>
     </details>
@@ -451,7 +701,142 @@
       </summary>
       <div class="editorial-section-body">
         <div class="appendix-content">
-          <!-- Stage 3c 将注入 -->
+      <div class="appendix-narrative">
+        <div class="appendix-narrative-intro">本附录展示作者本人的执行框架。<strong>这些规则只针对作者自己</strong>，不构成对任何人的投资建议。决策头、执行灯、预警规则、动作清单、仓位区间、硬阈值风控与行为纪律保留为高级详情。</div>
+
+        <h4>1. 决策概览 <em>· Decision Overview</em></h4>
+        <p>系统当前策略状态为 <code class="danger">Defensive · 红灯 / 禁止新增</code>，stateScore <code>56</code>。状态判定原因：<strong>执行引擎检测到高压风险组合</strong>，已激活 1 项结构信号 <code class="warn">逆回购准备金告急</code>(ON RRP 9.65 亿美元)，structuralScoreBump +10 应用于主分数。主导风险源：<strong>能源 (88) / 地缘政治 (81) / 通胀 (59)</strong>。</p>
+
+        <p>目标总仓位区间 <code>18%-38%</code>，风险预算 <code>30%</code>，目标 gross exposure <code>38%</code>，现金缓冲目标 <code>35%</code>。riskAssetBias = 低配风险资产。structuralBandShift = −5 表示因结构信号触发，目标仓位带需要额外保守 5 个百分点。</p>
+
+        <h4>2. 执行状态灯 <em>· Execution Lock</em></h4>
+
+        <div class="execution-stoplight red">
+          <div class="es-kicker">EXECUTION LOCK · LIVE MODE · 主观不得覆盖</div>
+          <div class="es-state">红灯 / 禁止新增</div>
+          <div class="es-title">今天禁止主动加仓，只允许减仓与恢复防御层</div>
+          <p class="es-desc">系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。</p>
+          <div class="es-cols">
+            <div class="es-col">
+              <div class="es-col-label">ALLOW · 允许</div>
+              <ul><li>允许减仓风险资产。</li><li>允许补充美元 / 短票与现金。</li><li>允许把黄金对冲恢复到上限。</li></ul>
+            </div>
+            <div class="es-col">
+              <div class="es-col-label">BLOCK · 禁止</div>
+              <ul><li>禁止新增股票与高波动仓位。</li><li>禁止盘中追涨。</li><li>禁止主观覆盖系统阈值。</li></ul>
+            </div>
+            <div class="es-col">
+              <div class="es-col-label">MANDATORY · 强制</div>
+              <ul><li>若总仓位 &gt; 42%，必须先减到 38% 附近。</li><li>若高波动资产 &gt; 2%，立即降回 2% 以下。</li><li>若现金缓冲 &lt; 30%，立即补回。</li></ul>
+            </div>
+          </div>
+        </div>
+
+        <h4>3. 触发器面板 <em>· Trigger Panel</em></h4>
+        <p>系统从三个层级监控触发条件：<strong>升级触发</strong>(本期最重要的 5 个数字)、<strong>主驱动</strong>(底层风险源)、<strong>持续跟踪</strong>(等待下次发布的数据)。</p>
+
+        <div class="appendix-twocol">
+          <div>
+            <h5>升级触发器(critical)</h5>
+            <ul class="trigger-list up">
+              <li>布伦特原油 <code class="danger">116.7</code></li>
+              <li>广义美元指数 <code class="warn">119.28</code></li>
+              <li>高收益利差 <code class="ok">2.78%</code></li>
+              <li>10 年-2 年利差 <code>0.43</code></li>
+              <li>投资级信用利差 <code class="ok">0.75%</code></li>
+            </ul>
+          </div>
+          <div>
+            <h5>主驱动 + 持续跟踪</h5>
+            <ul class="trigger-list watch">
+              <li>波动率 VIX <code class="ok">16.76</code></li>
+              <li>10 年期美债 <code class="warn">4.57%</code></li>
+              <li>实际利率 <code>2.18%</code></li>
+              <li>下一次通胀数据(等待)</li>
+              <li>油价是否高于 100(超过)</li>
+              <li>信用利差是否重新走阔(未发生)</li>
+            </ul>
+          </div>
+        </div>
+
+        <h4>4. 预警规则与门控 <em>· Warning Rules & Gating</em></h4>
+        <p>系统按 5 条规则自动触发预警等级：</p>
+        <ul style="font-family:var(--font-serif);font-size:13px;line-height:1.85;color:var(--paper-warm);margin:8px 0 0 0;padding-left:20px;">
+          <li>关键快变量失败 ≥ 2 项 → 标记<strong>部分降级</strong>。</li>
+          <li>关键快变量失败 ≥ 4 项 → 进入<strong>缓存模式</strong>。</li>
+          <li>缓存模式自动把执行状态灯至少提升到<strong>黄灯</strong>。</li>
+          <li>结构性红灯门控：曲线倒挂 (&lt; -0.8) <strong>且</strong>投资级信用告警 (≥ 2.0%)；<strong>或</strong>逆回购余额临界告急。</li>
+          <li>结构性黄灯门控：曲线深度倒挂叠加美联储缩表；<strong>或</strong>投资级信用利差进入应力区；<strong>或</strong>逆回购告急。</li>
+        </ul>
+
+        <h4>5. 目标仓位 <em>· Position Allocation</em></h4>
+        <p>目标仓位配置遵循<strong>强防守执行框架</strong>。核心配置 5 项：</p>
+
+        <table class="asset-table">
+          <thead><tr><th>核心配置</th><th>目标</th><th>权重</th><th>执行说明</th></tr></thead>
+          <tbody>
+            <tr><td class="asset-name">美元 / 短票</td><td>核心 1</td><td class="asset-range">24%</td><td>融资与信用压力阶段的首要防御层。</td></tr>
+            <tr><td class="asset-name">现金</td><td>缓冲层</td><td class="asset-range">35%</td><td>执行引擎红灯，现金缓冲必须充足。</td></tr>
+            <tr><td class="asset-name">黄金</td><td>对冲</td><td class="asset-range">12%</td><td>用于对冲尾部风险和政策不确定性。</td></tr>
+            <tr><td class="asset-name">原油 / 能源</td><td>防守受益</td><td class="asset-range">12%</td><td>油价偏高时继续保留。</td></tr>
+            <tr><td class="asset-name">股票(防御)</td><td>观察仓</td><td class="asset-range">5%</td><td>仅保留最低防御仓。</td></tr>
+          </tbody>
+        </table>
+
+        <p>执行限制 3 条：总仓位偏离目标值 &lt; ±5% 前不做方向性调整；高波动资产合计不超过 3%；新增进攻仓位必须由减仓腾出空间。</p>
+
+        <h4>6. 硬阈值风控 <em>· Hard Thresholds</em></h4>
+        <p>最大回撤容忍 <code class="danger">−6%</code>，单资产上限 <code>20%</code>，当前系统状态：<strong>今天禁止主动加仓，只允许减仓与恢复防御层</strong>。</p>
+
+        <h5>强制减仓阈值(任一触发即执行)</h5>
+        <ul class="trigger-list up">
+          <li>流动性指数 ≥ 75 → 总仓位降至 42%。</li>
+          <li>布伦特 ≥ 110 → 能源上调，股票下调。</li>
+          <li>高收益利差 ≥ 4.5% → 暂停新增风险仓位。</li>
+          <li>波动率指数 ≥ 28 → 切入红灯。</li>
+          <li>结构性红灯：曲线 &lt; −0.8 且 IG OAS ≥ 2.0%；<strong>或</strong>逆回购余额临界告急。</li>
+          <li>结构性黄灯：曲线 ≤ −0.5 叠加美联储缩表；<strong>或</strong>IG OAS ≥ 1.5%；<strong>或</strong>逆回购 &lt; 1000 亿美元。</li>
+        </ul>
+
+        <h5>复位条件(全部满足才能放松)</h5>
+        <ul class="trigger-list down">
+          <li>VIX &lt; 18 <strong>且</strong> HY OAS &lt; 3.7：才允许回到绿灯。</li>
+          <li>布伦特 &lt; 95 <strong>且</strong>美元走弱：才允许提高成长仓。</li>
+          <li>关键缺失 &lt; 2：解除数据回退约束。</li>
+          <li>曲线回到 0 以上 <strong>且</strong> IG OAS &lt; 1.2%：解除结构性约束。</li>
+        </ul>
+
+        <h4>7. 行为纪律 <em>· Behavioral Discipline</em></h4>
+        <p><strong>系统优先于主观判断。</strong>本框架包含 9 条行为规则，分 3 类：</p>
+
+        <div class="appendix-twocol" style="grid-template-columns:1fr 1fr 1fr;">
+          <div>
+            <h5>允许开仓条件</h5>
+            <ul style="font-family:var(--font-serif);font-size:12.5px;line-height:1.7;color:var(--paper-warm);margin:8px 0 0 0;padding-left:18px;">
+              <li>宏观状态、流动性、传导链至少 2 项同向支持。</li>
+              <li>信号强度 ≥ 65 且预警系统无新增红色项。</li>
+              <li>仓位调整基于主链条变化，而非单日情绪波动。</li>
+            </ul>
+          </div>
+          <div>
+            <h5>禁止行为</h5>
+            <ul style="font-family:var(--font-serif);font-size:12.5px;line-height:1.7;color:var(--paper-warm);margin:8px 0 0 0;padding-left:18px;">
+              <li>禁止流动性偏紧时重仓抄底高 Beta 资产。</li>
+              <li>禁止信号分歧时一次性大幅加仓。</li>
+              <li>禁止因单日上涨追逐已脱离主链条的资产。</li>
+            </ul>
+          </div>
+          <div>
+            <h5>强制规则</h5>
+            <ul style="font-family:var(--font-serif);font-size:12.5px;line-height:1.7;color:var(--paper-warm);margin:8px 0 0 0;padding-left:18px;">
+              <li>每次新增仓位最多分 3 笔执行。</li>
+              <li>单日净加仓 &lt; 组合总资产 5%。</li>
+              <li>连续 2 天红色预警 → 次日重新评估并考虑减仓。</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
         </div>
       </div>
     </details>
