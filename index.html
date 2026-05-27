@@ -643,48 +643,48 @@
 
         <div class="ai-warning-block">
           <div class="aw-kicker">⚠ READ-ONLY AUXILIARY INTERPRETATION</div>
-          <p>本层为 <strong>DeepSeek</strong> / <strong>OpenAI</strong> 自动生成的解释层，<strong>不影响平台评分</strong>(项目宪法第 4 条)。当前 provider <code>deepseek</code> / model <code>deepseek-v4-flash</code>，qualityReview 通过 (<code>pass_for_manual_review</code>)，但 promotionEligible 为 <code>false</code>，因此不晋升为生产证据。sourceAttribution / provenance 完整可审计：runId <code>26379224068</code>，generatedAt <code>2026-05-25 01:55 UTC</code>。</p>
+          <p>本层为 <strong>DeepSeek</strong> / <strong>OpenAI</strong> 自动生成的解释层，<strong>不影响平台评分</strong>(项目宪法第 4 条)。当前 provider <code id="ext-ai-provider">deepseek</code> / model <code id="ext-ai-model">deepseek-v4-flash</code>，qualityReview 通过 (<code id="ext-ai-quality">pass_for_manual_review</code>)，但 promotionEligible 为 <code id="ext-ai-promotion">false</code>，因此不晋升为生产证据。sourceAttribution / provenance 完整可审计：runId <code id="ext-ai-run-id">26379224068</code>，generatedAt <code id="ext-ai-generated-at">2026-05-25 01:55 UTC</code>。</p>
         </div>
 
         <h4>1. AI 摘要 <em>· Summary</em></h4>
-        <p>站内结构化数据显示<strong>能源定价背离压力持续</strong>，布伦特公开代理价差达 <code class="danger">16.52 美元</code>，但不等同于正式实物成交价。消费者信心月频走弱(<code class="warn">UMCSENT 49.8</code>，三个月变化 −6.6)，与风险资产定价存在观察性背离。当前证据仅支持观察，<strong>不足以形成高置信度方向判断</strong>。若布伦特回落且验证层压力解除，或消费者信心改善，则当前背离观察可能失效。</p>
+        <p id="ext-ai-summary">站内结构化数据显示<strong>能源定价背离压力持续</strong>，布伦特公开代理价差达 <code class="danger">16.52 美元</code>，但不等同于正式实物成交价。消费者信心月频走弱(<code class="warn">UMCSENT 49.8</code>，三个月变化 −6.6)，与风险资产定价存在观察性背离。当前证据仅支持观察，<strong>不足以形成高置信度方向判断</strong>。若布伦特回落且验证层压力解除，或消费者信心改善，则当前背离观察可能失效。</p>
 
         <h4>2. AI 已验证事实 <em>· Facts</em></h4>
-        <p>AI 从站内结构化数据中提取 10 项可验证事实：布伦特主显示值 <code>116.73</code> 来源 <code>fred:DCOILBRENTEU</code>；布伦特公开代理价差(现货减期货)<code>16.52</code> 状态为压力；消费者信心指数 <code>UMCSENT 49.8</code>，前值 <code>53.3</code>，三个月变化 <code>−6.6</code>；美国 10 年期收益率 <code>4.57%</code>，10 年盈亏平衡通胀 <code>2.40%</code>；广义美元指数 <code>119.28</code>；高收益利差 <code>2.78%</code>；背离层整体状态<strong>压力</strong>(得分 60)；能源定价背离检查得分 <code>72</code>(压力)；消费者与资产定价背离检查得分 <code>54</code>(压力)；数据健康评分 <code>100</code>。</p>
+        <p id="ext-ai-facts-text">AI 从站内结构化数据中提取 10 项可验证事实：布伦特主显示值 <code>116.73</code> 来源 <code>fred:DCOILBRENTEU</code>；布伦特公开代理价差(现货减期货)<code>16.52</code> 状态为压力；消费者信心指数 <code>UMCSENT 49.8</code>，前值 <code>53.3</code>，三个月变化 <code>−6.6</code>；美国 10 年期收益率 <code>4.57%</code>，10 年盈亏平衡通胀 <code>2.40%</code>；广义美元指数 <code>119.28</code>；高收益利差 <code>2.78%</code>；背离层整体状态<strong>压力</strong>(得分 60)；能源定价背离检查得分 <code>72</code>(压力)；消费者与资产定价背离检查得分 <code>54</code>(压力)；数据健康评分 <code>100</code>。</p>
 
         <h4>3. AI 数据推断 <em>· Data Inferences</em></h4>
-        <p>AI 在已验证事实之上给出 3 项观察性推断：(1) <strong>能源定价背离压力</strong>主要源于公开代理价差扩大，但该价差仅用于审计观察，不改变布伦特主值；(2) <strong>消费者信心持续走弱</strong>，而风险资产定价尚未充分反映，存在观察性错配——但该信号为月频慢变量；(3) <strong>长端利率压力与风险资产定价之间的背离</strong>处于压力状态，但信用利差和波动率尚未明显扩张，表明压力尚未广泛扩散。</p>
+        <p id="ext-ai-inferences-text">AI 在已验证事实之上给出 3 项观察性推断：(1) <strong>能源定价背离压力</strong>主要源于公开代理价差扩大，但该价差仅用于审计观察，不改变布伦特主值；(2) <strong>消费者信心持续走弱</strong>，而风险资产定价尚未充分反映，存在观察性错配——但该信号为月频慢变量；(3) <strong>长端利率压力与风险资产定价之间的背离</strong>处于压力状态，但信用利差和波动率尚未明显扩张，表明压力尚未广泛扩散。</p>
 
         <h4>4. AI 模型判断 <em>· Model Judgments</em></h4>
-        <p>AI 给出的 3 项模型判断，每项都附带置信度声明：(1) 能源定价背离的证据强度<strong>中等</strong>，数据充分但来源为公开代理，不足以确认实物现货溢价；(2) 消费者信心数据为月频，存在发布延迟，时效性不足，属于<strong>低置信度观察</strong>；(3) 综合背离层得分 60，多个维度存在压力，但信用和波动率指标相对平静，<strong>整体不确定性较高</strong>。</p>
+        <p id="ext-ai-judgments-text">AI 给出的 3 项模型判断，每项都附带置信度声明：(1) 能源定价背离的证据强度<strong>中等</strong>，数据充分但来源为公开代理，不足以确认实物现货溢价；(2) 消费者信心数据为月频，存在发布延迟，时效性不足，属于<strong>低置信度观察</strong>；(3) 综合背离层得分 60，多个维度存在压力，但信用和波动率指标相对平静，<strong>整体不确定性较高</strong>。</p>
 
         <h4>5. AI 情景假设 <em>· Scenario Hypotheses</em></h4>
         <p>AI 给出 2 个 if-then 假设(均附触发条件和失效条件)：</p>
         <ul style="font-family:var(--font-serif);font-size:13.5px;line-height:1.85;color:var(--paper-warm);margin:8px 0 0 0;padding-left:20px;">
-          <li><strong>能源利率资产重定价观察</strong>：若布伦特公开代理价差持续压力、US10Y 上行、VIX 或 HY OAS 扩张，则升级；若价差收敛、US10Y 回落、VIX 与 HY OAS 不扩张，则降级。</li>
-          <li><strong>消费者资产背离缓解观察</strong>：若消费者信心三个月变化改善、US10Y 回落、HY OAS 不扩张，则缓解；若消费者信心继续走弱、HY OAS 或 VIX 扩张，则继续。</li>
+          <li id="ext-ai-scenario-1"><strong>能源利率资产重定价观察</strong>：若布伦特公开代理价差持续压力、US10Y 上行、VIX 或 HY OAS 扩张，则升级；若价差收敛、US10Y 回落、VIX 与 HY OAS 不扩张，则降级。</li>
+          <li id="ext-ai-scenario-2"><strong>消费者资产背离缓解观察</strong>：若消费者信心三个月变化改善、US10Y 回落、HY OAS 不扩张，则缓解；若消费者信心继续走弱、HY OAS 或 VIX 扩张，则继续。</li>
         </ul>
 
         <h4>6. 边界与审计字段 <em>· Boundary & Audit</em></h4>
         <div class="appendix-twocol">
           <div>
-            <p>本 AI 解读层<strong>不进入 scoring、decisionModel、executionLock、positionGuidance</strong>。displayOnly = true / externalAiGenerated = true / usesExternalAiApi = true / notInvestmentAdvice = true。</p>
-            <p>auditFlags 显式标记：<code>manual_artifact_only</code> / <code>site_structured_data_only</code> / <code>validator_required</code> / <code>non_production_output</code> / <code>no_frontend_display</code>。</p>
+            <p id="ext-ai-boundaries-text">本 AI 解读层<strong>不进入 scoring、decisionModel、executionLock、positionGuidance</strong>。displayOnly = true / externalAiGenerated = true / usesExternalAiApi = true / notInvestmentAdvice = true。</p>
+            <p id="ext-ai-audit-flags">auditFlags 显式标记：<code>manual_artifact_only</code> / <code>site_structured_data_only</code> / <code>validator_required</code> / <code>non_production_output</code> / <code>no_frontend_display</code>。</p>
           </div>
           <aside class="appendix-sidebar">
             <div class="sidebar-kicker">Provenance</div>
-            <div class="sidebar-title">runId 26379224068</div>
+            <div class="sidebar-title">runId <span id="ext-ai-prov-run-id">26379224068</span></div>
             <dl>
               <dt>provider</dt><dd>deepseek</dd>
               <dt>model</dt><dd>deepseek-v4-flash</dd>
-              <dt>inputSource</dt><dd>local_compact</dd>
-              <dt>sourceMode</dt><dd>manual_local_compact</dd>
-              <dt>generatedAt</dt><dd>2026-05-25 01:55 UTC</dd>
-              <dt>artifactDigest</dt><dd>47b3303a88...</dd>
-              <dt>sourceCommit</dt><dd>8a4464bf...</dd>
-              <dt>humanApproved</dt><dd>false</dd>
-              <dt>promotionEligible</dt><dd>false</dd>
-              <dt>confidence</dt><dd>low (30/100)</dd>
+              <dt>inputSource</dt><dd id="ext-ai-prov-input-source">local_compact</dd>
+              <dt>sourceMode</dt><dd id="ext-ai-prov-source-mode">manual_local_compact</dd>
+              <dt>generatedAt</dt><dd id="ext-ai-prov-generated-at">2026-05-25 01:55 UTC</dd>
+              <dt>artifactDigest</dt><dd id="ext-ai-prov-artifact-digest">47b3303a88...</dd>
+              <dt>sourceCommit</dt><dd id="ext-ai-prov-source-commit">8a4464bf...</dd>
+              <dt>humanApproved</dt><dd id="ext-ai-prov-human-approved">false</dd>
+              <dt>promotionEligible</dt><dd id="ext-ai-prov-promotion">false</dd>
+              <dt>confidence</dt><dd id="ext-ai-prov-confidence">low (30/100)</dd>
             </dl>
           </aside>
         </div>
@@ -705,29 +705,29 @@
         <div class="appendix-narrative-intro">本附录展示作者本人的执行框架。<strong>这些规则只针对作者自己</strong>，不构成对任何人的投资建议。决策头、执行灯、预警规则、动作清单、仓位区间、硬阈值风控与行为纪律保留为高级详情。</div>
 
         <h4>1. 决策概览 <em>· Decision Overview</em></h4>
-        <p>系统当前策略状态为 <code class="danger">Defensive · 红灯 / 禁止新增</code>，stateScore <code>56</code>。状态判定原因：<strong>执行引擎检测到高压风险组合</strong>，已激活 1 项结构信号 <code class="warn">逆回购准备金告急</code>(ON RRP 9.65 亿美元)，structuralScoreBump +10 应用于主分数。主导风险源：<strong>能源 (88) / 地缘政治 (81) / 通胀 (59)</strong>。</p>
+        <p>系统当前策略状态为 <code class="danger" id="exec-decision-state">Defensive · 红灯 / 禁止新增</code>，stateScore <code id="exec-decision-score">56</code>。状态判定原因：<strong id="exec-decision-reason">执行引擎检测到高压风险组合</strong>，已激活 1 项结构信号 <code class="warn" id="exec-structural-signal">逆回购准备金告急</code>(ON RRP 9.65 亿美元)，structuralScoreBump <span id="exec-structural-bump">+10</span> 应用于主分数。主导风险源：<strong id="exec-dominant-drivers">能源 (88) / 地缘政治 (81) / 通胀 (59)</strong>。</p>
 
-        <p>目标总仓位区间 <code>18%-38%</code>，风险预算 <code>30%</code>，目标 gross exposure <code>38%</code>，现金缓冲目标 <code>35%</code>。riskAssetBias = 低配风险资产。structuralBandShift = −5 表示因结构信号触发，目标仓位带需要额外保守 5 个百分点。</p>
+        <p>目标总仓位区间 <code id="exec-exposure-band">18%-38%</code>，风险预算 <code id="exec-risk-budget">30%</code>，目标 gross exposure <code id="exec-target-gross">38%</code>，现金缓冲目标 <code id="exec-cash-target">35%</code>。riskAssetBias = <span id="exec-risk-asset-bias">低配风险资产</span>。structuralBandShift = <span id="exec-band-shift">−5</span> 表示因结构信号触发，目标仓位带需要额外保守 5 个百分点。</p>
 
         <h4>2. 执行状态灯 <em>· Execution Lock</em></h4>
 
-        <div class="execution-stoplight red">
-          <div class="es-kicker">EXECUTION LOCK · LIVE MODE · 主观不得覆盖</div>
-          <div class="es-state">红灯 / 禁止新增</div>
-          <div class="es-title">今天禁止主动加仓，只允许减仓与恢复防御层</div>
-          <p class="es-desc">系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。</p>
+        <div class="execution-stoplight red" id="exec-lock-card">
+          <div class="es-kicker" id="exec-lock-kicker">EXECUTION LOCK · LIVE MODE · 主观不得覆盖</div>
+          <div class="es-state" id="exec-lock-state">红灯 / 禁止新增</div>
+          <div class="es-title" id="exec-lock-title">今天禁止主动加仓，只允许减仓与恢复防御层</div>
+          <p class="es-desc" id="exec-lock-desc">系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。</p>
           <div class="es-cols">
             <div class="es-col">
               <div class="es-col-label">ALLOW · 允许</div>
-              <ul><li>允许减仓风险资产。</li><li>允许补充美元 / 短票与现金。</li><li>允许把黄金对冲恢复到上限。</li></ul>
+              <ul><li id="exec-lock-allow-1">允许减仓风险资产。</li><li id="exec-lock-allow-2">允许补充美元 / 短票与现金。</li><li id="exec-lock-allow-3">允许把黄金对冲恢复到上限。</li></ul>
             </div>
             <div class="es-col">
               <div class="es-col-label">BLOCK · 禁止</div>
-              <ul><li>禁止新增股票与高波动仓位。</li><li>禁止盘中追涨。</li><li>禁止主观覆盖系统阈值。</li></ul>
+              <ul><li id="exec-lock-block-1">禁止新增股票与高波动仓位。</li><li id="exec-lock-block-2">禁止盘中追涨。</li><li id="exec-lock-block-3">禁止主观覆盖系统阈值。</li></ul>
             </div>
             <div class="es-col">
               <div class="es-col-label">MANDATORY · 强制</div>
-              <ul><li>若总仓位 &gt; 42%，必须先减到 38% 附近。</li><li>若高波动资产 &gt; 2%，立即降回 2% 以下。</li><li>若现金缓冲 &lt; 30%，立即补回。</li></ul>
+              <ul><li id="exec-lock-mandatory-1">若总仓位 &gt; 42%，必须先减到 38% 附近。</li><li id="exec-lock-mandatory-2">若高波动资产 &gt; 2%，立即降回 2% 以下。</li><li id="exec-lock-mandatory-3">若现金缓冲 &lt; 30%，立即补回。</li></ul>
             </div>
           </div>
         </div>
@@ -739,99 +739,99 @@
           <div>
             <h5>升级触发器(critical)</h5>
             <ul class="trigger-list up">
-              <li>布伦特原油 <code class="danger">116.7</code></li>
-              <li>广义美元指数 <code class="warn">119.28</code></li>
-              <li>高收益利差 <code class="ok">2.78%</code></li>
-              <li>10 年-2 年利差 <code>0.43</code></li>
-              <li>投资级信用利差 <code class="ok">0.75%</code></li>
+              <li id="exec-trigger-critical-1">布伦特原油 <code class="danger">116.7</code></li>
+              <li id="exec-trigger-critical-2">广义美元指数 <code class="warn">119.28</code></li>
+              <li id="exec-trigger-critical-3">高收益利差 <code class="ok">2.78%</code></li>
+              <li id="exec-trigger-critical-4">10 年-2 年利差 <code>0.43</code></li>
+              <li id="exec-trigger-critical-5">投资级信用利差 <code class="ok">0.75%</code></li>
             </ul>
           </div>
           <div>
             <h5>主驱动 + 持续跟踪</h5>
             <ul class="trigger-list watch">
-              <li>波动率 VIX <code class="ok">16.76</code></li>
-              <li>10 年期美债 <code class="warn">4.57%</code></li>
-              <li>实际利率 <code>2.18%</code></li>
-              <li>下一次通胀数据(等待)</li>
-              <li>油价是否高于 100(超过)</li>
-              <li>信用利差是否重新走阔(未发生)</li>
+              <li id="exec-trigger-driver-1">波动率 VIX <code class="ok">16.76</code></li>
+              <li id="exec-trigger-driver-2">10 年期美债 <code class="warn">4.57%</code></li>
+              <li id="exec-trigger-driver-3">实际利率 <code>2.18%</code></li>
+              <li id="exec-trigger-watch-1">下一次通胀数据(等待)</li>
+              <li id="exec-trigger-watch-2">油价是否高于 100(超过)</li>
+              <li id="exec-trigger-watch-3">信用利差是否重新走阔(未发生)</li>
             </ul>
           </div>
         </div>
 
         <h4>4. 预警规则与门控 <em>· Warning Rules & Gating</em></h4>
-        <p>系统按 5 条规则自动触发预警等级：</p>
+        <p id="exec-warning-summary">系统按 5 条规则自动触发预警等级：</p>
         <ul style="font-family:var(--font-serif);font-size:13px;line-height:1.85;color:var(--paper-warm);margin:8px 0 0 0;padding-left:20px;">
-          <li>关键快变量失败 ≥ 2 项 → 标记<strong>部分降级</strong>。</li>
-          <li>关键快变量失败 ≥ 4 项 → 进入<strong>缓存模式</strong>。</li>
-          <li>缓存模式自动把执行状态灯至少提升到<strong>黄灯</strong>。</li>
-          <li>结构性红灯门控：曲线倒挂 (&lt; -0.8) <strong>且</strong>投资级信用告警 (≥ 2.0%)；<strong>或</strong>逆回购余额临界告急。</li>
-          <li>结构性黄灯门控：曲线深度倒挂叠加美联储缩表；<strong>或</strong>投资级信用利差进入应力区；<strong>或</strong>逆回购告急。</li>
+          <li id="exec-warning-rule-1">关键快变量失败 ≥ 2 项 → 标记<strong>部分降级</strong>。</li>
+          <li id="exec-warning-rule-2">关键快变量失败 ≥ 4 项 → 进入<strong>缓存模式</strong>。</li>
+          <li id="exec-warning-rule-3">缓存模式自动把执行状态灯至少提升到<strong>黄灯</strong>。</li>
+          <li id="exec-warning-rule-4">结构性红灯门控：曲线倒挂 (&lt; -0.8) <strong>且</strong>投资级信用告警 (≥ 2.0%)；<strong>或</strong>逆回购余额临界告急。</li>
+          <li id="exec-warning-rule-5">结构性黄灯门控：曲线深度倒挂叠加美联储缩表；<strong>或</strong>投资级信用利差进入应力区；<strong>或</strong>逆回购告急。</li>
         </ul>
 
         <h4>5. 目标仓位 <em>· Position Allocation</em></h4>
-        <p>目标仓位配置遵循<strong>强防守执行框架</strong>。核心配置 5 项：</p>
+        <p>目标仓位配置遵循<strong id="exec-position-regime">强防守执行框架</strong>。核心配置 5 项：</p>
 
         <table class="asset-table">
           <thead><tr><th>核心配置</th><th>目标</th><th>权重</th><th>执行说明</th></tr></thead>
           <tbody>
-            <tr><td class="asset-name">美元 / 短票</td><td>核心 1</td><td class="asset-range">24%</td><td>融资与信用压力阶段的首要防御层。</td></tr>
-            <tr><td class="asset-name">现金</td><td>缓冲层</td><td class="asset-range">35%</td><td>执行引擎红灯，现金缓冲必须充足。</td></tr>
-            <tr><td class="asset-name">黄金</td><td>对冲</td><td class="asset-range">12%</td><td>用于对冲尾部风险和政策不确定性。</td></tr>
-            <tr><td class="asset-name">原油 / 能源</td><td>防守受益</td><td class="asset-range">12%</td><td>油价偏高时继续保留。</td></tr>
-            <tr><td class="asset-name">股票(防御)</td><td>观察仓</td><td class="asset-range">5%</td><td>仅保留最低防御仓。</td></tr>
+            <tr><td class="asset-name" id="exec-alloc-usd-name">美元 / 短票</td><td id="exec-alloc-usd-target">核心 1</td><td class="asset-range" id="exec-alloc-usd-weight">24%</td><td id="exec-alloc-usd-reason">融资与信用压力阶段的首要防御层。</td></tr>
+            <tr><td class="asset-name" id="exec-alloc-cash-name">现金</td><td id="exec-alloc-cash-target">缓冲层</td><td class="asset-range" id="exec-alloc-cash-weight">35%</td><td id="exec-alloc-cash-reason">执行引擎红灯，现金缓冲必须充足。</td></tr>
+            <tr><td class="asset-name" id="exec-alloc-gold-name">黄金</td><td id="exec-alloc-gold-target">对冲</td><td class="asset-range" id="exec-alloc-gold-weight">12%</td><td id="exec-alloc-gold-reason">用于对冲尾部风险和政策不确定性。</td></tr>
+            <tr><td class="asset-name" id="exec-alloc-energy-name">原油 / 能源</td><td id="exec-alloc-energy-target">防守受益</td><td class="asset-range" id="exec-alloc-energy-weight">12%</td><td id="exec-alloc-energy-reason">油价偏高时继续保留。</td></tr>
+            <tr><td class="asset-name" id="exec-alloc-equity-name">股票(防御)</td><td id="exec-alloc-equity-target">观察仓</td><td class="asset-range" id="exec-alloc-equity-weight">5%</td><td id="exec-alloc-equity-reason">仅保留最低防御仓。</td></tr>
           </tbody>
         </table>
 
         <p>执行限制 3 条：总仓位偏离目标值 &lt; ±5% 前不做方向性调整；高波动资产合计不超过 3%；新增进攻仓位必须由减仓腾出空间。</p>
 
         <h4>6. 硬阈值风控 <em>· Hard Thresholds</em></h4>
-        <p>最大回撤容忍 <code class="danger">−6%</code>，单资产上限 <code>20%</code>，当前系统状态：<strong>今天禁止主动加仓，只允许减仓与恢复防御层</strong>。</p>
+        <p>最大回撤容忍 <code class="danger" id="exec-risk-max-drawdown">−6%</code>，单资产上限 <code id="exec-risk-single-asset-max">20%</code>，当前系统状态：<strong id="exec-risk-system-state">今天禁止主动加仓，只允许减仓与恢复防御层</strong>。</p>
 
         <h5>强制减仓阈值(任一触发即执行)</h5>
         <ul class="trigger-list up">
-          <li>流动性指数 ≥ 75 → 总仓位降至 42%。</li>
-          <li>布伦特 ≥ 110 → 能源上调，股票下调。</li>
-          <li>高收益利差 ≥ 4.5% → 暂停新增风险仓位。</li>
-          <li>波动率指数 ≥ 28 → 切入红灯。</li>
-          <li>结构性红灯：曲线 &lt; −0.8 且 IG OAS ≥ 2.0%；<strong>或</strong>逆回购余额临界告急。</li>
-          <li>结构性黄灯：曲线 ≤ −0.5 叠加美联储缩表；<strong>或</strong>IG OAS ≥ 1.5%；<strong>或</strong>逆回购 &lt; 1000 亿美元。</li>
+          <li id="exec-hard-threshold-1">流动性指数 ≥ 75 → 总仓位降至 42%。</li>
+          <li id="exec-hard-threshold-2">布伦特 ≥ 110 → 能源上调，股票下调。</li>
+          <li id="exec-hard-threshold-3">高收益利差 ≥ 4.5% → 暂停新增风险仓位。</li>
+          <li id="exec-hard-threshold-4">波动率指数 ≥ 28 → 切入红灯。</li>
+          <li id="exec-hard-threshold-5">结构性红灯：曲线 &lt; −0.8 且 IG OAS ≥ 2.0%；<strong>或</strong>逆回购余额临界告急。</li>
+          <li id="exec-hard-threshold-6">结构性黄灯：曲线 ≤ −0.5 叠加美联储缩表；<strong>或</strong>IG OAS ≥ 1.5%；<strong>或</strong>逆回购 &lt; 1000 亿美元。</li>
         </ul>
 
         <h5>复位条件(全部满足才能放松)</h5>
         <ul class="trigger-list down">
-          <li>VIX &lt; 18 <strong>且</strong> HY OAS &lt; 3.7：才允许回到绿灯。</li>
-          <li>布伦特 &lt; 95 <strong>且</strong>美元走弱：才允许提高成长仓。</li>
-          <li>关键缺失 &lt; 2：解除数据回退约束。</li>
-          <li>曲线回到 0 以上 <strong>且</strong> IG OAS &lt; 1.2%：解除结构性约束。</li>
+          <li id="exec-reset-threshold-1">VIX &lt; 18 <strong>且</strong> HY OAS &lt; 3.7：才允许回到绿灯。</li>
+          <li id="exec-reset-threshold-2">布伦特 &lt; 95 <strong>且</strong>美元走弱：才允许提高成长仓。</li>
+          <li id="exec-reset-threshold-3">关键缺失 &lt; 2：解除数据回退约束。</li>
+          <li id="exec-reset-threshold-4">曲线回到 0 以上 <strong>且</strong> IG OAS &lt; 1.2%：解除结构性约束。</li>
         </ul>
 
         <h4>7. 行为纪律 <em>· Behavioral Discipline</em></h4>
-        <p><strong>系统优先于主观判断。</strong>本框架包含 9 条行为规则，分 3 类：</p>
+        <p><strong id="exec-discipline-tag">系统优先于主观判断。</strong>本框架包含 9 条行为规则，分 3 类：</p>
 
         <div class="appendix-twocol" style="grid-template-columns:1fr 1fr 1fr;">
           <div>
             <h5>允许开仓条件</h5>
             <ul style="font-family:var(--font-serif);font-size:12.5px;line-height:1.7;color:var(--paper-warm);margin:8px 0 0 0;padding-left:18px;">
-              <li>宏观状态、流动性、传导链至少 2 项同向支持。</li>
-              <li>信号强度 ≥ 65 且预警系统无新增红色项。</li>
-              <li>仓位调整基于主链条变化，而非单日情绪波动。</li>
+              <li id="exec-entry-condition-1">宏观状态、流动性、传导链至少 2 项同向支持。</li>
+              <li id="exec-entry-condition-2">信号强度 ≥ 65 且预警系统无新增红色项。</li>
+              <li id="exec-entry-condition-3">仓位调整基于主链条变化，而非单日情绪波动。</li>
             </ul>
           </div>
           <div>
             <h5>禁止行为</h5>
             <ul style="font-family:var(--font-serif);font-size:12.5px;line-height:1.7;color:var(--paper-warm);margin:8px 0 0 0;padding-left:18px;">
-              <li>禁止流动性偏紧时重仓抄底高 Beta 资产。</li>
-              <li>禁止信号分歧时一次性大幅加仓。</li>
-              <li>禁止因单日上涨追逐已脱离主链条的资产。</li>
+              <li id="exec-prohibited-1">禁止流动性偏紧时重仓抄底高 Beta 资产。</li>
+              <li id="exec-prohibited-2">禁止信号分歧时一次性大幅加仓。</li>
+              <li id="exec-prohibited-3">禁止因单日上涨追逐已脱离主链条的资产。</li>
             </ul>
           </div>
           <div>
             <h5>强制规则</h5>
             <ul style="font-family:var(--font-serif);font-size:12.5px;line-height:1.7;color:var(--paper-warm);margin:8px 0 0 0;padding-left:18px;">
-              <li>每次新增仓位最多分 3 笔执行。</li>
-              <li>单日净加仓 &lt; 组合总资产 5%。</li>
-              <li>连续 2 天红色预警 → 次日重新评估并考虑减仓。</li>
+              <li id="exec-mandatory-rule-1">每次新增仓位最多分 3 笔执行。</li>
+              <li id="exec-mandatory-rule-2">单日净加仓 &lt; 组合总资产 5%。</li>
+              <li id="exec-mandatory-rule-3">连续 2 天红色预警 → 次日重新评估并考虑减仓。</li>
             </ul>
           </div>
         </div>
@@ -862,6 +862,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=stage-5d1-1"></script>
+  <script type="module" src="scripts/app.js?v=stage-5d2-1"></script>
 </body>
 </html>
