@@ -72,29 +72,29 @@
         <div class="big-left">
           <div class="label">TODAY JUDGMENT · 今日总判断</div>
           <div>
-            <div class="value">56<sup>/100</sup></div>
+            <div class="value" id="hero-score-value">56<sup>/100</sup></div>
             <div class="breakdown">
-              6 底层模块中 <strong>2 红 / 2 黄 / 2 绿</strong><br/>
-              World Order overlay: 70(升档提示)
+              6 底层模块中 <span id="hero-breakdown-counts"><strong>2 红 / 2 黄 / 2 绿</strong></span><br/>
+              World Order overlay: <span id="hero-overlay-score">70(升档提示)</span>
             </div>
           </div>
         </div>
         <div class="big-right">
-          <div class="verdict-kicker">THIS ISSUE · 滞胀冲击 / 通胀冲击</div>
-          <h2>今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察。</h2>
-          <p>原始 56 落在 40–60 高风险预警带。World Order overlay 70 触发橙色升档指针。HY OAS 仍在 4% 以下、VIX 16.8 没有同步恐慌，判读保持观察语气而非危机定性。</p>
+          <div class="verdict-kicker" id="hero-verdict-kicker">THIS ISSUE · 滞胀冲击 / 通胀冲击</div>
+          <h2 id="hero-verdict-headline">今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察。</h2>
+          <p id="hero-verdict-body">原始 56 落在 40–60 高风险预警带。World Order overlay 70 触发橙色升档指针。HY OAS 仍在 4% 以下、VIX 16.8 没有同步恐慌，判读保持观察语气而非危机定性。</p>
         </div>
         <div class="big-footer">
-          <div><div class="k">DOMINANT RISK CHAIN</div><div class="v">能源 → 通胀 → 利率压力</div></div>
-          <div><div class="k">WEEKLY CHANGE</div><div class="v">+2 (WoW)</div></div>
-          <div><div class="k">DATA HEALTH</div><div class="v">23/23 OK · 数据正常</div></div>
+          <div><div class="k">DOMINANT RISK CHAIN</div><div class="v" id="hero-dominant-chain">能源 → 通胀 → 利率压力</div></div>
+          <div><div class="k">WEEKLY CHANGE</div><div class="v" id="hero-weekly-change">+2 (WoW)</div></div>
+          <div><div class="k">DATA HEALTH</div><div class="v" id="hero-data-health">23/23 OK · 数据正常</div></div>
         </div>
       </article>
 
       <div class="threshold-block">
         <div class="threshold-header">
           <h4>触发阈值标尺 <em>· Threshold Scale</em></h4>
-          <div class="now">原始 56(高风险预警) · overlay 升档 → 系统性顶部带</div>
+          <div class="now" id="threshold-now-line">原始 56(高风险预警) · overlay 升档 → 系统性顶部带</div>
         </div>
         <div class="threshold-bar-wrap">
           <div class="threshold-bar">
@@ -102,8 +102,8 @@
             <div class="zone t-yellow" style="flex:15"><span class="zone-label">中度警戒</span><span class="zone-pct">25–40</span></div>
             <div class="zone t-orange" style="flex:20"><span class="zone-label">高风险预警</span><span class="zone-pct">40–60</span></div>
             <div class="zone t-red"    style="flex:40"><span class="zone-label">系统性顶部</span><span class="zone-pct">≥60</span></div>
-            <div class="marker" style="left:56%"><span class="marker-label">原始 56</span></div>
-            <div class="marker override" style="left:80%"><span class="marker-label">overlay 70</span></div>
+            <div class="marker" id="threshold-marker-main" style="left:56%"><span class="marker-label">原始 56</span></div>
+            <div class="marker override" id="threshold-marker-override" style="left:80%"><span class="marker-label">overlay 70</span></div>
           </div>
         </div>
       </div>
@@ -145,12 +145,12 @@
           <div class="meta">六大底层模块 · data.modules 扁平数字 · data.moduleTrends 趋势</div>
         </div>
         <div class="mini-grid">
-          <div class="mini-card red"><div class="label">Energy 能源</div><div class="num">82</div><div class="status">↑ 能源传导主线</div></div>
-          <div class="mini-card red"><div class="label">Geopolitical 地缘</div><div class="num">78</div><div class="status">↑ multi_theater</div></div>
-          <div class="mini-card yellow"><div class="label">Inflation 通胀</div><div class="num">52</div><div class="status">→ 横盘观察</div></div>
-          <div class="mini-card yellow"><div class="label">Liquidity 流动性</div><div class="num">48</div><div class="status">↑ 边际收紧</div></div>
-          <div class="mini-card green"><div class="label">Debt 债务</div><div class="num">31</div><div class="status">→ 杠杆稳定</div></div>
-          <div class="mini-card green"><div class="label">Banking 银行</div><div class="num">29</div><div class="status">↓ 持续改善</div></div>
+          <div class="mini-card red" id="pressure-card-energy"><div class="label">Energy 能源</div><div class="num">82</div><div class="status">↑ 能源传导主线</div></div>
+          <div class="mini-card red" id="pressure-card-geopolitical"><div class="label">Geopolitical 地缘</div><div class="num">78</div><div class="status">↑ multi_theater</div></div>
+          <div class="mini-card yellow" id="pressure-card-inflation"><div class="label">Inflation 通胀</div><div class="num">52</div><div class="status">→ 横盘观察</div></div>
+          <div class="mini-card yellow" id="pressure-card-liquidity"><div class="label">Liquidity 流动性</div><div class="num">48</div><div class="status">↑ 边际收紧</div></div>
+          <div class="mini-card green" id="pressure-card-debt"><div class="label">Debt 债务</div><div class="num">31</div><div class="status">→ 杠杆稳定</div></div>
+          <div class="mini-card green" id="pressure-card-banking"><div class="label">Banking 银行</div><div class="num">29</div><div class="status">↓ 持续改善</div></div>
         </div>
       </div>
 
@@ -862,6 +862,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=stage-4a-1"></script>
+  <script type="module" src="scripts/app.js?v=stage-4b-1a-1"></script>
 </body>
 </html>

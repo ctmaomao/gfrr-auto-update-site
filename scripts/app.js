@@ -1,13 +1,14 @@
-// scripts/app.js — M-94 V0 路径 C · Stage 4a 主 JS 入口
-// 职责:数据加载 + issue-meta 填充 + Stage 4b/c renderer 注入点 stub
-// 创建于 Stage 4a (2026-05-27)
+// scripts/app.js — M-94 V0 路径 C · Stage 4b-1A 主 JS 入口
+// 职责:数据加载(3 个 JSON)+ issue-meta 填充 + 调用 renderMacroOverview
+// 创建于 Stage 4a (2026-05-27),Stage 4b-1A 扩展
 
 import {
   dataUrl,
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'stage-4a-1';
+const APP_VERSION = 'stage-4b-1a-1';
+const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 
 const ISSUE_META_FALLBACK = {
   issue: '—',
@@ -34,23 +35,27 @@ async function fetchJson(url, label) {
 }
 
 async function loadAllData() {
-  // 并行 fetch radar-data.json + world-order-stress.json
-  const [radarData, worldOrderStressData] = await Promise.all([
+  // 并行 fetch 3 个 JSON 文件
+  const [radarData, worldOrderStressData, marketPricingMetricsData] = await Promise.all([
     fetchJson(dataUrl, 'radar-data.json'),
     fetchJson(worldOrderStressUrl, 'world-order-stress.json'),
+    fetchJson(MARKET_PRICING_METRICS_URL, 'market-pricing-metrics.json'),
   ]);
 
   if (!radarData) {
-    console.error('[app] CRITICAL: radar-data.json failed to load. Issue meta will use fallback.');
+    console.error('[app] CRITICAL: radar-data.json failed to load. Issue meta + macro-overview will use fallback.');
   }
   if (!worldOrderStressData) {
     console.error('[app] WARN: world-order-stress.json failed to load. World Order overlay will use fallback.');
   }
+  if (!marketPricingMetricsData) {
+    console.error('[app] WARN: market-pricing-metrics.json failed to load. Market Temperature will use fallback.');
+  }
 
-  return { radarData, worldOrderStressData };
+  return { radarData, worldOrderStressData, marketPricingMetricsData };
 }
 
-// ---------------- issue-meta 填充 ----------------
+// ---------------- issue-meta 填充(Stage 4a 不动)----------------
 
 function formatAsOfTimestamp(updatedAtIso) {
   if (!updatedAtIso || typeof updatedAtIso !== 'string') return ISSUE_META_FALLBACK.asOf;
@@ -95,7 +100,6 @@ function applyIssueMetaToDom(meta) {
   const cacheEl = document.getElementById('issue-meta-cache');
 
   if (issueEl) {
-    // 保持 <strong> 包裹格式(与 Stage 3a 原结构一致)
     issueEl.innerHTML = `<strong>ISSUE ${meta.issue}</strong>`;
   }
   if (asOfEl) {
@@ -109,25 +113,31 @@ function applyIssueMetaToDom(meta) {
 // ---------------- 主入口 ----------------
 
 async function main() {
-  const { radarData, worldOrderStressData } = await loadAllData();
+  const { radarData, worldOrderStressData, marketPricingMetricsData } = await loadAllData();
 
   // Stage 4a: 填充 issue-meta
   const issueMeta = deriveIssueMeta(radarData);
   applyIssueMetaToDom(issueMeta);
 
-  // Stage 4b/c stub: 后续 sub-stage 在此 import + 调用 renderer
+  // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
+  try {
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=stage-4b-1a-1');
+    renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData });
+  } catch (error) {
+    console.error('[app] Failed to import / run renderMacroOverview:', error);
+  }
+
+  // Stage 4c stub: 后续 sub-stage 在此 import + 调用 renderer
   // 例如:
-  // import('./modules/renderMacroOverview.js').then(({ renderMacroOverview }) => {
-  //   renderMacroOverview({ radarData, worldOrderStressData });
-  // });
   // import('./modules/renderPlainSummary.js').then(({ renderPlainSummary }) => {
   //   renderPlainSummary({ radarData });
   // });
 
-  console.log(`[app] Stage 4a init complete. APP_VERSION=${APP_VERSION}`);
+  console.log(`[app] Stage 4b-1A init complete. APP_VERSION=${APP_VERSION}`);
   console.log('[app] Data loaded:', {
     radarDataPresent: radarData !== null,
     worldOrderStressDataPresent: worldOrderStressData !== null,
+    marketPricingMetricsDataPresent: marketPricingMetricsData !== null,
   });
 }
 
