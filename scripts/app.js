@@ -7,8 +7,9 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'stage-4b-1a-1';
+const APP_VERSION = 'stage-4b-2-1';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
+const RADAR_HISTORY_URL = './data/radar-history.json';
 
 const ISSUE_META_FALLBACK = {
   issue: '—',
@@ -35,11 +36,12 @@ async function fetchJson(url, label) {
 }
 
 async function loadAllData() {
-  // 并行 fetch 3 个 JSON 文件
-  const [radarData, worldOrderStressData, marketPricingMetricsData] = await Promise.all([
+  // 并行 fetch 4 个 JSON 文件
+  const [radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData] = await Promise.all([
     fetchJson(dataUrl, 'radar-data.json'),
     fetchJson(worldOrderStressUrl, 'world-order-stress.json'),
     fetchJson(MARKET_PRICING_METRICS_URL, 'market-pricing-metrics.json'),
+    fetchJson(RADAR_HISTORY_URL, 'radar-history.json'),
   ]);
 
   if (!radarData) {
@@ -51,8 +53,11 @@ async function loadAllData() {
   if (!marketPricingMetricsData) {
     console.error('[app] WARN: market-pricing-metrics.json failed to load. Market Temperature will use fallback.');
   }
+  if (!radarHistoryData) {
+    console.error('[app] WARN: radar-history.json failed to load. Trend SVG will use fallback.');
+  }
 
-  return { radarData, worldOrderStressData, marketPricingMetricsData };
+  return { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData };
 }
 
 // ---------------- issue-meta 填充(Stage 4a 不动)----------------
@@ -113,7 +118,7 @@ function applyIssueMetaToDom(meta) {
 // ---------------- 主入口 ----------------
 
 async function main() {
-  const { radarData, worldOrderStressData, marketPricingMetricsData } = await loadAllData();
+  const { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData } = await loadAllData();
 
   // Stage 4a: 填充 issue-meta
   const issueMeta = deriveIssueMeta(radarData);
@@ -121,8 +126,8 @@ async function main() {
 
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=stage-4b-1a-1');
-    renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData });
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=stage-4b-2-1');
+    renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData });
   } catch (error) {
     console.error('[app] Failed to import / run renderMacroOverview:', error);
   }
@@ -133,11 +138,12 @@ async function main() {
   //   renderPlainSummary({ radarData });
   // });
 
-  console.log(`[app] Stage 4b-1A init complete. APP_VERSION=${APP_VERSION}`);
+  console.log(`[app] Stage 4b-2 init complete. APP_VERSION=${APP_VERSION}`);
   console.log('[app] Data loaded:', {
     radarDataPresent: radarData !== null,
     worldOrderStressDataPresent: worldOrderStressData !== null,
     marketPricingMetricsDataPresent: marketPricingMetricsData !== null,
+    radarHistoryDataPresent: radarHistoryData !== null,
   });
 }
 

@@ -126,10 +126,10 @@
             <text x="784" y="89" font-family="IBM Plex Mono" font-size="9" fill="#A8761A">40</text>
             <line x1="40" y1="28.57" x2="780" y2="28.57" stroke="#7C1D1D" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
             <text x="784" y="32" font-family="IBM Plex Mono" font-size="9" fill="#7C1D1D">60</text>
-            <polyline points="80,62.86 177.14,60.0 274.29,54.29 371.43,57.14 468.57,48.57 565.71,45.71 662.86,48.57 760,40.0" fill="none" stroke="#7C1D1D" stroke-width="2.5"/>
-            <polyline points="80,22.86 177.14,17.14 274.29,14.29 371.43,14.29 468.57,8.57 565.71,5.71 662.86,2.86 760,0" fill="none" stroke="#C25E2A" stroke-width="2" stroke-dasharray="5,3"/>
-            <circle cx="760" cy="40.0" r="5" fill="#7C1D1D" stroke="#1A1815" stroke-width="1.5"/>
-            <circle cx="760" cy="0" r="4" fill="#C25E2A" stroke="#1A1815" stroke-width="1"/>
+            <polyline id="trend-line-score" points="80,62.86 177.14,60.0 274.29,54.29 371.43,57.14 468.57,48.57 565.71,45.71 662.86,48.57 760,40.0" fill="none" stroke="#7C1D1D" stroke-width="2.5"/>
+            <polyline id="trend-line-overlay" points="80,22.86 177.14,17.14 274.29,14.29 371.43,14.29 468.57,8.57 565.71,5.71 662.86,2.86 760,0" fill="none" stroke="#C25E2A" stroke-width="2" stroke-dasharray="5,3"/>
+            <circle id="trend-dot-score" cx="760" cy="40.0" r="5" fill="#7C1D1D" stroke="#1A1815" stroke-width="1.5"/>
+            <circle id="trend-dot-overlay" cx="760" cy="0" r="4" fill="#C25E2A" stroke="#1A1815" stroke-width="1"/>
             <text x="80" y="195" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#666">W-7</text>
             <text x="274.29" y="195" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#666">W-5</text>
             <text x="468.57" y="195" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#666">W-3</text>
@@ -160,22 +160,22 @@
           <div class="meta">7 个 active narratives 中:3 active / 4 latent · NARRATIVE_EMOJI 映射</div>
         </div>
         <div class="narrative-list">
-          <div class="narrative-item active">
-            <div class="head"><span class="emoji">⚡</span><span class="name">energy_shock 能源冲击</span><span class="score">score 78 · ACTIVE</span></div>
-            <p>Brent + crack spread 同步走阔，2022 模式重演。下一节是是否传导至 CPI / breakeven。</p>
+          <div class="narrative-item active id="narrative-1"">
+            <div class="head"><span class="emoji">⚡</span><span class="name id="narrative-1-name"">energy_shock 能源冲击</span><span class="score id="narrative-1-score"">score 78 · ACTIVE</span></div>
+            <p id="narrative-1-desc">Brent + crack spread 同步走阔，2022 模式重演。下一节是是否传导至 CPI / breakeven。</p>
           </div>
-          <div class="narrative-item active">
-            <div class="head"><span class="emoji">⚖️</span><span class="name">stagflation_pressure 滞胀压力</span><span class="score">score 62 · ACTIVE</span></div>
-            <p>ISM PMI 48.7 收缩 + 能源涨价 + 实际工资压制。三件套均已出现，但信用未验证。</p>
+          <div class="narrative-item active id="narrative-2"">
+            <div class="head"><span class="emoji">⚖️</span><span class="name id="narrative-2-name"">stagflation_pressure 滞胀压力</span><span class="score id="narrative-2-score"">score 62 · ACTIVE</span></div>
+            <p id="narrative-2-desc">ISM PMI 48.7 收缩 + 能源涨价 + 实际工资压制。三件套均已出现，但信用未验证。</p>
           </div>
-          <div class="narrative-item active">
-            <div class="head"><span class="emoji">🌐</span><span class="name">world_order_pressure_crossing 世界秩序压力穿越</span><span class="score">score 70 · ACTIVE</span></div>
-            <p>multi_theater_stress 连续 2 周，触发橙色升档指针。OFAC + GDELT 双印证。</p>
+          <div class="narrative-item active id="narrative-3"">
+            <div class="head"><span class="emoji">🌐</span><span class="name id="narrative-3-name"">world_order_pressure_crossing 世界秩序压力穿越</span><span class="score id="narrative-3-score"">score 70 · ACTIVE</span></div>
+            <p id="narrative-3-desc">multi_theater_stress 连续 2 周，触发橙色升档指针。OFAC + GDELT 双印证。</p>
           </div>
-          <div class="narrative-item"><div class="head"><span class="emoji">📉</span><span class="name">risk_asset_mismatch 风险资产错配</span><span class="score">score 38 · LATENT</span></div><p>SPX 仍在高位但 NDX 跑赢，内部分化未到危机程度。</p></div>
-          <div class="narrative-item"><div class="head"><span class="emoji">🔥</span><span class="name">overheat_confirmation 过热确认</span><span class="score">score 55 · LATENT</span></div><p>QQQ z-score +2.18σ 极度过热，但信用 + 波动率没有验证，缺少同步证据。</p></div>
-          <div class="narrative-item"><div class="head"><span class="emoji">💰</span><span class="name">credit_spread_warning 信用利差告警</span><span class="score">score 22 · LATENT</span></div><p>HY OAS / IG OAS 双绿，NFCI 刚转正。压力初现但远未到告警阈值。</p></div>
-          <div class="narrative-item"><div class="head"><span class="emoji">💧</span><span class="name">liquidity_tightening 流动性收紧</span><span class="score">score 18 · LATENT</span></div><p>水位 / 回购 / 隔夜三层均无压力。2019-09 信号目前不存在。</p></div>
+          <div class="narrative-item id="narrative-4""><div class="head"><span class="emoji">📉</span><span class="name id="narrative-4-name"">risk_asset_mismatch 风险资产错配</span><span class="score id="narrative-4-score"">score 38 · LATENT</span></div><p id="narrative-4-desc">SPX 仍在高位但 NDX 跑赢，内部分化未到危机程度。</p></div>
+          <div class="narrative-item id="narrative-5""><div class="head"><span class="emoji">🔥</span><span class="name id="narrative-5-name"">overheat_confirmation 过热确认</span><span class="score id="narrative-5-score"">score 55 · LATENT</span></div><p id="narrative-5-desc">QQQ z-score +2.18σ 极度过热，但信用 + 波动率没有验证，缺少同步证据。</p></div>
+          <div class="narrative-item id="narrative-6""><div class="head"><span class="emoji">💰</span><span class="name id="narrative-6-name"">credit_spread_warning 信用利差告警</span><span class="score id="narrative-6-score"">score 22 · LATENT</span></div><p id="narrative-6-desc">HY OAS / IG OAS 双绿，NFCI 刚转正。压力初现但远未到告警阈值。</p></div>
+          <div class="narrative-item id="narrative-7""><div class="head"><span class="emoji">💧</span><span class="name id="narrative-7-name"">liquidity_tightening 流动性收紧</span><span class="score id="narrative-7-score"">score 18 · LATENT</span></div><p id="narrative-7-desc">水位 / 回购 / 隔夜三层均无压力。2019-09 信号目前不存在。</p></div>
         </div>
       </div>
 
@@ -185,10 +185,10 @@
           <div class="meta">fedLiquidity / policyExpectations / curve / credit + consumer/shippingFreight/employment/consumerRetail/commercialRealEstate/privateCreditProxy 等</div>
         </div>
         <div class="runtime-block-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Fed Liquidity</strong><p style="margin:0;font-size:12.5px;">三层均无压力。WALCL / reserveBalances 3.62T / repo BGCR-SOFR +2bp / SOFR-EFFR 锚定。</p></div>
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Policy Expectations</strong><p style="margin:0;font-size:12.5px;">market vs 委员分歧。futureMinusTargetMid +38bp，市场比 Fed 鹰。</p></div>
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Curve</strong><p style="margin:0;font-size:12.5px;">t10y2y +18bp，curve.regime 从倒挂转正。通常领先衰退 6-18 月。</p></div>
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Credit</strong><p style="margin:0;font-size:12.5px;">HY OAS 2.78% / IG OAS 1.05% / NFCI +0.18 刚转正 / SLOOS 紧缩。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Fed Liquidity</strong><p id="pillar-1-text" style="margin:0;font-size:12.5px;">三层均无压力。WALCL / reserveBalances 3.62T / repo BGCR-SOFR +2bp / SOFR-EFFR 锚定。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Policy Expectations</strong><p id="pillar-2-text" style="margin:0;font-size:12.5px;">market vs 委员分歧。futureMinusTargetMid +38bp，市场比 Fed 鹰。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Curve</strong><p id="pillar-3-text" style="margin:0;font-size:12.5px;">t10y2y +18bp，curve.regime 从倒挂转正。通常领先衰退 6-18 月。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Credit</strong><p id="pillar-4-text" style="margin:0;font-size:12.5px;">HY OAS 2.78% / IG OAS 1.05% / NFCI +0.18 刚转正 / SLOOS 紧缩。</p></div>
           <div style="grid-column: 1 / -1;border-top:1px dashed #aaa;padding-top:10px;margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">子模块完整列表：fedLiquidity / policyExpectations / curve / credit / consumer / shippingFreight / employment / consumerRetail / commercialRealEstate / privateCreditProxy / activeSignals / gatingEvaluation</div>
         </div>
       </div>
@@ -240,9 +240,9 @@
         </div>
         <div class="consistency-block" style="border-top:none;padding-top:0;">
           <div class="consistency-label">一致性 / Consistency</div>
-          <div class="consistency-bar-wrap"><div class="consistency-bar"><div class="fill"></div></div></div>
-          <div class="consistency-value">72<span style="font-size:0.5em;color:var(--paper-muted);"> /100</span></div>
-          <div class="consistency-detail">5 strong_confirmation / 2 contradiction / 1 insufficient_data<br/>能源 + 通胀 + Fed 路径同向支持；HY OAS + VIX 提供反向证据。</div>
+          <div class="consistency-bar-wrap"><div class="consistency-bar"><div class="fill" id="cv-bar-fill"></div></div></div>
+          <div class="consistency-value"><span id="cv-consistency-value">72</span><span style="font-size:0.5em;color:var(--paper-muted);"> /100</span></div>
+          <div class="consistency-detail"><span id="cv-breakdown-counts">5 strong_confirmation / 2 contradiction / 1 insufficient_data</span><br/><span id="cv-summary-line">能源 + 通胀 + Fed 路径同向支持；HY OAS + VIX 提供反向证据。</span></div>
         </div>
       </div>
 
@@ -862,6 +862,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=stage-4b-1b-1"></script>
+  <script type="module" src="scripts/app.js?v=stage-4b-2-1"></script>
 </body>
 </html>
