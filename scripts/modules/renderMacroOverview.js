@@ -1279,6 +1279,234 @@ function renderC4UsEconomyTemperature({ radarData }) {
   }
 }
 
+function findByField(items, fieldName, expectedValue) {
+  if (!Array.isArray(items)) return null;
+  return items.find((item) => item && item[fieldName] === expectedValue) || null;
+}
+
+function formatUtcMinute(isoValue) {
+  if (!isoValue) return null;
+  const date = new Date(isoValue);
+  if (Number.isNaN(date.getTime())) return null;
+  return `${date.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+}
+
+function signedInteger(value) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  return `${n > 0 ? '+' : ''}${Math.round(n)}`;
+}
+
+function pathChangeText(entry) {
+  if (!entry) return null;
+  const value = asNumber(entry.value);
+  const delta = asNumber(entry.delta);
+  if (value === null || delta === null) return null;
+  return `${Math.round(value)} (${signedInteger(delta)})`;
+}
+
+function assetRowByName(rows, name) {
+  return findByField(rows, 'asset', name);
+}
+
+function scenarioByName(items, name) {
+  return findByField(items, 'name', name);
+}
+
+function dimensionTone(score) {
+  const n = asNumber(score);
+  if (n === null) return null;
+  if (n >= 85) return 'severe';
+  if (n >= 70) return 'high';
+  if (n >= 50) return 'med';
+  return 'low';
+}
+
+function updateToneClass(id, allowed, tone) {
+  const el = document.getElementById(id);
+  if (!el || !tone) return;
+  for (const cls of allowed) el.classList.remove(cls);
+  el.classList.add(tone);
+}
+
+function confidenceLabel(value) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  if (n >= 0.8) return `高 (${Number.isInteger(n) ? n : n.toFixed(2)})`;
+  if (n >= 0.5) return `中 (${n.toFixed(2)})`;
+  return `低 (${n.toFixed(2)})`;
+}
+
+function renderDetailData({ radarData }) {
+  try {
+    if (!radarData) return;
+
+    const realtime = radarData.dailyRealtimeInput || {};
+    const structuralSignals = radarData.decisionModel?.structuralSignals || [];
+    const time = radarData.timeDimension || {};
+    const chain = radarData.transmissionChain || {};
+    const assetRows = radarData.assetReturnMap?.rows || [];
+    const scenarios = radarData.scenarioTree || [];
+
+    if (asNumber(realtime.healthScore) !== null) {
+      setLeafText('detail-health-score', `healthScore ${Math.round(realtime.healthScore)}/100`);
+    }
+    if (realtime.sourceMode) setLeafText('detail-health-source-mode', `实时输入 ${realtime.sourceMode}`);
+    const runAt = formatUtcMinute(realtime.capturedAt || realtime.updatedAt);
+    if (runAt) setLeafText('detail-health-run-at', runAt);
+    if (structuralSignals.length > 0) {
+      const first = structuralSignals[0];
+      setLeafText('detail-health-structural-signal', `${first.key || 'structuralSignal'} · ${first.detail || first.label || ''}`.trim());
+    }
+
+    if (asNumber(time.scoreChange30d) !== null) setLeafText('detail-time-change', signedInteger(time.scoreChange30d));
+    if (asNumber(time.avg30d) !== null) setLeafText('detail-time-avg', Math.round(time.avg30d));
+    if (asNumber(time.trough30d) !== null && asNumber(time.peak30d) !== null) {
+      setLeafText('detail-time-range', `[${Math.round(time.trough30d)}, ${Math.round(time.peak30d)}]`);
+    }
+    if (asNumber(time.drawFromPeak) !== null) setLeafText('detail-time-drawdown', signedInteger(time.drawFromPeak));
+    if (asNumber(time.transmissionSpeed) !== null) setLeafText('detail-time-speed', Math.round(time.transmissionSpeed));
+    if (time.transmissionAcceleration) setLeafText('detail-time-accel', time.transmissionAcceleration);
+
+    const pathChanges = time.pathChanges || [];
+    const pathMap = {
+      '油价→通胀': 'detail-time-path-oil-inflation',
+      '通胀→利率': 'detail-time-path-inflation-rate',
+      '美元→信用': 'detail-time-path-dollar-credit',
+      '利率→股票': 'detail-time-path-rate-equity',
+      '流动性→估值': 'detail-time-path-liquidity-valuation',
+    };
+    for (const [label, id] of Object.entries(pathMap)) {
+      const entry = findByField(pathChanges, 'label', label);
+      const text = pathChangeText(entry);
+      if (text) setLeafText(id, text);
+    }
+
+    if (asNumber(chain.stressScore) !== null) setLeafText('detail-chain-stress', Math.round(chain.stressScore));
+    if (asNumber(chain.pathConfidence) !== null) setLeafText('detail-chain-confidence', Math.round(chain.pathConfidence));
+    if (chain.leadShock) setLeafText('detail-chain-lead-shock', chain.leadShock);
+    if (chain.dominantImpact) setLeafText('detail-chain-dominant-impact', chain.dominantImpact);
+
+    const nodes = chain.nodes || [];
+    const nodeMap = {
+      '战争冲击': 'detail-chain-node-shock',
+      '油价压力': 'detail-chain-node-price',
+      '通胀传导': 'detail-chain-node-macro',
+      '利率压力': 'detail-chain-node-rate',
+      '股票影响': 'detail-chain-node-equity',
+      '黄金影响': 'detail-chain-node-gold',
+    };
+    for (const [label, id] of Object.entries(nodeMap)) {
+      const node = findByField(nodes, 'label', label);
+      if (node && asNumber(node.score) !== null) {
+        if (node.state && node.state.length > 0) {
+          setLeafText(id, `score ${Math.round(node.score)} · ${node.state}`);
+        } else {
+          setLeafText(id, `score ${Math.round(node.score)}`);
+        }
+      }
+    }
+
+    const assetIdMap = {
+      '原油': 'oil',
+      '美元/短票': 'dollar',
+      '能源股': 'energy-equity',
+      '黄金': 'gold',
+      '美国国债': 'treasury',
+      '全球股票': 'global-equity',
+      '科技股': 'tech',
+      '比特币': 'bitcoin',
+    };
+    for (const [asset, slug] of Object.entries(assetIdMap)) {
+      const row = assetRowByName(assetRows, asset);
+      if (!row) continue;
+      if (row.bias) setLeafText(`detail-asset-${slug}-bias`, row.bias);
+      if (row.expectedReturn) setLeafText(`detail-asset-${slug}-range`, row.expectedReturn);
+      if (row.maxDrawdown) setLeafText(`detail-asset-${slug}-drawdown`, row.maxDrawdown);
+      if (row.confidence) setLeafText(`detail-asset-${slug}-confidence`, row.confidence);
+    }
+
+    const scenarioMap = {
+      '基准情景': 'detail-scenario-base',
+      '风险情景': 'detail-scenario-risk',
+      '极端情景': 'detail-scenario-extreme',
+      '反转情景': 'detail-scenario-reversal',
+    };
+    for (const [name, id] of Object.entries(scenarioMap)) {
+      const scenario = scenarioByName(scenarios, name);
+      if (scenario && asNumber(scenario.probability) !== null) {
+        setLeafText(id, `${name} ${Math.round(scenario.probability)}%`);
+      }
+    }
+  } catch (error) {
+    console.error('[renderMacroOverview] renderDetailData failed:', error);
+  }
+}
+
+function renderWorldOrderStress({ worldOrderStressData }) {
+  try {
+    if (!worldOrderStressData) return;
+
+    const wo = worldOrderStressData;
+    if (asNumber(wo.score) !== null) {
+      setLeafText('wo-detail-intro-score', Math.round(wo.score));
+      setLeafText('wo-detail-score', Math.round(wo.score));
+    }
+    if (wo.labelZh || wo.state) setLeafText('wo-detail-state', `${wo.labelZh || '—'} · ${wo.state || '—'}`);
+    const confidence = confidenceLabel(wo.confidence);
+    if (confidence) setLeafText('wo-detail-confidence', confidence);
+    const marketInput = wo.marketConfirmationInput || {};
+    if (marketInput.source || asNumber(marketInput.healthScore) !== null) {
+      const health = asNumber(marketInput.healthScore) !== null ? `health ${Math.round(marketInput.healthScore)}/100` : 'health —';
+      setLeafText('wo-detail-market-confirmation', `${marketInput.source || 'unknown-source'} · ${health}`);
+    }
+    const modifier = wo.decisionModifier || {};
+    if (modifier.riskBias || asNumber(modifier.maxStateBoost) !== null) {
+      setLeafText('wo-detail-risk-bias', `riskBias ${modifier.riskBias || '—'} · maxStateBoost ${modifier.maxStateBoost ?? '—'}`);
+    }
+
+    const dimMap = {
+      peaceDividendRetreat: 'peace',
+      blocFormation: 'bloc',
+      multiTheaterConflict: 'conflict',
+      economicWeaponization: 'weaponization',
+      capitalControlRisk: 'capital',
+      marketConfirmation: 'market',
+    };
+    for (const [key, slug] of Object.entries(dimMap)) {
+      const dim = wo.dimensions?.[key];
+      if (!dim) continue;
+      const tone = dimensionTone(dim.score);
+      updateToneClass(`wo-dim-${slug}`, ['low', 'med', 'high', 'severe'], tone);
+      if (asNumber(dim.score) !== null) setLeafText(`wo-dim-${slug}-score`, Math.round(dim.score));
+      const evidenceSource = key === 'marketConfirmation' && !dim.trend ? null : dim.evidence?.[0]?.source;
+      const sourceText = evidenceSource || dim.sourceLabel;
+      const trendText = dim.trend;
+      if (sourceText || trendText) {
+        if (sourceText && trendText) {
+          setLeafText(`wo-dim-${slug}-trend`, `${sourceText} · ${trendText}`);
+        } else if (sourceText) {
+          setLeafText(`wo-dim-${slug}-trend`, sourceText);
+        } else {
+          setLeafText(`wo-dim-${slug}-trend`, trendText);
+        }
+      }
+    }
+
+    const drivers = wo.dominantDrivers || [];
+    for (let i = 0; i < 3; i += 1) {
+      const driver = drivers[i];
+      if (!driver) continue;
+      setLeafText(`wo-driver-${i + 1}`, `${driver.labelZh || driver.dimensionKey || `driver-${i + 1}`} · ${driver.score ?? '—'}`);
+    }
+    if (Array.isArray(wo.warnings) && wo.warnings.length > 0) {
+      setLeafText('wo-warning-boundary', wo.warnings[0]);
+    }
+  } catch (error) {
+    console.error('[renderMacroOverview] renderWorldOrderStress failed:', error);
+  }
+}
+
 // ---------- 主入口 ----------
 
 export function renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData }) {
@@ -1311,5 +1539,9 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   renderC3CreditCorporate({ radarData });
   renderC4UsEconomyTemperature({ radarData });
 
-  console.log('[renderMacroOverview] Stage 5c renders complete (macro overview + heatmap + C1/C2/C3/C4/C7/C8 thematic cards)');
+  // Stage 5d-1: detail-data + world-order-stress appendix narratives
+  renderDetailData({ radarData });
+  renderWorldOrderStress({ worldOrderStressData });
+
+  console.log('[renderMacroOverview] Stage 5d-1 renders complete (macro overview + thematic cards + detail-data/world-order details)');
 }

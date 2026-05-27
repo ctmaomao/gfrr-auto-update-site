@@ -407,7 +407,7 @@
         <div class="appendix-narrative-intro">本附录为今日主判断的支撑层。所有数据来自 <code>data/radar-data.json</code>，每天自动更新。读取顺序：数据健康 → 时间维度 → 传导网络 → 资产投影。</div>
 
         <h4>1. 数据健康 <em>· Data Health</em></h4>
-        <p>本期数据综合健康状态<strong>正常</strong>。<code class="ok">healthScore 100/100</code>，数据来源为 <code>worker-realtime</code>，0 项关键缺失，0 项 fallback。Daily 输入来自 <code>realtime-data</code> 分支，提交 <code>75b982d4</code>，采集时间 <code>23:29 UTC</code>。实时数据源刷新成功，无需进入降级模式或缓存模式。</p>
+        <p>本期数据综合健康状态<strong>正常</strong>。<code class="ok" id="detail-health-score">healthScore 100/100</code>，数据来源为 <code id="detail-health-source-mode">worker-realtime</code>，0 项关键缺失，0 项 fallback。Daily 输入来自 <code>realtime-data</code> 分支，提交 <code>75b982d4</code>，采集时间 <code>23:29 UTC</code>。实时数据源刷新成功，无需进入降级模式或缓存模式。</p>
         <div class="appendix-twocol">
           <div>
             <p>快变量层 7 个数据源(<code>brent / dxy / vix / hyOas / us10y / gold / spx</code>) 全部 <code class="ok">live</code>。慢变量层 macroDrivers 下 12 个子模块的 <code>sourceStatus</code> 字段显示，FRED 系列(8 项)、Yahoo 系列(NDX/QQQ/IXIC/BIZD/PBDC/SRLN/CCLFX 等)、ISM(PMI)、StockQ(BDTI/BCTI/BDI)、ICE(CDX HY/IG)、Bank of America Consumer Checkpoint 均处于 live 状态。</p>
@@ -421,7 +421,7 @@
               <dt>关键缺失</dt><dd>0 项</dd>
               <dt>降级模式</dt><dd>false</dd>
               <dt>安全输出</dt><dd>true</dd>
-              <dt>最近运行</dt><dd>2026-05-24 23:32 UTC</dd>
+              <dt>最近运行</dt><dd id="detail-health-run-at">2026-05-24 23:32 UTC</dd>
               <dt>结构信号</dt><dd>onRrpCritical (1)</dd>
             </dl>
           </aside>
@@ -429,12 +429,12 @@
         <div class="appendix-callout ok">
           <div class="callout-kicker">现状判读</div>
           <p>数据健康正常，无需触发 fallback 机制。</p>
-          <p>系统所有关键数据源处于 live 状态，今日主判断的所有证据均可被审计追溯。唯一需要观察的是 onRrpCritical 结构信号，它已自动把决策层 stateScore 提升 10 分。</p>
+          <p>系统所有关键数据源处于 live 状态，今日主判断的所有证据均可被审计追溯。唯一需要观察的是 <span id="detail-health-structural-signal">onRrpCritical 结构信号</span>，它已自动把决策层 stateScore 提升 10 分。</p>
         </div>
 
         <h4>2. 30 日时间维度与传导速度 <em>· Time Dimension</em></h4>
-        <p>过去 30 天综合风险分数总变化 <code>0</code>，均值 <code>55</code>，高低区间 <code>[53, 58]</code>，距 30 日高点回撤 <code>−2</code>。这是典型的<strong>高位震荡</strong>形态：分数没有继续上行，但也没有显著回落到 40 分以下的"中度警戒"带。</p>
-        <p>趋势解释字段写的是<strong>滚动风险曲线(混合实时驱动)</strong>，说明本期分数的稳定不是因为数据停滞，而是快变量(实时)与慢变量(月度/季度)在<strong>同向支撑</strong>当前的 56 分判读。传导速度 <code class="warn">65</code>(0-100 标尺)，加速度判断<code class="ok">平稳</code>。这意味着冲击虽然在向下游传导，但传导节奏没有再加速。</p>
+        <p>过去 30 天综合风险分数总变化 <code id="detail-time-change">0</code>，均值 <code id="detail-time-avg">55</code>，高低区间 <code id="detail-time-range">[53, 58]</code>，距 30 日高点回撤 <code id="detail-time-drawdown">−2</code>。这是典型的<strong>高位震荡</strong>形态：分数没有继续上行，但也没有显著回落到 40 分以下的"中度警戒"带。</p>
+        <p>趋势解释字段写的是<strong>滚动风险曲线(混合实时驱动)</strong>，说明本期分数的稳定不是因为数据停滞，而是快变量(实时)与慢变量(月度/季度)在<strong>同向支撑</strong>当前的 56 分判读。传导速度 <code class="warn" id="detail-time-speed">65</code>(0-100 标尺)，加速度判断<code class="ok" id="detail-time-accel">平稳</code>。这意味着冲击虽然在向下游传导，但传导节奏没有再加速。</p>
 
         <div class="micro-chart">
           <div class="mc-kicker">5 条主传导链 · 30 日 delta</div>
@@ -444,19 +444,19 @@
               <g font-family="IBM Plex Mono" font-size="9">
                 <text x="0" y="12" fill="#666">油价→通胀</text>
                 <rect x="100" y="4" width="528" height="10" fill="#7C1D1D"/>
-                <text x="640" y="12" fill="#1A1815">88 (+8)</text>
+                <text x="640" y="12" fill="#1A1815" id="detail-time-path-oil-inflation">88 (+8)</text>
                 <text x="0" y="28" fill="#666">通胀→利率</text>
                 <rect x="100" y="20" width="366" height="10" fill="#A8761A"/>
-                <text x="478" y="28" fill="#1A1815">61 (0)</text>
+                <text x="478" y="28" fill="#1A1815" id="detail-time-path-inflation-rate">61 (0)</text>
                 <text x="0" y="44" fill="#666">美元→信用</text>
                 <rect x="100" y="36" width="330" height="10" fill="#A8761A"/>
-                <text x="442" y="44" fill="#1A1815">55 (+5)</text>
+                <text x="442" y="44" fill="#1A1815" id="detail-time-path-dollar-credit">55 (+5)</text>
                 <text x="0" y="60" fill="#666">利率→股票</text>
                 <rect x="100" y="52" width="138" height="10" fill="#1F4D2C"/>
-                <text x="250" y="60" fill="#1A1815">23 (−1)</text>
+                <text x="250" y="60" fill="#1A1815" id="detail-time-path-rate-equity">23 (−1)</text>
                 <text x="0" y="76" fill="#666">流动性→估值</text>
                 <rect x="100" y="68" width="246" height="10" fill="#A8761A"/>
-                <text x="358" y="76" fill="#1A1815">41 (−2)</text>
+                <text x="358" y="76" fill="#1A1815" id="detail-time-path-liquidity-valuation">41 (−2)</text>
               </g>
             </svg>
           </div>
@@ -466,20 +466,20 @@
         <p>上图显示，能源向通胀的传导(<code class="danger">88, +8</code>)是本期唯一明显加速的链条。通胀向利率(<code class="warn">61, 0</code>)和美元向信用(<code class="warn">55, +5</code>)处于中等压力但变化平缓。利率向股票(<code class="ok">23, −1</code>)和流动性向估值(<code class="warn">41, −2</code>)两条链条都在 30 日内回落，这也是当前主判断保留"观察语气"而非"危机定性"的关键证据。</p>
 
         <h4>3. 机构级宏观传导网络 <em>· Transmission Network</em></h4>
-        <p>系统通过 6 个节点把宏观冲击从源头追到资产层。当前传导压力综合分 <code class="danger">79</code>，路径置信度 <code>88</code>，主导冲击为<strong>战争 / 油价</strong>，主导资产影响为<strong>全球股票承压</strong>。</p>
+        <p>系统通过 6 个节点把宏观冲击从源头追到资产层。当前传导压力综合分 <code class="danger" id="detail-chain-stress">79</code>，路径置信度 <code id="detail-chain-confidence">88</code>，主导冲击为<strong id="detail-chain-lead-shock">战争 / 油价</strong>，主导资产影响为<strong id="detail-chain-dominant-impact">全球股票承压</strong>。</p>
 
         <div class="flow-strip">
-          <div class="flow-node high"><div class="fn-label">SHOCK</div><div class="fn-name">战争冲击</div><div class="fn-value">score 82 · 冲击上行</div></div>
+          <div class="flow-node high"><div class="fn-label">SHOCK</div><div class="fn-name">战争冲击</div><div class="fn-value" id="detail-chain-node-shock">score 82 · 冲击上行</div></div>
           <div class="flow-arrow">→</div>
-          <div class="flow-node high"><div class="fn-label">PRICE</div><div class="fn-name">油价压力</div><div class="fn-value">score 81 · 推升油价</div></div>
+          <div class="flow-node high"><div class="fn-label">PRICE</div><div class="fn-name">油价压力</div><div class="fn-value" id="detail-chain-node-price">score 81 · 推升油价</div></div>
           <div class="flow-arrow">→</div>
-          <div class="flow-node high"><div class="fn-label">MACRO</div><div class="fn-name">通胀传导</div><div class="fn-value">score 81 · 抬高通胀</div></div>
+          <div class="flow-node high"><div class="fn-label">MACRO</div><div class="fn-name">通胀传导</div><div class="fn-value" id="detail-chain-node-macro">score 81 · 抬高通胀</div></div>
           <div class="flow-arrow">→</div>
-          <div class="flow-node high"><div class="fn-label">RATE</div><div class="fn-name">利率压力</div><div class="fn-value">score 78 · 压制宽松</div></div>
+          <div class="flow-node high"><div class="fn-label">RATE</div><div class="fn-name">利率压力</div><div class="fn-value" id="detail-chain-node-rate">score 78 · 压制宽松</div></div>
           <div class="flow-arrow">→</div>
-          <div class="flow-node med"><div class="fn-label">ASSET</div><div class="fn-name">股票影响</div><div class="fn-value">score 79 · 偏空</div></div>
+          <div class="flow-node med"><div class="fn-label">ASSET</div><div class="fn-name">股票影响</div><div class="fn-value" id="detail-chain-node-equity">score 79 · 偏空</div></div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;margin:-8px 0 8px 0;font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">+ 中期对冲：<strong style="color:var(--paper-ink);">黄金影响 score 64 · 中期偏多</strong>(对冲通胀，但短线受真实利率压制)</div>
+        <div style="display:flex;align-items:center;gap:8px;margin:-8px 0 8px 0;font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">+ 中期对冲：<strong style="color:var(--paper-ink);" id="detail-chain-node-gold">黄金影响 score 64 · 中期偏多</strong>(对冲通胀，但短线受真实利率压制)</div>
 
         <p>网络第二层把"价格变量层"(原油 / 商品 / 美元，综合 76) → "宏观变量层"(通胀预期 / 真实利率 / 流动性，综合 77) → "市场传导层"(融资条件 / 波动率 / 相关性，综合 72) → "资产结果层"(股票 / 债券 / 黄金 / 能源，综合 75)。四层得分接近，说明压力在每一层都被 partial 验证，<strong>没有出现"上游强、下游弱"</strong>那种典型的"市场不信"形态。</p>
 
@@ -508,19 +508,19 @@
         <table class="asset-table">
           <thead><tr><th>资产</th><th>倾向</th><th>预期收益区间</th><th>回撤风险</th><th>把握度</th><th>主导驱动</th></tr></thead>
           <tbody>
-            <tr><td class="asset-name">原油</td><td class="asset-bias up">偏多</td><td class="asset-range">+3% ~ +9%</td><td class="asset-range">−7%</td><td class="asset-conviction">高</td><td>地缘冲击 / 供给约束</td></tr>
-            <tr><td class="asset-name">美元 / 短票</td><td class="asset-bias up">偏多</td><td class="asset-range">+1% ~ +3%</td><td class="asset-range">−2%</td><td class="asset-conviction">中高</td><td>融资偏紧 / 防御需求</td></tr>
-            <tr><td class="asset-name">能源股</td><td class="asset-bias up">偏多</td><td class="asset-range">+2% ~ +8%</td><td class="asset-range">−8%</td><td class="asset-conviction">高</td><td>油价 / 现金流弹性</td></tr>
-            <tr><td class="asset-name">黄金</td><td class="asset-bias mixed">中性偏多</td><td class="asset-range">−1% ~ +4%</td><td class="asset-range">−6%</td><td class="asset-conviction">中高</td><td>通胀对冲 / 真实利率放缓</td></tr>
-            <tr><td class="asset-name">美国国债</td><td class="asset-bias mixed">中性偏空</td><td class="asset-range">−2% ~ +2%</td><td class="asset-range">−5%</td><td class="asset-conviction">中</td><td>通胀黏性 / 政策路径</td></tr>
-            <tr><td class="asset-name">全球股票</td><td class="asset-bias down">偏空</td><td class="asset-range">−6% ~ +2%</td><td class="asset-range">−11%</td><td class="asset-conviction">高</td><td>利率压力 / 融资条件</td></tr>
-            <tr><td class="asset-name">科技股</td><td class="asset-bias down">偏空</td><td class="asset-range">−8% ~ +3%</td><td class="asset-range">−14%</td><td class="asset-conviction">高</td><td>真实利率 / 流动性</td></tr>
-            <tr><td class="asset-name">比特币</td><td class="asset-bias down">偏空</td><td class="asset-range">−10% ~ +6%</td><td class="asset-range">−18%</td><td class="asset-conviction">中</td><td>流动性 / 风险偏好</td></tr>
+            <tr><td class="asset-name">原油</td><td class="asset-bias up" id="detail-asset-oil-bias">偏多</td><td class="asset-range" id="detail-asset-oil-range">+3% ~ +9%</td><td class="asset-range" id="detail-asset-oil-drawdown">−7%</td><td class="asset-conviction" id="detail-asset-oil-confidence">高</td><td>地缘冲击 / 供给约束</td></tr>
+            <tr><td class="asset-name">美元 / 短票</td><td class="asset-bias up" id="detail-asset-dollar-bias">偏多</td><td class="asset-range" id="detail-asset-dollar-range">+1% ~ +3%</td><td class="asset-range" id="detail-asset-dollar-drawdown">−2%</td><td class="asset-conviction" id="detail-asset-dollar-confidence">中高</td><td>融资偏紧 / 防御需求</td></tr>
+            <tr><td class="asset-name">能源股</td><td class="asset-bias up" id="detail-asset-energy-equity-bias">偏多</td><td class="asset-range" id="detail-asset-energy-equity-range">+2% ~ +8%</td><td class="asset-range" id="detail-asset-energy-equity-drawdown">−8%</td><td class="asset-conviction" id="detail-asset-energy-equity-confidence">高</td><td>油价 / 现金流弹性</td></tr>
+            <tr><td class="asset-name">黄金</td><td class="asset-bias mixed" id="detail-asset-gold-bias">中性偏多</td><td class="asset-range" id="detail-asset-gold-range">−1% ~ +4%</td><td class="asset-range" id="detail-asset-gold-drawdown">−6%</td><td class="asset-conviction" id="detail-asset-gold-confidence">中高</td><td>通胀对冲 / 真实利率放缓</td></tr>
+            <tr><td class="asset-name">美国国债</td><td class="asset-bias mixed" id="detail-asset-treasury-bias">中性偏空</td><td class="asset-range" id="detail-asset-treasury-range">−2% ~ +2%</td><td class="asset-range" id="detail-asset-treasury-drawdown">−5%</td><td class="asset-conviction" id="detail-asset-treasury-confidence">中</td><td>通胀黏性 / 政策路径</td></tr>
+            <tr><td class="asset-name">全球股票</td><td class="asset-bias down" id="detail-asset-global-equity-bias">偏空</td><td class="asset-range" id="detail-asset-global-equity-range">−6% ~ +2%</td><td class="asset-range" id="detail-asset-global-equity-drawdown">−11%</td><td class="asset-conviction" id="detail-asset-global-equity-confidence">高</td><td>利率压力 / 融资条件</td></tr>
+            <tr><td class="asset-name">科技股</td><td class="asset-bias down" id="detail-asset-tech-bias">偏空</td><td class="asset-range" id="detail-asset-tech-range">−8% ~ +3%</td><td class="asset-range" id="detail-asset-tech-drawdown">−14%</td><td class="asset-conviction" id="detail-asset-tech-confidence">高</td><td>真实利率 / 流动性</td></tr>
+            <tr><td class="asset-name">比特币</td><td class="asset-bias down" id="detail-asset-bitcoin-bias">偏空</td><td class="asset-range" id="detail-asset-bitcoin-range">−10% ~ +6%</td><td class="asset-range" id="detail-asset-bitcoin-drawdown">−18%</td><td class="asset-conviction" id="detail-asset-bitcoin-confidence">中</td><td>流动性 / 风险偏好</td></tr>
           </tbody>
         </table>
 
         <h5>四情景概率分布</h5>
-        <p>系统按 4 个情景给出概率：<strong>基准情景 31%</strong>(风险高位但未失控，防守与分化为主)、<strong>风险情景 22%</strong>(信用与波动率继续上行，红灯执行)、<strong>极端情景 41%</strong>(多源关键快变量连续失效，缓存模式强制防守)、<strong>反转情景 4%</strong>(美元走弱、波动率和利差收敛，重新开放进攻窗口)。</p>
+        <p>系统按 4 个情景给出概率：<strong id="detail-scenario-base">基准情景 31%</strong>(风险高位但未失控，防守与分化为主)、<strong id="detail-scenario-risk">风险情景 22%</strong>(信用与波动率继续上行，红灯执行)、<strong id="detail-scenario-extreme">极端情景 41%</strong>(多源关键快变量连续失效，缓存模式强制防守)、<strong id="detail-scenario-reversal">反转情景 4%</strong>(美元走弱、波动率和利差收敛，重新开放进攻窗口)。</p>
 
         <div class="appendix-callout warn">
           <div class="callout-kicker">情景概率注意</div>
@@ -541,14 +541,14 @@
       <div class="editorial-section-body">
         <div class="appendix-content">
       <div class="appendix-narrative">
-        <div class="appendix-narrative-intro">World Order Stress 是 regime overlay / 结构性状态修正器(ADR-0004)。它不进入 scoring、decision、execution 或 position，但会通过 overlay 系数为今日判读添加"升档指针"。本期 overlay 升至 70，触发橙色升档。</div>
+        <div class="appendix-narrative-intro">World Order Stress 是 regime overlay / 结构性状态修正器(ADR-0004)。它不进入 scoring、decision、execution 或 position，但会通过 overlay 系数为今日判读添加"升档指针"。本期 overlay 升至 <span id="wo-detail-intro-score">70</span>，触发橙色升档。</div>
 
         <h4>1. 总体状态 <em>· Overall Regime</em></h4>
 
         <div class="wo-regime-banner">
           <div class="wo-kicker">CURRENT REGIME</div>
-          <div class="wo-state">多战区压力期 · multi_theater_stress</div>
-          <p class="wo-desc">压力分数 70 / 置信度 medium / 市场确认度 stress / 已持续 2 周。决策层修正系数 +5 分应用于今日判读，体现为本期 hero 的 "overlay 70" 升档指针。</p>
+          <div class="wo-state" id="wo-detail-state">多战区压力期 · multi_theater_stress</div>
+          <p class="wo-desc">压力分数 <span id="wo-detail-score">70</span> / 置信度 <span id="wo-detail-confidence">medium</span> / 市场确认度 <span id="wo-detail-market-confirmation">stress</span> / 已持续 2 周。决策层修正系数 <span id="wo-detail-risk-bias">+5</span> 分应用于今日判读，体现为本期 hero 的 "overlay 70" 升档指针。</p>
         </div>
 
         <p>本层数据来自 4 个外部源：<code>GDELT</code>(全球新闻情绪与冲突)、<code>OFAC</code>(经济制裁)、<code>SIPRI</code>(全球军费，年频)、<code>ACLED</code>(冲突事件，周频)，以及 1 个市场确认层(VIX / Gold / DXY 跨资产同步性)。当前所有外部源 <code class="ok">live</code>，marketConfirmation 输入显示<strong>stress</strong>状态。</p>
@@ -556,19 +556,19 @@
         <h4>2. 六维度详情 <em>· Six Dimensions</em></h4>
 
         <div class="wo-dim-grid">
-          <div class="wo-dim med"><div class="wd-label">DIM 1</div><div class="wd-name">和平红利退潮</div><div class="wd-score">+1.2σ</div><div class="wd-trend">ACLED + SIPRI · rising</div></div>
-          <div class="wo-dim high"><div class="wd-label">DIM 2</div><div class="wd-name">阵营化形成</div><div class="wd-score">68</div><div class="wd-trend">GDELT bloc 信号 · rising</div></div>
-          <div class="wo-dim severe"><div class="wd-label">DIM 3</div><div class="wd-name">多战区冲突</div><div class="wd-score">85</div><div class="wd-trend">ACLED 30d · rising 2 周</div></div>
-          <div class="wo-dim high"><div class="wd-label">DIM 4</div><div class="wd-name">经济武器化</div><div class="wd-score">+2.3σ</div><div class="wd-trend">OFAC 30d + GDELT · rising</div></div>
-          <div class="wo-dim med"><div class="wd-label">DIM 5</div><div class="wd-name">资本管制风险</div><div class="wd-score">52</div><div class="wd-trend">CFETS / capital flow · stable</div></div>
-          <div class="wo-dim high"><div class="wd-label">DIM 6</div><div class="wd-name">市场确认度</div><div class="wd-score">stress</div><div class="wd-trend">VIX/Gold/DXY 同步性 · rising</div></div>
+          <div class="wo-dim med" id="wo-dim-peace"><div class="wd-label">DIM 1</div><div class="wd-name">和平红利退潮</div><div class="wd-score" id="wo-dim-peace-score">+1.2σ</div><div class="wd-trend" id="wo-dim-peace-trend">ACLED + SIPRI · rising</div></div>
+          <div class="wo-dim high" id="wo-dim-bloc"><div class="wd-label">DIM 2</div><div class="wd-name">阵营化形成</div><div class="wd-score" id="wo-dim-bloc-score">68</div><div class="wd-trend" id="wo-dim-bloc-trend">GDELT bloc 信号 · rising</div></div>
+          <div class="wo-dim severe" id="wo-dim-conflict"><div class="wd-label">DIM 3</div><div class="wd-name">多战区冲突</div><div class="wd-score" id="wo-dim-conflict-score">85</div><div class="wd-trend" id="wo-dim-conflict-trend">ACLED 30d · rising 2 周</div></div>
+          <div class="wo-dim high" id="wo-dim-weaponization"><div class="wd-label">DIM 4</div><div class="wd-name">经济武器化</div><div class="wd-score" id="wo-dim-weaponization-score">+2.3σ</div><div class="wd-trend" id="wo-dim-weaponization-trend">OFAC 30d + GDELT · rising</div></div>
+          <div class="wo-dim med" id="wo-dim-capital"><div class="wd-label">DIM 5</div><div class="wd-name">资本管制风险</div><div class="wd-score" id="wo-dim-capital-score">52</div><div class="wd-trend" id="wo-dim-capital-trend">CFETS / capital flow · stable</div></div>
+          <div class="wo-dim high" id="wo-dim-market"><div class="wd-label">DIM 6</div><div class="wd-name">市场确认度</div><div class="wd-score" id="wo-dim-market-score">stress</div><div class="wd-trend" id="wo-dim-market-trend">VIX/Gold/DXY 同步性 · rising</div></div>
         </div>
 
         <p>六个维度中，<strong>多战区冲突</strong> (85, 严重) 和 <strong>经济武器化</strong> (+2.3σ, 高) 是本期压力的核心驱动。这两个维度都是 <code>rising</code> 状态，叠加产生了 multi_theater_stress regime。市场确认度从中性升至 stress，说明<strong>市场已经开始定价</strong>这种结构性压力——这是 overlay 从 unconfirmed 升档到 confirmed 的关键证据。</p>
 
         <h4>3. 主导驱动与降级条件 <em>· Drivers & De-escalation</em></h4>
 
-        <p>本期主导驱动有 3 个：<code>multi_theater_stress 持续 2 周</code>、<code>OFAC 制裁事件 z-score +2.3σ</code>、<code>GDELT bloc 信号 rising</code>。这三项都来自高频数据源(GDELT 每日、OFAC 每日、ACLED 每周)，说明本期 overlay 升档不是基于年频数据(如 SIPRI 军费)的滞后判读，而是基于<strong>近 30 天的实际事件</strong>。</p>
+        <p>本期主导驱动有 3 个：<code id="wo-driver-1">multi_theater_stress 持续 2 周</code>、<code id="wo-driver-2">OFAC 制裁事件 z-score +2.3σ</code>、<code id="wo-driver-3">GDELT bloc 信号 rising</code>。这三项都来自高频数据源(GDELT 每日、OFAC 每日、ACLED 每周)，说明本期 overlay 升档不是基于年频数据(如 SIPRI 军费)的滞后判读，而是基于<strong>近 30 天的实际事件</strong>。</p>
 
         <ul class="trigger-list watch">
           <li><strong>降级路径 A</strong>：multi_theater_stress 持续 &lt; 1 周 + OFAC 30d z-score 回落到 +1σ 以下。</li>
@@ -578,7 +578,7 @@
 
         <div class="appendix-callout warn">
           <div class="callout-kicker">边界说明</div>
-          <p>该模块用于结构性风险识别，不构成战争预测或投资建议。</p>
+          <p id="wo-warning-boundary">该模块用于结构性风险识别，不构成战争预测或投资建议。</p>
           <p>regime overlay 只通过 decisionModifier.riskBias 影响判读的强度修正，<strong>不直接进入 scoring 或 executionLock</strong>。即使 overlay 升至 war_economy_stress，系统主分数仍然由 6 大底层模块决定。</p>
         </div>
 
@@ -862,6 +862,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=stage-5c-1"></script>
+  <script type="module" src="scripts/app.js?v=stage-5d1-1"></script>
 </body>
 </html>
