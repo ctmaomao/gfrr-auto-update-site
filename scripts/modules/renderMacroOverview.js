@@ -1051,6 +1051,234 @@ function renderC2GlobalLiquidity({ radarData }) {
   }
 }
 
+// ---------- Stage 5c formatting helpers ----------
+
+function formatK(value) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  return `${Math.round(n / 1000)}`;
+}
+
+function formatCountM(value, digits = 2) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  return `${(n / 1000000).toFixed(digits)}M`;
+}
+
+function formatPctPlain(value, digits = 1) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  return `${n.toFixed(digits)}%`;
+}
+
+function creditHyTone(value) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  if (n >= 5) return 'red';
+  if (n >= 3.7) return 'yellow';
+  return 'green';
+}
+
+function creditIgTone(value) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  if (n >= 1.5) return 'red';
+  if (n >= 1.2) return 'yellow';
+  return 'green';
+}
+
+function nfciToneFromRegime(regime) {
+  if (regime === '显著宽松' || regime === '宽松') return 'green';
+  if (regime === '中性' || regime === '边际收紧') return 'yellow';
+  if (regime === '收紧' || regime === '紧张') return 'red';
+  return null;
+}
+
+function privateCreditToneFromRegime(regime) {
+  if (regime === '平稳') return 'green';
+  if (regime === '观察' || regime === 'caution' || regime === '偏弱') return 'yellow';
+  if (regime === '紧张' || regime === 'stress') return 'red';
+  return null;
+}
+
+function creToneFromRegime(regime) {
+  if (regime === '稳定') return 'green';
+  if (regime === '观察') return 'yellow';
+  if (regime === '压力' || regime === '恶化') return 'red';
+  return null;
+}
+
+function employmentToneFromRegime(regime) {
+  if (regime === '强扩张' || regime === '扩散改善') return 'green';
+  if (regime === '温和扩张' || regime === '稳定') return 'yellow';
+  if (regime === '收缩' || regime === '走弱') return 'red';
+  return null;
+}
+
+function consumerToneFromRegime(regime) {
+  if (regime === '稳定' || regime === '改善') return 'green';
+  if (regime === '走弱') return 'yellow';
+  if (regime === '急剧走弱' || regime === '衰退') return 'red';
+  return null;
+}
+
+function signedK(value) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  const k = Math.round(n / 1000);
+  return `${k >= 0 ? '+' : ''}${k}k`;
+}
+
+function signedPercentFromDecimal(value, digits = 1) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  return formatPct(n * 100, digits);
+}
+
+// ---------- Stage 5c: C3 Credit & Corporate ----------
+
+function renderC3CreditCorporate({ radarData }) {
+  try {
+    if (!radarData) return;
+    const display = radarData.displayInputsBaseline || {};
+    const credit = radarData.macroDrivers?.credit || {};
+    const privateCredit = radarData.macroDrivers?.privateCreditProxy || {};
+    const cre = radarData.macroDrivers?.commercialRealEstate || {};
+
+    const hyOas = asNumber(display.hyOas ?? credit.hyOas);
+    const hyTone = creditHyTone(hyOas);
+    setIndicatorStatus('c3-hy-status', 'c3-hy-badge', hyTone);
+    if (hyOas !== null) {
+      setLeafText('c3-hy-number', hyOas.toFixed(2));
+      setLeafText('c3-hy-aux', `HY OAS ${hyOas.toFixed(2)}% · WoW 字段未接入`);
+    }
+
+    const igOas = asNumber(credit.igOas);
+    const igTone = creditIgTone(igOas);
+    setIndicatorStatus('c3-ig-status', 'c3-ig-badge', igTone);
+    if (igOas !== null) setLeafText('c3-ig-number', igOas.toFixed(2));
+    const igChange = asNumber(credit.igOas1dChange);
+    const igHyRatio = asNumber(credit.igHyRatio);
+    if (igChange !== null && igHyRatio !== null) {
+      setLeafText('c3-ig-aux', `igOas1dChange ${formatBps(igChange, 0)} · igHyRatio ${igHyRatio.toFixed(2)}`);
+    }
+
+    const nfciTone = nfciToneFromRegime(credit.nfciRegime);
+    setIndicatorStatus('c3-nfci-status', 'c3-nfci-badge', nfciTone);
+    const nfci = asNumber(credit.nfci);
+    if (nfci !== null) setLeafText('c3-nfci-number', nfci.toFixed(3));
+    const nfciChange = asNumber(credit.nfci4wChange);
+    if (nfciChange !== null && credit.nfciRegime) {
+      setLeafText('c3-nfci-aux', `nfci4wChange ${signedNumber(nfciChange, 3)} · regime: ${credit.nfciRegime}`);
+    }
+    if (nfci !== null && credit.nfciRegime) {
+      setLeafText('c3-nfci-note', `NFCI 汇总 100+ 跨市场信号(信用 / 流动性 / 杠杆)。方向反转：正值=收紧。当前 ${nfci.toFixed(3)},${credit.nfciRegime}。`);
+    }
+
+    const privateTone = privateCreditToneFromRegime(privateCredit.privateCreditProxyRegime);
+    setIndicatorStatus('c3-private-status', 'c3-private-badge', privateTone);
+    const intervalNav = asNumber(privateCredit.intervalFundNavPrice);
+    if (intervalNav !== null) setLeafText('c3-private-number', intervalNav.toFixed(2));
+    const intervalChange = signedPercentFromDecimal(privateCredit.intervalFundNav4wChange, 1);
+    if (privateCredit.intervalFundNavSymbol && intervalChange) {
+      setLeafText('c3-private-aux', `${privateCredit.intervalFundNavSymbol} intervalFundNav · 4w ${intervalChange}`);
+    }
+    if (asNumber(privateCredit.bdcEtfPrice) !== null && signedPercentFromDecimal(privateCredit.bdcEtf4wChange, 1)) {
+      setLeafText('c3-private-bdc', `${formatUsd(privateCredit.bdcEtfPrice)} · 4w ${signedPercentFromDecimal(privateCredit.bdcEtf4wChange, 1)}`);
+    }
+    if (asNumber(privateCredit.pbdcEtfPrice) !== null && signedPercentFromDecimal(privateCredit.pbdcEtf4wChange, 1)) {
+      setLeafText('c3-private-pbdc', `${formatUsd(privateCredit.pbdcEtfPrice)} · 4w ${signedPercentFromDecimal(privateCredit.pbdcEtf4wChange, 1)}`);
+    }
+    if (asNumber(privateCredit.seniorLoanEtfPrice) !== null && signedPercentFromDecimal(privateCredit.seniorLoanEtf4wChange, 1)) {
+      setLeafText('c3-private-srln', `${formatUsd(privateCredit.seniorLoanEtfPrice)} · 4w ${signedPercentFromDecimal(privateCredit.seniorLoanEtf4wChange, 1)}`);
+    }
+    if (privateCredit.privateCreditProxyRegime) setLeafText('c3-private-regime', privateCredit.privateCreditProxyRegime);
+
+    const creTone = creToneFromRegime(cre.creStressRegime);
+    setIndicatorStatus('c3-cre-status', 'c3-cre-badge', creTone);
+    const delinquency = asNumber(cre.creDelinquencyRate);
+    if (delinquency !== null) setLeafText('c3-cre-number', delinquency.toFixed(2));
+    const delinquencyChange = asNumber(cre.creDelinquencyRateQoQChange);
+    if (delinquencyChange !== null && cre.creStressRegime) {
+      setLeafText('c3-cre-aux', `creDelinquencyRate · QoQ ${formatBps(delinquencyChange, 0)} · regime: ${cre.creStressRegime}`);
+    }
+    if (delinquency !== null) setLeafText('c3-cre-delinquency', `creDelinquencyRate ${delinquency.toFixed(2)}%`);
+    if (asNumber(cre.creChargeOffRate) !== null) setLeafText('c3-cre-chargeoff', `creChargeOffRate ${cre.creChargeOffRate.toFixed(2)}%`);
+    if (asNumber(cre.sloosCreNonfarmNonresidentialTightening) !== null) setLeafText('c3-cre-sloos-nonfarm', signedNumber(cre.sloosCreNonfarmNonresidentialTightening, 1));
+    if (asNumber(cre.sloosCreConstructionTightening) !== null) setLeafText('c3-cre-sloos-construction', signedNumber(cre.sloosCreConstructionTightening, 1));
+    if (asNumber(cre.sloosCreMultifamilyTightening) !== null) setLeafText('c3-cre-sloos-multifamily', signedNumber(cre.sloosCreMultifamilyTightening, 1));
+    if (asNumber(cre.sloosCreTighteningMax) !== null) setLeafText('c3-cre-sloos-max', signedNumber(cre.sloosCreTighteningMax, 1));
+  } catch (error) {
+    console.error('[renderMacroOverview] renderC3CreditCorporate failed:', error);
+  }
+}
+
+// ---------- Stage 5c: C4 US Economic Temperature ----------
+
+function renderC4UsEconomyTemperature({ radarData }) {
+  try {
+    if (!radarData) return;
+    const employment = radarData.macroDrivers?.employment || {};
+    const retail = radarData.macroDrivers?.consumerRetail || {};
+    const consumer = radarData.macroDrivers?.consumer || {};
+
+    const employmentTone = employmentToneFromRegime(employment.industryDiffusionRegime);
+    setIndicatorStatus('c4-employment-status', 'c4-employment-badge', employmentTone);
+    const claims = asNumber(employment.initialClaims);
+    if (claims !== null) setLeafText('c4-employment-number', formatK(claims));
+    const claimsAvg = asNumber(employment.initialClaims4wAverage);
+    const claimsChange = signedK(employment.initialClaims4wChange);
+    if (claimsAvg !== null && claimsChange) {
+      setLeafText('c4-employment-aux', `initialClaims · 4w average ${formatK(claimsAvg)}k · 4w change ${claimsChange}`);
+      setLeafText('c4-employment-claims-change', claimsChange);
+    }
+    if (asNumber(employment.continuingClaims) !== null && asNumber(employment.continuingClaims4wAverage) !== null) {
+      setLeafText('c4-employment-continuing', `${formatCountM(employment.continuingClaims, 2)} · 4w avg ${formatCountM(employment.continuingClaims4wAverage, 2)}`);
+    }
+    if (asNumber(employment.joltsOpenings) !== null && signedPercentFromDecimal(employment.joltsOpeningsYoY, 1)) {
+      setLeafText('c4-employment-jolts', `${formatCountM(employment.joltsOpenings, 1)} · YoY ${signedPercentFromDecimal(employment.joltsOpeningsYoY, 1)}`);
+    }
+    if (asNumber(employment.u6Rate) !== null) setLeafText('c4-employment-u6', `${employment.u6Rate.toFixed(1)}%`);
+    if (signedPercentFromDecimal(employment.averageHourlyEarningsYoY, 1)) setLeafText('c4-employment-ahe', signedPercentFromDecimal(employment.averageHourlyEarningsYoY, 1));
+    if (asNumber(employment.industryPayrollDiffusionPct) !== null) {
+      const positive = asNumber(employment.industryPayrollPositiveCount);
+      const total = asNumber(employment.industryPayrollSeriesCount);
+      const suffix = positive !== null && total !== null ? ` (${positive}/${total} 行业扩张占比)` : '';
+      setLeafText('c4-employment-diffusion', `${employment.industryPayrollDiffusionPct.toFixed(1)}%${suffix}`);
+    }
+    if (employment.industryDiffusionRegime) setLeafText('c4-employment-regime', employment.industryDiffusionRegime);
+
+    const consumerTone = consumerToneFromRegime(consumer.regime);
+    setIndicatorStatus('c4-consumer-status', 'c4-consumer-badge', consumerTone);
+    const nominalYoy = signedPercentFromDecimal(retail.cartsNominalYoY, 1);
+    const realYoy = signedPercentFromDecimal(retail.cartsRealYoY, 1);
+    if (nominalYoy) setLeafText('c4-consumer-number', nominalYoy.replace('%', ''));
+    if (realYoy) {
+      setLeafText('c4-consumer-aux', `cartsNominal · real ${realYoy} YoY`);
+      setLeafText('c4-consumer-real', realYoy);
+    }
+    if (asNumber(retail.segmentDiffusionPct) !== null) {
+      const positive = asNumber(retail.segmentPositiveCount);
+      const total = asNumber(retail.segmentSeriesCount);
+      const suffix = positive !== null && total !== null ? ` (${positive}/${total} 类品类正增长占比)` : '';
+      setLeafText('c4-consumer-diffusion', `${retail.segmentDiffusionPct.toFixed(1)}%${suffix}`);
+    }
+    if (retail.strongestSegment?.labelZh && asNumber(retail.strongestSegment.yoy) !== null) {
+      setLeafText('c4-consumer-strongest', `${retail.strongestSegment.labelZh} ${signedPercentFromDecimal(retail.strongestSegment.yoy, 1)} YoY`);
+    }
+    if (retail.weakestSegment?.labelZh && asNumber(retail.weakestSegment.yoy) !== null) {
+      setLeafText('c4-consumer-weakest', `${retail.weakestSegment.labelZh} ${signedPercentFromDecimal(retail.weakestSegment.yoy, 1)} YoY`);
+    }
+    if (asNumber(consumer.umichSentiment) !== null && asNumber(consumer.threeMonthChange) !== null) {
+      setLeafText('c4-consumer-umich', `${consumer.umichSentiment.toFixed(1)} · 3m ${signedNumber(consumer.threeMonthChange, 1)}`);
+    }
+    if (signedPercentFromDecimal(retail.bofaCardSpendingExGasYoY, 1)) setLeafText('c4-consumer-bofa', `${signedPercentFromDecimal(retail.bofaCardSpendingExGasYoY, 1)} YoY`);
+    if (signedPercentFromDecimal(retail.redbookRetailSalesYoY, 1)) setLeafText('c4-consumer-redbook', signedPercentFromDecimal(retail.redbookRetailSalesYoY, 1));
+  } catch (error) {
+    console.error('[renderMacroOverview] renderC4UsEconomyTemperature failed:', error);
+  }
+}
+
 // ---------- 主入口 ----------
 
 export function renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData }) {
@@ -1079,5 +1307,9 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   renderC1InflationEnergy({ radarData });
   renderC2GlobalLiquidity({ radarData });
 
-  console.log('[renderMacroOverview] Stage 5b renders complete (macro overview + heatmap + C1/C2/C7/C8 thematic cards)');
+  // Stage 5c: C3 credit/corporate + C4 US economic temperature
+  renderC3CreditCorporate({ radarData });
+  renderC4UsEconomyTemperature({ radarData });
+
+  console.log('[renderMacroOverview] Stage 5c renders complete (macro overview + heatmap + C1/C2/C3/C4/C7/C8 thematic cards)');
 }
