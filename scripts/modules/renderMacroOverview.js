@@ -632,6 +632,181 @@ function renderCrossValidation({ radarData, worldOrderStressData, marketPricingM
   }
 }
 
+// ---------- Stage 5a shared helpers ----------
+
+const HEATMAP_KEY_BY_CELL = {
+  us: 'us',
+  europe: 'europe',
+  middleeast: 'middleeast',
+  china: 'china',
+  japan: 'japan',
+  latam: 'latam',
+};
+
+function heatmapTone(risk) {
+  const n = asNumber(risk);
+  if (n === null) return null;
+  if (n >= 70) return 'severe';
+  if (n >= 50) return 'high';
+  if (n >= 30) return 'med';
+  return 'low';
+}
+
+function indicatorTone(score) {
+  const n = asNumber(score);
+  if (n === null) return null;
+  if (n >= 70) return 'red';
+  if (n >= 50) return 'yellow';
+  return 'green';
+}
+
+function vixTone(value) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  if (n < 18) return 'green';
+  if (n < 25) return 'yellow';
+  return 'red';
+}
+
+function setToneClass(id, baseClass, tone) {
+  const el = $(id);
+  if (!el || !tone) return;
+  el.className = `${baseClass} ${tone}`;
+}
+
+function setBadge(id, tone, label = null) {
+  const el = $(id);
+  if (!el || !tone) return;
+  el.className = `badge ${tone}`;
+  el.textContent = label || tone.toUpperCase();
+}
+
+function findHeatmapEntry(radarData, key) {
+  const entries = Array.isArray(radarData?.heatmap) ? radarData.heatmap : [];
+  return entries.find((item) => item?.key === key) || null;
+}
+
+function updateHeatmapCell(cellKey, entryKey, radarData) {
+  const entry = findHeatmapEntry(radarData, entryKey);
+  if (!entry) return;
+  const risk = asNumber(entry.risk);
+  const tone = heatmapTone(risk);
+  setToneClass(`heatmap-cell-${cellKey}`, 'heatmap-cell', tone);
+  if (entry.shortLabel || entry.label) {
+    setLeafText(`heatmap-${cellKey}-region`, entry.shortLabel || entry.label);
+  }
+  if (risk !== null) {
+    setLeafText(`heatmap-${cellKey}-score`, `RISK ${Math.round(risk)}`);
+  }
+  if (entry.note) {
+    setLeafText(`heatmap-${cellKey}-note`, entry.note);
+  }
+}
+
+function formatScoreNumber(value, digits = 0) {
+  const n = asNumber(value);
+  if (n === null) return '—';
+  return n.toFixed(digits);
+}
+
+function formatSignedScore(value, digits = 2, suffix = '') {
+  const n = asNumber(value);
+  if (n === null) return '—';
+  return `${n >= 0 ? '+' : ''}${n.toFixed(digits)}${suffix}`;
+}
+
+function latestMarketRecord(marketPricingMetricsData, assetKey) {
+  return latestRecord(marketPricingMetricsData?.assets?.[assetKey]?.records);
+}
+
+// ---------- Stage 5a: Heatmap ----------
+
+function renderHeatmap({ radarData }) {
+  try {
+    if (!radarData) return;
+    updateHeatmapCell('us', HEATMAP_KEY_BY_CELL.us, radarData);
+    updateHeatmapCell('europe', HEATMAP_KEY_BY_CELL.europe, radarData);
+    updateHeatmapCell('middleeast', HEATMAP_KEY_BY_CELL.middleeast, radarData);
+    updateHeatmapCell('china', HEATMAP_KEY_BY_CELL.china, radarData);
+    updateHeatmapCell('japan', HEATMAP_KEY_BY_CELL.japan, radarData);
+    updateHeatmapCell('latam', HEATMAP_KEY_BY_CELL.latam, radarData);
+  } catch (error) {
+    console.error('[renderMacroOverview] renderHeatmap failed:', error);
+  }
+}
+
+// ---------- Stage 5a: C7 Market Sentiment ----------
+
+function renderC7MarketSentiment({ radarData, marketPricingMetricsData }) {
+  try {
+    if (!radarData) return;
+
+    const vix = asNumber(radarData.displayInputsBaseline?.vix ?? radarData.__effectiveDisplayInputs?.vix);
+    const vixStatus = vixTone(vix);
+    setToneClass('c7-vix-status', 'status-bar', vixStatus);
+    setBadge('c7-vix-badge', vixStatus);
+    if (vix !== null) setLeafText('c7-vix-number', vix.toFixed(2));
+    setLeafText('c7-vix-aux', '12 周低位');
+
+    const spx = asNumber(radarData.displayInputsBaseline?.spx ?? radarData.__effectiveDisplayInputs?.spx);
+    if (spx !== null) setLeafText('c7-spx-number', spx.toFixed(0));
+
+    const ndxRecord = latestMarketRecord(marketPricingMetricsData, 'ndx');
+    const ndxZ = asNumber(ndxRecord?.zScore);
+    if (ndxZ !== null) {
+      const zText = formatSignedScore(ndxZ, 2);
+      setBadge('c7-ndx-badge', 'yellow', `${zText}σ`);
+      setLeafText('c7-ndx-number', zText);
+      setLeafText('c7-ndx-aux', 'NDX vs 60 周均值 · 与 QQQ 同步极端');
+    }
+  } catch (error) {
+    console.error('[renderMacroOverview] renderC7MarketSentiment failed:', error);
+  }
+}
+
+// ---------- Stage 5a: C8 Geopolitics & World Order ----------
+
+function renderC8Geopolitical({ radarData, worldOrderStressData }) {
+  try {
+    const geoScore = asNumber(radarData?.modules?.geopolitical);
+    const geoTone = indicatorTone(geoScore);
+    setToneClass('c8-geo-status', 'status-bar', geoTone);
+    setBadge('c8-geo-badge', geoTone);
+    if (geoScore !== null) setLeafText('c8-geo-number', String(Math.round(geoScore)));
+    const geoTrend = trendArrow(asNumber(radarData?.moduleTrends?.geopolitical));
+    setLeafText('c8-geo-aux', `6 底层模块之一 · moduleTrends 显示 ${geoTrend}`);
+    if (geoScore !== null) {
+      setLeafText('c8-geo-note', `底层地缘评分 ${Math.round(geoScore)},直接进入主评分链。和 World Order overlay 不是同一回事。`);
+    }
+
+    const woScore = asNumber(worldOrderStressData?.score);
+    if (woScore !== null) setLeafText('c8-wo-number', String(Math.round(woScore)));
+    if (worldOrderStressData?.state || worldOrderStressData?.labelZh) {
+      setLeafText('c8-wo-aux', `state: ${worldOrderStressData.state || '—'} · labelZh: ${worldOrderStressData.labelZh || '—'}`);
+    }
+
+    const econ = worldOrderStressData?.dimensions?.economicWeaponization || {};
+    const econScore = asNumber(econ.score);
+    const econTone = indicatorTone(econScore);
+    setToneClass('c8-econ-status', 'status-bar', econTone);
+    setBadge('c8-econ-badge', econTone);
+    if (econScore !== null) setLeafText('c8-econ-number', String(Math.round(econScore)));
+    if (econ.trend) setLeafText('c8-econ-aux', `trend: ${econ.trend} · OFAC + GDELT`);
+    if (econ.trend) setLeafText('c8-econ-note', `制裁与经济武器化处于高位区间。trend: ${econ.trend}。`);
+
+    const arms = worldOrderStressData?.dimensions?.peaceDividendRetreat || {};
+    const armsScore = asNumber(arms.score);
+    const armsTone = indicatorTone(armsScore);
+    setToneClass('c8-arms-status', 'status-bar', armsTone);
+    setBadge('c8-arms-badge', armsTone);
+    if (armsScore !== null) setLeafText('c8-arms-number', String(Math.round(armsScore)));
+    if (arms.trend) setLeafText('c8-arms-aux', `trend: ${arms.trend} · ACLED weekly + SIPRI annual`);
+    if (arms.trend) setLeafText('c8-arms-note', `手动 + 年度数据。不当成实时高频信号读。trend: ${arms.trend}。`);
+  } catch (error) {
+    console.error('[renderMacroOverview] renderC8Geopolitical failed:', error);
+  }
+}
+
 // ---------- 主入口 ----------
 
 export function renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData }) {
@@ -651,5 +826,10 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   renderMacroDriversPillars({ radarData });
   renderCrossValidation({ radarData, worldOrderStressData, marketPricingMetricsData });
 
-  console.log('[renderMacroOverview] Stage 4b-2 renders complete (all macro-overview runtime blocks)');
+  // Stage 5a: heatmap + C7 market sentiment + C8 geopolitics/world-order
+  renderHeatmap({ radarData });
+  renderC7MarketSentiment({ radarData, marketPricingMetricsData });
+  renderC8Geopolitical({ radarData, worldOrderStressData });
+
+  console.log('[renderMacroOverview] Stage 5a renders complete (macro overview + heatmap + C7/C8 thematic cards)');
 }
