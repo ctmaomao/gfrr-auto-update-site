@@ -202,16 +202,16 @@
           <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start;">
             <div>
               <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;color:var(--paper-muted);text-transform:uppercase;">极度过热 · extreme-hot</div>
-              <div style="font-family:var(--font-display);font-size:48px;font-weight:900;line-height:1;color:var(--risk-yellow);margin-top:4px;">+2.18<span style="font-size:0.4em;color:var(--paper-muted);">σ</span></div>
+              <div style="font-family:var(--font-display);font-size:48px;font-weight:900;line-height:1;color:var(--risk-yellow);margin-top:4px;"><span id="mt-zscore-value">+2.18</span><span style="font-size:0.4em;color:var(--paper-muted);">σ</span></div>
               <div style="font-family:var(--font-mono);font-size:10px;color:var(--paper-muted);margin-top:6px;">QQQ vs 60 周均值 · 历史第二极端</div>
             </div>
             <div>
-              <p style="margin:0 0 8px 0;font-size:13.5px;">QQQ 当前价格距 60 周均值 2.18 个标准差，处于历史第二极端区间。NDX +2.22σ / IXIC +1.92σ，整个美国成长股板块同步极端。</p>
+              <p id="mt-narrative" style="margin:0 0 8px 0;font-size:13.5px;">QQQ 当前价格距 60 周均值 2.18 个标准差，处于历史第二极端区间。NDX +2.22σ / IXIC +1.92σ，整个美国成长股板块同步极端。</p>
               <div style="font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 16px;">
-                <div>close: <span style="color:var(--paper-ink);">$708.93</span></div>
-                <div>ma60: <span style="color:var(--paper-ink);">$579.84</span></div>
-                <div>stdDev60: <span style="color:var(--paper-ink);">$59.23</span></div>
-                <div>zScoreRange: <span style="color:var(--paper-ink);">[-2.64, +2.83]</span></div>
+                <div>close: <span id="mt-close" style="color:var(--paper-ink);">$708.93</span></div>
+                <div>ma60: <span id="mt-ma60" style="color:var(--paper-ink);">$579.84</span></div>
+                <div>stdDev60: <span id="mt-stddev" style="color:var(--paper-ink);">$59.23</span></div>
+                <div>zScoreRange: <span id="mt-zscore-range" style="color:var(--paper-ink);">[-2.64, +2.83]</span></div>
               </div>
             </div>
           </div>
@@ -224,12 +224,12 @@
           <div class="meta">data.modules 6 引擎 + divergenceLayer + privateCreditProxy + worldOrderStress + marketTemperature 等多源派生</div>
         </div>
         <div class="mini-grid">
-          <div class="mini-card red"><div class="label">B1 Energy</div><div class="num">RED</div><div class="status">能源冲击主导</div></div>
-          <div class="mini-card yellow"><div class="label">B2 Liquidity</div><div class="num">YEL</div><div class="status">流动性边际收紧</div></div>
-          <div class="mini-card green"><div class="label">B3 Credit</div><div class="num">GRN</div><div class="status">信用反向证据</div></div>
-          <div class="mini-card green"><div class="label">B4 Debt</div><div class="num">GRN</div><div class="status">杠杆稳定</div></div>
-          <div class="mini-card yellow"><div class="label">B5 Consumer</div><div class="num">YEL</div><div class="status">实际工资压制</div></div>
-          <div class="mini-card red"><div class="label">B6 Geopolitical</div><div class="num">RED</div><div class="status">multi_theater</div></div>
+          <div class="mini-card red" id="engine-card-b1"><div class="label">B1 Energy</div><div class="num">RED</div><div class="status">能源冲击主导</div></div>
+          <div class="mini-card yellow" id="engine-card-b2"><div class="label">B2 Liquidity</div><div class="num">YEL</div><div class="status">流动性边际收紧</div></div>
+          <div class="mini-card green" id="engine-card-b3"><div class="label">B3 Credit</div><div class="num">GRN</div><div class="status">信用反向证据</div></div>
+          <div class="mini-card green" id="engine-card-b4"><div class="label">B4 Debt</div><div class="num">GRN</div><div class="status">杠杆稳定</div></div>
+          <div class="mini-card yellow" id="engine-card-b5"><div class="label">B5 Consumer</div><div class="num">YEL</div><div class="status">实际工资压制</div></div>
+          <div class="mini-card red" id="engine-card-b6"><div class="label">B6 Geopolitical</div><div class="num">RED</div><div class="status">multi_theater</div></div>
         </div>
       </div>
 
@@ -250,12 +250,12 @@
         <div class="wow-label">本期关键变化 · Week-over-Week</div>
         <h3>能源链加压，信用反向证据，地缘 overlay 升档 <em>· this issue's deltas</em></h3>
         <div class="wow-grid">
-          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 通胀与能源</span><div class="wow-text">Brent 周内 +6.2，crack spread 同步走阔到 48.37。<span class="wow-source">brentPricingLayer.crackSpread4wChange +19.87</span></div></div>
-          <div class="wow-item"><span class="wow-tag is-down">▼ 风险下降 · 信用</span><div class="wow-text">HY OAS 周内收窄，与 VIX 同步走低。信用市场不验证恐慌。<span class="wow-source">divergenceLayer 提供反向证据</span></div></div>
-          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 地缘</span><div class="wow-text">World Order overlay 升档至 multi_theater_stress 持续第 2 周。<span class="wow-source">worldOrderStress.state transition</span></div></div>
-          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 流动性</span><div class="wow-text">Fed 政策路径分歧扩至 +38bp，市场比委员鹰。<span class="wow-source">macroDrivers.policyExpectations.futureMinusTargetMid</span></div></div>
-          <div class="wow-item"><span class="wow-tag is-flat">━ 持平 · 美国就业</span><div class="wow-text">首次申请稳在 238k，扩张产业占比 70% → 63%。<span class="wow-source">macroDrivers.employment.diffusion</span></div></div>
-          <div class="wow-item"><span class="wow-tag is-down">▼ 风险下降 · 消费 vs 资产</span><div class="wow-text">consumer_vs_asset_pricing 背离收敛。<span class="wow-source">divergenceLayer.checks[consumer_vs_asset_pricing]</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 通胀与能源</span><div class="wow-text"><span id="wow-item-1-text">Brent 周内 +6.2，crack spread 同步走阔到 48.37。</span><span class="wow-source" id="wow-item-1-source">brentPricingLayer.crackSpread4wChange +19.87</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-down">▼ 风险下降 · 信用</span><div class="wow-text"><span id="wow-item-2-text">HY OAS 周内收窄，与 VIX 同步走低。信用市场不验证恐慌。</span><span class="wow-source" id="wow-item-2-source">divergenceLayer 提供反向证据</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 地缘</span><div class="wow-text"><span id="wow-item-3-text">World Order overlay 升档至 multi_theater_stress 持续第 2 周。</span><span class="wow-source" id="wow-item-3-source">worldOrderStress.state transition</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 流动性</span><div class="wow-text"><span id="wow-item-4-text">Fed 政策路径分歧扩至 +38bp，市场比委员鹰。</span><span class="wow-source" id="wow-item-4-source">macroDrivers.policyExpectations.futureMinusTargetMid</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-flat">━ 持平 · 美国就业</span><div class="wow-text"><span id="wow-item-5-text">首次申请稳在 238k，扩张产业占比 70% → 63%。</span><span class="wow-source" id="wow-item-5-source">macroDrivers.employment.diffusion</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-down">▼ 风险下降 · 消费 vs 资产</span><div class="wow-text"><span id="wow-item-6-text">consumer_vs_asset_pricing 背离收敛。</span><span class="wow-source" id="wow-item-6-source">divergenceLayer.checks[consumer_vs_asset_pricing]</span></div></div>
         </div>
       </section>
 
@@ -862,6 +862,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=stage-4b-1a-1"></script>
+  <script type="module" src="scripts/app.js?v=stage-4b-1b-1"></script>
 </body>
 </html>
