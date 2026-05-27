@@ -1507,6 +1507,236 @@ function renderWorldOrderStress({ worldOrderStressData }) {
   }
 }
 
+function textValue(value) {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  return text.length > 0 ? text : null;
+}
+
+function joinNonEmpty(parts, separator = ' · ') {
+  return parts
+    .map((part) => textValue(part))
+    .filter(Boolean)
+    .join(separator);
+}
+
+function formatBoolean(value) {
+  if (value === true) return 'true';
+  if (value === false) return 'false';
+  if (value === null || value === undefined) return null;
+  return String(value);
+}
+
+function shortHash(value, length = 12) {
+  const text = textValue(value);
+  if (!text) return null;
+  return text.length > length ? `${text.slice(0, length)}...` : text;
+}
+
+function orderedSentence(items) {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  const clean = items.map((item) => textValue(item)).filter(Boolean);
+  if (clean.length === 0) return null;
+  return clean.map((item, index) => `(${index + 1}) ${item}`).join(' ');
+}
+
+function formatUtcMinuteStage5d2(value) {
+  const text = textValue(value);
+  if (!text) return null;
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return text;
+  return `${date.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+}
+
+function setListItems(prefix, items, maxCount) {
+  if (!Array.isArray(items) || items.length === 0) return;
+  for (let i = 0; i < maxCount; i += 1) {
+    const value = textValue(items[i]);
+    if (value) setLeafText(`${prefix}-${i + 1}`, value);
+  }
+}
+
+function scenarioText(scenario) {
+  if (!scenario) return null;
+  const title = textValue(scenario.titleZh);
+  const triggers = Array.isArray(scenario.triggerConditions)
+    ? scenario.triggerConditions.map((item) => textValue(item)).filter(Boolean).join('、')
+    : null;
+  const invalidations = Array.isArray(scenario.invalidationConditions)
+    ? scenario.invalidationConditions.map((item) => textValue(item)).filter(Boolean).join('、')
+    : null;
+  const parts = [];
+  if (title) parts.push(`${title}:`);
+  if (triggers) parts.push(`若 ${triggers},则升级观察`);
+  if (invalidations) parts.push(`若 ${invalidations},则降级/失效`);
+  return parts.length > 0 ? parts.join('；') : null;
+}
+
+function allocationByTarget(positioning, target) {
+  const allocations = positioning?.coreAllocations;
+  if (!Array.isArray(allocations)) return null;
+  return allocations.find((item) => item?.target === target) || null;
+}
+
+function setAllocationRow(slug, allocation) {
+  if (!allocation) return;
+  if (textValue(allocation.name)) setLeafText(`exec-alloc-${slug}-name`, allocation.name);
+  if (textValue(allocation.target)) setLeafText(`exec-alloc-${slug}-target`, allocation.target);
+  if (textValue(allocation.weight)) setLeafText(`exec-alloc-${slug}-weight`, allocation.weight);
+  if (textValue(allocation.reason)) setLeafText(`exec-alloc-${slug}-reason`, allocation.reason);
+}
+
+function renderExternalAiAuxiliary({ radarData }) {
+  try {
+    const layer = radarData?.externalAiInterpretationLayer;
+    if (!layer || layer.displayEnabled === false) return;
+
+    if (textValue(layer.provider)) setLeafText('ext-ai-provider', layer.provider);
+    if (textValue(layer.model)) setLeafText('ext-ai-model', layer.model);
+    if (textValue(layer.qualityReview?.recommendation)) setLeafText('ext-ai-quality', layer.qualityReview.recommendation);
+    const promotion = formatBoolean(layer.qualityReview?.promotionEligible);
+    if (promotion) setLeafText('ext-ai-promotion', promotion);
+    if (textValue(layer.provenance?.runId)) setLeafText('ext-ai-run-id', layer.provenance.runId);
+    const generatedAt = formatUtcMinuteStage5d2(layer.generatedAt);
+    if (generatedAt) setLeafText('ext-ai-generated-at', generatedAt);
+
+    if (textValue(layer.summaryZh)) setLeafText('ext-ai-summary', layer.summaryZh);
+    const factsText = orderedSentence(layer.facts);
+    if (factsText) setLeafText('ext-ai-facts-text', factsText);
+    const inferencesText = orderedSentence(layer.inferences);
+    if (inferencesText) setLeafText('ext-ai-inferences-text', inferencesText);
+    const judgmentsText = orderedSentence(layer.modelJudgments);
+    if (judgmentsText) setLeafText('ext-ai-judgments-text', judgmentsText);
+
+    if (Array.isArray(layer.scenarioHypotheses)) {
+      for (let i = 0; i < 2; i += 1) {
+        const text = scenarioText(layer.scenarioHypotheses[i]);
+        if (text) setLeafText(`ext-ai-scenario-${i + 1}`, text);
+      }
+    }
+
+    const boundaries = layer.boundaries || {};
+    const boundaryText = joinNonEmpty([
+      `displayOnly=${formatBoolean(boundaries.displayOnly)}`,
+      `externalAiGenerated=${formatBoolean(boundaries.externalAiGenerated)}`,
+      `usesExternalAiApi=${formatBoolean(boundaries.usesExternalAiApi)}`,
+      `notInvestmentAdvice=${formatBoolean(boundaries.notInvestmentAdvice)}`,
+      `productionWriteApproved=${formatBoolean(boundaries.productionWriteApproved)}`,
+      `frontendDisplayApproved=${formatBoolean(boundaries.frontendDisplayApproved)}`,
+    ], ' / ');
+    if (boundaryText) setLeafText('ext-ai-boundaries-text', boundaryText);
+
+    if (Array.isArray(layer.auditFlags) && layer.auditFlags.length > 0) {
+      setLeafText('ext-ai-audit-flags', layer.auditFlags.join(' / '));
+    }
+
+    if (textValue(layer.provenance?.runId)) setLeafText('ext-ai-prov-run-id', layer.provenance.runId);
+    if (textValue(layer.inputSource)) setLeafText('ext-ai-prov-input-source', layer.inputSource);
+    if (textValue(layer.sourceMode)) setLeafText('ext-ai-prov-source-mode', layer.sourceMode);
+    if (generatedAt) setLeafText('ext-ai-prov-generated-at', generatedAt);
+    const digest = shortHash(layer.provenance?.artifactDigest, 12);
+    if (digest) setLeafText('ext-ai-prov-artifact-digest', digest);
+    const commit = shortHash(layer.provenance?.sourceCommit, 12);
+    if (commit) setLeafText('ext-ai-prov-source-commit', commit);
+    const humanApproved = formatBoolean(layer.provenance?.humanApproved);
+    if (humanApproved) setLeafText('ext-ai-prov-human-approved', humanApproved);
+    if (promotion) setLeafText('ext-ai-prov-promotion', promotion);
+    const confidenceText = joinNonEmpty([
+      layer.confidence?.level,
+      asNumber(layer.confidence?.score) !== null ? `${Math.round(layer.confidence.score)}/100` : null,
+    ], ' ');
+    if (confidenceText) setLeafText('ext-ai-prov-confidence', confidenceText);
+  } catch (error) {
+    console.error('[renderMacroOverview] renderExternalAiAuxiliary failed:', error);
+  }
+}
+
+function renderExecutionRiskDetail({ radarData }) {
+  try {
+    if (!radarData) return;
+    const decision = radarData.decisionModel || {};
+    const guidance = decision.positionGuidance || {};
+    const trading = radarData.tradingSystem || {};
+    const lock = trading.executionLock || {};
+    const triggerPanel = radarData.triggerPanel || {};
+    const triggerMonitor = decision.triggerMonitor || {};
+    const warning = radarData.warningSystem || {};
+    const positioning = trading.positioning || {};
+    const riskControl = trading.riskControl || {};
+    const discipline = trading.discipline || {};
+
+    const stateText = joinNonEmpty([decision.strategyState, decision.stateLabel]);
+    if (stateText) setLeafText('exec-decision-state', stateText);
+    if (asNumber(decision.stateScore) !== null) setLeafText('exec-decision-score', Math.round(decision.stateScore));
+    if (textValue(decision.stateReason)) setLeafText('exec-decision-reason', decision.stateReason);
+    const structural = Array.isArray(decision.structuralSignals) ? decision.structuralSignals[0] : null;
+    const structuralText = structural ? joinNonEmpty([structural.label, structural.detail]) : null;
+    if (structuralText) setLeafText('exec-structural-signal', structuralText);
+    if (asNumber(decision.structuralScoreBump) !== null) setLeafText('exec-structural-bump', `+${Math.round(decision.structuralScoreBump)}`);
+    if (Array.isArray(decision.dominantDrivers) && decision.dominantDrivers.length > 0) {
+      const drivers = decision.dominantDrivers
+        .map((driver) => {
+          const label = textValue(driver.labelZh) || textValue(driver.key);
+          return label && asNumber(driver.score) !== null ? `${label} (${Math.round(driver.score)})` : null;
+        })
+        .filter(Boolean);
+      if (drivers.length > 0) setLeafText('exec-dominant-drivers', drivers.join(' / '));
+    }
+    if (textValue(guidance.totalExposureBand)) setLeafText('exec-exposure-band', guidance.totalExposureBand);
+    if (textValue(guidance.riskBudget)) setLeafText('exec-risk-budget', guidance.riskBudget);
+    if (textValue(guidance.targetGrossExposure)) setLeafText('exec-target-gross', guidance.targetGrossExposure);
+    if (textValue(guidance.cashBufferTarget)) setLeafText('exec-cash-target', guidance.cashBufferTarget);
+    if (textValue(guidance.riskAssetBias)) setLeafText('exec-risk-asset-bias', guidance.riskAssetBias);
+    if (asNumber(guidance.structuralBandShift) !== null) setLeafText('exec-band-shift', `${Math.round(guidance.structuralBandShift)}`);
+
+    updateToneClass('exec-lock-card', ['red', 'yellow', 'green'], lock.level);
+    if (textValue(lock.tag)) setLeafText('exec-lock-kicker', `EXECUTION LOCK · ${lock.tag}`);
+    if (textValue(lock.levelLabel)) setLeafText('exec-lock-state', lock.levelLabel);
+    if (textValue(lock.title)) setLeafText('exec-lock-title', lock.title);
+    if (textValue(lock.description)) setLeafText('exec-lock-desc', lock.description);
+    setListItems('exec-lock-allow', lock.allow, 3);
+    setListItems('exec-lock-block', lock.block, 3);
+    setListItems('exec-lock-mandatory', lock.mandatory, 3);
+
+    setListItems('exec-trigger-critical', triggerPanel.critical, 3);
+    if (Array.isArray(triggerMonitor.upgradeTriggers) && triggerMonitor.upgradeTriggers.length >= 5) {
+      if (textValue(triggerMonitor.upgradeTriggers[3])) setLeafText('exec-trigger-critical-4', triggerMonitor.upgradeTriggers[3]);
+      if (textValue(triggerMonitor.upgradeTriggers[4])) setLeafText('exec-trigger-critical-5', triggerMonitor.upgradeTriggers[4]);
+    }
+    setListItems('exec-trigger-driver', triggerPanel.drivers, 3);
+    setListItems('exec-trigger-watch', triggerPanel.watchlist, 3);
+
+    const warningSummary = joinNonEmpty([
+      warning.status,
+      asNumber(warning.criticalCount) !== null ? `critical ${Math.round(warning.criticalCount)}` : null,
+      asNumber(warning.warningCount) !== null ? `warning ${Math.round(warning.warningCount)}` : null,
+      asNumber(warning.watchCount) !== null ? `watch ${Math.round(warning.watchCount)}` : null,
+    ], ' / ');
+    if (warningSummary) setLeafText('exec-warning-summary', `系统按 5 条规则自动触发预警等级: ${warningSummary}`);
+    setListItems('exec-warning-rule', warning.rules, 5);
+
+    setAllocationRow('usd', allocationByTarget(positioning, '核心1'));
+    setAllocationRow('cash', allocationByTarget(positioning, '缓冲层'));
+    setAllocationRow('gold', allocationByTarget(positioning, '对冲'));
+    setAllocationRow('energy', allocationByTarget(positioning, '防守受益'));
+    setAllocationRow('equity', allocationByTarget(positioning, '观察仓'));
+
+    if (textValue(positioning.regime)) setLeafText('exec-position-regime', positioning.regime);
+    if (textValue(riskControl.maxDrawdown)) setLeafText('exec-risk-max-drawdown', riskControl.maxDrawdown);
+    if (textValue(riskControl.singleAssetMax)) setLeafText('exec-risk-single-asset-max', riskControl.singleAssetMax);
+    if (textValue(riskControl.systemState)) setLeafText('exec-risk-system-state', riskControl.systemState);
+    setListItems('exec-hard-threshold', riskControl.hardThresholds, 6);
+    setListItems('exec-reset-threshold', riskControl.resetThresholds, 4);
+
+    if (textValue(discipline.tag)) setLeafText('exec-discipline-tag', discipline.tag);
+    setListItems('exec-entry-condition', discipline.entryConditions, 3);
+    setListItems('exec-prohibited', discipline.prohibitedBehaviors, 3);
+    setListItems('exec-mandatory-rule', discipline.mandatoryRules, 3);
+  } catch (error) {
+    console.error('[renderMacroOverview] renderExecutionRiskDetail failed:', error);
+  }
+}
+
 // ---------- 主入口 ----------
 
 export function renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData }) {
@@ -1543,5 +1773,9 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   renderDetailData({ radarData });
   renderWorldOrderStress({ worldOrderStressData });
 
-  console.log('[renderMacroOverview] Stage 5d-1 renders complete (macro overview + thematic cards + detail-data/world-order details)');
+  // Stage 5d-2: external-ai + execution-risk appendix narratives
+  renderExternalAiAuxiliary({ radarData });
+  renderExecutionRiskDetail({ radarData });
+
+  console.log('[renderMacroOverview] Stage 5d-2 renders complete (all Stage 5 frontend binding complete)');
 }
