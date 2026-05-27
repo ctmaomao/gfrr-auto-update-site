@@ -807,6 +807,250 @@ function renderC8Geopolitical({ radarData, worldOrderStressData }) {
   }
 }
 
+// ---------- Stage 5b formatting helpers ----------
+
+function formatT(value) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  return (n / 1000000).toFixed(2);
+}
+
+function formatPct(value, digits = 1) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  const factor = 10 ** digits;
+  const rounded = Math.round((n + Number.EPSILON) * factor) / factor;
+  return `${rounded >= 0 ? '+' : ''}${rounded.toFixed(digits)}%`;
+}
+
+function formatBps(value, digits = 0) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  const bps = n * 100;
+  return `${bps >= 0 ? '+' : ''}${bps.toFixed(digits)}bp`;
+}
+
+function formatM(value) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  const sign = n < 0 ? '-' : '';
+  const abs = Math.abs(n);
+  if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(2)}B`;
+  return `${sign}$${(abs * 1000).toFixed(0)}M`;
+}
+
+function formatUsd(value, digits = 2) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  return `$${n.toFixed(digits)}`;
+}
+
+function signedNumber(value, digits = 2) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  return `${n >= 0 ? '+' : ''}${n.toFixed(digits)}`;
+}
+
+function brentTone(value) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  if (n >= 100) return 'red';
+  if (n >= 80) return 'yellow';
+  return 'green';
+}
+
+function crackTone(value) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  if (n >= 40) return 'red';
+  if (n >= 25) return 'yellow';
+  return 'green';
+}
+
+function ismToneFromRegime(regime) {
+  if (regime === '扩张') return 'green';
+  if (regime === '中性偏扩张') return 'yellow';
+  if (regime === '收缩') return 'red';
+  return null;
+}
+
+function us10yTone(value) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  if (n >= 5) return 'red';
+  if (n >= 4) return 'yellow';
+  return 'green';
+}
+
+function liquidityToneFromRegime(regime) {
+  if (regime === '平稳') return 'green';
+  if (regime === '偏紧') return 'yellow';
+  if (regime === '紧张') return 'red';
+  return null;
+}
+
+function fedPathTone(diffRate) {
+  const n = asNumber(diffRate);
+  if (n === null) return null;
+  const absBp = Math.abs(n * 100);
+  if (absBp >= 50) return 'red';
+  if (absBp > 20) return 'yellow';
+  return 'green';
+}
+
+function setIndicatorStatus(statusId, badgeId, tone) {
+  if (!tone) return;
+  setToneClass(statusId, 'status-bar', tone);
+  setBadge(badgeId, tone);
+}
+
+// ---------- Stage 5b: C1 Inflation & Energy ----------
+
+function renderC1InflationEnergy({ radarData }) {
+  try {
+    if (!radarData) return;
+    const brentLayer = radarData.brentPricingLayer || {};
+    const display = radarData.displayInputsBaseline || {};
+    const consumer = radarData.macroDrivers?.consumer || {};
+
+    const brent = asNumber(display.brent ?? brentLayer.selectedBrent?.value);
+    const brentStatus = brentTone(brent);
+    setIndicatorStatus('c1-brent-status', 'c1-brent-badge', brentStatus);
+    if (brent !== null) setLeafText('c1-brent-number', brent.toFixed(2));
+    if (brentLayer.mode) {
+      setLeafText('c1-brent-aux', `主值 selectedBrent · status: ${brentLayer.mode}`);
+    }
+    const eia = asNumber(brentLayer.eiaBrentSpotProxy?.price);
+    const futures = asNumber(brentLayer.futuresProxy?.value);
+    const ice = asNumber(brentLayer.iceFuturesPriceCurve?.frontPrice);
+    const spread = asNumber(brentLayer.proxySpread?.spotMinusFutures);
+    const divergence = asNumber(brentLayer.proxySpread?.maxProxyDivergencePct);
+    if (eia !== null) setLeafText('c1-brent-eia', formatUsd(eia));
+    if (futures !== null) setLeafText('c1-brent-futures', formatUsd(futures));
+    if (ice !== null) setLeafText('c1-brent-ice', formatUsd(ice));
+    if (spread !== null) {
+      const sign = spread >= 0 ? '+$' : '-$';
+      setLeafText('c1-brent-spread', `${sign}${Math.abs(spread).toFixed(2)}`);
+    }
+    if (divergence !== null) setLeafText('c1-brent-divergence', `${divergence.toFixed(1)}%`);
+
+    const crack = asNumber(brentLayer.crackSpread);
+    const crackStatus = crackTone(crack);
+    setIndicatorStatus('c1-crack-status', 'c1-crack-badge', crackStatus);
+    if (crack !== null) setLeafText('c1-crack-number', crack.toFixed(2));
+    const crackChange = asNumber(brentLayer.crackSpread4wChange);
+    if (crackChange !== null) {
+      setLeafText('c1-crack-aux', `ULSD × 42 − Brent · crackSpread4wChange ${signedNumber(crackChange, 2)}`);
+    }
+    if (brentLayer.crackSpreadRegime) {
+      setLeafText('c1-crack-note', `炼油利润扩张说明能源向汽油 / 柴油传导。Brent → CPI 的中间证据。regime: ${brentLayer.crackSpreadRegime}。`);
+    }
+
+    const ismRegime = consumer.ismPmiRegime;
+    const ismTone = ismToneFromRegime(ismRegime);
+    setIndicatorStatus('c1-ism-status', 'c1-ism-badge', ismTone);
+    const ism = asNumber(consumer.ismManufacturingPmi);
+    if (ism !== null) setLeafText('c1-ism-number', ism.toFixed(1));
+    const ismChange = asNumber(consumer.ismManufacturingPmi3mChange);
+    if (ismChange !== null && ismRegime) {
+      setLeafText('c1-ism-aux', `3 月动量 ${signedNumber(ismChange, 1)} · regime: ${ismRegime}`);
+    }
+    if (ismRegime) {
+      setLeafText('c1-ism-note', `制造业读数仍在扩张线附近，regime: ${ismRegime}。能源成本能否被需求消化仍是通胀链条的关键。`);
+    }
+  } catch (error) {
+    console.error('[renderMacroOverview] renderC1InflationEnergy failed:', error);
+  }
+}
+
+// ---------- Stage 5b: C2 Global Liquidity ----------
+
+function renderC2GlobalLiquidity({ radarData }) {
+  try {
+    if (!radarData) return;
+    const display = radarData.displayInputsBaseline || {};
+    const curve = radarData.macroDrivers?.curve || {};
+    const fed = radarData.macroDrivers?.fedLiquidity || {};
+    const policy = radarData.macroDrivers?.policyExpectations || {};
+
+    const dxy = asNumber(display.dxy);
+    if (dxy !== null) setLeafText('c2-dxy-number', dxy.toFixed(2));
+
+    const gold = asNumber(display.gold);
+    if (gold !== null) setLeafText('c2-gold-number', gold.toFixed(2));
+
+    const us10y = asNumber(display.us10y);
+    const us10yStatus = us10yTone(us10y);
+    setIndicatorStatus('c2-us10y-status', 'c2-us10y-badge', us10yStatus);
+    if (us10y !== null) setLeafText('c2-us10y-number', us10y.toFixed(2));
+    const t10y2y = asNumber(curve.t10y2y);
+    const t10y2yWeekChange = asNumber(curve.t10y2yWeekChange);
+    if (t10y2y !== null && curve.regime) {
+      setLeafText('c2-us10y-aux', `10Y · 2s10s spread ${formatBps(t10y2y, 0)} · ${curve.regime}`);
+    }
+    if (t10y2y !== null) setLeafText('c2-us10y-t10y2y', `${signedNumber(t10y2y, 2)}%`);
+    if (t10y2yWeekChange !== null) setLeafText('c2-us10y-week-change', formatBps(t10y2yWeekChange, 0));
+    if (curve.regime) setLeafText('c2-us10y-regime', curve.regime);
+    if (typeof curve.steepeningAlert === 'boolean') {
+      setLeafText('c2-us10y-alert', String(curve.steepeningAlert));
+    }
+
+    const liquidityTone = liquidityToneFromRegime(fed.regime);
+    setIndicatorStatus('c2-liquidity-status', 'c2-liquidity-badge', liquidityTone);
+    const reserves = asNumber(fed.reserveBalances);
+    if (reserves !== null) setLeafText('c2-liquidity-number', formatT(reserves));
+    if (fed.regime) setLeafText('c2-liquidity-aux', `银行准备金 reserveBalances · regime: ${fed.regime}`);
+    const walcl = asNumber(fed.walcl);
+    if (walcl !== null && asNumber(fed.walcl4wChange) !== null) {
+      setLeafText('c2-liquidity-walcl', `${formatT(walcl)}T · 4w ${formatPct(fed.walcl4wChange, 1)}`);
+    }
+    if (reserves !== null && asNumber(fed.reserveBalances4wChange) !== null) {
+      setLeafText('c2-liquidity-reserves', `${formatT(reserves)}T · 4w ${formatPct(fed.reserveBalances4wChange, 1)}`);
+    }
+    if (asNumber(fed.onRrp) !== null && asNumber(fed.onRrpWeekChange) !== null) {
+      setLeafText('c2-liquidity-rrp', `${formatM(fed.onRrp)} · WoW ${formatPct(fed.onRrpWeekChange, 1)}`);
+    }
+    if (asNumber(fed.sofr) !== null && asNumber(fed.effectiveFedFundsRate) !== null) {
+      setLeafText('c2-liquidity-sofr-effr', `${fed.sofr.toFixed(2)}% / ${fed.effectiveFedFundsRate.toFixed(2)}%`);
+    }
+    if (asNumber(fed.bgcr) !== null && asNumber(fed.tgcr) !== null) {
+      setLeafText('c2-liquidity-bgcr-tgcr', `${fed.bgcr.toFixed(2)}% / ${fed.tgcr.toFixed(2)}%`);
+    }
+    if (fed.repoSpreadRegime) setLeafText('c2-liquidity-repo-regime', fed.repoSpreadRegime);
+
+    const diff = asNumber(policy.futureMinusTargetMid);
+    const fedTone = fedPathTone(diff);
+    setIndicatorStatus('c2-fed-path-status', 'c2-fed-path-badge', fedTone);
+    if (diff !== null) {
+      const diffBp = diff * 100;
+      const signedBp = `${diffBp >= 0 ? '+' : ''}${diffBp.toFixed(1)}`;
+      setLeafText('c2-fed-path-number', signedBp);
+      setLeafText('c2-fed-path-aux', `market vs 委员分歧 · ${signedBp}bp`);
+    }
+    if (asNumber(policy.targetMid) !== null) setLeafText('c2-fed-path-target', `${policy.targetMid.toFixed(2)}%`);
+    if (asNumber(policy.fedFundsFutureFrontPrice) !== null && asNumber(policy.fedFundsFutureImpliedRate) !== null) {
+      setLeafText('c2-fed-path-front', `${policy.fedFundsFutureFrontPrice.toFixed(2)} → ${policy.fedFundsFutureImpliedRate.toFixed(2)}%`);
+    }
+    if (asNumber(policy.fedFundsFuturesCurve?.frontMinusBack) !== null) {
+      setLeafText('c2-fed-path-zq', `front ${formatBps(policy.fedFundsFuturesCurve.frontMinusBack, 0)}`);
+    }
+    if (asNumber(policy.sofrFuturesCurve?.frontMinusBack) !== null) {
+      setLeafText('c2-fed-path-sr3', `front ${formatBps(policy.sofrFuturesCurve.frontMinusBack, 0)}`);
+    }
+    if (asNumber(policy.oisForwardCurve?.oneYearRate) !== null) {
+      setLeafText('c2-fed-path-ois', `${policy.oisForwardCurve.oneYearRate.toFixed(2)}%`);
+    }
+    if (asNumber(policy.dotPlotMedianCurrentYear) !== null) {
+      setLeafText('c2-fed-path-dot', `${policy.dotPlotMedianCurrentYear.toFixed(2)}%`);
+    }
+    if (policy.policyTone && policy.minutesPolicyTone) {
+      setLeafText('c2-fed-path-tone', `${policy.policyTone} / ${policy.minutesPolicyTone}`);
+    }
+  } catch (error) {
+    console.error('[renderMacroOverview] renderC2GlobalLiquidity failed:', error);
+  }
+}
+
 // ---------- 主入口 ----------
 
 export function renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData }) {
@@ -831,5 +1075,9 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   renderC7MarketSentiment({ radarData, marketPricingMetricsData });
   renderC8Geopolitical({ radarData, worldOrderStressData });
 
-  console.log('[renderMacroOverview] Stage 5a renders complete (macro overview + heatmap + C7/C8 thematic cards)');
+  // Stage 5b: C1 inflation/energy + C2 global liquidity
+  renderC1InflationEnergy({ radarData });
+  renderC2GlobalLiquidity({ radarData });
+
+  console.log('[renderMacroOverview] Stage 5b renders complete (macro overview + heatmap + C1/C2/C7/C8 thematic cards)');
 }
