@@ -101,6 +101,10 @@ const WORLD_ECONOMY_KEYS = ['stoxx50', 'nikkei225', 'dax'];
 const CHINA_EQUITY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_CHINA_EQUITY_SOURCE = 'Yahoo:000001.SS; Yahoo:^HSI; Yahoo:000300.SS';
 const CHINA_EQUITY_KEYS = ['sseComposite', 'hangSeng', 'csi300'];
+const INFLATION_ENERGY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_INFLATION_ENERGY_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO';
+const VALID_INFLATION_CPI_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL';
+const VALID_INFLATION_WTI_SOURCE = 'FRED:DCOILWTICO';
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
@@ -961,6 +965,50 @@ function validateMacroDriversChinaEquity(dataPayload) {
     assertString(item.sourceStatus, `macroDrivers.chinaEquity.${key}.sourceStatus`);
     assert(CHINA_EQUITY_SOURCE_STATUSES.has(item.sourceStatus), `macroDrivers.chinaEquity.${key}.sourceStatus is not supported`);
   }
+}
+
+function validateMacroDriversInflationEnergy(dataPayload) {
+  const inflationEnergy = dataPayload?.macroDrivers?.inflationEnergy;
+  if (inflationEnergy === undefined) return;
+  assertPlainObject(inflationEnergy, 'macroDrivers.inflationEnergy');
+  validateNullableIsoString(inflationEnergy.updatedAt, 'macroDrivers.inflationEnergy.updatedAt');
+  assert(inflationEnergy.source === VALID_INFLATION_ENERGY_SOURCE, `macroDrivers.inflationEnergy.source must be ${VALID_INFLATION_ENERGY_SOURCE}`);
+  assertString(inflationEnergy.notes, 'macroDrivers.inflationEnergy.notes');
+  assertPlainObject(inflationEnergy.sourceStatus, 'macroDrivers.inflationEnergy.sourceStatus');
+  for (const key of ['cpi', 'wti']) {
+    assert(Object.hasOwn(inflationEnergy.sourceStatus, key), `macroDrivers.inflationEnergy.sourceStatus.${key} is missing`);
+    assert(INFLATION_ENERGY_SOURCE_STATUSES.has(inflationEnergy.sourceStatus[key]), `macroDrivers.inflationEnergy.sourceStatus.${key} is not supported`);
+  }
+
+  assertPlainObject(inflationEnergy.cpi, 'macroDrivers.inflationEnergy.cpi');
+  const cpi = inflationEnergy.cpi;
+  for (const field of ['headlineIndex', 'headlineYoY', 'headlineMoM', 'coreIndex', 'coreYoY', 'coreMoM']) {
+    assert(isFiniteNumberOrNull(cpi[field]), `macroDrivers.inflationEnergy.cpi.${field} must be finite number or null`);
+  }
+  assertString(cpi.yoyWindow, 'macroDrivers.inflationEnergy.cpi.yoyWindow');
+  assert(cpi.yoyWindow === 'YoY', 'macroDrivers.inflationEnergy.cpi.yoyWindow must be YoY');
+  validateNullableIsoString(cpi.updatedAt, 'macroDrivers.inflationEnergy.cpi.updatedAt');
+  assert(cpi.source === VALID_INFLATION_CPI_SOURCE, `macroDrivers.inflationEnergy.cpi.source must be ${VALID_INFLATION_CPI_SOURCE}`);
+  assertPlainObject(cpi.seriesStatus, 'macroDrivers.inflationEnergy.cpi.seriesStatus');
+  for (const key of ['headline', 'core']) {
+    assert(Object.hasOwn(cpi.seriesStatus, key), `macroDrivers.inflationEnergy.cpi.seriesStatus.${key} is missing`);
+    assert(INFLATION_ENERGY_SOURCE_STATUSES.has(cpi.seriesStatus[key]), `macroDrivers.inflationEnergy.cpi.seriesStatus.${key} is not supported`);
+  }
+  assertString(cpi.sourceStatus, 'macroDrivers.inflationEnergy.cpi.sourceStatus');
+  assert(INFLATION_ENERGY_SOURCE_STATUSES.has(cpi.sourceStatus), 'macroDrivers.inflationEnergy.cpi.sourceStatus is not supported');
+  assert(cpi.sourceStatus === inflationEnergy.sourceStatus.cpi, 'macroDrivers.inflationEnergy.cpi.sourceStatus must match parent sourceStatus.cpi');
+
+  assertPlainObject(inflationEnergy.wti, 'macroDrivers.inflationEnergy.wti');
+  const wti = inflationEnergy.wti;
+  assert(isFiniteNumberOrNull(wti.price), 'macroDrivers.inflationEnergy.wti.price must be finite number or null');
+  assert(isFiniteNumberOrNull(wti.changePct), 'macroDrivers.inflationEnergy.wti.changePct must be finite number or null');
+  assertString(wti.changeWindow, 'macroDrivers.inflationEnergy.wti.changeWindow');
+  assert(wti.changeWindow === '5d', 'macroDrivers.inflationEnergy.wti.changeWindow must be 5d');
+  validateNullableIsoString(wti.updatedAt, 'macroDrivers.inflationEnergy.wti.updatedAt');
+  assert(wti.source === VALID_INFLATION_WTI_SOURCE, `macroDrivers.inflationEnergy.wti.source must be ${VALID_INFLATION_WTI_SOURCE}`);
+  assertString(wti.sourceStatus, 'macroDrivers.inflationEnergy.wti.sourceStatus');
+  assert(INFLATION_ENERGY_SOURCE_STATUSES.has(wti.sourceStatus), 'macroDrivers.inflationEnergy.wti.sourceStatus is not supported');
+  assert(wti.sourceStatus === inflationEnergy.sourceStatus.wti, 'macroDrivers.inflationEnergy.wti.sourceStatus must match parent sourceStatus.wti');
 }
 
 function validateNullableString(value, fieldName) {
@@ -1941,6 +1989,7 @@ validateMacroDriversCommercialRealEstate(data);
 validateMacroDriversPrivateCreditProxy(data);
 validateMacroDriversWorldEconomy(data);
 validateMacroDriversChinaEquity(data);
+validateMacroDriversInflationEnergy(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);
 validateExternalAiInterpretationLayer(data);

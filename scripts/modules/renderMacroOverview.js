@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-c6-china-equity-1';
+} from './config.js?v=stage-c1-inflation-energy-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1006,6 +1006,15 @@ function brentTone(value) {
   return 'green';
 }
 
+function cpiYoYTone(headlineYoY, coreYoY) {
+  const vals = [headlineYoY, coreYoY].filter(Number.isFinite);
+  if (!vals.length) return 'pending';
+  const max = Math.max(...vals);
+  if (max >= 0.04) return 'red';
+  if (max >= 0.03) return 'yellow';
+  return 'green';
+}
+
 function crackTone(value) {
   const n = asNumber(value);
   if (n === null) return null;
@@ -1104,6 +1113,38 @@ function renderC1InflationEnergy({ radarData }) {
     }
     if (ismRegime) {
       setLeafText('c1-ism-note', `制造业读数仍在扩张线附近，regime: ${ismRegime}。能源成本能否被需求消化仍是通胀链条的关键。`);
+    }
+
+    const inflationEnergy = radarData.macroDrivers?.inflationEnergy;
+    if (inflationEnergy) {
+      const cpiYoY = asNumber(inflationEnergy.cpi?.headlineYoY);
+      const coreYoY = asNumber(inflationEnergy.cpi?.coreYoY);
+      const cpiTone = cpiYoYTone(cpiYoY, coreYoY);
+      setIndicatorStatus('c1-cpi-status', 'c1-cpi-badge', cpiTone);
+      if (cpiYoY !== null) {
+        setLeafText('c1-cpi-number', (cpiYoY * 100).toFixed(1));
+      } else {
+        setLeafText('c1-cpi-number', '—');
+      }
+      const cpiMoM = asNumber(inflationEnergy.cpi?.headlineMoM);
+      const coreText = coreYoY !== null ? `Core ${signedFixed(coreYoY * 100, 1)}% YoY` : 'Core —';
+      const momText = cpiMoM !== null ? `MoM ${signedFixed(cpiMoM * 100, 1)}%` : 'MoM —';
+      setLeafText('c1-cpi-aux', `${coreText} · ${momText}`);
+
+      const wtiPrice = asNumber(inflationEnergy.wti?.price);
+      const wtiTone = wtiPrice === null ? 'pending' : brentTone(wtiPrice);
+      setIndicatorStatus('c1-wti-status', 'c1-wti-badge', wtiTone);
+      if (wtiPrice !== null) {
+        setLeafText('c1-wti-number', wtiPrice.toFixed(0));
+      } else {
+        setLeafText('c1-wti-number', '—');
+      }
+      const wtiChange = asNumber(inflationEnergy.wti?.changePct);
+      if (wtiChange !== null) {
+        setLeafText('c1-wti-aux', `近5日 ${signedFixed(wtiChange * 100, 2)}%`);
+      } else {
+        setLeafText('c1-wti-aux', '近5日 —');
+      }
     }
   } catch (error) {
     console.error('[renderMacroOverview] renderC1InflationEnergy failed:', error);

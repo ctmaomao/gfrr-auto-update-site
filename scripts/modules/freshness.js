@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-c6-china-equity-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-c1-inflation-energy-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

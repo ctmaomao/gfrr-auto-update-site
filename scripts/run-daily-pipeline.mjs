@@ -92,6 +92,18 @@ const CHINA_EQUITY_INDEXES = [
   { key: 'hangSeng', symbol: '^HSI', labelZh: '恒生指数', min: 8000, max: 50000 },
   { key: 'csi300', symbol: '000300.SS', labelZh: '沪深 300', min: 1000, max: 9000 }
 ];
+const INFLATION_ENERGY_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO';
+const INFLATION_CPI_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL';
+const INFLATION_WTI_SOURCE = 'FRED:DCOILWTICO';
+const INFLATION_ENERGY_DISPLAY_NOTE =
+  '通胀与能源 display-only 公开数据代理;tone 仅展示,不进 scoring/decision/execution/position。';
+const CPI_DAYS_BACK = 450;
+const CPI_YOY_GAP_DAYS = 45;
+const CPI_MOM_GAP_DAYS = 20;
+const WTI_DAYS_BACK = 30;
+const WTI_CHANGE_WINDOW = '5d';
+const WTI_CHANGE_GAP_DAYS = 7;
+const INFLATION_ENERGY_STATUS_RANK = { live: 0, fallback: 1, missing: 2 };
 const STOCKQ_INDEX_BASE = 'https://en.stockq.org/index';
 const STOCKQ_FETCH_TIMEOUT_MS = 9000;
 const EMPLOYMENT_SOURCE =
@@ -2391,6 +2403,202 @@ async function resolveChinaEquity(prevChinaEquity) {
   return next;
 }
 
+function pickInflationEnergyStatus(...statuses) {
+  let worst = 'live';
+  for (const status of statuses) {
+    const normalized = Object.hasOwn(INFLATION_ENERGY_STATUS_RANK, status) ? status : 'missing';
+    if (INFLATION_ENERGY_STATUS_RANK[normalized] > INFLATION_ENERGY_STATUS_RANK[worst]) {
+      worst = normalized;
+    }
+  }
+  return worst;
+}
+
+function buildMissingInflationCpiSeries() {
+  return {
+    index: null,
+    yoy: null,
+    mom: null,
+    updatedAt: null,
+    status: 'missing'
+  };
+}
+
+function normalizePreviousInflationCpiSeries(previous, config) {
+  if (!previous || typeof previous !== 'object') return null;
+  const index = Number.isFinite(previous[config.indexField])
+    ? +Number(previous[config.indexField]).toFixed(3)
+    : null;
+  const yoy = Number.isFinite(previous[config.yoyField])
+    ? +Number(previous[config.yoyField]).toFixed(4)
+    : null;
+  const mom = Number.isFinite(previous[config.momField])
+    ? +Number(previous[config.momField]).toFixed(4)
+    : null;
+  if (!Number.isFinite(index) && !Number.isFinite(yoy) && !Number.isFinite(mom)) return null;
+  return {
+    index,
+    yoy,
+    mom,
+    updatedAt: typeof previous.updatedAt === 'string' ? previous.updatedAt : null,
+    status: 'fallback'
+  };
+}
+
+function calculateFredRowChangeRatio(latest, candidate) {
+  if (!candidate?.ok || !Number.isFinite(latest?.value) || !Number.isFinite(candidate.row?.value) || candidate.row.value === 0) {
+    return null;
+  }
+  return +(((latest.value - candidate.row.value) / candidate.row.value)).toFixed(4);
+}
+
+function buildInflationCpiSeries(result, previous, config) {
+  if (result.status === 'fulfilled') {
+    const rows = result.value;
+    const latest = Array.isArray(rows) ? rows[rows.length - 1] : null;
+    if (Number.isFinite(latest?.value)) {
+      const yoyCandidate = findFredRowAgoWithin(rows, 365, CPI_YOY_GAP_DAYS);
+      const momCandidate = findFredRowAgoWithin(rows, 30, CPI_MOM_GAP_DAYS);
+      return {
+        index: +Number(latest.value).toFixed(3),
+        yoy: calculateFredRowChangeRatio(latest, yoyCandidate),
+        mom: calculateFredRowChangeRatio(latest, momCandidate),
+        updatedAt: latest.date ? `${latest.date}T00:00:00Z` : null,
+        status: 'live'
+      };
+    }
+  }
+
+  return normalizePreviousInflationCpiSeries(previous, config) || buildMissingInflationCpiSeries();
+}
+
+function buildMissingInflationWti() {
+  return {
+    price: null,
+    changePct: null,
+    changeWindow: WTI_CHANGE_WINDOW,
+    updatedAt: null,
+    source: INFLATION_WTI_SOURCE,
+    sourceStatus: 'missing'
+  };
+}
+
+function normalizePreviousInflationWti(previous) {
+  if (!previous || typeof previous !== 'object' || !Number.isFinite(previous.price)) return null;
+  return {
+    price: +Number(previous.price).toFixed(2),
+    changePct: Number.isFinite(previous.changePct) ? +Number(previous.changePct).toFixed(4) : null,
+    changeWindow: typeof previous.changeWindow === 'string' && previous.changeWindow.trim()
+      ? previous.changeWindow
+      : WTI_CHANGE_WINDOW,
+    updatedAt: typeof previous.updatedAt === 'string' ? previous.updatedAt : null,
+    source: typeof previous.source === 'string' && previous.source.trim()
+      ? previous.source
+      : INFLATION_WTI_SOURCE,
+    sourceStatus: 'fallback'
+  };
+}
+
+function buildInflationWti(result, previous) {
+  if (result.status === 'fulfilled') {
+    const rows = result.value;
+    const latest = Array.isArray(rows) ? rows[rows.length - 1] : null;
+    if (Number.isFinite(latest?.value)) {
+      const ago = findFredRowAgoWithin(rows, 5, WTI_CHANGE_GAP_DAYS);
+      return {
+        price: +Number(latest.value).toFixed(2),
+        changePct: calculateFredRowChangeRatio(latest, ago),
+        changeWindow: WTI_CHANGE_WINDOW,
+        updatedAt: latest.date ? `${latest.date}T00:00:00Z` : null,
+        source: INFLATION_WTI_SOURCE,
+        sourceStatus: 'live'
+      };
+    }
+  }
+
+  return normalizePreviousInflationWti(previous) || buildMissingInflationWti();
+}
+
+function buildInflationCpi(headline, core) {
+  const seriesStatus = {
+    headline: headline.status,
+    core: core.status
+  };
+  const sourceStatus = pickInflationEnergyStatus(seriesStatus.headline, seriesStatus.core);
+  return {
+    headlineIndex: headline.index,
+    headlineYoY: headline.yoy,
+    headlineMoM: headline.mom,
+    coreIndex: core.index,
+    coreYoY: core.yoy,
+    coreMoM: core.mom,
+    yoyWindow: 'YoY',
+    updatedAt: latestIsoDate(headline.updatedAt, core.updatedAt),
+    source: INFLATION_CPI_SOURCE,
+    seriesStatus,
+    sourceStatus
+  };
+}
+
+function buildMissingInflationEnergy(prevInflationEnergy = null) {
+  const headline = normalizePreviousInflationCpiSeries(prevInflationEnergy?.cpi, {
+    indexField: 'headlineIndex',
+    yoyField: 'headlineYoY',
+    momField: 'headlineMoM'
+  }) || buildMissingInflationCpiSeries();
+  const core = normalizePreviousInflationCpiSeries(prevInflationEnergy?.cpi, {
+    indexField: 'coreIndex',
+    yoyField: 'coreYoY',
+    momField: 'coreMoM'
+  }) || buildMissingInflationCpiSeries();
+  const cpi = buildInflationCpi(headline, core);
+  const wti = normalizePreviousInflationWti(prevInflationEnergy?.wti) || buildMissingInflationWti();
+  return {
+    updatedAt: latestIsoDate(cpi.updatedAt, wti.updatedAt, typeof prevInflationEnergy?.updatedAt === 'string' ? prevInflationEnergy.updatedAt : null),
+    source: INFLATION_ENERGY_SOURCE,
+    sourceStatus: {
+      cpi: cpi.sourceStatus,
+      wti: wti.sourceStatus
+    },
+    notes: INFLATION_ENERGY_DISPLAY_NOTE,
+    cpi,
+    wti
+  };
+}
+
+async function resolveInflationEnergy(prevInflationEnergy) {
+  const [headlineResult, coreResult, wtiResult] = await Promise.allSettled([
+    fetchFredSeries('CPIAUCSL', CPI_DAYS_BACK),
+    fetchFredSeries('CPILFESL', CPI_DAYS_BACK),
+    fetchFredSeries('DCOILWTICO', WTI_DAYS_BACK)
+  ]);
+
+  const headline = buildInflationCpiSeries(headlineResult, prevInflationEnergy?.cpi, {
+    indexField: 'headlineIndex',
+    yoyField: 'headlineYoY',
+    momField: 'headlineMoM'
+  });
+  const core = buildInflationCpiSeries(coreResult, prevInflationEnergy?.cpi, {
+    indexField: 'coreIndex',
+    yoyField: 'coreYoY',
+    momField: 'coreMoM'
+  });
+  const cpi = buildInflationCpi(headline, core);
+  const wti = buildInflationWti(wtiResult, prevInflationEnergy?.wti);
+
+  return {
+    updatedAt: latestIsoDate(cpi.updatedAt, wti.updatedAt),
+    source: INFLATION_ENERGY_SOURCE,
+    sourceStatus: {
+      cpi: cpi.sourceStatus,
+      wti: wti.sourceStatus
+    },
+    notes: INFLATION_ENERGY_DISPLAY_NOTE,
+    cpi,
+    wti
+  };
+}
+
 const MONTH_INDEX_BY_NAME = new Map([
   ['january', 0],
   ['february', 1],
@@ -2532,6 +2740,34 @@ function findValueAgo(rows, days) {
     }
   }
   return best;
+}
+
+function findFredRowAgoWithin(rows, targetDaysAgo, maxGapDays) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return { row: null, gapDays: null, ok: false };
+  }
+  const latest = rows[rows.length - 1];
+  const latestMs = Date.parse(`${latest?.date}T00:00:00Z`);
+  if (!Number.isFinite(latestMs)) {
+    return { row: null, gapDays: null, ok: false };
+  }
+  const targetMs = latestMs - targetDaysAgo * 24 * 3600 * 1000;
+  let best = null;
+  let bestGap = Infinity;
+  for (const r of rows) {
+    const ms = Date.parse(`${r?.date}T00:00:00Z`);
+    if (!Number.isFinite(ms) || !Number.isFinite(r?.value)) continue;
+    const gap = Math.abs(ms - targetMs) / (24 * 3600 * 1000);
+    if (gap < bestGap) {
+      bestGap = gap;
+      best = r;
+    }
+  }
+  return {
+    row: best,
+    gapDays: Number.isFinite(bestGap) ? bestGap : null,
+    ok: best !== null && bestGap <= maxGapDays
+  };
 }
 
 function trimDiagnosticString(value, maxLength = 200) {
@@ -5849,7 +6085,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveCommercialRealEstate(prevMd.commercialRealEstate),
     resolvePrivateCreditProxy(prevMd.privateCreditProxy, hyOasLive),
     resolveWorldEconomy(prevMd.worldEconomy),
-    resolveChinaEquity(prevMd.chinaEquity)
+    resolveChinaEquity(prevMd.chinaEquity),
+    resolveInflationEnergy(prevMd.inflationEnergy)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -5893,6 +6130,7 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   const privateCreditProxy = results[9].status === 'fulfilled' ? results[9].value : buildMissingPrivateCreditProxy();
   const worldEconomy = results[10].status === 'fulfilled' ? results[10].value : buildMissingWorldEconomy(prevMd.worldEconomy);
   const chinaEquity = results[11].status === 'fulfilled' ? results[11].value : buildMissingChinaEquity(prevMd.chinaEquity);
+  const inflationEnergy = results[12].status === 'fulfilled' ? results[12].value : buildMissingInflationEnergy(prevMd.inflationEnergy);
 
   return {
     fedLiquidity,
@@ -5906,7 +6144,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     commercialRealEstate,
     privateCreditProxy,
     worldEconomy,
-    chinaEquity
+    chinaEquity,
+    inflationEnergy
   };
 }
 
@@ -6656,6 +6895,7 @@ async function build() {
       privateCreditProxy: macroDrivers.privateCreditProxy,
       worldEconomy: macroDrivers.worldEconomy,
       chinaEquity: macroDrivers.chinaEquity,
+      inflationEnergy: macroDrivers.inflationEnergy,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,
