@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-c5-world-economy-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-c6-china-equity-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

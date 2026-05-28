@@ -83,6 +83,15 @@ const WORLD_ECONOMY_INDEXES = [
   { key: 'nikkei225', symbol: '^N225', labelZh: '日经 225', min: 10000, max: 100000 },
   { key: 'dax', symbol: '^GDAXI', labelZh: '德国 DAX', min: 5000, max: 60000 }
 ];
+const CHINA_EQUITY_SOURCE = 'Yahoo:000001.SS; Yahoo:^HSI; Yahoo:000300.SS';
+const CHINA_EQUITY_CHANGE_WINDOW = '5d';
+const CHINA_EQUITY_DISPLAY_NOTE =
+  '中国股指 display-only 公开指数代理;不进 scoring/decision/execution/position。';
+const CHINA_EQUITY_INDEXES = [
+  { key: 'sseComposite', symbol: '000001.SS', labelZh: '上证综指', min: 1000, max: 8000 },
+  { key: 'hangSeng', symbol: '^HSI', labelZh: '恒生指数', min: 8000, max: 50000 },
+  { key: 'csi300', symbol: '000300.SS', labelZh: '沪深 300', min: 1000, max: 9000 }
+];
 const STOCKQ_INDEX_BASE = 'https://en.stockq.org/index';
 const STOCKQ_FETCH_TIMEOUT_MS = 9000;
 const EMPLOYMENT_SOURCE =
@@ -2180,7 +2189,9 @@ async function fetchYahooChartQuote(symbol, range = '1mo', interval = '1d') {
   const latest = points[points.length - 1] || null;
   if (!latest) throw new Error(`yahoo:${symbol} missing close values`);
   const first = points[0] || null;
-  const changePct = first && first.value !== 0 ? +(((latest.value - first.value) / first.value)).toFixed(4) : null;
+  const changePct = points.length >= 2 && first.value !== 0
+    ? +(((latest.value - first.value) / first.value)).toFixed(4)
+    : null;
   return {
     symbol,
     price: +latest.value.toFixed(4),
@@ -2282,6 +2293,101 @@ async function resolveWorldEconomy(prevWorldEconomy) {
   });
 
   next.updatedAt = latestIsoDate(...WORLD_ECONOMY_INDEXES.map((config) => next[config.key]?.updatedAt));
+  return next;
+}
+
+function buildMissingChinaEquityIndex(config) {
+  return {
+    symbol: config.symbol,
+    labelZh: config.labelZh,
+    price: null,
+    changePct: null,
+    changeWindow: CHINA_EQUITY_CHANGE_WINDOW,
+    updatedAt: null,
+    source: `Yahoo:${config.symbol}`,
+    sourceStatus: 'missing'
+  };
+}
+
+function normalizePreviousChinaEquityIndex(previous, config) {
+  if (!previous || typeof previous !== 'object' || !Number.isFinite(previous.price)) {
+    return null;
+  }
+  return {
+    symbol: config.symbol,
+    labelZh: config.labelZh,
+    price: +Number(previous.price).toFixed(4),
+    changePct: Number.isFinite(previous.changePct) ? +Number(previous.changePct).toFixed(4) : null,
+    changeWindow: typeof previous.changeWindow === 'string' && previous.changeWindow.trim()
+      ? previous.changeWindow
+      : CHINA_EQUITY_CHANGE_WINDOW,
+    updatedAt: typeof previous.updatedAt === 'string' ? previous.updatedAt : null,
+    source: typeof previous.source === 'string' && previous.source.trim()
+      ? previous.source
+      : `Yahoo:${config.symbol}`,
+    sourceStatus: 'fallback'
+  };
+}
+
+function buildMissingChinaEquity(prevChinaEquity = null) {
+  const next = {
+    updatedAt: typeof prevChinaEquity?.updatedAt === 'string' ? prevChinaEquity.updatedAt : null,
+    source: CHINA_EQUITY_SOURCE,
+    sourceStatus: {},
+    notes: CHINA_EQUITY_DISPLAY_NOTE
+  };
+
+  for (const config of CHINA_EQUITY_INDEXES) {
+    const fallback = normalizePreviousChinaEquityIndex(prevChinaEquity?.[config.key], config);
+    next[config.key] = fallback || buildMissingChinaEquityIndex(config);
+    next.sourceStatus[config.key] = fallback ? 'fallback' : 'missing';
+  }
+
+  next.updatedAt = latestIsoDate(...CHINA_EQUITY_INDEXES.map((config) => next[config.key]?.updatedAt), next.updatedAt);
+  return next;
+}
+
+function isPlausibleChinaEquityQuote(quote, config) {
+  return Number.isFinite(quote?.price)
+    && quote.price >= config.min
+    && quote.price <= config.max;
+}
+
+async function resolveChinaEquity(prevChinaEquity) {
+  const results = await Promise.allSettled(
+    CHINA_EQUITY_INDEXES.map((config) => fetchYahooChartQuote(config.symbol, CHINA_EQUITY_CHANGE_WINDOW, '1d'))
+  );
+
+  const next = {
+    updatedAt: null,
+    source: CHINA_EQUITY_SOURCE,
+    sourceStatus: {},
+    notes: CHINA_EQUITY_DISPLAY_NOTE
+  };
+
+  CHINA_EQUITY_INDEXES.forEach((config, index) => {
+    const result = results[index];
+    if (result.status === 'fulfilled' && isPlausibleChinaEquityQuote(result.value, config)) {
+      next[config.key] = {
+        symbol: config.symbol,
+        labelZh: config.labelZh,
+        price: result.value.price,
+        changePct: Number.isFinite(result.value.changePct) ? result.value.changePct : null,
+        changeWindow: CHINA_EQUITY_CHANGE_WINDOW,
+        updatedAt: result.value.updatedAt,
+        source: result.value.source,
+        sourceStatus: 'live'
+      };
+      next.sourceStatus[config.key] = 'live';
+      return;
+    }
+
+    const fallback = normalizePreviousChinaEquityIndex(prevChinaEquity?.[config.key], config);
+    next[config.key] = fallback || buildMissingChinaEquityIndex(config);
+    next.sourceStatus[config.key] = fallback ? 'fallback' : 'missing';
+  });
+
+  next.updatedAt = latestIsoDate(...CHINA_EQUITY_INDEXES.map((config) => next[config.key]?.updatedAt));
   return next;
 }
 
@@ -5742,7 +5848,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveConsumerRetail(prevMd.consumerRetail),
     resolveCommercialRealEstate(prevMd.commercialRealEstate),
     resolvePrivateCreditProxy(prevMd.privateCreditProxy, hyOasLive),
-    resolveWorldEconomy(prevMd.worldEconomy)
+    resolveWorldEconomy(prevMd.worldEconomy),
+    resolveChinaEquity(prevMd.chinaEquity)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -5785,6 +5892,7 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   const commercialRealEstate = results[8].status === 'fulfilled' ? results[8].value : buildMissingCommercialRealEstate();
   const privateCreditProxy = results[9].status === 'fulfilled' ? results[9].value : buildMissingPrivateCreditProxy();
   const worldEconomy = results[10].status === 'fulfilled' ? results[10].value : buildMissingWorldEconomy(prevMd.worldEconomy);
+  const chinaEquity = results[11].status === 'fulfilled' ? results[11].value : buildMissingChinaEquity(prevMd.chinaEquity);
 
   return {
     fedLiquidity,
@@ -5797,7 +5905,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     consumerRetail,
     commercialRealEstate,
     privateCreditProxy,
-    worldEconomy
+    worldEconomy,
+    chinaEquity
   };
 }
 
@@ -6546,6 +6655,7 @@ async function build() {
       commercialRealEstate: macroDrivers.commercialRealEstate,
       privateCreditProxy: macroDrivers.privateCreditProxy,
       worldEconomy: macroDrivers.worldEconomy,
+      chinaEquity: macroDrivers.chinaEquity,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

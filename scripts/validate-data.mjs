@@ -98,6 +98,9 @@ const VALID_PRIVATE_CREDIT_PROXY_REGIMES = new Set(['压力上升', '观察', '�
 const WORLD_ECONOMY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_WORLD_ECONOMY_SOURCE = 'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI';
 const WORLD_ECONOMY_KEYS = ['stoxx50', 'nikkei225', 'dax'];
+const CHINA_EQUITY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_CHINA_EQUITY_SOURCE = 'Yahoo:000001.SS; Yahoo:^HSI; Yahoo:000300.SS';
+const CHINA_EQUITY_KEYS = ['sseComposite', 'hangSeng', 'csi300'];
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
@@ -930,6 +933,33 @@ function validateMacroDriversWorldEconomy(dataPayload) {
     assertString(item.source, `macroDrivers.worldEconomy.${key}.source`);
     assertString(item.sourceStatus, `macroDrivers.worldEconomy.${key}.sourceStatus`);
     assert(WORLD_ECONOMY_SOURCE_STATUSES.has(item.sourceStatus), `macroDrivers.worldEconomy.${key}.sourceStatus is not supported`);
+  }
+}
+
+function validateMacroDriversChinaEquity(dataPayload) {
+  const chinaEquity = dataPayload?.macroDrivers?.chinaEquity;
+  if (chinaEquity === undefined) return;
+  assertPlainObject(chinaEquity, 'macroDrivers.chinaEquity');
+  validateNullableIsoString(chinaEquity.updatedAt, 'macroDrivers.chinaEquity.updatedAt');
+  assert(chinaEquity.source === VALID_CHINA_EQUITY_SOURCE, `macroDrivers.chinaEquity.source must be ${VALID_CHINA_EQUITY_SOURCE}`);
+  assertString(chinaEquity.notes, 'macroDrivers.chinaEquity.notes');
+  assertPlainObject(chinaEquity.sourceStatus, 'macroDrivers.chinaEquity.sourceStatus');
+
+  for (const key of CHINA_EQUITY_KEYS) {
+    assert(Object.hasOwn(chinaEquity.sourceStatus, key), `macroDrivers.chinaEquity.sourceStatus.${key} is missing`);
+    assert(CHINA_EQUITY_SOURCE_STATUSES.has(chinaEquity.sourceStatus[key]), `macroDrivers.chinaEquity.sourceStatus.${key} is not supported`);
+    assert(Object.hasOwn(chinaEquity, key), `macroDrivers.chinaEquity.${key} is missing`);
+    const item = chinaEquity[key];
+    assertPlainObject(item, `macroDrivers.chinaEquity.${key}`);
+    assertString(item.symbol, `macroDrivers.chinaEquity.${key}.symbol`);
+    assertString(item.labelZh, `macroDrivers.chinaEquity.${key}.labelZh`);
+    assert(isFiniteNumberOrNull(item.price), `macroDrivers.chinaEquity.${key}.price must be finite number or null`);
+    assert(isFiniteNumberOrNull(item.changePct), `macroDrivers.chinaEquity.${key}.changePct must be finite number or null`);
+    assertString(item.changeWindow, `macroDrivers.chinaEquity.${key}.changeWindow`);
+    validateNullableIsoString(item.updatedAt, `macroDrivers.chinaEquity.${key}.updatedAt`);
+    assertString(item.source, `macroDrivers.chinaEquity.${key}.source`);
+    assertString(item.sourceStatus, `macroDrivers.chinaEquity.${key}.sourceStatus`);
+    assert(CHINA_EQUITY_SOURCE_STATUSES.has(item.sourceStatus), `macroDrivers.chinaEquity.${key}.sourceStatus is not supported`);
   }
 }
 
@@ -1910,6 +1940,7 @@ validateMacroDriversConsumerRetail(data);
 validateMacroDriversCommercialRealEstate(data);
 validateMacroDriversPrivateCreditProxy(data);
 validateMacroDriversWorldEconomy(data);
+validateMacroDriversChinaEquity(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);
 validateExternalAiInterpretationLayer(data);

@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-c5-world-economy-1';
+} from './config.js?v=stage-c6-china-equity-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1466,6 +1466,46 @@ function renderC5WorldEconomy({ radarData }) {
   }
 }
 
+function renderC6ChinaEquity({ radarData }) {
+  try {
+    if (!radarData) return;
+    const chinaEquity = radarData.macroDrivers?.chinaEquity;
+    if (!chinaEquity) return;
+
+    const cards = [
+      { key: 'sseComposite', prefix: 'c6-sse' },
+      { key: 'hangSeng', prefix: 'c6-hsi' },
+      { key: 'csi300', prefix: 'c6-csi300' }
+    ];
+
+    cards.forEach(({ key, prefix }) => {
+      const item = chinaEquity[key];
+      const price = asNumber(item?.price);
+      const changePct = asNumber(item?.changePct);
+      const status = item?.sourceStatus || chinaEquity.sourceStatus?.[key] || 'missing';
+
+      setToneClass(`${prefix}-status`, 'status-bar', 'neutral');
+      setBadge(`${prefix}-badge`, 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
+
+      if (price !== null) {
+        setLeafText(`${prefix}-number`, price.toFixed(0));
+      } else {
+        setLeafText(`${prefix}-number`, '—');
+      }
+
+      if (changePct !== null) {
+        const pctText = signedFixed(changePct * 100, 2);
+        const suffix = status === 'fallback' ? ' · 回退' : '';
+        setLeafText(`${prefix}-aux`, `近5日 ${pctText}%${suffix}`);
+      } else {
+        setLeafText(`${prefix}-aux`, status === 'fallback' ? '近5日 — · 回退' : '近5日 —');
+      }
+    });
+  } catch (error) {
+    console.error('[renderMacroOverview] renderC6ChinaEquity failed:', error);
+  }
+}
+
 function findByField(items, fieldName, expectedValue) {
   if (!Array.isArray(items)) return null;
   return items.find((item) => item && item[fieldName] === expectedValue) || null;
@@ -1956,6 +1996,7 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   renderC3CreditCorporate({ radarData });
   renderC4UsEconomyTemperature({ radarData });
   renderC5WorldEconomy({ radarData });
+  renderC6ChinaEquity({ radarData });
 
   // Stage 5d-1: detail-data + world-order-stress appendix narratives
   renderDetailData({ radarData });
