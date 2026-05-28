@@ -50,35 +50,8 @@ jobs:
           cache: npm
           package-manager-cache: false
 
-      - name: Check JavaScript syntax
-        run: npm run check:syntax
-
-      - name: Check DOM mount IDs
-        run: npm run check:dom
-
-      - name: Check module imports
-        run: npm run check:modules
-
-      - name: Check user-facing copy contract
-        run: npm run check:copy
-
-      - name: Check Node runtime baseline
-        run: npm run check:node-runtime
-
-      - name: Check workflow contract
-        run: npm run check:workflows
-
-      - name: Check documentation links
-        run: npm run check:docs
-
-      - name: Check homepage IA contract
-        run: npm run check:homepage-ia-contract
-
-      - name: Check editorial redesign contract
-        run: npm run check:editorial-redesign-contract
-
-      - name: Validate data contract
-        run: npm run check:data
+      - name: Run full check suite
+        run: npm run check:all
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
