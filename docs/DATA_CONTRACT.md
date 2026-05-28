@@ -915,7 +915,7 @@ Boundaries:
 
 ### Frontend asset cache version
 
-v28.0M-95 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+vstage-wo-overlay-history-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
 当前前端资源版本为：
 
@@ -925,8 +925,8 @@ v28.0M-95 Frontend Asset Cache Busting 只定义前端静态资源版本契约�
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=28.0M-95`。
-- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=28.0M-95`。
+- `index.html` 入口 module script 必须指向 `app.js?v=stage-wo-overlay-history-1`。
+- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=stage-wo-overlay-history-1`。
 - `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-92AV"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
@@ -934,11 +934,11 @@ v28.0M-95 Frontend Asset Cache Busting 只定义前端静态资源版本契约�
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs 28.0M-95
-npm run bump:frontend-asset-version -- 28.0M-95
+node scripts/bump-frontend-asset-version.mjs stage-wo-overlay-history-1
+npm run bump:frontend-asset-version -- stage-wo-overlay-history-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `28.0M-95`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `stage-wo-overlay-history-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
@@ -1598,6 +1598,30 @@ Daily history 新记录可保存轻量传导网络快照：
 ```
 
 `transmissionSnapshot` 用于下一次 Daily 构建计算节点级 `delta`。它不用于直接渲染页面主值，不参与评分，不参与决策。旧历史记录没有 `transmissionSnapshot` 时必须保持兼容，不能视为数据错误。
+
+### World Order Stress history overlay snapshot
+
+Daily history records may optionally include a `worldOrderStress` nested object on both `data/radar-history.json` and `data/radar-history-full.json`.
+
+```json
+"worldOrderStress": {
+  "score": 72,
+  "state": "multi_theater_stress",
+  "labelZh": "多战区压力期",
+  "observedAt": "2026-05-27T23:59:04.613Z",
+  "confidence": 1,
+  "freshness": "fresh"
+}
+```
+
+Contract:
+
+- `observedAt` is copied from `data/world-order-stress.json.updatedAt`; it is not the Daily snapshot date.
+- The field is optional for old records and must remain backward compatible.
+- The field is history/display-only. It does not enter scoring, `decisionModel`, `executionLock`, `positionGuidance`, Action Queue, Trigger Monitor, Invalidation Rules, Worker runtime, `displayInputsBaseline`, or `effectiveDisplayInputs`.
+- No backfill is allowed. Historical records before this stage remain unchanged.
+- Daily reruns on the same date must not erase an existing same-day `worldOrderStress` object if the current World Order file is missing or invalid.
+- Frontend overlay trend rendering must treat insufficient history and stale observedAt separately: insufficient history may render a current-value reference line; stale tail rendering must preserve accumulated real history and only extend the tail horizontally.
 
 边界规则：
 

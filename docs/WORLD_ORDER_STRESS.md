@@ -102,6 +102,14 @@ sanitizer 读取 `manual-artifacts/world-order/acled-input/weekly/` 下的本地
 
 `npm run check:all` 已集成该检查：check:all includes check:world-order。正常 CI / 本地检查会验证 world-order-stress 数据产物，但不会自动刷新外部数据。
 
+### 当前自动刷新与 history 交互
+
+当前仓库已经存在 `refresh-world-order-stress.yml` daily workflow (`0 23 * * *`)。它会运行 `npm run build:world-order` 并提交 `data/world-order-stress.json`; build step 使用 `continue-on-error: true`。`build-daily-radar-data.yml` 在 `30 22 * * *` 先运行，写入 `data/radar-data.json`、`data/radar-history.json` 与 `data/radar-history-full.json`。
+
+因此 Daily history 注入 World Order overlay 时，读取到的通常是上一轮已经提交的 `data/world-order-stress.json`，而不是 23:00 当轮尚未生成的文件。history snapshot 必须记录 `worldOrderStress.observedAt = data/world-order-stress.json.updatedAt`，并由前端用 observedAt 判断 insufficient history 与 stale tail。
+
+Overlay history accumulation 只用于 `#macro-risk-overview` 的趋势展示。它不改变 World Order scoring，不改变六大风险模块评分，不接入 `decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。旧 history 不 backfill。
+
 ## v28.0H-4 手动刷新与工作流准备
 
 当前 World Order Stress 使用手动刷新，不自动刷新，不新增 scheduled workflow。scheduled refresh 后续再评估，因为 GDELT 仍可能 timeout / 429，外部源刷新频率不应过高，先观察手动刷新稳定性。

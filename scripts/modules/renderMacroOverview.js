@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=28.0M-95';
+} from './config.js?v=stage-wo-overlay-history-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -413,6 +413,146 @@ function pickEightWeeklyPoints(history) {
   return points;
 }
 
+const WO_HISTORY_MIN_VALID_POINTS = 5;
+const WO_HISTORY_STALE_DAYS = 14;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function parseObservedAtMs(value) {
+  const text = textValue(value);
+  if (!text) return null;
+  const ms = Date.parse(text);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+function normalizeOverlayHistoryPoint(historyItem) {
+  const wo = historyItem?.worldOrderStress;
+  const score = asNumber(wo?.score);
+  const observedAt = textValue(wo?.observedAt);
+  const observedAtMs = parseObservedAtMs(observedAt);
+  if (score === null || !observedAt || observedAtMs === null) {
+    return {
+      date: historyItem?.date || null,
+      valid: false
+    };
+  }
+  return {
+    date: historyItem?.date || null,
+    valid: true,
+    score,
+    state: textValue(wo?.state),
+    labelZh: textValue(wo?.labelZh),
+    observedAt,
+    observedAtMs,
+    freshness: textValue(wo?.freshness)
+  };
+}
+
+function pickEightWeeklyOverlay(history) {
+  const weekly = pickEightWeeklyPoints(history);
+  if (weekly.length !== 8) return [];
+  return weekly.map((item) => normalizeOverlayHistoryPoint(item));
+}
+
+function analyzeOverlayHistory(overlayWeekly, nowMs = Date.now()) {
+  const validPoints = overlayWeekly.filter((point) => point.valid);
+  const observedAtSet = new Set(validPoints.map((point) => point.observedAt));
+  const latestPoint = validPoints.reduce((latest, point) => {
+    if (!latest || point.observedAtMs > latest.observedAtMs) return point;
+    return latest;
+  }, null);
+  const latestObservedAtAgeDays = latestPoint
+    ? Math.max(0, (nowMs - latestPoint.observedAtMs) / DAY_MS)
+    : null;
+  const fullFallback = validPoints.length < WO_HISTORY_MIN_VALID_POINTS || observedAtSet.size < 2;
+  const staleTail = !fullFallback && latestObservedAtAgeDays !== null && latestObservedAtAgeDays > WO_HISTORY_STALE_DAYS;
+  return {
+    validWoPoints: validPoints.length,
+    uniqueObservedAt: observedAtSet.size,
+    latestObservedAt: latestPoint?.observedAt || null,
+    latestObservedAtAgeDays,
+    fullFallback,
+    staleTail
+  };
+}
+
+function staleTailStartIndex(overlayWeekly, latestObservedAt) {
+  if (!latestObservedAt) return -1;
+  let index = -1;
+  for (let i = overlayWeekly.length - 1; i >= 0; i -= 1) {
+    if (overlayWeekly[i]?.valid && overlayWeekly[i].observedAt === latestObservedAt) {
+      index = i;
+      break;
+    }
+  }
+  if (index < 0) return -1;
+  while (index > 0 && overlayWeekly[index - 1]?.valid && overlayWeekly[index - 1].observedAt === latestObservedAt) {
+    index -= 1;
+  }
+  return index;
+}
+
+function buildOverlayTrendPoints(overlayWeekly, fallbackScore, analysis) {
+  const fallbackY = trendY(fallbackScore);
+  if (fallbackY === null) return null;
+  if (analysis.fullFallback || overlayWeekly.length !== TREND_X.length) {
+    return {
+      mode: 'fallback',
+      points: TREND_X.map((x) => pointPair(x, fallbackY)),
+      lastY: fallbackY
+    };
+  }
+
+  const tailStart = analysis.staleTail ? staleTailStartIndex(overlayWeekly, analysis.latestObservedAt) : -1;
+  let lastY = fallbackY;
+  const points = overlayWeekly.map((point, index) => {
+    const shouldExtendTail = analysis.staleTail && tailStart >= 0 && index > tailStart;
+    if (!shouldExtendTail && point.valid) {
+      const y = trendY(point.score);
+      if (y !== null) lastY = y;
+    }
+    return pointPair(TREND_X[index], lastY);
+  });
+
+  return {
+    mode: analysis.staleTail ? 'stale-tail' : 'history',
+    points,
+    lastY
+  };
+}
+
+function overlayStatusSuffix(mode) {
+  if (mode === 'fallback') return '参考线';
+  if (mode === 'stale-tail') return '尾部滞后';
+  return '';
+}
+
+function renderOverlayTrendStatus({ mode, radarData, worldOrderStressData, analysis }) {
+  const suffix = overlayStatusSuffix(mode);
+  const mainScore = asNumber(radarData?.score);
+  const woScore = asNumber(worldOrderStressData?.score);
+  const woLabel = textValue(worldOrderStressData?.labelZh);
+  const mainText = mainScore === null ? '—' : String(Math.round(mainScore));
+  const scoreText = woScore === null ? '—' : String(Math.round(woScore));
+  const labelText = woLabel ? `(${woLabel})` : '';
+  const suffixText = suffix ? ` · overlay ${suffix}` : '';
+  const nowEl = $('threshold-now-line');
+  if (nowEl) {
+    nowEl.textContent = `原始 ${mainText}(高风险预警) · overlay ${scoreText}${labelText}${suffixText}`;
+  }
+  const marker = $('threshold-marker-override');
+  const labelSpan = marker?.querySelector('.marker-label');
+  if (labelSpan) {
+    labelSpan.textContent = suffix ? `overlay ${scoreText} (${suffix})` : `overlay ${scoreText}`;
+  }
+  const overlayLine = $('trend-line-overlay');
+  if (overlayLine) {
+    const detail = mode === 'stale-tail' && analysis.latestObservedAtAgeDays !== null
+      ? `latest observedAt age ${analysis.latestObservedAtAgeDays.toFixed(1)} days`
+      : `${analysis.validWoPoints} valid points, ${analysis.uniqueObservedAt} unique observedAt`;
+    overlayLine.setAttribute('aria-label', `World Order overlay trend ${mode}; ${detail}`);
+  }
+}
+
 function latestQqqZ(marketPricingMetricsData) {
   const qqq = latestRecord(marketPricingMetricsData?.assets?.qqq?.records);
   return asNumber(qqq?.zScore);
@@ -534,7 +674,7 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
 
 // ---------- Block 4: Trend SVG ----------
 
-function renderTrendSvg({ radarHistoryData, worldOrderStressData }) {
+function renderTrendSvg({ radarData, radarHistoryData, worldOrderStressData }) {
   try {
     const weekly = pickEightWeeklyPoints(radarHistoryData);
     if (weekly.length !== 8) return;
@@ -554,16 +694,23 @@ function renderTrendSvg({ radarHistoryData, worldOrderStressData }) {
 
     const overlayScore = asNumber(worldOrderStressData?.score);
     if (overlayScore === null) return;
-    const overlayY = trendY(overlayScore);
-    if (overlayY === null) return;
-    const overlayPoints = TREND_X.map((x) => pointPair(x, overlayY));
+    const overlayWeekly = pickEightWeeklyOverlay(radarHistoryData);
+    const analysis = analyzeOverlayHistory(overlayWeekly);
+    const overlayTrend = buildOverlayTrendPoints(overlayWeekly, overlayScore, analysis);
+    if (!overlayTrend) return;
     const overlayLine = $('trend-line-overlay');
-    if (overlayLine) overlayLine.setAttribute('points', overlayPoints.join(' '));
+    if (overlayLine) overlayLine.setAttribute('points', overlayTrend.points.join(' '));
     const overlayDot = $('trend-dot-overlay');
     if (overlayDot) {
       overlayDot.setAttribute('cx', String(TREND_X[TREND_X.length - 1]));
-      overlayDot.setAttribute('cy', Number(overlayY.toFixed(2)).toString());
+      overlayDot.setAttribute('cy', Number(overlayTrend.lastY.toFixed(2)).toString());
     }
+    renderOverlayTrendStatus({
+      mode: overlayTrend.mode,
+      radarData,
+      worldOrderStressData,
+      analysis
+    });
   } catch (error) {
     console.error('[renderMacroOverview] renderTrendSvg failed:', error);
   }
@@ -1751,7 +1898,7 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   renderWowSection({ radarData, worldOrderStressData });
 
   // Stage 4b-2: trend SVG + signal-layers + macro-drivers + cross-validation
-  renderTrendSvg({ radarHistoryData, worldOrderStressData });
+  renderTrendSvg({ radarData, radarHistoryData, worldOrderStressData });
   renderSignalLayers({ radarData, worldOrderStressData, marketPricingMetricsData });
   renderMacroDriversPillars({ radarData });
   renderCrossValidation({ radarData, worldOrderStressData, marketPricingMetricsData });

@@ -15,6 +15,7 @@ const dataDir = path.join(root, 'data');
 const dataPath = path.join(dataDir, 'radar-data.json');
 const histPath = path.join(dataDir, 'radar-history.json');
 const histFullPath = path.join(dataDir, 'radar-history-full.json');
+const worldOrderPath = path.join(dataDir, 'world-order-stress.json');
 const rtPath = path.join(root, 'realtime', 'market.json');
 
 const clamp = (n, min = 0, max = 100) => Math.max(min, Math.min(max, Math.round(n)));
@@ -118,6 +119,39 @@ const FUTURES_MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', '
 
 function readJson(file, fallback = null) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
+}
+
+function finiteNumberOrNull(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function textOrNull(value) {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  return text.length ? text : null;
+}
+
+function normalizeWorldOrderStressHistorySnapshot(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+  const score = finiteNumberOrNull(payload.score);
+  const confidence = finiteNumberOrNull(payload.confidence);
+  const observedAt = textOrNull(payload.updatedAt);
+  const state = textOrNull(payload.state);
+  const labelZh = textOrNull(payload.labelZh);
+  const freshness = textOrNull(payload.freshness);
+  if (score === null || score < 0 || score > 100) return null;
+  if (confidence === null || confidence < 0 || confidence > 1) return null;
+  if (!observedAt || Number.isNaN(Date.parse(observedAt))) return null;
+  if (!state || !labelZh || !freshness) return null;
+  return {
+    score,
+    state,
+    labelZh,
+    observedAt,
+    confidence,
+    freshness
+  };
 }
 
 const DAILY_REALTIME_AUDIT_SOURCE = 'origin/realtime-data:realtime/market.json';
@@ -227,6 +261,7 @@ function runDailyRealtimeInputAudit(realtimePayload) {
 const prevData = readJson(dataPath, {});
 const prevHistory = readJson(histPath, []);
 const prevHistoryFull = readJson(histFullPath, []);
+const worldOrderStressHistorySnapshot = normalizeWorldOrderStressHistorySnapshot(readJson(worldOrderPath, null));
 const realtime = readJson(rtPath, null);
 if (IS_MAIN) runDailyRealtimeInputAudit(realtime);
 
@@ -6132,26 +6167,40 @@ function applyTransmissionDeltas(chain, previousSource) {
   };
 }
 
-function appendHistory(prev, score, transmissionSnapshot = null) {
+function mergeWorldOrderStress(entry, worldOrderStress, previousEntry = null) {
+  if (worldOrderStress) return { ...entry, worldOrderStress };
+  if (previousEntry?.worldOrderStress) return { ...entry, worldOrderStress: previousEntry.worldOrderStress };
+  return entry;
+}
+
+function appendHistory(prev, score, transmissionSnapshot = null, worldOrderStress = null) {
   const today = isoNow.slice(0, 10);
   const history = Array.isArray(prev) ? [...prev] : [];
   if (history.length && history[history.length - 1].date === today) {
-    history[history.length - 1].score = score;
-    if (transmissionSnapshot) history[history.length - 1].transmissionSnapshot = transmissionSnapshot;
+    const previousEntry = history[history.length - 1];
+    const nextEntry = {
+      ...previousEntry,
+      date: today,
+      score
+    };
+    if (transmissionSnapshot) nextEntry.transmissionSnapshot = transmissionSnapshot;
+    history[history.length - 1] = mergeWorldOrderStress(nextEntry, worldOrderStress, previousEntry);
   } else {
-    history.push({
+    const entry = mergeWorldOrderStress({
       date: today,
       score,
       ...(transmissionSnapshot ? { transmissionSnapshot } : {})
-    });
+    }, worldOrderStress);
+    history.push(entry);
   }
   return history.slice(-90);
 }
 
-function appendHistoryFull(prevFull, risk, lock, macro, macroDrivers, transmissionSnapshot = null) {
+function appendHistoryFull(prevFull, risk, lock, macro, macroDrivers, transmissionSnapshot = null, worldOrderStress = null) {
   const today = isoNow.slice(0, 10);
   const full = Array.isArray(prevFull) ? [...prevFull] : [];
-  const entry = {
+  const previousEntry = full.length && full[full.length - 1].date === today ? full[full.length - 1] : null;
+  const entry = mergeWorldOrderStress({
     date: today,
     score: risk.score,
     lock: lock.level,
@@ -6168,8 +6217,8 @@ function appendHistoryFull(prevFull, risk, lock, macro, macroDrivers, transmissi
     walcl: macroDrivers?.fedLiquidity?.walcl ?? null,
     onRrp: macroDrivers?.fedLiquidity?.onRrp ?? null,
     ...(transmissionSnapshot ? { transmissionSnapshot } : {})
-  };
-  if (full.length && full[full.length - 1].date === today) {
+  }, worldOrderStress, previousEntry);
+  if (previousEntry) {
     full[full.length - 1] = entry;
   } else {
     full.push(entry);
@@ -6230,7 +6279,7 @@ async function build() {
   const previousTransmissionSource = resolvePreviousTransmissionSource(prevData, prevHistoryFull, prevHistory);
   const transmissionDeltaResult = applyTransmissionDeltas(prevData.transmissionChain || {}, previousTransmissionSource);
   const transmissionSnapshot = buildTransmissionSnapshot(transmissionDeltaResult.chain);
-  const history = appendHistory(prevHistory, risk.score, transmissionSnapshot);
+  const history = appendHistory(prevHistory, risk.score, transmissionSnapshot, worldOrderStressHistorySnapshot);
   const scoreChange1d = history.length >= 2 ? risk.score - history[history.length - 2].score : 0;
   const scoreChange7d = history.length >= 8 ? risk.score - history[history.length - 8].score : 0;
   const scoreChange30d = history.length >= 30 ? risk.score - history[Math.max(0, history.length - 30)].score : scoreChange7d;
@@ -6695,7 +6744,7 @@ async function build() {
   data.aiInterpretationLayer = buildAiInterpretationLayer(data);
   preserveExternalAiInterpretationLayer(data);
 
-  const historyFull = appendHistoryFull(prevHistoryFull, risk, lock, macro, macroDrivers, transmissionSnapshot);
+  const historyFull = appendHistoryFull(prevHistoryFull, risk, lock, macro, macroDrivers, transmissionSnapshot, worldOrderStressHistorySnapshot);
 
   return { data, history, historyFull };
 }

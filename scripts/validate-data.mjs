@@ -1833,11 +1833,33 @@ function validateTransmissionSnapshotHistory(historyPayload, fieldName) {
   });
 }
 
+function validateWorldOrderStressHistory(historyPayload, fieldName) {
+  if (historyPayload === null || historyPayload === undefined) return;
+  assertArray(historyPayload, fieldName);
+  historyPayload.forEach((entry, entryIndex) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry) || entry.worldOrderStress === undefined) return;
+    const snapshot = entry.worldOrderStress;
+    const snapshotField = `${fieldName}[${entryIndex}].worldOrderStress`;
+    assertPlainObject(snapshot, snapshotField);
+    assertFiniteNumber(snapshot.score, `${snapshotField}.score`);
+    assert(snapshot.score >= 0 && snapshot.score <= 100, `${snapshotField}.score must be between 0 and 100`);
+    assertString(snapshot.state, `${snapshotField}.state`);
+    assertString(snapshot.labelZh, `${snapshotField}.labelZh`);
+    assertString(snapshot.observedAt, `${snapshotField}.observedAt`);
+    assert(!Number.isNaN(Date.parse(snapshot.observedAt)), `${snapshotField}.observedAt must be parseable ISO time`);
+    assertFiniteNumber(snapshot.confidence, `${snapshotField}.confidence`);
+    assert(snapshot.confidence >= 0 && snapshot.confidence <= 1, `${snapshotField}.confidence must be between 0 and 1`);
+    assertString(snapshot.freshness, `${snapshotField}.freshness`);
+  });
+}
+
 function validateTransmissionDeltaContract(dataPayload, historyPayload, historyFullPayload) {
   validateTransmissionChainDeltas(dataPayload);
   validateTransmissionDeltaMeta(dataPayload);
   validateTransmissionSnapshotHistory(historyPayload, 'radar-history');
   validateTransmissionSnapshotHistory(historyFullPayload, 'radar-history-full');
+  validateWorldOrderStressHistory(historyPayload, 'radar-history');
+  validateWorldOrderStressHistory(historyFullPayload, 'radar-history-full');
 }
 
 if (!data.updatedAt) throw new Error('Validation failed: missing updatedAt.');

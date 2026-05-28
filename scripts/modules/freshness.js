@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=28.0M-95';
+﻿import { fmtNumSafe } from './config.js?v=stage-wo-overlay-history-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

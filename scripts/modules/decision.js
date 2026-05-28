@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=28.0M-95';
-import { formatOnRrpYiUsd } from './format.js?v=28.0M-95';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=stage-wo-overlay-history-1';
+import { formatOnRrpYiUsd } from './format.js?v=stage-wo-overlay-history-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',
