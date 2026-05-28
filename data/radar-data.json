@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-27T23:44:26.195Z",
+  "updatedAt": "2026-05-28T23:49:08.808Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "262b4263c401886cb7fce9e64649b5255d3217c3",
-    "updatedAt": "2026-05-27T23:39:27.338Z",
-    "sourceMode": "live",
-    "healthScore": 100,
-    "capturedAt": "2026-05-27T23:44:26.195Z"
+    "commitSha": "900414b8507b5037e751c9e6febb4279d68b6f21",
+    "updatedAt": "2026-05-28T23:41:36.784Z",
+    "sourceMode": "cache-only",
+    "healthScore": 0,
+    "capturedAt": "2026-05-28T23:49:08.808Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-27T23:44:26.195Z",
+    "generatedAt": "2026-05-28T23:49:08.808Z",
     "macroState": "滞胀冲击 / 通胀冲击",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
     "dominantRiskChain": {
@@ -852,8 +852,8 @@
     "高收益利差 2.72%，信用风险可控但需观察。",
     "10年期美债 4.50%，实际利率 2.10%。"
   ],
-  "decisionLine": "当前已进入 v27.0 交易引擎模式：实时快变量实时，执行状态灯为红灯 / 禁止新增。已激活结构信号：逆回购准备金告急。先看状态灯，再决定能不能动。",
-  "summary": "v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 116.7、广义美元指数 119.29、波动率 17.01、高收益利差 2.72%。",
+  "decisionLine": "实时快变量暂不可用，系统沿用上次有效慢变量结构，但保留今日更新时间戳。",
+  "summary": "v27.0 日构建已退回到上次有效慢变量结构。",
   "modules": {
     "geopolitical": 82,
     "energy": 88,
@@ -2211,11 +2211,11 @@
     "结构信号：逆回购准备金告急。"
   ],
   "recovery": {
-    "degradedMode": false,
+    "degradedMode": true,
     "safeOutput": true,
-    "lastRun": "2026-05-27T23:44:26.195Z",
+    "lastRun": "2026-05-28T23:49:08.808Z",
     "notes": [
-      "实时数据源刷新成功。"
+      "日构建未拿到可用实时快照，已回退到上次有效结果。"
     ]
   },
   "tradingSystem": {
@@ -2452,7 +2452,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-05-27T23:44:26.195Z",
+    "generatedAt": "2026-05-28T23:49:08.808Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [
