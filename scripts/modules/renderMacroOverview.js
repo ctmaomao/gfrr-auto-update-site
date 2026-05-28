@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-wo-overlay-history-1';
+} from './config.js?v=stage-trend-path-reorder-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1519,8 +1519,8 @@ function renderDetailData({ radarData }) {
     const pathMap = {
       '油价→通胀': 'detail-time-path-oil-inflation',
       '通胀→利率': 'detail-time-path-inflation-rate',
-      '美元→信用': 'detail-time-path-dollar-credit',
       '利率→股票': 'detail-time-path-rate-equity',
+      '美元→信用': 'detail-time-path-dollar-credit',
       '流动性→估值': 'detail-time-path-liquidity-valuation',
     };
     for (const [label, id] of Object.entries(pathMap)) {

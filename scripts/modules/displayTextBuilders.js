@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-wo-overlay-history-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-trend-path-reorder-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

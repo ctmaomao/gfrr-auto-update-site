@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=stage-wo-overlay-history-1';
+﻿import { formatFiniteNumber } from './format.js?v=stage-trend-path-reorder-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

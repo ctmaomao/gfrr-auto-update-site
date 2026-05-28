@@ -6481,8 +6481,8 @@ async function build() {
       pathChanges: [
         { label: '油价→通胀', value: clamp(avg([risk.oilRisk, risk.inflationRisk])), delta: clamp((realtime.changes?.brent1d ?? 0) * 3, -9, 9) },
         { label: '通胀→利率', value: clamp(avg([risk.inflationRisk, risk.rateRisk])), delta: clamp((realtime.changes?.breakeven10y1d ?? 0) * 18, -9, 9) },
-        { label: '美元→信用', value: clamp(avg([risk.dollarRisk, risk.hyRisk])), delta: clamp(((realtime.changes?.dxy1d ?? 0) * 8) + ((realtime.changes?.hyOas1d ?? 0) * 8), -9, 9) },
         { label: '利率→股票', value: clamp(avg([risk.rateRisk, risk.spxRisk])), delta: clamp(((realtime.changes?.us10y1d ?? 0) * 16) - ((realtime.changes?.spx1d ?? 0) / 20), -9, 9) },
+        { label: '美元→信用', value: clamp(avg([risk.dollarRisk, risk.hyRisk])), delta: clamp(((realtime.changes?.dxy1d ?? 0) * 8) + ((realtime.changes?.hyOas1d ?? 0) * 8), -9, 9) },
         { label: '流动性→估值', value: clamp(avg([risk.modules.liquidity, risk.vixRisk])), delta: clamp(((realtime.changes?.vix1d ?? 0) * 3) + ((realtime.changes?.hyOas1d ?? 0) * 8), -9, 9) }
       ],
       notes: [
