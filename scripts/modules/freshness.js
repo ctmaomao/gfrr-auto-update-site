@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-trend-path-reorder-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-c5-world-economy-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

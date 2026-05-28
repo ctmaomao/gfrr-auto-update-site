@@ -487,13 +487,13 @@ window.__GFRR_RUNTIME__?.realtimeFetchAudit
 
 ### 2A. Android Chrome 旧前端缓存排查
 
-vstage-trend-path-reorder-1 Frontend Asset Cache Busting 处理 Android Chrome cached old module graph：普通窗口可能缓存旧 `scripts/app.js` / ES module graph，导致页面仍显示 Actions/FRED 旧逻辑，例如 Brent 来源停留在 FRED 日度锚点；无痕窗口显示 Worker 独立生成 / 实时数据新鲜 / Yahoo + Trading Economics 双源确认，则说明线上 Worker-first runtime 正常，问题不在 Worker、DNS 或自定义域名。
+vstage-c5-world-economy-1 Frontend Asset Cache Busting 处理 Android Chrome cached old module graph：普通窗口可能缓存旧 `scripts/app.js` / ES module graph，导致页面仍显示 Actions/FRED 旧逻辑，例如 Brent 来源停留在 FRED 日度锚点；无痕窗口显示 Worker 独立生成 / 实时数据新鲜 / Yahoo + Trading Economics 双源确认，则说明线上 Worker-first runtime 正常，问题不在 Worker、DNS 或自定义域名。
 
 当前处理方式：
 
 ```text
-index.html app.js entry → ?v=stage-trend-path-reorder-1
-scripts/app.js and scripts/modules/*.js local imports → ?v=stage-trend-path-reorder-1
+index.html app.js entry → ?v=stage-c5-world-economy-1
+scripts/app.js and scripts/modules/*.js local imports → ?v=stage-c5-world-economy-1
 window.__GFRR_FRONTEND_VERSION__ → 28.0M-92AV
 ```
 
@@ -508,11 +508,11 @@ window.__GFRR_FRONTEND_VERSION__
 v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs stage-trend-path-reorder-1
-npm run bump:frontend-asset-version -- stage-trend-path-reorder-1
+node scripts/bump-frontend-asset-version.mjs stage-c5-world-economy-1
+npm run bump:frontend-asset-version -- stage-c5-world-economy-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `stage-trend-path-reorder-1`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `stage-c5-world-economy-1`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 
 ## 3. Realtime workflow 排查
 

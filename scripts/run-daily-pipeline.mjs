@@ -74,6 +74,15 @@ const ICE_CDX_INDEX_SETTLEMENT_PAGE_URL = 'https://www.ice.com/cds-settlement-pr
 const ICE_CDX_FETCH_TIMEOUT_MS = 10000;
 const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
 const YAHOO_FETCH_TIMEOUT_MS = 9000;
+const WORLD_ECONOMY_SOURCE = 'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI';
+const WORLD_ECONOMY_CHANGE_WINDOW = '5d';
+const WORLD_ECONOMY_DISPLAY_NOTE =
+  '世界经济维度 display-only 公开指数代理;不进 scoring/decision/execution/position。';
+const WORLD_ECONOMY_INDEXES = [
+  { key: 'stoxx50', symbol: '^STOXX50E', labelZh: '欧元区大盘', min: 1000, max: 20000 },
+  { key: 'nikkei225', symbol: '^N225', labelZh: '日经 225', min: 10000, max: 100000 },
+  { key: 'dax', symbol: '^GDAXI', labelZh: '德国 DAX', min: 5000, max: 60000 }
+];
 const STOCKQ_INDEX_BASE = 'https://en.stockq.org/index';
 const STOCKQ_FETCH_TIMEOUT_MS = 9000;
 const EMPLOYMENT_SOURCE =
@@ -2179,6 +2188,101 @@ async function fetchYahooChartQuote(symbol, range = '1mo', interval = '1d') {
     updatedAt: new Date(latest.timestamp * 1000).toISOString(),
     source: `Yahoo:${symbol}`
   };
+}
+
+function buildMissingWorldEconomyIndex(config) {
+  return {
+    symbol: config.symbol,
+    labelZh: config.labelZh,
+    price: null,
+    changePct: null,
+    changeWindow: WORLD_ECONOMY_CHANGE_WINDOW,
+    updatedAt: null,
+    source: `Yahoo:${config.symbol}`,
+    sourceStatus: 'missing'
+  };
+}
+
+function normalizePreviousWorldEconomyIndex(previous, config) {
+  if (!previous || typeof previous !== 'object' || !Number.isFinite(previous.price)) {
+    return null;
+  }
+  return {
+    symbol: config.symbol,
+    labelZh: config.labelZh,
+    price: +Number(previous.price).toFixed(4),
+    changePct: Number.isFinite(previous.changePct) ? +Number(previous.changePct).toFixed(4) : null,
+    changeWindow: typeof previous.changeWindow === 'string' && previous.changeWindow.trim()
+      ? previous.changeWindow
+      : WORLD_ECONOMY_CHANGE_WINDOW,
+    updatedAt: typeof previous.updatedAt === 'string' ? previous.updatedAt : null,
+    source: typeof previous.source === 'string' && previous.source.trim()
+      ? previous.source
+      : `Yahoo:${config.symbol}`,
+    sourceStatus: 'fallback'
+  };
+}
+
+function buildMissingWorldEconomy(prevWorldEconomy = null) {
+  const next = {
+    updatedAt: typeof prevWorldEconomy?.updatedAt === 'string' ? prevWorldEconomy.updatedAt : null,
+    source: WORLD_ECONOMY_SOURCE,
+    sourceStatus: {},
+    notes: WORLD_ECONOMY_DISPLAY_NOTE
+  };
+
+  for (const config of WORLD_ECONOMY_INDEXES) {
+    const fallback = normalizePreviousWorldEconomyIndex(prevWorldEconomy?.[config.key], config);
+    next[config.key] = fallback || buildMissingWorldEconomyIndex(config);
+    next.sourceStatus[config.key] = fallback ? 'fallback' : 'missing';
+  }
+
+  next.updatedAt = latestIsoDate(...WORLD_ECONOMY_INDEXES.map((config) => next[config.key]?.updatedAt), next.updatedAt);
+  return next;
+}
+
+function isPlausibleWorldEconomyQuote(quote, config) {
+  return Number.isFinite(quote?.price)
+    && quote.price >= config.min
+    && quote.price <= config.max;
+}
+
+async function resolveWorldEconomy(prevWorldEconomy) {
+  const results = await Promise.allSettled(
+    WORLD_ECONOMY_INDEXES.map((config) => fetchYahooChartQuote(config.symbol, WORLD_ECONOMY_CHANGE_WINDOW, '1d'))
+  );
+
+  const next = {
+    updatedAt: null,
+    source: WORLD_ECONOMY_SOURCE,
+    sourceStatus: {},
+    notes: WORLD_ECONOMY_DISPLAY_NOTE
+  };
+
+  WORLD_ECONOMY_INDEXES.forEach((config, index) => {
+    const result = results[index];
+    if (result.status === 'fulfilled' && isPlausibleWorldEconomyQuote(result.value, config)) {
+      next[config.key] = {
+        symbol: config.symbol,
+        labelZh: config.labelZh,
+        price: result.value.price,
+        changePct: Number.isFinite(result.value.changePct) ? result.value.changePct : null,
+        changeWindow: WORLD_ECONOMY_CHANGE_WINDOW,
+        updatedAt: result.value.updatedAt,
+        source: result.value.source,
+        sourceStatus: 'live'
+      };
+      next.sourceStatus[config.key] = 'live';
+      return;
+    }
+
+    const fallback = normalizePreviousWorldEconomyIndex(prevWorldEconomy?.[config.key], config);
+    next[config.key] = fallback || buildMissingWorldEconomyIndex(config);
+    next.sourceStatus[config.key] = fallback ? 'fallback' : 'missing';
+  });
+
+  next.updatedAt = latestIsoDate(...WORLD_ECONOMY_INDEXES.map((config) => next[config.key]?.updatedAt));
+  return next;
 }
 
 const MONTH_INDEX_BY_NAME = new Map([
@@ -5637,7 +5741,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveEmploymentBreadth(prevMd.employment),
     resolveConsumerRetail(prevMd.consumerRetail),
     resolveCommercialRealEstate(prevMd.commercialRealEstate),
-    resolvePrivateCreditProxy(prevMd.privateCreditProxy, hyOasLive)
+    resolvePrivateCreditProxy(prevMd.privateCreditProxy, hyOasLive),
+    resolveWorldEconomy(prevMd.worldEconomy)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -5679,6 +5784,7 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   const consumerRetail = results[7].status === 'fulfilled' ? results[7].value : buildMissingConsumerRetail();
   const commercialRealEstate = results[8].status === 'fulfilled' ? results[8].value : buildMissingCommercialRealEstate();
   const privateCreditProxy = results[9].status === 'fulfilled' ? results[9].value : buildMissingPrivateCreditProxy();
+  const worldEconomy = results[10].status === 'fulfilled' ? results[10].value : buildMissingWorldEconomy(prevMd.worldEconomy);
 
   return {
     fedLiquidity,
@@ -5690,7 +5796,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     employment,
     consumerRetail,
     commercialRealEstate,
-    privateCreditProxy
+    privateCreditProxy,
+    worldEconomy
   };
 }
 
@@ -6438,6 +6545,7 @@ async function build() {
       consumerRetail: macroDrivers.consumerRetail,
       commercialRealEstate: macroDrivers.commercialRealEstate,
       privateCreditProxy: macroDrivers.privateCreditProxy,
+      worldEconomy: macroDrivers.worldEconomy,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

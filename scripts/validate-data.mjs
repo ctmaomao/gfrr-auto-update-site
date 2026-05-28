@@ -95,6 +95,9 @@ const OIS_FORWARD_CURVE_STATUSES = new Set(['live_public_curve', 'fallback_publi
 const PRIVATE_CREDIT_PROXY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'manual_required']);
 const VALID_PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; Yahoo:CCLFX; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public';
 const VALID_PRIVATE_CREDIT_PROXY_REGIMES = new Set(['压力上升', '观察', '平稳', '未知']);
+const WORLD_ECONOMY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_WORLD_ECONOMY_SOURCE = 'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI';
+const WORLD_ECONOMY_KEYS = ['stoxx50', 'nikkei225', 'dax'];
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
@@ -901,6 +904,33 @@ function validateMacroDriversPrivateCreditProxy(dataPayload) {
   assert(proxy.source === VALID_PRIVATE_CREDIT_PROXY_SOURCE, `macroDrivers.privateCreditProxy.source must be ${VALID_PRIVATE_CREDIT_PROXY_SOURCE}`);
   assertArray(proxy.notes, 'macroDrivers.privateCreditProxy.notes');
   proxy.notes.forEach((item, index) => assertString(item, `macroDrivers.privateCreditProxy.notes[${index}]`));
+}
+
+function validateMacroDriversWorldEconomy(dataPayload) {
+  const worldEconomy = dataPayload?.macroDrivers?.worldEconomy;
+  if (worldEconomy === undefined) return;
+  assertPlainObject(worldEconomy, 'macroDrivers.worldEconomy');
+  validateNullableIsoString(worldEconomy.updatedAt, 'macroDrivers.worldEconomy.updatedAt');
+  assert(worldEconomy.source === VALID_WORLD_ECONOMY_SOURCE, `macroDrivers.worldEconomy.source must be ${VALID_WORLD_ECONOMY_SOURCE}`);
+  assertString(worldEconomy.notes, 'macroDrivers.worldEconomy.notes');
+  assertPlainObject(worldEconomy.sourceStatus, 'macroDrivers.worldEconomy.sourceStatus');
+
+  for (const key of WORLD_ECONOMY_KEYS) {
+    assert(Object.hasOwn(worldEconomy.sourceStatus, key), `macroDrivers.worldEconomy.sourceStatus.${key} is missing`);
+    assert(WORLD_ECONOMY_SOURCE_STATUSES.has(worldEconomy.sourceStatus[key]), `macroDrivers.worldEconomy.sourceStatus.${key} is not supported`);
+    assert(Object.hasOwn(worldEconomy, key), `macroDrivers.worldEconomy.${key} is missing`);
+    const item = worldEconomy[key];
+    assertPlainObject(item, `macroDrivers.worldEconomy.${key}`);
+    assertString(item.symbol, `macroDrivers.worldEconomy.${key}.symbol`);
+    assertString(item.labelZh, `macroDrivers.worldEconomy.${key}.labelZh`);
+    assert(isFiniteNumberOrNull(item.price), `macroDrivers.worldEconomy.${key}.price must be finite number or null`);
+    assert(isFiniteNumberOrNull(item.changePct), `macroDrivers.worldEconomy.${key}.changePct must be finite number or null`);
+    assertString(item.changeWindow, `macroDrivers.worldEconomy.${key}.changeWindow`);
+    validateNullableIsoString(item.updatedAt, `macroDrivers.worldEconomy.${key}.updatedAt`);
+    assertString(item.source, `macroDrivers.worldEconomy.${key}.source`);
+    assertString(item.sourceStatus, `macroDrivers.worldEconomy.${key}.sourceStatus`);
+    assert(WORLD_ECONOMY_SOURCE_STATUSES.has(item.sourceStatus), `macroDrivers.worldEconomy.${key}.sourceStatus is not supported`);
+  }
 }
 
 function validateNullableString(value, fieldName) {
@@ -1879,6 +1909,7 @@ validateMacroDriversEmployment(data);
 validateMacroDriversConsumerRetail(data);
 validateMacroDriversCommercialRealEstate(data);
 validateMacroDriversPrivateCreditProxy(data);
+validateMacroDriversWorldEconomy(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);
 validateExternalAiInterpretationLayer(data);
