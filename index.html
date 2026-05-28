@@ -114,18 +114,20 @@
           <div style="font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">
             <span style="color:var(--risk-red)">●</span> Score
             <span style="margin-left:14px;color:var(--risk-orange)">● ●</span> Overlay
-            · y 0-70 · 阈值线 25/40/60
+            · y 0-100 · 阈值线 25/40/60/80
           </div>
         </div>
         <div class="trend-svg-wrap">
           <svg viewBox="0 0 800 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="0" y="0" width="800" height="200" fill="#F5F0E5"/>
-            <line x1="40" y1="128.57" x2="780" y2="128.57" stroke="#1F4D2C" stroke-width="1" stroke-dasharray="4,3" opacity="0.45"/>
-            <text x="784" y="132" font-family="IBM Plex Mono" font-size="9" fill="#1F4D2C">25</text>
-            <line x1="40" y1="85.71" x2="780" y2="85.71" stroke="#A8761A" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
-            <text x="784" y="89" font-family="IBM Plex Mono" font-size="9" fill="#A8761A">40</text>
-            <line x1="40" y1="28.57" x2="780" y2="28.57" stroke="#7C1D1D" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
-            <text x="784" y="32" font-family="IBM Plex Mono" font-size="9" fill="#7C1D1D">60</text>
+            <line x1="40" y1="150" x2="780" y2="150" stroke="#1F4D2C" stroke-width="1" stroke-dasharray="4,3" opacity="0.45"/>
+            <text x="784" y="154" font-family="IBM Plex Mono" font-size="9" fill="#1F4D2C">25</text>
+            <line x1="40" y1="120" x2="780" y2="120" stroke="#A8761A" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
+            <text x="784" y="124" font-family="IBM Plex Mono" font-size="9" fill="#A8761A">40</text>
+            <line x1="40" y1="80" x2="780" y2="80" stroke="#7C1D1D" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
+            <text x="784" y="84" font-family="IBM Plex Mono" font-size="9" fill="#7C1D1D">60</text>
+            <line x1="40" y1="40" x2="780" y2="40" stroke="#7C1D1D" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
+            <text x="784" y="44" font-family="IBM Plex Mono" font-size="9" fill="#7C1D1D">80</text>
             <polyline id="trend-line-score" points="80,62.86 177.14,60.0 274.29,54.29 371.43,57.14 468.57,48.57 565.71,45.71 662.86,48.57 760,40.0" fill="none" stroke="#7C1D1D" stroke-width="2.5"/>
             <polyline id="trend-line-overlay" points="80,22.86 177.14,17.14 274.29,14.29 371.43,14.29 468.57,8.57 565.71,5.71 662.86,2.86 760,0" fill="none" stroke="#C25E2A" stroke-width="2" stroke-dasharray="5,3"/>
             <circle id="trend-dot-score" cx="760" cy="40.0" r="5" fill="#7C1D1D" stroke="#1A1815" stroke-width="1.5"/>

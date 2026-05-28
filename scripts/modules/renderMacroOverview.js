@@ -395,7 +395,7 @@ function clamp(value, min, max) {
 function trendY(score) {
   const n = asNumber(score);
   if (n === null) return null;
-  return clamp(200 * (1 - n / 70), 0, 200);
+  return clamp(200 * (1 - n / 100), 0, 200);
 }
 
 function pointPair(x, y) {
