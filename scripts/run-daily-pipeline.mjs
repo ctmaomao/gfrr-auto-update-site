@@ -40,6 +40,8 @@ const SOURCE_MODE_CN = {
 };
 
 const FRED_BASE = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
+const FRED_API_BASE = 'https://api.stlouisfed.org/fred/series/observations';
+const FRED_API_KEY = (process.env.FRED_API_KEY || '').trim();
 const MACRO_FETCH_TIMEOUT_MS = 10000;
 const MACRO_FETCH_RETRIES = 2;
 const MACRO_FETCH_RETRY_DELAY_MS = 800;
@@ -1522,12 +1524,54 @@ function parseFredCsv(text) {
   return out;
 }
 
+function parseFredApiObservations(text) {
+  const json = JSON.parse(text);
+  const observations = json?.observations;
+  if (!Array.isArray(observations)) {
+    throw new Error('FRED API returned invalid observations payload');
+  }
+  const out = [];
+  for (const item of observations) {
+    const date = item?.date;
+    const raw = item?.value;
+    if (!date || raw === undefined || raw === '.' || String(raw).trim() === '') continue;
+    const value = Number(raw);
+    if (!Number.isFinite(value)) continue;
+    out.push({ date, value });
+  }
+  return out;
+}
+
 function cosdIso(daysBack) {
   return new Date(Date.now() - daysBack * 24 * 3600 * 1000).toISOString().slice(0, 10);
 }
 
+function buildFredApiUrl(seriesId, observationStart) {
+  const params = new URLSearchParams({
+    series_id: seriesId,
+    api_key: FRED_API_KEY,
+    file_type: 'json',
+    observation_start: observationStart,
+    sort_order: 'asc'
+  });
+  return `${FRED_API_BASE}?${params.toString()}`;
+}
+
 async function fetchFredSeries(seriesId, daysBack = 90) {
-  const url = `${FRED_BASE}?cosd=${cosdIso(daysBack)}&id=${seriesId}`;
+  const observationStart = cosdIso(daysBack);
+
+  if (FRED_API_KEY) {
+    try {
+      const apiText = await fetchWithTimeout(buildFredApiUrl(seriesId, observationStart), MACRO_FETCH_TIMEOUT_MS);
+      const apiRows = parseFredApiObservations(apiText);
+      if (apiRows.length < 2) throw new Error(`fred:${seriesId} API insufficient rows`);
+      return apiRows;
+    } catch (err) {
+      console.warn(`[fred-api-fallback] fred:${seriesId}: ${stringifyFetchError(err)}`);
+    }
+  }
+
+  const url = `${FRED_BASE}?cosd=${observationStart}&id=${seriesId}`;
   const text = await retryFetch(url, `fred:${seriesId}`);
   const rows = parseFredCsv(text);
   if (rows.length < 2) throw new Error(`fred:${seriesId} insufficient rows`);

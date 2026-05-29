@@ -12,6 +12,8 @@ const realtimePath = path.join(root, 'realtime', 'market.json');
 const now = new Date().toISOString();
 const cosd = new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString().slice(0, 10);
 const FRED = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
+const FRED_API_BASE = 'https://api.stlouisfed.org/fred/series/observations';
+const FRED_API_KEY = (process.env.FRED_API_KEY || '').trim();
 
 const REQUEST_TIMEOUT_MS = 8000;
 const REQUEST_RETRIES = 2;
@@ -91,6 +93,35 @@ function parseFredCsv(text) {
     out.push({ date, value });
   }
   return out;
+}
+
+function parseFredApiObservations(text) {
+  const json = JSON.parse(text);
+  const observations = json?.observations;
+  if (!Array.isArray(observations)) {
+    throw new Error('FRED API returned invalid observations payload');
+  }
+  const out = [];
+  for (const item of observations) {
+    const date = item?.date;
+    const raw = item?.value;
+    if (!date || raw === undefined || raw === '.' || String(raw).trim() === '') continue;
+    const value = Number(raw);
+    if (!Number.isFinite(value)) continue;
+    out.push({ date, value });
+  }
+  return out;
+}
+
+function buildFredApiUrl(seriesId, observationStart) {
+  const params = new URLSearchParams({
+    series_id: seriesId,
+    api_key: FRED_API_KEY,
+    file_type: 'json',
+    observation_start: observationStart,
+    sort_order: 'asc'
+  });
+  return `${FRED_API_BASE}?${params.toString()}`;
 }
 
 function parseStooqCsv(text) {
@@ -506,11 +537,32 @@ async function retryTask(fn, { label, retries = REQUEST_RETRIES } = {}) {
 }
 
 async function fetchRows(descriptor) {
-  const url = descriptor.kind === 'fred'
-    ? `${FRED}?cosd=${cosd}&id=${descriptor.id}`
-    : descriptor.kind === 'goldapi'
-      ? `https://api.gold-api.com/price/${descriptor.symbol}`
-      : `https://stooq.com/q/d/l/?s=${encodeURIComponent(descriptor.symbol)}&i=d`;
+  if (descriptor.kind === 'fred') {
+    if (FRED_API_KEY) {
+      try {
+        const apiText = await fetchWithTimeout(buildFredApiUrl(descriptor.id, cosd), {
+          timeoutMs: REQUEST_TIMEOUT_MS
+        });
+        const apiRows = parseFredApiObservations(apiText);
+        if (apiRows.length < 2) throw new Error(`${descriptor.source} API returned insufficient rows`);
+        return apiRows;
+      } catch (error) {
+        console.warn(`[fred-api-fallback] ${descriptor.source}: ${stringifyError(error)}`);
+      }
+    }
+
+    const text = await retryTask(
+      () => fetchWithTimeout(`${FRED}?cosd=${cosd}&id=${descriptor.id}`, { timeoutMs: REQUEST_TIMEOUT_MS }),
+      { label: descriptor.source }
+    );
+    const rows = parseFredCsv(text);
+    if (rows.length < 2) throw new Error(`${descriptor.source} returned insufficient rows`);
+    return rows;
+  }
+
+  const url = descriptor.kind === 'goldapi'
+    ? `https://api.gold-api.com/price/${descriptor.symbol}`
+    : `https://stooq.com/q/d/l/?s=${encodeURIComponent(descriptor.symbol)}&i=d`;
 
   const text = await retryTask(
     () => fetchWithTimeout(url, { timeoutMs: REQUEST_TIMEOUT_MS }),
@@ -528,7 +580,7 @@ async function fetchRows(descriptor) {
       { date: today, value: Number(json.price) }
     ];
   }
-  const rows = descriptor.kind === 'fred' ? parseFredCsv(text) : parseStooqCsv(text);
+  const rows = parseStooqCsv(text);
   if (rows.length < 2) throw new Error(`${descriptor.source} returned insufficient rows`);
   return rows;
 }
