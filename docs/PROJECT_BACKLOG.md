@@ -37,13 +37,12 @@ No active P1 item. ACLED/SIPRI/GDELT、Pages trigger coverage、World Order refr
 
 ### P2 Items
 
-#### P2-13: FRED 抓取迁官方 API(韧性加固，进行中)
+#### P2-13: FRED 抓取迁官方 API(代码已合并，待线上验证)
 
-- **现状**：`run-realtime.mjs`(8s)与 `run-daily-pipeline.mjs` 的 `fetchFredSeries`(10s)均用公开 CSV 站点端点 `https://fred.stlouisfed.org/graph/fredgraph.csv`，无 API key。2026-05-29 FRED 大范围故障期间该端点超时、`api.stlouisfed.org` 504，导致 realtime / Worker / Daily `inflationEnergy` 全线降级(详见 Section 5)。
-- **目标(选项 2)**：迁到官方 API `api.stlouisfed.org/fred/series/observations` + 免费 `FRED_API_KEY`(GitHub secret)，降低**日常**超时/限流。若仍不足，再做选项 3(Worker 侧非-FRED 兜底源)。
-- **边界**：纯数据抓取链路，不改 scoring/decision/execution/position，不改前端。
-- **预期产出 / 验证**：FRED 调用走官方 API；`npm run check:all` 全绿;合并后线上 realtime/Daily 回 live。
-- **注**：对「FRED 整体宕机」这类外部故障无解(源头宕机谁都救不了)，目标是降低日常抖动。
+- **状态**：代码已合并并 push（commit `d44c4f1`）；`FRED_API_KEY` GitHub secret 已配置。
+- **待验证（外部依赖，自动）**：当前 FRED 整体宕机；**待 FRED 恢复后**,下次 Build Realtime Market / Build Daily Radar Data 应走官方 API → realtime/Worker-fallback/Daily `inflationEnergy` 回 live。
+- **若仍不足** → 选项 3：Worker(`worker-market-preview.js:222`)侧非-FRED 兜底源。
+- **注**：对「FRED 整体宕机」无解;本项只降低**日常**超时/限流。详见 Section 5。
 
 ### P3 Items
 
@@ -79,6 +78,7 @@ Recent completed context only; full milestone archive is [MILESTONE_INDEX.md](MI
 
 | Milestone | 一句话 |
 |---|---|
+| P2-13 FRED API 迁移 | FRED 抓取从公开 CSV 端点(`fredgraph.csv`)迁官方 API(`api.stlouisfed.org/fred/series/observations` + `FRED_API_KEY`),**API-first + CSV-fallback**(无 key/API 失败回落 CSV,零回归)。覆盖 realtime 9 + Daily 55 个 series 两个 chokepoint;source 标签不动;两个 build workflow 注入 secret。commit `d44c4f1`。待 FRED 恢复后线上验证。 |
 | Daily degraded display refresh | Daily fallback 路径不再跳过 display-only macroDrivers:新增 `fetchDisplayOnlyMacroDrivers`,`buildFallback` 改 async 并 merge `worldEconomy`/`chinaEquity`/`inflationEnergy`/`copperGold` 四块,preserve-set 零覆盖。修复「realtime 降级时 C1/C5/C6/C2 展示卡数据永不进生产」。线上活体验证通过(降级态下 3 个 Yahoo 块 live,degradedMode 仍 true)。commit `d270176`。 |
 | Stage C2 Cu/Au | C2 全球流动性 Cu/Au 铜金比从 P1 升级为 Yahoo `HG=F`/`GC=F` live 派生比率 display-only OBS 卡;接入 `macroDrivers.copperGold` (`results[13]`);schema 存原始 `ratio`,前端 render ×1000(`1.418`);`ratioChangePct` 两腿 `prev=price/(1+changePct)` 派生;不进 scoring/decision/execution/position/effectiveDisplayInputs/cross-validation。commit `80b2bac`。 |
 | M-93A V3 | `#plain-summary-card` editorial section 上线;9 narrative + 31 evidence 翻译表 + 5 risk-level / 3 data-health enum;bounded checker + bump 工具命令示例 marker 覆盖;frontend display-only,不动 scoring/decision/execution/position guidance。 |
@@ -119,6 +119,7 @@ Compact current audit trail:
 
 | Date | Scope | Outcome |
 |---|---|---|
+| 2026-05-29 | P2-13 FRED 抓取迁官方 API(韧性加固) | `run-realtime.mjs` + `run-daily-pipeline.mjs` 的 FRED 抓取改 API-first + CSV-fallback;新增 `parseFredApiObservations`/`buildFredApiUrl`,API 单次尝试失败即回落现有 CSV(零回归);两个 build workflow env 注入 `FRED_API_KEY: ${{ secrets.FRED_API_KEY }}`;source 标签/validator/前端/Worker 不动。commit `d44c4f1`,`check:all` 全绿。`FRED_API_KEY` secret 已配置;待 FRED 恢复后线上验证 API 路径。 |
 | 2026-05-29 | Daily 降级模式 display-only 修复 + FRED 故障 RCA | 查实 Daily 长期走 `buildFallback`(realtime 降级)→ 跳过 `fetchMacroDrivers` → C1/C5/C6/C2 四块从未进生产数据。修复:fallback 也刷新 4 个 display-only 块(commit `d270176`,`check:all` 全绿,线上验证四块出现且 `degradedMode` 仍 true)。FRED RCA:realtime/Worker/Daily 全线降级源于公开 CSV 端点 `fred.stlouisfed.org/graph/fredgraph.csv` 大范围超时 + `api.stlouisfed.org` 504(独立网络复现,排除 CI-IP 封锁),始于 05-28 23:41Z;外部故障,自愈为主。开 P2-13 韧性加固。 |
 | 2026-05-29 | Stage C2 Cu/Au 铜金比接入 (Yahoo `HG=F`/`GC=F` live display-only) | 7 步协作流程全过 (outline v1.0/v1.1 → Codex brief → Claude 逐行复核 → Codex 实施 → Claude diff 复核);commit `80b2bac` pushed to main;14 files +251/−33;`macroDrivers.copperGold` 作为 `results[13]` 接入,raw ratio 存储 / render ×1000 / OBS 中性 tone;边界守住(不进 scoring/decision/execution/position/effectiveDisplayInputs/cross-validation);无 data/realtime 手改,`build:data` 留给生产 CI;`check:all` 23 suites PASS;cache bump → `stage-c2-copper-gold-ratio-1`。 |
 | 2026-05-24 | M-93 4 阶段全流程 (V1 audit / V2 spec / M-93A0 IA / V3 implementation) | PR #244/#245/#247/#248 全部 merged;新增 `#plain-summary-card` editorial section + bounded checker (`check-plain-summary-card-contract.mjs`) + `renderPlainSummary.js` 翻译表;cache version bump 28.0M-91V → 28.0M-93AV via 官方工具,工具同时扩展正则覆盖命令示例 marker;`check:all` 23 suites PASS;无 data/realtime/workers runtime/workflows 改动。 |
@@ -147,7 +148,7 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于**: commit `d270176`(已 push)— Daily 降级模式 display-only 修复上线 + 线上验证通过(Daily run `5991639` 写入四块,degradedMode 仍 true)。C2 接入(`80b2bac`)亦已上线。工作树:仅本次 PROJECT_BACKLOG 更新待提交。
-- **当前进行中**: 启动 **P2-13(选项 2)= FRED 抓取迁官方 API + `FRED_API_KEY`**。下一动作 = Claude 写 outline → Codex 实证复审(走完整代码先行流程)。
-- **下一步建议**: 先提交本次 backlog 收尾;然后开 P2-13 outline(目标文件 `scripts/run-realtime.mjs` + `scripts/run-daily-pipeline.mjs` 的 `fetchFredSeries`/`FRED_BASE`)。若 P2-13 仍不足 → 选项 3(Worker 侧非-FRED 兜底)。
-- **阻塞或等待**: FRED 外部故障进行中(05-28 23:41Z 起,realtime/Worker/Daily inflationEnergy 全线降级),大概率自愈;P2-13 是降低**日常**抖动,不依赖本次故障是否结束。
+- **上次会话结束于**: commit `d44c4f1`(已 push)— P2-13 FRED API 迁移上线(API-first + CSV-fallback,零回归)。本会话四件事全部落地:C2 接入(`80b2bac`)、Daily 降级 display-only 修复(`d270176`,线上验证四块写入)、FRED 故障 RCA、P2-13 FRED API 迁移(`d44c4f1`)。`FRED_API_KEY` secret 已配置。工作树:仅本次 PROJECT_BACKLOG 收尾待提交。
+- **当前进行中**: 无活跃编码任务。P2-13 代码已合并,等 FRED 恢复后线上验证(外部依赖,自动)。
+- **下一步建议**: 提交本次 backlog 收尾。FRED 恢复后确认 realtime/Daily `inflationEnergy` 回 live(走官方 API)。若 P2-13 仍不足 → 选项 3(Worker `worker-market-preview.js:222` 侧非-FRED 兜底)。其余可选路线图项:C2 剩余 CFETS RMB P1。
+- **阻塞或等待**: FRED 外部故障可能仍在进行(05-28 23:41Z 起);大概率自愈,P2-13 不依赖本次故障是否结束。`.claude/stage-briefs/` 存有 C2 / Daily-fix / P2-13 三组 outline+brief(gitignored)。
