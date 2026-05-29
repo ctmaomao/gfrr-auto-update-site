@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-6a-china-bond-cfets-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-6c-china-cpi-ppi-pmi-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

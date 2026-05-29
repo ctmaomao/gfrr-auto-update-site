@@ -1,4 +1,4 @@
-// scripts/modules/renderMacroOverview.js
+﻿// scripts/modules/renderMacroOverview.js
 // M-94 V0 路径 C · Stage 4b-1A
 // 职责:render macro-overview-shell 内 3 个 block(Hero + threshold + pressure-sources)
 // 后续 Stage 4b-1B / 4b-2 扩展(market-temp / risk-engines / wow / trend SVG / signal-layers / macro-drivers / cross-validation)
@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-6a-china-bond-cfets-1';
+} from './config.js?v=stage-6c-china-cpi-ppi-pmi-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1198,6 +1198,39 @@ function renderChinaBondLeaf({ radarData }) {
   const suffix = status === 'fallback' ? ' · 回退' : '';
   setLeafText('c6-china-10y-aux', `${cnText} · ${usText} · ${spreadText}${suffix}`);
 }
+function renderChinaInflationLeaf({ radarData }) {
+  const chinaInflation = radarData?.macroDrivers?.chinaInflation;
+  if (!chinaInflation) return;
+  const cpiStatus = chinaInflation.sourceStatus?.cpi || chinaInflation.cpi?.sourceStatus || 'missing';
+  const ppiStatus = chinaInflation.sourceStatus?.ppi || chinaInflation.ppi?.sourceStatus || 'missing';
+  const status = cpiStatus === 'live' || ppiStatus === 'live' ? 'live' : (cpiStatus === 'fallback' || ppiStatus === 'fallback' ? 'fallback' : 'missing');
+  setToneClass('c6-china-infl-status', 'status-bar', 'neutral');
+  setBadge('c6-china-infl-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
+
+  const cpi = asNumber(chinaInflation.cpi?.yoy);
+  const ppi = asNumber(chinaInflation.ppi?.yoy);
+  setLeafText('c6-china-infl-number', cpi !== null ? (cpi * 100).toFixed(1) : '—');
+  const cpiText = cpi !== null ? `CPI ${signedFixed(cpi * 100, 1)}% YoY` : 'CPI —';
+  const ppiText = ppi !== null ? `PPI ${signedFixed(ppi * 100, 1)}% YoY` : 'PPI —';
+  const refMonth = chinaInflation.cpi?.refMonth || chinaInflation.ppi?.refMonth || '—';
+  const suffix = status === 'fallback' ? ' · 回退' : '';
+  setLeafText('c6-china-infl-aux', `${cpiText} · ${ppiText} · ${refMonth}${suffix}`);
+}
+
+function renderChinaPmiLeaf({ radarData }) {
+  const chinaPmi = radarData?.macroDrivers?.chinaPmi;
+  if (!chinaPmi) return;
+  const status = chinaPmi.sourceStatus?.pmi || chinaPmi.pmi?.sourceStatus || 'missing';
+  setToneClass('c6-china-pmi-status', 'status-bar', 'neutral');
+  setBadge('c6-china-pmi-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
+
+  const pmi = asNumber(chinaPmi.pmi?.value);
+  setLeafText('c6-china-pmi-number', pmi !== null ? pmi.toFixed(1) : '—');
+  const refMonth = chinaPmi.pmi?.refMonth || '—';
+  const expansion = pmi === null ? '—' : (pmi >= 50 ? '扩张' : '收缩');
+  const suffix = status === 'fallback' ? ' · 回退' : '';
+  setLeafText('c6-china-pmi-aux', `${refMonth} · ${expansion}${suffix}`);
+}
 function renderC2GlobalLiquidity({ radarData }) {
   try {
     if (!radarData) return;
@@ -1617,6 +1650,8 @@ function renderC6ChinaEquity({ radarData }) {
     if (!radarData) return;
     renderChinaBondLeaf({ radarData });
     renderCfetsRmbLeaf('c6-cfets', radarData.macroDrivers?.cfetsRmb);
+    renderChinaInflationLeaf({ radarData });
+    renderChinaPmiLeaf({ radarData });
 
     const chinaEquity = radarData.macroDrivers?.chinaEquity;
     if (!chinaEquity) return;

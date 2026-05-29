@@ -1,4 +1,4 @@
-import fs from 'fs';
+﻿import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { computeAgeMinutes, classifyFreshnessLevel, canUseRealtimePayloadValues } from './modules/freshness.js';
@@ -130,6 +130,21 @@ const CFETS_RMB_LOOKBACK_DAYS = 21;
 const CFETS_RMB_FRESH_DAYS = 14;
 const CFETS_RMB_DISPLAY_NOTE =
   'CFETS 人民币篮子指数来自 ChinaMoney 官方 JSON;周频精确篮子,display-only,不进 scoring/decision/execution/position。';
+const CHINA_MACRO_HTML_USER_AGENT = 'Mozilla/5.0 GFRRBot/1.0';
+const CHINA_MACRO_FRESH_DAYS = 45;
+const CHINA_NBS_INDEX_URLS = [
+  'https://www.stats.gov.cn/sj/zxfb/',
+  'https://www.stats.gov.cn/sj/zxfb/index_1.html'
+];
+const CHINA_INFLATION_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-CPI-PPI-public-html';
+const CHINA_INFLATION_DISPLAY_NOTE =
+  '中国 CPI/PPI 来自国家统计局发布正文;Trading Economics 公开 HTML 仅作 fallback;display-only,不进 scoring/decision/execution/position。';
+const CHINA_PMI_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-NBS-Manufacturing-PMI-public-html';
+const CHINA_PMI_DISPLAY_NOTE =
+  '中国制造业 PMI 来自国家统计局发布正文;Trading Economics NBS Manufacturing PMI 公开 HTML 仅作 fallback;display-only,不进 scoring/decision/execution/position。';
+const TRADING_ECONOMICS_CHINA_CPI_URL = 'https://tradingeconomics.com/china/inflation-cpi';
+const TRADING_ECONOMICS_CHINA_PPI_URL = 'https://tradingeconomics.com/china/producer-prices-change';
+const TRADING_ECONOMICS_CHINA_NBS_PMI_URL = 'https://tradingeconomics.com/china/business-confidence';
 const STOCKQ_INDEX_BASE = 'https://en.stockq.org/index';
 const STOCKQ_FETCH_TIMEOUT_MS = 9000;
 const EMPLOYMENT_SOURCE =
@@ -3019,6 +3034,344 @@ async function resolveCfetsRmb(prevCfetsRmb) {
   }
 }
 
+
+const CHINA_NBS_LINK_RE = /<a\b[^>]*href=['"](?<href>\.\/\d{6}\/t\d+_\d+\.html)['"][^>]*title=['"](?<title>[^'"]*(居民消费价格|工业生产者出厂价格|采购经理指数)[^'"]*)['"][^>]*>/giu;
+const CHINA_NBS_REF_MONTH_RE = /(?<year>\d{4})\s*年\s*(?<month>\d{1,2})\s*月(?:份)?/u;
+const CHINA_NBS_YOY_RE = /(?:全国)?(?:居民消费价格|工业生产者出厂价格)\s*同比\s*(?:(?<flat>持平)|(?<verb>上涨|增长|下降|降低)\s*(?<value>\d+(?:\.\d+)?)\s*%)/u;
+const CHINA_NBS_PMI_RE = /制造业采购经理指数\s*（?\s*PMI\s*）?\s*为\s*(?<value>\d+(?:\.\d+)?)\s*%/u;
+
+const CHINA_NBS_KEYWORDS = {
+  cpi: '居民消费价格',
+  ppi: '工业生产者出厂价格',
+  pmi: '采购经理指数'
+};
+
+const CHINA_TE_CONFIG = {
+  cpi: {
+    url: TRADING_ECONOMICS_CHINA_CPI_URL,
+    label: 'tradingeconomics:china-cpi',
+    source: 'TradingEconomics:china-inflation-cpi-public-html',
+    calendarRe: /Inflation Rate YoY\s+(?<month>[A-Za-z]{3,9})\s+(?<value>[-+]?\d+(?:\.\d+)?)%/iu,
+    narrativeRe: /Inflation Rate in China[^.]*?(?:increased|decreased|rose|fell|was|remained unchanged)[^.]*?(?:to|at)\s+(?<value>[-+]?\d+(?:\.\d+)?)\s+percent\s+in\s+(?<month>[A-Za-z]+)(?:[^.]*?\bof\s+(?<year>\d{4}))?/iu,
+    valueType: 'ratio'
+  },
+  ppi: {
+    url: TRADING_ECONOMICS_CHINA_PPI_URL,
+    label: 'tradingeconomics:china-ppi',
+    source: 'TradingEconomics:china-producer-prices-change-public-html',
+    calendarRe: /PPI YoY\s+(?<month>[A-Za-z]{3,9})\s+(?<value>[-+]?\d+(?:\.\d+)?)%/iu,
+    narrativeRe: /Producer Prices in China[^.]*?(?:increased|decreased|rose|fell|was|remained unchanged)\s+(?:to\s+)?(?<value>[-+]?\d+(?:\.\d+)?)\s+percent\s+in\s+(?<month>[A-Za-z]+)(?:\s+of\s+(?<year>\d{4}))?/iu,
+    valueType: 'ratio'
+  },
+  pmi: {
+    url: TRADING_ECONOMICS_CHINA_NBS_PMI_URL,
+    label: 'tradingeconomics:china-nbs-pmi',
+    source: 'TradingEconomics:china-business-confidence-nbs-pmi-public-html',
+    calendarRe: /NBS Manufacturing PMI\s+(?<month>[A-Za-z]{3,9})\s+(?<value>[-+]?\d+(?:\.\d+)?)/iu,
+    narrativeRe: /Business Confidence in China[^.]*?(?:increased|decreased|rose|fell|was|remained unchanged)[^.]*?(?:to|at)\s+(?<value>[-+]?\d+(?:\.\d+)?)\s+points\s+in\s+(?<month>[A-Za-z]+)(?:[^.]*?\bof\s+(?<year>\d{4}))?/iu,
+    valueType: 'points'
+  }
+};
+
+function monthNumberToRefMonth(year, monthIndex) {
+  if (!Number.isInteger(year) || !Number.isInteger(monthIndex) || monthIndex < 0 || monthIndex > 11) return null;
+  return `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+}
+
+function parseChinaNbsRefMonth(title) {
+  const match = String(title || '').match(CHINA_NBS_REF_MONTH_RE);
+  if (!match?.groups) return null;
+  return monthNumberToRefMonth(Number(match.groups.year), Number(match.groups.month) - 1);
+}
+
+function parseChinaNbsPublishedAt(href) {
+  const match = String(href || '').match(/t(?<year>\d{4})(?<month>\d{2})(?<day>\d{2})_/u);
+  if (!match?.groups) return null;
+  const dateOnly = `${match.groups.year}-${match.groups.month}-${match.groups.day}`;
+  return dateOnlyToIso(dateOnly);
+}
+
+function endOfRefMonthDateOnly(refMonth) {
+  const match = String(refMonth || '').match(/^(?<year>\d{4})-(?<month>\d{2})$/u);
+  if (!match?.groups) return null;
+  const year = Number(match.groups.year);
+  const month = Number(match.groups.month);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return null;
+  const date = new Date(Date.UTC(year, month, 0));
+  return Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : null;
+}
+
+function isFreshChinaMacro(refMonth, publishedAt) {
+  const publishedDate = dateOnlyIso(publishedAt);
+  const freshnessDate = publishedDate || endOfRefMonthDateOnly(refMonth);
+  return isFreshDateOnly(freshnessDate, CHINA_MACRO_FRESH_DAYS);
+}
+
+function chinaMacroValuePlausible(kind, value) {
+  if (!Number.isFinite(value)) return false;
+  if (kind === 'cpi') return value >= -0.10 && value <= 0.30;
+  if (kind === 'ppi') return value >= -0.30 && value <= 0.40;
+  if (kind === 'pmi') return value >= 30 && value <= 70;
+  return false;
+}
+
+function pickChinaNbsLink(indexHtmlList, kind) {
+  const keyword = CHINA_NBS_KEYWORDS[kind];
+  const rows = [];
+  for (const html of indexHtmlList) {
+    for (const match of String(html || '').matchAll(CHINA_NBS_LINK_RE)) {
+      const title = match.groups?.title || '';
+      const href = match.groups?.href || '';
+      if (!title.includes(keyword)) continue;
+      const refMonth = parseChinaNbsRefMonth(title);
+      const publishedAt = parseChinaNbsPublishedAt(href);
+      const url = resolveAbsoluteUrl(href, 'https://www.stats.gov.cn/sj/zxfb/');
+      if (!refMonth || !url) continue;
+      rows.push({ title, href, url, refMonth, publishedAt });
+    }
+  }
+  return rows
+    .filter((row, index, list) => list.findIndex((item) => item.url === row.url) === index)
+    .sort((a, b) => {
+      const refDiff = String(a.refMonth).localeCompare(String(b.refMonth));
+      if (refDiff !== 0) return refDiff;
+      return Date.parse(a.publishedAt || '1970-01-01T00:00:00Z') - Date.parse(b.publishedAt || '1970-01-01T00:00:00Z');
+    })
+    .at(-1) || null;
+}
+
+function parseChinaNbsYoyValue(plain, kind) {
+  const match = String(plain || '').match(CHINA_NBS_YOY_RE);
+  if (!match?.groups) throw new Error(`nbs:china-${kind} missing yoy value`);
+  if (match.groups.flat) return 0;
+  const raw = Number(match.groups.value);
+  if (!Number.isFinite(raw)) throw new Error(`nbs:china-${kind} invalid yoy value`);
+  const sign = /下降|降低/u.test(match.groups.verb || '') ? -1 : 1;
+  return +((sign * raw) / 100).toFixed(4);
+}
+
+function parseChinaNbsPmiValue(plain) {
+  const match = String(plain || '').match(CHINA_NBS_PMI_RE);
+  const value = Number(match?.groups?.value);
+  if (!Number.isFinite(value)) throw new Error('nbs:china-pmi missing pmi value');
+  return +value.toFixed(1);
+}
+
+async function fetchChinaNbsIndexPages() {
+  const pages = [];
+  for (const url of CHINA_NBS_INDEX_URLS) {
+    const html = await retryFetch(url, `nbs:china-index:${url}`, MACRO_FETCH_TIMEOUT_MS, {
+      userAgent: CHINA_MACRO_HTML_USER_AGENT,
+      headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
+    });
+    pages.push(html);
+  }
+  return pages;
+}
+
+async function fetchChinaNbsLeaf(kind, indexHtmlList) {
+  const link = pickChinaNbsLink(indexHtmlList, kind);
+  if (!link) throw new Error(`nbs:china-${kind} missing index link`);
+  const articleHtml = await retryFetch(link.url, `nbs:china-${kind}-article`, MACRO_FETCH_TIMEOUT_MS, {
+    userAgent: CHINA_MACRO_HTML_USER_AGENT,
+    headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
+  });
+  const plain = htmlToPlainText(articleHtml);
+  const value = kind === 'pmi'
+    ? parseChinaNbsPmiValue(plain)
+    : parseChinaNbsYoyValue(plain, kind);
+  if (!chinaMacroValuePlausible(kind, value)) throw new Error(`nbs:china-${kind} implausible value`);
+  if (!isFreshChinaMacro(link.refMonth, link.publishedAt)) throw new Error(`nbs:china-${kind} stale`);
+  return {
+    value,
+    refMonth: link.refMonth,
+    publishedAt: link.publishedAt,
+    updatedAt: link.publishedAt,
+    source: 'NBS:stats-zxfb',
+    sourceStatus: 'live'
+  };
+}
+
+function parseTeLastUpdateIso(html) {
+  const match = String(html || '').match(/TELastUpdate\s*=\s*'(?<stamp>\d{8})\d*'/u);
+  const stamp = match?.groups?.stamp;
+  if (!stamp) return null;
+  return dateOnlyToIso(`${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6, 8)}`);
+}
+
+function inferTeRefMonth(monthName, yearRaw, publishedAt) {
+  const monthIndex = monthIndexFromName(monthName);
+  if (!Number.isInteger(monthIndex)) return null;
+  let year = Number(yearRaw);
+  const publishedDate = dateOnlyIso(publishedAt);
+  if (!Number.isInteger(year)) {
+    year = Number(String(publishedDate || '').slice(0, 4));
+    const publishedMonthIndex = Number(String(publishedDate || '').slice(5, 7)) - 1;
+    if (Number.isInteger(publishedMonthIndex) && monthIndex > publishedMonthIndex) year -= 1;
+  }
+  return monthNumberToRefMonth(year, monthIndex);
+}
+
+function pickTeMetricMatch(plain, config) {
+  return String(plain || '').match(config.calendarRe) || String(plain || '').match(config.narrativeRe);
+}
+
+async function fetchTradingEconomicsChinaLeaf(kind) {
+  const config = CHINA_TE_CONFIG[kind];
+  const html = await retryFetch(config.url, config.label, MACRO_FETCH_TIMEOUT_MS, {
+    userAgent: CHINA_MACRO_HTML_USER_AGENT,
+    headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
+  });
+  const plain = htmlToPlainText(html);
+  const match = pickTeMetricMatch(plain, config);
+  const rawValue = Number(match?.groups?.value);
+  const publishedAt = parseTeLastUpdateIso(html);
+  const refMonth = inferTeRefMonth(match?.groups?.month, match?.groups?.year, publishedAt);
+  if (!Number.isFinite(rawValue) || !refMonth) throw new Error(`${config.label} missing latest value`);
+  const value = config.valueType === 'ratio' ? +(rawValue / 100).toFixed(4) : +rawValue.toFixed(1);
+  if (!chinaMacroValuePlausible(kind, value)) throw new Error(`${config.label} implausible value`);
+  if (!isFreshChinaMacro(refMonth, publishedAt)) throw new Error(`${config.label} stale`);
+  return {
+    value,
+    refMonth,
+    publishedAt,
+    updatedAt: publishedAt,
+    source: config.source,
+    sourceStatus: 'fallback'
+  };
+}
+
+function buildMissingChinaInflationLeaf(kind, previousLeaf = null) {
+  const previousValue = parseChinaOfficialNumber(previousLeaf?.yoy);
+  const hasFallback = Number.isFinite(previousValue);
+  return {
+    yoy: hasFallback ? +previousValue.toFixed(4) : null,
+    refMonth: typeof previousLeaf?.refMonth === 'string' ? previousLeaf.refMonth : null,
+    publishedAt: typeof previousLeaf?.publishedAt === 'string' ? previousLeaf.publishedAt : null,
+    updatedAt: typeof previousLeaf?.updatedAt === 'string' ? previousLeaf.updatedAt : null,
+    source: typeof previousLeaf?.source === 'string' && previousLeaf.source.trim() ? previousLeaf.source : null,
+    sourceStatus: hasFallback ? 'fallback' : 'missing'
+  };
+}
+
+function buildMissingChinaInflation(prevChinaInflation = null) {
+  const cpi = buildMissingChinaInflationLeaf('cpi', prevChinaInflation?.cpi);
+  const ppi = buildMissingChinaInflationLeaf('ppi', prevChinaInflation?.ppi);
+  return {
+    updatedAt: latestIsoDate(cpi.updatedAt, ppi.updatedAt),
+    source: CHINA_INFLATION_SOURCE,
+    sourceStatus: { cpi: cpi.sourceStatus, ppi: ppi.sourceStatus },
+    notes: CHINA_INFLATION_DISPLAY_NOTE,
+    cpi,
+    ppi
+  };
+}
+
+function buildMissingChinaPmiLeaf(previousLeaf = null) {
+  const previousValue = parseChinaOfficialNumber(previousLeaf?.value);
+  const hasFallback = Number.isFinite(previousValue);
+  return {
+    value: hasFallback ? +previousValue.toFixed(1) : null,
+    refMonth: typeof previousLeaf?.refMonth === 'string' ? previousLeaf.refMonth : null,
+    publishedAt: typeof previousLeaf?.publishedAt === 'string' ? previousLeaf.publishedAt : null,
+    updatedAt: typeof previousLeaf?.updatedAt === 'string' ? previousLeaf.updatedAt : null,
+    source: typeof previousLeaf?.source === 'string' && previousLeaf.source.trim() ? previousLeaf.source : null,
+    sourceStatus: hasFallback ? 'fallback' : 'missing'
+  };
+}
+
+function buildMissingChinaPmi(prevChinaPmi = null) {
+  const pmi = buildMissingChinaPmiLeaf(prevChinaPmi?.pmi);
+  return {
+    updatedAt: pmi.updatedAt,
+    source: CHINA_PMI_SOURCE,
+    sourceStatus: { pmi: pmi.sourceStatus },
+    notes: CHINA_PMI_DISPLAY_NOTE,
+    pmi
+  };
+}
+
+async function resolveChinaInflationLeaf(kind, previousLeaf, indexHtmlList) {
+  try {
+    const nbs = await fetchChinaNbsLeaf(kind, indexHtmlList);
+    return { ...nbs, yoy: nbs.value, value: undefined };
+  } catch (err) {
+    console.warn(`[china-inflation-${kind}-nbs-fallback] ${stringifyFetchError(err)}`);
+  }
+  try {
+    const te = await fetchTradingEconomicsChinaLeaf(kind);
+    return { ...te, yoy: te.value, value: undefined };
+  } catch (err) {
+    console.warn(`[china-inflation-${kind}-missing] ${stringifyFetchError(err)}`);
+    return buildMissingChinaInflationLeaf(kind, previousLeaf);
+  }
+}
+
+async function resolveChinaInflation(prevChinaInflation) {
+  let indexHtmlList = [];
+  try {
+    indexHtmlList = await fetchChinaNbsIndexPages();
+  } catch (err) {
+    console.warn(`[china-inflation-nbs-index-fallback] ${stringifyFetchError(err)}`);
+  }
+  const fallback = buildMissingChinaInflation(prevChinaInflation);
+  const [cpi, ppi] = await Promise.all([
+    resolveChinaInflationLeaf('cpi', fallback.cpi, indexHtmlList),
+    resolveChinaInflationLeaf('ppi', fallback.ppi, indexHtmlList)
+  ]);
+  return {
+    updatedAt: latestIsoDate(cpi.updatedAt, ppi.updatedAt),
+    source: CHINA_INFLATION_SOURCE,
+    sourceStatus: { cpi: cpi.sourceStatus, ppi: ppi.sourceStatus },
+    notes: CHINA_INFLATION_DISPLAY_NOTE,
+    cpi,
+    ppi
+  };
+}
+
+async function resolveChinaPmi(prevChinaPmi) {
+  let indexHtmlList = [];
+  try {
+    indexHtmlList = await fetchChinaNbsIndexPages();
+    const nbs = await fetchChinaNbsLeaf('pmi', indexHtmlList);
+    return {
+      updatedAt: nbs.updatedAt,
+      source: CHINA_PMI_SOURCE,
+      sourceStatus: { pmi: nbs.sourceStatus },
+      notes: CHINA_PMI_DISPLAY_NOTE,
+      pmi: {
+        value: nbs.value,
+        refMonth: nbs.refMonth,
+        publishedAt: nbs.publishedAt,
+        updatedAt: nbs.updatedAt,
+        source: nbs.source,
+        sourceStatus: nbs.sourceStatus
+      }
+    };
+  } catch (err) {
+    console.warn(`[china-pmi-nbs-fallback] ${stringifyFetchError(err)}`);
+  }
+  try {
+    const te = await fetchTradingEconomicsChinaLeaf('pmi');
+    return {
+      updatedAt: te.updatedAt,
+      source: CHINA_PMI_SOURCE,
+      sourceStatus: { pmi: te.sourceStatus },
+      notes: CHINA_PMI_DISPLAY_NOTE,
+      pmi: {
+        value: te.value,
+        refMonth: te.refMonth,
+        publishedAt: te.publishedAt,
+        updatedAt: te.updatedAt,
+        source: te.source,
+        sourceStatus: te.sourceStatus
+      }
+    };
+  } catch (err) {
+    console.warn(`[china-pmi-missing] ${stringifyFetchError(err)}`);
+    return buildMissingChinaPmi(prevChinaPmi);
+  }
+}
 const MONTH_INDEX_BY_NAME = new Map([
   ['january', 0],
   ['february', 1],
@@ -6509,7 +6862,9 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveInflationEnergy(prevMd.inflationEnergy),
     resolveCopperGold(prevMd.copperGold),
     resolveChinaBond(prevMd.chinaBond),
-    resolveCfetsRmb(prevMd.cfetsRmb)
+    resolveCfetsRmb(prevMd.cfetsRmb),
+    resolveChinaInflation(prevMd.chinaInflation),
+    resolveChinaPmi(prevMd.chinaPmi)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -6557,6 +6912,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   const copperGold = results[13].status === 'fulfilled' ? results[13].value : buildMissingCopperGold(prevMd.copperGold);
   const chinaBond = results[14].status === 'fulfilled' ? results[14].value : buildMissingChinaBond(prevMd.chinaBond);
   const cfetsRmb = results[15].status === 'fulfilled' ? results[15].value : buildMissingCfetsRmb(prevMd.cfetsRmb);
+  const chinaInflation = results[16].status === 'fulfilled' ? results[16].value : buildMissingChinaInflation(prevMd.chinaInflation);
+  const chinaPmi = results[17].status === 'fulfilled' ? results[17].value : buildMissingChinaPmi(prevMd.chinaPmi);
 
   return {
     fedLiquidity,
@@ -6574,7 +6931,9 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     inflationEnergy,
     copperGold,
     chinaBond,
-    cfetsRmb
+    cfetsRmb,
+    chinaInflation,
+    chinaPmi
   };
 }
 
@@ -6585,7 +6944,9 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     resolveInflationEnergy(prevMd?.inflationEnergy),
     resolveCopperGold(prevMd?.copperGold),
     resolveChinaBond(prevMd?.chinaBond),
-    resolveCfetsRmb(prevMd?.cfetsRmb)
+    resolveCfetsRmb(prevMd?.cfetsRmb),
+    resolveChinaInflation(prevMd?.chinaInflation),
+    resolveChinaPmi(prevMd?.chinaPmi)
   ]);
   return {
     worldEconomy: results[0].status === 'fulfilled' ? results[0].value : buildMissingWorldEconomy(prevMd?.worldEconomy),
@@ -6593,7 +6954,9 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     inflationEnergy: results[2].status === 'fulfilled' ? results[2].value : buildMissingInflationEnergy(prevMd?.inflationEnergy),
     copperGold: results[3].status === 'fulfilled' ? results[3].value : buildMissingCopperGold(prevMd?.copperGold),
     chinaBond: results[4].status === 'fulfilled' ? results[4].value : buildMissingChinaBond(prevMd?.chinaBond),
-    cfetsRmb: results[5].status === 'fulfilled' ? results[5].value : buildMissingCfetsRmb(prevMd?.cfetsRmb)
+    cfetsRmb: results[5].status === 'fulfilled' ? results[5].value : buildMissingCfetsRmb(prevMd?.cfetsRmb),
+    chinaInflation: results[6].status === 'fulfilled' ? results[6].value : buildMissingChinaInflation(prevMd?.chinaInflation),
+    chinaPmi: results[7].status === 'fulfilled' ? results[7].value : buildMissingChinaPmi(prevMd?.chinaPmi)
   };
 }
 
@@ -7511,6 +7874,8 @@ async function build() {
       copperGold: macroDrivers.copperGold,
       chinaBond: macroDrivers.chinaBond,
       cfetsRmb: macroDrivers.cfetsRmb,
+      chinaInflation: macroDrivers.chinaInflation,
+      chinaPmi: macroDrivers.chinaPmi,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

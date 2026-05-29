@@ -1,4 +1,4 @@
-import fs from 'fs';
+﻿import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -114,6 +114,9 @@ const VALID_CHINA_BOND_SOURCE = 'ChinaBond:MOF-yield-curve';
 const VALID_CHINA_BOND_LEAF_SOURCE = 'ChinaBond:MOF';
 const CFETS_RMB_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_CFETS_RMB_SOURCE = 'ChinaMoney:CFETS-RmbIdx';
+const CHINA_MACRO_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_CHINA_INFLATION_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-CPI-PPI-public-html';
+const VALID_CHINA_PMI_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-NBS-Manufacturing-PMI-public-html';
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
@@ -1100,6 +1103,53 @@ function validateMacroDriversCfetsRmb(dataPayload) {
   }
 }
 
+function validateChinaMacroRefMonth(value, fieldName) {
+  assert(value === null || /^\d{4}-\d{2}$/u.test(value), `${fieldName} must be YYYY-MM or null`);
+}
+
+function validateChinaMacroLeaf(leaf, fieldName, valueKey) {
+  assertPlainObject(leaf, fieldName);
+  assert(isFiniteNumberOrNull(leaf[valueKey]), `${fieldName}.${valueKey} must be finite number or null`);
+  validateChinaMacroRefMonth(leaf.refMonth, `${fieldName}.refMonth`);
+  validateNullableIsoString(leaf.publishedAt, `${fieldName}.publishedAt`);
+  validateNullableIsoString(leaf.updatedAt, `${fieldName}.updatedAt`);
+  assert(leaf.source === null || typeof leaf.source === 'string', `${fieldName}.source must be string or null`);
+  assertString(leaf.sourceStatus, `${fieldName}.sourceStatus`);
+  assert(CHINA_MACRO_SOURCE_STATUSES.has(leaf.sourceStatus), `${fieldName}.sourceStatus is not supported`);
+  if (leaf[valueKey] === null) {
+    assert(leaf.sourceStatus === 'missing', `${fieldName}.sourceStatus must be missing when ${valueKey} is null`);
+  }
+}
+
+function validateMacroDriversChinaInflation(dataPayload) {
+  const chinaInflation = dataPayload?.macroDrivers?.chinaInflation;
+  if (chinaInflation === undefined) return;
+  assertPlainObject(chinaInflation, 'macroDrivers.chinaInflation');
+  validateNullableIsoString(chinaInflation.updatedAt, 'macroDrivers.chinaInflation.updatedAt');
+  assert(chinaInflation.source === VALID_CHINA_INFLATION_SOURCE, `macroDrivers.chinaInflation.source must be ${VALID_CHINA_INFLATION_SOURCE}`);
+  assertString(chinaInflation.notes, 'macroDrivers.chinaInflation.notes');
+  assertPlainObject(chinaInflation.sourceStatus, 'macroDrivers.chinaInflation.sourceStatus');
+  for (const key of ['cpi', 'ppi']) {
+    assert(Object.hasOwn(chinaInflation.sourceStatus, key), `macroDrivers.chinaInflation.sourceStatus.${key} is missing`);
+    assert(CHINA_MACRO_SOURCE_STATUSES.has(chinaInflation.sourceStatus[key]), `macroDrivers.chinaInflation.sourceStatus.${key} is not supported`);
+    validateChinaMacroLeaf(chinaInflation[key], `macroDrivers.chinaInflation.${key}`, 'yoy');
+    assert(chinaInflation[key].sourceStatus === chinaInflation.sourceStatus[key], `macroDrivers.chinaInflation.${key}.sourceStatus must match parent sourceStatus.${key}`);
+  }
+}
+
+function validateMacroDriversChinaPmi(dataPayload) {
+  const chinaPmi = dataPayload?.macroDrivers?.chinaPmi;
+  if (chinaPmi === undefined) return;
+  assertPlainObject(chinaPmi, 'macroDrivers.chinaPmi');
+  validateNullableIsoString(chinaPmi.updatedAt, 'macroDrivers.chinaPmi.updatedAt');
+  assert(chinaPmi.source === VALID_CHINA_PMI_SOURCE, `macroDrivers.chinaPmi.source must be ${VALID_CHINA_PMI_SOURCE}`);
+  assertString(chinaPmi.notes, 'macroDrivers.chinaPmi.notes');
+  assertPlainObject(chinaPmi.sourceStatus, 'macroDrivers.chinaPmi.sourceStatus');
+  assert(Object.hasOwn(chinaPmi.sourceStatus, 'pmi'), 'macroDrivers.chinaPmi.sourceStatus.pmi is missing');
+  assert(CHINA_MACRO_SOURCE_STATUSES.has(chinaPmi.sourceStatus.pmi), 'macroDrivers.chinaPmi.sourceStatus.pmi is not supported');
+  validateChinaMacroLeaf(chinaPmi.pmi, 'macroDrivers.chinaPmi.pmi', 'value');
+  assert(chinaPmi.pmi.sourceStatus === chinaPmi.sourceStatus.pmi, 'macroDrivers.chinaPmi.pmi.sourceStatus must match parent sourceStatus.pmi');
+}
 function validateHistoryWindowBase(node, fieldName, targetObservations, expectedWindowLabel) {
   assertPlainObject(node, fieldName);
   assertString(node.windowStatus, `${fieldName}.windowStatus`);
@@ -2139,6 +2189,8 @@ validateMacroDriversInflationEnergy(data);
 validateMacroDriversCopperGold(data);
 validateMacroDriversChinaBond(data);
 validateMacroDriversCfetsRmb(data);
+validateMacroDriversChinaInflation(data);
+validateMacroDriversChinaPmi(data);
 validateHistoryWindowFields(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);

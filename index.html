@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=stage-6a-china-bond-cfets-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=stage-6c-china-cpi-ppi-pmi-1" />
 </head>
 <body>
   <div class="container">
@@ -340,14 +340,14 @@
 
         <!-- C6: 中国宏观 -->
         <div class="reader-cat-block">
-          <div class="reader-cat-header"><h3>中国宏观</h3><span class="en">CHINA MACRO · NEW CATEGORY</span><span class="counts">5 live · <span class="pending">2 P1 占位</span></span></div>
-          <p class="cat-intro orange-edge"><strong>类别整体 P1 占位。</strong>M-94 阶段无任何数据接入。M-95/M-96 起接入公开数据(Yahoo 股指 + TE 公开 PMI/CPI/10Y + Stooq CFETS)。央行 SLO/MLF/OMO 原始 tape、社融组件分项、70 城房价原始数据均不可达。</p>
+          <div class="reader-cat-header"><h3>中国宏观</h3><span class="en">CHINA MACRO · NEW CATEGORY</span><span class="counts">7 live</span></div>
+          <p class="cat-intro orange-edge"><strong>中国宏观公开观察层。</strong>本类使用 Yahoo 股指、NBS/TE 中国通胀与 PMI、ChinaBond 10Y、ChinaMoney CFETS 等公开源。央行 SLO/MLF/OMO 原始 tape、社融组件分项、70 城房价原始数据均不可达。</p>
           <div class="card-grid">
             <article class="indicator-card"><div class="status-bar neutral" id="c6-sse-status"></div><div class="head"><div><div class="name-en">SSE Composite</div><div class="name-zh">上证综指</div></div><span class="badge neutral" id="c6-sse-badge">OBS</span></div><div class="number" id="c6-sse-number">4100</div><div class="aux" id="c6-sse-aux">近5日 —</div><p class="note">A 股大盘风险情绪基准。</p><div class="meta"><span>live</span><span>Yahoo 000001.SS</span></div></article>
             <article class="indicator-card"><div class="status-bar neutral" id="c6-hsi-status"></div><div class="head"><div><div class="name-en">Hang Seng</div><div class="name-zh">恒生指数</div></div><span class="badge neutral" id="c6-hsi-badge">OBS</span></div><div class="number" id="c6-hsi-number">25000</div><div class="aux" id="c6-hsi-aux">近5日 —</div><p class="note">中国资本市场对外开放窗口。</p><div class="meta"><span>live</span><span>Yahoo ^HSI</span></div></article>
             <article class="indicator-card"><div class="status-bar neutral" id="c6-csi300-status"></div><div class="head"><div><div class="name-en">CSI 300</div><div class="name-zh">沪深 300</div></div><span class="badge neutral" id="c6-csi300-badge">OBS</span></div><div class="number" id="c6-csi300-number">4900</div><div class="aux" id="c6-csi300-aux">近5日 —</div><p class="note">A 股蓝筹组合。</p><div class="meta"><span>live</span><span>Yahoo 000300.SS</span></div></article>
-            <article class="indicator-card pending"><span class="corner p1">P1</span><div class="status-bar pending"></div><div class="head"><div><div class="name-en">China PMI</div><div class="name-zh">中国制造业 PMI</div></div><span class="badge pending">P1</span></div><div class="number" style="color:var(--paper-muted)">—</div><p class="note">中国经济活动温度。月频。</p><div class="meta"><span>next: P2</span><span>TE 公开 HTML</span></div></article>
-            <article class="indicator-card pending"><span class="corner p1">P1</span><div class="status-bar pending"></div><div class="head"><div><div class="name-en">China CPI / PPI</div><div class="name-zh">中国通胀</div></div><span class="badge pending">P1</span></div><div class="number" style="color:var(--paper-muted)">—</div><p class="note">中国通缩 / 通胀压力 vs 美国分化。</p><div class="meta"><span>next: P2</span><span>TE + FRED mirror</span></div></article>
+            <article class="indicator-card" id="card-c6-china-pmi"><div class="status-bar neutral" id="c6-china-pmi-status"></div><div class="head"><div><div class="name-en">China PMI</div><div class="name-zh">中国制造业 PMI</div></div><span class="badge neutral" id="c6-china-pmi-badge">OBS</span></div><div class="number"><span id="c6-china-pmi-number">50.3</span><span class="unit" id="c6-china-pmi-unit">points</span></div><div class="aux" id="c6-china-pmi-aux">2026-04 · 扩张</div><p class="note">国家统计局官方制造业 PMI，反映制造业景气扩张/收缩状态。本卡为 display-only。</p><div class="meta"><span>monthly official HTML</span><span>macroDrivers.chinaPmi</span></div></article>
+            <article class="indicator-card" id="card-c6-china-infl"><div class="status-bar neutral" id="c6-china-infl-status"></div><div class="head"><div><div class="name-en">China CPI / PPI</div><div class="name-zh">中国通胀</div></div><span class="badge neutral" id="c6-china-infl-badge">OBS</span></div><div class="number"><span id="c6-china-infl-number">1.2</span><span class="unit" id="c6-china-infl-unit">% YoY</span></div><div class="aux" id="c6-china-infl-aux">CPI +1.2% YoY · PPI +2.8% YoY · 2026-04</div><p class="note">国家统计局 CPI/PPI 同比观察，展示中国通胀与工业品价格压力。本卡为 display-only。</p><div class="meta"><span>monthly official HTML</span><span>macroDrivers.chinaInflation</span></div></article>
             <article class="indicator-card" id="card-c6-china-10y"><div class="status-bar neutral" id="c6-china-10y-status"></div><div class="head"><div><div class="name-en">China 10Y</div><div class="name-zh">中国 10 年国债</div></div><span class="badge neutral" id="c6-china-10y-badge">OBS</span></div><div class="number"><span id="c6-china-10y-number">1.72</span><span class="unit" id="c6-china-10y-unit">%</span></div><div class="aux" id="c6-china-10y-aux">中国 10Y 1.72% · 美 10Y — · 差 —</div><p class="note">中国长端利率反映增长预期与中美利差。本卡为 ChinaBond 官方收益率曲线 display-only 观察值。</p><div class="meta"><span>daily official JSON</span><span>macroDrivers.chinaBond</span></div></article>
             <article class="indicator-card" id="card-c6-cfets"><div class="status-bar neutral" id="c6-cfets-status"></div><div class="head"><div><div class="name-en">CFETS RMB</div><div class="name-zh">人民币篮子指数</div></div><span class="badge neutral" id="c6-cfets-badge">OBS</span></div><div class="number"><span id="c6-cfets-number">100.47</span><span class="unit" id="c6-cfets-unit">index</span></div><div class="aux" id="c6-cfets-aux">CFETS 100.47 · BIS 108.34 · SDR 95.82</div><p class="note">(同时在全球流动性类) 汇率政策意图。ChinaMoney 官方周频 CFETS 篮子指数。</p><div class="meta"><span>weekly official JSON</span><span>macroDrivers.cfetsRmb</span></div></article>
           </div>
@@ -864,6 +864,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=stage-6a-china-bond-cfets-1"></script>
+  <script type="module" src="scripts/app.js?v=stage-6c-china-cpi-ppi-pmi-1"></script>
 </body>
 </html>
