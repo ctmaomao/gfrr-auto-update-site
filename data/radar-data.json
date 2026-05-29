@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-29T02:10:06.470Z",
+  "updatedAt": "2026-05-29T03:21:14.457Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
     "commitSha": "3a11fd9522f488937fad558b13a0655f9b35c823",
     "updatedAt": "2026-05-29T01:48:24.061Z",
     "sourceMode": "cache-only",
     "healthScore": 0,
-    "capturedAt": "2026-05-29T02:10:06.470Z"
+    "capturedAt": "2026-05-29T03:21:14.457Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-29T02:10:06.470Z",
+    "generatedAt": "2026-05-29T03:21:14.457Z",
     "macroState": "滞胀冲击 / 通胀冲击",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
     "dominantRiskChain": {
@@ -1628,7 +1628,153 @@
         "逆回购余额告急"
       ]
     },
-    "allSourcesMissing": false
+    "allSourcesMissing": false,
+    "worldEconomy": {
+      "updatedAt": "2026-05-29T00:00:00.000Z",
+      "source": "Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI",
+      "sourceStatus": {
+        "stoxx50": "live",
+        "nikkei225": "live",
+        "dax": "live"
+      },
+      "notes": "世界经济维度 display-only 公开指数代理;不进 scoring/decision/execution/position。",
+      "stoxx50": {
+        "symbol": "^STOXX50E",
+        "labelZh": "欧元区大盘",
+        "price": 6055.1099,
+        "changePct": 0.0159,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-28T07:00:00.000Z",
+        "source": "Yahoo:^STOXX50E",
+        "sourceStatus": "live"
+      },
+      "nikkei225": {
+        "symbol": "^N225",
+        "labelZh": "日经 225",
+        "price": 65896.5703,
+        "changePct": 0.0113,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-29T00:00:00.000Z",
+        "source": "Yahoo:^N225",
+        "sourceStatus": "live"
+      },
+      "dax": {
+        "symbol": "^GDAXI",
+        "labelZh": "德国 DAX",
+        "price": 25092.25,
+        "changePct": 0.0082,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-28T07:00:00.000Z",
+        "source": "Yahoo:^GDAXI",
+        "sourceStatus": "live"
+      }
+    },
+    "chinaEquity": {
+      "updatedAt": "2026-05-29T01:30:00.000Z",
+      "source": "Yahoo:000001.SS; Yahoo:^HSI; Yahoo:000300.SS",
+      "sourceStatus": {
+        "sseComposite": "live",
+        "hangSeng": "live",
+        "csi300": "live"
+      },
+      "notes": "中国股指 display-only 公开指数代理;不进 scoring/decision/execution/position。",
+      "sseComposite": {
+        "symbol": "000001.SS",
+        "labelZh": "上证综指",
+        "price": 4082.2778,
+        "changePct": -0.0169,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-29T01:30:00.000Z",
+        "source": "Yahoo:000001.SS",
+        "sourceStatus": "live"
+      },
+      "hangSeng": {
+        "symbol": "^HSI",
+        "labelZh": "恒生指数",
+        "price": 25060.5,
+        "changePct": -0.0213,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-29T01:30:00.000Z",
+        "source": "Yahoo:^HSI",
+        "sourceStatus": "live"
+      },
+      "csi300": {
+        "symbol": "000300.SS",
+        "labelZh": "沪深 300",
+        "price": 4911.7993,
+        "changePct": -0.002,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-29T01:30:00.000Z",
+        "source": "Yahoo:000300.SS",
+        "sourceStatus": "live"
+      }
+    },
+    "inflationEnergy": {
+      "updatedAt": null,
+      "source": "FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO",
+      "sourceStatus": {
+        "cpi": "missing",
+        "wti": "missing"
+      },
+      "notes": "通胀与能源 display-only 公开数据代理;tone 仅展示,不进 scoring/decision/execution/position。",
+      "cpi": {
+        "headlineIndex": null,
+        "headlineYoY": null,
+        "headlineMoM": null,
+        "coreIndex": null,
+        "coreYoY": null,
+        "coreMoM": null,
+        "yoyWindow": "YoY",
+        "updatedAt": null,
+        "source": "FRED:CPIAUCSL; FRED:CPILFESL",
+        "seriesStatus": {
+          "headline": "missing",
+          "core": "missing"
+        },
+        "sourceStatus": "missing"
+      },
+      "wti": {
+        "price": null,
+        "changePct": null,
+        "changeWindow": "5d",
+        "updatedAt": null,
+        "source": "FRED:DCOILWTICO",
+        "sourceStatus": "missing"
+      }
+    },
+    "copperGold": {
+      "updatedAt": "2026-05-29T03:11:12.000Z",
+      "source": "Yahoo:HG=F; Yahoo:GC=F",
+      "sourceStatus": {
+        "copper": "live",
+        "gold": "live",
+        "ratio": "live"
+      },
+      "notes": "铜金比 display-only 公开期货代理;regime 观察,不进 scoring/decision/execution/position。",
+      "copper": {
+        "symbol": "HG=F",
+        "labelZh": "铜期货",
+        "price": 6.4145,
+        "changePct": 0.0114,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-29T03:11:11.000Z",
+        "source": "Yahoo:HG=F",
+        "sourceStatus": "live"
+      },
+      "gold": {
+        "symbol": "GC=F",
+        "labelZh": "金期货",
+        "price": 4528,
+        "changePct": 0.0015,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-29T03:11:12.000Z",
+        "source": "Yahoo:GC=F",
+        "sourceStatus": "live"
+      },
+      "ratio": 0.00141663,
+      "ratioChangePct": 0.0099,
+      "ratioWindow": "5d"
+    }
   },
   "liquidityIndex": {
     "score": 47,
@@ -2213,7 +2359,7 @@
   "recovery": {
     "degradedMode": true,
     "safeOutput": true,
-    "lastRun": "2026-05-29T02:10:06.470Z",
+    "lastRun": "2026-05-29T03:21:14.457Z",
     "notes": [
       "日构建未拿到可用实时快照，已回退到上次有效结果。"
     ]
@@ -2452,7 +2598,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-05-29T02:10:06.470Z",
+    "generatedAt": "2026-05-29T03:21:14.457Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [
