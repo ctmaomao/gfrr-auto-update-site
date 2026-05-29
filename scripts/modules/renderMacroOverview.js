@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-5-history-window-1';
+} from './config.js?v=stage-6a-china-bond-cfets-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1164,6 +1164,40 @@ function renderC1InflationEnergy({ radarData }) {
 
 // ---------- Stage 5b: C2 Global Liquidity ----------
 
+
+function renderCfetsRmbLeaf(prefix, cfetsRmb) {
+  if (!cfetsRmb) return;
+  const status = cfetsRmb.sourceStatus?.cfets || 'missing';
+  setToneClass(`${prefix}-status`, 'status-bar', 'neutral');
+  setBadge(`${prefix}-badge`, 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
+
+  const cfets = asNumber(cfetsRmb.cfets);
+  const bis = asNumber(cfetsRmb.bis);
+  const sdr = asNumber(cfetsRmb.sdr);
+  setLeafText(`${prefix}-number`, cfets !== null ? cfets.toFixed(2) : '—');
+  const cfetsText = cfets !== null ? `CFETS ${cfets.toFixed(2)}` : 'CFETS —';
+  const bisText = bis !== null ? `BIS ${bis.toFixed(2)}` : 'BIS —';
+  const sdrText = sdr !== null ? `SDR ${sdr.toFixed(2)}` : 'SDR —';
+  const suffix = status === 'fallback' ? ' · 回退' : '';
+  setLeafText(`${prefix}-aux`, `${cfetsText} · ${bisText} · ${sdrText}${suffix}`);
+}
+
+function renderChinaBondLeaf({ radarData }) {
+  const chinaBond = radarData?.macroDrivers?.chinaBond;
+  if (!chinaBond) return;
+  const status = chinaBond.sourceStatus?.yield10y || chinaBond.yield10y?.sourceStatus || 'missing';
+  setToneClass('c6-china-10y-status', 'status-bar', 'neutral');
+  setBadge('c6-china-10y-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
+
+  const cn10y = asNumber(chinaBond.yield10y?.value);
+  const us10y = asNumber(radarData?.displayInputsBaseline?.us10y);
+  setLeafText('c6-china-10y-number', cn10y !== null ? cn10y.toFixed(2) : '—');
+  const cnText = cn10y !== null ? `中国 10Y ${cn10y.toFixed(2)}%` : '中国 10Y —';
+  const usText = us10y !== null ? `美 10Y ${us10y.toFixed(2)}%` : '美 10Y —';
+  const spreadText = cn10y !== null && us10y !== null ? `差 ${formatBps(cn10y - us10y, 0)}` : '差 —';
+  const suffix = status === 'fallback' ? ' · 回退' : '';
+  setLeafText('c6-china-10y-aux', `${cnText} · ${usText} · ${spreadText}${suffix}`);
+}
 function renderC2GlobalLiquidity({ radarData }) {
   try {
     if (!radarData) return;
@@ -1273,6 +1307,8 @@ function renderC2GlobalLiquidity({ radarData }) {
       const suffix = status === 'fallback' ? ' · 回退' : '';
       setLeafText('c2-cuau-aux', `${cuText} · ${auText} · ${rcText}${suffix}`);
     }
+
+    renderCfetsRmbLeaf('c2-cfets', radarData.macroDrivers?.cfetsRmb);
   } catch (error) {
     console.error('[renderMacroOverview] renderC2GlobalLiquidity failed:', error);
   }
@@ -1579,6 +1615,9 @@ function renderC5WorldEconomy({ radarData }) {
 function renderC6ChinaEquity({ radarData }) {
   try {
     if (!radarData) return;
+    renderChinaBondLeaf({ radarData });
+    renderCfetsRmbLeaf('c6-cfets', radarData.macroDrivers?.cfetsRmb);
+
     const chinaEquity = radarData.macroDrivers?.chinaEquity;
     if (!chinaEquity) return;
 

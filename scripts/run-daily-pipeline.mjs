@@ -115,6 +115,21 @@ const COPPER_GOLD_LEGS = [
   { key: 'copper', symbol: 'HG=F', labelZh: '铜期货', min: 0.5, max: 20 },
   { key: 'gold', symbol: 'GC=F', labelZh: '金期货', min: 500, max: 10000 }
 ];
+const CHINA_BOND_SOURCE = 'ChinaBond:MOF-yield-curve';
+const CHINA_BOND_LEAF_SOURCE = 'ChinaBond:MOF';
+const CHINA_BOND_HISTORY_URL = 'https://yield.chinabond.com.cn/cbweb-czb-web/czb/historyQuery';
+const CHINA_BOND_REFERER = 'https://yield.chinabond.com.cn/cbweb-czb-web/czb/historyQuery';
+const CHINA_BOND_LOOKBACK_DAYS = 10;
+const CHINA_BOND_FRESH_DAYS = 7;
+const CHINA_BOND_DISPLAY_NOTE =
+  '中国 10 年国债收益率来自 ChinaBond 官方 JSON;display-only,不进 scoring/decision/execution/position。';
+const CFETS_RMB_SOURCE = 'ChinaMoney:CFETS-RmbIdx';
+const CFETS_RMB_HISTORY_URL = 'https://www.chinamoney.com.cn/ags/ms/cm-u-bk-fx/RmbIdxHis';
+const CFETS_RMB_REFERER = 'https://www.chinamoney.com.cn/chinese/bkcurvfx/';
+const CFETS_RMB_LOOKBACK_DAYS = 21;
+const CFETS_RMB_FRESH_DAYS = 14;
+const CFETS_RMB_DISPLAY_NOTE =
+  'CFETS 人民币篮子指数来自 ChinaMoney 官方 JSON;周频精确篮子,display-only,不进 scoring/decision/execution/position。';
 const STOCKQ_INDEX_BASE = 'https://en.stockq.org/index';
 const STOCKQ_FETCH_TIMEOUT_MS = 9000;
 const EMPLOYMENT_SOURCE =
@@ -1545,6 +1560,40 @@ function parseFredApiObservations(text) {
 function cosdIso(daysBack) {
   return new Date(Date.now() - daysBack * 24 * 3600 * 1000).toISOString().slice(0, 10);
 }
+function dateOnlyIso(value) {
+  const match = String(value || '').trim().match(/^(\d{4}-\d{2}-\d{2})/u);
+  if (!match) return null;
+  const ms = Date.parse(`${match[1]}T00:00:00Z`);
+  return Number.isFinite(ms) ? match[1] : null;
+}
+
+function dateOnlyToIso(value) {
+  const dateOnly = dateOnlyIso(value);
+  return dateOnly ? `${dateOnly}T00:00:00Z` : null;
+}
+
+function dateOnlyAgeDays(value) {
+  const dateOnly = dateOnlyIso(value);
+  if (!dateOnly) return null;
+  const todayMs = Date.parse(`${isoNow.slice(0, 10)}T00:00:00Z`);
+  const obsMs = Date.parse(`${dateOnly}T00:00:00Z`);
+  if (!Number.isFinite(todayMs) || !Number.isFinite(obsMs)) return null;
+  return Math.floor((todayMs - obsMs) / (24 * 3600 * 1000));
+}
+
+function isFreshDateOnly(value, maxAgeDays) {
+  const ageDays = dateOnlyAgeDays(value);
+  return Number.isFinite(ageDays) && ageDays >= 0 && ageDays <= maxAgeDays;
+}
+
+function officialJsonFetchOptions(referer) {
+  return {
+    headers: {
+      Accept: 'application/json,text/plain,*/*',
+      Referer: referer
+    }
+  };
+}
 
 function buildFredApiUrl(seriesId, observationStart) {
   const params = new URLSearchParams({
@@ -2792,6 +2841,182 @@ async function resolveCopperGold(prevCopperGold) {
     : pickCopperGoldStatus(next.sourceStatus.copper, next.sourceStatus.gold);
   next.updatedAt = latestIsoDate(next.copper?.updatedAt, next.gold?.updatedAt);
   return next;
+}
+function parseChinaOfficialNumber(value) {
+  const n = Number(String(value ?? '').trim());
+  return Number.isFinite(n) ? n : null;
+}
+
+function buildChinaBondHistoryUrl() {
+  const params = new URLSearchParams({
+    startDate: cosdIso(CHINA_BOND_LOOKBACK_DAYS),
+    endDate: isoNow.slice(0, 10),
+    gjqx: '10',
+    locale: 'cn_ZH',
+    qxmc: '1'
+  });
+  return `${CHINA_BOND_HISTORY_URL}?${params.toString()}`;
+}
+
+function buildCfetsRmbHistoryUrl() {
+  const params = new URLSearchParams({
+    lang: 'cn',
+    startDate: cosdIso(CFETS_RMB_LOOKBACK_DAYS),
+    endDate: isoNow.slice(0, 10)
+  });
+  return `${CFETS_RMB_HISTORY_URL}?${params.toString()}`;
+}
+
+function pickLatestChinaBondRow(payload) {
+  const rows = Array.isArray(payload?.heList) ? payload.heList : [];
+  return rows
+    .map((row) => ({
+      row,
+      workTime: dateOnlyIso(row?.workTime),
+      tenYear: parseChinaOfficialNumber(row?.tenYear)
+    }))
+    .filter((item) => item.workTime && Number.isFinite(item.tenYear))
+    .sort((a, b) => Date.parse(`${a.workTime}T00:00:00Z`) - Date.parse(`${b.workTime}T00:00:00Z`))
+    .at(-1) || null;
+}
+
+function normalizePreviousChinaBondYield(previous) {
+  const value = parseChinaOfficialNumber(previous?.value);
+  if (!Number.isFinite(value)) return null;
+  return {
+    value: +value.toFixed(4),
+    latestObsDate: typeof previous.latestObsDate === 'string' ? previous.latestObsDate : null,
+    updatedAt: typeof previous.updatedAt === 'string' ? previous.updatedAt : null,
+    source: typeof previous.source === 'string' && previous.source.trim() ? previous.source : CHINA_BOND_LEAF_SOURCE,
+    sourceStatus: 'fallback'
+  };
+}
+
+function buildMissingChinaBond(prevChinaBond = null) {
+  const fallback = normalizePreviousChinaBondYield(prevChinaBond?.yield10y);
+  const status = fallback ? 'fallback' : 'missing';
+  return {
+    updatedAt: fallback?.updatedAt || null,
+    source: CHINA_BOND_SOURCE,
+    sourceStatus: { yield10y: status },
+    notes: CHINA_BOND_DISPLAY_NOTE,
+    yield10y: fallback || {
+      value: null,
+      latestObsDate: null,
+      updatedAt: null,
+      source: CHINA_BOND_LEAF_SOURCE,
+      sourceStatus: 'missing'
+    }
+  };
+}
+
+async function resolveChinaBond(prevChinaBond) {
+  try {
+    const payload = await fetchJsonText(
+      buildChinaBondHistoryUrl(),
+      'chinabond:10y',
+      MACRO_FETCH_TIMEOUT_MS,
+      officialJsonFetchOptions(CHINA_BOND_REFERER)
+    );
+    const latest = pickLatestChinaBondRow(payload);
+    if (!latest || !isFreshDateOnly(latest.workTime, CHINA_BOND_FRESH_DAYS)) {
+      return buildMissingChinaBond(prevChinaBond);
+    }
+    if (latest.tenYear < 0.5 || latest.tenYear > 8) {
+      return buildMissingChinaBond(prevChinaBond);
+    }
+    const updatedAt = dateOnlyToIso(latest.workTime);
+    return {
+      updatedAt,
+      source: CHINA_BOND_SOURCE,
+      sourceStatus: { yield10y: 'live' },
+      notes: CHINA_BOND_DISPLAY_NOTE,
+      yield10y: {
+        value: +latest.tenYear.toFixed(4),
+        latestObsDate: updatedAt,
+        updatedAt,
+        source: CHINA_BOND_LEAF_SOURCE,
+        sourceStatus: 'live'
+      }
+    };
+  } catch (err) {
+    console.warn(`[china-bond-fallback] ${stringifyFetchError(err)}`);
+    return buildMissingChinaBond(prevChinaBond);
+  }
+}
+
+function pickLatestCfetsRecord(payload) {
+  const records = Array.isArray(payload?.records) ? payload.records : [];
+  return records
+    .map((record) => ({
+      record,
+      showDate: dateOnlyIso(record?.showDate),
+      cfets: parseChinaOfficialNumber(record?.cfetsIndexRate),
+      bis: parseChinaOfficialNumber(record?.bisIndexRate),
+      sdr: parseChinaOfficialNumber(record?.sdrIndexRate)
+    }))
+    .filter((item) => item.showDate && Number.isFinite(item.cfets))
+    .sort((a, b) => Date.parse(`${a.showDate}T00:00:00Z`) - Date.parse(`${b.showDate}T00:00:00Z`))
+    .at(-1) || null;
+}
+
+function normalizePreviousCfetsRmb(previous) {
+  const cfets = parseChinaOfficialNumber(previous?.cfets);
+  if (!Number.isFinite(cfets)) return null;
+  return {
+    cfets: +cfets.toFixed(2),
+    bis: Number.isFinite(parseChinaOfficialNumber(previous?.bis)) ? +parseChinaOfficialNumber(previous.bis).toFixed(2) : null,
+    sdr: Number.isFinite(parseChinaOfficialNumber(previous?.sdr)) ? +parseChinaOfficialNumber(previous.sdr).toFixed(2) : null,
+    latestObsDate: typeof previous.latestObsDate === 'string' ? previous.latestObsDate : null,
+    updatedAt: typeof previous.updatedAt === 'string' ? previous.updatedAt : null
+  };
+}
+
+function buildMissingCfetsRmb(prevCfetsRmb = null) {
+  const fallback = normalizePreviousCfetsRmb(prevCfetsRmb);
+  const status = fallback ? 'fallback' : 'missing';
+  return {
+    updatedAt: fallback?.updatedAt || null,
+    source: CFETS_RMB_SOURCE,
+    sourceStatus: { cfets: status },
+    notes: CFETS_RMB_DISPLAY_NOTE,
+    cfets: fallback?.cfets ?? null,
+    bis: fallback?.bis ?? null,
+    sdr: fallback?.sdr ?? null,
+    latestObsDate: fallback?.latestObsDate || null
+  };
+}
+
+async function resolveCfetsRmb(prevCfetsRmb) {
+  try {
+    const payload = await fetchJsonText(
+      buildCfetsRmbHistoryUrl(),
+      'chinamoney:cfets-rmb',
+      MACRO_FETCH_TIMEOUT_MS,
+      officialJsonFetchOptions(CFETS_RMB_REFERER)
+    );
+    const latest = pickLatestCfetsRecord(payload);
+    if (!latest || !isFreshDateOnly(latest.showDate, CFETS_RMB_FRESH_DAYS)) {
+      return buildMissingCfetsRmb(prevCfetsRmb);
+    }
+    if (latest.cfets < 80 || latest.cfets > 120) {
+      return buildMissingCfetsRmb(prevCfetsRmb);
+    }
+    const updatedAt = dateOnlyToIso(latest.showDate);
+    return {
+      updatedAt,
+      source: CFETS_RMB_SOURCE,
+      sourceStatus: { cfets: 'live' },
+      notes: CFETS_RMB_DISPLAY_NOTE,
+      cfets: +latest.cfets.toFixed(2),
+      bis: Number.isFinite(latest.bis) ? +latest.bis.toFixed(2) : null,
+      sdr: Number.isFinite(latest.sdr) ? +latest.sdr.toFixed(2) : null,
+      latestObsDate: updatedAt
+    };
+  } catch (err) {
+    console.warn(`[cfets-rmb-fallback] ${stringifyFetchError(err)}`);
+    return buildMissingCfetsRmb(prevCfetsRmb);
+  }
 }
 
 const MONTH_INDEX_BY_NAME = new Map([
@@ -6282,7 +6507,9 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveWorldEconomy(prevMd.worldEconomy),
     resolveChinaEquity(prevMd.chinaEquity),
     resolveInflationEnergy(prevMd.inflationEnergy),
-    resolveCopperGold(prevMd.copperGold)
+    resolveCopperGold(prevMd.copperGold),
+    resolveChinaBond(prevMd.chinaBond),
+    resolveCfetsRmb(prevMd.cfetsRmb)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -6328,6 +6555,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   const chinaEquity = results[11].status === 'fulfilled' ? results[11].value : buildMissingChinaEquity(prevMd.chinaEquity);
   const inflationEnergy = results[12].status === 'fulfilled' ? results[12].value : buildMissingInflationEnergy(prevMd.inflationEnergy);
   const copperGold = results[13].status === 'fulfilled' ? results[13].value : buildMissingCopperGold(prevMd.copperGold);
+  const chinaBond = results[14].status === 'fulfilled' ? results[14].value : buildMissingChinaBond(prevMd.chinaBond);
+  const cfetsRmb = results[15].status === 'fulfilled' ? results[15].value : buildMissingCfetsRmb(prevMd.cfetsRmb);
 
   return {
     fedLiquidity,
@@ -6343,7 +6572,9 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     worldEconomy,
     chinaEquity,
     inflationEnergy,
-    copperGold
+    copperGold,
+    chinaBond,
+    cfetsRmb
   };
 }
 
@@ -6352,13 +6583,17 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     resolveWorldEconomy(prevMd?.worldEconomy),
     resolveChinaEquity(prevMd?.chinaEquity),
     resolveInflationEnergy(prevMd?.inflationEnergy),
-    resolveCopperGold(prevMd?.copperGold)
+    resolveCopperGold(prevMd?.copperGold),
+    resolveChinaBond(prevMd?.chinaBond),
+    resolveCfetsRmb(prevMd?.cfetsRmb)
   ]);
   return {
     worldEconomy: results[0].status === 'fulfilled' ? results[0].value : buildMissingWorldEconomy(prevMd?.worldEconomy),
     chinaEquity: results[1].status === 'fulfilled' ? results[1].value : buildMissingChinaEquity(prevMd?.chinaEquity),
     inflationEnergy: results[2].status === 'fulfilled' ? results[2].value : buildMissingInflationEnergy(prevMd?.inflationEnergy),
-    copperGold: results[3].status === 'fulfilled' ? results[3].value : buildMissingCopperGold(prevMd?.copperGold)
+    copperGold: results[3].status === 'fulfilled' ? results[3].value : buildMissingCopperGold(prevMd?.copperGold),
+    chinaBond: results[4].status === 'fulfilled' ? results[4].value : buildMissingChinaBond(prevMd?.chinaBond),
+    cfetsRmb: results[5].status === 'fulfilled' ? results[5].value : buildMissingCfetsRmb(prevMd?.cfetsRmb)
   };
 }
 
@@ -7274,6 +7509,8 @@ async function build() {
       chinaEquity: macroDrivers.chinaEquity,
       inflationEnergy: macroDrivers.inflationEnergy,
       copperGold: macroDrivers.copperGold,
+      chinaBond: macroDrivers.chinaBond,
+      cfetsRmb: macroDrivers.cfetsRmb,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

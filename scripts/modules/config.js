@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=stage-5-history-window-1';
+﻿import { formatFiniteNumber } from './format.js?v=stage-6a-china-bond-cfets-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

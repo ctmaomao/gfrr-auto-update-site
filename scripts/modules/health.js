@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=stage-5-history-window-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=stage-5-history-window-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=stage-6a-china-bond-cfets-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=stage-6a-china-bond-cfets-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

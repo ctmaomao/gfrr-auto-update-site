@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=stage-5-history-window-1';
-import { formatOnRrpYiUsd } from './format.js?v=stage-5-history-window-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=stage-6a-china-bond-cfets-1';
+import { formatOnRrpYiUsd } from './format.js?v=stage-6a-china-bond-cfets-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

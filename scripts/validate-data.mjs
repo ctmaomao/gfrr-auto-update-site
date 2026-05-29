@@ -109,6 +109,11 @@ const VALID_INFLATION_WTI_SOURCE = 'FRED:DCOILWTICO';
 const COPPER_GOLD_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_COPPER_GOLD_SOURCE = 'Yahoo:HG=F; Yahoo:GC=F';
 const COPPER_GOLD_KEYS = ['copper', 'gold'];
+const CHINA_BOND_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_CHINA_BOND_SOURCE = 'ChinaBond:MOF-yield-curve';
+const VALID_CHINA_BOND_LEAF_SOURCE = 'ChinaBond:MOF';
+const CFETS_RMB_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_CFETS_RMB_SOURCE = 'ChinaMoney:CFETS-RmbIdx';
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
@@ -1051,6 +1056,47 @@ function validateMacroDriversCopperGold(dataPayload) {
   assert(copperGold.ratioWindow === '5d', 'macroDrivers.copperGold.ratioWindow must be 5d');
   if (copperGold.ratio === null) {
     assert(copperGold.sourceStatus.ratio === 'missing', 'macroDrivers.copperGold.sourceStatus.ratio must be missing when ratio is null');
+  }
+}
+function validateMacroDriversChinaBond(dataPayload) {
+  const chinaBond = dataPayload?.macroDrivers?.chinaBond;
+  if (chinaBond === undefined) return;
+  assertPlainObject(chinaBond, 'macroDrivers.chinaBond');
+  validateNullableIsoString(chinaBond.updatedAt, 'macroDrivers.chinaBond.updatedAt');
+  assert(chinaBond.source === VALID_CHINA_BOND_SOURCE, `macroDrivers.chinaBond.source must be ${VALID_CHINA_BOND_SOURCE}`);
+  assertString(chinaBond.notes, 'macroDrivers.chinaBond.notes');
+  assertPlainObject(chinaBond.sourceStatus, 'macroDrivers.chinaBond.sourceStatus');
+  assert(Object.hasOwn(chinaBond.sourceStatus, 'yield10y'), 'macroDrivers.chinaBond.sourceStatus.yield10y is missing');
+  assert(CHINA_BOND_SOURCE_STATUSES.has(chinaBond.sourceStatus.yield10y), 'macroDrivers.chinaBond.sourceStatus.yield10y is not supported');
+  assertPlainObject(chinaBond.yield10y, 'macroDrivers.chinaBond.yield10y');
+  assert(isFiniteNumberOrNull(chinaBond.yield10y.value), 'macroDrivers.chinaBond.yield10y.value must be finite number or null');
+  validateNullableIsoString(chinaBond.yield10y.latestObsDate, 'macroDrivers.chinaBond.yield10y.latestObsDate');
+  validateNullableIsoString(chinaBond.yield10y.updatedAt, 'macroDrivers.chinaBond.yield10y.updatedAt');
+  assert(chinaBond.yield10y.source === VALID_CHINA_BOND_LEAF_SOURCE, `macroDrivers.chinaBond.yield10y.source must be ${VALID_CHINA_BOND_LEAF_SOURCE}`);
+  assertString(chinaBond.yield10y.sourceStatus, 'macroDrivers.chinaBond.yield10y.sourceStatus');
+  assert(CHINA_BOND_SOURCE_STATUSES.has(chinaBond.yield10y.sourceStatus), 'macroDrivers.chinaBond.yield10y.sourceStatus is not supported');
+  assert(chinaBond.yield10y.sourceStatus === chinaBond.sourceStatus.yield10y, 'macroDrivers.chinaBond.yield10y.sourceStatus must match parent sourceStatus.yield10y');
+  if (chinaBond.yield10y.value === null) {
+    assert(chinaBond.sourceStatus.yield10y === 'missing', 'macroDrivers.chinaBond.sourceStatus.yield10y must be missing when value is null');
+  }
+}
+
+function validateMacroDriversCfetsRmb(dataPayload) {
+  const cfetsRmb = dataPayload?.macroDrivers?.cfetsRmb;
+  if (cfetsRmb === undefined) return;
+  assertPlainObject(cfetsRmb, 'macroDrivers.cfetsRmb');
+  validateNullableIsoString(cfetsRmb.updatedAt, 'macroDrivers.cfetsRmb.updatedAt');
+  assert(cfetsRmb.source === VALID_CFETS_RMB_SOURCE, `macroDrivers.cfetsRmb.source must be ${VALID_CFETS_RMB_SOURCE}`);
+  assertString(cfetsRmb.notes, 'macroDrivers.cfetsRmb.notes');
+  assertPlainObject(cfetsRmb.sourceStatus, 'macroDrivers.cfetsRmb.sourceStatus');
+  assert(Object.hasOwn(cfetsRmb.sourceStatus, 'cfets'), 'macroDrivers.cfetsRmb.sourceStatus.cfets is missing');
+  assert(CFETS_RMB_SOURCE_STATUSES.has(cfetsRmb.sourceStatus.cfets), 'macroDrivers.cfetsRmb.sourceStatus.cfets is not supported');
+  for (const key of ['cfets', 'bis', 'sdr']) {
+    assert(isFiniteNumberOrNull(cfetsRmb[key]), `macroDrivers.cfetsRmb.${key} must be finite number or null`);
+  }
+  validateNullableIsoString(cfetsRmb.latestObsDate, 'macroDrivers.cfetsRmb.latestObsDate');
+  if (cfetsRmb.cfets === null) {
+    assert(cfetsRmb.sourceStatus.cfets === 'missing', 'macroDrivers.cfetsRmb.sourceStatus.cfets must be missing when cfets is null');
   }
 }
 
@@ -2091,6 +2137,8 @@ validateMacroDriversWorldEconomy(data);
 validateMacroDriversChinaEquity(data);
 validateMacroDriversInflationEnergy(data);
 validateMacroDriversCopperGold(data);
+validateMacroDriversChinaBond(data);
+validateMacroDriversCfetsRmb(data);
 validateHistoryWindowFields(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);
