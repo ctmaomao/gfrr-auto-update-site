@@ -37,7 +37,7 @@ No active P1 item. ACLED/SIPRI/GDELT、Pages trigger coverage、World Order refr
 
 ### P2 Items
 
-No active P2 item. P2-13 FRED API 迁移已完成并**线上验证通过**(详见 Section 3/5);残留的 Worker(`worker-market-preview.js:222`)仍走 FRED CSV = 选项 3,**按需再做**(前端已可回落健康 realtime-data,优先级低)。
+No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API 迁移**全部完成并线上验证通过**(详见 Section 3/5)—— 三链路均 API-first + CSV-fallback;CSV 端点仍宕时全部经官方 API 回 live。FRED CSV 通道现为 dormant fallback,长期确认废弃后可一次性清理(见 Section 4)。
 
 ### P3 Items
 
@@ -73,6 +73,7 @@ Recent completed context only; full milestone archive is [MILESTONE_INDEX.md](MI
 
 | Milestone | 一句话 |
 |---|---|
+| P2-13b Worker FRED API 迁移 | Cloudflare Worker(`worker-market-preview.js`)FRED 抓取迁官方 API:`env.FRED_API_KEY` 沿 builder→fetchAllFredSeries→fetchFredSeries 下传,API-first(`maxAttempts:1`)+ CSV-fallback,新增 `latestTwoFredApiValues`,失败仅追加 `fredApi*` 诊断不污染 sourceStatus。commit `d44c4f1`→`d3adf69` + `wrangler deploy`(version `477574de`)。**线上验证**:CSV 仍宕时 worker preview `health=100/criticalMissing=0`,前端主源恢复。Cloudflare secret `FRED_API_KEY` 已配。 |
 | P2-13 FRED API 迁移 | FRED 抓取从公开 CSV 端点(`fredgraph.csv`)迁官方 API(`api.stlouisfed.org/fred/series/observations` + `FRED_API_KEY`),**API-first + CSV-fallback**(无 key/API 失败回落 CSV,零回归)。覆盖 realtime 9 + Daily 55 个 series 两个 chokepoint;source 标签不动;两个 build workflow 注入 secret。commit `d44c4f1`。**线上验证通过**:CSV 仍宕时,realtime 经官方 API 回 health=100/live、Daily degradedMode=false、`inflationEnergy` live。 |
 | Daily degraded display refresh | Daily fallback 路径不再跳过 display-only macroDrivers:新增 `fetchDisplayOnlyMacroDrivers`,`buildFallback` 改 async 并 merge `worldEconomy`/`chinaEquity`/`inflationEnergy`/`copperGold` 四块,preserve-set 零覆盖。修复「realtime 降级时 C1/C5/C6/C2 展示卡数据永不进生产」。线上活体验证通过(降级态下 3 个 Yahoo 块 live,degradedMode 仍 true)。commit `d270176`。 |
 | Stage C2 Cu/Au | C2 全球流动性 Cu/Au 铜金比从 P1 升级为 Yahoo `HG=F`/`GC=F` live 派生比率 display-only OBS 卡;接入 `macroDrivers.copperGold` (`results[13]`);schema 存原始 `ratio`,前端 render ×1000(`1.418`);`ratioChangePct` 两腿 `prev=price/(1+changePct)` 派生;不进 scoring/decision/execution/position/effectiveDisplayInputs/cross-validation。commit `80b2bac`。 |
@@ -115,6 +116,7 @@ Compact current audit trail:
 
 | Date | Scope | Outcome |
 |---|---|---|
+| 2026-05-29 | P2-13b Worker FRED 抓取迁官方 API(选项 3) | Cloudflare Worker 主 preview 的 FRED 抓取改 API-first(`maxAttempts:1`)+ CSV-fallback;`env.FRED_API_KEY` 沿链下传(index.js:694 + builder/fetchAllFredSeries/fetchFredSeries);新增 `latestTwoFredApiValues`/`buildFredApiUrl`/`fredApiFallbackFields`;`fetchTextWithDiagnostics` 加 `maxAttempts`(默认 2 不变);fallback 仅追加 `fredApi*` 诊断,不污染 sourceStatus。commit `d3adf69`,两 `node --check` + `check:workflows`/`check:modules`/`check:all` 全绿。Cloudflare secret 已配 + `wrangler deploy`(version `477574de`)。**线上验证**:CSV 端点仍宕时 worker preview `health=100/live/criticalMissing=0` → 前端主源恢复。至此 FRED-API 迁移三链路(Node daily/realtime + Worker)全完成。 |
 | 2026-05-29 | P2-13 FRED 抓取迁官方 API(韧性加固) | `run-realtime.mjs` + `run-daily-pipeline.mjs` 的 FRED 抓取改 API-first + CSV-fallback;新增 `parseFredApiObservations`/`buildFredApiUrl`,API 单次尝试失败即回落现有 CSV(零回归);两个 build workflow env 注入 `FRED_API_KEY: ${{ secrets.FRED_API_KEY }}`;source 标签/validator/前端/Worker 不动。commit `d44c4f1`,`check:all` 全绿。`FRED_API_KEY` secret 已配。**线上验证通过(同日)**:官方 API 已恢复(快速 400)而 CSV 端点仍超时;手动触发两 workflow → realtime `health=100/live`、Daily `degradedMode=false` + `inflationEnergy` cpi/wti `live` + `fedLiquidity` 实值,全经官方 API。整条数据管线(realtime/Daily/前端 fallback)靠 P2-13 从 FRED CSV 故障中自救恢复;仅 Worker(选项 3)仍走 CSV。 |
 | 2026-05-29 | Daily 降级模式 display-only 修复 + FRED 故障 RCA | 查实 Daily 长期走 `buildFallback`(realtime 降级)→ 跳过 `fetchMacroDrivers` → C1/C5/C6/C2 四块从未进生产数据。修复:fallback 也刷新 4 个 display-only 块(commit `d270176`,`check:all` 全绿,线上验证四块出现且 `degradedMode` 仍 true)。FRED RCA:realtime/Worker/Daily 全线降级源于公开 CSV 端点 `fred.stlouisfed.org/graph/fredgraph.csv` 大范围超时 + `api.stlouisfed.org` 504(独立网络复现,排除 CI-IP 封锁),始于 05-28 23:41Z;外部故障,自愈为主。开 P2-13 韧性加固。 |
 | 2026-05-29 | Stage C2 Cu/Au 铜金比接入 (Yahoo `HG=F`/`GC=F` live display-only) | 7 步协作流程全过 (outline v1.0/v1.1 → Codex brief → Claude 逐行复核 → Codex 实施 → Claude diff 复核);commit `80b2bac` pushed to main;14 files +251/−33;`macroDrivers.copperGold` 作为 `results[13]` 接入,raw ratio 存储 / render ×1000 / OBS 中性 tone;边界守住(不进 scoring/decision/execution/position/effectiveDisplayInputs/cross-validation);无 data/realtime 手改,`build:data` 留给生产 CI;`check:all` 23 suites PASS;cache bump → `stage-c2-copper-gold-ratio-1`。 |
@@ -144,7 +146,7 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于**: commit `d44c4f1`(已 push)— P2-13 FRED API 迁移上线(API-first + CSV-fallback,零回归)。本会话四件事全部落地:C2 接入(`80b2bac`)、Daily 降级 display-only 修复(`d270176`,线上验证四块写入)、FRED 故障 RCA、P2-13 FRED API 迁移(`d44c4f1`)。`FRED_API_KEY` secret 已配置。工作树:仅本次 PROJECT_BACKLOG 收尾待提交。
-- **当前进行中**: 无活跃任务。**P2-13 已线上验证通过**:官方 API 已恢复(CSV 仍宕),手动触发两 workflow → realtime health=100/live、Daily degradedMode=false、inflationEnergy/fedLiquidity live(全经 API)。整条管线靠 P2-13 自救恢复。
-- **下一步建议**: 提交本次 backlog 收尾。无紧急项。可选:Worker 侧非-FRED 兜底(选项 3,优先级低,前端已回落健康 realtime-data);C2 剩余 CFETS RMB P1。
-- **阻塞或等待**: 无。(Worker 主源仍走 FRED CSV、CSV 端点本次仍宕,但前端回落 realtime-data 已健康;FRED CSV 何时自愈不影响数据管线。)`.claude/stage-briefs/` 存有 C2 / Daily-fix / P2-13 三组 outline+brief(gitignored)。
+- **上次会话结束于**: commit `d3adf69`(已 push)+ `wrangler deploy`(version `477574de`)— P2-13b Worker FRED API 迁移上线并线上验证(worker preview health=100,CSV 仍宕时经 API)。本会话五件事全部落地:C2(`80b2bac`)、Daily 降级 display-only 修复(`d270176`)、FRED RCA、P2-13 Node FRED API 迁移(`d44c4f1`)、P2-13b Worker FRED API 迁移(`d3adf69`)。**FRED-API 迁移三链路(Node daily/realtime + Worker)全完成**。GitHub + Cloudflare 两个 `FRED_API_KEY` secret 均已配。工作树:仅本次 PROJECT_BACKLOG 收尾待提交。
+- **当前进行中**: 无活跃任务。FRED-API 迁移全链完成且线上验证(realtime/Daily/Worker 均 health=100 或 degradedMode=false,全经官方 API)。
+- **下一步建议**: 提交本次 backlog 收尾。无紧急项。路线图后续:Stage 5(补缺字段 DXY12w/SPX52w/HY WoW/z-score,历史窗口逻辑)、Stage 6(难源调研 China PMI/CPI/10Y/CFETS/V2X)、Stage 7(World Order 暂代卡退场)。FRED CSV 通道长期确认废弃后可一次性清理(Section 4)。
+- **阻塞或等待**: 无。FRED CSV 端点本次仍宕但已全链改走官方 API,不影响。`.claude/stage-briefs/` 存有 C2 / Daily-fix / P2-13 / P2-13b 四组 outline+brief(gitignored)。
