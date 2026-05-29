@@ -110,9 +110,12 @@ async function fetchTextWithDiagnostics(url, options = {}) {
   const timeoutMs = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0
     ? options.timeoutMs
     : WORKER_FETCH_TIMEOUT_MS;
+  const maxAttempts = Number.isInteger(options.maxAttempts) && options.maxAttempts > 0
+    ? options.maxAttempts
+    : 2;
   let last = null;
 
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const startedAt = Date.now();
     const parsedUrl = new URL(url);
     const controller = new AbortController();
@@ -139,7 +142,7 @@ async function fetchTextWithDiagnostics(url, options = {}) {
         text,
       };
 
-      if (response.ok || attempt === 1) return result;
+      if (response.ok || attempt === maxAttempts - 1) return result;
       last = result;
     } catch (err) {
       const error = err instanceof Error && err.name === 'AbortError'
@@ -160,7 +163,7 @@ async function fetchTextWithDiagnostics(url, options = {}) {
         retryCount: attempt,
         text: '',
       };
-      if (attempt === 1) return last;
+      if (attempt === maxAttempts - 1) return last;
     } finally {
       clearTimeout(timer);
     }
@@ -218,11 +221,104 @@ function latestTwoCsvValues(text, valueColumnIndex = 1) {
   };
 }
 
-async function fetchFredSeries(name, seriesId, cosd) {
+function latestTwoFredApiValues(text) {
+  const json = JSON.parse(text);
+  const observations = json?.observations;
+  if (!Array.isArray(observations)) {
+    throw new Error('FRED API returned invalid observations payload');
+  }
+  const values = [];
+
+  for (const observation of observations) {
+    const value = parseNumeric(observation?.value);
+    if (observation?.date && value != null) {
+      values.push({ timestamp: observation.date, value });
+    }
+  }
+
+  return {
+    latest: values.at(-1) ?? null,
+    previous: values.at(-2) ?? null,
+  };
+}
+
+function buildFredApiUrl(seriesId, cosd, fredApiKey) {
+  const params = new URLSearchParams({
+    series_id: seriesId,
+    api_key: fredApiKey,
+    file_type: 'json',
+    observation_start: cosd,
+    sort_order: 'asc',
+  });
+  return `https://api.stlouisfed.org/fred/series/observations?${params.toString()}`;
+}
+
+function fredApiFallbackFields(apiFallback) {
+  if (!apiFallback) return {};
+  const result = apiFallback.result;
+  return {
+    fredApiFallback: true,
+    fredApiHttpStatus: result?.status ?? null,
+    fredApiError: apiFallback.error ?? result?.error ?? null,
+    fredApiUrlHost: result?.urlHost ?? null,
+    fredApiRetryCount: result?.retryCount ?? null,
+  };
+}
+
+async function fetchFredSeries(name, seriesId, cosd, fredApiKey) {
+  const source = `FRED:${seriesId}`;
+  let apiFallback = null;
+
+  if (fredApiKey) {
+    let apiResult = null;
+    try {
+      apiResult = await fetchTextWithDiagnostics(buildFredApiUrl(seriesId, cosd, fredApiKey), {
+        maxAttempts: 1,
+      });
+
+      if (apiResult.ok) {
+        const { latest, previous } = latestTwoFredApiValues(apiResult.text);
+        if (latest) {
+          return {
+            name,
+            value: roundValue(latest.value),
+            change: previous ? roundValue(latest.value - previous.value) : null,
+            detail: {
+              ok: true,
+              value: roundValue(latest.value),
+              source,
+              timestamp: latest.timestamp,
+              error: null,
+              httpStatus: apiResult.status,
+              contentType: apiResult.contentType,
+              bodyLength: apiResult.bodyLength,
+              durationMs: apiResult.durationMs,
+              fredUrlHost: apiResult.urlHost,
+              fredHttpStatus: apiResult.status,
+              fredBodyLength: apiResult.bodyLength,
+              fredContentType: apiResult.contentType,
+              fredError: null,
+              retryCount: apiResult.retryCount,
+            },
+            diagnostic: normalizeDiagnostic(apiResult),
+          };
+        }
+        apiFallback = { result: apiResult, error: 'no numeric value' };
+      } else {
+        apiFallback = { result: apiResult, error: apiResult.error };
+      }
+    } catch (err) {
+      apiFallback = {
+        result: apiResult,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
   const url = `https://fred.stlouisfed.org/graph/fredgraph.csv?cosd=${cosd}&id=${seriesId}`;
   const result = await fetchTextWithDiagnostics(url);
   const diagnostic = normalizeDiagnostic(result);
-  const source = `FRED:${seriesId}`;
+  const fallbackFields = fredApiFallbackFields(apiFallback);
 
   if (!result.ok) {
     return {
@@ -245,6 +341,7 @@ async function fetchFredSeries(name, seriesId, cosd) {
         fredContentType: result.contentType,
         fredError: result.error,
         retryCount: result.retryCount,
+        ...fallbackFields,
       },
       diagnostic,
     };
@@ -272,6 +369,7 @@ async function fetchFredSeries(name, seriesId, cosd) {
         fredContentType: result.contentType,
         fredError: 'no numeric value',
         retryCount: result.retryCount,
+        ...fallbackFields,
       },
       diagnostic,
     };
@@ -297,18 +395,19 @@ async function fetchFredSeries(name, seriesId, cosd) {
       fredContentType: result.contentType,
       fredError: null,
       retryCount: result.retryCount,
+      ...fallbackFields,
     },
     diagnostic,
   };
 }
 
-async function fetchAllFredSeries(cosd) {
+async function fetchAllFredSeries(cosd, fredApiKey) {
   const results = [];
   const entries = Object.entries(FRED_SERIES);
 
   for (let i = 0; i < entries.length; i += 1) {
     const [name, seriesId] = entries[i];
-    results.push(await fetchFredSeries(name, seriesId, cosd));
+    results.push(await fetchFredSeries(name, seriesId, cosd, fredApiKey));
     if (i < entries.length - 1) {
       await sleep(150 + Math.floor(Math.random() * 151));
     }
@@ -1471,9 +1570,10 @@ function sourceSummaryFromDiagnostic(diagnostic) {
 
 export async function buildWorkerGeneratedMarketPreview(options = {}) {
   const previousPreviewSummary = options?.previousPreviewSummary ?? null;
+  const fredApiKey = typeof options?.fredApiKey === 'string' ? options.fredApiKey.trim() : '';
   const nowIso = new Date().toISOString();
   const cosd = formatDate(new Date(Date.now() - 45 * 24 * 60 * 60 * 1000));
-  const fredResults = await fetchAllFredSeries(cosd);
+  const fredResults = await fetchAllFredSeries(cosd, fredApiKey);
   const gold = await fetchGold();
 
   const values = Object.fromEntries(fredResults.map((result) => [result.name, result.value]));

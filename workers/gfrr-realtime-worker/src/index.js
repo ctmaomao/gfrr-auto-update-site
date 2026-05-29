@@ -691,7 +691,10 @@ async function buildWorkerGeneratedPreviewOrStatusPayload(scheduledAt, env) {
     const previousPreviewSummary = await readPreviousWorkerPreviewSummary(env);
     return {
       key: MARKET_WORKER_GENERATED_PREVIEW_KEY,
-      value: await buildWorkerGeneratedMarketPreview({ previousPreviewSummary }),
+      value: await buildWorkerGeneratedMarketPreview({
+        previousPreviewSummary,
+        fredApiKey: env.FRED_API_KEY,
+      }),
     };
   } catch (err) {
     return buildStatusPayload(
