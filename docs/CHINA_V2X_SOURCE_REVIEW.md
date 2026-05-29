@@ -6,6 +6,11 @@
 
 调研日期:2026-05-29。Claude 设计 + Codex 实证搜寻 + Claude 交叉核对端点(✅ = 本次实测 200 + 返回真实数据)。
 
+> **⚠️ 实施后勘误(Stage 6A/6C/V2X 实证 · 2026-05-29)**:本调研下表标「✅」的部分源,在实施阶段实拉证实已陈旧/死,**实际生产接入与下表不同**:
+> - **China CPI/PPI**:FRED OECD(`CHNCPIALLMINMEI` 停 2025-04 / `CHNPIEATI01GYM` 停 2022-12)已陈旧 → 实际接入 **NBS 官方发布正文**(Stage 6C `cd42b75`),TradingEconomics 公开 HTML fallback。
+> - **V2X**:STOXX `h_vstoxx.txt`(2016 冻结)、Yahoo `V2TX.DE`(2016 死)均不可用 → 实际接入 **boerse-frankfurt quote_box JSON**(Stage V2X `a92ee96`),STOXX 官页 HTML fallback(详见 §5)。
+> - **China 10Y / CFETS RMB**:按下表 ChinaBond / ChinaMoney JSON 实际接入(Stage 6A `9fe8b1b`),与调研一致。
+
 ---
 
 ## 汇总:每数据点 ≥2 源

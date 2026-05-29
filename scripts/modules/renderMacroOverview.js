@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-7-overlay-retire-1';
+} from './config.js?v=stage-8-cleanup-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1038,6 +1038,7 @@ function ismToneFromRegime(regime) {
   if (regime === '扩张') return 'green';
   if (regime === '中性偏扩张') return 'yellow';
   if (regime === '收缩') return 'red';
+  if (regime === '深度收缩') return 'red';
   return null;
 }
 
