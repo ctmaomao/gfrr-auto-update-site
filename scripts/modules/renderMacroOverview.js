@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-c1-inflation-energy-1';
+} from './config.js?v=stage-c2-copper-gold-ratio-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1233,6 +1233,25 @@ function renderC2GlobalLiquidity({ radarData }) {
     }
     if (policy.policyTone && policy.minutesPolicyTone) {
       setLeafText('c2-fed-path-tone', `${policy.policyTone} / ${policy.minutesPolicyTone}`);
+    }
+
+    const cg = radarData.macroDrivers?.copperGold;
+    if (cg) {
+      const status = cg.sourceStatus?.ratio || 'missing';
+      setToneClass('c2-cuau-status', 'status-bar', 'neutral');
+      setBadge('c2-cuau-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
+
+      const ratio = asNumber(cg.ratio);
+      setLeafText('c2-cuau-number', ratio !== null ? (ratio * 1000).toFixed(3) : '—');
+
+      const cu = asNumber(cg.copper?.price);
+      const au = asNumber(cg.gold?.price);
+      const rc = asNumber(cg.ratioChangePct);
+      const cuText = cu !== null ? `铜 $${cu.toFixed(2)}/lb` : '铜 —';
+      const auText = au !== null ? `金 $${au.toFixed(0)}/oz` : '金 —';
+      const rcText = rc !== null ? `近5日 ${signedFixed(rc * 100, 2)}%` : '近5日 —';
+      const suffix = status === 'fallback' ? ' · 回退' : '';
+      setLeafText('c2-cuau-aux', `${cuText} · ${auText} · ${rcText}${suffix}`);
     }
   } catch (error) {
     console.error('[renderMacroOverview] renderC2GlobalLiquidity failed:', error);

@@ -105,6 +105,9 @@ const INFLATION_ENERGY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']
 const VALID_INFLATION_ENERGY_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO';
 const VALID_INFLATION_CPI_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL';
 const VALID_INFLATION_WTI_SOURCE = 'FRED:DCOILWTICO';
+const COPPER_GOLD_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_COPPER_GOLD_SOURCE = 'Yahoo:HG=F; Yahoo:GC=F';
+const COPPER_GOLD_KEYS = ['copper', 'gold'];
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
@@ -1009,6 +1012,45 @@ function validateMacroDriversInflationEnergy(dataPayload) {
   assertString(wti.sourceStatus, 'macroDrivers.inflationEnergy.wti.sourceStatus');
   assert(INFLATION_ENERGY_SOURCE_STATUSES.has(wti.sourceStatus), 'macroDrivers.inflationEnergy.wti.sourceStatus is not supported');
   assert(wti.sourceStatus === inflationEnergy.sourceStatus.wti, 'macroDrivers.inflationEnergy.wti.sourceStatus must match parent sourceStatus.wti');
+}
+
+function validateMacroDriversCopperGold(dataPayload) {
+  const copperGold = dataPayload?.macroDrivers?.copperGold;
+  if (copperGold === undefined) return;
+  assertPlainObject(copperGold, 'macroDrivers.copperGold');
+  validateNullableIsoString(copperGold.updatedAt, 'macroDrivers.copperGold.updatedAt');
+  assert(copperGold.source === VALID_COPPER_GOLD_SOURCE, `macroDrivers.copperGold.source must be ${VALID_COPPER_GOLD_SOURCE}`);
+  assertString(copperGold.notes, 'macroDrivers.copperGold.notes');
+  assertPlainObject(copperGold.sourceStatus, 'macroDrivers.copperGold.sourceStatus');
+  for (const key of [...COPPER_GOLD_KEYS, 'ratio']) {
+    assert(Object.hasOwn(copperGold.sourceStatus, key), `macroDrivers.copperGold.sourceStatus.${key} is missing`);
+    assert(COPPER_GOLD_SOURCE_STATUSES.has(copperGold.sourceStatus[key]), `macroDrivers.copperGold.sourceStatus.${key} is not supported`);
+  }
+
+  for (const key of COPPER_GOLD_KEYS) {
+    assert(Object.hasOwn(copperGold, key), `macroDrivers.copperGold.${key} is missing`);
+    const leg = copperGold[key];
+    assertPlainObject(leg, `macroDrivers.copperGold.${key}`);
+    assertString(leg.symbol, `macroDrivers.copperGold.${key}.symbol`);
+    assertString(leg.labelZh, `macroDrivers.copperGold.${key}.labelZh`);
+    assert(isFiniteNumberOrNull(leg.price), `macroDrivers.copperGold.${key}.price must be finite number or null`);
+    assert(isFiniteNumberOrNull(leg.changePct), `macroDrivers.copperGold.${key}.changePct must be finite number or null`);
+    assertString(leg.changeWindow, `macroDrivers.copperGold.${key}.changeWindow`);
+    assert(leg.changeWindow === '5d', `macroDrivers.copperGold.${key}.changeWindow must be 5d`);
+    validateNullableIsoString(leg.updatedAt, `macroDrivers.copperGold.${key}.updatedAt`);
+    assertString(leg.source, `macroDrivers.copperGold.${key}.source`);
+    assertString(leg.sourceStatus, `macroDrivers.copperGold.${key}.sourceStatus`);
+    assert(COPPER_GOLD_SOURCE_STATUSES.has(leg.sourceStatus), `macroDrivers.copperGold.${key}.sourceStatus is not supported`);
+    assert(leg.sourceStatus === copperGold.sourceStatus[key], `macroDrivers.copperGold.${key}.sourceStatus must match parent sourceStatus.${key}`);
+  }
+
+  assert(isFiniteNumberOrNull(copperGold.ratio), 'macroDrivers.copperGold.ratio must be finite number or null');
+  assert(isFiniteNumberOrNull(copperGold.ratioChangePct), 'macroDrivers.copperGold.ratioChangePct must be finite number or null');
+  assertString(copperGold.ratioWindow, 'macroDrivers.copperGold.ratioWindow');
+  assert(copperGold.ratioWindow === '5d', 'macroDrivers.copperGold.ratioWindow must be 5d');
+  if (copperGold.ratio === null) {
+    assert(copperGold.sourceStatus.ratio === 'missing', 'macroDrivers.copperGold.sourceStatus.ratio must be missing when ratio is null');
+  }
 }
 
 function validateNullableString(value, fieldName) {
@@ -1990,6 +2032,7 @@ validateMacroDriversPrivateCreditProxy(data);
 validateMacroDriversWorldEconomy(data);
 validateMacroDriversChinaEquity(data);
 validateMacroDriversInflationEnergy(data);
+validateMacroDriversCopperGold(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);
 validateExternalAiInterpretationLayer(data);

@@ -104,6 +104,15 @@ const WTI_DAYS_BACK = 30;
 const WTI_CHANGE_WINDOW = '5d';
 const WTI_CHANGE_GAP_DAYS = 7;
 const INFLATION_ENERGY_STATUS_RANK = { live: 0, fallback: 1, missing: 2 };
+const COPPER_GOLD_SOURCE = 'Yahoo:HG=F; Yahoo:GC=F';
+const COPPER_GOLD_CHANGE_WINDOW = '5d';
+const COPPER_GOLD_DISPLAY_NOTE =
+  '铜金比 display-only 公开期货代理;regime 观察,不进 scoring/decision/execution/position。';
+const COPPER_GOLD_STATUS_RANK = { live: 0, fallback: 1, missing: 2 };
+const COPPER_GOLD_LEGS = [
+  { key: 'copper', symbol: 'HG=F', labelZh: '铜期货', min: 0.5, max: 20 },
+  { key: 'gold', symbol: 'GC=F', labelZh: '金期货', min: 500, max: 10000 }
+];
 const STOCKQ_INDEX_BASE = 'https://en.stockq.org/index';
 const STOCKQ_FETCH_TIMEOUT_MS = 9000;
 const EMPLOYMENT_SOURCE =
@@ -2597,6 +2606,148 @@ async function resolveInflationEnergy(prevInflationEnergy) {
     cpi,
     wti
   };
+}
+
+function pickCopperGoldStatus(...statuses) {
+  let worst = 'live';
+  for (const status of statuses) {
+    const normalized = Object.hasOwn(COPPER_GOLD_STATUS_RANK, status) ? status : 'missing';
+    if (COPPER_GOLD_STATUS_RANK[normalized] > COPPER_GOLD_STATUS_RANK[worst]) {
+      worst = normalized;
+    }
+  }
+  return worst;
+}
+
+function isPlausibleCopperGoldQuote(quote, config) {
+  return Number.isFinite(quote?.price)
+    && quote.price >= config.min
+    && quote.price <= config.max;
+}
+
+function buildMissingCopperGoldLeg(config) {
+  return {
+    symbol: config.symbol,
+    labelZh: config.labelZh,
+    price: null,
+    changePct: null,
+    changeWindow: COPPER_GOLD_CHANGE_WINDOW,
+    updatedAt: null,
+    source: `Yahoo:${config.symbol}`,
+    sourceStatus: 'missing'
+  };
+}
+
+function normalizePreviousCopperGoldLeg(previous, config) {
+  if (!previous || typeof previous !== 'object' || !Number.isFinite(previous.price)) return null;
+  return {
+    symbol: config.symbol,
+    labelZh: config.labelZh,
+    price: +Number(previous.price).toFixed(4),
+    changePct: Number.isFinite(previous.changePct) ? +Number(previous.changePct).toFixed(4) : null,
+    changeWindow: typeof previous.changeWindow === 'string' && previous.changeWindow.trim()
+      ? previous.changeWindow
+      : COPPER_GOLD_CHANGE_WINDOW,
+    updatedAt: typeof previous.updatedAt === 'string' ? previous.updatedAt : null,
+    source: typeof previous.source === 'string' && previous.source.trim()
+      ? previous.source
+      : `Yahoo:${config.symbol}`,
+    sourceStatus: 'fallback'
+  };
+}
+
+function deriveCopperGoldRatio(copper, gold) {
+  const copperPrice = Number(copper?.price);
+  const goldPrice = Number(gold?.price);
+  if (!Number.isFinite(copperPrice) || !Number.isFinite(goldPrice) || goldPrice <= 0) return null;
+  return +(copperPrice / goldPrice).toFixed(8);
+}
+
+function deriveCopperGoldRatioChangePct(copper, gold, ratio) {
+  if (!Number.isFinite(ratio)) return null;
+  const copperPrice = Number(copper?.price);
+  const goldPrice = Number(gold?.price);
+  const copperChange = Number(copper?.changePct);
+  const goldChange = Number(gold?.changePct);
+  if (!Number.isFinite(copperPrice) || !Number.isFinite(goldPrice)) return null;
+  if (!Number.isFinite(copperChange) || !Number.isFinite(goldChange)) return null;
+  if ((1 + copperChange) === 0 || (1 + goldChange) === 0) return null;
+  const copperPrev = copperPrice / (1 + copperChange);
+  const goldPrev = goldPrice / (1 + goldChange);
+  if (!Number.isFinite(copperPrev) || !Number.isFinite(goldPrev) || goldPrev <= 0) return null;
+  const ratioPrev = copperPrev / goldPrev;
+  if (!Number.isFinite(ratioPrev) || ratioPrev === 0) return null;
+  return +(((ratio - ratioPrev) / ratioPrev)).toFixed(4);
+}
+
+function buildMissingCopperGold(prevCopperGold = null) {
+  const next = {
+    updatedAt: null,
+    source: COPPER_GOLD_SOURCE,
+    sourceStatus: {},
+    notes: COPPER_GOLD_DISPLAY_NOTE
+  };
+  COPPER_GOLD_LEGS.forEach((config) => {
+    const fallback = normalizePreviousCopperGoldLeg(prevCopperGold?.[config.key], config);
+    next[config.key] = fallback || buildMissingCopperGoldLeg(config);
+    next.sourceStatus[config.key] = fallback ? 'fallback' : 'missing';
+  });
+  next.ratio = deriveCopperGoldRatio(next.copper, next.gold);
+  next.ratioChangePct = deriveCopperGoldRatioChangePct(next.copper, next.gold, next.ratio);
+  next.ratioWindow = COPPER_GOLD_CHANGE_WINDOW;
+  next.sourceStatus.ratio = next.ratio === null
+    ? 'missing'
+    : pickCopperGoldStatus(next.sourceStatus.copper, next.sourceStatus.gold);
+  next.updatedAt = latestIsoDate(
+    next.copper?.updatedAt,
+    next.gold?.updatedAt,
+    typeof prevCopperGold?.updatedAt === 'string' ? prevCopperGold.updatedAt : null
+  );
+  return next;
+}
+
+async function resolveCopperGold(prevCopperGold) {
+  const results = await Promise.allSettled(
+    COPPER_GOLD_LEGS.map((config) => fetchYahooChartQuote(config.symbol, COPPER_GOLD_CHANGE_WINDOW, '1d'))
+  );
+
+  const next = {
+    updatedAt: null,
+    source: COPPER_GOLD_SOURCE,
+    sourceStatus: {},
+    notes: COPPER_GOLD_DISPLAY_NOTE
+  };
+
+  COPPER_GOLD_LEGS.forEach((config, index) => {
+    const result = results[index];
+    if (result.status === 'fulfilled' && isPlausibleCopperGoldQuote(result.value, config)) {
+      next[config.key] = {
+        symbol: config.symbol,
+        labelZh: config.labelZh,
+        price: result.value.price,
+        changePct: Number.isFinite(result.value.changePct) ? result.value.changePct : null,
+        changeWindow: COPPER_GOLD_CHANGE_WINDOW,
+        updatedAt: result.value.updatedAt,
+        source: result.value.source,
+        sourceStatus: 'live'
+      };
+      next.sourceStatus[config.key] = 'live';
+      return;
+    }
+
+    const fallback = normalizePreviousCopperGoldLeg(prevCopperGold?.[config.key], config);
+    next[config.key] = fallback || buildMissingCopperGoldLeg(config);
+    next.sourceStatus[config.key] = fallback ? 'fallback' : 'missing';
+  });
+
+  next.ratio = deriveCopperGoldRatio(next.copper, next.gold);
+  next.ratioChangePct = deriveCopperGoldRatioChangePct(next.copper, next.gold, next.ratio);
+  next.ratioWindow = COPPER_GOLD_CHANGE_WINDOW;
+  next.sourceStatus.ratio = next.ratio === null
+    ? 'missing'
+    : pickCopperGoldStatus(next.sourceStatus.copper, next.sourceStatus.gold);
+  next.updatedAt = latestIsoDate(next.copper?.updatedAt, next.gold?.updatedAt);
+  return next;
 }
 
 const MONTH_INDEX_BY_NAME = new Map([
@@ -6086,7 +6237,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolvePrivateCreditProxy(prevMd.privateCreditProxy, hyOasLive),
     resolveWorldEconomy(prevMd.worldEconomy),
     resolveChinaEquity(prevMd.chinaEquity),
-    resolveInflationEnergy(prevMd.inflationEnergy)
+    resolveInflationEnergy(prevMd.inflationEnergy),
+    resolveCopperGold(prevMd.copperGold)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -6131,6 +6283,7 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   const worldEconomy = results[10].status === 'fulfilled' ? results[10].value : buildMissingWorldEconomy(prevMd.worldEconomy);
   const chinaEquity = results[11].status === 'fulfilled' ? results[11].value : buildMissingChinaEquity(prevMd.chinaEquity);
   const inflationEnergy = results[12].status === 'fulfilled' ? results[12].value : buildMissingInflationEnergy(prevMd.inflationEnergy);
+  const copperGold = results[13].status === 'fulfilled' ? results[13].value : buildMissingCopperGold(prevMd.copperGold);
 
   return {
     fedLiquidity,
@@ -6145,7 +6298,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     privateCreditProxy,
     worldEconomy,
     chinaEquity,
-    inflationEnergy
+    inflationEnergy,
+    copperGold
   };
 }
 
@@ -6896,6 +7050,7 @@ async function build() {
       worldEconomy: macroDrivers.worldEconomy,
       chinaEquity: macroDrivers.chinaEquity,
       inflationEnergy: macroDrivers.inflationEnergy,
+      copperGold: macroDrivers.copperGold,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

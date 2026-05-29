@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=stage-c1-inflation-energy-1';
+﻿import { formatFiniteNumber } from './format.js?v=stage-c2-copper-gold-ratio-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

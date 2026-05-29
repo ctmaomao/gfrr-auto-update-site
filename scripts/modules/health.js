@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=stage-c1-inflation-energy-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=stage-c1-inflation-energy-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=stage-c2-copper-gold-ratio-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=stage-c2-copper-gold-ratio-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
