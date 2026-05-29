@@ -6303,6 +6303,21 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   };
 }
 
+async function fetchDisplayOnlyMacroDrivers(prevMd) {
+  const results = await Promise.allSettled([
+    resolveWorldEconomy(prevMd?.worldEconomy),
+    resolveChinaEquity(prevMd?.chinaEquity),
+    resolveInflationEnergy(prevMd?.inflationEnergy),
+    resolveCopperGold(prevMd?.copperGold)
+  ]);
+  return {
+    worldEconomy: results[0].status === 'fulfilled' ? results[0].value : buildMissingWorldEconomy(prevMd?.worldEconomy),
+    chinaEquity: results[1].status === 'fulfilled' ? results[1].value : buildMissingChinaEquity(prevMd?.chinaEquity),
+    inflationEnergy: results[2].status === 'fulfilled' ? results[2].value : buildMissingInflationEnergy(prevMd?.inflationEnergy),
+    copperGold: results[3].status === 'fulfilled' ? results[3].value : buildMissingCopperGold(prevMd?.copperGold)
+  };
+}
+
 // 判断结构信号数据源是否"全不可用"
 function isAllStructuralSourcesMissing(macroDrivers) {
   const fed = macroDrivers?.fedLiquidity?.sourceStatus || {};
@@ -6835,7 +6850,7 @@ function appendHistoryFull(prevFull, risk, lock, macro, macroDrivers, transmissi
   return full;
 }
 
-function buildFallback() {
+async function buildFallback() {
   const next = structuredClone(prevData);
   next.version = 'v27.0';
   next.updatedAt = isoNow;
@@ -6870,11 +6885,14 @@ function buildFallback() {
     ? { ...prevData.aiInterpretationLayer, generatedAt: isoNow }
     : buildAiInterpretationLayer(next);
   preserveExternalAiInterpretationLayer(next);
+
+  const displayMacro = await fetchDisplayOnlyMacroDrivers(prevData?.macroDrivers || {});
+  next.macroDrivers = { ...(next.macroDrivers || {}), ...displayMacro };
   return { data: next, history: prevHistory, historyFull: prevHistoryFull };
 }
 
 async function build() {
-  if (!canUseRealtimePayloadValues(realtime)) return buildFallback();
+  if (!canUseRealtimePayloadValues(realtime)) return await buildFallback();
 
   const sourceModeLabel = SOURCE_MODE_CN[realtime.sourceMode] || realtime.sourceMode || '--';
 
