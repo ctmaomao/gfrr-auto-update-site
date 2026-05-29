@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=stage-v2x-vstoxx-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=stage-7-overlay-retire-1" />
 </head>
 <body>
   <div class="container">
@@ -327,10 +327,10 @@
 
         <!-- C5: 世界经济 -->
         <div class="reader-cat-block">
-          <div class="reader-cat-header"><h3>世界经济</h3><span class="en">WORLD ECONOMY</span><span class="counts">1 暂代 · 4 live</span></div>
-          <p class="cat-intro">M-94 阶段世界经济维度保留 overlay 暂代，同时观察欧 / 日 / 德股指与欧元区波动率。</p>
+          <div class="reader-cat-header"><h3>世界经济</h3><span class="en">WORLD ECONOMY</span><span class="counts">4 live</span></div>
+          <p class="cat-intro">世界经济公开观察层：欧 / 日 / 德股指（STOXX 50 / 日经 225 / DAX）+ 欧元区波动率（VSTOXX），均为 display-only 公开指数代理。</p>
           <div class="card-grid">
-            <article class="indicator-card"><span class="corner overlay">暂代</span><div class="status-bar orange"></div><div class="head"><div><div class="name-en">Placeholder</div><div class="name-zh">本类暂用 World Order overlay</div></div><span class="badge orange">OVERLAY</span></div><div class="number">70</div><p class="note">M-94 阶段世界经济维度仅有 overlay 可填。M-95 接入欧 / 日 / 德 / 欧 VIX 后退场。</p><div class="meta"><span>暂时复用</span><span>worldOrderStress.{score, state, labelZh}</span></div></article>
+
             <article class="indicator-card"><div class="status-bar neutral" id="c5-stoxx50-status"></div><div class="head"><div><div class="name-en">STOXX 50</div><div class="name-zh">欧元区大盘</div></div><span class="badge neutral" id="c5-stoxx50-badge">OBS</span></div><div class="number" id="c5-stoxx50-number">6071</div><div class="aux" id="c5-stoxx50-aux">近5日 —</div><p class="note">欧股 vs 美股相对强弱反映全球资金分配。</p><div class="meta"><span>live</span><span>Yahoo ^STOXX50E</span></div></article>
             <article class="indicator-card"><div class="status-bar neutral" id="c5-nikkei225-status"></div><div class="head"><div><div class="name-en">Nikkei 225</div><div class="name-zh">日经 225</div></div><span class="badge neutral" id="c5-nikkei225-badge">OBS</span></div><div class="number" id="c5-nikkei225-number">64642</div><div class="aux" id="c5-nikkei225-aux">近5日 —</div><p class="note">日股是日元 carry 与全球流动性的重要观察点。</p><div class="meta"><span>live</span><span>Yahoo ^N225</span></div></article>
             <article class="indicator-card"><div class="status-bar neutral" id="c5-dax-status"></div><div class="head"><div><div class="name-en">DAX</div><div class="name-zh">德国 DAX</div></div><span class="badge neutral" id="c5-dax-badge">OBS</span></div><div class="number" id="c5-dax-number">25178</div><div class="aux" id="c5-dax-aux">近5日 —</div><p class="note">德股代表欧洲制造业核心。</p><div class="meta"><span>live</span><span>Yahoo ^GDAXI</span></div></article>
@@ -864,6 +864,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=stage-v2x-vstoxx-1"></script>
+  <script type="module" src="scripts/app.js?v=stage-7-overlay-retire-1"></script>
 </body>
 </html>

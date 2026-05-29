@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-v2x-vstoxx-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-7-overlay-retire-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

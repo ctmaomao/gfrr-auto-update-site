@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-v2x-vstoxx-1';
+} from './config.js?v=stage-7-overlay-retire-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
