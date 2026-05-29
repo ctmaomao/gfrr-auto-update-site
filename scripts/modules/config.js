@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=stage-6c-china-cpi-ppi-pmi-1';
+﻿import { formatFiniteNumber } from './format.js?v=stage-v2x-vstoxx-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

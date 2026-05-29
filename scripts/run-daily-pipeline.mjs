@@ -85,6 +85,17 @@ const WORLD_ECONOMY_INDEXES = [
   { key: 'nikkei225', symbol: '^N225', labelZh: '日经 225', min: 10000, max: 100000 },
   { key: 'dax', symbol: '^GDAXI', labelZh: '德国 DAX', min: 5000, max: 60000 }
 ];
+const EURO_VOLATILITY_SOURCE = 'DeutscheBoerse:quote_box:V2TX; STOXX(fallback)';
+const EURO_VOLATILITY_PRIMARY_SOURCE = 'DeutscheBoerse:quote_box:V2TX';
+const EURO_VOLATILITY_FALLBACK_SOURCE = 'STOXX:index-page:V2TX';
+const EURO_VOLATILITY_QUOTE_URL = 'https://api.boerse-frankfurt.de/v1/data/quote_box/single?isin=DE000A0C3QF1&mic=XFRA';
+const EURO_VOLATILITY_STOXX_URL = 'https://stoxx.com/index/V2TX/';
+const EURO_VOLATILITY_FETCH_TIMEOUT_MS = 10000;
+const EURO_VOLATILITY_FRESH_DAYS = 5;
+const EURO_VOLATILITY_MIN = 5;
+const EURO_VOLATILITY_MAX = 100;
+const EURO_VOLATILITY_DISPLAY_NOTE =
+  'VSTOXX 欧版 VIX 来自 Deutsche Börse quote_box 主源 / STOXX 官页 fallback;display-only,不进 scoring/decision/execution/position。';
 const CHINA_EQUITY_SOURCE = 'Yahoo:000001.SS; Yahoo:^HSI; Yahoo:000300.SS';
 const CHINA_EQUITY_CHANGE_WINDOW = '5d';
 const CHINA_EQUITY_DISPLAY_NOTE =
@@ -1585,6 +1596,40 @@ function dateOnlyIso(value) {
 function dateOnlyToIso(value) {
   const dateOnly = dateOnlyIso(value);
   return dateOnly ? `${dateOnly}T00:00:00Z` : null;
+}
+function dateOnlyInTimeZone(value, timeZone) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (!Number.isFinite(date.getTime())) return null;
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+  const part = (type) => parts.find((item) => item.type === type)?.value || null;
+  const year = part('year');
+  const month = part('month');
+  const day = part('day');
+  return year && month && day ? `${year}-${month}-${day}` : null;
+}
+
+function berlinDateOnly(value) {
+  return dateOnlyInTimeZone(value, 'Europe/Berlin');
+}
+
+function berlinDateAgeDays(value) {
+  const dateOnly = dateOnlyIso(value);
+  const today = berlinDateOnly(isoNow);
+  if (!dateOnly || !today) return null;
+  const todayMs = Date.parse(`${today}T00:00:00Z`);
+  const obsMs = Date.parse(`${dateOnly}T00:00:00Z`);
+  if (!Number.isFinite(todayMs) || !Number.isFinite(obsMs)) return null;
+  return Math.floor((todayMs - obsMs) / (24 * 3600 * 1000));
+}
+
+function isFreshBerlinDateOnly(value, maxAgeDays) {
+  const ageDays = berlinDateAgeDays(value);
+  return Number.isFinite(ageDays) && ageDays >= 0 && ageDays <= maxAgeDays;
 }
 
 function dateOnlyAgeDays(value) {
@@ -3370,6 +3415,137 @@ async function resolveChinaPmi(prevChinaPmi) {
   } catch (err) {
     console.warn(`[china-pmi-missing] ${stringifyFetchError(err)}`);
     return buildMissingChinaPmi(prevChinaPmi);
+  }
+}
+function isPlausibleEuroVolatilityValue(value) {
+  return Number.isFinite(value) && value >= EURO_VOLATILITY_MIN && value <= EURO_VOLATILITY_MAX;
+}
+
+function normalizeEuroVolatilityChangePct(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? +(n / 100).toFixed(4) : null;
+}
+
+function normalizePreviousEuroVolatility(previous) {
+  const value = finiteNumberOrNull(previous?.value);
+  const refDate = dateOnlyIso(previous?.refDate);
+  if (!isPlausibleEuroVolatilityValue(value) || !refDate || !isFreshBerlinDateOnly(refDate, EURO_VOLATILITY_FRESH_DAYS)) {
+    return null;
+  }
+  return {
+    updatedAt: typeof previous?.updatedAt === 'string' ? previous.updatedAt : null,
+    source: EURO_VOLATILITY_SOURCE,
+    sourceStatus: 'fallback',
+    notes: EURO_VOLATILITY_DISPLAY_NOTE,
+    value: +value.toFixed(4),
+    refDate,
+    changePct: Number.isFinite(previous?.changePct) ? +Number(previous.changePct).toFixed(4) : null
+  };
+}
+
+function buildMissingEuroVolatility(prevEuroVolatility = null) {
+  const fallback = normalizePreviousEuroVolatility(prevEuroVolatility);
+  if (fallback) return fallback;
+  return {
+    updatedAt: null,
+    source: EURO_VOLATILITY_SOURCE,
+    sourceStatus: 'missing',
+    notes: EURO_VOLATILITY_DISPLAY_NOTE,
+    value: null,
+    refDate: null,
+    changePct: null
+  };
+}
+
+function parseBoerseEuroVolatilityQuote(payload) {
+  const value = finiteNumberOrNull(payload?.lastPrice);
+  const timestampLastPrice = typeof payload?.timestampLastPrice === 'string' ? payload.timestampLastPrice : null;
+  const refDate = timestampLastPrice ? berlinDateOnly(timestampLastPrice) : null;
+  if (!isPlausibleEuroVolatilityValue(value) || !refDate || !isFreshBerlinDateOnly(refDate, EURO_VOLATILITY_FRESH_DAYS)) {
+    throw new Error('boerse V2TX quote missing fresh plausible value/refDate');
+  }
+  return {
+    updatedAt: new Date(timestampLastPrice).toISOString(),
+    source: EURO_VOLATILITY_SOURCE,
+    sourceStatus: 'live',
+    notes: EURO_VOLATILITY_DISPLAY_NOTE,
+    value: +value.toFixed(4),
+    refDate,
+    changePct: normalizeEuroVolatilityChangePct(payload?.changeToPrevDayInPercent)
+  };
+}
+
+async function fetchBoerseEuroVolatilityQuote() {
+  const payload = await fetchJsonText(
+    EURO_VOLATILITY_QUOTE_URL,
+    'deutsche-boerse:v2tx-quote-box',
+    EURO_VOLATILITY_FETCH_TIMEOUT_MS,
+    {
+      userAgent: 'GFRRBot/1.0',
+      headers: {
+        Accept: 'application/json,text/plain,*/*'
+      }
+    }
+  );
+  return parseBoerseEuroVolatilityQuote(payload);
+}
+
+function parseStoxxEuroVolatilityHtml(html) {
+  const raw = String(html || '');
+  const plain = htmlToPlainText(raw);
+  const valueMatch = raw.match(/id=["']overview-last-value["'][^>]*>\s*(?<value>[-+]?\d+(?:\.\d+)?)/u)
+    || plain.match(/Last Value\s+(?<value>[-+]?\d+(?:\.\d+)?)/u);
+  const changeMatch = raw.match(/class=["']data-daily-change-percent["'][^>]*>\s*(?<value>[-+]?\d+(?:\.\d+)?)/u)
+    || plain.match(/Last Value\s+[-+]?\d+(?:\.\d+)?\s+[-+]?\d+(?:\.\d+)?\s+\(\s*(?<value>[-+]?\d+(?:\.\d+)?)\s*%\s*\)/u);
+  const graphPairs = [...raw.matchAll(/\[(1[0-9]{12}),([0-9]+(?:\.[0-9]+)?)\]/g)]
+    .map((match) => ({
+      timestampMs: Number(match[1]),
+      value: Number(match[2])
+    }))
+    .filter((point) => Number.isFinite(point.timestampMs) && isPlausibleEuroVolatilityValue(point.value));
+  const latestPoint = graphPairs.at(-1) || null;
+  const value = finiteNumberOrNull(valueMatch?.groups?.value);
+  const refDate = latestPoint ? berlinDateOnly(latestPoint.timestampMs) : null;
+  if (!isPlausibleEuroVolatilityValue(value) || !refDate || !isFreshBerlinDateOnly(refDate, EURO_VOLATILITY_FRESH_DAYS)) {
+    throw new Error('stoxx V2TX page missing fresh plausible value/refDate');
+  }
+  return {
+    updatedAt: new Date(latestPoint.timestampMs).toISOString(),
+    source: EURO_VOLATILITY_SOURCE,
+    sourceStatus: 'fallback',
+    notes: EURO_VOLATILITY_DISPLAY_NOTE,
+    value: +value.toFixed(4),
+    refDate,
+    changePct: normalizeEuroVolatilityChangePct(changeMatch?.groups?.value)
+  };
+}
+
+async function fetchStoxxEuroVolatilityQuote() {
+  const html = await retryFetch(
+    EURO_VOLATILITY_STOXX_URL,
+    'stoxx:v2tx-index-page',
+    EURO_VOLATILITY_FETCH_TIMEOUT_MS,
+    {
+      userAgent: 'GFRRBot/1.0',
+      headers: {
+        Accept: 'text/html,*/*;q=0.8'
+      }
+    }
+  );
+  return parseStoxxEuroVolatilityHtml(html);
+}
+
+async function resolveEuroVolatility(prevEuroVolatility) {
+  try {
+    return await fetchBoerseEuroVolatilityQuote();
+  } catch (err) {
+    console.warn(`[euro-volatility-boerse-fallback] ${stringifyFetchError(err)}`);
+  }
+  try {
+    return await fetchStoxxEuroVolatilityQuote();
+  } catch (err) {
+    console.warn(`[euro-volatility-missing] ${stringifyFetchError(err)}`);
+    return buildMissingEuroVolatility(prevEuroVolatility);
   }
 }
 const MONTH_INDEX_BY_NAME = new Map([
@@ -6864,7 +7040,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveChinaBond(prevMd.chinaBond),
     resolveCfetsRmb(prevMd.cfetsRmb),
     resolveChinaInflation(prevMd.chinaInflation),
-    resolveChinaPmi(prevMd.chinaPmi)
+    resolveChinaPmi(prevMd.chinaPmi),
+    resolveEuroVolatility(prevMd.euroVolatility)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -6914,6 +7091,7 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   const cfetsRmb = results[15].status === 'fulfilled' ? results[15].value : buildMissingCfetsRmb(prevMd.cfetsRmb);
   const chinaInflation = results[16].status === 'fulfilled' ? results[16].value : buildMissingChinaInflation(prevMd.chinaInflation);
   const chinaPmi = results[17].status === 'fulfilled' ? results[17].value : buildMissingChinaPmi(prevMd.chinaPmi);
+  const euroVolatility = results[18].status === 'fulfilled' ? results[18].value : buildMissingEuroVolatility(prevMd.euroVolatility);
 
   return {
     fedLiquidity,
@@ -6933,7 +7111,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     chinaBond,
     cfetsRmb,
     chinaInflation,
-    chinaPmi
+    chinaPmi,
+    euroVolatility
   };
 }
 
@@ -6946,7 +7125,8 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     resolveChinaBond(prevMd?.chinaBond),
     resolveCfetsRmb(prevMd?.cfetsRmb),
     resolveChinaInflation(prevMd?.chinaInflation),
-    resolveChinaPmi(prevMd?.chinaPmi)
+    resolveChinaPmi(prevMd?.chinaPmi),
+    resolveEuroVolatility(prevMd?.euroVolatility)
   ]);
   return {
     worldEconomy: results[0].status === 'fulfilled' ? results[0].value : buildMissingWorldEconomy(prevMd?.worldEconomy),
@@ -6956,7 +7136,8 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     chinaBond: results[4].status === 'fulfilled' ? results[4].value : buildMissingChinaBond(prevMd?.chinaBond),
     cfetsRmb: results[5].status === 'fulfilled' ? results[5].value : buildMissingCfetsRmb(prevMd?.cfetsRmb),
     chinaInflation: results[6].status === 'fulfilled' ? results[6].value : buildMissingChinaInflation(prevMd?.chinaInflation),
-    chinaPmi: results[7].status === 'fulfilled' ? results[7].value : buildMissingChinaPmi(prevMd?.chinaPmi)
+    chinaPmi: results[7].status === 'fulfilled' ? results[7].value : buildMissingChinaPmi(prevMd?.chinaPmi),
+    euroVolatility: results[8].status === 'fulfilled' ? results[8].value : buildMissingEuroVolatility(prevMd?.euroVolatility)
   };
 }
 
@@ -7876,6 +8057,7 @@ async function build() {
       cfetsRmb: macroDrivers.cfetsRmb,
       chinaInflation: macroDrivers.chinaInflation,
       chinaPmi: macroDrivers.chinaPmi,
+      euroVolatility: macroDrivers.euroVolatility,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

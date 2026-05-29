@@ -99,6 +99,8 @@ const VALID_PRIVATE_CREDIT_PROXY_REGIMES = new Set(['压力上升', '观察', '�
 const WORLD_ECONOMY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_WORLD_ECONOMY_SOURCE = 'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI';
 const WORLD_ECONOMY_KEYS = ['stoxx50', 'nikkei225', 'dax'];
+const EURO_VOLATILITY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
+const VALID_EURO_VOLATILITY_SOURCE = 'DeutscheBoerse:quote_box:V2TX; STOXX(fallback)';
 const CHINA_EQUITY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_CHINA_EQUITY_SOURCE = 'Yahoo:000001.SS; Yahoo:^HSI; Yahoo:000300.SS';
 const CHINA_EQUITY_KEYS = ['sseComposite', 'hangSeng', 'csi300'];
@@ -925,6 +927,22 @@ function validateMacroDriversPrivateCreditProxy(dataPayload) {
   proxy.notes.forEach((item, index) => assertString(item, `macroDrivers.privateCreditProxy.notes[${index}]`));
 }
 
+function validateMacroDriversEuroVolatility(dataPayload) {
+  const euroVolatility = dataPayload?.macroDrivers?.euroVolatility;
+  if (euroVolatility === undefined) return;
+  assertPlainObject(euroVolatility, 'macroDrivers.euroVolatility');
+  validateNullableIsoString(euroVolatility.updatedAt, 'macroDrivers.euroVolatility.updatedAt');
+  assert(euroVolatility.source === VALID_EURO_VOLATILITY_SOURCE, `macroDrivers.euroVolatility.source must be ${VALID_EURO_VOLATILITY_SOURCE}`);
+  assertString(euroVolatility.notes, 'macroDrivers.euroVolatility.notes');
+  assertString(euroVolatility.sourceStatus, 'macroDrivers.euroVolatility.sourceStatus');
+  assert(EURO_VOLATILITY_SOURCE_STATUSES.has(euroVolatility.sourceStatus), 'macroDrivers.euroVolatility.sourceStatus is not supported');
+  assert(isFiniteNumberOrNull(euroVolatility.value), 'macroDrivers.euroVolatility.value must be finite number or null');
+  validateNullableIsoString(euroVolatility.refDate, 'macroDrivers.euroVolatility.refDate');
+  assert(isFiniteNumberOrNull(euroVolatility.changePct), 'macroDrivers.euroVolatility.changePct must be finite number or null');
+  if (euroVolatility.value === null) {
+    assert(euroVolatility.sourceStatus === 'missing', 'macroDrivers.euroVolatility.sourceStatus must be missing when value is null');
+  }
+}
 function validateMacroDriversWorldEconomy(dataPayload) {
   const worldEconomy = dataPayload?.macroDrivers?.worldEconomy;
   if (worldEconomy === undefined) return;
@@ -2183,6 +2201,7 @@ validateMacroDriversEmployment(data);
 validateMacroDriversConsumerRetail(data);
 validateMacroDriversCommercialRealEstate(data);
 validateMacroDriversPrivateCreditProxy(data);
+validateMacroDriversEuroVolatility(data);
 validateMacroDriversWorldEconomy(data);
 validateMacroDriversChinaEquity(data);
 validateMacroDriversInflationEnergy(data);

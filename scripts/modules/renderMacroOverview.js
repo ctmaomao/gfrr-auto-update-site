@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-6c-china-cpi-ppi-pmi-1';
+} from './config.js?v=stage-v2x-vstoxx-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1605,9 +1605,35 @@ function renderC4UsEconomyTemperature({ radarData }) {
   }
 }
 
+function renderEuroVolatilityLeaf({ radarData }) {
+  const euroVolatility = radarData?.macroDrivers?.euroVolatility;
+  const value = asNumber(euroVolatility?.value);
+  const changePct = asNumber(euroVolatility?.changePct);
+  const vix = asNumber(radarData?.displayInputsBaseline?.vix);
+  const status = euroVolatility?.sourceStatus || 'missing';
+
+  setToneClass('c5-v2x-status', 'status-bar', 'neutral');
+  setBadge('c5-v2x-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : status === 'missing' ? 'OBS·缺失' : 'OBS');
+  setLeafText('c5-v2x-number', value !== null ? value.toFixed(1) : '—');
+
+  const auxParts = [];
+  if (typeof euroVolatility?.refDate === 'string' && euroVolatility.refDate.trim()) {
+    auxParts.push(euroVolatility.refDate);
+  }
+  if (changePct !== null) {
+    auxParts.push(`1日 ${signedFixed(changePct * 100, 1)}%`);
+  }
+  if (value !== null && vix !== null) {
+    auxParts.push(`vs 美VIX ${signedFixed(value - vix, 1)}`);
+  }
+  if (status === 'fallback') auxParts.push('回退');
+  if (status === 'missing' && auxParts.length === 0) auxParts.push('待源恢复');
+  setLeafText('c5-v2x-aux', auxParts.join(' · ') || '—');
+}
 function renderC5WorldEconomy({ radarData }) {
   try {
     if (!radarData) return;
+    renderEuroVolatilityLeaf({ radarData });
     const worldEconomy = radarData.macroDrivers?.worldEconomy;
     if (!worldEconomy) return;
 

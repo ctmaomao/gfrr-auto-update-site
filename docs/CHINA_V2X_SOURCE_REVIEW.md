@@ -1,4 +1,4 @@
-# China Macro & V2X Source Review (Stage 6, 调研型)
+﻿# China Macro & V2X Source Review (Stage 6, 调研型)
 
 > **Stage 6 = source-resolution only**(只调研、不实施)。为路线图 5 张 pending 卡(China PMI / China CPI·PPI / China 10Y / CFETS RMB / V2X)逐源实证公开数据源,目标每数据点 ≥2 个优质源,产出接入建议。沿用 `BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md` 模板。
 > **使用姿态(owner 确认)**:私人非商业用途。ChinaMoney / ChinaBond / NBS 的法律/ToS 风险对本用途**非阻断**;其 JSON 端点可作为自动抓取候选,但须**低频 + 按日期缓存 + 不广扫站点路径**。
@@ -54,9 +54,10 @@
 
 ## 5. V2X(VSTOXX,欧元区波动率)
 
-- **Primary — STOXX 官方 `h_vstoxx.txt`** ✅:`https://www.stoxx.com/document/Indices/Current/HistoricalData/h_vstoxx.txt`,`Date,V2TX,...` CSV,**日频、1999 起、无 auth、权威**。
-- **Secondary — Yahoo `V2TX.DE`**(注:项目原用 `^V2TX` 是错符号,已死;正确为 `V2TX.DE`)。
-- **建议**:STOXX 官方 txt 为主(权威+无限流),Yahoo V2TX.DE 备选。
+- **Primary — boerse-frankfurt quote_box JSON**:`https://api.boerse-frankfurt.de/v1/data/quote_box/single?isin=DE000A0C3QF1&mic=XFRA`。`DE000A0C3QF1` 是 V2TX 主指数;`DE000A0G87B2` 是 VSTOXX 1M,口径不同,不得用于本卡。实测无需 token/signature,UA=`GFRRBot/1.0` 可取 `lastPrice` + `timestampLastPrice`。
+- **Fallback — STOXX 官页 HTML**:`https://stoxx.com/index/V2TX/`。解析 `#overview-last-value` 与末尾图表点 `[timestampMs,value]`;UAT 子域 Cloudflare 403,不用。
+- **Dead / stale sources**:STOXX `h_vstoxx.txt` 仍可 200 但尾行冻结在 `2016-02-12`;Yahoo `V2TX.DE` 返回 200 但 `regularMarketTime` 为 2016,`^V2TX` 404。二者不得作为新鲜源。
+- **建议**:boerse-frankfurt quote_box 为主源,STOXX 官页为 fallback;按 Europe/Berlin `refDate` freshness `<=5` 自然日 fail-closed。
 
 ## 6. China CPI(已早先确认,补全留档)
 
