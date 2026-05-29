@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-c2-copper-gold-ratio-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-5-history-window-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

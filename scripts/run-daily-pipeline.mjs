@@ -6868,6 +6868,11 @@ function appendHistoryFull(prevFull, risk, lock, macro, macroDrivers, transmissi
   const today = isoNow.slice(0, 10);
   const full = Array.isArray(prevFull) ? [...prevFull] : [];
   const previousEntry = full.length && full[full.length - 1].date === today ? full[full.length - 1] : null;
+  const privateCreditProxy = macroDrivers?.privateCreditProxy || {};
+  const credit = macroDrivers?.credit || {};
+  const finiteOrNull = (value) => (Number.isFinite(value) ? value : null);
+  const privateCreditHyOas = Number.isFinite(privateCreditProxy.hyOas) ? privateCreditProxy.hyOas : credit.hyOas;
+  const privateCreditIgOas = Number.isFinite(privateCreditProxy.igOas) ? privateCreditProxy.igOas : credit.igOas;
   const entry = mergeWorldOrderStress({
     date: today,
     score: risk.score,
@@ -6878,12 +6883,21 @@ function appendHistoryFull(prevFull, risk, lock, macro, macroDrivers, transmissi
     vix: risk.vix,
     dxy: risk.dxy,
     hyOas: risk.hy,
+    spx: finiteOrNull(realtime?.values?.spx),
     us10y: risk.us10y,
     real10y: risk.real10y,
     t10y2y: macroDrivers?.curve?.t10y2y ?? null,
     igOas: macroDrivers?.credit?.igOas ?? null,
     walcl: macroDrivers?.fedLiquidity?.walcl ?? null,
     onRrp: macroDrivers?.fedLiquidity?.onRrp ?? null,
+    privateCredit6: {
+      bdcEtfPrice: finiteOrNull(privateCreditProxy.bdcEtfPrice),
+      pbdcEtfPrice: finiteOrNull(privateCreditProxy.pbdcEtfPrice),
+      seniorLoanEtfPrice: finiteOrNull(privateCreditProxy.seniorLoanEtfPrice),
+      intervalFundNavPrice: finiteOrNull(privateCreditProxy.intervalFundNavPrice),
+      hyOas: finiteOrNull(privateCreditHyOas),
+      igOas: finiteOrNull(privateCreditIgOas)
+    },
     ...(transmissionSnapshot ? { transmissionSnapshot } : {})
   }, worldOrderStress, previousEntry);
   if (previousEntry) {
@@ -6892,6 +6906,153 @@ function appendHistoryFull(prevFull, risk, lock, macro, macroDrivers, transmissi
     full.push(entry);
   }
   return full;
+}
+
+function roundHistoryWindowNumber(value, digits = 4) {
+  if (!Number.isFinite(value)) return null;
+  const factor = 10 ** digits;
+  return Math.round((value + Number.EPSILON) * factor) / factor;
+}
+
+function historyWindowRows(historyFull, valueSelector) {
+  return (Array.isArray(historyFull) ? historyFull : [])
+    .map((entry) => {
+      const value = valueSelector(entry);
+      return {
+        date: typeof entry?.date === 'string' ? entry.date : null,
+        value: Number.isFinite(value) ? value : null
+      };
+    })
+    .filter((row) => row.date && Number.isFinite(row.value));
+}
+
+function historyWindowStatus(observations, targetObservations) {
+  if (!Number.isFinite(observations) || observations <= 0) return 'missing';
+  return observations >= targetObservations ? 'ready' : 'partial';
+}
+
+function historyWindowMeta(rows, targetObservations, windowLabel) {
+  const observations = rows.length;
+  return {
+    windowStatus: historyWindowStatus(observations, targetObservations),
+    observations,
+    targetObservations,
+    windowLabel,
+    firstDate: rows[0]?.date ?? null,
+    lastDate: rows[rows.length - 1]?.date ?? null
+  };
+}
+
+function findHistoryRowAtLeastDaysAgo(rows, days) {
+  const latest = rows[rows.length - 1];
+  if (!latest?.date) return null;
+  const targetTime = Date.parse(`${latest.date}T00:00:00Z`) - days * 24 * 3600 * 1000;
+  let best = null;
+  for (const row of rows) {
+    const time = Date.parse(`${row.date}T00:00:00Z`);
+    if (Number.isFinite(time) && time <= targetTime) {
+      if (!best || time > Date.parse(`${best.date}T00:00:00Z`)) best = row;
+    }
+  }
+  return best;
+}
+
+function buildHyOasWoW(historyFull) {
+  const targetObservations = 7;
+  const rows = historyWindowRows(historyFull, (entry) => entry?.hyOas);
+  const latest = rows[rows.length - 1] || null;
+  const prior = findHistoryRowAtLeastDaysAgo(rows, 7);
+  const hasChange = latest && prior && prior.value !== 0;
+  const observations = Math.min(rows.length, targetObservations);
+  return {
+    changeBp: hasChange ? roundHistoryWindowNumber((latest.value - prior.value) * 100, 1) : null,
+    changePct: hasChange ? roundHistoryWindowNumber((latest.value - prior.value) / prior.value, 4) : null,
+    windowStatus: hasChange ? 'ready' : historyWindowStatus(observations, targetObservations),
+    priorDate: prior?.date ?? null,
+    lastDate: latest?.date ?? null,
+    observations,
+    targetObservations,
+    windowLabel: '周度变化'
+  };
+}
+
+function buildHighWindow(historyFull, key, targetObservations, windowLabel) {
+  const rows = historyWindowRows(historyFull, (entry) => entry?.[key]).slice(-targetObservations);
+  const meta = historyWindowMeta(rows, targetObservations, windowLabel);
+  const values = rows.map((row) => row.value).filter(Number.isFinite);
+  return {
+    value: values.length ? roundHistoryWindowNumber(Math.max(...values), key === 'spx' ? 2 : 4) : null,
+    ...meta
+  };
+}
+
+function componentZScore(rows, targetObservations) {
+  const windowRows = rows.slice(-targetObservations);
+  if (windowRows.length < targetObservations) {
+    return { z: null, observations: windowRows.length };
+  }
+  const values = windowRows.map((row) => row.value);
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+  const squaredDeviationSum = values.reduce((sum, value) => sum + ((value - mean) ** 2), 0);
+  const stdDev = Math.sqrt(squaredDeviationSum / (values.length - 1));
+  if (!Number.isFinite(stdDev)) return { z: null, observations: windowRows.length };
+  if (stdDev === 0) return { z: 0, observations: windowRows.length };
+  return {
+    z: roundHistoryWindowNumber((values[values.length - 1] - mean) / stdDev, 4),
+    observations: windowRows.length
+  };
+}
+
+function buildPrivateCreditStressZScore(historyFull) {
+  const targetObservations = 84;
+  const componentDefs = [
+    { key: 'bdcEtfPrice', direction: '-z' },
+    { key: 'pbdcEtfPrice', direction: '-z' },
+    { key: 'seniorLoanEtfPrice', direction: '-z' },
+    { key: 'intervalFundNavPrice', direction: '-z' },
+    { key: 'hyOas', direction: '+z' },
+    { key: 'igOas', direction: '+z' }
+  ];
+  const components = componentDefs.map((definition) => {
+    const rows = historyWindowRows(historyFull, (entry) => entry?.privateCredit6?.[definition.key]);
+    const { z, observations } = componentZScore(rows, targetObservations);
+    const stressZ = Number.isFinite(z)
+      ? roundHistoryWindowNumber(definition.direction === '-z' ? -z : z, 4)
+      : null;
+    return {
+      key: definition.key,
+      z,
+      stressZ,
+      direction: definition.direction,
+      observations
+    };
+  });
+  const observations = components.length
+    ? Math.min(...components.map((component) => component.observations))
+    : 0;
+  const stressValues = components.map((component) => component.stressZ).filter(Number.isFinite);
+  const headline = stressValues.length === componentDefs.length
+    ? roundHistoryWindowNumber(avg(stressValues), 4)
+    : null;
+  return {
+    headline,
+    components,
+    windowStatus: headline !== null
+      ? 'ready'
+      : historyWindowStatus(observations, targetObservations),
+    observations,
+    targetObservations,
+    windowLabel: '12周'
+  };
+}
+
+function buildHistoryWindowFields(historyFull) {
+  return {
+    hyOasWoW: buildHyOasWoW(historyFull),
+    dxy12wHigh: buildHighWindow(historyFull, 'dxy', 84, '12周'),
+    privateCreditStressZScore: buildPrivateCreditStressZScore(historyFull),
+    spx52wHigh: buildHighWindow(historyFull, 'spx', 364, '52周')
+  };
 }
 
 async function buildFallback() {
@@ -7420,6 +7581,7 @@ async function build() {
   preserveExternalAiInterpretationLayer(data);
 
   const historyFull = appendHistoryFull(prevHistoryFull, risk, lock, macro, macroDrivers, transmissionSnapshot, worldOrderStressHistorySnapshot);
+  data.historyWindowFields = buildHistoryWindowFields(historyFull);
 
   return { data, history, historyFull };
 }

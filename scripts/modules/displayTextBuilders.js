@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-c2-copper-gold-ratio-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-5-history-window-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

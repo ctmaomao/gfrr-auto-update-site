@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-c2-copper-gold-ratio-1';
+} from './config.js?v=stage-5-history-window-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -897,6 +897,17 @@ function renderC7MarketSentiment({ radarData, marketPricingMetricsData }) {
 
     const spx = asNumber(radarData.displayInputsBaseline?.spx ?? radarData.__effectiveDisplayInputs?.spx);
     if (spx !== null) setLeafText('c7-spx-number', spx.toFixed(0));
+    const spx52wHigh = radarData.historyWindowFields?.spx52wHigh;
+    const spxHighValue = asNumber(spx52wHigh?.value);
+    if (spx52wHigh?.windowStatus === 'ready' && spxHighValue !== null) {
+      const drawdownPct = spx !== null && spxHighValue !== 0 ? ((spx / spxHighValue) - 1) * 100 : null;
+      const drawdownText = formatPct(drawdownPct, 1);
+      setLeafText('c7-spx-aux', drawdownText ? `52周高位 ${spxHighValue.toFixed(0)} · 距高 ${drawdownText}` : `52周高位 ${spxHighValue.toFixed(0)}`);
+    } else if (spxHighValue !== null) {
+      setLeafText('c7-spx-aux', `当前可用窗口高位 ${spxHighValue.toFixed(0)} · ${formatWindowProgress(spx52wHigh)}`);
+    } else if (spx52wHigh) {
+      setLeafText('c7-spx-aux', `52周高位 ${formatWindowProgress(spx52wHigh)}`);
+    }
 
     const ndxRecord = latestMarketRecord(marketPricingMetricsData, 'ndx');
     const ndxZ = asNumber(ndxRecord?.zScore);
@@ -1163,6 +1174,15 @@ function renderC2GlobalLiquidity({ radarData }) {
 
     const dxy = asNumber(display.dxy);
     if (dxy !== null) setLeafText('c2-dxy-number', dxy.toFixed(2));
+    const dxy12wHigh = radarData.historyWindowFields?.dxy12wHigh;
+    const dxyHighValue = asNumber(dxy12wHigh?.value);
+    if (dxy12wHigh?.windowStatus === 'ready' && dxyHighValue !== null) {
+      setLeafText('c2-dxy-aux', `12周高位 ${dxyHighValue.toFixed(2)}`);
+    } else if (dxyHighValue !== null) {
+      setLeafText('c2-dxy-aux', `当前可用窗口高位 ${dxyHighValue.toFixed(2)} · ${formatWindowProgress(dxy12wHigh)}`);
+    } else if (dxy12wHigh) {
+      setLeafText('c2-dxy-aux', `12周高位 ${formatWindowProgress(dxy12wHigh)}`);
+    }
 
     const gold = asNumber(display.gold);
     if (gold !== null) setLeafText('c2-gold-number', gold.toFixed(2));
@@ -1342,6 +1362,19 @@ function signedPercentFromDecimal(value, digits = 1) {
   return formatPct(n * 100, digits);
 }
 
+function formatWindowProgress(field) {
+  const observations = asNumber(field?.observations);
+  const target = asNumber(field?.targetObservations);
+  if (observations === null || target === null) return '累积中';
+  return `累积中 ${observations}/${target}天`;
+}
+
+function formatSignedBpValue(value, digits = 0) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  return `${n >= 0 ? '+' : ''}${n.toFixed(digits)}bp`;
+}
+
 // ---------- Stage 5c: C3 Credit & Corporate ----------
 
 function renderC3CreditCorporate({ radarData }) {
@@ -1355,9 +1388,18 @@ function renderC3CreditCorporate({ radarData }) {
     const hyOas = asNumber(display.hyOas ?? credit.hyOas);
     const hyTone = creditHyTone(hyOas);
     setIndicatorStatus('c3-hy-status', 'c3-hy-badge', hyTone);
+    const hyOasWoW = radarData.historyWindowFields?.hyOasWoW;
     if (hyOas !== null) {
       setLeafText('c3-hy-number', hyOas.toFixed(2));
-      setLeafText('c3-hy-aux', `HY OAS ${hyOas.toFixed(2)}% · WoW 字段未接入`);
+      const changeBp = asNumber(hyOasWoW?.changeBp);
+      const changePct = signedPercentFromDecimal(hyOasWoW?.changePct, 1);
+      if (hyOasWoW?.windowStatus === 'ready' && changeBp !== null && changePct) {
+        setLeafText('c3-hy-aux', `HY OAS ${hyOas.toFixed(2)}% · WoW ${formatSignedBpValue(changeBp, 0)} / ${changePct}`);
+      } else if (hyOasWoW) {
+        setLeafText('c3-hy-aux', `HY OAS ${hyOas.toFixed(2)}% · WoW ${formatWindowProgress(hyOasWoW)}`);
+      } else {
+        setLeafText('c3-hy-aux', `HY OAS ${hyOas.toFixed(2)}% · WoW 字段未接入`);
+      }
     }
 
     const igOas = asNumber(credit.igOas);
@@ -1386,9 +1428,17 @@ function renderC3CreditCorporate({ radarData }) {
     setIndicatorStatus('c3-private-status', 'c3-private-badge', privateTone);
     const intervalNav = asNumber(privateCredit.intervalFundNavPrice);
     if (intervalNav !== null) setLeafText('c3-private-number', intervalNav.toFixed(2));
-    const intervalChange = signedPercentFromDecimal(privateCredit.intervalFundNav4wChange, 1);
-    if (privateCredit.intervalFundNavSymbol && intervalChange) {
-      setLeafText('c3-private-aux', `${privateCredit.intervalFundNavSymbol} intervalFundNav · 4w ${intervalChange}`);
+    const privateStressZ = radarData.historyWindowFields?.privateCreditStressZScore;
+    const privateStressHeadline = asNumber(privateStressZ?.headline);
+    if (privateStressZ?.windowStatus === 'ready' && privateStressHeadline !== null) {
+      setLeafText('c3-private-aux', `6-proxy stress z ${formatSignedScore(privateStressHeadline, 2, 'σ')}`);
+    } else if (privateStressZ) {
+      setLeafText('c3-private-aux', `6-proxy z-score ${formatWindowProgress(privateStressZ)}`);
+    } else {
+      const intervalChange = signedPercentFromDecimal(privateCredit.intervalFundNav4wChange, 1);
+      if (privateCredit.intervalFundNavSymbol && intervalChange) {
+        setLeafText('c3-private-aux', `${privateCredit.intervalFundNavSymbol} intervalFundNav · 4w ${intervalChange}`);
+      }
     }
     if (asNumber(privateCredit.bdcEtfPrice) !== null && signedPercentFromDecimal(privateCredit.bdcEtf4wChange, 1)) {
       setLeafText('c3-private-bdc', `${formatUsd(privateCredit.bdcEtfPrice)} · 4w ${signedPercentFromDecimal(privateCredit.bdcEtf4wChange, 1)}`);

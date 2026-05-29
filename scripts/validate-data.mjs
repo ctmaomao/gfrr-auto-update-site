@@ -39,6 +39,7 @@ const history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
 const realtime = JSON.parse(fs.readFileSync(realtimePath, 'utf8'));
 
 const DISPLAY_INPUT_KEYS = ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'real10y', 'breakeven10y', 'gold', 'spx'];
+const HISTORY_WINDOW_STATUSES = new Set(['ready', 'partial', 'missing']);
 const WIDE_TOLERANCE_KEYS = new Set(['gold', 'spx']);
 const BRENT_CONFIDENCE_LEVELS = new Set(['high', 'medium', 'low', 'none']);
 const DAILY_REALTIME_SOURCE_MODES = new Set(['live', 'degraded', 'live-with-fallback', 'fallback', 'cache-only', 'mock']);
@@ -1053,6 +1054,63 @@ function validateMacroDriversCopperGold(dataPayload) {
   }
 }
 
+function validateHistoryWindowBase(node, fieldName, targetObservations, expectedWindowLabel) {
+  assertPlainObject(node, fieldName);
+  assertString(node.windowStatus, `${fieldName}.windowStatus`);
+  assert(HISTORY_WINDOW_STATUSES.has(node.windowStatus), `${fieldName}.windowStatus is not supported`);
+  assert(Number.isInteger(node.observations) && node.observations >= 0, `${fieldName}.observations must be non-negative integer`);
+  assert(node.targetObservations === targetObservations, `${fieldName}.targetObservations must be ${targetObservations}`);
+  assertString(node.windowLabel, `${fieldName}.windowLabel`);
+  assert(node.windowLabel === expectedWindowLabel, `${fieldName}.windowLabel must be ${expectedWindowLabel}`);
+}
+
+function validateHistoryWindowDatedBase(node, fieldName, targetObservations, expectedWindowLabel) {
+  validateHistoryWindowBase(node, fieldName, targetObservations, expectedWindowLabel);
+  validateNullableIsoString(node.firstDate, `${fieldName}.firstDate`);
+  validateNullableIsoString(node.lastDate, `${fieldName}.lastDate`);
+}
+
+function validateHistoryWindowFields(dataPayload) {
+  const fields = dataPayload?.historyWindowFields;
+  if (fields === undefined) return;
+  assertPlainObject(fields, 'historyWindowFields');
+
+  if (fields.hyOasWoW !== undefined) {
+    const hy = fields.hyOasWoW;
+    validateHistoryWindowBase(hy, 'historyWindowFields.hyOasWoW', 7, '周度变化');
+    assert(isFiniteNumberOrNull(hy.changeBp), 'historyWindowFields.hyOasWoW.changeBp must be finite number or null');
+    assert(isFiniteNumberOrNull(hy.changePct), 'historyWindowFields.hyOasWoW.changePct must be finite number or null');
+    validateNullableIsoString(hy.priorDate, 'historyWindowFields.hyOasWoW.priorDate');
+    validateNullableIsoString(hy.lastDate, 'historyWindowFields.hyOasWoW.lastDate');
+  }
+
+  if (fields.dxy12wHigh !== undefined) {
+    validateHistoryWindowDatedBase(fields.dxy12wHigh, 'historyWindowFields.dxy12wHigh', 84, '12周');
+    assert(isFiniteNumberOrNull(fields.dxy12wHigh.value), 'historyWindowFields.dxy12wHigh.value must be finite number or null');
+  }
+
+  if (fields.privateCreditStressZScore !== undefined) {
+    const privateCredit = fields.privateCreditStressZScore;
+    validateHistoryWindowBase(privateCredit, 'historyWindowFields.privateCreditStressZScore', 84, '12周');
+    assert(isFiniteNumberOrNull(privateCredit.headline), 'historyWindowFields.privateCreditStressZScore.headline must be finite number or null');
+    assertArray(privateCredit.components, 'historyWindowFields.privateCreditStressZScore.components');
+    privateCredit.components.forEach((component, index) => {
+      const fieldName = `historyWindowFields.privateCreditStressZScore.components[${index}]`;
+      assertPlainObject(component, fieldName);
+      assertString(component.key, `${fieldName}.key`);
+      assert(isFiniteNumberOrNull(component.z), `${fieldName}.z must be finite number or null`);
+      assert(isFiniteNumberOrNull(component.stressZ), `${fieldName}.stressZ must be finite number or null`);
+      assert(component.direction === '-z' || component.direction === '+z', `${fieldName}.direction must be -z or +z`);
+      assert(Number.isInteger(component.observations) && component.observations >= 0, `${fieldName}.observations must be non-negative integer`);
+    });
+  }
+
+  if (fields.spx52wHigh !== undefined) {
+    validateHistoryWindowDatedBase(fields.spx52wHigh, 'historyWindowFields.spx52wHigh', 364, '52周');
+    assert(isFiniteNumberOrNull(fields.spx52wHigh.value), 'historyWindowFields.spx52wHigh.value must be finite number or null');
+  }
+}
+
 function validateNullableString(value, fieldName) {
   assert(value === null || typeof value === 'string', `${fieldName} must be string or null`);
 }
@@ -2033,6 +2091,7 @@ validateMacroDriversWorldEconomy(data);
 validateMacroDriversChinaEquity(data);
 validateMacroDriversInflationEnergy(data);
 validateMacroDriversCopperGold(data);
+validateHistoryWindowFields(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);
 validateExternalAiInterpretationLayer(data);
