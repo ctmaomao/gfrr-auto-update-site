@@ -91,6 +91,11 @@
 
 - `docs/BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md` (M-71)
 
+### China macro source review scope
+
+- `docs/CHINA_V2X_SOURCE_REVIEW.md` (Stage 6 China 难源调研 + V2X 源)
+- `docs/CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md` (China central-bank operation / SReFin / property index candidates, source-review only)
+
 ### Frontend visual + IA restructure scope (M-54 → M-55b)
 
 - `docs/M-54_FRONTEND_VISUAL_UPGRADE_PHASE1.md`
