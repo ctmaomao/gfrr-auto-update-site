@@ -8,13 +8,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 | 项 | 当前值 |
 |---|---|
-| 当前生产状态 | v28.0N-1 editorial first-fold + M-93A plain user summary card |
-| Cache version | `28.0M-93AV` |
+| 当前生产状态 | v28.0N-1 editorial first-fold + C2 全球流动性 Cu/Au 铜金比 live display-only OBS 卡 |
+| Cache version | `stage-c2-copper-gold-ratio-1` |
 | check:all 项数 | 23 top-level suites |
-| 最后审计日期 | 2026-05-24 |
+| 最后审计日期 | 2026-05-29 |
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |
-| 下次审计建议 | 2026-05-26 或下一次 milestone 合并时 |
+| 下次审计建议 | 下一次 stage / milestone 合并时 |
 
 当前边界摘要:
 
@@ -73,6 +73,7 @@ Recent completed context only; full milestone archive is [MILESTONE_INDEX.md](MI
 
 | Milestone | 一句话 |
 |---|---|
+| Stage C2 Cu/Au | C2 全球流动性 Cu/Au 铜金比从 P1 升级为 Yahoo `HG=F`/`GC=F` live 派生比率 display-only OBS 卡;接入 `macroDrivers.copperGold` (`results[13]`);schema 存原始 `ratio`,前端 render ×1000(`1.418`);`ratioChangePct` 两腿 `prev=price/(1+changePct)` 派生;不进 scoring/decision/execution/position/effectiveDisplayInputs/cross-validation。commit `80b2bac`。 |
 | M-93A V3 | `#plain-summary-card` editorial section 上线;9 narrative + 31 evidence 翻译表 + 5 risk-level / 3 data-health enum;bounded checker + bump 工具命令示例 marker 覆盖;frontend display-only,不动 scoring/decision/execution/position guidance。 |
 | M-93A0 | Homepage IA contract 新增 non-nav plain summary preface slot;DESIGN.md §4.1/§5.1/§10.2/§12 正式引入 `#plain-summary-card` 概念;`check-homepage-ia-contract.mjs` 添加 `checkOptionalPlainSummaryPreface()` 提供 optional allow + position guard。 |
 | M-93A V2 | Plain User Summary section source review spec 落地 docs/PLAIN_SUMMARY_M93A_V2_SOURCE_REVIEW.md;12 sections 覆盖翻译表、bounded checker、cache marker 豁免边界、V3 实施清单。 |
@@ -111,6 +112,7 @@ Compact current audit trail:
 
 | Date | Scope | Outcome |
 |---|---|---|
+| 2026-05-29 | Stage C2 Cu/Au 铜金比接入 (Yahoo `HG=F`/`GC=F` live display-only) | 7 步协作流程全过 (outline v1.0/v1.1 → Codex brief → Claude 逐行复核 → Codex 实施 → Claude diff 复核);commit `80b2bac` pushed to main;14 files +251/−33;`macroDrivers.copperGold` 作为 `results[13]` 接入,raw ratio 存储 / render ×1000 / OBS 中性 tone;边界守住(不进 scoring/decision/execution/position/effectiveDisplayInputs/cross-validation);无 data/realtime 手改,`build:data` 留给生产 CI;`check:all` 23 suites PASS;cache bump → `stage-c2-copper-gold-ratio-1`。 |
 | 2026-05-24 | M-93 4 阶段全流程 (V1 audit / V2 spec / M-93A0 IA / V3 implementation) | PR #244/#245/#247/#248 全部 merged;新增 `#plain-summary-card` editorial section + bounded checker (`check-plain-summary-card-contract.mjs`) + `renderPlainSummary.js` 翻译表;cache version bump 28.0M-91V → 28.0M-93AV via 官方工具,工具同时扩展正则覆盖命令示例 marker;`check:all` 23 suites PASS;无 data/realtime/workers runtime/workflows 改动。 |
 | 2026-05-23 | M-91 / P2-12 Market Pricing NDX/IXIC implementation | Yahoo `^NDX` / `^IXIC` added as Daily/manual auxiliary history + metrics;QQQ primary, SPX fallback, Worker/scoring/decision boundaries preserved;self-audit required by AGENTS.md Section 10 completed in delivery. |
 | 2026-05-22 | M-87 null-zero display guards | Missing Brent / repo source values stay missing instead of rendering as zero. |
@@ -132,3 +134,12 @@ Add or update backlog items with these rules:
 3. When an item closes, keep only a one-line recent summary here and move detail to [MILESTONE_INDEX.md](MILESTONE_INDEX.md) or a scoped doc.
 4. P3 / won't-fix / source-review items must state the boundary reason and the unlock path.
 5. This file is checked by `npm run check:project-backlog-format` and `npm run check:all`.
+
+---
+
+## 🔄 Session Handoff (最新)
+
+- **上次会话结束于**: commit `80b2bac`(已 push 到 `origin/main`)— Stage C2 Cu/Au 铜金比接入完成,工作树干净。
+- **当前进行中**: 无活跃任务。C2 已 commit + push;等本次 push 触发的 **Build Daily Radar Data** workflow 跑绿,确认 `macroDrivers.copperGold` 真实 fetch 写入(HG=F/GC=F)。
+- **下一步建议**: 选路线图下一个 stage(如 C2 剩余的 CFETS RMB P1,或其他 macro display-only 卡);或先盯本次 Daily CI run 验证 copperGold 线上生效。
+- **阻塞或等待**: 无。
