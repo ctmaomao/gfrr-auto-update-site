@@ -1312,8 +1312,8 @@ function buildDailyBrief({
   const highModules = Object.entries(risk.modules).filter(([, value]) => value >= 70);
   const dataGaps = [
     '消费者信心与资产价格背离仍缺少稳定月频输入。',
-    'Brent physical proxy / term structure 尚未纳入本数据产物。',
-    'shipping / freight stress 已进入 macroDrivers.shippingFreight 审计观察层。'
+    'Brent 实物价格与期限结构尚未纳入本期数据。',
+    '航运与运价压力已纳入本期观察。'
   ];
   if (allMacroMissing) dataGaps.unshift('结构性宏观驱动源当前不可用，相关判断只能低置信观察。');
 
@@ -1321,7 +1321,7 @@ function buildDailyBrief({
     contractVersion: 'v28.0I-1',
     generatedAt: isoNow,
     macroState: `${macroState} / ${phase}`,
-    oneLineConclusion: `今日主线是${dominantRiskChain.labelZh}；最大背离为${largestDivergence.labelZh}，结论仍按 display-only 解释层处理。`,
+    oneLineConclusion: `今日主线是${dominantRiskChain.labelZh}；最大背离为${largestDivergence.labelZh}。`,
     dominantRiskChain,
     largestDivergence,
     keyTriggers: [
@@ -1377,11 +1377,11 @@ function buildUnavailableDailyBrief() {
     },
     keyTriggers: ['数据健康状态恢复后重新生成今日触发器。'],
     invalidationSignals: ['数据健康恢复且风险判断不再获得交叉验证。'],
-    dataGaps: ['实时快变量暂不可用。', '消费者信心、Brent physical proxy 与 term structure 等仍未纳入。'],
+    dataGaps: ['实时快变量暂不可用。', '消费者信心、Brent 实物价格与期限结构等仍未纳入。'],
     confidence: {
       level: 'low',
       score: 0,
-      reasonZh: '实时快变量暂不可用，dailyBrief 只能作为低置信 display-only 占位解释。'
+      reasonZh: '实时快变量暂不可用，今日总判断只能作为低置信观察。'
     },
     boundaries: {
       displayOnly: true,

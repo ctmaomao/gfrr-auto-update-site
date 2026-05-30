@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-16-mlf-eastmoney-1';
+} from './config.js?v=a-scope-jargon-sweep-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -934,7 +934,7 @@ function renderC8Geopolitical({ radarData, worldOrderStressData }) {
     const geoTrend = trendArrow(asNumber(radarData?.moduleTrends?.geopolitical));
     setLeafText('c8-geo-aux', `6 底层模块之一 · moduleTrends 显示 ${geoTrend}`);
     if (geoScore !== null) {
-      setLeafText('c8-geo-note', `底层地缘评分 ${Math.round(geoScore)},直接进入主评分链。和 World Order overlay 不是同一回事。`);
+      setLeafText('c8-geo-note', `底层地缘评分 ${Math.round(geoScore)},直接计入主评分。与世界秩序压力(只做修正、不计分)不是一回事。`);
     }
 
     const woScore = asNumber(worldOrderStressData?.score);

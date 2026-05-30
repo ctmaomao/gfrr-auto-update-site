@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-16-mlf-eastmoney-1';
+﻿import { fmtNumSafe } from './config.js?v=a-scope-jargon-sweep-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

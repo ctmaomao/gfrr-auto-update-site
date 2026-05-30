@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=stage-16-mlf-eastmoney-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=stage-16-mlf-eastmoney-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=a-scope-jargon-sweep-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=a-scope-jargon-sweep-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
