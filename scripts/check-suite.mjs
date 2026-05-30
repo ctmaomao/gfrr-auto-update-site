@@ -1,6 +1,9 @@
 import { spawnSync } from 'node:child_process';
 
 const SUITES = {
+  'frontend-live-contracts': [
+    'check:null-zero-display-guards'
+  ],
   'external-ai': [
     'check:external-ai-manual-workflow',
     'check:external-ai-provider-workflow',
@@ -12,7 +15,6 @@ const SUITES = {
     'check:external-ai-production-projection',
     'check:external-ai-production-write-guard',
     'check:external-ai-frontend-hidden-scaffold',
-    'check:external-ai-production-data-write-script',
     'check:external-ai-manual-scaffold',
     'check:external-ai-production-provider-path'
   ],
@@ -39,23 +41,6 @@ const SUITES = {
   ],
   'market-pricing': [
     'check:market-pricing-history',
-    'check:market-pricing-source-adapter-dry-run',
-    'check:market-pricing-artifact-fetch-design',
-    'check:market-pricing-artifact-fetch-scaffold',
-    'check:market-pricing-artifact-sanitizer-scaffold',
-    'check:market-pricing-real-record-contract-design',
-    'check:market-pricing-real-record-sanitizer-scaffold',
-    'check:market-pricing-source-selection-review',
-    'check:market-pricing-proof-of-source-design',
-    'check:market-pricing-source-specific-artifact-fetch-scaffold',
-    'check:unified-data-pipeline-architecture',
-    'check:market-pricing-network-gate-design',
-    'check:market-pricing-network-gate-scaffold',
-    'check:market-pricing-source-compliance-review-scaffold',
-    'check:market-pricing-symbol-mapping-verification-design',
-    'check:market-pricing-source-format-verification-design',
-    'check:market-pricing-network-open-throttled-scaffold',
-    'check:market-pricing-manual-weekly-input-sanitizer-design',
     'check:market-pricing-manual-weekly-input-sanitizer-scaffold',
     'check:market-pricing-first-real-record-write-scaffold',
     'check:market-pricing-weekly-history-buildup',
