@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-30T22:36:42.736Z",
+  "updatedAt": "2026-05-30T23:17:31.815Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "8ab328e36fc32144eb557573888ba8c0b400df25",
-    "updatedAt": "2026-05-30T21:38:06.008Z",
+    "commitSha": "0c5f90de6edefb704d5f6849cb8c55cd5f517bc1",
+    "updatedAt": "2026-05-30T22:41:15.195Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-30T22:36:42.736Z"
+    "capturedAt": "2026-05-30T23:17:31.815Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-30T22:36:42.736Z",
+    "generatedAt": "2026-05-30T23:17:31.815Z",
     "macroState": "滞胀冲击 / 风险缓和",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察。",
     "dominantRiskChain": {
@@ -129,7 +129,7 @@
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-30T22:36:42.736Z",
+    "generatedAt": "2026-05-30T23:17:31.815Z",
     "score": 50,
     "state": "watch",
     "stateZh": "背离观察",
@@ -434,13 +434,13 @@
   },
   "brentPricingLayer": {
     "contractVersion": "v28.0I-5A",
-    "generatedAt": "2026-05-30T22:36:42.736Z",
+    "generatedAt": "2026-05-30T23:17:31.815Z",
     "mode": "public_proxy_observation",
     "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
     "selectedBrent": {
       "value": 102.75,
       "source": "fred:DCOILBRENTEU",
-      "observedAt": "2026-05-30T21:38:06.008Z",
+      "observedAt": "2026-05-30T22:41:15.195Z",
       "status": "ok",
       "noteZh": "当前主 Brent 显示值来自现有 Daily / realtime 输入；该层只做公开代理审计，不改变 values.brent。"
     },
@@ -473,7 +473,7 @@
       "source": "ICE:Brent-Crude-Futures-contract-data",
       "sourceUrl": "https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430",
       "curveStatus": "live_structure_only",
-      "fetchedAt": "2026-05-30T22:36:42.736Z",
+      "fetchedAt": "2026-05-30T23:17:31.815Z",
       "contracts": [
         {
           "contract": "Jul26",
@@ -742,9 +742,9 @@
       {
         "source": "marketwatch",
         "labelZh": "marketwatch",
-        "value": null,
+        "value": 87.76,
         "observedAt": null,
-        "status": "missing",
+        "status": "excluded",
         "role": "diagnostic",
         "participatesInPromotion": false,
         "noteZh": "该来源仅作为诊断观察，不参与 Brent promotion。"
@@ -800,7 +800,7 @@
       "promotionReason": "stooq/oilprice 基本一致；Oilprice 缺少 observedAt，仅作为弱确认源参与，推荐优先采用 stooq；FRED 仅作低频锚点参考。",
       "selectedSource": "fred:DCOILBRENTEU",
       "anchorSource": "fred-anchor",
-      "anchorAgeHours": 117.63527777777777
+      "anchorAgeHours": 118.68777777777778
     },
     "dataGaps": [
       "EIA Europe Brent Spot Price FOB public proxy 已接入；Platts Dated Brent / 正式 Dated Brent 仍未接入。",
@@ -1619,7 +1619,7 @@
     },
     "worldEconomy": {
       "updatedAt": "2026-05-29T07:00:00.000Z",
-      "source": "Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11",
+      "source": "Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11; Yahoo:^AXJO; Yahoo:^STI; Yahoo:^TWII",
       "sourceStatus": {
         "stoxx50": "live",
         "nikkei225": "live",
@@ -1627,7 +1627,10 @@
         "ftse100": "live",
         "cac40": "live",
         "stoxx600": "live",
-        "kospi": "live"
+        "kospi": "live",
+        "asx200": "live",
+        "sti": "live",
+        "taiex": "live"
       },
       "notes": "世界经济维度 display-only 公开指数代理;不进 scoring/decision/execution/position。",
       "stoxx50": {
@@ -1698,6 +1701,36 @@
         "changeWindow": "5d",
         "updatedAt": "2026-05-29T00:00:00.000Z",
         "source": "Yahoo:^KS11",
+        "sourceStatus": "live"
+      },
+      "asx200": {
+        "symbol": "^AXJO",
+        "labelZh": "澳洲 ASX 200",
+        "price": 8731.7002,
+        "changePct": 0.0046,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-29T00:00:00.000Z",
+        "source": "Yahoo:^AXJO",
+        "sourceStatus": "live"
+      },
+      "sti": {
+        "symbol": "^STI",
+        "labelZh": "新加坡 STI",
+        "price": 5037.8599,
+        "changePct": -0.0064,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-29T01:00:00.000Z",
+        "source": "Yahoo:^STI",
+        "sourceStatus": "live"
+      },
+      "taiex": {
+        "symbol": "^TWII",
+        "labelZh": "台湾加权 TAIEX",
+        "price": 44732.9414,
+        "changePct": 0.0249,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-29T01:00:00.000Z",
+        "source": "Yahoo:^TWII",
         "sourceStatus": "live"
       }
     },
@@ -2722,7 +2755,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-30T22:36:42.736Z",
+        "triggeredAgo": "2026-05-30T23:17:31.815Z",
         "condition": "结构性双压触发红灯（逆回购准备金临界告急）。系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -2730,7 +2763,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-30T22:36:42.736Z",
+        "triggeredAgo": "2026-05-30T23:17:31.815Z",
         "condition": "ON RRP 116.77 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -2738,7 +2771,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-30T22:36:42.736Z",
+        "triggeredAgo": "2026-05-30T23:17:31.815Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -2777,7 +2810,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-30T22:36:42.736Z",
+    "lastRun": "2026-05-30T23:17:31.815Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
@@ -3016,7 +3049,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-05-30T22:36:42.736Z",
+    "generatedAt": "2026-05-30T23:17:31.815Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [
