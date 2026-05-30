@@ -1,4 +1,4 @@
-// scripts/app.js — M-94 V0 路径 C · Stage 4b-1A 主 JS 入口
+﻿// scripts/app.js — M-94 V0 路径 C · Stage 4b-1A 主 JS 入口
 // 职责:数据加载(3 个 JSON)+ issue-meta 填充 + 调用 renderMacroOverview
 // 创建于 Stage 4a (2026-05-27),Stage 4b-1A 扩展
 
@@ -7,7 +7,7 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'stage-ux-meta-cleanup-1';
+const APP_VERSION = 'stage-70city-detail-1';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
 
@@ -126,7 +126,7 @@ async function main() {
 
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=stage-ux-meta-cleanup-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=stage-70city-detail-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData });
   } catch (error) {
     console.error('[app] Failed to import / run renderMacroOverview:', error);

@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-ux-meta-cleanup-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-70city-detail-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

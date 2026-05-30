@@ -1169,6 +1169,31 @@ function validateMacroDriversChinaPmi(dataPayload) {
   validateChinaMacroLeaf(chinaPmi.pmi, 'macroDrivers.chinaPmi.pmi', 'value');
   assert(chinaPmi.pmi.sourceStatus === chinaPmi.sourceStatus.pmi, 'macroDrivers.chinaPmi.pmi.sourceStatus must match parent sourceStatus.pmi');
 }
+const CHINA_PROPERTY_PRICE_TIER_VALIDATION = {
+  tier1: { label: '一线', cityCount: 4, cities: new Set(['北京', '上海', '广州', '深圳']) },
+  tier2: {
+    label: '二线',
+    cityCount: 31,
+    cities: new Set([
+      '天津', '石家庄', '太原', '呼和浩特', '沈阳', '大连', '长春', '哈尔滨', '南京', '杭州',
+      '宁波', '合肥', '福州', '厦门', '南昌', '济南', '青岛', '郑州', '武汉', '长沙',
+      '南宁', '海口', '重庆', '成都', '贵阳', '昆明', '西安', '兰州', '西宁', '银川',
+      '乌鲁木齐'
+    ])
+  },
+  tier3: {
+    label: '三线',
+    cityCount: 35,
+    cities: new Set([
+      '唐山', '秦皇岛', '包头', '丹东', '锦州', '吉林', '牡丹江', '无锡', '徐州', '扬州',
+      '温州', '金华', '蚌埠', '安庆', '泉州', '九江', '赣州', '烟台', '济宁', '洛阳',
+      '平顶山', '宜昌', '襄阳', '岳阳', '常德', '韶关', '湛江', '惠州', '桂林', '北海',
+      '三亚', '泸州', '南充', '遵义', '大理'
+    ])
+  }
+};
+const CHINA_PROPERTY_PRICE_TIER_KEYS = ['tier1', 'tier2', 'tier3'];
+
 function validateChinaPropertyCount(value, fieldName) {
   assert(value === null || (Number.isInteger(value) && value >= 0 && value <= 70), `${fieldName} must be integer 0-70 or null`);
 }
@@ -1183,6 +1208,49 @@ function validateChinaPropertyCountSet(node, keys, fieldName, sourceStatus) {
   }
   assert(values.every((value) => Number.isInteger(value)), `${fieldName} counts must be complete when sourceStatus is ${sourceStatus}`);
   assert(values.reduce((sum, value) => sum + value, 0) === 70, `${fieldName} counts must sum to 70`);
+}
+
+function validateChinaPropertyCityArray(value, fieldName, tierSpec) {
+  assert(Array.isArray(value), `${fieldName} must be an array`);
+  const seen = new Set();
+  for (const city of value) {
+    assertString(city, `${fieldName}[]`);
+    assert(tierSpec.cities.has(city), `${fieldName} contains city outside ${tierSpec.label}: ${city}`);
+    assert(!seen.has(city), `${fieldName} contains duplicate city: ${city}`);
+    seen.add(city);
+  }
+  return value.length;
+}
+
+function validateChinaPropertyTierDirectionSet(node, fieldName, tierSpec) {
+  assertPlainObject(node, fieldName);
+  const up = validateChinaPropertyCityArray(node.up, `${fieldName}.up`, tierSpec);
+  const flat = validateChinaPropertyCityArray(node.flat, `${fieldName}.flat`, tierSpec);
+  const down = validateChinaPropertyCityArray(node.down, `${fieldName}.down`, tierSpec);
+  const allCities = [...node.up, ...node.flat, ...node.down];
+  assert(new Set(allCities).size === allCities.length, `${fieldName} city arrays must not overlap`);
+  assert(up + flat + down === tierSpec.cityCount, `${fieldName} up+flat+down must equal ${tierSpec.cityCount}`);
+  return up + flat + down;
+}
+
+function validateChinaPropertyTierBreakdown(tierBreakdown, fieldName, sourceStatus) {
+  if (tierBreakdown === undefined || tierBreakdown === null) return;
+  assert(sourceStatus !== 'missing', `${fieldName} must be null or absent when sourceStatus is missing`);
+  assertPlainObject(tierBreakdown, fieldName);
+  const keys = Object.keys(tierBreakdown);
+  assert(keys.length === CHINA_PROPERTY_PRICE_TIER_KEYS.length, `${fieldName} must contain exactly three tiers`);
+  let cityCountTotal = 0;
+  for (const key of CHINA_PROPERTY_PRICE_TIER_KEYS) {
+    const tierSpec = CHINA_PROPERTY_PRICE_TIER_VALIDATION[key];
+    const tier = tierBreakdown[key];
+    assertPlainObject(tier, `${fieldName}.${key}`);
+    assert(tier.label === tierSpec.label, `${fieldName}.${key}.label must be ${tierSpec.label}`);
+    assert(tier.cityCount === tierSpec.cityCount, `${fieldName}.${key}.cityCount must be ${tierSpec.cityCount}`);
+    validateChinaPropertyTierDirectionSet(tier.new, `${fieldName}.${key}.new`, tierSpec);
+    validateChinaPropertyTierDirectionSet(tier.resale, `${fieldName}.${key}.resale`, tierSpec);
+    cityCountTotal += tier.cityCount;
+  }
+  assert(cityCountTotal === 70, `${fieldName} tier cityCount total must be 70`);
 }
 
 function validateMacroDriversChinaPropertyPrice(dataPayload) {
@@ -1206,6 +1274,11 @@ function validateMacroDriversChinaPropertyPrice(dataPayload) {
     property,
     ['resaleCitiesUp', 'resaleCitiesFlat', 'resaleCitiesDown'],
     'macroDrivers.chinaPropertyPrice.resale',
+    property.sourceStatus
+  );
+  validateChinaPropertyTierBreakdown(
+    property.tierBreakdown,
+    'macroDrivers.chinaPropertyPrice.tierBreakdown',
     property.sourceStatus
   );
 }

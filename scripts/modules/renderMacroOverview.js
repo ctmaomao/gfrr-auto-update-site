@@ -1,4 +1,4 @@
-// scripts/modules/renderMacroOverview.js
+﻿// scripts/modules/renderMacroOverview.js
 // M-94 V0 路径 C · Stage 4b-1A
 // 职责:render macro-overview-shell 内 3 个 block(Hero + threshold + pressure-sources)
 // 后续 Stage 4b-1B / 4b-2 扩展(market-temp / risk-engines / wow / trend SVG / signal-layers / macro-drivers / cross-validation)
@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-ux-meta-cleanup-1';
+} from './config.js?v=stage-70city-detail-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1233,9 +1233,69 @@ function renderChinaPmiLeaf({ radarData }) {
   setLeafText('c6-china-pmi-aux', `${refMonth} · ${expansion}${suffix}`);
 }
 
+function formatChinaPropertyTierCounts(group) {
+  if (!group) return '—';
+  return `${group.up?.length || 0} 涨/${group.flat?.length || 0} 平/${group.down?.length || 0} 跌`;
+}
+
+function formatChinaPropertyUpCities(group) {
+  const cities = Array.isArray(group?.up) ? group.up : [];
+  return cities.length > 0 ? cities.join('、') : '无';
+}
+
+function createChinaPropertyDetailText(className, text) {
+  const node = document.createElement('p');
+  node.className = className;
+  node.textContent = text;
+  return node;
+}
+
+function createChinaPropertyTierBlock(id, tier) {
+  const block = document.createElement('div');
+  block.id = id;
+  block.className = 'city-tier-block';
+  if (!tier) {
+    block.replaceChildren(createChinaPropertyDetailText('city-tier-line', '城市明细暂不可用。'));
+    return block;
+  }
+  const label = `${tier.label || '分线'}(${tier.cityCount || '—'}城)`;
+  const title = createChinaPropertyDetailText('city-tier-title', label);
+  const newLine = createChinaPropertyDetailText(
+    'city-tier-line',
+    `新房:${formatChinaPropertyTierCounts(tier.new)} — 上涨:${formatChinaPropertyUpCities(tier.new)}`
+  );
+  const resaleLine = createChinaPropertyDetailText(
+    'city-tier-line',
+    `二手:${formatChinaPropertyTierCounts(tier.resale)} — 上涨:${formatChinaPropertyUpCities(tier.resale)}`
+  );
+  block.replaceChildren(title, newLine, resaleLine);
+  return block;
+}
+
+function renderChinaPropertyTierBreakdown(property) {
+  const root = document.getElementById('c6-house-tier-breakdown');
+  if (!root) return;
+  const tierBreakdown = property?.tierBreakdown;
+  if (!tierBreakdown || typeof tierBreakdown !== 'object') {
+    const empty = document.createElement('p');
+    empty.className = 'city-tier-empty';
+    empty.textContent = '城市明细暂不可用。';
+    root.replaceChildren(empty);
+    return;
+  }
+  root.replaceChildren(
+    createChinaPropertyTierBlock('c6-house-tier1', tierBreakdown.tier1),
+    createChinaPropertyTierBlock('c6-house-tier2', tierBreakdown.tier2),
+    createChinaPropertyTierBlock('c6-house-tier3', tierBreakdown.tier3)
+  );
+}
+
 function renderChinaPropertyLeaf({ radarData }) {
   const property = radarData?.macroDrivers?.chinaPropertyPrice;
-  if (!property) return;
+  if (!property) {
+    renderChinaPropertyTierBreakdown(null);
+    return;
+  }
   const status = property.sourceStatus || 'missing';
   setToneClass('c6-house-status', 'status-bar', 'neutral');
   setBadge('c6-house-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : status === 'missing' ? 'OBS·缺失' : 'OBS');
@@ -1253,6 +1313,7 @@ function renderChinaPropertyLeaf({ radarData }) {
   if (status === 'fallback') auxParts.push('回退');
   if (status === 'missing') auxParts.push('待源恢复');
   setLeafText('c6-house-aux', auxParts.join(' · '));
+  renderChinaPropertyTierBreakdown(property);
 }
 function renderC2GlobalLiquidity({ radarData }) {
   try {

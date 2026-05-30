@@ -169,6 +169,62 @@ const CHINA_PROPERTY_PRICE_CITIES = [
   '九江', '赣州', '烟台', '济宁', '洛阳', '平顶山', '宜昌', '襄阳', '岳阳', '常德',
   '韶关', '湛江', '惠州', '桂林', '北海', '三亚', '泸州', '南充', '遵义', '大理'
 ];
+// Official 70-city tier split from NBS interpretation note; runtime does not fetch the interpretation page.
+// Source example: https://www.stats.gov.cn/sj/sjjd/202605/t20260518_1963721.html
+const CHINA_PROPERTY_PRICE_TIER_DEFINITIONS = [
+  {
+    key: 'tier1',
+    label: '一线',
+    cityCount: 4,
+    cities: ['北京', '上海', '广州', '深圳']
+  },
+  {
+    key: 'tier2',
+    label: '二线',
+    cityCount: 31,
+    cities: [
+      '天津', '石家庄', '太原', '呼和浩特', '沈阳', '大连', '长春', '哈尔滨', '南京', '杭州',
+      '宁波', '合肥', '福州', '厦门', '南昌', '济南', '青岛', '郑州', '武汉', '长沙',
+      '南宁', '海口', '重庆', '成都', '贵阳', '昆明', '西安', '兰州', '西宁', '银川',
+      '乌鲁木齐'
+    ]
+  },
+  {
+    key: 'tier3',
+    label: '三线',
+    cityCount: 35,
+    cities: [
+      '唐山', '秦皇岛', '包头', '丹东', '锦州', '吉林', '牡丹江', '无锡', '徐州', '扬州',
+      '温州', '金华', '蚌埠', '安庆', '泉州', '九江', '赣州', '烟台', '济宁', '洛阳',
+      '平顶山', '宜昌', '襄阳', '岳阳', '常德', '韶关', '湛江', '惠州', '桂林', '北海',
+      '三亚', '泸州', '南充', '遵义', '大理'
+    ]
+  }
+];
+const CHINA_PROPERTY_PRICE_TIER_KEYS = CHINA_PROPERTY_PRICE_TIER_DEFINITIONS.map((tier) => tier.key);
+
+function assertChinaPropertyTierDefinitions() {
+  const officialCitySet = new Set(CHINA_PROPERTY_PRICE_CITIES);
+  const tierCities = CHINA_PROPERTY_PRICE_TIER_DEFINITIONS.flatMap((tier) => tier.cities);
+  const tierCitySet = new Set(tierCities);
+  if (
+    tierCities.length !== CHINA_PROPERTY_PRICE_CITY_COUNT
+    || tierCitySet.size !== CHINA_PROPERTY_PRICE_CITY_COUNT
+    || officialCitySet.size !== CHINA_PROPERTY_PRICE_CITY_COUNT
+  ) {
+    throw new Error('nbs:china-property tier constants must contain exactly 70 unique cities');
+  }
+  for (const city of CHINA_PROPERTY_PRICE_CITIES) {
+    if (!tierCitySet.has(city)) throw new Error(`nbs:china-property tier constants missing ${city}`);
+  }
+  for (const tier of CHINA_PROPERTY_PRICE_TIER_DEFINITIONS) {
+    if (tier.cities.length !== tier.cityCount) {
+      throw new Error(`nbs:china-property ${tier.key} expected ${tier.cityCount} cities`);
+    }
+  }
+}
+
+assertChinaPropertyTierDefinitions();
 const CHINA_INFLATION_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-CPI-PPI-public-html';
 const CHINA_INFLATION_DISPLAY_NOTE =
   '中国 CPI/PPI 来自国家统计局发布正文;Trading Economics 公开 HTML 仅作 fallback;display-only,不进 scoring/decision/execution/position。';
@@ -3199,23 +3255,83 @@ function isChinaPropertyCountSetPlausible(up, flat, down) {
     && values.reduce((sum, value) => sum + value, 0) === CHINA_PROPERTY_PRICE_CITY_COUNT;
 }
 
+function classifyChinaPropertyDirection(mom) {
+  if (mom > 100) return 'up';
+  if (mom === 100) return 'flat';
+  if (mom < 100) return 'down';
+  return null;
+}
+
+function countChinaPropertyRows(rows) {
+  return {
+    up: rows.filter((row) => row.dir === 'up').length,
+    flat: rows.filter((row) => row.dir === 'flat').length,
+    down: rows.filter((row) => row.dir === 'down').length
+  };
+}
+
+function groupChinaPropertyRowsByTier(rows, tier) {
+  const tierCitySet = new Set(tier.cities);
+  const grouped = { up: [], flat: [], down: [] };
+  for (const row of rows) {
+    if (!tierCitySet.has(row.city)) continue;
+    if (!Object.prototype.hasOwnProperty.call(grouped, row.dir)) {
+      throw new Error(`nbs:china-property invalid direction for ${row.city}`);
+    }
+    grouped[row.dir].push(row.city);
+  }
+  const groupedCount = grouped.up.length + grouped.flat.length + grouped.down.length;
+  if (groupedCount !== tier.cityCount) {
+    throw new Error(`nbs:china-property ${tier.key} expected ${tier.cityCount} cities, got ${groupedCount}`);
+  }
+  return grouped;
+}
+
+function buildChinaPropertyTierBreakdown(newRows, resaleRows) {
+  if (!Array.isArray(newRows) || newRows.length !== CHINA_PROPERTY_PRICE_CITY_COUNT) {
+    throw new Error('nbs:china-property new-home rows incomplete for tier breakdown');
+  }
+  if (!Array.isArray(resaleRows) || resaleRows.length !== CHINA_PROPERTY_PRICE_CITY_COUNT) {
+    throw new Error('nbs:china-property resale rows incomplete for tier breakdown');
+  }
+  const tierBreakdown = {};
+  let totalCityCount = 0;
+  for (const tier of CHINA_PROPERTY_PRICE_TIER_DEFINITIONS) {
+    tierBreakdown[tier.key] = {
+      label: tier.label,
+      cityCount: tier.cityCount,
+      new: groupChinaPropertyRowsByTier(newRows, tier),
+      resale: groupChinaPropertyRowsByTier(resaleRows, tier)
+    };
+    totalCityCount += tier.cityCount;
+  }
+  if (totalCityCount !== CHINA_PROPERTY_PRICE_CITY_COUNT) {
+    throw new Error(`nbs:china-property tier city count sum must be ${CHINA_PROPERTY_PRICE_CITY_COUNT}`);
+  }
+  return tierBreakdown;
+}
+
 function parseChinaPropertyPriceCountSet(tableText, label) {
   const rows = CHINA_PROPERTY_PRICE_CITIES.map((city) => {
     const cityPattern = flexibleChinaPropertyCityPattern(city);
     const re = new RegExp(`${cityPattern}\\s+(?<mom>\\d+(?:\\.\\d+)?)\\s+(?<yoy>\\d+(?:\\.\\d+)?)\\s+(?<avg>\\d+(?:\\.\\d+)?)`, 'u');
     const match = String(tableText || '').match(re);
     const mom = Number(match?.groups?.mom);
-    return { city, mom: Number.isFinite(mom) ? mom : null };
+    return {
+      city,
+      mom: Number.isFinite(mom) ? mom : null,
+      dir: Number.isFinite(mom) ? classifyChinaPropertyDirection(mom) : null
+    };
   });
   const missing = rows.filter((row) => !Number.isFinite(row.mom)).map((row) => row.city);
   if (missing.length > 0) throw new Error(`nbs:china-property ${label} missing city rows: ${missing.join(',')}`);
-  const up = rows.filter((row) => row.mom > 100).length;
-  const flat = rows.filter((row) => row.mom === 100).length;
-  const down = rows.filter((row) => row.mom < 100).length;
-  if (!isChinaPropertyCountSetPlausible(up, flat, down)) {
+  const invalidDirections = rows.filter((row) => !row.dir).map((row) => row.city);
+  if (invalidDirections.length > 0) throw new Error(`nbs:china-property ${label} invalid city directions: ${invalidDirections.join(',')}`);
+  const counts = countChinaPropertyRows(rows);
+  if (!isChinaPropertyCountSetPlausible(counts.up, counts.flat, counts.down)) {
     throw new Error(`nbs:china-property ${label} invalid count set`);
   }
-  return { up, flat, down };
+  return { ...counts, rows };
 }
 
 function isFreshChinaPropertyPrice(refMonth, publishedAt) {
@@ -3245,6 +3361,12 @@ function parseChinaPropertyPriceArticle(articleHtml, link) {
   );
   const newCounts = parseChinaPropertyPriceCountSet(newTableText, 'new-home');
   const resaleCounts = parseChinaPropertyPriceCountSet(resaleTableText, 'resale');
+  let tierBreakdown = null;
+  try {
+    tierBreakdown = buildChinaPropertyTierBreakdown(newCounts.rows, resaleCounts.rows);
+  } catch (err) {
+    console.warn(`[china-property-tier-breakdown-missing] ${stringifyFetchError(err)}`);
+  }
   if (!isFreshChinaPropertyPrice(refMonth, publishedAt)) throw new Error('nbs:china-property stale');
   return {
     updatedAt: publishedAt || dateOnlyToIso(endOfRefMonthDateOnly(refMonth)),
@@ -3258,7 +3380,8 @@ function parseChinaPropertyPriceArticle(articleHtml, link) {
     newCitiesDown: newCounts.down,
     resaleCitiesUp: resaleCounts.up,
     resaleCitiesFlat: resaleCounts.flat,
-    resaleCitiesDown: resaleCounts.down
+    resaleCitiesDown: resaleCounts.down,
+    tierBreakdown
   };
 }
 
@@ -3285,6 +3408,7 @@ function normalizePreviousChinaPropertyPrice(previous) {
     notes: CHINA_PROPERTY_PRICE_DISPLAY_NOTE,
     refMonth: typeof previous?.refMonth === 'string' ? previous.refMonth : null,
     publishedAt: typeof previous?.publishedAt === 'string' ? previous.publishedAt : null,
+    tierBreakdown: null,
     ...counts
   };
 }
@@ -3304,7 +3428,8 @@ function buildMissingChinaPropertyPrice(prevChinaPropertyPrice = null) {
     newCitiesDown: null,
     resaleCitiesUp: null,
     resaleCitiesFlat: null,
-    resaleCitiesDown: null
+    resaleCitiesDown: null,
+    tierBreakdown: null
   };
 }
 
