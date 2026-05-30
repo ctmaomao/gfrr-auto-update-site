@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-8-cleanup-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-9-c6-intro-errata-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

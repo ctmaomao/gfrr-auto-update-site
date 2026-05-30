@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-8-cleanup-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-9-c6-intro-errata-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

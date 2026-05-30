@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-8-cleanup-1';
+} from './config.js?v=stage-9-c6-intro-errata-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
