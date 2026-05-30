@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-30T08:21:11.489Z",
+  "updatedAt": "2026-05-30T08:57:01.677Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
     "commitSha": "13203f049450e75ff7381fa0e50faa2956cf8292",
     "updatedAt": "2026-05-30T07:30:18.557Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-30T08:21:11.489Z"
+    "capturedAt": "2026-05-30T08:57:01.677Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-30T08:21:11.489Z",
+    "generatedAt": "2026-05-30T08:57:01.677Z",
     "macroState": "滞胀冲击 / 风险缓和",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
     "dominantRiskChain": {
@@ -129,7 +129,7 @@
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-30T08:21:11.489Z",
+    "generatedAt": "2026-05-30T08:57:01.677Z",
     "score": 50,
     "state": "watch",
     "stateZh": "背离观察",
@@ -434,7 +434,7 @@
   },
   "brentPricingLayer": {
     "contractVersion": "v28.0I-5A",
-    "generatedAt": "2026-05-30T08:21:11.489Z",
+    "generatedAt": "2026-05-30T08:57:01.677Z",
     "mode": "public_proxy_observation",
     "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
     "selectedBrent": {
@@ -473,7 +473,7 @@
       "source": "ICE:Brent-Crude-Futures-contract-data",
       "sourceUrl": "https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430",
       "curveStatus": "live_structure_only",
-      "fetchedAt": "2026-05-30T08:21:11.489Z",
+      "fetchedAt": "2026-05-30T08:57:01.677Z",
       "contracts": [
         {
           "contract": "Jul26",
@@ -1283,8 +1283,8 @@
         "pmi": {
           "httpStatus": 200,
           "landingHttpStatus": 200,
-          "latencyMs": 4515,
-          "parsedAt": "2026-05-30T08:21:11.995Z",
+          "latencyMs": 6514,
+          "parsedAt": "2026-05-30T08:57:02.012Z",
           "reportUrl": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/april/",
           "reportMonthLabel": "April"
         }
@@ -1843,25 +1843,223 @@
     "chinaPropertyPrice": {
       "updatedAt": "2026-05-18T09:30:00+08:00",
       "source": "NBS:70city-price-index",
-      "sourceStatus": "fallback",
+      "sourceStatus": "live",
       "notes": "NBS 70 城商品住宅价格指数为城市级价格指数计数摘要;display-only,不进 scoring/decision/execution/position,不代表房源级 raw tape。",
       "refMonth": "2026-04",
       "publishedAt": "2026-05-18T09:30:00+08:00",
-      "tierBreakdown": null,
       "newCitiesUp": 14,
       "newCitiesFlat": 7,
       "newCitiesDown": 49,
       "resaleCitiesUp": 12,
       "resaleCitiesFlat": 4,
-      "resaleCitiesDown": 54
+      "resaleCitiesDown": 54,
+      "tierBreakdown": {
+        "tier1": {
+          "label": "一线",
+          "cityCount": 4,
+          "new": {
+            "up": [
+              "上海",
+              "广州",
+              "深圳"
+            ],
+            "flat": [],
+            "down": [
+              "北京"
+            ]
+          },
+          "resale": {
+            "up": [
+              "北京",
+              "上海",
+              "广州",
+              "深圳"
+            ],
+            "flat": [],
+            "down": []
+          }
+        },
+        "tier2": {
+          "label": "二线",
+          "cityCount": 31,
+          "new": {
+            "up": [
+              "太原",
+              "大连",
+              "南京",
+              "杭州",
+              "宁波",
+              "青岛",
+              "银川",
+              "乌鲁木齐"
+            ],
+            "flat": [
+              "天津",
+              "沈阳",
+              "合肥",
+              "武汉",
+              "海口"
+            ],
+            "down": [
+              "石家庄",
+              "呼和浩特",
+              "长春",
+              "哈尔滨",
+              "福州",
+              "厦门",
+              "南昌",
+              "济南",
+              "郑州",
+              "长沙",
+              "南宁",
+              "重庆",
+              "成都",
+              "贵阳",
+              "昆明",
+              "西安",
+              "兰州",
+              "西宁"
+            ]
+          },
+          "resale": {
+            "up": [
+              "沈阳",
+              "宁波",
+              "合肥",
+              "厦门",
+              "武汉",
+              "海口",
+              "西安"
+            ],
+            "flat": [
+              "大连",
+              "南京",
+              "重庆"
+            ],
+            "down": [
+              "天津",
+              "石家庄",
+              "太原",
+              "呼和浩特",
+              "长春",
+              "哈尔滨",
+              "杭州",
+              "福州",
+              "南昌",
+              "济南",
+              "青岛",
+              "郑州",
+              "长沙",
+              "南宁",
+              "成都",
+              "贵阳",
+              "昆明",
+              "兰州",
+              "西宁",
+              "银川",
+              "乌鲁木齐"
+            ]
+          }
+        },
+        "tier3": {
+          "label": "三线",
+          "cityCount": 35,
+          "new": {
+            "up": [
+              "吉林",
+              "烟台",
+              "大理"
+            ],
+            "flat": [
+              "徐州",
+              "襄阳"
+            ],
+            "down": [
+              "唐山",
+              "秦皇岛",
+              "包头",
+              "丹东",
+              "锦州",
+              "牡丹江",
+              "无锡",
+              "扬州",
+              "温州",
+              "金华",
+              "蚌埠",
+              "安庆",
+              "泉州",
+              "九江",
+              "赣州",
+              "济宁",
+              "洛阳",
+              "平顶山",
+              "宜昌",
+              "岳阳",
+              "常德",
+              "韶关",
+              "湛江",
+              "惠州",
+              "桂林",
+              "北海",
+              "三亚",
+              "泸州",
+              "南充",
+              "遵义"
+            ]
+          },
+          "resale": {
+            "up": [
+              "徐州"
+            ],
+            "flat": [
+              "无锡"
+            ],
+            "down": [
+              "唐山",
+              "秦皇岛",
+              "包头",
+              "丹东",
+              "锦州",
+              "吉林",
+              "牡丹江",
+              "扬州",
+              "温州",
+              "金华",
+              "蚌埠",
+              "安庆",
+              "泉州",
+              "九江",
+              "赣州",
+              "烟台",
+              "济宁",
+              "洛阳",
+              "平顶山",
+              "宜昌",
+              "襄阳",
+              "岳阳",
+              "常德",
+              "韶关",
+              "湛江",
+              "惠州",
+              "桂林",
+              "北海",
+              "三亚",
+              "泸州",
+              "南充",
+              "遵义",
+              "大理"
+            ]
+          }
+        }
+      }
     },
     "chinaOmo": {
-      "updatedAt": "2026-05-29T09:20:30+08:00",
-      "source": "PBOC:OMO-announcement",
+      "updatedAt": "2026-05-29T09:24:00+08:00",
+      "source": "EastMoney:OMO-aggregated-news",
       "sourceStatus": "live",
-      "notes": "PBOC 公开市场操作公告级数据;display-only,不进 scoring/decision/execution/position,不代表逐机构/逐笔 raw tape。",
+      "notes": "东方财富聚合转载的央行公开市场操作新闻,非 PBOC 官方原始公告;按新闻毛额操作句提取逆回购/正回购期限、利率、操作量,announcementNo 因聚合新闻缺失为 null;display-only,不进 scoring/decision/execution/position,不代表逐机构/逐笔 raw tape。",
       "opDate": "2026-05-29",
-      "announcementNo": 102,
+      "announcementNo": null,
       "operationType": "逆回购",
       "termDays": 7,
       "operationRate": 0.014,
@@ -2480,7 +2678,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-30T08:21:11.489Z",
+        "triggeredAgo": "2026-05-30T08:57:01.677Z",
         "condition": "结构性双压触发红灯（逆回购准备金临界告急）。系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -2488,7 +2686,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-30T08:21:11.489Z",
+        "triggeredAgo": "2026-05-30T08:57:01.677Z",
         "condition": "ON RRP 116.77 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -2496,7 +2694,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-30T08:21:11.489Z",
+        "triggeredAgo": "2026-05-30T08:57:01.677Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -2535,7 +2733,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-30T08:21:11.489Z",
+    "lastRun": "2026-05-30T08:57:01.677Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
@@ -2774,7 +2972,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-05-30T08:21:11.489Z",
+    "generatedAt": "2026-05-30T08:57:01.677Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [
