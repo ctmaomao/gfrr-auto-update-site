@@ -216,11 +216,14 @@ const CHINA_TSF_COMPONENT_DEFINITIONS = [
   }
 ];
 const CHINA_TSF_COMPONENT_KEYS = new Set(CHINA_TSF_COMPONENT_DEFINITIONS.map((component) => component.key));
-const CHINA_MLF_SOURCE = 'PBOC:MLF-announcement';
+const CHINA_MLF_SOURCE = 'EastMoney:MLF-aggregated-news';
 const CHINA_MLF_DISPLAY_NOTE =
-  'PBOC 中期借贷便利 MLF 操作公告级数据;display-only,不进 scoring/decision/execution/position,不代表逐机构/逐笔 raw tape。';
-const CHINA_MLF_INDEX_URL = 'https://www.pbc.gov.cn/zhengcehuobisi/125207/125213/125437/125446/125873/index.html';
-const CHINA_MLF_INDEX_BASE_URL = 'https://www.pbc.gov.cn/zhengcehuobisi/125207/125213/125437/125446/125873/';
+  '东方财富聚合转载的央行中期借贷便利 MLF 操作新闻,非 PBOC 官方原始公告;按新闻毛额操作句提取操作量和期限,不取净投放/净回笼/到期金额;mlfRate 未披露时为 null;display-only,不进 scoring/decision/execution/position,不代表逐机构/逐笔 raw tape。';
+const CHINA_MLF_SEARCH_BASE_URL = 'https://search-api-web.eastmoney.com/search/jsonp';
+const CHINA_MLF_SEARCH_KEYWORD = '央行 MLF 操作 期限';
+const CHINA_MLF_SEARCH_KEYWORD_FALLBACK = '央行 开展 MLF操作';
+const CHINA_MLF_ARTICLE_BASE_URL = 'https://finance.eastmoney.com/a/';
+const CHINA_MLF_MAX_ARTICLE_FETCH = 6;
 const CHINA_MLF_FRESH_DAYS = 45;
 const CHINA_MLF_AMOUNT_MIN = 1;
 const CHINA_MLF_AMOUNT_MAX = 100000;
@@ -3745,45 +3748,20 @@ async function resolveChinaTsf(prevChinaTsf) {
     return buildMissingChinaTsf(prevChinaTsf);
   }
 }
-const CHINA_MLF_TITLE_RE = /(?<year>\d{4})年(?<month>\d{1,2})月中期借贷便利(?:招标公告|开展情况)/u;
-const CHINA_MLF_AMOUNT_RES = [
-  /开展(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)\s*(?:中期借贷便利(?:（?MLF）?)?|MLF)操作/u,
-  /中期借贷便利操作共(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)/u,
-  /操作共(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)/u
+const CHINA_MLF_AMOUNT_RE = /开展\s*(?<value>\d+(?:\.\d+)?)\s*(?<unit>万亿元|亿元|万亿|亿)\s*(?:[（(][^）)]{0,30}[）)])?\s*(?:(?:\d+(?:\.\d+)?|[一二三四五六七八九十]+)\s*(?:年|个月)\s*期?\s*)?(?:中期借贷便利(?:\s*[（(]\s*MLF\s*[）)])?|MLF(?:\s*[（(]\s*中期借贷便利\s*[）)])?)\s*操作/u;
+const CHINA_MLF_TERM_RES = [
+  /(?:期限(?:为)?|均为)\s*(?<value>\d+(?:\.\d+)?|[一二三四五六七八九十]+)\s*(?<unit>年|个月)/u,
+  /(?<value>\d+(?:\.\d+)?|[一二三四五六七八九十]+)\s*(?<unit>年|个月)期/u
 ];
-const CHINA_MLF_TERM_RE = /(?:期限(?:为)?(?<years>\d+)年(?:期)?|均为(?<yearsAlt>\d+)年期)/u;
-const CHINA_MLF_RATE_RE = /(?:中标利率|利率为)(?<rate>\d+(?:\.\d+)?)%/u;
-
-function getChinaMlfAnchorAttribute(attrs, name) {
-  const match = String(attrs || '').match(new RegExp(`${name}=["'](?<value>[^"']+)["']`, 'iu'));
-  return match?.groups?.value || '';
-}
+const CHINA_MLF_RATE_RE = /(?:中标利率|操作利率)\s*(?:为|:|：)?\s*(?<rate>\d+(?:\.\d+)?)%/u;
+const CHINA_MLF_INTEXT_DATE_RE = /(?:(?<year>\d{4})年)?(?<month>\d{1,2})月(?<day>\d{1,2})日/u;
 
 function normalizeChinaMlfPlainText(value) {
   return String(value || '')
     .replace(/(\d)\s*\.\s*(\d)/gu, '$1.$2')
     .replace(/\s+/gu, ' ')
+    .replace(/(?<=\p{Script=Han})\s+(?=\p{Script=Han})/gu, '')
     .trim();
-}
-
-function parseChinaMlfTitle(value) {
-  const match = normalizeChinaMlfPlainText(value).match(CHINA_MLF_TITLE_RE);
-  if (!match?.groups) return null;
-  const year = Number(match.groups.year);
-  const month = Number(match.groups.month);
-  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return null;
-  return {
-    title: match[0],
-    year,
-    month,
-    sortKey: year * 100 + month
-  };
-}
-
-function parseChinaMlfPublishedAt(plain) {
-  const match = normalizeChinaMlfPlainText(plain).match(/文章来源：\s*(?<date>\d{4}-\d{2}-\d{2})\s+(?<time>\d{2}:\d{2}:\d{2})/u);
-  if (!match?.groups) return null;
-  return `${match.groups.date}T${match.groups.time}+08:00`;
 }
 
 function parseChinaMlfDateOnly(year, month, day) {
@@ -3792,43 +3770,29 @@ function parseChinaMlfDateOnly(year, month, day) {
   return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-function parseChinaMlfOpDate(plain, titleInfo) {
-  const match = normalizeChinaMlfPlainText(plain).match(/(?<year>\d{4})年(?<month>\d{1,2})月(?<day>\d{1,2})日(?:，|,)?(?:中国人民银行|人民银行)?/u);
-  if (match?.groups) {
-    return parseChinaMlfDateOnly(
-      Number(match.groups.year),
-      Number(match.groups.month),
-      Number(match.groups.day)
-    );
-  }
-  if (titleInfo?.year && titleInfo?.month) {
-    return endOfRefMonthDateOnly(monthNumberToRefMonth(titleInfo.year, titleInfo.month - 1));
-  }
-  return null;
-}
-
 function chinaMlfAmountToYi(groups) {
   if (!groups) return null;
   let value = Number(groups.value);
   if (!Number.isFinite(value)) return null;
-  if (groups.unit === '万亿元') value *= 10000;
+  if (groups.unit === '万亿元' || groups.unit === '万亿') value *= 10000;
   return +value.toFixed(2);
 }
 
 function parseChinaMlfAmountYi(plain) {
-  const text = normalizeChinaMlfPlainText(plain);
-  for (const pattern of CHINA_MLF_AMOUNT_RES) {
-    const match = text.match(pattern);
-    if (match?.groups) return chinaMlfAmountToYi(match.groups);
-  }
-  return null;
+  const match = normalizeChinaMlfPlainText(plain).match(CHINA_MLF_AMOUNT_RE);
+  return match?.groups ? chinaMlfAmountToYi(match.groups) : null;
 }
 
 function parseChinaMlfTermMonths(plain) {
-  const match = normalizeChinaMlfPlainText(plain).match(CHINA_MLF_TERM_RE);
-  const years = Number(match?.groups?.years || match?.groups?.yearsAlt);
-  if (!Number.isInteger(years) || years <= 0) return null;
-  return years * 12;
+  const text = normalizeChinaMlfPlainText(plain);
+  for (const re of CHINA_MLF_TERM_RES) {
+    const m = text.match(re);
+    if (!m?.groups) continue;
+    const value = parseChinaTsfChineseMonthCount(m.groups.value);
+    if (!Number.isInteger(value) || value <= 0) continue;
+    return m.groups.unit === '年' ? value * 12 : value;
+  }
+  return null;
 }
 
 function parseChinaMlfRate(plain) {
@@ -3851,52 +3815,46 @@ function isFreshChinaMlf(opDate, publishedAt) {
   return isFreshDateOnly(publishedDate || opDate, CHINA_MLF_FRESH_DAYS);
 }
 
-function pickChinaMlfAnnouncementLink(indexHtml) {
-  const rows = [];
-  const linkRe = /<a\b(?<attrs>[^>]*)>(?<body>[\s\S]*?)<\/a>/giu;
-  for (const match of String(indexHtml || '').matchAll(linkRe)) {
-    const attrs = match.groups?.attrs || '';
-    const href = getChinaMlfAnchorAttribute(attrs, 'href');
-    const titleAttr = getChinaMlfAnchorAttribute(attrs, 'title');
-    const bodyText = normalizeChinaMlfPlainText(htmlToPlainText(match.groups?.body || ''));
-    const title = normalizeChinaMlfPlainText(titleAttr || bodyText);
-    const parsedTitle = parseChinaMlfTitle(title);
-    if (!parsedTitle) continue;
-    const url = resolveAbsoluteUrl(href, CHINA_MLF_INDEX_BASE_URL);
-    if (!url || url === CHINA_MLF_INDEX_URL) continue;
-    if (!url.includes('/125873/') || !url.endsWith('/index.html')) continue;
-    rows.push({
-      ...parsedTitle,
-      title,
-      href,
-      url
-    });
+function parseChinaMlfOpDateFromText(plain, link) {
+  const text = normalizeChinaMlfPlainText(plain);
+  const searchDate = dateOnlyIso(link?.publishedAt);
+  const dateMatches = [...text.matchAll(new RegExp(CHINA_MLF_INTEXT_DATE_RE.source, 'gu'))];
+  const operationMatches = [...text.matchAll(new RegExp(CHINA_MLF_AMOUNT_RE.source, 'gu'))];
+  for (const operationMatch of operationMatches) {
+    const beforeOperation = dateMatches
+      .filter((match) => match.index <= operationMatch.index)
+      .at(-1);
+    if (!beforeOperation || operationMatch.index - beforeOperation.index > 180) continue;
+    const year = beforeOperation.groups.year
+      ? Number(beforeOperation.groups.year)
+      : (searchDate ? Number(searchDate.slice(0, 4)) : null);
+    const date = parseChinaMlfDateOnly(year, Number(beforeOperation.groups.month), Number(beforeOperation.groups.day));
+    if (date) return date;
   }
-  return rows
-    .filter((row, index, list) => list.findIndex((item) => item.url === row.url) === index)
-    .sort((a, b) => {
-      const sortDiff = a.sortKey - b.sortKey;
-      if (sortDiff !== 0) return sortDiff;
-      return String(a.title || '').localeCompare(String(b.title || ''));
-    })
-    .at(-1) || null;
+  if (dateMatches.length) {
+    const m = dateMatches[0];
+    const year = m.groups.year ? Number(m.groups.year) : (searchDate ? Number(searchDate.slice(0, 4)) : null);
+    const date = parseChinaMlfDateOnly(year, Number(m.groups.month), Number(m.groups.day));
+    if (date) return date;
+  }
+  return /(?:今日|今天|当日)/u.test(text) ? (searchDate || null) : null;
 }
 
-function parseChinaMlfArticle(articleHtml, link) {
-  const plain = normalizeChinaMlfPlainText(htmlToPlainText(articleHtml));
-  const titleInfo = parseChinaMlfTitle(link?.title) || parseChinaMlfTitle(plain);
-  if (!titleInfo) throw new Error('pboc:mlf missing title');
-  const publishedAt = parseChinaMlfPublishedAt(plain);
-  const opDate = parseChinaMlfOpDate(plain, titleInfo);
-  if (!opDate) throw new Error('pboc:mlf missing opDate');
-  if (!isFreshChinaMlf(opDate, publishedAt)) throw new Error('pboc:mlf stale');
+function parseChinaMlfText(plainInput, link) {
+  const plain = normalizeChinaMlfPlainText(plainInput);
+  if (!CHINA_MLF_AMOUNT_RE.test(plain)) throw new Error('eastmoney:mlf missing gross operation sentence');
 
   const operationAmountYi = parseChinaMlfAmountYi(plain);
   const termMonths = parseChinaMlfTermMonths(plain);
   const mlfRate = parseChinaMlfRate(plain);
-  if (!isPlausibleChinaMlfAmount(operationAmountYi)) throw new Error('pboc:mlf missing or implausible amount');
-  if (!Number.isInteger(termMonths) || termMonths <= 0) throw new Error('pboc:mlf missing term');
-  if (!isPlausibleChinaMlfRate(mlfRate)) throw new Error('pboc:mlf rate out of plausible range');
+  if (!isPlausibleChinaMlfAmount(operationAmountYi)) throw new Error('eastmoney:mlf missing or implausible amount');
+  if (!Number.isInteger(termMonths) || termMonths <= 0) throw new Error('eastmoney:mlf missing term');
+  if (!isPlausibleChinaMlfRate(mlfRate)) throw new Error('eastmoney:mlf rate out of plausible range');
+
+  const publishedAt = link?.publishedAt || null;
+  const opDate = parseChinaMlfOpDateFromText(plain, link);
+  if (!opDate) throw new Error('eastmoney:mlf missing opDate');
+  if (!isFreshChinaMlf(opDate, publishedAt)) throw new Error('eastmoney:mlf stale');
 
   return {
     updatedAt: publishedAt || dateOnlyToIso(opDate),
@@ -3950,19 +3908,63 @@ function buildMissingChinaMlf(prevChinaMlf = null) {
   };
 }
 
+async function fetchChinaMlfSearchCandidates(keyword) {
+  const param = encodeURIComponent(JSON.stringify({
+    uid: '',
+    keyword,
+    type: ['cmsArticleWebOld'],
+    client: 'web',
+    clientType: 'web',
+    pageIndex: 1,
+    pageSize: 20
+  }));
+  const url = `${CHINA_MLF_SEARCH_BASE_URL}?cb=jQuery&param=${param}`;
+  const raw = await retryFetch(url, 'eastmoney:mlf-search', MACRO_FETCH_TIMEOUT_MS, {
+    userAgent: CHINA_MACRO_HTML_USER_AGENT,
+    headers: { Accept: 'text/javascript,application/javascript,*/*' }
+  });
+  const payload = parseEastMoneyJsonp(raw);
+  const rows = Array.isArray(payload?.result?.cmsArticleWebOld) ? payload.result.cmsArticleWebOld : [];
+  const candidates = [];
+  for (const row of rows) {
+    const code = typeof row?.code === 'string' ? row.code.trim() : '';
+    if (!/^\d{13,}$/u.test(code)) continue;
+    const title = normalizeChinaMlfPlainText(htmlToPlainText(String(row?.title || '')));
+    const content = normalizeChinaMlfPlainText(htmlToPlainText(String(row?.content || '')));
+    candidates.push({
+      code,
+      url: `${CHINA_MLF_ARTICLE_BASE_URL}${code}.html`,
+      summaryText: `${title} ${content}`,
+      publishedAt: eastMoneyDateToIso(row?.date),
+      dateRaw: typeof row?.date === 'string' ? row.date.trim() : ''
+    });
+  }
+  return candidates.sort((a, b) => b.dateRaw.localeCompare(a.dateRaw));
+}
+
 async function resolveChinaMlf(prevChinaMlf) {
   try {
-    const indexHtml = await retryFetch(CHINA_MLF_INDEX_URL, 'pboc:mlf-index', MACRO_FETCH_TIMEOUT_MS, {
-      userAgent: CHINA_MACRO_HTML_USER_AGENT,
-      headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
-    });
-    const link = pickChinaMlfAnnouncementLink(indexHtml);
-    if (!link) throw new Error('pboc:mlf missing announcement link');
-    const articleHtml = await retryFetch(link.url, 'pboc:mlf-article', MACRO_FETCH_TIMEOUT_MS, {
-      userAgent: CHINA_MACRO_HTML_USER_AGENT,
-      headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
-    });
-    return parseChinaMlfArticle(articleHtml, link);
+    let candidates = await fetchChinaMlfSearchCandidates(CHINA_MLF_SEARCH_KEYWORD);
+    if (!candidates.length) candidates = await fetchChinaMlfSearchCandidates(CHINA_MLF_SEARCH_KEYWORD_FALLBACK);
+    if (!candidates.length) throw new Error('eastmoney:mlf no search candidates');
+    let lastError = null;
+    for (const candidate of candidates.slice(0, CHINA_MLF_MAX_ARTICLE_FETCH)) {
+      try {
+        return parseChinaMlfText(candidate.summaryText, candidate);
+      } catch (errSummary) {
+        lastError = errSummary;
+      }
+      try {
+        const articleHtml = await retryFetch(candidate.url, 'eastmoney:mlf-article', MACRO_FETCH_TIMEOUT_MS, {
+          userAgent: CHINA_MACRO_HTML_USER_AGENT,
+          headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
+        });
+        return parseChinaMlfText(htmlToPlainText(articleHtml), candidate);
+      } catch (errArticle) {
+        lastError = errArticle;
+      }
+    }
+    throw lastError || new Error('eastmoney:mlf no valid operation among candidates');
   } catch (err) {
     console.warn(`[china-mlf-missing] ${stringifyFetchError(err)}`);
     return buildMissingChinaMlf(prevChinaMlf);

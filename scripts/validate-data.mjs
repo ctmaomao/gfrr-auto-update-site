@@ -122,7 +122,11 @@ const VALID_CHINA_PMI_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-NBS-Manuf
 const VALID_CHINA_PROPERTY_PRICE_SOURCE = 'NBS:70city-price-index';
 const VALID_CHINA_OMO_SOURCE = 'EastMoney:OMO-aggregated-news';
 const VALID_CHINA_TSF_SOURCE = 'EastMoney:TSF-aggregated-report';
-const VALID_CHINA_MLF_SOURCE = 'PBOC:MLF-announcement';
+const VALID_CHINA_MLF_SOURCE = 'EastMoney:MLF-aggregated-news';
+// Stage 16 transition: committed data/radar-data.json 仍可能带 Stage 16 之前的
+// 'PBOC:MLF-announcement'(pbc 源,US runner 地理封锁导致 missing),直到合并后的线上
+// Daily run 刷成 EastMoney。届时移除下面的 'PBOC:MLF-announcement' 容差。
+const VALID_CHINA_MLF_SOURCES = new Set([VALID_CHINA_MLF_SOURCE, 'PBOC:MLF-announcement']);
 const CHINA_TSF_COMPONENT_STATUSES = new Set(['complete', 'partial', 'missing']);
 const CHINA_TSF_COMPONENT_KEYS = new Set([
   'rmbLoans',
@@ -1329,7 +1333,7 @@ function validateMacroDriversChinaMlf(dataPayload) {
   if (mlf === undefined) return;
   assertPlainObject(mlf, 'macroDrivers.chinaMlf');
   validateNullableIsoString(mlf.updatedAt, 'macroDrivers.chinaMlf.updatedAt');
-  assert(mlf.source === VALID_CHINA_MLF_SOURCE, `macroDrivers.chinaMlf.source must be ${VALID_CHINA_MLF_SOURCE}`);
+  assert(VALID_CHINA_MLF_SOURCES.has(mlf.source), `macroDrivers.chinaMlf.source must be one of ${[...VALID_CHINA_MLF_SOURCES].join(', ')}`);
   assertString(mlf.notes, 'macroDrivers.chinaMlf.notes');
   assertString(mlf.sourceStatus, 'macroDrivers.chinaMlf.sourceStatus');
   assert(CHINA_MACRO_SOURCE_STATUSES.has(mlf.sourceStatus), 'macroDrivers.chinaMlf.sourceStatus is not supported');

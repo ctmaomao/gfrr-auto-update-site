@@ -7,7 +7,7 @@
 
 调研日期:2026-05-29。Claude 设计/边界复核 + Codex 可接入性实证分析。本文**不批准** live fetch、不写生产数据、不改 scoring。
 
-Stage 12/15 勘误:后续线上实测确认 pbc.gov.cn 在 GitHub US runner 被地理封锁,因此 Stage 14 将社融 TSF 实采源改为 EastMoney 聚合转载,Stage 15 将 OMO 实采源改为 EastMoney 聚合新闻;audit-only/display-only 边界不变,MLF 同类问题待后续 stage 单独切换。
+Stage 12/15/16 勘误:后续线上实测确认 pbc.gov.cn 在 GitHub US runner 被地理封锁,因此 Stage 14 将社融 TSF 实采源改为 EastMoney 聚合转载,Stage 15 将 OMO 实采源改为 EastMoney 聚合新闻,Stage 16 将 MLF 实采源改为 EastMoney 聚合新闻;三张 pbc 卡均已因 pbc geoblock 切换完毕,audit-only/display-only 边界不变。
 
 ---
 
@@ -77,7 +77,7 @@ Stage 12/15 勘误:后续线上实测确认 pbc.gov.cn 在 GitHub US runner 被�
 
 - 低频 + 按日期缓存 + UA `GFRRBot/1.0`;不绕 SSO/captcha;只取所需 headline/表格,不存全 HTML;只用从官方页发现的显式端点 URL,绝不广扫站点路径。
 - **Fail closed**:空记录 / schema 变化 / 非 200 / 解析失败 / 超期 → `source_unavailable` / `parse_error` / `inactive`,**不得伪造缺失值、不得把 stale 当 live**。
-- 保留并区分 source 标签:Stage 15 OMO runtime 为 `EastMoney:OMO-aggregated-news`;Stage 14 TSF runtime 为 `EastMoney:TSF-aggregated-report`;MLF 仍为 `PBOC:MLF-announcement`;70 城为 `NBS:70city-price-index`;SLO 若未来登记仅能为 `PBOC:SLO-historical`。
+- 保留并区分 source 标签:Stage 15 OMO runtime 为 `EastMoney:OMO-aggregated-news`;Stage 14 TSF runtime 为 `EastMoney:TSF-aggregated-report`;Stage 16 MLF runtime 为 `EastMoney:MLF-aggregated-news`;70 城为 `NBS:70city-price-index`;SLO 若未来登记仅能为 `PBOC:SLO-historical`。
 - 私用非商业姿态;法律/ToS 对本用途非阻断,但须低频 + 缓存。
 
 ## 7. 待办 / 注
