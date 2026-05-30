@@ -191,7 +191,8 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于**: **Stage 14/15/16 全完成 —— 三张 pbc 卡(社融/OMO/MLF)因 pbc.gov.cn US runner 地理封锁,全部切到 EastMoney 聚合源并线上验证 live。** Stage 14 chinaTsf `5157183`(线上 `f340127`);Stage 15 chinaOmo `49d7236`(线上 `affe934`);Stage 16 chinaMlf `8501a42`(线上,opDate 2026-05-25、operationAmountYi 6000 毛额、mlfRate null)。Stage 16 contract 收尾(validator 删过渡容差)**已 check:all 全绿,待 finalize commit**;backlog Section 1/3/5 + P3-16 + 本 Handoff 已更新。
-- **当前进行中**: Stage 16 finalize commit 待提交(contract 收尾 validate-data.mjs + 本次 backlog 收口 docs)。outline/brief 在 `.claude/stage-briefs/`(STAGE_14/15/16_*,gitignored)。
-- **下一步建议**: P3-16 China Macro 层换源任务已收官,无未完成主线。下一步等 owner 拍板新优先级(可选:① EastMoney 聚合源稳定性观察期后考虑加 fallback/告警;② 其它 backlog 项;③ 新 feature)。换源经验沉淀:pbc→eastmoney 搜索 JSONP + 新闻/正文解析 + 硬验证门 + expand-then-contract validator,可作未来境内官方源被 geoblock 时的模板。
-- **阻塞或等待**: 无。Stage 14/15/16 全闭环;等 owner 拍板下一优先级。
+- **上次会话结束于**: **P3-16 三张 pbc 卡换源 + A 档文案 sweep 全部落地并 push。** ① 三卡(社融/OMO/MLF)因 pbc.gov.cn US runner 地理封锁全切 EastMoney 聚合源、线上验证 live:Stage 14 `5157183`(线上 `f340127`)、Stage 15 `49d7236`(线上 `affe934`)、Stage 16 `26d5d79`(线上 `8501a42`),三个 finalize 收尾合并在 `e00851e`(S15)、`8279d00`(S16,**本会话补提交**);② A 档文案去工程术语 sweep `393a204`(首屏 oneLineConclusion 去「display-only 解释层处理」+ 卡 note/cat-intro 白话化,保留方法附录 B + 字段 chip C)。
+- **当前进行中**: 无。两件事均已 push 到 main(HEAD `393a204`)。A 档 pipeline 文案(oneLineConclusion/dataGaps)需**下次 Daily run** 刷进 `data/radar-data.json` 才显示到首屏;index.html/卡 note 改动 deploy 后即时生效。
+- **下一步建议**: 无未完成主线,等 owner 拍板新优先级(可选:① EastMoney 聚合源稳定性观察期后加 fallback/告警;② B/C 档更彻底白话化〔需改 DESIGN.md〕;③ 其它 backlog 项;④ 新 feature)。换源经验沉淀:pbc→eastmoney 搜索 JSONP + 新闻/正文解析 + 硬验证门 + expand-then-contract validator,可作未来境内官方源被 geoblock 的模板。
+- **阻塞或等待**: 无。
+- **⚠️ 流程教训(2026-05-30)**: 多步任务的 **finalize commit 容易漏提交** —— Stage 16 finalize 曾被误判为已提交(owner「push 了」实指实施 commit),后由 Codex 报告 dirty 文件才发现。**防呆:每个 stage 收尾前先 `git log --oneline -3` 确认 finalize commit 真在 log 里,再开下一任务;serial-trunk 下若工作区出现非本轮的 dirty 文件,先停查 git status/log 别直接 add -A 混提交。**
