@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-11-pboc-omo-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-12-pboc-tsf-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

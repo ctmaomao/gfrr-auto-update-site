@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-11-pboc-omo-1';
+} from './config.js?v=stage-12-pboc-tsf-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1290,6 +1290,61 @@ function renderChinaPropertyTierBreakdown(property) {
   );
 }
 
+function formatChinaTsfIncrementYi(value) {
+  const numeric = asNumber(value);
+  if (numeric === null) return '—';
+  const sign = numeric < 0 ? '-' : '';
+  const absValue = Math.abs(numeric);
+  if (absValue >= 10000) return `${sign}${(absValue / 10000).toFixed(2)}万亿`;
+  return `${sign}${Math.round(absValue)}亿`;
+}
+
+function createChinaTsfDetailText(className, text) {
+  const node = document.createElement('p');
+  node.className = className;
+  node.textContent = text;
+  return node;
+}
+
+function createChinaTsfComponentLine(component) {
+  const label = component?.label || '分项';
+  return createChinaTsfDetailText('city-tier-line', `${label}:${formatChinaTsfIncrementYi(component?.incrementYi)}`);
+}
+
+function renderChinaTsfComponents(tsf) {
+  const root = document.getElementById('c6-tsf-components-list');
+  if (!root) return;
+  const components = Array.isArray(tsf?.components) ? tsf.components : [];
+  if (!components.length) {
+    root.replaceChildren(createChinaTsfDetailText('city-tier-line', '社融分项暂不可用。'));
+    return;
+  }
+  root.replaceChildren(
+    createChinaTsfDetailText('city-tier-title', `年内累计分项(${components.length}/8)`),
+    ...components.map(createChinaTsfComponentLine)
+  );
+}
+
+function renderChinaTsfLeaf({ radarData }) {
+  const tsf = radarData?.macroDrivers?.chinaTsf;
+  if (!tsf) {
+    renderChinaTsfComponents(null);
+    return;
+  }
+  const status = tsf.sourceStatus || 'missing';
+  setToneClass('c6-tsf-status', 'status-bar', 'neutral');
+  setBadge('c6-tsf-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : status === 'missing' ? 'OBS·缺失' : 'OBS');
+
+  const stockYoY = asNumber(tsf.stockYoY);
+  const ytdIncrementYi = asNumber(tsf.ytdIncrementYi);
+  const label = tsf.incrementPeriodLabel || '年内';
+  const refMonth = tsf.refMonth || '—';
+  const suffix = status === 'fallback' ? ' · 回退' : status === 'missing' ? ' · 待源恢复' : '';
+  setLeafText('c6-tsf-number', stockYoY !== null ? (stockYoY * 100).toFixed(1) : '—');
+  setLeafText('c6-tsf-unit', stockYoY !== null ? '% YoY' : '');
+  setLeafText('c6-tsf-aux', `${label}增量 ${formatChinaTsfIncrementYi(ytdIncrementYi)} · ${refMonth}${suffix}`);
+  renderChinaTsfComponents(tsf);
+}
 function renderChinaOmoLeaf({ radarData }) {
   const omo = radarData?.macroDrivers?.chinaOmo;
   if (!omo) return;
@@ -1792,6 +1847,7 @@ function renderC6ChinaEquity({ radarData }) {
     renderChinaPmiLeaf({ radarData });
     renderChinaPropertyLeaf({ radarData });
     renderChinaOmoLeaf({ radarData });
+    renderChinaTsfLeaf({ radarData });
 
     const chinaEquity = radarData.macroDrivers?.chinaEquity;
     if (!chinaEquity) return;

@@ -121,6 +121,18 @@ const VALID_CHINA_INFLATION_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-CPI
 const VALID_CHINA_PMI_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-NBS-Manufacturing-PMI-public-html';
 const VALID_CHINA_PROPERTY_PRICE_SOURCE = 'NBS:70city-price-index';
 const VALID_CHINA_OMO_SOURCE = 'PBOC:OMO-announcement';
+const VALID_CHINA_TSF_SOURCE = 'PBOC:TSF-report';
+const CHINA_TSF_COMPONENT_STATUSES = new Set(['complete', 'partial', 'missing']);
+const CHINA_TSF_COMPONENT_KEYS = new Set([
+  'rmbLoans',
+  'foreignLoans',
+  'entrustedLoans',
+  'trustLoans',
+  'undiscountedBills',
+  'corpBonds',
+  'govBonds',
+  'equity'
+]);
 const CHINA_OMO_OPERATION_TYPES = new Set(['逆回购', '正回购', '无操作']);
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
@@ -1255,6 +1267,62 @@ function validateChinaPropertyTierBreakdown(tierBreakdown, fieldName, sourceStat
   assert(cityCountTotal === 70, `${fieldName} tier cityCount total must be 70`);
 }
 
+function validateMacroDriversChinaTsf(dataPayload) {
+  const tsf = dataPayload?.macroDrivers?.chinaTsf;
+  if (tsf === undefined) return;
+  assertPlainObject(tsf, 'macroDrivers.chinaTsf');
+  validateNullableIsoString(tsf.updatedAt, 'macroDrivers.chinaTsf.updatedAt');
+  assert(tsf.source === VALID_CHINA_TSF_SOURCE, `macroDrivers.chinaTsf.source must be ${VALID_CHINA_TSF_SOURCE}`);
+  assertString(tsf.notes, 'macroDrivers.chinaTsf.notes');
+  assertString(tsf.sourceStatus, 'macroDrivers.chinaTsf.sourceStatus');
+  assert(CHINA_MACRO_SOURCE_STATUSES.has(tsf.sourceStatus), 'macroDrivers.chinaTsf.sourceStatus is not supported');
+  validateChinaMacroRefMonth(tsf.refMonth, 'macroDrivers.chinaTsf.refMonth');
+  validateNullableIsoString(tsf.publishedAt, 'macroDrivers.chinaTsf.publishedAt');
+  assert(CHINA_TSF_COMPONENT_STATUSES.has(tsf.componentsStatus), 'macroDrivers.chinaTsf.componentsStatus is not supported');
+  assertArray(tsf.components, 'macroDrivers.chinaTsf.components');
+
+  if (tsf.sourceStatus === 'missing') {
+    assert(tsf.stockYoY === null, 'macroDrivers.chinaTsf.stockYoY must be null when missing');
+    assert(tsf.ytdIncrementYi === null, 'macroDrivers.chinaTsf.ytdIncrementYi must be null when missing');
+    assert(tsf.incrementPeriodLabel === null, 'macroDrivers.chinaTsf.incrementPeriodLabel must be null when missing');
+    assert(tsf.componentsStatus === 'missing', 'macroDrivers.chinaTsf.componentsStatus must be missing when sourceStatus missing');
+    assert(tsf.components.length === 0, 'macroDrivers.chinaTsf.components must be empty when missing');
+    return;
+  }
+
+  assert(
+    Number.isFinite(tsf.stockYoY) && tsf.stockYoY >= -0.2 && tsf.stockYoY <= 0.5,
+    'macroDrivers.chinaTsf.stockYoY must be plausible decimal YoY when live/fallback'
+  );
+  assert(isFiniteNumberOrNull(tsf.ytdIncrementYi), 'macroDrivers.chinaTsf.ytdIncrementYi must be finite number or null');
+  assert(
+    tsf.incrementPeriodLabel === null || typeof tsf.incrementPeriodLabel === 'string',
+    'macroDrivers.chinaTsf.incrementPeriodLabel must be string or null'
+  );
+
+  const seen = new Set();
+  for (const [index, component] of tsf.components.entries()) {
+    assertPlainObject(component, `macroDrivers.chinaTsf.components[${index}]`);
+    assertString(component.key, `macroDrivers.chinaTsf.components[${index}].key`);
+    assert(CHINA_TSF_COMPONENT_KEYS.has(component.key), `macroDrivers.chinaTsf.components[${index}].key is not supported`);
+    assert(!seen.has(component.key), `macroDrivers.chinaTsf.components[${index}].key must be unique`);
+    seen.add(component.key);
+    assertString(component.label, `macroDrivers.chinaTsf.components[${index}].label`);
+    assert(
+      Number.isFinite(component.incrementYi) || component.incrementYi === null,
+      `macroDrivers.chinaTsf.components[${index}].incrementYi must be finite number or null`
+    );
+  }
+
+  if (tsf.componentsStatus === 'complete') {
+    assert(tsf.components.length === CHINA_TSF_COMPONENT_KEYS.size, 'macroDrivers.chinaTsf.components must contain 8 items when complete');
+    assert(seen.size === CHINA_TSF_COMPONENT_KEYS.size, 'macroDrivers.chinaTsf.components must include all fixed keys when complete');
+  } else if (tsf.componentsStatus === 'partial') {
+    assert(tsf.components.length > 0 && tsf.components.length < CHINA_TSF_COMPONENT_KEYS.size, 'macroDrivers.chinaTsf.components partial count is invalid');
+  } else {
+    assert(tsf.components.length === 0, 'macroDrivers.chinaTsf.components must be empty when componentsStatus missing');
+  }
+}
 function validateMacroDriversChinaOmo(dataPayload) {
   const omo = dataPayload?.macroDrivers?.chinaOmo;
   if (omo === undefined) return;
@@ -2373,6 +2441,7 @@ validateMacroDriversChinaInflation(data);
 validateMacroDriversChinaPmi(data);
 validateMacroDriversChinaPropertyPrice(data);
 validateMacroDriversChinaOmo(data);
+validateMacroDriversChinaTsf(data);
 validateHistoryWindowFields(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);

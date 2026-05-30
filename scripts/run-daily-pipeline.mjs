@@ -155,6 +155,59 @@ const CHINA_OMO_INDEX_BASE_URL = 'https://www.pbc.gov.cn/zhengcehuobisi/125207/1
 const CHINA_OMO_FRESH_DAYS = 7;
 const CHINA_OMO_RATE_MIN = 0.005;
 const CHINA_OMO_RATE_MAX = 0.05;
+const CHINA_TSF_SOURCE = 'PBOC:TSF-report';
+const CHINA_TSF_DISPLAY_NOTE =
+  'PBOC 金融统计数据报告中的社会融资规模统计为报告级累计数据;display-only,不进 scoring/decision/execution/position,不代表贷款笔级/机构级 raw tape。';
+const CHINA_TSF_INDEX_URL = 'https://www.pbc.gov.cn/diaochatongjisi/116219/116225/index.html';
+const CHINA_TSF_INDEX_BASE_URL = 'https://www.pbc.gov.cn/diaochatongjisi/116219/116225/';
+const CHINA_TSF_FRESH_DAYS = 45;
+const CHINA_TSF_REF_FRESH_DAYS = 60;
+const CHINA_TSF_STOCK_YOY_MIN = -0.2;
+const CHINA_TSF_STOCK_YOY_MAX = 0.5;
+const CHINA_TSF_COMPONENT_STATUSES = new Set(['complete', 'partial', 'missing']);
+const CHINA_TSF_COMPONENT_DEFINITIONS = [
+  {
+    key: 'rmbLoans',
+    label: '人民币贷款',
+    pattern: /对实体经济发放的人民币贷款(?<verb>增加|减少|下降)(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)/u
+  },
+  {
+    key: 'foreignLoans',
+    label: '外币贷款',
+    pattern: /对实体经济发放的外币贷款折合人民币(?<verb>增加|减少|下降)(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)/u
+  },
+  {
+    key: 'entrustedLoans',
+    label: '委托贷款',
+    pattern: /委托贷款(?<verb>增加|减少|下降)(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)/u
+  },
+  {
+    key: 'trustLoans',
+    label: '信托贷款',
+    pattern: /信托贷款(?<verb>增加|减少|下降)(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)/u
+  },
+  {
+    key: 'undiscountedBills',
+    label: '未贴现银行承兑汇票',
+    pattern: /未贴现的银行承兑汇票(?<verb>增加|减少|下降)(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)/u
+  },
+  {
+    key: 'corpBonds',
+    label: '企业债券',
+    pattern: /企业债券净融资(?<verb>增加|减少|下降)?(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)/u
+  },
+  {
+    key: 'govBonds',
+    label: '政府债券',
+    pattern: /政府债券净融资(?<verb>增加|减少|下降)?(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)/u
+  },
+  {
+    key: 'equity',
+    label: '境内股票融资',
+    pattern: /非金融企业境内股票融资(?<verb>增加|减少|下降)?(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)/u
+  }
+];
+const CHINA_TSF_COMPONENT_KEYS = new Set(CHINA_TSF_COMPONENT_DEFINITIONS.map((component) => component.key));
 const CHINA_PROPERTY_PRICE_SOURCE = 'NBS:70city-price-index';
 const CHINA_PROPERTY_PRICE_DISPLAY_NOTE =
   'NBS 70 城商品住宅价格指数为城市级价格指数计数摘要;display-only,不进 scoring/decision/execution/position,不代表房源级 raw tape。';
@@ -3388,6 +3441,301 @@ async function resolveChinaOmo(prevChinaOmo) {
   } catch (err) {
     console.warn(`[china-omo-missing] ${stringifyFetchError(err)}`);
     return buildMissingChinaOmo(prevChinaOmo);
+  }
+}
+const CHINA_TSF_TITLE_RE = /(?<year>\d{4})年(?:(?<month>\d{1,2})月|(?<quarter>一季度|上半年|前三季度))?金融统计数据报告/u;
+const CHINA_TSF_ARTICLE_HREF_RE = /\/\d{13,}\/index\.html$/u;
+const CHINA_TSF_STOCK_YOY_RE = /社会融资规模存量为(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)，同比(?<verb>增长|下降)(?<yoy>\d+(?:\.\d+)?)%/u;
+const CHINA_TSF_YTD_INCREMENT_RE = /社会融资规模增量(?:累计)?为(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)/u;
+const CHINA_TSF_INCREMENT_PERIOD_RE = /(?<label>前[一二三四五六七八九十\d]+个月|一季度|上半年|前三季度)社会融资规模增量(?:累计)?为/u;
+const CHINA_TSF_CHINESE_MONTH_NUMBERS = new Map([
+  ['一', 1],
+  ['二', 2],
+  ['三', 3],
+  ['四', 4],
+  ['五', 5],
+  ['六', 6],
+  ['七', 7],
+  ['八', 8],
+  ['九', 9],
+  ['十', 10],
+  ['十一', 11],
+  ['十二', 12]
+]);
+
+function getChinaTsfAnchorAttribute(attrs, name) {
+  const match = String(attrs || '').match(new RegExp(`${name}=["'](?<value>[^"']+)["']`, 'iu'));
+  return match?.groups?.value || '';
+}
+
+function normalizeChinaTsfPlainText(text) {
+  return String(text || '')
+    .replace(/\s+/gu, ' ')
+    .replace(/(\d+)\.\s+(\d+)/gu, '$1.$2')
+    .trim();
+}
+
+function parseChinaTsfTitle(text) {
+  const match = normalizeChinaTsfPlainText(text).match(CHINA_TSF_TITLE_RE);
+  if (!match?.groups) return null;
+  const year = Number(match.groups.year);
+  if (!Number.isInteger(year)) return null;
+  if (match.groups.month) {
+    const month = Number(match.groups.month);
+    if (!Number.isInteger(month) || month < 1 || month > 12) return null;
+    return {
+      title: match[0],
+      refMonth: monthNumberToRefMonth(year, month - 1),
+      periodLabel: `前${month}个月`
+    };
+  }
+  const quarterMonth = {
+    一季度: 3,
+    上半年: 6,
+    前三季度: 9
+  }[match.groups.quarter || ''];
+  if (quarterMonth) {
+    return {
+      title: match[0],
+      refMonth: monthNumberToRefMonth(year, quarterMonth - 1),
+      periodLabel: `前${quarterMonth}个月`
+    };
+  }
+  return {
+    title: match[0],
+    refMonth: monthNumberToRefMonth(year, 11),
+    periodLabel: '全年'
+  };
+}
+
+function parseChinaTsfPublishedAt(plain) {
+  const match = normalizeChinaTsfPlainText(plain).match(/文章来源：\s*(?<date>\d{4}-\d{2}-\d{2})\s+(?<time>\d{2}:\d{2}:\d{2})/u);
+  if (!match?.groups) return null;
+  return `${match.groups.date}T${match.groups.time}+08:00`;
+}
+
+function parseChinaTsfUrlDate(url) {
+  const match = String(url || '').match(/\/(?<year>\d{4})(?<month>\d{2})(?<day>\d{2})\d+\/index\.html$/u);
+  if (!match?.groups) return null;
+  return `${match.groups.year}-${match.groups.month}-${match.groups.day}`;
+}
+
+function parseChinaTsfChineseMonthCount(text) {
+  const raw = String(text || '').trim();
+  if (/^\d+$/u.test(raw)) return Number(raw);
+  if (CHINA_TSF_CHINESE_MONTH_NUMBERS.has(raw)) return CHINA_TSF_CHINESE_MONTH_NUMBERS.get(raw);
+  const match = raw.match(/^(?<tens>[一二])?十(?<ones>[一二])?$/u);
+  if (!match?.groups) return null;
+  const tens = match.groups.tens ? CHINA_TSF_CHINESE_MONTH_NUMBERS.get(match.groups.tens) : 1;
+  const ones = match.groups.ones ? CHINA_TSF_CHINESE_MONTH_NUMBERS.get(match.groups.ones) : 0;
+  const value = tens * 10 + ones;
+  return value >= 1 && value <= 12 ? value : null;
+}
+
+function normalizeChinaTsfPeriodLabel(label, refMonth) {
+  const text = String(label || '').trim();
+  const monthMatch = text.match(/^前(?<month>[一二三四五六七八九十\d]+)个月$/u);
+  if (monthMatch?.groups) {
+    const month = parseChinaTsfChineseMonthCount(monthMatch.groups.month);
+    if (Number.isInteger(month) && month >= 1 && month <= 12) return `前${month}个月`;
+  }
+  if (text === '一季度') return '前3个月';
+  if (text === '上半年') return '前6个月';
+  if (text === '前三季度') return '前9个月';
+  const refMatch = String(refMonth || '').match(/^\d{4}-(?<month>\d{2})$/u);
+  if (refMatch?.groups) {
+    const month = Number(refMatch.groups.month);
+    if (month === 12) return '全年';
+    if (month >= 1 && month <= 11) return `前${month}个月`;
+  }
+  return null;
+}
+
+function chinaTsfAmountToYi(groups) {
+  if (!groups) return null;
+  let value = Number(groups.value);
+  if (!Number.isFinite(value)) return null;
+  if (groups.unit === '万亿元') value *= 10000;
+  if (groups.verb === '减少' || groups.verb === '下降') value *= -1;
+  return +value.toFixed(2);
+}
+
+function isPlausibleChinaTsfStockYoY(value) {
+  return Number.isFinite(value) && value >= CHINA_TSF_STOCK_YOY_MIN && value <= CHINA_TSF_STOCK_YOY_MAX;
+}
+
+function isFreshChinaTsf(refMonth, publishedAt) {
+  const publishedDate = dateOnlyIso(publishedAt);
+  if (publishedDate) return isFreshDateOnly(publishedDate, CHINA_TSF_FRESH_DAYS);
+  return isFreshDateOnly(endOfRefMonthDateOnly(refMonth), CHINA_TSF_REF_FRESH_DAYS);
+}
+
+function pickChinaTsfReportLink(indexHtml) {
+  const rows = [];
+  const linkRe = /<a\b(?<attrs>[^>]*)>(?<body>[\s\S]*?)<\/a>/giu;
+  for (const match of String(indexHtml || '').matchAll(linkRe)) {
+    const attrs = match.groups?.attrs || '';
+    const href = getChinaTsfAnchorAttribute(attrs, 'href');
+    if (!CHINA_TSF_ARTICLE_HREF_RE.test(href)) continue;
+    const titleAttr = getChinaTsfAnchorAttribute(attrs, 'title');
+    const bodyText = normalizeChinaTsfPlainText(htmlToPlainText(match.groups?.body || ''));
+    const title = normalizeChinaTsfPlainText(titleAttr || bodyText);
+    const parsedTitle = parseChinaTsfTitle(title);
+    if (!parsedTitle) continue;
+    const url = resolveAbsoluteUrl(href, CHINA_TSF_INDEX_BASE_URL);
+    if (!url || url === CHINA_TSF_INDEX_URL) continue;
+    rows.push({
+      ...parsedTitle,
+      title,
+      href,
+      url,
+      urlDate: parseChinaTsfUrlDate(url)
+    });
+  }
+  return rows
+    .filter((row, index, list) => list.findIndex((item) => item.url === row.url) === index)
+    .sort((a, b) => {
+      const refDiff = String(a.refMonth || '').localeCompare(String(b.refMonth || ''));
+      if (refDiff !== 0) return refDiff;
+      return String(a.urlDate || '').localeCompare(String(b.urlDate || ''));
+    })
+    .at(-1) || null;
+}
+
+function parseChinaTsfComponents(plain) {
+  const components = [];
+  for (const definition of CHINA_TSF_COMPONENT_DEFINITIONS) {
+    const match = plain.match(definition.pattern);
+    if (!match?.groups) continue;
+    const incrementYi = chinaTsfAmountToYi(match.groups);
+    if (!Number.isFinite(incrementYi)) continue;
+    components.push({
+      key: definition.key,
+      label: definition.label,
+      incrementYi
+    });
+  }
+  const componentsStatus = components.length === CHINA_TSF_COMPONENT_DEFINITIONS.length
+    ? 'complete'
+    : components.length > 0
+      ? 'partial'
+      : 'missing';
+  return { componentsStatus, components };
+}
+
+function parseChinaTsfArticle(articleHtml, link) {
+  const plain = normalizeChinaTsfPlainText(htmlToPlainText(articleHtml));
+  const titleInfo = parseChinaTsfTitle(link?.title) || parseChinaTsfTitle(plain);
+  const refMonth = titleInfo?.refMonth || null;
+  if (!refMonth) throw new Error('pboc:tsf missing refMonth');
+
+  const publishedAt = parseChinaTsfPublishedAt(plain) || dateOnlyToIso(parseChinaTsfUrlDate(link?.url));
+  if (!isFreshChinaTsf(refMonth, publishedAt)) throw new Error('pboc:tsf stale');
+
+  const stockMatch = plain.match(CHINA_TSF_STOCK_YOY_RE);
+  if (!stockMatch?.groups) throw new Error('pboc:tsf missing stockYoY');
+  const stockYoY = (stockMatch.groups.verb === '下降' ? -1 : 1) * (Number(stockMatch.groups.yoy) / 100);
+  if (!isPlausibleChinaTsfStockYoY(stockYoY)) throw new Error('pboc:tsf stockYoY out of plausible range');
+
+  const ytdMatch = plain.match(CHINA_TSF_YTD_INCREMENT_RE);
+  const ytdIncrementYi = ytdMatch?.groups ? chinaTsfAmountToYi(ytdMatch.groups) : null;
+  const periodMatch = plain.match(CHINA_TSF_INCREMENT_PERIOD_RE);
+  const incrementPeriodLabel = normalizeChinaTsfPeriodLabel(periodMatch?.groups?.label || titleInfo?.periodLabel, refMonth);
+  const { componentsStatus, components } = parseChinaTsfComponents(plain);
+
+  return {
+    updatedAt: publishedAt || dateOnlyToIso(endOfRefMonthDateOnly(refMonth)),
+    source: CHINA_TSF_SOURCE,
+    sourceStatus: 'live',
+    notes: CHINA_TSF_DISPLAY_NOTE,
+    refMonth,
+    publishedAt,
+    stockYoY: +stockYoY.toFixed(6),
+    ytdIncrementYi,
+    incrementPeriodLabel,
+    componentsStatus,
+    components
+  };
+}
+
+function normalizeChinaTsfComponent(component) {
+  if (!component || typeof component !== 'object') return null;
+  const definition = CHINA_TSF_COMPONENT_DEFINITIONS.find((item) => item.key === component.key);
+  if (!definition) return null;
+  const incrementYi = Number(component.incrementYi);
+  return {
+    key: definition.key,
+    label: definition.label,
+    incrementYi: Number.isFinite(incrementYi) ? incrementYi : null
+  };
+}
+
+function normalizePreviousChinaTsf(previous) {
+  if (!previous || previous.source !== CHINA_TSF_SOURCE || !isFreshChinaTsf(previous.refMonth, previous.publishedAt || previous.updatedAt)) {
+    return null;
+  }
+  const stockYoY = Number(previous.stockYoY);
+  if (!isPlausibleChinaTsfStockYoY(stockYoY)) return null;
+  const ytdIncrementYi = Number(previous.ytdIncrementYi);
+  const components = Array.isArray(previous.components)
+    ? previous.components.map(normalizeChinaTsfComponent).filter(Boolean)
+    : [];
+  const uniqueComponents = components.filter(
+    (component, index, list) => list.findIndex((item) => item.key === component.key) === index
+  );
+  let componentsStatus = CHINA_TSF_COMPONENT_STATUSES.has(previous.componentsStatus) ? previous.componentsStatus : 'missing';
+  if (uniqueComponents.length === CHINA_TSF_COMPONENT_DEFINITIONS.length) componentsStatus = 'complete';
+  else if (uniqueComponents.length > 0 && componentsStatus === 'complete') componentsStatus = 'partial';
+  else if (uniqueComponents.length === 0) componentsStatus = 'missing';
+  return {
+    updatedAt: typeof previous.updatedAt === 'string' ? previous.updatedAt : null,
+    source: CHINA_TSF_SOURCE,
+    sourceStatus: 'fallback',
+    notes: CHINA_TSF_DISPLAY_NOTE,
+    refMonth: typeof previous.refMonth === 'string' ? previous.refMonth : null,
+    publishedAt: typeof previous.publishedAt === 'string' ? previous.publishedAt : null,
+    stockYoY: +stockYoY.toFixed(6),
+    ytdIncrementYi: Number.isFinite(ytdIncrementYi) ? ytdIncrementYi : null,
+    incrementPeriodLabel: typeof previous.incrementPeriodLabel === 'string' ? previous.incrementPeriodLabel : null,
+    componentsStatus,
+    components: uniqueComponents
+  };
+}
+
+function buildMissingChinaTsf(prevChinaTsf = null) {
+  const fallback = normalizePreviousChinaTsf(prevChinaTsf);
+  if (fallback) return fallback;
+  return {
+    updatedAt: null,
+    source: CHINA_TSF_SOURCE,
+    sourceStatus: 'missing',
+    notes: CHINA_TSF_DISPLAY_NOTE,
+    refMonth: null,
+    publishedAt: null,
+    stockYoY: null,
+    ytdIncrementYi: null,
+    incrementPeriodLabel: null,
+    componentsStatus: 'missing',
+    components: []
+  };
+}
+
+async function resolveChinaTsf(prevChinaTsf) {
+  try {
+    const indexHtml = await retryFetch(CHINA_TSF_INDEX_URL, 'pboc:tsf-index', MACRO_FETCH_TIMEOUT_MS, {
+      userAgent: CHINA_MACRO_HTML_USER_AGENT,
+      headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
+    });
+    const link = pickChinaTsfReportLink(indexHtml);
+    if (!link) throw new Error('pboc:tsf missing report link');
+    const articleHtml = await retryFetch(link.url, 'pboc:tsf-article', MACRO_FETCH_TIMEOUT_MS, {
+      userAgent: CHINA_MACRO_HTML_USER_AGENT,
+      headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
+    });
+    return parseChinaTsfArticle(articleHtml, link);
+  } catch (err) {
+    console.warn(`[china-tsf-missing] ${stringifyFetchError(err)}`);
+    return buildMissingChinaTsf(prevChinaTsf);
   }
 }
 const CHINA_PROPERTY_PRICE_TITLE_RE = /(?<year>\d{4})\s*年\s*(?<month>\d{1,2})\s*月份?\s*70\s*个大中城市商品住宅销售价格变动情况/u;
@@ -7642,7 +7990,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveChinaPmi(prevMd.chinaPmi),
     resolveEuroVolatility(prevMd.euroVolatility),
     resolveChinaPropertyPrice(prevMd.chinaPropertyPrice),
-    resolveChinaOmo(prevMd.chinaOmo)
+    resolveChinaOmo(prevMd.chinaOmo),
+    resolveChinaTsf(prevMd.chinaTsf)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -7695,6 +8044,7 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   const euroVolatility = results[18].status === 'fulfilled' ? results[18].value : buildMissingEuroVolatility(prevMd.euroVolatility);
   const chinaPropertyPrice = results[19].status === 'fulfilled' ? results[19].value : buildMissingChinaPropertyPrice(prevMd.chinaPropertyPrice);
   const chinaOmo = results[20].status === 'fulfilled' ? results[20].value : buildMissingChinaOmo(prevMd.chinaOmo);
+  const chinaTsf = results[21].status === 'fulfilled' ? results[21].value : buildMissingChinaTsf(prevMd.chinaTsf);
 
   return {
     fedLiquidity,
@@ -7717,7 +8067,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     chinaPmi,
     euroVolatility,
     chinaPropertyPrice,
-    chinaOmo
+    chinaOmo,
+    chinaTsf
   };
 }
 
@@ -7733,7 +8084,8 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     resolveChinaPmi(prevMd?.chinaPmi),
     resolveEuroVolatility(prevMd?.euroVolatility),
     resolveChinaPropertyPrice(prevMd?.chinaPropertyPrice),
-    resolveChinaOmo(prevMd?.chinaOmo)
+    resolveChinaOmo(prevMd?.chinaOmo),
+    resolveChinaTsf(prevMd?.chinaTsf)
   ]);
   return {
     worldEconomy: results[0].status === 'fulfilled' ? results[0].value : buildMissingWorldEconomy(prevMd?.worldEconomy),
@@ -7746,7 +8098,8 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     chinaPmi: results[7].status === 'fulfilled' ? results[7].value : buildMissingChinaPmi(prevMd?.chinaPmi),
     euroVolatility: results[8].status === 'fulfilled' ? results[8].value : buildMissingEuroVolatility(prevMd?.euroVolatility),
     chinaPropertyPrice: results[9].status === 'fulfilled' ? results[9].value : buildMissingChinaPropertyPrice(prevMd?.chinaPropertyPrice),
-    chinaOmo: results[10].status === 'fulfilled' ? results[10].value : buildMissingChinaOmo(prevMd?.chinaOmo)
+    chinaOmo: results[10].status === 'fulfilled' ? results[10].value : buildMissingChinaOmo(prevMd?.chinaOmo),
+    chinaTsf: results[11].status === 'fulfilled' ? results[11].value : buildMissingChinaTsf(prevMd?.chinaTsf)
   };
 }
 
@@ -8669,6 +9022,7 @@ async function build() {
       euroVolatility: macroDrivers.euroVolatility,
       chinaPropertyPrice: macroDrivers.chinaPropertyPrice,
       chinaOmo: macroDrivers.chinaOmo,
+      chinaTsf: macroDrivers.chinaTsf,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,
