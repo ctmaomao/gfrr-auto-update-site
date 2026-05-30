@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-30T04:16:22.615Z",
+  "updatedAt": "2026-05-30T06:04:00.496Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "e4f53b09cd15d824773a6c2e88546302eb0e3175",
-    "updatedAt": "2026-05-30T04:11:36.777Z",
+    "commitSha": "8d3f69d3989ca38155badbca2e3bca799b512005",
+    "updatedAt": "2026-05-30T04:30:18.336Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-30T04:16:22.615Z"
+    "capturedAt": "2026-05-30T06:04:00.496Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-30T04:16:22.615Z",
+    "generatedAt": "2026-05-30T06:04:00.496Z",
     "macroState": "滞胀冲击 / 风险缓和",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
     "dominantRiskChain": {
@@ -129,7 +129,7 @@
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-30T04:16:22.615Z",
+    "generatedAt": "2026-05-30T06:04:00.496Z",
     "score": 50,
     "state": "watch",
     "stateZh": "背离观察",
@@ -434,13 +434,13 @@
   },
   "brentPricingLayer": {
     "contractVersion": "v28.0I-5A",
-    "generatedAt": "2026-05-30T04:16:22.615Z",
+    "generatedAt": "2026-05-30T06:04:00.496Z",
     "mode": "public_proxy_observation",
     "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
     "selectedBrent": {
       "value": 102.75,
       "source": "fred:DCOILBRENTEU",
-      "observedAt": "2026-05-30T04:11:36.777Z",
+      "observedAt": "2026-05-30T04:30:18.336Z",
       "status": "ok",
       "noteZh": "当前主 Brent 显示值来自现有 Daily / realtime 输入；该层只做公开代理审计，不改变 values.brent。"
     },
@@ -455,7 +455,7 @@
     "futuresProxy": {
       "labelZh": "Brent 期货代理",
       "source": "yahoo",
-      "value": 91.7,
+      "value": 91.12,
       "observedAt": "2026-05-29T20:59:56.000Z",
       "status": "ok",
       "limitationZh": "该字段为公开期货/市场报价代理，仅用于验证层观察。"
@@ -473,7 +473,7 @@
       "source": "ICE:Brent-Crude-Futures-contract-data",
       "sourceUrl": "https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430",
       "curveStatus": "live_structure_only",
-      "fetchedAt": "2026-05-30T04:16:22.615Z",
+      "fetchedAt": "2026-05-30T06:04:00.496Z",
       "contracts": [
         {
           "contract": "Jul26",
@@ -613,17 +613,17 @@
           "marketId": 6018430,
           "contract": "Jul26",
           "price": 91.99,
-          "volume": 29423,
+          "volume": 29422,
           "updatedAt": "2026-05-29T18:29:00.000Z",
-          "changePct": -0.0184
+          "changePct": -0.0007
         },
         {
           "marketId": 6018418,
           "contract": "Aug26",
           "price": 91.89,
-          "volume": 347869,
+          "volume": 347866,
           "updatedAt": "2026-05-29T21:55:00.000Z",
-          "changePct": -0.0087
+          "changePct": 0.0085
         },
         {
           "marketId": 6018448,
@@ -631,7 +631,7 @@
           "price": 89.21,
           "volume": 199480,
           "updatedAt": "2026-05-29T21:17:00.000Z",
-          "changePct": -0.0177
+          "changePct": 0.0011
         },
         {
           "marketId": 6018445,
@@ -639,7 +639,7 @@
           "price": 87.24,
           "volume": 84703,
           "updatedAt": "2026-05-29T21:17:00.000Z",
-          "changePct": -0.0193
+          "changePct": 0.0002
         },
         {
           "marketId": 6018442,
@@ -647,7 +647,7 @@
           "price": 85.6,
           "volume": 52926,
           "updatedAt": "2026-05-29T21:17:00.000Z",
-          "changePct": -0.0196
+          "changePct": 0
         },
         {
           "marketId": 6018421,
@@ -655,7 +655,7 @@
           "price": 84.03,
           "volume": 95486,
           "updatedAt": "2026-05-29T21:10:00.000Z",
-          "changePct": -0.0207
+          "changePct": -0.0018
         },
         {
           "marketId": 6018427,
@@ -663,7 +663,7 @@
           "price": 83.26,
           "volume": 19765,
           "updatedAt": "2026-05-29T20:58:00.000Z",
-          "changePct": -0.0143
+          "changePct": 0.0039
         },
         {
           "marketId": 6018424,
@@ -671,7 +671,7 @@
           "price": 82.25,
           "volume": 12467,
           "updatedAt": "2026-05-29T20:55:00.000Z",
-          "changePct": -0.0125
+          "changePct": 0.0048
         },
         {
           "marketId": 6018436,
@@ -679,7 +679,7 @@
           "price": 81.25,
           "volume": 20087,
           "updatedAt": "2026-05-29T20:58:00.000Z",
-          "changePct": -0.0125
+          "changePct": 0.004
         },
         {
           "marketId": 6018416,
@@ -687,7 +687,7 @@
           "price": 80.52,
           "volume": 4710,
           "updatedAt": "2026-05-29T20:55:00.000Z",
-          "changePct": -0.0111
+          "changePct": 0.0046
         },
         {
           "marketId": 6018440,
@@ -695,7 +695,7 @@
           "price": 79.65,
           "volume": 4322,
           "updatedAt": "2026-05-29T20:42:00.000Z",
-          "changePct": -0.0129
+          "changePct": 0.002
         },
         {
           "marketId": 6018434,
@@ -703,7 +703,7 @@
           "price": 79.24,
           "volume": 21112,
           "updatedAt": "2026-05-29T20:58:00.000Z",
-          "changePct": -0.0104
+          "changePct": 0.0039
         }
       ],
       "limitationZh": "ICE public contract-data lastPrice 是 delayed/last quote；不是 official settlement curve、Platts Dated Brent 或正式实物现货。"
@@ -742,9 +742,9 @@
       {
         "source": "marketwatch",
         "labelZh": "marketwatch",
-        "value": null,
+        "value": 87.76,
         "observedAt": null,
-        "status": "missing",
+        "status": "excluded",
         "role": "diagnostic",
         "participatesInPromotion": false,
         "noteZh": "该来源仅作为诊断观察，不参与 Brent promotion。"
@@ -762,7 +762,7 @@
       {
         "source": "yahoo",
         "labelZh": "Yahoo BZ=F",
-        "value": 91.7,
+        "value": 91.12,
         "observedAt": "2026-05-29T20:59:56.000Z",
         "status": "ok",
         "role": "futures_proxy",
@@ -787,9 +787,9 @@
     "crackSpreadRegime": "供应紧张",
     "ulsdSourceStatus": "live",
     "proxySpread": {
-      "spotMinusFutures": 11.05,
-      "selectedMinusFutures": 11.05,
-      "maxProxyDivergencePct": 11.154,
+      "spotMinusFutures": 11.63,
+      "selectedMinusFutures": 11.63,
+      "maxProxyDivergencePct": 11.763,
       "status": "stress",
       "statusZh": "公开代理价差压力",
       "interpretationZh": "该价差只用于公开代理价格层审计，不改变 Brent 主值或 promotion。"
@@ -800,7 +800,7 @@
       "promotionReason": "stooq/oilprice 基本一致；Oilprice 缺少 observedAt，仅作为弱确认源参与，推荐优先采用 stooq；FRED 仅作低频锚点参考。",
       "selectedSource": "fred:DCOILBRENTEU",
       "anchorSource": "fred-anchor",
-      "anchorAgeHours": 100.19361111111111
+      "anchorAgeHours": 100.50555555555556
     },
     "dataGaps": [
       "EIA Europe Brent Spot Price FOB public proxy 已接入；Platts Dated Brent / 正式 Dated Brent 仍未接入。",
@@ -1010,32 +1010,32 @@
         "source": "Yahoo:SR3-monthly-SOFR-futures",
         "curveStatus": "live_proxy_curve",
         "updatedAt": "2026-05-29T20:59:59.000Z",
-        "frontImpliedRate": 3.662,
-        "backImpliedRate": 3.895,
-        "frontMinusBack": -0.233,
+        "frontImpliedRate": 3.665,
+        "backImpliedRate": 3.9,
+        "frontMinusBack": -0.235,
         "contracts": [
           {
             "symbol": "SR3M26.CME",
             "contractMonth": "Jun26",
-            "price": 96.3375,
-            "impliedRate": 3.662,
-            "impliedMinusTargetMid": 0.037,
+            "price": 96.335,
+            "impliedRate": 3.665,
+            "impliedMinusTargetMid": 0.04,
             "updatedAt": "2026-05-29T20:59:59.000Z"
           },
           {
             "symbol": "SR3N26.CME",
             "contractMonth": "Jul26",
-            "price": 96.295,
-            "impliedRate": 3.705,
-            "impliedMinusTargetMid": 0.08,
+            "price": 96.305,
+            "impliedRate": 3.695,
+            "impliedMinusTargetMid": 0.07,
             "updatedAt": "2026-05-28T06:36:13.000Z"
           },
           {
             "symbol": "SR3Q26.CME",
             "contractMonth": "Aug26",
-            "price": 96.26,
-            "impliedRate": 3.74,
-            "impliedMinusTargetMid": 0.115,
+            "price": 96.28,
+            "impliedRate": 3.72,
+            "impliedMinusTargetMid": 0.095,
             "updatedAt": "2026-05-26T19:59:55.000Z"
           },
           {
@@ -1057,9 +1057,9 @@
           {
             "symbol": "SR3H27.CME",
             "contractMonth": "Mar27",
-            "price": 96.105,
-            "impliedRate": 3.895,
-            "impliedMinusTargetMid": 0.27,
+            "price": 96.1,
+            "impliedRate": 3.9,
+            "impliedMinusTargetMid": 0.275,
             "updatedAt": "2026-05-29T20:59:59.000Z"
           }
         ],
@@ -1283,8 +1283,8 @@
         "pmi": {
           "httpStatus": 200,
           "landingHttpStatus": 200,
-          "latencyMs": 3093,
-          "parsedAt": "2026-05-30T04:16:22.951Z",
+          "latencyMs": 7808,
+          "parsedAt": "2026-05-30T06:04:00.786Z",
           "reportUrl": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/april/",
           "reportMonthLabel": "April"
         }
@@ -1843,17 +1843,251 @@
     "chinaPropertyPrice": {
       "updatedAt": "2026-05-18T09:30:00+08:00",
       "source": "NBS:70city-price-index",
-      "sourceStatus": "fallback",
+      "sourceStatus": "live",
       "notes": "NBS 70 城商品住宅价格指数为城市级价格指数计数摘要;display-only,不进 scoring/decision/execution/position,不代表房源级 raw tape。",
       "refMonth": "2026-04",
       "publishedAt": "2026-05-18T09:30:00+08:00",
-      "tierBreakdown": null,
       "newCitiesUp": 14,
       "newCitiesFlat": 7,
       "newCitiesDown": 49,
       "resaleCitiesUp": 12,
       "resaleCitiesFlat": 4,
-      "resaleCitiesDown": 54
+      "resaleCitiesDown": 54,
+      "tierBreakdown": {
+        "tier1": {
+          "label": "一线",
+          "cityCount": 4,
+          "new": {
+            "up": [
+              "上海",
+              "广州",
+              "深圳"
+            ],
+            "flat": [],
+            "down": [
+              "北京"
+            ]
+          },
+          "resale": {
+            "up": [
+              "北京",
+              "上海",
+              "广州",
+              "深圳"
+            ],
+            "flat": [],
+            "down": []
+          }
+        },
+        "tier2": {
+          "label": "二线",
+          "cityCount": 31,
+          "new": {
+            "up": [
+              "太原",
+              "大连",
+              "南京",
+              "杭州",
+              "宁波",
+              "青岛",
+              "银川",
+              "乌鲁木齐"
+            ],
+            "flat": [
+              "天津",
+              "沈阳",
+              "合肥",
+              "武汉",
+              "海口"
+            ],
+            "down": [
+              "石家庄",
+              "呼和浩特",
+              "长春",
+              "哈尔滨",
+              "福州",
+              "厦门",
+              "南昌",
+              "济南",
+              "郑州",
+              "长沙",
+              "南宁",
+              "重庆",
+              "成都",
+              "贵阳",
+              "昆明",
+              "西安",
+              "兰州",
+              "西宁"
+            ]
+          },
+          "resale": {
+            "up": [
+              "沈阳",
+              "宁波",
+              "合肥",
+              "厦门",
+              "武汉",
+              "海口",
+              "西安"
+            ],
+            "flat": [
+              "大连",
+              "南京",
+              "重庆"
+            ],
+            "down": [
+              "天津",
+              "石家庄",
+              "太原",
+              "呼和浩特",
+              "长春",
+              "哈尔滨",
+              "杭州",
+              "福州",
+              "南昌",
+              "济南",
+              "青岛",
+              "郑州",
+              "长沙",
+              "南宁",
+              "成都",
+              "贵阳",
+              "昆明",
+              "兰州",
+              "西宁",
+              "银川",
+              "乌鲁木齐"
+            ]
+          }
+        },
+        "tier3": {
+          "label": "三线",
+          "cityCount": 35,
+          "new": {
+            "up": [
+              "吉林",
+              "烟台",
+              "大理"
+            ],
+            "flat": [
+              "徐州",
+              "襄阳"
+            ],
+            "down": [
+              "唐山",
+              "秦皇岛",
+              "包头",
+              "丹东",
+              "锦州",
+              "牡丹江",
+              "无锡",
+              "扬州",
+              "温州",
+              "金华",
+              "蚌埠",
+              "安庆",
+              "泉州",
+              "九江",
+              "赣州",
+              "济宁",
+              "洛阳",
+              "平顶山",
+              "宜昌",
+              "岳阳",
+              "常德",
+              "韶关",
+              "湛江",
+              "惠州",
+              "桂林",
+              "北海",
+              "三亚",
+              "泸州",
+              "南充",
+              "遵义"
+            ]
+          },
+          "resale": {
+            "up": [
+              "徐州"
+            ],
+            "flat": [
+              "无锡"
+            ],
+            "down": [
+              "唐山",
+              "秦皇岛",
+              "包头",
+              "丹东",
+              "锦州",
+              "吉林",
+              "牡丹江",
+              "扬州",
+              "温州",
+              "金华",
+              "蚌埠",
+              "安庆",
+              "泉州",
+              "九江",
+              "赣州",
+              "烟台",
+              "济宁",
+              "洛阳",
+              "平顶山",
+              "宜昌",
+              "襄阳",
+              "岳阳",
+              "常德",
+              "韶关",
+              "湛江",
+              "惠州",
+              "桂林",
+              "北海",
+              "三亚",
+              "泸州",
+              "南充",
+              "遵义",
+              "大理"
+            ]
+          }
+        }
+      }
+    },
+    "chinaOmo": {
+      "updatedAt": null,
+      "source": "PBOC:OMO-announcement",
+      "sourceStatus": "missing",
+      "notes": "PBOC 公开市场操作公告级数据;display-only,不进 scoring/decision/execution/position,不代表逐机构/逐笔 raw tape。",
+      "opDate": null,
+      "announcementNo": null,
+      "operationType": null,
+      "termDays": null,
+      "operationRate": null,
+      "operationAmount": null
+    },
+    "chinaTsf": {
+      "updatedAt": null,
+      "source": "PBOC:TSF-report",
+      "sourceStatus": "missing",
+      "notes": "PBOC 金融统计数据报告中的社会融资规模统计为报告级累计数据;display-only,不进 scoring/decision/execution/position,不代表贷款笔级/机构级 raw tape。",
+      "refMonth": null,
+      "publishedAt": null,
+      "stockYoY": null,
+      "ytdIncrementYi": null,
+      "incrementPeriodLabel": null,
+      "componentsStatus": "missing",
+      "components": []
+    },
+    "chinaMlf": {
+      "updatedAt": null,
+      "source": "PBOC:MLF-announcement",
+      "sourceStatus": "missing",
+      "notes": "PBOC 中期借贷便利 MLF 操作公告级数据;display-only,不进 scoring/decision/execution/position,不代表逐机构/逐笔 raw tape。",
+      "opDate": null,
+      "publishedAt": null,
+      "operationAmountYi": null,
+      "termMonths": null,
+      "mlfRate": null
     },
     "activeSignals": [
       {
@@ -2403,7 +2637,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-30T04:16:22.615Z",
+        "triggeredAgo": "2026-05-30T06:04:00.496Z",
         "condition": "结构性双压触发红灯（逆回购准备金临界告急）。系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -2411,7 +2645,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-30T04:16:22.615Z",
+        "triggeredAgo": "2026-05-30T06:04:00.496Z",
         "condition": "ON RRP 116.77 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -2419,7 +2653,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-30T04:16:22.615Z",
+        "triggeredAgo": "2026-05-30T06:04:00.496Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -2458,7 +2692,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-30T04:16:22.615Z",
+    "lastRun": "2026-05-30T06:04:00.496Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
@@ -2697,7 +2931,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-05-30T04:16:22.615Z",
+    "generatedAt": "2026-05-30T06:04:00.496Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [
