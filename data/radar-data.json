@@ -1,17 +1,17 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-30T10:20:55.618Z",
+  "updatedAt": "2026-05-30T22:36:42.736Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "ce3ac79c969f5c1ebda159445dcb6955e40d86e7",
-    "updatedAt": "2026-05-30T09:31:57.663Z",
+    "commitSha": "8ab328e36fc32144eb557573888ba8c0b400df25",
+    "updatedAt": "2026-05-30T21:38:06.008Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-30T10:20:55.618Z"
+    "capturedAt": "2026-05-30T22:36:42.736Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-30T10:20:55.618Z",
+    "generatedAt": "2026-05-30T22:36:42.736Z",
     "macroState": "滞胀冲击 / 风险缓和",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察。",
     "dominantRiskChain": {
@@ -31,8 +31,8 @@
           "source": "displayInputsBaseline",
           "key": "breakeven10y",
           "labelZh": "10年盈亏平衡通胀",
-          "value": 2.39,
-          "summaryZh": "10年盈亏平衡通胀 2.39%。"
+          "value": 2.38,
+          "summaryZh": "10年盈亏平衡通胀 2.38%。"
         },
         {
           "source": "displayInputsBaseline",
@@ -129,7 +129,7 @@
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-30T10:20:55.618Z",
+    "generatedAt": "2026-05-30T22:36:42.736Z",
     "score": 50,
     "state": "watch",
     "stateZh": "背离观察",
@@ -159,8 +159,8 @@
           "source": "displayInputsBaseline",
           "key": "spx",
           "labelZh": "标普500",
-          "value": 7563.63,
-          "summaryZh": "标普500 7564。"
+          "value": 7580.06,
+          "summaryZh": "标普500 7580。"
         },
         {
           "source": "displayInputsBaseline",
@@ -239,8 +239,8 @@
             "source": "displayInputsBaseline",
             "key": "spx",
             "labelZh": "标普500",
-            "value": 7563.63,
-            "summaryZh": "标普500 7564。"
+            "value": 7580.06,
+            "summaryZh": "标普500 7580。"
           },
           {
             "source": "displayInputsBaseline",
@@ -382,8 +382,8 @@
             "source": "displayInputsBaseline",
             "key": "spx",
             "labelZh": "标普500",
-            "value": 7563.63,
-            "summaryZh": "标普500 7564。"
+            "value": 7580.06,
+            "summaryZh": "标普500 7580。"
           },
           {
             "source": "displayInputsBaseline",
@@ -434,13 +434,13 @@
   },
   "brentPricingLayer": {
     "contractVersion": "v28.0I-5A",
-    "generatedAt": "2026-05-30T10:20:55.618Z",
+    "generatedAt": "2026-05-30T22:36:42.736Z",
     "mode": "public_proxy_observation",
     "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
     "selectedBrent": {
       "value": 102.75,
       "source": "fred:DCOILBRENTEU",
-      "observedAt": "2026-05-30T09:31:57.663Z",
+      "observedAt": "2026-05-30T21:38:06.008Z",
       "status": "ok",
       "noteZh": "当前主 Brent 显示值来自现有 Daily / realtime 输入；该层只做公开代理审计，不改变 values.brent。"
     },
@@ -473,7 +473,7 @@
       "source": "ICE:Brent-Crude-Futures-contract-data",
       "sourceUrl": "https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430",
       "curveStatus": "live_structure_only",
-      "fetchedAt": "2026-05-30T10:20:55.618Z",
+      "fetchedAt": "2026-05-30T22:36:42.736Z",
       "contracts": [
         {
           "contract": "Jul26",
@@ -785,7 +785,7 @@
     "crackSpread": 49.16,
     "crackSpread4wChange": -10.5,
     "crackSpreadRegime": "供应紧张",
-    "ulsdSourceStatus": "live",
+    "ulsdSourceStatus": "fallback",
     "proxySpread": {
       "spotMinusFutures": 11.63,
       "selectedMinusFutures": 11.63,
@@ -800,7 +800,7 @@
       "promotionReason": "stooq/oilprice 基本一致；Oilprice 缺少 observedAt，仅作为弱确认源参与，推荐优先采用 stooq；FRED 仅作低频锚点参考。",
       "selectedSource": "fred:DCOILBRENTEU",
       "anchorSource": "fred-anchor",
-      "anchorAgeHours": 105.53277777777778
+      "anchorAgeHours": 117.63527777777777
     },
     "dataGaps": [
       "EIA Europe Brent Spot Price FOB public proxy 已接入；Platts Dated Brent / 正式 Dated Brent 仍未接入。",
@@ -849,9 +849,9 @@
     "hyOas": 2.72,
     "us10y": 4.45,
     "real10y": 2.06,
-    "breakeven10y": 2.39,
+    "breakeven10y": 2.38,
     "gold": 4540.299805,
-    "spx": 7563.63
+    "spx": 7580.06
   },
   "topRisks": [
     "布伦特 102.8 美元，能源链条仍在传导。",
@@ -887,7 +887,7 @@
   },
   "phaseSignals": [
     "实时输入：布伦特 102.8 / 波动率 15.74 / 高收益利差 2.72%。",
-    "利率输入：10年期 4.45 / 实际利率 2.06 / 盈亏平衡通胀 2.39%。",
+    "利率输入：10年期 4.45 / 实际利率 2.06 / 盈亏平衡通胀 2.38%。",
     "快变量状态：实时，健康度 100。"
   ],
   "macroDrivers": {
@@ -913,10 +913,10 @@
       "pressure": 45,
       "sourceStatus": {
         "walcl": "live",
-        "onRrp": "live",
-        "effectiveFedFundsRate": "live",
-        "sofr": "live",
-        "reserveBalances": "live",
+        "onRrp": "fallback",
+        "effectiveFedFundsRate": "fallback",
+        "sofr": "fallback",
+        "reserveBalances": "fallback",
         "bgcr": "live",
         "tgcr": "live"
       }
@@ -1221,7 +1221,7 @@
       "oisForwardRate": 3.82,
       "oisForwardStatus": "live",
       "sourceStatus": {
-        "targetRange": "live",
+        "targetRange": "fallback",
         "fedFundsFuture": "live",
         "fedFundsFuturesCurve": "live",
         "sofrFuturesCurve": "live",
@@ -1243,7 +1243,7 @@
       "regime": "正常",
       "steepeningAlert": false,
       "sourceStatus": {
-        "t10y2y": "live"
+        "t10y2y": "fallback"
       }
     },
     "credit": {
@@ -1260,9 +1260,9 @@
       "nfci4wChange": -0.015,
       "nfciRegime": "显著宽松",
       "sourceStatus": {
-        "igOas": "live",
-        "sloos": "live",
-        "nfci": "live"
+        "igOas": "fallback",
+        "sloos": "fallback",
+        "nfci": "fallback"
       },
       "hyOas": 2.72
     },
@@ -1276,8 +1276,8 @@
       "ismManufacturingPmi3mChange": 0.1,
       "ismPmiRegime": "中性偏扩张",
       "sourceStatus": {
-        "umichSentiment": "live",
-        "pmi": "live"
+        "umichSentiment": "fallback",
+        "pmi": "fallback"
       },
       "diagnostics": {
         "pmi": {
@@ -1344,12 +1344,12 @@
       "laborQualityRegime": "扩散改善",
       "industryDiffusionRegime": "温和扩张",
       "sourceStatus": {
-        "icsa": "live",
-        "ccsa": "live",
-        "jtsjol": "live",
-        "ahe": "live",
-        "u6": "live",
-        "industryPayroll": "live"
+        "icsa": "fallback",
+        "ccsa": "fallback",
+        "jtsjol": "fallback",
+        "ahe": "fallback",
+        "u6": "fallback",
+        "industryPayroll": "fallback"
       },
       "updatedAt": "2026-05-23T00:00:00Z",
       "source": "FRED:ICSA; FRED:CCSA; FRED:JTSJOL; FRED:CES0500000003; FRED:U6RATE; FRED:industry-payroll-basket",
@@ -1514,9 +1514,9 @@
       "redbookSummary": "Trading Economics public HTML reports Redbook same-store sales YoY 9.00% for week ending 2026-05-23; this is not the Redbook raw subscription feed.",
       "retailRegime": "稳定",
       "sourceStatus": {
-        "carts": "live",
-        "cartsr": "live",
-        "retailSegments": "live",
+        "carts": "fallback",
+        "cartsr": "fallback",
+        "retailSegments": "fallback",
         "bofaConsumerCheckpoint": "live",
         "redbookPublicHtml": "live"
       },
@@ -1548,20 +1548,20 @@
       "creLoanBalance4wChange": 0.0054,
       "creLoanBalanceYoY": 0.0304,
       "creLoanBalanceUpdatedAt": "2026-05-20T00:00:00Z",
-      "creLoanBalanceStatus": "live",
+      "creLoanBalanceStatus": "fallback",
       "crePublicMarketProxyRegime": "观察",
       "nonPublicCreStatus": "manual_required",
       "creStressRegime": "稳定",
       "sourceStatus": {
-        "delinquency": "live",
-        "chargeOff": "live",
-        "sloosNonfarmNonresidential": "live",
-        "sloosConstruction": "live",
-        "sloosMultifamily": "live",
+        "delinquency": "fallback",
+        "chargeOff": "fallback",
+        "sloosNonfarmNonresidential": "fallback",
+        "sloosConstruction": "fallback",
+        "sloosMultifamily": "fallback",
         "reitEtf": "live",
         "mortgageReitEtf": "live",
         "cmbsEtf": "live",
-        "creLoanBalance": "live",
+        "creLoanBalance": "fallback",
         "nonPublicCre": "manual_required"
       },
       "updatedAt": "2026-05-29T13:30:00.000Z",
@@ -1606,7 +1606,7 @@
         "seniorLoanEtf": "live",
         "intervalFundNav": "live",
         "hyOas": "live",
-        "igOas": "live",
+        "igOas": "fallback",
         "cdxHy": "live",
         "cdxIg": "live",
         "privateCreditMarks": "manual_required"
@@ -1619,11 +1619,15 @@
     },
     "worldEconomy": {
       "updatedAt": "2026-05-29T07:00:00.000Z",
-      "source": "Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI",
+      "source": "Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11",
       "sourceStatus": {
         "stoxx50": "live",
         "nikkei225": "live",
-        "dax": "live"
+        "dax": "live",
+        "ftse100": "live",
+        "cac40": "live",
+        "stoxx600": "live",
+        "kospi": "live"
       },
       "notes": "世界经济维度 display-only 公开指数代理;不进 scoring/decision/execution/position。",
       "stoxx50": {
@@ -1654,6 +1658,46 @@
         "changeWindow": "5d",
         "updatedAt": "2026-05-29T07:00:00.000Z",
         "source": "Yahoo:^GDAXI",
+        "sourceStatus": "live"
+      },
+      "ftse100": {
+        "symbol": "^FTSE",
+        "labelZh": "英国富时 100",
+        "price": 10409.2998,
+        "changePct": -0.0054,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-29T07:00:00.000Z",
+        "source": "Yahoo:^FTSE",
+        "sourceStatus": "live"
+      },
+      "cac40": {
+        "symbol": "^FCHI",
+        "labelZh": "法国 CAC 40",
+        "price": 8183.3398,
+        "changePct": -0.0091,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-29T07:00:00.000Z",
+        "source": "Yahoo:^FCHI",
+        "sourceStatus": "live"
+      },
+      "stoxx600": {
+        "symbol": "^STOXX",
+        "labelZh": "泛欧 STOXX 600",
+        "price": 626,
+        "changePct": 0.0014,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-29T07:00:00.000Z",
+        "source": "Yahoo:^STOXX",
+        "sourceStatus": "live"
+      },
+      "kospi": {
+        "symbol": "^KS11",
+        "labelZh": "韩国 KOSPI",
+        "price": 8476.1504,
+        "changePct": 0.0801,
+        "changeWindow": "5d",
+        "updatedAt": "2026-05-29T00:00:00.000Z",
+        "source": "Yahoo:^KS11",
         "sourceStatus": "live"
       }
     },
@@ -1701,8 +1745,8 @@
       "updatedAt": "2026-05-26T00:00:00Z",
       "source": "FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO",
       "sourceStatus": {
-        "cpi": "live",
-        "wti": "live"
+        "cpi": "fallback",
+        "wti": "fallback"
       },
       "notes": "通胀与能源 display-only 公开数据代理;tone 仅展示,不进 scoring/decision/execution/position。",
       "cpi": {
@@ -1716,10 +1760,10 @@
         "updatedAt": "2026-04-01T00:00:00Z",
         "source": "FRED:CPIAUCSL; FRED:CPILFESL",
         "seriesStatus": {
-          "headline": "live",
-          "core": "live"
+          "headline": "fallback",
+          "core": "fallback"
         },
-        "sourceStatus": "live"
+        "sourceStatus": "fallback"
       },
       "wti": {
         "price": 97.63,
@@ -1727,7 +1771,7 @@
         "changeWindow": "5d",
         "updatedAt": "2026-05-26T00:00:00Z",
         "source": "FRED:DCOILWTICO",
-        "sourceStatus": "live"
+        "sourceStatus": "fallback"
       }
     },
     "copperGold": {
@@ -2135,7 +2179,7 @@
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
         "detail": "ON RRP 116.77 亿美元",
-        "reliability": "live"
+        "reliability": "fallback"
       }
     ],
     "gatingEvaluation": {
@@ -2211,7 +2255,7 @@
       {
         "label": "利率→股票",
         "value": 22,
-        "delta": -3
+        "delta": -1
       },
       {
         "label": "美元→信用",
@@ -2678,7 +2722,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-30T10:20:55.618Z",
+        "triggeredAgo": "2026-05-30T22:36:42.736Z",
         "condition": "结构性双压触发红灯（逆回购准备金临界告急）。系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -2686,7 +2730,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-30T10:20:55.618Z",
+        "triggeredAgo": "2026-05-30T22:36:42.736Z",
         "condition": "ON RRP 116.77 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -2694,7 +2738,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-30T10:20:55.618Z",
+        "triggeredAgo": "2026-05-30T22:36:42.736Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -2733,7 +2777,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-30T10:20:55.618Z",
+    "lastRun": "2026-05-30T22:36:42.736Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
@@ -2887,13 +2931,13 @@
     "strategyState": "Defensive",
     "stateLabel": "红灯 / 禁止新增",
     "stateScore": 50,
-    "stateReason": "红灯 / 禁止新增，风险分数 50。结构信号激活：逆回购准备金告急（ON RRP 116.77 亿美元）。 主导模块：能源、地缘政治、通胀。",
+    "stateReason": "红灯 / 禁止新增，风险分数 50。结构信号激活：逆回购准备金告急（ON RRP 116.77 亿美元）。（部分结构信号基于回退数据） 主导模块：能源、地缘政治、通胀。",
     "structuralSignals": [
       {
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
         "detail": "ON RRP 116.77 亿美元",
-        "reliability": "live"
+        "reliability": "fallback"
       }
     ],
     "structuralScoreBump": 10,
@@ -2972,7 +3016,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-05-30T10:20:55.618Z",
+    "generatedAt": "2026-05-30T22:36:42.736Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [
@@ -3431,7 +3475,7 @@
       "windowLabel": "12周"
     },
     "spx52wHigh": {
-      "value": 7563.63,
+      "value": 7580.06,
       "windowStatus": "partial",
       "observations": 2,
       "targetObservations": 364,
