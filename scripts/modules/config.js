@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=stage-9-c6-intro-errata-1';
+﻿import { formatFiniteNumber } from './format.js?v=stage-10-nbs-70city-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-9-c6-intro-errata-1';
+} from './config.js?v=stage-10-nbs-70city-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1232,6 +1232,28 @@ function renderChinaPmiLeaf({ radarData }) {
   const suffix = status === 'fallback' ? ' · 回退' : '';
   setLeafText('c6-china-pmi-aux', `${refMonth} · ${expansion}${suffix}`);
 }
+
+function renderChinaPropertyLeaf({ radarData }) {
+  const property = radarData?.macroDrivers?.chinaPropertyPrice;
+  if (!property) return;
+  const status = property.sourceStatus || 'missing';
+  setToneClass('c6-house-status', 'status-bar', 'neutral');
+  setBadge('c6-house-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : status === 'missing' ? 'OBS·缺失' : 'OBS');
+
+  const newUp = asNumber(property.newCitiesUp);
+  const newFlat = asNumber(property.newCitiesFlat);
+  const resaleUp = asNumber(property.resaleCitiesUp);
+  setLeafText('c6-house-number', newUp !== null ? `${Math.round(newUp)}/70` : '—');
+  setLeafText('c6-house-unit', 'cities');
+
+  const auxParts = [];
+  auxParts.push(`二手上涨 ${resaleUp !== null ? `${Math.round(resaleUp)}/70` : '—'}`);
+  auxParts.push(`新房持平 ${newFlat !== null ? `${Math.round(newFlat)} 城` : '—'}`);
+  auxParts.push(property.refMonth || '—');
+  if (status === 'fallback') auxParts.push('回退');
+  if (status === 'missing') auxParts.push('待源恢复');
+  setLeafText('c6-house-aux', auxParts.join(' · '));
+}
 function renderC2GlobalLiquidity({ radarData }) {
   try {
     if (!radarData) return;
@@ -1679,6 +1701,7 @@ function renderC6ChinaEquity({ radarData }) {
     renderCfetsRmbLeaf('c6-cfets', radarData.macroDrivers?.cfetsRmb);
     renderChinaInflationLeaf({ radarData });
     renderChinaPmiLeaf({ radarData });
+    renderChinaPropertyLeaf({ radarData });
 
     const chinaEquity = radarData.macroDrivers?.chinaEquity;
     if (!chinaEquity) return;

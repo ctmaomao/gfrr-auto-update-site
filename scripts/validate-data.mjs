@@ -119,6 +119,7 @@ const VALID_CFETS_RMB_SOURCE = 'ChinaMoney:CFETS-RmbIdx';
 const CHINA_MACRO_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_CHINA_INFLATION_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-CPI-PPI-public-html';
 const VALID_CHINA_PMI_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-NBS-Manufacturing-PMI-public-html';
+const VALID_CHINA_PROPERTY_PRICE_SOURCE = 'NBS:70city-price-index';
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
@@ -1168,6 +1169,46 @@ function validateMacroDriversChinaPmi(dataPayload) {
   validateChinaMacroLeaf(chinaPmi.pmi, 'macroDrivers.chinaPmi.pmi', 'value');
   assert(chinaPmi.pmi.sourceStatus === chinaPmi.sourceStatus.pmi, 'macroDrivers.chinaPmi.pmi.sourceStatus must match parent sourceStatus.pmi');
 }
+function validateChinaPropertyCount(value, fieldName) {
+  assert(value === null || (Number.isInteger(value) && value >= 0 && value <= 70), `${fieldName} must be integer 0-70 or null`);
+}
+
+function validateChinaPropertyCountSet(node, keys, fieldName, sourceStatus) {
+  for (const key of keys) validateChinaPropertyCount(node[key], `${fieldName}.${key}`);
+  const values = keys.map((key) => node[key]);
+  const allNull = values.every((value) => value === null);
+  if (sourceStatus === 'missing') {
+    assert(allNull, `${fieldName} counts must be null when sourceStatus is missing`);
+    return;
+  }
+  assert(values.every((value) => Number.isInteger(value)), `${fieldName} counts must be complete when sourceStatus is ${sourceStatus}`);
+  assert(values.reduce((sum, value) => sum + value, 0) === 70, `${fieldName} counts must sum to 70`);
+}
+
+function validateMacroDriversChinaPropertyPrice(dataPayload) {
+  const property = dataPayload?.macroDrivers?.chinaPropertyPrice;
+  if (property === undefined) return;
+  assertPlainObject(property, 'macroDrivers.chinaPropertyPrice');
+  validateNullableIsoString(property.updatedAt, 'macroDrivers.chinaPropertyPrice.updatedAt');
+  assert(property.source === VALID_CHINA_PROPERTY_PRICE_SOURCE, `macroDrivers.chinaPropertyPrice.source must be ${VALID_CHINA_PROPERTY_PRICE_SOURCE}`);
+  assertString(property.notes, 'macroDrivers.chinaPropertyPrice.notes');
+  assertString(property.sourceStatus, 'macroDrivers.chinaPropertyPrice.sourceStatus');
+  assert(CHINA_MACRO_SOURCE_STATUSES.has(property.sourceStatus), 'macroDrivers.chinaPropertyPrice.sourceStatus is not supported');
+  validateChinaMacroRefMonth(property.refMonth, 'macroDrivers.chinaPropertyPrice.refMonth');
+  validateNullableIsoString(property.publishedAt, 'macroDrivers.chinaPropertyPrice.publishedAt');
+  validateChinaPropertyCountSet(
+    property,
+    ['newCitiesUp', 'newCitiesFlat', 'newCitiesDown'],
+    'macroDrivers.chinaPropertyPrice.new',
+    property.sourceStatus
+  );
+  validateChinaPropertyCountSet(
+    property,
+    ['resaleCitiesUp', 'resaleCitiesFlat', 'resaleCitiesDown'],
+    'macroDrivers.chinaPropertyPrice.resale',
+    property.sourceStatus
+  );
+}
 function validateHistoryWindowBase(node, fieldName, targetObservations, expectedWindowLabel) {
   assertPlainObject(node, fieldName);
   assertString(node.windowStatus, `${fieldName}.windowStatus`);
@@ -2210,6 +2251,7 @@ validateMacroDriversChinaBond(data);
 validateMacroDriversCfetsRmb(data);
 validateMacroDriversChinaInflation(data);
 validateMacroDriversChinaPmi(data);
+validateMacroDriversChinaPropertyPrice(data);
 validateHistoryWindowFields(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);

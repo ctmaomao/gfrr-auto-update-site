@@ -147,6 +147,28 @@ const CHINA_NBS_INDEX_URLS = [
   'https://www.stats.gov.cn/sj/zxfb/',
   'https://www.stats.gov.cn/sj/zxfb/index_1.html'
 ];
+const CHINA_PROPERTY_PRICE_SOURCE = 'NBS:70city-price-index';
+const CHINA_PROPERTY_PRICE_DISPLAY_NOTE =
+  'NBS 70 城商品住宅价格指数为城市级价格指数计数摘要;display-only,不进 scoring/decision/execution/position,不代表房源级 raw tape。';
+const CHINA_PROPERTY_PRICE_INDEX_URLS = [
+  'https://www.stats.gov.cn/sj/zxfbhjd/',
+  'https://www.stats.gov.cn/sj/zxfbhjd/index_1.html',
+  'https://www.stats.gov.cn/sj/zxfbhjd/index_2.html',
+  'https://www.stats.gov.cn/sj/zxfbhjd/index_3.html',
+  'https://www.stats.gov.cn/sj/zxfbhjd/index_4.html'
+];
+const CHINA_PROPERTY_PRICE_FRESH_DAYS = 45;
+const CHINA_PROPERTY_PRICE_REF_FRESH_DAYS = 60;
+const CHINA_PROPERTY_PRICE_CITY_COUNT = 70;
+const CHINA_PROPERTY_PRICE_CITIES = [
+  '北京', '天津', '石家庄', '太原', '呼和浩特', '沈阳', '大连', '长春', '哈尔滨', '上海',
+  '南京', '杭州', '宁波', '合肥', '福州', '厦门', '南昌', '济南', '青岛', '郑州',
+  '武汉', '长沙', '广州', '深圳', '南宁', '海口', '重庆', '成都', '贵阳', '昆明',
+  '西安', '兰州', '西宁', '银川', '乌鲁木齐', '唐山', '秦皇岛', '包头', '丹东', '锦州',
+  '吉林', '牡丹江', '无锡', '徐州', '扬州', '温州', '金华', '蚌埠', '安庆', '泉州',
+  '九江', '赣州', '烟台', '济宁', '洛阳', '平顶山', '宜昌', '襄阳', '岳阳', '常德',
+  '韶关', '湛江', '惠州', '桂林', '北海', '三亚', '泸州', '南充', '遵义', '大理'
+];
 const CHINA_INFLATION_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-CPI-PPI-public-html';
 const CHINA_INFLATION_DISPLAY_NOTE =
   '中国 CPI/PPI 来自国家统计局发布正文;Trading Economics 公开 HTML 仅作 fallback;display-only,不进 scoring/decision/execution/position。';
@@ -3080,6 +3102,227 @@ async function resolveCfetsRmb(prevCfetsRmb) {
 }
 
 
+
+const CHINA_PROPERTY_PRICE_TITLE_RE = /(?<year>\d{4})\s*年\s*(?<month>\d{1,2})\s*月份?\s*70\s*个大中城市商品住宅销售价格变动情况/u;
+const CHINA_PROPERTY_PRICE_HREF_RE = /^\.\/\d{6}\/t\d+_\d+\.html$/u;
+const CHINA_PROPERTY_PRICE_TABLE_ANCHORS = {
+  newStart: /表\s*1\s*：?\s*\d{4}\s*年\s*\d{1,2}\s*月\s*70\s*个大中城市新建商品住宅销售价格指数/u,
+  resaleStart: /表\s*2\s*：?\s*\d{4}\s*年\s*\d{1,2}\s*月\s*70\s*个大中城市二手住宅销售价格指数/u,
+  classifiedStart: /表\s*3\s*：?\s*\d{4}\s*年\s*\d{1,2}\s*月\s*70\s*个大中城市新建商品住宅销售价格分类指数/u
+};
+
+function getChinaPropertyAnchorAttribute(attrs, name) {
+  const match = String(attrs || '').match(new RegExp(`${name}=["'](?<value>[^"']+)["']`, 'iu'));
+  return match?.groups?.value || '';
+}
+
+function parseChinaPropertyRefMonth(text) {
+  const match = String(text || '').match(CHINA_PROPERTY_PRICE_TITLE_RE);
+  if (!match?.groups) return null;
+  return monthNumberToRefMonth(Number(match.groups.year), Number(match.groups.month) - 1);
+}
+
+function parseChinaPropertyPublishedAtFromPlain(plain) {
+  const match = String(plain || '').match(/(?<year>\d{4})\/(?<month>\d{2})\/(?<day>\d{2})\s+(?<hour>\d{2}):(?<minute>\d{2})\s+来源/u);
+  if (!match?.groups) return null;
+  return `${match.groups.year}-${match.groups.month}-${match.groups.day}T${match.groups.hour}:${match.groups.minute}:00+08:00`;
+}
+
+function pickChinaPropertyPriceLink(indexHtmlList) {
+  const rows = [];
+  const linkRe = /<a\b(?<attrs>[^>]*)>(?<body>[\s\S]*?)<\/a>/giu;
+  for (const html of indexHtmlList) {
+    for (const match of String(html || '').matchAll(linkRe)) {
+      const attrs = match.groups?.attrs || '';
+      const href = getChinaPropertyAnchorAttribute(attrs, 'href');
+      if (!CHINA_PROPERTY_PRICE_HREF_RE.test(href)) continue;
+      const titleAttr = getChinaPropertyAnchorAttribute(attrs, 'title');
+      const bodyText = htmlToPlainText(match.groups?.body || '');
+      const title = String(titleAttr || bodyText || '').replace(/\s+/gu, ' ').trim();
+      const titleForMatch = `${title} ${bodyText}`.replace(/\s+/gu, ' ').trim();
+      if (!CHINA_PROPERTY_PRICE_TITLE_RE.test(titleForMatch)) continue;
+      const refMonth = parseChinaPropertyRefMonth(titleForMatch);
+      const publishedAt = parseChinaNbsPublishedAt(href);
+      const url = resolveAbsoluteUrl(href, 'https://www.stats.gov.cn/sj/zxfbhjd/');
+      if (!refMonth || !url) continue;
+      rows.push({ title, href, url, refMonth, publishedAt });
+    }
+  }
+  return rows
+    .filter((row, index, list) => list.findIndex((item) => item.url === row.url) === index)
+    .sort((a, b) => {
+      const refDiff = String(a.refMonth).localeCompare(String(b.refMonth));
+      if (refDiff !== 0) return refDiff;
+      return Date.parse(a.publishedAt || '1970-01-01T00:00:00Z') - Date.parse(b.publishedAt || '1970-01-01T00:00:00Z');
+    })
+    .at(-1) || null;
+}
+
+async function fetchChinaPropertyPriceIndexPages() {
+  const pages = [];
+  for (const url of CHINA_PROPERTY_PRICE_INDEX_URLS) {
+    const html = await retryFetch(url, `nbs:china-property-index:${url}`, MACRO_FETCH_TIMEOUT_MS, {
+      userAgent: CHINA_MACRO_HTML_USER_AGENT,
+      headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
+    });
+    pages.push(html);
+  }
+  return pages;
+}
+
+function escapeChinaPropertyRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+}
+
+function flexibleChinaPropertyCityPattern(city) {
+  return [...String(city || '')].map((char) => escapeChinaPropertyRegex(char)).join('\\s*');
+}
+
+function extractChinaPropertyTableSegment(plain, startRe, endRe, label) {
+  const source = String(plain || '');
+  const start = source.search(startRe);
+  if (start < 0) throw new Error(`nbs:china-property missing ${label} table start`);
+  const remainder = source.slice(start);
+  const end = remainder.search(endRe);
+  if (end <= 0) throw new Error(`nbs:china-property missing ${label} table end`);
+  return remainder.slice(0, end);
+}
+
+function normalizeChinaPropertyCount(value) {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 0 && n <= CHINA_PROPERTY_PRICE_CITY_COUNT ? n : null;
+}
+
+function isChinaPropertyCountSetPlausible(up, flat, down) {
+  const values = [up, flat, down].map(normalizeChinaPropertyCount);
+  return values.every((value) => value !== null)
+    && values.reduce((sum, value) => sum + value, 0) === CHINA_PROPERTY_PRICE_CITY_COUNT;
+}
+
+function parseChinaPropertyPriceCountSet(tableText, label) {
+  const rows = CHINA_PROPERTY_PRICE_CITIES.map((city) => {
+    const cityPattern = flexibleChinaPropertyCityPattern(city);
+    const re = new RegExp(`${cityPattern}\\s+(?<mom>\\d+(?:\\.\\d+)?)\\s+(?<yoy>\\d+(?:\\.\\d+)?)\\s+(?<avg>\\d+(?:\\.\\d+)?)`, 'u');
+    const match = String(tableText || '').match(re);
+    const mom = Number(match?.groups?.mom);
+    return { city, mom: Number.isFinite(mom) ? mom : null };
+  });
+  const missing = rows.filter((row) => !Number.isFinite(row.mom)).map((row) => row.city);
+  if (missing.length > 0) throw new Error(`nbs:china-property ${label} missing city rows: ${missing.join(',')}`);
+  const up = rows.filter((row) => row.mom > 100).length;
+  const flat = rows.filter((row) => row.mom === 100).length;
+  const down = rows.filter((row) => row.mom < 100).length;
+  if (!isChinaPropertyCountSetPlausible(up, flat, down)) {
+    throw new Error(`nbs:china-property ${label} invalid count set`);
+  }
+  return { up, flat, down };
+}
+
+function isFreshChinaPropertyPrice(refMonth, publishedAt) {
+  const publishedDate = dateOnlyIso(publishedAt);
+  if (publishedDate) return isFreshDateOnly(publishedDate, CHINA_PROPERTY_PRICE_FRESH_DAYS);
+  const refMonthEnd = endOfRefMonthDateOnly(refMonth);
+  return isFreshDateOnly(refMonthEnd, CHINA_PROPERTY_PRICE_REF_FRESH_DAYS);
+}
+
+function parseChinaPropertyPriceArticle(articleHtml, link) {
+  const plain = htmlToPlainText(articleHtml);
+  const title = link?.title || String(plain || '').match(CHINA_PROPERTY_PRICE_TITLE_RE)?.[0] || '';
+  const refMonth = parseChinaPropertyRefMonth(title) || parseChinaPropertyRefMonth(plain);
+  const publishedAt = parseChinaPropertyPublishedAtFromPlain(plain) || link?.publishedAt || null;
+  if (!refMonth) throw new Error('nbs:china-property missing refMonth');
+  const newTableText = extractChinaPropertyTableSegment(
+    plain,
+    CHINA_PROPERTY_PRICE_TABLE_ANCHORS.newStart,
+    CHINA_PROPERTY_PRICE_TABLE_ANCHORS.resaleStart,
+    'new-home'
+  );
+  const resaleTableText = extractChinaPropertyTableSegment(
+    plain,
+    CHINA_PROPERTY_PRICE_TABLE_ANCHORS.resaleStart,
+    CHINA_PROPERTY_PRICE_TABLE_ANCHORS.classifiedStart,
+    'resale'
+  );
+  const newCounts = parseChinaPropertyPriceCountSet(newTableText, 'new-home');
+  const resaleCounts = parseChinaPropertyPriceCountSet(resaleTableText, 'resale');
+  if (!isFreshChinaPropertyPrice(refMonth, publishedAt)) throw new Error('nbs:china-property stale');
+  return {
+    updatedAt: publishedAt || dateOnlyToIso(endOfRefMonthDateOnly(refMonth)),
+    source: CHINA_PROPERTY_PRICE_SOURCE,
+    sourceStatus: 'live',
+    notes: CHINA_PROPERTY_PRICE_DISPLAY_NOTE,
+    refMonth,
+    publishedAt,
+    newCitiesUp: newCounts.up,
+    newCitiesFlat: newCounts.flat,
+    newCitiesDown: newCounts.down,
+    resaleCitiesUp: resaleCounts.up,
+    resaleCitiesFlat: resaleCounts.flat,
+    resaleCitiesDown: resaleCounts.down
+  };
+}
+
+function normalizePreviousChinaPropertyPrice(previous) {
+  const counts = {
+    newCitiesUp: normalizeChinaPropertyCount(previous?.newCitiesUp),
+    newCitiesFlat: normalizeChinaPropertyCount(previous?.newCitiesFlat),
+    newCitiesDown: normalizeChinaPropertyCount(previous?.newCitiesDown),
+    resaleCitiesUp: normalizeChinaPropertyCount(previous?.resaleCitiesUp),
+    resaleCitiesFlat: normalizeChinaPropertyCount(previous?.resaleCitiesFlat),
+    resaleCitiesDown: normalizeChinaPropertyCount(previous?.resaleCitiesDown)
+  };
+  if (
+    !isChinaPropertyCountSetPlausible(counts.newCitiesUp, counts.newCitiesFlat, counts.newCitiesDown)
+    || !isChinaPropertyCountSetPlausible(counts.resaleCitiesUp, counts.resaleCitiesFlat, counts.resaleCitiesDown)
+    || !isFreshChinaPropertyPrice(previous?.refMonth, previous?.publishedAt)
+  ) {
+    return null;
+  }
+  return {
+    updatedAt: typeof previous?.updatedAt === 'string' ? previous.updatedAt : null,
+    source: CHINA_PROPERTY_PRICE_SOURCE,
+    sourceStatus: 'fallback',
+    notes: CHINA_PROPERTY_PRICE_DISPLAY_NOTE,
+    refMonth: typeof previous?.refMonth === 'string' ? previous.refMonth : null,
+    publishedAt: typeof previous?.publishedAt === 'string' ? previous.publishedAt : null,
+    ...counts
+  };
+}
+
+function buildMissingChinaPropertyPrice(prevChinaPropertyPrice = null) {
+  const fallback = normalizePreviousChinaPropertyPrice(prevChinaPropertyPrice);
+  if (fallback) return fallback;
+  return {
+    updatedAt: null,
+    source: CHINA_PROPERTY_PRICE_SOURCE,
+    sourceStatus: 'missing',
+    notes: CHINA_PROPERTY_PRICE_DISPLAY_NOTE,
+    refMonth: null,
+    publishedAt: null,
+    newCitiesUp: null,
+    newCitiesFlat: null,
+    newCitiesDown: null,
+    resaleCitiesUp: null,
+    resaleCitiesFlat: null,
+    resaleCitiesDown: null
+  };
+}
+
+async function resolveChinaPropertyPrice(prevChinaPropertyPrice) {
+  try {
+    const indexHtmlList = await fetchChinaPropertyPriceIndexPages();
+    const link = pickChinaPropertyPriceLink(indexHtmlList);
+    if (!link) throw new Error('nbs:china-property missing index link');
+    const articleHtml = await retryFetch(link.url, 'nbs:china-property-article', MACRO_FETCH_TIMEOUT_MS, {
+      userAgent: CHINA_MACRO_HTML_USER_AGENT,
+      headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
+    });
+    return parseChinaPropertyPriceArticle(articleHtml, link);
+  } catch (err) {
+    console.warn(`[china-property-price-missing] ${stringifyFetchError(err)}`);
+    return buildMissingChinaPropertyPrice(prevChinaPropertyPrice);
+  }
+}
 const CHINA_NBS_LINK_RE = /<a\b[^>]*href=['"](?<href>\.\/\d{6}\/t\d+_\d+\.html)['"][^>]*title=['"](?<title>[^'"]*(居民消费价格|工业生产者出厂价格|采购经理指数)[^'"]*)['"][^>]*>/giu;
 const CHINA_NBS_REF_MONTH_RE = /(?<year>\d{4})\s*年\s*(?<month>\d{1,2})\s*月(?:份)?/u;
 const CHINA_NBS_YOY_RE = /(?:全国)?(?:居民消费价格|工业生产者出厂价格)\s*同比\s*(?:(?<flat>持平)|(?<verb>上涨|增长|下降|降低)\s*(?<value>\d+(?:\.\d+)?)\s*%)/u;
@@ -7041,7 +7284,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveCfetsRmb(prevMd.cfetsRmb),
     resolveChinaInflation(prevMd.chinaInflation),
     resolveChinaPmi(prevMd.chinaPmi),
-    resolveEuroVolatility(prevMd.euroVolatility)
+    resolveEuroVolatility(prevMd.euroVolatility),
+    resolveChinaPropertyPrice(prevMd.chinaPropertyPrice)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -7092,6 +7336,7 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   const chinaInflation = results[16].status === 'fulfilled' ? results[16].value : buildMissingChinaInflation(prevMd.chinaInflation);
   const chinaPmi = results[17].status === 'fulfilled' ? results[17].value : buildMissingChinaPmi(prevMd.chinaPmi);
   const euroVolatility = results[18].status === 'fulfilled' ? results[18].value : buildMissingEuroVolatility(prevMd.euroVolatility);
+  const chinaPropertyPrice = results[19].status === 'fulfilled' ? results[19].value : buildMissingChinaPropertyPrice(prevMd.chinaPropertyPrice);
 
   return {
     fedLiquidity,
@@ -7112,7 +7357,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     cfetsRmb,
     chinaInflation,
     chinaPmi,
-    euroVolatility
+    euroVolatility,
+    chinaPropertyPrice
   };
 }
 
@@ -7126,7 +7372,8 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     resolveCfetsRmb(prevMd?.cfetsRmb),
     resolveChinaInflation(prevMd?.chinaInflation),
     resolveChinaPmi(prevMd?.chinaPmi),
-    resolveEuroVolatility(prevMd?.euroVolatility)
+    resolveEuroVolatility(prevMd?.euroVolatility),
+    resolveChinaPropertyPrice(prevMd?.chinaPropertyPrice)
   ]);
   return {
     worldEconomy: results[0].status === 'fulfilled' ? results[0].value : buildMissingWorldEconomy(prevMd?.worldEconomy),
@@ -7137,7 +7384,8 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     cfetsRmb: results[5].status === 'fulfilled' ? results[5].value : buildMissingCfetsRmb(prevMd?.cfetsRmb),
     chinaInflation: results[6].status === 'fulfilled' ? results[6].value : buildMissingChinaInflation(prevMd?.chinaInflation),
     chinaPmi: results[7].status === 'fulfilled' ? results[7].value : buildMissingChinaPmi(prevMd?.chinaPmi),
-    euroVolatility: results[8].status === 'fulfilled' ? results[8].value : buildMissingEuroVolatility(prevMd?.euroVolatility)
+    euroVolatility: results[8].status === 'fulfilled' ? results[8].value : buildMissingEuroVolatility(prevMd?.euroVolatility),
+    chinaPropertyPrice: results[9].status === 'fulfilled' ? results[9].value : buildMissingChinaPropertyPrice(prevMd?.chinaPropertyPrice)
   };
 }
 
@@ -8058,6 +8306,7 @@ async function build() {
       chinaInflation: macroDrivers.chinaInflation,
       chinaPmi: macroDrivers.chinaPmi,
       euroVolatility: macroDrivers.euroVolatility,
+      chinaPropertyPrice: macroDrivers.chinaPropertyPrice,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,
