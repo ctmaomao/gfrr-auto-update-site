@@ -2928,44 +2928,49 @@
     "schemaVersion": "v28.0L-external-ai-production-1",
     "status": "valid",
     "displayEnabled": true,
-    "generatedAt": "2026-05-29T01:49:30.458Z",
-    "updatedAt": "2026-05-29T01:49:30.458Z",
+    "generatedAt": "2026-05-30T01:45:07.284Z",
+    "updatedAt": "2026-05-30T01:45:07.284Z",
     "sourceMode": "manual_local_compact",
     "provider": "deepseek",
     "model": "deepseek-v4-flash",
     "inputSource": "local_compact",
     "sourceSemantics": "site_structured_data_compact_summary",
-    "summaryZh": "站内结构化数据显示能源-通胀-利率链条持续施压，布伦特公开代理价差处于压力状态，消费者信心月频走弱。但数据来源存在局限：Brent 公开代理不等同于 Platts Dated Brent，消费者数据为月频慢变量。当前证据仅支持观察，不足以形成高置信度方向判断。若 Brent 回落且利率压力缓解，则当前观察信号可能失效。",
+    "summaryZh": "站内结构化数据显示能源-通胀-利率链条持续传导，布伦特102.8美元，10年期美债4.45%，10年盈亏平衡通胀2.39%。背离层提示长端利率与风险资产、消费者体感与资产定价之间存在观察性背离，但信用利差和波动率尚未明显扩张。Brent公开代理价差处于压力状态，但不等同于正式实物成交价。消费者信心指数49.8，三个月变化-6.6，为月频慢变量。整体证据支持观察，但不足以形成高置信度方向判断。若Brent回落且利率压力缓解，当前背离可能收敛。",
     "facts": [
-      "布伦特主显示值为 116.73 美元，来源为 fred:DCOILBRENTEU。",
-      "Brent 公开现货代理与期货代理价差为 22.97 美元，状态为压力。",
-      "美国10年期收益率为 4.50%，10年盈亏平衡通胀为 2.39%。",
-      "消费者信心指数 UMCSENT 为 49.8，前值 53.3，三个月变化 -6.6。",
-      "背离层综合评分 60，能源定价背离检查评分 72。",
-      "风险模块中能源评分 88，地缘政治评分 82，通胀评分 58。"
+      "布伦特原油当前值为102.75美元，来源为fred:DCOILBRENTEU。",
+      "美国10年期收益率为4.45%，10年期实际利率为2.06%。",
+      "10年盈亏平衡通胀率为2.39%。",
+      "广义美元指数为119.29。",
+      "高收益利差为2.72%。",
+      "VIX为15.74。",
+      "标普500为7563.63。",
+      "消费者信心指数（UMCSENT）为49.8，前值53.3，三个月变化-6.6，六个月变化-3.8。",
+      "Brent公开现货代理值为102.75，期货代理值为91.7，价差11.05，状态为压力。",
+      "背离层状态为watch，得分50，其中长端利率与风险资产背离、能源定价缺口、流动性信用传导、消费者与资产定价背离均处于stress状态。",
+      "风险模块中能源得分71，地缘政治69，通胀54，流动性46，债务27，银行34。"
     ],
     "inferences": [
-      "能源价格公开代理价差压力可能反映现货与期货市场定价分歧，但受限于数据来源，无法确认实物溢价。",
-      "消费者信心持续走弱与风险资产定价之间存在观察性背离，但月频数据存在发布延迟。",
-      "长端利率上行与信用利差、波动率相对平静并存，表明压力尚未明显扩散至信用/波动率领域。"
+      "能源价格高位与利率上行共同指向通胀传导压力，但信用利差和波动率未扩张表明压力尚未广泛扩散。",
+      "消费者信心持续走弱与风险资产高位形成背离，但该信号为月频慢变量，需更多数据确认。",
+      "Brent公开代理价差显著（11.05%），可能反映现货与期货市场定价差异，但受限于数据来源，不能直接推断实物溢价。"
     ],
     "modelJudgments": [
-      "能源定价背离检查评分较高（72），但数据来源为公开代理，证据强度有限，属于 watch 状态。",
-      "消费者信心数据为月频慢变量，三个月的下降趋势值得关注，但不足以单独支持方向性判断。",
-      "综合背离层评分 60，多个检查处于压力状态，但均声明为 display-only 审计层，不进入评分或决策系统。"
+      "能源-通胀-利率链条证据强度中等，布伦特和利率数据来自公开来源，但缺乏正式实物成交价验证。",
+      "背离层多个指标处于stress状态，但信用和波动率指标未扩张，表明当前压力尚未系统性升级，数据充分性不足。",
+      "消费者信心数据为月频，存在发布延迟，不足以作为实时判断依据，属于低置信度观察。"
     ],
     "scenarioHypotheses": [
       {
         "titleZh": "能源-利率-资产重定价观察",
         "triggerConditions": [
-          "Brent 公开代理价差持续处于压力状态",
+          "Brent公开代理价差持续处于stress状态",
           "美国10年期收益率继续上行",
-          "VIX 或 HY OAS 明显扩张"
+          "VIX或高收益利差明显扩张"
         ],
         "invalidationConditions": [
-          "Brent 公开代理价差收敛",
+          "Brent公开代理价差收敛",
           "美国10年期收益率回落",
-          "VIX 与 HY OAS 未扩张且综合风险分数下降"
+          "VIX与高收益利差未扩张且综合风险分数下降"
         ]
       },
       {
@@ -2973,25 +2978,25 @@
         "triggerConditions": [
           "消费者信心三个月变化改善",
           "美国10年期收益率回落",
-          "HY OAS 未扩张"
+          "高收益利差未扩张"
         ],
         "invalidationConditions": [
           "消费者信心继续走弱",
-          "HY OAS 或 VIX 扩张",
+          "高收益利差或VIX扩张",
           "风险资产定价继续与体感数据背离"
         ]
       }
     ],
     "dataGaps": [
-      "Platts Dated Brent / 正式 Dated Brent 未接入。",
-      "Brent 期限结构数据未接入。",
-      "消费者信心数据为月频，存在发布延迟。",
-      "航运 / 货运压力数据仅进入审计观察层，未量化。"
+      "Platts Dated Brent / 正式Dated Brent未接入。",
+      "Brent期限结构数据未接入。",
+      "航运/货运压力数据未接入。",
+      "消费者信心数据为月频，存在发布延迟。"
     ],
     "invalidationSignals": [
-      "Brent 回落且验证层不再提示压力。",
+      "Brent回落且验证层不再提示压力。",
       "美国10年期收益率回落。",
-      "VIX / HY OAS 未扩张且综合风险分数下降。"
+      "VIX / HY OAS未扩张且综合风险分数下降。"
     ],
     "sourceAttribution": [
       {
@@ -3008,7 +3013,7 @@
       },
       {
         "sourceLayer": "local_compact",
-        "field": "proxySpread",
+        "field": "selectedBrent",
         "claimType": "site_structured_data",
         "noteZh": "Site structured data only; non-production projection dry-run source."
       },
@@ -3020,15 +3025,15 @@
       },
       {
         "sourceLayer": "local_compact",
-        "field": "energy",
-        "claimType": "site_structured_data",
+        "field": "modelJudgments",
+        "claimType": "rule_based_interpretation",
         "noteZh": "Site structured data only; non-production projection dry-run source."
       }
     ],
     "confidence": {
       "level": "low",
       "score": 30,
-      "reasonZh": "基于站内结构化数据，尚未接入外部独立验证。关键数据源（Platts Dated Brent、期限结构）缺失，消费者数据为月频慢变量，证据不足以形成高置信度判断。"
+      "reasonZh": "基于站内结构化数据，尚未接入外部独立验证。"
     },
     "qualityReview": {
       "status": "pass",
@@ -3036,15 +3041,15 @@
       "promotionEligible": false,
       "failedDimensions": [],
       "warningDimensions": [],
-      "reviewedAt": "2026-05-29T01:49:30.458Z"
+      "reviewedAt": "2026-05-30T01:45:07.284Z"
     },
     "provenance": {
-      "runId": "26613131714",
-      "artifactName": "external-ai-production-refresh-26613131714",
-      "artifactId": "26613131714-1",
-      "artifactDigest": "5760057f457c5b9ca6144ac364e1101ebdb54ac8cf06e6aa1ad581d1610a4946",
-      "sourceCommit": "80b2bacb6f99368f91d4e293d38e015309af47b4",
-      "sourceDataUpdatedAt": "2026-05-28T23:49:08.808Z",
+      "runId": "26671062708",
+      "artifactName": "external-ai-production-refresh-26671062708",
+      "artifactId": "26671062708-1",
+      "artifactDigest": "0043709278f0996dcbd81fc30c082ca2d5d36355e14c3875bd816ce6a5d68bd4",
+      "sourceCommit": "ee390fa191a20bcd620f7084ba1b29aa233ac4f3",
+      "sourceDataUpdatedAt": "2026-05-30T01:13:40.006Z",
       "inputArtifactPath": "manual-artifacts/external-ai/deepseek-output-latest.json",
       "outputArtifactPath": "manual-artifacts/external-ai/external-ai-production-projection-latest.json",
       "qualityReviewArtifactPath": "manual-artifacts/external-ai/external-ai-quality-review-latest.json",
@@ -3052,7 +3057,7 @@
       "humanApproved": false
     },
     "freshness": {
-      "artifactGeneratedAt": "2026-05-29T01:49:30.458Z",
+      "artifactGeneratedAt": "2026-05-30T01:45:07.284Z",
       "sourceDataUpdatedAt": null,
       "maxAgeHours": 24,
       "isStale": false,
