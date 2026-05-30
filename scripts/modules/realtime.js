@@ -1,13 +1,13 @@
-﻿import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=stage-70city-detail-2';
+﻿import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=stage-11-pboc-omo-1';
 import {
   computeAgeMinutes,
   classifyFreshnessLevel,
   buildRealtimeStatusLabel,
   shouldApplyRealtimeOverlay,
   canUseRealtimePayloadValues
-} from './freshness.js?v=stage-70city-detail-2';
-import { buildHealthDashboardModel } from './health.js?v=stage-70city-detail-2';
-import { buildDecisionModel } from './decision.js?v=stage-70city-detail-2';
+} from './freshness.js?v=stage-11-pboc-omo-1';
+import { buildHealthDashboardModel } from './health.js?v=stage-11-pboc-omo-1';
+import { buildDecisionModel } from './decision.js?v=stage-11-pboc-omo-1';
 import {
   buildAssetMatrixReasons,
   buildDecisionLineDisplay,
@@ -19,7 +19,7 @@ import {
   buildSummaryDisplay,
   buildTopRisksDisplay,
   buildTriggerPanelDisplay
-} from './displayTextBuilders.js?v=stage-70city-detail-2';
+} from './displayTextBuilders.js?v=stage-11-pboc-omo-1';
 
 const STRUCTURAL_SIGNAL_LABELS_CN = {
   curveDeepInversion: '曲线深度倒挂',

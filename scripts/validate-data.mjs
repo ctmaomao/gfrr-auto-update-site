@@ -120,6 +120,8 @@ const CHINA_MACRO_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_CHINA_INFLATION_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-CPI-PPI-public-html';
 const VALID_CHINA_PMI_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-NBS-Manufacturing-PMI-public-html';
 const VALID_CHINA_PROPERTY_PRICE_SOURCE = 'NBS:70city-price-index';
+const VALID_CHINA_OMO_SOURCE = 'PBOC:OMO-announcement';
+const CHINA_OMO_OPERATION_TYPES = new Set(['逆回购', '正回购', '无操作']);
 const BRENT_LAYER_SOURCE_STATUSES = new Set(['ok', 'fallback', 'missing']);
 const BRENT_CONFIRMATION_STATUSES = new Set(['ok', 'fallback', 'missing', 'excluded']);
 const BRENT_CONFIRMATION_ROLES = new Set(['anchor', 'futures_proxy', 'confirmation', 'diagnostic']);
@@ -1253,6 +1255,51 @@ function validateChinaPropertyTierBreakdown(tierBreakdown, fieldName, sourceStat
   assert(cityCountTotal === 70, `${fieldName} tier cityCount total must be 70`);
 }
 
+function validateMacroDriversChinaOmo(dataPayload) {
+  const omo = dataPayload?.macroDrivers?.chinaOmo;
+  if (omo === undefined) return;
+  assertPlainObject(omo, 'macroDrivers.chinaOmo');
+  validateNullableIsoString(omo.updatedAt, 'macroDrivers.chinaOmo.updatedAt');
+  assert(omo.source === VALID_CHINA_OMO_SOURCE, `macroDrivers.chinaOmo.source must be ${VALID_CHINA_OMO_SOURCE}`);
+  assertString(omo.notes, 'macroDrivers.chinaOmo.notes');
+  assertString(omo.sourceStatus, 'macroDrivers.chinaOmo.sourceStatus');
+  assert(CHINA_MACRO_SOURCE_STATUSES.has(omo.sourceStatus), 'macroDrivers.chinaOmo.sourceStatus is not supported');
+  assert(
+    omo.opDate === null || (typeof omo.opDate === 'string' && /^\d{4}-\d{2}-\d{2}$/u.test(omo.opDate)),
+    'macroDrivers.chinaOmo.opDate must be YYYY-MM-DD or null'
+  );
+  assert(
+    omo.announcementNo === null || (Number.isInteger(omo.announcementNo) && omo.announcementNo > 0),
+    'macroDrivers.chinaOmo.announcementNo must be a positive integer or null'
+  );
+  assert(
+    omo.operationType === null || CHINA_OMO_OPERATION_TYPES.has(omo.operationType),
+    'macroDrivers.chinaOmo.operationType is not supported'
+  );
+  if (omo.operationType === '无操作') {
+    assert(omo.termDays === null, 'macroDrivers.chinaOmo.termDays must be null for no-op');
+    assert(omo.operationRate === null, 'macroDrivers.chinaOmo.operationRate must be null for no-op');
+    assert(omo.operationAmount === null, 'macroDrivers.chinaOmo.operationAmount must be null for no-op');
+    return;
+  }
+  if (omo.sourceStatus === 'missing') {
+    assert(omo.operationType === null, 'macroDrivers.chinaOmo.operationType must be null when missing');
+    assert(omo.termDays === null, 'macroDrivers.chinaOmo.termDays must be null when missing');
+    assert(omo.operationRate === null, 'macroDrivers.chinaOmo.operationRate must be null when missing');
+    assert(omo.operationAmount === null, 'macroDrivers.chinaOmo.operationAmount must be null when missing');
+    return;
+  }
+  assert(['逆回购', '正回购'].includes(omo.operationType), 'macroDrivers.chinaOmo.operationType must be operation type when live/fallback');
+  assert(Number.isInteger(omo.termDays) && omo.termDays > 0 && omo.termDays <= 365, 'macroDrivers.chinaOmo.termDays must be 1-365');
+  assert(
+    Number.isFinite(omo.operationRate) && omo.operationRate >= 0.005 && omo.operationRate <= 0.05,
+    'macroDrivers.chinaOmo.operationRate must be plausible decimal rate'
+  );
+  assert(
+    Number.isFinite(omo.operationAmount) && omo.operationAmount >= 0,
+    'macroDrivers.chinaOmo.operationAmount must be non-negative'
+  );
+}
 function validateMacroDriversChinaPropertyPrice(dataPayload) {
   const property = dataPayload?.macroDrivers?.chinaPropertyPrice;
   if (property === undefined) return;
@@ -2325,6 +2372,7 @@ validateMacroDriversCfetsRmb(data);
 validateMacroDriversChinaInflation(data);
 validateMacroDriversChinaPmi(data);
 validateMacroDriversChinaPropertyPrice(data);
+validateMacroDriversChinaOmo(data);
 validateHistoryWindowFields(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);

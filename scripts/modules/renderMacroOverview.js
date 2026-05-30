@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-70city-detail-2';
+} from './config.js?v=stage-11-pboc-omo-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1290,6 +1290,34 @@ function renderChinaPropertyTierBreakdown(property) {
   );
 }
 
+function renderChinaOmoLeaf({ radarData }) {
+  const omo = radarData?.macroDrivers?.chinaOmo;
+  if (!omo) return;
+  const status = omo.sourceStatus || 'missing';
+  setToneClass('c6-omo-status', 'status-bar', 'neutral');
+  setBadge('c6-omo-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : status === 'missing' ? 'OBS·缺失' : 'OBS');
+
+  const opDate = omo.opDate || '—';
+  if (omo.operationType === '无操作') {
+    setLeafText('c6-omo-number', '—');
+    setLeafText('c6-omo-unit', '今日无操作');
+    const suffix = status === 'fallback' ? ' · 回退' : '';
+    setLeafText('c6-omo-aux', `今日无操作 · ${opDate}${suffix}`);
+    return;
+  }
+
+  const operationRate = asNumber(omo.operationRate);
+  const termDays = asNumber(omo.termDays);
+  const operationAmount = asNumber(omo.operationAmount);
+  const operationType = omo.operationType || '公开市场操作';
+  const announcementNo = Number.isInteger(omo.announcementNo) ? `第${omo.announcementNo}号` : '公告号 —';
+  const termText = termDays !== null ? `${Math.round(termDays)}天${operationType}` : operationType;
+  const amountText = operationAmount !== null ? `中标 ${Math.round(operationAmount)}亿` : '中标 —';
+  const suffix = status === 'fallback' ? ' · 回退' : status === 'missing' ? ' · 待源恢复' : '';
+  setLeafText('c6-omo-number', operationRate !== null ? (operationRate * 100).toFixed(2) : '—');
+  setLeafText('c6-omo-unit', operationRate !== null ? '%' : '');
+  setLeafText('c6-omo-aux', `${termText} · ${amountText} · ${opDate} · ${announcementNo}${suffix}`);
+}
 function renderChinaPropertyLeaf({ radarData }) {
   const property = radarData?.macroDrivers?.chinaPropertyPrice;
   if (!property) {
@@ -1763,6 +1791,7 @@ function renderC6ChinaEquity({ radarData }) {
     renderChinaInflationLeaf({ radarData });
     renderChinaPmiLeaf({ radarData });
     renderChinaPropertyLeaf({ radarData });
+    renderChinaOmoLeaf({ radarData });
 
     const chinaEquity = radarData.macroDrivers?.chinaEquity;
     if (!chinaEquity) return;

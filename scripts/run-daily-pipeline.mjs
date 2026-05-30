@@ -147,6 +147,14 @@ const CHINA_NBS_INDEX_URLS = [
   'https://www.stats.gov.cn/sj/zxfb/',
   'https://www.stats.gov.cn/sj/zxfb/index_1.html'
 ];
+const CHINA_OMO_SOURCE = 'PBOC:OMO-announcement';
+const CHINA_OMO_DISPLAY_NOTE =
+  'PBOC 公开市场操作公告级数据;display-only,不进 scoring/decision/execution/position,不代表逐机构/逐笔 raw tape。';
+const CHINA_OMO_INDEX_URL = 'https://www.pbc.gov.cn/zhengcehuobisi/125207/125213/125431/125475/index.html';
+const CHINA_OMO_INDEX_BASE_URL = 'https://www.pbc.gov.cn/zhengcehuobisi/125207/125213/125431/125475/';
+const CHINA_OMO_FRESH_DAYS = 7;
+const CHINA_OMO_RATE_MIN = 0.005;
+const CHINA_OMO_RATE_MAX = 0.05;
 const CHINA_PROPERTY_PRICE_SOURCE = 'NBS:70city-price-index';
 const CHINA_PROPERTY_PRICE_DISPLAY_NOTE =
   'NBS 70 城商品住宅价格指数为城市级价格指数计数摘要;display-only,不进 scoring/decision/execution/position,不代表房源级 raw tape。';
@@ -3159,6 +3167,229 @@ async function resolveCfetsRmb(prevCfetsRmb) {
 
 
 
+
+const CHINA_OMO_TITLE_RE = /公开市场业务交易公告\s*\[(?<year>\d{4})\]第\s*(?<announcementNo>\d+)\s*号/u;
+const CHINA_OMO_ARTICLE_HREF_RE = /\/\d{14,}\/index\.html$/u;
+const CHINA_OMO_NARRATIVE_RE = /(?<year>\d{4})年(?<month>\d{1,2})月(?<day>\d{1,2})日中国人民银行[^。]*开展了(?<amount>\d+(?:\.\d+)?)\s*亿元\s*(?<term>\d+)\s*天期(?<type>逆回购|正回购)操作/u;
+const CHINA_OMO_TABLE_RE = /(?<term>\d+)\s*天\s+(?<ratePct>\d+(?:\.\d+)?)\s*%\s+(?<bid>\d+(?:\.\d+)?)\s*亿元\s+(?<amount>\d+(?:\.\d+)?)\s*亿元/u;
+const CHINA_OMO_NO_OPERATION_RE = /(?:不开展|未开展)(?:公开市场)?(?:逆回购|正回购)?操作|无公开市场操作|今日无(?:逆回购|正回购|公开市场)?操作/u;
+const CHINA_OMO_OPERATION_TYPES = new Set(['逆回购', '正回购', '无操作']);
+
+function getChinaOmoAnchorAttribute(attrs, name) {
+  const match = String(attrs || '').match(new RegExp(`${name}=["'](?<value>[^"']+)["']`, 'iu'));
+  return match?.groups?.value || '';
+}
+
+function normalizeChinaOmoPlainText(value) {
+  return String(value || '')
+    .replace(/(\d)\s*\.\s*(\d)/gu, '$1.$2')
+    .replace(/\s+/gu, ' ')
+    .trim();
+}
+
+function parseChinaOmoTitle(value) {
+  const match = String(value || '').match(CHINA_OMO_TITLE_RE);
+  if (!match?.groups) return null;
+  return {
+    announcementYear: Number(match.groups.year),
+    announcementNo: Number(match.groups.announcementNo)
+  };
+}
+
+function chinaOmoDateOnlyFromYmd(year, month, day) {
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null;
+  return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function parseChinaOmoPublishedAt(plain) {
+  const match = String(plain || '').match(/文章来源：\s*(?<date>\d{4}-\d{2}-\d{2})\s+(?<time>\d{2}:\d{2}:\d{2})/u);
+  if (!match?.groups) return null;
+  return `${match.groups.date}T${match.groups.time}+08:00`;
+}
+
+function parseChinaOmoUrlDate(url) {
+  const match = String(url || '').match(/\/(?<year>\d{4})(?<month>\d{2})(?<day>\d{2})\d+\/index\.html$/u);
+  if (!match?.groups) return null;
+  return `${match.groups.year}-${match.groups.month}-${match.groups.day}`;
+}
+
+function parseChinaOmoOpDate(plain, url) {
+  const match = String(plain || '').match(/(?<year>\d{4})年(?<month>\d{1,2})月(?<day>\d{1,2})日中国人民银行/u);
+  if (match?.groups) {
+    return chinaOmoDateOnlyFromYmd(Number(match.groups.year), Number(match.groups.month), Number(match.groups.day));
+  }
+  return parseChinaOmoUrlDate(url);
+}
+
+function isPlausibleChinaOmoOperationRate(value) {
+  return Number.isFinite(value) && value >= CHINA_OMO_RATE_MIN && value <= CHINA_OMO_RATE_MAX;
+}
+
+function isFreshChinaOmo(opDate, publishedAt) {
+  const publishedDate = dateOnlyIso(publishedAt);
+  return isFreshDateOnly(publishedDate || opDate, CHINA_OMO_FRESH_DAYS);
+}
+
+function pickChinaOmoAnnouncementLink(indexHtml) {
+  const rows = [];
+  const linkRe = /<a\b(?<attrs>[^>]*)>(?<body>[\s\S]*?)<\/a>/giu;
+  for (const match of String(indexHtml || '').matchAll(linkRe)) {
+    const attrs = match.groups?.attrs || '';
+    const href = getChinaOmoAnchorAttribute(attrs, 'href');
+    if (!CHINA_OMO_ARTICLE_HREF_RE.test(href)) continue;
+    const titleAttr = getChinaOmoAnchorAttribute(attrs, 'title');
+    const bodyText = normalizeChinaOmoPlainText(htmlToPlainText(match.groups?.body || ''));
+    const title = normalizeChinaOmoPlainText(titleAttr || bodyText);
+    const parsedTitle = parseChinaOmoTitle(title);
+    if (!parsedTitle) continue;
+    const url = resolveAbsoluteUrl(href, CHINA_OMO_INDEX_BASE_URL);
+    if (!url || url === CHINA_OMO_INDEX_URL) continue;
+    rows.push({
+      ...parsedTitle,
+      title,
+      href,
+      url,
+      opDate: parseChinaOmoUrlDate(url)
+    });
+  }
+  return rows
+    .filter((row, index, list) => list.findIndex((item) => item.url === row.url) === index)
+    .sort((a, b) => {
+      const yearDiff = a.announcementYear - b.announcementYear;
+      if (yearDiff !== 0) return yearDiff;
+      const noDiff = a.announcementNo - b.announcementNo;
+      if (noDiff !== 0) return noDiff;
+      return String(a.opDate || '').localeCompare(String(b.opDate || ''));
+    })
+    .at(-1) || null;
+}
+
+function parseChinaOmoArticle(articleHtml, link) {
+  const plain = normalizeChinaOmoPlainText(htmlToPlainText(articleHtml));
+  const titleInfo = parseChinaOmoTitle(link?.title) || parseChinaOmoTitle(plain);
+  const publishedAt = parseChinaOmoPublishedAt(plain);
+  const opDate = parseChinaOmoOpDate(plain, link?.url) || link?.opDate || null;
+  if (!titleInfo?.announcementNo) throw new Error('pboc:omo missing announcementNo');
+  if (!opDate) throw new Error('pboc:omo missing opDate');
+  if (!isFreshChinaOmo(opDate, publishedAt)) throw new Error('pboc:omo stale');
+
+  if (CHINA_OMO_NO_OPERATION_RE.test(plain)) {
+    return {
+      updatedAt: publishedAt || dateOnlyToIso(opDate),
+      source: CHINA_OMO_SOURCE,
+      sourceStatus: 'live',
+      notes: CHINA_OMO_DISPLAY_NOTE,
+      opDate,
+      announcementNo: titleInfo.announcementNo,
+      operationType: '无操作',
+      termDays: null,
+      operationRate: null,
+      operationAmount: null
+    };
+  }
+
+  const narrativeMatch = plain.match(CHINA_OMO_NARRATIVE_RE);
+  const tableMatch = plain.match(CHINA_OMO_TABLE_RE);
+  if (!narrativeMatch?.groups) throw new Error('pboc:omo missing operation narrative');
+  if (!tableMatch?.groups) throw new Error('pboc:omo missing operation table');
+
+  const narrativeTerm = Number(narrativeMatch.groups.term);
+  const tableTerm = Number(tableMatch.groups.term);
+  if (!Number.isInteger(narrativeTerm) || !Number.isInteger(tableTerm) || narrativeTerm !== tableTerm) {
+    throw new Error('pboc:omo term mismatch');
+  }
+  const operationType = narrativeMatch.groups.type;
+  if (!CHINA_OMO_OPERATION_TYPES.has(operationType)) throw new Error('pboc:omo unsupported operation type');
+
+  const operationRate = Number(tableMatch.groups.ratePct) / 100;
+  const operationAmount = Number(tableMatch.groups.amount);
+  if (!isPlausibleChinaOmoOperationRate(operationRate)) throw new Error('pboc:omo operationRate out of plausible range');
+  if (!Number.isFinite(operationAmount) || operationAmount < 0) throw new Error('pboc:omo invalid operationAmount');
+
+  return {
+    updatedAt: publishedAt || dateOnlyToIso(opDate),
+    source: CHINA_OMO_SOURCE,
+    sourceStatus: 'live',
+    notes: CHINA_OMO_DISPLAY_NOTE,
+    opDate,
+    announcementNo: titleInfo.announcementNo,
+    operationType,
+    termDays: tableTerm,
+    operationRate: +operationRate.toFixed(6),
+    operationAmount
+  };
+}
+
+function normalizePreviousChinaOmo(previous) {
+  if (!previous || previous.source !== CHINA_OMO_SOURCE || !isFreshChinaOmo(previous.opDate, previous.updatedAt)) return null;
+  const operationType = CHINA_OMO_OPERATION_TYPES.has(previous.operationType) ? previous.operationType : null;
+  if (!operationType) return null;
+  const base = {
+    updatedAt: typeof previous.updatedAt === 'string' ? previous.updatedAt : null,
+    source: CHINA_OMO_SOURCE,
+    sourceStatus: 'fallback',
+    notes: CHINA_OMO_DISPLAY_NOTE,
+    opDate: typeof previous.opDate === 'string' ? previous.opDate : null,
+    announcementNo: Number.isInteger(previous.announcementNo) ? previous.announcementNo : null,
+    operationType
+  };
+  if (operationType === '无操作') {
+    return {
+      ...base,
+      termDays: null,
+      operationRate: null,
+      operationAmount: null
+    };
+  }
+  const termDays = Number(previous.termDays);
+  const operationRate = Number(previous.operationRate);
+  const operationAmount = Number(previous.operationAmount);
+  if (!Number.isInteger(termDays) || termDays <= 0) return null;
+  if (!isPlausibleChinaOmoOperationRate(operationRate)) return null;
+  if (!Number.isFinite(operationAmount) || operationAmount < 0) return null;
+  return {
+    ...base,
+    termDays,
+    operationRate,
+    operationAmount
+  };
+}
+
+function buildMissingChinaOmo(prevChinaOmo = null) {
+  const fallback = normalizePreviousChinaOmo(prevChinaOmo);
+  if (fallback) return fallback;
+  return {
+    updatedAt: null,
+    source: CHINA_OMO_SOURCE,
+    sourceStatus: 'missing',
+    notes: CHINA_OMO_DISPLAY_NOTE,
+    opDate: null,
+    announcementNo: null,
+    operationType: null,
+    termDays: null,
+    operationRate: null,
+    operationAmount: null
+  };
+}
+
+async function resolveChinaOmo(prevChinaOmo) {
+  try {
+    const indexHtml = await retryFetch(CHINA_OMO_INDEX_URL, 'pboc:omo-index', MACRO_FETCH_TIMEOUT_MS, {
+      userAgent: CHINA_MACRO_HTML_USER_AGENT,
+      headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
+    });
+    const link = pickChinaOmoAnnouncementLink(indexHtml);
+    if (!link) throw new Error('pboc:omo missing announcement link');
+    const articleHtml = await retryFetch(link.url, 'pboc:omo-article', MACRO_FETCH_TIMEOUT_MS, {
+      userAgent: CHINA_MACRO_HTML_USER_AGENT,
+      headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
+    });
+    return parseChinaOmoArticle(articleHtml, link);
+  } catch (err) {
+    console.warn(`[china-omo-missing] ${stringifyFetchError(err)}`);
+    return buildMissingChinaOmo(prevChinaOmo);
+  }
+}
 const CHINA_PROPERTY_PRICE_TITLE_RE = /(?<year>\d{4})\s*年\s*(?<month>\d{1,2})\s*月份?\s*70\s*个大中城市商品住宅销售价格变动情况/u;
 const CHINA_PROPERTY_PRICE_HREF_RE = /^\.\/\d{6}\/t\d+_\d+\.html$/u;
 const CHINA_PROPERTY_PRICE_TABLE_ANCHORS = {
@@ -7410,7 +7641,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveChinaInflation(prevMd.chinaInflation),
     resolveChinaPmi(prevMd.chinaPmi),
     resolveEuroVolatility(prevMd.euroVolatility),
-    resolveChinaPropertyPrice(prevMd.chinaPropertyPrice)
+    resolveChinaPropertyPrice(prevMd.chinaPropertyPrice),
+    resolveChinaOmo(prevMd.chinaOmo)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -7462,6 +7694,7 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   const chinaPmi = results[17].status === 'fulfilled' ? results[17].value : buildMissingChinaPmi(prevMd.chinaPmi);
   const euroVolatility = results[18].status === 'fulfilled' ? results[18].value : buildMissingEuroVolatility(prevMd.euroVolatility);
   const chinaPropertyPrice = results[19].status === 'fulfilled' ? results[19].value : buildMissingChinaPropertyPrice(prevMd.chinaPropertyPrice);
+  const chinaOmo = results[20].status === 'fulfilled' ? results[20].value : buildMissingChinaOmo(prevMd.chinaOmo);
 
   return {
     fedLiquidity,
@@ -7483,7 +7716,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     chinaInflation,
     chinaPmi,
     euroVolatility,
-    chinaPropertyPrice
+    chinaPropertyPrice,
+    chinaOmo
   };
 }
 
@@ -7498,7 +7732,8 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     resolveChinaInflation(prevMd?.chinaInflation),
     resolveChinaPmi(prevMd?.chinaPmi),
     resolveEuroVolatility(prevMd?.euroVolatility),
-    resolveChinaPropertyPrice(prevMd?.chinaPropertyPrice)
+    resolveChinaPropertyPrice(prevMd?.chinaPropertyPrice),
+    resolveChinaOmo(prevMd?.chinaOmo)
   ]);
   return {
     worldEconomy: results[0].status === 'fulfilled' ? results[0].value : buildMissingWorldEconomy(prevMd?.worldEconomy),
@@ -7510,7 +7745,8 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     chinaInflation: results[6].status === 'fulfilled' ? results[6].value : buildMissingChinaInflation(prevMd?.chinaInflation),
     chinaPmi: results[7].status === 'fulfilled' ? results[7].value : buildMissingChinaPmi(prevMd?.chinaPmi),
     euroVolatility: results[8].status === 'fulfilled' ? results[8].value : buildMissingEuroVolatility(prevMd?.euroVolatility),
-    chinaPropertyPrice: results[9].status === 'fulfilled' ? results[9].value : buildMissingChinaPropertyPrice(prevMd?.chinaPropertyPrice)
+    chinaPropertyPrice: results[9].status === 'fulfilled' ? results[9].value : buildMissingChinaPropertyPrice(prevMd?.chinaPropertyPrice),
+    chinaOmo: results[10].status === 'fulfilled' ? results[10].value : buildMissingChinaOmo(prevMd?.chinaOmo)
   };
 }
 
@@ -8432,6 +8668,7 @@ async function build() {
       chinaPmi: macroDrivers.chinaPmi,
       euroVolatility: macroDrivers.euroVolatility,
       chinaPropertyPrice: macroDrivers.chinaPropertyPrice,
+      chinaOmo: macroDrivers.chinaOmo,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,
