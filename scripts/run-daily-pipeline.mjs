@@ -3602,15 +3602,15 @@ function parseChinaTsfArticle(articleHtml, link) {
     : null;
   const titleInfo = parseChinaTsfTitle(link?.title) || parseChinaTsfTitle(plain);
   const refMonth = bodyRefMonth || titleInfo?.refMonth || null;
-  if (!refMonth) throw new Error('pboc:tsf missing refMonth');
+  if (!refMonth) throw new Error('eastmoney:tsf missing refMonth');
 
   const publishedAt = link?.publishedAt || parseChinaTsfPublishedAt(plain) || null;
-  if (!isFreshChinaTsf(refMonth, publishedAt)) throw new Error('pboc:tsf stale');
+  if (!isFreshChinaTsf(refMonth, publishedAt)) throw new Error('eastmoney:tsf stale');
 
   const stockMatch = plain.match(CHINA_TSF_STOCK_YOY_RE);
-  if (!stockMatch?.groups) throw new Error('pboc:tsf missing stockYoY');
+  if (!stockMatch?.groups) throw new Error('eastmoney:tsf missing stockYoY');
   const stockYoY = (stockMatch.groups.verb === '下降' ? -1 : 1) * (Number(stockMatch.groups.yoy) / 100);
-  if (!isPlausibleChinaTsfStockYoY(stockYoY)) throw new Error('pboc:tsf stockYoY out of plausible range');
+  if (!isPlausibleChinaTsfStockYoY(stockYoY)) throw new Error('eastmoney:tsf stockYoY out of plausible range');
 
   const ytdMatch = plain.match(CHINA_TSF_YTD_INCREMENT_RE);
   const ytdIncrementYi = ytdMatch?.groups ? chinaTsfAmountToYi(ytdMatch.groups) : null;
