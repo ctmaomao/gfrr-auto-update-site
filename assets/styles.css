@@ -1,4 +1,4 @@
-  :root {
+﻿  :root {
     --paper-bg: #FBF7F0;
     --paper-bg-canvas: #F5F0E5;
     --paper-ink: #1A1815;
@@ -132,6 +132,12 @@
   .indicator-card .agg-rows div { display: flex; gap: 6px; flex-wrap: wrap; }
   .indicator-card .agg-rows .k { color: var(--paper-muted); }
   .indicator-card .agg-rows .v { color: var(--paper-ink); font-weight: 600; }
+  .indicator-card .card-local-details { margin-top: 8px; }
+  .indicator-card .card-local-details > summary { cursor: pointer; font-family: var(--font-serif); font-size: 12px; color: var(--paper-warm); line-height: 1.65; font-style: italic; }
+  .indicator-card .city-tier-breakdown { margin-top: 6px; }
+  .indicator-card .city-tier-block { margin-top: 6px; }
+  .indicator-card .city-tier-title { margin: 0; font-family: var(--font-serif); font-size: 12px; color: var(--paper-warm); line-height: 1.65; font-style: italic; font-weight: 600; }
+  .indicator-card .city-tier-line, .indicator-card .city-tier-empty { margin: 2px 0 0; font-family: var(--font-serif); font-size: 12px; color: var(--paper-warm); line-height: 1.65; font-style: italic; }
   .indicator-card .corner { position: absolute; top: 6px; right: 6px; font-family: var(--font-mono); font-size: 8px; padding: 2px 4px; letter-spacing: 0.1em; background: var(--paper-muted); color: var(--paper-bg); }
   .indicator-card .corner.p1 { background: var(--risk-orange); }
   .indicator-card .corner.p2 { background: #c79b54; }

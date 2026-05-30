@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-70city-detail-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-70city-detail-2';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

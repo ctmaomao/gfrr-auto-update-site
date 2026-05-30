@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=stage-70city-detail-1';
-import { formatOnRrpYiUsd } from './format.js?v=stage-70city-detail-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=stage-70city-detail-2';
+import { formatOnRrpYiUsd } from './format.js?v=stage-70city-detail-2';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

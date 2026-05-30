@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-70city-detail-1';
+} from './config.js?v=stage-70city-detail-2';
 
 // ---------- 阈值 + 派生 helper ----------
 
