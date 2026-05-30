@@ -1,19 +1,19 @@
 {
   "version": "v27.0",
-  "updatedAt": "2026-05-30T09:36:42.851Z",
+  "updatedAt": "2026-05-30T10:20:55.618Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
     "commitSha": "ce3ac79c969f5c1ebda159445dcb6955e40d86e7",
     "updatedAt": "2026-05-30T09:31:57.663Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-05-30T09:36:42.851Z"
+    "capturedAt": "2026-05-30T10:20:55.618Z"
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-05-30T09:36:42.851Z",
+    "generatedAt": "2026-05-30T10:20:55.618Z",
     "macroState": "滞胀冲击 / 风险缓和",
-    "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察，结论仍按 display-only 解释层处理。",
+    "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察。",
     "dominantRiskChain": {
       "key": "energy_inflation_rates",
       "labelZh": "能源 → 通胀 → 利率压力",
@@ -81,8 +81,8 @@
     ],
     "dataGaps": [
       "消费者信心与资产价格背离仍缺少稳定月频输入。",
-      "Brent physical proxy / term structure 尚未纳入本数据产物。",
-      "shipping / freight stress 已进入 macroDrivers.shippingFreight 审计观察层。"
+      "Brent 实物价格与期限结构尚未纳入本期数据。",
+      "航运与运价压力已纳入本期观察。"
     ],
     "confidence": {
       "level": "high",
@@ -129,7 +129,7 @@
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-05-30T09:36:42.851Z",
+    "generatedAt": "2026-05-30T10:20:55.618Z",
     "score": 50,
     "state": "watch",
     "stateZh": "背离观察",
@@ -434,7 +434,7 @@
   },
   "brentPricingLayer": {
     "contractVersion": "v28.0I-5A",
-    "generatedAt": "2026-05-30T09:36:42.851Z",
+    "generatedAt": "2026-05-30T10:20:55.618Z",
     "mode": "public_proxy_observation",
     "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
     "selectedBrent": {
@@ -473,7 +473,7 @@
       "source": "ICE:Brent-Crude-Futures-contract-data",
       "sourceUrl": "https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430",
       "curveStatus": "live_structure_only",
-      "fetchedAt": "2026-05-30T09:36:42.851Z",
+      "fetchedAt": "2026-05-30T10:20:55.618Z",
       "contracts": [
         {
           "contract": "Jul26",
@@ -1283,8 +1283,8 @@
         "pmi": {
           "httpStatus": 200,
           "landingHttpStatus": 200,
-          "latencyMs": 2140,
-          "parsedAt": "2026-05-30T09:36:43.233Z",
+          "latencyMs": 1424,
+          "parsedAt": "2026-05-30T10:20:56.007Z",
           "reportUrl": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/april/",
           "reportMonthLabel": "April"
         }
@@ -2678,7 +2678,7 @@
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-05-30T09:36:42.851Z",
+        "triggeredAgo": "2026-05-30T10:20:55.618Z",
         "condition": "结构性双压触发红灯（逆回购准备金临界告急）。系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -2686,7 +2686,7 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-05-30T09:36:42.851Z",
+        "triggeredAgo": "2026-05-30T10:20:55.618Z",
         "condition": "ON RRP 116.77 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
@@ -2694,7 +2694,7 @@
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-05-30T09:36:42.851Z",
+        "triggeredAgo": "2026-05-30T10:20:55.618Z",
         "condition": "实时数据源刷新成功。",
         "action": "继续使用回退值，不中断系统"
       }
@@ -2733,7 +2733,7 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-05-30T09:36:42.851Z",
+    "lastRun": "2026-05-30T10:20:55.618Z",
     "notes": [
       "实时数据源刷新成功。"
     ]
@@ -2972,7 +2972,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-05-30T09:36:42.851Z",
+    "generatedAt": "2026-05-30T10:20:55.618Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [
