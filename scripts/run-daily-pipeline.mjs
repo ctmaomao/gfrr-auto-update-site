@@ -155,11 +155,15 @@ const CHINA_OMO_INDEX_BASE_URL = 'https://www.pbc.gov.cn/zhengcehuobisi/125207/1
 const CHINA_OMO_FRESH_DAYS = 7;
 const CHINA_OMO_RATE_MIN = 0.005;
 const CHINA_OMO_RATE_MAX = 0.05;
-const CHINA_TSF_SOURCE = 'PBOC:TSF-report';
+const CHINA_TSF_SOURCE = 'EastMoney:TSF-aggregated-report';
 const CHINA_TSF_DISPLAY_NOTE =
-  'PBOC 金融统计数据报告中的社会融资规模统计为报告级累计数据;display-only,不进 scoring/decision/execution/position,不代表贷款笔级/机构级 raw tape。';
-const CHINA_TSF_INDEX_URL = 'https://www.pbc.gov.cn/diaochatongjisi/116219/116225/index.html';
-const CHINA_TSF_INDEX_BASE_URL = 'https://www.pbc.gov.cn/diaochatongjisi/116219/116225/';
+  '东方财富聚合转载的央行社会融资规模月度报告(公开财经媒体,如中国网财经),非 PBOC 官方原始报告;社融为报告级月度累计数据;display-only,不进 scoring/decision/execution/position,不代表贷款笔级/机构级 raw tape。';
+const CHINA_TSF_SEARCH_BASE_URL = 'https://search-api-web.eastmoney.com/search/jsonp';
+const CHINA_TSF_SEARCH_KEYWORD = '社会融资规模 增量累计';
+const CHINA_TSF_ARTICLE_BASE_URL = 'https://finance.eastmoney.com/a/';
+const CHINA_TSF_MAX_ARTICLE_FETCH = 6;
+const CHINA_TSF_SEARCH_EXCLUDE_RE = /山西|房企|可转债|同业存单|评论|解读|观察/u;
+const CHINA_TSF_BODY_REF_MONTH_RE = /(?<year>\d{4})年(?<month>\d{1,2})月末社会融资规模存量/u;
 const CHINA_TSF_FRESH_DAYS = 45;
 const CHINA_TSF_REF_FRESH_DAYS = 60;
 const CHINA_TSF_STOCK_YOY_MIN = -0.2;
@@ -3454,7 +3458,6 @@ async function resolveChinaOmo(prevChinaOmo) {
   }
 }
 const CHINA_TSF_TITLE_RE = /(?<year>\d{4})年(?:(?<month>\d{1,2})月|(?<quarter>一季度|上半年|前三季度))?金融统计数据报告/u;
-const CHINA_TSF_ARTICLE_HREF_RE = /\/\d{13,}\/index\.html$/u;
 const CHINA_TSF_STOCK_YOY_RE = /社会融资规模存量为(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)，同比(?<verb>增长|下降)(?<yoy>\d+(?:\.\d+)?)%/u;
 const CHINA_TSF_YTD_INCREMENT_RE = /社会融资规模增量(?:累计)?为(?<value>\d+(?:\.\d+)?)(?<unit>万亿元|亿元)/u;
 const CHINA_TSF_INCREMENT_PERIOD_RE = /(?<label>前[一二三四五六七八九十\d]+个月|一季度|上半年|前三季度)社会融资规模增量(?:累计)?为/u;
@@ -3473,15 +3476,11 @@ const CHINA_TSF_CHINESE_MONTH_NUMBERS = new Map([
   ['十二', 12]
 ]);
 
-function getChinaTsfAnchorAttribute(attrs, name) {
-  const match = String(attrs || '').match(new RegExp(`${name}=["'](?<value>[^"']+)["']`, 'iu'));
-  return match?.groups?.value || '';
-}
-
 function normalizeChinaTsfPlainText(text) {
   return String(text || '')
     .replace(/\s+/gu, ' ')
     .replace(/(\d+)\.\s+(\d+)/gu, '$1.$2')
+    .replace(/(?<=\p{Script=Han})\s+(?=\p{Script=Han})/gu, '')
     .trim();
 }
 
@@ -3522,12 +3521,6 @@ function parseChinaTsfPublishedAt(plain) {
   const match = normalizeChinaTsfPlainText(plain).match(/文章来源：\s*(?<date>\d{4}-\d{2}-\d{2})\s+(?<time>\d{2}:\d{2}:\d{2})/u);
   if (!match?.groups) return null;
   return `${match.groups.date}T${match.groups.time}+08:00`;
-}
-
-function parseChinaTsfUrlDate(url) {
-  const match = String(url || '').match(/\/(?<year>\d{4})(?<month>\d{2})(?<day>\d{2})\d+\/index\.html$/u);
-  if (!match?.groups) return null;
-  return `${match.groups.year}-${match.groups.month}-${match.groups.day}`;
 }
 
 function parseChinaTsfChineseMonthCount(text) {
@@ -3580,38 +3573,6 @@ function isFreshChinaTsf(refMonth, publishedAt) {
   return isFreshDateOnly(endOfRefMonthDateOnly(refMonth), CHINA_TSF_REF_FRESH_DAYS);
 }
 
-function pickChinaTsfReportLink(indexHtml) {
-  const rows = [];
-  const linkRe = /<a\b(?<attrs>[^>]*)>(?<body>[\s\S]*?)<\/a>/giu;
-  for (const match of String(indexHtml || '').matchAll(linkRe)) {
-    const attrs = match.groups?.attrs || '';
-    const href = getChinaTsfAnchorAttribute(attrs, 'href');
-    if (!CHINA_TSF_ARTICLE_HREF_RE.test(href)) continue;
-    const titleAttr = getChinaTsfAnchorAttribute(attrs, 'title');
-    const bodyText = normalizeChinaTsfPlainText(htmlToPlainText(match.groups?.body || ''));
-    const title = normalizeChinaTsfPlainText(titleAttr || bodyText);
-    const parsedTitle = parseChinaTsfTitle(title);
-    if (!parsedTitle) continue;
-    const url = resolveAbsoluteUrl(href, CHINA_TSF_INDEX_BASE_URL);
-    if (!url || url === CHINA_TSF_INDEX_URL) continue;
-    rows.push({
-      ...parsedTitle,
-      title,
-      href,
-      url,
-      urlDate: parseChinaTsfUrlDate(url)
-    });
-  }
-  return rows
-    .filter((row, index, list) => list.findIndex((item) => item.url === row.url) === index)
-    .sort((a, b) => {
-      const refDiff = String(a.refMonth || '').localeCompare(String(b.refMonth || ''));
-      if (refDiff !== 0) return refDiff;
-      return String(a.urlDate || '').localeCompare(String(b.urlDate || ''));
-    })
-    .at(-1) || null;
-}
-
 function parseChinaTsfComponents(plain) {
   const components = [];
   for (const definition of CHINA_TSF_COMPONENT_DEFINITIONS) {
@@ -3635,11 +3596,15 @@ function parseChinaTsfComponents(plain) {
 
 function parseChinaTsfArticle(articleHtml, link) {
   const plain = normalizeChinaTsfPlainText(htmlToPlainText(articleHtml));
+  const bodyRefMonthMatch = plain.match(CHINA_TSF_BODY_REF_MONTH_RE);
+  const bodyRefMonth = bodyRefMonthMatch?.groups
+    ? monthNumberToRefMonth(Number(bodyRefMonthMatch.groups.year), Number(bodyRefMonthMatch.groups.month) - 1)
+    : null;
   const titleInfo = parseChinaTsfTitle(link?.title) || parseChinaTsfTitle(plain);
-  const refMonth = titleInfo?.refMonth || null;
+  const refMonth = bodyRefMonth || titleInfo?.refMonth || null;
   if (!refMonth) throw new Error('pboc:tsf missing refMonth');
 
-  const publishedAt = parseChinaTsfPublishedAt(plain) || dateOnlyToIso(parseChinaTsfUrlDate(link?.url));
+  const publishedAt = link?.publishedAt || parseChinaTsfPublishedAt(plain) || null;
   if (!isFreshChinaTsf(refMonth, publishedAt)) throw new Error('pboc:tsf stale');
 
   const stockMatch = plain.match(CHINA_TSF_STOCK_YOY_RE);
@@ -3730,19 +3695,74 @@ function buildMissingChinaTsf(prevChinaTsf = null) {
   };
 }
 
+function eastMoneyDateToIso(date) {
+  const match = String(date || '').match(/^(?<d>\d{4}-\d{2}-\d{2})\s+(?<t>\d{2}:\d{2}:\d{2})$/u);
+  return match?.groups ? `${match.groups.d}T${match.groups.t}+08:00` : null;
+}
+
+function parseEastMoneyJsonp(raw) {
+  const stripped = String(raw || '').trim().replace(/^jQuery\(/u, '').replace(/\)\s*;?\s*$/u, '');
+  return JSON.parse(stripped);
+}
+
+async function fetchChinaTsfSearchCandidates() {
+  const param = encodeURIComponent(JSON.stringify({
+    uid: '',
+    keyword: CHINA_TSF_SEARCH_KEYWORD,
+    type: ['cmsArticleWebOld'],
+    client: 'web',
+    clientType: 'web',
+    pageIndex: 1,
+    pageSize: 20
+  }));
+  const url = `${CHINA_TSF_SEARCH_BASE_URL}?cb=jQuery&param=${param}`;
+  const raw = await retryFetch(url, 'eastmoney:tsf-search', MACRO_FETCH_TIMEOUT_MS, {
+    userAgent: CHINA_MACRO_HTML_USER_AGENT,
+    headers: { Accept: 'text/javascript,application/javascript,*/*' }
+  });
+  const payload = parseEastMoneyJsonp(raw);
+  const rows = Array.isArray(payload?.result?.cmsArticleWebOld) ? payload.result.cmsArticleWebOld : [];
+  const candidates = [];
+  for (const row of rows) {
+    const code = typeof row?.code === 'string' ? row.code.trim() : '';
+    if (!/^\d{13,}$/u.test(code)) continue;
+    const title = normalizeChinaTsfPlainText(htmlToPlainText(String(row?.title || '')));
+    const content = normalizeChinaTsfPlainText(htmlToPlainText(String(row?.content || '')));
+    const haystack = `${title} ${content}`;
+    if (!haystack.includes('社会融资规模') || !haystack.includes('增量累计')) continue;
+    if (CHINA_TSF_SEARCH_EXCLUDE_RE.test(haystack)) continue;
+    const publishedAt = eastMoneyDateToIso(row?.date);
+    candidates.push({
+      code,
+      url: `${CHINA_TSF_ARTICLE_BASE_URL}${code}.html`,
+      title,
+      mediaName: typeof row?.mediaName === 'string' ? row.mediaName.trim() : '',
+      publishedAt,
+      dateRaw: typeof row?.date === 'string' ? row.date.trim() : ''
+    });
+  }
+  return candidates.sort((a, b) => b.dateRaw.localeCompare(a.dateRaw));
+}
+
 async function resolveChinaTsf(prevChinaTsf) {
   try {
-    const indexHtml = await retryFetch(CHINA_TSF_INDEX_URL, 'pboc:tsf-index', MACRO_FETCH_TIMEOUT_MS, {
-      userAgent: CHINA_MACRO_HTML_USER_AGENT,
-      headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
-    });
-    const link = pickChinaTsfReportLink(indexHtml);
-    if (!link) throw new Error('pboc:tsf missing report link');
-    const articleHtml = await retryFetch(link.url, 'pboc:tsf-article', MACRO_FETCH_TIMEOUT_MS, {
-      userAgent: CHINA_MACRO_HTML_USER_AGENT,
-      headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
-    });
-    return parseChinaTsfArticle(articleHtml, link);
+    const candidates = await fetchChinaTsfSearchCandidates();
+    if (!candidates.length) throw new Error('eastmoney:tsf no search candidates');
+    let lastError = null;
+    for (const candidate of candidates.slice(0, CHINA_TSF_MAX_ARTICLE_FETCH)) {
+      try {
+        const articleHtml = await retryFetch(candidate.url, 'eastmoney:tsf-article', MACRO_FETCH_TIMEOUT_MS, {
+          userAgent: CHINA_MACRO_HTML_USER_AGENT,
+          headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
+        });
+        const parsed = parseChinaTsfArticle(articleHtml, candidate);
+        if (parsed.componentsStatus === 'complete') return parsed;
+        lastError = new Error('eastmoney:tsf candidate components incomplete');
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    throw lastError || new Error('eastmoney:tsf no complete report among candidates');
   } catch (err) {
     console.warn(`[china-tsf-missing] ${stringifyFetchError(err)}`);
     return buildMissingChinaTsf(prevChinaTsf);

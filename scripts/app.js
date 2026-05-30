@@ -126,7 +126,7 @@ async function main() {
 
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=stage-13-pboc-mlf-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=stage-14-tsf-eastmoney-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData });
   } catch (error) {
     console.error('[app] Failed to import / run renderMacroOverview:', error);

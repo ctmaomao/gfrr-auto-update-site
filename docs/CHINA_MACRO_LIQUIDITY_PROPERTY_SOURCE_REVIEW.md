@@ -7,6 +7,8 @@
 
 调研日期:2026-05-29。Claude 设计/边界复核 + Codex 可接入性实证分析。本文**不批准** live fetch、不写生产数据、不改 scoring。
 
+Stage 12 TSF 勘误:后续线上实测确认 pbc.gov.cn 在 GitHub US runner 被地理封锁,因此 Stage 14 将社融 TSF 实采源改为 EastMoney 聚合转载;audit-only/display-only 边界不变,OMO/MLF 同类问题待后续 stage 单独切换。
+
 ---
 
 ## 0. 结论修正(从「均不可达」到三分类)
