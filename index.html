@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=stage-c5-batch1-world-indices-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=stage-c5-batch2-world-indices-1" />
 </head>
 <body>
   <div class="container">
@@ -327,8 +327,8 @@
 
         <!-- C5: 世界经济 -->
         <div class="reader-cat-block">
-          <div class="reader-cat-header"><h3>世界经济</h3><span class="en">WORLD ECONOMY</span><span class="counts">8 live</span></div>
-          <p class="cat-intro">世界经济公开观察层：欧美亚主要股指（STOXX 50 / 日经 225 / DAX / 英国 FTSE 100 / 法国 CAC 40 / 泛欧 STOXX 600 / 韩国 KOSPI）+ 欧元区波动率（VSTOXX），均为公开指数，仅供观察。</p>
+          <div class="reader-cat-header"><h3>世界经济</h3><span class="en">WORLD ECONOMY</span><span class="counts">11 live</span></div>
+          <p class="cat-intro">世界经济公开观察层：欧美亚主要股指（STOXX 50 / 日经 225 / DAX / 英国 FTSE 100 / 法国 CAC 40 / 泛欧 STOXX 600 / 韩国 KOSPI / 澳洲 ASX 200 / 新加坡 STI / 台湾加权）+ 欧元区波动率（VSTOXX），均为公开指数，仅供观察。</p>
           <div class="card-grid">
 
             <article class="indicator-card"><div class="status-bar neutral" id="c5-stoxx50-status"></div><div class="head"><div><div class="name-en">STOXX 50</div><div class="name-zh">欧元区大盘</div></div><span class="badge neutral" id="c5-stoxx50-badge">OBS</span></div><div class="number" id="c5-stoxx50-number">6071</div><div class="aux" id="c5-stoxx50-aux">近5日 —</div><p class="note">欧股 vs 美股相对强弱反映全球资金分配。</p><div class="meta"><span>live</span><span>Yahoo ^STOXX50E</span></div></article>
@@ -338,6 +338,9 @@
             <article class="indicator-card"><div class="status-bar neutral" id="c5-cac40-status"></div><div class="head"><div><div class="name-en">CAC 40</div><div class="name-zh">法国 CAC 40</div></div><span class="badge neutral" id="c5-cac40-badge">OBS</span></div><div class="number" id="c5-cac40-number">8183</div><div class="aux" id="c5-cac40-aux">近5日 —</div><p class="note">法国大盘，奢侈品与工业权重高。</p><div class="meta"><span>live</span><span>Yahoo ^FCHI</span></div></article>
             <article class="indicator-card"><div class="status-bar neutral" id="c5-stoxx600-status"></div><div class="head"><div><div class="name-en">STOXX 600</div><div class="name-zh">泛欧 600</div></div><span class="badge neutral" id="c5-stoxx600-badge">OBS</span></div><div class="number" id="c5-stoxx600-number">626</div><div class="aux" id="c5-stoxx600-aux">近5日 —</div><p class="note">覆盖欧洲 17 国 600 家公司，欧洲股市最宽口径。</p><div class="meta"><span>live</span><span>Yahoo ^STOXX</span></div></article>
             <article class="indicator-card"><div class="status-bar neutral" id="c5-kospi-status"></div><div class="head"><div><div class="name-en">KOSPI</div><div class="name-zh">韩国综合</div></div><span class="badge neutral" id="c5-kospi-badge">OBS</span></div><div class="number" id="c5-kospi-number">8476</div><div class="aux" id="c5-kospi-aux">近5日 —</div><p class="note">韩国大盘，半导体与出口周期的领先观察点。</p><div class="meta"><span>live</span><span>Yahoo ^KS11</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-asx200-status"></div><div class="head"><div><div class="name-en">ASX 200</div><div class="name-zh">澳洲 ASX 200</div></div><span class="badge neutral" id="c5-asx200-badge">OBS</span></div><div class="number" id="c5-asx200-number">8731</div><div class="aux" id="c5-asx200-aux">近5日 —</div><p class="note">澳洲大盘，矿业与银行权重高，大宗商品周期风向标。</p><div class="meta"><span>live</span><span>Yahoo ^AXJO</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-sti-status"></div><div class="head"><div><div class="name-en">STI</div><div class="name-zh">新加坡海峡时报</div></div><span class="badge neutral" id="c5-sti-badge">OBS</span></div><div class="number" id="c5-sti-number">5038</div><div class="aux" id="c5-sti-aux">近5日 —</div><p class="note">新加坡大盘，东南亚金融与贸易枢纽。</p><div class="meta"><span>live</span><span>Yahoo ^STI</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-taiex-status"></div><div class="head"><div><div class="name-en">TAIEX</div><div class="name-zh">台湾加权</div></div><span class="badge neutral" id="c5-taiex-badge">OBS</span></div><div class="number" id="c5-taiex-number">44733</div><div class="aux" id="c5-taiex-aux">近5日 —</div><p class="note">台湾加权，半导体产业链最集中的指数。</p><div class="meta"><span>live</span><span>Yahoo ^TWII</span></div></article>
             <article class="indicator-card"><div class="status-bar neutral" id="c5-v2x-status"></div><div class="head"><div><div class="name-en">V2X</div><div class="name-zh">欧元区波动率</div></div><span class="badge neutral" id="c5-v2x-badge">OBS</span></div><div class="number" id="c5-v2x-number">19.2</div><div class="aux" id="c5-v2x-aux">2026-05-29 · vs 美VIX +2.9</div><p class="note">欧 VIX vs 美 VIX 反映地区性恐慌差异。</p><div class="meta"><span>live</span><span>Deutsche Börse V2TX</span></div></article>
           </div>
         </div>
@@ -872,6 +875,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=stage-c5-batch1-world-indices-1"></script>
+  <script type="module" src="scripts/app.js?v=stage-c5-batch2-world-indices-1"></script>
 </body>
 </html>

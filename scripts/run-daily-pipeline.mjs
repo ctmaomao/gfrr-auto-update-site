@@ -76,7 +76,7 @@ const ICE_CDX_INDEX_SETTLEMENT_PAGE_URL = 'https://www.ice.com/cds-settlement-pr
 const ICE_CDX_FETCH_TIMEOUT_MS = 10000;
 const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
 const YAHOO_FETCH_TIMEOUT_MS = 9000;
-const WORLD_ECONOMY_SOURCE = 'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11';
+const WORLD_ECONOMY_SOURCE = 'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11; Yahoo:^AXJO; Yahoo:^STI; Yahoo:^TWII';
 const WORLD_ECONOMY_CHANGE_WINDOW = '5d';
 const WORLD_ECONOMY_DISPLAY_NOTE =
   '世界经济维度 display-only 公开指数代理;不进 scoring/decision/execution/position。';
@@ -87,7 +87,10 @@ const WORLD_ECONOMY_INDEXES = [
   { key: 'ftse100', symbol: '^FTSE', labelZh: '英国富时 100', min: 4000, max: 20000 },
   { key: 'cac40', symbol: '^FCHI', labelZh: '法国 CAC 40', min: 3000, max: 16000 },
   { key: 'stoxx600', symbol: '^STOXX', labelZh: '泛欧 STOXX 600', min: 250, max: 1500 },
-  { key: 'kospi', symbol: '^KS11', labelZh: '韩国 KOSPI', min: 2000, max: 20000 }
+  { key: 'kospi', symbol: '^KS11', labelZh: '韩国 KOSPI', min: 2000, max: 20000 },
+  { key: 'asx200', symbol: '^AXJO', labelZh: '澳洲 ASX 200', min: 4000, max: 20000 },
+  { key: 'sti', symbol: '^STI', labelZh: '新加坡 STI', min: 2000, max: 10000 },
+  { key: 'taiex', symbol: '^TWII', labelZh: '台湾加权 TAIEX', min: 10000, max: 80000 }
 ];
 const EURO_VOLATILITY_SOURCE = 'DeutscheBoerse:quote_box:V2TX; STOXX(fallback)';
 const EURO_VOLATILITY_PRIMARY_SOURCE = 'DeutscheBoerse:quote_box:V2TX';

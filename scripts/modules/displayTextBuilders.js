@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-c5-batch1-world-indices-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-c5-batch2-world-indices-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
