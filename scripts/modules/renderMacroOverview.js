@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-12-pboc-tsf-1';
+} from './config.js?v=stage-13-pboc-mlf-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1345,6 +1345,36 @@ function renderChinaTsfLeaf({ radarData }) {
   setLeafText('c6-tsf-aux', `${label}增量 ${formatChinaTsfIncrementYi(ytdIncrementYi)} · ${refMonth}${suffix}`);
   renderChinaTsfComponents(tsf);
 }
+function formatChinaMlfTerm(termMonths) {
+  const numeric = asNumber(termMonths);
+  if (numeric === null) return '期限 —';
+  if (Number.isInteger(numeric) && numeric % 12 === 0) return `${numeric / 12}年期`;
+  return `${Math.round(numeric)}个月`;
+}
+
+function formatChinaMlfAmount(value) {
+  const numeric = asNumber(value);
+  if (numeric === null) return '—';
+  return Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(1);
+}
+
+function renderChinaMlfLeaf({ radarData }) {
+  const mlf = radarData?.macroDrivers?.chinaMlf;
+  if (!mlf) return;
+  const status = mlf.sourceStatus || 'missing';
+  setToneClass('c6-mlf-status', 'status-bar', 'neutral');
+  setBadge('c6-mlf-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : status === 'missing' ? 'OBS·缺失' : 'OBS');
+
+  const operationAmountYi = asNumber(mlf.operationAmountYi);
+  const termText = formatChinaMlfTerm(mlf.termMonths);
+  const opDate = mlf.opDate || '—';
+  const rate = asNumber(mlf.mlfRate);
+  const rateText = rate !== null ? `中标利率 ${(rate * 100).toFixed(2)}%` : '利率未披露';
+  const suffix = status === 'fallback' ? ' · 回退' : status === 'missing' ? ' · 待源恢复' : '';
+  setLeafText('c6-mlf-number', formatChinaMlfAmount(operationAmountYi));
+  setLeafText('c6-mlf-unit', operationAmountYi !== null ? '亿元' : '');
+  setLeafText('c6-mlf-aux', `${termText} · ${opDate} · ${rateText}${suffix}`);
+}
 function renderChinaOmoLeaf({ radarData }) {
   const omo = radarData?.macroDrivers?.chinaOmo;
   if (!omo) return;
@@ -1848,6 +1878,7 @@ function renderC6ChinaEquity({ radarData }) {
     renderChinaPropertyLeaf({ radarData });
     renderChinaOmoLeaf({ radarData });
     renderChinaTsfLeaf({ radarData });
+    renderChinaMlfLeaf({ radarData });
 
     const chinaEquity = radarData.macroDrivers?.chinaEquity;
     if (!chinaEquity) return;

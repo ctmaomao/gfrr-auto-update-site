@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=stage-12-pboc-tsf-1';
-import { formatOnRrpYiUsd } from './format.js?v=stage-12-pboc-tsf-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=stage-13-pboc-mlf-1';
+import { formatOnRrpYiUsd } from './format.js?v=stage-13-pboc-mlf-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

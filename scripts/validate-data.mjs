@@ -122,6 +122,7 @@ const VALID_CHINA_PMI_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-NBS-Manuf
 const VALID_CHINA_PROPERTY_PRICE_SOURCE = 'NBS:70city-price-index';
 const VALID_CHINA_OMO_SOURCE = 'PBOC:OMO-announcement';
 const VALID_CHINA_TSF_SOURCE = 'PBOC:TSF-report';
+const VALID_CHINA_MLF_SOURCE = 'PBOC:MLF-announcement';
 const CHINA_TSF_COMPONENT_STATUSES = new Set(['complete', 'partial', 'missing']);
 const CHINA_TSF_COMPONENT_KEYS = new Set([
   'rmbLoans',
@@ -1323,6 +1324,40 @@ function validateMacroDriversChinaTsf(dataPayload) {
     assert(tsf.components.length === 0, 'macroDrivers.chinaTsf.components must be empty when componentsStatus missing');
   }
 }
+function validateMacroDriversChinaMlf(dataPayload) {
+  const mlf = dataPayload?.macroDrivers?.chinaMlf;
+  if (mlf === undefined) return;
+  assertPlainObject(mlf, 'macroDrivers.chinaMlf');
+  validateNullableIsoString(mlf.updatedAt, 'macroDrivers.chinaMlf.updatedAt');
+  assert(mlf.source === VALID_CHINA_MLF_SOURCE, `macroDrivers.chinaMlf.source must be ${VALID_CHINA_MLF_SOURCE}`);
+  assertString(mlf.notes, 'macroDrivers.chinaMlf.notes');
+  assertString(mlf.sourceStatus, 'macroDrivers.chinaMlf.sourceStatus');
+  assert(CHINA_MACRO_SOURCE_STATUSES.has(mlf.sourceStatus), 'macroDrivers.chinaMlf.sourceStatus is not supported');
+  assert(
+    mlf.opDate === null || (typeof mlf.opDate === 'string' && /^\d{4}-\d{2}-\d{2}$/u.test(mlf.opDate)),
+    'macroDrivers.chinaMlf.opDate must be YYYY-MM-DD or null'
+  );
+  validateNullableIsoString(mlf.publishedAt, 'macroDrivers.chinaMlf.publishedAt');
+
+  if (mlf.sourceStatus === 'missing') {
+    assert(mlf.opDate === null, 'macroDrivers.chinaMlf.opDate must be null when missing');
+    assert(mlf.publishedAt === null, 'macroDrivers.chinaMlf.publishedAt must be null when missing');
+    assert(mlf.operationAmountYi === null, 'macroDrivers.chinaMlf.operationAmountYi must be null when missing');
+    assert(mlf.termMonths === null, 'macroDrivers.chinaMlf.termMonths must be null when missing');
+    assert(mlf.mlfRate === null, 'macroDrivers.chinaMlf.mlfRate must be null when missing');
+    return;
+  }
+
+  assert(
+    Number.isFinite(mlf.operationAmountYi) && mlf.operationAmountYi >= 1 && mlf.operationAmountYi <= 100000,
+    'macroDrivers.chinaMlf.operationAmountYi must be plausible amount in yi'
+  );
+  assert(Number.isInteger(mlf.termMonths) && mlf.termMonths > 0 && mlf.termMonths <= 120, 'macroDrivers.chinaMlf.termMonths must be 1-120');
+  assert(
+    mlf.mlfRate === null || (Number.isFinite(mlf.mlfRate) && mlf.mlfRate >= 0.005 && mlf.mlfRate <= 0.05),
+    'macroDrivers.chinaMlf.mlfRate must be plausible decimal rate or null'
+  );
+}
 function validateMacroDriversChinaOmo(dataPayload) {
   const omo = dataPayload?.macroDrivers?.chinaOmo;
   if (omo === undefined) return;
@@ -2442,6 +2477,7 @@ validateMacroDriversChinaPmi(data);
 validateMacroDriversChinaPropertyPrice(data);
 validateMacroDriversChinaOmo(data);
 validateMacroDriversChinaTsf(data);
+validateMacroDriversChinaMlf(data);
 validateHistoryWindowFields(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);

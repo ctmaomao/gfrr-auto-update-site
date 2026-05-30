@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=stage-12-pboc-tsf-1';
+﻿import { formatFiniteNumber } from './format.js?v=stage-13-pboc-mlf-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
