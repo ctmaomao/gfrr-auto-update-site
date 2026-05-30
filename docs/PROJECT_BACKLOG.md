@@ -8,8 +8,8 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 | 项 | 当前值 |
 |---|---|
-| 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾(ISM 深度收缩 tone + C2/C7 去 stale + source-review 勘误)|
-| Cache version | `stage-8-cleanup-1` |
+| 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误(均不可达 → 公告级/指数级可作 audit-only 候选)|
+| Cache version | `stage-9-c6-intro-errata-1` |
 | check:all 项数 | 23 top-level suites |
 | 最后审计日期 | 2026-05-29 |
 | 主 runtime | Worker-first `/market.worker-preview.json` |
@@ -82,6 +82,7 @@ Recent completed context only; full milestone archive is [MILESTONE_INDEX.md](MI
 
 | Milestone | 一句话 |
 |---|---|
+| Stage 9 C6 intro 三分类勘误 | Todo 1。C6 中国宏观 intro 旧称「央行 SLO/MLF/OMO/社融分项/70 城房价原始数据均不可达」与 source-review 三分类结论不符 → 改为「逐机构/逐笔 raw tape、社融贷款微观明细、70 城房源级成交不可达;操作级/公告级/指数级公开数据可作 audit-only 候选(P3-16)」。纯前端 1 句文案 + asset bump `stage-9-c6-intro-errata-1`;无 count/卡结构/render/runtime/data/scoring 改动。commit `1b1b31a`(12 files),check:all 全绿 + `git diff --check` 净 + `均不可达` 零命中。 |
 | China Macro Liquidity / Property 源调研(docs-only) | 推翻 C6「央行 SLO/MLF/OMO、社融分项、70 城房价原始数据均不可达」旧结论 → 三分类:逐机构/逐笔/房源级 **raw tape 仍不可达**,但**操作级 OMO / 公告级 MLF / 分项级社融 / 指数级 70 城房价官方公开可达**,可作 audit-only 的 China Macro Liquidity / Property Evidence Layer 候选;PBOC SLO 仅历史/inactive(**≠ Fed SLOOS**)。最小落点:新建 `docs/CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md` + DATA_SOURCES 候选小节(Current Authority)+ INDEX 注册(顺带补 CHINA_V2X gap)+ P3-16。**docs-only**:无 runtime/fetcher/data/frontend/scoring/workflow/asset bump。check:docs + check:project-backlog-format + check:all 全绿。 |
 | Stage 8 小批收尾(ISM tone + 去 stale + 勘误) | owner 选「以上全做」的 3 小项收尾。① `ismToneFromRegime` 补 `深度收缩 → red`(PMI<45 regime 之前漏映射 → C1 ISM 卡无 tone;`未知`→null 不动);② C2 count 去「1 P2」+ C2 DXY / C7 SPX 静态卡去「P2 待接入」(`dxy12wHigh`/`spx52wHigh` 实为 Stage 5 已接 live 累积字段,render 运行时已覆盖,静态 mock 过时);③ `CHINA_V2X_SOURCE_REVIEW.md` 加「实施后勘误」banner(FRED OECD CPI/PPI 陈旧、STOXX txt/Yahoo 死 → 实际 NBS〔6C〕/boerse〔V2X〕接入)。纯 display/文档,无 scoring/decision/数据流改动。Codex §E `rg` 检查兜住 brief 漏的 C7 SPX 平行 stale(补 B3),Codex 停而不擅自加宽 → Claude 复核补 brief。commit `1975da9`(13 files +39/−33),6 Assert Count=1 + check:all 全绿 + `git diff --check` 净;index.html 零 P2 残留。asset bump `stage-8-cleanup-1`。 |
 | Stage 7 C5 World Order 暂代卡退场 | 纯静态 HTML 退场:删 C5 世界经济的「暂代」overlay 占位卡(退场条件 M-95 接入欧/日/德/欧VIX 已由 V2X 满足)。Explore 实证零耦合(占位卡无 id/无 render 绑定/无 checker 断言);C5 count `1 暂代 · 4 live`→`4 live`、intro 改写公开观察层措辞。`worldOrderStress` 数据流完全不动(C8 地缘/hero/WOW/叙事/cross-validation 仍在,index.html 226/257/373-375 保留)。仅 `index.html` 本体改 + asset bump;无 render/checker/validator/DATA_CONTRACT 改动。卡总数 38→37。commit `e489aac`,4 Assert Count=1 + check:all 全绿 + `git diff --check` 净。asset bump `stage-7-overlay-retire-1`。 |
@@ -171,7 +172,7 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于**: China Macro Liquidity / Property 可接入性 source-review(**docs-only**)—— 推翻 C6「均不可达」旧结论,三分类登记 PBOC OMO/MLF/社融分项/NBS 70 城房价为 audit-only 候选,PBOC SLO 仅历史/inactive。新建 `docs/CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md` + DATA_SOURCES 候选小节 + INDEX 注册(补 CHINA_V2X gap)+ P3-16。无 runtime/data/frontend/scoring/asset bump。前序 Stage 8(`1975da9`)及 6-脆弱批/Stage 7 均已收口。会话累计:…、Stage 7、Stage 8、China-macro-liquidity source-review。
-- **当前进行中**: 无活跃任务。本次纯 docs/source-review,无需 Daily/线上验证;待 owner commit。
-- **下一步建议**: P3-16 落地了 China Macro Liquidity / Property 候选(source-review only)。若未来实现,先 70 城/OMO(最干净)→ 社融/MLF → SLO 仅历史;每源另开实施 stage 走完整复核,且必为 audit-only,永不进 scoring/decision/execution/position。另:C6 前端 intro「均不可达」措辞待 frontend stage 勘误。其余候选(Stage 5 窗口字段 ready 态、worldOrderStress C8 强化)仍待拍板。
-- **阻塞或等待**: 无。`.claude/stage-briefs/` 存有历批 outline+brief(gitignored);China-macro source-review = `docs/CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md`。
+- **上次会话结束于**: Stage 9 C6 intro 三分类勘误上线(commit `1b1b31a` pushed,12 files;纯前端文案 + bump `stage-9-c6-intro-errata-1`)+ backlog 收尾(本次)。前序 China-macro-liquidity source-review(`d5f5962`,docs-only)、Stage 8(`1975da9`)、6-脆弱批/Stage 7 均已收口。会话累计:…、Stage 7、Stage 8、China-macro source-review、Stage 9。
+- **当前进行中**: **P3-16 实施程序启动**(owner 拍板「都做」)。owner 定:这批卡放 **C6 中国宏观**(不开新类目)。serial trunk 一次一个源,顺序 **Stage 10 = 70 城房价(NBS,最低风险,复用 6C stats.gov.cn US-runner 可达 + HTML 表纪律)→ Stage 11 OMO → Stage 12 社融分项 → Stage 13 MLF;SLO 仅历史不追**。**Stage 10 outline 进行中**,下一步给 Codex 70 城实证指令。
+- **下一步建议**: 接 Stage 10(70 城)—— 实证 `stats.gov.cn` 70 城价格指数表真实 HTML 结构 + US runner 可达 + 卡 headline 选型(如一线/二线新建住宅 MoM,或上涨城市数);全 audit-only/display-only,不进 scoring/decision/execution/position(P3-16 边界)。
+- **阻塞或等待**: 无。`.claude/stage-briefs/` 存有历批 outline+brief(gitignored);P3-16 source-review = `docs/CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md`。
