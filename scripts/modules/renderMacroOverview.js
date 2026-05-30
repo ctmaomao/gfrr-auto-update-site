@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-14-tsf-eastmoney-1';
+} from './config.js?v=stage-15-omo-eastmoney-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

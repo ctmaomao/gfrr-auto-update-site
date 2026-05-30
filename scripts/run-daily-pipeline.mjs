@@ -147,14 +147,18 @@ const CHINA_NBS_INDEX_URLS = [
   'https://www.stats.gov.cn/sj/zxfb/',
   'https://www.stats.gov.cn/sj/zxfb/index_1.html'
 ];
-const CHINA_OMO_SOURCE = 'PBOC:OMO-announcement';
+const CHINA_OMO_SOURCE = 'EastMoney:OMO-aggregated-news';
 const CHINA_OMO_DISPLAY_NOTE =
-  'PBOC 公开市场操作公告级数据;display-only,不进 scoring/decision/execution/position,不代表逐机构/逐笔 raw tape。';
-const CHINA_OMO_INDEX_URL = 'https://www.pbc.gov.cn/zhengcehuobisi/125207/125213/125431/125475/index.html';
-const CHINA_OMO_INDEX_BASE_URL = 'https://www.pbc.gov.cn/zhengcehuobisi/125207/125213/125431/125475/';
+  '东方财富聚合转载的央行公开市场操作新闻,非 PBOC 官方原始公告;按新闻毛额操作句提取逆回购/正回购期限、利率、操作量,announcementNo 因聚合新闻缺失为 null;display-only,不进 scoring/decision/execution/position,不代表逐机构/逐笔 raw tape。';
+const CHINA_OMO_SEARCH_BASE_URL = 'https://search-api-web.eastmoney.com/search/jsonp';
+const CHINA_OMO_SEARCH_KEYWORD = '央行今日开展逆回购操作';
+const CHINA_OMO_SEARCH_KEYWORD_FALLBACK = '公开市场 逆回购操作';
+const CHINA_OMO_ARTICLE_BASE_URL = 'https://finance.eastmoney.com/a/';
+const CHINA_OMO_MAX_ARTICLE_FETCH = 6;
 const CHINA_OMO_FRESH_DAYS = 7;
 const CHINA_OMO_RATE_MIN = 0.005;
 const CHINA_OMO_RATE_MAX = 0.05;
+const CHINA_OMO_AMOUNT_MAX_YI = 100000;
 const CHINA_TSF_SOURCE = 'EastMoney:TSF-aggregated-report';
 const CHINA_TSF_DISPLAY_NOTE =
   '东方财富聚合转载的央行社会融资规模月度报告(公开财经媒体,如中国网财经),非 PBOC 官方原始报告;社融为报告级月度累计数据;display-only,不进 scoring/decision/execution/position,不代表贷款笔级/机构级 raw tape。';
@@ -3235,57 +3239,22 @@ async function resolveCfetsRmb(prevCfetsRmb) {
 
 
 
-const CHINA_OMO_TITLE_RE = /公开市场业务交易公告\s*\[(?<year>\d{4})\]第\s*(?<announcementNo>\d+)\s*号/u;
-const CHINA_OMO_ARTICLE_HREF_RE = /\/\d{14,}\/index\.html$/u;
-const CHINA_OMO_NARRATIVE_RE = /(?<year>\d{4})年(?<month>\d{1,2})月(?<day>\d{1,2})日中国人民银行[^。]*开展了(?<amount>\d+(?:\.\d+)?)\s*亿元\s*(?<term>\d+)\s*天期(?<type>逆回购|正回购)操作/u;
-const CHINA_OMO_TABLE_RE = /(?<term>\d+)\s*天\s+(?<ratePct>\d+(?:\.\d+)?)\s*%\s+(?<bid>\d+(?:\.\d+)?)\s*亿元\s+(?<amount>\d+(?:\.\d+)?)\s*亿元/u;
-const CHINA_OMO_NO_OPERATION_RE = /(?:不开展|未开展)(?:公开市场)?(?:逆回购|正回购)?操作|无公开市场操作|今日无(?:逆回购|正回购|公开市场)?操作/u;
+const CHINA_OMO_OPERATION_RE = /开展了?(?<amount>\d+(?:\.\d+)?)(?<unit>万亿元|亿元|万亿|亿)\s*(?<termDays>\d+)\s*天(?:期)?(?<operationType>逆回购|正回购)操作/u;
+const CHINA_OMO_RATE_RE = /(?:操作利率|中标利率)\s*(?:为)?\s*(?<ratePct>\d+(?:\.\d+)?)%/u;
+const CHINA_OMO_INTEXT_DATE_RE = /(?:(?<year>\d{4})年)?(?<month>\d{1,2})月(?<day>\d{1,2})日[^。]*开展了?\d/u;
 const CHINA_OMO_OPERATION_TYPES = new Set(['逆回购', '正回购', '无操作']);
-
-function getChinaOmoAnchorAttribute(attrs, name) {
-  const match = String(attrs || '').match(new RegExp(`${name}=["'](?<value>[^"']+)["']`, 'iu'));
-  return match?.groups?.value || '';
-}
 
 function normalizeChinaOmoPlainText(value) {
   return String(value || '')
     .replace(/(\d)\s*\.\s*(\d)/gu, '$1.$2')
     .replace(/\s+/gu, ' ')
+    .replace(/(?<=\p{Script=Han})\s+(?=\p{Script=Han})/gu, '')
     .trim();
-}
-
-function parseChinaOmoTitle(value) {
-  const match = String(value || '').match(CHINA_OMO_TITLE_RE);
-  if (!match?.groups) return null;
-  return {
-    announcementYear: Number(match.groups.year),
-    announcementNo: Number(match.groups.announcementNo)
-  };
 }
 
 function chinaOmoDateOnlyFromYmd(year, month, day) {
   if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null;
   return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
-function parseChinaOmoPublishedAt(plain) {
-  const match = String(plain || '').match(/文章来源：\s*(?<date>\d{4}-\d{2}-\d{2})\s+(?<time>\d{2}:\d{2}:\d{2})/u);
-  if (!match?.groups) return null;
-  return `${match.groups.date}T${match.groups.time}+08:00`;
-}
-
-function parseChinaOmoUrlDate(url) {
-  const match = String(url || '').match(/\/(?<year>\d{4})(?<month>\d{2})(?<day>\d{2})\d+\/index\.html$/u);
-  if (!match?.groups) return null;
-  return `${match.groups.year}-${match.groups.month}-${match.groups.day}`;
-}
-
-function parseChinaOmoOpDate(plain, url) {
-  const match = String(plain || '').match(/(?<year>\d{4})年(?<month>\d{1,2})月(?<day>\d{1,2})日中国人民银行/u);
-  if (match?.groups) {
-    return chinaOmoDateOnlyFromYmd(Number(match.groups.year), Number(match.groups.month), Number(match.groups.day));
-  }
-  return parseChinaOmoUrlDate(url);
 }
 
 function isPlausibleChinaOmoOperationRate(value) {
@@ -3297,81 +3266,45 @@ function isFreshChinaOmo(opDate, publishedAt) {
   return isFreshDateOnly(publishedDate || opDate, CHINA_OMO_FRESH_DAYS);
 }
 
-function pickChinaOmoAnnouncementLink(indexHtml) {
-  const rows = [];
-  const linkRe = /<a\b(?<attrs>[^>]*)>(?<body>[\s\S]*?)<\/a>/giu;
-  for (const match of String(indexHtml || '').matchAll(linkRe)) {
-    const attrs = match.groups?.attrs || '';
-    const href = getChinaOmoAnchorAttribute(attrs, 'href');
-    if (!CHINA_OMO_ARTICLE_HREF_RE.test(href)) continue;
-    const titleAttr = getChinaOmoAnchorAttribute(attrs, 'title');
-    const bodyText = normalizeChinaOmoPlainText(htmlToPlainText(match.groups?.body || ''));
-    const title = normalizeChinaOmoPlainText(titleAttr || bodyText);
-    const parsedTitle = parseChinaOmoTitle(title);
-    if (!parsedTitle) continue;
-    const url = resolveAbsoluteUrl(href, CHINA_OMO_INDEX_BASE_URL);
-    if (!url || url === CHINA_OMO_INDEX_URL) continue;
-    rows.push({
-      ...parsedTitle,
-      title,
-      href,
-      url,
-      opDate: parseChinaOmoUrlDate(url)
-    });
+function parseChinaOmoOpDateFromText(plain, link) {
+  const m = String(plain || '').match(CHINA_OMO_INTEXT_DATE_RE);
+  const searchDate = dateOnlyIso(link?.publishedAt);
+  if (m?.groups) {
+    const year = m.groups.year ? Number(m.groups.year) : (searchDate ? Number(searchDate.slice(0, 4)) : null);
+    const date = chinaOmoDateOnlyFromYmd(year, Number(m.groups.month), Number(m.groups.day));
+    if (date) return date;
   }
-  return rows
-    .filter((row, index, list) => list.findIndex((item) => item.url === row.url) === index)
-    .sort((a, b) => {
-      const yearDiff = a.announcementYear - b.announcementYear;
-      if (yearDiff !== 0) return yearDiff;
-      const noDiff = a.announcementNo - b.announcementNo;
-      if (noDiff !== 0) return noDiff;
-      return String(a.opDate || '').localeCompare(String(b.opDate || ''));
-    })
-    .at(-1) || null;
+  return searchDate || null;
 }
 
-function parseChinaOmoArticle(articleHtml, link) {
-  const plain = normalizeChinaOmoPlainText(htmlToPlainText(articleHtml));
-  const titleInfo = parseChinaOmoTitle(link?.title) || parseChinaOmoTitle(plain);
-  const publishedAt = parseChinaOmoPublishedAt(plain);
-  const opDate = parseChinaOmoOpDate(plain, link?.url) || link?.opDate || null;
-  if (!titleInfo?.announcementNo) throw new Error('pboc:omo missing announcementNo');
-  if (!opDate) throw new Error('pboc:omo missing opDate');
-  if (!isFreshChinaOmo(opDate, publishedAt)) throw new Error('pboc:omo stale');
+function parseChinaOmoText(plainInput, link) {
+  const plain = normalizeChinaOmoPlainText(plainInput);
+  const opMatch = plain.match(CHINA_OMO_OPERATION_RE);
+  if (!opMatch?.groups) throw new Error('eastmoney:omo missing operation sentence');
+  const rateMatch = plain.match(CHINA_OMO_RATE_RE);
+  if (!rateMatch?.groups) throw new Error('eastmoney:omo missing rate');
 
-  if (CHINA_OMO_NO_OPERATION_RE.test(plain)) {
-    return {
-      updatedAt: publishedAt || dateOnlyToIso(opDate),
-      source: CHINA_OMO_SOURCE,
-      sourceStatus: 'live',
-      notes: CHINA_OMO_DISPLAY_NOTE,
-      opDate,
-      announcementNo: titleInfo.announcementNo,
-      operationType: '无操作',
-      termDays: null,
-      operationRate: null,
-      operationAmount: null
-    };
+  const operationType = opMatch.groups.operationType;
+  if (!CHINA_OMO_OPERATION_TYPES.has(operationType) || operationType === '无操作') {
+    throw new Error('eastmoney:omo unsupported operation type');
+  }
+  const termDays = Number(opMatch.groups.termDays);
+  if (!Number.isInteger(termDays) || termDays <= 0 || termDays > 365) throw new Error('eastmoney:omo invalid term');
+
+  const unit = opMatch.groups.unit;
+  let operationAmount = Number(opMatch.groups.amount);
+  if (unit === '万亿元' || unit === '万亿') operationAmount *= 10000;
+  if (!Number.isFinite(operationAmount) || operationAmount <= 0 || operationAmount > CHINA_OMO_AMOUNT_MAX_YI) {
+    throw new Error('eastmoney:omo invalid operationAmount');
   }
 
-  const narrativeMatch = plain.match(CHINA_OMO_NARRATIVE_RE);
-  const tableMatch = plain.match(CHINA_OMO_TABLE_RE);
-  if (!narrativeMatch?.groups) throw new Error('pboc:omo missing operation narrative');
-  if (!tableMatch?.groups) throw new Error('pboc:omo missing operation table');
+  const operationRate = Number(rateMatch.groups.ratePct) / 100;
+  if (!isPlausibleChinaOmoOperationRate(operationRate)) throw new Error('eastmoney:omo operationRate out of plausible range');
 
-  const narrativeTerm = Number(narrativeMatch.groups.term);
-  const tableTerm = Number(tableMatch.groups.term);
-  if (!Number.isInteger(narrativeTerm) || !Number.isInteger(tableTerm) || narrativeTerm !== tableTerm) {
-    throw new Error('pboc:omo term mismatch');
-  }
-  const operationType = narrativeMatch.groups.type;
-  if (!CHINA_OMO_OPERATION_TYPES.has(operationType)) throw new Error('pboc:omo unsupported operation type');
-
-  const operationRate = Number(tableMatch.groups.ratePct) / 100;
-  const operationAmount = Number(tableMatch.groups.amount);
-  if (!isPlausibleChinaOmoOperationRate(operationRate)) throw new Error('pboc:omo operationRate out of plausible range');
-  if (!Number.isFinite(operationAmount) || operationAmount < 0) throw new Error('pboc:omo invalid operationAmount');
+  const publishedAt = link?.publishedAt || null;
+  const opDate = parseChinaOmoOpDateFromText(plain, link);
+  if (!opDate) throw new Error('eastmoney:omo missing opDate');
+  if (!isFreshChinaOmo(opDate, publishedAt)) throw new Error('eastmoney:omo stale');
 
   return {
     updatedAt: publishedAt || dateOnlyToIso(opDate),
@@ -3379,11 +3312,11 @@ function parseChinaOmoArticle(articleHtml, link) {
     sourceStatus: 'live',
     notes: CHINA_OMO_DISPLAY_NOTE,
     opDate,
-    announcementNo: titleInfo.announcementNo,
+    announcementNo: null,
     operationType,
-    termDays: tableTerm,
+    termDays,
     operationRate: +operationRate.toFixed(6),
-    operationAmount
+    operationAmount: +operationAmount.toFixed(2)
   };
 }
 
@@ -3439,19 +3372,63 @@ function buildMissingChinaOmo(prevChinaOmo = null) {
   };
 }
 
+async function fetchChinaOmoSearchCandidates(keyword) {
+  const param = encodeURIComponent(JSON.stringify({
+    uid: '',
+    keyword,
+    type: ['cmsArticleWebOld'],
+    client: 'web',
+    clientType: 'web',
+    pageIndex: 1,
+    pageSize: 20
+  }));
+  const url = `${CHINA_OMO_SEARCH_BASE_URL}?cb=jQuery&param=${param}`;
+  const raw = await retryFetch(url, 'eastmoney:omo-search', MACRO_FETCH_TIMEOUT_MS, {
+    userAgent: CHINA_MACRO_HTML_USER_AGENT,
+    headers: { Accept: 'text/javascript,application/javascript,*/*' }
+  });
+  const payload = parseEastMoneyJsonp(raw);
+  const rows = Array.isArray(payload?.result?.cmsArticleWebOld) ? payload.result.cmsArticleWebOld : [];
+  const candidates = [];
+  for (const row of rows) {
+    const code = typeof row?.code === 'string' ? row.code.trim() : '';
+    if (!/^\d{13,}$/u.test(code)) continue;
+    const title = normalizeChinaOmoPlainText(htmlToPlainText(String(row?.title || '')));
+    const content = normalizeChinaOmoPlainText(htmlToPlainText(String(row?.content || '')));
+    candidates.push({
+      code,
+      url: `${CHINA_OMO_ARTICLE_BASE_URL}${code}.html`,
+      summaryText: `${title} ${content}`,
+      publishedAt: eastMoneyDateToIso(row?.date),
+      dateRaw: typeof row?.date === 'string' ? row.date.trim() : ''
+    });
+  }
+  return candidates.sort((a, b) => b.dateRaw.localeCompare(a.dateRaw));
+}
+
 async function resolveChinaOmo(prevChinaOmo) {
   try {
-    const indexHtml = await retryFetch(CHINA_OMO_INDEX_URL, 'pboc:omo-index', MACRO_FETCH_TIMEOUT_MS, {
-      userAgent: CHINA_MACRO_HTML_USER_AGENT,
-      headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
-    });
-    const link = pickChinaOmoAnnouncementLink(indexHtml);
-    if (!link) throw new Error('pboc:omo missing announcement link');
-    const articleHtml = await retryFetch(link.url, 'pboc:omo-article', MACRO_FETCH_TIMEOUT_MS, {
-      userAgent: CHINA_MACRO_HTML_USER_AGENT,
-      headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
-    });
-    return parseChinaOmoArticle(articleHtml, link);
+    let candidates = await fetchChinaOmoSearchCandidates(CHINA_OMO_SEARCH_KEYWORD);
+    if (!candidates.length) candidates = await fetchChinaOmoSearchCandidates(CHINA_OMO_SEARCH_KEYWORD_FALLBACK);
+    if (!candidates.length) throw new Error('eastmoney:omo no search candidates');
+    let lastError = null;
+    for (const candidate of candidates.slice(0, CHINA_OMO_MAX_ARTICLE_FETCH)) {
+      try {
+        return parseChinaOmoText(candidate.summaryText, candidate);
+      } catch (errSummary) {
+        lastError = errSummary;
+      }
+      try {
+        const articleHtml = await retryFetch(candidate.url, 'eastmoney:omo-article', MACRO_FETCH_TIMEOUT_MS, {
+          userAgent: CHINA_MACRO_HTML_USER_AGENT,
+          headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
+        });
+        return parseChinaOmoText(htmlToPlainText(articleHtml), candidate);
+      } catch (errArticle) {
+        lastError = errArticle;
+      }
+    }
+    throw lastError || new Error('eastmoney:omo no valid operation among candidates');
   } catch (err) {
     console.warn(`[china-omo-missing] ${stringifyFetchError(err)}`);
     return buildMissingChinaOmo(prevChinaOmo);

@@ -120,7 +120,11 @@ const CHINA_MACRO_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_CHINA_INFLATION_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-CPI-PPI-public-html';
 const VALID_CHINA_PMI_SOURCE = 'NBS:stats-zxfb; TradingEconomics:China-NBS-Manufacturing-PMI-public-html';
 const VALID_CHINA_PROPERTY_PRICE_SOURCE = 'NBS:70city-price-index';
-const VALID_CHINA_OMO_SOURCE = 'PBOC:OMO-announcement';
+const VALID_CHINA_OMO_SOURCE = 'EastMoney:OMO-aggregated-news';
+// Stage 15 transition: committed data/radar-data.json 仍可能带 Stage 15 之前的
+// 'PBOC:OMO-announcement'(pbc 源,US runner 地理封锁导致 missing),直到合并后的线上
+// Daily run 刷成 EastMoney。届时移除下面的 'PBOC:OMO-announcement' 容差。
+const VALID_CHINA_OMO_SOURCES = new Set([VALID_CHINA_OMO_SOURCE, 'PBOC:OMO-announcement']);
 const VALID_CHINA_TSF_SOURCE = 'EastMoney:TSF-aggregated-report';
 const VALID_CHINA_MLF_SOURCE = 'PBOC:MLF-announcement';
 const CHINA_TSF_COMPONENT_STATUSES = new Set(['complete', 'partial', 'missing']);
@@ -1363,7 +1367,10 @@ function validateMacroDriversChinaOmo(dataPayload) {
   if (omo === undefined) return;
   assertPlainObject(omo, 'macroDrivers.chinaOmo');
   validateNullableIsoString(omo.updatedAt, 'macroDrivers.chinaOmo.updatedAt');
-  assert(omo.source === VALID_CHINA_OMO_SOURCE, `macroDrivers.chinaOmo.source must be ${VALID_CHINA_OMO_SOURCE}`);
+  assert(
+    VALID_CHINA_OMO_SOURCES.has(omo.source),
+    `macroDrivers.chinaOmo.source must be one of ${[...VALID_CHINA_OMO_SOURCES].join(', ')}`
+  );
   assertString(omo.notes, 'macroDrivers.chinaOmo.notes');
   assertString(omo.sourceStatus, 'macroDrivers.chinaOmo.sourceStatus');
   assert(CHINA_MACRO_SOURCE_STATUSES.has(omo.sourceStatus), 'macroDrivers.chinaOmo.sourceStatus is not supported');

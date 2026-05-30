@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-14-tsf-eastmoney-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-15-omo-eastmoney-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

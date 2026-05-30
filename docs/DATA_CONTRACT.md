@@ -410,7 +410,7 @@ M-74 新增三条 audit-only / display-only 生产数据层，均不进入 `valu
 | `macroDrivers.chinaInflation` | NBS:stats-zxfb; TradingEconomics:China-CPI-PPI-public-html | `cpi` / `ppi` leaf objects (`yoy`, `refMonth`, `publishedAt`, `updatedAt`, `source`, `sourceStatus`), parent `sourceStatus.{cpi,ppi}`, `updatedAt`, `source`, `notes` | 中国 CPI/PPI 同比来自国家统计局发布正文；Trading Economics 公开 HTML 仅作 fallback；`yoy` 存 decimal ratio,render 层乘 100；freshness 使用 endOfRefMonth 或 publishedAt + 45 天；display-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
 | `macroDrivers.chinaPmi` | NBS:stats-zxfb; TradingEconomics:China-NBS-Manufacturing-PMI-public-html | `pmi` leaf object (`value`, `refMonth`, `publishedAt`, `updatedAt`, `source`, `sourceStatus`), parent `sourceStatus.pmi`, `updatedAt`, `source`, `notes` | 中国制造业 PMI 为国家统计局官方 PMI；Trading Economics `/china/business-confidence` 仅作 NBS PMI fallback,不得混用 RatingDog/S&P `/china/manufacturing-pmi`；`value` 存点值；freshness 使用 endOfRefMonth 或 publishedAt + 45 天；display-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
 | `macroDrivers.chinaPropertyPrice` | NBS:70city-price-index | `refMonth`, `publishedAt`, `updatedAt`, `source`, `sourceStatus`, `notes`, `newCitiesUp`, `newCitiesFlat`, `newCitiesDown`, `resaleCitiesUp`, `resaleCitiesFlat`, `resaleCitiesDown`, optional / nullable `tierBreakdown.{tier1,tier2,tier3}.{label,cityCount,new,resale}.{up,flat,down}` | NBS 70 城商品住宅价格指数为城市级价格指数计数摘要；从新建商品住宅 / 二手住宅两张表按环比指数 `>100 / =100 / <100` 统计上涨、持平、下降城市数；`tierBreakdown` 按 NBS 官方一线 4 / 二线 31 / 三线 35 城市划分保存全量城市方向数组,用于 C6 卡折叠明细；freshness 使用 publishedAt + 45 天，publishedAt 缺失时使用 endOfRefMonth + 60 天；display-only/audit-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation；城市级指数方向不得写成房源级成交 raw tape |
-| `macroDrivers.chinaOmo` | PBOC:OMO-announcement | `opDate`, `announcementNo`, `operationType`, `termDays`, `operationRate`, `operationAmount`, `updatedAt`, `source`, `sourceStatus`, `notes` | PBOC 公开市场业务交易公告为公告级逆回购 / 正回购 / 无操作观察层；discovery 从官方列表页发现最新公告，不硬编码单条 URL；`operationRate` 存 decimal rate(如 1.40% -> `0.014`),render 层乘 100；`operationAmount` 只存中标量(亿元),不存投标量或净投放；no-op 公告为 live 且数值字段 null；freshness 使用 publishedAt/opDate + 7 自然日；display-only/audit-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation；公告级操作数据不得写成逐机构 / 逐笔 raw tape |
+| `macroDrivers.chinaOmo` | EastMoney:OMO-aggregated-news | `opDate`, `announcementNo`, `operationType`, `termDays`, `operationRate`, `operationAmount`, `updatedAt`, `source`, `sourceStatus`, `notes` | 东方财富聚合转载的央行公开市场操作新闻为公告/新闻级逆回购 / 正回购观察层,非 PBOC 官方原始公告；`announcementNo` 因聚合新闻缺失为 null；按新闻毛额操作句提取 `operationRate` decimal rate(如 1.40% -> `0.014`)和 `operationAmount`(亿元),不存投标量、到期量、净投放或净回笼；EastMoney 新闻源不保留无操作 live 分支,搜不到 7 天内合格操作则 fallback/missing；freshness 使用 publishedAt/opDate + 7 自然日；display-only/audit-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation；公开市场操作数据不得写成逐机构 / 逐笔 raw tape |
 | `macroDrivers.chinaTsf` | EastMoney:TSF-aggregated-report | `refMonth`, `publishedAt`, `updatedAt`, `source`, `sourceStatus`, `notes`, `stockYoY`, `ytdIncrementYi`, `incrementPeriodLabel`, `componentsStatus`, `components[]` (`key`, `label`, `incrementYi`) | 东方财富聚合转载的央行社会融资规模月度报告为报告级社会融资规模观察层,非 PBOC 官方原始报告；`stockYoY` 存 decimal ratio,render 层乘 100；`ytdIncrementYi` 与分项 `incrementYi` 均为年内累计增量(亿元),`万亿元` 归一为亿元,`减少` / `下降` 取负；`componentsStatus` 为 complete / partial / missing,不做分项和等于总量的硬校验；freshness 使用 publishedAt + 45 天，publishedAt 缺失时使用 endOfRefMonth + 60 天；display-only/audit-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation；报告级累计分项不得写成贷款笔级 / 机构级 raw tape |
 | `macroDrivers.chinaMlf` | PBOC:MLF-announcement | `opDate`, `publishedAt`, `updatedAt`, `source`, `sourceStatus`, `notes`, `operationAmountYi`, `termMonths`, nullable `mlfRate` | PBOC 中期借贷便利公告为公告级 MLF 操作观察层；discovery 从官方中期借贷便利工作信息列表页按标题年月发现最新公告，不依赖 URL 日期，允许短 id；`operationAmountYi` 存亿元，`termMonths` 存期限月数，`mlfRate` 若披露则存 decimal rate(render 层乘 100)，近年利率未披露时为 null 且不视作错误；freshness 使用 publishedAt/opDate + 45 自然日；display-only/audit-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation；公告级 MLF 操作不得写成逐机构 / 逐笔投标 raw tape |
 | `Daily degraded display-only refresh` | Daily fallback path | When `buildFallback()` is used, only `macroDrivers.worldEconomy`, `macroDrivers.chinaEquity`, `macroDrivers.inflationEnergy`, `macroDrivers.copperGold`, `macroDrivers.chinaBond`, `macroDrivers.cfetsRmb`, `macroDrivers.chinaInflation`, `macroDrivers.chinaPmi`, `macroDrivers.euroVolatility`, `macroDrivers.chinaPropertyPrice`, `macroDrivers.chinaOmo`, `macroDrivers.chinaTsf`, and `macroDrivers.chinaMlf` may be independently refreshed and merged over the cloned previous data | This degraded-mode refresh is display-only; it preserves `recovery.degradedMode` / `safeOutput`, does not overwrite `fedLiquidity` / `policyExpectations` / `curve` / `credit` / `activeSignals` / `gatingEvaluation`, and does not affect scoring, decision, execution, position, `displayInputsBaseline`, `effectiveDisplayInputs`, or cross-validation |
@@ -929,7 +929,7 @@ Boundaries:
 
 ### Frontend asset cache version
 
-vstage-14-tsf-eastmoney-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+vstage-15-omo-eastmoney-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
 当前前端资源版本为：
 
@@ -939,8 +939,8 @@ vstage-14-tsf-eastmoney-1 Frontend Asset Cache Busting 只定义前端静态资�
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=stage-14-tsf-eastmoney-1`。
-- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=stage-14-tsf-eastmoney-1`。
+- `index.html` 入口 module script 必须指向 `app.js?v=stage-15-omo-eastmoney-1`。
+- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=stage-15-omo-eastmoney-1`。
 - `scripts/app.js` 必须暴露 `window.__GFRR_FRONTEND_VERSION__`，浏览器 Console 中应返回 `"28.0M-92AV"`。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
@@ -948,11 +948,11 @@ vstage-14-tsf-eastmoney-1 Frontend Asset Cache Busting 只定义前端静态资�
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs stage-14-tsf-eastmoney-1
-npm run bump:frontend-asset-version -- stage-14-tsf-eastmoney-1
+node scripts/bump-frontend-asset-version.mjs stage-15-omo-eastmoney-1
+npm run bump:frontend-asset-version -- stage-15-omo-eastmoney-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `stage-14-tsf-eastmoney-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `stage-15-omo-eastmoney-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

@@ -238,28 +238,28 @@ See [`BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md`](BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md)
 
 | Candidate | Source family | Review role | Status |
 |---|---|---|---|
-| PBOC OMO 公开市场操作公告 | `pbc.gov.cn` 公开市场业务交易公告 | 操作级逆/正回购 利率·期限·中标量 evidence | implemented (Stage 11);audit-only/display-only;announcement-level, not raw tape;stores awarded amount only, no bid amount / net amount |
+| PBOC OMO 公开市场操作公告 | EastMoney 搜索聚合(转载央行公开市场操作新闻) | 操作级逆/正回购 利率·期限·操作量 evidence | implemented (Stage 11, runtime source switched in Stage 15);实采源 = EastMoney 聚合新闻(pbc.gov.cn US runner 地理封锁,改抓境外可达聚合源);audit-only/display-only;announcement/news-level,非官方原始页,not raw tape;stores gross operation amount only, no maturity / net injection |
 | PBOC MLF 招标公告 | `pbc.gov.cn` MLF 操作 / 招标公告 | 中期借贷便利 公告级(规模·期限·可选利率)evidence | implemented (Stage 13);audit-only/display-only;announcement-level, not raw tape;rate may be null when not disclosed |
 | PBOC 社融组件分项 | EastMoney 搜索聚合(转载央行社融报告) | 社融存量同比 + 年内累计增量 + 8 个累计分项 evidence | implemented (Stage 12, runtime source switched in Stage 14);实采源 = EastMoney 聚合转载(pbc.gov.cn US runner 地理封锁,改抓境外可达聚合源);audit-only/display-only;report-level cumulative / announcement-level,非官方原始页,not raw tape;no derived monthly increment |
 | NBS 70 城房价指数 | `stats.gov.cn` 月度城市价格指数页 | 城市级新建商品住宅 / 二手住宅销售价格指数 evidence | implemented (Stage 10);audit-only/display-only;index-level count summary, not transaction-level raw tape |
 | PBOC SLO 短期流动性调节工具 | `pbc.gov.cn` 历史 SLO 公告 | 历史/低频 evidence 候选 | source-review only;historical / inactive / no_recent_operation;**≠ Fed SLOOS** |
 
-Except for the Stage 10 NBS 70-city implementation row, the Stage 11 PBOC OMO implementation row, the Stage 12 TSF implementation row (runtime source now EastMoney aggregated repost because pbc.gov.cn is geoblocked on US runners), and the Stage 13 PBOC MLF implementation row, these China central-bank operation / social-financing / property-index candidates are **source-review only**. Non-implemented rows are NOT fetched at runtime and NOT written to production data. Implemented rows remain audit-only / display-only under the `China Macro Liquidity / Property Evidence Layer`: they must not change `scoring`, `decisionModel`, `executionLock`, `positionGuidance`, `Action Queue`, `Trigger Monitor`, `Invalidation Rules`, `values.*`, `displayInputsBaseline`, `effectiveDisplayInputs`, or cross-validation. Announcement-level OMO/MLF, report-level SReFin components, and index-level 70-city prices must **not** be written as per-institution / per-bid / loan-level / unit-level raw tape, and field names / frontend copy / notes must not imply such substitution. Stage 12 TSF stores report-level cumulative values only and must not derive or label an implied current-month increment. Stage 13 MLF stores announcement-level amount/term plus nullable disclosed rate only and must not imply per-bid or per-institution raw tape. **PBOC SLO** is the PBOC Short-term Liquidity Operations tool and must not be confused with **Fed SLOOS** (already connected via FRED `DRTSCILM` / `DRTSCIS` in `macroDrivers.credit`).
+Except for the Stage 10 NBS 70-city implementation row, the Stage 11 OMO implementation row (runtime source now EastMoney aggregated news because pbc.gov.cn is geoblocked on US runners), the Stage 12 TSF implementation row (runtime source now EastMoney aggregated repost because pbc.gov.cn is geoblocked on US runners), and the Stage 13 PBOC MLF implementation row, these China central-bank operation / social-financing / property-index candidates are **source-review only**. Non-implemented rows are NOT fetched at runtime and NOT written to production data. Implemented rows remain audit-only / display-only under the `China Macro Liquidity / Property Evidence Layer`: they must not change `scoring`, `decisionModel`, `executionLock`, `positionGuidance`, `Action Queue`, `Trigger Monitor`, `Invalidation Rules`, `values.*`, `displayInputsBaseline`, `effectiveDisplayInputs`, or cross-validation. Announcement-level OMO/MLF, report-level SReFin components, and index-level 70-city prices must **not** be written as per-institution / per-bid / loan-level / unit-level raw tape, and field names / frontend copy / notes must not imply such substitution. Stage 11/15 OMO stores gross operation amount only and must not label maturity, net injection, or net withdrawal as operation amount. Stage 12 TSF stores report-level cumulative values only and must not derive or label an implied current-month increment. Stage 13 MLF stores announcement-level amount/term plus nullable disclosed rate only and must not imply per-bid or per-institution raw tape. **PBOC SLO** is the PBOC Short-term Liquidity Operations tool and must not be confused with **Fed SLOOS** (already connected via FRED `DRTSCILM` / `DRTSCIS` in `macroDrivers.credit`).
 
 See [`CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md`](CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md).
 
 ---
 
-### EastMoney TSF aggregated report
+### EastMoney aggregated reports / news
 
 | 字段 | 值 |
 |---|---|
-| **License** | Public EastMoney search JSONP + public article HTML reposts |
-| **Refresh 频率** | Daily pipeline discovery;monthly report cadence |
-| **失败 fallback** | `macroDrivers.chinaTsf.sourceStatus = 'fallback'` or `'missing'`;stockYoY 缺失时 fail-closed |
+| **License** | Public EastMoney search JSONP + public article HTML reposts/news |
+| **Refresh 频率** | Daily pipeline discovery;OMO daily/workday news cadence, TSF monthly report cadence |
+| **失败 fallback** | `macroDrivers.chinaOmo.sourceStatus` / `macroDrivers.chinaTsf.sourceStatus = 'fallback'` or `'missing'`;OMO amount/term/type/rate 缺失或 TSF stockYoY 缺失时 fail-closed |
 | **影响 scoring?** | **否** — display-only / audit-only,不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
-| **fetcher** | `resolveChinaTsf` |
-| **边界** | 东方财富聚合转载公开财经媒体文本,非 PBOC 官方原始报告；只保存报告级累计社融口径,不得写成贷款笔级 / 机构级 raw tape |
+| **fetcher** | `resolveChinaOmo` / `resolveChinaTsf` |
+| **边界** | 东方财富聚合转载公开财经媒体文本,非 PBOC 官方原始公告/报告；OMO 只保存新闻毛额操作句中的期限、利率、操作量,不得把到期量、净投放/净回笼写成操作量；TSF 只保存报告级累计社融口径,不得写成贷款笔级 / 机构级 raw tape |
 
 ---
 
