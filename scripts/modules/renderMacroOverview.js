@@ -1,4 +1,4 @@
-﻿// scripts/modules/renderMacroOverview.js
+// scripts/modules/renderMacroOverview.js
 // M-94 V0 路径 C · Stage 4b-1A
 // 职责:render macro-overview-shell 内 3 个 block(Hero + threshold + pressure-sources)
 // 后续 Stage 4b-1B / 4b-2 扩展(market-temp / risk-engines / wow / trend SVG / signal-layers / macro-drivers / cross-validation)
@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-10-nbs-70city-1';
+} from './config.js?v=stage-ux-meta-cleanup-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -339,29 +339,29 @@ function renderWowSection({ radarData, worldOrderStressData }) {
     const crackSpread4wChange = asNumber(radarData.brentPricingLayer?.crackSpread4wChange);
     if (crackSpread !== null && crackSpread4wChange !== null) {
       setLeafText('wow-item-1-text', `Brent crack spread 走阔到 ${crackSpread.toFixed(2)},4w 变化 ${signedFixed(crackSpread4wChange, 2)}。`);
-      setLeafText('wow-item-1-source', `brentPricingLayer.crackSpread4wChange ${signedFixed(crackSpread4wChange, 2)}`);
+      setLeafText('wow-item-1-source', `炼油价差 4 周变化 ${signedFixed(crackSpread4wChange, 2)}`);
     }
     const hyOas = asNumber(radarData.macroDrivers?.credit?.hyOas);
     if (hyOas !== null) {
       setLeafText('wow-item-2-text', `HY OAS 在 ${hyOas.toFixed(2)}% 低位,与 VIX 同步走低。信用市场不验证恐慌。`);
-      setLeafText('wow-item-2-source', 'divergenceLayer 提供反向证据');
+      setLeafText('wow-item-2-source', '信用与波动率反向证据');
     }
     const woState = worldOrderStressData?.state;
     const woLabel = worldOrderStressData?.labelZh;
     if (woState) {
       setLeafText('wow-item-3-text', `World Order overlay 当前为 ${woState}${woLabel ? `(${woLabel})` : ''},结构性压力持续。`);
-      setLeafText('wow-item-3-source', 'worldOrderStress.state transition');
+      setLeafText('wow-item-3-source', '世界秩序状态变化');
     }
     const futureMinusTargetMid = asNumber(radarData.macroDrivers?.policyExpectations?.futureMinusTargetMid);
     if (futureMinusTargetMid !== null) {
       const bp = futureMinusTargetMid * 100;
       setLeafText('wow-item-4-text', `Fed 政策路径分歧 ${signedFixed(bp, 1)}bp,市场定价与目标中位仍有偏差。`);
-      setLeafText('wow-item-4-source', 'macroDrivers.policyExpectations.futureMinusTargetMid');
+      setLeafText('wow-item-4-source', 'Fed 政策路径分歧');
     }
     const initialClaims = asNumber(radarData.macroDrivers?.employment?.initialClaims);
     if (initialClaims !== null) {
       setLeafText('wow-item-5-text', `首次申请稳在 ${(initialClaims / 1000).toFixed(0)}k,就业扩散仍需观察。`);
-      setLeafText('wow-item-5-source', 'macroDrivers.employment.diffusion');
+      setLeafText('wow-item-5-source', '就业扩散度');
     }
     const consumerCheck = Array.isArray(radarData.divergenceLayer?.checks)
       ? radarData.divergenceLayer.checks.find((item) => item?.key === 'consumer_vs_asset_pricing')
@@ -369,8 +369,8 @@ function renderWowSection({ radarData, worldOrderStressData }) {
     if (consumerCheck) {
       const scoreText = Number.isFinite(consumerCheck.score) ? `score ${consumerCheck.score}` : 'score —';
       const statusText = consumerCheck.status ? `(${consumerCheck.status})` : '';
-      setLeafText('wow-item-6-text', `consumer_vs_asset_pricing 背离 ${scoreText}${statusText}。`);
-      setLeafText('wow-item-6-source', 'divergenceLayer.checks[consumer_vs_asset_pricing]');
+      setLeafText('wow-item-6-text', `消费与资产价格背离 ${scoreText}${statusText}。`);
+      setLeafText('wow-item-6-source', '消费与资产价格背离');
     }
   } catch (error) {
     console.error('[renderMacroOverview] renderWowSection failed:', error);
@@ -1244,7 +1244,7 @@ function renderChinaPropertyLeaf({ radarData }) {
   const newFlat = asNumber(property.newCitiesFlat);
   const resaleUp = asNumber(property.resaleCitiesUp);
   setLeafText('c6-house-number', newUp !== null ? `${Math.round(newUp)}/70` : '—');
-  setLeafText('c6-house-unit', 'cities');
+  setLeafText('c6-house-unit', '新房上涨');
 
   const auxParts = [];
   auxParts.push(`二手上涨 ${resaleUp !== null ? `${Math.round(resaleUp)}/70` : '—'}`);
