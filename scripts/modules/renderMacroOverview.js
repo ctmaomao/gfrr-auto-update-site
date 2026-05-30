@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=china-macro-intro-errata-1';
+} from './config.js?v=stage-c5-batch1-world-indices-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1837,7 +1837,11 @@ function renderC5WorldEconomy({ radarData }) {
     const cards = [
       { key: 'stoxx50', prefix: 'c5-stoxx50' },
       { key: 'nikkei225', prefix: 'c5-nikkei225' },
-      { key: 'dax', prefix: 'c5-dax' }
+      { key: 'dax', prefix: 'c5-dax' },
+      { key: 'ftse100', prefix: 'c5-ftse100' },
+      { key: 'cac40', prefix: 'c5-cac40' },
+      { key: 'stoxx600', prefix: 'c5-stoxx600' },
+      { key: 'kospi', prefix: 'c5-kospi' }
     ];
 
     cards.forEach(({ key, prefix }) => {

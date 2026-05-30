@@ -97,8 +97,11 @@ const PRIVATE_CREDIT_PROXY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missi
 const VALID_PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; Yahoo:CCLFX; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public';
 const VALID_PRIVATE_CREDIT_PROXY_REGIMES = new Set(['压力上升', '观察', '平稳', '未知']);
 const WORLD_ECONOMY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
-const VALID_WORLD_ECONOMY_SOURCE = 'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI';
-const WORLD_ECONOMY_KEYS = ['stoxx50', 'nikkei225', 'dax'];
+const VALID_WORLD_ECONOMY_SOURCES = new Set([
+  'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI',
+  'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11'
+]);
+const WORLD_ECONOMY_KEYS = ['stoxx50', 'nikkei225', 'dax', 'ftse100', 'cac40', 'stoxx600', 'kospi'];
 const EURO_VOLATILITY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_EURO_VOLATILITY_SOURCE = 'DeutscheBoerse:quote_box:V2TX; STOXX(fallback)';
 const CHINA_EQUITY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
@@ -964,11 +967,12 @@ function validateMacroDriversWorldEconomy(dataPayload) {
   if (worldEconomy === undefined) return;
   assertPlainObject(worldEconomy, 'macroDrivers.worldEconomy');
   validateNullableIsoString(worldEconomy.updatedAt, 'macroDrivers.worldEconomy.updatedAt');
-  assert(worldEconomy.source === VALID_WORLD_ECONOMY_SOURCE, `macroDrivers.worldEconomy.source must be ${VALID_WORLD_ECONOMY_SOURCE}`);
+  assert(VALID_WORLD_ECONOMY_SOURCES.has(worldEconomy.source), 'macroDrivers.worldEconomy.source is not a supported worldEconomy source');
   assertString(worldEconomy.notes, 'macroDrivers.worldEconomy.notes');
   assertPlainObject(worldEconomy.sourceStatus, 'macroDrivers.worldEconomy.sourceStatus');
 
   for (const key of WORLD_ECONOMY_KEYS) {
+    if (!Object.hasOwn(worldEconomy, key)) continue;
     assert(Object.hasOwn(worldEconomy.sourceStatus, key), `macroDrivers.worldEconomy.sourceStatus.${key} is missing`);
     assert(WORLD_ECONOMY_SOURCE_STATUSES.has(worldEconomy.sourceStatus[key]), `macroDrivers.worldEconomy.sourceStatus.${key} is not supported`);
     assert(Object.hasOwn(worldEconomy, key), `macroDrivers.worldEconomy.${key} is missing`);

@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=china-macro-intro-errata-1';
+﻿import { fmtNumSafe } from './config.js?v=stage-c5-batch1-world-indices-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
