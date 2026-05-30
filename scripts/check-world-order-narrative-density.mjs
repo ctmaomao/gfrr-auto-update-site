@@ -68,7 +68,6 @@ if (!narrative) {
     'economic_weaponization',
     'capital_control_risk',
     'bloc_formation',
-    'world_order_market_confirmation',
     'market_confirmation_source',
     'ofac_recent_actions',
   ]) {
@@ -77,6 +76,19 @@ if (!narrative) {
     }
   }
 
+  // Hotfix: world_order_market_confirmation is conditional on marketConfirmation.state.
+  // A weak / unconfirmed market does NOT confirm structural world-order stress, so the
+  // builder (buildCrossValidationMatrix.js) only pushes it to supportingEvidence when the
+  // marketConfirmation dimension is confirmed / partial_confirmed. This mirrors the M-51
+  // gdelt_tone_proxy conditional; requiring it unconditionally fails whenever markets are calm.
+  const marketConfirmationState = worldOrder?.dimensions?.marketConfirmation?.state;
+  if (marketConfirmationState === 'confirmed' || marketConfirmationState === 'partial_confirmed') {
+    if (!supportingSources.has('world_order_market_confirmation')) {
+      fail('world_order_pressure_crossing missing supporting evidence source: world_order_market_confirmation (marketConfirmation confirmed/partial_confirmed)');
+    }
+  } else if (supportingSources.has('world_order_market_confirmation')) {
+    fail("world_order_market_confirmation should NOT be in supportingEvidence when marketConfirmation.state is not confirmed/partial_confirmed");
+  }
   const missingSources = new Set(narrative.missingEvidence.map((item) => item.source));
   const gdeltStatus = worldOrder?.externalSources?.gdelt?.status;
   const gdeltTone = worldOrder?.externalSources?.gdelt?.summary?.toneProxy;
