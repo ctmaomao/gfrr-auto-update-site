@@ -192,8 +192,8 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于**: 本会话已落地并 push:① **P3-16 三卡换源**(社融 `5157183`/OMO `49d7236`/MLF `26d5d79` 切 EastMoney,线上全 live,finalize `e00851e`/`8279d00`);② **A 档首屏文案去工程术语** `393a204`;③ **中国宏观等分类 intro 事实滞后修正** `0a49a2e`(OMO/MLF/社融「未来候选」→「已 EastMoney 接入」、CPI/WTI 已 live、删不实 pending-card 句);④ **checker 精简 Phase 1** `7fb9b3c`(删 19 个 frozen 占位 checker + 修 null-zero coverage gap;check:all leaf ~65→~48)。
-- **当前进行中**: checker「23」陈旧计数同步(CLAUDE.md×2 / AGENTS.md / PROJECT_BACKLOG Section 1 → 18 顶层项/~48 leaf)+ 本 Section 5 审计 + Handoff,**待提交**(docs-only)。
-- **下一步建议**: 无未完成主线。可选:① **checker Phase 2**(6 个 MERGE 合并项,含改 workflow 自检命令的 M-EA-2)或 **Phase 1b**(删 scaffold 源/fixture/设计文档死重);② EastMoney 聚合源稳定性观察期后加 fallback/告警;③ B/C 档更彻底白话化(需改 DESIGN.md);④ 其它 backlog / 新 feature。换源经验沉淀:pbc→eastmoney 搜索 JSONP + 新闻/正文解析 + 硬验证门 + expand-then-contract validator,可作未来境内官方源被 geoblock 的模板。
+- **上次会话结束于**: 本会话全部落地并 push(HEAD `580647a`):① **P3-16 三卡换源**(社融 `5157183`/OMO `49d7236`/MLF `26d5d79` 切 EastMoney,线上全 live,finalize `e00851e`/`8279d00`);② **A 档首屏文案去工程术语** `393a204`;③ **中国宏观等分类 intro 事实滞后修正** `0a49a2e`;④ **checker 精简 Phase 1** `7fb9b3c`(删 19 个 frozen 占位 checker + 修 null-zero coverage gap;check:all leaf ~65→~48)+ doc 计数同步 `f67a7fa`(「23」→18/~48);⑤ **checker Phase 1b = D-lite** `580647a`(8 个退休 Market Pricing 中间设计文档在 INDEX 降级为 Historical,**不删文件**,尊重项目 history-keeping 文化;Codex 决策支持 + Claude 复核一致)。
+- **当前进行中**: 无。本会话所有改动已 push,工作树 clean。
+- **下一步建议**: 无未完成主线。可选(都非紧急):① **checker Phase 2**(6 个 MERGE 合并项,含改 workflow 自检命令的 M-EA-2,重构风险中、边际收益小——Phase 1 已达成核心目标);② EastMoney 聚合源稳定性观察期后加 fallback/告警;③ B/C 档更彻底白话化(需改 DESIGN.md);④ 其它 backlog / 新 feature。换源经验沉淀:pbc→eastmoney 搜索 JSONP + 新闻/正文解析 + 硬验证门 + expand-then-contract validator,可作未来境内官方源被 geoblock 的模板。**checker 精简经验**:frozen 分阶段 rollout 守卫可整只删(附边界不丢证明),历史设计文档用 INDEX 重分类而非物理删。
 - **阻塞或等待**: 无。
 - **⚠️ 流程教训(2026-05-30)**: 多步任务的 **finalize commit 容易漏提交** —— Stage 16 finalize 曾被误判为已提交(owner「push 了」实指实施 commit),后由 Codex 报告 dirty 文件才发现。**防呆:每个 stage 收尾前先 `git log --oneline -3` 确认 finalize commit 真在 log 里,再开下一任务;serial-trunk 下若工作区出现非本轮的 dirty 文件,先停查 git status/log 别直接 add -A 混提交。**
