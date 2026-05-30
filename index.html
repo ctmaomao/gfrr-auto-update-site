@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=a-scope-jargon-sweep-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=china-macro-intro-errata-1" />
 </head>
 <body>
   <div class="container">
@@ -269,7 +269,7 @@
       <header class="editorial-section-header">
         <span class="section-kicker">MACRO THEMATIC CARDS · 宏观主题卡阵 · NEW</span>
         <span class="section-title">8 读者类别 红黄绿指标卡</span>
-        <span class="section-note">将上方证据按读者最容易理解的主题重新组织。部分卡片仍在等待数据接入。</span>
+        <span class="section-note">将上方证据按读者最容易理解的主题重新组织。</span>
       </header>
       <div class="editorial-section-body">
         <div class="reader-cat-grid">
@@ -277,7 +277,7 @@
         <!-- C1: 通胀与能源 -->
         <div class="reader-cat-block">
           <div class="reader-cat-header"><h3>通胀与能源</h3><span class="en">INFLATION & ENERGY</span><span class="counts">5 张 · <span class="red">3 红</span> · <span class="yellow">2 黄</span></span></div>
-          <p class="cat-intro">能源是当前主线第一环。Brent 主值与公开代理价格的距离反映现货溢价压力；crack spread 是能源向下游柴油 / 汽油传导的中间证据；ISM PMI 看美国制造业能否消化能源成本。CPI / WTI 后续 milestone 接入。</p>
+          <p class="cat-intro">能源是当前主线第一环。Brent 主值与公开代理价格的距离反映现货溢价压力；crack spread 是能源向下游柴油 / 汽油传导的中间证据；ISM PMI 看美国制造业能否消化能源成本；CPI / WTI 提供通胀与油价基准的直接读数。</p>
           <div class="card-grid">
             <article class="indicator-card" id="card-c1-brent"><div class="status-bar red" id="c1-brent-status"></div><div class="head"><div><div class="name-en">Brent</div><div class="name-zh">布伦特原油</div></div><span class="badge red" id="c1-brent-badge">RED</span></div><div class="number"><span id="c1-brent-number">116.73</span><span class="unit" id="c1-brent-unit">USD/bbl</span></div><div class="aux" id="c1-brent-aux">主值 selectedBrent · status: public_proxy_observation</div><div class="agg-rows"><div><span class="k">公开现货代理 EIA</span> · <span class="v" id="c1-brent-eia">$116.50</span></div><div><span class="k">期货 front Yahoo</span> · <span class="v" id="c1-brent-futures">$103.54</span></div><div><span class="k">期货 ICE</span> · <span class="v" id="c1-brent-ice">$98.21</span></div><div><span class="k">spotMinusFutures</span> · <span class="v" id="c1-brent-spread">+$16.52</span></div><div><span class="k">maxProxyDivergencePct</span> · <span class="v" id="c1-brent-divergence">14.9%</span></div></div><p class="note">三层证据链(主值 / 现货代理 / 期货代理)显示价差较大，能源主线传导正在被实际定价压实。</p><div class="meta"><span>阈值 &gt;100 红</span><span>能源价格证据链</span></div></article>
             <article class="indicator-card" id="card-c1-crack"><div class="status-bar red" id="c1-crack-status"></div><div class="head"><div><div class="name-en">Crack spread</div><div class="name-zh">炼油利润压力</div></div><span class="badge red" id="c1-crack-badge">RED</span></div><div class="number"><span id="c1-crack-number">48.37</span><span class="unit" id="c1-crack-unit">USD/bbl</span></div><div class="aux" id="c1-crack-aux">ULSD × 42 − Brent · crackSpread4wChange +19.87</div><p class="note" id="c1-crack-note">炼油利润扩张说明能源向汽油 / 柴油传导。Brent → CPI 的中间证据。regime: 供应紧张。</p><div class="meta"><span>阈值 &gt;40 红</span><span>炼油价差与 4 周变化</span></div></article>
@@ -341,7 +341,7 @@
         <!-- C6: 中国宏观 -->
         <div class="reader-cat-block">
           <div class="reader-cat-header"><h3>中国宏观</h3><span class="en">CHINA MACRO · NEW CATEGORY</span><span class="counts">11 live</span></div>
-          <p class="cat-intro orange-edge"><strong>中国宏观公开观察层。</strong>本类使用 Yahoo 股指、NBS/TE 中国通胀与 PMI、ChinaBond 10Y、ChinaMoney CFETS、NBS 70 城房价指数等公开源。央行逐笔交易明细、社融贷款底层数据、70 城单套房源成交价仍拿不到；OMO、MLF、社融分项等官方公开数据未来可作观察候选。</p>
+          <p class="cat-intro orange-edge"><strong>中国宏观公开观察层。</strong>本类使用 Yahoo 中国股指、NBS/TE 中国通胀与 PMI、ChinaBond 10Y、ChinaMoney CFETS、NBS 70 城房价指数,以及东方财富转载的央行公开市场操作(OMO)、中期借贷便利(MLF)、社会融资规模等公开源(均为聚合转载、非官方原始页面)。央行逐笔交易明细、社融贷款底层数据、70 城单套房源成交价仍拿不到。</p>
           <div class="card-grid">
             <article class="indicator-card"><div class="status-bar neutral" id="c6-sse-status"></div><div class="head"><div><div class="name-en">SSE Composite</div><div class="name-zh">上证综指</div></div><span class="badge neutral" id="c6-sse-badge">OBS</span></div><div class="number" id="c6-sse-number">4100</div><div class="aux" id="c6-sse-aux">近5日 —</div><p class="note">A 股大盘风险情绪基准。</p><div class="meta"><span>live</span><span>Yahoo 000001.SS</span></div></article>
             <article class="indicator-card"><div class="status-bar neutral" id="c6-hsi-status"></div><div class="head"><div><div class="name-en">Hang Seng</div><div class="name-zh">恒生指数</div></div><span class="badge neutral" id="c6-hsi-badge">OBS</span></div><div class="number" id="c6-hsi-number">25000</div><div class="aux" id="c6-hsi-aux">近5日 —</div><p class="note">中国资本市场对外开放窗口。</p><div class="meta"><span>live</span><span>Yahoo ^HSI</span></div></article>
@@ -868,6 +868,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=a-scope-jargon-sweep-1"></script>
+  <script type="module" src="scripts/app.js?v=china-macro-intro-errata-1"></script>
 </body>
 </html>

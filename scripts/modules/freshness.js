@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=a-scope-jargon-sweep-1';
+﻿import { fmtNumSafe } from './config.js?v=china-macro-intro-errata-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

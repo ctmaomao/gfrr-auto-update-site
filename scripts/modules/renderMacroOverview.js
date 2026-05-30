@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=a-scope-jargon-sweep-1';
+} from './config.js?v=china-macro-intro-errata-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
