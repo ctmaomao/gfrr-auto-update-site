@@ -8,7 +8,7 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-c5-batch2-world-indices-1';
+} from './config.js?v=stage-c5-batch3-world-indices-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1844,7 +1844,9 @@ function renderC5WorldEconomy({ radarData }) {
       { key: 'kospi', prefix: 'c5-kospi' },
       { key: 'asx200', prefix: 'c5-asx200' },
       { key: 'sti', prefix: 'c5-sti' },
-      { key: 'taiex', prefix: 'c5-taiex' }
+      { key: 'taiex', prefix: 'c5-taiex' },
+      { key: 'nifty50', prefix: 'c5-nifty50' },
+      { key: 'bovespa', prefix: 'c5-bovespa' }
     ];
 
     cards.forEach(({ key, prefix }) => {

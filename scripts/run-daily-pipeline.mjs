@@ -76,7 +76,7 @@ const ICE_CDX_INDEX_SETTLEMENT_PAGE_URL = 'https://www.ice.com/cds-settlement-pr
 const ICE_CDX_FETCH_TIMEOUT_MS = 10000;
 const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
 const YAHOO_FETCH_TIMEOUT_MS = 9000;
-const WORLD_ECONOMY_SOURCE = 'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11; Yahoo:^AXJO; Yahoo:^STI; Yahoo:^TWII';
+const WORLD_ECONOMY_SOURCE = 'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11; Yahoo:^AXJO; Yahoo:^STI; Yahoo:^TWII; Yahoo:^NSEI; Yahoo:^BVSP';
 const WORLD_ECONOMY_CHANGE_WINDOW = '5d';
 const WORLD_ECONOMY_DISPLAY_NOTE =
   '世界经济维度 display-only 公开指数代理;不进 scoring/decision/execution/position。';
@@ -90,7 +90,9 @@ const WORLD_ECONOMY_INDEXES = [
   { key: 'kospi', symbol: '^KS11', labelZh: '韩国 KOSPI', min: 2000, max: 20000 },
   { key: 'asx200', symbol: '^AXJO', labelZh: '澳洲 ASX 200', min: 4000, max: 20000 },
   { key: 'sti', symbol: '^STI', labelZh: '新加坡 STI', min: 2000, max: 10000 },
-  { key: 'taiex', symbol: '^TWII', labelZh: '台湾加权 TAIEX', min: 10000, max: 80000 }
+  { key: 'taiex', symbol: '^TWII', labelZh: '台湾加权 TAIEX', min: 10000, max: 80000 },
+  { key: 'nifty50', symbol: '^NSEI', labelZh: '印度 Nifty 50', min: 10000, max: 50000 },
+  { key: 'bovespa', symbol: '^BVSP', labelZh: '巴西 Bovespa', min: 50000, max: 300000 }
 ];
 const EURO_VOLATILITY_SOURCE = 'DeutscheBoerse:quote_box:V2TX; STOXX(fallback)';
 const EURO_VOLATILITY_PRIMARY_SOURCE = 'DeutscheBoerse:quote_box:V2TX';

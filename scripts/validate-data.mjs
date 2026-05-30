@@ -98,10 +98,10 @@ const VALID_PRIVATE_CREDIT_PROXY_SOURCE = 'Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; Y
 const VALID_PRIVATE_CREDIT_PROXY_REGIMES = new Set(['压力上升', '观察', '平稳', '未知']);
 const WORLD_ECONOMY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_WORLD_ECONOMY_SOURCES = new Set([
-  'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11',
-  'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11; Yahoo:^AXJO; Yahoo:^STI; Yahoo:^TWII'
+  'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11; Yahoo:^AXJO; Yahoo:^STI; Yahoo:^TWII',
+  'Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11; Yahoo:^AXJO; Yahoo:^STI; Yahoo:^TWII; Yahoo:^NSEI; Yahoo:^BVSP'
 ]);
-const WORLD_ECONOMY_KEYS = ['stoxx50', 'nikkei225', 'dax', 'ftse100', 'cac40', 'stoxx600', 'kospi', 'asx200', 'sti', 'taiex'];
+const WORLD_ECONOMY_KEYS = ['stoxx50', 'nikkei225', 'dax', 'ftse100', 'cac40', 'stoxx600', 'kospi', 'asx200', 'sti', 'taiex', 'nifty50', 'bovespa'];
 const EURO_VOLATILITY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_EURO_VOLATILITY_SOURCE = 'DeutscheBoerse:quote_box:V2TX; STOXX(fallback)';
 const CHINA_EQUITY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
