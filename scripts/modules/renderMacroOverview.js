@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=mobile-fullwidth-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=mobile-fullwidth-1';
+} from './config.js?v=signal-emoji-dedup-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=signal-emoji-dedup-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

@@ -85,7 +85,6 @@
   .narrative-item { border-left: 3px solid var(--paper-line); padding: 8px 14px; background: var(--paper-bg-canvas); }
   .narrative-item.active { border-left-color: var(--risk-red); }
   .narrative-item .head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 4px; }
-  .narrative-item .emoji { font-size: 16px; }
   .narrative-item .name { font-family: var(--font-serif); font-size: 14px; font-weight: 600; color: var(--paper-ink); }
   .narrative-item .score { font-family: var(--font-mono); font-size: 11px; color: var(--paper-muted); margin-left: auto; }
   .narrative-item p { font-family: var(--font-serif); font-size: 12.5px; line-height: 1.6; color: var(--paper-warm); margin: 0; }
@@ -360,7 +359,7 @@
     /* 信号分层:score 移到独立一行,长 snake_case narrative 名得整行宽度、
        几乎不再断词;overflow-wrap 仅作超长 token 兜底(不用激进的 word-break)*/
     .narrative-item .head { flex-wrap: wrap; }
-    .narrative-item .score { flex: 0 0 100%; margin-left: 0; padding-left: 26px; margin-top: 2px; }
+    .narrative-item .score { flex: 0 0 100%; margin-left: 0; margin-top: 2px; }
     .narrative-item .name { overflow-wrap: anywhere; }
     /* 交叉验证一致性条:基础 min-width:280px 比窄屏块还宽 → 归零,随块收缩 */
     .consistency-bar-wrap { min-width: 0; }

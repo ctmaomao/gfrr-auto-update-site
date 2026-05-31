@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=mobile-fullwidth-1';
+﻿import { fmtNumSafe } from './config.js?v=signal-emoji-dedup-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
