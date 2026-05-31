@@ -148,7 +148,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 2. <nav class="dashboard-jump-nav">       顶部跳转导航 15 项
 
 ═══ Non-nav preface block（不计入 nav 编号）═══
-#plain-summary-card                       普通用户 preface block
+#plain-summary-card                       普通用户 preface block（2026-05 Bubble Watch 改版已退场)
    - 位于 <main> 内、dashboard-jump-nav 后、#macro-risk-overview 前
    - 使用 plain-summary-section 叙事结构
    - 不计入 15 项 jump-nav IA section
@@ -312,8 +312,8 @@ runtime block 的基准结构:
 ```
 
 **视觉规范**：
-- 背景 `var(--paper-ink)` 深墨
-- 文字 `var(--paper-bg)` 反白
+- （2026-05 Bubble Watch 改版:只分数反白,判读敞开)`.big-left`(TODAY JUDGMENT + 分数)为深墨反白块:背景 `var(--paper-ink)`、文字 `var(--paper-bg)`
+- `.big-right`(判读 kicker/headline/body)与 `.big-footer` 在纸色背景上、深字 `var(--paper-ink)`,不再整卡反白
 - 数值字号 `clamp(80px, 14vw, 144px)`,Playfair Display 900 weight
 - 数值 `line-height: 0.9`
 - `big-footer` 为 3 列元数据:DOMINANT RISK CHAIN / WEEKLY CHANGE / DATA HEALTH

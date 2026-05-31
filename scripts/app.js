@@ -7,7 +7,7 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'batch-c-shipping-freight-1';
+const APP_VERSION = 'bubble-watch-firstfold-redesign-1';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
 
@@ -126,7 +126,7 @@ async function main() {
 
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=batch-e-macro-coherence-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=bubble-watch-firstfold-redesign-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData });
   } catch (error) {
     console.error('[app] Failed to import / run renderMacroOverview:', error);
@@ -134,10 +134,6 @@ async function main() {
 
   // Stage 4c stub: 后续 sub-stage 在此 import + 调用 renderer
   // 例如:
-  // import('./modules/renderPlainSummary.js').then(({ renderPlainSummary }) => {
-  //   renderPlainSummary({ radarData });
-  // });
-
   console.log(`[app] Stage 5d-2 init complete. APP_VERSION=${APP_VERSION}`);
   console.log('[app] Data loaded:', {
     radarDataPresent: radarData !== null,

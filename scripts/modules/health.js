@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=batch-e-macro-coherence-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=batch-e-macro-coherence-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=bubble-watch-firstfold-redesign-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=bubble-watch-firstfold-redesign-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
