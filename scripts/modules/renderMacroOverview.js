@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=batch-c-shipping-freight-1';
-import { buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=batch-c-shipping-freight-1';
+} from './config.js?v=batch-e-macro-coherence-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=batch-e-macro-coherence-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -781,6 +781,52 @@ function renderCrossValidation({ radarData, worldOrderStressData, marketPricingM
     setLeafText('cv-summary-line', matrix?.oneLineSummary || '—');
   } catch (error) {
     console.error('[renderMacroOverview] renderCrossValidation failed:', error);
+  }
+}
+
+// ---------- Block 9b: Macro Coherence(批 E,display-only 定性印证) ----------
+
+function macroCoherenceToneClass(verdict) {
+  if (verdict === '印证') return 'mc-confirm';
+  if (verdict === '背离') return 'mc-diverge';
+  return 'mc-background';
+}
+
+function renderMacroCoherence({ radarData, worldOrderStressData, marketPricingMetricsData }) {
+  try {
+    const matrix = buildCrossValidationMatrix(radarData, worldOrderStressData, marketPricingMetricsData, radarData?.macroDrivers?.fedLiquidity);
+    const coherence = buildMacroCoherence(radarData, matrix, marketPricingMetricsData);
+    const rowsRoot = $('mc-rows');
+    if (rowsRoot) {
+      const rows = (coherence?.signals || []).map((sig) => {
+        const row = document.createElement('div');
+        row.className = 'mc-row';
+        const head = document.createElement('div');
+        head.className = 'mc-row-head';
+        const persp = document.createElement('span');
+        persp.className = 'mc-perspective';
+        persp.textContent = sig.perspectiveZh;
+        const verdict = document.createElement('span');
+        verdict.className = `mc-verdict ${macroCoherenceToneClass(sig.verdict)}`;
+        verdict.textContent = sig.verdict;
+        const role = document.createElement('span');
+        role.className = 'mc-role';
+        role.textContent = sig.timeRole;
+        head.append(persp, verdict, role);
+        const reason = document.createElement('div');
+        reason.className = 'mc-reason';
+        reason.textContent = sig.reason;
+        const caveat = document.createElement('div');
+        caveat.className = 'mc-caveat';
+        caveat.textContent = sig.caveat;
+        row.append(head, reason, caveat);
+        return row;
+      });
+      rowsRoot.replaceChildren(...rows);
+    }
+    setLeafText('mc-summary-line', coherence?.summaryLine || '—');
+  } catch (error) {
+    console.error('[renderMacroOverview] renderMacroCoherence failed:', error);
   }
 }
 
@@ -2430,6 +2476,7 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   renderSignalLayers({ radarData, worldOrderStressData, marketPricingMetricsData });
   renderMacroDriversPillars({ radarData });
   renderCrossValidation({ radarData, worldOrderStressData, marketPricingMetricsData });
+  renderMacroCoherence({ radarData, worldOrderStressData, marketPricingMetricsData });
 
   // Stage 5a: heatmap + C7 market sentiment + C8 geopolitics/world-order
   renderHeatmap({ radarData });

@@ -180,6 +180,19 @@
   .consistency-value { font-family: var(--font-display); font-size: 24px; font-weight: 700; }
   .consistency-detail { font-family: var(--font-mono); font-size: 11px; color: var(--paper-muted); line-height: 1.7; }
 
+  #homepage-macro-coherence .mc-row { padding: 8px 0; border-top: 1px solid var(--paper-line); }
+  #homepage-macro-coherence .mc-row:first-child { border-top: none; }
+  #homepage-macro-coherence .mc-row-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  #homepage-macro-coherence .mc-perspective { font-weight: 600; }
+  #homepage-macro-coherence .mc-verdict { font-size: 0.8em; padding: 0 4px; }
+  #homepage-macro-coherence .mc-verdict.mc-confirm { color: var(--risk-green); }
+  #homepage-macro-coherence .mc-verdict.mc-diverge { color: var(--risk-red); }
+  #homepage-macro-coherence .mc-verdict.mc-background { color: var(--paper-muted); }
+  #homepage-macro-coherence .mc-role { font-size: 0.75em; color: var(--paper-muted); }
+  #homepage-macro-coherence .mc-reason { font-size: 0.9em; margin-top: 2px; }
+  #homepage-macro-coherence .mc-caveat { font-size: 0.75em; color: var(--paper-muted); font-style: italic; margin-top: 2px; }
+  #homepage-macro-coherence .mc-summary { margin-top: 10px; font-size: 0.9em; }
+
   .wow-section { background: var(--paper-ink); color: var(--paper-bg); padding: 28px 32px; margin-top: 22px; }
   .wow-section .wow-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.22em; opacity: 0.6; margin-bottom: 14px; text-transform: uppercase; }
   .wow-section h3 { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin: 0 0 18px 0; }

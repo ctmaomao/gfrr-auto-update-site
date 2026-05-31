@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=batch-c-shipping-freight-1';
-import { formatOnRrpYiUsd } from './format.js?v=batch-c-shipping-freight-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=batch-e-macro-coherence-1';
+import { formatOnRrpYiUsd } from './format.js?v=batch-e-macro-coherence-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

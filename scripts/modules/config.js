@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=batch-c-shipping-freight-1';
+﻿import { formatFiniteNumber } from './format.js?v=batch-e-macro-coherence-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

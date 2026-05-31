@@ -3,7 +3,8 @@ import { spawnSync } from 'node:child_process';
 const SUITES = {
   'frontend-live-contracts': [
     'check:null-zero-display-guards',
-    'check:dom'
+    'check:dom',
+    'check:macro-coherence-display-only'
   ],
   'external-ai': [
     'check:external-ai-manual-workflow',

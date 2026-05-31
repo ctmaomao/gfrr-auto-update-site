@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=batch-c-shipping-freight-1';
+﻿import { fmtNumSafe } from './config.js?v=batch-e-macro-coherence-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

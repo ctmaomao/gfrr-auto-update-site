@@ -985,5 +985,206 @@ export function buildCrossValidationMatrix(data = {}, worldOrderStressData = {},
   };
 }
 
+const MACRO_COHERENCE_WORLD_KEYS = [
+  'stoxx50', 'nikkei225', 'dax', 'ftse100', 'cac40', 'stoxx600',
+  'kospi', 'asx200', 'sti', 'taiex', 'nifty50', 'bovespa',
+];
+
+function coherenceSignal(id, perspectiveZh, verdict, timeRole, reason, dataUsed, caveat) {
+  return {
+    id,
+    perspectiveZh,
+    verdict,
+    timeRole,
+    reason: String(reason || ''),
+    dataUsed: safeArray(dataUsed),
+    caveat: String(caveat || ''),
+  };
+}
+
+// 批 E · 跨市场印证层(Design B'):display-only 纯定性,不改 consistencyScore,不落盘,不进 scoring/decision。
+export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetricsData = null) {
+  const md = isPlainObject(data?.macroDrivers) ? data.macroDrivers : {};
+  const baseline = isPlainObject(data?.displayInputsBaseline) ? data.displayInputsBaseline : {};
+  const matrixNarratives = safeArray(matrix?.narratives);
+  const metric = getLatestMetric(marketPricingMetricsData);
+  const usZ = metric ? metric.zScore : null;
+  const vix = finite(baseline.vix);
+  const signals = [];
+
+  // E1 · V2X vs VIX 地区波动率背离(同步)
+  {
+    const euro = isPlainObject(md.euroVolatility) ? md.euroVolatility : {};
+    const v2x = euro.sourceStatus === 'live' ? finite(euro.value) : null;
+    const caveat = 'V2X 与 VIX 高度相关,只取背离;VIX 已在 scoring,不重复计数恐慌。';
+    if (v2x === null || vix === null) {
+      signals.push(coherenceSignal('v2x_vix_divergence', 'V2X 欧美波动率', '背景', '同步',
+        'V2X 或 VIX 未刷新,暂不判定地区波动率背离。', ['euroVolatility.value', 'vix'], caveat));
+    } else {
+      const spread = v2x - vix;
+      let verdict, reason;
+      if (spread >= 2.5) {
+        verdict = '背离';
+        reason = `欧元区波动率 ${formatNumber(v2x, 1)} 高于美国 VIX ${formatNumber(vix, 1)}(+${formatNumber(spread, 1)}),恐慌偏欧洲地区性,美国市价读数或低估广度。`;
+      } else if (spread <= -2.5) {
+        verdict = '背离';
+        reason = `美国 VIX ${formatNumber(vix, 1)} 高于欧元区 ${formatNumber(v2x, 1)}(${formatNumber(spread, 1)}),恐慌偏美国 idiosyncratic。`;
+      } else {
+        verdict = '印证';
+        reason = `欧美波动率同步(差 ${formatNumber(spread, 1)}),恐慌为系统性而非地区性,与核心一致。`;
+      }
+      signals.push(coherenceSignal('v2x_vix_divergence', 'V2X 欧美波动率', verdict, '同步', reason,
+        ['euroVolatility.value', 'vix'], caveat));
+    }
+  }
+
+  // E2 · 全球股指广度同步 vs 局部(同步)
+  {
+    const we = isPlainObject(md.worldEconomy) ? md.worldEconomy : {};
+    let up = 0, down = 0;
+    for (const k of MACRO_COHERENCE_WORLD_KEYS) {
+      const cp = finite(we?.[k]?.changePct);
+      if (cp === null) continue;
+      if (cp > 0) up += 1; else if (cp < 0) down += 1;
+    }
+    const n = up + down;
+    const caveat = '本币计价/时区错位/无成分股 breadth,与 SPX 高 beta 重叠;只作同步 vs 局部,不作领先。';
+    if (n < 8 || usZ === null) {
+      signals.push(coherenceSignal('global_breadth', '全球股指广度', '背景', '同步',
+        n < 8 ? '全球指数刷新不足,暂不判定广度。' : '美股温度(QQQ z)不可用,暂不判定广度。',
+        ['worldEconomy.changePct', 'qqq.zScore'], caveat));
+    } else {
+      let verdict, reason;
+      if (down >= 8 && usZ <= 0) {
+        verdict = '印证';
+        reason = `全球 ${down}/12 国走弱且美股偏冷(z ${formatSigned(usZ)}),系统性而非孤立,印证核心。`;
+      } else if (down >= 8 && usZ > 0) {
+        verdict = '背离';
+        reason = `美股偏热(z ${formatSigned(usZ)})但全球 ${down}/12 国走弱,美国局部强势,广度背离。`;
+      } else if (up >= 8 && usZ >= 0) {
+        verdict = '印证';
+        reason = `全球 ${up}/12 国走强且美股偏热(z ${formatSigned(usZ)}),风险偏好同步。`;
+      } else if (up >= 8 && usZ < 0) {
+        verdict = '背离';
+        reason = `美股偏冷(z ${formatSigned(usZ)})但全球 ${up}/12 国走强,美国局部弱,广度背离。`;
+      } else {
+        verdict = '背景';
+        reason = `全球广度分化(${up} 涨 / ${down} 跌),无明确同步/局部信号。`;
+      }
+      signals.push(coherenceSignal('global_breadth', '全球股指广度', verdict, '同步', reason,
+        ['worldEconomy.changePct', 'qqq.zScore'], caveat));
+    }
+  }
+
+  // E3 · 实体-市场错配 Main St vs Wall St(滞后)
+  {
+    const emp = isPlainObject(md.employment) ? md.employment : {};
+    const cr = isPlainObject(md.consumerRetail) ? md.consumerRetail : {};
+    const claims4w = finite(emp.initialClaims4wChange);
+    const realRetail = finite(cr.cartsRealYoY);
+    const caveat = '周/月频滞后,只论持续性不论今日紧迫度;只用 ICSA+CARTS+Redbook,JOLTS/AHE/U6 季频不纳入。';
+    const dataUsed = ['employment.initialClaims4wChange', 'consumerRetail.cartsRealYoY', 'consumerRetail.redbookRetailSalesYoY'];
+    if (claims4w === null && realRetail === null) {
+      signals.push(coherenceSignal('main_vs_wall', '实体-市场错配', '背景', '滞后',
+        '就业/零售实体数据未刷新,暂不判定。', dataUsed, caveat));
+    } else {
+      const marketLoose = (usZ !== null && usZ > 0) || (vix !== null && vix < 18);
+      const entityWeak = (claims4w !== null && claims4w > 5000) || (realRetail !== null && realRetail < 0);
+      const entityStrong = (claims4w !== null && claims4w < 0) && (realRetail !== null && realRetail > 0);
+      let verdict, reason;
+      if (entityWeak && marketLoose) {
+        verdict = '背离';
+        const bits = [];
+        if (claims4w !== null && claims4w > 5000) bits.push(`初请 4 周 +${formatNumber(claims4w, 0)}`);
+        if (realRetail !== null && realRetail < 0) bits.push(`实际零售 ${formatSignedPercent(realRetail * 100, 1)}`);
+        reason = `市价偏松/偏热,但${bits.join('、')} → 持续性存疑,基本面未确认。`;
+      } else if (entityStrong && marketLoose) {
+        verdict = '印证';
+        reason = `实体(初请下行 + 实际零售 ${formatSignedPercent(realRetail * 100, 1)})与市价同向,基本面支持。`;
+      } else {
+        verdict = '背景';
+        reason = `实体与市价未形成明确错配(初请 4 周 ${claims4w === null ? '—' : formatSigned(claims4w, 0)} / 实际零售 ${realRetail === null ? '—' : formatSignedPercent(realRetail * 100, 1)})。`;
+      }
+      signals.push(coherenceSignal('main_vs_wall', '实体-市场错配', verdict, '滞后', reason, dataUsed, caveat));
+    }
+  }
+
+  // E4 · 公开信用代理 vs HY/IG 背离(领先/同步)
+  {
+    const pc = isPlainObject(md.privateCreditProxy) ? md.privateCreditProxy : {};
+    const credit = isPlainObject(md.credit) ? md.credit : {};
+    const bdc = finite(pc.bdcEtf4wChange);
+    const pbdc = finite(pc.pbdcEtf4wChange);
+    const hyOas = finite(baseline.hyOas ?? credit.hyOas);
+    const proxyVals = [bdc, pbdc].filter((x) => x !== null);
+    const caveat = 'HY/IG 已 scoring,只取公开 vs 代理背离;BDC/SRLN/CCLFX/CDX 是公开 ETF/NAV/指数代理,无 discount 字段、非 private marks,不得写"隐藏私募裂缝已确认"。';
+    const dataUsed = ['privateCreditProxy.bdcEtf4wChange', 'privateCreditProxy.pbdcEtf4wChange', 'hyOas', 'credit.igOas'];
+    if (proxyVals.length === 0 || hyOas === null) {
+      signals.push(coherenceSignal('public_credit_proxy', '公开信用代理', '背景', '领先/同步',
+        '公开信用代理或 HY 利差未刷新,暂不判定。', dataUsed, caveat));
+    } else {
+      const proxyAvg = proxyVals.reduce((a, b) => a + b, 0) / proxyVals.length;
+      const proxyWeak = proxyAvg <= -0.03;
+      const proxyStable = proxyAvg >= 0;
+      const creditCalm = hyOas < 3.5;
+      let verdict, reason;
+      if (proxyWeak && creditCalm) {
+        verdict = '背离';
+        reason = `公开 BDC/优先贷款 ETF 4 周走弱(均 ${formatSignedPercent(proxyAvg * 100, 1)})但 HY 利差仍平静(${formatNumber(hyOas, 2)}%),公开信用代理出现压力、利差尚未确认。`;
+      } else if (proxyWeak && hyOas > 5) {
+        verdict = '印证';
+        reason = `公开信用代理(${formatSignedPercent(proxyAvg * 100, 1)})与 HY 利差(${formatNumber(hyOas, 2)}%)同向走弱,信用压力一致。`;
+      } else if (proxyStable && creditCalm) {
+        verdict = '印证';
+        reason = `公开信用代理平稳(${formatSignedPercent(proxyAvg * 100, 1)})且 HY 利差平静(${formatNumber(hyOas, 2)}%),信用面无背离。`;
+      } else {
+        verdict = '背景';
+        reason = `公开信用代理 ${formatSignedPercent(proxyAvg * 100, 1)} / HY ${formatNumber(hyOas, 2)}%,无明确背离/确认。`;
+      }
+      signals.push(coherenceSignal('public_credit_proxy', '公开信用代理', verdict, '领先/同步', reason, dataUsed, caveat));
+    }
+  }
+
+  // E5 · 中国/EM 弱慢背景(verdict 恒为 '背景',慢背景)
+  {
+    const prop = isPlainObject(md.chinaPropertyPrice) ? md.chinaPropertyPrice : {};
+    const ppi = finite(md.chinaInflation?.ppi?.yoy);
+    const pmi = finite(md.chinaPmi?.pmi?.value);
+    const newUp = finite(prop.newCitiesUp);
+    const newDown = finite(prop.newCitiesDown);
+    const bits = [];
+    if (pmi !== null) bits.push(`PMI ${formatNumber(pmi, 1)}${pmi < 50 ? '(收缩)' : pmi > 50 ? '(扩张)' : '(临界)'}`);
+    if (ppi !== null) bits.push(`PPI ${formatSignedPercent(ppi * 100, 1)}`);
+    if (newUp !== null && newDown !== null) bits.push(`70 城新房 ${newUp} 涨/${newDown} 跌`);
+    const reason = bits.length
+      ? `${bits.join(' / ')} → 中国需求/通胀作 inflation/liquidity 结论的弱慢背景(不作领先)。`
+      : '中国宏观数据未刷新,作弱慢背景观察。';
+    signals.push(coherenceSignal('china_em_background', '中国/EM 弱慢背景', '背景', '慢背景', reason,
+      ['chinaPropertyPrice.newCitiesUp/Down', 'chinaInflation.ppi.yoy', 'chinaPmi.pmi.value', 'cfetsRmb.cfets'],
+      '东方财富转载非官方原始;不用央行毛额做流动性脉冲;CFETS 受管理篮子≠资本外流;月频慢变量只作背景。'));
+  }
+
+  // E6/E7 · 引用既有矩阵 narrative(不重建逻辑)
+  const refRow = (narrId, id, perspectiveZh, timeRole, coveredZh) => {
+    const nar = matrixNarratives.find((x) => x?.id === narrId);
+    const a = nar?.assessment;
+    const verdict = (a === 'strong_confirmation' || a === 'partial_confirmation') ? '印证'
+      : a === 'contradiction' ? '背离' : '背景';
+    signals.push(coherenceSignal(id, perspectiveZh, verdict, timeRole,
+      `已在交叉验证矩阵确认(${coveredZh}),此处不重复计数。`,
+      [`matrix.${narrId}`], '与上方一致性矩阵同源,避免重复计数。'));
+  };
+  refRow('overheat_confirmation', 'overheat_ref', '估值过热(已覆盖)', '同步', '过热确认 narrative');
+  refRow('energy_shock', 'energy_ref', '能源供给冲击(已覆盖)', '同步/滞后', '能源冲击 narrative');
+
+  // summaryLine:prose,先点背离,无 N/M 数字、无 bar
+  const diverge = signals.filter((s) => s.verdict === '背离').map((s) => s.perspectiveZh);
+  const summaryLine = diverge.length
+    ? `值得盯的背离:${diverge.join('、')}。其余跨市场证据多数与核心结论同向。`
+    : '跨市场证据多数与核心结论同向,暂无显著背离;中国/EM 作弱慢背景。';
+
+  return { signals, summaryLine };
+}
+
 export { ASSESSMENT_LABELS };
 export { classifyZScoreBucket };
