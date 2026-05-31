@@ -9,7 +9,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 项 | 当前值 |
 |---|---|
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分)|
-| Cache version | `batch-e-macro-coherence-1` |
+| Cache version | `threshold-scale-1to1-1` |
 | check:all 项数 | 18 顶层项 / ~48 leaf checks(checker 精简 Phase 1 后)|
 | 最后审计日期 | 2026-05-31 |
 | 主 runtime | Worker-first `/market.worker-preview.json` |
@@ -198,10 +198,11 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于**: **系统终审六批全部收口(A/B/C/B-next/D/E)**。批 E 跨市场印证层 push(HEAD `919162e`,`buildMacroCoherence` display-only,Design B',不改 consistencyScore/不进 scoring)+ docs 回填 push(`ea81863`)+ **批 D 评审决议 = A(不改风险模型)**:油价 28.456% 集中度非 bug、零决策影响(去重不翻转任何 executionLock/strategyState/positionGuidance;红灯实为 ON RRP 结构门控),`oilInflationWeight` 记为未来回测候选。本 docs commit 记录 D 关闭 + Handoff。
-- **当前进行中**: 无。六批全收口,工作树待本 docs commit 后 clean。
-- **下一步建议**: 无主线未完成。可选小项(非紧急):① 批 E 待今晚 Daily 后看线上渲染(新块 7 行 + summary 是否正常);② checker Phase 2(6 MERGE 合并项,边际小)+ Phase 1b(删 scaffold 死重);③ B-worker(Brent-hold 年龄上限,改 worker 运行时 + 需 wrangler deploy,owner 单独拍板);④ 若哪天要主动降油价集中度 → 批 D 的 B 路径(`oilInflationWeight`→回测→版本评审)。**批 D 决议详见 Section 5 + 记忆 `system_audit_2026_05`;批 E 范式见 `.claude/stage-briefs/BATCH_E_MACRO_COHERENCE_*`。**
+- **上次会话结束于**: 系统终审六批(A/B/C/B-next/D/E)收口后,做了**编辑版面改版系列**:① 首屏改版(删本期速读 plain-summary 静态块、verdict body 接活数据成富判读、de-box 只框分数)`2497e65`;② C5/C6 跨市场印证更有存在感(分级全球广度 + 中国接结论主线,仍 display-only/守边界)`a20e2da`;③ 阈值标尺 1:1 复刻参考页(bar 56→64px、标题 18→22px、zone 12→13/9→10px + 600px 响应式)+ 删“本期判读”标题(commit `ba101f7`,asset `threshold-scale-1to1-1`)。①②③ 均已 push、check:all 绿、BOM 净、`data/*.json` 未动;工作树仅余**本 Handoff docs commit**。批 D 决议=A 见 `926b423`。
+- **当前进行中**: 无。owner 拟开**新 session 做广度排查(其他问题/功能检查)**,非续此编辑线。
+- **下一步建议(新 session 候选排查点)**: ① 新首屏在**手机/窄屏**渲染(de-box 黑块 + 敞开判读、64px 阈值条是否溢出);② 跨市场印证块 7 行在不同数据下判定是否合理(尤其 QQQ z / metric 缺失时 fallback);③ checker Phase 2(6 MERGE)/ Phase 1b(删 scaffold 死重);④ B-worker(Brent-hold 年龄上限,需 wrangler deploy);⑤ 数据链 / 功能巡检。参考页标尺样本 = `D:\PCTMoveData\Desktop\AI 泡沫监测 · The Bubble Watch.html`。
 - **阻塞或等待**: 无。
 - **⚠️ 流程教训(2026-05-30)**: 多步任务的 **finalize commit 容易漏提交** —— Stage 16 finalize 曾被误判为已提交(owner「push 了」实指实施 commit),后由 Codex 报告 dirty 文件才发现。**防呆:每个 stage 收尾前先 `git log --oneline -3` 确认 finalize commit 真在 log 里,再开下一任务;serial-trunk 下若工作区出现非本轮的 dirty 文件,先停查 git status/log 别直接 add -A 混提交。**
 - **⚠️ 教训(2026-05-31,C5 三批)**: ① **往已存在多 key 展示层加 key 必走 Option C**(validator Set 接受 legacy+target source、新 key「存在才校验」)——直接改严会让 committed 数据失效、push 触发 deploy check:all 红、Pages 断。② **PowerShell here-string helper 的 `Set-Content -NoNewline` 会删 UTF-8 BOM**;每批 diff 复核必查 6 个 helper-touched 文件 BOM 并字节级补回。③ **批 N+1 提交前先 `git pull --rebase`** 同步上批 Daily 的 committed 数据,否则本地旧 key 数据在新 Set 下 check:data 失败。
 - **⚠️ 教训(2026-05-31,批 E)**: ① **BOM 不是全项目统一** —— `scripts/modules/buildCrossValidationMatrix.js` 是唯一**无** BOM 的源文件;brief 笼统写「所有源文件带 BOM」导致 Codex 给它**误加** BOM、污染首行 diff。**diff 复核查 BOM 要双向 + 对 HEAD 比对**(`git show HEAD:f | head -c3` vs 工作树),既防误删也防误加。② **大型 display 层走「同模块 + 纯定性 + 不碰既有分数」(Design B')最稳**:`consistencyScore` 算法 byte 不动 → 现有一堆 marker/density checker 零风险;新层只出定性判定不出第二个数字。③ **方向有歧义先让 Codex 独立复核再拍板**:批 E 的「并入 consistencyScore」二义性由 Codex 对抗复核收敛为 B'(去掉可见计数)。
+- **⚠️ 教训(2026-05-31,编辑改版)**: ① owner 常在一项验证完就跳到下一需求/报错,**上一项 commit 易留工作区没提交**(本轮阈值标尺、之前批 D backlog 都中过)——收尾/换 session 前**必 `git status` 确认无遗留 dirty**。② **`const APP_VERSION`(scripts/app.js)bump 工具不覆盖**,每次 `bump:frontend-asset-version` 后手动对齐它。③ **`DESIGN.md` 也是无 BOM 文件**(第 3 个,连同 `buildCrossValidationMatrix.js` / `MILESTONE_INDEX.md`)。④ **小幅前端 display-only 微调可 Claude 直接改 + 自验 + 给 commit**(C5/C6、阈值标尺即如此);大改 / 动逻辑仍走 Codex 实施→复核。⑤ **运维**:Daily「dailyRealtimeInput live payload is stale」与「Check Worker Health: worker ageMinutes>10」均为周末/cron 缺口的 freshness 闸误报,非代码,详见记忆 `ops_daily_realtime_freshness`。
