@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=xval-meta-plain-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=xval-meta-plain-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=xval-gap-wording-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=xval-gap-wording-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

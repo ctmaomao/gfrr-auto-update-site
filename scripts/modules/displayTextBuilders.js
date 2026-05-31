@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=xval-meta-plain-1';
+﻿import { fmtNumSafe } from './config.js?v=xval-gap-wording-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

@@ -9,7 +9,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 项 | 当前值 |
 |---|---|
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分)|
-| Cache version | `xval-meta-plain-1` |
+| Cache version | `xval-gap-wording-1` |
 | check:all 项数 | 18 顶层项 / ~48 leaf checks(checker 精简 Phase 1 后)|
 | 最后审计日期 | 2026-05-31 |
 | 主 runtime | Worker-first `/market.worker-preview.json` |
@@ -199,7 +199,7 @@ Add or update backlog items with these rules:
 ## 🔄 Session Handoff (最新)
 
 - **上次会话结束于**: 系统终审六批(A/B/C/B-next/D/E)收口后,做了**编辑版面改版系列**:① 首屏改版(删本期速读 plain-summary 静态块、verdict body 接活数据成富判读、de-box 只框分数)`2497e65`;② C5/C6 跨市场印证更有存在感(分级全球广度 + 中国接结论主线,仍 display-only/守边界)`a20e2da`;③ 阈值标尺 1:1 复刻参考页(bar 56→64px、标题 18→22px、zone 12→13/9→10px + 600px 响应式)+ 删“本期判读”标题(commit `ba101f7`,asset `threshold-scale-1to1-1`)。①②③ 均已 push、check:all 绿、BOM 净、`data/*.json` 未动;工作树仅余**本 Handoff docs commit**。批 D 决议=A 见 `926b423`。
-- **本 session 增量(2026-05-31)**: 交叉验证 / 跨市场印证两块的 `<div class="meta">` 去工程术语——`CROSS VALIDATION MATRIX` 的 `buildCrossValidationMatrix() · narratives + consistencyScore + oneLineSummary` 换成大白话「7 条风险逻辑链的同向印证与反向证据 · 综合为一致性评分」;`MACRO COHERENCE` 的 `buildMacroCoherence() · ` 函数名前缀去掉、保留「仅供观察的定性印证 · 不进打分」。纯 index.html display-only,无 checker 引用这两行 meta(已 grep 确认),无 render/数据/scoring 改动。asset bump `xval-meta-plain-1`(含手动对齐 app.js APP_VERSION + 两处 doc cache-version)。顺带答疑「数据缺口 N 个 narrative」= 7 条逻辑链里 missingEvidence 非空或 insufficient_data 的条数(与确认/矛盾**重叠**,故三数不相加;当前 4 = 能源冲击/滞涨/信用利差/世界秩序,多为未接 Platts/CDX 深度源或边界声明,非"判不了")。
+- **本 session 增量(2026-05-31)**: 交叉验证 / 跨市场印证两块的 `<div class="meta">` 去工程术语——`CROSS VALIDATION MATRIX` 的 `buildCrossValidationMatrix() · narratives + consistencyScore + oneLineSummary` 换成大白话「7 条风险逻辑链的同向印证与反向证据 · 综合为一致性评分」;`MACRO COHERENCE` 的 `buildMacroCoherence() · ` 函数名前缀去掉、保留「仅供观察的定性印证 · 不进打分」。纯 index.html display-only,无 checker 引用这两行 meta(已 grep 确认),无 render/数据/scoring 改动。asset bump → `xval-meta-plain-1`。**第二步**(owner 续):oneLineSummary 第三句措辞改写——`数据缺口: N 个 narrative` → `N 条逻辑链可接入更深佐证源`(0 时「佐证源已较完整」),因「数据缺口」易被误读为"判不了",实则 = 7 条里 missingEvidence 非空/insufficient_data 的条数(与确认/矛盾**重叠**,故三数不相加;当前 4 = 能源冲击/滞涨/信用利差/世界秩序,多为未接 Platts/CDX 深度源或边界声明)。改 `buildCrossValidationMatrix.js:959`(项目唯一无 BOM 源文件,已双向核对未误加 BOM),无 checker 锁此措辞。asset bump → `xval-gap-wording-1`(三处盲区同步见教训 ②)。
 - **当前进行中**: 无。owner 拟开**新 session 做广度排查(其他问题/功能检查)**,非续此编辑线。
 - **下一步建议(新 session 候选排查点)**: ① 新首屏在**手机/窄屏**渲染(de-box 黑块 + 敞开判读、64px 阈值条是否溢出);② 跨市场印证块 7 行在不同数据下判定是否合理(尤其 QQQ z / metric 缺失时 fallback);③ checker Phase 2(6 MERGE)/ Phase 1b(删 scaffold 死重);④ B-worker(Brent-hold 年龄上限,需 wrangler deploy);⑤ 数据链 / 功能巡检。参考页标尺样本 = `D:\PCTMoveData\Desktop\AI 泡沫监测 · The Bubble Watch.html`。
 - **阻塞或等待**: 无。

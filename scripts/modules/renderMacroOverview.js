@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=xval-meta-plain-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=xval-meta-plain-1';
+} from './config.js?v=xval-gap-wording-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=xval-gap-wording-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

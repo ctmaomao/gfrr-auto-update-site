@@ -956,7 +956,7 @@ function buildOneLineSummary(narratives) {
   return [
     `主要风险确认: ${confirmed.length ? confirmed.join(' + ') : '暂无'}`,
     `主要矛盾: ${contradictions.length ? contradictions.join(' + ') : '暂无'}`,
-    `数据缺口: ${gaps.length} 个 narrative`,
+    gaps.length ? `${gaps.length} 条逻辑链可接入更深佐证源` : '佐证源已较完整',
   ].join('; ');
 }
 
