@@ -45,6 +45,7 @@
     "check:syntax": "node scripts/check-syntax.mjs",
     "check:null-zero-display-guards": "node --check scripts/check-null-zero-display-guards.mjs && node scripts/check-null-zero-display-guards.mjs",
     "check:frontend-live-contracts": "node scripts/check-suite.mjs frontend-live-contracts",
+    "check:dom": "node --check scripts/check-dom.mjs && node scripts/check-dom.mjs",
     "check:node-runtime": "node --check scripts/check-node-runtime.mjs && node scripts/check-node-runtime.mjs",
     "check:workflows-node24-only": "node --check scripts/check-workflows-node24-only.mjs && node scripts/check-workflows-node24-only.mjs",
     "check:workflows": "node scripts/check-workflows.mjs",

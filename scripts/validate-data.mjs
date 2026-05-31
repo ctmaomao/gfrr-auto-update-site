@@ -231,6 +231,12 @@ function validateFiniteNumberIfPresent(source, key, fieldName) {
   if (source[key] !== undefined) assertFiniteNumber(source[key], `${fieldName}.${key}`);
 }
 
+function validateDecimalRatioRangeIfPresent(value, fieldName, min = -2, max = 2) {
+  if (value === null || value === undefined) return;
+  assert(Number.isFinite(value), `${fieldName} must be finite number or null`);
+  assert(value >= min && value <= max, `${fieldName} decimal-ratio out of plausible range [${min}, ${max}]: ${value}`);
+}
+
 function validateArrayIfPresent(source, key, fieldName) {
   if (source[key] !== undefined) assertArray(source[key], `${fieldName}.${key}`);
 }
@@ -683,6 +689,9 @@ function validateMacroDriversCommercialRealEstate(dataPayload) {
     assert(Object.hasOwn(cre, key), `macroDrivers.commercialRealEstate.${key} is missing`);
     assert(isFiniteNumberOrNull(cre[key]), `macroDrivers.commercialRealEstate.${key} must be finite number or null`);
   }
+  for (const key of ['reitEtf4wChange', 'mortgageReitEtf4wChange', 'cmbsEtf4wChange', 'creLoanBalance4wChange']) {
+    validateDecimalRatioRangeIfPresent(cre[key], `macroDrivers.commercialRealEstate.${key}`);
+  }
   validateNullableIsoString(cre.reitEtfUpdatedAt, 'macroDrivers.commercialRealEstate.reitEtfUpdatedAt');
   validateNullableIsoString(cre.mortgageReitEtfUpdatedAt, 'macroDrivers.commercialRealEstate.mortgageReitEtfUpdatedAt');
   validateNullableIsoString(cre.cmbsEtfUpdatedAt, 'macroDrivers.commercialRealEstate.cmbsEtfUpdatedAt');
@@ -743,6 +752,9 @@ function validateMacroDriversShippingFreight(dataPayload) {
   ]) {
     assert(Object.hasOwn(freight, key), `macroDrivers.shippingFreight.${key} is missing`);
     assert(isFiniteNumberOrNull(freight[key]), `macroDrivers.shippingFreight.${key} must be finite number or null`);
+  }
+  for (const key of ['balticDirtyTankerDailyChangePct', 'balticCleanTankerDailyChangePct', 'balticDryDailyChangePct']) {
+    validateDecimalRatioRangeIfPresent(freight[key], `macroDrivers.shippingFreight.${key}`);
   }
   for (const key of ['balticDirtyTankerUpdatedAt', 'balticCleanTankerUpdatedAt', 'balticDryUpdatedAt', 'updatedAt']) {
     assert(Object.hasOwn(freight, key), `macroDrivers.shippingFreight.${key} is missing`);
@@ -919,6 +931,9 @@ function validateMacroDriversPrivateCreditProxy(dataPayload) {
     assert(Object.hasOwn(proxy, key), `macroDrivers.privateCreditProxy.${key} is missing`);
     assert(isFiniteNumberOrNull(proxy[key]), `macroDrivers.privateCreditProxy.${key} must be finite number or null`);
   }
+  for (const key of ['bdcEtf4wChange', 'pbdcEtf4wChange', 'seniorLoanEtf4wChange', 'intervalFundNav4wChange']) {
+    validateDecimalRatioRangeIfPresent(proxy[key], `macroDrivers.privateCreditProxy.${key}`);
+  }
   validateNullableIsoString(proxy.bdcEtfUpdatedAt, 'macroDrivers.privateCreditProxy.bdcEtfUpdatedAt');
   validateNullableIsoString(proxy.pbdcEtfUpdatedAt, 'macroDrivers.privateCreditProxy.pbdcEtfUpdatedAt');
   validateNullableIsoString(proxy.seniorLoanEtfUpdatedAt, 'macroDrivers.privateCreditProxy.seniorLoanEtfUpdatedAt');
@@ -958,6 +973,7 @@ function validateMacroDriversEuroVolatility(dataPayload) {
   assert(isFiniteNumberOrNull(euroVolatility.value), 'macroDrivers.euroVolatility.value must be finite number or null');
   validateNullableIsoString(euroVolatility.refDate, 'macroDrivers.euroVolatility.refDate');
   assert(isFiniteNumberOrNull(euroVolatility.changePct), 'macroDrivers.euroVolatility.changePct must be finite number or null');
+  validateDecimalRatioRangeIfPresent(euroVolatility.changePct, 'macroDrivers.euroVolatility.changePct');
   if (euroVolatility.value === null) {
     assert(euroVolatility.sourceStatus === 'missing', 'macroDrivers.euroVolatility.sourceStatus must be missing when value is null');
   }
@@ -982,6 +998,7 @@ function validateMacroDriversWorldEconomy(dataPayload) {
     assertString(item.labelZh, `macroDrivers.worldEconomy.${key}.labelZh`);
     assert(isFiniteNumberOrNull(item.price), `macroDrivers.worldEconomy.${key}.price must be finite number or null`);
     assert(isFiniteNumberOrNull(item.changePct), `macroDrivers.worldEconomy.${key}.changePct must be finite number or null`);
+    validateDecimalRatioRangeIfPresent(item.changePct, `macroDrivers.worldEconomy.${key}.changePct`);
     assertString(item.changeWindow, `macroDrivers.worldEconomy.${key}.changeWindow`);
     validateNullableIsoString(item.updatedAt, `macroDrivers.worldEconomy.${key}.updatedAt`);
     assertString(item.source, `macroDrivers.worldEconomy.${key}.source`);
@@ -1009,6 +1026,7 @@ function validateMacroDriversChinaEquity(dataPayload) {
     assertString(item.labelZh, `macroDrivers.chinaEquity.${key}.labelZh`);
     assert(isFiniteNumberOrNull(item.price), `macroDrivers.chinaEquity.${key}.price must be finite number or null`);
     assert(isFiniteNumberOrNull(item.changePct), `macroDrivers.chinaEquity.${key}.changePct must be finite number or null`);
+    validateDecimalRatioRangeIfPresent(item.changePct, `macroDrivers.chinaEquity.${key}.changePct`);
     assertString(item.changeWindow, `macroDrivers.chinaEquity.${key}.changeWindow`);
     validateNullableIsoString(item.updatedAt, `macroDrivers.chinaEquity.${key}.updatedAt`);
     assertString(item.source, `macroDrivers.chinaEquity.${key}.source`);
@@ -1052,6 +1070,7 @@ function validateMacroDriversInflationEnergy(dataPayload) {
   const wti = inflationEnergy.wti;
   assert(isFiniteNumberOrNull(wti.price), 'macroDrivers.inflationEnergy.wti.price must be finite number or null');
   assert(isFiniteNumberOrNull(wti.changePct), 'macroDrivers.inflationEnergy.wti.changePct must be finite number or null');
+  validateDecimalRatioRangeIfPresent(wti.changePct, 'macroDrivers.inflationEnergy.wti.changePct');
   assertString(wti.changeWindow, 'macroDrivers.inflationEnergy.wti.changeWindow');
   assert(wti.changeWindow === '5d', 'macroDrivers.inflationEnergy.wti.changeWindow must be 5d');
   validateNullableIsoString(wti.updatedAt, 'macroDrivers.inflationEnergy.wti.updatedAt');
@@ -1082,6 +1101,7 @@ function validateMacroDriversCopperGold(dataPayload) {
     assertString(leg.labelZh, `macroDrivers.copperGold.${key}.labelZh`);
     assert(isFiniteNumberOrNull(leg.price), `macroDrivers.copperGold.${key}.price must be finite number or null`);
     assert(isFiniteNumberOrNull(leg.changePct), `macroDrivers.copperGold.${key}.changePct must be finite number or null`);
+    validateDecimalRatioRangeIfPresent(leg.changePct, `macroDrivers.copperGold.${key}.changePct`);
     assertString(leg.changeWindow, `macroDrivers.copperGold.${key}.changeWindow`);
     assert(leg.changeWindow === '5d', `macroDrivers.copperGold.${key}.changeWindow must be 5d`);
     validateNullableIsoString(leg.updatedAt, `macroDrivers.copperGold.${key}.updatedAt`);
@@ -1093,6 +1113,7 @@ function validateMacroDriversCopperGold(dataPayload) {
 
   assert(isFiniteNumberOrNull(copperGold.ratio), 'macroDrivers.copperGold.ratio must be finite number or null');
   assert(isFiniteNumberOrNull(copperGold.ratioChangePct), 'macroDrivers.copperGold.ratioChangePct must be finite number or null');
+  validateDecimalRatioRangeIfPresent(copperGold.ratioChangePct, 'macroDrivers.copperGold.ratioChangePct');
   assertString(copperGold.ratioWindow, 'macroDrivers.copperGold.ratioWindow');
   assert(copperGold.ratioWindow === '5d', 'macroDrivers.copperGold.ratioWindow must be 5d');
   if (copperGold.ratio === null) {
@@ -1462,6 +1483,7 @@ function validateHistoryWindowFields(dataPayload) {
     validateHistoryWindowBase(hy, 'historyWindowFields.hyOasWoW', 7, '周度变化');
     assert(isFiniteNumberOrNull(hy.changeBp), 'historyWindowFields.hyOasWoW.changeBp must be finite number or null');
     assert(isFiniteNumberOrNull(hy.changePct), 'historyWindowFields.hyOasWoW.changePct must be finite number or null');
+    validateDecimalRatioRangeIfPresent(hy.changePct, 'historyWindowFields.hyOasWoW.changePct');
     validateNullableIsoString(hy.priorDate, 'historyWindowFields.hyOasWoW.priorDate');
     validateNullableIsoString(hy.lastDate, 'historyWindowFields.hyOasWoW.lastDate');
   }
@@ -1597,6 +1619,7 @@ function validateIceBrentFuturesPriceCurve(curve) {
     assert(Number.isInteger(contract.volume) || contract.volume === null, `${fieldName}.volume must be integer or null`);
     validateNullableIsoString(contract.updatedAt, `${fieldName}.updatedAt`);
     assert(isFiniteNumberOrNull(contract.changePct), `${fieldName}.changePct must be finite number or null`);
+    validateDecimalRatioRangeIfPresent(contract.changePct, `${fieldName}.changePct`);
   });
   assertString(curve.limitationZh, 'brentPricingLayer.iceFuturesPriceCurve.limitationZh');
 }
