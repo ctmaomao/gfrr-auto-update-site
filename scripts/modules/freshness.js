@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=xval-gap-wording-1';
+﻿import { fmtNumSafe } from './config.js?v=energy-tone-fix-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
