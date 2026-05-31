@@ -335,3 +335,31 @@
   footer.method { border-top: 3px double var(--paper-ink); padding-top: 22px; margin-top: 32px; font-family: var(--font-mono); font-size: 11px; color: var(--paper-muted); line-height: 1.75; }
   .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px; }
   .method-grid h4 { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; color: var(--paper-ink); margin: 0 0 6px 0; }
+
+  /* ================================================================
+     窄屏 / 手机覆盖层 · MOBILE / NARROW-SCREEN OVERRIDES
+     仅在 @media 内生效;放在文件末尾(所有基础规则之后),
+     以保证同 specificity 下层叠顺序覆盖成功。
+     PC / 宽屏完全走上方基础样式,这一段不影响桌面展示。
+     ================================================================ */
+  @media (max-width: 600px) {
+    /* 根因:.macro-overview-shell 是隐式 auto 列的 grid,会被最宽子块
+       (signal-layers 等的 min-content)撑出 278px 容器 → 整页横向溢出。
+       约束列到容器宽 + 子块允许收缩,首屏与所有 shell 子块都回到视口内。*/
+    .macro-overview-shell { grid-template-columns: minmax(0, 1fr); }
+    .macro-overview-shell > * { min-width: 0; }
+    /* 首屏大数字:80px 下限会把黑框撑宽;收小使「分数/100」适配窄屏
+       (PC 仍 clamp(80px,12vw,128px))*/
+    .big-left .value { font-size: clamp(44px, 13vw, 72px); }
+    /* 长 snake_case narrative 标识符 / 长 inline code 在窄屏允许断行,
+       否则不可断的长 token 会撑出横向滚动(PC 基础样式不变)*/
+    .narrative-item .name { overflow-wrap: anywhere; word-break: break-word; }
+    .appendix-narrative code { white-space: normal; overflow-wrap: anywhere; }
+  }
+  @media (max-width: 440px) {
+    /* 窄手机:首屏「今日判读」footer 三列改单列,每项独占一行更易读 */
+    .big-footer { grid-template-columns: 1fr; gap: 10px; }
+    /* 窄手机:市场温度块内联 auto/1fr 网格改单列堆叠,避免右栏 minmax(150px)
+       指标在 ~360px 越界(覆盖 HTML 内联 style 需 !important)*/
+    #homepage-market-temperature .runtime-block-body > div { grid-template-columns: 1fr !important; gap: 14px !important; }
+  }
