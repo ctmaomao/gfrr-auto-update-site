@@ -1841,12 +1841,32 @@ function buildFredApiUrl(seriesId, observationStart) {
   return `${FRED_API_BASE}?${params.toString()}`;
 }
 
+// FRED API serialization gate. The daily pipeline fans ~55 FRED series across
+// concurrent macro builders; firing them simultaneously trips FRED's API rate
+// limit (observed: 54x HTTP 429 in a single run, all within ~0.7s). Serialize
+// FRED API requests one-at-a-time with a jittered gap — mirrors the realtime
+// worker's sequential FRED policy — so a burst never forms. This only changes
+// FRED API request *timing/concurrency*; parsing, fallback, and values are
+// unchanged. A failing task never breaks the chain (spacer runs on both paths).
+let fredApiQueue = Promise.resolve();
+function runFredApiSerialized(task) {
+  const run = fredApiQueue.then(task);
+  const spacer = () => sleep(150 + Math.floor(Math.random() * 151));
+  fredApiQueue = run.then(spacer, spacer);
+  return run;
+}
+
 async function fetchFredSeries(seriesId, daysBack = 90) {
   const observationStart = cosdIso(daysBack);
 
   if (FRED_API_KEY) {
     try {
-      const apiText = await fetchWithTimeout(buildFredApiUrl(seriesId, observationStart), MACRO_FETCH_TIMEOUT_MS);
+      // Serialized + retried (retryFetch: 3 attempts, 800/1600ms backoff) so a
+      // residual 429/transient error is ridden out instead of dropping straight
+      // to the (now-defunct) CSV fallback.
+      const apiText = await runFredApiSerialized(
+        () => retryFetch(buildFredApiUrl(seriesId, observationStart), `fred-api:${seriesId}`),
+      );
       const apiRows = parseFredApiObservations(apiText);
       if (apiRows.length < 2) throw new Error(`fred:${seriesId} API insufficient rows`);
       return apiRows;
