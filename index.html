@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=mobile-narrow-blocks-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=mobile-asset-table-scroll-1" />
 </head>
 <body>
   <div class="container">
@@ -512,6 +512,7 @@
         <h4>4. 资产收益矩阵与情景概率 <em>· Asset Map & Scenarios</em></h4>
         <p>未来 1 个月决策区间(按当前确定性排序)，系统给出 8 类资产的预期收益区间和回撤风险：</p>
 
+        <div class="asset-table-wrap">
         <table class="asset-table">
           <thead><tr><th>资产</th><th>倾向</th><th>预期收益区间</th><th>回撤风险</th><th>把握度</th><th>主导驱动</th></tr></thead>
           <tbody>
@@ -525,6 +526,7 @@
             <tr><td class="asset-name">比特币</td><td class="asset-bias down" id="detail-asset-bitcoin-bias">偏空</td><td class="asset-range" id="detail-asset-bitcoin-range">−10% ~ +6%</td><td class="asset-range" id="detail-asset-bitcoin-drawdown">−18%</td><td class="asset-conviction" id="detail-asset-bitcoin-confidence">中</td><td>流动性 / 风险偏好</td></tr>
           </tbody>
         </table>
+        </div>
 
         <h5>四情景概率分布</h5>
         <p>系统按 4 个情景给出概率：<strong id="detail-scenario-base">基准情景 31%</strong>(风险高位但未失控，防守与分化为主)、<strong id="detail-scenario-risk">风险情景 22%</strong>(信用与波动率继续上行，红灯执行)、<strong id="detail-scenario-extreme">极端情景 41%</strong>(多源关键快变量连续失效，缓存模式强制防守)、<strong id="detail-scenario-reversal">反转情景 4%</strong>(美元走弱、波动率和利差收敛，重新开放进攻窗口)。</p>
@@ -869,6 +871,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=mobile-narrow-blocks-1"></script>
+  <script type="module" src="scripts/app.js?v=mobile-asset-table-scroll-1"></script>
 </body>
 </html>

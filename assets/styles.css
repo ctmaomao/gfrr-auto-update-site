@@ -365,6 +365,10 @@
     /* 长 inline code / 段落内无空格斜杠串(如 NDX/QQQ/IXIC)在窄屏换行(PC 不变)*/
     .appendix-narrative code { white-space: normal; overflow-wrap: anywhere; }
     .appendix-narrative p { overflow-wrap: anywhere; }
+    /* 资产收益矩阵 6 列表:窄屏给表保底宽度,外层容器横向滚动——表在容器内横滑,
+       不挤压列、不触发整页横向滚动(PC 上表 width:100% 放得下,wrapper 不出滚动条)*/
+    .asset-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .asset-table-wrap .asset-table { min-width: 540px; }
   }
   @media (max-width: 440px) {
     /* 窄手机:首屏「今日判读」footer 三列改单列,每项独占一行更易读 */
