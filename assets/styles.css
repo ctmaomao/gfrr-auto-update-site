@@ -343,8 +343,14 @@
      PC / 宽屏完全走上方基础样式,这一段不影响桌面展示。
      ================================================================ */
   @media (max-width: 600px) {
+    /* 窄屏:收掉 section / body / 折叠区的左右内边距,让所有模块内容对齐到
+       与分隔横线、标题、导航同宽(= container 内容宽),消除两侧大留白、字更大更清晰。
+       仅去横向 padding,纵向节奏与上下边框不动;container 的 20px 仍作屏幕边距。*/
+    .editorial-section { padding-left: 0; padding-right: 0; }
+    .editorial-section-body { padding-left: 0; padding-right: 0; }
+    details.editorial-folded-content { padding-left: 0; padding-right: 0; }
     /* 根因:.macro-overview-shell 是隐式 auto 列的 grid,会被最宽子块
-       (signal-layers 等的 min-content)撑出 278px 容器 → 整页横向溢出。
+       (signal-layers 等的 min-content)撑出容器 → 整页横向溢出。
        约束列到容器宽 + 子块允许收缩,首屏与所有 shell 子块都回到视口内。*/
     .macro-overview-shell { grid-template-columns: minmax(0, 1fr); }
     .macro-overview-shell > * { min-width: 0; }

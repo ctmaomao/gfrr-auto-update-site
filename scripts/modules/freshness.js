@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=mobile-asset-table-scroll-1';
+﻿import { fmtNumSafe } from './config.js?v=mobile-fullwidth-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
