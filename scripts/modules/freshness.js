@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=signal-emoji-dedup-1';
+﻿import { fmtNumSafe } from './config.js?v=coherence-ref-fallback-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

@@ -1185,10 +1185,20 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
   const refRow = (narrId, id, perspectiveZh, timeRole, coveredZh) => {
     const nar = matrixNarratives.find((x) => x?.id === narrId);
     const a = nar?.assessment;
-    const verdict = (a === 'strong_confirmation' || a === 'partial_confirmation') ? '印证'
-      : a === 'contradiction' ? '背离' : '背景';
-    signals.push(coherenceSignal(id, perspectiveZh, verdict, timeRole,
-      `已在交叉验证矩阵确认(${coveredZh}),此处不重复计数。`,
+    // reason 必须随 verdict 走:被引用 narrative 因 metric 缺失/反向证据而非确认态时,
+    // 不能再写死「已确认」(否则出现 verdict=背离/背景 但文案说已确认的自相矛盾)。
+    let verdict, reason;
+    if (a === 'strong_confirmation' || a === 'partial_confirmation') {
+      verdict = '印证';
+      reason = `已在交叉验证矩阵确认(${coveredZh}),此处不重复计数。`;
+    } else if (a === 'contradiction') {
+      verdict = '背离';
+      reason = `交叉验证矩阵中为反向证据(${coveredZh}),此处不重复计数。`;
+    } else {
+      verdict = '背景';
+      reason = `交叉验证矩阵中证据不足或未激活(${coveredZh}),此处不重复计数。`;
+    }
+    signals.push(coherenceSignal(id, perspectiveZh, verdict, timeRole, reason,
       [`matrix.${narrId}`], '与上方一致性矩阵同源,避免重复计数。'));
   };
   refRow('overheat_confirmation', 'overheat_ref', '估值过热(已覆盖)', '同步', '过热确认 narrative');

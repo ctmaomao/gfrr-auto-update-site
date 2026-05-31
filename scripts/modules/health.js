@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=signal-emoji-dedup-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=signal-emoji-dedup-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=coherence-ref-fallback-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=coherence-ref-fallback-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

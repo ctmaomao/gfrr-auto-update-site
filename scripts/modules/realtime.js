@@ -1,13 +1,13 @@
-﻿import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=signal-emoji-dedup-1';
+﻿import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=coherence-ref-fallback-1';
 import {
   computeAgeMinutes,
   classifyFreshnessLevel,
   buildRealtimeStatusLabel,
   shouldApplyRealtimeOverlay,
   canUseRealtimePayloadValues
-} from './freshness.js?v=signal-emoji-dedup-1';
-import { buildHealthDashboardModel } from './health.js?v=signal-emoji-dedup-1';
-import { buildDecisionModel } from './decision.js?v=signal-emoji-dedup-1';
+} from './freshness.js?v=coherence-ref-fallback-1';
+import { buildHealthDashboardModel } from './health.js?v=coherence-ref-fallback-1';
+import { buildDecisionModel } from './decision.js?v=coherence-ref-fallback-1';
 import {
   buildAssetMatrixReasons,
   buildDecisionLineDisplay,
@@ -19,7 +19,7 @@ import {
   buildSummaryDisplay,
   buildTopRisksDisplay,
   buildTriggerPanelDisplay
-} from './displayTextBuilders.js?v=signal-emoji-dedup-1';
+} from './displayTextBuilders.js?v=coherence-ref-fallback-1';
 
 const STRUCTURAL_SIGNAL_LABELS_CN = {
   curveDeepInversion: '曲线深度倒挂',
