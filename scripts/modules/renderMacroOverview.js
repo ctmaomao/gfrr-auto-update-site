@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=mobile-narrow-overrides-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=mobile-narrow-overrides-1';
+} from './config.js?v=mobile-narrow-blocks-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=mobile-narrow-blocks-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

@@ -351,10 +351,20 @@
     /* 首屏大数字:80px 下限会把黑框撑宽;收小使「分数/100」适配窄屏
        (PC 仍 clamp(80px,12vw,128px))*/
     .big-left .value { font-size: clamp(44px, 13vw, 72px); }
-    /* 长 snake_case narrative 标识符 / 长 inline code 在窄屏允许断行,
-       否则不可断的长 token 会撑出横向滚动(PC 基础样式不变)*/
-    .narrative-item .name { overflow-wrap: anywhere; word-break: break-word; }
+    /* 信号分层:score 移到独立一行,长 snake_case narrative 名得整行宽度、
+       几乎不再断词;overflow-wrap 仅作超长 token 兜底(不用激进的 word-break)*/
+    .narrative-item .head { flex-wrap: wrap; }
+    .narrative-item .score { flex: 0 0 100%; margin-left: 0; padding-left: 26px; margin-top: 2px; }
+    .narrative-item .name { overflow-wrap: anywhere; }
+    /* 交叉验证一致性条:基础 min-width:280px 比窄屏块还宽 → 归零,随块收缩 */
+    .consistency-bar-wrap { min-width: 0; }
+    /* 附录双栏 grid 与 .macro-overview-shell 同类:1fr 列未约束会被子项 min-content
+       撑出容器(~17px 内溢)→ 约束列宽 + 子项可收缩 */
+    .appendix-twocol { grid-template-columns: minmax(0, 1fr); }
+    .appendix-twocol > * { min-width: 0; }
+    /* 长 inline code / 段落内无空格斜杠串(如 NDX/QQQ/IXIC)在窄屏换行(PC 不变)*/
     .appendix-narrative code { white-space: normal; overflow-wrap: anywhere; }
+    .appendix-narrative p { overflow-wrap: anywhere; }
   }
   @media (max-width: 440px) {
     /* 窄手机:首屏「今日判读」footer 三列改单列,每项独占一行更易读 */
