@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=batch-a-display-integrity-1';
+﻿import { fmtNumSafe } from './config.js?v=batch-c-shipping-freight-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

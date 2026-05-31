@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=batch-a-display-integrity-1';
-import { buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=batch-a-display-integrity-1';
+} from './config.js?v=batch-c-shipping-freight-1';
+import { buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=batch-c-shipping-freight-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1804,6 +1804,32 @@ function renderC4UsEconomyTemperature({ radarData }) {
   }
 }
 
+function renderShippingFreight({ radarData }) {
+  try {
+    const sf = radarData?.macroDrivers?.shippingFreight;
+    if (!sf) return;
+    const ss = sf.sourceStatus || {};
+    const anyLive = ss.dirtyTanker === 'live' || ss.cleanTanker === 'live' || ss.dryBulk === 'live';
+    const anyFallback = ss.dirtyTanker === 'fallback' || ss.cleanTanker === 'fallback' || ss.dryBulk === 'fallback';
+    const status = anyLive ? 'live' : (anyFallback ? 'fallback' : 'missing');
+    setToneClass('c1-freight-status', 'status-bar', 'neutral');
+    setBadge('c1-freight-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
+    const bdi = asNumber(sf.balticDryIndex);
+    setLeafText('c1-freight-number', bdi !== null ? bdi.toFixed(0) : '—');
+    const leg = (idxVal, chgVal, label) => {
+      const v = asNumber(idxVal);
+      if (v === null) return `${label} —`;
+      const c = asNumber(chgVal);
+      return c !== null ? `${label} ${v.toFixed(0)} ${signedFixed(c * 100, 2)}%` : `${label} ${v.toFixed(0)}`;
+    };
+    const regime = sf.freightStressRegime ? ` · ${sf.freightStressRegime}` : '';
+    const suffix = status === 'fallback' ? ' · 回退' : '';
+    setLeafText('c1-freight-aux', `${leg(sf.balticDirtyTankerIndex, sf.balticDirtyTankerDailyChangePct, 'BDTI')} · ${leg(sf.balticCleanTankerIndex, sf.balticCleanTankerDailyChangePct, 'BCTI')} · ${leg(sf.balticDryIndex, sf.balticDryDailyChangePct, 'BDI')}${regime}${suffix}`);
+  } catch (error) {
+    console.error('[renderMacroOverview] renderShippingFreight failed:', error);
+  }
+}
+
 function renderEuroVolatilityLeaf({ radarData }) {
   const euroVolatility = radarData?.macroDrivers?.euroVolatility;
   const value = asNumber(euroVolatility?.value);
@@ -2412,6 +2438,7 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
 
   // Stage 5b: C1 inflation/energy + C2 global liquidity
   renderC1InflationEnergy({ radarData });
+  renderShippingFreight({ radarData });
   renderC2GlobalLiquidity({ radarData });
 
   // Stage 5c: C3 credit/corporate + C4 US economic temperature + C5 world economy

@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=batch-a-display-integrity-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=batch-c-shipping-freight-1" />
 </head>
 <body>
   <div class="container">
@@ -276,7 +276,7 @@
 
         <!-- C1: 通胀与能源 -->
         <div class="reader-cat-block">
-          <div class="reader-cat-header"><h3>通胀与能源</h3><span class="en">INFLATION & ENERGY</span><span class="counts">5 张 · <span class="red">3 红</span> · <span class="yellow">2 黄</span></span></div>
+          <div class="reader-cat-header"><h3>通胀与能源</h3><span class="en">INFLATION & ENERGY</span><span class="counts">6 张 · <span class="red">3 红</span> · <span class="yellow">2 黄</span> · 1 OBS</span></div>
           <p class="cat-intro">能源是当前主线第一环。Brent 主值与公开代理价格的距离反映现货溢价压力；crack spread 是能源向下游柴油 / 汽油传导的中间证据；ISM PMI 看美国制造业能否消化能源成本；CPI / WTI 提供通胀与油价基准的直接读数。</p>
           <div class="card-grid">
             <article class="indicator-card" id="card-c1-brent"><div class="status-bar red" id="c1-brent-status"></div><div class="head"><div><div class="name-en">Brent</div><div class="name-zh">布伦特原油</div></div><span class="badge red" id="c1-brent-badge">RED</span></div><div class="number"><span id="c1-brent-number">116.73</span><span class="unit" id="c1-brent-unit">USD/bbl</span></div><div class="aux" id="c1-brent-aux">主值 selectedBrent · status: public_proxy_observation</div><div class="agg-rows"><div><span class="k">公开现货代理 EIA</span> · <span class="v" id="c1-brent-eia">$116.50</span></div><div><span class="k">期货 front Yahoo</span> · <span class="v" id="c1-brent-futures">$103.54</span></div><div><span class="k">期货 ICE</span> · <span class="v" id="c1-brent-ice">$98.21</span></div><div><span class="k">spotMinusFutures</span> · <span class="v" id="c1-brent-spread">+$16.52</span></div><div><span class="k">maxProxyDivergencePct</span> · <span class="v" id="c1-brent-divergence">14.9%</span></div></div><p class="note">三层证据链(主值 / 现货代理 / 期货代理)显示价差较大，能源主线传导正在被实际定价压实。</p><div class="meta"><span>阈值 &gt;100 红</span><span>能源价格证据链</span></div></article>
@@ -284,6 +284,7 @@
             <article class="indicator-card" id="card-c1-ism"><div class="status-bar yellow" id="c1-ism-status"></div><div class="head"><div><div class="name-en">ISM PMI</div><div class="name-zh">美国制造业景气</div></div><span class="badge yellow" id="c1-ism-badge">YELLOW</span></div><div class="number" id="c1-ism-number">52.7</div><div class="aux" id="c1-ism-aux">3 月动量 +0.1 · regime: 中性偏扩张</div><p class="note" id="c1-ism-note">制造业读数仍在扩张线之上，但增速放缓，能源成本难被需求消化。</p><div class="meta"><span>阈值 &lt;45 红</span><span>制造业 PMI</span></div></article>
             <article class="indicator-card" id="card-c1-cpi"><div class="status-bar yellow" id="c1-cpi-status"></div><div class="head"><div><div class="name-en">US CPI</div><div class="name-zh">美国通胀直接证据</div></div><span class="badge yellow" id="c1-cpi-badge">YELLOW</span></div><div class="number"><span id="c1-cpi-number">3.8</span><span class="unit" id="c1-cpi-unit">% YoY</span></div><div class="aux" id="c1-cpi-aux">Core +2.7% YoY · MoM +0.6%</div><p class="note" id="c1-cpi-note">FRED headline + core CPI 月频公开数据。主显 YoY。</p><div class="meta"><span>live</span><span>FRED CPIAUCSL + CPILFESL</span></div></article>
             <article class="indicator-card" id="card-c1-wti"><div class="status-bar red" id="c1-wti-status"></div><div class="head"><div><div class="name-en">WTI</div><div class="name-zh">美国油价基准</div></div><span class="badge red" id="c1-wti-badge">RED</span></div><div class="number"><span id="c1-wti-number">112</span><span class="unit" id="c1-wti-unit">USD/bbl</span></div><div class="aux" id="c1-wti-aux">近5日 —</div><p class="note" id="c1-wti-note">配 Brent 看美欧能源分化。FRED daily WTI 可能滞后,近5日为相对最新 FRED 点。</p><div class="meta"><span>live</span><span>FRED DCOILWTICO</span></div></article>
+            <article class="indicator-card" id="card-c1-shipping-freight"><div class="status-bar neutral" id="c1-freight-status"></div><div class="head"><div><div class="name-en">Baltic Freight</div><div class="name-zh">波罗的海运费</div></div><span class="badge neutral" id="c1-freight-badge">OBS</span></div><div class="number"><span id="c1-freight-number">3224</span><span class="unit">BDI</span></div><div class="aux" id="c1-freight-aux">BDTI 2068 -0.96% · BCTI 1504 -3.40% · BDI 3224 -0.06% · 高压</div><p class="note">波罗的海运费:BDTI/BCTI 油轮 + BDI 干散货,反映全球海运需求与运费压力。display-only 观察。</p><div class="meta"><span>live</span><span>StockQ BDTI/BCTI/BDI</span></div></article>
           </div>
         </div>
 
@@ -877,6 +878,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=batch-a-display-integrity-1"></script>
+  <script type="module" src="scripts/app.js?v=batch-c-shipping-freight-1"></script>
 </body>
 </html>

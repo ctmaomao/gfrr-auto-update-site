@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=batch-a-display-integrity-1';
+﻿import { fmtNumSafe } from './config.js?v=batch-c-shipping-freight-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

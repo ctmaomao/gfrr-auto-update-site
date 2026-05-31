@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=batch-a-display-integrity-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=batch-a-display-integrity-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=batch-c-shipping-freight-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=batch-c-shipping-freight-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
