@@ -1311,6 +1311,169 @@ if (fs.existsSync(workerContract.routerFile)) {
   addRuntimeFailure(workerContract.routerFile, 'worker router file missing');
 }
 
+// M-WF-1: merged from former check:pages-trigger-coverage. Verifies the Pages
+// deploy workflow's workflow_run.workflows list covers every commits-to-main
+// workflow (or excludes it with a reason), that listed entries match real
+// workflows, and that refresh-world-order-stress.yml has no obsolete Pages step.
+// All assertions preserved verbatim; failures feed the aggregate exit via
+// addRuntimeFailure, and the operator-facing coverage report still prints.
+function checkPagesTriggerCoverage() {
+  const WORKFLOWS_DIR = '.github/workflows';
+  const PAGES_WORKFLOW = '.github/workflows/deploy-static-site-to-pages.yml';
+  const EXCLUDED_FROM_PAGES = {
+    'Build Realtime Market': 'commits to realtime-data branch (consumed by daily-radar, not by Pages)',
+    'Recover Stale Realtime Market': 'commits to realtime-data branch (same publish branch as Build Realtime Market)',
+  };
+  const pagesErrors = [];
+  const pagesWarnings = [];
+  const pfail = (msg) => pagesErrors.push(msg);
+  const pwarn = (msg) => pagesWarnings.push(msg);
+
+  if (!fs.existsSync(PAGES_WORKFLOW)) {
+    addRuntimeFailure(PAGES_WORKFLOW, `M-60: ${PAGES_WORKFLOW} missing`);
+    return;
+  }
+
+  const pagesSrc = fs.readFileSync(PAGES_WORKFLOW, 'utf8');
+  const wfRunMatch = pagesSrc.match(/workflow_run:\s*\n\s+workflows:\s*\n([\s\S]+?)\n\s+types:/);
+  let pagesListeners = new Set();
+  if (!wfRunMatch) {
+    pfail('Pages workflow missing workflow_run.workflows block (or types: not found as sibling key)');
+  } else {
+    const listed = wfRunMatch[1]
+      .split('\n')
+      .map((line) => line.trim().replace(/^-\s*/, '').trim())
+      .filter(Boolean);
+    pagesListeners = new Set(listed);
+  }
+
+  const workflowFiles = fs.readdirSync(WORKFLOWS_DIR)
+    .filter((f) => f.endsWith('.yml') || f.endsWith('.yaml'))
+    .map((f) => `${WORKFLOWS_DIR}/${f}`)
+    .filter((p) => p.replace(/\\/g, '/') !== PAGES_WORKFLOW);
+
+  const report = [];
+
+  for (const filepath of workflowFiles) {
+    const src = fs.readFileSync(filepath, 'utf8');
+    const nameMatch = src.match(/^name:\s*(.+)$/m);
+    const workflowName = nameMatch ? nameMatch[1].trim() : null;
+    if (!workflowName) {
+      pfail(`${filepath}: missing top-level "name:" declaration; cannot match against Pages workflow_run list`);
+      continue;
+    }
+
+    const hasContentsWrite = /permissions:\s*\n[\s\S]*?contents:\s*write/.test(src);
+    const hasContentsRead = /permissions:\s*\n[\s\S]*?contents:\s*read/.test(src);
+    const pushLines = src.match(/git\s+push[^\n]*/g) || [];
+    const commitLines = src.match(/git\s+commit[^\n]*/g) || [];
+    const pushesToRealtimeBranch = pushLines.some((line) => line.includes('realtime-data'));
+    const pushesToMain = pushLines.some((line) => !line.includes('realtime-data'));
+    const hasCommit = commitLines.length > 0;
+    const hasPush = pushLines.length > 0;
+    const assertsNoDiff = /git\s+diff\s+--exit-code/.test(src);
+
+    let category;
+    let needsPagesTrigger = false;
+    if (hasContentsRead && !hasContentsWrite && !hasPush) {
+      category = 'read-only';
+    } else if (assertsNoDiff && !pushesToMain) {
+      category = 'dry-run';
+    } else if (pushesToRealtimeBranch && !pushesToMain) {
+      category = 'realtime-data-branch';
+    } else if (hasCommit && pushesToMain) {
+      category = 'commits-to-main';
+      needsPagesTrigger = true;
+    } else if (hasContentsWrite && hasCommit && hasPush) {
+      category = 'commits-unclear';
+      needsPagesTrigger = true;
+    } else if (!hasCommit && !hasPush) {
+      category = 'no-write';
+    } else {
+      category = 'unclassified';
+    }
+
+    const isExcluded = Object.prototype.hasOwnProperty.call(EXCLUDED_FROM_PAGES, workflowName);
+    const isInPagesList = pagesListeners.has(workflowName);
+
+    report.push({ filepath, workflowName, category, needsPagesTrigger, isInPagesList, isExcluded });
+
+    if (needsPagesTrigger) {
+      if (isExcluded) {
+        pwarn(`${workflowName} (${filepath}) commits to main BUT is in EXCLUDED_FROM_PAGES with reason "${EXCLUDED_FROM_PAGES[workflowName]}". Verify the exclusion is intentional; commits-to-main workflows normally need Pages auto-deploy.`);
+      } else if (!isInPagesList) {
+        pfail(`${workflowName} (${filepath}) commits to main but is NOT in ${PAGES_WORKFLOW} workflow_run.workflows list. Either:\n` +
+          `    (a) add "${workflowName}" to deploy-static-site-to-pages.yml workflow_run.workflows, or\n` +
+          '    (b) if this workflow should NOT trigger Pages, add it to EXCLUDED_FROM_PAGES in this check with a written reason.');
+      }
+    }
+
+    if (!needsPagesTrigger && isInPagesList) {
+      pwarn(`${workflowName} (${filepath}) is in Pages workflow_run.workflows but no main commit was detected. Heuristic may be wrong, or the listing may be obsolete. Category: ${category}.`);
+    }
+
+    if (category === 'commits-unclear' && !isExcluded && !isInPagesList) {
+      pfail(`${workflowName} (${filepath}) has contents:write + git commit + git push but the destination branch is unclear. Manually verify and either:\n` +
+        `    (a) add to Pages workflow_run.workflows if pushing to main, or\n` +
+        '    (b) add to EXCLUDED_FROM_PAGES with reason.');
+    }
+  }
+
+  for (const listed of pagesListeners) {
+    if (!report.find((r) => r.workflowName === listed)) {
+      pfail(`Pages workflow_run lists "${listed}" but no workflow file with that name: declaration was found. Either rename the workflow or update Pages listing.`);
+    }
+  }
+
+  const refreshPath = '.github/workflows/refresh-world-order-stress.yml';
+  if (fs.existsSync(refreshPath)) {
+    const refreshSrc = fs.readFileSync(refreshPath, 'utf8');
+    if (refreshSrc.includes('gh workflow run deploy-static-site-to-pages.yml')) {
+      pfail(`${refreshPath} still has explicit "gh workflow run deploy-static-site-to-pages.yml" step from PR #213. Remove it; M-60 uses workflow_run in Pages workflow to auto-trigger instead.`);
+    }
+    if (/id:\s*commit_step/.test(refreshSrc) && refreshSrc.includes('committed=true')) {
+      pfail(`${refreshPath} still has commit_step id and committed output from PR #213. Simplify the Commit step now that the explicit Pages trigger step has been removed.`);
+    }
+  }
+
+  // Operator-facing coverage report (preserved from former standalone checker).
+  console.log('Pages trigger coverage report:');
+  console.log('');
+  console.log('  Status | Category              | Workflow Name');
+  console.log('  -------|-----------------------|--------------');
+  const statusPriority = { MISSING: 0, unclear: 1, registered: 2, excluded: 3, 'N/A': 4 };
+  const statusKey = (item) => {
+    if (item.needsPagesTrigger) {
+      if (item.isInPagesList) return 'registered';
+      if (item.isExcluded) return 'excluded';
+      return 'MISSING';
+    }
+    if (item.isExcluded) return 'excluded';
+    if (item.isInPagesList) return 'unclear';
+    return 'N/A';
+  };
+  for (const r of report.slice().sort((a, b) => (statusPriority[statusKey(a)] ?? 9) - (statusPriority[statusKey(b)] ?? 9))) {
+    let status;
+    if (r.needsPagesTrigger) {
+      if (r.isInPagesList) status = '✓ registered';
+      else if (r.isExcluded) status = '✓ excluded';
+      else status = '✗ MISSING';
+    } else if (r.isExcluded) status = '✓ excluded';
+    else if (r.isInPagesList) status = '⚠ listed-but-no-commit';
+    else status = '— N/A';
+    console.log(`  ${status.padEnd(22)} | ${r.category.padEnd(22)} | ${r.workflowName}`);
+  }
+  console.log('');
+  if (pagesWarnings.length > 0) {
+    console.log('Pages trigger coverage warnings:');
+    for (const w of pagesWarnings) console.log('  -', w);
+    console.log('');
+  }
+  for (const e of pagesErrors) addRuntimeFailure(PAGES_WORKFLOW, e);
+}
+
+checkPagesTriggerCoverage();
+
 if (failures.length > 0) {
   console.error(`Workflow contract check failed: ${failures.length} issue(s) found`);
   process.exit(1);

@@ -6,6 +6,7 @@ const README = 'README.md';
 const AGENTS = 'AGENTS.md';
 const DOCS_DIR = 'docs';
 const failures = [];
+const formatFailures = [];
 
 function toPosix(filePath) {
   return filePath.split(path.sep).join('/');
@@ -93,6 +94,44 @@ function checkFile(source) {
   }
 }
 
+// M-DOC-1: merged from former check:project-backlog-format — required backlog
+// sections present + non-stub content. PROJECT_BACKLOG.md is governance authority.
+function checkProjectBacklogFormat() {
+  const backlogPath = path.join(ROOT, 'docs/PROJECT_BACKLOG.md');
+  if (!fs.existsSync(backlogPath)) {
+    formatFailures.push('M-57: docs/PROJECT_BACKLOG.md does not exist');
+    return;
+  }
+  const content = fs.readFileSync(backlogPath, 'utf8');
+  const expectedSections = [
+    '## Section 1',
+    '## Section 2',
+    '## Section 3',
+    '## Section 4',
+    '## Section 5',
+    '## Section 6',
+  ];
+  for (const section of expectedSections) {
+    if (!content.includes(section)) {
+      formatFailures.push(`M-57 project-backlog: missing section header "${section}"`);
+    }
+  }
+  for (let i = 0; i < expectedSections.length; i += 1) {
+    const startMarker = expectedSections[i];
+    const endMarker = i < expectedSections.length - 1 ? expectedSections[i + 1] : null;
+    const startIdx = content.indexOf(startMarker);
+    const endIdx = endMarker ? content.indexOf(endMarker) : content.length;
+    if (startIdx === -1) continue;
+    const sectionContent = content.substring(startIdx + startMarker.length, endIdx);
+    if (sectionContent.trim().length < 50) {
+      formatFailures.push(`M-57 project-backlog: section "${startMarker}" appears empty or too short`);
+    }
+  }
+  if (content.trim().length < 500) {
+    formatFailures.push('M-57 project-backlog: file is too short, may be a stub');
+  }
+}
+
 const markdownFiles = getMarkdownFiles();
 
 for (const file of markdownFiles) {
@@ -104,9 +143,16 @@ for (const file of markdownFiles) {
   checkFile(file);
 }
 
-if (failures.length > 0) {
-  console.error(`Documentation link check failed: ${failures.length} issue(s) found`);
+checkProjectBacklogFormat();
+for (const message of formatFailures) {
+  console.error(`Project backlog format check failed: ${message}`);
+}
+
+if (failures.length > 0 || formatFailures.length > 0) {
+  if (failures.length > 0) {
+    console.error(`Documentation link check failed: ${failures.length} issue(s) found`);
+  }
   process.exit(1);
 }
 
-console.log('Documentation link check passed');
+console.log('Documentation link + project-backlog format check passed');
