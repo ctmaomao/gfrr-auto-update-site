@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=bubble-watch-firstfold-redesign-1';
-import { formatOnRrpYiUsd } from './format.js?v=bubble-watch-firstfold-redesign-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=coherence-c5c6-presence-1';
+import { formatOnRrpYiUsd } from './format.js?v=coherence-c5c6-presence-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

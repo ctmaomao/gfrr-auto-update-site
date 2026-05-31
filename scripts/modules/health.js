@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=bubble-watch-firstfold-redesign-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=bubble-watch-firstfold-redesign-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=coherence-c5c6-presence-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=coherence-c5c6-presence-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

@@ -1,13 +1,13 @@
-﻿import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=bubble-watch-firstfold-redesign-1';
+﻿import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=coherence-c5c6-presence-1';
 import {
   computeAgeMinutes,
   classifyFreshnessLevel,
   buildRealtimeStatusLabel,
   shouldApplyRealtimeOverlay,
   canUseRealtimePayloadValues
-} from './freshness.js?v=bubble-watch-firstfold-redesign-1';
-import { buildHealthDashboardModel } from './health.js?v=bubble-watch-firstfold-redesign-1';
-import { buildDecisionModel } from './decision.js?v=bubble-watch-firstfold-redesign-1';
+} from './freshness.js?v=coherence-c5c6-presence-1';
+import { buildHealthDashboardModel } from './health.js?v=coherence-c5c6-presence-1';
+import { buildDecisionModel } from './decision.js?v=coherence-c5c6-presence-1';
 import {
   buildAssetMatrixReasons,
   buildDecisionLineDisplay,
@@ -19,7 +19,7 @@ import {
   buildSummaryDisplay,
   buildTopRisksDisplay,
   buildTriggerPanelDisplay
-} from './displayTextBuilders.js?v=bubble-watch-firstfold-redesign-1';
+} from './displayTextBuilders.js?v=coherence-c5c6-presence-1';
 
 const STRUCTURAL_SIGNAL_LABELS_CN = {
   curveDeepInversion: '曲线深度倒挂',

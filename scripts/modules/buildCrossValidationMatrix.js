@@ -1048,28 +1048,38 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
       if (cp > 0) up += 1; else if (cp < 0) down += 1;
     }
     const n = up + down;
-    const caveat = '本币计价/时区错位/无成分股 breadth,与 SPX 高 beta 重叠;只作同步 vs 局部,不作领先。';
-    if (n < 8 || usZ === null) {
+    const caveat = '本币计价/时区错位/无成分股 breadth,与 SPX 高 beta 重叠;只作同步/确认,不作领先。';
+    const usTempZh = usZ === null ? null : (usZ > 0.5 ? '偏热' : (usZ < -0.5 ? '偏冷' : '中性'));
+    const usStr = usTempZh ? `美股${usTempZh}(z ${formatSigned(usZ)})` : '美股温度暂缺';
+    if (n < 6) {
       signals.push(coherenceSignal('global_breadth', '全球股指广度', '背景', '同步',
-        n < 8 ? '全球指数刷新不足,暂不判定广度。' : '美股温度(QQQ z)不可用,暂不判定广度。',
+        `全球指数有效样本不足(${n}/12),暂不判定广度。`,
         ['worldEconomy.changePct', 'qqq.zScore'], caveat));
     } else {
+      const breadthStr = `全球 ${up} 涨 / ${down} 跌`;
+      const tilt = (up - down >= 3) ? 'up' : ((down - up >= 3) ? 'down' : 'balanced');
+      const usRiskOff = usZ !== null && usZ <= 0;
+      const usRiskOn = usZ !== null && usZ > 0;
       let verdict, reason;
-      if (down >= 8 && usZ <= 0) {
+      if (tilt === 'down' && usRiskOff) {
         verdict = '印证';
-        reason = `全球 ${down}/12 国走弱且美股偏冷(z ${formatSigned(usZ)}),系统性而非孤立,印证核心。`;
-      } else if (down >= 8 && usZ > 0) {
+        reason = `${breadthStr},多数走弱、且${usStr},全球系统性走弱与核心同向(非美国孤立)。`;
+      } else if (tilt === 'down' && usRiskOn) {
         verdict = '背离';
-        reason = `美股偏热(z ${formatSigned(usZ)})但全球 ${down}/12 国走弱,美国局部强势,广度背离。`;
-      } else if (up >= 8 && usZ >= 0) {
+        reason = `${breadthStr},多数走弱但${usStr},美股相对全球偏强、广度背离(美国局部强势)。`;
+      } else if (tilt === 'up' && usRiskOn) {
         verdict = '印证';
-        reason = `全球 ${up}/12 国走强且美股偏热(z ${formatSigned(usZ)}),风险偏好同步。`;
-      } else if (up >= 8 && usZ < 0) {
+        reason = `${breadthStr},多数走强、且${usStr},全球风险偏好同步。`;
+      } else if (tilt === 'up' && usRiskOff) {
         verdict = '背离';
-        reason = `美股偏冷(z ${formatSigned(usZ)})但全球 ${up}/12 国走强,美国局部弱,广度背离。`;
+        reason = `${breadthStr},多数走强但${usStr},美股相对全球偏弱、广度背离。`;
+      } else if (usTempZh) {
+        verdict = '背景';
+        reason = `${breadthStr},广度均衡;${usStr},但全球未单边同向,系统性压力暂未扩散。`;
       } else {
         verdict = '背景';
-        reason = `全球广度分化(${up} 涨 / ${down} 跌),无明确同步/局部信号。`;
+        const tiltZh = tilt === 'down' ? '多数走弱' : (tilt === 'up' ? '多数走强' : '广度均衡');
+        reason = `${breadthStr}(${tiltZh});美股温度暂缺,暂作系统性背景观察。`;
       }
       signals.push(coherenceSignal('global_breadth', '全球股指广度', verdict, '同步', reason,
         ['worldEconomy.changePct', 'qqq.zScore'], caveat));
@@ -1156,9 +1166,16 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
     if (pmi !== null) bits.push(`PMI ${formatNumber(pmi, 1)}${pmi < 50 ? '(收缩)' : pmi > 50 ? '(扩张)' : '(临界)'}`);
     if (ppi !== null) bits.push(`PPI ${formatSignedPercent(ppi * 100, 1)}`);
     if (newUp !== null && newDown !== null) bits.push(`70 城新房 ${newUp} 涨/${newDown} 跌`);
-    const reason = bits.length
-      ? `${bits.join(' / ')} → 中国需求/通胀作 inflation/liquidity 结论的弱慢背景(不作领先)。`
-      : '中国宏观数据未刷新,作弱慢背景观察。';
+    let reason;
+    if (bits.length) {
+      const weakDemand = (pmi !== null && pmi < 50.5) || (newUp !== null && newDown !== null && newDown > newUp) || (ppi !== null && ppi < 0.005);
+      const stance = weakDemand
+        ? '中国内需/地产偏弱 → 对全球商品需求与再通胀是下行背景,与今日能源 → 通胀主线方向相反(倾向缓冲而非放大通胀)'
+        : '中国内需边际企稳 → 对全球商品需求与再通胀是中性偏支撑背景';
+      reason = `${bits.join(' / ')};${stance};仅作慢背景、不作领先。`;
+    } else {
+      reason = '中国宏观数据未刷新,作弱慢背景观察。';
+    }
     signals.push(coherenceSignal('china_em_background', '中国/EM 弱慢背景', '背景', '慢背景', reason,
       ['chinaPropertyPrice.newCitiesUp/Down', 'chinaInflation.ppi.yoy', 'chinaPmi.pmi.value', 'cfetsRmb.cfets'],
       '东方财富转载非官方原始;不用央行毛额做流动性脉冲;CFETS 受管理篮子≠资本外流;月频慢变量只作背景。'));

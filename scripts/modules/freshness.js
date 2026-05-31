@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=bubble-watch-firstfold-redesign-1';
+﻿import { fmtNumSafe } from './config.js?v=coherence-c5c6-presence-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
