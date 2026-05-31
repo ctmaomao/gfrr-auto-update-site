@@ -14,6 +14,11 @@ const fixedFiles = [
   'docs/OPERATIONS.md',
   'docs/DATA_CONTRACT.md',
   'workers/gfrr-realtime-worker/README.md',
+  // L0 metadata: these two carry the cache-version of record but used to be
+  // missed by every bump (not scanned), causing recurring L0 drift. Tightly
+  // anchored regexes below keep their single cache-version reference in sync.
+  'docs/PROJECT_BACKLOG.md',
+  'docs/MILESTONE_INDEX.md',
 ];
 
 function fail(message) {
@@ -48,6 +53,16 @@ function replaceFrontendAssetVersion(text) {
       /(frontendAssetVersion\s*=\s*['"])[A-Za-z0-9._-]+(['"])/gu,
       `$1${version}$2`,
     )
+    // scripts/app.js runtime banner constant (not covered by the ?v= rule)
+    .replace(
+      /(APP_VERSION\s*=\s*['"])[A-Za-z0-9._-]+(['"])/gu,
+      `$1${version}$2`,
+    )
+    // docs/PROJECT_BACKLOG.md Section 1 maintenance-table cell
+    .replace(/(\|\s*Cache version\s*\|\s*`)[A-Za-z0-9._-]+(`)/gu, `$1${version}$2`)
+    // docs/MILESTONE_INDEX.md Active line "当前 `X`;`check:all`" (suffix-anchored
+    // so it never touches Handoff/history references to past versions)
+    .replace(/(当前 `)[A-Za-z0-9._-]+(`;`check:all`)/gu, `$1${version}$2`)
     .replace(/v[A-Za-z0-9._-]+(?=\s+Frontend Asset Cache Busting)/gu, `v${version}`)
     .replace(/(当前正式版本仍是\s*[`'"]?)[A-Za-z0-9._-]+/gu, `$1${version}`)
     .replace(/(正式版本仍保持\s*[`'"]?)[A-Za-z0-9._-]+/gu, `$1${version}`)
