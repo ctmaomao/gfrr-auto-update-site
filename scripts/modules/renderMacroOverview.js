@@ -8,7 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=stage-c5-batch3-world-indices-1';
+} from './config.js?v=batch-a-display-integrity-1';
+import { buildCrossValidationMatrix } from './buildCrossValidationMatrix.js?v=batch-a-display-integrity-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -203,6 +204,12 @@ function latestRecord(records) {
 function asNumber(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+// 当前市值唯一取数:__effectiveDisplayInputs(实时有效)优先,缺则 displayInputsBaseline(当日快照)。
+// 契约 DATA_CONTRACT.md:当前值来自 __effectiveDisplayInputs。display-only,不影响 scoring。
+function currentValue(radarData, key) {
+  return asNumber(radarData?.__effectiveDisplayInputs?.[key] ?? radarData?.displayInputsBaseline?.[key]);
 }
 function signedFixed(value, digits = 2) {
   const n = asNumber(value);
@@ -574,7 +581,7 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
   const energy = asNumber(radarData?.modules?.energy);
   const inflation = asNumber(radarData?.modules?.inflation);
   const liquidity = asNumber(radarData?.modules?.liquidity);
-  const brent = asNumber(radarData?.displayInputsBaseline?.brent ?? radarData?.__effectiveDisplayInputs?.brent ?? radarData?.brentPricingLayer?.selectedBrent?.value);
+  const brent = currentValue(radarData, 'brent') ?? asNumber(radarData?.brentPricingLayer?.selectedBrent?.value);
   const crackSpread = asNumber(radarData?.brentPricingLayer?.crackSpread);
   const sentiment = asNumber(radarData?.macroDrivers?.consumer?.umichSentiment);
   const ismPmi = asNumber(radarData?.macroDrivers?.consumer?.ismManufacturingPmi);
@@ -612,8 +619,8 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
       score: n1Score,
       isActive: n1Active,
       description: n1Active
-        ? `Brent ${(brent ?? 0).toFixed(2)} + crack spread 走阔到 ${(crackSpread ?? 0).toFixed(2)},2022 模式重演。下一节是是否传导至 CPI / breakeven。`
-        : `Brent ${(brent ?? 0).toFixed(2)} + crack spread ${(crackSpread ?? 0).toFixed(2)},暂未触发能源传导主线条件。`,
+        ? `Brent ${brent !== null ? brent.toFixed(2) : '—'} + crack spread 走阔到 ${crackSpread !== null ? crackSpread.toFixed(2) : '—'},2022 模式重演。下一节是是否传导至 CPI / breakeven。`
+        : `Brent ${brent !== null ? brent.toFixed(2) : '—'} + crack spread ${crackSpread !== null ? crackSpread.toFixed(2) : '—'},暂未触发能源传导主线条件。`,
     },
     {
       shortName: '滞胀压力',
@@ -621,8 +628,8 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
       score: n2Score,
       isActive: n2Active,
       description: n2Active
-        ? `ISM PMI ${(ismPmi ?? 0).toFixed(1)} ${(ismPmi ?? 0) < 50 ? '收缩' : '扩张'} + 能源涨价 + 实际工资压制。三件套均已出现,但信用未验证。`
-        : `ISM PMI ${(ismPmi ?? 0).toFixed(1)} ${(ismPmi ?? 0) < 50 ? '收缩' : '扩张'} + 能源涨价。三件套尚未集结,观察中。`,
+        ? `ISM PMI ${ismPmi !== null ? ismPmi.toFixed(1) : '—'} ${ismPmi !== null ? (ismPmi < 50 ? '收缩' : '扩张') : '—'} + 能源涨价 + 实际工资压制。三件套均已出现,但信用未验证。`
+        : `ISM PMI ${ismPmi !== null ? ismPmi.toFixed(1) : '—'} ${ismPmi !== null ? (ismPmi < 50 ? '收缩' : '扩张') : '—'} + 能源涨价。三件套尚未集结,观察中。`,
     },
     {
       shortName: '世界秩序压力穿越',
@@ -648,8 +655,8 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
       score: n5Score,
       isActive: n5Active,
       description: n5Active
-        ? `QQQ z-score ${signedFixed(qqqZ ?? 0, 2)}σ ${(qqqZ ?? 0) > 2 ? '极度过热' : '偏热'},波动率与信用未同步,缺少印证。`
-        : `QQQ z-score ${signedFixed(qqqZ ?? 0, 2)}σ ${(qqqZ ?? 0) > 2 ? '极度过热' : '偏热'},但信用 + 波动率没有验证,缺少同步证据。`,
+        ? `QQQ z-score ${signedFixed(qqqZ, 2)}σ ${(qqqZ ?? 0) > 2 ? '极度过热' : '偏热'},波动率与信用未同步,缺少印证。`
+        : `QQQ z-score ${signedFixed(qqqZ, 2)}σ ${(qqqZ ?? 0) > 2 ? '极度过热' : '偏热'},但信用 + 波动率没有验证,缺少同步证据。`,
     },
     {
       shortName: '信用利差告警',
@@ -657,8 +664,8 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
       score: n6Score,
       isActive: n6Active,
       description: n6Active
-        ? `HY OAS ${(hyOas ?? 0).toFixed(2)}% / IG OAS ${(igOas ?? 0).toFixed(2)}% / NFCI ${signedFixed(nfci ?? 0, 2)}。信用层进入边际收紧。`
-        : `HY OAS ${(hyOas ?? 0).toFixed(2)}% / IG OAS ${(igOas ?? 0).toFixed(2)}% / NFCI ${signedFixed(nfci ?? 0, 2)}。压力初现但远未到告警阈值。`,
+        ? `HY OAS ${hyOas !== null ? hyOas.toFixed(2) : '—'}% / IG OAS ${igOas !== null ? igOas.toFixed(2) : '—'}% / NFCI ${signedFixed(nfci, 2)}。信用层进入边际收紧。`
+        : `HY OAS ${hyOas !== null ? hyOas.toFixed(2) : '—'}% / IG OAS ${igOas !== null ? igOas.toFixed(2) : '—'}% / NFCI ${signedFixed(nfci, 2)}。压力初现但远未到告警阈值。`,
     },
     {
       shortName: '流动性收紧',
@@ -737,19 +744,21 @@ function renderMacroDriversPillars({ radarData }) {
     const credit = radarData?.macroDrivers?.credit || {};
 
     const reserveT = asNumber(fed.reserveBalances) !== null ? (asNumber(fed.reserveBalances) / 1000000).toFixed(2) : '—';
-    const repoBp = signedFixedWithZero(asNumber(fed.bgcrSofrSpread) ?? 0, 0);
+    const repoBp = signedFixedWithZero(asNumber(fed.bgcrSofrSpread), 0);
     setLeafText('pillar-1-text', `${fed.regime || '—'}。WALCL / reserveBalances ${reserveT}T / repo BGCR-SOFR ${repoBp}bp / SOFR-EFFR 锚定。ON RRP: ${fed.onRrpLevel || '—'}。`);
 
-    const policyBp = signedFixedWithZero((asNumber(policy.futureMinusTargetMid) ?? 0) * 100, 1);
+    const policySpread = asNumber(policy.futureMinusTargetMid);
+    const policyBp = signedFixedWithZero(policySpread !== null ? policySpread * 100 : null, 1);
     setLeafText('pillar-2-text', `market vs 委员分歧。futureMinusTargetMid ${policyBp}bp,policy tone: ${policy.policyTone || '—'}。`);
 
-    const curveBp = signedFixedWithZero((asNumber(curve.t10y2y) ?? 0) * 100, 0);
+    const curveSpread = asNumber(curve.t10y2y);
+    const curveBp = signedFixedWithZero(curveSpread !== null ? curveSpread * 100 : null, 0);
     setLeafText('pillar-3-text', `t10y2y ${curveBp}bp,curve.regime ${curve.regime || '—'}。${curve.steepeningAlert ? '陡峭化告警激活,通常领先衰退 6-18 月' : '未触发陡峭化告警'}。`);
 
     const hy = asNumber(credit.hyOas);
     const ig = asNumber(credit.igOas);
     const nfci = asNumber(credit.nfci);
-    setLeafText('pillar-4-text', `HY OAS ${(hy ?? 0).toFixed(2)}% / IG OAS ${(ig ?? 0).toFixed(2)}% / NFCI ${signedFixed(nfci ?? 0, 2)} (${credit.nfciRegime || '—'}) / SLOOS ${credit.sloosRegime || '—'}。`);
+    setLeafText('pillar-4-text', `HY OAS ${hy !== null ? hy.toFixed(2) : '—'}% / IG OAS ${ig !== null ? ig.toFixed(2) : '—'}% / NFCI ${signedFixed(nfci, 2)} (${credit.nfciRegime || '—'}) / SLOOS ${credit.sloosRegime || '—'}。`);
   } catch (error) {
     console.error('[renderMacroOverview] renderMacroDriversPillars failed:', error);
   }
@@ -759,21 +768,17 @@ function renderMacroDriversPillars({ radarData }) {
 
 function renderCrossValidation({ radarData, worldOrderStressData, marketPricingMetricsData }) {
   try {
-    const narratives = deriveNarratives({ radarData, worldOrderStressData, marketPricingMetricsData });
-    const active = narratives.filter((item) => item.isActive);
-    const checks = Array.isArray(radarData?.divergenceLayer?.checks) ? radarData.divergenceLayer.checks : [];
-    const contradictionCount = checks.filter((item) => item?.status === 'stress').length;
-    const insufficientCount = checks.filter((item) => item?.status === 'insufficient_data').length;
-    const consistencyScore = Math.round(clamp(active.length * 12 - contradictionCount * 5 + 30, 0, 100));
-    setLeafText('cv-consistency-value', String(consistencyScore));
+    const matrix = buildCrossValidationMatrix(radarData, worldOrderStressData, marketPricingMetricsData, radarData?.macroDrivers?.fedLiquidity);
+    const narratives = Array.isArray(matrix?.narratives) ? matrix.narratives : [];
+    const strong = narratives.filter((n) => n.assessment === 'strong_confirmation').length;
+    const partial = narratives.filter((n) => n.assessment === 'partial_confirmation').length;
+    const contradiction = narratives.filter((n) => n.assessment === 'contradiction').length;
+    const consistencyScore = asNumber(matrix?.consistencyScore);
+    setLeafText('cv-consistency-value', consistencyScore !== null ? String(consistencyScore) : '—');
     const fill = $('cv-bar-fill');
-    if (fill) fill.style.width = `${consistencyScore}%`;
-    setLeafText('cv-breakdown-counts', `${active.length} strong_confirmation / ${contradictionCount} contradiction / ${insufficientCount} insufficient_data`);
-
-    const activeNames = active.slice(0, 3).map((item) => item.shortName).join(' + ');
-    const hyOas = asNumber(radarData?.macroDrivers?.credit?.hyOas);
-    const creditEvidence = hyOas !== null && hyOas < 3 ? '提供反向证据' : '不提供反向证据';
-    setLeafText('cv-summary-line', `${activeNames} ${active.length >= 3 ? '同向支持' : '尚未集结'};HY OAS + VIX ${creditEvidence}。`);
+    if (fill) fill.style.width = `${consistencyScore !== null ? consistencyScore : 0}%`;
+    setLeafText('cv-breakdown-counts', `${strong} strong_confirmation / ${partial} partial_confirmation / ${contradiction} contradiction`);
+    setLeafText('cv-summary-line', matrix?.oneLineSummary || '—');
   } catch (error) {
     console.error('[renderMacroOverview] renderCrossValidation failed:', error);
   }
@@ -888,14 +893,14 @@ function renderC7MarketSentiment({ radarData, marketPricingMetricsData }) {
   try {
     if (!radarData) return;
 
-    const vix = asNumber(radarData.displayInputsBaseline?.vix ?? radarData.__effectiveDisplayInputs?.vix);
+    const vix = currentValue(radarData, 'vix');
     const vixStatus = vixTone(vix);
     setToneClass('c7-vix-status', 'status-bar', vixStatus);
     setBadge('c7-vix-badge', vixStatus);
     if (vix !== null) setLeafText('c7-vix-number', vix.toFixed(2));
     setLeafText('c7-vix-aux', '12 周低位');
 
-    const spx = asNumber(radarData.displayInputsBaseline?.spx ?? radarData.__effectiveDisplayInputs?.spx);
+    const spx = currentValue(radarData, 'spx');
     if (spx !== null) setLeafText('c7-spx-number', spx.toFixed(0));
     const spx52wHigh = radarData.historyWindowFields?.spx52wHigh;
     const spxHighValue = asNumber(spx52wHigh?.value);
@@ -1078,10 +1083,9 @@ function renderC1InflationEnergy({ radarData }) {
   try {
     if (!radarData) return;
     const brentLayer = radarData.brentPricingLayer || {};
-    const display = radarData.displayInputsBaseline || {};
     const consumer = radarData.macroDrivers?.consumer || {};
 
-    const brent = asNumber(display.brent ?? brentLayer.selectedBrent?.value);
+    const brent = currentValue(radarData, 'brent') ?? asNumber(brentLayer.selectedBrent?.value);
     const brentStatus = brentTone(brent);
     setIndicatorStatus('c1-brent-status', 'c1-brent-badge', brentStatus);
     if (brent !== null) setLeafText('c1-brent-number', brent.toFixed(2));
@@ -1191,7 +1195,7 @@ function renderChinaBondLeaf({ radarData }) {
   setBadge('c6-china-10y-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
 
   const cn10y = asNumber(chinaBond.yield10y?.value);
-  const us10y = asNumber(radarData?.displayInputsBaseline?.us10y);
+  const us10y = currentValue(radarData, 'us10y');
   setLeafText('c6-china-10y-number', cn10y !== null ? cn10y.toFixed(2) : '—');
   const cnText = cn10y !== null ? `中国 10Y ${cn10y.toFixed(2)}%` : '中国 10Y —';
   const usText = us10y !== null ? `美 10Y ${us10y.toFixed(2)}%` : '美 10Y —';
@@ -1431,12 +1435,11 @@ function renderChinaPropertyLeaf({ radarData }) {
 function renderC2GlobalLiquidity({ radarData }) {
   try {
     if (!radarData) return;
-    const display = radarData.displayInputsBaseline || {};
     const curve = radarData.macroDrivers?.curve || {};
     const fed = radarData.macroDrivers?.fedLiquidity || {};
     const policy = radarData.macroDrivers?.policyExpectations || {};
 
-    const dxy = asNumber(display.dxy);
+    const dxy = currentValue(radarData, 'dxy');
     if (dxy !== null) setLeafText('c2-dxy-number', dxy.toFixed(2));
     const dxy12wHigh = radarData.historyWindowFields?.dxy12wHigh;
     const dxyHighValue = asNumber(dxy12wHigh?.value);
@@ -1448,10 +1451,10 @@ function renderC2GlobalLiquidity({ radarData }) {
       setLeafText('c2-dxy-aux', `12周高位 ${formatWindowProgress(dxy12wHigh)}`);
     }
 
-    const gold = asNumber(display.gold);
+    const gold = currentValue(radarData, 'gold');
     if (gold !== null) setLeafText('c2-gold-number', gold.toFixed(2));
 
-    const us10y = asNumber(display.us10y);
+    const us10y = currentValue(radarData, 'us10y');
     const us10yStatus = us10yTone(us10y);
     setIndicatorStatus('c2-us10y-status', 'c2-us10y-badge', us10yStatus);
     if (us10y !== null) setLeafText('c2-us10y-number', us10y.toFixed(2));
@@ -1646,12 +1649,11 @@ function formatSignedBpValue(value, digits = 0) {
 function renderC3CreditCorporate({ radarData }) {
   try {
     if (!radarData) return;
-    const display = radarData.displayInputsBaseline || {};
     const credit = radarData.macroDrivers?.credit || {};
     const privateCredit = radarData.macroDrivers?.privateCreditProxy || {};
     const cre = radarData.macroDrivers?.commercialRealEstate || {};
 
-    const hyOas = asNumber(display.hyOas ?? credit.hyOas);
+    const hyOas = currentValue(radarData, 'hyOas') ?? asNumber(credit.hyOas);
     const hyTone = creditHyTone(hyOas);
     setIndicatorStatus('c3-hy-status', 'c3-hy-badge', hyTone);
     const hyOasWoW = radarData.historyWindowFields?.hyOasWoW;
@@ -1806,7 +1808,7 @@ function renderEuroVolatilityLeaf({ radarData }) {
   const euroVolatility = radarData?.macroDrivers?.euroVolatility;
   const value = asNumber(euroVolatility?.value);
   const changePct = asNumber(euroVolatility?.changePct);
-  const vix = asNumber(radarData?.displayInputsBaseline?.vix);
+  const vix = currentValue(radarData, 'vix');
   const status = euroVolatility?.sourceStatus || 'missing';
 
   setToneClass('c5-v2x-status', 'status-bar', 'neutral');

@@ -1,13 +1,13 @@
-﻿import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=stage-c5-batch3-world-indices-1';
+﻿import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=batch-a-display-integrity-1';
 import {
   computeAgeMinutes,
   classifyFreshnessLevel,
   buildRealtimeStatusLabel,
   shouldApplyRealtimeOverlay,
   canUseRealtimePayloadValues
-} from './freshness.js?v=stage-c5-batch3-world-indices-1';
-import { buildHealthDashboardModel } from './health.js?v=stage-c5-batch3-world-indices-1';
-import { buildDecisionModel } from './decision.js?v=stage-c5-batch3-world-indices-1';
+} from './freshness.js?v=batch-a-display-integrity-1';
+import { buildHealthDashboardModel } from './health.js?v=batch-a-display-integrity-1';
+import { buildDecisionModel } from './decision.js?v=batch-a-display-integrity-1';
 import {
   buildAssetMatrixReasons,
   buildDecisionLineDisplay,
@@ -19,7 +19,7 @@ import {
   buildSummaryDisplay,
   buildTopRisksDisplay,
   buildTriggerPanelDisplay
-} from './displayTextBuilders.js?v=stage-c5-batch3-world-indices-1';
+} from './displayTextBuilders.js?v=batch-a-display-integrity-1';
 
 const STRUCTURAL_SIGNAL_LABELS_CN = {
   curveDeepInversion: '曲线深度倒挂',

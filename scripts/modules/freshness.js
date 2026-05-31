@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=stage-c5-batch3-world-indices-1';
+﻿import { fmtNumSafe } from './config.js?v=batch-a-display-integrity-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

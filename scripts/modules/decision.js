@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=stage-c5-batch3-world-indices-1';
-import { formatOnRrpYiUsd } from './format.js?v=stage-c5-batch3-world-indices-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=batch-a-display-integrity-1';
+import { formatOnRrpYiUsd } from './format.js?v=batch-a-display-integrity-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

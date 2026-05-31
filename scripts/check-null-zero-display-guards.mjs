@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+﻿import fs from 'node:fs';
 import path from 'node:path';
 
 import { buildCrossValidationMatrix } from './modules/buildCrossValidationMatrix.js';
@@ -94,9 +94,51 @@ function assertCrossValidationFiniteGuardsMissingValues() {
   );
 }
 
+function assertMacroOverviewMissingValueDisplayGuards() {
+  const source = readText('scripts/modules/renderMacroOverview.js');
+  const forbiddenSnippets = [
+    '(brent ?? 0).toFixed(2)',
+    '(crackSpread ?? 0).toFixed(2)',
+    '(ismPmi ?? 0).toFixed(1)',
+    'signedFixed(qqqZ ?? 0, 2)',
+    '(hyOas ?? 0).toFixed(2)',
+    '(igOas ?? 0).toFixed(2)',
+    'signedFixed(nfci ?? 0, 2)',
+    'signedFixedWithZero(asNumber(fed.bgcrSofrSpread) ?? 0, 0)',
+    'signedFixedWithZero((asNumber(policy.futureMinusTargetMid) ?? 0) * 100, 1)',
+    'signedFixedWithZero((asNumber(curve.t10y2y) ?? 0) * 100, 0)',
+    '(hy ?? 0).toFixed(2)',
+    '(ig ?? 0).toFixed(2)',
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    assert(!source.includes(snippet), `renderMacroOverview.js must not default missing display value to zero: ${snippet}`);
+  }
+
+  const requiredSnippets = [
+    "brent !== null ? brent.toFixed(2) : '—'",
+    "crackSpread !== null ? crackSpread.toFixed(2) : '—'",
+    "ismPmi !== null ? ismPmi.toFixed(1) : '—'",
+    'signedFixed(qqqZ, 2)',
+    "hyOas !== null ? hyOas.toFixed(2) : '—'",
+    "igOas !== null ? igOas.toFixed(2) : '—'",
+    'signedFixed(nfci, 2)',
+    'signedFixedWithZero(asNumber(fed.bgcrSofrSpread), 0)',
+    'policySpread !== null ? policySpread * 100 : null',
+    'curveSpread !== null ? curveSpread * 100 : null',
+    "hy !== null ? hy.toFixed(2) : '—'",
+    "ig !== null ? ig.toFixed(2) : '—'",
+  ];
+
+  for (const snippet of requiredSnippets) {
+    assert(source.includes(snippet), `renderMacroOverview.js missing null-safe display guard: ${snippet}`);
+  }
+}
+
 function main() {
   assertRepoMissingStaysMissing();
   assertCrossValidationFiniteGuardsMissingValues();
+  assertMacroOverviewMissingValueDisplayGuards();
   console.log('Null-zero display guard: PASS');
 }
 
