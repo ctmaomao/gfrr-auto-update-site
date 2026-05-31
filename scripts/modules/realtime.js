@@ -1,13 +1,13 @@
-﻿import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=coherence-ref-fallback-1';
+﻿import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=brent-held-age-cap-1';
 import {
   computeAgeMinutes,
   classifyFreshnessLevel,
   buildRealtimeStatusLabel,
   shouldApplyRealtimeOverlay,
   canUseRealtimePayloadValues
-} from './freshness.js?v=coherence-ref-fallback-1';
-import { buildHealthDashboardModel } from './health.js?v=coherence-ref-fallback-1';
-import { buildDecisionModel } from './decision.js?v=coherence-ref-fallback-1';
+} from './freshness.js?v=brent-held-age-cap-1';
+import { buildHealthDashboardModel } from './health.js?v=brent-held-age-cap-1';
+import { buildDecisionModel } from './decision.js?v=brent-held-age-cap-1';
 import {
   buildAssetMatrixReasons,
   buildDecisionLineDisplay,
@@ -19,7 +19,7 @@ import {
   buildSummaryDisplay,
   buildTopRisksDisplay,
   buildTriggerPanelDisplay
-} from './displayTextBuilders.js?v=coherence-ref-fallback-1';
+} from './displayTextBuilders.js?v=brent-held-age-cap-1';
 
 const STRUCTURAL_SIGNAL_LABELS_CN = {
   curveDeepInversion: '曲线深度倒挂',
@@ -505,6 +505,14 @@ export function buildRuntimeState(baseline, history, realtimeResult) {
   const brentFieldFreshness = realtimePayload?.fieldFreshness?.brent || null;
   const brentFreshnessLevel = brentFieldFreshness?.freshnessLevel || null;
   const brentIsStale = brentFreshnessLevel === 'stale' || brentFreshnessLevel === 'unavailable';
+  // B-worker: worker promotion audit flags when values.brent is a held/anchor value
+  // older than the held-age cap. Soft display warning only — never gates overlay use,
+  // never drops Brent, never touches scoring. Absent (pre-deploy / fallback) → false.
+  const brentAudit = realtimePayload?.brentValidation?.audit || null;
+  const brentHeldBeyondAgeCap = brentAudit?.heldBeyondAgeCap === true;
+  const brentSelectedAgeHours = Number.isFinite(brentAudit?.selectedAgeHours)
+    ? brentAudit.selectedAgeHours
+    : null;
   const realtimeAsOf = realtimePayload?.asOf || realtimePayload?.lastSuccessAt || realtimePayload?.updatedAt || null;
   const realtimeAgeMinutes = computeAgeMinutes(realtimeAsOf);
   const realtimeFreshnessLevel = classifyFreshnessLevel(realtimeAgeMinutes, !!realtimePayload?.values);
@@ -542,7 +550,9 @@ export function buildRuntimeState(baseline, history, realtimeResult) {
     brentAgeMinutes: brentFieldFreshness?.ageMinutes ?? null,
     brentFreshnessLevel,
     brentIsStale,
-    realtimeHasStaleKeyFields: brentIsStale
+    realtimeHasStaleKeyFields: brentIsStale,
+    realtimeBrentHeldBeyondAgeCap: brentHeldBeyondAgeCap,
+    realtimeBrentSelectedAgeHours: brentSelectedAgeHours
   };
   runtimeMetadata.realtimeFetchAudit = buildRealtimeFetchAudit({ realtimeResult, realtimePayload, runtimeMetadata });
   runtimeMetadata.realtimeStatusLabel = buildRealtimeStatusLabel(runtimeMetadata);

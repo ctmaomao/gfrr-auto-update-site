@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=coherence-ref-fallback-1';
+﻿import { fmtNumSafe } from './config.js?v=brent-held-age-cap-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
@@ -82,6 +82,14 @@ export function buildRealtimeStatusLabel(metadata) {
   if (metadata.realtimeDegraded) parts.push('降级');
   if (metadata.realtimeFallbackUsed) parts.push('本地回退');
   if (metadata.realtimeCacheOnly) parts.push('缓存模式');
+  // B-worker soft warning: held Brent value older than the worker's age cap.
+  // Display-only hint; does not change source selection, overlay use, or scoring.
+  if (metadata.realtimeBrentHeldBeyondAgeCap) {
+    const ageDays = Number.isFinite(metadata.realtimeBrentSelectedAgeHours)
+      ? `~${Math.round(metadata.realtimeBrentSelectedAgeHours / 24)}天`
+      : '';
+    parts.push(`Brent旧值风险${ageDays ? `(held ${ageDays})` : '(held)'}`);
+  }
   return parts.join(' / ');
 }
 

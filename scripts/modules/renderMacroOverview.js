@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=coherence-ref-fallback-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=coherence-ref-fallback-1';
+} from './config.js?v=brent-held-age-cap-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=brent-held-age-cap-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

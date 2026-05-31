@@ -25,6 +25,11 @@ const TRADING_ECONOMICS_ALT_BRENT_URL =
   'https://tradingeconomics.com/commodity/brentcrudeoil';
 const BRENT_ANCHOR_STALE_HOURS = 72;
 const BRENT_CONFIRMATION_FRESH_HOURS = 48;
+// B-worker hardening: upper age cap on a held/anchor Brent value. When the
+// selected (non-promoted) Brent observation is older than this, the audit flags
+// `heldBeyondAgeCap` so downstream display can warn it is a stale held value.
+// Observability + soft-warn only: does NOT change values.brent or any gate.
+const BRENT_HELD_MAX_AGE_HOURS = 168;
 const BRENT_PROMOTION_MAX_DIVERGENCE_PCT = 2;
 const BRENT_MOVE_WATCH_PCT = 2;
 const BRENT_MOVE_EXTREME_PCT = 3;
@@ -927,14 +932,26 @@ function summarizeBrentCandidate(candidate, anchorDetail = null) {
   };
 }
 
-function buildBrentAudit(selectedDetail, brentValidation, promotionDecision, anchorDetail) {
+function buildBrentAudit(selectedDetail, brentValidation, promotionDecision, anchorDetail, nowMs = Date.now()) {
   const consensus = brentValidation.consensus || {};
   const selectedValue = isFiniteNumber(selectedDetail?.value) ? selectedDetail.value : null;
+
+  // B-worker hardening: age of the observation behind the value actually written
+  // to values.brent. When the value is a held/anchor fallback (promotion not
+  // applied) older than the cap, flag it so display can warn "stale held value".
+  // Pure observability — selectedValue and every gate are untouched.
+  const selectedAgeHours = hoursSinceTimestamp(selectedDetail?.timestamp ?? null, nowMs);
+  const heldBeyondAgeCap = promotionDecision?.applied !== true
+    && isFiniteNumber(selectedAgeHours)
+    && selectedAgeHours > BRENT_HELD_MAX_AGE_HOURS;
 
   return {
     selectedSource: selectedDetail?.source || 'FRED:DCOILBRENTEU',
     selectedValue,
     selectedObservedAt: selectedDetail?.timestamp ?? null,
+    selectedAgeHours: isFiniteNumber(selectedAgeHours) ? roundValue(selectedAgeHours, 2) : null,
+    heldMaxAgeHours: BRENT_HELD_MAX_AGE_HOURS,
+    heldBeyondAgeCap,
     selectedStatus: selectedDetail?.ok ? 'ok' : selectedDetail?.error || 'missing',
     consensusValue: isFiniteNumber(consensus.recommendedValue) ? consensus.recommendedValue : null,
     candidateSources: brentValidation.candidates.map((candidate) =>
@@ -1649,6 +1666,7 @@ export async function buildWorkerGeneratedMarketPreview(options = {}) {
     brentValidation,
     brentPromotion,
     brentAnchorDetail,
+    nowMs,
   );
   const criticalMissing = countMissing(values, CRITICAL_FIELDS);
   const nonCriticalFields = Object.keys(values).filter((field) => !CRITICAL_FIELDS.includes(field));
