@@ -2150,6 +2150,9 @@ function validateDisplayInputsBaseline(dataPayload) {
     assert(Object.hasOwn(baseline, key), `displayInputsBaseline.${key} is missing`);
     assert(isFiniteNumberOrNull(baseline[key]), `displayInputsBaseline.${key} must be finite number or null`);
   }
+  if (Object.hasOwn(baseline, 'asOf')) {
+    validateNullableIsoString(baseline.asOf, 'displayInputsBaseline.asOf');
+  }
 }
 
 function shouldValidateRealtimeBaselineAlignment(realtimePayload) {

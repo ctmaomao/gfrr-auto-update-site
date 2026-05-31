@@ -23,6 +23,12 @@ const clampRange = (n, min, max) => Math.max(min, Math.min(max, n));
 const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 const isoNow = new Date().toISOString();
 
+function normalizeIsoOrNull(value) {
+  if (typeof value !== 'string') return null;
+  const t = Date.parse(value);
+  return Number.isFinite(t) ? new Date(t).toISOString() : null;
+}
+
 const MODULE_LABELS_CN = {
   geopolitical: '地缘政治',
   energy: '能源',
@@ -9061,7 +9067,8 @@ async function buildFallback() {
     real10y: normFinite(prevInputs?.real10y),
     breakeven10y: normFinite(prevInputs?.breakeven10y),
     gold: normFinite(prevInputs?.gold),
-    spx: normFinite(prevInputs?.spx)
+    spx: normFinite(prevInputs?.spx),
+    asOf: normalizeIsoOrNull(prevInputs?.asOf) ?? normalizeIsoOrNull(prevData?.updatedAt) ?? null
   };
   next.recovery = {
     degradedMode: true,
@@ -9167,7 +9174,8 @@ async function build() {
     real10y: toFiniteOrNull(risk.real10y),
     breakeven10y: toFiniteOrNull(risk.breakeven),
     gold: toFiniteOrNull(risk.gold),
-    spx: toFiniteOrNull(risk.spx)
+    spx: toFiniteOrNull(risk.spx),
+    asOf: isoNow
   };
   const confidenceScore = clamp(100 - (realtime.criticalMissing ?? 0) * R.confidenceScoring.criticalMissingPenalty - (realtime.fallbackCount ?? 0) * R.confidenceScoring.fallbackPenalty);
   const dailyBrief = buildDailyBrief({

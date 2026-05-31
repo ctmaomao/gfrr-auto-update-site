@@ -1088,6 +1088,8 @@ v28.0G-7B adds `scripts/review-worker-health-snapshot.mjs` and `review:worker-he
 
 `displayInputsBaseline` 是 baseline fallback 的结构化当前值来源，不是中文文案，也不是从旧文案反解析出来的结果。不允许通过解析旧中文文案恢复这些值。Daily 构建必须先读取最新 `realtime-data`，再基于该 realtime payload 生成 `displayInputsBaseline`。
 
+`asOf`(nullable ISO):baseline 值的真实生成时间 —— 主路径=本轮 isoNow;降级路径=沿用承载旧值那轮的时间戳(prevInputs.asOf ?? 上一份 updatedAt)。诊断/展示用,不进 scoring/decision/execution/position/values/cross-validation。
+
 ## dailyRealtimeInput 契约
 
 `data/radar-data.json` 根层应包含：
