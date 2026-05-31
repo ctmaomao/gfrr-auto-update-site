@@ -147,24 +147,28 @@
 
   .threshold-block { padding: 6px 0; }
   .threshold-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
-  .threshold-header h4 { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin: 0; }
-  .threshold-header h4 em { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 0.78em; }
+  .threshold-header h4 { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin: 0; }
+  .threshold-header h4 em { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 0.7em; }
   .threshold-header .now { font-family: var(--font-mono); font-size: 11px; color: var(--paper-muted); letter-spacing: 0.1em; }
   .threshold-bar-wrap { position: relative; padding-top: 28px; padding-bottom: 30px; }
-  .threshold-bar { position: relative; height: 56px; border: 1px solid var(--paper-ink); display: flex; overflow: visible; }
-  .threshold-bar .zone { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 4px; text-align: center; color: var(--paper-bg); gap: 2px; min-width: 0; }
+  .threshold-bar { position: relative; height: 64px; border: 1px solid var(--paper-ink); display: flex; overflow: visible; }
+  .threshold-bar .zone { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 6px 4px; text-align: center; color: var(--paper-bg); gap: 3px; min-width: 0; }
   .threshold-bar .zone.t-green  { background: var(--risk-green); }
   .threshold-bar .zone.t-yellow { background: var(--risk-yellow); }
   .threshold-bar .zone.t-orange { background: var(--risk-orange); }
   .threshold-bar .zone.t-red    { background: var(--risk-red); }
-  .zone-label { font-family: var(--font-serif); font-size: 12px; font-weight: 700; line-height: 1.1; }
-  .zone-pct { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; opacity: 0.9; }
+  .zone-label { font-family: var(--font-serif); font-size: 13px; font-weight: 700; line-height: 1.1; }
+  .zone-pct { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; opacity: 0.9; }
   .threshold-bar .marker { position: absolute; top: -8px; bottom: -8px; width: 2px; background: var(--paper-ink); transform: translateX(-50%); z-index: 2; }
   .threshold-bar .marker::after { content: ""; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid var(--paper-ink); }
   .threshold-bar .marker .marker-label { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); font-family: var(--font-mono); font-size: 10px; background: var(--paper-ink); color: var(--paper-bg); padding: 3px 7px; white-space: nowrap; font-weight: 600; }
   .threshold-bar .marker.override { background: var(--risk-orange); }
   .threshold-bar .marker.override::after { bottom: auto; top: -6px; border-top: none; border-bottom: 8px solid var(--risk-orange); }
   .threshold-bar .marker.override .marker-label { top: auto; bottom: -24px; background: var(--risk-orange); }
+  @media (max-width: 600px) {
+    .threshold-bar .zone-label { font-size: 11px; }
+    .threshold-bar .zone-pct { font-size: 9px; }
+  }
 
   .trend-block { border-top: 1px solid var(--paper-line); padding-top: 18px; }
   .trend-block-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }

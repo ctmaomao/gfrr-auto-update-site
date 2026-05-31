@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=coherence-c5c6-presence-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=coherence-c5c6-presence-1';
+} from './config.js?v=threshold-scale-1to1-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=threshold-scale-1to1-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

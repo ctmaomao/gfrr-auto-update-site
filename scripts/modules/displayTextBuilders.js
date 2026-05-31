@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=coherence-c5c6-presence-1';
+﻿import { fmtNumSafe } from './config.js?v=threshold-scale-1to1-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
