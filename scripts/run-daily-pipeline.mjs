@@ -132,14 +132,18 @@ const WTI_DAYS_BACK = 30;
 const WTI_CHANGE_WINDOW = '5d';
 const WTI_CHANGE_GAP_DAYS = 7;
 const INFLATION_ENERGY_STATUS_RANK = { live: 0, fallback: 1, missing: 2 };
-const COPPER_GOLD_SOURCE = 'Yahoo:HG=F; Yahoo:GC=F';
-const COPPER_GOLD_CHANGE_WINDOW = '5d';
+const GOLD_API_PRICE_BASE = 'https://api.gold-api.com/price';
+const COPPER_GOLD_SOURCE = 'gold-api:HG; gold-api:XAU';
+// gold-api's real-time endpoint returns spot price only (no change field), so
+// ratioChangePct is derived day-over-day from the previous Daily run's stored
+// leg price — hence the window is "1d" (vs previous daily run), not 5d intraday.
+const COPPER_GOLD_CHANGE_WINDOW = '1d';
 const COPPER_GOLD_DISPLAY_NOTE =
-  '铜金比 display-only 公开期货代理;regime 观察,不进 scoring/decision/execution/position。';
+  '铜金比 display-only 公开现货价(gold-api);regime 观察,不进 scoring/decision/execution/position。';
 const COPPER_GOLD_STATUS_RANK = { live: 0, fallback: 1, missing: 2 };
 const COPPER_GOLD_LEGS = [
-  { key: 'copper', symbol: 'HG=F', labelZh: '铜期货', min: 0.5, max: 20 },
-  { key: 'gold', symbol: 'GC=F', labelZh: '金期货', min: 500, max: 10000 }
+  { key: 'copper', symbol: 'HG', labelZh: '铜现货', min: 0.5, max: 20 },
+  { key: 'gold', symbol: 'XAU', labelZh: '金现货', min: 500, max: 10000 }
 ];
 const CHINA_BOND_SOURCE = 'ChinaBond:MOF-yield-curve';
 const CHINA_BOND_LEAF_SOURCE = 'ChinaBond:MOF';
@@ -2570,6 +2574,30 @@ async function fetchYahooChartQuote(symbol, range = '1mo', interval = '1d') {
   };
 }
 
+// gold-api.com real-time spot price (keyless, unlimited free tier). Returns spot
+// price + updatedAt only (no change field), so changePct is derived elsewhere
+// day-over-day from the previous Daily run. Used by copperGold (display-only).
+async function fetchGoldApiPrice(symbol) {
+  const payload = await fetchJsonText(
+    `${GOLD_API_PRICE_BASE}/${encodeURIComponent(symbol)}`,
+    `gold-api:${symbol}`,
+    MACRO_FETCH_TIMEOUT_MS,
+    { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
+  );
+  const price = Number(payload?.price);
+  if (!Number.isFinite(price) || price <= 0) throw new Error(`gold-api:${symbol} missing price`);
+  const updatedAt = typeof payload?.updatedAt === 'string' && payload.updatedAt.trim()
+    ? payload.updatedAt
+    : new Date().toISOString();
+  return {
+    symbol,
+    price: +price.toFixed(4),
+    changePct: null,
+    updatedAt,
+    source: `gold-api:${symbol}`
+  };
+}
+
 function buildMissingWorldEconomyIndex(config) {
   return {
     symbol: config.symbol,
@@ -2981,7 +3009,7 @@ function buildMissingCopperGoldLeg(config) {
     changePct: null,
     changeWindow: COPPER_GOLD_CHANGE_WINDOW,
     updatedAt: null,
-    source: `Yahoo:${config.symbol}`,
+    source: `gold-api:${config.symbol}`,
     sourceStatus: 'missing'
   };
 }
@@ -2999,7 +3027,7 @@ function normalizePreviousCopperGoldLeg(previous, config) {
     updatedAt: typeof previous.updatedAt === 'string' ? previous.updatedAt : null,
     source: typeof previous.source === 'string' && previous.source.trim()
       ? previous.source
-      : `Yahoo:${config.symbol}`,
+      : `gold-api:${config.symbol}`,
     sourceStatus: 'fallback'
   };
 }
@@ -3056,7 +3084,7 @@ function buildMissingCopperGold(prevCopperGold = null) {
 
 async function resolveCopperGold(prevCopperGold) {
   const results = await Promise.allSettled(
-    COPPER_GOLD_LEGS.map((config) => fetchYahooChartQuote(config.symbol, COPPER_GOLD_CHANGE_WINDOW, '1d'))
+    COPPER_GOLD_LEGS.map((config) => fetchGoldApiPrice(config.symbol))
   );
 
   const next = {
@@ -3069,11 +3097,20 @@ async function resolveCopperGold(prevCopperGold) {
   COPPER_GOLD_LEGS.forEach((config, index) => {
     const result = results[index];
     if (result.status === 'fulfilled' && isPlausibleCopperGoldQuote(result.value, config)) {
+      // gold-api gives spot price only; derive changePct day-over-day from the
+      // previous run's gold-api price (skip on the one-time Yahoo->gold-api
+      // transition run, when the prior leg's source was not gold-api).
+      const prevLeg = prevCopperGold?.[config.key];
+      const prevPrice = Number(prevLeg?.price);
+      const prevFromGoldApi = typeof prevLeg?.source === 'string' && prevLeg.source.startsWith('gold-api');
+      const changePct = (prevFromGoldApi && Number.isFinite(prevPrice) && prevPrice > 0)
+        ? +(((result.value.price - prevPrice) / prevPrice)).toFixed(4)
+        : null;
       next[config.key] = {
         symbol: config.symbol,
         labelZh: config.labelZh,
         price: result.value.price,
-        changePct: Number.isFinite(result.value.changePct) ? result.value.changePct : null,
+        changePct,
         changeWindow: COPPER_GOLD_CHANGE_WINDOW,
         updatedAt: result.value.updatedAt,
         source: result.value.source,

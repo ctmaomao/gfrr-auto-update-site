@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=brent-held-age-cap-1';
+﻿import { formatFiniteNumber } from './format.js?v=copper-gold-goldapi-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

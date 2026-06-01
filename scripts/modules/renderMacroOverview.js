@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=brent-held-age-cap-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=brent-held-age-cap-1';
+} from './config.js?v=copper-gold-goldapi-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=copper-gold-goldapi-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1650,7 +1650,7 @@ function renderC2GlobalLiquidity({ radarData }) {
       const rc = asNumber(cg.ratioChangePct);
       const cuText = cu !== null ? `铜 $${cu.toFixed(2)}/lb` : '铜 —';
       const auText = au !== null ? `金 $${au.toFixed(0)}/oz` : '金 —';
-      const rcText = rc !== null ? `近5日 ${signedFixed(rc * 100, 2)}%` : '近5日 —';
+      const rcText = rc !== null ? `较前日 ${signedFixed(rc * 100, 2)}%` : '较前日 —';
       const suffix = status === 'fallback' ? ' · 回退' : '';
       setLeafText('c2-cuau-aux', `${cuText} · ${auText} · ${rcText}${suffix}`);
     }

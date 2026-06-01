@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=brent-held-age-cap-1';
+﻿import { fmtNumSafe } from './config.js?v=copper-gold-goldapi-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

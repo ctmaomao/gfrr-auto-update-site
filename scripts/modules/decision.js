@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=brent-held-age-cap-1';
-import { formatOnRrpYiUsd } from './format.js?v=brent-held-age-cap-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=copper-gold-goldapi-1';
+import { formatOnRrpYiUsd } from './format.js?v=copper-gold-goldapi-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',
