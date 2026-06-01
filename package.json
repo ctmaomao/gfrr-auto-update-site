@@ -33,6 +33,8 @@
     "market-pricing:metrics-calculation:commit": "node scripts/market-pricing/metrics-calculation-scaffold.mjs --commit-metrics",
     "market-pricing:ndx-ixic-yahoo:dry-run": "node scripts/market-pricing/ndx-ixic-yahoo-history-refresh.mjs --dry-run",
     "market-pricing:ndx-ixic-yahoo:commit": "node scripts/market-pricing/ndx-ixic-yahoo-history-refresh.mjs --commit-history",
+    "market-pricing:qqq-yahoo:dry-run": "node scripts/market-pricing/qqq-yahoo-history-refresh.mjs --dry-run",
+    "market-pricing:qqq-yahoo:commit": "node scripts/market-pricing/qqq-yahoo-history-refresh.mjs --commit-history",
     "market-pricing:source-compliance-review:scaffold": "node scripts/market-pricing/source-compliance-review-scaffold.mjs --output manual-artifacts/market-pricing/source-compliance-review-scaffold-latest.json",
     "review:external-ai-artifact": "node scripts/review-external-ai-artifact.mjs",
     "check:worker-health": "node scripts/check-worker-health.mjs",

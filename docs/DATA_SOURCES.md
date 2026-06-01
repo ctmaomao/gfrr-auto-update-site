@@ -89,10 +89,10 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 |---|---|
 | **License** | 公开;非官方 API,需 User-Agent + Referer 头 |
 | **Quota** | 无明确限制,但建议 < 1 req/sec |
-| **Refresh 频率** | Realtime worker (high freq) + Daily pipeline 兜底；Market Pricing NDX/IXIC 仅走 Daily/manual history refresh |
+| **Refresh 频率** | Realtime worker (high freq) + Daily pipeline 兜底；Market Pricing QQQ 每周自动 + NDX/IXIC Daily/manual history refresh |
 | **失败 fallback** | 失败时记录 `previewFetchStatus`,主 worker preview 不写入;前端通过 strict gate 回退 |
 | **影响 scoring?** | **仅 Brent**:Yahoo `BZ=F` 作为 Brent fresh confirmation(M-D-5+);**其他 secondary 不影响 scoring** |
-| **fetcher** | Worker secondary: `workers/gfrr-realtime-worker/src/worker-market-preview.js`;Market Pricing NDX/IXIC: `scripts/market-pricing/ndx-ixic-yahoo-history-refresh.mjs` |
+| **fetcher** | Worker secondary: `workers/gfrr-realtime-worker/src/worker-market-preview.js`;Market Pricing NDX/IXIC: `scripts/market-pricing/ndx-ixic-yahoo-history-refresh.mjs`;Market Pricing QQQ: `scripts/market-pricing/qqq-yahoo-history-refresh.mjs` |
 
 **当前消费的 symbol**:
 
@@ -102,6 +102,7 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 | `^GSPC` | S&P 500 index | secondary diagnostics only (不影响 scoring,M-E-4) |
 | `^NDX` | Nasdaq 100 index | `marketPricingHistory.assets.ndx` Daily/manual history refresh;QQQ primary 的辅助横向对照,不进 Worker/scoring |
 | `^IXIC` | Nasdaq Composite index | `marketPricingHistory.assets.ixic` Daily/manual history refresh;Nasdaq 广度参照,不进 Worker/scoring |
+| `QQQ` | Invesco QQQ ETF | `marketPricingHistory.assets.qqq` 每周自动 history refresh(Yahoo chart,替代手动 Nasdaq CSV;`refresh-qqq-market-pricing.yml` 周六 cron);primary 市场温度计 display-only,不进 Worker/scoring |
 | `^TNX` | US 10Y treasury yield | secondary diagnostics only;`rawValue > 20` 时按 `divide-by-10` 归一化 (E-3A) |
 | `GC=F` | Gold futures | secondary diagnostics only (E-1) |
 | `DX-Y.NYB` | DXY 美元指数 | secondary diagnostics only (E-2) |
