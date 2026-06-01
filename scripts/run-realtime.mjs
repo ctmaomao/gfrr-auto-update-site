@@ -56,8 +56,10 @@ const sourceSpecs = {
   },
   spx: {
     critical: false,
-    primary: { kind: 'fred', id: 'SP500', source: 'fred:SP500' },
-    alternates: [{ kind: 'stooq', symbol: '^spx', source: 'stooq:^spx' }]
+    primary: { kind: 'fred', id: 'SP500', source: 'fred:SP500' }
+    // Dead Stooq alternate removed 2026-06-01: Stooq's daily-history CSV endpoint
+    // (/q/d/l/) now API-key-gates this symbol ("Get your apikey:"), so the
+    // fallback never produced a value. SP500 FRED primary is the source.
   },
   us10y: {
     critical: true,
@@ -77,8 +79,11 @@ const sourceSpecs = {
   },
   gold: {
     critical: false,
-    primary: { kind: 'goldapi', symbol: 'XAU', source: 'goldapi:XAU' },
-    alternates: [{ kind: 'stooq', symbol: 'xauusd', source: 'stooq:xauusd' }]
+    primary: { kind: 'goldapi', symbol: 'XAU', source: 'goldapi:XAU' }
+    // Dead Stooq alternate removed 2026-06-01: Stooq's daily-history CSV endpoint
+    // (/q/d/l/) now API-key-gates this symbol ("Get your apikey:"), so the
+    // fallback never produced a value. Gold is a non-critical display value;
+    // gold-api is the sole source (owner-confirmed: no new gold source added).
   }
 };
 
