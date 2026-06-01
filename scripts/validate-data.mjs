@@ -112,7 +112,14 @@ const VALID_INFLATION_ENERGY_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILW
 const VALID_INFLATION_CPI_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL';
 const VALID_INFLATION_WTI_SOURCE = 'FRED:DCOILWTICO';
 const COPPER_GOLD_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
-const VALID_COPPER_GOLD_SOURCE = 'Yahoo:HG=F; Yahoo:GC=F';
+// expand-then-contract: accept the current gold-api source / 1d window AND the
+// pre-swap committed Yahoo / 5d values during transition. Contract to gold-api +
+// 1d only after a Daily run commits gold-api-sourced copperGold data.
+const VALID_COPPER_GOLD_SOURCES = new Set([
+  'gold-api:HG; gold-api:XAU',
+  'Yahoo:HG=F; Yahoo:GC=F'
+]);
+const VALID_COPPER_GOLD_WINDOWS = new Set(['1d', '5d']);
 const COPPER_GOLD_KEYS = ['copper', 'gold'];
 const CHINA_BOND_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_CHINA_BOND_SOURCE = 'ChinaBond:MOF-yield-curve';
@@ -1085,7 +1092,7 @@ function validateMacroDriversCopperGold(dataPayload) {
   if (copperGold === undefined) return;
   assertPlainObject(copperGold, 'macroDrivers.copperGold');
   validateNullableIsoString(copperGold.updatedAt, 'macroDrivers.copperGold.updatedAt');
-  assert(copperGold.source === VALID_COPPER_GOLD_SOURCE, `macroDrivers.copperGold.source must be ${VALID_COPPER_GOLD_SOURCE}`);
+  assert(VALID_COPPER_GOLD_SOURCES.has(copperGold.source), `macroDrivers.copperGold.source must be one of: ${[...VALID_COPPER_GOLD_SOURCES].join(' | ')}`);
   assertString(copperGold.notes, 'macroDrivers.copperGold.notes');
   assertPlainObject(copperGold.sourceStatus, 'macroDrivers.copperGold.sourceStatus');
   for (const key of [...COPPER_GOLD_KEYS, 'ratio']) {
@@ -1103,7 +1110,7 @@ function validateMacroDriversCopperGold(dataPayload) {
     assert(isFiniteNumberOrNull(leg.changePct), `macroDrivers.copperGold.${key}.changePct must be finite number or null`);
     validateDecimalRatioRangeIfPresent(leg.changePct, `macroDrivers.copperGold.${key}.changePct`);
     assertString(leg.changeWindow, `macroDrivers.copperGold.${key}.changeWindow`);
-    assert(leg.changeWindow === '5d', `macroDrivers.copperGold.${key}.changeWindow must be 5d`);
+    assert(VALID_COPPER_GOLD_WINDOWS.has(leg.changeWindow), `macroDrivers.copperGold.${key}.changeWindow must be one of: ${[...VALID_COPPER_GOLD_WINDOWS].join(', ')}`);
     validateNullableIsoString(leg.updatedAt, `macroDrivers.copperGold.${key}.updatedAt`);
     assertString(leg.source, `macroDrivers.copperGold.${key}.source`);
     assertString(leg.sourceStatus, `macroDrivers.copperGold.${key}.sourceStatus`);
@@ -1115,7 +1122,7 @@ function validateMacroDriversCopperGold(dataPayload) {
   assert(isFiniteNumberOrNull(copperGold.ratioChangePct), 'macroDrivers.copperGold.ratioChangePct must be finite number or null');
   validateDecimalRatioRangeIfPresent(copperGold.ratioChangePct, 'macroDrivers.copperGold.ratioChangePct');
   assertString(copperGold.ratioWindow, 'macroDrivers.copperGold.ratioWindow');
-  assert(copperGold.ratioWindow === '5d', 'macroDrivers.copperGold.ratioWindow must be 5d');
+  assert(VALID_COPPER_GOLD_WINDOWS.has(copperGold.ratioWindow), `macroDrivers.copperGold.ratioWindow must be one of: ${[...VALID_COPPER_GOLD_WINDOWS].join(', ')}`);
   if (copperGold.ratio === null) {
     assert(copperGold.sourceStatus.ratio === 'missing', 'macroDrivers.copperGold.sourceStatus.ratio must be missing when ratio is null');
   }
