@@ -11,7 +11,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分)|
 | Cache version | `move-bond-vol-2` |
 | check:all 项数 | 15 顶层项 / ~48 leaf checks(checker 精简 Phase 1+2 后)|
-| 最后审计日期 | 2026-06-01 |
+| 最后审计日期 | 2026-06-02(Codex 只读审计 + Claude 7-agent 复核 + Codex 终裁;F3 文档漂移已修 `a6e9101`,余 F1/F2/F4/F5/F7 见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |
 | 下次审计建议 | 下一次 stage / milestone 合并时 |
@@ -74,6 +74,18 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - ✅ **pbc.gov.cn 地理封锁已绕过(2026-05-30)**: `pbc.gov.cn` 在 GitHub US runner 域名级地理封锁 → 三 pbc 源曾全 missing。**已全部改抓 EastMoney 搜索聚合并线上验证 live:`chinaTsf`(Stage 14)/ `chinaOmo`(Stage 15)/ `chinaMlf`(Stage 16)**。EastMoney 搜索 JSONP + 新闻/正文解析 + 硬验证门 + fail-closed,source 标聚合非官方。
 - 状态: **70城(stats.gov.cn)+ 社融/OMO/MLF(EastMoney 聚合,Stage 14/15/16)四源全 live**;source 标聚合转载非 PBOC 官方,audit-only;SLO 仅历史/inactive。详见 [`CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md`](CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md)。
 - unlock: **P3-16 四源代码全实施 + runtime 可达性全恢复(US runner 全 live)**;SLO 无近期常态操作不追;未来若要更细分项/更高频可另开 stage。
+
+#### P3-17: 2026-06-02 Codex 审计终裁 — 剩余清理项
+
+来源:2026-06-02 Codex 只读审计(7 findings)→ Claude 7-agent 并行复核 → Codex 终裁。F3+扩展已执行(commit `a6e9101`,docs-only,未 push)。剩余按终裁优先级:
+
+- **F2(下一项 · DO_NOW · 另开 task)**: `.github/workflows/test-api-secrets.yml` line 49/93 对 `acleddata.com` 发真实请求(OAuth + read API),违反 `DATA_SOURCES.md:310`(ACLED manual-only,EULA §3.3)。严重度低-中:`workflow_dispatch`-only(休眠态、非按计划联网);遗留(2026-05-17 加,2026-05-19/M-63a 才写死契约)。处置:删两段 ACLED 步骤 + ACLED secret 注入(保留 GDELT),`scripts/check-workflows.mjs` 全局 forbiddenRuntimePatterns 加 `acleddata.com` 守卫防复发;跑 `check:workflows`+`check:all`;commit 拟 `ci: remove obsolete ACLED API diagnostic`。
+- **F4(P3 · 文档卫生)**: `DESIGN.md` 仍以 `manual-artifacts/m94-v0/m94-v0-FINAL-mock-v2.html` 为视觉权威,但该文件被 `.gitignore`(`manual-artifacts/`)忽略、从未提交(`!.../m94-v0/**` 取反对已排除父目录无效)→ 现行权威不可复现。处置:修 `.gitignore` 根因 + `git add -f` 跟踪 v2;**不**改指回 v1(v2 自 PR 2c 起即视觉权威)。commit 拟 `docs: restore M94 mock v2 reproducibility`。
+- **F1(P3 · 纯文档)**: `AGENTS.md:40` 把 Worker-first 写成前端职责,但 M-94 路径C 后前端读 `data/radar-data.json` 静态快照、`scripts/modules/realtime.js` 有意冻结成孤儿(Worker-first 在后端/Daily/worker 层仍成立)。处置:**只改 `AGENTS.md:40` 措辞澄清分层**(后端/Daily/worker 仍 Worker-first、前端读 `data/radar-data.json` 静态快照);**不碰 `scripts/modules/realtime.js`**(M94 要求 git diff=0;改 .js 还会触发 frontend asset bump)。见记忆 `audit_m94_path_c_false_positive`。
+- **F5(P3 · 性能 judgment,非缺陷)**: 首屏 `scripts/app.js` 并行加载 4 个本地 JSON(~732KB,大头 `market-pricing-metrics`356KB + `world-order-stress`233KB),无数据级懒加载。处置:先测 Pages 是否已 gzip/br;要优化只盯这两个;**`radar-history`(28.6KB)非负担、`market-pricing-history` 不在前端首屏路径**(审计曾误当首屏)。
+- **F7(P3 · 可维护性,非缺陷)**: `scripts/run-daily-pipeline.mjs`(437KB/9807 行)、`scripts/validate-data.mjs`(151KB)、`scripts/modules/renderMacroOverview.js`(115KB)+ 大文档体量真实。处置:文档归档可先做(低风险、与 2026-05-18 拆分先例一致);`.mjs` 单体拆分高 churn,须另开重构 task 独立验证。
+- **F6**: 见 Section 4 Future Considerations(worker Stooq `/q/d/l/` 死探针)——Codex 确认 diagnostic-only、不进 `values.*`,保持现状直到专门死源清理批次;清理须 lockstep(`check-workflows.mjs` 硬断言 + Worker README + backlog),且勿误删 `run-realtime.mjs` 仍可用的实时 `/q/l/` 链路。
+- 边界: 除 F2(workflow)/F4(.gitignore)外均 docs-only;F2 须过 `check:workflows`+`check:all`;不重开已合并 milestone。
 
 ---
 
@@ -204,6 +216,16 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-06-02)**: F3 文档同步 + 扩展完成,HEAD=`a6e9101`(docs-only,**未 push**);工作树仅余本 backlog/handoff 更新。本 session:① 用 Workflow 起 7-agent 并行复核 Codex 只读审计(F1–F7),中立取证。② Codex 终裁回传(双向交叉校验):F2 ACCEPT/DO_NOW、F1/F4/F5/F6/F7 ACCEPT 或 PARTIAL/BACKLOG;**F4 处 Codex 反向纠正我「降级过头」**(DESIGN.md 仍以 v2 mock 为视觉权威)。③ 执行 F3+ext(commit `a6e9101`):INDEX.md 删 2 行死 checker、AGENTS.md 改指 `check:frontend-live-contracts`+18→15、CLAUDE.md 18→15(两处)、DESIGN.md §8.2 改指 §4.1/§5.6+ADR-0014、OPERATIONS.md ~16 行 operator note 去死命令;`check:all` 15/15 绿;rg 证明 DESIGN.md+OPERATIONS.md 零死命令残留(M36/M94/SYSTEM_UPGRADE_PLAN 历史引用有意保留)。新增记忆 `audit_m94_path_c_false_positive`。
+- **当前进行中(2026-06-02)**: 无。F3 已收口。
+- **下一步建议(2026-06-02)**: 按 Codex 编排 → **F2(P2,另开 serial task)**:删 `test-api-secrets.yml` 的 ACLED 两段 + `check-workflows.mjs` 加全局 `acleddata.com` 守卫(commit `ci: remove obsolete ACLED API diagnostic`)→ F4(.gitignore 修根因跟踪 v2 mock)→ F1 文档收口 → F7 文档归档 → F5(测 gzip 后定)→ F6 死源批次。详见 Section 2 P3-17。**`a6e9101` 尚未 push**,owner 可择时 push(触发 Pages,docs-only 低风险)或并入后续一起 push。
+- **阻塞或等待(2026-06-02)**: 无。
+- **⚠️ 教训(2026-06-02)**: ① 审计复核中立取证有效——Codex 7 条事实引用全准,但 F1「回归」定性、F5「market-pricing-history 当首屏」被证伪/纠正;F4 反被 Codex 纠正我降级过头(双向交叉校验,非单向)。② `check:frontend-live-contracts` = `null-zero-display-guards`+`dom`+`macro-coherence-display-only`,**不**校验 IA 顺序/字体——退役 IA/editorial checker 后权威落 `DESIGN.md §4.1/§5.6` + ADR-0014(人工 review),文案别再暗示有命令能校验 IA。③ 中文 commit message 经 PowerShell 5.1 易乱码 → 写 UTF-8 文件 + `git commit -F` 规避(bash heredoc 亦可,勿用 PS here-string)。
+
+---
+
+> 以下为 2026-06-01 session 留档,当前状态以上方 2026-06-02 段为准。
 
 - **上次会话结束于**: 2026-06-01 长 session,HEAD=`c40f293`,工作树干净,全部已 push。本 session 六件事(详细审计行见 Section 5):① **check 计数修正 18→15**(`887d29f`,纯文档)。② **Check Worker Health 报红 = worker 部署漂移**(非代码/非 FRED/非配额)→ owner `wrangler deploy`(Version `b354e20e`)修复,顺带上线一直 pending 的 brent-held-age-cap;#317 验证绿。③ **死 Stooq fallback 清理**(`1e5d4bd`:realtime gold/spx alternates 移除;实证 Stooq 日线 CSV `/q/d/l/` 已 API-key 门控,`/q/l/` 报价端点仍可用)。④ **copperGold 源 Yahoo 期货→gold-api 现货**(`d814e67`)+ Yahoo 跨厂商 fallback 两腿全覆盖(`fe481a4`)+ Daily check:data validator expand(`b176deb`)+ changePct null 守卫 & validator contract(`93a9714`);**Daily #116 线上验证 copperGold live**(ratio×1000=1.363,vendor=gold-api)。⑤ **QQQ 周线历史改 Yahoo 自动**(`643b660` 代码 + `5159639` 首刷至 2026-05-29/W22)+ 每周六 cron workflow `refresh-qqq-market-pricing.yml`,替代手动 Nasdaq CSV(`refresh-qqq-data.ps1` 留 fallback);已注册进 Pages deploy 触发列表。⑥ **新增 MOVE 债券波动率维度**(ADR-0015,结构门控·评分例外·**非第7模块**):数据广度审计发现唯一缺口=利率市场失灵通道;**两轮 Codex 对抗复核**(第1轮:校准红线 180→160、证伪 structuralScoreBump 进 lockEngine;第2轮:fail-closed 硬约束+stale 语义+审计轨迹)→实施 `de09111`+`c40f293`;`macroDrivers.rateVol`(Yahoo 日频 `^MOVE`,≥140 黄/≥160 红),不动 6 模块公式/权重、全历史零扰动。新增记忆:`ops_worker_generated_preview_stale`、`ops_validate_data_source_changes`。cache 版本现 `move-bond-vol-2`。**⚠️ 待 owner 跑 Build Daily Radar Data 验证 copperGold(gold-api)+ QQQ(已自动跑过)+ rateVol(MOVE)三者线上落盘。**
 - **当前进行中(2026-06-01)**: 无。
