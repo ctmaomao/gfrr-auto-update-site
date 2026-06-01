@@ -1143,6 +1143,17 @@ function validateMacroDriversRateVol(dataPayload) {
   assertPlainObject(rateVol.sourceStatus, 'macroDrivers.rateVol.sourceStatus');
   assert(RATE_VOL_SOURCE_STATUSES.has(rateVol.sourceStatus.move), 'macroDrivers.rateVol.sourceStatus.move is not supported');
   assertString(rateVol.notes, 'macroDrivers.rateVol.notes');
+  // 状态↔数值↔fail-closed 联动硬约束（防坏数据：如 sourceStatus.move='stale' 但 move=200 仍能触发结构信号）。
+  // [20,400] 镜像 rules.json macroDrivers.rateVol.plausibleMin/Max（稳定物理区间）；新鲜度阈值不在此断言，
+  // 以免与 rules.json maxAgeDays 耦合（freshness 由 resolveRateVol 上游强制 fail-closed）。
+  const moveStatus = rateVol.sourceStatus.move;
+  if (moveStatus === 'live' || moveStatus === 'fallback') {
+    assert(Number.isFinite(rateVol.move) && rateVol.move >= 20 && rateVol.move <= 400,
+      'macroDrivers.rateVol.move must be a finite number in [20,400] when sourceStatus.move is live/fallback');
+  } else {
+    assert(rateVol.move === null,
+      `macroDrivers.rateVol.move must be null when sourceStatus.move is "${moveStatus}" (fail-closed)`);
+  }
 }
 
 function validateMacroDriversChinaBond(dataPayload) {

@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=move-bond-vol-1';
-import { formatOnRrpYiUsd } from './format.js?v=move-bond-vol-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=move-bond-vol-2';
+import { formatOnRrpYiUsd } from './format.js?v=move-bond-vol-2';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',
@@ -105,7 +105,7 @@ function readActiveStructuralSignals(data) {
   if (Number.isFinite(credit.igOas) && creditStatus.igOas !== 'missing' && credit.igOas >= 1.8) {
     active.push({ key: 'igOasStress', label: STRUCTURAL_SIGNAL_LABELS.igOasStress, detail: `IG OAS ${credit.igOas.toFixed(2)}%`, reliability: creditStatus.igOas });
   }
-  if (Number.isFinite(rateVol.move) && rateVolStatus.move !== 'missing' && rateVol.move >= 140) {
+  if (Number.isFinite(rateVol.move) && (rateVolStatus.move === 'live' || rateVolStatus.move === 'fallback') && rateVol.move >= 140) {
     active.push({ key: 'moveVolStress', label: STRUCTURAL_SIGNAL_LABELS.moveVolStress, detail: `MOVE ${rateVol.move.toFixed(1)}（${rateVol.move >= 160 ? '危机' : '应激'}）`, reliability: rateVolStatus.move });
   }
   return active;
@@ -121,7 +121,7 @@ function isAllStructuralSourcesMissing(data) {
   const rateVol = md.rateVol?.sourceStatus || {};
   const statuses = [fed.walcl, fed.onRrp, curve.t10y2y, credit.igOas, rateVol.move];
   if (!statuses.length) return true;
-  return statuses.every((s) => s === 'missing' || s == null);
+  return statuses.every((s) => s === 'missing' || s === 'stale' || s == null);
 }
 
 // ============================================================

@@ -8540,7 +8540,7 @@ function isAllStructuralSourcesMissing(macroDrivers) {
     && fed.onRrp === 'missing'
     && curve.t10y2y === 'missing'
     && credit.igOas === 'missing'
-    && rateVol.move === 'missing';
+    && rateVol.move !== 'live' && rateVol.move !== 'fallback';
 }
 
 function activeStructuralSignals(macroDrivers) {
@@ -8599,7 +8599,7 @@ function activeStructuralSignals(macroDrivers) {
       reliability: creditStatus.igOas
     });
   }
-  if (Number.isFinite(rateVol.move) && rateVolStatus.move !== 'missing'
+  if (Number.isFinite(rateVol.move) && (rateVolStatus.move === 'live' || rateVolStatus.move === 'fallback')
       && rateVol.move >= cfg.rateVol.stressThreshold) {
     active.push({
       key: 'moveVolStress',
@@ -8812,7 +8812,7 @@ function evaluateStructuralGating(macroDrivers) {
   const onRrp = (Number.isFinite(fed.onRrp) && fedStatus.onRrp !== 'missing') ? fed.onRrp : null;
   const walcl4w = (Number.isFinite(fed.walcl4wChange) && fedStatus.walcl !== 'missing') ? fed.walcl4wChange : null;
   const igOas = (Number.isFinite(credit.igOas) && creditStatus.igOas !== 'missing') ? credit.igOas : null;
-  const move = (Number.isFinite(rateVol.move) && rateVolStatus.move !== 'missing') ? rateVol.move : null;
+  const move = (Number.isFinite(rateVol.move) && (rateVolStatus.move === 'live' || rateVolStatus.move === 'fallback')) ? rateVol.move : null;
 
   // === 红灯：严格阈值，需要严重双压或单项极端值 ===
   // 红灯触发条件1：曲线严重倒挂（< -0.8）且 IG 告警级以上（>= critical 2.0%）
@@ -9082,6 +9082,9 @@ function appendHistoryFull(prevFull, risk, lock, macro, macroDrivers, transmissi
     igOas: macroDrivers?.credit?.igOas ?? null,
     walcl: macroDrivers?.fedLiquidity?.walcl ?? null,
     onRrp: macroDrivers?.fedLiquidity?.onRrp ?? null,
+    move: macroDrivers?.rateVol?.move ?? null,
+    moveAgeDays: macroDrivers?.rateVol?.moveAgeDays ?? null,
+    moveSourceStatus: macroDrivers?.rateVol?.sourceStatus?.move ?? null,
     privateCredit6: {
       bdcEtfPrice: finiteOrNull(privateCreditProxy.bdcEtfPrice),
       pbdcEtfPrice: finiteOrNull(privateCreditProxy.pbdcEtfPrice),
@@ -9597,7 +9600,7 @@ async function build() {
           action: lock.actionText
         },
         ...activeSignals.map((s) => ({
-          level: ['curveDeepInversion', 'onRrpCritical', 'igOasStress'].includes(s.key) ? '橙色' : '黄色',
+          level: ['curveDeepInversion', 'onRrpCritical', 'igOasStress', 'moveVolStress'].includes(s.key) ? '橙色' : '黄色',
           title: s.label,
           driver: '结构信号',
           triggeredAgo: isoNow,

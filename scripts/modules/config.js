@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=move-bond-vol-1';
+﻿import { formatFiniteNumber } from './format.js?v=move-bond-vol-2';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

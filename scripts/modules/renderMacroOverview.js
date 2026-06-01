@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=move-bond-vol-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=move-bond-vol-1';
+} from './config.js?v=move-bond-vol-2';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=move-bond-vol-2';
 
 // ---------- 阈值 + 派生 helper ----------
 
