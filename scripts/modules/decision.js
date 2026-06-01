@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=copper-gold-goldapi-1';
-import { formatOnRrpYiUsd } from './format.js?v=copper-gold-goldapi-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=move-bond-vol-1';
+import { formatOnRrpYiUsd } from './format.js?v=move-bond-vol-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',
@@ -16,7 +16,8 @@ const STRUCTURAL_SIGNAL_LABELS = {
   curveRapidSteepening: '曲线快速陡峭化',
   onRrpCritical: '逆回购准备金告急',
   fedRapidContraction: '美联储快速缩表',
-  igOasStress: '投资级信用利差扩张'
+  igOasStress: '投资级信用利差扩张',
+  moveVolStress: '债券波动率告急（MOVE）'
 };
 
 // ============================================================
@@ -86,6 +87,8 @@ function readActiveStructuralSignals(data) {
   const curveStatus = curve.sourceStatus || {};
   const credit = md.credit || {};
   const creditStatus = credit.sourceStatus || {};
+  const rateVol = md.rateVol || {};
+  const rateVolStatus = rateVol.sourceStatus || {};
   const active = [];
   if (Number.isFinite(curve.t10y2y) && curveStatus.t10y2y !== 'missing' && curve.t10y2y <= -0.5) {
     active.push({ key: 'curveDeepInversion', label: STRUCTURAL_SIGNAL_LABELS.curveDeepInversion, detail: `10年-2年利差 ${curve.t10y2y.toFixed(2)}`, reliability: curveStatus.t10y2y });
@@ -102,6 +105,9 @@ function readActiveStructuralSignals(data) {
   if (Number.isFinite(credit.igOas) && creditStatus.igOas !== 'missing' && credit.igOas >= 1.8) {
     active.push({ key: 'igOasStress', label: STRUCTURAL_SIGNAL_LABELS.igOasStress, detail: `IG OAS ${credit.igOas.toFixed(2)}%`, reliability: creditStatus.igOas });
   }
+  if (Number.isFinite(rateVol.move) && rateVolStatus.move !== 'missing' && rateVol.move >= 140) {
+    active.push({ key: 'moveVolStress', label: STRUCTURAL_SIGNAL_LABELS.moveVolStress, detail: `MOVE ${rateVol.move.toFixed(1)}（${rateVol.move >= 160 ? '危机' : '应激'}）`, reliability: rateVolStatus.move });
+  }
   return active;
 }
 
@@ -112,7 +118,8 @@ function isAllStructuralSourcesMissing(data) {
   const fed = md.fedLiquidity?.sourceStatus || {};
   const curve = md.curve?.sourceStatus || {};
   const credit = md.credit?.sourceStatus || {};
-  const statuses = [fed.walcl, fed.onRrp, curve.t10y2y, credit.igOas];
+  const rateVol = md.rateVol?.sourceStatus || {};
+  const statuses = [fed.walcl, fed.onRrp, curve.t10y2y, credit.igOas, rateVol.move];
   if (!statuses.length) return true;
   return statuses.every((s) => s === 'missing' || s == null);
 }
@@ -327,6 +334,7 @@ export function buildStrategyStateMeta(data, history, metadata, healthDashboard)
   if (activeSignals.some((s) => s.key === 'onRrpCritical')) extremeThresholds.push('逆回购准备金告急');
   if (activeSignals.some((s) => s.key === 'igOasStress')) extremeThresholds.push('投资级信用利差扩张');
   if (activeSignals.some((s) => s.key === 'fedRapidContraction')) extremeThresholds.push('美联储快速缩表');
+  if (activeSignals.some((s) => s.key === 'moveVolStress')) extremeThresholds.push('债券波动率告急（MOVE）');
 
   return {
     totalRiskScore, recent3dDelta, recent3dSpeed, resonanceCount, severeResonanceCount,

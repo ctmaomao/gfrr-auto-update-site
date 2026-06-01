@@ -106,6 +106,7 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 | `^TNX` | US 10Y treasury yield | secondary diagnostics only;`rawValue > 20` 时按 `divide-by-10` 归一化 (E-3A) |
 | `GC=F` | Gold futures | secondary diagnostics only (E-1) |
 | `DX-Y.NYB` | DXY 美元指数 | secondary diagnostics only (E-2) |
+| `^MOVE` | ICE BofA MOVE 债券/利率波动率指数 | `macroDrivers.rateVol` 结构信号（进结构门控：≥140→黄、≥160→红）；**评分例外**，非 secondary/display-only；日频 + 闸门 `[20,400]`/INDEX/≤5d + fail-closed |
 
 ---
 
@@ -414,6 +415,7 @@ documented attribution string and code is a contract violation.
 | `marketPricingHistory.assets.ndx` / `marketPricingHistory.assets.ixic` | Yahoo chart `^NDX` / `^IXIC`;Daily/manual Market Pricing history only;display-only auxiliary,QQQ remains primary |
 | `macroDrivers.fedLiquidity` | FRED: DFF, SOFR, WRESBAL + NY Fed secured rates API: BGCR/TGCR (+ 派生 spreads) |
 | `macroDrivers.credit` | FRED: BAMLH0A0HYM2 (HY OAS), BAMLC0A0CM (IG OAS), DRTSCILM, DRTSCIS, NFCI |
+| `macroDrivers.rateVol` | Yahoo: `^MOVE` 债券波动率；**评分例外结构信号**，进结构门控（≥140 黄 / ≥160 红），不进 6 模块 score / `values.*` |
 | `macroDrivers.consumer` | FRED: UMCSENT + ISM: Manufacturing PMI public report parser |
 | `macroDrivers.employment` | FRED: ICSA, CCSA, JTSJOL, CES0500000003, U6RATE, public industry payroll basket |
 | `macroDrivers.consumerRetail` | FRED: CARTS, CARTSR, MRTS monthly retail trade segment basket + BoA Consumer Checkpoint public HTML + Trading Economics Redbook public HTML |

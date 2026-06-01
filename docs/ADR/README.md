@@ -23,6 +23,7 @@
 | [ADR-0012](0012-check-all-composed-in-package-json.md) | `check:all` is composed in `package.json`, not separate config | Accepted |
 | [ADR-0013](0013-dev-dependencies-allowed-for-local-tools.md) | devDependencies allowed for local development tools | Accepted |
 | [ADR-0014](0014-design-md-is-ia-ground-truth.md) | DESIGN.md §4.1 is the IA ground truth; appendix sections have content boundaries | Accepted |
+| [ADR-0015](0015-move-bond-volatility-structural-gate.md) | MOVE (债券/利率波动率) enters via structural gating, not a 7th risk module | Accepted |
 
 ## Superseded
 

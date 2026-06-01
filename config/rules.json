@@ -130,15 +130,25 @@
       "igOasWatchThreshold": 1.5,
       "igOasStressThreshold": 1.8,
       "igOasCriticalThreshold": 2.0
+    },
+    "rateVol": {
+      "_comment": "债券/利率波动率 MOVE (Yahoo ^MOVE 日频)。结构信号: >=140 应激->黄、>=160 危机->红; 平静(<140)不影响打分。MOVE 是继 onRrp/t10y2y/igOas 后第4个进结构门控的评分例外结构源, 非第七模块, 与 World Order overlay 无关。",
+      "stressThreshold": 140,
+      "crisisThreshold": 160,
+      "elevatedThreshold": 100,
+      "plausibleMin": 20,
+      "plausibleMax": 400,
+      "maxAgeDays": 5
     }
   },
   "structuralGating": {
-    "_comment": "v27.0 新增：结构信号对 strategyState 的加分门控（在现有 score 基础上叠加）",
+    "_comment": "结构信号在 decisionModel 展示用的 structuralScoreBump（仅 decisionModel 显示, lockEngine 不消费; 真正翻灯靠 evaluateStructuralGating 的 structuralRed/Yellow 门控）",
     "curveDeepInversion": 8,
     "curveRapidSteepening": 12,
     "onRrpCritical": 10,
     "fedRapidContraction": 6,
-    "igOasStress": 8
+    "igOasStress": 8,
+    "moveVolStress": 8
   },
   "moduleSubWeights": {
     "_comment": "v27.0 新增：三模块在引入结构信号后的加权分配（旧版基础权重 + 结构信号权重，每组总和为 1.0）",
@@ -164,6 +174,8 @@
     "curveDeepInversion": -8,
     "onRrpCritical": -5,
     "igOasStress": -6,
-    "fedRapidContraction": -3
-  }
+    "fedRapidContraction": -3,
+    "moveVolStress": -5
+  },
+  "positionGuidanceShiftFloor": -15
 }

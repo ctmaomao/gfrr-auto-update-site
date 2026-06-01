@@ -6206,6 +6206,87 @@ async function resolveCurve(prevCurve) {
   };
 }
 
+const RATE_VOL_YAHOO_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EMOVE?range=5d&interval=1d';
+
+function classifyMoveRegime(move) {
+  const cfg = R.macroDrivers.rateVol;
+  if (!Number.isFinite(move)) return '未知';
+  if (move >= cfg.crisisThreshold) return '危机';
+  if (move >= cfg.stressThreshold) return '应激';
+  if (move >= cfg.elevatedThreshold) return '偏高';
+  return '平静';
+}
+
+// 债券/利率波动率 MOVE 结构源（Yahoo 日频 ^MOVE）。display + 评分例外结构信号。
+// 合理性闸门 + freshness + fail-closed-with-visibility：坏值/超龄不让信号触发；取数失败仅在上一轮值仍
+// fresh 时 carry last-good（避免真危机因瞬时取数失败漏报），否则 fail-closed（move=null, 不触发）并写明 stale。
+// 仅 >=140 应激 / >=160 危机时进结构门控；平静（<140）零影响打分。
+async function resolveRateVol(prevRateVol) {
+  const cfg = R.macroDrivers.rateVol;
+  const status = { move: 'missing' };
+  let move = null;
+  let moveUpdatedAt = null;
+  let moveAgeDays = null;
+  let freshnessStatus = 'missing';
+
+  try {
+    const payload = await fetchJsonText(RATE_VOL_YAHOO_URL, 'yahoo:^MOVE', YAHOO_FETCH_TIMEOUT_MS, {
+      userAgent: 'Mozilla/5.0 GFRRBot/1.0'
+    });
+    const result = payload?.chart?.result?.[0];
+    const meta = result?.meta || {};
+    if (meta.instrumentType !== 'INDEX') throw new Error(`instrument_type_invalid:${meta.instrumentType ?? 'missing'}`);
+    const closes = Array.isArray(result?.indicators?.quote?.[0]?.close) ? result.indicators.quote[0].close : [];
+    const timestamps = Array.isArray(result?.timestamp) ? result.timestamp : [];
+    let latest = null;
+    let latestTs = null;
+    for (let i = closes.length - 1; i >= 0; i -= 1) {
+      const c = Number(closes[i]);
+      if (Number.isFinite(c) && c > 0) { latest = c; latestTs = Number(timestamps[i]); break; }
+    }
+    if (latest === null || !Number.isFinite(latestTs)) throw new Error('no_numeric_close');
+    if (latest < cfg.plausibleMin || latest > cfg.plausibleMax) throw new Error(`implausible:${latest}`);
+    const ageDays = (Date.now() - latestTs * 1000) / 86400000;
+    moveUpdatedAt = new Date(latestTs * 1000).toISOString();
+    moveAgeDays = +ageDays.toFixed(2);
+    if (ageDays > cfg.maxAgeDays) {
+      freshnessStatus = 'stale';
+      status.move = 'stale';
+      move = null;
+    } else {
+      move = +latest.toFixed(2);
+      freshnessStatus = 'fresh';
+      status.move = 'live';
+    }
+  } catch (_err) {
+    const prevMove = Number(prevRateVol?.move);
+    const prevTs = prevRateVol?.moveUpdatedAt ? Date.parse(prevRateVol.moveUpdatedAt) : NaN;
+    const prevAgeDays = Number.isFinite(prevTs) ? (Date.now() - prevTs) / 86400000 : Infinity;
+    if (Number.isFinite(prevMove) && prevMove >= cfg.plausibleMin && prevMove <= cfg.plausibleMax && prevAgeDays <= cfg.maxAgeDays) {
+      move = +prevMove.toFixed(2);
+      moveUpdatedAt = prevRateVol.moveUpdatedAt;
+      moveAgeDays = +prevAgeDays.toFixed(2);
+      freshnessStatus = 'fallback-fresh';
+      status.move = 'fallback';
+    } else {
+      move = null;
+      freshnessStatus = 'stale';
+      status.move = 'missing';
+    }
+  }
+
+  return {
+    move: Number.isFinite(move) ? move : null,
+    moveUpdatedAt,
+    moveAgeDays,
+    moveRegime: classifyMoveRegime(move),
+    freshnessStatus,
+    source: 'Yahoo:^MOVE',
+    sourceStatus: status,
+    notes: '债券/利率波动率 MOVE 结构信号 evidence（Yahoo ^MOVE 日频）。仅在 >=140 应激/>=160 危机时进结构门控翻黄/红；平静时不影响打分。display + 评分例外结构源，非第七模块，与 World Order overlay 无关。'
+  };
+}
+
 async function resolveCredit(prevCredit, hyOasLive) {
   const status = { igOas: 'missing', sloos: 'missing', nfci: 'missing' };
   let igOas = null;
@@ -8326,7 +8407,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveChinaPropertyPrice(prevMd.chinaPropertyPrice),
     resolveChinaOmo(prevMd.chinaOmo),
     resolveChinaTsf(prevMd.chinaTsf),
-    resolveChinaMlf(prevMd.chinaMlf)
+    resolveChinaMlf(prevMd.chinaMlf),
+    resolveRateVol(prevMd.rateVol)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -8381,6 +8463,11 @@ async function fetchMacroDrivers(prev, hyOasLive) {
   const chinaOmo = results[20].status === 'fulfilled' ? results[20].value : buildMissingChinaOmo(prevMd.chinaOmo);
   const chinaTsf = results[21].status === 'fulfilled' ? results[21].value : buildMissingChinaTsf(prevMd.chinaTsf);
   const chinaMlf = results[22].status === 'fulfilled' ? results[22].value : buildMissingChinaMlf(prevMd.chinaMlf);
+  const rateVol = results[23].status === 'fulfilled' ? results[23].value : {
+    move: null, moveUpdatedAt: null, moveAgeDays: null, moveRegime: '未知',
+    freshnessStatus: 'missing', source: 'Yahoo:^MOVE', sourceStatus: { move: 'missing' },
+    notes: '债券/利率波动率 MOVE 结构信号 evidence（Yahoo ^MOVE 日频）。'
+  };
 
   return {
     fedLiquidity,
@@ -8405,7 +8492,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     chinaPropertyPrice,
     chinaOmo,
     chinaTsf,
-    chinaMlf
+    chinaMlf,
+    rateVol
   };
 }
 
@@ -8447,10 +8535,12 @@ function isAllStructuralSourcesMissing(macroDrivers) {
   const fed = macroDrivers?.fedLiquidity?.sourceStatus || {};
   const curve = macroDrivers?.curve?.sourceStatus || {};
   const credit = macroDrivers?.credit?.sourceStatus || {};
+  const rateVol = macroDrivers?.rateVol?.sourceStatus || {};
   return fed.walcl === 'missing'
     && fed.onRrp === 'missing'
     && curve.t10y2y === 'missing'
-    && credit.igOas === 'missing';
+    && credit.igOas === 'missing'
+    && rateVol.move === 'missing';
 }
 
 function activeStructuralSignals(macroDrivers) {
@@ -8461,6 +8551,8 @@ function activeStructuralSignals(macroDrivers) {
   const curveStatus = curve.sourceStatus || {};
   const credit = macroDrivers?.credit || {};
   const creditStatus = credit.sourceStatus || {};
+  const rateVol = macroDrivers?.rateVol || {};
+  const rateVolStatus = rateVol.sourceStatus || {};
   const cfg = R.macroDrivers;
 
   if (Number.isFinite(curve.t10y2y) && curveStatus.t10y2y !== 'missing'
@@ -8507,6 +8599,15 @@ function activeStructuralSignals(macroDrivers) {
       reliability: creditStatus.igOas
     });
   }
+  if (Number.isFinite(rateVol.move) && rateVolStatus.move !== 'missing'
+      && rateVol.move >= cfg.rateVol.stressThreshold) {
+    active.push({
+      key: 'moveVolStress',
+      label: '债券波动率告急（MOVE）',
+      detail: `MOVE ${rateVol.move.toFixed(1)}（${rateVol.move >= cfg.rateVol.crisisThreshold ? '危机' : '应激'}）`,
+      reliability: rateVolStatus.move
+    });
+  }
   return active;
 }
 
@@ -8527,7 +8628,9 @@ function structuralBandShift(activeSignals) {
     const v = shifts[sig.key];
     if (Number.isFinite(v)) total += v;
   }
-  return total;
+  // 多结构信号叠加时设总下限，避免过度保守（Codex 复核建议）
+  const floor = Number.isFinite(R.positionGuidanceShiftFloor) ? R.positionGuidanceShiftFloor : -15;
+  return Math.max(floor, total);
 }
 
 function deriveRisk(rt, macroDrivers) {
@@ -8702,11 +8805,14 @@ function evaluateStructuralGating(macroDrivers) {
   const curveStatus = curve.sourceStatus || {};
   const credit = macroDrivers?.credit || {};
   const creditStatus = credit.sourceStatus || {};
+  const rateVol = macroDrivers?.rateVol || {};
+  const rateVolStatus = rateVol.sourceStatus || {};
 
   const t10y2y = (Number.isFinite(curve.t10y2y) && curveStatus.t10y2y !== 'missing') ? curve.t10y2y : null;
   const onRrp = (Number.isFinite(fed.onRrp) && fedStatus.onRrp !== 'missing') ? fed.onRrp : null;
   const walcl4w = (Number.isFinite(fed.walcl4wChange) && fedStatus.walcl !== 'missing') ? fed.walcl4wChange : null;
   const igOas = (Number.isFinite(credit.igOas) && creditStatus.igOas !== 'missing') ? credit.igOas : null;
+  const move = (Number.isFinite(rateVol.move) && rateVolStatus.move !== 'missing') ? rateVol.move : null;
 
   // === 红灯：严格阈值，需要严重双压或单项极端值 ===
   // 红灯触发条件1：曲线严重倒挂（< -0.8）且 IG 告警级以上（>= critical 2.0%）
@@ -8714,7 +8820,9 @@ function evaluateStructuralGating(macroDrivers) {
     && (igOas !== null && igOas >= cfg.credit.igOasCriticalThreshold);
   // 红灯触发条件2：ON RRP 低于 onRrpCriticalThreshold / 2（单项极端，约 500 亿美元）
   const onRrpCatastrophic = onRrp !== null && onRrp < (cfg.fedLiquidity.onRrpCriticalThreshold / 2);
-  const structuralRed = redCurveCreditDouble || onRrpCatastrophic;
+  // 红灯触发条件3：MOVE 债券波动率危机（>= 160）单项 —— 利率市场失灵可独立翻红
+  const moveCrisis = move !== null && move >= cfg.rateVol.crisisThreshold;
+  const structuralRed = redCurveCreditDouble || onRrpCatastrophic || moveCrisis;
 
   // === 黄灯：较宽阈值 ===
   // 黄灯触发条件1：曲线深度倒挂（<= -0.5）且美联储快速缩表（4周 <= -1%）
@@ -8726,17 +8834,21 @@ function evaluateStructuralGating(macroDrivers) {
   const yellowOnRrpCritical = onRrp !== null && onRrp < cfg.fedLiquidity.onRrpCriticalThreshold;
   // 黄灯触发条件4：曲线深度倒挂单项（<= -0.5）
   const yellowCurveDeep = t10y2y !== null && t10y2y <= cfg.curve.deepInversionThreshold;
-  const structuralYellow = yellowCurveFedDouble || yellowIgWatch || yellowOnRrpCritical || yellowCurveDeep;
+  // 黄灯触发条件5：MOVE 债券波动率应激（>= 140）单项
+  const yellowMoveStress = move !== null && move >= cfg.rateVol.stressThreshold;
+  const structuralYellow = yellowCurveFedDouble || yellowIgWatch || yellowOnRrpCritical || yellowCurveDeep || yellowMoveStress;
 
   // 记录触发原因（用于文案）
   const redReasons = [];
   if (redCurveCreditDouble) redReasons.push('曲线严重倒挂且投资级信用告警');
   if (onRrpCatastrophic) redReasons.push('逆回购准备金临界告急');
+  if (moveCrisis) redReasons.push('债券波动率危机（MOVE 利率市场失灵）');
   const yellowReasons = [];
   if (yellowCurveFedDouble) yellowReasons.push('曲线深度倒挂叠加美联储缩表');
   if (yellowIgWatch) yellowReasons.push('投资级信用利差进入应力区');
   if (yellowOnRrpCritical) yellowReasons.push('逆回购余额告急');
   if (yellowCurveDeep) yellowReasons.push('曲线深度倒挂');
+  if (yellowMoveStress) yellowReasons.push('债券波动率进入应激区（MOVE）');
 
   return {
     structuralRed,
@@ -9365,6 +9477,7 @@ async function build() {
       chinaOmo: macroDrivers.chinaOmo,
       chinaTsf: macroDrivers.chinaTsf,
       chinaMlf: macroDrivers.chinaMlf,
+      rateVol: macroDrivers.rateVol,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

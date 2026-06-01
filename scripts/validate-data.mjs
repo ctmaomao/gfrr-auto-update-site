@@ -1126,6 +1126,25 @@ function validateMacroDriversCopperGold(dataPayload) {
     assert(copperGold.sourceStatus.ratio === 'missing', 'macroDrivers.copperGold.sourceStatus.ratio must be missing when ratio is null');
   }
 }
+const VALID_RATE_VOL_SOURCE = 'Yahoo:^MOVE';
+const RATE_VOL_SOURCE_STATUSES = new Set(['live', 'fallback', 'stale', 'missing']);
+
+function validateMacroDriversRateVol(dataPayload) {
+  const rateVol = dataPayload?.macroDrivers?.rateVol;
+  // expand-then-contract: 旧 committed / 降级快照可能没有 rateVol，容忍缺失；Daily 正式写入后再收紧为必备。
+  if (rateVol === undefined) return;
+  assertPlainObject(rateVol, 'macroDrivers.rateVol');
+  assert(isFiniteNumberOrNull(rateVol.move), 'macroDrivers.rateVol.move must be finite number or null');
+  validateNullableIsoString(rateVol.moveUpdatedAt, 'macroDrivers.rateVol.moveUpdatedAt');
+  assert(isFiniteNumberOrNull(rateVol.moveAgeDays), 'macroDrivers.rateVol.moveAgeDays must be finite number or null');
+  assertString(rateVol.moveRegime, 'macroDrivers.rateVol.moveRegime');
+  assertString(rateVol.freshnessStatus, 'macroDrivers.rateVol.freshnessStatus');
+  assert(rateVol.source === VALID_RATE_VOL_SOURCE, `macroDrivers.rateVol.source must be ${VALID_RATE_VOL_SOURCE}`);
+  assertPlainObject(rateVol.sourceStatus, 'macroDrivers.rateVol.sourceStatus');
+  assert(RATE_VOL_SOURCE_STATUSES.has(rateVol.sourceStatus.move), 'macroDrivers.rateVol.sourceStatus.move is not supported');
+  assertString(rateVol.notes, 'macroDrivers.rateVol.notes');
+}
+
 function validateMacroDriversChinaBond(dataPayload) {
   const chinaBond = dataPayload?.macroDrivers?.chinaBond;
   if (chinaBond === undefined) return;
@@ -2514,6 +2533,7 @@ validateMacroDriversChinaPropertyPrice(data);
 validateMacroDriversChinaOmo(data);
 validateMacroDriversChinaTsf(data);
 validateMacroDriversChinaMlf(data);
+validateMacroDriversRateVol(data);
 validateHistoryWindowFields(data);
 validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);

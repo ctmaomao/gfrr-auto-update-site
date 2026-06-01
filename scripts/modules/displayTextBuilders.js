@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=copper-gold-goldapi-1';
+﻿import { fmtNumSafe } from './config.js?v=move-bond-vol-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
