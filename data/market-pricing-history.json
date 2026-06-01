@@ -1,8 +1,8 @@
 {
   "schemaVersion": "v28.0M-market-pricing-history-1",
   "status": "has_history",
-  "updatedAt": "2026-05-23T03:24:53.949Z",
-  "generatedAt": "2026-05-23T03:24:53.949Z",
+  "updatedAt": "2026-06-01T08:42:45.205Z",
+  "generatedAt": "2026-06-01T08:42:45.205Z",
   "sourceMode": "manual_weekly_input_committed",
   "descriptionZh": "市场定价温度计历史数据。QQQ 继续作为 primary；M-91 已通过 Yahoo chart Daily/manual market-pricing path 接入 NDX / IXIC display-only auxiliary comparison。当前 status=has_history。",
   "assets": {
@@ -12,3681 +12,3680 @@
       "priority": 1,
       "status": "active",
       "source": {
-        "vendor": "nasdaq_official_manual_download",
-        "downloadUrl": "https://www.nasdaq.com/market-activity/etf/qqq/historical",
-        "lastCommittedAt": "2026-05-18T03:57:44.077Z",
-        "committedRecordsCount": 523
+        "vendor": "yahoo_chart",
+        "downloadUrl": "https://query1.finance.yahoo.com/v8/finance/chart/QQQ?range=10y&interval=1wk",
+        "chartRange": "10y",
+        "chartInterval": "1wk",
+        "autoRefresh": true,
+        "marketPricingDailyOnly": true,
+        "workerRuntime": false,
+        "previousVendor": "nasdaq_official_manual_download",
+        "lastCommittedAt": "2026-06-01T08:42:45.205Z",
+        "committedRecordsCount": 522
       },
       "frequency": "weekly",
       "currency": "USD",
       "records": [
         {
-          "date": "2016-05-13",
-          "isoWeek": "2016-W19",
-          "close": 105.5,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
-        },
-        {
-          "date": "2016-05-20",
-          "isoWeek": "2016-W20",
-          "close": 106.47,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
-        },
-        {
-          "date": "2016-05-27",
-          "isoWeek": "2016-W21",
-          "close": 110.13,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
-        },
-        {
-          "date": "2016-06-03",
+          "date": "2016-05-30",
           "isoWeek": "2016-W22",
           "close": 110.06,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-06-10",
+          "date": "2016-06-06",
           "isoWeek": "2016-W23",
           "close": 108.94,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-06-17",
+          "date": "2016-06-13",
           "isoWeek": "2016-W24",
           "close": 106.49,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-06-24",
+          "date": "2016-06-20",
           "isoWeek": "2016-W25",
           "close": 104.29,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-07-01",
+          "date": "2016-06-27",
           "isoWeek": "2016-W26",
           "close": 108.08,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-07-08",
+          "date": "2016-07-04",
           "isoWeek": "2016-W27",
           "close": 110.3,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-07-15",
+          "date": "2016-07-11",
           "isoWeek": "2016-W28",
           "close": 111.8,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-07-22",
+          "date": "2016-07-18",
           "isoWeek": "2016-W29",
           "close": 113.65,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-07-29",
+          "date": "2016-07-25",
           "isoWeek": "2016-W30",
           "close": 115.23,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-08-05",
+          "date": "2016-08-01",
           "isoWeek": "2016-W31",
           "close": 116.78,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-08-12",
+          "date": "2016-08-08",
           "isoWeek": "2016-W32",
           "close": 117.2,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-08-19",
+          "date": "2016-08-15",
           "isoWeek": "2016-W33",
           "close": 117.26,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-08-26",
+          "date": "2016-08-22",
           "isoWeek": "2016-W34",
           "close": 116.78,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-09-02",
+          "date": "2016-08-29",
           "isoWeek": "2016-W35",
           "close": 117.12,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-09-09",
+          "date": "2016-09-05",
           "isoWeek": "2016-W36",
           "close": 114.28,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-09-16",
+          "date": "2016-09-12",
           "isoWeek": "2016-W37",
           "close": 117.29,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-09-23",
+          "date": "2016-09-19",
           "isoWeek": "2016-W38",
           "close": 118.33,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-09-30",
+          "date": "2016-09-26",
           "isoWeek": "2016-W39",
           "close": 118.72,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-10-07",
+          "date": "2016-10-03",
           "isoWeek": "2016-W40",
           "close": 118.47,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-10-14",
+          "date": "2016-10-10",
           "isoWeek": "2016-W41",
           "close": 117.14,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-10-21",
+          "date": "2016-10-17",
           "isoWeek": "2016-W42",
           "close": 118.15,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-10-28",
+          "date": "2016-10-24",
           "isoWeek": "2016-W43",
           "close": 117.1,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-11-04",
+          "date": "2016-10-31",
           "isoWeek": "2016-W44",
           "close": 113.65,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-11-11",
+          "date": "2016-11-07",
           "isoWeek": "2016-W45",
           "close": 115.8,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-11-18",
+          "date": "2016-11-14",
           "isoWeek": "2016-W46",
           "close": 117.32,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-11-25",
+          "date": "2016-11-21",
           "isoWeek": "2016-W47",
           "close": 118.8,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-12-02",
+          "date": "2016-11-28",
           "isoWeek": "2016-W48",
           "close": 115.7,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-12-09",
+          "date": "2016-12-05",
           "isoWeek": "2016-W49",
           "close": 119.5,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-12-16",
+          "date": "2016-12-12",
           "isoWeek": "2016-W50",
           "close": 119.6,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-12-23",
+          "date": "2016-12-19",
           "isoWeek": "2016-W51",
           "close": 120.2,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2016-12-30",
+          "date": "2016-12-26",
           "isoWeek": "2016-W52",
           "close": 118.48,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-01-06",
+          "date": "2017-01-02",
           "isoWeek": "2017-W01",
           "close": 121.93,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-01-13",
+          "date": "2017-01-09",
           "isoWeek": "2017-W02",
           "close": 123.16,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-01-20",
+          "date": "2017-01-16",
           "isoWeek": "2017-W03",
           "close": 123.25,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-01-27",
+          "date": "2017-01-23",
           "isoWeek": "2017-W04",
           "close": 125.8,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-02-03",
+          "date": "2017-01-30",
           "isoWeek": "2017-W05",
           "close": 125.68,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-02-10",
+          "date": "2017-02-06",
           "isoWeek": "2017-W06",
           "close": 127.38,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-02-17",
+          "date": "2017-02-13",
           "isoWeek": "2017-W07",
           "close": 129.81,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-02-24",
+          "date": "2017-02-20",
           "isoWeek": "2017-W08",
           "close": 130.26,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-03-03",
+          "date": "2017-02-27",
           "isoWeek": "2017-W09",
           "close": 131.02,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-03-10",
+          "date": "2017-03-06",
           "isoWeek": "2017-W10",
           "close": 131.39,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-03-17",
+          "date": "2017-03-13",
           "isoWeek": "2017-W11",
           "close": 131.69,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-03-24",
+          "date": "2017-03-20",
           "isoWeek": "2017-W12",
           "close": 130.63,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-03-31",
+          "date": "2017-03-27",
           "isoWeek": "2017-W13",
           "close": 132.38,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-04-07",
+          "date": "2017-04-03",
           "isoWeek": "2017-W14",
           "close": 131.97,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-04-13",
+          "date": "2017-04-10",
           "isoWeek": "2017-W15",
           "close": 130.4,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-04-21",
+          "date": "2017-04-17",
           "isoWeek": "2017-W16",
           "close": 132.56,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-04-28",
+          "date": "2017-04-24",
           "isoWeek": "2017-W17",
           "close": 135.99,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-05-05",
+          "date": "2017-05-01",
           "isoWeek": "2017-W18",
           "close": 137.54,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-05-12",
+          "date": "2017-05-08",
           "isoWeek": "2017-W19",
           "close": 138.6,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-05-19",
+          "date": "2017-05-15",
           "isoWeek": "2017-W20",
           "close": 137.84,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-05-26",
+          "date": "2017-05-22",
           "isoWeek": "2017-W21",
           "close": 141.22,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-06-02",
+          "date": "2017-05-29",
           "isoWeek": "2017-W22",
           "close": 143.46,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-06-09",
+          "date": "2017-06-05",
           "isoWeek": "2017-W23",
           "close": 139.98,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-06-16",
+          "date": "2017-06-12",
           "isoWeek": "2017-W24",
           "close": 138.15,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-06-23",
+          "date": "2017-06-19",
           "isoWeek": "2017-W25",
           "close": 141.24,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-06-30",
+          "date": "2017-06-26",
           "isoWeek": "2017-W26",
           "close": 137.64,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-07-07",
+          "date": "2017-07-03",
           "isoWeek": "2017-W27",
           "close": 137.76,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-07-14",
+          "date": "2017-07-10",
           "isoWeek": "2017-W28",
           "close": 142.12,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-07-21",
+          "date": "2017-07-17",
           "isoWeek": "2017-W29",
           "close": 144.11,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-07-28",
+          "date": "2017-07-24",
           "isoWeek": "2017-W30",
           "close": 143.84,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-08-04",
+          "date": "2017-07-31",
           "isoWeek": "2017-W31",
           "close": 143.65,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-08-11",
+          "date": "2017-08-07",
           "isoWeek": "2017-W32",
           "close": 142.1,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-08-18",
+          "date": "2017-08-14",
           "isoWeek": "2017-W33",
           "close": 141.23,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-08-25",
+          "date": "2017-08-21",
           "isoWeek": "2017-W34",
           "close": 141.97,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-09-01",
+          "date": "2017-08-28",
           "isoWeek": "2017-W35",
           "close": 146,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-09-08",
+          "date": "2017-09-04",
           "isoWeek": "2017-W36",
           "close": 144.21,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-09-15",
+          "date": "2017-09-11",
           "isoWeek": "2017-W37",
           "close": 146.06,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-09-22",
+          "date": "2017-09-18",
           "isoWeek": "2017-W38",
           "close": 144.32,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-09-29",
+          "date": "2017-09-25",
           "isoWeek": "2017-W39",
           "close": 145.45,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-10-06",
+          "date": "2017-10-02",
           "isoWeek": "2017-W40",
           "close": 147.66,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-10-13",
+          "date": "2017-10-09",
           "isoWeek": "2017-W41",
           "close": 148.34,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-10-20",
+          "date": "2017-10-16",
           "isoWeek": "2017-W42",
           "close": 148.71,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-10-27",
+          "date": "2017-10-23",
           "isoWeek": "2017-W43",
           "close": 151.24,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-11-03",
+          "date": "2017-10-30",
           "isoWeek": "2017-W44",
           "close": 153.27,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-11-10",
+          "date": "2017-11-06",
           "isoWeek": "2017-W45",
           "close": 153.68,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-11-17",
+          "date": "2017-11-13",
           "isoWeek": "2017-W46",
           "close": 153.95,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-11-24",
+          "date": "2017-11-20",
           "isoWeek": "2017-W47",
           "close": 156.26,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-12-01",
+          "date": "2017-11-27",
           "isoWeek": "2017-W48",
           "close": 154.49,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-12-08",
+          "date": "2017-12-04",
           "isoWeek": "2017-W49",
           "close": 154.7,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-12-15",
+          "date": "2017-12-11",
           "isoWeek": "2017-W50",
           "close": 157.65,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-12-22",
+          "date": "2017-12-18",
           "isoWeek": "2017-W51",
           "close": 157.37,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2017-12-29",
+          "date": "2017-12-25",
           "isoWeek": "2017-W52",
           "close": 155.76,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-01-05",
+          "date": "2018-01-01",
           "isoWeek": "2018-W01",
           "close": 161.92,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-01-12",
+          "date": "2018-01-08",
           "isoWeek": "2018-W02",
           "close": 164.49,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-01-19",
+          "date": "2018-01-15",
           "isoWeek": "2018-W03",
           "close": 166.34,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-01-26",
+          "date": "2018-01-22",
           "isoWeek": "2018-W04",
           "close": 170.93,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-02-02",
+          "date": "2018-01-29",
           "isoWeek": "2018-W05",
           "close": 164.61,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-02-09",
+          "date": "2018-02-05",
           "isoWeek": "2018-W06",
           "close": 156.1,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-02-16",
+          "date": "2018-02-12",
           "isoWeek": "2018-W07",
           "close": 164.96,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-02-23",
+          "date": "2018-02-19",
           "isoWeek": "2018-W08",
           "close": 168.17,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-03-02",
+          "date": "2018-02-26",
           "isoWeek": "2018-W09",
           "close": 165.99,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-03-09",
+          "date": "2018-03-05",
           "isoWeek": "2018-W10",
           "close": 173.16,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-03-16",
+          "date": "2018-03-12",
           "isoWeek": "2018-W11",
           "close": 171.02,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-03-23",
+          "date": "2018-03-19",
           "isoWeek": "2018-W12",
           "close": 158.51,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-03-29",
+          "date": "2018-03-26",
           "isoWeek": "2018-W13",
           "close": 160.13,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-04-06",
+          "date": "2018-04-02",
           "isoWeek": "2018-W14",
           "close": 156.63,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-04-13",
+          "date": "2018-04-09",
           "isoWeek": "2018-W15",
           "close": 161.37,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-04-20",
+          "date": "2018-04-16",
           "isoWeek": "2018-W16",
           "close": 162.3,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-04-27",
+          "date": "2018-04-23",
           "isoWeek": "2018-W17",
           "close": 162.09,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-05-04",
+          "date": "2018-04-30",
           "isoWeek": "2018-W18",
           "close": 164.87,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-05-11",
+          "date": "2018-05-07",
           "isoWeek": "2018-W19",
           "close": 169.46,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-05-18",
+          "date": "2018-05-14",
           "isoWeek": "2018-W20",
           "close": 167.46,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-05-25",
+          "date": "2018-05-21",
           "isoWeek": "2018-W21",
           "close": 169.72,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-06-01",
+          "date": "2018-05-28",
           "isoWeek": "2018-W22",
           "close": 172.74,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-06-08",
+          "date": "2018-06-04",
           "isoWeek": "2018-W23",
           "close": 174.44,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-06-15",
+          "date": "2018-06-11",
           "isoWeek": "2018-W24",
           "close": 176.98,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-06-22",
+          "date": "2018-06-18",
           "isoWeek": "2018-W25",
           "close": 175.32,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-06-29",
+          "date": "2018-06-25",
           "isoWeek": "2018-W26",
           "close": 171.65,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-07-06",
+          "date": "2018-07-02",
           "isoWeek": "2018-W27",
           "close": 175.61,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-07-13",
+          "date": "2018-07-09",
           "isoWeek": "2018-W28",
           "close": 179.61,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-07-20",
+          "date": "2018-07-16",
           "isoWeek": "2018-W29",
           "close": 178.99,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-07-27",
+          "date": "2018-07-23",
           "isoWeek": "2018-W30",
           "close": 177.62,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-08-03",
+          "date": "2018-07-30",
           "isoWeek": "2018-W31",
           "close": 180.08,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-08-10",
+          "date": "2018-08-06",
           "isoWeek": "2018-W32",
           "close": 180.52,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-08-17",
+          "date": "2018-08-13",
           "isoWeek": "2018-W33",
           "close": 179.86,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-08-24",
+          "date": "2018-08-20",
           "isoWeek": "2018-W34",
           "close": 182.48,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-08-31",
+          "date": "2018-08-27",
           "isoWeek": "2018-W35",
           "close": 186.65,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-09-07",
+          "date": "2018-09-03",
           "isoWeek": "2018-W36",
           "close": 181.11,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-09-14",
+          "date": "2018-09-10",
           "isoWeek": "2018-W37",
           "close": 183.99,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-09-21",
+          "date": "2018-09-17",
           "isoWeek": "2018-W38",
           "close": 183.71,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-09-28",
+          "date": "2018-09-24",
           "isoWeek": "2018-W39",
           "close": 185.79,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-10-05",
+          "date": "2018-10-01",
           "isoWeek": "2018-W40",
           "close": 180.15,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-10-12",
+          "date": "2018-10-08",
           "isoWeek": "2018-W41",
           "close": 174.32,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-10-19",
+          "date": "2018-10-15",
           "isoWeek": "2018-W42",
           "close": 173.02,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-10-26",
+          "date": "2018-10-22",
           "isoWeek": "2018-W43",
           "close": 166.66,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-11-02",
+          "date": "2018-10-29",
           "isoWeek": "2018-W44",
           "close": 169.38,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-11-09",
+          "date": "2018-11-05",
           "isoWeek": "2018-W45",
           "close": 171.52,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-11-16",
+          "date": "2018-11-12",
           "isoWeek": "2018-W46",
           "close": 167.5,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-11-23",
+          "date": "2018-11-19",
           "isoWeek": "2018-W47",
           "close": 159.21,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-11-30",
+          "date": "2018-11-26",
           "isoWeek": "2018-W48",
           "close": 169.37,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-12-07",
+          "date": "2018-12-03",
           "isoWeek": "2018-W49",
           "close": 161.38,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-12-14",
+          "date": "2018-12-10",
           "isoWeek": "2018-W50",
           "close": 161.08,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-12-21",
+          "date": "2018-12-17",
           "isoWeek": "2018-W51",
           "close": 147.57,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2018-12-28",
+          "date": "2018-12-24",
           "isoWeek": "2018-W52",
           "close": 152.97,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-01-04",
+          "date": "2018-12-31",
           "isoWeek": "2019-W01",
           "close": 156.23,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-01-11",
+          "date": "2019-01-07",
           "isoWeek": "2019-W02",
           "close": 160.69,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-01-18",
+          "date": "2019-01-14",
           "isoWeek": "2019-W03",
           "close": 165.25,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-01-25",
+          "date": "2019-01-21",
           "isoWeek": "2019-W04",
           "close": 165.15,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-02-01",
+          "date": "2019-01-28",
           "isoWeek": "2019-W05",
           "close": 167.45,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-02-08",
+          "date": "2019-02-04",
           "isoWeek": "2019-W06",
           "close": 168.56,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-02-15",
+          "date": "2019-02-11",
           "isoWeek": "2019-W07",
           "close": 171.94,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-02-22",
+          "date": "2019-02-18",
           "isoWeek": "2019-W08",
           "close": 172.89,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-03-01",
+          "date": "2019-02-25",
           "isoWeek": "2019-W09",
           "close": 174.39,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-03-08",
+          "date": "2019-03-04",
           "isoWeek": "2019-W10",
           "close": 171.17,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-03-15",
+          "date": "2019-03-11",
           "isoWeek": "2019-W11",
           "close": 178.35,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-03-22",
+          "date": "2019-03-18",
           "isoWeek": "2019-W12",
           "close": 178.56,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-03-29",
+          "date": "2019-03-25",
           "isoWeek": "2019-W13",
           "close": 179.66,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-04-05",
+          "date": "2019-04-01",
           "isoWeek": "2019-W14",
           "close": 184.66,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-04-12",
+          "date": "2019-04-08",
           "isoWeek": "2019-W15",
           "close": 185.83,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-04-18",
+          "date": "2019-04-15",
           "isoWeek": "2019-W16",
           "close": 187.39,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-04-26",
+          "date": "2019-04-22",
           "isoWeek": "2019-W17",
           "close": 190.65,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-05-03",
+          "date": "2019-04-29",
           "isoWeek": "2019-W18",
           "close": 191.11,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-05-10",
+          "date": "2019-05-06",
           "isoWeek": "2019-W19",
           "close": 185,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-05-17",
+          "date": "2019-05-13",
           "isoWeek": "2019-W20",
           "close": 183.04,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-05-24",
+          "date": "2019-05-20",
           "isoWeek": "2019-W21",
           "close": 178.16,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-05-31",
+          "date": "2019-05-27",
           "isoWeek": "2019-W22",
           "close": 173.95,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-06-07",
+          "date": "2019-06-03",
           "isoWeek": "2019-W23",
           "close": 181.04,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-06-14",
+          "date": "2019-06-10",
           "isoWeek": "2019-W24",
           "close": 182.64,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-06-21",
+          "date": "2019-06-17",
           "isoWeek": "2019-W25",
           "close": 188.57,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-06-28",
+          "date": "2019-06-24",
           "isoWeek": "2019-W26",
           "close": 186.74,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-07-05",
+          "date": "2019-07-01",
           "isoWeek": "2019-W27",
           "close": 191.05,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-07-12",
+          "date": "2019-07-08",
           "isoWeek": "2019-W28",
           "close": 193.53,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-07-19",
+          "date": "2019-07-15",
           "isoWeek": "2019-W29",
           "close": 191.01,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-07-26",
+          "date": "2019-07-22",
           "isoWeek": "2019-W30",
           "close": 195.29,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-08-02",
+          "date": "2019-07-29",
           "isoWeek": "2019-W31",
           "close": 187.35,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-08-09",
+          "date": "2019-08-05",
           "isoWeek": "2019-W32",
           "close": 186.49,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-08-16",
+          "date": "2019-08-12",
           "isoWeek": "2019-W33",
           "close": 185.48,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-08-23",
+          "date": "2019-08-19",
           "isoWeek": "2019-W34",
           "close": 182.07,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-08-30",
+          "date": "2019-08-26",
           "isoWeek": "2019-W35",
           "close": 187.47,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-09-06",
+          "date": "2019-09-02",
           "isoWeek": "2019-W36",
           "close": 191.59,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-09-13",
+          "date": "2019-09-09",
           "isoWeek": "2019-W37",
           "close": 192.54,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-09-20",
+          "date": "2019-09-16",
           "isoWeek": "2019-W38",
           "close": 190.8,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-09-27",
+          "date": "2019-09-23",
           "isoWeek": "2019-W39",
           "close": 187.03,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-10-04",
+          "date": "2019-09-30",
           "isoWeek": "2019-W40",
           "close": 188.81,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-10-11",
+          "date": "2019-10-07",
           "isoWeek": "2019-W41",
           "close": 191.11,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-10-18",
+          "date": "2019-10-14",
           "isoWeek": "2019-W42",
           "close": 191.69,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-10-25",
+          "date": "2019-10-21",
           "isoWeek": "2019-W43",
           "close": 195.64,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-11-01",
+          "date": "2019-10-28",
           "isoWeek": "2019-W44",
           "close": 198.87,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-11-08",
+          "date": "2019-11-04",
           "isoWeek": "2019-W45",
           "close": 201.23,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-11-15",
+          "date": "2019-11-11",
           "isoWeek": "2019-W46",
           "close": 202.91,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-11-22",
+          "date": "2019-11-18",
           "isoWeek": "2019-W47",
           "close": 201.83,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-11-29",
+          "date": "2019-11-25",
           "isoWeek": "2019-W48",
           "close": 205.1,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-12-06",
+          "date": "2019-12-02",
           "isoWeek": "2019-W49",
           "close": 205,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-12-13",
+          "date": "2019-12-09",
           "isoWeek": "2019-W50",
           "close": 207.19,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-12-20",
+          "date": "2019-12-16",
           "isoWeek": "2019-W51",
           "close": 211.71,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2019-12-27",
+          "date": "2019-12-23",
           "isoWeek": "2019-W52",
           "close": 213.61,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-01-03",
+          "date": "2019-12-30",
           "isoWeek": "2020-W01",
           "close": 214.18,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-01-10",
+          "date": "2020-01-06",
           "isoWeek": "2020-W02",
           "close": 218.43,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-01-17",
+          "date": "2020-01-13",
           "isoWeek": "2020-W03",
           "close": 223.38,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-01-24",
+          "date": "2020-01-20",
           "isoWeek": "2020-W04",
           "close": 222.7,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-01-31",
+          "date": "2020-01-27",
           "isoWeek": "2020-W05",
           "close": 219.07,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-02-07",
+          "date": "2020-02-03",
           "isoWeek": "2020-W06",
           "close": 229.2,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-02-14",
+          "date": "2020-02-10",
           "isoWeek": "2020-W07",
           "close": 234.64,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-02-21",
+          "date": "2020-02-17",
           "isoWeek": "2020-W08",
           "close": 230.27,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-02-28",
+          "date": "2020-02-24",
           "isoWeek": "2020-W09",
           "close": 205.8,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-03-06",
+          "date": "2020-03-02",
           "isoWeek": "2020-W10",
           "close": 208.02,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-03-13",
+          "date": "2020-03-09",
           "isoWeek": "2020-W11",
           "close": 192.34,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-03-20",
+          "date": "2020-03-16",
           "isoWeek": "2020-W12",
           "close": 170.7,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-03-27",
+          "date": "2020-03-23",
           "isoWeek": "2020-W13",
           "close": 185.3,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-04-03",
+          "date": "2020-03-30",
           "isoWeek": "2020-W14",
           "close": 183.37,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-04-09",
+          "date": "2020-04-06",
           "isoWeek": "2020-W15",
           "close": 200.86,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-04-17",
+          "date": "2020-04-13",
           "isoWeek": "2020-W16",
           "close": 215.29,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-04-24",
+          "date": "2020-04-20",
           "isoWeek": "2020-W17",
           "close": 213.84,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-05-01",
+          "date": "2020-04-27",
           "isoWeek": "2020-W18",
           "close": 212.74,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-05-08",
+          "date": "2020-05-04",
           "isoWeek": "2020-W19",
           "close": 224.86,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-05-15",
+          "date": "2020-05-11",
           "isoWeek": "2020-W20",
           "close": 223.27,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-05-22",
+          "date": "2020-05-18",
           "isoWeek": "2020-W21",
           "close": 229.66,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-05-29",
+          "date": "2020-05-25",
           "isoWeek": "2020-W22",
           "close": 233.36,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-06-05",
+          "date": "2020-06-01",
           "isoWeek": "2020-W23",
           "close": 239.69,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-06-12",
+          "date": "2020-06-08",
           "isoWeek": "2020-W24",
           "close": 235.88,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-06-19",
+          "date": "2020-06-15",
           "isoWeek": "2020-W25",
           "close": 244.24,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-06-26",
+          "date": "2020-06-22",
           "isoWeek": "2020-W26",
           "close": 240.22,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-07-02",
+          "date": "2020-06-29",
           "isoWeek": "2020-W27",
           "close": 252.19,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-07-10",
+          "date": "2020-07-06",
           "isoWeek": "2020-W28",
           "close": 263.97,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-07-17",
+          "date": "2020-07-13",
           "isoWeek": "2020-W29",
           "close": 259.42,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-07-24",
+          "date": "2020-07-20",
           "isoWeek": "2020-W30",
           "close": 255.56,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-07-31",
+          "date": "2020-07-27",
           "isoWeek": "2020-W31",
           "close": 265.79,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-08-07",
+          "date": "2020-08-03",
           "isoWeek": "2020-W32",
           "close": 271.47,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-08-14",
+          "date": "2020-08-10",
           "isoWeek": "2020-W33",
           "close": 272.16,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-08-21",
+          "date": "2020-08-17",
           "isoWeek": "2020-W34",
           "close": 281.87,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-08-28",
+          "date": "2020-08-24",
           "isoWeek": "2020-W35",
           "close": 292.53,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-09-04",
+          "date": "2020-08-31",
           "isoWeek": "2020-W36",
           "close": 283.58,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-09-11",
+          "date": "2020-09-07",
           "isoWeek": "2020-W37",
           "close": 270.45,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-09-18",
+          "date": "2020-09-14",
           "isoWeek": "2020-W38",
           "close": 266.87,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-09-25",
+          "date": "2020-09-21",
           "isoWeek": "2020-W39",
           "close": 271.56,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-10-02",
+          "date": "2020-09-28",
           "isoWeek": "2020-W40",
           "close": 274.31,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-10-09",
+          "date": "2020-10-05",
           "isoWeek": "2020-W41",
           "close": 285.71,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-10-16",
+          "date": "2020-10-12",
           "isoWeek": "2020-W42",
           "close": 288.51,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-10-23",
+          "date": "2020-10-19",
           "isoWeek": "2020-W43",
           "close": 284.74,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-10-30",
+          "date": "2020-10-26",
           "isoWeek": "2020-W44",
           "close": 269.38,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-11-06",
+          "date": "2020-11-02",
           "isoWeek": "2020-W45",
           "close": 294.61,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-11-13",
+          "date": "2020-11-09",
           "isoWeek": "2020-W46",
           "close": 290.93,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-11-20",
+          "date": "2020-11-16",
           "isoWeek": "2020-W47",
           "close": 290.38,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-11-27",
+          "date": "2020-11-23",
           "isoWeek": "2020-W48",
           "close": 299.01,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-12-04",
+          "date": "2020-11-30",
           "isoWeek": "2020-W49",
           "close": 305.52,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-12-11",
+          "date": "2020-12-07",
           "isoWeek": "2020-W50",
           "close": 301.85,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-12-18",
+          "date": "2020-12-14",
           "isoWeek": "2020-W51",
           "close": 310.06,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-12-24",
+          "date": "2020-12-21",
           "isoWeek": "2020-W52",
           "close": 309.56,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2020-12-31",
+          "date": "2020-12-28",
           "isoWeek": "2020-W53",
           "close": 313.74,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-01-08",
+          "date": "2021-01-04",
           "isoWeek": "2021-W01",
           "close": 319.03,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-01-15",
+          "date": "2021-01-11",
           "isoWeek": "2021-W02",
           "close": 311.86,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-01-22",
+          "date": "2021-01-18",
           "isoWeek": "2021-W03",
           "close": 325.42,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-01-29",
+          "date": "2021-01-25",
           "isoWeek": "2021-W04",
           "close": 314.56,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-02-05",
+          "date": "2021-02-01",
           "isoWeek": "2021-W05",
           "close": 331.36,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-02-12",
+          "date": "2021-02-08",
           "isoWeek": "2021-W06",
           "close": 336.45,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-02-19",
+          "date": "2021-02-15",
           "isoWeek": "2021-W07",
           "close": 331.02,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-02-26",
+          "date": "2021-02-22",
           "isoWeek": "2021-W08",
           "close": 314.14,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-03-05",
+          "date": "2021-03-01",
           "isoWeek": "2021-W09",
           "close": 308.68,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-03-12",
+          "date": "2021-03-08",
           "isoWeek": "2021-W10",
           "close": 315.46,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-03-19",
+          "date": "2021-03-15",
           "isoWeek": "2021-W11",
           "close": 313.14,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-03-26",
+          "date": "2021-03-22",
           "isoWeek": "2021-W12",
           "close": 316,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-04-01",
+          "date": "2021-03-29",
           "isoWeek": "2021-W13",
           "close": 324.57,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-04-09",
+          "date": "2021-04-05",
           "isoWeek": "2021-W14",
           "close": 337.11,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-04-16",
+          "date": "2021-04-12",
           "isoWeek": "2021-W15",
           "close": 342.01,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-04-23",
+          "date": "2021-04-19",
           "isoWeek": "2021-W16",
           "close": 339.42,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-04-30",
+          "date": "2021-04-26",
           "isoWeek": "2021-W17",
           "close": 337.99,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-05-07",
+          "date": "2021-05-03",
           "isoWeek": "2021-W18",
           "close": 334.2,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-05-14",
+          "date": "2021-05-10",
           "isoWeek": "2021-W19",
           "close": 326.39,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-05-21",
+          "date": "2021-05-17",
           "isoWeek": "2021-W20",
           "close": 327.01,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-05-28",
+          "date": "2021-05-24",
           "isoWeek": "2021-W21",
           "close": 333.93,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-06-04",
+          "date": "2021-05-31",
           "isoWeek": "2021-W22",
           "close": 335.6,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-06-11",
+          "date": "2021-06-07",
           "isoWeek": "2021-W23",
           "close": 341.24,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-06-18",
+          "date": "2021-06-14",
           "isoWeek": "2021-W24",
           "close": 342.63,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-06-25",
+          "date": "2021-06-21",
           "isoWeek": "2021-W25",
           "close": 349.46,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-07-02",
+          "date": "2021-06-28",
           "isoWeek": "2021-W26",
           "close": 358.64,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-07-09",
+          "date": "2021-07-05",
           "isoWeek": "2021-W27",
           "close": 361.01,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-07-16",
+          "date": "2021-07-12",
           "isoWeek": "2021-W28",
           "close": 357.6,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-07-23",
+          "date": "2021-07-19",
           "isoWeek": "2021-W29",
           "close": 368.2,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-07-30",
+          "date": "2021-07-26",
           "isoWeek": "2021-W30",
           "close": 364.57,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-08-06",
+          "date": "2021-08-02",
           "isoWeek": "2021-W31",
           "close": 368.05,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-08-13",
+          "date": "2021-08-09",
           "isoWeek": "2021-W32",
           "close": 368.82,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-08-20",
+          "date": "2021-08-16",
           "isoWeek": "2021-W33",
           "close": 367.73,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-08-27",
+          "date": "2021-08-23",
           "isoWeek": "2021-W34",
           "close": 376.04,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-09-03",
+          "date": "2021-08-30",
           "isoWeek": "2021-W35",
           "close": 381.57,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-09-10",
+          "date": "2021-09-06",
           "isoWeek": "2021-W36",
           "close": 376.59,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-09-17",
+          "date": "2021-09-13",
           "isoWeek": "2021-W37",
           "close": 373.83,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-09-24",
+          "date": "2021-09-20",
           "isoWeek": "2021-W38",
           "close": 373.33,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-10-01",
+          "date": "2021-09-27",
           "isoWeek": "2021-W39",
           "close": 360.18,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-10-08",
+          "date": "2021-10-04",
           "isoWeek": "2021-W40",
           "close": 361.16,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-10-15",
+          "date": "2021-10-11",
           "isoWeek": "2021-W41",
           "close": 368.94,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-10-22",
+          "date": "2021-10-18",
           "isoWeek": "2021-W42",
           "close": 374.1,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-10-29",
+          "date": "2021-10-25",
           "isoWeek": "2021-W43",
           "close": 386.11,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-11-05",
+          "date": "2021-11-01",
           "isoWeek": "2021-W44",
           "close": 398.6,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-11-12",
+          "date": "2021-11-08",
           "isoWeek": "2021-W45",
           "close": 394.7,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-11-19",
+          "date": "2021-11-15",
           "isoWeek": "2021-W46",
           "close": 403.99,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-11-26",
+          "date": "2021-11-22",
           "isoWeek": "2021-W47",
           "close": 391.2,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-12-03",
+          "date": "2021-11-29",
           "isoWeek": "2021-W48",
           "close": 383.13,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-12-10",
+          "date": "2021-12-06",
           "isoWeek": "2021-W49",
           "close": 398.01,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-12-17",
+          "date": "2021-12-13",
           "isoWeek": "2021-W50",
           "close": 384.91,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-12-23",
+          "date": "2021-12-20",
           "isoWeek": "2021-W51",
           "close": 396.92,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2021-12-31",
+          "date": "2021-12-27",
           "isoWeek": "2021-W52",
           "close": 397.85,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-01-07",
+          "date": "2022-01-03",
           "isoWeek": "2022-W01",
           "close": 379.86,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-01-14",
+          "date": "2022-01-10",
           "isoWeek": "2022-W02",
           "close": 380.01,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-01-21",
+          "date": "2022-01-17",
           "isoWeek": "2022-W03",
           "close": 351.69,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-01-28",
+          "date": "2022-01-24",
           "isoWeek": "2022-W04",
           "close": 351.8,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-02-04",
+          "date": "2022-01-31",
           "isoWeek": "2022-W05",
           "close": 358.01,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-02-11",
+          "date": "2022-02-07",
           "isoWeek": "2022-W06",
           "close": 347.06,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-02-18",
+          "date": "2022-02-14",
           "isoWeek": "2022-W07",
           "close": 341.51,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-02-25",
+          "date": "2022-02-21",
           "isoWeek": "2022-W08",
           "close": 345.77,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-03-04",
+          "date": "2022-02-28",
           "isoWeek": "2022-W09",
           "close": 337.3,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-03-11",
+          "date": "2022-03-07",
           "isoWeek": "2022-W10",
           "close": 324.4,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-03-18",
+          "date": "2022-03-14",
           "isoWeek": "2022-W11",
           "close": 351.49,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-03-25",
+          "date": "2022-03-21",
           "isoWeek": "2022-W12",
           "close": 359.35,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-04-01",
+          "date": "2022-03-28",
           "isoWeek": "2022-W13",
           "close": 361.85,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-04-08",
+          "date": "2022-04-04",
           "isoWeek": "2022-W14",
           "close": 349.15,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-04-14",
+          "date": "2022-04-11",
           "isoWeek": "2022-W15",
           "close": 338.43,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-04-22",
+          "date": "2022-04-18",
           "isoWeek": "2022-W16",
           "close": 325.4,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-04-29",
+          "date": "2022-04-25",
           "isoWeek": "2022-W17",
           "close": 313.25,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-05-06",
+          "date": "2022-05-02",
           "isoWeek": "2022-W18",
           "close": 309.25,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-05-13",
+          "date": "2022-05-09",
           "isoWeek": "2022-W19",
           "close": 301.94,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-05-20",
+          "date": "2022-05-16",
           "isoWeek": "2022-W20",
           "close": 288.68,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-05-27",
+          "date": "2022-05-23",
           "isoWeek": "2022-W21",
           "close": 309.1,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-06-03",
+          "date": "2022-05-30",
           "isoWeek": "2022-W22",
           "close": 306.2,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-06-10",
+          "date": "2022-06-06",
           "isoWeek": "2022-W23",
           "close": 288.84,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-06-17",
+          "date": "2022-06-13",
           "isoWeek": "2022-W24",
           "close": 274.69,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-06-24",
+          "date": "2022-06-20",
           "isoWeek": "2022-W25",
           "close": 294.61,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-07-01",
+          "date": "2022-06-27",
           "isoWeek": "2022-W26",
           "close": 282.13,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-07-08",
+          "date": "2022-07-04",
           "isoWeek": "2022-W27",
           "close": 295.35,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-07-15",
+          "date": "2022-07-11",
           "isoWeek": "2022-W28",
           "close": 291.87,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-07-22",
+          "date": "2022-07-18",
           "isoWeek": "2022-W29",
           "close": 301.99,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-07-29",
+          "date": "2022-07-25",
           "isoWeek": "2022-W30",
           "close": 315.46,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-08-05",
+          "date": "2022-08-01",
           "isoWeek": "2022-W31",
           "close": 321.75,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-08-12",
+          "date": "2022-08-08",
           "isoWeek": "2022-W32",
           "close": 330.39,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-08-19",
+          "date": "2022-08-15",
           "isoWeek": "2022-W33",
           "close": 322.86,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-08-26",
+          "date": "2022-08-22",
           "isoWeek": "2022-W34",
           "close": 307.44,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-09-02",
+          "date": "2022-08-29",
           "isoWeek": "2022-W35",
           "close": 295.17,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-09-09",
+          "date": "2022-09-05",
           "isoWeek": "2022-W36",
           "close": 307.09,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-09-16",
+          "date": "2022-09-12",
           "isoWeek": "2022-W37",
           "close": 289.32,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-09-23",
+          "date": "2022-09-19",
           "isoWeek": "2022-W38",
           "close": 275.51,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-09-30",
+          "date": "2022-09-26",
           "isoWeek": "2022-W39",
           "close": 267.26,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-10-07",
+          "date": "2022-10-03",
           "isoWeek": "2022-W40",
           "close": 269.1,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-10-14",
+          "date": "2022-10-10",
           "isoWeek": "2022-W41",
           "close": 260.74,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-10-21",
+          "date": "2022-10-17",
           "isoWeek": "2022-W42",
           "close": 275.42,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-10-28",
+          "date": "2022-10-24",
           "isoWeek": "2022-W43",
           "close": 281.22,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-11-04",
+          "date": "2022-10-31",
           "isoWeek": "2022-W44",
           "close": 264.68,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-11-11",
+          "date": "2022-11-07",
           "isoWeek": "2022-W45",
           "close": 287.96,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-11-18",
+          "date": "2022-11-14",
           "isoWeek": "2022-W46",
           "close": 284.82,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-11-25",
+          "date": "2022-11-21",
           "isoWeek": "2022-W47",
           "close": 286.92,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-12-02",
+          "date": "2022-11-28",
           "isoWeek": "2022-W48",
           "close": 292.55,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-12-09",
+          "date": "2022-12-05",
           "isoWeek": "2022-W49",
           "close": 282.04,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-12-16",
+          "date": "2022-12-12",
           "isoWeek": "2022-W50",
           "close": 274.25,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-12-23",
+          "date": "2022-12-19",
           "isoWeek": "2022-W51",
           "close": 267.36,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2022-12-30",
+          "date": "2022-12-26",
           "isoWeek": "2022-W52",
           "close": 266.28,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-01-06",
+          "date": "2023-01-02",
           "isoWeek": "2023-W01",
           "close": 268.8,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-01-13",
+          "date": "2023-01-09",
           "isoWeek": "2023-W02",
           "close": 280.97,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-01-20",
+          "date": "2023-01-16",
           "isoWeek": "2023-W03",
           "close": 282.68,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-01-27",
+          "date": "2023-01-23",
           "isoWeek": "2023-W04",
           "close": 296.26,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-02-03",
+          "date": "2023-01-30",
           "isoWeek": "2023-W05",
           "close": 306.18,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-02-10",
+          "date": "2023-02-06",
           "isoWeek": "2023-W06",
           "close": 299.7,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-02-17",
+          "date": "2023-02-13",
           "isoWeek": "2023-W07",
           "close": 301.16,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-02-24",
+          "date": "2023-02-20",
           "isoWeek": "2023-W08",
           "close": 291.85,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-03-03",
+          "date": "2023-02-27",
           "isoWeek": "2023-W09",
           "close": 299.68,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-03-10",
+          "date": "2023-03-06",
           "isoWeek": "2023-W10",
           "close": 288.55,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-03-17",
+          "date": "2023-03-13",
           "isoWeek": "2023-W11",
           "close": 305.36,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-03-24",
+          "date": "2023-03-20",
           "isoWeek": "2023-W12",
           "close": 310.89,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-03-31",
+          "date": "2023-03-27",
           "isoWeek": "2023-W13",
           "close": 320.93,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-04-06",
+          "date": "2023-04-03",
           "isoWeek": "2023-W14",
           "close": 318.05,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-04-14",
+          "date": "2023-04-10",
           "isoWeek": "2023-W15",
           "close": 318.57,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-04-21",
+          "date": "2023-04-17",
           "isoWeek": "2023-W16",
           "close": 316.61,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-04-28",
+          "date": "2023-04-24",
           "isoWeek": "2023-W17",
           "close": 322.56,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-05-05",
+          "date": "2023-05-01",
           "isoWeek": "2023-W18",
           "close": 322.89,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-05-12",
+          "date": "2023-05-08",
           "isoWeek": "2023-W19",
           "close": 325.03,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-05-19",
+          "date": "2023-05-15",
           "isoWeek": "2023-W20",
           "close": 336.51,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-05-26",
+          "date": "2023-05-22",
           "isoWeek": "2023-W21",
           "close": 348.4,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-06-02",
+          "date": "2023-05-29",
           "isoWeek": "2023-W22",
           "close": 354.65,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-06-09",
+          "date": "2023-06-05",
           "isoWeek": "2023-W23",
           "close": 354.5,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-06-16",
+          "date": "2023-06-12",
           "isoWeek": "2023-W24",
           "close": 367.93,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-06-23",
+          "date": "2023-06-19",
           "isoWeek": "2023-W25",
           "close": 362.54,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-06-30",
+          "date": "2023-06-26",
           "isoWeek": "2023-W26",
           "close": 369.42,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-07-07",
+          "date": "2023-07-03",
           "isoWeek": "2023-W27",
           "close": 366.24,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-07-14",
+          "date": "2023-07-10",
           "isoWeek": "2023-W28",
           "close": 379.07,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-07-21",
+          "date": "2023-07-17",
           "isoWeek": "2023-W29",
           "close": 375.63,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-07-28",
+          "date": "2023-07-24",
           "isoWeek": "2023-W30",
           "close": 383.48,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-08-04",
+          "date": "2023-07-31",
           "isoWeek": "2023-W31",
           "close": 372.04,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-08-11",
+          "date": "2023-08-07",
           "isoWeek": "2023-W32",
           "close": 366.24,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-08-18",
+          "date": "2023-08-14",
           "isoWeek": "2023-W33",
           "close": 358.13,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-08-25",
+          "date": "2023-08-21",
           "isoWeek": "2023-W34",
           "close": 364.02,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-09-01",
+          "date": "2023-08-28",
           "isoWeek": "2023-W35",
           "close": 377.59,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-09-08",
+          "date": "2023-09-04",
           "isoWeek": "2023-W36",
           "close": 372.58,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-09-15",
+          "date": "2023-09-11",
           "isoWeek": "2023-W37",
           "close": 370.81,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-09-22",
+          "date": "2023-09-18",
           "isoWeek": "2023-W38",
           "close": 357.91,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-09-29",
+          "date": "2023-09-25",
           "isoWeek": "2023-W39",
           "close": 358.27,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-10-06",
+          "date": "2023-10-02",
           "isoWeek": "2023-W40",
           "close": 364.7,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-10-13",
+          "date": "2023-10-09",
           "isoWeek": "2023-W41",
           "close": 365.28,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-10-20",
+          "date": "2023-10-16",
           "isoWeek": "2023-W42",
           "close": 354.6,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-10-27",
+          "date": "2023-10-23",
           "isoWeek": "2023-W43",
           "close": 345.31,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-11-03",
+          "date": "2023-10-30",
           "isoWeek": "2023-W44",
           "close": 367.71,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-11-10",
+          "date": "2023-11-06",
           "isoWeek": "2023-W45",
           "close": 378.39,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-11-17",
+          "date": "2023-11-13",
           "isoWeek": "2023-W46",
           "close": 386.04,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-11-24",
+          "date": "2023-11-20",
           "isoWeek": "2023-W47",
           "close": 389.51,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-12-01",
+          "date": "2023-11-27",
           "isoWeek": "2023-W48",
           "close": 389.94,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-12-08",
+          "date": "2023-12-04",
           "isoWeek": "2023-W49",
           "close": 392.17,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-12-15",
+          "date": "2023-12-11",
           "isoWeek": "2023-W50",
           "close": 405.34,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-12-22",
+          "date": "2023-12-18",
           "isoWeek": "2023-W51",
           "close": 408.38,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2023-12-29",
+          "date": "2023-12-25",
           "isoWeek": "2023-W52",
           "close": 409.52,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-01-05",
+          "date": "2024-01-01",
           "isoWeek": "2024-W01",
           "close": 396.75,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-01-12",
+          "date": "2024-01-08",
           "isoWeek": "2024-W02",
           "close": 409.56,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-01-19",
+          "date": "2024-01-15",
           "isoWeek": "2024-W03",
           "close": 421.18,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-01-26",
+          "date": "2024-01-22",
           "isoWeek": "2024-W04",
           "close": 423.81,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-02-02",
+          "date": "2024-01-29",
           "isoWeek": "2024-W05",
           "close": 429.01,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-02-09",
+          "date": "2024-02-05",
           "isoWeek": "2024-W06",
           "close": 437.05,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-02-16",
+          "date": "2024-02-12",
           "isoWeek": "2024-W07",
           "close": 430.57,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-02-23",
+          "date": "2024-02-19",
           "isoWeek": "2024-W08",
           "close": 436.78,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-03-01",
+          "date": "2024-02-26",
           "isoWeek": "2024-W09",
           "close": 445.61,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-03-08",
+          "date": "2024-03-04",
           "isoWeek": "2024-W10",
           "close": 439.02,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-03-15",
+          "date": "2024-03-11",
           "isoWeek": "2024-W11",
           "close": 433.92,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-03-22",
+          "date": "2024-03-18",
           "isoWeek": "2024-W12",
           "close": 446.38,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-03-28",
+          "date": "2024-03-25",
           "isoWeek": "2024-W13",
           "close": 444.01,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-04-05",
+          "date": "2024-04-01",
           "isoWeek": "2024-W14",
           "close": 440.47,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-04-12",
+          "date": "2024-04-08",
           "isoWeek": "2024-W15",
           "close": 438.27,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-04-19",
+          "date": "2024-04-15",
           "isoWeek": "2024-W16",
           "close": 414.65,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-04-26",
+          "date": "2024-04-22",
           "isoWeek": "2024-W17",
           "close": 431,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-05-03",
+          "date": "2024-04-29",
           "isoWeek": "2024-W18",
           "close": 435.48,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-05-10",
+          "date": "2024-05-06",
           "isoWeek": "2024-W19",
           "close": 442.06,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-05-17",
+          "date": "2024-05-13",
           "isoWeek": "2024-W20",
           "close": 451.76,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-05-24",
+          "date": "2024-05-20",
           "isoWeek": "2024-W21",
           "close": 457.95,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-05-31",
+          "date": "2024-05-27",
           "isoWeek": "2024-W22",
           "close": 450.71,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-06-07",
+          "date": "2024-06-03",
           "isoWeek": "2024-W23",
           "close": 462.96,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-06-14",
+          "date": "2024-06-10",
           "isoWeek": "2024-W24",
           "close": 479.19,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-06-21",
+          "date": "2024-06-17",
           "isoWeek": "2024-W25",
           "close": 480.18,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-06-28",
+          "date": "2024-06-24",
           "isoWeek": "2024-W26",
           "close": 479.11,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-07-05",
+          "date": "2024-07-01",
           "isoWeek": "2024-W27",
           "close": 496.16,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-07-12",
+          "date": "2024-07-08",
           "isoWeek": "2024-W28",
           "close": 494.82,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-07-19",
+          "date": "2024-07-15",
           "isoWeek": "2024-W29",
           "close": 475.24,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-07-26",
+          "date": "2024-07-22",
           "isoWeek": "2024-W30",
           "close": 462.97,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-08-02",
+          "date": "2024-07-29",
           "isoWeek": "2024-W31",
           "close": 448.75,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-08-09",
+          "date": "2024-08-05",
           "isoWeek": "2024-W32",
           "close": 450.41,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-08-16",
+          "date": "2024-08-12",
           "isoWeek": "2024-W33",
           "close": 475.03,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-08-23",
+          "date": "2024-08-19",
           "isoWeek": "2024-W34",
           "close": 480,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-08-30",
+          "date": "2024-08-26",
           "isoWeek": "2024-W35",
           "close": 476.27,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-09-06",
+          "date": "2024-09-02",
           "isoWeek": "2024-W36",
           "close": 448.69,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-09-13",
+          "date": "2024-09-09",
           "isoWeek": "2024-W37",
           "close": 475.34,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-09-20",
+          "date": "2024-09-16",
           "isoWeek": "2024-W38",
           "close": 482.44,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-09-27",
+          "date": "2024-09-23",
           "isoWeek": "2024-W39",
           "close": 486.75,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-10-04",
+          "date": "2024-09-30",
           "isoWeek": "2024-W40",
           "close": 487.32,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-10-11",
+          "date": "2024-10-07",
           "isoWeek": "2024-W41",
           "close": 493.36,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-10-18",
+          "date": "2024-10-14",
           "isoWeek": "2024-W42",
           "close": 494.47,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-10-25",
+          "date": "2024-10-21",
           "isoWeek": "2024-W43",
           "close": 495.32,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-11-01",
+          "date": "2024-10-28",
           "isoWeek": "2024-W44",
           "close": 487.43,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-11-08",
+          "date": "2024-11-04",
           "isoWeek": "2024-W45",
           "close": 514.14,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-11-15",
+          "date": "2024-11-11",
           "isoWeek": "2024-W46",
           "close": 496.57,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-11-22",
+          "date": "2024-11-18",
           "isoWeek": "2024-W47",
           "close": 505.79,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-11-29",
+          "date": "2024-11-25",
           "isoWeek": "2024-W48",
           "close": 509.74,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-12-06",
+          "date": "2024-12-02",
           "isoWeek": "2024-W49",
           "close": 526.48,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-12-13",
+          "date": "2024-12-09",
           "isoWeek": "2024-W50",
           "close": 530.53,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-12-20",
+          "date": "2024-12-16",
           "isoWeek": "2024-W51",
           "close": 518.66,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2024-12-27",
+          "date": "2024-12-23",
           "isoWeek": "2024-W52",
           "close": 522.56,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-01-03",
+          "date": "2024-12-30",
           "isoWeek": "2025-W01",
           "close": 518.58,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-01-10",
+          "date": "2025-01-06",
           "isoWeek": "2025-W02",
           "close": 507.19,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-01-17",
+          "date": "2025-01-13",
           "isoWeek": "2025-W03",
           "close": 521.74,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-01-24",
+          "date": "2025-01-20",
           "isoWeek": "2025-W04",
           "close": 529.63,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-01-31",
+          "date": "2025-01-27",
           "isoWeek": "2025-W05",
           "close": 522.29,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-02-07",
+          "date": "2025-02-03",
           "isoWeek": "2025-W06",
           "close": 522.92,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-02-14",
+          "date": "2025-02-10",
           "isoWeek": "2025-W07",
           "close": 538.15,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-02-21",
+          "date": "2025-02-17",
           "isoWeek": "2025-W08",
           "close": 526.08,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-02-28",
+          "date": "2025-02-24",
           "isoWeek": "2025-W09",
           "close": 508.17,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-03-07",
+          "date": "2025-03-03",
           "isoWeek": "2025-W10",
           "close": 491.79,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-03-14",
+          "date": "2025-03-10",
           "isoWeek": "2025-W11",
           "close": 479.66,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-03-21",
+          "date": "2025-03-17",
           "isoWeek": "2025-W12",
           "close": 480.84,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-03-28",
+          "date": "2025-03-24",
           "isoWeek": "2025-W13",
           "close": 468.94,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-04-04",
+          "date": "2025-03-31",
           "isoWeek": "2025-W14",
           "close": 422.67,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-04-11",
+          "date": "2025-04-07",
           "isoWeek": "2025-W15",
           "close": 454.4,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-04-17",
+          "date": "2025-04-14",
           "isoWeek": "2025-W16",
           "close": 444.1,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-04-25",
+          "date": "2025-04-21",
           "isoWeek": "2025-W17",
           "close": 472.56,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-05-02",
+          "date": "2025-04-28",
           "isoWeek": "2025-W18",
           "close": 488.83,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-05-09",
+          "date": "2025-05-05",
           "isoWeek": "2025-W19",
           "close": 487.97,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-05-16",
+          "date": "2025-05-12",
           "isoWeek": "2025-W20",
           "close": 521.51,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-05-23",
+          "date": "2025-05-19",
           "isoWeek": "2025-W21",
           "close": 509.24,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-05-30",
+          "date": "2025-05-26",
           "isoWeek": "2025-W22",
           "close": 519.11,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-06-06",
+          "date": "2025-06-02",
           "isoWeek": "2025-W23",
           "close": 529.92,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-06-13",
+          "date": "2025-06-09",
           "isoWeek": "2025-W24",
           "close": 526.96,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-06-20",
+          "date": "2025-06-16",
           "isoWeek": "2025-W25",
           "close": 526.83,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-06-27",
+          "date": "2025-06-23",
           "isoWeek": "2025-W26",
           "close": 548.09,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-07-03",
+          "date": "2025-06-30",
           "isoWeek": "2025-W27",
           "close": 556.22,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-07-11",
+          "date": "2025-07-07",
           "isoWeek": "2025-W28",
           "close": 554.2,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-07-18",
+          "date": "2025-07-14",
           "isoWeek": "2025-W29",
           "close": 561.26,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-07-25",
+          "date": "2025-07-21",
           "isoWeek": "2025-W30",
           "close": 566.37,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-08-01",
+          "date": "2025-07-28",
           "isoWeek": "2025-W31",
           "close": 553.88,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-08-08",
+          "date": "2025-08-04",
           "isoWeek": "2025-W32",
           "close": 574.55,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-08-15",
+          "date": "2025-08-11",
           "isoWeek": "2025-W33",
           "close": 577.34,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-08-22",
+          "date": "2025-08-18",
           "isoWeek": "2025-W34",
           "close": 571.97,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-08-29",
+          "date": "2025-08-25",
           "isoWeek": "2025-W35",
           "close": 570.4,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-09-05",
+          "date": "2025-09-01",
           "isoWeek": "2025-W36",
           "close": 576.06,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-09-12",
+          "date": "2025-09-08",
           "isoWeek": "2025-W37",
           "close": 586.66,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-09-19",
+          "date": "2025-09-15",
           "isoWeek": "2025-W38",
           "close": 599.35,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-09-26",
+          "date": "2025-09-22",
           "isoWeek": "2025-W39",
           "close": 595.97,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-10-03",
+          "date": "2025-09-29",
           "isoWeek": "2025-W40",
           "close": 603.18,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-10-10",
+          "date": "2025-10-06",
           "isoWeek": "2025-W41",
           "close": 589.5,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-10-17",
+          "date": "2025-10-13",
           "isoWeek": "2025-W42",
           "close": 603.93,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-10-24",
+          "date": "2025-10-20",
           "isoWeek": "2025-W43",
           "close": 617.1,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-10-31",
+          "date": "2025-10-27",
           "isoWeek": "2025-W44",
           "close": 629.07,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-11-07",
+          "date": "2025-11-03",
           "isoWeek": "2025-W45",
           "close": 609.74,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-11-14",
+          "date": "2025-11-10",
           "isoWeek": "2025-W46",
           "close": 608.86,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-11-21",
+          "date": "2025-11-17",
           "isoWeek": "2025-W47",
           "close": 590.07,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-11-28",
+          "date": "2025-11-24",
           "isoWeek": "2025-W48",
           "close": 619.25,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-12-05",
+          "date": "2025-12-01",
           "isoWeek": "2025-W49",
           "close": 625.48,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-12-12",
+          "date": "2025-12-08",
           "isoWeek": "2025-W50",
           "close": 613.62,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-12-19",
+          "date": "2025-12-15",
           "isoWeek": "2025-W51",
           "close": 617.05,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2025-12-26",
+          "date": "2025-12-22",
           "isoWeek": "2025-W52",
           "close": 623.89,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-01-02",
+          "date": "2025-12-29",
           "isoWeek": "2026-W01",
           "close": 613.12,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-01-09",
+          "date": "2026-01-05",
           "isoWeek": "2026-W02",
           "close": 626.65,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-01-16",
+          "date": "2026-01-12",
           "isoWeek": "2026-W03",
           "close": 621.26,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-01-23",
+          "date": "2026-01-19",
           "isoWeek": "2026-W04",
           "close": 622.72,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-01-30",
+          "date": "2026-01-26",
           "isoWeek": "2026-W05",
           "close": 621.87,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-02-06",
+          "date": "2026-02-02",
           "isoWeek": "2026-W06",
           "close": 609.65,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-02-13",
+          "date": "2026-02-09",
           "isoWeek": "2026-W07",
           "close": 601.92,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-02-20",
+          "date": "2026-02-16",
           "isoWeek": "2026-W08",
           "close": 608.81,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-02-27",
+          "date": "2026-02-23",
           "isoWeek": "2026-W09",
           "close": 607.29,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-03-06",
+          "date": "2026-03-02",
           "isoWeek": "2026-W10",
           "close": 599.75,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-03-13",
+          "date": "2026-03-09",
           "isoWeek": "2026-W11",
           "close": 593.72,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-03-20",
+          "date": "2026-03-16",
           "isoWeek": "2026-W12",
           "close": 582.06,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-03-27",
+          "date": "2026-03-23",
           "isoWeek": "2026-W13",
           "close": 562.58,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-04-02",
+          "date": "2026-03-30",
           "isoWeek": "2026-W14",
           "close": 584.98,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-04-10",
+          "date": "2026-04-06",
           "isoWeek": "2026-W15",
           "close": 611.07,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-04-17",
+          "date": "2026-04-13",
           "isoWeek": "2026-W16",
           "close": 648.85,
-          "sourceFile": "2026-05-13.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-04-24",
+          "date": "2026-04-20",
           "isoWeek": "2026-W17",
           "close": 663.88,
-          "sourceFile": "2026-05-18.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-05-01",
+          "date": "2026-04-27",
           "isoWeek": "2026-W18",
           "close": 674.15,
-          "sourceFile": "2026-05-18.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-05-08",
+          "date": "2026-05-04",
           "isoWeek": "2026-W19",
           "close": 711.23,
-          "sourceFile": "2026-05-18.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-05-15",
+          "date": "2026-05-11",
           "isoWeek": "2026-W20",
           "close": 708.93,
-          "sourceFile": "2026-05-18.csv",
-          "sourceVendor": "nasdaq_official_manual_download"
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-05-18",
+          "isoWeek": "2026-W21",
+          "close": 717.54,
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-05-29",
+          "isoWeek": "2026-W22",
+          "close": 738.31,
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
         }
       ],
       "coverage": {
-        "weeklyRows": 523,
+        "weeklyRows": 522,
         "hasAtLeast60Weeks": true,
-        "oldestDate": "2016-05-13",
-        "latestDate": "2026-05-15"
+        "oldestDate": "2016-05-30",
+        "latestDate": "2026-05-29"
       },
       "dataGaps": [
         "MA60 / 标准差 / z-score 计算待 v28.0M-26 启用。",
