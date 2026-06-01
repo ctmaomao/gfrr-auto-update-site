@@ -228,7 +228,19 @@ const forbiddenRuntimePatterns = [
   [/node-version:\s*['"]?20(?:\.x)?['"]?/u, 'must not use node-version 20'],
   [/node20/u, 'must not use node20'],
   [/ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION/u, 'must not use ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION'],
-  [/FORCE_JAVASCRIPT_ACTIONS_TO_NODE20/u, 'must not use FORCE_JAVASCRIPT_ACTIONS_TO_NODE20']
+  [/FORCE_JAVASCRIPT_ACTIONS_TO_NODE20/u, 'must not use FORCE_JAVASCRIPT_ACTIONS_TO_NODE20'],
+  // ACLED is manual xlsx only — no automated access from ANY workflow.
+  // Authority: docs/DATA_SOURCES.md:310 (EULA §3.3 bans scraping/crawling), AGENTS.md:86/88
+  // (no ACLED_API_KEY / ACLED_EMAIL / api.acleddata.com; reminder workflows must not make any
+  // network request to acleddata.com), docs/WORLD_ORDER_STRESS.md:87.
+  // Precise by design: matches any ACLED_* secret injection, the API subdomain/paths, and scripted
+  // network verbs hitting acleddata.com — NOT the bare domain, so the acled-*-refresh-reminder
+  // workflows may still cite the public download URL (acleddata.com/conflict-data/...) in text.
+  [/secrets\.ACLED_/u, 'must not inject any ACLED_* secret — ACLED is manual xlsx only (docs/DATA_SOURCES.md:310 / AGENTS.md:86 / EULA §3.3)'],
+  [/api\.acleddata\.com/u, 'must not reference the ACLED API subdomain api.acleddata.com — ACLED is manual xlsx only (AGENTS.md:86)'],
+  [/acleddata\.com\/(?:oauth|api)/u, 'must not call ACLED oauth/api endpoints — ACLED is manual xlsx only (docs/DATA_SOURCES.md:310 / EULA §3.3)'],
+  [/(?:curl|wget)\s[^\n]*acleddata\.com/u, 'must not curl/wget acleddata.com — ACLED EULA §3.3 bans scraping; reminders must not contact acleddata.com (AGENTS.md:88)'],
+  [/fetch\([^\n]*acleddata\.com/u, 'must not fetch() acleddata.com — ACLED is manual xlsx only (docs/DATA_SOURCES.md:310 / EULA §3.3)']
 ];
 
 function hasNode24ActionsEnv(text) {
