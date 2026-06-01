@@ -3047,8 +3047,11 @@ function deriveCopperGoldRatioChangePct(copper, gold, ratio) {
   if (!Number.isFinite(ratio)) return null;
   const copperPrice = Number(copper?.price);
   const goldPrice = Number(gold?.price);
-  const copperChange = Number(copper?.changePct);
-  const goldChange = Number(gold?.changePct);
+  // Guard null explicitly: Number(null) === 0 (finite), which would wrongly
+  // yield ratioChangePct 0 instead of null when a leg has no changePct (e.g. the
+  // Yahoo-fallback path, or the one-time gold-api transition run).
+  const copperChange = copper?.changePct == null ? null : Number(copper.changePct);
+  const goldChange = gold?.changePct == null ? null : Number(gold.changePct);
   if (!Number.isFinite(copperPrice) || !Number.isFinite(goldPrice)) return null;
   if (!Number.isFinite(copperChange) || !Number.isFinite(goldChange)) return null;
   if ((1 + copperChange) === 0 || (1 + goldChange) === 0) return null;

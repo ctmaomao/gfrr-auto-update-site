@@ -112,14 +112,13 @@ const VALID_INFLATION_ENERGY_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILW
 const VALID_INFLATION_CPI_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL';
 const VALID_INFLATION_WTI_SOURCE = 'FRED:DCOILWTICO';
 const COPPER_GOLD_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
-// expand-then-contract: accept the current gold-api source / 1d window AND the
-// pre-swap committed Yahoo / 5d values during transition. Contract to gold-api +
-// 1d only after a Daily run commits gold-api-sourced copperGold data.
-const VALID_COPPER_GOLD_SOURCES = new Set([
-  'gold-api:HG; gold-api:XAU',
-  'Yahoo:HG=F; Yahoo:GC=F'
-]);
-const VALID_COPPER_GOLD_WINDOWS = new Set(['1d', '5d']);
+// copperGold parent source is gold-api spot (HG/XAU) with a 1d (day-over-day vs
+// previous Daily run) window. Yahoo HG=F/GC=F is a per-leg fallback only — the
+// parent source label stays gold-api regardless — so it is not listed here.
+// (Pre-swap Yahoo/5d transition allowance contracted 2026-06-01 after the Daily
+// run committed gold-api-sourced copperGold data.)
+const VALID_COPPER_GOLD_SOURCES = new Set(['gold-api:HG; gold-api:XAU']);
+const VALID_COPPER_GOLD_WINDOWS = new Set(['1d']);
 const COPPER_GOLD_KEYS = ['copper', 'gold'];
 const CHINA_BOND_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_CHINA_BOND_SOURCE = 'ChinaBond:MOF-yield-curve';
