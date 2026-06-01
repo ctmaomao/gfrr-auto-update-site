@@ -515,7 +515,7 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
 ### 8.2 结构禁令
 
 1. ❌ 改变 §4.1 的 IA 顺序（除非走 §4.2 流程）
-2. ❌ 添加新的一级 section 而不更新 `check:homepage-ia-contract` 和本文档
+2. ❌ 添加新的一级 section 而不同步更新 §4.1 IA 顺序 / §5.6 视觉契约 与 `docs/ADR/0014-design-md-is-ia-ground-truth.md`,且未运行 `npm run check:frontend-live-contracts`
 3. ❌ 把"主路径 section"改为折叠
 4. ❌ 把"附录 section"提升到主路径
 5. ❌ 使用非标准的 className 派系（如 `editorial-heatmap-*`, `editorial-appendix-*`, `ia-detail-panel`, `advanced-panel` 作为顶层容器）

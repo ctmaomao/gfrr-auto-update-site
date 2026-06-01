@@ -25,8 +25,6 @@
 | `CLAUDE.md` | AI 启动导航 (新增于 v28.0J-pre-split 后) |
 | `DESIGN.md` | 前端设计契约 (视觉/IA/色彩/字体/组件) |
 | `AGENTS.md` | AI 开发规则合约 (规则锚点,索引/历史已外迁) |
-| `scripts/check-homepage-ia-contract.mjs` | 首页 IA 顺序与 anchor 权威 |
-| `scripts/check-editorial-redesign-contract.mjs` | 字体白名单 + IA + 设计 anchor 权威 |
 | `package.json` | 所有 check 命令与 `check:all` 组成权威源 |
 | `docs/PROJECT_BACKLOG.md` | 项目自我记忆 + 跨会话 active task |
 | `docs/DATA_SOURCES.md` | 10+ 外部数据源边界 (新增于 v28.0J-pre-split 后) |

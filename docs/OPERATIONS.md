@@ -2124,7 +2124,7 @@ v28.0M-7U makes Macro Risk Overview the single primary homepage judgment and mov
 
 Operator guidance:
 
-- If users report duplicate judgment modules, run `npm run check:homepage-ia-contract`.
+- If users report duplicate judgment modules, consult the homepage IA order in DESIGN.md §4.1 (ADR-0014) and run `npm run check:frontend-live-contracts`.
 - Do not manually edit generated Daily Brief, AI, decision, execution, or position content to fix UX confusion.
 - Use grouping, collapsible detail sections, or copy around static section headings instead.
 - External AI remains a read-only auxiliary explanation and must keep display gates.
@@ -2152,7 +2152,7 @@ v28.0M-7V-1 records that the homepage reading path repair is merged and post-mer
 Operator guidance:
 
 - The homepage primary reading path is the 10-step nav: 今日总判断 → 压力来源 → 信号分层 → 四大驱动 → 市场温度 → 风险引擎 → 交叉验证 → 风险热力图 → 详细数据 → 方法说明.
-- If users report confusing navigation, inspect `npm run check:homepage-ia-contract` before changing layout.
+- If users report confusing navigation, consult the homepage IA order in DESIGN.md §4.1 (ADR-0014) and run `npm run check:frontend-live-contracts` before changing layout.
 - Do not fix homepage UX by manually editing generated AI text, Daily Brief output, external AI text, or radar data.
 - Macro Overview remains the primary conclusion / pressure / signal / driver / temperature / engine / cross-validation layer.
 - Daily Brief remains evidence / source detail.
@@ -2166,7 +2166,7 @@ v28.0N-1 introduces an editorial first-fold homepage skin. It is frontend displa
 
 Operator guidance:
 
-- Preserve the homepage reading path order and anchors protected by `npm run check:homepage-ia-contract`.
+- Preserve the homepage reading path order and anchors protected by DESIGN.md §4.1 (homepage IA order, ADR-0014).
 - Do not edit generated AI text, Daily Brief output, scoring, decision, execution, position, workflow, or data pipeline logic for the editorial skin.
 - Market Pricing Temperature remains waiting-for-history; do not add market-pricing records or calculate MA60, standard deviation, z-score, bands, or temperature.
 - External AI remains read-only auxiliary explanation and must keep its boundaries.
@@ -2177,7 +2177,7 @@ v28.0N-2 introduces editorial pressure-source reading polish. It is frontend dis
 
 Operator guidance:
 
-- Preserve `homepage-pressure-sources` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Preserve `homepage-pressure-sources` and the homepage reading path protected by DESIGN.md §4.1 (homepage IA order, ADR-0014).
 - Treat pressure-source status classes and count pills as display-only presentation.
 - Do not edit generated AI text, Daily Brief output, scoring, decision, execution, position, workflow, or data pipeline logic for the pressure-source polish.
 - Market Pricing Temperature remains waiting-for-history and must not be activated.
@@ -2188,7 +2188,7 @@ v28.0N-3 introduces editorial signal-layer reading polish. It is frontend displa
 
 Operator guidance:
 
-- Preserve `homepage-signal-layers` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Preserve `homepage-signal-layers` and the homepage reading path protected by DESIGN.md §4.1 (homepage IA order, ADR-0014).
 - Treat signal bucket classes, summaries, count pills, and cards as display-only presentation.
 - Do not edit generated AI text, Daily Brief output, scoring, signal judgment calculation, decision, execution, position, workflow, or data pipeline logic for the signal-layer polish.
 - Market Pricing Temperature remains waiting-for-history and must not be activated.
@@ -2200,7 +2200,7 @@ v28.0N-4 introduces the editorial paper background and Bubble Watch-style font s
 Operator guidance:
 
 - Do not add external font, CDN, image, or provider URLs for the paper/font foundation.
-- Preserve the homepage reading path and anchors protected by `npm run check:homepage-ia-contract`.
+- Preserve the homepage reading path and anchors protected by DESIGN.md §4.1 (homepage IA order, ADR-0014).
 - Preserve dark legacy panel readability while the lower dashboard remains only partially converted.
 - Do not edit generated AI text, Daily Brief output, scoring, pressure or signal judgment calculation, decision, execution, position, workflow, or data pipeline logic.
 - Market Pricing Temperature remains waiting-for-history and must not be activated.
@@ -2211,7 +2211,7 @@ v28.0N-5 introduces editorial macro-driver reading polish. It is frontend displa
 
 Operator guidance:
 
-- Preserve `homepage-macro-drivers` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Preserve `homepage-macro-drivers` and the homepage reading path protected by DESIGN.md §4.1 (homepage IA order, ADR-0014).
 - Keep growth, inflation, liquidity, and policy driver cards as rendered evidence only; do not change macro driver judgment calculation.
 - Preserve the N-1 first fold, N-2 pressure section, N-3 signal section, N-4 paper/font foundation, homepage IA order, and anchors.
 - Do not change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
@@ -2223,7 +2223,7 @@ v28.0N-6 introduces editorial Market Temperature waiting-state polish. It is fro
 
 Operator guidance:
 
-- Preserve `homepage-market-temperature` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Preserve `homepage-market-temperature` and the homepage reading path protected by DESIGN.md §4.1 (homepage IA order, ADR-0014).
 - Keep Market Pricing Temperature waiting-for-history; do not infer market cold, normal, hot, or overheated status.
 - Keep QQQ / Nasdaq weekly history, 60+ weeks, MA60, standard deviation, and z-score gaps visible.
 - Do not add live fetch, market-pricing records, history writes, MA60, standard deviation, z-score, calculation, production writes, workflows, External AI changes, or scoring/decision/execution/position logic changes.
@@ -2234,7 +2234,7 @@ v28.0N-7 introduces editorial risk-engine reading polish. It is frontend display
 
 Operator guidance:
 
-- Preserve `homepage-risk-engines` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Preserve `homepage-risk-engines` and the homepage reading path protected by DESIGN.md §4.1 (homepage IA order, ADR-0014).
 - Keep risk-engine type/status classes, summaries, count pills, and cards as rendered evidence only; do not change risk-engine judgment calculation.
 - Preserve evidence, missing evidence, and counter-evidence visibility.
 - Do not convert risk mechanisms into trading advice or change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
@@ -2246,7 +2246,7 @@ v28.0N-8 introduces editorial cross-validation reading polish. It is frontend di
 
 Operator guidance:
 
-- Preserve `homepage-cross-validation` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Preserve `homepage-cross-validation` and the homepage reading path protected by DESIGN.md §4.1 (homepage IA order, ADR-0014).
 - Keep cross-validation status classes, summaries, count pills, and cards as rendered evidence only; do not change cross-validation judgment calculation.
 - Preserve evidence, missing evidence, counter-evidence, noise warnings, and data gaps.
 - Do not force macro conclusions from partial validation or change scoring, decision, execution, position logic, data pipeline, workflows, External AI, or Market Pricing calculations.
@@ -2258,7 +2258,7 @@ v28.0N-9 introduces editorial Global Risk Heatmap polish. It is frontend display
 
 Operator guidance:
 
-- Preserve `global-risk-heatmap`, `world-heatmap`, `heatmap-list`, and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Preserve `global-risk-heatmap`, `world-heatmap`, `heatmap-list`, and the homepage reading path protected by DESIGN.md §4.1 (homepage IA order, ADR-0014).
 - Keep Global Risk Heatmap standalone and visually prominent as a visual evidence layer.
 - Do not change heatmap scoring, region data calculation, data pipeline, workflows, External AI, Market Pricing, or decision/execution/position logic.
 - Market Pricing Temperature remains waiting-for-history and must not be activated.
@@ -2269,7 +2269,7 @@ v28.0N-10 introduces editorial Detailed Data appendix polish. It is frontend dis
 
 Operator guidance:
 
-- Preserve `detail-data`, `detail-data-header`, and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Preserve `detail-data`, `detail-data-header`, and the homepage reading path protected by DESIGN.md §4.1 (homepage IA order, ADR-0014).
 - Keep detailed data as a secondary audit appendix, not the first reading path.
 - Keep realtime inputs, data health, charts, asset tables, execution/risk details, and collapsible panels available.
 - Do not change data, charts, calculations, workflows, External AI, Market Pricing, scoring, decision, execution, or position logic.
@@ -2280,7 +2280,7 @@ v28.0N-11 introduces editorial Method / Evidence / Boundary appendix polish. It 
 
 Operator guidance:
 
-- Preserve `method-evidence` and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Preserve `method-evidence` and the homepage reading path protected by DESIGN.md §4.1 (homepage IA order, ADR-0014).
 - Keep method content as a secondary explanatory appendix after Detailed Data.
 - Keep Market Pricing Temperature waiting-for-history and External AI as read-only auxiliary explanation.
 - Do not change data, charts, calculations, workflows, External AI, Market Pricing, scoring, decision, execution, or position logic.
@@ -2291,7 +2291,7 @@ v28.0N-12 introduces editorial External AI read-only panel polish. It is fronten
 
 Operator guidance:
 
-- Preserve `external-ai-display-panel`, hidden / aria-hidden behavior, and the homepage reading path protected by `npm run check:homepage-ia-contract`.
+- Preserve `external-ai-display-panel`, hidden / aria-hidden behavior, and the homepage reading path protected by DESIGN.md §4.1 (homepage IA order, ADR-0014).
 - Keep External AI auxiliary and read-only.
 - Do not change External AI generated text, provider path, workflow, output schema, production write, scoring, decision, execution, position logic, data pipeline, or Market Pricing calculations.
 - Keep Market Pricing Temperature waiting-for-history.
@@ -2335,7 +2335,7 @@ v28.0N-16 adds an editorial redesign contract guard. It is guard / validation la
 
 Operator guidance:
 
-- Use `npm run check:editorial-redesign-contract` when touching the editorial homepage shell, macro overview renderer, or paper theme styles.
+- Run `npm run check:frontend-live-contracts` and review DESIGN.md §5.6 (M-94 V0 视觉契约, ADR-0014) when touching the editorial homepage shell, macro overview renderer, or paper theme styles.
 - The guard protects the Bubble Watch-inspired editorial structures, paper theme, Market Pricing waiting state, External AI read-only boundary, and Global Risk Heatmap standalone status.
 - Do not treat the guard as approval to redesign UI or change data, scoring, decision, execution, position logic, workflows, External AI behavior, or Market Pricing calculations.
 
