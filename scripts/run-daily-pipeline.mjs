@@ -138,12 +138,16 @@ const COPPER_GOLD_SOURCE = 'gold-api:HG; gold-api:XAU';
 // ratioChangePct is derived day-over-day from the previous Daily run's stored
 // leg price — hence the window is "1d" (vs previous daily run), not 5d intraday.
 const COPPER_GOLD_CHANGE_WINDOW = '1d';
+// Range used only when a leg falls back to the Yahoo chart (different provider,
+// keeps both legs covered if gold-api is down); just enough to land a recent
+// close — the Yahoo-fallback changePct is dropped to avoid mixing windows.
+const COPPER_GOLD_YAHOO_FALLBACK_RANGE = '5d';
 const COPPER_GOLD_DISPLAY_NOTE =
-  '铜金比 display-only 公开现货价(gold-api);regime 观察,不进 scoring/decision/execution/position。';
+  '铜金比 display-only 公开现货价(gold-api 主 / Yahoo 期货备);regime 观察,不进 scoring/decision/execution/position。';
 const COPPER_GOLD_STATUS_RANK = { live: 0, fallback: 1, missing: 2 };
 const COPPER_GOLD_LEGS = [
-  { key: 'copper', symbol: 'HG', labelZh: '铜现货', min: 0.5, max: 20 },
-  { key: 'gold', symbol: 'XAU', labelZh: '金现货', min: 500, max: 10000 }
+  { key: 'copper', symbol: 'HG', yahooSymbol: 'HG=F', labelZh: '铜现货', min: 0.5, max: 20 },
+  { key: 'gold', symbol: 'XAU', yahooSymbol: 'GC=F', labelZh: '金现货', min: 500, max: 10000 }
 ];
 const CHINA_BOND_SOURCE = 'ChinaBond:MOF-yield-curve';
 const CHINA_BOND_LEAF_SOURCE = 'ChinaBond:MOF';
@@ -3082,9 +3086,40 @@ function buildMissingCopperGold(prevCopperGold = null) {
   return next;
 }
 
+// Resolve a single copperGold leg: gold-api spot (primary) with a Yahoo futures
+// fallback (different provider, so both legs survive a gold-api outage). Returns
+// { quote, sourceStatus, changePct } or null when both providers fail.
+async function fetchCopperGoldLeg(config, prevLeg) {
+  try {
+    const goldApi = await fetchGoldApiPrice(config.symbol);
+    if (isPlausibleCopperGoldQuote(goldApi, config)) {
+      // gold-api gives spot price only; derive changePct day-over-day from the
+      // previous run's gold-api price (null on the one-time Yahoo->gold-api
+      // transition, when the prior leg's source was not gold-api).
+      const prevPrice = Number(prevLeg?.price);
+      const prevFromGoldApi = typeof prevLeg?.source === 'string' && prevLeg.source.startsWith('gold-api');
+      const changePct = (prevFromGoldApi && Number.isFinite(prevPrice) && prevPrice > 0)
+        ? +(((goldApi.price - prevPrice) / prevPrice)).toFixed(4)
+        : null;
+      return { quote: goldApi, sourceStatus: 'live', changePct };
+    }
+  } catch (_err) { /* fall through to Yahoo fallback */ }
+
+  try {
+    const yahoo = await fetchYahooChartQuote(config.yahooSymbol, COPPER_GOLD_YAHOO_FALLBACK_RANGE, '1d');
+    if (isPlausibleCopperGoldQuote(yahoo, config)) {
+      // Different-provider fallback; drop changePct to avoid mixing the gold-api
+      // day-over-day window with Yahoo's intraday window.
+      return { quote: yahoo, sourceStatus: 'fallback', changePct: null };
+    }
+  } catch (_err) { /* fall through to previous-run carry-over */ }
+
+  return null;
+}
+
 async function resolveCopperGold(prevCopperGold) {
   const results = await Promise.allSettled(
-    COPPER_GOLD_LEGS.map((config) => fetchGoldApiPrice(config.symbol))
+    COPPER_GOLD_LEGS.map((config) => fetchCopperGoldLeg(config, prevCopperGold?.[config.key]))
   );
 
   const next = {
@@ -3096,27 +3131,19 @@ async function resolveCopperGold(prevCopperGold) {
 
   COPPER_GOLD_LEGS.forEach((config, index) => {
     const result = results[index];
-    if (result.status === 'fulfilled' && isPlausibleCopperGoldQuote(result.value, config)) {
-      // gold-api gives spot price only; derive changePct day-over-day from the
-      // previous run's gold-api price (skip on the one-time Yahoo->gold-api
-      // transition run, when the prior leg's source was not gold-api).
-      const prevLeg = prevCopperGold?.[config.key];
-      const prevPrice = Number(prevLeg?.price);
-      const prevFromGoldApi = typeof prevLeg?.source === 'string' && prevLeg.source.startsWith('gold-api');
-      const changePct = (prevFromGoldApi && Number.isFinite(prevPrice) && prevPrice > 0)
-        ? +(((result.value.price - prevPrice) / prevPrice)).toFixed(4)
-        : null;
+    const resolved = result.status === 'fulfilled' ? result.value : null;
+    if (resolved) {
       next[config.key] = {
         symbol: config.symbol,
         labelZh: config.labelZh,
-        price: result.value.price,
-        changePct,
+        price: resolved.quote.price,
+        changePct: resolved.changePct,
         changeWindow: COPPER_GOLD_CHANGE_WINDOW,
-        updatedAt: result.value.updatedAt,
-        source: result.value.source,
-        sourceStatus: 'live'
+        updatedAt: resolved.quote.updatedAt,
+        source: resolved.quote.source,
+        sourceStatus: resolved.sourceStatus
       };
-      next.sourceStatus[config.key] = 'live';
+      next.sourceStatus[config.key] = resolved.sourceStatus;
       return;
     }
 
