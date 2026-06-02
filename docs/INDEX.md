@@ -74,6 +74,7 @@
 - `docs/M-48_NFCI_BANK_STRESS_INDEX.md`
 - `docs/M-49_DIESEL_CRACK_SPREAD.md`
 - `docs/M-50_REPO_MARKET_SPREAD.md`
+- `docs/M-67_ISM_PMI_SOURCE_REPAIR.md` — ISM PMI **active source contract**(`docs/M-47_ISM_PMI_GROWTH_LAYER.md` §Current Source 明确指向它;FRED:NAPM 404 后现行源为 `ISM:ManufacturingPMI`)。**仍有效,非历史**;audit-only/display-only。
 
 ### Cross-validation narrative density scope (M-51 → M-53)
 
@@ -105,6 +106,11 @@
 - `docs/M-61_SIPRI_INTEGRATION.md`
 - (M-43 provenance, M-62 isoWeek merge — 见 MILESTONE_INDEX.md)
 
+### M-94 V0 Path C frontend rebuild scope (current — 仍有效,非历史)
+
+- `docs/M94_V0_DATA_CONTRACT.md` — M-94 V0 数据消费契约 v3.1 + 视觉权威基准(mock v2.1);文件自述「保持有效」,被 `AGENTS.md` 与 `DESIGN.md §5.6` 引用。前端 display-only,不动 scoring/decision/execution/position/Worker/pipeline。
+- `docs/m94-v0/M94_V0_FRONTEND_REBUILD_PLAN.md` — 路径 C 前端重写 7-stage 计划参考(位于 `docs/m94-v0/` 子目录,非 `docs/` 顶层)。
+
 ### External AI scope
 
 - `docs/EXTERNAL_AI_API_DESIGN.md`
@@ -112,13 +118,14 @@
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`
 - `docs/EXTERNAL_AI_MANUAL_TEST_DESIGN.md`
 - `docs/EXTERNAL_AI_PROVENANCE_TRACKING_M43.md`
-- `docs/EXTERNAL_AI_*_DESIGN.md` (其他)
+- `docs/EXTERNAL_AI_*_DESIGN.md` (其他;wildcard 覆盖未逐条列出的 External AI 设计文档 — 本轮有意不逐文件展开)
 
 ### World Order / Signal Intake scope
 
 - `docs/WORLD_ORDER_STRESS.md`
 - `docs/WORLD_ORDER_SOURCE_REVIEW.md`
 - `docs/SIGNAL_INTAKE.md`
+- `docs/M-63_ACLED_INTEGRATION.md` — ACLED manual-xlsx 接入操作契约(**仍有效,非普通历史**):含 EULA §3.3 硬边界(禁 workflow/script/crawler/browser 自动访问 `acleddata.com`);`acled-{weekly,monthly}-refresh-reminder.yml` 仍指向其 Runbook(Section 3 + Section 9)。
 
 ### Architecture (conditional, not current operating contract)
 
@@ -138,6 +145,7 @@
 - `docs/DATA_CONTRACT.md` — 数据契约 (规则与历史混合)
 - `docs/OPERATIONS.md` — 运维与排查 (命令与版本历史混合)
 - `docs/SYSTEM_UPGRADE_PLAN.md` — 升级计划与稳定基线 (规则与已完成阶段混合)
+- `docs/MARKET_PRICING_WEEKLY_REFRESH.md` — QQQ 周线**手动 fallback runbook**(`scripts/refresh-qqq-data.ps1` operator 工具,非 CI)。QQQ 周历史已改 Yahoo cron 自动(`refresh-qqq-market-pricing.yml`),本 runbook 退为手动 fallback,非历史死档。
 
 ---
 
