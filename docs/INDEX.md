@@ -54,15 +54,8 @@
 
 ### Editorial / Visual scope (M-31 → M-39)
 
-- `docs/EDITORIAL_DESIGN_CONTRACT_COMPLIANCE_M31.md` (M-31)
-- `docs/EDITORIAL_DESIGN_CONTRACT_AMENDMENT_M32.md` (M-32)
-- `docs/BIAS_COLOR_SEMANTIC_FIX_M33.md` (M-33)
-- `docs/SPACING_GOVERNANCE_M34.md` (M-34)
-- `docs/SPACING_GOVERNANCE_M35_AND_FOOTER.md` (M-35)
-- `docs/CODE_DEAD_WEIGHT_REMOVAL_M36.md` (M-36)
-- `docs/DOCUMENTATION_VERSION_DRIFT_FIX_M37.md` (M-37)
-- `docs/SECTION_BORDER_CONSISTENCY_M38.md` (M-38)
-- `docs/BRENT_PROMOTION_AUDIT_M39.md` (M-39)
+- M-31 → M-38(8 个 editorial/visual 已合并 milestone scope docs)— 已在 `docs/MILESTONE_INDEX.md` ## Archived › M-series 逐条登记,默认不加载(A1 验证 2026-06-02:纯历史、无活引用)。
+- `docs/BRENT_PROMOTION_AUDIT_M39.md` (M-39) — 保留(A1 验证:被 ADR-0009 References 引用,非纯历史)
 
 ### Macro driver expansion scope (M-41 → M-50)
 
@@ -78,9 +71,7 @@
 
 ### Cross-validation narrative density scope (M-51 → M-53)
 
-- `docs/M-51_WORLD_ORDER_NARRATIVE_ENHANCEMENT.md`
-- `docs/M-52_RISK_ASSET_MISMATCH_NARRATIVE_ENHANCEMENT.md`
-- `docs/M-53_OVERHEAT_CONFIRMATION_NARRATIVE_ENHANCEMENT.md`
+- M-51 → M-53(3 个 narrative-density 已合并 milestone scope docs)— 已在 `docs/MILESTONE_INDEX.md` ## Archived 逐条登记,默认不加载(A1 验证 2026-06-02:纯历史、无活引用)。
 
 ### Brent / energy public proxy source review scope
 
@@ -93,9 +84,7 @@
 
 ### Frontend visual + IA restructure scope (M-54 → M-55b)
 
-- `docs/M-54_FRONTEND_VISUAL_UPGRADE_PHASE1.md`
-- `docs/M-55a_IA_RESTRUCTURE_PHASE2A.md`
-- `docs/M-55b_IA_RESTRUCTURE_PHASE2B.md`
+- M-54 → M-55b(3 个 frontend-visual / IA-restructure 已合并 milestone scope docs;M-54 已被 M-94 推翻)— 已在 `docs/MILESTONE_INDEX.md` ## Archived 逐条登记,默认不加载(A1 验证 2026-06-02:纯历史、无活引用)。
 
 ### Recent milestones (M-57 → M-62)
 
