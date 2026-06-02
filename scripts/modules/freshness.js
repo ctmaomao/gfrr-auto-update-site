@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=frontend-stale-static-wire-2';
+﻿import { fmtNumSafe } from './config.js?v=frontend-stale-static-wire-3';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

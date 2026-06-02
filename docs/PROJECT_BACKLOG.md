@@ -9,7 +9,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 项 | 当前值 |
 |---|---|
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分)|
-| Cache version | `frontend-stale-static-wire-2` |
+| Cache version | `frontend-stale-static-wire-3` |
 | check:all 项数 | 15 顶层项 / ~48 leaf checks(checker 精简 Phase 1+2 后)|
 | 最后审计日期 | 2026-06-02(Codex 只读审计 + Claude 7-agent 复核 + Codex 终裁;已修 F3 文档漂移 `a6e9101` + F2 ACLED workflow 清理 `a74a4a2` + F4 M94 mock 可复现 `4c491f3` + F1 AGENTS.md 分层措辞 `c7a9db7`,**Codex 审计 7 findings 全部收口**:F5/F6 = no action、F7 本轮增量(A2/A3/A1-clean;A1 余项 + .mjs 拆分 deferred);详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |

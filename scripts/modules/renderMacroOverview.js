@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=frontend-stale-static-wire-2';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-wire-2';
+} from './config.js?v=frontend-stale-static-wire-3';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-wire-3';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2182,6 +2182,7 @@ function renderDetailData({ radarData }) {
     if (asNumber(realtime.healthScore) !== null) {
       setLeafText('detail-health-score-dd', `${Math.round(realtime.healthScore)} / 100`);
     }
+    setLeafText('detail-fed-signal-count', String(structuralSignals.length));
     if (structuralSignals.length > 0) {
       const sig = structuralSignals[0];
       setLeafText('detail-health-structural-dd', `${sig.key || 'structuralSignal'} (${structuralSignals.length})`);

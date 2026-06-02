@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=frontend-stale-static-wire-2" />
+  <link rel="stylesheet" href="assets/styles.css?v=frontend-stale-static-wire-3" />
 </head>
 <body>
   <div class="container">
@@ -414,11 +414,11 @@
         <div class="appendix-narrative-intro">本附录为今日主判断的支撑层。所有数据来自 <code>data/radar-data.json</code>，每天自动更新。读取顺序：数据健康 → 时间维度 → 传导网络 → 资产投影。</div>
 
         <h4>1. 数据健康 <em>· Data Health</em></h4>
-        <p>本期数据综合健康状态<strong>正常</strong>。<code class="ok" id="detail-health-score">healthScore 100/100</code>，数据来源为 <code id="detail-health-source-mode">worker-realtime</code>，0 项关键缺失，0 项 fallback。Daily 输入来自 <code id="detail-health-branch">realtime-data</code> 分支，提交 <code id="detail-health-commit">75b982d4</code>，采集时间 <code id="detail-health-captured">23:29 UTC</code>。实时数据源刷新成功，无需进入降级模式或缓存模式。</p>
+        <p>本期数据综合健康状态<strong>正常</strong>。<code class="ok" id="detail-health-score">healthScore 100/100</code>，数据来源为 <code id="detail-health-source-mode">worker-realtime</code>，无关键缺失、无 fallback。Daily 输入来自 <code id="detail-health-branch">realtime-data</code> 分支，提交 <code id="detail-health-commit">75b982d4</code>，采集时间 <code id="detail-health-captured">23:29 UTC</code>。实时数据源刷新成功，无需进入降级模式或缓存模式。</p>
         <div class="appendix-twocol">
           <div>
             <p>快变量层 7 个数据源(<code>brent / dxy / vix / hyOas / us10y / gold / spx</code>) 全部 <code class="ok">live</code>。慢变量层 macroDrivers 下 12 个子模块的 <code>sourceStatus</code> 字段显示，FRED 系列(8 项)、Yahoo 系列(NDX/QQQ/IXIC/BIZD/PBDC/SRLN/CCLFX 等)、ISM(PMI)、StockQ(BDTI/BCTI/BDI)、ICE(CDX HY/IG)、Bank of America Consumer Checkpoint 均处于 live 状态。</p>
-            <p>结构信号层激活 1 项：<code class="warn">逆回购准备金告急</code>(<span id="detail-fed-onrrp">ON RRP 9.65 亿美元</span>)。该信号已纳入决策层门控，但 fedLiquidity 三层主流仍处于 <code class="ok" id="detail-fed-regime">平稳</code> regime，WALCL <span id="detail-fed-walcl">6.71T</span>、reserveBalances <span id="detail-fed-reserves">3.13T</span>、SOFR/EFFR 锚定 <span id="detail-fed-sofr-effr">3.51%/3.62%</span>，repoSpreadRegime 为<code class="ok" id="detail-fed-repo-regime">正常</code>。</p>
+            <p>结构信号层激活 <span id="detail-fed-signal-count">1</span> 项：<code class="warn">逆回购准备金告急</code>(<span id="detail-fed-onrrp">ON RRP 9.65 亿美元</span>)。该信号已纳入决策层门控，但 fedLiquidity 三层主流仍处于 <code class="ok" id="detail-fed-regime">平稳</code> regime，WALCL <span id="detail-fed-walcl">6.71T</span>、reserveBalances <span id="detail-fed-reserves">3.13T</span>、SOFR/EFFR 锚定 <span id="detail-fed-sofr-effr">3.51%/3.62%</span>，repoSpreadRegime 为<code class="ok" id="detail-fed-repo-regime">正常</code>。</p>
           </div>
           <aside class="appendix-sidebar">
             <div class="sidebar-kicker">健康度快照</div>
@@ -871,6 +871,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=frontend-stale-static-wire-2"></script>
+  <script type="module" src="scripts/app.js?v=frontend-stale-static-wire-3"></script>
 </body>
 </html>
