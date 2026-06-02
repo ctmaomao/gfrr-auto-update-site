@@ -3316,49 +3316,48 @@
     "schemaVersion": "v28.0L-external-ai-production-1",
     "status": "valid",
     "displayEnabled": true,
-    "generatedAt": "2026-06-01T02:04:57.890Z",
-    "updatedAt": "2026-06-01T02:04:57.890Z",
+    "generatedAt": "2026-06-02T02:06:01.131Z",
+    "updatedAt": "2026-06-02T02:06:01.131Z",
     "sourceMode": "manual_local_compact",
     "provider": "deepseek",
     "model": "deepseek-v4-flash",
     "inputSource": "local_compact",
     "sourceSemantics": "site_structured_data_compact_summary",
-    "summaryZh": "站内结构化数据显示当前主线为能源→通胀→利率压力，布伦特公开代理价差处于压力状态，长端利率与风险资产存在观察性背离。消费者信心月频走弱，但信用利差和波动率尚未明显扩张。整体证据指向压力传导初期，但缺乏正式实物成交价和期限结构数据，置信度较低。若布伦特回落且利率下行，则当前压力情景可能缓解。",
+    "summaryZh": "站内结构化数据显示能源-通胀-利率链条仍为主要压力来源，布伦特现货与期货代理价差处于压力状态，长端利率与风险资产存在观察性背离。消费者信心月频数据走弱，但信用利差和波动率尚未明显扩张。当前证据仅支持观察，不足以形成高置信度方向判断。若布伦特回落且利率压力缓解，则当前压力情景可能失效。",
     "facts": [
-      "布伦特公开代理现货值为102.75美元，期货代理值为92.96美元，价差9.79美元，处于压力状态。",
-      "美国10年期收益率为4.45%，实际利率为2.06%。",
-      "标普500指数为7580.06，VIX为15.74。",
-      "消费者信心指数(UMCSENT)为49.8，前值53.3，三个月变化-6.6。",
-      "高收益利差为2.72%。",
-      "广义美元指数为119.29。",
-      "地缘政治风险模块得分69，趋势-8；能源风险模块得分71，趋势-9。"
+      "布伦特现货代理值为102.75美元，期货代理值为95.19美元，价差7.56美元，处于压力状态。",
+      "美国10年期收益率为4.45%，10年期实际利率为2.07%。",
+      "标普500指数为7580.06，VIX为15.32。",
+      "消费者信心指数UMCSENT为49.8，前值53.3，三个月变化-6.6。",
+      "高收益利差为2.74%，广义美元指数为118.88。",
+      "风险模块中能源得分71，地缘政治得分68，通胀得分55，流动性得分46。"
     ],
     "inferences": [
-      "布伦特现货与期货价差扩大，可能反映短期实物供应紧张预期，但该价差来自公开代理，不等同于正式成交价。",
-      "长端利率上行与风险资产高位并存，形成背离，但VIX和信用利差未同步扩张，表明市场尚未普遍定价压力。",
-      "消费者信心持续走弱，与风险资产定价存在方向性差异，但该指标为月频慢变量，传导至资产定价需时间。"
+      "布伦特现货与期货价差扩大可能反映短期供应紧张或市场结构压力，但该价差来自公开代理数据，不等同于实物成交价。",
+      "长端利率上行与风险资产高位并存，形成观察性背离，但波动率偏低表明市场尚未普遍定价压力。",
+      "消费者信心持续走弱与风险资产定价存在背离，但该数据为月频慢变量，发布时间有延迟。"
     ],
     "modelJudgments": [
-      "能源→通胀→利率链条的证据强度中等：布伦特价差和利率数据支持传导，但缺乏正式现货成交价和期限结构，数据充分性不足。",
-      "背离层多个检查项处于stress状态，但风险自满检查为normal，表明当前背离尚未引发广泛市场恐慌，属于低置信度观察。",
-      "消费者信心数据为月频，存在发布延迟，不足以作为实时判断依据，属于insufficient_data。"
+      "能源价格背离证据强度中等，价差压力来自公开代理，需更多数据确认。",
+      "利率与风险资产背离证据充分但不确定性高，因波动率未扩张，市场情绪尚未恶化。",
+      "消费者信心数据充分但为月频，不足以作为实时判断依据，属于低置信度观察。"
     ],
     "scenarioHypotheses": [
       {
-        "titleZh": "能源利率压力持续情景",
+        "titleZh": "能源-利率-资产重定价观察",
         "triggerConditions": [
-          "布伦特公开代理价差继续扩大或维持stress",
-          "美国10年期收益率进一步上行",
+          "布伦特公开代理价差持续处于压力状态",
+          "美国10年期收益率继续上行",
           "VIX或高收益利差明显扩张"
         ],
         "invalidationConditions": [
-          "布伦特公开代理价差收敛至正常",
+          "布伦特公开代理价差收敛",
           "美国10年期收益率回落",
-          "VIX与高收益利差未扩张且综合风险分数下降"
+          "VIX与高收益利差未扩张"
         ]
       },
       {
-        "titleZh": "消费者与资产背离缓解情景",
+        "titleZh": "消费者-资产背离缓和观察",
         "triggerConditions": [
           "消费者信心三个月变化改善",
           "美国10年期收益率回落",
@@ -3367,22 +3366,27 @@
         "invalidationConditions": [
           "消费者信心继续走弱",
           "高收益利差或VIX扩张",
-          "风险资产定价继续与消费者数据背离"
+          "风险资产定价继续与体感数据背离"
         ]
       }
     ],
     "dataGaps": [
-      "Platts Dated Brent / 正式实物现货成交价未接入。",
-      "Brent期限结构数据未接入。",
-      "航运/运费压力数据未在输入中提供。",
-      "消费者信心数据为月频，缺乏更高频的消费或零售数据。"
+      "Platts Dated Brent或正式实物成交数据未接入。",
+      "布伦特期限结构数据未接入。",
+      "航运/运费压力数据未在本次输入中提供。"
     ],
     "invalidationSignals": [
       "布伦特回落且验证层不再提示压力。",
       "美国10年期收益率回落。",
-      "VIX / 高收益利差未扩张且综合风险分数下降。"
+      "VIX或高收益利差未扩张且综合风险分数下降。"
     ],
     "sourceAttribution": [
+      {
+        "sourceLayer": "local_compact",
+        "field": "macroState",
+        "claimType": "site_structured_data",
+        "noteZh": "Site structured data only; non-production projection dry-run source."
+      },
       {
         "sourceLayer": "local_compact",
         "field": "dominantRiskChain",
@@ -3417,7 +3421,7 @@
     "confidence": {
       "level": "low",
       "score": 30,
-      "reasonZh": "基于站内结构化数据，尚未接入外部独立验证；关键数据如正式现货成交价和期限结构缺失，背离信号需更多确认。"
+      "reasonZh": "基于站内结构化数据，尚未接入外部独立验证。"
     },
     "qualityReview": {
       "status": "pass",
@@ -3425,15 +3429,15 @@
       "promotionEligible": false,
       "failedDimensions": [],
       "warningDimensions": [],
-      "reviewedAt": "2026-06-01T02:04:57.890Z"
+      "reviewedAt": "2026-06-02T02:06:01.131Z"
     },
     "provenance": {
-      "runId": "26731384818",
-      "artifactName": "external-ai-production-refresh-26731384818",
-      "artifactId": "26731384818-1",
-      "artifactDigest": "6a47d5f9e3b76b29b37629a640846b834de34787a572918d2778f946499539e7",
-      "sourceCommit": "1e5d4bd4fbc01d7f7a9b2319095a308cf07ce550",
-      "sourceDataUpdatedAt": "2026-05-31T23:37:22.747Z",
+      "runId": "26793897490",
+      "artifactName": "external-ai-production-refresh-26793897490",
+      "artifactId": "26793897490-1",
+      "artifactDigest": "855622220f4815f59a1796780c180adb51177c51823c2bb854f368ae523bdd55",
+      "sourceCommit": "6105c4d31064f114d70ae579810ac889a11cd349",
+      "sourceDataUpdatedAt": "2026-06-01T23:49:48.226Z",
       "inputArtifactPath": "manual-artifacts/external-ai/deepseek-output-latest.json",
       "outputArtifactPath": "manual-artifacts/external-ai/external-ai-production-projection-latest.json",
       "qualityReviewArtifactPath": "manual-artifacts/external-ai/external-ai-quality-review-latest.json",
@@ -3441,7 +3445,7 @@
       "humanApproved": false
     },
     "freshness": {
-      "artifactGeneratedAt": "2026-06-01T02:04:57.890Z",
+      "artifactGeneratedAt": "2026-06-02T02:06:01.131Z",
       "sourceDataUpdatedAt": null,
       "maxAgeHours": 24,
       "isStale": false,
