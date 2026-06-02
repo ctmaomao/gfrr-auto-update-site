@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=frontend-stale-static-wire-3';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=frontend-stale-static-wire-3';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=frontend-stale-static-wire-4';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=frontend-stale-static-wire-4';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

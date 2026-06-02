@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=frontend-stale-static-wire-3';
+﻿import { fmtNumSafe } from './config.js?v=frontend-stale-static-wire-4';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=frontend-stale-static-wire-3';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-wire-3';
+} from './config.js?v=frontend-stale-static-wire-4';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-wire-4';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -294,6 +294,10 @@ function setLeafText(id, value) {
   const el = $(id);
   if (!el || value === null || value === undefined || value === '') return;
   el.textContent = String(value);
+}
+function setHidden(id, hidden) {
+  const el = $(id);
+  if (el) el.hidden = hidden;
 }
 function toneCode(tone) {
   if (tone === 'red') return 'RED';
@@ -2170,24 +2174,55 @@ function renderDetailData({ radarData }) {
     if (realtime.sourceMode) setLeafText('detail-health-source-mode', `实时输入 ${realtime.sourceMode}`);
     const runAt = formatUtcMinute(realtime.capturedAt || realtime.updatedAt);
     if (runAt) setLeafText('detail-health-run-at', runAt);
-    if (structuralSignals.length > 0) {
-      const first = structuralSignals[0];
-      setLeafText('detail-health-structural-signal', `${first.key || 'structuralSignal'} · ${first.detail || first.label || ''}`.trim());
-    }
-
-    // P3-18 WIRE batch B: data-health appendix prose + sidebar dd + Fed liquidity mirror
+    // P3-18 WIRE batch B/C/D: data-health appendix prose + sidebar dd + Fed liquidity mirror
     if (realtime.branch) setLeafText('detail-health-branch', realtime.branch);
     if (realtime.commitSha) setLeafText('detail-health-commit', String(realtime.commitSha).slice(0, 8));
     if (runAt) setLeafText('detail-health-captured', runAt);
     if (asNumber(realtime.healthScore) !== null) {
       setLeafText('detail-health-score-dd', `${Math.round(realtime.healthScore)} / 100`);
     }
-    setLeafText('detail-fed-signal-count', String(structuralSignals.length));
-    if (structuralSignals.length > 0) {
-      const sig = structuralSignals[0];
-      setLeafText('detail-health-structural-dd', `${sig.key || 'structuralSignal'} (${structuralSignals.length})`);
-      if (sig.detail) setLeafText('detail-fed-onrrp', sig.detail);
+
+    // Structural signals: WIRE count + active/none toggle (batch D — 0-signal safe)
+    const structuralSignalCount = structuralSignals.length;
+    const hasStructuralSignal = structuralSignalCount > 0;
+    const firstSignal = hasStructuralSignal ? structuralSignals[0] : null;
+    setLeafText('detail-fed-signal-count', String(structuralSignalCount));
+    setHidden('detail-fed-signal-active', !hasStructuralSignal);
+    setHidden('detail-fed-signal-none', hasStructuralSignal);
+    setHidden('detail-health-structural-note-active', !hasStructuralSignal);
+    setHidden('detail-health-structural-note-none', hasStructuralSignal);
+    if (firstSignal) {
+      const signalKey = firstSignal.key || 'structuralSignal';
+      const signalLabel = firstSignal.label || signalKey;
+      const signalDetail = firstSignal.detail || signalLabel;
+      setLeafText('detail-fed-signal-label', signalLabel);
+      setLeafText('detail-fed-onrrp', signalDetail);
+      setLeafText('detail-health-structural-signal', `${signalKey} · ${signalDetail}`.trim());
+      setLeafText('detail-health-structural-dd', `${signalKey} (${structuralSignalCount})`);
+    } else {
+      setLeafText('detail-health-structural-dd', '无激活结构信号');
     }
+
+    // recovery booleans (batch D) — false must not be guarded away
+    const recovery = radarData.recovery || {};
+    if (typeof recovery.degradedMode === 'boolean') {
+      setLeafText('detail-health-degraded-mode', String(recovery.degradedMode));
+    }
+    if (typeof recovery.safeOutput === 'boolean') {
+      setLeafText('detail-health-safe-output', String(recovery.safeOutput));
+    }
+
+    // 关键缺失 / fallback counts (batch D) — live from warningSystem (criticalMissing / fallbackCount)
+    const warning = radarData.warningSystem || {};
+    if (asNumber(warning.criticalCount) !== null) {
+      const criticalText = String(Math.round(warning.criticalCount));
+      setLeafText('detail-health-critical-missing', criticalText);
+      setLeafText('detail-health-critical-missing-dd', `${criticalText} 项`);
+    }
+    if (asNumber(warning.warningCount) !== null) {
+      setLeafText('detail-health-fallback-count', String(Math.round(warning.warningCount)));
+    }
+
     const fed = radarData.macroDrivers?.fedLiquidity || {};
     if (fed.regime) setLeafText('detail-fed-regime', fed.regime);
     if (asNumber(fed.walcl) !== null) setLeafText('detail-fed-walcl', `${formatT(fed.walcl)}T`);
