@@ -37,7 +37,7 @@
 
 当前关键边界：
 
-- Worker-first 主链路读取 `/market.worker-preview.json`，并由前端 strict gate 决定是否使用。
+- Worker-first 主链路：worker 生成 `/market.worker-preview.json` 作为主 realtime payload。**M-94 V0 路径 C 重写后，前端入口改读 `data/radar-data.json` 静态快照，不再在前端跑 worker-first strict gate；`scripts/modules/realtime.js`（fetch + strict-gate 逻辑）按 M-94 要求保留但当前未接入重写后的前端、有意冻结（见 `docs/M94_V0_DATA_CONTRACT.md`）。是否在后续 stage 把 realtime overlay 重新接回前端属产品决策，须另开版本评审。**
 - serial trunk mode：所有任务基于 latest main，一次只推进一个逻辑任务，no stacked PR，旧 PR 不继续堆改。
 - `/market.secondary-preview.json` 只承载独立 secondary diagnostics，当前包含 VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB`、US10Y via Yahoo `^TNX` 与 SPX via Yahoo `^GSPC`；不得污染主 preview。
 - 当前 core secondary set 为 `vix` / `gold` / `dxy` / `us10y` / `spx`。E-4 后应先观察 Worker health workflow 与 secondary freshness，暂停继续堆新 secondary source。
