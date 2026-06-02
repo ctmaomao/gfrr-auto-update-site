@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=frontend-stale-static-tier2-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-tier2-1';
+} from './config.js?v=frontend-stale-static-wire-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-wire-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1189,6 +1189,14 @@ function fedPathTone(diffRate) {
   return 'green';
 }
 
+function dxyTone(value) {
+  const n = asNumber(value);
+  if (n === null) return null;
+  if (n >= 115) return 'red';
+  if (n >= 105) return 'yellow';
+  return 'green';
+}
+
 function setIndicatorStatus(statusId, badgeId, tone) {
   if (!tone) return;
   setToneClass(statusId, 'status-bar', tone);
@@ -1559,6 +1567,7 @@ function renderC2GlobalLiquidity({ radarData }) {
 
     const dxy = currentValue(radarData, 'dxy');
     if (dxy !== null) setLeafText('c2-dxy-number', dxy.toFixed(2));
+    setIndicatorStatus('c2-dxy-status', 'c2-dxy-badge', dxyTone(dxy));
     const dxy12wHigh = radarData.historyWindowFields?.dxy12wHigh;
     const dxyHighValue = asNumber(dxy12wHigh?.value);
     if (dxy12wHigh?.windowStatus === 'ready' && dxyHighValue !== null) {
@@ -1571,6 +1580,8 @@ function renderC2GlobalLiquidity({ radarData }) {
 
     const gold = currentValue(radarData, 'gold');
     if (gold !== null) setLeafText('c2-gold-number', gold.toFixed(2));
+    setToneClass('c2-gold-status', 'status-bar', 'neutral');
+    setBadge('c2-gold-badge', 'neutral', 'OBS');
 
     const us10y = currentValue(radarData, 'us10y');
     const us10yStatus = us10yTone(us10y);

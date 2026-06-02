@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=frontend-stale-static-tier2-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=frontend-stale-static-wire-1" />
 </head>
 <body>
   <div class="container">
@@ -281,10 +281,10 @@
 
         <!-- C2: 全球流动性 -->
         <div class="reader-cat-block">
-          <div class="reader-cat-header"><h3>全球流动性</h3><span class="en">GLOBAL LIQUIDITY</span><span class="counts">7 张 · <span class="yellow">3 黄</span> · <span class="green">1 绿</span> · 1 OBS</span></div>
+          <div class="reader-cat-header"><h3>全球流动性</h3><span class="en">GLOBAL LIQUIDITY</span><span class="counts">7 张</span></div>
           <p class="cat-intro">全球流动性来自四条管线：美元 / 黄金 / 利率 / 美联储资产负债表。任意管线收紧都会向风险资产传导。当前美联储流动性三层(水位 / 回购 / 隔夜)均无 2019-09 形态信号。</p>
           <div class="card-grid">
-            <article class="indicator-card" id="card-c2-dxy"><div class="status-bar yellow"></div><div class="head"><div><div class="name-en">DXY</div><div class="name-zh">广义美元指数</div></div><span class="badge yellow">YELLOW</span></div><div class="number" id="c2-dxy-number">119.28</div><div class="aux" id="c2-dxy-aux">12 周高位 累积中</div><p class="note">强美元说明全球融资环境收紧，尚未到单独危机程度。</p><div class="meta"><span>阈值 &gt;115 红</span><span>美元指数 + 12 周区间</span></div></article>
+            <article class="indicator-card" id="card-c2-dxy"><div class="status-bar yellow" id="c2-dxy-status"></div><div class="head"><div><div class="name-en">DXY</div><div class="name-zh">广义美元指数</div></div><span class="badge yellow" id="c2-dxy-badge">YELLOW</span></div><div class="number" id="c2-dxy-number">119.28</div><div class="aux" id="c2-dxy-aux">12 周高位 累积中</div><p class="note">强美元说明全球融资环境收紧，尚未到单独危机程度。</p><div class="meta"><span>阈值 &gt;115 红</span><span>美元指数 + 12 周区间</span></div></article>
             <article class="indicator-card" id="card-c2-gold"><div class="status-bar yellow" id="c2-gold-status"></div><div class="head"><div><div class="name-en">Gold</div><div class="name-zh">黄金</div></div><span class="badge yellow" id="c2-gold-badge">YELLOW</span></div><div class="number"><span id="c2-gold-number">4510.50</span><span class="unit" id="c2-gold-unit">USD/oz</span></div><div class="aux">趋势 +</div><p class="note">避险需求 + 通胀对冲并存，与强美元共强 = 金融压力与安全资产需求并存。</p><div class="meta"><span>趋势驱动</span><span>黄金现货价格</span></div></article>
             <article class="indicator-card" id="card-c2-us10y"><div class="status-bar yellow" id="c2-us10y-status"></div><div class="head"><div><div class="name-en">US 10Y + 2s10s</div><div class="name-zh">美元利率曲线</div></div><span class="badge yellow" id="c2-us10y-badge">YELLOW</span></div><div class="number"><span id="c2-us10y-number">4.57</span><span class="unit" id="c2-us10y-unit">%</span></div><div class="aux" id="c2-us10y-aux">10Y · 2s10s spread +18bp · 从倒挂转正</div><div class="agg-rows"><div><span class="k">t10y2y</span> · <span class="v" id="c2-us10y-t10y2y">+0.18%</span></div><div><span class="k">t10y2yWeekChange</span> · <span class="v" id="c2-us10y-week-change">+3bp</span></div><div><span class="k">regime</span> · <span class="v" id="c2-us10y-regime">陡峭化</span></div><div><span class="k">steepeningAlert</span> · <span class="v" id="c2-us10y-alert">true</span></div></div><p class="note">曲线从倒挂转正通常领先衰退 6-18 个月。</p><div class="meta"><span>阈值 &gt;5% 红</span><span>美债收益率曲线</span></div></article>
             <article class="indicator-card" id="card-c2-usd-liquidity"><div class="status-bar green" id="c2-liquidity-status"></div><div class="head"><div><div class="name-en">USD Liquidity Agg</div><div class="name-zh">美元流动性聚合</div></div><span class="badge green" id="c2-liquidity-badge">GREEN</span></div><div class="number"><span id="c2-liquidity-number">3.62</span><span class="unit" id="c2-liquidity-unit">T USD</span></div><div class="aux" id="c2-liquidity-aux">银行准备金 reserveBalances · 12 周高位</div><div class="agg-rows"><div><span class="k">水位 WALCL</span> · <span class="v" id="c2-liquidity-walcl">7.18T · 4w +$36B</span></div><div><span class="k">准备金 reserveBalances</span> · <span class="v" id="c2-liquidity-reserves">3.62T · 4w +$58B</span></div><div><span class="k">ON RRP</span> · <span class="v" id="c2-liquidity-rrp">$320B · WoW -$8B</span></div><div><span class="k">隔夜 SOFR / EFFR</span> · <span class="v" id="c2-liquidity-sofr-effr">5.31% / 5.33%</span></div><div><span class="k">回购 BGCR / TGCR</span> · <span class="v" id="c2-liquidity-bgcr-tgcr">5.29% / 5.28%</span></div><div><span class="k">repoSpreadRegime</span> · <span class="v" id="c2-liquidity-repo-regime">normal</span></div></div><p class="note">三层递进结构均无压力。2019-09 回购市场最早信号目前不存在。</p><div class="meta"><span>仅供观察</span><span>Fed 流动性组合</span></div></article>
@@ -296,7 +296,7 @@
 
         <!-- C3: 信用与企业债 -->
         <div class="reader-cat-block">
-          <div class="reader-cat-header"><h3>信用与企业债</h3><span class="en">CREDIT & CORPORATE</span><span class="counts">5 张 · <span class="green">2 绿</span> · <span class="yellow">3 黄</span></span></div>
+          <div class="reader-cat-header"><h3>信用与企业债</h3><span class="en">CREDIT & CORPORATE</span><span class="counts">5 张</span></div>
           <p class="cat-intro">信用层回答的不是"压力高不高"，而是"压力有没有从价格变成融资约束"。HY OAS / IG OAS 是企业借钱难易的市场定价；NFCI 综合 100+ 跨市场信号；私募代理用上市 BDC ETF 篮子近似公开市场看不见的私募信贷；CRE 看商业地产融资压力。</p>
           <div class="card-grid">
             <article class="indicator-card" id="card-c3-hy-oas"><div class="status-bar green" id="c3-hy-status"></div><div class="head"><div><div class="name-en">HY OAS</div><div class="name-zh">高收益债利差</div></div><span class="badge green" id="c3-hy-badge">GREEN</span></div><div class="number"><span id="c3-hy-number">2.78</span><span class="unit" id="c3-hy-unit">%</span></div><div class="aux" id="c3-hy-aux">WoW 收窄 · 与 VIX 同步走低</div><p class="note">企业信用风险可控。与 VIX 同步背离，信用市场不验证恐慌。</p><div class="meta"><span>阈值 &gt;5% 红</span><span>高收益债利差</span></div></article>
@@ -360,7 +360,7 @@
 
         <!-- C7: 市场情绪 -->
         <div class="reader-cat-block">
-          <div class="reader-cat-header"><h3>市场情绪</h3><span class="en">MARKET SENTIMENT</span><span class="counts">3 张 · <span class="green">2 绿</span> · <span class="yellow">1 黄</span></span></div>
+          <div class="reader-cat-header"><h3>市场情绪</h3><span class="en">MARKET SENTIMENT</span><span class="counts">3 张</span></div>
           <p class="cat-intro">注：Market Temperature 主卡(QQQ z-score)已在上方 #homepage-market-temperature 完整展示。此处放 VIX / SPX / NDX 60w z-score(广度参照)，不与上方重复。</p>
           <div class="card-grid">
             <article class="indicator-card" id="card-c7-vix"><div class="status-bar green" id="c7-vix-status"></div><div class="head"><div><div class="name-en">VIX</div><div class="name-zh">S&P 隐含波动率</div></div><span class="badge green" id="c7-vix-badge">GREEN</span></div><div class="number" id="c7-vix-number">16.76</div><div class="aux" id="c7-vix-aux">12 周低位</div><p class="note" id="c7-vix-note">波动率没有同步扩张，是当前形势不能写成全面危机的关键反证。</p><div class="meta"><span>阈值 &gt;25 红</span><span>S&P 隐含波动率</span></div></article>
@@ -371,7 +371,7 @@
 
         <!-- C8: 地缘与世界秩序 -->
         <div class="reader-cat-block">
-          <div class="reader-cat-header"><h3>地缘与世界秩序</h3><span class="en">GEOPOLITICS & WORLD ORDER</span><span class="counts">4 张 · <span class="red">2 红</span> · <span class="yellow">1 黄</span> · 1 OVERLAY</span></div>
+          <div class="reader-cat-header"><h3>地缘与世界秩序</h3><span class="en">GEOPOLITICS & WORLD ORDER</span><span class="counts">4 张</span></div>
           <p class="cat-intro">底层地缘评分(计入主评分)+ 世界秩序压力(只做强度修正、不计入主评分)+ 经济武器化 + 军备冲突。</p>
           <div class="card-grid">
             <article class="indicator-card" id="card-c8-geo"><div class="status-bar red" id="c8-geo-status"></div><div class="head"><div><div class="name-en">Geopolitical Module</div><div class="name-zh">底层地缘风险评分</div></div><span class="badge red" id="c8-geo-badge">RED</span></div><div class="number" id="c8-geo-number">78</div><div class="aux" id="c8-geo-aux">6 底层模块之一 · moduleTrends 显示 ↑</div><p class="note" id="c8-geo-note">底层地缘评分 78，直接计入主评分。与世界秩序压力(只做修正、不计分)不是一回事。</p><div class="meta"><span>阈值 &gt;70 红</span><span>底层地缘评分趋势</span></div></article>
@@ -871,6 +871,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=frontend-stale-static-tier2-1"></script>
+  <script type="module" src="scripts/app.js?v=frontend-stale-static-wire-1"></script>
 </body>
 </html>
