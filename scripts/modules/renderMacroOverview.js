@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=frontend-stale-static-wire-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-wire-1';
+} from './config.js?v=frontend-stale-static-wire-2';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-wire-2';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2174,6 +2174,27 @@ function renderDetailData({ radarData }) {
       const first = structuralSignals[0];
       setLeafText('detail-health-structural-signal', `${first.key || 'structuralSignal'} · ${first.detail || first.label || ''}`.trim());
     }
+
+    // P3-18 WIRE batch B: data-health appendix prose + sidebar dd + Fed liquidity mirror
+    if (realtime.branch) setLeafText('detail-health-branch', realtime.branch);
+    if (realtime.commitSha) setLeafText('detail-health-commit', String(realtime.commitSha).slice(0, 8));
+    if (runAt) setLeafText('detail-health-captured', runAt);
+    if (asNumber(realtime.healthScore) !== null) {
+      setLeafText('detail-health-score-dd', `${Math.round(realtime.healthScore)} / 100`);
+    }
+    if (structuralSignals.length > 0) {
+      const sig = structuralSignals[0];
+      setLeafText('detail-health-structural-dd', `${sig.key || 'structuralSignal'} (${structuralSignals.length})`);
+      if (sig.detail) setLeafText('detail-fed-onrrp', sig.detail);
+    }
+    const fed = radarData.macroDrivers?.fedLiquidity || {};
+    if (fed.regime) setLeafText('detail-fed-regime', fed.regime);
+    if (asNumber(fed.walcl) !== null) setLeafText('detail-fed-walcl', `${formatT(fed.walcl)}T`);
+    if (asNumber(fed.reserveBalances) !== null) setLeafText('detail-fed-reserves', `${formatT(fed.reserveBalances)}T`);
+    if (asNumber(fed.sofr) !== null && asNumber(fed.effectiveFedFundsRate) !== null) {
+      setLeafText('detail-fed-sofr-effr', `${fed.sofr.toFixed(2)}%/${fed.effectiveFedFundsRate.toFixed(2)}%`);
+    }
+    if (fed.repoSpreadRegime) setLeafText('detail-fed-repo-regime', fed.repoSpreadRegime);
 
     if (asNumber(time.scoreChange30d) !== null) setLeafText('detail-time-change', signedInteger(time.scoreChange30d));
     if (asNumber(time.avg30d) !== null) setLeafText('detail-time-avg', Math.round(time.avg30d));
