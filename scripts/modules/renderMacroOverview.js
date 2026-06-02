@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=frontend-stale-static-wire-4';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-wire-4';
+} from './config.js?v=frontend-stale-static-wire-5';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-wire-5';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2222,6 +2222,25 @@ function renderDetailData({ radarData }) {
     if (asNumber(warning.warningCount) !== null) {
       setLeafText('detail-health-fallback-count', String(Math.round(warning.warningCount)));
     }
+
+    // 数据健康整段叙述：健康 / 需关注 两态切换 (batch E)
+    const sourceMode = String(realtime.sourceMode || '');
+    const healthDegraded =
+      recovery.degradedMode === true ||
+      (asNumber(warning.criticalCount) || 0) > 0 ||
+      (asNumber(warning.warningCount) || 0) > 0 ||
+      (sourceMode !== '' && sourceMode !== 'live');
+    setLeafText('detail-health-state-word', healthDegraded ? '需关注' : '正常');
+    setToneClass('detail-health-score', '', healthDegraded ? 'warn' : 'ok');
+    setToneClass('detail-health-callout', 'appendix-callout', healthDegraded ? 'warn' : 'ok');
+    setHidden('detail-health-refresh-active', healthDegraded);
+    setHidden('detail-health-refresh-none', !healthDegraded);
+    setHidden('detail-health-sources-active', healthDegraded);
+    setHidden('detail-health-sources-none', !healthDegraded);
+    setHidden('detail-health-callout-active', healthDegraded);
+    setHidden('detail-health-callout-none', !healthDegraded);
+    setHidden('detail-health-live-note-active', healthDegraded);
+    setHidden('detail-health-live-note-none', !healthDegraded);
 
     const fed = radarData.macroDrivers?.fedLiquidity || {};
     if (fed.regime) setLeafText('detail-fed-regime', fed.regime);

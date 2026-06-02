@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=frontend-stale-static-wire-4" />
+  <link rel="stylesheet" href="assets/styles.css?v=frontend-stale-static-wire-5" />
 </head>
 <body>
   <div class="container">
@@ -414,10 +414,11 @@
         <div class="appendix-narrative-intro">本附录为今日主判断的支撑层。所有数据来自 <code>data/radar-data.json</code>，每天自动更新。读取顺序：数据健康 → 时间维度 → 传导网络 → 资产投影。</div>
 
         <h4>1. 数据健康 <em>· Data Health</em></h4>
-        <p>本期数据综合健康状态<strong>正常</strong>。<code class="ok" id="detail-health-score">healthScore 100/100</code>，数据来源为 <code id="detail-health-source-mode">worker-realtime</code>，<span id="detail-health-critical-missing">0</span> 项关键缺失、<span id="detail-health-fallback-count">0</span> 项 fallback。Daily 输入来自 <code id="detail-health-branch">realtime-data</code> 分支，提交 <code id="detail-health-commit">75b982d4</code>，采集时间 <code id="detail-health-captured">23:29 UTC</code>。实时数据源刷新成功，无需进入降级模式或缓存模式。</p>
+        <p>本期数据综合健康状态<strong id="detail-health-state-word">正常</strong>。<code class="ok" id="detail-health-score">healthScore 100/100</code>，数据来源为 <code id="detail-health-source-mode">worker-realtime</code>，<span id="detail-health-critical-missing">0</span> 项关键缺失、<span id="detail-health-fallback-count">0</span> 项 fallback。Daily 输入来自 <code id="detail-health-branch">realtime-data</code> 分支，提交 <code id="detail-health-commit">75b982d4</code>，采集时间 <code id="detail-health-captured">23:29 UTC</code>。<span id="detail-health-refresh-active">实时数据源刷新成功，无需进入降级模式或缓存模式。</span><span id="detail-health-refresh-none" hidden>实时数据源未完全处于 live 状态，当前可能为非实时、降级或缓存输入，请以上方计数与各卡片 sourceStatus 为准。</span></p>
         <div class="appendix-twocol">
           <div>
-            <p>快变量层 7 个数据源(<code>brent / dxy / vix / hyOas / us10y / gold / spx</code>) 全部 <code class="ok">live</code>。慢变量层 macroDrivers 下 12 个子模块的 <code>sourceStatus</code> 字段显示，FRED 系列(8 项)、Yahoo 系列(NDX/QQQ/IXIC/BIZD/PBDC/SRLN/CCLFX 等)、ISM(PMI)、StockQ(BDTI/BCTI/BDI)、ICE(CDX HY/IG)、Bank of America Consumer Checkpoint 均处于 live 状态。</p>
+            <p id="detail-health-sources-active">快变量层 7 个数据源(<code>brent / dxy / vix / hyOas / us10y / gold / spx</code>) 全部 <code class="ok">live</code>。慢变量层 macroDrivers 下 12 个子模块的 <code>sourceStatus</code> 字段显示，FRED 系列(8 项)、Yahoo 系列(NDX/QQQ/IXIC/BIZD/PBDC/SRLN/CCLFX 等)、ISM(PMI)、StockQ(BDTI/BCTI/BDI)、ICE(CDX HY/IG)、Bank of America Consumer Checkpoint 均处于 live 状态。</p>
+            <p id="detail-health-sources-none" hidden>部分快变量 / 慢变量数据源未处于 live 状态（非实时 / 降级 / 回退），具体以各卡片 <code>sourceStatus</code> 与上方关键缺失 / fallback 计数为准。</p>
             <p><span id="detail-fed-signal-active">结构信号层激活 <span id="detail-fed-signal-count">1</span> 项：<code class="warn" id="detail-fed-signal-label">逆回购准备金告急</code>(<span id="detail-fed-onrrp">ON RRP 9.65 亿美元</span>)。该信号已纳入决策层门控</span><span id="detail-fed-signal-none" hidden>结构信号层当前未激活，决策层未因结构信号加码</span>，但 fedLiquidity 三层主流仍处于 <code class="ok" id="detail-fed-regime">平稳</code> regime，WALCL <span id="detail-fed-walcl">6.71T</span>、reserveBalances <span id="detail-fed-reserves">3.13T</span>、SOFR/EFFR 锚定 <span id="detail-fed-sofr-effr">3.51%/3.62%</span>，repoSpreadRegime 为<code class="ok" id="detail-fed-repo-regime">正常</code>。</p>
           </div>
           <aside class="appendix-sidebar">
@@ -433,10 +434,11 @@
             </dl>
           </aside>
         </div>
-        <div class="appendix-callout ok">
+        <div class="appendix-callout ok" id="detail-health-callout">
           <div class="callout-kicker">现状判读</div>
-          <p>数据健康正常，无需触发 fallback 机制。</p>
-          <p>系统所有关键数据源处于 live 状态，今日主判断的所有证据均可被审计追溯。<span id="detail-health-structural-note-active">唯一需要观察的是 <span id="detail-health-structural-signal">onRrpCritical 结构信号</span>，它已自动把决策层 stateScore 提升 10 分。</span><span id="detail-health-structural-note-none" hidden>当前无激活结构信号，决策层未因结构信号加码。</span></p>
+          <p id="detail-health-callout-active">数据健康正常，无需触发 fallback 机制。</p>
+          <p id="detail-health-callout-none" hidden>数据健康需关注，当前存在非 live、降级或 fallback 信号。</p>
+          <p><span id="detail-health-live-note-active">系统所有关键数据源处于 live 状态，今日主判断的所有证据均可被审计追溯。</span><span id="detail-health-live-note-none" hidden>部分关键数据源未处于 live 状态，今日部分证据可能来自非实时、缓存或回退输入，请谨慎解读。</span><span id="detail-health-structural-note-active">唯一需要观察的是 <span id="detail-health-structural-signal">onRrpCritical 结构信号</span>，它已自动把决策层 stateScore 提升 10 分。</span><span id="detail-health-structural-note-none" hidden>当前无激活结构信号，决策层未因结构信号加码。</span></p>
         </div>
 
         <h4>2. 30 日时间维度与传导速度 <em>· Time Dimension</em></h4>
@@ -871,6 +873,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=frontend-stale-static-wire-4"></script>
+  <script type="module" src="scripts/app.js?v=frontend-stale-static-wire-5"></script>
 </body>
 </html>
