@@ -11,7 +11,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分)|
 | Cache version | `move-bond-vol-2` |
 | check:all 项数 | 15 顶层项 / ~48 leaf checks(checker 精简 Phase 1+2 后)|
-| 最后审计日期 | 2026-06-02(Codex 只读审计 + Claude 7-agent 复核 + Codex 终裁;F3 文档漂移已修 `a6e9101`,余 F1/F2/F4/F5/F7 见 Section 2 P3-17)|
+| 最后审计日期 | 2026-06-02(Codex 只读审计 + Claude 7-agent 复核 + Codex 终裁;已修 F3 文档漂移 `a6e9101` + F2 ACLED workflow 清理 `a74a4a2`,余 F1/F4/F5/F7 见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |
 | 下次审计建议 | 下一次 stage / milestone 合并时 |
@@ -77,9 +77,9 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 
 #### P3-17: 2026-06-02 Codex 审计终裁 — 剩余清理项
 
-来源:2026-06-02 Codex 只读审计(7 findings)→ Claude 7-agent 并行复核 → Codex 终裁。F3+扩展已执行(commit `a6e9101`,docs-only,未 push)。剩余按终裁优先级:
+来源:2026-06-02 Codex 只读审计(7 findings)→ Claude 7-agent 并行复核 → Codex 终裁。**F3+扩展(`a6e9101`)与 F2(`a74a4a2`)已执行、经 Codex 复审、已 push**。剩余按终裁优先级:
 
-- **F2(下一项 · DO_NOW · 另开 task)**: `.github/workflows/test-api-secrets.yml` line 49/93 对 `acleddata.com` 发真实请求(OAuth + read API),违反 `DATA_SOURCES.md:310`(ACLED manual-only,EULA §3.3)。严重度低-中:`workflow_dispatch`-only(休眠态、非按计划联网);遗留(2026-05-17 加,2026-05-19/M-63a 才写死契约)。处置:删两段 ACLED 步骤 + ACLED secret 注入(保留 GDELT),`scripts/check-workflows.mjs` 全局 forbiddenRuntimePatterns 加 `acleddata.com` 守卫防复发;跑 `check:workflows`+`check:all`;commit 拟 `ci: remove obsolete ACLED API diagnostic`。
+- **F2 ✅ 已完成(commit `a74a4a2`,2026-06-02)**: `.github/workflows/test-api-secrets.yml` 删两段 ACLED(OAuth + read API)+ ACLED secret 注入(保留 GDELT 诊断);`scripts/check-workflows.mjs` 全局 forbiddenRuntimePatterns 加 **5 条精确守卫**(`secrets.ACLED_` / `api.acleddata.com` / `acleddata.com/(oauth|api)` / `curl|wget …acleddata.com` / `fetch(…acleddata.com`),覆盖完整 ACLED 契约(`DATA_SOURCES.md:310` / `AGENTS.md:86/88` / `WORLD_ORDER_STRESS.md:87`),不误伤 reminder 公开下载 URL。守卫经 Codex 复审从 3→5 条收紧;独立单测 10/10 bypass(含 `ACLED_API_KEY`/`EMAIL`/`ACCESS_KEY`/`api.acleddata.com`)全捕获、0 误伤;`check:workflows`+`check:all` 绿。
 - **F4(P3 · 文档卫生)**: `DESIGN.md` 仍以 `manual-artifacts/m94-v0/m94-v0-FINAL-mock-v2.html` 为视觉权威,但该文件被 `.gitignore`(`manual-artifacts/`)忽略、从未提交(`!.../m94-v0/**` 取反对已排除父目录无效)→ 现行权威不可复现。处置:修 `.gitignore` 根因 + `git add -f` 跟踪 v2;**不**改指回 v1(v2 自 PR 2c 起即视觉权威)。commit 拟 `docs: restore M94 mock v2 reproducibility`。
 - **F1(P3 · 纯文档)**: `AGENTS.md:40` 把 Worker-first 写成前端职责,但 M-94 路径C 后前端读 `data/radar-data.json` 静态快照、`scripts/modules/realtime.js` 有意冻结成孤儿(Worker-first 在后端/Daily/worker 层仍成立)。处置:**只改 `AGENTS.md:40` 措辞澄清分层**(后端/Daily/worker 仍 Worker-first、前端读 `data/radar-data.json` 静态快照);**不碰 `scripts/modules/realtime.js`**(M94 要求 git diff=0;改 .js 还会触发 frontend asset bump)。见记忆 `audit_m94_path_c_false_positive`。
 - **F5(P3 · 性能 judgment,非缺陷)**: 首屏 `scripts/app.js` 并行加载 4 个本地 JSON(~732KB,大头 `market-pricing-metrics`356KB + `world-order-stress`233KB),无数据级懒加载。处置:先测 Pages 是否已 gzip/br;要优化只盯这两个;**`radar-history`(28.6KB)非负担、`market-pricing-history` 不在前端首屏路径**(审计曾误当首屏)。
@@ -217,9 +217,9 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于(2026-06-02)**: F3 文档同步 + 扩展完成,HEAD=`a6e9101`(docs-only,**未 push**);工作树仅余本 backlog/handoff 更新。本 session:① 用 Workflow 起 7-agent 并行复核 Codex 只读审计(F1–F7),中立取证。② Codex 终裁回传(双向交叉校验):F2 ACCEPT/DO_NOW、F1/F4/F5/F6/F7 ACCEPT 或 PARTIAL/BACKLOG;**F4 处 Codex 反向纠正我「降级过头」**(DESIGN.md 仍以 v2 mock 为视觉权威)。③ 执行 F3+ext(commit `a6e9101`):INDEX.md 删 2 行死 checker、AGENTS.md 改指 `check:frontend-live-contracts`+18→15、CLAUDE.md 18→15(两处)、DESIGN.md §8.2 改指 §4.1/§5.6+ADR-0014、OPERATIONS.md ~16 行 operator note 去死命令;`check:all` 15/15 绿;rg 证明 DESIGN.md+OPERATIONS.md 零死命令残留(M36/M94/SYSTEM_UPGRADE_PLAN 历史引用有意保留)。新增记忆 `audit_m94_path_c_false_positive`。
+- **上次会话结束于(2026-06-02)**: 三批工作全部完成、经 Codex 逐轮复审、已 push,`main` 与 origin 同步(HEAD=`a74a4a2`)。① 用 Workflow 起 7-agent 并行复核 Codex 只读审计(F1–F7),中立取证。② Codex 终裁(双向交叉校验):F2 DO_NOW、F1/F4/F5/F6/F7 BACKLOG;**F4 处 Codex 反向纠正我「降级过头」**(DESIGN.md 仍以 v2 mock 为视觉权威)。③ **F3+ext**(`a6e9101`):INDEX.md 删死 checker、AGENTS.md 改指 `check:frontend-live-contracts`+18→15、CLAUDE.md 18→15、DESIGN.md §8.2 改指 §4.1/§5.6+ADR-0014、OPERATIONS.md ~16 行 operator note 去死命令;rg 证明零死命令残留(M36/M94/SYSTEM_UPGRADE_PLAN 历史引用有意保留)。④ **backlog 持久化**(`7531259`,含本 P3-17;Codex 复审修了 F1 处置自相矛盾)。⑤ **F2**(`a74a4a2`):删 test-api-secrets.yml ACLED 两段 + check-workflows.mjs 加 5 条 ACLED 守卫(Codex 复审从 3→5 收紧、单测 10/10);push 撞 CI 自动提交 `8e721f0`(radar 刷新,零重叠)→ `git pull --rebase` 换基后复跑 check:all 仍绿。每批 check:all 15/15 绿。新增记忆 `audit_m94_path_c_false_positive`。
 - **当前进行中(2026-06-02)**: 无。F3 已收口。
-- **下一步建议(2026-06-02)**: 按 Codex 编排 → **F2(P2,另开 serial task)**:删 `test-api-secrets.yml` 的 ACLED 两段 + `check-workflows.mjs` 加全局 `acleddata.com` 守卫(commit `ci: remove obsolete ACLED API diagnostic`)→ F4(.gitignore 修根因跟踪 v2 mock)→ F1 文档收口 → F7 文档归档 → F5(测 gzip 后定)→ F6 死源批次。详见 Section 2 P3-17。**`a6e9101` 尚未 push**,owner 可择时 push(触发 Pages,docs-only 低风险)或并入后续一起 push。
+- **下一步建议(2026-06-02)**: Codex 终裁 DO_NOW 项(F3 / F3-ext / F2)已全部落地 + push。**下一项 = F4**(修 `.gitignore` 根因 + `git add -f` 跟踪 `manual-artifacts/m94-v0/m94-v0-FINAL-mock-v2.html`;commit `docs: restore M94 mock v2 reproducibility`)→ F1(只改 `AGENTS.md:40` 措辞,**不碰** realtime.js)→ F7 文档归档 → F5(先测 Pages gzip/br 再定)→ F6 死源批次。各自另开 serial task,详见 Section 2 P3-17。
 - **阻塞或等待(2026-06-02)**: 无。
 - **⚠️ 教训(2026-06-02)**: ① 审计复核中立取证有效——Codex 7 条事实引用全准,但 F1「回归」定性、F5「market-pricing-history 当首屏」被证伪/纠正;F4 反被 Codex 纠正我降级过头(双向交叉校验,非单向)。② `check:frontend-live-contracts` = `null-zero-display-guards`+`dom`+`macro-coherence-display-only`,**不**校验 IA 顺序/字体——退役 IA/editorial checker 后权威落 `DESIGN.md §4.1/§5.6` + ADR-0014(人工 review),文案别再暗示有命令能校验 IA。③ 中文 commit message 经 PowerShell 5.1 易乱码 → 写 UTF-8 文件 + `git commit -F` 规避(bash heredoc 亦可,勿用 PS here-string)。
 
