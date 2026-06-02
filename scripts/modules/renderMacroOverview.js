@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=frontend-stale-static-tier1-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-tier1-1';
+} from './config.js?v=frontend-stale-static-tier2-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-tier2-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=frontend-stale-static-tier1-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=frontend-stale-static-tier2-1" />
 </head>
 <body>
   <div class="container">
@@ -488,18 +488,18 @@
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin:-8px 0 8px 0;font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">+ 中期对冲：<strong style="color:var(--paper-ink);" id="detail-chain-node-gold">黄金影响 score 64 · 中期偏多</strong>(对冲通胀，但短线受真实利率压制)</div>
 
-        <p>网络第二层把"价格变量层"(原油 / 商品 / 美元，综合 76) → "宏观变量层"(通胀预期 / 真实利率 / 流动性，综合 77) → "市场传导层"(融资条件 / 波动率 / 相关性，综合 72) → "资产结果层"(股票 / 债券 / 黄金 / 能源，综合 75)。四层得分接近，说明压力在每一层都被 partial 验证，<strong>没有出现"上游强、下游弱"</strong>那种典型的"市场不信"形态。</p>
+        <p>网络第二层把"价格变量层"(原油 / 商品 / 美元) → "宏观变量层"(通胀预期 / 真实利率 / 流动性) → "市场传导层"(融资条件 / 波动率 / 相关性) → "资产结果层"(股票 / 债券 / 黄金 / 能源)。各层压力均被 partial 验证(逐层得分见上方节点链实时字段)，<strong>没有出现"上游强、下游弱"</strong>那种典型的"市场不信"形态。</p>
 
         <div class="appendix-twocol">
           <div>
             <p>资产冲击分解层显示六类资产的方向：</p>
             <ul style="font-family:var(--font-serif);font-size:13.5px;line-height:1.85;color:var(--paper-warm);margin:8px 0 0 0;padding-left:18px;">
-              <li>能源 <code class="ok">score 84 · 正面</code> — 地缘冲击 (52) + 供给约束 (29) + 库存/需求 (19)</li>
-              <li>美元 / 短票 <code class="ok">score 72 · 正面</code> — 融资偏紧 + 防御需求</li>
-              <li>科技股 <code class="danger">score 82 · 阶段偏空</code> — 真实利率 + 流动性最敏感</li>
-              <li>全球股票 <code class="danger">score 79 · 负面</code> — 利率 (47) + 流动性 (31) + 风险偏好 (22)</li>
-              <li>长久期债券 <code class="danger">score 76 · 负面</code> — 通胀黏性 + 政策路径</li>
-              <li>黄金 <code class="warn">score 63 · 中性偏多</code> — 通胀对冲 (41) + 真实利率 (34) + 流动性扰动 (25)</li>
+              <li>能源 <code class="ok">正面</code> — 地缘冲击 + 供给约束 + 库存/需求</li>
+              <li>美元 / 短票 <code class="ok">正面</code> — 融资偏紧 + 防御需求</li>
+              <li>科技股 <code class="danger">阶段偏空</code> — 真实利率 + 流动性最敏感</li>
+              <li>全球股票 <code class="danger">负面</code> — 利率 + 流动性 + 风险偏好</li>
+              <li>长久期债券 <code class="danger">负面</code> — 通胀黏性 + 政策路径</li>
+              <li>黄金 <code class="warn">中性偏多</code> — 通胀对冲 + 真实利率 + 流动性扰动</li>
             </ul>
           </div>
           <aside class="appendix-sidebar">
@@ -557,7 +557,7 @@
         <div class="wo-regime-banner">
           <div class="wo-kicker">CURRENT REGIME</div>
           <div class="wo-state" id="wo-detail-state">多战区压力期 · multi_theater_stress</div>
-          <p class="wo-desc">压力分数 <span id="wo-detail-score">70</span> / 置信度 <span id="wo-detail-confidence">medium</span> / 市场确认度 <span id="wo-detail-market-confirmation">stress</span> / 已持续 2 周。决策层修正系数 <span id="wo-detail-risk-bias">+5</span> 分应用于今日判读，体现为本期 hero 的 "overlay 70" 升档指针。</p>
+          <p class="wo-desc">压力分数 <span id="wo-detail-score">70</span> / 置信度 <span id="wo-detail-confidence">medium</span> / 市场确认度 <span id="wo-detail-market-confirmation">stress</span>。决策层修正系数 <span id="wo-detail-risk-bias">+5</span> 分应用于今日判读，体现为本期 hero 的 overlay 升档指针。</p>
         </div>
 
         <p>本层数据来自 4 个外部源：<code>GDELT</code>(全球新闻情绪与冲突)、<code>OFAC</code>(经济制裁)、<code>SIPRI</code>(全球军费，年频)、<code>ACLED</code>(冲突事件，周频)，以及 1 个市场确认层(VIX / Gold / DXY 跨资产同步性)。当前所有外部源 <code class="ok">live</code>，marketConfirmation 输入显示<strong>stress</strong>状态。</p>
@@ -573,7 +573,7 @@
           <div class="wo-dim high" id="wo-dim-market"><div class="wd-label">DIM 6</div><div class="wd-name">市场确认度</div><div class="wd-score" id="wo-dim-market-score">stress</div><div class="wd-trend" id="wo-dim-market-trend">VIX/Gold/DXY 同步性 · rising</div></div>
         </div>
 
-        <p>六个维度中，<strong>多战区冲突</strong> (85, 严重) 和 <strong>经济武器化</strong> (+2.3σ, 高) 是本期压力的核心驱动。这两个维度都是 <code>rising</code> 状态，叠加产生了 multi_theater_stress regime。市场确认度从中性升至 stress，说明<strong>市场已经开始定价</strong>这种结构性压力——这是 overlay 从 unconfirmed 升档到 confirmed 的关键证据。</p>
+        <p>六个维度中，<strong>多战区冲突</strong> 和 <strong>经济武器化</strong> 是本期压力的核心驱动(各维度分值见上方实时维度卡)。这两个维度都是 <code>rising</code> 状态，叠加产生了 multi_theater_stress regime。市场确认度从中性升至 stress，说明<strong>市场已经开始定价</strong>这种结构性压力——这是 overlay 从 unconfirmed 升档到 confirmed 的关键证据。</p>
 
         <h4>3. 主导驱动与降级条件 <em>· Drivers & De-escalation</em></h4>
 
@@ -714,7 +714,7 @@
         <div class="appendix-narrative-intro">本附录展示作者本人的执行框架。<strong>这些规则只针对作者自己</strong>，不构成对任何人的投资建议。决策头、执行灯、预警规则、动作清单、仓位区间、硬阈值风控与行为纪律保留为高级详情。</div>
 
         <h4>1. 决策概览 <em>· Decision Overview</em></h4>
-        <p>系统当前策略状态为 <code class="danger" id="exec-decision-state">Defensive · 红灯 / 禁止新增</code>，stateScore <code id="exec-decision-score">56</code>。状态判定原因：<strong id="exec-decision-reason">执行引擎检测到高压风险组合</strong>，已激活 1 项结构信号 <code class="warn" id="exec-structural-signal">逆回购准备金告急</code>(ON RRP 9.65 亿美元)，structuralScoreBump <span id="exec-structural-bump">+10</span> 应用于主分数。主导风险源：<strong id="exec-dominant-drivers">能源 (88) / 地缘政治 (81) / 通胀 (59)</strong>。</p>
+        <p>系统当前策略状态为 <code class="danger" id="exec-decision-state">Defensive · 红灯 / 禁止新增</code>，stateScore <code id="exec-decision-score">56</code>。状态判定原因：<strong id="exec-decision-reason">执行引擎检测到高压风险组合</strong>，已激活 1 项结构信号 <code class="warn" id="exec-structural-signal">逆回购准备金告急</code>，structuralScoreBump <span id="exec-structural-bump">+10</span> 应用于主分数。主导风险源：<strong id="exec-dominant-drivers">能源 (88) / 地缘政治 (81) / 通胀 (59)</strong>。</p>
 
         <p>目标总仓位区间 <code id="exec-exposure-band">18%-38%</code>，风险预算 <code id="exec-risk-budget">30%</code>，目标 gross exposure <code id="exec-target-gross">38%</code>，现金缓冲目标 <code id="exec-cash-target">35%</code>。riskAssetBias = <span id="exec-risk-asset-bias">低配风险资产</span>。structuralBandShift = <span id="exec-band-shift">−5</span> 表示因结构信号触发，目标仓位带需要额外保守 5 个百分点。</p>
 
@@ -871,6 +871,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=frontend-stale-static-tier1-1"></script>
+  <script type="module" src="scripts/app.js?v=frontend-stale-static-tier2-1"></script>
 </body>
 </html>
