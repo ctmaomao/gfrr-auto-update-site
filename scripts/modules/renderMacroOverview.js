@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=move-bond-vol-2';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=move-bond-vol-2';
+} from './config.js?v=frontend-stale-static-tier1-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-tier1-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1028,13 +1028,17 @@ function renderC7MarketSentiment({ radarData, marketPricingMetricsData }) {
       setLeafText('c7-spx-aux', `52周高位 ${formatWindowProgress(spx52wHigh)}`);
     }
 
+    const qqqRecord = latestMarketRecord(marketPricingMetricsData, 'qqq');
     const ndxRecord = latestMarketRecord(marketPricingMetricsData, 'ndx');
+    const qqqZ = asNumber(qqqRecord?.zScore);
     const ndxZ = asNumber(ndxRecord?.zScore);
     if (ndxZ !== null) {
       const zText = formatSignedScore(ndxZ, 2);
       setBadge('c7-ndx-badge', 'yellow', `${zText}σ`);
       setLeafText('c7-ndx-number', zText);
-      setLeafText('c7-ndx-aux', 'NDX vs 60 周均值 · 与 QQQ 同步极端');
+      setLeafText('c7-ndx-aux', 'NDX vs 60 周均值 · QQQ 对照');
+      const qqqClause = qqqZ !== null ? `；QQQ ${formatSignedScore(qqqZ, 2)}σ` : '';
+      setLeafText('c7-ndx-note', `NDX 60 周 z-score ${zText}σ${qqqClause}。用于观察美国成长股板块整体温度。本数据为统计描述，不构成投资建议。`);
     }
   } catch (error) {
     console.error('[renderMacroOverview] renderC7MarketSentiment failed:', error);
@@ -2094,6 +2098,18 @@ function pathChangeText(entry) {
   return `${Math.round(value)} (${signedInteger(delta)})`;
 }
 
+function updatePathChangeBar(entry, barId, textId) {
+  const value = asNumber(entry?.value);
+  if (value === null) return;
+  const boundedValue = Math.max(0, Math.min(100, value));
+  const width = boundedValue * 6;
+  const textX = Math.min(760, 112 + width);
+  const barEl = $(barId);
+  if (barEl) barEl.setAttribute('width', width.toFixed(0));
+  const textEl = $(textId);
+  if (textEl) textEl.setAttribute('x', textX.toFixed(0));
+}
+
 function assetRowByName(rows, name) {
   return findByField(rows, 'asset', name);
 }
@@ -2159,16 +2175,17 @@ function renderDetailData({ radarData }) {
 
     const pathChanges = time.pathChanges || [];
     const pathMap = {
-      '油价→通胀': 'detail-time-path-oil-inflation',
-      '通胀→利率': 'detail-time-path-inflation-rate',
-      '利率→股票': 'detail-time-path-rate-equity',
-      '美元→信用': 'detail-time-path-dollar-credit',
-      '流动性→估值': 'detail-time-path-liquidity-valuation',
+      '油价→通胀': { textId: 'detail-time-path-oil-inflation', barId: 'detail-time-path-oil-inflation-bar' },
+      '通胀→利率': { textId: 'detail-time-path-inflation-rate', barId: 'detail-time-path-inflation-rate-bar' },
+      '利率→股票': { textId: 'detail-time-path-rate-equity', barId: 'detail-time-path-rate-equity-bar' },
+      '美元→信用': { textId: 'detail-time-path-dollar-credit', barId: 'detail-time-path-dollar-credit-bar' },
+      '流动性→估值': { textId: 'detail-time-path-liquidity-valuation', barId: 'detail-time-path-liquidity-valuation-bar' },
     };
-    for (const [label, id] of Object.entries(pathMap)) {
+    for (const [label, ids] of Object.entries(pathMap)) {
       const entry = findByField(pathChanges, 'label', label);
       const text = pathChangeText(entry);
-      if (text) setLeafText(id, text);
+      if (text) setLeafText(ids.textId, text);
+      updatePathChangeBar(entry, ids.barId, ids.textId);
     }
 
     if (asNumber(chain.stressScore) !== null) setLeafText('detail-chain-stress', Math.round(chain.stressScore));

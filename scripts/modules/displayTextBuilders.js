@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=move-bond-vol-2';
+﻿import { fmtNumSafe } from './config.js?v=frontend-stale-static-tier1-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
