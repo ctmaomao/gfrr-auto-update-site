@@ -116,10 +116,10 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 |---|---|
 | **License** | 公开 CSV,需 User-Agent |
 | **Quota** | 无明确限制 |
-| **Refresh 频率** | Realtime worker + Daily pipeline 多源 cross-check |
-| **失败 fallback** | sourceProbe diagnostic only |
-| **影响 scoring?** | **否** — D-8B 后只保留 sourceProbe;不参与 Brent consensus/promotion |
-| **fetcher** | `workers/gfrr-realtime-worker/src/worker-market-preview.js` (CSV `https://stooq.com/q/d/l/?s=<symbol>&i=d`) |
+| **Refresh 频率** | run-realtime Brent consensus 候选(每次 realtime 运行) |
+| **失败 fallback** | Brent consensus 多源交叉(ice / barchart / stooq / marketwatch / oilprice / yahoo + FRED anchor) |
+| **影响 scoring?** | 作为 run-realtime Brent consensus 候选之一参与交叉(多源、非单一决定;FRED DCOILBRENTEU 仍为 daily anchor)。**worker `/q/d/l/` Brent 诊断 sourceProbe 已于 F6(2026-06-02)删除** |
+| **fetcher** | `scripts/run-realtime.mjs` (`fetchBrentStooqCandidate`,quote `https://stooq.com/q/l/?s=cb.f`);worker `/q/d/l/` 诊断探针已移除 |
 
 ---
 

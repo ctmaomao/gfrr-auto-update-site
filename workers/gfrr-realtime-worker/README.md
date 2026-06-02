@@ -40,6 +40,7 @@
   - v28.0G-9B Frontend Asset Version Bump Helper 属于前端静态资源维护工具，不改变 Worker runtime。命令为 `node scripts/bump-frontend-asset-version.mjs frontend-stale-static-wire-5` 或 `npm run bump:frontend-asset-version -- frontend-stale-static-wire-5`；当前正式 frontend asset cache version 仍是 `28.0G-9`。工具不访问网络、不写 KV、不写 data/realtime、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。frontend asset cache version must be bumped when index.html or frontend JS changes.
   - v28.0G-10 Data Check Expected-Skip Noise Cleanup 只清理本地 data check 噪音，不改变 Worker runtime。默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline。需要细节用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`；不写 KV、不写 data/realtime、不 deploy Worker。
   - v28.0G release state：当前先稳定观察 Worker-first、G-4C TE freshness gate、G-6 runbook 与 G-7A/G-7B health snapshot 工具；KV write guard deferred，先观察 writes，不实现复杂 no-op guard。
+  - v28.0F6 Stooq Brent dead-source removal（2026-06-02）：删除 worker 内 Stooq `brn.f` / `brn.c` diagnostic candidate 与 `/q/d/l/` sourceProbe（`brn.f` / `brn.c` / `bz.f`）及其 helper（`fetchStooqBrentCandidate` / `stooqProbeUrl` / `probeStooqBrentSource` / `parseStooqProbeCsv` / `detectStooqCloseColumn`）。sourceProbe 现仅 2 路 Google Finance probe（diagnostic-only）。纯 dead-source 清理，不改变 `values.brent` / consensus / promotion / scoring / `healthScore`。`check-workflows.mjs` 加了回归守卫禁止 worker 重新引入 Stooq Brent 探针。`scripts/run-realtime.mjs` 的实时 Stooq Brent consensus 候选（`/q/l/?s=cb.f`）未改动。**worker runtime 改动需 `wrangler deploy` 才生效。**
 - **已提供的 HTTP 能力**：
   - `GET /health`：存活与模式探测。
   - `GET /market.json`：从 KV 读取 `market:latest`（若尚未由后续版本写入，则返回 404 JSON）。
@@ -52,7 +53,7 @@
 - 不是生产 market 生成器；Worker generated preview 只是独立生成链路的 **MVP 观察产物**。
 - **不**影响 GitHub Pages 前端读取路径。
 - **不**改变或取代 GitHub Actions 对 `realtime-data` 的更新。
-- 如果 FRED / Yahoo / Stooq 在 Cloudflare Worker 环境返回 520 / 429 / 522，payload 会保留 `worker-generated-unavailable` / `unavailable: true` 并写入 diagnostics，仍不会进入生产。
+- 如果 FRED / Yahoo / Google Finance / Trading Economics 等外部源在 Cloudflare Worker 环境返回 520 / 429 / 522，payload 会保留 `worker-generated-unavailable` / `unavailable: true` 并写入 diagnostics，仍不会进入生产。
 
 **生产切换**与前端优先读 Worker 仍需后续版本明确约定；当前仍不写 `market:latest`，仍不接入前端，仍不替代 GitHub Actions。
 

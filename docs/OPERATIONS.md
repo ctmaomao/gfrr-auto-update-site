@@ -942,9 +942,9 @@ git push origin main
 ### SourceProbe
 
 - `sourceProbeFrequencyMinutes=60`、`probeCount<=5`：正常。
-- Google Finance / Stooq probe failed：正常 diagnostic-only，不影响 main values。
+- Google Finance probe failed：正常 diagnostic-only，不影响 main values。（Stooq worker probe 已于 F6 删除。）
 - sourceProbe missing 或 `probeCount >5`：检查 Worker payload contract。
-- 不要把 Google Finance / Stooq 升级为 validation source，除非另开版本并有稳定证据。
+- 不要把 Google Finance 升级为 validation source，除非另开版本并有稳定证据。
 
 ### Secondary diagnostics
 
@@ -1019,11 +1019,11 @@ npm run review:worker-health-snapshot -- health-worker-snapshot.json
 
 **v28.0D-7 Brent source explainability UI**：页面“盘中快变量 / 布伦特”会显示 Brent 来源与 D-6 move status，例如 FRED 日度锚点、FRED 滞后且 Yahoo + Trading Economics 双源确认、正常 / 较大波动观察 / 已确认极端波动 / 未确认跳变。该 UI 仅用于解释 selected realtime payload，不改变 Worker 数据、Brent promotion、scoring、decision，也不读取或展示 secondary diagnostics preview。
 
-**v28.0D-8 Brent source hygiene**：Google Finance Brent 继续只作为 HTML experimental diagnostic，可能命中 futures chain 中的 `0` 或非主价格；非正值必须标记 `excluded-non-positive-or-invalid`，不参与 consensus 或 promotion。Stooq `brn.f` 保留为观测源，但 CSV close 缺失时应明确记录 `csv-no-numeric-close` 或 `symbol-download-unavailable`。新增 `stooq:brn.c` alternate diagnostic probe，仅进入 audit candidateSources，不参与主值、consensus 或 promotion。当前 Brent 主值逻辑仍是 FRED anchor + Yahoo / Trading Economics confirmed promotion，失败的 Google Finance / Stooq 不影响 `healthScore` / `criticalMissing` / `unavailable`。
+**v28.0D-8 Brent source hygiene**：Google Finance Brent 继续只作为 HTML experimental diagnostic，可能命中 futures chain 中的 `0` 或非主价格；非正值必须标记 `excluded-non-positive-or-invalid`，不参与 consensus 或 promotion。（**Stooq `brn.f` / `brn.c` worker diagnostic candidate 已于 F6（2026-06-02）删除**；不影响 `scripts/run-realtime.mjs` 的实时 Stooq Brent consensus 候选。）当前 Brent 主值逻辑仍是 FRED anchor + Yahoo / Trading Economics confirmed promotion，失败的 Google Finance 不影响 `healthScore` / `criticalMissing` / `unavailable`。
 
-**v28.0D-8A Stooq role cleanup**：将 `stooq:brn.f` 标为 `diagnostic`、`participatesInConsensus: false`、`quality: csv-symbol-unstable`，不进入 `brentValidation.consensus`，避免误读为仍参与 Brent validation。此行 **不是** Google Finance / Stooq 抓取修复；不可靠 HTML / CSV 与符号问题应通过 **v28.0D-8B Source Probe** 另行处理。
+**v28.0F6 Stooq worker probe removal（2026-06-02）**：worker `worker-market-preview.js` 的 Stooq `brn.f` / `brn.c` diagnostic candidate 与 `/q/d/l/` sourceProbe（`brn.f` / `brn.c` / `bz.f`）已整体删除（dead-source 清理，零功能影响）。Google Finance sourceProbe 仍 diagnostic-only。`scripts/run-realtime.mjs` 的实时 Stooq Brent consensus 候选（`/q/l/?s=cb.f`）**未改动**。`check-workflows.mjs` 已加回归守卫禁止 worker 重新引入 Stooq Brent 探针。worker 改动需 `wrangler deploy` 生效。
 
-**v28.0D-8B-lite Brent source probe**：Worker generated preview 在 `brentValidation.sourceProbe` 中记录低频隔离的 Google Finance / Stooq source probe。它每 **60** 分钟最多运行一次；60 分钟内复用上一轮 main preview 中的 `sourceProbe.probes`，并标记 `reused: true` / `source-probe-reused-within-60m`。当前只探测 Google Finance canonical / front-month 两个 URL，以及 Stooq `brn.f` / `brn.c` / `bz.f` 三个 symbol。它不保存完整 HTML 或完整 CSV，不参与 `brentValidation.consensus`、`brentValidation.promotion` 或 `values.brent`，也不影响 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable`。即使某个 probe 显示 `parseStatus: ok`，当前 Brent 主逻辑仍是 FRED anchor + Yahoo `BZ=F` / Trading Economics confirmed promotion；只有连续稳定后才应另开 D-8C 讨论是否升级为 validation source。
+**v28.0D-8B-lite Brent source probe**：Worker generated preview 在 `brentValidation.sourceProbe` 中记录低频隔离的 Google Finance source probe。它每 **60** 分钟最多运行一次；60 分钟内复用上一轮 main preview 中的 `sourceProbe.probes`，并标记 `reused: true` / `source-probe-reused-within-60m`。当前只探测 Google Finance canonical / front-month 两个 URL（**Stooq `brn.f` / `brn.c` / `bz.f` 三路 probe 已于 F6 删除**）。它不保存完整 HTML 或完整 CSV，不参与 `brentValidation.consensus`、`brentValidation.promotion` 或 `values.brent`，也不影响 `healthScore` / `criticalMissing` / `sourceMode` / `unavailable`。即使某个 probe 显示 `parseStatus: ok`，当前 Brent 主逻辑仍是 FRED anchor + Yahoo `BZ=F` / Trading Economics confirmed promotion；只有连续稳定后才应另开 D-8C 讨论是否升级为 validation source。
 
 ### v28.0D-8B Source Probe Findings
 
@@ -1031,11 +1031,8 @@ v28.0D-8B-lite **已上线运行并通过验证**。以下为一次典型线上 
 
 - `google-finance:BZW00:NYMEX` canonical：**`parseStatus = unreliable-html-parse`**
 - `google-finance:BZY00:NYMEX` front-month：**`parseStatus = unreliable-html-parse`**
-- `stooq:brn.f`：**`parseStatus = empty-body`**（不可靠 Brent close）
-- `stooq:brn.c`：**`parseStatus = header-unrecognized`**（不可靠 Brent close）
-- `stooq:bz.f`：**`parseStatus = empty-body`**（不可靠 Brent close）
 
-**运维结论**：Google Finance 与 Stooq **在此观测窗口内均不能升级为 Brent validation source**；也 **不得** 进入：
+**运维结论**：Google Finance **在此观测窗口内不能升级为 Brent validation source**；也 **不得** 进入：
 
 - `brentValidation.consensus`
 - `brentValidation.promotion`
@@ -1048,7 +1045,7 @@ v28.0D-8B-lite **已上线运行并通过验证**。以下为一次典型线上 
 3. **Trading Economics confirmation**（与 Yahoo 一起做 promotion confirmation pair）
 4. **v28.0D-6 extreme-move confirmation guard**
 
-若未来重新评估 Google / Stooq 是否“可升级候选”，必须先在 `sourceProbe` 中观察到**连续多轮**满足：
+若未来重新评估 Google Finance 是否“可升级候选”，必须先在 `sourceProbe` 中观察到**连续多轮**满足：
 
 - **`parseStatus = ok`**（且不得靠放宽解析把不可靠 HTML / 非 CSV 误判为 ok）
 - **`parsedValue > 0`**

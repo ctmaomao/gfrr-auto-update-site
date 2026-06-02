@@ -387,11 +387,6 @@ const workerContract = {
     'Google Finance HTML may contain futures-chain zero / non-primary price',
     'google-finance:BZW00:NYMEX canonical',
     'google-finance:BZY00:NYMEX front-month',
-    'stooq:brn.c',
-    'experimental-alt-symbol',
-    'csv-no-numeric-close',
-    'csv-symbol-unstable',
-    'stooq-brn-f-diagnostic-only-not-used-for-promotion',
     'tradingeconomics:brent-crude-oil',
     'parseTradingEconomicsObservedAt',
     'tradingeconomics-observedAt-invalid',
@@ -426,15 +421,9 @@ const workerContract = {
     'affectsPromotion: false',
     'participatesInConsensus: false',
     'promotionEligible: false',
-    'header-unrecognized',
-    'non-csv-response',
     'unreliable-html-parse',
-    'stooqProbeUrl(symbol)',
     'google-finance:BZW00:NYMEX canonical',
-    'google-finance:BZY00:NYMEX front-month',
-    'stooq:brn.f',
-    'stooq:brn.c',
-    '\'bz.f\''
+    'google-finance:BZY00:NYMEX front-month'
   ],
   brentPrimaryForbiddenPatterns: [
     [/values\.brent\s*=\s*.*recommendedValue/u, 'must not assign values.brent directly from consensus recommendedValue'],
@@ -1104,6 +1093,21 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
   for (const [pattern, message] of workerContract.brentPrimaryForbiddenPatterns) {
     if (pattern.test(text)) addRuntimeFailure(workerContract.mainPreviewFile, message);
   }
+  // F6: Stooq diagnostic Brent probe permanently removed — block reintroduction (worker file only).
+  for (const removedStooqMarker of [
+    'STOOQ_BRENT_PROBE_SYMBOLS',
+    'stooqProbeUrl',
+    'probeStooqBrentSource',
+    'fetchStooqBrentCandidate',
+    'stooq:brn.f',
+    'stooq:brn.c',
+    'stooq:bz.f',
+    'stooq.com/q/d/l/',
+  ]) {
+    if (text.includes(removedStooqMarker)) {
+      addRuntimeFailure(workerContract.mainPreviewFile, `F6: removed Stooq Brent probe must not return ("${removedStooqMarker}")`);
+    }
+  }
   const fetchHelperStart = text.indexOf('async function fetchTextWithDiagnostics');
   const splitCsvStart = text.indexOf('function splitCsvLine');
   if (fetchHelperStart !== -1 && splitCsvStart !== -1 && splitCsvStart > fetchHelperStart) {
@@ -1122,12 +1126,6 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
     }
   } else {
     addRuntimeFailure(workerContract.mainPreviewFile, 'missing fetchTextWithDiagnostics timeout guard block');
-  }
-  if (/\{\s*\.\.\.stooq,\s*role:\s*['"]validation['"]/u.test(text)) {
-    addRuntimeFailure(workerContract.mainPreviewFile, 'stooq:brn.f must not be spread with validation role');
-  }
-  if (!/source\s*=\s*['"]stooq:brn\.f['"][\s\S]{0,160}role\s*=\s*['"]diagnostic['"][\s\S]{0,160}participatesInConsensus\s*=\s*false[\s\S]{0,160}quality\s*=\s*['"]csv-symbol-unstable['"]/u.test(text)) {
-    addRuntimeFailure(workerContract.mainPreviewFile, 'stooq:brn.f must remain diagnostic-only csv-symbol-unstable');
   }
   const tradingEconomicsCandidateStart = text.indexOf('async function fetchTradingEconomicsDiagnosticCandidate');
   const buildValidationAfterTradingEconomics = text.indexOf('async function buildBrentValidation', tradingEconomicsCandidateStart);
@@ -1230,17 +1228,13 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
       }
     }
     const googleProbeBlockMatch = sourceProbeBlock.match(/const googleProbes = \[([\s\S]*?)\];/u);
-    const stooqSymbolBlockMatch = text.match(/const STOOQ_BRENT_PROBE_SYMBOLS = \[([\s\S]*?)\];/u);
     const googleProbeCount = googleProbeBlockMatch
       ? (googleProbeBlockMatch[1].match(/probeId:/gu) || []).length
       : 0;
-    const stooqProbeCount = stooqSymbolBlockMatch
-      ? (stooqSymbolBlockMatch[1].match(/'[^']+'/gu) || []).length
-      : 0;
-    if (googleProbeCount + stooqProbeCount > 5) {
+    if (googleProbeCount > 5) {
       addRuntimeFailure(
         workerContract.mainPreviewFile,
-        `D-8B-lite sourceProbe count must be <= 5; found ${googleProbeCount + stooqProbeCount}`,
+        `D-8B-lite sourceProbe count must be <= 5; found ${googleProbeCount}`,
       );
     }
   } else {
