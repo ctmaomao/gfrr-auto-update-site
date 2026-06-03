@@ -215,7 +215,7 @@ PR1 只落 **evidence + freshness + seasonality**;`signals` / `finalBias` / `int
 
 ## 11. PR1 文件清单
 
-**PR1 新建**:`scripts/oil-directional/build-oil-directional-pressure.mjs`(**零依赖**,写 `data/`)+ 取数路径按 §9 二选一(A=零依赖 EIA API client;B=`scripts/oil-directional/sanitize-*.mjs` 用 xlsx 写 `config/`)· `data/oil-directional-pressure.json`(初次 build)· `scripts/check-oil-directional-*.mjs` ×5 · 本文档。
+**PR1 新建**:`scripts/oil-directional/build-oil-directional-pressure.mjs`(**零依赖**,写 `data/`)+ 取数路径 = **A 主路**(零依赖 EIA API client,见 §9;B=`scripts/oil-directional/sanitize-*.mjs` 用 xlsx 写 `config/` 仅 fallback)· `data/oil-directional-pressure.json`(初次 build)· `scripts/check-oil-directional-*.mjs` ×5 · 本文档。
 
 **PR1 触碰**:`scripts/check-suite.mjs`(加套件)· `package.json`(加脚本 + 入 check:all)· `DATA_SOURCES.md`(主表 + 反向索引)· `DATA_CONTRACT.md`(新文件契约)· `PROJECT_BACKLOG.md`(backlog 项 + Handoff)· 计数字段(`CLAUDE.md` / `AGENTS.md` / `MILESTONE_INDEX.md` 15→16)· **`docs/INDEX.md`**(按其自身规则:新增文档必登记,放「Brent / energy public proxy source review scope」段)。
 
@@ -239,7 +239,7 @@ PR1 只落 **evidence + freshness + seasonality**;`signals` / `finalBias` / `int
 ## 13. 待办 / 注
 
 - 本文为 source-review / feasibility,**无代码改动、无 runtime、无 data 写入、无 frontend 改动、无 workflow 触发**。
-- 数据可得性核验状态:EIA 8 系列 2026-06-03 live 确认存在 + 单位/频率坐实(Codex 另用结构化 xlsx 复核 latest 行一致 @2026-05-22);前移的工程决策 = 取数架构按 ADR-0013 二选一(零依赖 EIA API JSON vs 手动 xlsx sanitizer→config→零依赖 build),HTML 仅元数据。
+- 数据可得性核验状态:EIA 8 系列 2026-06-03 live 确认存在 + 单位/频率坐实(Codex 另用结构化 xlsx 复核 latest 行一致 @2026-05-22);取数架构**已裁为 A-first**(EIA API v2 JSON,零依赖;owner 2026-06-03);B 仅 fallback / manual seed;PR1 先过 EIA API route discovery 硬 gate;HTML 仅取元数据。
 - 任何实现须各自另开 PR 走完整复核流程(outline → 实证 → brief → 复核 → 实施 → diff 复核),且永不进 scoring/decision/execution/position。
 
 ---
