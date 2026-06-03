@@ -683,7 +683,7 @@ M-49 在 brentPricingLayer 新增柴油裂解价差字段，扩展能源链条�
 
 ### oil-directional-pressure.json — Oil Directional Pressure (ODP) 独立文件 contract
 
-ODP 是**独立数据文件** `data/oil-directional-pressure.json`(不在 `radar-data.json` 内),audit-only / display-only 能源专题。PR1 只落 evidence + freshness + seasonality;`signals` / `finalBias` / `interpretation` 在 PR1 为 `null`(模型在 PR3)。
+ODP 是**独立数据文件** `data/oil-directional-pressure.json`(不在 `radar-data.json` 内),audit-only / display-only 能源专题。evidence + freshness + seasonality 自 PR1 起落地;**PR3 起 `signals` / `finalBias` / `interpretation` 由 classifier 模型填充**(见下「PR3 模型输出」),仍 display-only。
 
 顶层:`schemaVersion` 必须为 `odp-1`;`module` 为 `oil-directional-pressure`;`boundary` 字符串声明 audit-only/display-only 且含「NOT in」scoring 路径;`builtAt` ISO;`ingestion` = `{mode:'A', provider:'EIA API v2', route:'/v2/seriesid/PET.<id>.W'}`。
 
@@ -696,7 +696,34 @@ ODP 是**独立数据文件** `data/oil-directional-pressure.json`(不在 `radar
 
 freshness 不变式:`value` 缺 → `missing`;present 且 `ageDays` 无 → `stale`;present 且 `ageDays > maxAgeDays` → `stale`;否则 `live`。
 
-严格边界(同 brentPricingLayer / World Order overlay):不进 `values.*` / scoring / `decisionModel` / `executionLock` / `positionGuidance` / `displayInputsBaseline` / `effectiveDisplayInputs` / cross-validation;不并入 Global Risk Heatmap;缺数据不伪造、PR1 不提前下方向结论。校验 = `npm run check:oil-directional`(contract / freshness / seasonality / degradation / boundary);fetcher 零依赖(ADR-0013)。完整设计见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
+严格边界(同 brentPricingLayer / World Order overlay):不进 `values.*` / scoring / `decisionModel` / `executionLock` / `positionGuidance` / `displayInputsBaseline` / `effectiveDisplayInputs` / cross-validation;不并入 Global Risk Heatmap;缺数据不伪造、数据不足显式 `insufficient_data` 不硬判。校验 = `npm run check:oil-directional`(contract / freshness / seasonality / degradation / boundary / backtest / score);fetcher 零依赖(ADR-0013)。完整设计见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
+
+**PR3 模型输出**(`signals` / `finalBias` / `interpretation`,display-only;classifier = `scripts/oil-directional/odp-classifier.mjs`):
+
+- `finalBias` ∈ **8 枚举**(`FINAL_BIAS_VALUES`,classifier 单一来源):`strong_bullish` / `moderate_bullish` / `neutral_range` / `bearish` / `false_down_physical_stress` / `false_up_unconfirmed` / `product_crisis` / `insufficient_data`。**永不为 null**(build 总写一个判定,至少 `insufficient_data`)。
+- `signals`(object | null):6 物理子信号(`inventoryDrawPressure` / `dieselProductStress` / `refineryConfirmation` / `sprBufferEffectiveness` / `demandDestructionRisk` / `futuresCurveConfirmation`)+ `priceContext`(`brentChangePct4w` number|null、`curveSlopeRegime` string|null、`crackChange4w`、`priceDirectionSource`)。**`signals` 为 null 当且仅当 `finalBias='insufficient_data'`**(数据不足→暂不判断)。
+- `interpretation`(object,**非 null**):`physicalBias`、`finalBias`、`divergence` ∈ {`none`,`false_down_physical_stress`,`false_up_unconfirmed`}、`priceVsPhysical`、`drivers`(signal group 数组)、`confidence` ∈ {`low`,`moderate`,`high`}、`dataSufficiency` ∈ {`full`,`partial`,`insufficient`}、`note`(重申 audit-only)。
+
+**物理>金融裁决**(grounded `OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md` §5):classifier 先出物理 bias(6 类),`finalizeBias()` 再叠**价格背离层**——价格表象与物理链背离时信物理:
+
+- 油价跌 + 物理偏紧(库存 tight/drawAccel/extremeTight)+ backwardation + 柴油紧 → `false_down_physical_stress`;
+- 油价涨 + 物理偏松(loose)+ contango + 柴油改善 → `false_up_unconfirmed`;
+- 无背离 → `finalBias` = 物理 bias;**价格方向未知(`brentChangePct4w` null)→ 不产出 `false_*`**(fail-safe,物理 bias 站住)。
+
+**预登记价格阈值**(`ODP_PRICE_THRESHOLDS`,`Object.freeze` locked,上线前锁定、零 cherry-tune;改判定须重登):
+
+| 常量 | 值 | 含义 |
+|---|---|---|
+| `PRICE_DOWN_PCT` | −3 | Brent ~4 周 % 变动 ≤ → 「油价跌」 |
+| `PRICE_UP_PCT` | +3 | ≥ → 「油价涨」 |
+
+价格方向 = Brent ~4 周变动,从 committed `data/radar-history-full.json`(latest vs 最近 ~28 天前点,±10 天容差)零依赖派生;curve regime 复用 `radar-data` futuresPriceCurve。
+
+**同周守卫**(live 路径,镜像 PR2 canonical-grid):`classifyAt` 按 `idxAtOrBefore` 取各 series,故 build 在调用前要求 **8 条 EIA 全 `live` 且 latest period 与 crude 同周**;否则 `finalBias='insufficient_data'`(不产出混周判定)。
+
+**`dataSufficiency` 注**:枚举留 `full|partial|insufficient`,但**当前 PR3 live build 因同周守卫要求 8 条全 live,实际只产出 `full` 或 `insufficient` —— `partial` 暂不可达,保留作 forward-compatible / 未来放宽用,非当前语义承诺**。
+
+PR3 校验新增 `check:oil-directional-score`(finalBias 枚举 + `interpretation` 镜像 + 背离一致性 + **replay `finalizeBias()` 比对** + `dataSufficiency` 枚举/双条件 + signals⟺insufficient);`contract` / `degradation` / `boundary` 从「signals 必须 null」放宽为校验填充后的 display-only 输出。
 
 ### oil-directional-history.json — ODP PR2 历史 cache + 回测 GATE contract
 

@@ -463,5 +463,5 @@ documented attribution string and code is a contract violation.
 | `worldOrderStress.dimensions.economicWeaponization` | OFAC + (GDELT) |
 | `worldOrderStress.dimensions.peaceDividendRetreat` | SIPRI (年度) |
 | `worldOrderStress` GDELT narrative | GDELT Cloud v2 |
-| `data/oil-directional-pressure.json` (ODP, 独立文件) | EIA API v2 weekly petroleum (`PET.*.W`) + 复用 radar-data WTI/Brent/crack/curve |
+| `data/oil-directional-pressure.json` (ODP, 独立文件) | EIA API v2 weekly petroleum (`PET.*.W`) + 复用 radar-data WTI/Brent/crack/curve + radar-history-full Brent ~4w 价格方向(PR3 背离层) |
 | `data/oil-directional-history.json` (ODP PR2 回测 cache) | EIA API v2 weekly petroleum (`PET.*.W`) 2014-至今 committed snapshot;仅 backtest replay,不进 live / scoring / Heatmap |
