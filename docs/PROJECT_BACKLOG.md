@@ -10,7 +10,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 |---|---|
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分)|
 | Cache version | `world-order-acled-freshness-1` |
-| check:all 项数 | 16 顶层项 / ~53 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 5 leaf)|
+| check:all 项数 | 16 顶层项 / ~54 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 6 leaf,含 PR2 backtest GATE)|
 | 最后审计日期 | 2026-06-02(Codex 只读审计 + Claude 7-agent 复核 + Codex 终裁;已修 F3 文档漂移 `a6e9101` + F2 ACLED workflow 清理 `a74a4a2` + F4 M94 mock 可复现 `4c491f3` + F1 AGENTS.md 分层措辞 `c7a9db7`,**Codex 审计 7 findings 全部收口**:F5/F6 = no action、F7 本轮增量(A2/A3/A1-clean;A1 余项 + .mjs 拆分 deferred);详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |
@@ -102,14 +102,15 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **✅ P3-18 stale-display 收口完成(closure 坐实)**:Tier-1/2(`0e7e76a`/`00a83c7`)+ WIRE 批 A/B/C/D/E(`975f501`/`4cf7220`/`5076658`/`d5ff2ef`/`6f98cdb`)共 7 批;6 个 deferred WIRE 项 + 批 B/C 余项 + 0-信号边界 + 整段 health narrative 两态化全部落地;数据健康附录与主题卡在健康与降级两态下均无写死会漂 / 说反话的断言。**无 pending 后续。**(批 D 提的「整段 health narrative active/none」已由批 E 完成。)
 - **硬约束**:改前端必 `npm run bump:frontend-asset-version`;**每次 bump 会重写冻结的 `scripts/modules/realtime.js` 的 import `?v=` → 须 `git checkout HEAD --` 还原保 diff=0**(见 memory `ops_bump_tool_blind_spots`,本类已踩两次);加新 id 须 index.html 与 setter 两边一致(否则 `check:dom` 红);受限路径 `data/`/`realtime/`/`.github/workflows/`/`manual-artifacts/` 零 diff。
 
-#### P3-19: Oil Directional Pressure (ODP) 油价方向压力研判 — 能源专题(PR1 + PR1b merged; PR2 next)
+#### P3-19: Oil Directional Pressure (ODP) 油价方向压力研判 — 能源专题(PR1 + PR1b merged; PR2 代码完成 + Codex 审过,待 commit/push/建 PR)
 
 来源:2026-06-03 owner 立项 + 可行性审计(Codex↔Claude↔owner 终裁,见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md))。**audit-only / display-only 独立能源专题,非第七个底层风险模块,Global Risk Heatmap 独立**(同 CLAUDE.md 绝对规则 3)。
 
 - **取数终裁 A-first**(owner 2026-06-03):EIA API v2 JSON(`/v2/seriesid/PET.<id>.W`,免费 `EIA_API_KEY`)→ 零依赖 build 写独立文件 `data/oil-directional-pressure.json`;B(手动 xlsx sanitizer→`config/`)仅 fallback。**ADR-0013**:写 `data/` 不导入 devDep(xlsx 禁进 CI/`data/`)。
 - **PR1(✅ 已 squash-merge 到 main = `70876f5d`,#258)**:零依赖 fetcher(8 个 WPSR series:原油 exSPR/SPR/馏分油/汽油库存 + 炼厂开工率/净投入 + 汽油/馏分油 product supplied;短超时 + fail-closed)+ 复用 radar-data WTI/Brent/crack/curve + 初始 `data/oil-directional-pressure.json`(evidence + freshness + seasonality;`signals`/`finalBias`/`interpretation`=null)+ 5 个 `check:oil-directional-*`(contract/freshness/seasonality/degradation/boundary)接入 `check:all`(16 项)。**不碰 UI / `app.js` / workflow**。build 经 3 轮 Codex、checks 经 2 轮 Codex + 负例自验。
 - **PR1b(✅ 已 squash-merge 到 main,#259)**:周度 refresh workflow(`refresh-oil-directional-pressure.yml`,Thu cron + manual dispatch)+ Pages-trigger + `build:oil-directional`;`EIA_API_KEY` repo secret 已设。
-- **后续 PR**:PR2 历史 cache + 2020/2022/2023-24 回测(**GATE**,拐点合理才进 UI);PR3 `signals`/`finalBias`/物理>金融裁决(display-only);PR4 中文 UI 独立专题(整包升级 `app.js` + DESIGN §4.1 同步 + 决定是否投 `radar-data.json` root snapshot);PR5 只读引用 dailyBrief/interpretation。
+- **PR2(✅ 代码完成 + Codex 审过 · branch `codex/odp-pr2-backtest`,待 commit/push/建 PR)**:第二独立文件 `data/oil-directional-history.json`(8 series × ~647 周、2014-至今 committed snapshot,零依赖 build)+ 物理链分类器 `odp-classifier.mjs`(look-ahead-safe,预登记锁定阈值 `ODP_THRESHOLDS`;PR2 仅 backtest 调,live `signals`/`finalBias` 仍 null)+ 回测 harness + GATE `check:oil-directional-backtest`(history-integrity + points 真实性 + canonical 周网格对齐 + 2020/2022/2023-24 预登记 regime 判定;`oil-directional` 套件 5→6 leaf)。**回测 GATE 通过、与 owner 独立跑逐一吻合**(2020-collapse 6/6 bearish;2022-Q2 13/13 bullish-family;2023-24 strong/crisis 9/52=17.3%、max-consec 2)。**Codex review 放行**:实质模型 + regime GATE 过;唯一 P2 = history gate 过信 metadata、不验 `points` → 已补 points 真实性 + canonical 周网格校验(负例 blanked / 删一周 / 网格漂移现全 FAIL,真 cache PASS、`check:all` 绿)。契约见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)、源见 [`DATA_SOURCES.md`](DATA_SOURCES.md)。
+- **后续 PR**:PR3 `signals`/`finalBias`/物理>金融裁决(display-only,把 classifier productionize 到 live);PR4 中文 UI 独立专题(整包升级 `app.js` + DESIGN §4.1 同步 + 决定是否投 `radar-data.json` root snapshot);PR5 只读引用 dailyBrief/interpretation。
 - 边界:不进 `values.*`/scoring/decisionModel/executionLock/positionGuidance/cross-validation;期限结构低置信复用、缺则不参与裁决;数据不足显式「暂不判断」。EIA = 美国政府公共领域。
 
 ---
@@ -241,6 +242,15 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-06-03 — ODP PR2 历史 cache + 回测 GATE)**: PR2 在 branch `codex/odp-pr2-backtest`。代码:历史 cache `data/oil-directional-history.json`(8 series × ~647 周、2014-至今 committed snapshot,零依赖 build)+ 物理链分类器 `odp-classifier.mjs`(look-ahead-safe,预登记锁定阈值 `ODP_THRESHOLDS`)+ 回测 harness + GATE `check:oil-directional-backtest`(history-integrity + points 真实性 + canonical 周网格 + 2020/2022/2023-24 预登记 regime;`oil-directional` 套件 5→6 leaf)。**Codex review 放行**(实质模型 + GATE 过;唯一 P2 = history gate 过信 metadata → 已补 points 真实性 + canonical 周网格校验,负例 blanked / 删一周 / 网格漂移全 FAIL、真 cache PASS)。文档:DATA_SOURCES + DATA_CONTRACT(含预登记阈值表)+ 本 backlog P3-19 PR2 段 + leaf 计数 ~53→~54 / 套件 6 leaf。`check:all` 16 项绿;回测与 owner 独立跑逐一吻合;live `signals`/`finalBias` 仍 null(productionize=PR3)。
+- **当前进行中(2026-06-03 ODP PR2)**: PR2 代码 + 文档已 commit 到 branch `codex/odp-pr2-backtest`(本 Handoff 即在该 docs commit 内);push + 建 PR 待 owner 授权。
+- **下一步建议(2026-06-03 ODP PR2)**: owner 授权后 push branch → 建 PR(squash,同 #258/#259);合并 main 需单独授权 + 选 squash/rebase。merge 后 PR3 = 把 classifier productionize 到 live(`signals`/`finalBias`,物理>金融,display-only)。
+- **阻塞或等待(2026-06-03 ODP PR2)**: 待 owner 授权 push + 建 PR。
+
+---
+
+> 以下为 2026-06-03 ODP PR1 留档,当前状态以上方 PR2 段为准。
 
 - **上次会话结束于(2026-06-03 — ODP PR1 油价方向压力研判 数据接入)**: owner 立项「油价方向压力研判 / ODP」独立能源专题;可行性审计经 Codex↔Claude↔owner 终裁、source-review 文档已 merge(PR #257)。**PR1 代码全部完成并已 squash-merge 到 main(#258 = `70876f5d`)**:① 零依赖 build `scripts/oil-directional/build-oil-directional-pressure.mjs`(EIA API v2 `/v2/seriesid/PET.<id>.W` 取 8 个 WPSR series + 复用 radar-data WTI/Brent/crack/curve;短超时 `EIA_FETCH_TIMEOUT_MS` + fail-closed;key 走 `process.env.EIA_API_KEY`,本地从 gitignored `manual-artifacts/eia-api-key.txt` 注入);② 初始 `data/oil-directional-pressure.json`(evidence + freshness + seasonality;`signals`/`finalBias`/`interpretation`=null);③ 5 个 `check:oil-directional-*` + check-suite `oil-directional` + package.json(check:all 15→16);④ 文档(本 backlog + DATA_SOURCES + DATA_CONTRACT + 计数 CLAUDE/AGENTS/MILESTONE)。build 经 3 轮 Codex、checks 经 2 轮 Codex + 负例自验;`check:all` 16 项绿;ADR-0013 守(写 `data/` 零依赖)。**PR1b(#259,merge `226a698f`)续上**:周度 refresh workflow(`refresh-oil-directional-pressure.yml`,Thu cron + dispatch)+ Pages-trigger + `build:oil-directional`;`EIA_API_KEY` repo secret 已设(`gh secret set` 从 gitignored key 文件)。
 - **当前进行中(2026-06-03 ODP)**: 无。PR1 + PR1b **均已 squash-merge 到 main**([#258](https://github.com/ctmaomao/gfrr-auto-update-site/pull/258)=`70876f5d` / [#259](https://github.com/ctmaomao/gfrr-auto-update-site/pull/259)=`226a698f`);`check:all` 16 项绿;main 干净、PR 分支已删。

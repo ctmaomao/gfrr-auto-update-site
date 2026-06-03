@@ -291,6 +291,8 @@ See [`CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md`](CHINA_MACRO_LIQUIDITY_PR
 
 WTI / Brent / 裂解价差 / 期限结构由 `oil-directional-pressure.json` **复用** `data/radar-data.json`(`macroDrivers.inflationEnergy.wti` / `brentPricingLayer.selectedBrent` / `.crackSpread` / `.futuresPriceCurve`),不重抓。EIA = 美国政府公共领域数据,标注 source URL 即可。详见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
 
+**PR2 历史 cache**（`data/oil-directional-history.json`）：同 8 个 `PET.*.W` series、同 `/v2/seriesid/` route，由 `scripts/oil-directional/build-oil-directional-history.mjs`（零依赖，ADR-0013）一次性抓 2014-至今全周度史并切片落盘（每 series ~647 周，2014-01-03 起），作 **committed snapshot** 供回测 harness 离线、可复现回放（`check:all` 不联网）。fail-closed：失败 series → `sourceStatus:'missing'` / `points:[]`，不伪造。**仅供 PR2 回测 GATE**，不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / decision / Global Risk Heatmap。文件契约 + 分类器 / GATE / 预登记阈值见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)。
+
 ---
 
 ### GDELT Cloud v2
@@ -462,3 +464,4 @@ documented attribution string and code is a contract violation.
 | `worldOrderStress.dimensions.peaceDividendRetreat` | SIPRI (年度) |
 | `worldOrderStress` GDELT narrative | GDELT Cloud v2 |
 | `data/oil-directional-pressure.json` (ODP, 独立文件) | EIA API v2 weekly petroleum (`PET.*.W`) + 复用 radar-data WTI/Brent/crack/curve |
+| `data/oil-directional-history.json` (ODP PR2 回测 cache) | EIA API v2 weekly petroleum (`PET.*.W`) 2014-至今 committed snapshot;仅 backtest replay,不进 live / scoring / Heatmap |
