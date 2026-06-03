@@ -5,7 +5,7 @@
 > **Global Risk Heatmap 必须保持独立**——ODP 与其并列,不得合并、挤占或破坏它。
 > 沿用 `BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md` / `CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md` 模板与边界纪律。
 
-调研/裁决日期:2026-06-03。流程:Codex 只读审计 → Claude 交叉验证(代码级核 + EIA dnav live 核验)→ owner 复核(数据源优先级 / 落点 / PR 拆分已裁;**取数架构 A/B 待最终裁决**)。本文**不批准** live fetch、不写生产数据、不改 scoring。
+调研/裁决日期:2026-06-03。流程:Codex 只读审计 → Claude 交叉验证(代码级核 + EIA dnav live 核验)→ owner 终裁(2026-06-03):数据源优先级 / 落点 / PR 拆分已裁;**取数架构 = A-first**(EIA API v2 JSON,零依赖)—— PR1 先过 EIA API route discovery 硬 gate,**B 仅 fallback / manual seed**(见 §9/§12)。本文**不批准** live fetch、不写生产数据、不改 scoring。
 
 ---
 
@@ -192,8 +192,8 @@ PR1 只落 **evidence + freshness + seasonality**;`signals` / `finalBias` / `int
 ## 9. 抓取纪律（若未来实现,沿用 ISM/Redbook/NBS/EIA 纪律）
 
 - ⚠️ **ADR-0013 硬约束(写 `data/` 的代码必须零依赖)**:`docs/ADR/0013-*.md` 明确 devDependency(含 `xlsx`)**不得**被任何写 `data/` 的代码、或任何 GitHub Actions production 路径脚本导入(line 30/36)。因此 **xlsx 不能用于直写 `data/oil-directional-pressure.json` 的 fetcher/build,也不能在 CI 自动 refresh 里跑**。两条合规路径:
-    - **(A) CI 自动(推荐自动化)**:EIA API v2 返 **JSON → 零依赖解析 → build 写 `data/`**;需免费 EIA key(GitHub secret,同 FRED/GDELT 管理);全程无 devDep。
-    - **(B) 手动 sanitizer(ACLED 模式)**:operator 本地下 dnav `.xls` → `scripts/oil-directional/sanitize-*.mjs`(xlsx,dev-time entry,**只写 `config/`**)→ 零依赖 build 读 config 写 `data/`;xlsx 永不进 CI/`data/`(ADR-0013 line 23/29 sanctioned 模式)。**选 B 须同步放宽 `AGENTS.md`(:86)/ `DATA_SOURCES.md`(:317)的「xlsx 仅限 ACLED sanitizer」边界以纳入 ODP sanitizer(选 A 不动)。**
+    - **(A) CI 自动【owner 终裁 = 已选主路】**:EIA API v2 返 **JSON → 零依赖解析 → build 写 `data/`**;需免费 EIA key(GitHub secret,同 FRED/GDELT 管理);全程无 devDep。前置硬 gate 见 §12。
+    - **(B) 手动 sanitizer(ACLED 模式)【fallback / manual seed / API 不通退路】**:operator 本地下 dnav `.xls` → `scripts/oil-directional/sanitize-*.mjs`(xlsx,dev-time entry,**只写 `config/`**)→ 零依赖 build 读 config 写 `data/`;xlsx 永不进 CI/`data/`(ADR-0013 line 23/29 sanctioned 模式)。**选 B 须同步放宽 `AGENTS.md`(:86)/ `DATA_SOURCES.md`(:317)的「xlsx 仅限 ACLED sanitizer」边界以纳入 ODP sanitizer(选 A 不动)。**
 - **结构化解析**:无论 A/B,latest-row 都从结构化源取;**HTML LeafHandler 仅确认 series 存在/元数据,不取 latest-row**(见 §2 实测教训)。
 - 低频 + 按日期缓存 + UA `GFRRBot/1.0`;不绕 SSO/captcha;只用官方显式端点 URL,不广扫站点。
 - **Fail closed**:空记录 / schema 变化 / 非 200 / 解析失败 / 超期 → `missing` / `stale` / `fallback`,**不得伪造缺失值、不得把 stale 当 live**。
@@ -204,7 +204,7 @@ PR1 只落 **evidence + freshness + seasonality**;`signals` / `finalBias` / `int
 
 ## 10. PR 拆分（serial trunk,逐个合并;PR1 不碰 UI/`app.js`）
 
-1. **PR1** — source review + data contract + fetch/build 脚本(**零依赖写 `data/`**,见 §9 ADR-0013)+ 5 个 check + 一次性 build 初始 `data/oil-directional-pressure.json`;**不含 workflow**;**不渲染、不碰 `app.js`/`index.html`/`renderMacroOverview.js`/`validate-data.mjs`**;`radar-data.json` 零改动。
+1. **PR1** — **第一步过 EIA API route discovery 硬 gate(8 WPSR series live-proof,见 §12)** + source review + data contract + fetch/build 脚本(**零依赖写 `data/`**,见 §9 ADR-0013)+ 5 个 check + 一次性 build 初始 `data/oil-directional-pressure.json`;**不含 workflow**;**不渲染、不碰 `app.js`/`index.html`/`renderMacroOverview.js`/`validate-data.mjs`**;`radar-data.json` 零改动。
 2. **PR1b** — 周度 refresh workflow(镜像 `refresh-world-order-stress.yml`)+ 按 `check-workflows.mjs` 接入 `deploy-static-site-to-pages.yml` 的 Pages trigger 覆盖。**与 PR1 分开**,避免第一刀扩到 workflow + trigger 接线(呼应原始约束「第一 PR 纯数据接入 + check」)。
 3. **PR2** — 历史 cache + 2020/2022/2023-24 回测 harness(**GATE**:拐点方向合理才进 UI)。
 4. **PR3** — `signals`/`finalBias`/`interpretation` 模型固化 + 物理>金融裁决,仍 display-only;启用 `check:odp-score`。
@@ -229,7 +229,7 @@ PR1 只落 **evidence + freshness + seasonality**;`signals` / `finalBias` / `int
 
 ## 12. PR1 source-review 开放问题（开工前必须先回答）
 
-1. **取数架构(ADR-0013 决策点,owner 定)**:A(EIA API v2 JSON,零依赖 + 免费 key,CI 自动)vs B(手动 xlsx sanitizer→`config/`→零依赖 build)。A 须确认 EIA API v2 对 8 个 WPSR series 的覆盖/路由 + 申请 key;并查 dnav 是否另有零依赖 CSV 端点(若有则无 key 也能自动)。B 接受手动周度刷新(同 ACLED)。
+1. **取数架构 —— owner 2026-06-03 终裁:A-first**(EIA API v2 JSON,零依赖 + 免费 key,CI 自动);**B(手动 xlsx sanitizer→`config/`→零依赖 build)仅作 fallback / manual seed / API 不通退路**。**硬 gate(PR1 第一个动作)**:用 EIA key live-proof 8 个 WPSR series 的 API route(`petroleum` route 或 v2 `/seriesid/` legacy)—— 覆盖 / 返回结构 / 单位频率坐实才写正式 build;映射不稳或结构不适合才切 B。顺带查 dnav 是否另有零依赖 CSV 端点(若有则 A 连 key 都省)。**不接受**为自动化让 xlsx 进 CI 写 `data/`(撞 ADR-0013)。
 2. **deploy-trigger 接线**:新 refresh workflow commit 到 main,`check-workflows` 是否强制它进 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows`?(PR1-3 前端尚未读此文件,理想是不触发 Pages 重建;须确认 checker 是否允许非部署型 commit workflow,否则接入即可,无害重建。)
 3. **dnav 稳定性**:连续几次拉取确认 XLS 结构不变、无地理封锁(EIA 在 US runner 应可达,不同于 pbc.gov.cn)。
 4. **`WGFUPUS2` / `WDIUPUS2` / days-of-supply**:确认 product-supplied 口径是否满足 `demandDestructionRisk` 需求;days-of-supply 采「`WCESTUS1 ÷ WCRRIUS2` 派生」。
@@ -246,4 +246,4 @@ PR1 只落 **evidence + freshness + seasonality**;`signals` / `finalBias` / `int
 
 ## 结论
 
-ODP 适合作为 GFRR 的**独立能源专题、audit-only / display-only**(非第七个底层风险模块,Heatmap 保持独立)。核心物理链数据**可得**:dnav XLS 已证明**零 key 可得**(手动 B 路径);CI 自动路径若走 EIA API v2 仍需确认 series 路由并配置免费 EIA key(见 §9 A/B)。dnav XLS 提供原油/SPR/馏分油/汽油库存、炼厂开工率与投入、product-supplied 需求 proxy(2026-06-03 已 live 确认,史起 1982–1991),价格/裂解/曲线复用现有 FRED + Yahoo 字段。第一步**不碰 UI、不碰 `app.js`**,先做 source review + data contract + check scripts;期限结构只能低置信复用、缺则不参与裁决;回测作上线 GATE;数据不足时显式「暂不判断」。
+ODP 适合作为 GFRR 的**独立能源专题、audit-only / display-only**(非第七个底层风险模块,Heatmap 保持独立)。核心物理链数据**可得**:dnav XLS 已证明**零 key 可得**(手动 B 路径);CI 自动主路 = EIA API v2(owner 终裁 A);PR1 先过 route discovery 硬 gate 确认 8 series 并配免费 key(见 §9/§12)。dnav XLS 提供原油/SPR/馏分油/汽油库存、炼厂开工率与投入、product-supplied 需求 proxy(2026-06-03 已 live 确认,史起 1982–1991),价格/裂解/曲线复用现有 FRED + Yahoo 字段。第一步**不碰 UI、不碰 `app.js`**,先做 source review + data contract + check scripts;期限结构只能低置信复用、缺则不参与裁决;回测作上线 GATE;数据不足时显式「暂不判断」。
