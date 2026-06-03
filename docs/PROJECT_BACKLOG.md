@@ -10,7 +10,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 |---|---|
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分)|
 | Cache version | `odp-energy-theme-1` |
-| check:all 项数 | 16 顶层项 / ~55 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 7 leaf,含 PR2 backtest GATE + PR3 score)|
+| check:all 项数 | 16 顶层项 / ~56 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 8 leaf,含 PR2 backtest GATE + PR3 score + PR4 zh-copy)|
 | 最后审计日期 | 2026-06-02(Codex 只读审计 + Claude 7-agent 复核 + Codex 终裁;已修 F3 文档漂移 `a6e9101` + F2 ACLED workflow 清理 `a74a4a2` + F4 M94 mock 可复现 `4c491f3` + F1 AGENTS.md 分层措辞 `c7a9db7`,**Codex 审计 7 findings 全部收口**:F5/F6 = no action、F7 本轮增量(A2/A3/A1-clean;A1 余项 + .mjs 拆分 deferred);详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |
@@ -102,7 +102,7 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **✅ P3-18 stale-display 收口完成(closure 坐实)**:Tier-1/2(`0e7e76a`/`00a83c7`)+ WIRE 批 A/B/C/D/E(`975f501`/`4cf7220`/`5076658`/`d5ff2ef`/`6f98cdb`)共 7 批;6 个 deferred WIRE 项 + 批 B/C 余项 + 0-信号边界 + 整段 health narrative 两态化全部落地;数据健康附录与主题卡在健康与降级两态下均无写死会漂 / 说反话的断言。**无 pending 后续。**(批 D 提的「整段 health narrative active/none」已由批 E 完成。)
 - **硬约束**:改前端必 `npm run bump:frontend-asset-version`;**每次 bump 会重写冻结的 `scripts/modules/realtime.js` 的 import `?v=` → 须 `git checkout HEAD --` 还原保 diff=0**(见 memory `ops_bump_tool_blind_spots`,本类已踩两次);加新 id 须 index.html 与 setter 两边一致(否则 `check:dom` 红);受限路径 `data/`/`realtime/`/`.github/workflows/`/`manual-artifacts/` 零 diff。
 
-#### P3-19: Oil Directional Pressure (ODP) 油价方向压力研判 — 能源专题(PR1 + PR1b + PR2 + PR3 merged; PR4 next)
+#### P3-19: Oil Directional Pressure (ODP) 油价方向压力研判 — 能源专题(PR1 + PR1b + PR2 + PR3 merged; PR4 代码完成 + Codex 两轮审过,待 PR)
 
 来源:2026-06-03 owner 立项 + 可行性审计(Codex↔Claude↔owner 终裁,见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md))。**audit-only / display-only 独立能源专题,非第七个底层风险模块,Global Risk Heatmap 独立**(同 CLAUDE.md 绝对规则 3)。
 
@@ -111,7 +111,8 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **PR1b(✅ 已 squash-merge 到 main,#259)**:周度 refresh workflow(`refresh-oil-directional-pressure.yml`,Thu cron + manual dispatch)+ Pages-trigger + `build:oil-directional`;`EIA_API_KEY` repo secret 已设。
 - **PR2(✅ 已 squash-merge 到 main = `93a41d96`,#260)**:第二独立文件 `data/oil-directional-history.json`(8 series × ~647 周、2014-至今 committed snapshot,零依赖 build)+ 物理链分类器 `odp-classifier.mjs`(look-ahead-safe,预登记锁定阈值 `ODP_THRESHOLDS`;PR2 仅 backtest 调,live `signals`/`finalBias` 仍 null)+ 回测 harness + GATE `check:oil-directional-backtest`(history-integrity + points 真实性 + canonical 周网格对齐 + 2020/2022/2023-24 预登记 regime 判定;`oil-directional` 套件 5→6 leaf)。**回测 GATE 通过、与 owner 独立跑逐一吻合**(2020-collapse 6/6 bearish;2022-Q2 13/13 bullish-family;2023-24 strong/crisis 9/52=17.3%、max-consec 2)。**Codex review 放行**:实质模型 + regime GATE 过;唯一 P2 = history gate 过信 metadata、不验 `points` → 已补 points 真实性 + canonical 周网格校验(负例 blanked / 删一周 / 网格漂移现全 FAIL,真 cache PASS、`check:all` 绿)。契约见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)、源见 [`DATA_SOURCES.md`](DATA_SOURCES.md)。
 - **PR3(✅ 已 squash-merge 到 main = `ed265db6`,#261)**:把 PR2 锁定的 classifier productionize 到 live —— `build-oil-directional-pressure.mjs` 构造 history → `classifyAt` → 价格上下文(Brent ~4w 变动复用 committed `radar-history-full.json` + curve regime)→ `finalizeBias()` 叠**价格背离层**,填 `oil-directional-pressure.json` 的 `signals`/`finalBias`/`interpretation`(均 display-only,仍不进 scoring/decision/Heatmap)。**classifyAt/ODP_THRESHOLDS 一字不改(纯追加 `finalizeBias` + 预登记 `ODP_PRICE_THRESHOLDS`),PR2 backtest GATE 原样绿**。finalBias 8 枚举,补出物理链缺的 `false_down_physical_stress`/`false_up_unconfirmed`(§5 物理>金融);新增 `check:oil-directional-score`(套件 6→7 leaf:enum + interpretation 镜像 + 背离一致性 + **replay `finalizeBias` 比对** + dataSufficiency 契约),contract/degradation/boundary 从「signals 必须 null」放宽。**Codex 两轮闭合**:P1 all-null 回归 / P2 不可能 false_* / P2 混周(→ 同周守卫:8 EIA 全 live 同周才判)/ dataSufficiency 契约洞,各负例坐实;`partial` 当前同周守卫下不可达、保留作 forward-compat(已写 DATA_CONTRACT)。live verdict 实跑 = `false_down_physical_stress`(Brent 4w −13% 跌但物理 product_crisis + backwardation + 柴油紧)。契约见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)。
-- **后续 PR**:PR4 中文 UI 独立专题(整包升级 `app.js` + DESIGN §4.1 同步 + 决定是否投 `radar-data.json` root snapshot;启用 `check:odp-zh-copy`);PR5 只读引用 dailyBrief/interpretation。
+- **PR4(✅ 代码完成 + Codex 两轮审过 · branch `codex/odp-pr4-ui`,待 PR)**:中文 UI 独立能源专题(决策 **A+(i)**,owner/Codex 定)—— 把 live `signals`/`finalBias`/`interpretation` 渲染成首页 `#oil-directional-pressure` 一级 section(在 `#global-risk-heatmap` 后、附录前;§7 结构:结论可见 + 一句话 + 原因 + `<details>` 证据)。**数据落点 = app.js 第 5 个 fetch**(ODP 保持独立文件、`check-oil-directional-boundary` 守卫不动、无 radar-data 耦合);新 `scripts/modules/renderOilDirectional.js`(finalBias→中文 verdict + tone,原因/证据从 signals/evidence,值走 setter 不写死防 stale-display)。**正式 IA 变更**:DESIGN §4.1(新 section #6、附录 →#7-11)/ §4.2(jump-nav 15→16 第 11 项)/ §5.1 色表 / §5.6 增补 + ADR-0014;新增 `check:oil-directional-zh-copy`(套件 7→8 leaf:无 trade-action 词 + finalBias 8 中文全有 + 暂不判断 fallback);asset bump → `odp-energy-theme-1`(冻结 `realtime.js` 还原 diff=0)。**Codex 两轮闭合**:P2 headline 夸大(`product_crisis`/`strong_bullish`/`false_down` 收窄到 classifier 保证事实,明细行仍显实测具体态)/ P3 降级重渲染 stale(`setToneClass` 空 tone 重置 + insufficient/!oilData 清 meta/reasons/证据),各 mock-DOM + in-browser 验。**端到端验证**:check:all 16 项 / 套件 8 leaf 绿、check:dom 绿、真实浏览器渲染正确零 console error、受限路径(`data/`/`.github/`/radar-data)零污染。`#oil-directional-pressure` display-only,不进打分 / 执行 / Heatmap。
+- **后续 PR**:PR5 稳定观察后让 dailyBrief / interpretation 层**只读引用** ODP(ODP 收官)。
 - 边界:不进 `values.*`/scoring/decisionModel/executionLock/positionGuidance/cross-validation;期限结构低置信复用、缺则不参与裁决;数据不足显式「暂不判断」。EIA = 美国政府公共领域。
 
 ---
@@ -243,6 +244,15 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-06-03 — ODP PR4 中文 UI 独立能源专题)**: PR4 在 branch `codex/odp-pr4-ui`(off main `6e9b0bcd`)。决策 **A+(i)**(owner 让 Codex 拍):app.js 第 5 个 fetch(ODP 保持独立文件、boundary 守卫不动)+ 主路径新一级 section `#oil-directional-pressure`(`#global-risk-heatmap` 后、附录前;jump-nav 15→16 第 11 项)。新 `renderOilDirectional.js`(finalBias→中文 verdict+tone+原因+证据,值走 setter 不写死)+ **正式 IA 变更** DESIGN §4.1/§4.2/§5.1/§5.6 + ADR-0014 + 新 `check:oil-directional-zh-copy`(套件 7→8 leaf)+ asset bump `odp-energy-theme-1`(冻结 `realtime.js` 还原 diff=0)。**Codex 两轮审查全闭合**(P2 headline 夸大→收窄到 classifier 保证事实 / P3 降级重渲染 stale→tone 重置+清 meta/reasons/证据,各 mock-DOM + in-browser 验)。`check:all` 16 项 / 套件 8 leaf 绿;真实浏览器渲染正确、零 console error;受限路径(`data/`/`.github/`/radar-data)零污染。
+- **当前进行中(2026-06-03 ODP PR4)**: PR4 代码 + 文档已 commit 到 branch `codex/odp-pr4-ui`(本 Handoff 在该 docs commit 内);建 PR 待 owner 授权。
+- **下一步建议(2026-06-03 ODP PR4)**: owner 授权后建 PR(squash,同 #258/#259/#260/#261)→ 授权 squash-merge;merge 后 **PR5**(稳定观察后 dailyBrief/interpretation 只读引用 ODP)= ODP 收官。
+- **阻塞或等待(2026-06-03 ODP PR4)**: 待 owner 授权 建 PR。
+
+---
+
+> 以下为同日 ODP PR3 留档,当前状态以上方 PR4 段为准。
 
 - **上次会话结束于(2026-06-03 — ODP PR3 productionize classifier + 价格背离层)**: PR3 已 squash-merge 到 main(#261 = `ed265db6`,squash subject 干净无 wip)。把 PR2 锁定 classifier productionize 到 live:`finalizeBias()` 价格背离层(物理>金融,§5)填 `signals`/`finalBias`/`interpretation`(display-only)。**classifyAt/ODP_THRESHOLDS 纯追加未改、PR2 GATE 原样绿**;新增 `check:oil-directional-score`(套件 6→7 leaf);价格方向复用 committed `radar-history-full.json` Brent ~4w;同周守卫(8 EIA 全 live 同周才判,否则 insufficient)。**Codex 两轮审查全闭合**(P1 all-null / P2 不可能 false_* / P2 混周 / dataSufficiency 契约洞,各负例坐实;`partial` forward-compat 注已写)。`check:all` 16 项绿;live verdict = `false_down_physical_stress`。文档:DATA_CONTRACT(PR3 模型输出 + 背离层 + `ODP_PRICE_THRESHOLDS` 表 + 同周守卫 + dataSufficiency 注)/ DATA_SOURCES / 本 P3-19 + leaf ~54→~55·套件 7。
 - **当前进行中(2026-06-03 ODP PR3)**: 无。PR3 已 squash-merge 到 main(#261);branch `codex/odp-pr3-productionize` 已删(本 Handoff 在 post-merge 收尾 commit 内)。
