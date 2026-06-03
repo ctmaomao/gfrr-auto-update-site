@@ -53,6 +53,13 @@ const SUITES = {
   'world-order-acled': [
     'check:world-order-acled-weekly',
     'check:world-order-acled-monthly'
+  ],
+  'oil-directional': [
+    'check:oil-directional-contract',
+    'check:oil-directional-freshness',
+    'check:oil-directional-seasonality',
+    'check:oil-directional-degradation',
+    'check:oil-directional-boundary'
   ]
 };
 

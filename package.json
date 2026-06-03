@@ -97,12 +97,18 @@
     "check:world-order-acled": "node --check scripts/check-suite.mjs && node scripts/check-suite.mjs world-order-acled",
     "check:data:verbose": "node scripts/validate-data.mjs --verbose",
     "check:data:strict-live-alignment": "node scripts/validate-data.mjs --strict-live-alignment",
-    "check:all": "npm run check:syntax && npm run check:gdelt-cloud-fetcher-integration && npm run check:modules && npm run check:frontend-live-contracts && npm run check:node-runtime && npm run check:workflows && npm run check:docs && npm run check:external-ai && npm run check:data && npm run check:brent && npm run check:macro-drivers && npm run check:narrative-density && npm run check:market-pricing && npm run check:world-order && npm run check:world-order-acled",
+    "check:all": "npm run check:syntax && npm run check:gdelt-cloud-fetcher-integration && npm run check:modules && npm run check:frontend-live-contracts && npm run check:node-runtime && npm run check:workflows && npm run check:docs && npm run check:external-ai && npm run check:data && npm run check:brent && npm run check:macro-drivers && npm run check:narrative-density && npm run check:market-pricing && npm run check:world-order && npm run check:world-order-acled && npm run check:oil-directional",
     "acled:sanitize:weekly": "node scripts/world-order/sanitize-acled-weekly.mjs",
     "acled:sanitize:monthly": "node scripts/world-order/sanitize-acled-monthly.mjs",
     "acled:status": "node scripts/world-order/acled-weekly-status.mjs",
     "check:world-order-acled-weekly": "node --check scripts/check-world-order-acled-weekly.mjs && node scripts/check-world-order-acled-weekly.mjs",
-    "check:world-order-acled-monthly": "node --check scripts/check-world-order-acled-monthly.mjs && node scripts/check-world-order-acled-monthly.mjs"
+    "check:world-order-acled-monthly": "node --check scripts/check-world-order-acled-monthly.mjs && node scripts/check-world-order-acled-monthly.mjs",
+    "check:oil-directional": "node --check scripts/check-suite.mjs && node scripts/check-suite.mjs oil-directional",
+    "check:oil-directional-contract": "node --check scripts/check-oil-directional-contract.mjs && node scripts/check-oil-directional-contract.mjs",
+    "check:oil-directional-freshness": "node --check scripts/check-oil-directional-freshness.mjs && node scripts/check-oil-directional-freshness.mjs",
+    "check:oil-directional-seasonality": "node --check scripts/check-oil-directional-seasonality.mjs && node scripts/check-oil-directional-seasonality.mjs",
+    "check:oil-directional-degradation": "node --check scripts/check-oil-directional-degradation.mjs && node scripts/check-oil-directional-degradation.mjs",
+    "check:oil-directional-boundary": "node --check scripts/check-oil-directional-boundary.mjs && node scripts/check-oil-directional-boundary.mjs"
   },
   "engines": {
     "node": ">=24 <25"

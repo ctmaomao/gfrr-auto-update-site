@@ -681,6 +681,23 @@ M-49 在 brentPricingLayer 新增柴油裂解价差字段，扩展能源链条�
 - DHOILNYH 为日度数据（EIA 工作日发布，T+1 滞后）
 - crackSpread 用于 cross-validation `energy_shock` narrative 的条件分类
 
+### oil-directional-pressure.json — Oil Directional Pressure (ODP) 独立文件 contract
+
+ODP 是**独立数据文件** `data/oil-directional-pressure.json`(不在 `radar-data.json` 内),audit-only / display-only 能源专题。PR1 只落 evidence + freshness + seasonality;`signals` / `finalBias` / `interpretation` 在 PR1 为 `null`(模型在 PR3)。
+
+顶层:`schemaVersion` 必须为 `odp-1`;`module` 为 `oil-directional-pressure`;`boundary` 字符串声明 audit-only/display-only 且含「NOT in」scoring 路径;`builtAt` ISO;`ingestion` = `{mode:'A', provider:'EIA API v2', route:'/v2/seriesid/PET.<id>.W'}`。
+
+`evidence`(12 项,每项带 freshness 四件套 `frequency`/`ageDays`/`maxAgeDays`/`sourceStatus`):
+- 8 个 EIA(`crudeStocksExSpr`/`sprStocks`/`distillateStocks`/`gasolineStocks`/`refineryUtilization`/`refinerCrudeInputs`/`demandGasolineSupplied`/`demandDistillateSupplied`):`value`(number|null)、`unit` ∈ {`thousand barrels`,`thousand barrels per day`,`percent`}、`asOfDate`、`source` 以 `EIA:` 开头、`change1w/4w/13w`、`vs5yAvgPct`、`fiveYrRangePosition`、`historyWeeks`、`signalGroup`。
+- 复用价格 3 项(`wtiPrice`/`brentPrice`/`crackSpread`):`unit` `$/bbl`、`source` 以 `radar-data:` 开头(复用,不重抓)。
+- `curve`:`slopeRegime`、`frontMinusBack`(numeric,freshness 以此判定)、`confidence:'low'`、`limitationZh`、`source` 以 `radar-data:` 开头。
+
+`seasonality`(仅 8 个 weekly EIA;missing series 不得携带):`weekOfYear`(1..53)、`seasonBucket` ∈ {`winter_heating`,`summer_driving`,`shoulder`}、`fiveYrSameWeekMean/Min/Max`、`sampleYears`(0..5)、`windowFallback` ∈ {`exact`,`±1week`}。
+
+freshness 不变式:`value` 缺 → `missing`;present 且 `ageDays` 无 → `stale`;present 且 `ageDays > maxAgeDays` → `stale`;否则 `live`。
+
+严格边界(同 brentPricingLayer / World Order overlay):不进 `values.*` / scoring / `decisionModel` / `executionLock` / `positionGuidance` / `displayInputsBaseline` / `effectiveDisplayInputs` / cross-validation;不并入 Global Risk Heatmap;缺数据不伪造、PR1 不提前下方向结论。校验 = `npm run check:oil-directional`(contract / freshness / seasonality / degradation / boundary);fetcher 零依赖(ADR-0013)。完整设计见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
+
 ### aiInterpretationLayer 规则化结构解释层 contract
 
 `v28.0J-0` 在 `data/radar-data.json` 根级新增：
