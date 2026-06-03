@@ -24,6 +24,7 @@ const SIGNAL_GROUPS = new Set([
 ]);
 const DIVERGENCE_VALUES = new Set(['none', 'false_down_physical_stress', 'false_up_unconfirmed']);
 const CONFIDENCE_VALUES = new Set(['low', 'moderate', 'high']);
+const DATA_SUFFICIENCY_VALUES = new Set(['full', 'partial', 'insufficient']);
 
 // finalBias is ALWAYS populated by the PR3 build (>= 'insufficient_data'); null = regression.
 if (!FINAL_BIAS_VALUES.includes(data.finalBias)) {
@@ -43,6 +44,11 @@ if (!it || typeof it !== 'object' || Array.isArray(it)) {
   if (!FINAL_BIAS_VALUES.includes(it.physicalBias)) fail(`interpretation.physicalBias invalid: ${it.physicalBias}`);
   if (!DIVERGENCE_VALUES.has(it.divergence)) fail(`interpretation.divergence invalid: ${it.divergence}`);
   if (!CONFIDENCE_VALUES.has(it.confidence)) fail(`interpretation.confidence invalid: ${it.confidence}`);
+  if (!DATA_SUFFICIENCY_VALUES.has(it.dataSufficiency)) fail(`interpretation.dataSufficiency invalid/missing: ${it.dataSufficiency}`);
+  // structured "数据不足 -> 暂不判断": dataSufficiency 'insufficient' IFF finalBias 'insufficient_data'.
+  if ((data.finalBias === 'insufficient_data') !== (it.dataSufficiency === 'insufficient')) {
+    fail(`dataSufficiency '${it.dataSufficiency}' inconsistent with finalBias '${data.finalBias}' (insufficient <=> insufficient_data)`);
+  }
 
   // a divergence verdict must equal finalBias; otherwise finalBias == physicalBias (insufficient excepted).
   if (it.divergence !== 'none') {

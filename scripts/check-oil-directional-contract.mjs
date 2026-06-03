@@ -90,7 +90,7 @@ if (data.signals && typeof data.signals === 'object') {
 if (typeof data.interpretation !== 'object' || data.interpretation === null || Array.isArray(data.interpretation)) {
   fail('interpretation must be a non-null object (PR3 always writes it)');
 } else {
-  for (const f of ['physicalBias', 'finalBias', 'divergence', 'priceVsPhysical', 'note']) {
+  for (const f of ['physicalBias', 'finalBias', 'divergence', 'priceVsPhysical', 'dataSufficiency', 'note']) {
     if (typeof data.interpretation[f] !== 'string' || !data.interpretation[f]) fail(`interpretation.${f} must be a non-empty string`);
   }
   if (!Array.isArray(data.interpretation.drivers)) fail('interpretation.drivers must be an array');
