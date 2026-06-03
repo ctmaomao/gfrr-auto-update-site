@@ -698,6 +698,37 @@ freshness 不变式:`value` 缺 → `missing`;present 且 `ageDays` 无 → `sta
 
 严格边界(同 brentPricingLayer / World Order overlay):不进 `values.*` / scoring / `decisionModel` / `executionLock` / `positionGuidance` / `displayInputsBaseline` / `effectiveDisplayInputs` / cross-validation;不并入 Global Risk Heatmap;缺数据不伪造、PR1 不提前下方向结论。校验 = `npm run check:oil-directional`(contract / freshness / seasonality / degradation / boundary);fetcher 零依赖(ADR-0013)。完整设计见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
 
+### oil-directional-history.json — ODP PR2 历史 cache + 回测 GATE contract
+
+PR2 新增**第二个独立文件** `data/oil-directional-history.json`:8 个 WPSR weekly series 的 2014-至今全周度史 committed snapshot,供回测 harness 离线、可复现回放。**仅供 backtest GATE**,不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / `decisionModel` / `executionLock` / `positionGuidance` / cross-validation / Global Risk Heatmap。zero-dependency build(ADR-0013)+ fail-closed。
+
+顶层:`schemaVersion` 必须为 `odp-history-1`;`module` = `oil-directional-pressure-history`;`boundary` 声明 audit-only + 「not scoring/decision/values」;`builtAt` ISO;`rangeStart` = `2014-01-01`;`series` = 8 key map(`crudeStocksExSpr`/`sprStocks`/`distillateStocks`/`gasolineStocks`/`refineryUtilization`/`refinerCrudeInputs`/`demandGasolineSupplied`/`demandDistillateSupplied`)。
+
+每 series:`id`(`PET.<id>.W`)、`unit` ∈ {`thousand barrels`,`thousand barrels per day`,`percent`}、`source` 以 `EIA:api-v2:` 开头、`sourceStatus` ∈ {`live`,`missing`}、`count`、`firstPeriod`、`lastPeriod`、`points[]`(`{period:'YYYY-MM-DD', value:number}`,period 严格升序)。失败 series → `sourceStatus:'missing'` / `count:0` / `points:[]`,不伪造。
+
+**分类器**(`scripts/oil-directional/odp-classifier.mjs`):纯函数 `classifyAt(history, period)`,**look-ahead-safe**(只读 `period <= target` 的点);physical-only —— crude exSPR / distillate / SPR 库存 + 炼厂开工率 + product supplied;`gasolineStocks` + `refinerCrudeInputs` 存于 cache 但 PR2 分类不用。输出 `bias` ∈ {`insufficient_data`,`strong_bullish`,`product_crisis`,`bearish`,`moderate_bullish`,`neutral_range`};价格背离类 `false_*` 需价格、PR2 不产出(PR3 在 live 上)。**PR2 该分类器仅被 backtest 调用 —— live `oil-directional-pressure.json` 的 `signals` / `finalBias` 仍为 `null`(productionize = PR3)。**
+
+**预登记阈值**(`ODP_THRESHOLDS`,`Object.freeze` locked,作审计记录 —— 回测前锁定、零 cherry-tune;改判定逻辑须重新预登记):
+
+| 常量 | 值 | 含义 |
+|---|---|---|
+| `VS5Y_TIGHT` | −5 | 库存 vs 5y 同周均值 %,≤ → 偏紧 |
+| `VS5Y_LOOSE` | +5 | ≥ 且在建库 → 偏松 |
+| `RANGEPOS_TIGHT` | 0.25 | 5y 同周 [min,max] 内位置,≤ → 偏紧 |
+| `RANGEPOS_EXTREME` | 0 | < → 跌破 5y 同周地板(极紧) |
+| `REFINERY_HIGH` | 90 | 炼厂开工率 4w 均 %,≥ |
+| `REFINERY_LOW` | 85 | ≤ |
+| `SPR_RELEASE_4W` | −3000 | SPR 4 周变动(千桶),≤ → 显著释储 |
+| `DEMAND_FALLING` | 0.95 | product supplied 4w / 13w,< |
+| `DEMAND_DESTRUCTION` | 0.90 | < → 需求破坏 |
+
+**回测 GATE**(`scripts/check-oil-directional-backtest.mjs`,`oil-directional` 套件第 6 leaf,离线跑 committed cache):
+
+- **(1) history-integrity + points 真实性 + 网格对齐**:8 series 全 `live`、`count ≥ 600`、`firstPeriod ≤ 2014-01-31` ∧ `lastPeriod ≥ 2026-05-22`;`points[]` 与 metadata 一致(`Array.isArray` / `length === count` / 首尾 period 对账 / 严格升序 + finite);且 8 series 须共享 `crudeStocksExSpr` 的 canonical 周网格(`length` 与逐 index `period` 全等)。任一 blanked / truncated / 少一周 / 网格漂移都 hard-block —— 杜绝「metadata 完整但 points 空 / 错位」legally pass(守「同周物理链 replay」语义)。
+- **(2) regime GATE**(预登记窗口 + 判定,look-ahead-safe replay,窗口 / 允许集 / 禁止集全部预先固定、无 cherry-pick):`2020-collapse`(04-10..05-15,weekly)bearish 多数 ∧ 零 strong/moderate;`2020-fullQ2`(04-03..06-26,weekly)零 strong/moderate;`2022-Q2`(weekly)bullish-family 多数 ∧ 零 bearish;`2023-24-range`(biweekly)strong/crisis ≤ 30% ∧ max-consec ≤ 2。
+
+校验 = `npm run check:oil-directional-backtest`;完整设计见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
+
 ### aiInterpretationLayer 规则化结构解释层 contract
 
 `v28.0J-0` 在 `data/radar-data.json` 根级新增：

@@ -1,9 +1,11 @@
 // check:oil-directional-backtest — PR2 GATE (offline, over the committed history cache).
 //
-// (1) HISTORY-INTEGRITY gate: every series must be live, with sufficient count and
-//     2014-coverage. The classifier itself only flags `insufficient_data` on the 3
-//     core stocks, so a degraded/short cache must be hard-blocked HERE — it must not
-//     "legally pass" the backtest.
+// (1) HISTORY-INTEGRITY gate: every series must be live, with sufficient count,
+//     2014→present coverage, AND a points[] array that actually matches its metadata
+//     (length/endpoints/monotonic/finite) — a blanked or truncated points[] with
+//     intact metadata must NOT pass (Codex PR2 review negative case). The classifier
+//     itself only flags `insufficient_data` on the 3 core stocks, so a degraded/short
+//     cache must be hard-blocked HERE — it must not "legally pass" the backtest.
 // (2) REGIME GATE: replay the locked physical classifier over fixed windows
 //     (look-ahead-safe) and assert pre-registered regime-level criteria. No
 //     cherry-picking — windows + allowed/forbidden sets are fixed in advance.
@@ -24,7 +26,7 @@ const REQUIRED = [
 ];
 const MIN_COUNT = 600;            // ~647 expected for 2014-present weekly
 const COVER_FIRST_ON_OR_BEFORE = '2014-01-31';
-const COVER_LAST_ON_OR_AFTER = '2026-01-01';
+const COVER_LAST_ON_OR_AFTER = '2026-05-22'; // committed snapshot's last week (tightened from 2026-01-01 per Codex PR2 review)
 
 if (history.schemaVersion !== 'odp-history-1') fail(`history.schemaVersion must be 'odp-history-1', got '${history.schemaVersion}'`);
 for (const k of REQUIRED) {
@@ -34,6 +36,48 @@ for (const k of REQUIRED) {
   if (!(Number.isFinite(s.count) && s.count >= MIN_COUNT)) fail(`history.series.${k}.count ${s.count} < ${MIN_COUNT}`);
   if (!(s.firstPeriod && s.firstPeriod <= COVER_FIRST_ON_OR_BEFORE)) fail(`history.series.${k}.firstPeriod ${s.firstPeriod} must be <= ${COVER_FIRST_ON_OR_BEFORE}`);
   if (!(s.lastPeriod && s.lastPeriod >= COVER_LAST_ON_OR_AFTER)) fail(`history.series.${k}.lastPeriod ${s.lastPeriod} must be >= ${COVER_LAST_ON_OR_AFTER}`);
+  // points authenticity: the actual array must match the metadata, so a blanked /
+  // truncated points[] with intact sourceStatus/count/first/last cannot pass.
+  const pts = s.points;
+  if (!Array.isArray(pts)) { fail(`history.series.${k}.points must be an array`); continue; }
+  if (pts.length !== s.count) fail(`history.series.${k}.points.length ${pts.length} !== count ${s.count}`);
+  if (pts.length > 0) {
+    if (pts[0].period !== s.firstPeriod) fail(`history.series.${k}.points[0].period ${pts[0].period} !== firstPeriod ${s.firstPeriod}`);
+    if (pts[pts.length - 1].period !== s.lastPeriod) fail(`history.series.${k}.points[last].period ${pts[pts.length - 1].period} !== lastPeriod ${s.lastPeriod}`);
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      if (!p || typeof p.period !== 'string' || !Number.isFinite(p.value)) { fail(`history.series.${k}.points[${i}] invalid period/value`); break; }
+      if (i > 0 && !(p.period > pts[i - 1].period)) { fail(`history.series.${k}.points not strictly increasing (${pts[i - 1].period} -> ${p.period})`); break; }
+    }
+  }
+}
+
+// ---- (1b) canonical weekly-grid alignment ----
+// PR2 backtest semantics = "same physical-chain week", NOT "each series' last value
+// on or before the target date". If one series is missing a week, idxAtOrBefore()
+// silently uses the prior week and the GATE could still pass with a changed economic
+// meaning. Pin every required series to crudeStocksExSpr's week grid.
+const canonical = (history.series && history.series.crudeStocksExSpr && Array.isArray(history.series.crudeStocksExSpr.points))
+  ? history.series.crudeStocksExSpr.points.map((p) => p.period)
+  : null;
+if (!canonical) {
+  fail('canonical weekly grid unavailable: crudeStocksExSpr.points missing/invalid');
+} else {
+  for (const k of REQUIRED) {
+    const s = history.series && history.series[k];
+    if (!s || !Array.isArray(s.points)) continue; // already failed in (1)
+    const periods = s.points.map((p) => p.period);
+    if (periods.length !== canonical.length) {
+      fail(`history.series.${k}.points.length ${periods.length} !== canonical grid length ${canonical.length} (crudeStocksExSpr)`);
+      continue;
+    }
+    for (let i = 0; i < canonical.length; i++) {
+      if (periods[i] !== canonical[i]) {
+        fail(`history.series.${k}.points[${i}].period ${periods[i]} !== canonical grid ${canonical[i]} (first week-grid mismatch)`);
+        break;
+      }
+    }
+  }
 }
 if (errors.length > 0) {
   console.error('Oil Directional backtest check FAILED (history integrity):');

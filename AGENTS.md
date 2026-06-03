@@ -163,7 +163,7 @@ When `DESIGN.md` and any other contract (e.g., Market Pricing governance) appear
 
 - `npm run check:frontend-live-contracts` enforces the live frontend display contracts: DOM id 契约 (`check:dom`)、null/zero 显示守卫、macro coherence (display-only)
 - `DESIGN.md` itself is the ground truth for IA 顺序 / 字体 / 视觉 (see `docs/ADR/0014-design-md-is-ia-ground-truth.md`); the dedicated `check:homepage-ia-contract` / `check:editorial-redesign-contract` checkers were retired in checker 精简 Phase 1+2, so IA/font contracts are now guarded by `DESIGN.md` + review, not a script
-- `npm run check:all` runs `check:frontend-live-contracts` as part of the 16-item top-level baseline (~53 leaf checks)
+- `npm run check:all` runs `check:frontend-live-contracts` as part of the 16-item top-level baseline (~54 leaf checks)
 
 PRs that fail these contracts MUST NOT be merged, regardless of how good the visual result looks.
 
