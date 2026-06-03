@@ -102,7 +102,7 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **✅ P3-18 stale-display 收口完成(closure 坐实)**:Tier-1/2(`0e7e76a`/`00a83c7`)+ WIRE 批 A/B/C/D/E(`975f501`/`4cf7220`/`5076658`/`d5ff2ef`/`6f98cdb`)共 7 批;6 个 deferred WIRE 项 + 批 B/C 余项 + 0-信号边界 + 整段 health narrative 两态化全部落地;数据健康附录与主题卡在健康与降级两态下均无写死会漂 / 说反话的断言。**无 pending 后续。**(批 D 提的「整段 health narrative active/none」已由批 E 完成。)
 - **硬约束**:改前端必 `npm run bump:frontend-asset-version`;**每次 bump 会重写冻结的 `scripts/modules/realtime.js` 的 import `?v=` → 须 `git checkout HEAD --` 还原保 diff=0**(见 memory `ops_bump_tool_blind_spots`,本类已踩两次);加新 id 须 index.html 与 setter 两边一致(否则 `check:dom` 红);受限路径 `data/`/`realtime/`/`.github/workflows/`/`manual-artifacts/` 零 diff。
 
-#### P3-19: Oil Directional Pressure (ODP) 油价方向压力研判 — 能源专题(PR1 进行中)
+#### P3-19: Oil Directional Pressure (ODP) 油价方向压力研判 — 能源专题(PR1 merged; PR1b next)
 
 来源:2026-06-03 owner 立项 + 可行性审计(Codex↔Claude↔owner 终裁,见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md))。**audit-only / display-only 独立能源专题,非第七个底层风险模块,Global Risk Heatmap 独立**(同 CLAUDE.md 绝对规则 3)。
 
