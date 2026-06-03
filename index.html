@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=world-order-acled-freshness-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=odp-energy-theme-1" />
 </head>
 <body>
   <div class="container">
@@ -36,6 +36,7 @@
       <a href="#wow-key-changes">本期变化</a>
       <a href="#macro-thematic-cards" class="new">主题卡阵 NEW</a>
       <a href="#global-risk-heatmap">风险热力图</a>
+      <a href="#oil-directional-pressure">油价方向</a>
       <a href="#detail-data">详细数据</a>
       <a href="#world-order-stress-section">世界秩序</a>
       <a href="#method-evidence">方法说明</a>
@@ -400,6 +401,42 @@
           <div class="heatmap-cell med" id="heatmap-cell-japan"><span class="region" id="heatmap-japan-region">日韩</span><span class="risk-score" id="heatmap-japan-score">RISK 33</span><span class="note" id="heatmap-japan-note">输入型压力 + 美元波动</span></div>
           <div class="heatmap-cell low" id="heatmap-cell-latam"><span class="region" id="heatmap-latam-region">拉美</span><span class="risk-score" id="heatmap-latam-score">RISK 31</span><span class="note" id="heatmap-latam-note">商品支撑但外部融资受限</span></div>
         </div>
+      </div>
+    </section>
+
+    <section class="editorial-section" id="oil-directional-pressure" style="--section-accent: var(--risk-red);">
+      <header class="editorial-section-header">
+        <span class="section-kicker">OIL DIRECTIONAL PRESSURE · 油价方向压力研判</span>
+        <span class="section-title" id="odp-verdict">—</span>
+        <span class="section-note">独立能源专题 · 物理链优先于金融表象 · 仅供观察,不进打分 / 执行 / 热力图</span>
+      </header>
+      <div class="editorial-section-body">
+        <p class="odp-headline" id="odp-headline">—</p>
+        <dl class="odp-meta">
+          <div><dt>物理判断</dt><dd id="odp-physical-bias">—</dd></div>
+          <div><dt>价格背离</dt><dd id="odp-divergence">—</dd></div>
+          <div><dt>数据充分度</dt><dd id="odp-data-sufficiency">—</dd></div>
+          <div><dt>截至</dt><dd id="odp-asof">—</dd></div>
+        </dl>
+        <ul class="odp-reasons">
+          <li><span class="odp-reason-label">库存降速</span><span id="odp-reason-inventory">—</span></li>
+          <li><span class="odp-reason-label">柴油 / 馏分油</span><span id="odp-reason-diesel">—</span></li>
+          <li><span class="odp-reason-label">期限结构</span><span id="odp-reason-curve">—</span></li>
+          <li><span class="odp-reason-label">炼厂</span><span id="odp-reason-refinery">—</span></li>
+          <li><span class="odp-reason-label">SPR 缓冲</span><span id="odp-reason-spr">—</span></li>
+          <li><span class="odp-reason-label">需求</span><span id="odp-reason-demand">—</span></li>
+        </ul>
+        <details class="editorial-folded-content odp-detail">
+          <summary>
+            <span><span class="fold-marker"></span> 证据与详情 <em>· 指标值 / 近期变化 / 历史区间 / 互相印证</em></span>
+            <span class="fold-label">展开/收起</span>
+          </summary>
+          <div class="editorial-section-body">
+            <p id="odp-evidence-note">—</p>
+            <div class="odp-evidence-list" id="odp-evidence-list"></div>
+            <p class="odp-boundary-note">边界:油价方向研判为 audit-only / display-only 独立能源专题,不进入风险打分、决策、执行或全球风险热力图;数据不足时显式标注「暂不判断」。</p>
+          </div>
+        </details>
       </div>
     </section>
 
@@ -875,6 +912,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=world-order-acled-freshness-1"></script>
+  <script type="module" src="scripts/app.js?v=odp-energy-theme-1"></script>
 </body>
 </html>

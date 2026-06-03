@@ -1,0 +1,54 @@
+// check:oil-directional-zh-copy — PR4 · the ODP energy-theme renderer copy is an
+// OBSERVATIONAL verdict, not a trade instruction. It must:
+//   (1) carry NO trade-action words,
+//   (2) map EVERY finalBias enum value (single source of truth = the classifier) to a
+//       Chinese label,
+//   (3) keep an explicit "暂不判断" fallback for insufficient data.
+//
+// Scope = scripts/modules/renderOilDirectional.js (the dynamic Chinese copy). The static
+// index.html section copy is boundary disclaimers ("不进打分 / 执行 / 热力图") and is
+// reviewed manually under DESIGN.md §4.1/§5.6 + ADR-0014.
+
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { FINAL_BIAS_VALUES } from './oil-directional/odp-classifier.mjs';
+
+const errors = [];
+const fail = (m) => errors.push(m);
+
+const src = readFileSync(resolve('scripts/modules/renderOilDirectional.js'), 'utf8');
+
+// (1) No trade-action words. These are instructions; ODP is display-only observation.
+// Directional VIEWS (看涨 / 偏空 / 中性) are allowed — they are assessments, not actions.
+const FORBIDDEN_ACTION = [
+  '买入', '卖出', '买进', '卖掉', '做多', '做空', '加仓', '减仓', '建仓', '平仓',
+  '持仓', '仓位', '止损', '止盈', '抄底', '清仓', '入场', '离场', '加杠杆', '挂单',
+];
+for (const w of FORBIDDEN_ACTION) {
+  if (src.includes(w)) fail(`ODP UI copy must not contain trade-action word '${w}' (display-only observational verdict)`);
+}
+
+// (2) Every finalBias enum value maps to a Chinese label.
+const mapMatch = src.match(/const FINAL_BIAS_ZH = \{([\s\S]*?)\};/);
+if (!mapMatch) {
+  fail('FINAL_BIAS_ZH map not found in renderOilDirectional.js');
+} else {
+  for (const v of FINAL_BIAS_VALUES) {
+    if (!new RegExp(`(^|[^A-Za-z_])${v}\\s*:`).test(mapMatch[1])) {
+      fail(`FINAL_BIAS_ZH is missing a Chinese label for finalBias '${v}'`);
+    }
+  }
+}
+
+// (3) Explicit insufficient -> 暂不判断 fallback present.
+if (!src.includes('暂不判断')) {
+  fail("ODP UI copy must keep an explicit '暂不判断' fallback for insufficient data");
+}
+
+if (errors.length > 0) {
+  console.error('Oil Directional Pressure zh-copy check FAILED:');
+  errors.forEach((e) => console.error('  -', e));
+  process.exit(1);
+}
+
+console.log(`Oil Directional Pressure zh-copy check: PASS (no trade-action words; all ${FINAL_BIAS_VALUES.length} finalBias labels; 暂不判断 fallback)`);

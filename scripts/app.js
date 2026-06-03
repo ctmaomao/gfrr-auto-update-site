@@ -7,9 +7,10 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'world-order-acled-freshness-1';
+const APP_VERSION = 'odp-energy-theme-1';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
+const OIL_DIRECTIONAL_URL = './data/oil-directional-pressure.json';
 
 const ISSUE_META_FALLBACK = {
   issue: '—',
@@ -36,12 +37,13 @@ async function fetchJson(url, label) {
 }
 
 async function loadAllData() {
-  // 并行 fetch 4 个 JSON 文件
-  const [radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData] = await Promise.all([
+  // 并行 fetch 5 个 JSON 文件
+  const [radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData] = await Promise.all([
     fetchJson(dataUrl, 'radar-data.json'),
     fetchJson(worldOrderStressUrl, 'world-order-stress.json'),
     fetchJson(MARKET_PRICING_METRICS_URL, 'market-pricing-metrics.json'),
     fetchJson(RADAR_HISTORY_URL, 'radar-history.json'),
+    fetchJson(OIL_DIRECTIONAL_URL, 'oil-directional-pressure.json'),
   ]);
 
   if (!radarData) {
@@ -56,8 +58,11 @@ async function loadAllData() {
   if (!radarHistoryData) {
     console.error('[app] WARN: radar-history.json failed to load. Trend SVG will use fallback.');
   }
+  if (!oilDirectionalData) {
+    console.error('[app] WARN: oil-directional-pressure.json failed to load. Oil Directional theme will use fallback.');
+  }
 
-  return { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData };
+  return { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData };
 }
 
 // ---------------- issue-meta 填充(Stage 4a 不动)----------------
@@ -118,7 +123,7 @@ function applyIssueMetaToDom(meta) {
 // ---------------- 主入口 ----------------
 
 async function main() {
-  const { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData } = await loadAllData();
+  const { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData } = await loadAllData();
 
   // Stage 4a: 填充 issue-meta
   const issueMeta = deriveIssueMeta(radarData);
@@ -126,14 +131,20 @@ async function main() {
 
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=world-order-acled-freshness-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=odp-energy-theme-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData });
   } catch (error) {
     console.error('[app] Failed to import / run renderMacroOverview:', error);
   }
 
-  // Stage 4c stub: 后续 sub-stage 在此 import + 调用 renderer
-  // 例如:
+  // PR4: Oil Directional Pressure (ODP) 独立能源专题 — display-only, 独立数据文件。
+  try {
+    const { renderOilDirectional } = await import(`./modules/renderOilDirectional.js?v=${APP_VERSION}`);
+    renderOilDirectional({ oilData: oilDirectionalData });
+  } catch (error) {
+    console.error('[app] Failed to import / run renderOilDirectional:', error);
+  }
+
   console.log(`[app] Stage 5d-2 init complete. APP_VERSION=${APP_VERSION}`);
   console.log('[app] Data loaded:', {
     radarDataPresent: radarData !== null,

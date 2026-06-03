@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=world-order-acled-freshness-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-energy-theme-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

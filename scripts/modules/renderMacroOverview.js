@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=world-order-acled-freshness-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=world-order-acled-freshness-1';
+} from './config.js?v=odp-energy-theme-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-energy-theme-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

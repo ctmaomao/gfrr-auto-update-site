@@ -335,6 +335,26 @@
   .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px; }
   .method-grid h4 { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; color: var(--paper-ink); margin: 0 0 6px 0; }
 
+  /* ===== PR4 · Oil Directional Pressure (ODP) 独立能源专题(display-only) ===== */
+  #oil-directional-pressure .section-title.red { color: var(--risk-red); }
+  #oil-directional-pressure .section-title.yellow { color: var(--risk-yellow); }
+  #oil-directional-pressure .section-title.green { color: var(--risk-green); }
+  .odp-headline { font-family: var(--font-serif); font-size: 16px; line-height: 1.8; color: var(--paper-warm); margin: 8px 0 18px 0; }
+  .odp-meta { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0 0 18px 0; padding: 12px 0; border-top: 1px solid var(--paper-line); border-bottom: 1px solid var(--paper-line); font-family: var(--font-mono); font-size: 12px; }
+  .odp-meta > div { display: flex; gap: 8px; align-items: baseline; }
+  .odp-meta dt { color: var(--paper-muted); letter-spacing: 0.1em; text-transform: uppercase; font-size: 10px; }
+  .odp-meta dd { margin: 0; color: var(--paper-ink); font-weight: 600; }
+  .odp-reasons { list-style: none; padding: 0; margin: 0 0 18px 0; display: grid; gap: 8px; }
+  .odp-reasons li { display: grid; grid-template-columns: 116px 1fr; gap: 12px; font-family: var(--font-serif); font-size: 14px; line-height: 1.6; color: var(--paper-warm); padding-bottom: 8px; border-bottom: 1px dotted var(--paper-line); }
+  .odp-reason-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; color: var(--paper-muted); text-transform: uppercase; align-self: center; }
+  .odp-detail { margin-top: 12px; }
+  .odp-evidence-list { display: grid; gap: 2px; margin: 10px 0; }
+  .odp-evidence-row { display: grid; grid-template-columns: 1.6fr 1fr 0.9fr 0.9fr; gap: 12px; font-family: var(--font-mono); font-size: 12px; color: var(--paper-warm); padding: 4px 0; border-bottom: 1px solid var(--paper-line); }
+  .odp-ev-label, .odp-ev-value { color: var(--paper-ink); }
+  .odp-ev-value { font-weight: 600; }
+  .odp-ev-change, .odp-ev-range { color: var(--paper-muted); }
+  .odp-boundary-note { font-family: var(--font-serif); font-size: 12px; font-style: italic; line-height: 1.7; color: var(--paper-muted); margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--paper-line); }
+
   /* ================================================================
      窄屏 / 手机覆盖层 · MOBILE / NARROW-SCREEN OVERRIDES
      仅在 @media 内生效;放在文件末尾(所有基础规则之后),
