@@ -265,6 +265,34 @@ See [`CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md`](CHINA_MACRO_LIQUIDITY_PR
 
 ---
 
+### EIA API v2 — Weekly Petroleum (Oil Directional Pressure / ODP)
+
+| 字段 | 值 |
+|---|---|
+| **License** | 公开;US EIA Open Data API v2,需免费 `EIA_API_KEY`(GitHub secret;本地从 gitignored `manual-artifacts/eia-api-key.txt` 注入) |
+| **Route** | `/v2/seriesid/PET.<id>.W`(legacy 全 ID;裸 `WCESTUS1` 无效) |
+| **Refresh 频率** | Weekly(WPSR,周三发布上周五数据);PR1 一次性 build,PR1b 周度 workflow |
+| **失败 fallback** | 短超时(`EIA_FETCH_TIMEOUT_MS`,默认 15s)+ fail-closed:`sourceStatus='missing'`(reason timeout/http_*/no_data…),不伪造值、不抛穿透 |
+| **影响 scoring?** | **否** — audit-only / display-only,独立文件 `data/oil-directional-pressure.json`;不进 `values.*`、scoring、decisionModel、executionLock、positionGuidance、cross-validation 或 Global Risk Heatmap |
+| **fetcher** | `scripts/oil-directional/build-oil-directional-pressure.mjs`(零依赖,ADR-0013:写 `data/` 不导入 devDep) |
+
+**当前消费的 series**(全 PET 数据集,weekly):
+
+| Series (legacy ID) | 含义 | 单位 | 喂给信号 |
+|---|---|---|---|
+| `PET.WCESTUS1.W` | 商业原油库存 ex-SPR | 千桶 | inventoryDrawPressure |
+| `PET.WCSSTUS1.W` | SPR 原油库存 | 千桶 | sprBufferEffectiveness |
+| `PET.WDISTUS1.W` | 馏分油库存 | 千桶 | dieselProductStress |
+| `PET.WGTSTUS1.W` | 总汽油库存 | 千桶 | dieselProductStress(辅) |
+| `PET.WPULEUS3.W` | 炼厂开工率 | % | refineryConfirmation |
+| `PET.WCRRIUS2.W` | 炼厂原油净投入 | 千桶/日 | refineryConfirmation |
+| `PET.WGFUPUS2.W` | 成品汽油 product supplied | 千桶/日 | demandDestructionRisk |
+| `PET.WDIUPUS2.W` | 馏分油 product supplied | 千桶/日 | demandDestructionRisk |
+
+WTI / Brent / 裂解价差 / 期限结构由 `oil-directional-pressure.json` **复用** `data/radar-data.json`(`macroDrivers.inflationEnergy.wti` / `brentPricingLayer.selectedBrent` / `.crackSpread` / `.futuresPriceCurve`),不重抓。EIA = 美国政府公共领域数据,标注 source URL 即可。详见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
+
+---
+
 ### GDELT Cloud v2
 
 | 字段 | 值 |
@@ -433,3 +461,4 @@ documented attribution string and code is a contract violation.
 | `worldOrderStress.dimensions.economicWeaponization` | OFAC + (GDELT) |
 | `worldOrderStress.dimensions.peaceDividendRetreat` | SIPRI (年度) |
 | `worldOrderStress` GDELT narrative | GDELT Cloud v2 |
+| `data/oil-directional-pressure.json` (ODP, 独立文件) | EIA API v2 weekly petroleum (`PET.*.W`) + 复用 radar-data WTI/Brent/crack/curve |

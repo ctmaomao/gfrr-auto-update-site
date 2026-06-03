@@ -10,7 +10,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 |---|---|
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分)|
 | Cache version | `world-order-acled-freshness-1` |
-| check:all 项数 | 15 顶层项 / ~48 leaf checks(checker 精简 Phase 1+2 后)|
+| check:all 项数 | 16 顶层项 / ~53 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 5 leaf)|
 | 最后审计日期 | 2026-06-02(Codex 只读审计 + Claude 7-agent 复核 + Codex 终裁;已修 F3 文档漂移 `a6e9101` + F2 ACLED workflow 清理 `a74a4a2` + F4 M94 mock 可复现 `4c491f3` + F1 AGENTS.md 分层措辞 `c7a9db7`,**Codex 审计 7 findings 全部收口**:F5/F6 = no action、F7 本轮增量(A2/A3/A1-clean;A1 余项 + .mjs 拆分 deferred);详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |
@@ -101,6 +101,15 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **协调闸结论(已验证)**:M-94 路径C Stage 3/4/5 早已 ship 在产(app.js init log = Stage 5d-2、`scripts/modules/` 无 `renderThematicCards.js`、plan v1.0「Stage 1 待启动」仅文档漂移)→ 无活跃重写分支可并,WIRE = 维护在产前端(风险同 Tier-1/2);五批均 Claude 计划 → Codex 交叉复审 → push,`check:dom` + `check:all` 全绿,`realtime.js` diff=0、受限路径零 diff。
 - **✅ P3-18 stale-display 收口完成(closure 坐实)**:Tier-1/2(`0e7e76a`/`00a83c7`)+ WIRE 批 A/B/C/D/E(`975f501`/`4cf7220`/`5076658`/`d5ff2ef`/`6f98cdb`)共 7 批;6 个 deferred WIRE 项 + 批 B/C 余项 + 0-信号边界 + 整段 health narrative 两态化全部落地;数据健康附录与主题卡在健康与降级两态下均无写死会漂 / 说反话的断言。**无 pending 后续。**(批 D 提的「整段 health narrative active/none」已由批 E 完成。)
 - **硬约束**:改前端必 `npm run bump:frontend-asset-version`;**每次 bump 会重写冻结的 `scripts/modules/realtime.js` 的 import `?v=` → 须 `git checkout HEAD --` 还原保 diff=0**(见 memory `ops_bump_tool_blind_spots`,本类已踩两次);加新 id 须 index.html 与 setter 两边一致(否则 `check:dom` 红);受限路径 `data/`/`realtime/`/`.github/workflows/`/`manual-artifacts/` 零 diff。
+
+#### P3-19: Oil Directional Pressure (ODP) 油价方向压力研判 — 能源专题(PR1 进行中)
+
+来源:2026-06-03 owner 立项 + 可行性审计(Codex↔Claude↔owner 终裁,见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md))。**audit-only / display-only 独立能源专题,非第七个底层风险模块,Global Risk Heatmap 独立**(同 CLAUDE.md 绝对规则 3)。
+
+- **取数终裁 A-first**(owner 2026-06-03):EIA API v2 JSON(`/v2/seriesid/PET.<id>.W`,免费 `EIA_API_KEY`)→ 零依赖 build 写独立文件 `data/oil-directional-pressure.json`;B(手动 xlsx sanitizer→`config/`)仅 fallback。**ADR-0013**:写 `data/` 不导入 devDep(xlsx 禁进 CI/`data/`)。
+- **PR1(进行中,branch `codex/odp-pr1-eia-ingestion`,未合并)**:零依赖 fetcher(8 个 WPSR series:原油 exSPR/SPR/馏分油/汽油库存 + 炼厂开工率/净投入 + 汽油/馏分油 product supplied;短超时 + fail-closed)+ 复用 radar-data WTI/Brent/crack/curve + 初始 `data/oil-directional-pressure.json`(evidence + freshness + seasonality;`signals`/`finalBias`/`interpretation`=null)+ 5 个 `check:oil-directional-*`(contract/freshness/seasonality/degradation/boundary)接入 `check:all`(16 项)。**不碰 UI / `app.js` / workflow**。build 经 3 轮 Codex、checks 经 2 轮 Codex + 负例自验。
+- **后续 PR**:PR1b 周度 refresh workflow + Pages-trigger;PR2 历史 cache + 2020/2022/2023-24 回测(**GATE**,拐点合理才进 UI);PR3 `signals`/`finalBias`/物理>金融裁决(display-only);PR4 中文 UI 独立专题(整包升级 `app.js` + DESIGN §4.1 同步 + 决定是否投 `radar-data.json` root snapshot);PR5 只读引用 dailyBrief/interpretation。
+- 边界:不进 `values.*`/scoring/decisionModel/executionLock/positionGuidance/cross-validation;期限结构低置信复用、缺则不参与裁决;数据不足显式「暂不判断」。EIA = 美国政府公共领域。
 
 ---
 
@@ -231,6 +240,15 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-06-03 — ODP PR1 油价方向压力研判 数据接入)**: owner 立项「油价方向压力研判 / ODP」独立能源专题;可行性审计经 Codex↔Claude↔owner 终裁、source-review 文档已 merge(PR #257)。**PR1 代码全部完成,在 branch `codex/odp-pr1-eia-ingestion`(未合并)**:① 零依赖 build `scripts/oil-directional/build-oil-directional-pressure.mjs`(EIA API v2 `/v2/seriesid/PET.<id>.W` 取 8 个 WPSR series + 复用 radar-data WTI/Brent/crack/curve;短超时 `EIA_FETCH_TIMEOUT_MS` + fail-closed;key 走 `process.env.EIA_API_KEY`,本地从 gitignored `manual-artifacts/eia-api-key.txt` 注入);② 初始 `data/oil-directional-pressure.json`(evidence + freshness + seasonality;`signals`/`finalBias`/`interpretation`=null);③ 5 个 `check:oil-directional-*` + check-suite `oil-directional` + package.json(check:all 15→16);④ 文档(本 backlog + DATA_SOURCES + DATA_CONTRACT + 计数 CLAUDE/AGENTS/MILESTONE)。build 经 3 轮 Codex、checks 经 2 轮 Codex + 负例自验;`check:all` 16 项绿;ADR-0013 守(写 `data/` 零依赖)。
+- **当前进行中(2026-06-03 ODP)**: PR1 文档刚落,**正在 commit**(代码 + 数据 + 5 check + 套件/package.json + 文档一并)到 `codex/odp-pr1-eia-ingestion`。
+- **下一步建议(2026-06-03 ODP)**: commit PR1 → (owner 授权后)push + 建 PR;之后 PR1b 周度 workflow + Pages-trigger、PR2 回测 GATE、PR3 模型、PR4 中文 UI。完整 PR 拆分见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md) §10 + 记忆 `project_odp_oil_directional_pressure`。
+- **阻塞或等待(2026-06-03 ODP)**: 无。EIA key 本地已配;CI 的 GitHub secret `EIA_API_KEY` 待 PR1b 设(届时一步步带 owner)。
+
+---
+
+> 以下为同日早段(F6 验证 + ACLED 新鲜度)留档,当前状态以上方 ODP 段为准。
 
 - **上次会话结束于(2026-06-03 — F6 验证 + ACLED 新鲜度可见性)**: ① **F6 实测确认生效**(`6efddfd`):线上 worker `/market.worker-preview.json` sourceProbe `probeCount=2`、整个 payload 零 stooq(fresh build 2026-06-02T23:45Z);F6 = repo + 线上 + 实测三重确认彻底关闭。② **ACLED 新鲜度可见性**(2 commit,asset `world-order-acled-freshness-1`):**item1 前端**(`46381c8`)世界秩序附录(`#world-order-stress-section`)新增「数据新鲜度」行,WIRE `worldOrderStressData.externalSources.acled.summary.{latestWeek,eventsLast4Weeks,monthlyAsOfDate}` + `gdelt.summary.conflictEvents`(display-only、**不改 overlay scoring/weights/pipeline**,只读既有字段;HTML 初值 `—` 防 stale 假值;`Number.isFinite`/字符串 guard 避 `asNumber(null)→0`;相邻硬编码「所有源 live/stress」中性化);**item2 脚本**(`6bc5812`)新 `npm run acled:status`(`scripts/world-order/acled-weekly-status.mjs`)= sanitize:weekly + check:weekly + **config-vs-data 多字段对比**(`preparedAt`↔`lastFetchedAt` + `latestWeek` + `events4w`)→ 4 状态(`data_current`/`sanitized_not_refreshed`/`config_missing_or_no_input`/`data_ahead_or_local_stale`);步骤非零退出 → `check_failed`+`exit 1`(不误报 data_current);read-mostly、不 commit/push/触发 CI。Codex 复审:方案轮 2 修正(边界话术 + 避 0-trap;单一→多字段对比)、diff 轮 2 block(脚本吞错误、HTML 硬编码默认)均修。push 撞 CI 自动提交(`4b436db` radar + `340f099` world-order refresh)→ `git pull --rebase` + 复跑 check:all 绿 → push,`main` = origin = `6bc5812`(其上叠本 backlog commit)。
 - **当前进行中(2026-06-03)**: 无。
