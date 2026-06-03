@@ -100,6 +100,7 @@
     "check:all": "npm run check:syntax && npm run check:gdelt-cloud-fetcher-integration && npm run check:modules && npm run check:frontend-live-contracts && npm run check:node-runtime && npm run check:workflows && npm run check:docs && npm run check:external-ai && npm run check:data && npm run check:brent && npm run check:macro-drivers && npm run check:narrative-density && npm run check:market-pricing && npm run check:world-order && npm run check:world-order-acled",
     "acled:sanitize:weekly": "node scripts/world-order/sanitize-acled-weekly.mjs",
     "acled:sanitize:monthly": "node scripts/world-order/sanitize-acled-monthly.mjs",
+    "acled:status": "node scripts/world-order/acled-weekly-status.mjs",
     "check:world-order-acled-weekly": "node --check scripts/check-world-order-acled-weekly.mjs && node scripts/check-world-order-acled-weekly.mjs",
     "check:world-order-acled-monthly": "node --check scripts/check-world-order-acled-monthly.mjs && node scripts/check-world-order-acled-monthly.mjs"
   },
