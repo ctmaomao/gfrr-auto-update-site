@@ -26,11 +26,16 @@ for (const [k, e] of Object.entries(ev)) {
   }
 }
 
-// PR1: no hard directional call before the PR3 model + PR2 backtest gate.
-for (const k of ['signals', 'finalBias', 'interpretation']) {
-  if (k in data && data[k] !== null) {
-    fail(`${k} is populated at PR1 — degradation rule: no directional conclusion before the PR3 model + backtest`);
+// PR3 — the "数据不足 -> 暂不判断" guard now applies to the model output:
+// insufficient_data must carry NO directional signals; a real verdict needs evidence.
+if (data.finalBias === 'insufficient_data') {
+  if (data.signals !== null) fail("finalBias 'insufficient_data' but signals is populated (must be null — 暂不判断)");
+  const it = data.interpretation;
+  if (it && it.dataSufficiency && it.dataSufficiency !== 'insufficient') {
+    fail(`finalBias 'insufficient_data' but interpretation.dataSufficiency='${it.dataSufficiency}' (must be 'insufficient')`);
   }
+} else if (data.finalBias !== null) {
+  if (data.signals === null) fail(`finalBias '${data.finalBias}' but signals is null (a directional verdict needs evidence)`);
 }
 
 if (errors.length > 0) {

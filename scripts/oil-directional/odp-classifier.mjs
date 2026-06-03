@@ -158,3 +158,90 @@ export function classifyAt(history, period) {
 
   return { period, bias, signals };
 }
+
+// ===========================================================================
+// PR3 — price-divergence reconciliation ("物理>金融"). PURE ADDITION: classifyAt
+// and ODP_THRESHOLDS above are LOCKED (PR2 backtest GATE replays them unchanged).
+// This layer takes the locked physical bias + a LOW-CONFIDENCE price/curve picture
+// and produces the two price-divergence verdicts the physical chain alone cannot
+// (false_down_physical_stress / false_up_unconfirmed). Thresholds are PRE-REGISTERED
+// and grounded in OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md §5; do NOT cherry-tune.
+// ===========================================================================
+
+export const FINAL_BIAS_VALUES = Object.freeze([
+  'strong_bullish', 'moderate_bullish', 'neutral_range', 'bearish',
+  'false_down_physical_stress', 'false_up_unconfirmed', 'product_crisis', 'insufficient_data',
+]);
+
+export const ODP_PRICE_THRESHOLDS = Object.freeze({
+  PRICE_DOWN_PCT: -3, // Brent ~4w % change <= -3% counts as "price down"
+  PRICE_UP_PCT: 3,    // Brent ~4w % change >= +3% counts as "price up"
+});
+
+const TP = ODP_PRICE_THRESHOLDS;
+
+function primaryDriversFor(bias) {
+  switch (bias) {
+    case 'strong_bullish': return ['inventoryDrawPressure', 'refineryConfirmation', 'sprBufferEffectiveness'];
+    case 'moderate_bullish': return ['inventoryDrawPressure'];
+    case 'product_crisis': return ['dieselProductStress', 'refineryConfirmation'];
+    case 'bearish': return ['demandDestructionRisk', 'inventoryDrawPressure'];
+    default: return [];
+  }
+}
+
+// physical = { bias, signals } from classifyAt; price = low-confidence context:
+//   { changePct4w:number|null, curveSlopeRegime:string|null }
+// Returns the reconciliation record (physicalBias kept for audit; finalBias is the
+// display verdict). When the price direction is unknown, NO false_* is emitted —
+// the physical bias stands (fail-safe, consistent with 数据不足→不硬判).
+export function finalizeBias(physical, price) {
+  const out = {
+    physicalBias: physical && physical.bias ? physical.bias : 'insufficient_data',
+    finalBias: physical && physical.bias ? physical.bias : 'insufficient_data',
+    divergence: 'none',
+    priceVsPhysical: 'unknown',
+    drivers: [],
+  };
+  if (!physical || physical.bias === 'insufficient_data') {
+    out.finalBias = 'insufficient_data';
+    out.priceVsPhysical = 'insufficient_data';
+    return out;
+  }
+
+  const s = physical.signals || {};
+  const inv = s.inventoryDrawPressure || {};
+  const dist = s.dieselProductStress || {};
+  const physicallyTight = !!(inv.tight || inv.drawAccel || inv.extremeTight);
+  const physicallyLoose = !!inv.loose;
+  const distillateTight = !!(dist.tight || dist.extremeTight);
+  const distillateImproving = dist.drawing === false; // present and not drawing => building/improving
+
+  const chg = price && Number.isFinite(price.changePct4w) ? price.changePct4w : null;
+  const priceDown = chg !== null && chg <= TP.PRICE_DOWN_PCT;
+  const priceUp = chg !== null && chg >= TP.PRICE_UP_PCT;
+  const backwardation = !!price && price.curveSlopeRegime === 'backwardation';
+  const curveWeak = !!price && price.curveSlopeRegime === 'contango';
+
+  // ① price fell BUT physical still tight + backwardation + diesel still low (§5).
+  if (priceDown && physicallyTight && backwardation && distillateTight) {
+    out.finalBias = 'false_down_physical_stress';
+    out.divergence = 'false_down_physical_stress';
+    out.priceVsPhysical = 'price_down_physical_tight';
+    out.drivers = ['inventoryDrawPressure', 'dieselProductStress', 'futuresCurveConfirmation'];
+    return out;
+  }
+  // ② price rose BUT physical loose + curve weakening + diesel improving (§5).
+  if (priceUp && physicallyLoose && curveWeak && distillateImproving) {
+    out.finalBias = 'false_up_unconfirmed';
+    out.divergence = 'false_up_unconfirmed';
+    out.priceVsPhysical = 'price_up_physical_loose';
+    out.drivers = ['inventoryDrawPressure', 'demandDestructionRisk', 'futuresCurveConfirmation'];
+    return out;
+  }
+
+  // No divergence -> the physical bias stands ("物理>金融" with price agreeing/flat/unknown).
+  out.priceVsPhysical = chg === null ? 'unknown' : (priceDown ? 'price_down' : (priceUp ? 'price_up' : 'price_flat'));
+  out.drivers = primaryDriversFor(physical.bias);
+  return out;
+}

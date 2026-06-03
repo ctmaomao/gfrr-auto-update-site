@@ -2,7 +2,7 @@
   "schemaVersion": "odp-1",
   "module": "oil-directional-pressure",
   "boundary": "audit-only/display-only; NOT in values/scoring/decisionModel/executionLock/positionGuidance; Global Risk Heatmap independent",
-  "builtAt": "2026-06-03T07:03:03.494Z",
+  "builtAt": "2026-06-03T09:00:43.196Z",
   "ingestion": {
     "mode": "A",
     "provider": "EIA API v2",
@@ -276,7 +276,60 @@
       "windowFallback": "exact"
     }
   },
-  "signals": null,
-  "finalBias": null,
-  "interpretation": null
+  "signals": {
+    "inventoryDrawPressure": {
+      "drawAccel": true,
+      "tight": false,
+      "extremeTight": false,
+      "loose": false,
+      "vs5yPct": -2.037819878724433,
+      "rangePos": 0.3390500092954081,
+      "change4w": -17809
+    },
+    "dieselProductStress": {
+      "tight": true,
+      "extremeTight": true,
+      "drawing": true,
+      "vs5yPct": -10.697927427171132,
+      "rangePos": -0.10162031627327257
+    },
+    "refineryConfirmation": {
+      "utilAvg4w": 91.975,
+      "high": true,
+      "low": false
+    },
+    "sprBufferEffectiveness": {
+      "bufferInsufficient": true,
+      "sprChange4w": -32812,
+      "totalChange4w": -50621
+    },
+    "demandDestructionRisk": {
+      "demandFalling": false,
+      "demandDestruction": false,
+      "suppliedAvg4w": 12470,
+      "suppliedAvg13w": 12721.23076923077
+    },
+    "futuresCurveConfirmation": "not_used_in_backtest",
+    "priceContext": {
+      "brentChangePct4w": -13.12,
+      "curveSlopeRegime": "backwardation",
+      "crackChange4w": -10.5,
+      "priceDirectionSource": "radar-history-full:brent~4w"
+    }
+  },
+  "finalBias": "false_down_physical_stress",
+  "interpretation": {
+    "physicalBias": "product_crisis",
+    "finalBias": "false_down_physical_stress",
+    "divergence": "false_down_physical_stress",
+    "priceVsPhysical": "price_down_physical_tight",
+    "drivers": [
+      "inventoryDrawPressure",
+      "dieselProductStress",
+      "futuresCurveConfirmation"
+    ],
+    "confidence": "low",
+    "dataSufficiency": "full",
+    "note": "physical-chain verdict; price-divergence overlay is a low-confidence confirm. Audit-only/display-only, NOT in scoring/decision."
+  }
 }

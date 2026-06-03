@@ -41,9 +41,17 @@ for (const h of guardedHosts) {
   if (radar[h] && typeof radar[h] === 'object') scanForOdp(radar[h], h, '', 0);
 }
 
-// 3) ODP file must not carry scoring/decision output at PR1.
-for (const k of ['signals', 'finalBias', 'interpretation']) {
-  if (k in odp && odp[k] !== null) fail(`oil-directional-pressure.json.${k} must be null (ODP is not a scoring/decision module)`);
+// 3) PR3 — signals/finalBias/interpretation are a DISPLAY-ONLY verdict; that does not
+// make ODP a scoring module. The boundary it must keep: no scoring/decision/execution
+// DIRECTIVE keys on the ODP file, and the interpretation must keep reaffirming audit-only.
+const FORBIDDEN_OUTPUT_KEYS = ['scoring', 'score', 'decisionModel', 'executionLock', 'positionGuidance', 'actionQueue', 'triggerMonitor'];
+for (const k of FORBIDDEN_OUTPUT_KEYS) {
+  if (k in odp) fail(`oil-directional-pressure.json must not carry a '${k}' directive key (display-only, not a scoring/decision module)`);
+}
+if (odp.interpretation && typeof odp.interpretation === 'object') {
+  if (typeof odp.interpretation.note !== 'string' || !/audit-only|display-only/i.test(odp.interpretation.note)) {
+    fail('interpretation.note must reaffirm audit-only/display-only (display-only verdict)');
+  }
 }
 
 // 4) Global Risk Heatmap independence: ODP evidence must not merge heatmap state.
