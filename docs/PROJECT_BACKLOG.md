@@ -102,13 +102,14 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **✅ P3-18 stale-display 收口完成(closure 坐实)**:Tier-1/2(`0e7e76a`/`00a83c7`)+ WIRE 批 A/B/C/D/E(`975f501`/`4cf7220`/`5076658`/`d5ff2ef`/`6f98cdb`)共 7 批;6 个 deferred WIRE 项 + 批 B/C 余项 + 0-信号边界 + 整段 health narrative 两态化全部落地;数据健康附录与主题卡在健康与降级两态下均无写死会漂 / 说反话的断言。**无 pending 后续。**(批 D 提的「整段 health narrative active/none」已由批 E 完成。)
 - **硬约束**:改前端必 `npm run bump:frontend-asset-version`;**每次 bump 会重写冻结的 `scripts/modules/realtime.js` 的 import `?v=` → 须 `git checkout HEAD --` 还原保 diff=0**(见 memory `ops_bump_tool_blind_spots`,本类已踩两次);加新 id 须 index.html 与 setter 两边一致(否则 `check:dom` 红);受限路径 `data/`/`realtime/`/`.github/workflows/`/`manual-artifacts/` 零 diff。
 
-#### P3-19: Oil Directional Pressure (ODP) 油价方向压力研判 — 能源专题(PR1 merged; PR1b next)
+#### P3-19: Oil Directional Pressure (ODP) 油价方向压力研判 — 能源专题(PR1 + PR1b merged; PR2 next)
 
 来源:2026-06-03 owner 立项 + 可行性审计(Codex↔Claude↔owner 终裁,见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md))。**audit-only / display-only 独立能源专题,非第七个底层风险模块,Global Risk Heatmap 独立**(同 CLAUDE.md 绝对规则 3)。
 
 - **取数终裁 A-first**(owner 2026-06-03):EIA API v2 JSON(`/v2/seriesid/PET.<id>.W`,免费 `EIA_API_KEY`)→ 零依赖 build 写独立文件 `data/oil-directional-pressure.json`;B(手动 xlsx sanitizer→`config/`)仅 fallback。**ADR-0013**:写 `data/` 不导入 devDep(xlsx 禁进 CI/`data/`)。
 - **PR1(✅ 已 squash-merge 到 main = `70876f5d`,#258)**:零依赖 fetcher(8 个 WPSR series:原油 exSPR/SPR/馏分油/汽油库存 + 炼厂开工率/净投入 + 汽油/馏分油 product supplied;短超时 + fail-closed)+ 复用 radar-data WTI/Brent/crack/curve + 初始 `data/oil-directional-pressure.json`(evidence + freshness + seasonality;`signals`/`finalBias`/`interpretation`=null)+ 5 个 `check:oil-directional-*`(contract/freshness/seasonality/degradation/boundary)接入 `check:all`(16 项)。**不碰 UI / `app.js` / workflow**。build 经 3 轮 Codex、checks 经 2 轮 Codex + 负例自验。
-- **后续 PR**:PR1b 周度 refresh workflow + Pages-trigger;PR2 历史 cache + 2020/2022/2023-24 回测(**GATE**,拐点合理才进 UI);PR3 `signals`/`finalBias`/物理>金融裁决(display-only);PR4 中文 UI 独立专题(整包升级 `app.js` + DESIGN §4.1 同步 + 决定是否投 `radar-data.json` root snapshot);PR5 只读引用 dailyBrief/interpretation。
+- **PR1b(✅ 已 squash-merge 到 main,#259)**:周度 refresh workflow(`refresh-oil-directional-pressure.yml`,Thu cron + manual dispatch)+ Pages-trigger + `build:oil-directional`;`EIA_API_KEY` repo secret 已设。
+- **后续 PR**:PR2 历史 cache + 2020/2022/2023-24 回测(**GATE**,拐点合理才进 UI);PR3 `signals`/`finalBias`/物理>金融裁决(display-only);PR4 中文 UI 独立专题(整包升级 `app.js` + DESIGN §4.1 同步 + 决定是否投 `radar-data.json` root snapshot);PR5 只读引用 dailyBrief/interpretation。
 - 边界:不进 `values.*`/scoring/decisionModel/executionLock/positionGuidance/cross-validation;期限结构低置信复用、缺则不参与裁决;数据不足显式「暂不判断」。EIA = 美国政府公共领域。
 
 ---
@@ -241,10 +242,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于(2026-06-03 — ODP PR1 油价方向压力研判 数据接入)**: owner 立项「油价方向压力研判 / ODP」独立能源专题;可行性审计经 Codex↔Claude↔owner 终裁、source-review 文档已 merge(PR #257)。**PR1 代码全部完成并已 squash-merge 到 main(#258 = `70876f5d`)**:① 零依赖 build `scripts/oil-directional/build-oil-directional-pressure.mjs`(EIA API v2 `/v2/seriesid/PET.<id>.W` 取 8 个 WPSR series + 复用 radar-data WTI/Brent/crack/curve;短超时 `EIA_FETCH_TIMEOUT_MS` + fail-closed;key 走 `process.env.EIA_API_KEY`,本地从 gitignored `manual-artifacts/eia-api-key.txt` 注入);② 初始 `data/oil-directional-pressure.json`(evidence + freshness + seasonality;`signals`/`finalBias`/`interpretation`=null);③ 5 个 `check:oil-directional-*` + check-suite `oil-directional` + package.json(check:all 15→16);④ 文档(本 backlog + DATA_SOURCES + DATA_CONTRACT + 计数 CLAUDE/AGENTS/MILESTONE)。build 经 3 轮 Codex、checks 经 2 轮 Codex + 负例自验;`check:all` 16 项绿;ADR-0013 守(写 `data/` 零依赖)。
-- **当前进行中(2026-06-03 ODP)**: 无。PR1 **已 squash-merge 到 main**([#258](https://github.com/ctmaomao/gfrr-auto-update-site/pull/258),merge commit `70876f5d`;`check:all` 16 项绿;main 干净、PR 分支已删)。
-- **下一步建议(2026-06-03 ODP)**: **PR1b** — 周度 refresh workflow + 接入 `deploy-static-site-to-pages.yml` Pages-trigger(CI 需设 GitHub secret `EIA_API_KEY`);之后 PR2 历史 cache + 回测 GATE、PR3 模型(signals/finalBias/物理>金融)、PR4 中文 UI、PR5 只读引用。完整 PR 拆分见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md) §10 + 记忆 `project_odp_oil_directional_pressure`。
-- **阻塞或等待(2026-06-03 ODP)**: 无。EIA key 本地已配;CI 的 GitHub secret `EIA_API_KEY` 待 PR1b 设(届时一步步带 owner)。
+- **上次会话结束于(2026-06-03 — ODP PR1 油价方向压力研判 数据接入)**: owner 立项「油价方向压力研判 / ODP」独立能源专题;可行性审计经 Codex↔Claude↔owner 终裁、source-review 文档已 merge(PR #257)。**PR1 代码全部完成并已 squash-merge 到 main(#258 = `70876f5d`)**:① 零依赖 build `scripts/oil-directional/build-oil-directional-pressure.mjs`(EIA API v2 `/v2/seriesid/PET.<id>.W` 取 8 个 WPSR series + 复用 radar-data WTI/Brent/crack/curve;短超时 `EIA_FETCH_TIMEOUT_MS` + fail-closed;key 走 `process.env.EIA_API_KEY`,本地从 gitignored `manual-artifacts/eia-api-key.txt` 注入);② 初始 `data/oil-directional-pressure.json`(evidence + freshness + seasonality;`signals`/`finalBias`/`interpretation`=null);③ 5 个 `check:oil-directional-*` + check-suite `oil-directional` + package.json(check:all 15→16);④ 文档(本 backlog + DATA_SOURCES + DATA_CONTRACT + 计数 CLAUDE/AGENTS/MILESTONE)。build 经 3 轮 Codex、checks 经 2 轮 Codex + 负例自验;`check:all` 16 项绿;ADR-0013 守(写 `data/` 零依赖)。**PR1b(#259,merge `226a698f`)续上**:周度 refresh workflow(`refresh-oil-directional-pressure.yml`,Thu cron + dispatch)+ Pages-trigger + `build:oil-directional`;`EIA_API_KEY` repo secret 已设(`gh secret set` 从 gitignored key 文件)。
+- **当前进行中(2026-06-03 ODP)**: 无。PR1 + PR1b **均已 squash-merge 到 main**([#258](https://github.com/ctmaomao/gfrr-auto-update-site/pull/258)=`70876f5d` / [#259](https://github.com/ctmaomao/gfrr-auto-update-site/pull/259)=`226a698f`);`check:all` 16 项绿;main 干净、PR 分支已删。
+- **下一步建议(2026-06-03 ODP)**: **PR2** — 历史 cache + 2020/2022/2023-24 回测(**GATE**,拐点合理才进 UI);之后 PR3 模型(signals/finalBias/物理>金融)、PR4 中文 UI、PR5 只读引用。(PR1b 已 merge、`EIA_API_KEY` secret 已设;workflow 周四 cron 自动跑 / 可 manual dispatch。)完整 PR 拆分见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md) §10 + 记忆 `project_odp_oil_directional_pressure`。
+- **阻塞或等待(2026-06-03 ODP)**: 无。`EIA_API_KEY` repo secret 已设;PR1b workflow 在产(Thu cron / manual dispatch)。
 
 ---
 
