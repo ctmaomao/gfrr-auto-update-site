@@ -21,8 +21,9 @@ function setLeafText(id, value) {
 
 function setToneClass(id, baseClass, tone) {
   const el = $(id);
-  if (!el || !tone) return;
-  el.className = `${baseClass} ${tone}`;
+  if (!el) return;
+  // empty tone -> reset to base class (no stale tone left over on a degraded re-render)
+  el.className = tone ? `${baseClass} ${tone}` : baseClass;
 }
 
 const FINAL_BIAS_ZH = {
@@ -127,15 +128,15 @@ function buildHeadline(finalBias, it, sig) {
   const brent = pct(pc.brentChangePct4w);
   switch (finalBias) {
     case 'false_down_physical_stress':
-      return `布伦特近 ~4 周 ${brent},价格回落;但物理链仍偏紧(库存加速去化 + 期限结构 backwardation + 柴油偏紧),下跌未获物理确认。`;
+      return `布伦特近 ~4 周 ${brent},价格回落;但物理链仍偏紧(库存偏紧 + 期限结构 backwardation + 柴油偏紧),下跌未获物理确认。`;
     case 'false_up_unconfirmed':
       return `布伦特近 ~4 周 ${brent},价格走高;但物理链偏松(库存回补 + 曲线走弱 + 柴油改善),上涨缺物理确认。`;
     case 'strong_bullish':
-      return `物理链强紧张:库存加速去化、炼厂高开工、SPR 缓冲不足以抵消,布伦特近 ~4 周 ${brent}。`;
+      return `物理链强紧张:库存加速去化、炼厂高开工,布伦特近 ~4 周 ${brent}。`;
     case 'moderate_bullish':
       return `物理链偏紧(库存偏低或去化),布伦特近 ~4 周 ${brent}。`;
     case 'product_crisis':
-      return `成品油主导:柴油/裂解极紧、炼厂受限,压力来自下游而非原油本身,布伦特近 ~4 周 ${brent}。`;
+      return `馏分油库存极紧,成品油压力主导(压力来自下游成品而非原油本身),布伦特近 ~4 周 ${brent}。`;
     case 'bearish':
       return `物理链偏松:库存回补且高于同期、需求转弱,布伦特近 ~4 周 ${brent}。`;
     case 'neutral_range':
@@ -175,7 +176,12 @@ function renderEvidenceList(ev) {
 export function renderOilDirectional({ oilData }) {
   if (!oilData || typeof oilData !== 'object') {
     setLeafText('odp-verdict', '数据不可用');
+    setToneClass('odp-verdict', 'section-title', '');
     setLeafText('odp-headline', '油价方向研判数据未能加载,暂不显示。');
+    for (const id of ['odp-physical-bias', 'odp-divergence', 'odp-data-sufficiency', 'odp-asof', 'odp-evidence-note']) setLeafText(id, '—');
+    for (const id of REASON_IDS) setLeafText(id, '—');
+    const host = $('odp-evidence-list');
+    if (host) host.replaceChildren();
     return;
   }
 
@@ -194,9 +200,11 @@ export function renderOilDirectional({ oilData }) {
   setLeafText('odp-asof', crudeAsOf);
 
   if (!sig) {
-    // insufficient_data -> 暂不判断, no fabricated reasons.
+    // insufficient_data -> 暂不判断, no fabricated reasons; clear any prior evidence rows.
     for (const id of REASON_IDS) setLeafText(id, '暂不判断');
     setLeafText('odp-evidence-note', '本周物理链数据不足(非 8 源同周 live),暂不给出方向判断。');
+    const host = $('odp-evidence-list');
+    if (host) host.replaceChildren();
     return;
   }
 
