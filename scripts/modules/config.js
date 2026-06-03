@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=world-order-acled-freshness-1';
+﻿import { formatFiniteNumber } from './format.js?v=odp-energy-theme-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

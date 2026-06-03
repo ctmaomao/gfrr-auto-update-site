@@ -173,12 +173,15 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 ═══ Static risk map（M-94 静态,M-95+ 再接真实区域算法）═══
 5. #global-risk-heatmap                   6 cells 静态 heatmap
 
+═══ Energy theme（PR4 · 独立能源专题,主路径可见 + 折叠详情）═══
+6. #oil-directional-pressure              油价方向压力研判(ODP,display-only;不进打分/执行/Heatmap)
+
 ═══ 第二层：附录区（5 个 details,默认收起）═══
-6. #detail-data                           详细数据与图表
-7. #world-order-stress-section            World Order regime overlay
-8. #method-evidence                       方法说明与证据链
-9. #external-ai-auxiliary                 外部 AI 解读 - 只读辅助
-10. #execution-risk-detail                执行与风控详情
+7. #detail-data                           详细数据与图表
+8. #world-order-stress-section            World Order regime overlay
+9. #method-evidence                       方法说明与证据链
+10. #external-ai-auxiliary                外部 AI 解读 - 只读辅助
+11. #execution-risk-detail                执行与风控详情
 
 ═══ Footer（不进 jump nav）═══
 <footer class="method">                   method-grid 4 项
@@ -186,7 +189,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 
 ### 4.2 dashboard-jump-nav 15 项（顺序锁定）
 
-顶部跳转导航必须是 15 项,按以下顺序指向主路径锚点:
+顶部跳转导航必须是 16 项,按以下顺序指向主路径锚点:
 
 1. `#homepage-today-judgment`
 2. `#homepage-pressure-sources`
@@ -198,11 +201,12 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 8. `#wow-key-changes`
 9. `#macro-thematic-cards`（`.new` 主题卡阵入口）
 10. `#global-risk-heatmap`
-11. `#detail-data`
-12. `#world-order-stress-section`
-13. `#method-evidence`
-14. `#external-ai-auxiliary`
-15. `#execution-risk-detail`
+11. `#oil-directional-pressure`（PR4 · 独立能源专题）
+12. `#detail-data`
+13. `#world-order-stress-section`
+14. `#method-evidence`
+15. `#external-ai-auxiliary`
+16. `#execution-risk-detail`
 
 ### 4.3 修改 IA 顺序的流程
 
@@ -242,6 +246,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 | `#macro-risk-overview` | `var(--risk-red)` | 主判断与 8 runtime block |
 | `#macro-thematic-cards` | `var(--risk-green)` | 主题汇编,跨分析层的读者类别入口 |
 | `#global-risk-heatmap` | `var(--risk-red)` | 6 cells 静态风险热力图 |
+| `#oil-directional-pressure` | `var(--risk-red)` | PR4 独立能源专题(ODP,display-only;物理>金融,verdict 动态上色) |
 | `#detail-data` | `var(--paper-ink)` | 中性 appendix |
 | `#world-order-stress-section` | `var(--risk-orange)` | regime overlay;独立结构性观察层 |
 | `#method-evidence` | `var(--paper-ink)` | 中性 appendix |
@@ -403,10 +408,12 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
 
 任何视觉合约疑问以 mock v2.1 为准。本 DESIGN.md v2 是 mock v2.1 的文字化描述。
 
+**PR4 增补(超出 mock v2.1)**:`#oil-directional-pressure` 独立能源专题是 mock v2.1 之后新增的一级 section(§4.1 #6 / jump-nav 第 11 项),**复用 `editorial-section` + `editorial-folded-content` 既有视觉族 + paper 色板**,无新增视觉范式;verdict(`#odp-verdict`)按 `finalBias` 动态上 red/yellow/green;内部 `<details>` 不带 `open`(同 §5.4 折叠约束)。display-only,不进打分/执行/Heatmap。见 `docs/ADR/0014-design-md-is-ia-ground-truth.md`。
+
 **永久禁用的旧 IA 元素**(任何 PR 不得引入):
 - 旧 `<section id="homepage-realtime-band">` 及其内部所有元素(`#rt-brent-source` / `#rt-brent-delta` 等 16 个子 ID)
 - 旧 `<section id="world-heatmap">` SVG 投影层(由 6 cells 静态 grid 替代)
-- 旧 jump nav 14 项结构(由 15 项 + .new 主题卡阵替代)
+- 旧 jump nav 14 项结构(PR4 起为 16 项 + .new 主题卡阵替代)
 - 旧 `#core-dashboard` / 旧 hero `.hero-*` selector 全套
 - `<head>` 内联 `<style>` 块(M94_V0_DATA_CONTRACT.md §I.6 禁止)
 
