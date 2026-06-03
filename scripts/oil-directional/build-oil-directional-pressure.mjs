@@ -296,11 +296,20 @@ async function main() {
   }
 
   // PR3 — productionize the LOCKED physical classifier + the price-divergence overlay.
+  // SAME-WEEK GUARD (mirrors PR2's canonical-grid check, for the LIVE path): the physical
+  // chain must be ONE week. classifyAt() takes idxAtOrBefore per series, so a single series
+  // lagging a week (yet within maxAgeDays) would silently mix weeks. Require EVERY EIA series
+  // live and sharing crude's latest period; otherwise emit insufficient_data (no mixed-week verdict).
   const crudePts = (history.series.crudeStocksExSpr || {}).points || [];
-  const targetPeriod = crudePts.length ? crudePts[crudePts.length - 1].period : null;
-  const physical = targetPeriod
-    ? classifyAt(history, targetPeriod)
-    : { period: null, bias: 'insufficient_data', signals: {} };
+  const canonicalPeriod = crudePts.length ? crudePts[crudePts.length - 1].period : null;
+  const sameWeekAligned = !!canonicalPeriod && EIA_SERIES.every((cfg) => {
+    const s = history.series[cfg.key];
+    const pts = s && s.points;
+    return s && s.sourceStatus === 'live' && Array.isArray(pts) && pts.length && pts[pts.length - 1].period === canonicalPeriod;
+  });
+  const physical = sameWeekAligned
+    ? classifyAt(history, canonicalPeriod)
+    : { period: canonicalPeriod, bias: 'insufficient_data', signals: {} };
 
   const brentChangePct4w = brentChange4wFromHistory();
   const curveSlopeRegime = (!reuse._radarMissing && reuse.curve) ? reuse.curve.slopeRegime : null;

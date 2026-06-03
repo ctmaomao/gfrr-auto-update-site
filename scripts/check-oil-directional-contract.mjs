@@ -70,9 +70,9 @@ if (!ev || typeof ev !== 'object') {
   }
 }
 
-// PR3 — model output is populated (null only before the model runs). Structural
-// validation here; finalBias enum + cross-field consistency live in check:oil-directional-score.
-if (!(data.finalBias === null || typeof data.finalBias === 'string')) fail('finalBias must be string|null');
+// PR3 — model output is ALWAYS populated (the build writes a verdict; finalBias null
+// = model regressed). Structural validation here; enum + consistency live in check:oil-directional-score.
+if (typeof data.finalBias !== 'string') fail('finalBias must be a non-null string (null = model not produced)');
 if (!(data.signals === null || (typeof data.signals === 'object' && !Array.isArray(data.signals)))) fail('signals must be object|null');
 if (data.signals && typeof data.signals === 'object') {
   for (const g of ['inventoryDrawPressure', 'dieselProductStress', 'refineryConfirmation', 'sprBufferEffectiveness', 'demandDestructionRisk', 'priceContext']) {
@@ -87,9 +87,9 @@ if (data.signals && typeof data.signals === 'object') {
     if (typeof pc.priceDirectionSource !== 'string') fail('signals.priceContext.priceDirectionSource must be a string');
   }
 }
-if (!(data.interpretation === null || (typeof data.interpretation === 'object' && !Array.isArray(data.interpretation)))) {
-  fail('interpretation must be object|null');
-} else if (data.interpretation) {
+if (typeof data.interpretation !== 'object' || data.interpretation === null || Array.isArray(data.interpretation)) {
+  fail('interpretation must be a non-null object (PR3 always writes it)');
+} else {
   for (const f of ['physicalBias', 'finalBias', 'divergence', 'priceVsPhysical', 'note']) {
     if (typeof data.interpretation[f] !== 'string' || !data.interpretation[f]) fail(`interpretation.${f} must be a non-empty string`);
   }
