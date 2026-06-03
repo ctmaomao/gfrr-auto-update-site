@@ -17,10 +17,12 @@
 // (those land in PR3); the contract is forward-compatible.
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { classifyAt, finalizeBias } from './odp-classifier.mjs';
 
 const SCHEMA_VERSION = 'odp-1';
 const OUT_PATH = 'data/oil-directional-pressure.json';
 const RADAR_PATH = 'data/radar-data.json';
+const HISTORY_PATH = 'data/radar-history-full.json';
 const EIA_BASE = 'https://api.eia.gov/v2/seriesid';
 // Weekly WPSR cadence: week-ending Friday + ~5d EIA release lag + up to a 7d
 // inter-release gap + slack. So the latest point is normally up to ~12-14d old
@@ -234,6 +236,32 @@ function reuseFromRadar(builtMs) {
   };
 }
 
+// Crude price direction for the divergence overlay: Brent ~4-week % change from the
+// committed daily radar history (zero-dep reuse). Returns null when the history is
+// missing/short or lacks a point near ~4w ago -> the overlay then emits no false_*.
+function brentChange4wFromHistory() {
+  let hist;
+  try { hist = JSON.parse(readFileSync(HISTORY_PATH, 'utf8')); }
+  catch { return null; }
+  if (!Array.isArray(hist) || hist.length < 2) return null;
+  const pts = hist.filter((d) => d && typeof d.date === 'string' && Number.isFinite(Number(d.brent)));
+  if (pts.length < 2) return null;
+  const last = pts[pts.length - 1];
+  const lastMs = Date.parse(last.date + 'T00:00:00Z');
+  const target = lastMs - 28 * DAY_MS;
+  let best = null;
+  let bestDiff = Infinity;
+  for (const d of pts) {
+    const diff = Math.abs(Date.parse(d.date + 'T00:00:00Z') - target);
+    if (diff < bestDiff) { bestDiff = diff; best = d; }
+  }
+  if (!best || bestDiff > 10 * DAY_MS) return null;
+  const prev = Number(best.brent);
+  const cur = Number(last.brent);
+  if (!(prev > 0)) return null;
+  return round(((cur - prev) / prev) * 100, 2);
+}
+
 async function main() {
   if (!EIA_API_KEY) {
     console.error('[odp] FATAL: EIA_API_KEY not set — aborting (fail-closed, no fabrication).');
@@ -244,6 +272,7 @@ async function main() {
 
   const evidence = {};
   const seasonality = {};
+  const history = { series: {} };
   let liveCount = 0;
 
   for (const cfg of EIA_SERIES) {
@@ -251,6 +280,7 @@ async function main() {
     const [ev, season] = buildEiaEvidence(cfg, fetched, builtMs);
     evidence[cfg.key] = ev;
     if (season) seasonality[cfg.key] = season;
+    history.series[cfg.key] = { sourceStatus: ev.sourceStatus, points: fetched.ok ? fetched.series : [] };
     if (ev.sourceStatus === 'live') liveCount++;
     console.log(`[odp] ${cfg.key.padEnd(24)} PET.${cfg.id}.W ${ev.sourceStatus}` +
       (ev.value !== null
@@ -265,6 +295,53 @@ async function main() {
     Object.assign(evidence, reuse);
   }
 
+  // PR3 — productionize the LOCKED physical classifier + the price-divergence overlay.
+  // SAME-WEEK GUARD (mirrors PR2's canonical-grid check, for the LIVE path): the physical
+  // chain must be ONE week. classifyAt() takes idxAtOrBefore per series, so a single series
+  // lagging a week (yet within maxAgeDays) would silently mix weeks. Require EVERY EIA series
+  // live and sharing crude's latest period; otherwise emit insufficient_data (no mixed-week verdict).
+  const crudePts = (history.series.crudeStocksExSpr || {}).points || [];
+  const canonicalPeriod = crudePts.length ? crudePts[crudePts.length - 1].period : null;
+  const sameWeekAligned = !!canonicalPeriod && EIA_SERIES.every((cfg) => {
+    const s = history.series[cfg.key];
+    const pts = s && s.points;
+    return s && s.sourceStatus === 'live' && Array.isArray(pts) && pts.length && pts[pts.length - 1].period === canonicalPeriod;
+  });
+  const physical = sameWeekAligned
+    ? classifyAt(history, canonicalPeriod)
+    : { period: canonicalPeriod, bias: 'insufficient_data', signals: {} };
+
+  const brentChangePct4w = brentChange4wFromHistory();
+  const curveSlopeRegime = (!reuse._radarMissing && reuse.curve) ? reuse.curve.slopeRegime : null;
+  const crackChange4w = (!reuse._radarMissing && reuse.crackSpread) ? reuse.crackSpread.change4w : null;
+  const reconcile = finalizeBias(physical, { changePct4w: brentChangePct4w, curveSlopeRegime });
+
+  const insufficient = reconcile.finalBias === 'insufficient_data';
+  const dataSufficiency = insufficient ? 'insufficient' : (liveCount === EIA_SERIES.length ? 'full' : 'partial');
+
+  // signals carry the physical chain + the low-confidence price context (display-only).
+  // Insufficient data -> null signals (honest "暂不判断"), finalBias 'insufficient_data'.
+  const signals = insufficient ? null : {
+    ...physical.signals,
+    priceContext: {
+      brentChangePct4w,
+      curveSlopeRegime,
+      crackChange4w,
+      priceDirectionSource: brentChangePct4w === null ? 'unavailable' : 'radar-history-full:brent~4w',
+    },
+  };
+
+  const interpretation = {
+    physicalBias: reconcile.physicalBias,
+    finalBias: reconcile.finalBias,
+    divergence: reconcile.divergence,
+    priceVsPhysical: reconcile.priceVsPhysical,
+    drivers: reconcile.drivers,
+    confidence: 'low',
+    dataSufficiency,
+    note: 'physical-chain verdict; price-divergence overlay is a low-confidence confirm. Audit-only/display-only, NOT in scoring/decision.',
+  };
+
   const out = {
     schemaVersion: SCHEMA_VERSION,
     module: 'oil-directional-pressure',
@@ -274,15 +351,17 @@ async function main() {
     ingestion: { mode: 'A', provider: 'EIA API v2', route: '/v2/seriesid/PET.<id>.W' },
     evidence,
     seasonality,
-    // PR3 fields — intentionally null at PR1 (forward-compatible contract).
-    signals: null,
-    finalBias: null,
-    interpretation: null,
+    // PR3 — physical classifier + price-divergence overlay (display-only).
+    signals,
+    finalBias: reconcile.finalBias,
+    interpretation,
   };
 
   mkdirSync('data', { recursive: true });
   writeFileSync(OUT_PATH, `${JSON.stringify(out, null, 2)}\n`);
-  console.log(`[odp] wrote ${OUT_PATH} — ${liveCount}/${EIA_SERIES.length} EIA series live; builtAt ${builtAt}`);
+  console.log(`[odp] wrote ${OUT_PATH} — ${liveCount}/${EIA_SERIES.length} EIA series live; ` +
+    `finalBias=${reconcile.finalBias} (physical=${reconcile.physicalBias}, divergence=${reconcile.divergence}, ` +
+    `brent4w=${brentChangePct4w == null ? 'n/a' : brentChangePct4w + '%'}); builtAt ${builtAt}`);
 }
 
 main().catch((e) => {

@@ -70,9 +70,30 @@ if (!ev || typeof ev !== 'object') {
   }
 }
 
-// PR1: model output stays null (forward-compatible; PR3 relaxes this).
-for (const k of ['signals', 'finalBias', 'interpretation']) {
-  if (k in data && data[k] !== null) fail(`${k} must be null at PR1 (model lands in PR3), got a populated value`);
+// PR3 — model output is ALWAYS populated (the build writes a verdict; finalBias null
+// = model regressed). Structural validation here; enum + consistency live in check:oil-directional-score.
+if (typeof data.finalBias !== 'string') fail('finalBias must be a non-null string (null = model not produced)');
+if (!(data.signals === null || (typeof data.signals === 'object' && !Array.isArray(data.signals)))) fail('signals must be object|null');
+if (data.signals && typeof data.signals === 'object') {
+  for (const g of ['inventoryDrawPressure', 'dieselProductStress', 'refineryConfirmation', 'sprBufferEffectiveness', 'demandDestructionRisk', 'priceContext']) {
+    if (!(g in data.signals)) fail(`signals.${g} missing`);
+  }
+  const pc = data.signals.priceContext;
+  if (!pc || typeof pc !== 'object') {
+    fail('signals.priceContext must be an object');
+  } else {
+    if (!numOrNull(pc.brentChangePct4w)) fail('signals.priceContext.brentChangePct4w must be number|null');
+    if (!(pc.curveSlopeRegime === null || typeof pc.curveSlopeRegime === 'string')) fail('signals.priceContext.curveSlopeRegime must be string|null');
+    if (typeof pc.priceDirectionSource !== 'string') fail('signals.priceContext.priceDirectionSource must be a string');
+  }
+}
+if (typeof data.interpretation !== 'object' || data.interpretation === null || Array.isArray(data.interpretation)) {
+  fail('interpretation must be a non-null object (PR3 always writes it)');
+} else {
+  for (const f of ['physicalBias', 'finalBias', 'divergence', 'priceVsPhysical', 'dataSufficiency', 'note']) {
+    if (typeof data.interpretation[f] !== 'string' || !data.interpretation[f]) fail(`interpretation.${f} must be a non-empty string`);
+  }
+  if (!Array.isArray(data.interpretation.drivers)) fail('interpretation.drivers must be an array');
 }
 
 if (errors.length > 0) {
