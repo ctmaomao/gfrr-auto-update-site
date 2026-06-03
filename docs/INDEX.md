@@ -76,7 +76,7 @@
 ### Brent / energy public proxy source review scope
 
 - `docs/BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md` (M-71)
-- `docs/OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md` (Oil Directional Pressure Model / ODP — energy physical-chain feasibility + source review; source-review only, not implemented)
+- `docs/OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md` (Oil Directional Pressure Model / ODP — feasibility + source review; this doc stays a source-review artifact, but PR1 ingestion + checks are implemented on branch `codex/odp-pr1-eia-ingestion`: `data/oil-directional-pressure.json` + `scripts/oil-directional/` + `check:oil-directional`)
 
 ### China macro source review scope
 

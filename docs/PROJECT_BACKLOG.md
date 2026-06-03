@@ -242,8 +242,8 @@ Add or update backlog items with these rules:
 ## 🔄 Session Handoff (最新)
 
 - **上次会话结束于(2026-06-03 — ODP PR1 油价方向压力研判 数据接入)**: owner 立项「油价方向压力研判 / ODP」独立能源专题;可行性审计经 Codex↔Claude↔owner 终裁、source-review 文档已 merge(PR #257)。**PR1 代码全部完成,在 branch `codex/odp-pr1-eia-ingestion`(未合并)**:① 零依赖 build `scripts/oil-directional/build-oil-directional-pressure.mjs`(EIA API v2 `/v2/seriesid/PET.<id>.W` 取 8 个 WPSR series + 复用 radar-data WTI/Brent/crack/curve;短超时 `EIA_FETCH_TIMEOUT_MS` + fail-closed;key 走 `process.env.EIA_API_KEY`,本地从 gitignored `manual-artifacts/eia-api-key.txt` 注入);② 初始 `data/oil-directional-pressure.json`(evidence + freshness + seasonality;`signals`/`finalBias`/`interpretation`=null);③ 5 个 `check:oil-directional-*` + check-suite `oil-directional` + package.json(check:all 15→16);④ 文档(本 backlog + DATA_SOURCES + DATA_CONTRACT + 计数 CLAUDE/AGENTS/MILESTONE)。build 经 3 轮 Codex、checks 经 2 轮 Codex + 负例自验;`check:all` 16 项绿;ADR-0013 守(写 `data/` 零依赖)。
-- **当前进行中(2026-06-03 ODP)**: PR1 文档刚落,**正在 commit**(代码 + 数据 + 5 check + 套件/package.json + 文档一并)到 `codex/odp-pr1-eia-ingestion`。
-- **下一步建议(2026-06-03 ODP)**: commit PR1 → (owner 授权后)push + 建 PR;之后 PR1b 周度 workflow + Pages-trigger、PR2 回测 GATE、PR3 模型、PR4 中文 UI。完整 PR 拆分见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md) §10 + 记忆 `project_odp_oil_directional_pressure`。
+- **当前进行中(2026-06-03 ODP)**: 无。PR1 **已 commit = `b312c104`**(15 文件 / +962;`check:all` 16 项绿;工作区干净)到 `codex/odp-pr1-eia-ingestion`;**未 push、未建 PR**。
+- **下一步建议(2026-06-03 ODP)**: owner 授权后 push `codex/odp-pr1-eia-ingestion` + 建 PR;之后 PR1b 周度 workflow + Pages-trigger(CI 设 GitHub secret `EIA_API_KEY`)、PR2 回测 GATE、PR3 模型、PR4 中文 UI。完整 PR 拆分见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md) §10 + 记忆 `project_odp_oil_directional_pressure`。
 - **阻塞或等待(2026-06-03 ODP)**: 无。EIA key 本地已配;CI 的 GitHub secret `EIA_API_KEY` 待 PR1b 设(届时一步步带 owner)。
 
 ---
