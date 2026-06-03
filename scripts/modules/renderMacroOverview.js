@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=frontend-stale-static-wire-5';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-stale-static-wire-5';
+} from './config.js?v=world-order-acled-freshness-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=world-order-acled-freshness-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2357,6 +2357,18 @@ function renderWorldOrderStress({ worldOrderStressData }) {
     if (modifier.riskBias || asNumber(modifier.maxStateBoost) !== null) {
       setLeafText('wo-detail-risk-bias', `riskBias ${modifier.riskBias || '—'} · maxStateBoost ${modifier.maxStateBoost ?? '—'}`);
     }
+
+    // ACLED / GDELT data-freshness indicators — display-only; surfaces existing
+    // world-order fields so an operator can confirm a manual ACLED refresh landed.
+    // Does NOT change overlay scoring/weights/pipeline (ACLED/GDELT already feed
+    // the overlay upstream; this only reads the resulting freshness fields).
+    const acledSummary = wo.externalSources?.acled?.summary || {};
+    const woDateOrDash = (v) => (typeof v === 'string' && v.trim() ? v.trim() : '—');
+    const woCountOrDash = (v) => (Number.isFinite(v) ? Math.round(v).toLocaleString('en-US') : '—');
+    setLeafText('wo-detail-acled-latest-week', woDateOrDash(acledSummary.latestWeek));
+    setLeafText('wo-detail-acled-events-4w', woCountOrDash(acledSummary.eventsLast4Weeks));
+    setLeafText('wo-detail-acled-monthly-asof', woDateOrDash(acledSummary.monthlyAsOfDate));
+    setLeafText('wo-detail-gdelt-conflict-events', woCountOrDash(wo.externalSources?.gdelt?.summary?.conflictEvents));
 
     const dimMap = {
       peaceDividendRetreat: 'peace',

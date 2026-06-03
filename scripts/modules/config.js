@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=frontend-stale-static-wire-5';
+﻿import { formatFiniteNumber } from './format.js?v=world-order-acled-freshness-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

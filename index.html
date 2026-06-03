@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=frontend-stale-static-wire-5" />
+  <link rel="stylesheet" href="assets/styles.css?v=world-order-acled-freshness-1" />
 </head>
 <body>
   <div class="container">
@@ -562,7 +562,9 @@
           <p class="wo-desc">压力分数 <span id="wo-detail-score">70</span> / 置信度 <span id="wo-detail-confidence">medium</span> / 市场确认度 <span id="wo-detail-market-confirmation">stress</span>。决策层修正系数 <span id="wo-detail-risk-bias">+5</span> 分应用于今日判读，体现为本期 hero 的 overlay 升档指针。</p>
         </div>
 
-        <p>本层数据来自 4 个外部源：<code>GDELT</code>(全球新闻情绪与冲突)、<code>OFAC</code>(经济制裁)、<code>SIPRI</code>(全球军费，年频)、<code>ACLED</code>(冲突事件，周频)，以及 1 个市场确认层(VIX / Gold / DXY 跨资产同步性)。当前所有外部源 <code class="ok">live</code>，marketConfirmation 输入显示<strong>stress</strong>状态。</p>
+        <p>本层数据来自 4 个外部源：<code>GDELT</code>(全球新闻情绪与冲突)、<code>OFAC</code>(经济制裁)、<code>SIPRI</code>(全球军费，年频)、<code>ACLED</code>(冲突事件，周频)，以及 1 个市场确认层(VIX / Gold / DXY 跨资产同步性)。各外部源的实际新鲜度见下方「数据新鲜度」行，marketConfirmation 状态见上方压力分数行。</p>
+
+        <p class="wo-freshness">数据新鲜度：ACLED 最新周 <code id="wo-detail-acled-latest-week">—</code>(近 4 周冲突事件 <span id="wo-detail-acled-events-4w">—</span>)· 月度 asOf <code id="wo-detail-acled-monthly-asof">—</code> · GDELT 冲突事件 <span id="wo-detail-gdelt-conflict-events">—</span>。ACLED 为周频手动刷新源，跑完 Refresh World Order Stress 工作流后此处随之更新。</p>
 
         <h4>2. 六维度详情 <em>· Six Dimensions</em></h4>
 
@@ -873,6 +875,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=frontend-stale-static-wire-5"></script>
+  <script type="module" src="scripts/app.js?v=world-order-acled-freshness-1"></script>
 </body>
 </html>
