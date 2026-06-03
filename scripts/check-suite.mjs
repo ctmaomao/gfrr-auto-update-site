@@ -59,7 +59,8 @@ const SUITES = {
     'check:oil-directional-freshness',
     'check:oil-directional-seasonality',
     'check:oil-directional-degradation',
-    'check:oil-directional-boundary'
+    'check:oil-directional-boundary',
+    'check:oil-directional-backtest'
   ]
 };
 

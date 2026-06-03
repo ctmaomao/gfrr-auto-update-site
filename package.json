@@ -10,6 +10,8 @@
     "build:realtime": "node scripts/run-realtime.mjs",
     "build:world-order": "node scripts/build-world-order-stress.mjs",
     "build:oil-directional": "node scripts/oil-directional/build-oil-directional-pressure.mjs",
+    "build:oil-directional-history": "node scripts/oil-directional/build-oil-directional-history.mjs",
+    "backtest:oil-directional": "node scripts/oil-directional/backtest-oil-directional.mjs",
     "write:external-ai-production": "node scripts/write-external-ai-production-data.mjs",
     "check:world-order": "node scripts/check-world-order-stress.mjs",
     "review:world-order": "node scripts/review-world-order-stress.mjs data/world-order-stress.json",
@@ -109,7 +111,8 @@
     "check:oil-directional-freshness": "node --check scripts/check-oil-directional-freshness.mjs && node scripts/check-oil-directional-freshness.mjs",
     "check:oil-directional-seasonality": "node --check scripts/check-oil-directional-seasonality.mjs && node scripts/check-oil-directional-seasonality.mjs",
     "check:oil-directional-degradation": "node --check scripts/check-oil-directional-degradation.mjs && node scripts/check-oil-directional-degradation.mjs",
-    "check:oil-directional-boundary": "node --check scripts/check-oil-directional-boundary.mjs && node scripts/check-oil-directional-boundary.mjs"
+    "check:oil-directional-boundary": "node --check scripts/check-oil-directional-boundary.mjs && node scripts/check-oil-directional-boundary.mjs",
+    "check:oil-directional-backtest": "node --check scripts/check-oil-directional-backtest.mjs && node scripts/check-oil-directional-backtest.mjs"
   },
   "engines": {
     "node": ">=24 <25"
