@@ -124,6 +124,7 @@ Recent completed context only; full milestone archive is [MILESTONE_INDEX.md](MI
 
 | Milestone | 一句话 |
 |---|---|
+| ACLED monthly 一键 helper(weekly parity · audit-only) | monthly ACLED 补齐到 weekly 同能力:新增 `npm run acled:status:monthly`(+ `acled:status:weekly` 别名;`acled:status` 仍=weekly 不变)= 一键 sanitize:monthly + check + config-vs-data 裁决。`scripts/world-order/acled-monthly-status.mjs` 镜像 weekly helper,但**裁决比对 fetch-acled.mjs `buildMonthlyFields` 投进 `externalSources.acled.summary` 的全 7 字段月度签名**(monthlyAsOfDate/monthlyLatestFullYear/politicalViolenceEventsLatestFullYear/politicalViolenceYoyDelta/civilianTargetingShareLatestFullYear/fatalitiesLatestFullYear/monthlyLatest12mVsPrior12mDelta),**不止比 pvEvents 一个数** —— 否则 ACLED 同 as-of 修订 / sanitizer 改派生字段时会假报 data_current(实测 12m 趋势 −4.6%→+1.9% 符号翻转);`monthlySourceFreshness` 故意排除(time-derived,随时间会假报 mismatch);asOfDate 做 YYYY-MM-DD 单调键(`>=` 容同 as-of 本地重跑)。**lastFetchedAt 不可信**(fetch-acled.mjs `lastFetchedAt = weekly.preparedAt || monthly.preparedAt`,反映 weekly 时间戳 → monthly 必须比签名)。配套 `acled-monthly-refresh-reminder.yml` 改一键 + M-63 §9/§9B 双向对称(§9 weekly 也补 `acled:status`)。Codex 审 P2(全签名比对)/P3(文档对称)已修。commit `4bded56`,check:all 全绿。边界:audit-only/display-only 不进 scoring/decision/…(ACLED overlay,ADR-0004)。**本轮顺带 monthly(as-of 2026-05-29)+ weekly(events4w 33328→32758,ACLED 修订)两笔数据刷新已 push + 触发 "Refresh World Order Stress" 部署,git pull 后 data 与 config 全 7 字段对齐 = data_current。** |
 | 批 E 跨市场印证层(Macro Coherence · display-only) | 交叉验证块下方新增「跨市场印证」display-only 定性层(`buildMacroCoherence`,7 行:V2X-VIX 背离 / 全球股指广度 / 实体-市场错配 / 公开信用 proxy / 中国弱慢背景 + 过热·能源引用既有矩阵)。每行判 印证/背离/背景 + 时间角色 + 理由 + 弱点;底部一句话综合。**Design B'(Codex 独立复核确认)**:不改 `consistencyScore` 数字、不落盘、不进 scoring/decision;守卫 checker `check:macro-coherence-display-only` 入 `frontend-live-contracts`。`buildCrossValidationMatrix.js` 纯新增(201/0),现有 7 narrative/算法 byte 不动。commit `919162e`,asset `batch-e-macro-coherence-1`,check:all 全绿。复核修掉 Codex 给唯一无 BOM 源文件误加的 BOM。 |
 | 系统终审 批 A/B/C/B-next(展示层加固) | 6 路只读审计 + Codex 交叉证伪:**无确认级 critical bug,真问题在展示层**。批 A 展示完整性(effective-first 当前值 / null→— / 统一 consistencyScore,`aceb60f`);批 B 守卫(check:dom + changePct 范围,`2765df0`);批 C shippingFreight 补成 Baltic Freight 卡(`20f2b11`);批 B-next displayInputsBaseline.asOf 真实龄(`bc814c9`)。均 display-only,不进打分。 |
 | C5 世界经济加国家/地区股指 ×3 批(+9 卡) | C5 4 live → 13 live(FTSE100/CAC40/STOXX600/KOSPI/ASX200/STI/TAIEX/Nifty50/Bovespa,Yahoo 指数 display-only)。批1 `1c4e41a` / 批2 `d8793b2` / 批3 `3396885`;往已存在多 key 层加 key 走 Option C 过渡 validator。 |
@@ -245,6 +246,15 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-06-04 — ACLED monthly 一键 helper · weekly parity)**: monthly ACLED 补齐 weekly 同能力。capability = feat commit `4bded56`(稳定):新 `scripts/world-order/acled-monthly-status.mjs` + npm `acled:status:monthly`(+ `acled:status:weekly` 别名;`acled:status` 仍 weekly 不变)+ monthly reminder workflow 改一键 + M-63 §9/§9B 双向对称。裁决比对 fetch-acled.mjs 投进 `externalSources.acled.summary` 的全 7 字段月度签名(非仅 pvEvents),`monthlySourceFreshness` 排除(time-derived),asOfDate 单调键 `>=`;**lastFetchedAt 不可信**(反映 weekly preparedAt → monthly 必须比签名)。Codex P2(全签名)/P3(文档对称)已修。check:all 全绿。本轮顺带 monthly(as-of 2026-05-29)+ weekly(events4w 33328→32758,ACLED 修订)两笔数据刷新已 push + 触发 "Refresh World Order Stress" 部署,git pull 后 data 全字段对齐 = data_current。
+- **当前进行中(2026-06-04 — ACLED monthly)**: 无。任务收官(capability + 两笔数据刷新均已上线 data_current)。
+- **下一步建议(2026-06-04 — ACLED monthly)**: 无强制后续。可选小优化:sanitizer 每次重写 `preparedAt`,跑 acled:status* 后工作区总显 config `M`(纯时间戳噪音,`git checkout -- <file>` 撤即可)—— 若烦可改两个 sanitizer 在内容未变时保留旧时间戳(单独小任务)。
+- **阻塞或等待(2026-06-04 — ACLED monthly)**: 无。
+
+---
+
+> 以下为 2026-06-03 ODP PR5 留档,当前状态以上方 ACLED monthly 段为准。
 
 - **上次会话结束于(2026-06-03 — ODP PR5 dailyBrief 只读引用 = ODP 收官)**: PR5 已 squash-merge 到 main(#263 = `c890ba35`,squash subject 干净无 wip;与建分支后落 main 的 3 笔 CI 数据刷新分离、squash 只含 PR5 文件)。决策 **A(frontend-only 显示 join)**:Hero「今日判断」(`.big-right`)加一行 muted 只读 ODP 交叉引用(`#hero-odp-ref-verdict` 由 `renderOilDirectional` set、链到 `#oil-directional-pressure`),读 PR4 已加载的 `oilDirectionalData`;**无 daily-pipeline / radar-data 改动、boundary 守卫不动**。asset bump `odp-hero-ref-1`(冻结 `realtime.js` 还原 diff=0);leaf 不变(仍套件 8、无新 check)。**Codex 审无 actionable finding**(boundary 守住:`data/`/`.github/`/pipeline/realtime 零 diff;Hero 放置不暗示打分;全检查绿)。`check:all` 16 项 / 套件 8 leaf 绿;cross-ref setter mock-DOM 三态验过(live / insufficient / unavailable)。
 - **当前进行中(2026-06-03 ODP PR5)**: 无。PR5 已 squash-merge 到 main(#263);branch 已删;**ODP 五刀(PR1–PR5)全 merged 收官**(本 Handoff 在 post-merge 收尾 commit 内)。
