@@ -247,9 +247,9 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于(2026-06-04 — ACLED monthly 一键 helper · weekly parity)**: monthly ACLED 补齐 weekly 同能力。capability = feat commit `4bded56`(稳定):新 `scripts/world-order/acled-monthly-status.mjs` + npm `acled:status:monthly`(+ `acled:status:weekly` 别名;`acled:status` 仍 weekly 不变)+ monthly reminder workflow 改一键 + M-63 §9/§9B 双向对称。裁决比对 fetch-acled.mjs 投进 `externalSources.acled.summary` 的全 7 字段月度签名(非仅 pvEvents),`monthlySourceFreshness` 排除(time-derived),asOfDate 单调键 `>=`;**lastFetchedAt 不可信**(反映 weekly preparedAt → monthly 必须比签名)。Codex P2(全签名)/P3(文档对称)已修。check:all 全绿。本轮顺带 monthly(as-of 2026-05-29)+ weekly(events4w 33328→32758,ACLED 修订)两笔数据刷新已 push + 触发 "Refresh World Order Stress" 部署,git pull 后 data 全字段对齐 = data_current。
-- **当前进行中(2026-06-04 — ACLED monthly)**: 无。任务收官(capability + 两笔数据刷新均已上线 data_current)。
-- **下一步建议(2026-06-04 — ACLED monthly)**: 无强制后续。可选小优化:sanitizer 每次重写 `preparedAt`,跑 acled:status* 后工作区总显 config `M`(纯时间戳噪音,`git checkout -- <file>` 撤即可)—— 若烦可改两个 sanitizer 在内容未变时保留旧时间戳(单独小任务)。
+- **上次会话结束于(2026-06-04 — ACLED monthly parity + sanitizer 幂等优化)**: monthly ACLED 补齐 weekly 同能力。capability = feat commit `4bded56`(稳定):新 `scripts/world-order/acled-monthly-status.mjs` + npm `acled:status:monthly`(+ `acled:status:weekly` 别名;`acled:status` 仍 weekly 不变)+ monthly reminder workflow 改一键 + M-63 §9/§9B 双向对称。裁决比对 fetch-acled.mjs 投进 `externalSources.acled.summary` 的全 7 字段月度签名(非仅 pvEvents),`monthlySourceFreshness` 排除(time-derived),asOfDate 单调键 `>=`;**lastFetchedAt 不可信**(反映 weekly preparedAt → monthly 必须比签名)。Codex P2(全签名)/P3(文档对称)已修。随后 sanitizer 幂等优化 commit `b5da04c`:weekly+monthly sanitizer 在内容除 `preparedAt` 外完全一致时跳过写入、保留旧时间戳 → 空跑不再脏工作区,且 `preparedAt` 改表「内容上次真正变化时间」(顺带消除 weekly `acled:status` 因 preparedAt 漂移误报 sanitized_not_refreshed 的隐患)。两次 check:all 均全绿。本轮 monthly(as-of 2026-05-29)+ weekly(events4w 33328→32758,ACLED 修订)两笔数据刷新已 push + 触发 "Refresh World Order Stress" 部署,git pull 后 data 全字段对齐,两个 `acled:status*` 均 data_current 且不再脏树。
+- **当前进行中(2026-06-04 — ACLED monthly)**: 无。全部收官(capability + Codex 修复 + sanitizer 幂等优化 + 两笔数据刷新均已上线 data_current)。
+- **下一步建议(2026-06-04 — ACLED monthly)**: 无后续。先前列为可选的「sanitizer preparedAt 噪音」优化已在 `b5da04c` 完成。若日后要 ACLED 增强(如新分项/更细窗口)须另立项。
 - **阻塞或等待(2026-06-04 — ACLED monthly)**: 无。
 
 ---
