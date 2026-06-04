@@ -1,5 +1,7 @@
 # External AI API Design & Output Audit Plan
 
+> **STATUS (2026-06):** This document is preserved as a phase / scope record. In-body "disabled / NO-GO / non-user-visible / `displayEnabled=false` / `frontendDisplayApproved=false` / no provider call / 不调用外部 AI" statements describe the phase named in their section and are **not** today's production state unless explicitly restated as current. Today's `externalAiInterpretationLayer` is validator- and quality-gated **visible read-only** output, written only by the `External AI Production Refresh` workflow: `status=valid`, **`displayEnabled=true`**, **`boundaries.frontendDisplayApproved=true`**, `provider=deepseek`. The checker-required `auditFlags` still carry the legacy-named `non_production_output` / `no_frontend_display`, but current display authority is `displayEnabled=true` + `frontendDisplayApproved=true` — the legacy flag name does **not** mean the panel is hidden today. Boundaries that remain mandatory: `qualityReview.promotionEligible=false`, `provenance.humanApproved=false`, and **no scoring / decision / execution / position impact**. Separately, the rule-based `aiInterpretationLayer` (`contractVersion=v28.0J-0`) remains `boundaries.generatedByExternalAi=false` / `usesExternalAiApi=false` and must not be replaced by the external layer. Current authority: `docs/DATA_CONTRACT.md` and `docs/OPERATIONS.md`.
+
 ## 1. Purpose / 目的
 
 本文档定义未来接入 DeepSeek / OpenAI / external AI API 之前必须先满足的设计边界、输出契约和审计要求。当前系统不调用任何外部 AI API；现有 `aiInterpretationLayer` 仍是 `rule_based_structured_interpretation`，只基于站内结构化数据生成规则化解释。
