@@ -1,5 +1,7 @@
 # Oil Directional Pressure Model 油价方向压力研判 — Source Review（docs-only · source-review / feasibility）
 
+> **STATUS（2026-06-04 更新）:** ODP PR1–PR5 已全部 merged（EIA 周度物理链接入 + 回测 GATE + classifier + 中文 UI + dailyBrief 只读引用,audit-only/display-only）。本文已从「feasibility / 拟实现」转为**已实现模块的 source-of-record / 历史记录**;下文 §0/§10/§12 的「若未来实现」「PR 拆分」「开工前必答」按当时计划保留作历史,实际状态以 backlog / `DATA_CONTRACT.md` / `DATA_SOURCES.md` 为准。硬边界不变:不进 scoring/decision/execution/position,Global Risk Heatmap 保持独立。
+
 > **Source-review / feasibility only。** 本文为可行性审计 + 数据可得性核验 + 模型设计 + 实施拆分的登记文档,**不写 fetcher、不接 runtime、不改 `data/*.json`、不改 frontend、不触发 GitHub Actions、不进 scoring/decision/execution/position**。
 > **候选模块命名**:**Oil Directional Pressure Model**(内部代号 ODP),中文显示名「油价方向压力研判」。若未来实现,**必为 audit-only / display-only 的独立能源专题**。
 > **Global Risk Heatmap 必须保持独立**——ODP 与其并列,不得合并、挤占或破坏它。

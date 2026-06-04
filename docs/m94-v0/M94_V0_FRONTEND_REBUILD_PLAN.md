@@ -1,6 +1,6 @@
 # M-94 V0 路径 C — Frontend Rebuild Plan v1.0
 
-> **Status**: Plan v1.0,Stage 0 已完成,Stage 1 待启动
+> **Status**: 已完成 — 路径 C 7-stage 前端重写全部 shipped;`index.html` 已是目标 IA(mock v2.1)。本文档保留作该重写的设计/计划历史记录。
 > **决策日期**: 2026-05-26
 > **决策人**: Robert
 > **执行模型**: Claude(设计) + Codex(实施) + Robert(本地 QA + merge)

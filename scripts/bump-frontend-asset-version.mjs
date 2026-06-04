@@ -63,7 +63,11 @@ function replaceFrontendAssetVersion(text) {
     // docs/MILESTONE_INDEX.md Active line "当前 `X`;`check:all`" (suffix-anchored
     // so it never touches Handoff/history references to past versions)
     .replace(/(当前 `)[A-Za-z0-9._-]+(`;`check:all`)/gu, `$1${version}$2`)
-    .replace(/v[A-Za-z0-9._-]+(?=\s+Frontend Asset Cache Busting)/gu, `v${version}`)
+    // "<version> Frontend Asset Cache Busting" heading: write the exact canonical
+    // version argument with NO auto-prefix. Descriptive versions like
+    // odp-hero-ref-1 must not become vodp-hero-ref-1; a numeric arg like
+    // v28.0M-99V is written verbatim (the caller owns any leading "v").
+    .replace(/[A-Za-z0-9._-]+(?=\s+Frontend Asset Cache Busting)/gu, version)
     .replace(/(当前正式版本仍是\s*[`'"]?)[A-Za-z0-9._-]+/gu, `$1${version}`)
     .replace(/(正式版本仍保持\s*[`'"]?)[A-Za-z0-9._-]+/gu, `$1${version}`)
     .replace(/(当前 frontend asset cache version 是\s*[`'"]?)[A-Za-z0-9._-]+/giu, `$1${version}`)
