@@ -176,6 +176,7 @@ function renderEvidenceList(ev) {
 export function renderOilDirectional({ oilData }) {
   if (!oilData || typeof oilData !== 'object') {
     setLeafText('odp-verdict', '数据不可用');
+    setLeafText('hero-odp-ref-verdict', '数据不可用');
     setToneClass('odp-verdict', 'section-title', '');
     setLeafText('odp-headline', '油价方向研判数据未能加载,暂不显示。');
     for (const id of ['odp-physical-bias', 'odp-divergence', 'odp-data-sufficiency', 'odp-asof', 'odp-evidence-note']) setLeafText(id, '—');
@@ -192,6 +193,7 @@ export function renderOilDirectional({ oilData }) {
   const crudeAsOf = (ev.crudeStocksExSpr && ev.crudeStocksExSpr.asOfDate) || '—';
 
   setLeafText('odp-verdict', FINAL_BIAS_ZH[finalBias] || '—');
+  setLeafText('hero-odp-ref-verdict', FINAL_BIAS_ZH[finalBias] || '—'); // PR5: read-only cross-ref in the Hero / dailyBrief
   setToneClass('odp-verdict', 'section-title', FINAL_BIAS_TONE[finalBias]);
   setLeafText('odp-headline', buildHeadline(finalBias, it, sig));
   setLeafText('odp-physical-bias', PHYSICAL_BIAS_ZH[it.physicalBias] || '—');
