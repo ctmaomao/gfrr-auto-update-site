@@ -336,6 +336,12 @@
   .method-grid h4 { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; color: var(--paper-ink); margin: 0 0 6px 0; }
 
   /* ===== PR4 · Oil Directional Pressure (ODP) 独立能源专题(display-only) ===== */
+  /* PR5 — read-only ODP cross-reference in the Hero / dailyBrief (display-only, muted). */
+  .hero-odp-ref { font-family: var(--font-mono); font-size: 11px; line-height: 1.6; color: var(--paper-muted); margin: 14px 0 0 0; padding-top: 10px; border-top: 1px dotted var(--paper-line); }
+  .hero-odp-ref em { font-style: italic; opacity: 0.8; }
+  #hero-odp-ref-verdict { color: var(--paper-ink); font-weight: 600; }
+  .hero-odp-ref a { color: var(--risk-red); text-decoration: none; border-bottom: 1px solid transparent; }
+  .hero-odp-ref a:hover { border-bottom-color: var(--risk-red); }
   #oil-directional-pressure .section-title.red { color: var(--risk-red); }
   #oil-directional-pressure .section-title.yellow { color: var(--risk-yellow); }
   #oil-directional-pressure .section-title.green { color: var(--risk-green); }

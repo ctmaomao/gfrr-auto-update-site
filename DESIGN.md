@@ -410,6 +410,8 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
 
 **PR4 增补(超出 mock v2.1)**:`#oil-directional-pressure` 独立能源专题是 mock v2.1 之后新增的一级 section(§4.1 #6 / jump-nav 第 11 项),**复用 `editorial-section` + `editorial-folded-content` 既有视觉族 + paper 色板**,无新增视觉范式;verdict(`#odp-verdict`)按 `finalBias` 动态上 red/yellow/green;内部 `<details>` 不带 `open`(同 §5.4 折叠约束)。display-only,不进打分/执行/Heatmap。见 `docs/ADR/0014-design-md-is-ia-ground-truth.md`。
 
+**PR5 增补**:Hero `#homepage-today-judgment`(`.big-right`)内新增一行 muted 只读 ODP 交叉引用(`.hero-odp-ref`,`#hero-odp-ref-verdict` 由 `renderOilDirectional` set、链到 `#oil-directional-pressure`)。**非 IA 变更**(Hero 子元素,不动 §4.1 section 顺序 / §4.2 jump-nav 计数);display-only,明标「仅供观察,不进打分」,只 POINT 到独立专题、不混入打分判断。
+
 **永久禁用的旧 IA 元素**(任何 PR 不得引入):
 - 旧 `<section id="homepage-realtime-band">` 及其内部所有元素(`#rt-brent-source` / `#rt-brent-delta` 等 16 个子 ID)
 - 旧 `<section id="world-heatmap">` SVG 投影层(由 6 cells 静态 grid 替代)
