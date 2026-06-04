@@ -364,6 +364,21 @@ function writeJsonAtomic(filePath, payload) {
   }
 }
 
+// Re-running on byte-identical inputs must not dirty the working tree: preparedAt is the only
+// volatile field (stamped = now each run). When the freshly-built payload matches the existing
+// file in every OTHER field, skip the write so the committed preparedAt is preserved. This also
+// makes preparedAt mean "when the content last actually changed" — exactly what fetch-acled.mjs
+// surfaces as lastFetchedAt and what acled:status compares against. Both payloads come from the
+// same builder, so key order matches and a stringify compare is a sound deep-equal here.
+function unchangedExceptPreparedAt(payload, filePath) {
+  try {
+    const existing = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    return JSON.stringify({ ...payload, preparedAt: existing.preparedAt }) === JSON.stringify(existing);
+  } catch {
+    return false;
+  }
+}
+
 function buildPayload(parsedByMetric, selectedFiles) {
   const asOfDates = selectedFiles.map((entry) => entry.asOfDate);
   const asOfDate = asOfDates.sort()[asOfDates.length - 1];
@@ -468,8 +483,14 @@ function main() {
   }
 
   const payload = buildPayload(parsedByMetric, selectedFiles);
+  const relPath = path.relative(root, outputPath);
+  const summary = `files=${selectedFiles.length}, asOfDate=${payload.asOfDate}, latestFullYear=${payload.latestFullYear}, pvEvents=${payload.global.politicalViolenceEventsLatestFullYear}`;
+  if (unchangedExceptPreparedAt(payload, outputPath)) {
+    console.log(`ACLED monthly sanitizer: ${relPath} unchanged (${summary}); preparedAt preserved, file not rewritten`);
+    return;
+  }
   writeJsonAtomic(outputPath, payload);
-  console.log(`ACLED monthly sanitizer: wrote ${path.relative(root, outputPath)} (files=${selectedFiles.length}, asOfDate=${payload.asOfDate}, latestFullYear=${payload.latestFullYear}, pvEvents=${payload.global.politicalViolenceEventsLatestFullYear})`);
+  console.log(`ACLED monthly sanitizer: wrote ${relPath} (${summary})`);
 }
 
 try {

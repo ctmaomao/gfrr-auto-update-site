@@ -274,6 +274,21 @@ function writeJsonAtomic(filePath, payload) {
   }
 }
 
+// Re-running on byte-identical inputs must not dirty the working tree: preparedAt is the only
+// volatile field (stamped = now each run). When the freshly-built payload matches the existing
+// file in every OTHER field, skip the write so the committed preparedAt is preserved. This also
+// makes preparedAt mean "when the content last actually changed" — exactly what fetch-acled.mjs
+// surfaces as lastFetchedAt and what acled:status compares against. Both payloads come from the
+// same builder, so key order matches and a stringify compare is a sound deep-equal here.
+function unchangedExceptPreparedAt(payload, filePath) {
+  try {
+    const existing = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    return JSON.stringify({ ...payload, preparedAt: existing.preparedAt }) === JSON.stringify(existing);
+  } catch {
+    return false;
+  }
+}
+
 function buildPayload(aggregates, selectedFiles) {
   const allRows = aggregates.flatMap((aggregate) => aggregate.rows);
   const allWeeksDescending = sortWeeksDescending(allRows);
@@ -352,8 +367,14 @@ function main() {
 
   const aggregates = selectedFiles.map((entry) => aggregateRegion(entry.region, readWorkbookRows(entry)));
   const payload = buildPayload(aggregates, selectedFiles);
+  const relPath = path.relative(root, outputPath);
+  const summary = `regions=${aggregates.length}, latestWeek=${payload.latestWeek}`;
+  if (unchangedExceptPreparedAt(payload, outputPath)) {
+    console.log(`ACLED weekly sanitizer: ${relPath} unchanged (${summary}); preparedAt preserved, file not rewritten`);
+    return;
+  }
   writeJsonAtomic(outputPath, payload);
-  console.log(`ACLED weekly sanitizer: wrote ${path.relative(root, outputPath)} (regions=${aggregates.length}, latestWeek=${payload.latestWeek})`);
+  console.log(`ACLED weekly sanitizer: wrote ${relPath} (${summary})`);
 }
 
 try {
