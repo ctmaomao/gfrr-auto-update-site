@@ -71,7 +71,7 @@ v28.0I / v28.0J 新增的 `dailyBrief`、`divergenceLayer`、`macroDrivers.consu
 
 ## v28.0J AI Interpretation Layer baseline checks
 
-v28.0J-2B post-deploy audit 已通过，当前 AI 解释层为 rule-based structured interpretation，不调用 DeepSeek / OpenAI / 外部 AI API。日常排查顺序：
+v28.0J-2B post-deploy audit 已通过，rule-based `aiInterpretationLayer` 为 rule-based structured interpretation，不调用 DeepSeek / OpenAI / 外部 AI API（独立的 `externalAiInterpretationLayer` 已由 approved workflow 用 DeepSeek,visible read-only,见 `docs/DATA_CONTRACT.md` 当前生产契约）。日常排查顺序：
 
 1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `odp-data-cache-1`）。
 2. 检查 live `data/radar-data.json` 是否包含 `aiInterpretationLayer`。
@@ -81,9 +81,9 @@ v28.0J-2B post-deploy audit 已通过，当前 AI 解释层为 rule-based struct
 6. 不要手工补 `data/radar-data.json`。
 7. 若未来外部 AI 接入，必须检查 timeout、fallback、source attribution、禁用文案和不影响 scoring / decision 的边界。
 
-## Future External AI operations note
+## External AI operations note（已实现 · visible read-only）
 
-未来如果新增 `externalAiInterpretationLayer`，排查时必须先确认该层是否通过 output audit。若外部 AI output 缺失、timeout、API error、rate limit、invalid JSON、unsafe output 或 stale input，应 fallback 到现有 rule-based `aiInterpretationLayer`。
+`externalAiInterpretationLayer` 已实现并为 visible read-only 展示层（见 `docs/DATA_CONTRACT.md` 当前生产契约）。排查时先确认该层是否通过 output audit / `check:external-ai-production-contract`。若外部 AI output 缺失、timeout、API error、rate limit、invalid JSON、unsafe output 或 stale input，应 fallback 到现有 rule-based `aiInterpretationLayer`。
 
 若 AI output audit 失败，应隐藏 external output，不得手工编辑 `data/radar-data.json` 修复 AI 输出。外部 AI 输出不得影响 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
 
@@ -97,22 +97,20 @@ npm run check:external-ai-output
 
 如果 validation fails，应隐藏 external output 或 fallback 到 rule-based `aiInterpretationLayer`。不要手工编辑 `data/radar-data.json` 修复 external AI output。
 
-v28.0K-3A 后，如果 `externalAiInterpretationLayer.status="disabled"`，这是预期状态，不代表 API failure；含义是当前回退到 rule-based `aiInterpretationLayer`。如果 live data 暂时缺少该字段，等待 v28.0K-3A 合并后的 Daily 自然刷新；只有 realtime health 为 fresh / aging 时才考虑手动触发 Daily。不要手工编辑 `data/radar-data.json` 补该字段。
+_(历史 v28.0K-3A:当时 `status="disabled"` 为预期、回退 rule-based layer。)_ 当前 live `externalAiInterpretationLayer.status=valid`、visible read-only。任何情况下都不要手工编辑 `data/radar-data.json` 补/改该字段;缺失或异常时等待 `External AI Production Refresh` / Daily 自然刷新,或 fallback rule-based `aiInterpretationLayer`。
 
-## v28.0K-3 external AI disabled scaffold checks
+## External AI production layer checks（当前 · v28.0L visible read-only）
 
-日常或 incident 排查顺序：
+> 历史 v28.0K-3 disabled-scaffold 排查清单已 superseded(当时验证 `enabled=false`/`status=disabled`)。当前 live 为 visible read-only,排查顺序：
 
 1. 检查 live data 是否包含 `externalAiInterpretationLayer`。
-2. 确认 `contractVersion` 为 `v28.0K-3A`。
-3. 确认 `enabled=false` 且 `status=disabled`。
-4. 确认 `provider=none` 且 `output=null`。
-5. 确认 `externalAiGenerated=false` 且 `usesExternalAiApi=false`。
-6. 确认 `fallback.fallbackLayer=aiInterpretationLayer`。
-7. 如果本地缺失但 live 已存在，pull latest `main` 或等待 Daily data commit。
-8. 不要手工编辑 `data/radar-data.json`。
-9. 不要把 disabled scaffold 当成 API failure。
-10. 不要在未另开评审版本前把该字段暴露到 frontend。
+2. 确认 `status=valid`、`displayEnabled=true`、`boundaries.frontendDisplayApproved=true`(visible read-only)。
+3. 确认 `provider=deepseek`、`qualityReview.status ∈ {pass,warn}`、`recommendation=pass_for_manual_review`。
+4. 确认硬边界:`qualityReview.promotionEligible=false`、`provenance.humanApproved=false`,且不影响 scoring/decision/execution/position/`values.*`。
+5. 用 `npm run check:external-ai-production-contract` 验证字段/边界契约(含 `auditFlags` 必含项)。
+6. 如果本地缺失但 live 已存在，pull latest `main` 或等待 `External AI Production Refresh` / Daily data commit。
+7. 不要手工编辑 `data/radar-data.json`(唯一写入路径是 validator+quality 门控的 `External AI Production Refresh` workflow)。
+8. 输出异常时 fallback 到 rule-based `aiInterpretationLayer`,不要手改产物。
 
 ## Stable Observation Audit
 
@@ -124,7 +122,7 @@ Do not restore or run the retired workflow/script. Use the v28.0L-aware checks f
 
 v28.0K-4A is design-only. It documents a future disabled-by-default manual API test process in [`EXTERNAL_AI_MANUAL_TEST_DESIGN.md`](EXTERNAL_AI_MANUAL_TEST_DESIGN.md), but it does not add API code, secrets, provider SDKs, external AI workflows, frontend display, or production data changes.
 
-If future manual API tests exist, they must be explicitly opt-in. A failed manual test is a diagnostic event, not a production incident. Production fallback remains the rule-based `aiInterpretationLayer`, and production `externalAiInterpretationLayer` must remain disabled unless a separate reviewed version changes that boundary.
+If manual API tests are run, they must be explicitly opt-in. A failed manual test is a diagnostic event, not a production incident. Production fallback remains the rule-based `aiInterpretationLayer`. _(历史 K-4A:当时要求 production layer 保持 disabled;自 v28.0L-3P+ 该层已 visible read-only,见 `docs/DATA_CONTRACT.md` 当前生产契约。)_
 
 ## External AI Manual Dry-Run Scaffold
 
@@ -136,7 +134,7 @@ npm run manual:external-ai:dry-run
 
 Expected result: a dry-run scaffold report only. The command does not use network, does not read API keys, does not call a provider, and does not mutate production data. If it fails because provider is not `none`, that is expected safety behavior.
 
-Do not use this command to troubleshoot production `externalAiInterpretationLayer`; the production field remains a disabled scaffold until a separate reviewed version changes it.
+Do not use this command to troubleshoot production `externalAiInterpretationLayer`. _(历史 K-4B note;当前 production layer 为 visible read-only,排查见上文 “External AI production layer checks”。)_
 
 ## External AI Provider Adapter Skeleton
 
@@ -148,7 +146,7 @@ npm run check:external-ai-provider-adapters
 
 Expected result: `External AI provider adapter skeleton: PASS`.
 
-Non-`none` provider refusal is expected in v28.0K-4C. Do not treat `deepseek` / `openai` refusal as an incident; no API call is expected, no API key should be read, and production `externalAiInterpretationLayer` remains disabled.
+Non-`none` provider refusal is expected in v28.0K-4C. Do not treat `deepseek` / `openai` refusal as an incident; no API call is expected, no API key should be read. _(历史 K-4C note;此为手动测试 adapter skeleton 行为;生产 `externalAiInterpretationLayer` 现为 visible read-only,见 `docs/DATA_CONTRACT.md` 当前生产契约。)_
 
 ## External AI DeepSeek Manual Artifact Test
 
@@ -172,7 +170,7 @@ manual-artifacts/external-ai/deepseek-output-latest.json
 
 The DeepSeek command requires `DEEPSEEK_API_KEY`, `--allow-network`, `--validate-output`, and a safe `--output` path. Do not paste or print the API key. The command writes only a manual artifact, runs `check:external-ai-output` against it, and must fail closed if the API call, JSON parse, or validator fails.
 
-Failure is a manual diagnostic event, not a production incident. Do not commit the artifact, do not copy it into `data/radar-data.json`, and do not use it to troubleshoot production `externalAiInterpretationLayer`. Production remains disabled and rule-based fallback remains unchanged.
+Failure is a manual diagnostic event, not a production incident. Do not commit the artifact, do not copy it into `data/radar-data.json`, and do not use it to troubleshoot production `externalAiInterpretationLayer`. Rule-based fallback remains unchanged. _(历史 K-4D note;生产 `externalAiInterpretationLayer` 现为 visible read-only,见 `docs/DATA_CONTRACT.md` 当前生产契约。)_
 
 After running `npm run manual:external-ai:deepseek`, do not run `git add manual-artifacts/` and do not commit artifacts. `manual-artifacts/` is ignored by git; delete local artifacts after review if they are no longer needed. A validator PASS means only that the artifact passed offline checks, not that it is approved for production promotion, frontend display, scoring, decision, execution, or position use.
 
@@ -334,11 +332,13 @@ Security:
 - Clear `DEEPSEEK_API_KEY` from the local shell after manual tests.
 - Do not commit `manual-artifacts/`.
 
-### External AI production integration design status
+### External AI production integration design status（历史 staged-rollout note）
+
+> **历史:** 以下 v28.0L-0…L-3G note 为分阶段 rollout 期间所写(当时 production layer 尚 disabled、integration 尚未实现)。该 rollout 已在 **v28.0L-3P+** 完成:当前 production `externalAiInterpretationLayer` 为 **visible read-only**,由 `External AI Production Refresh` workflow(validator + quality 门控)写入;`DEEPSEEK_API_KEY` secret 与 refresh workflow 已就位。当前态见 `docs/DATA_CONTRACT.md` 当前生产契约。下列各阶段 note 保留作历史。
 
 v28.0L-0 is documented in [`EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`](EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md), but no production integration exists. Do not create GitHub secrets, scheduled provider calls, Daily provider calls, Worker provider calls, or frontend display until the L-0 design is reviewed and a later implementation PR is approved.
 
-Manual testing remains the only allowed provider usage. Production `externalAiInterpretationLayer` remains the disabled scaffold.
+_(历史 L-0 note:撰写时无 production integration、layer 为 disabled scaffold。该 rollout 已在 v28.0L-3P+ 完成,当前 production `externalAiInterpretationLayer` 为 visible read-only,由 `External AI Production Refresh` workflow 写入;见 `docs/DATA_CONTRACT.md` 当前生产契约。)_
 
 v28.0L-1 readiness audit is documented in [`EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md`](EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md). Operators must not add `DEEPSEEK_API_KEY` to GitHub Secrets until a reviewed `workflow_dispatch` artifact-only PR is approved. Do not run provider calls from Daily. Continue manual-only testing unless a later phase explicitly changes this boundary.
 

@@ -802,15 +802,15 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 - `aiInterpretationLayer` 是 display-only / interpretation-only。
 - `generatedByExternalAi=false`。
 - `usesExternalAiApi=false`。
-- 当前不调用 DeepSeek / OpenAI / 外部 AI API。
+- rule-based `aiInterpretationLayer` 本身不调用 DeepSeek / OpenAI / 外部 AI API（独立的 `externalAiInterpretationLayer` 已用 DeepSeek,见下方当前生产契约）。
 - 不参与 scoring / `decisionModel` / `executionLock` / `positionGuidance`。
 - 不改变 `values.*`、`effectiveDisplayInputs`、Brent promotion、Action Queue、Trigger Monitor 或 Invalidation Rules。
 - 前端只能只读消费 `aiInterpretationLayer`，不得在 render 层生成、重算或补写解释。
-- 未来如接入外部 AI，必须使用单独字段或明确 source metadata，不得覆盖现有 rule-based layer。
+- 外部 AI 已通过独立字段 `externalAiInterpretationLayer` 接入(visible read-only,见下方当前生产契约),不覆盖本 rule-based layer;任何进一步扩展仍须用单独字段 + source metadata,不得覆盖 rule-based layer。
 
-#### future externalAiInterpretationLayer contract note
+#### externalAiInterpretationLayer 当前生产契约（已实现 · visible read-only）
 
-`externalAiInterpretationLayer` 是 future-only contract candidate，当前数据产物不得要求或生成该字段。未来如接入 DeepSeek / OpenAI / external AI API，必须先遵守 [`EXTERNAL_AI_API_DESIGN.md`](EXTERNAL_AI_API_DESIGN.md)。
+`externalAiInterpretationLayer` 已实现,为 **visible read-only 展示层**:当前 live data 为 `schemaVersion = v28.0L-external-ai-production-1`、`status = valid`、`displayEnabled = true`、`boundaries.frontendDisplayApproved = true`、`provider = deepseek`,由 `External AI Production Refresh` workflow 经 `check:external-ai-production-contract` validator + quality review 写入。生产契约(权威定义见 `scripts/check-external-ai-production-contract.mjs`)要求:`displayEnabled === boundaries.frontendDisplayApproved`;visible 时须 `status=valid` + `qualityReview.status ∈ {pass,warn}` + `recommendation=pass_for_manual_review` + `freshness.isStale=false`;且**恒** `qualityReview.promotionEligible=false`、`provenance.humanApproved=false`,`auditFlags` 须含 `non_production_output` / `no_frontend_display`(后两者命名为历史遗留、与 visible 现态字面相左,属待另开协调改名项,非当前 docs slice)。接入与输出仍须遵守 [`EXTERNAL_AI_API_DESIGN.md`](EXTERNAL_AI_API_DESIGN.md)。
 
 边界：
 
@@ -821,17 +821,19 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 - 不得影响 scoring / decision / execution / position。
 - 不得影响 `values.*`、`effectiveDisplayInputs`、Brent promotion、Action Queue、Trigger Monitor 或 Invalidation Rules。
 
-`docs/fixtures/external-ai/*.json` 是 v28.0K-1 prompt contract 的非生产样例，不属于 production data contract，不得被 runtime 消费，也不得作为 `data/*.json`、`realtime/*.json` 或 Worker payload 的替代输入。External AI production contract 仍为 future-only。
+`docs/fixtures/external-ai/*.json` 是 v28.0K-1 prompt contract 的非生产样例，不属于 production data contract，不得被 runtime 消费，也不得作为 `data/*.json`、`realtime/*.json` 或 Worker payload 的替代输入。（External AI production contract 已在 v28.0L-3P+ 实现并 visible read-only,见上方当前生产契约;下文 832 起的 K-3A/3B disabled scaffold 与 L-0…L-3F-1 段为历史基线,保留作历史。）
 
 `scripts/check-external-ai-output.mjs` / `npm run check:external-ai-output` 只验证 sample 或 future external AI output artifacts；它不验证 production `data/radar-data.json`，不改变 `aiInterpretationLayer`，也不把 external AI 字段加入当前 production contract。
 
-v28.0K-4A does not change the production data contract. The live `externalAiInterpretationLayer` remains the disabled scaffold, and any future manual API test output must not overwrite live `data/radar-data.json` or the production scaffold field.
+v28.0K-4A does not change the production data contract. _(历史:当时 live `externalAiInterpretationLayer` 为 disabled scaffold;自 v28.0L-3P+ 已是 visible read-only,见上方当前生产契约。)_ Manual API test output must not overwrite live `data/radar-data.json` outside the approved `External AI Production Refresh` write path.
 
-v28.0L-3C provider-call workflow design does not change the production data contract. Future provider-call workflow artifacts, if implemented later, remain manual diagnostics and are not production data. They must not overwrite `data/radar-data.json`, `data/*.json`, `realtime/*.json`, config files, or the production disabled `externalAiInterpretationLayer` scaffold.
+v28.0L-3C provider-call workflow design does not change the production data contract. Future provider-call workflow artifacts, if implemented later, remain manual diagnostics and are not production data. They must not overwrite `data/radar-data.json`, `data/*.json`, `realtime/*.json`, config files, or the approved production `externalAiInterpretationLayer` field (now visible read-only — see current contract above; this remains a historical L-3C note).
 
-#### externalAiInterpretationLayer disabled scaffold contract
+#### externalAiInterpretationLayer disabled scaffold contract（SUPERSEDED — 历史 v28.0K-3A/3B 基线）
 
-v28.0K-3A 在 Daily radar data 根级新增 future-only disabled scaffold；v28.0K-3B activation audit 通过后，该字段已进入 live data baseline：
+> **SUPERSEDED:** 以下为 v28.0K-3A/3B 时期的 disabled-scaffold 基线,保留作历史。**当前态见上方「当前生产契约」**——自 v28.0L-3P+ 起该层已是 visible read-only(`status=valid`/`displayEnabled=true`/`provider=deepseek`),并由 `v28.0M-3H` preservation 规则跨日刷新保留。
+
+v28.0K-3A 在 Daily radar data 根级新增 future-only disabled scaffold；v28.0K-3B activation audit 通过后，该字段进入 live data baseline（历史）：
 
 ```text
 externalAiInterpretationLayer
@@ -857,13 +859,15 @@ externalAiInterpretationLayer
 
 #### v28.0K-4G manual artifact boundary
 
-`externalAiInterpretationLayer` in production data remains the disabled scaffold. Manual DeepSeek output artifacts, manual input artifacts, provider failure artifacts, and quality review artifacts under `manual-artifacts/` are not part of the production data contract.
+`externalAiInterpretationLayer` in production data is the implemented visible read-only layer (see current contract above). The only approved write path is the validator + quality-review gated `External AI Production Refresh` workflow. Manual DeepSeek output artifacts, manual input artifacts, provider failure artifacts, and quality review artifacts under `manual-artifacts/` are not themselves the production data contract and must not be hand-copied into it.
 
 Manual artifacts must not be copied into `data/radar-data.json`, `data/*.json`, `realtime/*.json`, Worker payloads, or frontend display paths. A future production external AI data contract requires a separate reviewed version with explicit audit, validator, quality-review, fallback, disable-switch, and source-attribution boundaries.
 
-#### v28.0L-0 production integration design note
+#### v28.0L-0 production integration design note（历史 staged-rollout note）
 
-[`EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`](EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md) designs a future production `externalAiInterpretationLayer` contract, but it is not implemented. The current production data contract remains the v28.0K-3A disabled scaffold: `enabled=false`, `status="disabled"`, `provider="none"`, and `output=null`.
+> **历史:** 以下 v28.0L-0…L-3F-1 为分阶段 rollout 期间所写(撰写时该层尚 disabled、integration 尚未实现)。该 rollout 已在 **v28.0L-3P+** 完成,当前 live `externalAiInterpretationLayer` 为 visible read-only(见上方「当前生产契约」)。下列各阶段 note 保留作历史。
+
+[`EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`](EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md) designed the production `externalAiInterpretationLayer` contract. _(历史 L-0 note:撰写时尚未实现;该设计已在 v28.0L-3P+ 落地,当前 live 为 visible read-only,见上方当前生产契约。)_
 
 v28.0L-1 readiness audit does not change the production data contract. [`EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md`](EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md) confirms production external AI data writes are not ready, and `externalAiInterpretationLayer` remains the disabled scaffold.
 
