@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-hero-ref-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-data-cache-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

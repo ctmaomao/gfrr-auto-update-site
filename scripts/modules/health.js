@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-hero-ref-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-hero-ref-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-data-cache-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-data-cache-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
