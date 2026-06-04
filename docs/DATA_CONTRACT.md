@@ -1745,418 +1745,123 @@ Contract:
 
 删除或重命名前必须先确认所有消费方，包括页面渲染、运行时 overlay、校验脚本和历史数据兼容逻辑。
 
+> **External AI staged-rollout 历史阶段账本（style-B 折叠）:** 以下 `v28.0L-3H → v28.0M-3H-1` 各段记录 External AI 从 provider-call 试验 → 首次 production 写入 → visible 展示的分阶段落地。**当前态(visible read-only / `provider=deepseek` / `promotionEligible=false` / 不影响 scoring·decision·execution·position)以上方「externalAiInterpretationLayer 当前生产契约」为准**;各段当时反复声明的 "remains disabled / non-production / promotionEligible=false / not_ready" 已被当前契约 + 下方 M-3H preservation 取代,完整历史见 git history 与对应 `EXTERNAL_AI_*.md` 设计文档。
+
 ## v28.0L-3H External AI provider artifact boundary
 
-The `External AI Manual Provider Test` workflow may produce a DeepSeek output artifact after the `external-ai-manual` environment gate is approved, but that artifact remains non-production.
-
-Contract boundary:
-
-- Provider output must not be copied into `data/radar-data.json`.
-- Provider output must not modify the live `externalAiInterpretationLayer`.
-- Production `externalAiInterpretationLayer` remains disabled / non-user-visible.
-- Provider output remains artifact-only, validator-gated, quality-review-gated, and `promotionEligible=false`.
-- No scoring, decision, execution, position, Worker, Daily, frontend, `values.*`, or `effectiveDisplayInputs` contract changes are introduced by L-3H.
+`External AI Manual Provider Test` workflow 的 DeepSeek artifact 为 non-production、validator + quality-gated、`promotionEligible=false`;不进 `data/radar-data.json` / live layer / scoring·decision·execution·position。
 
 ## v28.0L-3H-1 provider-call audit data boundary
 
-Run `25592238444` produced the first real `fixture_sample` provider-call result, but it did not change the production data contract.
-
-Audit result:
-
-- output validation passed.
-- DeepSeek manual API test passed.
-- quality review failed with `needs_prompt_revision`.
-- `promotionEligible=false`.
-- provider artifacts remain non-production diagnostics.
-- artifact upload was blocked by the sanitizer because diagnostic JSON contained the forbidden marker `DEEPSEEK_API_KEY`.
-
-The sanitizer failure was a diagnostic marker issue, not approval to copy provider output into production. No provider output, quality review output, failure artifact, or provider-test diagnostic artifact may be copied into `data/radar-data.json`, `data/*.json`, `realtime/*.json`, Worker payloads, config files, frontend display paths, Daily inputs, scoring, decision, execution, or position logic.
+Run `25592238444` 首个 `fixture_sample` provider-call:output 验证过、quality review `needs_prompt_revision`、diagnostic JSON 因含 forbidden marker `DEEPSEEK_API_KEY` 被 artifact sanitizer 拦;均 non-production diagnostics,不进生产路径。
 
 ## v28.0L-3H-2 prompt quality revision data boundary
 
-v28.0L-3H-2 changes prompt / quality guidance only. It does not change the production data contract.
-
-No external AI provider artifact, quality review artifact, dry-run artifact, prompt diagnostic, or manual artifact may enter `data/radar-data.json`, `data/*.json`, `realtime/*.json`, Worker payloads, config files, frontend display paths, Daily inputs, scoring, decision, execution, or position logic.
-
-Production `externalAiInterpretationLayer` remains disabled and non-user-visible. Production integration remains `not_ready`.
+仅改 prompt / quality 指引;无 production data contract 变更;artifact 仍 non-production。
 
 ## v28.0L-3H-3 second fixture provider-call audit data boundary
 
-Run `25593082968` successfully audited the second `fixture_sample` provider-call path, including provider transport, output validation, quality review, artifact sanitizer, and sanitized artifact upload.
-
-This does not change the production data contract:
-
-- provider artifacts remain non-production diagnostics.
-- even quality-reviewed provider output cannot enter `data/radar-data.json` yet.
-- production `externalAiInterpretationLayer` remains disabled and non-user-visible.
-- `promotionEligible=false` remains required.
-- no provider output may enter `data/*.json`, `realtime/*.json`, Worker payloads, config files, frontend display paths, Daily inputs, scoring, decision, execution, or position logic.
+Run `25593082968` 审计第二条 `fixture_sample` provider-call(transport/validation/quality/sanitizer/upload 全过);仍 non-production diagnostics。
 
 ## v28.0L-3I local_compact provider artifact data boundary
 
-v28.0L-3I designs a future `local_compact` provider-call path only. It does not change the production data contract.
-
-Future `local_compact` input and output artifacts remain non-production diagnostics:
-
-- `manual-artifacts/external-ai/manual-input-compact-latest.json` must stay ignored and artifact-only.
-- provider output must not enter `data/radar-data.json`.
-- provider output must not enter any `data/*.json` or `realtime/*.json` production path.
-- provider output must not modify Worker payloads or config files.
-- provider output must not enter Daily inputs.
-- provider output must not affect scoring, decision, execution, or position logic.
-- production `externalAiInterpretationLayer` remains disabled and non-user-visible.
-- `promotionEligible=false` remains required unless a separate reviewed production integration PR explicitly changes that boundary.
+设计 future `local_compact` provider-call 路径;input/output artifact 仍 ignored / non-production,不进生产路径。
 
 ## v28.0L-3J local_compact workflow artifact data boundary
 
-v28.0L-3J implements the `local_compact` provider-call workflow path, but it does not change the production data contract and does not run the provider call in the PR.
-
-Contract boundary:
-
-- `manual-artifacts/external-ai/manual-input-compact-latest.json` remains an ignored diagnostic artifact.
-- Any future `local_compact` provider output remains non-production.
-- No provider output enters `data/radar-data.json`.
-- No provider output enters `data/*.json`, `realtime/*.json`, Worker payloads, config files, Daily inputs, or frontend display paths.
-- Production `externalAiInterpretationLayer` remains disabled and non-user-visible.
-- `promotionEligible=false` remains required.
-- Scoring, decision, execution, and position logic remain unchanged.
+实现 `local_compact` provider-call workflow 路径(PR 内不跑 provider call);artifact 仍 non-production。
 
 ## v28.0L-3J-1 local_compact source metadata exception
 
-`manual-artifacts/external-ai/manual-input-compact-latest.json` may reference `data/radar-data.json` as read-only local source metadata.
-
-This reference is not a production data write and is not approval to upload or copy production data:
-
-- the compact input artifact remains ignored and non-production.
-- actual `data/radar-data.json` must not be uploaded as a workflow artifact.
-- provider output must not be copied into `data/radar-data.json`.
-- provider output must not enter `data/*.json`, `realtime/*.json`, Worker payloads, config files, Daily inputs, or frontend display paths.
-- production `externalAiInterpretationLayer` remains disabled and non-user-visible.
-- scoring, decision, execution, and position logic remain unchanged.
+compact input artifact 可只读引用 `data/radar-data.json` 作 source metadata;不等于上传/写 production data,artifact 仍 ignored / non-production。
 
 ## v28.0L-3J-3 local_compact execution-language output boundary
 
-Run `25598379612` proved the `local_compact` provider-call path can reach validation and sanitizer, but quality review correctly blocked a provider artifact because a fact repeated the decisionContext phrase `执行灯`.
-
-This does not change the production data contract:
-
-- `decisionContext` remains read-only background.
-- `local_compact` provider output may not expose decision, execution, position, cash, exposure, target-band, light/status, or trading-action fields in display strings.
-- `facts`, `summaryZh`, `inferences`, `modelJudgments`, `scenarioHypotheses`, `invalidationSignals`, `sourceAttribution.noteZh`, and `auditFlags` must not repeat `decisionContext` operation language.
-- provider output remains artifact-only and non-production.
-- production `externalAiInterpretationLayer` remains disabled and non-user-visible.
-- no provider output may enter `data/radar-data.json`, `data/*.json`, `realtime/*.json`, Worker payloads, config files, Daily inputs, or frontend display paths.
-- scoring, decision, execution, and position logic remain unchanged.
+Run `25598379612`:quality review 正确拦截复述 `decisionContext`「执行灯」的 artifact;`decisionContext` 仅只读背景,output 不得复述 decision/execution/position 字段。
 
 ## v28.0L-3J-4 local_compact provider-call audit data boundary
 
-Run `25598887574` successfully audited the `local_compact` provider-call path, including provider transport, output validation, quality review, artifact sanitizer, and sanitized artifact upload.
-
-This does not change the production data contract:
-
-- `local_compact` provider artifacts remain non-production diagnostics.
-- even quality-reviewed provider output cannot enter `data/radar-data.json` yet.
-- production `externalAiInterpretationLayer` remains disabled and non-user-visible.
-- `promotionEligible=false` remains required.
-- no provider output may enter `data/*.json`, `realtime/*.json`, Worker payloads, config files, frontend display paths, Daily inputs, scoring, decision, execution, or position logic.
-- production data writes remain `not_ready`.
-- frontend display remains `not_ready`.
-- Daily integration remains `not_ready`.
+Run `25598887574` 审计 `local_compact` provider-call 全链路过;仍 non-production,当时 production write/frontend/Daily 均 `not_ready`。
 
 ## v28.0L-3K production readiness data boundary
 
-v28.0L-3K reviews production integration readiness but does not change the production data contract.
-
-Current data contract decision:
-
-- External AI production data contract remains disabled / `not_ready`.
-- Production `externalAiInterpretationLayer` remains disabled and non-user-visible.
-- Provider artifacts remain non-production diagnostics.
-- Provider output must not be copied into `data/radar-data.json`.
-- Provider output must not enter `data/*.json`, `realtime/*.json`, Worker payloads, config files, Daily inputs, frontend display paths, scoring, decision, execution, or position logic.
-- `promotionEligible=false` remains required.
-
-Future production data contract design must be a separate reviewed phase.
+production integration readiness review;当时结论 production 仍 disabled / `not_ready`,future contract 设计须另开 reviewed phase。
 
 ## v28.0L-3L externalAiInterpretationLayer production contract design
 
-v28.0L-3L designs the future production data contract in [`EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md`](EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md). It does not implement the contract and does not write production data.
-
-Current contract boundary:
-
-- `externalAiInterpretationLayer` remains disabled / absent / scaffold-only in production data.
-- The layer remains non-user-visible.
-- No data write is approved.
-- No frontend display is approved.
-- No Daily integration or automatic provider call is approved.
-- Provider artifacts remain non-production diagnostics.
-- Provider output must not be copied into `data/radar-data.json`.
-- `promotionEligible=false` remains required.
-
-Before any future write to `data/radar-data.json`, a production contract validator must exist and pass. The future validator must reject unsafe execution / investment / trading wording, secrets, headers, raw provider dumps, stale artifacts, malformed provenance, malformed freshness metadata, and any scoring / decision / execution / position effect.
+设计 future production 契约([`EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md`](EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md));当时未实现、未写 production。要求:任何 write 前须有 production contract validator,拒不安全 execution/investment/trading wording、secrets、headers、raw dumps、stale artifacts、坏 provenance/freshness 及任何 scoring/decision/execution/position 影响。
 
 ## v28.0L-3M externalAiInterpretationLayer validator scaffold
 
-v28.0L-3M adds `npm run check:external-ai-production-contract` and a valid fixture for the proposed production contract.
-
-Current data contract boundary:
-
-- The production contract validator scaffold exists.
-- `externalAiInterpretationLayer` is still not written to `data/radar-data.json`.
-- The layer remains disabled / absent / scaffold-only in production data.
-- Frontend display remains disabled.
-- Daily and automatic provider calls remain disabled.
-- Future write requires a projection / dry-run stage and explicit approval.
-- Future write must pass the production contract validator before any production data file is changed.
+新增 `npm run check:external-ai-production-contract` + valid fixture;字段当时仍未写入 `data/radar-data.json`。
 
 ## v28.0L-3N externalAiInterpretationLayer projection dry-run
 
-v28.0L-3N adds a local projection dry-run for the future production contract.
-
-Current data contract boundary:
-
-- `npm run check:external-ai-production-projection` generates and validates an ignored projection artifact.
-- Projection output is written only under `manual-artifacts/external-ai/`.
-- Projection output is not `data/radar-data.json`.
-- `externalAiInterpretationLayer` remains absent / disabled / scaffold-only in production data.
-- Frontend display remains disabled.
-- Daily and automatic provider calls remain disabled.
-- Production write remains NO-GO until a separate explicitly approved production write design and implementation phase.
-- Future writes must still pass `check:external-ai-production-contract` before any production data file is changed.
+新增 `npm run check:external-ai-production-projection`(只在 `manual-artifacts/external-ai/` 产 ignored projection);production write 当时仍 NO-GO,future write 须先过 contract validator。
 
 ## v28.0L-3O externalAiInterpretationLayer first write guard
 
-v28.0L-3O adds first controlled production write design and `npm run check:external-ai-production-write-guard`.
-
-Current data contract boundary:
-
-- `externalAiInterpretationLayer` production write remains not approved.
-- The write guard checks that current production data remains disabled / non-impacting.
-- The write guard fails on frontend display approval, `promotionEligible=true`, or scoring / decision / execution / position impact.
-- First production write must be a separate data-only PR with explicit approval.
-- First production write must not include frontend display, workflow schedule changes, Daily integration, or automatic provider calls.
-- Rollback for the future first write is reverting that isolated PR.
+新增 first-write 设计 + `npm run check:external-ai-production-write-guard`(在 frontend display approval / `promotionEligible=true` / 任何 scoring·decision·execution·position 影响时 fail);首次 write 须为独立 data-only PR。
 
 ## v28.0L-3P externalAiInterpretationLayer first controlled write
 
-v28.0L-3P writes the first validated production `externalAiInterpretationLayer` into `data/radar-data.json` from run `25598887574`.
-
-Current data contract boundary:
-
-- `externalAiInterpretationLayer` now exists in `data/radar-data.json`.
-- The layer is display-disabled: `displayEnabled=false`.
-- `boundaries.frontendDisplayApproved=false`.
-- `qualityReview.promotionEligible=false`.
-- The field is read-only metadata for now.
-- Frontend code must ignore the field until a separate frontend PR explicitly approves display.
-- The layer must not affect scoring, `decisionModel`, `executionLock`, or `positionGuidance`.
+从 run `25598887574` 首次把 validated layer 写入 `data/radar-data.json`(当时 `displayEnabled=false` / `frontendDisplayApproved=false` / `promotionEligible=false`,data-only 非可见,不影响 scoring/decision/execution/position)。
 
 ## v28.0L-3P-1 externalAiInterpretationLayer first write audit
 
-v28.0L-3P-1 records the successful post-merge audit of the first controlled data-only write.
-
-Current data contract boundary:
-
-- `externalAiInterpretationLayer` exists in production `data/radar-data.json`.
-- `displayEnabled=false`.
-- `boundaries.frontendDisplayApproved=false`.
-- `qualityReview.promotionEligible=false`.
-- The field is data-only and non-user-visible.
-- Frontend code must continue ignoring the field until a separate explicitly approved frontend PR changes that boundary.
-- Future edits must use the production contract validator and write guard flow.
-- No scoring, `decisionModel`, `executionLock`, or `positionGuidance` effect is approved.
-- Daily integration and automatic provider calls remain disabled.
-- Future edits to the layer must use the write script and production contract validator.
+首次 data-only write 的 post-merge 审计通过(当时仍 `displayEnabled=false`、非可见);后续编辑须走 write script + production contract validator + write guard。
 
 ## v28.0L-3Q externalAiInterpretationLayer frontend display design
 
-v28.0L-3Q adds [`EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md`](EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md) as a documentation-only design for a future read-only frontend panel.
-
-Current data contract boundary:
-
-- `externalAiInterpretationLayer` exists in `data/radar-data.json`, but it is not frontend-visible.
-- Future frontend display must require `displayEnabled=true`.
-- Future frontend display must require `boundaries.frontendDisplayApproved=true`.
-- Current production data keeps both values false.
-- The layer remains data-only and non-user-visible.
-- The layer must not affect scoring, `decisionModel`, `executionLock`, `positionGuidance`, Global Risk Heatmap layout, Daily integration, or automatic provider calls.
+新增 [`EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md`](EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md)(文档-only);可见展示须 `displayEnabled=true` + `boundaries.frontendDisplayApproved=true`(当时两者仍 false)。
 
 ## v28.0L-3R externalAiInterpretationLayer hidden frontend scaffold
 
-v28.0L-3R adds a defensive frontend scaffold that can read `externalAiInterpretationLayer` without making it visible.
-
-Current data contract boundary:
-
-- `externalAiInterpretationLayer` remains present in `data/radar-data.json`.
-- Current production data keeps `displayEnabled=false`.
-- Current production data keeps `boundaries.frontendDisplayApproved=false`.
-- The frontend scaffold hides and clears the panel unless both flags are explicitly true.
-- The scaffold does not modify `data/radar-data.json`.
-- The scaffold does not affect scoring, `decisionModel`, `executionLock`, `positionGuidance`, Global Risk Heatmap layout, Daily integration, or automatic provider calls.
-- Visible frontend display remains not approved.
+新增防御性 frontend scaffold:两 flag 非 true 时隐藏/清空 panel,不改 `data/radar-data.json`,不影响 scoring/decision/execution/position/Heatmap。
 
 ## v28.0L-3S externalAiInterpretationLayer visible display flag design
 
-v28.0L-3S documents the future approval and data-flag process for making the existing hidden scaffold visible.
-
-Current data contract boundary:
-
-- Visible display will require `displayEnabled=true`.
-- Visible display will require `boundaries.frontendDisplayApproved=true`.
-- Current production data keeps both values false.
-- This PR does not change `data/radar-data.json`.
-- Future visible-display flag enablement should be data-only where possible if the hidden scaffold remains sufficient.
-- Future visible-display flag enablement must not update AI text content, rerun DeepSeek, refresh provider artifacts, add automatic provider calls, or change frontend code unless a separate approval requires it.
-- The layer must continue to have no scoring, `decisionModel`, `executionLock`, `positionGuidance`, Global Risk Heatmap, Daily, or automatic provider-call effect.
+设计将 hidden scaffold 转可见的审批 + data-flag 流程(当时两 flag 仍 false,本阶段不改数据)。
 
 ## v28.0L-3T externalAiInterpretationLayer visible display flags
 
-v28.0L-3T enables the existing production external AI panel through data flags.
-
-Current data contract boundary:
-
-- `externalAiInterpretationLayer.displayEnabled=true`.
-- `externalAiInterpretationLayer.boundaries.frontendDisplayApproved=true`.
-- This approves display only.
-- This does not approve a provider rerun.
-- This does not approve AI text changes.
-- `qualityReview.promotionEligible=false` remains required.
-- `boundaries.affectsScoring=false` remains required.
-- `boundaries.affectsDecisionModel=false` remains required.
-- `boundaries.affectsExecutionLock=false` remains required.
-- `boundaries.affectsPositionGuidance=false` remains required.
-- Global Risk Heatmap, Daily integration, and automatic provider calls remain unaffected.
+**经数据 flag 启用 production external AI panel:`displayEnabled=true` + `boundaries.frontendDisplayApproved=true`(= 当前 visible 态)。** 仅批准展示(不批 provider rerun / AI text 改);`qualityReview.promotionEligible=false` 与 `boundaries.affectsScoring/DecisionModel/ExecutionLock/PositionGuidance=false` 仍必需。
 
 ## v28.0L-3T-1 externalAiInterpretationLayer visible display audit
 
-v28.0L-3T-1 records that the visible display flag state passed post-merge audit.
-
-Current data contract boundary:
-
-- `externalAiInterpretationLayer` is display-enabled.
-- `externalAiInterpretationLayer.displayEnabled=true`.
-- `externalAiInterpretationLayer.boundaries.frontendDisplayApproved=true`.
-- `qualityReview.promotionEligible=false`.
-- `boundaries.affectsScoring=false`.
-- `boundaries.affectsDecisionModel=false`.
-- `boundaries.affectsExecutionLock=false`.
-- `boundaries.affectsPositionGuidance=false`.
-- Display approval does not approve provider reruns, AI text edits, Daily integration, automatic provider calls, or scoring / decision / execution / position impact.
+visible display flag 态 post-merge 审计通过(`displayEnabled=true` + `frontendDisplayApproved=true` + 全部 affects*=false + `promotionEligible=false`)。
 
 ## v28.0L-3U-1 externalAiInterpretationLayer UX audit
 
-v28.0L-3U-1 records that the visible display UX polish passed post-merge audit without changing the data contract.
-
-Current data contract boundary:
-
-- `data/radar-data.json` was not modified during UX polish.
-- `externalAiInterpretationLayer` remains the production source for the panel.
-- The production data contract remained unchanged.
-- AI-generated text was not edited or refreshed.
-- Future data updates still require the production contract validator, production write guard, frontend scaffold check, `check:data`, and `check:all`.
-- Provider refresh automation, Daily integration, and automatic provider calls remain unapproved.
+visible display UX polish post-merge 审计通过,未改 `data/radar-data.json` / data contract / AI 文本;future 更新仍须过 contract validator + write guard + frontend scaffold check + `check:data` + `check:all`。
 
 ## v28.0L-4A externalAiInterpretationLayer production refresh
 
-v28.0L-4A adds the `External AI Production Refresh` workflow as the controlled update path for the production external AI layer.
-
-Current data contract boundary:
-
-- The workflow may update `externalAiInterpretationLayer` inside `data/radar-data.json`.
-- The workflow must not update other production data fields.
-- Production contract validation is required before commit.
-- Production write guard is required before commit.
-- Frontend scaffold check is required before commit.
-- `check:data` and `check:all` are required before commit.
-- `displayEnabled=true` is preserved from the current production layer.
-- `boundaries.frontendDisplayApproved=true` is preserved from the current production layer.
-- `qualityReview.promotionEligible=false` remains required.
-- Scoring, `decisionModel`, `executionLock`, `positionGuidance`, Daily integration, and Global Risk Heatmap layout remain unaffected.
+新增 `External AI Production Refresh` workflow 为 production layer 受控更新路径:只可改 `data/radar-data.json`,commit 前须过 production contract validation + write guard + frontend scaffold check + `check:data` + `check:all`;保留 `displayEnabled=true` / `frontendDisplayApproved=true`,`qualityReview.promotionEligible=false` 仍必需,不影响 scoring/decision/execution/position/Daily/Heatmap。
 
 ## v28.0L-4A-1 externalAiInterpretationLayer refresh audit
 
-v28.0L-4A-1 records that the first `External AI Production Refresh` workflow update succeeded.
-
-Current data contract boundary:
-
-- `externalAiInterpretationLayer` can now be updated by the `External AI Production Refresh` workflow.
-- The first workflow update ran as run `25611392014` and committed `c32af65`.
-- The refresh workflow may commit only `data/radar-data.json`.
-- Production contract validation is required before commit.
-- Production write guard is required before commit.
-- Protected path assertion is required before commit.
-- The successful refresh changed only `data/radar-data.json`.
-- No manual artifact, frontend file, script, workflow file, package file, config file, realtime file, or Worker file was committed by the refresh.
-- `qualityReview.promotionEligible=false`, non-impact boundaries, and visible display gates remain required.
+首个 refresh workflow 更新成功(run `25611392014`,commit `c32af65`):只 commit `data/radar-data.json`,未碰 manual artifact / 前端 / script / workflow / package / config / realtime / Worker;contract validation + write guard + protected-path assertion 均必需。
 
 ## v28.0L-4B externalAiInterpretationLayer display coverage
 
-v28.0L-4B does not change the production data contract.
-
-Current data contract boundary:
-
-- Existing `externalAiInterpretationLayer` fields may be displayed in capped, safe, read-only summaries.
-- `modelJudgments`, `scenarioHypotheses`, `sourceAttribution`, and `qualityReview` remain production data fields, not frontend-derived data.
-- Display coverage polish must not edit AI-generated text or production data.
-- Raw provenance, provider artifacts, run IDs, artifact IDs, artifact paths, raw headers, and raw provider output remain hidden from normal display.
-- Display coverage must not affect scoring, `decisionModel`, `executionLock`, `positionGuidance`, Daily integration, or Global Risk Heatmap layout.
+现有 layer 字段可作 capped / safe / read-only 摘要展示(`modelJudgments` / `scenarioHypotheses` / `sourceAttribution` / `qualityReview` 仍为 production data 字段);raw provenance / run ID / artifact ID / artifact path / raw headers / raw output 不展示;不影响 scoring/decision/execution/position/Daily/Heatmap。
 
 ## v28.0L-4B-1 externalAiInterpretationLayer display coverage audit
 
-v28.0L-4B-1 confirms that display coverage polish does not change the production contract.
-
-Current data contract boundary:
-
-- `externalAiInterpretationLayer` fields may be displayed as capped read-only summaries.
-- Displayed fields may include `modelJudgments`, `scenarioHypotheses`, `sourceAttribution` summary, and public `qualityReview` status.
-- Raw provenance remains a non-display field.
-- Artifact identifiers remain non-display fields.
-- Run IDs remain non-display fields.
-- Raw provider output remains a non-display field.
-- Raw `decisionContext` remains a non-display field.
-- The production contract remains unchanged by display coverage polish.
-- Future data changes still require production contract validation and production write guard.
+display coverage polish 不改 production contract;raw provenance / artifact IDs / run IDs / raw provider output / raw `decisionContext` 仍为 non-display;future data 改动仍须过 production contract validation + write guard。
 
 ## v28.0M-3H externalAiInterpretationLayer preservation
 
-`data/radar-data.json` must retain a contract-valid `externalAiInterpretationLayer` across ordinary radar data refreshes.
-
-Current data contract boundary:
-
-- Normal radar refresh may update market data, risk modules, daily brief, history inputs, and related radar fields.
-- Normal radar refresh must preserve the existing contract-valid `externalAiInterpretationLayer` unless the approved `External AI Production Refresh` workflow explicitly updates that layer.
-- Normal radar refresh must not delete `displayEnabled`, `boundaries.frontendDisplayApproved`, `qualityReview.promotionEligible`, or the non-impact boundary flags.
-- Normal radar refresh must not edit external AI generated text.
-- `External AI Production Refresh` remains the only approved automatic provider path for changing external AI content.
-- Future data updates still require production contract validation and production write guard.
+**【当前活规则,非纯历史】** `data/radar-data.json` 须跨日常 radar refresh 保留 contract-valid `externalAiInterpretationLayer`:普通 refresh **不得**删除 `displayEnabled` / `boundaries.frontendDisplayApproved` / `qualityReview.promotionEligible` / non-impact 边界 flags,**不得**编辑 external AI 生成文本;**`External AI Production Refresh` 是唯一批准的自动 provider 写入路径**;future data 更新仍须过 production contract validation + write guard。
 
 ## v28.0M-3H-1 externalAiInterpretationLayer preservation audit
 
-v28.0M-3H-1 records that the preservation hotfix passed post-merge audit.
-
-Current data contract boundary:
-
-- `data/radar-data.json` must retain a valid `externalAiInterpretationLayer` across ordinary radar refreshes.
-- Ordinary radar refresh must preserve the existing layer instead of replacing it with a disabled scaffold.
-- `External AI Production Refresh` remains the only approved path that updates external AI content.
-- `displayEnabled` must remain a boolean.
-- `boundaries.frontendDisplayApproved` must remain a boolean.
-- `qualityReview.promotionEligible=false` remains required.
-- Non-impact boundaries must remain valid: no scoring, decision, execution, or position impact.
-- Future data changes still require production contract validation, production write guard, frontend scaffold check, `check:data`, and `check:all`.
+**【当前活规则,非纯历史】** preservation hotfix post-merge 审计通过:普通 refresh 须保留 layer(而非以 disabled scaffold 覆盖);`displayEnabled` / `frontendDisplayApproved` 须为 boolean,`qualityReview.promotionEligible=false` 与 non-impact 边界(no scoring/decision/execution/position)仍必需;future 改动须过 production contract validation + write guard + frontend scaffold check + `check:data` + `check:all`。
 
 ## v28.0M-4 macro overview read-only derivation boundary
 
-The Macro Overview is a frontend read-only derivation layer.
-
-Current data contract boundary:
-
-- Macro overview rendering must not mutate `data/radar-data.json`.
-- It reads from existing site data and displays missing-data states when required inputs are unavailable.
-- Market Pricing Temperature remains a waiting state until historical weekly data exists.
-- Nasdaq / QQQ weekly history, MA60, standard deviation, and z-score values must not be fabricated.
-- Macro overview judgment cards must not change scoring, `decisionModel`, `executionLock`, or `positionGuidance`.
-- Global Risk Heatmap remains a separate display section, not nested inside macro overview cards.
+Macro Overview 是前端只读派生层:render 不得 mutate `data/radar-data.json`、不得伪造 Nasdaq/QQQ 周历史/MA60/标准差/z-score,不影响 scoring/decisionModel/executionLock/positionGuidance;Global Risk Heatmap 为独立 display section(非嵌入 macro overview 卡内)。
 
 ## v28.0M-5 market pricing temperature design boundary
 
@@ -2164,233 +1869,64 @@ Current data contract boundary:
 
 The following M-5 through M-16 market-pricing sections preserve staged baseline language from before M-24 history write, M-26 metrics calculation, and M-27 frontend activation. Current production state is `status=has_history`, with M-26 MA60 / standard deviation / z-score calculation and M-27 frontend temperature display active. The display-only and no scoring / decision / execution / position boundaries still apply.
 
-v28.0M-5 is design-only and does not change production data.
-
-Future data contract boundary:
-
-- Future `marketPricingTemperatureLayer` must remain display-only.
-- Future market pricing history must require sufficient weekly observations before calculation.
-- Current production `data/radar-data.json` remains unchanged by this design.
-- Current macro overview must keep Market Pricing Temperature in waiting-for-history state until valid weekly history exists.
-- Nasdaq / QQQ / MA60 / standard deviation / z-score values must not be fabricated.
-- The temperature layer must not affect scoring, `decisionModel`, `executionLock`, or `positionGuidance` unless a separate approved phase changes that boundary.
+M-5(design-only):future `marketPricingTemperatureLayer` 须 display-only、须足够周观测才计算、不得伪造 Nasdaq/QQQ/MA60/标准差/z-score、不影响 scoring/decision/execution/position。
 
 ## v28.0M-6 market pricing history scaffold contract
 
-`data/market-pricing-history.json` exists as a scaffold-only contract.
-
-Current data contract boundary:
-
-- The file must keep `status=waiting_for_history` and `sourceMode=scaffold_only`.
-- `records` arrays must remain empty until a future approved fetch/data-write PR.
-- `check:market-pricing-history` must pass.
-- At least 60 weekly observations are required before any MA60, standard deviation, z-score, band, or temperature calculation.
-- SPX may be listed only as fallback candidate and must not be mislabeled as Nasdaq / QQQ temperature.
-- The scaffold does not feed scoring, `decisionModel`, `executionLock`, or `positionGuidance`.
-- `marketPricingTemperatureLayer` remains not implemented / waiting.
+(scaffold 阶段)`data/market-pricing-history.json` 当时 `status=waiting_for_history` / `sourceMode=scaffold_only`、records 空、须 ≥60 周观测才算 MA60/z-score、SPX 仅 fallback 候选、不进 scoring/decision/execution/position。
 
 ## v28.0M-7 market pricing source adapter dry-run boundary
 
-`manual-artifacts/market-pricing/source-adapter-dry-run-latest.json` is a local dry-run report, not production data.
-
-Current data contract boundary:
-
-- The dry-run report must not be committed.
-- The dry-run report must not contain price records.
-- The dry-run report must not contain MA60, standard deviation, z-score, band, temperature, or trading signal outputs.
-- `data/market-pricing-history.json` remains scaffold-only.
-- The source adapter dry-run must not write `data/market-pricing-history.json`.
-- The source adapter dry-run must not write `data/radar-data.json`.
-- Future source work must remain artifact-only until a separate approved production data write phase.
+(scaffold)source adapter dry-run report 为本地 non-production、不 commit、不含价格/计算/信号、不写 `data/market-pricing-history.json` 或 `data/radar-data.json`。
 
 ## v28.0M-8 market pricing artifact-only fetch design boundary
 
-Future market pricing artifact-only fetch reports are not production data.
-
-Current data contract boundary:
-
-- `manual-artifacts/market-pricing/` reports must not be committed.
-- Future artifact fetch output must be validated and sanitized before any history write is considered.
-- `data/market-pricing-history.json` remains scaffold-only until a separate approved write PR.
-- `data/market-pricing-history.json` records must remain empty in this phase.
-- Derived MA60, standard deviation, z-score, band, and temperature fields remain absent.
-- Market Pricing Temperature remains waiting-for-history.
-- Artifact-only fetch reports must not affect scoring, `decisionModel`, `executionLock`, or `positionGuidance`.
+(design)future artifact-only fetch report 非 production、不 commit、须 validate + sanitize 后才考虑 history write;history records 当时仍空、不进 scoring/decision/execution/position。
 
 ## v28.0M-9 market pricing artifact fetch scaffold boundary
 
-`manual-artifacts/market-pricing/artifact-fetch-scaffold-latest.json` is a local scaffold report, not production data.
-
-Current data contract boundary:
-
-- The scaffold report must not be committed.
-- The scaffold report must not contain fetched market records, close values, adjusted close values, MA60, standard deviation, z-score, bands, temperature, or trading signal outputs.
-- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
-- The artifact fetch scaffold must not write `data/market-pricing-history.json`.
-- The artifact fetch scaffold must not write `data/radar-data.json`.
-- If `--allow-network` is supplied, v28.0M-9 must still reject network access.
-- No fetched records may enter production without a future validator, sanitizer, and explicit approved write phase.
-- Market Pricing Temperature remains waiting-for-history and display-only.
+(scaffold)artifact-fetch scaffold report 为本地 non-production、不 commit、不含 fetched records/计算/信号;即便 `--allow-network` 也须拒网络;不写 history / radar-data。
 
 ## v28.0M-10 market pricing artifact sanitizer scaffold boundary
 
-`manual-artifacts/market-pricing/artifact-sanitizer-scaffold-latest.json` is a local sanitizer scaffold report, not production data.
-
-Current data contract boundary:
-
-- The sanitizer report must not be committed.
-- Sanitizer reports must not be copied into `data/market-pricing-history.json` or `data/radar-data.json`.
-- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
-- The sanitizer scaffold must reject secrets, headers, cookies, API tokens, source URL fields, calculation fields, trading advice fields, and production-write flags.
-- A scaffold sanitizer PASS does not approve production history writes; `readyForProductionWrite` remains false.
-- No artifact may be promoted to history without sanitizer approval and a separate production-write PR.
-- Market Pricing Temperature remains waiting-for-history and display-only.
+(scaffold)artifact-sanitizer scaffold report 非 production、不 commit;sanitizer 须拒 secrets/headers/cookies/tokens/source-URL/计算/交易建议/write flags;PASS ≠ 批准 history write(`readyForProductionWrite=false`)。
 
 ## v28.0M-11 market pricing real-record contract design boundary
 
-`docs/MARKET_PRICING_REAL_RECORD_CONTRACT_DESIGN.md` defines the future real-record contract for market pricing artifacts.
-
-Current data contract boundary:
-
-- The real-record contract design is not production data.
-- The schema-only fixture keeps `records=[]`.
-- No market pricing records are written.
-- `data/market-pricing-history.json` remains scaffold-only and empty.
-- Future real records must pass sanitizer checks and a separate history-write approval before production history changes.
-- Future calculation requires at least 60 validated weekly observations and a separate approved calculation PR.
-- Market Pricing Temperature remains `waiting_for_history`.
+(design)`docs/MARKET_PRICING_REAL_RECORD_CONTRACT_DESIGN.md` 定义 future real-record 契约;schema-only fixture `records=[]`、history 当时空;future real records 须过 sanitizer + 独立 history-write 审批,计算须 ≥60 周观测。
 
 ## v28.0M-12 market pricing real-record sanitizer scaffold boundary
 
-M-12 synthetic real-record fixtures are not production data.
-
-Current data contract boundary:
-
-- `docs/fixtures/market-pricing/artifact-sanitizer-real-record-valid-synthetic-v28.0M-12.json` and `docs/fixtures/market-pricing/artifact-sanitizer-real-record-invalid-synthetic-v28.0M-12.json` are fixture-only / synthetic-only sanitizer inputs.
-- The fixtures use `assetKey=fixture_asset` and `symbol=FIXTURE`; they must not be treated as QQQ, NDX, IXIC, SPX, or any production candidate.
-- Sanitizer reports must not be copied into `data/market-pricing-history.json` or `data/radar-data.json`.
-- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
-- `recordsAcceptedForHistory` remains `0` until a separate approved history writer PR changes that boundary.
-- `readyForProductionWrite` remains `false` in M-12.
-- No MA60, standard deviation, z-score, band, or market temperature calculation is performed.
-- Market Pricing Temperature remains `waiting_for_history`.
+(fixture-only)M-12 synthetic real-record fixtures(`assetKey=fixture_asset` / `symbol=FIXTURE`,**非** QQQ/NDX/IXIC/SPX);`recordsAcceptedForHistory=0`、`readyForProductionWrite=false`、无 MA60/z-score 计算。
 
 ## v28.0M-13 market pricing source selection review boundary
 
-The source selection review fixture is not production data.
-
-Current data contract boundary:
-
-- `docs/fixtures/market-pricing/source-selection-review-v28.0M-13.json` records review status only.
-- No source is approved for live fetch.
-- `sourceSelectionFinalized=false`, `liveFetchApproved=false`, `productionDataWriteApproved=false`, and `historyWriteApproved=false`.
-- No source URLs, endpoints, records, prices, or secrets are part of the fixture.
-- No history records are written.
-- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
-- `data/radar-data.json` remains unchanged.
-- Market Pricing Temperature remains `waiting_for_history`.
+(fixture)source-selection review 仅记审查状态:无源批准 live fetch,`sourceSelectionFinalized/liveFetchApproved/productionDataWriteApproved/historyWriteApproved=false`,无 URL/endpoint/secret,history 空。
 
 ## v28.0M-14 market pricing proof-of-source design boundary
 
-The proof-of-source design fixture is not production data.
-
-Current data contract boundary:
-
-- `docs/fixtures/market-pricing/proof-of-source-design-v28.0M-14.json` records design metadata only.
-- It contains no records and no prices.
-- QQQ appears only as target metadata.
-- No source is approved.
-- `sourceSelectionFinalized=false`, `sourceApproved=false`, `liveFetchApproved=false`, `productionDataWriteApproved=false`, and `historyWriteApproved=false`.
-- No source URLs, endpoints, secrets, headers, cookies, or auth tokens are part of the fixture.
-- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
-- `data/radar-data.json` remains unchanged.
-- Market Pricing Temperature remains `waiting_for_history`.
+(fixture)proof-of-source design 仅记设计 metadata(QQQ 仅 target metadata);无源批准,全 approval flags=false,无 URL/secret,history 空,radar-data 不变。
 
 ## v28.0M-15 market pricing source-specific artifact fetch scaffold boundary
 
-The source-specific scaffold report is not production data.
-
-Current data contract boundary:
-
-- `docs/fixtures/market-pricing/source-specific-artifact-fetch-scaffold-v28.0M-15.json` records scaffold status only.
-- `manual-artifacts/market-pricing/source-specific-artifact-fetch-scaffold-latest.json` must not be committed.
-- QQQ appears only as target metadata.
-- Stooq / public CSV appears only as a source candidate label.
-- No source is approved for live fetch.
-- `sourceSelectionFinalized=false`, `sourceApproved=false`, `liveFetchApproved=false`, and `productionDataWriteApproved=false`.
-- No records, prices, source URLs, endpoints, secrets, headers, cookies, or auth tokens are part of the fixture.
-- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
-- `data/radar-data.json` remains unchanged.
-- Market Pricing Temperature remains `waiting_for_history`.
+(fixture/scaffold)source-specific scaffold 仅记状态(QQQ=target、Stooq/public CSV 仅候选 label);无源批准 live fetch,approval flags=false,无 records/URL/secret,history 空。
 
 ## v28.0M-15A unified data pipeline architecture boundary
 
-The unified data pipeline architecture sync does not change production data.
-
-Current data contract boundary:
-
-- `data/radar-data.json` remains Daily output / production display data.
-- `data/market-pricing-history.json` belongs to `daily_history_layer`.
-- realtime data belongs to `realtime_worker_layer`.
-- backup validation belongs to `github_actions_backup_validation_layer`.
-- market-pricing artifacts belong to `artifact_sanitizer_layer` until an approved history writer exists.
-- frontend market-pricing display belongs to `frontend_display_layer` and remains waiting-for-history until approved calculation exists.
-- no isolated data pipelines are allowed.
-- no data files are written by architecture-sync checks.
+统一数据管线分层:`data/radar-data.json`=Daily/production display、`data/market-pricing-history.json`=`daily_history_layer`、realtime=`realtime_worker_layer`、backup=`github_actions_backup_validation_layer`、market-pricing artifacts=`artifact_sanitizer_layer`、frontend market-pricing=`frontend_display_layer`;不允许 isolated pipeline,architecture-sync checks 不写任何 data 文件。
 
 ## v28.0M-16 market pricing network gate design boundary
 
-The network gate design fixture is not production data.
-
-Current data contract boundary:
-
-- `docs/fixtures/market-pricing/network-gate-design-v28.0M-16.json` records design status only.
-- No network gate fixture may set approval flags true.
-- `networkGateApproved=false`.
-- `networkGateOpen=false`.
-- `networkAllowed=false`.
-- No history records are written.
-- `data/market-pricing-history.json` remains scaffold-only and records remain empty.
-- `data/radar-data.json` remains unchanged.
-- No source URLs, endpoints, secrets, headers, cookies, or auth tokens are part of the fixture.
-- Market Pricing Temperature remains `waiting_for_history`.
+(fixture)network-gate design 仅记状态:`networkGateApproved/networkGateOpen/networkAllowed=false`,无 history write,无 URL/secret,history 空,radar-data 不变。
 
 ## v28.0M-7U homepage IA frontend-only boundary
 
-v28.0M-7U changes homepage presentation only and does not alter the data contract.
-
-Current data contract boundary:
-
-- Macro Risk Overview remains a read-only frontend derivation.
-- Daily Brief remains source data / evidence detail, not a duplicate primary homepage judgment.
-- External AI output remains governed by its production contract and display gates.
-- Global Risk Heatmap remains a standalone frontend section.
-- The frontend asset cache version is defined by `APP_VERSION` in `scripts/app.js`.
-- No `data/*.json`, `realtime/*.json`, scoring, `decisionModel`, `executionLock`, or `positionGuidance` contract changes are introduced.
+仅改首页呈现,不动数据契约:Macro Risk Overview 只读派生、Daily Brief = 证据明细(非重复主判断)、External AI 受 production contract + display gate 管、Global Risk Heatmap 独立;frontend asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准;不改 `data/*.json` / `realtime/*.json` / scoring / decision / execution / position。
 
 ## v28.0M-7V homepage reading path frontend-only boundary
 
-v28.0M-7V repairs homepage navigation and section grouping only.
-
-Current data contract boundary:
-
-- No data contract changes are introduced.
-- No `data/radar-data.json`, `data/market-pricing-history.json`, `data/*.json`, `realtime/*.json`, or config data is changed.
-- Macro Overview remains a read-only frontend derivation layer over existing site data.
-- The first seven homepage reading-path anchors are generated on actual Macro Overview content sections, not data fields.
-- Daily Brief remains evidence detail under method / evidence grouping.
-- External AI remains auxiliary read-only explanation and keeps its display gates.
-- Global Risk Heatmap remains a standalone frontend section.
-- Market Pricing Temperature remains waiting-for-history; no Nasdaq / QQQ weekly history, MA60, standard deviation, z-score, market temperature calculation, or market-pricing fetch is introduced.
-- No scoring, `decisionModel`, `executionLock`, `positionGuidance`, Worker, workflow, or provider-call contract changes are introduced.
+仅修首页导航/分组:不改任何 `data/*.json` / `realtime/*.json` / config;Macro Overview 只读派生、Daily Brief = 证据明细、External AI 只读受 display gate、Heatmap 独立;不改 scoring / decision / execution / position / Worker / workflow。
 
 ## v28.0M-7V-1 homepage reading path audit-sync data boundary
 
-v28.0M-7V-1 is documentation-only and does not change data contracts.
-
-Current data contract boundary:
-
-- Macro Overview remains a read-only frontend derivation layer.
-- Homepage reading path updates must not mutate `data/radar-data.json`, `data/market-pricing-history.json`, `data/*.json`, `realtime/*.json`, or config data.
-- Market Pricing Temperature remains waiting-for-history and must not calculate or write history-derived values until a separate approved implementation exists.
-- External AI, scoring, `decisionModel`, `executionLock`, and `positionGuidance` contracts remain unchanged.
+文档-only audit-sync:不 mutate `data/radar-data.json` / `data/market-pricing-history.json` / `data/*.json` / `realtime/*.json` / config;Macro Overview 只读派生;External AI / scoring / decision / execution / position 契约不变。
