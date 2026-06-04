@@ -276,11 +276,10 @@ Weekly refresh:
 2. Download the 6 weekly regional aggregated xlsx files.
 3. Place the files under `manual-artifacts/world-order/acled-input/weekly/`.
 4. On first use after M-63a, run `npm install` so the `xlsx` devDependency is installed.
-5. Run `npm run acled:sanitize:weekly`.
-6. Run `npm run check:world-order-acled-weekly`.
-7. Run `npm run check:all`; M-63b expects 69 items to pass.
-8. Review `config/world-order-acled-regional-weekly.json`.
-9. Commit the derived JSON with a focused operator refresh commit:
+5. Run `npm run acled:status` — the one-command helper that runs `acled:sanitize:weekly` + `check:world-order-acled-weekly` and then reports a config-vs-data verdict (expect `data_current`; a fresh local refresh that has not yet propagated to data reports `sanitized_not_refreshed`). `npm run acled:status:weekly` is an explicit alias. To run the steps individually instead: `npm run acled:sanitize:weekly` then `npm run check:world-order-acled-weekly`.
+6. Run `npm run check:all`; M-63b expects 69 items to pass.
+7. Review `config/world-order-acled-regional-weekly.json`.
+8. Commit the derived JSON with a focused operator refresh commit:
 
 ```text
 git add config/world-order-acled-regional-weekly.json
@@ -399,8 +398,8 @@ Monthly refresh:
 1. Open `https://acleddata.com/conflict-data/download-data-files` manually in a browser.
 2. Download the 6 monthly aggregated xlsx files (one batch per refresh; all 6 must share the same `as-of` date).
 3. Place the files under `manual-artifacts/world-order/acled-input/monthly/`.
-4. Run `npm run acled:sanitize:monthly`.
-5. Run `npm run check:world-order-acled-monthly`.
+4. On first use after M-63a, run `npm install` so the `xlsx` devDependency is installed.
+5. Run `npm run acled:status:monthly`. This one-command helper runs `acled:sanitize:monthly` + `check:world-order-acled-monthly` and then reports a config-vs-data verdict (it is the monthly sibling of `npm run acled:status`; see Section 9 for weekly). Expect `data_current`; a fresh local refresh that has not yet propagated to data reports `sanitized_not_refreshed`.
 6. Run `npm run check:all`; M-63b expects 69 items to pass.
 7. Review `config/world-order-acled-global-monthly.json`.
 8. Commit the derived JSON with a focused operator refresh commit:
