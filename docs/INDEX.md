@@ -36,6 +36,8 @@
 
 仅在对应 PR / 子系统范围内权威。**默认会话不应将其作为全项目规则。**
 
+> **2026-06 doc-slim 审计注**:External AI scope + Market Pricing scope 的 phase/scaffold 设计文档顶部已加 STATUS banner,把文中「disabled / waiting-for-history / scaffold-only」阶段措辞 reconcile 到当前生产态(External AI = live visible read-only;Market Pricing = has_history / M-27 温度卡 live);**grading 未变**,仅消除冷打开 current-state 误导。Operating Document 三 changelog tail + READINESS_CHECKLIST + TEMPERATURE_DATA_SOURCE_DESIGN 的 stacked 段已 B-consolidated 折叠。详见 `docs/PROJECT_BACKLOG.md` Section 5(doc-slim 审计 Batch 1–3b)。
+
 ### Market Pricing scope (M-14 → M-91)
 
 - `docs/MARKET_PRICING_TEMPERATURE_DATA_SOURCE_DESIGN.md`
