@@ -116,6 +116,15 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **ODP 五刀(PR1–PR5)merge 后全收官**:数据接入 → 周度 workflow → 回测 GATE → productionize + 价格背离 → 中文 UI → dailyBrief 只读引用;全程 audit-only / display-only,不进 scoring / decision / execution / Heatmap。
 - 边界:不进 `values.*`/scoring/decisionModel/executionLock/positionGuidance/cross-validation;期限结构低置信复用、缺则不参与裁决;数据不足显式「暂不判断」。EIA = 美国政府公共领域。
 
+#### P3-20: External AI 深化 — analyst_compact_v1 深度独立分析(PR0 设计契约已锁 · PR1-4 contract-led canary)
+
+来源:2026-06-05 owner 立项。目标:让 External AI Auxiliary 对后台丰富数据做**深度独立跨层分析**。根因=输入面窄(`extractSiteData`/`extractCompactSiteData` 都只喂 `macroDrivers.consumer` 一个,约 5-10% richness),非模型能力。**硬边界(CLAUDE.md 绝对规则 4,全程不动)**:External AI = 只读展示层,输出不进 scoring/decision/execution/position;3 守卫(`check-external-ai-output`/`-production-contract`/`-production-write-guard`)+ unsafe-wording + `promotionEligible/humanApproved=false` + `affects*=false` 保留;「独立」=对站内数据独立推理,不接外部新闻/行情。
+
+- **关键现实(Codex+Claude 交叉核实)**:production **硬锁** `local_compact`——workflow 固定 `--compact`、`validate-data.mjs` 硬断言 sourceMode/model/inputSource、projection 折叠 sourceAttribution。故为 **contract migration 非加字段**,必走 expand-then-contract(本地 check:all 只校验旧 committed 数据→换源类本地绿≠Daily 绿)。
+- **PR0 ✅ 设计契约已锁**(design-contract only,Codex 起草 + Claude 逐行交叉核 5 轮,check:docs 绿,doc 内自洽):新 source mode `analyst_compact_v1` / schema 串 `v28.0L-external-ai-production-analyst-1`;evidence-pack schema(全 macroDrivers + modules + regimeProbabilities + scenarioTree + transmission + heatmap + divergence + ODP/world-order/market-pricing 仅 summary+top-N);**redaction 以 checker 数组为单一真相源**(`BANNED_COPY`/`UNSAFE_CLAIMS`/`UNSAFE_CONTENT`,不手抄);sourceLayer floor + `macroDrivers.<key>` pattern;confidence cap **low-medium/45**;canary gates;rollback;PR0→PR4 迁移地图。详见 [`EXTERNAL_AI_ANALYST_INPUT_CONTRACT_REVIEW.md`](EXTERNAL_AI_ANALYST_INPUT_CONTRACT_REVIEW.md)。
+- **PR1-4 待开(serial-trunk,逐刀)**:PR1=`extractAnalystSiteDataV2()` 受控 evidence-pack + redaction(只产 artifact、不碰生产);PR2=manual/provider canary(不写 production,升 prompt 4 分析任务 + 扩 sourceLayer 白名单 + 量 token/timeout/unsafe-wording/覆盖/增量,**模型 tier flash vs 更强**在此 A/B 决);PR3=production contract migration(workflow + validate-data + 3 checker + projection,expand-then-contract 留旧 local_compact 过渡);PR4=输出 schema(`crossLayerSynthesis`/`keyDivergences`/`scenarioLean`/`dataQualityLens`)+ 前端(读 DESIGN.md + asset bump)。
+- 状态:**PR0 doc 已 authored、待 owner 授权提交**;入库前不开 PR1。记忆见 `project_external_ai_deep_analysis`。
+
 ---
 
 ## Section 3 · Completed Items
@@ -247,6 +256,15 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-06-05 · 续 — worker-health 修复 + doc-slim 同步 push + External AI PR0)**: 三件均完成。① worker-health workflow 加 `if: always()`(失败时也上传 snapshot artifact),已 merged + push,origin/main 含该刀。② 发现整批 doc-slim 18 笔 + handoff **此前滞留本地未推**(origin 曾停在 ACLED `9fc995a1`),已随 worker-health 同次 fast-forward push 同步上 origin(无 force);Handoff 里被 rebase 改写的失效旧 SHA 已弱化为耐用措辞。③ External AI 深化 **PR0 设计契约** `docs/EXTERNAL_AI_ANALYST_INPUT_CONTRACT_REVIEW.md` 已 authored(Codex 起草 + Claude 逐行交叉核 5 轮)、check:docs 绿、doc 内自洽,**仍 untracked 未提交**。
+- **当前进行中(2026-06-05 · 续)**: External AI 深化 PR0 = 完成待提交;本 P3-20 backlog 项 + 本 Handoff「续」段为 docs-only 补充(同 untracked,待同批提交)。
+- **下一步建议(2026-06-05 · 续)**: owner 授权后提交 PR0 doc + 本 backlog/handoff(message 已拟);入库后再开 **PR1**(`extractAnalystSiteDataV2()` + redaction,只产 artifact、不碰生产)。serial-trunk 一刀一结,PR0 入库前不开 PR1。详见 [`EXTERNAL_AI_ANALYST_INPUT_CONTRACT_REVIEW.md`](EXTERNAL_AI_ANALYST_INPUT_CONTRACT_REVIEW.md) + 记忆 `project_external_ai_deep_analysis`。
+- **阻塞或等待(2026-06-05 · 续)**: 等 owner 明确授权 git 提交(AGENTS 10.4);无技术阻塞。
+
+---
+
+> 以下为同日早段(.md doc-slim 审计)留档,当前状态以上方「续」段为准。
 
 - **上次会话结束于(2026-06-05 — 全站 .md 文档审计/瘦身 1a→5余项 全轮收官)**: doc-slim audit 全部完成并在当前 main 序列(Batch 1a / 1b / 1c / 2 / 2b / 3 / 3b / 5-checkpoint / 4 / 5余项;原钉的 commit SHA 因 2026-06-05 push 前 rebase 换基已全部改写,故不再逐一钉旧哈希);各批 check:all 绿、git diff --check clean。Batch 1=三大 Operating Doc changelog tail 折 B-consolidated 索引;2/2b=External AI 簇收口(14 banner + READINESS_CHECKLIST 1111→422 折表);3/3b=Market Pricing 簇收口(13 banner + TEMPERATURE_DATA_SOURCE_DESIGN 529→340 折表);4=M92/M93 plain-summary 4 docs INDEX Historical + 2 banner;5余项=M94_V0/DESIGN plain-summary reconcile→retired + 三段 attribution(checker `5eff6ab` / renderer `c8229574` / DOM `91d06f3d`)。
 - **当前进行中(2026-06-05 — doc audit)**: 无。整轮 .md doc-slim audit(Batch 1a→5余项)全部收官。
