@@ -9,7 +9,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 项 | 当前值 |
 |---|---|
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分)|
-| Cache version | `odp-data-cache-1` |
+| Cache version | `m94-css-cleanup-1` |
 | check:all 项数 | 16 顶层项 / ~56 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 8 leaf,含 PR2 backtest GATE + PR3 score + PR4 zh-copy)|
 | 最后审计日期 | 2026-06-05(全站 `.md` doc-slim 审计 Batch 1a→5余项,docs-only;两大 scope-of-record 簇 External AI / Market Pricing 收口 + 三 Operating Document changelog tail 折叠,详见 Section 5 + Session Handoff)。上次系统审计 2026-06-02(Codex 只读审计 7 findings 全收口,详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
