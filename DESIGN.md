@@ -252,7 +252,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 | `#method-evidence` | `var(--paper-ink)` | 中性 appendix |
 | `#external-ai-auxiliary` | `var(--paper-muted)` | 辅助层 |
 | `#execution-risk-detail` | `var(--risk-red)` | 风控严重性 |
-| `#plain-summary-card` | n/a (preface, no accent band required) | non-nav preface block |
+| `#plain-summary-card` | n/a (preface, no accent band required) | non-nav preface block — 已退场 / historical preface block(M-94 退场) |
 
 **视觉规范**：
 - 顶部 `border-top: 4px solid var(--section-accent)`
@@ -627,7 +627,7 @@ var(--font-mono)              /* IBM Plex Mono */
 #execution-risk-detail        执行与风控详情（红色带，折叠）
 
 ─── non-nav preface（可选，不进 jump nav，不计入 IA 编号）───
-#plain-summary-card           普通用户 preface block（M-93A0 / 优化路径 3）
+#plain-summary-card           普通用户 preface block（M-93A0 / 优化路径 3 · 已退场 / historical preface block,M-94 退场）
 ```
 
 ---

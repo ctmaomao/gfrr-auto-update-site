@@ -1,6 +1,6 @@
 # M-93A V2 Source Review Spec · 普通用户摘要 Section
 
-> **STATUS (2026-06):** Historical artifact — preserved as a pre-implementation source-review / spec record. The 2026-05 runtime path reviewed here (`#plain-summary-card` / `renderPlainSummary.js` / `check-plain-summary-card-contract.mjs`) shipped and was later retired by the M-94 V0 Path C frontend rebuild (deleted in `c8229574`, "stage 2: delete 13 legacy frontend files"); residual style/contract references are tracked as **M-94 cleanup debt, not evidence that this spec is pending**. Not a current behavior contract; retained as milestone background only. Current frontend authority: `docs/M94_V0_DATA_CONTRACT.md` + `DESIGN.md`.
+> **STATUS (2026-06):** Historical artifact — preserved as a pre-implementation source-review / spec record. The 2026-05 runtime path reviewed here (`#plain-summary-card` / `renderPlainSummary.js` / `check-plain-summary-card-contract.mjs`) shipped and was later retired across the M-94 V0 Path C cleanup/rebuild path (checker `check-plain-summary-card-contract.mjs` deleted in `5eff6ab` stage 1; `renderPlainSummary.js` in `c8229574` stage 2; `#plain-summary-card` DOM removed in `91d06f3d`); residual style/contract references are tracked as **M-94 cleanup debt, not evidence that this spec is pending**. Not a current behavior contract; retained as milestone background only. Current frontend authority: `docs/M94_V0_DATA_CONTRACT.md` + `DESIGN.md`.
 
 审阅日期: 2026-05-24  
 输入依据: `docs/USER_LANGUAGE_AUDIT_M93_V1.md`、owner 拍板的 M-93A V0 设计、当前 `main` 已合并的 PR #244。  

@@ -1,5 +1,7 @@
 # M-94 V0 — Data Consumption Contract v3.1
 
+> **STATUS (2026-06):** This file **remains the authority** for the M-94 data-consumption contract (JSON fields → frontend display) and the mock v2.1 visual baseline. But its body also retains **PR 2b / Path C implementation-period language** — acceptance checklists, 不动清单, and module / checker / renderer references — and **any such reference that conflicts with the current tree is historical implementation residue, not a current instruction.** In particular, `#plain-summary-card` / `renderPlainSummary.js` / `check-plain-summary-card-contract.mjs` were **retired** across the M-94 V0 Path C cleanup/rebuild path after this v3.1 contract was written (`check-plain-summary-card-contract.mjs` deleted in `5eff6ab` stage 1; `renderPlainSummary.js` in `c8229574` stage 2; `#plain-summary-card` DOM removed in `91d06f3d`) — **retired, not pending** — so in-body lines such as "plain summary 完全保留 / 已稳定 / `check:plain-summary-card-contract` / `git diff … renderPlainSummary.js 必须为 0` / 不动 plain-summary-card assertion" are stale. (The orphaned `assets/styles.css .plain-summary-section` CSS is tracked as a separate frontend cleanup.)
+
 > **Status**: V0 Draft v3.1 (PR 2b ✅ merged + 路径 C 启动 — Mock v2.1 成为唯一权威视觉基准)
 > **PR 路径**: PR 1 ✅ merged · PR 2a ✅ merged · PR 2b ✅ merged · PR 2c = **路径 C 前台从零重写(7 stages,详见 docs/m94-v0/M94_V0_FRONTEND_REBUILD_PLAN.md)**
 > **Scope**: 前端展示 only · 不动 scoring / decision / execution / position / Worker / data pipeline / JSON 生产结构
