@@ -63,6 +63,17 @@ function replaceFrontendAssetVersion(text) {
     // docs/MILESTONE_INDEX.md Active line "当前 `X`;`check:all`" (suffix-anchored
     // so it never touches Handoff/history references to past versions)
     .replace(/(当前 `)[A-Za-z0-9._-]+(`;`check:all`)/gu, `$1${version}$2`)
+    // Inline "current version" prose snapshots that defer to scripts/app.js APP_VERSION
+    // (AGENTS.md §1, docs/DATA_CONTRACT.md, docs/OPERATIONS.md, worker README). These used
+    // to go stale on every bump — the tool flipped the surrounding ?v=/command examples but
+    // not the parenthetical snapshot, leaving same-line self-contradiction. Anchored on
+    // "为准…现 `X`", a phrasing that only ever means "currently X" (never a historical
+    // "在 X 版本中…" ref); full/half-width （ and ， both covered.
+    .replace(/(为准[（(，,]现\s*`)[A-Za-z0-9._-]+(`)/gu, `$1${version}$2`)
+    // Console-line variant "…APP_VERSION=<版本>`（当前 `X`）" — anchored on the literal
+    // APP_VERSION=<版本>` code span so historical "当前 X" prose elsewhere is left alone.
+    // DATA_CONTRACT uses half-width "(当前 )", OPERATIONS uses full-width "（当前 ）".
+    .replace(/(APP_VERSION=<版本>`[（(]当前\s*`)[A-Za-z0-9._-]+(`)/gu, `$1${version}$2`)
     // "<version> Frontend Asset Cache Busting" heading: write the exact canonical
     // version argument with NO auto-prefix. Descriptive versions like
     // odp-hero-ref-1 must not become vodp-hero-ref-1; a numeric arg like
