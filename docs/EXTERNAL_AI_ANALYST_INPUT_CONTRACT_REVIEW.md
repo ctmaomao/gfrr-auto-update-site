@@ -350,10 +350,11 @@ Minimum sourceAttribution quality for canary:
 
 Initial confidence cap:
 
-- max `confidence.level`: `low-medium`
+- max `confidence.level`: `medium` (the legal enum used for low-to-medium semantics; `high` is not allowed for `analyst_compact_v1`)
 - max `confidence.score`: `45`
 - default range if usable: 25-40
 - score above 40 requires at least 5 distinct source layers, no stale critical layers, and no quality-review warning about weak attribution.
+- current output validators only allow `low | medium | high`; do not emit `low-medium` as a literal enum unless a later contract migration changes validators and schema together.
 
 Suggested `confidence.reasonZh`:
 
@@ -408,7 +409,7 @@ Future production output may add:
       "summaryZh": "string",
       "supportingLayers": ["macroDrivers.credit", "rateVol", "marketPricing"],
       "conflictingLayers": ["string"],
-      "confidence": "low|low-medium"
+      "confidence": "low|medium"
     }
   ],
   "keyDivergences": [
@@ -425,7 +426,7 @@ Future production output may add:
     "scenarioRefs": ["scenarioTree[0]"],
     "triggerConditions": ["string"],
     "invalidationConditions": ["string"],
-    "confidence": "low|low-medium"
+    "confidence": "low|medium"
   },
   "dataQualityLens": {
     "summaryZh": "string",
@@ -437,7 +438,7 @@ Future production output may add:
 }
 ```
 
-These fields require updates to prompt schema, output validator, production contract validator, projection, data contract docs, and frontend renderer. They are not part of PR1 / PR2 canary unless kept as non-production artifact-only fields.
+These fields require updates to prompt schema, output validator, production contract validator, projection, data contract docs, and frontend renderer. They are not part of PR1 / PR2 canary unless kept as non-production artifact-only fields. Until validators and production contracts explicitly add another enum, PR4 subfield confidence values must reuse legal output enum values (`low | medium | high`). The `analyst_compact_v1` cap still forbids `high` and keeps score at or below 45 unless a separately reviewed contract migration changes that rule.
 
 `max_tokens` may be revisited after schema design, but `2400 -> 5000` must not be the first lever.
 

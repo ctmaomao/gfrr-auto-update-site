@@ -60,6 +60,41 @@ export const UNSAFE_CONTENT = [
   '风控动作',
 ];
 
+export const OPERATION_LANGUAGE_PHRASES = [
+  '执行灯',
+  '执行',
+  '禁止新增',
+  '新增仓位',
+  '现金缓冲',
+  '现金',
+  '风险敞口',
+  '敞口带',
+  '总风险敞口',
+  '敞口',
+  '仓位',
+  '交易',
+  '买入',
+  '卖出',
+  '加仓',
+  '减仓',
+  '做多',
+  '做空',
+  '止损',
+  '止盈',
+  '建仓',
+  '平仓',
+  '满仓',
+  '清仓',
+  '立即执行',
+  '执行交易',
+  '操作信号',
+  '行动信号',
+  '交易信号',
+  '配置建议',
+  '风险动作',
+  '风控动作',
+];
+
 export const FORBIDDEN_SECRET_MARKERS = [
   'DEEPSEEK_API_KEY',
   'Authorization',
@@ -84,6 +119,10 @@ export const EXTERNAL_AI_BLOCKLIST_GROUPS = [
   {
     className: 'unsafe_content',
     phrases: UNSAFE_CONTENT,
+  },
+  {
+    className: 'operation_language',
+    phrases: OPERATION_LANGUAGE_PHRASES,
   },
   {
     className: 'secret_marker',

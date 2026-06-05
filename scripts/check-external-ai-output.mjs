@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { BANNED_COPY, UNSAFE_CLAIMS } from './external-ai/safety-constants.mjs';
+import { isAllowedExternalAiSourceLayer } from './external-ai/source-layers.mjs';
 
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-output-v28.0K-1.json';
 
@@ -271,8 +272,16 @@ function validateScenarioHypotheses(items, errors) {
   });
 }
 
-function validateSourceAttribution(sourceAttribution, errors, warnings) {
+function isAnalystCompactOutput(data) {
+  return (
+    Array.isArray(data?.auditFlags) &&
+    data.auditFlags.includes('analyst_compact_v1')
+  );
+}
+
+function validateSourceAttribution(data, sourceAttribution, errors, warnings) {
   if (!Array.isArray(sourceAttribution)) return;
+  const analystCompact = isAnalystCompactOutput(data);
 
   if (sourceAttribution.length === 0) {
     addError(errors, 'sourceAttribution must be a non-empty array');
@@ -295,6 +304,11 @@ function validateSourceAttribution(sourceAttribution, errors, warnings) {
   sourceAttribution.forEach((item, index) => {
     if (isPlainObject(item) && item.usesExternalMarketData === true) {
       addError(errors, `sourceAttribution[${index}].usesExternalMarketData must not be true in v28.0K-2`);
+    }
+    if (isPlainObject(item) && typeof item.sourceLayer === 'string') {
+      if (!isAllowedExternalAiSourceLayer(item.sourceLayer, { analyst: analystCompact })) {
+        addError(errors, `sourceAttribution[${index}].sourceLayer is not allowed for this input: ${item.sourceLayer}`);
+      }
     }
 
     const serialized = JSON.stringify(item);
@@ -366,6 +380,28 @@ function runSelfTests() {
       throw new Error(`self-test failed: expected failure for "${text}"`);
     }
   }
+
+  const analystSourceLayerErrors = [];
+  validateSourceAttribution(
+    { auditFlags: ['analyst_compact_v1'] },
+    [{ sourceLayer: 'macroDrivers.rateVol', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' }],
+    analystSourceLayerErrors,
+    []
+  );
+  if (analystSourceLayerErrors.length > 0) {
+    throw new Error(`self-test failed: expected analyst sourceLayer pass, got ${analystSourceLayerErrors.join('; ')}`);
+  }
+
+  const legacySourceLayerErrors = [];
+  validateSourceAttribution(
+    { auditFlags: ['site_structured_data_only'] },
+    [{ sourceLayer: 'macroDrivers.rateVol', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' }],
+    legacySourceLayerErrors,
+    []
+  );
+  if (legacySourceLayerErrors.length === 0) {
+    throw new Error('self-test failed: expected legacy sourceLayer rejection for macroDrivers.rateVol');
+  }
 }
 
 function validateOutput(data) {
@@ -380,7 +416,7 @@ function validateOutput(data) {
   validateConfidence(data.confidence, errors);
   validateBoundaries(data.boundaries, errors);
   validateScenarioHypotheses(data.scenarioHypotheses, errors);
-  validateSourceAttribution(data.sourceAttribution, errors, warnings);
+  validateSourceAttribution(data, data.sourceAttribution, errors, warnings);
   validateRecursiveStrings(data, errors);
 
   return { errors, warnings };

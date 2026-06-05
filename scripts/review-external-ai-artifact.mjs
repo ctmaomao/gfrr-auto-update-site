@@ -3,6 +3,9 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { OPERATION_LANGUAGE_PHRASES } from './external-ai/safety-constants.mjs';
+import { isAllowedExternalAiSourceLayer } from './external-ai/source-layers.mjs';
+
 const REVIEW_VERSION = 'v28.0K-4F';
 const DEFAULT_INPUT = 'manual-artifacts/external-ai/deepseek-output-latest.json';
 const DEFAULT_OUTPUT = 'manual-artifacts/external-ai/external-ai-quality-review-latest.json';
@@ -18,40 +21,6 @@ const UNSAFE_OUTPUT_FILES = new Set([
   'index.html',
   'scripts/app.js'
 ]);
-const OPERATION_LANGUAGE_PHRASES = [
-  '执行灯',
-  '执行',
-  '禁止新增',
-  '新增仓位',
-  '现金缓冲',
-  '现金',
-  '风险敞口',
-  '敞口带',
-  '总风险敞口',
-  '敞口',
-  '仓位',
-  '交易',
-  '买入',
-  '卖出',
-  '加仓',
-  '减仓',
-  '做多',
-  '做空',
-  '止损',
-  '止盈',
-  '建仓',
-  '平仓',
-  '满仓',
-  '清仓',
-  '立即执行',
-  '执行交易',
-  '操作信号',
-  '行动信号',
-  '交易信号',
-  '配置建议',
-  '风险动作',
-  '风控动作'
-];
 const UNSUPPORTED_EXTERNAL_CLAIMS = [
   '已接入新闻验证',
   '已经外部验证',
@@ -276,10 +245,14 @@ function classifySourceSemantics(data) {
     serializedAttribution.includes('样例输入') ||
     serializedAttribution.includes('样例结构化输入') ||
     serializedAll.includes('sample_input_only');
+  const isAnalystCompact =
+    serializedAll.includes('analyst_compact_v1') ||
+    serializedAll.includes('site_structured_analyst_evidence_pack');
 
   return {
     appearsSiteStructured: hasSiteStructured,
-    appearsSample: hasSample
+    appearsSample: hasSample,
+    isAnalystCompact
   };
 }
 
@@ -318,6 +291,41 @@ function reviewExecutionLanguageSafety(review, strings) {
   }
 }
 
+function runSelfTests() {
+  for (const phrase of ['禁止新增', '新增仓位', '现金缓冲', '风险敞口', '敞口带', '总风险敞口', '执行交易']) {
+    if (!OPERATION_LANGUAGE_PHRASES.includes(phrase)) {
+      throw new Error(`self-test failed: operation language phrase missing from canonical safety constants: ${phrase}`);
+    }
+  }
+
+  const review = createBaseReview('self-test.json', {});
+  reviewExecutionLanguageSafety(review, [{ path: '$.summaryZh', value: '这里包含执行交易措辞' }]);
+  if (review.scores.executionLanguageSafety !== 'fail') {
+    throw new Error('self-test failed: operation language should fail quality review');
+  }
+
+  const analystReview = createBaseReview('self-test.json', {});
+  reviewSourceAttributionCoverage(
+    {
+      sourceAttribution: [
+        { sourceLayer: 'macroDrivers.rateVol', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' },
+        { sourceLayer: 'decisionContext.sanitized', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' },
+        { sourceLayer: 'marketPricing', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' },
+        { sourceLayer: 'scenarioTree', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' },
+        { sourceLayer: 'dataQuality', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' },
+        { sourceLayer: 'modules', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' },
+        { sourceLayer: 'worldOrderStress', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' },
+        { sourceLayer: 'oilDirectionalPressure', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' },
+      ],
+    },
+    analystReview,
+    { appearsSiteStructured: true, appearsSample: false, isAnalystCompact: true }
+  );
+  if (analystReview.scores.sourceAttributionCoverage === 'fail') {
+    throw new Error(`self-test failed: analyst sourceLayer coverage should not fail: ${analystReview.errors.join('; ')}`);
+  }
+}
+
 function reviewUnsupportedExternalClaims(review, strings) {
   for (const { path: stringPath, value } of strings) {
     const matches = lowerIncludesAny(value, UNSUPPORTED_EXTERNAL_CLAIMS);
@@ -329,18 +337,39 @@ function reviewUnsupportedExternalClaims(review, strings) {
 
 function reviewSourceAttributionCoverage(data, review, sourceSemantics) {
   const sourceAttribution = Array.isArray(data.sourceAttribution) ? data.sourceAttribution : [];
-  if (sourceAttribution.length < 5) {
-    markScore(review, 'sourceAttributionCoverage', 'warn', 'sourceAttribution has fewer than 5 items.');
+  const minimumAttributions = sourceSemantics.isAnalystCompact ? 8 : 5;
+  const minimumDistinctLayers = sourceSemantics.isAnalystCompact ? 5 : 3;
+
+  if (sourceAttribution.length < minimumAttributions) {
+    markScore(
+      review,
+      'sourceAttributionCoverage',
+      'warn',
+      `sourceAttribution has fewer than ${minimumAttributions} items.`
+    );
   }
 
   const distinctLayers = new Set();
   for (const item of sourceAttribution) {
     if (isPlainObject(item) && typeof item.sourceLayer === 'string' && item.sourceLayer.length > 0) {
       distinctLayers.add(item.sourceLayer);
+      if (!isAllowedExternalAiSourceLayer(item.sourceLayer, { analyst: sourceSemantics.isAnalystCompact })) {
+        markScore(
+          review,
+          'sourceAttributionCoverage',
+          'fail',
+          `sourceAttribution contains unsupported sourceLayer for this input: ${item.sourceLayer}`
+        );
+      }
     }
   }
-  if (distinctLayers.size < 3) {
-    markScore(review, 'sourceAttributionCoverage', 'warn', 'sourceAttribution covers fewer than 3 distinct sourceLayer values.');
+  if (distinctLayers.size < minimumDistinctLayers) {
+    markScore(
+      review,
+      'sourceAttributionCoverage',
+      'warn',
+      `sourceAttribution covers fewer than ${minimumDistinctLayers} distinct sourceLayer values.`
+    );
   }
 
   if (sourceSemantics.appearsSiteStructured && sourceAttribution.some((item) => item?.claimType === 'sample_input')) {
@@ -368,6 +397,15 @@ function reviewConfidenceReasonableness(data, review, sourceSemantics) {
   }
   if (level === 'high' && weakAttribution) {
     markScore(review, 'confidenceReasonableness', 'fail', 'confidence.level is high while source attribution is weak.');
+  }
+  if (sourceSemantics.isAnalystCompact && level === 'high') {
+    markScore(review, 'confidenceReasonableness', 'fail', 'analyst_compact_v1 output must not use confidence.level=high.');
+  }
+  if (sourceSemantics.isAnalystCompact && typeof score === 'number' && score > 45) {
+    markScore(review, 'confidenceReasonableness', 'fail', 'analyst_compact_v1 confidence.score must be <= 45.');
+  }
+  if (sourceSemantics.isAnalystCompact && typeof score === 'number' && score > 40 && weakAttribution) {
+    markScore(review, 'confidenceReasonableness', 'warn', 'analyst_compact_v1 confidence.score above 40 requires stronger source attribution.');
   }
   if (typeof score === 'number' && score > 60) {
     markScore(review, 'confidenceReasonableness', 'warn', 'confidence.score is above 60 without external independent verification.');
@@ -417,7 +455,7 @@ function reviewBoundaries(data, review) {
   }
 }
 
-function reviewIncrementalValue(data, review) {
+function reviewIncrementalValue(data, review, sourceSemantics) {
   const synthesisText = JSON.stringify({
     summaryZh: data.summaryZh,
     inferences: data.inferences,
@@ -432,14 +470,22 @@ function reviewIncrementalValue(data, review) {
     /marketConfirmation|market confirmation|市场确认/i,
     /dailyBrief|macroState|宏观/i,
     /dataHealth|freshness|数据健康|新鲜度/i,
-    /rate|rates|利率|美债/i
+    /rate|rates|利率|美债/i,
+    /scenarioTree|情景|触发|证伪/i,
+    /transmissionChain|传导/i,
+    /regimeProbabilities|regime|概率/i,
+    /marketPricing|定价/i,
+    /oilDirectionalPressure|oilDirectional|ODP|原油方向/i,
+    /worldOrderStress|worldOrder|秩序/i,
+    /dataQuality|fallback|stale|missing|数据质量/i
   ];
   const layersMentioned = layerSignals.filter((pattern) => pattern.test(synthesisText)).length;
+  const minimumEvidenceFamilies = sourceSemantics.isAnalystCompact ? 3 : 2;
 
   if (typeof data.summaryZh !== 'string' || data.summaryZh.trim().length === 0) {
     markScore(review, 'incrementalValue', 'warn', 'summaryZh is missing or empty.');
   }
-  if (layersMentioned < 2) {
+  if (layersMentioned < minimumEvidenceFamilies) {
     markScore(review, 'incrementalValue', 'warn', 'artifact appears to repeat facts with limited cross-layer synthesis.');
   }
 }
@@ -536,11 +582,12 @@ async function reviewValidOutput(inputPath, outputPath, data) {
   reviewConfidenceReasonableness(data, review, sourceSemantics);
   reviewStructureQuality(data, review);
   reviewBoundaries(data, review);
-  reviewIncrementalValue(data, review);
+  reviewIncrementalValue(data, review, sourceSemantics);
 
   review.notes.push(`reviewArtifactPath=${outputPath}`);
   if (sourceSemantics.appearsSiteStructured) review.notes.push('sourceSemantics=site_structured_data');
   if (sourceSemantics.appearsSample) review.notes.push('sourceSemanticsIncludesSampleMarkers=true');
+  if (sourceSemantics.isAnalystCompact) review.notes.push('sourceSemantics=analyst_compact_v1');
 
   return finalizeReview(review);
 }
@@ -582,6 +629,8 @@ function printReviewResult(review, outputPath) {
 }
 
 async function main() {
+  runSelfTests();
+
   let options;
   try {
     options = parseArgs(process.argv.slice(2));

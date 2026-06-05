@@ -10,6 +10,12 @@ import {
   createExternalAiProviderAdapter,
   normalizeExternalAiProvider
 } from './external-ai/provider-adapters.mjs';
+import { OPERATION_LANGUAGE_PHRASES } from './external-ai/safety-constants.mjs';
+import {
+  formatSourceLayerAllowlist,
+  getAnalystSourceLayersForInput,
+  LEGACY_EXTERNAL_AI_SOURCE_LAYERS,
+} from './external-ai/source-layers.mjs';
 
 const CONTRACT_VERSION = 'v28.0K-4D';
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-input-v28.0K-1.json';
@@ -76,6 +82,23 @@ const LOCAL_COMPACT_SOURCE_SEMANTICS_RULES = [
   'Do not invent external facts.',
   'Do not treat local_compact as a trading signal.'
 ];
+
+const ANALYST_COMPACT_SOURCE_SEMANTICS_RULES = [
+  'For analyst_compact_v1, auditFlags should include site_structured_data_only and analyst_compact_v1.',
+  'For analyst_compact_v1, sourceSemantics should remain site_structured_analyst_evidence_pack_v1 if available.',
+  'For analyst_compact_v1, use only the provided site-structured analyst evidence pack. Do not browse, fetch, or claim independent external verification.',
+  'For analyst_compact_v1, write cross-layer synthesis into summaryZh and inferences using at least three evidence families when available.',
+  'For analyst_compact_v1, detect abnormal divergences or cross-layer contradictions in modelJudgments and inferences, and name the sourceLayer values that conflict.',
+  'For analyst_compact_v1, scenarioHypotheses should express scenario lean as watch conditions with triggerConditions and invalidationConditions, not predictions.',
+  'For analyst_compact_v1, use dataQuality stale/fallback/missing evidence to lower confidence and to write specific dataGaps and confidence.reasonZh.',
+  'For analyst_compact_v1, sourceAttribution should include at least 8 objects and at least 5 distinct sourceLayer values, with target coverage of 8 or more layers.',
+  'For analyst_compact_v1, do not add PR4-only fields such as crossLayerSynthesis, keyDivergences, scenarioLean, or dataQualityLens; use the existing output fields only.',
+  'For analyst_compact_v1, keep confidence.score in the 25-40 range by default; score above 40 requires at least 5 distinct sourceLayer values and no critical stale/fallback layers; never exceed 45.',
+];
+
+function formatUnsafeOutputPhrases() {
+  return [...new Set(OPERATION_LANGUAGE_PHRASES)].join(', ');
+}
 
 function fail(message) {
   console.error(message);
@@ -162,14 +185,34 @@ function validateInput(input) {
   assert(typeof input.generatedAt === 'string' && input.generatedAt.length > 0, errors, 'generatedAt must be a non-empty string');
   assert(input.siteData && typeof input.siteData === 'object', errors, 'siteData must be an object');
 
-  for (const field of [
-    'dailyBrief',
-    'divergenceLayer',
-    'brentPricingLayer',
-    'aiInterpretationLayer',
-    'dataHealth',
-    'decisionContext'
-  ]) {
+  const requiredSiteDataFields = isAnalystCompactInput(input)
+    ? [
+      'dailyBrief',
+      'macroDrivers',
+      'riskModules',
+      'regimeProbabilities',
+      'scenarioTree',
+      'transmissionChain',
+      'heatmap',
+      'divergenceLayer',
+      'brentPricingLayer',
+      'oilDirectionalPressure',
+      'worldOrderStress',
+      'marketPricing',
+      'dataQuality',
+      'ruleBasedBaseline',
+      'decisionContext'
+    ]
+    : [
+      'dailyBrief',
+      'divergenceLayer',
+      'brentPricingLayer',
+      'aiInterpretationLayer',
+      'dataHealth',
+      'decisionContext'
+    ];
+
+  for (const field of requiredSiteDataFields) {
     assert(Boolean(getPath(input, ['siteData', field])), errors, `siteData.${field} is required`);
   }
 
@@ -188,6 +231,9 @@ function validateInput(input) {
 function collectLayersAvailable(input) {
   const layers = [];
   const siteData = input.siteData || {};
+  if (isAnalystCompactInput(input)) {
+    return getAnalystSourceLayersForInput(input);
+  }
   for (const field of ['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'aiInterpretationLayer', 'dataHealth', 'decisionContext']) {
     if (siteData[field]) layers.push(field);
   }
@@ -216,7 +262,14 @@ async function writeOutputFile(outputPath, text) {
   await fs.writeFile(outputPath, text, 'utf8');
 }
 
-function buildDeepSeekSystemPrompt() {
+function buildDeepSeekSystemPrompt(input = null) {
+  const promptSemantics = input
+    ? getInputPromptSemantics(input)
+    : {
+      sourceKind: 'site_structured_data',
+      sourceSemanticsRules: LOCAL_COMPACT_SOURCE_SEMANTICS_RULES,
+      sourceLayerAllowlist: LEGACY_EXTERNAL_AI_SOURCE_LAYERS.join(', ')
+    };
   return [
     'You are a display-only external AI explanation layer for Global Financial Risk Radar manual testing.',
     'Use only the provided structured JSON input. Do not browse. Do not invent market data. Do not claim independent sources.',
@@ -228,12 +281,12 @@ function buildDeepSeekSystemPrompt() {
     'User-facing text must be Chinese, professional, restrained, and non-sensational.',
     'Separate facts, inferences, modelJudgments, scenarioHypotheses, dataGaps, invalidationSignals, sourceAttribution, auditFlags, confidence, and boundaries.',
     'Do not provide investment advice, trading instructions, deterministic crisis claims, war probability, or world-war predictions.',
-    'Global unsafe wording rule: the following Chinese phrases must not appear anywhere in any returned string field: 投资建议, 交易建议, 买入, 卖出, 加仓, 减仓, 满仓, 清仓, 立即执行, 执行交易, 仓位建议, 执行灯, 禁止新增, 新增仓位, 现金缓冲, 风险敞口, 敞口带, 总风险敞口, 仓位.',
+    `Global unsafe wording rule: the following Chinese phrases must not appear anywhere in any returned string field: ${formatUnsafeOutputPhrases()}.`,
     'This global unsafe wording rule applies to summaryZh, facts, inferences, modelJudgments, scenarioHypotheses, dataGaps, invalidationSignals, sourceAttribution.noteZh, auditFlags, confidence.reasonZh, and every other text field.',
     'Do not write disclaimer sentences using these unsafe phrases. Do not write 不构成交易建议 or 不构成投资建议 in any text field.',
     'Express safety boundaries only through boundaries.notInvestmentAdvice=true and the other boolean boundaries.',
     'auditFlags must contain short neutral diagnostic tags only, not prose sentences.',
-    'Allowed auditFlags vocabulary includes manual_artifact_only, sample_input_only, site_structured_data_only, validator_required, non_production_output, and no_frontend_display.',
+    'Allowed auditFlags vocabulary includes manual_artifact_only, sample_input_only, site_structured_data_only, analyst_compact_v1, validator_required, non_production_output, and no_frontend_display.',
     'Use source-appropriate auditFlags only: sample fixture output may include sample_input_only, while live/local site structured output may include site_structured_data_only.',
     'Never include both sample_input_only and site_structured_data_only in the same output.',
     'The output is artifact-only and non-production. It must add incremental analytical value beyond restating the input fields.',
@@ -247,8 +300,8 @@ function buildDeepSeekSystemPrompt() {
     ...SOURCE_ATTRIBUTION_OUTPUT_RULES,
     'auditFlags output requirements:',
     ...AUDIT_FLAGS_OUTPUT_RULES,
-    'local_compact source semantics requirements:',
-    ...LOCAL_COMPACT_SOURCE_SEMANTICS_RULES,
+    `${promptSemantics.sourceKind} source semantics requirements:`,
+    ...promptSemantics.sourceSemanticsRules,
     'sourceAttribution must be an array of objects, not a string and not an array of strings.',
     'Each sourceAttribution object must include sourceLayer, field, claimType, and noteZh.',
     'Each sourceAttribution.noteZh must include validator-recognized attribution wording: 样例结构化输入, 站内结构化数据, or sample input.',
@@ -257,7 +310,7 @@ function buildDeepSeekSystemPrompt() {
     'Do not call live site radar-data sample data. Do not write 样例输入 or 样例结构化输入 when input source is local_file or allowed_live_url.',
     'Do not use only 来自提供的结构化输入 because it may not satisfy validator attribution keyword detection.',
     'Keep claimType as one of site_structured_data, rule_based_interpretation, or sample_input.',
-    'Every factual claim should map to one provided structured input layer: dailyBrief, divergenceLayer, brentPricingLayer, macroDrivers.consumer, aiInterpretationLayer, dataHealth, or decisionContext.',
+    `Every factual claim should map to one provided structured input layer from this allowlist: ${promptSemantics.sourceLayerAllowlist}.`,
     'sourceAttribution must cover the main factual claims and the main inference/model judgment claims.',
     'summaryZh should synthesize what the site-structured data suggests, what remains uncertain, and which evidence would invalidate the interpretation.',
     'scenarioHypotheses must be framed as watch conditions and invalidation logic, not predictions.',
@@ -271,9 +324,41 @@ function buildDeepSeekSystemPrompt() {
   ].join('\n');
 }
 
+function isAnalystCompactInput(input) {
+  return (
+    input?.inputSource === 'analyst_compact_v1' ||
+    input?.sourceMode === 'manual_analyst_compact_v1' ||
+    input?.sourceSemantics === 'site_structured_analyst_evidence_pack_v1' ||
+    input?.source?.dataSemantics === 'site_structured_analyst_evidence_pack_v1' ||
+    input?.compaction?.mode === 'analyst_compact_v1'
+  );
+}
+
 function getInputPromptSemantics(input) {
   const sourceType = input?.source?.type;
   const inputVersion = typeof input?.inputVersion === 'string' ? input.inputVersion : '';
+  if (isAnalystCompactInput(input)) {
+    return {
+      sourceKind: 'site_structured_analyst_evidence_pack',
+      claimType: 'site_structured_data',
+      noteZh: '来自站内结构化数据',
+      auditFlags: [
+        'manual_artifact_only',
+        'site_structured_data_only',
+        'analyst_compact_v1',
+        'validator_required',
+        'non_production_output',
+        'no_frontend_display'
+      ],
+      sourceSemanticsRules: ANALYST_COMPACT_SOURCE_SEMANTICS_RULES,
+      sourceLayerAllowlist: formatSourceLayerAllowlist(input, { analyst: true }),
+      defaultConfidence: {
+        level: 'medium',
+        score: 35
+      },
+      confidenceGuidance: 'For analyst_compact_v1 site-structured evidence packs without external independent verification, confidence.score should usually be 25-40. Use confidence.level low or medium only; treat medium as low-medium, never high. A score above 40 requires at least 5 distinct sourceLayer values, no critical stale/fallback layers, and no quality-review warning about weak attribution. Never exceed confidence.score 45. confidence.reasonZh should say 基于站内结构化数据的跨层证据包生成，未接入外部独立取数或新闻验证.'
+    };
+  }
   const isSiteRadarData = (
     sourceType === 'local_file' ||
     sourceType === 'allowed_live_url' ||
@@ -292,6 +377,12 @@ function getInputPromptSemantics(input) {
         'non_production_output',
         'no_frontend_display'
       ],
+      sourceSemanticsRules: LOCAL_COMPACT_SOURCE_SEMANTICS_RULES,
+      sourceLayerAllowlist: LEGACY_EXTERNAL_AI_SOURCE_LAYERS.join(', '),
+      defaultConfidence: {
+        level: 'low',
+        score: 30
+      },
       confidenceGuidance: 'For live/local site structured input without external independent verification, confidence.score should usually be 20-40. Keep confidence.level low unless evidence is very strong. Do not use score 0 when structured input is usable. confidence.reasonZh should say 基于站内结构化数据，尚未接入外部独立验证.'
     };
   }
@@ -306,6 +397,12 @@ function getInputPromptSemantics(input) {
       'non_production_output',
       'no_frontend_display'
     ],
+    sourceSemanticsRules: [],
+    sourceLayerAllowlist: LEGACY_EXTERNAL_AI_SOURCE_LAYERS.join(', '),
+    defaultConfidence: {
+      level: 'low',
+      score: 10
+    },
     confidenceGuidance: 'For sample fixture input, confidence.score should usually be 10-30 when the structured fixture input is usable. Keep confidence.level low or low-medium. Do not use score 0 for usable structured fixture input, and do not overstate certainty. confidence.reasonZh may mention 样例结构化输入.'
   };
 }
@@ -343,8 +440,8 @@ function buildDeepSeekUserPrompt(input) {
       ],
       auditFlags: promptSemantics.auditFlags,
       confidence: {
-        level: 'low',
-        score: promptSemantics.sourceKind === 'site_structured_data' ? 30 : 10,
+        level: promptSemantics.defaultConfidence.level,
+        score: promptSemantics.defaultConfidence.score,
         reasonZh: 'string'
       },
       boundaries: {
@@ -363,7 +460,7 @@ function buildDeepSeekUserPrompt(input) {
     '- If current time is unavailable, use the input generatedAt.',
     '- Do not invent a market-data timestamp; generatedAt is artifact metadata only.',
     'global unsafe wording requirements:',
-    '- The following Chinese phrases must not appear anywhere in any returned string field: 投资建议, 交易建议, 买入, 卖出, 加仓, 减仓, 满仓, 清仓, 立即执行, 执行交易, 仓位建议, 执行灯, 禁止新增, 新增仓位, 现金缓冲, 风险敞口, 敞口带, 总风险敞口, 仓位.',
+    `- The following Chinese phrases must not appear anywhere in any returned string field: ${formatUnsafeOutputPhrases()}.`,
     '- This includes summaryZh, facts, inferences, modelJudgments, scenarioHypotheses, dataGaps, invalidationSignals, sourceAttribution.noteZh, auditFlags, confidence.reasonZh, and every other text field.',
     '- Do not write disclaimer sentences using these phrases.',
     '- Do not write 不构成交易建议 or 不构成投资建议 in any text field.',
@@ -381,7 +478,7 @@ function buildDeepSeekUserPrompt(input) {
     '- Bad: any sentence containing 投资建议 or 交易建议.',
     '- Bad: any sentence containing 买入, 卖出, 加仓, 减仓, 仓位, or 执行.',
     'auditFlags requirements:',
-    '- Use only short neutral diagnostic tags such as manual_artifact_only, sample_input_only, site_structured_data_only, validator_required, non_production_output, and no_frontend_display.',
+    '- Use only short neutral diagnostic tags such as manual_artifact_only, sample_input_only, site_structured_data_only, analyst_compact_v1, validator_required, non_production_output, and no_frontend_display.',
     '- Use source-appropriate auditFlags only.',
     '- For sample fixture input, include sample_input_only and do not include site_structured_data_only.',
     '- For live/local site structured input, include site_structured_data_only and do not include sample_input_only.',
@@ -389,11 +486,11 @@ function buildDeepSeekUserPrompt(input) {
     '- The global unsafe wording rule also applies to auditFlags.',
     '- Express safety boundaries only through boundaries.notInvestmentAdvice=true and other boolean boundaries.',
     ...AUDIT_FLAGS_OUTPUT_RULES.map((rule) => `- ${rule}`),
-    ...LOCAL_COMPACT_SOURCE_SEMANTICS_RULES.map((rule) => `- ${rule}`),
+    ...promptSemantics.sourceSemanticsRules.map((rule) => `- ${rule}`),
     'sourceAttribution requirements:',
     '- sourceAttribution must be an array of objects, never a string and never an array of strings.',
     '- Each object must include sourceLayer, field, claimType, and noteZh.',
-    '- sourceLayer must be one of dailyBrief, divergenceLayer, brentPricingLayer, macroDrivers.consumer, aiInterpretationLayer, dataHealth, or decisionContext.',
+    `- sourceLayer must be one of: ${promptSemantics.sourceLayerAllowlist}.`,
     '- claimType must be one of site_structured_data, rule_based_interpretation, or sample_input.',
     '- noteZh must include validator-recognized attribution wording: 样例结构化输入, 站内结构化数据, or sample input.',
     `- This input source kind is ${promptSemantics.sourceKind}.`,
@@ -406,7 +503,7 @@ function buildDeepSeekUserPrompt(input) {
     '- Do not use only 来自提供的结构化输入 because it may not satisfy validator attribution keyword detection.',
     ...SOURCE_ATTRIBUTION_OUTPUT_RULES.map((rule) => `- ${rule}`),
     '- Every factual claim should map to one of the provided non-decisionContext structured input layers unless the claim is purely about data availability or metadata.',
-    '- Include enough sourceAttribution objects to cover the main facts plus the main inference/model judgment claims. Aim for at least five sourceAttribution objects across at least three sourceLayer values when the input supports it.',
+    `- Include enough sourceAttribution objects to cover the main facts plus the main inference/model judgment claims. Aim for at least ${promptSemantics.sourceKind === 'site_structured_analyst_evidence_pack' ? '8 sourceAttribution objects across at least 5 sourceLayer values' : 'five sourceAttribution objects across at least three sourceLayer values'} when the input supports it.`,
     '- Do not claim external web, news, or market verification.',
     'incremental value requirements:',
     '- Do not merely restate the input. Synthesize relationships across at least two provided layers when evidence exists.',
@@ -425,7 +522,8 @@ function buildDeepSeekUserPrompt(input) {
 }
 
 function buildPromptContractCheck(input) {
-  const combinedPrompt = `${buildDeepSeekSystemPrompt()}\n\n${buildDeepSeekUserPrompt(input)}`;
+  const promptSemantics = getInputPromptSemantics(input);
+  const combinedPrompt = `${buildDeepSeekSystemPrompt(input)}\n\n${buildDeepSeekUserPrompt(input)}`;
   const requiredRules = [
     'decisionContext is read-only background only.',
     'Do not put decisionContext terms into facts.',
@@ -439,11 +537,24 @@ function buildPromptContractCheck(input) {
     '执行灯',
     '操作信号',
     'site_structured_data_only',
-    'sourceSemantics should remain site_structured_data_compact_summary',
     'facts must contain only direct observations from non-decisionContext structured data layers',
     'Preferred noteZh for decisionContext: 只读系统状态背景，不作为解释层结论来源。',
     'auditFlags must be neutral diagnostic tags only.'
   ];
+  if (promptSemantics.sourceKind === 'site_structured_analyst_evidence_pack') {
+    requiredRules.push(
+      'site_structured_analyst_evidence_pack_v1',
+      'cross-layer synthesis',
+      'abnormal divergences',
+      'scenario lean',
+      'dataQuality stale/fallback/missing',
+      'Never exceed confidence.score 45',
+      'decisionContext.sanitized',
+      'macroDrivers.<safeKey>'
+    );
+  } else if (promptSemantics.sourceKind === 'site_structured_data') {
+    requiredRules.push('sourceSemantics should remain site_structured_data_compact_summary');
+  }
   const missingRules = requiredRules.filter((rule) => !combinedPrompt.includes(rule));
   return {
     status: missingRules.length === 0 ? 'pass' : 'fail',
@@ -470,7 +581,7 @@ async function runDeepSeekRequest({ input, apiKey, model, timeoutMs }) {
         thinking: { type: 'disabled' },
         response_format: { type: 'json_object' },
         messages: [
-          { role: 'system', content: buildDeepSeekSystemPrompt() },
+          { role: 'system', content: buildDeepSeekSystemPrompt(input) },
           { role: 'user', content: buildDeepSeekUserPrompt(input) }
         ]
       }),
