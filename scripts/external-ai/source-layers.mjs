@@ -27,6 +27,8 @@ export const ANALYST_EXTERNAL_AI_SOURCE_LAYER_FLOOR = [
 ];
 
 const SAFE_MACRO_DRIVER_SOURCE_LAYER = /^macroDrivers\.[A-Za-z][A-Za-z0-9_]*$/u;
+const LEGACY_PRODUCTION_SOURCE_LAYERS = ['local_compact', ...LEGACY_EXTERNAL_AI_SOURCE_LAYERS];
+const FIXTURE_PRODUCTION_SOURCE_LAYERS = ['fixture_sample'];
 
 export function isMacroDriverSourceLayer(sourceLayer) {
   return typeof sourceLayer === 'string' && SAFE_MACRO_DRIVER_SOURCE_LAYER.test(sourceLayer);
@@ -41,6 +43,12 @@ export function isAllowedExternalAiSourceLayer(sourceLayer, options = {}) {
     );
   }
   return LEGACY_EXTERNAL_AI_SOURCE_LAYERS.includes(sourceLayer);
+}
+
+export function isAllowedExternalAiProductionSourceLayer(sourceLayer, options = {}) {
+  if (options.fixture === true) return FIXTURE_PRODUCTION_SOURCE_LAYERS.includes(sourceLayer);
+  if (options.analyst === true) return isAllowedExternalAiSourceLayer(sourceLayer, { analyst: true });
+  return LEGACY_PRODUCTION_SOURCE_LAYERS.includes(sourceLayer);
 }
 
 export function getAnalystMacroDriverSourceLayers(input) {

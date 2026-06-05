@@ -1,6 +1,12 @@
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import {
+  EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT,
+  EXTERNAL_AI_LEGACY_PRODUCTION_CONTRACT,
+  EXTERNAL_AI_PRODUCTION_MODEL,
+} from './external-ai/production-contract.mjs';
+import { isAllowedExternalAiProductionSourceLayer } from './external-ai/source-layers.mjs';
 
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-output-v28.0K-1.json';
 const DEFAULT_OUTPUT = 'manual-artifacts/external-ai/external-ai-production-projection-latest.json';
@@ -262,6 +268,7 @@ function projectStringArray(items, label) {
 
 function detectSourceMapping(input) {
   const serialized = JSON.stringify(input).toLowerCase();
+  const auditFlags = Array.isArray(input.auditFlags) ? input.auditFlags : [];
   const sampleLike =
     input.provider === 'sample' ||
     input.contractVersion?.includes('sample') ||
@@ -276,23 +283,45 @@ function detectSourceMapping(input) {
       sourceMode: 'manual_artifact',
       inputSource: 'fixture_sample',
       sourceSemantics: 'sample_fixture',
-      sourceFlag: 'sample_input_only',
+      schemaVersion: EXTERNAL_AI_LEGACY_PRODUCTION_CONTRACT.schemaVersion,
+      sourceFlags: ['sample_input_only'],
       forbiddenSourceFlag: 'site_structured_data_only',
       sourceLayer: 'fixture_sample',
       claimType: 'sample_input',
       note: 'Sample input only; non-production projection dry-run source.',
+      preserveSourceLayer: false,
+      fixture: true,
+    };
+  }
+
+  const analystLike =
+    auditFlags.includes('analyst_compact_v1') ||
+    input.mode === 'analyst_compact_v1' ||
+    serialized.includes('analyst_compact_v1') ||
+    serialized.includes('site_structured_analyst_evidence_pack_v1');
+
+  if (analystLike) {
+    return {
+      ...EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT,
+      sourceFlags: EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.requiredAuditFlags,
+      forbiddenSourceFlag: 'sample_input_only',
+      sourceLayer: null,
+      claimType: 'site_structured_data',
+      note: '来自站内结构化数据',
+      preserveSourceLayer: true,
+      fixture: false,
     };
   }
 
   return {
-    sourceMode: 'manual_local_compact',
-    inputSource: 'local_compact',
-    sourceSemantics: 'site_structured_data_compact_summary',
-    sourceFlag: 'site_structured_data_only',
+    ...EXTERNAL_AI_LEGACY_PRODUCTION_CONTRACT,
+    sourceFlags: EXTERNAL_AI_LEGACY_PRODUCTION_CONTRACT.requiredAuditFlags,
     forbiddenSourceFlag: 'sample_input_only',
     sourceLayer: 'local_compact',
     claimType: 'site_structured_data',
     note: 'Site structured data only; non-production projection dry-run source.',
+    preserveSourceLayer: false,
+    fixture: false,
   };
 }
 
@@ -302,9 +331,33 @@ function projectSourceAttribution(items, mapping) {
   }
 
   return items.map((item, index) => {
+    if (mapping.preserveSourceLayer) {
+      if (!isPlainObject(item)) {
+        throw new Error(`sourceAttribution[${index}] must be an object for analyst_compact_v1 projection`);
+      }
+      if (typeof item.sourceLayer !== 'string' || item.sourceLayer.trim() === '') {
+        throw new Error(`sourceAttribution[${index}].sourceLayer is required for analyst_compact_v1 projection`);
+      }
+      if (!isAllowedExternalAiProductionSourceLayer(item.sourceLayer, { analyst: true })) {
+        throw new Error(`sourceAttribution[${index}].sourceLayer is not allowed for analyst_compact_v1 projection: ${item.sourceLayer}`);
+      }
+      if (typeof item.field !== 'string' || item.field.trim() === '') {
+        throw new Error(`sourceAttribution[${index}].field is required for analyst_compact_v1 projection`);
+      }
+      if (typeof item.claimType !== 'string' || item.claimType.trim() === '') {
+        throw new Error(`sourceAttribution[${index}].claimType is required for analyst_compact_v1 projection`);
+      }
+      return {
+        sourceLayer: item.sourceLayer,
+        field: item.field,
+        claimType: item.claimType,
+        noteZh: mapping.note,
+      };
+    }
+
     if (isPlainObject(item)) {
       return {
-        sourceLayer: typeof item.source === 'string' && item.source.trim() !== '' ? item.source : mapping.sourceLayer,
+        sourceLayer: mapping.sourceLayer,
         field: typeof item.field === 'string' && item.field.trim() !== '' ? item.field : `sourceAttribution[${index}]`,
         claimType:
           typeof item.claimType === 'string' && item.claimType.trim() !== '' ? item.claimType : mapping.claimType,
@@ -335,6 +388,14 @@ function projectConfidence(confidence, mapping) {
   }
   if (mapping.sourceMode === 'manual_local_compact' && confidence.level === 'high') {
     throw new Error('confidence.level=high is not allowed for manual_local_compact projection');
+  }
+  if (mapping.inputSource === EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.inputSource) {
+    if (confidence.level === 'high') {
+      throw new Error('confidence.level=high is not allowed for analyst_compact_v1 projection');
+    }
+    if (confidence.score > EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.maxConfidenceScore) {
+      throw new Error(`confidence.score must be <= ${EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.maxConfidenceScore} for analyst_compact_v1 projection`);
+    }
   }
   if (typeof confidence.reasonZh !== 'string' || confidence.reasonZh.trim() === '') {
     throw new Error('confidence.reasonZh must be a non-empty string');
@@ -407,7 +468,7 @@ function projectQualityReview(reviewPath, generatedAt, mapping) {
 function projectAuditFlags(mapping) {
   return [
     'manual_artifact_only',
-    mapping.sourceFlag,
+    ...mapping.sourceFlags,
     'validator_required',
     'non_production_output',
     'no_frontend_display',
@@ -447,14 +508,14 @@ function buildProjection({ input, inputPath, outputPath, reviewPath, generatedAt
   });
 
   const layer = {
-    schemaVersion: 'v28.0L-external-ai-production-1',
+    schemaVersion: mapping.schemaVersion,
     status: 'valid',
     displayEnabled: displayState.displayEnabled,
     generatedAt,
     updatedAt: generatedAt,
     sourceMode: mapping.sourceMode,
     provider: 'deepseek',
-    model: input.provider === 'sample' ? 'deepseek-v4-flash' : input.model,
+    model: input.provider === 'sample' ? EXTERNAL_AI_PRODUCTION_MODEL : input.model,
     inputSource: mapping.inputSource,
     sourceSemantics: mapping.sourceSemantics,
     summaryZh: input.summaryZh,
@@ -489,6 +550,10 @@ function buildProjection({ input, inputPath, outputPath, reviewPath, generatedAt
     auditFlags: projectAuditFlags(mapping),
   };
 
+  if (layer.model !== EXTERNAL_AI_PRODUCTION_MODEL) {
+    throw new Error(`model must be ${EXTERNAL_AI_PRODUCTION_MODEL}`);
+  }
+
   assertNoSecretMarkers(layer, 'projection');
 
   return {
@@ -496,8 +561,64 @@ function buildProjection({ input, inputPath, outputPath, reviewPath, generatedAt
   };
 }
 
+function assertThrows(fn, message) {
+  try {
+    fn();
+  } catch {
+    return;
+  }
+  throw new Error(message);
+}
+
+function runRegressionChecks() {
+  const analystMapping = {
+    ...EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT,
+    sourceFlags: EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.requiredAuditFlags,
+    forbiddenSourceFlag: 'sample_input_only',
+    sourceLayer: null,
+    claimType: 'site_structured_data',
+    note: '来自站内结构化数据',
+    preserveSourceLayer: true,
+    fixture: false,
+  };
+  const projectedAnalyst = projectSourceAttribution(
+    [
+      {
+        sourceLayer: 'oilDirectionalPressure',
+        field: 'signals.dieselProductStress',
+        claimType: 'site_structured_data',
+        noteZh: '来自站内结构化数据',
+      },
+    ],
+    analystMapping,
+  );
+  if (projectedAnalyst[0].sourceLayer !== 'oilDirectionalPressure') {
+    throw new Error('regression failed: analyst projection must preserve canonical sourceLayer');
+  }
+  assertThrows(
+    () => projectSourceAttribution([{ field: 'x', claimType: 'site_structured_data' }], analystMapping),
+    'regression failed: analyst projection accepted missing sourceLayer',
+  );
+
+  const legacyMapping = detectSourceMapping({ auditFlags: ['site_structured_data_only'] });
+  const projectedLegacy = projectSourceAttribution(
+    [
+      {
+        sourceLayer: 'oilDirectionalPressure',
+        field: 'signals.dieselProductStress',
+        claimType: 'site_structured_data',
+      },
+    ],
+    legacyMapping,
+  );
+  if (projectedLegacy[0].sourceLayer !== 'local_compact') {
+    throw new Error('regression failed: legacy projection must keep local_compact collapse');
+  }
+}
+
 function main() {
   try {
+    runRegressionChecks();
     const options = parseArgs(process.argv.slice(2));
     const { resolvedOutput, relativeToRepo } = assertSafeOutputPath(options.output);
     const resolvedInput = path.resolve(options.input);

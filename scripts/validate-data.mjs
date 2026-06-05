@@ -1,6 +1,13 @@
 ﻿import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import {
+  ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS,
+  EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT,
+  EXTERNAL_AI_PRODUCTION_MODEL,
+  resolveExternalAiProductionContract,
+} from './external-ai/production-contract.mjs';
+import { isAllowedExternalAiProductionSourceLayer } from './external-ai/source-layers.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -158,7 +165,6 @@ const AI_INTERPRETATION_EVIDENCE_LAYERS = new Set(['dailyBrief', 'divergenceLaye
 const EXTERNAL_AI_SCAFFOLD_CONTRACT_VERSION = 'v28.0K-3A';
 const EXTERNAL_AI_SCAFFOLD_MODE = 'external_ai_disabled_scaffold';
 const EXTERNAL_AI_SCAFFOLD_LAYERS = new Set(['dailyBrief', 'divergenceLayer', 'brentPricingLayer', 'macroDrivers.consumer', 'aiInterpretationLayer', 'decisionModel']);
-const EXTERNAL_AI_PRODUCTION_CONTRACT_VERSION = 'v28.0L-external-ai-production-1';
 const DAILY_BRIEF_FORBIDDEN_PHRASES = [
   '战争概率',
   '世界大战',
@@ -1831,16 +1837,21 @@ function validateExternalAiProductionLayer(layer) {
     assert(Object.hasOwn(layer, key), `externalAiInterpretationLayer.${key} is missing`);
   }
 
-  assert(layer.schemaVersion === EXTERNAL_AI_PRODUCTION_CONTRACT_VERSION, `externalAiInterpretationLayer.schemaVersion must be ${EXTERNAL_AI_PRODUCTION_CONTRACT_VERSION}`);
+  const productionContract = resolveExternalAiProductionContract(layer);
+  assert(
+    productionContract !== null,
+    `externalAiInterpretationLayer source contract must be one of ${[...ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS].join(', ')} with matching sourceMode/inputSource/sourceSemantics`
+  );
   assert(layer.status === 'valid', 'externalAiInterpretationLayer.status must be valid');
   assert(typeof layer.displayEnabled === 'boolean', 'externalAiInterpretationLayer.displayEnabled must be boolean');
   parseIsoTime(layer.generatedAt, 'externalAiInterpretationLayer.generatedAt');
   parseIsoTime(layer.updatedAt, 'externalAiInterpretationLayer.updatedAt');
-  assert(layer.sourceMode === 'manual_local_compact', 'externalAiInterpretationLayer.sourceMode must be manual_local_compact');
+  assert(layer.schemaVersion === productionContract.schemaVersion, `externalAiInterpretationLayer.schemaVersion must be ${productionContract.schemaVersion}`);
+  assert(layer.sourceMode === productionContract.sourceMode, `externalAiInterpretationLayer.sourceMode must be ${productionContract.sourceMode}`);
   assert(layer.provider === 'deepseek', 'externalAiInterpretationLayer.provider must be deepseek');
-  assert(layer.model === 'deepseek-v4-flash', 'externalAiInterpretationLayer.model must be deepseek-v4-flash');
-  assert(layer.inputSource === 'local_compact', 'externalAiInterpretationLayer.inputSource must be local_compact');
-  assert(layer.sourceSemantics === 'site_structured_data_compact_summary', 'externalAiInterpretationLayer.sourceSemantics must be site_structured_data_compact_summary');
+  assert(layer.model === EXTERNAL_AI_PRODUCTION_MODEL, `externalAiInterpretationLayer.model must be ${EXTERNAL_AI_PRODUCTION_MODEL}`);
+  assert(layer.inputSource === productionContract.inputSource, `externalAiInterpretationLayer.inputSource must be ${productionContract.inputSource}`);
+  assert(layer.sourceSemantics === productionContract.sourceSemantics, `externalAiInterpretationLayer.sourceSemantics must be ${productionContract.sourceSemantics}`);
   assertString(layer.summaryZh, 'externalAiInterpretationLayer.summaryZh');
   validateStringArray(layer.facts, 'externalAiInterpretationLayer.facts');
   validateStringArray(layer.inferences, 'externalAiInterpretationLayer.inferences');
@@ -1849,6 +1860,9 @@ function validateExternalAiProductionLayer(layer) {
   validateStringArray(layer.dataGaps, 'externalAiInterpretationLayer.dataGaps');
   validateStringArray(layer.invalidationSignals, 'externalAiInterpretationLayer.invalidationSignals');
   validateStringArray(layer.auditFlags, 'externalAiInterpretationLayer.auditFlags');
+  for (const flag of productionContract.requiredAuditFlags) {
+    assert(layer.auditFlags.includes(flag), `externalAiInterpretationLayer.auditFlags must include ${flag}`);
+  }
 
   assertArray(layer.sourceAttribution, 'externalAiInterpretationLayer.sourceAttribution');
   layer.sourceAttribution.forEach((item, index) => {
@@ -1856,12 +1870,21 @@ function validateExternalAiProductionLayer(layer) {
     for (const key of ['sourceLayer', 'field', 'claimType', 'noteZh']) {
       assertString(item[key], `externalAiInterpretationLayer.sourceAttribution[${index}].${key}`);
     }
+    assert(
+      isAllowedExternalAiProductionSourceLayer(item.sourceLayer, {
+        analyst: productionContract.inputSource === EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.inputSource,
+      }),
+      `externalAiInterpretationLayer.sourceAttribution[${index}].sourceLayer is not allowed: ${item.sourceLayer}`
+    );
   });
 
   const confidence = layer.confidence;
   assertPlainObject(confidence, 'externalAiInterpretationLayer.confidence');
   assert(['low', 'medium'].includes(confidence.level), 'externalAiInterpretationLayer.confidence.level must be low or medium');
   assert(Number.isFinite(confidence.score) && confidence.score >= 0 && confidence.score <= 100, 'externalAiInterpretationLayer.confidence.score must be 0-100');
+  if (productionContract.inputSource === EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.inputSource) {
+    assert(confidence.score <= EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.maxConfidenceScore, `externalAiInterpretationLayer.confidence.score must be <= ${EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.maxConfidenceScore} for analyst_compact_v1`);
+  }
   assertString(confidence.reasonZh, 'externalAiInterpretationLayer.confidence.reasonZh');
 
   const qualityReview = layer.qualityReview;
@@ -2055,7 +2078,7 @@ function validateExternalAiInterpretationLayer(dataPayload) {
 
   assertPlainObject(layer, 'externalAiInterpretationLayer');
 
-  if (layer.schemaVersion === EXTERNAL_AI_PRODUCTION_CONTRACT_VERSION) {
+  if (ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS.has(layer.schemaVersion)) {
     validateExternalAiProductionLayer(layer);
     return;
   }

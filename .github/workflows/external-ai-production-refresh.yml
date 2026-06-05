@@ -15,6 +15,7 @@ on:
         default: local_compact
         options:
           - local_compact
+          - analyst_compact_v1
       allow_network:
         description: "Allow DeepSeek network call"
         type: boolean
@@ -90,8 +91,14 @@ jobs:
           acknowledge_non_production="true"
           max_attempts="1"
 
-          if [ "$input_source" != "local_compact" ]; then
-            echo "input_source must be local_compact"
+          if [ "$input_source" = "local_compact" ]; then
+            input_artifact_path="manual-artifacts/external-ai/manual-input-compact-latest.json"
+            build_input_mode="compact"
+          elif [ "$input_source" = "analyst_compact_v1" ]; then
+            input_artifact_path="manual-artifacts/external-ai/manual-input-analyst-latest.json"
+            build_input_mode="analyst_compact_v1"
+          else
+            echo "input_source must be local_compact or analyst_compact_v1"
             exit 1
           fi
           if [ "$allow_network" != "true" ]; then
@@ -131,13 +138,29 @@ jobs:
             echo "validate_output=$validate_output"
             echo "timeout_ms=$timeout_ms"
             echo "max_attempts=$max_attempts"
+            echo "input_artifact_path=$input_artifact_path"
+            echo "build_input_mode=$build_input_mode"
           } >> "$GITHUB_OUTPUT"
 
       - name: Prepare refresh artifact directory
         run: mkdir -p manual-artifacts/external-ai
 
-      - name: Build local compact input
-        run: node scripts/build-external-ai-manual-input.mjs --compact --output manual-artifacts/external-ai/manual-input-compact-latest.json
+      - name: Build selected production input
+        run: |
+          set -euo pipefail
+
+          if [ "${{ steps.refresh_inputs.outputs.build_input_mode }}" = "compact" ]; then
+            node scripts/build-external-ai-manual-input.mjs \
+              --compact \
+              --output "${{ steps.refresh_inputs.outputs.input_artifact_path }}"
+          elif [ "${{ steps.refresh_inputs.outputs.build_input_mode }}" = "analyst_compact_v1" ]; then
+            node scripts/build-external-ai-manual-input.mjs \
+              --analyst-compact-v1 \
+              --output "${{ steps.refresh_inputs.outputs.input_artifact_path }}"
+          else
+            echo "unsupported build_input_mode"
+            exit 1
+          fi
 
       - name: Run DeepSeek production refresh provider call
         env:
@@ -152,7 +175,7 @@ jobs:
 
           node scripts/run-external-ai-manual-test.mjs \
             --provider deepseek \
-            --input manual-artifacts/external-ai/manual-input-compact-latest.json \
+            --input "${{ steps.refresh_inputs.outputs.input_artifact_path }}" \
             --output manual-artifacts/external-ai/deepseek-output-latest.json \
             --allow-network \
             --validate-output \
@@ -189,7 +212,7 @@ jobs:
         with:
           name: external-ai-production-refresh-${{ github.run_id }}
           path: |
-            manual-artifacts/external-ai/manual-input-compact-latest.json
+            ${{ steps.refresh_inputs.outputs.input_artifact_path }}
             manual-artifacts/external-ai/deepseek-output-latest.json
             manual-artifacts/external-ai/external-ai-quality-review-latest.json
             manual-artifacts/external-ai/external-ai-production-projection-latest.json

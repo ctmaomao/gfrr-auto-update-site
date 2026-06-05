@@ -634,6 +634,9 @@ function buildResponseDiagnostics(responseJson, errorType = 'provider_response')
     reasoningContentLength: typeof reasoningContent === 'string' ? reasoningContent.length : null,
     hasUsage: Boolean(usage),
     usageKeys: usage ? Object.keys(usage).sort() : [],
+    usage: usage ? Object.fromEntries(
+      Object.entries(usage).filter(([, value]) => typeof value === 'number' || typeof value === 'string' || value === null),
+    ) : null,
     errorType
   };
   const responseError = sanitizedResponseError(responseJson);
@@ -955,6 +958,21 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
     fail(`DeepSeek manual test failed before validation: ${message}`);
     return;
   }
+
+  providerOutput._manualDiagnostics = {
+    providerMetadata: providerAdapter.metadata,
+    responseDiagnostics,
+    requestDiagnostics: buildRequestDiagnostics({
+      timeoutMs: options.timeoutMs,
+      inputText,
+      model: providerAdapter.model,
+      provider,
+      allowNetwork: options.allowNetwork,
+      validateOutput: options.validateOutput,
+      outputPathSafe: !isUnsafeOutputPath(options.output),
+      likelyCause: null
+    })
+  };
 
   try {
     await writeOutputFile(options.output, `${JSON.stringify(providerOutput, null, 2)}\n`);

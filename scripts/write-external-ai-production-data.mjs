@@ -1,6 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import {
+  EXTERNAL_AI_PRODUCTION_MODEL,
+  resolveExternalAiProductionContract,
+} from './external-ai/production-contract.mjs';
 
 const REQUIRED_FLAGS = new Set(['--confirm-production-write', '--data-only', '--no-frontend-display']);
 const OPTIONAL_FLAGS = new Set(['--preserve-visible-display']);
@@ -124,17 +128,15 @@ function readProjection(inputPath, expectedDisplayState) {
   requirePathValue(layer, 'displayEnabled', expectedDisplayState.displayEnabled);
   requirePathValue(layer, 'boundaries.frontendDisplayApproved', expectedDisplayState.frontendDisplayApproved);
 
-  if (layer.schemaVersion !== 'v28.0L-external-ai-production-1') {
-    throw new Error('schemaVersion must be v28.0L-external-ai-production-1');
-  }
+  const productionContract = resolveExternalAiProductionContract(layer);
+  if (productionContract === null) throw new Error('schemaVersion/source contract is not an allowed external AI production contract');
   if (layer.status !== 'valid') throw new Error('status must be valid');
-  if (layer.sourceMode !== 'manual_local_compact') throw new Error('sourceMode must be manual_local_compact');
+  if (layer.schemaVersion !== productionContract.schemaVersion) throw new Error(`schemaVersion must be ${productionContract.schemaVersion}`);
+  if (layer.sourceMode !== productionContract.sourceMode) throw new Error(`sourceMode must be ${productionContract.sourceMode}`);
   if (layer.provider !== 'deepseek') throw new Error('provider must be deepseek');
-  if (layer.model !== 'deepseek-v4-flash') throw new Error('model must be deepseek-v4-flash');
-  if (layer.inputSource !== 'local_compact') throw new Error('inputSource must be local_compact');
-  if (layer.sourceSemantics !== 'site_structured_data_compact_summary') {
-    throw new Error('sourceSemantics must be site_structured_data_compact_summary');
-  }
+  if (layer.model !== EXTERNAL_AI_PRODUCTION_MODEL) throw new Error(`model must be ${EXTERNAL_AI_PRODUCTION_MODEL}`);
+  if (layer.inputSource !== productionContract.inputSource) throw new Error(`inputSource must be ${productionContract.inputSource}`);
+  if (layer.sourceSemantics !== productionContract.sourceSemantics) throw new Error(`sourceSemantics must be ${productionContract.sourceSemantics}`);
   if (layer.freshness?.isStale !== false) throw new Error('freshness.isStale must be false');
   if (!['pass', 'warn'].includes(layer.qualityReview?.status)) {
     throw new Error('qualityReview.status must be pass or warn');

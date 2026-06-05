@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS } from './external-ai/production-contract.mjs';
 
 const DATA_PATH = 'data/radar-data.json';
 const FRONTEND_PATHS = ['index.html', 'scripts/app.js', 'scripts/modules'];
@@ -133,7 +134,7 @@ function validateLayerDisabledOrNonImpacting(layer, errors) {
 
   if (displayEnabled === true && frontendDisplayApproved === true) {
     const visibleRequirements = [
-      ['schemaVersion', layer.schemaVersion === 'v28.0L-external-ai-production-1'],
+      ['schemaVersion', ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS.has(layer.schemaVersion)],
       ['status', layer.status === 'valid'],
       ['boundaries.displayOnly', boundaries.displayOnly === true],
       ['boundaries.notInvestmentAdvice', boundaries.notInvestmentAdvice === true],
@@ -147,7 +148,7 @@ function validateLayerDisabledOrNonImpacting(layer, errors) {
     }
   }
 
-  if (layer.schemaVersion === 'v28.0L-external-ai-production-1') {
+  if (ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS.has(layer.schemaVersion)) {
     const result = spawnSync(process.execPath, ['scripts/check-external-ai-production-contract.mjs', DATA_PATH], {
       encoding: 'utf8',
       stdio: 'pipe',

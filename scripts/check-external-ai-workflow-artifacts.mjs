@@ -7,10 +7,12 @@ const STRICT_MODE = process.argv.includes('--workflow-provider-test');
 const MAX_ARTIFACT_BYTES = 500 * 1024;
 const LOCAL_RADAR_DATA_SOURCE_PATH = 'data/radar-data.json';
 const COMPACT_INPUT_ARTIFACT = 'manual-input-compact-latest.json';
+const ANALYST_INPUT_ARTIFACT = 'manual-input-analyst-latest.json';
 
 const providerWorkflowAllowlist = new Set([
   'workflow-dry-run-report.json',
   'manual-input-compact-latest.json',
+  'manual-input-analyst-latest.json',
   'provider-test-gate-status.json',
   'provider-test-missing-secret.json',
   'provider-test-secret-present-blocked.json',
@@ -188,7 +190,7 @@ function validateCompactInputSourceMetadata(data, fileName, text) {
 }
 
 function strictForbiddenSnippetsForFile(fileName) {
-  if (fileName !== COMPACT_INPUT_ARTIFACT) return forbiddenContentSnippets;
+  if (fileName !== COMPACT_INPUT_ARTIFACT && fileName !== ANALYST_INPUT_ARTIFACT) return forbiddenContentSnippets;
   return forbiddenContentSnippets.filter((snippet) => snippet !== LOCAL_RADAR_DATA_SOURCE_PATH);
 }
 
@@ -242,7 +244,7 @@ function checkStrictFile(filePath, fileName) {
   const data = readJson(filePath, fileName);
   const text = scanFileContent(filePath, fileName, strictForbiddenSnippetsForFile(fileName));
 
-  if (fileName === COMPACT_INPUT_ARTIFACT && data) {
+  if ((fileName === COMPACT_INPUT_ARTIFACT || fileName === ANALYST_INPUT_ARTIFACT) && data) {
     validateCompactInputSourceMetadata(data, fileName, text);
   }
 

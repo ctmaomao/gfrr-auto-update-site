@@ -1,14 +1,21 @@
 import fs from 'node:fs';
 
 import { FORBIDDEN_SECRET_MARKERS, UNSAFE_CONTENT } from './external-ai/safety-constants.mjs';
+import {
+  ALLOWED_EXTERNAL_AI_PRODUCTION_INPUT_SOURCES,
+  ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS,
+  ALLOWED_EXTERNAL_AI_PRODUCTION_SOURCE_MODES,
+  ALLOWED_EXTERNAL_AI_PRODUCTION_SOURCE_SEMANTICS,
+  EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT,
+  isAnalystExternalAiProductionLayer,
+  validateExternalAiProductionContractCoherence,
+} from './external-ai/production-contract.mjs';
+import { isAllowedExternalAiProductionSourceLayer } from './external-ai/source-layers.mjs';
 
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/production-contract-valid-v28.0L.json';
 
 const ALLOWED_STATUS = new Set(['disabled', 'unavailable', 'valid', 'rejected', 'stale', 'provider_failed']);
-const ALLOWED_SOURCE_MODE = new Set(['manual_artifact', 'manual_local_compact', 'disabled']);
 const ALLOWED_PROVIDER = new Set(['deepseek', null]);
-const ALLOWED_INPUT_SOURCE = new Set(['local_compact', 'fixture_sample', null]);
-const ALLOWED_SOURCE_SEMANTICS = new Set(['site_structured_data_compact_summary', 'sample_fixture', null]);
 const ALLOWED_QUALITY_STATUS = new Set(['pass', 'warn', 'fail', 'not_run']);
 const ALLOWED_RECOMMENDATION = new Set([
   'pass_for_manual_review',
@@ -143,6 +150,12 @@ function validateRequiredFields(layer, errors) {
 
   if (typeof layer.schemaVersion !== 'string' || layer.schemaVersion.trim() === '') {
     addError(errors, 'schemaVersion must be a non-empty string');
+  } else if (
+    layer.sourceMode !== 'manual_artifact' &&
+    layer.sourceMode !== 'disabled' &&
+    !ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS.has(layer.schemaVersion)
+  ) {
+    addError(errors, `schemaVersion must be one of ${[...ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS].join(', ')}`);
   }
 
   if (!ALLOWED_STATUS.has(layer.status)) {
@@ -159,18 +172,20 @@ function validateRequiredFields(layer, errors) {
     }
   }
 
-  if (!ALLOWED_SOURCE_MODE.has(layer.sourceMode)) {
-    addError(errors, 'sourceMode must be manual_artifact, manual_local_compact, or disabled');
+  if (!ALLOWED_EXTERNAL_AI_PRODUCTION_SOURCE_MODES.has(layer.sourceMode)) {
+    addError(errors, `sourceMode must be one of ${[...ALLOWED_EXTERNAL_AI_PRODUCTION_SOURCE_MODES].join(', ')}`);
   }
   if (!ALLOWED_PROVIDER.has(layer.provider)) {
     addError(errors, 'provider must be deepseek or null');
   }
-  if (!ALLOWED_INPUT_SOURCE.has(layer.inputSource)) {
-    addError(errors, 'inputSource must be local_compact, fixture_sample, or null');
+  if (!ALLOWED_EXTERNAL_AI_PRODUCTION_INPUT_SOURCES.has(layer.inputSource)) {
+    addError(errors, `inputSource must be one of ${[...ALLOWED_EXTERNAL_AI_PRODUCTION_INPUT_SOURCES].join(', ')}`);
   }
-  if (!ALLOWED_SOURCE_SEMANTICS.has(layer.sourceSemantics)) {
-    addError(errors, 'sourceSemantics must be site_structured_data_compact_summary, sample_fixture, or null');
+  if (!ALLOWED_EXTERNAL_AI_PRODUCTION_SOURCE_SEMANTICS.has(layer.sourceSemantics)) {
+    addError(errors, `sourceSemantics must be one of ${[...ALLOWED_EXTERNAL_AI_PRODUCTION_SOURCE_SEMANTICS].join(', ')}`);
   }
+
+  for (const error of validateExternalAiProductionContractCoherence(layer)) addError(errors, error);
 
   for (const field of STRING_ARRAY_FIELDS) {
     if (!Array.isArray(layer[field]) || !layer[field].every((item) => typeof item === 'string')) {
@@ -344,8 +359,10 @@ function validateFreshness(layer, errors) {
   }
 }
 
-function validateSourceAttribution(sourceAttribution, errors) {
+function validateSourceAttribution(layer, sourceAttribution, errors) {
   if (!Array.isArray(sourceAttribution)) return;
+  const analyst = isAnalystExternalAiProductionLayer(layer);
+  const fixture = layer.inputSource === 'fixture_sample';
 
   for (const [index, item] of sourceAttribution.entries()) {
     if (!isPlainObject(item)) {
@@ -356,6 +373,15 @@ function validateSourceAttribution(sourceAttribution, errors) {
       if (typeof item[field] !== 'string' || item[field].trim() === '') {
         addError(errors, `sourceAttribution[${index}].${field} must be a non-empty string`);
       }
+    }
+    if (
+      typeof item.sourceLayer === 'string' &&
+      !isAllowedExternalAiProductionSourceLayer(item.sourceLayer, {
+        analyst,
+        fixture,
+      })
+    ) {
+      addError(errors, `sourceAttribution[${index}].sourceLayer is not allowed for this production input: ${item.sourceLayer}`);
     }
     for (const phrase of UNSAFE_CONTENT) {
       if (typeof item.noteZh === 'string' && item.noteZh.includes(phrase)) {
@@ -380,6 +406,14 @@ function validateConfidence(layer, errors) {
   }
   if (confidence.level === 'high' && layer.sourceMode === 'manual_local_compact') {
     addError(errors, 'confidence.level=high is not allowed for manual_local_compact');
+  }
+  if (isAnalystExternalAiProductionLayer(layer)) {
+    if (confidence.level === 'high') {
+      addError(errors, 'confidence.level=high is not allowed for manual_analyst_compact_v1');
+    }
+    if (Number.isFinite(confidence.score) && confidence.score > EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.maxConfidenceScore) {
+      addError(errors, `confidence.score must be <= ${EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.maxConfidenceScore} for manual_analyst_compact_v1`);
+    }
   }
 }
 
@@ -460,6 +494,15 @@ function validateAuditFlags(layer, errors) {
     }
   }
 
+  if (isAnalystExternalAiProductionLayer(layer)) {
+    for (const flag of EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.requiredAuditFlags) {
+      if (!auditFlags.includes(flag)) addError(errors, `analyst_compact_v1 auditFlags must include ${flag}`);
+    }
+    if (auditFlags.includes('sample_input_only')) {
+      addError(errors, 'analyst_compact_v1 auditFlags must not include sample_input_only');
+    }
+  }
+
   if (layer.inputSource === 'fixture_sample') {
     if (!auditFlags.includes('sample_input_only')) {
       addError(errors, 'fixture_sample auditFlags must include sample_input_only');
@@ -483,13 +526,88 @@ function validateLayer(layer) {
   validateQualityReview(layer, errors);
   validateProvenance(layer.provenance, errors);
   validateFreshness(layer, errors);
-  validateSourceAttribution(layer.sourceAttribution, errors);
+  validateSourceAttribution(layer, layer.sourceAttribution, errors);
   validateConfidence(layer, errors);
   validateStatusBehavior(layer, errors);
   validateStringSafety(layer, errors);
   validateAuditFlags(layer, errors);
 
   return errors;
+}
+
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function buildAnalystRegressionLayer() {
+  const base = layerFromInput(readJson(DEFAULT_INPUT));
+  const layer = cloneJson(base);
+  layer.schemaVersion = EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.schemaVersion;
+  layer.sourceMode = EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.sourceMode;
+  layer.inputSource = EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.inputSource;
+  layer.sourceSemantics = EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.sourceSemantics;
+  layer.auditFlags = [
+    'manual_artifact_only',
+    'site_structured_data_only',
+    'analyst_compact_v1',
+    'validator_required',
+    'non_production_output',
+    'no_frontend_display',
+  ];
+  layer.confidence = {
+    level: 'low',
+    score: 35,
+    reasonZh: '基于站内结构化数据,且包含 fallback 层,仅作低置信观察。',
+  };
+  layer.sourceAttribution = [
+    {
+      sourceLayer: 'oilDirectionalPressure',
+      field: 'signals.dieselProductStress',
+      claimType: 'site_structured_data',
+      noteZh: '来自站内结构化数据',
+    },
+    {
+      sourceLayer: 'macroDrivers.rateVol',
+      field: 'move',
+      claimType: 'site_structured_data',
+      noteZh: '来自站内结构化数据',
+    },
+    {
+      sourceLayer: 'worldOrderStress',
+      field: 'score',
+      claimType: 'site_structured_data',
+      noteZh: '来自站内结构化数据',
+    },
+  ];
+  return layer;
+}
+
+function runRegressionChecks() {
+  const legacy = layerFromInput(readJson(DEFAULT_INPUT));
+  const analyst = buildAnalystRegressionLayer();
+  const analystErrors = validateLayer(analyst);
+  if (analystErrors.length > 0) {
+    throw new Error(`regression failed: valid analyst production layer rejected:\n- ${analystErrors.join('\n- ')}`);
+  }
+
+  const legacyWithAnalystLayer = cloneJson(legacy);
+  legacyWithAnalystLayer.sourceAttribution[0].sourceLayer = 'macroDrivers.rateVol';
+  if (validateLayer(legacyWithAnalystLayer).length === 0) {
+    throw new Error('regression failed: legacy production layer accepted analyst-only sourceLayer');
+  }
+
+  const analystMissingSourceLayer = cloneJson(analyst);
+  delete analystMissingSourceLayer.sourceAttribution[0].sourceLayer;
+  if (validateLayer(analystMissingSourceLayer).length === 0) {
+    throw new Error('regression failed: analyst production layer accepted missing sourceLayer');
+  }
+
+  const analystHighConfidence = cloneJson(analyst);
+  analystHighConfidence.confidence.level = 'medium';
+  analystHighConfidence.confidence.score = EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.maxConfidenceScore + 1;
+  if (validateLayer(analystHighConfidence).length === 0) {
+    throw new Error('regression failed: analyst production layer accepted confidence score above cap');
+  }
 }
 
 function parseArgs(argv) {
@@ -500,6 +618,7 @@ function parseArgs(argv) {
 }
 
 function main() {
+  runRegressionChecks();
   const { expectFail, inputPath } = parseArgs(process.argv.slice(2));
   const input = readJson(inputPath);
   const errors = validateLayer(layerFromInput(input));

@@ -56,7 +56,8 @@ function checkTriggers(text) {
   for (const input of requiredInputs) {
     assert(triggerBlock.includes(input), `workflow dispatch input missing ${input}`);
   }
-  assert(triggerBlock.includes('- local_compact'), 'input_source must allow only local_compact');
+  assert(triggerBlock.includes('- local_compact'), 'input_source must allow local_compact');
+  assert(triggerBlock.includes('- analyst_compact_v1'), 'input_source must allow analyst_compact_v1 for manual dispatch');
 }
 
 function checkRuntimeBaseline(text) {
@@ -115,15 +116,26 @@ function checkSecretPolicy(text) {
 
 function checkProviderAndValidationPath(text) {
   const required = [
-    'node scripts/build-external-ai-manual-input.mjs --compact --output manual-artifacts/external-ai/manual-input-compact-latest.json',
     'input_source="local_compact"',
+    'input_source must be local_compact or analyst_compact_v1',
+    'input_artifact_path="manual-artifacts/external-ai/manual-input-compact-latest.json"',
+    'input_artifact_path="manual-artifacts/external-ai/manual-input-analyst-latest.json"',
+    'build_input_mode="compact"',
+    'build_input_mode="analyst_compact_v1"',
+    'echo "input_artifact_path=$input_artifact_path"',
+    'echo "build_input_mode=$build_input_mode"',
+    'name: Build selected production input',
+    'node scripts/build-external-ai-manual-input.mjs \\',
+    '--compact',
+    '--analyst-compact-v1',
+    '--output "${{ steps.refresh_inputs.outputs.input_artifact_path }}"',
     'allow_network="true"',
     'acknowledge_cost="true"',
     'acknowledge_non_production="true"',
     'max_attempts="1"',
     'node scripts/run-external-ai-manual-test.mjs \\',
     '--provider deepseek',
-    '--input manual-artifacts/external-ai/manual-input-compact-latest.json',
+    '--input "${{ steps.refresh_inputs.outputs.input_artifact_path }}"',
     '--output manual-artifacts/external-ai/deepseek-output-latest.json',
     '--allow-network',
     '--validate-output',
@@ -150,6 +162,11 @@ function checkProviderAndValidationPath(text) {
   }
 
   assert(countOccurrences(text, 'node scripts/run-external-ai-manual-test.mjs') === 1, 'workflow must call provider command exactly once');
+  assert(
+    getBlock(text, 'if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then', ['\n          fi']).includes('else') &&
+      text.includes('input_source="local_compact"'),
+    'scheduled path must default to local_compact',
+  );
   assert(!text.includes('max_attempts="2"'), 'workflow must not configure retries beyond one attempt');
 }
 
@@ -157,7 +174,7 @@ function checkArtifactPolicy(text) {
   const uploadStep = getBlock(text, 'name: Upload sanitized refresh artifacts', ['\n      - name: Write production data layer']);
   assert(uploadStep.includes("if: ${{ always() && steps.sanitize_refresh_artifacts.outcome == 'success' }}"), 'artifact upload must be sanitizer-gated');
   for (const artifact of [
-    'manual-artifacts/external-ai/manual-input-compact-latest.json',
+    '${{ steps.refresh_inputs.outputs.input_artifact_path }}',
     'manual-artifacts/external-ai/deepseek-output-latest.json',
     'manual-artifacts/external-ai/external-ai-quality-review-latest.json',
     'manual-artifacts/external-ai/external-ai-production-projection-latest.json',

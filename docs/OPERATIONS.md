@@ -1145,6 +1145,7 @@ Schedule:
 - Workflow: `External AI Production Refresh`.
 - Daily schedule: `23:50 UTC`.
 - The schedule is intended to run after the current data generation time around `23:29 UTC`.
+- Scheduled runs still use `input_source=local_compact` by default. `analyst_compact_v1` is manual-dispatch only until a later reviewed default-cutover PR.
 - Do not add additional schedules.
 
 Required GitHub environment:
@@ -1164,9 +1165,22 @@ gh workflow run "External AI Production Refresh" \
   -f timeout_ms=120000
 ```
 
+Manual analyst opt-in canary-to-production refresh (PR3 expand-then-contract path):
+
+```bash
+gh workflow run "External AI Production Refresh" \
+  -f input_source=analyst_compact_v1 \
+  -f allow_network=true \
+  -f acknowledge_cost=true \
+  -f validate_output=true \
+  -f timeout_ms=120000
+```
+
+Use the analyst option only after reviewing the latest analyst canary evidence. If the run fails provider output validation, quality review, production contract validation, write guard, `check:data`, or `check:all`, do not rerun repeatedly; inspect sanitized artifacts and fall back to the scheduled legacy `local_compact` path.
+
 Refresh behavior:
 
-- Builds local compact input from current site data.
+- Builds the selected input from current site data: scheduled/default `local_compact`, or manual-dispatch `analyst_compact_v1`.
 - Calls DeepSeek once.
 - Runs output validation.
 - Runs external AI artifact quality review.
