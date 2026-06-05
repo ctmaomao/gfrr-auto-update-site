@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { BANNED_COPY, UNSAFE_CLAIMS } from './external-ai/safety-constants.mjs';
+
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-output-v28.0K-1.json';
 
 const REQUIRED_FIELDS = [
@@ -31,43 +33,6 @@ const ARRAY_FIELDS = [
   'invalidationSignals',
   'sourceAttribution',
   'auditFlags'
-];
-
-const BANNED_COPY = [
-  '危机已经爆发',
-  '必然崩盘',
-  '必然逼空',
-  '世界大战',
-  '战争概率',
-  '已经进入第三次世界大战',
-  '13步已走几步',
-  'guaranteed',
-  'certainty',
-  'sure thing',
-  'risk-free',
-  '真实 Dated Brent 已接入',
-  'Platts Dated Brent 已接入',
-  '实物油价已经确认',
-  'DeepSeek 已验证市场事实',
-  'OpenAI 已验证市场事实',
-  '外部 AI 已确认危机'
-];
-
-const UNSAFE_CLAIMS = [
-  '买入',
-  '卖出',
-  '加仓',
-  '满仓',
-  '清仓',
-  '必须买',
-  '必须卖',
-  '确定赚钱',
-  '无风险',
-  '投资建议',
-  '交易建议',
-  '立即执行',
-  '已确认危机',
-  '外部 AI 已确认'
 ];
 
 const SAFE_NEGATIVE_CONTEXTS = [

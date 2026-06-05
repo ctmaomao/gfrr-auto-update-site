@@ -116,14 +116,15 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **ODP 五刀(PR1–PR5)merge 后全收官**:数据接入 → 周度 workflow → 回测 GATE → productionize + 价格背离 → 中文 UI → dailyBrief 只读引用;全程 audit-only / display-only,不进 scoring / decision / execution / Heatmap。
 - 边界:不进 `values.*`/scoring/decisionModel/executionLock/positionGuidance/cross-validation;期限结构低置信复用、缺则不参与裁决;数据不足显式「暂不判断」。EIA = 美国政府公共领域。
 
-#### P3-20: External AI 深化 — analyst_compact_v1 深度独立分析(PR0 设计契约已锁 · PR1-4 contract-led canary)
+#### P3-20: External AI 深化 — analyst_compact_v1 深度独立分析(PR0+PR1 已落 · PR2-4 待开 · contract-led canary)
 
 来源:2026-06-05 owner 立项。目标:让 External AI Auxiliary 对后台丰富数据做**深度独立跨层分析**。根因=输入面窄(`extractSiteData`/`extractCompactSiteData` 都只喂 `macroDrivers.consumer` 一个,约 5-10% richness),非模型能力。**硬边界(CLAUDE.md 绝对规则 4,全程不动)**:External AI = 只读展示层,输出不进 scoring/decision/execution/position;3 守卫(`check-external-ai-output`/`-production-contract`/`-production-write-guard`)+ unsafe-wording + `promotionEligible/humanApproved=false` + `affects*=false` 保留;「独立」=对站内数据独立推理,不接外部新闻/行情。
 
 - **关键现实(Codex+Claude 交叉核实)**:production **硬锁** `local_compact`——workflow 固定 `--compact`、`validate-data.mjs` 硬断言 sourceMode/model/inputSource、projection 折叠 sourceAttribution。故为 **contract migration 非加字段**,必走 expand-then-contract(本地 check:all 只校验旧 committed 数据→换源类本地绿≠Daily 绿)。
 - **PR0 ✅ 设计契约已锁**(design-contract only,Codex 起草 + Claude 逐行交叉核 5 轮,check:docs 绿,doc 内自洽):新 source mode `analyst_compact_v1` / schema 串 `v28.0L-external-ai-production-analyst-1`;evidence-pack schema(全 macroDrivers + modules + regimeProbabilities + scenarioTree + transmission + heatmap + divergence + ODP/world-order/market-pricing 仅 summary+top-N);**redaction 以 checker 数组为单一真相源**(`BANNED_COPY`/`UNSAFE_CLAIMS`/`UNSAFE_CONTENT`,不手抄);sourceLayer floor + `macroDrivers.<key>` pattern;confidence cap **low-medium/45**;canary gates;rollback;PR0→PR4 迁移地图。详见 [`EXTERNAL_AI_ANALYST_INPUT_CONTRACT_REVIEW.md`](EXTERNAL_AI_ANALYST_INPUT_CONTRACT_REVIEW.md)。
-- **PR1-4 待开(serial-trunk,逐刀)**:PR1=`extractAnalystSiteDataV2()` 受控 evidence-pack + redaction(只产 artifact、不碰生产);PR2=manual/provider canary(不写 production,升 prompt 4 分析任务 + 扩 sourceLayer 白名单 + 量 token/timeout/unsafe-wording/覆盖/增量,**模型 tier flash vs 更强**在此 A/B 决);PR3=production contract migration(workflow + validate-data + 3 checker + projection,expand-then-contract 留旧 local_compact 过渡);PR4=输出 schema(`crossLayerSynthesis`/`keyDivergences`/`scenarioLean`/`dataQualityLens`)+ 前端(读 DESIGN.md + asset bump)。
-- 状态:**PR0 doc 已 authored、待 owner 授权提交**;入库前不开 PR1。记忆见 `project_external_ai_deep_analysis`。
+- **PR1 ✅ 已落**(artifact-only,Codex 实现 + Claude 逐行交叉核,check:all 绿):`build-external-ai-manual-input.mjs` 加 `--analyst-compact-v1` 路径 → 产 gitignored `manual-artifacts/external-ai/manual-input-analyst-latest.json`;全 27 macroDrivers + modules/regime/scenario/transmission/heatmap/divergence/ODP/world-order/market-pricing 紧凑 evidence pack(siteData minified ~25KB,合 15-30KB 预算);写前共享 blocklist redaction(residual 0,透明审计摘要 `rewrittenPaths`/`classCounts`);**禁词单一真相源** `scripts/external-ai/safety-constants.mjs`,output/production-contract checker 改 import(byte 级忠实、零掉词,经 diff 实证);decisionContext 仅发 sanitized allowlist(`rawControlFieldsOmitted`,裁 A,PR0 §4.2/§5.1/§12-Q4 已对齐)。不碰 provider/production/workflow/frontend。
+- **PR2-4 待开(serial-trunk,逐刀)**:PR2=manual/provider canary(不写 production,升 prompt 4 分析任务 + 扩 sourceLayer 白名单 + 量 token/timeout/unsafe-wording/覆盖/增量,**模型 tier flash vs 更强**在此 A/B 决);PR3=production contract migration(workflow + validate-data + 3 checker + projection,expand-then-contract 留旧 local_compact 过渡);PR4=输出 schema(`crossLayerSynthesis`/`keyDivergences`/`scenarioLean`/`dataQualityLens`)+ 前端(读 DESIGN.md + asset bump)。
+- 状态:**PR0 + PR1 已入 main**;下一刀 = PR2 canary(需 provider 凭证、不写 production)。记忆见 `project_external_ai_deep_analysis`。
 
 ---
 
@@ -256,6 +257,15 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-06-05 · 续2 — External AI PR1 落地)**: External AI 深化 **PR1 已落**(`feat(external-ai)`):`build-external-ai-manual-input.mjs` 加 `--analyst-compact-v1` artifact-only 输入路径(全 27 macroDrivers + 全层紧凑 evidence pack,siteData ~25KB,gitignored artifact);写前共享 blocklist redaction(residual 0);**禁词单一真相源** `scripts/external-ai/safety-constants.mjs`,output/production-contract checker 改 import(byte 级忠实零掉词);decisionContext 仅 sanitized allowlist(裁 A,PR0 §4.2/§5.1/§12-Q4 已对齐)。Codex 实现 + Claude 逐行交叉核(独立证伪两风险:禁词重构无削弱 + redaction residual 0 含 substring `执行`/`交易`)。仅码、不碰 provider/production/workflow/frontend;check:all 绿。本批含 backlog P3-20 标 PR1 ✅ + 本 Handoff,一个 commit 收口。
+- **当前进行中(2026-06-05 · 续2)**: 无。PR1 收口。
+- **下一步建议(2026-06-05 · 续2)**: 下一刀 = **PR2 manual/provider canary**(需 provider 凭证、不写 production:升 prompt 4 分析任务 + 扩 sourceLayer 白名单 + 量 token/timeout/unsafe-wording/覆盖/增量,**模型 tier flash vs 更强** A/B 决)。serial-trunk,PR1 入库后才开 PR2。详见 [`EXTERNAL_AI_ANALYST_INPUT_CONTRACT_REVIEW.md`](EXTERNAL_AI_ANALYST_INPUT_CONTRACT_REVIEW.md) §7 + 记忆 `project_external_ai_deep_analysis`。
+- **阻塞或等待(2026-06-05 · 续2)**: 无。(PR2 需 provider 凭证 + owner 触发,非阻塞。)
+
+---
+
+> 以下为同会话早段(worker-health + doc-slim + PR0)留档,当前状态以上方「续2」段为准。
 
 - **上次会话结束于(2026-06-05 · 续 — worker-health 修复 + doc-slim 同步 push + External AI PR0)**: 三件均完成。① worker-health workflow 加 `if: always()`(失败时也上传 snapshot artifact),已 merged + push,origin/main 含该刀。② 发现整批 doc-slim 18 笔 + handoff **此前滞留本地未推**(origin 曾停在 ACLED `9fc995a1`),已随 worker-health 同次 fast-forward push 同步上 origin(无 force);Handoff 里被 rebase 改写的失效旧 SHA 已弱化为耐用措辞。③ External AI 深化 **PR0 设计契约** `docs/EXTERNAL_AI_ANALYST_INPUT_CONTRACT_REVIEW.md` 已 authored(Codex 起草 + Claude 逐行交叉核 5 轮)、check:docs 绿、doc 内自洽,**仍 untracked 未提交**。
 - **当前进行中(2026-06-05 · 续)**: External AI 深化 PR0 = 完成待提交;本 P3-20 backlog 项 + 本 Handoff「续」段为 docs-only 补充(同 untracked,待同批提交)。

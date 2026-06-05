@@ -183,7 +183,7 @@ The evidence-pack JSON may use compact, product-facing names, but output attribu
 | `marketPricing` | `marketPricing` |
 | `dataQuality` | `dataQuality` |
 | `ruleBasedBaseline` | `aiInterpretationLayer` |
-| `decisionContext` | `decisionContext` |
+| `decisionContext` | `decisionContext.sanitized` |
 
 Provider prompt examples, sourceAttribution validation, production projection, and frontend display labels must use the canonical `sourceLayer` values, not the compact evidence-pack aliases.
 
@@ -243,8 +243,8 @@ English equivalents in source data should be sanitized too: `position`, `cash`, 
 
 | Source | Risk | Required treatment |
 |---|---|---|
-| `decisionContext.positionGuidance` | may contain cash / exposure / position / target-band semantics | Do not pass raw. Replace with neutral marker: `decisionContext: read_only_system_state_background`. |
-| `decisionContext.executionLock` or `tradingSystem.executionLock` | execution/status/light wording | Do not pass raw labels/reasons. If needed, only pass `decisionContextAvailable=true` and a neutral note. |
+| `decisionContext.positionGuidance` | may contain cash / exposure / position / target-band semantics | Do not pass raw. PR1 may emit only a sanitized allowlist object with `readOnly=true`, `rawControlFieldsOmitted=true`, and safe non-operational system-state fields such as `strategyState`, `stateLabel`, `stateScore`, and `riskControlStatus`. |
+| `decisionContext.executionLock` or `tradingSystem.executionLock` | execution/status/light wording | Do not pass raw labels/reasons. If context is useful for canary analysis, emit only the sanitized allowlist above plus an explicit omission marker. |
 | `tradingSystem.positioning` | position/cash/exposure semantics | Exclude. |
 | `scenarioTree.triggers` / `scenarioTree.assets` | may contain action-style text from current site copy | Sanitize into non-operational trigger/invalidation concepts; remove action terms. |
 | `world-order-stress.json.decisionModifier` | "decision modifier" can be confused with decision path | Either exclude or rename to `readOnlyOverlayModifierSummary`; remove action words. |
@@ -325,7 +325,7 @@ Prompt allowlist, output validator assumptions, production projection, productio
 - `worldOrderStress`
 - `marketPricing`
 - `dataQuality`
-- `decisionContext`
+- `decisionContext.sanitized`
 
 Future unknown `macroDrivers.<key>` should be allowed if the input builder emits it through the same compact/redaction pipeline and the sourceLayer string matches `macroDrivers.<safeKey>`.
 
@@ -588,7 +588,7 @@ Scope:
 1. Should `analyst_compact_v1` be implemented as a new option on `build-external-ai-manual-input.mjs` or a small helper module imported by that script?
 2. What exact redaction failure mode should PR1 use: hard fail on any remaining unsafe phrase, or emit artifact with `blocked=true` and exit non-zero? Hard fail is recommended.
 3. Which top-N values are enough for World Order and Market Pricing without losing useful signal? Suggested starting point: top 5 evidence items per external file, plus freshness/source-status summary.
-4. Should `decisionContext` be omitted entirely rather than included as neutral marker? Recommended: include only a neutral marker so provider knows it exists but cannot quote it.
+4. Resolved in PR1: include a sanitized allowlist object rather than raw `decisionContext` or a pure marker. The object must keep `rawControlFieldsOmitted=true`, exclude raw control/action fields, pass canonical redaction with zero residual phrases, and attribute as `decisionContext.sanitized`.
 5. How many canary runs are enough before PR3? Recommended: at least one successful local/site-data canary plus one successful production-refresh dry run, both with zero unsafe wording.
 6. Should model-tier A/B compare only DeepSeek models, or include OpenAI later? Recommended: keep DeepSeek-only for the first canary to avoid widening provider governance.
 

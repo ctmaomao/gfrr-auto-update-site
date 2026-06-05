@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 
+import { FORBIDDEN_SECRET_MARKERS, UNSAFE_CONTENT } from './external-ai/safety-constants.mjs';
+
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/production-contract-valid-v28.0L.json';
 
 const ALLOWED_STATUS = new Set(['disabled', 'unavailable', 'valid', 'rejected', 'stale', 'provider_failed']);
@@ -96,43 +98,6 @@ const REQUIRED_QUALITY_FIELDS = [
 ];
 
 const REQUIRED_SOURCE_ATTRIBUTION_FIELDS = ['sourceLayer', 'field', 'claimType', 'noteZh'];
-
-const UNSAFE_CONTENT = [
-  '执行灯',
-  '执行',
-  '仓位',
-  '现金',
-  '敞口',
-  '交易',
-  '买入',
-  '卖出',
-  '加仓',
-  '减仓',
-  '做多',
-  '做空',
-  '建仓',
-  '平仓',
-  '止损',
-  '止盈',
-  '操作信号',
-  '行动信号',
-  '交易信号',
-  '配置建议',
-  '风险动作',
-  '风控动作',
-];
-
-const FORBIDDEN_SECRET_MARKERS = [
-  'DEEPSEEK_API_KEY',
-  'Authorization',
-  'Bearer',
-  'GITHUB_TOKEN',
-  '.env',
-  'rawHeaders',
-  'rawResponse',
-  'requestHeaders',
-  'responseHeaders',
-];
 
 const REQUIRED_AUDIT_FLAGS = [
   'manual_artifact_only',

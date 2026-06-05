@@ -24,6 +24,7 @@ const defaultLocalAllowlist = new Set([
   'manual-input-latest.json',
   'manual-input-live.json',
   'manual-input-live-compact.json',
+  'manual-input-analyst-latest.json',
   'sample-quality-review-latest.json',
 ]);
 
