@@ -250,7 +250,7 @@ Add or update backlog items with these rules:
 
 - **上次会话结束于(2026-06-05 — 全站 .md 文档审计/瘦身 1a→5余项 全轮收官)**: doc-slim audit 全部 merged(1a `c0dfb6a4` / 1b `1f1f463f` / 1c `16c10fe0` / 2 `a65a7b95` / 2b `67b98394` / 3 `09575c58` / 3b `bec94f66` / 5-checkpoint `e51ca995` / 4 `af4a1974` / 5余项 `a0ee0f53`);各批 check:all 绿、git diff --check clean。Batch 1=三大 Operating Doc changelog tail 折 B-consolidated 索引;2/2b=External AI 簇收口(14 banner + READINESS_CHECKLIST 1111→422 折表);3/3b=Market Pricing 簇收口(13 banner + TEMPERATURE_DATA_SOURCE_DESIGN 529→340 折表);4=M92/M93 plain-summary 4 docs INDEX Historical + 2 banner;5余项=M94_V0/DESIGN plain-summary reconcile→retired + 三段 attribution(checker `5eff6ab` / renderer `c8229574` / DOM `91d06f3d`)。
 - **当前进行中(2026-06-05 — doc audit)**: 无。整轮 .md doc-slim audit(Batch 1a→5余项)全部收官。
-- **下一步建议(2026-06-05 — doc audit)**: 无后续 .md 审计 —— 整轮 doc-slim audit 收官。唯一遗留 = 独立 `assets/styles.css` `.plain-summary-section` dead CSS cleanup(已 spawn chip;需 frontend asset bump,故有意不进本 .md 审计)。日后若再瘦身须另立项。
+- **下一步建议(2026-06-05 — doc audit)**: 无后续 .md 审计 —— 整轮 doc-slim audit 收官。原列为唯一遗留的 `assets/styles.css` `.plain-summary-section` dead CSS cleanup **已完成**(`7f2ee0fd` 删 5 行 orphaned CSS + cache bump `m94-css-cleanup-1` 扇出;`10ad43d1` 标 INDEX debt resolved);顺带 bump 工具 inline current-version 快照盲区已 harden 进工具(`bdb4d91a`,2 紧锚正则,见记忆 `ops_bump_tool_blind_spots`)。日后若再瘦身须另立项。
 - **阻塞或等待(2026-06-05 — doc audit)**: 无。
 
 ---
