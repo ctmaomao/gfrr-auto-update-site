@@ -49,7 +49,7 @@ function checkTriggers(text) {
     'acknowledge_cost:',
     'validate_output:',
     'timeout_ms:',
-    'default: local_compact',
+    'default: analyst_compact_v1',
     'default: true',
     'default: 120000',
   ];
@@ -116,7 +116,7 @@ function checkSecretPolicy(text) {
 
 function checkProviderAndValidationPath(text) {
   const required = [
-    'input_source="local_compact"',
+    'if [ "$input_source" = "local_compact" ]; then',
     'input_source must be local_compact or analyst_compact_v1',
     'input_artifact_path="manual-artifacts/external-ai/manual-input-compact-latest.json"',
     'input_artifact_path="manual-artifacts/external-ai/manual-input-analyst-latest.json"',
@@ -164,8 +164,8 @@ function checkProviderAndValidationPath(text) {
   assert(countOccurrences(text, 'node scripts/run-external-ai-manual-test.mjs') === 1, 'workflow must call provider command exactly once');
   assert(
     getBlock(text, 'if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then', ['\n          fi']).includes('else') &&
-      text.includes('input_source="local_compact"'),
-    'scheduled path must default to local_compact',
+      text.includes('input_source="analyst_compact_v1"'),
+    'scheduled path must default to analyst_compact_v1',
   );
   assert(!text.includes('max_attempts="2"'), 'workflow must not configure retries beyond one attempt');
 }

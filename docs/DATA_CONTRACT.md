@@ -810,14 +810,14 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 
 #### externalAiInterpretationLayer 当前生产契约（已实现 · visible read-only）
 
-`externalAiInterpretationLayer` 已实现,为 **visible read-only 展示层**:当前 live data 为 `schemaVersion = v28.0L-external-ai-production-1`、`status = valid`、`displayEnabled = true`、`boundaries.frontendDisplayApproved = true`、`provider = deepseek`,由 `External AI Production Refresh` workflow 经 `check:external-ai-production-contract` validator + quality review 写入。生产契约(权威定义见 `scripts/check-external-ai-production-contract.mjs`)要求:`displayEnabled === boundaries.frontendDisplayApproved`;visible 时须 `status=valid` + `qualityReview.status ∈ {pass,warn}` + `recommendation=pass_for_manual_review` + `freshness.isStale=false`;且**恒** `qualityReview.promotionEligible=false`、`provenance.humanApproved=false`,`auditFlags` 须含 `non_production_output` / `no_frontend_display`(后两者命名为历史遗留、与 visible 现态字面相左,属待另开协调改名项,非当前 docs slice)。接入与输出仍须遵守 [`EXTERNAL_AI_API_DESIGN.md`](EXTERNAL_AI_API_DESIGN.md)。
+`externalAiInterpretationLayer` 已实现,为 **visible read-only 展示层**:当前 live data 为 `schemaVersion = v28.0L-external-ai-production-analyst-1`、`status = valid`、`displayEnabled = true`、`boundaries.frontendDisplayApproved = true`、`provider = deepseek`,由 `External AI Production Refresh` workflow 经 `check:external-ai-production-contract` validator + quality review 写入。生产契约(权威定义见 `scripts/check-external-ai-production-contract.mjs`)要求:`displayEnabled === boundaries.frontendDisplayApproved`;visible 时须 `status=valid` + `qualityReview.status ∈ {pass,warn}` + `recommendation=pass_for_manual_review` + `freshness.isStale=false`;且**恒** `qualityReview.promotionEligible=false`、`provenance.humanApproved=false`,`auditFlags` 须含 `non_production_output` / `no_frontend_display`(后两者命名为历史遗留、与 visible 现态字面相左,属待另开协调改名项,非当前 docs slice)。接入与输出仍须遵守 [`EXTERNAL_AI_API_DESIGN.md`](EXTERNAL_AI_API_DESIGN.md)。
 
-PR3 expand-then-contract 后,validator / projection / write guard 同时接受两套 production source family,但当前 committed `data/radar-data.json` 不要求立刻切换:
+PR3 expand-then-contract 后,validator / projection / write guard 同时接受两套 production source family:
 
 - legacy: `schemaVersion=v28.0L-external-ai-production-1`, `sourceMode=manual_local_compact`, `inputSource=local_compact`, `sourceSemantics=site_structured_data_compact_summary`。
-- analyst opt-in: `schemaVersion=v28.0L-external-ai-production-analyst-1`, `sourceMode=manual_analyst_compact_v1`, `inputSource=analyst_compact_v1`, `sourceSemantics=site_structured_analyst_evidence_pack_v1`。
+- analyst current/default: `schemaVersion=v28.0L-external-ai-production-analyst-1`, `sourceMode=manual_analyst_compact_v1`, `inputSource=analyst_compact_v1`, `sourceSemantics=site_structured_analyst_evidence_pack_v1`。
 
-`External AI Production Refresh` 的 scheduled cron 仍默认 legacy `local_compact`;`analyst_compact_v1` 仅可通过手动 `workflow_dispatch` 选择,用于验证真实 production refresh + Daily checks。legacy family 必须保留为 rollback,直到另一个 reviewed PR 明确 contract。
+`External AI Production Refresh` 的 scheduled cron 与 `workflow_dispatch` 默认源为 `analyst_compact_v1`;legacy `local_compact` 仍保留为手动 dispatch rollback 选项,直到另一个 reviewed PR 明确 contract。
 
 边界：
 

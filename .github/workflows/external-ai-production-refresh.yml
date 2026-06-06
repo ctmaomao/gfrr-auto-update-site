@@ -12,7 +12,7 @@ on:
         description: "Input source"
         type: choice
         required: true
-        default: local_compact
+        default: analyst_compact_v1
         options:
           - local_compact
           - analyst_compact_v1
@@ -81,7 +81,7 @@ jobs:
             validate_output="${{ inputs.validate_output }}"
             timeout_ms="${{ inputs.timeout_ms }}"
           else
-            input_source="local_compact"
+            input_source="analyst_compact_v1"
             allow_network="true"
             acknowledge_cost="true"
             validate_output="true"

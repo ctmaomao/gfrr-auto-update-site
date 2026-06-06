@@ -116,7 +116,7 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **ODP 五刀(PR1–PR5)merge 后全收官**:数据接入 → 周度 workflow → 回测 GATE → productionize + 价格背离 → 中文 UI → dailyBrief 只读引用;全程 audit-only / display-only,不进 scoring / decision / execution / Heatmap。
 - 边界:不进 `values.*`/scoring/decisionModel/executionLock/positionGuidance/cross-validation;期限结构低置信复用、缺则不参与裁决;数据不足显式「暂不判断」。EIA = 美国政府公共领域。
 
-#### P3-20: External AI 深化 — analyst_compact_v1 深度独立分析(PR0/PR1/PR2+canary/PR3+follow-up+go-live+Daily 终证 已落 · 翻默认/PR4 待开)
+#### P3-20: External AI 深化 — analyst_compact_v1 深度独立分析(PR0/PR1/PR2+canary/PR3+follow-up+go-live+Daily 终证+默认翻转 已落 · PR4 待开)
 
 来源:2026-06-05 owner 立项。目标:让 External AI Auxiliary 对后台丰富数据做**深度独立跨层分析**。根因=输入面窄(`extractSiteData`/`extractCompactSiteData` 都只喂 `macroDrivers.consumer` 一个,约 5-10% richness),非模型能力。**硬边界(CLAUDE.md 绝对规则 4,全程不动)**:External AI = 只读展示层,输出不进 scoring/decision/execution/position;3 守卫(`check-external-ai-output`/`-production-contract`/`-production-write-guard`)+ unsafe-wording + `promotionEligible/humanApproved=false` + `affects*=false` 保留;「独立」=对站内数据独立推理,不接外部新闻/行情。
 
@@ -127,8 +127,9 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **PR3 ✅ 已落(production contract migration,保守 expand-only + analyst opt-in)**(Codex 实现 + Claude 逐行交叉核):新 `scripts/external-ai/production-contract.mjs` 集中 legacy+analyst 两套 Set(legacy 未删、model 固定 flash);validate-data/contract/write-guard/write/projection 容旧+新;projection analyst 保 per-layer sourceLayer(缺失/未识别即 fail)、legacy 仍 collapse,带 `runRegressionChecks` 自测三态;workflow 仅 `workflow_dispatch` 加 analyst 选项、**scheduled 默认仍 local_compact**;run-manual-test 加 `_manualDiagnostics`(usage/timeout,不进 projection)。**未改 committed `data/`**(Set 容旧使旧 legacy data 仍 PASS)、affects*/promotionEligible/humanApproved 强校验未动、check:all 绿。
 - **PR3 follow-up ✅ 已落(首次 go-live safe-fail 后双 acceptor 修复)**:owner 授权 `gh` 触发 analyst go-live run `27047538710`;DeepSeek provider/output validation/quality review/projection/write step 均过,但 final production data 在 commit 前 **fail-closed**:frontend hidden scaffold checker 仍硬编码 legacy schema,因此 production data **零提交/零污染**。随后全仓 legacy-schema grep 又抓到第二处 [P1] `run-daily-pipeline.mjs:isPreservableExternalAiLayer` 硬编码 legacy schema(否则 analyst 真进 production 后下一轮 Daily preserve 会 throw 崩管线)。commit `10c726c3` 将两处 acceptor 改走 `ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS`;runtime/checker 硬编码 legacy 字面仅剩 `production-contract.mjs` 定义处;check:all 绿、未改 `data/`/workflow/frontend。
 - **Go-live ✅ 已落 + Daily 终证完成**:re-run `External AI Production Refresh` run `27049623075` PASS,自动提交 `82b2183d` 只改 `data/radar-data.json`,schema/sourceMode/inputSource = `v28.0L-external-ai-production-analyst-1` / `manual_analyst_compact_v1` / `analyst_compact_v1`,per-layer sourceAttribution 10 条,blocklist 0,display-only/promotion/humanApproved/affects* 边界全守;Pages `27049642175` PASS。随后 owner 手动 `Build Daily Radar Data` run `27050746309` PASS,自动提交 `fa9db1b0`(radar data/history),Daily preserve 后 `externalAiInterpretationLayer` 仍为 analyst 且 production contract PASS;Pages `27050765084` PASS。至此“本地 check:all 绿≠Daily 绿”的最后一关已实跑通过。
-- **下一步**:另开小 PR 翻 scheduled 默认到 analyst(当前 scheduled External AI Refresh 仍默认 `local_compact`,保守 scope 保留 rollback);之后 **PR4**=输出 schema(`crossLayerSynthesis`/`keyDivergences`/`scenarioLean`/`dataQualityLens`)+ 前端(读 DESIGN.md + asset bump)。serial-trunk 逐刀。
-- 状态:**PR0/PR1/PR2(代码+canary PASS)/PR3/follow-up/go-live/Daily 终证全落;analyst 已 live 进 production 并上站;下一步=翻默认小 PR 或 PR4**。记忆见 `project_external_ai_deep_analysis`。
+- **默认翻转 ✅ 已落(小 PR #1)**:在 analyst live + Daily 终证后,`External AI Production Refresh` 的 scheduled 分支与 `workflow_dispatch` default 均翻到 `analyst_compact_v1`;`local_compact` 仍保留为 manual dispatch rollback option + build 分支;workflow checker 同步改为断言默认 analyst 且显式断言 rollback 分支存在。Set/守卫/data/前端零改,模型仍 `deepseek-v4-flash`,check:all 绿。
+- **下一步**:**PR4**=输出 schema(`crossLayerSynthesis`/`keyDivergences`/`scenarioLean`/`dataQualityLens`)+ 前端专属渲染(改前端先读 DESIGN.md + asset bump)。serial-trunk,PR4 另开一刀。
+- 状态:**PR0/PR1/PR2(代码+canary PASS)/PR3/follow-up/go-live/Daily 终证/default cutover 全落;analyst 已 live 进 production、上站且成为 scheduled/default 输入;剩 PR4 为可选增强**。记忆见 `project_external_ai_deep_analysis`。
 
 ---
 
@@ -262,10 +263,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于(2026-06-06 · 续6 — External AI analyst live + Daily 终证完成)**: analyst go-live 已完成并上站。首次 run `27047538710` safe-fail 于 final production guard 前(零 production 提交)并暴露两个 legacy-schema acceptor;follow-up `10c726c3` 修 `check-external-ai-frontend-hidden-scaffold.mjs` + `run-daily-pipeline.mjs:isPreservableExternalAiLayer` 改走 `ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS`。随后 re-run `External AI Production Refresh` `27049623075` PASS,自动提交 `82b2183d` 只改 `data/radar-data.json`,External AI layer 为 analyst schema/source/inputSource、per-layer sourceAttribution 10、blocklist 0、display-only/promotion/humanApproved/affects* 边界全守;Pages `27049642175` PASS。owner 再手动 `Build Daily Radar Data` `27050746309` PASS,自动提交 `fa9db1b0`;Daily preserve 后 `externalAiInterpretationLayer` 仍为 analyst,`check:data` + production contract PASS,Pages `27050765084` PASS。
-- **当前进行中(2026-06-06 · 续6)**: 无。PR0→PR3 + follow-up + go-live + Daily 终证全部收口,main tip `fa9db1b0`。
-- **下一步建议(2026-06-06 · 续6)**: 另开小 PR 翻 scheduled External AI Refresh 默认到 `analyst_compact_v1`(保留 legacy rollback 的 contract Set),或先开 **PR4** 输出 schema + 前端增强。若改前端,先读 DESIGN.md 并按 asset bump 纪律处理。
-- **阻塞或等待(2026-06-06 · 续6)**: 无技术阻塞。
+- **上次会话结束于(2026-06-06 · 续7 — External AI scheduled/default 翻 analyst)**: analyst go-live 与 Daily 终证已完成后,小 PR #1 把 `External AI Production Refresh` 的 scheduled 分支与 `workflow_dispatch` default 从 `local_compact` 翻到 `analyst_compact_v1`;`local_compact` 仍保留为 manual dispatch rollback option + build 分支。workflow checker 同步改默认断言,并显式断言 rollback 分支 `if [ "$input_source" = "local_compact" ]; then` 存在。docs/DATA_CONTRACT + OPERATIONS 同步默认/rollback 语义。Set/守卫/data/前端零改;model 仍 `deepseek-v4-flash`;check:all 绿。
+- **当前进行中(2026-06-06 · 续7)**: 无。PR0→PR3 + follow-up + go-live + Daily 终证 + default cutover 全收口。
+- **下一步建议(2026-06-06 · 续7)**: **PR4** 输出 schema + 前端增强(`crossLayerSynthesis`/`keyDivergences`/`scenarioLean`/`dataQualityLens`),改前端前先读 DESIGN.md 并按 asset bump 纪律处理。
+- **阻塞或等待(2026-06-06 · 续7)**: 无技术阻塞。
 
 ---
 

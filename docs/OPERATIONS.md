@@ -111,6 +111,7 @@ _(历史 v28.0K-3A:当时 `status="disabled"` 为预期、回退 rule-based laye
 6. 如果本地缺失但 live 已存在，pull latest `main` 或等待 `External AI Production Refresh` / Daily data commit。
 7. 不要手工编辑 `data/radar-data.json`(唯一写入路径是 validator+quality 门控的 `External AI Production Refresh` workflow)。
 8. 输出异常时 fallback 到 rule-based `aiInterpretationLayer`,不要手改产物。
+9. `External AI Production Refresh` 的 scheduled 默认源为 `analyst_compact_v1`；rollback 时手动 `workflow_dispatch` 选择 `input_source=local_compact`。
 
 ## Stable Observation Audit
 
@@ -1145,7 +1146,7 @@ Schedule:
 - Workflow: `External AI Production Refresh`.
 - Daily schedule: `23:50 UTC`.
 - The schedule is intended to run after the current data generation time around `23:29 UTC`.
-- Scheduled runs still use `input_source=local_compact` by default. `analyst_compact_v1` is manual-dispatch only until a later reviewed default-cutover PR.
+- Scheduled runs use `input_source=analyst_compact_v1` by default. `local_compact` remains available as a manual dispatch rollback option.
 - Do not add additional schedules.
 
 Required GitHub environment:
@@ -1154,18 +1155,7 @@ Required GitHub environment:
 - Environment secret: `DEEPSEEK_API_KEY`.
 - For true automatic daily refresh, this environment must not require manual reviewers. If required reviewers are configured, scheduled runs wait for approval and are not fully automatic.
 
-Manual refresh:
-
-```bash
-gh workflow run "External AI Production Refresh" \
-  -f input_source=local_compact \
-  -f allow_network=true \
-  -f acknowledge_cost=true \
-  -f validate_output=true \
-  -f timeout_ms=120000
-```
-
-Manual analyst opt-in canary-to-production refresh (PR3 expand-then-contract path):
+Manual analyst/default refresh:
 
 ```bash
 gh workflow run "External AI Production Refresh" \
@@ -1176,11 +1166,22 @@ gh workflow run "External AI Production Refresh" \
   -f timeout_ms=120000
 ```
 
-Use the analyst option only after reviewing the latest analyst canary evidence. If the run fails provider output validation, quality review, production contract validation, write guard, `check:data`, or `check:all`, do not rerun repeatedly; inspect sanitized artifacts and fall back to the scheduled legacy `local_compact` path.
+Manual legacy rollback refresh:
+
+```bash
+gh workflow run "External AI Production Refresh" \
+  -f input_source=local_compact \
+  -f allow_network=true \
+  -f acknowledge_cost=true \
+  -f validate_output=true \
+  -f timeout_ms=120000
+```
+
+If a refresh fails provider output validation, quality review, production contract validation, write guard, `check:data`, or `check:all`, do not rerun repeatedly; inspect sanitized artifacts and use manual `local_compact` rollback only after confirming analyst output is the failure source.
 
 Refresh behavior:
 
-- Builds the selected input from current site data: scheduled/default `local_compact`, or manual-dispatch `analyst_compact_v1`.
+- Builds the selected input from current site data: scheduled/default `analyst_compact_v1`, or manual-dispatch rollback `local_compact`.
 - Calls DeepSeek once.
 - Runs output validation.
 - Runs external AI artifact quality review.
