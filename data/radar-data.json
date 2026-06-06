@@ -3316,75 +3316,84 @@
     "schemaVersion": "v28.0L-external-ai-production-1",
     "status": "valid",
     "displayEnabled": true,
-    "generatedAt": "2026-06-05T01:56:06.278Z",
-    "updatedAt": "2026-06-05T01:56:06.278Z",
+    "generatedAt": "2026-06-06T01:48:12.948Z",
+    "updatedAt": "2026-06-06T01:48:12.948Z",
     "sourceMode": "manual_local_compact",
     "provider": "deepseek",
     "model": "deepseek-v4-flash",
     "inputSource": "local_compact",
     "sourceSemantics": "site_structured_data_compact_summary",
-    "summaryZh": "站内结构化数据显示当前主线为能源→通胀→利率压力，布伦特98.3美元，10年期美债4.46%，背离层提示长端利率与风险资产之间存在观察性背离，消费者信心走弱（49.8）与资产定价背离。但数据来源均为公开代理或月频慢变量，缺乏正式实物成交价和实时高频验证，整体证据强度不足以形成高置信度方向判断。若布伦特回落且利率压力缓解，则当前观察情景失效。",
+    "summaryZh": "站内结构化数据显示能源价格与长端利率存在压力，消费者信心走弱，但信用利差和波动率尚未明显扩张。当前证据仅支持观察，不足以形成高置信度方向判断。若能源价格回落且利率压力缓解，则当前背离信号可能失效。",
     "facts": [
-      "布伦特公开代理值为98.29美元，期货代理值为95.2美元，价差3.09美元，处于观察状态。",
-      "美国10年期收益率为4.46%，实际利率为2.07%。",
-      "标普500指数为7553.68，VIX为16.06。",
-      "消费者信心指数（UMCSENT）为49.8，前值53.3，三个月变化-6.6。",
-      "背离层评分50，其中能源定价背离检查评分52，利率与风险资产背离检查评分58。",
-      "风险模块中能源评分74（趋势+9），地缘政治评分63（趋势+9），通胀评分52（趋势0）。"
+      "布伦特原油公开代理价格为98.29美元，期货代理价格为92.87美元，价差5.42美元处于压力状态。",
+      "美国10年期收益率为4.47%，实际利率为2.11%。",
+      "标普500指数为7584.31，VIX为15.40。",
+      "消费者信心指数为49.8，前值53.3，三个月变化-6.6。",
+      "高收益利差为2.74%，信用风险可控。",
+      "广义美元指数为118.88。",
+      "背离层状态为watch，评分50，主要背离为长端利率与风险资产。",
+      "能源定价缺口检查评分为52，状态为stress。",
+      "消费者与资产定价背离检查评分为54，状态为stress。",
+      "数据健康评分为100，数据源为live。"
     ],
     "inferences": [
-      "布伦特现货与期货价差扩大，可能反映短期供应紧张预期，但公开代理数据不能代表正式实物成交价。",
-      "长端利率上行而风险资产（标普500）维持高位，两者走势分化，可能暗示市场对利率持续上升的韧性过度乐观。",
-      "消费者信心连续三个月下滑，与风险资产定价形成背离，若消费数据进一步走弱，可能压制企业盈利预期。",
-      "能源和地缘政治风险评分上升趋势明显，但信用利差（HY OAS 2.75%）和波动率（VIX 16.06）尚未扩张，表明压力尚未广泛传导至信用和波动率市场。"
+      "能源价格与长端利率同步上行，但风险资产（标普500）未显著下跌，存在观察性背离。",
+      "消费者信心持续走弱，但风险资产定价尚未充分反映，可能预示未来调整压力。",
+      "信用利差和波动率处于低位，表明金融压力尚未广泛扩散。",
+      "能源现货与期货价差扩大，可能反映短期供应紧张或市场结构扭曲。"
     ],
     "modelJudgments": [
-      "当前证据强度中等：布伦特价差和利率-资产背离均有数据支持，但缺乏正式现货成交价和实时高频数据，数据充分性不足。",
-      "消费者信心数据为月频慢变量，存在发布延迟，不能作为短期判断依据，属于低置信度观察。",
-      "能源定价背离检查处于观察状态，但不等同于真实实物溢价，需更多独立来源确认。",
-      "整体不确定性较高，建议维持观察，等待布伦特回落或利率压力缓解等失效信号。"
+      "能源价格压力证据强度中等，但期货代理价格低于现货，价差压力需更多数据确认。",
+      "消费者信心数据为月频慢变量，时效性有限，不足以作为实时判断依据。",
+      "背离层评分50，处于watch状态，数据充分性中等，不确定性较高。",
+      "当前证据不足以确认系统性风险，建议保持观察。"
     ],
     "scenarioHypotheses": [
       {
-        "titleZh": "能源-利率-资产重定价观察",
+        "titleZh": "能源利率压力持续情景",
         "triggerConditions": [
-          "布伦特公开代理价差持续扩大或进入压力状态",
+          "布伦特现货代理价格继续上行",
           "美国10年期收益率继续上行",
           "VIX或高收益利差明显扩张"
         ],
         "invalidationConditions": [
-          "布伦特公开代理价差收敛",
+          "布伦特现货代理价格回落",
           "美国10年期收益率回落",
-          "VIX与高收益利差未扩张且综合风险分数下降"
+          "VIX和高收益利差未扩张"
         ]
       },
       {
-        "titleZh": "消费者-资产背离缓和观察",
+        "titleZh": "消费者与资产定价背离缓解情景",
         "triggerConditions": [
-          "消费者信心三个月变化改善",
+          "消费者信心指数三个月变化改善",
           "美国10年期收益率回落",
           "高收益利差未扩张"
         ],
         "invalidationConditions": [
-          "消费者信心继续走弱",
+          "消费者信心指数继续走弱",
           "高收益利差或VIX扩张",
-          "风险资产定价继续与体感数据背离"
+          "风险资产定价继续与消费者数据背离"
         ]
       }
     ],
     "dataGaps": [
-      "Platts Dated Brent或正式实物现货成交价未接入。",
-      "布伦特期限结构数据未接入。",
-      "航运/运费压力数据仅进入审计观察层，未提供具体数值。",
-      "消费者信心数据为月频，缺乏周度或日度高频替代指标。",
-      "地缘政治和能源风险模块的具体构成指标未提供。"
+      "Platts Dated Brent或正式实物成交价未接入。",
+      "Brent期限结构数据未接入。",
+      "航运/货运压力数据未接入。",
+      "消费者信心数据为月频，存在发布延迟。"
     ],
     "invalidationSignals": [
-      "布伦特回落且验证层不再提示压力。",
+      "布伦特原油价格回落且验证层不再提示压力。",
       "美国10年期收益率回落。",
       "VIX或高收益利差未扩张且综合风险分数下降。"
     ],
     "sourceAttribution": [
+      {
+        "sourceLayer": "local_compact",
+        "field": "macroState",
+        "claimType": "site_structured_data",
+        "noteZh": "Site structured data only; non-production projection dry-run source."
+      },
       {
         "sourceLayer": "local_compact",
         "field": "dominantRiskChain",
@@ -3411,15 +3420,15 @@
       },
       {
         "sourceLayer": "local_compact",
-        "field": "energy",
-        "claimType": "site_structured_data",
+        "field": "modelJudgments",
+        "claimType": "rule_based_interpretation",
         "noteZh": "Site structured data only; non-production projection dry-run source."
       }
     ],
     "confidence": {
       "level": "low",
       "score": 30,
-      "reasonZh": "基于站内结构化数据，尚未接入外部独立验证，且关键数据（布伦特现货、期限结构、高频消费指标）缺失，证据充分性不足。"
+      "reasonZh": "基于站内结构化数据，尚未接入外部独立验证。"
     },
     "qualityReview": {
       "status": "pass",
@@ -3427,15 +3436,15 @@
       "promotionEligible": false,
       "failedDimensions": [],
       "warningDimensions": [],
-      "reviewedAt": "2026-06-05T01:56:06.278Z"
+      "reviewedAt": "2026-06-06T01:48:12.948Z"
     },
     "provenance": {
-      "runId": "26990664024",
-      "artifactName": "external-ai-production-refresh-26990664024",
-      "artifactId": "26990664024-1",
-      "artifactDigest": "ae04d989fb577ee3bf9ed8ba2294b92f433e2acff930da6bb261c2b6cfc8807a",
-      "sourceCommit": "1904029fe51dc00517fa7d3cc7665a0e3cdf3a87",
-      "sourceDataUpdatedAt": "2026-06-04T23:44:49.962Z",
+      "runId": "27049205744",
+      "artifactName": "external-ai-production-refresh-27049205744",
+      "artifactId": "27049205744-1",
+      "artifactDigest": "fa6a932824867db95da3d0ea6d9b247092471d6618f13ee183f7c4b26d2ec84d",
+      "sourceCommit": "10c726c3008b8a304807a0071fc2e7b3adc74ae7",
+      "sourceDataUpdatedAt": "2026-06-05T23:45:32.401Z",
       "inputArtifactPath": "manual-artifacts/external-ai/deepseek-output-latest.json",
       "outputArtifactPath": "manual-artifacts/external-ai/external-ai-production-projection-latest.json",
       "qualityReviewArtifactPath": "manual-artifacts/external-ai/external-ai-quality-review-latest.json",
@@ -3443,7 +3452,7 @@
       "humanApproved": false
     },
     "freshness": {
-      "artifactGeneratedAt": "2026-06-05T01:56:06.278Z",
+      "artifactGeneratedAt": "2026-06-06T01:48:12.948Z",
       "sourceDataUpdatedAt": null,
       "maxAgeHours": 24,
       "isStale": false,
