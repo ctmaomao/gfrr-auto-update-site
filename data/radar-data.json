@@ -3313,122 +3313,146 @@
     }
   },
   "externalAiInterpretationLayer": {
-    "schemaVersion": "v28.0L-external-ai-production-1",
+    "schemaVersion": "v28.0L-external-ai-production-analyst-1",
     "status": "valid",
     "displayEnabled": true,
-    "generatedAt": "2026-06-06T01:48:12.948Z",
-    "updatedAt": "2026-06-06T01:48:12.948Z",
-    "sourceMode": "manual_local_compact",
+    "generatedAt": "2026-06-06T02:07:25.102Z",
+    "updatedAt": "2026-06-06T02:07:25.102Z",
+    "sourceMode": "manual_analyst_compact_v1",
     "provider": "deepseek",
     "model": "deepseek-v4-flash",
-    "inputSource": "local_compact",
-    "sourceSemantics": "site_structured_data_compact_summary",
-    "summaryZh": "站内结构化数据显示能源价格与长端利率存在压力，消费者信心走弱，但信用利差和波动率尚未明显扩张。当前证据仅支持观察，不足以形成高置信度方向判断。若能源价格回落且利率压力缓解，则当前背离信号可能失效。",
+    "inputSource": "analyst_compact_v1",
+    "sourceSemantics": "site_structured_analyst_evidence_pack_v1",
+    "summaryZh": "站内结构化数据表明，当前宏观主线为能源—通胀—利率压力链条，布伦特现货代理与期货价差扩大至5.42美元，显示公开代理价格层存在压力。消费者信心月频数据持续走弱（UMich 49.8），与风险资产定价形成观察性背离。地缘多战区压力指数65，阵营化与经济武器化维度得分87，但信用利差与波动率尚未明显扩张，表明压力尚未广泛扩散。跨层证据存在矛盾：能源实物链显示柴油库存极端紧张，但布伦特近4周下跌16.89%，形成价格与实物的背离。数据缺口包括Platts Dated Brent未接入、Brent期限结构缺失、中国部分宏观数据更新延迟。当前证据仅支持观察，不足以形成高置信度方向判断。",
     "facts": [
-      "布伦特原油公开代理价格为98.29美元，期货代理价格为92.87美元，价差5.42美元处于压力状态。",
-      "美国10年期收益率为4.47%，实际利率为2.11%。",
-      "标普500指数为7584.31，VIX为15.40。",
-      "消费者信心指数为49.8，前值53.3，三个月变化-6.6。",
-      "高收益利差为2.74%，信用风险可控。",
-      "广义美元指数为118.88。",
-      "背离层状态为watch，评分50，主要背离为长端利率与风险资产。",
-      "能源定价缺口检查评分为52，状态为stress。",
-      "消费者与资产定价背离检查评分为54，状态为stress。",
-      "数据健康评分为100，数据源为live。"
+      "布伦特现货代理值98.29美元，期货代理值92.87美元，价差5.42美元，状态为公开代理价差压力。",
+      "美国10年期收益率4.47%，实际利率2.11%，标普500指数7584.31，VIX 15.40。",
+      "消费者信心指数UMich 49.8，前值53.3，三个月变化-6.6，六个月变化-3.8。",
+      "柴油库存较五年同期均值低11.19%，状态为极端紧张；原油库存较五年同期均值低3.43%。",
+      "地缘多战区压力得分65，阵营化与经济武器化维度得分均为87，趋势均为上升。",
+      "高收益利差2.74%，信用利差IG OAS 0.74%，状态为偏宽松。",
+      "ON RRP余额7.61亿美元，周变化-93.48亿，逆回购准备金告急信号活跃。",
+      "中国制造业PMI数据更新至2026年5月31日，中国CPI/PPI数据更新至2026年5月11日，中国MLF数据状态为fallback。"
     ],
     "inferences": [
-      "能源价格与长端利率同步上行，但风险资产（标普500）未显著下跌，存在观察性背离。",
-      "消费者信心持续走弱，但风险资产定价尚未充分反映，可能预示未来调整压力。",
-      "信用利差和波动率处于低位，表明金融压力尚未广泛扩散。",
-      "能源现货与期货价差扩大，可能反映短期供应紧张或市场结构扭曲。"
+      "能源实物链紧张（柴油极端紧张、库存持续下降）与布伦特期货价格近4周下跌16.89%形成背离，可能反映市场对需求前景的担忧超过供给紧张。",
+      "消费者信心持续走弱，但风险资产定价（标普500）仍处于高位，该背离可能暗示资产定价尚未充分计入消费放缓风险，但月频数据延迟需谨慎。",
+      "地缘多战区压力与阵营化趋势上升，但信用利差和波动率未扩张，表明金融市场的风险定价尚未完全反映地缘风险溢价。",
+      "逆回购准备金快速下降至7.61亿美元，显示流动性缓冲正在收缩，但联邦基金利率仍处于目标区间，尚未引发货币市场压力。"
     ],
     "modelJudgments": [
-      "能源价格压力证据强度中等，但期货代理价格低于现货，价差压力需更多数据确认。",
-      "消费者信心数据为月频慢变量，时效性有限，不足以作为实时判断依据。",
-      "背离层评分50，处于watch状态，数据充分性中等，不确定性较高。",
-      "当前证据不足以确认系统性风险，建议保持观察。"
+      "能源—通胀—利率链条的证据强度中等：布伦特现货与期货价差扩大、柴油库存极端紧张提供实物侧支撑，但布伦特价格近4周下跌削弱了链条的持续性判断。",
+      "消费者与资产定价背离的证据充分性不足：UMich为月频慢变量，发布时间存在延迟，且单月数据波动较大，不足以确认趋势性背离。",
+      "地缘风险向金融市场传导的证据不足：尽管地缘压力得分较高，但信用利差和波动率仍处于低位，表明传导尚未发生，当前为watch状态。",
+      "中国宏观数据存在数据充分性问题：MLF数据为fallback状态，CPI/PPI和PMI更新日期较早，可能影响对中国经济判断的时效性。"
     ],
     "scenarioHypotheses": [
       {
-        "titleZh": "能源利率压力持续情景",
+        "titleZh": "能源—利率—资产重新定价观察",
         "triggerConditions": [
-          "布伦特现货代理价格继续上行",
-          "美国10年期收益率继续上行",
-          "VIX或高收益利差明显扩张"
+          "布伦特现货与期货价差持续扩大至6%以上",
+          "美国10年期收益率突破4.6%且VIX同步上升至20以上",
+          "高收益利差扩大至3.5%以上"
         ],
         "invalidationConditions": [
-          "布伦特现货代理价格回落",
-          "美国10年期收益率回落",
-          "VIX和高收益利差未扩张"
+          "布伦特价差回落至3%以下",
+          "美国10年期收益率回落至4.3%以下",
+          "消费者信心指数企稳回升"
         ]
       },
       {
-        "titleZh": "消费者与资产定价背离缓解情景",
+        "titleZh": "流动性压力升级观察",
         "triggerConditions": [
-          "消费者信心指数三个月变化改善",
-          "美国10年期收益率回落",
-          "高收益利差未扩张"
+          "ON RRP余额降至5亿美元以下",
+          "联邦基金利率有效值突破目标区间上沿",
+          "美元指数继续上行突破120"
         ],
         "invalidationConditions": [
-          "消费者信心指数继续走弱",
-          "高收益利差或VIX扩张",
-          "风险资产定价继续与消费者数据背离"
+          "ON RRP余额回升至10亿美元以上",
+          "联邦基金利率稳定在目标区间内",
+          "美元指数回落至117以下"
         ]
       }
     ],
     "dataGaps": [
-      "Platts Dated Brent或正式实物成交价未接入。",
-      "Brent期限结构数据未接入。",
-      "航运/货运压力数据未接入。",
-      "消费者信心数据为月频，存在发布延迟。"
+      "Platts Dated Brent / 正式Dated Brent未接入，无法验证公开代理价差的准确性。",
+      "Brent期限结构数据未接入，无法评估远期曲线形态。",
+      "中国MLF数据状态为fallback，可能影响对中国货币政策判断。",
+      "中国CPI/PPI数据更新至2026年5月11日，时效性不足。",
+      "消费者信心指数为月频数据，发布时间存在延迟，无法实时跟踪。"
     ],
     "invalidationSignals": [
-      "布伦特原油价格回落且验证层不再提示压力。",
-      "美国10年期收益率回落。",
-      "VIX或高收益利差未扩张且综合风险分数下降。"
+      "布伦特现货代理价差回落至3%以下且验证层不再提示压力。",
+      "美国10年期收益率回落至4.3%以下。",
+      "柴油库存紧张状态缓解，库存回升至五年均值以上。",
+      "消费者信心指数回升至55以上。"
     ],
     "sourceAttribution": [
       {
-        "sourceLayer": "local_compact",
-        "field": "macroState",
-        "claimType": "site_structured_data",
-        "noteZh": "Site structured data only; non-production projection dry-run source."
-      },
-      {
-        "sourceLayer": "local_compact",
+        "sourceLayer": "dailyBrief",
         "field": "dominantRiskChain",
         "claimType": "site_structured_data",
-        "noteZh": "Site structured data only; non-production projection dry-run source."
+        "noteZh": "来自站内结构化数据"
       },
       {
-        "sourceLayer": "local_compact",
-        "field": "primaryDivergence",
-        "claimType": "site_structured_data",
-        "noteZh": "Site structured data only; non-production projection dry-run source."
-      },
-      {
-        "sourceLayer": "local_compact",
+        "sourceLayer": "brentPricingLayer",
         "field": "proxySpread",
         "claimType": "site_structured_data",
-        "noteZh": "Site structured data only; non-production projection dry-run source."
+        "noteZh": "来自站内结构化数据"
       },
       {
-        "sourceLayer": "local_compact",
+        "sourceLayer": "macroDrivers.consumer",
         "field": "umichSentiment",
         "claimType": "site_structured_data",
-        "noteZh": "Site structured data only; non-production projection dry-run source."
+        "noteZh": "来自站内结构化数据"
       },
       {
-        "sourceLayer": "local_compact",
-        "field": "modelJudgments",
-        "claimType": "rule_based_interpretation",
-        "noteZh": "Site structured data only; non-production projection dry-run source."
+        "sourceLayer": "oilDirectionalPressure",
+        "field": "signals.dieselProductStress",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "worldOrderStress",
+        "field": "score",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "macroDrivers.credit",
+        "field": "igOas",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "macroDrivers.fedLiquidity",
+        "field": "onRrp",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "divergenceLayer",
+        "field": "checks",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "dataQuality",
+        "field": "macroDrivers.chinaMlf",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "transmissionChain",
+        "field": "stressScore",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
       }
     ],
     "confidence": {
       "level": "low",
-      "score": 30,
-      "reasonZh": "基于站内结构化数据，尚未接入外部独立验证。"
+      "score": 32,
+      "reasonZh": "基于站内结构化数据的跨层证据包生成，未接入外部独立取数或新闻验证。存在关键数据缺口（Platts Dated Brent、Brent期限结构），中国部分宏观数据时效性不足，消费者信心为月频慢变量，跨层证据存在矛盾（能源实物紧张与价格下跌背离），整体证据充分性有限。"
     },
     "qualityReview": {
       "status": "pass",
@@ -3436,14 +3460,14 @@
       "promotionEligible": false,
       "failedDimensions": [],
       "warningDimensions": [],
-      "reviewedAt": "2026-06-06T01:48:12.948Z"
+      "reviewedAt": "2026-06-06T02:07:25.102Z"
     },
     "provenance": {
-      "runId": "27049205744",
-      "artifactName": "external-ai-production-refresh-27049205744",
-      "artifactId": "27049205744-1",
-      "artifactDigest": "fa6a932824867db95da3d0ea6d9b247092471d6618f13ee183f7c4b26d2ec84d",
-      "sourceCommit": "10c726c3008b8a304807a0071fc2e7b3adc74ae7",
+      "runId": "27049623075",
+      "artifactName": "external-ai-production-refresh-27049623075",
+      "artifactId": "27049623075-1",
+      "artifactDigest": "e2f235e50101cab24f971a192d9aa992d7fe212db176d4b625b75d2b87eb064c",
+      "sourceCommit": "789518c2a20c5e66b60deff23def98a8b1a1b6cf",
       "sourceDataUpdatedAt": "2026-06-05T23:45:32.401Z",
       "inputArtifactPath": "manual-artifacts/external-ai/deepseek-output-latest.json",
       "outputArtifactPath": "manual-artifacts/external-ai/external-ai-production-projection-latest.json",
@@ -3452,7 +3476,7 @@
       "humanApproved": false
     },
     "freshness": {
-      "artifactGeneratedAt": "2026-06-06T01:48:12.948Z",
+      "artifactGeneratedAt": "2026-06-06T02:07:25.102Z",
       "sourceDataUpdatedAt": null,
       "maxAgeHours": 24,
       "isStale": false,
@@ -3473,6 +3497,7 @@
     "auditFlags": [
       "manual_artifact_only",
       "site_structured_data_only",
+      "analyst_compact_v1",
       "validator_required",
       "non_production_output",
       "no_frontend_display"
