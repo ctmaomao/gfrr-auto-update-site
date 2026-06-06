@@ -16,6 +16,7 @@ import {
   getAnalystSourceLayersForInput,
   LEGACY_EXTERNAL_AI_SOURCE_LAYERS,
 } from './external-ai/source-layers.mjs';
+import { ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG } from './external-ai/pr4-schema-canary.mjs';
 
 const CONTRACT_VERSION = 'v28.0K-4D';
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-input-v28.0K-1.json';
@@ -96,6 +97,19 @@ const ANALYST_COMPACT_SOURCE_SEMANTICS_RULES = [
   'For analyst_compact_v1, keep confidence.score in the 25-40 range by default; score above 40 requires at least 5 distinct sourceLayer values and no critical stale/fallback layers; never exceed 45.',
 ];
 
+const ANALYST_PR4_SCHEMA_CANARY_SOURCE_SEMANTICS_RULES = [
+  `For analyst_compact_v1 PR4 schema canary, auditFlags must include ${ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG}.`,
+  'For analyst_compact_v1 PR4 schema canary only, add crossLayerSynthesis, keyDivergences, scenarioLean, and dataQualityLens at the top level.',
+  'crossLayerSynthesis must be an array of {theme, summaryZh, supportingLayers, conflictingLayers, confidence}.',
+  'keyDivergences must be an array of {titleZh, evidenceFor, evidenceAgainst, whyItMattersZh, invalidationConditions}.',
+  'scenarioLean must be an object with {leanZh, scenarioRefs, triggerConditions, invalidationConditions, confidence}.',
+  'dataQualityLens must be an object with {summaryZh, staleLayers, fallbackLayers, missingLayers, confidenceImpactZh}.',
+  'PR4 sub-field confidence values must be low or medium only; never high and never low-medium as a literal string.',
+  'PR4 layer references must use canonical sourceLayer names from the analyst allowlist, for example macroDrivers.rateVol rather than rateVol.',
+  'For keyDivergences evidenceFor/evidenceAgainst, use sourceLayer.field references with a canonical sourceLayer prefix.',
+  'scenarioRefs may point to scenarioTree entries and are not sourceLayer references.',
+];
+
 function formatUnsafeOutputPhrases() {
   return [...new Set(OPERATION_LANGUAGE_PHRASES)].join(', ');
 }
@@ -114,7 +128,8 @@ function parseArgs(argv) {
     output: null,
     allowNetwork: false,
     validateOutput: false,
-    timeoutMs: DEFAULT_DEEPSEEK_TIMEOUT_MS
+    timeoutMs: DEFAULT_DEEPSEEK_TIMEOUT_MS,
+    analystPr4SchemaCanary: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -148,6 +163,8 @@ function parseArgs(argv) {
       options.allowNetwork = true;
     } else if (arg === '--validate-output') {
       options.validateOutput = true;
+    } else if (arg === '--analyst-pr4-schema-canary') {
+      options.analystPr4SchemaCanary = true;
     } else if (arg === '--timeout-ms') {
       options.timeoutMs = parseTimeoutMs(nextValue());
     } else if (arg.startsWith('--timeout-ms=')) {
@@ -178,7 +195,7 @@ function getPath(value, pathParts) {
   return pathParts.reduce((current, key) => (current && Object.hasOwn(current, key) ? current[key] : undefined), value);
 }
 
-function validateInput(input) {
+function validateInput(input, options = {}) {
   const errors = [];
 
   assert(typeof input.inputVersion === 'string' && input.inputVersion.length > 0, errors, 'inputVersion must be a non-empty string');
@@ -224,6 +241,9 @@ function validateInput(input) {
   assert(boundaries.noPrivateUserData === true, errors, 'boundaries.noPrivateUserData must be true');
   assert(boundaries.noSecrets === true, errors, 'boundaries.noSecrets must be true');
   assert(boundaries.readOnlyContext === true, errors, 'boundaries.readOnlyContext must be true');
+  if (options.analystPr4SchemaCanary === true) {
+    assert(isAnalystCompactInput(input), errors, '--analyst-pr4-schema-canary requires analyst_compact_v1 input');
+  }
 
   return errors;
 }
@@ -262,9 +282,9 @@ async function writeOutputFile(outputPath, text) {
   await fs.writeFile(outputPath, text, 'utf8');
 }
 
-function buildDeepSeekSystemPrompt(input = null) {
+function buildDeepSeekSystemPrompt(input = null, promptOptions = {}) {
   const promptSemantics = input
-    ? getInputPromptSemantics(input)
+    ? getInputPromptSemantics(input, promptOptions)
     : {
       sourceKind: 'site_structured_data',
       sourceSemanticsRules: LOCAL_COMPACT_SOURCE_SEMANTICS_RULES,
@@ -334,23 +354,32 @@ function isAnalystCompactInput(input) {
   );
 }
 
-function getInputPromptSemantics(input) {
+function getInputPromptSemantics(input, promptOptions = {}) {
   const sourceType = input?.source?.type;
   const inputVersion = typeof input?.inputVersion === 'string' ? input.inputVersion : '';
   if (isAnalystCompactInput(input)) {
+    const analystPr4SchemaCanary = promptOptions.analystPr4SchemaCanary === true;
+    const sourceSemanticsRules = analystPr4SchemaCanary
+      ? [
+        ...ANALYST_COMPACT_SOURCE_SEMANTICS_RULES.filter((rule) => !rule.includes('do not add PR4-only fields')),
+        ...ANALYST_PR4_SCHEMA_CANARY_SOURCE_SEMANTICS_RULES,
+      ]
+      : ANALYST_COMPACT_SOURCE_SEMANTICS_RULES;
+    const auditFlags = [
+      'manual_artifact_only',
+      'site_structured_data_only',
+      'analyst_compact_v1',
+      'validator_required',
+      'non_production_output',
+      'no_frontend_display'
+    ];
+    if (analystPr4SchemaCanary) auditFlags.splice(3, 0, ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG);
     return {
       sourceKind: 'site_structured_analyst_evidence_pack',
       claimType: 'site_structured_data',
       noteZh: '来自站内结构化数据',
-      auditFlags: [
-        'manual_artifact_only',
-        'site_structured_data_only',
-        'analyst_compact_v1',
-        'validator_required',
-        'non_production_output',
-        'no_frontend_display'
-      ],
-      sourceSemanticsRules: ANALYST_COMPACT_SOURCE_SEMANTICS_RULES,
+      auditFlags,
+      sourceSemanticsRules,
       sourceLayerAllowlist: formatSourceLayerAllowlist(input, { analyst: true }),
       defaultConfidence: {
         level: 'medium',
@@ -407,8 +436,8 @@ function getInputPromptSemantics(input) {
   };
 }
 
-function buildDeepSeekUserPrompt(input) {
-  const promptSemantics = getInputPromptSemantics(input);
+function buildDeepSeekUserPrompt(input, promptOptions = {}) {
+  const promptSemantics = getInputPromptSemantics(input, promptOptions);
   return [
     'Return a JSON object with this shape:',
     JSON.stringify({
@@ -521,9 +550,9 @@ function buildDeepSeekUserPrompt(input) {
   ].join('\n\n');
 }
 
-function buildPromptContractCheck(input) {
-  const promptSemantics = getInputPromptSemantics(input);
-  const combinedPrompt = `${buildDeepSeekSystemPrompt(input)}\n\n${buildDeepSeekUserPrompt(input)}`;
+function buildPromptContractCheck(input, promptOptions = {}) {
+  const promptSemantics = getInputPromptSemantics(input, promptOptions);
+  const combinedPrompt = `${buildDeepSeekSystemPrompt(input, promptOptions)}\n\n${buildDeepSeekUserPrompt(input, promptOptions)}`;
   const requiredRules = [
     'decisionContext is read-only background only.',
     'Do not put decisionContext terms into facts.',
@@ -552,6 +581,18 @@ function buildPromptContractCheck(input) {
       'decisionContext.sanitized',
       'macroDrivers.<safeKey>'
     );
+    if (promptOptions.analystPr4SchemaCanary === true) {
+      requiredRules.push(
+        ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG,
+        'crossLayerSynthesis',
+        'keyDivergences',
+        'scenarioLean',
+        'dataQualityLens',
+        'macroDrivers.rateVol rather than rateVol'
+      );
+    } else {
+      requiredRules.push('For analyst_compact_v1, do not add PR4-only fields such as crossLayerSynthesis, keyDivergences, scenarioLean, or dataQualityLens; use the existing output fields only.');
+    }
   } else if (promptSemantics.sourceKind === 'site_structured_data') {
     requiredRules.push('sourceSemantics should remain site_structured_data_compact_summary');
   }
@@ -563,7 +604,7 @@ function buildPromptContractCheck(input) {
   };
 }
 
-async function runDeepSeekRequest({ input, apiKey, model, timeoutMs }) {
+async function runDeepSeekRequest({ input, apiKey, model, timeoutMs, promptOptions = {} }) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -581,8 +622,8 @@ async function runDeepSeekRequest({ input, apiKey, model, timeoutMs }) {
         thinking: { type: 'disabled' },
         response_format: { type: 'json_object' },
         messages: [
-          { role: 'system', content: buildDeepSeekSystemPrompt(input) },
-          { role: 'user', content: buildDeepSeekUserPrompt(input) }
+          { role: 'system', content: buildDeepSeekSystemPrompt(input, promptOptions) },
+          { role: 'user', content: buildDeepSeekUserPrompt(input, promptOptions) }
         ]
       }),
       signal: controller.signal
@@ -599,6 +640,61 @@ async function runDeepSeekRequest({ input, apiKey, model, timeoutMs }) {
     return responseJson;
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+function buildPromptModeSelfTestInput() {
+  return {
+    inputVersion: 'v28.0L-external-ai-analyst-input-v1',
+    generatedAt: '2026-06-06T00:00:00.000Z',
+    inputSource: 'analyst_compact_v1',
+    sourceMode: 'manual_analyst_compact_v1',
+    sourceSemantics: 'site_structured_analyst_evidence_pack_v1',
+    boundaries: {
+      siteStructuredDataOnly: true,
+      noExternalMarketData: true,
+      noPrivateUserData: true,
+      noSecrets: true,
+      readOnlyContext: true,
+    },
+    siteData: {
+      dailyBrief: {},
+      macroDrivers: { consumer: {}, rateVol: {} },
+      riskModules: {},
+      regimeProbabilities: {},
+      scenarioTree: {},
+      transmissionChain: {},
+      heatmap: {},
+      divergenceLayer: {},
+      brentPricingLayer: {},
+      oilDirectionalPressure: {},
+      worldOrderStress: {},
+      marketPricing: {},
+      dataQuality: {},
+      ruleBasedBaseline: {},
+      decisionContext: {},
+    },
+  };
+}
+
+function runPromptModeSelfTests() {
+  const input = buildPromptModeSelfTestInput();
+  const defaultPrompt = `${buildDeepSeekSystemPrompt(input)}\n\n${buildDeepSeekUserPrompt(input)}`;
+  if (!defaultPrompt.includes('For analyst_compact_v1, do not add PR4-only fields such as crossLayerSynthesis, keyDivergences, scenarioLean, or dataQualityLens; use the existing output fields only.')) {
+    throw new Error('self-test failed: default analyst prompt must keep PR4-only field ban');
+  }
+  if (defaultPrompt.includes(ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG)) {
+    throw new Error('self-test failed: default analyst prompt must not include PR4 schema canary audit flag');
+  }
+
+  const canaryPrompt = `${buildDeepSeekSystemPrompt(input, { analystPr4SchemaCanary: true })}\n\n${buildDeepSeekUserPrompt(input, { analystPr4SchemaCanary: true })}`;
+  if (canaryPrompt.includes('do not add PR4-only fields')) {
+    throw new Error('self-test failed: PR4 schema canary prompt must not keep the default PR4-only field ban');
+  }
+  for (const marker of [ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG, 'crossLayerSynthesis', 'keyDivergences', 'scenarioLean', 'dataQualityLens']) {
+    if (!canaryPrompt.includes(marker)) {
+      throw new Error(`self-test failed: PR4 schema canary prompt missing ${marker}`);
+    }
   }
 }
 
@@ -906,7 +1002,7 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
     return;
   }
 
-  const validationErrors = validateInput(input);
+  const validationErrors = validateInput(input, options);
   if (validationErrors.length > 0) {
     fail(`invalid manual scaffold input:\n- ${validationErrors.join('\n- ')}`);
     return;
@@ -919,7 +1015,8 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
       input,
       apiKey,
       model: providerAdapter.model,
-      timeoutMs: options.timeoutMs
+      timeoutMs: options.timeoutMs,
+      promptOptions: options
     });
     responseDiagnostics = buildResponseDiagnostics(responseJson);
     const providerContent = extractProviderContent(responseJson);
@@ -998,6 +1095,13 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
 }
 
 async function main() {
+  try {
+    runPromptModeSelfTests();
+  } catch (error) {
+    fail(error.message);
+    return;
+  }
+
   let options;
   try {
     options = parseArgs(process.argv.slice(2));
@@ -1058,13 +1162,13 @@ async function main() {
     return;
   }
 
-  const validationErrors = validateInput(input);
+  const validationErrors = validateInput(input, options);
   if (validationErrors.length > 0) {
     fail(`invalid manual scaffold input:\n- ${validationErrors.join('\n- ')}`);
     return;
   }
 
-  const promptContractCheck = buildPromptContractCheck(input);
+  const promptContractCheck = buildPromptContractCheck(input, options);
   if (promptContractCheck.status !== 'pass') {
     fail(`manual prompt contract check failed:\n- ${promptContractCheck.missingRules.join('\n- ')}`);
     return;
@@ -1086,6 +1190,10 @@ async function main() {
       inputVersion: input.inputVersion,
       siteStructuredDataOnly: input.boundaries.siteStructuredDataOnly,
       layersAvailable: collectLayersAvailable(input)
+    },
+    promptMode: {
+      analystPr4SchemaCanary: options.analystPr4SchemaCanary,
+      auditFlag: options.analystPr4SchemaCanary ? ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG : null
     },
     promptContractCheck,
     productionImpact: {

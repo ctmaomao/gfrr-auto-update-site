@@ -5,6 +5,11 @@ import process from 'node:process';
 
 import { OPERATION_LANGUAGE_PHRASES } from './external-ai/safety-constants.mjs';
 import { isAllowedExternalAiSourceLayer } from './external-ai/source-layers.mjs';
+import {
+  ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG,
+  summarizeAnalystPr4StructuredFields,
+  validateAnalystPr4StructuredFields,
+} from './external-ai/pr4-schema-canary.mjs';
 
 const REVIEW_VERSION = 'v28.0K-4F';
 const DEFAULT_INPUT = 'manual-artifacts/external-ai/deepseek-output-latest.json';
@@ -216,6 +221,7 @@ function createBaseReview(inputPath, data) {
       sourceAttributionCoverage: 'pass',
       confidenceReasonableness: 'pass',
       structureQuality: 'pass',
+      pr4SchemaCanary: 'pass',
       incrementalValue: 'pass'
     },
     errors: [],
@@ -248,11 +254,14 @@ function classifySourceSemantics(data) {
   const isAnalystCompact =
     serializedAll.includes('analyst_compact_v1') ||
     serializedAll.includes('site_structured_analyst_evidence_pack');
+  const isPr4SchemaCanary =
+    serializedAll.includes(ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG);
 
   return {
     appearsSiteStructured: hasSiteStructured,
     appearsSample: hasSample,
-    isAnalystCompact
+    isAnalystCompact,
+    isPr4SchemaCanary
   };
 }
 
@@ -323,6 +332,50 @@ function runSelfTests() {
   );
   if (analystReview.scores.sourceAttributionCoverage === 'fail') {
     throw new Error(`self-test failed: analyst sourceLayer coverage should not fail: ${analystReview.errors.join('; ')}`);
+  }
+
+  const pr4Review = createBaseReview('self-test.json', {});
+  reviewPr4SchemaCanary(
+    {
+      auditFlags: ['analyst_compact_v1', ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG],
+      crossLayerSynthesis: [
+        {
+          theme: 'energy_pricing_divergence',
+          summaryZh: '能源实物层与定价层存在背离观察。',
+          supportingLayers: ['oilDirectionalPressure', 'macroDrivers.rateVol'],
+          conflictingLayers: ['marketPricing'],
+          confidence: 'low',
+        },
+      ],
+      keyDivergences: [
+        {
+          titleZh: '能源与风险定价不一致',
+          evidenceFor: ['oilDirectionalPressure.finalBias', 'macroDrivers.rateVol.move'],
+          evidenceAgainst: ['marketPricing.primaryAssetStatus'],
+          whyItMattersZh: '该背离影响解释层置信度。',
+          invalidationConditions: ['相关层同步收敛'],
+        },
+      ],
+      scenarioLean: {
+        leanZh: '偏观察情景',
+        scenarioRefs: ['scenarioTree[0]'],
+        triggerConditions: ['背离继续扩大'],
+        invalidationConditions: ['数据质量恢复且背离收敛'],
+        confidence: 'medium',
+      },
+      dataQualityLens: {
+        summaryZh: 'fallback 层降低整体置信。',
+        staleLayers: [],
+        fallbackLayers: ['dataQuality', 'macroDrivers.rateVol'],
+        missingLayers: [],
+        confidenceImpactZh: '数据质量使结论维持低至中低置信。',
+      },
+    },
+    pr4Review,
+    { isPr4SchemaCanary: true }
+  );
+  if (pr4Review.scores.pr4SchemaCanary === 'fail') {
+    throw new Error(`self-test failed: PR4 schema canary review should not fail: ${pr4Review.errors.join('; ')}`);
   }
 }
 
@@ -437,6 +490,52 @@ function reviewStructureQuality(data, review) {
       markScore(review, 'structureQuality', 'warn', `scenarioHypotheses[${index}] is missing triggerConditions or invalidationConditions.`);
     }
   });
+}
+
+function reviewPr4SchemaCanary(data, review, sourceSemantics) {
+  const summary = summarizeAnalystPr4StructuredFields(data);
+  review.pr4SchemaCanaryMetrics = summary;
+
+  const hasAnyPr4Field = summary.presentFields.length > 0;
+  const requireAll = sourceSemantics.isPr4SchemaCanary === true;
+  const validationErrors = validateAnalystPr4StructuredFields(data, { requireAll });
+
+  for (const error of validationErrors) {
+    markScore(review, 'pr4SchemaCanary', 'fail', `PR4 schema canary field error: ${error}`);
+  }
+
+  if (!requireAll && !hasAnyPr4Field) return;
+
+  if (requireAll && summary.missingFields.length > 0) {
+    markScore(
+      review,
+      'pr4SchemaCanary',
+      'fail',
+      `PR4 schema canary is missing fields: ${summary.missingFields.join(', ')}`
+    );
+  }
+
+  if (summary.invalidLayerReferences.length > 0) {
+    markScore(
+      review,
+      'pr4SchemaCanary',
+      'fail',
+      `PR4 schema canary contains non-canonical sourceLayer references: ${summary.invalidLayerReferences.join(', ')}`
+    );
+  }
+
+  if (requireAll && summary.totalLayerReferences < 4) {
+    markScore(review, 'pr4SchemaCanary', 'warn', 'PR4 schema canary has fewer than 4 layer references.');
+  }
+  if (requireAll && summary.distinctCanonicalLayers.length < 3) {
+    markScore(review, 'pr4SchemaCanary', 'warn', 'PR4 schema canary covers fewer than 3 distinct canonical sourceLayer values.');
+  }
+  if (requireAll && countArray(data.crossLayerSynthesis) === 0) {
+    markScore(review, 'pr4SchemaCanary', 'warn', 'PR4 schema canary crossLayerSynthesis is empty.');
+  }
+  if (requireAll && countArray(data.keyDivergences) === 0) {
+    markScore(review, 'pr4SchemaCanary', 'warn', 'PR4 schema canary keyDivergences is empty.');
+  }
 }
 
 function reviewBoundaries(data, review) {
@@ -581,6 +680,7 @@ async function reviewValidOutput(inputPath, outputPath, data) {
   reviewSourceAttributionCoverage(data, review, sourceSemantics);
   reviewConfidenceReasonableness(data, review, sourceSemantics);
   reviewStructureQuality(data, review);
+  reviewPr4SchemaCanary(data, review, sourceSemantics);
   reviewBoundaries(data, review);
   reviewIncrementalValue(data, review, sourceSemantics);
 
@@ -588,6 +688,7 @@ async function reviewValidOutput(inputPath, outputPath, data) {
   if (sourceSemantics.appearsSiteStructured) review.notes.push('sourceSemantics=site_structured_data');
   if (sourceSemantics.appearsSample) review.notes.push('sourceSemanticsIncludesSampleMarkers=true');
   if (sourceSemantics.isAnalystCompact) review.notes.push('sourceSemantics=analyst_compact_v1');
+  if (sourceSemantics.isPr4SchemaCanary) review.notes.push(`sourceSemantics=${ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG}`);
 
   return finalizeReview(review);
 }

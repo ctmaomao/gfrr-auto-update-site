@@ -407,8 +407,8 @@ Future production output may add:
     {
       "theme": "string",
       "summaryZh": "string",
-      "supportingLayers": ["macroDrivers.credit", "rateVol", "marketPricing"],
-      "conflictingLayers": ["string"],
+      "supportingLayers": ["macroDrivers.credit", "macroDrivers.rateVol", "marketPricing"],
+      "conflictingLayers": ["sourceLayer"],
       "confidence": "low|medium"
     }
   ],
@@ -438,7 +438,9 @@ Future production output may add:
 }
 ```
 
-These fields require updates to prompt schema, output validator, production contract validator, projection, data contract docs, and frontend renderer. They are not part of PR1 / PR2 canary unless kept as non-production artifact-only fields. Until validators and production contracts explicitly add another enum, PR4 subfield confidence values must reuse legal output enum values (`low | medium | high`). The `analyst_compact_v1` cap still forbids `high` and keeps score at or below 45 unless a separately reviewed contract migration changes that rule.
+PR4a implements these fields as an opt-in, non-production `analyst_pr4_schema_canary` mode only. The default `analyst_compact_v1` production prompt must continue to use existing output fields and must not emit these PR4-only fields until PR4b accepts them in projection / production contract / frontend. New field layer references must use canonical sourceLayer names from `scripts/external-ai/source-layers.mjs` (for example `macroDrivers.rateVol`, not bare `rateVol`); `scenarioRefs` point to `scenarioTree` entries and are not sourceLayer references.
+
+These fields require updates to prompt schema, output validator, production contract validator, projection, data contract docs, and frontend renderer before production display. Until validators and production contracts explicitly add another enum, PR4 subfield confidence values must reuse legal output enum values (`low | medium | high`). The `analyst_compact_v1` cap still forbids `high` and keeps score at or below 45 unless a separately reviewed contract migration changes that rule. PR4a canary validation is stricter for subfield confidence and accepts only `low | medium`.
 
 `max_tokens` may be revisited after schema design, but `2400 -> 5000` must not be the first lever.
 

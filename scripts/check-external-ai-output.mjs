@@ -3,6 +3,10 @@ import path from 'node:path';
 
 import { BANNED_COPY, UNSAFE_CLAIMS } from './external-ai/safety-constants.mjs';
 import { isAllowedExternalAiSourceLayer } from './external-ai/source-layers.mjs';
+import {
+  ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG,
+  validateAnalystPr4StructuredFields,
+} from './external-ai/pr4-schema-canary.mjs';
 
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-output-v28.0K-1.json';
 
@@ -279,6 +283,13 @@ function isAnalystCompactOutput(data) {
   );
 }
 
+function isAnalystPr4SchemaCanaryOutput(data) {
+  return (
+    Array.isArray(data?.auditFlags) &&
+    data.auditFlags.includes(ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG)
+  );
+}
+
 function validateSourceAttribution(data, sourceAttribution, errors, warnings) {
   if (!Array.isArray(sourceAttribution)) return;
   const analystCompact = isAnalystCompactOutput(data);
@@ -348,6 +359,14 @@ function validateRecursiveStrings(data, errors) {
   }
 }
 
+function validatePr4StructuredFields(data, errors) {
+  for (const error of validateAnalystPr4StructuredFields(data, {
+    requireAll: isAnalystPr4SchemaCanaryOutput(data),
+  })) {
+    addError(errors, error);
+  }
+}
+
 function runSelfTests() {
   const passingTexts = [
     '不提供投资建议',
@@ -402,6 +421,122 @@ function runSelfTests() {
   if (legacySourceLayerErrors.length === 0) {
     throw new Error('self-test failed: expected legacy sourceLayer rejection for macroDrivers.rateVol');
   }
+
+  const basePr4Output = {
+    contractVersion: 'v28.0K-4D-manual',
+    generatedAt: '2026-06-06T00:00:00.000Z',
+    provider: 'deepseek',
+    model: 'deepseek-v4-flash',
+    mode: 'external_ai_manual_artifact_test',
+    summaryZh: '结构化证据仅支持低置信观察。',
+    facts: ['布伦特公开代理层存在背离观察。'],
+    inferences: ['能源层与定价层之间存在可审计分歧。'],
+    modelJudgments: ['证据强度有限，需继续观察数据质量。'],
+    scenarioHypotheses: [
+      { titleZh: '观察情景', triggerConditions: ['数据继续背离'], invalidationConditions: ['数据重新收敛'] },
+    ],
+    dataGaps: ['部分数据为 fallback。'],
+    invalidationSignals: ['背离收敛。'],
+    sourceAttribution: [
+      { sourceLayer: 'macroDrivers.rateVol', field: 'move', claimType: 'site_structured_data', noteZh: '来自站内结构化数据' },
+      { sourceLayer: 'dataQuality', field: 'fallbackLayers', claimType: 'site_structured_data', noteZh: '来自站内结构化数据' },
+      { sourceLayer: 'oilDirectionalPressure', field: 'finalBias', claimType: 'site_structured_data', noteZh: '来自站内结构化数据' },
+      { sourceLayer: 'worldOrderStress', field: 'state', claimType: 'site_structured_data', noteZh: '来自站内结构化数据' },
+      { sourceLayer: 'scenarioTree', field: 'base', claimType: 'site_structured_data', noteZh: '来自站内结构化数据' },
+      { sourceLayer: 'transmissionChain', field: 'stressScore', claimType: 'site_structured_data', noteZh: '来自站内结构化数据' },
+      { sourceLayer: 'marketPricing', field: 'status', claimType: 'site_structured_data', noteZh: '来自站内结构化数据' },
+      { sourceLayer: 'divergenceLayer', field: 'checks', claimType: 'site_structured_data', noteZh: '来自站内结构化数据' },
+    ],
+    auditFlags: [
+      'manual_artifact_only',
+      'site_structured_data_only',
+      'analyst_compact_v1',
+      ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG,
+      'validator_required',
+      'non_production_output',
+      'no_frontend_display',
+    ],
+    confidence: { level: 'low', score: 35, reasonZh: '基于站内结构化数据，未接入外部独立验证。' },
+    boundaries: {
+      displayOnly: true,
+      externalAiGenerated: true,
+      usesExternalAiApi: true,
+      affectsScoring: false,
+      affectsDecisionModel: false,
+      affectsExecutionLock: false,
+      affectsPositionGuidance: false,
+      notInvestmentAdvice: true,
+    },
+    crossLayerSynthesis: [
+      {
+        theme: 'energy_pricing_divergence',
+        summaryZh: '能源实物层与定价层存在背离观察。',
+        supportingLayers: ['oilDirectionalPressure', 'brentPricingLayer', 'macroDrivers.rateVol'],
+        conflictingLayers: ['marketPricing'],
+        confidence: 'low',
+      },
+    ],
+    keyDivergences: [
+      {
+        titleZh: '能源与风险定价不一致',
+        evidenceFor: ['oilDirectionalPressure.finalBias', 'macroDrivers.rateVol.move'],
+        evidenceAgainst: ['marketPricing.primaryAssetStatus'],
+        whyItMattersZh: '该背离影响解释层置信度。',
+        invalidationConditions: ['相关层同步收敛'],
+      },
+    ],
+    scenarioLean: {
+      leanZh: '偏观察情景',
+      scenarioRefs: ['scenarioTree[0]'],
+      triggerConditions: ['背离继续扩大'],
+      invalidationConditions: ['数据质量恢复且背离收敛'],
+      confidence: 'medium',
+    },
+    dataQualityLens: {
+      summaryZh: 'fallback 层降低整体置信。',
+      staleLayers: [],
+      fallbackLayers: ['dataQuality', 'macroDrivers.rateVol'],
+      missingLayers: [],
+      confidenceImpactZh: '数据质量使结论维持低至中低置信。',
+    },
+  };
+
+  const validCanaryErrors = validateOutput(basePr4Output).errors;
+  if (validCanaryErrors.length > 0) {
+    throw new Error(`self-test failed: expected PR4 canary output pass, got ${validCanaryErrors.join('; ')}`);
+  }
+
+  const missingCanaryFields = { ...basePr4Output };
+  delete missingCanaryFields.dataQualityLens;
+  if (!validateOutput(missingCanaryFields).errors.some((error) => error.includes('dataQualityLens is required'))) {
+    throw new Error('self-test failed: expected PR4 canary output to require dataQualityLens');
+  }
+
+  const nonCanonicalLayer = structuredClone(basePr4Output);
+  nonCanonicalLayer.crossLayerSynthesis[0].supportingLayers = ['rateVol'];
+  if (!validateOutput(nonCanonicalLayer).errors.some((error) => error.includes('canonical analyst sourceLayer'))) {
+    throw new Error('self-test failed: expected PR4 canary output to reject non-canonical rateVol layer');
+  }
+
+  const proseLayerReference = structuredClone(basePr4Output);
+  proseLayerReference.keyDivergences[0].evidenceFor = ['macroDrivers.rateVol and marketPricing'];
+  if (!validateOutput(proseLayerReference).errors.some((error) => error.includes('canonical analyst sourceLayer'))) {
+    throw new Error('self-test failed: expected PR4 canary output to reject prose sourceLayer references');
+  }
+
+  const highSubConfidence = structuredClone(basePr4Output);
+  highSubConfidence.scenarioLean.confidence = 'high';
+  if (!validateOutput(highSubConfidence).errors.some((error) => error.includes('scenarioLean.confidence must be low or medium'))) {
+    throw new Error('self-test failed: expected PR4 canary output to reject sub-field confidence=high');
+  }
+
+  const optionalMissingPr4Fields = structuredClone(basePr4Output);
+  optionalMissingPr4Fields.auditFlags = optionalMissingPr4Fields.auditFlags.filter((flag) => flag !== ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG);
+  for (const field of ['crossLayerSynthesis', 'keyDivergences', 'scenarioLean', 'dataQualityLens']) delete optionalMissingPr4Fields[field];
+  const optionalErrors = validateOutput(optionalMissingPr4Fields).errors;
+  if (optionalErrors.length > 0) {
+    throw new Error(`self-test failed: expected missing PR4 fields to be optional without canary flag, got ${optionalErrors.join('; ')}`);
+  }
 }
 
 function validateOutput(data) {
@@ -417,6 +552,7 @@ function validateOutput(data) {
   validateBoundaries(data.boundaries, errors);
   validateScenarioHypotheses(data.scenarioHypotheses, errors);
   validateSourceAttribution(data, data.sourceAttribution, errors, warnings);
+  validatePr4StructuredFields(data, errors);
   validateRecursiveStrings(data, errors);
 
   return { errors, warnings };
