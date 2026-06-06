@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS } from './external-ai/production-contract.mjs';
 
 const DATA_PATH = 'data/radar-data.json';
 const WORKFLOW_DIR = '.github/workflows';
@@ -87,7 +88,7 @@ function validateProductionLayer(errors) {
 
   if (layer.displayEnabled === true && boundaries.frontendDisplayApproved === true) {
     const visibleRequirements = [
-      ['schemaVersion', layer.schemaVersion === 'v28.0L-external-ai-production-1'],
+      ['schemaVersion', ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS.has(layer.schemaVersion)],
       ['status', layer.status === 'valid'],
       ['boundaries.displayOnly', boundaries.displayOnly === true],
       ['boundaries.notInvestmentAdvice', boundaries.notInvestmentAdvice === true],

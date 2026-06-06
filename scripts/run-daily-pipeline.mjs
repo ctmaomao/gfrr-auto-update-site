@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { computeAgeMinutes, classifyFreshnessLevel, canUseRealtimePayloadValues } from './modules/freshness.js';
 import { formatOnRrpYiUsd } from './modules/format.js';
+import { ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS } from './external-ai/production-contract.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1661,7 +1662,7 @@ function isPreservableExternalAiLayer(layer) {
   const qualityReview = isRecord(layer?.qualityReview) ? layer.qualityReview : null;
   const boundaries = isRecord(layer?.boundaries) ? layer.boundaries : null;
   return isRecord(layer)
-    && layer.schemaVersion === 'v28.0L-external-ai-production-1'
+    && ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS.has(layer.schemaVersion)
     && layer.status === 'valid'
     && typeof layer.displayEnabled === 'boolean'
     && isRecord(qualityReview)
