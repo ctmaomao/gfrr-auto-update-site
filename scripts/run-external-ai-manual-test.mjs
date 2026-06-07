@@ -102,6 +102,7 @@ const ANALYST_COMPACT_SOURCE_SEMANTICS_RULES = [
   'For analyst_compact_v1, scenarioHypotheses should express scenario lean as watch conditions with triggerConditions and invalidationConditions, not predictions.',
   'For analyst_compact_v1, use dataQuality stale/fallback/missing evidence to lower confidence and to write specific dataGaps and confidence.reasonZh.',
   'For analyst_compact_v1, sourceAttribution should include at least 8 objects and at least 5 distinct sourceLayer values, with target coverage of 8 or more layers.',
+  'For analyst_compact_v1, sourceAttribution.sourceLayer must use canonical allowlist sourceLayer names, not compact evidence-pack keys; map riskModules to modules, ruleBasedBaseline to aiInterpretationLayer, and decisionContext to decisionContext.sanitized.',
   'For analyst_compact_v1, do not add PR4-only fields such as crossLayerSynthesis, keyDivergences, scenarioLean, or dataQualityLens; use the existing output fields only.',
   'For analyst_compact_v1, keep confidence.score in the 25-40 range by default; score above 40 requires at least 5 distinct sourceLayer values and no critical stale/fallback layers; never exceed 45.',
 ];
@@ -725,6 +726,17 @@ function runPromptModeSelfTests() {
   if (defaultPrompt.includes('crossLayerSynthesis.supportingLayers')) {
     throw new Error('self-test failed: default analyst prompt must not include PR4 schema canary layer-array rules');
   }
+  const canonicalAttributionMarkers = [
+    'sourceAttribution.sourceLayer must use canonical allowlist sourceLayer names',
+    'map riskModules to modules',
+    'ruleBasedBaseline to aiInterpretationLayer',
+    'decisionContext to decisionContext.sanitized',
+  ];
+  for (const marker of canonicalAttributionMarkers) {
+    if (!defaultPrompt.includes(marker)) {
+      throw new Error(`self-test failed: default analyst prompt missing canonical attribution marker ${marker}`);
+    }
+  }
 
   const canaryPrompt = `${buildDeepSeekSystemPrompt(input, { analystPr4SchemaCanary: true })}\n\n${buildDeepSeekUserPrompt(input, { analystPr4SchemaCanary: true })}`;
   if (canaryPrompt.includes('do not add PR4-only fields')) {
@@ -744,6 +756,11 @@ function runPromptModeSelfTests() {
   ]) {
     if (!canaryPrompt.includes(marker)) {
       throw new Error(`self-test failed: PR4 schema canary prompt missing ${marker}`);
+    }
+  }
+  for (const marker of canonicalAttributionMarkers) {
+    if (!canaryPrompt.includes(marker)) {
+      throw new Error(`self-test failed: PR4 schema canary prompt missing canonical attribution marker ${marker}`);
     }
   }
 }

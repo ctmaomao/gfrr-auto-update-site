@@ -422,6 +422,19 @@ function runSelfTests() {
     throw new Error('self-test failed: expected legacy sourceLayer rejection for macroDrivers.rateVol');
   }
 
+  for (const compactAliasSourceLayer of ['riskModules', 'ruleBasedBaseline', 'decisionContext']) {
+    const compactAliasErrors = [];
+    validateSourceAttribution(
+      { auditFlags: ['analyst_compact_v1'] },
+      [{ sourceLayer: compactAliasSourceLayer, noteZh: '来自站内结构化数据', claimType: 'site_structured_data' }],
+      compactAliasErrors,
+      []
+    );
+    if (compactAliasErrors.length === 0) {
+      throw new Error(`self-test failed: expected analyst sourceLayer rejection for compact alias ${compactAliasSourceLayer}`);
+    }
+  }
+
   const basePr4Output = {
     contractVersion: 'v28.0K-4D-manual',
     generatedAt: '2026-06-06T00:00:00.000Z',
