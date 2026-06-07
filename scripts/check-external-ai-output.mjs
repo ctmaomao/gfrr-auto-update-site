@@ -506,6 +506,43 @@ function runSelfTests() {
     throw new Error(`self-test failed: expected PR4 canary output pass, got ${validCanaryErrors.join('; ')}`);
   }
 
+  const tooManySynthesisItems = structuredClone(basePr4Output);
+  tooManySynthesisItems.crossLayerSynthesis = [
+    ...tooManySynthesisItems.crossLayerSynthesis,
+    structuredClone(tooManySynthesisItems.crossLayerSynthesis[0]),
+    structuredClone(tooManySynthesisItems.crossLayerSynthesis[0]),
+  ];
+  if (!validateOutput(tooManySynthesisItems).errors.some((error) => error.includes('crossLayerSynthesis must contain at most 2 items'))) {
+    throw new Error('self-test failed: expected PR4 canary output to reject crossLayerSynthesis over cap');
+  }
+
+  const tooManyDivergences = structuredClone(basePr4Output);
+  tooManyDivergences.keyDivergences = [
+    ...tooManyDivergences.keyDivergences,
+    structuredClone(tooManyDivergences.keyDivergences[0]),
+    structuredClone(tooManyDivergences.keyDivergences[0]),
+  ];
+  if (!validateOutput(tooManyDivergences).errors.some((error) => error.includes('keyDivergences must contain at most 2 items'))) {
+    throw new Error('self-test failed: expected PR4 canary output to reject keyDivergences over cap');
+  }
+
+  const tooManyLayerRefs = structuredClone(basePr4Output);
+  tooManyLayerRefs.crossLayerSynthesis[0].supportingLayers = [
+    'oilDirectionalPressure',
+    'brentPricingLayer',
+    'macroDrivers.rateVol',
+    'marketPricing',
+  ];
+  if (!validateOutput(tooManyLayerRefs).errors.some((error) => error.includes('supportingLayers must contain at most 3 items'))) {
+    throw new Error('self-test failed: expected PR4 canary output to reject layer reference arrays over cap');
+  }
+
+  const tooManyConditions = structuredClone(basePr4Output);
+  tooManyConditions.scenarioLean.triggerConditions = ['a', 'b', 'c', 'd'];
+  if (!validateOutput(tooManyConditions).errors.some((error) => error.includes('triggerConditions must contain at most 3 items'))) {
+    throw new Error('self-test failed: expected PR4 canary output to reject condition arrays over cap');
+  }
+
   const missingCanaryFields = { ...basePr4Output };
   delete missingCanaryFields.dataQualityLens;
   if (!validateOutput(missingCanaryFields).errors.some((error) => error.includes('dataQualityLens is required'))) {

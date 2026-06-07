@@ -16,12 +16,21 @@ import {
   getAnalystSourceLayersForInput,
   LEGACY_EXTERNAL_AI_SOURCE_LAYERS,
 } from './external-ai/source-layers.mjs';
-import { ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG } from './external-ai/pr4-schema-canary.mjs';
+import {
+  ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG,
+  MAX_CROSS_LAYER_SYNTHESIS_ITEMS,
+  MAX_KEY_DIVERGENCE_ITEMS,
+  MAX_PR4_CONDITIONS_PER_ARRAY,
+  MAX_PR4_LAYER_REFERENCES_PER_ARRAY,
+  MAX_PR4_SCENARIO_REFS,
+} from './external-ai/pr4-schema-canary.mjs';
 
 const CONTRACT_VERSION = 'v28.0K-4D';
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-input-v28.0K-1.json';
 const DEFAULT_DEEPSEEK_TIMEOUT_MS = 90000;
 const MAX_DEEPSEEK_TIMEOUT_MS = 180000;
+const DEFAULT_DEEPSEEK_MAX_TOKENS = 2400;
+const ANALYST_PR4_SCHEMA_CANARY_MAX_TOKENS = 5000;
 const UNSAFE_OUTPUT_DIRS = [
   'data',
   'realtime',
@@ -104,6 +113,9 @@ const ANALYST_PR4_SCHEMA_CANARY_SOURCE_SEMANTICS_RULES = [
   'keyDivergences must be an array of {titleZh, evidenceFor, evidenceAgainst, whyItMattersZh, invalidationConditions}.',
   'scenarioLean must be an object with {leanZh, scenarioRefs, triggerConditions, invalidationConditions, confidence}.',
   'dataQualityLens must be an object with {summaryZh, staleLayers, fallbackLayers, missingLayers, confidenceImpactZh}.',
+  `For PR4 schema canary output budget, crossLayerSynthesis must contain at most ${MAX_CROSS_LAYER_SYNTHESIS_ITEMS} items and keyDivergences must contain at most ${MAX_KEY_DIVERGENCE_ITEMS} items.`,
+  `For PR4 schema canary output budget, each layer/evidence array must contain at most ${MAX_PR4_LAYER_REFERENCES_PER_ARRAY} items, each trigger/invalidation array at most ${MAX_PR4_CONDITIONS_PER_ARRAY} items, and scenarioRefs at most ${MAX_PR4_SCENARIO_REFS} items.`,
+  'For PR4 schema canary output budget, keep summaryZh, whyItMattersZh, and confidenceImpactZh as short sentences rather than long paragraphs.',
   'PR4 sub-field confidence values must be low or medium only; never high and never low-medium as a literal string.',
   'PR4 layer references must use canonical sourceLayer names from the analyst allowlist, for example macroDrivers.rateVol rather than rateVol.',
   'For keyDivergences evidenceFor/evidenceAgainst, use sourceLayer.field references with a canonical sourceLayer prefix.',
@@ -185,6 +197,22 @@ function parseTimeoutMs(value) {
     throw new Error(`--timeout-ms must be <= ${MAX_DEEPSEEK_TIMEOUT_MS}`);
   }
   return timeoutMs;
+}
+
+function getDeepSeekMaxTokens(options = {}) {
+  return options.analystPr4SchemaCanary === true
+    ? ANALYST_PR4_SCHEMA_CANARY_MAX_TOKENS
+    : DEFAULT_DEEPSEEK_MAX_TOKENS;
+}
+
+function getPr4SchemaCanaryCaps() {
+  return {
+    crossLayerSynthesisItems: MAX_CROSS_LAYER_SYNTHESIS_ITEMS,
+    keyDivergenceItems: MAX_KEY_DIVERGENCE_ITEMS,
+    layerReferencesPerArray: MAX_PR4_LAYER_REFERENCES_PER_ARRAY,
+    conditionsPerArray: MAX_PR4_CONDITIONS_PER_ARRAY,
+    scenarioRefs: MAX_PR4_SCENARIO_REFS,
+  };
 }
 
 function assert(condition, errors, message) {
@@ -604,7 +632,7 @@ function buildPromptContractCheck(input, promptOptions = {}) {
   };
 }
 
-async function runDeepSeekRequest({ input, apiKey, model, timeoutMs, promptOptions = {} }) {
+async function runDeepSeekRequest({ input, apiKey, model, timeoutMs, maxTokens, promptOptions = {} }) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -618,7 +646,7 @@ async function runDeepSeekRequest({ input, apiKey, model, timeoutMs, promptOptio
         model,
         stream: false,
         temperature: 0.2,
-        max_tokens: 2400,
+        max_tokens: maxTokens,
         thinking: { type: 'disabled' },
         response_format: { type: 'json_object' },
         messages: [
@@ -679,6 +707,13 @@ function buildPromptModeSelfTestInput() {
 
 function runPromptModeSelfTests() {
   const input = buildPromptModeSelfTestInput();
+  if (getDeepSeekMaxTokens({ analystPr4SchemaCanary: false }) !== DEFAULT_DEEPSEEK_MAX_TOKENS) {
+    throw new Error('self-test failed: default analyst max_tokens must remain 2400');
+  }
+  if (getDeepSeekMaxTokens({ analystPr4SchemaCanary: true }) !== ANALYST_PR4_SCHEMA_CANARY_MAX_TOKENS) {
+    throw new Error('self-test failed: PR4 schema canary max_tokens must use canary-only headroom');
+  }
+
   const defaultPrompt = `${buildDeepSeekSystemPrompt(input)}\n\n${buildDeepSeekUserPrompt(input)}`;
   if (!defaultPrompt.includes('For analyst_compact_v1, do not add PR4-only fields such as crossLayerSynthesis, keyDivergences, scenarioLean, or dataQualityLens; use the existing output fields only.')) {
     throw new Error('self-test failed: default analyst prompt must keep PR4-only field ban');
@@ -691,7 +726,16 @@ function runPromptModeSelfTests() {
   if (canaryPrompt.includes('do not add PR4-only fields')) {
     throw new Error('self-test failed: PR4 schema canary prompt must not keep the default PR4-only field ban');
   }
-  for (const marker of [ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG, 'crossLayerSynthesis', 'keyDivergences', 'scenarioLean', 'dataQualityLens']) {
+  for (const marker of [
+    ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG,
+    'crossLayerSynthesis',
+    'keyDivergences',
+    'scenarioLean',
+    'dataQualityLens',
+    `crossLayerSynthesis must contain at most ${MAX_CROSS_LAYER_SYNTHESIS_ITEMS} items`,
+    `keyDivergences must contain at most ${MAX_KEY_DIVERGENCE_ITEMS} items`,
+    `each layer/evidence array must contain at most ${MAX_PR4_LAYER_REFERENCES_PER_ARRAY} items`,
+  ]) {
     if (!canaryPrompt.includes(marker)) {
       throw new Error(`self-test failed: PR4 schema canary prompt missing ${marker}`);
     }
@@ -930,9 +974,10 @@ function isAbortError(error) {
   return error?.name === 'AbortError' || /aborted/i.test(error?.message || '');
 }
 
-function buildRequestDiagnostics({ timeoutMs, inputText, model, provider, allowNetwork, validateOutput, outputPathSafe, likelyCause }) {
+function buildRequestDiagnostics({ timeoutMs, maxTokens, inputText, model, provider, allowNetwork, validateOutput, outputPathSafe, likelyCause }) {
   return {
     timeoutMs,
+    maxTokens,
     inputApproxBytes: Buffer.byteLength(inputText, 'utf8'),
     inputApproxChars: inputText.length,
     model,
@@ -1010,12 +1055,15 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
 
   let providerOutput;
   let responseDiagnostics = null;
+  const maxTokens = getDeepSeekMaxTokens(options);
+  providerAdapter.metadata.maxTokens = maxTokens;
   try {
     const responseJson = await runDeepSeekRequest({
       input,
       apiKey,
       model: providerAdapter.model,
       timeoutMs: options.timeoutMs,
+      maxTokens,
       promptOptions: options
     });
     responseDiagnostics = buildResponseDiagnostics(responseJson);
@@ -1031,6 +1079,7 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
     const diagnostics = error.responseDiagnostics || responseDiagnostics;
     const requestDiagnostics = buildRequestDiagnostics({
       timeoutMs: options.timeoutMs,
+      maxTokens,
       inputText,
       model: providerAdapter.model,
       provider,
@@ -1061,6 +1110,7 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
     responseDiagnostics,
     requestDiagnostics: buildRequestDiagnostics({
       timeoutMs: options.timeoutMs,
+      maxTokens,
       inputText,
       model: providerAdapter.model,
       provider,
@@ -1193,7 +1243,9 @@ async function main() {
     },
     promptMode: {
       analystPr4SchemaCanary: options.analystPr4SchemaCanary,
-      auditFlag: options.analystPr4SchemaCanary ? ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG : null
+      auditFlag: options.analystPr4SchemaCanary ? ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG : null,
+      maxTokens: getDeepSeekMaxTokens(options),
+      outputBudgetCaps: options.analystPr4SchemaCanary ? getPr4SchemaCanaryCaps() : null
     },
     promptContractCheck,
     productionImpact: {

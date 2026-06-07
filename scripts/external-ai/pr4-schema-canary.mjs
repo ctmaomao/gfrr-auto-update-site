@@ -12,6 +12,12 @@ export const ANALYST_PR4_STRUCTURED_FIELDS = [
   'dataQualityLens',
 ];
 
+export const MAX_CROSS_LAYER_SYNTHESIS_ITEMS = 2;
+export const MAX_KEY_DIVERGENCE_ITEMS = 2;
+export const MAX_PR4_LAYER_REFERENCES_PER_ARRAY = 3;
+export const MAX_PR4_CONDITIONS_PER_ARRAY = 3;
+export const MAX_PR4_SCENARIO_REFS = 3;
+
 const PR4_SUBFIELD_CONFIDENCE_LEVELS = new Set(['low', 'medium']);
 const MACRO_DRIVER_SOURCE_LAYER_PATTERN = /^(macroDrivers\.[A-Za-z][A-Za-z0-9_]*)(?:[.[].*)?$/u;
 
@@ -65,11 +71,18 @@ function validateStringArray(value, path, errors) {
   });
 }
 
-function validateLayerArray(value, path, errors, { allowFieldPath = false } = {}) {
+function validateArrayMaxLength(value, path, maxItems, errors) {
+  if (Array.isArray(value) && value.length > maxItems) {
+    addError(errors, `${path} must contain at most ${maxItems} items`);
+  }
+}
+
+function validateLayerArray(value, path, errors, { allowFieldPath = false, maxItems = MAX_PR4_LAYER_REFERENCES_PER_ARRAY } = {}) {
   if (!Array.isArray(value)) {
     addError(errors, `${path} must be an array`);
     return;
   }
+  validateArrayMaxLength(value, path, maxItems, errors);
 
   value.forEach((item, index) => {
     if (!isNonEmptyString(item)) {
@@ -96,6 +109,7 @@ function validateCrossLayerSynthesis(value, errors) {
     addError(errors, 'crossLayerSynthesis must be an array');
     return;
   }
+  validateArrayMaxLength(value, 'crossLayerSynthesis', MAX_CROSS_LAYER_SYNTHESIS_ITEMS, errors);
   value.forEach((item, index) => {
     const path = `crossLayerSynthesis[${index}]`;
     if (!isPlainObject(item)) {
@@ -115,6 +129,7 @@ function validateKeyDivergences(value, errors) {
     addError(errors, 'keyDivergences must be an array');
     return;
   }
+  validateArrayMaxLength(value, 'keyDivergences', MAX_KEY_DIVERGENCE_ITEMS, errors);
   value.forEach((item, index) => {
     const path = `keyDivergences[${index}]`;
     if (!isPlainObject(item)) {
@@ -126,6 +141,7 @@ function validateKeyDivergences(value, errors) {
     validateLayerArray(item.evidenceAgainst, `${path}.evidenceAgainst`, errors, { allowFieldPath: true });
     validateRequiredString(item.whyItMattersZh, `${path}.whyItMattersZh`, errors);
     validateStringArray(item.invalidationConditions, `${path}.invalidationConditions`, errors);
+    validateArrayMaxLength(item.invalidationConditions, `${path}.invalidationConditions`, MAX_PR4_CONDITIONS_PER_ARRAY, errors);
   });
 }
 
@@ -136,8 +152,11 @@ function validateScenarioLean(value, errors) {
   }
   validateRequiredString(value.leanZh, 'scenarioLean.leanZh', errors);
   validateStringArray(value.scenarioRefs, 'scenarioLean.scenarioRefs', errors);
+  validateArrayMaxLength(value.scenarioRefs, 'scenarioLean.scenarioRefs', MAX_PR4_SCENARIO_REFS, errors);
   validateStringArray(value.triggerConditions, 'scenarioLean.triggerConditions', errors);
+  validateArrayMaxLength(value.triggerConditions, 'scenarioLean.triggerConditions', MAX_PR4_CONDITIONS_PER_ARRAY, errors);
   validateStringArray(value.invalidationConditions, 'scenarioLean.invalidationConditions', errors);
+  validateArrayMaxLength(value.invalidationConditions, 'scenarioLean.invalidationConditions', MAX_PR4_CONDITIONS_PER_ARRAY, errors);
   validatePr4Confidence(value.confidence, 'scenarioLean.confidence', errors);
 }
 
@@ -185,6 +204,77 @@ function collectLayerReferencesFromArray(value, { allowFieldPath = false } = {})
     }));
 }
 
+function collectArrayLengths(data) {
+  const entries = [];
+  const add = (path, value) => {
+    if (Array.isArray(value)) entries.push({ path, length: value.length });
+  };
+
+  add('crossLayerSynthesis', data?.crossLayerSynthesis);
+  if (Array.isArray(data?.crossLayerSynthesis)) {
+    data.crossLayerSynthesis.forEach((item, index) => {
+      add(`crossLayerSynthesis[${index}].supportingLayers`, item?.supportingLayers);
+      add(`crossLayerSynthesis[${index}].conflictingLayers`, item?.conflictingLayers);
+    });
+  }
+
+  add('keyDivergences', data?.keyDivergences);
+  if (Array.isArray(data?.keyDivergences)) {
+    data.keyDivergences.forEach((item, index) => {
+      add(`keyDivergences[${index}].evidenceFor`, item?.evidenceFor);
+      add(`keyDivergences[${index}].evidenceAgainst`, item?.evidenceAgainst);
+      add(`keyDivergences[${index}].invalidationConditions`, item?.invalidationConditions);
+    });
+  }
+
+  if (isPlainObject(data?.scenarioLean)) {
+    add('scenarioLean.scenarioRefs', data.scenarioLean.scenarioRefs);
+    add('scenarioLean.triggerConditions', data.scenarioLean.triggerConditions);
+    add('scenarioLean.invalidationConditions', data.scenarioLean.invalidationConditions);
+  }
+
+  if (isPlainObject(data?.dataQualityLens)) {
+    add('dataQualityLens.staleLayers', data.dataQualityLens.staleLayers);
+    add('dataQualityLens.fallbackLayers', data.dataQualityLens.fallbackLayers);
+    add('dataQualityLens.missingLayers', data.dataQualityLens.missingLayers);
+  }
+
+  return entries;
+}
+
+function expectedCapForPath(path) {
+  if (path === 'crossLayerSynthesis') return MAX_CROSS_LAYER_SYNTHESIS_ITEMS;
+  if (path === 'keyDivergences') return MAX_KEY_DIVERGENCE_ITEMS;
+  if (path === 'scenarioLean.scenarioRefs') return MAX_PR4_SCENARIO_REFS;
+  if (path.includes('triggerConditions') || path.includes('invalidationConditions')) return MAX_PR4_CONDITIONS_PER_ARRAY;
+  return MAX_PR4_LAYER_REFERENCES_PER_ARRAY;
+}
+
+function summarizeCaps(data) {
+  const arrayLengths = collectArrayLengths(data);
+  const capViolations = arrayLengths
+    .map((item) => ({ ...item, max: expectedCapForPath(item.path) }))
+    .filter((item) => item.length > item.max);
+
+  return {
+    limits: {
+      crossLayerSynthesisItems: MAX_CROSS_LAYER_SYNTHESIS_ITEMS,
+      keyDivergenceItems: MAX_KEY_DIVERGENCE_ITEMS,
+      layerReferencesPerArray: MAX_PR4_LAYER_REFERENCES_PER_ARRAY,
+      conditionsPerArray: MAX_PR4_CONDITIONS_PER_ARRAY,
+      scenarioRefs: MAX_PR4_SCENARIO_REFS,
+    },
+    itemCounts: {
+      crossLayerSynthesis: Array.isArray(data?.crossLayerSynthesis) ? data.crossLayerSynthesis.length : 0,
+      keyDivergences: Array.isArray(data?.keyDivergences) ? data.keyDivergences.length : 0,
+    },
+    arrayLengths,
+    maxArrayLength: arrayLengths.reduce((max, item) => Math.max(max, item.length), 0),
+    capViolations,
+    anyCapViolation: capViolations.length > 0,
+  };
+}
+
 export function summarizeAnalystPr4StructuredFields(data) {
   const presentFields = ANALYST_PR4_STRUCTURED_FIELDS.filter((field) => field in (data || {}));
   const missingFields = ANALYST_PR4_STRUCTURED_FIELDS.filter((field) => !(field in (data || {})));
@@ -221,5 +311,6 @@ export function summarizeAnalystPr4StructuredFields(data) {
     validLayerReferences: references.length - invalidLayerReferences.length,
     invalidLayerReferences: invalidLayerReferences.map((item) => item.reference),
     distinctCanonicalLayers,
+    caps: summarizeCaps(data),
   };
 }

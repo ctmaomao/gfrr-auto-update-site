@@ -377,6 +377,42 @@ function runSelfTests() {
   if (pr4Review.scores.pr4SchemaCanary === 'fail') {
     throw new Error(`self-test failed: PR4 schema canary review should not fail: ${pr4Review.errors.join('; ')}`);
   }
+  if (pr4Review.pr4SchemaCanaryMetrics.caps.itemCounts.crossLayerSynthesis !== 1) {
+    throw new Error('self-test failed: PR4 schema canary review should report cap metrics');
+  }
+
+  const pr4CapReview = createBaseReview('self-test.json', {});
+  const capOverflow = {
+    auditFlags: ['analyst_compact_v1', ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG],
+    crossLayerSynthesis: [
+      {
+        theme: 'energy_pricing_divergence',
+        summaryZh: '能源实物层与定价层存在背离观察。',
+        supportingLayers: ['oilDirectionalPressure', 'macroDrivers.rateVol', 'marketPricing', 'dataQuality'],
+        conflictingLayers: ['marketPricing'],
+        confidence: 'low',
+      },
+    ],
+    keyDivergences: [],
+    scenarioLean: {
+      leanZh: '偏观察情景',
+      scenarioRefs: ['scenarioTree[0]'],
+      triggerConditions: ['背离继续扩大'],
+      invalidationConditions: ['数据质量恢复且背离收敛'],
+      confidence: 'medium',
+    },
+    dataQualityLens: {
+      summaryZh: 'fallback 层降低整体置信。',
+      staleLayers: [],
+      fallbackLayers: ['dataQuality'],
+      missingLayers: [],
+      confidenceImpactZh: '数据质量使结论维持低置信。',
+    },
+  };
+  reviewPr4SchemaCanary(capOverflow, pr4CapReview, { isPr4SchemaCanary: true });
+  if (pr4CapReview.scores.pr4SchemaCanary !== 'fail' || !pr4CapReview.pr4SchemaCanaryMetrics.caps.anyCapViolation) {
+    throw new Error('self-test failed: PR4 schema canary review should fail cap violations');
+  }
 }
 
 function reviewUnsupportedExternalClaims(review, strings) {
@@ -521,6 +557,15 @@ function reviewPr4SchemaCanary(data, review, sourceSemantics) {
       'pr4SchemaCanary',
       'fail',
       `PR4 schema canary contains non-canonical sourceLayer references: ${summary.invalidLayerReferences.join(', ')}`
+    );
+  }
+
+  if (requireAll && summary.caps.anyCapViolation) {
+    markScore(
+      review,
+      'pr4SchemaCanary',
+      'fail',
+      `PR4 schema canary exceeds output caps: ${summary.caps.capViolations.map((item) => `${item.path}=${item.length}/${item.max}`).join(', ')}`
     );
   }
 
