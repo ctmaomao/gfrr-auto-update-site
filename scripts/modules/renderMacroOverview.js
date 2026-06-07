@@ -8,8 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=external-ai-warning-readability-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=external-ai-warning-readability-1';
+} from './config.js?v=external-ai-pr4b3-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=external-ai-pr4b3-1';
+import { MODULE_LABELS } from './decision.js?v=external-ai-pr4b3-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2483,10 +2484,157 @@ function externalAiListText(items, fallback = '—') {
   return clean.length > 0 ? clean.join(' / ') : fallback;
 }
 
+const EXTERNAL_AI_MACRO_DRIVER_LABELS = {
+  fedLiquidity: '美元流动性',
+  policyExpectations: '政策预期',
+  curve: '收益率曲线',
+  credit: '信用压力',
+  consumer: '消费者信心',
+  shippingFreight: '航运运价',
+  employment: '就业质量',
+  consumerRetail: '零售消费',
+  commercialRealEstate: '商业地产',
+  privateCreditProxy: '私募信贷代理',
+  worldEconomy: '世界经济',
+  chinaEquity: '中国权益',
+  inflationEnergy: '通胀与能源',
+  copperGold: '铜金比',
+  chinaBond: '中国债券',
+  cfetsRmb: 'CFETS 人民币',
+  chinaInflation: '中国通胀',
+  chinaPmi: '中国 PMI',
+  euroVolatility: '欧元区波动',
+  chinaPropertyPrice: '中国房价',
+  chinaOmo: '中国公开市场操作',
+  chinaTsf: '中国社融',
+  chinaMlf: '中国 MLF',
+  rateVol: '利率波动',
+  activeSignals: '活跃信号',
+  gatingEvaluation: '门控评估',
+  allSourcesMissing: '缺失源汇总',
+};
+
+const EXTERNAL_AI_SOURCE_LAYER_LABELS = {
+  dailyBrief: '每日简报',
+  aiInterpretationLayer: '规则基线解读',
+  dataHealth: '数据健康',
+  modules: '六大风险模块',
+  regimeProbabilities: '情景概率',
+  scenarioTree: '情景树',
+  transmissionChain: '传导链',
+  heatmap: '全球风险热力图',
+  divergenceLayer: '背离检查层',
+  brentPricingLayer: '布伦特定价层',
+  oilDirectionalPressure: '油价方向压力',
+  worldOrderStress: '世界秩序压力',
+  marketPricing: '市场定价',
+  dataQuality: '数据质量',
+  'decisionContext.sanitized': '只读系统状态',
+  ...Object.fromEntries(
+    Object.entries(EXTERNAL_AI_MACRO_DRIVER_LABELS).map(([key, label]) => [`macroDrivers.${key}`, label])
+  ),
+};
+
+const EXTERNAL_AI_FIELD_PATH_LABELS = {
+  'oilDirectionalPressure.signals.dieselProductStress.extremeTight': '柴油库存压力',
+  'brentPricingLayer.proxySpread.status': '现货期货价差状态',
+  'dailyBrief.dominantRiskChain.evidence[0].value': '主风险链证据',
+  'macroDrivers.consumer.umichSentiment.threeMonthChange': '密歇根信心三月变化',
+  'divergenceLayer.checks[4].status': '消费资产背离检查',
+  'marketPricing.assets.qqq.status': 'QQQ 状态',
+  'marketPricing.assets.ndx.status': '纳指100 状态',
+  'marketPricing.assets.ixic.status': '纳指综合状态',
+};
+
+const EXTERNAL_AI_SOURCE_LAYER_KEYS = Object.keys(EXTERNAL_AI_SOURCE_LAYER_LABELS)
+  .sort((a, b) => b.length - a.length);
+
+const EXTERNAL_AI_CONFIDENCE_LABELS = {
+  low: '低',
+  medium: '中',
+  high: '高',
+};
+
+function externalAiSourceLayerLabel(sourceLayer) {
+  if (!sourceLayer) return null;
+  if (sourceLayer === 'modules') return '六大风险模块';
+  if (sourceLayer.startsWith('modules.')) {
+    const moduleKey = sourceLayer.slice('modules.'.length).split(/[.\[\]]/u)[0];
+    return MODULE_LABELS[moduleKey] ? `六大风险模块 · ${MODULE_LABELS[moduleKey]}` : '六大风险模块';
+  }
+  if (sourceLayer.startsWith('macroDrivers.')) {
+    const key = sourceLayer.slice('macroDrivers.'.length);
+    return EXTERNAL_AI_MACRO_DRIVER_LABELS[key] || `宏观驱动 · ${key}`;
+  }
+  return EXTERNAL_AI_SOURCE_LAYER_LABELS[sourceLayer] || sourceLayer;
+}
+
+function findExternalAiCanonicalSourceLayer(reference) {
+  const value = textValue(reference);
+  if (!value) return null;
+  const macroMatch = value.match(/^(macroDrivers\.[A-Za-z][A-Za-z0-9_]*)(?:[.\[].*)?$/u);
+  if (macroMatch) return macroMatch[1];
+  return EXTERNAL_AI_SOURCE_LAYER_KEYS.find((key) => (
+    value === key ||
+    value.startsWith(`${key}.`) ||
+    value.startsWith(`${key}[`)
+  )) || null;
+}
+
+function externalAiFieldPathEntityLabel(reference, canonicalLayer) {
+  const value = textValue(reference);
+  if (!value || !canonicalLayer || value === canonicalLayer) return null;
+  if (EXTERNAL_AI_FIELD_PATH_LABELS[value]) return EXTERNAL_AI_FIELD_PATH_LABELS[value];
+  const tail = value.slice(canonicalLayer.length).replace(/^\./u, '');
+  if (!tail) return null;
+  if (canonicalLayer === 'modules') {
+    const moduleKey = tail.split(/[.\[\]]/u)[0];
+    if (MODULE_LABELS[moduleKey]) return MODULE_LABELS[moduleKey];
+  }
+  return tail;
+}
+
+function externalAiReferenceLabel(reference, { allowFieldPath = false } = {}) {
+  const value = textValue(reference);
+  if (!value) return null;
+  const canonicalLayer = findExternalAiCanonicalSourceLayer(value);
+  if (!canonicalLayer) return value;
+  const sourceLabel = externalAiSourceLayerLabel(canonicalLayer);
+  if (!allowFieldPath || value === canonicalLayer) return sourceLabel;
+  const entityLabel = externalAiFieldPathEntityLabel(value, canonicalLayer);
+  return entityLabel ? `${sourceLabel} · ${entityLabel}` : sourceLabel;
+}
+
+function externalAiReferenceListText(items, options = {}, fallback = '—') {
+  if (!Array.isArray(items)) return fallback;
+  const clean = items.map((item) => textValue(item)).filter(Boolean);
+  if (clean.length === 0) return fallback;
+  return clean
+    .map((item) => externalAiReferenceLabel(item, options))
+    .filter(Boolean)
+    .join(' / ');
+}
+
+function setExternalAiReferenceListText(id, items, options = {}) {
+  const el = $(id);
+  if (!el) return;
+  const raw = Array.isArray(items)
+    ? items.map((item) => textValue(item)).filter(Boolean).join(' / ')
+    : '';
+  const displayText = externalAiReferenceListText(items, options);
+  el.textContent = displayText;
+  if (raw && raw !== displayText) {
+    el.setAttribute('title', raw);
+  } else {
+    el.removeAttribute('title');
+  }
+}
+
 function externalAiTitleWithConfidence(title, confidence) {
+  const confidenceLabel = EXTERNAL_AI_CONFIDENCE_LABELS[textValue(confidence)] || textValue(confidence);
   return joinNonEmpty([
     title,
-    textValue(confidence) ? `confidence=${confidence}` : null,
+    confidenceLabel ? `置信度:${confidenceLabel}` : null,
   ]);
 }
 
@@ -2505,8 +2653,8 @@ function renderExternalAiSynthesisItem(item, index) {
   setHidden(blockId, false);
   if (title) setLeafText(`ext-ai-synthesis-${index}-theme`, title);
   if (summary) setLeafText(`ext-ai-synthesis-${index}-summary`, summary);
-  setLeafText(`ext-ai-synthesis-${index}-supporting`, externalAiListText(item.supportingLayers));
-  setLeafText(`ext-ai-synthesis-${index}-conflicting`, externalAiListText(item.conflictingLayers));
+  setExternalAiReferenceListText(`ext-ai-synthesis-${index}-supporting`, item.supportingLayers);
+  setExternalAiReferenceListText(`ext-ai-synthesis-${index}-conflicting`, item.conflictingLayers);
   return true;
 }
 
@@ -2525,8 +2673,8 @@ function renderExternalAiDivergenceItem(item, index) {
   setHidden(blockId, false);
   if (title) setLeafText(`ext-ai-divergence-${index}-title`, title);
   if (why) setLeafText(`ext-ai-divergence-${index}-why`, why);
-  setLeafText(`ext-ai-divergence-${index}-for`, externalAiListText(item.evidenceFor));
-  setLeafText(`ext-ai-divergence-${index}-against`, externalAiListText(item.evidenceAgainst));
+  setExternalAiReferenceListText(`ext-ai-divergence-${index}-for`, item.evidenceFor, { allowFieldPath: true });
+  setExternalAiReferenceListText(`ext-ai-divergence-${index}-against`, item.evidenceAgainst, { allowFieldPath: true });
   setLeafText(`ext-ai-divergence-${index}-invalidations`, externalAiListText(item.invalidationConditions, '—'));
   return true;
 }
@@ -2564,9 +2712,9 @@ function renderExternalAiDataQualityLens(item) {
   }
   setHidden(blockId, false);
   if (summary) setLeafText('ext-ai-data-quality-summary', summary);
-  setLeafText('ext-ai-data-quality-stale', externalAiListText(item.staleLayers));
-  setLeafText('ext-ai-data-quality-fallback', externalAiListText(item.fallbackLayers));
-  setLeafText('ext-ai-data-quality-missing', externalAiListText(item.missingLayers));
+  setExternalAiReferenceListText('ext-ai-data-quality-stale', item.staleLayers);
+  setExternalAiReferenceListText('ext-ai-data-quality-fallback', item.fallbackLayers);
+  setExternalAiReferenceListText('ext-ai-data-quality-missing', item.missingLayers);
   if (impact) setLeafText('ext-ai-data-quality-impact', impact);
   return true;
 }

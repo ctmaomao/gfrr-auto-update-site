@@ -21,7 +21,7 @@ const jsFiles = fs
 jsFiles.push(path.join(root, 'scripts', 'app.js'));
 
 // 单 id 首参 helper + $()(作 id 用,plain-id token 才算)
-const SINGLE = ['setLeafText', 'setToneClass', 'setBadge', 'setMiniCardState', 'updateToneClass', '\\$'];
+const SINGLE = ['setLeafText', 'setExternalAiReferenceListText', 'setToneClass', 'setBadge', 'setMiniCardState', 'updateToneClass', '\\$'];
 const writes = []; // { file, line, id }
 for (const file of jsFiles) {
   const lines = fs.readFileSync(file, 'utf8').split('\n');

@@ -795,7 +795,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `external-ai-warning-readability-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `external-ai-pr4b3-1`）。
 
 稳定边界：
 
@@ -1018,26 +1018,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-external-ai-warning-readability-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+external-ai-pr4b3-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `external-ai-warning-readability-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `external-ai-pr4b3-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=external-ai-warning-readability-1`。
-- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=external-ai-warning-readability-1`。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `external-ai-warning-readability-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=external-ai-pr4b3-1`。
+- `scripts/app.js` 与 `scripts/modules/*.js` 的本地相对 `.js` import 必须使用 `?v=external-ai-pr4b3-1`。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `external-ai-pr4b3-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js` 时，必须同步 bump version 并替换所有本地 module import query。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs external-ai-warning-readability-1
-npm run bump:frontend-asset-version -- external-ai-warning-readability-1
+node scripts/bump-frontend-asset-version.mjs external-ai-pr4b3-1
+npm run bump:frontend-asset-version -- external-ai-pr4b3-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `external-ai-warning-readability-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `external-ai-pr4b3-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
