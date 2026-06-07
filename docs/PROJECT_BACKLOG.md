@@ -9,7 +9,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 项 | 当前值 |
 |---|---|
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分)|
-| Cache version | `m94-css-cleanup-1` |
+| Cache version | `external-ai-pr4b2-1` |
 | check:all 项数 | 16 顶层项 / ~56 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 8 leaf,含 PR2 backtest GATE + PR3 score + PR4 zh-copy)|
 | 最后审计日期 | 2026-06-05(全站 `.md` doc-slim 审计 Batch 1a→5余项,docs-only;两大 scope-of-record 簇 External AI / Market Pricing 收口 + 三 Operating Document changelog tail 折叠,详见 Section 5 + Session Handoff)。上次系统审计 2026-06-02(Codex 只读审计 7 findings 全收口,详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
@@ -116,7 +116,7 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **ODP 五刀(PR1–PR5)merge 后全收官**:数据接入 → 周度 workflow → 回测 GATE → productionize + 价格背离 → 中文 UI → dailyBrief 只读引用;全程 audit-only / display-only,不进 scoring / decision / execution / Heatmap。
 - 边界:不进 `values.*`/scoring/decisionModel/executionLock/positionGuidance/cross-validation;期限结构低置信复用、缺则不参与裁决;数据不足显式「暂不判断」。EIA = 美国政府公共领域。
 
-#### P3-20: External AI 深化 — analyst_compact_v1 深度独立分析(PR0/PR1/PR2+canary/PR3+follow-up+go-live+Daily 终证+默认翻转+PR4a 证毕 · PR4b-1 待复核)
+#### P3-20: External AI 深化 — analyst_compact_v1 深度独立分析(PR0/PR1/PR2+canary/PR3+follow-up+go-live+Daily 终证+默认翻转+PR4a/PR4b-1 证毕 · PR4b-2 前端渲染待复核)
 
 来源:2026-06-05 owner 立项。目标:让 External AI Auxiliary 对后台丰富数据做**深度独立跨层分析**。根因=输入面窄(`extractSiteData`/`extractCompactSiteData` 都只喂 `macroDrivers.consumer` 一个,约 5-10% richness),非模型能力。**硬边界(CLAUDE.md 绝对规则 4,全程不动)**:External AI = 只读展示层,输出不进 scoring/decision/execution/position;3 守卫(`check-external-ai-output`/`-production-contract`/`-production-write-guard`)+ unsafe-wording + `promotionEligible/humanApproved=false` + `affects*=false` 保留;「独立」=对站内数据独立推理,不接外部新闻/行情。
 
@@ -134,9 +134,10 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **PR4a follow-up#3 ✅ 已落(sourceAttribution canonical alias 规则)**:第三次 canary 的 PR4 四字段已过,但顶层 `sourceAttribution` safe-fail:模型把 evidence-pack 键 `riskModules` 写成 `sourceLayer`(canonical 应为 `modules`)。修:default+canary analyst prompt 均讲死 `sourceAttribution.sourceLayer` 必须用 canonical allowlist 名,并显式映射 `riskModules->modules` / `ruleBasedBaseline->aiInterpretationLayer` / `decisionContext->decisionContext.sanitized`;output checker 加三 alias 负例自测。**checker/source-layers/pr4-schema 校验逻辑零放宽**,默认 PR4 禁令/2400、canary 5000/caps 不动。
 - **PR4a follow-up#4 ✅ 已落(canary layer-name array zero-ambiguity 规则)**:第四次 canary 无截断、4 字段齐全、sourceAttribution 全 canonical,但 `dataQualityLens.missingLayers[0]` 写成 `brentPricingLayer.limitations: Platts Dated Brent未接入`(field-path + 冒号 + 解释文字)。修:仅 canary prompt 讲死 PR4 layer-name arrays 是机器可读 identifier list,每个元素必须 exactly one bare canonical sourceLayer,不得含 field-path/colon/explanation/natural-language text;原因写入 `summaryZh`/`confidenceImpactZh`/相关 `*Zh` 字段;output checker 加 inline explanation 负例自测。**checker/pr4-schema/source-layers 逻辑零放宽**,default prompt/2400/production/前端/data 零碰。
 - **PR4a ✅ 证毕(第 5 次 provider canary PASS)**:第五次 `--analyst-pr4-schema-canary` 真调 DeepSeek PASS: `check:external-ai-output` PASS(0 warn),`review:external-ai-artifact` PASS,4 字段齐全,caps 守(2/2、数组≤3),layer refs 18/18 valid 0 invalid,sub-confidence 全 `low|medium`,blocklist 0。至此模型已证实可稳定产出 PR4 结构化字段;4 次 safe-fail 均为 prompt 格式歧义且 production 零影响。
-- **PR4b-1 ⏳ 代码待复核/落地(production prompt 产出 + optional 接受,无前端)**:默认 analyst production prompt 移除 PR4 禁令并并入 4 字段 shape/caps/canonical/bare layer-name 规则,默认 `max_tokens` 提升到 5000;production projection / contract checker / validate-data 对 4 字段 **additive optional** 接受(存在才复用 PR4a validator 严校验,不 bump schema,不要求旧 committed layer 有字段)。前端渲染仍留 PR4b-2;本刀不碰 data/前端/workflow/provider。
-- **下一步**:交叉复核 PR4b-1 → 授权 commit+push → owner 跑一次 `External AI Production Refresh` 真 production refresh 并等 Daily preserve 绿;稳后另开 **PR4b-2**=前端专属渲染(改前端先读 DESIGN.md + asset bump)。serial-trunk,PR4b-2 另开一刀。
-- 状态:**PR0/PR1/PR2(代码+canary PASS)/PR3/follow-up/go-live/Daily 终证/default cutover 全落;analyst 已 live 进 production、上站且成为 scheduled/default 输入;PR4a canary 已证毕;PR4b-1 代码待复核/落地;PR4b-2 未开**。记忆见 `project_external_ai_deep_analysis`。
+- **PR4b-1 ✅ 已落 + production/Daily 终证完成(production prompt 产出 + optional 接受,无前端)**:默认 analyst production prompt 移除 PR4 禁令并并入 4 字段 shape/caps/canonical/bare layer-name 规则,默认 `max_tokens` 提升到 5000;production projection / contract checker / validate-data 对 4 字段 **additive optional** 接受(存在才复用 PR4a validator 严校验,不 bump schema,不要求旧 committed layer 有字段)。owner 授权 production refresh run `27084750986` PASS → commit `74f6ed7` 将 4 字段写入 `externalAiInterpretationLayer`;随后 Daily run `27084845769` PASS → commit `c6996a7` preserve 后 4 字段仍在,contract/data/check:all/Pages 绿。
+- **PR4b-2 ⏳ 前端渲染待复核/落地**:在现有 `#external-ai-auxiliary` 折叠区内渲染 4 个 optional 字段(`crossLayerSynthesis`/`keyDivergences`/`scenarioLean`/`dataQualityLens`),不新增一级 section、不改 IA;缺字段时 hidden fallback,仍 display-only;asset bump `external-ai-pr4b2-1`(冻结 `realtime.js` diff=0)。
+- **下一步**:交叉复核 PR4b-2 → 授权 commit+push → Pages 绿后站上 External AI 折叠区显示结构化跨层解读。serial-trunk,无剩余 PR4 生产契约刀。
+- 状态:**PR0/PR1/PR2(代码+canary PASS)/PR3/follow-up/go-live/Daily 终证/default cutover 全落;analyst 已 live 进 production、上站且成为 scheduled/default 输入;PR4a canary 已证毕;PR4b-1 production + Daily 终证已完成;PR4b-2 前端渲染待复核/落地**。记忆见 `project_external_ai_deep_analysis`。
 
 ---
 

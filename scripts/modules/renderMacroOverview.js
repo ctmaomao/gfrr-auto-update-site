@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=m94-css-cleanup-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=m94-css-cleanup-1';
+} from './config.js?v=external-ai-pr4b2-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=external-ai-pr4b2-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2477,6 +2477,112 @@ function scenarioText(scenario) {
   return parts.length > 0 ? parts.join('；') : null;
 }
 
+function externalAiListText(items, fallback = '—') {
+  if (!Array.isArray(items)) return fallback;
+  const clean = items.map((item) => textValue(item)).filter(Boolean);
+  return clean.length > 0 ? clean.join(' / ') : fallback;
+}
+
+function externalAiTitleWithConfidence(title, confidence) {
+  return joinNonEmpty([
+    title,
+    textValue(confidence) ? `confidence=${confidence}` : null,
+  ]);
+}
+
+function renderExternalAiSynthesisItem(item, index) {
+  const blockId = `ext-ai-synthesis-${index}-block`;
+  if (!item || typeof item !== 'object') {
+    setHidden(blockId, true);
+    return false;
+  }
+  const title = externalAiTitleWithConfidence(item.theme, item.confidence);
+  const summary = textValue(item.summaryZh);
+  if (!title && !summary) {
+    setHidden(blockId, true);
+    return false;
+  }
+  setHidden(blockId, false);
+  if (title) setLeafText(`ext-ai-synthesis-${index}-theme`, title);
+  if (summary) setLeafText(`ext-ai-synthesis-${index}-summary`, summary);
+  setLeafText(`ext-ai-synthesis-${index}-supporting`, externalAiListText(item.supportingLayers));
+  setLeafText(`ext-ai-synthesis-${index}-conflicting`, externalAiListText(item.conflictingLayers));
+  return true;
+}
+
+function renderExternalAiDivergenceItem(item, index) {
+  const blockId = `ext-ai-divergence-${index}-block`;
+  if (!item || typeof item !== 'object') {
+    setHidden(blockId, true);
+    return false;
+  }
+  const title = textValue(item.titleZh);
+  const why = textValue(item.whyItMattersZh);
+  if (!title && !why) {
+    setHidden(blockId, true);
+    return false;
+  }
+  setHidden(blockId, false);
+  if (title) setLeafText(`ext-ai-divergence-${index}-title`, title);
+  if (why) setLeafText(`ext-ai-divergence-${index}-why`, why);
+  setLeafText(`ext-ai-divergence-${index}-for`, externalAiListText(item.evidenceFor));
+  setLeafText(`ext-ai-divergence-${index}-against`, externalAiListText(item.evidenceAgainst));
+  setLeafText(`ext-ai-divergence-${index}-invalidations`, externalAiListText(item.invalidationConditions, '—'));
+  return true;
+}
+
+function renderExternalAiScenarioLean(item) {
+  const blockId = 'ext-ai-scenario-lean-block';
+  if (!item || typeof item !== 'object') {
+    setHidden(blockId, true);
+    return false;
+  }
+  const lean = externalAiTitleWithConfidence(item.leanZh, item.confidence);
+  if (!lean) {
+    setHidden(blockId, true);
+    return false;
+  }
+  setHidden(blockId, false);
+  setLeafText('ext-ai-scenario-lean-text', lean);
+  setLeafText('ext-ai-scenario-lean-refs', externalAiListText(item.scenarioRefs));
+  setLeafText('ext-ai-scenario-lean-triggers', externalAiListText(item.triggerConditions));
+  setLeafText('ext-ai-scenario-lean-invalidations', externalAiListText(item.invalidationConditions));
+  return true;
+}
+
+function renderExternalAiDataQualityLens(item) {
+  const blockId = 'ext-ai-data-quality-lens-block';
+  if (!item || typeof item !== 'object') {
+    setHidden(blockId, true);
+    return false;
+  }
+  const summary = textValue(item.summaryZh);
+  const impact = textValue(item.confidenceImpactZh);
+  if (!summary && !impact) {
+    setHidden(blockId, true);
+    return false;
+  }
+  setHidden(blockId, false);
+  if (summary) setLeafText('ext-ai-data-quality-summary', summary);
+  setLeafText('ext-ai-data-quality-stale', externalAiListText(item.staleLayers));
+  setLeafText('ext-ai-data-quality-fallback', externalAiListText(item.fallbackLayers));
+  setLeafText('ext-ai-data-quality-missing', externalAiListText(item.missingLayers));
+  if (impact) setLeafText('ext-ai-data-quality-impact', impact);
+  return true;
+}
+
+function renderExternalAiStructuredFields(layer) {
+  const shown = [
+    renderExternalAiSynthesisItem(layer?.crossLayerSynthesis?.[0], 1),
+    renderExternalAiSynthesisItem(layer?.crossLayerSynthesis?.[1], 2),
+    renderExternalAiDivergenceItem(layer?.keyDivergences?.[0], 1),
+    renderExternalAiDivergenceItem(layer?.keyDivergences?.[1], 2),
+    renderExternalAiScenarioLean(layer?.scenarioLean),
+    renderExternalAiDataQualityLens(layer?.dataQualityLens),
+  ].some(Boolean);
+  setHidden('ext-ai-structured-output', !shown);
+}
+
 function allocationByTarget(positioning, target) {
   const allocations = positioning?.coreAllocations;
   if (!Array.isArray(allocations)) return null;
@@ -2519,6 +2625,7 @@ function renderExternalAiAuxiliary({ radarData }) {
         if (text) setLeafText(`ext-ai-scenario-${i + 1}`, text);
       }
     }
+    renderExternalAiStructuredFields(layer);
 
     const boundaries = layer.boundaries || {};
     const boundaryText = joinNonEmpty([
