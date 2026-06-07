@@ -555,6 +555,13 @@ function runSelfTests() {
     throw new Error('self-test failed: expected PR4 canary output to reject non-canonical rateVol layer');
   }
 
+  const directLayerFieldPath = structuredClone(basePr4Output);
+  directLayerFieldPath.crossLayerSynthesis[0].supportingLayers = ['oilDirectionalPressure.signals.dieselProductStress'];
+  directLayerFieldPath.dataQualityLens.missingLayers = ['brentPricingLayer.futuresCurve'];
+  if (!validateOutput(directLayerFieldPath).errors.some((error) => error.includes('oilDirectionalPressure.signals.dieselProductStress'))) {
+    throw new Error('self-test failed: expected PR4 canary output to reject direct-layer field paths');
+  }
+
   const proseLayerReference = structuredClone(basePr4Output);
   proseLayerReference.keyDivergences[0].evidenceFor = ['macroDrivers.rateVol and marketPricing'];
   if (!validateOutput(proseLayerReference).errors.some((error) => error.includes('canonical analyst sourceLayer'))) {

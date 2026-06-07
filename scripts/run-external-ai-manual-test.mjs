@@ -118,6 +118,7 @@ const ANALYST_PR4_SCHEMA_CANARY_SOURCE_SEMANTICS_RULES = [
   'For PR4 schema canary output budget, keep summaryZh, whyItMattersZh, and confidenceImpactZh as short sentences rather than long paragraphs.',
   'PR4 sub-field confidence values must be low or medium only; never high and never low-medium as a literal string.',
   'PR4 layer references must use canonical sourceLayer names from the analyst allowlist, for example macroDrivers.rateVol rather than rateVol.',
+  'For PR4 schema canary layer arrays, crossLayerSynthesis.supportingLayers, crossLayerSynthesis.conflictingLayers, dataQualityLens.staleLayers, dataQualityLens.fallbackLayers, and dataQualityLens.missingLayers MUST each contain only BARE canonical sourceLayer names such as oilDirectionalPressure or macroDrivers.consumer; they must NOT contain field paths such as oilDirectionalPressure.signals.dieselProductStress.',
   'For keyDivergences evidenceFor/evidenceAgainst, use sourceLayer.field references with a canonical sourceLayer prefix.',
   'scenarioRefs may point to scenarioTree entries and are not sourceLayer references.',
 ];
@@ -721,6 +722,9 @@ function runPromptModeSelfTests() {
   if (defaultPrompt.includes(ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG)) {
     throw new Error('self-test failed: default analyst prompt must not include PR4 schema canary audit flag');
   }
+  if (defaultPrompt.includes('crossLayerSynthesis.supportingLayers')) {
+    throw new Error('self-test failed: default analyst prompt must not include PR4 schema canary layer-array rules');
+  }
 
   const canaryPrompt = `${buildDeepSeekSystemPrompt(input, { analystPr4SchemaCanary: true })}\n\n${buildDeepSeekUserPrompt(input, { analystPr4SchemaCanary: true })}`;
   if (canaryPrompt.includes('do not add PR4-only fields')) {
@@ -735,6 +739,8 @@ function runPromptModeSelfTests() {
     `crossLayerSynthesis must contain at most ${MAX_CROSS_LAYER_SYNTHESIS_ITEMS} items`,
     `keyDivergences must contain at most ${MAX_KEY_DIVERGENCE_ITEMS} items`,
     `each layer/evidence array must contain at most ${MAX_PR4_LAYER_REFERENCES_PER_ARRAY} items`,
+    'crossLayerSynthesis.supportingLayers, crossLayerSynthesis.conflictingLayers, dataQualityLens.staleLayers, dataQualityLens.fallbackLayers, and dataQualityLens.missingLayers MUST each contain only BARE canonical sourceLayer names',
+    'they must NOT contain field paths such as oilDirectionalPressure.signals.dieselProductStress',
   ]) {
     if (!canaryPrompt.includes(marker)) {
       throw new Error(`self-test failed: PR4 schema canary prompt missing ${marker}`);
