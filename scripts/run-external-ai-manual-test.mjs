@@ -29,7 +29,7 @@ const CONTRACT_VERSION = 'v28.0K-4D';
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-input-v28.0K-1.json';
 const DEFAULT_DEEPSEEK_TIMEOUT_MS = 90000;
 const MAX_DEEPSEEK_TIMEOUT_MS = 180000;
-const DEFAULT_DEEPSEEK_MAX_TOKENS = 2400;
+const DEFAULT_DEEPSEEK_MAX_TOKENS = 5000;
 const ANALYST_PR4_SCHEMA_CANARY_MAX_TOKENS = 5000;
 const UNSAFE_OUTPUT_DIRS = [
   'data',
@@ -103,27 +103,30 @@ const ANALYST_COMPACT_SOURCE_SEMANTICS_RULES = [
   'For analyst_compact_v1, use dataQuality stale/fallback/missing evidence to lower confidence and to write specific dataGaps and confidence.reasonZh.',
   'For analyst_compact_v1, sourceAttribution should include at least 8 objects and at least 5 distinct sourceLayer values, with target coverage of 8 or more layers.',
   'For analyst_compact_v1, sourceAttribution.sourceLayer must use canonical allowlist sourceLayer names, not compact evidence-pack keys; map riskModules to modules, ruleBasedBaseline to aiInterpretationLayer, and decisionContext to decisionContext.sanitized.',
-  'For analyst_compact_v1, do not add PR4-only fields such as crossLayerSynthesis, keyDivergences, scenarioLean, or dataQualityLens; use the existing output fields only.',
   'For analyst_compact_v1, keep confidence.score in the 25-40 range by default; score above 40 requires at least 5 distinct sourceLayer values and no critical stale/fallback layers; never exceed 45.',
 ];
 
-const ANALYST_PR4_SCHEMA_CANARY_SOURCE_SEMANTICS_RULES = [
-  `For analyst_compact_v1 PR4 schema canary, auditFlags must include ${ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG}.`,
-  'For analyst_compact_v1 PR4 schema canary only, add crossLayerSynthesis, keyDivergences, scenarioLean, and dataQualityLens at the top level.',
+const ANALYST_PR4_STRUCTURED_OUTPUT_RULES = [
+  'For analyst_compact_v1, add crossLayerSynthesis, keyDivergences, scenarioLean, and dataQualityLens at the top level.',
   'crossLayerSynthesis must be an array of {theme, summaryZh, supportingLayers, conflictingLayers, confidence}.',
   'keyDivergences must be an array of {titleZh, evidenceFor, evidenceAgainst, whyItMattersZh, invalidationConditions}.',
   'scenarioLean must be an object with {leanZh, scenarioRefs, triggerConditions, invalidationConditions, confidence}.',
   'dataQualityLens must be an object with {summaryZh, staleLayers, fallbackLayers, missingLayers, confidenceImpactZh}.',
-  `For PR4 schema canary output budget, crossLayerSynthesis must contain at most ${MAX_CROSS_LAYER_SYNTHESIS_ITEMS} items and keyDivergences must contain at most ${MAX_KEY_DIVERGENCE_ITEMS} items.`,
-  `For PR4 schema canary output budget, each layer/evidence array must contain at most ${MAX_PR4_LAYER_REFERENCES_PER_ARRAY} items, each trigger/invalidation array at most ${MAX_PR4_CONDITIONS_PER_ARRAY} items, and scenarioRefs at most ${MAX_PR4_SCENARIO_REFS} items.`,
-  'For PR4 schema canary output budget, keep summaryZh, whyItMattersZh, and confidenceImpactZh as short sentences rather than long paragraphs.',
+  `For PR4 structured output budget, crossLayerSynthesis must contain at most ${MAX_CROSS_LAYER_SYNTHESIS_ITEMS} items and keyDivergences must contain at most ${MAX_KEY_DIVERGENCE_ITEMS} items.`,
+  `For PR4 structured output budget, each layer/evidence array must contain at most ${MAX_PR4_LAYER_REFERENCES_PER_ARRAY} items, each trigger/invalidation array at most ${MAX_PR4_CONDITIONS_PER_ARRAY} items, and scenarioRefs at most ${MAX_PR4_SCENARIO_REFS} items.`,
+  'For PR4 structured output budget, keep summaryZh, whyItMattersZh, and confidenceImpactZh as short sentences rather than long paragraphs.',
   'PR4 sub-field confidence values must be low or medium only; never high and never low-medium as a literal string.',
   'PR4 layer references must use canonical sourceLayer names from the analyst allowlist, for example macroDrivers.rateVol rather than rateVol.',
-  'For PR4 schema canary layer-name arrays, crossLayerSynthesis.supportingLayers, crossLayerSynthesis.conflictingLayers, dataQualityLens.staleLayers, dataQualityLens.fallbackLayers, and dataQualityLens.missingLayers are machine-readable identifier lists: each element MUST be exactly one bare canonical sourceLayer string and nothing else.',
-  'For PR4 schema canary layer-name arrays, each element MUST NOT contain a field path, a colon, any explanation, or any Chinese/natural-language text; write brentPricingLayer, not brentPricingLayer.limitations: Platts Dated Brent missing; write oilDirectionalPressure, not oilDirectionalPressure.signals.dieselProductStress; write modules, not riskModules.',
-  'For PR4 schema canary layer-name arrays, put all reasons and explanations in dataQualityLens.summaryZh, dataQualityLens.confidenceImpactZh, or the relevant *Zh fields, never inside a layer array element.',
+  'For PR4 layer-name arrays, crossLayerSynthesis.supportingLayers, crossLayerSynthesis.conflictingLayers, dataQualityLens.staleLayers, dataQualityLens.fallbackLayers, and dataQualityLens.missingLayers are machine-readable identifier lists: each element MUST be exactly one bare canonical sourceLayer string and nothing else.',
+  'For PR4 layer-name arrays, each element MUST NOT contain a field path, a colon, any explanation, or any Chinese/natural-language text; write brentPricingLayer, not brentPricingLayer.limitations: Platts Dated Brent missing; write oilDirectionalPressure, not oilDirectionalPressure.signals.dieselProductStress; write modules, not riskModules.',
+  'For PR4 layer-name arrays, put all reasons and explanations in dataQualityLens.summaryZh, dataQualityLens.confidenceImpactZh, or the relevant *Zh fields, never inside a layer array element.',
   'For keyDivergences evidenceFor/evidenceAgainst, use sourceLayer.field references with a canonical sourceLayer prefix.',
   'scenarioRefs may point to scenarioTree entries and are not sourceLayer references.',
+];
+
+const ANALYST_PR4_SCHEMA_CANARY_SOURCE_SEMANTICS_RULES = [
+  `For analyst_compact_v1 PR4 schema canary, auditFlags must include ${ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG}.`,
+  ...ANALYST_PR4_STRUCTURED_OUTPUT_RULES,
 ];
 
 function formatUnsafeOutputPhrases() {
@@ -391,12 +394,12 @@ function getInputPromptSemantics(input, promptOptions = {}) {
   const inputVersion = typeof input?.inputVersion === 'string' ? input.inputVersion : '';
   if (isAnalystCompactInput(input)) {
     const analystPr4SchemaCanary = promptOptions.analystPr4SchemaCanary === true;
-    const sourceSemanticsRules = analystPr4SchemaCanary
-      ? [
-        ...ANALYST_COMPACT_SOURCE_SEMANTICS_RULES.filter((rule) => !rule.includes('do not add PR4-only fields')),
-        ...ANALYST_PR4_SCHEMA_CANARY_SOURCE_SEMANTICS_RULES,
-      ]
-      : ANALYST_COMPACT_SOURCE_SEMANTICS_RULES;
+    const sourceSemanticsRules = [
+      ...ANALYST_COMPACT_SOURCE_SEMANTICS_RULES,
+      ...(analystPr4SchemaCanary
+        ? ANALYST_PR4_SCHEMA_CANARY_SOURCE_SEMANTICS_RULES
+        : ANALYST_PR4_STRUCTURED_OUTPUT_RULES),
+    ];
     const auditFlags = [
       'manual_artifact_only',
       'site_structured_data_only',
@@ -611,19 +614,15 @@ function buildPromptContractCheck(input, promptOptions = {}) {
       'dataQuality stale/fallback/missing',
       'Never exceed confidence.score 45',
       'decisionContext.sanitized',
-      'macroDrivers.<safeKey>'
+      'macroDrivers.<safeKey>',
+      'crossLayerSynthesis',
+      'keyDivergences',
+      'scenarioLean',
+      'dataQualityLens',
+      'macroDrivers.rateVol rather than rateVol'
     );
     if (promptOptions.analystPr4SchemaCanary === true) {
-      requiredRules.push(
-        ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG,
-        'crossLayerSynthesis',
-        'keyDivergences',
-        'scenarioLean',
-        'dataQualityLens',
-        'macroDrivers.rateVol rather than rateVol'
-      );
-    } else {
-      requiredRules.push('For analyst_compact_v1, do not add PR4-only fields such as crossLayerSynthesis, keyDivergences, scenarioLean, or dataQualityLens; use the existing output fields only.');
+      requiredRules.push(ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG);
     }
   } else if (promptSemantics.sourceKind === 'site_structured_data') {
     requiredRules.push('sourceSemantics should remain site_structured_data_compact_summary');
@@ -712,21 +711,18 @@ function buildPromptModeSelfTestInput() {
 function runPromptModeSelfTests() {
   const input = buildPromptModeSelfTestInput();
   if (getDeepSeekMaxTokens({ analystPr4SchemaCanary: false }) !== DEFAULT_DEEPSEEK_MAX_TOKENS) {
-    throw new Error('self-test failed: default analyst max_tokens must remain 2400');
+    throw new Error('self-test failed: default analyst max_tokens must use production PR4 headroom');
   }
   if (getDeepSeekMaxTokens({ analystPr4SchemaCanary: true }) !== ANALYST_PR4_SCHEMA_CANARY_MAX_TOKENS) {
     throw new Error('self-test failed: PR4 schema canary max_tokens must use canary-only headroom');
   }
 
   const defaultPrompt = `${buildDeepSeekSystemPrompt(input)}\n\n${buildDeepSeekUserPrompt(input)}`;
-  if (!defaultPrompt.includes('For analyst_compact_v1, do not add PR4-only fields such as crossLayerSynthesis, keyDivergences, scenarioLean, or dataQualityLens; use the existing output fields only.')) {
-    throw new Error('self-test failed: default analyst prompt must keep PR4-only field ban');
+  if (defaultPrompt.includes('do not add PR4-only fields')) {
+    throw new Error('self-test failed: default analyst prompt must not keep PR4-only field ban');
   }
   if (defaultPrompt.includes(ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG)) {
     throw new Error('self-test failed: default analyst prompt must not include PR4 schema canary audit flag');
-  }
-  if (defaultPrompt.includes('crossLayerSynthesis.supportingLayers')) {
-    throw new Error('self-test failed: default analyst prompt must not include PR4 schema canary layer-array rules');
   }
   const canonicalAttributionMarkers = [
     'sourceAttribution.sourceLayer must use canonical allowlist sourceLayer names',
@@ -734,18 +730,8 @@ function runPromptModeSelfTests() {
     'ruleBasedBaseline to aiInterpretationLayer',
     'decisionContext to decisionContext.sanitized',
   ];
-  for (const marker of canonicalAttributionMarkers) {
-    if (!defaultPrompt.includes(marker)) {
-      throw new Error(`self-test failed: default analyst prompt missing canonical attribution marker ${marker}`);
-    }
-  }
-
-  const canaryPrompt = `${buildDeepSeekSystemPrompt(input, { analystPr4SchemaCanary: true })}\n\n${buildDeepSeekUserPrompt(input, { analystPr4SchemaCanary: true })}`;
-  if (canaryPrompt.includes('do not add PR4-only fields')) {
-    throw new Error('self-test failed: PR4 schema canary prompt must not keep the default PR4-only field ban');
-  }
-  for (const marker of [
-    ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG,
+  const pr4StructuredOutputMarkers = [
+    'For analyst_compact_v1, add crossLayerSynthesis, keyDivergences, scenarioLean, and dataQualityLens at the top level.',
     'crossLayerSynthesis',
     'keyDivergences',
     'scenarioLean',
@@ -759,7 +745,23 @@ function runPromptModeSelfTests() {
     'write oilDirectionalPressure, not oilDirectionalPressure.signals.dieselProductStress',
     'write modules, not riskModules',
     'put all reasons and explanations in dataQualityLens.summaryZh, dataQualityLens.confidenceImpactZh, or the relevant *Zh fields',
-  ]) {
+  ];
+  for (const marker of canonicalAttributionMarkers) {
+    if (!defaultPrompt.includes(marker)) {
+      throw new Error(`self-test failed: default analyst prompt missing canonical attribution marker ${marker}`);
+    }
+  }
+  for (const marker of pr4StructuredOutputMarkers) {
+    if (!defaultPrompt.includes(marker)) {
+      throw new Error(`self-test failed: default analyst prompt missing PR4 structured output marker ${marker}`);
+    }
+  }
+
+  const canaryPrompt = `${buildDeepSeekSystemPrompt(input, { analystPr4SchemaCanary: true })}\n\n${buildDeepSeekUserPrompt(input, { analystPr4SchemaCanary: true })}`;
+  if (canaryPrompt.includes('do not add PR4-only fields')) {
+    throw new Error('self-test failed: PR4 schema canary prompt must not keep the default PR4-only field ban');
+  }
+  for (const marker of [ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG, ...pr4StructuredOutputMarkers]) {
     if (!canaryPrompt.includes(marker)) {
       throw new Error(`self-test failed: PR4 schema canary prompt missing ${marker}`);
     }

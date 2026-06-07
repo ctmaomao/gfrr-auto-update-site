@@ -10,6 +10,7 @@ import {
   isAnalystExternalAiProductionLayer,
   validateExternalAiProductionContractCoherence,
 } from './external-ai/production-contract.mjs';
+import { validateAnalystPr4StructuredFields } from './external-ai/pr4-schema-canary.mjs';
 import { isAllowedExternalAiProductionSourceLayer } from './external-ai/source-layers.mjs';
 
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/production-contract-valid-v28.0L.json';
@@ -417,6 +418,12 @@ function validateConfidence(layer, errors) {
   }
 }
 
+function validateOptionalPr4StructuredFields(layer, errors) {
+  for (const error of validateAnalystPr4StructuredFields(layer, { requireAll: false })) {
+    addError(errors, error);
+  }
+}
+
 function validateStatusBehavior(layer, errors) {
   if (layer.status === 'rejected' && layer.displayEnabled === true) {
     addError(errors, 'status=rejected must not have displayEnabled=true');
@@ -528,6 +535,7 @@ function validateLayer(layer) {
   validateFreshness(layer, errors);
   validateSourceAttribution(layer, layer.sourceAttribution, errors);
   validateConfidence(layer, errors);
+  validateOptionalPr4StructuredFields(layer, errors);
   validateStatusBehavior(layer, errors);
   validateStringSafety(layer, errors);
   validateAuditFlags(layer, errors);
@@ -582,12 +590,54 @@ function buildAnalystRegressionLayer() {
   return layer;
 }
 
+function addValidPr4StructuredFields(layer) {
+  layer.crossLayerSynthesis = [
+    {
+      theme: 'energy_pricing_divergence',
+      summaryZh: '能源层与定价层存在可审计背离。',
+      supportingLayers: ['brentPricingLayer', 'oilDirectionalPressure'],
+      conflictingLayers: ['marketPricing'],
+      confidence: 'low',
+    },
+  ];
+  layer.keyDivergences = [
+    {
+      titleZh: '能源与资产定价背离',
+      evidenceFor: ['brentPricingLayer.proxySpread', 'oilDirectionalPressure.finalBias'],
+      evidenceAgainst: ['marketPricing.primaryAssetStatus'],
+      whyItMattersZh: '该背离影响解释层置信。',
+      invalidationConditions: ['相关层重新收敛'],
+    },
+  ];
+  layer.scenarioLean = {
+    leanZh: '维持观察情景',
+    scenarioRefs: ['scenarioTree[0]'],
+    triggerConditions: ['能源价差扩大'],
+    invalidationConditions: ['价差收敛'],
+    confidence: 'low',
+  };
+  layer.dataQualityLens = {
+    summaryZh: 'fallback 层降低整体置信。',
+    staleLayers: [],
+    fallbackLayers: ['dataQuality'],
+    missingLayers: [],
+    confidenceImpactZh: '数据质量使结论保持低置信。',
+  };
+}
+
 function runRegressionChecks() {
   const legacy = layerFromInput(readJson(DEFAULT_INPUT));
   const analyst = buildAnalystRegressionLayer();
   const analystErrors = validateLayer(analyst);
   if (analystErrors.length > 0) {
     throw new Error(`regression failed: valid analyst production layer rejected:\n- ${analystErrors.join('\n- ')}`);
+  }
+
+  const analystWithPr4 = cloneJson(analyst);
+  addValidPr4StructuredFields(analystWithPr4);
+  const analystWithPr4Errors = validateLayer(analystWithPr4);
+  if (analystWithPr4Errors.length > 0) {
+    throw new Error(`regression failed: valid analyst production layer with PR4 fields rejected:\n- ${analystWithPr4Errors.join('\n- ')}`);
   }
 
   const legacyWithAnalystLayer = cloneJson(legacy);
@@ -607,6 +657,13 @@ function runRegressionChecks() {
   analystHighConfidence.confidence.score = EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.maxConfidenceScore + 1;
   if (validateLayer(analystHighConfidence).length === 0) {
     throw new Error('regression failed: analyst production layer accepted confidence score above cap');
+  }
+
+  const analystInvalidPr4 = cloneJson(analyst);
+  addValidPr4StructuredFields(analystInvalidPr4);
+  analystInvalidPr4.crossLayerSynthesis[0].supportingLayers = ['rateVol'];
+  if (validateLayer(analystInvalidPr4).length === 0) {
+    throw new Error('regression failed: analyst production layer accepted invalid PR4 sourceLayer');
   }
 }
 

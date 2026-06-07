@@ -819,6 +819,8 @@ PR3 expand-then-contract 后,validator / projection / write guard 同时接受�
 
 `External AI Production Refresh` 的 scheduled cron 与 `workflow_dispatch` 默认源为 `analyst_compact_v1`;legacy `local_compact` 仍保留为手动 dispatch rollback 选项,直到另一个 reviewed PR 明确 contract。
 
+PR4b-1 后,`analyst_compact_v1` production prompt 默认要求 4 个结构化字段: `crossLayerSynthesis` / `keyDivergences` / `scenarioLean` / `dataQualityLens`,并把 provider `max_tokens` 提升到 5000。生产数据契约**不 bump schema**:这 4 个字段为 additive optional,现有 committed analyst 层即使没有这些字段仍 valid;字段存在时必须通过与 PR4a canary 相同的结构校验(caps、canonical sourceLayer、direct layer arrays 仅 bare sourceLayer、sub-field confidence 仅 `low|medium`)。PR4b-2 前端渲染另开;本契约仅表示 production layer 可携带这些字段。
+
 边界：
 
 - 不得覆盖现有 `aiInterpretationLayer`。

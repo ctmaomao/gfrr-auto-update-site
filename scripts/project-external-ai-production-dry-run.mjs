@@ -39,6 +39,13 @@ const ARRAY_INPUT_FIELDS = [
   'auditFlags',
 ];
 
+const OPTIONAL_PR4_STRUCTURED_FIELDS = [
+  'crossLayerSynthesis',
+  'keyDivergences',
+  'scenarioLean',
+  'dataQualityLens',
+];
+
 const SECRET_MARKERS = [
   'DEEPSEEK_API_KEY',
   'Authorization',
@@ -378,6 +385,13 @@ function projectSourceAttribution(items, mapping) {
   });
 }
 
+function projectOptionalPr4StructuredFields(input, layer, mapping) {
+  if (mapping.inputSource !== EXTERNAL_AI_ANALYST_PRODUCTION_CONTRACT.inputSource) return;
+  for (const field of OPTIONAL_PR4_STRUCTURED_FIELDS) {
+    if (Object.hasOwn(input, field)) layer[field] = structuredClone(input[field]);
+  }
+}
+
 function projectConfidence(confidence, mapping) {
   if (!isPlainObject(confidence)) throw new Error('confidence must be an object');
   if (!['low', 'medium', 'high'].includes(confidence.level)) {
@@ -550,6 +564,8 @@ function buildProjection({ input, inputPath, outputPath, reviewPath, generatedAt
     auditFlags: projectAuditFlags(mapping),
   };
 
+  projectOptionalPr4StructuredFields(input, layer, mapping);
+
   if (layer.model !== EXTERNAL_AI_PRODUCTION_MODEL) {
     throw new Error(`model must be ${EXTERNAL_AI_PRODUCTION_MODEL}`);
   }
@@ -613,6 +629,56 @@ function runRegressionChecks() {
   );
   if (projectedLegacy[0].sourceLayer !== 'local_compact') {
     throw new Error('regression failed: legacy projection must keep local_compact collapse');
+  }
+
+  const pr4Input = {
+    crossLayerSynthesis: [
+      {
+        theme: 'energy_pricing_divergence',
+        summaryZh: '能源层与定价层存在背离。',
+        supportingLayers: ['brentPricingLayer'],
+        conflictingLayers: ['marketPricing'],
+        confidence: 'low',
+      },
+    ],
+    keyDivergences: [
+      {
+        titleZh: '能源与风险定价不一致',
+        evidenceFor: ['brentPricingLayer.proxySpread'],
+        evidenceAgainst: ['marketPricing.primaryAssetStatus'],
+        whyItMattersZh: '背离影响解释层置信。',
+        invalidationConditions: ['价差收敛'],
+      },
+    ],
+    scenarioLean: {
+      leanZh: '维持观察情景',
+      scenarioRefs: ['scenarioTree[0]'],
+      triggerConditions: ['能源压力扩大'],
+      invalidationConditions: ['压力收敛'],
+      confidence: 'low',
+    },
+    dataQualityLens: {
+      summaryZh: 'fallback 层降低整体置信。',
+      staleLayers: [],
+      fallbackLayers: ['dataQuality'],
+      missingLayers: [],
+      confidenceImpactZh: '数据质量使结论保持低置信。',
+    },
+  };
+  const analystLayerWithPr4 = {};
+  projectOptionalPr4StructuredFields(pr4Input, analystLayerWithPr4, analystMapping);
+  if (analystLayerWithPr4.crossLayerSynthesis?.[0]?.theme !== 'energy_pricing_divergence') {
+    throw new Error('regression failed: analyst projection did not passthrough PR4 fields');
+  }
+  const analystLayerWithoutPr4 = {};
+  projectOptionalPr4StructuredFields({}, analystLayerWithoutPr4, analystMapping);
+  if (Object.keys(analystLayerWithoutPr4).length !== 0) {
+    throw new Error('regression failed: analyst projection added missing PR4 fields');
+  }
+  const legacyLayerWithPr4 = {};
+  projectOptionalPr4StructuredFields(pr4Input, legacyLayerWithPr4, legacyMapping);
+  if (Object.keys(legacyLayerWithPr4).length !== 0) {
+    throw new Error('regression failed: legacy projection passthrough PR4 fields');
   }
 }
 

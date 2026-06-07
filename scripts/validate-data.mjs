@@ -7,6 +7,7 @@ import {
   EXTERNAL_AI_PRODUCTION_MODEL,
   resolveExternalAiProductionContract,
 } from './external-ai/production-contract.mjs';
+import { validateAnalystPr4StructuredFields } from './external-ai/pr4-schema-canary.mjs';
 import { isAllowedExternalAiProductionSourceLayer } from './external-ai/source-layers.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1887,6 +1888,10 @@ function validateExternalAiProductionLayer(layer) {
   }
   assertString(confidence.reasonZh, 'externalAiInterpretationLayer.confidence.reasonZh');
 
+  for (const error of validateAnalystPr4StructuredFields(layer, { requireAll: false })) {
+    assert(false, `externalAiInterpretationLayer.${error}`);
+  }
+
   const qualityReview = layer.qualityReview;
   assertPlainObject(qualityReview, 'externalAiInterpretationLayer.qualityReview');
   assert(['pass', 'warn'].includes(qualityReview.status), 'externalAiInterpretationLayer.qualityReview.status must be pass or warn');
@@ -1928,6 +1933,68 @@ function validateExternalAiProductionLayer(layer) {
   for (const phrase of EXTERNAL_AI_FORBIDDEN_PHRASES) {
     assert(!serializedStrings.includes(phrase), `externalAiInterpretationLayer must not contain forbidden phrase "${phrase}"`);
   }
+}
+
+function cloneForValidationSelfTest(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function addExternalAiPr4ValidationSelfTestFields(layer) {
+  layer.crossLayerSynthesis = [
+    {
+      theme: 'energy_pricing_divergence',
+      summaryZh: '能源层与定价层存在可审计背离。',
+      supportingLayers: ['brentPricingLayer'],
+      conflictingLayers: ['marketPricing'],
+      confidence: 'low',
+    },
+  ];
+  layer.keyDivergences = [
+    {
+      titleZh: '能源与风险定价不一致',
+      evidenceFor: ['brentPricingLayer.proxySpread'],
+      evidenceAgainst: ['marketPricing.primaryAssetStatus'],
+      whyItMattersZh: '该背离影响解释层置信。',
+      invalidationConditions: ['相关层重新收敛'],
+    },
+  ];
+  layer.scenarioLean = {
+    leanZh: '维持观察情景',
+    scenarioRefs: ['scenarioTree[0]'],
+    triggerConditions: ['能源价差扩大'],
+    invalidationConditions: ['价差收敛'],
+    confidence: 'low',
+  };
+  layer.dataQualityLens = {
+    summaryZh: 'fallback 层降低整体置信。',
+    staleLayers: [],
+    fallbackLayers: ['dataQuality'],
+    missingLayers: [],
+    confidenceImpactZh: '数据质量使结论保持低置信。',
+  };
+}
+
+function assertValidationThrows(fn, message) {
+  try {
+    fn();
+  } catch {
+    return;
+  }
+  assert(false, message);
+}
+
+function runExternalAiPr4ValidationRegression(layer) {
+  const withPr4 = cloneForValidationSelfTest(layer);
+  addExternalAiPr4ValidationSelfTestFields(withPr4);
+  validateExternalAiProductionLayer(withPr4);
+
+  const invalidPr4 = cloneForValidationSelfTest(layer);
+  addExternalAiPr4ValidationSelfTestFields(invalidPr4);
+  invalidPr4.crossLayerSynthesis[0].supportingLayers = ['rateVol'];
+  assertValidationThrows(
+    () => validateExternalAiProductionLayer(invalidPr4),
+    'externalAiInterpretationLayer PR4 optional fields must reject non-canonical layer refs'
+  );
 }
 
 function validateAiInterpretationFacts(items, fieldName) {
@@ -2080,6 +2147,7 @@ function validateExternalAiInterpretationLayer(dataPayload) {
 
   if (ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS.has(layer.schemaVersion)) {
     validateExternalAiProductionLayer(layer);
+    runExternalAiPr4ValidationRegression(layer);
     return;
   }
 
