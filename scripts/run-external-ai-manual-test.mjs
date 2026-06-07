@@ -119,7 +119,9 @@ const ANALYST_PR4_SCHEMA_CANARY_SOURCE_SEMANTICS_RULES = [
   'For PR4 schema canary output budget, keep summaryZh, whyItMattersZh, and confidenceImpactZh as short sentences rather than long paragraphs.',
   'PR4 sub-field confidence values must be low or medium only; never high and never low-medium as a literal string.',
   'PR4 layer references must use canonical sourceLayer names from the analyst allowlist, for example macroDrivers.rateVol rather than rateVol.',
-  'For PR4 schema canary layer arrays, crossLayerSynthesis.supportingLayers, crossLayerSynthesis.conflictingLayers, dataQualityLens.staleLayers, dataQualityLens.fallbackLayers, and dataQualityLens.missingLayers MUST each contain only BARE canonical sourceLayer names such as oilDirectionalPressure or macroDrivers.consumer; they must NOT contain field paths such as oilDirectionalPressure.signals.dieselProductStress.',
+  'For PR4 schema canary layer-name arrays, crossLayerSynthesis.supportingLayers, crossLayerSynthesis.conflictingLayers, dataQualityLens.staleLayers, dataQualityLens.fallbackLayers, and dataQualityLens.missingLayers are machine-readable identifier lists: each element MUST be exactly one bare canonical sourceLayer string and nothing else.',
+  'For PR4 schema canary layer-name arrays, each element MUST NOT contain a field path, a colon, any explanation, or any Chinese/natural-language text; write brentPricingLayer, not brentPricingLayer.limitations: Platts Dated Brent missing; write oilDirectionalPressure, not oilDirectionalPressure.signals.dieselProductStress; write modules, not riskModules.',
+  'For PR4 schema canary layer-name arrays, put all reasons and explanations in dataQualityLens.summaryZh, dataQualityLens.confidenceImpactZh, or the relevant *Zh fields, never inside a layer array element.',
   'For keyDivergences evidenceFor/evidenceAgainst, use sourceLayer.field references with a canonical sourceLayer prefix.',
   'scenarioRefs may point to scenarioTree entries and are not sourceLayer references.',
 ];
@@ -751,8 +753,12 @@ function runPromptModeSelfTests() {
     `crossLayerSynthesis must contain at most ${MAX_CROSS_LAYER_SYNTHESIS_ITEMS} items`,
     `keyDivergences must contain at most ${MAX_KEY_DIVERGENCE_ITEMS} items`,
     `each layer/evidence array must contain at most ${MAX_PR4_LAYER_REFERENCES_PER_ARRAY} items`,
-    'crossLayerSynthesis.supportingLayers, crossLayerSynthesis.conflictingLayers, dataQualityLens.staleLayers, dataQualityLens.fallbackLayers, and dataQualityLens.missingLayers MUST each contain only BARE canonical sourceLayer names',
-    'they must NOT contain field paths such as oilDirectionalPressure.signals.dieselProductStress',
+    'each element MUST be exactly one bare canonical sourceLayer string and nothing else',
+    'MUST NOT contain a field path, a colon, any explanation, or any Chinese/natural-language text',
+    'write brentPricingLayer, not brentPricingLayer.limitations: Platts Dated Brent missing',
+    'write oilDirectionalPressure, not oilDirectionalPressure.signals.dieselProductStress',
+    'write modules, not riskModules',
+    'put all reasons and explanations in dataQualityLens.summaryZh, dataQualityLens.confidenceImpactZh, or the relevant *Zh fields',
   ]) {
     if (!canaryPrompt.includes(marker)) {
       throw new Error(`self-test failed: PR4 schema canary prompt missing ${marker}`);

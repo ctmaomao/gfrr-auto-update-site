@@ -575,6 +575,12 @@ function runSelfTests() {
     throw new Error('self-test failed: expected PR4 canary output to reject direct-layer field paths');
   }
 
+  const inlineExplanationLayerRef = structuredClone(basePr4Output);
+  inlineExplanationLayerRef.dataQualityLens.missingLayers = ['brentPricingLayer.limitations: Platts Dated Brent missing'];
+  if (!validateOutput(inlineExplanationLayerRef).errors.some((error) => error.includes('brentPricingLayer.limitations: Platts Dated Brent missing'))) {
+    throw new Error('self-test failed: expected PR4 canary output to reject layer-array inline explanations');
+  }
+
   const proseLayerReference = structuredClone(basePr4Output);
   proseLayerReference.keyDivergences[0].evidenceFor = ['macroDrivers.rateVol and marketPricing'];
   if (!validateOutput(proseLayerReference).errors.some((error) => error.includes('canonical analyst sourceLayer'))) {
