@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=external-ai-pr4b2-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=external-ai-pr4b2-1';
+} from './config.js?v=external-ai-warning-readability-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=external-ai-warning-readability-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
