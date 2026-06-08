@@ -587,6 +587,12 @@ function runSelfTests() {
     throw new Error('self-test failed: expected PR4 canary output to reject prose sourceLayer references');
   }
 
+  const colonEvidenceReference = structuredClone(basePr4Output);
+  colonEvidenceReference.keyDivergences[0].evidenceFor = ['macroDrivers.consumer: umichSentiment=49.8, threeMonthChange=-6.6'];
+  if (!validateOutput(colonEvidenceReference).errors.some((error) => error.includes('macroDrivers.consumer: umichSentiment=49.8'))) {
+    throw new Error('self-test failed: expected PR4 canary output to reject colon/prose evidence sourceLayer references');
+  }
+
   const highSubConfidence = structuredClone(basePr4Output);
   highSubConfidence.scenarioLean.confidence = 'high';
   if (!validateOutput(highSubConfidence).errors.some((error) => error.includes('scenarioLean.confidence must be low or medium'))) {

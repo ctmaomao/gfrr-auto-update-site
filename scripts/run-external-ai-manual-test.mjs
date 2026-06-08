@@ -12,8 +12,10 @@ import {
 } from './external-ai/provider-adapters.mjs';
 import { OPERATION_LANGUAGE_PHRASES } from './external-ai/safety-constants.mjs';
 import {
+  ANALYST_EXTERNAL_AI_SOURCE_LAYER_FLOOR,
   formatSourceLayerAllowlist,
   getAnalystSourceLayersForInput,
+  isAllowedExternalAiSourceLayer,
   LEGACY_EXTERNAL_AI_SOURCE_LAYERS,
 } from './external-ai/source-layers.mjs';
 import {
@@ -121,8 +123,159 @@ const ANALYST_PR4_STRUCTURED_OUTPUT_RULES = [
   'For PR4 layer-name arrays, each element MUST NOT contain a field path, a colon, any explanation, or any Chinese/natural-language text; write brentPricingLayer, not brentPricingLayer.limitations: Platts Dated Brent missing; write oilDirectionalPressure, not oilDirectionalPressure.signals.dieselProductStress; write modules, not riskModules.',
   'For PR4 layer-name arrays, put all reasons and explanations in dataQualityLens.summaryZh, dataQualityLens.confidenceImpactZh, or the relevant *Zh fields, never inside a layer array element.',
   'For keyDivergences evidenceFor/evidenceAgainst, use sourceLayer.field references with a canonical sourceLayer prefix.',
+  'For keyDivergences evidenceFor/evidenceAgainst, each element must be a machine-readable sourceLayer.field reference and not prose; write macroDrivers.consumer.umichSentiment, not macroDrivers.consumer: umichSentiment=49.8.',
   'scenarioRefs may point to scenarioTree entries and are not sourceLayer references.',
 ];
+
+const PR4_SOURCE_LAYER_ALIAS_MAP = new Map([
+  ['riskModules', 'modules'],
+  ['ruleBasedBaseline', 'aiInterpretationLayer'],
+  ['decisionContext', 'decisionContext.sanitized'],
+]);
+
+const MACRO_DRIVER_SOURCE_LAYER_PREFIX = /^(macroDrivers\.[A-Za-z][A-Za-z0-9_]*)(.*)$/u;
+const FIELD_TOKEN_AFTER_SEPARATOR = /^[\s:：,，;；-]*([A-Za-z][A-Za-z0-9_]*)/u;
+const INLINE_EXPLANATION_SEPARATOR = /[:：\s]/u;
+
+function hasSourceLayerBoundary(value, prefix) {
+  const next = value[prefix.length];
+  return (
+    next === undefined ||
+    next === '.' ||
+    next === '[' ||
+    next === ':' ||
+    next === '：' ||
+    next === ',' ||
+    next === '，' ||
+    next === ';' ||
+    next === '；' ||
+    /\s/u.test(next)
+  );
+}
+
+function matchAnalystSourceLayerPrefix(reference) {
+  if (typeof reference !== 'string') return null;
+  const value = reference.trim();
+  if (value === '') return null;
+
+  if (isAllowedExternalAiSourceLayer(value, { analyst: true })) {
+    return { sourceLayer: value, rest: '', matched: value };
+  }
+
+  const macroMatch = value.match(MACRO_DRIVER_SOURCE_LAYER_PREFIX);
+  if (
+    macroMatch &&
+    isAllowedExternalAiSourceLayer(macroMatch[1], { analyst: true }) &&
+    hasSourceLayerBoundary(value, macroMatch[1])
+  ) {
+    return { sourceLayer: macroMatch[1], rest: macroMatch[2] || '', matched: macroMatch[1] };
+  }
+
+  for (const layer of [...ANALYST_EXTERNAL_AI_SOURCE_LAYER_FLOOR].sort((a, b) => b.length - a.length)) {
+    if (value.startsWith(layer) && hasSourceLayerBoundary(value, layer)) {
+      return { sourceLayer: layer, rest: value.slice(layer.length), matched: layer };
+    }
+  }
+
+  for (const [alias, sourceLayer] of PR4_SOURCE_LAYER_ALIAS_MAP) {
+    if (value.startsWith(alias) && hasSourceLayerBoundary(value, alias)) {
+      return { sourceLayer, rest: value.slice(alias.length), matched: alias };
+    }
+  }
+
+  return null;
+}
+
+function stripInlineExplanationFromFieldPath(reference) {
+  const trimmed = reference.trim();
+  const separatorIndex = trimmed.search(INLINE_EXPLANATION_SEPARATOR);
+  if (separatorIndex === -1) return trimmed;
+  return trimmed.slice(0, separatorIndex).trim();
+}
+
+function normalizeDirectPr4LayerReference(reference) {
+  const match = matchAnalystSourceLayerPrefix(reference);
+  return match ? match.sourceLayer : reference;
+}
+
+function normalizeEvidencePr4LayerReference(reference) {
+  const match = matchAnalystSourceLayerPrefix(reference);
+  if (!match) return reference;
+
+  const rest = match.rest || '';
+  if (rest === '') return match.sourceLayer;
+
+  if (rest.startsWith('.') || rest.startsWith('[')) {
+    return stripInlineExplanationFromFieldPath(`${match.sourceLayer}${rest}`);
+  }
+
+  const fieldMatch = rest.match(FIELD_TOKEN_AFTER_SEPARATOR);
+  if (fieldMatch) return `${match.sourceLayer}.${fieldMatch[1]}`;
+  return match.sourceLayer;
+}
+
+function normalizePr4ReferenceArray(container, key, path, changes, { allowFieldPath = false } = {}) {
+  if (!container || !Array.isArray(container[key])) return;
+
+  const seenStrings = new Set();
+  const nextValues = [];
+  container[key].forEach((item, index) => {
+    if (typeof item !== 'string') {
+      nextValues.push(item);
+      return;
+    }
+
+    const normalized = allowFieldPath
+      ? normalizeEvidencePr4LayerReference(item)
+      : normalizeDirectPr4LayerReference(item);
+    const trimmed = normalized.trim();
+    if (trimmed !== item.trim()) {
+      changes.push({
+        path: `${path}[${index}]`,
+        normalizedTo: trimmed,
+        mode: allowFieldPath ? 'field_path_allowed' : 'bare_layer_only',
+      });
+    }
+    if (!seenStrings.has(trimmed)) {
+      seenStrings.add(trimmed);
+      nextValues.push(trimmed);
+    }
+  });
+  container[key] = nextValues;
+}
+
+function normalizePr4StructuredReferenceFields(output) {
+  const changes = [];
+
+  if (Array.isArray(output?.crossLayerSynthesis)) {
+    output.crossLayerSynthesis.forEach((item, index) => {
+      normalizePr4ReferenceArray(item, 'supportingLayers', `crossLayerSynthesis[${index}].supportingLayers`, changes);
+      normalizePr4ReferenceArray(item, 'conflictingLayers', `crossLayerSynthesis[${index}].conflictingLayers`, changes);
+    });
+  }
+
+  if (Array.isArray(output?.keyDivergences)) {
+    output.keyDivergences.forEach((item, index) => {
+      normalizePr4ReferenceArray(item, 'evidenceFor', `keyDivergences[${index}].evidenceFor`, changes, { allowFieldPath: true });
+      normalizePr4ReferenceArray(item, 'evidenceAgainst', `keyDivergences[${index}].evidenceAgainst`, changes, { allowFieldPath: true });
+    });
+  }
+
+  if (output?.dataQualityLens && typeof output.dataQualityLens === 'object' && !Array.isArray(output.dataQualityLens)) {
+    normalizePr4ReferenceArray(output.dataQualityLens, 'staleLayers', 'dataQualityLens.staleLayers', changes);
+    normalizePr4ReferenceArray(output.dataQualityLens, 'fallbackLayers', 'dataQualityLens.fallbackLayers', changes);
+    normalizePr4ReferenceArray(output.dataQualityLens, 'missingLayers', 'dataQualityLens.missingLayers', changes);
+  }
+
+  return {
+    applied: changes.length > 0,
+    changeCount: changes.length,
+    changedPaths: [...new Set(changes.map((change) => change.path))],
+    normalizedValues: [...new Set(changes.map((change) => change.normalizedTo))],
+    modes: [...new Set(changes.map((change) => change.mode))],
+    note: 'PR4 sourceLayer references normalized to canonical machine identifiers before strict output validation.',
+  };
+}
 
 const ANALYST_PR4_SCHEMA_CANARY_SOURCE_SEMANTICS_RULES = [
   `For analyst_compact_v1 PR4 schema canary, auditFlags must include ${ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG}.`,
@@ -708,7 +861,77 @@ function buildPromptModeSelfTestInput() {
   };
 }
 
+function runPr4ReferenceNormalizationSelfTests() {
+  const sample = {
+    crossLayerSynthesis: [
+      {
+        supportingLayers: ['oilDirectionalPressure.signals.dieselProductStress.extremeTight'],
+        conflictingLayers: ['marketPricing.assets.qqq.status: risk appetite is elevated'],
+      },
+    ],
+    keyDivergences: [
+      {
+        evidenceFor: ['macroDrivers.consumer: umichSentiment=49.8, threeMonthChange=-6.6'],
+        evidenceAgainst: ['macroDrivers.credit: igOas=0.74, regime=wide'],
+      },
+    ],
+    dataQualityLens: {
+      staleLayers: ['ruleBasedBaseline: stale baseline note'],
+      fallbackLayers: ['decisionContext: readonly background'],
+      missingLayers: [
+        'brentPricingLayer.limitations: Platts Dated Brent missing',
+        'brentPricingLayer.limitations: Brent curve missing',
+        'riskModules: module summary',
+      ],
+    },
+    scenarioLean: {
+      triggerConditions: ['keep this prose untouched'],
+    },
+  };
+
+  const diagnostics = normalizePr4StructuredReferenceFields(sample);
+  const expected = {
+    supporting: 'oilDirectionalPressure',
+    conflicting: 'marketPricing',
+    evidenceFor: 'macroDrivers.consumer.umichSentiment',
+    evidenceAgainst: 'macroDrivers.credit.igOas',
+    stale: 'aiInterpretationLayer',
+    fallback: 'decisionContext.sanitized',
+    missing: ['brentPricingLayer', 'modules'],
+  };
+
+  if (sample.crossLayerSynthesis[0].supportingLayers[0] !== expected.supporting) {
+    throw new Error('self-test failed: PR4 direct supportingLayers should normalize field paths to bare sourceLayer');
+  }
+  if (sample.crossLayerSynthesis[0].conflictingLayers[0] !== expected.conflicting) {
+    throw new Error('self-test failed: PR4 direct conflictingLayers should strip inline explanations');
+  }
+  if (sample.keyDivergences[0].evidenceFor[0] !== expected.evidenceFor) {
+    throw new Error('self-test failed: PR4 evidenceFor should normalize colon references to sourceLayer.field');
+  }
+  if (sample.keyDivergences[0].evidenceAgainst[0] !== expected.evidenceAgainst) {
+    throw new Error('self-test failed: PR4 evidenceAgainst should normalize colon references to sourceLayer.field');
+  }
+  if (sample.dataQualityLens.staleLayers[0] !== expected.stale) {
+    throw new Error('self-test failed: PR4 staleLayers should map ruleBasedBaseline to aiInterpretationLayer');
+  }
+  if (sample.dataQualityLens.fallbackLayers[0] !== expected.fallback) {
+    throw new Error('self-test failed: PR4 fallbackLayers should map decisionContext to decisionContext.sanitized');
+  }
+  if (JSON.stringify(sample.dataQualityLens.missingLayers) !== JSON.stringify(expected.missing)) {
+    throw new Error('self-test failed: PR4 missingLayers should normalize and dedupe bare sourceLayer references');
+  }
+  if (sample.scenarioLean.triggerConditions[0] !== 'keep this prose untouched') {
+    throw new Error('self-test failed: PR4 reference normalization must not touch prose condition arrays');
+  }
+  if (!diagnostics.applied || diagnostics.changeCount < 7) {
+    throw new Error('self-test failed: PR4 reference normalization diagnostics should record applied changes');
+  }
+}
+
 function runPromptModeSelfTests() {
+  runPr4ReferenceNormalizationSelfTests();
+
   const input = buildPromptModeSelfTestInput();
   if (getDeepSeekMaxTokens({ analystPr4SchemaCanary: false }) !== DEFAULT_DEEPSEEK_MAX_TOKENS) {
     throw new Error('self-test failed: default analyst max_tokens must use production PR4 headroom');
@@ -745,6 +968,7 @@ function runPromptModeSelfTests() {
     'write oilDirectionalPressure, not oilDirectionalPressure.signals.dieselProductStress',
     'write modules, not riskModules',
     'put all reasons and explanations in dataQualityLens.summaryZh, dataQualityLens.confidenceImpactZh, or the relevant *Zh fields',
+    'write macroDrivers.consumer.umichSentiment, not macroDrivers.consumer: umichSentiment=49.8',
   ];
   for (const marker of canonicalAttributionMarkers) {
     if (!defaultPrompt.includes(marker)) {
@@ -1136,9 +1360,12 @@ async function runDeepSeekManualTest(options, provider, environmentProvider) {
     return;
   }
 
+  const pr4ReferenceNormalization = normalizePr4StructuredReferenceFields(providerOutput);
+
   providerOutput._manualDiagnostics = {
     providerMetadata: providerAdapter.metadata,
     responseDiagnostics,
+    pr4ReferenceNormalization,
     requestDiagnostics: buildRequestDiagnostics({
       timeoutMs: options.timeoutMs,
       maxTokens,
