@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=trend-axis-overlay-1';
+﻿import { fmtNumSafe } from './config.js?v=trend-axis-label-copy-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

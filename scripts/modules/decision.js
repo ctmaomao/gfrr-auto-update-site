@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=trend-axis-overlay-1';
-import { formatOnRrpYiUsd } from './format.js?v=trend-axis-overlay-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=trend-axis-label-copy-1';
+import { formatOnRrpYiUsd } from './format.js?v=trend-axis-label-copy-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

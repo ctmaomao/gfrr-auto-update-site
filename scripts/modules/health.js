@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=trend-axis-overlay-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=trend-axis-overlay-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=trend-axis-label-copy-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=trend-axis-label-copy-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
