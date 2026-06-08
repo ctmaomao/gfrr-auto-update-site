@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=external-ai-pr4b3-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=external-ai-pr4b3-1';
-import { MODULE_LABELS } from './decision.js?v=external-ai-pr4b3-1';
+} from './config.js?v=trend-axis-overlay-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=trend-axis-overlay-1';
+import { MODULE_LABELS } from './decision.js?v=trend-axis-overlay-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -459,7 +459,19 @@ function renderWowSection({ radarData, worldOrderStressData }) {
 
 // ---------- Stage 4b-2 shared helpers ----------
 
-const TREND_X = [80, 177.14, 274.29, 371.43, 468.57, 565.71, 662.86, 760];
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const TREND_CHART = {
+  plotLeft: 52,
+  plotRight: 736,
+  plotTop: 20,
+  plotBottom: 204,
+  yMin: 0,
+  yMax: 100
+};
+const TREND_X = Array.from({ length: 8 }, (_, index) => (
+  TREND_CHART.plotLeft
+  + ((TREND_CHART.plotRight - TREND_CHART.plotLeft) * index) / 7
+));
 
 function signedFixedWithZero(value, digits = 1) {
   const n = asNumber(value);
@@ -475,11 +487,106 @@ function clamp(value, min, max) {
 function trendY(score) {
   const n = asNumber(score);
   if (n === null) return null;
-  return clamp(200 * (1 - n / 100), 0, 200);
+  const ratio = (clamp(n, TREND_CHART.yMin, TREND_CHART.yMax) - TREND_CHART.yMin)
+    / (TREND_CHART.yMax - TREND_CHART.yMin);
+  return TREND_CHART.plotBottom - ratio * (TREND_CHART.plotBottom - TREND_CHART.plotTop);
 }
 
 function pointPair(x, y) {
   return `${Number(x.toFixed(2))},${Number(y.toFixed(2))}`;
+}
+
+function formatTrendDateLabel(value, fallback) {
+  const text = textValue(value);
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/u);
+  if (match) return `${match[2]}-${match[3]}`;
+  return fallback;
+}
+
+function trendIsoDate(value) {
+  const text = textValue(value);
+  const match = text.match(/^(\d{4}-\d{2}-\d{2})/u);
+  if (match) return match[1];
+  const ms = Date.parse(text);
+  if (!Number.isFinite(ms)) return null;
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+function mergeCurrentTrendSnapshot(weekly, radarData, worldOrderStressData) {
+  if (!Array.isArray(weekly) || weekly.length !== TREND_X.length) return weekly;
+  const currentScore = asNumber(radarData?.score);
+  const overlayScore = asNumber(worldOrderStressData?.score);
+  if (currentScore === null && overlayScore === null) return weekly;
+
+  const next = weekly.slice();
+  const last = next[next.length - 1] || {};
+  const currentDate = trendIsoDate(radarData?.updatedAt) || trendIsoDate(worldOrderStressData?.observedAt) || last.date;
+  const merged = {
+    ...last,
+    date: currentDate || last.date
+  };
+
+  if (currentScore !== null) merged.score = currentScore;
+
+  if (overlayScore !== null) {
+    merged.worldOrderStress = {
+      ...(last.worldOrderStress || {}),
+      ...(worldOrderStressData || {}),
+      score: overlayScore,
+      observedAt: textValue(worldOrderStressData?.observedAt) || currentDate || textValue(last.worldOrderStress?.observedAt),
+    };
+  }
+
+  next[next.length - 1] = merged;
+  return next;
+}
+
+function updateTrendXAxisLabels(weekly) {
+  weekly.forEach((item, index) => {
+    const label = $(`trend-x-${index}`);
+    if (!label) return;
+    label.textContent = formatTrendDateLabel(item?.date, index === weekly.length - 1 ? 'NOW' : `W-${weekly.length - 1 - index}`);
+    label.setAttribute('x', Number(TREND_X[index].toFixed(2)).toString());
+    label.classList.toggle('is-now', index === weekly.length - 1);
+  });
+}
+
+function buildTrendPoint(index, score, source = null) {
+  const y = trendY(score);
+  if (y === null) return null;
+  return {
+    x: TREND_X[index],
+    y,
+    score: asNumber(score),
+    source
+  };
+}
+
+function pointsToAttribute(points) {
+  return points
+    .filter(Boolean)
+    .map((point) => pointPair(point.x, point.y))
+    .join(' ');
+}
+
+function renderTrendDots(groupId, points, className, radius, lastId) {
+  const group = $(groupId);
+  if (!group) return;
+  group.textContent = '';
+  points.filter(Boolean).forEach((point, index, validPoints) => {
+    const circle = document.createElementNS(SVG_NS, 'circle');
+    circle.setAttribute('class', `trend-dot ${className}`);
+    circle.setAttribute('cx', Number(point.x.toFixed(2)).toString());
+    circle.setAttribute('cy', Number(point.y.toFixed(2)).toString());
+    circle.setAttribute('r', String(index === validPoints.length - 1 ? radius + 0.8 : radius));
+    if (index === validPoints.length - 1 && lastId) {
+      circle.setAttribute('id', lastId);
+    }
+    if (point.score !== null) {
+      circle.setAttribute('aria-label', `${point.score.toFixed(0)} on ${point.source?.date || 'trend point'}`);
+    }
+    group.appendChild(circle);
+  });
 }
 
 function pickEightWeeklyPoints(history) {
@@ -507,21 +614,24 @@ function parseObservedAtMs(value) {
 function normalizeOverlayHistoryPoint(historyItem) {
   const wo = historyItem?.worldOrderStress;
   const score = asNumber(wo?.score);
-  const observedAt = textValue(wo?.observedAt);
+  const date = textValue(historyItem?.date);
+  const observedAtRaw = textValue(wo?.observedAt);
+  const observedAt = observedAtRaw || date;
   const observedAtMs = parseObservedAtMs(observedAt);
   if (score === null || !observedAt || observedAtMs === null) {
     return {
-      date: historyItem?.date || null,
+      date: date || null,
       valid: false
     };
   }
   return {
-    date: historyItem?.date || null,
+    date: date || null,
     valid: true,
     score,
     state: textValue(wo?.state),
     labelZh: textValue(wo?.labelZh),
     observedAt,
+    observedAtSource: observedAtRaw ? 'observedAt' : 'history-date',
     observedAtMs,
     freshness: textValue(wo?.freshness)
   };
@@ -574,11 +684,35 @@ function staleTailStartIndex(overlayWeekly, latestObservedAt) {
 function buildOverlayTrendPoints(overlayWeekly, fallbackScore, analysis) {
   const fallbackY = trendY(fallbackScore);
   if (fallbackY === null) return null;
+  if (overlayWeekly.length === TREND_X.length) {
+    const slottedPoints = overlayWeekly.map((point, index) => (
+      point.valid ? buildTrendPoint(index, point.score, point) : null
+    ));
+    const validSlottedPoints = slottedPoints.filter(Boolean);
+    if (validSlottedPoints.length >= 2 && validSlottedPoints.length < TREND_X.length) {
+      return {
+        mode: 'partial-history',
+        points: validSlottedPoints,
+        dotPoints: validSlottedPoints,
+        lastY: validSlottedPoints[validSlottedPoints.length - 1].y,
+        validPointCount: validSlottedPoints.length
+      };
+    }
+  }
+
   if (analysis.fullFallback || overlayWeekly.length !== TREND_X.length) {
+    const fallbackPoints = TREND_X.map((x, index) => ({
+      x,
+      y: fallbackY,
+      score: fallbackScore,
+      source: overlayWeekly[index] || null
+    }));
     return {
       mode: 'fallback',
-      points: TREND_X.map((x) => pointPair(x, fallbackY)),
-      lastY: fallbackY
+      points: fallbackPoints,
+      dotPoints: fallbackPoints.slice(-1),
+      lastY: fallbackY,
+      validPointCount: analysis.validWoPoints
     };
   }
 
@@ -590,17 +724,24 @@ function buildOverlayTrendPoints(overlayWeekly, fallbackScore, analysis) {
       const y = trendY(point.score);
       if (y !== null) lastY = y;
     }
-    return pointPair(TREND_X[index], lastY);
+    return {
+      x: TREND_X[index],
+      y: lastY,
+      score: point.valid ? point.score : fallbackScore,
+      source: point
+    };
   });
 
   return {
     mode: analysis.staleTail ? 'stale-tail' : 'history',
     points,
+    dotPoints: points,
     lastY
   };
 }
 
 function overlayStatusSuffix(mode) {
+  if (mode === 'partial-history') return '历史累积中';
   if (mode === 'fallback') return '参考线';
   if (mode === 'stale-tail') return '尾部滞后';
   return '';
@@ -626,10 +767,24 @@ function renderOverlayTrendStatus({ mode, radarData, worldOrderStressData, analy
   }
   const overlayLine = $('trend-line-overlay');
   if (overlayLine) {
-    const detail = mode === 'stale-tail' && analysis.latestObservedAtAgeDays !== null
+    const detail = mode === 'partial-history'
+      ? `${analysis.validWoPoints} valid weekly anchors; history still accumulating`
+      : mode === 'stale-tail' && analysis.latestObservedAtAgeDays !== null
       ? `latest observedAt age ${analysis.latestObservedAtAgeDays.toFixed(1)} days`
       : `${analysis.validWoPoints} valid points, ${analysis.uniqueObservedAt} unique observedAt`;
     overlayLine.setAttribute('aria-label', `World Order overlay trend ${mode}; ${detail}`);
+  }
+  const modeEl = $('trend-overlay-mode');
+  if (modeEl) {
+    if (mode === 'partial-history') {
+      modeEl.textContent = `Overlay ${analysis.validWoPoints}/8 周锚点`;
+    } else if (mode === 'fallback') {
+      modeEl.textContent = 'Overlay 历史不足: 参考线';
+    } else if (mode === 'stale-tail') {
+      modeEl.textContent = 'Overlay 尾部滞后';
+    } else {
+      modeEl.textContent = 'Overlay 8 周历史';
+    }
   }
 }
 
@@ -756,35 +911,35 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
 
 function renderTrendSvg({ radarData, radarHistoryData, worldOrderStressData }) {
   try {
-    const weekly = pickEightWeeklyPoints(radarHistoryData);
+    const weekly = mergeCurrentTrendSnapshot(
+      pickEightWeeklyPoints(radarHistoryData),
+      radarData,
+      worldOrderStressData
+    );
     if (weekly.length !== 8) return;
-    const scorePoints = weekly.map((item, index) => {
-      const y = trendY(item.score);
-      return y === null ? null : pointPair(TREND_X[index], y);
-    });
+    updateTrendXAxisLabels(weekly);
+    const scorePoints = weekly.map((item, index) => buildTrendPoint(index, item.score, item));
     if (scorePoints.some((p) => p === null)) return;
     const scoreLine = $('trend-line-score');
-    if (scoreLine) scoreLine.setAttribute('points', scorePoints.join(' '));
-    const lastY = trendY(weekly[weekly.length - 1].score);
-    const scoreDot = $('trend-dot-score');
-    if (scoreDot && lastY !== null) {
-      scoreDot.setAttribute('cx', String(TREND_X[TREND_X.length - 1]));
-      scoreDot.setAttribute('cy', Number(lastY.toFixed(2)).toString());
+    if (scoreLine) {
+      scoreLine.setAttribute('points', pointsToAttribute(scorePoints));
+      scoreLine.setAttribute('aria-label', `Risk score trend ${weekly.map((item) => `${item.date}:${Math.round(item.score)}`).join(', ')}`);
     }
+    renderTrendDots('trend-dots-score', scorePoints, 'trend-dot-score', 4.2, 'trend-dot-score');
 
     const overlayScore = asNumber(worldOrderStressData?.score);
     if (overlayScore === null) return;
-    const overlayWeekly = pickEightWeeklyOverlay(radarHistoryData);
+    const overlayWeekly = weekly.map((item) => normalizeOverlayHistoryPoint(item));
     const analysis = analyzeOverlayHistory(overlayWeekly);
     const overlayTrend = buildOverlayTrendPoints(overlayWeekly, overlayScore, analysis);
     if (!overlayTrend) return;
     const overlayLine = $('trend-line-overlay');
-    if (overlayLine) overlayLine.setAttribute('points', overlayTrend.points.join(' '));
-    const overlayDot = $('trend-dot-overlay');
-    if (overlayDot) {
-      overlayDot.setAttribute('cx', String(TREND_X[TREND_X.length - 1]));
-      overlayDot.setAttribute('cy', Number(overlayTrend.lastY.toFixed(2)).toString());
+    if (overlayLine) {
+      overlayLine.setAttribute('points', pointsToAttribute(overlayTrend.points));
+      overlayLine.classList.toggle('is-partial', overlayTrend.mode === 'partial-history');
+      overlayLine.classList.toggle('is-fallback', overlayTrend.mode === 'fallback');
     }
+    renderTrendDots('trend-dots-overlay', overlayTrend.dotPoints || overlayTrend.points, 'trend-dot-overlay', 3.7, 'trend-dot-overlay');
     renderOverlayTrendStatus({
       mode: overlayTrend.mode,
       radarData,
