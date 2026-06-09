@@ -81,6 +81,7 @@
 - `docs/OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md` (Oil Directional Pressure Model / ODP — feasibility + source review; this doc stays a source-review artifact, but PR1 ingestion + checks are implemented: `data/oil-directional-pressure.json` + `scripts/oil-directional/` + `check:oil-directional`)
 - `docs/OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md` (Energy Stress Phase 2 source-review + owner-approved implementation follow-up; EIA STEO `COPS_OPEC` → `macroDrivers.energySpareCapacity`)
 - `docs/ENERGY_TRANSPORT_CHOKEPOINT_SOURCE_REVIEW.md` (Energy Stress Phase 2 source-review only; IMF PortWatch chokepoint candidate)
+- `docs/ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md` (owner-approved PortWatch implementation brief; target `macroDrivers.energyTransport`, docs-only until implementation)
 
 ### China macro source review scope
 

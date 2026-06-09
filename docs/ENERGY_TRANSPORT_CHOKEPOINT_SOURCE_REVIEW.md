@@ -208,4 +208,12 @@ PortWatch AIS-derived chokepoint proxy; vessel counts and capacity are observati
 | displayOnlyCandidate | yes |
 | scoringAllowed | no |
 | BDIAction | no new source; keep existing StockQ proxy |
-| recommendedNextStep | source-specific implementation brief, if owner approves |
+| recommendedNextStep | source-specific implementation brief opened after owner approval |
+
+---
+
+## 7. Implementation Brief Follow-up(2026-06-09)
+
+Owner approved opening a PortWatch source-specific implementation brief after OPEC spare capacity reached production-live status. The brief is now tracked in [`ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md`](ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md).
+
+This follow-up does **not** by itself approve runtime code, production data writes, frontend rendering, World Order scoring changes, or oil/war probability language. It only changes the next-step status from "waiting for owner-approved brief" to "brief available; implementation still requires the next explicit implementation turn."
