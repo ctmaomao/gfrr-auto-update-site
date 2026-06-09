@@ -87,12 +87,12 @@ const ENERGY_TEXT_IDS = [
   'odp-energy-source-boundary',
 ];
 const CORE_CHOKEPOINTS = [
-  ['suez', 'Suez'],
-  ['babElMandeb', 'Bab el-Mandeb'],
-  ['malacca', 'Malacca'],
-  ['hormuz', 'Hormuz'],
-  ['capeGoodHope', 'Cape'],
-  ['gibraltar', 'Gibraltar'],
+  ['suez', '苏伊士'],
+  ['babElMandeb', '曼德海峡'],
+  ['malacca', '马六甲'],
+  ['hormuz', '霍尔木兹'],
+  ['capeGoodHope', '好望角'],
+  ['gibraltar', '直布罗陀'],
 ];
 
 function signed(v, dp = 0) {
@@ -123,12 +123,12 @@ function compactNumber(v) {
 function statusZh(status) {
   const normalized = typeof status === 'string' ? status : '';
   return ({
-    live: 'live',
-    fallback: 'fallback · 沿用',
-    stale: 'stale · 待刷新',
-    missing: 'missing · 源暂不可用',
+    live: '实时',
+    fallback: '回退沿用',
+    stale: '陈旧待刷新',
+    missing: '源不可用',
     insufficient_window: '窗口不足',
-  })[normalized] || '源暂不可用';
+  })[normalized] || '源不可用';
 }
 function reroutingZh(regime) {
   return ({
@@ -170,9 +170,9 @@ function renderTransportCore(transport) {
   const rows = CORE_CHOKEPOINTS.map(([id, label]) => {
     const item = transport.chokepoints[id] || {};
     const latest = item.latest || {};
-    const tanker = Number.isFinite(latest.nTanker) ? `${latest.nTanker} tankers` : '—';
-    const cap = Number.isFinite(latest.capacityTanker) ? `capacity ${compactNumber(latest.capacityTanker)}` : 'capacity —';
-    const dev = Number.isFinite(item.latestVs30dPct) ? `30d ${ratioPct(item.latestVs30dPct)}` : '30d —';
+    const tanker = Number.isFinite(latest.nTanker) ? `${latest.nTanker} 艘油轮` : '—';
+    const cap = Number.isFinite(latest.capacityTanker) ? `运力 ${compactNumber(latest.capacityTanker)}` : '运力 —';
+    const dev = Number.isFinite(item.latestVs30dPct) ? `较30日均 ${ratioPct(item.latestVs30dPct)}` : '较30日均 —';
     const row = document.createElement('div');
     row.className = 'odp-energy-core-item';
     const name = document.createElement('span');
@@ -198,11 +198,11 @@ function renderEnergyTransport(transport) {
 
   const age = Number.isFinite(transport.latestAgeDays) ? ` · ${Math.round(transport.latestAgeDays)} 天前` : '';
   const rerouting = transport.reroutingProxy || {};
-  const redSea = Number.isFinite(rerouting.suezBabTankerVs30dPct) ? `Suez/Bab ${ratioPct(rerouting.suezBabTankerVs30dPct)}` : 'Suez/Bab —';
-  const cape = Number.isFinite(rerouting.capeTankerVs30dPct) ? `Cape ${ratioPct(rerouting.capeTankerVs30dPct)}` : 'Cape —';
+  const redSea = Number.isFinite(rerouting.suezBabTankerVs30dPct) ? `苏伊士/曼德 ${ratioPct(rerouting.suezBabTankerVs30dPct)}` : '苏伊士/曼德 —';
+  const cape = Number.isFinite(rerouting.capeTankerVs30dPct) ? `好望角 ${ratioPct(rerouting.capeTankerVs30dPct)}` : '好望角 —';
   setLeafText('odp-energy-transport-date', `${transport.latestDate || '—'}${age}`);
   setLeafText('odp-energy-transport-rerouting', `${reroutingZh(rerouting.redSeaToCapeRegime)} · ${redSea} / ${cape}`);
-  setLeafText('odp-energy-transport-note', 'PortWatch AIS-derived proxy;船舶计数和 capacity 是观测代理,可能受 GPS jamming、AIS spoofing、vessels going dark、绕行或数据延迟影响;不是官方贸易统计,不估算军事或价格结果。');
+  setLeafText('odp-energy-transport-note', 'PortWatch 基于 AIS 卫星船舶数据的咽喉代理;船舶计数与运力为观测代理,可能受 GPS 干扰、AIS 信号伪造、船舶关闭 AIS、绕行或数据延迟影响;不是官方贸易统计,不估算军事或价格结果。');
   renderTransportCore(transport);
 }
 function renderEnergyAddendum(radarData) {
@@ -210,7 +210,7 @@ function renderEnergyAddendum(radarData) {
   const macroDrivers = radarData && radarData.macroDrivers ? radarData.macroDrivers : {};
   renderSpareCapacity(macroDrivers.energySpareCapacity);
   renderEnergyTransport(macroDrivers.energyTransport);
-  setLeafText('odp-energy-source-boundary', '边界:OPEC 闲置产能与咽喉转运均为 audit-only / display-only 能源证据层,不进入 scoring、decision、execution、position、World Order weights 或 Global Risk Heatmap。');
+  setLeafText('odp-energy-source-boundary', '边界:OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
 }
 
 function reasonInventory(sig, ev) {
@@ -348,6 +348,6 @@ export function renderOilDirectional({ oilData, radarData }) {
   setLeafText('odp-reason-refinery', reasonRefinery(sig, ev));
   setLeafText('odp-reason-spr', reasonSpr(sig));
   setLeafText('odp-reason-demand', reasonDemand(sig));
-  setLeafText('odp-evidence-note', `物理链 = 馏分油库存 -> 裂解价差/炼厂开工 -> 商业原油库存 -> Brent 期限结构;8 个周度源来自 EIA WPSR(截至 ${crudeAsOf}),价格方向取布伦特近 ~4 周变动,期限结构为低置信公开代理;本层 audit-only / display-only,不进入 scoring / decision / execution / Heatmap。`);
+  setLeafText('odp-evidence-note', `物理链 = 馏分油库存 -> 裂解价差/炼厂开工 -> 商业原油库存 -> Brent 期限结构;8 个周度源来自 EIA WPSR(截至 ${crudeAsOf}),价格方向取布伦特近 ~4 周变动,期限结构为低置信公开代理;本层仅供参考,不参与平台的风险打分与决策。`);
   renderEvidenceList(ev);
 }

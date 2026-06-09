@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=energy-stress-display-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=energy-stress-display-1';
-import { MODULE_LABELS } from './decision.js?v=energy-stress-display-1';
+} from './config.js?v=frontend-zh-copy-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-zh-copy-1';
+import { MODULE_LABELS } from './decision.js?v=frontend-zh-copy-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -28,6 +28,52 @@ function trendArrow(trend) {
   if (trend > 2) return '↑';
   if (trend < -2) return '↓';
   return '→';
+}
+
+const WORLD_ORDER_STATE_LABELS = {
+  multi_theater_stress: '多战区压力期',
+  war_economy_stress: '战时经济压力期',
+  world_order_pressure_crossing: '世界秩序压力穿越',
+  normal: '常态观察',
+  unknown: '状态待确认',
+};
+const SOURCE_MODE_LABELS = {
+  live: '实时',
+  fallback: '回退',
+  degraded: '降级',
+  'cache-only': '缓存',
+  'live-with-fallback': '实时含回退',
+  'worker-generated-preview': 'Worker 主预览',
+};
+const BRENT_MODE_LABELS = {
+  public_proxy_observation: '公开代理观察',
+};
+const RISK_BIAS_LABELS = {
+  upward: '上修偏置',
+  neutral: '中性',
+  downward: '下修偏置',
+};
+
+function sourceModeZh(value) {
+  const text = textValue(value);
+  return text ? (SOURCE_MODE_LABELS[text] || text) : '—';
+}
+
+function brentModeZh(value) {
+  const text = textValue(value);
+  return text ? (BRENT_MODE_LABELS[text] || text) : '—';
+}
+
+function worldOrderStateLabel(state, labelZh) {
+  const label = textValue(labelZh);
+  if (label) return label;
+  const stateText = textValue(state);
+  return stateText ? (WORLD_ORDER_STATE_LABELS[stateText] || '状态待确认') : '状态待确认';
+}
+
+function riskBiasZh(value) {
+  const text = textValue(value);
+  return text ? (RISK_BIAS_LABELS[text] || text) : '—';
 }
 
 // 6 module 真实派生 X red / Y yellow / Z green count
@@ -225,7 +271,7 @@ function renderThresholdBlock({ radarData, worldOrderStressData }) {
 
 const PRESSURE_MODULES = [
   { key: 'energy', cardId: 'pressure-card-energy', label: 'Energy 能源', activeText: '能源传导主线' },
-  { key: 'geopolitical', cardId: 'pressure-card-geopolitical', label: 'Geopolitical 地缘', activeText: 'multi_theater' },
+  { key: 'geopolitical', cardId: 'pressure-card-geopolitical', label: 'Geopolitical 地缘', activeText: '多战区压力' },
   { key: 'inflation', cardId: 'pressure-card-inflation', label: 'Inflation 通胀', activeText: '横盘观察' },
   { key: 'liquidity', cardId: 'pressure-card-liquidity', label: 'Liquidity 流动性', activeText: '边际收紧' },
   { key: 'debt', cardId: 'pressure-card-debt', label: 'Debt 债务', activeText: '杠杆稳定' },
@@ -403,7 +449,7 @@ function renderRiskEngines({ radarData }) {
     }
     const geopoliticalTone = moduleTone(asNumber(radarData.modules?.geopolitical));
     if (geopoliticalTone) {
-      setMiniCardState('engine-card-b6', geopoliticalTone, geopoliticalTone === 'green' ? '地缘降温' : 'multi_theater');
+      setMiniCardState('engine-card-b6', geopoliticalTone, geopoliticalTone === 'green' ? '地缘降温' : '多战区压力');
     }
   } catch (error) {
     console.error('[renderMacroOverview] renderRiskEngines failed:', error);
@@ -429,7 +475,7 @@ function renderWowSection({ radarData, worldOrderStressData }) {
     const woState = worldOrderStressData?.state;
     const woLabel = worldOrderStressData?.labelZh;
     if (woState) {
-      setLeafText('wow-item-3-text', `World Order overlay 当前为 ${woState}${woLabel ? `(${woLabel})` : ''},结构性压力持续。`);
+      setLeafText('wow-item-3-text', `World Order 当前为 ${worldOrderStateLabel(woState, woLabel)},结构性压力持续。`);
       setLeafText('wow-item-3-source', '世界秩序状态变化');
     }
     const futureMinusTargetMid = asNumber(radarData.macroDrivers?.policyExpectations?.futureMinusTargetMid);
@@ -794,13 +840,13 @@ function latestQqqZ(marketPricingMetricsData) {
 }
 
 function formatStatus(score, isActive) {
-  return `score ${score} · ${isActive ? 'ACTIVE' : 'LATENT'}`;
+  return `分数 ${score} · ${isActive ? '已激活' : '潜伏'}`;
 }
 
 function setNarrative(index, item) {
   const root = $(`narrative-${index}`);
   if (root) root.classList.toggle('active', item.isActive);
-  setLeafText(`narrative-${index}-name`, item.name);
+  setLeafText(`narrative-${index}-name`, item.shortName || item.name);
   setLeafText(`narrative-${index}-score`, formatStatus(item.score, item.isActive));
   setLeafText(`narrative-${index}-desc`, item.description);
 }
@@ -814,8 +860,7 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
   const sentiment = asNumber(radarData?.macroDrivers?.consumer?.umichSentiment);
   const ismPmi = asNumber(radarData?.macroDrivers?.consumer?.ismManufacturingPmi);
   const woScore = asNumber(worldOrderStressData?.score);
-  const woState = worldOrderStressData?.state || 'unknown';
-  const woLabel = worldOrderStressData?.labelZh || '';
+  const woDisplay = worldOrderStateLabel(worldOrderStressData?.state, worldOrderStressData?.labelZh);
   const qqqZ = latestQqqZ(marketPricingMetricsData);
   const hyOas = asNumber(radarData?.macroDrivers?.credit?.hyOas);
   const igOas = asNumber(radarData?.macroDrivers?.credit?.igOas);
@@ -843,7 +888,7 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
   return [
     {
       shortName: '能源冲击',
-      name: '⚡ energy_shock 能源冲击',
+      name: '能源冲击',
       score: n1Score,
       isActive: n1Active,
       description: n1Active
@@ -852,7 +897,7 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
     },
     {
       shortName: '滞胀压力',
-      name: '⚖️ stagflation_pressure 滞胀压力',
+      name: '滞胀压力',
       score: n2Score,
       isActive: n2Active,
       description: n2Active
@@ -861,16 +906,16 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
     },
     {
       shortName: '世界秩序压力穿越',
-      name: '🌐 world_order_pressure_crossing 世界秩序压力穿越',
+      name: '世界秩序压力穿越',
       score: n3Score,
       isActive: n3Active,
       description: n3Active
-        ? `${woState}${woLabel ? `(${woLabel})` : ''} 持续,触发橙色升档指针。OFAC + GDELT 双印证。`
-        : `${woState}${woLabel ? `(${woLabel})` : ''} 未触发升档阈值。OFAC + GDELT 双印证。`,
+        ? `${woDisplay} 持续,触发橙色升档指针。OFAC + GDELT 双印证。`
+        : `${woDisplay} 未触发升档阈值。OFAC + GDELT 双印证。`,
     },
     {
       shortName: '风险资产错配',
-      name: '📉 risk_asset_mismatch 风险资产错配',
+      name: '风险资产错配',
       score: n4Score,
       isActive: n4Active,
       description: n4Active
@@ -879,7 +924,7 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
     },
     {
       shortName: '过热确认',
-      name: '🔥 overheat_confirmation 过热确认',
+      name: '过热确认',
       score: n5Score,
       isActive: n5Active,
       description: n5Active
@@ -888,7 +933,7 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
     },
     {
       shortName: '信用利差告警',
-      name: '💰 credit_spread_warning 信用利差告警',
+      name: '信用利差告警',
       score: n6Score,
       isActive: n6Active,
       description: n6Active
@@ -897,7 +942,7 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
     },
     {
       shortName: '流动性收紧',
-      name: '💧 liquidity_tightening 流动性收紧',
+      name: '流动性收紧',
       score: n7Score,
       isActive: n7Active,
       description: n7Active
@@ -1005,7 +1050,7 @@ function renderCrossValidation({ radarData, worldOrderStressData, marketPricingM
     setLeafText('cv-consistency-value', consistencyScore !== null ? String(consistencyScore) : '—');
     const fill = $('cv-bar-fill');
     if (fill) fill.style.width = `${consistencyScore !== null ? consistencyScore : 0}%`;
-    setLeafText('cv-breakdown-counts', `${strong} strong_confirmation / ${partial} partial_confirmation / ${contradiction} contradiction`);
+    setLeafText('cv-breakdown-counts', `强确认 ${strong} / 部分确认 ${partial} / 矛盾 ${contradiction}`);
     setLeafText('cv-summary-line', matrix?.oneLineSummary || '—');
   } catch (error) {
     console.error('[renderMacroOverview] renderCrossValidation failed:', error);
@@ -1223,7 +1268,7 @@ function renderC8Geopolitical({ radarData, worldOrderStressData }) {
     const woScore = asNumber(worldOrderStressData?.score);
     if (woScore !== null) setLeafText('c8-wo-number', String(Math.round(woScore)));
     if (worldOrderStressData?.state || worldOrderStressData?.labelZh) {
-      setLeafText('c8-wo-aux', `state: ${worldOrderStressData.state || '—'} · labelZh: ${worldOrderStressData.labelZh || '—'}`);
+      setLeafText('c8-wo-aux', `状态:${worldOrderStressData.labelZh || '—'}`);
     }
 
     const econ = worldOrderStressData?.dimensions?.economicWeaponization || {};
@@ -1376,7 +1421,7 @@ function renderC1InflationEnergy({ radarData }) {
     setIndicatorStatus('c1-brent-status', 'c1-brent-badge', brentStatus);
     if (brent !== null) setLeafText('c1-brent-number', brent.toFixed(2));
     if (brentLayer.mode) {
-      setLeafText('c1-brent-aux', `主值 selectedBrent · status: ${brentLayer.mode}`);
+      setLeafText('c1-brent-aux', `主值取公开现货代理 · 状态:${brentModeZh(brentLayer.mode)}`);
     }
     const eia = asNumber(brentLayer.eiaBrentSpotProxy?.price);
     const futures = asNumber(brentLayer.futuresProxy?.value);
@@ -2325,9 +2370,9 @@ function renderDetailData({ radarData }) {
     const scenarios = radarData.scenarioTree || [];
 
     if (asNumber(realtime.healthScore) !== null) {
-      setLeafText('detail-health-score', `healthScore ${Math.round(realtime.healthScore)}/100`);
+      setLeafText('detail-health-score', `健康度 ${Math.round(realtime.healthScore)}/100`);
     }
-    if (realtime.sourceMode) setLeafText('detail-health-source-mode', `实时输入 ${realtime.sourceMode}`);
+    if (realtime.sourceMode) setLeafText('detail-health-source-mode', `实时输入 ${sourceModeZh(realtime.sourceMode)}`);
     const runAt = formatUtcMinute(realtime.capturedAt || realtime.updatedAt);
     if (runAt) setLeafText('detail-health-run-at', runAt);
     // P3-18 WIRE batch B/C/D: data-health appendix prose + sidebar dd + Fed liquidity mirror
@@ -2353,8 +2398,8 @@ function renderDetailData({ radarData }) {
       const signalDetail = firstSignal.detail || signalLabel;
       setLeafText('detail-fed-signal-label', signalLabel);
       setLeafText('detail-fed-onrrp', signalDetail);
-      setLeafText('detail-health-structural-signal', `${signalKey} · ${signalDetail}`.trim());
-      setLeafText('detail-health-structural-dd', `${signalKey} (${structuralSignalCount})`);
+      setLeafText('detail-health-structural-signal', `${signalLabel} · ${signalDetail}`.trim());
+      setLeafText('detail-health-structural-dd', `${signalLabel} (${structuralSignalCount})`);
     } else {
       setLeafText('detail-health-structural-dd', '无激活结构信号');
     }
@@ -2501,17 +2546,17 @@ function renderWorldOrderStress({ worldOrderStressData }) {
       setLeafText('wo-detail-intro-score', Math.round(wo.score));
       setLeafText('wo-detail-score', Math.round(wo.score));
     }
-    if (wo.labelZh || wo.state) setLeafText('wo-detail-state', `${wo.labelZh || '—'} · ${wo.state || '—'}`);
+    if (wo.labelZh || wo.state) setLeafText('wo-detail-state', wo.labelZh || '—');
     const confidence = confidenceLabel(wo.confidence);
     if (confidence) setLeafText('wo-detail-confidence', confidence);
     const marketInput = wo.marketConfirmationInput || {};
     if (marketInput.source || asNumber(marketInput.healthScore) !== null) {
-      const health = asNumber(marketInput.healthScore) !== null ? `health ${Math.round(marketInput.healthScore)}/100` : 'health —';
-      setLeafText('wo-detail-market-confirmation', `${marketInput.source || 'unknown-source'} · ${health}`);
+      const health = asNumber(marketInput.healthScore) !== null ? `健康度 ${Math.round(marketInput.healthScore)}/100` : '健康度 —';
+      setLeafText('wo-detail-market-confirmation', `${sourceModeZh(marketInput.source) || '来源未知'} · ${health}`);
     }
     const modifier = wo.decisionModifier || {};
     if (modifier.riskBias || asNumber(modifier.maxStateBoost) !== null) {
-      setLeafText('wo-detail-risk-bias', `riskBias ${modifier.riskBias || '—'} · maxStateBoost ${modifier.maxStateBoost ?? '—'}`);
+      setLeafText('wo-detail-risk-bias', `风险偏置 ${riskBiasZh(modifier.riskBias)} · 最大升档 ${modifier.maxStateBoost ?? '—'}`);
     }
 
     // ACLED / GDELT data-freshness indicators — display-only; surfaces existing

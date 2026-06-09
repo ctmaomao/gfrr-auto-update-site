@@ -31,7 +31,7 @@
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `energy-stress-display-1`）。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `frontend-zh-copy-1`）。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -165,7 +165,7 @@ When `DESIGN.md` and any other contract (e.g., Market Pricing governance) appear
 
 - `npm run check:frontend-live-contracts` enforces the live frontend display contracts: DOM id 契约 (`check:dom`)、null/zero 显示守卫、macro coherence (display-only)
 - `DESIGN.md` itself is the ground truth for IA 顺序 / 字体 / 视觉 (see `docs/ADR/0014-design-md-is-ia-ground-truth.md`); the dedicated `check:homepage-ia-contract` / `check:editorial-redesign-contract` checkers were retired in checker 精简 Phase 1+2, so IA/font contracts are now guarded by `DESIGN.md` + review, not a script
-- `npm run check:all` runs `check:frontend-live-contracts` as part of the 16-item top-level baseline (~56 leaf checks)
+- `npm run check:all` runs `check:frontend-live-contracts` and `check:frontend-zh-copy` as part of the 17-item top-level baseline (~57 leaf checks)
 
 PRs that fail these contracts MUST NOT be merged, regardless of how good the visual result looks.
 
@@ -275,6 +275,16 @@ ON RRP 用户可见单位必须是：
 ```text
 趋势待累计
 ```
+
+### 7.1 中文优先(机器强制 · `check:frontend-zh-copy`)
+
+本站用户是**纯中文用户**。用户可见的前端显示文案**必须中文优先**,不得直显工程语言:
+
+- **禁**:工程模块/边界英文(`scoring` / `decisionModel` / `executionLock` / `positionGuidance` / `displayOnly` / `externalAiGenerated` / `promotionEligible` / `audit-only` / `display-only`)、snake_case 枚举(`multi_theater_stress` / `strong_confirmation` …)、裸 camelCase 字段名(`riskBias` / `crackSpread4wChange`)。边界免责文案统一简化成「仅供参考,不参与平台的风险打分与决策」。
+- **JS 设值的 data 枚举值要在 renderer 中文化**:把 `${wo.state}` 这类原始枚举值改成显 `labelZh`(中文)。
+- **放行**:报刊双语美学(刊头 / section kicker / 「中文 · English」副标题 / THIS ISSUE / AS OF)+ 金融标准缩写(VIX / PMI / HY OAS / BDI / WALCL …)+ 已登记的审计溯源标识符(External AI provenance / auditFlags 代号)。
+
+**强制**:`npm run check:frontend-zh-copy` 已并入 `check:all`。新增/改动前端显示**必跑**,踩工程英文/snake_case → CI 红。新增「允许英文」在 checker 的 `FORBIDDEN_TERMS` / `SNAKE_CASE_ALLOW` 显式登记,**不要放宽规则**。
 
 ## 8. 工作流与部署保护
 
