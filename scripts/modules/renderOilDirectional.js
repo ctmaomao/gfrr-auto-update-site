@@ -74,6 +74,26 @@ const REASON_IDS = [
   'odp-reason-inventory', 'odp-reason-diesel', 'odp-reason-curve',
   'odp-reason-refinery', 'odp-reason-spr', 'odp-reason-demand',
 ];
+const ENERGY_TEXT_IDS = [
+  'odp-energy-spare-status',
+  'odp-energy-spare-value',
+  'odp-energy-spare-regime',
+  'odp-energy-spare-period',
+  'odp-energy-spare-note',
+  'odp-energy-transport-status',
+  'odp-energy-transport-date',
+  'odp-energy-transport-rerouting',
+  'odp-energy-transport-note',
+  'odp-energy-source-boundary',
+];
+const CORE_CHOKEPOINTS = [
+  ['suez', 'Suez'],
+  ['babElMandeb', 'Bab el-Mandeb'],
+  ['malacca', 'Malacca'],
+  ['hormuz', 'Hormuz'],
+  ['capeGoodHope', 'Cape'],
+  ['gibraltar', 'Gibraltar'],
+];
 
 function signed(v, dp = 0) {
   if (!Number.isFinite(v)) return '—';
@@ -85,6 +105,112 @@ function pct(v, dp = 1) {
 }
 function fixed(v, dp = 1) {
   return Number.isFinite(v) ? v.toFixed(dp) : '—';
+}
+function formatMbpd(v) {
+  if (!Number.isFinite(v)) return '—';
+  return `${v < 0.1 ? v.toFixed(2) : v.toFixed(1)} mbpd`;
+}
+function ratioPct(v) {
+  if (!Number.isFinite(v)) return '—';
+  return signed(v * 100, 1) + '%';
+}
+function compactNumber(v) {
+  if (!Number.isFinite(v)) return '—';
+  if (Math.abs(v) >= 1000000) return `${(v / 1000000).toFixed(1)}m`;
+  if (Math.abs(v) >= 1000) return `${Math.round(v / 1000)}k`;
+  return String(Math.round(v));
+}
+function statusZh(status) {
+  const normalized = typeof status === 'string' ? status : '';
+  return ({
+    live: 'live',
+    fallback: 'fallback · 沿用',
+    stale: 'stale · 待刷新',
+    missing: 'missing · 源暂不可用',
+    insufficient_window: '窗口不足',
+  })[normalized] || '源暂不可用';
+}
+function reroutingZh(regime) {
+  return ({
+    rerouting_watch: '红海->好望角绕行代理偏高',
+    normal: '未见显著绕行代理',
+    unknown: '窗口不足',
+  })[regime] || '窗口不足';
+}
+function clearEnergyAddendum() {
+  for (const id of ENERGY_TEXT_IDS) setLeafText(id, '—');
+  const coreHost = $('odp-energy-transport-core');
+  if (coreHost) coreHost.textContent = '—';
+}
+function renderSpareCapacity(spare) {
+  const status = spare && spare.sourceStatus ? spare.sourceStatus.spareCapacity : null;
+  setLeafText('odp-energy-spare-status', statusZh(status));
+
+  if (!spare || typeof spare !== 'object' || status === 'missing') {
+    setLeafText('odp-energy-spare-value', '—');
+    setLeafText('odp-energy-spare-regime', '源暂不可用');
+    setLeafText('odp-energy-spare-period', '—');
+    setLeafText('odp-energy-spare-note', 'OPEC 闲置产能补充层暂不可用;本区只显示 Daily 已生成的 EIA STEO 慢变量。');
+    return;
+  }
+
+  const periodType = spare.latestIsForecast === true ? '预测期' : spare.latestIsForecast === false ? '历史期' : '期别待核';
+  setLeafText('odp-energy-spare-value', formatMbpd(spare.spareCapacityMbpd));
+  setLeafText('odp-energy-spare-regime', spare.bufferRegime || '—');
+  setLeafText('odp-energy-spare-period', `${spare.latestPeriod || '—'} · ${periodType}`);
+  setLeafText('odp-energy-spare-note', 'EIA STEO COPS_OPEC 月度估算/预测,用于观察全球供应缓冲厚薄;不是实时物理闲置桶数或 OPEC 官方配额执行。');
+}
+function renderTransportCore(transport) {
+  const host = $('odp-energy-transport-core');
+  if (!host) return;
+  if (!transport || !transport.chokepoints || typeof transport.chokepoints !== 'object') {
+    host.textContent = '—';
+    return;
+  }
+  const rows = CORE_CHOKEPOINTS.map(([id, label]) => {
+    const item = transport.chokepoints[id] || {};
+    const latest = item.latest || {};
+    const tanker = Number.isFinite(latest.nTanker) ? `${latest.nTanker} tankers` : '—';
+    const cap = Number.isFinite(latest.capacityTanker) ? `capacity ${compactNumber(latest.capacityTanker)}` : 'capacity —';
+    const dev = Number.isFinite(item.latestVs30dPct) ? `30d ${ratioPct(item.latestVs30dPct)}` : '30d —';
+    const row = document.createElement('div');
+    row.className = 'odp-energy-core-item';
+    const name = document.createElement('span');
+    name.textContent = label;
+    const value = document.createElement('span');
+    value.textContent = `${tanker} · ${cap} · ${dev}`;
+    row.append(name, value);
+    return row;
+  });
+  host.replaceChildren(...rows);
+}
+function renderEnergyTransport(transport) {
+  const status = transport && transport.sourceStatus ? transport.sourceStatus.chokepoints : null;
+  setLeafText('odp-energy-transport-status', statusZh(status));
+
+  if (!transport || typeof transport !== 'object' || status === 'missing') {
+    setLeafText('odp-energy-transport-date', '—');
+    setLeafText('odp-energy-transport-rerouting', '源暂不可用');
+    setLeafText('odp-energy-transport-note', '咽喉转运补充层暂不可用;本区只显示 Daily 已生成的 compact 派生摘要,不读取浏览器外部源。');
+    renderTransportCore(null);
+    return;
+  }
+
+  const age = Number.isFinite(transport.latestAgeDays) ? ` · ${Math.round(transport.latestAgeDays)} 天前` : '';
+  const rerouting = transport.reroutingProxy || {};
+  const redSea = Number.isFinite(rerouting.suezBabTankerVs30dPct) ? `Suez/Bab ${ratioPct(rerouting.suezBabTankerVs30dPct)}` : 'Suez/Bab —';
+  const cape = Number.isFinite(rerouting.capeTankerVs30dPct) ? `Cape ${ratioPct(rerouting.capeTankerVs30dPct)}` : 'Cape —';
+  setLeafText('odp-energy-transport-date', `${transport.latestDate || '—'}${age}`);
+  setLeafText('odp-energy-transport-rerouting', `${reroutingZh(rerouting.redSeaToCapeRegime)} · ${redSea} / ${cape}`);
+  setLeafText('odp-energy-transport-note', 'PortWatch AIS-derived proxy;船舶计数和 capacity 是观测代理,可能受 GPS jamming、AIS spoofing、vessels going dark、绕行或数据延迟影响;不是官方贸易统计,不估算军事或价格结果。');
+  renderTransportCore(transport);
+}
+function renderEnergyAddendum(radarData) {
+  clearEnergyAddendum();
+  const macroDrivers = radarData && radarData.macroDrivers ? radarData.macroDrivers : {};
+  renderSpareCapacity(macroDrivers.energySpareCapacity);
+  renderEnergyTransport(macroDrivers.energyTransport);
+  setLeafText('odp-energy-source-boundary', '边界:OPEC 闲置产能与咽喉转运均为 audit-only / display-only 能源证据层,不进入 scoring、decision、execution、position、World Order weights 或 Global Risk Heatmap。');
 }
 
 function reasonInventory(sig, ev) {
@@ -177,7 +303,9 @@ function renderEvidenceList(ev) {
   host.replaceChildren(...rows.map(([label, e]) => evidenceRow(label, e)));
 }
 
-export function renderOilDirectional({ oilData }) {
+export function renderOilDirectional({ oilData, radarData }) {
+  renderEnergyAddendum(radarData);
+
   if (!oilData || typeof oilData !== 'object') {
     setLeafText('odp-verdict', '数据不可用');
     setLeafText('hero-odp-ref-verdict', '数据不可用');

@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=energy-physical-chain-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=energy-physical-chain-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=energy-stress-display-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=energy-stress-display-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

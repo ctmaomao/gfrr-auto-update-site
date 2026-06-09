@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=energy-physical-chain-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=energy-stress-display-1" />
 </head>
 <body>
   <div class="container">
@@ -473,6 +473,35 @@
           <div class="editorial-section-body">
             <p id="odp-evidence-note">—</p>
             <div class="odp-evidence-list" id="odp-evidence-list"></div>
+            <div class="odp-energy-addendum" id="odp-energy-addendum" aria-label="能源压力补充证据">
+              <div class="odp-energy-group">
+                <div class="odp-energy-heading">
+                  <span class="odp-energy-kicker">OPEC BUFFER</span>
+                  <strong>OPEC 闲置产能</strong>
+                </div>
+                <div class="odp-energy-metrics">
+                  <div><span>状态</span><b id="odp-energy-spare-status">—</b></div>
+                  <div><span>闲置产能</span><b id="odp-energy-spare-value">—</b></div>
+                  <div><span>缓冲状态</span><b id="odp-energy-spare-regime">—</b></div>
+                  <div><span>期别</span><b id="odp-energy-spare-period">—</b></div>
+                </div>
+                <p class="odp-energy-note" id="odp-energy-spare-note">—</p>
+              </div>
+              <div class="odp-energy-group">
+                <div class="odp-energy-heading">
+                  <span class="odp-energy-kicker">CHOKEPOINT PROXY</span>
+                  <strong>咽喉转运</strong>
+                </div>
+                <div class="odp-energy-metrics">
+                  <div><span>状态</span><b id="odp-energy-transport-status">—</b></div>
+                  <div><span>截至</span><b id="odp-energy-transport-date">—</b></div>
+                  <div class="wide"><span>绕行代理</span><b id="odp-energy-transport-rerouting">—</b></div>
+                </div>
+                <div class="odp-energy-core-list" id="odp-energy-transport-core">—</div>
+                <p class="odp-energy-note" id="odp-energy-transport-note">—</p>
+              </div>
+              <p class="odp-energy-source-boundary" id="odp-energy-source-boundary">—</p>
+            </div>
             <p class="odp-boundary-note">边界:油价方向研判为 audit-only / display-only 独立能源专题,不进入风险打分、决策、执行或全球风险热力图;数据不足时显式标注「暂不判断」。</p>
           </div>
         </details>
@@ -1002,6 +1031,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=energy-physical-chain-1"></script>
+  <script type="module" src="scripts/app.js?v=energy-stress-display-1"></script>
 </body>
 </html>

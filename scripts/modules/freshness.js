@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=energy-physical-chain-1';
+﻿import { fmtNumSafe } from './config.js?v=energy-stress-display-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

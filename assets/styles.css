@@ -388,6 +388,22 @@
   .odp-ev-label, .odp-ev-value { color: var(--paper-ink); }
   .odp-ev-value { font-weight: 600; }
   .odp-ev-change, .odp-ev-range { color: var(--paper-muted); }
+  .odp-energy-addendum { margin: 18px 0 0 0; border-top: 1px solid var(--paper-line-strong); }
+  .odp-energy-group { padding: 14px 0; border-bottom: 1px solid var(--paper-line); }
+  .odp-energy-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin: 0 0 10px 0; }
+  .odp-energy-heading strong { font-family: var(--font-display); font-size: 16px; color: var(--paper-ink); }
+  .odp-energy-kicker { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--paper-muted); text-transform: uppercase; }
+  .odp-energy-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 14px; margin: 0 0 10px 0; }
+  .odp-energy-metrics div { border-top: 1px dotted var(--paper-line); padding-top: 7px; min-width: 0; }
+  .odp-energy-metrics div.wide { grid-column: span 2; }
+  .odp-energy-metrics span { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--paper-muted); text-transform: uppercase; }
+  .odp-energy-metrics b { display: block; margin-top: 3px; font-family: var(--font-mono); font-size: 12px; line-height: 1.5; color: var(--paper-ink); overflow-wrap: anywhere; }
+  .odp-energy-note, .odp-energy-source-boundary { font-family: var(--font-serif); font-size: 12px; line-height: 1.7; color: var(--paper-muted); margin: 8px 0 0 0; }
+  .odp-energy-source-boundary { padding-top: 10px; border-top: 1px dashed var(--paper-line); font-style: italic; }
+  .odp-energy-core-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 12px; margin: 8px 0 0 0; font-family: var(--font-mono); font-size: 11px; line-height: 1.5; color: var(--paper-warm); }
+  .odp-energy-core-item { display: grid; grid-template-columns: 112px 1fr; gap: 8px; border-bottom: 1px dotted var(--paper-line); padding: 3px 0; }
+  .odp-energy-core-item span:first-child { color: var(--paper-ink); font-weight: 600; }
+  .odp-energy-core-item span:last-child { color: var(--paper-muted); }
   .odp-boundary-note { font-family: var(--font-serif); font-size: 12px; font-style: italic; line-height: 1.7; color: var(--paper-muted); margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--paper-line); }
 
   /* ================================================================
@@ -425,6 +441,9 @@
     /* 长 inline code / 段落内无空格斜杠串(如 NDX/QQQ/IXIC)在窄屏换行(PC 不变)*/
     .appendix-narrative code { white-space: normal; overflow-wrap: anywhere; }
     .appendix-narrative p { overflow-wrap: anywhere; }
+    .odp-energy-metrics { grid-template-columns: 1fr 1fr; }
+    .odp-energy-metrics div.wide { grid-column: span 2; }
+    .odp-energy-core-list { grid-template-columns: 1fr; }
     /* 资产收益矩阵 6 列表:窄屏给表保底宽度,外层容器横向滚动——表在容器内横滑,
        不挤压列、不触发整页横向滚动(PC 上表 width:100% 放得下,wrapper 不出滚动条)*/
     .asset-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }

@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=energy-physical-chain-1';
+﻿import { fmtNumSafe } from './config.js?v=energy-stress-display-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

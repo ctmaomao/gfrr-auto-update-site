@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=energy-physical-chain-1';
+﻿import { formatFiniteNumber } from './format.js?v=energy-stress-display-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
