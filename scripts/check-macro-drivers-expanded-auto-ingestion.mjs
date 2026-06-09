@@ -65,6 +65,18 @@ if (isPlainObject(freight)) {
   if (freight.source !== 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI') fail('macroDrivers.shippingFreight.source is not the approved M-74 source string');
 }
 
+const energySpareCapacity = macroDrivers?.energySpareCapacity;
+if (energySpareCapacity !== undefined) {
+  assertLayer('macroDrivers.energySpareCapacity', energySpareCapacity);
+  if (isPlainObject(energySpareCapacity)) {
+    assertFiniteOrNull(energySpareCapacity, 'macroDrivers.energySpareCapacity', ['spareCapacityMbpd', 'forecast12mMbpd', 'forecast18mMbpd']);
+    assertStatusKeys(energySpareCapacity, 'macroDrivers.energySpareCapacity', ['spareCapacity'], new Set(['live', 'fallback', 'missing', 'stale']));
+    if (energySpareCapacity.source !== 'EIA:STEO:COPS_OPEC') fail('macroDrivers.energySpareCapacity.source is not the approved EIA STEO source string');
+    if (energySpareCapacity.unit !== 'million barrels per day') fail('macroDrivers.energySpareCapacity.unit is not the approved unit');
+    if (energySpareCapacity.frequency !== 'monthly') fail('macroDrivers.energySpareCapacity.frequency must be monthly');
+  }
+}
+
 const policy = macroDrivers?.policyExpectations;
 assertLayer('macroDrivers.policyExpectations', policy);
 if (isPlainObject(policy)) {
@@ -136,6 +148,12 @@ const requiredRunDailyMarkers = [
   'parseFedSepMedians',
   'parseFedPolicyTone',
   'parseFedMinutesTone',
+  'resolveEnergySpareCapacity(prevMd.energySpareCapacity)',
+  'ENERGY_SPARE_CAPACITY_SOURCE',
+  'ENERGY_SPARE_CAPACITY_SERIES_ID',
+  'buildEnergySpareCapacityApiUrl',
+  'parseEnergySpareCapacityRows',
+  'energySpareCapacity: macroDrivers.energySpareCapacity',
   'async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive)',
   "fetchYahooChartQuote('BIZD', '1mo', '1d')",
   "fetchYahooChartQuote('PBDC', '1mo', '1d')",
@@ -174,6 +192,7 @@ for (const marker of requiredRunDailyMarkers) {
 
 const requiredValidateMarkers = [
   'validateMacroDriversShippingFreight(data)',
+  'validateMacroDriversEnergySpareCapacity(data)',
   'validateMacroDriversPolicyExpectations(data)',
   'validateMacroDriversPrivateCreditProxy(data)'
 ];
@@ -183,6 +202,9 @@ for (const marker of requiredValidateMarkers) {
 
 for (const marker of [
   'macroDrivers.shippingFreight',
+  'macroDrivers.energySpareCapacity',
+  'EIA:STEO:COPS_OPEC',
+  'COPS_OPEC',
   'macroDrivers.policyExpectations',
   'macroDrivers.privateCreditProxy',
   'BDTI',

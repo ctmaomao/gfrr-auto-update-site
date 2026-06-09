@@ -46,6 +46,8 @@ jobs:
         run: node scripts/audit-daily-vs-worker.mjs --github-summary
 
       - name: Generate radar data
+        env:
+          EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
         run: npm run build:data
 
       - name: Validate output

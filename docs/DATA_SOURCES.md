@@ -63,7 +63,7 @@
 
 **M-70/M-81/M-83/M-84 注意**: `macroDrivers.commercialRealEstate` M-84 起可读取 FRED `CREACBW027SBOG` public aggregate CRE loan balance proxy,但仍不接 non-public CRE loan tape / private CRE marks,不代表 CDX 或 私募信贷数据。M-81 起 `macroDrivers.privateCreditProxy` 可读取 ICE Clear Credit public CDX index EOD settlement price,但不得写成 private credit marks 或完整 licensed Markit history database。M-83 起可读取 Yahoo `CCLFX` public interval-fund NAV proxy,但不得写成 private credit marks、fundraising data、Cliffwater Direct Lending Index licensed dataset 或非公开私募贷款估值。
 
-**M-74/M-77/M-78/M-79/M-80/M-81/M-82/M-83/M-84/M-85 注意**: `macroDrivers.policyExpectations` 直接读取 FRED target range / DFF、Federal Reserve SEP accessible table + FOMC statement/minutes、Yahoo `ZQ=F` front Fed funds futures proxy、Yahoo ZQ monthly futures proxy curve、Yahoo SR3 monthly SOFR futures proxy curve 与 CheckMySwap USD OIS public curve；`macroDrivers.shippingFreight` 读取 StockQ `BDTI` / `BCTI` / `BDI` 公开页面；`macroDrivers.privateCreditProxy` 读取 Yahoo `BIZD` / `PBDC` / `SRLN` / `CCLFX`、FRED HY/IG OAS cash-bond proxies 与 ICE public CDX index settlement；`macroDrivers.commercialRealEstate` 读取 Yahoo `VNQ` / `REM` / `CMBS` 与 FRED `CREACBW027SBOG` public aggregate exposure proxy；`brentPricingLayer.iceFuturesPriceCurve` 读取 ICE Brent public delayed last-price curve；`brentPricingLayer.eiaBrentSpotProxy` 读取 EIA Europe Brent Spot Price FOB public HTML。CheckMySwap 是 public OIS curve,不得写成 proprietary dealer forward curve；ICE CDX public settlement 与 CCLFX NAV proxy 不得写成 private credit marks；FRED `CREACBW027SBOG` 不得写成 non-public CRE loan tape；ICE Brent public delayed curve 不得写成 official settlement curve 或 Platts；EIA Brent spot proxy 不得写成 Platts Dated Brent 或正式 Dated Brent。
+**M-74/M-77/M-78/M-79/M-80/M-81/M-82/M-83/M-84/M-85/Energy Stress Phase 2 注意**: `macroDrivers.policyExpectations` 直接读取 FRED target range / DFF、Federal Reserve SEP accessible table + FOMC statement/minutes、Yahoo `ZQ=F` front Fed funds futures proxy、Yahoo ZQ monthly futures proxy curve、Yahoo SR3 monthly SOFR futures proxy curve 与 CheckMySwap USD OIS public curve；`macroDrivers.shippingFreight` 读取 StockQ `BDTI` / `BCTI` / `BDI` 公开页面；`macroDrivers.energySpareCapacity` 读取 EIA STEO `COPS_OPEC` OPEC surplus crude oil production capacity monthly estimate/forecast；`macroDrivers.privateCreditProxy` 读取 Yahoo `BIZD` / `PBDC` / `SRLN` / `CCLFX`、FRED HY/IG OAS cash-bond proxies 与 ICE public CDX index settlement；`macroDrivers.commercialRealEstate` 读取 Yahoo `VNQ` / `REM` / `CMBS` 与 FRED `CREACBW027SBOG` public aggregate exposure proxy；`brentPricingLayer.iceFuturesPriceCurve` 读取 ICE Brent public delayed last-price curve；`brentPricingLayer.eiaBrentSpotProxy` 读取 EIA Europe Brent Spot Price FOB public HTML。CheckMySwap 是 public OIS curve,不得写成 proprietary dealer forward curve；EIA STEO `COPS_OPEC` 不得写成实时物理闲置桶数、OPEC 官方配额执行或油价预测；ICE CDX public settlement 与 CCLFX NAV proxy 不得写成 private credit marks；FRED `CREACBW027SBOG` 不得写成 non-public CRE loan tape；ICE Brent public delayed curve 不得写成 official settlement curve 或 Platts；EIA Brent spot proxy 不得写成 Platts Dated Brent 或正式 Dated Brent。
 
 ---
 
@@ -161,7 +161,7 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 
 ---
 
-### Yahoo / StockQ / Federal Reserve / BoA / Redbook / CheckMySwap / ICE public macro-driver inputs (M-74 / M-77 / M-78 / M-79 / M-80 / M-81 / M-82 / M-83 / M-84)
+### Yahoo / StockQ / EIA STEO / Federal Reserve / BoA / Redbook / CheckMySwap / ICE public macro-driver inputs (M-74 / M-77 / M-78 / M-79 / M-80 / M-81 / M-82 / M-83 / M-84 / Energy Stress Phase 2)
 
 | Source | Layer | Role |
 |---|---|---|
@@ -182,13 +182,14 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 | Yahoo `CMBS` | `macroDrivers.commercialRealEstate` | commercial MBS ETF public proxy; not non-public CRE loan tape |
 | FRED `CREACBW027SBOG` | `macroDrivers.commercialRealEstate.creLoanBalance` | weekly public aggregate bank CRE loan balance / exposure stock proxy; not non-public CRE loan tape |
 | StockQ `BDTI` / `BCTI` / `BDI` | `macroDrivers.shippingFreight` | shipping / freight / oil tanker freight pressure proxy |
+| EIA STEO `COPS_OPEC` (`EIA:STEO:COPS_OPEC`) | `macroDrivers.energySpareCapacity` | OPEC surplus crude oil production capacity monthly estimate/forecast; not real-time spare barrels, OPEC quota execution, or oil price forecast |
 | Federal Reserve `fomcprojtablYYYYMMDD.htm` | `macroDrivers.policyExpectations` | Fed dot plot federal funds median proxy from SEP accessible table |
 | Federal Reserve `monetaryYYYYMMDDa.htm` | `macroDrivers.policyExpectations` | FOMC policy text tone count |
 | Federal Reserve `fomcminutesYYYYMMDD.htm` | `macroDrivers.policyExpectations` | FOMC minutes keyword NLP tone/topic count |
 | BoA Consumer Checkpoint public HTML | `macroDrivers.consumerRetail` | card spending per household YoY / ex-gas YoY public summary |
 | Trading Economics Redbook public HTML | `macroDrivers.consumerRetail.redbookRetailSalesYoY` | Redbook same-store sales YoY public summary; not Redbook raw subscription feed |
 
-These M-74/M-77/M-78/M-79/M-80/M-81/M-82/M-83/M-84/M-85 sources are audit-only / display-only. They must not change Brent promotion, scoring, decision, execution, position, Worker runtime, `displayInputsBaseline`, `effectiveDisplayInputs`, or cross-validation. Private credit marks, Redbook raw subscription feed, BoA raw card feed, Platts Dated Brent, official ICE Brent settlement curve, proprietary dealer OIS forward, and non-public CRE loan tape remain unconnected or `manual_required`.
+These M-74/M-77/M-78/M-79/M-80/M-81/M-82/M-83/M-84/M-85/Energy Stress Phase 2 sources are audit-only / display-only. They must not change Brent promotion, scoring, decision, execution, position, Worker runtime, `displayInputsBaseline`, `effectiveDisplayInputs`, or cross-validation. Private credit marks, Redbook raw subscription feed, BoA raw card feed, Platts Dated Brent, official ICE Brent settlement curve, proprietary dealer OIS forward, non-public CRE loan tape, OPEC official quota execution, and oil-price prediction remain unconnected or explicitly out of scope.
 
 ---
 
@@ -292,6 +293,27 @@ See [`CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md`](CHINA_MACRO_LIQUIDITY_PR
 WTI / Brent / 裂解价差 / 期限结构由 `oil-directional-pressure.json` **复用** `data/radar-data.json`(`macroDrivers.inflationEnergy.wti` / `brentPricingLayer.selectedBrent` / `.crackSpread` / `.futuresPriceCurve`),不重抓。EIA = 美国政府公共领域数据,标注 source URL 即可。详见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
 
 **PR2 历史 cache**（`data/oil-directional-history.json`）：同 8 个 `PET.*.W` series、同 `/v2/seriesid/` route，由 `scripts/oil-directional/build-oil-directional-history.mjs`（零依赖，ADR-0013）一次性抓 2014-至今全周度史并切片落盘（每 series ~647 周，2014-01-03 起），作 **committed snapshot** 供回测 harness 离线、可复现回放（`check:all` 不联网）。fail-closed：失败 series → `sourceStatus:'missing'` / `points:[]`，不伪造。**仅供 PR2 回测 GATE**，不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / decision / Global Risk Heatmap。文件契约 + 分类器 / GATE / 预登记阈值见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)。
+
+---
+
+### EIA API v2 — STEO OPEC Spare Capacity (Energy Stress Phase 2)
+
+| 字段 | 值 |
+|---|---|
+| **License** | 公开;US EIA Open Data API v2,需免费 `EIA_API_KEY`(GitHub secret;本地从 gitignored `manual-artifacts/eia-api-key.txt` 注入) |
+| **Route** | `/v2/steo/data/?facets[seriesId][]=COPS_OPEC` |
+| **Refresh 频率** | Daily pipeline (`build-daily-radar-data.yml`)；源数据为 STEO monthly estimate/forecast 慢变量 |
+| **失败 fallback** | 短超时(`ENERGY_SPARE_CAPACITY_FETCH_TIMEOUT_MS`,默认 10s)+ carry last-good if not stale；无 key/网络/解析失败时 `sourceStatus.spareCapacity='fallback'` 或 `missing`；超过 95 天 stale 时 fail-closed 为 null |
+| **影响 scoring?** | **否** — audit-only / display-only,写入 `macroDrivers.energySpareCapacity`;不进 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decisionModel、executionLock、positionGuidance、cross-validation、Brent promotion、World Order weights 或 Global Risk Heatmap |
+| **fetcher** | `scripts/run-daily-pipeline.mjs::resolveEnergySpareCapacity` |
+
+**当前消费的 series**:
+
+| Series ID | 含义 | 单位 | 消费层 |
+|---|---|---|---|
+| `COPS_OPEC` | OPEC Total Spare Crude Oil Production Capacity | million barrels per day | `macroDrivers.energySpareCapacity` |
+
+`COPS_OPEC` 是 EIA STEO estimate / forecast product。用户可见文案必须保留“估算/预测、非实时、非油价预测”边界；不得写成实时物理闲置桶数、OPEC 官方配额执行、OPEC+政策承诺、断供概率或交易信号。source-review 见 [`OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md`](OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md)。
 
 ---
 
@@ -450,7 +472,7 @@ documented attribution string and code is a contract violation.
 | `macroDrivers.employment` | FRED: ICSA, CCSA, JTSJOL, CES0500000003, U6RATE, public industry payroll basket |
 | `macroDrivers.consumerRetail` | FRED: CARTS, CARTSR, MRTS monthly retail trade segment basket + BoA Consumer Checkpoint public HTML + Trading Economics Redbook public HTML |
 | `macroDrivers.shippingFreight` | StockQ: BDTI, BCTI, BDI public index pages |
-| `energySpareCapacity candidate` | Source-review only: EIA STEO `COPS_OPEC` OPEC Total Spare Crude Oil Production Capacity;monthly display-only slow variable candidate,not connected |
+| `macroDrivers.energySpareCapacity` | `EIA:STEO:COPS_OPEC` / EIA STEO `COPS_OPEC` OPEC Total Spare Crude Oil Production Capacity;monthly estimate/forecast display-only slow variable;not real-time spare barrels or oil price prediction |
 | `energyTransport chokepoint candidate` | Source-review only: IMF PortWatch `Daily_Chokepoints_Data` public ArcGIS query;AIS-derived tanker/chokepoint proxy candidate,not connected;usage/attribution/redistribution caveat remains before production fetch;keep existing StockQ BDTI/BCTI/BDI freight proxy |
 | `macroDrivers.policyExpectations` | FRED: DFEDTARL/DFEDTARU/DFF + Yahoo: ZQ=F / ZQ monthly futures curve / SR3 monthly SOFR futures curve + CheckMySwap USD OIS public curve + Federal Reserve SEP/FOMC statement/minutes |
 | `macroDrivers.commercialRealEstate` | FRED: DRCRELEXFACBS, CORCREXFACBS, SUBLPDRCSN, SUBLPDRCSC, SUBLPDRCSM, CREACBW027SBOG + Yahoo: VNQ, REM, CMBS |

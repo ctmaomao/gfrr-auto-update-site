@@ -49,6 +49,7 @@ const SOURCE_MODE_CN = {
 const FRED_BASE = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
 const FRED_API_BASE = 'https://api.stlouisfed.org/fred/series/observations';
 const FRED_API_KEY = (process.env.FRED_API_KEY || '').trim();
+const EIA_API_KEY = (process.env.EIA_API_KEY || '').trim();
 const MACRO_FETCH_TIMEOUT_MS = 10000;
 const MACRO_FETCH_RETRIES = 2;
 const MACRO_FETCH_RETRY_DELAY_MS = 800;
@@ -373,6 +374,12 @@ const CONSUMER_RETAIL_SEGMENT_SERIES = [
   { key: 'foodServices', id: 'MRTSSM722USN', labelZh: '餐饮服务' }
 ];
 const SHIPPING_FREIGHT_SOURCE = 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI';
+const ENERGY_SPARE_CAPACITY_SOURCE = 'EIA:STEO:COPS_OPEC';
+const ENERGY_SPARE_CAPACITY_API_URL = 'https://api.eia.gov/v2/steo/data/';
+const ENERGY_SPARE_CAPACITY_SOURCE_URL = 'https://www.eia.gov/outlooks/steo/data.php';
+const ENERGY_SPARE_CAPACITY_SERIES_ID = 'COPS_OPEC';
+const ENERGY_SPARE_CAPACITY_FETCH_TIMEOUT_MS = 10000;
+const ENERGY_SPARE_CAPACITY_MAX_PERIOD_AGE_DAYS = 95;
 const CONSUMER_RETAIL_SOURCE =
   'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html; TradingEconomics:Redbook-public-html';
 const POLICY_EXPECTATIONS_SOURCE =
@@ -6773,6 +6780,200 @@ function buildMissingShippingFreight() {
   };
 }
 
+function buildMissingEnergySpareCapacity(reason = 'missing') {
+  return {
+    spareCapacityMbpd: null,
+    latestPeriod: null,
+    latestIsForecast: null,
+    forecast12mMbpd: null,
+    forecast12mPeriod: null,
+    forecast18mMbpd: null,
+    forecast18mPeriod: null,
+    bufferRegime: '未知',
+    sourceStatus: { spareCapacity: 'missing' },
+    fetchReason: reason,
+    unit: 'million barrels per day',
+    frequency: 'monthly',
+    source: ENERGY_SPARE_CAPACITY_SOURCE,
+    sourceUrl: ENERGY_SPARE_CAPACITY_SOURCE_URL,
+    updatedAt: null,
+    fetchedAt: isoNow,
+    limitationZh: 'EIA STEO OPEC spare crude capacity 是估算/预测慢变量,不是实时物理闲置桶数、OPEC 官方配额执行或油价预测。',
+    notes: [
+      'EIA STEO COPS_OPEC 为 OPEC surplus crude oil production capacity monthly estimate/forecast;display-only,不进 scoring/decision/execution/position。',
+      '当前月与未来月份为 STEO 估算/预测;低闲置产能只表示供应缓冲较薄,不等于价格预测。'
+    ]
+  };
+}
+
+function normalizePreviousEnergySpareCapacity(prevEnergySpareCapacity, reason = 'fetch_failed') {
+  if (!prevEnergySpareCapacity || typeof prevEnergySpareCapacity !== 'object') {
+    return buildMissingEnergySpareCapacity(reason);
+  }
+  const spareCapacityMbpd = finiteNumberOrNull(prevEnergySpareCapacity.spareCapacityMbpd);
+  if (spareCapacityMbpd === null) return buildMissingEnergySpareCapacity(reason);
+  const latestPeriod = typeof prevEnergySpareCapacity.latestPeriod === 'string' ? prevEnergySpareCapacity.latestPeriod : null;
+  const latestAgeDays = periodAgeDays(latestPeriod);
+  if (latestAgeDays === null || latestAgeDays > ENERGY_SPARE_CAPACITY_MAX_PERIOD_AGE_DAYS) {
+    return {
+      ...buildMissingEnergySpareCapacity('previous_period_stale'),
+      sourceStatus: { spareCapacity: 'stale' },
+      latestPeriod,
+      updatedAt: periodToIso(latestPeriod)
+    };
+  }
+  return {
+    spareCapacityMbpd,
+    latestPeriod,
+    latestIsForecast: typeof prevEnergySpareCapacity.latestIsForecast === 'boolean' ? prevEnergySpareCapacity.latestIsForecast : null,
+    forecast12mMbpd: finiteNumberOrNull(prevEnergySpareCapacity.forecast12mMbpd),
+    forecast12mPeriod: typeof prevEnergySpareCapacity.forecast12mPeriod === 'string' ? prevEnergySpareCapacity.forecast12mPeriod : null,
+    forecast18mMbpd: finiteNumberOrNull(prevEnergySpareCapacity.forecast18mMbpd),
+    forecast18mPeriod: typeof prevEnergySpareCapacity.forecast18mPeriod === 'string' ? prevEnergySpareCapacity.forecast18mPeriod : null,
+    bufferRegime: typeof prevEnergySpareCapacity.bufferRegime === 'string' ? prevEnergySpareCapacity.bufferRegime : classifyEnergySpareCapacityRegime(spareCapacityMbpd),
+    sourceStatus: { spareCapacity: 'fallback' },
+    fetchReason: reason,
+    unit: 'million barrels per day',
+    frequency: 'monthly',
+    source: ENERGY_SPARE_CAPACITY_SOURCE,
+    sourceUrl: ENERGY_SPARE_CAPACITY_SOURCE_URL,
+    updatedAt: normalizeIsoOrNull(prevEnergySpareCapacity.updatedAt),
+    fetchedAt: isoNow,
+    limitationZh: typeof prevEnergySpareCapacity.limitationZh === 'string'
+      ? prevEnergySpareCapacity.limitationZh
+      : 'EIA STEO OPEC spare crude capacity 是估算/预测慢变量,不是实时物理闲置桶数、OPEC 官方配额执行或油价预测。',
+    notes: Array.isArray(prevEnergySpareCapacity.notes) && prevEnergySpareCapacity.notes.length
+      ? prevEnergySpareCapacity.notes
+      : buildMissingEnergySpareCapacity(reason).notes
+  };
+}
+
+function classifyEnergySpareCapacityRegime(value) {
+  if (!Number.isFinite(value)) return '未知';
+  if (value < 1) return '极低缓冲';
+  if (value < 2) return '偏低';
+  if (value < 3) return '正常';
+  return '宽松';
+}
+
+function addMonthsToPeriod(period, months) {
+  const match = String(period || '').match(/^(?<year>\d{4})-(?<month>\d{2})$/u);
+  if (!match?.groups) return null;
+  const year = Number(match.groups.year);
+  const month = Number(match.groups.month);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return null;
+  const index = year * 12 + (month - 1) + months;
+  const outYear = Math.floor(index / 12);
+  const outMonth = (index % 12) + 1;
+  return `${outYear}-${String(outMonth).padStart(2, '0')}`;
+}
+
+function periodToIso(period) {
+  return /^\d{4}-\d{2}$/u.test(String(period || '')) ? `${period}-01T00:00:00.000Z` : null;
+}
+
+function periodAgeDays(period) {
+  const iso = periodToIso(period);
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  const now = Date.parse(isoNow);
+  if (!Number.isFinite(t) || !Number.isFinite(now)) return null;
+  return Math.max(0, Math.round((now - t) / (24 * 3600 * 1000)));
+}
+
+function buildEnergySpareCapacityApiUrl() {
+  const params = new URLSearchParams();
+  params.set('api_key', EIA_API_KEY);
+  params.append('frequency', 'monthly');
+  params.append('data[0]', 'value');
+  params.append('facets[seriesId][]', ENERGY_SPARE_CAPACITY_SERIES_ID);
+  params.append('sort[0][column]', 'period');
+  params.append('sort[0][direction]', 'asc');
+  params.append('offset', '0');
+  params.append('length', '5000');
+  return `${ENERGY_SPARE_CAPACITY_API_URL}?${params.toString()}`;
+}
+
+function parseEnergySpareCapacityRows(payload) {
+  const rows = payload?.response?.data;
+  if (!Array.isArray(rows)) throw new Error('eia:steo:COPS_OPEC missing response.data');
+  return rows
+    .map((row) => ({
+      period: typeof row?.period === 'string' ? row.period : null,
+      value: Number(row?.value),
+      seriesId: typeof row?.seriesId === 'string' ? row.seriesId : null,
+      unit: typeof row?.unit === 'string' ? row.unit : null
+    }))
+    .filter((row) => (
+      row.seriesId === ENERGY_SPARE_CAPACITY_SERIES_ID &&
+      /^\d{4}-\d{2}$/u.test(row.period || '') &&
+      Number.isFinite(row.value)
+    ))
+    .sort((a, b) => a.period.localeCompare(b.period));
+}
+
+function pickMonthlyForecast(rows, targetPeriod) {
+  if (!targetPeriod) return null;
+  return rows.find((row) => row.period === targetPeriod)
+    || rows.find((row) => row.period > targetPeriod)
+    || null;
+}
+
+async function resolveEnergySpareCapacity(prevEnergySpareCapacity) {
+  if (!EIA_API_KEY) return normalizePreviousEnergySpareCapacity(prevEnergySpareCapacity, 'missing_api_key');
+  try {
+    const payload = await fetchJsonText(
+      buildEnergySpareCapacityApiUrl(),
+      'eia:steo:COPS_OPEC',
+      ENERGY_SPARE_CAPACITY_FETCH_TIMEOUT_MS,
+      { userAgent: 'GFRRBot/1.0' }
+    );
+    if (payload?.error) throw new Error(`eia:steo:COPS_OPEC api_error:${payload.error}`);
+    const rows = parseEnergySpareCapacityRows(payload);
+    if (!rows.length) throw new Error('eia:steo:COPS_OPEC no numeric monthly rows');
+    const currentPeriod = isoNow.slice(0, 7);
+    const current = rows.filter((row) => row.period <= currentPeriod).at(-1);
+    if (!current) throw new Error('eia:steo:COPS_OPEC no current-or-historical period');
+    const latestAgeDays = periodAgeDays(current.period);
+    if (latestAgeDays === null || latestAgeDays > ENERGY_SPARE_CAPACITY_MAX_PERIOD_AGE_DAYS) {
+      return {
+        ...buildMissingEnergySpareCapacity('latest_period_stale'),
+        sourceStatus: { spareCapacity: 'stale' },
+        latestPeriod: current.period,
+        updatedAt: periodToIso(current.period)
+      };
+    }
+    const forecast12m = pickMonthlyForecast(rows, addMonthsToPeriod(current.period, 12));
+    const forecast18m = pickMonthlyForecast(rows, addMonthsToPeriod(current.period, 18));
+    const spareCapacityMbpd = +current.value.toFixed(2);
+    return {
+      spareCapacityMbpd,
+      latestPeriod: current.period,
+      latestIsForecast: current.period >= currentPeriod,
+      forecast12mMbpd: forecast12m ? +forecast12m.value.toFixed(2) : null,
+      forecast12mPeriod: forecast12m?.period || null,
+      forecast18mMbpd: forecast18m ? +forecast18m.value.toFixed(2) : null,
+      forecast18mPeriod: forecast18m?.period || null,
+      bufferRegime: classifyEnergySpareCapacityRegime(spareCapacityMbpd),
+      sourceStatus: { spareCapacity: 'live' },
+      fetchReason: null,
+      unit: 'million barrels per day',
+      frequency: 'monthly',
+      source: ENERGY_SPARE_CAPACITY_SOURCE,
+      sourceUrl: ENERGY_SPARE_CAPACITY_SOURCE_URL,
+      updatedAt: periodToIso(current.period),
+      fetchedAt: isoNow,
+      limitationZh: 'EIA STEO OPEC spare crude capacity 是估算/预测慢变量,不是实时物理闲置桶数、OPEC 官方配额执行或油价预测。',
+      notes: [
+        'EIA STEO COPS_OPEC 为 OPEC surplus crude oil production capacity monthly estimate/forecast;display-only,不进 scoring/decision/execution/position。',
+        '当前月与未来月份为 STEO 估算/预测;低闲置产能只表示供应缓冲较薄,不等于价格预测。'
+      ]
+    };
+  } catch (err) {
+    return normalizePreviousEnergySpareCapacity(prevEnergySpareCapacity, stringifyFetchError(err));
+  }
+}
+
 function buildMissingFedFundsFuturesCurve() {
   return {
     source: 'Yahoo:ZQ-monthly-futures',
@@ -8409,7 +8610,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveChinaOmo(prevMd.chinaOmo),
     resolveChinaTsf(prevMd.chinaTsf),
     resolveChinaMlf(prevMd.chinaMlf),
-    resolveRateVol(prevMd.rateVol)
+    resolveRateVol(prevMd.rateVol),
+    resolveEnergySpareCapacity(prevMd.energySpareCapacity)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -8469,6 +8671,7 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     freshnessStatus: 'missing', source: 'Yahoo:^MOVE', sourceStatus: { move: 'missing' },
     notes: '债券/利率波动率 MOVE 结构信号 evidence（Yahoo ^MOVE 日频）。'
   };
+  const energySpareCapacity = results[24].status === 'fulfilled' ? results[24].value : buildMissingEnergySpareCapacity('resolver_rejected');
 
   return {
     fedLiquidity,
@@ -8494,7 +8697,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     chinaOmo,
     chinaTsf,
     chinaMlf,
-    rateVol
+    rateVol,
+    energySpareCapacity
   };
 }
 
@@ -8512,7 +8716,8 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     resolveChinaPropertyPrice(prevMd?.chinaPropertyPrice),
     resolveChinaOmo(prevMd?.chinaOmo),
     resolveChinaTsf(prevMd?.chinaTsf),
-    resolveChinaMlf(prevMd?.chinaMlf)
+    resolveChinaMlf(prevMd?.chinaMlf),
+    resolveEnergySpareCapacity(prevMd?.energySpareCapacity)
   ]);
   return {
     worldEconomy: results[0].status === 'fulfilled' ? results[0].value : buildMissingWorldEconomy(prevMd?.worldEconomy),
@@ -8527,7 +8732,8 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     chinaPropertyPrice: results[9].status === 'fulfilled' ? results[9].value : buildMissingChinaPropertyPrice(prevMd?.chinaPropertyPrice),
     chinaOmo: results[10].status === 'fulfilled' ? results[10].value : buildMissingChinaOmo(prevMd?.chinaOmo),
     chinaTsf: results[11].status === 'fulfilled' ? results[11].value : buildMissingChinaTsf(prevMd?.chinaTsf),
-    chinaMlf: results[12].status === 'fulfilled' ? results[12].value : buildMissingChinaMlf(prevMd?.chinaMlf)
+    chinaMlf: results[12].status === 'fulfilled' ? results[12].value : buildMissingChinaMlf(prevMd?.chinaMlf),
+    energySpareCapacity: results[13].status === 'fulfilled' ? results[13].value : buildMissingEnergySpareCapacity('resolver_rejected')
   };
 }
 
@@ -9482,6 +9688,7 @@ async function build() {
       chinaTsf: macroDrivers.chinaTsf,
       chinaMlf: macroDrivers.chinaMlf,
       rateVol: macroDrivers.rateVol,
+      energySpareCapacity: macroDrivers.energySpareCapacity,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

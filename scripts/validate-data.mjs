@@ -94,6 +94,11 @@ const VALID_CRE_PUBLIC_MARKET_PROXY_REGIMES = new Set(['市场压力上升', '�
 const SHIPPING_FREIGHT_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_SHIPPING_FREIGHT_SOURCE = 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI';
 const VALID_FREIGHT_REGIMES = new Set(['高压', '观察', '快速回落', '正常', '未知']);
+const ENERGY_SPARE_CAPACITY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'stale']);
+const VALID_ENERGY_SPARE_CAPACITY_SOURCE = 'EIA:STEO:COPS_OPEC';
+const VALID_ENERGY_SPARE_CAPACITY_UNIT = 'million barrels per day';
+const VALID_ENERGY_SPARE_CAPACITY_FREQUENCY = 'monthly';
+const VALID_ENERGY_SPARE_CAPACITY_REGIMES = new Set(['极低缓冲', '偏低', '正常', '宽松', '未知']);
 const POLICY_EXPECTATIONS_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'manual_required']);
 const VALID_POLICY_EXPECTATIONS_SOURCE = 'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; CheckMySwap:USD-OIS-public-curve; FederalReserve:FOMC statement/SEP/minutes';
 const VALID_POLICY_TONES = new Set(['偏鹰', '偏鸽', '平衡', '未知']);
@@ -785,6 +790,59 @@ function validateMacroDriversShippingFreight(dataPayload) {
   assert(freight.source === VALID_SHIPPING_FREIGHT_SOURCE, `macroDrivers.shippingFreight.source must be ${VALID_SHIPPING_FREIGHT_SOURCE}`);
   assertArray(freight.notes, 'macroDrivers.shippingFreight.notes');
   freight.notes.forEach((item, index) => assertString(item, `macroDrivers.shippingFreight.notes[${index}]`));
+}
+
+function validateMacroDriversEnergySpareCapacity(dataPayload) {
+  const layer = dataPayload?.macroDrivers?.energySpareCapacity;
+  // expand-then-contract: current committed snapshots may not have this new display-only layer yet.
+  if (layer === undefined) return;
+  assertPlainObject(layer, 'macroDrivers.energySpareCapacity');
+  for (const key of ['spareCapacityMbpd', 'forecast12mMbpd', 'forecast18mMbpd']) {
+    assert(Object.hasOwn(layer, key), `macroDrivers.energySpareCapacity.${key} is missing`);
+    assert(isFiniteNumberOrNull(layer[key]), `macroDrivers.energySpareCapacity.${key} must be finite number or null`);
+  }
+  for (const key of ['latestPeriod', 'forecast12mPeriod', 'forecast18mPeriod']) {
+    assert(Object.hasOwn(layer, key), `macroDrivers.energySpareCapacity.${key} is missing`);
+    assert(layer[key] === null || (typeof layer[key] === 'string' && /^\d{4}-\d{2}$/u.test(layer[key])),
+      `macroDrivers.energySpareCapacity.${key} must be YYYY-MM or null`);
+  }
+  assert(Object.hasOwn(layer, 'latestIsForecast'), 'macroDrivers.energySpareCapacity.latestIsForecast is missing');
+  assert(layer.latestIsForecast === null || typeof layer.latestIsForecast === 'boolean',
+    'macroDrivers.energySpareCapacity.latestIsForecast must be boolean or null');
+  assertString(layer.bufferRegime, 'macroDrivers.energySpareCapacity.bufferRegime');
+  assert(VALID_ENERGY_SPARE_CAPACITY_REGIMES.has(layer.bufferRegime), 'macroDrivers.energySpareCapacity.bufferRegime is not supported');
+  assertPlainObject(layer.sourceStatus, 'macroDrivers.energySpareCapacity.sourceStatus');
+  assert(Object.hasOwn(layer.sourceStatus, 'spareCapacity'), 'macroDrivers.energySpareCapacity.sourceStatus.spareCapacity is missing');
+  assert(ENERGY_SPARE_CAPACITY_SOURCE_STATUSES.has(layer.sourceStatus.spareCapacity),
+    'macroDrivers.energySpareCapacity.sourceStatus.spareCapacity is not supported');
+  assert(layer.source === VALID_ENERGY_SPARE_CAPACITY_SOURCE,
+    `macroDrivers.energySpareCapacity.source must be ${VALID_ENERGY_SPARE_CAPACITY_SOURCE}`);
+  assert(layer.unit === VALID_ENERGY_SPARE_CAPACITY_UNIT,
+    `macroDrivers.energySpareCapacity.unit must be ${VALID_ENERGY_SPARE_CAPACITY_UNIT}`);
+  assert(layer.frequency === VALID_ENERGY_SPARE_CAPACITY_FREQUENCY,
+    `macroDrivers.energySpareCapacity.frequency must be ${VALID_ENERGY_SPARE_CAPACITY_FREQUENCY}`);
+  validateNullableIsoString(layer.updatedAt, 'macroDrivers.energySpareCapacity.updatedAt');
+  validateNullableIsoString(layer.fetchedAt, 'macroDrivers.energySpareCapacity.fetchedAt');
+  validateNullableString(layer.fetchReason, 'macroDrivers.energySpareCapacity.fetchReason');
+  assertString(layer.sourceUrl, 'macroDrivers.energySpareCapacity.sourceUrl');
+  assertString(layer.limitationZh, 'macroDrivers.energySpareCapacity.limitationZh');
+  assert(
+    /estimate|forecast|估算|预测/u.test(layer.limitationZh) &&
+    /不是实时|not real-time|not.*price|油价预测/u.test(layer.limitationZh),
+    'macroDrivers.energySpareCapacity.limitationZh must disclose estimate/forecast and non-real-time/non-price boundary'
+  );
+  assertArray(layer.notes, 'macroDrivers.energySpareCapacity.notes');
+  layer.notes.forEach((item, index) => assertString(item, `macroDrivers.energySpareCapacity.notes[${index}]`));
+
+  const status = layer.sourceStatus.spareCapacity;
+  if (status === 'live' || status === 'fallback') {
+    assert(Number.isFinite(layer.spareCapacityMbpd) && layer.spareCapacityMbpd >= 0 && layer.spareCapacityMbpd <= 15,
+      'macroDrivers.energySpareCapacity.spareCapacityMbpd must be finite in [0,15] when live/fallback');
+    assert(layer.latestPeriod !== null, 'macroDrivers.energySpareCapacity.latestPeriod must be present when live/fallback');
+  } else {
+    assert(layer.spareCapacityMbpd === null,
+      `macroDrivers.energySpareCapacity.spareCapacityMbpd must be null when sourceStatus is ${status}`);
+  }
 }
 
 function validateFedFundsFuturesCurve(curve) {
@@ -2617,6 +2675,7 @@ validateDailyBrief(data);
 validateDivergenceLayer(data);
 validateMacroDriversConsumer(data);
 validateMacroDriversShippingFreight(data);
+validateMacroDriversEnergySpareCapacity(data);
 validateMacroDriversPolicyExpectations(data);
 validateMacroDriversEmployment(data);
 validateMacroDriversConsumerRetail(data);

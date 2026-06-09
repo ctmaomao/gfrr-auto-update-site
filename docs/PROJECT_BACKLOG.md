@@ -116,13 +116,13 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **ODP 五刀(PR1–PR5)merge 后全收官**:数据接入 → 周度 workflow → 回测 GATE → productionize + 价格背离 → 中文 UI → dailyBrief 只读引用;全程 audit-only / display-only,不进 scoring / decision / execution / Heatmap。
 - 边界:不进 `values.*`/scoring/decisionModel/executionLock/positionGuidance/cross-validation;期限结构低置信复用、缺则不参与裁决;数据不足显式「暂不判断」。EIA = 美国政府公共领域。
 
-#### P3-19a: Energy Stress Phase 2 source-review — OPEC spare capacity + chokepoint transport
+#### P3-19a: Energy Stress Phase 2 — OPEC spare capacity implementation + chokepoint source-review
 
-- **Source-review only(2026-06-09)**:登记两条 Energy Stress Phase 2 候选,不接 runtime、不改 `data/*.json`、不改 frontend、不触发 workflow、不进 scoring/decision/execution/position。
-- **OPEC spare capacity**:EIA STEO `COPS_OPEC` (`OPEC Total Spare Crude Oil Production Capacity`,monthly,unit=`million barrels per day`) 官方 API v2 可达;候选为 monthly display-only 慢变量。见 [`OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md`](OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md)。
+- **Source-review baseline(2026-06-09)**:登记两条 Energy Stress Phase 2 候选,当时不接 runtime、不改 `data/*.json`、不改 frontend、不触发 workflow、不进 scoring/decision/execution/position。
+- **OPEC spare capacity implementation(owner-approved,2026-06-09)**:EIA STEO `COPS_OPEC` (`OPEC Total Spare Crude Oil Production Capacity`,monthly,unit=`million barrels per day`) 接入 Daily `macroDrivers.energySpareCapacity`。该层是 monthly estimate/forecast display-only 慢变量;通过 `EIA_API_KEY` 在 `Generate radar data` step live fetch,失败时 carry non-stale last-good 或 fail-closed null/stale;不进 `values.*` / `displayInputsBaseline` / `effectiveDisplayInputs` / scoring / decision / execution / position / Brent promotion / World Order weights / Heatmap。见 [`OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md`](OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md)。
 - **Chokepoint transport**:IMF PortWatch `Daily_Chokepoints_Data` public ArcGIS query 可达,含 Suez/Panama/Bab el-Mandeb/Malacca/Hormuz/Cape/Gibraltar/Bosporus 的 `n_tanker`/`n_total`/`capacity_tanker`/`capacity`;候选为 AIS-derived display-only 咽喉转运 proxy。必须带 AIS spoofing / jamming / going-dark / data-lag 限制;API 公开可查已证实,正式自动化前仍需保留 attribution/usage/redistribution caveat。见 [`ENERGY_TRANSPORT_CHOKEPOINT_SOURCE_REVIEW.md`](ENERGY_TRANSPORT_CHOKEPOINT_SOURCE_REVIEW.md)。
 - **BDI/Baltic**:不新增官方 Baltic source;现有 `macroDrivers.shippingFreight` 已有 StockQ BDTI/BCTI/BDI freight proxy。PortWatch 若未来实现应 complement 而非替换。
-- **unlock**:若 owner 批准,分别另开 source-specific implementation brief;不得把 OPEC spare capacity 或 chokepoint proxy 变成 Oil Bull Score / World Order weight / scoring input。
+- **remaining unlock**:PortWatch / chokepoint proxy 仍需另开 source-specific implementation brief;不得把 OPEC spare capacity 或 chokepoint proxy 变成 Oil Bull Score / World Order weight / scoring input。
 
 #### P3-20: External AI 深化 — analyst_compact_v1 深度独立分析(PR0/PR1/PR2+canary/PR3+follow-up+go-live+Daily 终证+默认翻转+PR4a/PR4b-1 证毕 · PR4b-2 前端渲染待复核)
 

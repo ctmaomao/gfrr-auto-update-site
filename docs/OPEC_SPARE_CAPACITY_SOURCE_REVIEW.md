@@ -1,6 +1,6 @@
-# OPEC Spare Capacity Source Review(docs-only · source-review)
+# OPEC Spare Capacity Source Review(source-review + owner-approved implementation follow-up)
 
-> **Source-review only.** 本文只登记 OPEC 闲置产能候选源;不写 fetcher、不接 runtime、不改 `data/*.json`、不改 frontend、不触发 workflow、不进 scoring / decision / execution / position。
+> **Source-review baseline.** 本文最初只登记 OPEC 闲置产能候选源;不写 fetcher、不接 runtime、不改 `data/*.json`、不改 frontend、不触发 workflow、不进 scoring / decision / execution / position。2026-06-09 owner 后续批准一个 source-specific implementation:只允许 EIA STEO `COPS_OPEC` 写入 `macroDrivers.energySpareCapacity`,仍保持 audit-only / display-only。
 > **候选层命名**:`Energy Spare Capacity Slow Variable`(proposed,未实现)。
 > **调研日期**:2026-06-09。
 
@@ -154,9 +154,23 @@ Do not derive an "Oil Bull Score" from this series.
 | sourceCandidate | `EIA:STEO:COPS_OPEC` |
 | sourceReachable | yes |
 | freePublicSource | yes, with EIA API key |
-| liveFetchApproved | no |
-| productionDataWriteApproved | no |
+| liveFetchApproved | yes, only for the 2026-06-09 owner-approved `macroDrivers.energySpareCapacity` Daily implementation |
+| productionDataWriteApproved | yes, only through normal `build-daily-radar-data.yml` / `data/radar-data.json` generation;manual JSON edits remain disallowed |
 | displayOnlyCandidate | yes |
 | scoringAllowed | no |
-| recommendedNextStep | source-specific implementation brief, if owner approves |
+| recommendedNextStep | implemented as a narrow Daily macroDriver layer;frontend surfacing remains a separate decision |
 
+---
+
+## 7. Implementation Follow-up(2026-06-09)
+
+Owner approved connecting OPEC spare capacity after the source-review phase. The approved scope is intentionally narrow:
+
+- Fetch only EIA STEO `COPS_OPEC` through the existing Daily radar-data generation path.
+- Store only under `macroDrivers.energySpareCapacity`.
+- Use `EIA_API_KEY` only in the `Generate radar data` step;do not print or persist the key.
+- Keep stale/missing behavior fail-closed:carry last-good only while the latest period is not stale;otherwise render null + stale/missing status.
+- Preserve source wording as EIA STEO estimate / forecast;never present as real-time physical barrels, OPEC official quota execution, blockade probability, or oil price prediction.
+- Do not touch frontend, Worker runtime, `values.*`, `displayInputsBaseline`, `effectiveDisplayInputs`, scoring, decision, execution, position, Brent promotion, World Order weights, Action Queue, Trigger Monitor, Invalidation Rules, or Global Risk Heatmap.
+
+The chokepoint transport source-review remains separate and is not approved by this OPEC implementation.
