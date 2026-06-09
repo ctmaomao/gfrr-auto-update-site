@@ -101,7 +101,7 @@ if (energyTransport !== undefined) {
   if (isPlainObject(energyTransport)) {
     assertStatusKeys(energyTransport, 'macroDrivers.energyTransport', ['chokepoints'], new Set(['live', 'fallback', 'missing', 'stale']));
     if (energyTransport.source !== 'IMFPortWatch:Daily_Chokepoints_Data') fail('macroDrivers.energyTransport.source is not the approved IMF PortWatch source string');
-    if (energyTransport.usageTermsPinned !== 'partial') fail('macroDrivers.energyTransport.usageTermsPinned must remain partial until PortWatch TOS is pinned');
+    if (energyTransport.usageTermsPinned !== 'imf_data_terms_pinned') fail('macroDrivers.energyTransport.usageTermsPinned must be imf_data_terms_pinned after PortWatch TOS pin proof');
     if (energyTransport.redistributionCaveat !== true) fail('macroDrivers.energyTransport.redistributionCaveat must be true');
     if (!isPlainObject(energyTransport.reroutingProxy)) fail('macroDrivers.energyTransport.reroutingProxy is missing');
     const status = energyTransport.sourceStatus?.chokepoints;
