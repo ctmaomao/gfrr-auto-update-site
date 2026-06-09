@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=trend-axis-label-copy-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=trend-axis-label-copy-1';
-import { MODULE_LABELS } from './decision.js?v=trend-axis-label-copy-1';
+} from './config.js?v=energy-physical-chain-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=energy-physical-chain-1';
+import { MODULE_LABELS } from './decision.js?v=energy-physical-chain-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

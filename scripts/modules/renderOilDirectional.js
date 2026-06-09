@@ -91,36 +91,40 @@ function reasonInventory(sig, ev) {
   const i = sig.inventoryDrawPressure || {};
   const e = ev.crudeStocksExSpr || {};
   const trend = i.drawAccel ? '加速去化' : (Number.isFinite(i.change4w) && i.change4w < 0 ? '去化' : '回补');
-  return `${trend},近 4 周 ${signed(e.change4w)} 千桶,5 年同期 ${pct(e.vs5yAvgPct)}`;
+  return `链条库存端:商业原油${trend},近 4 周 ${signed(e.change4w)} 千桶,5 年同期 ${pct(e.vs5yAvgPct)}`;
 }
 function reasonDiesel(sig, ev) {
   const d = sig.dieselProductStress || {};
   const e = ev.distillateStocks || {};
   const state = d.extremeTight ? '极紧' : (d.tight ? '偏紧' : '正常');
-  return `${state},5 年同期 ${pct(e.vs5yAvgPct)}`;
+  return `链条起点:馏分油库存${state},5 年同期 ${pct(e.vs5yAvgPct)},对应工业/运输需求压力`;
 }
 function reasonCurve(sig, ev) {
   const pc = sig.priceContext || {};
   const c = ev.curve || {};
-  const regime = pc.curveSlopeRegime === 'backwardation' ? 'backwardation(近强远弱)'
-    : pc.curveSlopeRegime === 'contango' ? 'contango(近弱远强)' : '—';
-  return `${regime},前-后 ${signed(c.frontMinusBack, 2)}(低置信代理)`;
+  const regime = pc.curveSlopeRegime === 'backwardation' ? 'backwardation(近端高于远端,现货紧张代理)'
+    : pc.curveSlopeRegime === 'contango' ? 'contango(近端低于远端,供应宽松代理)' : '—';
+  return `链条定价端:${regime},前-后 ${signed(c.frontMinusBack, 2)}(公开代理,低置信,非官方结算曲线)`;
 }
-function reasonRefinery(sig) {
+function reasonRefinery(sig, ev) {
   const r = sig.refineryConfirmation || {};
+  const crack = ev.crackSpread || {};
   const state = r.high ? '偏高' : (r.low ? '偏低' : '中性');
-  return `开工率 4 周均 ${fixed(r.utilAvg4w, 1)}%,${state}`;
+  const crackText = Number.isFinite(crack.value)
+    ? `;裂解价差 ${fixed(crack.value, 2)} ${crack.unit || '$/bbl'}${crack.regime ? `(${crack.regime})` : ''},4w ${signed(crack.change4w, 2)}`
+    : ';裂解价差 —';
+  return `链条加工端:炼厂开工率 4 周均 ${fixed(r.utilAvg4w, 1)}%,${state}${crackText}`;
 }
 function reasonSpr(sig) {
   const s = sig.sprBufferEffectiveness || {};
-  return `近 4 周 ${signed(s.sprChange4w)} 千桶${s.bufferInsufficient ? ',缓冲不足以抵消商业去化' : ''}`;
+  return `政策缓冲端:SPR 近 4 周 ${signed(s.sprChange4w)} 千桶${s.bufferInsufficient ? ',缓冲不足以抵消商业去化' : ''}`;
 }
 function reasonDemand(sig) {
   const d = sig.demandDestructionRisk || {};
   const ratio = (Number.isFinite(d.suppliedAvg4w) && Number.isFinite(d.suppliedAvg13w) && d.suppliedAvg13w)
     ? (d.suppliedAvg4w / d.suppliedAvg13w).toFixed(2) : '—';
   const state = d.demandDestruction ? '需求破坏' : (d.demandFalling ? '需求转弱' : '未见需求破坏');
-  return `产品供应 4w/13w 比 ${ratio},${state}`;
+  return `需求端:产品供应 4w/13w 比 ${ratio},${state}`;
 }
 
 function buildHeadline(finalBias, it, sig) {
@@ -128,9 +132,9 @@ function buildHeadline(finalBias, it, sig) {
   const brent = pct(pc.brentChangePct4w);
   switch (finalBias) {
     case 'false_down_physical_stress':
-      return `布伦特近 ~4 周 ${brent},价格回落;但物理链仍偏紧(库存偏紧 + 期限结构 backwardation + 柴油偏紧),下跌未获物理确认。`;
+      return `布伦特近 ~4 周 ${brent},价格回落;但物理链仍偏紧(馏分油/成品油压力 + 加工端确认 + 期限结构 backwardation),下跌未获物理确认。`;
     case 'false_up_unconfirmed':
-      return `布伦特近 ~4 周 ${brent},价格走高;但物理链偏松(库存回补 + 曲线走弱 + 柴油改善),上涨缺物理确认。`;
+      return `布伦特近 ~4 周 ${brent},价格走高;但物理链偏松(库存回补 + 曲线走弱 + 馏分油改善),上涨缺物理确认。`;
     case 'strong_bullish':
       return `物理链强紧张:库存加速去化、炼厂高开工,布伦特近 ~4 周 ${brent}。`;
     case 'moderate_bullish':
@@ -213,9 +217,9 @@ export function renderOilDirectional({ oilData }) {
   setLeafText('odp-reason-inventory', reasonInventory(sig, ev));
   setLeafText('odp-reason-diesel', reasonDiesel(sig, ev));
   setLeafText('odp-reason-curve', reasonCurve(sig, ev));
-  setLeafText('odp-reason-refinery', reasonRefinery(sig));
+  setLeafText('odp-reason-refinery', reasonRefinery(sig, ev));
   setLeafText('odp-reason-spr', reasonSpr(sig));
   setLeafText('odp-reason-demand', reasonDemand(sig));
-  setLeafText('odp-evidence-note', `物理链 8 个周度源(EIA WPSR,截至 ${crudeAsOf});价格方向取布伦特近 ~4 周变动,期限结构为低置信公开代理。`);
+  setLeafText('odp-evidence-note', `物理链 = 馏分油库存 -> 裂解价差/炼厂开工 -> 商业原油库存 -> Brent 期限结构;8 个周度源来自 EIA WPSR(截至 ${crudeAsOf}),价格方向取布伦特近 ~4 周变动,期限结构为低置信公开代理;本层 audit-only / display-only,不进入 scoring / decision / execution / Heatmap。`);
   renderEvidenceList(ev);
 }

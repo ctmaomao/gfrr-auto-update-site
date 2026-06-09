@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=trend-axis-label-copy-1';
+﻿import { fmtNumSafe } from './config.js?v=energy-physical-chain-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

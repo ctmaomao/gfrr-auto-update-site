@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=trend-axis-label-copy-1';
+﻿import { formatFiniteNumber } from './format.js?v=energy-physical-chain-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
