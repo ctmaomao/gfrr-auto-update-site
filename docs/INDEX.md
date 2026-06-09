@@ -79,6 +79,8 @@
 
 - `docs/BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md` (M-71)
 - `docs/OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md` (Oil Directional Pressure Model / ODP — feasibility + source review; this doc stays a source-review artifact, but PR1 ingestion + checks are implemented: `data/oil-directional-pressure.json` + `scripts/oil-directional/` + `check:oil-directional`)
+- `docs/OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md` (Energy Stress Phase 2 source-review only; EIA STEO `COPS_OPEC` candidate)
+- `docs/ENERGY_TRANSPORT_CHOKEPOINT_SOURCE_REVIEW.md` (Energy Stress Phase 2 source-review only; IMF PortWatch chokepoint candidate)
 
 ### China macro source review scope
 

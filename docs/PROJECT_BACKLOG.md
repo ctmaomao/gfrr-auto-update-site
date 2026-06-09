@@ -116,6 +116,14 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **ODP 五刀(PR1–PR5)merge 后全收官**:数据接入 → 周度 workflow → 回测 GATE → productionize + 价格背离 → 中文 UI → dailyBrief 只读引用;全程 audit-only / display-only,不进 scoring / decision / execution / Heatmap。
 - 边界:不进 `values.*`/scoring/decisionModel/executionLock/positionGuidance/cross-validation;期限结构低置信复用、缺则不参与裁决;数据不足显式「暂不判断」。EIA = 美国政府公共领域。
 
+#### P3-19a: Energy Stress Phase 2 source-review — OPEC spare capacity + chokepoint transport
+
+- **Source-review only(2026-06-09)**:登记两条 Energy Stress Phase 2 候选,不接 runtime、不改 `data/*.json`、不改 frontend、不触发 workflow、不进 scoring/decision/execution/position。
+- **OPEC spare capacity**:EIA STEO `COPS_OPEC` (`OPEC Total Spare Crude Oil Production Capacity`,monthly,unit=`million barrels per day`) 官方 API v2 可达;候选为 monthly display-only 慢变量。见 [`OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md`](OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md)。
+- **Chokepoint transport**:IMF PortWatch `Daily_Chokepoints_Data` public ArcGIS query 可达,含 Suez/Panama/Bab el-Mandeb/Malacca/Hormuz/Cape/Gibraltar/Bosporus 的 `n_tanker`/`n_total`/`capacity_tanker`/`capacity`;候选为 AIS-derived display-only 咽喉转运 proxy。必须带 AIS spoofing / jamming / going-dark / data-lag 限制;API 公开可查已证实,正式自动化前仍需保留 attribution/usage/redistribution caveat。见 [`ENERGY_TRANSPORT_CHOKEPOINT_SOURCE_REVIEW.md`](ENERGY_TRANSPORT_CHOKEPOINT_SOURCE_REVIEW.md)。
+- **BDI/Baltic**:不新增官方 Baltic source;现有 `macroDrivers.shippingFreight` 已有 StockQ BDTI/BCTI/BDI freight proxy。PortWatch 若未来实现应 complement 而非替换。
+- **unlock**:若 owner 批准,分别另开 source-specific implementation brief;不得把 OPEC spare capacity 或 chokepoint proxy 变成 Oil Bull Score / World Order weight / scoring input。
+
 #### P3-20: External AI 深化 — analyst_compact_v1 深度独立分析(PR0/PR1/PR2+canary/PR3+follow-up+go-live+Daily 终证+默认翻转+PR4a/PR4b-1 证毕 · PR4b-2 前端渲染待复核)
 
 来源:2026-06-05 owner 立项。目标:让 External AI Auxiliary 对后台丰富数据做**深度独立跨层分析**。根因=输入面窄(`extractSiteData`/`extractCompactSiteData` 都只喂 `macroDrivers.consumer` 一个,约 5-10% richness),非模型能力。**硬边界(CLAUDE.md 绝对规则 4,全程不动)**:External AI = 只读展示层,输出不进 scoring/decision/execution/position;3 守卫(`check-external-ai-output`/`-production-contract`/`-production-write-guard`)+ unsafe-wording + `promotionEligible/humanApproved=false` + `affects*=false` 保留;「独立」=对站内数据独立推理,不接外部新闻/行情。

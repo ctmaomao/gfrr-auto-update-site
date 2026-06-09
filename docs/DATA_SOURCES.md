@@ -450,6 +450,8 @@ documented attribution string and code is a contract violation.
 | `macroDrivers.employment` | FRED: ICSA, CCSA, JTSJOL, CES0500000003, U6RATE, public industry payroll basket |
 | `macroDrivers.consumerRetail` | FRED: CARTS, CARTSR, MRTS monthly retail trade segment basket + BoA Consumer Checkpoint public HTML + Trading Economics Redbook public HTML |
 | `macroDrivers.shippingFreight` | StockQ: BDTI, BCTI, BDI public index pages |
+| `energySpareCapacity candidate` | Source-review only: EIA STEO `COPS_OPEC` OPEC Total Spare Crude Oil Production Capacity;monthly display-only slow variable candidate,not connected |
+| `energyTransport chokepoint candidate` | Source-review only: IMF PortWatch `Daily_Chokepoints_Data` public ArcGIS query;AIS-derived tanker/chokepoint proxy candidate,not connected;usage/attribution/redistribution caveat remains before production fetch;keep existing StockQ BDTI/BCTI/BDI freight proxy |
 | `macroDrivers.policyExpectations` | FRED: DFEDTARL/DFEDTARU/DFF + Yahoo: ZQ=F / ZQ monthly futures curve / SR3 monthly SOFR futures curve + CheckMySwap USD OIS public curve + Federal Reserve SEP/FOMC statement/minutes |
 | `macroDrivers.commercialRealEstate` | FRED: DRCRELEXFACBS, CORCREXFACBS, SUBLPDRCSN, SUBLPDRCSC, SUBLPDRCSM, CREACBW027SBOG + Yahoo: VNQ, REM, CMBS |
 | `macroDrivers.privateCreditProxy` | Yahoo: BIZD, PBDC, SRLN, CCLFX + FRED: BAMLH0A0HYM2 / BAMLC0A0CM + ICE public CDX index settlement; private marks = manual_required |
