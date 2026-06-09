@@ -1,6 +1,6 @@
 # Energy Transport Chokepoint Implementation Brief(owner-approved · docs-only)
 
-> **Implementation brief only.** Owner has approved opening the PortWatch / chokepoint implementation plan, but this document does not itself add a fetcher, runtime code, workflow change, data snapshot, frontend surface, or scoring connection.
+> **Implementation design contract.** This document was first landed as docs-only; owner subsequently approved the first runtime implementation to follow this brief. Scope remains limited to the Daily `macroDrivers.energyTransport` data path + validator/check/docs; no frontend surface, workflow change, standalone data snapshot, raw AIS-derived history dump, or scoring connection is approved here.
 >
 > Target source: IMF PortWatch `Daily_Chokepoints_Data` via public ArcGIS FeatureServer query.
 >
@@ -345,4 +345,3 @@ If the endpoint becomes unavailable, schema changes, terms become unsuitable, or
 - keep validator optional so existing committed data can pass during rollback
 - leave source-review and this brief as historical docs
 - do not delete unrelated OPEC spare capacity or StockQ shipping freight layers
-

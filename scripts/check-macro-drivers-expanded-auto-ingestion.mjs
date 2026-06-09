@@ -40,6 +40,24 @@ function assertStatusKeys(layer, path, keys, allowed = new Set(['live', 'fallbac
   }
 }
 
+function assertEnergyTransportChokepoint(layer, path, key, requireLiveValues = false) {
+  const node = layer?.chokepoints?.[key];
+  if (!isPlainObject(node)) {
+    fail(`${path}.chokepoints.${key} is missing or not an object`);
+    return;
+  }
+  if (!isPlainObject(node.latest)) {
+    fail(`${path}.chokepoints.${key}.latest is missing or not an object`);
+    return;
+  }
+  if (!isFiniteNumberOrNull(node.latest.nTanker)) fail(`${path}.chokepoints.${key}.latest.nTanker must be finite number or null`);
+  if (!isFiniteNumberOrNull(node.latest.capacityTanker)) fail(`${path}.chokepoints.${key}.latest.capacityTanker must be finite number or null`);
+  if (requireLiveValues) {
+    if (!Number.isFinite(node.latest.nTanker)) fail(`${path}.chokepoints.${key}.latest.nTanker must be finite when live/fallback`);
+    if (!Number.isFinite(node.latest.capacityTanker)) fail(`${path}.chokepoints.${key}.latest.capacityTanker must be finite when live/fallback`);
+  }
+}
+
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
 const validateText = readText('scripts/validate-data.mjs');
@@ -74,6 +92,23 @@ if (energySpareCapacity !== undefined) {
     if (energySpareCapacity.source !== 'EIA:STEO:COPS_OPEC') fail('macroDrivers.energySpareCapacity.source is not the approved EIA STEO source string');
     if (energySpareCapacity.unit !== 'million barrels per day') fail('macroDrivers.energySpareCapacity.unit is not the approved unit');
     if (energySpareCapacity.frequency !== 'monthly') fail('macroDrivers.energySpareCapacity.frequency must be monthly');
+  }
+}
+
+const energyTransport = macroDrivers?.energyTransport;
+if (energyTransport !== undefined) {
+  assertLayer('macroDrivers.energyTransport', energyTransport);
+  if (isPlainObject(energyTransport)) {
+    assertStatusKeys(energyTransport, 'macroDrivers.energyTransport', ['chokepoints'], new Set(['live', 'fallback', 'missing', 'stale']));
+    if (energyTransport.source !== 'IMFPortWatch:Daily_Chokepoints_Data') fail('macroDrivers.energyTransport.source is not the approved IMF PortWatch source string');
+    if (energyTransport.usageTermsPinned !== 'partial') fail('macroDrivers.energyTransport.usageTermsPinned must remain partial until PortWatch TOS is pinned');
+    if (energyTransport.redistributionCaveat !== true) fail('macroDrivers.energyTransport.redistributionCaveat must be true');
+    if (!isPlainObject(energyTransport.reroutingProxy)) fail('macroDrivers.energyTransport.reroutingProxy is missing');
+    const status = energyTransport.sourceStatus?.chokepoints;
+    const requireLiveValues = status === 'live' || status === 'fallback';
+    for (const key of ['suez', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar']) {
+      assertEnergyTransportChokepoint(energyTransport, 'macroDrivers.energyTransport', key, requireLiveValues);
+    }
   }
 }
 
@@ -154,6 +189,12 @@ const requiredRunDailyMarkers = [
   'buildEnergySpareCapacityApiUrl',
   'parseEnergySpareCapacityRows',
   'energySpareCapacity: macroDrivers.energySpareCapacity',
+  'resolveEnergyTransport(prevMd.energyTransport)',
+  'ENERGY_TRANSPORT_SOURCE',
+  'ENERGY_TRANSPORT_QUERY_URL',
+  'buildEnergyTransportQueryUrl',
+  'parseEnergyTransportRows',
+  'energyTransport: macroDrivers.energyTransport',
   'async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive)',
   "fetchYahooChartQuote('BIZD', '1mo', '1d')",
   "fetchYahooChartQuote('PBDC', '1mo', '1d')",
@@ -193,6 +234,7 @@ for (const marker of requiredRunDailyMarkers) {
 const requiredValidateMarkers = [
   'validateMacroDriversShippingFreight(data)',
   'validateMacroDriversEnergySpareCapacity(data)',
+  'validateMacroDriversEnergyTransport(data)',
   'validateMacroDriversPolicyExpectations(data)',
   'validateMacroDriversPrivateCreditProxy(data)'
 ];
@@ -205,6 +247,10 @@ for (const marker of [
   'macroDrivers.energySpareCapacity',
   'EIA:STEO:COPS_OPEC',
   'COPS_OPEC',
+  'macroDrivers.energyTransport',
+  'IMFPortWatch:Daily_Chokepoints_Data',
+  'usageTermsPinned',
+  'redistributionCaveat',
   'macroDrivers.policyExpectations',
   'macroDrivers.privateCreditProxy',
   'BDTI',
@@ -237,5 +283,6 @@ if (errors.length > 0) {
 console.log(
   'Expanded macro-driver auto-ingestion check: PASS ' +
   `(BDTI=${freight.balticDirtyTankerIndex}, ZQ=${policy.fedFundsFutureImpliedRate}, ` +
-  `dot=${policy.dotPlotMedianCurrentYear}, minutes=${policy.minutesPolicyTone}, BIZD=${privateCredit.bdcEtfPrice}, CCLFX=${privateCredit.intervalFundNavPrice}, CDXHY=${privateCredit.cdxHyPrice})`
+  `dot=${policy.dotPlotMedianCurrentYear}, minutes=${policy.minutesPolicyTone}, BIZD=${privateCredit.bdcEtfPrice}, CCLFX=${privateCredit.intervalFundNavPrice}, ` +
+  `CDXHY=${privateCredit.cdxHyPrice}, PortWatch=${energyTransport?.sourceStatus?.chokepoints || 'pending'})`
 );

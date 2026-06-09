@@ -99,6 +99,19 @@ const VALID_ENERGY_SPARE_CAPACITY_SOURCE = 'EIA:STEO:COPS_OPEC';
 const VALID_ENERGY_SPARE_CAPACITY_UNIT = 'million barrels per day';
 const VALID_ENERGY_SPARE_CAPACITY_FREQUENCY = 'monthly';
 const VALID_ENERGY_SPARE_CAPACITY_REGIMES = new Set(['极低缓冲', '偏低', '正常', '宽松', '未知']);
+const ENERGY_TRANSPORT_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'stale']);
+const ENERGY_TRANSPORT_CHOKEPOINT_STATUSES = new Set(['live', 'missing', 'insufficient_window']);
+const VALID_ENERGY_TRANSPORT_SOURCE = 'IMFPortWatch:Daily_Chokepoints_Data';
+const VALID_ENERGY_TRANSPORT_USAGE_TERMS = 'partial';
+const VALID_ENERGY_TRANSPORT_REROUTING_REGIMES = new Set(['rerouting_watch', 'normal', 'unknown']);
+const ENERGY_TRANSPORT_CHOKEPOINT_KEYS = ['suez', 'panama', 'bosporus', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar'];
+const ENERGY_TRANSPORT_CORE_KEYS = ['suez', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar'];
+const ENERGY_TRANSPORT_FORBIDDEN_KEYS = new Set([
+  'warProbability',
+  'blockadeProbability',
+  'oilPricePrediction',
+  'officialTradeStatistic'
+]);
 const POLICY_EXPECTATIONS_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'manual_required']);
 const VALID_POLICY_EXPECTATIONS_SOURCE = 'FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; CheckMySwap:USD-OIS-public-curve; FederalReserve:FOMC statement/SEP/minutes';
 const VALID_POLICY_TONES = new Set(['偏鹰', '偏鸽', '平衡', '未知']);
@@ -842,6 +855,153 @@ function validateMacroDriversEnergySpareCapacity(dataPayload) {
   } else {
     assert(layer.spareCapacityMbpd === null,
       `macroDrivers.energySpareCapacity.spareCapacityMbpd must be null when sourceStatus is ${status}`);
+  }
+}
+
+function assertNoForbiddenEnergyTransportKeys(value, pathName) {
+  if (!value || typeof value !== 'object') return;
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => assertNoForbiddenEnergyTransportKeys(item, `${pathName}[${index}]`));
+    return;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    assert(!ENERGY_TRANSPORT_FORBIDDEN_KEYS.has(key), `${pathName}.${key} is forbidden for macroDrivers.energyTransport`);
+    assertNoForbiddenEnergyTransportKeys(child, `${pathName}.${key}`);
+  }
+}
+
+function validateEnergyTransportLatest(latest, fieldName) {
+  assertPlainObject(latest, fieldName);
+  assert(Object.hasOwn(latest, 'date'), `${fieldName}.date is missing`);
+  assert(latest.date === null || (typeof latest.date === 'string' && /^\d{4}-\d{2}-\d{2}$/u.test(latest.date)),
+    `${fieldName}.date must be YYYY-MM-DD or null`);
+  for (const key of ['nTanker', 'nTotal', 'capacityTanker', 'capacityTotal']) {
+    assert(Object.hasOwn(latest, key), `${fieldName}.${key} is missing`);
+    assert(isFiniteNumberOrNull(latest[key]), `${fieldName}.${key} must be finite number or null`);
+    if (Number.isFinite(latest[key])) assert(latest[key] >= 0, `${fieldName}.${key} must be non-negative`);
+  }
+}
+
+function validateEnergyTransportAverage(avg, fieldName) {
+  assertPlainObject(avg, fieldName);
+  for (const key of ['nTanker', 'capacityTanker']) {
+    assert(Object.hasOwn(avg, key), `${fieldName}.${key} is missing`);
+    assert(isFiniteNumberOrNull(avg[key]), `${fieldName}.${key} must be finite number or null`);
+    if (Number.isFinite(avg[key])) assert(avg[key] >= 0, `${fieldName}.${key} must be non-negative`);
+  }
+}
+
+function validateEnergyTransportChokepoint(node, fieldName) {
+  assertPlainObject(node, fieldName);
+  for (const key of ['portid', 'portname', 'latest', 'avg7d', 'avg30d', 'latestVs30dPct', 'capacityTankerVs30dPct', 'sourceStatus']) {
+    assert(Object.hasOwn(node, key), `${fieldName}.${key} is missing`);
+  }
+  assertString(node.portid, `${fieldName}.portid`);
+  assertString(node.portname, `${fieldName}.portname`);
+  validateEnergyTransportLatest(node.latest, `${fieldName}.latest`);
+  validateEnergyTransportAverage(node.avg7d, `${fieldName}.avg7d`);
+  validateEnergyTransportAverage(node.avg30d, `${fieldName}.avg30d`);
+  validateDecimalRatioRangeIfPresent(node.latestVs30dPct, `${fieldName}.latestVs30dPct`);
+  validateDecimalRatioRangeIfPresent(node.capacityTankerVs30dPct, `${fieldName}.capacityTankerVs30dPct`);
+  assertString(node.sourceStatus, `${fieldName}.sourceStatus`);
+  assert(ENERGY_TRANSPORT_CHOKEPOINT_STATUSES.has(node.sourceStatus), `${fieldName}.sourceStatus is not supported`);
+}
+
+function validateMacroDriversEnergyTransport(dataPayload) {
+  const layer = dataPayload?.macroDrivers?.energyTransport;
+  // expand-then-contract: current committed snapshots may omit this new display-only layer until first Daily run.
+  if (layer === undefined) return;
+  assertPlainObject(layer, 'macroDrivers.energyTransport');
+  assertNoForbiddenEnergyTransportKeys(layer, 'macroDrivers.energyTransport');
+
+  for (const key of [
+    'source',
+    'sourceUrl',
+    'queryUrl',
+    'sourceStatus',
+    'usageTermsPinned',
+    'redistributionCaveat',
+    'latestDate',
+    'latestAgeDays',
+    'windowDays',
+    'fetchedAt',
+    'lastEditDate',
+    'fetchReason',
+    'chokepoints',
+    'reroutingProxy',
+    'limitationZh',
+    'notes'
+  ]) {
+    assert(Object.hasOwn(layer, key), `macroDrivers.energyTransport.${key} is missing`);
+  }
+
+  assert(layer.source === VALID_ENERGY_TRANSPORT_SOURCE,
+    `macroDrivers.energyTransport.source must be ${VALID_ENERGY_TRANSPORT_SOURCE}`);
+  assertString(layer.sourceUrl, 'macroDrivers.energyTransport.sourceUrl');
+  assertString(layer.queryUrl, 'macroDrivers.energyTransport.queryUrl');
+  assertPlainObject(layer.sourceStatus, 'macroDrivers.energyTransport.sourceStatus');
+  assertString(layer.sourceStatus.chokepoints, 'macroDrivers.energyTransport.sourceStatus.chokepoints');
+  assert(ENERGY_TRANSPORT_SOURCE_STATUSES.has(layer.sourceStatus.chokepoints),
+    'macroDrivers.energyTransport.sourceStatus.chokepoints is not supported');
+  assert(layer.usageTermsPinned === VALID_ENERGY_TRANSPORT_USAGE_TERMS,
+    `macroDrivers.energyTransport.usageTermsPinned must be ${VALID_ENERGY_TRANSPORT_USAGE_TERMS}`);
+  assert(layer.redistributionCaveat === true,
+    'macroDrivers.energyTransport.redistributionCaveat must be true');
+  assert(layer.latestDate === null || (typeof layer.latestDate === 'string' && /^\d{4}-\d{2}-\d{2}$/u.test(layer.latestDate)),
+    'macroDrivers.energyTransport.latestDate must be YYYY-MM-DD or null');
+  assert(isFiniteNumberOrNull(layer.latestAgeDays), 'macroDrivers.energyTransport.latestAgeDays must be finite number or null');
+  if (Number.isFinite(layer.latestAgeDays)) assert(layer.latestAgeDays >= 0, 'macroDrivers.energyTransport.latestAgeDays must be non-negative');
+  assert(Number.isInteger(layer.windowDays) && layer.windowDays > 0 && layer.windowDays <= 366,
+    'macroDrivers.energyTransport.windowDays must be a positive integer <= 366');
+  validateNullableIsoString(layer.fetchedAt, 'macroDrivers.energyTransport.fetchedAt');
+  validateNullableIsoString(layer.lastEditDate, 'macroDrivers.energyTransport.lastEditDate');
+  validateNullableString(layer.fetchReason, 'macroDrivers.energyTransport.fetchReason');
+
+  assertPlainObject(layer.chokepoints, 'macroDrivers.energyTransport.chokepoints');
+  const seenKeys = Object.keys(layer.chokepoints);
+  for (const key of seenKeys) {
+    assert(ENERGY_TRANSPORT_CHOKEPOINT_KEYS.includes(key), `macroDrivers.energyTransport.chokepoints.${key} is not approved`);
+  }
+  for (const key of ENERGY_TRANSPORT_CHOKEPOINT_KEYS) {
+    assert(Object.hasOwn(layer.chokepoints, key), `macroDrivers.energyTransport.chokepoints.${key} is missing`);
+    validateEnergyTransportChokepoint(layer.chokepoints[key], `macroDrivers.energyTransport.chokepoints.${key}`);
+  }
+
+  assertPlainObject(layer.reroutingProxy, 'macroDrivers.energyTransport.reroutingProxy');
+  assertString(layer.reroutingProxy.redSeaToCapeRegime, 'macroDrivers.energyTransport.reroutingProxy.redSeaToCapeRegime');
+  assert(VALID_ENERGY_TRANSPORT_REROUTING_REGIMES.has(layer.reroutingProxy.redSeaToCapeRegime),
+    'macroDrivers.energyTransport.reroutingProxy.redSeaToCapeRegime is not supported');
+  for (const key of ['suezBabTankerVs30dPct', 'capeTankerVs30dPct']) {
+    assert(Object.hasOwn(layer.reroutingProxy, key), `macroDrivers.energyTransport.reroutingProxy.${key} is missing`);
+    validateDecimalRatioRangeIfPresent(layer.reroutingProxy[key], `macroDrivers.energyTransport.reroutingProxy.${key}`);
+  }
+  assertArray(layer.reroutingProxy.notes, 'macroDrivers.energyTransport.reroutingProxy.notes');
+  layer.reroutingProxy.notes.forEach((item, index) => assertString(item, `macroDrivers.energyTransport.reroutingProxy.notes[${index}]`));
+
+  assertString(layer.limitationZh, 'macroDrivers.energyTransport.limitationZh');
+  assert(
+    /AIS-derived|AIS 派生|AIS/u.test(layer.limitationZh) &&
+    /spoofing|jamming|going dark|data lag|扭曲/u.test(layer.limitationZh) &&
+    /不是官方|非官方|not official/u.test(layer.limitationZh) &&
+    /战争概率|war probability|油价预测|oil price/u.test(layer.limitationZh),
+    'macroDrivers.energyTransport.limitationZh must disclose AIS proxy, spoofing/jamming limitations, non-official boundary, and no war/oil-price prediction'
+  );
+  assertArray(layer.notes, 'macroDrivers.energyTransport.notes');
+  layer.notes.forEach((item, index) => assertString(item, `macroDrivers.energyTransport.notes[${index}]`));
+
+  const status = layer.sourceStatus.chokepoints;
+  if (status === 'live' || status === 'fallback') {
+    assert(layer.latestDate !== null, 'macroDrivers.energyTransport.latestDate must be present when live/fallback');
+    assert(Number.isFinite(layer.latestAgeDays), 'macroDrivers.energyTransport.latestAgeDays must be finite when live/fallback');
+    for (const key of ENERGY_TRANSPORT_CORE_KEYS) {
+      const node = layer.chokepoints[key];
+      assert(node.latest.date === layer.latestDate, `macroDrivers.energyTransport.chokepoints.${key}.latest.date must match latestDate when live/fallback`);
+      assert(Number.isFinite(node.latest.nTanker), `macroDrivers.energyTransport.chokepoints.${key}.latest.nTanker must be finite when live/fallback`);
+      assert(Number.isFinite(node.latest.capacityTanker), `macroDrivers.energyTransport.chokepoints.${key}.latest.capacityTanker must be finite when live/fallback`);
+    }
+  } else {
+    assert(layer.latestDate === null || status === 'stale',
+      `macroDrivers.energyTransport.latestDate must be null unless sourceStatus is stale, live, or fallback (status=${status})`);
   }
 }
 
@@ -2676,6 +2836,7 @@ validateDivergenceLayer(data);
 validateMacroDriversConsumer(data);
 validateMacroDriversShippingFreight(data);
 validateMacroDriversEnergySpareCapacity(data);
+validateMacroDriversEnergyTransport(data);
 validateMacroDriversPolicyExpectations(data);
 validateMacroDriversEmployment(data);
 validateMacroDriversConsumerRetail(data);

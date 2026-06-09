@@ -380,6 +380,27 @@ const ENERGY_SPARE_CAPACITY_SOURCE_URL = 'https://www.eia.gov/outlooks/steo/data
 const ENERGY_SPARE_CAPACITY_SERIES_ID = 'COPS_OPEC';
 const ENERGY_SPARE_CAPACITY_FETCH_TIMEOUT_MS = 10000;
 const ENERGY_SPARE_CAPACITY_MAX_PERIOD_AGE_DAYS = 95;
+const ENERGY_TRANSPORT_SOURCE = 'IMFPortWatch:Daily_Chokepoints_Data';
+const ENERGY_TRANSPORT_SOURCE_URL = 'https://portwatch.imf.org/';
+const ENERGY_TRANSPORT_QUERY_URL = 'https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Chokepoints_Data/FeatureServer/0/query';
+const ENERGY_TRANSPORT_FETCH_TIMEOUT_MS = 10000;
+const ENERGY_TRANSPORT_WINDOW_DAYS = 120;
+const ENERGY_TRANSPORT_QUERY_RECORD_LIMIT = 1000;
+const ENERGY_TRANSPORT_STALE_DAYS = 21;
+const ENERGY_TRANSPORT_CORE_KEYS = ['suez', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar'];
+const ENERGY_TRANSPORT_CHOKEPOINTS = [
+  { key: 'suez', portid: 'chokepoint1', portname: 'Suez Canal', core: true },
+  { key: 'panama', portid: 'chokepoint2', portname: 'Panama Canal', core: false },
+  { key: 'bosporus', portid: 'chokepoint3', portname: 'Bosporus Strait', core: false },
+  { key: 'babElMandeb', portid: 'chokepoint4', portname: 'Bab el-Mandeb Strait', core: true },
+  { key: 'malacca', portid: 'chokepoint5', portname: 'Malacca Strait', core: true },
+  { key: 'hormuz', portid: 'chokepoint6', portname: 'Strait of Hormuz', core: true },
+  { key: 'capeGoodHope', portid: 'chokepoint7', portname: 'Cape of Good Hope', core: true },
+  { key: 'gibraltar', portid: 'chokepoint8', portname: 'Gibraltar Strait', core: true }
+];
+const ENERGY_TRANSPORT_CHOKEPOINT_BY_PORTID = new Map(
+  ENERGY_TRANSPORT_CHOKEPOINTS.map((item) => [item.portid, item])
+);
 const CONSUMER_RETAIL_SOURCE =
   'FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html; TradingEconomics:Redbook-public-html';
 const POLICY_EXPECTATIONS_SOURCE =
@@ -6974,6 +6995,337 @@ async function resolveEnergySpareCapacity(prevEnergySpareCapacity) {
   }
 }
 
+function roundEnergyTransportNumber(value, digits = 2) {
+  if (!Number.isFinite(value)) return null;
+  const factor = 10 ** digits;
+  return Math.round((value + Number.EPSILON) * factor) / factor;
+}
+
+function buildEnergyTransportLimitation() {
+  return 'PortWatch AIS-derived chokepoint proxy;船舶计数和 capacity 是观测代理,可能受 GPS jamming、AIS spoofing、vessels going dark、routing changes 或 data lag 扭曲;不是官方贸易统计、封锁确认、战争概率或油价预测。';
+}
+
+function buildEnergyTransportNotes() {
+  return [
+    'Sources: UN Global Platform; IMF PortWatch. Daily_Chokepoints_Data 为 AIS-derived chokepoint proxy;display-only,不进 scoring/decision/execution/position。',
+    '本层只保存 compact 派生摘要(latest + 7d/30d average + deviation),不提交 PortWatch raw AIS-derived history;usageTermsPinned=partial,redistributionCaveat=true。'
+  ];
+}
+
+function buildEmptyEnergyTransportChokepoints(status = 'missing') {
+  return Object.fromEntries(ENERGY_TRANSPORT_CHOKEPOINTS.map((definition) => [
+    definition.key,
+    {
+      portid: definition.portid,
+      portname: definition.portname,
+      latest: {
+        date: null,
+        nTanker: null,
+        nTotal: null,
+        capacityTanker: null,
+        capacityTotal: null
+      },
+      avg7d: {
+        nTanker: null,
+        capacityTanker: null
+      },
+      avg30d: {
+        nTanker: null,
+        capacityTanker: null
+      },
+      latestVs30dPct: null,
+      capacityTankerVs30dPct: null,
+      sourceStatus: status
+    }
+  ]));
+}
+
+function buildMissingEnergyTransport(reason = 'missing') {
+  return {
+    source: ENERGY_TRANSPORT_SOURCE,
+    sourceUrl: ENERGY_TRANSPORT_SOURCE_URL,
+    queryUrl: ENERGY_TRANSPORT_QUERY_URL,
+    sourceStatus: { chokepoints: 'missing' },
+    usageTermsPinned: 'partial',
+    redistributionCaveat: true,
+    latestDate: null,
+    latestAgeDays: null,
+    windowDays: ENERGY_TRANSPORT_WINDOW_DAYS,
+    fetchedAt: isoNow,
+    lastEditDate: null,
+    fetchReason: reason,
+    chokepoints: buildEmptyEnergyTransportChokepoints('missing'),
+    reroutingProxy: {
+      redSeaToCapeRegime: 'unknown',
+      suezBabTankerVs30dPct: null,
+      capeTankerVs30dPct: null,
+      notes: []
+    },
+    limitationZh: buildEnergyTransportLimitation(),
+    notes: buildEnergyTransportNotes()
+  };
+}
+
+function normalizePreviousEnergyTransport(prevEnergyTransport, reason = 'fetch_failed') {
+  if (!prevEnergyTransport || typeof prevEnergyTransport !== 'object') {
+    return buildMissingEnergyTransport(reason);
+  }
+  const latestDate = dateOnlyIso(prevEnergyTransport.latestDate);
+  const latestAgeDays = dateOnlyAgeDays(latestDate);
+  if (latestAgeDays === null || latestAgeDays > ENERGY_TRANSPORT_STALE_DAYS) {
+    return {
+      ...buildMissingEnergyTransport('previous_latest_date_stale'),
+      sourceStatus: { chokepoints: 'stale' },
+      latestDate,
+      latestAgeDays
+    };
+  }
+  const previousChokepoints = (
+    prevEnergyTransport.chokepoints &&
+    typeof prevEnergyTransport.chokepoints === 'object' &&
+    !Array.isArray(prevEnergyTransport.chokepoints)
+  )
+    ? prevEnergyTransport.chokepoints
+    : buildEmptyEnergyTransportChokepoints('missing');
+  return {
+    source: ENERGY_TRANSPORT_SOURCE,
+    sourceUrl: ENERGY_TRANSPORT_SOURCE_URL,
+    queryUrl: ENERGY_TRANSPORT_QUERY_URL,
+    sourceStatus: { chokepoints: 'fallback' },
+    usageTermsPinned: 'partial',
+    redistributionCaveat: true,
+    latestDate,
+    latestAgeDays,
+    windowDays: ENERGY_TRANSPORT_WINDOW_DAYS,
+    fetchedAt: isoNow,
+    lastEditDate: normalizeIsoOrNull(prevEnergyTransport.lastEditDate),
+    fetchReason: reason,
+    chokepoints: previousChokepoints,
+    reroutingProxy: (
+      prevEnergyTransport.reroutingProxy &&
+      typeof prevEnergyTransport.reroutingProxy === 'object' &&
+      !Array.isArray(prevEnergyTransport.reroutingProxy)
+    )
+      ? prevEnergyTransport.reroutingProxy
+      : buildMissingEnergyTransport(reason).reroutingProxy,
+    limitationZh: typeof prevEnergyTransport.limitationZh === 'string'
+      ? prevEnergyTransport.limitationZh
+      : buildEnergyTransportLimitation(),
+    notes: Array.isArray(prevEnergyTransport.notes) && prevEnergyTransport.notes.length
+      ? prevEnergyTransport.notes
+      : buildEnergyTransportNotes()
+  };
+}
+
+function buildEnergyTransportQueryUrl() {
+  const params = new URLSearchParams();
+  const quotedIds = ENERGY_TRANSPORT_CHOKEPOINTS.map((item) => `'${item.portid}'`).join(',');
+  params.set('f', 'json');
+  params.set('where', `portid IN (${quotedIds})`);
+  params.set('outFields', 'date,portid,portname,n_tanker,n_total,capacity_tanker,capacity');
+  params.set('orderByFields', 'date DESC');
+  params.set('returnGeometry', 'false');
+  params.set('resultRecordCount', String(ENERGY_TRANSPORT_QUERY_RECORD_LIMIT));
+  return `${ENERGY_TRANSPORT_QUERY_URL}?${params.toString()}`;
+}
+
+function normalizePortWatchDate(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return new Date(value).toISOString().slice(0, 10);
+  }
+  return dateOnlyIso(value);
+}
+
+function parseEnergyTransportRows(payload) {
+  if (payload?.error) throw new Error(`portwatch:chokepoints api_error:${JSON.stringify(payload.error).slice(0, 160)}`);
+  const features = payload?.features;
+  if (!Array.isArray(features)) throw new Error('portwatch:chokepoints missing features[]');
+  return features
+    .map((feature) => {
+      const row = feature?.attributes || {};
+      const portid = typeof row.portid === 'string' ? row.portid : null;
+      const definition = portid ? ENERGY_TRANSPORT_CHOKEPOINT_BY_PORTID.get(portid) : null;
+      return {
+        date: normalizePortWatchDate(row.date),
+        portid,
+        portname: typeof row.portname === 'string' ? row.portname : definition?.portname || null,
+        nTanker: finiteNumberOrNull(row.n_tanker),
+        nTotal: finiteNumberOrNull(row.n_total),
+        capacityTanker: finiteNumberOrNull(row.capacity_tanker),
+        capacityTotal: finiteNumberOrNull(row.capacity),
+        definition
+      };
+    })
+    .filter((row) => (
+      row.definition &&
+      dateOnlyIso(row.date) &&
+      Number.isFinite(row.nTanker) &&
+      Number.isFinite(row.nTotal) &&
+      Number.isFinite(row.capacityTanker) &&
+      Number.isFinite(row.capacityTotal) &&
+      row.nTanker >= 0 &&
+      row.nTotal >= 0 &&
+      row.capacityTanker >= 0 &&
+      row.capacityTotal >= 0
+    ))
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function averageEnergyTransportWindow(rows, latestDate, days, field) {
+  const latestMs = Date.parse(`${latestDate}T00:00:00Z`);
+  if (!Number.isFinite(latestMs)) return null;
+  const values = rows
+    .filter((row) => {
+      const rowMs = Date.parse(`${row.date}T00:00:00Z`);
+      if (!Number.isFinite(rowMs)) return false;
+      const deltaDays = Math.floor((latestMs - rowMs) / (24 * 3600 * 1000));
+      return deltaDays >= 0 && deltaDays < days;
+    })
+    .map((row) => row[field])
+    .filter(Number.isFinite);
+  if (!values.length) return null;
+  return roundEnergyTransportNumber(values.reduce((sum, value) => sum + value, 0) / values.length, 2);
+}
+
+function pctChangeEnergyTransport(latest, base) {
+  if (!Number.isFinite(latest) || !Number.isFinite(base) || base <= 0) return null;
+  return roundEnergyTransportNumber((latest - base) / base, 4);
+}
+
+function buildEnergyTransportChokepoint(definition, rows, latestDate) {
+  const latest = rows.find((row) => row.date === latestDate) || rows[0] || null;
+  if (!latest) {
+    return buildEmptyEnergyTransportChokepoints('missing')[definition.key];
+  }
+  const avg7Tanker = averageEnergyTransportWindow(rows, latestDate, 7, 'nTanker');
+  const avg7Capacity = averageEnergyTransportWindow(rows, latestDate, 7, 'capacityTanker');
+  const avg30Tanker = averageEnergyTransportWindow(rows, latestDate, 30, 'nTanker');
+  const avg30Capacity = averageEnergyTransportWindow(rows, latestDate, 30, 'capacityTanker');
+  const observations30d = rows.filter((row) => {
+    const latestMs = Date.parse(`${latestDate}T00:00:00Z`);
+    const rowMs = Date.parse(`${row.date}T00:00:00Z`);
+    if (!Number.isFinite(latestMs) || !Number.isFinite(rowMs)) return false;
+    const deltaDays = Math.floor((latestMs - rowMs) / (24 * 3600 * 1000));
+    return deltaDays >= 0 && deltaDays < 30;
+  }).length;
+  return {
+    portid: definition.portid,
+    portname: definition.portname,
+    latest: {
+      date: latest.date,
+      nTanker: latest.nTanker,
+      nTotal: latest.nTotal,
+      capacityTanker: latest.capacityTanker,
+      capacityTotal: latest.capacityTotal
+    },
+    avg7d: {
+      nTanker: avg7Tanker,
+      capacityTanker: avg7Capacity
+    },
+    avg30d: {
+      nTanker: avg30Tanker,
+      capacityTanker: avg30Capacity
+    },
+    latestVs30dPct: pctChangeEnergyTransport(latest.nTanker, avg30Tanker),
+    capacityTankerVs30dPct: pctChangeEnergyTransport(latest.capacityTanker, avg30Capacity),
+    sourceStatus: observations30d >= 10 ? 'live' : 'insufficient_window'
+  };
+}
+
+function classifyRedSeaToCapeRerouting(chokepoints) {
+  const suez = chokepoints.suez?.latestVs30dPct;
+  const bab = chokepoints.babElMandeb?.latestVs30dPct;
+  const cape = chokepoints.capeGoodHope?.latestVs30dPct;
+  const redSeaValues = [suez, bab].filter(Number.isFinite);
+  if (redSeaValues.length < 2 || !Number.isFinite(cape)) {
+    return {
+      redSeaToCapeRegime: 'unknown',
+      suezBabTankerVs30dPct: null,
+      capeTankerVs30dPct: Number.isFinite(cape) ? cape : null,
+      notes: ['PortWatch rerouting proxy insufficient: Suez/Bab el-Mandeb/Cape windows not all available.']
+    };
+  }
+  const redSeaAvg = roundEnergyTransportNumber(redSeaValues.reduce((sum, value) => sum + value, 0) / redSeaValues.length, 4);
+  const regime = redSeaAvg <= -0.2 && cape >= 0.2 ? 'rerouting_watch' : 'normal';
+  return {
+    redSeaToCapeRegime: regime,
+    suezBabTankerVs30dPct: redSeaAvg,
+    capeTankerVs30dPct: cape,
+    notes: regime === 'rerouting_watch'
+      ? ['Suez/Bab el-Mandeb tanker proxy below 30d average while Cape proxy is above 30d average;AIS-derived rerouting watch only.']
+      : ['No material Red Sea to Cape rerouting proxy based on current AIS-derived 30d deviations.']
+  };
+}
+
+function buildEnergyTransportLayer(rows) {
+  const latestDate = rows[0]?.date || null;
+  const latestAgeDays = dateOnlyAgeDays(latestDate);
+  if (!latestDate || latestAgeDays === null) throw new Error('portwatch:chokepoints missing latestDate');
+  if (latestAgeDays > ENERGY_TRANSPORT_STALE_DAYS) {
+    return {
+      ...buildMissingEnergyTransport('latest_date_stale'),
+      sourceStatus: { chokepoints: 'stale' },
+      latestDate,
+      latestAgeDays
+    };
+  }
+  const chokepoints = {};
+  for (const definition of ENERGY_TRANSPORT_CHOKEPOINTS) {
+    const perPortRows = rows
+      .filter((row) => row.portid === definition.portid)
+      .sort((a, b) => b.date.localeCompare(a.date));
+    chokepoints[definition.key] = buildEnergyTransportChokepoint(definition, perPortRows, latestDate);
+  }
+  const missingCore = ENERGY_TRANSPORT_CORE_KEYS.filter((key) => (
+    chokepoints[key]?.latest?.date !== latestDate ||
+    !Number.isFinite(chokepoints[key]?.latest?.nTanker) ||
+    !Number.isFinite(chokepoints[key]?.latest?.capacityTanker)
+  ));
+  if (missingCore.length) {
+    return {
+      ...buildMissingEnergyTransport(`missing_core_chokepoints:${missingCore.join(',')}`),
+      sourceStatus: { chokepoints: 'missing' },
+      latestDate,
+      latestAgeDays,
+      chokepoints
+    };
+  }
+  return {
+    source: ENERGY_TRANSPORT_SOURCE,
+    sourceUrl: ENERGY_TRANSPORT_SOURCE_URL,
+    queryUrl: ENERGY_TRANSPORT_QUERY_URL,
+    sourceStatus: { chokepoints: 'live' },
+    usageTermsPinned: 'partial',
+    redistributionCaveat: true,
+    latestDate,
+    latestAgeDays,
+    windowDays: ENERGY_TRANSPORT_WINDOW_DAYS,
+    fetchedAt: isoNow,
+    lastEditDate: null,
+    fetchReason: null,
+    chokepoints,
+    reroutingProxy: classifyRedSeaToCapeRerouting(chokepoints),
+    limitationZh: buildEnergyTransportLimitation(),
+    notes: buildEnergyTransportNotes()
+  };
+}
+
+async function resolveEnergyTransport(prevEnergyTransport) {
+  try {
+    const payload = await fetchJsonText(
+      buildEnergyTransportQueryUrl(),
+      'portwatch:chokepoints',
+      ENERGY_TRANSPORT_FETCH_TIMEOUT_MS,
+      { userAgent: 'GFRRBot/1.0' }
+    );
+    const rows = parseEnergyTransportRows(payload);
+    if (!rows.length) throw new Error('portwatch:chokepoints no usable rows');
+    return buildEnergyTransportLayer(rows);
+  } catch (err) {
+    return normalizePreviousEnergyTransport(prevEnergyTransport, stringifyFetchError(err));
+  }
+}
+
 function buildMissingFedFundsFuturesCurve() {
   return {
     source: 'Yahoo:ZQ-monthly-futures',
@@ -8611,7 +8963,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveChinaTsf(prevMd.chinaTsf),
     resolveChinaMlf(prevMd.chinaMlf),
     resolveRateVol(prevMd.rateVol),
-    resolveEnergySpareCapacity(prevMd.energySpareCapacity)
+    resolveEnergySpareCapacity(prevMd.energySpareCapacity),
+    resolveEnergyTransport(prevMd.energyTransport)
   ]);
 
   const fedLiquidity = results[0].status === 'fulfilled' ? results[0].value : {
@@ -8672,6 +9025,7 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     notes: '债券/利率波动率 MOVE 结构信号 evidence（Yahoo ^MOVE 日频）。'
   };
   const energySpareCapacity = results[24].status === 'fulfilled' ? results[24].value : buildMissingEnergySpareCapacity('resolver_rejected');
+  const energyTransport = results[25].status === 'fulfilled' ? results[25].value : buildMissingEnergyTransport('resolver_rejected');
 
   return {
     fedLiquidity,
@@ -8698,7 +9052,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     chinaTsf,
     chinaMlf,
     rateVol,
-    energySpareCapacity
+    energySpareCapacity,
+    energyTransport
   };
 }
 
@@ -8717,7 +9072,8 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     resolveChinaOmo(prevMd?.chinaOmo),
     resolveChinaTsf(prevMd?.chinaTsf),
     resolveChinaMlf(prevMd?.chinaMlf),
-    resolveEnergySpareCapacity(prevMd?.energySpareCapacity)
+    resolveEnergySpareCapacity(prevMd?.energySpareCapacity),
+    resolveEnergyTransport(prevMd?.energyTransport)
   ]);
   return {
     worldEconomy: results[0].status === 'fulfilled' ? results[0].value : buildMissingWorldEconomy(prevMd?.worldEconomy),
@@ -8733,7 +9089,8 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     chinaOmo: results[10].status === 'fulfilled' ? results[10].value : buildMissingChinaOmo(prevMd?.chinaOmo),
     chinaTsf: results[11].status === 'fulfilled' ? results[11].value : buildMissingChinaTsf(prevMd?.chinaTsf),
     chinaMlf: results[12].status === 'fulfilled' ? results[12].value : buildMissingChinaMlf(prevMd?.chinaMlf),
-    energySpareCapacity: results[13].status === 'fulfilled' ? results[13].value : buildMissingEnergySpareCapacity('resolver_rejected')
+    energySpareCapacity: results[13].status === 'fulfilled' ? results[13].value : buildMissingEnergySpareCapacity('resolver_rejected'),
+    energyTransport: results[14].status === 'fulfilled' ? results[14].value : buildMissingEnergyTransport('resolver_rejected')
   };
 }
 
@@ -9689,6 +10046,7 @@ async function build() {
       chinaMlf: macroDrivers.chinaMlf,
       rateVol: macroDrivers.rateVol,
       energySpareCapacity: macroDrivers.energySpareCapacity,
+      energyTransport: macroDrivers.energyTransport,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {
         structuralRed: gatingResult.structuralRed,

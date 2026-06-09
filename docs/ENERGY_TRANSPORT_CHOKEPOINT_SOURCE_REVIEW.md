@@ -214,6 +214,6 @@ PortWatch AIS-derived chokepoint proxy; vessel counts and capacity are observati
 
 ## 7. Implementation Brief Follow-up(2026-06-09)
 
-Owner approved opening a PortWatch source-specific implementation brief after OPEC spare capacity reached production-live status. The brief is now tracked in [`ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md`](ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md).
+Owner approved opening a PortWatch source-specific implementation brief after OPEC spare capacity reached production-live status. The brief is tracked in [`ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md`](ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md), and the owner subsequently approved a first runtime implementation limited to Daily `macroDrivers.energyTransport` data path + validator/check/docs. Production-live confirmation still requires a post-commit Daily run and artifact verification.
 
 This follow-up does **not** by itself approve runtime code, production data writes, frontend rendering, World Order scoring changes, or oil/war probability language. It only changes the next-step status from "waiting for owner-approved brief" to "brief available; implementation still requires the next explicit implementation turn."
