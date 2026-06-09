@@ -1,14 +1,14 @@
-# Energy Transport Chokepoint Source Review(docs-only · source-review)
+# Energy Transport Chokepoint Source Review(source-review + implementation follow-up)
 
-> **Source-review only.** 本文只登记咽喉转运 / 航运候选源;不写 fetcher、不接 runtime、不改 `data/*.json`、不改 frontend、不触发 workflow、不进 scoring / decision / execution / position。
-> **候选层命名**:`Energy Transport / Chokepoint Evidence Layer`(proposed,未实现)。
+> **Source-review baseline.** 本文最初只登记咽喉转运 / 航运候选源;不写 fetcher、不接 runtime、不改 `data/*.json`、不改 frontend、不触发 workflow、不进 scoring / decision / execution / position。Owner 后续批准一个 source-specific implementation:只允许 IMF PortWatch `Daily_Chokepoints_Data` 写入 `macroDrivers.energyTransport`,仍保持 audit-only / display-only。
+> **实现层命名**:`macroDrivers.energyTransport` / `Energy Transport Chokepoint Evidence Layer`。
 > **调研日期**:2026-06-09。
 
 ---
 
 ## 0. Executive Decision
 
-**结论:IMF PortWatch 可作为未来 display-only 咽喉转运候选源;BDI 不需要新增源。**
+**结论:IMF PortWatch 可作为 display-only 咽喉转运源;BDI 不需要新增源。** First implementation has since landed as `macroDrivers.energyTransport`; frontend display and terms-enum refinement remain separate stages.
 
 最有价值的免费候选:
 
@@ -22,7 +22,7 @@
 - `macroDrivers.shippingFreight` 已接 StockQ BDTI / BCTI / BDI,作为 freight pressure proxy。
 - `worldOrderStress` 已有 `blockadeOrChokepointEvents` GDELT narrative count。
 
-本文**不批准** live fetch。若未来实现,必须另开 stage,并保持 display-only / narrative evidence。
+本文最初**不批准** live fetch。Owner later approved a separate implementation brief and runtime PR for the Daily `macroDrivers.energyTransport` data path only; no frontend surface or scoring connection was approved by that first runtime stage.
 
 ---
 
@@ -50,7 +50,7 @@ PortWatch API surface:
 
 - official pages expose public dashboards / data-download views
 - the working query endpoint is ArcGIS REST, not the general IMF SDMX API
-- no dedicated PortWatch API TOS was pinned in this review, so future implementation must keep attribution and redistribution caveats explicit
+- no dedicated PortWatch API TOS was pinned in this first review, so first implementation kept attribution and redistribution caveats explicit. A later TOS pin review found the exact ArcGIS item `licenseInfo` points to IMF terms; see `PORTWATCH_TOS_PIN_REVIEW.md`.
 
 Local endpoint probe:
 
@@ -195,25 +195,27 @@ PortWatch AIS-derived chokepoint proxy; vessel counts and capacity are observati
 
 ---
 
-## 6. Review Outcome
+## 6. Review Outcome + Follow-up Status
 
 | Field | Decision |
 |---|---|
 | primaryCandidate | `IMFPortWatch:Daily_Chokepoints_Data` |
 | sourceReachable | yes |
 | publicEndpointReachable | yes |
-| usageTermsPinned | partial;official public platform confirmed, dedicated API redistribution terms not pinned |
-| liveFetchApproved | no |
-| productionDataWriteApproved | no |
+| firstReviewUsageTermsPinned | partial;official public platform confirmed, dedicated API redistribution terms not pinned in this first review |
+| tosPinFollowUp | exact ArcGIS item `licenseInfo` points to IMF terms;see [`PORTWATCH_TOS_PIN_REVIEW.md`](PORTWATCH_TOS_PIN_REVIEW.md). Runtime enum still remains `partial` until a separate code PR. |
+| liveFetchApproved | originally no;later owner-approved via implementation brief for Daily `macroDrivers.energyTransport` only |
+| productionDataWriteApproved | originally no;later owner-approved and production-live proven for compact `macroDrivers.energyTransport` only |
+| frontendApproved | no implementation yet;docs-only display brief exists in [`ENERGY_STRESS_FRONTEND_DISPLAY_BRIEF.md`](ENERGY_STRESS_FRONTEND_DISPLAY_BRIEF.md) |
 | displayOnlyCandidate | yes |
 | scoringAllowed | no |
 | BDIAction | no new source; keep existing StockQ proxy |
-| recommendedNextStep | source-specific implementation brief opened after owner approval |
+| recommendedNextStep | future UI implementation or TOS enum code follow-up only after explicit owner approval |
 
 ---
 
 ## 7. Implementation Brief Follow-up(2026-06-09)
 
-Owner approved opening a PortWatch source-specific implementation brief after OPEC spare capacity reached production-live status. The brief is tracked in [`ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md`](ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md), and the owner subsequently approved a first runtime implementation limited to Daily `macroDrivers.energyTransport` data path + validator/check/docs. Production-live confirmation still requires a post-commit Daily run and artifact verification.
+Owner approved opening a PortWatch source-specific implementation brief after OPEC spare capacity reached production-live status. The brief is tracked in [`ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md`](ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md), and the owner subsequently approved a first runtime implementation limited to Daily `macroDrivers.energyTransport` data path + validator/check/docs. Production-live confirmation was completed by a post-commit Daily run and artifact verification.
 
-This follow-up does **not** by itself approve runtime code, production data writes, frontend rendering, World Order scoring changes, or oil/war probability language. It only changes the next-step status from "waiting for owner-approved brief" to "brief available; implementation still requires the next explicit implementation turn."
+This follow-up does **not** approve frontend rendering, World Order scoring changes, or oil/war probability language. Frontend display and TOS enum changes remain separate owner-approved stages.

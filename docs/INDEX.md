@@ -80,8 +80,10 @@
 - `docs/BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md` (M-71)
 - `docs/OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md` (Oil Directional Pressure Model / ODP — feasibility + source review; this doc stays a source-review artifact, but PR1 ingestion + checks are implemented: `data/oil-directional-pressure.json` + `scripts/oil-directional/` + `check:oil-directional`)
 - `docs/OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md` (Energy Stress Phase 2 source-review + owner-approved implementation follow-up; EIA STEO `COPS_OPEC` → `macroDrivers.energySpareCapacity`)
-- `docs/ENERGY_TRANSPORT_CHOKEPOINT_SOURCE_REVIEW.md` (Energy Stress Phase 2 source-review only; IMF PortWatch chokepoint candidate)
+- `docs/ENERGY_TRANSPORT_CHOKEPOINT_SOURCE_REVIEW.md` (Energy Stress Phase 2 source-review + implementation follow-up; IMF PortWatch chokepoint source → `macroDrivers.energyTransport`)
 - `docs/ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md` (owner-approved PortWatch implementation design contract; first runtime scope limited to Daily `macroDrivers.energyTransport` + validator/check/docs)
+- `docs/ENERGY_STRESS_FRONTEND_DISPLAY_BRIEF.md` (owner-approved docs-only frontend display brief for surfacing OPEC spare capacity + PortWatch inside existing ODP details; no UI implementation yet)
+- `docs/PORTWATCH_TOS_PIN_REVIEW.md` (docs-only terms pin review; exact ArcGIS `Daily_Chokepoints_Data` licenseInfo points to IMF terms, runtime enum change deferred)
 
 ### China macro source review scope
 
