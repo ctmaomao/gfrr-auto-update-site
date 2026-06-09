@@ -1,6 +1,6 @@
 # PortWatch TOS Pin Review
 
-> **Docs-only terms review.** This document evaluates whether the PortWatch `usageTermsPinned=partial` residual can be moved toward a more specific pinned-terms status. It does not change runtime code, validator enums, `data/radar-data.json`, Daily pipeline, frontend, workflow, scoring, decision, execution, position, or World Order weights.
+> **Terms review + Phase A implementation follow-up.** This document was first landed as docs-only to evaluate whether the PortWatch `usageTermsPinned=partial` residual can move toward a more specific pinned-terms status. Owner later approved a narrow Phase A code follow-up: Daily writer emits `imf_data_terms_pinned`, validator temporarily accepts legacy `partial`, and `redistributionCaveat=true` remains required. This document still does not approve frontend, workflow, scoring, decision, execution, position, World Order weights, raw AIS publication, or validator narrowing before Daily proof.
 > **Date**: 2026-06-09.
 
 ---
@@ -18,7 +18,7 @@ Recommended future runtime transition:
 }
 ```
 
-This is not implemented in this docs PR. A future code PR must use expand-then-contract before changing the committed data shape.
+This was not implemented in the docs-only review. The follow-up code PR must use expand-then-contract before changing the committed data shape.
 
 Residual risk is improved but not zero:
 
@@ -129,11 +129,11 @@ This compact-only implementation remains the correct posture even after terms pi
 
 ## 3. Recommended Runtime Follow-up
 
-If owner approves a code follow-up, use the same staged discipline as OPEC and PortWatch first implementation.
+Owner approved this code follow-up. Use the same staged discipline as OPEC and PortWatch first implementation.
 
 ### Phase A - Expand
 
-- Add allowed enum value `imf_data_terms_pinned` next to `partial`.
+- Add allowed enum value `imf_data_terms_pinned` next to legacy `partial`.
 - Update Daily `buildEnergyTransportNotes()` / layer builder to emit:
   - `usageTermsPinned: "imf_data_terms_pinned"`
   - `redistributionCaveat: true`
@@ -143,7 +143,7 @@ If owner approves a code follow-up, use the same staged discipline as OPEC and P
 - Keep `limitationZh` AIS / spoofing / non-official / no-war-probability regex.
 - Keep no raw data dump.
 
-### Phase B - Daily Proof
+### Phase B - Daily Proof(pending until after commit/push)
 
 - Manually trigger `Build Daily Radar Data`.
 - Pull the workflow commit.
@@ -154,7 +154,7 @@ If owner approves a code follow-up, use the same staged discipline as OPEC and P
   - no forbidden keys
   - only one `energyTransport` occurrence, under `macroDrivers`
 
-### Phase C - Contract
+### Phase C - Contract(optional after Daily proof)
 
 Only after the Daily proof commit is live:
 

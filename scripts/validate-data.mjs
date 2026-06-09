@@ -102,7 +102,8 @@ const VALID_ENERGY_SPARE_CAPACITY_REGIMES = new Set(['极低缓冲', '偏低', '
 const ENERGY_TRANSPORT_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'stale']);
 const ENERGY_TRANSPORT_CHOKEPOINT_STATUSES = new Set(['live', 'missing', 'insufficient_window']);
 const VALID_ENERGY_TRANSPORT_SOURCE = 'IMFPortWatch:Daily_Chokepoints_Data';
-const VALID_ENERGY_TRANSPORT_USAGE_TERMS = 'partial';
+const PREFERRED_ENERGY_TRANSPORT_USAGE_TERMS = 'imf_data_terms_pinned';
+const VALID_ENERGY_TRANSPORT_USAGE_TERMS = new Set(['partial', PREFERRED_ENERGY_TRANSPORT_USAGE_TERMS]);
 const VALID_ENERGY_TRANSPORT_REROUTING_REGIMES = new Set(['rerouting_watch', 'normal', 'unknown']);
 const ENERGY_TRANSPORT_CHOKEPOINT_KEYS = ['suez', 'panama', 'bosporus', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar'];
 const ENERGY_TRANSPORT_CORE_KEYS = ['suez', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar'];
@@ -943,8 +944,8 @@ function validateMacroDriversEnergyTransport(dataPayload) {
   assertString(layer.sourceStatus.chokepoints, 'macroDrivers.energyTransport.sourceStatus.chokepoints');
   assert(ENERGY_TRANSPORT_SOURCE_STATUSES.has(layer.sourceStatus.chokepoints),
     'macroDrivers.energyTransport.sourceStatus.chokepoints is not supported');
-  assert(layer.usageTermsPinned === VALID_ENERGY_TRANSPORT_USAGE_TERMS,
-    `macroDrivers.energyTransport.usageTermsPinned must be ${VALID_ENERGY_TRANSPORT_USAGE_TERMS}`);
+  assert(VALID_ENERGY_TRANSPORT_USAGE_TERMS.has(layer.usageTermsPinned),
+    `macroDrivers.energyTransport.usageTermsPinned must be one of ${Array.from(VALID_ENERGY_TRANSPORT_USAGE_TERMS).join(', ')}`);
   assert(layer.redistributionCaveat === true,
     'macroDrivers.energyTransport.redistributionCaveat must be true');
   assert(layer.latestDate === null || (typeof layer.latestDate === 'string' && /^\d{4}-\d{2}-\d{2}$/u.test(layer.latestDate)),

@@ -387,6 +387,7 @@ const ENERGY_TRANSPORT_FETCH_TIMEOUT_MS = 10000;
 const ENERGY_TRANSPORT_WINDOW_DAYS = 120;
 const ENERGY_TRANSPORT_QUERY_RECORD_LIMIT = 1000;
 const ENERGY_TRANSPORT_STALE_DAYS = 21;
+const ENERGY_TRANSPORT_USAGE_TERMS_PINNED = 'imf_data_terms_pinned';
 const ENERGY_TRANSPORT_CORE_KEYS = ['suez', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar'];
 const ENERGY_TRANSPORT_CHOKEPOINTS = [
   { key: 'suez', portid: 'chokepoint1', portname: 'Suez Canal', core: true },
@@ -7007,8 +7008,8 @@ function buildEnergyTransportLimitation() {
 
 function buildEnergyTransportNotes() {
   return [
-    'Sources: UN Global Platform; IMF PortWatch. Daily_Chokepoints_Data 为 AIS-derived chokepoint proxy;display-only,不进 scoring/decision/execution/position。',
-    '本层只保存 compact 派生摘要(latest + 7d/30d average + deviation),不提交 PortWatch raw AIS-derived history;usageTermsPinned=partial,redistributionCaveat=true。'
+    'Sources: UN Global Platform; IMF PortWatch. Daily_Chokepoints_Data 为 AIS-derived chokepoint proxy;IMF Data Terms pinned via exact ArcGIS licenseInfo;display-only,不进 scoring/decision/execution/position。',
+    '本层只保存 compact 派生摘要(latest + 7d/30d average + deviation),不提交 PortWatch raw AIS-derived history;usageTermsPinned=imf_data_terms_pinned,redistributionCaveat=true(UN Global Platform / AIS 第三方上游 caveat 保留)。'
   ];
 }
 
@@ -7046,7 +7047,7 @@ function buildMissingEnergyTransport(reason = 'missing') {
     sourceUrl: ENERGY_TRANSPORT_SOURCE_URL,
     queryUrl: ENERGY_TRANSPORT_QUERY_URL,
     sourceStatus: { chokepoints: 'missing' },
-    usageTermsPinned: 'partial',
+    usageTermsPinned: ENERGY_TRANSPORT_USAGE_TERMS_PINNED,
     redistributionCaveat: true,
     latestDate: null,
     latestAgeDays: null,
@@ -7092,7 +7093,7 @@ function normalizePreviousEnergyTransport(prevEnergyTransport, reason = 'fetch_f
     sourceUrl: ENERGY_TRANSPORT_SOURCE_URL,
     queryUrl: ENERGY_TRANSPORT_QUERY_URL,
     sourceStatus: { chokepoints: 'fallback' },
-    usageTermsPinned: 'partial',
+    usageTermsPinned: ENERGY_TRANSPORT_USAGE_TERMS_PINNED,
     redistributionCaveat: true,
     latestDate,
     latestAgeDays,
@@ -7295,7 +7296,7 @@ function buildEnergyTransportLayer(rows) {
     sourceUrl: ENERGY_TRANSPORT_SOURCE_URL,
     queryUrl: ENERGY_TRANSPORT_QUERY_URL,
     sourceStatus: { chokepoints: 'live' },
-    usageTermsPinned: 'partial',
+    usageTermsPinned: ENERGY_TRANSPORT_USAGE_TERMS_PINNED,
     redistributionCaveat: true,
     latestDate,
     latestAgeDays,

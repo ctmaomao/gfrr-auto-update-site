@@ -57,7 +57,7 @@ Source / limitation references that implementation docs and data notes must pres
 - IMF data-download page attribution: `Sources: UN Global Platform; PortWatch`.
 - ArcGIS layer is public and queryable, with `Daily_Chokepoints_Data` fields above.
 - IEA's Middle East chokepoint monitor says it draws on IMF PortWatch and warns about GPS jamming, AIS spoofing, and vessels going dark.
-- No dedicated PortWatch API redistribution terms were pinned in source-review; implementation must keep `usageTermsPinned: partial` and avoid committing raw 120-day record dumps.
+- Initial source-review did not pin dedicated PortWatch API redistribution terms, so the first implementation kept `usageTermsPinned: partial` and avoided committing raw 120-day record dumps. A later TOS pin review found the exact ArcGIS item `licenseInfo` points to IMF Data Terms; TOS pin Phase A may emit `usageTermsPinned: imf_data_terms_pinned`, while keeping `redistributionCaveat: true` and compact-only output.
 
 ---
 

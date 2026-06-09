@@ -203,14 +203,14 @@ PortWatch AIS-derived chokepoint proxy; vessel counts and capacity are observati
 | sourceReachable | yes |
 | publicEndpointReachable | yes |
 | firstReviewUsageTermsPinned | partial;official public platform confirmed, dedicated API redistribution terms not pinned in this first review |
-| tosPinFollowUp | exact ArcGIS item `licenseInfo` points to IMF terms;see [`PORTWATCH_TOS_PIN_REVIEW.md`](PORTWATCH_TOS_PIN_REVIEW.md). Runtime enum still remains `partial` until a separate code PR. |
+| tosPinFollowUp | exact ArcGIS item `licenseInfo` points to IMF terms;see [`PORTWATCH_TOS_PIN_REVIEW.md`](PORTWATCH_TOS_PIN_REVIEW.md). TOS pin Phase A code changes writer output to `imf_data_terms_pinned` while validator temporarily accepts legacy `partial` until Daily proof. |
 | liveFetchApproved | originally no;later owner-approved via implementation brief for Daily `macroDrivers.energyTransport` only |
 | productionDataWriteApproved | originally no;later owner-approved and production-live proven for compact `macroDrivers.energyTransport` only |
 | frontendApproved | no implementation yet;docs-only display brief exists in [`ENERGY_STRESS_FRONTEND_DISPLAY_BRIEF.md`](ENERGY_STRESS_FRONTEND_DISPLAY_BRIEF.md) |
 | displayOnlyCandidate | yes |
 | scoringAllowed | no |
 | BDIAction | no new source; keep existing StockQ proxy |
-| recommendedNextStep | future UI implementation or TOS enum code follow-up only after explicit owner approval |
+| recommendedNextStep | future UI implementation remains separate; after TOS enum Phase A commit/push, run Daily live proof before narrowing validator |
 
 ---
 
@@ -218,4 +218,4 @@ PortWatch AIS-derived chokepoint proxy; vessel counts and capacity are observati
 
 Owner approved opening a PortWatch source-specific implementation brief after OPEC spare capacity reached production-live status. The brief is tracked in [`ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md`](ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md), and the owner subsequently approved a first runtime implementation limited to Daily `macroDrivers.energyTransport` data path + validator/check/docs. Production-live confirmation was completed by a post-commit Daily run and artifact verification.
 
-This follow-up does **not** approve frontend rendering, World Order scoring changes, or oil/war probability language. Frontend display and TOS enum changes remain separate owner-approved stages.
+This follow-up does **not** approve frontend rendering, World Order scoring changes, or oil/war probability language. Frontend display remains a separate owner-approved stage; TOS enum Phase A still requires Daily live proof before validator narrowing.
