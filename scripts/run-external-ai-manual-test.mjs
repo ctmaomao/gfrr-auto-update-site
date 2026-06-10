@@ -116,6 +116,7 @@ const ANALYST_PR4_STRUCTURED_OUTPUT_RULES = [
   'dataQualityLens must be an object with {summaryZh, staleLayers, fallbackLayers, missingLayers, confidenceImpactZh}.',
   `For PR4 structured output budget, crossLayerSynthesis must contain at most ${MAX_CROSS_LAYER_SYNTHESIS_ITEMS} items and keyDivergences must contain at most ${MAX_KEY_DIVERGENCE_ITEMS} items.`,
   `For PR4 structured output budget, each layer/evidence array must contain at most ${MAX_PR4_LAYER_REFERENCES_PER_ARRAY} items, each trigger/invalidation array at most ${MAX_PR4_CONDITIONS_PER_ARRAY} items, and scenarioRefs at most ${MAX_PR4_SCENARIO_REFS} items.`,
+  `For PR4 structured output budget, if more than ${MAX_PR4_LAYER_REFERENCES_PER_ARRAY} layer/evidence references seem relevant, choose the ${MAX_PR4_LAYER_REFERENCES_PER_ARRAY} strongest canonical references and omit the rest.`,
   'For PR4 structured output budget, keep summaryZh, whyItMattersZh, and confidenceImpactZh as short sentences rather than long paragraphs.',
   'PR4 sub-field confidence values must be low or medium only; never high and never low-medium as a literal string.',
   'PR4 layer references must use canonical sourceLayer names from the analyst allowlist, for example macroDrivers.rateVol rather than rateVol.',
@@ -214,6 +215,20 @@ function normalizeEvidencePr4LayerReference(reference) {
   return match.sourceLayer;
 }
 
+function enforcePr4ReferenceArrayCap(container, key, path, changes) {
+  if (!container || !Array.isArray(container[key])) return;
+  if (container[key].length <= MAX_PR4_LAYER_REFERENCES_PER_ARRAY) return;
+
+  changes.push({
+    path,
+    mode: 'array_cap_enforced',
+    originalCount: container[key].length,
+    maxItems: MAX_PR4_LAYER_REFERENCES_PER_ARRAY,
+    droppedCount: container[key].length - MAX_PR4_LAYER_REFERENCES_PER_ARRAY,
+  });
+  container[key] = container[key].slice(0, MAX_PR4_LAYER_REFERENCES_PER_ARRAY);
+}
+
 function normalizePr4ReferenceArray(container, key, path, changes, { allowFieldPath = false } = {}) {
   if (!container || !Array.isArray(container[key])) return;
 
@@ -242,6 +257,7 @@ function normalizePr4ReferenceArray(container, key, path, changes, { allowFieldP
     }
   });
   container[key] = nextValues;
+  enforcePr4ReferenceArrayCap(container, key, path, changes);
 }
 
 function normalizePr4StructuredReferenceFields(output) {
@@ -271,8 +287,16 @@ function normalizePr4StructuredReferenceFields(output) {
     applied: changes.length > 0,
     changeCount: changes.length,
     changedPaths: [...new Set(changes.map((change) => change.path))],
-    normalizedValues: [...new Set(changes.map((change) => change.normalizedTo))],
+    normalizedValues: [...new Set(changes.map((change) => change.normalizedTo).filter(Boolean))],
     modes: [...new Set(changes.map((change) => change.mode))],
+    cappedArrays: changes
+      .filter((change) => change.mode === 'array_cap_enforced')
+      .map((change) => ({
+        path: change.path,
+        originalCount: change.originalCount,
+        maxItems: change.maxItems,
+        droppedCount: change.droppedCount,
+      })),
     note: 'PR4 sourceLayer references normalized to canonical machine identifiers before strict output validation.',
   };
 }
@@ -927,6 +951,44 @@ function runPr4ReferenceNormalizationSelfTests() {
   if (!diagnostics.applied || diagnostics.changeCount < 7) {
     throw new Error('self-test failed: PR4 reference normalization diagnostics should record applied changes');
   }
+
+  const overBudgetSample = {
+    crossLayerSynthesis: [
+      {
+        supportingLayers: [
+          'oilDirectionalPressure.signals.dieselProductStress.extremeTight',
+          'brentPricingLayer',
+          'macroDrivers.rateVol',
+          'marketPricing',
+        ],
+        conflictingLayers: [],
+      },
+    ],
+    keyDivergences: [
+      {
+        evidenceFor: [
+          'dailyBrief.summaryZh',
+          'divergenceLayer.primaryDivergence',
+          'brentPricingLayer.futuresCurve',
+          'macroDrivers.consumer.umichSentiment',
+        ],
+        evidenceAgainst: [],
+      },
+    ],
+  };
+  const capDiagnostics = normalizePr4StructuredReferenceFields(overBudgetSample);
+  if (overBudgetSample.crossLayerSynthesis[0].supportingLayers.length !== MAX_PR4_LAYER_REFERENCES_PER_ARRAY) {
+    throw new Error('self-test failed: PR4 supportingLayers should be capped before strict validation');
+  }
+  if (overBudgetSample.keyDivergences[0].evidenceFor.length !== MAX_PR4_LAYER_REFERENCES_PER_ARRAY) {
+    throw new Error('self-test failed: PR4 evidenceFor should be capped before strict validation');
+  }
+  if (!capDiagnostics.cappedArrays.some((item) => item.path === 'crossLayerSynthesis[0].supportingLayers')) {
+    throw new Error('self-test failed: PR4 cap diagnostics should record capped supportingLayers');
+  }
+  if (!capDiagnostics.modes.includes('array_cap_enforced')) {
+    throw new Error('self-test failed: PR4 cap diagnostics should include array_cap_enforced mode');
+  }
 }
 
 function runPromptModeSelfTests() {
@@ -962,6 +1024,7 @@ function runPromptModeSelfTests() {
     `crossLayerSynthesis must contain at most ${MAX_CROSS_LAYER_SYNTHESIS_ITEMS} items`,
     `keyDivergences must contain at most ${MAX_KEY_DIVERGENCE_ITEMS} items`,
     `each layer/evidence array must contain at most ${MAX_PR4_LAYER_REFERENCES_PER_ARRAY} items`,
+    `choose the ${MAX_PR4_LAYER_REFERENCES_PER_ARRAY} strongest canonical references and omit the rest`,
     'each element MUST be exactly one bare canonical sourceLayer string and nothing else',
     'MUST NOT contain a field path, a colon, any explanation, or any Chinese/natural-language text',
     'write brentPricingLayer, not brentPricingLayer.limitations: Platts Dated Brent missing',
