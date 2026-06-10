@@ -67,6 +67,45 @@
 
 ---
 
+### Treasury Fiscal Data — Daily Treasury Statement / TGA candidate(source-review only)
+
+| 字段 | 值 |
+|---|---|
+| **License** | U.S. Treasury Fiscal Data public API,no key used in source-review probe |
+| **Source URL** | `https://fiscaldata.treasury.gov/datasets/daily-treasury-statement/` |
+| **Probe endpoint** | `https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/dts/operating_cash_balance` |
+| **Candidate fields** | TGA closing balance;Total TGA Deposits(Table II);Total TGA Withdrawals(Table II) |
+| **Current status** | **source-review only;artifact-only replay scaffolds exist;not implemented** |
+| **Potential future consumer** | `macroDrivers.fedLiquidity` candidate input after artifact-only replay/backtest |
+| **影响 scoring?** | **否** — no runtime / formula / scoring approval;future main-calculation use requires separate owner-approved formula/backtest PR |
+| **fetcher** | none |
+
+2026-06-10 source-review 实测 `operating_cash_balance` 可用精确
+`account_type` filter 稳定抽取:
+
+- `Treasury General Account (TGA) Closing Balance` line 4。
+- `Total TGA Deposits (Table II)` line 2。
+- `Total TGA Withdrawals (Table II) (-)` line 3。
+
+该候选只证明 DTS/TGA 具备未来财政流动性冲击输入的可审查基础:
+可派生 TGA 余额、1d/5d/20d 变化与 deposits-minus-withdrawals。它尚未证明
+相对 ON RRP / WALCL / reserve balances 的预测增量;不得进入 `values.*`、
+`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、
+position、Action Queue、Trigger Monitor 或 Invalidation Rules。source-review 见
+[`TREASURY_FISCAL_DATA_TGA_SOURCE_REVIEW.md`](TREASURY_FISCAL_DATA_TGA_SOURCE_REVIEW.md)。本地
+`npm run treasury:tga-replay`、`npm run treasury:liquidity-replay` 和
+`npm run treasury:liquidity-long-backtest` 仅写 ignored
+`manual-artifacts/treasury-fiscal-data/` 报告;`liquidity-replay` 需要 `FRED_API_KEY`
+并拒绝 unsupported FRED CSV fallback。长历史判断使用 FRED `WDTGAL` / `WTREGEN`
+TGA weekly proxies,因为 DTS `operating_cash_balance` reviewed rows 当前只回到
+2022-04-18。2026-06-10 默认 2014+ 长回测结论为
+`accuracy_not_proven_not_formula_approved`;随后 adversarial cross-audit 的 2002+
+周频面板结论为 current liquidity pressure `needs_recalibration`、TGA
+`tga_incremental_signal_not_proven`、new model candidate not strong enough for
+formula PR。任何 artifact replay 都不批准 formula 或 production 接入。
+
+---
+
 ### ISM — Institute for Supply Management
 
 | 字段 | 值 |
@@ -495,6 +534,7 @@ documented attribution string and code is a contract violation.
 | `values.vix` / `values.gold` / `values.dxy` / `values.us10y` / `values.spx` | 来自 GitHub realtime-data 或 displayInputsBaseline;**secondary preview 仅诊断,不覆盖** |
 | `marketPricingHistory.assets.ndx` / `marketPricingHistory.assets.ixic` | Yahoo chart `^NDX` / `^IXIC`;Daily/manual Market Pricing history only;display-only auxiliary,QQQ remains primary |
 | `macroDrivers.fedLiquidity` | FRED: DFF, SOFR, WRESBAL + NY Fed secured rates API: BGCR/TGCR (+ 派生 spreads) |
+| `macroDrivers.fedLiquidity.tga candidate` | Treasury Fiscal Data DTS / TGA source-review only;not implemented;future formula/backtest required before any main-calculation use |
 | `macroDrivers.credit` | FRED: BAMLH0A0HYM2 (HY OAS), BAMLC0A0CM (IG OAS), DRTSCILM, DRTSCIS, NFCI |
 | `macroDrivers.rateVol` | Yahoo: `^MOVE` 债券波动率；**评分例外结构信号**，进结构门控（≥140 黄 / ≥160 红），不进 6 模块 score / `values.*` |
 | `macroDrivers.consumer` | FRED: UMCSENT + ISM: Manufacturing PMI public report parser |

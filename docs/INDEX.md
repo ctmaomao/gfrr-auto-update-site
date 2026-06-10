@@ -70,6 +70,8 @@
 - `docs/M-49_DIESEL_CRACK_SPREAD.md`
 - `docs/M-50_REPO_MARKET_SPREAD.md`
 - `docs/M-67_ISM_PMI_SOURCE_REPAIR.md` — ISM PMI **active source contract**(`docs/M-47_ISM_PMI_GROWTH_LAYER.md` §Current Source 明确指向它;FRED:NAPM 404 后现行源为 `ISM:ManufacturingPMI`)。**仍有效,非历史**;audit-only/display-only。
+- `docs/TREASURY_FISCAL_DATA_TGA_SOURCE_REVIEW.md` — Treasury Fiscal Data DTS / TGA source-review only; future `macroDrivers.fedLiquidity` candidate, no runtime / formula / scoring approval.
+- `docs/FED_LIQUIDITY_RECALIBRATION_BRIEF.md` — brief-only research contract for funding-stress target, regime-aware ON RRP buffer/velocity, and near-zero percentage-noise recalibration; no runtime / formula / scoring approval.
 
 ### Cross-validation narrative density scope (M-51 → M-53)
 
