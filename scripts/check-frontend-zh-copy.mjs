@@ -43,6 +43,12 @@ const FORBIDDEN_TERMS = [
 // snake_case 枚举/代号(全小写词以下划线连接)= 一律工程语言,中文里不会自然出现。
 const SNAKE_CASE = /[a-z][a-z0-9]*(?:_[a-z0-9]+)+/g;
 
+// camelCase 工程字段名(词边界 + 小写起 + 含大写)= 工程语言。`\b` 锚定避免误命中 PascalCase
+// 品牌/金融词的子串(StockQ→tockQ、OpenAI→penAI、YoY→oY 等):那些前一字符是字母、无词边界。
+const CAMEL_CASE = /\b[a-z][a-z0-9]*[A-Z][A-Za-z0-9]*/g;
+// 显式登记的 camelCase 豁免(确属编辑/品牌、非工程字段)。尽量保持极小。
+const CAMEL_CASE_ALLOW = new Set([]);
+
 // 显式登记的"可审计标识符"白名单 —— 这些是 External AI 溯源/审计块里有意保留给审计核对的
 // 标识符(owner 决定:字段名标签已中文化,代号本身作为标识符保留)。新增登记须是确属"审计溯源
 // 用途"的代号,不是图省事放行普通工程枚举。
@@ -63,6 +69,11 @@ function scanText(text, where) {
   while ((m = SNAKE_CASE.exec(text))) {
     if (SNAKE_CASE_ALLOW.has(m[0])) continue;
     fail(`${where}: 用户可见文案直显 snake_case 工程代号 '${m[0]}' — 改成中文标签`);
+  }
+  CAMEL_CASE.lastIndex = 0;
+  while ((m = CAMEL_CASE.exec(text))) {
+    if (CAMEL_CASE_ALLOW.has(m[0])) continue;
+    fail(`${where}: 用户可见文案直显 camelCase 工程字段名 '${m[0]}' — 改成中文标签`);
   }
 }
 

@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=frontend-zh-copy-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-zh-copy-1';
-import { MODULE_LABELS } from './decision.js?v=frontend-zh-copy-1';
+} from './config.js?v=frontend-zh-copy-2';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-zh-copy-2';
+import { MODULE_LABELS } from './decision.js?v=frontend-zh-copy-2';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1018,11 +1018,12 @@ function renderMacroDriversPillars({ radarData }) {
 
     const reserveT = asNumber(fed.reserveBalances) !== null ? (asNumber(fed.reserveBalances) / 1000000).toFixed(2) : '—';
     const repoBp = signedFixedWithZero(asNumber(fed.bgcrSofrSpread), 0);
-    setLeafText('pillar-1-text', `${fed.regime || '—'}。WALCL / reserveBalances ${reserveT}T / repo BGCR-SOFR ${repoBp}bp / SOFR-EFFR 锚定。ON RRP: ${fed.onRrpLevel || '—'}。`);
+    setLeafText('pillar-1-text', `${fed.regime || '—'}。美联储总资产(WALCL) / 银行准备金 ${reserveT}T / 回购利差 BGCR-SOFR ${repoBp}bp / SOFR-EFFR 锚定。隔夜逆回购: ${fed.onRrpLevel || '—'}。`);
 
     const policySpread = asNumber(policy.futureMinusTargetMid);
     const policyBp = signedFixedWithZero(policySpread !== null ? policySpread * 100 : null, 1);
-    setLeafText('pillar-2-text', `market vs 委员分歧。futureMinusTargetMid ${policyBp}bp,policy tone: ${policy.policyTone || '—'}。`);
+    const toneZh = ({ hawkish: '鹰派', dovish: '鸽派', neutral: '中性' })[policy.policyTone] || policy.policyTone || '—';
+    setLeafText('pillar-2-text', `市场与委员分歧。期货隐含与目标中值差 ${policyBp}bp,政策基调: ${toneZh}。`);
 
     const curveSpread = asNumber(curve.t10y2y);
     const curveBp = signedFixedWithZero(curveSpread !== null ? curveSpread * 100 : null, 0);
@@ -1260,7 +1261,7 @@ function renderC8Geopolitical({ radarData, worldOrderStressData }) {
     setBadge('c8-geo-badge', geoTone);
     if (geoScore !== null) setLeafText('c8-geo-number', String(Math.round(geoScore)));
     const geoTrend = trendArrow(asNumber(radarData?.moduleTrends?.geopolitical));
-    setLeafText('c8-geo-aux', `6 底层模块之一 · moduleTrends 显示 ${geoTrend}`);
+    setLeafText('c8-geo-aux', `6 底层模块之一 · 模块趋势 ${geoTrend}`);
     if (geoScore !== null) {
       setLeafText('c8-geo-note', `底层地缘评分 ${Math.round(geoScore)},直接计入主评分。与世界秩序压力(只做修正、不计分)不是一回事。`);
     }
@@ -1443,7 +1444,7 @@ function renderC1InflationEnergy({ radarData }) {
     if (crack !== null) setLeafText('c1-crack-number', crack.toFixed(2));
     const crackChange = asNumber(brentLayer.crackSpread4wChange);
     if (crackChange !== null) {
-      setLeafText('c1-crack-aux', `ULSD × 42 − Brent · crackSpread4wChange ${signedNumber(crackChange, 2)}`);
+      setLeafText('c1-crack-aux', `ULSD × 42 − Brent · 4 周变化 ${signedNumber(crackChange, 2)}`);
     }
     if (brentLayer.crackSpreadRegime) {
       setLeafText('c1-crack-note', `炼油利润扩张说明能源向汽油 / 柴油传导。Brent → CPI 的中间证据。regime: ${brentLayer.crackSpreadRegime}。`);
@@ -1808,7 +1809,7 @@ function renderC2GlobalLiquidity({ radarData }) {
     setIndicatorStatus('c2-liquidity-status', 'c2-liquidity-badge', liquidityTone);
     const reserves = asNumber(fed.reserveBalances);
     if (reserves !== null) setLeafText('c2-liquidity-number', formatT(reserves));
-    if (fed.regime) setLeafText('c2-liquidity-aux', `银行准备金 reserveBalances · regime: ${fed.regime}`);
+    if (fed.regime) setLeafText('c2-liquidity-aux', `银行准备金 · 状态: ${fed.regime}`);
     const walcl = asNumber(fed.walcl);
     if (walcl !== null && asNumber(fed.walcl4wChange) !== null) {
       setLeafText('c2-liquidity-walcl', `${formatT(walcl)}T · 4w ${formatPct(fed.walcl4wChange, 1)}`);
@@ -2011,7 +2012,7 @@ function renderC3CreditCorporate({ radarData }) {
     const igChange = asNumber(credit.igOas1dChange);
     const igHyRatio = asNumber(credit.igHyRatio);
     if (igChange !== null && igHyRatio !== null) {
-      setLeafText('c3-ig-aux', `igOas1dChange ${formatBps(igChange, 0)} · igHyRatio ${igHyRatio.toFixed(2)}`);
+      setLeafText('c3-ig-aux', `1 日变化 ${formatBps(igChange, 0)} · 投资级/高收益比 ${igHyRatio.toFixed(2)}`);
     }
 
     const nfciTone = nfciToneFromRegime(credit.nfciRegime);
@@ -2020,7 +2021,7 @@ function renderC3CreditCorporate({ radarData }) {
     if (nfci !== null) setLeafText('c3-nfci-number', nfci.toFixed(3));
     const nfciChange = asNumber(credit.nfci4wChange);
     if (nfciChange !== null && credit.nfciRegime) {
-      setLeafText('c3-nfci-aux', `nfci4wChange ${signedNumber(nfciChange, 3)} · regime: ${credit.nfciRegime}`);
+      setLeafText('c3-nfci-aux', `4 周变化 ${signedNumber(nfciChange, 3)} · 状态: ${credit.nfciRegime}`);
     }
     if (nfci !== null && credit.nfciRegime) {
       setLeafText('c3-nfci-note', `NFCI 汇总 100+ 跨市场信号(信用 / 流动性 / 杠杆)。方向反转：正值=收紧。当前 ${nfci.toFixed(3)},${credit.nfciRegime}。`);
@@ -2039,7 +2040,7 @@ function renderC3CreditCorporate({ radarData }) {
     } else {
       const intervalChange = signedPercentFromDecimal(privateCredit.intervalFundNav4wChange, 1);
       if (privateCredit.intervalFundNavSymbol && intervalChange) {
-        setLeafText('c3-private-aux', `${privateCredit.intervalFundNavSymbol} intervalFundNav · 4w ${intervalChange}`);
+        setLeafText('c3-private-aux', `${privateCredit.intervalFundNavSymbol} 区间基金净值 · 4w ${intervalChange}`);
       }
     }
     if (asNumber(privateCredit.bdcEtfPrice) !== null && signedPercentFromDecimal(privateCredit.bdcEtf4wChange, 1)) {
@@ -2059,10 +2060,10 @@ function renderC3CreditCorporate({ radarData }) {
     if (delinquency !== null) setLeafText('c3-cre-number', delinquency.toFixed(2));
     const delinquencyChange = asNumber(cre.creDelinquencyRateQoQChange);
     if (delinquencyChange !== null && cre.creStressRegime) {
-      setLeafText('c3-cre-aux', `creDelinquencyRate · QoQ ${formatBps(delinquencyChange, 0)} · regime: ${cre.creStressRegime}`);
+      setLeafText('c3-cre-aux', `商业地产贷款违约率 · QoQ ${formatBps(delinquencyChange, 0)} · 状态: ${cre.creStressRegime}`);
     }
-    if (delinquency !== null) setLeafText('c3-cre-delinquency', `creDelinquencyRate ${delinquency.toFixed(2)}%`);
-    if (asNumber(cre.creChargeOffRate) !== null) setLeafText('c3-cre-chargeoff', `creChargeOffRate ${cre.creChargeOffRate.toFixed(2)}%`);
+    if (delinquency !== null) setLeafText('c3-cre-delinquency', `${delinquency.toFixed(2)}%`);
+    if (asNumber(cre.creChargeOffRate) !== null) setLeafText('c3-cre-chargeoff', `${cre.creChargeOffRate.toFixed(2)}%`);
     if (asNumber(cre.sloosCreNonfarmNonresidentialTightening) !== null) setLeafText('c3-cre-sloos-nonfarm', signedNumber(cre.sloosCreNonfarmNonresidentialTightening, 1));
     if (asNumber(cre.sloosCreConstructionTightening) !== null) setLeafText('c3-cre-sloos-construction', signedNumber(cre.sloosCreConstructionTightening, 1));
     if (asNumber(cre.sloosCreMultifamilyTightening) !== null) setLeafText('c3-cre-sloos-multifamily', signedNumber(cre.sloosCreMultifamilyTightening, 1));
@@ -2088,7 +2089,7 @@ function renderC4UsEconomyTemperature({ radarData }) {
     const claimsAvg = asNumber(employment.initialClaims4wAverage);
     const claimsChange = signedK(employment.initialClaims4wChange);
     if (claimsAvg !== null && claimsChange) {
-      setLeafText('c4-employment-aux', `initialClaims · 4w average ${formatK(claimsAvg)}k · 4w change ${claimsChange}`);
+      setLeafText('c4-employment-aux', `初请失业金 · 4 周均值 ${formatK(claimsAvg)}k · 4 周变化 ${claimsChange}`);
       setLeafText('c4-employment-claims-change', claimsChange);
     }
     if (asNumber(employment.continuingClaims) !== null && asNumber(employment.continuingClaims4wAverage) !== null) {
@@ -2113,7 +2114,7 @@ function renderC4UsEconomyTemperature({ radarData }) {
     const realYoy = signedPercentFromDecimal(retail.cartsRealYoY, 1);
     if (nominalYoy) setLeafText('c4-consumer-number', nominalYoy.replace('%', ''));
     if (realYoy) {
-      setLeafText('c4-consumer-aux', `cartsNominal · real ${realYoy} YoY`);
+      setLeafText('c4-consumer-aux', `名义零售(CARTS) · 实际 ${realYoy} YoY`);
       setLeafText('c4-consumer-real', realYoy);
     }
     if (asNumber(retail.segmentDiffusionPct) !== null) {
@@ -2372,7 +2373,7 @@ function renderDetailData({ radarData }) {
     if (asNumber(realtime.healthScore) !== null) {
       setLeafText('detail-health-score', `健康度 ${Math.round(realtime.healthScore)}/100`);
     }
-    if (realtime.sourceMode) setLeafText('detail-health-source-mode', `实时输入 ${sourceModeZh(realtime.sourceMode)}`);
+    if (realtime.sourceMode) setLeafText('detail-health-source-mode', `${sourceModeZh(realtime.sourceMode)}输入`);
     const runAt = formatUtcMinute(realtime.capturedAt || realtime.updatedAt);
     if (runAt) setLeafText('detail-health-run-at', runAt);
     // P3-18 WIRE batch B/C/D: data-health appendix prose + sidebar dd + Fed liquidity mirror
@@ -2407,10 +2408,10 @@ function renderDetailData({ radarData }) {
     // recovery booleans (batch D) — false must not be guarded away
     const recovery = radarData.recovery || {};
     if (typeof recovery.degradedMode === 'boolean') {
-      setLeafText('detail-health-degraded-mode', String(recovery.degradedMode));
+      setLeafText('detail-health-degraded-mode', recovery.degradedMode ? '是' : '否');
     }
     if (typeof recovery.safeOutput === 'boolean') {
-      setLeafText('detail-health-safe-output', String(recovery.safeOutput));
+      setLeafText('detail-health-safe-output', recovery.safeOutput ? '是' : '否');
     }
 
     // 关键缺失 / fallback counts (batch D) — live from warningSystem (criticalMissing / fallbackCount)
@@ -2603,7 +2604,8 @@ function renderWorldOrderStress({ worldOrderStressData }) {
     for (let i = 0; i < 3; i += 1) {
       const driver = drivers[i];
       if (!driver) continue;
-      setLeafText(`wo-driver-${i + 1}`, `${driver.labelZh || driver.dimensionKey || `driver-${i + 1}`} · ${driver.score ?? '—'}`);
+      const driverLabel = textValue(driver.labelZh) || textValue(driver.dimensionKey) || `驱动 ${i + 1}`;
+      setLeafText(`wo-driver-${i + 1}`, `${driverLabel} · ${driver.score ?? '—'}`);
     }
     if (Array.isArray(wo.warnings) && wo.warnings.length > 0) {
       setLeafText('wo-warning-boundary', wo.warnings[0]);
