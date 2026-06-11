@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=visual-unify-2';
+﻿import { fmtNumSafe } from './config.js?v=visual-unify-3';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

@@ -598,6 +598,11 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
   卡顶 4px 红/黄/绿状态条(同原版 indicator status-bar)、数字 20→26px display。
   布局与信息形态不变;"全卡片化"方案经评估否决(矩阵/叙事/图表的信息形态不适配
   卡片网格),统一手段 = 页眉/边框/状态条三条语法。
+- 2026-06-11(三批)同套语法扩展到 ODP 一级 section 与 5 个折叠附录(纯 CSS):
+  `.editorial-section-header` 统一加 2px 实墨下边框(覆盖全部一级 section 含 ODP);
+  折叠附录 `details.editorial-folded-content` 外框升级为 1px 实墨(原仅上下线,
+  保留 4px 墨色上缘)、summary 18px/700→21px/900、展开态 summary 获 2px 实墨
+  下边框;窄屏(≤600px,横向 padding 归零)去侧边框防贴字。折叠行为/DOM 不变。
 
 ---
 

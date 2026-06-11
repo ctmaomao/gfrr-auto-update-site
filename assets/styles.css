@@ -40,7 +40,8 @@
   .dashboard-jump-nav a.new { color: var(--risk-green); font-weight: 600; }
 
   .editorial-section { margin: 40px 0; border-top: 4px solid var(--section-accent, var(--risk-red)); border-bottom: 1px solid var(--paper-line); padding: 24px 28px 20px 28px; background: var(--paper-bg); }
-  .editorial-section-header { margin-bottom: 18px; }
+  /* 一级 section 页眉统一 Bubble Watch 分类页眉语法:2px 实墨下边框(含 ODP 等全部 editorial-section) */
+  .editorial-section-header { margin-bottom: 18px; border-bottom: 2px solid var(--paper-ink); padding-bottom: 10px; }
   .section-kicker { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.28em; color: var(--paper-muted); text-transform: uppercase; margin-bottom: 6px; }
   .section-title { display: block; font-family: var(--font-display); font-size: clamp(22px, 3vw, 30px); font-weight: 900; line-height: 1.2; letter-spacing: -0.01em; color: var(--paper-ink); }
   .section-note { display: block; font-family: var(--font-serif); font-size: 13px; line-height: 1.7; color: var(--paper-muted); margin-top: 6px; }
@@ -259,8 +260,11 @@
   .heatmap-cell .risk-score { font-family: var(--font-mono); font-size: 11px; opacity: 0.85; }
   .heatmap-cell .note { font-family: var(--font-serif); font-size: 11px; line-height: 1.5; opacity: 0.9; }
 
-  details.editorial-folded-content { margin: 32px 0; padding: 24px 28px; border-top: 4px solid var(--paper-ink); border-bottom: 1px solid var(--paper-line); background: var(--paper-bg); }
-  details.editorial-folded-content > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; font-family: var(--font-display); font-size: 18px; font-weight: 700; }
+  /* 折叠附录采用 Bubble Watch 卡片语法:实墨外框(原仅上下线)+ 900 字重标题,
+     展开时 summary 获得 2px 实墨下边框(同分类页眉);布局/折叠行为不变 */
+  details.editorial-folded-content { margin: 32px 0; padding: 24px 28px; border: 1px solid var(--paper-ink); border-top: 4px solid var(--paper-ink); background: var(--paper-bg); }
+  details.editorial-folded-content > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; font-family: var(--font-display); font-size: 21px; font-weight: 900; letter-spacing: -0.01em; }
+  details.editorial-folded-content[open] > summary { border-bottom: 2px solid var(--paper-ink); padding-bottom: 10px; margin-bottom: 16px; }
   details.editorial-folded-content > summary::-webkit-details-marker { display: none; }
   details.editorial-folded-content > summary em { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 0.7em; margin-left: 8px; color: var(--paper-muted); }
   details.editorial-folded-content .fold-marker { font-family: var(--font-mono); font-weight: 600; color: var(--paper-muted); }
@@ -431,7 +435,8 @@
        仅去横向 padding,纵向节奏与上下边框不动;container 的 20px 仍作屏幕边距。*/
     .editorial-section { padding-left: 0; padding-right: 0; }
     .editorial-section-body { padding-left: 0; padding-right: 0; }
-    details.editorial-folded-content { padding-left: 0; padding-right: 0; }
+    /* 横向 padding 归零后侧边墨框会贴字,窄屏只保留上下框线 */
+    details.editorial-folded-content { padding-left: 0; padding-right: 0; border-left: none; border-right: none; }
     /* 根因:.macro-overview-shell 是隐式 auto 列的 grid,会被最宽子块
        (signal-layers 等的 min-content)撑出容器 → 整页横向溢出。
        约束列到容器宽 + 子块允许收缩,首屏与所有 shell 子块都回到视口内。*/

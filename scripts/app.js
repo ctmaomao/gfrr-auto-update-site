@@ -7,7 +7,7 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'visual-unify-2';
+const APP_VERSION = 'visual-unify-3';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
 const OIL_DIRECTIONAL_URL = `./data/oil-directional-pressure.json?v=${APP_VERSION}`;
@@ -131,7 +131,7 @@ async function main() {
 
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=visual-unify-2');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=visual-unify-3');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData });
   } catch (error) {
     console.error('[app] Failed to import / run renderMacroOverview:', error);
