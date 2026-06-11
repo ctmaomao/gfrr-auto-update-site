@@ -603,6 +603,9 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
   折叠附录 `details.editorial-folded-content` 外框升级为 1px 实墨(原仅上下线,
   保留 4px 墨色上缘)、summary 18px/700→21px/900、展开态 summary 获 2px 实墨
   下边框;窄屏(≤600px,横向 padding 归零)去侧边框防贴字。折叠行为/DOM 不变。
+  补:嵌套在一级 section 内的折叠块(如 ODP「证据与详情」)**不加侧边框**——
+  墨框语法只用于画布上的独立单元(顶级附录/卡片),section 内部用横线分隔,
+  避免「框中框」失调(owner 发现并拍板)。
 
 ---
 

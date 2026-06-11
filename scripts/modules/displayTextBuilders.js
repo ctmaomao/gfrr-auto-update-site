@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=visual-unify-3';
+﻿import { fmtNumSafe } from './config.js?v=visual-unify-4';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

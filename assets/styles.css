@@ -263,6 +263,10 @@
   /* 折叠附录采用 Bubble Watch 卡片语法:实墨外框(原仅上下线)+ 900 字重标题,
      展开时 summary 获得 2px 实墨下边框(同分类页眉);布局/折叠行为不变 */
   details.editorial-folded-content { margin: 32px 0; padding: 24px 28px; border: 1px solid var(--paper-ink); border-top: 4px solid var(--paper-ink); background: var(--paper-bg); }
+  /* 嵌套在一级 section 内的折叠块(如 ODP「证据与详情」)不加侧边框:墨框语法
+     只用于画布上的独立单元(顶级附录/卡片);section 内部用横线分隔,
+     避免与所在 section 的无侧框形态形成「框中框」失调 */
+  .editorial-section details.editorial-folded-content { border-left: none; border-right: none; border-bottom: 1px solid var(--paper-line); }
   details.editorial-folded-content > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; font-family: var(--font-display); font-size: 21px; font-weight: 900; letter-spacing: -0.01em; }
   details.editorial-folded-content[open] > summary { border-bottom: 2px solid var(--paper-ink); padding-bottom: 10px; margin-bottom: 16px; }
   details.editorial-folded-content > summary::-webkit-details-marker { display: none; }

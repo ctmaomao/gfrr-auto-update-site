@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=visual-unify-3';
-import { formatOnRrpYiUsd } from './format.js?v=visual-unify-3';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=visual-unify-4';
+import { formatOnRrpYiUsd } from './format.js?v=visual-unify-4';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',
