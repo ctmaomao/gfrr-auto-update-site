@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=bubble-watch-tab-1';
+﻿import { fmtNumSafe } from './config.js?v=site-domain-footer-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=bubble-watch-tab-1';
+﻿import { fmtNumSafe } from './config.js?v=site-domain-footer-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

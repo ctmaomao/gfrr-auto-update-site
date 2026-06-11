@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=bubble-watch-tab-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=bubble-watch-tab-1';
-import { MODULE_LABELS } from './decision.js?v=bubble-watch-tab-1';
+} from './config.js?v=site-domain-footer-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=site-domain-footer-1';
+import { MODULE_LABELS } from './decision.js?v=site-domain-footer-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
