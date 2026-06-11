@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=frontend-zh-copy-4';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=frontend-zh-copy-4';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=bubble-watch-tab-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=bubble-watch-tab-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

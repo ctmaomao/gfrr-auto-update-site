@@ -24,6 +24,7 @@
 | [ADR-0013](0013-dev-dependencies-allowed-for-local-tools.md) | devDependencies allowed for local development tools | Accepted |
 | [ADR-0014](0014-design-md-is-ia-ground-truth.md) | DESIGN.md §4.1 is the IA ground truth; appendix sections have content boundaries | Accepted |
 | [ADR-0015](0015-move-bond-volatility-structural-gate.md) | MOVE (债券/利率波动率) enters via structural gating, not a 7th risk module | Accepted |
+| [ADR-0016](0016-bubble-watch-second-page.md) | AI 泡沫监测作为第二独立页面 + 自有周更数据管线 (display-only) | Accepted |
 
 ## Superseded
 

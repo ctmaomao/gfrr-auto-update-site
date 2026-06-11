@@ -1,0 +1,49 @@
+name: Refresh Bubble Watch
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Monday 05:30 UTC — 周一更新(美股周五收盘 + 周末研究数据落定后)
+    - cron: '30 5 * * 1'
+
+concurrency:
+  group: gfrr-bubble-watch-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          package-manager-cache: false
+
+      - run: npm ci
+
+      - name: Refresh bubble watch data
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: npm run build:bubble-watch
+        continue-on-error: true
+
+      - run: npm run check:bubble-watch
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/bubble-watch.json data/bubble-watch-history.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: refresh bubble watch"
+            git push
+          fi

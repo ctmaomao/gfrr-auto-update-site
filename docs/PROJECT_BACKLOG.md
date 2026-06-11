@@ -8,9 +8,9 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 | 项 | 当前值 |
 |---|---|
-| 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分)|
-| Cache version | `frontend-zh-copy-4` |
-| check:all 项数 | 17 顶层项 / ~57 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 8 leaf + `check:frontend-zh-copy`)|
+| 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分);**第二页面 AI 泡沫监测(`bubble-watch.html` + 周一 cron 数据管线,ADR-0016,display-only)live,与主页书签互切**|
+| Cache version | `bubble-watch-tab-1` |
+| check:all 项数 | 18 顶层项 / ~63 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 8 leaf + `check:frontend-zh-copy` + `check:bubble-watch` 6 leaf)|
 | 最后审计日期 | 2026-06-05(全站 `.md` doc-slim 审计 Batch 1a→5余项,docs-only;两大 scope-of-record 簇 External AI / Market Pricing 收口 + 三 Operating Document changelog tail 折叠,详见 Section 5 + Session Handoff)。上次系统审计 2026-06-02(Codex 只读审计 7 findings 全收口,详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |
@@ -150,6 +150,17 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **PR4b-3 ⏳ 本次 display-only 友好标签映射待落库**:结构化跨层解读区把静态英文标签(`supporting/for/stale...`)译成中文,并把 7 类 sourceLayer/field-path 引用显示为中文友好名;原 canonical id 仅保留在 `title` 供审计,JSON/schema/checker/provider/production contract 不动;asset bump `external-ai-pr4b3-1`。
 - 状态:**External AI 深化 PR0→PR4b-2 全链 live + 线上验证闭环;当前仅剩 PR4b-3 前端友好标签映射待 commit/push**。记忆见 `project_external_ai_deep_analysis`。
 
+#### P3-21: AI 泡沫监测第二页面(Bubble Watch · ADR-0016,一次性落地)
+
+来源:2026-06-11 owner 提供外部静态页 zip,要求 1:1 动态复刻 + 与主页书签互切。**display-only 独立专题页,不进 GFRR scoring/decision/execution/position**(同 CLAUDE.md 绝对规则 3/4 的同类边界)。
+
+- **数据管线**:`scripts/build-bubble-watch.mjs`(零依赖)→ `data/bubble-watch.json` + `data/bubble-watch-history.json`;周一 cron `refresh-bubble-watch.yml`(+dispatch),已登记 Pages workflow_run 清单 + push paths(`bubble-watch.html`)。23 指标 × 6 分类:**12 项实时接入**(FRED HY OAS/DFF/CPI、Yahoo SPY/RSP/全成份股广度实算、SEC EDGAR capex/FCF/NVDA 收入/RPO、multpl CAPE、SPY holdings Top-5、OpenInsider 卖买比、stockanalysis NVDA fPE),**11 项编辑/研究口径** = `config/bubble-watch-curated.json`(asOfDate + maxAgeDays 超期自动 STALE)。全部 fail-closed 沿用带日期快照。
+- **打分 1:1 复刻并机器锁定**:red_pct 四档(25/40/60)+ 加权风险分 (红+0.5黄)/23 + 分类强制升级(红灯占比 ≥50% 的分类 ≥2 个 → 至少「高风险预警」);`check:bubble-watch`(6 leaf,入 check:all 第 18 项)对 verdict 全量 replay + provenance/stale 一致性 + boundary(app.js/index.html 不读专题数据、build 不碰 radar-data/realtime、双侧书签存在)。
+- **前端**:`bubble-watch.html` 独立单文件页(内联 CSS/JS,原版报纸排版 1:1;Chart.js → 手写 SVG 平滑双线 + tooltip,守 ADR-0001 零依赖);历史种子取自上游 ai-bubble-monitor Issue 001-009 真实序列,WoW 翻灯按上期 statuses 比对。
+- **书签互切**:`.page-bookmarks` 纯 CSS 彩色丝带(index 侧在 `assets/styles.css`、专题侧内联,双侧同构契约见 DESIGN.md §4.4)。
+- **已知边界**:SEC EDGAR 对本地网络不稳(UA 合规已证,CI US runner 为准);Top-5 为 SPY 持仓口径、广度为全成份实算(非 Barchart S5FI 官方序列),均已在 source_name/note 标注;编辑 11 项更新 = 改 curated config 后触发 workflow。
+- 状态:**全链落地待首轮 CI 实跑验证**(本地 build 6/12 auto live,EDGAR/FRED 项待 CI 补全)。
+
 ---
 
 ## Section 3 · Completed Items
@@ -283,10 +294,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于(2026-06-11 — 第三轮中文化清扫收口)**: frontend zh-copy 第三轮清扫(16 文件):JS 数据枚举值在 renderer 层显中文(如策略状态 `Defensive`→「防守(Defensive)」、narrative `score/ACTIVE`→「分数/已激活」)+ index.html 双语标签与金融缩写中文释义(HY OAS/VIX/NFCI/SLOOS 等加中文注解);asset bump `frontend-zh-copy-2`→`frontend-zh-copy-4`(docs 快照扇出由 bump 工具自动同步,realtime.js `?v=` 正常含入——非冻结);check:all 17 顶层项全绿后提交。期间(2026-06-07~10,见 git log)已完成但旧 Handoff 未记:External AI PR4a/PR4b 全收口线上实测通过、ODP energy stress 证据展示、Treasury/TGA+Fed liquidity 回测交叉审计定案(owner 拍板不接 TGA/不接新公式,只做 regime-aware recalibration;brief 已落 main `docs/`)。
-- **当前进行中(2026-06-11)**: 无。
-- **下一步建议(2026-06-11)**: 唯一已知开放方向 = TGA/Fed liquidity 的 **regime-aware recalibration 实施**(brief 已在 main,实施未开、须 owner 立项);无其他 pending。
-- **阻塞或等待(2026-06-11)**: 无。
+- **上次会话结束于(2026-06-11 · 续 — Bubble Watch 第二页面全链落地)**: P3-21 一次性落地:`bubble-watch.html`(1:1 复刻外部原版,内联 CSS/JS + 手写 SVG 趋势图)+ `scripts/build-bubble-watch.mjs`(23 指标,12 实时 / 11 curated,fail-closed)+ `config/bubble-watch-curated.json` + `data/bubble-watch{,-history}.json`(本地实跑产出,6/12 auto live,EDGAR/FRED 项待 CI)+ `check:bubble-watch` 6 leaf 入 check:all(17→18)+ `refresh-bubble-watch.yml` 周一 cron + Pages 清单登记 + 两页 `.page-bookmarks` 书签互切(asset bump 至 `bubble-watch-tab-1`)+ DESIGN §4.4 / DATA_CONTRACT / DATA_SOURCES / ADR-0016 收口。同日早段:zh-copy 第三轮清扫已 push(`feat(frontend): third-pass Chinese-first sweep`)。
+- **当前进行中(2026-06-11 · 续)**: 无(Bubble Watch 待首轮 CI 实跑补全 EDGAR/FRED 自动项)。
+- **下一步建议(2026-06-11 · 续)**: ① 手动 dispatch `Refresh Bubble Watch` 验 12/12 auto + Pages 上线实测;② TGA/Fed liquidity regime-aware recalibration 实施(brief 已在 main,须 owner 立项)。
+- **阻塞或等待(2026-06-11 · 续)**: 无技术阻塞。
 
 ---
 

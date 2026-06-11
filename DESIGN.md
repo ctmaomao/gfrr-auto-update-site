@@ -218,6 +218,15 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 4. 同步更新 `index.html` 静态骨架与对应 render module
 5. PR 必须包含 IA 变更的视觉对比截图
 
+### 4.4 第二页面(bubble-watch.html)与页面切换书签
+
+站点自 2026-06-11 起有两个独立页面(见 ADR-0016):
+
+- `index.html` — 全球金融风险雷达(本合约 §4.1-4.3 的 IA 锁定仅约束此页)。
+- `bubble-watch.html` — AI 泡沫监测 · The Bubble Watch,**独立单文件页**(内联 CSS + 内联渲染 JS,1:1 复刻外部原版的报纸排版),自带视觉契约,不受 §4.1 一级阅读顺序约束;数据只读 `data/bubble-watch.json`,display-only,不进雷达打分/决策链。
+- 两页通过左上角 `.page-bookmarks` 彩色书签丝带互切:默认缩在角落只露带尾(当前页饱和度更高、带光环圆点),hover / 键盘聚焦滑出显示页名;纯 CSS、无 JS。组件契约**双侧同构**:`assets/styles.css`(index 侧)与 `bubble-watch.html` 内联(专题侧)各持一份,**改任一侧必须同步另一侧**,由 `check:bubble-watch` 的 boundary leaf 守卫两侧存在性。
+- 书签是 fixed overlay 导航,不属于 §4.1 的 section,不进 dashboard-jump-nav。
+
 ---
 
 ## 5. 组件规范（核心组件的 HTML 结构和样式）

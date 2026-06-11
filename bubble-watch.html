@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="AI 泡沫监测 - 23 项领先指标周度评级 / The Bubble Watch - weekly AI bubble indicator briefing">
+<title>AI 泡沫监测 · The Bubble Watch</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #FBF7F0;
+    --ink: #1A1815;
+    --red: #7C1D1D;
+    --yellow: #A8761A;
+    --green: #1F4D2C;
+    --muted: #666;
+    --warm: #3A3530;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+    min-height: 100vh;
+  }
+  .mono { font-family: "IBM Plex Mono", monospace; }
+  .display { font-family: "Playfair Display", "Noto Serif SC", serif; }
+  .container { max-width: 1280px; margin: 0 auto; padding: clamp(20px, 4vw, 48px); }
+
+  /* Masthead */
+  header.masthead { border-bottom: 3px double var(--ink); padding-bottom: 20px; margin-bottom: 32px; }
+  .masthead-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.3em; color: var(--red); margin-bottom: 8px; }
+  h1.title { font-family: "Playfair Display", "Noto Serif SC", serif; font-size: clamp(36px, 6vw, 64px); font-weight: 900; line-height: 1.05; margin: 0; letter-spacing: -0.02em; }
+  h1.title em { font-style: italic; font-weight: 400; }
+  .issue-meta { text-align: right; font-family: "IBM Plex Mono", monospace; font-size: 12px; line-height: 1.8; }
+  .issue-meta .small { margin-top: 8px; color: var(--muted); }
+
+  /* Headline */
+  .headline { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 32px; align-items: stretch; margin-bottom: 48px; }
+  @media (max-width: 720px) { .headline { grid-template-columns: 1fr; } }
+  .big-number {
+    background: var(--ink); color: var(--bg); padding: 32px;
+    display: flex; flex-direction: column; justify-content: space-between; min-height: 320px;
+  }
+  .big-number .label { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.2em; opacity: 0.6; }
+  .big-number .value {
+    font-family: "Playfair Display", serif; font-size: clamp(80px, 14vw, 144px);
+    font-weight: 900; line-height: 0.9; letter-spacing: -0.04em;
+  }
+  .big-number .value sup { font-size: 0.4em; vertical-align: super; }
+  .big-number .breakdown { font-family: "IBM Plex Mono", monospace; font-size: 12px; margin-top: 12px; opacity: 0.7; line-height: 1.6; }
+  .big-number .footer { border-top: 1px solid rgba(251,247,240,0.2); padding-top: 12px; font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.15em; opacity: 0.5; }
+
+  .verdict { display: flex; flex-direction: column; justify-content: space-between; }
+  .verdict .label { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--red); margin-bottom: 12px; }
+  .verdict h2 { font-family: "Playfair Display", "Noto Serif SC", serif; font-size: clamp(28px, 4vw, 42px); font-weight: 700; line-height: 1.15; margin: 0 0 16px 0; letter-spacing: -0.01em; }
+  .verdict p { font-size: 17px; line-height: 1.7; margin: 0; color: var(--warm); }
+  .verdict p em { font-style: italic; }
+  .verdict .footnote { margin-top: 24px; border-top: 1px solid var(--ink); padding-top: 16px; font-family: "IBM Plex Mono", monospace; font-size: 11px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+  /* Threshold scale */
+  section.threshold { margin-bottom: 48px; padding: 4px 0; }
+  .threshold-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
+  .threshold-header h3 { font-family: "Playfair Display", "Noto Serif SC", serif; font-size: 22px; font-weight: 700; margin: 0; }
+  .threshold-header h3 em { font-style: italic; font-weight: 400; font-size: 0.7em; }
+  .threshold-header .now { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.1em; }
+  .threshold-bar-wrap { position: relative; padding-top: 28px; }
+  .threshold-bar { position: relative; height: 64px; border: 1px solid var(--ink); display: flex; overflow: visible; }
+  .threshold-bar .zone { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 6px 4px; text-align: center; color: #FBF7F0; gap: 3px; min-width: 0; }
+  .threshold-bar .zone.t-green  { background: #1F4D2C; }
+  .threshold-bar .zone.t-yellow { background: #A8761A; }
+  .threshold-bar .zone.t-orange { background: #C25E2A; }
+  .threshold-bar .zone.t-red    { background: #7C1D1D; }
+  .threshold-bar .zone-label { font-family: "Noto Serif SC", serif; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; line-height: 1.1; }
+  .threshold-bar .zone-pct { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.08em; opacity: 0.9; }
+  .threshold-bar .marker { position: absolute; top: -8px; bottom: -8px; width: 2px; background: var(--ink); transform: translateX(-50%); z-index: 2; }
+  .threshold-bar .marker::after { content: ""; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid var(--ink); }
+  .threshold-bar .marker .marker-label { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); font-family: "IBM Plex Mono", monospace; font-size: 10px; background: var(--ink); color: var(--bg); padding: 3px 7px; white-space: nowrap; letter-spacing: 0.05em; font-weight: 600; }
+  /* Override marker — 分类强制升级把判读推高于原始 red% 档位时出现 */
+  .threshold-bar .marker.override { background: #C25E2A; }
+  .threshold-bar .marker.override::after { bottom: auto; top: -6px; border-top: none; border-bottom: 8px solid #C25E2A; }
+  .threshold-bar .marker.override .marker-label { top: auto; bottom: -24px; background: #C25E2A; }
+  .threshold-bar-wrap.has-override { padding-bottom: 28px; }
+  @media (max-width: 600px) {
+    .threshold-bar .zone-label { font-size: 11px; }
+    .threshold-bar .zone-pct { font-size: 9px; }
+  }
+
+  /* Trend */
+  section.trend { margin-bottom: 48px; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 24px 0; }
+  .trend-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
+  .trend-header h3 { font-family: "Playfair Display", serif; font-size: 22px; font-weight: 700; margin: 0; }
+  .trend-header h3 em { font-style: italic; font-weight: 400; font-size: 0.7em; }
+  .trend-legend { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
+  #trend-chart-wrap { position: relative; height: 220px; }
+  #trend-chart-wrap svg { display: block; }
+  #trend-tooltip { position: absolute; display: none; background: #1A1815; color: #FBF7F0; font-family: "IBM Plex Mono", monospace; font-size: 11px; padding: 6px 9px; pointer-events: none; white-space: nowrap; z-index: 5; line-height: 1.6; }
+
+  /* Categories */
+  section.category { margin-bottom: 40px; }
+  .category-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; border-bottom: 2px solid var(--ink); padding-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+  .category-header .titles { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  .category-header h3 { font-family: "Playfair Display", "Noto Serif SC", serif; font-size: 28px; font-weight: 900; margin: 0; letter-spacing: -0.01em; }
+  .category-header .en { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--muted); }
+  .category-header .counts { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--muted); }
+  .counts .red { color: var(--red); }
+  .counts .yellow { color: var(--yellow); }
+
+  .indicator-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 16px; }
+  article.indicator { border: 1px solid var(--ink); background: var(--bg); padding: 18px; position: relative; display: flex; flex-direction: column; gap: 10px; }
+  article.indicator .status-bar { position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
+  .status-bar.red { background: var(--red); }
+  .status-bar.yellow { background: var(--yellow); }
+  .status-bar.green { background: var(--green); }
+  article.indicator .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-top: 4px; }
+  article.indicator .name-en { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--muted); }
+  article.indicator .name-zh { font-family: "Noto Serif SC", serif; font-size: 15px; font-weight: 600; margin-top: 2px; }
+  .badge { font-family: "IBM Plex Mono", monospace; font-size: 10px; padding: 4px 8px; letter-spacing: 0.1em; font-weight: 600; white-space: nowrap; color: var(--bg); }
+  .badge.red { background: var(--red); }
+  .badge.yellow { background: var(--yellow); }
+  .badge.green { background: var(--green); }
+  article.indicator .number { font-family: "Playfair Display", serif; font-size: 38px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+  article.indicator .number .unit { font-size: 0.5em; font-weight: 400; margin-left: 2px; }
+  article.indicator .note { font-family: "Noto Serif SC", serif; font-size: 13px; color: var(--warm); line-height: 1.55; font-style: italic; }
+  article.indicator .meta { border-top: 1px dashed #999; padding-top: 8px; font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
+  article.indicator.stale::after { content: "STALE"; position: absolute; top: 8px; right: 8px; font-family: "IBM Plex Mono", monospace; font-size: 9px; padding: 2px 5px; background: #ddd; color: #555; letter-spacing: 0.1em; }
+
+  /* WoW */
+  section.wow { margin-bottom: 40px; background: var(--ink); color: var(--bg); padding: 28px; }
+  section.wow .label { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.2em; opacity: 0.6; margin-bottom: 16px; }
+  .wow-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 20px; }
+  .wow-item .tag { font-family: "IBM Plex Mono", monospace; font-size: 10px; margin-bottom: 4px; }
+  .wow-item .tag.up { color: var(--yellow); }
+  .wow-item .tag.down { color: #7DB37C; }
+  .wow-item .tag.flat { color: #999; }
+  .wow-item .text { font-family: "Noto Serif SC", serif; font-size: 14px; line-height: 1.6; }
+
+  /* Watch */
+  section.watch { margin-bottom: 48px; }
+  section.watch h3 { font-family: "Playfair Display", "Noto Serif SC", serif; font-size: 24px; font-weight: 700; margin: 0 0 16px 0; border-bottom: 1px solid var(--ink); padding-bottom: 8px; }
+  section.watch h3 em { font-style: italic; font-weight: 400; }
+  .watch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+  .watch-item { border-left: 3px solid var(--red); padding-left: 14px; }
+  .watch-item .icon { font-family: "Playfair Display", serif; font-size: 20px; font-weight: 700; color: var(--red); margin-bottom: 4px; }
+  .watch-item .title { font-family: "Noto Serif SC", serif; font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .watch-item .desc { font-family: "Noto Serif SC", serif; font-size: 13px; line-height: 1.6; color: var(--warm); }
+
+  /* Footer */
+  footer.method { border-top: 3px double var(--ink); padding-top: 24px; margin-top: 48px; font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); line-height: 1.7; }
+  .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 24px; }
+  .method-grid h4 { color: var(--ink); font-weight: 600; margin: 0 0 6px 0; font-family: inherit; font-size: 11px; }
+
+  /* Loading state */
+  .loading { padding: 80px 0; text-align: center; font-family: "IBM Plex Mono", monospace; color: var(--muted); }
+  .error { padding: 40px; background: #fee; border-left: 4px solid var(--red); margin: 32px 0; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--red); }
+
+  /* ── 页面切换书签(与 index.html 共用同一组件契约)── */
+  .page-bookmarks { position: fixed; top: 0; left: clamp(10px, 2.5vw, 30px); display: flex; gap: 10px; z-index: 1000; }
+  .page-bookmarks .pbm {
+    display: block; width: 34px; height: 128px; position: relative;
+    text-decoration: none; color: #FBF7F0;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), 50% 100%, 0 calc(100% - 10px));
+    transform: translateY(calc(-100% + 24px));
+    transition: transform .38s cubic-bezier(.34, 1.45, .64, 1), filter .2s ease;
+    box-shadow: 0 2px 6px rgba(26, 24, 21, .35);
+    filter: saturate(.82);
+  }
+  .page-bookmarks .pbm:nth-child(2) { transition-delay: .04s; }
+  .page-bookmarks .pbm-radar { background: linear-gradient(180deg, #5d1515 0%, #7C1D1D 100%); }
+  .page-bookmarks .pbm-bubble { background: linear-gradient(180deg, #7d5813 0%, #A8761A 100%); }
+  .page-bookmarks .pbm-label {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    writing-mode: vertical-rl; font-family: "Noto Serif SC", serif;
+    font-size: 13px; font-weight: 600; letter-spacing: .3em; white-space: nowrap;
+  }
+  .page-bookmarks .pbm-dot {
+    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+    width: 7px; height: 7px; border-radius: 50%;
+    background: rgba(251, 247, 240, .85);
+  }
+  .page-bookmarks .pbm-active { filter: saturate(1.1); }
+  .page-bookmarks .pbm-active .pbm-dot { box-shadow: 0 0 0 2.5px rgba(251, 247, 240, .3); }
+  .page-bookmarks:hover .pbm, .page-bookmarks:focus-within .pbm { transform: translateY(0); filter: saturate(1.1); }
+  .page-bookmarks .pbm:hover { filter: saturate(1.25) brightness(1.06); }
+  .page-bookmarks .pbm:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  @media (hover: none) { .page-bookmarks .pbm { transform: translateY(calc(-100% + 46px)); } }
+  @media (prefers-reduced-motion: reduce) { .page-bookmarks .pbm { transition: none; } }
+  @media print { .page-bookmarks { display: none; } }
+</style>
+</head>
+<body>
+<nav class="page-bookmarks" aria-label="站内页面切换">
+  <a class="pbm pbm-radar" href="index.html" title="切换到 全球金融风险雷达">
+    <span class="pbm-label">风险雷达</span>
+    <span class="pbm-dot" aria-hidden="true"></span>
+  </a>
+  <a class="pbm pbm-bubble pbm-active" href="bubble-watch.html" aria-current="page" title="AI 泡沫监测(当前页)">
+    <span class="pbm-label">AI 泡沫监测</span>
+    <span class="pbm-dot" aria-hidden="true"></span>
+  </a>
+</nav>
+
+<div class="container" id="root">
+  <div class="loading">LOADING THE BUBBLE WATCH …</div>
+</div>
+
+<script>
+// 渲染逻辑 1:1 移植自原 The Bubble Watch 静态页;数据源换为本仓库自动管线
+// 产出的 data/bubble-watch.json(同 schema);趋势图以手写 SVG 替代 Chart.js(零依赖)。
+const CATEGORY_ORDER = [
+  { key: 'valuation',        zh: '估值',     en: 'VALUATION' },
+  { key: 'capital',          zh: '资金面',    en: 'CAPITAL' },
+  { key: 'market_structure', zh: '市场结构',  en: 'MARKET STRUCTURE' },
+  { key: 'credit',           zh: '信用',     en: 'CREDIT' },
+  { key: 'fundamentals',     zh: '基本面',    en: 'FUNDAMENTALS' },
+  { key: 'macro',            zh: '宏观',     en: 'MACRO' }
+];
+
+const WATCH_LIST = [
+  { icon: '①', title: 'Hyperscaler Capex 指引', desc: '任何一家 Mag7 在下次季报下调当年 capex 即转 RED——结构性顶部信号' },
+  { icon: '②', title: 'Fed 政策路径', desc: '油价/CPI 若迫使 Fed 重启加息,与 1999-2000、1845 铁路狂热顶部完全同构' },
+  { icon: '③', title: 'CoreWeave / Nebius 信用', desc: '数据中心 ABS 利差走阔 50bps+ 是 vendor financing 链条松动的最早信号' },
+  { icon: '④', title: 'OpenAI 审计师披露', desc: 'Burry 提出但未确认。任何 round-tripping 调查都是即时 RED' },
+  { icon: '⑤', title: 'Anthropic IPO 时点', desc: '若按计划推进,「AI 公司 IPO 洪流」指标可能转 RED' },
+  { icon: '⑥', title: 'Mag7 内部人减持', desc: '当前类 Thiel 案例零星出现,需观察是否扩散至 Mag7 高管' }
+];
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function statusBadge(status) {
+  const map = { red: '● RED', yellow: '◐ YELLOW', green: '○ GREEN' };
+  return `<span class="badge ${status}">${map[status] || status}</span>`;
+}
+
+const TIER_FROM_LABEL_ZH = { '系统性顶部信号': 'top', '系统性顶部': 'top', '高风险预警': 'alert', '中度警戒': 'caution', '观察期': 'observation' };
+const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
+const TIER_MID_POS = { observation: 12.5, caution: 32.5, alert: 50, top: 80 };
+
+function tierFromPct(p) {
+  if (p >= 60) return 'top';
+  if (p >= 40) return 'alert';
+  if (p >= 25) return 'caution';
+  return 'observation';
+}
+
+let lastData = null;
+
+function render(data) {
+  lastData = data;
+  const s = data.summary;
+  const indicators = data.indicators;
+  const issueNo = String(data.issue_number).padStart(3, '0');
+  const headlineColor = s.red_pct >= 60 ? '#E63946' : s.red_pct >= 40 ? '#E89B3C' : s.red_pct >= 25 ? '#F1C232' : 'var(--bg)';
+
+  // override 检测:原始档位(red_pct)vs 生效档位(verdict_label)
+  const baseTier = tierFromPct(s.red_pct);
+  const effTier = TIER_FROM_LABEL_ZH[s.verdict_label] || baseTier;
+  const overrideActive = effTier !== baseTier;
+  const overridePos = TIER_MID_POS[effTier];
+  const nowText = overrideActive
+    ? `原始 ${s.red_pct.toFixed(1)}% (${TIER_LABEL_ZH[baseTier]}) · 分类升级 → ${s.verdict_label}`
+    : `当前 ${s.red_pct.toFixed(1)}% · ${s.verdict_label}`;
+
+  const meta = data.meta || {};
+  const pipelineLine = `数据管线:${meta.auto_count ?? '—'} 项实时接入 / ${(meta.curated_count ?? 0) + (meta.fallback_count ?? 0)} 项人工研究口径 · 周一自动更新`;
+
+  const root = document.getElementById('root');
+  root.innerHTML = `
+    <header class="masthead">
+      <div class="masthead-row">
+        <div>
+          <div class="kicker">23 项指标 · 每周一更新</div>
+          <h1 class="title">AI 泡沫监测<br/><em>The Bubble Watch</em></h1>
+        </div>
+        <div class="issue-meta">
+          <div>ISSUE NO. ${issueNo}</div>
+          <div>${escapeHtml(data.as_of_date)}</div>
+          <div class="small">${s.total_indicators} INDICATORS · 6 CATEGORIES</div>
+        </div>
+      </div>
+    </header>
+
+    <section class="headline">
+      <div class="big-number">
+        <div class="label">RED LIGHT RATIO</div>
+        <div>
+          <div class="value" style="color:${headlineColor}">${s.red_pct.toFixed(1)}<sup>%</sup></div>
+          <div class="breakdown">
+            ${s.red_count} 红 / ${s.yellow_count} 黄 / ${s.green_count} 绿<br/>
+            阈值: 25% 黄 / 40% 橙 / 60% 红
+          </div>
+        </div>
+        <div class="footer">WEIGHTED RISK SCORE: ${s.weighted_risk_score.toFixed(1)}%</div>
+      </div>
+      <div class="verdict">
+        <div>
+          <div class="label">本周判读 · THIS WEEK'S VERDICT</div>
+          <h2>${escapeHtml(s.verdict_label)}</h2>
+          <p>${escapeHtml(s.verdict_desc)}</p>
+        </div>
+        <div class="footnote">
+          <span>Issue ${issueNo} · ${escapeHtml(data.as_of_date)}</span>
+          <span>对照: 2000-03 (CAPE 44.19, NDX -78%)</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="threshold">
+      <div class="threshold-header">
+        <h3>触发阈值标尺 <em>· Threshold Scale</em></h3>
+        <div class="now">${escapeHtml(nowText)}</div>
+      </div>
+      <div class="threshold-bar-wrap${overrideActive ? ' has-override' : ''}">
+        <div class="threshold-bar">
+          <div class="zone t-green" style="flex:25">
+            <span class="zone-label">观察期</span>
+            <span class="zone-pct">0–25%</span>
+          </div>
+          <div class="zone t-yellow" style="flex:15">
+            <span class="zone-label">中度警戒</span>
+            <span class="zone-pct">25–40%</span>
+          </div>
+          <div class="zone t-orange" style="flex:20">
+            <span class="zone-label">高风险预警</span>
+            <span class="zone-pct">40–60%</span>
+          </div>
+          <div class="zone t-red" style="flex:40">
+            <span class="zone-label">系统性顶部</span>
+            <span class="zone-pct">≥60%</span>
+          </div>
+          <div class="marker" style="left:${Math.min(Math.max(s.red_pct, 0.5), 99.5)}%">
+            <span class="marker-label">原始 ${s.red_pct.toFixed(1)}%</span>
+          </div>
+          ${overrideActive ? `
+          <div class="marker override" style="left:${overridePos}%">
+            <span class="marker-label">分类升级 → ${escapeHtml(s.verdict_label)}</span>
+          </div>` : ''}
+        </div>
+      </div>
+    </section>
+
+    <section class="trend">
+      <div class="trend-header">
+        <h3>红灯比例趋势 <em>· 8-Week Trend</em></h3>
+        <div class="trend-legend">
+          <span><span style="color:var(--red)">●</span> Red %</span>
+          <span><span style="color:var(--yellow)">●</span> Risk Score</span>
+          <span style="color:var(--muted)">阈值: 25 / 40 / 60</span>
+        </div>
+      </div>
+      <div id="trend-chart-wrap"><div id="trend-tooltip"></div></div>
+    </section>
+
+    ${CATEGORY_ORDER.map(cat => {
+      const items = indicators.filter(i => i.category === cat.key);
+      if (!items.length) return '';
+      const r = items.filter(i => i.status === 'red').length;
+      const y = items.filter(i => i.status === 'yellow').length;
+      return `
+        <section class="category">
+          <div class="category-header">
+            <div class="titles">
+              <h3>${cat.zh}</h3>
+              <span class="en">${cat.en}</span>
+            </div>
+            <div class="counts">
+              ${items.length} 个指标 · <span class="red">${r} 红</span> · <span class="yellow">${y} 黄</span>
+            </div>
+          </div>
+          <div class="indicator-grid">
+            ${items.map(ind => `
+              <article class="indicator${ind.stale ? ' stale' : ''}">
+                <div class="status-bar ${ind.status}"></div>
+                <div class="head">
+                  <div>
+                    <div class="name-en">${escapeHtml(ind.name_en)}</div>
+                    <div class="name-zh">${escapeHtml(ind.name_zh)}</div>
+                  </div>
+                  ${statusBadge(ind.status)}
+                </div>
+                <div class="number">${escapeHtml(ind.value_display || ind.value)}</div>
+                <div class="note">${escapeHtml(ind.note)}</div>
+                <div class="meta">
+                  <span>${escapeHtml(ind.threshold_text)}</span>
+                  <span>${escapeHtml(ind.source_name)}</span>
+                </div>
+              </article>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }).join('')}
+
+    ${(data.wow_changes && data.wow_changes.length) ? `
+      <section class="wow">
+        <div class="label">本周关键变化 · WEEK-OVER-WEEK CHANGES</div>
+        <div class="wow-grid">
+          ${data.wow_changes.map(w => {
+            const tagClass = w.type === 'status_upgrade' ? 'up' : w.type === 'status_downgrade' ? 'down' : 'flat';
+            const tagLabel = w.type === 'status_upgrade' ? '▲ 风险升高' : w.type === 'status_downgrade' ? '▼ 风险下降' : '━ 持平';
+            return `
+              <div class="wow-item">
+                <div class="tag ${tagClass}">${tagLabel}</div>
+                <div class="text">${escapeHtml(w.note)}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </section>
+    ` : ''}
+
+    <section class="watch">
+      <h3>观察清单 · <em>What to Watch</em></h3>
+      <div class="watch-grid">
+        ${WATCH_LIST.map(w => `
+          <div class="watch-item">
+            <div class="icon">${w.icon}</div>
+            <div class="title">${escapeHtml(w.title)}</div>
+            <div class="desc">${escapeHtml(w.desc)}</div>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+
+    <footer class="method">
+      <div class="method-grid">
+        <div>
+          <h4>方法论</h4>
+          <div>23 个领先指标,分 6 类。每个指标按其历史阈值评级 RED / YELLOW / GREEN。整体红灯比例 ≥60% 为系统性顶部信号;加权风险分 = (红×1.0 + 黄×0.5) / 总数。红灯占比过半的分类 ≥2 个时,判读强制升级到「高风险预警」。关键阈值锚定历史泡沫。</div>
+        </div>
+        <div>
+          <h4>历史对照</h4>
+          <div>2000 dot-com、1845 铁路狂热、1996 telecom 泡沫顶部前 6-12 个月,下列指标均闪烁: 内部人减持、capex/FCF 背离、广度恶化、循环融资、CEO 对冲表态。</div>
+        </div>
+        <div>
+          <h4>免责</h4>
+          <div>本文为框架研究,非投资建议,仅供参考,不参与平台的风险打分与决策。指标阈值随研究演进调整。Issue ${issueNo} · ${escapeHtml(data.as_of_date)}. ${escapeHtml(pipelineLine)}. <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;">English: <a href="https://bubblewatch.github.io" target="_blank" rel="noopener" style="color:var(--ink);border-bottom:1px solid var(--ink);text-decoration:none;padding-bottom:1px;">bubblewatch.github.io</a></span></div>
+        </div>
+      </div>
+    </footer>
+  `;
+
+  drawTrend(data);
+}
+
+// 手写 SVG 双线趋势图(替代 Chart.js:免外部依赖,视觉对齐原页)
+function smoothPath(pts) {
+  if (pts.length < 2) return '';
+  let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  }
+  return d;
+}
+
+function drawTrend(data) {
+  const seed = data.history_seed || [];
+  const wrap = document.getElementById('trend-chart-wrap');
+  if (!wrap || !seed.length) return;
+  const W = Math.max(320, wrap.clientWidth);
+  const H = 220;
+  const padL = 44, padR = 14, padT = 10, padB = 26;
+  const ymax = 70;
+  const x = i => padL + (seed.length === 1 ? 0 : i * (W - padL - padR) / (seed.length - 1));
+  const y = v => padT + (1 - Math.min(v, ymax) / ymax) * (H - padT - padB);
+
+  let grid = '';
+  for (let v = 0; v <= ymax; v += 10) {
+    grid += `<line x1="${padL}" y1="${y(v)}" x2="${W - padR}" y2="${y(v)}" stroke="rgba(0,0,0,0.05)" stroke-width="1"/>`;
+    grid += `<text x="${padL - 8}" y="${y(v) + 4}" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="#1A1815">${v}%</text>`;
+  }
+  // 窄屏抽稀 x 轴标签,避免周标重叠(尾点始终保留)
+  const labelStep = W < 560 ? Math.ceil(seed.length / 5) : 1;
+  let xlabels = '';
+  seed.forEach((p, i) => {
+    if (i % labelStep !== 0 && i !== seed.length - 1) return;
+    xlabels += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#1A1815">${escapeHtml(p.week)}</text>`;
+  });
+
+  const redPts = seed.map((p, i) => ({ x: x(i), y: y(p.red_pct) }));
+  const ylwPts = seed.map((p, i) => ({ x: x(i), y: y(p.risk_score) }));
+  const redDots = redPts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#7C1D1D"/>`).join('');
+  const ylwDots = ylwPts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="#A8761A"/>`).join('');
+
+  const tooltip = document.getElementById('trend-tooltip');
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="红灯比例与风险分趋势">
+      ${grid}
+      <path d="${smoothPath(ylwPts)}" fill="none" stroke="#A8761A" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <path d="${smoothPath(redPts)}" fill="none" stroke="#7C1D1D" stroke-width="2.5"/>
+      ${ylwDots}${redDots}
+      ${xlabels}
+    </svg>
+  `;
+  wrap.appendChild(tooltip);
+
+  const svg = wrap.querySelector('svg');
+  svg.addEventListener('mousemove', (ev) => {
+    const rect = svg.getBoundingClientRect();
+    const mx = (ev.clientX - rect.left) * (W / rect.width);
+    let best = 0;
+    let bestDist = Infinity;
+    seed.forEach((p, i) => {
+      const d = Math.abs(x(i) - mx);
+      if (d < bestDist) { bestDist = d; best = i; }
+    });
+    const p = seed[best];
+    tooltip.style.display = 'block';
+    tooltip.innerHTML = `${escapeHtml(p.week)}<br>Red % ${p.red_pct.toFixed(1)}<br>Risk ${p.risk_score.toFixed(1)}`;
+    const tx = Math.min(Math.max(x(best) / W * rect.width - 40, 0), rect.width - 110);
+    tooltip.style.left = `${tx}px`;
+    tooltip.style.top = `${Math.max(y(Math.max(p.red_pct, p.risk_score)) / H * rect.height - 64, 0)}px`;
+  });
+  svg.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+}
+
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (lastData) drawTrend(lastData); }, 150);
+});
+
+async function load() {
+  try {
+    const r = await fetch(`data/bubble-watch.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    render(data);
+  } catch (e) {
+    document.getElementById('root').innerHTML = `
+      <div class="error">数据加载失败: ${escapeHtml(e.message)}<br>检查 data/bubble-watch.json 是否存在</div>
+    `;
+  }
+}
+load();
+</script>
+</body>
+</html>

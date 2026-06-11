@@ -1,0 +1,188 @@
+{
+  "_comment": "AI 泡沫监测(Bubble Watch)curated 层:本文件是 11 项编辑/研究类指标的唯一人工口径来源,以及 12 项自动指标的 fail-closed 回退快照。自动指标实时抓取失败时沿用此处快照并按 maxAgeDays 标 STALE;编辑类指标更新本文件即可(改 value/status/note + asOfDate)。本层 display-only,不进 GFRR scoring/decision。",
+  "curated": {
+    "vc_ai_share": {
+      "status": "red",
+      "value_display": "80-81%",
+      "note": "Crunchbase/PitchBook Q1 2026:全球 VC 创纪录 $297-300B,AI 占 80-81%($239-242B),较 2025 Q1 的 55% 大幅跃升;美元高度集中于 OpenAI/Anthropic/xAI 等少数巨额轮次,Anthropic 5/28 估值逼近 $1T,无季度新数据沿用 Q1 口径",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 120,
+      "cadence": "quarterly"
+    },
+    "ai_ipo_pipeline": {
+      "status": "yellow",
+      "value_display": "升温",
+      "note": "SpaceX IPO 定价敲定为固定 $135/股,拟售 5.556 亿股募资约 $75B(绿鞋另加 $11.2B)、估值 $1.77T,6/11 定价、6/12 纳斯达克挂牌(SPCX),将成史上最大 IPO;叠加 Anthropic、OpenAI、Databricks、Cerebras 合计 $100-200B 需求,超 2025 全年美股 IPO 市场 2-4 倍,但具体公司数仍 <10 未达洪流",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 21,
+      "cadence": "weekly-editorial"
+    },
+    "dc_abs_spread": {
+      "status": "green",
+      "value_display": "收窄",
+      "note": "顶级 DC ABS 利差近周收窄约 60bps(CloudHQ 5 年 AAA 4/20 定价 +125bps);CoreWeave 关联数据中心 6/2 发行 $900M 五年期高收益债、利率降至 7.5%(4 月同期为 9.75%),数据中心融资条件边际明显改善,市场分层仍存但整体走向收窄",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 21,
+      "cadence": "weekly-editorial"
+    },
+    "neocloud_credit": {
+      "status": "green",
+      "value_display": "0",
+      "note": "CoreWeave / Nebius / Crusoe / Lambda 90 日内无评级下调或违约;CoreWeave 总债务约 $21B、未来 12 个月到期约 $9.7B、债务/股本 7.39,再融资敞口仍是潜在风险点;本周 $900M 新债以 7.5% 顺利发行,短期流动性无虞",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 21,
+      "cadence": "weekly-editorial"
+    },
+    "token_volume_mom": {
+      "status": "green",
+      "value_display": "+35%",
+      "note": "OpenRouter 月 token 量稳在 100 万亿(周 25 万亿、半年 5 倍),全年有望突破千万亿(quadrillion)、单日已超 1 万亿;服务超 800 万用户、接入 400+ 模型,全产业用量继续加速",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 45,
+      "cadence": "monthly-research"
+    },
+    "token_revenue_ratio": {
+      "status": "green",
+      "value_display": "0.4x",
+      "note": "Anthropic ARR 升至约 $47B(2025 底 $10B,年化数倍),收入增速仍快于 token 量增速(半年 5 倍);单 token 价值持续上行、付费需求真实,比值维持 <1x",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 45,
+      "cadence": "monthly-research"
+    },
+    "arr_2nd_deriv": {
+      "status": "green",
+      "value_display": "加速中",
+      "note": "Anthropic run-rate 收入维持约 $47B(2 月 $14B → 3 月 $19B → 4 月 $30B → 5 月 $45-47B),约 35% 领先 OpenAI ~$33B、5/28 估值逼近 $1T;二阶导维持正向,唯 OpenAI 对其毛收入口径仍有约 $8B 争议",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 45,
+      "cadence": "monthly-research"
+    },
+    "enterprise_deploy": {
+      "status": "green",
+      "value_display": "72%",
+      "note": "McKinsey Q1 2026:72% 企业至少 1 项 AI workload 生产化(2024 55%、2020 20%);Deloitte:67% 企业月耗 token 超 10 亿、25% 已将 ≥40% 实验转产;深度集成仍在爬坡但整体高位,无季度新数据沿用",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 120,
+      "cadence": "quarterly"
+    },
+    "accounting_events": {
+      "status": "green",
+      "value_display": "0",
+      "note": "无主要 AI 龙头正式执法;iLearning Engines round-tripping 案 4 月被刑事起诉(虚增 $144M,已破产)但属小盘股;Burry 仍指控 Mag7 借延长服务器折旧虚增 2026-28 利润、Super Micro 受 SEC 调查,均非核心 AI 龙头,本周无新增执法",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 21,
+      "cadence": "weekly-editorial"
+    },
+    "capex_reaction": {
+      "status": "yellow",
+      "value_display": "惩罚加深",
+      "note": "本周 AI 板块明显回撤:Broadcom 仅维持、拒绝上调 $100B AI 芯片目标即暴跌约 15%,NVDA 周五跌 6.2%;叠加 Q1 财报 3 罚 1 奖,市场对 AI 资本开支叙事的容忍度持续下降,惩罚由偶发向系统性逼近,但尚未全面系统化,维持黄灯",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 21,
+      "cadence": "weekly-editorial"
+    },
+    "ceo_hedging": {
+      "status": "yellow",
+      "value_display": "增加",
+      "note": "对冲表态持续:Pichai 承认 AI 热潮存在「非理性」、「无公司能免疫包括谷歌」;Dimon「部分项目确在泡沫中,但整体大概率回本」;本周无重大新增表态,频率与强度仍偏高但 CEO 仍坚持 capex 合理,未达全体一致承认过热",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 21,
+      "cadence": "weekly-editorial"
+    }
+  },
+  "autoFallback": {
+    "cape": {
+      "status": "red",
+      "value_display": "41.5",
+      "note": "CAPE 约 41.5(multpl 41.57、GuruFocus 39.8),仍是 155 年来第 2 高、距 2000 年峰值 44.19 仅约 6%;earnings yield 仅 ~2.4%,即便本周 AI 板块回撤,整体估值仍处极度拉伸区",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 14
+    },
+    "top5_weight": {
+      "status": "red",
+      "value_display": "≈27.5%",
+      "note": "S&P 500 前 10 大权重约 37%、Top-5 合计 ≈27.5%(MSFT / AAPL / NVDA / AMZN / GOOGL);本周 AI 板块回撤令集中度略有松动,但仍贴近 2000 年极值,市值高度押注少数 AI 龙头",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 14
+    },
+    "nvda_fpe": {
+      "status": "green",
+      "value_display": "≈23x",
+      "note": "周五重挫 6.2% 后远期 PE 降至约 23x(GuruFocus 23.01、StockAnalysis 22.0、FinanceCharts 24.51,区间 22-24.5x),较 12 个月均值 43 折让逾 27%;FY28 EPS 持续上修使倍数维持历史低位,估值并非泡沫源头",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 14
+    },
+    "hyperscaler_capex_yoy": {
+      "status": "yellow",
+      "value_display": "+77%",
+      "note": "四大 hyperscaler 2026 capex 合计约 $725B(AMZN $200B、GOOGL ~$190B、MSFT $190B、META $125-145B),YoY +77%,约 75%($450B)投向 AI 基础设施,无一下调指引;但本周 Broadcom 拒绝上调 $100B AI 芯片目标,供应端首现「不再加码」信号,继续加速但边际谨慎",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 30
+    },
+    "mag4_fcf_yoy": {
+      "status": "red",
+      "value_display": "-92%",
+      "note": "Amazon 尾随 FCF 暴跌约 95% 至 $1.2B,2026 全年预计转负约 -$17B(capex $200B);Mag4 合计 FCF 料降至 2014 年以来最低,唯 MSFT 仍正增长——$725B capex 持续吞噬现金流,无季度新数据沿用 Q1 口径",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 30
+    },
+    "nvda_invest_revenue": {
+      "status": "red",
+      "value_display": "≈43%",
+      "note": "NVDA 累计股权投资承诺 $110B+(含 OpenAI $30B)再加 $15B+ GPU 抵押债务;对 LTM 收入 $253.5B 的比率约 43%——每笔投资捆绑采购协议,循环融资规模仍远超 Lucent 1999 峰值 24%,无新披露沿用上期",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 30
+    },
+    "breadth_50d": {
+      "status": "yellow",
+      "value_display": "≈54%",
+      "note": "S5FI 6/5 收于约 54.6%(5/29 为 52.3%),仍处 40-60% 黄区;但周五 AI 板块普跌或令次周广度再承压,指数靠头部权重支撑、广度脆弱格局延续",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 14
+    },
+    "spy_vs_rsp_6m": {
+      "status": "yellow",
+      "value_display": "+5.5%",
+      "note": "市值加权仍领先:SPY YTD 11.69% vs RSP 10.12%(领先约 1.6pp)、近 3 月领先(1.5% vs 0.8%);本周 AI 回撤令头部权重承压,6 月差略收窄至约 +5.5%,头部独涨格局仍在但边际松动",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 14
+    },
+    "insider_sell_buy": {
+      "status": "yellow",
+      "value_display": "~8x",
+      "note": "NVDA / PLTR / AVGO 内部人过去 12 个月累计卖出约 $4.6B、几乎零买入;个人层面仍以卖出为主、卖买比偏高但未及 2000 年 23x 极值;OpenInsider 聚合页受限,沿用 ~8x",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 14
+    },
+    "hy_oas": {
+      "status": "green",
+      "value_display": "272 bps",
+      "note": "ICE BofA HY OAS 最新约 2.72%(272 bps),远低于长期均值 3.94%、中位数 4.52%;即便本周 AI 股普跌,信用市场对 AI capex 激增与 $725B 烧钱仍未现压力,是当前最支撑多头的指标",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 14
+    },
+    "fed_policy": {
+      "status": "yellow",
+      "value_display": "偏鹰",
+      "note": "Warsh 主持 6/17 FOMC,CME 维持概率 99.4%、加息概率极低;利率维持 3.5-3.75%,通胀仍超 2% 目标、劳动力强劲,higher-for-longer 延续,对极度拉伸的估值构成持续压制",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 14
+    },
+    "cloud_rpo_growth": {
+      "status": "green",
+      "value_display": "强劲",
+      "note": "Oracle RPO $455B(+359% YoY、云 RPO 近 +500%)超越 MSFT;MSFT 商业 RPO $392B(+51%)、Azure +40%;GCP 积压 $460B;合计超 $1.12T——递延需求持续强劲,无季度新数据沿用",
+      "asOfDate": "2026-06-07",
+      "maxAgeDays": 90
+    }
+  },
+  "params": {
+    "nvdaCommitments": {
+      "usd": 125000000000,
+      "desc": "累计股权投资承诺 $110B+(含 OpenAI $30B)+ GPU 抵押债务 $15B+",
+      "asOfDate": "2026-06-07"
+    },
+    "insiderBasket": ["NVDA", "PLTR", "AVGO"],
+    "breadthSampleSize": 100
+  }
+}

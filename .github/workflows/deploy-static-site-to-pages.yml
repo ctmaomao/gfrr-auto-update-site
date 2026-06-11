@@ -12,6 +12,7 @@ on:
       - External AI Production Refresh
       - Refresh QQQ Market Pricing
       - Refresh Oil Directional Pressure
+      - Refresh Bubble Watch
     types:
       - completed
   push:
@@ -19,6 +20,7 @@ on:
       - main
     paths:
       - 'index.html'
+      - 'bubble-watch.html'
       - 'assets/**'
       - 'scripts/**'
       - 'data/**'

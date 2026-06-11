@@ -385,6 +385,22 @@ PortWatch 字段是 AIS-derived chokepoint proxy,本项目只保存 latest、7d/
 
 ---
 
+### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider (ADR-0016)
+
+第二页面「AI 泡沫监测」(`data/bubble-watch.json`,周一 cron)专属,display-only,不进 scoring/decision。复用既有 FRED API(`BAMLH0A0HYM2`/`DFF`/`CPIAUCSL`,`FRED_API_KEY`)与 Yahoo Chart(SPY/RSP/成份股 6mo closes)之外,新增:
+
+| 源 | 端点 | 喂养指标 | 边界 |
+|---|---|---|---|
+| **SEC EDGAR companyconcept** | `data.sec.gov/api/xbrl/companyconcept/CIK*/us-gaap/*.json` | hyperscaler capex YoY、Mag4 FCF YoY、NVDA LTM 收入(投资/收入比分母)、Cloud RPO | 美国政府公共领域;UA 必须携带联系方式(否则 403 + 临时 IP 封禁);10-Q 现金流为 YTD 累计,build 内差分出单季 |
+| **multpl.com** | `/shiller-pe` 公开 HTML | Shiller CAPE | 公开 HTML proxy,不得写成官方 Shiller 数据库 |
+| **stockanalysis.com** | `/stocks/nvda/statistics/`、`/etf/spy/holdings/` 公开 HTML | NVDA 远期 PE、S&P Top-5 权重(SPY 持仓代理,服务端只渲染前 ~25 行) | 公开页代理;Top-5 是 SPY 持仓口径非 S&P 官方权重 |
+| **Wikipedia** | `List of S&P 500 companies` | 全市场广度成份股名单(~503 只 → Yahoo 实算 %>50DMA) | 名单代理;广度为全成份实算,非 Barchart S5FI 官方序列 |
+| **OpenInsider** | `/screener?s=<ticker>&fd=365&xp=1&xs=1` 公开 HTML | AI 龙头(NVDA/PLTR/AVGO)内部人卖买比 | SEC Form 4 聚合代理;买入不足 $1M 按 $1M 下限折算,不得写成官方 SEC 统计 |
+
+编辑/研究类 11 项(VC AI 占比、IPO pipeline、DC ABS、token 量等)无公开 API,人工口径唯一来源 = `config/bubble-watch-curated.json`(带 asOfDate + maxAgeDays,超期自动 STALE)。所有自动指标 fail-closed 回退该文件快照。契约见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)「bubble-watch 专题数据契约」。
+
+---
+
 ### GDELT Cloud v2
 
 | 字段 | 值 |
