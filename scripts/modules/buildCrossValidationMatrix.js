@@ -1016,7 +1016,7 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
   {
     const euro = isPlainObject(md.euroVolatility) ? md.euroVolatility : {};
     const v2x = euro.sourceStatus === 'live' ? finite(euro.value) : null;
-    const caveat = 'V2X 与 VIX 高度相关,只取背离;VIX 已在 scoring,不重复计数恐慌。';
+    const caveat = 'V2X 与 VIX 高度相关,只取背离;VIX 已计入主评分,不重复计数恐慌。';
     if (v2x === null || vix === null) {
       signals.push(coherenceSignal('v2x_vix_divergence', 'V2X 欧美波动率', '背景', '同步',
         'V2X 或 VIX 未刷新,暂不判定地区波动率背离。', ['euroVolatility.value', 'vix'], caveat));
@@ -1127,7 +1127,7 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
     const pbdc = finite(pc.pbdcEtf4wChange);
     const hyOas = finite(baseline.hyOas ?? credit.hyOas);
     const proxyVals = [bdc, pbdc].filter((x) => x !== null);
-    const caveat = 'HY/IG 已 scoring,只取公开 vs 代理背离;BDC/SRLN/CCLFX/CDX 是公开 ETF/NAV/指数代理,无 discount 字段、非 private marks,不得写"隐藏私募裂缝已确认"。';
+    const caveat = 'HY/IG 已计入主评分,只取公开 vs 代理背离;BDC/SRLN/CCLFX/CDX 是公开 ETF/净值/指数代理,无折价字段、非私募内部估值,不得写"隐藏私募裂缝已确认"。';
     const dataUsed = ['privateCreditProxy.bdcEtf4wChange', 'privateCreditProxy.pbdcEtf4wChange', 'hyOas', 'credit.igOas'];
     if (proxyVals.length === 0 || hyOas === null) {
       signals.push(coherenceSignal('public_credit_proxy', '公开信用代理', '背景', '领先/同步',

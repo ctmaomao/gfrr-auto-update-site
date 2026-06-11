@@ -9,7 +9,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 项 | 当前值 |
 |---|---|
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分)|
-| Cache version | `frontend-zh-copy-3` |
+| Cache version | `frontend-zh-copy-4` |
 | check:all 项数 | 17 顶层项 / ~57 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 8 leaf + `check:frontend-zh-copy`)|
 | 最后审计日期 | 2026-06-05(全站 `.md` doc-slim 审计 Batch 1a→5余项,docs-only;两大 scope-of-record 簇 External AI / Market Pricing 收口 + 三 Operating Document changelog tail 折叠,详见 Section 5 + Session Handoff)。上次系统审计 2026-06-02(Codex 只读审计 7 findings 全收口,详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
@@ -282,6 +282,15 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-06-11 — 第三轮中文化清扫收口)**: frontend zh-copy 第三轮清扫(16 文件):JS 数据枚举值在 renderer 层显中文(如策略状态 `Defensive`→「防守(Defensive)」、narrative `score/ACTIVE`→「分数/已激活」)+ index.html 双语标签与金融缩写中文释义(HY OAS/VIX/NFCI/SLOOS 等加中文注解);asset bump `frontend-zh-copy-2`→`frontend-zh-copy-4`(docs 快照扇出由 bump 工具自动同步,realtime.js `?v=` 正常含入——非冻结);check:all 17 顶层项全绿后提交。期间(2026-06-07~10,见 git log)已完成但旧 Handoff 未记:External AI PR4a/PR4b 全收口线上实测通过、ODP energy stress 证据展示、Treasury/TGA+Fed liquidity 回测交叉审计定案(owner 拍板不接 TGA/不接新公式,只做 regime-aware recalibration;brief 已落 main `docs/`)。
+- **当前进行中(2026-06-11)**: 无。
+- **下一步建议(2026-06-11)**: 唯一已知开放方向 = TGA/Fed liquidity 的 **regime-aware recalibration 实施**(brief 已在 main,实施未开、须 owner 立项);无其他 pending。
+- **阻塞或等待(2026-06-11)**: 无。
+
+---
+
+> 以下为 2026-06-06 External AI 留档,当前状态以上方 2026-06-11 段为准。
 
 - **上次会话结束于(2026-06-06 · 续7 — External AI scheduled/default 翻 analyst)**: analyst go-live 与 Daily 终证已完成后,小 PR #1 把 `External AI Production Refresh` 的 scheduled 分支与 `workflow_dispatch` default 从 `local_compact` 翻到 `analyst_compact_v1`;`local_compact` 仍保留为 manual dispatch rollback option + build 分支。workflow checker 同步改默认断言,并显式断言 rollback 分支 `if [ "$input_source" = "local_compact" ]; then` 存在。docs/DATA_CONTRACT + OPERATIONS 同步默认/rollback 语义。Set/守卫/data/前端零改;model 仍 `deepseek-v4-flash`;check:all 绿。
 - **当前进行中(2026-06-06 · 续7)**: 无。PR0→PR3 + follow-up + go-live + Daily 终证 + default cutover 全收口。

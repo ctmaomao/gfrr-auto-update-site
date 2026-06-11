@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=frontend-zh-copy-2';
+﻿import { fmtNumSafe } from './config.js?v=frontend-zh-copy-4';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

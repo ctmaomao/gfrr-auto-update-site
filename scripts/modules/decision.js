@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=frontend-zh-copy-2';
-import { formatOnRrpYiUsd } from './format.js?v=frontend-zh-copy-2';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=frontend-zh-copy-4';
+import { formatOnRrpYiUsd } from './format.js?v=frontend-zh-copy-4';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',
@@ -431,7 +431,7 @@ export function calculateStrategyStateEngine(data, history, metadata, healthDash
   ];
 
   const stateReason = [
-    `策略状态判定为 ${strategyState}，状态分数 ${stateScore}。`,
+    `策略状态判定为 ${({ Defensive: '防守(Defensive)', Caution: '谨慎(Caution)', Crisis: '危机(Crisis)', Neutral: '中性(Neutral)', Offensive: '进攻(Offensive)' })[strategyState] || strategyState}，状态分数 ${stateScore}。`,
     `总风险 ${stateMeta.totalRiskScore ?? '--'}，3日变化 ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta}，共振模块数 ${stateMeta.resonanceCount}。`,
     stateMeta.extremeThresholdCount
       ? `极端阈值已触发：${stateMeta.extremeThresholds.join('、')}。`

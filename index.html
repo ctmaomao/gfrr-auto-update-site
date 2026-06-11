@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=frontend-zh-copy-2" />
+  <link rel="stylesheet" href="assets/styles.css?v=frontend-zh-copy-4" />
 </head>
 <body>
   <div class="container">
@@ -58,27 +58,27 @@
             <div class="value" id="hero-score-value">56<sup>/100</sup></div>
             <div class="breakdown">
               6 底层模块中 <span id="hero-breakdown-counts"><strong>2 红 / 2 黄 / 2 绿</strong></span><br/>
-              World Order overlay: <span id="hero-overlay-score">70(升档提示)</span>
+              世界秩序升档(overlay): <span id="hero-overlay-score">70(升档提示)</span>
             </div>
           </div>
         </div>
         <div class="big-right">
           <div class="verdict-kicker" id="hero-verdict-kicker">THIS ISSUE · 滞胀冲击 / 通胀冲击</div>
           <h2 id="hero-verdict-headline">今日主线是能源 → 通胀 → 利率压力；最大背离为能源定价背离观察。</h2>
-          <p id="hero-verdict-body">原始 56 落在 40–60 高风险预警带。世界秩序压力升至 70，把今日判读上调一档。HY OAS 仍在 4% 以下、VIX 16.8 没有同步恐慌，判读保持观察语气而非危机定性。</p>
+          <p id="hero-verdict-body">原始 56 落在 40–60 高风险预警带。世界秩序压力升至 70，把今日判读上调一档。高收益债利差(HY OAS)仍在 4% 以下、波动率指数(VIX) 16.8 没有同步恐慌，判读保持观察语气而非危机定性。</p>
           <p class="hero-odp-ref">能源方向 <em>· 独立能源专题,仅供观察,不进打分</em>:<span id="hero-odp-ref-verdict">—</span> <a href="#oil-directional-pressure">查看 →</a></p>
         </div>
         <div class="big-footer">
-          <div><div class="k">DOMINANT RISK CHAIN</div><div class="v" id="hero-dominant-chain">能源 → 通胀 → 利率压力</div></div>
-          <div><div class="k">WEEKLY CHANGE</div><div class="v" id="hero-weekly-change">+2 (WoW)</div></div>
-          <div><div class="k">DATA HEALTH</div><div class="v" id="hero-data-health">23/23 OK · 数据正常</div></div>
+          <div><div class="k">DOMINANT RISK CHAIN · 主导风险链</div><div class="v" id="hero-dominant-chain">能源 → 通胀 → 利率压力</div></div>
+          <div><div class="k">WEEKLY CHANGE · 周变化</div><div class="v" id="hero-weekly-change">+2 (WoW)</div></div>
+          <div><div class="k">DATA HEALTH · 数据健康</div><div class="v" id="hero-data-health">23/23 OK · 数据正常</div></div>
         </div>
       </article>
 
       <div class="threshold-block">
         <div class="threshold-header">
           <h4>触发阈值标尺 <em>· Threshold Scale</em></h4>
-          <div class="now" id="threshold-now-line">原始 56(高风险预警) · overlay 升档 → 系统性顶部带</div>
+          <div class="now" id="threshold-now-line">原始 56(高风险预警) · 世界秩序升档 70(多战区压力期)</div>
         </div>
         <div class="threshold-bar-wrap">
           <div class="threshold-bar">
@@ -87,7 +87,7 @@
             <div class="zone t-orange" style="flex:20"><span class="zone-label">高风险预警</span><span class="zone-pct">40–60</span></div>
             <div class="zone t-red"    style="flex:40"><span class="zone-label">系统性顶部</span><span class="zone-pct">≥60</span></div>
             <div class="marker" id="threshold-marker-main" style="left:56%"><span class="marker-label">原始 56</span></div>
-            <div class="marker override" id="threshold-marker-override" style="left:80%"><span class="marker-label">overlay 70</span></div>
+            <div class="marker override" id="threshold-marker-override" style="left:80%"><span class="marker-label">升档 70</span></div>
           </div>
         </div>
       </div>
@@ -96,10 +96,10 @@
         <div class="trend-block-header">
           <h4>8 周趋势 <em>· 8-Week Trend</em></h4>
           <div class="trend-legend">
-            <span><span class="score-key">●</span> Score</span>
-            <span><span class="overlay-key">●</span> Overlay</span>
+            <span><span class="score-key">●</span> 风险分 Score</span>
+            <span><span class="overlay-key">●</span> 升档层 Overlay</span>
             <span>风险分 /100 · 阈值线 25/40/60/80</span>
-            <span id="trend-overlay-mode">Overlay 历史累积中</span>
+            <span id="trend-overlay-mode">升档层(Overlay)历史累积中</span>
           </div>
         </div>
         <div class="trend-svg-wrap">
@@ -181,25 +181,25 @@
       <div class="runtime-block" id="homepage-signal-layers">
         <div class="runtime-block-header">
           <h3>信号分层 <span class="en">SIGNAL LAYERS · 7 NARRATIVES</span></h3>
-          <div class="meta">7 个 active narratives 中:3 active / 4 latent · NARRATIVE_EMOJI 映射</div>
+          <div class="meta">7 条信号叙事:3 条已激活 / 4 条潜伏 · 激活状态随每日数据更新</div>
         </div>
         <div class="narrative-list">
           <div class="narrative-item active" id="narrative-1">
-            <div class="head"><span class="name" id="narrative-1-name">能源冲击</span><span class="score" id="narrative-1-score">score 78 · ACTIVE</span></div>
-            <p id="narrative-1-desc">Brent + crack spread 同步走阔，2022 模式重演。下一节是是否传导至 CPI / breakeven。</p>
+            <div class="head"><span class="name" id="narrative-1-name">能源冲击</span><span class="score" id="narrative-1-score">分数 78 · 已激活</span></div>
+            <p id="narrative-1-desc">Brent(布伦特原油) + 裂解价差(crack spread)同步走阔，2022 模式重演。下一节是是否传导至 CPI(消费者物价)/ breakeven(盈亏平衡通胀)。</p>
           </div>
           <div class="narrative-item active" id="narrative-2">
-            <div class="head"><span class="name" id="narrative-2-name">滞胀压力</span><span class="score" id="narrative-2-score">score 62 · ACTIVE</span></div>
-            <p id="narrative-2-desc">ISM PMI 48.7 收缩 + 能源涨价 + 实际工资压制。三件套均已出现，但信用未验证。</p>
+            <div class="head"><span class="name" id="narrative-2-name">滞胀压力</span><span class="score" id="narrative-2-score">分数 62 · 已激活</span></div>
+            <p id="narrative-2-desc">ISM PMI(制造业景气) 48.7 收缩 + 能源涨价 + 实际工资压制。三件套均已出现，但信用未验证。</p>
           </div>
           <div class="narrative-item active" id="narrative-3">
-            <div class="head"><span class="name" id="narrative-3-name">世界秩序压力穿越</span><span class="score" id="narrative-3-score">score 70 · ACTIVE</span></div>
+            <div class="head"><span class="name" id="narrative-3-name">世界秩序压力穿越</span><span class="score" id="narrative-3-score">分数 70 · 已激活</span></div>
             <p id="narrative-3-desc">多战区压力连续 2 周，触发橙色升档指针。OFAC + GDELT 双印证。</p>
           </div>
-          <div class="narrative-item" id="narrative-4"><div class="head"><span class="name" id="narrative-4-name">风险资产错配</span><span class="score" id="narrative-4-score">score 38 · LATENT</span></div><p id="narrative-4-desc">SPX 仍在高位但 NDX 跑赢，内部分化未到危机程度。</p></div>
-          <div class="narrative-item" id="narrative-5"><div class="head"><span class="name" id="narrative-5-name">过热确认</span><span class="score" id="narrative-5-score">score 55 · LATENT</span></div><p id="narrative-5-desc">QQQ z-score +2.18σ 极度过热，但信用 + 波动率没有验证，缺少同步证据。</p></div>
-          <div class="narrative-item" id="narrative-6"><div class="head"><span class="name" id="narrative-6-name">信用利差告警</span><span class="score" id="narrative-6-score">score 22 · LATENT</span></div><p id="narrative-6-desc">HY OAS / IG OAS 双绿，NFCI 刚转正。压力初现但远未到告警阈值。</p></div>
-          <div class="narrative-item" id="narrative-7"><div class="head"><span class="name" id="narrative-7-name">流动性收紧</span><span class="score" id="narrative-7-score">score 18 · LATENT</span></div><p id="narrative-7-desc">水位 / 回购 / 隔夜三层均无压力。2019-09 信号目前不存在。</p></div>
+          <div class="narrative-item" id="narrative-4"><div class="head"><span class="name" id="narrative-4-name">风险资产错配</span><span class="score" id="narrative-4-score">分数 38 · 潜伏</span></div><p id="narrative-4-desc">标普500(SPX)仍在高位但纳指100(NDX)跑赢，内部分化未到危机程度。</p></div>
+          <div class="narrative-item" id="narrative-5"><div class="head"><span class="name" id="narrative-5-name">过热确认</span><span class="score" id="narrative-5-score">分数 55 · 潜伏</span></div><p id="narrative-5-desc">QQQ 偏离度(z-score) +2.18σ 极度过热，但信用 + 波动率没有验证，缺少同步证据。</p></div>
+          <div class="narrative-item" id="narrative-6"><div class="head"><span class="name" id="narrative-6-name">信用利差告警</span><span class="score" id="narrative-6-score">分数 22 · 潜伏</span></div><p id="narrative-6-desc">高收益债利差(HY OAS)/ 投资级利差(IG OAS)双绿，金融条件指数(NFCI)刚转正。压力初现但远未到告警阈值。</p></div>
+          <div class="narrative-item" id="narrative-7"><div class="head"><span class="name" id="narrative-7-name">流动性收紧</span><span class="score" id="narrative-7-score">分数 18 · 潜伏</span></div><p id="narrative-7-desc">水位 / 回购 / 隔夜三层均无压力。2019-09 信号目前不存在。</p></div>
         </div>
       </div>
 
@@ -209,10 +209,10 @@
           <div class="meta">流动性 / 政策路径 / 利率曲线 / 信用 / 消费 / 就业 / 商业地产等</div>
         </div>
         <div class="runtime-block-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Fed Liquidity</strong><p id="pillar-1-text" style="margin:0;font-size:12.5px;">三层均无压力。美联储总资产(WALCL) / 银行准备金 3.62T / 回购利差 BGCR-SOFR +2bp / SOFR-EFFR 锚定。</p></div>
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Policy Expectations</strong><p id="pillar-2-text" style="margin:0;font-size:12.5px;">市场与委员分歧。期货隐含与目标中值差 +38bp，市场比 Fed 鹰。</p></div>
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Curve</strong><p id="pillar-3-text" style="margin:0;font-size:12.5px;">t10y2y +18bp，curve.regime 从倒挂转正。通常领先衰退 6-18 月。</p></div>
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">Credit</strong><p id="pillar-4-text" style="margin:0;font-size:12.5px;">HY OAS 2.78% / IG OAS 1.05% / NFCI +0.18 刚转正 / SLOOS 紧缩。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">美联储流动性 Fed Liquidity</strong><p id="pillar-1-text" style="margin:0;font-size:12.5px;">三层均无压力。美联储总资产(WALCL) / 银行准备金 3.62T / 回购利差(BGCR-SOFR) +2bp / 隔夜利率锚(SOFR-EFFR)锚定。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">政策预期 Policy Expectations</strong><p id="pillar-2-text" style="margin:0;font-size:12.5px;">市场与委员分歧。期货隐含与目标中值差 +38bp，市场比 Fed 鹰。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">利率曲线 Curve</strong><p id="pillar-3-text" style="margin:0;font-size:12.5px;">10年-2年利差(t10y2y) +18bp，曲线状态: 从倒挂转正。通常领先衰退 6-18 月。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">信用环境 Credit</strong><p id="pillar-4-text" style="margin:0;font-size:12.5px;">高收益债利差(HY OAS) 2.78% / 投资级利差(IG OAS) 1.05% / 金融条件指数(NFCI) +0.18 刚转正 / 银行信贷调查(SLOOS) 紧缩。</p></div>
           <div style="grid-column: 1 / -1;border-top:1px dashed #aaa;padding-top:10px;margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">子模块覆盖：流动性、政策路径、利率曲线、信用、消费、运输、就业、商业地产与私募信贷公开代理。</div>
         </div>
       </div>
@@ -220,7 +220,7 @@
       <div class="runtime-block" id="homepage-market-temperature">
         <div class="runtime-block-header">
           <h3>市场温度 <span class="en">MARKET PRICING TEMPERATURE</span></h3>
-          <div class="meta">QQQ 60 周均值 + z-score · NDX/IXIC 广度对照 · 本数据为统计描述，不构成投资建议</div>
+          <div class="meta">QQQ 60 周均值与偏离度(z-score) · NDX/IXIC 广度对照 · 本数据为统计描述，不构成投资建议</div>
         </div>
         <div class="runtime-block-body">
           <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start;">
@@ -232,8 +232,8 @@
             <div>
               <p id="mt-narrative" style="margin:0 0 8px 0;font-size:13.5px;">QQQ 当前价格距 60 周均值 2.18 个标准差，处于历史第二极端区间。NDX +2.22σ / IXIC +1.92σ，整个美国成长股板块同步极端。</p>
               <div style="font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 16px;">
-                <div>close: <span id="mt-close" style="color:var(--paper-ink);">$708.93</span></div>
-                <div>ma60: <span id="mt-ma60" style="color:var(--paper-ink);">$579.84</span></div>
+                <div>收盘(close): <span id="mt-close" style="color:var(--paper-ink);">$708.93</span></div>
+                <div>60周均线(ma60): <span id="mt-ma60" style="color:var(--paper-ink);">$579.84</span></div>
                 <div>60 日标准差: <span id="mt-stddev" style="color:var(--paper-ink);">$59.23</span></div>
                 <div>z 分数区间: <span id="mt-zscore-range" style="color:var(--paper-ink);">[-2.64, +2.83]</span></div>
               </div>
@@ -248,12 +248,12 @@
           <div class="meta">6 个底层引擎 + 分歧信号 + 私募信贷代理 + 世界秩序压力 + 市场温度</div>
         </div>
         <div class="mini-grid">
-          <div class="mini-card red" id="engine-card-b1"><div class="label">B1 Energy</div><div class="num">RED</div><div class="status">能源冲击主导</div></div>
-          <div class="mini-card yellow" id="engine-card-b2"><div class="label">B2 Liquidity</div><div class="num">YEL</div><div class="status">流动性边际收紧</div></div>
-          <div class="mini-card green" id="engine-card-b3"><div class="label">B3 Credit</div><div class="num">GRN</div><div class="status">信用反向证据</div></div>
-          <div class="mini-card green" id="engine-card-b4"><div class="label">B4 Debt</div><div class="num">GRN</div><div class="status">杠杆稳定</div></div>
-          <div class="mini-card yellow" id="engine-card-b5"><div class="label">B5 Consumer</div><div class="num">YEL</div><div class="status">实际工资压制</div></div>
-          <div class="mini-card red" id="engine-card-b6"><div class="label">B6 Geopolitical</div><div class="num">RED</div><div class="status">多战区压力</div></div>
+          <div class="mini-card red" id="engine-card-b1"><div class="label">B1 Energy 能源</div><div class="num">RED</div><div class="status">能源冲击主导</div></div>
+          <div class="mini-card yellow" id="engine-card-b2"><div class="label">B2 Liquidity 流动性</div><div class="num">YEL</div><div class="status">流动性边际收紧</div></div>
+          <div class="mini-card green" id="engine-card-b3"><div class="label">B3 Credit 信用</div><div class="num">GRN</div><div class="status">信用反向证据</div></div>
+          <div class="mini-card green" id="engine-card-b4"><div class="label">B4 Debt 债务</div><div class="num">GRN</div><div class="status">杠杆稳定</div></div>
+          <div class="mini-card yellow" id="engine-card-b5"><div class="label">B5 Consumer 消费</div><div class="num">YEL</div><div class="status">实际工资压制</div></div>
+          <div class="mini-card red" id="engine-card-b6"><div class="label">B6 Geopolitical 地缘</div><div class="num">RED</div><div class="status">多战区压力</div></div>
         </div>
       </div>
 
@@ -281,11 +281,11 @@
 
       <section class="wow-section" id="wow-key-changes">
         <div class="wow-label">本期关键变化 · Week-over-Week</div>
-        <h3>能源链加压，信用反向证据，地缘 overlay 升档 <em>· this issue's deltas</em></h3>
+        <h3>能源链加压，信用反向证据，地缘结构升档 <em>· this issue's deltas</em></h3>
         <div class="wow-grid">
-          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 通胀与能源</span><div class="wow-text"><span id="wow-item-1-text">Brent 周内 +6.2，crack spread 同步走阔到 48.37。</span><span class="wow-source" id="wow-item-1-source">炼油价差 4 周变化 +19.87</span></div></div>
-          <div class="wow-item"><span class="wow-tag is-down">▼ 风险下降 · 信用</span><div class="wow-text"><span id="wow-item-2-text">HY OAS 周内收窄，与 VIX 同步走低。信用市场不验证恐慌。</span><span class="wow-source" id="wow-item-2-source">信用与波动率反向证据</span></div></div>
-          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 地缘</span><div class="wow-text"><span id="wow-item-3-text">World Order 升档至多战区压力 持续第 2 周。</span><span class="wow-source" id="wow-item-3-source">世界秩序状态变化</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 通胀与能源</span><div class="wow-text"><span id="wow-item-1-text">Brent(布伦特原油)周内 +6.2，裂解价差(crack spread)同步走阔到 48.37。</span><span class="wow-source" id="wow-item-1-source">炼油价差 4 周变化 +19.87</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-down">▼ 风险下降 · 信用</span><div class="wow-text"><span id="wow-item-2-text">高收益债利差(HY OAS)周内收窄，与波动率指数(VIX)同步走低。信用市场不验证恐慌。</span><span class="wow-source" id="wow-item-2-source">信用与波动率反向证据</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 地缘</span><div class="wow-text"><span id="wow-item-3-text">世界秩序压力(World Order)升档至多战区压力 持续第 2 周。</span><span class="wow-source" id="wow-item-3-source">世界秩序状态变化</span></div></div>
           <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 流动性</span><div class="wow-text"><span id="wow-item-4-text">Fed 政策路径分歧扩至 +38bp，市场比委员鹰。</span><span class="wow-source" id="wow-item-4-source">Fed 政策路径分歧</span></div></div>
           <div class="wow-item"><span class="wow-tag is-flat">━ 持平 · 美国就业</span><div class="wow-text"><span id="wow-item-5-text">首次申请稳在 238k，扩张产业占比 70% → 63%。</span><span class="wow-source" id="wow-item-5-source">就业扩散度</span></div></div>
           <div class="wow-item"><span class="wow-tag is-down">▼ 风险下降 · 消费 vs 资产</span><div class="wow-text"><span id="wow-item-6-text">消费与资产价格背离收敛。</span><span class="wow-source" id="wow-item-6-source">消费与资产价格背离</span></div></div>
@@ -308,14 +308,14 @@
         <!-- C1: 通胀与能源 -->
         <div class="reader-cat-block">
           <div class="reader-cat-header"><h3>通胀与能源</h3><span class="en">INFLATION & ENERGY</span><span class="counts">6 张 · <span class="red">3 红</span> · <span class="yellow">2 黄</span> · 1 OBS</span></div>
-          <p class="cat-intro">能源是当前主线第一环。Brent 主值与公开代理价格的距离反映现货溢价压力；crack spread 是能源向下游柴油 / 汽油传导的中间证据；ISM PMI 看美国制造业能否消化能源成本；CPI / WTI 提供通胀与油价基准的直接读数。</p>
+          <p class="cat-intro">能源是当前主线第一环。Brent(布伦特原油)主值与公开代理价格的距离反映现货溢价压力；裂解价差(crack spread)是能源向下游柴油 / 汽油传导的中间证据；ISM PMI(制造业景气)看美国制造业能否消化能源成本；CPI(消费者物价) / WTI(美国油价)提供通胀与油价基准的直接读数。</p>
           <div class="card-grid">
             <article class="indicator-card" id="card-c1-brent"><div class="status-bar red" id="c1-brent-status"></div><div class="head"><div><div class="name-en">Brent</div><div class="name-zh">布伦特原油</div></div><span class="badge red" id="c1-brent-badge">RED</span></div><div class="number"><span id="c1-brent-number">116.73</span><span class="unit" id="c1-brent-unit">USD/bbl</span></div><div class="aux" id="c1-brent-aux">主值取公开现货代理 · 状态:公开代理观察</div><div class="agg-rows"><div><span class="k">公开现货代理 EIA</span> · <span class="v" id="c1-brent-eia">$116.50</span></div><div><span class="k">期货 front Yahoo</span> · <span class="v" id="c1-brent-futures">$103.54</span></div><div><span class="k">期货 ICE</span> · <span class="v" id="c1-brent-ice">$98.21</span></div><div><span class="k">现货-期货价差</span> · <span class="v" id="c1-brent-spread">+$16.52</span></div><div><span class="k">最大代理偏离%</span> · <span class="v" id="c1-brent-divergence">14.9%</span></div></div><p class="note">三层证据链(主值 / 现货代理 / 期货代理)显示价差较大，能源主线传导正在被实际定价压实。</p><div class="meta"><span>阈值 &gt;100 红</span><span>能源价格证据链</span></div></article>
             <article class="indicator-card" id="card-c1-crack"><div class="status-bar red" id="c1-crack-status"></div><div class="head"><div><div class="name-en">Crack spread</div><div class="name-zh">炼油利润压力</div></div><span class="badge red" id="c1-crack-badge">RED</span></div><div class="number"><span id="c1-crack-number">48.37</span><span class="unit" id="c1-crack-unit">USD/bbl</span></div><div class="aux" id="c1-crack-aux">ULSD × 42 − Brent · 4 周变化 +19.87</div><p class="note" id="c1-crack-note">炼油利润扩张说明能源向汽油 / 柴油传导。Brent → CPI 的中间证据。状态: 供应紧张。</p><div class="meta"><span>阈值 &gt;40 红</span><span>炼油价差与 4 周变化</span></div></article>
             <article class="indicator-card" id="card-c1-ism"><div class="status-bar yellow" id="c1-ism-status"></div><div class="head"><div><div class="name-en">ISM PMI</div><div class="name-zh">美国制造业景气</div></div><span class="badge yellow" id="c1-ism-badge">YELLOW</span></div><div class="number" id="c1-ism-number">52.7</div><div class="aux" id="c1-ism-aux">3 月动量 +0.1 · regime: 中性偏扩张</div><p class="note" id="c1-ism-note">制造业读数仍在扩张线之上，但增速放缓，能源成本难被需求消化。</p><div class="meta"><span>阈值 &lt;45 红</span><span>制造业 PMI</span></div></article>
-            <article class="indicator-card" id="card-c1-cpi"><div class="status-bar yellow" id="c1-cpi-status"></div><div class="head"><div><div class="name-en">US CPI</div><div class="name-zh">美国通胀直接证据</div></div><span class="badge yellow" id="c1-cpi-badge">YELLOW</span></div><div class="number"><span id="c1-cpi-number">3.8</span><span class="unit" id="c1-cpi-unit">% YoY</span></div><div class="aux" id="c1-cpi-aux">Core +2.7% YoY · MoM +0.6%</div><p class="note" id="c1-cpi-note">FRED headline + core CPI 月频公开数据。主显 YoY。</p><div class="meta"><span>live</span><span>FRED CPIAUCSL + CPILFESL</span></div></article>
-            <article class="indicator-card" id="card-c1-wti"><div class="status-bar red" id="c1-wti-status"></div><div class="head"><div><div class="name-en">WTI</div><div class="name-zh">美国油价基准</div></div><span class="badge red" id="c1-wti-badge">RED</span></div><div class="number"><span id="c1-wti-number">112</span><span class="unit" id="c1-wti-unit">USD/bbl</span></div><div class="aux" id="c1-wti-aux">近5日 —</div><p class="note" id="c1-wti-note">配 Brent 看美欧能源分化。FRED daily WTI 可能滞后,近5日为相对最新 FRED 点。</p><div class="meta"><span>live</span><span>FRED DCOILWTICO</span></div></article>
-            <article class="indicator-card" id="card-c1-shipping-freight"><div class="status-bar neutral" id="c1-freight-status"></div><div class="head"><div><div class="name-en">Baltic Freight</div><div class="name-zh">波罗的海运费</div></div><span class="badge neutral" id="c1-freight-badge">OBS</span></div><div class="number"><span id="c1-freight-number">3224</span><span class="unit">BDI</span></div><div class="aux" id="c1-freight-aux">BDTI 2068 -0.96% · BCTI 1504 -3.40% · BDI 3224 -0.06% · 高压</div><p class="note">波罗的海运费:BDTI/BCTI 油轮 + BDI 干散货,反映全球海运需求与运费压力。仅作展示观察。</p><div class="meta"><span>live</span><span>StockQ BDTI/BCTI/BDI</span></div></article>
+            <article class="indicator-card" id="card-c1-cpi"><div class="status-bar yellow" id="c1-cpi-status"></div><div class="head"><div><div class="name-en">US CPI</div><div class="name-zh">美国通胀直接证据</div></div><span class="badge yellow" id="c1-cpi-badge">YELLOW</span></div><div class="number"><span id="c1-cpi-number">3.8</span><span class="unit" id="c1-cpi-unit">% YoY</span></div><div class="aux" id="c1-cpi-aux">Core +2.7% YoY · MoM +0.6%</div><p class="note" id="c1-cpi-note">FRED headline + core CPI 月频公开数据。主显 YoY。</p><div class="meta"><span>实时</span><span>FRED CPIAUCSL + CPILFESL</span></div></article>
+            <article class="indicator-card" id="card-c1-wti"><div class="status-bar red" id="c1-wti-status"></div><div class="head"><div><div class="name-en">WTI</div><div class="name-zh">美国油价基准</div></div><span class="badge red" id="c1-wti-badge">RED</span></div><div class="number"><span id="c1-wti-number">112</span><span class="unit" id="c1-wti-unit">USD/bbl</span></div><div class="aux" id="c1-wti-aux">近5日 —</div><p class="note" id="c1-wti-note">配 Brent 看美欧能源分化。FRED daily WTI 可能滞后,近5日为相对最新 FRED 点。</p><div class="meta"><span>实时</span><span>FRED DCOILWTICO</span></div></article>
+            <article class="indicator-card" id="card-c1-shipping-freight"><div class="status-bar neutral" id="c1-freight-status"></div><div class="head"><div><div class="name-en">Baltic Freight</div><div class="name-zh">波罗的海运费</div></div><span class="badge neutral" id="c1-freight-badge">OBS</span></div><div class="number"><span id="c1-freight-number">3224</span><span class="unit">BDI</span></div><div class="aux" id="c1-freight-aux">BDTI 2068 -0.96% · BCTI 1504 -3.40% · BDI 3224 -0.06% · 高压</div><p class="note">波罗的海运费:BDTI/BCTI 油轮 + BDI 干散货,反映全球海运需求与运费压力。仅作展示观察。</p><div class="meta"><span>实时</span><span>StockQ BDTI/BCTI/BDI</span></div></article>
           </div>
         </div>
 
@@ -326,10 +326,10 @@
           <div class="card-grid">
             <article class="indicator-card" id="card-c2-dxy"><div class="status-bar yellow" id="c2-dxy-status"></div><div class="head"><div><div class="name-en">DXY</div><div class="name-zh">广义美元指数</div></div><span class="badge yellow" id="c2-dxy-badge">YELLOW</span></div><div class="number" id="c2-dxy-number">119.28</div><div class="aux" id="c2-dxy-aux">12 周高位 累积中</div><p class="note">强美元说明全球融资环境收紧，尚未到单独危机程度。</p><div class="meta"><span>阈值 &gt;115 红</span><span>美元指数 + 12 周区间</span></div></article>
             <article class="indicator-card" id="card-c2-gold"><div class="status-bar yellow" id="c2-gold-status"></div><div class="head"><div><div class="name-en">Gold</div><div class="name-zh">黄金</div></div><span class="badge yellow" id="c2-gold-badge">YELLOW</span></div><div class="number"><span id="c2-gold-number">4510.50</span><span class="unit" id="c2-gold-unit">USD/oz</span></div><div class="aux">趋势 +</div><p class="note">避险需求 + 通胀对冲并存，与强美元共强 = 金融压力与安全资产需求并存。</p><div class="meta"><span>趋势驱动</span><span>黄金现货价格</span></div></article>
-            <article class="indicator-card" id="card-c2-us10y"><div class="status-bar yellow" id="c2-us10y-status"></div><div class="head"><div><div class="name-en">US 10Y + 2s10s</div><div class="name-zh">美元利率曲线</div></div><span class="badge yellow" id="c2-us10y-badge">YELLOW</span></div><div class="number"><span id="c2-us10y-number">4.57</span><span class="unit" id="c2-us10y-unit">%</span></div><div class="aux" id="c2-us10y-aux">10Y · 2s10s spread +18bp · 从倒挂转正</div><div class="agg-rows"><div><span class="k">10-2 年期差</span> · <span class="v" id="c2-us10y-t10y2y">+0.18%</span></div><div><span class="k">周变化</span> · <span class="v" id="c2-us10y-week-change">+3bp</span></div><div><span class="k">状态</span> · <span class="v" id="c2-us10y-regime">陡峭化</span></div><div><span class="k">陡峭化警示</span> · <span class="v" id="c2-us10y-alert">是</span></div></div><p class="note">曲线从倒挂转正通常领先衰退 6-18 个月。</p><div class="meta"><span>阈值 &gt;5% 红</span><span>美债收益率曲线</span></div></article>
+            <article class="indicator-card" id="card-c2-us10y"><div class="status-bar yellow" id="c2-us10y-status"></div><div class="head"><div><div class="name-en">US 10Y + 2s10s</div><div class="name-zh">美元利率曲线</div></div><span class="badge yellow" id="c2-us10y-badge">YELLOW</span></div><div class="number"><span id="c2-us10y-number">4.57</span><span class="unit" id="c2-us10y-unit">%</span></div><div class="aux" id="c2-us10y-aux">10年期 · 10年-2年利差(2s10s) +18bp · 从倒挂转正</div><div class="agg-rows"><div><span class="k">10-2 年期差</span> · <span class="v" id="c2-us10y-t10y2y">+0.18%</span></div><div><span class="k">周变化</span> · <span class="v" id="c2-us10y-week-change">+3bp</span></div><div><span class="k">状态</span> · <span class="v" id="c2-us10y-regime">陡峭化</span></div><div><span class="k">陡峭化警示</span> · <span class="v" id="c2-us10y-alert">是</span></div></div><p class="note">曲线从倒挂转正通常领先衰退 6-18 个月。</p><div class="meta"><span>阈值 &gt;5% 红</span><span>美债收益率曲线</span></div></article>
             <article class="indicator-card" id="card-c2-usd-liquidity"><div class="status-bar green" id="c2-liquidity-status"></div><div class="head"><div><div class="name-en">USD Liquidity Agg</div><div class="name-zh">美元流动性聚合</div></div><span class="badge green" id="c2-liquidity-badge">GREEN</span></div><div class="number"><span id="c2-liquidity-number">3.62</span><span class="unit" id="c2-liquidity-unit">T USD</span></div><div class="aux" id="c2-liquidity-aux">银行准备金 · 12 周高位</div><div class="agg-rows"><div><span class="k">水位 WALCL</span> · <span class="v" id="c2-liquidity-walcl">7.18T · 4w +$36B</span></div><div><span class="k">银行准备金</span> · <span class="v" id="c2-liquidity-reserves">3.62T · 4w +$58B</span></div><div><span class="k">隔夜逆回购 ON RRP</span> · <span class="v" id="c2-liquidity-rrp">$320B · WoW -$8B</span></div><div><span class="k">隔夜利率 SOFR / EFFR</span> · <span class="v" id="c2-liquidity-sofr-effr">5.31% / 5.33%</span></div><div><span class="k">回购利率 BGCR / TGCR</span> · <span class="v" id="c2-liquidity-bgcr-tgcr">5.29% / 5.28%</span></div><div><span class="k">回购利差状态</span> · <span class="v" id="c2-liquidity-repo-regime">正常</span></div></div><p class="note">三层递进结构均无压力。2019-09 回购市场最早信号目前不存在。</p><div class="meta"><span>仅供观察</span><span>Fed 流动性组合</span></div></article>
             <article class="indicator-card" id="card-c2-fed-path"><div class="status-bar yellow" id="c2-fed-path-status"></div><div class="head"><div><div class="name-en">Fed Path Agg</div><div class="name-zh">Fed 政策路径分歧</div></div><span class="badge yellow" id="c2-fed-path-badge">YELLOW</span></div><div class="number"><span id="c2-fed-path-number">+38</span><span class="unit" id="c2-fed-path-unit">bp</span></div><div class="aux" id="c2-fed-path-aux">市场比委员鹰 · 期货隐含与目标中值差</div><div class="agg-rows"><div><span class="k">目标中值 (DFF)</span> · <span class="v" id="c2-fed-path-target">5.33%</span></div><div><span class="k">联邦基金期货近月</span> · <span class="v" id="c2-fed-path-front">94.27 → 5.73%</span></div><div><span class="k">ZQ 期货曲线</span> · <span class="v" id="c2-fed-path-zq">近月 +50bp</span></div><div><span class="k">SR3 期货曲线</span> · <span class="v" id="c2-fed-path-sr3">近月 +42bp</span></div><div><span class="k">OIS 远期 12M</span> · <span class="v" id="c2-fed-path-ois">4.88%</span></div><div><span class="k">SEP 点阵中值 2026</span> · <span class="v" id="c2-fed-path-dot">4.50%</span></div><div><span class="k">声明 / 纪要基调</span> · <span class="v" id="c2-fed-path-tone">鹰派</span></div></div><p class="note">市场比 Fed 委员预期更鹰。这种分歧是 1999-2000 / 2022 顶部前的同构信号。</p><div class="meta"><span>阈值 |分歧|&gt;50bp 红</span><span>政策预期组合</span></div></article>
-            <article class="indicator-card" id="card-c2-cuau"><div class="status-bar neutral" id="c2-cuau-status"></div><div class="head"><div><div class="name-en">Cu / Au</div><div class="name-zh">铜金比</div></div><span class="badge neutral" id="c2-cuau-badge">OBS</span></div><div class="number"><span id="c2-cuau-number">1.362</span><span class="unit" id="c2-cuau-unit">Cu/Au ×1000</span></div><div class="aux" id="c2-cuau-aux">铜 $6.17/lb · 金 $4529/oz · 较前日 +0.00%</div><p class="note">铜代表实体经济，黄金代表金融避险。本卡显示 copper/gold 原始比率 ×1000，观察方向不设绝对红黄绿阈值。</p><div class="meta"><span>live</span><span>gold-api HG / XAU</span></div></article>
+            <article class="indicator-card" id="card-c2-cuau"><div class="status-bar neutral" id="c2-cuau-status"></div><div class="head"><div><div class="name-en">Cu / Au</div><div class="name-zh">铜金比</div></div><span class="badge neutral" id="c2-cuau-badge">OBS</span></div><div class="number"><span id="c2-cuau-number">1.362</span><span class="unit" id="c2-cuau-unit">Cu/Au ×1000</span></div><div class="aux" id="c2-cuau-aux">铜 $6.17/lb · 金 $4529/oz · 较前日 +0.00%</div><p class="note">铜代表实体经济，黄金代表金融避险。本卡显示 copper/gold 原始比率 ×1000，观察方向不设绝对红黄绿阈值。</p><div class="meta"><span>实时</span><span>gold-api HG / XAU</span></div></article>
             <article class="indicator-card" id="card-c2-cfets"><div class="status-bar neutral" id="c2-cfets-status"></div><div class="head"><div><div class="name-en">CFETS RMB</div><div class="name-zh">人民币篮子指数</div></div><span class="badge neutral" id="c2-cfets-badge">OBS</span></div><div class="number"><span id="c2-cfets-number">100.47</span><span class="unit" id="c2-cfets-unit">index</span></div><div class="aux" id="c2-cfets-aux">CFETS 100.47 · BIS 108.34 · SDR 95.82</div><p class="note">人民币对一篮子货币强弱，反映中国央行汇率意图。本卡为 ChinaMoney 官方 CFETS 周频指数，观察用。</p><div class="meta"><span>weekly official JSON</span><span>人民币篮子指数</span></div></article>
           </div>
         </div>
@@ -337,7 +337,7 @@
         <!-- C3: 信用与企业债 -->
         <div class="reader-cat-block">
           <div class="reader-cat-header"><h3>信用与企业债</h3><span class="en">CREDIT & CORPORATE</span><span class="counts">5 张</span></div>
-          <p class="cat-intro">信用层回答的不是"压力高不高"，而是"压力有没有从价格变成融资约束"。HY OAS / IG OAS 是企业借钱难易的市场定价；NFCI 综合 100+ 跨市场信号；私募代理用上市 BDC ETF 篮子近似公开市场看不见的私募信贷；CRE 看商业地产融资压力。</p>
+          <p class="cat-intro">信用层回答的不是"压力高不高"，而是"压力有没有从价格变成融资约束"。高收益债利差(HY OAS)/ 投资级利差(IG OAS)是企业借钱难易的市场定价；金融条件指数(NFCI)综合 100+ 跨市场信号；私募代理用上市 BDC ETF 篮子近似公开市场看不见的私募信贷；CRE(商业地产)看商业地产融资压力。</p>
           <div class="card-grid">
             <article class="indicator-card" id="card-c3-hy-oas"><div class="status-bar green" id="c3-hy-status"></div><div class="head"><div><div class="name-en">HY OAS</div><div class="name-zh">高收益债利差</div></div><span class="badge green" id="c3-hy-badge">GREEN</span></div><div class="number"><span id="c3-hy-number">2.78</span><span class="unit" id="c3-hy-unit">%</span></div><div class="aux" id="c3-hy-aux">WoW 收窄 · 与 VIX 同步走低</div><p class="note">企业信用风险可控。与 VIX 同步背离，信用市场不验证恐慌。</p><div class="meta"><span>阈值 &gt;5% 红</span><span>高收益债利差</span></div></article>
             <article class="indicator-card" id="card-c3-ig-oas"><div class="status-bar green" id="c3-ig-status"></div><div class="head"><div><div class="name-en">IG OAS</div><div class="name-zh">投资级利差</div></div><span class="badge green" id="c3-ig-badge">GREEN</span></div><div class="number"><span id="c3-ig-number">1.05</span><span class="unit" id="c3-ig-unit">%</span></div><div class="aux" id="c3-ig-aux">1 日变化 -2bp · 投资级/高收益比 0.38</div><p class="note">优质企业融资几乎无压力。"信用相对耐压"的最强反向证据。</p><div class="meta"><span>阈值 &gt;1.5% 红</span><span>投资级 / 高收益利差组合</span></div></article>
@@ -363,19 +363,19 @@
           <p class="cat-intro">世界经济公开观察层：欧美亚主要股指（STOXX 50 / 日经 225 / DAX / 英国 FTSE 100 / 法国 CAC 40 / 泛欧 STOXX 600 / 韩国 KOSPI / 澳洲 ASX 200 / 新加坡 STI / 台湾加权 / 印度 Nifty 50 / 巴西 Bovespa）+ 欧元区波动率（VSTOXX），均为公开指数，仅供观察。</p>
           <div class="card-grid">
 
-            <article class="indicator-card"><div class="status-bar neutral" id="c5-stoxx50-status"></div><div class="head"><div><div class="name-en">STOXX 50</div><div class="name-zh">欧元区大盘</div></div><span class="badge neutral" id="c5-stoxx50-badge">OBS</span></div><div class="number" id="c5-stoxx50-number">6071</div><div class="aux" id="c5-stoxx50-aux">近5日 —</div><p class="note">欧股 vs 美股相对强弱反映全球资金分配。</p><div class="meta"><span>live</span><span>Yahoo ^STOXX50E</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c5-nikkei225-status"></div><div class="head"><div><div class="name-en">Nikkei 225</div><div class="name-zh">日经 225</div></div><span class="badge neutral" id="c5-nikkei225-badge">OBS</span></div><div class="number" id="c5-nikkei225-number">64642</div><div class="aux" id="c5-nikkei225-aux">近5日 —</div><p class="note">日股是日元 carry 与全球流动性的重要观察点。</p><div class="meta"><span>live</span><span>Yahoo ^N225</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c5-dax-status"></div><div class="head"><div><div class="name-en">DAX</div><div class="name-zh">德国 DAX</div></div><span class="badge neutral" id="c5-dax-badge">OBS</span></div><div class="number" id="c5-dax-number">25178</div><div class="aux" id="c5-dax-aux">近5日 —</div><p class="note">德股代表欧洲制造业核心。</p><div class="meta"><span>live</span><span>Yahoo ^GDAXI</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c5-ftse100-status"></div><div class="head"><div><div class="name-en">FTSE 100</div><div class="name-zh">英国富时 100</div></div><span class="badge neutral" id="c5-ftse100-badge">OBS</span></div><div class="number" id="c5-ftse100-number">10409</div><div class="aux" id="c5-ftse100-aux">近5日 —</div><p class="note">英国蓝筹大盘，能源与金融权重高，反映英国与全球大宗周期。</p><div class="meta"><span>live</span><span>Yahoo ^FTSE</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c5-cac40-status"></div><div class="head"><div><div class="name-en">CAC 40</div><div class="name-zh">法国 CAC 40</div></div><span class="badge neutral" id="c5-cac40-badge">OBS</span></div><div class="number" id="c5-cac40-number">8183</div><div class="aux" id="c5-cac40-aux">近5日 —</div><p class="note">法国大盘，奢侈品与工业权重高。</p><div class="meta"><span>live</span><span>Yahoo ^FCHI</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c5-stoxx600-status"></div><div class="head"><div><div class="name-en">STOXX 600</div><div class="name-zh">泛欧 600</div></div><span class="badge neutral" id="c5-stoxx600-badge">OBS</span></div><div class="number" id="c5-stoxx600-number">626</div><div class="aux" id="c5-stoxx600-aux">近5日 —</div><p class="note">覆盖欧洲 17 国 600 家公司，欧洲股市最宽口径。</p><div class="meta"><span>live</span><span>Yahoo ^STOXX</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c5-kospi-status"></div><div class="head"><div><div class="name-en">KOSPI</div><div class="name-zh">韩国综合</div></div><span class="badge neutral" id="c5-kospi-badge">OBS</span></div><div class="number" id="c5-kospi-number">8476</div><div class="aux" id="c5-kospi-aux">近5日 —</div><p class="note">韩国大盘，半导体与出口周期的领先观察点。</p><div class="meta"><span>live</span><span>Yahoo ^KS11</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c5-asx200-status"></div><div class="head"><div><div class="name-en">ASX 200</div><div class="name-zh">澳洲 ASX 200</div></div><span class="badge neutral" id="c5-asx200-badge">OBS</span></div><div class="number" id="c5-asx200-number">8731</div><div class="aux" id="c5-asx200-aux">近5日 —</div><p class="note">澳洲大盘，矿业与银行权重高，大宗商品周期风向标。</p><div class="meta"><span>live</span><span>Yahoo ^AXJO</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c5-sti-status"></div><div class="head"><div><div class="name-en">STI</div><div class="name-zh">新加坡海峡时报</div></div><span class="badge neutral" id="c5-sti-badge">OBS</span></div><div class="number" id="c5-sti-number">5038</div><div class="aux" id="c5-sti-aux">近5日 —</div><p class="note">新加坡大盘，东南亚金融与贸易枢纽。</p><div class="meta"><span>live</span><span>Yahoo ^STI</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c5-taiex-status"></div><div class="head"><div><div class="name-en">TAIEX</div><div class="name-zh">台湾加权</div></div><span class="badge neutral" id="c5-taiex-badge">OBS</span></div><div class="number" id="c5-taiex-number">44733</div><div class="aux" id="c5-taiex-aux">近5日 —</div><p class="note">台湾加权，半导体产业链最集中的指数。</p><div class="meta"><span>live</span><span>Yahoo ^TWII</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c5-nifty50-status"></div><div class="head"><div><div class="name-en">Nifty 50</div><div class="name-zh">印度 Nifty 50</div></div><span class="badge neutral" id="c5-nifty50-badge">OBS</span></div><div class="number" id="c5-nifty50-number">23548</div><div class="aux" id="c5-nifty50-aux">近5日 —</div><p class="note">印度大盘，新兴市场增长与全球资金流向的关键观察点。</p><div class="meta"><span>live</span><span>Yahoo ^NSEI</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c5-bovespa-status"></div><div class="head"><div><div class="name-en">Bovespa</div><div class="name-zh">巴西 Bovespa</div></div><span class="badge neutral" id="c5-bovespa-badge">OBS</span></div><div class="number" id="c5-bovespa-number">173788</div><div class="aux" id="c5-bovespa-aux">近5日 —</div><p class="note">巴西大盘，大宗商品与拉美新兴市场风向。</p><div class="meta"><span>live</span><span>Yahoo ^BVSP</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c5-v2x-status"></div><div class="head"><div><div class="name-en">V2X</div><div class="name-zh">欧元区波动率</div></div><span class="badge neutral" id="c5-v2x-badge">OBS</span></div><div class="number" id="c5-v2x-number">19.2</div><div class="aux" id="c5-v2x-aux">2026-05-29 · vs 美VIX +2.9</div><p class="note">欧 VIX vs 美 VIX 反映地区性恐慌差异。</p><div class="meta"><span>live</span><span>Deutsche Börse V2TX</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-stoxx50-status"></div><div class="head"><div><div class="name-en">STOXX 50</div><div class="name-zh">欧元区大盘</div></div><span class="badge neutral" id="c5-stoxx50-badge">OBS</span></div><div class="number" id="c5-stoxx50-number">6071</div><div class="aux" id="c5-stoxx50-aux">近5日 —</div><p class="note">欧股 vs 美股相对强弱反映全球资金分配。</p><div class="meta"><span>实时</span><span>Yahoo ^STOXX50E</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-nikkei225-status"></div><div class="head"><div><div class="name-en">Nikkei 225</div><div class="name-zh">日经 225</div></div><span class="badge neutral" id="c5-nikkei225-badge">OBS</span></div><div class="number" id="c5-nikkei225-number">64642</div><div class="aux" id="c5-nikkei225-aux">近5日 —</div><p class="note">日股是日元 carry 与全球流动性的重要观察点。</p><div class="meta"><span>实时</span><span>Yahoo ^N225</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-dax-status"></div><div class="head"><div><div class="name-en">DAX</div><div class="name-zh">德国 DAX</div></div><span class="badge neutral" id="c5-dax-badge">OBS</span></div><div class="number" id="c5-dax-number">25178</div><div class="aux" id="c5-dax-aux">近5日 —</div><p class="note">德股代表欧洲制造业核心。</p><div class="meta"><span>实时</span><span>Yahoo ^GDAXI</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-ftse100-status"></div><div class="head"><div><div class="name-en">FTSE 100</div><div class="name-zh">英国富时 100</div></div><span class="badge neutral" id="c5-ftse100-badge">OBS</span></div><div class="number" id="c5-ftse100-number">10409</div><div class="aux" id="c5-ftse100-aux">近5日 —</div><p class="note">英国蓝筹大盘，能源与金融权重高，反映英国与全球大宗周期。</p><div class="meta"><span>实时</span><span>Yahoo ^FTSE</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-cac40-status"></div><div class="head"><div><div class="name-en">CAC 40</div><div class="name-zh">法国 CAC 40</div></div><span class="badge neutral" id="c5-cac40-badge">OBS</span></div><div class="number" id="c5-cac40-number">8183</div><div class="aux" id="c5-cac40-aux">近5日 —</div><p class="note">法国大盘，奢侈品与工业权重高。</p><div class="meta"><span>实时</span><span>Yahoo ^FCHI</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-stoxx600-status"></div><div class="head"><div><div class="name-en">STOXX 600</div><div class="name-zh">泛欧 600</div></div><span class="badge neutral" id="c5-stoxx600-badge">OBS</span></div><div class="number" id="c5-stoxx600-number">626</div><div class="aux" id="c5-stoxx600-aux">近5日 —</div><p class="note">覆盖欧洲 17 国 600 家公司，欧洲股市最宽口径。</p><div class="meta"><span>实时</span><span>Yahoo ^STOXX</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-kospi-status"></div><div class="head"><div><div class="name-en">KOSPI</div><div class="name-zh">韩国综合</div></div><span class="badge neutral" id="c5-kospi-badge">OBS</span></div><div class="number" id="c5-kospi-number">8476</div><div class="aux" id="c5-kospi-aux">近5日 —</div><p class="note">韩国大盘，半导体与出口周期的领先观察点。</p><div class="meta"><span>实时</span><span>Yahoo ^KS11</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-asx200-status"></div><div class="head"><div><div class="name-en">ASX 200</div><div class="name-zh">澳洲 ASX 200</div></div><span class="badge neutral" id="c5-asx200-badge">OBS</span></div><div class="number" id="c5-asx200-number">8731</div><div class="aux" id="c5-asx200-aux">近5日 —</div><p class="note">澳洲大盘，矿业与银行权重高，大宗商品周期风向标。</p><div class="meta"><span>实时</span><span>Yahoo ^AXJO</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-sti-status"></div><div class="head"><div><div class="name-en">STI</div><div class="name-zh">新加坡海峡时报</div></div><span class="badge neutral" id="c5-sti-badge">OBS</span></div><div class="number" id="c5-sti-number">5038</div><div class="aux" id="c5-sti-aux">近5日 —</div><p class="note">新加坡大盘，东南亚金融与贸易枢纽。</p><div class="meta"><span>实时</span><span>Yahoo ^STI</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-taiex-status"></div><div class="head"><div><div class="name-en">TAIEX</div><div class="name-zh">台湾加权</div></div><span class="badge neutral" id="c5-taiex-badge">OBS</span></div><div class="number" id="c5-taiex-number">44733</div><div class="aux" id="c5-taiex-aux">近5日 —</div><p class="note">台湾加权，半导体产业链最集中的指数。</p><div class="meta"><span>实时</span><span>Yahoo ^TWII</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-nifty50-status"></div><div class="head"><div><div class="name-en">Nifty 50</div><div class="name-zh">印度 Nifty 50</div></div><span class="badge neutral" id="c5-nifty50-badge">OBS</span></div><div class="number" id="c5-nifty50-number">23548</div><div class="aux" id="c5-nifty50-aux">近5日 —</div><p class="note">印度大盘，新兴市场增长与全球资金流向的关键观察点。</p><div class="meta"><span>实时</span><span>Yahoo ^NSEI</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-bovespa-status"></div><div class="head"><div><div class="name-en">Bovespa</div><div class="name-zh">巴西 Bovespa</div></div><span class="badge neutral" id="c5-bovespa-badge">OBS</span></div><div class="number" id="c5-bovespa-number">173788</div><div class="aux" id="c5-bovespa-aux">近5日 —</div><p class="note">巴西大盘，大宗商品与拉美新兴市场风向。</p><div class="meta"><span>实时</span><span>Yahoo ^BVSP</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c5-v2x-status"></div><div class="head"><div><div class="name-en">V2X</div><div class="name-zh">欧元区波动率</div></div><span class="badge neutral" id="c5-v2x-badge">OBS</span></div><div class="number" id="c5-v2x-number">19.2</div><div class="aux" id="c5-v2x-aux">2026-05-29 · vs 美VIX +2.9</div><p class="note">欧 VIX vs 美 VIX 反映地区性恐慌差异。</p><div class="meta"><span>实时</span><span>Deutsche Börse V2TX</span></div></article>
           </div>
         </div>
 
@@ -384,9 +384,9 @@
           <div class="reader-cat-header"><h3>中国宏观</h3><span class="en">CHINA MACRO · NEW CATEGORY</span><span class="counts">11 live</span></div>
           <p class="cat-intro orange-edge"><strong>中国宏观公开观察层。</strong>本类使用 Yahoo 中国股指、NBS/TE 中国通胀与 PMI、ChinaBond 10Y、ChinaMoney CFETS、NBS 70 城房价指数,以及东方财富转载的央行公开市场操作(OMO)、中期借贷便利(MLF)、社会融资规模等公开源(均为聚合转载、非官方原始页面)。央行逐笔交易明细、社融贷款底层数据、70 城单套房源成交价仍拿不到。</p>
           <div class="card-grid">
-            <article class="indicator-card"><div class="status-bar neutral" id="c6-sse-status"></div><div class="head"><div><div class="name-en">SSE Composite</div><div class="name-zh">上证综指</div></div><span class="badge neutral" id="c6-sse-badge">OBS</span></div><div class="number" id="c6-sse-number">4100</div><div class="aux" id="c6-sse-aux">近5日 —</div><p class="note">A 股大盘风险情绪基准。</p><div class="meta"><span>live</span><span>Yahoo 000001.SS</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c6-hsi-status"></div><div class="head"><div><div class="name-en">Hang Seng</div><div class="name-zh">恒生指数</div></div><span class="badge neutral" id="c6-hsi-badge">OBS</span></div><div class="number" id="c6-hsi-number">25000</div><div class="aux" id="c6-hsi-aux">近5日 —</div><p class="note">中国资本市场对外开放窗口。</p><div class="meta"><span>live</span><span>Yahoo ^HSI</span></div></article>
-            <article class="indicator-card"><div class="status-bar neutral" id="c6-csi300-status"></div><div class="head"><div><div class="name-en">CSI 300</div><div class="name-zh">沪深 300</div></div><span class="badge neutral" id="c6-csi300-badge">OBS</span></div><div class="number" id="c6-csi300-number">4900</div><div class="aux" id="c6-csi300-aux">近5日 —</div><p class="note">A 股蓝筹组合。</p><div class="meta"><span>live</span><span>Yahoo 000300.SS</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c6-sse-status"></div><div class="head"><div><div class="name-en">SSE Composite</div><div class="name-zh">上证综指</div></div><span class="badge neutral" id="c6-sse-badge">OBS</span></div><div class="number" id="c6-sse-number">4100</div><div class="aux" id="c6-sse-aux">近5日 —</div><p class="note">A 股大盘风险情绪基准。</p><div class="meta"><span>实时</span><span>Yahoo 000001.SS</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c6-hsi-status"></div><div class="head"><div><div class="name-en">Hang Seng</div><div class="name-zh">恒生指数</div></div><span class="badge neutral" id="c6-hsi-badge">OBS</span></div><div class="number" id="c6-hsi-number">25000</div><div class="aux" id="c6-hsi-aux">近5日 —</div><p class="note">中国资本市场对外开放窗口。</p><div class="meta"><span>实时</span><span>Yahoo ^HSI</span></div></article>
+            <article class="indicator-card"><div class="status-bar neutral" id="c6-csi300-status"></div><div class="head"><div><div class="name-en">CSI 300</div><div class="name-zh">沪深 300</div></div><span class="badge neutral" id="c6-csi300-badge">OBS</span></div><div class="number" id="c6-csi300-number">4900</div><div class="aux" id="c6-csi300-aux">近5日 —</div><p class="note">A 股蓝筹组合。</p><div class="meta"><span>实时</span><span>Yahoo 000300.SS</span></div></article>
             <article class="indicator-card" id="card-c6-china-pmi"><div class="status-bar neutral" id="c6-china-pmi-status"></div><div class="head"><div><div class="name-en">China PMI</div><div class="name-zh">中国制造业 PMI</div></div><span class="badge neutral" id="c6-china-pmi-badge">OBS</span></div><div class="number"><span id="c6-china-pmi-number">50.3</span><span class="unit" id="c6-china-pmi-unit">points</span></div><div class="aux" id="c6-china-pmi-aux">2026-04 · 扩张</div><p class="note">国家统计局官方制造业 PMI，反映制造业景气扩张/收缩状态。</p><div class="meta"><span>monthly official HTML</span><span>官方制造业 PMI</span></div></article>
             <article class="indicator-card" id="card-c6-china-infl"><div class="status-bar neutral" id="c6-china-infl-status"></div><div class="head"><div><div class="name-en">China CPI / PPI</div><div class="name-zh">中国通胀</div></div><span class="badge neutral" id="c6-china-infl-badge">OBS</span></div><div class="number"><span id="c6-china-infl-number">1.2</span><span class="unit" id="c6-china-infl-unit">% YoY</span></div><div class="aux" id="c6-china-infl-aux">CPI +1.2% YoY · PPI +2.8% YoY · 2026-04</div><p class="note">国家统计局 CPI/PPI 同比观察，展示中国通胀与工业品价格压力。</p><div class="meta"><span>monthly official HTML</span><span>官方 CPI / PPI</span></div></article>
             <article class="indicator-card" id="card-c6-house"><div class="status-bar neutral" id="c6-house-status"></div><div class="head"><div><div class="name-en">70-city Home Prices</div><div class="name-zh">70 城房价</div></div><span class="badge neutral" id="c6-house-badge">OBS</span></div><div class="number"><span id="c6-house-number">14/70</span><span class="unit" id="c6-house-unit">新房上涨</span></div><div class="aux" id="c6-house-aux">二手上涨 12/70 · 新房持平 7 城 · 2026-04</div><p class="note">国家统计局 70 个大城市商品住宅价格指数，统计有多少城市房价上涨 / 持平 / 下降。这是官方价格指数，不是单套房源的成交价。</p><details class="card-local-details" id="c6-house-details"><summary id="c6-house-details-summary">看各城市涨跌</summary><div class="city-tier-breakdown" id="c6-house-tier-breakdown"><div class="city-tier-block" id="c6-house-tier1"></div><div class="city-tier-block" id="c6-house-tier2"></div><div class="city-tier-block" id="c6-house-tier3"></div></div></details><div class="meta"><span>monthly official HTML</span><span>官方 70 城房价指数</span></div></article>
@@ -401,7 +401,7 @@
         <!-- C7: 市场情绪 -->
         <div class="reader-cat-block">
           <div class="reader-cat-header"><h3>市场情绪</h3><span class="en">MARKET SENTIMENT</span><span class="counts">3 张</span></div>
-          <p class="cat-intro">注：Market Temperature 主卡(QQQ z-score)已在上方 #homepage-market-temperature 完整展示。此处放 VIX / SPX / NDX 60w z-score(广度参照)，不与上方重复。</p>
+          <p class="cat-intro">注：市场温度主卡(QQQ 偏离度 z-score)已在上方"市场温度"区完整展示。此处放 VIX(波动率指数) / SPX(标普500) / NDX(纳指100) 60 周偏离度(广度参照)，不与上方重复。</p>
           <div class="card-grid">
             <article class="indicator-card" id="card-c7-vix"><div class="status-bar green" id="c7-vix-status"></div><div class="head"><div><div class="name-en">VIX</div><div class="name-zh">S&P 隐含波动率</div></div><span class="badge green" id="c7-vix-badge">GREEN</span></div><div class="number" id="c7-vix-number">16.76</div><div class="aux" id="c7-vix-aux">12 周低位</div><p class="note" id="c7-vix-note">波动率没有同步扩张，是当前形势不能写成全面危机的关键反证。</p><div class="meta"><span>阈值 &gt;25 红</span><span>S&P 隐含波动率</span></div></article>
             <article class="indicator-card" id="card-c7-spx"><div class="status-bar yellow" id="c7-spx-status"></div><div class="head"><div><div class="name-en">SPX</div><div class="name-zh">标普 500</div></div><span class="badge yellow" id="c7-spx-badge">MIXED</span></div><div class="number" id="c7-spx-number">7473</div><div class="aux" id="c7-spx-aux">52 周高位 累积中</div><p class="note">风险资产仍强，结构压力尚未完全进入价格。</p><div class="meta"><span>距高 -15%+ 红</span><span>标普 500 与 52 周高位</span></div></article>
@@ -583,17 +583,17 @@
         <p>系统通过 6 个节点把宏观冲击从源头追到资产层。当前传导压力综合分 <code class="danger" id="detail-chain-stress">79</code>，路径置信度 <code id="detail-chain-confidence">88</code>，主导冲击为<strong id="detail-chain-lead-shock">战争 / 油价</strong>，主导资产影响为<strong id="detail-chain-dominant-impact">全球股票承压</strong>。</p>
 
         <div class="flow-strip">
-          <div class="flow-node high"><div class="fn-label">SHOCK</div><div class="fn-name">战争冲击</div><div class="fn-value" id="detail-chain-node-shock">score 82 · 冲击上行</div></div>
+          <div class="flow-node high"><div class="fn-label">SHOCK</div><div class="fn-name">战争冲击</div><div class="fn-value" id="detail-chain-node-shock">分数 82 · 冲击上行</div></div>
           <div class="flow-arrow">→</div>
-          <div class="flow-node high"><div class="fn-label">PRICE</div><div class="fn-name">油价压力</div><div class="fn-value" id="detail-chain-node-price">score 81 · 推升油价</div></div>
+          <div class="flow-node high"><div class="fn-label">PRICE</div><div class="fn-name">油价压力</div><div class="fn-value" id="detail-chain-node-price">分数 81 · 推升油价</div></div>
           <div class="flow-arrow">→</div>
-          <div class="flow-node high"><div class="fn-label">MACRO</div><div class="fn-name">通胀传导</div><div class="fn-value" id="detail-chain-node-macro">score 81 · 抬高通胀</div></div>
+          <div class="flow-node high"><div class="fn-label">MACRO</div><div class="fn-name">通胀传导</div><div class="fn-value" id="detail-chain-node-macro">分数 81 · 抬高通胀</div></div>
           <div class="flow-arrow">→</div>
-          <div class="flow-node high"><div class="fn-label">RATE</div><div class="fn-name">利率压力</div><div class="fn-value" id="detail-chain-node-rate">score 78 · 压制宽松</div></div>
+          <div class="flow-node high"><div class="fn-label">RATE</div><div class="fn-name">利率压力</div><div class="fn-value" id="detail-chain-node-rate">分数 78 · 压制宽松</div></div>
           <div class="flow-arrow">→</div>
-          <div class="flow-node med"><div class="fn-label">ASSET</div><div class="fn-name">股票影响</div><div class="fn-value" id="detail-chain-node-equity">score 79 · 偏空</div></div>
+          <div class="flow-node med"><div class="fn-label">ASSET</div><div class="fn-name">股票影响</div><div class="fn-value" id="detail-chain-node-equity">分数 79 · 偏空</div></div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;margin:-8px 0 8px 0;font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">+ 中期对冲：<strong style="color:var(--paper-ink);" id="detail-chain-node-gold">黄金影响 score 64 · 中期偏多</strong>(对冲通胀，但短线受真实利率压制)</div>
+        <div style="display:flex;align-items:center;gap:8px;margin:-8px 0 8px 0;font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">+ 中期对冲：<strong style="color:var(--paper-ink);" id="detail-chain-node-gold">黄金影响 分数 64 · 中期偏多</strong>(对冲通胀，但短线受真实利率压制)</div>
 
         <p>网络第二层把"价格变量层"(原油 / 商品 / 美元) → "宏观变量层"(通胀预期 / 真实利率 / 流动性) → "市场传导层"(融资条件 / 波动率 / 相关性) → "资产结果层"(股票 / 债券 / 黄金 / 能源)。各层压力均被 partial 验证(逐层得分见上方节点链实时字段)，<strong>没有出现"上游强、下游弱"</strong>那种典型的"市场不信"形态。</p>
 
@@ -657,29 +657,29 @@
       <div class="editorial-section-body">
         <div class="appendix-content">
       <div class="appendix-narrative">
-        <div class="appendix-narrative-intro">World Order Stress 是结构性状态修正层(状态叠加,非底层评分模块)。它不参与平台的风险打分、决策与执行,但会通过叠加系数为今日判读添加"升档指针"。本期叠加升至 <span id="wo-detail-intro-score">70</span>，触发橙色升档。</div>
+        <div class="appendix-narrative-intro">世界秩序压力层(World Order Stress)是结构性状态修正层(状态叠加,非底层评分模块)。它不参与平台的风险打分、决策与执行,但会通过叠加系数为今日判读添加"升档指针"。本期叠加升至 <span id="wo-detail-intro-score">70</span>，触发橙色升档。</div>
 
         <h4>1. 总体状态 <em>· Overall Regime</em></h4>
 
         <div class="wo-regime-banner">
           <div class="wo-kicker">CURRENT REGIME</div>
           <div class="wo-state" id="wo-detail-state">多战区压力期</div>
-          <p class="wo-desc">压力分数 <span id="wo-detail-score">70</span> / 置信度 <span id="wo-detail-confidence">medium</span> / 市场确认度 <span id="wo-detail-market-confirmation">stress</span>。决策层修正系数 <span id="wo-detail-risk-bias">+5</span> 分应用于今日判读，体现为本期 hero 的 overlay 升档指针。</p>
+          <p class="wo-desc">压力分数 <span id="wo-detail-score">70</span> / 置信度 <span id="wo-detail-confidence">中</span> / 市场确认 <span id="wo-detail-market-confirmation">承压</span>。决策层修正系数 <span id="wo-detail-risk-bias">+5</span> 分应用于今日判读，体现为本期头版的升档指针。</p>
         </div>
 
-        <p>本层数据来自 4 个外部源：<code>GDELT</code>(全球新闻情绪与冲突)、<code>OFAC</code>(经济制裁)、<code>SIPRI</code>(全球军费，年频)、<code>ACLED</code>(冲突事件，周频)，以及 1 个市场确认层(VIX / Gold / DXY 跨资产同步性)。各外部源的实际新鲜度见下方「数据新鲜度」行，市场确认状态见上方压力分数行。</p>
+        <p>本层数据来自 4 个外部源：<code>GDELT</code>(全球新闻情绪与冲突)、<code>OFAC</code>(经济制裁)、<code>SIPRI</code>(全球军费，年频)、<code>ACLED</code>(冲突事件，周频)，以及 1 个市场确认层(VIX 波动率 / 黄金 / 广义美元指数 跨资产同步性)。各外部源的实际新鲜度见下方「数据新鲜度」行，市场确认状态见上方压力分数行。</p>
 
         <p class="wo-freshness">数据新鲜度：ACLED 最新周 <code id="wo-detail-acled-latest-week">—</code>(近 4 周冲突事件 <span id="wo-detail-acled-events-4w">—</span>)· 月度截至 <code id="wo-detail-acled-monthly-asof">—</code> · GDELT 冲突事件 <span id="wo-detail-gdelt-conflict-events">—</span>。ACLED 为周频手动刷新源，跑完 Refresh World Order Stress 工作流后此处随之更新。</p>
 
         <h4>2. 六维度详情 <em>· Six Dimensions</em></h4>
 
         <div class="wo-dim-grid">
-          <div class="wo-dim med" id="wo-dim-peace"><div class="wd-label">DIM 1</div><div class="wd-name">和平红利退潮</div><div class="wd-score" id="wo-dim-peace-score">+1.2σ</div><div class="wd-trend" id="wo-dim-peace-trend">ACLED + SIPRI · rising</div></div>
-          <div class="wo-dim high" id="wo-dim-bloc"><div class="wd-label">DIM 2</div><div class="wd-name">阵营化形成</div><div class="wd-score" id="wo-dim-bloc-score">68</div><div class="wd-trend" id="wo-dim-bloc-trend">GDELT bloc 信号 · rising</div></div>
-          <div class="wo-dim severe" id="wo-dim-conflict"><div class="wd-label">DIM 3</div><div class="wd-name">多战区冲突</div><div class="wd-score" id="wo-dim-conflict-score">85</div><div class="wd-trend" id="wo-dim-conflict-trend">ACLED 30d · rising 2 周</div></div>
-          <div class="wo-dim high" id="wo-dim-weaponization"><div class="wd-label">DIM 4</div><div class="wd-name">经济武器化</div><div class="wd-score" id="wo-dim-weaponization-score">+2.3σ</div><div class="wd-trend" id="wo-dim-weaponization-trend">OFAC 30d + GDELT · rising</div></div>
-          <div class="wo-dim med" id="wo-dim-capital"><div class="wd-label">DIM 5</div><div class="wd-name">资本管制风险</div><div class="wd-score" id="wo-dim-capital-score">52</div><div class="wd-trend" id="wo-dim-capital-trend">CFETS / capital flow · stable</div></div>
-          <div class="wo-dim high" id="wo-dim-market"><div class="wd-label">DIM 6</div><div class="wd-name">市场确认度</div><div class="wd-score" id="wo-dim-market-score">stress</div><div class="wd-trend" id="wo-dim-market-trend">VIX/Gold/DXY 同步性 · rising</div></div>
+          <div class="wo-dim med" id="wo-dim-peace"><div class="wd-label">DIM 1</div><div class="wd-name">和平红利退潮</div><div class="wd-score" id="wo-dim-peace-score">+1.2σ</div><div class="wd-trend" id="wo-dim-peace-trend">ACLED + SIPRI · 上行</div></div>
+          <div class="wo-dim high" id="wo-dim-bloc"><div class="wd-label">DIM 2</div><div class="wd-name">阵营化形成</div><div class="wd-score" id="wo-dim-bloc-score">68</div><div class="wd-trend" id="wo-dim-bloc-trend">GDELT 阵营信号 · 上行</div></div>
+          <div class="wo-dim severe" id="wo-dim-conflict"><div class="wd-label">DIM 3</div><div class="wd-name">多战区冲突</div><div class="wd-score" id="wo-dim-conflict-score">85</div><div class="wd-trend" id="wo-dim-conflict-trend">ACLED 30 天 · 上行 2 周</div></div>
+          <div class="wo-dim high" id="wo-dim-weaponization"><div class="wd-label">DIM 4</div><div class="wd-name">经济武器化</div><div class="wd-score" id="wo-dim-weaponization-score">+2.3σ</div><div class="wd-trend" id="wo-dim-weaponization-trend">OFAC 30 天 + GDELT · 上行</div></div>
+          <div class="wo-dim med" id="wo-dim-capital"><div class="wd-label">DIM 5</div><div class="wd-name">资本管制风险</div><div class="wd-score" id="wo-dim-capital-score">52</div><div class="wd-trend" id="wo-dim-capital-trend">CFETS / 资本流向 · 平稳</div></div>
+          <div class="wo-dim high" id="wo-dim-market"><div class="wd-label">DIM 6</div><div class="wd-name">市场确认度</div><div class="wd-score" id="wo-dim-market-score">承压</div><div class="wd-trend" id="wo-dim-market-trend">VIX/Gold/DXY 同步性 · 上行</div></div>
         </div>
 
         <p>六个维度中，<strong>多战区冲突</strong> 和 <strong>经济武器化</strong> 是本期压力的核心驱动(各维度分值见上方实时维度卡)。这两个维度都处于<code>上行</code>状态，叠加产生了多战区压力状态。市场确认度从中性升至承压，说明<strong>市场已经开始定价</strong>这种结构性压力——这是叠加从未确认升档到已确认的关键证据。</p>
@@ -719,7 +719,7 @@
         <p>首页采用四层结构：<strong>结论 → 原因 → 证据 → 展开详情</strong>。上方 8 runtime block 是<strong>结论层</strong>，给出今日总判断、压力来源、信号分层、四大驱动、市场温度、风险引擎、交叉验证和本期变化。8 主题卡阵是<strong>证据层</strong>，把同样的信息按"读者最容易理解的主题"重新组织。本附录区是<strong>原始材料层</strong>，保留所有可审计的细节字段。</p>
 
         <h4>2. 评分方法 <em>· Scoring Method</em></h4>
-        <p>综合风险分数 = 6 底层模块加权(<code>Energy / Geopolitical / Inflation / Liquidity / Debt / Banking</code>)，每模块 0-100。当前权重：能源 0.25 / 地缘 0.20 / 通胀 0.15 / 流动性 0.15 / 债务 0.15 / 银行 0.10。每模块的阈值分为 RED (≥70) / YELLOW (40-69) / GREEN (&lt;40)。</p>
+        <p>综合风险分数 = 6 底层模块加权(能源 Energy / 地缘 Geopolitical / 通胀 Inflation / 流动性 Liquidity / 债务 Debt / 银行 Banking)，每模块 0-100。当前权重：能源 0.25 / 地缘 0.20 / 通胀 0.15 / 流动性 0.15 / 债务 0.15 / 银行 0.10。每模块的阈值分为红 RED (≥70) / 黄 YELLOW (40-69) / 绿 GREEN (&lt;40)。</p>
         <p>World Order Stress 是<strong>结构性状态修正层</strong>，不参与风险打分。它通过风险偏置系数为状态分应用 +0 / +5 / +10 的升档修正。</p>
 
         <h4>3. 证据分层 <em>· Evidence Layers</em></h4>
@@ -874,7 +874,7 @@
         <div class="appendix-narrative-intro">本附录展示作者本人的执行框架。<strong>这些规则只针对作者自己</strong>，不构成对任何人的投资建议。决策头、执行灯、预警规则、动作清单、仓位区间、硬阈值风控与行为纪律保留为高级详情。</div>
 
         <h4>1. 决策概览 <em>· Decision Overview</em></h4>
-        <p>系统当前策略状态为 <code class="danger" id="exec-decision-state">Defensive · 红灯 / 禁止新增</code>，状态分 <code id="exec-decision-score">56</code>。状态判定原因：<strong id="exec-decision-reason">执行引擎检测到高压风险组合</strong>，已激活 1 项结构信号 <code class="warn" id="exec-structural-signal">逆回购准备金告急</code>，结构加分 <span id="exec-structural-bump">+10</span> 应用于主分数。主导风险源：<strong id="exec-dominant-drivers">能源 (88) / 地缘政治 (81) / 通胀 (59)</strong>。</p>
+        <p>系统当前策略状态为 <code class="danger" id="exec-decision-state">防守(Defensive) · 红灯 / 禁止新增</code>，状态分 <code id="exec-decision-score">56</code>。状态判定原因：<strong id="exec-decision-reason">执行引擎检测到高压风险组合</strong>，已激活 1 项结构信号 <code class="warn" id="exec-structural-signal">逆回购准备金告急</code>，结构加分 <span id="exec-structural-bump">+10</span> 应用于主分数。主导风险源：<strong id="exec-dominant-drivers">能源 (88) / 地缘政治 (81) / 通胀 (59)</strong>。</p>
 
         <p>目标总仓位区间 <code id="exec-exposure-band">18%-38%</code>，风险预算 <code id="exec-risk-budget">30%</code>，目标总敞口 <code id="exec-target-gross">38%</code>，现金缓冲目标 <code id="exec-cash-target">35%</code>。风险资产倾向 = <span id="exec-risk-asset-bias">低配风险资产</span>。结构性仓位带修正 = <span id="exec-band-shift">−5</span> 表示因结构信号触发，目标仓位带需要额外保守 5 个百分点。</p>
 
@@ -1014,7 +1014,7 @@
       <div class="method-grid">
         <div>
           <h4>METHOD · 方法论</h4>
-          <div>6 底层模块加权 0-100。每模块阈值 RED/YELLOW/GREEN。World Order 为结构性状态修正层,不参与风险打分。详见上方"方法说明"附录(默认折叠,点击展开)。</div>
+          <div>6 底层模块加权 0-100。每模块阈值分红/黄/绿三档。世界秩序压力(World Order)为结构性状态修正层,不参与风险打分。详见上方"方法说明"附录(默认折叠,点击展开)。</div>
         </div>
         <div>
           <h4>BOUNDARY · 边界</h4>
@@ -1031,6 +1031,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=frontend-zh-copy-2"></script>
+  <script type="module" src="scripts/app.js?v=frontend-zh-copy-4"></script>
 </body>
 </html>
