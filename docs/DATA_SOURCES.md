@@ -391,9 +391,9 @@ PortWatch 字段是 AIS-derived chokepoint proxy,本项目只保存 latest、7d/
 
 | 源 | 端点 | 喂养指标 | 边界 |
 |---|---|---|---|
-| **SEC EDGAR companyconcept** | `data.sec.gov/api/xbrl/companyconcept/CIK*/us-gaap/*.json` | hyperscaler capex YoY、Mag4 FCF YoY、NVDA LTM 收入(投资/收入比分母)、Cloud RPO | 美国政府公共领域;UA 必须携带联系方式(否则 403 + 临时 IP 封禁);10-Q 现金流为 YTD 累计,build 内差分出单季 |
+| **SEC EDGAR companyconcept** | `data.sec.gov/api/xbrl/companyconcept/CIK*/us-gaap/*.json` | hyperscaler capex YoY、Mag4 FCF YoY、NVDA LTM 收入(投资/收入比分母)、Cloud RPO | 美国政府公共领域;UA 必须携带联系方式;**实测对数据中心 IP(含 GitHub runner)整段 403** → capex/FCF/NVDA 收入三项落 stockanalysis 季报镜像,RPO 无镜像落 curated;10-Q 现金流为 YTD 累计,build 内差分出单季 |
 | **multpl.com** | `/shiller-pe` 公开 HTML | Shiller CAPE | 公开 HTML proxy,不得写成官方 Shiller 数据库 |
-| **stockanalysis.com** | `/stocks/nvda/statistics/`、`/etf/spy/holdings/` 公开 HTML | NVDA 远期 PE、S&P Top-5 权重(SPY 持仓代理,服务端只渲染前 ~25 行) | 公开页代理;Top-5 是 SPY 持仓口径非 S&P 官方权重 |
+| **stockanalysis.com** | `/stocks/nvda/statistics/`、`/etf/spy/holdings/`、`/stocks/*/financials/{,cash-flow-statement/}?p=quarterly` 公开 HTML | NVDA 远期 PE、S&P Top-5 权重(SPY 持仓代理,服务端只渲染前 ~25 行)、**EDGAR 被封时的季报镜像**(OCF/Capex/Revenue,~20 季服务端渲染) | 公开页代理;Top-5 是 SPY 持仓口径非 S&P 官方权重;季报数字为 $M 口径镜像非 SEC 原始 filing |
 | **Wikipedia** | `List of S&P 500 companies` | 全市场广度成份股名单(~503 只 → Yahoo 实算 %>50DMA) | 名单代理;广度为全成份实算,非 Barchart S5FI 官方序列 |
 | **OpenInsider** | `/screener?s=<ticker>&fd=365&xp=1&xs=1` 公开 HTML | AI 龙头(NVDA/PLTR/AVGO)内部人卖买比 | SEC Form 4 聚合代理;买入不足 $1M 按 $1M 下限折算,不得写成官方 SEC 统计 |
 

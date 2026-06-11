@@ -19,5 +19,5 @@ Owner 提供了外部静态页「AI 泡沫监测 · The Bubble Watch」(23 项�
 
 - check:all 17→18 顶层项(`check:bubble-watch` 6 leaf)。
 - Pages 部署清单与 push paths 登记 `Refresh Bubble Watch` / `bubble-watch.html`。
-- SEC EDGAR 为新数据源(美国政府公共领域,UA 需携带联系方式);本地网络对 EDGAR 不稳定时相关指标落 fallback,CI(US runner)为准。
+- SEC EDGAR 为新数据源(美国政府公共领域,UA 需携带联系方式);**实测 EDGAR 对数据中心 IP(含 GitHub runner)整段 403**,故 capex/FCF/NVDA 收入三项配 stockanalysis 季报镜像二级源(EDGAR → 镜像 → curated 三级 fail-closed),Cloud RPO 无镜像、EDGAR 不可达时落 curated。
 - 编辑类 11 项的更新动作 = 改 `config/bubble-watch-curated.json`(value/status/note/asOfDate)后触发 workflow;超期未更新由 STALE 角标显式暴露,与原版「沿用旧口径」机制同构。

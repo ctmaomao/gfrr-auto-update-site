@@ -158,8 +158,8 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **打分 1:1 复刻并机器锁定**:red_pct 四档(25/40/60)+ 加权风险分 (红+0.5黄)/23 + 分类强制升级(红灯占比 ≥50% 的分类 ≥2 个 → 至少「高风险预警」);`check:bubble-watch`(6 leaf,入 check:all 第 18 项)对 verdict 全量 replay + provenance/stale 一致性 + boundary(app.js/index.html 不读专题数据、build 不碰 radar-data/realtime、双侧书签存在)。
 - **前端**:`bubble-watch.html` 独立单文件页(内联 CSS/JS,原版报纸排版 1:1;Chart.js → 手写 SVG 平滑双线 + tooltip,守 ADR-0001 零依赖);历史种子取自上游 ai-bubble-monitor Issue 001-009 真实序列,WoW 翻灯按上期 statuses 比对。
 - **书签互切**:`.page-bookmarks` 纯 CSS 彩色丝带(index 侧在 `assets/styles.css`、专题侧内联,双侧同构契约见 DESIGN.md §4.4)。
-- **已知边界**:SEC EDGAR 对本地网络不稳(UA 合规已证,CI US runner 为准);Top-5 为 SPY 持仓口径、广度为全成份实算(非 Barchart S5FI 官方序列),均已在 source_name/note 标注;编辑 11 项更新 = 改 curated config 后触发 workflow。
-- 状态:**全链落地待首轮 CI 实跑验证**(本地 build 6/12 auto live,EDGAR/FRED 项待 CI 补全)。
+- **已知边界**:SEC EDGAR 对数据中心 IP(含 GitHub runner)整段 403(首轮 CI dispatch 实证)→ capex/FCF/NVDA 收入走 stockanalysis 季报镜像二级源(EDGAR→镜像→curated 三级 fail-closed),Cloud RPO 无镜像、EDGAR 不可达时落 curated;Top-5 为 SPY 持仓口径、广度为全成份实算(非 Barchart S5FI 官方序列),均已在 source_name/note 标注;编辑 11 项更新 = 改 curated config 后触发 workflow。
+- 状态:**全链 live**。首轮 CI dispatch workflow 全绿(FRED live:HY OAS 278bps / fed_policy 实算「偏鹰」;8/12 auto);补镜像链后本地 9/12(FRED 无本地 key),CI 预期 11/12(仅 RPO curated)。
 
 ---
 

@@ -48,10 +48,10 @@ const INDICATOR_DEFS = [
   { id: 'cape', category: 'valuation', name_en: 'Shiller CAPE', name_zh: 'CAPE 周期调整 PE', threshold_text: '>35 红 / 25-35 黄 / <25 绿', source_name: 'multpl.com / GuruFocus', mode: 'auto' },
   { id: 'top5_weight', category: 'valuation', name_en: 'S&P 500 Top-5 Weight', name_zh: '前 5 大权重占比', threshold_text: '>25% 红 / 18-25% 黄 / <18% 绿', source_name: 'SPY holdings (stockanalysis / slickcharts)', mode: 'auto' },
   { id: 'nvda_fpe', category: 'valuation', name_en: 'NVDA Forward P/E', name_zh: 'NVDA 远期 PE', threshold_text: '>40 红 / 30-40 黄 / <30 绿', source_name: 'GuruFocus / StockAnalysis', mode: 'auto' },
-  { id: 'hyperscaler_capex_yoy', category: 'capital', name_en: 'Hyperscaler Capex YoY', name_zh: 'Hyperscaler 资本开支增速', threshold_text: '指引下调=红 / 加速=黄 / 稳健=绿', source_name: 'SEC EDGAR 10-Q/10-K', mode: 'auto' },
-  { id: 'mag4_fcf_yoy', category: 'capital', name_en: 'Mag4 FCF YoY', name_zh: 'Mag4 自由现金流变化', threshold_text: '<-20% 红 / -20%~0 黄 / >0 绿', source_name: 'SEC EDGAR 10-Q/10-K', mode: 'auto' },
+  { id: 'hyperscaler_capex_yoy', category: 'capital', name_en: 'Hyperscaler Capex YoY', name_zh: 'Hyperscaler 资本开支增速', threshold_text: '指引下调=红 / 加速=黄 / 稳健=绿', source_name: 'SEC EDGAR / stockanalysis 季报镜像', mode: 'auto' },
+  { id: 'mag4_fcf_yoy', category: 'capital', name_en: 'Mag4 FCF YoY', name_zh: 'Mag4 自由现金流变化', threshold_text: '<-20% 红 / -20%~0 黄 / >0 绿', source_name: 'SEC EDGAR / stockanalysis 季报镜像', mode: 'auto' },
   { id: 'vc_ai_share', category: 'capital', name_en: 'AI / Total VC Funding', name_zh: 'AI 占 VC 投资比重', threshold_text: '>50% 红 / 30-50% 黄 / <30% 绿', source_name: 'Crunchbase / PitchBook(季度研究口径)', mode: 'curated' },
-  { id: 'nvda_invest_revenue', category: 'capital', name_en: 'NVDA Customer Invest / Rev', name_zh: 'NVDA 客户投资/收入比', threshold_text: '>30% 红 / 15-30% 黄 / <15% 绿 (Lucent 99 峰值 24%)', source_name: '公开披露承诺 ÷ SEC EDGAR LTM 收入', mode: 'auto' },
+  { id: 'nvda_invest_revenue', category: 'capital', name_en: 'NVDA Customer Invest / Rev', name_zh: 'NVDA 客户投资/收入比', threshold_text: '>30% 红 / 15-30% 黄 / <15% 绿 (Lucent 99 峰值 24%)', source_name: '公开披露承诺 ÷ EDGAR/stockanalysis LTM 收入', mode: 'auto' },
   { id: 'breadth_50d', category: 'market_structure', name_en: '% Above 50-Day MA', name_zh: 'S&P 50 日均线上方比例', threshold_text: '<40% 红 / 40-60% 黄 / >60% 绿', source_name: 'Yahoo Chart × Wikipedia 全成份股实算', mode: 'auto' },
   { id: 'spy_vs_rsp_6m', category: 'market_structure', name_en: 'SPY vs RSP 6M Spread', name_zh: '市值加权 vs 等权重', threshold_text: '>10% 红 / 5-10% 黄 / <5% 绿', source_name: 'Yahoo Chart(SPY/RSP 6 个月)', mode: 'auto' },
   { id: 'insider_sell_buy', category: 'market_structure', name_en: 'AI Insider Sell/Buy Ratio', name_zh: 'AI 龙头内部人卖买比', threshold_text: '>20x=红 / 5-20x=黄 / <5x=绿 (2000 峰值 23x)', source_name: 'OpenInsider / SEC Form 4', mode: 'auto' },
@@ -297,6 +297,43 @@ async function fetchSp500Constituents() {
   return [...seen];
 }
 
+// stockanalysis 季度报表镜像(SEC EDGAR 对数据中心 IP 封 403 时的二级源;
+// 服务端渲染表格,~20 个季度,单位 $M,列序 新→旧)
+const SA_FIN_CACHE = new Map();
+async function fetchSaFinancialPage(ticker, statementPath) {
+  const key = `${ticker}|${statementPath}`;
+  if (SA_FIN_CACHE.has(key)) return SA_FIN_CACHE.get(key);
+  const url = `https://stockanalysis.com/stocks/${ticker.toLowerCase()}/financials/${statementPath}?p=quarterly`;
+  const html = await fetchWithTimeout(url, { headers: { 'User-Agent': BROWSER_UA } });
+  SA_FIN_CACHE.set(key, html);
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  return html;
+}
+
+function parseSaQuarterlyRow(html, label) {
+  // 遍历所有 `>label<` 文本节点候选(避免「Revenue」误中「Cost of Revenue」等
+  // 复合标签;nav/图例里的同名节点因所在 <tr> 段解析不出 ≥8 个数而被跳过)
+  const re = new RegExp(`>${label.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}<`, 'gu');
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    const seg = html.slice(m.index, m.index + 9000);
+    const end = seg.indexOf('</tr>');
+    const text = (end > 0 ? seg.slice(0, end) : seg)
+      .replace(/<!--[\s\S]*?-->/gu, '')
+      .replace(/<[^>]+>/gu, '|');
+    const nums = [...text.matchAll(/\|\s*(-?[0-9][0-9,]*)\s*(?=\|)/gu)].map((x) => Number(x[1].replace(/,/gu, '')));
+    if (nums.length >= 8) return nums.map((v) => v * 1e6); // 新→旧,换算为 USD
+  }
+  throw new Error(`stockanalysis 行「${label}」未解析到 ≥8 个季度值`);
+}
+
+function saT4qYoy(numsNewestFirst) {
+  const now = numsNewestFirst.slice(0, 4).reduce((a, b) => a + b, 0);
+  const prev = numsNewestFirst.slice(4, 8).reduce((a, b) => a + b, 0);
+  if (prev === 0) return null;
+  return { now, prev, yoyPct: ((now - prev) / Math.abs(prev)) * 100 };
+}
+
 async function mapPool(items, limit, worker) {
   const results = [];
   let cursor = 0;
@@ -396,16 +433,29 @@ const autoBuilders = {
   },
   async hyperscaler_capex_yoy() {
     const companies = ['AMZN', 'MSFT', 'GOOGL', 'META'];
-    const perCompany = [];
-    for (const ticker of companies) {
-      const units = await retry(
-        () => edgarConcept(EDGAR_CIK[ticker], ['PaymentsToAcquirePropertyPlantAndEquipment', 'PaymentsToAcquireProductiveAssets']),
-        `EDGAR capex ${ticker}`
-      );
-      const yoy = trailing4qYoy(deriveQuarterlySeries(units));
-      if (yoy) perCompany.push({ ticker, ...yoy });
+    let perCompany = [];
+    let sourceTag = 'SEC EDGAR';
+    try {
+      for (const ticker of companies) {
+        const units = await edgarConcept(EDGAR_CIK[ticker], ['PaymentsToAcquirePropertyPlantAndEquipment', 'PaymentsToAcquireProductiveAssets']);
+        const yoy = trailing4qYoy(deriveQuarterlySeries(units));
+        if (yoy) perCompany.push({ ticker, ...yoy });
+      }
+    } catch (error) {
+      console.warn(`[bubble-watch] EDGAR capex 链失败,改走 stockanalysis 镜像: ${error.message}`);
+      perCompany = [];
     }
-    if (perCompany.length < 3) throw new Error(`EDGAR capex 可用公司不足 (${perCompany.length}/4)`);
+    if (perCompany.length < 3) {
+      sourceTag = 'stockanalysis 季报镜像';
+      perCompany = [];
+      for (const ticker of companies) {
+        const html = await retry(() => fetchSaFinancialPage(ticker, 'cash-flow-statement/'), `SA cash-flow ${ticker}`);
+        const capex = parseSaQuarterlyRow(html, 'Capital Expenditures').map((v) => Math.abs(v));
+        const yoy = saT4qYoy(capex);
+        if (yoy) perCompany.push({ ticker, ...yoy });
+      }
+    }
+    if (perCompany.length < 3) throw new Error(`capex 可用公司不足 (${perCompany.length}/4)`);
     const now = perCompany.reduce((a, c) => a + c.now, 0);
     const prev = perCompany.reduce((a, c) => a + c.prev, 0);
     const yoyPct = ((now - prev) / Math.abs(prev)) * 100;
@@ -413,29 +463,42 @@ const autoBuilders = {
     return {
       status,
       value_display: fmtPct(yoyPct, 0, true),
-      note: `SEC EDGAR 实拉 ${perCompany.map((c) => c.ticker).join('/')} 滚动 4 季 capex 合计 $${(now / 1e9).toFixed(0)}B,同比 ${fmtPct(yoyPct, 1, true)}(上年同期 $${(prev / 1e9).toFixed(0)}B);开支仍在${yoyPct >= 15 ? '加速扩张' : yoyPct >= 0 ? '稳健区间' : '收缩——指引下调风险落地'}。判级:实际收缩=红 / 同比 ≥15% 加速=黄 / 稳健=绿`,
-      detail: { yoyPct, perCompany: perCompany.map((c) => ({ ticker: c.ticker, yoyPct: Number(c.yoyPct.toFixed(1)), latestEnd: c.latestEnd })) }
+      note: `${sourceTag}实拉 ${perCompany.map((c) => c.ticker).join('/')} 滚动 4 季 capex 合计 $${(now / 1e9).toFixed(0)}B,同比 ${fmtPct(yoyPct, 1, true)}(上年同期 $${(prev / 1e9).toFixed(0)}B);开支仍在${yoyPct >= 15 ? '加速扩张' : yoyPct >= 0 ? '稳健区间' : '收缩——指引下调风险落地'}。判级:实际收缩=红 / 同比 ≥15% 加速=黄 / 稳健=绿`,
+      detail: { yoyPct, source: sourceTag, perCompany: perCompany.map((c) => ({ ticker: c.ticker, yoyPct: Number(c.yoyPct.toFixed(1)) })) }
     };
   },
   async mag4_fcf_yoy() {
     const companies = ['AMZN', 'MSFT', 'GOOGL', 'META'];
-    const perCompany = [];
-    for (const ticker of companies) {
-      const ocfUnits = await retry(
-        () => edgarConcept(EDGAR_CIK[ticker], ['NetCashProvidedByUsedInOperatingActivities', 'NetCashProvidedByUsedInOperatingActivitiesContinuingOperations']),
-        `EDGAR OCF ${ticker}`
-      );
-      const capexUnits = await retry(
-        () => edgarConcept(EDGAR_CIK[ticker], ['PaymentsToAcquirePropertyPlantAndEquipment', 'PaymentsToAcquireProductiveAssets']),
-        `EDGAR capex(FCF) ${ticker}`
-      );
-      const ocfQ = deriveQuarterlySeries(ocfUnits);
-      const capexQ = new Map(deriveQuarterlySeries(capexUnits).map((q) => [q.end, q.val]));
-      const fcfQ = ocfQ.filter((q) => capexQ.has(q.end)).map((q) => ({ end: q.end, val: q.val - capexQ.get(q.end) }));
-      const yoy = trailing4qYoy(fcfQ);
-      if (yoy) perCompany.push({ ticker, ...yoy });
+    let perCompany = [];
+    let sourceTag = 'SEC EDGAR';
+    try {
+      for (const ticker of companies) {
+        const ocfUnits = await edgarConcept(EDGAR_CIK[ticker], ['NetCashProvidedByUsedInOperatingActivities', 'NetCashProvidedByUsedInOperatingActivitiesContinuingOperations']);
+        const capexUnits = await edgarConcept(EDGAR_CIK[ticker], ['PaymentsToAcquirePropertyPlantAndEquipment', 'PaymentsToAcquireProductiveAssets']);
+        const ocfQ = deriveQuarterlySeries(ocfUnits);
+        const capexQ = new Map(deriveQuarterlySeries(capexUnits).map((q) => [q.end, q.val]));
+        const fcfQ = ocfQ.filter((q) => capexQ.has(q.end)).map((q) => ({ end: q.end, val: q.val - capexQ.get(q.end) }));
+        const yoy = trailing4qYoy(fcfQ);
+        if (yoy) perCompany.push({ ticker, ...yoy });
+      }
+    } catch (error) {
+      console.warn(`[bubble-watch] EDGAR FCF 链失败,改走 stockanalysis 镜像: ${error.message}`);
+      perCompany = [];
     }
-    if (perCompany.length < 3) throw new Error(`EDGAR FCF 可用公司不足 (${perCompany.length}/4)`);
+    if (perCompany.length < 3) {
+      sourceTag = 'stockanalysis 季报镜像';
+      perCompany = [];
+      for (const ticker of companies) {
+        const html = await retry(() => fetchSaFinancialPage(ticker, 'cash-flow-statement/'), `SA cash-flow ${ticker}`);
+        const ocf = parseSaQuarterlyRow(html, 'Operating Cash Flow');
+        const capex = parseSaQuarterlyRow(html, 'Capital Expenditures'); // 负值
+        const n = Math.min(ocf.length, capex.length);
+        const fcf = Array.from({ length: n }, (_, i) => ocf[i] + capex[i]);
+        const yoy = saT4qYoy(fcf);
+        if (yoy) perCompany.push({ ticker, ...yoy });
+      }
+    }
+    if (perCompany.length < 3) throw new Error(`FCF 可用公司不足 (${perCompany.length}/4)`);
     const now = perCompany.reduce((a, c) => a + c.now, 0);
     const prev = perCompany.reduce((a, c) => a + c.prev, 0);
     if (prev === 0) throw new Error('FCF 基期为 0');
@@ -444,27 +507,36 @@ const autoBuilders = {
     return {
       status,
       value_display: fmtPct(yoyPct, 0, true),
-      note: `SEC EDGAR 实拉 ${perCompany.map((c) => c.ticker).join('/')} 滚动 4 季自由现金流(经营现金流 − capex)合计 $${(now / 1e9).toFixed(0)}B,同比 ${fmtPct(yoyPct, 1, true)}(上年同期 $${(prev / 1e9).toFixed(0)}B)——巨额 capex ${yoyPct < 0 ? '正在吞噬现金流' : '尚未压垮现金流'}。阈值:<-20% 红 / -20%~0 黄 / >0 绿`,
-      detail: { yoyPct, perCompany: perCompany.map((c) => ({ ticker: c.ticker, fcfNowB: Number((c.now / 1e9).toFixed(1)), yoyPct: Number(c.yoyPct.toFixed(1)) })) }
+      note: `${sourceTag}实拉 ${perCompany.map((c) => c.ticker).join('/')} 滚动 4 季自由现金流(经营现金流 − capex)合计 $${(now / 1e9).toFixed(0)}B,同比 ${fmtPct(yoyPct, 1, true)}(上年同期 $${(prev / 1e9).toFixed(0)}B)——巨额 capex ${yoyPct < 0 ? '正在吞噬现金流' : '尚未压垮现金流'}。阈值:<-20% 红 / -20%~0 黄 / >0 绿`,
+      detail: { yoyPct, source: sourceTag, perCompany: perCompany.map((c) => ({ ticker: c.ticker, fcfNowB: Number((c.now / 1e9).toFixed(1)), yoyPct: Number(c.yoyPct.toFixed(1)) })) }
     };
   },
   async nvda_invest_revenue(ctx) {
     const commitments = ctx.config.params?.nvdaCommitments;
     if (!commitments?.usd) throw new Error('config 缺 nvdaCommitments');
-    const revUnits = await retry(
-      () => edgarConcept(EDGAR_CIK.NVDA, ['RevenueFromContractWithCustomerExcludingAssessedTax', 'Revenues']),
-      'EDGAR NVDA revenue'
-    );
-    const quarters = deriveQuarterlySeries(revUnits);
-    if (quarters.length < 4) throw new Error('NVDA 季度收入不足 4 季');
-    const ltm = quarters.slice(-4).reduce((a, q) => a + q.val, 0);
+    let ltm = null;
+    let sourceTag = 'SEC EDGAR';
+    try {
+      const revUnits = await edgarConcept(EDGAR_CIK.NVDA, ['RevenueFromContractWithCustomerExcludingAssessedTax', 'Revenues']);
+      const quarters = deriveQuarterlySeries(revUnits);
+      if (quarters.length >= 4) ltm = quarters.slice(-4).reduce((a, q) => a + q.val, 0);
+    } catch (error) {
+      console.warn(`[bubble-watch] EDGAR NVDA revenue 失败,改走 stockanalysis 镜像: ${error.message}`);
+    }
+    if (!ltm) {
+      sourceTag = 'stockanalysis 季报镜像';
+      const html = await retry(() => fetchSaFinancialPage('NVDA', ''), 'SA NVDA income');
+      const rev = parseSaQuarterlyRow(html, 'Revenue');
+      ltm = rev.slice(0, 4).reduce((a, b) => a + b, 0);
+    }
+    if (!(ltm > 1e10)) throw new Error(`NVDA LTM 收入异常: ${ltm}`);
     const ratio = (commitments.usd / ltm) * 100;
     const status = classifyNumeric(ratio, 30, 15);
     return {
       status,
       value_display: `≈${ratio.toFixed(0)}%`,
-      note: `分子=公开披露投资承诺 ${commitments.desc}(${commitments.asOfDate} 口径,$${(commitments.usd / 1e9).toFixed(0)}B);分母=SEC EDGAR 实拉 NVDA LTM 收入 $${(ltm / 1e9).toFixed(1)}B(至 ${quarters[quarters.length - 1].end});比率 ≈${ratio.toFixed(1)}%,仍远超 Lucent 1999 循环融资峰值 24%。阈值:>30% 红 / 15-30% 黄 / <15% 绿`,
-      detail: { commitmentsUsd: commitments.usd, ltmRevenue: ltm, ratioPct: ratio }
+      note: `分子=公开披露投资承诺 ${commitments.desc}(${commitments.asOfDate} 口径,$${(commitments.usd / 1e9).toFixed(0)}B);分母=${sourceTag}实拉 NVDA LTM 收入 $${(ltm / 1e9).toFixed(1)}B;比率 ≈${ratio.toFixed(1)}%,仍远超 Lucent 1999 循环融资峰值 24%。阈值:>30% 红 / 15-30% 黄 / <15% 绿`,
+      detail: { commitmentsUsd: commitments.usd, ltmRevenue: ltm, ratioPct: ratio, source: sourceTag }
     };
   },
   async breadth_50d() {
