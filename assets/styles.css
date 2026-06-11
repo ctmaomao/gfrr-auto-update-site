@@ -23,13 +23,16 @@
   .path-tag { position: sticky; top: 0; z-index: 100; background: var(--paper-ink); color: var(--paper-bg); padding: 10px 16px; text-align: center; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; border-bottom: 2px solid var(--paper-bg); }
   .path-tag strong { font-size: 13px; letter-spacing: 0.2em; color: var(--risk-yellow); }
 
-  header.masthead { border-bottom: 3px double var(--paper-ink); padding-bottom: 20px; margin-bottom: 24px; }
+  /* masthead 规格对齐 Bubble Watch 原版(64px 题、32px 下距、0.3em kicker 字距、
+     meta 正文墨色仅末行弱化)——消除两页报头的细微视觉漂移 */
+  header.masthead { border-bottom: 3px double var(--paper-ink); padding-bottom: 20px; margin-bottom: 32px; }
   .masthead-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
-  .kicker { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.28em; color: var(--risk-red); margin-bottom: 8px; text-transform: uppercase; }
-  h1.title { font-family: var(--font-display); font-size: clamp(36px, 6vw, 56px); font-weight: 900; line-height: 1.05; margin: 0; letter-spacing: -0.02em; }
+  .kicker { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.3em; color: var(--risk-red); margin-bottom: 8px; text-transform: uppercase; }
+  h1.title { font-family: var(--font-display); font-size: clamp(36px, 6vw, 64px); font-weight: 900; line-height: 1.05; margin: 0; letter-spacing: -0.02em; }
   h1.title em { font-style: italic; font-weight: 400; }
-  .issue-meta { text-align: right; font-family: var(--font-mono); font-size: 12px; line-height: 1.8; color: var(--paper-muted); }
+  .issue-meta { text-align: right; font-family: var(--font-mono); font-size: 12px; line-height: 1.8; color: var(--paper-ink); }
   .issue-meta strong { color: var(--paper-ink); }
+  .issue-meta > div:last-child { margin-top: 8px; color: var(--paper-muted); }
 
   .dashboard-jump-nav { margin-bottom: 32px; padding: 12px 0; border-top: 1px solid var(--paper-line); border-bottom: 1px solid var(--paper-line); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; display: flex; gap: 22px; flex-wrap: wrap; }
   .dashboard-jump-nav a { color: var(--paper-muted); text-decoration: none; padding: 2px 0; border-bottom: 1px solid transparent; }
@@ -39,7 +42,7 @@
   .editorial-section { margin: 40px 0; border-top: 4px solid var(--section-accent, var(--risk-red)); border-bottom: 1px solid var(--paper-line); padding: 24px 28px 20px 28px; background: var(--paper-bg); }
   .editorial-section-header { margin-bottom: 18px; }
   .section-kicker { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.28em; color: var(--paper-muted); text-transform: uppercase; margin-bottom: 6px; }
-  .section-title { display: block; font-family: var(--font-display); font-size: clamp(22px, 3vw, 30px); font-weight: 700; line-height: 1.2; color: var(--paper-ink); }
+  .section-title { display: block; font-family: var(--font-display); font-size: clamp(22px, 3vw, 30px); font-weight: 900; line-height: 1.2; letter-spacing: -0.01em; color: var(--paper-ink); }
   .section-note { display: block; font-family: var(--font-serif); font-size: 13px; line-height: 1.7; color: var(--paper-muted); margin-top: 6px; }
   .editorial-section-body { padding: 0 8px; }
 
@@ -48,14 +51,16 @@
   .editorial-big-number { padding: 0; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 32px; align-items: stretch; min-height: 240px; }
   @media (max-width: 720px) { .editorial-big-number { grid-template-columns: 1fr; } }
   .big-left { background: var(--paper-ink); color: var(--paper-bg); padding: 32px; display: flex; flex-direction: column; justify-content: space-between; }
-  .big-left .label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.22em; opacity: 0.6; }
-  .big-left .value { font-family: var(--font-display); font-size: clamp(80px, 12vw, 128px); font-weight: 900; line-height: 0.9; letter-spacing: -0.04em; }
+  /* Hero 排版对齐 Bubble Watch 原版:大数字 14vw/144(同 DESIGN.md §5.3 契约,
+     此前 CSS 漂移为 12vw/128)、判读标题用 display 字体、正文 17px/1.7 暖墨 */
+  .big-left .label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; opacity: 0.6; }
+  .big-left .value { font-family: var(--font-display); font-size: clamp(80px, 14vw, 144px); font-weight: 900; line-height: 0.9; letter-spacing: -0.04em; }
   .big-left .value sup { font-size: 0.4em; vertical-align: super; opacity: 0.7; }
-  .big-left .breakdown { font-family: var(--font-mono); font-size: 12px; margin-top: 12px; opacity: 0.75; line-height: 1.7; }
+  .big-left .breakdown { font-family: var(--font-mono); font-size: 12px; margin-top: 12px; opacity: 0.7; line-height: 1.6; }
   .big-right { display: flex; flex-direction: column; justify-content: center; }
-  .big-right .verdict-kicker { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.22em; color: var(--risk-orange); margin-bottom: 12px; }
-  .big-right h2 { font-family: var(--font-serif); font-size: clamp(22px, 3vw, 32px); font-weight: 700; line-height: 1.3; margin: 0 0 16px 0; color: var(--paper-ink); }
-  .big-right p { font-family: var(--font-serif); font-size: 16px; line-height: 1.85; margin: 0; color: var(--paper-ink); opacity: 0.9; }
+  .big-right .verdict-kicker { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--risk-red); margin-bottom: 12px; }
+  .big-right h2 { font-family: var(--font-display); font-size: clamp(24px, 3.4vw, 36px); font-weight: 700; line-height: 1.2; margin: 0 0 16px 0; letter-spacing: -0.01em; color: var(--paper-ink); }
+  .big-right p { font-family: var(--font-serif); font-size: 17px; line-height: 1.7; margin: 0; color: var(--paper-warm); }
   .big-footer { grid-column: 1 / -1; border-top: 1px solid rgba(31,24,21,0.18); padding-top: 14px; margin-top: 4px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--paper-ink); opacity: 0.7; }
   .big-footer .k { opacity: 0.5; text-transform: uppercase; }
   .big-footer .v { color: var(--paper-ink); opacity: 1; margin-top: 3px; }

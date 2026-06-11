@@ -268,7 +268,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 - 底部 `border-bottom: 1px solid var(--paper-line)`
 - 内边距 `padding: 24px 28px 20px 28px`
 - `section-kicker`:mono 字体,11px,letter-spacing 0.28em,uppercase
-- `section-title`:display 字体,22-30px clamp,font-weight 700
+- `section-title`:display 字体,22-30px clamp,font-weight 900(2026-06-11 对齐 Bubble Watch 原版分类标题字重;原 700)
 - `section-note`:serif 字体,13px,line-height 1.7
 
 ### 5.2 macro-overview-shell 与 8 runtime block
@@ -587,6 +587,11 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
   修订 §2.2 允许图表 / 画布容器使用次级纸张背景; 修订 §8.1 #4，区分主背景
   与装饰层，允许 `::before` / `::after` 装饰性 fade overlay 渐变，同时继续禁止
   section / card 主背景使用渐变。
+- 2026-06-11 视觉统一微调(对齐 Bubble Watch 原版,display-only、零数据/逻辑改动):
+  masthead 题号 56→64px、下距 24→32px、kicker 字距 0.3em、issue-meta 正文墨色
+  仅末行弱化;Hero 大数字回归 §5.3 契约 14vw/144(修复 CSS 漂移的 12vw/128)、
+  判读标题改 display 字体 24-36px/1.2、正文 17px/1.7 暖墨、判读 kicker 橙→红;
+  §5.1 section-title 字重 700→900。
 
 ---
 
