@@ -2,20 +2,20 @@
   "contractVersion": "bubble-watch-v1",
   "issue_number": 10,
   "as_of_date": "2026-06-11",
-  "generated_at": "2026-06-11T04:53:58.512Z",
+  "generated_at": "2026-06-11T05:04:18.413Z",
   "summary": {
     "total_indicators": 23,
-    "red_count": 6,
-    "yellow_count": 6,
+    "red_count": 5,
+    "yellow_count": 7,
     "green_count": 11,
-    "red_pct": 26.1,
-    "weighted_risk_score": 39.1,
+    "red_pct": 21.7,
+    "weighted_risk_score": 37,
     "verdict_label": "高风险预警",
     "verdict_label_en": "High Risk Alert",
-    "verdict_desc": "本周计数 6 红 / 6 黄 / 11 绿,red_pct 26.1%、加权风险分 39.1%。本期翻灯 2 项:「市值加权 vs 等权重」黄→绿、「AI 龙头内部人卖买比」黄→红。基础判读为中度警戒(red_pct 25-40%)。分类强制升级生效:估值 2/3 红、资金面 3/4 红——红灯占比过半的分类达 2 个,判读上调至「高风险预警」。当前红灯:CAPE 周期调整 PE(40.9)、前 5 大权重占比(≈26.5%)、Mag4 自由现金流变化(-92%)、AI 占 VC 投资比重(80-81%)、NVDA 客户投资/收入比(≈43%)、AI 龙头内部人卖买比(≫20x)。数据由自动管线于 2026-06-11 采集:8 项实时接入、15 项沿用人工研究口径;编辑性事件叙事以最近一期人工口径为准。"
+    "verdict_desc": "本周计数 5 红 / 7 黄 / 11 绿,red_pct 21.7%、加权风险分 37.0%。本期翻灯 3 项:「Mag4 自由现金流变化」红→黄、「市值加权 vs 等权重」黄→绿、「AI 龙头内部人卖买比」黄→红。基础判读为观察期(red_pct <25%)。分类强制升级生效:估值 2/3 红、资金面 2/4 红——红灯占比过半的分类达 2 个,判读上调至「高风险预警」。当前红灯:CAPE 周期调整 PE(40.9)、前 5 大权重占比(≈26.5%)、AI 占 VC 投资比重(80-81%)、NVDA 客户投资/收入比(≈49%)、AI 龙头内部人卖买比(≫20x)。数据由自动管线于 2026-06-11 采集:11 项实时接入、12 项沿用人工研究口径;编辑性事件叙事以最近一期人工口径为准。"
   },
   "scoring": {
-    "base_tier": "caution",
+    "base_tier": "observation",
     "effective_tier": "alert",
     "override_active": true,
     "override_rule": "红灯占比 ≥50% 的分类 ≥2 个 → 判读至少上调到「高风险预警」",
@@ -29,7 +29,7 @@
       {
         "key": "capital",
         "zh": "资金面",
-        "red": 3,
+        "red": 2,
         "total": 4
       }
     ]
@@ -48,7 +48,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:53:40.505Z",
+        "fetchedAt": "2026-06-11T05:03:55.996Z",
         "detail": {
           "cape": 40.87
         }
@@ -67,7 +67,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:53:40.690Z",
+        "fetchedAt": "2026-06-11T05:03:56.123Z",
         "detail": {
           "top5": [
             {
@@ -108,7 +108,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:53:40.799Z",
+        "fetchedAt": "2026-06-11T05:03:56.199Z",
         "detail": {
           "forwardPe": 20.17
         }
@@ -120,17 +120,36 @@
       "name_en": "Hyperscaler Capex YoY",
       "name_zh": "Hyperscaler 资本开支增速",
       "threshold_text": "指引下调=红 / 加速=黄 / 稳健=绿",
-      "source_name": "SEC EDGAR 10-Q/10-K",
+      "source_name": "SEC EDGAR / stockanalysis 季报镜像",
       "status": "yellow",
-      "value_display": "+77%",
-      "note": "四大 hyperscaler 2026 capex 合计约 $725B(AMZN $200B、GOOGL ~$190B、MSFT $190B、META $125-145B),YoY +77%,约 75%($450B)投向 AI 基础设施,无一下调指引;但本周 Broadcom 拒绝上调 $100B AI 芯片目标,供应端首现「不再加码」信号,继续加速但边际谨慎(实时抓取失败,沿用 2026-06-07 快照)",
+      "value_display": "+70%",
+      "note": "stockanalysis 季报镜像实拉 AMZN/MSFT/GOOGL/META 滚动 4 季 capex 合计 $434B,同比 +69.5%(上年同期 $256B);开支仍在加速扩张。判级:实际收缩=红 / 同比 ≥15% 加速=黄 / 稳健=绿",
       "stale": false,
       "provenance": {
-        "mode": "auto_fallback",
-        "asOfDate": "2026-06-07",
-        "ageDays": 4,
-        "maxAgeDays": 30,
-        "reason": "HTTP 403 for https://data.sec.gov/api/xbrl/companyconcept/CIK0001018724/us-gaap/PaymentsToAcquireProductiveAssets.json"
+        "mode": "auto",
+        "fetchedAt": "2026-06-11T05:03:57.975Z",
+        "detail": {
+          "yoyPct": 69.52159559297533,
+          "source": "stockanalysis 季报镜像",
+          "perCompany": [
+            {
+              "ticker": "AMZN",
+              "yoyPct": 62.2
+            },
+            {
+              "ticker": "MSFT",
+              "yoyPct": 58.5
+            },
+            {
+              "ticker": "GOOGL",
+              "yoyPct": 90.4
+            },
+            {
+              "ticker": "META",
+              "yoyPct": 73
+            }
+          ]
+        }
       }
     },
     {
@@ -139,17 +158,40 @@
       "name_en": "Mag4 FCF YoY",
       "name_zh": "Mag4 自由现金流变化",
       "threshold_text": "<-20% 红 / -20%~0 黄 / >0 绿",
-      "source_name": "SEC EDGAR 10-Q/10-K",
-      "status": "red",
-      "value_display": "-92%",
-      "note": "Amazon 尾随 FCF 暴跌约 95% 至 $1.2B,2026 全年预计转负约 -$17B(capex $200B);Mag4 合计 FCF 料降至 2014 年以来最低,唯 MSFT 仍正增长——$725B capex 持续吞噬现金流,无季度新数据沿用 Q1 口径(实时抓取失败,沿用 2026-06-07 快照)",
+      "source_name": "SEC EDGAR / stockanalysis 季报镜像",
+      "status": "yellow",
+      "value_display": "-16%",
+      "note": "stockanalysis 季报镜像实拉 AMZN/MSFT/GOOGL/META 滚动 4 季自由现金流(经营现金流 − capex)合计 $183B,同比 -15.8%(上年同期 $217B)——巨额 capex 正在吞噬现金流。阈值:<-20% 红 / -20%~0 黄 / >0 绿",
       "stale": false,
       "provenance": {
-        "mode": "auto_fallback",
-        "asOfDate": "2026-06-07",
-        "ageDays": 4,
-        "maxAgeDays": 30,
-        "reason": "HTTP 403 for https://data.sec.gov/api/xbrl/companyconcept/CIK0001018724/us-gaap/NetCashProvidedByUsedInOperatingActivitiesContinuingOperations.json"
+        "mode": "auto",
+        "fetchedAt": "2026-06-11T05:03:58.002Z",
+        "detail": {
+          "yoyPct": -15.752621143043793,
+          "source": "stockanalysis 季报镜像",
+          "perCompany": [
+            {
+              "ticker": "AMZN",
+              "fcfNowB": -2.5,
+              "yoyPct": -111.9
+            },
+            {
+              "ticker": "MSFT",
+              "fcfNowB": 72.9,
+              "yoyPct": 5.1
+            },
+            {
+              "ticker": "GOOGL",
+              "fcfNowB": 64.4,
+              "yoyPct": -14
+            },
+            {
+              "ticker": "META",
+              "fcfNowB": 48.3,
+              "yoyPct": -7.8
+            }
+          ]
+        }
       }
     },
     {
@@ -176,17 +218,20 @@
       "name_en": "NVDA Customer Invest / Rev",
       "name_zh": "NVDA 客户投资/收入比",
       "threshold_text": ">30% 红 / 15-30% 黄 / <15% 绿 (Lucent 99 峰值 24%)",
-      "source_name": "公开披露承诺 ÷ SEC EDGAR LTM 收入",
+      "source_name": "公开披露承诺 ÷ EDGAR/stockanalysis LTM 收入",
       "status": "red",
-      "value_display": "≈43%",
-      "note": "NVDA 累计股权投资承诺 $110B+(含 OpenAI $30B)再加 $15B+ GPU 抵押债务;对 LTM 收入 $253.5B 的比率约 43%——每笔投资捆绑采购协议,循环融资规模仍远超 Lucent 1999 峰值 24%,无新披露沿用上期(实时抓取失败,沿用 2026-06-07 快照)",
+      "value_display": "≈49%",
+      "note": "分子=公开披露投资承诺 累计股权投资承诺 $110B+(含 OpenAI $30B)+ GPU 抵押债务 $15B+(2026-06-07 口径,$125B);分母=stockanalysis 季报镜像实拉 NVDA LTM 收入 $253.5B;比率 ≈49.3%,仍远超 Lucent 1999 循环融资峰值 24%。阈值:>30% 红 / 15-30% 黄 / <15% 绿",
       "stale": false,
       "provenance": {
-        "mode": "auto_fallback",
-        "asOfDate": "2026-06-07",
-        "ageDays": 4,
-        "maxAgeDays": 30,
-        "reason": "HTTP 403 for https://data.sec.gov/api/xbrl/companyconcept/CIK0001045810/us-gaap/Revenues.json"
+        "mode": "auto",
+        "fetchedAt": "2026-06-11T05:03:58.396Z",
+        "detail": {
+          "commitmentsUsd": 125000000000,
+          "ltmRevenue": 253491000000,
+          "ratioPct": 49.31141539541838,
+          "source": "stockanalysis 季报镜像"
+        }
       }
     },
     {
@@ -202,7 +247,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:53:56.173Z",
+        "fetchedAt": "2026-06-11T05:04:14.852Z",
         "detail": {
           "above": 289,
           "counted": 501,
@@ -223,7 +268,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:53:56.300Z",
+        "fetchedAt": "2026-06-11T05:04:15.012Z",
         "detail": {
           "spyRet": 6.947488438284808,
           "rspRet": 7.425669917899673,
@@ -244,7 +289,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:53:57.892Z",
+        "fetchedAt": "2026-06-11T05:04:16.775Z",
         "detail": {
           "buyUsd": 1552999,
           "sellUsd": 4452290984,
@@ -283,7 +328,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:53:58.098Z",
+        "fetchedAt": "2026-06-11T05:04:17.396Z",
         "detail": {
           "bps": 278,
           "date": "2026-06-09"
@@ -448,7 +493,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:53:58.511Z",
+        "fetchedAt": "2026-06-11T05:04:18.412Z",
         "detail": {
           "dff": 3.62,
           "drift60dBp": -2.0000000000000018,
@@ -541,11 +586,15 @@
     },
     {
       "week": "06-11",
-      "red_pct": 26.1,
-      "risk_score": 39.1
+      "red_pct": 21.7,
+      "risk_score": 37
     }
   ],
   "wow_changes": [
+    {
+      "type": "status_downgrade",
+      "note": "「Mag4 自由现金流变化」由红转黄:当前 -16%。stockanalysis 季报镜像实拉 AMZN/MSFT/GOOGL/META 滚动 4 季自由现金流(经营现金流 − capex)合计 $183B,同比 -15.8%(上年同期 $217B)——巨额 capex 正在吞噬现金流。阈值:<-20% 红 / -20%~0 黄 / >0 绿"
+    },
     {
       "type": "status_downgrade",
       "note": "「市值加权 vs 等权重」由黄转绿:当前 -0.5%。Yahoo Chart 实算 6 个月回报:SPY +6.9% vs 等权重 RSP +7.4%,市值加权领先 -0.5%——头部与平均股差距可控。阈值:>10% 红 / 5-10% 黄 / <5% 绿"
@@ -558,22 +607,10 @@
   "meta": {
     "builder": "scripts/build-bubble-watch.mjs",
     "boundary": "display-only:独立专题页数据,不进 GFRR 打分/决策/执行/仓位",
-    "auto_count": 8,
+    "auto_count": 11,
     "curated_count": 11,
-    "fallback_count": 4,
+    "fallback_count": 1,
     "fetch_failures": [
-      {
-        "id": "hyperscaler_capex_yoy",
-        "reason": "HTTP 403 for https://data.sec.gov/api/xbrl/companyconcept/CIK0001018724/us-gaap/PaymentsToAcquireProductiveAssets.json"
-      },
-      {
-        "id": "mag4_fcf_yoy",
-        "reason": "HTTP 403 for https://data.sec.gov/api/xbrl/companyconcept/CIK0001018724/us-gaap/NetCashProvidedByUsedInOperatingActivitiesContinuingOperations.json"
-      },
-      {
-        "id": "nvda_invest_revenue",
-        "reason": "HTTP 403 for https://data.sec.gov/api/xbrl/companyconcept/CIK0001045810/us-gaap/Revenues.json"
-      },
       {
         "id": "cloud_rpo_growth",
         "reason": "RPO 可用公司不足 (0)"
