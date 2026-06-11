@@ -4,10 +4,11 @@
     "vc_ai_share": {
       "status": "red",
       "value_display": "80-81%",
-      "note": "Crunchbase/PitchBook Q1 2026:全球 VC 创纪录 $297-300B,AI 占 80-81%($239-242B),较 2025 Q1 的 55% 大幅跃升;美元高度集中于 OpenAI/Anthropic/xAI 等少数巨额轮次,Anthropic 5/28 估值逼近 $1T,无季度新数据沿用 Q1 口径",
+      "note": "Crunchbase/PitchBook Q1 2026：全球 VC 创纪录 $297-300B，AI 占 80-81%（$239-242B），较 2025 Q1 的 55% 大幅跃升；美元高度集中于 OpenAI/Anthropic/xAI 等少数巨额轮次，Anthropic 5/28 估值逼近 $1T，无季度新数据沿用 Q1 口径",
       "asOfDate": "2026-06-07",
       "maxAgeDays": 120,
-      "cadence": "quarterly"
+      "cadence": "quarterly",
+      "syncedFromUpstream": true
     },
     "ai_ipo_pipeline": {
       "status": "yellow",
@@ -182,7 +183,17 @@
       "desc": "累计股权投资承诺 $110B+(含 OpenAI $30B)+ GPU 抵押债务 $15B+",
       "asOfDate": "2026-06-07"
     },
-    "insiderBasket": ["NVDA", "PLTR", "AVGO"],
+    "insiderBasket": [
+      "NVDA",
+      "PLTR",
+      "AVGO"
+    ],
     "breadthSampleSize": 100
+  },
+  "upstreamSync": {
+    "sourceUrl": "https://raw.githubusercontent.com/crystal-xiaoxiao/ai-bubble-monitor/main/docs/data/latest.json",
+    "upstreamAsOf": "2026-06-07",
+    "adoptedCount": 1,
+    "syncedAt": "2026-06-11T05:19:10.315Z"
   }
 }

@@ -73,6 +73,7 @@ check('contract', typeof s.verdict_desc === 'string' && s.verdict_desc.length >=
 
 const meta = data.meta || {};
 check('contract', (meta.auto_count || 0) + (meta.curated_count || 0) + (meta.fallback_count || 0) === 23, 'meta 计数和 ≠ 23');
+check('contract', meta.upstream_sync?.checked === true, 'meta.upstream_sync 缺失(build 须每轮检查上游周报)');
 
 // ---- 2. scoring replay ----
 function tierFromPct(p) {

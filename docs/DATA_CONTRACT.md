@@ -1957,4 +1957,4 @@ latest 文件关键字段:
 - `history_seed`(尾 10 周)与 `wow_changes`(翻灯优先,无翻灯时持平要点)。
 - `meta`:`auto_count + curated_count + fallback_count = 23`、`fetch_failures`、`boundary` 声明。
 
-编辑/研究类 11 项的人工口径唯一来源是 `config/bubble-watch-curated.json`(改 value/status/note + asOfDate 后触发 workflow);自动 12 项抓取失败 fail-closed 沿用该文件快照并标注「实时抓取失败,沿用 YYYY-MM-DD 快照」。history 文件由 build 维护(同 ISO 周覆盖、新周追加、保留 16 周),不得手改。
+编辑/研究类 11 项的人工口径唯一来源是 `config/bubble-watch-curated.json`(改 value/status/note + asOfDate 后触发 workflow);自动 12 项抓取失败 fail-closed 沿用该文件快照并标注「实时抓取失败,沿用 YYYY-MM-DD 快照」。**上游周报自动同步**:每轮 build 先检查 aibubble-cn.github.io 上游周报(实际端点 = ai-bubble-monitor `latest.json`),上游 `as_of_date` 更新时自动采纳 curated/autoFallback 的 status/value_display/note 并回写 config(workflow 一并提交;`meta.upstream_sync.checked` 必为 true,checker 强制),上游不可达/未更新则沿用现状、下个周期再查。history 文件由 build 维护(同 ISO 周覆盖、新周追加、保留 16 周),不得手改。

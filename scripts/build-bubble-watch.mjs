@@ -677,6 +677,67 @@ const autoBuilders = {
   }
 };
 
+// ---------- 上游周报同步(aibubble-cn.github.io)----------
+// 编辑/研究类指标(及自动指标的 fallback 快照)无公开 API,每次周一 build 先检查
+// 上游 AI 泡沫监测周报(aibubble-cn.github.io 的实际数据源 = ai-bubble-monitor
+// latest.json):上游 as_of_date 比本地 curated 口径新 → 自动采纳其
+// status/value_display/note 并回写 config(workflow 随数据一起提交,实现
+// 「每周一检查,拿不到下周一再查」的滚动自动同步)。上游不可达/未更新 → 保持现状,
+// 超期由 STALE 角标显式暴露。
+const UPSTREAM_URLS = [
+  // aibubble-cn.github.io 页面 fetch 的真实数据端点
+  'https://raw.githubusercontent.com/crystal-xiaoxiao/ai-bubble-monitor/main/docs/data/latest.json',
+  // 若上游日后改为站内托管的兜底路径
+  'https://aibubble-cn.github.io/data/latest.json'
+];
+
+async function syncCuratedFromUpstream(config) {
+  let upstream = null;
+  let sourceUrl = null;
+  for (const url of UPSTREAM_URLS) {
+    try {
+      const json = await fetchWithTimeout(`${url}?t=${Date.now()}`, { asJson: true });
+      if (json && /^\d{4}-\d{2}-\d{2}$/u.test(json.as_of_date || '') && Array.isArray(json.indicators)) {
+        upstream = json;
+        sourceUrl = url;
+        break;
+      }
+      console.warn(`[bubble-watch] upstream ${url} 返回结构异常,跳过`);
+    } catch (error) {
+      console.warn(`[bubble-watch] upstream ${url} 不可达: ${error.message}`);
+    }
+  }
+  if (!upstream) {
+    console.warn('[bubble-watch] upstream sync: 本轮未拿到上游周报,沿用现有口径,下个周期再查');
+    return { checked: true, reachable: false, adopted: 0 };
+  }
+  const byId = new Map(upstream.indicators.map((i) => [i.id, i]));
+  let adopted = 0;
+  for (const bucket of ['curated', 'autoFallback']) {
+    for (const [id, entry] of Object.entries(config[bucket] || {})) {
+      const up = byId.get(id);
+      if (!up || !STATUS_RANK.hasOwnProperty(up.status)) continue;
+      if (upstream.as_of_date > entry.asOfDate) {
+        entry.status = up.status;
+        entry.value_display = String(up.value_display ?? up.value ?? entry.value_display).slice(0, 40);
+        if (typeof up.note === 'string' && up.note.length > 20) entry.note = up.note.slice(0, 800);
+        entry.asOfDate = upstream.as_of_date;
+        entry.syncedFromUpstream = true;
+        adopted += 1;
+      }
+    }
+  }
+  const result = { checked: true, reachable: true, upstreamAsOf: upstream.as_of_date, upstreamIssue: upstream.issue_number ?? null, adopted, sourceUrl };
+  if (adopted) {
+    config.upstreamSync = { sourceUrl, upstreamAsOf: upstream.as_of_date, adoptedCount: adopted, syncedAt: new Date().toISOString() };
+    fs.writeFileSync(CONFIG_PATH, `${JSON.stringify(config, null, 2)}\n`);
+    console.log(`[bubble-watch] upstream sync: 采纳上游 ${upstream.as_of_date}(Issue ${upstream.issue_number})共 ${adopted} 项,已回写 config`);
+  } else {
+    console.log(`[bubble-watch] upstream sync: 上游 ${upstream.as_of_date} 不比本地口径新,无采纳`);
+  }
+  return result;
+}
+
 // ---------- 指标组装 ----------
 
 function buildCuratedIndicator(def, entry, today) {
@@ -824,6 +885,7 @@ async function main() {
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
   const history = JSON.parse(fs.readFileSync(HISTORY_PATH, 'utf8'));
   const today = isoDate();
+  const upstreamSync = await syncCuratedFromUpstream(config);
   const ctx = { config };
 
   const indicators = [];
@@ -901,7 +963,8 @@ async function main() {
       curated_count: curatedCount,
       fallback_count: fallbackCount,
       fetch_failures: fetchFailures,
-      fred_key_present: Boolean(FRED_API_KEY)
+      fred_key_present: Boolean(FRED_API_KEY),
+      upstream_sync: upstreamSync
     }
   };
 
