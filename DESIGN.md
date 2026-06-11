@@ -592,6 +592,12 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
   仅末行弱化;Hero 大数字回归 §5.3 契约 14vw/144(修复 CSS 漂移的 12vw/128)、
   判读标题改 display 字体 24-36px/1.2、正文 17px/1.7 暖墨、判读 kicker 橙→红;
   §5.1 section-title 字重 700→900。
+- 2026-06-11(二批)runtime block / mini-card 移植 Bubble Watch 视觉语法(纯 CSS、
+  零 DOM/数据/逻辑改动,owner 预览拍板):runtime-block 边框发丝线→1px 实墨、
+  页眉下边框 1px 发丝线→2px 实墨、h3 18px/700→21px/900;mini-card 边框实墨化 +
+  卡顶 4px 红/黄/绿状态条(同原版 indicator status-bar)、数字 20→26px display。
+  布局与信息形态不变;"全卡片化"方案经评估否决(矩阵/叙事/图表的信息形态不适配
+  卡片网格),统一手段 = 页眉/边框/状态条三条语法。
 
 ---
 

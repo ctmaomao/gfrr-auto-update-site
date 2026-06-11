@@ -65,18 +65,26 @@
   .big-footer .k { opacity: 0.5; text-transform: uppercase; }
   .big-footer .v { color: var(--paper-ink); opacity: 1; margin-top: 3px; }
 
-  .runtime-block { background: var(--paper-bg); border: 1px solid var(--paper-line); padding: 16px 18px; }
-  .runtime-block-header { border-bottom: 1px solid var(--paper-line); padding-bottom: 8px; margin-bottom: 12px; }
-  .runtime-block-header h3 { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin: 0; color: var(--paper-ink); }
-  .runtime-block-header .en { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.22em; color: var(--paper-muted); text-transform: uppercase; margin-left: 8px; }
-  .runtime-block-header .meta { font-family: var(--font-mono); font-size: 11px; color: var(--paper-muted); margin-top: 4px; }
+  /* runtime block 采用 Bubble Watch 卡片/分类页眉语法:实墨边框(替代发丝线)、
+     2px 实线页眉下边框、900 字重粗标题 + mono 英文小标——布局/信息形态不变,
+     只统一视觉语法,与 bubble-watch.html 的 article.indicator / category-header 同族 */
+  .runtime-block { background: var(--paper-bg); border: 1px solid var(--paper-ink); padding: 18px; }
+  .runtime-block-header { border-bottom: 2px solid var(--paper-ink); padding-bottom: 8px; margin-bottom: 14px; }
+  .runtime-block-header h3 { font-family: var(--font-display); font-size: 21px; font-weight: 900; letter-spacing: -0.01em; margin: 0; color: var(--paper-ink); }
+  .runtime-block-header .en { font-family: var(--font-mono); font-size: 11px; font-weight: 400; letter-spacing: 0.2em; color: var(--paper-muted); text-transform: uppercase; margin-left: 12px; }
+  .runtime-block-header .meta { font-family: var(--font-mono); font-size: 11px; color: var(--paper-muted); margin-top: 6px; }
   .runtime-block-body { font-family: var(--font-serif); font-size: 13.5px; line-height: 1.7; color: var(--paper-warm); }
 
-  .mini-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 10px; }
-  .mini-card { padding: 10px 12px; border: 1px solid var(--paper-line); background: var(--paper-bg); display: grid; gap: 4px; }
-  .mini-card .label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.15em; color: var(--paper-muted); text-transform: uppercase; }
-  .mini-card .num { font-family: var(--font-display); font-size: 20px; font-weight: 700; line-height: 1.2; color: var(--paper-ink); }
+  /* mini-card 采用 Bubble Watch indicator 卡语法:实墨 1px 边框 + 卡顶 4px
+     红/黄/绿状态条 + 10px mono 标签 + display 大数字(信息结构不变) */
+  .mini-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 12px; }
+  .mini-card { padding: 12px 14px; border: 1px solid var(--paper-ink); border-top: 4px solid var(--paper-line); background: var(--paper-bg); display: grid; gap: 4px; }
+  .mini-card .label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; color: var(--paper-muted); text-transform: uppercase; }
+  .mini-card .num { font-family: var(--font-display); font-size: 26px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; color: var(--paper-ink); }
   .mini-card .status { font-family: var(--font-mono); font-size: 10px; color: var(--paper-muted); }
+  .mini-card.red { border-top-color: var(--risk-red); }
+  .mini-card.yellow { border-top-color: var(--risk-yellow); }
+  .mini-card.green { border-top-color: var(--risk-green); }
   .mini-card.red .num { color: var(--risk-red); }
   .mini-card.yellow .num { color: var(--risk-yellow); }
   .mini-card.green .num { color: var(--risk-green); }

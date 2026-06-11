@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=visual-unify-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=visual-unify-1';
-import { MODULE_LABELS } from './decision.js?v=visual-unify-1';
+} from './config.js?v=visual-unify-2';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=visual-unify-2';
+import { MODULE_LABELS } from './decision.js?v=visual-unify-2';
 
 // ---------- 阈值 + 派生 helper ----------
 
