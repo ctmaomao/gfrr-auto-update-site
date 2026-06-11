@@ -2,7 +2,7 @@
   "contractVersion": "bubble-watch-v1",
   "issue_number": 10,
   "as_of_date": "2026-06-11",
-  "generated_at": "2026-06-11T04:35:54.779Z",
+  "generated_at": "2026-06-11T04:53:58.512Z",
   "summary": {
     "total_indicators": 23,
     "red_count": 6,
@@ -12,7 +12,7 @@
     "weighted_risk_score": 39.1,
     "verdict_label": "高风险预警",
     "verdict_label_en": "High Risk Alert",
-    "verdict_desc": "本周计数 6 红 / 6 黄 / 11 绿,red_pct 26.1%、加权风险分 39.1%。本期翻灯 2 项:「市值加权 vs 等权重」黄→绿、「AI 龙头内部人卖买比」黄→红。基础判读为中度警戒(red_pct 25-40%)。分类强制升级生效:估值 2/3 红、资金面 3/4 红——红灯占比过半的分类达 2 个,判读上调至「高风险预警」。当前红灯:CAPE 周期调整 PE(40.9)、前 5 大权重占比(≈26.5%)、Mag4 自由现金流变化(-92%)、AI 占 VC 投资比重(80-81%)、NVDA 客户投资/收入比(≈43%)、AI 龙头内部人卖买比(≫20x)。数据由自动管线于 2026-06-11 采集:6 项实时接入、17 项沿用人工研究口径;编辑性事件叙事以最近一期人工口径为准。"
+    "verdict_desc": "本周计数 6 红 / 6 黄 / 11 绿,red_pct 26.1%、加权风险分 39.1%。本期翻灯 2 项:「市值加权 vs 等权重」黄→绿、「AI 龙头内部人卖买比」黄→红。基础判读为中度警戒(red_pct 25-40%)。分类强制升级生效:估值 2/3 红、资金面 3/4 红——红灯占比过半的分类达 2 个,判读上调至「高风险预警」。当前红灯:CAPE 周期调整 PE(40.9)、前 5 大权重占比(≈26.5%)、Mag4 自由现金流变化(-92%)、AI 占 VC 投资比重(80-81%)、NVDA 客户投资/收入比(≈43%)、AI 龙头内部人卖买比(≫20x)。数据由自动管线于 2026-06-11 采集:8 项实时接入、15 项沿用人工研究口径;编辑性事件叙事以最近一期人工口径为准。"
   },
   "scoring": {
     "base_tier": "caution",
@@ -48,7 +48,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:35:17.714Z",
+        "fetchedAt": "2026-06-11T04:53:40.505Z",
         "detail": {
           "cape": 40.87
         }
@@ -67,7 +67,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:35:18.197Z",
+        "fetchedAt": "2026-06-11T04:53:40.690Z",
         "detail": {
           "top5": [
             {
@@ -108,7 +108,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:35:18.660Z",
+        "fetchedAt": "2026-06-11T04:53:40.799Z",
         "detail": {
           "forwardPe": 20.17
         }
@@ -202,7 +202,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:35:50.240Z",
+        "fetchedAt": "2026-06-11T04:53:56.173Z",
         "detail": {
           "above": 289,
           "counted": 501,
@@ -223,7 +223,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:35:50.739Z",
+        "fetchedAt": "2026-06-11T04:53:56.300Z",
         "detail": {
           "spyRet": 6.947488438284808,
           "rspRet": 7.425669917899673,
@@ -244,7 +244,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-11T04:35:53.078Z",
+        "fetchedAt": "2026-06-11T04:53:57.892Z",
         "detail": {
           "buyUsd": 1552999,
           "sellUsd": 4452290984,
@@ -278,15 +278,16 @@
       "threshold_text": ">500 红 / 350-500 黄 / <350 绿",
       "source_name": "ICE BofA HY Index (FRED)",
       "status": "green",
-      "value_display": "272 bps",
-      "note": "ICE BofA HY OAS 最新约 2.72%(272 bps),远低于长期均值 3.94%、中位数 4.52%;即便本周 AI 股普跌,信用市场对 AI capex 激增与 $725B 烧钱仍未现压力,是当前最支撑多头的指标(实时抓取失败,沿用 2026-06-07 快照)",
+      "value_display": "278 bps",
+      "note": "FRED 实拉 ICE BofA 高收益债 OAS = 2.78%(278 bps,2026-06-09);长期均值约 394 bps——信用市场对 AI capex 烧钱仍未定价压力,是当前最支撑多头的指标。阈值:>500 红 / 350-500 黄 / <350 绿",
       "stale": false,
       "provenance": {
-        "mode": "auto_fallback",
-        "asOfDate": "2026-06-07",
-        "ageDays": 4,
-        "maxAgeDays": 14,
-        "reason": "FRED_API_KEY 未配置"
+        "mode": "auto",
+        "fetchedAt": "2026-06-11T04:53:58.098Z",
+        "detail": {
+          "bps": 278,
+          "date": "2026-06-09"
+        }
       }
     },
     {
@@ -443,14 +444,16 @@
       "source_name": "FRED DFF + CPI 推导",
       "status": "yellow",
       "value_display": "偏鹰",
-      "note": "Warsh 主持 6/17 FOMC,CME 维持概率 99.4%、加息概率极低;利率维持 3.5-3.75%,通胀仍超 2% 目标、劳动力强劲,higher-for-longer 延续,对极度拉伸的估值构成持续压制(实时抓取失败,沿用 2026-06-07 快照)",
+      "note": "FRED 实拉推导:有效联邦基金利率 3.62%(60 日漂移 -2bp)、CPI 同比 4.3%(2026-05-01 口径)→ 判定「偏鹰(维持高位)」,通胀仍高于 2% 目标、higher-for-longer 对极度拉伸的估值构成持续压制。判级:加息=红 / 通胀压力=黄 / 降息=绿",
       "stale": false,
       "provenance": {
-        "mode": "auto_fallback",
-        "asOfDate": "2026-06-07",
-        "ageDays": 4,
-        "maxAgeDays": 14,
-        "reason": "FRED_API_KEY 未配置"
+        "mode": "auto",
+        "fetchedAt": "2026-06-11T04:53:58.511Z",
+        "detail": {
+          "dff": 3.62,
+          "drift60dBp": -2.0000000000000018,
+          "cpiYoy": 4.270032656680247
+        }
       }
     },
     {
@@ -555,9 +558,9 @@
   "meta": {
     "builder": "scripts/build-bubble-watch.mjs",
     "boundary": "display-only:独立专题页数据,不进 GFRR 打分/决策/执行/仓位",
-    "auto_count": 6,
+    "auto_count": 8,
     "curated_count": 11,
-    "fallback_count": 6,
+    "fallback_count": 4,
     "fetch_failures": [
       {
         "id": "hyperscaler_capex_yoy",
@@ -572,18 +575,10 @@
         "reason": "HTTP 403 for https://data.sec.gov/api/xbrl/companyconcept/CIK0001045810/us-gaap/Revenues.json"
       },
       {
-        "id": "hy_oas",
-        "reason": "FRED_API_KEY 未配置"
-      },
-      {
         "id": "cloud_rpo_growth",
         "reason": "RPO 可用公司不足 (0)"
-      },
-      {
-        "id": "fed_policy",
-        "reason": "FRED_API_KEY 未配置"
       }
     ],
-    "fred_key_present": false
+    "fred_key_present": true
   }
 }
