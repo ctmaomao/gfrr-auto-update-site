@@ -276,7 +276,7 @@ Weekly refresh:
 2. Download the 6 weekly regional aggregated xlsx files.
 3. Place the files under `manual-artifacts/world-order/acled-input/weekly/`.
 4. On first use after M-63a, run `npm install` so the `xlsx` devDependency is installed.
-5. Run `npm run acled:status` — the one-command helper that runs `acled:sanitize:weekly` + `check:world-order-acled-weekly` and then reports a config-vs-data verdict (expect `data_current`; a fresh local refresh that has not yet propagated to data reports `sanitized_not_refreshed`). `npm run acled:status:weekly` is an explicit alias. To run the steps individually instead: `npm run acled:sanitize:weekly` then `npm run check:world-order-acled-weekly`.
+5. Run `npm run acled:status` — the one-command helper that runs `acled:sanitize:weekly` + `check:world-order-acled-weekly` and then reports a config-vs-data verdict (expect `data_current`; a fresh local refresh that has not yet propagated to data reports `sanitized_not_refreshed`). `npm run acled:status:weekly` is an explicit alias. To run the steps individually instead: `npm run acled:sanitize:weekly` then `npm run check:world-order-acled-weekly`. If the verdict is `sanitized_not_refreshed`, `npm run acled:publish` is the explicit opt-in full-chain helper (commit config + push + dispatch "Refresh World Order Stress" + watch CI + pull + re-verify; requires authenticated `gh` CLI) — it replaces manual steps 7-8 below; `acled:status` itself stays read-only.
 6. Run `npm run check:all`; M-63b expects 69 items to pass.
 7. Review `config/world-order-acled-regional-weekly.json`.
 8. Commit the derived JSON with a focused operator refresh commit:
