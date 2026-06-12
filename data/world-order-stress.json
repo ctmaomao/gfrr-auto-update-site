@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-06-12T07:41:05.639Z",
+  "updatedAt": "2026-06-12T08:00:26.120Z",
   "sourceMode": "computed_with_external_sources",
   "score": 70,
   "state": "multi_theater_stress",
@@ -11,12 +11,12 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-06-12T07:39:50.763Z",
-    "ageMinutes": 1,
+    "updatedAt": "2026-06-12T07:57:50.817Z",
+    "ageMinutes": 3,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 88.55,
-    "gold": 4177.8999,
+    "brent": 88.205,
+    "gold": 4183.7002,
     "vix": 22.22,
     "dxy": 120.0831,
     "hyOas": 2.8,
@@ -32,7 +32,7 @@
     "gdelt": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-06-12T07:41:01.548Z",
+      "lastFetchedAt": "2026-06-12T08:00:22.829Z",
       "summary": {
         "errors": [],
         "totalEvents": 581,
@@ -7686,13 +7686,13 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": false,
         "cacheReason": null,
-        "attemptedAt": "2026-06-12T07:41:01.548Z"
+        "attemptedAt": "2026-06-12T08:00:22.829Z"
       }
     },
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-06-12T07:41:01.736Z",
+      "lastFetchedAt": "2026-06-12T08:00:23.232Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 9,
@@ -7740,15 +7740,15 @@
     "acled": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-06-04T06:29:02.576Z",
+      "lastFetchedAt": "2026-06-12T07:39:37.237Z",
       "summary": {
-        "eventsLast4Weeks": 32758,
-        "eventsLast12Weeks": 108659,
-        "eventsDelta4Vs12": -0.095574,
-        "fatalitiesLast4Weeks": 13762,
-        "fatalitiesLast12Weeks": 46725,
-        "civilianTargetingShareLast4Weeks": 0.082697,
-        "latestWeek": "2026-05-22",
+        "eventsLast4Weeks": 32730,
+        "eventsLast12Weeks": 106712,
+        "eventsDelta4Vs12": -0.07986,
+        "fatalitiesLast4Weeks": 13636,
+        "fatalitiesLast12Weeks": 45715,
+        "civilianTargetingShareLast4Weeks": 0.082065,
+        "latestWeek": "2026-05-29",
         "regionsTracked": 6,
         "hotZonesTopCount": 10,
         "sourceFreshness": "aging",
@@ -7760,7 +7760,7 @@
         "monthlyAsOfDate": "2026-05-29",
         "monthlyLatestFullYear": 2025,
         "monthlySourceFreshness": "fresh",
-        "noteZh": "周度覆盖 6 个区域，最新周 2026-05-22，近4周事件相对12周均值变化 -9.6%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 20.0%。"
+        "noteZh": "周度覆盖 6 个区域，最新周 2026-05-29，近4周事件相对12周均值变化 -8.0%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 20.0%。"
       }
     }
   },
@@ -7781,7 +7781,7 @@
         {
           "labelZh": "ACLED 周度冲突事件显示和平红利退潮压力",
           "source": "acled",
-          "summary": "ACLED 手动周度聚合更新至 2026-05-22，覆盖 6 个区域，近 4 周事件相对 12 周均值变化 -10%。",
+          "summary": "ACLED 手动周度聚合更新至 2026-05-29，覆盖 6 个区域，近 4 周事件相对 12 周均值变化 -8%。",
           "value": 19,
           "direction": "neutral",
           "confidence": 0.9
@@ -7856,8 +7856,8 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4177.9，显示避险或实际利率压力定价。",
-          "value": 4177.8999,
+          "summary": "基于 Worker 快变量，黄金当前值 4183.7，显示避险或实际利率压力定价。",
+          "value": 4183.7002,
           "direction": "up",
           "confidence": 0.75
         },
@@ -7873,7 +7873,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "120.0831/4177.8999",
+          "value": "120.0831/4183.7002",
           "direction": "up",
           "confidence": 0.6
         },
@@ -7881,7 +7881,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7394.3/4177.8999",
+          "value": "7394.3/4183.7002",
           "direction": "mixed",
           "confidence": 0.45
         },
@@ -7889,7 +7889,7 @@
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
           "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 88.55,
+          "value": 88.205,
           "direction": "up",
           "confidence": 0.65
         }
