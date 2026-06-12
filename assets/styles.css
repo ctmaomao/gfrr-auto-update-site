@@ -481,12 +481,13 @@
 
   /* ================================================================
      页面切换书签 · PAGE BOOKMARKS
-     左上角两条彩色书签丝带:默认缩在角落只露带尾,hover / 键盘聚焦
+     右上角两条彩色书签丝带:默认缩在角落只露带尾,hover / 键盘聚焦
      滑出显示页名(风险雷达 / AI 泡沫监测)。与 bubble-watch.html 内联的
      同名组件保持同一契约(改任一侧需同步另一侧)。display-only 导航,
-     不参与任何数据渲染。
+     不参与任何数据渲染。统一固定右上角:左上角会遮挡手机端刊头标题,
+     右上角桌面/手机布局一致且 issue-meta 在手机端折行到标题下方不冲突。
      ================================================================ */
-  .page-bookmarks { position: fixed; top: 0; left: clamp(10px, 2.5vw, 30px); display: flex; gap: 10px; z-index: 1000; }
+  .page-bookmarks { position: fixed; top: 0; right: clamp(10px, 2.5vw, 30px); display: flex; gap: 10px; z-index: 1000; }
   .page-bookmarks .pbm {
     display: block; width: 34px; height: 128px; position: relative;
     text-decoration: none; color: #FBF7F0;
@@ -514,6 +515,7 @@
   .page-bookmarks:hover .pbm, .page-bookmarks:focus-within .pbm { transform: translateY(0); filter: saturate(1.1); }
   .page-bookmarks .pbm:hover { filter: saturate(1.25) brightness(1.06); }
   .page-bookmarks .pbm:focus-visible { outline: 2px solid var(--paper-ink, #1A1815); outline-offset: 2px; }
-  @media (hover: none) { .page-bookmarks .pbm { transform: translateY(calc(-100% + 46px)); } }
+  /* 触屏带尾 36px:止于手机端刊头标题首行(top≈39px)之上,避免角部遮字 */
+  @media (hover: none) { .page-bookmarks .pbm { transform: translateY(calc(-100% + 36px)); } }
   @media (prefers-reduced-motion: reduce) { .page-bookmarks .pbm { transition: none; } }
   @media print { .page-bookmarks { display: none; } }

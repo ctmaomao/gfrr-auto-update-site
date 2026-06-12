@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=visual-unify-4';
+﻿import { fmtNumSafe } from './config.js?v=bookmarks-right-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

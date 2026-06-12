@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=visual-unify-4';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=visual-unify-4';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=bookmarks-right-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=bookmarks-right-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
