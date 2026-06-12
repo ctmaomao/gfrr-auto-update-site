@@ -295,10 +295,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于(2026-06-11 · 续 — Bubble Watch 第二页面全链落地)**: P3-21 一次性落地:`bubble-watch.html`(1:1 复刻外部原版,内联 CSS/JS + 手写 SVG 趋势图)+ `scripts/build-bubble-watch.mjs`(23 指标,12 实时 / 11 curated,fail-closed)+ `config/bubble-watch-curated.json` + `data/bubble-watch{,-history}.json`(本地实跑产出,6/12 auto live,EDGAR/FRED 项待 CI)+ `check:bubble-watch` 6 leaf 入 check:all(17→18)+ `refresh-bubble-watch.yml` 周一 cron + Pages 清单登记 + 两页 `.page-bookmarks` 书签互切(asset bump 至 `bubble-watch-tab-1`)+ DESIGN §4.4 / DATA_CONTRACT / DATA_SOURCES / ADR-0016 收口。同日早段:zh-copy 第三轮清扫已 push(`feat(frontend): third-pass Chinese-first sweep`)。
-- **当前进行中(2026-06-11 · 续)**: 无(Bubble Watch 待首轮 CI 实跑补全 EDGAR/FRED 自动项)。
-- **下一步建议(2026-06-11 · 续)**: ① 手动 dispatch `Refresh Bubble Watch` 验 12/12 auto + Pages 上线实测;② TGA/Fed liquidity regime-aware recalibration 实施(brief 已在 main,须 owner 立项)。
-- **阻塞或等待(2026-06-11 · 续)**: 无技术阻塞。
+- **上次会话结束于(2026-06-12 · 书签右移)**: `c14aec6` — 页面切换书签丝带从左上角移至右上角(`left` → `right`),避免手机端遮挡刊头标题;触屏带尾从 46px 缩至 36px。两页面(`assets/styles.css` + `bubble-watch.html` 内联)同步更新。asset version bump `visual-unify-4` → `bookmarks-right-1`;所有 doc 快照(`AGENTS/DATA_CONTRACT×3/OPERATIONS×2/MILESTONE_INDEX/worker README`)已联动。check:all 18 项 / ~63 leaf 全绿。
+- **当前进行中(2026-06-12)**: 无。
+- **下一步建议(2026-06-12)**: ① 手动 dispatch `Refresh Bubble Watch` 验 12/12 auto + Pages 上线实测书签位置;② TGA/Fed liquidity regime-aware recalibration 实施(brief 已在 main,须 owner 立项)。
+- **阻塞或等待(2026-06-12)**: 无技术阻塞。
 
 ---
 
