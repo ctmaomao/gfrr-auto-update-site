@@ -295,10 +295,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于(2026-06-12 · 书签右移)**: `c14aec6` — 页面切换书签丝带从左上角移至右上角(`left` → `right`),避免手机端遮挡刊头标题;触屏带尾从 46px 缩至 36px。两页面(`assets/styles.css` + `bubble-watch.html` 内联)同步更新。asset version bump `visual-unify-4` → `bookmarks-right-1`;所有 doc 快照(`AGENTS/DATA_CONTRACT×3/OPERATIONS×2/MILESTONE_INDEX/worker README`)已联动。check:all 18 项 / ~63 leaf 全绿。
-- **当前进行中(2026-06-12)**: 无。
-- **下一步建议(2026-06-12)**: ① 手动 dispatch `Refresh Bubble Watch` 验 12/12 auto + Pages 上线实测书签位置;② TGA/Fed liquidity regime-aware recalibration 实施(brief 已在 main,须 owner 立项)。
-- **阻塞或等待(2026-06-12)**: 无技术阻塞。
+- **上次会话结束于(2026-06-12 · 续 — ACLED 周刷新收口 + acled:publish 工具)**: ① ACLED 周度 xlsx(至 2026-05-29)已 sanitize→commit→push→CI 重建→线上验证 `data_current`(诊断教训:operator 跑了 workflow 但 config 没 push,CI 读到旧 config——`acled:status` 的 `sanitized_not_refreshed` 判定即此场景);② 新增 `npm run acled:publish` opt-in 全链工具(status 门禁→commit config→push→dispatch "Refresh World Order Stress"→watch CI→pull→复核 data_current,需 gh CLI),`acled:status` 保持只读,周度提醒 issue 文案 + M-63 runbook + status verdict 指引同步,data_current 门禁路径已实测;③ 早段:书签丝带移右上角 + asset bump `bookmarks-right-1` 已 push 并线上验证。check:all 全绿。
+- **当前进行中(2026-06-12 · 续)**: 无。
+- **下一步建议(2026-06-12 · 续)**: ① 下次 ACLED 周刷新直接用 `npm run acled:publish` 实测 sanitized_not_refreshed 全链路径;② TGA/Fed liquidity regime-aware recalibration 实施(brief 已在 main,须 owner 立项)。
+- **阻塞或等待(2026-06-12 · 续)**: 无技术阻塞。
 
 ---
 
