@@ -137,8 +137,16 @@ function reroutingZh(regime) {
     unknown: '窗口不足',
   })[regime] || '窗口不足';
 }
+// 缓冲状态上色:极低缓冲=red(供应缓冲近耗尽),偏低=yellow,宽松=green;正常/未知不上色。
+// 枚举与 validate-data.mjs VALID_ENERGY_SPARE_CAPACITY_REGIMES 对齐。
+const BUFFER_REGIME_TONE = {
+  '极低缓冲': 'red',
+  '偏低': 'yellow',
+  '宽松': 'green',
+};
 function clearEnergyAddendum() {
   for (const id of ENERGY_TEXT_IDS) setLeafText(id, '—');
+  setToneClass('odp-energy-spare-regime', 'odp-energy-regime', '');
   const coreHost = $('odp-energy-transport-core');
   if (coreHost) coreHost.textContent = '—';
 }
@@ -157,6 +165,7 @@ function renderSpareCapacity(spare) {
   const periodType = spare.latestIsForecast === true ? '预测期' : spare.latestIsForecast === false ? '历史期' : '期别待核';
   setLeafText('odp-energy-spare-value', formatMbpd(spare.spareCapacityMbpd));
   setLeafText('odp-energy-spare-regime', spare.bufferRegime || '—');
+  setToneClass('odp-energy-spare-regime', 'odp-energy-regime', BUFFER_REGIME_TONE[spare.bufferRegime] || '');
   setLeafText('odp-energy-spare-period', `${spare.latestPeriod || '—'} · ${periodType}`);
   setLeafText('odp-energy-spare-note', 'EIA STEO COPS_OPEC 月度估算/预测,用于观察全球供应缓冲厚薄;不是实时物理闲置桶数或 OPEC 官方配额执行。');
 }

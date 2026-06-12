@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=bookmarks-right-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-buffer-tone-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
