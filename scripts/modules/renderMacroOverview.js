@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=odp-buffer-tone-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-buffer-tone-1';
-import { MODULE_LABELS } from './decision.js?v=odp-buffer-tone-1';
+} from './config.js?v=zh-term-standard-4';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=zh-term-standard-4';
+import { MODULE_LABELS } from './decision.js?v=zh-term-standard-4';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -136,8 +136,8 @@ function buildHeroVerdictBody(radarData, worldOrderStressData) {
     let s = `主线 ${chain.labelZh}`;
     if (chain.stageZh) s += `（${chain.stageZh}）`;
     const driver = [];
-    if (brent !== null) driver.push(`Brent(布伦特原油) ${brent.toFixed(1)}`);
-    if (crack !== null) driver.push(`crack spread(裂解价差) ${crack.toFixed(1)}${crackRegime ? '（' + crackRegime + '）' : ''}`);
+    if (brent !== null) driver.push(`布伦特原油(Brent) ${brent.toFixed(1)}`);
+    if (crack !== null) driver.push(`裂解价差(Crack Spread) ${crack.toFixed(1)}${crackRegime ? '（' + crackRegime + '）' : ''}`);
     if (driver.length) s += `：${driver.join('、')}`;
     parts.push(s + '。');
   }
@@ -146,8 +146,8 @@ function buildHeroVerdictBody(radarData, worldOrderStressData) {
     let s = `最大背离=${div.labelZh}`;
     if (div.statusZh) s += `（${div.statusZh}）`;
     const calm = [];
-    if (hy !== null) calm.push(`HY OAS(高收益债利差) ${hy.toFixed(2)}%`);
-    if (vix !== null) calm.push(`VIX(波动率指数) ${vix.toFixed(1)}`);
+    if (hy !== null) calm.push(`高收益债利差(HY OAS) ${hy.toFixed(2)}%`);
+    if (vix !== null) calm.push(`波动率指数(VIX) ${vix.toFixed(1)}`);
     if (calm.length) s += `；${calm.join('、')} 反映信用与波动率市场尚未同步验证`;
     parts.push(s + '。');
   }
@@ -405,7 +405,7 @@ function renderMarketTemperature({ marketPricingMetricsData }) {
     if (qqqZ !== null && ndxZ !== null && ixicZ !== null) {
       setLeafText(
         'mt-narrative',
-        `QQQ 当前价格距 60 周均值 ${qqqZ.toFixed(2)} 个标准差，处于历史第二极端区间。NDX(纳指100) ${signedFixed(ndxZ, 2)}σ / IXIC(纳指综合) ${signedFixed(ixicZ, 2)}σ，整个美国成长股板块同步极端。`
+        `纳斯达克100 ETF(QQQ)当前价格距 60 周均值 ${qqqZ.toFixed(2)} 个标准差，处于历史第二极端区间。纳指100(NDX) ${signedFixed(ndxZ, 2)}σ / 纳指综合(IXIC) ${signedFixed(ixicZ, 2)}σ，整个美国成长股板块同步极端。`
       );
     }
     setLeafText('mt-close', moneyFixed(qqq.close));
@@ -464,7 +464,7 @@ function renderWowSection({ radarData, worldOrderStressData }) {
     const crackSpread = asNumber(radarData.brentPricingLayer?.crackSpread);
     const crackSpread4wChange = asNumber(radarData.brentPricingLayer?.crackSpread4wChange);
     if (crackSpread !== null && crackSpread4wChange !== null) {
-      setLeafText('wow-item-1-text', `Brent 裂解价差(crack spread)走阔到 ${crackSpread.toFixed(2)},4 周变化 ${signedFixed(crackSpread4wChange, 2)}。`);
+      setLeafText('wow-item-1-text', `布伦特原油(Brent)裂解价差(Crack Spread)走阔到 ${crackSpread.toFixed(2)},4 周变化 ${signedFixed(crackSpread4wChange, 2)}。`);
       setLeafText('wow-item-1-source', `炼油价差 4 周变化 ${signedFixed(crackSpread4wChange, 2)}`);
     }
     const hyOas = asNumber(radarData.macroDrivers?.credit?.hyOas);
@@ -481,8 +481,8 @@ function renderWowSection({ radarData, worldOrderStressData }) {
     const futureMinusTargetMid = asNumber(radarData.macroDrivers?.policyExpectations?.futureMinusTargetMid);
     if (futureMinusTargetMid !== null) {
       const bp = futureMinusTargetMid * 100;
-      setLeafText('wow-item-4-text', `Fed 政策路径分歧 ${signedFixed(bp, 1)}bp,市场定价与目标中位仍有偏差。`);
-      setLeafText('wow-item-4-source', 'Fed 政策路径分歧');
+      setLeafText('wow-item-4-text', `美联储(Fed)政策路径分歧 ${signedFixed(bp, 1)}bp,市场定价与目标中位仍有偏差。`);
+      setLeafText('wow-item-4-source', '美联储(Fed)政策路径分歧');
     }
     const initialClaims = asNumber(radarData.macroDrivers?.employment?.initialClaims);
     if (initialClaims !== null) {
@@ -893,8 +893,8 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
       score: n1Score,
       isActive: n1Active,
       description: n1Active
-        ? `Brent(布伦特原油) ${brent !== null ? brent.toFixed(2) : '—'} + 裂解价差(crack spread)走阔到 ${crackSpread !== null ? crackSpread.toFixed(2) : '—'},2022 模式重演。下一节是是否传导至 CPI(消费者物价)/ breakeven(盈亏平衡通胀)。`
-        : `Brent(布伦特原油) ${brent !== null ? brent.toFixed(2) : '—'} + 裂解价差(crack spread) ${crackSpread !== null ? crackSpread.toFixed(2) : '—'},暂未触发能源传导主线条件。`,
+        ? `布伦特原油(Brent) ${brent !== null ? brent.toFixed(2) : '—'} + 裂解价差(Crack Spread)走阔到 ${crackSpread !== null ? crackSpread.toFixed(2) : '—'},2022 模式重演。下一节是是否传导至消费者物价(CPI)/ 盈亏平衡通胀(breakeven)。`
+        : `布伦特原油(Brent) ${brent !== null ? brent.toFixed(2) : '—'} + 裂解价差(Crack Spread) ${crackSpread !== null ? crackSpread.toFixed(2) : '—'},暂未触发能源传导主线条件。`,
     },
     {
       shortName: '滞胀压力',
@@ -902,8 +902,8 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
       score: n2Score,
       isActive: n2Active,
       description: n2Active
-        ? `ISM PMI(制造业景气) ${ismPmi !== null ? ismPmi.toFixed(1) : '—'} ${ismPmi !== null ? (ismPmi < 50 ? '收缩' : '扩张') : '—'} + 能源涨价 + 实际工资压制。三件套均已出现,但信用未验证。`
-        : `ISM PMI(制造业景气) ${ismPmi !== null ? ismPmi.toFixed(1) : '—'} ${ismPmi !== null ? (ismPmi < 50 ? '收缩' : '扩张') : '—'} + 能源涨价。三件套尚未集结,观察中。`,
+        ? `美国制造业景气(ISM PMI) ${ismPmi !== null ? ismPmi.toFixed(1) : '—'} ${ismPmi !== null ? (ismPmi < 50 ? '收缩' : '扩张') : '—'} + 能源涨价 + 实际工资压制。三件套均已出现,但信用未验证。`
+        : `美国制造业景气(ISM PMI) ${ismPmi !== null ? ismPmi.toFixed(1) : '—'} ${ismPmi !== null ? (ismPmi < 50 ? '收缩' : '扩张') : '—'} + 能源涨价。三件套尚未集结,观察中。`,
     },
     {
       shortName: '世界秩序压力穿越',
@@ -911,8 +911,8 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
       score: n3Score,
       isActive: n3Active,
       description: n3Active
-        ? `${woDisplay} 持续,触发橙色升档指针。OFAC + GDELT 双印证。`
-        : `${woDisplay} 未触发升档阈值。OFAC + GDELT 双印证。`,
+        ? `${woDisplay} 持续,触发橙色升档指针。经济制裁(OFAC)+全球新闻事件(GDELT)双印证。`
+        : `${woDisplay} 未触发升档阈值。经济制裁(OFAC)+全球新闻事件(GDELT)双印证。`,
     },
     {
       shortName: '风险资产错配',
@@ -929,8 +929,8 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
       score: n5Score,
       isActive: n5Active,
       description: n5Active
-        ? `QQQ 偏离度(z-score) ${signedFixed(qqqZ, 2)}σ ${(qqqZ ?? 0) > 2 ? '极度过热' : '偏热'},波动率与信用未同步,缺少印证。`
-        : `QQQ 偏离度(z-score) ${signedFixed(qqqZ, 2)}σ ${(qqqZ ?? 0) > 2 ? '极度过热' : '偏热'},但信用 + 波动率没有验证,缺少同步证据。`,
+        ? `纳斯达克100 ETF(QQQ)偏离度(z-score) ${signedFixed(qqqZ, 2)}σ ${(qqqZ ?? 0) > 2 ? '极度过热' : '偏热'},波动率与信用未同步,缺少印证。`
+        : `纳斯达克100 ETF(QQQ)偏离度(z-score) ${signedFixed(qqqZ, 2)}σ ${(qqqZ ?? 0) > 2 ? '极度过热' : '偏热'},但信用 + 波动率没有验证,缺少同步证据。`,
     },
     {
       shortName: '信用利差告警',
@@ -1243,8 +1243,8 @@ function renderC7MarketSentiment({ radarData, marketPricingMetricsData }) {
       const zText = formatSignedScore(ndxZ, 2);
       setBadge('c7-ndx-badge', 'yellow', `${zText}σ`);
       setLeafText('c7-ndx-number', zText);
-      setLeafText('c7-ndx-aux', 'NDX vs 60 周均值 · QQQ 对照');
-      const qqqClause = qqqZ !== null ? `；QQQ ${formatSignedScore(qqqZ, 2)}σ` : '';
+      setLeafText('c7-ndx-aux', '纳指100(NDX) vs 60 周均值 · 纳斯达克100 ETF(QQQ)对照');
+      const qqqClause = qqqZ !== null ? `；纳斯达克100 ETF(QQQ) ${formatSignedScore(qqqZ, 2)}σ` : '';
       setLeafText('c7-ndx-note', `纳指100(NDX) 60 周偏离度(z-score) ${zText}σ${qqqClause}。用于观察美国成长股板块整体温度。本数据为统计描述，不构成投资建议。`);
     }
   } catch (error) {
@@ -1279,8 +1279,8 @@ function renderC8Geopolitical({ radarData, worldOrderStressData }) {
     setToneClass('c8-econ-status', 'status-bar', econTone);
     setBadge('c8-econ-badge', econTone);
     if (econScore !== null) setLeafText('c8-econ-number', String(Math.round(econScore)));
-    if (econ.trend) setLeafText('c8-econ-aux', `trend: ${econ.trend} · OFAC + GDELT`);
-    if (econ.trend) setLeafText('c8-econ-note', `制裁与经济武器化处于高位区间。trend: ${econ.trend}。`);
+    if (econ.trend) setLeafText('c8-econ-aux', `趋势(trend): ${econ.trend} · 美国制裁清单(OFAC)+全球新闻事件(GDELT)`);
+    if (econ.trend) setLeafText('c8-econ-note', `制裁与经济武器化处于高位区间。趋势(trend): ${econ.trend}。`);
 
     const arms = worldOrderStressData?.dimensions?.peaceDividendRetreat || {};
     const armsScore = asNumber(arms.score);
@@ -1445,10 +1445,10 @@ function renderC1InflationEnergy({ radarData }) {
     if (crack !== null) setLeafText('c1-crack-number', crack.toFixed(2));
     const crackChange = asNumber(brentLayer.crackSpread4wChange);
     if (crackChange !== null) {
-      setLeafText('c1-crack-aux', `ULSD × 42 − Brent · 4 周变化 ${signedNumber(crackChange, 2)}`);
+      setLeafText('c1-crack-aux', `超低硫柴油(ULSD) × 42 − 布伦特原油(Brent) · 4 周变化 ${signedNumber(crackChange, 2)}`);
     }
     if (brentLayer.crackSpreadRegime) {
-      setLeafText('c1-crack-note', `炼油利润扩张说明能源向汽油 / 柴油传导。Brent → CPI 的中间证据。regime: ${brentLayer.crackSpreadRegime}。`);
+      setLeafText('c1-crack-note', `炼油利润扩张说明能源向汽油 / 柴油传导。布伦特原油(Brent) → 消费者物价(CPI)的中间证据。状态: ${brentLayer.crackSpreadRegime}。`);
     }
 
     const ismRegime = consumer.ismPmiRegime;
@@ -1548,8 +1548,8 @@ function renderChinaInflationLeaf({ radarData }) {
   const cpi = asNumber(chinaInflation.cpi?.yoy);
   const ppi = asNumber(chinaInflation.ppi?.yoy);
   setLeafText('c6-china-infl-number', cpi !== null ? (cpi * 100).toFixed(1) : '—');
-  const cpiText = cpi !== null ? `CPI ${signedFixed(cpi * 100, 1)}% YoY` : 'CPI —';
-  const ppiText = ppi !== null ? `PPI ${signedFixed(ppi * 100, 1)}% YoY` : 'PPI —';
+  const cpiText = cpi !== null ? `消费者物价(CPI) ${signedFixed(cpi * 100, 1)}% YoY` : '消费者物价(CPI) —';
+  const ppiText = ppi !== null ? `工业品出厂价格(PPI) ${signedFixed(ppi * 100, 1)}% YoY` : '工业品出厂价格(PPI) —';
   const refMonth = chinaInflation.cpi?.refMonth || chinaInflation.ppi?.refMonth || '—';
   const suffix = status === 'fallback' ? ' · 回退' : '';
   setLeafText('c6-china-infl-aux', `${cpiText} · ${ppiText} · ${refMonth}${suffix}`);
@@ -1998,11 +1998,11 @@ function renderC3CreditCorporate({ radarData }) {
       const changeBp = asNumber(hyOasWoW?.changeBp);
       const changePct = signedPercentFromDecimal(hyOasWoW?.changePct, 1);
       if (hyOasWoW?.windowStatus === 'ready' && changeBp !== null && changePct) {
-        setLeafText('c3-hy-aux', `HY OAS ${hyOas.toFixed(2)}% · WoW ${formatSignedBpValue(changeBp, 0)} / ${changePct}`);
+        setLeafText('c3-hy-aux', `高收益债利差(HY OAS) ${hyOas.toFixed(2)}% · 周变化(WoW) ${formatSignedBpValue(changeBp, 0)} / ${changePct}`);
       } else if (hyOasWoW) {
-        setLeafText('c3-hy-aux', `HY OAS ${hyOas.toFixed(2)}% · WoW ${formatWindowProgress(hyOasWoW)}`);
+        setLeafText('c3-hy-aux', `高收益债利差(HY OAS) ${hyOas.toFixed(2)}% · 周变化(WoW) ${formatWindowProgress(hyOasWoW)}`);
       } else {
-        setLeafText('c3-hy-aux', `HY OAS ${hyOas.toFixed(2)}% · WoW 字段未接入`);
+        setLeafText('c3-hy-aux', `高收益债利差(HY OAS) ${hyOas.toFixed(2)}% · 周变化(WoW)字段未接入`);
       }
     }
 
@@ -2025,7 +2025,7 @@ function renderC3CreditCorporate({ radarData }) {
       setLeafText('c3-nfci-aux', `4 周变化 ${signedNumber(nfciChange, 3)} · 状态: ${credit.nfciRegime}`);
     }
     if (nfci !== null && credit.nfciRegime) {
-      setLeafText('c3-nfci-note', `NFCI 汇总 100+ 跨市场信号(信用 / 流动性 / 杠杆)。方向反转：正值=收紧。当前 ${nfci.toFixed(3)},${credit.nfciRegime}。`);
+      setLeafText('c3-nfci-note', `金融条件指数(NFCI)汇总 100+ 跨市场信号(信用 / 流动性 / 杠杆)。方向反转：正值=收紧。当前 ${nfci.toFixed(3)},${credit.nfciRegime}。`);
     }
 
     const privateTone = privateCreditToneFromRegime(privateCredit.privateCreditProxyRegime);
@@ -2185,7 +2185,7 @@ function renderEuroVolatilityLeaf({ radarData }) {
     auxParts.push(`1日 ${signedFixed(changePct * 100, 1)}%`);
   }
   if (value !== null && vix !== null) {
-    auxParts.push(`vs 美VIX ${signedFixed(value - vix, 1)}`);
+    auxParts.push(`相对美国波动率(VIX) ${signedFixed(value - vix, 1)}`);
   }
   if (status === 'fallback') auxParts.push('回退');
   if (status === 'missing' && auxParts.length === 0) auxParts.push('待源恢复');
@@ -2630,8 +2630,8 @@ function joinNonEmpty(parts, separator = ' · ') {
 }
 
 function formatBoolean(value) {
-  if (value === true) return 'true';
-  if (value === false) return 'false';
+  if (value === true) return '是';
+  if (value === false) return '否';
   if (value === null || value === undefined) return null;
   return String(value);
 }
@@ -2667,12 +2667,12 @@ function setListItems(prefix, items, maxCount) {
 
 function scenarioText(scenario) {
   if (!scenario) return null;
-  const title = textValue(scenario.titleZh);
+  const title = externalAiDisplayText(scenario.titleZh);
   const triggers = Array.isArray(scenario.triggerConditions)
-    ? scenario.triggerConditions.map((item) => textValue(item)).filter(Boolean).join('、')
+    ? scenario.triggerConditions.map((item) => externalAiDisplayText(item)).filter(Boolean).join('、')
     : null;
   const invalidations = Array.isArray(scenario.invalidationConditions)
-    ? scenario.invalidationConditions.map((item) => textValue(item)).filter(Boolean).join('、')
+    ? scenario.invalidationConditions.map((item) => externalAiDisplayText(item)).filter(Boolean).join('、')
     : null;
   const parts = [];
   if (title) parts.push(`${title}:`);
@@ -2683,8 +2683,42 @@ function scenarioText(scenario) {
 
 function externalAiListText(items, fallback = '—') {
   if (!Array.isArray(items)) return fallback;
-  const clean = items.map((item) => textValue(item)).filter(Boolean);
+  const clean = items.map((item) => externalAiDisplayText(item)).filter(Boolean);
   return clean.length > 0 ? clean.join(' / ') : fallback;
+}
+
+function externalAiDisplayText(value) {
+  const text = textValue(value);
+  if (!text) return null;
+  return text
+    .replace(/\bfalse_down_physical_stress\b/g, '假性下跌、物理压力仍强')
+    .replace(/\boilDirectionalPressure\b/g, '油价方向压力')
+    .replace(/\bbrentPricingLayer\b/g, '布伦特原油(Brent)定价层')
+    .replace(/\bassets\.qqq\.latestMetricDate\b/g, '纳斯达克100 ETF(QQQ)最新温度日期')
+    .replace(/\btopRisks\b/g, '每日简报主要风险')
+    .replace(/\bfallback\b/g, '回退')
+    .replace(/\bif-then\b/g, '条件式(if-then)')
+    .replace(/(?<!\()(?<!波动率指数\()(?<!美国)波动率指数?\s*VIX\b/g, '波动率指数(VIX)')
+    .replace(/(?<!\()(?<!波动率指数\()\bVIX\b/g, '波动率指数(VIX)')
+    .replace(/(?<!\()(?<!高收益债利差\()\bHY OAS\b/g, '高收益债利差(HY OAS)')
+    .replace(/(?<!\()(?<!投资级债利差\()(?<!投资级利差\()\bIG OAS\b/g, '投资级债利差(IG OAS)')
+    .replace(/高收益利差/g, '高收益债利差(HY OAS)')
+    .replace(/美国10年期收益率/g, '美国10年期国债收益率(US10Y)')
+    .replace(/广义美元指数(?!\()/g, '广义美元指数(DXY)')
+    .replace(/消费者信心指数(?!\()/g, '消费者信心指数(UMCSENT)')
+    .replace(/(?<!\()(?<!美国10年期国债收益率\()\bUS10Y\b/g, '美国10年期国债收益率(US10Y)')
+    .replace(/(?<!\()(?<!隔夜逆回购\()\bON RRP\b/g, '隔夜逆回购(ON RRP)')
+    .replace(/布伦特(?!原油)(?!定价层)/g, '布伦特原油(Brent)')
+    .replace(/(?<!\()(?<!布伦特原油\()\bBrent\b/g, '布伦特原油(Brent)')
+    .replace(/(?<!\()(?<!纳斯达克100 ETF\()\bQQQ\b/g, '纳斯达克100 ETF(QQQ)')
+    .replace(/(?<!\()(?<!标普500\()\bSPX\b/g, '标普500(SPX)')
+    .replace(/(?<!\()(?<!纳指100\()\bNDX\b/g, '纳指100(NDX)')
+    .replace(/(?<!\()(?<!纳指综合\()\bIXIC\b/g, '纳指综合(IXIC)')
+    .replace(/(?<!\()(?<!中期借贷便利\()\bMLF\b/g, '中期借贷便利(MLF)')
+    .replace(/(?<!\()(?<!消费者物价\()\bCPI\b/g, '消费者物价(CPI)')
+    .replace(/(?<!\()(?<!工业品出厂价格\()\bPPI\b/g, '工业品出厂价格(PPI)')
+    .replace(/(?<!\()(?<!密歇根消费信心\()\bUMCSENT\b/g, '密歇根消费信心(UMCSENT)')
+    .replace(/(?<!\()\bz-score\b/g, '偏离度(z-score)');
 }
 
 const EXTERNAL_AI_MACRO_DRIVER_LABELS = {
@@ -2705,12 +2739,12 @@ const EXTERNAL_AI_MACRO_DRIVER_LABELS = {
   chinaBond: '中国债券',
   cfetsRmb: 'CFETS 人民币',
   chinaInflation: '中国通胀',
-  chinaPmi: '中国 PMI',
-  euroVolatility: '欧元区波动',
+  chinaPmi: '中国采购经理指数(PMI)',
+  euroVolatility: '欧元区波动率(V2X)',
   chinaPropertyPrice: '中国房价',
   chinaOmo: '中国公开市场操作',
   chinaTsf: '中国社融',
-  chinaMlf: '中国 MLF',
+  chinaMlf: '中国中期借贷便利(MLF)',
   rateVol: '利率波动',
   activeSignals: '活跃信号',
   gatingEvaluation: '门控评估',
@@ -2718,6 +2752,16 @@ const EXTERNAL_AI_MACRO_DRIVER_LABELS = {
 };
 
 const EXTERNAL_AI_SOURCE_LAYER_LABELS = {
+  topRisks: '每日简报 · 主要风险',
+  checks: '检查项',
+  signals: '信号层',
+  score: '风险分数',
+  stressScore: '压力分数',
+  macroState: '宏观状态',
+  onRrp: '隔夜逆回购(ON RRP)',
+  proxySpread: '公开代理价差',
+  umichSentiment: '密歇根消费信心(UMich)',
+  geopolitical: '地缘风险',
   dailyBrief: '每日简报',
   aiInterpretationLayer: '规则基线解读',
   dataHealth: '数据健康',
@@ -2727,7 +2771,7 @@ const EXTERNAL_AI_SOURCE_LAYER_LABELS = {
   transmissionChain: '传导链',
   heatmap: '全球风险热力图',
   divergenceLayer: '背离检查层',
-  brentPricingLayer: '布伦特定价层',
+  brentPricingLayer: '布伦特原油(Brent)定价层',
   oilDirectionalPressure: '油价方向压力',
   worldOrderStress: '世界秩序压力',
   marketPricing: '市场定价',
@@ -2739,18 +2783,44 @@ const EXTERNAL_AI_SOURCE_LAYER_LABELS = {
 };
 
 const EXTERNAL_AI_FIELD_PATH_LABELS = {
+  consumer_vs_asset_pricing: '消费者体感与资产定价错配',
+  'assets.qqq.latestMetricDate': '纳斯达克100 ETF(QQQ) · 最新温度日期',
+  'marketPricing.assets.qqq.latestMetricDate': '纳斯达克100 ETF(QQQ) · 最新温度日期',
   'oilDirectionalPressure.signals.dieselProductStress.extremeTight': '柴油库存压力',
   'oilDirectionalPressure.signals.dieselProductStress': '柴油库存压力',
+  'oilDirectionalPressure.signals.inventoryDrawPressure': '库存抽紧压力',
+  'oilDirectionalPressure.signals.priceContext.brentChangePct4w': '布伦特原油(Brent)4 周变化',
   'brentPricingLayer.proxySpread.status': '现货期货价差状态',
   'brentPricingLayer.proxySpread': '现货期货价差',
   'dailyBrief.dominantRiskChain': '主导风险链',
   'macroDrivers.consumer.umichSentiment': '密歇根消费信心',
+  'macroDrivers.credit.igOas': '投资级债利差(IG OAS)',
+  'macroDrivers.credit.igHyRatio': '投资级/高收益利差比(IG/HY)',
+  'macroDrivers.chinaMlf': '中国中期借贷便利(MLF)',
   'dailyBrief.dominantRiskChain.evidence[0].value': '主风险链证据',
   'macroDrivers.consumer.umichSentiment.threeMonthChange': '密歇根信心三月变化',
+  'divergenceLayer.checks.consumer_vs_asset_pricing': '消费者体感与资产定价错配',
   'divergenceLayer.checks[4].status': '消费资产背离检查',
-  'marketPricing.assets.qqq.status': 'QQQ 状态',
-  'marketPricing.assets.ndx.status': '纳指100 状态',
-  'marketPricing.assets.ixic.status': '纳指综合状态',
+  'marketPricing.assets.qqq.status': '纳斯达克100 ETF(QQQ)状态',
+  'marketPricing.assets.ndx.status': '纳指100(NDX)状态',
+  'marketPricing.assets.ixic.status': '纳指综合(IXIC)状态',
+};
+
+const EXTERNAL_AI_SOURCE_VALUE_LABELS = {
+  local_compact: '本地压缩输入',
+  manual_local_compact: '手动本地压缩输入',
+  manual_workflow: '手动工作流',
+  analyst_compact_v1: '分析师压缩输入(v1)',
+  manual_analyst_compact_v1: '手动分析师压缩输入(v1)',
+};
+
+const EXTERNAL_AI_AUDIT_FLAG_LABELS = {
+  manual_artifact_only: '手动工作流制品',
+  site_structured_data_only: '仅使用站内结构化数据',
+  analyst_compact_v1: '分析师压缩输入(v1)',
+  validator_required: '必须通过校验',
+  non_production_output: '不作为生产决策输出',
+  no_frontend_display: '不覆盖平台主结论',
 };
 
 const EXTERNAL_AI_SOURCE_LAYER_KEYS = Object.keys(EXTERNAL_AI_SOURCE_LAYER_LABELS)
@@ -2794,6 +2864,7 @@ function externalAiFieldPathEntityLabel(reference, canonicalLayer) {
   if (EXTERNAL_AI_FIELD_PATH_LABELS[value]) return EXTERNAL_AI_FIELD_PATH_LABELS[value];
   const tail = value.slice(canonicalLayer.length).replace(/^\./u, '');
   if (!tail) return null;
+  if (EXTERNAL_AI_FIELD_PATH_LABELS[tail]) return EXTERNAL_AI_FIELD_PATH_LABELS[tail];
   if (canonicalLayer === 'modules') {
     const moduleKey = tail.split(/[.\[\]]/u)[0];
     if (MODULE_LABELS[moduleKey]) return MODULE_LABELS[moduleKey];
@@ -2804,12 +2875,35 @@ function externalAiFieldPathEntityLabel(reference, canonicalLayer) {
 function externalAiReferenceLabel(reference, { allowFieldPath = false } = {}) {
   const value = textValue(reference);
   if (!value) return null;
+  if (EXTERNAL_AI_FIELD_PATH_LABELS[value]) return EXTERNAL_AI_FIELD_PATH_LABELS[value];
+  if (EXTERNAL_AI_SOURCE_LAYER_LABELS[value]) return EXTERNAL_AI_SOURCE_LAYER_LABELS[value];
   const canonicalLayer = findExternalAiCanonicalSourceLayer(value);
   if (!canonicalLayer) return value;
   const sourceLabel = externalAiSourceLayerLabel(canonicalLayer);
   if (!allowFieldPath || value === canonicalLayer) return sourceLabel;
   const entityLabel = externalAiFieldPathEntityLabel(value, canonicalLayer);
   return entityLabel ? `${sourceLabel} · ${entityLabel}` : sourceLabel;
+}
+
+function externalAiAuditFlagText(flags) {
+  if (!Array.isArray(flags)) return null;
+  const clean = flags.map((flag) => textValue(flag)).filter(Boolean);
+  if (!clean.length) return null;
+  return clean.map((flag) => EXTERNAL_AI_AUDIT_FLAG_LABELS[flag] || flag).join(' / ');
+}
+
+function setExternalAiAuditFlags(flags) {
+  const el = $('ext-ai-audit-flags');
+  if (!el) return;
+  const displayText = externalAiAuditFlagText(flags);
+  if (!displayText) return;
+  el.textContent = `审计标记：${displayText}。`;
+  el.removeAttribute('title');
+}
+
+function externalAiSourceValueLabel(value) {
+  const text = textValue(value);
+  return text ? (EXTERNAL_AI_SOURCE_VALUE_LABELS[text] || externalAiDisplayText(text)) : null;
 }
 
 function externalAiReferenceListText(items, options = {}, fallback = '—') {
@@ -2825,22 +2919,15 @@ function externalAiReferenceListText(items, options = {}, fallback = '—') {
 function setExternalAiReferenceListText(id, items, options = {}) {
   const el = $(id);
   if (!el) return;
-  const raw = Array.isArray(items)
-    ? items.map((item) => textValue(item)).filter(Boolean).join(' / ')
-    : '';
   const displayText = externalAiReferenceListText(items, options);
   el.textContent = displayText;
-  if (raw && raw !== displayText) {
-    el.setAttribute('title', raw);
-  } else {
-    el.removeAttribute('title');
-  }
+  el.removeAttribute('title');
 }
 
 function externalAiTitleWithConfidence(title, confidence) {
   const confidenceLabel = EXTERNAL_AI_CONFIDENCE_LABELS[textValue(confidence)] || textValue(confidence);
   return joinNonEmpty([
-    title,
+    externalAiDisplayText(title),
     confidenceLabel ? `置信度:${confidenceLabel}` : null,
   ]);
 }
@@ -2852,7 +2939,7 @@ function renderExternalAiSynthesisItem(item, index) {
     return false;
   }
   const title = externalAiTitleWithConfidence(item.theme, item.confidence);
-  const summary = textValue(item.summaryZh);
+  const summary = externalAiDisplayText(item.summaryZh);
   if (!title && !summary) {
     setHidden(blockId, true);
     return false;
@@ -2871,8 +2958,8 @@ function renderExternalAiDivergenceItem(item, index) {
     setHidden(blockId, true);
     return false;
   }
-  const title = textValue(item.titleZh);
-  const why = textValue(item.whyItMattersZh);
+  const title = externalAiDisplayText(item.titleZh);
+  const why = externalAiDisplayText(item.whyItMattersZh);
   if (!title && !why) {
     setHidden(blockId, true);
     return false;
@@ -2911,8 +2998,8 @@ function renderExternalAiDataQualityLens(item) {
     setHidden(blockId, true);
     return false;
   }
-  const summary = textValue(item.summaryZh);
-  const impact = textValue(item.confidenceImpactZh);
+  const summary = externalAiDisplayText(item.summaryZh);
+  const impact = externalAiDisplayText(item.confidenceImpactZh);
   if (!summary && !impact) {
     setHidden(blockId, true);
     return false;
@@ -2969,13 +3056,13 @@ function renderExternalAiAuxiliary({ radarData }) {
     const generatedAt = formatUtcMinuteStage5d2(layer.generatedAt);
     if (generatedAt) setLeafText('ext-ai-generated-at', generatedAt);
 
-    if (textValue(layer.summaryZh)) setLeafText('ext-ai-summary', layer.summaryZh);
+    if (textValue(layer.summaryZh)) setLeafText('ext-ai-summary', externalAiDisplayText(layer.summaryZh));
     const factsText = orderedSentence(layer.facts);
-    if (factsText) setLeafText('ext-ai-facts-text', factsText);
+    if (factsText) setLeafText('ext-ai-facts-text', externalAiDisplayText(factsText));
     const inferencesText = orderedSentence(layer.inferences);
-    if (inferencesText) setLeafText('ext-ai-inferences-text', inferencesText);
+    if (inferencesText) setLeafText('ext-ai-inferences-text', externalAiDisplayText(inferencesText));
     const judgmentsText = orderedSentence(layer.modelJudgments);
-    if (judgmentsText) setLeafText('ext-ai-judgments-text', judgmentsText);
+    if (judgmentsText) setLeafText('ext-ai-judgments-text', externalAiDisplayText(judgmentsText));
 
     if (Array.isArray(layer.scenarioHypotheses)) {
       for (let i = 0; i < 2; i += 1) {
@@ -2994,13 +3081,11 @@ function renderExternalAiAuxiliary({ radarData }) {
     const boundaryText = boundaryParts.length > 0 ? `${boundaryParts.join(';')}。` : '';
     if (boundaryText) setLeafText('ext-ai-boundaries-text', boundaryText);
 
-    if (Array.isArray(layer.auditFlags) && layer.auditFlags.length > 0) {
-      setLeafText('ext-ai-audit-flags', layer.auditFlags.join(' / '));
-    }
+    setExternalAiAuditFlags(layer.auditFlags);
 
     if (textValue(layer.provenance?.runId)) setLeafText('ext-ai-prov-run-id', layer.provenance.runId);
-    if (textValue(layer.inputSource)) setLeafText('ext-ai-prov-input-source', layer.inputSource);
-    if (textValue(layer.sourceMode)) setLeafText('ext-ai-prov-source-mode', layer.sourceMode);
+    if (textValue(layer.inputSource)) setLeafText('ext-ai-prov-input-source', externalAiSourceValueLabel(layer.inputSource));
+    if (textValue(layer.sourceMode)) setLeafText('ext-ai-prov-source-mode', externalAiSourceValueLabel(layer.sourceMode));
     if (generatedAt) setLeafText('ext-ai-prov-generated-at', generatedAt);
     const digest = shortHash(layer.provenance?.artifactDigest, 12);
     if (digest) setLeafText('ext-ai-prov-artifact-digest', digest);
@@ -3010,7 +3095,7 @@ function renderExternalAiAuxiliary({ radarData }) {
     if (humanApproved) setLeafText('ext-ai-prov-human-approved', humanApproved);
     if (promotion) setLeafText('ext-ai-prov-promotion', promotion);
     const confidenceText = joinNonEmpty([
-      layer.confidence?.level,
+      EXTERNAL_AI_CONFIDENCE_LABELS[textValue(layer.confidence?.level)] || layer.confidence?.level,
       asNumber(layer.confidence?.score) !== null ? `${Math.round(layer.confidence.score)}/100` : null,
     ], ' ');
     if (confidenceText) setLeafText('ext-ai-prov-confidence', confidenceText);

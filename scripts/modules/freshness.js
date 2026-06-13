@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-buffer-tone-1';
+﻿import { fmtNumSafe } from './config.js?v=zh-term-standard-4';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

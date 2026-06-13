@@ -1,13 +1,13 @@
-﻿import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=odp-buffer-tone-1';
+﻿import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=zh-term-standard-4';
 import {
   computeAgeMinutes,
   classifyFreshnessLevel,
   buildRealtimeStatusLabel,
   shouldApplyRealtimeOverlay,
   canUseRealtimePayloadValues
-} from './freshness.js?v=odp-buffer-tone-1';
-import { buildHealthDashboardModel } from './health.js?v=odp-buffer-tone-1';
-import { buildDecisionModel } from './decision.js?v=odp-buffer-tone-1';
+} from './freshness.js?v=zh-term-standard-4';
+import { buildHealthDashboardModel } from './health.js?v=zh-term-standard-4';
+import { buildDecisionModel } from './decision.js?v=zh-term-standard-4';
 import {
   buildAssetMatrixReasons,
   buildDecisionLineDisplay,
@@ -19,7 +19,7 @@ import {
   buildSummaryDisplay,
   buildTopRisksDisplay,
   buildTriggerPanelDisplay
-} from './displayTextBuilders.js?v=odp-buffer-tone-1';
+} from './displayTextBuilders.js?v=zh-term-standard-4';
 
 const STRUCTURAL_SIGNAL_LABELS_CN = {
   curveDeepInversion: '曲线深度倒挂',

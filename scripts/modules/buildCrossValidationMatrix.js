@@ -186,12 +186,12 @@ function buildStagflationNarrative(data, fedLiquidity = {}) {
     : evidence(
       'policy_path',
       formatNumber(effectiveFedFundsRate, 2, '%'),
-      `当前联邦基金有效利率已接入${sofr === null ? '' : `；SOFR ${formatNumber(sofr, 2, '%')} 提供近端融资状态`}；forward policy path 仍需 dot plot / Fed funds futures 验证`,
+      `当前联邦基金有效利率已接入${sofr === null ? '' : `；担保隔夜融资利率(SOFR) ${formatNumber(sofr, 2, '%')} 提供近端融资状态`}；前瞻政策路径仍需点阵图(dot plot)/联邦基金期货(Fed funds futures)验证`,
     );
   const supportingEvidence = [];
   const missingEvidence = [
     policyPathEvidence
-      ? evidence('policy_forward_path', null, 'Fed dot plot / Fed funds futures / OIS forward rates 未接入')
+      ? evidence('policy_forward_path', null, '美联储点阵图(Fed dot plot)/联邦基金期货(Fed funds futures)/隔夜指数掉期远期利率(OIS forward rates)未接入')
       : evidence('policy_path', null, '当前政策利率与前瞻政策路径未接入'),
   ];
   const contradictingEvidence = [];
@@ -273,20 +273,20 @@ function buildRiskAssetMismatchNarrative(data, metric) {
     if (nfci >= 0.5 && hyOas < 3.0) {
       supportingEvidence.push(evidence(
         'nfci_hy_mismatch',
-        `NFCI ${formatNumber(nfci, 2)} / HY ${formatNumber(hyOas, 2, '%')}`,
-        `金融状况显著收紧 (NFCI ${formatNumber(nfci, 2)}) 但 HY 信用利差仍极度平静 (${formatNumber(hyOas, 2, '%')})，信用市场未确认流动性收紧`
+        `金融条件指数(NFCI) ${formatNumber(nfci, 2)} / 高收益债利差(HY OAS) ${formatNumber(hyOas, 2, '%')}`,
+        `金融状况显著收紧(金融条件指数(NFCI) ${formatNumber(nfci, 2)})但高收益债利差(HY OAS)仍极度平静(${formatNumber(hyOas, 2, '%')})，信用市场未确认流动性收紧`
       ));
     } else if (nfci >= 0.1 && hyOas < 3.5) {
       supportingEvidence.push(evidence(
         'nfci_hy_mismatch',
-        `NFCI ${formatNumber(nfci, 2)} / HY ${formatNumber(hyOas, 2, '%')}`,
-        `金融状况温和收紧 (NFCI ${formatNumber(nfci, 2)}) 但 HY 信用利差仍偏窄 (${formatNumber(hyOas, 2, '%')})，错配迹象出现`
+        `金融条件指数(NFCI) ${formatNumber(nfci, 2)} / 高收益债利差(HY OAS) ${formatNumber(hyOas, 2, '%')}`,
+        `金融状况温和收紧(金融条件指数(NFCI) ${formatNumber(nfci, 2)})但高收益债利差(HY OAS)仍偏窄(${formatNumber(hyOas, 2, '%')})，错配迹象出现`
       ));
     } else if (nfci <= -0.5 && hyOas > 5.0) {
       contradictingEvidence.push(evidence(
         'nfci_hy_mismatch',
-        `NFCI ${formatNumber(nfci, 2)} / HY ${formatNumber(hyOas, 2, '%')}`,
-        `金融状况显著宽松 (NFCI ${formatNumber(nfci, 2)}) 且 HY 信用利差已警觉 (${formatNumber(hyOas, 2, '%')})，反向一致而非错配`
+        `金融条件指数(NFCI) ${formatNumber(nfci, 2)} / 高收益债利差(HY OAS) ${formatNumber(hyOas, 2, '%')}`,
+        `金融状况显著宽松(金融条件指数(NFCI) ${formatNumber(nfci, 2)})且高收益债利差(HY OAS)已警觉(${formatNumber(hyOas, 2, '%')})，反向一致而非错配`
       ));
     }
   }
@@ -438,7 +438,7 @@ function buildOverheatNarrative(metric, data) {
       '60 周离散度已由 M-26 指标文件提供'));
   } else {
     missingEvidence.push(evidence('qqq_zscore', null,
-      '60 周均值、标准差、z-score 与更长历史等待接入'));
+      '60 周均值、标准差、偏离度(z-score)与更长历史等待接入'));
   }
 
   // M-53 NEW: hyOas_qqq_complacency contradicting (replaces old credit-confirmation missing)
@@ -613,9 +613,9 @@ function buildCreditSpreadNarrative(data, metric) {
   ];
   const contradictingEvidence = [];
 
-  if (hyOas !== null && hyOas > 5) supportingEvidence.push(evidence('hy_oas', formatNumber(hyOas, 2, '%'), 'HY OAS 高于 5.0%'));
-  if (igOas !== null && igOas > 1.5) supportingEvidence.push(evidence('ig_oas', formatNumber(igOas, 2, '%'), 'IG OAS 高于 1.5%'));
-  if (igHyRatio !== null && igHyRatio < 0.25) supportingEvidence.push(evidence('ig_hy_ratio', formatNumber(igHyRatio, 2), 'IG/HY 比例低于 0.25，信用广度恶化'));
+  if (hyOas !== null && hyOas > 5) supportingEvidence.push(evidence('hy_oas', formatNumber(hyOas, 2, '%'), '高收益债利差(HY OAS)高于 5.0%'));
+  if (igOas !== null && igOas > 1.5) supportingEvidence.push(evidence('ig_oas', formatNumber(igOas, 2, '%'), '投资级利差(IG OAS)高于 1.5%'));
+  if (igHyRatio !== null && igHyRatio < 0.25) supportingEvidence.push(evidence('ig_hy_ratio', formatNumber(igHyRatio, 2), '投资级债/高收益债(IG/HY)比例低于 0.25，信用广度恶化'));
   if (ratesCheck.status === 'stress') supportingEvidence.push(evidence('rates_vs_risk_assets', formatNumber(ratesCheck.score, 0), ratesCheck.summaryZh || '利率与风险资产检查提示压力'));
   // M-48: NFCI moves from hardcoded missing evidence to dynamic bank-stress classification.
   if (nfci === null) {
@@ -624,25 +624,25 @@ function buildCreditSpreadNarrative(data, metric) {
     supportingEvidence.push(evidence(
       'nfci',
       `${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}`,
-      `NFCI ${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}，金融状况显著收紧（${nfciRegime}），银行与同业压力同步信用利差预警`
+      `金融条件指数(NFCI) ${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}，金融状况显著收紧（${nfciRegime}），银行与同业压力同步信用利差预警`
     ));
   } else if (nfci >= 0.1) {
     supportingEvidence.push(evidence(
       'nfci',
       `${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}`,
-      `NFCI ${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}，金融状况温和收紧（${nfciRegime}），支持信用压力观察`
+      `金融条件指数(NFCI) ${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}，金融状况温和收紧（${nfciRegime}），支持信用压力观察`
     ));
   } else if (nfci <= -0.5) {
     contradictingEvidence.push(evidence(
       'nfci',
       `${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}`,
-      `NFCI ${formatNumber(nfci, 2)}，金融状况显著宽松（${nfciRegime}），强烈反驳信用利差预警`
+      `金融条件指数(NFCI) ${formatNumber(nfci, 2)}，金融状况显著宽松（${nfciRegime}），强烈反驳信用利差预警`
     ));
   } else if (nfci < -0.1) {
     contradictingEvidence.push(evidence(
       'nfci',
       `${nfci >= 0 ? '+' : ''}${formatNumber(nfci, 2)}`,
-      `NFCI ${formatNumber(nfci, 2)}，金融状况温和宽松（${nfciRegime}），反驳信用压力扩散`
+      `金融条件指数(NFCI) ${formatNumber(nfci, 2)}，金融状况温和宽松（${nfciRegime}），反驳信用压力扩散`
     ));
   }
   if (hyOas !== null && hyOas < 3.5 && metric?.zScore >= 1.5) {
@@ -684,9 +684,9 @@ function buildLiquidityTighteningNarrative(data) {
   if (onRrp !== null && onRrp < 200) supportingEvidence.push(evidence('on_rrp', `${formatNumber(onRrp, 3)}B`, 'ON RRP 低于 200B，准备金缓冲偏薄'));
   if (dxy !== null && dxy > 105) supportingEvidence.push(evidence('dxy', formatNumber(dxy, 2), '广义美元高于 105'));
   if (t10y2y !== null && t10y2y > 0.5) supportingEvidence.push(evidence('t10y2y', formatNumber(t10y2y, 2), '曲线陡峭度高于 +0.5'));
-  if (walcl4wChange !== null && walcl4wChange < -50) supportingEvidence.push(evidence('walcl4wChange', formatNumber(walcl4wChange, 1), 'Fed 资产负债表 4 周收缩超过 50B'));
+  if (walcl4wChange !== null && walcl4wChange < -50) supportingEvidence.push(evidence('walcl4wChange', formatNumber(walcl4wChange, 1), '美联储(Fed)资产负债表 4 周收缩超过 50B'));
   if (onRrp !== null && onRrp > 1000) contradictingEvidence.push(evidence('on_rrp', `${formatNumber(onRrp, 1)}B`, 'ON RRP 高于 1T，流动性缓冲仍充裕'));
-  if (walcl4wChange !== null && walcl4wChange > 50) contradictingEvidence.push(evidence('walcl4wChange', formatNumber(walcl4wChange, 1), 'Fed 资产负债表 4 周扩张超过 50B'));
+  if (walcl4wChange !== null && walcl4wChange > 50) contradictingEvidence.push(evidence('walcl4wChange', formatNumber(walcl4wChange, 1), '美联储(Fed)资产负债表 4 周扩张超过 50B'));
 
   // M-50: repo_stress moves from hardcoded missing evidence to BGCR-SOFR spread classification.
   if (bgcrSofrSpread === null) {
@@ -1016,24 +1016,24 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
   {
     const euro = isPlainObject(md.euroVolatility) ? md.euroVolatility : {};
     const v2x = euro.sourceStatus === 'live' ? finite(euro.value) : null;
-    const caveat = 'V2X 与 VIX 高度相关,只取背离;VIX 已计入主评分,不重复计数恐慌。';
+    const caveat = '欧元区波动率(V2X)与波动率指数(VIX)高度相关,只取背离;波动率指数(VIX)已计入主评分,不重复计数恐慌。';
     if (v2x === null || vix === null) {
-      signals.push(coherenceSignal('v2x_vix_divergence', 'V2X 欧美波动率', '背景', '同步',
-        'V2X 或 VIX 未刷新,暂不判定地区波动率背离。', ['euroVolatility.value', 'vix'], caveat));
+      signals.push(coherenceSignal('v2x_vix_divergence', '欧美波动率(V2X/VIX)', '背景', '同步',
+        '欧元区波动率(V2X)或波动率指数(VIX)未刷新,暂不判定地区波动率背离。', ['euroVolatility.value', 'vix'], caveat));
     } else {
       const spread = v2x - vix;
       let verdict, reason;
       if (spread >= 2.5) {
         verdict = '背离';
-        reason = `欧元区波动率 ${formatNumber(v2x, 1)} 高于美国 VIX ${formatNumber(vix, 1)}(+${formatNumber(spread, 1)}),恐慌偏欧洲地区性,美国市价读数或低估广度。`;
+        reason = `欧元区波动率(V2X) ${formatNumber(v2x, 1)} 高于美国波动率指数(VIX) ${formatNumber(vix, 1)}(+${formatNumber(spread, 1)}),恐慌偏欧洲地区性,美国市价读数或低估广度。`;
       } else if (spread <= -2.5) {
         verdict = '背离';
-        reason = `美国 VIX ${formatNumber(vix, 1)} 高于欧元区 ${formatNumber(v2x, 1)}(${formatNumber(spread, 1)}),恐慌偏美国 idiosyncratic。`;
+        reason = `美国波动率指数(VIX) ${formatNumber(vix, 1)} 高于欧元区波动率(V2X) ${formatNumber(v2x, 1)}(${formatNumber(spread, 1)}),恐慌偏美国单市场性。`;
       } else {
         verdict = '印证';
         reason = `欧美波动率同步(差 ${formatNumber(spread, 1)}),恐慌为系统性而非地区性,与核心一致。`;
       }
-      signals.push(coherenceSignal('v2x_vix_divergence', 'V2X 欧美波动率', verdict, '同步', reason,
+      signals.push(coherenceSignal('v2x_vix_divergence', '欧美波动率(V2X/VIX)', verdict, '同步', reason,
         ['euroVolatility.value', 'vix'], caveat));
     }
   }
@@ -1048,7 +1048,7 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
       if (cp > 0) up += 1; else if (cp < 0) down += 1;
     }
     const n = up + down;
-    const caveat = '本币计价/时区错位/无成分股 breadth,与 SPX 高 beta 重叠;只作同步/确认,不作领先。';
+    const caveat = '本币计价/时区错位/无成分股广度(breadth),与标普500(SPX)高贝塔(beta)重叠;只作同步/确认,不作领先。';
     const usTempZh = usZ === null ? null : (usZ > 0.5 ? '偏热' : (usZ < -0.5 ? '偏冷' : '中性'));
     const usStr = usTempZh ? `美股${usTempZh}(z ${formatSigned(usZ)})` : '美股温度暂缺';
     if (n < 6) {
@@ -1092,7 +1092,7 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
     const cr = isPlainObject(md.consumerRetail) ? md.consumerRetail : {};
     const claims4w = finite(emp.initialClaims4wChange);
     const realRetail = finite(cr.cartsRealYoY);
-    const caveat = '周/月频滞后,只论持续性不论今日紧迫度;只用 ICSA+CARTS+Redbook,JOLTS/AHE/U6 季频不纳入。';
+    const caveat = '周/月频滞后,只论持续性不论今日紧迫度;只用初请失业金(ICSA)+零售销售(CARTS)+红皮书零售(Redbook),职位空缺(JOLTS)/平均时薪(AHE)/U-6 失业率(U-6)季频不纳入。';
     const dataUsed = ['employment.initialClaims4wChange', 'consumerRetail.cartsRealYoY', 'consumerRetail.redbookRetailSalesYoY'];
     if (claims4w === null && realRetail === null) {
       signals.push(coherenceSignal('main_vs_wall', '实体-市场错配', '背景', '滞后',
@@ -1127,7 +1127,7 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
     const pbdc = finite(pc.pbdcEtf4wChange);
     const hyOas = finite(baseline.hyOas ?? credit.hyOas);
     const proxyVals = [bdc, pbdc].filter((x) => x !== null);
-    const caveat = 'HY/IG 已计入主评分,只取公开 vs 代理背离;BDC/SRLN/CCLFX/CDX 是公开 ETF/净值/指数代理,无折价字段、非私募内部估值,不得写"隐藏私募裂缝已确认"。';
+    const caveat = '高收益债(HY)/投资级债(IG)已计入主评分,只取公开信用市场与代理资产的背离;商业发展公司(BDC)/优先贷款ETF(SRLN)/区间基金净值(CCLFX)/信用违约互换指数(CDX)是公开基金/净值/指数代理,无折价字段、非私募内部估值,不得写"隐藏私募裂缝已确认"。';
     const dataUsed = ['privateCreditProxy.bdcEtf4wChange', 'privateCreditProxy.pbdcEtf4wChange', 'hyOas', 'credit.igOas'];
     if (proxyVals.length === 0 || hyOas === null) {
       signals.push(coherenceSignal('public_credit_proxy', '公开信用代理', '背景', '领先/同步',
@@ -1140,16 +1140,16 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
       let verdict, reason;
       if (proxyWeak && creditCalm) {
         verdict = '背离';
-        reason = `公开 BDC/优先贷款 ETF 4 周走弱(均 ${formatSignedPercent(proxyAvg * 100, 1)})但 HY 利差仍平静(${formatNumber(hyOas, 2)}%),公开信用代理出现压力、利差尚未确认。`;
+        reason = `公开商业发展公司(BDC)/优先贷款ETF(SRLN)4 周走弱(均 ${formatSignedPercent(proxyAvg * 100, 1)})但高收益债利差(HY OAS)仍平静(${formatNumber(hyOas, 2)}%),公开信用代理出现压力、利差尚未确认。`;
       } else if (proxyWeak && hyOas > 5) {
         verdict = '印证';
-        reason = `公开信用代理(${formatSignedPercent(proxyAvg * 100, 1)})与 HY 利差(${formatNumber(hyOas, 2)}%)同向走弱,信用压力一致。`;
+        reason = `公开信用代理(${formatSignedPercent(proxyAvg * 100, 1)})与高收益债利差(HY OAS)(${formatNumber(hyOas, 2)}%)同向走弱,信用压力一致。`;
       } else if (proxyStable && creditCalm) {
         verdict = '印证';
-        reason = `公开信用代理平稳(${formatSignedPercent(proxyAvg * 100, 1)})且 HY 利差平静(${formatNumber(hyOas, 2)}%),信用面无背离。`;
+        reason = `公开信用代理平稳(${formatSignedPercent(proxyAvg * 100, 1)})且高收益债利差(HY OAS)平静(${formatNumber(hyOas, 2)}%),信用面无背离。`;
       } else {
         verdict = '背景';
-        reason = `公开信用代理 ${formatSignedPercent(proxyAvg * 100, 1)} / HY ${formatNumber(hyOas, 2)}%,无明确背离/确认。`;
+        reason = `公开信用代理 ${formatSignedPercent(proxyAvg * 100, 1)} / 高收益债利差(HY OAS) ${formatNumber(hyOas, 2)}%,无明确背离/确认。`;
       }
       signals.push(coherenceSignal('public_credit_proxy', '公开信用代理', verdict, '领先/同步', reason, dataUsed, caveat));
     }
@@ -1163,8 +1163,8 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
     const newUp = finite(prop.newCitiesUp);
     const newDown = finite(prop.newCitiesDown);
     const bits = [];
-    if (pmi !== null) bits.push(`PMI ${formatNumber(pmi, 1)}${pmi < 50 ? '(收缩)' : pmi > 50 ? '(扩张)' : '(临界)'}`);
-    if (ppi !== null) bits.push(`PPI ${formatSignedPercent(ppi * 100, 1)}`);
+    if (pmi !== null) bits.push(`采购经理指数(PMI) ${formatNumber(pmi, 1)}${pmi < 50 ? '(收缩)' : pmi > 50 ? '(扩张)' : '(临界)'}`);
+    if (ppi !== null) bits.push(`工业品出厂价格(PPI) ${formatSignedPercent(ppi * 100, 1)}`);
     if (newUp !== null && newDown !== null) bits.push(`70 城新房 ${newUp} 涨/${newDown} 跌`);
     let reason;
     if (bits.length) {
@@ -1176,9 +1176,9 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
     } else {
       reason = '中国宏观数据未刷新,作弱慢背景观察。';
     }
-    signals.push(coherenceSignal('china_em_background', '中国/EM 弱慢背景', '背景', '慢背景', reason,
+    signals.push(coherenceSignal('china_em_background', '中国/新兴市场(EM)弱慢背景', '背景', '慢背景', reason,
       ['chinaPropertyPrice.newCitiesUp/Down', 'chinaInflation.ppi.yoy', 'chinaPmi.pmi.value', 'cfetsRmb.cfets'],
-      '东方财富转载非官方原始;不用央行毛额做流动性脉冲;CFETS 受管理篮子≠资本外流;月频慢变量只作背景。'));
+      '东方财富(EastMoney)转载非官方原始;不用央行毛额做流动性脉冲;人民币篮子指数(CFETS)受管理篮子≠资本外流;月频慢变量只作背景。'));
   }
 
   // E6/E7 · 引用既有矩阵 narrative(不重建逻辑)
@@ -1201,8 +1201,8 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
     signals.push(coherenceSignal(id, perspectiveZh, verdict, timeRole, reason,
       [`matrix.${narrId}`], '与上方一致性矩阵同源,避免重复计数。'));
   };
-  refRow('overheat_confirmation', 'overheat_ref', '估值过热(已覆盖)', '同步', '过热确认 narrative');
-  refRow('energy_shock', 'energy_ref', '能源供给冲击(已覆盖)', '同步/滞后', '能源冲击 narrative');
+  refRow('overheat_confirmation', 'overheat_ref', '估值过热(已覆盖)', '同步', '过热确认');
+  refRow('energy_shock', 'energy_ref', '能源供给冲击(已覆盖)', '同步/滞后', '能源冲击');
 
   // summaryLine:prose,先点背离,无 N/M 数字、无 bar
   const diverge = signals.filter((s) => s.verdict === '背离').map((s) => s.perspectiveZh);
