@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=zh-term-standard-4';
+﻿import { formatFiniteNumber } from './format.js?v=ai-bubble-tab-label-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

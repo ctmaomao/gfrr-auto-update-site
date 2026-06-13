@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=zh-term-standard-4';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=zh-term-standard-4';
-import { MODULE_LABELS } from './decision.js?v=zh-term-standard-4';
+} from './config.js?v=ai-bubble-tab-label-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=ai-bubble-tab-label-1';
+import { MODULE_LABELS } from './decision.js?v=ai-bubble-tab-label-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

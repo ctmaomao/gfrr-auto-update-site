@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=zh-term-standard-4';
+﻿import { fmtNumSafe } from './config.js?v=ai-bubble-tab-label-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

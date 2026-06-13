@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=zh-term-standard-4';
-import { formatOnRrpYiUsd } from './format.js?v=zh-term-standard-4';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=ai-bubble-tab-label-1';
+import { formatOnRrpYiUsd } from './format.js?v=ai-bubble-tab-label-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',
