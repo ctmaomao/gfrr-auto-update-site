@@ -3548,75 +3548,75 @@
     "schemaVersion": "v28.0L-external-ai-production-analyst-1",
     "status": "valid",
     "displayEnabled": true,
-    "generatedAt": "2026-06-13T01:55:53.736Z",
-    "updatedAt": "2026-06-13T01:55:53.736Z",
+    "generatedAt": "2026-06-14T02:05:16.586Z",
+    "updatedAt": "2026-06-14T02:05:16.586Z",
     "sourceMode": "manual_analyst_compact_v1",
     "provider": "deepseek",
     "model": "deepseek-v4-flash",
     "inputSource": "analyst_compact_v1",
     "sourceSemantics": "site_structured_analyst_evidence_pack_v1",
-    "summaryZh": "站内结构化数据表明能源—通胀—利率链条仍是主要压力来源，布伦特现货与期货价差扩大提示实物紧张，但信用利差和波动率尚未扩张，显示压力尚未广泛传导。消费者信心持续走弱，与资产定价存在潜在背离。数据质量方面，中国MLF层为回退状态，需关注。整体证据强度中等，跨层一致性尚可，但缺乏外部独立验证，置信度受限。",
+    "summaryZh": "站内结构化数据表明，当前宏观主线为能源—通胀—利率传导，布伦特现货与期货价差压力显著，但信用利差和波动率尚未扩张，形成流动性偏紧与信用传导的背离。消费者信心持续走弱，但资产定价尚未充分反映。数据质量整体良好，但中国MLF为fallback状态，能源备用容量为预测值，需关注。跨层合成显示能源压力与信用平静并存，是当前最大不确定性。",
     "facts": [
-      "布伦特现货代理价97.46美元，期货代理价86.71美元，价差10.75美元，状态为压力。",
+      "布伦特现货代理97.46美元，期货代理87.33美元，价差10.13美元，处于压力状态。",
       "美国10年期收益率4.45%，广义美元指数120.08。",
       "高收益债信用利差2.78%，VIX 19.44。",
       "消费者信心指数49.8，前值53.3，三个月变化-6.6。",
-      "原油库存四周变化-26391千桶，馏分油库存较五年均值低13.5%。",
+      "ON RRP余额4.54亿美元，处于低位。",
+      "原油库存较5年均值低4.89%，柴油库存较5年均值低13.5%。",
       "世界秩序压力评分67，状态为多战区压力期。",
-      "中国MLF数据源状态为回退。",
-      "市场定价层最新指标日期为2026-06-05。"
+      "中国MLF数据源为fallback状态。"
     ],
     "inferences": [
-      "布伦特现货与期货价差扩大，结合原油库存下降和馏分油紧张，暗示实物市场偏紧，但期货价格下跌形成背离。",
-      "美元和长端利率高企，但信用利差和波动率未同步扩张，表明金融条件收紧尚未广泛传导至信用市场。",
-      "消费者信心持续下滑，与风险资产定价形成潜在背离，可能预示未来需求走弱。",
-      "世界秩序压力处于多战区状态，经济金融武器化维度评分最高，可能加剧供应链和能源风险。"
+      "布伦特现货与期货价差扩大，结合柴油库存极端紧张，暗示实物市场压力可能被期货价格低估。",
+      "流动性偏紧（美元高位、ON RRP低位）但信用利差和波动率未扩张，表明金融条件尚未全面收紧，存在传导时滞或阻断。",
+      "消费者信心持续下滑，但风险资产定价尚未明显承压，形成慢变量与快定价的潜在背离。",
+      "世界秩序多战区压力与能源供应链紧张叠加，可能加剧通胀传导的持续性。"
     ],
     "modelJudgments": [
-      "能源链条证据强度中等：布伦特价差和库存数据支持实物紧张，但期货价格下跌和低置信度的方向性压力标签削弱了确定性。",
-      "跨层一致性尚可：能源压力在dailyBrief、divergenceLayer和oilDirectionalPressure中均有体现，但信用和波动率层未确认压力扩散。",
-      "消费者信心数据为月频慢变量，存在发布延迟，不足以单独作为资产定价背离的强证据。",
-      "中国MLF层为回退状态，数据充分性不足，相关判断应保持低置信度。"
+      "能源压力证据充分（库存、价差、备用容量），但期货价格与现货背离降低方向判断置信度。",
+      "信用传导未扩张的证据强度中等，需更多时间窗口确认。",
+      "消费者信心数据为月频慢变量，时效性不足，仅作为观察条件。",
+      "中国MLF数据源为fallback，降低中国宏观维度证据充分性。"
     ],
     "scenarioHypotheses": [
       {
         "titleZh": "能源—利率—资产重新定价观察",
         "triggerConditions": [
-          "布伦特现货代理价差持续扩大且期货价格确认上行",
-          "美国10年期收益率突破4.5%且信用利差同步扩张",
-          "VIX突破25且高收益利差突破3.5%"
+          "布伦特现货代理价差持续扩大至15美元以上",
+          "美国10年期收益率突破4.6%",
+          "VIX突破22或高收益利差突破3.5%"
         ],
         "invalidationConditions": [
-          "布伦特价差收窄至5美元以下",
-          "美国10年期收益率回落至4.2%以下",
-          "消费者信心指数回升至55以上"
+          "布伦特现货代理价差收窄至5美元以下",
+          "美国10年期收益率回落至4.3%以下",
+          "VIX回落至18以下且高收益利差收窄至2.5%以下"
         ]
       },
       {
-        "titleZh": "消费者信心与资产定价背离收敛观察",
+        "titleZh": "消费者信心与资产定价收敛观察",
         "triggerConditions": [
           "消费者信心指数进一步跌破45",
           "零售销售数据连续两个月下滑",
-          "风险资产出现显著回调"
+          "风险资产（如QQQ）出现显著回调"
         ],
         "invalidationConditions": [
           "消费者信心指数回升至55以上",
-          "零售销售数据环比转正",
-          "风险资产价格继续上行且背离扩大"
+          "零售销售数据反弹",
+          "风险资产维持高位且波动率低位"
         ]
       }
     ],
     "dataGaps": [
-      "Platts Dated Brent或正式实物现货成交价未接入，无法验证现货代理价差的准确性。",
-      "布伦特期货期限结构数据未接入，无法评估远期曲线形态。",
-      "消费者信心数据为月频，发布延迟约两周，缺乏更高频的消费活动指标。",
-      "中国MLF层为回退状态，最新操作细节不可用。",
-      "市场定价层最新数据为2026-06-05，距今已有一周，时效性不足。"
+      "Platts Dated Brent 正式现货价格未接入。",
+      "Brent 期货期限结构完整曲线未接入。",
+      "中国MLF数据源为fallback，缺乏官方原始公告。",
+      "能源备用容量为预测值，非实际数据。",
+      "消费者信心数据更新频率低，时效性不足。"
     ],
     "invalidationSignals": [
-      "布伦特现货代理价差收窄至5美元以下且验证层不再提示压力。",
-      "美国10年期收益率回落至4.2%以下。",
-      "高收益利差回落至2.5%以下且VIX回落至18以下。",
+      "布伦特现货代理价差收窄至5美元以下。",
+      "美国10年期收益率回落至4.3%以下。",
+      "VIX回落至18以下且高收益利差收窄至2.5%以下。",
       "消费者信心指数回升至55以上。"
     ],
     "sourceAttribution": [
@@ -3645,6 +3645,12 @@
         "noteZh": "来自站内结构化数据"
       },
       {
+        "sourceLayer": "macroDrivers.fedLiquidity",
+        "field": "onRrp",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
         "sourceLayer": "oilDirectionalPressure",
         "field": "signals",
         "claimType": "site_structured_data",
@@ -3659,12 +3665,6 @@
       {
         "sourceLayer": "dataQuality",
         "field": "macroDrivers.chinaMlf",
-        "claimType": "site_structured_data",
-        "noteZh": "来自站内结构化数据"
-      },
-      {
-        "sourceLayer": "marketPricing",
-        "field": "latestMetricDate",
         "claimType": "site_structured_data",
         "noteZh": "来自站内结构化数据"
       },
@@ -3684,7 +3684,7 @@
     "confidence": {
       "level": "medium",
       "score": 35,
-      "reasonZh": "基于站内结构化数据的跨层证据包生成，未接入外部独立取数或新闻验证。能源链条证据强度中等，跨层一致性尚可，但存在数据缺口（如Platts Dated Brent、期限结构）和部分回退层（中国MLF），置信度受限。"
+      "reasonZh": "基于站内结构化数据的跨层证据包生成，未接入外部独立取数或新闻验证。能源压力证据充分，但信用传导和消费者信心维度存在时滞或数据源限制，降低整体置信度。"
     },
     "qualityReview": {
       "status": "pass",
@@ -3692,15 +3692,15 @@
       "promotionEligible": false,
       "failedDimensions": [],
       "warningDimensions": [],
-      "reviewedAt": "2026-06-13T01:55:53.736Z"
+      "reviewedAt": "2026-06-14T02:05:16.586Z"
     },
     "provenance": {
-      "runId": "27453152115",
-      "artifactName": "external-ai-production-refresh-27453152115",
-      "artifactId": "27453152115-1",
-      "artifactDigest": "08e9576e1ee501e31f39ff4061741b9a8a5b2df19deb764512985d534d509550",
-      "sourceCommit": "acf2a902edf9f70443278ebf8455b95db563bb3b",
-      "sourceDataUpdatedAt": "2026-06-12T23:59:13.765Z",
+      "runId": "27485458947",
+      "artifactName": "external-ai-production-refresh-27485458947",
+      "artifactId": "27485458947-1",
+      "artifactDigest": "f73308e33ecb84fd20378865e36f1af57a98f1b08108864ea68d3c7e8f659b95",
+      "sourceCommit": "ac0509f1254ae39daa02604d0c2c3fdd1777cc11",
+      "sourceDataUpdatedAt": "2026-06-13T23:39:53.215Z",
       "inputArtifactPath": "manual-artifacts/external-ai/deepseek-output-latest.json",
       "outputArtifactPath": "manual-artifacts/external-ai/external-ai-production-projection-latest.json",
       "qualityReviewArtifactPath": "manual-artifacts/external-ai/external-ai-quality-review-latest.json",
@@ -3708,7 +3708,7 @@
       "humanApproved": false
     },
     "freshness": {
-      "artifactGeneratedAt": "2026-06-13T01:55:53.736Z",
+      "artifactGeneratedAt": "2026-06-14T02:05:16.586Z",
       "sourceDataUpdatedAt": null,
       "maxAgeHours": 24,
       "isStale": false,
@@ -3736,92 +3736,97 @@
     ],
     "crossLayerSynthesis": [
       {
-        "theme": "能源实物紧张与期货价格背离",
-        "summaryZh": "布伦特现货代理与期货价差达10.75美元，原油库存下降，馏分油库存较五年均值低13.5%，但期货价格4周下跌8.15%，形成背离。",
+        "theme": "能源压力与信用传导背离",
+        "summaryZh": "布伦特现货期货价差扩大、柴油库存极端紧张，但信用利差和波动率未扩张，表明实物市场压力尚未传导至金融条件。",
         "supportingLayers": [
           "brentPricingLayer",
           "oilDirectionalPressure",
-          "dailyBrief"
+          "divergenceLayer"
         ],
         "conflictingLayers": [
+          "macroDrivers.credit",
           "marketPricing"
         ],
         "confidence": "medium"
       },
       {
-        "theme": "金融条件收紧尚未广泛传导",
-        "summaryZh": "美元指数和长端利率高企，但信用利差和波动率未同步扩张，显示压力尚未扩散至信用市场。",
+        "theme": "消费者信心走弱与资产定价脱节",
+        "summaryZh": "消费者信心指数持续下滑，但风险资产定价尚未明显承压，存在慢变量与快定价的潜在脱节。",
         "supportingLayers": [
-          "divergenceLayer",
-          "macroDrivers.curve",
-          "macroDrivers.credit"
+          "macroDrivers.consumer",
+          "dailyBrief"
         ],
         "conflictingLayers": [
-          "macroDrivers.fedLiquidity"
+          "marketPricing",
+          "transmissionChain"
         ],
-        "confidence": "medium"
+        "confidence": "low"
       }
     ],
     "keyDivergences": [
       {
-        "titleZh": "消费者信心与资产定价背离",
+        "titleZh": "布伦特现货期货价差与信用利差背离",
+        "evidenceFor": [
+          "brentPricingLayer.proxySpread",
+          "oilDirectionalPressure.signals.dieselProductStress"
+        ],
+        "evidenceAgainst": [
+          "macroDrivers.credit.igOas",
+          "divergenceLayer.checks.liquidity_vs_credit_transmission"
+        ],
+        "whyItMattersZh": "若实物压力最终传导至信用市场，可能导致金融条件急剧收紧。",
+        "invalidationConditions": [
+          "信用利差显著扩大至3.5%以上",
+          "VIX突破22"
+        ]
+      },
+      {
+        "titleZh": "消费者信心与风险资产定价背离",
         "evidenceFor": [
           "macroDrivers.consumer.umichSentiment",
           "dailyBrief.topRisks"
         ],
         "evidenceAgainst": [
-          "marketPricing.assets.qqq.latestMetricDate"
+          "marketPricing.assets.qqq",
+          "transmissionChain.assetImpacts"
         ],
-        "whyItMattersZh": "消费者信心持续走弱可能预示未来需求放缓，若风险资产继续上行则背离加深，需关注后续零售数据。",
+        "whyItMattersZh": "若消费者信心持续恶化，可能最终拖累企业盈利和风险资产。",
         "invalidationConditions": [
           "消费者信心回升至55以上",
-          "零售销售数据环比转正"
-        ]
-      },
-      {
-        "titleZh": "布伦特现货与期货价差背离",
-        "evidenceFor": [
-          "brentPricingLayer.proxySpread",
-          "oilDirectionalPressure.signals.inventoryDrawPressure"
-        ],
-        "evidenceAgainst": [
-          "oilDirectionalPressure.signals.priceContext.brentChangePct4w"
-        ],
-        "whyItMattersZh": "现货紧张而期货下跌可能反映市场对远期需求悲观，若价差持续扩大则实物紧张信号更强。",
-        "invalidationConditions": [
-          "价差收窄至5美元以下",
-          "期货价格确认上行"
+          "风险资产出现显著回调"
         ]
       }
     ],
     "scenarioLean": {
-      "leanZh": "能源—利率链条压力持续，但信用市场尚未确认广泛传导，整体偏向观察而非方向性判断。",
+      "leanZh": "当前偏向能源压力持续但信用传导受阻的观察情景，需关注价差和信用利差是否收敛。",
       "scenarioRefs": [
         "基准情景",
         "风险情景"
       ],
       "triggerConditions": [
-        "布伦特现货代理价差持续扩大",
-        "美国10年期收益率突破4.5%",
-        "信用利差和波动率同步扩张"
+        "布伦特现货期货价差持续扩大",
+        "美国10年期收益率上行",
+        "高收益利差突破3.5%"
       ],
       "invalidationConditions": [
-        "布伦特价差收窄至5美元以下",
-        "美国10年期收益率回落至4.2%以下",
-        "消费者信心回升至55以上"
+        "布伦特现货期货价差收窄至5美元以下",
+        "美国10年期收益率回落",
+        "高收益利差收窄至2.5%以下"
       ],
       "confidence": "medium"
     },
     "dataQualityLens": {
-      "summaryZh": "大部分数据层状态正常，但中国MLF为回退状态，市场定价层数据距今一周，时效性不足。",
+      "summaryZh": "数据质量整体良好，但中国MLF为fallback状态，能源备用容量为预测值，消费者信心为月频数据。",
       "staleLayers": [
-        "marketPricing"
+        "macroDrivers.consumer"
       ],
       "fallbackLayers": [
         "macroDrivers.chinaMlf"
       ],
-      "missingLayers": [],
-      "confidenceImpactZh": "中国MLF回退和市场定价层时效性不足降低了相关判断的置信度。"
+      "missingLayers": [
+        "brentPricingLayer"
+      ],
+      "confidenceImpactZh": "中国MLF fallback和消费者信心时效性不足，降低中国和消费维度的置信度。"
     }
   },
   "historyWindowFields": {
