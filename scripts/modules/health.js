@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=mobile-trend-width-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=mobile-trend-width-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=trend-visual-match-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=trend-visual-match-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

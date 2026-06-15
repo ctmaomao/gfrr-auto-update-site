@@ -179,44 +179,44 @@
     .threshold-bar .zone-pct { font-size: 9px; }
   }
 
-  .trend-block { border-top: 1px solid var(--paper-line); padding-top: 18px; }
-  .trend-block-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; flex-wrap: wrap; gap: 8px 18px; }
-  .trend-block-header h4 { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin: 0; }
-  .trend-block-header h4 em { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 0.78em; }
-  .trend-legend { font-family: var(--font-mono); font-size: 11px; color: var(--paper-muted); display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .trend-block { border-top: 1px solid var(--paper-ink); border-bottom: 1px solid var(--paper-ink); padding: 24px 0; }
+  .trend-block-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; flex-wrap: wrap; gap: 8px 18px; }
+  .trend-block-header h4 { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin: 0; }
+  .trend-block-header h4 em { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 0.7em; }
+  .trend-legend { font-family: var(--font-mono); font-size: 11px; color: var(--paper-muted); display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
   .trend-legend .score-key { color: var(--risk-red); }
-  .trend-legend .overlay-key { color: var(--risk-orange); }
-  .trend-svg-wrap { height: 240px; overflow-x: auto; background: var(--paper-bg-canvas); }
-  .trend-svg-wrap svg { width: 100%; min-width: 760px; height: 100%; display: block; }
-  .trend-canvas { fill: var(--paper-bg-canvas); }
+  .trend-legend .overlay-key { color: var(--risk-yellow); }
+  .trend-svg-wrap { height: 220px; overflow: hidden; background: transparent; }
+  .trend-svg-wrap svg { width: 100%; min-width: 0; height: 100%; display: block; }
+  .trend-canvas { fill: transparent; }
   .trend-axis,
   .trend-grid-line,
   .trend-threshold,
   .trend-line,
   .trend-dot { vector-effect: non-scaling-stroke; }
-  .trend-axis { stroke: var(--paper-line); stroke-width: 1; }
-  .trend-grid-line { stroke: var(--paper-line); stroke-width: 1; opacity: 0.45; }
-  .trend-threshold { stroke-width: 1; stroke-dasharray: 4 4; opacity: 0.58; }
+  .trend-axis { stroke: transparent; stroke-width: 1; }
+  .trend-grid-line { stroke: var(--paper-line); stroke-width: 1; opacity: 0.31; }
+  .trend-threshold { stroke-width: 1; stroke-dasharray: 4 4; opacity: 0.46; }
   .trend-threshold.threshold-25 { stroke: var(--risk-green); }
   .trend-threshold.threshold-40 { stroke: var(--risk-yellow); }
   .trend-threshold.threshold-60,
   .trend-threshold.threshold-80 { stroke: var(--risk-red); }
   .trend-axis-label,
-  .trend-threshold-label,
-  .trend-x-label { font-family: var(--font-mono); font-size: 10px; fill: var(--paper-muted); }
+  .trend-x-label { font-family: var(--font-mono); font-size: 11px; fill: var(--paper-ink); }
+  .trend-threshold-label { display: none; font-family: var(--font-mono); font-size: 11px; fill: var(--paper-muted); }
   .trend-threshold-label.threshold-25 { fill: var(--risk-green); }
   .trend-threshold-label.threshold-40 { fill: var(--risk-yellow); }
   .trend-threshold-label.threshold-60,
   .trend-threshold-label.threshold-80 { fill: var(--risk-red); }
   .trend-x-label.is-now { fill: var(--paper-ink); font-weight: 700; }
   .trend-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-  .trend-line-score { stroke: var(--risk-red); stroke-width: 2.6; }
-  .trend-line-overlay { stroke: var(--risk-orange); stroke-width: 2; stroke-dasharray: 5 4; }
+  .trend-line-score { stroke: var(--risk-red); stroke-width: 2.5; }
+  .trend-line-overlay { stroke: var(--risk-yellow); stroke-width: 1.5; stroke-dasharray: 3 3; }
   .trend-line-overlay.is-partial { opacity: 0.86; }
   .trend-line-overlay.is-fallback { opacity: 0.58; }
-  .trend-dot { stroke: var(--paper-ink); }
-  .trend-dot-score { fill: var(--risk-red); stroke-width: 1.4; }
-  .trend-dot-overlay { fill: var(--risk-orange); stroke-width: 1.1; }
+  .trend-dot { stroke: none; }
+  .trend-dot-score { fill: var(--risk-red); }
+  .trend-dot-overlay { fill: var(--risk-yellow); }
 
   .consistency-block { border-top: 1px solid var(--paper-line); padding-top: 16px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
   .consistency-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--paper-muted); text-transform: uppercase; }
@@ -467,13 +467,13 @@
        约束列到容器宽 + 子块允许收缩,首屏与所有 shell 子块都回到视口内。*/
     .macro-overview-shell { grid-template-columns: minmax(0, 1fr); }
     .macro-overview-shell > * { min-width: 0; }
-    /* 主页 8 周趋势图:桌面保留 760px 横向画布;手机对齐 AI 泡沫页趋势图,
-       直接按屏幕内容宽度绘制,并抽稀日期标签避免尾部重叠。*/
+    /* 主页 8 周趋势图:对齐 AI 泡沫页趋势图的屏幕宽度,并抽稀日期标签避免尾部重叠。*/
     .trend-svg-wrap { overflow-x: hidden; }
     .trend-svg-wrap svg { min-width: 0; width: 100%; }
     .trend-x-label { display: none; }
     .trend-x-label:nth-child(2n + 1),
     .trend-x-label.is-now { display: inline; }
+    .trend-x-label:nth-child(7) { display: none; }
     /* 首屏大数字:80px 下限会把黑框撑宽;收小使「分数/100」适配窄屏
        (PC 仍 clamp(80px,12vw,128px))*/
     .big-left .value { font-size: clamp(44px, 13vw, 72px); }

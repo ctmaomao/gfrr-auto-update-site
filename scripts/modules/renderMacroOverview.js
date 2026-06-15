@@ -8,10 +8,10 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=mobile-trend-width-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=mobile-trend-width-1';
-import { MODULE_LABELS } from './decision.js?v=mobile-trend-width-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=mobile-trend-width-1';
+} from './config.js?v=trend-visual-match-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=trend-visual-match-1';
+import { MODULE_LABELS } from './decision.js?v=trend-visual-match-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=trend-visual-match-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -453,18 +453,106 @@ function renderWowSection({ radarData, worldOrderStressData }) {
 // ---------- Stage 4b-2 shared helpers ----------
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const TREND_CHART = {
-  plotLeft: 52,
-  plotRight: 736,
-  plotTop: 20,
-  plotBottom: 204,
-  yMin: 0,
-  yMax: 100
-};
-const TREND_X = Array.from({ length: 8 }, (_, index) => (
-  TREND_CHART.plotLeft
-  + ((TREND_CHART.plotRight - TREND_CHART.plotLeft) * index) / 7
-));
+const TREND_POINT_COUNT = 8;
+const TREND_CHART_HEIGHT = 220;
+let TREND_CHART = buildTrendChart(800);
+let TREND_X = buildTrendX(TREND_CHART);
+
+function buildTrendChart(width) {
+  const safeWidth = Math.max(320, Math.round(asNumber(width) || 800));
+  return {
+    width: safeWidth,
+    height: TREND_CHART_HEIGHT,
+    plotLeft: 44,
+    plotRight: safeWidth - 14,
+    plotTop: 10,
+    plotBottom: 194,
+    yMin: 0,
+    yMax: 100
+  };
+}
+
+function buildTrendX(chart) {
+  return Array.from({ length: TREND_POINT_COUNT }, (_, index) => (
+    chart.plotLeft
+    + ((chart.plotRight - chart.plotLeft) * index) / (TREND_POINT_COUNT - 1)
+  ));
+}
+
+function trendLayoutWidth() {
+  const wrap = document.querySelector('.trend-svg-wrap');
+  return wrap?.clientWidth || 800;
+}
+
+function syncTrendFrame(chart) {
+  const svg = document.querySelector('.trend-svg-wrap svg');
+  if (!svg) return;
+  svg.setAttribute('viewBox', `0 0 ${chart.width} ${chart.height}`);
+  svg.setAttribute('height', String(chart.height));
+
+  const canvas = svg.querySelector('.trend-canvas');
+  if (canvas) {
+    canvas.setAttribute('width', String(chart.width));
+    canvas.setAttribute('height', String(chart.height));
+  }
+
+  const yFor = (value) => {
+    const ratio = (clamp(value, chart.yMin, chart.yMax) - chart.yMin) / (chart.yMax - chart.yMin);
+    return chart.plotBottom - ratio * (chart.plotBottom - chart.plotTop);
+  };
+
+  const gridValues = [100, 80, 60, 40, 20, 0];
+  svg.querySelectorAll('.trend-grid-line').forEach((line, index) => {
+    const y = yFor(gridValues[index] ?? 0);
+    line.setAttribute('x1', String(chart.plotLeft));
+    line.setAttribute('x2', String(chart.plotRight));
+    line.setAttribute('y1', Number(y.toFixed(2)).toString());
+    line.setAttribute('y2', Number(y.toFixed(2)).toString());
+  });
+
+  for (const value of [25, 40, 60, 80]) {
+    const y = yFor(value);
+    const line = svg.querySelector(`.trend-threshold.threshold-${value}`);
+    if (line) {
+      line.setAttribute('x1', String(chart.plotLeft));
+      line.setAttribute('x2', String(chart.plotRight));
+      line.setAttribute('y1', Number(y.toFixed(2)).toString());
+      line.setAttribute('y2', Number(y.toFixed(2)).toString());
+    }
+    const label = svg.querySelector(`.trend-threshold-label.threshold-${value}`);
+    if (label) {
+      label.setAttribute('x', Number((chart.plotRight + 12).toFixed(2)).toString());
+      label.setAttribute('y', Number((y + 3).toFixed(2)).toString());
+    }
+  }
+
+  const axes = svg.querySelectorAll('.trend-axis');
+  if (axes[0]) {
+    axes[0].setAttribute('x1', String(chart.plotLeft));
+    axes[0].setAttribute('x2', String(chart.plotLeft));
+    axes[0].setAttribute('y1', String(chart.plotTop));
+    axes[0].setAttribute('y2', String(chart.plotBottom));
+  }
+  if (axes[1]) {
+    axes[1].setAttribute('x1', String(chart.plotLeft));
+    axes[1].setAttribute('x2', String(chart.plotRight));
+    axes[1].setAttribute('y1', String(chart.plotBottom));
+    axes[1].setAttribute('y2', String(chart.plotBottom));
+  }
+
+  svg.querySelectorAll('.trend-axis-label').forEach((label, index) => {
+    const value = gridValues[index] ?? 0;
+    const y = yFor(value);
+    label.setAttribute('x', String(chart.plotLeft - 8));
+    label.setAttribute('y', Number((y + 4).toFixed(2)).toString());
+  });
+}
+
+function prepareTrendLayout() {
+  TREND_CHART = buildTrendChart(trendLayoutWidth());
+  TREND_X = buildTrendX(TREND_CHART);
+  syncTrendFrame(TREND_CHART);
+}
 
 function signedFixedWithZero(value, digits = 1) {
   const n = asNumber(value);
@@ -540,6 +628,7 @@ function updateTrendXAxisLabels(weekly) {
     if (!label) return;
     label.textContent = formatTrendDateLabel(item?.date, index === weekly.length - 1 ? 'NOW' : `W-${weekly.length - 1 - index}`);
     label.setAttribute('x', Number(TREND_X[index].toFixed(2)).toString());
+    label.setAttribute('text-anchor', index === weekly.length - 1 ? 'end' : 'middle');
     label.classList.toggle('is-now', index === weekly.length - 1);
   });
 }
@@ -571,7 +660,7 @@ function renderTrendDots(groupId, points, className, radius, lastId) {
     circle.setAttribute('class', `trend-dot ${className}`);
     circle.setAttribute('cx', Number(point.x.toFixed(2)).toString());
     circle.setAttribute('cy', Number(point.y.toFixed(2)).toString());
-    circle.setAttribute('r', String(index === validPoints.length - 1 ? radius + 0.8 : radius));
+    circle.setAttribute('r', String(radius));
     if (index === validPoints.length - 1 && lastId) {
       circle.setAttribute('id', lastId);
     }
@@ -901,8 +990,25 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
 
 // ---------- Block 4: Trend SVG ----------
 
+let lastTrendSvgArgs = null;
+let trendResizeBound = false;
+let trendResizeTimer = null;
+
+function bindTrendResizeHandler() {
+  if (trendResizeBound || typeof window === 'undefined') return;
+  trendResizeBound = true;
+  window.addEventListener('resize', () => {
+    if (!lastTrendSvgArgs) return;
+    window.clearTimeout(trendResizeTimer);
+    trendResizeTimer = window.setTimeout(() => renderTrendSvg(lastTrendSvgArgs), 120);
+  });
+}
+
 function renderTrendSvg({ radarData, radarHistoryData, worldOrderStressData }) {
   try {
+    lastTrendSvgArgs = { radarData, radarHistoryData, worldOrderStressData };
+    bindTrendResizeHandler();
+    prepareTrendLayout();
     const weekly = mergeCurrentTrendSnapshot(
       pickEightWeeklyPoints(radarHistoryData),
       radarData,
@@ -917,7 +1023,7 @@ function renderTrendSvg({ radarData, radarHistoryData, worldOrderStressData }) {
       scoreLine.setAttribute('points', pointsToAttribute(scorePoints));
       scoreLine.setAttribute('aria-label', `Risk score trend ${weekly.map((item) => `${item.date}:${Math.round(item.score)}`).join(', ')}`);
     }
-    renderTrendDots('trend-dots-score', scorePoints, 'trend-dot-score', 4.2, 'trend-dot-score');
+    renderTrendDots('trend-dots-score', scorePoints, 'trend-dot-score', 4, 'trend-dot-score');
 
     const overlayScore = asNumber(worldOrderStressData?.score);
     if (overlayScore === null) return;
@@ -931,7 +1037,7 @@ function renderTrendSvg({ radarData, radarHistoryData, worldOrderStressData }) {
       overlayLine.classList.toggle('is-partial', overlayTrend.mode === 'partial-history');
       overlayLine.classList.toggle('is-fallback', overlayTrend.mode === 'fallback');
     }
-    renderTrendDots('trend-dots-overlay', overlayTrend.dotPoints || overlayTrend.points, 'trend-dot-overlay', 3.7, 'trend-dot-overlay');
+    renderTrendDots('trend-dots-overlay', overlayTrend.dotPoints || overlayTrend.points, 'trend-dot-overlay', 3, 'trend-dot-overlay');
     renderOverlayTrendStatus({
       mode: overlayTrend.mode,
       radarData,

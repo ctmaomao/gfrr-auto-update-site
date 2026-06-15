@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=mobile-trend-width-1';
+﻿import { fmtNumSafe } from './config.js?v=trend-visual-match-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
