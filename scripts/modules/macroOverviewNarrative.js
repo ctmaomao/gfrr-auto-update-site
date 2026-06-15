@@ -396,6 +396,16 @@ export function buildMacroOverviewNarrativePlan(inputs = {}) {
   };
 }
 
+export function buildMacroOverviewHeadline(inputs = {}) {
+  const pack = buildMacroOverviewEvidencePack(inputs);
+  const rawBand = pack.scorecard.bandZh || '数据待确认';
+  const worldOrderScore = finite(pack.worldOrder.score);
+  if ((rawBand === '观察期' || rawBand === '中度警戒') && worldOrderScore !== null && worldOrderScore >= 65) {
+    return '高风险预警';
+  }
+  return rawBand === '数据待确认' ? '判读待确认' : rawBand;
+}
+
 export function buildMacroOverviewVerdictBodyFromPlan(plan) {
   const sections = Array.isArray(plan?.sections) ? plan.sections : [];
   const detailed = sections.map((section) => section.summaryZh).filter(Boolean).join('');

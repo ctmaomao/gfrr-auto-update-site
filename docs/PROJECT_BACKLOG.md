@@ -9,7 +9,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 项 | 当前值 |
 |---|---|
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分);**第二页面 AI 泡沫监测(`bubble-watch.html` + 周一 cron 数据管线,ADR-0016,display-only)live,与主页书签互切**|
-| Cache version | `macro-narrative-odp-1` |
+| Cache version | `macro-verdict-card-1` |
 | check:all 项数 | 18 顶层项 / ~64 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 9 leaf + `check:frontend-zh-copy` + `check:bubble-watch` 6 leaf)|
 | 最后审计日期 | 2026-06-05(全站 `.md` doc-slim 审计 Batch 1a→5余项,docs-only;两大 scope-of-record 簇 External AI / Market Pricing 收口 + 三 Operating Document changelog tail 折叠,详见 Section 5 + Session Handoff)。上次系统审计 2026-06-02(Codex 只读审计 7 findings 全收口,详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
@@ -305,9 +305,9 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于(2026-06-15 · Macro Overview narrative v1 + ODP)**: 首页 Macro Risk Overview 已迁移到 `macro-overview-narrative-v1` 本地叙事计划:新增 `scripts/modules/macroOverviewNarrative.js`,从 `radar-data.json` / `world-order-stress.json` / `market-pricing-metrics.json` / `oil-directional-pressure.json` 生成 evidence pack -> 5 段 narrative plan -> Hero verdict body。当前真实数据输出约 684 字符 / 1547 UTF-8 bytes,由 `check:macro-overview-narrative` 锁定 900-2200 bytes、5 sections、12+ evidence highlights。ODP 作为油价方向核心证据只读接入,不进入 scoring / decision / cross-validation / Heatmap。
-- **当前进行中(2026-06-15 · Macro Overview narrative v1 + ODP)**: 无。范围为前端 render/app/module/check/package/docs + asset bump `macro-narrative-odp-1`;未改 production data、Worker runtime、workflow 或 scoring/decision 逻辑。
-- **下一步建议(2026-06-15 · Macro Overview narrative v1 + ODP)**: 若 owner 确认页面效果,可按窄范围提交/推送。已验证:`git diff --check`、`npm run check:docs`、`npm run check:all` 全绿;本地浏览器 desktop + 390px 检查显示 Hero 判读含 ODP/油价方向段、console 无 error/warn、页面横向溢出 0。
+- **上次会话结束于(2026-06-15 · Macro Overview verdict headline/card alignment)**: 首页 Macro Risk Overview 在 `macro-overview-narrative-v1` 上补齐短 verdict headline:Hero 大标题改由 `buildMacroOverviewHeadline()` 从原始分数 + World Order 升档派生,当前真实数据输出「高风险预警」;`dailyBrief.oneLineConclusion` 的“今日主线/最大背离”长句只保留在正文/footer 层级。黑色 score card 增加 `.big-left-score` 居中块,desktop 与 390px 浏览器验证 score block 相对黑框中心偏移约 9px。
+- **当前进行中(2026-06-15 · Macro Overview verdict headline/card alignment)**: 无。范围为前端 HTML/CSS/render/module/check/docs + asset bump `macro-verdict-card-1`;未改 production data、Worker runtime、workflow 或 scoring/decision 逻辑。冻结 `scripts/modules/realtime.js` 在 bump 后已恢复为无 diff。
+- **下一步建议(2026-06-15 · Macro Overview verdict headline/card alignment)**: 若 owner 确认页面效果,可按窄范围提交/推送。已验证:`git diff --check`、`npm run check:docs`、`npm run check:frontend-live-contracts`、`npm run check:frontend-zh-copy`、`npm run check:macro-overview-narrative`、`npm run check:all`;本地浏览器 desktop + 390px 检查显示 headline =「高风险预警」、score block 相对黑框中心偏移约 9px、console 无 error/warn、横向溢出 0 级别。
 - **阻塞或等待(2026-06-15 · Macro Overview narrative v1 + ODP)**: 无技术阻塞。注意 `scripts/modules/realtime.js` 保持冻结旧 module graph,asset bump 后已恢复为无 diff。
 
 ---

@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import {
   MACRO_OVERVIEW_NARRATIVE_BYTE_BUDGET,
   MACRO_OVERVIEW_NARRATIVE_VERSION,
+  buildMacroOverviewHeadline,
   buildMacroOverviewNarrativePlan,
   buildMacroOverviewVerdictBodyFromPlan,
 } from './modules/macroOverviewNarrative.js';
@@ -51,6 +52,17 @@ function assertNoEngineeringText(text) {
   assert(snake.length === 0, `verdict body must not expose snake_case terms: ${snake.join(', ')}`);
 }
 
+function assertConciseHeadline(headline) {
+  const bytes = byteLength(headline);
+  assert(bytes >= 6 && bytes <= 36, `hero headline must stay concise: ${bytes} bytes`);
+  assert(!headline.includes('今日主线'), 'hero headline must not reuse dailyBrief oneLineConclusion');
+  assert(!headline.includes('最大背离'), 'hero headline must not carry divergence detail');
+  assert(!headline.includes('→'), 'hero headline must not carry risk-chain arrows');
+  assert(!headline.includes('；'), 'hero headline must not be a compound sentence');
+  const allowed = new Set(['系统性顶部', '高风险预警', '中度警戒', '观察期', '判读待确认']);
+  assert(allowed.has(headline), `hero headline must be a short verdict label, got '${headline}'`);
+}
+
 function assertBoundaryIsolation() {
   const sourceFiles = [
     'scripts/run-daily-pipeline.mjs',
@@ -82,6 +94,12 @@ function main() {
     marketPricingMetricsData,
     oilDirectionalData,
   });
+  const headline = buildMacroOverviewHeadline({
+    radarData,
+    worldOrderStressData,
+    marketPricingMetricsData,
+    oilDirectionalData,
+  });
   const verdict = buildMacroOverviewVerdictBodyFromPlan(plan);
   const verdictBytes = byteLength(verdict);
 
@@ -98,6 +116,7 @@ function main() {
 
   assert(verdictBytes >= MACRO_OVERVIEW_NARRATIVE_BYTE_BUDGET.min, `verdict body too short: ${verdictBytes} bytes`);
   assert(verdictBytes <= MACRO_OVERVIEW_NARRATIVE_BYTE_BUDGET.max, `verdict body too long: ${verdictBytes} bytes`);
+  assertConciseHeadline(headline);
   assert(Array.isArray(plan.sections) && plan.sections.length >= 5, 'narrative plan must contain at least 5 sections');
   assert(Array.isArray(plan.evidenceHighlights) && plan.evidenceHighlights.length >= 12, 'narrative plan must carry at least 12 evidence highlights');
 
@@ -119,7 +138,8 @@ function main() {
 
   const renderer = readText('scripts/modules/renderMacroOverview.js');
   const app = readText('scripts/app.js');
-  assert(renderer.includes("import { buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js"), 'renderMacroOverview must import macroOverviewNarrative');
+  assert(renderer.includes("import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js"), 'renderMacroOverview must import macro overview headline/body builders');
+  assert(!renderer.includes('h2El.textContent = radarData.dailyBrief.oneLineConclusion'), 'hero headline must not directly render dailyBrief.oneLineConclusion');
   assert(renderer.includes('oilDirectionalData'), 'renderMacroOverview must accept/pass oilDirectionalData');
   assert(app.includes('renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData })'), 'app.js must pass oilDirectionalData into Macro Overview');
 

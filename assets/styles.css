@@ -51,11 +51,12 @@
 
   .editorial-big-number { padding: 0; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 32px; align-items: stretch; min-height: 240px; }
   @media (max-width: 720px) { .editorial-big-number { grid-template-columns: 1fr; } }
-  .big-left { background: var(--paper-ink); color: var(--paper-bg); padding: 32px; display: flex; flex-direction: column; justify-content: space-between; }
+  .big-left { background: var(--paper-ink); color: var(--paper-bg); padding: 32px; display: flex; flex-direction: column; justify-content: flex-start; min-height: 100%; }
   /* Hero 排版对齐 Bubble Watch 原版:大数字 14vw/144(同 DESIGN.md §5.3 契约,
      此前 CSS 漂移为 12vw/128)、判读标题用 display 字体、正文 17px/1.7 暖墨 */
   .big-left .label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; opacity: 0.6; }
-  .big-left .value { font-family: var(--font-display); font-size: clamp(80px, 14vw, 144px); font-weight: 900; line-height: 0.9; letter-spacing: -0.04em; }
+  .big-left-score { margin: auto 0; }
+  .big-left .value { font-family: var(--font-display); font-size: clamp(80px, 14vw, 144px); font-weight: 900; line-height: 0.9; letter-spacing: 0; }
   .big-left .value sup { font-size: 0.4em; vertical-align: super; opacity: 0.7; }
   .big-left .breakdown { font-family: var(--font-mono); font-size: 12px; margin-top: 12px; opacity: 0.7; line-height: 1.6; }
   .big-right { display: flex; flex-direction: column; justify-content: center; }

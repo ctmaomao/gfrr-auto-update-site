@@ -8,10 +8,10 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=macro-narrative-odp-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=macro-narrative-odp-1';
-import { MODULE_LABELS } from './decision.js?v=macro-narrative-odp-1';
-import { buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=macro-narrative-odp-1';
+} from './config.js?v=macro-verdict-card-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=macro-verdict-card-1';
+import { MODULE_LABELS } from './decision.js?v=macro-verdict-card-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=macro-verdict-card-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -131,10 +131,16 @@ function renderHero({ radarData, worldOrderStressData, marketPricingMetricsData,
       kickerEl.textContent = `THIS ISSUE · ${radarData.dailyBrief.macroState}`;
     }
 
-    // big-right h2 — oneLineConclusion
+    // big-right h2 — concise verdict label; long risk chain stays in the body/footer.
     const h2El = $('hero-verdict-headline');
-    if (h2El && radarData.dailyBrief?.oneLineConclusion) {
-      h2El.textContent = radarData.dailyBrief.oneLineConclusion;
+    if (h2El) {
+      const headline = buildMacroOverviewHeadline({
+        radarData,
+        worldOrderStressData,
+        marketPricingMetricsData,
+        oilDirectionalData,
+      });
+      if (headline) h2El.textContent = headline;
     }
 
     // big-right p — verdict body(Bubble Watch 改版:接活数据,每期自动派生)
