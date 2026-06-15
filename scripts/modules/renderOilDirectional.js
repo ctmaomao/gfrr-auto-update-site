@@ -96,7 +96,10 @@ const ENERGY_TEXT_IDS = [
   'odp-energy-spare-note',
   'odp-energy-transport-status',
   'odp-energy-transport-date',
+  'odp-energy-transport-coverage',
+  'odp-energy-transport-hormuz',
   'odp-energy-transport-rerouting',
+  'odp-energy-transport-ais-caveat',
   'odp-energy-transport-note',
   'odp-energy-source-boundary',
 ];
@@ -107,6 +110,16 @@ const CORE_CHOKEPOINTS = [
   ['hormuz', '霍尔木兹'],
   ['capeGoodHope', '好望角'],
   ['gibraltar', '直布罗陀'],
+];
+const COVERAGE_CHOKEPOINT_KEYS = [
+  'suez',
+  'panama',
+  'bosporus',
+  'babElMandeb',
+  'malacca',
+  'hormuz',
+  'capeGoodHope',
+  'gibraltar',
 ];
 const CORE_WPSR_KEYS = [
   'crudeStocksExSpr',
@@ -418,13 +431,37 @@ function renderTransportCore(transport) {
   });
   host.replaceChildren(...rows);
 }
+function transportCoverageText(transport) {
+  const chokepoints = transport && transport.chokepoints ? transport.chokepoints : {};
+  const liveCount = COVERAGE_CHOKEPOINT_KEYS.filter((id) => chokepoints[id]?.sourceStatus === 'live').length;
+  const label = liveCount === COVERAGE_CHOKEPOINT_KEYS.length ? '核心咽喉完整' : '核心咽喉不完整';
+  return `${liveCount}/${COVERAGE_CHOKEPOINT_KEYS.length} live · ${label}`;
+}
+function hormuzTransportText(transport) {
+  const hormuz = transport?.chokepoints?.hormuz;
+  if (!hormuz || typeof hormuz !== 'object') return '窗口不足';
+  const latest = hormuz.latest || {};
+  const tanker = Number.isFinite(latest.nTanker) ? `${latest.nTanker} 艘油轮` : '油轮 —';
+  const countDev = Number.isFinite(hormuz.latestVs30dPct) ? `数量 ${ratioPct(hormuz.latestVs30dPct)}` : '数量 —';
+  const capacityDev = Number.isFinite(hormuz.capacityTankerVs30dPct) ? `运力 ${ratioPct(hormuz.capacityTankerVs30dPct)}` : '运力 —';
+  return `${tanker} · ${countDev} / ${capacityDev}`;
+}
+function aisCaveatText(transport) {
+  if (!transport || typeof transport !== 'object') return '源暂不可用';
+  const terms = transport.usageTermsPinned === 'imf_data_terms_pinned' ? 'IMF 条款已固定' : '条款状态待核';
+  const caveat = transport.redistributionCaveat === true ? '上游限制保留' : '上游限制待核';
+  return `${terms} · ${caveat} · 非暗航行确认`;
+}
 function renderEnergyTransport(transport) {
   const status = transport && transport.sourceStatus ? transport.sourceStatus.chokepoints : null;
   setLeafText('odp-energy-transport-status', statusZh(status));
 
   if (!transport || typeof transport !== 'object' || status === 'missing') {
     setLeafText('odp-energy-transport-date', '—');
+    setLeafText('odp-energy-transport-coverage', '源暂不可用');
+    setLeafText('odp-energy-transport-hormuz', '源暂不可用');
     setLeafText('odp-energy-transport-rerouting', '源暂不可用');
+    setLeafText('odp-energy-transport-ais-caveat', '源暂不可用');
     setLeafText('odp-energy-transport-note', '咽喉转运补充层暂不可用;本区只显示 Daily 已生成的 compact 派生摘要,不读取浏览器外部源。');
     renderTransportCore(null);
     return;
@@ -435,8 +472,11 @@ function renderEnergyTransport(transport) {
   const redSea = Number.isFinite(rerouting.suezBabTankerVs30dPct) ? `苏伊士/曼德 ${ratioPct(rerouting.suezBabTankerVs30dPct)}` : '苏伊士/曼德 —';
   const cape = Number.isFinite(rerouting.capeTankerVs30dPct) ? `好望角 ${ratioPct(rerouting.capeTankerVs30dPct)}` : '好望角 —';
   setLeafText('odp-energy-transport-date', `${transport.latestDate || '—'}${age}`);
+  setLeafText('odp-energy-transport-coverage', transportCoverageText(transport));
+  setLeafText('odp-energy-transport-hormuz', hormuzTransportText(transport));
   setLeafText('odp-energy-transport-rerouting', `${reroutingZh(rerouting.redSeaToCapeRegime)} · ${redSea} / ${cape}`);
-  setLeafText('odp-energy-transport-note', 'PortWatch 基于 AIS 卫星船舶数据的咽喉代理;船舶计数与运力为观测代理,可能受 GPS 干扰、AIS 信号伪造、船舶关闭 AIS、绕行或数据延迟影响;不是官方贸易统计,不估算军事或价格结果。');
+  setLeafText('odp-energy-transport-ais-caveat', aisCaveatText(transport));
+  setLeafText('odp-energy-transport-note', 'PortWatch 是 AIS 派生咽喉代理,可帮助观察霍尔木兹、苏伊士/曼德与好望角偏离;但本站未接 Kpler 或船舶级暗航行源,不能确认油轮关 AIS、科威特库存变化、封锁或真实油轮流量。');
   renderTransportCore(transport);
 }
 function renderEnergyAddendum(radarData, worldOrderStressData, oilData) {

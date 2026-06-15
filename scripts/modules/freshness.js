@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-pulse-factor-check-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-ais-gap-check-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

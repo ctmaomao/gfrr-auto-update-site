@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=odp-pulse-factor-check-1';
+﻿import { formatFiniteNumber } from './format.js?v=odp-ais-gap-check-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
