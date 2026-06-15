@@ -702,7 +702,7 @@ ODP 是**独立数据文件** `data/oil-directional-pressure.json`(不在 `radar
 
 freshness 不变式:`value` 缺 → `missing`;present 且 `ageDays` 无 → `stale`;present 且 `ageDays > maxAgeDays` → `stale`;否则 `live`。
 
-严格边界(同 brentPricingLayer / World Order overlay):不进 `values.*` / scoring / `decisionModel` / `executionLock` / `positionGuidance` / `displayInputsBaseline` / `effectiveDisplayInputs` / cross-validation;不并入 Global Risk Heatmap;缺数据不伪造、数据不足显式 `insufficient_data` 不硬判。校验 = `npm run check:oil-directional`(contract / freshness / seasonality / degradation / boundary / backtest / score);fetcher 零依赖(ADR-0013)。完整设计见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
+严格边界(同 brentPricingLayer / World Order overlay):不进 `values.*` / scoring / `decisionModel` / `executionLock` / `positionGuidance` / `displayInputsBaseline` / `effectiveDisplayInputs` / cross-validation;不并入 Global Risk Heatmap;缺数据不伪造、数据不足显式 `insufficient_data` 不硬判。校验 = `npm run check:oil-directional`(contract / freshness / seasonality / degradation / boundary / backtest / score / global-overlay replay / zh-copy);fetcher 零依赖(ADR-0013)。完整设计见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
 
 **PR3 模型输出**(`signals` / `finalBias` / `interpretation`,display-only;classifier = `scripts/oil-directional/odp-classifier.mjs`):
 
@@ -733,6 +733,8 @@ freshness 不变式:`value` 缺 → `missing`;present 且 `ageDays` 无 → `sta
 PR3 校验新增 `check:oil-directional-score`(finalBias 枚举 + `interpretation` 镜像 + 背离一致性 + **replay `finalizeBias()` 比对** + `dataSufficiency` 枚举/双条件 + signals⟺insufficient);`contract` / `degradation` / `boundary` 从「signals 必须 null」放宽为校验填充后的 display-only 输出。
 
 P6B 校验在 `check:oil-directional-contract` / `check:oil-directional-score` 中对可选 `interpretation.globalOverlay` 做枚举与 display-only boundary 校验;旧 committed ODP artifact 尚未重新 build 时该字段可缺失,前端仅做只读回填并标注来源,直到下一次 ODP build 写入 artifact。
+
+P7 新增 `scripts/oil-directional/replay-global-overlay.mjs` + `check:oil-directional-global-overlay`:离线 replay `data/oil-directional-history.json` 的 PR2 预登记窗口,并用固定全球慢变量情景网格复核 P6B 阈值边界。该 checker 只验证 `evaluateGlobalOverlay()` 的不变量:不能写入或暴露 `finalBias` / `physicalBias`,不能 mutate `finalizeBias()` 结果,必须覆盖 unavailable / threshold-near-miss / confirms_false_down / demand cap / transport watch 分支。它不是油价收益回测,不联网,不写 `data/*.json`,不接入 scoring / decision / Heatmap。
 
 ### oil-directional-history.json — ODP PR2 历史 cache + 回测 GATE contract
 

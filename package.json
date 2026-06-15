@@ -127,6 +127,7 @@
     "check:oil-directional-boundary": "node --check scripts/check-oil-directional-boundary.mjs && node scripts/check-oil-directional-boundary.mjs",
     "check:oil-directional-backtest": "node --check scripts/check-oil-directional-backtest.mjs && node scripts/check-oil-directional-backtest.mjs",
     "check:oil-directional-score": "node --check scripts/check-oil-directional-score.mjs && node scripts/check-oil-directional-score.mjs",
+    "check:oil-directional-global-overlay": "node --check scripts/oil-directional/replay-global-overlay.mjs && node --check scripts/check-oil-directional-global-overlay.mjs && node scripts/check-oil-directional-global-overlay.mjs",
     "check:oil-directional-zh-copy": "node --check scripts/check-oil-directional-zh-copy.mjs && node scripts/check-oil-directional-zh-copy.mjs"
   },
   "engines": {
