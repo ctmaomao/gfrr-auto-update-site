@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-ais-gap-check-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-global-stock-gap-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

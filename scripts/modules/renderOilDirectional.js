@@ -89,6 +89,13 @@ const ENERGY_TEXT_IDS = [
   'odp-pulse-factor-refinery',
   'odp-pulse-factor-window',
   'odp-pulse-factor-note',
+  'odp-global-forecast-status',
+  'odp-global-forecast-us-weekly',
+  'odp-global-forecast-global-stocks',
+  'odp-global-forecast-demand',
+  'odp-global-forecast-buffer',
+  'odp-global-forecast-window',
+  'odp-global-forecast-note',
   'odp-energy-spare-status',
   'odp-energy-spare-value',
   'odp-energy-spare-regime',
@@ -230,6 +237,7 @@ function clearEnergyAddendum() {
   setToneClass('odp-brent-basis-alert', 'odp-brent-basis-alert', '');
   setToneClass('odp-brent-basis-status', 'odp-brent-basis-status', '');
   setToneClass('odp-pulse-factor-status', 'odp-pulse-factor-status', '');
+  setToneClass('odp-global-forecast-status', 'odp-global-forecast-status', '');
   setToneClass('odp-energy-spare-regime', 'odp-energy-regime', '');
   const coreHost = $('odp-energy-transport-core');
   if (coreHost) coreHost.textContent = '—';
@@ -388,6 +396,32 @@ function renderPulseFactorCheck(oilData, radarData, worldOrderStressData) {
     : '裂解价差未显示 4 周收窄';
   setLeafText('odp-pulse-factor-note', `解读:库存去化、馏分油偏紧与炼厂高开工共同支持物理链偏紧;${crackText};${basisText}。本区只是把 Pulse 式三因子拆成站内证据质量说明,不替代 ODP 物理链分类器。`);
 }
+function renderGlobalForecastGap(oilData, radarData) {
+  const evidence = oilData && oilData.evidence ? oilData.evidence : {};
+  const alignment = wpsrAlignment(evidence);
+  const macroDrivers = radarData && radarData.macroDrivers ? radarData.macroDrivers : {};
+  const spare = macroDrivers.energySpareCapacity || {};
+  const crude = evidence.crudeStocksExSpr || {};
+  const gasoline = evidence.demandGasolineSupplied || {};
+  const distillate = evidence.demandDistillateSupplied || {};
+  const asOfText = alignment.dates.length === 1 ? alignment.dates[0] : (alignment.dates.length ? `${alignment.dates.length} 个日期` : '—');
+  const spareStatus = spare.sourceStatus ? spare.sourceStatus.spareCapacity : null;
+  const spareText = spareStatus === 'live'
+    ? `${formatMbpd(spare.spareCapacityMbpd)} · ${spare.latestPeriod || '—'} · ${spare.bufferRegime || '状态待核'}`
+    : 'EIA STEO 闲置产能源暂不可用';
+  const demandText = `美国汽油 ${pct(gasoline.vs5yAvgPct)} / 馏分油 ${pct(distillate.vs5yAvgPct)}`;
+  const status = alignment.aligned ? '需外部月度源' : '周报源需降级';
+  const tone = alignment.aligned ? 'yellow' : '';
+
+  setLeafText('odp-global-forecast-status', status);
+  setToneClass('odp-global-forecast-status', 'odp-global-forecast-status', tone);
+  setLeafText('odp-global-forecast-us-weekly', `${alignment.liveCount}/${alignment.total} 同周 live · 原油较5年 ${pct(crude.vs5yAvgPct)}`);
+  setLeafText('odp-global-forecast-global-stocks', '未接 OECD / 全球商业库存');
+  setLeafText('odp-global-forecast-demand', `${demandText} · 非全球预测`);
+  setLeafText('odp-global-forecast-buffer', spareText);
+  setLeafText('odp-global-forecast-window', `周报截至 ${asOfText} · STEO ${spare.latestPeriod || '—'}`);
+  setLeafText('odp-global-forecast-note', 'Pulse 的 OECD 库存低位、全球需求下修与 OPEC 月报属于全球月度/预测层;本站当前只能用美国 EIA 周报、EIA STEO 闲置产能和公开价格代理做边界解读,不能把外部新闻里的全球库存或需求预测当成站内已验证数据。');
+}
 function renderSpareCapacity(spare) {
   const status = spare && spare.sourceStatus ? spare.sourceStatus.spareCapacity : null;
   setLeafText('odp-energy-spare-status', statusZh(status));
@@ -484,9 +518,10 @@ function renderEnergyAddendum(radarData, worldOrderStressData, oilData) {
   const macroDrivers = radarData && radarData.macroDrivers ? radarData.macroDrivers : {};
   renderBrentBasisCheck(radarData, worldOrderStressData);
   renderPulseFactorCheck(oilData, radarData, worldOrderStressData);
+  renderGlobalForecastGap(oilData, radarData);
   renderSpareCapacity(macroDrivers.energySpareCapacity);
   renderEnergyTransport(macroDrivers.energyTransport);
-  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
+  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、全球库存/需求缺口、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
 }
 
 function reasonInventory(sig, ev) {
