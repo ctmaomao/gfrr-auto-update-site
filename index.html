@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=ai-bubble-tab-label-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=brent-basis-check-1" />
 </head>
 <body>
   <nav class="page-bookmarks" aria-label="站内页面切换">
@@ -461,6 +461,7 @@
       </header>
       <div class="editorial-section-body">
         <p class="odp-headline" id="odp-headline">—</p>
+        <p class="odp-brent-basis-alert" id="odp-brent-basis-alert">—</p>
         <dl class="odp-meta">
           <div><dt>物理判断</dt><dd id="odp-physical-bias">—</dd></div>
           <div><dt>价格背离</dt><dd id="odp-divergence">—</dd></div>
@@ -484,6 +485,20 @@
             <p id="odp-evidence-note">—</p>
             <div class="odp-evidence-list" id="odp-evidence-list"></div>
             <div class="odp-energy-addendum" id="odp-energy-addendum" aria-label="能源压力补充证据">
+              <div class="odp-energy-group">
+                <div class="odp-energy-heading">
+                  <span class="odp-energy-kicker">BRENT BASIS CHECK</span>
+                  <strong>Brent 口径校验</strong>
+                </div>
+                <div class="odp-energy-metrics">
+                  <div><span>状态</span><b class="odp-brent-basis-status" id="odp-brent-basis-status">—</b></div>
+                  <div><span>Daily 主显示</span><b id="odp-brent-basis-daily">—</b></div>
+                  <div><span>Worker 快照</span><b id="odp-brent-basis-worker">—</b></div>
+                  <div><span>期货代理</span><b id="odp-brent-basis-futures">—</b></div>
+                  <div class="wide"><span>差异</span><b id="odp-brent-basis-spread">—</b></div>
+                </div>
+                <p class="odp-energy-note" id="odp-brent-basis-note">—</p>
+              </div>
               <div class="odp-energy-group">
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">OPEC BUFFER</span>
@@ -1041,6 +1056,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=ai-bubble-tab-label-1"></script>
+  <script type="module" src="scripts/app.js?v=brent-basis-check-1"></script>
 </body>
 </html>

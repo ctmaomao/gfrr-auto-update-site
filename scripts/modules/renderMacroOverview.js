@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=ai-bubble-tab-label-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=ai-bubble-tab-label-1';
-import { MODULE_LABELS } from './decision.js?v=ai-bubble-tab-label-1';
+} from './config.js?v=brent-basis-check-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=brent-basis-check-1';
+import { MODULE_LABELS } from './decision.js?v=brent-basis-check-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

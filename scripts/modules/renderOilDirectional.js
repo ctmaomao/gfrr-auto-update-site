@@ -75,6 +75,13 @@ const REASON_IDS = [
   'odp-reason-refinery', 'odp-reason-spr', 'odp-reason-demand',
 ];
 const ENERGY_TEXT_IDS = [
+  'odp-brent-basis-alert',
+  'odp-brent-basis-status',
+  'odp-brent-basis-daily',
+  'odp-brent-basis-worker',
+  'odp-brent-basis-futures',
+  'odp-brent-basis-spread',
+  'odp-brent-basis-note',
   'odp-energy-spare-status',
   'odp-energy-spare-value',
   'odp-energy-spare-regime',
@@ -105,6 +112,38 @@ function pct(v, dp = 1) {
 }
 function fixed(v, dp = 1) {
   return Number.isFinite(v) ? v.toFixed(dp) : '—';
+}
+function asNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+function firstNumber(...values) {
+  for (const value of values) {
+    const n = asNumber(value);
+    if (n !== null) return n;
+  }
+  return null;
+}
+function formatUsd(value) {
+  return Number.isFinite(value) ? `$${value.toFixed(2)}` : '—';
+}
+function basisPct(reference, comparison) {
+  if (!Number.isFinite(reference) || !Number.isFinite(comparison) || comparison <= 0) return null;
+  return ((reference - comparison) / comparison) * 100;
+}
+function formatBasisPct(value) {
+  return Number.isFinite(value) ? signed(value, 1) + '%' : '—';
+}
+function formatUtcMinute(iso) {
+  if (!iso || typeof iso !== 'string') return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  const yyyy = date.getUTCFullYear();
+  const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(date.getUTCDate()).padStart(2, '0');
+  const hh = String(date.getUTCHours()).padStart(2, '0');
+  const min = String(date.getUTCMinutes()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd} ${hh}:${min} UTC`;
 }
 function formatMbpd(v) {
   if (!Number.isFinite(v)) return '—';
@@ -146,9 +185,75 @@ const BUFFER_REGIME_TONE = {
 };
 function clearEnergyAddendum() {
   for (const id of ENERGY_TEXT_IDS) setLeafText(id, '—');
+  setToneClass('odp-brent-basis-alert', 'odp-brent-basis-alert', '');
+  setToneClass('odp-brent-basis-status', 'odp-brent-basis-status', '');
   setToneClass('odp-energy-spare-regime', 'odp-energy-regime', '');
   const coreHost = $('odp-energy-transport-core');
   if (coreHost) coreHost.textContent = '—';
+}
+function brentBasisTone(status) {
+  return ({
+    '口径背离': 'red',
+    '轻微背离': 'yellow',
+    '基本一致': 'green',
+  })[status] || '';
+}
+function brentBasisStatus({ dailyVsWorkerPct, dailyVsFuturesPct, proxyStatus }) {
+  const maxAbs = Math.max(
+    Number.isFinite(dailyVsWorkerPct) ? Math.abs(dailyVsWorkerPct) : 0,
+    Number.isFinite(dailyVsFuturesPct) ? Math.abs(dailyVsFuturesPct) : 0,
+  );
+  if (proxyStatus === 'stress' || maxAbs >= 5) return '口径背离';
+  if (proxyStatus === 'watch' || maxAbs >= 2) return '轻微背离';
+  if (Number.isFinite(maxAbs) && maxAbs > 0) return '基本一致';
+  return '证据不足';
+}
+function renderBrentBasisCheck(radarData, worldOrderStressData) {
+  const brentLayer = radarData && radarData.brentPricingLayer ? radarData.brentPricingLayer : {};
+  const dailyBrent = firstNumber(
+    brentLayer.selectedBrent?.value,
+    radarData?.displayInputsBaseline?.brent,
+    radarData?.values?.brent,
+  );
+  const marketInput = worldOrderStressData && worldOrderStressData.marketConfirmationInput
+    ? worldOrderStressData.marketConfirmationInput
+    : {};
+  const workerBrent = firstNumber(marketInput.brent);
+  const futuresBrent = firstNumber(
+    brentLayer.futuresPriceCurve?.frontPrice,
+    brentLayer.iceFuturesPriceCurve?.frontPrice,
+    brentLayer.futuresProxy?.value,
+  );
+  const dailyVsWorkerPct = basisPct(dailyBrent, workerBrent);
+  const dailyVsFuturesPct = basisPct(dailyBrent, futuresBrent);
+  const status = brentBasisStatus({
+    dailyVsWorkerPct,
+    dailyVsFuturesPct,
+    proxyStatus: brentLayer.proxySpread?.status,
+  });
+  const tone = brentBasisTone(status);
+  const workerTime = formatUtcMinute(marketInput.updatedAt);
+  const futuresTime = formatUtcMinute(brentLayer.futuresPriceCurve?.updatedAt || brentLayer.iceFuturesPriceCurve?.updatedAt);
+
+  setLeafText('odp-brent-basis-status', status);
+  setToneClass('odp-brent-basis-status', 'odp-brent-basis-status', tone);
+  setLeafText('odp-brent-basis-daily', dailyBrent !== null ? `${formatUsd(dailyBrent)} · Daily · FRED` : '—');
+  setLeafText('odp-brent-basis-worker', workerBrent !== null ? `${formatUsd(workerBrent)}${workerTime ? ` · ${workerTime}` : ''}` : '—');
+  setLeafText('odp-brent-basis-futures', futuresBrent !== null ? `${formatUsd(futuresBrent)}${futuresTime ? ` · ${futuresTime}` : ''}` : '—');
+  setLeafText('odp-brent-basis-spread', `Daily 较 Worker ${formatBasisPct(dailyVsWorkerPct)} / Daily 较期货 ${formatBasisPct(dailyVsFuturesPct)}`);
+
+  if (status === '证据不足') {
+    setLeafText('odp-brent-basis-alert', 'Brent 口径校验:当前缺少足够的 Worker 快照或期货代理,暂不判断口径差异。');
+    setLeafText('odp-brent-basis-note', '本区只读站内已生成的 Daily 主显示值、Worker 快照和公开期货代理;不从浏览器重新抓取外部行情,不改变主 Brent 值。');
+    return;
+  }
+
+  const alert = status === '口径背离'
+    ? `Brent 口径校验:${status}。Daily 主显示值与市场确认/期货代理差异显著,说明 FRED/EIA 现货代理与市场快照存在时间差;ODP 价格解释应优先标注口径差异。`
+    : `Brent 口径校验:${status}。Daily 主显示值与市场确认/期货代理差异有限,仍按公开代理观察处理。`;
+  setLeafText('odp-brent-basis-alert', alert);
+  setToneClass('odp-brent-basis-alert', 'odp-brent-basis-alert', tone);
+  setLeafText('odp-brent-basis-note', '本区只解释 Brent 公开代理之间的时间戳和口径差异:Daily 主显示值、Worker 市场确认快照、Yahoo/ICE 期货代理可能不同步;该提示不改变主 Brent 值、Worker 油价确认逻辑、风险打分或执行判断。');
 }
 function renderSpareCapacity(spare) {
   const status = spare && spare.sourceStatus ? spare.sourceStatus.spareCapacity : null;
@@ -214,12 +319,13 @@ function renderEnergyTransport(transport) {
   setLeafText('odp-energy-transport-note', 'PortWatch 基于 AIS 卫星船舶数据的咽喉代理;船舶计数与运力为观测代理,可能受 GPS 干扰、AIS 信号伪造、船舶关闭 AIS、绕行或数据延迟影响;不是官方贸易统计,不估算军事或价格结果。');
   renderTransportCore(transport);
 }
-function renderEnergyAddendum(radarData) {
+function renderEnergyAddendum(radarData, worldOrderStressData) {
   clearEnergyAddendum();
   const macroDrivers = radarData && radarData.macroDrivers ? radarData.macroDrivers : {};
+  renderBrentBasisCheck(radarData, worldOrderStressData);
   renderSpareCapacity(macroDrivers.energySpareCapacity);
   renderEnergyTransport(macroDrivers.energyTransport);
-  setLeafText('odp-energy-source-boundary', '边界:OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
+  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
 }
 
 function reasonInventory(sig, ev) {
@@ -312,8 +418,8 @@ function renderEvidenceList(ev) {
   host.replaceChildren(...rows.map(([label, e]) => evidenceRow(label, e)));
 }
 
-export function renderOilDirectional({ oilData, radarData }) {
-  renderEnergyAddendum(radarData);
+export function renderOilDirectional({ oilData, radarData, worldOrderStressData }) {
+  renderEnergyAddendum(radarData, worldOrderStressData);
 
   if (!oilData || typeof oilData !== 'object') {
     setLeafText('odp-verdict', '数据不可用');

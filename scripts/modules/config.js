@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=ai-bubble-tab-label-1';
+﻿import { formatFiniteNumber } from './format.js?v=brent-basis-check-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
