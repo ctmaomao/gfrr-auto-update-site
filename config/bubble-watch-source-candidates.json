@@ -1,0 +1,170 @@
+{
+  "contractVersion": "bubble-watch-source-candidates-v1",
+  "note": "AI 泡沫监测 11 个 curated-origin 指标的免费公开源候选矩阵。hybrid_live 表示 build 可先尝试公开源自动覆盖,失败仍 fail-closed 回到 config/bubble-watch-curated.json; candidate_only 表示已记录免费源,但还不够稳定,暂不自动改灯。",
+  "indicators": {
+    "vc_ai_share": {
+      "automationStatus": "hybrid_live",
+      "primarySignal": "AI venture funding share of global VC dollars",
+      "freeSourceCandidates": [
+        {
+          "source": "Crunchbase News WordPress API",
+          "url": "https://news.crunchbase.com/wp-json/wp/v2/search?search=AI%20venture%20funding%202026",
+          "cadence": "quarterly",
+          "role": "public article parser for AI funding dollars and share",
+          "limitations": "Crunchbase article text can move; PitchBook remains paywalled and is not scraped."
+        }
+      ]
+    },
+    "ai_ipo_pipeline": {
+      "automationStatus": "hybrid_live",
+      "primarySignal": "AI IPO / exit pipeline heat from public startup-market reporting",
+      "freeSourceCandidates": [
+        {
+          "source": "Crunchbase News WordPress API",
+          "url": "https://news.crunchbase.com/wp-json/wp/v2/posts?search=IPO%20OpenAI%20Anthropic%20Cerebras%20Databricks%20SpaceX%20AI",
+          "cadence": "weekly",
+          "role": "public article search for AI IPO / blockbuster-exit language",
+          "limitations": "Counts evidence headlines, not a formal IPO calendar; classification remains conservative."
+        },
+        {
+          "source": "SEC EDGAR company submissions",
+          "url": "https://www.sec.gov/search-filings",
+          "cadence": "weekly",
+          "role": "future candidate for S-1 filing confirmation",
+          "limitations": "Needs issuer allowlist and filing-form normalization before automatic use."
+        }
+      ]
+    },
+    "dc_abs_spread": {
+      "automationStatus": "candidate_only",
+      "primarySignal": "Data-center ABS / secured-debt spread direction",
+      "freeSourceCandidates": [
+        {
+          "source": "Green Street News / public article snippets",
+          "url": "https://www.greenstreet.com/news/",
+          "cadence": "weekly",
+          "role": "public spread-direction mentions",
+          "limitations": "Continuous spread data appears research/paywalled; do not auto-score without a public numeric series."
+        },
+        {
+          "source": "KBRA / Morningstar public presale and rating headlines",
+          "url": "https://www.kbra.com/",
+          "cadence": "weekly",
+          "role": "deal/rating evidence",
+          "limitations": "Evidence of issuance quality, not a comparable spread index."
+        }
+      ]
+    },
+    "neocloud_credit": {
+      "automationStatus": "candidate_only",
+      "primarySignal": "Default, downgrade, distressed financing or rating event among neocloud names",
+      "freeSourceCandidates": [
+        {
+          "source": "Company IR / SEC / rating-agency public headlines",
+          "url": "https://www.sec.gov/search-filings",
+          "cadence": "weekly",
+          "role": "event watchlist for CoreWeave / Nebius / Crusoe / Lambda",
+          "limitations": "Negative-event absence requires broad watchlist and search hygiene; keep curated until a robust monitor is reviewed."
+        }
+      ]
+    },
+    "token_volume_mom": {
+      "automationStatus": "candidate_only",
+      "primarySignal": "AI token usage growth",
+      "freeSourceCandidates": [
+        {
+          "source": "OpenRouter rankings / public API surface",
+          "url": "https://openrouter.ai/rankings",
+          "cadence": "monthly",
+          "role": "candidate usage proxy",
+          "limitations": "Public page/API currently does not expose a stable monthly total-token field without further reverse engineering or API-key review."
+        }
+      ]
+    },
+    "token_revenue_ratio": {
+      "automationStatus": "candidate_only",
+      "primarySignal": "Token growth versus reported or estimated AI revenue growth",
+      "freeSourceCandidates": [
+        {
+          "source": "OpenRouter public usage proxy + public company/private-company revenue reporting",
+          "url": "https://openrouter.ai/",
+          "cadence": "monthly",
+          "role": "future composite evidence",
+          "limitations": "Private-company revenue estimates are not a stable public API; keep curated until a source-reviewed revenue panel exists."
+        }
+      ]
+    },
+    "arr_2nd_deriv": {
+      "automationStatus": "candidate_only",
+      "primarySignal": "Second derivative of AI ARR / run-rate estimates",
+      "freeSourceCandidates": [
+        {
+          "source": "Sacra / public reporting / company disclosures",
+          "url": "https://sacra.com/",
+          "cadence": "monthly",
+          "role": "private-company revenue estimate evidence",
+          "limitations": "Usually estimate-driven and partly paywalled; not safe for hard automatic scoring yet."
+        }
+      ]
+    },
+    "enterprise_deploy": {
+      "automationStatus": "candidate_only",
+      "primarySignal": "Enterprise AI production deployment rate",
+      "freeSourceCandidates": [
+        {
+          "source": "McKinsey State of AI / Deloitte State of Generative AI reports",
+          "url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai",
+          "cadence": "quarterly",
+          "role": "survey benchmark",
+          "limitations": "Low frequency and access can block data-center fetches; use as source-review candidate, not weekly auto."
+        }
+      ]
+    },
+    "accounting_events": {
+      "automationStatus": "hybrid_live",
+      "primarySignal": "Formal SEC / DOJ accounting, fraud, round-tripping or enforcement event tied to core AI names",
+      "freeSourceCandidates": [
+        {
+          "source": "SEC press releases",
+          "url": "https://www.sec.gov/newsroom/press-releases",
+          "cadence": "weekly",
+          "role": "formal enforcement search",
+          "limitations": "Search text must be treated as event evidence, not proof of no misconduct outside SEC coverage."
+        },
+        {
+          "source": "DOJ press releases",
+          "url": "https://www.justice.gov/news/press-releases",
+          "cadence": "weekly",
+          "role": "criminal enforcement search",
+          "limitations": "Generic search pages can be sparse; absence is only a watchlist signal."
+        }
+      ]
+    },
+    "capex_reaction": {
+      "automationStatus": "candidate_only",
+      "primarySignal": "Market reaction to AI capex guidance",
+      "freeSourceCandidates": [
+        {
+          "source": "Yahoo Chart around earnings dates + earnings-call guidance text",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/AVGO",
+          "cadence": "weekly",
+          "role": "future event-window return calculator",
+          "limitations": "Needs earnings-date calendar and capex-guidance text extraction before automatic classification."
+        }
+      ]
+    },
+    "ceo_hedging": {
+      "automationStatus": "hybrid_live",
+      "primarySignal": "CEO / senior-executive bubble-risk or overheat language frequency",
+      "freeSourceCandidates": [
+        {
+          "source": "GDELT DOC 2.0 public news search",
+          "url": "https://api.gdeltproject.org/api/v2/doc/doc",
+          "cadence": "weekly",
+          "role": "public-news evidence counter for AI bubble / irrational / overbuild language",
+          "limitations": "Rate-limited and media-driven; automatic result remains conservative and falls back on failure."
+        }
+      ]
+    }
+  }
+}

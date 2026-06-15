@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG_PATH = path.join(ROOT, 'config', 'bubble-watch-curated.json');
+const SOURCE_CANDIDATES_PATH = path.join(ROOT, 'config', 'bubble-watch-source-candidates.json');
 const OUT_PATH = path.join(ROOT, 'data', 'bubble-watch.json');
 const HISTORY_PATH = path.join(ROOT, 'data', 'bubble-watch-history.json');
 
@@ -114,6 +115,30 @@ async function retry(taskFn, label, attempts = 2) {
 
 function stripTags(html) {
   return html.replace(/<script[\s\S]*?<\/script>/giu, ' ').replace(/<[^>]+>/gu, ' ').replace(/\s+/gu, ' ');
+}
+
+function decodeHtmlEntities(text) {
+  return String(text || '')
+    .replace(/&#(\d+);/gu, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/giu, (_, code) => String.fromCharCode(Number.parseInt(code, 16)))
+    .replace(/&amp;/gu, '&')
+    .replace(/&lt;/gu, '<')
+    .replace(/&gt;/gu, '>')
+    .replace(/&quot;/gu, '"')
+    .replace(/&#8217;|&rsquo;/gu, "'")
+    .replace(/&#8216;|&lsquo;/gu, "'")
+    .replace(/&#8220;|&ldquo;/gu, '"')
+    .replace(/&#8221;|&rdquo;/gu, '"')
+    .replace(/&nbsp;/gu, ' ');
+}
+
+function htmlToText(html) {
+  return decodeHtmlEntities(stripTags(String(html || ''))).replace(/\s+/gu, ' ').trim();
+}
+
+function compactSnippet(text, maxLen = 120) {
+  const s = String(text || '').replace(/\s+/gu, ' ').trim();
+  return s.length > maxLen ? `${s.slice(0, maxLen - 1)}…` : s;
 }
 
 function isoDate(d = new Date()) {
@@ -386,6 +411,78 @@ async function fetchOpenInsiderTotals(symbol) {
   }
   if (buy === 0 && sell === 0) throw new Error(`OpenInsider ${symbol} 无交易行`);
   return { buy, sell };
+}
+
+async function crunchbaseWpSearch(query, perPage = 8) {
+  const params = new URLSearchParams({ search: query, per_page: String(perPage) });
+  const rows = await fetchWithTimeout(`https://news.crunchbase.com/wp-json/wp/v2/search?${params}`, {
+    asJson: true,
+    headers: { 'User-Agent': BROWSER_UA }
+  });
+  if (!Array.isArray(rows)) throw new Error('Crunchbase search 返回结构异常');
+  return rows
+    .filter((row) => row?.id)
+    .map((row) => ({
+      id: row.id,
+      title: htmlToText(typeof row.title === 'object' ? row.title?.rendered : row.title),
+      url: row.url || row.link || null
+    }));
+}
+
+async function crunchbaseWpPost(id) {
+  const params = new URLSearchParams({
+    _fields: 'id,date,link,title,excerpt,content'
+  });
+  const post = await fetchWithTimeout(`https://news.crunchbase.com/wp-json/wp/v2/posts/${id}?${params}`, {
+    asJson: true,
+    headers: { 'User-Agent': BROWSER_UA }
+  });
+  const title = htmlToText(post?.title?.rendered || post?.title || '');
+  const text = htmlToText(`${post?.title?.rendered || ''} ${post?.excerpt?.rendered || ''} ${post?.content?.rendered || ''}`);
+  if (!title || !text) throw new Error(`Crunchbase post ${id} 正文解析失败`);
+  return { id: post.id || id, date: post.date || null, link: post.link || null, title, text };
+}
+
+async function crunchbaseWpPosts(query, perPage = 10) {
+  const params = new URLSearchParams({
+    search: query,
+    per_page: String(perPage),
+    _fields: 'id,date,link,title,excerpt,content'
+  });
+  const rows = await fetchWithTimeout(`https://news.crunchbase.com/wp-json/wp/v2/posts?${params}`, {
+    asJson: true,
+    headers: { 'User-Agent': BROWSER_UA }
+  });
+  if (!Array.isArray(rows)) throw new Error('Crunchbase posts 返回结构异常');
+  return rows.map((post) => ({
+    id: post.id,
+    date: post.date || null,
+    link: post.link || null,
+    title: htmlToText(post.title?.rendered || post.title || ''),
+    text: htmlToText(`${post.title?.rendered || ''} ${post.excerpt?.rendered || ''} ${post.content?.rendered || ''}`)
+  })).filter((post) => post.id && post.title);
+}
+
+function extractPublicSearchLinks(html, source) {
+  const links = [];
+  const linkRe = /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/giu;
+  let m;
+  while ((m = linkRe.exec(html)) !== null) {
+    const href = decodeHtmlEntities(m[1]);
+    const title = htmlToText(m[2]);
+    if (!title || title.length < 8) continue;
+    if (source === 'SEC' && !/\/newsroom\/press-releases\//u.test(href)) continue;
+    if (source === 'DOJ' && !/(\/opa\/pr\/|\/news\/press-releases\/|\/usao-|\/justice-news\?)/u.test(href)) continue;
+    const start = Math.max(0, m.index - 240);
+    const context = htmlToText(html.slice(start, Math.min(html.length, m.index + 520)));
+    links.push({ source, href, title, context });
+  }
+  return links;
+}
+
+async function fetchPublicSearchPage(url, source) {
+  const html = await fetchWithTimeout(url, { headers: { 'User-Agent': BROWSER_UA } });
+  return extractPublicSearchLinks(html, source);
 }
 
 // ---------- 各指标构建(auto) ----------
@@ -678,6 +775,176 @@ const autoBuilders = {
   }
 };
 
+// ---------- 研究口径 hybrid builders ----------
+
+async function fetchVcAiShareFromCrunchbase() {
+  const rows = await retry(() => crunchbaseWpSearch('AI venture funding 2026', 8), 'Crunchbase AI VC search', 1);
+  const picked = rows.find((row) => /venture funding records|AI boom|AI startups|funding/i.test(row.title)) || rows[0];
+  if (!picked?.id) throw new Error('Crunchbase AI VC 候选文章为空');
+  const post = await retry(() => crunchbaseWpPost(picked.id), 'Crunchbase AI VC post', 1);
+  const aiMatch = post.text.match(/AI startups received\s+\$?([0-9]+(?:\.[0-9]+)?)\s*billion[^.]{0,120}?([0-9]{1,3})%/iu)
+    || post.text.match(/AI[^.]{0,180}?\$?([0-9]+(?:\.[0-9]+)?)\s*billion[^.]{0,140}?([0-9]{1,3})%/iu);
+  if (!aiMatch) throw new Error('Crunchbase AI funding share 未解析到金额+占比');
+  const aiFundingB = Number(aiMatch[1]);
+  const sharePct = Number(aiMatch[2]);
+  if (!(aiFundingB > 1 && sharePct > 0 && sharePct <= 100)) throw new Error(`Crunchbase AI VC 数值越界 ${aiFundingB}/${sharePct}`);
+  const totalMatch = post.text.match(/poured\s+\$?([0-9]+(?:\.[0-9]+)?)\s*billion/iu)
+    || post.text.match(/global venture funding[^.]{0,80}?\$?([0-9]+(?:\.[0-9]+)?)\s*billion/iu);
+  const totalFundingB = totalMatch ? Number(totalMatch[1]) : aiFundingB / (sharePct / 100);
+  const status = classifyNumeric(sharePct, 50, 30);
+  const articleDate = post.date ? post.date.slice(0, 10) : 'date n/a';
+  return {
+    status,
+    value_display: `~${sharePct.toFixed(0)}%`,
+    source_name: 'Crunchbase News public article parser',
+    note: `Crunchbase News 公开文章(${articleDate})解析:AI startup funding 约 $${aiFundingB.toFixed(0)}B,占全球 VC ${sharePct.toFixed(0)}%${Number.isFinite(totalFundingB) ? `,隐含/披露总额约 $${totalFundingB.toFixed(0)}B` : ''};>50% 仍属资金面红区。阈值:>50% 红 / 30-50% 黄 / <30% 绿`,
+    detail: { source: 'Crunchbase News WordPress API', url: post.link || picked.url, articleDate, aiFundingB, totalFundingB, sharePct }
+  };
+}
+
+async function fetchAiIpoPipelineFromCrunchbase() {
+  const posts = await retry(
+    () => crunchbaseWpPosts('IPO OpenAI Anthropic Cerebras Databricks SpaceX AI', 10),
+    'Crunchbase AI IPO posts',
+    1
+  );
+  const names = ['OpenAI', 'Anthropic', 'Databricks', 'Cerebras', 'SpaceX', 'CoreWeave', 'Scale AI'];
+  const evidence = posts.filter((post) => /\b(IPO|IPOs|public|listing|exit|exits|S-1|Nasdaq|NYSE)\b/iu.test(`${post.title} ${post.text}`));
+  const nameHits = new Set();
+  for (const post of evidence) {
+    const haystack = `${post.title} ${post.text}`;
+    for (const name of names) {
+      if (new RegExp(name.replace(/\s+/gu, '\\s+'), 'iu').test(haystack)) nameHits.add(name);
+    }
+  }
+  let status = 'green';
+  let display = '平静';
+  if (evidence.length >= 4 || nameHits.size >= 4) {
+    status = 'red';
+    display = '洪流';
+  } else if (evidence.length >= 1 || nameHits.size >= 2) {
+    status = 'yellow';
+    display = '升温';
+  }
+  const top = evidence[0] || posts[0];
+  if (!top) throw new Error('Crunchbase AI IPO 文章为空');
+  return {
+    status,
+    value_display: display,
+    source_name: 'Crunchbase News public article search',
+    note: `Crunchbase News 公开检索命中 ${evidence.length} 条 AI IPO/exit 相关报道,涉及 ${nameHits.size ? [...nameHits].join('/') : '核心名单未集中出现'};最新要点「${compactSnippet(top.title, 56)}」(${top.date ? top.date.slice(0, 10) : 'date n/a'})。判级:洪流=红 / 升温=黄 / 平静=绿`,
+    detail: {
+      source: 'Crunchbase News WordPress API',
+      evidenceCount: evidence.length,
+      nameHits: [...nameHits],
+      topTitle: top.title,
+      topUrl: top.link || null
+    }
+  };
+}
+
+async function fetchAccountingEventsFromPublicSearch() {
+  const pages = [
+    { source: 'SEC', url: 'https://www.sec.gov/newsroom/press-releases?combine=artificial%20intelligence%20accounting%20fraud' },
+    { source: 'SEC', url: 'https://www.sec.gov/newsroom/press-releases?combine=Super%20Micro%20accounting' },
+    { source: 'DOJ', url: 'https://www.justice.gov/news/press-releases?search_api_fulltext=artificial%20intelligence%20accounting%20fraud' },
+    { source: 'DOJ', url: 'https://www.justice.gov/news/press-releases?search_api_fulltext=round-tripping%20technology' }
+  ];
+  const currentYear = new Date().getUTCFullYear();
+  const recentYearRe = new RegExp(`\\b(${currentYear}|${currentYear - 1})\\b`, 'u');
+  const coreNameRe = /\b(NVIDIA|NVDA|Super Micro|SMCI|CoreWeave|Oracle|Broadcom|OpenAI|Anthropic|Databricks|Cerebras|Microsoft|Meta|Alphabet|Google|Amazon|AWS)\b/iu;
+  const formalEventRe = /\b(accounting|fraud|round[-\s]?tripping|misstatement|charged|charges|settled|settlement|enforcement|indictment)\b/iu;
+  const events = [];
+  const pageFailures = [];
+  let checkedPages = 0;
+  for (const page of pages) {
+    let links = [];
+    try {
+      links = await retry(() => fetchPublicSearchPage(page.url, page.source), `${page.source} accounting search`, 1);
+      checkedPages += 1;
+    } catch (error) {
+      pageFailures.push({ source: page.source, reason: error.message });
+      console.warn(`[bubble-watch] ${page.source} accounting search failed: ${error.message}`);
+      continue;
+    }
+    for (const link of links) {
+      const haystack = `${link.title} ${link.context}`;
+      if (!recentYearRe.test(haystack)) continue;
+      if (coreNameRe.test(haystack) && formalEventRe.test(haystack)) events.push(link);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  if (!checkedPages) throw new Error(`SEC/DOJ public search 全部失败: ${pageFailures.map((f) => `${f.source}:${f.reason}`).join('; ')}`);
+  const unique = [];
+  const seen = new Set();
+  for (const event of events) {
+    const key = `${event.source}|${event.href}|${event.title}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(event);
+  }
+  const status = unique.length ? 'red' : 'green';
+  return {
+    status,
+    value_display: unique.length ? `${unique.length} 件` : '0 件',
+    source_name: 'SEC / DOJ public press-release search',
+    note: unique.length
+      ? `SEC/DOJ 公开新闻稿近两年检索到 ${unique.length} 条核心 AI 名单会计/欺诈/round-tripping 正式事件线索,首条「${compactSnippet(unique[0].title, 64)}」;按口径任何正式事件即红。`
+      : 'SEC/DOJ 公开新闻稿近两年检索未命中核心 AI 名单的会计造假、round-tripping 或欺诈正式事件;该项仍只能说明公开执法搜索未见新红灯,不能替代完整法律尽调。判级:任何=红 / 调查=黄 / 无=绿',
+    detail: { source: 'SEC/DOJ public search pages', checkedPages, pageFailures, eventCount: unique.length, events: unique.slice(0, 5) }
+  };
+}
+
+async function fetchCeoHedgingFromGdelt() {
+  const query = '("AI bubble" OR "artificial intelligence bubble" OR "AI overbuild" OR "AI capex bubble")';
+  const params = new URLSearchParams({
+    query,
+    mode: 'ArtList',
+    format: 'json',
+    maxrecords: '30',
+    timespan: '30d',
+    sort: 'HybridRel'
+  });
+  const json = await fetchWithTimeout(`https://api.gdeltproject.org/api/v2/doc/doc?${params}`, {
+    asJson: true,
+    headers: { 'User-Agent': BROWSER_UA },
+    timeoutMs: 15000
+  });
+  const articles = Array.isArray(json?.articles) ? json.articles : [];
+  const executiveRe = /\b(CEO|chief executive|Altman|Nadella|Huang|Musk|Zuckerberg|Pichai|Ellison|Hock Tan|Lisa Su)\b/iu;
+  const overheatRe = /\b(bubble|overbuild|overbuilt|overheated|irrational|mania|capex)\b/iu;
+  const relevant = articles.filter((a) => overheatRe.test(`${a.title || ''} ${a.url || ''}`));
+  const executiveHits = relevant.filter((a) => executiveRe.test(`${a.title || ''} ${a.url || ''}`));
+  let status = 'green';
+  let display = '无';
+  if (relevant.length >= 12 && executiveHits.length >= 3) {
+    status = 'red';
+    display = '普遍';
+  } else if (relevant.length >= 3 || executiveHits.length >= 1) {
+    status = 'yellow';
+    display = '部分';
+  }
+  return {
+    status,
+    value_display: display,
+    source_name: 'GDELT DOC 2.0 public news search',
+    note: `GDELT DOC 2.0 近 30 天公开新闻检索:AI bubble/overbuild/capex 相关报道 ${relevant.length} 条,其中带 CEO/核心高管姓名线索 ${executiveHits.length} 条;该项按媒体中高管对冲语言频率保守判为「${display}」。判级:普遍承认过热=红 / 部分=黄 / 无=绿`,
+    detail: {
+      source: 'GDELT DOC 2.0',
+      articleCount: relevant.length,
+      executiveHitCount: executiveHits.length,
+      topArticles: relevant.slice(0, 5).map((a) => ({ title: a.title || null, url: a.url || null, domain: a.domain || null, seendate: a.seendate || null }))
+    }
+  };
+}
+
+const hybridCuratedBuilders = {
+  vc_ai_share: fetchVcAiShareFromCrunchbase,
+  ai_ipo_pipeline: fetchAiIpoPipelineFromCrunchbase,
+  accounting_events: fetchAccountingEventsFromPublicSearch,
+  ceo_hedging: fetchCeoHedgingFromGdelt
+};
+
 // ---------- 上游周报同步(aibubble-cn.github.io)----------
 // 编辑/研究类指标(及自动指标的 fallback 快照)无公开 API,每次周一 build 先检查
 // 上游 AI 泡沫监测周报(aibubble-cn.github.io 的实际数据源 = ai-bubble-monitor
@@ -685,30 +952,89 @@ const autoBuilders = {
 // status/value_display/note 并回写 config(workflow 随数据一起提交,实现
 // 「每周一检查,拿不到下周一再查」的滚动自动同步)。上游不可达/未更新 → 保持现状,
 // 超期由 STALE 角标显式暴露。
-const UPSTREAM_URLS = [
+const UPSTREAM_LATEST_URLS = [
   // aibubble-cn.github.io 页面 fetch 的真实数据端点
   'https://raw.githubusercontent.com/crystal-xiaoxiao/ai-bubble-monitor/main/docs/data/latest.json',
-  // 若上游日后改为站内托管的兜底路径
+  // 上游 README 中登记的 GitHub Pages dashboard 同源数据路径
+  'https://crystal-xiaoxiao.github.io/ai-bubble-monitor/data/latest.json',
+  // 若 aibubble-cn 日后改为站内托管的兜底路径(当前可能 404)
   'https://aibubble-cn.github.io/data/latest.json'
 ];
 
-async function syncCuratedFromUpstream(config) {
-  let upstream = null;
-  let sourceUrl = null;
-  for (const url of UPSTREAM_URLS) {
+const UPSTREAM_SNAPSHOT_INDEX_URLS = [
+  // latest.json 不可用时,从 GitHub contents API 枚举历史 snapshots,取日期最新文件
+  'https://api.github.com/repos/crystal-xiaoxiao/ai-bubble-monitor/contents/docs/data/snapshots?ref=main'
+];
+
+function cacheBust(url) {
+  return `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+}
+
+function isValidUpstreamPayload(json) {
+  return Boolean(
+    json &&
+    /^\d{4}-\d{2}-\d{2}$/u.test(json.as_of_date || '') &&
+    Array.isArray(json.indicators)
+  );
+}
+
+async function fetchUpstreamFromLatestUrls() {
+  for (const url of UPSTREAM_LATEST_URLS) {
     try {
-      const json = await fetchWithTimeout(`${url}?t=${Date.now()}`, { asJson: true });
-      if (json && /^\d{4}-\d{2}-\d{2}$/u.test(json.as_of_date || '') && Array.isArray(json.indicators)) {
-        upstream = json;
-        sourceUrl = url;
-        break;
+      const json = await fetchWithTimeout(cacheBust(url), { asJson: true });
+      if (isValidUpstreamPayload(json)) {
+        return { upstream: json, sourceUrl: url, sourceKind: 'latest' };
       }
       console.warn(`[bubble-watch] upstream ${url} 返回结构异常,跳过`);
     } catch (error) {
       console.warn(`[bubble-watch] upstream ${url} 不可达: ${error.message}`);
     }
   }
-  if (!upstream) {
+  return null;
+}
+
+async function fetchUpstreamFromSnapshots() {
+  for (const indexUrl of UPSTREAM_SNAPSHOT_INDEX_URLS) {
+    try {
+      const rows = await fetchWithTimeout(cacheBust(indexUrl), {
+        asJson: true,
+        headers: { Accept: 'application/vnd.github+json' }
+      });
+      const snapshots = Array.isArray(rows)
+        ? rows
+          .filter((row) => row?.type === 'file' && /^\d{4}-\d{2}-\d{2}\.json$/u.test(row.name || '') && row.download_url)
+          .sort((a, b) => String(a.name).localeCompare(String(b.name)))
+        : [];
+      if (!snapshots.length) {
+        console.warn(`[bubble-watch] upstream snapshots ${indexUrl} 未列出有效快照`);
+        continue;
+      }
+      const latest = snapshots[snapshots.length - 1];
+      const json = await fetchWithTimeout(cacheBust(latest.download_url), { asJson: true });
+      if (isValidUpstreamPayload(json)) {
+        return {
+          upstream: json,
+          sourceUrl: latest.download_url,
+          sourceKind: 'snapshot',
+          snapshotName: latest.name,
+          snapshotIndexUrl: indexUrl
+        };
+      }
+      console.warn(`[bubble-watch] upstream snapshot ${latest.download_url} 返回结构异常,跳过`);
+    } catch (error) {
+      console.warn(`[bubble-watch] upstream snapshots ${indexUrl} 不可达: ${error.message}`);
+    }
+  }
+  return null;
+}
+
+async function fetchUpstreamReport() {
+  return await fetchUpstreamFromLatestUrls() || await fetchUpstreamFromSnapshots();
+}
+
+async function syncCuratedFromUpstream(config) {
+  const upstreamReport = await fetchUpstreamReport();
+  if (!upstreamReport) {
     console.warn('[bubble-watch] upstream sync: 本轮未拿到上游周报,沿用现有口径,下个周期再查');
     return {
       checked: true,
@@ -719,6 +1045,7 @@ async function syncCuratedFromUpstream(config) {
       summaryUsage: 'not_used_for_production_narrative'
     };
   }
+  const { upstream, sourceUrl, sourceKind, snapshotName, snapshotIndexUrl } = upstreamReport;
   const byId = new Map(upstream.indicators.map((i) => [i.id, i]));
   let adopted = 0;
   for (const bucket of ['curated', 'autoFallback']) {
@@ -742,16 +1069,19 @@ async function syncCuratedFromUpstream(config) {
     upstreamIssue: upstream.issue_number ?? null,
     adopted,
     sourceUrl,
+    sourceKind,
+    snapshotName: snapshotName || null,
+    snapshotIndexUrl: snapshotIndexUrl || null,
     summaryAvailable: typeof upstream.summary?.verdict_desc === 'string' && upstream.summary.verdict_desc.length > 100,
     summaryAdopted: false,
     summaryUsage: 'not_used_for_production_narrative'
   };
   if (adopted) {
-    config.upstreamSync = { sourceUrl, upstreamAsOf: upstream.as_of_date, adoptedCount: adopted, syncedAt: new Date().toISOString() };
+    config.upstreamSync = { sourceUrl, sourceKind, snapshotName: snapshotName || null, upstreamAsOf: upstream.as_of_date, adoptedCount: adopted, syncedAt: new Date().toISOString() };
     fs.writeFileSync(CONFIG_PATH, `${JSON.stringify(config, null, 2)}\n`);
-    console.log(`[bubble-watch] upstream sync: 采纳上游 ${upstream.as_of_date}(Issue ${upstream.issue_number})共 ${adopted} 项,已回写 config`);
+    console.log(`[bubble-watch] upstream sync: 采纳上游 ${upstream.as_of_date}(Issue ${upstream.issue_number}, ${sourceKind})共 ${adopted} 项,已回写 config`);
   } else {
-    console.log(`[bubble-watch] upstream sync: 上游 ${upstream.as_of_date} 不比本地口径新,无采纳`);
+    console.log(`[bubble-watch] upstream sync: 上游 ${upstream.as_of_date}(${sourceKind}) 不比本地口径新,无采纳`);
   }
   return result;
 }
@@ -1154,21 +1484,58 @@ function buildWowChanges(flips, indicators) {
 
 async function main() {
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+  const sourceCandidates = JSON.parse(fs.readFileSync(SOURCE_CANDIDATES_PATH, 'utf8'));
   const history = JSON.parse(fs.readFileSync(HISTORY_PATH, 'utf8'));
   const today = isoDate();
   const upstreamSync = await syncCuratedFromUpstream(config);
-  const ctx = { config };
+  const ctx = { config, sourceCandidates };
 
   const indicators = [];
   const fetchFailures = [];
   let autoCount = 0;
   let curatedCount = 0;
   let fallbackCount = 0;
+  let hybridCount = 0;
 
   for (const def of INDICATOR_DEFS) {
     if (def.mode === 'curated') {
       const entry = config.curated[def.id];
       if (!entry) throw new Error(`config curated 缺指标 ${def.id}`);
+      const candidate = sourceCandidates.indicators?.[def.id];
+      const hybridBuilder = hybridCuratedBuilders[def.id];
+      if (candidate?.automationStatus === 'hybrid_live' && hybridBuilder) {
+        try {
+          const result = await hybridBuilder(ctx);
+          indicators.push({
+            ...baseIndicator(def),
+            source_name: result.source_name || def.source_name,
+            status: result.status,
+            value_display: result.value_display,
+            note: result.note,
+            stale: false,
+            provenance: {
+              mode: 'auto',
+              fetchedAt: new Date().toISOString(),
+              detail: {
+                ...(result.detail || {}),
+                sourceCandidateStatus: candidate.automationStatus,
+                sourceCandidatePrimarySignal: candidate.primarySignal || null,
+                curatedFallbackAsOfDate: entry.asOfDate || null
+              }
+            }
+          });
+          autoCount += 1;
+          hybridCount += 1;
+          console.log(`[bubble-watch] ${def.id}: hybrid public OK (${result.status} ${result.value_display})`);
+          continue;
+        } catch (error) {
+          fetchFailures.push({ id: def.id, reason: `hybrid_public_source_failed: ${error.message}` });
+          indicators.push(buildFallbackIndicator(def, entry, today, `hybrid public source failed: ${error.message}`));
+          fallbackCount += 1;
+          console.warn(`[bubble-watch] ${def.id}: hybrid public FAILED → curated fallback (${error.message})`);
+          continue;
+        }
+      }
       indicators.push(buildCuratedIndicator(def, entry, today));
       curatedCount += 1;
       console.log(`[bubble-watch] ${def.id}: curated (${entry.status})`);
@@ -1199,7 +1566,7 @@ async function main() {
   // 历史:同 ISO 周覆盖,新周追加 + issue 自增
   const entries = [...history.entries];
   const prevForWow = [...entries].reverse().find((e) => e.statuses && isoWeekKey(e.date) !== isoWeekKey(today)) || null;
-  const meta = { autoCount, curatedCount, fallbackCount };
+  const meta = { autoCount, curatedCount, fallbackCount, hybridCount };
   const { summary, scoring, flips } = computeSummary(indicators, today, prevForWow, meta);
 
   const lastIssue = entries.reduce((a, e) => Math.max(a, e.issue_number || 0), 0);
@@ -1233,6 +1600,16 @@ async function main() {
       auto_count: autoCount,
       curated_count: curatedCount,
       fallback_count: fallbackCount,
+      hybrid_count: hybridCount,
+      source_candidates: {
+        contractVersion: sourceCandidates.contractVersion || null,
+        hybrid_live_ids: Object.entries(sourceCandidates.indicators || {})
+          .filter(([, candidate]) => candidate?.automationStatus === 'hybrid_live')
+          .map(([id]) => id),
+        candidate_only_ids: Object.entries(sourceCandidates.indicators || {})
+          .filter(([, candidate]) => candidate?.automationStatus === 'candidate_only')
+          .map(([id]) => id)
+      },
       fetch_failures: fetchFailures,
       fred_key_present: Boolean(FRED_API_KEY),
       upstream_sync: upstreamSync
@@ -1241,7 +1618,7 @@ async function main() {
 
   fs.writeFileSync(OUT_PATH, `${JSON.stringify(output, null, 2)}\n`);
   fs.writeFileSync(HISTORY_PATH, `${JSON.stringify({ ...history, entries }, null, 2)}\n`);
-  console.log(`[bubble-watch] OK — issue ${issueNumber}, ${summary.red_count}红/${summary.yellow_count}黄/${summary.green_count}绿, red_pct ${summary.red_pct}%, verdict ${summary.verdict_label}${scoring.override_active ? '(分类升级)' : ''}, auto ${autoCount}/12, fallback ${fallbackCount}`);
+  console.log(`[bubble-watch] OK — issue ${issueNumber}, ${summary.red_count}红/${summary.yellow_count}黄/${summary.green_count}绿, red_pct ${summary.red_pct}%, verdict ${summary.verdict_label}${scoring.override_active ? '(分类升级)' : ''}, auto/hybrid ${autoCount}, curated ${curatedCount}, fallback ${fallbackCount}`);
 }
 
 main().catch((error) => {

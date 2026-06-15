@@ -415,7 +415,7 @@ PortWatch 字段是 AIS-derived chokepoint proxy,本项目只保存 latest、7d/
 
 ---
 
-### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider (ADR-0016)
+### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)
 
 第二页面「AI 泡沫监测」(`data/bubble-watch.json`,周一 cron)专属,display-only,不进 scoring/decision。复用既有 FRED API(`BAMLH0A0HYM2`/`DFF`/`CPIAUCSL`,`FRED_API_KEY`)与 Yahoo Chart(SPY/RSP/成份股 6mo closes)之外,新增:
 
@@ -426,9 +426,12 @@ PortWatch 字段是 AIS-derived chokepoint proxy,本项目只保存 latest、7d/
 | **stockanalysis.com** | `/stocks/nvda/statistics/`、`/etf/spy/holdings/`、`/stocks/*/financials/{,cash-flow-statement/}?p=quarterly` 公开 HTML | NVDA 远期 PE、S&P Top-5 权重(SPY 持仓代理,服务端只渲染前 ~25 行)、**EDGAR 被封时的季报镜像**(OCF/Capex/Revenue,~20 季服务端渲染) | 公开页代理;Top-5 是 SPY 持仓口径非 S&P 官方权重;季报数字为 $M 口径镜像非 SEC 原始 filing |
 | **Wikipedia** | `List of S&P 500 companies` | 全市场广度成份股名单(~503 只 → Yahoo 实算 %>50DMA) | 名单代理;广度为全成份实算,非 Barchart S5FI 官方序列 |
 | **OpenInsider** | `/screener?s=<ticker>&fd=365&xp=1&xs=1` 公开 HTML | AI 龙头(NVDA/PLTR/AVGO)内部人卖买比 | SEC Form 4 聚合代理;买入不足 $1M 按 $1M 下限折算,不得写成官方 SEC 统计 |
+| **Crunchbase News WordPress API** | `news.crunchbase.com/wp-json/wp/v2/{search,posts}` | `vc_ai_share`、`ai_ipo_pipeline` 的 hybrid public-source 覆盖 | 只解析公开文章的金额/占比/IPO-exit 语义,不是 PitchBook/Crunchbase Pro 数据库,不是正式 IPO calendar;抓取失败 fail-closed 回 `config/bubble-watch-curated.json` |
+| **SEC / DOJ press-release public search** | `sec.gov/newsroom/press-releases?combine=...`、`justice.gov/news/press-releases?search_api_fulltext=...` | `accounting_events` 的 hybrid public-source 覆盖 | 只作为核心 AI 名单的公开执法事件观察,不等同法律尽调;缺命中只能说明公开新闻稿搜索未见新红灯 |
+| **GDELT DOC 2.0 public search** | `api.gdeltproject.org/api/v2/doc/doc` | `ceo_hedging` 的 hybrid public-source 覆盖 | 免费公开新闻搜索,rate-limited 且媒体驱动;仅计 AI bubble/overbuild/capex 相关公开报道和高管线索,失败 fail-closed 回 curated |
 | **aibubble-cn.github.io 上游周报** | `raw.githubusercontent.com/crystal-xiaoxiao/ai-bubble-monitor/main/docs/data/latest.json`(该站页面的实际数据端点) | 编辑/研究类 11 项 + 自动指标 fallback 快照的滚动自动同步;历史 snapshots 仅作写作结构校准参考 | 每轮 build(周一 cron)检查:上游 `as_of_date` 比本地口径新 → 自动采纳 status/value_display/note 并回写 `config/bubble-watch-curated.json`(workflow 随数据一起提交);不可达/未更新 → 沿用现状、下周期再查,超期由 STALE 暴露。上游为人工周报,不得写成 API 实时数据;生产 `summary.verdict_desc` 由本地 `bubble-watch-narrative-v1` evidence-pack 生成,不得直接采纳上游正文 |
 
-编辑/研究类 11 项(VC AI 占比、IPO pipeline、DC ABS、token 量等)无公开 API,人工口径唯一来源 = `config/bubble-watch-curated.json`(带 asOfDate + maxAgeDays,超期自动 STALE)。所有自动指标 fail-closed 回退该文件快照。契约见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)「bubble-watch 专题数据契约」。
+编辑/研究类 11 项改称 **curated-origin**:源候选矩阵登记在 `config/bubble-watch-source-candidates.json`。其中 `vc_ai_share` / `ai_ipo_pipeline` / `accounting_events` / `ceo_hedging` 已为 `hybrid_live`,build 先尝试免费公开源自动覆盖,失败仍 fail-closed 回 `config/bubble-watch-curated.json`;`dc_abs_spread`、`neocloud_credit`、`token_volume_mom`、`token_revenue_ratio`、`arr_2nd_deriv`、`enterprise_deploy`、`capex_reaction` 仍为 `candidate_only`,只登记免费候选源与限制,不得强行自动改灯。所有自动指标 fail-closed 回退 curated 快照。契约见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)「bubble-watch 专题数据契约」。
 
 ---
 

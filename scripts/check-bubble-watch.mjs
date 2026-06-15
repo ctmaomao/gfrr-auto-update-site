@@ -29,6 +29,12 @@ const EXPECTED_IDS = [
   'token_volume_mom', 'token_revenue_ratio', 'arr_2nd_deriv', 'enterprise_deploy', 'cloud_rpo_growth',
   'accounting_events', 'fed_policy', 'capex_reaction', 'ceo_hedging'
 ];
+const CURATED_ORIGIN_IDS = [
+  'vc_ai_share', 'ai_ipo_pipeline', 'dc_abs_spread', 'neocloud_credit',
+  'token_volume_mom', 'token_revenue_ratio', 'arr_2nd_deriv', 'enterprise_deploy',
+  'accounting_events', 'capex_reaction', 'ceo_hedging'
+];
+const HYBRID_LIVE_IDS = ['vc_ai_share', 'ai_ipo_pipeline', 'accounting_events', 'ceo_hedging'];
 const CATEGORIES = ['valuation', 'capital', 'market_structure', 'credit', 'fundamentals', 'macro'];
 const STATUSES = ['red', 'yellow', 'green'];
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
@@ -41,6 +47,7 @@ const pageHtml = read('bubble-watch.html');
 const indexHtml = read('index.html');
 const appJs = read('scripts/app.js');
 const buildSrc = read('scripts/build-bubble-watch.mjs');
+const sourceCandidates = JSON.parse(read('config/bubble-watch-source-candidates.json'));
 
 // ---- 1. contract ----
 check('contract', data.contractVersion === 'bubble-watch-v1', `contractVersion 异常: ${data.contractVersion}`);
@@ -90,6 +97,26 @@ check('contract', (meta.auto_count || 0) + (meta.curated_count || 0) + (meta.fal
 check('contract', meta.upstream_sync?.checked === true, 'meta.upstream_sync 缺失(build 须每轮检查上游周报)');
 check('contract', meta.upstream_sync?.summaryAdopted === false, '不得直接采纳上游 summary.verdict_desc 作为生产正文');
 check('contract', meta.upstream_sync?.summaryUsage === 'not_used_for_production_narrative', 'meta.upstream_sync.summaryUsage 异常');
+check('contract', buildSrc.includes('UPSTREAM_LATEST_URLS') && buildSrc.includes('UPSTREAM_SNAPSHOT_INDEX_URLS'), 'build 须保留上游 latest + snapshots 双层同步入口');
+check('contract', buildSrc.includes('crystal-xiaoxiao.github.io/ai-bubble-monitor/data/latest.json'), 'build 须保留上游 GitHub Pages latest 兜底入口');
+check('contract', buildSrc.includes('contents/docs/data/snapshots?ref=main'), 'build 须保留 GitHub API snapshots 兜底入口');
+check('contract', sourceCandidates.contractVersion === 'bubble-watch-source-candidates-v1', `source candidates contractVersion 异常: ${sourceCandidates.contractVersion}`);
+const candidateEntries = sourceCandidates.indicators || {};
+check('contract', CURATED_ORIGIN_IDS.every((id) => candidateEntries[id]) && Object.keys(candidateEntries).length === CURATED_ORIGIN_IDS.length,
+  `source candidates 必须覆盖 11 个 curated-origin 指标(got ${Object.keys(candidateEntries).length})`);
+for (const id of CURATED_ORIGIN_IDS) {
+  const entry = candidateEntries[id] || {};
+  check('contract', ['hybrid_live', 'candidate_only'].includes(entry.automationStatus), `${id} automationStatus 非法: ${entry.automationStatus}`);
+  check('contract', typeof entry.primarySignal === 'string' && entry.primarySignal.length >= 10, `${id} 缺 primarySignal`);
+  check('contract', Array.isArray(entry.freeSourceCandidates) && entry.freeSourceCandidates.length >= 1, `${id} 缺 freeSourceCandidates`);
+}
+for (const id of HYBRID_LIVE_IDS) {
+  check('contract', candidateEntries[id]?.automationStatus === 'hybrid_live', `${id} 必须保持 hybrid_live`);
+}
+check('contract', buildSrc.includes('SOURCE_CANDIDATES_PATH') && buildSrc.includes('hybridCuratedBuilders'), 'build 须读取 source-candidates 并保留 hybrid curated builders');
+for (const id of HYBRID_LIVE_IDS) {
+  check('contract', buildSrc.includes(`${id}:`), `build 缺 ${id} hybrid builder 绑定`);
+}
 
 // ---- 2. scoring replay ----
 function tierFromPct(p) {
