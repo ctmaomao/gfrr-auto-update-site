@@ -1,12 +1,12 @@
 // build-bubble-watch.mjs — AI 泡沫监测(The Bubble Watch)周度数据管线
 //
-// 23 项指标 × 6 分类:12 项自动实时接入(FRED / Yahoo Chart / SEC EDGAR /
-// StockAnalysis metrics / multpl / slickcharts / OpenInsider),11 项编辑/研究类指标
+// 24 项指标 × 6 分类:12 项自动实时接入(FRED / Yahoo Chart / SEC EDGAR /
+// StockAnalysis metrics / multpl / slickcharts / OpenInsider),12 项编辑/研究类指标
 // 读 config/bubble-watch-curated.json 人工口径。所有自动指标 fail-closed:
 // 抓取失败沿用 curated 快照并按 maxAgeDays 标 STALE,绝不造数。
 //
 // 打分逻辑(复刻原 The Bubble Watch 页):
-//   red_pct = 红灯数 / 23;weighted = (红×1.0 + 黄×0.5) / 23
+//   red_pct = 红灯数 / total;weighted = (红×1.0 + 黄×0.5) / total
 //   分档:<25% 观察期 / 25-40% 中度警戒 / 40-60% 高风险预警 / ≥60% 系统性顶部
 //   分类强制升级:≥2 个分类红灯占比 ≥50% → 判读至少上调到「高风险预警」
 //
@@ -54,7 +54,7 @@ const CATEGORY_ORDER = [
   { key: 'macro', zh: '宏观', en: 'MACRO' }
 ];
 
-// 23 项指标静态定义(名称/分类/阈值文案/来源文案 1:1 复刻原页)
+// 24 项指标静态定义(名称/分类/阈值文案/来源文案 1:1 复刻原页)
 const INDICATOR_DEFS = [
   { id: 'cape', category: 'valuation', name_en: 'Shiller CAPE', name_zh: 'CAPE 周期调整 PE', threshold_text: '>35 红 / 25-35 黄 / <25 绿', source_name: 'multpl.com / GuruFocus', mode: 'auto' },
   { id: 'top5_weight', category: 'valuation', name_en: 'S&P 500 Top-5 Weight', name_zh: '前 5 大权重占比', threshold_text: '>25% 红 / 18-25% 黄 / <18% 绿', source_name: 'SPY holdings (stockanalysis / slickcharts)', mode: 'auto' },
@@ -69,6 +69,7 @@ const INDICATOR_DEFS = [
   { id: 'ai_ipo_pipeline', category: 'market_structure', name_en: 'AI IPO/SPAC Pipeline', name_zh: 'AI 一级市场发行', threshold_text: '洪流=红 / 升温=黄 / 平静=绿', source_name: '一级市场公开报道(编辑口径)', mode: 'curated' },
   { id: 'hy_oas', category: 'credit', name_en: 'HY OAS Spread', name_zh: '高收益债利差', threshold_text: '>500 红 / 350-500 黄 / <350 绿', source_name: 'ICE BofA HY Index (FRED)', mode: 'auto' },
   { id: 'dc_abs_spread', category: 'credit', name_en: 'Data Center ABS Spread', name_zh: '数据中心 ABS 利差', threshold_text: '走阔 50bps+ = 红 / 稳定 = 黄 / 收窄 = 绿', source_name: 'Green Street News / 公开发行定价(编辑口径)', mode: 'curated' },
+  { id: 'debt_capex_ratio', category: 'credit', name_en: 'Debt / Capex Flow Ratio', name_zh: '全口径外部融资/Capex 比', threshold_text: '>60% 红 / 30-60% 黄 / <30% 绿', source_name: 'Morgan Stanley public research / Wind paid cross-check', mode: 'curated' },
   { id: 'neocloud_credit', category: 'credit', name_en: 'Neocloud Credit Events', name_zh: 'Neocloud 信用事件', threshold_text: '任何违约/降级=红', source_name: 'S&P Global Ratings / Morningstar(编辑口径)', mode: 'curated' },
   { id: 'token_volume_mom', category: 'fundamentals', name_en: 'Industry Token Volume MoM', name_zh: 'AI 行业 Token 月度环比', threshold_text: '收缩=红 / 减速=黄 / 加速=绿', source_name: 'OpenRouter 公开披露(研究口径)', mode: 'curated' },
   { id: 'token_revenue_ratio', category: 'fundamentals', name_en: 'Token Growth / Revenue Growth', name_zh: 'Token 增速 / 收入增速 比值', threshold_text: '>2x 红 / 1-2x 黄 / <1x 绿', source_name: '厂商公开披露 / OpenRouter(研究口径)', mode: 'curated' },
@@ -246,18 +247,52 @@ function fmtPct(n, digits = 1, signed = false) {
 // ---------- 数据源 fetchers ----------
 
 async function fredObservations(seriesId, limit) {
-  if (!FRED_API_KEY) throw new Error('FRED_API_KEY 未配置');
+  if (FRED_API_KEY) {
+    try {
+      const params = new URLSearchParams({
+        series_id: seriesId,
+        api_key: FRED_API_KEY,
+        file_type: 'json',
+        sort_order: 'desc',
+        limit: String(limit)
+      });
+      const json = await fetchWithTimeout(`https://api.stlouisfed.org/fred/series/observations?${params}`, { asJson: true });
+      const rows = (json.observations || [])
+        .filter((o) => o.value !== '.' && Number.isFinite(Number(o.value)))
+        .map((o) => ({ date: o.date, value: Number(o.value) }));
+      if (!rows.length) throw new Error(`FRED ${seriesId} API 无有效观测`);
+      return rows; // 倒序:rows[0] 最新
+    } catch (error) {
+      console.warn(`[bubble-watch] FRED ${seriesId} API failed, try keyless CSV fallback: ${error.message}`);
+    }
+  }
+  return fredGraphCsvObservations(seriesId, limit);
+}
+
+async function fredGraphCsvObservations(seriesId, limit) {
+  const now = new Date();
+  const daysBack = seriesId === 'CPIAUCSL'
+    ? Math.max(700, limit * 45)
+    : Math.max(120, limit * 4);
+  const start = new Date(now);
+  start.setUTCDate(start.getUTCDate() - daysBack);
   const params = new URLSearchParams({
-    series_id: seriesId,
-    api_key: FRED_API_KEY,
-    file_type: 'json',
-    sort_order: 'desc',
-    limit: String(limit)
+    id: seriesId,
+    cosd: start.toISOString().slice(0, 10)
   });
-  const json = await fetchWithTimeout(`https://api.stlouisfed.org/fred/series/observations?${params}`, { asJson: true });
-  const rows = (json.observations || [])
-    .filter((o) => o.value !== '.' && Number.isFinite(Number(o.value)))
-    .map((o) => ({ date: o.date, value: Number(o.value) }));
+  const csv = await fetchWithTimeout(`https://fred.stlouisfed.org/graph/fredgraph.csv?${params}`, {
+    headers: { 'User-Agent': UA, Accept: 'text/csv,*/*' },
+    timeoutMs: 20000
+  });
+  const rows = csv.trim().split(/\r?\n/u)
+    .slice(1)
+    .map((line) => {
+      const [date, value] = line.split(',');
+      return { date: String(date || '').trim(), value: Number(value) };
+    })
+    .filter((row) => /^\d{4}-\d{2}-\d{2}$/u.test(row.date) && Number.isFinite(row.value))
+    .slice(-limit)
+    .reverse();
   if (!rows.length) throw new Error(`FRED ${seriesId} 无有效观测`);
   return rows; // 倒序:rows[0] 最新
 }
@@ -674,6 +709,66 @@ function extractPublicSearchLinks(html, source) {
     links.push({ source, href, title, context });
   }
   return links;
+}
+
+function extractTagText(xml, tag) {
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'iu');
+  const m = String(xml || '').match(re);
+  return m ? htmlToText(m[1]) : '';
+}
+
+function extractSecRssItems(xml) {
+  const items = [];
+  const itemRe = /<item\b[^>]*>([\s\S]*?)<\/item>/giu;
+  let m;
+  while ((m = itemRe.exec(xml)) !== null) {
+    const item = m[1];
+    const title = extractTagText(item, 'title');
+    const href = extractTagText(item, 'link');
+    const context = `${extractTagText(item, 'description')} ${extractTagText(item, 'dc:creator')}`.trim();
+    const date = extractTagText(item, 'pubDate');
+    if (title && href) items.push({ source: 'SEC RSS', href, title, context, date });
+  }
+  return items;
+}
+
+async function fetchSecPressReleaseRss() {
+  const xml = await fetchWithTimeout('https://www.sec.gov/news/pressreleases.rss', {
+    headers: { 'User-Agent': EDGAR_UA, Accept: 'application/rss+xml,text/xml,text/html' },
+    timeoutMs: 15000
+  });
+  const items = extractSecRssItems(xml);
+  if (!items.length) throw new Error('SEC press releases RSS 返回空列表');
+  return items;
+}
+
+function unixDateToIso(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return new Date(n * 1000).toISOString().slice(0, 10);
+}
+
+async function fetchDojPressReleaseApi() {
+  const params = new URLSearchParams({
+    sort: 'created',
+    direction: 'DESC',
+    pagesize: '50',
+    fields: 'date,title,url,body'
+  });
+  const json = await fetchWithTimeout(`https://www.justice.gov/api/v1/press_releases.json?${params}`, {
+    asJson: true,
+    headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json' },
+    timeoutMs: 15000
+  });
+  const rows = Array.isArray(json?.results) ? json.results : [];
+  if (!rows.length) throw new Error('DOJ News API press_releases 返回空列表');
+  return rows.map((row) => ({
+    source: 'DOJ News API',
+    href: row.url || null,
+    title: htmlToText(row.title || ''),
+    context: htmlToText(row.body || ''),
+    date: unixDateToIso(row.date) || String(row.date || '')
+  })).filter((row) => row.title || row.context);
 }
 
 async function fetchPublicSearchPage(url, source) {
@@ -1105,37 +1200,37 @@ async function fetchAiIpoPipelineFromCrunchbase() {
 }
 
 async function fetchAccountingEventsFromPublicSearch() {
-  const pages = [
-    { source: 'SEC', url: 'https://www.sec.gov/newsroom/press-releases?combine=artificial%20intelligence%20accounting%20fraud' },
-    { source: 'SEC', url: 'https://www.sec.gov/newsroom/press-releases?combine=Super%20Micro%20accounting' },
-    { source: 'DOJ', url: 'https://www.justice.gov/news/press-releases?search_api_fulltext=artificial%20intelligence%20accounting%20fraud' },
-    { source: 'DOJ', url: 'https://www.justice.gov/news/press-releases?search_api_fulltext=round-tripping%20technology' }
+  const sources = [
+    { source: 'SEC RSS', fetcher: fetchSecPressReleaseRss },
+    { source: 'DOJ News API', fetcher: fetchDojPressReleaseApi },
+    { source: 'SEC search:AI accounting', fetcher: () => fetchPublicSearchPage('https://www.sec.gov/newsroom/press-releases?combine=artificial%20intelligence%20accounting%20fraud', 'SEC') },
+    { source: 'SEC search:Super Micro accounting', fetcher: () => fetchPublicSearchPage('https://www.sec.gov/newsroom/press-releases?combine=Super%20Micro%20accounting', 'SEC') }
   ];
   const currentYear = new Date().getUTCFullYear();
   const recentYearRe = new RegExp(`\\b(${currentYear}|${currentYear - 1})\\b`, 'u');
   const coreNameRe = /\b(NVIDIA|NVDA|Super Micro|SMCI|CoreWeave|Oracle|Broadcom|OpenAI|Anthropic|Databricks|Cerebras|Microsoft|Meta|Alphabet|Google|Amazon|AWS)\b/iu;
   const formalEventRe = /\b(accounting|fraud|round[-\s]?tripping|misstatement|charged|charges|settled|settlement|enforcement|indictment)\b/iu;
   const events = [];
-  const pageFailures = [];
-  let checkedPages = 0;
-  for (const page of pages) {
+  const sourceFailures = [];
+  let checkedSources = 0;
+  for (const source of sources) {
     let links = [];
     try {
-      links = await retry(() => fetchPublicSearchPage(page.url, page.source), `${page.source} accounting search`, 1);
-      checkedPages += 1;
+      links = await retry(source.fetcher, `${source.source} accounting search`, 1);
+      checkedSources += 1;
     } catch (error) {
-      pageFailures.push({ source: page.source, reason: error.message });
-      console.warn(`[bubble-watch] ${page.source} accounting search failed: ${error.message}`);
+      sourceFailures.push({ source: source.source, reason: error.message });
+      console.warn(`[bubble-watch] ${source.source} accounting search failed: ${error.message}`);
       continue;
     }
     for (const link of links) {
-      const haystack = `${link.title} ${link.context}`;
+      const haystack = `${link.title} ${link.context} ${link.date || ''}`;
       if (!recentYearRe.test(haystack)) continue;
       if (coreNameRe.test(haystack) && formalEventRe.test(haystack)) events.push(link);
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
-  if (!checkedPages) throw new Error(`SEC/DOJ public search 全部失败: ${pageFailures.map((f) => `${f.source}:${f.reason}`).join('; ')}`);
+  if (!checkedSources) throw new Error(`SEC/DOJ official sources 全部失败: ${sourceFailures.map((f) => `${f.source}:${f.reason}`).join('; ')}`);
   const unique = [];
   const seen = new Set();
   for (const event of events) {
@@ -1148,11 +1243,206 @@ async function fetchAccountingEventsFromPublicSearch() {
   return {
     status,
     value_display: unique.length ? `${unique.length} 件` : '0 件',
-    source_name: 'SEC / DOJ public press-release search',
+    source_name: 'SEC RSS / DOJ News API official monitor',
     note: unique.length
-      ? `SEC/DOJ 公开新闻稿近两年检索到 ${unique.length} 条核心 AI 名单会计/欺诈/round-tripping 正式事件线索,首条「${compactSnippet(unique[0].title, 64)}」;按口径任何正式事件即红。`
-      : 'SEC/DOJ 公开新闻稿近两年检索未命中核心 AI 名单的会计造假、round-tripping 或欺诈正式事件;该项仍只能说明公开执法搜索未见新红灯,不能替代完整法律尽调。判级:任何=红 / 调查=黄 / 无=绿',
-    detail: { source: 'SEC/DOJ public search pages', checkedPages, pageFailures, eventCount: unique.length, events: unique.slice(0, 5) }
+      ? `SEC RSS/DOJ News API 官方新闻稿近两年监测到 ${unique.length} 条核心 AI 名单会计/欺诈/round-tripping 正式事件线索,首条「${compactSnippet(unique[0].title, 64)}」;按口径任何正式事件即红。`
+      : 'SEC RSS 与 DOJ News API 官方新闻稿近两年未命中核心 AI 名单的会计造假、round-tripping 或欺诈正式事件;该项仍只能说明公开执法监测未见新红灯,不能替代完整法律尽调。判级:任何=红 / 调查=黄 / 无=绿',
+    detail: { source: 'SEC RSS + DOJ News API official monitor', checkedSources, sourceFailures, eventCount: unique.length, events: unique.slice(0, 5) }
+  };
+}
+
+async function fetchDebtCapexRatioFromPublicResearch() {
+  const url = 'https://www.morganstanley.com/insights/articles/ai-market-trends-institute-2026';
+  const html = await fetchWithTimeout(url, { headers: { 'User-Agent': BROWSER_UA }, timeoutMs: 15000 });
+  const text = htmlToText(html);
+  const totalMatch = text.match(/Est\.\s*\$?([0-9]+(?:\.[0-9]+)?)\s*tr\s+Global Capex/iu)
+    || text.match(/\$?([0-9]+(?:\.[0-9]+)?)\s*trillion[^.]{0,120}?data center construction/iu);
+  const cashMatch = text.match(/\$?([0-9]+(?:\.[0-9]+)?)\s*tr\s+Covered by Hyperscaler Cash Flows/iu);
+  const corporateDebtMatch = text.match(/\$?([0-9]+(?:\.[0-9]+)?)\s*bn\s+Corporate Debt Issuance/iu);
+  const securitizedMatch = text.match(/\$?([0-9]+(?:\.[0-9]+)?)\s*bn\s+Securitized Credit Inss?uance/iu);
+  const privateCreditMatch = text.match(/\$?([0-9]+(?:\.[0-9]+)?)\s*bn\s+Opportunity for Private Credit/iu);
+  const otherCapitalMatch = text.match(/\$?([0-9]+(?:\.[0-9]+)?)\s*bn\s+Other Capital/iu);
+  const totalCapexT = totalMatch ? Number(totalMatch[1]) : null;
+  const hyperscalerCashFlowT = cashMatch ? Number(cashMatch[1]) : null;
+  const corporateDebtT = corporateDebtMatch ? Number(corporateDebtMatch[1]) / 1000 : null;
+  const securitizedCreditT = securitizedMatch ? Number(securitizedMatch[1]) / 1000 : null;
+  const privateCreditT = privateCreditMatch ? Number(privateCreditMatch[1]) / 1000 : null;
+  const otherCapitalT = otherCapitalMatch ? Number(otherCapitalMatch[1]) / 1000 : null;
+  if (![totalCapexT, hyperscalerCashFlowT, corporateDebtT, securitizedCreditT, privateCreditT, otherCapitalT].every(Number.isFinite)) {
+    throw new Error('Morgan Stanley AI capex financing split 解析失败');
+  }
+  const externalFundingGapT = totalCapexT - hyperscalerCashFlowT;
+  const externalFundingRatio = (externalFundingGapT / totalCapexT) * 100;
+  const debtLikeFundingT = corporateDebtT + securitizedCreditT + privateCreditT;
+  const debtLikeRatio = (debtLikeFundingT / totalCapexT) * 100;
+  const status = externalFundingRatio > 60 ? 'red' : externalFundingRatio >= 30 ? 'yellow' : 'green';
+  const display = `≈${Math.round(externalFundingRatio)}%`;
+  let windNews = { status: WIND_API_KEY ? 'not_checked' : 'skipped_no_wind_key' };
+  if (WIND_API_KEY) {
+    try {
+      const items = await fetchWindNewsEvidence('AI数据中心融资缺口债务资本开支Morgan Stanley', 'debt/capex cross-check', 3);
+      windNews = {
+        status: 'checked',
+        itemCount: items.length,
+        topTitles: items.slice(0, 3).map((item) => ({ title: item.title || null, date: item.date || null, relevance: item.relevance ?? null }))
+      };
+    } catch (error) {
+      windNews = { status: 'error', reason: error.message };
+    }
+  }
+  return {
+    status,
+    value_display: display,
+    source_name: 'Morgan Stanley public research + Wind paid cross-check',
+    note: `Morgan Stanley 公开研究页解析:2025-2028 数据中心总 capex 约 $${totalCapexT.toFixed(1)}T,其中 hyperscaler cash flows 覆盖约 $${hyperscalerCashFlowT.toFixed(1)}T,隐含外部融资缺口约 $${externalFundingGapT.toFixed(1)}T,占 capex ${display};债务/类债子项(公司债、ABS/CMBS、private credit/JV debt)约 $${debtLikeFundingT.toFixed(2)}T,占 capex ≈${Math.round(debtLikeRatio)}%。本项以外部融资缺口/Capex 为主口径,不是单一债券发行额。阈值:>60% 红 / 30-60% 黄 / <30% 绿`,
+    detail: {
+      source: 'Morgan Stanley public AI capex financing split',
+      url,
+      totalCapexT,
+      hyperscalerCashFlowT,
+      externalFundingGapT,
+      externalFundingRatio,
+      debtLikeFundingT,
+      debtLikeRatio,
+      componentsT: { corporateDebtT, securitizedCreditT, privateCreditT, otherCapitalT },
+      windNews
+    }
+  };
+}
+
+function windNewsHaystack(item) {
+  return `${item.title || ''} ${item.content || ''}`;
+}
+
+async function fetchAiIpoPipelineFromWindNews(primaryError) {
+  const items = await fetchWindNewsEvidence('AI IPO OpenAI Anthropic Databricks Cerebras SpaceX上市退出', 'AI IPO pipeline fallback', 8);
+  const names = ['OpenAI', 'Anthropic', 'Databricks', 'Cerebras', 'SpaceX', 'CoreWeave', 'Scale AI'];
+  const evidence = items.filter((item) => /\b(IPO|IPOs|public|listing|exit|exits|S-1|Nasdaq|NYSE)\b|上市|挂牌|退出/iu.test(windNewsHaystack(item)));
+  const nameHits = new Set();
+  for (const item of evidence) {
+    const haystack = windNewsHaystack(item);
+    for (const name of names) {
+      if (new RegExp(name.replace(/\s+/gu, '\\s+'), 'iu').test(haystack)) nameHits.add(name);
+    }
+  }
+  let status = 'green';
+  let display = '平静';
+  if (evidence.length >= 4 || nameHits.size >= 4) {
+    status = 'red';
+    display = '洪流';
+  } else if (evidence.length >= 1 || nameHits.size >= 2) {
+    status = 'yellow';
+    display = '升温';
+  }
+  return {
+    status,
+    value_display: display,
+    source_name: 'Wind MCP paid final news fallback',
+    note: `Crunchbase 免费源失败(${compactSnippet(primaryError?.message || primaryError, 90)})后启用 Wind 付费新闻兜底:检索到 AI IPO/exit 相关报道 ${evidence.length} 条,涉及 ${nameHits.size ? [...nameHits].join('/') : '核心名单未集中出现'};按同一阈值判为「${display}」。判级:洪流=红 / 升温=黄 / 平静=绿`,
+    detail: {
+      source: 'Wind MCP financial_docs.get_financial_news',
+      primarySourceFailure: primaryError?.message || String(primaryError || ''),
+      evidenceCount: evidence.length,
+      nameHits: [...nameHits],
+      topArticles: evidence.slice(0, 5).map((item) => ({ title: item.title || null, date: item.date || null, relevance: item.relevance ?? null }))
+    }
+  };
+}
+
+async function fetchAccountingEventsFromWindNews(primaryError) {
+  const items = await fetchWindNewsEvidence('AI会计造假 round-tripping SEC DOJ NVIDIA Super Micro OpenAI CoreWeave', 'accounting-events fallback', 8);
+  const coreNameRe = /\b(NVIDIA|NVDA|Super Micro|SMCI|CoreWeave|Oracle|Broadcom|OpenAI|Anthropic|Databricks|Cerebras|Microsoft|Meta|Alphabet|Google|Amazon|AWS)\b/iu;
+  const formalEventRe = /\b(accounting|fraud|round[-\s]?tripping|misstatement|charged|charges|settled|settlement|enforcement|indictment)\b|会计|造假|欺诈|执法|起诉|调查|和解/iu;
+  const events = items.filter((item) => {
+    const haystack = windNewsHaystack(item);
+    return coreNameRe.test(haystack) && formalEventRe.test(haystack);
+  });
+  const status = events.length ? 'red' : 'green';
+  return {
+    status,
+    value_display: events.length ? `${events.length} 件` : '0 件',
+    source_name: 'Wind MCP paid final news fallback',
+    note: `SEC RSS/DOJ API 官方源失败(${compactSnippet(primaryError?.message || primaryError, 90)})后启用 Wind 付费新闻兜底:核心 AI 名单会计/欺诈/round-tripping 正式事件线索 ${events.length} 条。该项仍是新闻/公告语义监测,不能替代法律尽调。判级:任何=红 / 调查=黄 / 无=绿`,
+    detail: {
+      source: 'Wind MCP financial_docs.get_financial_news',
+      primarySourceFailure: primaryError?.message || String(primaryError || ''),
+      eventCount: events.length,
+      events: events.slice(0, 5).map((item) => ({ title: item.title || null, date: item.date || null, relevance: item.relevance ?? null }))
+    }
+  };
+}
+
+async function fetchTokenRevenueRatioFromWindNews(primaryError) {
+  const items = await fetchWindNewsEvidence('OpenRouter token volume revenue growth Anthropic ARR AI token spend', 'token/revenue fallback', 8);
+  const text = items.map(windNewsHaystack).join('\n');
+  const ratioMatch = text.match(/([0-9]+(?:\.[0-9]+)?)\s*x[^.\n]{0,80}?(?:token|revenue|spend|收入|增速)/iu)
+    || text.match(/(?:token|收入|spend|revenue)[^.\n]{0,80}?([0-9]+(?:\.[0-9]+)?)\s*x/iu);
+  if (!ratioMatch) throw new Error('Wind token/revenue news 未解析到可判级 ratio');
+  const ratio = Number(ratioMatch[1]);
+  if (!Number.isFinite(ratio) || ratio <= 0 || ratio > 10) throw new Error(`Wind token/revenue ratio 越界:${ratioMatch[1]}`);
+  const status = ratio > 2 ? 'red' : ratio >= 1 ? 'yellow' : 'green';
+  return {
+    status,
+    value_display: `~${ratio.toFixed(1)}x`,
+    source_name: 'Wind MCP paid final news fallback',
+    note: `OpenRouter 免费 token/spend proxy 失败(${compactSnippet(primaryError?.message || primaryError, 90)})后启用 Wind 付费新闻兜底,从公开报道语义解析 token/revenue 增速比约 ${ratio.toFixed(1)}x。该项是 paid news proxy,不是厂商确认收入。阈值:>2x 红 / 1-2x 黄 / <1x 绿`,
+    detail: {
+      source: 'Wind MCP financial_docs.get_financial_news',
+      primarySourceFailure: primaryError?.message || String(primaryError || ''),
+      ratio,
+      topArticles: items.slice(0, 5).map((item) => ({ title: item.title || null, date: item.date || null, relevance: item.relevance ?? null }))
+    }
+  };
+}
+
+async function fetchEnterpriseDeployFromWindNews(primaryError) {
+  const items = await fetchWindNewsEvidence('企业AI生产部署率 Google Cloud Deloitte McKinsey production deployment', 'enterprise deployment fallback', 8);
+  const text = items.map(windNewsHaystack).join('\n');
+  const pctMatches = [...text.matchAll(/([0-9]{1,2})\s*%[^.\n。；;]{0,100}(?:production|deploy|deployment|生产|部署|落地)/giu)]
+    .map((m) => Number(m[1]))
+    .filter((n) => Number.isFinite(n) && n >= 10 && n <= 95);
+  if (!pctMatches.length) throw new Error('Wind enterprise deployment news 未解析到生产部署百分比');
+  const pct = Math.max(...pctMatches);
+  const status = pct < 50 ? 'red' : pct <= 65 ? 'yellow' : 'green';
+  return {
+    status,
+    value_display: `~${pct}%`,
+    source_name: 'Wind MCP paid final news fallback',
+    note: `Google/Deloitte 免费源失败(${compactSnippet(primaryError?.message || primaryError, 90)})后启用 Wind 付费新闻兜底,从企业 AI 生产部署报道中解析可用百分比约 ${pct}%。该项是 survey/news proxy,不等同所有企业 AI use case。阈值:<50%=红 / 50-65%=黄 / >65%=绿`,
+    detail: {
+      source: 'Wind MCP financial_docs.get_financial_news',
+      primarySourceFailure: primaryError?.message || String(primaryError || ''),
+      parsedPcts: pctMatches.slice(0, 8),
+      topArticles: items.slice(0, 5).map((item) => ({ title: item.title || null, date: item.date || null, relevance: item.relevance ?? null }))
+    }
+  };
+}
+
+async function fetchCapexReactionFromWindNews(primaryError) {
+  const items = await fetchWindNewsEvidence('AI资本开支 市场反应 hyperscaler capex stock selloff Microsoft Meta Amazon Google Oracle', 'capex reaction fallback', 8);
+  const penaltyRe = /selloff|sold off|shares fell|shares down|punish|pressure|concern|担忧|下跌|暴跌|承压|惩罚|质疑/iu;
+  const capexRe = /\b(capex|capital expenditure|AI spending|data center)\b|资本开支|数据中心|AI支出/iu;
+  const penaltyItems = items.filter((item) => penaltyRe.test(windNewsHaystack(item)) && capexRe.test(windNewsHaystack(item)));
+  let status = 'green';
+  let display = '奖励';
+  if (penaltyItems.length >= 3) {
+    status = 'red';
+    display = '系统性惩罚';
+  } else if (penaltyItems.length >= 1) {
+    status = 'yellow';
+    display = '选择性惩罚';
+  }
+  return {
+    status,
+    value_display: display,
+    source_name: 'Wind MCP paid final news fallback',
+    note: `StockAnalysis/Yahoo capex reaction proxy 失败(${compactSnippet(primaryError?.message || primaryError, 90)})后启用 Wind 付费新闻兜底:AI capex 与股价承压/质疑相关报道 ${penaltyItems.length} 条,按新闻事件代理判为「${display}」。该项低于价格窗口实算优先级。判级:系统性惩罚=红 / 偶发=黄 / 奖励=绿`,
+    detail: {
+      source: 'Wind MCP financial_docs.get_financial_news',
+      primarySourceFailure: primaryError?.message || String(primaryError || ''),
+      penaltyCount: penaltyItems.length,
+      topArticles: penaltyItems.slice(0, 5).map((item) => ({ title: item.title || null, date: item.date || null, relevance: item.relevance ?? null }))
+    }
   };
 }
 
@@ -1600,6 +1890,27 @@ function extractWindNewsItems(json) {
   return Array.isArray(items) ? items : [];
 }
 
+function normalizeWindNewsItem(item) {
+  return {
+    title: htmlToText(item?.title || ''),
+    content: htmlToText(item?.content || item?.summary || ''),
+    date: item?.date || item?.datetime || item?.publish_time || null,
+    url: item?.url || null,
+    relevance: item?.relevance ?? null,
+    doc_type: item?.doc_type || null
+  };
+}
+
+async function fetchWindNewsEvidence(query, label, topK = 5) {
+  const json = await windMcpCall('financial_docs', 'get_financial_news', {
+    query,
+    top_k: topK
+  });
+  const items = extractWindNewsItems(json).map(normalizeWindNewsItem);
+  if (!items.length) throw new Error(`Wind ${label} news 返回空列表`);
+  return items;
+}
+
 function extractDataCenterAbsRows(json) {
   const rows = [];
   for (const block of extractWindDataBlocks(json)) {
@@ -1836,6 +2147,7 @@ const hybridCuratedBuilders = {
   vc_ai_share: fetchVcAiShareFromCrunchbase,
   ai_ipo_pipeline: fetchAiIpoPipelineFromCrunchbase,
   dc_abs_spread: fetchDcAbsSpreadFromWind,
+  debt_capex_ratio: fetchDebtCapexRatioFromPublicResearch,
   neocloud_credit: fetchNeocloudCreditFromPublicMonitor,
   token_volume_mom: fetchTokenVolumeMomFromOpenRouter,
   token_revenue_ratio: fetchTokenRevenueRatioFromOpenRouter,
@@ -1844,6 +2156,14 @@ const hybridCuratedBuilders = {
   accounting_events: fetchAccountingEventsFromPublicSearch,
   capex_reaction: fetchCapexReactionFromPublicProxy,
   ceo_hedging: fetchCeoHedgingWithTieredSources
+};
+
+const windFinalFallbackBuilders = {
+  ai_ipo_pipeline: fetchAiIpoPipelineFromWindNews,
+  accounting_events: fetchAccountingEventsFromWindNews,
+  token_revenue_ratio: fetchTokenRevenueRatioFromWindNews,
+  enterprise_deploy: fetchEnterpriseDeployFromWindNews,
+  capex_reaction: fetchCapexReactionFromWindNews
 };
 
 // ---------- 上游周报同步(aibubble-cn.github.io)----------
@@ -2397,6 +2717,7 @@ async function main() {
   let curatedCount = 0;
   let fallbackCount = 0;
   let hybridCount = 0;
+  let paidWindFallbackCount = 0;
 
   for (const def of INDICATOR_DEFS) {
     if (def.mode === 'curated') {
@@ -2430,8 +2751,48 @@ async function main() {
           console.log(`[bubble-watch] ${def.id}: ${candidate.automationStatus} OK (${result.status} ${result.value_display})`);
           continue;
         } catch (error) {
-          fetchFailures.push({ id: def.id, reason: `${candidate.automationStatus}_source_failed: ${error.message}` });
-          indicators.push(buildFallbackIndicator(def, entry, today, `${candidate.automationStatus} source failed: ${error.message}`));
+          const windFallbackBuilder = windFinalFallbackBuilders[def.id];
+          if (WIND_API_KEY && windFallbackBuilder) {
+            try {
+              const result = await windFallbackBuilder(error, ctx);
+              indicators.push({
+                ...baseIndicator(def),
+                source_name: result.source_name || def.source_name,
+                status: result.status,
+                value_display: result.value_display,
+                note: result.note,
+                stale: false,
+                provenance: {
+                  mode: 'auto',
+                  fetchedAt: new Date().toISOString(),
+                  detail: {
+                    ...(result.detail || {}),
+                    sourceCandidateStatus: candidate.automationStatus,
+                    sourceCandidatePrimarySignal: candidate.primarySignal || null,
+                    paidWindFinalFallback: true,
+                    primarySourceFailure: error.message,
+                    curatedFallbackAsOfDate: entry.asOfDate || null
+                  }
+                }
+              });
+              autoCount += 1;
+              hybridCount += 1;
+              paidWindFallbackCount += 1;
+              console.log(`[bubble-watch] ${def.id}: paid Wind final fallback OK (${result.status} ${result.value_display}) after ${candidate.automationStatus} failure`);
+              continue;
+            } catch (windError) {
+              fetchFailures.push({ id: def.id, reason: `${candidate.automationStatus}_wind_fallback_failed: primary=${error.message}; wind=${windError.message}` });
+              console.warn(`[bubble-watch] ${def.id}: paid Wind final fallback FAILED (${windError.message})`);
+            }
+          } else if (windFallbackBuilder) {
+            fetchFailures.push({ id: def.id, reason: `${candidate.automationStatus}_source_failed_paid_wind_final_fallback_skipped: primary=${error.message}; wind=WIND_API_KEY 未配置或已禁用` });
+          } else {
+            fetchFailures.push({ id: def.id, reason: `${candidate.automationStatus}_source_failed: ${error.message}` });
+          }
+          const fallbackReason = windFallbackBuilder && !WIND_API_KEY
+            ? `${candidate.automationStatus} source failed: ${error.message}; paid Wind final fallback skipped: WIND_API_KEY 未配置或已禁用`
+            : `${candidate.automationStatus} source failed: ${error.message}`;
+          indicators.push(buildFallbackIndicator(def, entry, today, fallbackReason));
           fallbackCount += 1;
           console.warn(`[bubble-watch] ${def.id}: ${candidate.automationStatus} FAILED → curated fallback (${error.message})`);
           continue;
@@ -2502,6 +2863,7 @@ async function main() {
       curated_count: curatedCount,
       fallback_count: fallbackCount,
       hybrid_count: hybridCount,
+      paid_wind_fallback_count: paidWindFallbackCount,
       source_candidates: {
         contractVersion: sourceCandidates.contractVersion || null,
         hybrid_live_ids: Object.entries(sourceCandidates.indicators || {})

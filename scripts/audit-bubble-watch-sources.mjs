@@ -22,6 +22,15 @@ const CHECK_LOG_PATH = path.join(ROOT, 'manual-artifacts', 'bubble-watch-source-
 const args = new Set(process.argv.slice(2));
 const allowPaidWind = args.has('--allow-paid-wind');
 const githubSummary = args.has('--github-summary');
+const EXPECTED_PAID_FALLBACK_IDS = [
+  'dc_abs_spread',
+  'ai_ipo_pipeline',
+  'accounting_events',
+  'token_revenue_ratio',
+  'enterprise_deploy',
+  'capex_reaction',
+  'ceo_hedging'
+];
 
 function relPath(p) {
   return path.join(ROOT, p);
@@ -64,7 +73,7 @@ function indicatorLabel(row) {
 
 function isExpectedPaidSkip(row) {
   return !allowPaidWind &&
-    ['dc_abs_spread', 'ceo_hedging'].includes(row.id) &&
+    EXPECTED_PAID_FALLBACK_IDS.includes(row.id) &&
     row.provenance?.mode === 'auto_fallback' &&
     /WIND_API_KEY|Wind/i.test(String(row.provenance?.reason || ''));
 }
@@ -114,7 +123,7 @@ function buildReport(data, buildResult, checkResult) {
       readOnly: true,
       productionFilesRestored: true,
       windDisabledByDefault: !allowPaidWind,
-      paidFallbackSkipAllowed: !allowPaidWind ? ['dc_abs_spread', 'ceo_hedging'] : []
+      paidFallbackSkipAllowed: !allowPaidWind ? EXPECTED_PAID_FALLBACK_IDS : []
     },
     buildExitCode: buildResult.code,
     checkExitCode: checkResult.code,

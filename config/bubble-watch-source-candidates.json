@@ -1,6 +1,6 @@
 {
   "contractVersion": "bubble-watch-source-candidates-v1",
-  "note": "AI 泡沫监测 11 个 curated-origin 指标的数据源候选矩阵。hybrid_live 表示 build 可先尝试免费公开源自动覆盖; hybrid_paid_optional 表示有付费 API Key 时可尝试自动覆盖、无 Key 或失败仍 fail-closed 回到 config/bubble-watch-curated.json; candidate_only 表示已记录源,但还不够稳定,暂不自动改灯。",
+  "note": "AI 泡沫监测 12 个 curated-origin 指标的数据源候选矩阵。hybrid_live 表示 build 可先尝试免费公开源自动覆盖; hybrid_paid_optional 表示有付费 API Key 时可尝试自动覆盖、无 Key 或失败仍 fail-closed 回到 config/bubble-watch-curated.json; candidate_only 表示已记录源,但还不够稳定,暂不自动改灯。",
   "indicators": {
     "vc_ai_share": {
       "automationStatus": "hybrid_live",
@@ -18,6 +18,15 @@
     "ai_ipo_pipeline": {
       "automationStatus": "hybrid_live",
       "primarySignal": "AI IPO / exit pipeline heat from public startup-market reporting",
+      "paidFallbackCandidates": [
+        {
+          "source": "Wind MCP financial news",
+          "url": "https://aifinmarket.wind.com.cn/#/docs",
+          "cadence": "weekly / fallback only",
+          "role": "paid final fallback when Crunchbase News public API is unavailable",
+          "limitations": "News-language proxy only; not a formal IPO calendar or exchange filing feed."
+        }
+      ],
       "freeSourceCandidates": [
         {
           "source": "Crunchbase News WordPress API",
@@ -127,6 +136,35 @@
         }
       ]
     },
+    "debt_capex_ratio": {
+      "automationStatus": "hybrid_live",
+      "primarySignal": "External financing gap versus AI data-center capex",
+      "paidFallbackCandidates": [
+        {
+          "source": "Wind MCP financial news",
+          "url": "https://aifinmarket.wind.com.cn/#/docs",
+          "cadence": "weekly / fallback and cross-check",
+          "role": "paid news cross-check for AI data-center financing gap, debt issuance, ABS/CMBS and private-credit/JV debt funding",
+          "limitations": "Used as a cross-check and fallback only; builder publishes derived ratios, not raw Wind responses."
+        }
+      ],
+      "freeSourceCandidates": [
+        {
+          "source": "Morgan Stanley public AI market trends research",
+          "url": "https://www.morganstanley.com/insights/articles/ai-market-trends-institute-2026",
+          "cadence": "low-frequency public research update",
+          "role": "parse total data-center capex and financing-source split into an external-financing/capex ratio",
+          "limitations": "Low frequency research estimate; external financing gap is broader than pure bond issuance, so note must not label it as a single debt index."
+        },
+        {
+          "source": "Morgan Stanley public data-center financing-gap PDF",
+          "url": "https://www.morganstanley.com/content/dam/msdotcom/en/assets/pdfs/Research_Bridging-Data-Center-Gap.pdf",
+          "cadence": "research update",
+          "role": "methodology and financing-gap calibration",
+          "limitations": "PDF is not the primary weekly parser; used as calibration and source-review evidence."
+        }
+      ]
+    },
     "neocloud_credit": {
       "automationStatus": "hybrid_live",
       "primarySignal": "Default, downgrade, distressed financing or rating event among neocloud names",
@@ -212,6 +250,15 @@
     "token_revenue_ratio": {
       "automationStatus": "hybrid_live",
       "primarySignal": "Token growth versus reported or estimated AI revenue growth",
+      "paidFallbackCandidates": [
+        {
+          "source": "Wind MCP financial news",
+          "url": "https://aifinmarket.wind.com.cn/#/docs",
+          "cadence": "weekly / fallback only",
+          "role": "paid final fallback when OpenRouter token/spend endpoints are unavailable and a news-parsed ratio is available",
+          "limitations": "News proxy only; must parse an explicit ratio and must not pretend to be vendor recognized revenue."
+        }
+      ],
       "freeSourceCandidates": [
         {
           "source": "OpenRouter public model-ranking chart",
@@ -294,6 +341,15 @@
     "enterprise_deploy": {
       "automationStatus": "hybrid_live",
       "primarySignal": "Enterprise AI production deployment rate",
+      "paidFallbackCandidates": [
+        {
+          "source": "Wind MCP financial news",
+          "url": "https://aifinmarket.wind.com.cn/#/docs",
+          "cadence": "weekly / fallback only",
+          "role": "paid final fallback for survey/news reports containing explicit AI production-deployment percentages",
+          "limitations": "Requires an explicit deployment percentage; otherwise builder must still fail closed to curated."
+        }
+      ],
       "freeSourceCandidates": [
         {
           "source": "Google Cloud ROI of AI public report",
@@ -321,26 +377,44 @@
     "accounting_events": {
       "automationStatus": "hybrid_live",
       "primarySignal": "Formal SEC / DOJ accounting, fraud, round-tripping or enforcement event tied to core AI names",
+      "paidFallbackCandidates": [
+        {
+          "source": "Wind MCP financial news",
+          "url": "https://aifinmarket.wind.com.cn/#/docs",
+          "cadence": "weekly / fallback only",
+          "role": "paid final fallback when SEC RSS and DOJ News API official monitors are unavailable",
+          "limitations": "News/announcement semantic monitor; cannot replace legal diligence or full enforcement databases."
+        }
+      ],
       "freeSourceCandidates": [
         {
-          "source": "SEC press releases",
-          "url": "https://www.sec.gov/newsroom/press-releases",
+          "source": "SEC press releases RSS feed",
+          "url": "https://www.sec.gov/news/pressreleases.rss",
           "cadence": "weekly",
-          "role": "formal enforcement search",
-          "limitations": "Search text must be treated as event evidence, not proof of no misconduct outside SEC coverage."
+          "role": "formal enforcement/newsroom monitor, more stable than search page under runner egress restrictions",
+          "limitations": "Recent RSS monitor only; absence is not proof of no misconduct outside SEC coverage."
         },
         {
-          "source": "DOJ press releases",
-          "url": "https://www.justice.gov/news/press-releases",
+          "source": "DOJ News API press_releases",
+          "url": "https://www.justice.gov/api/v1/press_releases.json",
           "cadence": "weekly",
-          "role": "criminal enforcement search",
-          "limitations": "Generic search pages can be sparse; absence is only a watchlist signal."
+          "role": "official API monitor for recent criminal enforcement press releases",
+          "limitations": "API is locally filtered by watchlist terms; absence is only a watchlist signal."
         }
       ]
     },
     "capex_reaction": {
       "automationStatus": "hybrid_live",
       "primarySignal": "Market reaction to AI capex guidance",
+      "paidFallbackCandidates": [
+        {
+          "source": "Wind MCP financial news",
+          "url": "https://aifinmarket.wind.com.cn/#/docs",
+          "cadence": "weekly / fallback only",
+          "role": "paid final fallback when StockAnalysis/Yahoo numeric proxy is unavailable",
+          "limitations": "News-language proxy has lower priority than price-window calculation; must be marked as paid fallback."
+        }
+      ],
       "freeSourceCandidates": [
         {
           "source": "StockAnalysis quarterly cash-flow pages",

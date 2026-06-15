@@ -1,5 +1,5 @@
 {
-  "_comment": "AI 泡沫监测(Bubble Watch)curated 层:本文件是 11 项编辑/研究类指标的唯一人工口径来源,以及 12 项自动指标的 fail-closed 回退快照。自动指标实时抓取失败时沿用此处快照并按 maxAgeDays 标 STALE;编辑类指标更新本文件即可(改 value/status/note + asOfDate)。本层 display-only,不进 GFRR scoring/decision。",
+  "_comment": "AI 泡沫监测(Bubble Watch)curated 层:本文件是 12 项编辑/研究类指标的唯一人工口径来源,以及 12 项自动指标的 fail-closed 回退快照。自动指标实时抓取失败时沿用此处快照并按 maxAgeDays 标 STALE;编辑类指标更新本文件即可(改 value/status/note + asOfDate)。本层 display-only,不进 GFRR scoring/decision。",
   "curated": {
     "vc_ai_share": {
       "status": "red",
@@ -26,6 +26,15 @@
       "asOfDate": "2026-06-14",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
+      "syncedFromUpstream": true
+    },
+    "debt_capex_ratio": {
+      "status": "yellow",
+      "value_display": "≈50%",
+      "note": "Morgan Stanley 公开研究口径显示 2025-2028 数据中心总 capex 约 $2.9T，其中 hyperscaler cash flows 覆盖约 $1.4T，隐含外部融资缺口约 $1.5T、约占 capex 52%；公司债、ABS/CMBS、private credit/JV debt 等债务/类债资金合计约 $1.15T。该项按外部融资缺口/Capex 主口径列黄灯，不写成单一债券发行额。",
+      "asOfDate": "2026-06-14",
+      "maxAgeDays": 120,
+      "cadence": "low-frequency-research",
       "syncedFromUpstream": true
     },
     "neocloud_credit": {

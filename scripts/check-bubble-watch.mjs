@@ -1,7 +1,7 @@
 // check-bubble-watch.mjs — AI 泡沫监测(Bubble Watch)契约检查
 //
 // leaf 检查:
-//   1. contract   — data/bubble-watch.json schema + 23 指标完整性 + 计数/打分一致
+//   1. contract   — data/bubble-watch.json schema + 指标完整性 + 计数/打分一致
 //   2. scoring    — red_pct 分档 + 分类强制升级规则 replay,verdict 必须可复算
 //   3. freshness  — as_of_date 不得超过 35 天(周更 + 缓冲)
 //   4. provenance — curated/auto_fallback 必带 asOfDate;stale 标记与 maxAgeDays 一致
@@ -25,18 +25,19 @@ const EXPECTED_IDS = [
   'cape', 'top5_weight', 'nvda_fpe',
   'hyperscaler_capex_yoy', 'mag4_fcf_yoy', 'vc_ai_share', 'nvda_invest_revenue',
   'breadth_50d', 'spy_vs_rsp_6m', 'insider_sell_buy', 'ai_ipo_pipeline',
-  'hy_oas', 'dc_abs_spread', 'neocloud_credit',
+  'hy_oas', 'dc_abs_spread', 'debt_capex_ratio', 'neocloud_credit',
   'token_volume_mom', 'token_revenue_ratio', 'arr_2nd_deriv', 'enterprise_deploy', 'cloud_rpo_growth',
   'accounting_events', 'fed_policy', 'capex_reaction', 'ceo_hedging'
 ];
 const CURATED_ORIGIN_IDS = [
-  'vc_ai_share', 'ai_ipo_pipeline', 'dc_abs_spread', 'neocloud_credit',
+  'vc_ai_share', 'ai_ipo_pipeline', 'dc_abs_spread', 'debt_capex_ratio', 'neocloud_credit',
   'token_volume_mom', 'token_revenue_ratio', 'arr_2nd_deriv', 'enterprise_deploy',
   'accounting_events', 'capex_reaction', 'ceo_hedging'
 ];
 const HYBRID_LIVE_IDS = [
   'vc_ai_share',
   'ai_ipo_pipeline',
+  'debt_capex_ratio',
   'neocloud_credit',
   'token_volume_mom',
   'token_revenue_ratio',
@@ -67,7 +68,8 @@ const sourceCandidates = JSON.parse(read('config/bubble-watch-source-candidates.
 check('contract', data.contractVersion === 'bubble-watch-v1', `contractVersion 异常: ${data.contractVersion}`);
 check('contract', Number.isInteger(data.issue_number) && data.issue_number > 0, `issue_number 异常: ${data.issue_number}`);
 check('contract', /^\d{4}-\d{2}-\d{2}$/u.test(data.as_of_date || ''), `as_of_date 异常: ${data.as_of_date}`);
-check('contract', Array.isArray(data.indicators) && data.indicators.length === 23, `indicators 长度 ${data.indicators?.length} ≠ 23`);
+check('contract', Array.isArray(data.indicators) && data.indicators.length === EXPECTED_IDS.length,
+  `indicators 长度 ${data.indicators?.length} ≠ ${EXPECTED_IDS.length}`);
 
 const ids = new Set();
 for (const ind of data.indicators || []) {
@@ -80,17 +82,18 @@ for (const ind of data.indicators || []) {
   check('contract', typeof ind.stale === 'boolean', `${ind.id} stale 非 boolean`);
   check('contract', ['auto', 'curated', 'auto_fallback'].includes(ind.provenance?.mode), `${ind.id} provenance.mode 非法`);
 }
-check('contract', EXPECTED_IDS.every((id) => ids.has(id)) && ids.size === 23, `指标 id 集不等于预登记 23 项 (got ${ids.size})`);
+check('contract', EXPECTED_IDS.every((id) => ids.has(id)) && ids.size === EXPECTED_IDS.length,
+  `指标 id 集不等于预登记 ${EXPECTED_IDS.length} 项 (got ${ids.size})`);
 
 const s = data.summary || {};
 const red = (data.indicators || []).filter((i) => i.status === 'red').length;
 const yellow = (data.indicators || []).filter((i) => i.status === 'yellow').length;
 const green = (data.indicators || []).filter((i) => i.status === 'green').length;
-check('contract', s.total_indicators === 23, `summary.total_indicators ${s.total_indicators}`);
+check('contract', s.total_indicators === EXPECTED_IDS.length, `summary.total_indicators ${s.total_indicators}`);
 check('contract', s.red_count === red && s.yellow_count === yellow && s.green_count === green,
   `summary 计数 ${s.red_count}/${s.yellow_count}/${s.green_count} ≠ 实算 ${red}/${yellow}/${green}`);
-check('contract', Math.abs(s.red_pct - (red / 23) * 100) < 0.06, `red_pct ${s.red_pct} 复算不符`);
-check('contract', Math.abs(s.weighted_risk_score - ((red + 0.5 * yellow) / 23) * 100) < 0.06, `weighted_risk_score ${s.weighted_risk_score} 复算不符`);
+check('contract', Math.abs(s.red_pct - (red / EXPECTED_IDS.length) * 100) < 0.06, `red_pct ${s.red_pct} 复算不符`);
+check('contract', Math.abs(s.weighted_risk_score - ((red + 0.5 * yellow) / EXPECTED_IDS.length) * 100) < 0.06, `weighted_risk_score ${s.weighted_risk_score} 复算不符`);
 const verdictDescBytes = Buffer.byteLength(String(s.verdict_desc || ''), 'utf8');
 check('contract', typeof s.verdict_desc === 'string' && s.verdict_desc.length >= 650, 'verdict_desc 过短/缺失研究员式判读');
 check('contract', verdictDescBytes >= 900 && verdictDescBytes <= 2600, `verdict_desc 字节数 ${verdictDescBytes} 不在 900-2600 预算内`);
@@ -107,7 +110,8 @@ for (const section of s.narrative_plan?.sections || []) {
 }
 
 const meta = data.meta || {};
-check('contract', (meta.auto_count || 0) + (meta.curated_count || 0) + (meta.fallback_count || 0) === 23, 'meta 计数和 ≠ 23');
+check('contract', (meta.auto_count || 0) + (meta.curated_count || 0) + (meta.fallback_count || 0) === EXPECTED_IDS.length,
+  `meta 计数和 ≠ ${EXPECTED_IDS.length}`);
 check('contract', meta.upstream_sync?.checked === true, 'meta.upstream_sync 缺失(build 须每轮检查上游周报)');
 check('contract', meta.upstream_sync?.summaryAdopted === false, '不得直接采纳上游 summary.verdict_desc 作为生产正文');
 check('contract', meta.upstream_sync?.summaryUsage === 'not_used_for_production_narrative', 'meta.upstream_sync.summaryUsage 异常');
@@ -117,7 +121,7 @@ check('contract', buildSrc.includes('contents/docs/data/snapshots?ref=main'), 'b
 check('contract', sourceCandidates.contractVersion === 'bubble-watch-source-candidates-v1', `source candidates contractVersion 异常: ${sourceCandidates.contractVersion}`);
 const candidateEntries = sourceCandidates.indicators || {};
 check('contract', CURATED_ORIGIN_IDS.every((id) => candidateEntries[id]) && Object.keys(candidateEntries).length === CURATED_ORIGIN_IDS.length,
-  `source candidates 必须覆盖 11 个 curated-origin 指标(got ${Object.keys(candidateEntries).length})`);
+  `source candidates 必须覆盖 ${CURATED_ORIGIN_IDS.length} 个 curated-origin 指标(got ${Object.keys(candidateEntries).length})`);
 for (const id of CURATED_ORIGIN_IDS) {
   const entry = candidateEntries[id] || {};
   check('contract', ['hybrid_live', 'hybrid_paid_optional', 'candidate_only'].includes(entry.automationStatus), `${id} automationStatus 非法: ${entry.automationStatus}`);
@@ -195,7 +199,7 @@ check('history', entries.length >= 1, 'history entries 为空');
 const last = entries[entries.length - 1] || {};
 check('history', last.date === data.as_of_date, `history 尾项 ${last.date} ≠ as_of_date ${data.as_of_date}`);
 check('history', last.red_pct === s.red_pct && last.risk_score === s.weighted_risk_score, 'history 尾项分值与 summary 不符');
-check('history', last.statuses && Object.keys(last.statuses).length === 23, 'history 尾项 statuses 不全');
+check('history', last.statuses && Object.keys(last.statuses).length === EXPECTED_IDS.length, 'history 尾项 statuses 不全');
 const seed = data.history_seed || [];
 check('history', seed.length >= 1 && seed.length <= 10, `history_seed 长度异常 ${seed.length}`);
 check('history', seed.length && seed[seed.length - 1].week === last.week, 'history_seed 尾点与 history 尾项不符');
