@@ -40,6 +40,13 @@
       "primarySignal": "Data-center ABS / secured-debt spread direction",
       "freeSourceCandidates": [
         {
+          "source": "CRE Finance Council Data Center e-primer PDF",
+          "url": "https://www.crefc.org/common/Uploaded%20files/Learn/DataCenters-eprimer-2026.02.25.pdf",
+          "cadence": "low-frequency research update",
+          "role": "public issuance-size and market-structure context for data-center securitization",
+          "limitations": "Provides issuance scale and structural context, not a weekly comparable spread series."
+        },
+        {
           "source": "Green Street News / public article snippets",
           "url": "https://www.greenstreet.com/news/",
           "cadence": "weekly",
@@ -52,6 +59,13 @@
           "cadence": "weekly",
           "role": "deal/rating evidence",
           "limitations": "Evidence of issuance quality, not a comparable spread index."
+        },
+        {
+          "source": "Fitch / S&P / KBRA public data-center presale headlines",
+          "url": "https://www.fitchratings.com/structured-finance/abs",
+          "cadence": "weekly",
+          "role": "candidate monitor for new data-center ABS/CMBS issuance and rating changes",
+          "limitations": "Presale headlines are useful event evidence but do not expose a free continuous spread history; keep candidate_only for spread direction."
         }
       ]
     },
@@ -65,19 +79,47 @@
           "cadence": "weekly",
           "role": "event watchlist for CoreWeave / Nebius / Crusoe / Lambda",
           "limitations": "Negative-event absence requires broad watchlist and search hygiene; keep curated until a robust monitor is reviewed."
+        },
+        {
+          "source": "CoreWeave investor relations / public debt-financing releases",
+          "url": "https://investors.coreweave.com/news/default.aspx",
+          "cadence": "weekly",
+          "role": "public-company financing and notes event monitor",
+          "limitations": "News list is widget-driven and individual release pages can be Cloudflare-blocked; better as reviewed event evidence than hard weekly auto."
+        },
+        {
+          "source": "Nebius newsroom / investor hub public releases",
+          "url": "https://nebius.com/newsroom",
+          "cadence": "weekly",
+          "role": "public-company financing update monitor",
+          "limitations": "Captures company-disclosed financing plans, not rating-agency downgrades across the whole neocloud universe."
+        },
+        {
+          "source": "Fitch / S&P / Moody's public rating headlines",
+          "url": "https://www.fitchratings.com/entity/coreweave-inc-97744349",
+          "cadence": "weekly",
+          "role": "rating-action and debt-rating event monitor",
+          "limitations": "Some pages are client-rendered, paywalled, or search-index-visible but not reliably machine-readable from CI; keep candidate_only until a stable public feed is reviewed."
         }
       ]
     },
     "token_volume_mom": {
-      "automationStatus": "candidate_only",
+      "automationStatus": "hybrid_live",
       "primarySignal": "AI token usage growth",
       "freeSourceCandidates": [
         {
-          "source": "OpenRouter rankings / public API surface",
-          "url": "https://openrouter.ai/rankings",
+          "source": "OpenRouter public rankings API",
+          "url": "https://openrouter.ai/api/frontend/rankings/market-share",
+          "cadence": "weekly",
+          "role": "weekly provider-level token volume proxy, summed into 4w/4w growth",
+          "limitations": "OpenRouter platform proxy, not full-industry token tape; endpoint is frontend-public and can change without notice."
+        },
+        {
+          "source": "OpenRouter State of AI report",
+          "url": "https://openrouter.ai/state-of-ai",
           "cadence": "monthly",
-          "role": "candidate usage proxy",
-          "limitations": "Public page/API currently does not expose a stable monthly total-token field without further reverse engineering or API-key review."
+          "role": "methodology and cross-check for token-volume interpretation",
+          "limitations": "Low-frequency report; useful for calibration, not weekly production values."
         }
       ]
     },
@@ -86,11 +128,18 @@
       "primarySignal": "Token growth versus reported or estimated AI revenue growth",
       "freeSourceCandidates": [
         {
-          "source": "OpenRouter public usage proxy + public company/private-company revenue reporting",
-          "url": "https://openrouter.ai/",
+          "source": "OpenRouter public rankings API + public model pricing catalog",
+          "url": "https://openrouter.ai/api/frontend/rankings/models",
           "cadence": "monthly",
-          "role": "future composite evidence",
-          "limitations": "Private-company revenue estimates are not a stable public API; keep curated until a source-reviewed revenue panel exists."
+          "role": "future token/spend proxy for numerator; could combine model token counts with public pricing",
+          "limitations": "Spend proxy would be OpenRouter-only and still would not equal vendor revenue; denominator requires stable public revenue panel."
+        },
+        {
+          "source": "Menlo Ventures State of Generative AI in the Enterprise",
+          "url": "https://menlovc.com/perspective/2025-the-state-of-generative-ai-in-the-enterprise/",
+          "cadence": "annual / periodic",
+          "role": "enterprise GenAI spend growth benchmark",
+          "limitations": "Low frequency and survey/model-estimate driven; not enough for weekly token/revenue ratio automation."
         }
       ]
     },
@@ -104,19 +153,47 @@
           "cadence": "monthly",
           "role": "private-company revenue estimate evidence",
           "limitations": "Usually estimate-driven and partly paywalled; not safe for hard automatic scoring yet."
+        },
+        {
+          "source": "Public company RPO / AI revenue disclosures via SEC or company IR",
+          "url": "https://www.sec.gov/search-filings",
+          "cadence": "quarterly",
+          "role": "future public-company AI revenue acceleration panel",
+          "limitations": "Does not cover private OpenAI/Anthropic/Sacra-style ARR directly; requires issuer taxonomy and backtest before auto."
+        },
+        {
+          "source": "Menlo Ventures enterprise GenAI spend report",
+          "url": "https://menlovc.com/perspective/2025-the-state-of-generative-ai-in-the-enterprise/",
+          "cadence": "annual / periodic",
+          "role": "spend-growth proxy for AI application layer",
+          "limitations": "Not ARR, not company-level, and too low-frequency for weekly second-derivative classification."
         }
       ]
     },
     "enterprise_deploy": {
-      "automationStatus": "candidate_only",
+      "automationStatus": "hybrid_live",
       "primarySignal": "Enterprise AI production deployment rate",
       "freeSourceCandidates": [
+        {
+          "source": "Google Cloud ROI of AI public report",
+          "url": "https://cloud.google.com/transform/roi-of-ai-how-agents-help-business",
+          "cadence": "periodic",
+          "role": "production AI-agent deployment percentage proxy",
+          "limitations": "Executive survey / Google Cloud framing; production AI agents are narrower than all enterprise AI production use cases."
+        },
+        {
+          "source": "Deloitte State of AI in the Enterprise",
+          "url": "https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/content/state-of-ai-in-the-enterprise.html",
+          "cadence": "periodic",
+          "role": "cross-check for production-project scaling trend",
+          "limitations": "Provides directional production-project context; not always a single comparable percentage."
+        },
         {
           "source": "McKinsey State of AI / Deloitte State of Generative AI reports",
           "url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai",
           "cadence": "quarterly",
           "role": "survey benchmark",
-          "limitations": "Low frequency and access can block data-center fetches; use as source-review candidate, not weekly auto."
+          "limitations": "Low frequency and access can block data-center fetches; used only as calibration/cross-check, not primary weekly source."
         }
       ]
     },
@@ -150,6 +227,20 @@
           "cadence": "weekly",
           "role": "future event-window return calculator",
           "limitations": "Needs earnings-date calendar and capex-guidance text extraction before automatic classification."
+        },
+        {
+          "source": "Yahoo Chart API + manually reviewed earnings-date panel",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/NVDA",
+          "cadence": "quarterly",
+          "role": "candidate event-window return proxy for AI capex guidance reactions",
+          "limitations": "Yahoo quoteSummary/calendar endpoints require crumb or fail in CI; without a reliable earnings calendar and text parser this remains candidate_only."
+        },
+        {
+          "source": "Company IR earnings releases / transcripts",
+          "url": "https://investor.nvidia.com/financial-info/quarterly-results/default.aspx",
+          "cadence": "quarterly",
+          "role": "future capex-guidance text extraction",
+          "limitations": "Requires issuer-specific pages and guidance-language classifier; not safe for weekly auto until source-reviewed."
         }
       ]
     },

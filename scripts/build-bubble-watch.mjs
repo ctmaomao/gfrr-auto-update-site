@@ -485,6 +485,13 @@ async function fetchPublicSearchPage(url, source) {
   return extractPublicSearchLinks(html, source);
 }
 
+function sumFiniteObjectValues(obj) {
+  return Object.values(obj || {}).reduce((sum, value) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? sum + n : sum;
+  }, 0);
+}
+
 // ---------- 各指标构建(auto) ----------
 
 function classifyNumeric(value, redAbove, yellowAbove) {
@@ -895,6 +902,89 @@ async function fetchAccountingEventsFromPublicSearch() {
   };
 }
 
+async function fetchTokenVolumeMomFromOpenRouter() {
+  const json = await fetchWithTimeout('https://openrouter.ai/api/frontend/rankings/market-share', {
+    asJson: true,
+    headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json' }
+  });
+  const rows = (json?.data || [])
+    .filter((row) => /^\d{4}-\d{2}-\d{2}/u.test(row?.x || '') && row?.ys && typeof row.ys === 'object')
+    .map((row) => ({ date: row.x.slice(0, 10), totalTokens: sumFiniteObjectValues(row.ys) }))
+    .filter((row) => row.totalTokens > 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  if (rows.length < 8) throw new Error(`OpenRouter weekly token rows 不足 (${rows.length})`);
+  const latest4 = rows.slice(-4);
+  const prev4 = rows.slice(-8, -4);
+  const prior4 = rows.slice(-12, -8);
+  const sumLatest = latest4.reduce((a, row) => a + row.totalTokens, 0);
+  const sumPrev = prev4.reduce((a, row) => a + row.totalTokens, 0);
+  const sumPrior = prior4.length === 4 ? prior4.reduce((a, row) => a + row.totalTokens, 0) : null;
+  const momPct = ((sumLatest - sumPrev) / sumPrev) * 100;
+  const prevMomPct = sumPrior ? ((sumPrev - sumPrior) / sumPrior) * 100 : null;
+  let status = 'green';
+  let regime = '加速';
+  if (momPct < -2) {
+    status = 'red';
+    regime = '收缩';
+  } else if (momPct < 5 || (prevMomPct !== null && momPct < prevMomPct - 10)) {
+    status = 'yellow';
+    regime = '减速';
+  }
+  const latestWeek = latest4[latest4.length - 1].date;
+  return {
+    status,
+    value_display: `${regime}(${fmtPct(momPct, 1, true)})`,
+    source_name: 'OpenRouter public rankings API',
+    note: `OpenRouter public rankings API 汇总供应商周度 token volume:最近 4 周合计 ${(sumLatest / 1e12).toFixed(2)}T tokens,较前 4 周 ${fmtPct(momPct, 1, true)}${prevMomPct !== null ? `;上一窗口为 ${fmtPct(prevMomPct, 1, true)}` : ''}。该项是 OpenRouter 平台公开代理,不是全行业 token tape。判级:收缩=红 / 减速=黄 / 加速=绿`,
+    detail: {
+      source: 'OpenRouter /api/frontend/rankings/market-share',
+      latestWeek,
+      rows: latest4.map((row) => ({ date: row.date, totalTokens: row.totalTokens })),
+      latest4wTokens: sumLatest,
+      prev4wTokens: sumPrev,
+      momPct,
+      prevMomPct
+    }
+  };
+}
+
+async function fetchEnterpriseDeployFromPublicReports() {
+  const googleHtml = await fetchWithTimeout('https://cloud.google.com/transform/roi-of-ai-how-agents-help-business', {
+    headers: { 'User-Agent': BROWSER_UA }
+  });
+  const googleText = htmlToText(googleHtml);
+  const productionMatch = googleText.match(/for the\s+([0-9]{1,2})%\s+of executives[^.]{0,180}?deploying AI agents in production/iu)
+    || googleText.match(/([0-9]{1,2})%\s+of executives[^.]{0,180}?deploying AI agents in production/iu);
+  if (!productionMatch) throw new Error('Google Cloud AI production deployment percentage 未解析到');
+  const pct = Number(productionMatch[1]);
+  if (!(pct >= 0 && pct <= 100)) throw new Error(`Google Cloud production deployment percentage 越界: ${pct}`);
+  let deloitteSupport = null;
+  try {
+    const deloitteHtml = await fetchWithTimeout('https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/content/state-of-ai-in-the-enterprise.html', {
+      headers: { 'User-Agent': BROWSER_UA },
+      timeoutMs: 12000
+    });
+    const deloitteText = htmlToText(deloitteHtml);
+    const supportMatch = deloitteText.match(/Worker access to AI rose by 50%[^.]{0,180}?≥40% projects in production[^.]{0,120}?double in six months/iu);
+    deloitteSupport = supportMatch ? compactSnippet(supportMatch[0], 180) : null;
+  } catch (error) {
+    deloitteSupport = `Deloitte support fetch failed: ${error.message}`;
+  }
+  const status = pct < 50 ? 'red' : pct <= 65 ? 'yellow' : 'green';
+  return {
+    status,
+    value_display: `~${pct}%`,
+    source_name: 'Google Cloud ROI of AI public report',
+    note: `Google Cloud ROI of AI 公开报告解析:约 ${pct}% 受访高管称组织已在生产中部署 AI agents;Deloitte 同期公开页提示 ≥40% 项目进入 production 的公司数预计继续上升。该项是 enterprise production proxy,不等同所有企业 AI use case。阈值:<50%=红 / 50-65%=黄 / >65%=绿`,
+    detail: {
+      source: 'Google Cloud ROI of AI public report',
+      url: 'https://cloud.google.com/transform/roi-of-ai-how-agents-help-business',
+      productionDeployPct: pct,
+      deloitteSupport
+    }
+  };
+}
+
 async function fetchCeoHedgingFromGdelt() {
   const query = '("AI bubble" OR "artificial intelligence bubble" OR "AI overbuild" OR "AI capex bubble")';
   const params = new URLSearchParams({
@@ -941,6 +1031,8 @@ async function fetchCeoHedgingFromGdelt() {
 const hybridCuratedBuilders = {
   vc_ai_share: fetchVcAiShareFromCrunchbase,
   ai_ipo_pipeline: fetchAiIpoPipelineFromCrunchbase,
+  token_volume_mom: fetchTokenVolumeMomFromOpenRouter,
+  enterprise_deploy: fetchEnterpriseDeployFromPublicReports,
   accounting_events: fetchAccountingEventsFromPublicSearch,
   ceo_hedging: fetchCeoHedgingFromGdelt
 };

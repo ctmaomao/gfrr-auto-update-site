@@ -34,7 +34,7 @@ const CURATED_ORIGIN_IDS = [
   'token_volume_mom', 'token_revenue_ratio', 'arr_2nd_deriv', 'enterprise_deploy',
   'accounting_events', 'capex_reaction', 'ceo_hedging'
 ];
-const HYBRID_LIVE_IDS = ['vc_ai_share', 'ai_ipo_pipeline', 'accounting_events', 'ceo_hedging'];
+const HYBRID_LIVE_IDS = ['vc_ai_share', 'ai_ipo_pipeline', 'token_volume_mom', 'enterprise_deploy', 'accounting_events', 'ceo_hedging'];
 const CATEGORIES = ['valuation', 'capital', 'market_structure', 'credit', 'fundamentals', 'macro'];
 const STATUSES = ['red', 'yellow', 'green'];
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
