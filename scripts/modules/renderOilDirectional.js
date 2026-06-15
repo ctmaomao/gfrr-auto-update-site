@@ -195,7 +195,16 @@ function compactDate(value) {
 }
 function formatMbpd(v) {
   if (!Number.isFinite(v)) return '—';
-  return `${v < 0.1 ? v.toFixed(2) : v.toFixed(1)} mbpd`;
+  return `${Math.abs(v) < 0.1 ? v.toFixed(2) : v.toFixed(1)} mbpd`;
+}
+function formatSignedMbpd(v) {
+  if (!Number.isFinite(v)) return '—';
+  const dp = Math.abs(v) < 0.1 ? 2 : 1;
+  return `${signed(v, dp)} mbpd`;
+}
+function formatMbbl(v) {
+  if (!Number.isFinite(v)) return '—';
+  return `${fixed(v, 0)} mbbl`;
 }
 function formatKBarrels(value) {
   if (!Number.isFinite(value)) return '—';
@@ -409,26 +418,37 @@ function renderGlobalForecastGap(oilData, radarData) {
   const alignment = wpsrAlignment(evidence);
   const macroDrivers = radarData && radarData.macroDrivers ? radarData.macroDrivers : {};
   const spare = macroDrivers.energySpareCapacity || {};
+  const inventory = macroDrivers.energyInventoryBalance || {};
   const crude = evidence.crudeStocksExSpr || {};
   const gasoline = evidence.demandGasolineSupplied || {};
   const distillate = evidence.demandDistillateSupplied || {};
   const asOfText = alignment.dates.length === 1 ? alignment.dates[0] : (alignment.dates.length ? `${alignment.dates.length} 个日期` : '—');
   const spareStatus = spare.sourceStatus ? spare.sourceStatus.spareCapacity : null;
-  const spareText = spareStatus === 'live'
+  const spareText = spareStatus === 'live' || spareStatus === 'fallback'
     ? `${formatMbpd(spare.spareCapacityMbpd)} · ${spare.latestPeriod || '—'} · ${spare.bufferRegime || '状态待核'}`
     : 'EIA STEO 闲置产能源暂不可用';
+  const inventoryStatus = inventory.sourceStatus ? inventory.sourceStatus.inventoryBalance : null;
+  const inventoryUsable = inventoryStatus === 'live' || inventoryStatus === 'fallback';
+  const inventoryText = inventoryUsable
+    ? `OECD商库 ${formatMbbl(inventory.oecdCommercialInventoryMbbl)} · YoY ${signed(inventory.oecdCommercialInventoryYoYMbbl)} mbbl · 全球净抽库 ${formatSignedMbpd(inventory.globalInventoryDrawMbpd)}`
+    : '未接 OECD 商业库存 / 全球净库存变化';
+  const globalDemandText = inventoryUsable
+    ? `全球消费 ${formatMbpd(inventory.worldConsumptionMbpd)} · YoY ${formatSignedMbpd(inventory.worldConsumptionYoYMbpd)}`
+    : '未接全球消费预测';
   const demandText = `美国汽油 ${pct(gasoline.vs5yAvgPct)} / 馏分油 ${pct(distillate.vs5yAvgPct)}`;
-  const status = alignment.aligned ? '需外部月度源' : '周报源需降级';
-  const tone = alignment.aligned ? 'yellow' : '';
+  const status = !alignment.aligned ? '周报源需降级' : inventoryUsable ? 'STEO 月度已接' : '需外部月度源';
+  const tone = inventoryStatus === 'live' && alignment.aligned ? 'green' : 'yellow';
 
   setLeafText('odp-global-forecast-status', status);
   setToneClass('odp-global-forecast-status', 'odp-global-forecast-status', tone);
   setLeafText('odp-global-forecast-us-weekly', `${alignment.liveCount}/${alignment.total} 同周 live · 原油较5年 ${pct(crude.vs5yAvgPct)}`);
-  setLeafText('odp-global-forecast-global-stocks', '未接 OECD / 全球商业库存');
-  setLeafText('odp-global-forecast-demand', `${demandText} · 非全球预测`);
+  setLeafText('odp-global-forecast-global-stocks', inventoryText);
+  setLeafText('odp-global-forecast-demand', `${globalDemandText}; 美国周度 ${demandText}`);
   setLeafText('odp-global-forecast-buffer', spareText);
-  setLeafText('odp-global-forecast-window', `周报截至 ${asOfText} · STEO ${spare.latestPeriod || '—'}`);
-  setLeafText('odp-global-forecast-note', 'Pulse 的 OECD 库存低位、全球需求下修与 OPEC 月报属于全球月度/预测层;本站当前只能用美国 EIA 周报、EIA STEO 闲置产能和公开价格代理做边界解读,不能把外部新闻里的全球库存或需求预测当成站内已验证数据。');
+  setLeafText('odp-global-forecast-window', `周报截至 ${asOfText} · STEO 库存 ${inventory.latestPeriod || '—'} · 闲置 ${spare.latestPeriod || '—'}`);
+  setLeafText('odp-global-forecast-note', inventoryUsable
+    ? 'P6A 已接 EIA STEO OECD 商业库存、全球净库存变化与全球消费慢变量;可用于解释 Pulse 的 OECD 库存/全球需求叙事边界,但它仍是月度估算/预测,不是实时全球商业库存总量、OPEC 月报或油价预测。'
+    : 'Pulse 的 OECD 库存低位、全球需求下修与 OPEC 月报属于全球月度/预测层;本站当前只能用美国 EIA 周报、EIA STEO 闲置产能和公开价格代理做边界解读,不能把外部新闻里的全球库存或需求预测当成站内已验证数据。');
 }
 function renderDataQcLedger(oilData, radarData, worldOrderStressData) {
   const evidence = oilData && oilData.evidence ? oilData.evidence : {};
@@ -438,6 +458,7 @@ function renderDataQcLedger(oilData, radarData, worldOrderStressData) {
     ? worldOrderStressData.marketConfirmationInput
     : {};
   const spare = macroDrivers.energySpareCapacity || {};
+  const inventory = macroDrivers.energyInventoryBalance || {};
   const transport = macroDrivers.energyTransport || {};
   const asOfText = alignment.dates.length === 1 ? alignment.dates[0] : (alignment.dates.length ? `${alignment.dates.length} 个日期` : '—');
   const workerAt = formatUtcMinute(marketInput.updatedAt);
@@ -454,7 +475,7 @@ function renderDataQcLedger(oilData, radarData, worldOrderStressData) {
   setLeafText('odp-qc-ledger-odp', formatUtcMinute(oilData?.builtAt) || '—');
   setLeafText('odp-qc-ledger-daily', formatUtcMinute(radarData?.updatedAt) || '—');
   setLeafText('odp-qc-ledger-worker', `${workerAt || '—'}${workerBrent}${workerAge}`);
-  setLeafText('odp-qc-ledger-monthly', `STEO ${spare.latestPeriod || '—'} · PortWatch ${transport.latestDate || '—'}`);
+  setLeafText('odp-qc-ledger-monthly', `STEO 库存 ${inventory.latestPeriod || '—'} / 闲置 ${spare.latestPeriod || '—'} · PortWatch ${transport.latestDate || '—'}`);
   setLeafText('odp-qc-ledger-note', 'EIA 周报、ODP 构建、Daily 快照、Worker 市场确认、STEO 与 PortWatch 慢变量不在同一时间边界;本区只做时间戳核对和降噪提示,不重算信号,不改变风险打分或决策。');
 }
 function renderSpareCapacity(spare) {
@@ -557,7 +578,7 @@ function renderEnergyAddendum(radarData, worldOrderStressData, oilData) {
   renderDataQcLedger(oilData, radarData, worldOrderStressData);
   renderSpareCapacity(macroDrivers.energySpareCapacity);
   renderEnergyTransport(macroDrivers.energyTransport);
-  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、全球库存/需求缺口、数据时点/QC、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
+  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、OECD 库存/全球净抽库、数据时点/QC、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
 }
 
 function reasonInventory(sig, ev) {

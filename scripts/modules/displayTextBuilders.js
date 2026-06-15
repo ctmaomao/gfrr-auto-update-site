@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-timestamp-qc-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-energy-inventory-balance-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

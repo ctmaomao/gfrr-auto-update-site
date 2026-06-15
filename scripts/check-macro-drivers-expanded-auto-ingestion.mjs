@@ -95,6 +95,28 @@ if (energySpareCapacity !== undefined) {
   }
 }
 
+const energyInventoryBalance = macroDrivers?.energyInventoryBalance;
+if (energyInventoryBalance !== undefined) {
+  assertLayer('macroDrivers.energyInventoryBalance', energyInventoryBalance);
+  if (isPlainObject(energyInventoryBalance)) {
+    assertFiniteOrNull(energyInventoryBalance, 'macroDrivers.energyInventoryBalance', [
+      'oecdCommercialInventoryMbbl',
+      'oecdCommercialInventoryYoYMbbl',
+      'oecdCommercialInventoryVs5yPct',
+      'globalInventoryDrawMbpd',
+      'globalInventoryDraw3mAvgMbpd',
+      'worldConsumptionMbpd',
+      'worldConsumptionYoYMbpd',
+      'oecdConsumptionMbpd'
+    ]);
+    assertStatusKeys(energyInventoryBalance, 'macroDrivers.energyInventoryBalance', ['inventoryBalance'], new Set(['live', 'fallback', 'missing', 'stale']));
+    if (energyInventoryBalance.source !== 'EIA:STEO:PASC_OECD_T3/T3_STCHANGE_WORLD/PATC_WORLD') fail('macroDrivers.energyInventoryBalance.source is not the approved EIA STEO source string');
+    if (energyInventoryBalance.frequency !== 'monthly') fail('macroDrivers.energyInventoryBalance.frequency must be monthly');
+    if (energyInventoryBalance.series?.oecdCommercialInventory !== 'PASC_OECD_T3') fail('macroDrivers.energyInventoryBalance.series.oecdCommercialInventory must be PASC_OECD_T3');
+    if (energyInventoryBalance.series?.globalInventoryDraw !== 'T3_STCHANGE_WORLD') fail('macroDrivers.energyInventoryBalance.series.globalInventoryDraw must be T3_STCHANGE_WORLD');
+  }
+}
+
 const energyTransport = macroDrivers?.energyTransport;
 if (energyTransport !== undefined) {
   assertLayer('macroDrivers.energyTransport', energyTransport);
@@ -189,6 +211,12 @@ const requiredRunDailyMarkers = [
   'buildEnergySpareCapacityApiUrl',
   'parseEnergySpareCapacityRows',
   'energySpareCapacity: macroDrivers.energySpareCapacity',
+  'resolveEnergyInventoryBalance(prevMd.energyInventoryBalance)',
+  'ENERGY_INVENTORY_BALANCE_SOURCE',
+  'ENERGY_INVENTORY_BALANCE_SERIES',
+  'buildEnergyInventoryBalanceApiUrl',
+  'parseEnergyInventoryBalanceRows',
+  'energyInventoryBalance: macroDrivers.energyInventoryBalance',
   'resolveEnergyTransport(prevMd.energyTransport)',
   'ENERGY_TRANSPORT_SOURCE',
   'ENERGY_TRANSPORT_QUERY_URL',
@@ -234,6 +262,7 @@ for (const marker of requiredRunDailyMarkers) {
 const requiredValidateMarkers = [
   'validateMacroDriversShippingFreight(data)',
   'validateMacroDriversEnergySpareCapacity(data)',
+  'validateMacroDriversEnergyInventoryBalance(data)',
   'validateMacroDriversEnergyTransport(data)',
   'validateMacroDriversPolicyExpectations(data)',
   'validateMacroDriversPrivateCreditProxy(data)'
@@ -247,6 +276,10 @@ for (const marker of [
   'macroDrivers.energySpareCapacity',
   'EIA:STEO:COPS_OPEC',
   'COPS_OPEC',
+  'macroDrivers.energyInventoryBalance',
+  'EIA:STEO:PASC_OECD_T3/T3_STCHANGE_WORLD/PATC_WORLD',
+  'PASC_OECD_T3',
+  'T3_STCHANGE_WORLD',
   'macroDrivers.energyTransport',
   'IMFPortWatch:Daily_Chokepoints_Data',
   'usageTermsPinned',
@@ -284,5 +317,5 @@ console.log(
   'Expanded macro-driver auto-ingestion check: PASS ' +
   `(BDTI=${freight.balticDirtyTankerIndex}, ZQ=${policy.fedFundsFutureImpliedRate}, ` +
   `dot=${policy.dotPlotMedianCurrentYear}, minutes=${policy.minutesPolicyTone}, BIZD=${privateCredit.bdcEtfPrice}, CCLFX=${privateCredit.intervalFundNavPrice}, ` +
-  `CDXHY=${privateCredit.cdxHyPrice}, PortWatch=${energyTransport?.sourceStatus?.chokepoints || 'pending'})`
+  `CDXHY=${privateCredit.cdxHyPrice}, STEOInv=${energyInventoryBalance?.sourceStatus?.inventoryBalance || 'pending'}, PortWatch=${energyTransport?.sourceStatus?.chokepoints || 'pending'})`
 );

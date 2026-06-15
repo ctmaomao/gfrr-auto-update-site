@@ -380,6 +380,28 @@ const ENERGY_SPARE_CAPACITY_SOURCE_URL = 'https://www.eia.gov/outlooks/steo/data
 const ENERGY_SPARE_CAPACITY_SERIES_ID = 'COPS_OPEC';
 const ENERGY_SPARE_CAPACITY_FETCH_TIMEOUT_MS = 10000;
 const ENERGY_SPARE_CAPACITY_MAX_PERIOD_AGE_DAYS = 95;
+const ENERGY_INVENTORY_BALANCE_SOURCE = 'EIA:STEO:PASC_OECD_T3/T3_STCHANGE_WORLD/PATC_WORLD';
+const ENERGY_INVENTORY_BALANCE_API_URL = 'https://api.eia.gov/v2/steo/data/';
+const ENERGY_INVENTORY_BALANCE_SOURCE_URL = 'https://www.eia.gov/outlooks/steo/report/global_oil.php';
+const ENERGY_INVENTORY_BALANCE_FETCH_TIMEOUT_MS = 10000;
+const ENERGY_INVENTORY_BALANCE_MAX_PERIOD_AGE_DAYS = 95;
+const ENERGY_INVENTORY_BALANCE_SERIES = Object.freeze({
+  oecdCommercialInventory: 'PASC_OECD_T3',
+  usCommercialInventory: 'PASC_US',
+  otherOecdCommercialInventory: 'PASC_OOECD_T3',
+  globalInventoryDraw: 'T3_STCHANGE_WORLD',
+  usInventoryDraw: 'T3_STCHANGE_US',
+  otherOecdInventoryDraw: 'T3_STCHANGE_OOECD',
+  nonOecdInventoryDraw: 'T3_STCHANGE_NOECD',
+  worldConsumption: 'PATC_WORLD',
+  oecdConsumption: 'PATC_OECD'
+});
+const ENERGY_INVENTORY_BALANCE_CORE_SERIES = [
+  ENERGY_INVENTORY_BALANCE_SERIES.oecdCommercialInventory,
+  ENERGY_INVENTORY_BALANCE_SERIES.globalInventoryDraw,
+  ENERGY_INVENTORY_BALANCE_SERIES.worldConsumption,
+  ENERGY_INVENTORY_BALANCE_SERIES.oecdConsumption
+];
 const ENERGY_TRANSPORT_SOURCE = 'IMFPortWatch:Daily_Chokepoints_Data';
 const ENERGY_TRANSPORT_SOURCE_URL = 'https://portwatch.imf.org/';
 const ENERGY_TRANSPORT_QUERY_URL = 'https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Chokepoints_Data/FeatureServer/0/query';
@@ -6996,6 +7018,336 @@ async function resolveEnergySpareCapacity(prevEnergySpareCapacity) {
   }
 }
 
+function roundEnergyInventoryNumber(value, digits = 2) {
+  if (!Number.isFinite(value)) return null;
+  return +value.toFixed(digits);
+}
+
+function buildMissingEnergyInventoryBalance(reason = 'missing') {
+  return {
+    oecdCommercialInventoryMbbl: null,
+    oecdCommercialInventoryYoYMbbl: null,
+    oecdCommercialInventoryVs5yPct: null,
+    oecdCommercialInventoryDaysOfSupply: null,
+    oecdCommercialInventoryDaysOfSupplyYoY: null,
+    usCommercialInventoryMbbl: null,
+    otherOecdCommercialInventoryMbbl: null,
+    globalInventoryDrawMbpd: null,
+    globalInventoryDraw3mAvgMbpd: null,
+    usInventoryDrawMbpd: null,
+    otherOecdInventoryDrawMbpd: null,
+    nonOecdInventoryDrawMbpd: null,
+    oecdInventoryDrawMbpd: null,
+    worldConsumptionMbpd: null,
+    worldConsumptionYoYMbpd: null,
+    oecdConsumptionMbpd: null,
+    oecdConsumptionYoYMbpd: null,
+    forecast6mOecdCommercialInventoryMbbl: null,
+    forecast6mPeriod: null,
+    forecast12mOecdCommercialInventoryMbbl: null,
+    forecast12mPeriod: null,
+    inventoryRegime: '未知',
+    globalDrawRegime: '未知',
+    latestPeriod: null,
+    latestIsForecast: null,
+    sourceStatus: { inventoryBalance: 'missing' },
+    fetchReason: reason,
+    units: {
+      inventory: 'million barrels, end-of-period',
+      flow: 'million barrels per day',
+      daysOfSupply: 'days'
+    },
+    frequency: 'monthly',
+    source: ENERGY_INVENTORY_BALANCE_SOURCE,
+    sourceUrl: ENERGY_INVENTORY_BALANCE_SOURCE_URL,
+    updatedAt: null,
+    fetchedAt: isoNow,
+    series: { ...ENERGY_INVENTORY_BALANCE_SERIES },
+    limitationZh: 'EIA STEO OECD 商业库存与全球净库存变化为月度估算/预测慢变量;不是实时全球库存、不是全球商业库存总量实测,也不是油价预测。',
+    notes: [
+      'EIA STEO PASC_OECD_T3 为 OECD commercial crude oil and other liquids inventory monthly estimate/forecast。',
+      'T3_STCHANGE_WORLD 为 Total World crude oil and other liquids net inventory withdrawals;正值表示抽库,负值表示累库。',
+      '本层 display-only,不进 values/scoring/decision/execution/position、Brent promotion、World Order weights、Heatmap 或 cross-validation。'
+    ]
+  };
+}
+
+function normalizePreviousEnergyInventoryBalance(prevEnergyInventoryBalance, reason = 'fetch_failed') {
+  if (!prevEnergyInventoryBalance || typeof prevEnergyInventoryBalance !== 'object') {
+    return buildMissingEnergyInventoryBalance(reason);
+  }
+  const oecdCommercialInventoryMbbl = finiteNumberOrNull(prevEnergyInventoryBalance.oecdCommercialInventoryMbbl);
+  const globalInventoryDrawMbpd = finiteNumberOrNull(prevEnergyInventoryBalance.globalInventoryDrawMbpd);
+  if (oecdCommercialInventoryMbbl === null || globalInventoryDrawMbpd === null) {
+    return buildMissingEnergyInventoryBalance(reason);
+  }
+  const latestPeriod = typeof prevEnergyInventoryBalance.latestPeriod === 'string' ? prevEnergyInventoryBalance.latestPeriod : null;
+  const latestAgeDays = periodAgeDays(latestPeriod);
+  if (latestAgeDays === null || latestAgeDays > ENERGY_INVENTORY_BALANCE_MAX_PERIOD_AGE_DAYS) {
+    return {
+      ...buildMissingEnergyInventoryBalance('previous_period_stale'),
+      sourceStatus: { inventoryBalance: 'stale' },
+      latestPeriod,
+      updatedAt: periodToIso(latestPeriod)
+    };
+  }
+  const fallback = buildMissingEnergyInventoryBalance(reason);
+  const numericFields = [
+    'oecdCommercialInventoryMbbl',
+    'oecdCommercialInventoryYoYMbbl',
+    'oecdCommercialInventoryVs5yPct',
+    'oecdCommercialInventoryDaysOfSupply',
+    'oecdCommercialInventoryDaysOfSupplyYoY',
+    'usCommercialInventoryMbbl',
+    'otherOecdCommercialInventoryMbbl',
+    'globalInventoryDrawMbpd',
+    'globalInventoryDraw3mAvgMbpd',
+    'usInventoryDrawMbpd',
+    'otherOecdInventoryDrawMbpd',
+    'nonOecdInventoryDrawMbpd',
+    'oecdInventoryDrawMbpd',
+    'worldConsumptionMbpd',
+    'worldConsumptionYoYMbpd',
+    'oecdConsumptionMbpd',
+    'oecdConsumptionYoYMbpd',
+    'forecast6mOecdCommercialInventoryMbbl',
+    'forecast12mOecdCommercialInventoryMbbl'
+  ];
+  return {
+    ...fallback,
+    ...Object.fromEntries(numericFields.map((key) => [key, finiteNumberOrNull(prevEnergyInventoryBalance[key])])),
+    forecast6mPeriod: typeof prevEnergyInventoryBalance.forecast6mPeriod === 'string' ? prevEnergyInventoryBalance.forecast6mPeriod : null,
+    forecast12mPeriod: typeof prevEnergyInventoryBalance.forecast12mPeriod === 'string' ? prevEnergyInventoryBalance.forecast12mPeriod : null,
+    inventoryRegime: typeof prevEnergyInventoryBalance.inventoryRegime === 'string' ? prevEnergyInventoryBalance.inventoryRegime : fallback.inventoryRegime,
+    globalDrawRegime: typeof prevEnergyInventoryBalance.globalDrawRegime === 'string' ? prevEnergyInventoryBalance.globalDrawRegime : fallback.globalDrawRegime,
+    latestPeriod,
+    latestIsForecast: typeof prevEnergyInventoryBalance.latestIsForecast === 'boolean' ? prevEnergyInventoryBalance.latestIsForecast : null,
+    sourceStatus: { inventoryBalance: 'fallback' },
+    fetchReason: reason,
+    updatedAt: normalizeIsoOrNull(prevEnergyInventoryBalance.updatedAt),
+    fetchedAt: isoNow,
+    units: prevEnergyInventoryBalance.units && typeof prevEnergyInventoryBalance.units === 'object' ? prevEnergyInventoryBalance.units : fallback.units,
+    series: prevEnergyInventoryBalance.series && typeof prevEnergyInventoryBalance.series === 'object' ? prevEnergyInventoryBalance.series : fallback.series,
+    limitationZh: typeof prevEnergyInventoryBalance.limitationZh === 'string' ? prevEnergyInventoryBalance.limitationZh : fallback.limitationZh,
+    notes: Array.isArray(prevEnergyInventoryBalance.notes) && prevEnergyInventoryBalance.notes.length ? prevEnergyInventoryBalance.notes : fallback.notes
+  };
+}
+
+function classifyOecdInventoryRegime(vs5yPct) {
+  if (!Number.isFinite(vs5yPct)) return '未知';
+  if (vs5yPct <= -10) return '极低库存';
+  if (vs5yPct <= -5) return '偏低';
+  if (vs5yPct >= 5) return '偏高';
+  return '正常';
+}
+
+function classifyGlobalDrawRegime(drawMbpd) {
+  if (!Number.isFinite(drawMbpd)) return '未知';
+  if (drawMbpd >= 3) return '急速抽库';
+  if (drawMbpd >= 1) return '抽库';
+  if (drawMbpd <= -1) return '累库';
+  return '小幅变化';
+}
+
+function addYearsToPeriod(period, years) {
+  return addMonthsToPeriod(period, years * 12);
+}
+
+function energyInventoryStartPeriod() {
+  const currentPeriod = isoNow.slice(0, 7);
+  return addMonthsToPeriod(currentPeriod, -84) || `${Number(currentPeriod.slice(0, 4)) - 7}-01`;
+}
+
+function buildEnergyInventoryBalanceApiUrl() {
+  const params = new URLSearchParams();
+  params.set('api_key', EIA_API_KEY);
+  params.append('frequency', 'monthly');
+  params.append('data[0]', 'value');
+  params.append('start', energyInventoryStartPeriod());
+  for (const seriesId of Object.values(ENERGY_INVENTORY_BALANCE_SERIES)) {
+    params.append('facets[seriesId][]', seriesId);
+  }
+  params.append('sort[0][column]', 'period');
+  params.append('sort[0][direction]', 'asc');
+  params.append('offset', '0');
+  params.append('length', '5000');
+  return `${ENERGY_INVENTORY_BALANCE_API_URL}?${params.toString()}`;
+}
+
+function parseEnergyInventoryBalanceRows(payload) {
+  const rows = payload?.response?.data;
+  if (!Array.isArray(rows)) throw new Error('eia:steo:energy-inventory-balance missing response.data');
+  const allowed = new Set(Object.values(ENERGY_INVENTORY_BALANCE_SERIES));
+  return rows
+    .map((row) => ({
+      period: typeof row?.period === 'string' ? row.period : null,
+      value: Number(row?.value),
+      seriesId: typeof row?.seriesId === 'string' ? row.seriesId : null,
+      seriesDescription: typeof row?.seriesDescription === 'string' ? row.seriesDescription : null,
+      unit: typeof row?.unit === 'string' ? row.unit : null
+    }))
+    .filter((row) => (
+      allowed.has(row.seriesId) &&
+      /^\d{4}-\d{2}$/u.test(row.period || '') &&
+      Number.isFinite(row.value)
+    ))
+    .sort((a, b) => a.period.localeCompare(b.period));
+}
+
+function energyInventoryRow(rows, seriesId, period) {
+  return rows.find((row) => row.seriesId === seriesId && row.period === period) || null;
+}
+
+function latestEnergyInventoryPeriod(rows) {
+  const currentPeriod = isoNow.slice(0, 7);
+  const candidates = rows
+    .filter((row) => row.seriesId === ENERGY_INVENTORY_BALANCE_SERIES.oecdCommercialInventory && row.period <= currentPeriod)
+    .map((row) => row.period)
+    .sort();
+  return candidates.at(-1) || null;
+}
+
+function sameMonthAverage(rows, seriesId, period, years = 5) {
+  const values = [];
+  for (let i = 1; i <= years; i++) {
+    const previous = energyInventoryRow(rows, seriesId, addYearsToPeriod(period, -i));
+    if (previous && Number.isFinite(previous.value)) values.push(previous.value);
+  }
+  if (values.length < 3) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function trailingAverageByPeriod(rows, seriesId, period, months = 3) {
+  const values = [];
+  for (let i = 0; i < months; i++) {
+    const previous = energyInventoryRow(rows, seriesId, addMonthsToPeriod(period, -i));
+    if (previous && Number.isFinite(previous.value)) values.push(previous.value);
+  }
+  if (!values.length) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function pickEnergyInventoryForecast(rows, seriesId, targetPeriod) {
+  if (!targetPeriod) return null;
+  return rows.find((row) => row.seriesId === seriesId && row.period === targetPeriod)
+    || rows.find((row) => row.seriesId === seriesId && row.period > targetPeriod)
+    || null;
+}
+
+async function resolveEnergyInventoryBalance(prevEnergyInventoryBalance) {
+  if (!EIA_API_KEY) return normalizePreviousEnergyInventoryBalance(prevEnergyInventoryBalance, 'missing_api_key');
+  try {
+    const payload = await fetchJsonText(
+      buildEnergyInventoryBalanceApiUrl(),
+      'eia:steo:energy-inventory-balance',
+      ENERGY_INVENTORY_BALANCE_FETCH_TIMEOUT_MS,
+      { userAgent: 'GFRRBot/1.0' }
+    );
+    if (payload?.error) throw new Error(`eia:steo:energy-inventory-balance api_error:${payload.error}`);
+    const rows = parseEnergyInventoryBalanceRows(payload);
+    if (!rows.length) throw new Error('eia:steo:energy-inventory-balance no numeric monthly rows');
+    const latestPeriod = latestEnergyInventoryPeriod(rows);
+    if (!latestPeriod) throw new Error('eia:steo:energy-inventory-balance no current-or-historical period');
+    for (const seriesId of ENERGY_INVENTORY_BALANCE_CORE_SERIES) {
+      if (!energyInventoryRow(rows, seriesId, latestPeriod)) {
+        throw new Error(`eia:steo:energy-inventory-balance missing core ${seriesId} for ${latestPeriod}`);
+      }
+    }
+    const latestAgeDays = periodAgeDays(latestPeriod);
+    if (latestAgeDays === null || latestAgeDays > ENERGY_INVENTORY_BALANCE_MAX_PERIOD_AGE_DAYS) {
+      return {
+        ...buildMissingEnergyInventoryBalance('latest_period_stale'),
+        sourceStatus: { inventoryBalance: 'stale' },
+        latestPeriod,
+        updatedAt: periodToIso(latestPeriod)
+      };
+    }
+
+    const S = ENERGY_INVENTORY_BALANCE_SERIES;
+    const current = (seriesId) => energyInventoryRow(rows, seriesId, latestPeriod);
+    const priorYear = (seriesId) => energyInventoryRow(rows, seriesId, addYearsToPeriod(latestPeriod, -1));
+    const value = (seriesId) => finiteNumberOrNull(current(seriesId)?.value);
+    const prevValue = (seriesId) => finiteNumberOrNull(priorYear(seriesId)?.value);
+    const oecdCommercialInventoryMbbl = value(S.oecdCommercialInventory);
+    const oecdConsumptionMbpd = value(S.oecdConsumption);
+    const priorOecdInventory = prevValue(S.oecdCommercialInventory);
+    const priorOecdConsumption = prevValue(S.oecdConsumption);
+    const priorWorldConsumption = prevValue(S.worldConsumption);
+    const oecdDays = (Number.isFinite(oecdCommercialInventoryMbbl) && Number.isFinite(oecdConsumptionMbpd) && oecdConsumptionMbpd > 0)
+      ? oecdCommercialInventoryMbbl / oecdConsumptionMbpd
+      : null;
+    const priorOecdDays = (Number.isFinite(priorOecdInventory) && Number.isFinite(priorOecdConsumption) && priorOecdConsumption > 0)
+      ? priorOecdInventory / priorOecdConsumption
+      : null;
+    const sameMonth5y = sameMonthAverage(rows, S.oecdCommercialInventory, latestPeriod, 5);
+    const forecast6m = pickEnergyInventoryForecast(rows, S.oecdCommercialInventory, addMonthsToPeriod(latestPeriod, 6));
+    const forecast12m = pickEnergyInventoryForecast(rows, S.oecdCommercialInventory, addMonthsToPeriod(latestPeriod, 12));
+    const usInventoryDrawMbpd = value(S.usInventoryDraw);
+    const otherOecdInventoryDrawMbpd = value(S.otherOecdInventoryDraw);
+    const oecdInventoryDrawMbpd = Number.isFinite(usInventoryDrawMbpd) && Number.isFinite(otherOecdInventoryDrawMbpd)
+      ? usInventoryDrawMbpd + otherOecdInventoryDrawMbpd
+      : null;
+    const globalInventoryDrawMbpd = value(S.globalInventoryDraw);
+    const worldConsumptionMbpd = value(S.worldConsumption);
+    const oecdCommercialInventoryVs5yPct = Number.isFinite(oecdCommercialInventoryMbbl) && Number.isFinite(sameMonth5y) && sameMonth5y > 0
+      ? ((oecdCommercialInventoryMbbl - sameMonth5y) / sameMonth5y) * 100
+      : null;
+
+    return {
+      oecdCommercialInventoryMbbl: roundEnergyInventoryNumber(oecdCommercialInventoryMbbl, 2),
+      oecdCommercialInventoryYoYMbbl: Number.isFinite(oecdCommercialInventoryMbbl) && Number.isFinite(priorOecdInventory)
+        ? roundEnergyInventoryNumber(oecdCommercialInventoryMbbl - priorOecdInventory, 2)
+        : null,
+      oecdCommercialInventoryVs5yPct: roundEnergyInventoryNumber(oecdCommercialInventoryVs5yPct, 2),
+      oecdCommercialInventoryDaysOfSupply: roundEnergyInventoryNumber(oecdDays, 1),
+      oecdCommercialInventoryDaysOfSupplyYoY: Number.isFinite(oecdDays) && Number.isFinite(priorOecdDays)
+        ? roundEnergyInventoryNumber(oecdDays - priorOecdDays, 1)
+        : null,
+      usCommercialInventoryMbbl: roundEnergyInventoryNumber(value(S.usCommercialInventory), 2),
+      otherOecdCommercialInventoryMbbl: roundEnergyInventoryNumber(value(S.otherOecdCommercialInventory), 2),
+      globalInventoryDrawMbpd: roundEnergyInventoryNumber(globalInventoryDrawMbpd, 2),
+      globalInventoryDraw3mAvgMbpd: roundEnergyInventoryNumber(trailingAverageByPeriod(rows, S.globalInventoryDraw, latestPeriod, 3), 2),
+      usInventoryDrawMbpd: roundEnergyInventoryNumber(usInventoryDrawMbpd, 2),
+      otherOecdInventoryDrawMbpd: roundEnergyInventoryNumber(otherOecdInventoryDrawMbpd, 2),
+      nonOecdInventoryDrawMbpd: roundEnergyInventoryNumber(value(S.nonOecdInventoryDraw), 2),
+      oecdInventoryDrawMbpd: roundEnergyInventoryNumber(oecdInventoryDrawMbpd, 2),
+      worldConsumptionMbpd: roundEnergyInventoryNumber(worldConsumptionMbpd, 2),
+      worldConsumptionYoYMbpd: Number.isFinite(worldConsumptionMbpd) && Number.isFinite(priorWorldConsumption)
+        ? roundEnergyInventoryNumber(worldConsumptionMbpd - priorWorldConsumption, 2)
+        : null,
+      oecdConsumptionMbpd: roundEnergyInventoryNumber(oecdConsumptionMbpd, 2),
+      oecdConsumptionYoYMbpd: Number.isFinite(oecdConsumptionMbpd) && Number.isFinite(priorOecdConsumption)
+        ? roundEnergyInventoryNumber(oecdConsumptionMbpd - priorOecdConsumption, 2)
+        : null,
+      forecast6mOecdCommercialInventoryMbbl: forecast6m ? roundEnergyInventoryNumber(forecast6m.value, 2) : null,
+      forecast6mPeriod: forecast6m?.period || null,
+      forecast12mOecdCommercialInventoryMbbl: forecast12m ? roundEnergyInventoryNumber(forecast12m.value, 2) : null,
+      forecast12mPeriod: forecast12m?.period || null,
+      inventoryRegime: classifyOecdInventoryRegime(oecdCommercialInventoryVs5yPct),
+      globalDrawRegime: classifyGlobalDrawRegime(globalInventoryDrawMbpd),
+      latestPeriod,
+      latestIsForecast: latestPeriod >= isoNow.slice(0, 7),
+      sourceStatus: { inventoryBalance: 'live' },
+      fetchReason: null,
+      units: {
+        inventory: 'million barrels, end-of-period',
+        flow: 'million barrels per day',
+        daysOfSupply: 'days'
+      },
+      frequency: 'monthly',
+      source: ENERGY_INVENTORY_BALANCE_SOURCE,
+      sourceUrl: ENERGY_INVENTORY_BALANCE_SOURCE_URL,
+      updatedAt: periodToIso(latestPeriod),
+      fetchedAt: isoNow,
+      series: { ...ENERGY_INVENTORY_BALANCE_SERIES },
+      limitationZh: 'EIA STEO OECD 商业库存与全球净库存变化为月度估算/预测慢变量;不是实时全球库存、不是全球商业库存总量实测,也不是油价预测。',
+      notes: buildMissingEnergyInventoryBalance().notes
+    };
+  } catch (err) {
+    return normalizePreviousEnergyInventoryBalance(prevEnergyInventoryBalance, stringifyFetchError(err));
+  }
+}
+
 function roundEnergyTransportNumber(value, digits = 2) {
   if (!Number.isFinite(value)) return null;
   const factor = 10 ** digits;
@@ -8965,6 +9317,7 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     resolveChinaMlf(prevMd.chinaMlf),
     resolveRateVol(prevMd.rateVol),
     resolveEnergySpareCapacity(prevMd.energySpareCapacity),
+    resolveEnergyInventoryBalance(prevMd.energyInventoryBalance),
     resolveEnergyTransport(prevMd.energyTransport)
   ]);
 
@@ -9026,7 +9379,8 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     notes: '债券/利率波动率 MOVE 结构信号 evidence（Yahoo ^MOVE 日频）。'
   };
   const energySpareCapacity = results[24].status === 'fulfilled' ? results[24].value : buildMissingEnergySpareCapacity('resolver_rejected');
-  const energyTransport = results[25].status === 'fulfilled' ? results[25].value : buildMissingEnergyTransport('resolver_rejected');
+  const energyInventoryBalance = results[25].status === 'fulfilled' ? results[25].value : buildMissingEnergyInventoryBalance('resolver_rejected');
+  const energyTransport = results[26].status === 'fulfilled' ? results[26].value : buildMissingEnergyTransport('resolver_rejected');
 
   return {
     fedLiquidity,
@@ -9054,6 +9408,7 @@ async function fetchMacroDrivers(prev, hyOasLive) {
     chinaMlf,
     rateVol,
     energySpareCapacity,
+    energyInventoryBalance,
     energyTransport
   };
 }
@@ -9074,6 +9429,7 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     resolveChinaTsf(prevMd?.chinaTsf),
     resolveChinaMlf(prevMd?.chinaMlf),
     resolveEnergySpareCapacity(prevMd?.energySpareCapacity),
+    resolveEnergyInventoryBalance(prevMd?.energyInventoryBalance),
     resolveEnergyTransport(prevMd?.energyTransport)
   ]);
   return {
@@ -9091,7 +9447,8 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
     chinaTsf: results[11].status === 'fulfilled' ? results[11].value : buildMissingChinaTsf(prevMd?.chinaTsf),
     chinaMlf: results[12].status === 'fulfilled' ? results[12].value : buildMissingChinaMlf(prevMd?.chinaMlf),
     energySpareCapacity: results[13].status === 'fulfilled' ? results[13].value : buildMissingEnergySpareCapacity('resolver_rejected'),
-    energyTransport: results[14].status === 'fulfilled' ? results[14].value : buildMissingEnergyTransport('resolver_rejected')
+    energyInventoryBalance: results[14].status === 'fulfilled' ? results[14].value : buildMissingEnergyInventoryBalance('resolver_rejected'),
+    energyTransport: results[15].status === 'fulfilled' ? results[15].value : buildMissingEnergyTransport('resolver_rejected')
   };
 }
 
@@ -10047,6 +10404,7 @@ async function build() {
       chinaMlf: macroDrivers.chinaMlf,
       rateVol: macroDrivers.rateVol,
       energySpareCapacity: macroDrivers.energySpareCapacity,
+      energyInventoryBalance: macroDrivers.energyInventoryBalance,
       energyTransport: macroDrivers.energyTransport,
       activeSignals: activeSignals.map(s => ({ key: s.key, label: s.label, detail: s.detail, reliability: s.reliability })),
       gatingEvaluation: {

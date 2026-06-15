@@ -391,14 +391,15 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 - 任一 FRED series 拉取失败必须逐 series 降级为 `fallback` 或 `missing`，不得伪造值，不得用 CDX、私募信贷或非公开 loan tape 冒充 CRE 信用压力。
 - `CREACBW027SBOG` 只可显示为公开 aggregate exposure proxy；`VNQ` / `REM` / `CMBS` 只可显示为公开市场代理；均不得写成非公开 CRE 贷款、私募信用 marks、CDX 或 loan tape。
 
-### `macroDrivers.shippingFreight` / `energySpareCapacity` / `energyTransport` / `policyExpectations` / `privateCreditProxy` expanded ingestion contract (v28.0M-74 / M-77 / M-78 / M-79 / M-80 / M-81 / M-83 / Energy Stress Phase 2)
+### `macroDrivers.shippingFreight` / `energySpareCapacity` / `energyInventoryBalance` / `energyTransport` / `policyExpectations` / `privateCreditProxy` expanded ingestion contract (v28.0M-74 / M-77 / M-78 / M-79 / M-80 / M-81 / M-83 / Energy Stress Phase 2 / P6A)
 
-M-74 新增三条 audit-only / display-only 生产数据层；Energy Stress Phase 2 在 owner-approved OPEC implementation 中新增 `macroDrivers.energySpareCapacity`，并在 owner-approved PortWatch implementation 中新增 `macroDrivers.energyTransport`。这些字段均不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor、Invalidation Rules、World Order weights、Global Risk Heatmap 或 cross-validation matrix。
+M-74 新增三条 audit-only / display-only 生产数据层；Energy Stress Phase 2 在 owner-approved OPEC implementation 中新增 `macroDrivers.energySpareCapacity`，并在 owner-approved PortWatch implementation 中新增 `macroDrivers.energyTransport`。P6A 在 owner-approved ODP source-gap follow-up 中新增 `macroDrivers.energyInventoryBalance`,用于把 OECD 商业库存与全球净库存变化慢变量接入 ODP 证据边界说明。这些字段均不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor、Invalidation Rules、World Order weights、Global Risk Heatmap 或 cross-validation matrix。
 
 | Layer | Source | Required fields | Notes |
 |---|---|---|---|
 | `macroDrivers.shippingFreight` | StockQ:BDTI; StockQ:BCTI; StockQ:BDI | `balticDirtyTankerIndex`, `balticCleanTankerIndex`, `balticDryIndex`, per-index daily change, `tankerFreightRegime`, `freightStressRegime`, `sourceStatus` | BDTI / BCTI / BDI 是 shipping / freight pressure proxy；不得影响 Brent promotion |
 | `macroDrivers.energySpareCapacity` | EIA:STEO:COPS_OPEC | `spareCapacityMbpd`, `latestPeriod`, `latestIsForecast`, `forecast12mMbpd`, `forecast18mMbpd`, `bufferRegime`, `sourceStatus.spareCapacity`, `limitationZh` | EIA STEO OPEC surplus crude oil production capacity monthly estimate/forecast；display-only slow variable；不得写成实时物理闲置桶数、OPEC 官方配额执行或油价预测 |
+| `macroDrivers.energyInventoryBalance` | EIA:STEO:PASC_OECD_T3/T3_STCHANGE_WORLD/PATC_WORLD | `oecdCommercialInventoryMbbl`, `oecdCommercialInventoryYoYMbbl`, `oecdCommercialInventoryVs5yPct`, `oecdCommercialInventoryDaysOfSupply`, `globalInventoryDrawMbpd`, `globalInventoryDraw3mAvgMbpd`, `worldConsumptionMbpd`, `worldConsumptionYoYMbpd`, `latestPeriod`, `latestIsForecast`, `forecast6mOecdCommercialInventoryMbbl`, `forecast12mOecdCommercialInventoryMbbl`, `inventoryRegime`, `globalDrawRegime`, `sourceStatus.inventoryBalance`, `series`, `units`, `limitationZh` | EIA STEO OECD commercial inventory + global net inventory withdrawals + global consumption monthly estimate/forecast；display-only slow variable；不得写成实时全球商业库存总量、Kpler/AIS oil-on-water 确认、OPEC 月报或油价预测 |
 | `macroDrivers.energyTransport` | IMFPortWatch:Daily_Chokepoints_Data | `latestDate`, `latestAgeDays`, `windowDays`, `usageTermsPinned`, `redistributionCaveat`, `chokepoints.{suez,panama,bosporus,babElMandeb,malacca,hormuz,capeGoodHope,gibraltar}` compact latest + 7d/30d averages + deviations, `reroutingProxy`, `sourceStatus.chokepoints`, `limitationZh` | PortWatch AIS-derived chokepoint proxy；只提交 compact 派生摘要,不提交 raw AIS-derived history；writer emits `usageTermsPinned=imf_data_terms_pinned` after TOS pin Phase A,while validator temporarily accepts legacy `partial` until Daily proof;`redistributionCaveat=true` 必须保留；不得写成官方贸易统计、封锁确认、战争概率或油价预测 |
 | `macroDrivers.policyExpectations` | FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; CheckMySwap:USD-OIS-public-curve; FederalReserve:FOMC statement/SEP/minutes | `targetLower`, `targetUpper`, `targetMid`, `effectiveFedFundsRate`, `fedFundsFutureImpliedRate`, `fedFundsFuturesCurve`, `sofrFuturesCurve`, `oisForwardCurve`, `dotPlotMedianCurrentYear`, `statementUrl`, `policyTone`, `minutesUrl`, `minutesPolicyTone`, `minutesTopicCounts`, `policyExpectationRegime`, `oisForwardStatus` | Fed dot plot 使用 federalreserve.gov SEP accessible table 的 federal funds median；ZQ=F 与 ZQ monthly futures 是 Fed funds futures proxy；SR3 monthly SOFR futures 是担保融资利率曲线 proxy；CheckMySwap USD OIS public curve 来自 DTCC/CFTC public swap data；`fomcminutesYYYYMMDD.htm` 只做 keyword NLP 计数 |
 | `macroDrivers.privateCreditProxy` | Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; Yahoo:CCLFX; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public | `bdcEtfPrice`, `bdcEtf4wChange`, `pbdcEtfPrice`, `pbdcEtf4wChange`, `seniorLoanEtfPrice`, `seniorLoanEtf4wChange`, `intervalFundNavPrice`, `intervalFundNav4wChange`, `intervalFundNavUpdatedAt`, `intervalFundNavSymbol`, `intervalFundNavStatus`, `hyOas`, `igOas`, `igMinusHyOas`, `cdxHyPrice`, `cdxHyInstrument`, `cdxHyUpdatedAt`, `cdxIgPrice`, `cdxIgInstrument`, `cdxIgUpdatedAt`, `cdxHyStatus`, `cdxIgStatus`, `privateCreditMarksStatus`, `privateCreditProxyRegime`, `sourceStatus` | BIZD/PBDC 是 listed BDC public proxy；SRLN 是 senior loan ETF proxy；CCLFX 是 public interval-fund NAV proxy；HY/IG OAS 是 cash-bond spread proxy；ICE CDX 是 public EOD settlement price；private credit marks 仍只保留 manual/licensed input 状态 |
@@ -416,7 +417,7 @@ M-74 新增三条 audit-only / display-only 生产数据层；Energy Stress Phas
 | `macroDrivers.chinaTsf` | EastMoney:TSF-aggregated-report | `refMonth`, `publishedAt`, `updatedAt`, `source`, `sourceStatus`, `notes`, `stockYoY`, `ytdIncrementYi`, `incrementPeriodLabel`, `componentsStatus`, `components[]` (`key`, `label`, `incrementYi`) | 东方财富聚合转载的央行社会融资规模月度报告为报告级社会融资规模观察层,非 PBOC 官方原始报告；`stockYoY` 存 decimal ratio,render 层乘 100；`ytdIncrementYi` 与分项 `incrementYi` 均为年内累计增量(亿元),`万亿元` 归一为亿元,`减少` / `下降` 取负；`componentsStatus` 为 complete / partial / missing,不做分项和等于总量的硬校验；freshness 使用 publishedAt + 45 天，publishedAt 缺失时使用 endOfRefMonth + 60 天；display-only/audit-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation；报告级累计分项不得写成贷款笔级 / 机构级 raw tape |
 | `macroDrivers.chinaMlf` | EastMoney:MLF-aggregated-news | `opDate`, `publishedAt`, `updatedAt`, `source`, `sourceStatus`, `notes`, `operationAmountYi`, `termMonths`, nullable `mlfRate` | 东方财富聚合转载的央行中期借贷便利 MLF 操作新闻为公告/新闻级 MLF 观察层,非 PBOC 官方原始公告；按新闻毛额操作句提取 `operationAmountYi`(亿元)和 `termMonths`,不取净投放、净回笼、到期金额或加量续作轧差；`mlfRate` 若披露则存 decimal rate(render 层乘 100),近年利率未披露时为 null 且不视作错误；freshness 使用 publishedAt/opDate + 45 自然日；display-only/audit-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation；公告/新闻级 MLF 操作不得写成逐机构 / 逐笔投标 raw tape |
 | `macroDrivers.rateVol` | Yahoo:^MOVE | `move`, `moveUpdatedAt`, `moveAgeDays`, `moveRegime`, `freshnessStatus`, `source`, `sourceStatus.move`, `notes` | 债券/利率波动率 MOVE（Yahoo 日频 `^MOVE`）。**评分例外结构源**——继 `onRrp`/`t10y2y`/`igOas` 之后第 4 个进结构门控的 macroDriver：MOVE ≥140 应激→`structuralYellow`、≥160 危机→`structuralRed`，经 `evaluateStructuralGating` 翻黄/红；平静（<140）不影响打分。合理性闸门 `[20,400]` + `instrumentType==='INDEX'` + ≤5 自然日新鲜；取数失败仅在上一轮值仍 fresh 时 carry last-good，否则 fail-closed（`move=null` 不触发）。`structuralScoreBump`（rules.json `structuralGating.moveVolStress`）仅 `decisionModel` 展示、`lockEngine` 不消费。**非第七底层模块、与 World Order overlay 无关、不改 6 模块公式/权重**；`move` 仅经结构门控影响 `executionLock`/`positionGuidance`，不写入 `values.*`/`displayInputsBaseline`/`effectiveDisplayInputs`/6 模块 score/cross-validation |
-| `Daily degraded display-only refresh` | Daily fallback path | When `buildFallback()` is used, only `macroDrivers.worldEconomy`, `macroDrivers.chinaEquity`, `macroDrivers.inflationEnergy`, `macroDrivers.copperGold`, `macroDrivers.chinaBond`, `macroDrivers.cfetsRmb`, `macroDrivers.chinaInflation`, `macroDrivers.chinaPmi`, `macroDrivers.euroVolatility`, `macroDrivers.chinaPropertyPrice`, `macroDrivers.chinaOmo`, `macroDrivers.chinaTsf`, `macroDrivers.chinaMlf`, `macroDrivers.energySpareCapacity`, and `macroDrivers.energyTransport` may be independently refreshed and merged over the cloned previous data | This degraded-mode refresh is display-only; it preserves `recovery.degradedMode` / `safeOutput`, does not overwrite `fedLiquidity` / `policyExpectations` / `curve` / `credit` / `activeSignals` / `gatingEvaluation`, and does not affect scoring, decision, execution, position, `displayInputsBaseline`, `effectiveDisplayInputs`, or cross-validation |
+| `Daily degraded display-only refresh` | Daily fallback path | When `buildFallback()` is used, only `macroDrivers.worldEconomy`, `macroDrivers.chinaEquity`, `macroDrivers.inflationEnergy`, `macroDrivers.copperGold`, `macroDrivers.chinaBond`, `macroDrivers.cfetsRmb`, `macroDrivers.chinaInflation`, `macroDrivers.chinaPmi`, `macroDrivers.euroVolatility`, `macroDrivers.chinaPropertyPrice`, `macroDrivers.chinaOmo`, `macroDrivers.chinaTsf`, `macroDrivers.chinaMlf`, `macroDrivers.energySpareCapacity`, `macroDrivers.energyInventoryBalance`, and `macroDrivers.energyTransport` may be independently refreshed and merged over the cloned previous data | This degraded-mode refresh is display-only; it preserves `recovery.degradedMode` / `safeOutput`, does not overwrite `fedLiquidity` / `policyExpectations` / `curve` / `credit` / `activeSignals` / `gatingEvaluation`, and does not affect scoring, decision, execution, position, `displayInputsBaseline`, `effectiveDisplayInputs`, or cross-validation |
 
 失败边界：
 
@@ -431,6 +432,7 @@ M-74 新增三条 audit-only / display-only 生产数据层；Energy Stress Phas
 - M-81 的 `cdxHyPrice` / `cdxIgPrice` 只能标注为 ICE public CDX index EOD settlement price，不得写成 private credit marks、full licensed Markit historical database、Bloomberg/FactSet/Refinitiv feed 或私募信贷估值。
 - M-83 的 `intervalFundNavPrice` / `intervalFundNav4wChange` 只能标注为 CCLFX public interval-fund NAV proxy，不得写成 private credit marks、fundraising data、Cliffwater Direct Lending Index licensed dataset 或非公开私募贷款估值。
 - Energy Stress Phase 2 的 `energySpareCapacity` 只能标注为 EIA STEO OPEC surplus crude oil production capacity estimate/forecast 慢变量，不得写成实时物理闲置桶数、OPEC 官方配额执行、断供概率或油价预测。
+- P6A 的 `energyInventoryBalance` 只能标注为 EIA STEO OECD commercial inventory + global net inventory withdrawals + global consumption estimate/forecast 慢变量；`PASC_OECD_T3` 不是全球商业库存总量,`T3_STCHANGE_WORLD` 是净抽库/累库代理；不得写成实时全球库存、Kpler/AIS oil-on-water、OPEC 月报、断供概率或油价预测。
 - Energy Stress Phase 2 的 `energyTransport` 只能标注为 PortWatch AIS-derived chokepoint proxy；公开 repo 只保存 compact 派生摘要，不提交 raw AIS-derived 120 天历史；TOS pin Phase A 可把 writer 输出从 legacy `partial` 迁到 `imf_data_terms_pinned`,但 `redistributionCaveat=true` 仍保留；不得写成官方贸易统计、实际油轮流量确认、封锁确认、战争概率、断供概率或油价预测。
 
 #### macroDrivers.fedLiquidity
@@ -799,7 +801,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-timestamp-qc-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-energy-inventory-balance-1`）。
 
 稳定边界：
 
@@ -1022,26 +1024,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-timestamp-qc-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+odp-energy-inventory-balance-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-timestamp-qc-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-energy-inventory-balance-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-timestamp-qc-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-timestamp-qc-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-timestamp-qc-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-energy-inventory-balance-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-energy-inventory-balance-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-energy-inventory-balance-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-timestamp-qc-1
-npm run bump:frontend-asset-version -- odp-timestamp-qc-1
+node scripts/bump-frontend-asset-version.mjs odp-energy-inventory-balance-1
+npm run bump:frontend-asset-version -- odp-energy-inventory-balance-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-timestamp-qc-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-energy-inventory-balance-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

@@ -99,6 +99,11 @@ const VALID_ENERGY_SPARE_CAPACITY_SOURCE = 'EIA:STEO:COPS_OPEC';
 const VALID_ENERGY_SPARE_CAPACITY_UNIT = 'million barrels per day';
 const VALID_ENERGY_SPARE_CAPACITY_FREQUENCY = 'monthly';
 const VALID_ENERGY_SPARE_CAPACITY_REGIMES = new Set(['极低缓冲', '偏低', '正常', '宽松', '未知']);
+const ENERGY_INVENTORY_BALANCE_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'stale']);
+const VALID_ENERGY_INVENTORY_BALANCE_SOURCE = 'EIA:STEO:PASC_OECD_T3/T3_STCHANGE_WORLD/PATC_WORLD';
+const VALID_ENERGY_INVENTORY_BALANCE_FREQUENCY = 'monthly';
+const VALID_ENERGY_INVENTORY_REGIMES = new Set(['极低库存', '偏低', '正常', '偏高', '未知']);
+const VALID_ENERGY_GLOBAL_DRAW_REGIMES = new Set(['急速抽库', '抽库', '小幅变化', '累库', '未知']);
 const ENERGY_TRANSPORT_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'stale']);
 const ENERGY_TRANSPORT_CHOKEPOINT_STATUSES = new Set(['live', 'missing', 'insufficient_window']);
 const VALID_ENERGY_TRANSPORT_SOURCE = 'IMFPortWatch:Daily_Chokepoints_Data';
@@ -856,6 +861,122 @@ function validateMacroDriversEnergySpareCapacity(dataPayload) {
   } else {
     assert(layer.spareCapacityMbpd === null,
       `macroDrivers.energySpareCapacity.spareCapacityMbpd must be null when sourceStatus is ${status}`);
+  }
+}
+
+function validateMacroDriversEnergyInventoryBalance(dataPayload) {
+  const layer = dataPayload?.macroDrivers?.energyInventoryBalance;
+  // expand-then-contract: current committed snapshots may omit this new display-only layer until first Daily run.
+  if (layer === undefined) return;
+  assertPlainObject(layer, 'macroDrivers.energyInventoryBalance');
+
+  const numericKeys = [
+    'oecdCommercialInventoryMbbl',
+    'oecdCommercialInventoryYoYMbbl',
+    'oecdCommercialInventoryVs5yPct',
+    'oecdCommercialInventoryDaysOfSupply',
+    'oecdCommercialInventoryDaysOfSupplyYoY',
+    'usCommercialInventoryMbbl',
+    'otherOecdCommercialInventoryMbbl',
+    'globalInventoryDrawMbpd',
+    'globalInventoryDraw3mAvgMbpd',
+    'usInventoryDrawMbpd',
+    'otherOecdInventoryDrawMbpd',
+    'nonOecdInventoryDrawMbpd',
+    'oecdInventoryDrawMbpd',
+    'worldConsumptionMbpd',
+    'worldConsumptionYoYMbpd',
+    'oecdConsumptionMbpd',
+    'oecdConsumptionYoYMbpd',
+    'forecast6mOecdCommercialInventoryMbbl',
+    'forecast12mOecdCommercialInventoryMbbl'
+  ];
+  for (const key of numericKeys) {
+    assert(Object.hasOwn(layer, key), `macroDrivers.energyInventoryBalance.${key} is missing`);
+    assert(isFiniteNumberOrNull(layer[key]), `macroDrivers.energyInventoryBalance.${key} must be finite number or null`);
+  }
+
+  for (const key of ['latestPeriod', 'forecast6mPeriod', 'forecast12mPeriod']) {
+    assert(Object.hasOwn(layer, key), `macroDrivers.energyInventoryBalance.${key} is missing`);
+    assert(layer[key] === null || (typeof layer[key] === 'string' && /^\d{4}-\d{2}$/u.test(layer[key])),
+      `macroDrivers.energyInventoryBalance.${key} must be YYYY-MM or null`);
+  }
+  assert(Object.hasOwn(layer, 'latestIsForecast'), 'macroDrivers.energyInventoryBalance.latestIsForecast is missing');
+  assert(layer.latestIsForecast === null || typeof layer.latestIsForecast === 'boolean',
+    'macroDrivers.energyInventoryBalance.latestIsForecast must be boolean or null');
+
+  assertString(layer.inventoryRegime, 'macroDrivers.energyInventoryBalance.inventoryRegime');
+  assert(VALID_ENERGY_INVENTORY_REGIMES.has(layer.inventoryRegime), 'macroDrivers.energyInventoryBalance.inventoryRegime is not supported');
+  assertString(layer.globalDrawRegime, 'macroDrivers.energyInventoryBalance.globalDrawRegime');
+  assert(VALID_ENERGY_GLOBAL_DRAW_REGIMES.has(layer.globalDrawRegime), 'macroDrivers.energyInventoryBalance.globalDrawRegime is not supported');
+
+  assertPlainObject(layer.sourceStatus, 'macroDrivers.energyInventoryBalance.sourceStatus');
+  assert(Object.hasOwn(layer.sourceStatus, 'inventoryBalance'), 'macroDrivers.energyInventoryBalance.sourceStatus.inventoryBalance is missing');
+  assert(ENERGY_INVENTORY_BALANCE_SOURCE_STATUSES.has(layer.sourceStatus.inventoryBalance),
+    'macroDrivers.energyInventoryBalance.sourceStatus.inventoryBalance is not supported');
+  assert(layer.source === VALID_ENERGY_INVENTORY_BALANCE_SOURCE,
+    `macroDrivers.energyInventoryBalance.source must be ${VALID_ENERGY_INVENTORY_BALANCE_SOURCE}`);
+  assert(layer.frequency === VALID_ENERGY_INVENTORY_BALANCE_FREQUENCY,
+    `macroDrivers.energyInventoryBalance.frequency must be ${VALID_ENERGY_INVENTORY_BALANCE_FREQUENCY}`);
+
+  assertPlainObject(layer.units, 'macroDrivers.energyInventoryBalance.units');
+  assert(layer.units.inventory === 'million barrels, end-of-period',
+    'macroDrivers.energyInventoryBalance.units.inventory must be million barrels, end-of-period');
+  assert(layer.units.flow === 'million barrels per day',
+    'macroDrivers.energyInventoryBalance.units.flow must be million barrels per day');
+  assert(layer.units.daysOfSupply === 'days',
+    'macroDrivers.energyInventoryBalance.units.daysOfSupply must be days');
+
+  assertPlainObject(layer.series, 'macroDrivers.energyInventoryBalance.series');
+  for (const key of [
+    'oecdCommercialInventory',
+    'usCommercialInventory',
+    'otherOecdCommercialInventory',
+    'globalInventoryDraw',
+    'usInventoryDraw',
+    'otherOecdInventoryDraw',
+    'nonOecdInventoryDraw',
+    'worldConsumption',
+    'oecdConsumption'
+  ]) {
+    assertString(layer.series[key], `macroDrivers.energyInventoryBalance.series.${key}`);
+  }
+  assert(layer.series.oecdCommercialInventory === 'PASC_OECD_T3',
+    'macroDrivers.energyInventoryBalance.series.oecdCommercialInventory must be PASC_OECD_T3');
+  assert(layer.series.globalInventoryDraw === 'T3_STCHANGE_WORLD',
+    'macroDrivers.energyInventoryBalance.series.globalInventoryDraw must be T3_STCHANGE_WORLD');
+  assert(layer.series.worldConsumption === 'PATC_WORLD',
+    'macroDrivers.energyInventoryBalance.series.worldConsumption must be PATC_WORLD');
+
+  validateNullableIsoString(layer.updatedAt, 'macroDrivers.energyInventoryBalance.updatedAt');
+  validateNullableIsoString(layer.fetchedAt, 'macroDrivers.energyInventoryBalance.fetchedAt');
+  validateNullableString(layer.fetchReason, 'macroDrivers.energyInventoryBalance.fetchReason');
+  assertString(layer.sourceUrl, 'macroDrivers.energyInventoryBalance.sourceUrl');
+  assertString(layer.limitationZh, 'macroDrivers.energyInventoryBalance.limitationZh');
+  assert(
+    /estimate|forecast|估算|预测/u.test(layer.limitationZh) &&
+    /不是实时|not real-time|全球商业库存总量|not.*global.*total|油价预测|price forecast/u.test(layer.limitationZh),
+    'macroDrivers.energyInventoryBalance.limitationZh must disclose estimate/forecast, non-real-time/global-total, and non-price boundary'
+  );
+  assertArray(layer.notes, 'macroDrivers.energyInventoryBalance.notes');
+  layer.notes.forEach((item, index) => assertString(item, `macroDrivers.energyInventoryBalance.notes[${index}]`));
+
+  const status = layer.sourceStatus.inventoryBalance;
+  if (status === 'live' || status === 'fallback') {
+    assert(Number.isFinite(layer.oecdCommercialInventoryMbbl) && layer.oecdCommercialInventoryMbbl >= 1500 && layer.oecdCommercialInventoryMbbl <= 5000,
+      'macroDrivers.energyInventoryBalance.oecdCommercialInventoryMbbl must be finite in [1500,5000] when live/fallback');
+    assert(Number.isFinite(layer.globalInventoryDrawMbpd) && layer.globalInventoryDrawMbpd >= -20 && layer.globalInventoryDrawMbpd <= 20,
+      'macroDrivers.energyInventoryBalance.globalInventoryDrawMbpd must be finite in [-20,20] when live/fallback');
+    assert(Number.isFinite(layer.worldConsumptionMbpd) && layer.worldConsumptionMbpd >= 50 && layer.worldConsumptionMbpd <= 150,
+      'macroDrivers.energyInventoryBalance.worldConsumptionMbpd must be finite in [50,150] when live/fallback');
+    assert(Number.isFinite(layer.oecdConsumptionMbpd) && layer.oecdConsumptionMbpd >= 20 && layer.oecdConsumptionMbpd <= 80,
+      'macroDrivers.energyInventoryBalance.oecdConsumptionMbpd must be finite in [20,80] when live/fallback');
+    assert(layer.latestPeriod !== null, 'macroDrivers.energyInventoryBalance.latestPeriod must be present when live/fallback');
+  } else {
+    for (const key of ['oecdCommercialInventoryMbbl', 'globalInventoryDrawMbpd', 'worldConsumptionMbpd', 'oecdConsumptionMbpd']) {
+      assert(layer[key] === null,
+        `macroDrivers.energyInventoryBalance.${key} must be null when sourceStatus is ${status}`);
+    }
   }
 }
 
@@ -2837,6 +2958,7 @@ validateDivergenceLayer(data);
 validateMacroDriversConsumer(data);
 validateMacroDriversShippingFreight(data);
 validateMacroDriversEnergySpareCapacity(data);
+validateMacroDriversEnergyInventoryBalance(data);
 validateMacroDriversEnergyTransport(data);
 validateMacroDriversPolicyExpectations(data);
 validateMacroDriversEmployment(data);
