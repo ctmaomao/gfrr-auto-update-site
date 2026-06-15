@@ -4,6 +4,7 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { GLOBAL_OVERLAY_EFFECT_VALUES, GLOBAL_OVERLAY_STATUS_VALUES } from './oil-directional/odp-classifier.mjs';
 
 const errors = [];
 const fail = (m) => errors.push(m);
@@ -94,6 +95,21 @@ if (typeof data.interpretation !== 'object' || data.interpretation === null || A
     if (typeof data.interpretation[f] !== 'string' || !data.interpretation[f]) fail(`interpretation.${f} must be a non-empty string`);
   }
   if (!Array.isArray(data.interpretation.drivers)) fail('interpretation.drivers must be an array');
+  const go = data.interpretation.globalOverlay;
+  if (go !== undefined && go !== null) {
+    if (typeof go !== 'object' || Array.isArray(go)) {
+      fail('interpretation.globalOverlay must be an object|null when present');
+    } else {
+      if (!GLOBAL_OVERLAY_STATUS_VALUES.includes(go.status)) fail(`interpretation.globalOverlay.status invalid: ${go.status}`);
+      if (!GLOBAL_OVERLAY_EFFECT_VALUES.includes(go.effect)) fail(`interpretation.globalOverlay.effect invalid: ${go.effect}`);
+      if (!Number.isFinite(go.confirmationCount)) fail('interpretation.globalOverlay.confirmationCount must be a number');
+      if (!Array.isArray(go.drivers)) fail('interpretation.globalOverlay.drivers must be an array');
+      if (!Array.isArray(go.reasons)) fail('interpretation.globalOverlay.reasons must be an array');
+      if (typeof go.boundary !== 'string' || !/display-only|NOT in/i.test(go.boundary)) {
+        fail('interpretation.globalOverlay.boundary must reaffirm display-only / NOT in scoring paths');
+      }
+    }
+  }
 }
 
 if (errors.length > 0) {

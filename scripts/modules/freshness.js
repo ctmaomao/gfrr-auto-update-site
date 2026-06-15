@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-energy-inventory-balance-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-global-overlay-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

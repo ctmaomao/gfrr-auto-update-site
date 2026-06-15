@@ -245,3 +245,205 @@ export function finalizeBias(physical, price) {
   out.drivers = primaryDriversFor(physical.bias);
   return out;
 }
+
+// ===========================================================================
+// P6B — global/monthly energy overlay. This is deliberately NOT a new finalBias
+// classifier and does not participate in the PR2 backtest. It only confirms,
+// caps, or annotates the already-produced ODP verdict with display-only slow
+// variables: EIA STEO inventory/consumption, EIA STEO OPEC spare capacity, and
+// PortWatch chokepoint proxies.
+// ===========================================================================
+
+export const ODP_GLOBAL_OVERLAY_THRESHOLDS = Object.freeze({
+  OECD_VS5Y_TIGHT_PCT: -5,
+  OECD_YOY_DRAW_MBBL: -150,
+  GLOBAL_DRAW_MBD: 1,
+  GLOBAL_ACUTE_DRAW_MBD: 3,
+  GLOBAL_DRAW_3M_MBD: 1,
+  SPARE_TIGHT_MBD: 1,
+  SPARE_EXTREME_MBD: 0.5,
+  DEMAND_DOWNSHIFT_MBD: -1,
+  HORMUZ_CAPACITY_DROP_PCT: -0.4,
+  HORMUZ_TANKER_DROP_PCT: -0.4,
+  CAPE_TANKER_RISE_PCT: 0.3,
+});
+
+export const GLOBAL_OVERLAY_STATUS_VALUES = Object.freeze(['active', 'unavailable', 'not_evaluated']);
+export const GLOBAL_OVERLAY_EFFECT_VALUES = Object.freeze([
+  'confirms_false_down',
+  'confirms_physical_tightness',
+  'caps_confidence_demand_watch',
+  'event_risk_watch',
+  'neutral',
+  'unavailable',
+  'insufficient_physical_data',
+]);
+
+const GT = ODP_GLOBAL_OVERLAY_THRESHOLDS;
+const usableStatus = (status) => status === 'live' || status === 'fallback';
+const asNum = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
+
+function physicallyTightFromSignals(physical) {
+  const s = (physical && physical.signals) || {};
+  const inv = s.inventoryDrawPressure || {};
+  const dist = s.dieselProductStress || {};
+  return !!(
+    inv.tight || inv.drawAccel || inv.extremeTight
+    || dist.tight || dist.extremeTight
+    || physical.bias === 'product_crisis'
+    || physical.bias === 'strong_bullish'
+    || physical.bias === 'moderate_bullish'
+  );
+}
+
+export function evaluateGlobalOverlay(reconcile, physical, price, context) {
+  const base = {
+    status: 'unavailable',
+    effect: 'unavailable',
+    supplyBuffer: 'unavailable',
+    inventoryBalance: 'unavailable',
+    demandState: 'unavailable',
+    transportRisk: 'unavailable',
+    confirmationCount: 0,
+    confidenceAdjustment: 'flat',
+    confidence: 'low',
+    drivers: [],
+    reasons: [],
+    sourceWindows: {},
+    boundary: 'display-only global/monthly confirmation overlay; NOT in values/scoring/decision/execution/position',
+  };
+
+  if (!physical || !reconcile || reconcile.finalBias === 'insufficient_data') {
+    return {
+      ...base,
+      status: 'not_evaluated',
+      effect: 'insufficient_physical_data',
+      reasons: ['EIA 周度物理链不足,全球慢变量不替代主判定。'],
+    };
+  }
+
+  const inv = (context && context.inventoryBalance) || {};
+  const spare = (context && context.spareCapacity) || {};
+  const transport = (context && context.transport) || {};
+  const invUsable = usableStatus(inv.sourceStatus);
+  const spareUsable = usableStatus(spare.sourceStatus);
+  const transportUsable = usableStatus(transport.sourceStatus);
+
+  if (!invUsable && !spareUsable && !transportUsable) {
+    return {
+      ...base,
+      reasons: ['P6A/STEO 或 PortWatch 慢变量不可用,不做全球确认。'],
+    };
+  }
+
+  const oecdVs5y = asNum(inv.oecdCommercialInventoryVs5yPct);
+  const oecdYoY = asNum(inv.oecdCommercialInventoryYoYMbbl);
+  const drawNow = asNum(inv.globalInventoryDrawMbpd);
+  const draw3m = asNum(inv.globalInventoryDraw3mAvgMbpd);
+  const demandYoY = asNum(inv.worldConsumptionYoYMbpd);
+  const spareMbpd = asNum(spare.spareCapacityMbpd);
+  const hormuzCap = asNum(transport.hormuzCapacityTankerVs30dPct);
+  const hormuzTankers = asNum(transport.hormuzTankerVs30dPct);
+  const capeTankers = asNum(transport.capeTankerVs30dPct);
+
+  const oecdTight = invUsable && (
+    (oecdVs5y !== null && oecdVs5y <= GT.OECD_VS5Y_TIGHT_PCT)
+    || (oecdYoY !== null && oecdYoY <= GT.OECD_YOY_DRAW_MBBL)
+  );
+  const globalDraw = invUsable && (
+    (drawNow !== null && drawNow >= GT.GLOBAL_DRAW_MBD)
+    || (draw3m !== null && draw3m >= GT.GLOBAL_DRAW_3M_MBD)
+  );
+  const acuteDraw = invUsable && (
+    (drawNow !== null && drawNow >= GT.GLOBAL_ACUTE_DRAW_MBD)
+    || (draw3m !== null && draw3m >= GT.GLOBAL_ACUTE_DRAW_MBD)
+  );
+  const spareTight = spareUsable && (
+    (spareMbpd !== null && spareMbpd <= GT.SPARE_TIGHT_MBD)
+    || spare.bufferRegime === '极低缓冲'
+    || spare.bufferRegime === '偏低'
+  );
+  const spareExtreme = spareUsable && (
+    (spareMbpd !== null && spareMbpd <= GT.SPARE_EXTREME_MBD)
+    || spare.bufferRegime === '极低缓冲'
+  );
+
+  const weeklyDemand = (physical.signals || {}).demandDestructionRisk || {};
+  const demandDownshift = invUsable && demandYoY !== null && demandYoY <= GT.DEMAND_DOWNSHIFT_MBD;
+  const demandConfirmedWeak = demandDownshift && !!weeklyDemand.demandFalling;
+  const demandConfirmedBreak = demandDownshift && !!weeklyDemand.demandDestruction;
+  const chokepointWatch = transportUsable && (
+    (hormuzCap !== null && hormuzCap <= GT.HORMUZ_CAPACITY_DROP_PCT)
+    || (hormuzTankers !== null && hormuzTankers <= GT.HORMUZ_TANKER_DROP_PCT)
+  ) && (
+    (capeTankers !== null && capeTankers >= GT.CAPE_TANKER_RISE_PCT)
+    || transport.reroutingRegime === 'rerouting_watch'
+  );
+
+  const confirmationCount = [oecdTight, globalDraw, spareTight].filter(Boolean).length;
+  const physicallyTight = physicallyTightFromSignals(physical);
+  const priceDown = price && Number.isFinite(price.changePct4w) && price.changePct4w <= TP.PRICE_DOWN_PCT;
+
+  const out = {
+    ...base,
+    status: 'active',
+    supplyBuffer: spareExtreme ? 'extremely_tight' : (spareTight ? 'tight' : (spareUsable ? 'neutral' : 'unavailable')),
+    inventoryBalance: acuteDraw ? 'acute_draw' : ((oecdTight || globalDraw) ? 'tight' : (invUsable ? 'neutral' : 'unavailable')),
+    demandState: demandConfirmedBreak ? 'demand_break_confirmed'
+      : demandDownshift ? 'downshift_watch'
+      : (invUsable ? 'neutral' : 'unavailable'),
+    transportRisk: chokepointWatch ? 'chokepoint_watch_low_confidence' : (transportUsable ? 'normal' : 'unavailable'),
+    confirmationCount,
+    sourceWindows: {
+      inventoryPeriod: inv.latestPeriod || null,
+      sparePeriod: spare.latestPeriod || null,
+      transportDate: transport.latestDate || null,
+    },
+  };
+
+  if (oecdTight) {
+    out.drivers.push('oecdCommercialInventory');
+    out.reasons.push('OECD 商业库存低于同期或同比明显下降。');
+  }
+  if (globalDraw) {
+    out.drivers.push('globalInventoryDraw');
+    out.reasons.push('全球净库存变化显示抽库。');
+  }
+  if (spareTight) {
+    out.drivers.push('opecSpareCapacity');
+    out.reasons.push('OPEC 闲置产能缓冲偏薄。');
+  }
+  if (demandDownshift) {
+    out.drivers.push('globalDemandDownshift');
+    out.reasons.push('全球消费预测同比下修,对上行压力形成置信上限。');
+  }
+  if (demandConfirmedWeak) out.drivers.push('weeklyDemandConfirmation');
+  if (chokepointWatch) {
+    out.drivers.push('transportChokepoint');
+    out.reasons.push('PortWatch 咽喉代理触发低置信事件风险观察,不确认暗航行或封锁。');
+  }
+
+  if (demandConfirmedBreak && physicallyTight) {
+    out.effect = 'caps_confidence_demand_watch';
+    out.confidenceAdjustment = 'down';
+    out.confidence = 'low';
+  } else if (reconcile.finalBias === 'false_down_physical_stress' && priceDown && confirmationCount >= 2) {
+    out.effect = 'confirms_false_down';
+    out.confidenceAdjustment = demandDownshift ? 'up_with_demand_cap' : 'up';
+    out.confidence = demandDownshift ? 'low' : 'moderate';
+  } else if (physicallyTight && confirmationCount >= 2) {
+    out.effect = 'confirms_physical_tightness';
+    out.confidenceAdjustment = demandDownshift ? 'up_with_demand_cap' : 'up';
+    out.confidence = demandDownshift ? 'low' : 'moderate';
+  } else if (demandConfirmedWeak) {
+    out.effect = 'caps_confidence_demand_watch';
+    out.confidenceAdjustment = 'down';
+  } else if (chokepointWatch) {
+    out.effect = 'event_risk_watch';
+  } else {
+    out.effect = 'neutral';
+  }
+
+  if (!out.reasons.length) out.reasons.push('全球慢变量未给出足够同向确认,保持周度物理链主判定。');
+  return out;
+}

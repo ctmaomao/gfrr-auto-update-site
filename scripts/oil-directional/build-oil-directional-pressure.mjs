@@ -17,7 +17,7 @@
 // (those land in PR3); the contract is forward-compatible.
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { classifyAt, finalizeBias } from './odp-classifier.mjs';
+import { classifyAt, evaluateGlobalOverlay, finalizeBias } from './odp-classifier.mjs';
 
 const SCHEMA_VERSION = 'odp-1';
 const OUT_PATH = 'data/oil-directional-pressure.json';
@@ -110,6 +110,10 @@ async function fetchEiaSeries(id) {
 function changeNObsAgo(series, n) {
   if (series.length <= n) return null;
   return round(series[series.length - 1].value - series[series.length - 1 - n].value, 3);
+}
+
+function numMaybe(value) {
+  return Number.isFinite(Number(value)) ? round(Number(value), 3) : null;
 }
 
 // Same week-of-year over the prior `years` years: snap to the nearest weekly
@@ -233,6 +237,45 @@ function reuseFromRadar(builtMs) {
       source: 'radar-data:brentPricingLayer.futuresPriceCurve',
       limitationZh: '公开月度期货代理,非官方结算曲线',
     },
+    globalEnergyContext: globalEnergyContextFromRadar(radar),
+  };
+}
+
+function globalEnergyContextFromRadar(radar) {
+  const macroDrivers = radar && radar.macroDrivers ? radar.macroDrivers : {};
+  const inventory = macroDrivers.energyInventoryBalance || {};
+  const spare = macroDrivers.energySpareCapacity || {};
+  const transport = macroDrivers.energyTransport || {};
+  const hormuz = transport.chokepoints?.hormuz || {};
+  const cape = transport.chokepoints?.capeGoodHope || {};
+  return {
+    inventoryBalance: {
+      sourceStatus: inventory.sourceStatus?.inventoryBalance || null,
+      latestPeriod: inventory.latestPeriod || null,
+      oecdCommercialInventoryMbbl: numMaybe(inventory.oecdCommercialInventoryMbbl),
+      oecdCommercialInventoryYoYMbbl: numMaybe(inventory.oecdCommercialInventoryYoYMbbl),
+      oecdCommercialInventoryVs5yPct: numMaybe(inventory.oecdCommercialInventoryVs5yPct),
+      globalInventoryDrawMbpd: numMaybe(inventory.globalInventoryDrawMbpd),
+      globalInventoryDraw3mAvgMbpd: numMaybe(inventory.globalInventoryDraw3mAvgMbpd),
+      worldConsumptionMbpd: numMaybe(inventory.worldConsumptionMbpd),
+      worldConsumptionYoYMbpd: numMaybe(inventory.worldConsumptionYoYMbpd),
+      inventoryRegime: inventory.inventoryRegime || null,
+      globalDrawRegime: inventory.globalDrawRegime || null,
+    },
+    spareCapacity: {
+      sourceStatus: spare.sourceStatus?.spareCapacity || null,
+      latestPeriod: spare.latestPeriod || null,
+      spareCapacityMbpd: numMaybe(spare.spareCapacityMbpd),
+      bufferRegime: spare.bufferRegime || null,
+    },
+    transport: {
+      sourceStatus: transport.sourceStatus?.chokepoints || null,
+      latestDate: transport.latestDate || null,
+      hormuzTankerVs30dPct: numMaybe(hormuz.latestVs30dPct),
+      hormuzCapacityTankerVs30dPct: numMaybe(hormuz.capacityTankerVs30dPct),
+      capeTankerVs30dPct: numMaybe(cape.latestVs30dPct),
+      reroutingRegime: transport.reroutingProxy?.redSeaToCapeRegime || null,
+    },
   };
 }
 
@@ -292,7 +335,8 @@ async function main() {
   if (reuse._radarMissing) {
     console.log('[odp] WARN: data/radar-data.json unreadable — reuse price/curve fields skipped.');
   } else {
-    Object.assign(evidence, reuse);
+    const { globalEnergyContext, ...reuseEvidence } = reuse;
+    Object.assign(evidence, reuseEvidence);
   }
 
   // PR3 — productionize the LOCKED physical classifier + the price-divergence overlay.
@@ -314,7 +358,14 @@ async function main() {
   const brentChangePct4w = brentChange4wFromHistory();
   const curveSlopeRegime = (!reuse._radarMissing && reuse.curve) ? reuse.curve.slopeRegime : null;
   const crackChange4w = (!reuse._radarMissing && reuse.crackSpread) ? reuse.crackSpread.change4w : null;
-  const reconcile = finalizeBias(physical, { changePct4w: brentChangePct4w, curveSlopeRegime });
+  const priceContextForModel = { changePct4w: brentChangePct4w, curveSlopeRegime };
+  const reconcile = finalizeBias(physical, priceContextForModel);
+  const globalOverlay = evaluateGlobalOverlay(
+    reconcile,
+    physical,
+    priceContextForModel,
+    reuse._radarMissing ? null : reuse.globalEnergyContext,
+  );
 
   const insufficient = reconcile.finalBias === 'insufficient_data';
   const dataSufficiency = insufficient ? 'insufficient' : (liveCount === EIA_SERIES.length ? 'full' : 'partial');
@@ -337,9 +388,10 @@ async function main() {
     divergence: reconcile.divergence,
     priceVsPhysical: reconcile.priceVsPhysical,
     drivers: reconcile.drivers,
-    confidence: 'low',
+    confidence: globalOverlay && globalOverlay.confidence ? globalOverlay.confidence : 'low',
     dataSufficiency,
-    note: 'physical-chain verdict; price-divergence overlay is a low-confidence confirm. Audit-only/display-only, NOT in scoring/decision.',
+    globalOverlay,
+    note: 'physical-chain verdict; price-divergence and P6B global overlays are display-only confirms/guards. Audit-only/display-only, NOT in scoring/decision.',
   };
 
   const out = {

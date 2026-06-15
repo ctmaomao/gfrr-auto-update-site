@@ -709,6 +709,7 @@ freshness 不变式:`value` 缺 → `missing`;present 且 `ageDays` 无 → `sta
 - `finalBias` ∈ **8 枚举**(`FINAL_BIAS_VALUES`,classifier 单一来源):`strong_bullish` / `moderate_bullish` / `neutral_range` / `bearish` / `false_down_physical_stress` / `false_up_unconfirmed` / `product_crisis` / `insufficient_data`。**永不为 null**(build 总写一个判定,至少 `insufficient_data`)。
 - `signals`(object | null):6 物理子信号(`inventoryDrawPressure` / `dieselProductStress` / `refineryConfirmation` / `sprBufferEffectiveness` / `demandDestructionRisk` / `futuresCurveConfirmation`)+ `priceContext`(`brentChangePct4w` number|null、`curveSlopeRegime` string|null、`crackChange4w`、`priceDirectionSource`)。**`signals` 为 null 当且仅当 `finalBias='insufficient_data'`**(数据不足→暂不判断)。
 - `interpretation`(object,**非 null**):`physicalBias`、`finalBias`、`divergence` ∈ {`none`,`false_down_physical_stress`,`false_up_unconfirmed`}、`priceVsPhysical`、`drivers`(signal group 数组)、`confidence` ∈ {`low`,`moderate`,`high`}、`dataSufficiency` ∈ {`full`,`partial`,`insufficient`}、`note`(重申 audit-only)。
+- **P6B `interpretation.globalOverlay`**(object|null):全球/月度慢变量确认层,读取 ODP build 当时的 `radar-data.macroDrivers.energyInventoryBalance` / `energySpareCapacity` / `energyTransport` 归一化上下文,用于解释 `finalBias` 的证据质量。字段:`status` ∈ {`active`,`unavailable`,`not_evaluated`};`effect` ∈ {`confirms_false_down`,`confirms_physical_tightness`,`caps_confidence_demand_watch`,`event_risk_watch`,`neutral`,`unavailable`,`insufficient_physical_data`};`supplyBuffer`、`inventoryBalance`、`demandState`、`transportRisk`;`confirmationCount`(0..3);`confidenceAdjustment` ∈ {`flat`,`up`,`up_with_demand_cap`,`down`};`confidence` ∈ {`low`,`moderate`,`high`};`drivers` / `reasons`;`sourceWindows`;`boundary`。它**不新增 finalBias 枚举、不覆盖周度物理链、不进入 scoring / decision / execution / position / Heatmap / cross-validation**;只能确认、降级保护或标注事件风险观察。PortWatch 分支仍为低置信 proxy,不得写成暗航行、封锁或实际油轮流量确认。
 
 **物理>金融裁决**(grounded `OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md` §5):classifier 先出物理 bias(6 类),`finalizeBias()` 再叠**价格背离层**——价格表象与物理链背离时信物理:
 
@@ -730,6 +731,8 @@ freshness 不变式:`value` 缺 → `missing`;present 且 `ageDays` 无 → `sta
 **`dataSufficiency` 注**:枚举留 `full|partial|insufficient`,但**当前 PR3 live build 因同周守卫要求 8 条全 live,实际只产出 `full` 或 `insufficient` —— `partial` 暂不可达,保留作 forward-compatible / 未来放宽用,非当前语义承诺**。
 
 PR3 校验新增 `check:oil-directional-score`(finalBias 枚举 + `interpretation` 镜像 + 背离一致性 + **replay `finalizeBias()` 比对** + `dataSufficiency` 枚举/双条件 + signals⟺insufficient);`contract` / `degradation` / `boundary` 从「signals 必须 null」放宽为校验填充后的 display-only 输出。
+
+P6B 校验在 `check:oil-directional-contract` / `check:oil-directional-score` 中对可选 `interpretation.globalOverlay` 做枚举与 display-only boundary 校验;旧 committed ODP artifact 尚未重新 build 时该字段可缺失,前端仅做只读回填并标注来源,直到下一次 ODP build 写入 artifact。
 
 ### oil-directional-history.json — ODP PR2 历史 cache + 回测 GATE contract
 
@@ -801,7 +804,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-energy-inventory-balance-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-global-overlay-1`）。
 
 稳定边界：
 
@@ -1024,26 +1027,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-energy-inventory-balance-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+odp-global-overlay-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-energy-inventory-balance-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-global-overlay-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-energy-inventory-balance-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-energy-inventory-balance-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-energy-inventory-balance-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-global-overlay-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-global-overlay-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-global-overlay-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-energy-inventory-balance-1
-npm run bump:frontend-asset-version -- odp-energy-inventory-balance-1
+node scripts/bump-frontend-asset-version.mjs odp-global-overlay-1
+npm run bump:frontend-asset-version -- odp-global-overlay-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-energy-inventory-balance-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-global-overlay-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

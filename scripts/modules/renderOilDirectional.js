@@ -96,6 +96,13 @@ const ENERGY_TEXT_IDS = [
   'odp-global-forecast-buffer',
   'odp-global-forecast-window',
   'odp-global-forecast-note',
+  'odp-global-overlay-status',
+  'odp-global-overlay-effect',
+  'odp-global-overlay-supply',
+  'odp-global-overlay-demand',
+  'odp-global-overlay-transport',
+  'odp-global-overlay-confidence',
+  'odp-global-overlay-note',
   'odp-qc-ledger-status',
   'odp-qc-ledger-wpsr',
   'odp-qc-ledger-odp',
@@ -254,6 +261,7 @@ function clearEnergyAddendum() {
   setToneClass('odp-brent-basis-status', 'odp-brent-basis-status', '');
   setToneClass('odp-pulse-factor-status', 'odp-pulse-factor-status', '');
   setToneClass('odp-global-forecast-status', 'odp-global-forecast-status', '');
+  setToneClass('odp-global-overlay-status', 'odp-global-overlay-status', '');
   setToneClass('odp-qc-ledger-status', 'odp-qc-ledger-status', '');
   setToneClass('odp-energy-spare-regime', 'odp-energy-regime', '');
   const coreHost = $('odp-energy-transport-core');
@@ -450,6 +458,171 @@ function renderGlobalForecastGap(oilData, radarData) {
     ? 'P6A 已接 EIA STEO OECD 商业库存、全球净库存变化与全球消费慢变量;可用于解释 Pulse 的 OECD 库存/全球需求叙事边界,但它仍是月度估算/预测,不是实时全球商业库存总量、OPEC 月报或油价预测。'
     : 'Pulse 的 OECD 库存低位、全球需求下修与 OPEC 月报属于全球月度/预测层;本站当前只能用美国 EIA 周报、EIA STEO 闲置产能和公开价格代理做边界解读,不能把外部新闻里的全球库存或需求预测当成站内已验证数据。');
 }
+const GLOBAL_OVERLAY_EFFECT_ZH = {
+  confirms_false_down: '确认假性下跌',
+  confirms_physical_tightness: '确认物理偏紧',
+  caps_confidence_demand_watch: '需求下修封顶',
+  event_risk_watch: '事件风险观察',
+  neutral: '保持主判定',
+  unavailable: '证据不足',
+  insufficient_physical_data: '周度链不足',
+};
+const GLOBAL_OVERLAY_SUPPLY_ZH = {
+  extremely_tight: '极紧缓冲',
+  tight: '偏紧缓冲',
+  neutral: '中性',
+  unavailable: '源不可用',
+};
+const GLOBAL_OVERLAY_INVENTORY_ZH = {
+  acute_draw: '全球急抽库',
+  tight: '库存偏紧',
+  neutral: '中性',
+  unavailable: '源不可用',
+};
+const GLOBAL_OVERLAY_DEMAND_ZH = {
+  demand_break_confirmed: '需求破坏已确认',
+  downshift_watch: '需求下修观察',
+  neutral: '未确认需求破坏',
+  unavailable: '源不可用',
+};
+const GLOBAL_OVERLAY_TRANSPORT_ZH = {
+  chokepoint_watch_low_confidence: '咽喉观察(低置信)',
+  normal: '未触发',
+  unavailable: '源不可用',
+};
+const GLOBAL_OVERLAY_CONFIDENCE_ZH = {
+  flat: '不调整',
+  up: '上调',
+  up_with_demand_cap: '上调但受需求下修封顶',
+  down: '下调',
+};
+function overlayTone(effect) {
+  return ({
+    confirms_false_down: 'red',
+    confirms_physical_tightness: 'yellow',
+    caps_confidence_demand_watch: 'yellow',
+    event_risk_watch: 'yellow',
+    neutral: 'green',
+  })[effect] || '';
+}
+function isUsableEnergyStatus(status) {
+  return status === 'live' || status === 'fallback';
+}
+function lteNumber(value, threshold) {
+  const n = firstNumber(value);
+  return n !== null && n <= threshold;
+}
+function gteNumber(value, threshold) {
+  const n = firstNumber(value);
+  return n !== null && n >= threshold;
+}
+function deriveDisplayGlobalOverlay(oilData, radarData) {
+  const artifactOverlay = oilData?.interpretation?.globalOverlay;
+  if (artifactOverlay && typeof artifactOverlay === 'object') return { ...artifactOverlay, displaySource: 'artifact' };
+
+  const macroDrivers = radarData && radarData.macroDrivers ? radarData.macroDrivers : {};
+  const inventory = macroDrivers.energyInventoryBalance || {};
+  const spare = macroDrivers.energySpareCapacity || {};
+  const transport = macroDrivers.energyTransport || {};
+  const invUsable = isUsableEnergyStatus(inventory.sourceStatus?.inventoryBalance);
+  const spareUsable = isUsableEnergyStatus(spare.sourceStatus?.spareCapacity);
+  const transportUsable = isUsableEnergyStatus(transport.sourceStatus?.chokepoints);
+  if (!invUsable && !spareUsable && !transportUsable) return null;
+
+  const oecdTight = invUsable && (
+    lteNumber(inventory.oecdCommercialInventoryVs5yPct, -5)
+    || lteNumber(inventory.oecdCommercialInventoryYoYMbbl, -150)
+  );
+  const globalDraw = invUsable && (
+    gteNumber(inventory.globalInventoryDrawMbpd, 1)
+    || gteNumber(inventory.globalInventoryDraw3mAvgMbpd, 1)
+  );
+  const spareTight = spareUsable && (
+    lteNumber(spare.spareCapacityMbpd, 1)
+    || spare.bufferRegime === '极低缓冲'
+    || spare.bufferRegime === '偏低'
+  );
+  const confirmationCount = [oecdTight, globalDraw, spareTight].filter(Boolean).length;
+  const demandDownshift = invUsable && lteNumber(inventory.worldConsumptionYoYMbpd, -1);
+  const hormuz = transport.chokepoints?.hormuz || {};
+  const cape = transport.chokepoints?.capeGoodHope || {};
+  const chokepointWatch = transportUsable && (
+    lteNumber(hormuz.capacityTankerVs30dPct, -0.4)
+    || lteNumber(hormuz.latestVs30dPct, -0.4)
+  ) && (
+    gteNumber(cape.latestVs30dPct, 0.3)
+    || transport.reroutingProxy?.redSeaToCapeRegime === 'rerouting_watch'
+  );
+  const effect = oilData?.finalBias === 'false_down_physical_stress' && confirmationCount >= 2
+    ? 'confirms_false_down'
+    : confirmationCount >= 2
+      ? 'confirms_physical_tightness'
+      : demandDownshift
+        ? 'caps_confidence_demand_watch'
+        : chokepointWatch
+          ? 'event_risk_watch'
+          : 'neutral';
+  const drivers = [];
+  const reasons = [];
+  if (oecdTight) { drivers.push('oecdCommercialInventory'); reasons.push('OECD 商业库存低于同期或同比明显下降。'); }
+  if (globalDraw) { drivers.push('globalInventoryDraw'); reasons.push('全球净库存变化显示抽库。'); }
+  if (spareTight) { drivers.push('opecSpareCapacity'); reasons.push('OPEC 闲置产能缓冲偏薄。'); }
+  if (demandDownshift) { drivers.push('globalDemandDownshift'); reasons.push('全球消费预测同比下修,对上行压力形成置信上限。'); }
+  if (chokepointWatch) { drivers.push('transportChokepoint'); reasons.push('PortWatch 咽喉代理触发低置信事件风险观察,不确认暗航行或封锁。'); }
+  if (!reasons.length) reasons.push('Daily 慢变量未给出足够同向确认,保持周度物理链主判定。');
+  return {
+    status: 'active',
+    effect,
+    supplyBuffer: lteNumber(spare.spareCapacityMbpd, 0.5) || spare.bufferRegime === '极低缓冲' ? 'extremely_tight' : (spareTight ? 'tight' : (spareUsable ? 'neutral' : 'unavailable')),
+    inventoryBalance: gteNumber(inventory.globalInventoryDrawMbpd, 3) ? 'acute_draw' : ((oecdTight || globalDraw) ? 'tight' : (invUsable ? 'neutral' : 'unavailable')),
+    demandState: demandDownshift ? 'downshift_watch' : (invUsable ? 'neutral' : 'unavailable'),
+    transportRisk: chokepointWatch ? 'chokepoint_watch_low_confidence' : (transportUsable ? 'normal' : 'unavailable'),
+    confirmationCount,
+    confidenceAdjustment: (effect === 'confirms_false_down' || effect === 'confirms_physical_tightness')
+      ? (demandDownshift ? 'up_with_demand_cap' : 'up')
+      : effect === 'caps_confidence_demand_watch' ? 'down' : 'flat',
+    confidence: demandDownshift ? 'low' : (confirmationCount >= 2 ? 'moderate' : 'low'),
+    drivers,
+    reasons,
+    sourceWindows: {
+      inventoryPeriod: inventory.latestPeriod || null,
+      sparePeriod: spare.latestPeriod || null,
+      transportDate: transport.latestDate || null,
+    },
+    displaySource: 'daily_fallback',
+  };
+}
+function renderGlobalOverlay(oilData, radarData) {
+  const overlay = deriveDisplayGlobalOverlay(oilData, radarData);
+  if (!overlay) {
+    setLeafText('odp-global-overlay-status', '待 ODP 刷新');
+    setLeafText('odp-global-overlay-effect', '证据不足');
+    setLeafText('odp-global-overlay-supply', '—');
+    setLeafText('odp-global-overlay-demand', '—');
+    setLeafText('odp-global-overlay-transport', '—');
+    setLeafText('odp-global-overlay-confidence', '不调整');
+    setLeafText('odp-global-overlay-note', 'P6B 全球确认层需要 ODP artifact 或 Daily 慢变量;缺失时不替代周度物理链主判定。');
+    return;
+  }
+  const tone = overlayTone(overlay.effect);
+  const status = overlay.displaySource === 'daily_fallback'
+    ? 'Daily 回填'
+    : overlay.status === 'active' ? '已接入' : overlay.status === 'not_evaluated' ? '暂不评估' : '源不可用';
+  const windows = overlay.sourceWindows || {};
+  const sourceText = overlay.displaySource === 'daily_fallback'
+    ? 'ODP artifact 尚未含 P6B overlay;本区用 Daily 慢变量做只读回填,下次 ODP build 后以 artifact 为准。'
+    : 'P6B overlay 来自 ODP artifact,仅确认/降级解释,不改变平台风险打分与执行判断。';
+  const reasonText = Array.isArray(overlay.reasons) && overlay.reasons.length ? overlay.reasons.join(' ') : '保持周度物理链主判定。';
+
+  setLeafText('odp-global-overlay-status', status);
+  setToneClass('odp-global-overlay-status', 'odp-global-overlay-status', tone);
+  setLeafText('odp-global-overlay-effect', GLOBAL_OVERLAY_EFFECT_ZH[overlay.effect] || '—');
+  setLeafText('odp-global-overlay-supply', `${GLOBAL_OVERLAY_SUPPLY_ZH[overlay.supplyBuffer] || '—'} / ${GLOBAL_OVERLAY_INVENTORY_ZH[overlay.inventoryBalance] || '—'} · ${overlay.confirmationCount || 0}/3 确认`);
+  setLeafText('odp-global-overlay-demand', GLOBAL_OVERLAY_DEMAND_ZH[overlay.demandState] || '—');
+  setLeafText('odp-global-overlay-transport', GLOBAL_OVERLAY_TRANSPORT_ZH[overlay.transportRisk] || '—');
+  setLeafText('odp-global-overlay-confidence', `${GLOBAL_OVERLAY_CONFIDENCE_ZH[overlay.confidenceAdjustment] || '不调整'} · ${overlay.confidence || 'low'}`);
+  setLeafText('odp-global-overlay-note', `${reasonText} 期别:库存 ${windows.inventoryPeriod || '—'} / 闲置 ${windows.sparePeriod || '—'} / PortWatch ${windows.transportDate || '—'}。${sourceText}`);
+}
 function renderDataQcLedger(oilData, radarData, worldOrderStressData) {
   const evidence = oilData && oilData.evidence ? oilData.evidence : {};
   const alignment = wpsrAlignment(evidence);
@@ -575,10 +748,11 @@ function renderEnergyAddendum(radarData, worldOrderStressData, oilData) {
   renderBrentBasisCheck(radarData, worldOrderStressData);
   renderPulseFactorCheck(oilData, radarData, worldOrderStressData);
   renderGlobalForecastGap(oilData, radarData);
+  renderGlobalOverlay(oilData, radarData);
   renderDataQcLedger(oilData, radarData, worldOrderStressData);
   renderSpareCapacity(macroDrivers.energySpareCapacity);
   renderEnergyTransport(macroDrivers.energyTransport);
-  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、OECD 库存/全球净抽库、数据时点/QC、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
+  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、OECD 库存/全球净抽库、P6B 全球确认层、数据时点/QC、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
 }
 
 function reasonInventory(sig, ev) {

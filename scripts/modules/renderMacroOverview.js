@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=odp-energy-inventory-balance-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-energy-inventory-balance-1';
-import { MODULE_LABELS } from './decision.js?v=odp-energy-inventory-balance-1';
+} from './config.js?v=odp-global-overlay-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-global-overlay-1';
+import { MODULE_LABELS } from './decision.js?v=odp-global-overlay-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

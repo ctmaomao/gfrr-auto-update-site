@@ -11,7 +11,12 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { FINAL_BIAS_VALUES, finalizeBias } from './oil-directional/odp-classifier.mjs';
+import {
+  FINAL_BIAS_VALUES,
+  GLOBAL_OVERLAY_EFFECT_VALUES,
+  GLOBAL_OVERLAY_STATUS_VALUES,
+  finalizeBias,
+} from './oil-directional/odp-classifier.mjs';
 
 const errors = [];
 const fail = (m) => errors.push(m);
@@ -61,6 +66,25 @@ if (!it || typeof it !== 'object' || Array.isArray(it)) {
     for (const d of it.drivers) if (!SIGNAL_GROUPS.has(d)) fail(`interpretation.drivers has unknown signal group: ${d}`);
   } else {
     fail('interpretation.drivers must be an array');
+  }
+  const go = it.globalOverlay;
+  if (go !== undefined && go !== null) {
+    if (typeof go !== 'object' || Array.isArray(go)) {
+      fail('interpretation.globalOverlay must be an object|null when present');
+    } else {
+      if (!GLOBAL_OVERLAY_STATUS_VALUES.includes(go.status)) fail(`interpretation.globalOverlay.status invalid: ${go.status}`);
+      if (!GLOBAL_OVERLAY_EFFECT_VALUES.includes(go.effect)) fail(`interpretation.globalOverlay.effect invalid: ${go.effect}`);
+      if (go.status === 'not_evaluated' && data.finalBias !== 'insufficient_data') {
+        fail(`globalOverlay status not_evaluated is only valid with insufficient_data, got finalBias '${data.finalBias}'`);
+      }
+      if (go.effect === 'confirms_false_down' && data.finalBias !== 'false_down_physical_stress') {
+        fail(`globalOverlay confirms_false_down requires false_down_physical_stress, got '${data.finalBias}'`);
+      }
+      if (!['flat', 'up', 'up_with_demand_cap', 'down'].includes(go.confidenceAdjustment)) {
+        fail(`globalOverlay confidenceAdjustment invalid: ${go.confidenceAdjustment}`);
+      }
+      if (!CONFIDENCE_VALUES.has(go.confidence)) fail(`globalOverlay confidence invalid: ${go.confidence}`);
+    }
   }
 
   // AUTHORITATIVE consistency: replay the LOCKED finalizeBias() over the stored physical

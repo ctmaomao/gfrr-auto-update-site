@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=odp-energy-inventory-balance-1';
+﻿import { formatFiniteNumber } from './format.js?v=odp-global-overlay-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
