@@ -9,7 +9,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 项 | 当前值 |
 |---|---|
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分);**第二页面 AI 泡沫监测(`bubble-watch.html` + 周一 cron 数据管线,ADR-0016,display-only)live,与主页书签互切**|
-| Cache version | `macro-verdict-card-1` |
+| Cache version | `mobile-trend-width-1` |
 | check:all 项数 | 18 顶层项 / ~64 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 9 leaf + `check:frontend-zh-copy` + `check:bubble-watch` 6 leaf)|
 | 最后审计日期 | 2026-06-05(全站 `.md` doc-slim 审计 Batch 1a→5余项,docs-only;两大 scope-of-record 簇 External AI / Market Pricing 收口 + 三 Operating Document changelog tail 折叠,详见 Section 5 + Session Handoff)。上次系统审计 2026-06-02(Codex 只读审计 7 findings 全收口,详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
@@ -305,6 +305,11 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-06-16 · Mobile trend width fix)**: 首页 Macro Risk Overview「8 周趋势」手机端宽度修复完成。`assets/styles.css` 仅在 `@media (max-width: 600px)` 内取消趋势 SVG 的 `760px` 最小宽、隐藏横向滚动并抽稀 x 轴日期标签;桌面基础规则仍保留 `min-width: 760px`。frontend asset cache 已 bump 到 `mobile-trend-width-1`;冻结 `scripts/modules/realtime.js` 已恢复为无 diff。
+- **当前进行中(2026-06-16 · Mobile trend width fix)**: 无。范围为前端 CSS + cache version fanout + 当前版本文档快照;未改 production data、realtime、workflow、Worker runtime、scoring/decision/execution/position 逻辑。
+- **下一步建议(2026-06-16 · Mobile trend width fix)**: 若 owner 确认,按窄范围提交并 push。已验证:`git diff --check`、`npm run check:frontend-live-contracts`、`npm run check:frontend-zh-copy`、`npm run check:dom`、`npm run check:modules`、`npm run check:docs`、`npm run check:all`;受限路径 `data/` / `realtime/` / `.github/workflows/` / `manual-artifacts/` diff 为空。
+- **阻塞或等待(2026-06-16 · Mobile trend width fix)**: 无技术阻塞。注意 `.codex-remote-attachments/` 为用户上传截图产生的 untracked 附件目录,不纳入本次提交。
 
 - **上次会话结束于(2026-06-15 · Bubble Watch source-health audit)**: 新增周二至周五只读审计 workflow `.github/workflows/audit-bubble-watch-sources.yml` 与 `scripts/audit-bubble-watch-sources.mjs`:正式周一 `refresh-bubble-watch.yml` 仍负责写页面数据;审计 workflow 仅运行 builder/check、恢复 `data/bubble-watch*.json` 与 `config/bubble-watch-curated.json`,上传 `manual-artifacts/bubble-watch-source-health-*` artifact,`permissions: contents: read`,不 commit、不 deploy、不触发 Pages。scheduled 默认 `BUBBLE_WATCH_DISABLE_WIND=1`;手动 dispatch 勾选 paid opt-in 才注入 `WIND_API_KEY`。`dc_abs_spread` 无 Wind key 与 `ceo_hedging` 免费 GDELT 失败后 Wind disabled 计 expected WARN;其它 fallback/stale/fetch failure 仍 FAIL。
 - **当前进行中(2026-06-15 · Bubble Watch source-health audit)**: 无。范围为 workflow + audit script + package script + Bubble Watch 数据源/契约/backlog 文档;未改 frontend、production data、Worker runtime、scoring/decision。

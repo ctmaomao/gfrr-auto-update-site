@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=macro-verdict-card-1';
+﻿import { fmtNumSafe } from './config.js?v=mobile-trend-width-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

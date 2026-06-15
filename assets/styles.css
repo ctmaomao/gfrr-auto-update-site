@@ -467,6 +467,13 @@
        约束列到容器宽 + 子块允许收缩,首屏与所有 shell 子块都回到视口内。*/
     .macro-overview-shell { grid-template-columns: minmax(0, 1fr); }
     .macro-overview-shell > * { min-width: 0; }
+    /* 主页 8 周趋势图:桌面保留 760px 横向画布;手机对齐 AI 泡沫页趋势图,
+       直接按屏幕内容宽度绘制,并抽稀日期标签避免尾部重叠。*/
+    .trend-svg-wrap { overflow-x: hidden; }
+    .trend-svg-wrap svg { min-width: 0; width: 100%; }
+    .trend-x-label { display: none; }
+    .trend-x-label:nth-child(2n + 1),
+    .trend-x-label.is-now { display: inline; }
     /* 首屏大数字:80px 下限会把黑框撑宽;收小使「分数/100」适配窄屏
        (PC 仍 clamp(80px,12vw,128px))*/
     .big-left .value { font-size: clamp(44px, 13vw, 72px); }
