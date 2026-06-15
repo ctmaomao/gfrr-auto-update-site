@@ -1,7 +1,7 @@
 // build-bubble-watch.mjs — AI 泡沫监测(The Bubble Watch)周度数据管线
 //
 // 23 项指标 × 6 分类:12 项自动实时接入(FRED / Yahoo Chart / SEC EDGAR /
-// multpl / slickcharts / stockanalysis / OpenInsider),11 项编辑/研究类指标
+// StockAnalysis metrics / multpl / slickcharts / OpenInsider),11 项编辑/研究类指标
 // 读 config/bubble-watch-curated.json 人工口径。所有自动指标 fail-closed:
 // 抓取失败沿用 curated 快照并按 maxAgeDays 标 STALE,绝不造数。
 //
@@ -74,7 +74,7 @@ const INDICATOR_DEFS = [
   { id: 'token_revenue_ratio', category: 'fundamentals', name_en: 'Token Growth / Revenue Growth', name_zh: 'Token 增速 / 收入增速 比值', threshold_text: '>2x 红 / 1-2x 黄 / <1x 绿', source_name: '厂商公开披露 / OpenRouter(研究口径)', mode: 'curated' },
   { id: 'arr_2nd_deriv', category: 'fundamentals', name_en: 'AI ARR 2nd Derivative', name_zh: 'AI 收入增速的二阶导', threshold_text: '减速=红 / 平稳=黄 / 加速=绿', source_name: 'Sacra / 公开报道(研究口径)', mode: 'curated' },
   { id: 'enterprise_deploy', category: 'fundamentals', name_en: 'Enterprise Production Deploy', name_zh: '企业生产环境部署率', threshold_text: '<50%=红 / 50-65%=黄 / >65%=绿', source_name: 'McKinsey / Deloitte(季度调查口径)', mode: 'curated' },
-  { id: 'cloud_rpo_growth', category: 'fundamentals', name_en: 'Cloud RPO Growth', name_zh: '云厂商递延收入增速', threshold_text: '负增长=红 / 减速=黄 / 加速=绿', source_name: 'SEC EDGAR RPO 披露', mode: 'auto' },
+  { id: 'cloud_rpo_growth', category: 'fundamentals', name_en: 'Cloud RPO Growth', name_zh: '云厂商递延收入增速', threshold_text: '负增长=红 / 减速=黄 / 加速=绿', source_name: 'SEC EDGAR / StockAnalysis RPO metrics', mode: 'auto' },
   { id: 'accounting_events', category: 'macro', name_en: 'Round-Tripping / Accounting', name_zh: '会计造假/round-tripping 事件', threshold_text: '任何=红 / 调查=黄 / 无=绿', source_name: 'SEC / 公开执法报道(编辑口径)', mode: 'curated' },
   { id: 'fed_policy', category: 'macro', name_en: 'Fed Policy Direction', name_zh: 'Fed 政策方向', threshold_text: '加息=红 / 通胀压力=黄 / 降息=绿', source_name: 'FRED DFF + CPI 推导', mode: 'auto' },
   { id: 'capex_reaction', category: 'macro', name_en: 'Capex Guidance Reaction', name_zh: '资本开支指引市场反应', threshold_text: '系统性惩罚=红 / 偶发=黄 / 奖励=绿', source_name: '财报市场反应(编辑口径)', mode: 'curated' },
@@ -430,6 +430,120 @@ function parseSaQuarterlyRow(html, label) {
   throw new Error(`stockanalysis 行「${label}」未解析到 ≥8 个季度值`);
 }
 
+const SA_METRICS_CACHE = new Map();
+async function fetchSaMetricsPage(ticker, pathSuffix = 'metrics/') {
+  const key = `${ticker}|${pathSuffix}`;
+  if (SA_METRICS_CACHE.has(key)) return SA_METRICS_CACHE.get(key);
+  const url = `https://stockanalysis.com/stocks/${ticker.toLowerCase()}/${pathSuffix}`;
+  const html = await fetchWithTimeout(url, { headers: { 'User-Agent': BROWSER_UA } });
+  SA_METRICS_CACHE.set(key, html);
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  return html;
+}
+
+function parseSaCompactNumber(text, kind) {
+  const raw = String(text || '').replace(/\s+/gu, '').replace(/,/gu, '');
+  if (!raw || raw === '-' || /upgrade/iu.test(raw)) return null;
+  const m = raw.match(/^(-?[0-9]+(?:\.[0-9]+)?)([KMBT])?(%)?$/iu);
+  if (!m) return null;
+  if (kind === 'percent' && m[3] !== '%') return null;
+  if (kind === 'money' && m[3] === '%') return null;
+  const value = Number(m[1]);
+  if (!Number.isFinite(value)) return null;
+  if (kind === 'percent') return value;
+  const multiplier = { K: 1e3, M: 1e6, B: 1e9, T: 1e12 }[(m[2] || '').toUpperCase()] || 1;
+  return value * multiplier;
+}
+
+function parseSaMetricRow(html, label, kind, minCount = 1) {
+  const values = [];
+  let from = 0;
+  while (from < html.length) {
+    const idx = html.indexOf(label, from);
+    if (idx < 0) break;
+    from = idx + label.length;
+    const trStart = html.lastIndexOf('<tr', idx);
+    const trEnd = html.indexOf('</tr>', idx);
+    if (trStart < 0 || trEnd < idx) continue;
+    const row = html.slice(trStart, trEnd + 5).replace(/<!--[\s\S]*?-->/gu, '');
+    const cells = [...row.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/giu)].map((m) => m[1]);
+    if (cells.length < 2) continue;
+    const rowValues = cells.slice(1)
+      .map((cell) => parseSaCompactNumber(htmlToText(cell), kind))
+      .filter((value) => Number.isFinite(value));
+    if (rowValues.length >= minCount) return rowValues;
+    values.push(...rowValues);
+  }
+  if (values.length >= minCount) return values;
+  throw new Error(`stockanalysis metrics 行「${label}」未解析到 ≥${minCount} 个${kind === 'percent' ? '百分比' : '数值'}`);
+}
+
+const SA_RPO_METRICS = {
+  MSFT: {
+    pathSuffix: 'metrics/',
+    valueLabel: 'Commercial Remaining Performance Obligations',
+    growthLabel: 'Commercial Remaining Performance Obligations Growth',
+    cadence: 'quarterly'
+  },
+  AMZN: {
+    pathSuffix: 'metrics/',
+    valueLabel: 'AWS Remaining Performance Obligations',
+    growthLabel: 'AWS Remaining Performance Obligations Growth',
+    cadence: 'quarterly'
+  },
+  GOOGL: {
+    pathSuffix: 'metrics/',
+    valueLabel: 'Remaining Performance Obligations',
+    growthLabel: 'Remaining Performance Obligations Growth',
+    cadence: 'quarterly'
+  },
+  ORCL: {
+    pathSuffix: 'financials/metrics/',
+    valueLabel: 'Remaining Performance Obligations (RPO)',
+    growthLabel: 'Remaining Performance Obligations (RPO) Growth',
+    cadence: 'annual'
+  }
+};
+
+async function fetchStockAnalysisRpoMetric(ticker) {
+  const cfg = SA_RPO_METRICS[ticker];
+  if (!cfg) throw new Error(`未配置 StockAnalysis RPO ticker:${ticker}`);
+  const html = await fetchSaMetricsPage(ticker, cfg.pathSuffix);
+  const minValues = cfg.cadence === 'quarterly' ? 5 : 2;
+  const values = parseSaMetricRow(html, cfg.valueLabel, 'money', minValues);
+  const growths = parseSaMetricRow(html, cfg.growthLabel, 'percent', 1);
+  const currentValueUsd = values[0];
+  const priorYearValueUsd = cfg.cadence === 'quarterly' ? values[4] : values[1];
+  if (!(currentValueUsd > 0 && priorYearValueUsd > 0)) throw new Error(`${ticker} StockAnalysis RPO 当前/同比基数无效`);
+  const computedYoyPct = ((currentValueUsd - priorYearValueUsd) / priorYearValueUsd) * 100;
+  const yoyPct = Number.isFinite(growths[0]) ? growths[0] : computedYoyPct;
+  let prevPeriodValueUsd = null;
+  let prevPeriodComparableUsd = null;
+  if (cfg.cadence === 'quarterly' && values[1] > 0 && values[5] > 0) {
+    prevPeriodValueUsd = values[1];
+    prevPeriodComparableUsd = values[5];
+  } else if (cfg.cadence === 'annual' && values[1] > 0 && Number.isFinite(growths[1])) {
+    prevPeriodValueUsd = values[1];
+    prevPeriodComparableUsd = values[1] / (1 + growths[1] / 100);
+  }
+  const prevYoyPct = prevPeriodValueUsd > 0 && prevPeriodComparableUsd > 0
+    ? ((prevPeriodValueUsd - prevPeriodComparableUsd) / prevPeriodComparableUsd) * 100
+    : null;
+  return {
+    ticker,
+    source: `StockAnalysis ${cfg.pathSuffix}`,
+    cadence: cfg.cadence,
+    currentValueUsd,
+    priorYearValueUsd,
+    yoyPct,
+    prevPeriodValueUsd,
+    prevPeriodComparableUsd,
+    prevYoyPct,
+    parsedValues: values.length,
+    parsedGrowths: growths.length
+  };
+}
+
 function saT4qYoy(numsNewestFirst) {
   const now = numsNewestFirst.slice(0, 4).reduce((a, b) => a + b, 0);
   const prev = numsNewestFirst.slice(4, 8).reduce((a, b) => a + b, 0);
@@ -594,6 +708,47 @@ function classifyNumeric(value, redAbove, yellowAbove) {
   if (value > redAbove) return 'red';
   if (value > yellowAbove) return 'yellow';
   return 'green';
+}
+
+function summarizeRpoGrowthPanel(rows, sourceTag, sourceNote) {
+  if (rows.length < 2) throw new Error(`RPO 可用公司不足 (${rows.length})`);
+  const latestYoySum = rows.reduce((sum, row) => ({
+    now: sum.now + row.currentValueUsd,
+    prev: sum.prev + row.priorYearValueUsd
+  }), { now: 0, prev: 0 });
+  const priorRows = rows.filter((row) => row.prevPeriodValueUsd > 0 && row.prevPeriodComparableUsd > 0);
+  const priorYoySum = priorRows.reduce((sum, row) => ({
+    now: sum.now + row.prevPeriodValueUsd,
+    prev: sum.prev + row.prevPeriodComparableUsd
+  }), { now: 0, prev: 0 });
+  const yoy = ((latestYoySum.now - latestYoySum.prev) / latestYoySum.prev) * 100;
+  const prevYoy = priorRows.length >= 2 && priorYoySum.prev > 0
+    ? ((priorYoySum.now - priorYoySum.prev) / priorYoySum.prev) * 100
+    : null;
+  if (!Number.isFinite(yoy)) throw new Error('RPO YoY 计算失败');
+  const decel = prevYoy !== null && yoy < prevYoy - 2;
+  const status = yoy < 0 ? 'red' : decel ? 'yellow' : 'green';
+  const companySummary = rows.map((row) => `${row.ticker} ${fmtPct(row.yoyPct, 0, true)}`).join(' / ');
+  return {
+    status,
+    value_display: fmtPct(yoy, 0, true),
+    note: `${sourceTag}实拉 ${rows.map((c) => c.ticker).join('/')} RPO / 云 backlog 合计 $${(latestYoySum.now / 1e12).toFixed(2)}T,同比 ${fmtPct(yoy, 1, true)}${prevYoy !== null ? `(上一披露期同比 ${fmtPct(prevYoy, 1, true)},${decel ? '边际减速' : '未见减速'})` : ''};分公司:${companySummary}。${sourceNote}判级:负增长=红 / 减速=黄 / 加速=绿`,
+    detail: {
+      yoyPct: yoy,
+      prevYoyPct: prevYoy,
+      companies: rows.map((c) => c.ticker),
+      sourceTag,
+      rows: rows.map((row) => ({
+        ticker: row.ticker,
+        cadence: row.cadence || 'quarterly',
+        currentValueB: Number((row.currentValueUsd / 1e9).toFixed(1)),
+        priorYearValueB: Number((row.priorYearValueUsd / 1e9).toFixed(1)),
+        yoyPct: Number(row.yoyPct.toFixed(1)),
+        prevYoyPct: row.prevYoyPct === null ? null : Number(row.prevYoyPct.toFixed(1)),
+        source: row.source || sourceTag
+      }))
+    }
+  };
 }
 
 const autoBuilders = {
@@ -812,39 +967,42 @@ const autoBuilders = {
   },
   async cloud_rpo_growth() {
     const companies = ['MSFT', 'ORCL', 'AMZN', 'GOOGL'];
-    const series = [];
+    const rows = [];
     for (const ticker of companies) {
       try {
         const units = await retry(() => edgarConcept(EDGAR_CIK[ticker], ['RevenueRemainingPerformanceObligation']), `EDGAR RPO ${ticker}`, 1);
         const s = deriveInstantSeries(units);
-        if (s.length >= 6) series.push({ ticker, s });
+        const n = s.length;
+        if (n >= 6 && s[n - 1]?.val > 0 && s[n - 5]?.val > 0) {
+          rows.push({
+            ticker,
+            source: 'SEC EDGAR companyconcept',
+            cadence: 'quarterly',
+            currentValueUsd: s[n - 1].val,
+            priorYearValueUsd: s[n - 5].val,
+            yoyPct: ((s[n - 1].val - s[n - 5].val) / s[n - 5].val) * 100,
+            prevPeriodValueUsd: s[n - 2]?.val,
+            prevPeriodComparableUsd: s[n - 6]?.val,
+            prevYoyPct: s[n - 2]?.val > 0 && s[n - 6]?.val > 0 ? ((s[n - 2].val - s[n - 6].val) / s[n - 6].val) * 100 : null
+          });
+        }
       } catch (error) {
         console.warn(`[bubble-watch] RPO ${ticker} 不可用: ${error.message}`);
       }
     }
-    if (series.length < 2) throw new Error(`RPO 可用公司不足 (${series.length})`);
-    let latestYoySum = { now: 0, prev: 0 };
-    let priorYoySum = { now: 0, prev: 0 };
-    for (const { s } of series) {
-      const n = s.length;
-      latestYoySum.now += s[n - 1].val;
-      latestYoySum.prev += s[n - 5] ? s[n - 5].val : NaN;
-      priorYoySum.now += s[n - 2] ? s[n - 2].val : NaN;
-      priorYoySum.prev += s[n - 6] ? s[n - 6].val : NaN;
+    if (rows.length >= 2) {
+      return summarizeRpoGrowthPanel(rows, 'SEC EDGAR companyconcept', '美国公司 XBRL instant RPO 字段可达。');
     }
-    const yoy = ((latestYoySum.now - latestYoySum.prev) / latestYoySum.prev) * 100;
-    const prevYoy = Number.isFinite(priorYoySum.now) && Number.isFinite(priorYoySum.prev)
-      ? ((priorYoySum.now - priorYoySum.prev) / priorYoySum.prev) * 100
-      : null;
-    if (!Number.isFinite(yoy)) throw new Error('RPO YoY 计算失败');
-    const decel = prevYoy !== null && yoy < prevYoy - 2;
-    const status = yoy < 0 ? 'red' : decel ? 'yellow' : 'green';
-    return {
-      status,
-      value_display: fmtPct(yoy, 0, true),
-      note: `SEC EDGAR 实拉 ${series.map((c) => c.ticker).join('/')} 剩余履约义务(RPO)合计 $${(latestYoySum.now / 1e12).toFixed(2)}T,同比 ${fmtPct(yoy, 1, true)}${prevYoy !== null ? `(上季同比 ${fmtPct(prevYoy, 1, true)},${decel ? '边际减速' : '未见减速'})` : ''}——递延需求${yoy > 0 ? '仍在累积' : '开始萎缩'}。判级:负增长=红 / 减速=黄 / 加速=绿`,
-      detail: { yoyPct: yoy, prevYoyPct: prevYoy, companies: series.map((c) => c.ticker) }
-    };
+    console.warn(`[bubble-watch] EDGAR RPO 样本不足(${rows.length}),改走 StockAnalysis/Fiscal.ai metrics 镜像`);
+    const publicRows = [];
+    for (const ticker of companies) {
+      try {
+        publicRows.push(await retry(() => fetchStockAnalysisRpoMetric(ticker), `StockAnalysis RPO ${ticker}`, 1));
+      } catch (error) {
+        console.warn(`[bubble-watch] StockAnalysis RPO ${ticker} 不可用: ${error.message}`);
+      }
+    }
+    return summarizeRpoGrowthPanel(publicRows, 'StockAnalysis/Fiscal.ai metrics 镜像', 'EDGAR 对当前运行环境不可达时采用免费公开二级源;Oracle 用年度 metrics,其余三家用季度 operating metrics。');
   },
   async fed_policy() {
     const dff = await retry(() => fredObservations('DFF', 90), 'FRED DFF');
@@ -1584,7 +1742,13 @@ async function fetchDcAbsSpreadFromWind() {
   };
 }
 
-async function fetchCeoHedgingFromGdelt() {
+function classifyCeoHedgingEvidence(relevantCount, executiveHitCount) {
+  if (relevantCount >= 12 && executiveHitCount >= 3) return { status: 'red', display: '普遍' };
+  if (relevantCount >= 3 || executiveHitCount >= 1) return { status: 'yellow', display: '部分' };
+  return { status: 'green', display: '无' };
+}
+
+async function fetchCeoHedgingFromGdeltPublic() {
   const query = '("AI bubble" OR "artificial intelligence bubble" OR "AI overbuild" OR "AI capex bubble")';
   const params = new URLSearchParams({
     query,
@@ -1604,15 +1768,7 @@ async function fetchCeoHedgingFromGdelt() {
   const overheatRe = /\b(bubble|overbuild|overbuilt|overheated|irrational|mania|capex)\b/iu;
   const relevant = articles.filter((a) => overheatRe.test(`${a.title || ''} ${a.url || ''}`));
   const executiveHits = relevant.filter((a) => executiveRe.test(`${a.title || ''} ${a.url || ''}`));
-  let status = 'green';
-  let display = '无';
-  if (relevant.length >= 12 && executiveHits.length >= 3) {
-    status = 'red';
-    display = '普遍';
-  } else if (relevant.length >= 3 || executiveHits.length >= 1) {
-    status = 'yellow';
-    display = '部分';
-  }
+  const { status, display } = classifyCeoHedgingEvidence(relevant.length, executiveHits.length);
   return {
     status,
     value_display: display,
@@ -1627,6 +1783,54 @@ async function fetchCeoHedgingFromGdelt() {
   };
 }
 
+async function fetchCeoHedgingFromWindNews(gdeltError) {
+  const json = await windMcpCall('financial_docs', 'get_financial_news', {
+    query: 'AI泡沫CEO',
+    top_k: 5
+  });
+  const items = extractWindNewsItems(json);
+  if (!items.length) throw new Error('Wind CEO hedging news 返回空列表');
+  const aiRe = /\bAI\b|人工智能/iu;
+  const overheatRe = /泡沫|过热|非理性|担忧|质疑|风险|破裂|bubble|overbuild|overheated|irrational|mania|capex/iu;
+  const executiveRe = /CEO|首席执行官|高管|黄仁勋|Altman|奥特曼|Nadella|纳德拉|Pichai|皮查伊|Zuckerberg|扎克伯格|Ellison|埃里森|Dalio|达利欧/iu;
+  const cautionRe = /担忧|质疑|警告|风险|破裂|放缓|非理性|泡沫|bubble|overheated|irrational/iu;
+  const relevant = items.filter((item) => {
+    const text = `${item.title || ''} ${item.content || ''}`;
+    return aiRe.test(text) && overheatRe.test(text);
+  });
+  const executiveHits = relevant.filter((item) => executiveRe.test(`${item.title || ''} ${item.content || ''}`));
+  const cautionHits = relevant.filter((item) => cautionRe.test(`${item.title || ''} ${item.content || ''}`));
+  const { status, display } = classifyCeoHedgingEvidence(relevant.length, executiveHits.length);
+  return {
+    status,
+    value_display: display,
+    source_name: 'Wind MCP paid optional news fallback',
+    note: `GDELT 免费新闻源失败(${compactSnippet(gdeltError?.message || gdeltError, 90)})后,才启用 Wind 付费新闻兜底:检索到 AI 泡沫/过热相关新闻 ${relevant.length} 条,其中 CEO/高管线索 ${executiveHits.length} 条、谨慎/风险措辞 ${cautionHits.length} 条;该项仍按公开新闻语义保守判为「${display}」。判级:普遍承认过热=红 / 部分=黄 / 无=绿`,
+    detail: {
+      source: 'Wind MCP financial_docs.get_financial_news',
+      freePrimaryFailure: gdeltError?.message || String(gdeltError || ''),
+      articleCount: relevant.length,
+      executiveHitCount: executiveHits.length,
+      cautionHitCount: cautionHits.length,
+      topArticles: relevant.slice(0, 5).map((item) => ({
+        title: item.title || null,
+        date: item.date || null,
+        relevance: item.relevance ?? null,
+        doc_type: item.doc_type || null
+      }))
+    }
+  };
+}
+
+async function fetchCeoHedgingWithTieredSources() {
+  try {
+    return await fetchCeoHedgingFromGdeltPublic();
+  } catch (error) {
+    console.warn(`[bubble-watch] GDELT CEO hedging failed, try Wind paid fallback: ${error.message}`);
+    return fetchCeoHedgingFromWindNews(error);
+  }
+}
+
 const hybridCuratedBuilders = {
   vc_ai_share: fetchVcAiShareFromCrunchbase,
   ai_ipo_pipeline: fetchAiIpoPipelineFromCrunchbase,
@@ -1638,7 +1842,7 @@ const hybridCuratedBuilders = {
   enterprise_deploy: fetchEnterpriseDeployFromPublicReports,
   accounting_events: fetchAccountingEventsFromPublicSearch,
   capex_reaction: fetchCapexReactionFromPublicProxy,
-  ceo_hedging: fetchCeoHedgingFromGdelt
+  ceo_hedging: fetchCeoHedgingWithTieredSources
 };
 
 // ---------- 上游周报同步(aibubble-cn.github.io)----------

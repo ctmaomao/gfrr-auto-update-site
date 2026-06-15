@@ -410,6 +410,15 @@
     "ceo_hedging": {
       "automationStatus": "hybrid_live",
       "primarySignal": "CEO / senior-executive bubble-risk or overheat language frequency",
+      "paidFallbackCandidates": [
+        {
+          "source": "Wind MCP financial news",
+          "url": "https://aifinmarket.wind.com.cn/#/docs",
+          "cadence": "weekly / fallback only",
+          "role": "paid fallback only when GDELT free public search is rate-limited or unavailable",
+          "limitations": "Used after free GDELT failure, not as primary source; news-language proxy only, not a complete executive-transcript database."
+        }
+      ],
       "freeSourceCandidates": [
         {
           "source": "GDELT DOC 2.0 public news search",
