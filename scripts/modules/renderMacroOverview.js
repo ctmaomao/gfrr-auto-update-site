@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=brent-basis-check-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=brent-basis-check-1';
-import { MODULE_LABELS } from './decision.js?v=brent-basis-check-1';
+} from './config.js?v=odp-pulse-factor-check-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-pulse-factor-check-1';
+import { MODULE_LABELS } from './decision.js?v=odp-pulse-factor-check-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
