@@ -1,0 +1,62 @@
+name: Audit Bubble Watch Sources
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      allow_paid_wind:
+        description: 'Opt in to WIND_API_KEY during this manual audit'
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    # Tuesday-Friday 05:45 UTC — source health only; no data commit / no Pages deploy.
+    - cron: '45 5 * * 2-5'
+
+concurrency:
+  group: gfrr-bubble-watch-source-health-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          package-manager-cache: false
+
+      - run: npm ci
+
+      - name: Audit Bubble Watch sources (free-only)
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.allow_paid_wind != true }}
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: node scripts/audit-bubble-watch-sources.mjs --github-summary
+
+      - name: Audit Bubble Watch sources (paid Wind opt-in)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_paid_wind == true }}
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          WIND_API_KEY: ${{ secrets.WIND_API_KEY }}
+        run: node scripts/audit-bubble-watch-sources.mjs --github-summary --allow-paid-wind
+
+      - name: Upload Bubble Watch source-health report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bubble-watch-source-health
+          path: |
+            manual-artifacts/bubble-watch-source-health-latest.json
+            manual-artifacts/bubble-watch-source-health-build.log
+            manual-artifacts/bubble-watch-source-health-check.log
+          if-no-files-found: warn
+          retention-days: 14

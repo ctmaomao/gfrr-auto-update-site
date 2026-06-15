@@ -93,6 +93,7 @@ const EDGAR_CIK = {
 // ---------- 基础工具 ----------
 
 function readWindApiKey() {
+  if (process.env.BUBBLE_WATCH_DISABLE_WIND === '1') return '';
   const fromEnv = (process.env.WIND_API_KEY || '').trim();
   if (fromEnv) return fromEnv;
   try {
