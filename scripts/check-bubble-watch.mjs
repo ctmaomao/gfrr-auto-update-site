@@ -33,6 +33,7 @@ const CATEGORIES = ['valuation', 'capital', 'market_structure', 'credit', 'funda
 const STATUSES = ['red', 'yellow', 'green'];
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
 const TIER_LABEL_EN = { observation: 'Observation', caution: 'Moderate Caution', alert: 'High Risk Alert', top: 'Systemic Top' };
+const NARRATIVE_ENGINE_VERSION = 'bubble-watch-narrative-v1';
 
 const data = JSON.parse(read('data/bubble-watch.json'));
 const history = JSON.parse(read('data/bubble-watch-history.json'));
@@ -69,11 +70,26 @@ check('contract', s.red_count === red && s.yellow_count === yellow && s.green_co
   `summary 计数 ${s.red_count}/${s.yellow_count}/${s.green_count} ≠ 实算 ${red}/${yellow}/${green}`);
 check('contract', Math.abs(s.red_pct - (red / 23) * 100) < 0.06, `red_pct ${s.red_pct} 复算不符`);
 check('contract', Math.abs(s.weighted_risk_score - ((red + 0.5 * yellow) / 23) * 100) < 0.06, `weighted_risk_score ${s.weighted_risk_score} 复算不符`);
-check('contract', typeof s.verdict_desc === 'string' && s.verdict_desc.length >= 40, 'verdict_desc 过短/缺失');
+const verdictDescBytes = Buffer.byteLength(String(s.verdict_desc || ''), 'utf8');
+check('contract', typeof s.verdict_desc === 'string' && s.verdict_desc.length >= 650, 'verdict_desc 过短/缺失研究员式判读');
+check('contract', verdictDescBytes >= 900 && verdictDescBytes <= 2600, `verdict_desc 字节数 ${verdictDescBytes} 不在 900-2600 预算内`);
+check('contract', s.verdict_desc_source === NARRATIVE_ENGINE_VERSION, `verdict_desc_source 异常: ${s.verdict_desc_source}`);
+check('contract', s.narrative_plan?.version === NARRATIVE_ENGINE_VERSION, 'summary.narrative_plan.version 缺失/异常');
+check('contract', s.narrative_plan?.sourceMode === 'local_indicator_evidence_pack', 'summary.narrative_plan.sourceMode 必须为 local_indicator_evidence_pack');
+check('contract', s.narrative_plan?.upstreamVerdictPolicy === 'calibration_only_never_copied', 'summary.narrative_plan 上游正文策略异常');
+check('contract', Array.isArray(s.narrative_plan?.sections) && s.narrative_plan.sections.length >= 5, 'summary.narrative_plan.sections 不足');
+check('contract', Array.isArray(s.narrative_plan?.evidenceHighlights) && s.narrative_plan.evidenceHighlights.length >= 8, 'summary.narrative_plan.evidenceHighlights 不足');
+for (const section of s.narrative_plan?.sections || []) {
+  check('contract', typeof section.key === 'string' && section.key.length > 0, 'narrative_plan section 缺 key');
+  check('contract', typeof section.summaryZh === 'string' && section.summaryZh.length >= 40, `narrative_plan.${section.key || '?'} summaryZh 过短`);
+  check('contract', Array.isArray(section.sourceIndicators), `narrative_plan.${section.key || '?'} sourceIndicators 非数组`);
+}
 
 const meta = data.meta || {};
 check('contract', (meta.auto_count || 0) + (meta.curated_count || 0) + (meta.fallback_count || 0) === 23, 'meta 计数和 ≠ 23');
 check('contract', meta.upstream_sync?.checked === true, 'meta.upstream_sync 缺失(build 须每轮检查上游周报)');
+check('contract', meta.upstream_sync?.summaryAdopted === false, '不得直接采纳上游 summary.verdict_desc 作为生产正文');
+check('contract', meta.upstream_sync?.summaryUsage === 'not_used_for_production_narrative', 'meta.upstream_sync.summaryUsage 异常');
 
 // ---- 2. scoring replay ----
 function tierFromPct(p) {

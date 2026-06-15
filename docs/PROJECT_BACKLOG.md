@@ -305,10 +305,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于(2026-06-15 · P7 ODP global overlay replay)**: P6B 已 commit/push(`398fac1c`),owner 手动 Build Daily Radar Data #139 后 `radar-data.json` 已含 P6A 慢变量,页面 `GLOBAL OVERLAY` 可用 `Daily 回填` 正常显示。P7 本轮新增离线 replay/阈值守门:`scripts/oil-directional/replay-global-overlay.mjs` + `scripts/check-oil-directional-global-overlay.mjs`,并把 `check:oil-directional-global-overlay` 接入 ODP suite(8→9 leaf);当前未 commit/push。
-- **当前进行中(2026-06-15 · P7)**: P7 代码与文档已完成初版,正在验证。范围仅 scripts/package/docs,不改前端、不 bump asset、不写 `data/*.json` / `realtime/*.json` / `.github/workflows` / `manual-artifacts`。
-- **下一步建议(2026-06-15 · P7)**: 跑 `npm run check:oil-directional-global-overlay`、`npm run check:oil-directional`、`git diff --check`、`npm run check:all`;若全绿,等待 owner 决定是否 commit/push。
-- **阻塞或等待(2026-06-15 · P7)**: 无。P7 replay 是 overlay 语义守门,不是油价收益回测,不应被解读为新增方向预测模型。
+- **上次会话结束于(2026-06-15 · Bubble Watch narrative v1)**: AI 泡沫监测「本周判读」已改为本地 `bubble-watch-narrative-v1` 叙事引擎:从 23 项本地指标、翻灯、分类强制升级、估值/资金面/信用/宏观证据生成 `summary.verdict_desc`,不直接采用参考站正文。生产契约记录 `summaryAdopted=false` / `summaryUsage=not_used_for_production_narrative`;当前输出约 727 字符 / 1641 UTF-8 bytes,接近参考页体量,并由 checker 锁定 900-2600 bytes 区间。`data/bubble-watch.json` 已刷新到 issue 11 / `as_of_date=2026-06-15`,history 同步更新。
+- **当前进行中(2026-06-15 · Bubble Watch narrative v1)**: 无。范围限 `scripts/build-bubble-watch.mjs`、`scripts/check-bubble-watch.mjs`、Bubble Watch data/config/history 与 DATA_CONTRACT/DATA_SOURCES/本 Handoff;未改前端、不 bump asset、不改 Worker/runtime/workflows。
+- **下一步建议(2026-06-15 · Bubble Watch narrative v1)**: 可把同类「证据包→叙事计划→长度预算→契约守门」模式迁移到首页 Macro Risk Overview,但若触及前端渲染必须先读 `DESIGN.md` 并按 asset bump 纪律处理。
+- **阻塞或等待(2026-06-15 · Bubble Watch narrative v1)**: 无技术阻塞。本地构建未注入 `FRED_API_KEY`,因此 Bubble Watch 的 HY OAS / Fed policy 等少数字段走上游或配置 fallback;CI/production secret 环境应自动刷新。
 
 ---
 

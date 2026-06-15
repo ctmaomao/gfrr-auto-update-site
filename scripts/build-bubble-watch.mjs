@@ -33,6 +33,7 @@ const STATUS_RANK = { green: 0, yellow: 1, red: 2 };
 const STATUS_ZH = { green: '绿', yellow: '黄', red: '红' };
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
 const TIER_LABEL_EN = { observation: 'Observation', caution: 'Moderate Caution', alert: 'High Risk Alert', top: 'Systemic Top' };
+const NARRATIVE_ENGINE_VERSION = 'bubble-watch-narrative-v1';
 
 const CATEGORY_ORDER = [
   { key: 'valuation', zh: '估值', en: 'VALUATION' },
@@ -709,7 +710,14 @@ async function syncCuratedFromUpstream(config) {
   }
   if (!upstream) {
     console.warn('[bubble-watch] upstream sync: 本轮未拿到上游周报,沿用现有口径,下个周期再查');
-    return { checked: true, reachable: false, adopted: 0 };
+    return {
+      checked: true,
+      reachable: false,
+      adopted: 0,
+      summaryAvailable: false,
+      summaryAdopted: false,
+      summaryUsage: 'not_used_for_production_narrative'
+    };
   }
   const byId = new Map(upstream.indicators.map((i) => [i.id, i]));
   let adopted = 0;
@@ -727,7 +735,17 @@ async function syncCuratedFromUpstream(config) {
       }
     }
   }
-  const result = { checked: true, reachable: true, upstreamAsOf: upstream.as_of_date, upstreamIssue: upstream.issue_number ?? null, adopted, sourceUrl };
+  const result = {
+    checked: true,
+    reachable: true,
+    upstreamAsOf: upstream.as_of_date,
+    upstreamIssue: upstream.issue_number ?? null,
+    adopted,
+    sourceUrl,
+    summaryAvailable: typeof upstream.summary?.verdict_desc === 'string' && upstream.summary.verdict_desc.length > 100,
+    summaryAdopted: false,
+    summaryUsage: 'not_used_for_production_narrative'
+  };
   if (adopted) {
     config.upstreamSync = { sourceUrl, upstreamAsOf: upstream.as_of_date, adoptedCount: adopted, syncedAt: new Date().toISOString() };
     fs.writeFileSync(CONFIG_PATH, `${JSON.stringify(config, null, 2)}\n`);
@@ -786,6 +804,241 @@ function tierFromPct(p) {
   return 'observation';
 }
 
+function shortenText(text, maxChars) {
+  const raw = String(text || '').trim();
+  const chars = Array.from(raw);
+  if (chars.length <= maxChars) return raw;
+  const candidate = chars.slice(0, maxChars).join('');
+  const sentenceCut = Math.max(candidate.lastIndexOf('。'), candidate.lastIndexOf('；'), candidate.lastIndexOf(';'));
+  if (sentenceCut >= Math.floor(maxChars * 0.45)) return candidate.slice(0, sentenceCut + 1);
+  const softCut = Math.max(candidate.lastIndexOf('，'), candidate.lastIndexOf(','), candidate.lastIndexOf('、'));
+  if (softCut >= Math.floor(maxChars * 0.55)) return `${candidate.slice(0, softCut)}…`;
+  return `${chars.slice(0, Math.max(0, maxChars - 1)).join('')}…`;
+}
+
+function cleanIndicatorNote(note) {
+  return String(note || '')
+    .replace(/\(实时抓取失败,沿用 \d{4}-\d{2}-\d{2} 快照\)/gu, '')
+    .replace(/\(沿用 \d{4}-\d{2}-\d{2} 口径\)/gu, '')
+    .replace(/。?阈值[:：][\s\S]*$/u, '')
+    .replace(/。?判级[:：][\s\S]*$/u, '')
+    .replace(/\s+/gu, ' ')
+    .trim();
+}
+
+function indicatorClause(ind, maxChars = 150) {
+  if (!ind) return '';
+  const note = shortenText(cleanIndicatorNote(ind.note), maxChars).replace(/[。；;，,]+$/u, '');
+  const head = `${ind.name_zh} ${ind.value_display}（${STATUS_ZH[ind.status]}）`;
+  return note ? `${head}: ${note}` : head;
+}
+
+function compactIndicatorClause(ind, maxChars = 80) {
+  if (!ind) return '';
+  const note = shortenText(cleanIndicatorNote(ind.note), maxChars).replace(/[。；;，,]+$/u, '');
+  return `${ind.name_zh} ${ind.value_display}（${STATUS_ZH[ind.status]}）${note ? `: ${note}` : ''}`;
+}
+
+function indicatorValueBrief(ind) {
+  if (!ind) return '';
+  return `${ind.name_zh} ${ind.value_display}（${STATUS_ZH[ind.status]}）`;
+}
+
+function joinClauses(clauses) {
+  return clauses.filter(Boolean).join('；');
+}
+
+function statusMoveText(flip) {
+  return `「${flip.name_zh}」${STATUS_ZH[flip.from]}转${STATUS_ZH[flip.to]}`;
+}
+
+function compareMetricText(label, current, previous, suffix = '') {
+  if (!Number.isFinite(current)) return '';
+  const sep = /^[A-Za-z_]+$/u.test(label) ? ' ' : '';
+  if (!Number.isFinite(previous)) return `${label}${sep}${current.toFixed(1)}${suffix}`;
+  if (Math.abs(current - previous) < 0.05) return `${label}${sep}维持 ${current.toFixed(1)}${suffix}`;
+  return `${label}${sep}由 ${previous.toFixed(1)}${suffix} ${current > previous ? '升至' : '降至'} ${current.toFixed(1)}${suffix}`;
+}
+
+function buildCategorySnapshots(indicators) {
+  return CATEGORY_ORDER.map((cat) => {
+    const items = indicators.filter((i) => i.category === cat.key);
+    const red = items.filter((i) => i.status === 'red').length;
+    const yellow = items.filter((i) => i.status === 'yellow').length;
+    const green = items.filter((i) => i.status === 'green').length;
+    return {
+      ...cat,
+      total: items.length,
+      red,
+      yellow,
+      green,
+      redItems: items.filter((i) => i.status === 'red').map((i) => i.id),
+      yellowItems: items.filter((i) => i.status === 'yellow').map((i) => i.id),
+      greenItems: items.filter((i) => i.status === 'green').map((i) => i.id)
+    };
+  });
+}
+
+function pickIndicators(byId, ids) {
+  return ids.map((id) => byId.get(id)).filter(Boolean);
+}
+
+function buildEvidenceHighlights(byId, flips) {
+  const orderedIds = [
+    ...flips.map((f) => f.id),
+    'breadth_50d',
+    'spy_vs_rsp_6m',
+    'ai_ipo_pipeline',
+    'cloud_rpo_growth',
+    'hyperscaler_capex_yoy',
+    'mag4_fcf_yoy',
+    'nvda_invest_revenue',
+    'hy_oas',
+    'dc_abs_spread',
+    'neocloud_credit',
+    'fed_policy',
+    'capex_reaction',
+    'ceo_hedging'
+  ];
+  const seen = new Set();
+  return orderedIds
+    .filter((id) => {
+      if (seen.has(id) || !byId.has(id)) return false;
+      seen.add(id);
+      return true;
+    })
+    .slice(0, 12)
+    .map((id) => {
+      const ind = byId.get(id);
+      return {
+        indicator_id: id,
+        category: ind.category,
+        status: ind.status,
+        value_display: ind.value_display,
+        note_summary: shortenText(cleanIndicatorNote(ind.note), 220)
+      };
+    });
+}
+
+function buildBubbleNarrativePlan({
+  indicators,
+  red,
+  yellow,
+  green,
+  redPct,
+  weighted,
+  baseTier,
+  effTier,
+  overrideActive,
+  resonant,
+  flips,
+  prevEntry,
+  meta
+}) {
+  const byId = new Map(indicators.map((i) => [i.id, i]));
+  const categorySnapshots = buildCategorySnapshots(indicators);
+  const scoreParts = [
+    compareMetricText('red_pct', redPct, prevEntry?.red_pct, '%'),
+    compareMetricText('加权风险分', weighted, prevEntry?.risk_score, '%')
+  ].filter(Boolean);
+  const flipText = flips.length
+    ? `本期翻灯 ${flips.length} 项: ${flips.map(statusMoveText).join('、')}`
+    : prevEntry?.statuses
+      ? '状态层面无指标翻灯'
+      : '本期为本地历史序列首个可比点';
+
+  const sections = [];
+  sections.push({
+    key: 'scorecard',
+    role: 'lead',
+    sourceIndicators: [],
+    summaryZh: `本周计数 ${red} 红 / ${yellow} 黄 / ${green} 绿，${scoreParts.join('，')}。${flipText}；基础判读落在「${TIER_LABEL_ZH[baseTier]}」，有效判读为「${TIER_LABEL_ZH[effTier]}」。`
+  });
+
+  const breadth = byId.get('breadth_50d');
+  const rspSpread = byId.get('spy_vs_rsp_6m');
+  const insider = byId.get('insider_sell_buy');
+  const marketStructure = [breadth, rspSpread, insider].filter(Boolean);
+  sections.push({
+    key: 'market_structure',
+    role: 'breadth_and_risk_appetite',
+    sourceIndicators: marketStructure.map((i) => i.id),
+    summaryZh: `市场结构边际改善: ${indicatorValueBrief(breadth)}、${indicatorValueBrief(rspSpread)} 均为绿，说明头部独涨压力松动；但 ${indicatorValueBrief(insider)}，风险偏好并非完全健康。`
+  });
+
+  const mag4Fcf = byId.get('mag4_fcf_yoy');
+  const vcAi = byId.get('vc_ai_share');
+  const nvdaFinancing = byId.get('nvda_invest_revenue');
+  const cloudRpo = byId.get('cloud_rpo_growth');
+  const capitalAndFundamentals = [mag4Fcf, vcAi, nvdaFinancing, cloudRpo].filter(Boolean);
+  sections.push({
+    key: 'capital_fundamentals',
+    role: 'demand_vs_cash_burn',
+    sourceIndicators: capitalAndFundamentals.map((i) => i.id),
+    summaryZh: `资金面仍是核心压力: ${indicatorValueBrief(mag4Fcf)}、${indicatorValueBrief(vcAi)}、${indicatorValueBrief(nvdaFinancing)}；同时，${indicatorValueBrief(cloudRpo)} 说明需求仍在兑现。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。`
+  });
+
+  const hyOas = byId.get('hy_oas');
+  const dcAbs = byId.get('dc_abs_spread');
+  const neocloud = byId.get('neocloud_credit');
+  const fedPolicy = byId.get('fed_policy');
+  const capexReaction = byId.get('capex_reaction');
+  const creditAndMacro = [hyOas, dcAbs, neocloud, fedPolicy, capexReaction].filter(Boolean);
+  sections.push({
+    key: 'credit_macro',
+    role: 'financing_conditions_and_policy',
+    sourceIndicators: creditAndMacro.map((i) => i.id),
+    summaryZh: `信用端仍托底: ${indicatorValueBrief(hyOas)}、${indicatorValueBrief(dcAbs)}、${indicatorValueBrief(neocloud)}；宏观端则是 ${indicatorValueBrief(fedPolicy)}，叠加 ${indicatorValueBrief(capexReaction)}。这让本期更像高风险观察，而不是信用断裂式顶部。`
+  });
+
+  const resonantText = resonant.length
+    ? resonant.map((c) => {
+      const redItems = categorySnapshots.find((cat) => cat.key === c.key)?.redItems
+        .map((id) => byId.get(id))
+        .filter(Boolean)
+        .map((i) => `${i.name_zh} ${i.value_display}`)
+        .join('、');
+      return `${c.zh} ${c.red}/${c.total} 红${redItems ? `（${redItems}）` : ''}`;
+    }).join('；')
+    : '无分类红灯占比过半';
+  const redNames = indicators
+    .filter((i) => i.status === 'red')
+    .map((i) => `${i.name_zh} ${i.value_display}`)
+    .join('、');
+  sections.push({
+    key: 'override_conclusion',
+    role: 'final_judgment',
+    sourceIndicators: indicators.filter((i) => i.status === 'red').map((i) => i.id),
+    summaryZh: overrideActive
+      ? `因此，尽管基础读数仍在「${TIER_LABEL_ZH[baseTier]}」区间，分类强制升级继续生效: ${resonantText}。红灯集中在 ${redNames}；估值与资金面双类共振使有效判读维持「${TIER_LABEL_ZH[effTier]}」。`
+      : `因此，本期未触发分类强制升级: ${resonantText}。红灯为 ${redNames || '无'}；有效判读保持「${TIER_LABEL_ZH[effTier]}」。`
+  });
+
+  const staleCount = indicators.filter((i) => i.stale).length;
+  const limitations = [
+    `${meta.autoCount} 项自动接入、${meta.curatedCount + meta.fallbackCount} 项人工/回退口径。`,
+    staleCount ? `${staleCount} 项已标 STALE，相关叙事自动降为低确定性。` : '当前无 STALE 指标。',
+    '原站历史 snapshots 仅用于抽取写作结构与回归评估，生产正文不复制上游 summary.verdict_desc。'
+  ];
+
+  return {
+    version: NARRATIVE_ENGINE_VERSION,
+    sourceMode: 'local_indicator_evidence_pack',
+    upstreamVerdictPolicy: 'calibration_only_never_copied',
+    categorySnapshots,
+    evidenceHighlights: buildEvidenceHighlights(byId, flips),
+    sections,
+    limitations
+  };
+}
+
+function buildVerdictDescFromNarrativePlan(plan, fallbackDesc) {
+  const paragraphs = Array.isArray(plan?.sections)
+    ? plan.sections.map((section) => section.summaryZh).filter((text) => typeof text === 'string' && text.length > 40)
+    : [];
+  return paragraphs.length >= 4 ? paragraphs.join('') : fallbackDesc;
+}
+
 function computeSummary(indicators, today, prevEntry, meta) {
   const total = indicators.length;
   const red = indicators.filter((i) => i.status === 'red').length;
@@ -841,6 +1094,22 @@ function computeSummary(indicators, today, prevEntry, meta) {
   }
   if (redNames.length) parts.push(`当前红灯:${redNames.join('、')}。`);
   parts.push(`数据由自动管线于 ${today} 采集:${autoCount} 项实时接入、${curatedCount} 项沿用人工研究口径${staleCount ? `(其中 ${staleCount} 项已标 STALE)` : ''};编辑性事件叙事以最近一期人工口径为准。`);
+  const templateVerdictDesc = parts.join('');
+  const narrativePlan = buildBubbleNarrativePlan({
+    indicators,
+    red,
+    yellow,
+    green,
+    redPct,
+    weighted,
+    baseTier,
+    effTier,
+    overrideActive,
+    resonant,
+    flips,
+    prevEntry,
+    meta
+  });
 
   return {
     summary: {
@@ -852,7 +1121,9 @@ function computeSummary(indicators, today, prevEntry, meta) {
       weighted_risk_score: weighted,
       verdict_label: TIER_LABEL_ZH[effTier],
       verdict_label_en: TIER_LABEL_EN[effTier],
-      verdict_desc: parts.join('')
+      verdict_desc: buildVerdictDescFromNarrativePlan(narrativePlan, templateVerdictDesc),
+      verdict_desc_source: NARRATIVE_ENGINE_VERSION,
+      narrative_plan: narrativePlan
     },
     scoring: {
       base_tier: baseTier,
