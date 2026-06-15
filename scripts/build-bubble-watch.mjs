@@ -492,6 +492,20 @@ function sumFiniteObjectValues(obj) {
   }, 0);
 }
 
+function sumRows(rows, key) {
+  return rows.reduce((sum, row) => sum + (Number(row[key]) || 0), 0);
+}
+
+function dropLikelyPartialLatestRow(rows, valueKey) {
+  if (rows.length < 2) return { rows, droppedPartial: null };
+  const latest = rows[rows.length - 1];
+  const prev = rows[rows.length - 2];
+  if ((Number(latest[valueKey]) || 0) > 0 && (Number(latest[valueKey]) || 0) < (Number(prev[valueKey]) || 0) * 0.5) {
+    return { rows: rows.slice(0, -1), droppedPartial: latest };
+  }
+  return { rows, droppedPartial: null };
+}
+
 // ---------- 各指标构建(auto) ----------
 
 function classifyNumeric(value, redAbove, yellowAbove) {
@@ -907,18 +921,19 @@ async function fetchTokenVolumeMomFromOpenRouter() {
     asJson: true,
     headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json' }
   });
-  const rows = (json?.data || [])
+  const rawRows = (json?.data || [])
     .filter((row) => /^\d{4}-\d{2}-\d{2}/u.test(row?.x || '') && row?.ys && typeof row.ys === 'object')
     .map((row) => ({ date: row.x.slice(0, 10), totalTokens: sumFiniteObjectValues(row.ys) }))
     .filter((row) => row.totalTokens > 0)
     .sort((a, b) => a.date.localeCompare(b.date));
+  const { rows, droppedPartial } = dropLikelyPartialLatestRow(rawRows, 'totalTokens');
   if (rows.length < 8) throw new Error(`OpenRouter weekly token rows 不足 (${rows.length})`);
   const latest4 = rows.slice(-4);
   const prev4 = rows.slice(-8, -4);
   const prior4 = rows.slice(-12, -8);
-  const sumLatest = latest4.reduce((a, row) => a + row.totalTokens, 0);
-  const sumPrev = prev4.reduce((a, row) => a + row.totalTokens, 0);
-  const sumPrior = prior4.length === 4 ? prior4.reduce((a, row) => a + row.totalTokens, 0) : null;
+  const sumLatest = sumRows(latest4, 'totalTokens');
+  const sumPrev = sumRows(prev4, 'totalTokens');
+  const sumPrior = prior4.length === 4 ? sumRows(prior4, 'totalTokens') : null;
   const momPct = ((sumLatest - sumPrev) / sumPrev) * 100;
   const prevMomPct = sumPrior ? ((sumPrev - sumPrior) / sumPrior) * 100 : null;
   let status = 'green';
@@ -942,8 +957,124 @@ async function fetchTokenVolumeMomFromOpenRouter() {
       rows: latest4.map((row) => ({ date: row.date, totalTokens: row.totalTokens })),
       latest4wTokens: sumLatest,
       prev4wTokens: sumPrev,
+      droppedPartialWeek: droppedPartial,
       momPct,
       prevMomPct
+    }
+  };
+}
+
+function buildOpenRouterPricingMap(catalogRows) {
+  const map = new Map();
+  for (const model of catalogRows || []) {
+    const endpoint = model.endpoint || {};
+    const pricing = endpoint.pricing || {};
+    const prompt = Number(pricing.prompt);
+    const completion = Number(pricing.completion);
+    if (!Number.isFinite(prompt) || !Number.isFinite(completion)) continue;
+    for (const key of [endpoint.model_variant_permaslug, model.permaslug, model.slug, endpoint.model?.permaslug, endpoint.model?.slug]) {
+      if (key && !map.has(key)) map.set(key, { prompt, completion, isFree: endpoint.is_free === true });
+    }
+  }
+  return map;
+}
+
+async function fetchTokenRevenueRatioFromOpenRouter() {
+  const [chartJson, catalogJson] = await Promise.all([
+    fetchWithTimeout('https://openrouter.ai/api/frontend/rankings/model-rankings-chart', {
+      asJson: true,
+      headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json' }
+    }),
+    fetchWithTimeout('https://openrouter.ai/api/frontend/v1/catalog/models', {
+      asJson: true,
+      headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json' }
+    })
+  ]);
+  const pricingMap = buildOpenRouterPricingMap(catalogJson?.data || []);
+  const rawRows = (chartJson?.data?.data || [])
+    .filter((row) => /^\d{4}-\d{2}-\d{2}/u.test(row?.x || '') && row?.ys && typeof row.ys === 'object')
+    .map((row) => {
+      let totalTokens = 0;
+      let pricedTokens = 0;
+      let spendProxyUsd = 0;
+      let othersTokens = 0;
+      const missingModels = [];
+      for (const [modelId, rawTokens] of Object.entries(row.ys || {})) {
+        const tokens = Number(rawTokens) || 0;
+        totalTokens += tokens;
+        if (modelId === 'Others') {
+          othersTokens += tokens;
+          continue;
+        }
+        const pricing = pricingMap.get(modelId) || (modelId.endsWith(':free') ? pricingMap.get(modelId.replace(/:free$/u, '')) : null);
+        if (!pricing) {
+          missingModels.push(modelId);
+          continue;
+        }
+        pricedTokens += tokens;
+        // OpenRouter chart is total tokens; use an explicit 80/20 input-output blend as a spend proxy.
+        spendProxyUsd += tokens * (pricing.prompt * 0.8 + pricing.completion * 0.2);
+      }
+      return {
+        date: row.x.slice(0, 10),
+        totalTokens,
+        pricedTokens,
+        spendProxyUsd,
+        othersTokens,
+        missingModels: missingModels.slice(0, 5)
+      };
+    })
+    .filter((row) => row.totalTokens > 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const { rows, droppedPartial } = dropLikelyPartialLatestRow(rawRows, 'totalTokens');
+  if (rows.length < 8) throw new Error(`OpenRouter model-ranking weekly rows 不足 (${rows.length})`);
+  const latest4 = rows.slice(-4);
+  const prev4 = rows.slice(-8, -4);
+  const latestTokens = sumRows(latest4, 'totalTokens');
+  const prevTokens = sumRows(prev4, 'totalTokens');
+  const latestSpend = sumRows(latest4, 'spendProxyUsd');
+  const prevSpend = sumRows(prev4, 'spendProxyUsd');
+  const latestPricedTokens = sumRows(latest4, 'pricedTokens');
+  const coveragePct = (latestPricedTokens / latestTokens) * 100;
+  if (!(coveragePct >= 45)) throw new Error(`OpenRouter spend proxy priced coverage 过低: ${coveragePct.toFixed(1)}%`);
+  if (!(latestSpend > 0 && prevSpend > 0)) throw new Error('OpenRouter spend proxy 金额不足,无法计算 token/spend 增速比');
+  const tokenGrowthPct = ((latestTokens - prevTokens) / prevTokens) * 100;
+  const spendGrowthPct = ((latestSpend - prevSpend) / prevSpend) * 100;
+  let ratio = null;
+  let status = 'green';
+  if (tokenGrowthPct > 0 && spendGrowthPct <= 0) {
+    status = 'red';
+  } else if (tokenGrowthPct > 0 && spendGrowthPct > 0) {
+    ratio = tokenGrowthPct / spendGrowthPct;
+    status = ratio > 2 ? 'red' : ratio >= 1 ? 'yellow' : 'green';
+  }
+  const display = ratio === null
+    ? (tokenGrowthPct > 0 ? '≫2x' : '<1x')
+    : `~${ratio.toFixed(1)}x`;
+  return {
+    status,
+    value_display: display,
+    source_name: 'OpenRouter rankings + catalog spend proxy',
+    note: `OpenRouter 周度模型排名 + 公开 catalog pricing 估算平台内 spend proxy:最近 4 周 token volume ${fmtPct(tokenGrowthPct, 1, true)},估算 spend ${fmtPct(spendGrowthPct, 1, true)},token/spend 增速比 ${display};定价覆盖 ${coveragePct.toFixed(1)}%。该项不是厂商真实收入,仅作 OpenRouter 平台代理。阈值:>2x 红 / 1-2x 黄 / <1x 绿`,
+    detail: {
+      source: 'OpenRouter model-rankings-chart + frontend catalog models',
+      latestWeek: latest4[latest4.length - 1].date,
+      latest4wTokens: latestTokens,
+      prev4wTokens: prevTokens,
+      latest4wSpendProxyUsd: latestSpend,
+      prev4wSpendProxyUsd: prevSpend,
+      tokenGrowthPct,
+      spendGrowthPct,
+      ratio,
+      pricedCoveragePct: coveragePct,
+      droppedPartialWeek: droppedPartial,
+      rows: latest4.map((row) => ({
+        date: row.date,
+        totalTokens: row.totalTokens,
+        pricedTokens: row.pricedTokens,
+        spendProxyUsd: row.spendProxyUsd,
+        othersTokens: row.othersTokens
+      }))
     }
   };
 }
@@ -981,6 +1112,61 @@ async function fetchEnterpriseDeployFromPublicReports() {
       url: 'https://cloud.google.com/transform/roi-of-ai-how-agents-help-business',
       productionDeployPct: pct,
       deloitteSupport
+    }
+  };
+}
+
+function sentenceMatches(text, companyRe, termRe) {
+  return String(text || '')
+    .split(/[.!?。；;\n]/u)
+    .map((s) => s.replace(/\s+/gu, ' ').trim())
+    .filter((s) => s.length >= 28 && s.length <= 360 && companyRe.test(s) && termRe.test(s))
+    .slice(0, 12);
+}
+
+async function fetchNeocloudCreditFromPublicMonitor() {
+  const pages = [
+    { source: 'PRNewswire:CoreWeave', url: 'https://www.prnewswire.com/news/coreweave/' },
+    { source: 'Lambda official blog', url: 'https://lambda.ai/blog/lambda-closes-1-billion-senior-secured-credit-facility' },
+    { source: 'Crusoe official newsroom', url: 'https://www.crusoe.ai/resources/newsroom/crusoe-secures-usd750-million-credit-facility-from-brookfield-to-accelerate' },
+    { source: 'Nebius newsroom financing update', url: 'https://nebius.com/newsroom/nebius-provides-financing-update' },
+    { source: 'Nebius newsroom offering close', url: 'https://nebius.com/newsroom/nebius-group-announces-closings-of-its-public-offering-of-class-a-ordinary-shares-and-concurrent-private-offering-of-convertible-senior-notes-with-aggregate-gross-proceeds-to-date-of-approximately-4-2-billion' }
+  ];
+  const companyRe = /\b(CoreWeave|Nebius|Lambda|Crusoe)\b/iu;
+  const negativeRe = /\b(default|payment default|downgrade|downgraded|distressed|distress|bankruptcy|insolvency|covenant breach|negative outlook|rating watch negative)\b|违约|降级|债务重组|破产|资不抵债/iu;
+  const financingRe = /\b(credit facility|senior secured credit facility|senior notes|convertible senior notes|financing|offering|debt secured|gross proceeds|funding)\b|融资|信贷|优先票据|可转换票据/iu;
+  const negativeEvents = [];
+  const financingEvents = [];
+  const failures = [];
+  let checkedPages = 0;
+  for (const page of pages) {
+    try {
+      const html = await fetchWithTimeout(page.url, { headers: { 'User-Agent': BROWSER_UA }, timeoutMs: 15000 });
+      checkedPages += 1;
+      const text = htmlToText(html);
+      for (const snippet of sentenceMatches(text, companyRe, negativeRe)) negativeEvents.push({ ...page, snippet: compactSnippet(snippet, 180) });
+      for (const snippet of sentenceMatches(text, companyRe, financingRe)) financingEvents.push({ ...page, snippet: compactSnippet(snippet, 180) });
+    } catch (error) {
+      failures.push({ source: page.source, reason: error.message });
+    }
+  }
+  if (!checkedPages || !financingEvents.length) {
+    throw new Error(`neocloud public credit monitor evidence 不足: checked=${checkedPages}, financing=${financingEvents.length}, failures=${failures.length}`);
+  }
+  const status = negativeEvents.length ? 'red' : 'green';
+  return {
+    status,
+    value_display: negativeEvents.length ? `${negativeEvents.length} 件` : '0 件',
+    source_name: 'CoreWeave / Lambda / Crusoe / Nebius public credit-event monitor',
+    note: negativeEvents.length
+      ? `公开 neocloud 信用事件监测命中 ${negativeEvents.length} 条违约/降级/困境融资线索,首条「${negativeEvents[0].snippet}」;按口径任何正式信用事件即红。`
+      : `公开 neocloud 信用事件监测覆盖 CoreWeave/Lambda/Crusoe/Nebius 共 ${checkedPages} 个页面,未命中违约、降级或困境重组词;同时记录 ${financingEvents.length} 条融资/票据/credit facility 正常事件。该项不是完整评级数据库。判级:任何违约/降级=红 / 无正式事件=绿`,
+    detail: {
+      source: 'public neocloud credit-event monitor',
+      checkedPages,
+      failures,
+      negativeEvents: negativeEvents.slice(0, 5),
+      financingEvents: financingEvents.slice(0, 8)
     }
   };
 }
@@ -1031,7 +1217,9 @@ async function fetchCeoHedgingFromGdelt() {
 const hybridCuratedBuilders = {
   vc_ai_share: fetchVcAiShareFromCrunchbase,
   ai_ipo_pipeline: fetchAiIpoPipelineFromCrunchbase,
+  neocloud_credit: fetchNeocloudCreditFromPublicMonitor,
   token_volume_mom: fetchTokenVolumeMomFromOpenRouter,
+  token_revenue_ratio: fetchTokenRevenueRatioFromOpenRouter,
   enterprise_deploy: fetchEnterpriseDeployFromPublicReports,
   accounting_events: fetchAccountingEventsFromPublicSearch,
   ceo_hedging: fetchCeoHedgingFromGdelt

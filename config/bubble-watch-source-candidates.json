@@ -66,11 +66,39 @@
           "cadence": "weekly",
           "role": "candidate monitor for new data-center ABS/CMBS issuance and rating changes",
           "limitations": "Presale headlines are useful event evidence but do not expose a free continuous spread history; keep candidate_only for spread direction."
+        },
+        {
+          "source": "Vantage Data Centers Europe ABS release",
+          "url": "https://vantage-dc.com/news/vantage-data-centers-completes-industrys-first-euro-based-data-center-asset-backed-securitization-abs-with-e640m-transaction/",
+          "cadence": "event-driven",
+          "role": "Europe multilingual/global evidence for data-center ABS issuance, rating and size",
+          "limitations": "Confirms euro-based issuance and ratings, but does not publish a comparable issue-spread time series."
+        },
+        {
+          "source": "GDS / HK-listed China data-center ABS disclosures",
+          "url": "https://www.gds-services.com/zh_cn/newsshow_303.html",
+          "cadence": "event-driven",
+          "role": "Chinese-language data-center ABS issuance evidence for GDS / 万国数据",
+          "limitations": "Useful for China/HK market coverage and deal size; the article does not expose a weekly spread index."
+        },
+        {
+          "source": "Shanghai Stock Exchange bond listing search",
+          "url": "https://www.sse.com.cn/assortment/bonds/listing/",
+          "cadence": "event-driven",
+          "role": "China exchange-level lookup for data-center ABS coupon/listing fields",
+          "limitations": "Can confirm coupon-like fields for individual deals, but liquidity and benchmark spread normalization are not stable enough for automatic weekly scoring."
+        },
+        {
+          "source": "China ABS market reports / 联合资信 ABS 季报",
+          "url": "https://www.lhratings.com/",
+          "cadence": "quarterly",
+          "role": "Chinese-language broader ABS spread and issuance context",
+          "limitations": "Sector-level ABS context, not a data-center-specific continuous spread; can calibrate narrative but not auto-score the indicator."
         }
       ]
     },
     "neocloud_credit": {
-      "automationStatus": "candidate_only",
+      "automationStatus": "hybrid_live",
       "primarySignal": "Default, downgrade, distressed financing or rating event among neocloud names",
       "freeSourceCandidates": [
         {
@@ -95,11 +123,39 @@
           "limitations": "Captures company-disclosed financing plans, not rating-agency downgrades across the whole neocloud universe."
         },
         {
+          "source": "PRNewswire CoreWeave public news feed",
+          "url": "https://www.prnewswire.com/news/coreweave/",
+          "cadence": "weekly",
+          "role": "machine-readable public monitor for CoreWeave notes / credit-facility / financing events",
+          "limitations": "Company-distributed public feed; negative-event absence is not a full rating-database search."
+        },
+        {
+          "source": "Lambda official credit-facility release",
+          "url": "https://lambda.ai/blog/lambda-closes-1-billion-senior-secured-credit-facility",
+          "cadence": "event-driven",
+          "role": "neocloud secured-credit facility evidence",
+          "limitations": "Official company release; supports event monitoring but not mark-to-market credit spreads."
+        },
+        {
+          "source": "Crusoe official credit-facility release",
+          "url": "https://www.crusoe.ai/resources/newsroom/crusoe-secures-usd750-million-credit-facility-from-brookfield-to-accelerate",
+          "cadence": "event-driven",
+          "role": "neocloud credit facility / financing evidence",
+          "limitations": "Official company release; useful for financing-event evidence, not an independent downgrade database."
+        },
+        {
+          "source": "Nebius financing update / offering close releases",
+          "url": "https://nebius.com/newsroom/nebius-provides-financing-update",
+          "cadence": "event-driven",
+          "role": "public-company financing and convertible-note event monitor",
+          "limitations": "Covers Nebius official financing disclosures; broader rating-action absence remains a public-monitor proxy."
+        },
+        {
           "source": "Fitch / S&P / Moody's public rating headlines",
           "url": "https://www.fitchratings.com/entity/coreweave-inc-97744349",
           "cadence": "weekly",
           "role": "rating-action and debt-rating event monitor",
-          "limitations": "Some pages are client-rendered, paywalled, or search-index-visible but not reliably machine-readable from CI; keep candidate_only until a stable public feed is reviewed."
+          "limitations": "Some pages are client-rendered, paywalled, or search-index-visible but not reliably machine-readable from CI; current hybrid builder uses official/company and public-wire pages first and treats rating-agency headlines as calibration."
         }
       ]
     },
@@ -124,22 +180,29 @@
       ]
     },
     "token_revenue_ratio": {
-      "automationStatus": "candidate_only",
+      "automationStatus": "hybrid_live",
       "primarySignal": "Token growth versus reported or estimated AI revenue growth",
       "freeSourceCandidates": [
         {
-          "source": "OpenRouter public rankings API + public model pricing catalog",
-          "url": "https://openrouter.ai/api/frontend/rankings/models",
-          "cadence": "monthly",
-          "role": "future token/spend proxy for numerator; could combine model token counts with public pricing",
-          "limitations": "Spend proxy would be OpenRouter-only and still would not equal vendor revenue; denominator requires stable public revenue panel."
+          "source": "OpenRouter public model-ranking chart",
+          "url": "https://openrouter.ai/api/frontend/rankings/model-rankings-chart",
+          "cadence": "weekly",
+          "role": "model-level weekly token-volume panel for numerator",
+          "limitations": "OpenRouter platform proxy, not full-industry token tape; latest partial week must be dropped when incomplete."
+        },
+        {
+          "source": "OpenRouter public frontend catalog pricing",
+          "url": "https://openrouter.ai/api/frontend/v1/catalog/models",
+          "cadence": "weekly",
+          "role": "model endpoint pricing used to estimate OpenRouter platform spend proxy",
+          "limitations": "Spend proxy is token mix times public list price and is not vendor recognized revenue; builder requires minimum priced-token coverage and fails closed otherwise."
         },
         {
           "source": "Menlo Ventures State of Generative AI in the Enterprise",
           "url": "https://menlovc.com/perspective/2025-the-state-of-generative-ai-in-the-enterprise/",
           "cadence": "annual / periodic",
           "role": "enterprise GenAI spend growth benchmark",
-          "limitations": "Low frequency and survey/model-estimate driven; not enough for weekly token/revenue ratio automation."
+          "limitations": "Low frequency and survey/model-estimate driven; calibration only, not the weekly production numerator/denominator."
         }
       ]
     },
@@ -167,6 +230,27 @@
           "cadence": "annual / periodic",
           "role": "spend-growth proxy for AI application layer",
           "limitations": "Not ARR, not company-level, and too low-frequency for weekly second-derivative classification."
+        },
+        {
+          "source": "SaaStr public ARR growth posts",
+          "url": "https://www.saastr.com/anthropic-just-hit-14-billion-arr-up-from-1-billion-just-14-months-ago/",
+          "cadence": "event-driven",
+          "role": "public private-company ARR estimate snapshots for Anthropic / OpenAI-style growth curves",
+          "limitations": "High-signal narrative evidence, but estimates revise quickly and are not a stable audited panel."
+        },
+        {
+          "source": "Sacra public company profile pages",
+          "url": "https://sacra.com/c/lambda-labs/",
+          "cadence": "event-driven / periodic",
+          "role": "public snippets for private AI infrastructure revenue estimates",
+          "limitations": "Partly paywalled and estimate-driven; still unsuitable for automatic second-derivative scoring without a reviewed issuer panel."
+        },
+        {
+          "source": "Public listed-company RPO panel outside US where available",
+          "url": "https://www1.hkexnews.hk/search/titlesearch.xhtml",
+          "cadence": "quarterly",
+          "role": "Hong Kong / Singapore / Europe listed proxy disclosures for AI infrastructure demand",
+          "limitations": "Covers public data-center and hardware proxies, not private frontier-model ARR; useful for cross-region narrative support only."
         }
       ]
     },
@@ -241,6 +325,34 @@
           "cadence": "quarterly",
           "role": "future capex-guidance text extraction",
           "limitations": "Requires issuer-specific pages and guidance-language classifier; not safe for weekly auto until source-reviewed."
+        },
+        {
+          "source": "HKEXnews listed-company earnings PDFs",
+          "url": "https://www1.hkexnews.hk/search/titlesearch.xhtml",
+          "cadence": "quarterly",
+          "role": "Hong Kong data-center / AI infrastructure issuer disclosure source",
+          "limitations": "PDF-heavy and issuer-specific; can support manual/event research but cannot by itself align capex guidance with next-day market reaction."
+        },
+        {
+          "source": "SGX corporate announcements",
+          "url": "https://links.sgx.com/",
+          "cadence": "quarterly",
+          "role": "Singapore data-center REIT / digital infrastructure announcement source",
+          "limitations": "Useful for regional capex and data-center exposure, but market-reaction automation still needs event calendar and local price series normalization."
+        },
+        {
+          "source": "CNInfo / 巨潮资讯 investor-relation PDFs",
+          "url": "https://www.cninfo.com.cn/",
+          "cadence": "event-driven / quarterly",
+          "role": "Chinese-language capex guidance and AI infrastructure commentary",
+          "limitations": "PDF text varies by issuer and exchange; automated use requires issuer allowlist, translation and event-window backtest."
+        },
+        {
+          "source": "EastMoney Chinese financial news",
+          "url": "https://www.eastmoney.com/",
+          "cadence": "daily",
+          "role": "Chinese-language narrative evidence for hyperscaler capex and investor reaction",
+          "limitations": "Media/aggregation source only; cannot replace issuer filings plus market-window return calculation."
         }
       ]
     },
