@@ -8,9 +8,10 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=odp-global-overlay-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-global-overlay-1';
-import { MODULE_LABELS } from './decision.js?v=odp-global-overlay-1';
+} from './config.js?v=macro-narrative-odp-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=macro-narrative-odp-1';
+import { MODULE_LABELS } from './decision.js?v=macro-narrative-odp-1';
+import { buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=macro-narrative-odp-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -92,73 +93,7 @@ function deriveModuleBreakdown(modules) {
 
 // ---------- Block 1: Hero (editorial-big-number) ----------
 
-function riskBandZh(score) {
-  if (!Number.isFinite(score)) return null;
-  if (score >= 60) return '系统性顶部';
-  if (score >= 40) return '高风险预警';
-  if (score >= 25) return '中度警戒';
-  return '观察期';
-}
-
-function trimVerdictClause(s) {
-  return typeof s === 'string' ? s.replace(/[。；;\s]+$/, '') : '';
-}
-
-// Bubble Watch 改版:富宏观自动判读,每期从 dailyBrief + 驱动读数派生,fail-soft,display-only。
-function buildHeroVerdictBody(radarData, worldOrderStressData) {
-  const brief = (radarData && typeof radarData.dailyBrief === 'object' && radarData.dailyBrief) || {};
-  const baseline = (radarData && typeof radarData.displayInputsBaseline === 'object' && radarData.displayInputsBaseline) || {};
-  const brentLayer = (radarData && typeof radarData.brentPricingLayer === 'object' && radarData.brentPricingLayer) || {};
-  const num = (x) => (Number.isFinite(x) ? x : null);
-
-  const score = num(radarData?.score);
-  const band = riskBandZh(score);
-  const overlay = num(worldOrderStressData?.score);
-  const chain = (typeof brief.dominantRiskChain === 'object' && brief.dominantRiskChain) || {};
-  const div = (typeof brief.largestDivergence === 'object' && brief.largestDivergence) || {};
-  const brent = num(baseline.brent);
-  const crack = num(brentLayer.crackSpread);
-  const crackRegime = typeof brentLayer.crackSpreadRegime === 'string' ? brentLayer.crackSpreadRegime : null;
-  const hy = num(baseline.hyOas);
-  const vix = num(baseline.vix);
-  const triggers = Array.isArray(brief.keyTriggers) ? brief.keyTriggers.filter((t) => typeof t === 'string') : [];
-  const invalidation = Array.isArray(brief.invalidationSignals) ? brief.invalidationSignals.filter((t) => typeof t === 'string') : [];
-
-  const parts = [];
-
-  if (score !== null && band) {
-    let s = `原始 ${score} 落『${band}』带`;
-    if (overlay !== null && overlay >= 40) s += `，世界秩序压力 ${overlay} 把判读上调一档`;
-    parts.push(s + '。');
-  }
-
-  if (chain.labelZh) {
-    let s = `主线 ${chain.labelZh}`;
-    if (chain.stageZh) s += `（${chain.stageZh}）`;
-    const driver = [];
-    if (brent !== null) driver.push(`布伦特原油(Brent) ${brent.toFixed(1)}`);
-    if (crack !== null) driver.push(`裂解价差(Crack Spread) ${crack.toFixed(1)}${crackRegime ? '（' + crackRegime + '）' : ''}`);
-    if (driver.length) s += `：${driver.join('、')}`;
-    parts.push(s + '。');
-  }
-
-  if (div.labelZh) {
-    let s = `最大背离=${div.labelZh}`;
-    if (div.statusZh) s += `（${div.statusZh}）`;
-    const calm = [];
-    if (hy !== null) calm.push(`高收益债利差(HY OAS) ${hy.toFixed(2)}%`);
-    if (vix !== null) calm.push(`波动率指数(VIX) ${vix.toFixed(1)}`);
-    if (calm.length) s += `；${calm.join('、')} 反映信用与波动率市场尚未同步验证`;
-    parts.push(s + '。');
-  }
-
-  if (triggers.length) parts.push(`关键触发：${triggers.slice(0, 2).map(trimVerdictClause).join('；')}。`);
-  if (invalidation.length) parts.push(`失效信号：${invalidation.slice(0, 2).map(trimVerdictClause).join('；')}。`);
-
-  return parts.join('');
-}
-
-function renderHero({ radarData, worldOrderStressData }) {
+function renderHero({ radarData, worldOrderStressData, marketPricingMetricsData, oilDirectionalData }) {
   try {
     if (!radarData) {
       console.warn('[renderMacroOverview] renderHero: radarData missing, skip');
@@ -204,7 +139,12 @@ function renderHero({ radarData, worldOrderStressData }) {
 
     // big-right p — verdict body(Bubble Watch 改版:接活数据,每期自动派生)
     const bodyEl = $('hero-verdict-body');
-    const verdictBody = buildHeroVerdictBody(radarData, worldOrderStressData);
+    const verdictBody = buildMacroOverviewVerdictBody({
+      radarData,
+      worldOrderStressData,
+      marketPricingMetricsData,
+      oilDirectionalData,
+    });
     if (bodyEl && verdictBody) bodyEl.textContent = verdictBody;
 
     // big-footer DOMINANT RISK CHAIN
@@ -3193,9 +3133,9 @@ function renderExecutionRiskDetail({ radarData }) {
 
 // ---------- 主入口 ----------
 
-export function renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData }) {
+export function renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData }) {
   // Stage 4b-1A: Hero + threshold + pressure-sources
-  renderHero({ radarData, worldOrderStressData });
+  renderHero({ radarData, worldOrderStressData, marketPricingMetricsData, oilDirectionalData });
   renderThresholdBlock({ radarData, worldOrderStressData });
   renderPressureSources({ radarData });
 

@@ -806,7 +806,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-global-overlay-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `macro-narrative-odp-1`）。
 
 稳定边界：
 
@@ -1029,26 +1029,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-global-overlay-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+macro-narrative-odp-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-global-overlay-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `macro-narrative-odp-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-global-overlay-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-global-overlay-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-global-overlay-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=macro-narrative-odp-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=macro-narrative-odp-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `macro-narrative-odp-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-global-overlay-1
-npm run bump:frontend-asset-version -- odp-global-overlay-1
+node scripts/bump-frontend-asset-version.mjs macro-narrative-odp-1
+npm run bump:frontend-asset-version -- macro-narrative-odp-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-global-overlay-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `macro-narrative-odp-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
@@ -1882,6 +1882,20 @@ display coverage polish 不改 production contract;raw provenance / artifact IDs
 ## v28.0M-4 macro overview read-only derivation boundary
 
 Macro Overview 是前端只读派生层:render 不得 mutate `data/radar-data.json`、不得伪造 Nasdaq/QQQ 周历史/MA60/标准差/z-score,不影响 scoring/decisionModel/executionLock/positionGuidance;Global Risk Heatmap 为独立 display section(非嵌入 macro overview 卡内)。
+
+### macro-overview-narrative-v1 local narrative planner
+
+`scripts/modules/macroOverviewNarrative.js` 是首页 Macro Risk Overview 的本地叙事计划层。它只在浏览器前端读取已加载的 `radar-data.json`、`world-order-stress.json`、`market-pricing-metrics.json` 与独立 `oil-directional-pressure.json`,生成 render-time evidence pack / narrative plan / Hero verdict body;不写任何 `data/*.json` 或 `realtime/*.json`,不调用外部 AI,不影响 scoring / `decisionModel` / `executionLock` / `positionGuidance` / cross-validation / Global Risk Heatmap。
+
+叙事计划版本固定为 `macro-overview-narrative-v1`,source mode 为 `local_frontend_evidence_pack`。当前 sections 必须至少覆盖:
+
+- `scorecard`:综合风险分、六模块红黄绿计数、World Order 升档语气。
+- `oil_directional_pressure`:只读引用 ODP finalBias / 物理链 / 全球慢变量确认,用于解释油价方向压力;不得把 ODP 并入 scoring 或第七模块。
+- `market_credit_confirmation`:市场温度、信用利差、VIX 反证。
+- `policy_liquidity`:美联储政策、美元、长端利率、回购/逆回购水位。
+- `conclusion`:触发条件与失效条件。
+
+长度预算由 `MACRO_OVERVIEW_NARRATIVE_BYTE_BUDGET` 守门,当前为 900-2200 UTF-8 bytes;超出时使用 compact section 文案。`npm run check:macro-overview-narrative` 复算真实数据下的 narrative plan,要求至少 5 sections、12 evidence highlights、正文显式包含 ODP/油价/布伦特/信用/World Order 证据,并验证该 planner 未被 Daily、scoring、decision、realtime 或 cross-validation 路径引用。
 
 ## v28.0M-5 market pricing temperature design boundary
 

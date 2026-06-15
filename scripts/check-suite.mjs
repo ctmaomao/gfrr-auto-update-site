@@ -4,6 +4,7 @@ const SUITES = {
   'frontend-live-contracts': [
     'check:null-zero-display-guards',
     'check:dom',
+    'check:macro-overview-narrative',
     'check:macro-coherence-display-only'
   ],
   'external-ai': [

@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-global-overlay-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-global-overlay-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=macro-narrative-odp-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=macro-narrative-odp-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

@@ -9,7 +9,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 项 | 当前值 |
 |---|---|
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分);**第二页面 AI 泡沫监测(`bubble-watch.html` + 周一 cron 数据管线,ADR-0016,display-only)live,与主页书签互切**|
-| Cache version | `odp-global-overlay-1` |
+| Cache version | `macro-narrative-odp-1` |
 | check:all 项数 | 18 顶层项 / ~64 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 9 leaf + `check:frontend-zh-copy` + `check:bubble-watch` 6 leaf)|
 | 最后审计日期 | 2026-06-05(全站 `.md` doc-slim 审计 Batch 1a→5余项,docs-only;两大 scope-of-record 簇 External AI / Market Pricing 收口 + 三 Operating Document changelog tail 折叠,详见 Section 5 + Session Handoff)。上次系统审计 2026-06-02(Codex 只读审计 7 findings 全收口,详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
@@ -305,10 +305,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于(2026-06-15 · Bubble Watch narrative v1)**: AI 泡沫监测「本周判读」已改为本地 `bubble-watch-narrative-v1` 叙事引擎:从 23 项本地指标、翻灯、分类强制升级、估值/资金面/信用/宏观证据生成 `summary.verdict_desc`,不直接采用参考站正文。生产契约记录 `summaryAdopted=false` / `summaryUsage=not_used_for_production_narrative`;当前输出约 727 字符 / 1641 UTF-8 bytes,接近参考页体量,并由 checker 锁定 900-2600 bytes 区间。`data/bubble-watch.json` 已刷新到 issue 11 / `as_of_date=2026-06-15`,history 同步更新。
-- **当前进行中(2026-06-15 · Bubble Watch narrative v1)**: 无。范围限 `scripts/build-bubble-watch.mjs`、`scripts/check-bubble-watch.mjs`、Bubble Watch data/config/history 与 DATA_CONTRACT/DATA_SOURCES/本 Handoff;未改前端、不 bump asset、不改 Worker/runtime/workflows。
-- **下一步建议(2026-06-15 · Bubble Watch narrative v1)**: 可把同类「证据包→叙事计划→长度预算→契约守门」模式迁移到首页 Macro Risk Overview,但若触及前端渲染必须先读 `DESIGN.md` 并按 asset bump 纪律处理。
-- **阻塞或等待(2026-06-15 · Bubble Watch narrative v1)**: 无技术阻塞。本地构建未注入 `FRED_API_KEY`,因此 Bubble Watch 的 HY OAS / Fed policy 等少数字段走上游或配置 fallback;CI/production secret 环境应自动刷新。
+- **上次会话结束于(2026-06-15 · Macro Overview narrative v1 + ODP)**: 首页 Macro Risk Overview 已迁移到 `macro-overview-narrative-v1` 本地叙事计划:新增 `scripts/modules/macroOverviewNarrative.js`,从 `radar-data.json` / `world-order-stress.json` / `market-pricing-metrics.json` / `oil-directional-pressure.json` 生成 evidence pack -> 5 段 narrative plan -> Hero verdict body。当前真实数据输出约 684 字符 / 1547 UTF-8 bytes,由 `check:macro-overview-narrative` 锁定 900-2200 bytes、5 sections、12+ evidence highlights。ODP 作为油价方向核心证据只读接入,不进入 scoring / decision / cross-validation / Heatmap。
+- **当前进行中(2026-06-15 · Macro Overview narrative v1 + ODP)**: 无。范围为前端 render/app/module/check/package/docs + asset bump `macro-narrative-odp-1`;未改 production data、Worker runtime、workflow 或 scoring/decision 逻辑。
+- **下一步建议(2026-06-15 · Macro Overview narrative v1 + ODP)**: 若 owner 确认页面效果,可按窄范围提交/推送。已验证:`git diff --check`、`npm run check:docs`、`npm run check:all` 全绿;本地浏览器 desktop + 390px 检查显示 Hero 判读含 ODP/油价方向段、console 无 error/warn、页面横向溢出 0。
+- **阻塞或等待(2026-06-15 · Macro Overview narrative v1 + ODP)**: 无技术阻塞。注意 `scripts/modules/realtime.js` 保持冻结旧 module graph,asset bump 后已恢复为无 diff。
 
 ---
 
