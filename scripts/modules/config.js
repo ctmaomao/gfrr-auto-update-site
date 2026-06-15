@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=odp-global-stock-gap-1';
+﻿import { formatFiniteNumber } from './format.js?v=odp-timestamp-qc-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

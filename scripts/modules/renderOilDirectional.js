@@ -96,6 +96,13 @@ const ENERGY_TEXT_IDS = [
   'odp-global-forecast-buffer',
   'odp-global-forecast-window',
   'odp-global-forecast-note',
+  'odp-qc-ledger-status',
+  'odp-qc-ledger-wpsr',
+  'odp-qc-ledger-odp',
+  'odp-qc-ledger-daily',
+  'odp-qc-ledger-worker',
+  'odp-qc-ledger-monthly',
+  'odp-qc-ledger-note',
   'odp-energy-spare-status',
   'odp-energy-spare-value',
   'odp-energy-spare-regime',
@@ -238,6 +245,7 @@ function clearEnergyAddendum() {
   setToneClass('odp-brent-basis-status', 'odp-brent-basis-status', '');
   setToneClass('odp-pulse-factor-status', 'odp-pulse-factor-status', '');
   setToneClass('odp-global-forecast-status', 'odp-global-forecast-status', '');
+  setToneClass('odp-qc-ledger-status', 'odp-qc-ledger-status', '');
   setToneClass('odp-energy-spare-regime', 'odp-energy-regime', '');
   const coreHost = $('odp-energy-transport-core');
   if (coreHost) coreHost.textContent = '—';
@@ -422,6 +430,33 @@ function renderGlobalForecastGap(oilData, radarData) {
   setLeafText('odp-global-forecast-window', `周报截至 ${asOfText} · STEO ${spare.latestPeriod || '—'}`);
   setLeafText('odp-global-forecast-note', 'Pulse 的 OECD 库存低位、全球需求下修与 OPEC 月报属于全球月度/预测层;本站当前只能用美国 EIA 周报、EIA STEO 闲置产能和公开价格代理做边界解读,不能把外部新闻里的全球库存或需求预测当成站内已验证数据。');
 }
+function renderDataQcLedger(oilData, radarData, worldOrderStressData) {
+  const evidence = oilData && oilData.evidence ? oilData.evidence : {};
+  const alignment = wpsrAlignment(evidence);
+  const macroDrivers = radarData && radarData.macroDrivers ? radarData.macroDrivers : {};
+  const marketInput = worldOrderStressData && worldOrderStressData.marketConfirmationInput
+    ? worldOrderStressData.marketConfirmationInput
+    : {};
+  const spare = macroDrivers.energySpareCapacity || {};
+  const transport = macroDrivers.energyTransport || {};
+  const asOfText = alignment.dates.length === 1 ? alignment.dates[0] : (alignment.dates.length ? `${alignment.dates.length} 个日期` : '—');
+  const workerAt = formatUtcMinute(marketInput.updatedAt);
+  const workerBrent = Number.isFinite(marketInput.brent) ? ` · Brent ${formatUsd(marketInput.brent)}` : '';
+  const workerAge = Number.isFinite(marketInput.ageMinutes) ? ` · ${Math.round(marketInput.ageMinutes)} 分钟龄` : '';
+  const status = alignment.aligned && oilData?.builtAt && radarData?.updatedAt && marketInput.updatedAt
+    ? '时点已标注'
+    : '时点需降级';
+  const tone = status === '时点已标注' ? 'yellow' : '';
+
+  setLeafText('odp-qc-ledger-status', status);
+  setToneClass('odp-qc-ledger-status', 'odp-qc-ledger-status', tone);
+  setLeafText('odp-qc-ledger-wpsr', `${alignment.liveCount}/${alignment.total} 同周 live · ${asOfText}`);
+  setLeafText('odp-qc-ledger-odp', formatUtcMinute(oilData?.builtAt) || '—');
+  setLeafText('odp-qc-ledger-daily', formatUtcMinute(radarData?.updatedAt) || '—');
+  setLeafText('odp-qc-ledger-worker', `${workerAt || '—'}${workerBrent}${workerAge}`);
+  setLeafText('odp-qc-ledger-monthly', `STEO ${spare.latestPeriod || '—'} · PortWatch ${transport.latestDate || '—'}`);
+  setLeafText('odp-qc-ledger-note', 'EIA 周报、ODP 构建、Daily 快照、Worker 市场确认、STEO 与 PortWatch 慢变量不在同一时间边界;本区只做时间戳核对和降噪提示,不重算信号,不改变风险打分或决策。');
+}
 function renderSpareCapacity(spare) {
   const status = spare && spare.sourceStatus ? spare.sourceStatus.spareCapacity : null;
   setLeafText('odp-energy-spare-status', statusZh(status));
@@ -519,9 +554,10 @@ function renderEnergyAddendum(radarData, worldOrderStressData, oilData) {
   renderBrentBasisCheck(radarData, worldOrderStressData);
   renderPulseFactorCheck(oilData, radarData, worldOrderStressData);
   renderGlobalForecastGap(oilData, radarData);
+  renderDataQcLedger(oilData, radarData, worldOrderStressData);
   renderSpareCapacity(macroDrivers.energySpareCapacity);
   renderEnergyTransport(macroDrivers.energyTransport);
-  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、全球库存/需求缺口、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
+  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、全球库存/需求缺口、数据时点/QC、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
 }
 
 function reasonInventory(sig, ev) {

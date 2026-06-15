@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-global-stock-gap-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-timestamp-qc-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

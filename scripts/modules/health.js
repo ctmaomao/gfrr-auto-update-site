@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-global-stock-gap-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-global-stock-gap-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-timestamp-qc-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-timestamp-qc-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

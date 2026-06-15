@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=odp-global-stock-gap-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-global-stock-gap-1';
-import { MODULE_LABELS } from './decision.js?v=odp-global-stock-gap-1';
+} from './config.js?v=odp-timestamp-qc-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-timestamp-qc-1';
+import { MODULE_LABELS } from './decision.js?v=odp-timestamp-qc-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
