@@ -40,9 +40,14 @@ const HYBRID_LIVE_IDS = [
   'neocloud_credit',
   'token_volume_mom',
   'token_revenue_ratio',
+  'arr_2nd_deriv',
   'enterprise_deploy',
   'accounting_events',
+  'capex_reaction',
   'ceo_hedging'
+];
+const HYBRID_PAID_OPTIONAL_IDS = [
+  'dc_abs_spread'
 ];
 const CATEGORIES = ['valuation', 'capital', 'market_structure', 'credit', 'fundamentals', 'macro'];
 const STATUSES = ['red', 'yellow', 'green'];
@@ -115,15 +120,19 @@ check('contract', CURATED_ORIGIN_IDS.every((id) => candidateEntries[id]) && Obje
   `source candidates 必须覆盖 11 个 curated-origin 指标(got ${Object.keys(candidateEntries).length})`);
 for (const id of CURATED_ORIGIN_IDS) {
   const entry = candidateEntries[id] || {};
-  check('contract', ['hybrid_live', 'candidate_only'].includes(entry.automationStatus), `${id} automationStatus 非法: ${entry.automationStatus}`);
+  check('contract', ['hybrid_live', 'hybrid_paid_optional', 'candidate_only'].includes(entry.automationStatus), `${id} automationStatus 非法: ${entry.automationStatus}`);
   check('contract', typeof entry.primarySignal === 'string' && entry.primarySignal.length >= 10, `${id} 缺 primarySignal`);
   check('contract', Array.isArray(entry.freeSourceCandidates) && entry.freeSourceCandidates.length >= 1, `${id} 缺 freeSourceCandidates`);
 }
 for (const id of HYBRID_LIVE_IDS) {
   check('contract', candidateEntries[id]?.automationStatus === 'hybrid_live', `${id} 必须保持 hybrid_live`);
 }
+for (const id of HYBRID_PAID_OPTIONAL_IDS) {
+  check('contract', candidateEntries[id]?.automationStatus === 'hybrid_paid_optional', `${id} 必须保持 hybrid_paid_optional`);
+  check('contract', Array.isArray(candidateEntries[id]?.paidSourceCandidates) && candidateEntries[id].paidSourceCandidates.length >= 1, `${id} 缺 paidSourceCandidates`);
+}
 check('contract', buildSrc.includes('SOURCE_CANDIDATES_PATH') && buildSrc.includes('hybridCuratedBuilders'), 'build 须读取 source-candidates 并保留 hybrid curated builders');
-for (const id of HYBRID_LIVE_IDS) {
+for (const id of [...HYBRID_LIVE_IDS, ...HYBRID_PAID_OPTIONAL_IDS]) {
   check('contract', buildSrc.includes(`${id}:`), `build 缺 ${id} hybrid builder 绑定`);
 }
 

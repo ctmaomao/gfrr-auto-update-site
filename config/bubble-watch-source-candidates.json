@@ -1,6 +1,6 @@
 {
   "contractVersion": "bubble-watch-source-candidates-v1",
-  "note": "AI 泡沫监测 11 个 curated-origin 指标的免费公开源候选矩阵。hybrid_live 表示 build 可先尝试公开源自动覆盖,失败仍 fail-closed 回到 config/bubble-watch-curated.json; candidate_only 表示已记录免费源,但还不够稳定,暂不自动改灯。",
+  "note": "AI 泡沫监测 11 个 curated-origin 指标的数据源候选矩阵。hybrid_live 表示 build 可先尝试免费公开源自动覆盖; hybrid_paid_optional 表示有付费 API Key 时可尝试自动覆盖、无 Key 或失败仍 fail-closed 回到 config/bubble-watch-curated.json; candidate_only 表示已记录源,但还不够稳定,暂不自动改灯。",
   "indicators": {
     "vc_ai_share": {
       "automationStatus": "hybrid_live",
@@ -36,8 +36,17 @@
       ]
     },
     "dc_abs_spread": {
-      "automationStatus": "candidate_only",
+      "automationStatus": "hybrid_paid_optional",
       "primarySignal": "Data-center ABS / secured-debt spread direction",
+      "paidSourceCandidates": [
+        {
+          "source": "Wind MCP paid API",
+          "url": "https://aifinmarket.wind.com.cn/#/docs",
+          "cadence": "weekly / optional paid refresh",
+          "role": "paid optional builder: data-center ABS sample discovery + China ABS AAA benchmark yield direction + financial-news evidence",
+          "limitations": "Current Wind sample can identify data-center ABS / REIT-like securities and broad ABS benchmark yields, but data-center-specific latest spread fields can be null; builder labels output as paid proxy and fail-closes to curated if WIND_API_KEY is absent or evidence is insufficient."
+        }
+      ],
       "freeSourceCandidates": [
         {
           "source": "CRE Finance Council Data Center e-primer PDF",
@@ -65,7 +74,7 @@
           "url": "https://www.fitchratings.com/structured-finance/abs",
           "cadence": "weekly",
           "role": "candidate monitor for new data-center ABS/CMBS issuance and rating changes",
-          "limitations": "Presale headlines are useful event evidence but do not expose a free continuous spread history; keep candidate_only for spread direction."
+          "limitations": "Presale headlines are useful event evidence but do not expose a free continuous spread history; use only as calibration for the Wind paid optional proxy."
         },
         {
           "source": "Vantage Data Centers Europe ABS release",
@@ -94,6 +103,27 @@
           "cadence": "quarterly",
           "role": "Chinese-language broader ABS spread and issuance context",
           "limitations": "Sector-level ABS context, not a data-center-specific continuous spread; can calibrate narrative but not auto-score the indicator."
+        },
+        {
+          "source": "L&G securitized-credit data-center note",
+          "url": "https://am.landg.us.com/insights/insights-blog/2026/securitized-credit-financing-data-centers/",
+          "cadence": "event-driven / research update",
+          "role": "public recent data-center ABS new-issue spread range context",
+          "limitations": "Gives research-level recent spread ranges, not a weekly machine-readable issue-level time series."
+        },
+        {
+          "source": "IMF Connect US ABS Monitor",
+          "url": "https://www.imfconnect.org/content/dam/imf/News%20and%20Generic%20Content/GMM/Special%20Features/GMM%20US%20ABS%20Monitor%20October%202025%20.pdf",
+          "cadence": "monthly / periodic PDF",
+          "role": "public PDF chart source for data-center ABS spread-history direction",
+          "limitations": "PDF chart is not a stable zero-dependency JSON/HTML series and may require manual review; use only as calibration unless a parseable feed is found."
+        },
+        {
+          "source": "CRAI data-center ABS yields and ratings report",
+          "url": "https://www.crai.com/insights-events/publications/data-center-abs-risks-yields-and-ratings/",
+          "cadence": "periodic research update",
+          "role": "public research context for data-center ABS yields, ratings and issuance sample",
+          "limitations": "Underlying yield/spread sample is Bloomberg-derived; useful for evidence, not an independent free live spread feed."
         }
       ]
     },
@@ -207,7 +237,7 @@
       ]
     },
     "arr_2nd_deriv": {
-      "automationStatus": "candidate_only",
+      "automationStatus": "hybrid_live",
       "primarySignal": "Second derivative of AI ARR / run-rate estimates",
       "freeSourceCandidates": [
         {
@@ -237,6 +267,13 @@
           "cadence": "event-driven",
           "role": "public private-company ARR estimate snapshots for Anthropic / OpenAI-style growth curves",
           "limitations": "High-signal narrative evidence, but estimates revise quickly and are not a stable audited panel."
+        },
+        {
+          "source": "SaaStr WordPress public API",
+          "url": "https://www.saastr.com/wp-json/wp/v2/search?search=Anthropic%20ARR",
+          "cadence": "event-driven / weekly build check",
+          "role": "machine-readable public ARR milestone monitor for Anthropic/OpenAI/Cursor-style estimates",
+          "limitations": "Public blog estimates, not audited revenue; builder requires multiple parsed milestones and fails closed if coverage is insufficient."
         },
         {
           "source": "Sacra public company profile pages",
@@ -302,9 +339,23 @@
       ]
     },
     "capex_reaction": {
-      "automationStatus": "candidate_only",
+      "automationStatus": "hybrid_live",
       "primarySignal": "Market reaction to AI capex guidance",
       "freeSourceCandidates": [
+        {
+          "source": "StockAnalysis quarterly cash-flow pages",
+          "url": "https://stockanalysis.com/stocks/msft/financials/cash-flow-statement/?p=quarterly",
+          "cadence": "quarterly with weekly build check",
+          "role": "machine-readable hyperscaler capex acceleration proxy",
+          "limitations": "Public financial-statement mirror, not management guidance text; paired with Yahoo relative returns to classify reaction."
+        },
+        {
+          "source": "Yahoo Chart API",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/MSFT",
+          "cadence": "daily / weekly build check",
+          "role": "relative-return event-window proxy for capex-heavy hyperscalers versus QQQ/SPY",
+          "limitations": "Market reaction proxy only; does not parse exact earnings-call guidance sentences."
+        },
         {
           "source": "Yahoo Chart around earnings dates + earnings-call guidance text",
           "url": "https://query1.finance.yahoo.com/v8/finance/chart/AVGO",
@@ -317,7 +368,7 @@
           "url": "https://query1.finance.yahoo.com/v8/finance/chart/NVDA",
           "cadence": "quarterly",
           "role": "candidate event-window return proxy for AI capex guidance reactions",
-          "limitations": "Yahoo quoteSummary/calendar endpoints require crumb or fail in CI; without a reliable earnings calendar and text parser this remains candidate_only."
+          "limitations": "Yahoo quoteSummary/calendar endpoints require crumb or fail in CI; current hybrid builder therefore uses fixed hyperscaler capex panel plus relative-return proxy, while exact earnings-calendar alignment remains future enhancement."
         },
         {
           "source": "Company IR earnings releases / transcripts",

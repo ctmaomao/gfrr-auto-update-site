@@ -14,6 +14,7 @@
 // 边界:display-only 独立专题页数据,不进 GFRR scoring/decision/execution/position。
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -29,6 +30,14 @@ const EDGAR_UA = 'gfrr-auto-update-site bubble-watch ctmaomao@users.noreply.gith
 const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
 const FETCH_TIMEOUT_MS = 20000;
 const FRED_API_KEY = (process.env.FRED_API_KEY || '').trim();
+const WIND_API_KEY = readWindApiKey();
+const WIND_MCP_TIMEOUT_MS = 60000;
+const WIND_MCP_ENDPOINTS = {
+  analytics_data: 'https://mcp.wind.com.cn/vserver_analytics_data/mcp/',
+  economic_data: 'https://mcp.wind.com.cn/vserver_economic_data/mcp/',
+  financial_docs: 'https://mcp.wind.com.cn/vserver_financial_docs/mcp/'
+};
+const windMcpInitialized = new Set();
 
 const STATUS_RANK = { green: 0, yellow: 1, red: 2 };
 const STATUS_ZH = { green: '绿', yellow: '黄', red: '红' };
@@ -83,6 +92,19 @@ const EDGAR_CIK = {
 
 // ---------- 基础工具 ----------
 
+function readWindApiKey() {
+  const fromEnv = (process.env.WIND_API_KEY || '').trim();
+  if (fromEnv) return fromEnv;
+  try {
+    const configPath = path.join(os.homedir(), '.wind-aifinmarket', 'config');
+    if (!fs.existsSync(configPath)) return '';
+    const m = fs.readFileSync(configPath, 'utf8').match(/^WIND_API_KEY=(.+)$/mu);
+    return (m?.[1] || '').trim();
+  } catch {
+    return '';
+  }
+}
+
 async function fetchWithTimeout(url, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), options.timeoutMs || FETCH_TIMEOUT_MS);
@@ -111,6 +133,61 @@ async function retry(taskFn, label, attempts = 2) {
     }
   }
   throw lastError;
+}
+
+function parseWindSse(text) {
+  const trimmed = String(text || '').trim();
+  if (trimmed.startsWith('{')) return JSON.parse(trimmed);
+  let lastDataLine = null;
+  for (const line of String(text || '').split(/\r?\n/u)) {
+    if (line.startsWith('data: ')) lastDataLine = line.slice(6);
+  }
+  if (!lastDataLine) throw new Error(`Wind MCP 响应格式无法识别:${trimmed.slice(0, 120)}`);
+  return JSON.parse(lastDataLine);
+}
+
+async function windMcpRequest(serverType, method, params, timeoutMs = WIND_MCP_TIMEOUT_MS) {
+  if (!WIND_API_KEY) throw new Error('WIND_API_KEY 未配置');
+  const endpoint = WIND_MCP_ENDPOINTS[serverType];
+  if (!endpoint) throw new Error(`未知 Wind MCP serverType:${serverType}`);
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${WIND_API_KEY}`,
+      Accept: 'application/json, text/event-stream',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params }),
+    signal: AbortSignal.timeout(timeoutMs)
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`Wind ${serverType} HTTP ${res.status}: ${text.slice(0, 180)}`);
+  const payload = parseWindSse(text);
+  if (payload.error) throw new Error(`Wind ${serverType} error: ${JSON.stringify(payload.error).slice(0, 240)}`);
+  if (payload.result?.isError) {
+    const msg = payload.result.content?.[0]?.text || JSON.stringify(payload.result);
+    throw new Error(`Wind ${serverType} tool error: ${String(msg).slice(0, 240)}`);
+  }
+  return payload.result;
+}
+
+async function windMcpCall(serverType, toolName, args) {
+  if (!windMcpInitialized.has(serverType)) {
+    await windMcpRequest(serverType, 'initialize', {
+      protocolVersion: '2025-03-26',
+      capabilities: {},
+      clientInfo: { name: 'gfrr-bubble-watch', version: '1.0' }
+    }, 30000);
+    windMcpInitialized.add(serverType);
+  }
+  const result = await windMcpRequest(serverType, 'tools/call', {
+    name: toolName,
+    arguments: args,
+    _meta: { clientVersion: 'gfrr-bubble-watch' }
+  });
+  const text = result?.content?.[0]?.text;
+  if (typeof text !== 'string' || !text.trim()) throw new Error(`Wind ${serverType}.${toolName} 返回空文本`);
+  return JSON.parse(text);
 }
 
 function stripTags(html) {
@@ -358,6 +435,10 @@ function saT4qYoy(numsNewestFirst) {
   const prev = numsNewestFirst.slice(4, 8).reduce((a, b) => a + b, 0);
   if (prev === 0) return null;
   return { now, prev, yoyPct: ((now - prev) / Math.abs(prev)) * 100 };
+}
+
+function monthsBetweenIso(a, b) {
+  return (new Date(`${b}T00:00:00Z`) - new Date(`${a}T00:00:00Z`)) / (30.4375 * 86400000);
 }
 
 async function mapPool(items, limit, worker) {
@@ -1079,6 +1160,79 @@ async function fetchTokenRevenueRatioFromOpenRouter() {
   };
 }
 
+async function fetchSaastrPost(id) {
+  const json = await fetchWithTimeout(`https://www.saastr.com/wp-json/wp/v2/posts/${id}`, {
+    asJson: true,
+    headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json' },
+    timeoutMs: 15000
+  });
+  const title = htmlToText(json?.title?.rendered || '');
+  const content = htmlToText(json?.content?.rendered || '');
+  if (!json?.date || !title || !content) throw new Error(`SaaStr post ${id} 返回结构异常`);
+  return { id, date: json.date.slice(0, 10), title, text: `${title}. ${content}` };
+}
+
+function extractAnthropicArrB(post) {
+  const patterns = [
+    /\$?([0-9]+(?:\.[0-9]+)?)\s*(B|BN|Billion)\s+(?:in\s+)?(?:ARR|annualized revenue|annualized run-rate)/iu,
+    /Anthropic[^.]{0,160}?\$?([0-9]+(?:\.[0-9]+)?)\s*(B|BN|Billion)[^.]{0,80}?(?:annualized|run-rate|revenue|ARR)/iu,
+    /Anthropic[^.]{0,120}?(?:hit|hits|reached|rocketed to|confirmed)\s+\$?([0-9]+(?:\.[0-9]+)?)\s*(B|BN|Billion)\b/iu
+  ];
+  for (const re of patterns) {
+    const match = post.text.match(re);
+    if (!match) continue;
+    const around = post.text.slice(Math.max(0, match.index - 80), match.index + match[0].length + 120);
+    if (/Nvidia|OpenAI|SpaceX/iu.test(around) && !/ARR|annualized|run-rate|Anthropic[^.]{0,80}revenue/iu.test(around)) continue;
+    if (/valuation|post-money|Series [A-Z]/iu.test(around) && !/ARR|annualized|run-rate|revenue/iu.test(around)) continue;
+    const value = Number(match[1]);
+    if (value >= 1 && value <= 80) return value;
+  }
+  throw new Error(`SaaStr post ${post.id} 未解析到 Anthropic ARR/run-rate`);
+}
+
+async function fetchArrSecondDerivativeFromSaastr() {
+  const postIds = [315823, 322211, 323715, 325206];
+  const posts = [];
+  for (const id of postIds) posts.push(await fetchSaastrPost(id));
+  const milestones = posts
+    .map((post) => ({ date: post.date, arrB: extractAnthropicArrB(post), sourceId: post.id, title: post.title }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+  if (milestones.length < 4) throw new Error(`ARR milestones 不足 (${milestones.length}/4)`);
+  const segments = [];
+  for (let i = 1; i < milestones.length; i++) {
+    const prev = milestones[i - 1];
+    const cur = milestones[i];
+    const months = monthsBetweenIso(prev.date, cur.date);
+    if (!(months > 0.5) || cur.arrB <= prev.arrB) throw new Error(`ARR milestone 序列异常: ${prev.date}→${cur.date}`);
+    segments.push({
+      from: prev.date,
+      to: cur.date,
+      deltaB: cur.arrB - prev.arrB,
+      months,
+      monthlyDeltaB: (cur.arrB - prev.arrB) / months
+    });
+  }
+  const latest = segments[segments.length - 1];
+  const prev = segments[segments.length - 2];
+  const slopeRatio = latest.monthlyDeltaB / prev.monthlyDeltaB;
+  const status = slopeRatio < 0.5 ? 'red' : slopeRatio < 0.85 ? 'yellow' : 'green';
+  const latestMilestone = milestones[milestones.length - 1];
+  const display = status === 'red' ? '减速' : status === 'yellow' ? '高位放缓' : '加速中';
+  return {
+    status,
+    value_display: display,
+    source_name: 'SaaStr public ARR milestone monitor',
+    note: `SaaStr 公开 Anthropic ARR/run-rate 里程碑解析:${milestones.map((m) => `${m.date} $${m.arrB.toFixed(0)}B`).join(' → ')};最新区间月增量约 $${latest.monthlyDeltaB.toFixed(1)}B,为前一区间的 ${slopeRatio.toFixed(2)}x。该项是公开估算里程碑 proxy,不是审计收入。阈值:明显减速=红 / 高位放缓=黄 / 维持加速=绿`,
+    detail: {
+      source: 'SaaStr WordPress public API',
+      milestones,
+      segments: segments.map((s) => ({ ...s, monthlyDeltaB: Number(s.monthlyDeltaB.toFixed(2)), months: Number(s.months.toFixed(1)) })),
+      latestArrB: latestMilestone.arrB,
+      slopeRatio
+    }
+  };
+}
+
 async function fetchEnterpriseDeployFromPublicReports() {
   const googleHtml = await fetchWithTimeout('https://cloud.google.com/transform/roi-of-ai-how-agents-help-business', {
     headers: { 'User-Agent': BROWSER_UA }
@@ -1171,6 +1325,265 @@ async function fetchNeocloudCreditFromPublicMonitor() {
   };
 }
 
+function returnPctOverDays(closes, days) {
+  if (closes.length <= days) throw new Error(`Yahoo closes 不足 ${days} 日`);
+  const start = closes[closes.length - 1 - days];
+  const end = closes[closes.length - 1];
+  if (!(start > 0 && end > 0)) throw new Error('Yahoo closes 含无效值');
+  return ((end - start) / start) * 100;
+}
+
+async function fetchCapexReactionFromPublicProxy() {
+  const companies = ['MSFT', 'META', 'AMZN', 'GOOGL'];
+  const capexRows = [];
+  for (const ticker of companies) {
+    const html = await retry(() => fetchSaFinancialPage(ticker, 'cash-flow-statement/'), `SA cash-flow ${ticker}`);
+    const capex = parseSaQuarterlyRow(html, 'Capital Expenditures').map((v) => Math.abs(v));
+    if (capex.length < 8) throw new Error(`${ticker} capex quarterly rows 不足`);
+    capexRows.push({
+      ticker,
+      latestCapexB: capex[0] / 1e9,
+      latestYoyPct: ((capex[0] - capex[4]) / capex[4]) * 100,
+      t4qYoyPct: saT4qYoy(capex)?.yoyPct
+    });
+  }
+  const [qqqCloses, spyCloses] = await Promise.all([yahooCloses('QQQ', '6mo'), yahooCloses('SPY', '6mo')]);
+  const qqq21 = returnPctOverDays(qqqCloses, 21);
+  const spy21 = returnPctOverDays(spyCloses, 21);
+  const reactionRows = [];
+  for (const ticker of companies) {
+    const closes = await yahooCloses(ticker, '6mo');
+    const ret21 = returnPctOverDays(closes, 21);
+    const ret63 = returnPctOverDays(closes, 63);
+    reactionRows.push({
+      ticker,
+      ret21,
+      ret63,
+      excess21VsQqq: ret21 - qqq21,
+      excess21VsSpy: ret21 - spy21
+    });
+  }
+  const avgCapexYoy = capexRows.reduce((sum, row) => sum + row.t4qYoyPct, 0) / capexRows.length;
+  const avgExcessQqq = reactionRows.reduce((sum, row) => sum + row.excess21VsQqq, 0) / reactionRows.length;
+  const avgExcessSpy = reactionRows.reduce((sum, row) => sum + row.excess21VsSpy, 0) / reactionRows.length;
+  const punishedCount = reactionRows.filter((row) => row.excess21VsQqq <= -5).length;
+  let status = 'green';
+  let display = '奖励';
+  if (avgExcessQqq <= -8 && punishedCount >= 3) {
+    status = 'red';
+    display = '系统性惩罚';
+  } else if (avgExcessQqq <= -3 || punishedCount >= 1) {
+    status = 'yellow';
+    display = '选择性惩罚';
+  }
+  return {
+    status,
+    value_display: display,
+    source_name: 'StockAnalysis capex + Yahoo relative-return proxy',
+    note: `StockAnalysis 季度现金流解析 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 ${fmtPct(avgCapexYoy, 1, true)};Yahoo 近 21 交易日相对 QQQ 平均 ${fmtPct(avgExcessQqq, 1, true)}、相对 SPY ${fmtPct(avgExcessSpy, 1, true)},${punishedCount}/4 家跑输 QQQ 超 5pct。该项是 capex-heavy equity reaction proxy,不是逐字财报指引文本。判级:系统性惩罚=红 / 偶发或选择性=黄 / 奖励=绿`,
+    detail: {
+      source: 'StockAnalysis quarterly cash-flow + Yahoo Chart',
+      benchmark: { qqq21, spy21 },
+      avgCapexYoy,
+      avgExcessQqq,
+      avgExcessSpy,
+      punishedCount,
+      capexRows: capexRows.map((row) => ({ ...row, latestCapexB: Number(row.latestCapexB.toFixed(1)), latestYoyPct: Number(row.latestYoyPct.toFixed(1)), t4qYoyPct: Number(row.t4qYoyPct.toFixed(1)) })),
+      reactionRows: reactionRows.map((row) => ({
+        ticker: row.ticker,
+        ret21: Number(row.ret21.toFixed(1)),
+        ret63: Number(row.ret63.toFixed(1)),
+        excess21VsQqq: Number(row.excess21VsQqq.toFixed(1)),
+        excess21VsSpy: Number(row.excess21VsSpy.toFixed(1))
+      }))
+    }
+  };
+}
+
+function windColumnIndex(columns, candidates) {
+  const names = (columns || []).map((c) => String(c?.name || '').trim());
+  for (const candidate of candidates) {
+    const exact = names.indexOf(candidate);
+    if (exact >= 0) return exact;
+  }
+  for (const candidate of candidates) {
+    const partial = names.findIndex((name) => name.includes(candidate));
+    if (partial >= 0) return partial;
+  }
+  return -1;
+}
+
+function windNumber(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(String(value).replace(/[,，]/gu, ''));
+  return Number.isFinite(n) ? n : null;
+}
+
+function yyyymmdd(d) {
+  return d.toISOString().slice(0, 10).replace(/-/gu, '');
+}
+
+function windNearestOnOrBefore(pairs, targetDate) {
+  let best = null;
+  for (const pair of pairs) {
+    if (pair.date <= targetDate) best = pair;
+  }
+  return best || pairs[0] || null;
+}
+
+function extractWindDataBlocks(json) {
+  const blocks = json?.data?.data;
+  return Array.isArray(blocks) ? blocks : [];
+}
+
+function extractWindNewsItems(json) {
+  const items = json?.data?.items;
+  return Array.isArray(items) ? items : [];
+}
+
+function extractDataCenterAbsRows(json) {
+  const rows = [];
+  for (const block of extractWindDataBlocks(json)) {
+    const columns = block.columns || [];
+    const idx = {
+      code: windColumnIndex(columns, ['Wind代码']),
+      name: windColumnIndex(columns, ['证券简称']),
+      issueDate: windColumnIndex(columns, ['发行起始日期']),
+      issueAmount: windColumnIndex(columns, ['发行总额']),
+      coupon: windColumnIndex(columns, ['票面利率_发行时', '票面利率']),
+      valuationYield: windColumnIndex(columns, ['估值收益率_中债']),
+      latestYield: windColumnIndex(columns, ['最新估值收益率']),
+      assetClass: windColumnIndex(columns, ['ABS基础资产分类明细'])
+    };
+    for (const row of block.rows || []) {
+      const assetClass = idx.assetClass >= 0 ? String(row[idx.assetClass] || '') : '';
+      const shortName = idx.name >= 0 ? String(row[idx.name] || '') : '';
+      if (!/数据中心|万国|万数|互联|润泽|世纪/iu.test(`${assetClass} ${shortName}`)) continue;
+      rows.push({
+        windCode: idx.code >= 0 ? String(row[idx.code] || '') : null,
+        shortName: shortName || null,
+        issueDate: idx.issueDate >= 0 ? String(row[idx.issueDate] || '') : null,
+        issueAmountB: windNumber(idx.issueAmount >= 0 ? row[idx.issueAmount] : null),
+        couponRate: windNumber(idx.coupon >= 0 ? row[idx.coupon] : null),
+        valuationYield: windNumber(idx.valuationYield >= 0 ? row[idx.valuationYield] : null),
+        latestYield: windNumber(idx.latestYield >= 0 ? row[idx.latestYield] : null),
+        assetClass: assetClass || null
+      });
+    }
+  }
+  const byCode = new Map();
+  for (const row of rows) {
+    const key = row.windCode || `${row.shortName || ''}|${row.issueDate || ''}`;
+    const prev = byCode.get(key) || {};
+    byCode.set(key, { ...prev, ...row });
+  }
+  return [...byCode.values()].sort((a, b) => String(b.issueDate || '').localeCompare(String(a.issueDate || '')));
+}
+
+function extractWindAbsBenchmark(json) {
+  const dates = json?.data?.date || [];
+  const info = json?.data?.indicatorInfo?.[0];
+  const values = info?.data || [];
+  const pairs = dates.map((date, i) => ({ date: String(date), value: windNumber(values[i]) }))
+    .filter((pair) => /^\d{8}$/u.test(pair.date) && Number.isFinite(pair.value))
+    .sort((a, b) => a.date.localeCompare(b.date));
+  if (pairs.length < 40) throw new Error(`Wind ABS benchmark 有效观测不足:${pairs.length}`);
+  const latest = pairs[pairs.length - 1];
+  const latestDate = new Date(`${latest.date.slice(0, 4)}-${latest.date.slice(4, 6)}-${latest.date.slice(6, 8)}T00:00:00Z`);
+  const d4w = new Date(latestDate);
+  d4w.setUTCDate(d4w.getUTCDate() - 28);
+  const d12w = new Date(latestDate);
+  d12w.setUTCDate(d12w.getUTCDate() - 84);
+  const p4w = windNearestOnOrBefore(pairs, yyyymmdd(d4w));
+  const p12w = windNearestOnOrBefore(pairs, yyyymmdd(d12w));
+  if (!p4w || !p12w) throw new Error('Wind ABS benchmark 缺 4w/12w 对照点');
+  return {
+    name: info?.name || '中国:资产支持证券到期收益率(AAA):6个月',
+    code: info?.code || null,
+    latest,
+    p4w,
+    p12w,
+    change4wBp: (latest.value - p4w.value) * 100,
+    change12wBp: (latest.value - p12w.value) * 100,
+    observationCount: pairs.length
+  };
+}
+
+function extractWindDcAbsNewsEvidence(newsJson) {
+  const items = extractWindNewsItems(newsJson)
+    .filter((item) => /数据中心/iu.test(`${item.title || ''} ${item.content || ''}`))
+    .slice(0, 5);
+  const text = items.map((item) => `${item.title || ''} ${item.content || ''}`).join('\n');
+  const supportCount = (text.match(/超额认购|历史新低|量增价优|发行潮|热度|需求|认可|收益较高|成长/gu) || []).length;
+  const pressureCount = (text.match(/违约|降级|发行失败|认购不足|利差走阔|流动性压力|融资压力|风险上升/gu) || []).length;
+  const rangeMatch = text.match(/([0-9]+(?:\.[0-9]+)?)%\s*(?:至|到|-|—|~)\s*([0-9]+(?:\.[0-9]+)?)%/u);
+  const issueTotalMatch = text.match(/发行总额达到\s*([0-9]+(?:\.[0-9]+)?)\s*亿元/u);
+  const recentIssueMatch = text.match(/合计发行了约\s*([0-9]+(?:\.[0-9]+)?)\s*亿元/u);
+  return {
+    itemCount: items.length,
+    supportCount,
+    pressureCount,
+    yieldRangePct: rangeMatch ? [Number(rangeMatch[1]), Number(rangeMatch[2])] : null,
+    issueTotalB: issueTotalMatch ? Number(issueTotalMatch[1]) : null,
+    recentDataCenterIssueB: recentIssueMatch ? Number(recentIssueMatch[1]) : null,
+    topTitles: items.map((item) => ({ title: item.title || null, date: item.date || null, relevance: item.relevance ?? null }))
+  };
+}
+
+async function fetchDcAbsSpreadFromWind() {
+  const [sampleJson, benchmarkJson, newsJson] = await Promise.all([
+    windMcpCall('analytics_data', 'get_financial_data', {
+      question: '数据中心ABS发行利差或估值利差最新数据',
+      lang: 'CNS'
+    }),
+    windMcpCall('economic_data', 'get_economic_data', {
+      metricIdsStr: '中国资产支持证券ABS收益率AAA',
+      beginDate: '20250101',
+      endDate: yyyymmdd(new Date(Date.now() + 370 * 86400000))
+    }),
+    windMcpCall('financial_docs', 'get_financial_news', {
+      query: '数据中心ABS',
+      top_k: 3
+    })
+  ]);
+  const rows = extractDataCenterAbsRows(sampleJson);
+  if (rows.length < 2) throw new Error(`Wind 数据中心 ABS 样本不足:${rows.length}`);
+  const benchmark = extractWindAbsBenchmark(benchmarkJson);
+  const news = extractWindDcAbsNewsEvidence(newsJson);
+  const hasDirectYield = rows.some((row) => Number.isFinite(row.valuationYield) || Number.isFinite(row.latestYield) || Number.isFinite(row.couponRate));
+
+  let status = 'yellow';
+  let display = '稳定';
+  if (benchmark.change4wBp >= 50 || (benchmark.change4wBp >= 15 && news.pressureCount >= 2)) {
+    status = 'red';
+    display = '走阔';
+  } else if (benchmark.change4wBp >= 15 || news.pressureCount >= 2) {
+    status = 'yellow';
+    display = '压力观察';
+  } else if (benchmark.change12wBp <= -10 && news.supportCount >= 2) {
+    status = 'green';
+    display = '收窄';
+  }
+
+  const latestRow = rows[0];
+  const amountText = Number.isFinite(latestRow.issueAmountB) ? `、规模 ${latestRow.issueAmountB.toFixed(1)} 亿元` : '';
+  const directYieldText = hasDirectYield ? '部分样本含收益率/票息字段' : '样本券最新估值利差/收益率字段多为空';
+  const rangeText = news.yieldRangePct ? `;新闻样本提到年分配率 ${news.yieldRangePct[0]}%-${news.yieldRangePct[1]}%` : '';
+  return {
+    status,
+    value_display: display,
+    source_name: 'Wind MCP paid optional proxy',
+    note: `Wind 付费可选源识别数据中心 ABS/类 REITs 样本 ${rows.length} 只,最新样本 ${latestRow.shortName || latestRow.windCode || 'n/a'}(${latestRow.issueDate || 'n/a'}${amountText});${benchmark.name} 最新 ${benchmark.latest.value.toFixed(2)}%,4 周 ${benchmark.change4wBp >= 0 ? '+' : ''}${benchmark.change4wBp.toFixed(1)}bp、12 周 ${benchmark.change12wBp >= 0 ? '+' : ''}${benchmark.change12wBp.toFixed(1)}bp;新闻证据 ${news.itemCount} 条,支持词 ${news.supportCount}/压力词 ${news.pressureCount}${rangeText}。${directYieldText},因此本项明确为 paid proxy,不伪装为正式数据中心专属连续利差。判级:4 周走阔 ≥50bp=红 / ≥15bp 或压力词升温=黄 / 12 周收窄且需求证据充足=绿`,
+    detail: {
+      source: 'Wind MCP paid optional',
+      directDataCenterYieldAvailable: hasDirectYield,
+      sampleRows: rows.slice(0, 8),
+      benchmark,
+      news
+    }
+  };
+}
+
 async function fetchCeoHedgingFromGdelt() {
   const query = '("AI bubble" OR "artificial intelligence bubble" OR "AI overbuild" OR "AI capex bubble")';
   const params = new URLSearchParams({
@@ -1217,11 +1630,14 @@ async function fetchCeoHedgingFromGdelt() {
 const hybridCuratedBuilders = {
   vc_ai_share: fetchVcAiShareFromCrunchbase,
   ai_ipo_pipeline: fetchAiIpoPipelineFromCrunchbase,
+  dc_abs_spread: fetchDcAbsSpreadFromWind,
   neocloud_credit: fetchNeocloudCreditFromPublicMonitor,
   token_volume_mom: fetchTokenVolumeMomFromOpenRouter,
   token_revenue_ratio: fetchTokenRevenueRatioFromOpenRouter,
+  arr_2nd_deriv: fetchArrSecondDerivativeFromSaastr,
   enterprise_deploy: fetchEnterpriseDeployFromPublicReports,
   accounting_events: fetchAccountingEventsFromPublicSearch,
+  capex_reaction: fetchCapexReactionFromPublicProxy,
   ceo_hedging: fetchCeoHedgingFromGdelt
 };
 
@@ -1783,7 +2199,7 @@ async function main() {
       if (!entry) throw new Error(`config curated 缺指标 ${def.id}`);
       const candidate = sourceCandidates.indicators?.[def.id];
       const hybridBuilder = hybridCuratedBuilders[def.id];
-      if (candidate?.automationStatus === 'hybrid_live' && hybridBuilder) {
+      if (['hybrid_live', 'hybrid_paid_optional'].includes(candidate?.automationStatus) && hybridBuilder) {
         try {
           const result = await hybridBuilder(ctx);
           indicators.push({
@@ -1806,13 +2222,13 @@ async function main() {
           });
           autoCount += 1;
           hybridCount += 1;
-          console.log(`[bubble-watch] ${def.id}: hybrid public OK (${result.status} ${result.value_display})`);
+          console.log(`[bubble-watch] ${def.id}: ${candidate.automationStatus} OK (${result.status} ${result.value_display})`);
           continue;
         } catch (error) {
-          fetchFailures.push({ id: def.id, reason: `hybrid_public_source_failed: ${error.message}` });
-          indicators.push(buildFallbackIndicator(def, entry, today, `hybrid public source failed: ${error.message}`));
+          fetchFailures.push({ id: def.id, reason: `${candidate.automationStatus}_source_failed: ${error.message}` });
+          indicators.push(buildFallbackIndicator(def, entry, today, `${candidate.automationStatus} source failed: ${error.message}`));
           fallbackCount += 1;
-          console.warn(`[bubble-watch] ${def.id}: hybrid public FAILED → curated fallback (${error.message})`);
+          console.warn(`[bubble-watch] ${def.id}: ${candidate.automationStatus} FAILED → curated fallback (${error.message})`);
           continue;
         }
       }
@@ -1886,12 +2302,16 @@ async function main() {
         hybrid_live_ids: Object.entries(sourceCandidates.indicators || {})
           .filter(([, candidate]) => candidate?.automationStatus === 'hybrid_live')
           .map(([id]) => id),
+        hybrid_paid_optional_ids: Object.entries(sourceCandidates.indicators || {})
+          .filter(([, candidate]) => candidate?.automationStatus === 'hybrid_paid_optional')
+          .map(([id]) => id),
         candidate_only_ids: Object.entries(sourceCandidates.indicators || {})
           .filter(([, candidate]) => candidate?.automationStatus === 'candidate_only')
           .map(([id]) => id)
       },
       fetch_failures: fetchFailures,
       fred_key_present: Boolean(FRED_API_KEY),
+      wind_key_present: Boolean(WIND_API_KEY),
       upstream_sync: upstreamSync
     }
   };

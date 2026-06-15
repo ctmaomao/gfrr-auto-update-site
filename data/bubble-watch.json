@@ -2,17 +2,17 @@
   "contractVersion": "bubble-watch-v1",
   "issue_number": 11,
   "as_of_date": "2026-06-15",
-  "generated_at": "2026-06-15T06:38:17.454Z",
+  "generated_at": "2026-06-15T10:14:21.378Z",
   "summary": {
     "total_indicators": 23,
-    "red_count": 5,
+    "red_count": 7,
     "yellow_count": 6,
-    "green_count": 12,
-    "red_pct": 21.7,
-    "weighted_risk_score": 34.8,
+    "green_count": 10,
+    "red_pct": 30.4,
+    "weighted_risk_score": 43.5,
     "verdict_label": "高风险预警",
     "verdict_label_en": "High Risk Alert",
-    "verdict_desc": "本周计数 5 红 / 6 黄 / 12 绿，red_pct 维持 21.7%，加权风险分由 37.0% 降至 34.8%。本期翻灯 1 项: 「S&P 50 日均线上方比例」黄转绿；基础判读落在「观察期」，有效判读为「高风险预警」。市场结构边际改善: S&P 50 日均线上方比例 ≈60%（绿）、市值加权 vs 等权重 -0.3%（绿） 均为绿，说明头部独涨压力松动；但 AI 龙头内部人卖买比 ≫20x（红），风险偏好并非完全健康。资金面仍是核心压力: Mag4 自由现金流变化 -16%（黄）、AI 占 VC 投资比重 80-81%（红）、NVDA 客户投资/收入比 ≈49%（红）；同时，云厂商递延收入增速 强劲（绿） 说明需求仍在兑现。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。信用端仍托底: 高收益债利差 275 bps（绿）、数据中心 ABS 利差 收窄（绿）、Neocloud 信用事件 0（绿）；宏观端则是 Fed 政策方向 偏鹰（黄），叠加 资本开支指引市场反应 选择性惩罚（黄）。这让本期更像高风险观察，而不是信用断裂式顶部。因此，尽管基础读数仍在「观察期」区间，分类强制升级继续生效: 估值 2/3 红（CAPE 周期调整 PE 41.4、前 5 大权重占比 ≈26.2%）；资金面 2/4 红（AI 占 VC 投资比重 80-81%、NVDA 客户投资/收入比 ≈49%）。红灯集中在 CAPE 周期调整 PE 41.4、前 5 大权重占比 ≈26.2%、AI 占 VC 投资比重 80-81%、NVDA 客户投资/收入比 ≈49%、AI 龙头内部人卖买比 ≫20x；估值与资金面双类共振使有效判读维持「高风险预警」。",
+    "verdict_desc": "本周计数 7 红 / 6 黄 / 10 绿，red_pct 由 21.7% 升至 30.4%，加权风险分由 37.0% 升至 43.5%。本期翻灯 5 项: 「S&P 50 日均线上方比例」黄转绿、「AI 一级市场发行」黄转红、「Token 增速 / 收入增速 比值」绿转黄、「企业生产环境部署率」绿转黄、「资本开支指引市场反应」黄转红；基础判读落在「中度警戒」，有效判读为「高风险预警」。市场结构边际改善: S&P 50 日均线上方比例 ≈60%（绿）、市值加权 vs 等权重 -0.3%（绿） 均为绿，说明头部独涨压力松动；但 AI 龙头内部人卖买比 ≫20x（红），风险偏好并非完全健康。资金面仍是核心压力: Mag4 自由现金流变化 -16%（黄）、AI 占 VC 投资比重 ~65%（红）、NVDA 客户投资/收入比 ≈49%（红）；同时，云厂商递延收入增速 强劲（绿） 说明需求仍在兑现。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。信用端仍托底: 高收益债利差 275 bps（绿）、数据中心 ABS 利差 收窄（绿）、Neocloud 信用事件 0 件（绿）；宏观端则是 Fed 政策方向 偏鹰（黄），叠加 资本开支指引市场反应 系统性惩罚（红）。这让本期更像高风险观察，而不是信用断裂式顶部。因此，尽管基础读数仍在「中度警戒」区间，分类强制升级继续生效: 估值 2/3 红（CAPE 周期调整 PE 41.4、前 5 大权重占比 ≈26.2%）；资金面 2/4 红（AI 占 VC 投资比重 ~65%、NVDA 客户投资/收入比 ≈49%）；市场结构 2/4 红（AI 龙头内部人卖买比 ≫20x、AI 一级市场发行 洪流）。红灯集中在 CAPE 周期调整 PE 41.4、前 5 大权重占比 ≈26.2%、AI 占 VC 投资比重 ~65%、NVDA 客户投资/收入比 ≈49%、AI 龙头内部人卖买比 ≫20x、AI 一级市场发行 洪流、资本开支指引市场反应 系统性惩罚；估值与资金面双类共振使有效判读维持「高风险预警」。",
     "verdict_desc_source": "bubble-watch-narrative-v1",
     "narrative_plan": {
       "version": "bubble-watch-narrative-v1",
@@ -59,15 +59,14 @@
           "zh": "市场结构",
           "en": "MARKET STRUCTURE",
           "total": 4,
-          "red": 1,
-          "yellow": 1,
+          "red": 2,
+          "yellow": 0,
           "green": 2,
           "redItems": [
-            "insider_sell_buy"
-          ],
-          "yellowItems": [
+            "insider_sell_buy",
             "ai_ipo_pipeline"
           ],
+          "yellowItems": [],
           "greenItems": [
             "breadth_50d",
             "spy_vs_rsp_6m"
@@ -95,15 +94,16 @@
           "en": "FUNDAMENTALS",
           "total": 5,
           "red": 0,
-          "yellow": 0,
-          "green": 5,
+          "yellow": 2,
+          "green": 3,
           "redItems": [],
-          "yellowItems": [],
+          "yellowItems": [
+            "token_revenue_ratio",
+            "enterprise_deploy"
+          ],
           "greenItems": [
             "token_volume_mom",
-            "token_revenue_ratio",
             "arr_2nd_deriv",
-            "enterprise_deploy",
             "cloud_rpo_growth"
           ]
         },
@@ -112,13 +112,14 @@
           "zh": "宏观",
           "en": "MACRO",
           "total": 4,
-          "red": 0,
-          "yellow": 3,
+          "red": 1,
+          "yellow": 2,
           "green": 1,
-          "redItems": [],
+          "redItems": [
+            "capex_reaction"
+          ],
           "yellowItems": [
             "fed_policy",
-            "capex_reaction",
             "ceo_hedging"
           ],
           "greenItems": [
@@ -135,18 +136,39 @@
           "note_summary": "Yahoo Chart 全市场实算:S&P 500 成份股 501 只(Wikipedia 实时名单)中 303 只收于 50 日均线上方,占比 ≈60.5%"
         },
         {
+          "indicator_id": "ai_ipo_pipeline",
+          "category": "market_structure",
+          "status": "red",
+          "value_display": "洪流",
+          "note_summary": "Crunchbase News 公开检索命中 2 条 AI IPO/exit 相关报道,涉及 OpenAI/Anthropic/Databricks/Cerebras/SpaceX;最新要点「AI Services And Robotics Lead Diverse Crop Of 29 New Ma…」(2026-06-09)"
+        },
+        {
+          "indicator_id": "token_revenue_ratio",
+          "category": "fundamentals",
+          "status": "yellow",
+          "value_display": "~1.0x",
+          "note_summary": "OpenRouter 周度模型排名 + 公开 catalog pricing 估算平台内 spend proxy:最近 4 周 token volume +43.7%,估算 spend +43.4%,token/spend 增速比 ~1.0x;定价覆盖 55.3%。该项不是厂商真实收入,仅作 OpenRouter 平台代理"
+        },
+        {
+          "indicator_id": "enterprise_deploy",
+          "category": "fundamentals",
+          "status": "yellow",
+          "value_display": "~52%",
+          "note_summary": "Google Cloud ROI of AI 公开报告解析:约 52% 受访高管称组织已在生产中部署 AI agents;Deloitte 同期公开页提示 ≥40% 项目进入 production 的公司数预计继续上升。该项是 enterprise production proxy,不等同所有企业 AI use case"
+        },
+        {
+          "indicator_id": "capex_reaction",
+          "category": "macro",
+          "status": "red",
+          "value_display": "系统性惩罚",
+          "note_summary": "StockAnalysis 季度现金流解析 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +71.0%;Yahoo 近 21 交易日相对 QQQ 平均 -9.4%、相对 SPY -8.4%,3/4 家跑输 QQQ 超 5pct。该项是 capex-heavy equity reaction proxy,不是逐字财报指引文本"
+        },
+        {
           "indicator_id": "spy_vs_rsp_6m",
           "category": "market_structure",
           "status": "green",
           "value_display": "-0.3%",
           "note_summary": "Yahoo Chart 实算 6 个月回报:SPY +9.0% vs 等权重 RSP +9.3%,市值加权领先 -0.3%——头部与平均股差距可控"
-        },
-        {
-          "indicator_id": "ai_ipo_pipeline",
-          "category": "market_structure",
-          "status": "yellow",
-          "value_display": "升温",
-          "note_summary": "SpaceX 6/12 以 $135 定价、首日收 $161（+19%）完成史上最大 IPO（募资 $75B、估值 $1.77T、纳斯达克 SPCX）；Anthropic、OpenAI、Databricks、Cerebras 仍在排队，合计需求超 2025 全年美股 IPO 市场数倍，但已挂牌/待发具体公司数仍 <10，未达洪流，维持黄灯"
         },
         {
           "indicator_id": "cloud_rpo_growth",
@@ -188,28 +210,7 @@
           "category": "credit",
           "status": "green",
           "value_display": "收窄",
-          "note_summary": "顶级数据中心债利差近数周再收窄约 60bps（发行放缓、市场情绪改善）；CoreWeave 6/11 顺利发行 $1.25B + €2B 优先票据并加发 $3.5B，数据中心融资条件持续宽松，信用市场对 AI 基建仍未现压力，维持绿灯"
-        },
-        {
-          "indicator_id": "neocloud_credit",
-          "category": "credit",
-          "status": "green",
-          "value_display": "0",
-          "note_summary": "CoreWeave / Nebius / Crusoe / Lambda 90 日内无评级下调或违约；CoreWeave 6/11 顺利发行 $1.25B + €2B 优先票据并加发 $3.5B，再融资渠道畅通；其总债务高企、客户与到期集中仍是潜在风险点，但短期信用零事件，维持绿灯"
-        },
-        {
-          "indicator_id": "fed_policy",
-          "category": "macro",
-          "status": "yellow",
-          "value_display": "偏鹰",
-          "note_summary": "6/17 FOMC，CME 维持概率 97-99.5%、加息概率极低；利率维持 3.5-3.75%，CPI 仍约 4.2% 远超 2% 目标、劳动力稳健，higher-for-longer 延续，对极度拉伸的估值构成持续压制，维持黄灯"
-        },
-        {
-          "indicator_id": "capex_reaction",
-          "category": "macro",
-          "status": "yellow",
-          "value_display": "选择性惩罚",
-          "note_summary": "Broadcom 6/3 创纪录 AI 收入但仅维持 $56B 指引、未上调，6/4 暴跌 14% 拖累芯片股；本周板块企稳、SpaceX 首日 +19%、三大指数走高，惩罚转为对'不加码者'的选择性打击而非全面抛售；市场仍要求高 capex 配兑现，但未系统性惩罚，维持黄灯"
+          "note_summary": "Wind 付费可选源识别数据中心 ABS/类 REITs 样本 4 只,最新样本 G互联25A(2025-10-31、规模 8.6 亿元);中国:资产支持证券到期收益率(AAA):6个月 最新 1.42%,4 周 +2.1bp、12 周 -12.0bp;新闻证据 1 条,支持词 6/压力词 0;新闻样本提到年分配率 4%-8%。样本券最新估值利差/收益率字段多为空,因此本项明确为 paid proxy,不伪装为正式数据中心专属连续利差"
         }
       ],
       "sections": [
@@ -217,7 +218,7 @@
           "key": "scorecard",
           "role": "lead",
           "sourceIndicators": [],
-          "summaryZh": "本周计数 5 红 / 6 黄 / 12 绿，red_pct 维持 21.7%，加权风险分由 37.0% 降至 34.8%。本期翻灯 1 项: 「S&P 50 日均线上方比例」黄转绿；基础判读落在「观察期」，有效判读为「高风险预警」。"
+          "summaryZh": "本周计数 7 红 / 6 黄 / 10 绿，red_pct 由 21.7% 升至 30.4%，加权风险分由 37.0% 升至 43.5%。本期翻灯 5 项: 「S&P 50 日均线上方比例」黄转绿、「AI 一级市场发行」黄转红、「Token 增速 / 收入增速 比值」绿转黄、「企业生产环境部署率」绿转黄、「资本开支指引市场反应」黄转红；基础判读落在「中度警戒」，有效判读为「高风险预警」。"
         },
         {
           "key": "market_structure",
@@ -238,7 +239,7 @@
             "nvda_invest_revenue",
             "cloud_rpo_growth"
           ],
-          "summaryZh": "资金面仍是核心压力: Mag4 自由现金流变化 -16%（黄）、AI 占 VC 投资比重 80-81%（红）、NVDA 客户投资/收入比 ≈49%（红）；同时，云厂商递延收入增速 强劲（绿） 说明需求仍在兑现。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。"
+          "summaryZh": "资金面仍是核心压力: Mag4 自由现金流变化 -16%（黄）、AI 占 VC 投资比重 ~65%（红）、NVDA 客户投资/收入比 ≈49%（红）；同时，云厂商递延收入增速 强劲（绿） 说明需求仍在兑现。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。"
         },
         {
           "key": "credit_macro",
@@ -250,7 +251,7 @@
             "fed_policy",
             "capex_reaction"
           ],
-          "summaryZh": "信用端仍托底: 高收益债利差 275 bps（绿）、数据中心 ABS 利差 收窄（绿）、Neocloud 信用事件 0（绿）；宏观端则是 Fed 政策方向 偏鹰（黄），叠加 资本开支指引市场反应 选择性惩罚（黄）。这让本期更像高风险观察，而不是信用断裂式顶部。"
+          "summaryZh": "信用端仍托底: 高收益债利差 275 bps（绿）、数据中心 ABS 利差 收窄（绿）、Neocloud 信用事件 0 件（绿）；宏观端则是 Fed 政策方向 偏鹰（黄），叠加 资本开支指引市场反应 系统性惩罚（红）。这让本期更像高风险观察，而不是信用断裂式顶部。"
         },
         {
           "key": "override_conclusion",
@@ -260,20 +261,22 @@
             "top5_weight",
             "vc_ai_share",
             "nvda_invest_revenue",
-            "insider_sell_buy"
+            "insider_sell_buy",
+            "ai_ipo_pipeline",
+            "capex_reaction"
           ],
-          "summaryZh": "因此，尽管基础读数仍在「观察期」区间，分类强制升级继续生效: 估值 2/3 红（CAPE 周期调整 PE 41.4、前 5 大权重占比 ≈26.2%）；资金面 2/4 红（AI 占 VC 投资比重 80-81%、NVDA 客户投资/收入比 ≈49%）。红灯集中在 CAPE 周期调整 PE 41.4、前 5 大权重占比 ≈26.2%、AI 占 VC 投资比重 80-81%、NVDA 客户投资/收入比 ≈49%、AI 龙头内部人卖买比 ≫20x；估值与资金面双类共振使有效判读维持「高风险预警」。"
+          "summaryZh": "因此，尽管基础读数仍在「中度警戒」区间，分类强制升级继续生效: 估值 2/3 红（CAPE 周期调整 PE 41.4、前 5 大权重占比 ≈26.2%）；资金面 2/4 红（AI 占 VC 投资比重 ~65%、NVDA 客户投资/收入比 ≈49%）；市场结构 2/4 红（AI 龙头内部人卖买比 ≫20x、AI 一级市场发行 洪流）。红灯集中在 CAPE 周期调整 PE 41.4、前 5 大权重占比 ≈26.2%、AI 占 VC 投资比重 ~65%、NVDA 客户投资/收入比 ≈49%、AI 龙头内部人卖买比 ≫20x、AI 一级市场发行 洪流、资本开支指引市场反应 系统性惩罚；估值与资金面双类共振使有效判读维持「高风险预警」。"
         }
       ],
       "limitations": [
-        "9 项自动接入、14 项人工/回退口径。",
+        "19 项自动接入、4 项人工/回退口径。",
         "当前无 STALE 指标。",
         "原站历史 snapshots 仅用于抽取写作结构与回归评估，生产正文不复制上游 summary.verdict_desc。"
       ]
     }
   },
   "scoring": {
-    "base_tier": "observation",
+    "base_tier": "caution",
     "effective_tier": "alert",
     "override_active": true,
     "override_rule": "红灯占比 ≥50% 的分类 ≥2 个 → 判读至少上调到「高风险预警」",
@@ -287,6 +290,12 @@
       {
         "key": "capital",
         "zh": "资金面",
+        "red": 2,
+        "total": 4
+      },
+      {
+        "key": "market_structure",
+        "zh": "市场结构",
         "red": 2,
         "total": 4
       }
@@ -306,7 +315,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T06:37:42.774Z",
+        "fetchedAt": "2026-06-15T10:13:22.101Z",
         "detail": {
           "cape": 41.43
         }
@@ -325,7 +334,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T06:37:43.252Z",
+        "fetchedAt": "2026-06-15T10:13:22.579Z",
         "detail": {
           "top5": [
             {
@@ -366,7 +375,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T06:37:43.714Z",
+        "fetchedAt": "2026-06-15T10:13:23.050Z",
         "detail": {
           "forwardPe": 20.65
         }
@@ -385,7 +394,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T06:37:47.005Z",
+        "fetchedAt": "2026-06-15T10:13:26.474Z",
         "detail": {
           "yoyPct": 69.52159559297533,
           "source": "stockanalysis 季报镜像",
@@ -423,7 +432,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T06:37:47.031Z",
+        "fetchedAt": "2026-06-15T10:13:26.494Z",
         "detail": {
           "yoyPct": -15.752621143043793,
           "source": "stockanalysis 季报镜像",
@@ -458,16 +467,25 @@
       "name_en": "AI / Total VC Funding",
       "name_zh": "AI 占 VC 投资比重",
       "threshold_text": ">50% 红 / 30-50% 黄 / <30% 绿",
-      "source_name": "Crunchbase / PitchBook(季度研究口径)",
+      "source_name": "Crunchbase News public article parser",
       "status": "red",
-      "value_display": "80-81%",
-      "note": "Crunchbase/PitchBook Q1 2026：全球 VC 创纪录 $297-300B，AI 占 80-81%（$239-242B），较 2025 Q1 的 55% 大幅跃升；美元高度集中于 OpenAI/Anthropic/xAI 等少数巨额轮次，Anthropic 估值逼近 $1T，无季度新数据沿用 Q1 口径",
+      "value_display": "~65%",
+      "note": "Crunchbase News 公开文章(2026-04-01)解析:AI startup funding 约 $122B,占全球 VC 65%,隐含/披露总额约 $300B;>50% 仍属资金面红区。阈值:>50% 红 / 30-50% 黄 / <30% 绿",
       "stale": false,
       "provenance": {
-        "mode": "curated",
-        "asOfDate": "2026-06-14",
-        "ageDays": 1,
-        "maxAgeDays": 120
+        "mode": "auto",
+        "fetchedAt": "2026-06-15T10:13:27.099Z",
+        "detail": {
+          "source": "Crunchbase News WordPress API",
+          "url": "https://news.crunchbase.com/venture/record-breaking-funding-ai-global-q1-2026/",
+          "articleDate": "2026-04-01",
+          "aiFundingB": 122,
+          "totalFundingB": 300,
+          "sharePct": 65,
+          "sourceCandidateStatus": "hybrid_live",
+          "sourceCandidatePrimarySignal": "AI venture funding share of global VC dollars",
+          "curatedFallbackAsOfDate": "2026-06-14"
+        }
       }
     },
     {
@@ -483,7 +501,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T06:37:47.831Z",
+        "fetchedAt": "2026-06-15T10:13:27.922Z",
         "detail": {
           "commitmentsUsd": 125000000000,
           "ltmRevenue": 253491000000,
@@ -505,7 +523,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T06:38:12.903Z",
+        "fetchedAt": "2026-06-15T10:13:52.667Z",
         "detail": {
           "above": 303,
           "counted": 501,
@@ -526,7 +544,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T06:38:13.403Z",
+        "fetchedAt": "2026-06-15T10:13:52.984Z",
         "detail": {
           "spyRet": 8.96390952095744,
           "rspRet": 9.295120354933708,
@@ -547,7 +565,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T06:38:15.737Z",
+        "fetchedAt": "2026-06-15T10:13:55.363Z",
         "detail": {
           "buyUsd": 1552999,
           "sellUsd": 4396271251,
@@ -561,16 +579,30 @@
       "name_en": "AI IPO/SPAC Pipeline",
       "name_zh": "AI 一级市场发行",
       "threshold_text": "洪流=红 / 升温=黄 / 平静=绿",
-      "source_name": "一级市场公开报道(编辑口径)",
-      "status": "yellow",
-      "value_display": "升温",
-      "note": "SpaceX 6/12 以 $135 定价、首日收 $161（+19%）完成史上最大 IPO（募资 $75B、估值 $1.77T、纳斯达克 SPCX）；Anthropic、OpenAI、Databricks、Cerebras 仍在排队，合计需求超 2025 全年美股 IPO 市场数倍，但已挂牌/待发具体公司数仍 <10，未达洪流，维持黄灯",
+      "source_name": "Crunchbase News public article search",
+      "status": "red",
+      "value_display": "洪流",
+      "note": "Crunchbase News 公开检索命中 2 条 AI IPO/exit 相关报道,涉及 OpenAI/Anthropic/Databricks/Cerebras/SpaceX;最新要点「AI Services And Robotics Lead Diverse Crop Of 29 New Ma…」(2026-06-09)。判级:洪流=红 / 升温=黄 / 平静=绿",
       "stale": false,
       "provenance": {
-        "mode": "curated",
-        "asOfDate": "2026-06-14",
-        "ageDays": 1,
-        "maxAgeDays": 21
+        "mode": "auto",
+        "fetchedAt": "2026-06-15T10:13:55.680Z",
+        "detail": {
+          "source": "Crunchbase News WordPress API",
+          "evidenceCount": 2,
+          "nameHits": [
+            "OpenAI",
+            "Anthropic",
+            "Databricks",
+            "Cerebras",
+            "SpaceX"
+          ],
+          "topTitle": "AI Services And Robotics Lead Diverse Crop Of 29 New May Unicorns As SpaceX, Anthropic And OpenAI Line Up Blockbuster Exits",
+          "topUrl": "https://news.crunchbase.com/venture/new-unicorn-startups-may-2026-openai-anthropic-ipos-spacex-robotics/",
+          "sourceCandidateStatus": "hybrid_live",
+          "sourceCandidatePrimarySignal": "AI IPO / exit pipeline heat from public startup-market reporting",
+          "curatedFallbackAsOfDate": "2026-06-14"
+        }
       }
     },
     {
@@ -598,16 +630,100 @@
       "name_en": "Data Center ABS Spread",
       "name_zh": "数据中心 ABS 利差",
       "threshold_text": "走阔 50bps+ = 红 / 稳定 = 黄 / 收窄 = 绿",
-      "source_name": "Green Street News / 公开发行定价(编辑口径)",
+      "source_name": "Wind MCP paid optional proxy",
       "status": "green",
       "value_display": "收窄",
-      "note": "顶级数据中心债利差近数周再收窄约 60bps（发行放缓、市场情绪改善）；CoreWeave 6/11 顺利发行 $1.25B + €2B 优先票据并加发 $3.5B，数据中心融资条件持续宽松，信用市场对 AI 基建仍未现压力，维持绿灯",
+      "note": "Wind 付费可选源识别数据中心 ABS/类 REITs 样本 4 只,最新样本 G互联25A(2025-10-31、规模 8.6 亿元);中国:资产支持证券到期收益率(AAA):6个月 最新 1.42%,4 周 +2.1bp、12 周 -12.0bp;新闻证据 1 条,支持词 6/压力词 0;新闻样本提到年分配率 4%-8%。样本券最新估值利差/收益率字段多为空,因此本项明确为 paid proxy,不伪装为正式数据中心专属连续利差。判级:4 周走阔 ≥50bp=红 / ≥15bp 或压力词升温=黄 / 12 周收窄且需求证据充足=绿",
       "stale": false,
       "provenance": {
-        "mode": "curated",
-        "asOfDate": "2026-06-14",
-        "ageDays": 1,
-        "maxAgeDays": 21
+        "mode": "auto",
+        "fetchedAt": "2026-06-15T10:14:07.093Z",
+        "detail": {
+          "source": "Wind MCP paid optional",
+          "directDataCenterYieldAvailable": false,
+          "sampleRows": [
+            {
+              "windCode": "266616.SH",
+              "shortName": "G互联25A",
+              "issueDate": "2025-10-31",
+              "issueAmountB": 8.6,
+              "couponRate": null,
+              "valuationYield": null,
+              "latestYield": null,
+              "assetClass": "持有型不动产-企业ABS-持有型不动产-数据中心"
+            },
+            {
+              "windCode": "121607.SZ",
+              "shortName": "R润泽01",
+              "issueDate": "2025-07-22",
+              "issueAmountB": 44.9941,
+              "couponRate": null,
+              "valuationYield": null,
+              "latestYield": null,
+              "assetClass": "REITs类-公募REITs-新型基础设施REITs-数据中心"
+            },
+            {
+              "windCode": "265749.SH",
+              "shortName": "R万国01",
+              "issueDate": "2025-07-22",
+              "issueAmountB": 23.9999,
+              "couponRate": null,
+              "valuationYield": null,
+              "latestYield": null,
+              "assetClass": "REITs类-公募REITs-新型基础设施REITs-数据中心"
+            },
+            {
+              "windCode": "264635.SH",
+              "shortName": "25万数1A",
+              "issueDate": "2025-03-19",
+              "issueAmountB": 10.4598,
+              "couponRate": null,
+              "valuationYield": null,
+              "latestYield": null,
+              "assetClass": "持有型不动产-企业ABS-持有型不动产-数据中心"
+            }
+          ],
+          "benchmark": {
+            "name": "中国:资产支持证券到期收益率(AAA):6个月",
+            "code": "M1016265",
+            "latest": {
+              "date": "20260615",
+              "value": 1.4185
+            },
+            "p4w": {
+              "date": "20260518",
+              "value": 1.3977
+            },
+            "p12w": {
+              "date": "20260323",
+              "value": 1.5381
+            },
+            "change4wBp": 2.080000000000015,
+            "change12wBp": -11.959999999999994,
+            "observationCount": 358
+          },
+          "news": {
+            "itemCount": 1,
+            "supportCount": 6,
+            "pressureCount": 0,
+            "yieldRangePct": [
+              4,
+              8
+            ],
+            "issueTotalB": 785,
+            "recentDataCenterIssueB": 90,
+            "topTitles": [
+              {
+                "title": "数据中心加入中国持有型不动产ABS发行潮 与渴求收益的投资者双向奔赴",
+                "date": "2026-04-15",
+                "relevance": 0.872
+              }
+            ]
+          },
+          "sourceCandidateStatus": "hybrid_paid_optional",
+          "sourceCandidatePrimarySignal": "Data-center ABS / secured-debt spread direction",
+          "curatedFallbackAsOfDate": "2026-06-14"
+        }
       }
     },
     {
@@ -616,16 +732,65 @@
       "name_en": "Neocloud Credit Events",
       "name_zh": "Neocloud 信用事件",
       "threshold_text": "任何违约/降级=红",
-      "source_name": "S&P Global Ratings / Morningstar(编辑口径)",
+      "source_name": "CoreWeave / Lambda / Crusoe / Nebius public credit-event monitor",
       "status": "green",
-      "value_display": "0",
-      "note": "CoreWeave / Nebius / Crusoe / Lambda 90 日内无评级下调或违约；CoreWeave 6/11 顺利发行 $1.25B + €2B 优先票据并加发 $3.5B，再融资渠道畅通；其总债务高企、客户与到期集中仍是潜在风险点，但短期信用零事件，维持绿灯",
+      "value_display": "0 件",
+      "note": "公开 neocloud 信用事件监测覆盖 CoreWeave/Lambda/Crusoe/Nebius 共 5 个页面,未命中违约、降级或困境重组词;同时记录 27 条融资/票据/credit facility 正常事件。该项不是完整评级数据库。判级:任何违约/降级=红 / 无正式事件=绿",
       "stale": false,
       "provenance": {
-        "mode": "curated",
-        "asOfDate": "2026-06-14",
-        "ageDays": 1,
-        "maxAgeDays": 21
+        "mode": "auto",
+        "fetchedAt": "2026-06-15T10:14:10.626Z",
+        "detail": {
+          "source": "public neocloud credit-event monitor",
+          "checkedPages": 5,
+          "failures": [],
+          "negativeEvents": [],
+          "financingEvents": [
+            {
+              "source": "PRNewswire:CoreWeave",
+              "url": "https://www.prnewswire.com/news/coreweave/",
+              "snippet": "Jun 04, 2025, 09:00 ET CoreWeave Appoints Ernie Rogers to Strategic Leadership Role to Drive Next Phase of Financing Growth CoreWeave, Inc"
+            },
+            {
+              "source": "PRNewswire:CoreWeave",
+              "url": "https://www.prnewswire.com/news/coreweave/",
+              "snippet": "May 28, 2025, 13:15 ET CoreWeave Announces Closing of $2,000 million of Senior Notes Offering CoreWeave, Inc"
+            },
+            {
+              "source": "PRNewswire:CoreWeave",
+              "url": "https://www.prnewswire.com/news/coreweave/",
+              "snippet": "(Nasdaq: CRWV) (\"CoreWeave\") announced that it has closed its previously announced private offering of $2,000 million aggregate"
+            },
+            {
+              "source": "PRNewswire:CoreWeave",
+              "url": "https://www.prnewswire.com/news/coreweave/",
+              "snippet": "May 21, 2025, 12:00 ET CoreWeave Announces Upsize and Pricing of $2,000 million of Senior Notes CoreWeave, Inc"
+            },
+            {
+              "source": "PRNewswire:CoreWeave",
+              "url": "https://www.prnewswire.com/news/coreweave/",
+              "snippet": "(Nasdaq: CRWV) (\"CoreWeave\") announced today that it priced a private offering of $2,000 million aggregate principal amount of 9"
+            },
+            {
+              "source": "PRNewswire:CoreWeave",
+              "url": "https://www.prnewswire.com/news/coreweave/",
+              "snippet": "May 19, 2025, 07:00 ET CoreWeave Announces Intention to Offer $1,500 million of Senior Notes CoreWeave, Inc"
+            },
+            {
+              "source": "PRNewswire:CoreWeave",
+              "url": "https://www.prnewswire.com/news/coreweave/",
+              "snippet": "May 06, 2025, 16:45 ET CoreWeave Expands Credit Facility to $1"
+            },
+            {
+              "source": "PRNewswire:CoreWeave",
+              "url": "https://www.prnewswire.com/news/coreweave/",
+              "snippet": "Mar 27, 2025, 21:45 ET CoreWeave Announces Pricing of Initial Public Offering CoreWeave, Inc"
+            }
+          ],
+          "sourceCandidateStatus": "hybrid_live",
+          "sourceCandidatePrimarySignal": "Default, downgrade, distressed financing or rating event among neocloud names",
+          "curatedFallbackAsOfDate": "2026-06-14"
+        }
       }
     },
     {
@@ -634,16 +799,47 @@
       "name_en": "Industry Token Volume MoM",
       "name_zh": "AI 行业 Token 月度环比",
       "threshold_text": "收缩=红 / 减速=黄 / 加速=绿",
-      "source_name": "OpenRouter 公开披露(研究口径)",
+      "source_name": "OpenRouter public rankings API",
       "status": "green",
-      "value_display": "+35%",
-      "note": "OpenRouter 月 token 量稳在约 100 万亿（周 25 万亿、半年 5 倍），全年有望突破千万亿（quadrillion）、单日已超 1 万亿；服务超 800 万用户、接入 400+ 模型，全产业用量继续加速，维持绿灯",
+      "value_display": "加速(+43.7%)",
+      "note": "OpenRouter public rankings API 汇总供应商周度 token volume:最近 4 周合计 141.51T tokens,较前 4 周 +43.7%;上一窗口为 +7.8%。该项是 OpenRouter 平台公开代理,不是全行业 token tape。判级:收缩=红 / 减速=黄 / 加速=绿",
       "stale": false,
       "provenance": {
-        "mode": "curated",
-        "asOfDate": "2026-06-14",
-        "ageDays": 1,
-        "maxAgeDays": 45
+        "mode": "auto",
+        "fetchedAt": "2026-06-15T10:14:10.653Z",
+        "detail": {
+          "source": "OpenRouter /api/frontend/rankings/market-share",
+          "latestWeek": "2026-06-08",
+          "rows": [
+            {
+              "date": "2026-05-18",
+              "totalTokens": 28931151161426
+            },
+            {
+              "date": "2026-05-25",
+              "totalTokens": 31821170937871
+            },
+            {
+              "date": "2026-06-01",
+              "totalTokens": 36135310767290
+            },
+            {
+              "date": "2026-06-08",
+              "totalTokens": 44623118857794
+            }
+          ],
+          "latest4wTokens": 141510751724381,
+          "prev4wTokens": 98479905805125,
+          "droppedPartialWeek": {
+            "date": "2026-06-15",
+            "totalTokens": 2350999683935
+          },
+          "momPct": 43.695051866120515,
+          "prevMomPct": 7.79073684083474,
+          "sourceCandidateStatus": "hybrid_live",
+          "sourceCandidatePrimarySignal": "AI token usage growth",
+          "curatedFallbackAsOfDate": "2026-06-14"
+        }
       }
     },
     {
@@ -652,16 +848,67 @@
       "name_en": "Token Growth / Revenue Growth",
       "name_zh": "Token 增速 / 收入增速 比值",
       "threshold_text": ">2x 红 / 1-2x 黄 / <1x 绿",
-      "source_name": "厂商公开披露 / OpenRouter(研究口径)",
-      "status": "green",
-      "value_display": "0.4x",
-      "note": "Anthropic ARR 由 4 月 $30B 升至 5 月约 $45B（环比 +50%），收入增速持续快于 token 量增速（半年 5 倍、月环比约 +35%）；单 token 价值上行、付费需求真实，比值维持 <1x，维持绿灯",
+      "source_name": "OpenRouter rankings + catalog spend proxy",
+      "status": "yellow",
+      "value_display": "~1.0x",
+      "note": "OpenRouter 周度模型排名 + 公开 catalog pricing 估算平台内 spend proxy:最近 4 周 token volume +43.7%,估算 spend +43.4%,token/spend 增速比 ~1.0x;定价覆盖 55.3%。该项不是厂商真实收入,仅作 OpenRouter 平台代理。阈值:>2x 红 / 1-2x 黄 / <1x 绿",
       "stale": false,
       "provenance": {
-        "mode": "curated",
-        "asOfDate": "2026-06-14",
-        "ageDays": 1,
-        "maxAgeDays": 45
+        "mode": "auto",
+        "fetchedAt": "2026-06-15T10:14:10.795Z",
+        "detail": {
+          "source": "OpenRouter model-rankings-chart + frontend catalog models",
+          "latestWeek": "2026-06-08",
+          "latest4wTokens": 141510751724381,
+          "prev4wTokens": 98479905805125,
+          "latest4wSpendProxyUsd": 138188287.11173627,
+          "prev4wSpendProxyUsd": 96335907.11895522,
+          "tokenGrowthPct": 43.695051866120515,
+          "spendGrowthPct": 43.4442164343788,
+          "ratio": 1.0057737358923389,
+          "pricedCoveragePct": 55.31695770238861,
+          "droppedPartialWeek": {
+            "date": "2026-06-15",
+            "totalTokens": 2347682660503,
+            "pricedTokens": 1525039422658,
+            "spendProxyUsd": 3804203.989719579,
+            "othersTokens": 822643237845,
+            "missingModels": []
+          },
+          "rows": [
+            {
+              "date": "2026-05-18",
+              "totalTokens": 28931151161426,
+              "pricedTokens": 15292636836089,
+              "spendProxyUsd": 30277490.90791361,
+              "othersTokens": 13638514325337
+            },
+            {
+              "date": "2026-05-25",
+              "totalTokens": 31821170937871,
+              "pricedTokens": 17052269611572,
+              "spendProxyUsd": 33742028.36235273,
+              "othersTokens": 14768901326299
+            },
+            {
+              "date": "2026-06-01",
+              "totalTokens": 36135310767290,
+              "pricedTokens": 19326440086207,
+              "spendProxyUsd": 25861085.09494394,
+              "othersTokens": 16808870681083
+            },
+            {
+              "date": "2026-06-08",
+              "totalTokens": 44623118857794,
+              "pricedTokens": 26608096141840,
+              "spendProxyUsd": 48307682.74652599,
+              "othersTokens": 18015022715954
+            }
+          ],
+          "sourceCandidateStatus": "hybrid_live",
+          "sourceCandidatePrimarySignal": "Token growth versus reported or estimated AI revenue growth",
+          "curatedFallbackAsOfDate": "2026-06-14"
+        }
       }
     },
     {
@@ -670,16 +917,71 @@
       "name_en": "AI ARR 2nd Derivative",
       "name_zh": "AI 收入增速的二阶导",
       "threshold_text": "减速=红 / 平稳=黄 / 加速=绿",
-      "source_name": "Sacra / 公开报道(研究口径)",
+      "source_name": "SaaStr public ARR milestone monitor",
       "status": "green",
       "value_display": "加速中",
-      "note": "Anthropic run-rate 由 2 月 $14B → 3 月 $19B → 4 月 $30B → 5 月约 $45B，月增量持续放大（+5/+11/+15B），Q2 单季收入料约 $10.9B；约 36% 领先 OpenAI ~$33B，二阶导维持正向，唯 OpenAI 对其毛收入口径仍有约 $8B 争议",
+      "note": "SaaStr 公开 Anthropic ARR/run-rate 里程碑解析:2025-07-12 $4B → 2026-02-15 $14B → 2026-04-09 $30B → 2026-05-28 $44B;最新区间月增量约 $8.7B,为前一区间的 0.95x。该项是公开估算里程碑 proxy,不是审计收入。阈值:明显减速=红 / 高位放缓=黄 / 维持加速=绿",
       "stale": false,
       "provenance": {
-        "mode": "curated",
-        "asOfDate": "2026-06-14",
-        "ageDays": 1,
-        "maxAgeDays": 45
+        "mode": "auto",
+        "fetchedAt": "2026-06-15T10:14:11.003Z",
+        "detail": {
+          "source": "SaaStr WordPress public API",
+          "milestones": [
+            {
+              "date": "2025-07-12",
+              "arrB": 4,
+              "sourceId": 315823,
+              "title": "How Anthropic Rocketed to $4B ARR — And Why Your B2B Playbook May Already Be Obsolete"
+            },
+            {
+              "date": "2026-02-15",
+              "arrB": 14,
+              "sourceId": 322211,
+              "title": "Anthropic Just Hit $14 Billion in ARR. Up From $1 Billion Just 14 Months Ago."
+            },
+            {
+              "date": "2026-04-09",
+              "arrB": 30,
+              "sourceId": 323715,
+              "title": "20VC x SaaStr: Anthropic Hit $30 Billion and Training Costs a Quarter of OpenAI’s, SpaceX Files at $1.75 Trillion, and Why the Big Three Will Dwarf Every IPO of the Last 25 Years Combined"
+            },
+            {
+              "date": "2026-05-28",
+              "arrB": 44,
+              "sourceId": 325206,
+              "title": "20VC x SaaStr This Week: Anthropic Hits 70% Margins, OpenAI Files Its S-1, and Nvidia Yawns at $58B"
+            }
+          ],
+          "segments": [
+            {
+              "from": "2025-07-12",
+              "to": "2026-02-15",
+              "deltaB": 10,
+              "months": 7.2,
+              "monthlyDeltaB": 1.4
+            },
+            {
+              "from": "2026-02-15",
+              "to": "2026-04-09",
+              "deltaB": 16,
+              "months": 1.7,
+              "monthlyDeltaB": 9.19
+            },
+            {
+              "from": "2026-04-09",
+              "to": "2026-05-28",
+              "deltaB": 14,
+              "months": 1.6,
+              "monthlyDeltaB": 8.7
+            }
+          ],
+          "latestArrB": 44,
+          "slopeRatio": 0.9464285714285714,
+          "sourceCandidateStatus": "hybrid_live",
+          "sourceCandidatePrimarySignal": "Second derivative of AI ARR / run-rate estimates",
+          "curatedFallbackAsOfDate": "2026-06-14"
+        }
       }
     },
     {
@@ -688,16 +990,23 @@
       "name_en": "Enterprise Production Deploy",
       "name_zh": "企业生产环境部署率",
       "threshold_text": "<50%=红 / 50-65%=黄 / >65%=绿",
-      "source_name": "McKinsey / Deloitte(季度调查口径)",
-      "status": "green",
-      "value_display": "72%",
-      "note": "McKinsey Q1 2026：72% 企业至少 1 项 AI workload 生产化（2024 55%、2020 20%）；Deloitte：67% 企业月耗 token 超 10 亿、25% 已将 ≥40% 实验转产；深度集成仍在爬坡但整体高位，无季度新数据沿用",
+      "source_name": "Google Cloud ROI of AI public report",
+      "status": "yellow",
+      "value_display": "~52%",
+      "note": "Google Cloud ROI of AI 公开报告解析:约 52% 受访高管称组织已在生产中部署 AI agents;Deloitte 同期公开页提示 ≥40% 项目进入 production 的公司数预计继续上升。该项是 enterprise production proxy,不等同所有企业 AI use case。阈值:<50%=红 / 50-65%=黄 / >65%=绿",
       "stale": false,
       "provenance": {
-        "mode": "curated",
-        "asOfDate": "2026-06-14",
-        "ageDays": 1,
-        "maxAgeDays": 120
+        "mode": "auto",
+        "fetchedAt": "2026-06-15T10:14:12.227Z",
+        "detail": {
+          "source": "Google Cloud ROI of AI public report",
+          "url": "https://cloud.google.com/transform/roi-of-ai-how-agents-help-business",
+          "productionDeployPct": 52,
+          "deloitteSupport": "Worker access to AI rose by 50% in 2025, and expectations for scale are high: the number of companies with ≥40% projects in production is set to double in six months",
+          "sourceCandidateStatus": "hybrid_live",
+          "sourceCandidatePrimarySignal": "Enterprise AI production deployment rate",
+          "curatedFallbackAsOfDate": "2026-06-14"
+        }
       }
     },
     {
@@ -725,16 +1034,24 @@
       "name_en": "Round-Tripping / Accounting",
       "name_zh": "会计造假/round-tripping 事件",
       "threshold_text": "任何=红 / 调查=黄 / 无=绿",
-      "source_name": "SEC / 公开执法报道(编辑口径)",
+      "source_name": "SEC / DOJ public press-release search",
       "status": "green",
-      "value_display": "0",
-      "note": "无主要 AI 龙头正式执法；iLearning Engines round-tripping 案 4 月被刑事起诉（虚增 $144M，已破产）属小盘股；Burry 仍指控 Mag7 借延长服务器折旧虚增 2026-28 利润、Super Micro 受 SEC 调查，均非核心 AI 龙头，本周无新增执法，维持绿灯",
+      "value_display": "0 件",
+      "note": "SEC/DOJ 公开新闻稿近两年检索未命中核心 AI 名单的会计造假、round-tripping 或欺诈正式事件;该项仍只能说明公开执法搜索未见新红灯,不能替代完整法律尽调。判级:任何=红 / 调查=黄 / 无=绿",
       "stale": false,
       "provenance": {
-        "mode": "curated",
-        "asOfDate": "2026-06-14",
-        "ageDays": 1,
-        "maxAgeDays": 21
+        "mode": "auto",
+        "fetchedAt": "2026-06-15T10:14:13.992Z",
+        "detail": {
+          "source": "SEC/DOJ public search pages",
+          "checkedPages": 4,
+          "pageFailures": [],
+          "eventCount": 0,
+          "events": [],
+          "sourceCandidateStatus": "hybrid_live",
+          "sourceCandidatePrimarySignal": "Formal SEC / DOJ accounting, fraud, round-tripping or enforcement event tied to core AI names",
+          "curatedFallbackAsOfDate": "2026-06-14"
+        }
       }
     },
     {
@@ -762,16 +1079,84 @@
       "name_en": "Capex Guidance Reaction",
       "name_zh": "资本开支指引市场反应",
       "threshold_text": "系统性惩罚=红 / 偶发=黄 / 奖励=绿",
-      "source_name": "财报市场反应(编辑口径)",
-      "status": "yellow",
-      "value_display": "选择性惩罚",
-      "note": "Broadcom 6/3 创纪录 AI 收入但仅维持 $56B 指引、未上调，6/4 暴跌 14% 拖累芯片股；本周板块企稳、SpaceX 首日 +19%、三大指数走高，惩罚转为对'不加码者'的选择性打击而非全面抛售；市场仍要求高 capex 配兑现，但未系统性惩罚，维持黄灯",
+      "source_name": "StockAnalysis capex + Yahoo relative-return proxy",
+      "status": "red",
+      "value_display": "系统性惩罚",
+      "note": "StockAnalysis 季度现金流解析 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +71.0%;Yahoo 近 21 交易日相对 QQQ 平均 -9.4%、相对 SPY -8.4%,3/4 家跑输 QQQ 超 5pct。该项是 capex-heavy equity reaction proxy,不是逐字财报指引文本。判级:系统性惩罚=红 / 偶发或选择性=黄 / 奖励=绿",
       "stale": false,
       "provenance": {
-        "mode": "curated",
-        "asOfDate": "2026-06-14",
-        "ageDays": 1,
-        "maxAgeDays": 21
+        "mode": "auto",
+        "fetchedAt": "2026-06-15T10:14:15.898Z",
+        "detail": {
+          "source": "StockAnalysis quarterly cash-flow + Yahoo Chart",
+          "benchmark": {
+            "qqq21": 0.9276496311767339,
+            "spy21": -0.0754398513337478
+          },
+          "avgCapexYoy": 71.02230187618855,
+          "avgExcessQqq": -9.422308189596745,
+          "avgExcessSpy": -8.419218707086262,
+          "punishedCount": 3,
+          "capexRows": [
+            {
+              "ticker": "MSFT",
+              "latestCapexB": 30.9,
+              "latestYoyPct": 84.4,
+              "t4qYoyPct": 58.5
+            },
+            {
+              "ticker": "META",
+              "latestCapexB": 19,
+              "latestYoyPct": 46.8,
+              "t4qYoyPct": 73
+            },
+            {
+              "ticker": "AMZN",
+              "latestCapexB": 44.2,
+              "latestYoyPct": 76.7,
+              "t4qYoyPct": 62.2
+            },
+            {
+              "ticker": "GOOGL",
+              "latestCapexB": 35.7,
+              "latestYoyPct": 107.4,
+              "t4qYoyPct": 90.4
+            }
+          ],
+          "reactionRows": [
+            {
+              "ticker": "MSFT",
+              "ret21": -3.6,
+              "ret63": -1.2,
+              "excess21VsQqq": -4.5,
+              "excess21VsSpy": -3.5
+            },
+            {
+              "ticker": "META",
+              "ret21": -8.1,
+              "ret63": -7.6,
+              "excess21VsQqq": -9,
+              "excess21VsSpy": -8
+            },
+            {
+              "ticker": "AMZN",
+              "ret21": -11.7,
+              "ret63": 14.9,
+              "excess21VsQqq": -12.6,
+              "excess21VsSpy": -11.6
+            },
+            {
+              "ticker": "GOOGL",
+              "ret21": -10.7,
+              "ret63": 19,
+              "excess21VsQqq": -11.6,
+              "excess21VsSpy": -10.6
+            }
+          ],
+          "sourceCandidateStatus": "hybrid_live",
+          "sourceCandidatePrimarySignal": "Market reaction to AI capex guidance",
+          "curatedFallbackAsOfDate": "2026-06-14"
+        }
       }
     },
     {
@@ -783,13 +1168,14 @@
       "source_name": "公开表态汇编(编辑口径)",
       "status": "yellow",
       "value_display": "增加",
-      "note": "对冲表态持续升温：Altman 直言估值'非理性、insane'、'必有人巨亏'；Pichai 承认'非理性'、'无公司能免疫包括谷歌'；Dimon 称'不少资产已进入泡沫区间、部分钱会亏'；频率与强度偏高，但 CEO 仍坚持 capex 终将回本、未集体收手，未达全体一致承认过热，维持黄灯",
+      "note": "对冲表态持续升温：Altman 直言估值'非理性、insane'、'必有人巨亏'；Pichai 承认'非理性'、'无公司能免疫包括谷歌'；Dimon 称'不少资产已进入泡沫区间、部分钱会亏'；频率与强度偏高，但 CEO 仍坚持 capex 终将回本、未集体收手，未达全体一致承认过热，维持黄灯(实时抓取失败,沿用 2026-06-14 快照)",
       "stale": false,
       "provenance": {
-        "mode": "curated",
+        "mode": "auto_fallback",
         "asOfDate": "2026-06-14",
         "ageDays": 1,
-        "maxAgeDays": 21
+        "maxAgeDays": 21,
+        "reason": "hybrid_live source failed: HTTP 429 for https://api.gdeltproject.org/api/v2/doc/doc?query=%28%22AI+bubble%22+OR+%22artificial+intelligence+bubble%22+OR+%22AI+overbuild%22+OR+%22AI+capex+bubble%22%29&mode=ArtList&format=json&maxrecords=30&timespan=30d&sort=HybridRel"
       }
     }
   ],
@@ -841,22 +1227,58 @@
     },
     {
       "week": "06-15",
-      "red_pct": 21.7,
-      "risk_score": 34.8
+      "red_pct": 30.4,
+      "risk_score": 43.5
     }
   ],
   "wow_changes": [
     {
       "type": "status_downgrade",
       "note": "「S&P 50 日均线上方比例」由黄转绿:当前 ≈60%。Yahoo Chart 全市场实算:S&P 500 成份股 501 只(Wikipedia 实时名单)中 303 只收于 50 日均线上方,占比 ≈60.5%。阈值:<40% 红 / 40-60% 黄 / >60% 绿"
+    },
+    {
+      "type": "status_upgrade",
+      "note": "「AI 一级市场发行」由黄转红:当前 洪流。Crunchbase News 公开检索命中 2 条 AI IPO/exit 相关报道,涉及 OpenAI/Anthropic/Databricks/Cerebras/SpaceX;最新要点「AI Services And Robotics Lead Diverse Crop Of 29 New Ma…」(2026-06-09)。判级:洪流=红 / 升温=黄 / 平静=绿"
+    },
+    {
+      "type": "status_upgrade",
+      "note": "「Token 增速 / 收入增速 比值」由绿转黄:当前 ~1.0x。OpenRouter 周度模型排名 + 公开 catalog pricing 估算平台内 spend proxy:最近 4 周 token volume +43.7%,估算 spend +43.4%,token/spend 增速比 ~1.0x;定价覆盖 55.3%。该项不是厂商真实收入,仅作 OpenRouter 平台代理。阈值:>2x 红 / 1-2x 黄 / <1x 绿"
+    },
+    {
+      "type": "status_upgrade",
+      "note": "「企业生产环境部署率」由绿转黄:当前 ~52%。Google Cloud ROI of AI 公开报告解析:约 52% 受访高管称组织已在生产中部署 AI agents;Deloitte 同期公开页提示 ≥40% 项目进入 production 的公司数预计继续上升。该项是 enterprise production proxy,不等同所有企业 AI use case。阈值:<50%=红 / 50-65%=黄 / >65%=绿"
+    },
+    {
+      "type": "status_upgrade",
+      "note": "「资本开支指引市场反应」由黄转红:当前 系统性惩罚。StockAnalysis 季度现金流解析 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +71.0%;Yahoo 近 21 交易日相对 QQQ 平均 -9.4%、相对 SPY -8.4%,3/4 家跑输 QQQ 超 5pct。该项是 capex-heavy equity reaction proxy,不是逐字财报指引文本。判级:系统性惩罚=红 / 偶发或选择性=黄 / 奖励=绿"
     }
   ],
   "meta": {
     "builder": "scripts/build-bubble-watch.mjs",
     "boundary": "display-only:独立专题页数据,不进 GFRR 打分/决策/执行/仓位",
-    "auto_count": 9,
-    "curated_count": 11,
-    "fallback_count": 3,
+    "auto_count": 19,
+    "curated_count": 0,
+    "fallback_count": 4,
+    "hybrid_count": 10,
+    "source_candidates": {
+      "contractVersion": "bubble-watch-source-candidates-v1",
+      "hybrid_live_ids": [
+        "vc_ai_share",
+        "ai_ipo_pipeline",
+        "neocloud_credit",
+        "token_volume_mom",
+        "token_revenue_ratio",
+        "arr_2nd_deriv",
+        "enterprise_deploy",
+        "accounting_events",
+        "capex_reaction",
+        "ceo_hedging"
+      ],
+      "hybrid_paid_optional_ids": [
+        "dc_abs_spread"
+      ],
+      "candidate_only_ids": []
+    },
     "fetch_failures": [
       {
         "id": "hy_oas",
@@ -869,9 +1291,14 @@
       {
         "id": "fed_policy",
         "reason": "FRED_API_KEY 未配置"
+      },
+      {
+        "id": "ceo_hedging",
+        "reason": "hybrid_live_source_failed: HTTP 429 for https://api.gdeltproject.org/api/v2/doc/doc?query=%28%22AI+bubble%22+OR+%22artificial+intelligence+bubble%22+OR+%22AI+overbuild%22+OR+%22AI+capex+bubble%22%29&mode=ArtList&format=json&maxrecords=30&timespan=30d&sort=HybridRel"
       }
     ],
     "fred_key_present": false,
+    "wind_key_present": true,
     "upstream_sync": {
       "checked": true,
       "reachable": true,
@@ -879,6 +1306,9 @@
       "upstreamIssue": 10,
       "adopted": 0,
       "sourceUrl": "https://raw.githubusercontent.com/crystal-xiaoxiao/ai-bubble-monitor/main/docs/data/latest.json",
+      "sourceKind": "latest",
+      "snapshotName": null,
+      "snapshotIndexUrl": null,
       "summaryAvailable": true,
       "summaryAdopted": false,
       "summaryUsage": "not_used_for_production_narrative"

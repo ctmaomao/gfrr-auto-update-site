@@ -33,6 +33,7 @@ jobs:
       - name: Refresh bubble watch data
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          WIND_API_KEY: ${{ secrets.WIND_API_KEY }}
         run: npm run build:bubble-watch
         continue-on-error: true
 
