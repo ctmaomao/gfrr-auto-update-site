@@ -44,6 +44,14 @@ const STATUS_ZH = { green: '绿', yellow: '黄', red: '红' };
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
 const TIER_LABEL_EN = { observation: 'Observation', caution: 'Moderate Caution', alert: 'High Risk Alert', top: 'Systemic Top' };
 const NARRATIVE_ENGINE_VERSION = 'bubble-watch-narrative-v1';
+const PROXY_CONFIDENCE_CALIBRATION_IDS = new Set([
+  'insider_sell_buy',
+  'ai_ipo_pipeline',
+  'capex_reaction',
+  'ceo_hedging',
+  'token_revenue_ratio',
+  'enterprise_deploy'
+]);
 
 const CATEGORY_ORDER = [
   { key: 'valuation', zh: '估值', en: 'VALUATION' },
@@ -2346,6 +2354,157 @@ function baseIndicator(def) {
   };
 }
 
+function hasStrongProxyConfirmation(id, result) {
+  const detail = result?.detail || {};
+  switch (id) {
+    case 'insider_sell_buy':
+      // OpenInsider ratio can explode when buy volume is near zero; require a future
+      // independent SEC/Form-4 aggregate or equivalent cross-check before publishing red.
+      return detail.secondaryConfirmation === true || detail.secAggregateRatioConfirmed === true;
+    case 'ai_ipo_pipeline':
+      return Number(detail.confirmedIssueCount) >= 10
+        || (Number(detail.evidenceCount) >= 8 && Array.isArray(detail.nameHits) && detail.nameHits.length >= 8);
+    case 'capex_reaction':
+      return Number(detail.directGuidancePenaltyCount) >= 2
+        && Number(detail.punishedCount) >= 3
+        && Number(detail.avgExcessQqq) <= -8;
+    case 'ceo_hedging':
+      return Number(detail.executiveHitCount) >= 6 && Number(detail.uniqueExecutiveCount) >= 4;
+    case 'token_revenue_ratio':
+      return Number(detail.ratio) > 2 && Number(detail.pricedCoveragePct) >= 70;
+    case 'enterprise_deploy':
+      return Number(detail.productionDeployPct) < 50 && Number(detail.confirmingSurveyCount) >= 2;
+    default:
+      return false;
+  }
+}
+
+function proxyConfidenceRuleText(id) {
+  return {
+    insider_sell_buy: '内部人卖买比需要独立 Form-4/SEC 聚合确认;单一 OpenInsider 买入近零导致的极端 ratio 最多按黄灯发布。',
+    ai_ipo_pipeline: 'AI IPO 洪流需要接近模板口径的具体发行/待发公司数确认;单一 Crunchbase 新闻检索命中不足以升红。',
+    capex_reaction: '系统性 capex 惩罚需要价格代理叠加直接 earnings-call/指引惩罚证据;单一相对收益窗口最多按黄灯发布。',
+    ceo_hedging: 'CEO 普遍承认过热需要更多唯一高管与多篇直接表态确认;单一新闻搜索频率不足以升红。',
+    token_revenue_ratio: 'OpenRouter token×catalog spend 只是平台代理;覆盖率和 ratio 未显著越线时不得把近 1x 噪声自动升黄。',
+    enterprise_deploy: 'Google AI-agent production survey 是窄口径代理;未有第二调查源确认低部署率时不得把单一窄口径样本自动降档。'
+  }[id] || '自动代理源未达到本地二次确认门槛。';
+}
+
+function proxyConfidenceTarget(def, result) {
+  const detail = result?.detail || {};
+  switch (def.id) {
+    case 'insider_sell_buy':
+      return result.status === 'red' && !hasStrongProxyConfirmation(def.id, result)
+        ? { status: 'yellow', value_display: result.value_display }
+        : null;
+    case 'ai_ipo_pipeline':
+      return result.status === 'red' && !hasStrongProxyConfirmation(def.id, result)
+        ? { status: 'yellow', value_display: '升温' }
+        : null;
+    case 'capex_reaction':
+      return result.status === 'red' && !hasStrongProxyConfirmation(def.id, result)
+        ? { status: 'yellow', value_display: '选择性惩罚' }
+        : null;
+    case 'ceo_hedging':
+      return result.status === 'red' && !hasStrongProxyConfirmation(def.id, result)
+        ? { status: 'yellow', value_display: '增加' }
+        : null;
+    case 'token_revenue_ratio': {
+      const ratio = Number(detail.ratio);
+      const coverage = Number(detail.pricedCoveragePct);
+      if (result.status === 'red' && !hasStrongProxyConfirmation(def.id, result)) {
+        return { status: 'yellow', value_display: result.value_display };
+      }
+      if (result.status === 'yellow' && !(ratio >= 1.2 && coverage >= 60)) {
+        return { status: 'green', value_display: result.value_display };
+      }
+      return null;
+    }
+    case 'enterprise_deploy': {
+      const productionDeployPct = Number(detail.productionDeployPct);
+      const confirmingSurveyCount = Number(detail.confirmingSurveyCount || 0);
+      if (result.status === 'red' && !hasStrongProxyConfirmation(def.id, result)) {
+        return { status: 'yellow', value_display: result.value_display };
+      }
+      if (result.status === 'yellow' && !(productionDeployPct <= 65 && confirmingSurveyCount >= 2)) {
+        return { status: 'green', value_display: result.value_display };
+      }
+      return null;
+    }
+    default:
+      return null;
+  }
+}
+
+function freshCalibrationAnchor(entry, publishedStatus) {
+  if (!entry || entry.status !== publishedStatus || !entry.asOfDate || !entry.maxAgeDays) return null;
+  const ageDays = daysBetween(entry.asOfDate, isoDate());
+  if (ageDays > entry.maxAgeDays) return null;
+  return {
+    status: entry.status,
+    value_display: entry.value_display || null,
+    asOfDate: entry.asOfDate,
+    ageDays,
+    maxAgeDays: entry.maxAgeDays,
+    syncedFromUpstream: entry.syncedFromUpstream === true
+  };
+}
+
+function calibrateProxyConfidenceResult(def, result, entry) {
+  if (!PROXY_CONFIDENCE_CALIBRATION_IDS.has(def.id) || !STATUS_RANK.hasOwnProperty(result?.status)) {
+    return result;
+  }
+  const target = proxyConfidenceTarget(def, result);
+  if (!target || !STATUS_RANK.hasOwnProperty(target.status) || STATUS_RANK[result.status] <= STATUS_RANK[target.status]) {
+    return {
+      ...result,
+      detail: {
+        ...(result.detail || {}),
+        proxyConfidenceCalibration: {
+          applied: false,
+          reason: target ? 'not_more_severe_than_policy_target' : 'strong_confirmation_or_no_calibration_needed',
+          policy: 'local_proxy_confidence_v1'
+        }
+      }
+    };
+  }
+  const rule = proxyConfidenceRuleText(def.id);
+  const rawStatus = result.status;
+  const rawValueDisplay = result.value_display;
+  const anchor = freshCalibrationAnchor(entry, target.status);
+  const publishedValueDisplay = anchor?.value_display || target.value_display || result.value_display;
+  const calibration = {
+    applied: true,
+    policy: 'local_proxy_confidence_v1',
+    rule,
+    rawStatus,
+    rawValueDisplay,
+    publishedStatus: target.status,
+    publishedValueDisplay,
+    displayAnchor: anchor
+      ? {
+        source: 'local_curated_snapshot',
+        asOfDate: anchor.asOfDate,
+        ageDays: anchor.ageDays,
+        maxAgeDays: anchor.maxAgeDays,
+        syncedFromUpstream: anchor.syncedFromUpstream
+      }
+      : null
+  };
+  return {
+    ...result,
+    status: target.status,
+    value_display: publishedValueDisplay,
+    note: `${result.note} 代理源置信度校准:${rule}本轮发布状态按本地多源/样本阈值校准为${STATUS_ZH[target.status]}灯;该规则不依赖上游模板是否可达。自动原始判级 ${STATUS_ZH[rawStatus]}灯、原始值「${rawValueDisplay}」保留在 provenance.detail。`,
+    detail: {
+      ...(result.detail || {}),
+      proxyConfidenceCalibration: calibration,
+      // Backward-compatible alias for older local inspection scripts.
+      templateCompatibilityCalibration: calibration
+    }
+  };
+}
+
 // ---------- 打分 / 判读 ----------
 
 function tierFromPct(p) {
@@ -2566,8 +2725,10 @@ function buildBubbleNarrativePlan({
   });
 
   const staleCount = indicators.filter((i) => i.stale).length;
+  const proxyCalibrationCount = indicators.filter((i) => i.provenance?.detail?.proxyConfidenceCalibration?.applied).length;
   const limitations = [
     `${meta.autoCount} 项自动接入、${meta.curatedCount + meta.fallbackCount} 项人工/回退口径。`,
+    proxyCalibrationCount ? `${proxyCalibrationCount} 项新闻/代理指标触发本地置信度校准:自动原始证据保留,发布灯色按多源/样本阈值处理。` : '本期无代理源置信度校准覆盖项。',
     staleCount ? `${staleCount} 项已标 STALE，相关叙事自动降为低确定性。` : '当前无 STALE 指标。',
     '原站历史 snapshots 仅用于抽取写作结构与回归评估，生产正文不复制上游 summary.verdict_desc。'
   ];
@@ -2727,7 +2888,8 @@ async function main() {
       const hybridBuilder = hybridCuratedBuilders[def.id];
       if (['hybrid_live', 'hybrid_paid_optional'].includes(candidate?.automationStatus) && hybridBuilder) {
         try {
-          const result = await hybridBuilder(ctx);
+          const rawResult = await hybridBuilder(ctx);
+          const result = calibrateProxyConfidenceResult(def, rawResult, entry);
           indicators.push({
             ...baseIndicator(def),
             source_name: result.source_name || def.source_name,
@@ -2754,7 +2916,8 @@ async function main() {
           const windFallbackBuilder = windFinalFallbackBuilders[def.id];
           if (WIND_API_KEY && windFallbackBuilder) {
             try {
-              const result = await windFallbackBuilder(error, ctx);
+              const rawResult = await windFallbackBuilder(error, ctx);
+              const result = calibrateProxyConfidenceResult(def, rawResult, entry);
               indicators.push({
                 ...baseIndicator(def),
                 source_name: result.source_name || def.source_name,
@@ -2806,7 +2969,8 @@ async function main() {
     const fallback = config.autoFallback[def.id];
     if (!fallback) throw new Error(`config autoFallback 缺指标 ${def.id}`);
     try {
-      const result = await autoBuilders[def.id](ctx);
+      const rawResult = await autoBuilders[def.id](ctx);
+      const result = calibrateProxyConfidenceResult(def, rawResult, fallback);
       indicators.push({
         ...baseIndicator(def),
         status: result.status,
@@ -2846,6 +3010,21 @@ async function main() {
   else entries.push(newEntry);
   while (entries.length > 16) entries.shift();
 
+  const proxyConfidenceCalibrations = indicators
+    .map((ind) => {
+      const calibration = ind.provenance?.detail?.proxyConfidenceCalibration;
+      return calibration?.applied
+        ? {
+          id: ind.id,
+          rawStatus: calibration.rawStatus,
+          publishedStatus: calibration.publishedStatus,
+          policy: calibration.policy || null,
+          displayAnchor: calibration.displayAnchor || null
+        }
+        : null;
+    })
+    .filter(Boolean);
+
   const output = {
     contractVersion: 'bubble-watch-v1',
     issue_number: issueNumber,
@@ -2864,6 +3043,11 @@ async function main() {
       fallback_count: fallbackCount,
       hybrid_count: hybridCount,
       paid_wind_fallback_count: paidWindFallbackCount,
+      proxy_confidence_calibration_count: proxyConfidenceCalibrations.length,
+      proxy_confidence_calibrations: proxyConfidenceCalibrations,
+      // Deprecated compatibility fields for older local readers.
+      template_compatibility_calibration_count: proxyConfidenceCalibrations.length,
+      template_compatibility_calibrations: proxyConfidenceCalibrations,
       source_candidates: {
         contractVersion: sourceCandidates.contractVersion || null,
         hybrid_live_ids: Object.entries(sourceCandidates.indicators || {})
