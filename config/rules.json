@@ -18,6 +18,25 @@
     "breakevenScale": 45,
     "oilInflationWeight": 0.35
   },
+  "riskCalibrations": {
+    "_comment": "主分数输入的历史分位校准。用于替代过度线性的单点基准,避免常态高位被误判成极端风险。",
+    "dxyBroadDollar": {
+      "source": "FRED:DTWEXBGS",
+      "method": "piecewise_historical_percentile_v1",
+      "sampleStart": "2006-01-01",
+      "sampleEnd": "2026-06-16",
+      "fallbackBase": 95,
+      "fallbackScale": 8,
+      "points": [
+        { "value": 95.0, "risk": 0, "label": "legacy_floor" },
+        { "value": 109.9611, "risk": 15, "label": "p50_2006_2026" },
+        { "value": 116.7901, "risk": 45, "label": "p75_2006_2026" },
+        { "value": 121.4022, "risk": 70, "label": "p90_2006_2026" },
+        { "value": 124.7792, "risk": 90, "label": "p97_2006_2026" },
+        { "value": 127.7309, "risk": 100, "label": "p99_2006_2026" }
+      ]
+    }
+  },
   "moduleWeights": {
     "_comment": "六大模块对总风险分数的权重，总和应为 1.0",
     "geopolitical": 0.15,

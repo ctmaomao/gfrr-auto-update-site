@@ -9555,6 +9555,132 @@ function structuralBandShift(activeSignals) {
   return Math.max(floor, total);
 }
 
+function roundMetric(value, digits = 4) {
+  if (!Number.isFinite(value)) return null;
+  return Number(value.toFixed(digits));
+}
+
+function normalizeCalibrationPoints(points) {
+  if (!Array.isArray(points)) return [];
+  return points
+    .map((point) => ({
+      value: Number(point?.value),
+      risk: Number(point?.risk),
+      label: typeof point?.label === 'string' ? point.label : null
+    }))
+    .filter((point) => Number.isFinite(point.value) && Number.isFinite(point.risk))
+    .sort((a, b) => a.value - b.value);
+}
+
+function interpolateRiskFromCalibration(value, calibration, fallbackBase, fallbackScale) {
+  const fallbackRisk = clamp((value - fallbackBase) * fallbackScale);
+  const points = normalizeCalibrationPoints(calibration?.points);
+  if (!Number.isFinite(value) || points.length < 2) {
+    return {
+      value: roundMetric(value),
+      risk: fallbackRisk,
+      method: 'legacy_linear_fallback',
+      source: calibration?.source || null,
+      fallbackUsed: true
+    };
+  }
+
+  let risk = null;
+  let lowerPoint = points[0];
+  let upperPoint = points[points.length - 1];
+  if (value <= points[0].value) {
+    risk = points[0].risk;
+    upperPoint = points[1];
+  } else if (value >= points[points.length - 1].value) {
+    risk = points[points.length - 1].risk;
+    lowerPoint = points[points.length - 2];
+  } else {
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const left = points[index];
+      const right = points[index + 1];
+      if (value >= left.value && value <= right.value) {
+        const span = right.value - left.value;
+        const pct = span > 0 ? (value - left.value) / span : 0;
+        risk = left.risk + (right.risk - left.risk) * pct;
+        lowerPoint = left;
+        upperPoint = right;
+        break;
+      }
+    }
+  }
+
+  return {
+    value: roundMetric(value),
+    risk: clamp(risk ?? fallbackRisk),
+    method: calibration?.method || 'piecewise_historical_percentile',
+    source: calibration?.source || null,
+    sampleStart: calibration?.sampleStart || null,
+    sampleEnd: calibration?.sampleEnd || null,
+    lowerPoint,
+    upperPoint,
+    fallbackUsed: false
+  };
+}
+
+function buildTailRiskOverlay(inputs) {
+  const reasons = [];
+  let floor = null;
+
+  const considerFloor = (candidateFloor, key, labelZh, evidence) => {
+    if (!Number.isFinite(candidateFloor)) return;
+    reasons.push({
+      key,
+      labelZh,
+      floor: clamp(candidateFloor),
+      evidence: evidence.filter(Boolean)
+    });
+    floor = Math.max(floor ?? 0, candidateFloor);
+  };
+
+  if (inputs.vixRisk >= 95 && inputs.hyRisk >= 55) {
+    considerFloor(82, 'systemic_liquidity_credit_shock', '波动率与信用同步冲击', [
+      `VIX risk ${inputs.vixRisk}`,
+      `HY risk ${inputs.hyRisk}`
+    ]);
+  } else if (inputs.vixRisk >= 85 && (inputs.hyRisk >= 45 || inputs.baseLiquidity >= 65 || inputs.bankingRisk >= 65)) {
+    considerFloor(72, 'systemic_liquidity_credit_watch', '波动率冲击向信用/流动性传导', [
+      `VIX risk ${inputs.vixRisk}`,
+      `HY risk ${inputs.hyRisk}`,
+      `liquidity ${inputs.baseLiquidity}`,
+      `banking ${inputs.bankingRisk}`
+    ]);
+  }
+
+  if (inputs.oilRisk >= 85 && inputs.inflationRisk >= 60 && (inputs.vixRisk >= 45 || inputs.rateRisk >= 40 || inputs.dollarRisk >= 65)) {
+    considerFloor(68, 'energy_inflation_tail', '能源与通胀尾部冲击', [
+      `oil risk ${inputs.oilRisk}`,
+      `inflation risk ${inputs.inflationRisk}`,
+      `VIX/rates/dollar ${Math.max(inputs.vixRisk, inputs.rateRisk, inputs.dollarRisk)}`
+    ]);
+  }
+
+  if ((inputs.curveInversionRisk ?? 0) >= 60 && inputs.vixRisk >= 70 && (inputs.bankingRisk >= 35 || (inputs.nimPressureRisk ?? 0) >= 70)) {
+    considerFloor(66, 'banking_curve_stress', '曲线倒挂与银行压力共振', [
+      `curve inversion risk ${inputs.curveInversionRisk}`,
+      `VIX risk ${inputs.vixRisk}`,
+      `banking risk ${inputs.bankingRisk}`
+    ]);
+  }
+
+  const baseScore = clamp(inputs.baseScore);
+  const overlayFloor = Number.isFinite(floor) ? clamp(floor) : null;
+  const adjustedScore = overlayFloor === null ? baseScore : clamp(Math.max(baseScore, overlayFloor));
+  return {
+    method: 'conditional_tail_floor_v1',
+    applied: adjustedScore > baseScore,
+    baseScore,
+    floor: overlayFloor,
+    adjustedScore,
+    scoreAdd: adjustedScore - baseScore,
+    reasons
+  };
+}
+
 function deriveRisk(rt, macroDrivers) {
   const v = rt.values || {};
   const brent = v.brent ?? R.defaults.brent;
@@ -9569,7 +9695,13 @@ function deriveRisk(rt, macroDrivers) {
 
   const rb = R.riskBaselines;
   const oilRisk = clamp((brent - rb.brentBase) * rb.brentScale);
-  const dollarRisk = clamp((dxy - rb.dxyBase) * rb.dxyScale);
+  const dxyRiskCalibration = interpolateRiskFromCalibration(
+    dxy,
+    R.riskCalibrations?.dxyBroadDollar,
+    rb.dxyBase,
+    rb.dxyScale
+  );
+  const dollarRisk = dxyRiskCalibration.risk;
   const hyRisk = clamp((hy - rb.hyBase) * rb.hyScale);
   const vixRisk = clamp((vix - rb.vixBase) * rb.vixScale);
   const rateRisk = clamp((us10y - rb.us10yBase) * rb.us10yScale);
@@ -9674,7 +9806,7 @@ function deriveRisk(rt, macroDrivers) {
     banking: newBanking
   };
   const mw = R.moduleWeights;
-  const score = clamp(
+  const baseScore = clamp(
     modules.geopolitical * mw.geopolitical +
     modules.energy * mw.energy +
     modules.inflation * mw.inflation +
@@ -9682,12 +9814,31 @@ function deriveRisk(rt, macroDrivers) {
     modules.debt * mw.debt +
     modules.banking * mw.banking
   );
+  const tailRiskOverlay = buildTailRiskOverlay({
+    baseScore,
+    modules,
+    oilRisk,
+    inflationRisk,
+    vixRisk,
+    hyRisk,
+    rateRisk,
+    dollarRisk,
+    baseLiquidity,
+    bankingRisk: newBanking,
+    curveInversionRisk,
+    nimPressureRisk
+  });
+  const score = tailRiskOverlay.adjustedScore;
   return {
     modules, score,
     oilRisk, dollarRisk, hyRisk, vixRisk, rateRisk, realRisk, inflationRisk, spxRisk,
     brent, dxy, vix, hy, us10y, real10y, breakeven, spx, gold,
     fedAssetRisk, onRrpRisk, curveInversionRisk, curveSteepeningRisk,
-    igOasRisk, nimPressureRisk, reservePressure
+    igOasRisk, nimPressureRisk, reservePressure,
+    riskCalibration: {
+      dxyBroadDollar: dxyRiskCalibration
+    },
+    tailRiskOverlay
   };
 }
 
@@ -10361,6 +10512,8 @@ async function build() {
     decisionLine: `当前已进入 v27.0 交易引擎模式：实时快变量${sourceModeLabel}，执行状态灯为${lock.levelLabel}。${activeSignals.length ? '已激活结构信号：' + activeSignals.map(s => s.label).join('、') + '。' : allMacroMissing ? '结构信号数据源暂不可用。' : ''}先看状态灯，再决定能不能动。`,
     summary: `v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${risk.brent.toFixed(1)}、广义美元指数 ${risk.dxy.toFixed(2)}、波动率 ${risk.vix.toFixed(2)}、高收益利差 ${risk.hy.toFixed(2)}%。`,
     modules: risk.modules,
+    riskCalibration: risk.riskCalibration,
+    tailRiskOverlay: risk.tailRiskOverlay,
     moduleTrends: {
       geopolitical: clamp((realtime.changes?.brent1d ?? 0) * 2, -9, 9),
       energy: clamp((realtime.changes?.brent1d ?? 0) * 3, -9, 9),

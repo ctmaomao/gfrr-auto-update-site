@@ -21,6 +21,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - `macroDrivers.*`、`brentPricingLayer`、`consumer_vs_asset_pricing`、`dailyBrief`、`divergenceLayer` 和 `aiInterpretationLayer` 仍为 audit-only / display-only 解释层。
 - 这些层不得进入 scoring、decision、execution、position、Worker main payload、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation matrix,除非另开 reviewed PR。
 - Public proxy 必须继续清楚标注,不得冒充 Platts Dated Brent、official ICE settlement、private credit marks、non-public CRE loan tape、Redbook raw feed 或 BoA raw card feed。
+- **2026-06-16 主分数校准**: `values.dxy` 仍来自 FRED `DTWEXBGS`,但 `dollarRisk` 改用 2006-2026 历史分位 piecewise calibration；GitHub `realtime-data` Brent 可在 FRED anchor >72h 且 public Brent consensus 达到 high-confidence 或 guarded two-source medium 条件时受控晋升；`tailRiskOverlay` 是主分数 scoring overlay,不是 display-only。复核命令:`npm run audit:main-score-backtest`。
 - 详情字段和 schema 约束以 [DATA_CONTRACT.md](DATA_CONTRACT.md) 为准;运维流程以 [OPERATIONS.md](OPERATIONS.md) 为准。
 
 ---

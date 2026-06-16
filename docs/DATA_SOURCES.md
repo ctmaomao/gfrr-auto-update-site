@@ -23,6 +23,7 @@
 | Series ID | 含义 | 消费层 | Milestone |
 |---|---|---|---|
 | `DCOILBRENTEU` | Brent crude oil spot (USD/bbl) | Brent main value (anchor) | 长期 |
+| `DTWEXBGS` | Trade Weighted U.S. Dollar Index: Broad, Goods and Services | `values.dxy` / `displayInputsBaseline.dxy`;主分数 `dollarRisk` 采用 2006-2026 历史分位校准 | 长期 / 2026-06-16 calibration |
 | `DGS10` / `DGS2` / `T10Y2Y` | US Treasury yields + 10y2y spread | macroDrivers.fedLiquidity | 长期 |
 | `BAMLH0A0HYM2` | HY OAS (high-yield bond spread) | macroDrivers.credit, macroDrivers.privateCreditProxy, cross-validation | 长期 / M-74 |
 | `BAMLC0A0CM` | IG OAS (investment-grade spread) | macroDrivers.credit, macroDrivers.privateCreditProxy | 长期 / M-78 |
@@ -157,7 +158,7 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 | **Quota** | 无明确限制 |
 | **Refresh 频率** | run-realtime Brent consensus 候选(每次 realtime 运行) |
 | **失败 fallback** | Brent consensus 多源交叉(ice / barchart / stooq / marketwatch / oilprice / yahoo + FRED anchor) |
-| **影响 scoring?** | 作为 run-realtime Brent consensus 候选之一参与交叉(多源、非单一决定;FRED DCOILBRENTEU 仍为 daily anchor)。**worker `/q/d/l/` Brent 诊断 sourceProbe 已于 F6(2026-06-02)删除** |
+| **影响 scoring?** | 作为 run-realtime Brent consensus 候选之一参与交叉(多源、非单一决定)。当 FRED DCOILBRENTEU anchor 超过 72 小时时，GitHub `realtime-data` fallback producer 可在 high-confidence consensus 或 guarded two-source medium consensus 下受控晋升 `values.brent`。**worker `/q/d/l/` Brent 诊断 sourceProbe 已于 F6(2026-06-02)删除** |
 | **fetcher** | `scripts/run-realtime.mjs` (`fetchBrentStooqCandidate`,quote `https://stooq.com/q/l/?s=cb.f`);worker `/q/d/l/` 诊断探针已移除 |
 
 ---
@@ -590,9 +591,9 @@ documented attribution string and code is a contract violation.
 
 | 消费层 | 主要数据源 |
 |---|---|
-| `values.brent` | FRED `DCOILBRENTEU` (anchor) + Yahoo `BZ=F` (fresh confirmation) + TE (freshness gate) + D-6 extreme-move guard |
+| `values.brent` | Worker path:FRED `DCOILBRENTEU` anchor + Yahoo `BZ=F` fresh confirmation + TE freshness gate + D-6 extreme-move guard；GitHub `realtime-data` fallback path:FRED anchor + public Brent consensus promotion when anchor stale >72h and high-confidence or guarded two-source medium consensus |
 | `brent public proxy candidates` | M-71 source-review only: EIA Europe Brent Spot Price FOB / ICE Brent futures curve / Baltic Exchange freight benchmarks / Freightos Baltic Index / future licensed S&P-Platts Dated Brent |
-| `values.vix` / `values.gold` / `values.dxy` / `values.us10y` / `values.spx` | 来自 GitHub realtime-data 或 displayInputsBaseline;**secondary preview 仅诊断,不覆盖** |
+| `values.vix` / `values.gold` / `values.dxy` / `values.us10y` / `values.spx` | 来自 GitHub realtime-data 或 displayInputsBaseline;`values.dxy` 主源为 FRED `DTWEXBGS` 且 `dollarRisk` 用历史分位校准;**secondary preview 仅诊断,不覆盖** |
 | `marketPricingHistory.assets.ndx` / `marketPricingHistory.assets.ixic` | Yahoo chart `^NDX` / `^IXIC`;Daily/manual Market Pricing history only;display-only auxiliary,QQQ remains primary |
 | `macroDrivers.fedLiquidity` | FRED: DFF, SOFR, WRESBAL + NY Fed secured rates API: BGCR/TGCR (+ 派生 spreads) |
 | `macroDrivers.fedLiquidity.tga candidate` | Treasury Fiscal Data DTS / TGA source-review only;not implemented;future formula/backtest required before any main-calculation use |

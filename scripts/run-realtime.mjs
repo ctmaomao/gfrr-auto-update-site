@@ -36,6 +36,7 @@ const BRENT_CONSENSUS_DIVERGENCE_PCT = 2;
 const BRENT_WEAK_CONFIRMATION_DIVERGENCE_PCT = 1;
 const BRENT_REASONABLE_MIN = 30;
 const BRENT_REASONABLE_MAX = 150;
+const BRENT_PROMOTION_ANCHOR_STALE_HOURS = 72;
 
 const sourceSpecs = {
   brent: {
@@ -967,6 +968,111 @@ async function buildBrentValidation(results, fetchedAt) {
   };
 }
 
+function computeAgeHours(observedAt, reference = now) {
+  const minutes = computeAgeMinutes(observedAt, reference);
+  return Number.isFinite(minutes) ? Number((minutes / 60).toFixed(2)) : null;
+}
+
+function buildBrentPromotionDecision(results, brentValidation, reference = now) {
+  const brentResult = results.find((item) => item.key === 'brent');
+  const consensus = brentValidation?.consensus || null;
+  const anchorValue = Number(brentResult?.value);
+  const anchorObservedAt = typeof brentResult?.timestamp === 'string' ? brentResult.timestamp : null;
+  const anchorAgeHours = computeAgeHours(anchorObservedAt, reference);
+  const recommendedValue = Number(consensus?.recommendedValue);
+  const recommendedSource = typeof consensus?.recommendedSource === 'string' ? consensus.recommendedSource : null;
+  const base = {
+    applied: false,
+    reason: null,
+    selectedValue: null,
+    selectedSource: null,
+    selectedObservedAt: null,
+    selectedCandidateObservedAt: null,
+    anchorSource: brentResult?.source || 'fred:DCOILBRENTEU',
+    anchorValue: Number.isFinite(anchorValue) ? anchorValue : null,
+    anchorObservedAt,
+    anchorAgeHours,
+    anchorStaleHoursThreshold: BRENT_PROMOTION_ANCHOR_STALE_HOURS,
+    anchorDivergencePct: null,
+    consensusConfidence: consensus?.confidence || null,
+    consensusDivergencePct: Number.isFinite(Number(consensus?.divergencePct)) ? Number(consensus.divergencePct) : null,
+    promotionMode: null,
+    selectedPairSources: [],
+    selectedPairDivergencePct: null
+  };
+
+  if (!brentValidation || !consensus) return { ...base, reason: 'brent-validation-missing' };
+  if (!Number.isFinite(anchorValue)) return { ...base, reason: 'fred-anchor-missing' };
+  if (anchorAgeHours === null) return { ...base, reason: 'fred-anchor-age-missing' };
+  if (anchorAgeHours <= BRENT_PROMOTION_ANCHOR_STALE_HOURS) {
+    return { ...base, reason: 'fred-anchor-fresh-enough' };
+  }
+  if (!isReasonableBrentValue(recommendedValue) || !recommendedSource) {
+    return { ...base, reason: 'consensus-recommended-value-invalid' };
+  }
+
+  const participatingCandidates = (brentValidation.candidates || []).filter((candidate) => (
+    candidate?.source !== 'fred-anchor' &&
+    candidate?.participatesInConsensus === true &&
+    candidate?.weakConfirmation !== true &&
+    isReasonableBrentValue(candidate?.value)
+  ));
+  const { bestPair, bestDivergence } = findBestClosePair(participatingCandidates);
+  const bestPairSources = Array.isArray(bestPair) ? bestPair.map((candidate) => candidate.source) : [];
+  const selectedPairDivergencePct = Number.isFinite(bestDivergence) ? Number(bestDivergence.toFixed(3)) : null;
+  const highConfidencePromotable = consensus.canPromoteToPrimary === true && consensus.confidence === 'high';
+  const staleAnchorGuardedPromotable = consensus.confidence === 'medium' &&
+    Array.isArray(bestPair) &&
+    bestPair.length >= 2 &&
+    selectedPairDivergencePct !== null &&
+    selectedPairDivergencePct <= 0.5 &&
+    bestPair.some((candidate) => candidate.quality === 'high') &&
+    !bestPair.some((candidate) => candidate.weakConfirmation === true);
+
+  if (!highConfidencePromotable && !staleAnchorGuardedPromotable) {
+    return {
+      ...base,
+      reason: 'consensus-not-promotable',
+      selectedPairSources: bestPairSources,
+      selectedPairDivergencePct
+    };
+  }
+
+  const selectedCandidate = participatingCandidates.find((candidate) => (
+    candidate?.source === recommendedSource &&
+    isReasonableBrentValue(candidate?.value)
+  ));
+  if (!selectedCandidate) {
+    return {
+      ...base,
+      reason: 'recommended-candidate-not-found',
+      selectedPairSources: bestPairSources,
+      selectedPairDivergencePct
+    };
+  }
+
+  const anchorDivergencePct = computePairDivergencePct(anchorValue, recommendedValue);
+  const candidateObservedAt = selectedCandidate.observedAt || null;
+  const selectedObservedAt = candidateObservedAt && !/^\d{4}-\d{2}-\d{2}$/.test(candidateObservedAt)
+    ? candidateObservedAt
+    : (selectedCandidate.fetchedAt || reference);
+  return {
+    ...base,
+    applied: true,
+    reason: highConfidencePromotable
+      ? 'promoted-stale-fred-anchor-with-fresh-public-consensus'
+      : 'promoted-stale-fred-anchor-with-guarded-two-source-consensus',
+    selectedValue: Number(recommendedValue.toFixed(4)),
+    selectedSource: recommendedSource,
+    selectedObservedAt,
+    selectedCandidateObservedAt: candidateObservedAt,
+    anchorDivergencePct: Number.isFinite(anchorDivergencePct) ? Number(anchorDivergencePct.toFixed(3)) : null,
+    promotionMode: highConfidencePromotable ? 'high-confidence-consensus' : 'stale-anchor-guarded-medium-consensus',
+    selectedPairSources: bestPairSources,
+    selectedPairDivergencePct
+  };
+}
+
 function normalizeLiveResult(key, descriptor, rows, { critical, fallbackUsed = false } = {}) {
   const payload = buildSeriesPayload(rows);
   return {
@@ -1100,6 +1206,43 @@ function buildPayload(results, prev, brentValidation = null) {
     Math.min(100, 100 - criticalMissing * hs.criticalMissingPenalty - fallbackCount * hs.fallbackPenalty - secondarySourceCount * hs.secondarySourcePenalty)
   );
   const sourceDetails = buildSourceDetails(results);
+  const sourceStatus = buildSourceStatus(results);
+  const notes = buildNotes(results);
+  const brentPromotion = buildBrentPromotionDecision(results, brentValidation, now);
+  const brentValidationWithPromotion = brentValidation
+    ? { ...brentValidation, promotion: brentPromotion }
+    : brentValidation;
+  if (brentPromotion.applied) {
+    const prevBrent = Number(prev?.values?.brent);
+    values.brent = brentPromotion.selectedValue;
+    changes.brent1d = Number.isFinite(prevBrent)
+      ? Number((brentPromotion.selectedValue - prevBrent).toFixed(4))
+      : 0;
+    sourceDetails.brent = {
+      ...sourceDetails.brent,
+      ok: true,
+      value: brentPromotion.selectedValue,
+      source: `${brentPromotion.selectedSource}:public-consensus-promoted`,
+      timestamp: brentPromotion.selectedObservedAt,
+      ageSeconds: Number.isFinite(computeAgeMinutes(brentPromotion.selectedObservedAt, now))
+        ? computeAgeMinutes(brentPromotion.selectedObservedAt, now) * 60
+        : null,
+      promotionApplied: true,
+      promotionReason: brentPromotion.reason,
+      promotionMode: brentPromotion.promotionMode,
+      anchorSource: brentPromotion.anchorSource,
+      anchorValue: brentPromotion.anchorValue,
+      anchorObservedAt: brentPromotion.anchorObservedAt,
+      anchorAgeHours: brentPromotion.anchorAgeHours,
+      anchorDivergencePct: brentPromotion.anchorDivergencePct,
+      consensusDivergencePct: brentPromotion.consensusDivergencePct,
+      selectedPairSources: brentPromotion.selectedPairSources,
+      selectedPairDivergencePct: brentPromotion.selectedPairDivergencePct,
+      selectedCandidateObservedAt: brentPromotion.selectedCandidateObservedAt
+    };
+    sourceStatus.brent = 'promoted:public-consensus';
+    notes.push(`brent 已从滞后 FRED 锚点晋升为 ${brentPromotion.selectedSource} 多源共识值。`);
+  }
   return {
     updatedAt: now,
     asOf,
@@ -1116,13 +1259,13 @@ function buildPayload(results, prev, brentValidation = null) {
     lastSuccessAt: cacheOnly ? (prev?.lastSuccessAt ?? now) : now,
     freshnessPreparedAt: now,
     freshnessPending: true,
-    notes: buildNotes(results),
+    notes,
     values,
     changes,
-    sourceStatus: buildSourceStatus(results),
+    sourceStatus,
     sourceDetails,
     fieldFreshness: buildFieldFreshness(sourceDetails),
-    brentValidation
+    brentValidation: brentValidationWithPromotion
   };
 }
 

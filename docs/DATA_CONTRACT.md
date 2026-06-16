@@ -1186,6 +1186,15 @@ v28.0G-7B adds `scripts/review-worker-health-snapshot.mjs` and `review:worker-he
 
 `asOf`(nullable ISO):baseline 值的真实生成时间 —— 主路径=本轮 isoNow;降级路径=沿用承载旧值那轮的时间戳(prevInputs.asOf ?? 上一份 updatedAt)。诊断/展示用,不进 scoring/decision/execution/position/values/cross-validation。
 
+## 主分数校准与尾部风险 overlay
+
+2026-06-16 起，Daily 主分数新增两个审计字段：
+
+- `riskCalibration.dxyBroadDollar`: 记录 FRED `DTWEXBGS` 广义美元指数如何映射为 `dollarRisk`。映射方式从旧的单点线性公式 `dxyBase=95` / `dxyScale=8`，改为 `config/rules.json` 中 `riskCalibrations.dxyBroadDollar` 的 2006-01-01 至 2026-06-16 历史分位 piecewise calibration。`values.dxy` 的数据源仍为 GitHub `realtime-data` / `displayInputsBaseline`，Yahoo `DX-Y.NYB` secondary 仍只属于 diagnostics，不参与主值。
+- `tailRiskOverlay`: 记录六模块加权基础分 `baseScore` 之后，是否因已验证的组合型尾部风险触发条件而设定条件性 floor。当前 overlay 只使用现有主输入与现有结构性 macroDrivers 派生风险，不新增外部源；它会影响 `score`、`decisionModel.stateScore`、execution / position 相关 downstream 判断，因此不是 display-only 字段。
+
+`tailRiskOverlay.method` 当前为 `conditional_tail_floor_v1`。触发条件必须是多输入组合，例如波动率与信用同步冲击、能源与通胀尾部冲击、曲线倒挂与银行压力共振；不得因单一路径、单一新闻或单一代理源直接抬升主分数。
+
 ## dailyRealtimeInput 契约
 
 `data/radar-data.json` 根层应包含：
@@ -1230,6 +1239,8 @@ GitHub Actions Summary 是 Daily / Realtime 运行时审计入口，用于人工
 - `brentValidation.consensus.canPromoteToPrimary`
 
 其中 `values.brent` 是当前 Brent 主显示值来源之一；`brentValidation.consensus.recommendedValue` 只是验证层推荐值，不等于主值。`canPromoteToPrimary=false` 时不得切主值。
+
+GitHub `realtime-data` fallback producer 可在 `brentValidation.promotion` 中记录受控晋升：仅当 FRED `DCOILBRENTEU` anchor 观测时间超过 72 小时，且 ICE/Barchart/Stooq/MarketWatch/Oilprice/Yahoo 候选形成多源共识时，才允许把 `values.brent` 晋升为 `promotion.selectedValue`。晋升分两档：`high-confidence-consensus` 需要 `consensus.confidence="high"` 与 `canPromoteToPrimary=true`；`stale-anchor-guarded-medium-consensus` 只允许在 stale anchor 场景下使用，且必须有两条非 FRED 参与源、最佳配对偏差 `selectedPairDivergencePct <= 0.5`、至少一个 high-quality source、无 `weakConfirmation`。晋升必须同时记录 `anchorValue`、`anchorObservedAt`、`anchorAgeHours`、`selectedSource`、`selectedObservedAt`、`selectedPairSources`、`selectedPairDivergencePct`、`anchorDivergencePct` 和 `reason`。这不改变 Worker 的 G-4C hard gate：Worker Brent promotion 仍要求 Yahoo fresh + Trading Economics observedAt fresh。
 
 `Build Daily Radar Data` Summary 用于查看：
 
