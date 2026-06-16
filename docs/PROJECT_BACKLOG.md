@@ -23,6 +23,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - Public proxy 必须继续清楚标注,不得冒充 Platts Dated Brent、official ICE settlement、private credit marks、non-public CRE loan tape、Redbook raw feed 或 BoA raw card feed。
 - **2026-06-16 主分数校准**: `values.dxy` 仍来自 FRED `DTWEXBGS`,但 `dollarRisk` 改用 2006-2026 历史分位 piecewise calibration；GitHub `realtime-data` Brent 可在 FRED anchor >72h 且 public Brent consensus 达到 high-confidence 或 guarded two-source medium 条件时受控晋升；`tailRiskOverlay` 是主分数 scoring overlay,不是 display-only。复核命令:`npm run audit:main-score-backtest`。
 - **2026-06-16 Bubble Watch 主分数口径**:AI 泡沫监测页面/本周判读的主分数固定为 `primary_score_pct = red_pct = 红灯数/指标总数`;`weighted_risk_score` 只是黄灯调整辅助压力分,不得作为 Hero 主分数、阈值分档或 verdict_desc 主判读分。回测命令:`npm run audit:bubble-watch-backtest`。
+- **2026-06-16 Bubble Watch 公开市场技术热度面板**:`market_technical_heat` 是独立 display-only 审计子面板,使用 Yahoo Chart 免费公开日线价格计算 AI 等权篮子相对动量/RSI/Bollinger/200D 偏离/相关性-Beta;不进入 24 项主分、主判读、scoring、decision、execution 或 position。public-apis Finance 仅作 source-review fallback 候选;Wind paid API 只作最后兜底,本轮未接入。
 - 详情字段和 schema 约束以 [DATA_CONTRACT.md](DATA_CONTRACT.md) 为准;运维流程以 [OPERATIONS.md](OPERATIONS.md) 为准。
 
 ---
@@ -307,6 +308,11 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-06-16 · Bubble Watch public market technical heat panel)**: 已新增「公开市场技术热度」独立审计子面板,页面位置在 Bubble Watch 本周关键变化之后、观察清单之前。builder 使用 Yahoo Chart v8 免费公开日线价格构造 NVDA/AMD/MSFT/GOOGL/META/TSLA/AVGO/ORCL 等权 AI 篮子,并计算 21D 相对 QQQ 动量、14D RSI、20D Bollinger %B、200D 均线偏离、60D 相关性/Beta 五项;当前快照为 `升温观察`、`30.0/100`、`1 红 / 1 黄 / 3 绿`。public-apis Finance 仅登记为 source-review fallback 候选;Wind paid API 保持最后兜底且本轮未接入。
+- **当前进行中(2026-06-16 · Bubble Watch public market technical heat panel)**: 代码、数据快照、checker 与文档已改并通过验证。该面板 display-only,不改 24 项指标数量、主分数、`summary`、`scoring`、GFRR `radar-data.json`、Worker runtime 或 workflow。
+- **下一步建议(2026-06-16 · Bubble Watch public market technical heat panel)**: 若 owner 要提交,窄范围 stage 当前 7 个 tracked 文件并排除 `.codex-remote-attachments/`。已验证:`BUBBLE_WATCH_DISABLE_WIND=1 npm run build:bubble-watch`(随后剥离旧 paid/fallback 指标漂移,仅保留新面板)、`npm run check:bubble-watch`、`npm run check:frontend-zh-copy`、`npm run check:docs`、`npm run check:all`、`git diff --check`,Browser 390px/1280px 实测新增面板无横向溢出且 console 无 error/warn。
+- **阻塞或等待(2026-06-16 · Bubble Watch public market technical heat panel)**: 无技术阻塞。
 
 - **上次会话结束于(2026-06-16 · homepage 8-week trend visual match)**: 首页「8 周趋势」已按 AI 泡沫页趋势图视觉语法收敛:上下 1px 墨线、透明纸底、220px 高度、风险分红线 2.5px/红点 r=4、overlay 黄线 1.5px + `3 3` 虚线/黄点 r=3、无点描边;动态 SVG 改为按 `.trend-svg-wrap` 实际宽度重算 `viewBox` 和 x 坐标,手机不再靠 800px 画布拉伸,并收紧手机日期标签避免尾部重叠。asset bump → `trend-visual-match-1`;冻结 `scripts/modules/realtime.js` 已保持零 diff;未改 `data/`、`.github/workflows/`、scoring/decision/execution/position 或 Worker runtime。
 - **当前进行中(2026-06-16 · homepage 8-week trend visual match)**: 代码与文档已改并通过验证,等待按 owner 指令 commit/push。当前 dirty 范围为首页前端、活跃 module import cache bust、asset-version 文档快照与本 Handoff;`.codex-remote-attachments/` 仍为未跟踪附件目录,不应提交。

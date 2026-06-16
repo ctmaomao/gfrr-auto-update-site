@@ -314,6 +314,22 @@ async function yahooCloses(symbol, range = '6mo') {
   return closes;
 }
 
+async function yahooDailyCloses(symbol, range = '1y') {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=1d`;
+  const json = await fetchWithTimeout(url, { asJson: true, headers: { 'User-Agent': BROWSER_UA } });
+  const result = json?.chart?.result?.[0];
+  const timestamps = result?.timestamp || [];
+  const closes = result?.indicators?.quote?.[0]?.close || [];
+  const rows = timestamps
+    .map((ts, i) => ({
+      date: new Date(Number(ts) * 1000).toISOString().slice(0, 10),
+      close: Number(closes[i])
+    }))
+    .filter((row) => /^\d{4}-\d{2}-\d{2}$/u.test(row.date) && Number.isFinite(row.close) && row.close > 0);
+  if (rows.length < 80) throw new Error(`Yahoo ${symbol} daily closes 不足 (${rows.length})`);
+  return rows;
+}
+
 async function edgarConcept(cik, tags) {
   let lastError = null;
   for (const tag of tags) {
@@ -1857,6 +1873,359 @@ async function fetchCapexReactionFromPublicProxy() {
   };
 }
 
+// ---------- 公开市场技术热度审计面板(display-only,不进 24 项主分数) ----------
+
+function mean(values) {
+  const nums = values.filter(Number.isFinite);
+  return nums.length ? nums.reduce((sum, v) => sum + v, 0) / nums.length : null;
+}
+
+function standardDeviation(values) {
+  const m = mean(values);
+  if (!Number.isFinite(m) || values.length < 2) return null;
+  const variance = values.reduce((sum, v) => sum + ((v - m) ** 2), 0) / values.length;
+  return Math.sqrt(variance);
+}
+
+function pctReturn(start, end) {
+  if (!(start > 0 && end > 0)) return null;
+  return ((end - start) / start) * 100;
+}
+
+function closesByDate(rows) {
+  return new Map(rows.map((row) => [row.date, row.close]));
+}
+
+function commonDatesForSeries(seriesRows) {
+  if (!seriesRows.length) return [];
+  let dates = new Set(seriesRows[0].map((row) => row.date));
+  for (const rows of seriesRows.slice(1)) {
+    const rowDates = new Set(rows.map((row) => row.date));
+    dates = new Set([...dates].filter((date) => rowDates.has(date)));
+  }
+  return [...dates].sort();
+}
+
+function sliceCommonCloses(rows, dates) {
+  const byDate = closesByDate(rows);
+  return dates.map((date) => byDate.get(date)).filter((v) => Number.isFinite(v) && v > 0);
+}
+
+function dailyReturnsFromCloses(closes) {
+  const out = [];
+  for (let i = 1; i < closes.length; i++) {
+    if (closes[i - 1] > 0 && closes[i] > 0) out.push((closes[i] - closes[i - 1]) / closes[i - 1]);
+  }
+  return out;
+}
+
+function covariance(a, b) {
+  if (a.length !== b.length || a.length < 5) return null;
+  const ma = mean(a);
+  const mb = mean(b);
+  if (!Number.isFinite(ma) || !Number.isFinite(mb)) return null;
+  return a.reduce((sum, v, i) => sum + ((v - ma) * (b[i] - mb)), 0) / a.length;
+}
+
+function correlation(a, b) {
+  const cov = covariance(a, b);
+  const sa = standardDeviation(a);
+  const sb = standardDeviation(b);
+  if (!Number.isFinite(cov) || !(sa > 0) || !(sb > 0)) return null;
+  return cov / (sa * sb);
+}
+
+function betaToBenchmark(assetReturns, benchmarkReturns) {
+  const cov = covariance(assetReturns, benchmarkReturns);
+  const benchmarkStdDev = standardDeviation(benchmarkReturns);
+  const variance = Number.isFinite(benchmarkStdDev) ? benchmarkStdDev ** 2 : null;
+  if (!Number.isFinite(cov) || !(variance > 0)) return null;
+  return cov / variance;
+}
+
+function rsi14(closes) {
+  const window = closes.slice(-15);
+  if (window.length < 15) return null;
+  let gains = 0;
+  let losses = 0;
+  for (let i = 1; i < window.length; i++) {
+    const diff = window[i] - window[i - 1];
+    if (diff >= 0) gains += diff;
+    else losses += Math.abs(diff);
+  }
+  const avgGain = gains / 14;
+  const avgLoss = losses / 14;
+  if (avgLoss === 0) return 100;
+  const rs = avgGain / avgLoss;
+  return 100 - (100 / (1 + rs));
+}
+
+function bollingerPctB(closes) {
+  const window = closes.slice(-20);
+  if (window.length < 20) return null;
+  const ma = mean(window);
+  const sd = standardDeviation(window);
+  if (!Number.isFinite(ma) || !(sd > 0)) return null;
+  const upper = ma + (2 * sd);
+  const lower = ma - (2 * sd);
+  return (closes[closes.length - 1] - lower) / (upper - lower);
+}
+
+function marketStatus(status, valueDisplay, note, detail) {
+  return { status, value_display: valueDisplay, note, source_name: 'Yahoo Chart v8 public endpoint', detail };
+}
+
+function buildEqualWeightComposite(series, dates) {
+  const maps = series.map((entry) => ({ symbol: entry.symbol, byDate: closesByDate(entry.rows) }));
+  const firstBySymbol = new Map(maps.map((entry) => [entry.symbol, entry.byDate.get(dates[0])]));
+  return dates.map((date) => {
+    const normalized = maps.map((entry) => {
+      const first = firstBySymbol.get(entry.symbol);
+      const close = entry.byDate.get(date);
+      return close > 0 && first > 0 ? (close / first) * 100 : null;
+    }).filter(Number.isFinite);
+    return mean(normalized);
+  }).filter(Number.isFinite);
+}
+
+function classifyTechnicalHeatItem(id, raw) {
+  switch (id) {
+    case 'relative_momentum_21d':
+      return raw >= 8 ? 'red' : raw >= 3 ? 'yellow' : 'green';
+    case 'rsi_14d':
+      return raw >= 75 ? 'red' : raw >= 65 ? 'yellow' : 'green';
+    case 'bollinger_pct_b':
+      return raw >= 1.05 ? 'red' : raw >= 0.85 ? 'yellow' : 'green';
+    case 'sma_200_deviation':
+      return raw >= 25 ? 'red' : raw >= 10 ? 'yellow' : 'green';
+    case 'correlation_beta_60d':
+      return raw.correlation >= 0.75 && raw.beta >= 1.35 ? 'red'
+        : raw.correlation >= 0.55 || raw.beta >= 1.15 ? 'yellow'
+          : 'green';
+    default:
+      return 'green';
+  }
+}
+
+async function buildMarketTechnicalHeatPanel() {
+  const basketSymbols = ['NVDA', 'AMD', 'MSFT', 'GOOGL', 'META', 'TSLA', 'AVGO', 'ORCL'];
+  const benchmarkSymbols = ['QQQ', 'SPY'];
+  const failures = [];
+  const fetched = [];
+  for (const symbol of [...basketSymbols, ...benchmarkSymbols]) {
+    try {
+      fetched.push({ symbol, rows: await yahooDailyCloses(symbol, '1y') });
+    } catch (error) {
+      failures.push({ symbol, reason: error.message });
+    }
+  }
+
+  const basketSeries = fetched.filter((entry) => basketSymbols.includes(entry.symbol));
+  const qqq = fetched.find((entry) => entry.symbol === 'QQQ');
+  const spy = fetched.find((entry) => entry.symbol === 'SPY');
+  if (basketSeries.length < 6 || !qqq || !spy) {
+    throw new Error(`market technical heat evidence 不足:basket=${basketSeries.length}, QQQ=${Boolean(qqq)}, SPY=${Boolean(spy)}`);
+  }
+
+  const compositeDates = commonDatesForSeries(basketSeries.map((entry) => entry.rows));
+  if (compositeDates.length < 220) throw new Error(`AI basket common dates 不足:${compositeDates.length}`);
+  const compositeCloses = buildEqualWeightComposite(basketSeries, compositeDates);
+  if (compositeCloses.length < 220) throw new Error(`AI basket composite closes 不足:${compositeCloses.length}`);
+
+  const commonForQqq = commonDatesForSeries([...basketSeries.map((entry) => entry.rows), qqq.rows]);
+  const compositeForQqq = buildEqualWeightComposite(basketSeries, commonForQqq);
+  const qqqForComposite = sliceCommonCloses(qqq.rows, commonForQqq);
+  if (compositeForQqq.length < 63 || qqqForComposite.length < 63) {
+    throw new Error('AI basket vs QQQ common history 不足');
+  }
+
+  const basket21 = pctReturn(compositeForQqq[compositeForQqq.length - 22], compositeForQqq[compositeForQqq.length - 1]);
+  const qqq21 = pctReturn(qqqForComposite[qqqForComposite.length - 22], qqqForComposite[qqqForComposite.length - 1]);
+  const excess21 = basket21 - qqq21;
+  const rsi = rsi14(compositeCloses);
+  const pctB = bollingerPctB(compositeCloses);
+  const sma200 = mean(compositeCloses.slice(-200));
+  const sma200Deviation = ((compositeCloses[compositeCloses.length - 1] - sma200) / sma200) * 100;
+
+  const commonForRisk = commonDatesForSeries([...basketSeries.map((entry) => entry.rows), spy.rows]).slice(-61);
+  const compositeForRisk = buildEqualWeightComposite(basketSeries, commonForRisk);
+  const spyCloses = sliceCommonCloses(spy.rows, commonForRisk);
+  const compositeReturns = dailyReturnsFromCloses(compositeForRisk);
+  const spyReturns = dailyReturnsFromCloses(spyCloses);
+  const beta = betaToBenchmark(compositeReturns, spyReturns);
+  const pairwise = [];
+  const alignedCloses = basketSeries.map((entry) => ({ symbol: entry.symbol, closes: sliceCommonCloses(entry.rows, commonForRisk) }));
+  for (let i = 0; i < alignedCloses.length; i++) {
+    for (let j = i + 1; j < alignedCloses.length; j++) {
+      const corr = correlation(dailyReturnsFromCloses(alignedCloses[i].closes), dailyReturnsFromCloses(alignedCloses[j].closes));
+      if (Number.isFinite(corr)) pairwise.push(corr);
+    }
+  }
+  const avgCorrelation = mean(pairwise);
+  if (![excess21, rsi, pctB, sma200Deviation, beta, avgCorrelation].every(Number.isFinite)) {
+    throw new Error('market technical heat 指标计算出现非有限值');
+  }
+
+  const items = [
+    {
+      id: 'relative_momentum_21d',
+      name_zh: 'AI 篮子 21 日相对动量',
+      name_en: 'AI Basket 21D vs QQQ',
+      threshold_text: '>+8pct 红 / +3~+8 黄 / <+3 绿',
+      ...marketStatus(
+        classifyTechnicalHeatItem('relative_momentum_21d', excess21),
+        `${excess21 >= 0 ? '+' : ''}${excess21.toFixed(1)}pct`,
+        `等权 AI 篮子近 21 个交易日回报 ${fmtPct(basket21, 1, true)},QQQ ${fmtPct(qqq21, 1, true)},相对超额 ${excess21 >= 0 ? '+' : ''}${excess21.toFixed(1)}pct。该项只衡量公开市场短线追价热度,不进入红灯主分。`,
+        { basket21, qqq21, excess21 }
+      )
+    },
+    {
+      id: 'rsi_14d',
+      name_zh: '等权 AI 篮子 RSI',
+      name_en: 'Equal-Weight Basket RSI',
+      threshold_text: '≥75 红 / 65-75 黄 / <65 绿',
+      ...marketStatus(
+        classifyTechnicalHeatItem('rsi_14d', rsi),
+        rsi.toFixed(0),
+        `按等权 AI 篮子日线合成价计算 14 日 RSI=${rsi.toFixed(1)}。RSI 是技术超买代理,不能替代估值或基本面判断。`,
+        { rsi, period: 14 }
+      )
+    },
+    {
+      id: 'bollinger_pct_b',
+      name_zh: 'Bollinger %B 位置',
+      name_en: 'Bollinger %B',
+      threshold_text: '≥1.05 红 / 0.85-1.05 黄 / <0.85 绿',
+      ...marketStatus(
+        classifyTechnicalHeatItem('bollinger_pct_b', pctB),
+        pctB.toFixed(2),
+        `20 日 Bollinger %B=${pctB.toFixed(2)};%B 接近或高于 1 表示价格贴近/突破上轨,属于短线过热信号。`,
+        { pctB, window: 20, bandStdDev: 2 }
+      )
+    },
+    {
+      id: 'sma_200_deviation',
+      name_zh: '200 日均线偏离',
+      name_en: 'Distance from 200D SMA',
+      threshold_text: '>25% 红 / 10-25% 黄 / <10% 绿',
+      ...marketStatus(
+        classifyTechnicalHeatItem('sma_200_deviation', sma200Deviation),
+        `${fmtPct(sma200Deviation, 1, true)}`,
+        `等权 AI 篮子较 200 日均线偏离 ${fmtPct(sma200Deviation, 1, true)}。该项捕捉趋势拥挤,不判断企业现金流兑现。`,
+        { sma200Deviation, window: 200 }
+      )
+    },
+    {
+      id: 'correlation_beta_60d',
+      name_zh: '60 日相关性 / Beta',
+      name_en: '60D Correlation / Beta',
+      threshold_text: 'ρ≥0.75且β≥1.35 红 / ρ≥0.55或β≥1.15 黄 / 其余绿',
+      ...marketStatus(
+        classifyTechnicalHeatItem('correlation_beta_60d', { correlation: avgCorrelation, beta }),
+        `ρ ${avgCorrelation.toFixed(2)} / β ${beta.toFixed(2)}`,
+        `最近 60 个交易日 AI 篮子平均两两相关性 ρ=${avgCorrelation.toFixed(2)},相对 SPY beta=${beta.toFixed(2)}。相关性和 beta 同升时,代表主题交易更容易同涨同跌。`,
+        { avgCorrelation, beta, window: 60, pairCount: pairwise.length }
+      )
+    }
+  ];
+
+  const red = items.filter((item) => item.status === 'red').length;
+  const yellow = items.filter((item) => item.status === 'yellow').length;
+  const heatScore = Number((((red + yellow * 0.5) / items.length) * 100).toFixed(1));
+  const status = red >= 2 || (red >= 1 && yellow >= 2) ? 'red' : red >= 1 || yellow >= 2 ? 'yellow' : 'green';
+  const label = status === 'red' ? '技术过热' : status === 'yellow' ? '升温观察' : '温度可控';
+  const latestDate = compositeDates[compositeDates.length - 1];
+
+  return {
+    contractVersion: 'bubble-watch-market-technical-heat-v1',
+    boundary: 'display-only audit panel; excluded from 24-indicator red/yellow/green primary score, scoring, decision, execution, and position logic',
+    as_of_date: latestDate,
+    generated_at: new Date().toISOString(),
+    status,
+    label,
+    heat_score: heatScore,
+    counts: { red, yellow, green: items.length - red - yellow, total: items.length },
+    summary: `公开市场技术热度为「${label}」:${red} 红 / ${yellow} 黄 / ${items.length - red - yellow} 绿;该面板只看上市 AI 篮子的价格/拥挤度,不改变 Bubble Watch 主分数。`,
+    basket: {
+      construction: 'equal_weight_normalized_to_base_100',
+      symbols: basketSeries.map((entry) => entry.symbol),
+      requestedSymbols: basketSymbols,
+      benchmark: 'QQQ',
+      betaBenchmark: 'SPY',
+      observationCount: compositeCloses.length,
+      latestDate,
+      failedSymbols: failures
+    },
+    source_priority: [
+      {
+        rank: 1,
+        name: 'Yahoo Chart v8 public endpoint',
+        role: 'primary_free_public_daily_prices',
+        url: 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}'
+      },
+      {
+        rank: 2,
+        name: 'public-apis/public-apis Finance candidates',
+        role: 'source-review fallback candidates only; most reliable equity APIs require apiKey',
+        url: 'https://github.com/public-apis/public-apis#finance',
+        candidatesReviewed: ['Alpha Vantage', 'Marketstack', 'Finnhub', 'FRED']
+      },
+      {
+        rank: 3,
+        name: 'Wind API',
+        role: 'paid final fallback only; not used for this panel unless free public prices fail in a future reviewed PR'
+      }
+    ],
+    items
+  };
+}
+
+function buildUnavailableMarketTechnicalHeatPanel(error) {
+  return {
+    contractVersion: 'bubble-watch-market-technical-heat-v1',
+    boundary: 'display-only audit panel; excluded from 24-indicator red/yellow/green primary score, scoring, decision, execution, and position logic',
+    as_of_date: isoDate(),
+    generated_at: new Date().toISOString(),
+    status: 'unavailable',
+    label: '数据暂缺',
+    heat_score: null,
+    counts: { red: 0, yellow: 0, green: 0, total: 0 },
+    summary: `公开市场技术热度暂缺: ${compactSnippet(error?.message || error, 160)}。该面板 fail-closed,不改变 Bubble Watch 主分数。`,
+    basket: {
+      construction: 'equal_weight_normalized_to_base_100',
+      symbols: [],
+      requestedSymbols: ['NVDA', 'AMD', 'MSFT', 'GOOGL', 'META', 'TSLA', 'AVGO', 'ORCL'],
+      benchmark: 'QQQ',
+      betaBenchmark: 'SPY',
+      observationCount: 0,
+      latestDate: null,
+      failedSymbols: []
+    },
+    source_priority: [
+      {
+        rank: 1,
+        name: 'Yahoo Chart v8 public endpoint',
+        role: 'primary_free_public_daily_prices',
+        url: 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}'
+      },
+      {
+        rank: 2,
+        name: 'public-apis/public-apis Finance candidates',
+        role: 'source-review fallback candidates only; most reliable equity APIs require apiKey',
+        url: 'https://github.com/public-apis/public-apis#finance',
+        candidatesReviewed: ['Alpha Vantage', 'Marketstack', 'Finnhub', 'FRED']
+      },
+      {
+        rank: 3,
+        name: 'Wind API',
+        role: 'paid final fallback only; not used for this panel unless free public prices fail in a future reviewed PR'
+      }
+    ],
+    items: [],
+    error: error?.message || String(error || '')
+  };
+}
+
 function windColumnIndex(columns, candidates) {
   const names = (columns || []).map((c) => String(c?.name || '').trim());
   for (const candidate of candidates) {
@@ -2996,6 +3365,13 @@ async function main() {
   const prevForWow = [...entries].reverse().find((e) => e.statuses && isoWeekKey(e.date) !== isoWeekKey(today)) || null;
   const meta = { autoCount, curatedCount, fallbackCount, hybridCount };
   const { summary, scoring, flips } = computeSummary(indicators, today, prevForWow, meta);
+  let marketTechnicalHeat = null;
+  try {
+    marketTechnicalHeat = await buildMarketTechnicalHeatPanel();
+  } catch (error) {
+    console.warn(`[bubble-watch] market technical heat panel failed: ${error.message}`);
+    marketTechnicalHeat = buildUnavailableMarketTechnicalHeatPanel(error);
+  }
 
   const lastIssue = entries.reduce((a, e) => Math.max(a, e.issue_number || 0), 0);
   const sameWeekIdx = entries.findIndex((e) => isoWeekKey(e.date) === isoWeekKey(today));
@@ -3035,6 +3411,7 @@ async function main() {
     summary,
     scoring,
     indicators: indicators.map(({ ...ind }) => ind),
+    market_technical_heat: marketTechnicalHeat,
     history_seed: entries.slice(-10).map((e) => ({ week: e.week, red_pct: e.red_pct, risk_score: e.risk_score })),
     wow_changes: buildWowChanges(flips, indicators),
     meta: {

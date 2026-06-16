@@ -52,6 +52,13 @@ const HYBRID_PAID_OPTIONAL_IDS = [
 ];
 const CATEGORIES = ['valuation', 'capital', 'market_structure', 'credit', 'fundamentals', 'macro'];
 const STATUSES = ['red', 'yellow', 'green'];
+const TECHNICAL_HEAT_IDS = [
+  'relative_momentum_21d',
+  'rsi_14d',
+  'bollinger_pct_b',
+  'sma_200_deviation',
+  'correlation_beta_60d'
+];
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
 const TIER_LABEL_EN = { observation: 'Observation', caution: 'Moderate Caution', alert: 'High Risk Alert', top: 'Systemic Top' };
 const NARRATIVE_ENGINE_VERSION = 'bubble-watch-narrative-v1';
@@ -110,6 +117,41 @@ for (const section of s.narrative_plan?.sections || []) {
   check('contract', typeof section.key === 'string' && section.key.length > 0, 'narrative_plan section 缺 key');
   check('contract', typeof section.summaryZh === 'string' && section.summaryZh.length >= 40, `narrative_plan.${section.key || '?'} summaryZh 过短`);
   check('contract', Array.isArray(section.sourceIndicators), `narrative_plan.${section.key || '?'} sourceIndicators 非数组`);
+}
+
+const technicalHeat = data.market_technical_heat || {};
+check('contract', technicalHeat.contractVersion === 'bubble-watch-market-technical-heat-v1', 'market_technical_heat contractVersion 缺失/异常');
+check('contract', String(technicalHeat.boundary || '').includes('display-only') && String(technicalHeat.boundary || '').includes('excluded from 24-indicator'),
+  'market_technical_heat 必须声明 display-only 且排除 24 项主分');
+check('contract', ['red', 'yellow', 'green', 'unavailable'].includes(technicalHeat.status), `market_technical_heat.status 非法:${technicalHeat.status}`);
+check('contract', typeof technicalHeat.summary === 'string' && technicalHeat.summary.length >= 40, 'market_technical_heat.summary 缺失/过短');
+check('contract', Array.isArray(technicalHeat.source_priority) && technicalHeat.source_priority.length >= 3, 'market_technical_heat.source_priority 不足');
+check('contract', technicalHeat.source_priority?.some((s) => /Yahoo Chart/iu.test(s.name || '')), 'market_technical_heat 缺 Yahoo Chart 主源声明');
+check('contract', technicalHeat.source_priority?.some((s) => /public-apis/iu.test(s.name || s.url || '')), 'market_technical_heat 缺 public-apis 候选源声明');
+check('contract', technicalHeat.source_priority?.some((s) => /Wind/iu.test(s.name || 'paid final fallback only')), 'market_technical_heat 缺 Wind paid final fallback 边界声明');
+if (technicalHeat.status !== 'unavailable') {
+  const heatItems = technicalHeat.items || [];
+  check('contract', Array.isArray(heatItems) && heatItems.length === TECHNICAL_HEAT_IDS.length,
+    `market_technical_heat.items 长度 ${heatItems.length} ≠ ${TECHNICAL_HEAT_IDS.length}`);
+  const heatIds = new Set(heatItems.map((item) => item.id));
+  check('contract', TECHNICAL_HEAT_IDS.every((id) => heatIds.has(id)) && heatIds.size === TECHNICAL_HEAT_IDS.length,
+    'market_technical_heat.items id 集异常');
+  const heatRed = heatItems.filter((item) => item.status === 'red').length;
+  const heatYellow = heatItems.filter((item) => item.status === 'yellow').length;
+  const heatGreen = heatItems.filter((item) => item.status === 'green').length;
+  check('contract', technicalHeat.counts?.red === heatRed && technicalHeat.counts?.yellow === heatYellow && technicalHeat.counts?.green === heatGreen,
+    'market_technical_heat counts 与 items 不符');
+  check('contract', Math.abs(technicalHeat.heat_score - ((heatRed + 0.5 * heatYellow) / heatItems.length) * 100) < 0.06,
+    'market_technical_heat.heat_score 复算不符');
+  for (const item of heatItems) {
+    check('contract', STATUSES.includes(item.status), `${item.id} technical heat status 非法:${item.status}`);
+    for (const field of ['name_en', 'name_zh', 'value_display', 'note', 'threshold_text', 'source_name']) {
+      check('contract', typeof item[field] === 'string' && item[field].length > 0, `${item.id} 缺 ${field}`);
+    }
+    check('contract', /Yahoo Chart/iu.test(item.source_name), `${item.id} source_name 应标 Yahoo Chart`);
+  }
+} else {
+  check('contract', Array.isArray(technicalHeat.items) && technicalHeat.items.length === 0, 'market_technical_heat unavailable 时 items 应为空');
 }
 
 const meta = data.meta || {};
@@ -192,6 +234,7 @@ check('boundary', !indexHtml.includes('bubble-watch.json'), 'index.html 不得 f
 check('boundary', indexHtml.includes('class="page-bookmarks"') && indexHtml.includes('href="bubble-watch.html"'), 'index.html 缺页面切换书签组件');
 check('boundary', pageHtml.includes('class="page-bookmarks"') && pageHtml.includes('href="index.html"'), 'bubble-watch.html 缺页面切换书签组件');
 check('boundary', pageHtml.includes('data/bubble-watch.json'), 'bubble-watch.html 未读 data/bubble-watch.json');
+check('boundary', pageHtml.includes('id="market-technical-heat"') && pageHtml.includes('renderMarketTechnicalHeat'), 'bubble-watch.html 缺公开市场技术热度审计面板渲染');
 check('boundary', !pageHtml.includes('WEIGHTED RISK SCORE'), 'bubble-watch.html 不得把 weighted_risk_score 标成页面主风险分');
 check('boundary', pageHtml.includes('PRIMARY SCORE:'), 'bubble-watch.html 必须显式标注主分数口径');
 check('boundary', !buildSrc.includes('radar-data.json') && !buildSrc.includes("'realtime"), 'build 脚本不得触碰 radar-data / realtime');
