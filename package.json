@@ -19,6 +19,7 @@
     "diagnose:reliefweb": "node scripts/world-order/diagnose-reliefweb-source.mjs",
     "audit:daily-worker": "node scripts/audit-daily-vs-worker.mjs",
     "audit:bubble-watch-sources": "node scripts/audit-bubble-watch-sources.mjs",
+    "audit:bubble-watch-backtest": "node scripts/audit-bubble-watch-backtest.mjs --output manual-artifacts/bubble-watch-backtest/bubble-watch-backtest-latest.json",
     "audit:main-score-backtest": "node scripts/audit-main-score-backtest.mjs --allow-network --output manual-artifacts/main-score-audit/main-score-backtest-latest.json",
     "manual:external-ai:build-input": "node scripts/build-external-ai-manual-input.mjs",
     "manual:external-ai:build-input:compact": "node scripts/build-external-ai-manual-input.mjs --compact --output manual-artifacts/external-ai/manual-input-compact-latest.json",

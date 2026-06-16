@@ -6,8 +6,8 @@
 // 抓取失败沿用 curated 快照并按 maxAgeDays 标 STALE,绝不造数。
 //
 // 打分逻辑(复刻原 The Bubble Watch 页):
-//   red_pct = 红灯数 / total;weighted = (红×1.0 + 黄×0.5) / total
-//   分档:<25% 观察期 / 25-40% 中度警戒 / 40-60% 高风险预警 / ≥60% 系统性顶部
+//   primary score = red_pct = 红灯数 / total;weighted = (红×1.0 + 黄×0.5) / total
+//   分档只使用 red_pct:<25% 观察期 / 25-40% 中度警戒 / 40-60% 高风险预警 / ≥60% 系统性顶部
 //   分类强制升级:≥2 个分类红灯占比 ≥50% → 判读至少上调到「高风险预警」
 //
 // 输出:data/bubble-watch.json(latest)+ data/bubble-watch-history.json(周度滚动)
@@ -2564,7 +2564,7 @@ function statusMoveText(flip) {
 
 function compareMetricText(label, current, previous, suffix = '') {
   if (!Number.isFinite(current)) return '';
-  const sep = /^[A-Za-z_]+$/u.test(label) ? ' ' : '';
+  const sep = /\s$/u.test(label) ? '' : ' ';
   if (!Number.isFinite(previous)) return `${label}${sep}${current.toFixed(1)}${suffix}`;
   if (Math.abs(current - previous) < 0.05) return `${label}${sep}维持 ${current.toFixed(1)}${suffix}`;
   return `${label}${sep}由 ${previous.toFixed(1)}${suffix} ${current > previous ? '升至' : '降至'} ${current.toFixed(1)}${suffix}`;
@@ -2648,8 +2648,7 @@ function buildBubbleNarrativePlan({
   const byId = new Map(indicators.map((i) => [i.id, i]));
   const categorySnapshots = buildCategorySnapshots(indicators);
   const scoreParts = [
-    compareMetricText('red_pct', redPct, prevEntry?.red_pct, '%'),
-    compareMetricText('加权风险分', weighted, prevEntry?.risk_score, '%')
+    compareMetricText('主分数 red_pct', redPct, prevEntry?.red_pct, '%')
   ].filter(Boolean);
   const flipText = flips.length
     ? `本期翻灯 ${flips.length} 项: ${flips.map(statusMoveText).join('、')}`
@@ -2729,6 +2728,7 @@ function buildBubbleNarrativePlan({
   const limitations = [
     `${meta.autoCount} 项自动接入、${meta.curatedCount + meta.fallbackCount} 项人工/回退口径。`,
     proxyCalibrationCount ? `${proxyCalibrationCount} 项新闻/代理指标触发本地置信度校准:自动原始证据保留,发布灯色按多源/样本阈值处理。` : '本期无代理源置信度校准覆盖项。',
+    `黄灯调整辅助压力分 ${weighted.toFixed(1)}% 仅用于趋势辅助,不参与阈值分档或有效判读。`,
     staleCount ? `${staleCount} 项已标 STALE，相关叙事自动降为低确定性。` : '当前无 STALE 指标。',
     '原站历史 snapshots 仅用于抽取写作结构与回归评估，生产正文不复制上游 summary.verdict_desc。'
   ];
@@ -2790,7 +2790,7 @@ function computeSummary(indicators, today, prevEntry, meta) {
   const curatedCount = meta.curatedCount + meta.fallbackCount;
 
   const parts = [];
-  parts.push(`本周计数 ${red} 红 / ${yellow} 黄 / ${green} 绿${prevEntry?.statuses ? (flips.length ? '' : ',与上期持平') : ''},red_pct ${redPct.toFixed(1)}%、加权风险分 ${weighted.toFixed(1)}%。`);
+  parts.push(`本周计数 ${red} 红 / ${yellow} 黄 / ${green} 绿${prevEntry?.statuses ? (flips.length ? '' : ',与上期持平') : ''},主分数 red_pct ${redPct.toFixed(1)}%。`);
   if (flips.length) {
     parts.push(`本期翻灯 ${flips.length} 项:${flips.map((f) => `「${f.name_zh}」${STATUS_ZH[f.from]}→${STATUS_ZH[f.to]}`).join('、')}。`);
   } else if (prevEntry?.statuses) {
@@ -2829,6 +2829,8 @@ function computeSummary(indicators, today, prevEntry, meta) {
       red_count: red,
       yellow_count: yellow,
       green_count: green,
+      primary_score_pct: redPct,
+      primary_score_basis: 'red_light_ratio',
       red_pct: redPct,
       weighted_risk_score: weighted,
       verdict_label: TIER_LABEL_ZH[effTier],

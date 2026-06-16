@@ -1,18 +1,20 @@
 {
   "contractVersion": "bubble-watch-v1",
   "issue_number": 11,
-  "as_of_date": "2026-06-15",
-  "generated_at": "2026-06-15T23:56:16.781Z",
+  "as_of_date": "2026-06-16",
+  "generated_at": "2026-06-16T01:40:37.998Z",
   "summary": {
     "total_indicators": 24,
     "red_count": 4,
     "yellow_count": 8,
     "green_count": 12,
+    "primary_score_pct": 16.7,
+    "primary_score_basis": "red_light_ratio",
     "red_pct": 16.7,
     "weighted_risk_score": 33.3,
     "verdict_label": "高风险预警",
     "verdict_label_en": "High Risk Alert",
-    "verdict_desc": "本周计数 4 红 / 8 黄 / 12 绿，red_pct 由 21.7% 降至 16.7%，加权风险分由 37.0% 降至 33.3%。本期翻灯 2 项: 「S&P 50 日均线上方比例」黄转绿、「AI 龙头内部人卖买比」红转黄；基础判读落在「观察期」，有效判读为「高风险预警」。市场结构边际改善: S&P 50 日均线上方比例 ≈62%（绿）、市值加权 vs 等权重 +0.5%（绿） 均为绿，说明头部独涨压力松动；但 AI 龙头内部人卖买比 ~8x（黄），风险偏好并非完全健康。资金面仍是核心压力: Mag4 自由现金流变化 -16%（黄）、AI 占 VC 投资比重 ~65%（红）、NVDA 客户投资/收入比 ≈49%（红）；同时，云厂商递延收入增速 +186%（绿） 说明需求仍在兑现。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。信用端仍托底: 高收益债利差 271 bps（绿）、数据中心 ABS 利差 收窄（绿）、Neocloud 信用事件 0 件（绿）；宏观端则是 Fed 政策方向 偏鹰（黄），叠加 资本开支指引市场反应 选择性惩罚（黄）。这让本期更像高风险观察，而不是信用断裂式顶部。因此，尽管基础读数仍在「观察期」区间，分类强制升级继续生效: 估值 2/3 红（CAPE 周期调整 PE 42.2、前 5 大权重占比 ≈26.2%）；资金面 2/4 红（AI 占 VC 投资比重 ~65%、NVDA 客户投资/收入比 ≈49%）。红灯集中在 CAPE 周期调整 PE 42.2、前 5 大权重占比 ≈26.2%、AI 占 VC 投资比重 ~65%、NVDA 客户投资/收入比 ≈49%；估值与资金面双类共振使有效判读维持「高风险预警」。",
+    "verdict_desc": "本周计数 4 红 / 8 黄 / 12 绿，主分数 red_pct 由 21.7% 降至 16.7%。本期翻灯 2 项: 「S&P 50 日均线上方比例」黄转绿、「AI 龙头内部人卖买比」红转黄；基础判读落在「观察期」，有效判读为「高风险预警」。市场结构边际改善: S&P 50 日均线上方比例 ≈62%（绿）、市值加权 vs 等权重 +0.5%（绿） 均为绿，说明头部独涨压力松动；但 AI 龙头内部人卖买比 ~8x（黄），风险偏好并非完全健康。资金面仍是核心压力: Mag4 自由现金流变化 -16%（黄）、AI 占 VC 投资比重 ~65%（红）、NVDA 客户投资/收入比 ≈49%（红）；同时，云厂商递延收入增速 +186%（绿） 说明需求仍在兑现。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。信用端仍托底: 高收益债利差 271 bps（绿）、数据中心 ABS 利差 收窄（绿）、Neocloud 信用事件 0 件（绿）；宏观端则是 Fed 政策方向 偏鹰（黄），叠加 资本开支指引市场反应 选择性惩罚（黄）。这让本期更像高风险观察，而不是信用断裂式顶部。因此，尽管基础读数仍在「观察期」区间，分类强制升级继续生效: 估值 2/3 红（CAPE 周期调整 PE 42.2、前 5 大权重占比 ≈26.2%）；资金面 2/4 红（AI 占 VC 投资比重 ~65%、NVDA 客户投资/收入比 ≈49%）。红灯集中在 CAPE 周期调整 PE 42.2、前 5 大权重占比 ≈26.2%、AI 占 VC 投资比重 ~65%、NVDA 客户投资/收入比 ≈49%；估值与资金面双类共振使有效判读维持「高风险预警」。",
     "verdict_desc_source": "bubble-watch-narrative-v1",
     "narrative_plan": {
       "version": "bubble-watch-narrative-v1",
@@ -196,7 +198,7 @@
           "category": "credit",
           "status": "green",
           "value_display": "收窄",
-          "note_summary": "Wind 付费可选源识别数据中心 ABS/类 REITs 样本 4 只,最新样本 G互联25A(2025-10-31、规模 8.6 亿元);中国:资产支持证券到期收益率(AAA):6个月 最新 1.42%,4 周 +2.1bp、12 周 -12.0bp;新闻证据 2 条,支持词 4/压力词 0。样本券最新估值利差/收益率字段多为空,因此本项明确为 paid proxy,不伪装为正式数据中心专属连续利差"
+          "note_summary": "Wind 付费可选源识别数据中心 ABS/类 REITs 样本 4 只,最新样本 G互联25A(2025-10-31、规模 8.6 亿元);中国:资产支持证券到期收益率(AAA):6个月 最新 1.42%,4 周 +2.1bp、12 周 -12.0bp;新闻证据 1 条,支持词 2/压力词 0。样本券最新估值利差/收益率字段多为空,因此本项明确为 paid proxy,不伪装为正式数据中心专属连续利差"
         },
         {
           "indicator_id": "neocloud_credit",
@@ -218,7 +220,7 @@
           "key": "scorecard",
           "role": "lead",
           "sourceIndicators": [],
-          "summaryZh": "本周计数 4 红 / 8 黄 / 12 绿，red_pct 由 21.7% 降至 16.7%，加权风险分由 37.0% 降至 33.3%。本期翻灯 2 项: 「S&P 50 日均线上方比例」黄转绿、「AI 龙头内部人卖买比」红转黄；基础判读落在「观察期」，有效判读为「高风险预警」。"
+          "summaryZh": "本周计数 4 红 / 8 黄 / 12 绿，主分数 red_pct 由 21.7% 降至 16.7%。本期翻灯 2 项: 「S&P 50 日均线上方比例」黄转绿、「AI 龙头内部人卖买比」红转黄；基础判读落在「观察期」，有效判读为「高风险预警」。"
         },
         {
           "key": "market_structure",
@@ -268,6 +270,7 @@
       "limitations": [
         "24 项自动接入、0 项人工/回退口径。",
         "5 项新闻/代理指标触发本地置信度校准:自动原始证据保留,发布灯色按多源/样本阈值处理。",
+        "黄灯调整辅助压力分 33.3% 仅用于趋势辅助,不参与阈值分档或有效判读。",
         "当前无 STALE 指标。",
         "原站历史 snapshots 仅用于抽取写作结构与回归评估，生产正文不复制上游 summary.verdict_desc。"
       ]
@@ -307,7 +310,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:03.520Z",
+        "fetchedAt": "2026-06-16T01:39:09.618Z",
         "detail": {
           "cape": 42.18
         }
@@ -326,7 +329,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:03.992Z",
+        "fetchedAt": "2026-06-16T01:39:10.096Z",
         "detail": {
           "top5": [
             {
@@ -367,7 +370,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:04.292Z",
+        "fetchedAt": "2026-06-16T01:39:10.585Z",
         "detail": {
           "forwardPe": 21.38
         }
@@ -386,7 +389,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:07.664Z",
+        "fetchedAt": "2026-06-16T01:39:13.757Z",
         "detail": {
           "yoyPct": 69.52159559297533,
           "source": "stockanalysis 季报镜像",
@@ -424,7 +427,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:07.687Z",
+        "fetchedAt": "2026-06-16T01:39:13.777Z",
         "detail": {
           "yoyPct": -15.752621143043793,
           "source": "stockanalysis 季报镜像",
@@ -466,7 +469,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:09.051Z",
+        "fetchedAt": "2026-06-16T01:39:14.404Z",
         "detail": {
           "source": "Crunchbase News WordPress API",
           "url": "https://news.crunchbase.com/venture/record-breaking-funding-ai-global-q1-2026/",
@@ -493,7 +496,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:09.677Z",
+        "fetchedAt": "2026-06-16T01:39:15.020Z",
         "detail": {
           "commitmentsUsd": 125000000000,
           "ltmRevenue": 253491000000,
@@ -515,7 +518,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:34.818Z",
+        "fetchedAt": "2026-06-16T01:39:46.753Z",
         "detail": {
           "above": 311,
           "counted": 501,
@@ -536,7 +539,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:35.323Z",
+        "fetchedAt": "2026-06-16T01:39:47.083Z",
         "detail": {
           "spyRet": 11.189185340198152,
           "rspRet": 10.707791520924951,
@@ -557,11 +560,11 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:37.668Z",
+        "fetchedAt": "2026-06-16T01:39:49.562Z",
         "detail": {
           "buyUsd": 1926569,
-          "sellUsd": 4396271251,
-          "ratio": 2281.917362419929,
+          "sellUsd": 4396462004,
+          "ratio": 2282.016374186442,
           "proxyConfidenceCalibration": {
             "applied": true,
             "policy": "local_proxy_confidence_v1",
@@ -573,7 +576,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-14",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 14,
               "syncedFromUpstream": true
             }
@@ -589,7 +592,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-14",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 14,
               "syncedFromUpstream": true
             }
@@ -610,7 +613,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:37.952Z",
+        "fetchedAt": "2026-06-16T01:39:49.846Z",
         "detail": {
           "source": "Crunchbase News WordPress API",
           "evidenceCount": 2,
@@ -634,7 +637,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-14",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 21,
               "syncedFromUpstream": true
             }
@@ -650,7 +653,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-14",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 21,
               "syncedFromUpstream": true
             }
@@ -674,7 +677,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:38.595Z",
+        "fetchedAt": "2026-06-16T01:39:50.532Z",
         "detail": {
           "bps": 271,
           "date": "2026-06-12"
@@ -690,11 +693,11 @@
       "source_name": "Wind MCP paid optional proxy",
       "status": "green",
       "value_display": "收窄",
-      "note": "Wind 付费可选源识别数据中心 ABS/类 REITs 样本 4 只,最新样本 G互联25A(2025-10-31、规模 8.6 亿元);中国:资产支持证券到期收益率(AAA):6个月 最新 1.42%,4 周 +2.1bp、12 周 -12.0bp;新闻证据 2 条,支持词 4/压力词 0。样本券最新估值利差/收益率字段多为空,因此本项明确为 paid proxy,不伪装为正式数据中心专属连续利差。判级:4 周走阔 ≥50bp=红 / ≥15bp 或压力词升温=黄 / 12 周收窄且需求证据充足=绿",
+      "note": "Wind 付费可选源识别数据中心 ABS/类 REITs 样本 4 只,最新样本 G互联25A(2025-10-31、规模 8.6 亿元);中国:资产支持证券到期收益率(AAA):6个月 最新 1.42%,4 周 +2.1bp、12 周 -12.0bp;新闻证据 1 条,支持词 2/压力词 0。样本券最新估值利差/收益率字段多为空,因此本项明确为 paid proxy,不伪装为正式数据中心专属连续利差。判级:4 周走阔 ≥50bp=红 / ≥15bp 或压力词升温=黄 / 12 周收窄且需求证据充足=绿",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:48.617Z",
+        "fetchedAt": "2026-06-16T01:40:02.943Z",
         "detail": {
           "source": "Wind MCP paid optional",
           "directDataCenterYieldAvailable": false,
@@ -760,8 +763,8 @@
             "observationCount": 358
           },
           "news": {
-            "itemCount": 2,
-            "supportCount": 4,
+            "itemCount": 1,
+            "supportCount": 2,
             "pressureCount": 0,
             "yieldRangePct": null,
             "issueTotalB": null,
@@ -771,11 +774,6 @@
                 "title": "海工装备新动向！三星重工浮式数据中心获双船级社认证",
                 "date": "2026-05-10",
                 "relevance": 0.8129
-              },
-              {
-                "title": "Switch获26亿美元银行承诺，为数据中心扩张提供资金支持",
-                "date": "2026-04-21",
-                "relevance": 0.799
               }
             ]
           },
@@ -798,7 +796,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:51.871Z",
+        "fetchedAt": "2026-06-16T01:40:06.197Z",
         "detail": {
           "source": "Morgan Stanley public AI capex financing split",
           "url": "https://www.morganstanley.com/insights/articles/ai-market-trends-institute-2026",
@@ -819,19 +817,19 @@
             "itemCount": 3,
             "topTitles": [
               {
-                "title": "Debt-fuelled AI buildout flirts with collapse",
-                "date": "2026-03-12",
-                "relevance": 0.5694
-              },
-              {
                 "title": "市场依旧挺AI：谷歌数据中心建造商要发57亿美元垃圾债，创历史记录！",
                 "date": "2026-04-16",
-                "relevance": 0.5246
+                "relevance": 0.5245
               },
               {
-                "title": "AI基建融资潮“高烧”不退！谷歌(GOOGL.US)系数据中心领衔，市场抢购67亿美元高收益债",
-                "date": "2026-04-17",
-                "relevance": 0.52
+                "title": "全球银行业“不堪重负”，寻求减少“数据中心敞口”",
+                "date": "2026-05-04",
+                "relevance": 0.5033
+              },
+              {
+                "title": "3000亿美元！甲骨文测试AI巨头资本开支极限",
+                "date": "2026-04-24",
+                "relevance": 0.4858
               }
             ]
           },
@@ -854,7 +852,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:56.324Z",
+        "fetchedAt": "2026-06-16T01:40:10.366Z",
         "detail": {
           "source": "public neocloud credit-event monitor",
           "checkedPages": 5,
@@ -921,7 +919,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:56.364Z",
+        "fetchedAt": "2026-06-16T01:40:10.403Z",
         "detail": {
           "source": "OpenRouter /api/frontend/rankings/market-share",
           "latestWeek": "2026-06-08",
@@ -947,7 +945,7 @@
           "prev4wTokens": 98479905805125,
           "droppedPartialWeek": {
             "date": "2026-06-15",
-            "totalTokens": 6333056976535
+            "totalTokens": 6556754014182
           },
           "momPct": 43.695051866120515,
           "prevMomPct": 7.79073684083474,
@@ -970,7 +968,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:56.658Z",
+        "fetchedAt": "2026-06-16T01:40:10.591Z",
         "detail": {
           "source": "OpenRouter model-rankings-chart + frontend catalog models",
           "latestWeek": "2026-06-08",
@@ -984,10 +982,10 @@
           "pricedCoveragePct": 55.31695770238861,
           "droppedPartialWeek": {
             "date": "2026-06-15",
-            "totalTokens": 6337308503896,
-            "pricedTokens": 3826399128153,
-            "spendProxyUsd": 8122298.4814002,
-            "othersTokens": 2510909375743,
+            "totalTokens": 6556729828877,
+            "pricedTokens": 3952530627710,
+            "spendProxyUsd": 8354079.011711808,
+            "othersTokens": 2604199201167,
             "missingModels": []
           },
           "rows": [
@@ -1031,7 +1029,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-14",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 45,
               "syncedFromUpstream": true
             }
@@ -1047,7 +1045,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-14",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 45,
               "syncedFromUpstream": true
             }
@@ -1071,7 +1069,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:55:57.175Z",
+        "fetchedAt": "2026-06-16T01:40:10.798Z",
         "detail": {
           "source": "SaaStr WordPress public API",
           "milestones": [
@@ -1144,7 +1142,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:56:00.265Z",
+        "fetchedAt": "2026-06-16T01:40:14.338Z",
         "detail": {
           "source": "Google Cloud ROI of AI public report",
           "url": "https://cloud.google.com/transform/roi-of-ai-how-agents-help-business",
@@ -1161,7 +1159,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-14",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 120,
               "syncedFromUpstream": true
             }
@@ -1177,7 +1175,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-14",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 120,
               "syncedFromUpstream": true
             }
@@ -1201,7 +1199,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:56:04.405Z",
+        "fetchedAt": "2026-06-16T01:40:18.777Z",
         "detail": {
           "yoyPct": 185.5625170253337,
           "prevYoyPct": 87.60026788443905,
@@ -1266,7 +1264,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:56:06.357Z",
+        "fetchedAt": "2026-06-16T01:40:20.767Z",
         "detail": {
           "source": "SEC RSS + DOJ News API official monitor",
           "checkedSources": 4,
@@ -1292,7 +1290,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:56:07.008Z",
+        "fetchedAt": "2026-06-16T01:40:21.424Z",
         "detail": {
           "dff": 3.62,
           "drift60dBp": -2.0000000000000018,
@@ -1313,7 +1311,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:56:07.968Z",
+        "fetchedAt": "2026-06-16T01:40:22.589Z",
         "detail": {
           "source": "StockAnalysis quarterly cash-flow + Yahoo Chart",
           "benchmark": {
@@ -1391,7 +1389,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-14",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 21,
               "syncedFromUpstream": true
             }
@@ -1407,7 +1405,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-14",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 21,
               "syncedFromUpstream": true
             }
@@ -1427,16 +1425,16 @@
       "source_name": "Wind MCP paid optional news fallback",
       "status": "yellow",
       "value_display": "部分",
-      "note": "GDELT 免费新闻源失败(HTTP 429 for https://api.gdeltproject.org/api/v2/doc/doc?query=%28%22AI+bubble%22+OR+%22a…)后,才启用 Wind 付费新闻兜底:检索到 AI 泡沫/过热相关新闻 5 条,其中 CEO/高管线索 5 条、谨慎/风险措辞 5 条;该项仍按公开新闻语义保守判为「部分」。判级:普遍承认过热=红 / 部分=黄 / 无=绿",
+      "note": "GDELT 免费新闻源失败(HTTP 429 for https://api.gdeltproject.org/api/v2/doc/doc?query=%28%22AI+bubble%22+OR+%22a…)后,才启用 Wind 付费新闻兜底:检索到 AI 泡沫/过热相关新闻 5 条,其中 CEO/高管线索 2 条、谨慎/风险措辞 5 条;该项仍按公开新闻语义保守判为「部分」。判级:普遍承认过热=红 / 部分=黄 / 无=绿",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-15T23:56:16.780Z",
+        "fetchedAt": "2026-06-16T01:40:37.996Z",
         "detail": {
           "source": "Wind MCP financial_docs.get_financial_news",
           "freePrimaryFailure": "HTTP 429 for https://api.gdeltproject.org/api/v2/doc/doc?query=%28%22AI+bubble%22+OR+%22artificial+intelligence+bubble%22+OR+%22AI+overbuild%22+OR+%22AI+capex+bubble%22%29&mode=ArtList&format=json&maxrecords=30&timespan=30d&sort=HybridRel",
           "articleCount": 5,
-          "executiveHitCount": 5,
+          "executiveHitCount": 2,
           "cautionHitCount": 5,
           "topArticles": [
             {
@@ -1446,27 +1444,27 @@
               "doc_type": "news"
             },
             {
-              "title": "AI“疯狂”盈利了，黄仁勋再驳AI泡沫！访韩行程同步曝光",
-              "date": "2026-06-04",
-              "relevance": 0.794,
-              "doc_type": "news"
-            },
-            {
-              "title": "AI泡沫已经在破了",
-              "date": "2026-06-07",
-              "relevance": 0.788,
-              "doc_type": "news"
-            },
-            {
-              "title": "谷歌DeepMind CEO拉响警报：AI泡沫大量存在于初创企业中！",
-              "date": "2025-12-17",
-              "relevance": 0.782,
-              "doc_type": "news"
-            },
-            {
               "title": "生成式AI，没有第四次泡沫？",
               "date": "2026-06-10",
-              "relevance": 0.764,
+              "relevance": 0.765,
+              "doc_type": "news"
+            },
+            {
+              "title": "MiniMax暴跌65%，AI泡沫破裂了？",
+              "date": "2026-06-12",
+              "relevance": 0.6949,
+              "doc_type": "news"
+            },
+            {
+              "title": "狂热与审慎交织，资本市场AI泡沫何时见顶",
+              "date": "2026-05-22",
+              "relevance": 0.6909,
+              "doc_type": "news"
+            },
+            {
+              "title": "美股AI投资到底有没有泡沫",
+              "date": "2025-12-16",
+              "relevance": 0.686,
               "doc_type": "news"
             }
           ],
@@ -1529,7 +1527,7 @@
       "risk_score": 37
     },
     {
-      "week": "06-15",
+      "week": "06-16",
       "red_pct": 16.7,
       "risk_score": 33.3
     }
@@ -1562,7 +1560,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-14",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 14,
           "syncedFromUpstream": true
         }
@@ -1575,7 +1573,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-14",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 21,
           "syncedFromUpstream": true
         }
@@ -1588,7 +1586,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-14",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 45,
           "syncedFromUpstream": true
         }
@@ -1601,7 +1599,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-14",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 120,
           "syncedFromUpstream": true
         }
@@ -1614,7 +1612,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-14",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 21,
           "syncedFromUpstream": true
         }
@@ -1630,7 +1628,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-14",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 14,
           "syncedFromUpstream": true
         }
@@ -1643,7 +1641,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-14",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 21,
           "syncedFromUpstream": true
         }
@@ -1656,7 +1654,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-14",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 45,
           "syncedFromUpstream": true
         }
@@ -1669,7 +1667,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-14",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 120,
           "syncedFromUpstream": true
         }
@@ -1682,7 +1680,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-14",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 21,
           "syncedFromUpstream": true
         }

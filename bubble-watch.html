@@ -275,7 +275,7 @@ function render(data) {
     <header class="masthead">
       <div class="masthead-row">
         <div>
-          <div class="kicker">23 项指标 · 每周一更新</div>
+          <div class="kicker">${s.total_indicators} 项指标 · 每周一更新</div>
           <h1 class="title">AI 泡沫监测<br/><em>The Bubble Watch</em></h1>
         </div>
         <div class="issue-meta">
@@ -296,7 +296,7 @@ function render(data) {
             阈值: 25% 黄 / 40% 橙 / 60% 红
           </div>
         </div>
-        <div class="footer">WEIGHTED RISK SCORE: ${s.weighted_risk_score.toFixed(1)}%</div>
+        <div class="footer">PRIMARY SCORE: ${s.red_count} / ${s.total_indicators} RED = ${s.red_pct.toFixed(1)}%</div>
       </div>
       <div class="verdict">
         <div>
@@ -350,7 +350,7 @@ function render(data) {
         <h3>红灯比例趋势 <em>· 8-Week Trend</em></h3>
         <div class="trend-legend">
           <span><span style="color:var(--red)">●</span> Red %</span>
-          <span><span style="color:var(--yellow)">●</span> Risk Score</span>
+          <span><span style="color:var(--yellow)">●</span> Yellow-adjusted aux</span>
           <span style="color:var(--muted)">阈值: 25 / 40 / 60</span>
         </div>
       </div>
@@ -432,7 +432,7 @@ function render(data) {
       <div class="method-grid">
         <div>
           <h4>方法论</h4>
-          <div>23 个领先指标,分 6 类。每个指标按其历史阈值评级 RED / YELLOW / GREEN。整体红灯比例 ≥60% 为系统性顶部信号;加权风险分 = (红×1.0 + 黄×0.5) / 总数。红灯占比过半的分类 ≥2 个时,判读强制升级到「高风险预警」。关键阈值锚定历史泡沫。</div>
+          <div>24 个领先指标,分 6 类。每个指标按其历史阈值评级 RED / YELLOW / GREEN。主分数 = 红灯比例;整体红灯比例 ≥60% 为系统性顶部信号。黄灯调整辅助压力分 = (红×1.0 + 黄×0.5) / 总数,仅用于趋势辅助,不参与阈值分档。红灯占比过半的分类 ≥2 个时,判读强制升级到「高风险预警」。关键阈值锚定历史泡沫。</div>
         </div>
         <div>
           <h4>历史对照</h4>
