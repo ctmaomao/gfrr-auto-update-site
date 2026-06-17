@@ -489,8 +489,8 @@
           "source": "Wind MCP financial news",
           "url": "https://aifinmarket.wind.com.cn/#/docs",
           "cadence": "weekly / fallback only",
-          "role": "paid fallback only when GDELT free public search is rate-limited or unavailable",
-          "limitations": "Used after free GDELT failure, not as primary source; news-language proxy only, not a complete executive-transcript database."
+          "role": "paid fallback only when GDELT, Tavily, and Brave free public/news search paths are unavailable",
+          "limitations": "Used after free GDELT/Tavily/Brave failure, not as primary source; news-language proxy only, not a complete executive-transcript database."
         }
       ],
       "freeSourceCandidates": [
@@ -499,7 +499,21 @@
           "url": "https://api.gdeltproject.org/api/v2/doc/doc",
           "cadence": "weekly",
           "role": "public-news evidence counter for AI bubble / irrational / overbuild language",
-          "limitations": "Rate-limited and media-driven; automatic result remains conservative and falls back on failure."
+          "limitations": "Rate-limited and media-driven; builder uses reduced-result queries plus one bounded backoff retry on 429/5xx. Automatic result remains conservative and falls back on failure."
+        },
+        {
+          "source": "Tavily Search API",
+          "url": "https://api.tavily.com/search",
+          "cadence": "weekly cross-check + fallback",
+          "role": "free-credit news-search cross-check for GDELT results and fallback when GDELT public search is rate-limited or unavailable",
+          "limitations": "Requires TAVILY_API_KEYS; search-result proxy only, not a complete executive-transcript database. Red requires multi-source confirmation; single-source hits are capped below red by local proxy-confidence rules."
+        },
+        {
+          "source": "Brave News Search API",
+          "url": "https://api.search.brave.com/res/v1/news/search",
+          "cadence": "weekly cross-check + fallback",
+          "role": "independent news-index cross-check for GDELT/Tavily results and fallback when GDELT public search is rate-limited or unavailable",
+          "limitations": "Requires BRAVE_API_KEYS; official Brave news-search API with freshness=pm. Search-result proxy only, not a complete executive-transcript database. Red requires multi-source confirmation; single-source hits are capped below red by local proxy-confidence rules."
         }
       ]
     }

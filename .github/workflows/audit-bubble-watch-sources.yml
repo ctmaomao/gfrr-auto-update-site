@@ -40,12 +40,16 @@ jobs:
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.allow_paid_wind != true }}
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
+          BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
         run: node scripts/audit-bubble-watch-sources.mjs --github-summary
 
       - name: Audit Bubble Watch sources (paid Wind opt-in)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_paid_wind == true }}
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
+          BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
           WIND_API_KEY: ${{ secrets.WIND_API_KEY }}
         run: node scripts/audit-bubble-watch-sources.mjs --github-summary --allow-paid-wind
 

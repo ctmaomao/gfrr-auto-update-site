@@ -184,6 +184,20 @@ check('contract', buildSrc.includes('SOURCE_CANDIDATES_PATH') && buildSrc.includ
 for (const id of [...HYBRID_LIVE_IDS, ...HYBRID_PAID_OPTIONAL_IDS]) {
   check('contract', buildSrc.includes(`${id}:`), `build 缺 ${id} hybrid builder 绑定`);
 }
+check('contract', candidateEntries.ceo_hedging?.freeSourceCandidates?.some((source) => /Tavily/iu.test(source.source || '')),
+  'ceo_hedging source candidates 缺 Tavily 免费新闻兜底');
+check('contract', buildSrc.includes('fetchCeoHedgingFromTavilyPublic') && buildSrc.includes('TAVILY_API_KEYS'),
+  'ceo_hedging build path 必须保留 Tavily 免费新闻兜底');
+check('contract', candidateEntries.ceo_hedging?.freeSourceCandidates?.some((source) => /Brave/iu.test(source.source || '')),
+  'ceo_hedging source candidates 缺 Brave 免费新闻交叉确认');
+check('contract', buildSrc.includes('fetchCeoHedgingFromBraveNews') && buildSrc.includes('BRAVE_API_KEYS'),
+  'ceo_hedging build path 必须保留 Brave 免费新闻交叉确认');
+check('contract', buildSrc.includes('fetchGdeltDocCeoHedgingArticles') && buildSrc.includes('gdeltRetryDelayMs') && buildSrc.includes('Retry-After'),
+  'ceo_hedging GDELT public search 必须保留有界退避重试');
+check('contract', buildSrc.includes('mergeCeoHedgingNewsConfirmations') && buildSrc.includes('Brave News Search API'),
+  'ceo_hedging 必须保留 Tavily/Brave 交叉确认路径');
+check('contract', buildSrc.includes('capSingleSourceCeoHedgingRed') && buildSrc.includes('redRequiresTwoIndependentNewsSources'),
+  'ceo_hedging 必须保留单源红灯封顶规则');
 
 // ---- 2. scoring replay ----
 function tierFromPct(p) {

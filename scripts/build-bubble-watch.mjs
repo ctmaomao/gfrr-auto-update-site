@@ -30,6 +30,8 @@ const EDGAR_UA = 'gfrr-auto-update-site bubble-watch ctmaomao@users.noreply.gith
 const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
 const FETCH_TIMEOUT_MS = 20000;
 const FRED_API_KEY = (process.env.FRED_API_KEY || '').trim();
+const TAVILY_API_KEYS = readSecretList(['TAVILY_API_KEYS', 'TAVILY_API_KEY']);
+const BRAVE_API_KEYS = readSecretList(['BRAVE_API_KEYS', 'BRAVE_API_KEY']);
 const WIND_API_KEY = readWindApiKey();
 const WIND_MCP_TIMEOUT_MS = 60000;
 const WIND_MCP_ENDPOINTS = {
@@ -115,20 +117,41 @@ function readWindApiKey() {
   }
 }
 
+function readSecretList(names) {
+  const values = [];
+  for (const name of names) {
+    const raw = String(process.env[name] || '').trim();
+    if (!raw) continue;
+    values.push(...raw.split(/[\s,;]+/u).map((key) => key.trim()).filter(Boolean));
+  }
+  return [...new Set(values)];
+}
+
 async function fetchWithTimeout(url, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), options.timeoutMs || FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
+      method: options.method || 'GET',
       headers: { 'User-Agent': UA, ...(options.headers || {}) },
+      body: options.body,
       signal: controller.signal,
       redirect: 'follow'
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+    if (!res.ok) {
+      const error = new Error(`HTTP ${res.status} for ${url}`);
+      error.status = res.status;
+      error.retryAfter = res.headers.get('Retry-After') || '';
+      throw error;
+    }
     return options.asJson ? await res.json() : await res.text();
   } finally {
     clearTimeout(timer);
   }
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function retry(taskFn, label, attempts = 2) {
@@ -139,7 +162,7 @@ async function retry(taskFn, label, attempts = 2) {
     } catch (error) {
       lastError = error;
       console.warn(`[bubble-watch] ${label} attempt ${i + 1}/${attempts} failed: ${error.message}`);
-      if (i < attempts - 1) await new Promise((resolve) => setTimeout(resolve, 800));
+      if (i < attempts - 1) await delay(800);
     }
   }
   throw lastError;
@@ -2437,39 +2460,279 @@ function classifyCeoHedgingEvidence(relevantCount, executiveHitCount) {
   return { status: 'green', display: '无' };
 }
 
+const CEO_HEDGING_STATUS_RANK = { green: 0, yellow: 1, red: 2 };
+const CEO_HEDGING_STATUS_DISPLAY = { green: '无', yellow: '部分', red: '普遍' };
+const GDELT_CEO_HEDGING_QUERY = '("AI bubble" OR "artificial intelligence bubble" OR "AI overbuild" OR "AI capex bubble")';
+const GDELT_CEO_HEDGING_ATTEMPTS = [
+  { label: 'primary_30d_hybrid', maxrecords: '20', timespan: '30d', sort: 'HybridRel' },
+  { label: 'rate_limit_retry_14d_datedesc', maxrecords: '12', timespan: '14d', sort: 'DateDesc' }
+];
+
+function rankCeoHedgingStatus(status) {
+  return CEO_HEDGING_STATUS_RANK[status] ?? 0;
+}
+
+function ceoHedgingStatusFromRank(rank) {
+  if (rank >= 2) return 'red';
+  if (rank >= 1) return 'yellow';
+  return 'green';
+}
+
+function ceoHedgingDisplayForStatus(status) {
+  return CEO_HEDGING_STATUS_DISPLAY[status] || CEO_HEDGING_STATUS_DISPLAY.green;
+}
+
+function getCeoHedgingResultCounts(result) {
+  return {
+    articleCount: Number.isFinite(result?.detail?.articleCount) ? result.detail.articleCount : null,
+    executiveHitCount: Number.isFinite(result?.detail?.executiveHitCount) ? result.detail.executiveHitCount : null,
+    resultCount: Number.isFinite(result?.detail?.resultCount) ? result.detail.resultCount : null
+  };
+}
+
+function capSingleSourceCeoHedgingRed(result, reason) {
+  if (result?.status !== 'red') return result;
+  return {
+    ...result,
+    status: 'yellow',
+    value_display: ceoHedgingDisplayForStatus('yellow'),
+    note: `${result.note};单源上限规则: ${reason},未获得第二个独立新闻源确认,红灯封顶为黄灯。`,
+    detail: {
+      ...(result.detail || {}),
+      singleSourceCapApplied: true,
+      singleSourceCapReason: reason,
+      uncappedStatus: 'red'
+    }
+  };
+}
+
+function unavailableCeoHedgingConfirmation(source, errorOrReason) {
+  return {
+    source,
+    result: null,
+    status: 'unavailable',
+    reason: compactSnippet(errorOrReason?.message || errorOrReason || 'not configured', 120)
+  };
+}
+
+function availableCeoHedgingConfirmation(source, result) {
+  return {
+    source,
+    result,
+    status: result.status
+  };
+}
+
+function formatCeoHedgingSourceSummary(entry) {
+  if (!entry?.result) return `${entry.source}:不可用(${entry.reason || 'unknown'})`;
+  const counts = getCeoHedgingResultCounts(entry.result);
+  return `${entry.source}:${entry.result.value_display}(新闻${counts.articleCount ?? 'n/a'},高管${counts.executiveHitCount ?? 'n/a'})`;
+}
+
+function serializeCeoHedgingConfirmation(entry) {
+  if (!entry?.result) {
+    return {
+      source: entry.source,
+      status: 'unavailable',
+      reason: entry.reason || null
+    };
+  }
+  const counts = getCeoHedgingResultCounts(entry.result);
+  return {
+    source: entry.source,
+    status: entry.result.status,
+    value_display: entry.result.value_display,
+    ...counts,
+    usage: entry.result.detail?.usage || null,
+    requestId: entry.result.detail?.requestId || null,
+    topArticles: entry.result.detail?.topArticles || []
+  };
+}
+
+function mergeCeoHedgingNewsConfirmations(primaryEntry, confirmationEntries, options = {}) {
+  const entries = [primaryEntry, ...confirmationEntries];
+  const availableEntries = entries.filter((entry) => entry?.result);
+  const strongestRank = availableEntries.reduce((maxRank, entry) => Math.max(maxRank, rankCeoHedgingStatus(entry.result.status)), 0);
+  const confirmingSourceCount = availableEntries.filter((entry) => rankCeoHedgingStatus(entry.result.status) >= 1).length;
+  const multiSourceConfirmed = confirmingSourceCount >= 2;
+  const mergedRank = strongestRank >= 2 && !multiSourceConfirmed ? 1 : strongestRank;
+  const status = ceoHedgingStatusFromRank(mergedRank);
+  const display = ceoHedgingDisplayForStatus(status);
+  const primaryResult = primaryEntry.result;
+  const summary = entries.map(formatCeoHedgingSourceSummary).join(' / ');
+  const cappedText = strongestRank >= 2 && !multiSourceConfirmed ? '单一路径红色信号封顶为黄' : '允许采用多源确认后的最高等级';
+  const primaryFailureText = options.primaryFailure
+    ? `;GDELT 主源失败(${compactSnippet(options.primaryFailure.message || options.primaryFailure, 90)})`
+    : '';
+  return {
+    ...primaryResult,
+    status,
+    value_display: display,
+    source_name: `${availableEntries.map((entry) => entry.source).join(' + ')}${options.primaryFailure ? ' fallback' : ' cross-check'}`,
+    note: `${primaryResult.note}${primaryFailureText};新闻源交叉确认:${summary}。多源规则:红灯需要 GDELT/Tavily/Brave 至少两源达到黄色以上且至少一源达红,${cappedText}。`,
+    detail: {
+      ...(primaryResult.detail || {}),
+      source: `${availableEntries.map((entry) => entry.source).join(' + ')}${options.primaryFailure ? ' fallback' : ''}`,
+      freePrimaryFailure: options.primaryFailure?.message || primaryResult.detail?.freePrimaryFailure || null,
+      crossConfirmations: confirmationEntries.map(serializeCeoHedgingConfirmation),
+      crossConfirmation: confirmationEntries.length === 1 ? serializeCeoHedgingConfirmation(confirmationEntries[0]) : undefined,
+      crossConfirmationRule: {
+        redRequiresTwoIndependentNewsSources: true,
+        independentSources: ['GDELT DOC 2.0', 'Tavily Search API', 'Brave News Search API'],
+        availableSourceCount: availableEntries.length,
+        confirmingSourceCount,
+        strongestStatusBeforeCap: ceoHedgingStatusFromRank(strongestRank),
+        mergedStatus: status
+      }
+    }
+  };
+}
+
+function gdeltRetryDelayMs(error) {
+  const retryAfterSeconds = Number.parseInt(error?.retryAfter || '', 10);
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+    return Math.min(Math.max(retryAfterSeconds * 1000, 8000), 25000);
+  }
+  return 8000;
+}
+
+function shouldRetryGdeltDocSearch(error) {
+  const status = Number(error?.status);
+  return !Number.isFinite(status) || status === 429 || status >= 500;
+}
+
+async function fetchGdeltDocCeoHedgingArticles() {
+  const attempts = [];
+  let lastError = null;
+  for (let i = 0; i < GDELT_CEO_HEDGING_ATTEMPTS.length; i++) {
+    const attempt = GDELT_CEO_HEDGING_ATTEMPTS[i];
+    if (i > 0) {
+      const waitMs = gdeltRetryDelayMs(lastError);
+      console.warn(`[bubble-watch] GDELT CEO hedging retry after ${waitMs}ms via ${attempt.label}`);
+      await delay(waitMs);
+    }
+    const params = new URLSearchParams({
+      query: GDELT_CEO_HEDGING_QUERY,
+      mode: 'ArtList',
+      format: 'json',
+      maxrecords: attempt.maxrecords,
+      timespan: attempt.timespan,
+      sort: attempt.sort
+    });
+    try {
+      const json = await fetchWithTimeout(`https://api.gdeltproject.org/api/v2/doc/doc?${params}`, {
+        asJson: true,
+        headers: { 'User-Agent': BROWSER_UA },
+        timeoutMs: 15000
+      });
+      attempts.push({ ...attempt, status: 'ok' });
+      return { articles: Array.isArray(json?.articles) ? json.articles : [], request: attempt, attempts };
+    } catch (error) {
+      lastError = error;
+      attempts.push({ ...attempt, status: 'failed', error: compactSnippet(error.message, 140), retryAfter: error.retryAfter || null });
+      console.warn(`[bubble-watch] GDELT CEO hedging ${attempt.label} failed: ${error.message}`);
+      if (!shouldRetryGdeltDocSearch(error) || i === GDELT_CEO_HEDGING_ATTEMPTS.length - 1) break;
+    }
+  }
+  const error = lastError || new Error('GDELT DOC search failed without response');
+  error.gdeltAttempts = attempts;
+  throw error;
+}
+
 async function fetchCeoHedgingFromGdeltPublic() {
-  const query = '("AI bubble" OR "artificial intelligence bubble" OR "AI overbuild" OR "AI capex bubble")';
-  const params = new URLSearchParams({
-    query,
-    mode: 'ArtList',
-    format: 'json',
-    maxrecords: '30',
-    timespan: '30d',
-    sort: 'HybridRel'
-  });
-  const json = await fetchWithTimeout(`https://api.gdeltproject.org/api/v2/doc/doc?${params}`, {
-    asJson: true,
-    headers: { 'User-Agent': BROWSER_UA },
-    timeoutMs: 15000
-  });
-  const articles = Array.isArray(json?.articles) ? json.articles : [];
+  const { articles, request, attempts } = await fetchGdeltDocCeoHedgingArticles();
   const executiveRe = /\b(CEO|chief executive|Altman|Nadella|Huang|Musk|Zuckerberg|Pichai|Ellison|Hock Tan|Lisa Su)\b/iu;
   const overheatRe = /\b(bubble|overbuild|overbuilt|overheated|irrational|mania|capex)\b/iu;
   const relevant = articles.filter((a) => overheatRe.test(`${a.title || ''} ${a.url || ''}`));
   const executiveHits = relevant.filter((a) => executiveRe.test(`${a.title || ''} ${a.url || ''}`));
   const { status, display } = classifyCeoHedgingEvidence(relevant.length, executiveHits.length);
+  const windowText = request.timespan === '14d' ? '近 14 天' : '近 30 天';
   return {
     status,
     value_display: display,
     source_name: 'GDELT DOC 2.0 public news search',
-    note: `GDELT DOC 2.0 近 30 天公开新闻检索:AI bubble/overbuild/capex 相关报道 ${relevant.length} 条,其中带 CEO/核心高管姓名线索 ${executiveHits.length} 条;该项按媒体中高管对冲语言频率保守判为「${display}」。判级:普遍承认过热=红 / 部分=黄 / 无=绿`,
+    note: `GDELT DOC 2.0 ${windowText}公开新闻检索(${request.label}):AI bubble/overbuild/capex 相关报道 ${relevant.length} 条,其中带 CEO/核心高管姓名线索 ${executiveHits.length} 条;该项按媒体中高管对冲语言频率保守判为「${display}」。判级:普遍承认过热=红 / 部分=黄 / 无=绿`,
     detail: {
       source: 'GDELT DOC 2.0',
+      query: GDELT_CEO_HEDGING_QUERY,
+      gdeltRequest: request,
+      gdeltAttempts: attempts,
       articleCount: relevant.length,
       executiveHitCount: executiveHits.length,
       topArticles: relevant.slice(0, 5).map((a) => ({ title: a.title || null, url: a.url || null, domain: a.domain || null, seendate: a.seendate || null }))
     }
   };
+}
+
+async function tavilySearch(payload) {
+  if (!TAVILY_API_KEYS.length) throw new Error('TAVILY_API_KEYS 未配置');
+  let lastError = null;
+  for (let i = 0; i < TAVILY_API_KEYS.length; i++) {
+    const key = TAVILY_API_KEYS[i];
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20000);
+    try {
+      const res = await fetch('https://api.tavily.com/search', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${key}`,
+          'Content-Type': 'application/json',
+          'User-Agent': UA
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+      const text = await res.text();
+      if (!res.ok) throw new Error(`Tavily HTTP ${res.status}`);
+      try {
+        return JSON.parse(text);
+      } catch (parseError) {
+        throw new Error(`Tavily JSON parse failed: ${parseError.message}`);
+      }
+    } catch (error) {
+      lastError = error;
+      console.warn(`[bubble-watch] Tavily CEO hedging search key ${i + 1}/${TAVILY_API_KEYS.length} failed: ${error.message}`);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw lastError || new Error('Tavily Search API failed');
+}
+
+async function braveNewsSearch(params) {
+  if (!BRAVE_API_KEYS.length) throw new Error('BRAVE_API_KEYS 未配置');
+  let lastError = null;
+  for (let i = 0; i < BRAVE_API_KEYS.length; i++) {
+    const key = BRAVE_API_KEYS[i];
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20000);
+    try {
+      const url = `https://api.search.brave.com/res/v1/news/search?${params}`;
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Accept-Encoding': 'gzip',
+          'User-Agent': UA,
+          'X-Subscription-Token': key
+        },
+        signal: controller.signal
+      });
+      const text = await res.text();
+      if (!res.ok) throw new Error(`Brave News HTTP ${res.status}`);
+      try {
+        return JSON.parse(text);
+      } catch (parseError) {
+        throw new Error(`Brave News JSON parse failed: ${parseError.message}`);
+      }
+    } catch (error) {
+      lastError = error;
+      console.warn(`[bubble-watch] Brave CEO hedging news key ${i + 1}/${BRAVE_API_KEYS.length} failed: ${error.message}`);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw lastError || new Error('Brave News Search API failed');
 }
 
 async function fetchCeoHedgingFromWindNews(gdeltError) {
@@ -2511,12 +2774,172 @@ async function fetchCeoHedgingFromWindNews(gdeltError) {
   };
 }
 
+async function fetchCeoHedgingFromTavilyPublic(gdeltError, mode = 'fallback') {
+  const query = '"AI bubble" OR "artificial intelligence bubble" OR "AI overbuild" OR "AI capex bubble" CEO executive';
+  const json = await tavilySearch({
+    query,
+    topic: 'news',
+    search_depth: 'basic',
+    max_results: 10,
+    time_range: 'month',
+    include_answer: false,
+    include_raw_content: false,
+    include_usage: true
+  });
+  const results = Array.isArray(json?.results) ? json.results : [];
+  if (!results.length) throw new Error('Tavily CEO hedging news 返回空列表');
+  const aiRe = /\bAI\b|artificial intelligence|Nvidia|OpenAI|Microsoft|Meta|Google|Alphabet|Oracle|Broadcom|AMD|Tesla/iu;
+  const executiveRe = /\b(CEO|chief executive|executive|Altman|Nadella|Huang|Musk|Zuckerberg|Pichai|Ellison|Hock Tan|Lisa Su)\b/iu;
+  const overheatRe = /\b(bubble|overbuild|overbuilt|overheated|irrational|mania|capex|spending boom|data center glut)\b/iu;
+  const relevant = results.filter((item) => {
+    const text = `${item.title || ''} ${item.content || ''} ${item.url || ''}`;
+    return aiRe.test(text) && overheatRe.test(text);
+  });
+  const executiveHits = relevant.filter((item) => executiveRe.test(`${item.title || ''} ${item.content || ''}`));
+  const { status, display } = classifyCeoHedgingEvidence(relevant.length, executiveHits.length);
+  const isCrossCheck = mode === 'cross_check';
+  return {
+    status,
+    value_display: display,
+    source_name: isCrossCheck ? 'Tavily Search API news cross-check' : 'Tavily Search API news fallback',
+    note: isCrossCheck
+      ? `Tavily 免费额度新闻搜索交叉确认:近 30 天 AI bubble/overbuild/capex 相关新闻 ${relevant.length} 条,其中 CEO/核心高管线索 ${executiveHits.length} 条;该项仅作为 GDELT 结果的第二来源确认,单一路径命中不得直接升红。`
+      : `GDELT 免费新闻源失败(${compactSnippet(gdeltError?.message || gdeltError, 90)})后,启用 Tavily 免费额度新闻搜索兜底:近 30 天 AI bubble/overbuild/capex 相关新闻 ${relevant.length} 条,其中 CEO/核心高管线索 ${executiveHits.length} 条;该项仍按公开新闻语义保守判为「${display}」。判级:普遍承认过热=红 / 部分=黄 / 无=绿`,
+    detail: {
+      source: 'Tavily Search API',
+      sourceMode: mode,
+      freePrimaryFailure: isCrossCheck ? null : gdeltError?.message || String(gdeltError || ''),
+      query,
+      topic: 'news',
+      timeRange: 'month',
+      resultCount: results.length,
+      articleCount: relevant.length,
+      executiveHitCount: executiveHits.length,
+      usage: json?.usage || null,
+      requestId: json?.request_id || null,
+      topArticles: relevant.slice(0, 5).map((item) => ({
+        title: item.title || null,
+        url: item.url || null,
+        score: Number.isFinite(item.score) ? item.score : null,
+        published_date: item.published_date || item.publishedDate || null,
+        snippet: compactSnippet(item.content || '', 180)
+      }))
+    }
+  };
+}
+
+async function fetchCeoHedgingFromBraveNews(gdeltError, mode = 'fallback') {
+  const query = '"AI bubble" OR "artificial intelligence bubble" OR "AI overbuild" OR "AI capex bubble" CEO executive';
+  const params = new URLSearchParams({
+    q: query,
+    freshness: 'pm',
+    count: '10',
+    country: 'US',
+    search_lang: 'en',
+    ui_lang: 'en-US',
+    extra_snippets: 'true'
+  });
+  const json = await braveNewsSearch(params);
+  const results = Array.isArray(json?.results) ? json.results : [];
+  if (!results.length) throw new Error('Brave CEO hedging news 返回空列表');
+  const aiRe = /\bAI\b|artificial intelligence|Nvidia|OpenAI|Microsoft|Meta|Google|Alphabet|Oracle|Broadcom|AMD|Tesla/iu;
+  const executiveRe = /\b(CEO|chief executive|executive|Altman|Nadella|Huang|Musk|Zuckerberg|Pichai|Ellison|Hock Tan|Lisa Su)\b/iu;
+  const overheatRe = /\b(bubble|overbuild|overbuilt|overheated|irrational|mania|capex|spending boom|data center glut)\b/iu;
+  const relevant = results.filter((item) => {
+    const extra = Array.isArray(item.extra_snippets) ? item.extra_snippets.join(' ') : '';
+    const text = `${item.title || ''} ${item.description || ''} ${extra} ${item.url || ''}`;
+    return aiRe.test(text) && overheatRe.test(text);
+  });
+  const executiveHits = relevant.filter((item) => {
+    const extra = Array.isArray(item.extra_snippets) ? item.extra_snippets.join(' ') : '';
+    return executiveRe.test(`${item.title || ''} ${item.description || ''} ${extra}`);
+  });
+  const { status, display } = classifyCeoHedgingEvidence(relevant.length, executiveHits.length);
+  const isCrossCheck = mode === 'cross_check';
+  return {
+    status,
+    value_display: display,
+    source_name: isCrossCheck ? 'Brave News Search API cross-check' : 'Brave News Search API fallback',
+    note: isCrossCheck
+      ? `Brave News Search 交叉确认:近 31 天 AI bubble/overbuild/capex 相关新闻 ${relevant.length} 条,其中 CEO/核心高管线索 ${executiveHits.length} 条;该项仅作为 GDELT/Tavily 的独立新闻索引确认,单一路径命中不得直接升红。`
+      : `GDELT 免费新闻源失败(${compactSnippet(gdeltError?.message || gdeltError, 90)})后,启用 Brave News Search 免费额度兜底:近 31 天 AI bubble/overbuild/capex 相关新闻 ${relevant.length} 条,其中 CEO/核心高管线索 ${executiveHits.length} 条;该项仍按公开新闻语义保守判为「${display}」。判级:普遍承认过热=红 / 部分=黄 / 无=绿`,
+    detail: {
+      source: 'Brave News Search API',
+      sourceMode: mode,
+      freePrimaryFailure: isCrossCheck ? null : gdeltError?.message || String(gdeltError || ''),
+      query,
+      endpoint: 'news/search',
+      freshness: 'pm',
+      resultCount: results.length,
+      articleCount: relevant.length,
+      executiveHitCount: executiveHits.length,
+      topArticles: relevant.slice(0, 5).map((item) => ({
+        title: item.title || null,
+        url: item.url || null,
+        age: item.age || null,
+        page_age: item.page_age || null,
+        source: item.meta_url?.hostname || item.profile?.name || null,
+        snippet: compactSnippet(item.description || '', 180)
+      }))
+    }
+  };
+}
+
+async function tryCeoHedgingConfirmation(source, taskFn) {
+  try {
+    return availableCeoHedgingConfirmation(source, await taskFn());
+  } catch (error) {
+    console.warn(`[bubble-watch] ${source} CEO hedging confirmation failed: ${error.message}`);
+    return unavailableCeoHedgingConfirmation(source, error);
+  }
+}
+
+function hasAnyCeoHedgingSearchKey() {
+  return TAVILY_API_KEYS.length > 0 || BRAVE_API_KEYS.length > 0;
+}
+
+async function collectCeoHedgingFreeSearchConfirmations(gdeltError, mode) {
+  const tasks = [];
+  if (TAVILY_API_KEYS.length) {
+    tasks.push(tryCeoHedgingConfirmation('Tavily Search API', () => fetchCeoHedgingFromTavilyPublic(gdeltError, mode)));
+  } else {
+    tasks.push(Promise.resolve(unavailableCeoHedgingConfirmation('Tavily Search API', 'TAVILY_API_KEYS 未配置')));
+  }
+  if (BRAVE_API_KEYS.length) {
+    tasks.push(tryCeoHedgingConfirmation('Brave News Search API', () => fetchCeoHedgingFromBraveNews(gdeltError, mode)));
+  } else {
+    tasks.push(Promise.resolve(unavailableCeoHedgingConfirmation('Brave News Search API', 'BRAVE_API_KEYS 未配置')));
+  }
+  return Promise.all(tasks);
+}
+
 async function fetchCeoHedgingWithTieredSources() {
   try {
-    return await fetchCeoHedgingFromGdeltPublic();
+    const gdeltResult = await fetchCeoHedgingFromGdeltPublic();
+    const confirmations = await collectCeoHedgingFreeSearchConfirmations(null, 'cross_check');
+    return mergeCeoHedgingNewsConfirmations(
+      availableCeoHedgingConfirmation('GDELT DOC 2.0', gdeltResult),
+      confirmations
+    );
   } catch (error) {
-    console.warn(`[bubble-watch] GDELT CEO hedging failed, try Wind paid fallback: ${error.message}`);
-    return fetchCeoHedgingFromWindNews(error);
+    console.warn(`[bubble-watch] GDELT CEO hedging failed, try Tavily/Brave free fallbacks: ${error.message}`);
+    if (hasAnyCeoHedgingSearchKey()) {
+      const confirmations = await collectCeoHedgingFreeSearchConfirmations(error, 'fallback');
+      const available = confirmations.filter((entry) => entry.result);
+      if (available.length) {
+        return mergeCeoHedgingNewsConfirmations(
+          available[0],
+          confirmations.filter((entry) => entry !== available[0]),
+          { primaryFailure: error }
+        );
+      }
+    }
+    console.warn('[bubble-watch] Tavily/Brave CEO hedging fallbacks unavailable, try Wind paid fallback');
+    const windErrorContext = new Error(`GDELT failed: ${error.message}; Tavily/Brave free search unavailable`);
+    return capSingleSourceCeoHedgingRed(
+      await fetchCeoHedgingFromWindNews(windErrorContext),
+      'GDELT/Tavily/Brave 免费新闻路径均不可用,Wind 为唯一付费兜底路径'
+    );
   }
 }
 
