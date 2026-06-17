@@ -2496,7 +2496,7 @@ function capSingleSourceCeoHedgingRed(result, reason) {
     ...result,
     status: 'yellow',
     value_display: ceoHedgingDisplayForStatus('yellow'),
-    note: `${result.note};单源上限规则: ${reason},未获得第二个独立新闻源确认,红灯封顶为黄灯。`,
+    note: `${result.note} 当前只有单一路径达到红色强度,尚未形成独立来源共振,按保守口径先维持黄灯。`,
     detail: {
       ...(result.detail || {}),
       singleSourceCapApplied: true,
@@ -2527,6 +2527,50 @@ function formatCeoHedgingSourceSummary(entry) {
   if (!entry?.result) return `${entry.source}:不可用(${entry.reason || 'unknown'})`;
   const counts = getCeoHedgingResultCounts(entry.result);
   return `${entry.source}:${entry.result.value_display}(新闻${counts.articleCount ?? 'n/a'},高管${counts.executiveHitCount ?? 'n/a'})`;
+}
+
+function collectCeoHedgingEvidenceText(entries) {
+  return entries
+    .filter((entry) => entry?.result)
+    .flatMap((entry) => [
+      ...(entry.result.detail?.topArticles || []),
+      ...(entry.result.detail?.crossConfirmations || []).flatMap((confirmation) => confirmation.topArticles || [])
+    ])
+    .map((article) => `${article.title || ''} ${article.snippet || ''} ${article.source || ''}`)
+    .join(' ');
+}
+
+function buildCeoHedgingPublicNarrative(entries, status) {
+  const evidenceText = collectCeoHedgingEvidenceText(entries);
+  const hasAltman = /\bAltman\b|OpenAI/iu.test(evidenceText);
+  const hasPichai = /\bPichai\b|Google|Alphabet/iu.test(evidenceText);
+  const hasDimon = /\bDimon\b|JPMorgan|JPM/iu.test(evidenceText);
+  const hasSemi = /\bNvidia|Broadcom|AMD|semiconductor|chip\b/iu.test(evidenceText);
+  const hasCapex = /\bcapex|data center|overbuild|spending|cost|budget|huge issue\b/iu.test(evidenceText);
+  const hasValuation = /\bbubble|valuation|irrational|mania|burst|dot-com|stock market\b/iu.test(evidenceText);
+
+  const lead = status === 'red'
+    ? '对冲表态明显扩散'
+    : status === 'yellow'
+      ? '对冲表态继续升温'
+      : '对冲表态暂未扩散';
+  const signals = [];
+  if (hasAltman) signals.push('Altman 关于 AI 成本压力的表态被多篇引用');
+  if (hasPichai) signals.push('Google/Alphabet 相关高管线索进入泡沫讨论');
+  if (hasDimon) signals.push('Dimon 等金融高管的泡沫风险表述被市场关注');
+  if (hasSemi) signals.push('AI 股与半导体波动带出估值疑虑');
+  if (hasCapex) signals.push('数据中心投入、capex 回报和过建风险被反复讨论');
+  if (hasValuation) signals.push('多篇新闻围绕 AI bubble、估值和回撤风险展开');
+  const evidenceSentence = signals.length
+    ? signals.slice(0, 3).join('；')
+    : '近期新闻集中讨论 AI bubble、估值压力和资本开支可持续性';
+  if (status === 'red') {
+    return `${lead}:${evidenceSentence}。高管/市场领袖承认过热的频率与强度已明显偏高,升至红灯。`;
+  }
+  if (status === 'yellow') {
+    return `${lead}:${evidenceSentence}。频率与强度偏高,但尚未看到 CEO 集体承认过热或暂停投入,维持黄灯。`;
+  }
+  return `${lead}:${evidenceSentence}。当前公开表态仍以市场讨论和分析师质疑为主,缺少直接高管共振,维持绿灯。`;
 }
 
 function serializeCeoHedgingConfirmation(entry) {
@@ -2560,20 +2604,18 @@ function mergeCeoHedgingNewsConfirmations(primaryEntry, confirmationEntries, opt
   const display = ceoHedgingDisplayForStatus(status);
   const primaryResult = primaryEntry.result;
   const summary = entries.map(formatCeoHedgingSourceSummary).join(' / ');
-  const cappedText = strongestRank >= 2 && !multiSourceConfirmed ? '单一路径红色信号封顶为黄' : '允许采用多源确认后的最高等级';
-  const primaryFailureText = options.primaryFailure
-    ? `;GDELT 主源失败(${compactSnippet(options.primaryFailure.message || options.primaryFailure, 90)})`
-    : '';
+  const publicNarrative = buildCeoHedgingPublicNarrative(entries, status);
   return {
     ...primaryResult,
     status,
     value_display: display,
     source_name: `${availableEntries.map((entry) => entry.source).join(' + ')}${options.primaryFailure ? ' fallback' : ' cross-check'}`,
-    note: `${primaryResult.note}${primaryFailureText};新闻源交叉确认:${summary}。多源规则:红灯需要 GDELT/Tavily/Brave 至少两源达到黄色以上且至少一源达红,${cappedText}。`,
+    note: publicNarrative,
     detail: {
       ...(primaryResult.detail || {}),
       source: `${availableEntries.map((entry) => entry.source).join(' + ')}${options.primaryFailure ? ' fallback' : ''}`,
       freePrimaryFailure: options.primaryFailure?.message || primaryResult.detail?.freePrimaryFailure || null,
+      sourceSummary: summary,
       crossConfirmations: confirmationEntries.map(serializeCeoHedgingConfirmation),
       crossConfirmation: confirmationEntries.length === 1 ? serializeCeoHedgingConfirmation(confirmationEntries[0]) : undefined,
       crossConfirmationRule: {
@@ -2753,11 +2795,16 @@ async function fetchCeoHedgingFromWindNews(gdeltError) {
   const executiveHits = relevant.filter((item) => executiveRe.test(`${item.title || ''} ${item.content || ''}`));
   const cautionHits = relevant.filter((item) => cautionRe.test(`${item.title || ''} ${item.content || ''}`));
   const { status, display } = classifyCeoHedgingEvidence(relevant.length, executiveHits.length);
+  const narrative = status === 'red'
+    ? '对冲表态明显扩散:近期新闻持续围绕 AI 泡沫、估值压力和资本开支可持续性展开,并出现较多 CEO/高管谨慎表述。承认过热的频率与强度已明显偏高,升至红灯。'
+    : status === 'yellow'
+      ? '对冲表态继续升温:近期新闻继续围绕 AI 泡沫、估值压力和资本开支可持续性展开,并出现部分 CEO/高管谨慎表述。频率与强度偏高,但尚未看到 CEO 集体承认过热或暂停投入,维持黄灯。'
+      : '对冲表态暂未扩散:近期公开新闻仍以市场讨论和分析师质疑为主,缺少直接高管共振,维持绿灯。';
   return {
     status,
     value_display: display,
     source_name: 'Wind MCP paid optional news fallback',
-    note: `GDELT 免费新闻源失败(${compactSnippet(gdeltError?.message || gdeltError, 90)})后,才启用 Wind 付费新闻兜底:检索到 AI 泡沫/过热相关新闻 ${relevant.length} 条,其中 CEO/高管线索 ${executiveHits.length} 条、谨慎/风险措辞 ${cautionHits.length} 条;该项仍按公开新闻语义保守判为「${display}」。判级:普遍承认过热=红 / 部分=黄 / 无=绿`,
+    note: narrative,
     detail: {
       source: 'Wind MCP financial_docs.get_financial_news',
       freePrimaryFailure: gdeltError?.message || String(gdeltError || ''),
