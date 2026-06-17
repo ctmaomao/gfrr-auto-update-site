@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-06-17T11:15:16.165Z",
+  "updatedAt": "2026-06-17T11:32:22.731Z",
   "sourceMode": "computed_with_external_sources",
   "score": 66,
   "state": "multi_theater_stress",
@@ -11,12 +11,12 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-06-17T11:09:40.078Z",
-    "ageMinutes": 6,
+    "updatedAt": "2026-06-17T11:27:40.074Z",
+    "ageMinutes": 5,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 79.335,
-    "gold": 4330.6001,
+    "brent": 79.39,
+    "gold": 4330.7998,
     "vix": 16.2,
     "dxy": 119.5073,
     "hyOas": 2.66,
@@ -32,7 +32,7 @@
     "gdelt": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-06-17T11:15:12.331Z",
+      "lastFetchedAt": "2026-06-17T11:32:14.730Z",
       "summary": {
         "errors": [],
         "totalEvents": 580,
@@ -7685,13 +7685,13 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": false,
         "cacheReason": null,
-        "attemptedAt": "2026-06-17T11:15:12.331Z"
+        "attemptedAt": "2026-06-17T11:32:14.730Z"
       }
     },
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-06-17T11:15:12.629Z",
+      "lastFetchedAt": "2026-06-17T11:32:15.081Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 9,
@@ -7751,15 +7751,15 @@
         "regionsTracked": 6,
         "hotZonesTopCount": 10,
         "sourceFreshness": "fresh",
-        "politicalViolenceEventsLatestFullYear": 209202,
-        "politicalViolenceYoyDelta": 0.200163,
-        "civilianTargetingShareLatestFullYear": 0.311178,
-        "fatalitiesLatestFullYear": 243738,
-        "monthlyLatest12mVsPrior12mDelta": 0.019155,
-        "monthlyAsOfDate": "2026-05-29",
+        "politicalViolenceEventsLatestFullYear": 209287,
+        "politicalViolenceYoyDelta": 0.200577,
+        "civilianTargetingShareLatestFullYear": 0.311343,
+        "fatalitiesLatestFullYear": 243862,
+        "monthlyLatest12mVsPrior12mDelta": -0.028498,
+        "monthlyAsOfDate": "2026-06-12",
         "monthlyLatestFullYear": 2025,
         "monthlySourceFreshness": "fresh",
-        "noteZh": "周度覆盖 6 个区域，最新周 2026-06-05，近4周事件相对12周均值变化 -5.6%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 20.0%。"
+        "noteZh": "周度覆盖 6 个区域，最新周 2026-06-05，近4周事件相对12周均值变化 -5.6%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 20.1%。"
       }
     }
   },
@@ -7855,8 +7855,8 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4330.6，显示避险或实际利率压力定价。",
-          "value": 4330.6001,
+          "summary": "基于 Worker 快变量，黄金当前值 4330.8，显示避险或实际利率压力定价。",
+          "value": 4330.7998,
           "direction": "up",
           "confidence": 0.75
         },
@@ -7864,7 +7864,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "119.5073/4330.6001",
+          "value": "119.5073/4330.7998",
           "direction": "up",
           "confidence": 0.6
         },
@@ -7872,7 +7872,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7511.35/4330.6001",
+          "value": "7511.35/4330.7998",
           "direction": "mixed",
           "confidence": 0.45
         },
@@ -7880,7 +7880,7 @@
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
           "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 79.335,
+          "value": 79.39,
           "direction": "up",
           "confidence": 0.65
         }
