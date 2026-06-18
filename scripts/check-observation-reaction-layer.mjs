@@ -10,9 +10,12 @@ const requiredMarkers = [
   'function setObservationReaction(',
   'function reactionText(',
   'function signalFromEquityChange(',
+  'function signalFromGoldPrice(',
   'function signalFromFreightRegime(',
   'function signalFromChinaProperty(',
   "'c1-freight-status'",
+  "setObservationReaction('c2-gold-status', 'c2-gold-badge'",
+  "'c2-gold-aux'",
   "setObservationReaction('c2-cuau-status'",
   'setObservationReaction(`${prefix}-status`, `${prefix}-badge`, radarData, signal)',
   "renderCfetsRmbLeaf('c2-cfets', radarData.macroDrivers?.cfetsRmb, radarData)",
@@ -35,6 +38,8 @@ const requiredMarkers = [
 ];
 
 const forbiddenMarkers = [
+  "setBadge('c2-gold-badge', 'neutral'",
+  "setToneClass('c2-gold-status', 'status-bar', 'neutral'",
   "setBadge('c1-freight-badge', 'neutral'",
   "setBadge('c2-cuau-badge', 'neutral'",
   "setBadge('c5-v2x-badge', 'neutral'",
@@ -62,7 +67,10 @@ if (missing.length || forbidden.length) {
   process.exit(1);
 }
 
-const { __testObservationReaction } = await import('./modules/renderMacroOverview.js?check=observation-reaction-layer');
+const {
+  __testObservationReaction,
+  __testSignalFromGoldPrice
+} = await import('./modules/renderMacroOverview.js?check=observation-reaction-layer');
 
 const cases = [
   {
@@ -138,4 +146,31 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Observation reaction layer: PASS (${cases.length} behavior cases)`);
+const goldSignalCases = [
+  { name: 'Gold missing = unavailable', value: null, expected: 'unavailable' },
+  { name: 'Gold below high threshold = neutral', value: 1800, expected: 'neutral' },
+  { name: 'Gold high threshold = stress', value: 2400, expected: 'stress' },
+  { name: 'Gold elevated = stress', value: 4270.1, expected: 'stress' }
+];
+
+const goldSignalFailures = goldSignalCases
+  .map((testCase) => {
+    const actual = __testSignalFromGoldPrice(testCase.value);
+    return actual === testCase.expected ? null : `${testCase.name}: expected ${testCase.expected}, got ${actual}`;
+  })
+  .filter(Boolean);
+
+const goldReaction = __testObservationReaction({ score: 44 }, __testSignalFromGoldPrice(4270.1));
+if (goldReaction?.tone !== 'orange' || goldReaction?.label !== '印证' || goldReaction?.phrase !== '印证高风险预警') {
+  goldSignalFailures.push(
+    `Gold high reaction: expected orange/印证/印证高风险预警, got ${goldReaction?.tone}/${goldReaction?.label}/${goldReaction?.phrase}`,
+  );
+}
+
+if (goldSignalFailures.length) {
+  console.error('Gold observation reaction behavior mismatch:');
+  for (const failure of goldSignalFailures) console.error(`- ${failure}`);
+  process.exit(1);
+}
+
+console.log(`Observation reaction layer: PASS (${cases.length} relation cases, ${goldSignalCases.length + 1} gold cases)`);

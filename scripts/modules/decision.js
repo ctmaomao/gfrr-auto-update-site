@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=observation-reaction-risk-band-1';
-import { formatOnRrpYiUsd } from './format.js?v=observation-reaction-risk-band-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=gold-observation-reaction-1';
+import { formatOnRrpYiUsd } from './format.js?v=gold-observation-reaction-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

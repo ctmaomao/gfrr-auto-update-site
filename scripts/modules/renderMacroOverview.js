@@ -8,10 +8,10 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=observation-reaction-risk-band-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=observation-reaction-risk-band-1';
-import { MODULE_LABELS } from './decision.js?v=observation-reaction-risk-band-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=observation-reaction-risk-band-1';
+} from './config.js?v=gold-observation-reaction-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=gold-observation-reaction-1';
+import { MODULE_LABELS } from './decision.js?v=gold-observation-reaction-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=gold-observation-reaction-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1278,6 +1278,14 @@ function signalFromSourceStatus(status) {
   return 'neutral';
 }
 
+function signalFromGoldPrice(gold) {
+  if (gold === null || gold === undefined || gold === '') return 'unavailable';
+  const value = asNumber(gold);
+  if (value === null) return 'unavailable';
+  if (value >= 2400) return 'stress';
+  return 'neutral';
+}
+
 function signalFromFreightRegime(regime) {
   const text = typeof regime === 'string' ? regime : '';
   if (!text) return 'unavailable';
@@ -2001,8 +2009,11 @@ function renderC2GlobalLiquidity({ radarData }) {
 
     const gold = currentValue(radarData, 'gold');
     if (gold !== null) setLeafText('c2-gold-number', gold.toFixed(2));
-    setToneClass('c2-gold-status', 'status-bar', 'neutral');
-    setBadge('c2-gold-badge', 'neutral', 'OBS');
+    const goldReaction = setObservationReaction('c2-gold-status', 'c2-gold-badge', radarData, signalFromGoldPrice(gold));
+    const goldDriver = radarData.macroDrivers?.copperGold?.gold || {};
+    const goldChange = asNumber(goldDriver.changePct);
+    const goldChangeText = goldChange !== null ? `${signedPercentFromDecimal(goldChange, 2)} ${goldDriver.changeWindow || '1d'}` : '变化 —';
+    setLeafText('c2-gold-aux', reactionText(goldReaction, `黄金 ${moneyFixed(gold)} · ${goldChangeText}`));
 
     const us10y = currentValue(radarData, 'us10y');
     const us10yStatus = us10yTone(us10y);
@@ -3485,4 +3496,8 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
 
 export function __testObservationReaction(radarData, signal, worldOrderStressData = null) {
   return observationReaction(radarData, signal, worldOrderStressData);
+}
+
+export function __testSignalFromGoldPrice(gold) {
+  return signalFromGoldPrice(gold);
 }

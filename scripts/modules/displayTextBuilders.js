@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=observation-reaction-risk-band-1';
+﻿import { fmtNumSafe } from './config.js?v=gold-observation-reaction-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
