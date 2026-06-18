@@ -8,6 +8,7 @@ const SUITES = {
     'check:null-zero-display-guards',
     'check:dom',
     'check:macro-overview-narrative',
+    'check:macro-overview-display-helpers',
     'check:macro-coherence-display-only'
   ],
   'external-ai': [
