@@ -8,6 +8,7 @@
 //   5. boundary   — display-only:主站 app.js / index.html 不读本数据;build 不碰
 //                   radar-data / realtime;双页书签组件两侧都在
 //   6. history    — 历史文件与 latest 对齐,history_seed 尾点一致
+//   7. public-copy — 前台卡片文案不得暴露 builder/provenance/fallback/proxy 等工程语言
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -62,6 +63,19 @@ const TECHNICAL_HEAT_IDS = [
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
 const TIER_LABEL_EN = { observation: 'Observation', caution: 'Moderate Caution', alert: 'High Risk Alert', top: 'Systemic Top' };
 const NARRATIVE_ENGINE_VERSION = 'bubble-watch-narrative-v1';
+const VISIBLE_COPY_FORBIDDEN_PATTERNS = [
+  { re: /\blocal_proxy_confidence_v1\b/iu, label: 'local_proxy_confidence_v1' },
+  { re: /\bprovenance\b/iu, label: 'provenance' },
+  { re: /\bred_pct\b/iu, label: 'red_pct internal field name' },
+  { re: /\btemplate\b|模板|上游模板/iu, label: 'template/upstream template' },
+  { re: /\bfallback\b|兜底|fail-closed|fail closed/iu, label: 'fallback/fail-closed' },
+  { re: /\bproxy\b|代理源置信度|自动代理源|新闻事件代理|平台代理|技术超买代理/iu, label: 'proxy implementation wording' },
+  { re: /自动原始|原始判级|原始值「/iu, label: 'raw automatic classification wording' },
+  { re: /实时抓取|实拉|抓取失败|source failed|fetch failed/iu, label: 'fetch/build implementation wording' },
+  { re: /\bMCP\b|付费可选源|paid optional|paid final|paid source/iu, label: 'paid source implementation wording' },
+  { re: /\bcurated\b|\bhybrid\b|\bbuilder\b|\bendpoint\b/iu, label: 'builder/internal source wording' },
+  { re: /\bAPI\b/iu, label: 'API implementation wording' }
+];
 
 const data = JSON.parse(read('data/bubble-watch.json'));
 const history = JSON.parse(read('data/bubble-watch-history.json'));
@@ -119,6 +133,32 @@ for (const section of s.narrative_plan?.sections || []) {
   check('contract', Array.isArray(section.sourceIndicators), `narrative_plan.${section.key || '?'} sourceIndicators 非数组`);
 }
 
+function checkVisibleCopy(fieldName, value) {
+  const text = String(value || '');
+  for (const { re, label } of VISIBLE_COPY_FORBIDDEN_PATTERNS) {
+    check('public-copy', !re.test(text), `${fieldName} 暴露工程语言: ${label}`);
+  }
+}
+
+for (const ind of data.indicators || []) {
+  for (const field of ['note', 'source_name']) {
+    checkVisibleCopy(`indicators.${ind.id}.${field}`, ind[field]);
+  }
+}
+checkVisibleCopy('summary.verdict_desc', s.verdict_desc);
+for (const [index, section] of (s.narrative_plan?.sections || []).entries()) {
+  checkVisibleCopy(`summary.narrative_plan.sections[${index}].summaryZh`, section.summaryZh);
+}
+for (const [index, item] of (s.narrative_plan?.evidenceHighlights || []).entries()) {
+  checkVisibleCopy(`summary.narrative_plan.evidenceHighlights[${index}].note_summary`, item.note_summary);
+}
+for (const [index, text] of (s.narrative_plan?.limitations || []).entries()) {
+  checkVisibleCopy(`summary.narrative_plan.limitations[${index}]`, text);
+}
+for (const [index, item] of (data.wow_changes || []).entries()) {
+  checkVisibleCopy(`wow_changes[${index}].note`, item.note);
+}
+
 const technicalHeat = data.market_technical_heat || {};
 check('contract', technicalHeat.contractVersion === 'bubble-watch-market-technical-heat-v1', 'market_technical_heat contractVersion 缺失/异常');
 check('contract', String(technicalHeat.boundary || '').includes('display-only') && String(technicalHeat.boundary || '').includes('excluded from 24-indicator'),
@@ -149,10 +189,14 @@ if (technicalHeat.status !== 'unavailable') {
       check('contract', typeof item[field] === 'string' && item[field].length > 0, `${item.id} 缺 ${field}`);
     }
     check('contract', /Yahoo Chart/iu.test(item.source_name), `${item.id} source_name 应标 Yahoo Chart`);
+    for (const field of ['note', 'source_name']) {
+      checkVisibleCopy(`market_technical_heat.items.${item.id}.${field}`, item[field]);
+    }
   }
 } else {
   check('contract', Array.isArray(technicalHeat.items) && technicalHeat.items.length === 0, 'market_technical_heat unavailable 时 items 应为空');
 }
+checkVisibleCopy('market_technical_heat.summary', technicalHeat.summary);
 
 const meta = data.meta || {};
 check('contract', (meta.auto_count || 0) + (meta.curated_count || 0) + (meta.fallback_count || 0) === EXPECTED_IDS.length,
@@ -257,6 +301,8 @@ check('boundary', pageHtml.includes('data/bubble-watch.json'), 'bubble-watch.htm
 check('boundary', pageHtml.includes('id="market-technical-heat"') && pageHtml.includes('renderMarketTechnicalHeat'), 'bubble-watch.html 缺公开市场技术热度审计面板渲染');
 check('boundary', !pageHtml.includes('WEIGHTED RISK SCORE'), 'bubble-watch.html 不得把 weighted_risk_score 标成页面主风险分');
 check('boundary', pageHtml.includes('PRIMARY SCORE:'), 'bubble-watch.html 必须显式标注主分数口径');
+check('public-copy', !/Yellow-adjusted aux|数据管线|实时接入|人工研究口径|分类升级 →|不计入 24 项主分|不改变 24 项红灯比例|不参与平台的风险打分与决策/u.test(pageHtml),
+  'bubble-watch.html 可见模板残留工程语言');
 check('boundary', !buildSrc.includes('radar-data.json') && !buildSrc.includes("'realtime"), 'build 脚本不得触碰 radar-data / realtime');
 check('boundary', !/scoring\s*[:=].*decisionModel|executionLock|positionGuidance/u.test(buildSrc), 'build 脚本出现决策链字段');
 check('boundary', (data.meta?.boundary || '').includes('display-only'), 'meta.boundary 缺 display-only 声明');
@@ -276,11 +322,11 @@ for (const w of data.wow_changes || []) {
 }
 
 // ---- 输出 ----
-const groups = ['contract', 'scoring', 'freshness', 'provenance', 'boundary', 'history'];
+const groups = ['contract', 'scoring', 'freshness', 'provenance', 'boundary', 'history', 'public-copy'];
 if (failures.length) {
   for (const f of failures) console.error(`FAIL ${f}`);
   console.error(`check:bubble-watch FAILED (${failures.length} failure${failures.length > 1 ? 's' : ''})`);
   process.exit(1);
 }
 for (const g of groups) console.log(`OK bubble-watch ${g}`);
-console.log('check:bubble-watch PASS (6 leaf checks)');
+console.log('check:bubble-watch PASS (7 leaf checks)');

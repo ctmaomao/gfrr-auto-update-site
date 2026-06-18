@@ -2243,7 +2243,7 @@ function bollingerPctB(closes) {
 }
 
 function marketStatus(status, valueDisplay, note, detail) {
-  return { status, value_display: valueDisplay, note, source_name: 'Yahoo Chart v8 public endpoint', detail };
+  return { status, value_display: valueDisplay, note, source_name: 'Yahoo Chart 公开价格序列', detail };
 }
 
 function buildEqualWeightComposite(series, dates) {
@@ -2358,7 +2358,7 @@ async function buildMarketTechnicalHeatPanel() {
       ...marketStatus(
         classifyTechnicalHeatItem('rsi_14d', rsi),
         rsi.toFixed(0),
-        `按等权 AI 篮子日线合成价计算 14 日 RSI=${rsi.toFixed(1)}。RSI 是技术超买代理,不能替代估值或基本面判断。`,
+        `按等权 AI 篮子日线合成价计算 14 日 RSI=${rsi.toFixed(1)}。RSI 反映短线超买温度,不能替代估值或基本面判断。`,
         { rsi, period: 14 }
       )
     },
@@ -2416,7 +2416,7 @@ async function buildMarketTechnicalHeatPanel() {
     label,
     heat_score: heatScore,
     counts: { red, yellow, green: items.length - red - yellow, total: items.length },
-    summary: `公开市场技术热度为「${label}」:${red} 红 / ${yellow} 黄 / ${items.length - red - yellow} 绿;该面板只看上市 AI 篮子的价格/拥挤度,不改变 Bubble Watch 主分数。`,
+    summary: `公开市场技术热度为「${label}」:${red} 红 / ${yellow} 黄 / ${items.length - red - yellow} 绿;该面板只看上市 AI 篮子的价格与拥挤度,不能替代估值、现金流或信用条件判断。`,
     basket: {
       construction: 'equal_weight_normalized_to_base_100',
       symbols: basketSeries.map((entry) => entry.symbol),
@@ -2461,7 +2461,7 @@ function buildUnavailableMarketTechnicalHeatPanel(error) {
     label: '数据暂缺',
     heat_score: null,
     counts: { red: 0, yellow: 0, green: 0, total: 0 },
-    summary: `公开市场技术热度暂缺: ${compactSnippet(error?.message || error, 160)}。该面板 fail-closed,不改变 Bubble Watch 主分数。`,
+    summary: '公开市场技术热度暂缺。该面板仅作市场温度观察,不能替代估值、现金流或信用条件判断。',
     basket: {
       construction: 'equal_weight_normalized_to_base_100',
       symbols: [],
@@ -3592,6 +3592,128 @@ function calibrateProxyConfidenceResult(def, result, entry) {
   };
 }
 
+const PUBLIC_SOURCE_LABELS = {
+  cape: 'CAPE 历史估值序列',
+  top5_weight: 'SPY 持仓集中度',
+  nvda_fpe: 'NVDA 远期估值',
+  hyperscaler_capex_yoy: '公开季度现金流',
+  mag4_fcf_yoy: '公开季度现金流',
+  vc_ai_share: 'VC 市场季度研究',
+  nvda_invest_revenue: '公开投资承诺与收入',
+  breadth_50d: 'S&P 500 成份股价格广度',
+  spy_vs_rsp_6m: '市值加权与等权重 ETF',
+  insider_sell_buy: '内部人交易披露',
+  ai_ipo_pipeline: '一级市场公开报道',
+  hy_oas: 'ICE BofA 高收益债利差',
+  dc_abs_spread: '数据中心证券样本与 ABS 基准',
+  debt_capex_ratio: '数据中心融资缺口研究',
+  neocloud_credit: 'Neocloud 公开融资与信用事件',
+  token_volume_mom: '公开模型平台用量',
+  token_revenue_ratio: '公开模型平台用量与价格口径',
+  arr_2nd_deriv: '公开 ARR 里程碑',
+  enterprise_deploy: '企业 AI 部署调查',
+  cloud_rpo_growth: '云厂商订单与 backlog 披露',
+  accounting_events: 'SEC / DOJ 执法公告',
+  fed_policy: 'Fed 利率与 CPI',
+  capex_reaction: '公开财报与相对收益窗口',
+  ceo_hedging: '公开新闻与高管表态'
+};
+
+const PUBLIC_CALIBRATION_SUMMARIES = {
+  insider_sell_buy: '内部人卖出仍偏高，但尚未接近互联网泡沫峰值强度，因此维持黄灯。',
+  ai_ipo_pipeline: '发行热度正在升温，但已挂牌和明确待发公司数仍不足以构成 IPO 洪流，因此维持黄灯。',
+  capex_reaction: '价格惩罚已比较明显，但尚缺直接管理层下调或财报指引惩罚共振，因此按选择性惩罚而非系统性惩罚发布。',
+  ceo_hedging: '高管和市场领袖的谨慎措辞增加，但尚未形成集体承认过热或暂停投入的共振。',
+  token_revenue_ratio: 'Token 用量与估算支出增速接近，尚未显示收入兑现显著落后于算力消耗。',
+  enterprise_deploy: '单一 AI-agent 口径偏窄，但跨调查仍显示生产部署处于高位，暂不下调灯色。'
+};
+
+function publicCalibrationSummary(ind) {
+  return PUBLIC_CALIBRATION_SUMMARIES[ind.id] || '';
+}
+
+function normalizePublicBubbleCopy(text) {
+  return String(text || '')
+    .replace(/\(实时抓取失败,沿用 \d{4}-\d{2}-\d{2} 快照\)/gu, '（沿用最近一期可用样本）')
+    .replace(/实时抓取/gu, '最新可得数据')
+    .replace(/实拉/gu, '显示')
+    .replace(/StockAnalysis\/Fiscal\.ai metrics 镜像/gu, '公开订单披露')
+    .replace(/stockanalysis 季报镜像/giu, '公开季报现金流')
+    .replace(/StockAnalysis 季度现金流解析/gu, '公开季度现金流显示')
+    .replace(/StockAnalysis\/Yahoo capex reaction proxy 失败\([^)]+\)后启用 Wind 付费新闻兜底:/gu, '公开财报与价格窗口不可用，本轮改用公开新闻观察:')
+    .replace(/Wind 付费可选源识别数据中心 ABS\/类 REITs 样本/gu, '数据中心 ABS/类 REITs 样本')
+    .replace(/Wind 付费新闻兜底/gu, '公开新闻观察')
+    .replace(/Yahoo Chart 全市场实算/gu, '公开市场价格显示')
+    .replace(/Yahoo Chart 实算/gu, '公开市场价格显示')
+    .replace(/OpenRouter public rankings API 汇总供应商周度 token volume/gu, '公开模型平台用量显示')
+    .replace(/OpenRouter 周度模型排名 \+ 公开 catalog pricing 估算平台内 spend proxy/gu, '公开模型平台用量与价格口径显示')
+    .replace(/SaaStr 公开 Anthropic ARR\/run-rate 里程碑解析/gu, '公开 Anthropic ARR/run-rate 里程碑显示')
+    .replace(/Google Cloud ROI of AI 公开报告解析/gu, '企业 AI 部署调查显示')
+    .replace(/SEC RSS 与 DOJ News API 官方新闻稿/gu, 'SEC 与 DOJ 官方执法公告')
+    .replace(/；SEC EDGAR 申报确认不可用\([^)]+\)/gu, '；公开申报确认样本暂缺')
+    .replace(/SEC EDGAR [^。；;]*不可用\([^)]+\)/gu, '公开申报确认样本暂缺')
+    .replace(/GDELT DOC 2\.0 [^:：]{0,80}公开新闻检索\([^)]*\):/gu, '公开新闻检索显示:')
+    .replace(/Tavily 免费额度新闻搜索交叉确认:/gu, '第二组公开新闻检索显示:')
+    .replace(/Brave News Search 交叉确认:/gu, '独立新闻索引显示:')
+    .replace(/GDELT 免费新闻源失败\([^)]+\)后,启用 Tavily 免费额度新闻搜索兜底:/gu, '公开新闻检索显示:')
+    .replace(/GDELT 免费新闻源失败\([^)]+\)后,启用 Brave News Search 免费额度兜底:/gu, '公开新闻检索显示:')
+    .replace(/该项是 OpenRouter 平台公开代理,不是全行业 token tape。/gu, '该口径反映公开模型平台活动，不能等同全行业总量。')
+    .replace(/该项不是厂商真实收入,仅作 OpenRouter 平台代理。/gu, '该口径用于观察平台内用量与价格变化，不能等同厂商确认收入。')
+    .replace(/该项是公开估算里程碑 proxy,不是审计收入。/gu, '该口径来自公开估算里程碑，不能等同审计收入。')
+    .replace(/该项是 enterprise production proxy,不等同所有企业 AI use case。/gu, '该口径反映企业调查中的生产部署比例，不等同所有企业 AI 使用场景。')
+    .replace(/该项是 capex-heavy equity reaction proxy,不是逐字财报指引文本。/gu, '该口径观察高资本开支公司在财报期后的相对收益，不等同逐字财报指引文本。')
+    .replace(/该项是 survey\/news proxy,不等同所有企业 AI use case。/gu, '该口径来自调查和公开报道，不等同所有企业 AI 使用场景。')
+    .replace(/该项低于价格窗口实算优先级。/gu, '')
+    .replace(/按新闻事件代理判为/gu, '按公开新闻事件判为')
+    .replace(/该项仍按公开新闻语义保守判为/gu, '按公开新闻语义保守判为')
+    .replace(/该项仅作为[^。]*。/gu, '')
+    .replace(/单一路径命中不得直接升红。/gu, '')
+    .replace(/,?因此本项明确为 paid proxy,不伪装为正式数据中心专属连续利差/gu, '，因此只判断融资条件方向，不当作正式数据中心专属连续利差')
+    .replace(/paid proxy/giu, '方向性观察')
+    .replace(/\bproxy\b/giu, '观察口径')
+    .replace(/\bAPI\b/gu, '公开源')
+    .replace(/\bfallback\b/giu, '补充口径')
+    .replace(/\bcross-check\b/giu, '交叉验证')
+    .replace(/代理源置信度校准:[^。]*provenance\.detail。/gu, '')
+    .replace(/该规则不依赖上游模板是否可达。/gu, '')
+    .replace(/自动原始判级[^。]*。/gu, '')
+    .replace(/上游模板/gu, '历史对照口径')
+    .replace(/provenance\.detail/gu, '审计明细')
+    .replace(/模板口径/gu, '历史对照口径')
+    .replace(/实时抓取失败/gu, '最新数据暂缺')
+    .replace(/沿用 \d{4}-\d{2}-\d{2} 快照/gu, '沿用最近一期可用样本')
+    .replace(/\s+/gu, ' ')
+    .replace(/\s*([,，;；:：。])\s*/gu, '$1')
+    .replace(/。{2,}/gu, '。')
+    .trim();
+}
+
+function publicIndicatorNote(ind) {
+  let note = normalizePublicBubbleCopy(ind.note);
+  const calibration = ind.provenance?.detail?.proxyConfidenceCalibration;
+  if (calibration?.applied) {
+    note = note
+      .replace(/代理源置信度校准:.*$/u, '')
+      .replace(/[。；;，,\s]+$/u, '')
+      .trim();
+    const summary = publicCalibrationSummary(ind);
+    if (summary && !note.includes(summary)) note = `${note} ${summary}`;
+  }
+  return note.replace(/\s+/gu, ' ').trim();
+}
+
+function publicIndicatorSourceName(ind) {
+  return PUBLIC_SOURCE_LABELS[ind.id] || normalizePublicBubbleCopy(ind.source_name);
+}
+
+function applyPublicIndicatorCopy(indicators) {
+  return indicators.map((ind) => ({
+    ...ind,
+    note: publicIndicatorNote(ind),
+    source_name: publicIndicatorSourceName(ind)
+  }));
+}
+
 // ---------- 打分 / 判读 ----------
 
 function tierFromPct(p) {
@@ -3651,10 +3773,9 @@ function statusMoveText(flip) {
 
 function compareMetricText(label, current, previous, suffix = '') {
   if (!Number.isFinite(current)) return '';
-  const sep = /\s$/u.test(label) ? '' : ' ';
-  if (!Number.isFinite(previous)) return `${label}${sep}${current.toFixed(1)}${suffix}`;
-  if (Math.abs(current - previous) < 0.05) return `${label}${sep}维持 ${current.toFixed(1)}${suffix}`;
-  return `${label}${sep}由 ${previous.toFixed(1)}${suffix} ${current > previous ? '升至' : '降至'} ${current.toFixed(1)}${suffix}`;
+  if (!Number.isFinite(previous)) return `${label}${current.toFixed(1)}${suffix}`;
+  if (Math.abs(current - previous) < 0.05) return `${label}维持 ${current.toFixed(1)}${suffix}`;
+  return `${label}由 ${previous.toFixed(1)}${suffix} ${current > previous ? '升至' : '降至'} ${current.toFixed(1)}${suffix}`;
 }
 
 function buildCategorySnapshots(indicators) {
@@ -3735,7 +3856,7 @@ function buildBubbleNarrativePlan({
   const byId = new Map(indicators.map((i) => [i.id, i]));
   const categorySnapshots = buildCategorySnapshots(indicators);
   const scoreParts = [
-    compareMetricText('主分数 red_pct', redPct, prevEntry?.red_pct, '%')
+    compareMetricText('红灯比例', redPct, prevEntry?.red_pct, '%')
   ].filter(Boolean);
   const flipText = flips.length
     ? `本期翻灯 ${flips.length} 项: ${flips.map(statusMoveText).join('、')}`
@@ -3759,7 +3880,15 @@ function buildBubbleNarrativePlan({
     key: 'market_structure',
     role: 'breadth_and_risk_appetite',
     sourceIndicators: marketStructure.map((i) => i.id),
-    summaryZh: `市场结构边际改善: ${indicatorValueBrief(breadth)}、${indicatorValueBrief(rspSpread)} 均为绿，说明头部独涨压力松动；但 ${indicatorValueBrief(insider)}，风险偏好并非完全健康。`
+    summaryZh: (() => {
+      const greenCount = marketStructure.filter((i) => i.status === 'green').length;
+      const structureLead = greenCount >= 2
+        ? '市场结构边际改善'
+        : greenCount === 1
+          ? '市场结构仍在分化'
+          : '市场结构压力仍高';
+      return `${structureLead}: ${indicatorValueBrief(breadth)}、${indicatorValueBrief(rspSpread)} 显示广度和权重差距尚未同时转弱；但 ${indicatorValueBrief(insider)}，风险偏好并非完全健康。`;
+    })()
   });
 
   const mag4Fcf = byId.get('mag4_fcf_yoy');
@@ -3806,18 +3935,18 @@ function buildBubbleNarrativePlan({
     role: 'final_judgment',
     sourceIndicators: indicators.filter((i) => i.status === 'red').map((i) => i.id),
     summaryZh: overrideActive
-      ? `因此，尽管基础读数仍在「${TIER_LABEL_ZH[baseTier]}」区间，分类强制升级继续生效: ${resonantText}。红灯集中在 ${redNames}；估值与资金面双类共振使有效判读维持「${TIER_LABEL_ZH[effTier]}」。`
-      : `因此，本期未触发分类强制升级: ${resonantText}。红灯为 ${redNames || '无'}；有效判读保持「${TIER_LABEL_ZH[effTier]}」。`
+      ? `因此，尽管红灯比例仍在「${TIER_LABEL_ZH[baseTier]}」区间，估值与资金面共振继续抬高综合判读: ${resonantText}。红灯集中在 ${redNames}；双类压力共振使有效判读维持「${TIER_LABEL_ZH[effTier]}」。`
+      : `因此，本期未出现双类红灯共振: ${resonantText}。红灯为 ${redNames || '无'}；有效判读保持「${TIER_LABEL_ZH[effTier]}」。`
   });
 
   const staleCount = indicators.filter((i) => i.stale).length;
   const proxyCalibrationCount = indicators.filter((i) => i.provenance?.detail?.proxyConfidenceCalibration?.applied).length;
   const limitations = [
-    `${meta.autoCount} 项自动接入、${meta.curatedCount + meta.fallbackCount} 项人工/回退口径。`,
-    proxyCalibrationCount ? `${proxyCalibrationCount} 项新闻/代理指标触发本地置信度校准:自动原始证据保留,发布灯色按多源/样本阈值处理。` : '本期无代理源置信度校准覆盖项。',
-    `黄灯调整辅助压力分 ${weighted.toFixed(1)}% 仅用于趋势辅助,不参与阈值分档或有效判读。`,
-    staleCount ? `${staleCount} 项已标 STALE，相关叙事自动降为低确定性。` : '当前无 STALE 指标。',
-    '原站历史 snapshots 仅用于抽取写作结构与回归评估，生产正文不复制上游 summary.verdict_desc。'
+    `${meta.autoCount} 项公开数据口径、${meta.curatedCount + meta.fallbackCount} 项研究口径。`,
+    proxyCalibrationCount ? `${proxyCalibrationCount} 项新闻或调查口径采用多源确认,灯色按样本强度保守发布。` : '本期无需要额外置信度折扣的新闻或调查口径。',
+    `黄灯压力读数 ${weighted.toFixed(1)}% 仅用于趋势观察,不改变红灯比例阈值。`,
+    staleCount ? `${staleCount} 项数据时效偏弱,相关叙事按低确定性处理。` : '当前无过期指标。',
+    '历史页面仅用于周度结构对照；本期正文由当前指标重新生成。'
   ];
 
   return {
@@ -3877,22 +4006,22 @@ function computeSummary(indicators, today, prevEntry, meta) {
   const curatedCount = meta.curatedCount + meta.fallbackCount;
 
   const parts = [];
-  parts.push(`本周计数 ${red} 红 / ${yellow} 黄 / ${green} 绿${prevEntry?.statuses ? (flips.length ? '' : ',与上期持平') : ''},主分数 red_pct ${redPct.toFixed(1)}%。`);
+  parts.push(`本周计数 ${red} 红 / ${yellow} 黄 / ${green} 绿${prevEntry?.statuses ? (flips.length ? '' : ',与上期持平') : ''},红灯比例 ${redPct.toFixed(1)}%。`);
   if (flips.length) {
     parts.push(`本期翻灯 ${flips.length} 项:${flips.map((f) => `「${f.name_zh}」${STATUS_ZH[f.from]}→${STATUS_ZH[f.to]}`).join('、')}。`);
   } else if (prevEntry?.statuses) {
     parts.push('状态层面无指标翻灯。');
   }
-  parts.push(`基础判读为${TIER_LABEL_ZH[baseTier]}(red_pct ${redPct < 25 ? '<25%' : redPct < 40 ? '25-40%' : redPct < 60 ? '40-60%' : '≥60%'})。`);
+  parts.push(`基础判读为${TIER_LABEL_ZH[baseTier]}(红灯比例 ${redPct < 25 ? '<25%' : redPct < 40 ? '25-40%' : redPct < 60 ? '40-60%' : '≥60%'})。`);
   if (overrideActive) {
-    parts.push(`分类强制升级生效:${resonant.map((c) => `${c.zh} ${c.red}/${c.total} 红`).join('、')}——红灯占比过半的分类达 ${resonant.length} 个,判读上调至「${TIER_LABEL_ZH[effTier]}」。`);
+    parts.push(`双类压力共振:${resonant.map((c) => `${c.zh} ${c.red}/${c.total} 红`).join('、')}——红灯占比过半的分类达 ${resonant.length} 个,综合判读上调至「${TIER_LABEL_ZH[effTier]}」。`);
   } else if (resonant.length === 1) {
     parts.push(`${resonant[0].zh}分类红灯过半(${resonant[0].red}/${resonant[0].total}),未达双分类共振、不触发强制升级。`);
   } else {
     parts.push('无分类红灯占比过半,未触发强制升级。');
   }
   if (redNames.length) parts.push(`当前红灯:${redNames.join('、')}。`);
-  parts.push(`数据由自动管线于 ${today} 采集:${autoCount} 项实时接入、${curatedCount} 项沿用人工研究口径${staleCount ? `(其中 ${staleCount} 项已标 STALE)` : ''};编辑性事件叙事以最近一期人工口径为准。`);
+  parts.push(`数据覆盖截至 ${today}:${autoCount} 项公开数据口径、${curatedCount} 项研究口径${staleCount ? `(其中 ${staleCount} 项时效偏弱)` : ''};事件类叙事以最近一期可确认材料为准。`);
   const templateVerdictDesc = parts.join('');
   const narrativePlan = buildBubbleNarrativePlan({
     indicators,
@@ -4079,10 +4208,11 @@ async function main() {
   }
 
   // 历史:同 ISO 周覆盖,新周追加 + issue 自增
+  const publicIndicators = applyPublicIndicatorCopy(indicators);
   const entries = [...history.entries];
   const prevForWow = [...entries].reverse().find((e) => e.statuses && isoWeekKey(e.date) !== isoWeekKey(today)) || null;
   const meta = { autoCount, curatedCount, fallbackCount, hybridCount };
-  const { summary, scoring, flips } = computeSummary(indicators, today, prevForWow, meta);
+  const { summary, scoring, flips } = computeSummary(publicIndicators, today, prevForWow, meta);
   let marketTechnicalHeat = null;
   try {
     marketTechnicalHeat = await buildMarketTechnicalHeatPanel();
@@ -4100,13 +4230,13 @@ async function main() {
     issue_number: issueNumber,
     red_pct: summary.red_pct,
     risk_score: summary.weighted_risk_score,
-    statuses: Object.fromEntries(indicators.map((i) => [i.id, i.status]))
+    statuses: Object.fromEntries(publicIndicators.map((i) => [i.id, i.status]))
   };
   if (sameWeekIdx >= 0) entries[sameWeekIdx] = newEntry;
   else entries.push(newEntry);
   while (entries.length > 16) entries.shift();
 
-  const proxyConfidenceCalibrations = indicators
+  const proxyConfidenceCalibrations = publicIndicators
     .map((ind) => {
       const calibration = ind.provenance?.detail?.proxyConfidenceCalibration;
       return calibration?.applied
@@ -4128,10 +4258,10 @@ async function main() {
     generated_at: new Date().toISOString(),
     summary,
     scoring,
-    indicators: indicators.map(({ ...ind }) => ind),
+    indicators: publicIndicators.map(({ ...ind }) => ind),
     market_technical_heat: marketTechnicalHeat,
     history_seed: entries.slice(-10).map((e) => ({ week: e.week, red_pct: e.red_pct, risk_score: e.risk_score })),
-    wow_changes: buildWowChanges(flips, indicators),
+    wow_changes: buildWowChanges(flips, publicIndicators),
     meta: {
       builder: 'scripts/build-bubble-watch.mjs',
       boundary: 'display-only:独立专题页数据,不进 GFRR 打分/决策/执行/仓位',

@@ -267,9 +267,6 @@ function renderMarketTechnicalHeat(panel) {
   const status = panel.status || 'unavailable';
   const counts = panel.counts || {};
   const basket = panel.basket || {};
-  const sourcePriority = Array.isArray(panel.source_priority) ? panel.source_priority : [];
-  const primarySource = sourcePriority.find(s => /Yahoo Chart/i.test(s.name || '')) || sourcePriority[0] || {};
-  const fallbackSource = sourcePriority.find(s => /public-apis/i.test(`${s.name || ''} ${s.url || ''}`)) || {};
   const labelZh = status === 'red' ? '技术过热' : status === 'yellow' ? '升温观察' : status === 'green' ? '温度可控' : '数据暂缺';
   const statusClass = ['red', 'yellow', 'green'].includes(status) ? status : 'unavailable';
   const items = Array.isArray(panel.items) ? panel.items : [];
@@ -281,20 +278,20 @@ function renderMarketTechnicalHeat(panel) {
           <span class="en">PUBLIC MARKET TECHNICAL HEAT</span>
         </div>
         <div class="counts">
-          DISPLAY-ONLY · ${(counts.total ?? items.length) || 0} 个审计项 · <span class="red">${counts.red ?? 0} 红</span> · <span class="yellow">${counts.yellow ?? 0} 黄</span>
+          辅助观察 · ${(counts.total ?? items.length) || 0} 个市场温度项 · <span class="red">${counts.red ?? 0} 红</span> · <span class="yellow">${counts.yellow ?? 0} 黄</span>
         </div>
       </div>
       <div class="technical-audit-summary ${statusClass}">
         <div>
-          <div class="label">AUDIT PANEL · NOT IN PRIMARY SCORE</div>
+          <div class="label">MARKET TEMPERATURE · 独立观察</div>
           <div class="technical-headline">${escapeHtml(labelZh)}${Number.isFinite(panel.heat_score) ? ` · ${panel.heat_score.toFixed(1)}/100` : ''}</div>
-          <div class="summary-text">${escapeHtml(panel.summary || '公开市场技术热度暂缺;该面板不改变 Bubble Watch 主分数。')}</div>
+          <div class="summary-text">${escapeHtml(panel.summary || '公开市场技术热度暂缺;仅作市场温度观察。')}</div>
         </div>
         <div class="meta-lines">
           <div>篮子: ${escapeHtml((basket.symbols || basket.requestedSymbols || []).join('/') || '—')}</div>
-          <div>主源: ${escapeHtml(primarySource.name || 'Yahoo Chart v8 public endpoint')}</div>
-          <div>候选: ${escapeHtml(fallbackSource.name || 'public-apis Finance candidates')}</div>
-          <div>边界: 不进入 24 项红灯比例 / 不影响判读分档</div>
+          <div>数据口径: ${escapeHtml('公开日线价格')}</div>
+          <div>备用口径: ${escapeHtml('其它公开价格源')}</div>
+          <div>解释边界: 反映市场温度,不替代估值/基本面判断</div>
         </div>
       </div>
       ${items.length ? `
@@ -349,11 +346,11 @@ function render(data) {
   const overrideActive = effTier !== baseTier;
   const overridePos = TIER_MID_POS[effTier];
   const nowText = overrideActive
-    ? `原始 ${s.red_pct.toFixed(1)}% (${TIER_LABEL_ZH[baseTier]}) · 分类升级 → ${s.verdict_label}`
-    : `当前 ${s.red_pct.toFixed(1)}% · ${s.verdict_label}`;
+    ? `红灯比例 ${s.red_pct.toFixed(1)}% (${TIER_LABEL_ZH[baseTier]}) · 综合判读 → ${s.verdict_label}`
+    : `红灯比例 ${s.red_pct.toFixed(1)}% · ${s.verdict_label}`;
 
   const meta = data.meta || {};
-  const pipelineLine = `数据管线:${meta.auto_count ?? '—'} 项实时接入 / ${(meta.curated_count ?? 0) + (meta.fallback_count ?? 0)} 项人工研究口径`;
+  const pipelineLine = `数据覆盖:${meta.auto_count ?? '—'} 项公开数据口径 / ${(meta.curated_count ?? 0) + (meta.fallback_count ?? 0)} 项研究口径`;
 
   const root = document.getElementById('root');
   root.innerHTML = `
@@ -420,11 +417,11 @@ function render(data) {
             <span class="zone-pct">≥60%</span>
           </div>
           <div class="marker" style="left:${Math.min(Math.max(s.red_pct, 0.5), 99.5)}%">
-            <span class="marker-label">原始 ${s.red_pct.toFixed(1)}%</span>
+            <span class="marker-label">红灯比例 ${s.red_pct.toFixed(1)}%</span>
           </div>
           ${overrideActive ? `
           <div class="marker override" style="left:${overridePos}%">
-            <span class="marker-label">分类升级 → ${escapeHtml(s.verdict_label)}</span>
+            <span class="marker-label">综合判读 → ${escapeHtml(s.verdict_label)}</span>
           </div>` : ''}
         </div>
       </div>
@@ -435,7 +432,7 @@ function render(data) {
         <h3>红灯比例趋势 <em>· 8-Week Trend</em></h3>
         <div class="trend-legend">
           <span><span style="color:var(--red)">●</span> Red %</span>
-          <span><span style="color:var(--yellow)">●</span> Yellow-adjusted aux</span>
+          <span><span style="color:var(--yellow)">●</span> Yellow-adjusted pressure</span>
           <span style="color:var(--muted)">阈值: 25 / 40 / 60</span>
         </div>
       </div>
@@ -527,7 +524,7 @@ function render(data) {
         </div>
         <div>
           <h4>免责</h4>
-          <div>本文为框架研究,非投资建议,仅供参考,不参与平台的风险打分与决策。指标阈值随研究演进调整。Issue ${issueNo} · ${escapeHtml(data.as_of_date)}. ${escapeHtml(pipelineLine)}. <a href="https://radar.gfrfinradar.uk/" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink);border-bottom:1px solid var(--ink);text-decoration:none;padding-bottom:1px;">https://radar.gfrfinradar.uk/</a></div>
+          <div>本文为框架研究,非投资建议,仅供参考,不构成交易依据。指标阈值随研究演进调整。Issue ${issueNo} · ${escapeHtml(data.as_of_date)}. ${escapeHtml(pipelineLine)}. <a href="https://radar.gfrfinradar.uk/" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink);border-bottom:1px solid var(--ink);text-decoration:none;padding-bottom:1px;">https://radar.gfrfinradar.uk/</a></div>
         </div>
       </div>
     </footer>
