@@ -7,9 +7,9 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=trend-visual-match-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=frontend-loading-state-1" />
 </head>
-<body>
+<body class="gfrr-data-loading">
   <nav class="page-bookmarks" aria-label="站内页面切换">
     <a class="pbm pbm-radar pbm-active" href="index.html" aria-current="page" title="全球金融风险雷达(当前页)">
       <span class="pbm-label">风险雷达</span>
@@ -65,30 +65,30 @@
         <div class="big-left">
           <div class="label">TODAY JUDGMENT · 今日总判断</div>
           <div class="big-left-score">
-            <div class="value" id="hero-score-value">56<sup>/100</sup></div>
+            <div class="value" id="hero-score-value">—<sup>/100</sup></div>
             <div class="breakdown">
-              6 底层模块中 <span id="hero-breakdown-counts"><strong>2 红 / 2 黄 / 2 绿</strong></span><br/>
-              世界秩序升档(overlay): <span id="hero-overlay-score">70(升档提示)</span>
+              6 底层模块中 <span id="hero-breakdown-counts"><strong>— 红 / — 黄 / — 绿</strong></span><br/>
+              世界秩序升档(overlay): <span id="hero-overlay-score">—</span>
             </div>
           </div>
         </div>
         <div class="big-right">
-          <div class="verdict-kicker" id="hero-verdict-kicker">THIS ISSUE · 滞胀冲击 / 通胀冲击</div>
-          <h2 id="hero-verdict-headline">高风险预警</h2>
-          <p id="hero-verdict-body">原始 56 落在 40–60 高风险预警带。世界秩序压力升至 70，把今日判读上调一档。高收益债利差(HY OAS)仍在 4% 以下、波动率指数(VIX) 16.8 没有同步恐慌，判读保持观察语气而非危机定性。</p>
+          <div class="verdict-kicker" id="hero-verdict-kicker">THIS ISSUE · 等待数据</div>
+          <h2 id="hero-verdict-headline">等待数据</h2>
+          <p id="hero-verdict-body">正在读取最新雷达数据。真实数据到达并完成渲染前，本页不显示风险分数、判断结论或执行提示。</p>
           <p class="hero-odp-ref">能源方向 <em>· 独立能源专题,仅供观察,不进打分</em>:<span id="hero-odp-ref-verdict">—</span> <a href="#oil-directional-pressure">查看 →</a></p>
         </div>
         <div class="big-footer">
-          <div><div class="k">DOMINANT RISK CHAIN · 主导风险链</div><div class="v" id="hero-dominant-chain">能源 → 通胀 → 利率压力</div></div>
-          <div><div class="k">WEEKLY CHANGE · 周变化</div><div class="v" id="hero-weekly-change">+2 (WoW)</div></div>
-          <div><div class="k">DATA HEALTH · 数据健康</div><div class="v" id="hero-data-health">23/23 OK · 数据正常</div></div>
+          <div><div class="k">DOMINANT RISK CHAIN · 主导风险链</div><div class="v" id="hero-dominant-chain">—</div></div>
+          <div><div class="k">WEEKLY CHANGE · 周变化</div><div class="v" id="hero-weekly-change">—</div></div>
+          <div><div class="k">DATA HEALTH · 数据健康</div><div class="v" id="hero-data-health">—</div></div>
         </div>
       </article>
 
       <div class="threshold-block">
         <div class="threshold-header">
           <h4>触发阈值标尺 <em>· Threshold Scale</em></h4>
-          <div class="now" id="threshold-now-line">原始 56(高风险预警) · 世界秩序升档 70(多战区压力期)</div>
+          <div class="now" id="threshold-now-line">等待最新数据</div>
         </div>
         <div class="threshold-bar-wrap">
           <div class="threshold-bar">
@@ -96,8 +96,8 @@
             <div class="zone t-yellow" style="flex:15"><span class="zone-label">中度警戒</span><span class="zone-pct">25–40</span></div>
             <div class="zone t-orange" style="flex:20"><span class="zone-label">高风险预警</span><span class="zone-pct">40–60</span></div>
             <div class="zone t-red"    style="flex:40"><span class="zone-label">系统性顶部</span><span class="zone-pct">≥60</span></div>
-            <div class="marker" id="threshold-marker-main" style="left:56%"><span class="marker-label">原始 56</span></div>
-            <div class="marker override" id="threshold-marker-override" style="left:80%"><span class="marker-label">升档 70</span></div>
+            <div class="marker" id="threshold-marker-main" style="left:0%"><span class="marker-label">待加载</span></div>
+            <div class="marker override" id="threshold-marker-override" style="left:0%"><span class="marker-label">待加载</span></div>
           </div>
         </div>
       </div>
@@ -109,7 +109,7 @@
             <span><span class="score-key">●</span> 风险分 Score</span>
             <span><span class="overlay-key">●</span> 升档层 Overlay</span>
             <span>风险分 /100 · 阈值线 25/40/60/80</span>
-            <span id="trend-overlay-mode">升档层(Overlay)历史累积中</span>
+            <span id="trend-overlay-mode">升档层(Overlay)等待数据</span>
           </div>
         </div>
         <div class="trend-svg-wrap">
@@ -179,37 +179,37 @@
           <div class="meta">六大底层模块 · 最新读数 · 趋势变化</div>
         </div>
         <div class="mini-grid">
-          <div class="mini-card red" id="pressure-card-energy"><div class="label">Energy 能源</div><div class="num">82</div><div class="status">↑ 能源传导主线</div></div>
-          <div class="mini-card red" id="pressure-card-geopolitical"><div class="label">Geopolitical 地缘</div><div class="num">78</div><div class="status">↑ 多战区压力</div></div>
-          <div class="mini-card yellow" id="pressure-card-inflation"><div class="label">Inflation 通胀</div><div class="num">52</div><div class="status">→ 横盘观察</div></div>
-          <div class="mini-card yellow" id="pressure-card-liquidity"><div class="label">Liquidity 流动性</div><div class="num">48</div><div class="status">↑ 边际收紧</div></div>
-          <div class="mini-card green" id="pressure-card-debt"><div class="label">Debt 债务</div><div class="num">31</div><div class="status">→ 杠杆稳定</div></div>
-          <div class="mini-card green" id="pressure-card-banking"><div class="label">Banking 银行</div><div class="num">29</div><div class="status">↓ 持续改善</div></div>
+          <div class="mini-card" id="pressure-card-energy"><div class="label">Energy 能源</div><div class="num">—</div><div class="status">等待数据</div></div>
+          <div class="mini-card" id="pressure-card-geopolitical"><div class="label">Geopolitical 地缘</div><div class="num">—</div><div class="status">等待数据</div></div>
+          <div class="mini-card" id="pressure-card-inflation"><div class="label">Inflation 通胀</div><div class="num">—</div><div class="status">等待数据</div></div>
+          <div class="mini-card" id="pressure-card-liquidity"><div class="label">Liquidity 流动性</div><div class="num">—</div><div class="status">等待数据</div></div>
+          <div class="mini-card" id="pressure-card-debt"><div class="label">Debt 债务</div><div class="num">—</div><div class="status">等待数据</div></div>
+          <div class="mini-card" id="pressure-card-banking"><div class="label">Banking 银行</div><div class="num">—</div><div class="status">等待数据</div></div>
         </div>
       </div>
 
       <div class="runtime-block" id="homepage-signal-layers">
         <div class="runtime-block-header">
           <h3>信号分层 <span class="en">SIGNAL LAYERS · 7 NARRATIVES</span></h3>
-          <div class="meta">7 条信号叙事:3 条已激活 / 4 条潜伏 · 激活状态随每日数据更新</div>
+          <div class="meta">7 条信号叙事 · 等待最新数据</div>
         </div>
         <div class="narrative-list">
-          <div class="narrative-item active" id="narrative-1">
-            <div class="head"><span class="name" id="narrative-1-name">能源冲击</span><span class="score" id="narrative-1-score">分数 78 · 已激活</span></div>
-            <p id="narrative-1-desc">布伦特原油(Brent) + 裂解价差(Crack Spread)同步走阔，2022 模式重演。下一节是是否传导至消费者物价(CPI)/ 盈亏平衡通胀(breakeven)。</p>
+          <div class="narrative-item" id="narrative-1">
+            <div class="head"><span class="name" id="narrative-1-name">等待数据</span><span class="score" id="narrative-1-score">分数 — · 待确认</span></div>
+            <p id="narrative-1-desc">真实数据到达前不显示信号叙事。</p>
           </div>
-          <div class="narrative-item active" id="narrative-2">
-            <div class="head"><span class="name" id="narrative-2-name">滞胀压力</span><span class="score" id="narrative-2-score">分数 62 · 已激活</span></div>
-            <p id="narrative-2-desc">美国制造业景气(ISM PMI) 48.7 收缩 + 能源涨价 + 实际工资压制。三件套均已出现，但信用未验证。</p>
+          <div class="narrative-item" id="narrative-2">
+            <div class="head"><span class="name" id="narrative-2-name">等待数据</span><span class="score" id="narrative-2-score">分数 — · 待确认</span></div>
+            <p id="narrative-2-desc">真实数据到达前不显示信号叙事。</p>
           </div>
-          <div class="narrative-item active" id="narrative-3">
-            <div class="head"><span class="name" id="narrative-3-name">世界秩序压力穿越</span><span class="score" id="narrative-3-score">分数 70 · 已激活</span></div>
-            <p id="narrative-3-desc">多战区压力连续 2 周，触发橙色升档指针。经济制裁(OFAC)+全球新闻事件(GDELT)双印证。</p>
+          <div class="narrative-item" id="narrative-3">
+            <div class="head"><span class="name" id="narrative-3-name">等待数据</span><span class="score" id="narrative-3-score">分数 — · 待确认</span></div>
+            <p id="narrative-3-desc">真实数据到达前不显示信号叙事。</p>
           </div>
-          <div class="narrative-item" id="narrative-4"><div class="head"><span class="name" id="narrative-4-name">风险资产错配</span><span class="score" id="narrative-4-score">分数 38 · 潜伏</span></div><p id="narrative-4-desc">标普500(SPX)仍在高位但纳指100(NDX)跑赢，内部分化未到危机程度。</p></div>
-          <div class="narrative-item" id="narrative-5"><div class="head"><span class="name" id="narrative-5-name">过热确认</span><span class="score" id="narrative-5-score">分数 55 · 潜伏</span></div><p id="narrative-5-desc">纳斯达克100 ETF(QQQ)偏离度(z-score) +2.18σ 极度过热，但信用 + 波动率没有验证，缺少同步证据。</p></div>
-          <div class="narrative-item" id="narrative-6"><div class="head"><span class="name" id="narrative-6-name">信用利差告警</span><span class="score" id="narrative-6-score">分数 22 · 潜伏</span></div><p id="narrative-6-desc">高收益债利差(HY OAS)/ 投资级利差(IG OAS)双绿，金融条件指数(NFCI)刚转正。压力初现但远未到告警阈值。</p></div>
-          <div class="narrative-item" id="narrative-7"><div class="head"><span class="name" id="narrative-7-name">流动性收紧</span><span class="score" id="narrative-7-score">分数 18 · 潜伏</span></div><p id="narrative-7-desc">水位 / 回购 / 隔夜三层均无压力。2019-09 信号目前不存在。</p></div>
+          <div class="narrative-item" id="narrative-4"><div class="head"><span class="name" id="narrative-4-name">等待数据</span><span class="score" id="narrative-4-score">分数 — · 待确认</span></div><p id="narrative-4-desc">真实数据到达前不显示信号叙事。</p></div>
+          <div class="narrative-item" id="narrative-5"><div class="head"><span class="name" id="narrative-5-name">等待数据</span><span class="score" id="narrative-5-score">分数 — · 待确认</span></div><p id="narrative-5-desc">真实数据到达前不显示信号叙事。</p></div>
+          <div class="narrative-item" id="narrative-6"><div class="head"><span class="name" id="narrative-6-name">等待数据</span><span class="score" id="narrative-6-score">分数 — · 待确认</span></div><p id="narrative-6-desc">真实数据到达前不显示信号叙事。</p></div>
+          <div class="narrative-item" id="narrative-7"><div class="head"><span class="name" id="narrative-7-name">等待数据</span><span class="score" id="narrative-7-score">分数 — · 待确认</span></div><p id="narrative-7-desc">真实数据到达前不显示信号叙事。</p></div>
         </div>
       </div>
 
@@ -219,10 +219,10 @@
           <div class="meta">流动性 / 政策路径 / 利率曲线 / 信用 / 消费 / 就业 / 商业地产等</div>
         </div>
         <div class="runtime-block-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">美联储流动性(Fed Liquidity)</strong><p id="pillar-1-text" style="margin:0;font-size:12.5px;">三层均无压力。美联储总资产(WALCL) / 银行准备金 3.62T / 回购利差(BGCR-SOFR) +2bp / 隔夜利率锚(SOFR-EFFR)锚定。</p></div>
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">政策预期(Policy Expectations)</strong><p id="pillar-2-text" style="margin:0;font-size:12.5px;">市场与委员分歧。期货隐含与目标中值差 +38bp，市场比美联储(Fed)更鹰。</p></div>
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">利率曲线(Curve)</strong><p id="pillar-3-text" style="margin:0;font-size:12.5px;">10年-2年利差(t10y2y) +18bp，曲线状态: 从倒挂转正。通常领先衰退 6-18 月。</p></div>
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">信用环境(Credit)</strong><p id="pillar-4-text" style="margin:0;font-size:12.5px;">高收益债利差(HY OAS) 2.78% / 投资级利差(IG OAS) 1.05% / 金融条件指数(NFCI) +0.18 刚转正 / 银行信贷调查(SLOOS) 紧缩。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">美联储流动性(Fed Liquidity)</strong><p id="pillar-1-text" style="margin:0;font-size:12.5px;">等待最新数据。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">政策预期(Policy Expectations)</strong><p id="pillar-2-text" style="margin:0;font-size:12.5px;">等待最新数据。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">利率曲线(Curve)</strong><p id="pillar-3-text" style="margin:0;font-size:12.5px;">等待最新数据。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">信用环境(Credit)</strong><p id="pillar-4-text" style="margin:0;font-size:12.5px;">等待最新数据。</p></div>
           <div style="grid-column: 1 / -1;border-top:1px dashed #aaa;padding-top:10px;margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">子模块覆盖：流动性、政策路径、利率曲线、信用、消费、运输、就业、商业地产与私募信贷公开代理。</div>
         </div>
       </div>
@@ -236,16 +236,16 @@
           <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start;">
             <div>
               <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;color:var(--paper-muted);text-transform:uppercase;">极度过热 · extreme-hot</div>
-              <div style="font-family:var(--font-display);font-size:48px;font-weight:900;line-height:1;color:var(--risk-yellow);margin-top:4px;"><span id="mt-zscore-value">+2.18</span><span style="font-size:0.4em;color:var(--paper-muted);">σ</span></div>
+              <div style="font-family:var(--font-display);font-size:48px;font-weight:900;line-height:1;color:var(--risk-yellow);margin-top:4px;"><span id="mt-zscore-value">—</span><span style="font-size:0.4em;color:var(--paper-muted);">σ</span></div>
               <div style="font-family:var(--font-mono);font-size:10px;color:var(--paper-muted);margin-top:6px;">纳斯达克100 ETF(QQQ) vs 60 周均值 · 历史第二极端</div>
             </div>
             <div>
-              <p id="mt-narrative" style="margin:0 0 8px 0;font-size:13.5px;">纳斯达克100 ETF(QQQ)当前价格距 60 周均值 2.18 个标准差，处于历史第二极端区间。纳指100(NDX) +2.22σ / 纳指综合(IXIC) +1.92σ，整个美国成长股板块同步极端。</p>
+              <p id="mt-narrative" style="margin:0 0 8px 0;font-size:13.5px;">等待最新市场温度数据。</p>
               <div style="font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 16px;">
-                <div>收盘(close): <span id="mt-close" style="color:var(--paper-ink);">$708.93</span></div>
-                <div>60周均线(ma60): <span id="mt-ma60" style="color:var(--paper-ink);">$579.84</span></div>
-                <div>60 日标准差: <span id="mt-stddev" style="color:var(--paper-ink);">$59.23</span></div>
-                <div>z 分数区间: <span id="mt-zscore-range" style="color:var(--paper-ink);">[-2.64, +2.83]</span></div>
+                <div>收盘(close): <span id="mt-close" style="color:var(--paper-ink);">—</span></div>
+                <div>60周均线(ma60): <span id="mt-ma60" style="color:var(--paper-ink);">—</span></div>
+                <div>60 日标准差: <span id="mt-stddev" style="color:var(--paper-ink);">—</span></div>
+                <div>z 分数区间: <span id="mt-zscore-range" style="color:var(--paper-ink);">—</span></div>
               </div>
             </div>
           </div>
@@ -258,12 +258,12 @@
           <div class="meta">6 个底层引擎 + 分歧信号 + 私募信贷代理 + 世界秩序压力 + 市场温度</div>
         </div>
         <div class="mini-grid">
-          <div class="mini-card red" id="engine-card-b1"><div class="label">B1 Energy 能源</div><div class="num">RED</div><div class="status">能源冲击主导</div></div>
-          <div class="mini-card yellow" id="engine-card-b2"><div class="label">B2 Liquidity 流动性</div><div class="num">YEL</div><div class="status">流动性边际收紧</div></div>
-          <div class="mini-card green" id="engine-card-b3"><div class="label">B3 Credit 信用</div><div class="num">GRN</div><div class="status">信用反向证据</div></div>
-          <div class="mini-card green" id="engine-card-b4"><div class="label">B4 Debt 债务</div><div class="num">GRN</div><div class="status">杠杆稳定</div></div>
-          <div class="mini-card yellow" id="engine-card-b5"><div class="label">B5 Consumer 消费</div><div class="num">YEL</div><div class="status">实际工资压制</div></div>
-          <div class="mini-card red" id="engine-card-b6"><div class="label">B6 Geopolitical 地缘</div><div class="num">RED</div><div class="status">多战区压力</div></div>
+          <div class="mini-card" id="engine-card-b1"><div class="label">B1 Energy 能源</div><div class="num">—</div><div class="status">等待数据</div></div>
+          <div class="mini-card" id="engine-card-b2"><div class="label">B2 Liquidity 流动性</div><div class="num">—</div><div class="status">等待数据</div></div>
+          <div class="mini-card" id="engine-card-b3"><div class="label">B3 Credit 信用</div><div class="num">—</div><div class="status">等待数据</div></div>
+          <div class="mini-card" id="engine-card-b4"><div class="label">B4 Debt 债务</div><div class="num">—</div><div class="status">等待数据</div></div>
+          <div class="mini-card" id="engine-card-b5"><div class="label">B5 Consumer 消费</div><div class="num">—</div><div class="status">等待数据</div></div>
+          <div class="mini-card" id="engine-card-b6"><div class="label">B6 Geopolitical 地缘</div><div class="num">—</div><div class="status">等待数据</div></div>
         </div>
       </div>
 
@@ -274,9 +274,9 @@
         </div>
         <div class="consistency-block" style="border-top:none;padding-top:0;">
           <div class="consistency-label">一致性 / Consistency</div>
-          <div class="consistency-bar-wrap"><div class="consistency-bar"><div class="fill" id="cv-bar-fill"></div></div></div>
-          <div class="consistency-value"><span id="cv-consistency-value">72</span><span style="font-size:0.5em;color:var(--paper-muted);"> /100</span></div>
-          <div class="consistency-detail"><span id="cv-breakdown-counts">强确认 5 / 矛盾 2 / 数据不足 1</span><br/><span id="cv-summary-line">能源 + 通胀 + 美联储(Fed)路径同向支持；高收益债利差(HY OAS)+波动率指数(VIX)提供反向证据。</span></div>
+          <div class="consistency-bar-wrap"><div class="consistency-bar"><div class="fill" id="cv-bar-fill" style="width:0%;"></div></div></div>
+          <div class="consistency-value"><span id="cv-consistency-value">—</span><span style="font-size:0.5em;color:var(--paper-muted);"> /100</span></div>
+          <div class="consistency-detail"><span id="cv-breakdown-counts">等待数据</span><br/><span id="cv-summary-line">真实数据到达前不显示交叉验证结论。</span></div>
         </div>
       </div>
 
@@ -1119,6 +1119,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=trend-visual-match-1"></script>
+  <script type="module" src="scripts/app.js?v=frontend-loading-state-1"></script>
 </body>
 </html>

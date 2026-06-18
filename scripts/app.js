@@ -7,10 +7,13 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'trend-visual-match-1';
+const APP_VERSION = 'frontend-loading-state-1';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
 const OIL_DIRECTIONAL_URL = `./data/oil-directional-pressure.json?v=${APP_VERSION}`;
+const DATA_LOADING_CLASS = 'gfrr-data-loading';
+const DATA_READY_CLASS = 'gfrr-data-ready';
+const DATA_FAILED_CLASS = 'gfrr-data-failed';
 
 const ISSUE_META_FALLBACK = {
   issue: '—',
@@ -120,29 +123,58 @@ function applyIssueMetaToDom(meta) {
   }
 }
 
+function markDataReady() {
+  document.body?.classList.remove(DATA_LOADING_CLASS, DATA_FAILED_CLASS);
+  document.body?.classList.add(DATA_READY_CLASS);
+}
+
+function markDataUnavailable() {
+  document.body?.classList.remove(DATA_LOADING_CLASS, DATA_READY_CLASS);
+  document.body?.classList.add(DATA_FAILED_CLASS);
+  const cacheEl = document.getElementById('issue-meta-cache');
+  if (cacheEl) {
+    cacheEl.textContent = 'DATA LOAD INCOMPLETE · 暂不显示数据';
+  }
+}
+
+function allRenderableDataPresent({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData }) {
+  return Boolean(radarData && worldOrderStressData && marketPricingMetricsData && radarHistoryData && oilDirectionalData);
+}
+
 // ---------------- 主入口 ----------------
 
 async function main() {
   const { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData } = await loadAllData();
+  const dataReady = allRenderableDataPresent({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
 
   // Stage 4a: 填充 issue-meta
   const issueMeta = deriveIssueMeta(radarData);
   applyIssueMetaToDom(issueMeta);
 
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
+  let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=trend-visual-match-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=frontend-loading-state-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
+    macroOverviewRendered = true;
   } catch (error) {
     console.error('[app] Failed to import / run renderMacroOverview:', error);
   }
 
   // PR4: Oil Directional Pressure (ODP) 独立能源专题 — display-only, 独立数据文件。
+  let oilDirectionalRendered = false;
   try {
     const { renderOilDirectional } = await import(`./modules/renderOilDirectional.js?v=${APP_VERSION}`);
     renderOilDirectional({ oilData: oilDirectionalData, radarData, worldOrderStressData });
+    oilDirectionalRendered = true;
   } catch (error) {
     console.error('[app] Failed to import / run renderOilDirectional:', error);
+  }
+
+  if (dataReady && macroOverviewRendered && oilDirectionalRendered) {
+    markDataReady();
+  } else {
+    markDataUnavailable();
   }
 
   console.log(`[app] Stage 5d-2 init complete. APP_VERSION=${APP_VERSION}`);

@@ -46,6 +46,25 @@
   .section-title { display: block; font-family: var(--font-display); font-size: clamp(22px, 3vw, 30px); font-weight: 900; line-height: 1.2; letter-spacing: -0.01em; color: var(--paper-ink); }
   .section-note { display: block; font-family: var(--font-serif); font-size: 13px; line-height: 1.7; color: var(--paper-muted); margin-top: 6px; }
   .editorial-section-body { padding: 0 8px; }
+  body.gfrr-data-loading .editorial-section-body,
+  body.gfrr-data-loading footer.method,
+  body.gfrr-data-failed .editorial-section-body,
+  body.gfrr-data-failed footer.method {
+    visibility: hidden;
+  }
+  body.gfrr-data-loading .editorial-section::after,
+  body.gfrr-data-failed .editorial-section::after {
+    content: "数据加载中";
+    display: block;
+    padding: 10px 8px 0 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--paper-muted);
+  }
+  body.gfrr-data-failed .editorial-section::after {
+    content: "数据暂不可用";
+  }
 
   .macro-overview-shell { display: grid; gap: 22px; }
 

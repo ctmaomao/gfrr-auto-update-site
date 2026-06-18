@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=trend-visual-match-1';
+﻿import { fmtNumSafe } from './config.js?v=frontend-loading-state-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
