@@ -1,6 +1,6 @@
 {
   "contractVersion": "main-score-source-policy-v1",
-  "status": "contract_and_replay_gate",
+  "status": "runtime_invalid_leaf_fallback_v1",
   "purpose": "Allow Wind paid fallback to participate in the GFRR main radar core score only after source arbitration and replay validation pass.",
   "coreScoreInputs": [
     "brent",
@@ -81,6 +81,35 @@
       "spxPct": 1.5
     }
   },
+  "runtimeFallback": {
+    "mode": "wind_paid_invalid_leaf_fallback_v1",
+    "implementation": "scripts/run-daily-pipeline.mjs",
+    "enabledEnvVar": "GFRR_MAIN_SCORE_WIND_FALLBACK",
+    "requiresSecret": "WIND_API_KEY",
+    "defaultEnabled": false,
+    "networkTimeoutMs": 12000,
+    "doesNotBypassRealtimeTrustGate": true,
+    "doesNotOverrideFinitePublicPrimary": true,
+    "eligibleWhen": [
+      "current_value_missing_or_nonfinite",
+      "source_detail_not_ok",
+      "source_status_missing_or_fallback"
+    ],
+    "outputAuditField": "mainScoreSourcePolicy",
+    "runtimeSourceMode": "live-with-fallback",
+    "perInputSourceModeMarker": "wind_paid_fallback",
+    "failClosedReasons": [
+      "disabled",
+      "missing_wind_key",
+      "wind_fetch_failed",
+      "no_labeled_plausible_timestamped_value",
+      "freshness_failed",
+      "plausibility_range_failed",
+      "conflict_tolerance_failed",
+      "score_impact_guard_failed"
+    ],
+    "rawWindResponsePersisted": false
+  },
   "replayValidation": {
     "method": "wind_fallback_conflict_replay_v1",
     "script": "npm run audit:main-score-backtest",
@@ -139,7 +168,7 @@
     ]
   },
   "runtimeBoundary": {
-    "currentState": "contract_and_replay_only",
-    "implementationNote": "Runtime Wind fetch and source switching remain a separate implementation step. This policy is the gate that implementation must satisfy before Wind fallback can write score inputs."
+    "currentState": "runtime_invalid_leaf_fallback_v1",
+    "implementationNote": "Daily runtime may call Wind only when the trusted realtime payload has an invalid/missing/degraded core leaf input. It does not synthesize a full realtime payload and does not override a finite public primary input that is not explicitly stale/fallback/degraded."
   }
 }

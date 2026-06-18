@@ -12,6 +12,8 @@ const IS_MAIN = process.argv[1] && path.resolve(process.argv[1]) === __filename;
 const rulesPath = path.join(root, 'config', 'rules.json');
 const RULES = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
 const R = RULES;
+const mainScoreSourcePolicyPath = path.join(root, 'config', 'main-score-source-policy.json');
+const MAIN_SCORE_SOURCE_POLICY = JSON.parse(fs.readFileSync(mainScoreSourcePolicyPath, 'utf8'));
 const dataDir = path.join(root, 'data');
 const dataPath = path.join(dataDir, 'radar-data.json');
 const histPath = path.join(dataDir, 'radar-history.json');
@@ -50,6 +52,12 @@ const FRED_BASE = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
 const FRED_API_BASE = 'https://api.stlouisfed.org/fred/series/observations';
 const FRED_API_KEY = (process.env.FRED_API_KEY || '').trim();
 const EIA_API_KEY = (process.env.EIA_API_KEY || '').trim();
+const WIND_API_KEY = (process.env.WIND_API_KEY || '').trim();
+const MAIN_SCORE_WIND_FALLBACK_ENV = 'GFRR_MAIN_SCORE_WIND_FALLBACK';
+const MAIN_SCORE_WIND_FALLBACK_ENABLED = process.env[MAIN_SCORE_WIND_FALLBACK_ENV] === '1';
+const MAIN_SCORE_WIND_TIMEOUT_MS = Number(process.env.GFRR_MAIN_SCORE_WIND_TIMEOUT_MS) > 0
+  ? Number(process.env.GFRR_MAIN_SCORE_WIND_TIMEOUT_MS)
+  : 12000;
 const MACRO_FETCH_TIMEOUT_MS = 10000;
 const MACRO_FETCH_RETRIES = 2;
 const MACRO_FETCH_RETRY_DELAY_MS = 800;
@@ -591,6 +599,718 @@ function buildDailyRealtimeInput(realtimePayload) {
     healthScore: Number.isFinite(realtimePayload?.healthScore) ? realtimePayload.healthScore : null,
     capturedAt: isoNow
   };
+}
+
+const MAIN_SCORE_WIND_ENDPOINTS = {
+  analytics_data: 'https://wind-mcp.wind.com.cn/api/mcp/analytics_data/sse',
+  economic_data: 'https://wind-mcp.wind.com.cn/api/mcp/economic_data/sse'
+};
+
+const MAIN_SCORE_WIND_INPUTS = {
+  brent: {
+    serverType: 'analytics_data',
+    toolName: 'get_financial_data',
+    question: '请返回最新可用的布伦特原油连续合约或现货价格，仅包含日期、数值、单位、来源。',
+    valueHints: ['brent', '布伦特', '原油', 'crude', 'price', '价格', '收盘', '最新', '结算'],
+    rejectHints: ['日期', '时间', '代码', '涨跌', '涨跌幅', '成交', 'volume', 'open interest']
+  },
+  dxy: {
+    serverType: 'analytics_data',
+    toolName: 'get_financial_data',
+    question: '请返回最新可用的美元指数 DXY 或广义美元指数数值，仅包含日期、数值、单位、来源。',
+    valueHints: ['dxy', '美元指数', 'broad dollar', 'dollar index', '指数', '收盘', '最新'],
+    rejectHints: ['日期', '时间', '代码', '涨跌', '涨跌幅', '成交', 'volume']
+  },
+  vix: {
+    serverType: 'analytics_data',
+    toolName: 'get_financial_data',
+    question: '请返回最新可用的 CBOE VIX 指数数值，仅包含日期、数值、单位、来源。',
+    valueHints: ['vix', '波动率', 'volatility', '指数', '收盘', '最新'],
+    rejectHints: ['日期', '时间', '代码', '涨跌', '涨跌幅', '成交', 'volume']
+  },
+  hyOas: {
+    serverType: 'analytics_data',
+    toolName: 'get_financial_data',
+    question: '请返回最新可用的美国高收益债 OAS 利差，单位使用百分比，不要使用基点，仅包含日期、数值、单位、来源。',
+    valueHints: ['hy oas', 'high yield', '高收益', 'oas', '利差', 'percent', '百分比'],
+    rejectHints: ['日期', '时间', '代码', '涨跌', '涨跌幅', '成交', 'volume', 'bp', 'bps', '基点']
+  },
+  us10y: {
+    serverType: 'analytics_data',
+    toolName: 'get_financial_data',
+    question: '请返回最新可用的美国10年期国债收益率，单位使用百分比，仅包含日期、数值、单位、来源。',
+    valueHints: ['10y', '10年', '十年', 'treasury', '国债', '收益率', 'yield', 'percent', '百分比'],
+    rejectHints: ['日期', '时间', '代码', '涨跌', '涨跌幅', '成交', 'volume', 'bp', 'bps', '基点']
+  },
+  real10y: {
+    serverType: 'analytics_data',
+    toolName: 'get_financial_data',
+    question: '请返回最新可用的美国10年期实际利率或10年期 TIPS 实际收益率，单位使用百分比，仅包含日期、数值、单位、来源。',
+    valueHints: ['real', 'tips', '实际利率', '实际收益率', '10y', '10年', '收益率', 'percent', '百分比'],
+    rejectHints: ['日期', '时间', '代码', '涨跌', '涨跌幅', '成交', 'volume', 'bp', 'bps', '基点']
+  },
+  breakeven10y: {
+    serverType: 'analytics_data',
+    toolName: 'get_financial_data',
+    question: '请返回最新可用的美国10年期盈亏平衡通胀率，单位使用百分比，仅包含日期、数值、单位、来源。',
+    valueHints: ['breakeven', '盈亏平衡', '通胀', 'inflation', '10y', '10年', 'percent', '百分比'],
+    rejectHints: ['日期', '时间', '代码', '涨跌', '涨跌幅', '成交', 'volume', 'bp', 'bps', '基点']
+  },
+  spx: {
+    serverType: 'analytics_data',
+    toolName: 'get_financial_data',
+    question: '请返回最新可用的标普500指数 S&P 500 收盘或最新数值，仅包含日期、数值、单位、来源。',
+    valueHints: ['spx', 's&p 500', 'standard & poor', '标普', 'sp500', '指数', '收盘', '最新'],
+    rejectHints: ['日期', '时间', '代码', '涨跌', '涨跌幅', '成交', 'volume']
+  }
+};
+
+const mainScoreWindInitializedServers = new Set();
+let mainScoreWindRequestId = 1;
+
+function isPlainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function sanitizeAuditString(value, max = 180) {
+  if (value === null || value === undefined) return null;
+  return String(value).replace(/\s+/g, ' ').trim().slice(0, max) || null;
+}
+
+function mainScoreRiskTier(score) {
+  if (!Number.isFinite(score)) return 'unknown';
+  if (score >= 82) return 'red';
+  if (score >= 65) return 'yellow';
+  if (score >= 55) return 'watch';
+  return 'normal';
+}
+
+function mainScoreTierRank(tier) {
+  return { unknown: -1, normal: 0, watch: 1, yellow: 2, red: 3 }[tier] ?? -1;
+}
+
+function mainScorePolicyRange(key) {
+  return MAIN_SCORE_SOURCE_POLICY.windPaidFallback?.plausibilityRanges?.[key] || null;
+}
+
+function isPlausibleMainScoreWindValue(key, value) {
+  const range = mainScorePolicyRange(key);
+  return Number.isFinite(value) &&
+    (!range || ((!Number.isFinite(range.min) || value >= range.min) && (!Number.isFinite(range.max) || value <= range.max)));
+}
+
+function parseMainScoreNumber(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  if (!text) return null;
+  if (/^\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}/u.test(text)) return null;
+  const textWithoutDates = text
+    .replace(/\b(19|20)\d{2}[-/.年]\d{1,2}[-/.月]\d{1,2}(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?/gu, ' ')
+    .replace(/\b(19|20)\d{6}\b/gu, ' ');
+  const normalized = textWithoutDates.replace(/,/g, '').replace(/%$/u, '').trim();
+  if (/^-?\d+(?:\.\d+)?$/u.test(normalized)) {
+    const n = Number(normalized);
+    return Number.isFinite(n) ? n : null;
+  }
+  const matches = [...textWithoutDates.replace(/,/g, '').matchAll(/-?\d+(?:\.\d+)?/gu)];
+  if (matches.length > 1) return null;
+  const match = matches[0];
+  if (!match) return null;
+  const n = Number(match[0]);
+  return Number.isFinite(n) ? n : null;
+}
+
+function normalizeWindDate(value) {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  if (!text) return null;
+  const isoMatch = text.match(/\b(19|20)\d{2}-\d{1,2}-\d{1,2}(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?/u);
+  if (isoMatch) {
+    const parsed = Date.parse(isoMatch[0]);
+    return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
+  }
+  const slashMatch = text.match(/\b((?:19|20)\d{2})[/.年]([01]?\d)[/.月]([0-3]?\d)/u);
+  if (slashMatch) {
+    const [, year, month, day] = slashMatch;
+    const parsed = Date.parse(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00Z`);
+    return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
+  }
+  return null;
+}
+
+function findWindObservedAt(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'string' || typeof value === 'number') return normalizeWindDate(value);
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const observedAt = findWindObservedAt(item);
+      if (observedAt) return observedAt;
+    }
+    return null;
+  }
+  if (!isPlainObject(value)) return null;
+  for (const [key, item] of Object.entries(value)) {
+    if (/date|time|日期|时间|交易日|报告期|observed|updated|asof|as_of/i.test(key)) {
+      const observedAt = normalizeWindDate(item);
+      if (observedAt) return observedAt;
+    }
+  }
+  for (const item of Object.values(value)) {
+    const observedAt = findWindObservedAt(item);
+    if (observedAt) return observedAt;
+  }
+  return null;
+}
+
+function mainScoreLabelScore(key, label, context) {
+  const input = MAIN_SCORE_WIND_INPUTS[key];
+  const text = `${label || ''} ${context || ''}`.toLowerCase();
+  if (!input || !text.trim()) return 0;
+  if (input.rejectHints.some((hint) => text.includes(hint.toLowerCase()))) return -1;
+  let score = 0;
+  for (const hint of input.valueHints) {
+    if (text.includes(hint.toLowerCase())) score += 2;
+  }
+  if (/value|price|close|last|rate|yield|spread|index|数值|价格|收盘|最新|收益率|利差|指数/u.test(text)) score += 1;
+  return score;
+}
+
+function parseJsonMaybe(text) {
+  if (typeof text !== 'string') return null;
+  const trimmed = text.trim();
+  if (!trimmed || !/^[{[]/u.test(trimmed)) return null;
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return null;
+  }
+}
+
+function windResponseSearchRoots(payload) {
+  const roots = [];
+  const push = (value) => {
+    if (value !== null && value !== undefined) roots.push(value);
+    const parsed = parseJsonMaybe(value);
+    if (parsed) roots.push(parsed);
+  };
+  push(payload);
+  if (payload?.result !== undefined) push(payload.result);
+  const content = payload?.result?.content || payload?.content;
+  if (Array.isArray(content)) {
+    for (const item of content) {
+      push(item);
+      if (item?.text !== undefined) push(item.text);
+      if (item?.data !== undefined) push(item.data);
+    }
+  }
+  return roots;
+}
+
+function collectWindMainScoreCandidatesFromTable(candidates, key, value) {
+  if (!isPlainObject(value) || !Array.isArray(value.columns)) return;
+  const rows = Array.isArray(value.data) ? value.data : Array.isArray(value.rows) ? value.rows : null;
+  if (!rows) return;
+  const columns = value.columns.map((column) => (
+    typeof column === 'string' ? column : (column?.name || column?.title || column?.key || '')
+  ));
+  for (const row of rows) {
+    const rowObject = Array.isArray(row)
+      ? Object.fromEntries(columns.map((column, index) => [column || `col${index}`, row[index]]))
+      : (isPlainObject(row) ? row : null);
+    if (!rowObject) continue;
+    const observedAt = findWindObservedAt(rowObject);
+    const context = Object.entries(rowObject)
+      .filter(([rowKey, rowValue]) => typeof rowValue === 'string' && !/date|time|日期|时间|交易日|报告期/i.test(rowKey))
+      .map(([, rowValue]) => rowValue)
+      .join(' ');
+    for (const [label, raw] of Object.entries(rowObject)) {
+      const score = mainScoreLabelScore(key, label, context);
+      if (score < 1) continue;
+      const n = parseMainScoreNumber(raw);
+      if (!isPlausibleMainScoreWindValue(key, n)) continue;
+      candidates.push({
+        value: n,
+        observedAt,
+        label: sanitizeAuditString(label),
+        context: sanitizeAuditString(context),
+        score,
+        path: 'table'
+      });
+    }
+  }
+}
+
+function collectWindMainScoreCandidates(value, key, candidates = [], pathParts = [], inheritedDate = null, inheritedContext = '') {
+  collectWindMainScoreCandidatesFromTable(candidates, key, value);
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      collectWindMainScoreCandidates(item, key, candidates, [...pathParts, String(index)], inheritedDate, inheritedContext);
+    });
+    return candidates;
+  }
+  if (!isPlainObject(value)) return candidates;
+
+  const objectDate = findWindObservedAt(value) || inheritedDate;
+  const localContext = [
+    inheritedContext,
+    ...Object.entries(value)
+      .filter(([itemKey, itemValue]) => typeof itemValue === 'string' && !/date|time|日期|时间|交易日|报告期/i.test(itemKey))
+      .map(([, itemValue]) => itemValue)
+  ].join(' ');
+
+  for (const [keyName, raw] of Object.entries(value)) {
+    const path = [...pathParts, keyName];
+    const score = mainScoreLabelScore(key, keyName, localContext);
+    const n = parseMainScoreNumber(raw);
+    if (score >= 1 && isPlausibleMainScoreWindValue(key, n)) {
+      candidates.push({
+        value: n,
+        observedAt: objectDate,
+        label: sanitizeAuditString(keyName),
+        context: sanitizeAuditString(localContext),
+        score,
+        path: sanitizeAuditString(path.join('.'))
+      });
+    }
+    collectWindMainScoreCandidates(raw, key, candidates, path, objectDate, localContext);
+  }
+  return candidates;
+}
+
+function selectWindMainScoreCandidate(key, payload) {
+  const candidates = [];
+  for (const rootValue of windResponseSearchRoots(payload)) {
+    collectWindMainScoreCandidates(rootValue, key, candidates);
+  }
+  const filtered = candidates
+    .filter((candidate) => candidate.observedAt)
+    .sort((a, b) => b.score - a.score);
+  if (!filtered.length) {
+    return {
+      ok: false,
+      reason: 'no_labeled_plausible_timestamped_value',
+      candidateCount: candidates.length
+    };
+  }
+  const selected = filtered[0];
+  return {
+    ok: true,
+    value: selected.value,
+    observedAt: selected.observedAt,
+    evidence: {
+      label: selected.label,
+      context: selected.context,
+      path: selected.path,
+      candidateCount: filtered.length
+    }
+  };
+}
+
+function parseMainScoreWindSse(text) {
+  let lastJson = null;
+  for (const line of String(text || '').split(/\r?\n/)) {
+    if (!line.startsWith('data:')) continue;
+    const payload = line.slice('data:'.length).trim();
+    if (!payload || payload === '[DONE]') continue;
+    try {
+      lastJson = JSON.parse(payload);
+    } catch {
+      // Keep fail-closed behavior: malformed SSE events are ignored until no valid event remains.
+    }
+  }
+  if (!lastJson) throw new Error('Wind SSE response had no JSON data event');
+  return lastJson;
+}
+
+async function mainScoreWindMcpRequest(serverType, payload) {
+  const endpoint = MAIN_SCORE_WIND_ENDPOINTS[serverType];
+  if (!endpoint) throw new Error(`unsupported Wind MCP server: ${serverType}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), MAIN_SCORE_WIND_TIMEOUT_MS);
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${WIND_API_KEY}`,
+        Accept: 'application/json, text/event-stream',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    const text = await res.text();
+    if (!res.ok) throw new Error(`Wind MCP HTTP ${res.status}`);
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/event-stream') || text.includes('\ndata:')) return parseMainScoreWindSse(text);
+    return JSON.parse(text);
+  } catch (err) {
+    if (err?.name === 'AbortError') throw new Error(`Wind MCP timeout ${MAIN_SCORE_WIND_TIMEOUT_MS}ms`);
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function mainScoreWindMcpCall(serverType, toolName, args) {
+  if (!mainScoreWindInitializedServers.has(serverType)) {
+    await mainScoreWindMcpRequest(serverType, {
+      jsonrpc: '2.0',
+      id: mainScoreWindRequestId++,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: { name: 'gfrr-main-score-daily', version: '1.0.0' }
+      }
+    });
+    mainScoreWindInitializedServers.add(serverType);
+  }
+  return await mainScoreWindMcpRequest(serverType, {
+    jsonrpc: '2.0',
+    id: mainScoreWindRequestId++,
+    method: 'tools/call',
+    params: {
+      name: toolName,
+      arguments: args
+    }
+  });
+}
+
+async function fetchWindMainScoreInput(key) {
+  const input = MAIN_SCORE_WIND_INPUTS[key];
+  if (!input) return { ok: false, reason: 'unsupported_input' };
+  const payload = await mainScoreWindMcpCall(input.serverType, input.toolName, {
+    question: input.question,
+    lang: 'CNS'
+  });
+  const selected = selectWindMainScoreCandidate(key, payload);
+  if (!selected.ok) return selected;
+  return {
+    ok: true,
+    value: selected.value,
+    observedAt: selected.observedAt,
+    fetchedAt: isoNow,
+    source: `wind:${input.serverType}.${input.toolName}`,
+    evidence: selected.evidence
+  };
+}
+
+function existingPublicFallbackIsFresh(realtimePayload, key) {
+  const detail = realtimePayload?.sourceDetails?.[key];
+  if (!isPlainObject(detail) || detail.ok !== true || detail.paidWindFallback === true) return false;
+  const observedAt = normalizeWindDate(detail.observedAt || detail.timestamp || detail.asOf || detail.updatedAt) ||
+    normalizeWindDate(realtimePayload?.updatedAt || realtimePayload?.asOf);
+  const freshness = windFreshnessDecision(key, observedAt);
+  return freshness.ok;
+}
+
+function mainScoreInputFallbackNeed(realtimePayload, key) {
+  const currentValue = Number(realtimePayload?.values?.[key]);
+  if (!Number.isFinite(currentValue)) {
+    return { needed: true, reason: 'current_value_missing_or_nonfinite', currentValue: null };
+  }
+  const detail = realtimePayload?.sourceDetails?.[key];
+  if (isPlainObject(detail) && detail.ok === false) {
+    return { needed: true, reason: 'source_detail_not_ok', currentValue };
+  }
+  const sourceStatus = String(realtimePayload?.sourceStatus?.[key] || '').toLowerCase();
+  if (/(missing|unavailable|error|stale|blocked|degraded)/u.test(sourceStatus)) {
+    return { needed: true, reason: 'source_status_missing_or_fallback', currentValue };
+  }
+  if (/fallback/u.test(sourceStatus)) {
+    if (existingPublicFallbackIsFresh(realtimePayload, key)) {
+      return { needed: false, reason: 'existing_public_validated_fallback_available', currentValue };
+    }
+    return { needed: true, reason: 'source_status_missing_or_fallback', currentValue };
+  }
+  return { needed: false, reason: 'public_primary_available', currentValue };
+}
+
+function windFreshnessDecision(key, observedAt) {
+  const observedMs = Date.parse(observedAt);
+  if (!Number.isFinite(observedMs)) return { ok: false, reason: 'missing_or_invalid_observed_at', ageHours: null };
+  const ageHours = (Date.parse(isoNow) - observedMs) / 3600000;
+  const maxHours = MAIN_SCORE_SOURCE_POLICY.windPaidFallback?.freshnessHours?.[key];
+  if (!Number.isFinite(ageHours) || !Number.isFinite(maxHours)) {
+    return { ok: false, reason: 'freshness_policy_missing', ageHours: Number.isFinite(ageHours) ? Number(ageHours.toFixed(2)) : null };
+  }
+  return {
+    ok: ageHours >= 0 && ageHours <= maxHours,
+    reason: ageHours >= 0 && ageHours <= maxHours ? 'fresh' : 'stale',
+    ageHours: Number(ageHours.toFixed(2)),
+    maxHours
+  };
+}
+
+function mainScoreConflictTolerance(key) {
+  const tolerances = MAIN_SCORE_SOURCE_POLICY.windPaidFallback?.conflictTolerances || {};
+  return {
+    brent: { mode: 'pct', limit: tolerances.brentPct },
+    dxy: { mode: 'pct', limit: tolerances.dxyPct },
+    vix: { mode: 'pct', limit: tolerances.vixPct },
+    hyOas: { mode: 'abs', limit: tolerances.hyOasAbsPctPoint },
+    us10y: { mode: 'abs', limit: tolerances.us10yAbsPctPoint },
+    real10y: { mode: 'abs', limit: tolerances.real10yAbsPctPoint },
+    breakeven10y: { mode: 'abs', limit: tolerances.breakeven10yAbsPctPoint },
+    spx: { mode: 'pct', limit: tolerances.spxPct }
+  }[key] || null;
+}
+
+function mainScoreDivergence(key, candidateValue, referenceValue) {
+  if (!Number.isFinite(candidateValue) || !Number.isFinite(referenceValue)) return null;
+  const tolerance = mainScoreConflictTolerance(key);
+  if (!tolerance || !Number.isFinite(tolerance.limit)) return null;
+  if (tolerance.mode === 'pct') {
+    const denominator = Math.max(Math.abs(referenceValue), 1e-9);
+    return {
+      mode: 'pct',
+      value: Math.abs((candidateValue - referenceValue) / denominator) * 100,
+      limit: tolerance.limit
+    };
+  }
+  return {
+    mode: 'abs',
+    value: Math.abs(candidateValue - referenceValue),
+    limit: tolerance.limit
+  };
+}
+
+function cloneRealtimeWithWindInput(realtimePayload, key, windResult, need) {
+  const next = structuredClone(realtimePayload);
+  next.values = { ...(next.values || {}), [key]: windResult.value };
+  next.sourceStatus = { ...(next.sourceStatus || {}), [key]: 'wind:paid-fallback' };
+  next.sourceDetails = {
+    ...(next.sourceDetails || {}),
+    [key]: {
+      ok: true,
+      value: windResult.value,
+      source: windResult.source,
+      sourceMode: 'wind_paid_fallback',
+      observedAt: windResult.observedAt,
+      timestamp: windResult.observedAt,
+      fetchedAt: windResult.fetchedAt,
+      fallbackReason: need.reason,
+      paidWindFallback: true,
+      participatesInMainScore: true,
+      sourceConflictAudit: windResult.sourceConflictAudit,
+      evidence: windResult.evidence
+    }
+  };
+  next.sourceMode = next.sourceMode === 'live' ? 'live-with-fallback' : (next.sourceMode || 'live-with-fallback');
+  next.degradedMode = true;
+  next.fallbackCount = (Number.isFinite(next.fallbackCount) ? next.fallbackCount : 0) + 1;
+  const note = `Wind paid fallback applied to main score input ${key}; reason=${need.reason}.`;
+  next.notes = Array.isArray(next.notes) ? [...next.notes, note] : [note];
+  return next;
+}
+
+function mainScoreWindSwitchGuards(baseRisk, candidateRisk) {
+  const guards = [];
+  const cfg = MAIN_SCORE_SOURCE_POLICY.windPaidFallback?.scoreImpactGuards || {};
+  const scoreDelta = Number.isFinite(baseRisk?.score) && Number.isFinite(candidateRisk?.score)
+    ? candidateRisk.score - baseRisk.score
+    : null;
+  if (Number.isFinite(scoreDelta) && Number.isFinite(cfg.maxAutomaticScoreDeltaWithoutReview) &&
+      Math.abs(scoreDelta) > cfg.maxAutomaticScoreDeltaWithoutReview) {
+    guards.push('score_delta_exceeds_guard');
+  }
+  const baseTier = mainScoreRiskTier(baseRisk?.score);
+  const candidateTier = mainScoreRiskTier(candidateRisk?.score);
+  const rankDelta = mainScoreTierRank(candidateTier) - mainScoreTierRank(baseTier);
+  if (Number.isFinite(cfg.maxAutomaticTierJumpWithoutReview) &&
+      Math.abs(rankDelta) > cfg.maxAutomaticTierJumpWithoutReview) {
+    guards.push('tier_jump_exceeds_guard');
+  }
+  if (cfg.riskTierDowngradeRequiresConfirmationFrom === 'yellow' &&
+      mainScoreTierRank(baseTier) >= mainScoreTierRank('yellow') &&
+      mainScoreTierRank(candidateTier) < mainScoreTierRank(baseTier)) {
+    guards.push('yellow_or_red_tier_downgrade_requires_confirmation');
+  }
+  if (cfg.tailOverlaySwitchRequiresConfirmation === true &&
+      Boolean(baseRisk?.tailRiskOverlay?.applied) !== Boolean(candidateRisk?.tailRiskOverlay?.applied)) {
+    guards.push('tail_overlay_switch_requires_confirmation');
+  }
+  return {
+    scoreDelta: Number.isFinite(scoreDelta) ? scoreDelta : null,
+    baseTier,
+    candidateTier,
+    rankDelta: Number.isFinite(rankDelta) ? rankDelta : null,
+    guards
+  };
+}
+
+function buildMainScoreSourcePolicyAudit(realtimePayload) {
+  return {
+    contractVersion: MAIN_SCORE_SOURCE_POLICY.contractVersion,
+    mode: 'wind_paid_invalid_leaf_fallback_v1',
+    status: 'not_evaluated',
+    evaluatedAt: isoNow,
+    enabledEnvVar: MAIN_SCORE_WIND_FALLBACK_ENV,
+    enabled: MAIN_SCORE_WIND_FALLBACK_ENABLED,
+    windKeyPresent: Boolean(WIND_API_KEY),
+    doesNotBypassRealtimeTrustGate: true,
+    doesNotOverrideFinitePublicPrimary: true,
+    sourcePriority: MAIN_SCORE_SOURCE_POLICY.windPaidFallback?.sourcePriority || [],
+    scoreImpactGuards: MAIN_SCORE_SOURCE_POLICY.windPaidFallback?.scoreImpactGuards || {},
+    eligibleInputs: MAIN_SCORE_SOURCE_POLICY.windPaidFallback?.eligibleInputs || [],
+    candidateInputs: [],
+    appliedInputs: [],
+    reviewRequiredInputs: [],
+    skippedInputs: [],
+    sourceConflictAudit: {},
+    notes: [
+      `realtimeTrustGate=${canUseRealtimePayloadValues(realtimePayload) ? 'pass' : 'fail'}`
+    ]
+  };
+}
+
+async function evaluateWindMainScoreCandidate({ key, need, windResult, baseRealtime, currentRealtime, macroDrivers }) {
+  const audit = {
+    input: key,
+    fallbackReason: need.reason,
+    previousRealtimeValue: Number.isFinite(need.currentValue) ? need.currentValue : null,
+    windSource: windResult.source || null,
+    windObservedAt: windResult.observedAt || null,
+    windFetchedAt: windResult.fetchedAt || null,
+    windEvidence: windResult.evidence || null,
+    decision: 'rejected',
+    reasons: []
+  };
+
+  if (!windResult.ok) {
+    audit.reasons.push(windResult.reason || 'wind_fetch_or_parse_failed');
+    audit.windCandidateCount = windResult.candidateCount ?? null;
+    return { apply: false, reviewRequired: false, audit };
+  }
+
+  if (!isPlausibleMainScoreWindValue(key, windResult.value)) {
+    audit.reasons.push('plausibility_range_failed');
+    return { apply: false, reviewRequired: false, audit };
+  }
+  audit.windValue = windResult.value;
+
+  const freshness = windFreshnessDecision(key, windResult.observedAt);
+  audit.freshness = freshness;
+  if (!freshness.ok) {
+    audit.reasons.push(`wind_${freshness.reason}`);
+    return { apply: false, reviewRequired: false, audit };
+  }
+
+  const previousDailyValue = Number(prevData?.displayInputsBaseline?.[key]);
+  if (Number.isFinite(previousDailyValue)) {
+    const divergence = mainScoreDivergence(key, windResult.value, previousDailyValue);
+    audit.previousDailyBaseline = previousDailyValue;
+    audit.previousDailyDivergence = divergence;
+    if (divergence && Number.isFinite(divergence.value) && Number.isFinite(divergence.limit) && divergence.value > divergence.limit) {
+      audit.decision = 'review_required';
+      audit.reasons.push('previous_daily_baseline_conflict_exceeds_tolerance');
+      return { apply: false, reviewRequired: true, audit };
+    }
+  }
+
+  const baseRisk = deriveRisk(baseRealtime, macroDrivers);
+  const candidateRealtime = cloneRealtimeWithWindInput(currentRealtime, key, { ...windResult, sourceConflictAudit: audit }, need);
+  const candidateRisk = deriveRisk(candidateRealtime, macroDrivers);
+  const impact = mainScoreWindSwitchGuards(baseRisk, candidateRisk);
+  audit.scoreImpact = impact;
+  if (impact.guards.length) {
+    audit.decision = 'review_required';
+    audit.reasons.push(...impact.guards);
+    return { apply: false, reviewRequired: true, audit };
+  }
+
+  audit.decision = 'applied';
+  audit.reasons.push('wind_paid_fallback_passed_arbitration');
+  return { apply: true, reviewRequired: false, audit };
+}
+
+async function resolveMainScoreRuntimeSource(realtimePayload, macroDrivers) {
+  const audit = buildMainScoreSourcePolicyAudit(realtimePayload);
+  if (!canUseRealtimePayloadValues(realtimePayload)) {
+    audit.status = 'skipped_realtime_trust_gate';
+    audit.notes.push('Wind fallback does not synthesize a full realtime payload.');
+    return { realtimePayload, audit };
+  }
+
+  const eligibleInputs = audit.eligibleInputs;
+  const candidateNeeds = [];
+  for (const key of eligibleInputs) {
+    const need = mainScoreInputFallbackNeed(realtimePayload, key);
+    if (need.needed) {
+      candidateNeeds.push({ key, need });
+      audit.candidateInputs.push(key);
+    } else {
+      audit.skippedInputs.push({ key, reason: need.reason });
+    }
+  }
+
+  if (!candidateNeeds.length) {
+    audit.status = 'skipped_no_candidates';
+    audit.notes.push('No invalid/missing/fallback core score leaf input required Wind evaluation.');
+    return { realtimePayload, audit };
+  }
+  if (!MAIN_SCORE_WIND_FALLBACK_ENABLED) {
+    audit.status = 'skipped_disabled';
+    audit.notes.push(`${MAIN_SCORE_WIND_FALLBACK_ENV}=1 is required before paid Wind fallback can run.`);
+    return { realtimePayload, audit };
+  }
+  if (!WIND_API_KEY) {
+    audit.status = 'skipped_no_wind_key';
+    audit.notes.push('WIND_API_KEY is absent; paid fallback stayed fail-closed.');
+    return { realtimePayload, audit };
+  }
+
+  let workingRealtime = structuredClone(realtimePayload);
+  let hadError = false;
+  for (const { key, need } of candidateNeeds) {
+    try {
+      const windResult = await fetchWindMainScoreInput(key);
+      const decision = await evaluateWindMainScoreCandidate({
+        key,
+        need,
+        windResult,
+        baseRealtime: realtimePayload,
+        currentRealtime: workingRealtime,
+        macroDrivers
+      });
+      audit.sourceConflictAudit[key] = decision.audit;
+      if (decision.apply) {
+        const sourceConflictAudit = { ...decision.audit, decision: 'applied' };
+        workingRealtime = cloneRealtimeWithWindInput(
+          workingRealtime,
+          key,
+          { ...windResult, sourceConflictAudit },
+          need
+        );
+        audit.appliedInputs.push(key);
+      } else if (decision.reviewRequired) {
+        audit.reviewRequiredInputs.push(key);
+      }
+    } catch (err) {
+      hadError = true;
+      audit.sourceConflictAudit[key] = {
+        input: key,
+        fallbackReason: need.reason,
+        decision: 'error',
+        reasons: ['wind_fetch_failed'],
+        error: sanitizeAuditString(err instanceof Error ? err.message : err)
+      };
+    }
+  }
+
+  if (audit.appliedInputs.length) audit.status = 'applied';
+  else if (audit.reviewRequiredInputs.length) audit.status = 'review_required';
+  else if (hadError) audit.status = 'error';
+  else audit.status = 'evaluated_no_switch';
+
+  if (audit.appliedInputs.length) {
+    audit.notes.push('One or more Wind paid fallback inputs entered main score through arbitration.');
+  }
+  if (audit.reviewRequiredInputs.length) {
+    audit.notes.push('One or more Wind candidates were kept out of automatic scoring by source/score-impact guards.');
+  }
+  return { realtimePayload: workingRealtime, audit };
 }
 
 function briefEvidence(source, key, labelZh, value, summaryZh) {
@@ -10368,15 +11088,17 @@ async function buildFallback() {
 async function build() {
   if (!canUseRealtimePayloadValues(realtime)) return await buildFallback();
 
-  const sourceModeLabel = SOURCE_MODE_CN[realtime.sourceMode] || realtime.sourceMode || '--';
-
   const hyOasLive = Number(realtime.values?.hyOas);
   const macroDrivers = await fetchMacroDrivers(prevData, Number.isFinite(hyOasLive) ? hyOasLive : null);
   const allMacroMissing = isAllStructuralSourcesMissing(macroDrivers);
   const activeSignals = activeStructuralSignals(macroDrivers);
   const gatingResult = evaluateStructuralGating(macroDrivers);
+  const mainScoreSourceResolution = await resolveMainScoreRuntimeSource(realtime, macroDrivers);
+  const scoringRealtime = mainScoreSourceResolution.realtimePayload;
+  const sourceModeLabel = SOURCE_MODE_CN[scoringRealtime.sourceMode] || scoringRealtime.sourceMode || '--';
+  const hyOasScoreInput = Number(scoringRealtime.values?.hyOas);
 
-  const risk = deriveRisk(realtime, macroDrivers);
+  const risk = deriveRisk(scoringRealtime, macroDrivers);
   const previousTransmissionSource = resolvePreviousTransmissionSource(prevData, prevHistoryFull, prevHistory);
   const transmissionDeltaResult = applyTransmissionDeltas(prevData.transmissionChain || {}, previousTransmissionSource);
   const transmissionSnapshot = buildTransmissionSnapshot(transmissionDeltaResult.chain);
@@ -10390,7 +11112,7 @@ async function build() {
   const probs = regimeProb(risk.score, risk);
   const macro = regimeLabel(probs);
   const phase = risk.modules.liquidity >= 70 ? '流动性偏紧' : risk.modules.energy >= 75 ? '通胀冲击' : '风险缓和';
-  const lock = lockEngine(risk.score, risk, realtime, gatingResult);
+  const lock = lockEngine(risk.score, risk, scoringRealtime, gatingResult);
   const allocs = targetAllocations(lock);
 
   const topRisks = [
@@ -10432,8 +11154,8 @@ async function build() {
   const totalExposureBandCN = `${shiftedLo}%-${shiftedHi}%`;
 
   // v27: recovery.notes 构建 —— 若结构信号数据源全不可用则追加中文降级说明
-  const recoveryNotes = realtime.notes && realtime.notes.length
-    ? [...realtime.notes]
+  const recoveryNotes = scoringRealtime.notes && scoringRealtime.notes.length
+    ? [...scoringRealtime.notes]
     : ['v27.0 慢变量已由最新实时快照与结构性数据重算。'];
   if (allMacroMissing) {
     recoveryNotes.push('结构信号数据源当前全部不可用，v27 结构门控已降级。');
@@ -10452,10 +11174,10 @@ async function build() {
     spx: toFiniteOrNull(risk.spx),
     asOf: isoNow
   };
-  const confidenceScore = clamp(100 - (realtime.criticalMissing ?? 0) * R.confidenceScoring.criticalMissingPenalty - (realtime.fallbackCount ?? 0) * R.confidenceScoring.fallbackPenalty);
+  const confidenceScore = clamp(100 - (scoringRealtime.criticalMissing ?? 0) * R.confidenceScoring.criticalMissingPenalty - (scoringRealtime.fallbackCount ?? 0) * R.confidenceScoring.fallbackPenalty);
   const dailyBrief = buildDailyBrief({
     risk,
-    realtimePayload: realtime,
+    realtimePayload: scoringRealtime,
     macroState: macro,
     phase,
     displayInputsBaseline,
@@ -10466,7 +11188,7 @@ async function build() {
   });
   const divergenceLayer = buildDivergenceLayer({
     risk,
-    realtimePayload: realtime,
+    realtimePayload: scoringRealtime,
     displayInputsBaseline,
     macroDrivers,
     confidenceScore
@@ -10479,9 +11201,9 @@ async function build() {
     resolveEiaBrentSpotProxy(prevData?.brentPricingLayer)
   ]);
   const brentPricingLayer = buildBrentPricingLayer({
-    realtimePayload: realtime,
+    realtimePayload: scoringRealtime,
     displayInputsBaseline,
-    dailyRealtimeInput: buildDailyRealtimeInput(realtime),
+    dailyRealtimeInput: buildDailyRealtimeInput(scoringRealtime),
     ulsdData,
     futuresCurveData: brentFuturesCurve,
     futuresPriceCurveData: brentFuturesPriceCurve,
@@ -10492,7 +11214,8 @@ async function build() {
   const data = {
     version: 'v27.0',
     updatedAt: isoNow,
-    dailyRealtimeInput: buildDailyRealtimeInput(realtime),
+    dailyRealtimeInput: buildDailyRealtimeInput(scoringRealtime),
+    mainScoreSourcePolicy: mainScoreSourceResolution.audit,
     dailyBrief,
     divergenceLayer,
     brentPricingLayer,
@@ -10506,7 +11229,7 @@ async function build() {
     nextCrisisPhase: phase === '流动性偏紧' ? '政策应对' : '风险缓和',
     transitionRisk: clamp(avg([risk.modules.liquidity, risk.hyRisk, risk.vixRisk])),
     confidenceScore,
-    confidenceLevel: (realtime.cacheOnly ? '低' : realtime.degradedMode ? '中' : '高'),
+    confidenceLevel: (scoringRealtime.cacheOnly ? '低' : scoringRealtime.degradedMode ? '中' : '高'),
     displayInputsBaseline,
     topRisks,
     decisionLine: `当前已进入 v27.0 交易引擎模式：实时快变量${sourceModeLabel}，执行状态灯为${lock.levelLabel}。${activeSignals.length ? '已激活结构信号：' + activeSignals.map(s => s.label).join('、') + '。' : allMacroMissing ? '结构信号数据源暂不可用。' : ''}先看状态灯，再决定能不能动。`,
@@ -10515,18 +11238,18 @@ async function build() {
     riskCalibration: risk.riskCalibration,
     tailRiskOverlay: risk.tailRiskOverlay,
     moduleTrends: {
-      geopolitical: clamp((realtime.changes?.brent1d ?? 0) * 2, -9, 9),
-      energy: clamp((realtime.changes?.brent1d ?? 0) * 3, -9, 9),
-      inflation: clamp((realtime.changes?.breakeven10y1d ?? 0) * 20, -9, 9),
-      liquidity: clamp(((realtime.changes?.dxy1d ?? 0) * 8) + ((realtime.changes?.hyOas1d ?? 0) * 10), -9, 9),
-      debt: clamp(((realtime.changes?.us10y1d ?? 0) + (realtime.changes?.real10y1d ?? 0)) * 20, -9, 9),
-      banking: clamp((realtime.changes?.hyOas1d ?? 0) * 12, -9, 9)
+      geopolitical: clamp((scoringRealtime.changes?.brent1d ?? 0) * 2, -9, 9),
+      energy: clamp((scoringRealtime.changes?.brent1d ?? 0) * 3, -9, 9),
+      inflation: clamp((scoringRealtime.changes?.breakeven10y1d ?? 0) * 20, -9, 9),
+      liquidity: clamp(((scoringRealtime.changes?.dxy1d ?? 0) * 8) + ((scoringRealtime.changes?.hyOas1d ?? 0) * 10), -9, 9),
+      debt: clamp(((scoringRealtime.changes?.us10y1d ?? 0) + (scoringRealtime.changes?.real10y1d ?? 0)) * 20, -9, 9),
+      banking: clamp((scoringRealtime.changes?.hyOas1d ?? 0) * 12, -9, 9)
     },
     regimeProbabilities: probs,
     phaseSignals: [
       `实时输入：布伦特 ${risk.brent.toFixed(1)} / 波动率 ${risk.vix.toFixed(2)} / 高收益利差 ${risk.hy.toFixed(2)}%。`,
       `利率输入：10年期 ${risk.us10y.toFixed(2)} / 实际利率 ${risk.real10y.toFixed(2)} / 盈亏平衡通胀 ${risk.breakeven.toFixed(2)}%。`,
-      `快变量状态：${sourceModeLabel}，健康度 ${realtime.healthScore}。`
+      `快变量状态：${sourceModeLabel}，健康度 ${scoringRealtime.healthScore}。`
     ],
     macroDrivers: {
       fedLiquidity: macroDrivers.fedLiquidity,
@@ -10534,7 +11257,7 @@ async function build() {
       curve: macroDrivers.curve,
       credit: {
         ...macroDrivers.credit,
-        hyOas: Number.isFinite(hyOasLive) ? hyOasLive : null
+        hyOas: Number.isFinite(hyOasScoreInput) ? hyOasScoreInput : null
       },
       consumer: macroDrivers.consumer,
       shippingFreight: macroDrivers.shippingFreight,
@@ -10571,17 +11294,17 @@ async function build() {
     liquidityIndex: {
       score: risk.modules.liquidity,
       regime: risk.modules.liquidity >= 70 ? '限制性偏紧' : risk.modules.liquidity >= 55 ? '偏紧缓解' : '流动性修复',
-      change1d: clamp(((realtime.changes?.dxy1d ?? 0) * 10) + ((realtime.changes?.hyOas1d ?? 0) * 8), -9, 9),
-      directionLabel: realtime.cacheOnly ? '快变量缓存模式' : realtime.degradedMode ? '快变量带回退' : '快变量实时覆盖',
+      change1d: clamp(((scoringRealtime.changes?.dxy1d ?? 0) * 10) + ((scoringRealtime.changes?.hyOas1d ?? 0) * 8), -9, 9),
+      directionLabel: scoringRealtime.cacheOnly ? '快变量缓存模式' : scoringRealtime.degradedMode ? '快变量带回退' : '快变量实时覆盖',
       notes: [
         `广义美元指数 ${risk.dxy.toFixed(2)} / 高收益利差 ${risk.hy.toFixed(2)} / 波动率 ${risk.vix.toFixed(2)} 为三大流动性输入。`,
-        ...(realtime.notes || [])
+        ...(scoringRealtime.notes || [])
       ],
       pillars: [
-        { label: '美元融资', value: risk.dollarRisk, delta: clamp((realtime.changes?.dxy1d ?? 0) * 8, -9, 9) },
-        { label: '跨资产波动', value: risk.vixRisk, delta: clamp((realtime.changes?.vix1d ?? 0) * 4, -9, 9) },
-        { label: '信用 / 利差', value: risk.hyRisk, delta: clamp((realtime.changes?.hyOas1d ?? 0) * 10, -9, 9) },
-        { label: '利率敏感压力', value: clamp(avg([risk.rateRisk, risk.realRisk])), delta: clamp(((realtime.changes?.us10y1d ?? 0) + (realtime.changes?.real10y1d ?? 0)) * 18, -9, 9) }
+        { label: '美元融资', value: risk.dollarRisk, delta: clamp((scoringRealtime.changes?.dxy1d ?? 0) * 8, -9, 9) },
+        { label: '跨资产波动', value: risk.vixRisk, delta: clamp((scoringRealtime.changes?.vix1d ?? 0) * 4, -9, 9) },
+        { label: '信用 / 利差', value: risk.hyRisk, delta: clamp((scoringRealtime.changes?.hyOas1d ?? 0) * 10, -9, 9) },
+        { label: '利率敏感压力', value: clamp(avg([risk.rateRisk, risk.realRisk])), delta: clamp(((scoringRealtime.changes?.us10y1d ?? 0) + (scoringRealtime.changes?.real10y1d ?? 0)) * 18, -9, 9) }
       ],
       structuralSignals: {
         fedAssetTrend: macroDrivers.fedLiquidity.regime,
@@ -10600,11 +11323,11 @@ async function build() {
       transmissionAcceleration: scoreChange7d > R.trendThresholds.acceleratingThreshold ? '加快' : scoreChange7d < R.trendThresholds.deceleratingThreshold ? '放缓' : '平稳',
       dominantPath: risk.modules.energy >= risk.modules.liquidity ? '油价 → 通胀 → 利率 → 股票' : '美元 → 信用 → 流动性 → 股票',
       pathChanges: [
-        { label: '油价→通胀', value: clamp(avg([risk.oilRisk, risk.inflationRisk])), delta: clamp((realtime.changes?.brent1d ?? 0) * 3, -9, 9) },
-        { label: '通胀→利率', value: clamp(avg([risk.inflationRisk, risk.rateRisk])), delta: clamp((realtime.changes?.breakeven10y1d ?? 0) * 18, -9, 9) },
-        { label: '利率→股票', value: clamp(avg([risk.rateRisk, risk.spxRisk])), delta: clamp(((realtime.changes?.us10y1d ?? 0) * 16) - ((realtime.changes?.spx1d ?? 0) / 20), -9, 9) },
-        { label: '美元→信用', value: clamp(avg([risk.dollarRisk, risk.hyRisk])), delta: clamp(((realtime.changes?.dxy1d ?? 0) * 8) + ((realtime.changes?.hyOas1d ?? 0) * 8), -9, 9) },
-        { label: '流动性→估值', value: clamp(avg([risk.modules.liquidity, risk.vixRisk])), delta: clamp(((realtime.changes?.vix1d ?? 0) * 3) + ((realtime.changes?.hyOas1d ?? 0) * 8), -9, 9) }
+        { label: '油价→通胀', value: clamp(avg([risk.oilRisk, risk.inflationRisk])), delta: clamp((scoringRealtime.changes?.brent1d ?? 0) * 3, -9, 9) },
+        { label: '通胀→利率', value: clamp(avg([risk.inflationRisk, risk.rateRisk])), delta: clamp((scoringRealtime.changes?.breakeven10y1d ?? 0) * 18, -9, 9) },
+        { label: '利率→股票', value: clamp(avg([risk.rateRisk, risk.spxRisk])), delta: clamp(((scoringRealtime.changes?.us10y1d ?? 0) * 16) - ((scoringRealtime.changes?.spx1d ?? 0) / 20), -9, 9) },
+        { label: '美元→信用', value: clamp(avg([risk.dollarRisk, risk.hyRisk])), delta: clamp(((scoringRealtime.changes?.dxy1d ?? 0) * 8) + ((scoringRealtime.changes?.hyOas1d ?? 0) * 8), -9, 9) },
+        { label: '流动性→估值', value: clamp(avg([risk.modules.liquidity, risk.vixRisk])), delta: clamp(((scoringRealtime.changes?.vix1d ?? 0) * 3) + ((scoringRealtime.changes?.hyOas1d ?? 0) * 8), -9, 9) }
       ],
       notes: [
         `当前综合风险分数 ${risk.score}。`,
@@ -10665,9 +11388,9 @@ async function build() {
     ],
     warningSystem: {
       status: `${lock.levelLabel} / 数据模式${sourceModeLabel}`,
-      criticalCount: realtime.criticalMissing || 0,
-      warningCount: realtime.fallbackCount || 0,
-      watchCount: Object.values(realtime.sourceStatus || {}).filter(v => String(v).startsWith('fred') || String(v).startsWith('stooq')).length,
+      criticalCount: scoringRealtime.criticalMissing || 0,
+      warningCount: scoringRealtime.fallbackCount || 0,
+      watchCount: Object.values(scoringRealtime.sourceStatus || {}).filter(v => String(v).startsWith('fred') || String(v).startsWith('stooq')).length,
       alerts: [
         {
           level: lock.level === 'red' ? '红色' : lock.level === 'yellow' ? '橙色' : '黄色',
@@ -10685,7 +11408,7 @@ async function build() {
           condition: s.detail,
           action: '该结构信号已纳入决策层门控。'
         })),
-        ...(realtime.notes || []).map((n) => ({
+        ...(scoringRealtime.notes || []).map((n) => ({
           level: '黄色',
           title: '数据源提示',
           driver: '快变量源',
@@ -10709,12 +11432,12 @@ async function build() {
     },
     confidenceNotes: [
       `数据模式：${sourceModeLabel}。`,
-      `健康分数：${realtime.healthScore}。`,
-      `关键缺失项：${realtime.criticalMissing || 0}。`,
+      `健康分数：${scoringRealtime.healthScore}。`,
+      `关键缺失项：${scoringRealtime.criticalMissing || 0}。`,
       `结构信号：${activeSignals.length ? activeSignals.map(s => s.label).join('、') : (allMacroMissing ? '数据源全不可用' : '无激活')}。`
     ],
     recovery: {
-      degradedMode: realtime.degradedMode || allMacroMissing,
+      degradedMode: scoringRealtime.degradedMode || allMacroMissing,
       safeOutput: true,
       lastRun: isoNow,
       notes: recoveryNotes
@@ -10723,14 +11446,14 @@ async function build() {
       signalEngine: {
         strength: risk.score,
         direction: lock.level === 'red' ? '只允许减仓/防守' : lock.level === 'yellow' ? '防御偏多能源 / 美元，限制久期与高波动' : '允许质量权益分批进攻',
-        consistency: realtime.cacheOnly ? '低一致性（缓存）' : realtime.degradedMode ? '中一致性（回退）' : '高一致性',
+        consistency: scoringRealtime.cacheOnly ? '低一致性（缓存）' : scoringRealtime.degradedMode ? '中一致性（回退）' : '高一致性',
         macroSignal: macro,
         liquiditySignal: `${risk.modules.liquidity >= 70 ? '限制性偏紧' : risk.modules.liquidity >= 55 ? '偏紧缓解' : '流动性修复'}（实时）`,
         chainSignal: risk.modules.energy >= risk.modules.liquidity ? '油价→通胀→利率→股票' : '美元→信用→流动性→股票',
         notes: [
           `执行引擎状态：${lock.levelLabel}。`,
           `关键快变量：布伦特 ${risk.brent.toFixed(1)} / 广义美元指数 ${risk.dxy.toFixed(2)} / 波动率 ${risk.vix.toFixed(2)} / 高收益利差 ${risk.hy.toFixed(2)}。`,
-          `健康度 ${realtime.healthScore}，关键缺失 ${realtime.criticalMissing || 0}。`,
+          `健康度 ${scoringRealtime.healthScore}，关键缺失 ${scoringRealtime.criticalMissing || 0}。`,
           activeSignals.length ? `结构信号：${activeSignals.map(s => s.label).join('、')}。` : (allMacroMissing ? '结构信号数据源全不可用，门控已降级。' : '结构信号：无激活。')
         ]
       },
@@ -10787,7 +11510,7 @@ async function build() {
         ]
       },
       executionLock: {
-        tag: realtime.cacheOnly ? '缓存模式 · 主观不得覆盖' : realtime.degradedMode ? '带回退实时模式 · 主观不得覆盖' : '实时模式 · 主观不得覆盖',
+        tag: scoringRealtime.cacheOnly ? '缓存模式 · 主观不得覆盖' : scoringRealtime.degradedMode ? '带回退实时模式 · 主观不得覆盖' : '实时模式 · 主观不得覆盖',
         level: lock.level,
         levelLabel: lock.levelLabel,
         title: lock.title,

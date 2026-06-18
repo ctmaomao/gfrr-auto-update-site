@@ -74,6 +74,12 @@ Wind 兜底成功可以进入 GFRR 主雷达核心分数，但前提是对应 of
 
 成功进入主分数路径的 Wind 值必须带 `sourceMode=wind_paid_fallback`、`paidWindFallback=true`、`participatesInMainScore=true`、`sourceConflictAudit`、原始时间戳和 fallback reason。若 Wind source switch 会触发超过阈值的分数跳变、跨多档跳变、已有 yellow/red 档位自动降级或 tailRiskOverlay 开关翻转,分数影响守门会把该值转入 review_required / independent-confirmation 路径,不得自动改主分数。无 key、Wind 调用失败、字段缺失、超出合理范围或回放门槛未通过时，不得以 Wind 值写入 `values.*` / `displayInputsBaseline`，只能退回 last-good / rules default / unavailable 语义。
 
+Daily runtime 已接入 `wind_paid_invalid_leaf_fallback_v1`。触发条件更窄：整体 `realtime/market.json` 必须先通过信任门槛，且某个核心叶子输入缺失、非数值、source detail 明确失败，或 source status 明确 stale/fallback/degraded/error/unavailable/blocked。它不合成完整 realtime payload，也不覆盖正常可用的 public primary。GitHub Actions 使用现有 `WIND_API_KEY` secret，并在 `build-daily-radar-data.yml` 的 `Generate radar data` step 设置 `GFRR_MAIN_SCORE_WIND_FALLBACK=1`；本地默认不开启，除非手动设置同名 env var。
+
+该 runtime 会在 `data/radar-data.json.mainScoreSourcePolicy` 写入审计对象。`status=applied` 才代表 Wind 已实际进入本轮 GFRR 主雷达核心分数；`status=review_required` 表示 Wind 候选值取得成功但被 source conflict 或 score-impact guard 拦下。`mainScoreSourcePolicy` 不得保存 raw Wind response、Authorization header、cookie 或 API key。
+
+SEC EDGAR 免费补充源不需要 GitHub secret。它在数据中心或 GitHub runner 403 时必须 fail-closed，不得把 403/blocked 伪装成可用数据。
+
 ---
 
 ### Treasury Fiscal Data — Daily Treasury Statement / TGA candidate(source-review only)

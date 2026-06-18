@@ -1207,6 +1207,12 @@ v28.0G-7B adds `scripts/review-worker-health-snapshot.mjs` and `review:worker-he
 
 回放验证规则：任何 runtime Wind source-switch 实现前，必须运行 `npm run audit:main-score-backtest` 并检查报告字段 `windFallbackPolicy`。该回放使用 `wind_fallback_conflict_replay_v1`：不调用 Wind、不消耗 Wind 额度，而是在 2006 至今的公共历史序列上注入三组 Wind/public-source 冲突压力场景，验证事件窗口仍通过、`p95AbsScoreDelta` / `maxAbsScoreDelta` / `tierFlipPct` / `calmWindowAvgAbsDelta` 均未越界。`windFallbackPolicy.pass=false` 时不得启用 Wind 写入主分数输入。
 
+2026-06-18 runtime 加固后，Daily pipeline 实现 `wind_paid_invalid_leaf_fallback_v1`：只有当整体 realtime payload 先通过 `canUseRealtimePayloadValues`，且某个核心叶子输入满足 `current_value_missing_or_nonfinite` / `source_detail_not_ok` / `source_status_missing_or_fallback` 时，才允许在 `GFRR_MAIN_SCORE_WIND_FALLBACK=1` 且 `WIND_API_KEY` 存在的情况下调用 Wind。该路径不合成完整 realtime payload，不覆盖有限且未显式 stale/fallback/degraded 的 official/public primary。
+
+Daily 输出可包含根层 `mainScoreSourcePolicy` 审计对象，记录 `contractVersion=main-score-source-policy-v1`、`mode=wind_paid_invalid_leaf_fallback_v1`、runtime 开关状态、candidate/applied/reviewRequired/skipped inputs、`sourceConflictAudit` 与分数影响守门结果。该对象不得保存 raw Wind response、Authorization header、cookie 或 API key。若某个 Wind 值通过仲裁进入主分数，Daily 会在内部 scoring realtime 副本上标记 `sourceMode='live-with-fallback'`，并在对应输入的 source detail 中记录 `sourceMode='wind_paid_fallback'`、`paidWindFallback=true`、`participatesInMainScore=true`、`sourceConflictAudit`、`observedAt` 与 `fetchedAt`。
+
+`mainScoreSourcePolicy.status` 当前允许：`skipped_realtime_trust_gate`、`skipped_no_candidates`、`skipped_disabled`、`skipped_no_wind_key`、`evaluated_no_switch`、`applied`、`review_required`、`error`。`applied` 才表示 Wind 已实际进入本轮主分数；`review_required` 表示 Wind 取得候选值但因冲突容差或分数影响守门未自动写入评分输入。
+
 ## dailyRealtimeInput 契约
 
 `data/radar-data.json` 根层应包含：
@@ -1216,7 +1222,7 @@ v28.0G-7B adds `scripts/review-worker-health-snapshot.mjs` and `review:worker-he
   "branch": "realtime-data",
   "commitSha": "string|null",
   "updatedAt": "ISO string",
-  "sourceMode": "live|degraded|cache-only|fallback",
+  "sourceMode": "live|degraded|live-with-fallback|cache-only|fallback|mock",
   "healthScore": "number|null",
   "capturedAt": "ISO string"
 }

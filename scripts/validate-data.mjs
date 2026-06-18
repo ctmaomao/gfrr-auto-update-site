@@ -53,6 +53,19 @@ const BRENT_CONFIDENCE_LEVELS = new Set(['high', 'medium', 'low', 'none']);
 const DAILY_REALTIME_SOURCE_MODES = new Set(['live', 'degraded', 'live-with-fallback', 'fallback', 'cache-only', 'mock']);
 const DAILY_REALTIME_LIVE_MAX_AGE_MINUTES = 180;
 const DAILY_REALTIME_CACHE_ONLY_MAX_AGE_MINUTES = 360;
+const MAIN_SCORE_SOURCE_POLICY_INPUTS = new Set(['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'real10y', 'breakeven10y', 'spx']);
+const MAIN_SCORE_SOURCE_POLICY_STATUSES = new Set([
+  'not_evaluated',
+  'skipped_realtime_trust_gate',
+  'skipped_no_candidates',
+  'skipped_disabled',
+  'skipped_no_wind_key',
+  'evaluated_no_switch',
+  'applied',
+  'review_required',
+  'error'
+]);
+const MAIN_SCORE_SOURCE_POLICY_DECISIONS = new Set(['applied', 'review_required', 'rejected', 'error']);
 const DAILY_BRIEF_CONFIDENCE_LEVELS = new Set(['low', 'medium', 'high']);
 const DIVERGENCE_LAYER_STATES = new Set(['normal', 'watch', 'stress', 'high_stress', 'insufficient_data']);
 const DIVERGENCE_CHECK_STATUSES = new Set(['normal', 'watch', 'stress', 'insufficient_data']);
@@ -2622,6 +2635,69 @@ function validateDisplayInputsBaseline(dataPayload) {
   }
 }
 
+function validateMainScoreSourcePolicy(dataPayload) {
+  const policy = dataPayload.mainScoreSourcePolicy;
+  if (policy === undefined) return;
+  assertPlainObject(policy, 'mainScoreSourcePolicy');
+  assert(policy.contractVersion === 'main-score-source-policy-v1', 'mainScoreSourcePolicy.contractVersion must be main-score-source-policy-v1');
+  assert(policy.mode === 'wind_paid_invalid_leaf_fallback_v1', 'mainScoreSourcePolicy.mode must be wind_paid_invalid_leaf_fallback_v1');
+  assert(MAIN_SCORE_SOURCE_POLICY_STATUSES.has(policy.status), `mainScoreSourcePolicy.status is unsupported: ${policy.status}`);
+  validateNullableIsoString(policy.evaluatedAt, 'mainScoreSourcePolicy.evaluatedAt');
+  assert(policy.enabledEnvVar === 'GFRR_MAIN_SCORE_WIND_FALLBACK', 'mainScoreSourcePolicy.enabledEnvVar must be GFRR_MAIN_SCORE_WIND_FALLBACK');
+  assertBoolean(policy.enabled, 'mainScoreSourcePolicy.enabled');
+  assertBoolean(policy.windKeyPresent, 'mainScoreSourcePolicy.windKeyPresent');
+  assert(policy.doesNotBypassRealtimeTrustGate === true, 'mainScoreSourcePolicy.doesNotBypassRealtimeTrustGate must be true');
+  assert(policy.doesNotOverrideFinitePublicPrimary === true, 'mainScoreSourcePolicy.doesNotOverrideFinitePublicPrimary must be true');
+
+  for (const field of ['eligibleInputs', 'candidateInputs', 'appliedInputs', 'reviewRequiredInputs', 'sourcePriority', 'notes']) {
+    validateStringArray(policy[field], `mainScoreSourcePolicy.${field}`);
+  }
+  for (const key of policy.eligibleInputs) {
+    assert(MAIN_SCORE_SOURCE_POLICY_INPUTS.has(key), `mainScoreSourcePolicy.eligibleInputs includes unsupported key: ${key}`);
+  }
+  for (const field of ['candidateInputs', 'appliedInputs', 'reviewRequiredInputs']) {
+    for (const key of policy[field]) {
+      assert(MAIN_SCORE_SOURCE_POLICY_INPUTS.has(key), `mainScoreSourcePolicy.${field} includes unsupported key: ${key}`);
+    }
+  }
+
+  assertArray(policy.skippedInputs, 'mainScoreSourcePolicy.skippedInputs');
+  for (const [index, skipped] of policy.skippedInputs.entries()) {
+    assertPlainObject(skipped, `mainScoreSourcePolicy.skippedInputs[${index}]`);
+    assert(MAIN_SCORE_SOURCE_POLICY_INPUTS.has(skipped.key), `mainScoreSourcePolicy.skippedInputs[${index}].key is unsupported`);
+    assertString(skipped.reason, `mainScoreSourcePolicy.skippedInputs[${index}].reason`);
+  }
+
+  assertPlainObject(policy.scoreImpactGuards, 'mainScoreSourcePolicy.scoreImpactGuards');
+  assert(policy.scoreImpactGuards.guardedResult === 'review_required_or_independent_confirmation', 'mainScoreSourcePolicy.scoreImpactGuards.guardedResult is wrong');
+  assertPlainObject(policy.sourceConflictAudit, 'mainScoreSourcePolicy.sourceConflictAudit');
+  for (const [key, entry] of Object.entries(policy.sourceConflictAudit)) {
+    assert(MAIN_SCORE_SOURCE_POLICY_INPUTS.has(key), `mainScoreSourcePolicy.sourceConflictAudit unsupported key: ${key}`);
+    assertPlainObject(entry, `mainScoreSourcePolicy.sourceConflictAudit.${key}`);
+    assert(entry.input === key, `mainScoreSourcePolicy.sourceConflictAudit.${key}.input mismatch`);
+    assert(MAIN_SCORE_SOURCE_POLICY_DECISIONS.has(entry.decision), `mainScoreSourcePolicy.sourceConflictAudit.${key}.decision unsupported`);
+    if (entry.reasons !== undefined) validateStringArray(entry.reasons, `mainScoreSourcePolicy.sourceConflictAudit.${key}.reasons`);
+    if (entry.windValue !== undefined) assertFiniteNumber(entry.windValue, `mainScoreSourcePolicy.sourceConflictAudit.${key}.windValue`);
+    if (entry.windObservedAt !== undefined) validateNullableIsoString(entry.windObservedAt, `mainScoreSourcePolicy.sourceConflictAudit.${key}.windObservedAt`);
+    if (entry.windFetchedAt !== undefined) validateNullableIsoString(entry.windFetchedAt, `mainScoreSourcePolicy.sourceConflictAudit.${key}.windFetchedAt`);
+    if (entry.scoreImpact !== undefined) {
+      assertPlainObject(entry.scoreImpact, `mainScoreSourcePolicy.sourceConflictAudit.${key}.scoreImpact`);
+      assertArray(entry.scoreImpact.guards, `mainScoreSourcePolicy.sourceConflictAudit.${key}.scoreImpact.guards`);
+      for (const guard of entry.scoreImpact.guards) assertString(guard, `mainScoreSourcePolicy.sourceConflictAudit.${key}.scoreImpact.guards[]`);
+    }
+  }
+  if (policy.status === 'applied') {
+    assert(policy.appliedInputs.length > 0, 'mainScoreSourcePolicy.status=applied requires appliedInputs');
+  }
+  if (policy.status === 'review_required') {
+    assert(policy.reviewRequiredInputs.length > 0, 'mainScoreSourcePolicy.status=review_required requires reviewRequiredInputs');
+  }
+  const serialized = JSON.stringify(policy).toLowerCase();
+  for (const forbidden of ['authorization', 'bearer ', 'rawresponse', 'raw_response', 'set-cookie']) {
+    assert(!serialized.includes(forbidden), `mainScoreSourcePolicy must not include raw secret/header marker: ${forbidden}`);
+  }
+}
+
 function shouldValidateRealtimeBaselineAlignment(realtimePayload) {
   return realtimePayload?.sourceMode === 'live' &&
     Number.isFinite(realtimePayload.healthScore) &&
@@ -2984,6 +3060,7 @@ validateBrentPricingLayer(data);
 validateAiInterpretationLayer(data);
 validateExternalAiInterpretationLayer(data);
 validateDisplayInputsBaseline(data);
+validateMainScoreSourcePolicy(data);
 validateRealtimeBaselineAlignment(data, realtime);
 validateBrentValidation(realtime);
 validateDecisionContract(data);

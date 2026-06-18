@@ -18,10 +18,13 @@ Owner 明确要求:如果 Wind 作为兜底源成功取得关键市场输入,它
 5. Wind source switch 必须经过分数影响守门:如果一次切源会导致超阈值主分数跳变、跨多档跳变、已有 yellow/red 档位自动降级或 `tailRiskOverlay` 开关翻转,自动写分数路径必须转为 `review_required_or_independent_confirmation`。
 6. `scripts/audit-main-score-backtest.mjs` 必须输出 `windFallbackPolicy`。回放方法 `wind_fallback_conflict_replay_v1` 不调用 Wind,而是在 FRED 历史序列上注入 Wind/public-source 冲突压力场景,同时报告 raw conflict stress 与按 score-impact guard 处理后的 automatic switching 结果。
 7. `windFallbackPolicy.pass=false` 时,不得启用 runtime Wind source switching 写入主分数输入。
+8. Daily runtime 接入采用 `wind_paid_invalid_leaf_fallback_v1`:只在整体 realtime payload 已通过信任门槛、且单个核心叶子输入缺失/非数值/source detail 失败/source status 明确 stale/fallback/degraded/error/unavailable/blocked 时评估 Wind。该实现由 `GFRR_MAIN_SCORE_WIND_FALLBACK=1` 与现有 `WIND_API_KEY` 同时控制,不新增免费源 API key,不合成完整 realtime payload,不覆盖正常 finite public primary。
+9. Daily 输出必须记录 `mainScoreSourcePolicy`;`status=applied` 才表示 Wind 已进入本轮主分数,`status=review_required` 表示 Wind 候选值被 source conflict 或 score-impact guard 拦下。该字段不得保存 raw Wind response、Authorization header、cookie 或 API key。
 
 ## 后果
 
 - Wind 主分数兜底与 Bubble Watch Wind fallback 分离治理:前者可进 GFRR 主分数,后者仍是第二页面 display-only。
 - 新增 `check:main-score-wind-fallback`,并接入 `check:all`,防止契约、文档、ADR、回放脚本漂移。
-- 常规检查不调用 Wind、不消耗 Wind 额度。付费源 runtime 接入仍需后续独立实现,并必须先让 `npm run audit:main-score-backtest` 的 `windFallbackPolicy` 通过。
+- 常规检查不调用 Wind、不消耗 Wind 额度。Daily runtime 只有在显式 env 开启、存在 `WIND_API_KEY`、且核心叶子输入需要兜底时才调用 Wind。
+- 更宽的 runtime source switching,例如按时间新鲜度主动替换有限 public primary、为整份 realtime payload 兜底、或把 Wind 接入非核心 display-only 层,仍需另开设计和回放验证。
 - 该 ADR 不改变 External AI 只读边界,也不授权 DeepSeek / OpenAI / 新闻语义层进入 scoring。

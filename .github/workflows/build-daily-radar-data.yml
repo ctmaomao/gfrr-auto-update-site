@@ -48,6 +48,8 @@ jobs:
       - name: Generate radar data
         env:
           EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+          WIND_API_KEY: ${{ secrets.WIND_API_KEY }}
+          GFRR_MAIN_SCORE_WIND_FALLBACK: "1"
         run: npm run build:data
 
       - name: Validate output
@@ -60,6 +62,7 @@ jobs:
           const data = JSON.parse(fs.readFileSync('data/radar-data.json', 'utf8'));
           const input = data.dailyRealtimeInput || {};
           const baseline = data.displayInputsBaseline || {};
+          const mainScoreSourcePolicy = data.mainScoreSourcePolicy || {};
           const decisionModel = data.decisionModel || {};
           const tradingSystem = data.tradingSystem || {};
           const executionLock = tradingSystem.executionLock || {};
@@ -121,7 +124,10 @@ jobs:
             ['baseline broad dollar', baseline.dxy ?? '--'],
             ['baseline VIX', baseline.vix ?? '--'],
             ['baseline HY OAS', baseline.hyOas ?? '--'],
-            ['baseline SPX', baseline.spx ?? '--']
+            ['baseline SPX', baseline.spx ?? '--'],
+            ['mainScoreSourcePolicy.status', mainScoreSourcePolicy.status || '--'],
+            ['mainScoreSourcePolicy.appliedInputs', Array.isArray(mainScoreSourcePolicy.appliedInputs) ? mainScoreSourcePolicy.appliedInputs.join(', ') || '--' : '--'],
+            ['mainScoreSourcePolicy.reviewRequiredInputs', Array.isArray(mainScoreSourcePolicy.reviewRequiredInputs) ? mainScoreSourcePolicy.reviewRequiredInputs.join(', ') || '--' : '--']
           ];
           const decisionStatement = pick(
             decisionModel.decisionStatement,
