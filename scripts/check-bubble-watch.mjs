@@ -184,6 +184,12 @@ check('contract', buildSrc.includes('SOURCE_CANDIDATES_PATH') && buildSrc.includ
 for (const id of [...HYBRID_LIVE_IDS, ...HYBRID_PAID_OPTIONAL_IDS]) {
   check('contract', buildSrc.includes(`${id}:`), `build 缺 ${id} hybrid builder 绑定`);
 }
+check('contract', buildSrc.includes('fetchInsiderTotalsWithSecFallback') && buildSrc.includes('SEC EDGAR Form 4 ownership XML'),
+  'insider_sell_buy 必须保留 SEC Form 4 官方兜底路径');
+check('contract', buildSrc.includes('fetchSecAiIpoFilingConfirmations') && buildSrc.includes('SEC EDGAR S-1/F-1 confirmation'),
+  'ai_ipo_pipeline 必须保留 SEC S-1/F-1 官方申报确认路径');
+check('contract', candidateEntries.ai_ipo_pipeline?.freeSourceCandidates?.some((source) => /SEC EDGAR/iu.test(source.source || '') && /S-1|F-1|424B4/iu.test(`${source.role || ''} ${source.limitations || ''}`)),
+  'ai_ipo_pipeline source candidates 缺 SEC S-1/F-1/424B4 官方确认源');
 check('contract', candidateEntries.ceo_hedging?.freeSourceCandidates?.some((source) => /Tavily/iu.test(source.source || '')),
   'ceo_hedging source candidates 缺 Tavily 免费新闻兜底');
 check('contract', buildSrc.includes('fetchCeoHedgingFromTavilyPublic') && buildSrc.includes('TAVILY_API_KEYS'),

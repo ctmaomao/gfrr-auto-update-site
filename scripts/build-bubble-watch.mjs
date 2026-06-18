@@ -98,8 +98,13 @@ const EDGAR_CIK = {
   GOOGL: '0001652044',
   META: '0001326801',
   NVDA: '0001045810',
-  ORCL: '0001341439'
+  ORCL: '0001341439',
+  PLTR: '0001321655',
+  AVGO: '0001730168'
 };
+
+const AI_IPO_WATCHLIST = ['OpenAI', 'Anthropic', 'Databricks', 'Cerebras', 'SpaceX', 'CoreWeave', 'Scale AI'];
+const SEC_AI_IPO_FORMS = new Set(['S-1', 'S-1/A', 'F-1', 'F-1/A', '424B4']);
 
 // ---------- 基础工具 ----------
 
@@ -367,6 +372,177 @@ async function edgarConcept(cik, tags) {
     }
   }
   throw lastError || new Error('EDGAR concept 全部 tag 失败');
+}
+
+async function edgarSubmissions(cik) {
+  const padded = String(cik || '').replace(/\D/gu, '').padStart(10, '0');
+  if (!/^\d{10}$/u.test(padded)) throw new Error(`SEC CIK 无效:${cik}`);
+  const url = `https://data.sec.gov/submissions/CIK${padded}.json`;
+  return fetchWithTimeout(url, { asJson: true, headers: { 'User-Agent': EDGAR_UA, Accept: 'application/json' } });
+}
+
+function parseSecNumber(value) {
+  const n = Number(String(value || '').replace(/,/gu, '').trim());
+  return Number.isFinite(n) ? n : null;
+}
+
+function secXmlValue(block, tag) {
+  const direct = String(block || '').match(new RegExp(`<${tag}[^>]*>\\s*<value>([\\s\\S]*?)<\\/value>`, 'iu'));
+  if (direct) return direct[1].replace(/<[^>]*>/gu, '').trim();
+  const wrapped = String(block || '').match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'iu'));
+  return wrapped ? wrapped[1].replace(/<[^>]*>/gu, '').trim() : '';
+}
+
+function recentSecFilings(submissions, forms, maxAgeDays = 365, limit = 80) {
+  const recent = submissions?.filings?.recent || {};
+  const formRows = recent.form || [];
+  const filingDates = recent.filingDate || [];
+  const accessionNumbers = recent.accessionNumber || [];
+  const primaryDocuments = recent.primaryDocument || [];
+  const reportDates = recent.reportDate || [];
+  const cutoff = Date.now() - maxAgeDays * 86400000;
+  const allowed = forms instanceof Set ? forms : new Set(forms);
+  const rows = [];
+  for (let i = 0; i < formRows.length; i += 1) {
+    const form = String(formRows[i] || '').trim().toUpperCase();
+    const filingDate = String(filingDates[i] || '');
+    const filedMs = Date.parse(`${filingDate}T00:00:00Z`);
+    if (!allowed.has(form) || !Number.isFinite(filedMs) || filedMs < cutoff) continue;
+    rows.push({
+      form,
+      filingDate,
+      reportDate: reportDates[i] || null,
+      accessionNumber: accessionNumbers[i],
+      primaryDocument: primaryDocuments[i]
+    });
+    if (rows.length >= limit) break;
+  }
+  return rows;
+}
+
+async function fetchSecForm4InsiderTotals(symbol, cik) {
+  const submissions = await edgarSubmissions(cik);
+  const filings = recentSecFilings(submissions, new Set(['4']), 365, 80);
+  let buy = 0;
+  let sell = 0;
+  let transactionCount = 0;
+  const issuerCik = String(cik).replace(/^0+/u, '');
+  for (const filing of filings) {
+    if (!filing.accessionNumber || !filing.primaryDocument) continue;
+    const accessionPath = String(filing.accessionNumber).replace(/-/gu, '');
+    const primaryDocument = String(filing.primaryDocument).replace(/^\/+/u, '');
+    const url = `https://www.sec.gov/Archives/edgar/data/${issuerCik}/${accessionPath}/${primaryDocument}`;
+    let xml;
+    try {
+      xml = await fetchWithTimeout(url, { headers: { 'User-Agent': EDGAR_UA, Accept: 'application/xml,text/xml,text/html' }, timeoutMs: 15000 });
+    } catch (error) {
+      console.warn(`[bubble-watch] SEC Form 4 ${symbol} filing ${filing.accessionNumber} fetch failed: ${error.message}`);
+      continue;
+    }
+    const txRe = /<nonDerivativeTransaction\b[^>]*>([\s\S]*?)<\/nonDerivativeTransaction>/giu;
+    let m;
+    while ((m = txRe.exec(xml)) !== null) {
+      const block = m[1];
+      const code = secXmlValue(block, 'transactionCode').toUpperCase();
+      if (code !== 'P' && code !== 'S') continue;
+      const shares = parseSecNumber(secXmlValue(block, 'transactionShares'));
+      const price = parseSecNumber(secXmlValue(block, 'transactionPricePerShare'));
+      if (!(shares > 0) || !(price > 0)) continue;
+      const amount = shares * price;
+      if (code === 'P') buy += amount;
+      else sell += amount;
+      transactionCount += 1;
+    }
+    await delay(120);
+  }
+  if (buy === 0 && sell === 0) throw new Error(`SEC Form 4 ${symbol} 近 12 个月未解析到 P/S 交易`);
+  return { buy, sell, filingCount: filings.length, transactionCount };
+}
+
+async function fetchInsiderTotalsWithSecFallback(symbol) {
+  try {
+    const totals = await fetchOpenInsiderTotals(symbol);
+    return { ...totals, source: 'OpenInsider public screener', sourceMode: 'openinsider_primary' };
+  } catch (error) {
+    const cik = EDGAR_CIK[symbol];
+    if (!cik) throw error;
+    console.warn(`[bubble-watch] OpenInsider ${symbol} failed, try SEC Form 4 official fallback: ${error.message}`);
+    const totals = await fetchSecForm4InsiderTotals(symbol, cik);
+    return {
+      ...totals,
+      source: 'SEC EDGAR Form 4 ownership XML',
+      sourceMode: 'sec_form4_fallback',
+      primaryFailure: error.message
+    };
+  }
+}
+
+async function fetchSecCompanyTickersExchange() {
+  const json = await fetchWithTimeout('https://www.sec.gov/files/company_tickers_exchange.json', {
+    asJson: true,
+    headers: { 'User-Agent': EDGAR_UA, Accept: 'application/json' }
+  });
+  const fields = Array.isArray(json?.fields) ? json.fields : [];
+  const rows = Array.isArray(json?.data) ? json.data : [];
+  const cikIdx = fields.indexOf('cik');
+  const nameIdx = fields.indexOf('name');
+  const tickerIdx = fields.indexOf('ticker');
+  const exchangeIdx = fields.indexOf('exchange');
+  if (cikIdx < 0 || nameIdx < 0) throw new Error('SEC company_tickers_exchange schema changed');
+  return rows
+    .map((row) => ({
+      cik: String(row[cikIdx] || '').padStart(10, '0'),
+      name: String(row[nameIdx] || ''),
+      ticker: tickerIdx >= 0 ? String(row[tickerIdx] || '') : '',
+      exchange: exchangeIdx >= 0 ? String(row[exchangeIdx] || '') : ''
+    }))
+    .filter((row) => /^\d{10}$/u.test(row.cik) && row.name);
+}
+
+async function fetchSecAiIpoFilingConfirmations(ctx = {}) {
+  const rows = await fetchSecCompanyTickersExchange();
+  const extraWatchlist = Array.isArray(ctx.config?.params?.aiIpoSecWatchlist)
+    ? ctx.config.params.aiIpoSecWatchlist.map((name) => String(name || '').trim()).filter(Boolean)
+    : [];
+  const watchlist = [...new Set([...AI_IPO_WATCHLIST, ...extraWatchlist])];
+  const candidates = [];
+  for (const company of rows) {
+    const matchedName = watchlist.find((name) => new RegExp(name.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&').replace(/\s+/gu, '\\s+'), 'iu').test(company.name));
+    if (matchedName) candidates.push({ ...company, matchedName });
+  }
+  const filings = [];
+  for (const company of candidates.slice(0, 16)) {
+    try {
+      const submissions = await edgarSubmissions(company.cik);
+      const recent = recentSecFilings(submissions, SEC_AI_IPO_FORMS, 365, 12);
+      for (const filing of recent) {
+        filings.push({
+          company: company.name,
+          matchedName: company.matchedName,
+          cik: company.cik,
+          ticker: company.ticker || null,
+          exchange: company.exchange || null,
+          form: filing.form,
+          filingDate: filing.filingDate,
+          accessionNumber: filing.accessionNumber || null
+        });
+      }
+      await delay(120);
+    } catch (error) {
+      console.warn(`[bubble-watch] SEC IPO filing check ${company.name} failed: ${error.message}`);
+    }
+  }
+  return {
+    checkedCompanies: candidates.map((company) => ({
+      name: company.name,
+      matchedName: company.matchedName,
+      ticker: company.ticker || null,
+      exchange: company.exchange || null
+    })),
+    filings,
+    filingCount: filings.length,
+    companyCount: new Set(filings.map((filing) => filing.matchedName || filing.company)).size
+  };
 }
 
 // 现金流类(duration)概念:10-Q 报 YTD 累计,需差分出单季值
@@ -1080,21 +1256,40 @@ const autoBuilders = {
     const basket = ctx.config.params?.insiderBasket || ['NVDA', 'PLTR', 'AVGO'];
     let buy = 0;
     let sell = 0;
+    const sources = [];
+    const secFallbackSymbols = [];
+    const primaryFailures = [];
     for (const symbol of basket) {
-      const totals = await retry(() => fetchOpenInsiderTotals(symbol), `OpenInsider ${symbol}`);
+      const totals = await retry(() => fetchInsiderTotalsWithSecFallback(symbol), `OpenInsider/SEC Form 4 ${symbol}`);
       buy += totals.buy;
       sell += totals.sell;
+      sources.push({
+        symbol,
+        source: totals.source,
+        sourceMode: totals.sourceMode,
+        buyUsd: totals.buy,
+        sellUsd: totals.sell,
+        filingCount: totals.filingCount || null,
+        transactionCount: totals.transactionCount || null
+      });
+      if (totals.sourceMode === 'sec_form4_fallback') secFallbackSymbols.push(symbol);
+      if (totals.primaryFailure) primaryFailures.push({ symbol, reason: totals.primaryFailure });
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
     const buyFloor = Math.max(buy, 1e6); // 买入不足 $1M 时按 $1M 下限计算,避免除零
     const ratio = sell / buyFloor;
     const status = ratio > 20 ? 'red' : ratio >= 5 ? 'yellow' : 'green';
     const display = ratio > 99 ? '≫20x' : `~${ratio.toFixed(0)}x`;
+    const sourceName = secFallbackSymbols.length ? 'OpenInsider + SEC EDGAR Form 4 fallback' : 'OpenInsider public screener';
+    const sourceNote = secFallbackSymbols.length
+      ? `OpenInsider 不可用标的 ${secFallbackSymbols.join('/')} 已改用 SEC EDGAR Form 4 ownership XML 官方兜底`
+      : 'OpenInsider public screener';
     return {
       status,
       value_display: display,
-      note: `OpenInsider 实拉 ${basket.join(' / ')} 近 12 个月 Form 4:累计卖出 $${(sell / 1e9).toFixed(1)}B、买入 $${(buy / 1e6).toFixed(0)}M,卖买比 ≈${ratio > 99 ? '>99' : ratio.toFixed(1)}x(买入不足 $1M 时按 $1M 下限折算);2000 年顶部极值约 23x。阈值:>20x 红 / 5-20x 黄 / <5x 绿`,
-      detail: { buyUsd: buy, sellUsd: sell, ratio }
+      source_name: sourceName,
+      note: `${sourceNote} 实拉 ${basket.join(' / ')} 近 12 个月 Form 4:累计卖出 $${(sell / 1e9).toFixed(1)}B、买入 $${(buy / 1e6).toFixed(0)}M,卖买比 ≈${ratio > 99 ? '>99' : ratio.toFixed(1)}x(买入不足 $1M 时按 $1M 下限折算);2000 年顶部极值约 23x。阈值:>20x 红 / 5-20x 黄 / <5x 绿`,
+      detail: { buyUsd: buy, sellUsd: sell, ratio, sources, secFallbackSymbols, primaryFailures }
     };
   },
   async hy_oas() {
@@ -1205,13 +1400,20 @@ async function fetchVcAiShareFromCrunchbase() {
   };
 }
 
-async function fetchAiIpoPipelineFromCrunchbase() {
-  const posts = await retry(
-    () => crunchbaseWpPosts('IPO OpenAI Anthropic Cerebras Databricks SpaceX AI', 10),
-    'Crunchbase AI IPO posts',
-    1
-  );
-  const names = ['OpenAI', 'Anthropic', 'Databricks', 'Cerebras', 'SpaceX', 'CoreWeave', 'Scale AI'];
+async function fetchAiIpoPipelineFromCrunchbase(ctx = {}) {
+  let posts = [];
+  let crunchbaseError = null;
+  try {
+    posts = await retry(
+      () => crunchbaseWpPosts('IPO OpenAI Anthropic Cerebras Databricks SpaceX AI', 10),
+      'Crunchbase AI IPO posts',
+      1
+    );
+  } catch (error) {
+    crunchbaseError = error;
+    console.warn(`[bubble-watch] Crunchbase AI IPO posts failed, try SEC EDGAR filing confirmation: ${error.message}`);
+  }
+  const names = AI_IPO_WATCHLIST;
   const evidence = posts.filter((post) => /\b(IPO|IPOs|public|listing|exit|exits|S-1|Nasdaq|NYSE)\b/iu.test(`${post.title} ${post.text}`));
   const nameHits = new Set();
   for (const post of evidence) {
@@ -1220,28 +1422,74 @@ async function fetchAiIpoPipelineFromCrunchbase() {
       if (new RegExp(name.replace(/\s+/gu, '\\s+'), 'iu').test(haystack)) nameHits.add(name);
     }
   }
+  let secResult = { checkedCompanies: [], filings: [], filingCount: 0, companyCount: 0 };
+  let secError = null;
+  try {
+    secResult = await retry(() => fetchSecAiIpoFilingConfirmations(ctx), 'SEC EDGAR AI IPO filing confirmation', 1);
+  } catch (error) {
+    secError = error;
+    console.warn(`[bubble-watch] SEC EDGAR AI IPO filing confirmation failed: ${error.message}`);
+  }
+  for (const filing of secResult.filings || []) {
+    if (filing.matchedName) nameHits.add(filing.matchedName);
+  }
+  if (!posts.length && !(secResult.filingCount > 0)) {
+    const reason = crunchbaseError
+      ? `Crunchbase AI IPO posts failed and SEC EDGAR filing confirmation had no usable hit: ${crunchbaseError.message}${secError ? `; SEC=${secError.message}` : ''}`
+      : 'AI IPO pipeline public sources returned no usable hit';
+    throw new Error(reason);
+  }
   let status = 'green';
   let display = '平静';
-  if (evidence.length >= 4 || nameHits.size >= 4) {
+  if (evidence.length >= 4 || nameHits.size >= 4 || secResult.companyCount >= 3) {
     status = 'red';
     display = '洪流';
-  } else if (evidence.length >= 1 || nameHits.size >= 2) {
+  } else if (evidence.length >= 1 || nameHits.size >= 2 || secResult.filingCount >= 1) {
     status = 'yellow';
     display = '升温';
   }
-  const top = evidence[0] || posts[0];
+  const secTop = secResult.filings?.[0]
+    ? {
+        title: `${secResult.filings[0].matchedName || secResult.filings[0].company} ${secResult.filings[0].form} filing`,
+        date: secResult.filings[0].filingDate,
+        link: `https://www.sec.gov/Archives/edgar/data/${String(secResult.filings[0].cik || '').replace(/^0+/u, '')}/${String(secResult.filings[0].accessionNumber || '').replace(/-/gu, '')}/`
+      }
+    : null;
+  const top = evidence[0] || posts[0] || secTop;
   if (!top) throw new Error('Crunchbase AI IPO 文章为空');
+  const secNames = [...new Set((secResult.filings || []).map((filing) => filing.matchedName || filing.company).filter(Boolean))];
+  const secNote = secResult.filingCount > 0
+    ? `；SEC EDGAR 官方申报确认 ${secResult.filingCount} 份 S-1/F-1/424B4,涉及 ${secNames.join('/')}`
+    : secError
+      ? `；SEC EDGAR 申报确认不可用(${secError.message})`
+      : `；SEC EDGAR 已检查 ${secResult.checkedCompanies.length} 个 watchlist 公司,未见近 12 个月 S-1/F-1/424B4`;
+  const sourceName = secResult.filingCount > 0 && posts.length
+    ? 'Crunchbase News + SEC EDGAR S-1/F-1 confirmation'
+    : secResult.filingCount > 0
+      ? 'SEC EDGAR S-1/F-1 official filing monitor'
+      : 'Crunchbase News public article search';
   return {
     status,
     value_display: display,
-    source_name: 'Crunchbase News public article search',
-    note: `Crunchbase News 公开检索命中 ${evidence.length} 条 AI IPO/exit 相关报道,涉及 ${nameHits.size ? [...nameHits].join('/') : '核心名单未集中出现'};最新要点「${compactSnippet(top.title, 56)}」(${top.date ? top.date.slice(0, 10) : 'date n/a'})。判级:洪流=红 / 升温=黄 / 平静=绿`,
+    source_name: sourceName,
+    note: `Crunchbase News 公开检索命中 ${evidence.length} 条 AI IPO/exit 相关报道,涉及 ${nameHits.size ? [...nameHits].join('/') : '核心名单未集中出现'}${secNote};最新要点「${compactSnippet(top.title, 56)}」(${top.date ? top.date.slice(0, 10) : 'date n/a'})。判级:洪流=红 / 升温=黄 / 平静=绿`,
     detail: {
-      source: 'Crunchbase News WordPress API',
+      source: sourceName,
+      crunchbaseSource: 'Crunchbase News WordPress API',
+      crunchbaseStatus: crunchbaseError ? 'unavailable' : 'available',
+      crunchbaseError: crunchbaseError?.message || null,
       evidenceCount: evidence.length,
       nameHits: [...nameHits],
       topTitle: top.title,
-      topUrl: top.link || null
+      topUrl: top.link || null,
+      secEdgarConfirmation: {
+        status: secError ? 'unavailable' : 'available',
+        error: secError?.message || null,
+        checkedCompanies: secResult.checkedCompanies,
+        filingCount: secResult.filingCount,
+        companyCount: secResult.companyCount,
+        filings: secResult.filings
+      }
     }
   };
 }

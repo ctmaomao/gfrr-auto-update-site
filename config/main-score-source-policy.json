@@ -1,0 +1,145 @@
+{
+  "contractVersion": "main-score-source-policy-v1",
+  "status": "contract_and_replay_gate",
+  "purpose": "Allow Wind paid fallback to participate in the GFRR main radar core score only after source arbitration and replay validation pass.",
+  "coreScoreInputs": [
+    "brent",
+    "dxy",
+    "vix",
+    "hyOas",
+    "us10y",
+    "real10y",
+    "breakeven10y",
+    "spx"
+  ],
+  "windPaidFallback": {
+    "participatesInMainScore": true,
+    "eligibleInputs": [
+      "brent",
+      "dxy",
+      "vix",
+      "hyOas",
+      "us10y",
+      "real10y",
+      "breakeven10y",
+      "spx"
+    ],
+    "sourcePriority": [
+      "official_or_existing_public_primary_fresh",
+      "existing_public_validated_fallback_fresh",
+      "wind_paid_fallback_when_public_primary_unavailable_or_stale",
+      "last_good_or_rules_default"
+    ],
+    "activationRules": [
+      "Wind must not replace a fresh official or existing public primary source.",
+      "Wind may be used for a core score input only when the public primary chain is unavailable, stale, structurally blocked, or explicitly degraded.",
+      "Wind fallback must preserve the source timestamp and must pass per-input plausibility and cross-source divergence checks.",
+      "A Wind-fallback value that enters scoring must be marked with sourceMode=wind_paid_fallback, paidWindFallback=true, participatesInMainScore=true, and sourceConflictAudit.",
+      "If public primary and Wind are both fresh but disagree beyond tolerance, public primary wins and Wind is recorded only as a conflict note.",
+      "If Wind fallback would change the automatic main score by more than the score impact guard, trigger review_required or require independent confirmation instead of automatic score switching."
+    ],
+    "scoreImpactGuards": {
+      "comparisonBaselinePriority": [
+        "fresh_public_primary",
+        "last_good_score_input",
+        "previous_daily_baseline"
+      ],
+      "maxAutomaticScoreDeltaWithoutReview": 18,
+      "maxAutomaticTierJumpWithoutReview": 1,
+      "riskTierDowngradeRequiresConfirmationFrom": "yellow",
+      "tailOverlaySwitchRequiresConfirmation": true,
+      "guardedResult": "review_required_or_independent_confirmation"
+    },
+    "freshnessHours": {
+      "brent": 72,
+      "dxy": 96,
+      "vix": 72,
+      "hyOas": 120,
+      "us10y": 96,
+      "real10y": 120,
+      "breakeven10y": 120,
+      "spx": 72
+    },
+    "plausibilityRanges": {
+      "brent": { "min": 20, "max": 250, "unit": "usd_per_barrel" },
+      "dxy": { "min": 70, "max": 150, "unit": "index" },
+      "vix": { "min": 5, "max": 100, "unit": "index" },
+      "hyOas": { "min": 1, "max": 25, "unit": "percent" },
+      "us10y": { "min": 0, "max": 12, "unit": "percent" },
+      "real10y": { "min": -4, "max": 6, "unit": "percent" },
+      "breakeven10y": { "min": -1, "max": 8, "unit": "percent" },
+      "spx": { "min": 1000, "max": 12000, "unit": "index" }
+    },
+    "conflictTolerances": {
+      "brentPct": 3,
+      "dxyPct": 1.5,
+      "vixPct": 10,
+      "hyOasAbsPctPoint": 0.25,
+      "us10yAbsPctPoint": 0.12,
+      "real10yAbsPctPoint": 0.12,
+      "breakeven10yAbsPctPoint": 0.12,
+      "spxPct": 1.5
+    }
+  },
+  "replayValidation": {
+    "method": "wind_fallback_conflict_replay_v1",
+    "script": "npm run audit:main-score-backtest",
+    "reportField": "windFallbackPolicy",
+    "eventWindowsMustPass": true,
+    "scoreTierBoundaries": {
+      "normalMaxExclusive": 55,
+      "watchMaxExclusive": 65,
+      "yellowMaxExclusive": 82,
+      "redMin": 82
+    },
+    "passThresholds": {
+      "p95AbsScoreDeltaMax": 8,
+      "maxAbsScoreDeltaMax": 18,
+      "tierFlipPctMax": 15,
+      "calmWindowAvgAbsDeltaMax": 5,
+      "guardedSwitchPctMax": 10
+    },
+    "stressScenarios": [
+      {
+        "key": "wind_higher_stress",
+        "description": "Wind fallback is systematically more stress-sensitive than public source.",
+        "adjustments": {
+          "brentPct": 3,
+          "dxyPct": 1.5,
+          "vixPct": 10,
+          "hyOasAbsPctPoint": 0.25,
+          "us10yAbsPctPoint": 0.12,
+          "real10yAbsPctPoint": 0.12
+        }
+      },
+      {
+        "key": "wind_lower_stress",
+        "description": "Wind fallback is systematically less stress-sensitive than public source.",
+        "adjustments": {
+          "brentPct": -3,
+          "dxyPct": -1.5,
+          "vixPct": -10,
+          "hyOasAbsPctPoint": -0.25,
+          "us10yAbsPctPoint": -0.12,
+          "real10yAbsPctPoint": -0.12
+        }
+      },
+      {
+        "key": "wind_mixed_conflict",
+        "description": "Energy and dollar/rate inputs imply more stress while volatility and credit imply less stress.",
+        "adjustments": {
+          "brentPct": 3,
+          "dxyPct": 1.5,
+          "vixPct": -10,
+          "hyOasAbsPctPoint": -0.25,
+          "us10yAbsPctPoint": 0.12,
+          "real10yAbsPctPoint": 0.12
+        }
+      }
+    ]
+  },
+  "runtimeBoundary": {
+    "currentState": "contract_and_replay_only",
+    "implementationNote": "Runtime Wind fetch and source switching remain a separate implementation step. This policy is the gate that implementation must satisfy before Wind fallback can write score inputs."
+  }
+}

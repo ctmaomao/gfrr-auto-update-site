@@ -37,10 +37,10 @@
         },
         {
           "source": "SEC EDGAR company submissions",
-          "url": "https://www.sec.gov/search-filings",
+          "url": "https://data.sec.gov/submissions/CIK##########.json",
           "cadence": "weekly",
-          "role": "future candidate for S-1 filing confirmation",
-          "limitations": "Needs issuer allowlist and filing-form normalization before automatic use."
+          "role": "official S-1/F-1/424B4 filing confirmation when issuer CIK/ticker is discoverable",
+          "limitations": "Confirmation/fallback only: private companies without public registration filings remain invisible; not a complete IPO calendar. SEC may return 403 from data-center environments, so this path must fail closed."
         }
       ]
     },
