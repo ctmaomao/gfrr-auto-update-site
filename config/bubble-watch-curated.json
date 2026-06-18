@@ -144,12 +144,13 @@
       "syncedFromUpstream": true
     },
     "mag4_fcf_yoy": {
-      "status": "red",
-      "value_display": "-92%",
-      "note": "Amazon 尾随 FCF 暴跌约 95% 至 $1.2B、2026 全年预计转负约 -$17B（capex $200B）；Mag4 合计 FCF 料降至 2014 年以来最低，唯 MSFT 仍正增长；Oracle FY26 FCF -$23.7B 进一步印证 capex 吞噬现金流，无季度新数据沿用 Q1 口径",
-      "asOfDate": "2026-06-14",
+      "status": "yellow",
+      "value_display": "-16%",
+      "note": "AMZN/MSFT/GOOGL/META 已披露季度现金流按本站固定口径计算:滚动 4 季自由现金流为经营现金流加资本开支,合计约 $183B,同比约 -16%(上年同期约 $217B)。该备用快照只用于公开季报源短暂不可达时延续同一 realized TTM 公式,不得替换为前瞻 FCF、单家公司压力或参考站编辑口径",
+      "asOfDate": "2026-06-18",
       "maxAgeDays": 30,
-      "syncedFromUpstream": true
+      "syncedFromUpstream": false,
+      "fallbackContract": "local_realized_ttm_snapshot_v1"
     },
     "nvda_invest_revenue": {
       "status": "red",

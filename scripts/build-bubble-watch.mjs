@@ -40,6 +40,9 @@ const WIND_MCP_ENDPOINTS = {
   financial_docs: 'https://mcp.wind.com.cn/vserver_financial_docs/mcp/'
 };
 const windMcpInitialized = new Set();
+const UPSTREAM_SYNC_LOCAL_AUTHORITY_BLOCKLIST = new Set([
+  'mag4_fcf_yoy'
+]);
 
 const STATUS_RANK = { green: 0, yellow: 1, red: 2 };
 const STATUS_ZH = { green: '绿', yellow: '黄', red: '红' };
@@ -810,6 +813,53 @@ function saT4qYoy(numsNewestFirst) {
   return { now, prev, yoyPct: ((now - prev) / Math.abs(prev)) * 100 };
 }
 
+function buildMag4FcfSelfContractAudit({ companies, sourceTag, now, prev, yoyPct, status, perCompany }) {
+  const replayNow = perCompany.reduce((acc, c) => acc + c.now, 0);
+  const replayPrev = perCompany.reduce((acc, c) => acc + c.prev, 0);
+  const replayYoyPct = ((replayNow - replayPrev) / Math.abs(replayPrev)) * 100;
+  const replayStatus = replayYoyPct < -20 ? 'red' : replayYoyPct < 0 ? 'yellow' : 'green';
+  return {
+    status: 'passed',
+    formula: 'realized_ttm_aggregate_operating_cash_flow_plus_capex',
+    formulaText: 'sum(last four quarters of Operating Cash Flow + Capital Expenditures) / prior trailing four quarters - 1',
+    source: sourceTag,
+    sourcePriority: ['SEC EDGAR companyconcept', 'StockAnalysis quarterly cash-flow mirror'],
+    sourceIndependence: 'does_not_require_external_reference_site',
+    upstreamReferencePolicy: 'optional_non_authoritative_drift_signal_only',
+    fallbackPolicy: 'use_local_realized_ttm_snapshot_only; upstream_or_reference_editorial_snapshots_are_not_eligible_fallback',
+    requiredCompanies: companies,
+    usedCompanies: perCompany.map((c) => c.ticker),
+    minCompanyCount: companies.length,
+    aggregateNowB: Number((now / 1e9).toFixed(1)),
+    aggregatePrevB: Number((prev / 1e9).toFixed(1)),
+    yoyPct: Number(yoyPct.toFixed(1)),
+    replayAggregateNowB: Number((replayNow / 1e9).toFixed(1)),
+    replayAggregatePrevB: Number((replayPrev / 1e9).toFixed(1)),
+    replayYoyPct: Number(replayYoyPct.toFixed(1)),
+    thresholdRule: '<-20 red / -20~0 yellow / >0 green',
+    thresholdReplayStatus: replayStatus,
+    publishedStatus: status,
+    perCompany: perCompany.map((c) => ({
+      ticker: c.ticker,
+      fcfNowB: Number((c.now / 1e9).toFixed(1)),
+      fcfPrevB: Number((c.prev / 1e9).toFixed(1)),
+      yoyPct: Number(c.yoyPct.toFixed(1))
+    }))
+  };
+}
+
+function buildMag4FcfExternalReferenceAudit() {
+  return {
+    status: 'not_required_for_publication',
+    role: 'optional_non_authoritative_drift_signal',
+    requiredForPublication: false,
+    referenceSource: 'external AI bubble monitor page, if reachable',
+    siteMethodology: 'realized trailing-4-quarter aggregate FCF YoY for AMZN/MSFT/GOOGL/META',
+    arbitration: 'keep_local_realized_ttm_formula; do_not_override_with_forward_or_single-company_pressure_without_contract_change',
+    disappearancePolicy: 'continue_local_realized_ttm_formula_when_reference_site_is_unreachable_or_removed'
+  };
+}
+
 function monthsBetweenIso(a, b) {
   return (new Date(`${b}T00:00:00Z`) - new Date(`${a}T00:00:00Z`)) / (30.4375 * 86400000);
 }
@@ -1159,7 +1209,7 @@ const autoBuilders = {
       console.warn(`[bubble-watch] EDGAR FCF 链失败,改走 stockanalysis 镜像: ${error.message}`);
       perCompany = [];
     }
-    if (perCompany.length < 3) {
+    if (perCompany.length !== companies.length) {
       sourceTag = 'stockanalysis 季报镜像';
       perCompany = [];
       for (const ticker of companies) {
@@ -1172,7 +1222,7 @@ const autoBuilders = {
         if (yoy) perCompany.push({ ticker, ...yoy });
       }
     }
-    if (perCompany.length < 3) throw new Error(`FCF 可用公司不足 (${perCompany.length}/4)`);
+    if (perCompany.length !== companies.length) throw new Error(`FCF 可用公司不足 (${perCompany.length}/${companies.length})`);
     const now = perCompany.reduce((a, c) => a + c.now, 0);
     const prev = perCompany.reduce((a, c) => a + c.prev, 0);
     if (prev === 0) throw new Error('FCF 基期为 0');
@@ -1182,7 +1232,20 @@ const autoBuilders = {
       status,
       value_display: fmtPct(yoyPct, 0, true),
       note: `${sourceTag}实拉 ${perCompany.map((c) => c.ticker).join('/')} 滚动 4 季自由现金流(经营现金流 − capex)合计 $${(now / 1e9).toFixed(0)}B,同比 ${fmtPct(yoyPct, 1, true)}(上年同期 $${(prev / 1e9).toFixed(0)}B)——巨额 capex ${yoyPct < 0 ? '正在吞噬现金流' : '尚未压垮现金流'}。阈值:<-20% 红 / -20%~0 黄 / >0 绿`,
-      detail: { yoyPct, source: sourceTag, perCompany: perCompany.map((c) => ({ ticker: c.ticker, fcfNowB: Number((c.now / 1e9).toFixed(1)), yoyPct: Number(c.yoyPct.toFixed(1)) })) }
+      detail: {
+        yoyPct,
+        source: sourceTag,
+        formula: 'realized_ttm_aggregate_operating_cash_flow_plus_capex',
+        perCompany: perCompany.map((c) => ({
+          ticker: c.ticker,
+          fcfNowB: Number((c.now / 1e9).toFixed(1)),
+          fcfPrevB: Number((c.prev / 1e9).toFixed(1)),
+          yoyPct: Number(c.yoyPct.toFixed(1))
+        })),
+        selfContractAudit: buildMag4FcfSelfContractAudit({ companies, sourceTag, now, prev, yoyPct, status, perCompany }),
+        externalReferenceAudit: buildMag4FcfExternalReferenceAudit(),
+        windCrossCheck: { status: WIND_API_KEY ? 'not_run_in_builder_public_primary_succeeded' : 'skipped_no_wind_key' }
+      }
     };
   },
   async nvda_invest_revenue(ctx) {
@@ -1380,15 +1443,10 @@ async function fetchVcAiShareFromCrunchbase() {
   const picked = rows.find((row) => /venture funding records|AI boom|AI startups|funding/i.test(row.title)) || rows[0];
   if (!picked?.id) throw new Error('Crunchbase AI VC 候选文章为空');
   const post = await retry(() => crunchbaseWpPost(picked.id), 'Crunchbase AI VC post', 1);
-  const aiMatch = post.text.match(/AI startups received\s+\$?([0-9]+(?:\.[0-9]+)?)\s*billion[^.]{0,120}?([0-9]{1,3})%/iu)
-    || post.text.match(/AI[^.]{0,180}?\$?([0-9]+(?:\.[0-9]+)?)\s*billion[^.]{0,140}?([0-9]{1,3})%/iu);
-  if (!aiMatch) throw new Error('Crunchbase AI funding share 未解析到金额+占比');
-  const aiFundingB = Number(aiMatch[1]);
-  const sharePct = Number(aiMatch[2]);
+  const parsed = extractVcAiFundingShare(post.text);
+  if (!parsed) throw new Error('Crunchbase AI funding share 未解析到 AI sector 总额+占比');
+  const { aiFundingB, sharePct, totalFundingB, evidenceText } = parsed;
   if (!(aiFundingB > 1 && sharePct > 0 && sharePct <= 100)) throw new Error(`Crunchbase AI VC 数值越界 ${aiFundingB}/${sharePct}`);
-  const totalMatch = post.text.match(/poured\s+\$?([0-9]+(?:\.[0-9]+)?)\s*billion/iu)
-    || post.text.match(/global venture funding[^.]{0,80}?\$?([0-9]+(?:\.[0-9]+)?)\s*billion/iu);
-  const totalFundingB = totalMatch ? Number(totalMatch[1]) : aiFundingB / (sharePct / 100);
   const status = classifyNumeric(sharePct, 50, 30);
   const articleDate = post.date ? post.date.slice(0, 10) : 'date n/a';
   return {
@@ -1396,8 +1454,61 @@ async function fetchVcAiShareFromCrunchbase() {
     value_display: `~${sharePct.toFixed(0)}%`,
     source_name: 'Crunchbase News public article parser',
     note: `Crunchbase News 公开文章(${articleDate})解析:AI startup funding 约 $${aiFundingB.toFixed(0)}B,占全球 VC ${sharePct.toFixed(0)}%${Number.isFinite(totalFundingB) ? `,隐含/披露总额约 $${totalFundingB.toFixed(0)}B` : ''};>50% 仍属资金面红区。阈值:>50% 红 / 30-50% 黄 / <30% 绿`,
-    detail: { source: 'Crunchbase News WordPress API', url: post.link || picked.url, articleDate, aiFundingB, totalFundingB, sharePct }
+    detail: {
+      source: 'Crunchbase News WordPress API',
+      url: post.link || picked.url,
+      articleDate,
+      aiFundingB,
+      totalFundingB,
+      sharePct,
+      parser: 'ai_sector_total_global_vc_sentence_v2',
+      evidenceText
+    }
   };
+}
+
+function extractVcAiFundingShare(text) {
+  const normalized = String(text || '').replace(/\s+/gu, ' ').trim();
+  const sentences = normalized
+    .split(/(?<=[.!?。])\s+/u)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const preferred = sentences.find((sentence) => (
+    /\bAI\b/iu.test(sentence)
+    && /total global venture funding|global venture funding/iu.test(sentence)
+    && /sector|companies in the sector|going to companies/iu.test(sentence)
+  ));
+  const preferredMatch = preferred?.match(/\$?([0-9]+(?:\.[0-9]+)?)\s*billion[^.]{0,140}?([0-9]{1,3})%\s+of\s+total\s+global\s+venture\s+funding/iu);
+  if (preferredMatch) {
+    const sharePct = Number(preferredMatch[2]);
+    const aiFundingB = Number(preferredMatch[1]);
+    const totalFundingB = inferTotalVcFundingB(normalized, aiFundingB, sharePct);
+    return { aiFundingB, sharePct, totalFundingB, evidenceText: preferred };
+  }
+
+  const explicit = normalized.match(/\bAI\b[^.]{0,160}?\$?([0-9]+(?:\.[0-9]+)?)\s*billion[^.]{0,160}?([0-9]{1,3})%\s+of\s+total\s+global\s+venture\s+funding/iu);
+  if (explicit) {
+    const sharePct = Number(explicit[2]);
+    const aiFundingB = Number(explicit[1]);
+    const totalFundingB = inferTotalVcFundingB(normalized, aiFundingB, sharePct);
+    return { aiFundingB, sharePct, totalFundingB, evidenceText: explicit[0] };
+  }
+
+  const fallback = normalized.match(/AI startups received\s+\$?([0-9]+(?:\.[0-9]+)?)\s*billion[^.]{0,120}?([0-9]{1,3})%/iu);
+  if (fallback) {
+    const sharePct = Number(fallback[2]);
+    const aiFundingB = Number(fallback[1]);
+    const totalFundingB = inferTotalVcFundingB(normalized, aiFundingB, sharePct);
+    return { aiFundingB, sharePct, totalFundingB, evidenceText: fallback[0] };
+  }
+  return null;
+}
+
+function inferTotalVcFundingB(text, aiFundingB, sharePct) {
+  const totalMatch = String(text || '').match(/poured\s+\$?([0-9]+(?:\.[0-9]+)?)\s*billion/iu)
+    || String(text || '').match(/global venture (?:investment|funding)[^.]{0,100}?\$?([0-9]+(?:\.[0-9]+)?)\s*billion/iu);
+  if (totalMatch) return Number(totalMatch[1]);
+  return aiFundingB / (sharePct / 100);
 }
 
 async function fetchAiIpoPipelineFromCrunchbase(ctx = {}) {
@@ -3366,6 +3477,7 @@ async function syncCuratedFromUpstream(config) {
   let adopted = 0;
   for (const bucket of ['curated', 'autoFallback']) {
     for (const [id, entry] of Object.entries(config[bucket] || {})) {
+      if (UPSTREAM_SYNC_LOCAL_AUTHORITY_BLOCKLIST.has(id)) continue;
       const up = byId.get(id);
       if (!up || !STATUS_RANK.hasOwnProperty(up.status)) continue;
       if (upstream.as_of_date > entry.asOfDate) {

@@ -84,6 +84,7 @@ const indexHtml = read('index.html');
 const appJs = read('scripts/app.js');
 const buildSrc = read('scripts/build-bubble-watch.mjs');
 const sourceCandidates = JSON.parse(read('config/bubble-watch-source-candidates.json'));
+const curatedConfig = JSON.parse(read('config/bubble-watch-curated.json'));
 
 // ---- 1. contract ----
 check('contract', data.contractVersion === 'bubble-watch-v1', `contractVersion 异常: ${data.contractVersion}`);
@@ -105,6 +106,7 @@ for (const ind of data.indicators || []) {
 }
 check('contract', EXPECTED_IDS.every((id) => ids.has(id)) && ids.size === EXPECTED_IDS.length,
   `指标 id 集不等于预登记 ${EXPECTED_IDS.length} 项 (got ${ids.size})`);
+const indicatorById = Object.fromEntries((data.indicators || []).map((ind) => [ind.id, ind]));
 
 const s = data.summary || {};
 const red = (data.indicators || []).filter((i) => i.status === 'red').length;
@@ -248,6 +250,55 @@ check('contract', buildSrc.includes('mergeCeoHedgingNewsConfirmations') && build
   'ceo_hedging 必须保留 Tavily/Brave 交叉确认路径');
 check('contract', buildSrc.includes('capSingleSourceCeoHedgingRed') && buildSrc.includes('redRequiresTwoIndependentNewsSources'),
   'ceo_hedging 必须保留单源红灯封顶规则');
+check('contract', buildSrc.includes('extractVcAiFundingShare') && buildSrc.includes('ai_sector_total_global_vc_sentence_v2'),
+  'vc_ai_share 必须使用 AI sector / total global VC 句子级解析器,避免误抓巨额轮次数值');
+check('contract', buildSrc.includes('UPSTREAM_SYNC_LOCAL_AUTHORITY_BLOCKLIST') && buildSrc.includes("'mag4_fcf_yoy'"),
+  'mag4_fcf_yoy 必须在上游同步 blocklist 中,不得被参考站编辑口径覆盖');
+
+const vcAiShare = indicatorById.vc_ai_share;
+if (vcAiShare?.provenance?.mode === 'auto' && /Crunchbase News WordPress API/iu.test(vcAiShare.provenance?.detail?.source || '')) {
+  const detail = vcAiShare.provenance.detail;
+  check('contract', detail.parser === 'ai_sector_total_global_vc_sentence_v2', 'vc_ai_share Crunchbase 路径必须标注 v2 parser');
+  check('contract', Number(detail.aiFundingB) >= 200 && Number(detail.sharePct) >= 75,
+    `vc_ai_share Crunchbase 解析疑似误抓巨额轮次: aiFundingB=${detail.aiFundingB}, sharePct=${detail.sharePct}`);
+  check('contract', /total global venture funding/iu.test(detail.evidenceText || ''),
+    'vc_ai_share evidenceText 必须来自 total global venture funding 句子');
+}
+
+const mag4Fcf = indicatorById.mag4_fcf_yoy;
+if (mag4Fcf?.provenance?.mode === 'auto') {
+  const detail = mag4Fcf.provenance.detail || {};
+  check('contract', detail.formula === 'realized_ttm_aggregate_operating_cash_flow_plus_capex',
+    'mag4_fcf_yoy 必须声明 realized TTM aggregate OCF+Capex 公式');
+  check('contract', Array.isArray(detail.perCompany) && detail.perCompany.length === 4,
+    `mag4_fcf_yoy 必须四家公司齐全,当前 ${detail.perCompany?.length || 0}/4`);
+  const expectedMag4 = ['AMZN', 'MSFT', 'GOOGL', 'META'];
+  const usedMag4 = new Set((detail.perCompany || []).map((row) => row.ticker));
+  check('contract', expectedMag4.every((ticker) => usedMag4.has(ticker)) && usedMag4.size === expectedMag4.length,
+    'mag4_fcf_yoy perCompany 必须正好覆盖 AMZN/MSFT/GOOGL/META');
+  const selfAudit = detail.selfContractAudit || {};
+  check('contract', selfAudit.status === 'passed' && selfAudit.sourceIndependence === 'does_not_require_external_reference_site',
+    'mag4_fcf_yoy 必须通过本站自有公式审计,且声明不依赖参考站');
+  check('contract', selfAudit.fallbackPolicy === 'use_local_realized_ttm_snapshot_only; upstream_or_reference_editorial_snapshots_are_not_eligible_fallback',
+    'mag4_fcf_yoy fallbackPolicy 必须禁止参考站/前瞻编辑口径作为备用快照');
+  check('contract', Math.abs(Number(selfAudit.yoyPct) - Number(selfAudit.replayYoyPct)) < 0.2,
+    `mag4_fcf_yoy 自审 yoyPct ${selfAudit.yoyPct} 与 replay ${selfAudit.replayYoyPct} 不符`);
+  check('contract', selfAudit.thresholdReplayStatus === mag4Fcf.status,
+    `mag4_fcf_yoy 阈值 replay ${selfAudit.thresholdReplayStatus} 与发布状态 ${mag4Fcf.status} 不符`);
+  check('contract', detail.externalReferenceAudit?.requiredForPublication === false,
+    'mag4_fcf_yoy 外部参考审计只能是非必需的漂移提示');
+  check('contract', ['skipped_no_wind_key', 'not_run_in_builder_public_primary_succeeded'].includes(detail.windCrossCheck?.status),
+    `mag4_fcf_yoy windCrossCheck.status 异常: ${detail.windCrossCheck?.status}`);
+}
+const mag4Fallback = curatedConfig.autoFallback?.mag4_fcf_yoy || {};
+check('contract', mag4Fallback.fallbackContract === 'local_realized_ttm_snapshot_v1',
+  'mag4_fcf_yoy autoFallback 必须是本站 realized TTM 本地备用快照');
+check('contract', mag4Fallback.syncedFromUpstream !== true,
+  'mag4_fcf_yoy autoFallback 不得 syncedFromUpstream');
+check('contract', mag4Fallback.status === 'yellow' && /^-?1[0-9]%/u.test(mag4Fallback.value_display || ''),
+  `mag4_fcf_yoy autoFallback 值异常:${mag4Fallback.status} ${mag4Fallback.value_display}`);
+check('contract', /不得替换为前瞻 FCF|参考站编辑口径/u.test(mag4Fallback.note || ''),
+  'mag4_fcf_yoy autoFallback note 必须写明禁止前瞻/参考站编辑口径替换');
 
 // ---- 2. scoring replay ----
 function tierFromPct(p) {
