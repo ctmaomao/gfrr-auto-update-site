@@ -31,7 +31,7 @@
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `gold-observation-reaction-1`）。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `p2-doc-governance-1`）。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -166,7 +166,7 @@ When `DESIGN.md` and any other contract (e.g., Market Pricing governance) appear
 
 - `npm run check:frontend-live-contracts` enforces the live frontend display contracts: DOM id 契约 (`check:dom`)、null/zero 显示守卫、macro coherence (display-only)
 - `DESIGN.md` itself is the ground truth for IA 顺序 / 字体 / 视觉 (see `docs/ADR/0014-design-md-is-ia-ground-truth.md`); the dedicated `check:homepage-ia-contract` / `check:editorial-redesign-contract` checkers were retired in checker 精简 Phase 1+2, so IA/font contracts are now guarded by `DESIGN.md` + review, not a script
-- `npm run check:all` runs `check:frontend-live-contracts` and `check:frontend-zh-copy` as part of the 17-item top-level baseline (~57 leaf checks)
+- `npm run check:all` runs the default read-only validation chain defined in `package.json`; it includes `check:frontend-live-contracts`, `check:frontend-zh-copy`, and the read-only external AI contract checks, but excludes artifact-generating opt-in commands such as `check:external-ai:with-artifacts`
 
 PRs that fail these contracts MUST NOT be merged, regardless of how good the visual result looks.
 
@@ -213,10 +213,12 @@ PRs that fail these contracts MUST NOT be merged, regardless of how good the vis
 npm run check:all
 ```
 
-当前顺序：
+实际顺序以 `package.json` 的 `scripts.check:all` 为准。不要在文档中复制完整链路或硬编码检查数量,避免与 `package.json` 漂移。
+
+默认 `check:all` 是只读验证链;external AI 的 artifact / projection / manual-input 生成能力保留为显式 opt-in 命令,不属于日常默认验证。
 
 ```text
-check:syntax → check:dom → check:modules → check:copy → check:workflows → check:docs → check:data
+package.json scripts.check:all
 ```
 
 含义：
@@ -224,7 +226,9 @@ check:syntax → check:dom → check:modules → check:copy → check:workflows 
 - `check:syntax`：自动扫描 `scripts/` 下 `.js / .mjs` 并执行语法检查。
 - `check:dom`：检查关键 DOM 挂载点。
 - `check:modules`：自动扫描 `scripts/modules/*.js` 并动态 import。
-- `check:copy`：检查用户可见文案契约。
+- `check:frontend-live-contracts`：聚合当前前端 live display contract。
+- `check:frontend-zh-copy`：检查用户可见中文文案契约。
+- `check:external-ai`：默认只读 external AI contract / guard 检查;会写 artifact 的路径必须显式运行 `check:external-ai:with-artifacts` 或对应 manual/artifact 命令。
 - `check:workflows`：检查 GitHub Actions workflow 合约。
 - `check:docs`：检查 `README.md`、`AGENTS.md` 和 `docs/*.md` 中的本地 Markdown 链接；跳过 `http / https / mailto / 纯锚点`。
 - `check:data`：等价于 `node scripts/validate-data.mjs`，检查数据契约；local realtime / Daily baseline alignment 的 expected skip 默认静默。
@@ -241,7 +245,7 @@ v28.0G-10 起，如果本地 realtime 与 `dailyRealtimeInput.updatedAt` 不匹�
 | 改 HTML | `npm run check:dom` 和 `npm run check:all` |
 | 改 JS / MJS | `npm run check:all` |
 | 改 workflow | `npm run check:workflows` 和 `npm run check:all` |
-| 改用户可见文案 | `npm run check:copy` 和 `npm run check:all` |
+| 改用户可见文案 | `npm run check:frontend-zh-copy` 和 `npm run check:all` |
 | 改数据契约 / validate | `npm run check:data` 和 `npm run check:all` |
 | 运行 daily / realtime 生成脚本 | 必须确认是否产生 JSON 产物；除非任务明确要求，否则恢复 JSON 产物 |
 
@@ -292,16 +296,10 @@ ON RRP 用户可见单位必须是：
 Pages deploy 当前分步骤运行：
 
 ```text
-check:syntax
-check:dom
-check:modules
-check:copy
-check:workflows
-check:docs
-check:data
+npm run check:all
 ```
 
-不要误写成 Pages deploy 直接运行 `check:all`。分步骤运行用于快速判断失败类型。
+Pages deploy 的实际验证入口以 `.github/workflows/deploy-static-site-to-pages.yml` 为准；当前入口是默认只读 `check:all`。
 
 Realtime / Daily workflow 也有 GitHub Actions Summary，用于人工审计 realtime 输出、Daily baseline、Decision Summary 和 Transmission Delta Summary。
 

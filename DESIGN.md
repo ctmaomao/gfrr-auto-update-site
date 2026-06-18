@@ -145,13 +145,13 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 ```text
 ═══ 第一层：核心阅读路径（不折叠，始终展开）═══
 1. <header class="masthead">              顶部品牌 / 日期 / 数据健康 / 观察边界
-2. <nav class="dashboard-jump-nav">       顶部跳转导航 15 项
+2. <nav class="dashboard-jump-nav">       顶部跳转导航 16 项
 
 ═══ Non-nav preface block（不计入 nav 编号）═══
 #plain-summary-card                       普通用户 preface block（2026-05 Bubble Watch 改版已退场)
    - 位于 <main> 内、dashboard-jump-nav 后、#macro-risk-overview 前
    - 使用 plain-summary-section 叙事结构
-   - 不计入 15 项 jump-nav IA section
+   - 不计入 jump-nav IA section
 
 ═══ Macro runtime path（8 runtime block + WoW）═══
 3. #macro-risk-overview                   宏观风险判断总览
@@ -187,7 +187,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 <footer class="method">                   method-grid 4 项
 ```
 
-### 4.2 dashboard-jump-nav 15 项（顺序锁定）
+### 4.2 dashboard-jump-nav 16 项（顺序锁定）
 
 顶部跳转导航必须是 16 项,按以下顺序指向主路径锚点:
 
@@ -404,7 +404,7 @@ tag 颜色:
 - `.is-flat`, `.is-gap` → `var(--paper-muted)` 背景 + 反白文字
 
 **dashboard-jump-nav**:
-- 顶部跳转导航固定 15 项
+- 顶部跳转导航固定 16 项
 - 第 9 项 `#macro-thematic-cards` 必须带 `.new`
 - 字体 mono 11px,`letter-spacing: 0.18em`,uppercase
 - 默认色 `var(--paper-muted)`

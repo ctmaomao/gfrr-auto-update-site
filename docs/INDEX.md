@@ -25,7 +25,7 @@
 | `CLAUDE.md` | AI 启动导航 (新增于 v28.0J-pre-split 后) |
 | `DESIGN.md` | 前端设计契约 (视觉/IA/色彩/字体/组件) |
 | `AGENTS.md` | AI 开发规则合约 (规则锚点,索引/历史已外迁) |
-| `package.json` | 所有 check 命令与 `check:all` 组成权威源 |
+| `package.json` | 所有 check 命令与 `check:all` 组成权威源；默认 `check:all` 为只读验证链，artifact / manual 生成命令必须显式 opt-in |
 | `docs/PROJECT_BACKLOG.md` | 项目自我记忆 + 跨会话 active task |
 | `docs/DATA_SOURCES.md` | 10+ 外部数据源边界 (新增于 v28.0J-pre-split 后) |
 | `docs/ADR/README.md` | 重大架构决策索引 (新增于 v28.0J-pre-split 后) |

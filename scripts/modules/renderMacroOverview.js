@@ -8,10 +8,10 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=gold-observation-reaction-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=gold-observation-reaction-1';
-import { MODULE_LABELS } from './decision.js?v=gold-observation-reaction-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=gold-observation-reaction-1';
+} from './config.js?v=p2-doc-governance-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=p2-doc-governance-1';
+import { MODULE_LABELS } from './decision.js?v=p2-doc-governance-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=p2-doc-governance-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
