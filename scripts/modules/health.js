@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=p2-doc-governance-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=p2-doc-governance-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=macro-overview-helper-extraction-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=macro-overview-helper-extraction-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

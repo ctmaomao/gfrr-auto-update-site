@@ -8,74 +8,20 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=p2-doc-governance-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=p2-doc-governance-1';
-import { MODULE_LABELS } from './decision.js?v=p2-doc-governance-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=p2-doc-governance-1';
+} from './config.js?v=macro-overview-helper-extraction-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=macro-overview-helper-extraction-1';
+import { MODULE_LABELS } from './decision.js?v=macro-overview-helper-extraction-1';
+import {
+  brentModeZh,
+  moduleTone,
+  riskBiasZh,
+  sourceModeZh,
+  trendArrow,
+  worldOrderStateLabel,
+} from './macroOverviewDisplayHelpers.js?v=macro-overview-helper-extraction-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=macro-overview-helper-extraction-1';
 
 // ---------- 阈值 + 派生 helper ----------
-
-// 6 pressure module tone 阈值(red >= 70 / yellow 50-69 / green < 50)
-function moduleTone(score) {
-  if (!Number.isFinite(score)) return null;
-  if (score >= 70) return 'red';
-  if (score >= 50) return 'yellow';
-  return 'green';
-}
-
-// trend 派生箭头(>2 ↑ / <-2 ↓ / 中间 →)
-function trendArrow(trend) {
-  if (!Number.isFinite(trend)) return '→';
-  if (trend > 2) return '↑';
-  if (trend < -2) return '↓';
-  return '→';
-}
-
-const WORLD_ORDER_STATE_LABELS = {
-  multi_theater_stress: '多战区压力期',
-  war_economy_stress: '战时经济压力期',
-  world_order_pressure_crossing: '世界秩序压力穿越',
-  normal: '常态观察',
-  unknown: '状态待确认',
-};
-const SOURCE_MODE_LABELS = {
-  live: '实时',
-  fallback: '回退',
-  degraded: '降级',
-  'cache-only': '缓存',
-  'live-with-fallback': '实时含回退',
-  'worker-generated-preview': 'Worker 主预览',
-};
-const BRENT_MODE_LABELS = {
-  public_proxy_observation: '公开代理观察',
-};
-const RISK_BIAS_LABELS = {
-  upward: '上修偏置',
-  neutral: '中性',
-  downward: '下修偏置',
-};
-
-function sourceModeZh(value) {
-  const text = textValue(value);
-  return text ? (SOURCE_MODE_LABELS[text] || text) : '—';
-}
-
-function brentModeZh(value) {
-  const text = textValue(value);
-  return text ? (BRENT_MODE_LABELS[text] || text) : '—';
-}
-
-function worldOrderStateLabel(state, labelZh) {
-  const label = textValue(labelZh);
-  if (label) return label;
-  const stateText = textValue(state);
-  return stateText ? (WORLD_ORDER_STATE_LABELS[stateText] || '状态待确认') : '状态待确认';
-}
-
-function riskBiasZh(value) {
-  const text = textValue(value);
-  return text ? (RISK_BIAS_LABELS[text] || text) : '—';
-}
 
 // 6 module 真实派生 X red / Y yellow / Z green count
 function deriveModuleBreakdown(modules) {

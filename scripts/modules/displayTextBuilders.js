@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=p2-doc-governance-1';
+﻿import { fmtNumSafe } from './config.js?v=macro-overview-helper-extraction-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

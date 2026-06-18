@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=p2-doc-governance-1';
+﻿import { fmtNumSafe } from './config.js?v=macro-overview-helper-extraction-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
