@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=frontend-loading-state-1';
+﻿import { fmtNumSafe } from './config.js?v=observation-reaction-layer-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

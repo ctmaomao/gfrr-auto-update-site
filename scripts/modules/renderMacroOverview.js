@@ -8,10 +8,10 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=frontend-loading-state-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-loading-state-1';
-import { MODULE_LABELS } from './decision.js?v=frontend-loading-state-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=frontend-loading-state-1';
+} from './config.js?v=observation-reaction-layer-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=observation-reaction-layer-1';
+import { MODULE_LABELS } from './decision.js?v=observation-reaction-layer-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=observation-reaction-layer-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1206,6 +1206,112 @@ function setBadge(id, tone, label = null) {
   el.textContent = label || tone.toUpperCase();
 }
 
+function mainRiskIsElevated(radarData) {
+  const score = asNumber(radarData?.score);
+  if (score === null) return null;
+  return score >= 50;
+}
+
+function observationReaction(radarData, signal) {
+  const mainElevated = mainRiskIsElevated(radarData);
+  if (signal === 'unavailable') {
+    return { tone: 'pending', label: '数据不足', phrase: '主判断关系待确认' };
+  }
+  if (signal === 'neutral' || mainElevated === null) {
+    return { tone: 'neutral', label: '背景', phrase: '背景观察' };
+  }
+  if (signal === 'stress') {
+    return mainElevated
+      ? { tone: 'yellow', label: '印证', phrase: '印证主判断' }
+      : { tone: 'yellow', label: '背离', phrase: '背离主判断' };
+  }
+  if (signal === 'benign') {
+    return mainElevated
+      ? { tone: 'green', label: '背离', phrase: '背离主判断' }
+      : { tone: 'green', label: '印证', phrase: '印证主判断' };
+  }
+  return { tone: 'neutral', label: '背景', phrase: '背景观察' };
+}
+
+function setObservationReaction(statusId, badgeId, radarData, signal) {
+  const reaction = observationReaction(radarData, signal);
+  setToneClass(statusId, 'status-bar', reaction.tone);
+  setBadge(badgeId, reaction.tone, reaction.label);
+  return reaction;
+}
+
+function reactionText(reaction, detail) {
+  const text = typeof detail === 'string' && detail.trim() ? detail.trim() : '—';
+  return `${reaction.phrase} · ${text}`;
+}
+
+function signalFromEquityChange(changePct) {
+  const change = asNumber(changePct);
+  if (change === null) return 'unavailable';
+  if (change <= -0.01) return 'stress';
+  if (change >= 0.01) return 'benign';
+  return 'neutral';
+}
+
+function signalFromSourceStatus(status) {
+  if (status === 'missing') return 'unavailable';
+  return 'neutral';
+}
+
+function signalFromFreightRegime(regime) {
+  const text = typeof regime === 'string' ? regime : '';
+  if (!text) return 'unavailable';
+  if (text.includes('高压') || text.includes('紧张')) return 'stress';
+  if (text.includes('低压') || text.includes('平稳') || text.includes('正常')) return 'benign';
+  return 'neutral';
+}
+
+function signalFromChinaInflation(cpi, ppi) {
+  const c = asNumber(cpi);
+  const p = asNumber(ppi);
+  if (c === null && p === null) return 'unavailable';
+  if ((c !== null && (c < 0 || c >= 0.035)) || (p !== null && (p <= -0.03 || p >= 0.038))) {
+    return 'stress';
+  }
+  if ((c === null || (c >= 0.005 && c <= 0.03)) && (p === null || (p >= -0.02 && p <= 0.03))) {
+    return 'benign';
+  }
+  return 'neutral';
+}
+
+function signalFromChinaPmi(pmi) {
+  const value = asNumber(pmi);
+  if (value === null) return 'unavailable';
+  if (value < 49.5) return 'stress';
+  if (value > 50.5) return 'benign';
+  return 'neutral';
+}
+
+function signalFromChinaProperty(newCitiesUp, resaleCitiesUp) {
+  const n = asNumber(newCitiesUp);
+  const r = asNumber(resaleCitiesUp);
+  if (n === null && r === null) return 'unavailable';
+  if ((n !== null && n < 20) || (r !== null && r < 15)) return 'stress';
+  if ((n !== null && n > 35) && (r !== null && r > 30)) return 'benign';
+  return 'neutral';
+}
+
+function signalFromChinaTsf(stockYoY) {
+  const value = asNumber(stockYoY);
+  if (value === null) return 'unavailable';
+  if (value < 0.08) return 'stress';
+  if (value > 0.10) return 'benign';
+  return 'neutral';
+}
+
+function signalFromChina10y(cn10y) {
+  const value = asNumber(cn10y);
+  if (value === null) return 'unavailable';
+  if (value < 1.70) return 'stress';
+  if (value > 2.00) return 'benign';
+  return 'neutral';
+}
+
 function findHeatmapEntry(radarData, key) {
   const entries = Array.isArray(radarData?.heatmap) ? radarData.heatmap : [];
   return entries.find((item) => item?.key === key) || null;
@@ -1555,13 +1661,21 @@ function renderC1InflationEnergy({ radarData }) {
 // ---------- Stage 5b: C2 Global Liquidity ----------
 
 
-function renderCfetsRmbLeaf(prefix, cfetsRmb) {
+function renderCfetsRmbLeaf(prefix, cfetsRmb, radarData) {
   if (!cfetsRmb) return;
   const status = cfetsRmb.sourceStatus?.cfets || 'missing';
-  setToneClass(`${prefix}-status`, 'status-bar', 'neutral');
-  setBadge(`${prefix}-badge`, 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
-
   const cfets = asNumber(cfetsRmb.cfets);
+  const signal = status === 'missing'
+    ? 'unavailable'
+    : cfets === null
+      ? 'unavailable'
+      : cfets < 98
+        ? 'stress'
+        : cfets > 102
+          ? 'benign'
+          : 'neutral';
+  const reaction = setObservationReaction(`${prefix}-status`, `${prefix}-badge`, radarData, signal);
+
   const bis = asNumber(cfetsRmb.bis);
   const sdr = asNumber(cfetsRmb.sdr);
   setLeafText(`${prefix}-number`, cfets !== null ? cfets.toFixed(2) : '—');
@@ -1569,24 +1683,28 @@ function renderCfetsRmbLeaf(prefix, cfetsRmb) {
   const bisText = bis !== null ? `BIS ${bis.toFixed(2)}` : 'BIS —';
   const sdrText = sdr !== null ? `SDR ${sdr.toFixed(2)}` : 'SDR —';
   const suffix = status === 'fallback' ? ' · 回退' : '';
-  setLeafText(`${prefix}-aux`, `${cfetsText} · ${bisText} · ${sdrText}${suffix}`);
+  setLeafText(`${prefix}-aux`, reactionText(reaction, `${cfetsText} · ${bisText} · ${sdrText}${suffix}`));
 }
 
 function renderChinaBondLeaf({ radarData }) {
   const chinaBond = radarData?.macroDrivers?.chinaBond;
   if (!chinaBond) return;
   const status = chinaBond.sourceStatus?.yield10y || chinaBond.yield10y?.sourceStatus || 'missing';
-  setToneClass('c6-china-10y-status', 'status-bar', 'neutral');
-  setBadge('c6-china-10y-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
 
   const cn10y = asNumber(chinaBond.yield10y?.value);
+  const reaction = setObservationReaction(
+    'c6-china-10y-status',
+    'c6-china-10y-badge',
+    radarData,
+    status === 'missing' ? 'unavailable' : signalFromChina10y(cn10y)
+  );
   const us10y = currentValue(radarData, 'us10y');
   setLeafText('c6-china-10y-number', cn10y !== null ? cn10y.toFixed(2) : '—');
   const cnText = cn10y !== null ? `中国 10Y ${cn10y.toFixed(2)}%` : '中国 10Y —';
   const usText = us10y !== null ? `美 10Y ${us10y.toFixed(2)}%` : '美 10Y —';
   const spreadText = cn10y !== null && us10y !== null ? `差 ${formatBps(cn10y - us10y, 0)}` : '差 —';
   const suffix = status === 'fallback' ? ' · 回退' : '';
-  setLeafText('c6-china-10y-aux', `${cnText} · ${usText} · ${spreadText}${suffix}`);
+  setLeafText('c6-china-10y-aux', reactionText(reaction, `${cnText} · ${usText} · ${spreadText}${suffix}`));
 }
 function renderChinaInflationLeaf({ radarData }) {
   const chinaInflation = radarData?.macroDrivers?.chinaInflation;
@@ -1594,32 +1712,40 @@ function renderChinaInflationLeaf({ radarData }) {
   const cpiStatus = chinaInflation.sourceStatus?.cpi || chinaInflation.cpi?.sourceStatus || 'missing';
   const ppiStatus = chinaInflation.sourceStatus?.ppi || chinaInflation.ppi?.sourceStatus || 'missing';
   const status = cpiStatus === 'live' || ppiStatus === 'live' ? 'live' : (cpiStatus === 'fallback' || ppiStatus === 'fallback' ? 'fallback' : 'missing');
-  setToneClass('c6-china-infl-status', 'status-bar', 'neutral');
-  setBadge('c6-china-infl-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
 
   const cpi = asNumber(chinaInflation.cpi?.yoy);
   const ppi = asNumber(chinaInflation.ppi?.yoy);
+  const reaction = setObservationReaction(
+    'c6-china-infl-status',
+    'c6-china-infl-badge',
+    radarData,
+    status === 'missing' ? 'unavailable' : signalFromChinaInflation(cpi, ppi)
+  );
   setLeafText('c6-china-infl-number', cpi !== null ? (cpi * 100).toFixed(1) : '—');
   const cpiText = cpi !== null ? `消费者物价(CPI) ${signedFixed(cpi * 100, 1)}% YoY` : '消费者物价(CPI) —';
   const ppiText = ppi !== null ? `工业品出厂价格(PPI) ${signedFixed(ppi * 100, 1)}% YoY` : '工业品出厂价格(PPI) —';
   const refMonth = chinaInflation.cpi?.refMonth || chinaInflation.ppi?.refMonth || '—';
   const suffix = status === 'fallback' ? ' · 回退' : '';
-  setLeafText('c6-china-infl-aux', `${cpiText} · ${ppiText} · ${refMonth}${suffix}`);
+  setLeafText('c6-china-infl-aux', reactionText(reaction, `${cpiText} · ${ppiText} · ${refMonth}${suffix}`));
 }
 
 function renderChinaPmiLeaf({ radarData }) {
   const chinaPmi = radarData?.macroDrivers?.chinaPmi;
   if (!chinaPmi) return;
   const status = chinaPmi.sourceStatus?.pmi || chinaPmi.pmi?.sourceStatus || 'missing';
-  setToneClass('c6-china-pmi-status', 'status-bar', 'neutral');
-  setBadge('c6-china-pmi-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
 
   const pmi = asNumber(chinaPmi.pmi?.value);
+  const reaction = setObservationReaction(
+    'c6-china-pmi-status',
+    'c6-china-pmi-badge',
+    radarData,
+    status === 'missing' ? 'unavailable' : signalFromChinaPmi(pmi)
+  );
   setLeafText('c6-china-pmi-number', pmi !== null ? pmi.toFixed(1) : '—');
   const refMonth = chinaPmi.pmi?.refMonth || '—';
   const expansion = pmi === null ? '—' : (pmi >= 50 ? '扩张' : '收缩');
   const suffix = status === 'fallback' ? ' · 回退' : '';
-  setLeafText('c6-china-pmi-aux', `${refMonth} · ${expansion}${suffix}`);
+  setLeafText('c6-china-pmi-aux', reactionText(reaction, `${refMonth} · ${expansion}${suffix}`));
 }
 
 function formatChinaPropertyTierCounts(group) {
@@ -1721,17 +1847,21 @@ function renderChinaTsfLeaf({ radarData }) {
     return;
   }
   const status = tsf.sourceStatus || 'missing';
-  setToneClass('c6-tsf-status', 'status-bar', 'neutral');
-  setBadge('c6-tsf-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : status === 'missing' ? 'OBS·缺失' : 'OBS');
 
   const stockYoY = asNumber(tsf.stockYoY);
   const ytdIncrementYi = asNumber(tsf.ytdIncrementYi);
+  const reaction = setObservationReaction(
+    'c6-tsf-status',
+    'c6-tsf-badge',
+    radarData,
+    status === 'missing' ? 'unavailable' : signalFromChinaTsf(stockYoY)
+  );
   const label = tsf.incrementPeriodLabel || '年内';
   const refMonth = tsf.refMonth || '—';
   const suffix = status === 'fallback' ? ' · 回退' : status === 'missing' ? ' · 待源恢复' : '';
   setLeafText('c6-tsf-number', stockYoY !== null ? (stockYoY * 100).toFixed(1) : '—');
   setLeafText('c6-tsf-unit', stockYoY !== null ? '% YoY' : '');
-  setLeafText('c6-tsf-aux', `${label}增量 ${formatChinaTsfIncrementYi(ytdIncrementYi)} · ${refMonth}${suffix}`);
+  setLeafText('c6-tsf-aux', reactionText(reaction, `${label}增量 ${formatChinaTsfIncrementYi(ytdIncrementYi)} · ${refMonth}${suffix}`));
   renderChinaTsfComponents(tsf);
 }
 function formatChinaMlfTerm(termMonths) {
@@ -1751,8 +1881,12 @@ function renderChinaMlfLeaf({ radarData }) {
   const mlf = radarData?.macroDrivers?.chinaMlf;
   if (!mlf) return;
   const status = mlf.sourceStatus || 'missing';
-  setToneClass('c6-mlf-status', 'status-bar', 'neutral');
-  setBadge('c6-mlf-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : status === 'missing' ? 'OBS·缺失' : 'OBS');
+  const reaction = setObservationReaction(
+    'c6-mlf-status',
+    'c6-mlf-badge',
+    radarData,
+    status === 'missing' ? 'unavailable' : signalFromSourceStatus(status)
+  );
 
   const operationAmountYi = asNumber(mlf.operationAmountYi);
   const termText = formatChinaMlfTerm(mlf.termMonths);
@@ -1762,21 +1896,25 @@ function renderChinaMlfLeaf({ radarData }) {
   const suffix = status === 'fallback' ? ' · 回退' : status === 'missing' ? ' · 待源恢复' : '';
   setLeafText('c6-mlf-number', formatChinaMlfAmount(operationAmountYi));
   setLeafText('c6-mlf-unit', operationAmountYi !== null ? '亿元' : '');
-  setLeafText('c6-mlf-aux', `${termText} · ${opDate} · ${rateText}${suffix}`);
+  setLeafText('c6-mlf-aux', reactionText(reaction, `${termText} · ${opDate} · ${rateText}${suffix}`));
 }
 function renderChinaOmoLeaf({ radarData }) {
   const omo = radarData?.macroDrivers?.chinaOmo;
   if (!omo) return;
   const status = omo.sourceStatus || 'missing';
-  setToneClass('c6-omo-status', 'status-bar', 'neutral');
-  setBadge('c6-omo-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : status === 'missing' ? 'OBS·缺失' : 'OBS');
+  const reaction = setObservationReaction(
+    'c6-omo-status',
+    'c6-omo-badge',
+    radarData,
+    status === 'missing' ? 'unavailable' : signalFromSourceStatus(status)
+  );
 
   const opDate = omo.opDate || '—';
   if (omo.operationType === '无操作') {
     setLeafText('c6-omo-number', '—');
     setLeafText('c6-omo-unit', '今日无操作');
     const suffix = status === 'fallback' ? ' · 回退' : '';
-    setLeafText('c6-omo-aux', `今日无操作 · ${opDate}${suffix}`);
+    setLeafText('c6-omo-aux', reactionText(reaction, `今日无操作 · ${opDate}${suffix}`));
     return;
   }
 
@@ -1790,7 +1928,7 @@ function renderChinaOmoLeaf({ radarData }) {
   const suffix = status === 'fallback' ? ' · 回退' : status === 'missing' ? ' · 待源恢复' : '';
   setLeafText('c6-omo-number', operationRate !== null ? (operationRate * 100).toFixed(2) : '—');
   setLeafText('c6-omo-unit', operationRate !== null ? '%' : '');
-  setLeafText('c6-omo-aux', `${termText} · ${amountText} · ${opDate} · ${announcementNo}${suffix}`);
+  setLeafText('c6-omo-aux', reactionText(reaction, `${termText} · ${amountText} · ${opDate} · ${announcementNo}${suffix}`));
 }
 function renderChinaPropertyLeaf({ radarData }) {
   const property = radarData?.macroDrivers?.chinaPropertyPrice;
@@ -1799,12 +1937,16 @@ function renderChinaPropertyLeaf({ radarData }) {
     return;
   }
   const status = property.sourceStatus || 'missing';
-  setToneClass('c6-house-status', 'status-bar', 'neutral');
-  setBadge('c6-house-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : status === 'missing' ? 'OBS·缺失' : 'OBS');
 
   const newUp = asNumber(property.newCitiesUp);
   const newFlat = asNumber(property.newCitiesFlat);
   const resaleUp = asNumber(property.resaleCitiesUp);
+  const reaction = setObservationReaction(
+    'c6-house-status',
+    'c6-house-badge',
+    radarData,
+    status === 'missing' ? 'unavailable' : signalFromChinaProperty(newUp, resaleUp)
+  );
   setLeafText('c6-house-number', newUp !== null ? `${Math.round(newUp)}/70` : '—');
   setLeafText('c6-house-unit', '新房上涨');
 
@@ -1814,7 +1956,7 @@ function renderChinaPropertyLeaf({ radarData }) {
   auxParts.push(property.refMonth || '—');
   if (status === 'fallback') auxParts.push('回退');
   if (status === 'missing') auxParts.push('待源恢复');
-  setLeafText('c6-house-aux', auxParts.join(' · '));
+  setLeafText('c6-house-aux', reactionText(reaction, auxParts.join(' · ')));
   renderChinaPropertyTierBreakdown(property);
 }
 function renderC2GlobalLiquidity({ radarData }) {
@@ -1913,23 +2055,31 @@ function renderC2GlobalLiquidity({ radarData }) {
     const cg = radarData.macroDrivers?.copperGold;
     if (cg) {
       const status = cg.sourceStatus?.ratio || 'missing';
-      setToneClass('c2-cuau-status', 'status-bar', 'neutral');
-      setBadge('c2-cuau-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
 
       const ratio = asNumber(cg.ratio);
+      const rc = asNumber(cg.ratioChangePct);
+      const signal = status === 'missing'
+        ? 'unavailable'
+        : rc === null
+          ? 'neutral'
+          : rc <= -0.01
+            ? 'stress'
+            : rc >= 0.01
+              ? 'benign'
+              : 'neutral';
+      const reaction = setObservationReaction('c2-cuau-status', 'c2-cuau-badge', radarData, signal);
       setLeafText('c2-cuau-number', ratio !== null ? (ratio * 1000).toFixed(3) : '—');
 
       const cu = asNumber(cg.copper?.price);
       const au = asNumber(cg.gold?.price);
-      const rc = asNumber(cg.ratioChangePct);
       const cuText = cu !== null ? `铜 $${cu.toFixed(2)}/lb` : '铜 —';
       const auText = au !== null ? `金 $${au.toFixed(0)}/oz` : '金 —';
       const rcText = rc !== null ? `较前日 ${signedFixed(rc * 100, 2)}%` : '较前日 —';
       const suffix = status === 'fallback' ? ' · 回退' : '';
-      setLeafText('c2-cuau-aux', `${cuText} · ${auText} · ${rcText}${suffix}`);
+      setLeafText('c2-cuau-aux', reactionText(reaction, `${cuText} · ${auText} · ${rcText}${suffix}`));
     }
 
-    renderCfetsRmbLeaf('c2-cfets', radarData.macroDrivers?.cfetsRmb);
+    renderCfetsRmbLeaf('c2-cfets', radarData.macroDrivers?.cfetsRmb, radarData);
   } catch (error) {
     console.error('[renderMacroOverview] renderC2GlobalLiquidity failed:', error);
   }
@@ -2200,8 +2350,12 @@ function renderShippingFreight({ radarData }) {
     const anyLive = ss.dirtyTanker === 'live' || ss.cleanTanker === 'live' || ss.dryBulk === 'live';
     const anyFallback = ss.dirtyTanker === 'fallback' || ss.cleanTanker === 'fallback' || ss.dryBulk === 'fallback';
     const status = anyLive ? 'live' : (anyFallback ? 'fallback' : 'missing');
-    setToneClass('c1-freight-status', 'status-bar', 'neutral');
-    setBadge('c1-freight-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
+    const reaction = setObservationReaction(
+      'c1-freight-status',
+      'c1-freight-badge',
+      radarData,
+      status === 'missing' ? 'unavailable' : signalFromFreightRegime(sf.freightStressRegime)
+    );
     const bdi = asNumber(sf.balticDryIndex);
     setLeafText('c1-freight-number', bdi !== null ? bdi.toFixed(0) : '—');
     const leg = (idxVal, chgVal, label) => {
@@ -2212,7 +2366,8 @@ function renderShippingFreight({ radarData }) {
     };
     const regime = sf.freightStressRegime ? ` · ${sf.freightStressRegime}` : '';
     const suffix = status === 'fallback' ? ' · 回退' : '';
-    setLeafText('c1-freight-aux', `${leg(sf.balticDirtyTankerIndex, sf.balticDirtyTankerDailyChangePct, 'BDTI')} · ${leg(sf.balticCleanTankerIndex, sf.balticCleanTankerDailyChangePct, 'BCTI')} · ${leg(sf.balticDryIndex, sf.balticDryDailyChangePct, 'BDI')}${regime}${suffix}`);
+    const detail = `${leg(sf.balticDirtyTankerIndex, sf.balticDirtyTankerDailyChangePct, 'BDTI')} · ${leg(sf.balticCleanTankerIndex, sf.balticCleanTankerDailyChangePct, 'BCTI')} · ${leg(sf.balticDryIndex, sf.balticDryDailyChangePct, 'BDI')}${regime}${suffix}`;
+    setLeafText('c1-freight-aux', reactionText(reaction, detail));
   } catch (error) {
     console.error('[renderMacroOverview] renderShippingFreight failed:', error);
   }
@@ -2225,8 +2380,16 @@ function renderEuroVolatilityLeaf({ radarData }) {
   const vix = currentValue(radarData, 'vix');
   const status = euroVolatility?.sourceStatus || 'missing';
 
-  setToneClass('c5-v2x-status', 'status-bar', 'neutral');
-  setBadge('c5-v2x-badge', 'neutral', status === 'fallback' ? 'OBS·回退' : status === 'missing' ? 'OBS·缺失' : 'OBS');
+  const signal = status === 'missing'
+    ? 'unavailable'
+    : value === null
+      ? 'unavailable'
+      : value >= 25 || (changePct !== null && changePct >= 0.08)
+        ? 'stress'
+        : value < 18 && (changePct === null || changePct < 0.05)
+          ? 'benign'
+          : 'neutral';
+  const reaction = setObservationReaction('c5-v2x-status', 'c5-v2x-badge', radarData, signal);
   setLeafText('c5-v2x-number', value !== null ? value.toFixed(1) : '—');
 
   const auxParts = [];
@@ -2241,7 +2404,7 @@ function renderEuroVolatilityLeaf({ radarData }) {
   }
   if (status === 'fallback') auxParts.push('回退');
   if (status === 'missing' && auxParts.length === 0) auxParts.push('待源恢复');
-  setLeafText('c5-v2x-aux', auxParts.join(' · ') || '—');
+  setLeafText('c5-v2x-aux', reactionText(reaction, auxParts.join(' · ') || '—'));
 }
 function renderC5WorldEconomy({ radarData }) {
   try {
@@ -2271,8 +2434,12 @@ function renderC5WorldEconomy({ radarData }) {
       const changePct = asNumber(item?.changePct);
       const status = item?.sourceStatus || worldEconomy.sourceStatus?.[key] || 'missing';
 
-      setToneClass(`${prefix}-status`, 'status-bar', 'neutral');
-      setBadge(`${prefix}-badge`, 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
+      const reaction = setObservationReaction(
+        `${prefix}-status`,
+        `${prefix}-badge`,
+        radarData,
+        status === 'missing' ? 'unavailable' : signalFromEquityChange(changePct)
+      );
 
       if (price !== null) {
         setLeafText(`${prefix}-number`, price.toFixed(0));
@@ -2283,9 +2450,9 @@ function renderC5WorldEconomy({ radarData }) {
       if (changePct !== null) {
         const pctText = signedFixed(changePct * 100, 2);
         const suffix = status === 'fallback' ? ' · 回退' : '';
-        setLeafText(`${prefix}-aux`, `近5日 ${pctText}%${suffix}`);
+        setLeafText(`${prefix}-aux`, reactionText(reaction, `近5日 ${pctText}%${suffix}`));
       } else {
-        setLeafText(`${prefix}-aux`, status === 'fallback' ? '近5日 — · 回退' : '近5日 —');
+        setLeafText(`${prefix}-aux`, reactionText(reaction, status === 'fallback' ? '近5日 — · 回退' : '近5日 —'));
       }
     });
   } catch (error) {
@@ -2297,7 +2464,7 @@ function renderC6ChinaEquity({ radarData }) {
   try {
     if (!radarData) return;
     renderChinaBondLeaf({ radarData });
-    renderCfetsRmbLeaf('c6-cfets', radarData.macroDrivers?.cfetsRmb);
+    renderCfetsRmbLeaf('c6-cfets', radarData.macroDrivers?.cfetsRmb, radarData);
     renderChinaInflationLeaf({ radarData });
     renderChinaPmiLeaf({ radarData });
     renderChinaPropertyLeaf({ radarData });
@@ -2320,8 +2487,12 @@ function renderC6ChinaEquity({ radarData }) {
       const changePct = asNumber(item?.changePct);
       const status = item?.sourceStatus || chinaEquity.sourceStatus?.[key] || 'missing';
 
-      setToneClass(`${prefix}-status`, 'status-bar', 'neutral');
-      setBadge(`${prefix}-badge`, 'neutral', status === 'fallback' ? 'OBS·回退' : 'OBS');
+      const reaction = setObservationReaction(
+        `${prefix}-status`,
+        `${prefix}-badge`,
+        radarData,
+        status === 'missing' ? 'unavailable' : signalFromEquityChange(changePct)
+      );
 
       if (price !== null) {
         setLeafText(`${prefix}-number`, price.toFixed(0));
@@ -2332,9 +2503,9 @@ function renderC6ChinaEquity({ radarData }) {
       if (changePct !== null) {
         const pctText = signedFixed(changePct * 100, 2);
         const suffix = status === 'fallback' ? ' · 回退' : '';
-        setLeafText(`${prefix}-aux`, `近5日 ${pctText}%${suffix}`);
+        setLeafText(`${prefix}-aux`, reactionText(reaction, `近5日 ${pctText}%${suffix}`));
       } else {
-        setLeafText(`${prefix}-aux`, status === 'fallback' ? '近5日 — · 回退' : '近5日 —');
+        setLeafText(`${prefix}-aux`, reactionText(reaction, status === 'fallback' ? '近5日 — · 回退' : '近5日 —'));
       }
     });
   } catch (error) {

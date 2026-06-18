@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 const SUITES = {
   'frontend-live-contracts': [
     'check:frontend-loading-state',
+    'check:observation-reaction-layer',
     'check:null-zero-display-guards',
     'check:dom',
     'check:macro-overview-narrative',
