@@ -366,6 +366,7 @@ runtime block 的基准结构:
 - C5 世界经济与 C6 中国宏观保留历史编号、DOM id prefix 与 renderer 绑定,但视觉上必须置于 C7/C8 之后,作为区域 / 外部扩散观察层收尾
 - 总计 51 个 `article.indicator-card`
 - 每张卡必须只显示公开代理 / 审计层 / 展示层证据,不得暗示正式源或非公开数据已接入
+- 观察层反应徽章必须表达“与有效主判断的关系”: `印证` 的颜色跟随有效主判断等级(观察期=绿 / 中度警戒=黄 / 高风险预警=橙 / 系统性顶部=红);`背离` 的颜色表达反向证据方向(缓和反证=绿,压力反证=黄);`背景` 与 `数据不足` 保持中性 / pending
 
 **mini-grid / mini-card**:
 - `#homepage-pressure-sources` 与 `#homepage-risk-engines` 使用 `.mini-grid`
@@ -679,3 +680,4 @@ var(--font-mono)              /* IBM Plex Mono */
 | 2026-05 | M-93A0: 引入 `#plain-summary-card` 非 nav preface block 概念；jump nav 15 项与 IA section 编号均不变；同步更新 `scripts/check-homepage-ia-contract.mjs` 和 `scripts/check-editorial-redesign-contract.mjs` | PR #<待 owner 填> |
 | 2026-05 | M-94 V0 PR 1: IA 扩为 15 项，新增 `#macro-thematic-cards` 绿色带 section 容器骨架，并同步 DESIGN.md 与 IA checker 契约 | PR #<待 owner 填> |
 | 2026-06 | IA 合约变更: 主题卡阵视觉顺序改为 C1/C2/C3/C4/C7/C8/C5/C6,将世界经济与中国宏观观察层置底,并新增 checker 锁定顺序 | PR #<待 owner 填> |
+| 2026-06 | 观察层反应徽章语义更新: `印证` 颜色跟随有效主判断等级,`背离` 保留反向证据方向色;同步 checker 行为样例 | PR #<待 owner 填> |

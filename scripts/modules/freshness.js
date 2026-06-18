@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=thematic-ia-regional-last-1';
+﻿import { fmtNumSafe } from './config.js?v=observation-reaction-risk-band-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

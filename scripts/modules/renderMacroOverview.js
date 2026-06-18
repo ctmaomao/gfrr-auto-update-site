@@ -8,10 +8,10 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=thematic-ia-regional-last-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=thematic-ia-regional-last-1';
-import { MODULE_LABELS } from './decision.js?v=thematic-ia-regional-last-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=thematic-ia-regional-last-1';
+} from './config.js?v=observation-reaction-risk-band-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=observation-reaction-risk-band-1';
+import { MODULE_LABELS } from './decision.js?v=observation-reaction-risk-band-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=observation-reaction-risk-band-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1206,29 +1206,49 @@ function setBadge(id, tone, label = null) {
   el.textContent = label || tone.toUpperCase();
 }
 
-function mainRiskIsElevated(radarData) {
-  const score = asNumber(radarData?.score);
-  if (score === null) return null;
-  return score >= 50;
+const observationReactionContext = {
+  worldOrderStressData: null,
+};
+
+function scoreRiskBand(score) {
+  const value = asNumber(score);
+  if (value === null) return { key: 'unknown', label: '判读待确认', tone: 'neutral' };
+  if (value >= 60) return { key: 'systemic_top', label: '系统性顶部', tone: 'red' };
+  if (value >= 40) return { key: 'high_risk', label: '高风险预警', tone: 'orange' };
+  if (value >= 25) return { key: 'moderate_watch', label: '中度警戒', tone: 'yellow' };
+  return { key: 'watch', label: '观察期', tone: 'green' };
 }
 
-function observationReaction(radarData, signal) {
-  const mainElevated = mainRiskIsElevated(radarData);
+function mainRiskBand(radarData, worldOrderStressData = observationReactionContext.worldOrderStressData) {
+  const band = scoreRiskBand(radarData?.score);
+  const worldOrderScore = asNumber(worldOrderStressData?.score);
+  if (
+    (band.key === 'watch' || band.key === 'moderate_watch')
+    && worldOrderScore !== null
+    && worldOrderScore >= 65
+  ) {
+    return { key: 'high_risk', label: '高风险预警', tone: 'orange' };
+  }
+  return band;
+}
+
+function observationReaction(radarData, signal, worldOrderStressData = observationReactionContext.worldOrderStressData) {
+  const band = mainRiskBand(radarData, worldOrderStressData);
   if (signal === 'unavailable') {
     return { tone: 'pending', label: '数据不足', phrase: '主判断关系待确认' };
   }
-  if (signal === 'neutral' || mainElevated === null) {
+  if (signal === 'neutral' || band.key === 'unknown') {
     return { tone: 'neutral', label: '背景', phrase: '背景观察' };
   }
   if (signal === 'stress') {
-    return mainElevated
-      ? { tone: 'yellow', label: '印证', phrase: '印证主判断' }
-      : { tone: 'yellow', label: '背离', phrase: '背离主判断' };
+    return band.key === 'watch'
+      ? { tone: 'yellow', label: '背离', phrase: `背离${band.label}` }
+      : { tone: band.tone, label: '印证', phrase: `印证${band.label}` };
   }
   if (signal === 'benign') {
-    return mainElevated
-      ? { tone: 'green', label: '背离', phrase: '背离主判断' }
-      : { tone: 'green', label: '印证', phrase: '印证主判断' };
+    return band.key === 'watch'
+      ? { tone: band.tone, label: '印证', phrase: `印证${band.label}` }
+      : { tone: 'green', label: '背离', phrase: `背离${band.label}` };
   }
   return { tone: 'neutral', label: '背景', phrase: '背景观察' };
 }
@@ -3417,6 +3437,8 @@ function renderExecutionRiskDetail({ radarData }) {
 // ---------- 主入口 ----------
 
 export function renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData }) {
+  observationReactionContext.worldOrderStressData = worldOrderStressData || null;
+
   // Stage 4b-1A: Hero + threshold + pressure-sources
   renderHero({ radarData, worldOrderStressData, marketPricingMetricsData, oilDirectionalData });
   renderThresholdBlock({ radarData, worldOrderStressData });
@@ -3459,4 +3481,8 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   renderExecutionRiskDetail({ radarData });
 
   console.log('[renderMacroOverview] Stage 5d-2 renders complete (all Stage 5 frontend binding complete)');
+}
+
+export function __testObservationReaction(radarData, signal, worldOrderStressData = null) {
+  return observationReaction(radarData, signal, worldOrderStressData);
 }
