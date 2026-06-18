@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=observation-reaction-layer-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=thematic-ia-regional-last-1" />
 </head>
 <body class="gfrr-data-loading">
   <nav class="page-bookmarks" aria-label="站内页面切换">
@@ -367,6 +367,29 @@
           </div>
         </div>
 
+        <!-- C7: 市场情绪 -->
+        <div class="reader-cat-block">
+          <div class="reader-cat-header"><h3>市场情绪</h3><span class="en">MARKET SENTIMENT</span><span class="counts">3 张</span></div>
+          <p class="cat-intro">注：市场温度主卡(纳斯达克100 ETF(QQQ)偏离度 z-score)已在上方"市场温度"区完整展示。此处放波动率指数(VIX) / 标普500(SPX) / 纳指100(NDX) 60 周偏离度(广度参照)，不与上方重复。</p>
+          <div class="card-grid">
+            <article class="indicator-card" id="card-c7-vix"><div class="status-bar green" id="c7-vix-status"></div><div class="head"><div><div class="name-en">VIX</div><div class="name-zh">标普500隐含波动率(VIX)</div></div><span class="badge green" id="c7-vix-badge">GREEN</span></div><div class="number" id="c7-vix-number">16.76</div><div class="aux" id="c7-vix-aux">12 周低位</div><p class="note" id="c7-vix-note">波动率没有同步扩张，是当前形势不能写成全面危机的关键反证。</p><div class="meta"><span>阈值 &gt;25 红</span><span>标普500隐含波动率(VIX)</span></div></article>
+            <article class="indicator-card" id="card-c7-spx"><div class="status-bar yellow" id="c7-spx-status"></div><div class="head"><div><div class="name-en">SPX</div><div class="name-zh">标普500(SPX)</div></div><span class="badge yellow" id="c7-spx-badge">MIXED</span></div><div class="number" id="c7-spx-number">7473</div><div class="aux" id="c7-spx-aux">52 周高位 累积中</div><p class="note">风险资产仍强，结构压力尚未完全进入价格。</p><div class="meta"><span>距高 -15%+ 红</span><span>标普500(SPX)与 52 周高位</span></div></article>
+            <article class="indicator-card" id="card-c7-ndx"><div class="status-bar yellow" id="c7-ndx-status"></div><div class="head"><div><div class="name-en">NDX 60w z-score</div><div class="name-zh">纳指100温度对照(NDX)</div></div><span class="badge yellow" id="c7-ndx-badge">+2.22σ</span></div><div class="number"><span id="c7-ndx-number">+2.22</span><span class="unit" id="c7-ndx-unit">σ</span></div><div class="aux" id="c7-ndx-aux">纳指100(NDX) vs 60 周均值 · 纳斯达克100 ETF(QQQ)对照</div><p class="note" id="c7-ndx-note">纳指100(NDX) 60 周偏离度(z-score)用于观察美国成长股板块整体温度。本数据为统计描述，不构成投资建议。</p><div class="meta"><span>仅供观察</span><span>纳指100(NDX)历史温度</span></div></article>
+          </div>
+        </div>
+
+        <!-- C8: 地缘与世界秩序 -->
+        <div class="reader-cat-block">
+          <div class="reader-cat-header"><h3>地缘与世界秩序</h3><span class="en">GEOPOLITICS & WORLD ORDER</span><span class="counts">4 张</span></div>
+          <p class="cat-intro">底层地缘评分(计入主评分)+ 世界秩序压力(只做强度修正、不计入主评分)+ 经济武器化 + 军备冲突。</p>
+          <div class="card-grid">
+            <article class="indicator-card" id="card-c8-geo"><div class="status-bar red" id="c8-geo-status"></div><div class="head"><div><div class="name-en">Geopolitical Module</div><div class="name-zh">底层地缘风险评分</div></div><span class="badge red" id="c8-geo-badge">RED</span></div><div class="number" id="c8-geo-number">78</div><div class="aux" id="c8-geo-aux">6 底层模块之一 · 模块趋势 ↑</div><p class="note" id="c8-geo-note">底层地缘评分 78，直接计入主评分。与世界秩序压力(只做修正、不计分)不是一回事。</p><div class="meta"><span>阈值 &gt;70 红</span><span>底层地缘评分趋势</span></div></article>
+            <article class="indicator-card" id="card-c8-wo"><span class="corner overlay" id="c8-wo-corner">OVERLAY</span><div class="status-bar orange" id="c8-wo-status"></div><div class="head"><div><div class="name-en">World Order Overlay</div><div class="name-zh">结构性世界秩序压力</div></div><span class="badge orange" id="c8-wo-badge">OVERLAY</span></div><div class="number" id="c8-wo-number">70</div><div class="aux" id="c8-wo-aux">状态:多战区压力期</div><p class="note" id="c8-wo-note">只为今日判读做强度修正，不计入主评分。</p><div class="meta"><span>不进主评分</span><span>世界秩序压力状态</span></div></article>
+            <article class="indicator-card" id="card-c8-econ"><div class="status-bar red" id="c8-econ-status"></div><div class="head"><div><div class="name-en">Economic Weaponization</div><div class="name-zh">经济武器化</div></div><span class="badge red" id="c8-econ-badge">RED</span></div><div class="number" id="c8-econ-number">+2.3</div><div class="aux" id="c8-econ-aux">美国制裁清单(OFAC)30日 + 全球新闻事件(GDELT)制裁事件偏离度(z-score)</div><p class="note" id="c8-econ-note">制裁与经济武器化处于历史高位区间。趋势(trend): 上行。</p><div class="meta"><span>美国制裁清单(OFAC)+全球新闻事件(GDELT)</span><span id="c8-econ-meta-source">经济武器化压力</span></div></article>
+            <article class="indicator-card" id="card-c8-arms"><span class="corner manual" id="c8-arms-corner">MANUAL · ANNUAL</span><div class="status-bar yellow" id="c8-arms-status"></div><div class="head"><div><div class="name-en">Arms & Conflict</div><div class="name-zh">军备与冲突</div></div><span class="badge yellow" id="c8-arms-badge">YELLOW</span></div><div class="number" id="c8-arms-number">+1.2</div><div class="aux" id="c8-arms-aux">ACLED 30d + SIPRI 全球军费 2.4% GDP</div><p class="note" id="c8-arms-note">手动 + 年度数据。不当成实时高频信号读。</p><div class="meta"><span>ACLED weekly + SIPRI annual</span><span>军备与冲突压力</span></div></article>
+          </div>
+        </div>
+
         <!-- C5: 世界经济 -->
         <div class="reader-cat-block">
           <div class="reader-cat-header"><h3>世界经济</h3><span class="en">WORLD ECONOMY</span><span class="counts">13 live</span></div>
@@ -405,29 +428,6 @@
             <article class="indicator-card" id="card-c6-mlf"><div class="status-bar neutral" id="c6-mlf-status"></div><div class="head"><div><div class="name-en">PBOC MLF</div><div class="name-zh">央行中期借贷便利</div></div><span class="badge neutral" id="c6-mlf-badge">OBS</span></div><div class="number"><span id="c6-mlf-number">6000</span><span class="unit" id="c6-mlf-unit">亿元</span></div><div class="aux" id="c6-mlf-aux">1年期 · 2026-05-25 · 利率未披露</div><p class="note">数据来自东方财富转载的央行中期借贷便利（MLF）操作快讯（公开财经媒体转载，非官方原始公告），显示 MLF 操作量、期限和（如有披露的）利率。</p><div class="meta"><span>每月公开转载</span><span>东方财富聚合 · MLF 操作</span></div></article>
             <article class="indicator-card" id="card-c6-china-10y"><div class="status-bar neutral" id="c6-china-10y-status"></div><div class="head"><div><div class="name-en">China 10Y</div><div class="name-zh">中国 10 年国债</div></div><span class="badge neutral" id="c6-china-10y-badge">OBS</span></div><div class="number"><span id="c6-china-10y-number">1.72</span><span class="unit" id="c6-china-10y-unit">%</span></div><div class="aux" id="c6-china-10y-aux">中国 10Y 1.72% · 美 10Y — · 差 —</div><p class="note">中国长端利率反映增长预期与中美利差。数据来自 ChinaBond 官方收益率曲线。</p><div class="meta"><span>daily official JSON</span><span>ChinaBond 收益率曲线</span></div></article>
             <article class="indicator-card" id="card-c6-cfets"><div class="status-bar neutral" id="c6-cfets-status"></div><div class="head"><div><div class="name-en">CFETS RMB</div><div class="name-zh">人民币篮子指数</div></div><span class="badge neutral" id="c6-cfets-badge">OBS</span></div><div class="number"><span id="c6-cfets-number">100.47</span><span class="unit" id="c6-cfets-unit">index</span></div><div class="aux" id="c6-cfets-aux">CFETS 100.47 · BIS 108.34 · SDR 95.82</div><p class="note">(同时在全球流动性类) 汇率政策意图。ChinaMoney 官方周频 CFETS 篮子指数。</p><div class="meta"><span>weekly official JSON</span><span>人民币篮子指数</span></div></article>
-          </div>
-        </div>
-
-        <!-- C7: 市场情绪 -->
-        <div class="reader-cat-block">
-          <div class="reader-cat-header"><h3>市场情绪</h3><span class="en">MARKET SENTIMENT</span><span class="counts">3 张</span></div>
-          <p class="cat-intro">注：市场温度主卡(纳斯达克100 ETF(QQQ)偏离度 z-score)已在上方"市场温度"区完整展示。此处放波动率指数(VIX) / 标普500(SPX) / 纳指100(NDX) 60 周偏离度(广度参照)，不与上方重复。</p>
-          <div class="card-grid">
-            <article class="indicator-card" id="card-c7-vix"><div class="status-bar green" id="c7-vix-status"></div><div class="head"><div><div class="name-en">VIX</div><div class="name-zh">标普500隐含波动率(VIX)</div></div><span class="badge green" id="c7-vix-badge">GREEN</span></div><div class="number" id="c7-vix-number">16.76</div><div class="aux" id="c7-vix-aux">12 周低位</div><p class="note" id="c7-vix-note">波动率没有同步扩张，是当前形势不能写成全面危机的关键反证。</p><div class="meta"><span>阈值 &gt;25 红</span><span>标普500隐含波动率(VIX)</span></div></article>
-            <article class="indicator-card" id="card-c7-spx"><div class="status-bar yellow" id="c7-spx-status"></div><div class="head"><div><div class="name-en">SPX</div><div class="name-zh">标普500(SPX)</div></div><span class="badge yellow" id="c7-spx-badge">MIXED</span></div><div class="number" id="c7-spx-number">7473</div><div class="aux" id="c7-spx-aux">52 周高位 累积中</div><p class="note">风险资产仍强，结构压力尚未完全进入价格。</p><div class="meta"><span>距高 -15%+ 红</span><span>标普500(SPX)与 52 周高位</span></div></article>
-            <article class="indicator-card" id="card-c7-ndx"><div class="status-bar yellow" id="c7-ndx-status"></div><div class="head"><div><div class="name-en">NDX 60w z-score</div><div class="name-zh">纳指100温度对照(NDX)</div></div><span class="badge yellow" id="c7-ndx-badge">+2.22σ</span></div><div class="number"><span id="c7-ndx-number">+2.22</span><span class="unit" id="c7-ndx-unit">σ</span></div><div class="aux" id="c7-ndx-aux">纳指100(NDX) vs 60 周均值 · 纳斯达克100 ETF(QQQ)对照</div><p class="note" id="c7-ndx-note">纳指100(NDX) 60 周偏离度(z-score)用于观察美国成长股板块整体温度。本数据为统计描述，不构成投资建议。</p><div class="meta"><span>仅供观察</span><span>纳指100(NDX)历史温度</span></div></article>
-          </div>
-        </div>
-
-        <!-- C8: 地缘与世界秩序 -->
-        <div class="reader-cat-block">
-          <div class="reader-cat-header"><h3>地缘与世界秩序</h3><span class="en">GEOPOLITICS & WORLD ORDER</span><span class="counts">4 张</span></div>
-          <p class="cat-intro">底层地缘评分(计入主评分)+ 世界秩序压力(只做强度修正、不计入主评分)+ 经济武器化 + 军备冲突。</p>
-          <div class="card-grid">
-            <article class="indicator-card" id="card-c8-geo"><div class="status-bar red" id="c8-geo-status"></div><div class="head"><div><div class="name-en">Geopolitical Module</div><div class="name-zh">底层地缘风险评分</div></div><span class="badge red" id="c8-geo-badge">RED</span></div><div class="number" id="c8-geo-number">78</div><div class="aux" id="c8-geo-aux">6 底层模块之一 · 模块趋势 ↑</div><p class="note" id="c8-geo-note">底层地缘评分 78，直接计入主评分。与世界秩序压力(只做修正、不计分)不是一回事。</p><div class="meta"><span>阈值 &gt;70 红</span><span>底层地缘评分趋势</span></div></article>
-            <article class="indicator-card" id="card-c8-wo"><span class="corner overlay" id="c8-wo-corner">OVERLAY</span><div class="status-bar orange" id="c8-wo-status"></div><div class="head"><div><div class="name-en">World Order Overlay</div><div class="name-zh">结构性世界秩序压力</div></div><span class="badge orange" id="c8-wo-badge">OVERLAY</span></div><div class="number" id="c8-wo-number">70</div><div class="aux" id="c8-wo-aux">状态:多战区压力期</div><p class="note" id="c8-wo-note">只为今日判读做强度修正，不计入主评分。</p><div class="meta"><span>不进主评分</span><span>世界秩序压力状态</span></div></article>
-            <article class="indicator-card" id="card-c8-econ"><div class="status-bar red" id="c8-econ-status"></div><div class="head"><div><div class="name-en">Economic Weaponization</div><div class="name-zh">经济武器化</div></div><span class="badge red" id="c8-econ-badge">RED</span></div><div class="number" id="c8-econ-number">+2.3</div><div class="aux" id="c8-econ-aux">美国制裁清单(OFAC)30日 + 全球新闻事件(GDELT)制裁事件偏离度(z-score)</div><p class="note" id="c8-econ-note">制裁与经济武器化处于历史高位区间。趋势(trend): 上行。</p><div class="meta"><span>美国制裁清单(OFAC)+全球新闻事件(GDELT)</span><span id="c8-econ-meta-source">经济武器化压力</span></div></article>
-            <article class="indicator-card" id="card-c8-arms"><span class="corner manual" id="c8-arms-corner">MANUAL · ANNUAL</span><div class="status-bar yellow" id="c8-arms-status"></div><div class="head"><div><div class="name-en">Arms & Conflict</div><div class="name-zh">军备与冲突</div></div><span class="badge yellow" id="c8-arms-badge">YELLOW</span></div><div class="number" id="c8-arms-number">+1.2</div><div class="aux" id="c8-arms-aux">ACLED 30d + SIPRI 全球军费 2.4% GDP</div><p class="note" id="c8-arms-note">手动 + 年度数据。不当成实时高频信号读。</p><div class="meta"><span>ACLED weekly + SIPRI annual</span><span>军备与冲突压力</span></div></article>
           </div>
         </div>
 
@@ -1119,6 +1119,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=observation-reaction-layer-1"></script>
+  <script type="module" src="scripts/app.js?v=thematic-ia-regional-last-1"></script>
 </body>
 </html>

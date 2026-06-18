@@ -4,6 +4,7 @@ const SUITES = {
   'frontend-live-contracts': [
     'check:frontend-loading-state',
     'check:observation-reaction-layer',
+    'check:thematic-card-ia',
     'check:null-zero-display-guards',
     'check:dom',
     'check:macro-overview-narrative',

@@ -168,7 +168,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
       └─ #wow-key-changes                 本期关键变化
 
 ═══ Thematic reader path（8 主题卡阵）═══
-4. #macro-thematic-cards                  C1-C8 主题卡阵,38 张 indicator-card
+4. #macro-thematic-cards                  C1-C8 主题卡阵,51 张 indicator-card；C5/C6 观察层视觉置底
 
 ═══ Static risk map（M-94 静态,M-95+ 再接真实区域算法）═══
 5. #global-risk-heatmap                   6 cells 静态 heatmap
@@ -362,8 +362,9 @@ runtime block 的基准结构:
 
 **8 主题卡阵**:
 - `#macro-thematic-cards` 内必须有 8 个 `.reader-cat-block`
-- 标题顺序为 C1 通胀与能源 / C2 全球流动性 / C3 信用与企业债 / C4 美国经济温度 / C5 世界经济 / C6 中国宏观 / C7 市场情绪 / C8 地缘与世界秩序
-- 总计 38 个 `article.indicator-card`
+- 视觉标题顺序为 C1 通胀与能源 / C2 全球流动性 / C3 信用与企业债 / C4 美国经济温度 / C7 市场情绪 / C8 地缘与世界秩序 / C5 世界经济 / C6 中国宏观
+- C5 世界经济与 C6 中国宏观保留历史编号、DOM id prefix 与 renderer 绑定,但视觉上必须置于 C7/C8 之后,作为区域 / 外部扩散观察层收尾
+- 总计 51 个 `article.indicator-card`
 - 每张卡必须只显示公开代理 / 审计层 / 展示层证据,不得暗示正式源或非公开数据已接入
 
 **mini-grid / mini-card**:
@@ -677,3 +678,4 @@ var(--font-mono)              /* IBM Plex Mono */
 | 2026-05 | 初版创建。基于 PR #153-#163 完成的 editorial redesign 改造，确立 Bubble Watch 风格设计合约 | PR #164（本 PR） |
 | 2026-05 | M-93A0: 引入 `#plain-summary-card` 非 nav preface block 概念；jump nav 15 项与 IA section 编号均不变；同步更新 `scripts/check-homepage-ia-contract.mjs` 和 `scripts/check-editorial-redesign-contract.mjs` | PR #<待 owner 填> |
 | 2026-05 | M-94 V0 PR 1: IA 扩为 15 项，新增 `#macro-thematic-cards` 绿色带 section 容器骨架，并同步 DESIGN.md 与 IA checker 契约 | PR #<待 owner 填> |
+| 2026-06 | IA 合约变更: 主题卡阵视觉顺序改为 C1/C2/C3/C4/C7/C8/C5/C6,将世界经济与中国宏观观察层置底,并新增 checker 锁定顺序 | PR #<待 owner 填> |

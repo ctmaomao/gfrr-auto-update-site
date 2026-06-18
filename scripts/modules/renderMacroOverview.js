@@ -8,10 +8,10 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=observation-reaction-layer-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=observation-reaction-layer-1';
-import { MODULE_LABELS } from './decision.js?v=observation-reaction-layer-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=observation-reaction-layer-1';
+} from './config.js?v=thematic-ia-regional-last-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=thematic-ia-regional-last-1';
+import { MODULE_LABELS } from './decision.js?v=thematic-ia-regional-last-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=thematic-ia-regional-last-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
