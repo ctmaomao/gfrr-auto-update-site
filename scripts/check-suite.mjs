@@ -18,6 +18,18 @@ const SUITES = {
     'check:external-ai-output',
     'check:external-ai-production-contract',
     'check:external-ai-provenance-completeness',
+    'check:external-ai-production-write-guard',
+    'check:external-ai-frontend-hidden-scaffold',
+    'check:external-ai-production-provider-path'
+  ],
+  'external-ai-with-artifacts': [
+    'check:external-ai-manual-workflow',
+    'check:external-ai-provider-workflow',
+    'check:external-ai-production-refresh-workflow',
+    'check:external-ai-workflow-artifacts',
+    'check:external-ai-output',
+    'check:external-ai-production-contract',
+    'check:external-ai-provenance-completeness',
     'check:external-ai-production-projection',
     'check:external-ai-production-write-guard',
     'check:external-ai-frontend-hidden-scaffold',

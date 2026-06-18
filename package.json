@@ -110,6 +110,8 @@
     "check:risk-asset-mismatch-narrative-density": "node scripts/check-risk-asset-mismatch-narrative-density.mjs",
     "check:overheat-confirmation-narrative-density": "node scripts/check-overheat-confirmation-narrative-density.mjs",
     "check:external-ai": "node --check scripts/check-suite.mjs && node scripts/check-suite.mjs external-ai",
+    "check:external-ai:contract": "node --check scripts/check-suite.mjs && node scripts/check-suite.mjs external-ai",
+    "check:external-ai:with-artifacts": "node --check scripts/check-suite.mjs && node scripts/check-suite.mjs external-ai-with-artifacts",
     "check:brent": "node --check scripts/check-suite.mjs && node scripts/check-suite.mjs brent",
     "check:macro-drivers": "node --check scripts/check-suite.mjs && node scripts/check-suite.mjs macro-drivers",
     "check:narrative-density": "node --check scripts/check-suite.mjs && node scripts/check-suite.mjs narrative-density",
