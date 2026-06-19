@@ -1853,7 +1853,7 @@ async function fetchCapexReactionFromWindNews(primaryError) {
 }
 
 async function fetchTokenVolumeMomFromOpenRouter() {
-  const json = await fetchWithTimeout('https://openrouter.ai/api/frontend/rankings/market-share', {
+  const json = await fetchWithTimeout('https://openrouter.ai/api/frontend/v1/rankings/market-share', {
     asJson: true,
     headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json' }
   });
@@ -1888,7 +1888,7 @@ async function fetchTokenVolumeMomFromOpenRouter() {
     source_name: 'OpenRouter public rankings API',
     note: `OpenRouter public rankings API 汇总供应商周度 token volume:最近 4 周合计 ${(sumLatest / 1e12).toFixed(2)}T tokens,较前 4 周 ${fmtPct(momPct, 1, true)}${prevMomPct !== null ? `;上一窗口为 ${fmtPct(prevMomPct, 1, true)}` : ''}。该项是 OpenRouter 平台公开代理,不是全行业 token tape。判级:收缩=红 / 减速=黄 / 加速=绿`,
     detail: {
-      source: 'OpenRouter /api/frontend/rankings/market-share',
+      source: 'OpenRouter /api/frontend/v1/rankings/market-share',
       latestWeek,
       rows: latest4.map((row) => ({ date: row.date, totalTokens: row.totalTokens })),
       latest4wTokens: sumLatest,
@@ -1917,7 +1917,7 @@ function buildOpenRouterPricingMap(catalogRows) {
 
 async function fetchTokenRevenueRatioFromOpenRouter() {
   const [chartJson, catalogJson] = await Promise.all([
-    fetchWithTimeout('https://openrouter.ai/api/frontend/rankings/model-rankings-chart', {
+    fetchWithTimeout('https://openrouter.ai/api/frontend/v1/rankings/model-rankings-chart', {
       asJson: true,
       headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json' }
     }),
@@ -1993,7 +1993,7 @@ async function fetchTokenRevenueRatioFromOpenRouter() {
     source_name: 'OpenRouter rankings + catalog spend proxy',
     note: `OpenRouter 周度模型排名 + 公开 catalog pricing 估算平台内 spend proxy:最近 4 周 token volume ${fmtPct(tokenGrowthPct, 1, true)},估算 spend ${fmtPct(spendGrowthPct, 1, true)},token/spend 增速比 ${display};定价覆盖 ${coveragePct.toFixed(1)}%。该项不是厂商真实收入,仅作 OpenRouter 平台代理。阈值:>2x 红 / 1-2x 黄 / <1x 绿`,
     detail: {
-      source: 'OpenRouter model-rankings-chart + frontend catalog models',
+      source: 'OpenRouter v1 model-rankings-chart + frontend catalog models',
       latestWeek: latest4[latest4.length - 1].date,
       latest4wTokens: latestTokens,
       prev4wTokens: prevTokens,

@@ -233,7 +233,7 @@
       "freeSourceCandidates": [
         {
           "source": "OpenRouter public rankings API",
-          "url": "https://openrouter.ai/api/frontend/rankings/market-share",
+          "url": "https://openrouter.ai/api/frontend/v1/rankings/market-share",
           "cadence": "weekly",
           "role": "weekly provider-level token volume proxy, summed into 4w/4w growth",
           "limitations": "OpenRouter platform proxy, not full-industry token tape; endpoint is frontend-public and can change without notice."
@@ -262,7 +262,7 @@
       "freeSourceCandidates": [
         {
           "source": "OpenRouter public model-ranking chart",
-          "url": "https://openrouter.ai/api/frontend/rankings/model-rankings-chart",
+          "url": "https://openrouter.ai/api/frontend/v1/rankings/model-rankings-chart",
           "cadence": "weekly",
           "role": "model-level weekly token-volume panel for numerator",
           "limitations": "OpenRouter platform proxy, not full-industry token tape; latest partial week must be dropped when incomplete."
