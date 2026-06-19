@@ -167,7 +167,26 @@ if (!narrative) {
     }
   }
 
-  if (narrative.contradictingEvidence.length !== 0) {
+  const worldOrderScore = Number(worldOrder?.score);
+  const mainScore = Number(radarData?.score);
+  const expectsTransmissionGapContradiction =
+    Number.isFinite(worldOrderScore) &&
+    worldOrderScore >= 60 &&
+    Number.isFinite(mainScore) &&
+    mainScore < 40;
+  const transmissionGapContradictions = narrative.contradictingEvidence
+    .filter((item) => item.source === 'world_order_vs_main_score');
+  const unexpectedContradictions = narrative.contradictingEvidence
+    .filter((item) => item.source !== 'world_order_vs_main_score' || !expectsTransmissionGapContradiction);
+
+  if (expectsTransmissionGapContradiction) {
+    if (transmissionGapContradictions.length !== 1) {
+      fail('world_order_pressure_crossing expected one world_order_vs_main_score contradiction when high world-order pressure has not transmitted to main score');
+    }
+  } else if (transmissionGapContradictions.length > 0) {
+    fail('world_order_vs_main_score contradiction should only appear when worldOrder.score >= 60 and radar score < 40');
+  }
+  if (unexpectedContradictions.length !== 0) {
     fail('current world_order_pressure_crossing should not become contradiction from low-information dimensions');
   }
 
@@ -175,8 +194,9 @@ if (!narrative) {
     fail(`world_order_pressure_crossing supporting evidence too thin: ${narrative.supportingEvidence.length}`);
   }
 
-  if (narrative.assessment !== 'strong_confirmation') {
-    fail(`world_order_pressure_crossing expected strong_confirmation after M-51 enrichment, got ${narrative.assessment}`);
+  const expectedAssessment = expectsTransmissionGapContradiction ? 'contradiction' : 'strong_confirmation';
+  if (narrative.assessment !== expectedAssessment) {
+    fail(`world_order_pressure_crossing expected ${expectedAssessment} after M-51 enrichment, got ${narrative.assessment}`);
   }
 }
 
