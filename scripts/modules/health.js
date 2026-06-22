@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-news-event-watch-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-news-event-watch-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-thermal-watch-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-thermal-watch-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

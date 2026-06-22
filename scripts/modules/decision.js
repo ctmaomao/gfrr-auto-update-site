@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=odp-news-event-watch-1';
-import { formatOnRrpYiUsd } from './format.js?v=odp-news-event-watch-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=odp-thermal-watch-1';
+import { formatOnRrpYiUsd } from './format.js?v=odp-thermal-watch-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

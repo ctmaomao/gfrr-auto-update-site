@@ -109,6 +109,12 @@ const ENERGY_TEXT_IDS = [
   'odp-news-event-sanctions',
   'odp-news-event-market',
   'odp-news-event-note',
+  'odp-thermal-status',
+  'odp-thermal-source',
+  'odp-thermal-window',
+  'odp-thermal-facility',
+  'odp-thermal-signal',
+  'odp-thermal-note',
   'odp-qc-ledger-status',
   'odp-qc-ledger-wpsr',
   'odp-qc-ledger-odp',
@@ -337,6 +343,7 @@ function clearEnergyAddendum() {
   setToneClass('odp-global-forecast-status', 'odp-global-forecast-status', '');
   setToneClass('odp-global-overlay-status', 'odp-global-overlay-status', '');
   setToneClass('odp-news-event-status', 'odp-news-event-status', '');
+  setToneClass('odp-thermal-status', 'odp-thermal-status', '');
   setToneClass('odp-qc-ledger-status', 'odp-qc-ledger-status', '');
   setToneClass('odp-energy-spare-regime', 'odp-energy-regime', '');
   const coreHost = $('odp-energy-transport-core');
@@ -784,6 +791,15 @@ function renderOilEventNewsLayer(worldOrderStressData) {
   setLeafText('odp-news-event-market', marketText);
   setLeafText('odp-news-event-note', `本层复用已有 GDELT 广义新闻事件摘要,用于提示油价相关地缘背景是否需要观察;它不是 ODP 专用新闻 API,也不确认霍尔木兹通道中断、断供或船舶级流向。${eventContext}${directContext}后续只有与价格结构、咽喉转运、库存/供需锚点和卫星/设施事件同时印证时,才提高事件观察置信度。`);
 }
+function renderSatelliteThermalWatch() {
+  setLeafText('odp-thermal-status', '待接入');
+  setToneClass('odp-thermal-status', 'odp-thermal-status', 'yellow');
+  setLeafText('odp-thermal-source', 'NASA FIRMS / VIIRS NRT · 需免费 MAP_KEY');
+  setLeafText('odp-thermal-window', '分钟至数小时级 · 受卫星过境影响');
+  setLeafText('odp-thermal-facility', '炼厂/终端坐标白名单待建');
+  setLeafText('odp-thermal-signal', '热异常/火炬代理 · 未参与方向判断');
+  setLeafText('odp-thermal-note', '本区是卫星热异常高频物理信号插槽。正式接入前必须先建立设施坐标白名单、半径、FRP、置信度、昼夜和历史基线规则;否则全球火点会产生大量误报。当前不读取浏览器外部源,不确认炼厂事故、供应中断或油价预测,也不改变 ODP 方向判断。');
+}
 function renderDataQcLedger(oilData, radarData, worldOrderStressData) {
   const evidence = oilData && oilData.evidence ? oilData.evidence : {};
   const alignment = wpsrAlignment(evidence);
@@ -911,10 +927,11 @@ function renderEnergyAddendum(radarData, worldOrderStressData, oilData) {
   renderGlobalForecastGap(oilData, radarData);
   renderGlobalOverlay(oilData, radarData);
   renderOilEventNewsLayer(worldOrderStressData);
+  renderSatelliteThermalWatch();
   renderDataQcLedger(oilData, radarData, worldOrderStressData);
   renderSpareCapacity(macroDrivers.energySpareCapacity);
   renderEnergyTransport(macroDrivers.energyTransport);
-  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、OECD 库存/全球净抽库、P6B 全球确认层、新闻事件观察、数据时点/QC、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
+  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、OECD 库存/全球净抽库、P6B 全球确认层、新闻事件观察、卫星热异常观察、数据时点/QC、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
 }
 
 function reasonInventory(sig, ev) {
