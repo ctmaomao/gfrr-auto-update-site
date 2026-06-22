@@ -250,6 +250,40 @@ P25 does not read `FIRMS_MAP_KEY`, does not access the network, does not write
 `finalBias`, scoring, decision, execution, position, Brent promotion, Global Risk
 Heatmap, or cross-validation.
 
+## P26 Local Watch Sample Archive
+
+P26 adds a local/manual archive helper:
+
+```text
+scripts/oil-directional/archive-oil-thermal-watch-sample.mjs
+npm run archive:oil-thermal-watch-sample
+npm run check:oil-thermal-watch-sample-archive
+```
+
+The helper validates a sanitized `oil-thermal-watch-1` artifact and copies it into
+an ignored sample archive:
+
+```text
+manual-artifacts/oil-thermal/watch-samples/
+```
+
+It also writes an ignored sidecar metadata file beside the archived sample. The
+sidecar records source path, generated time, summary counts, `productionImpact`
+false boundaries, and the next review command. P25's `--input-dir` reader now
+skips `*.archive-meta.json`, so the archive directory can be passed directly to:
+
+```powershell
+npm run review:oil-thermal-baseline-samples -- --input-dir manual-artifacts/oil-thermal/watch-samples
+```
+
+The archive helper refuses raw FIRMS Area API URLs, refuses missing or truthy
+`productionImpact`, refuses unsafe input paths, and refuses to write outside
+`manual-artifacts/`. It does not read `FIRMS_MAP_KEY`, does not access the
+network, does not write production data, and does not approve a production
+baseline. The first archived local production sample remains a
+`collect_more_samples_before_baseline_candidate_review` state because only one
+sample is present.
+
 ## Current P11 Scope
 
 P11 only adds a visible ODP readiness slot: `SATELLITE THERMAL WATCH / 卫星热异常观察`.

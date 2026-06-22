@@ -155,7 +155,7 @@ function expandInputs(options) {
       throw new Error(`Input directory does not exist: ${inputDir}`);
     }
     const jsonFiles = readdirSync(absoluteDir)
-      .filter((name) => extname(name).toLowerCase() === '.json')
+      .filter((name) => extname(name).toLowerCase() === '.json' && !name.endsWith('.archive-meta.json'))
       .sort((a, b) => a.localeCompare(b))
       .map((name) => `${inputDir.replace(/\\/g, '/')}/${name}`);
     paths.push(...jsonFiles);
