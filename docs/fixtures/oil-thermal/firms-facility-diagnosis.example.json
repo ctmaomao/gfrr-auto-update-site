@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "firms-facility-thermal-diagnosis-1",
+  "status": "ok",
+  "diagnosis": "firms-facility-batch-no-detections",
+  "generatedAt": "2026-06-22T00:00:00.000Z",
+  "mode": "facility_batch",
+  "sources": ["VIIRS_SNPP_NRT", "VIIRS_NOAA20_NRT"],
+  "dayRange": 5,
+  "date": null,
+  "mapKeySource": "file:manual-artifacts/oil-thermal/firms-map-key.txt",
+  "aggregate": {
+    "rowCount": 0,
+    "latestAcqAt": null,
+    "maxFrp": null,
+    "confidenceCounts": {},
+    "highConfidenceCount": 0,
+    "frpOver50Count": 0,
+    "frpOver100Count": 0,
+    "dayNightCounts": {},
+    "facilityCount": 1,
+    "requestCount": 2,
+    "facilitiesWithDetections": 0,
+    "facilitiesByAnomalyLevel": {
+      "none_observed": 1
+    }
+  },
+  "facilities": [
+    {
+      "id": "example_refinery_small_box",
+      "label": "Example refinery small box",
+      "region": "Example region",
+      "assetType": "refinery",
+      "bbox": {
+        "west": 0,
+        "south": 0,
+        "east": 0.1,
+        "north": 0.1
+      },
+      "sourceNote": "Example only; replace with an operator-reviewed public coordinate source before live diagnosis.",
+      "aggregate": {
+        "rowCount": 0,
+        "latestAcqAt": null,
+        "maxFrp": null,
+        "confidenceCounts": {},
+        "highConfidenceCount": 0,
+        "frpOver50Count": 0,
+        "frpOver100Count": 0,
+        "dayNightCounts": {},
+        "sourcesChecked": 2,
+        "sourcesWithDetections": 0,
+        "sourceAgreement": "0/2",
+        "anomalyLevel": "none_observed",
+        "anomalyLabelZh": "未观察到",
+        "anomalyReason": "No FIRMS detections were returned for the selected facility window.",
+        "heuristicOnly": true
+      },
+      "sources": [
+        {
+          "status": "ok",
+          "diagnosis": "firms-api-ok-no-detections-in-bbox",
+          "source": "VIIRS_SNPP_NRT",
+          "summary": {
+            "rowCount": 0,
+            "latestAcqAt": null,
+            "maxFrp": null,
+            "confidenceCounts": {},
+            "highConfidenceCount": 0,
+            "frpOver50Count": 0,
+            "frpOver100Count": 0,
+            "dayNightCounts": {}
+          },
+          "redactedUrl": "https://firms.modaps.eosdis.nasa.gov/api/area/csv/<FIRMS_MAP_KEY>/VIIRS_SNPP_NRT/0,0,0.1,0.1/5"
+        },
+        {
+          "status": "ok",
+          "diagnosis": "firms-api-ok-no-detections-in-bbox",
+          "source": "VIIRS_NOAA20_NRT",
+          "summary": {
+            "rowCount": 0,
+            "latestAcqAt": null,
+            "maxFrp": null,
+            "confidenceCounts": {},
+            "highConfidenceCount": 0,
+            "frpOver50Count": 0,
+            "frpOver100Count": 0,
+            "dayNightCounts": {}
+          },
+          "redactedUrl": "https://firms.modaps.eosdis.nasa.gov/api/area/csv/<FIRMS_MAP_KEY>/VIIRS_NOAA20_NRT/0,0,0.1,0.1/5"
+        }
+      ]
+    }
+  ],
+  "outputPath": "manual-artifacts/oil-thermal/firms-thermal-diagnosis-latest.json",
+  "boundary": "manual diagnostic only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
+  "notes": "Facility anomalyLevel is a manual diagnostic heuristic only. It does not confirm an incident, outage, supply interruption, or oil-price direction."
+}

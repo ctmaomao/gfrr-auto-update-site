@@ -1,6 +1,6 @@
 # Oil Thermal Anomaly Source Review — NASA FIRMS / VIIRS candidate
 
-Status: P16 source-review + manual diagnostic tooling only. No runtime fetch, no workflow,
+Status: P17 source-review + manual diagnostic tooling only. No runtime fetch, no workflow,
 no production data write.
 
 ## Candidate Source
@@ -258,3 +258,45 @@ npm run diagnose:firms-thermal -- `
 Strict mode requires `region`, `assetType` and `sourceNote` for every facility. This
 only improves manual review quality; it does not promote the facility list to a
 production whitelist.
+
+### Artifact Review Helper
+
+P17 adds an offline review helper for the ignored diagnostic artifact:
+
+```powershell
+npm run review:firms-thermal
+```
+
+By default it reads:
+
+```text
+manual-artifacts/oil-thermal/firms-thermal-diagnosis-latest.json
+```
+
+and writes another ignored manual artifact:
+
+```text
+manual-artifacts/oil-thermal/firms-thermal-review-latest.json
+```
+
+The review helper does not read the FIRMS key, does not call the network and does
+not write production data. It checks:
+
+- supported FIRMS diagnostic schema;
+- artifact freshness;
+- whether FIRMS URLs stayed redacted;
+- whether the manual-only boundary is present;
+- whether the facility list still contains example rows;
+- whether facility metadata is missing;
+- whether detections require manual review.
+
+The review result always keeps `promotionEligible=false`. `WARN` means the artifact
+is usable for human source review but not ready for any production display. `FAIL`
+means the artifact should be rejected, usually because schema or redaction/boundary
+guards failed.
+
+The check suite uses a committed example artifact and does not depend on local keys:
+
+```powershell
+npm run check:firms-thermal-review
+```

@@ -364,6 +364,8 @@ P15 起,`diagnose:firms-thermal` 在非 dry-run 时默认向 stderr 输出进度
 
 P16 起,新增 `npm run init:firms-facilities` 作为 **manual-only** 设施清单初始化/严格校验辅助。该命令只在 ignored `manual-artifacts/oil-thermal/facilities.json` 缺失时从 `docs/fixtures/oil-thermal/facilities.example.json` 创建示例,若文件已存在则只校验不覆盖;`--strict-facilities` 要求每个设施带 `region` / `assetType` / `sourceNote`。P16 不提交真实设施坐标、不新增 workflow、不读取 GitHub secret、不写 `data/*.json` / `realtime/*.json`,也不把设施清单提升为 production whitelist 或油价预测输入。
 
+P17 起,新增 `npm run review:firms-thermal` 作为 **manual-only** FIRMS artifact 离线审阅辅助。它默认读取 ignored `manual-artifacts/oil-thermal/firms-thermal-diagnosis-latest.json`,可写 ignored `manual-artifacts/oil-thermal/firms-thermal-review-latest.json`,并检查 schema、artifact freshness、FIRMS URL 脱敏、manual-only boundary、example facility rows、设施 metadata 与 detections 是否需要人工复核。该 helper 不读取 MAP_KEY、不访问网络、不写 production data,输出 `promotionEligible=false`;`check:firms-thermal-review` 只用 committed example fixture 离线守门。
+
 **PR2 历史 cache**（`data/oil-directional-history.json`）：同 8 个 `PET.*.W` series、同 `/v2/seriesid/` route，由 `scripts/oil-directional/build-oil-directional-history.mjs`（零依赖，ADR-0013）一次性抓 2014-至今全周度史并切片落盘（每 series ~647 周，2014-01-03 起），作 **committed snapshot** 供回测 harness 离线、可复现回放（`check:all` 不联网）。fail-closed：失败 series → `sourceStatus:'missing'` / `points:[]`，不伪造。**仅供 PR2 回测 GATE**，不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / decision / Global Risk Heatmap。文件契约 + 分类器 / GATE / 预登记阈值见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)。
 
 ---
