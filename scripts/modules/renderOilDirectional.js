@@ -795,6 +795,8 @@ function thermalTone(data) {
   if (!data || typeof data !== 'object') return '';
   if (data.status === 'source_unavailable') return 'yellow';
   if (data.status === 'not_configured') return 'yellow';
+  if (data.signalState === 'baseline_elevated_repeated_watch') return 'yellow';
+  if (data.signalState === 'baseline_repeated_watch') return 'yellow';
   if (data.signalState === 'baseline_building_elevated_watch') return 'yellow';
   if (data.status === 'ok' || data.status === 'partial') return 'green';
   return '';
@@ -816,12 +818,23 @@ function thermalFacilityText(data) {
 }
 function thermalSignalText(data) {
   const aggregate = data && data.aggregate ? data.aggregate : {};
+  const baseline = data && data.baseline ? data.baseline : {};
   const rowCount = Number.isFinite(aggregate.rowCount) ? aggregate.rowCount : 0;
   const high = Number.isFinite(aggregate.highConfidenceCount) ? aggregate.highConfidenceCount : 0;
   const maxFrp = Number.isFinite(aggregate.maxFrp) ? aggregate.maxFrp.toFixed(1) : '—';
   const facilities = Number.isFinite(aggregate.facilitiesWithDetections) ? aggregate.facilitiesWithDetections : 0;
-  const baseline = aggregate.baselineStatus === 'not_established' ? '基线建立中' : '基线待核';
-  return `${rowCount} 条聚合热异常 · 高置信 ${high} · max FRP ${maxFrp} · ${facilities} 个设施有检出 · ${baseline}`;
+  const repeated = Number.isFinite(aggregate.repeatedObservationCount) ? aggregate.repeatedObservationCount : 0;
+  const elevated = Number.isFinite(aggregate.elevatedRepeatedObservationCount) ? aggregate.elevatedRepeatedObservationCount : 0;
+  const established = Number.isFinite(baseline.facilitiesWithEstablishedBaseline) ? baseline.facilitiesWithEstablishedBaseline : 0;
+  const baselineStatus = aggregate.baselineStatus || baseline.status;
+  const baselineText = ({
+    established: `基线已建立 ${established}/${baseline.facilityCount || 0}`,
+    partial: `部分基线 ${established}/${baseline.facilityCount || 0}`,
+    missing: '基线配置缺失',
+    not_established: '基线建立中'
+  })[baselineStatus] || '基线待核';
+  const repeatedText = repeated > 0 ? ` · 重复观察 ${repeated}${elevated > 0 ? ` / 升高 ${elevated}` : ''}` : ' · 未达重复观测';
+  return `${rowCount} 条聚合热异常 · 高置信 ${high} · max FRP ${maxFrp} · ${facilities} 个设施有检出 · ${baselineText}${repeatedText}`;
 }
 function thermalNoteText(data) {
   if (!data || typeof data !== 'object') {
@@ -836,9 +849,15 @@ function thermalNoteText(data) {
   if (data.signalState === 'source_unavailable') {
     return 'FIRMS 本轮查询失败或全部源不可用;保持 fail-closed,不沿用为事故、断供或油价方向判断。';
   }
+  if (data.signalState === 'baseline_elevated_repeated_watch' || data.signalState === 'baseline_repeated_watch') {
+    return '设施热异常同时满足历史基线超阈值与多源重复观测,需要人工复核;它仍不确认炼厂事故、供应中断或油价预测,也不改变 ODP 方向判断。';
+  }
+  if (data.signalState === 'baseline_established_no_detections' || data.signalState === 'baseline_established_no_repeated_signal') {
+    return '设施热异常观察已接入基线解释框架,但本轮未满足超基线强度与多源重复观测的组合条件;不确认炼厂事故、供应中断或油价预测。';
+  }
   const elevated = data.signalState === 'baseline_building_elevated_watch';
-  const prefix = elevated ? '设施热异常聚合出现升高观察,需要人工复核。' : '设施热异常聚合已接入生产只读观察层。';
-  return `${prefix}历史基线尚未建立前,这些计数只能作为热源/火炬代理,不确认炼厂事故、供应中断或油价预测,也不改变 ODP 方向判断。`;
+  const prefix = elevated ? '设施热异常聚合出现基线建立期升高观察,需要人工复核。' : '设施热异常聚合已接入生产只读观察层。';
+  return `${prefix}历史基线样本不足前,这些计数只能作为热源/火炬代理,不确认炼厂事故、供应中断或油价预测,也不改变 ODP 方向判断。`;
 }
 function renderSatelliteThermalWatch(oilThermalWatchData) {
   const data = oilThermalWatchData && typeof oilThermalWatchData === 'object' ? oilThermalWatchData : null;

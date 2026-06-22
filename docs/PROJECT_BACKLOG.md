@@ -11,7 +11,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分);**第二页面 AI 泡沫监测(`bubble-watch.html` + 周一 cron 数据管线,ADR-0016,display-only)live,与主页书签互切**|
 | Release/display version | `v28.0.10` |
 | Data/decision contract version | 根级 `data.version` 与 `decisionModel.contractVersion` 保持兼容契约 `v27.0` |
-| Cache version | `odp-thermal-watch-shell-1` |
+| Cache version | `odp-thermal-baseline-1` |
 | check:all 项数 | 19 顶层项 / ~69 leaf checks(checker 精简 Phase 1+2 后 + ODP `oil-directional` 套件 13 leaf + `check:frontend-zh-copy` + `check:bubble-watch` 6 leaf + `check:main-score-wind-fallback`)|
 | 最后审计日期 | 2026-06-05(全站 `.md` doc-slim 审计 Batch 1a→5余项,docs-only;两大 scope-of-record 簇 External AI / Market Pricing 收口 + 三 Operating Document changelog tail 折叠,详见 Section 5 + Session Handoff)。上次系统审计 2026-06-02(Codex 只读审计 7 findings 全收口,详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
@@ -328,10 +328,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于(2026-06-23 · ODP FIRMS P23 starter facility whitelist)**: P22 production read-only shell 已扩展为 P23 starter whitelist: `config/oil-thermal-watch-facilities.json` 从空白改为 12 个 EIA/HIFLD `Petroleum_Refineries_US_2021.shp` 派生的 U.S. Gulf Coast Texas/Louisiana 炼厂小 bbox,并同步 `OIL_THERMAL_ANOMALY_SOURCE_REVIEW` / `DATA_SOURCES` / `DATA_CONTRACT`。该层仍只写 sanitized `data/oil-thermal-watch.json`,不保存 key、raw FIRMS URL 或 raw 火点。
-- **当前进行中(2026-06-23 · ODP FIRMS P23)**: 本刀范围为 production read-only facility-level aggregate。ODP `finalBias`、classifier、scoring、decision、execution、Heatmap、cross-validation、`radar-data.json` 与 `realtime` 均保持不接入。
-- **下一步建议(2026-06-23 · ODP FIRMS P23)**: 积累多轮 `data/oil-thermal-watch.json` 后另开 baseline / repeated-observation rule,再评估是否扩展 product terminals 或 global refinery/terminal coverage。无历史基线前,所有检出只能作为人工复核热异常代理。
-- **阻塞或等待(2026-06-23 · ODP FIRMS P23)**: 无。GitHub Secret `FIRMS_MAP_KEY` 与本地 ignored key file 路径均可用;后续 blocker 是历史基线尚未建立,不是 API/key 问题。
+- **上次会话结束于(2026-06-23 · ODP FIRMS P24 baseline policy)**: P24 已新增 `config/oil-thermal-watch-baseline.json` baseline policy、`build-oil-thermal-watch.mjs` baselineComparison / repeatedObservation 逻辑、`check-oil-thermal-watch-contract` 新契约守卫和前端 ODP thermal 文案分层。当前 committed baseline 仍 `not_established` / empty facilities,不会把现有低强度 FIRMS 检出升级成事故、断供或油价方向。
+- **当前进行中(2026-06-23 · ODP FIRMS P24)**: 本刀范围为 production read-only baseline/repeated-observation interpretation。ODP `finalBias`、classifier、scoring、decision、execution、Heatmap、cross-validation、`radar-data.json` 与 `realtime` 均保持不接入。
+- **下一步建议(2026-06-23 · ODP FIRMS P24)**: 等待 Refresh Oil Thermal Watch workflow 运行数轮后,可另开 P25 baseline-sample accumulation/review helper,把多轮 production artifact 归档成 reviewed p95 baseline rows;随后再考虑 product terminals 或 global refinery/terminal expansion。
+- **阻塞或等待(2026-06-23 · ODP FIRMS P24)**: 无 API/key 阻塞。真实 blocker 是 baseline 样本数尚不足;当前 repeatedObservation 分支已用 ignored synthetic baseline smoke 验证可达,但正式基线不得伪造。
 
 - **上次会话结束于(2026-06-17 · Bubble Watch CEO hedging GDELT hardening + Tavily/Brave cross-check)**: `ceo_hedging` 已从 `GDELT -> Wind` 改为 `GDELT -> Tavily/Brave -> Wind`:GDELT DOC 2.0 public search 仍是免费主源,默认小样本请求,429/5xx 时按 `Retry-After` 或短退避只重试一次;GDELT 成功时 Tavily Search API `topic=news` + `time_range=month` 与 Brave News Search API `freshness=pm` 做第二/第三新闻源确认,GDELT 失败时 Tavily/Brave 做免费兜底,Tavily/Brave 均失败或未配置时才进入 Wind paid final fallback。红灯必须 GDELT/Tavily/Brave 至少两源确认,单一路径红色信号封顶为黄。GitHub workflows `refresh-bubble-watch.yml` 与 `audit-bubble-watch-sources.yml` 已注入 `TAVILY_API_KEYS` / `BRAVE_API_KEYS`;source-candidates、DATA_CONTRACT、DATA_SOURCES 已同步。密钥不写入仓库。
 - **当前进行中(2026-06-17 · Bubble Watch CEO hedging GDELT hardening + Tavily/Brave cross-check)**: 代码、workflow、checker 与文档已改并完成本地 secret smoke test。未改 `data/bubble-watch.json`、`data/bubble-watch-history.json`、`config/bubble-watch-curated.json`、主 GFRR `radar-data.json`、主 scoring/decision/execution/position 或 Worker runtime。

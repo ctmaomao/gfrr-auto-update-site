@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "oil-thermal-baseline-production-v1",
+  "status": "not_established",
+  "notes": [
+    "P24 baseline policy is committed before enough historical samples exist; facility baseline rows start empty by design.",
+    "A facility baseline is established only after minSamplesPerFacility valid samples and facility-specific p95 fields are present.",
+    "Repeated observation requires both multi-source repeatability and above-baseline strength; single-pass FIRMS detections remain manual-review thermal proxy only.",
+    "This baseline file never stores MAP_KEY, raw FIRMS rows, raw URLs, outage claims, supply-disruption claims, or oil-price direction."
+  ],
+  "policy": {
+    "minSamplesPerFacility": 8,
+    "minRepeatSources": 2,
+    "rowCountP95Margin": 1,
+    "maxFrpP95Margin": 1,
+    "highConfidenceP95Margin": 0,
+    "frpOver50P95Margin": 0,
+    "elevatedMinFrp": 50,
+    "elevatedMinHighConfidenceCount": 2,
+    "elevatedMinFrpOver50Count": 1,
+    "elevatedMinFrpOver100Count": 1
+  },
+  "facilities": []
+}

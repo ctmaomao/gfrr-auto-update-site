@@ -6,6 +6,7 @@ import process from 'node:process';
 const SCHEMA_VERSION = 'oil-thermal-watch-1';
 const MODULE = 'oil-thermal-watch';
 const DEFAULT_FACILITIES = 'config/oil-thermal-watch-facilities.json';
+const DEFAULT_BASELINE = 'config/oil-thermal-watch-baseline.json';
 const DEFAULT_OUTPUT = 'data/oil-thermal-watch.json';
 const DEFAULT_KEY_FILE = 'manual-artifacts/oil-thermal/firms-map-key.txt';
 const DEFAULT_SOURCES = ['VIIRS_SNPP_NRT', 'VIIRS_NOAA20_NRT', 'VIIRS_NOAA21_NRT'];
@@ -17,10 +18,23 @@ const MAX_REQUESTS_PER_RUN = 150;
 const MAX_FACILITY_BBOX_SPAN_DEGREES = 1.5;
 const BOUNDARY =
   'production read-only satellite thermal watch; display-only/audit-only; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
+const DEFAULT_BASELINE_POLICY = {
+  minSamplesPerFacility: 8,
+  minRepeatSources: 2,
+  rowCountP95Margin: 1,
+  maxFrpP95Margin: 1,
+  highConfidenceP95Margin: 0,
+  frpOver50P95Margin: 0,
+  elevatedMinFrp: 50,
+  elevatedMinHighConfidenceCount: 2,
+  elevatedMinFrpOver50Count: 1,
+  elevatedMinFrpOver100Count: 1
+};
 
 function parseArgs(argv) {
   const options = {
     facilitiesPath: DEFAULT_FACILITIES,
+    baselinePath: DEFAULT_BASELINE,
     output: DEFAULT_OUTPUT,
     keyFile: DEFAULT_KEY_FILE,
     sources: DEFAULT_SOURCES,
@@ -48,6 +62,8 @@ function parseArgs(argv) {
     };
     if (arg === '--facilities') {
       options.facilitiesPath = nextValue();
+    } else if (arg === '--baseline') {
+      options.baselinePath = nextValue();
     } else if (arg === '--output') {
       options.output = nextValue();
     } else if (arg === '--map-key-file') {
@@ -142,6 +158,180 @@ function readFacilityConfig(path) {
       const bbox = parseBbox(facility.bbox, `Facility ${id} bbox`);
       return { id, label, region, assetType, sourceNote, bbox };
     })
+  };
+}
+
+function numberOrDefault(value, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : fallback;
+}
+
+function normalizeBaselinePolicy(rawPolicy = {}) {
+  return Object.fromEntries(Object.entries(DEFAULT_BASELINE_POLICY).map(([key, fallback]) => [
+    key,
+    numberOrDefault(rawPolicy[key], fallback)
+  ]));
+}
+
+function finiteNumberOrNull(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : null;
+}
+
+function validIsoOrNull(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  return Number.isNaN(Date.parse(value)) ? null : value;
+}
+
+function readBaselineConfig(path) {
+  const absolutePath = resolve(path);
+  if (!existsSync(absolutePath)) {
+    return {
+      schemaVersion: 'oil-thermal-baseline-production-v1',
+      status: 'missing',
+      notes: ['Baseline config file is missing; repeated-observation rules stay disabled.'],
+      policy: { ...DEFAULT_BASELINE_POLICY },
+      facilitiesById: new Map()
+    };
+  }
+  const parsed = JSON.parse(readFileSync(absolutePath, 'utf8'));
+  const rows = Array.isArray(parsed.facilities) ? parsed.facilities : [];
+  const facilitiesById = new Map();
+  const policy = normalizeBaselinePolicy(parsed.policy);
+  for (const [index, row] of rows.entries()) {
+    const id = String(row.id ?? '').trim();
+    if (!/^[A-Za-z0-9_.:-]+$/.test(id)) throw new Error(`Baseline row ${index} has invalid id.`);
+    if (facilitiesById.has(id)) throw new Error(`Duplicate baseline facility id: ${id}`);
+    facilitiesById.set(id, {
+      id,
+      sampleCount: Math.floor(numberOrDefault(row.sampleCount, 0)),
+      windowDays: finiteNumberOrNull(row.windowDays),
+      lastSampleAt: validIsoOrNull(row.lastSampleAt),
+      rowCountP95: finiteNumberOrNull(row.rowCountP95),
+      maxFrpP95: finiteNumberOrNull(row.maxFrpP95),
+      highConfidenceCountP95: finiteNumberOrNull(row.highConfidenceCountP95),
+      frpOver50CountP95: finiteNumberOrNull(row.frpOver50CountP95),
+      frpOver100CountP95: finiteNumberOrNull(row.frpOver100CountP95),
+      sourcesWithDetectionsP95: finiteNumberOrNull(row.sourcesWithDetectionsP95)
+    });
+  }
+  return {
+    schemaVersion: parsed.schemaVersion ?? 'oil-thermal-baseline-production-v1',
+    status: String(parsed.status ?? 'not_established'),
+    notes: Array.isArray(parsed.notes) ? parsed.notes.filter((note) => typeof note === 'string') : [],
+    policy,
+    facilitiesById
+  };
+}
+
+function hasEstablishedBaseline(row, policy) {
+  return Boolean(
+    row
+    && row.sampleCount >= policy.minSamplesPerFacility
+    && Number.isFinite(row.rowCountP95)
+    && Number.isFinite(row.maxFrpP95)
+    && Number.isFinite(row.sourcesWithDetectionsP95)
+  );
+}
+
+function deriveBaselineStatus(facilities, baselineConfig) {
+  const baselineRows = facilities.filter((facility) => baselineConfig.facilitiesById.has(facility.id));
+  const establishedRows = facilities.filter((facility) => hasEstablishedBaseline(
+    baselineConfig.facilitiesById.get(facility.id),
+    baselineConfig.policy
+  ));
+  if (baselineConfig.status === 'missing') return 'missing';
+  if (establishedRows.length === 0) return 'not_established';
+  if (establishedRows.length < facilities.length) return 'partial';
+  if (baselineRows.length === facilities.length) return 'established';
+  return 'partial';
+}
+
+function buildBaselineArtifact({ options, config, baselineConfig }) {
+  const facilities = config.facilities ?? [];
+  const establishedCount = facilities.filter((facility) => hasEstablishedBaseline(
+    baselineConfig.facilitiesById.get(facility.id),
+    baselineConfig.policy
+  )).length;
+  return {
+    configPath: options.baselinePath,
+    configSchemaVersion: baselineConfig.schemaVersion,
+    status: deriveBaselineStatus(facilities, baselineConfig),
+    minSamplesPerFacility: baselineConfig.policy.minSamplesPerFacility,
+    minRepeatSources: baselineConfig.policy.minRepeatSources,
+    facilityCount: facilities.length,
+    baselineFacilityCount: facilities.filter((facility) => baselineConfig.facilitiesById.has(facility.id)).length,
+    facilitiesWithEstablishedBaseline: establishedCount,
+    repeatedObservationRule: {
+      requiresEstablishedBaseline: true,
+      requiresAboveBaselineStrength: true,
+      minRepeatSources: baselineConfig.policy.minRepeatSources,
+      rowCountP95Margin: baselineConfig.policy.rowCountP95Margin,
+      maxFrpP95Margin: baselineConfig.policy.maxFrpP95Margin,
+      elevatedMinFrp: baselineConfig.policy.elevatedMinFrp,
+      elevatedMinHighConfidenceCount: baselineConfig.policy.elevatedMinHighConfidenceCount,
+      elevatedMinFrpOver50Count: baselineConfig.policy.elevatedMinFrpOver50Count,
+      elevatedMinFrpOver100Count: baselineConfig.policy.elevatedMinFrpOver100Count
+    },
+    notes: baselineConfig.notes
+  };
+}
+
+function compareWithBaseline({ facilityId, summary, sourcesWithDetections, baselineConfig }) {
+  const policy = baselineConfig.policy;
+  const row = baselineConfig.facilitiesById.get(facilityId) ?? null;
+  const established = hasEstablishedBaseline(row, policy);
+  const sourceRepeatMet = sourcesWithDetections >= policy.minRepeatSources;
+  const maxFrp = Number.isFinite(summary.maxFrp) ? summary.maxFrp : 0;
+  const rowCountAboveP95 = established && summary.rowCount > (row.rowCountP95 + policy.rowCountP95Margin);
+  const maxFrpAboveP95 = established && maxFrp > (row.maxFrpP95 + policy.maxFrpP95Margin);
+  const highConfidenceAboveP95 = established
+    && Number.isFinite(row.highConfidenceCountP95)
+    && summary.highConfidenceCount > (row.highConfidenceCountP95 + policy.highConfidenceP95Margin);
+  const frpOver50AboveP95 = established
+    && Number.isFinite(row.frpOver50CountP95)
+    && summary.frpOver50Count > (row.frpOver50CountP95 + policy.frpOver50P95Margin);
+  const aboveBaselineStrength = Boolean(rowCountAboveP95 || maxFrpAboveP95 || highConfidenceAboveP95 || frpOver50AboveP95);
+  const repeatedObservation = Boolean(established && sourceRepeatMet && aboveBaselineStrength);
+  const elevatedRepeatedObservation = Boolean(
+    repeatedObservation
+    && (
+      maxFrp >= policy.elevatedMinFrp
+      || summary.highConfidenceCount >= policy.elevatedMinHighConfidenceCount
+      || summary.frpOver50Count >= policy.elevatedMinFrpOver50Count
+      || summary.frpOver100Count >= policy.elevatedMinFrpOver100Count
+    )
+  );
+  const status = established ? 'established' : (row ? 'insufficient_samples' : 'not_established');
+  const reason = established
+    ? (
+      repeatedObservation
+        ? (elevatedRepeatedObservation ? 'above_baseline_repeated_elevated' : 'above_baseline_repeated')
+        : 'within_baseline_or_not_repeated'
+    )
+    : 'baseline_missing_or_insufficient_samples';
+  return {
+    status,
+    sampleCount: row?.sampleCount ?? 0,
+    requiredSampleCount: policy.minSamplesPerFacility,
+    windowDays: row?.windowDays ?? null,
+    lastSampleAt: row?.lastSampleAt ?? null,
+    rowCountP95: row?.rowCountP95 ?? null,
+    maxFrpP95: row?.maxFrpP95 ?? null,
+    highConfidenceCountP95: row?.highConfidenceCountP95 ?? null,
+    frpOver50CountP95: row?.frpOver50CountP95 ?? null,
+    frpOver100CountP95: row?.frpOver100CountP95 ?? null,
+    sourcesWithDetectionsP95: row?.sourcesWithDetectionsP95 ?? null,
+    sourcesWithDetections,
+    sourceRepeatMet,
+    rowCountAboveP95,
+    maxFrpAboveP95,
+    highConfidenceAboveP95,
+    frpOver50AboveP95,
+    aboveBaselineStrength,
+    repeatedObservation,
+    elevatedRepeatedObservation,
+    reason
   };
 }
 
@@ -261,7 +451,7 @@ function emptySummary() {
   return aggregateSummaries([]);
 }
 
-function deriveAnomalyLevel(summary, sourceCount, sourceDetections) {
+function deriveRawSignalLevel(summary, sourceCount, sourceDetections) {
   if (summary.rowCount === 0) return 'none_observed';
   if (sourceDetections >= Math.min(2, sourceCount) && (summary.highConfidenceCount >= 2 || (summary.maxFrp ?? 0) >= 50)) {
     return 'elevated_watch';
@@ -270,12 +460,21 @@ function deriveAnomalyLevel(summary, sourceCount, sourceDetections) {
   return 'low_signal';
 }
 
+function deriveAnomalyLevel(rawSignalLevel, baselineComparison) {
+  if (baselineComparison.elevatedRepeatedObservation) return 'elevated_repeated_watch';
+  if (baselineComparison.repeatedObservation) return 'repeated_watch';
+  if (baselineComparison.status === 'established' && rawSignalLevel !== 'none_observed') return 'low_signal';
+  return rawSignalLevel;
+}
+
 function anomalyLabelZh(level) {
   return ({
     none_observed: '未观察到',
     low_signal: '低信号',
     watch: '观察',
-    elevated_watch: '升高观察'
+    elevated_watch: '升高观察',
+    repeated_watch: '重复观察',
+    elevated_repeated_watch: '升高重复观察'
   })[level] || '待核';
 }
 
@@ -321,7 +520,7 @@ function requestBudget(sources) {
   };
 }
 
-function baseArtifact({ generatedAt, options, config, keyResolution, status, signalState, displayStatusZh }) {
+function baseArtifact({ generatedAt, options, config, baselineConfig, keyResolution, status, signalState, displayStatusZh }) {
   const facilities = config.facilities ?? [];
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -354,13 +553,17 @@ function baseArtifact({ generatedAt, options, config, keyResolution, status, sig
       requestBudget: requestBudget(options.sources),
       notes: config.notes ?? []
     },
+    baseline: buildBaselineArtifact({ options, config, baselineConfig }),
     aggregate: {
       ...emptySummary(),
       facilityCount: facilities.length,
       facilitiesWithDetections: 0,
       requestCount: facilities.length * options.sources.length,
       requestErrorCount: 0,
-      baselineStatus: 'not_established',
+      baselineStatus: deriveBaselineStatus(facilities, baselineConfig),
+      repeatedObservationCount: 0,
+      elevatedRepeatedObservationCount: 0,
+      facilitiesWithEstablishedBaseline: 0,
       facilitiesByAnomalyLevel: {}
     },
     facilities: [],
@@ -379,16 +582,17 @@ function baseArtifact({ generatedAt, options, config, keyResolution, status, sig
     limitationsZh: [
       'FIRMS/VIIRS 是热异常和火点代理,不是炼厂事故、停产、断供或油价方向确认。',
       '生产展示只保留设施级聚合摘要,不保存 MAP_KEY、raw URL 或原始火点明细。',
-      '历史基线尚未建立前,任何热异常计数都只能作为人工复核观察。'
+      '基线与重复观测规则只用于人工复核分层,不确认事故、断供或油价方向。'
     ]
   };
 }
 
-async function buildLiveArtifact({ generatedAt, options, config, keyResolution }) {
+async function buildLiveArtifact({ generatedAt, options, config, baselineConfig, keyResolution }) {
   const artifact = baseArtifact({
     generatedAt,
     options,
     config,
+    baselineConfig,
     keyResolution,
     status: 'ok',
     signalState: 'baseline_building_no_detections',
@@ -425,7 +629,21 @@ async function buildLiveArtifact({ generatedAt, options, config, keyResolution }
     const summary = aggregateSummaries(sourceSummaries);
     const sourcesWithDetections = sourceResults.filter((result) => result.summary.rowCount > 0).length;
     const sourceErrorCount = sourceResults.filter((result) => result.sourceStatus !== 'live').length;
-    const anomalyLevel = deriveAnomalyLevel(summary, options.sources.length, sourcesWithDetections);
+    const rawSignalLevel = deriveRawSignalLevel(summary, options.sources.length, sourcesWithDetections);
+    const baselineComparison = compareWithBaseline({
+      facilityId: facility.id,
+      summary,
+      sourcesWithDetections,
+      baselineConfig
+    });
+    const anomalyLevel = deriveAnomalyLevel(rawSignalLevel, baselineComparison);
+    const noteZh = baselineComparison.status === 'established'
+      ? (
+        baselineComparison.repeatedObservation
+          ? '当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。'
+          : '设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。'
+      )
+      : '设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。';
     facilityRows.push({
       id: facility.id,
       label: facility.label,
@@ -437,10 +655,12 @@ async function buildLiveArtifact({ generatedAt, options, config, keyResolution }
       requestErrorCount: sourceErrorCount,
       ...summary,
       latestAgeHours: latestAgeHours(summary.latestAcqAt, generatedAt),
+      rawSignalLevel,
+      baselineComparison,
       anomalyLevel,
       anomalyLabelZh: anomalyLabelZh(anomalyLevel),
-      baselineStatus: 'not_established',
-      noteZh: '设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。'
+      baselineStatus: baselineComparison.status,
+      noteZh
     });
   }
 
@@ -450,6 +670,9 @@ async function buildLiveArtifact({ generatedAt, options, config, keyResolution }
   for (const facility of facilityRows) {
     facilitiesByAnomalyLevel[facility.anomalyLevel] = (facilitiesByAnomalyLevel[facility.anomalyLevel] ?? 0) + 1;
   }
+  const repeatedObservationCount = facilityRows.filter((facility) => facility.baselineComparison.repeatedObservation).length;
+  const elevatedRepeatedObservationCount = facilityRows.filter((facility) => facility.baselineComparison.elevatedRepeatedObservation).length;
+  const facilitiesWithEstablishedBaseline = facilityRows.filter((facility) => facility.baselineStatus === 'established').length;
 
   artifact.facilities = facilityRows;
   artifact.aggregate = {
@@ -459,7 +682,10 @@ async function buildLiveArtifact({ generatedAt, options, config, keyResolution }
     facilitiesWithDetections: facilityRows.filter((facility) => facility.rowCount > 0).length,
     requestCount,
     requestErrorCount,
-    baselineStatus: 'not_established',
+    baselineStatus: artifact.baseline.status,
+    repeatedObservationCount,
+    elevatedRepeatedObservationCount,
+    facilitiesWithEstablishedBaseline,
     facilitiesByAnomalyLevel
   };
   artifact.freshness.latestAcqAt = aggregate.latestAcqAt;
@@ -469,6 +695,16 @@ async function buildLiveArtifact({ generatedAt, options, config, keyResolution }
   artifact.displayStatusZh = artifact.status === 'source_unavailable' ? '源暂不可用' : '观察层已接入';
   if (artifact.status === 'source_unavailable') {
     artifact.signalState = 'source_unavailable';
+  } else if (artifact.aggregate.elevatedRepeatedObservationCount > 0) {
+    artifact.signalState = 'baseline_elevated_repeated_watch';
+    artifact.displayStatusZh = '重复观察待核';
+  } else if (artifact.aggregate.repeatedObservationCount > 0) {
+    artifact.signalState = 'baseline_repeated_watch';
+    artifact.displayStatusZh = '重复观察待核';
+  } else if ((artifact.baseline.status === 'established' || artifact.baseline.status === 'partial') && artifact.aggregate.rowCount === 0) {
+    artifact.signalState = 'baseline_established_no_detections';
+  } else if (artifact.baseline.status === 'established' || artifact.baseline.status === 'partial') {
+    artifact.signalState = 'baseline_established_no_repeated_signal';
   } else if (artifact.aggregate.rowCount === 0) {
     artifact.signalState = 'baseline_building_no_detections';
   } else if ((artifact.aggregate.facilitiesByAnomalyLevel.elevated_watch ?? 0) > 0) {
@@ -523,6 +759,7 @@ async function main() {
   const generatedAt = new Date().toISOString();
   const keyResolution = resolveMapKey(options);
   const config = readFacilityConfig(options.facilitiesPath);
+  const baselineConfig = readBaselineConfig(options.baselinePath);
   let artifact;
 
   if (config.facilities.length === 0) {
@@ -530,6 +767,7 @@ async function main() {
       generatedAt,
       options,
       config,
+      baselineConfig,
       keyResolution,
       status: 'not_configured',
       signalState: keyResolution.mapKey ? 'facility_whitelist_missing' : 'map_key_or_facility_missing',
@@ -540,6 +778,7 @@ async function main() {
       generatedAt,
       options,
       config,
+      baselineConfig,
       keyResolution,
       status: 'not_configured',
       signalState: 'map_key_missing',
@@ -550,13 +789,14 @@ async function main() {
       generatedAt,
       options,
       config,
+      baselineConfig,
       keyResolution,
       status: 'dry_run',
       signalState: 'dry_run',
       displayStatusZh: 'Dry run'
     });
   } else {
-    artifact = await buildLiveArtifact({ generatedAt, options, config, keyResolution });
+    artifact = await buildLiveArtifact({ generatedAt, options, config, baselineConfig, keyResolution });
   }
 
   artifact = stabilizeUnqueriedArtifact(options, artifact);
@@ -566,6 +806,7 @@ async function main() {
     signalState: artifact.signalState,
     sourceStatus: artifact.sourceStatus,
     facilityCoverage: artifact.facilityCoverage,
+    baseline: artifact.baseline,
     aggregate: artifact.aggregate,
     outputPath,
     boundary: artifact.boundary

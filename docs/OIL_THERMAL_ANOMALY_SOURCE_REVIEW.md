@@ -170,6 +170,41 @@ confirmation, oil-price prediction, scoring, `decisionModel`, `executionLock`,
 `positionGuidance`, Brent promotion, ODP `finalBias`, Global Risk Heatmap, or
 cross-validation impact.
 
+## P24 Baseline / Repeated Observation Rule
+
+P24 adds the production baseline policy file:
+
+```text
+config/oil-thermal-watch-baseline.json
+```
+
+The committed baseline file intentionally starts with `status=not_established`
+and an empty `facilities[]` list. It defines only the minimum evidence policy for
+future facility baselines:
+
+- at least 8 valid samples per facility before a baseline is established;
+- at least 2 FIRMS sources with detections for repeatability;
+- above-baseline strength must exceed facility-specific p95 fields;
+- elevated repeated watch additionally requires stronger FRP / confidence
+  thresholds.
+
+`build-oil-thermal-watch.mjs` now writes baseline metadata and per-facility
+`baselineComparison` into `data/oil-thermal-watch.json`. The rule is intentionally
+two-gated:
+
+1. established facility baseline;
+2. multi-source repeatability plus above-baseline strength.
+
+Without both gates, a FIRMS detection remains a baseline-building or low-signal
+thermal proxy. This prevents a refinery's normal heat output, flare stack activity
+or single satellite pass from being promoted into an incident interpretation.
+
+P24 introduces possible future signal states such as `baseline_repeated_watch` and
+`baseline_elevated_repeated_watch`, but the current committed baseline has no
+established facility rows. Therefore current production output remains
+`baseline_building_*` until enough samples are reviewed and committed in a later
+baseline refresh.
+
 ## Current P11 Scope
 
 P11 only adds a visible ODP readiness slot: `SATELLITE THERMAL WATCH / 卫星热异常观察`.

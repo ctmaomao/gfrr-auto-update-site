@@ -6,6 +6,7 @@ const errors = [];
 const fail = (message) => errors.push(message);
 const data = JSON.parse(readFileSync(resolve('data/oil-thermal-watch.json'), 'utf8'));
 const config = JSON.parse(readFileSync(resolve('config/oil-thermal-watch-facilities.json'), 'utf8'));
+const baselineConfig = JSON.parse(readFileSync(resolve('config/oil-thermal-watch-baseline.json'), 'utf8'));
 
 const STATUSES = new Set(['ok', 'partial', 'source_unavailable', 'not_configured', 'dry_run']);
 const SIGNAL_STATES = new Set([
@@ -13,13 +14,25 @@ const SIGNAL_STATES = new Set([
   'map_key_or_facility_missing',
   'map_key_missing',
   'source_unavailable',
+  'baseline_established_no_detections',
+  'baseline_established_no_repeated_signal',
+  'baseline_repeated_watch',
+  'baseline_elevated_repeated_watch',
   'baseline_building_no_detections',
   'baseline_building_watch',
   'baseline_building_elevated_watch',
   'dry_run'
 ]);
 const SOURCE_STATUSES = new Set(['configured', 'missing', 'not_queried', 'live', 'partial', 'error']);
-const ANOMALY_LEVELS = new Set(['none_observed', 'low_signal', 'watch', 'elevated_watch']);
+const ANOMALY_LEVELS = new Set([
+  'none_observed',
+  'low_signal',
+  'watch',
+  'elevated_watch',
+  'repeated_watch',
+  'elevated_repeated_watch'
+]);
+const BASELINE_STATUSES = new Set(['missing', 'not_established', 'insufficient_samples', 'partial', 'established']);
 const PRODUCTION_FALSE_KEYS = [
   'affectsValues',
   'affectsScoring',
@@ -84,6 +97,27 @@ if (!data.facilityCoverage || typeof data.facilityCoverage !== 'object') {
   }
 }
 
+if (!data.baseline || typeof data.baseline !== 'object') {
+  fail('baseline missing');
+} else {
+  if (data.baseline.configPath !== 'config/oil-thermal-watch-baseline.json') {
+    fail('baseline.configPath must use committed production baseline config');
+  }
+  if (data.baseline.configSchemaVersion !== baselineConfig.schemaVersion) {
+    fail('baseline.configSchemaVersion must match config/oil-thermal-watch-baseline.json');
+  }
+  if (!BASELINE_STATUSES.has(data.baseline.status)) fail(`baseline.status invalid: ${data.baseline.status}`);
+  for (const field of ['minSamplesPerFacility', 'minRepeatSources', 'facilityCount', 'baselineFacilityCount', 'facilitiesWithEstablishedBaseline']) {
+    if (!Number.isFinite(data.baseline[field]) || data.baseline[field] < 0) fail(`baseline.${field} must be non-negative number`);
+  }
+  if (!data.baseline.repeatedObservationRule || typeof data.baseline.repeatedObservationRule !== 'object') {
+    fail('baseline.repeatedObservationRule missing');
+  } else if (data.baseline.repeatedObservationRule.requiresEstablishedBaseline !== true
+    || data.baseline.repeatedObservationRule.requiresAboveBaselineStrength !== true) {
+    fail('baseline.repeatedObservationRule must require established baseline and above-baseline strength');
+  }
+}
+
 if (!data.freshness || typeof data.freshness !== 'object') {
   fail('freshness missing');
 } else {
@@ -98,7 +132,10 @@ if (data.aggregate) {
   for (const field of ['facilityCount', 'facilitiesWithDetections', 'requestCount', 'requestErrorCount']) {
     if (!Number.isFinite(data.aggregate[field]) || data.aggregate[field] < 0) fail(`aggregate.${field} must be non-negative number`);
   }
-  if (data.aggregate.baselineStatus !== 'not_established') fail('aggregate.baselineStatus must stay not_established in P22');
+  for (const field of ['repeatedObservationCount', 'elevatedRepeatedObservationCount', 'facilitiesWithEstablishedBaseline']) {
+    if (!Number.isFinite(data.aggregate[field]) || data.aggregate[field] < 0) fail(`aggregate.${field} must be non-negative number`);
+  }
+  if (!BASELINE_STATUSES.has(data.aggregate.baselineStatus)) fail(`aggregate.baselineStatus invalid: ${data.aggregate.baselineStatus}`);
 }
 
 if (!Array.isArray(data.facilities)) {
@@ -112,8 +149,24 @@ for (const [index, facility] of (data.facilities || []).entries()) {
     if (typeof facility[field] !== 'string' || !facility[field]) fail(`${path}.${field} must be non-empty string`);
   }
   if (!ANOMALY_LEVELS.has(facility.anomalyLevel)) fail(`${path}.anomalyLevel invalid: ${facility.anomalyLevel}`);
-  if (facility.baselineStatus !== 'not_established') fail(`${path}.baselineStatus must be not_established`);
+  if (!ANOMALY_LEVELS.has(facility.rawSignalLevel)) fail(`${path}.rawSignalLevel invalid: ${facility.rawSignalLevel}`);
+  if (!BASELINE_STATUSES.has(facility.baselineStatus)) fail(`${path}.baselineStatus invalid: ${facility.baselineStatus}`);
   validateSummary(path, facility);
+  if (!facility.baselineComparison || typeof facility.baselineComparison !== 'object') {
+    fail(`${path}.baselineComparison missing`);
+  } else {
+    if (!BASELINE_STATUSES.has(facility.baselineComparison.status)) {
+      fail(`${path}.baselineComparison.status invalid: ${facility.baselineComparison.status}`);
+    }
+    for (const field of ['sampleCount', 'requiredSampleCount', 'sourcesWithDetections']) {
+      if (!Number.isFinite(facility.baselineComparison[field]) || facility.baselineComparison[field] < 0) {
+        fail(`${path}.baselineComparison.${field} must be non-negative number`);
+      }
+    }
+    for (const field of ['sourceRepeatMet', 'aboveBaselineStrength', 'repeatedObservation', 'elevatedRepeatedObservation']) {
+      if (typeof facility.baselineComparison[field] !== 'boolean') fail(`${path}.baselineComparison.${field} must be boolean`);
+    }
+  }
   if ('bbox' in facility) fail(`${path}.bbox must not be exposed in production display artifact`);
   if ('redactedUrl' in facility || 'url' in facility) fail(`${path} must not expose FIRMS URLs`);
 }

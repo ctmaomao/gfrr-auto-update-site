@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-thermal-watch-shell-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-thermal-baseline-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

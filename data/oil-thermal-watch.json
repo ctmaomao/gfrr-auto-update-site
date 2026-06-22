@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-06-22T19:55:38.647Z",
+  "generatedAt": "2026-06-22T20:41:01.485Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -19,7 +19,7 @@
   "freshness": {
     "windowDays": 1,
     "latestAcqAt": "2026-06-22T08:58:00Z",
-    "latestAgeHours": 11,
+    "latestAgeHours": 11.7,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -53,6 +53,33 @@
       "This config never stores MAP_KEY and never approves thermal detections as incidents, outages, supply disruptions, or oil-price direction."
     ]
   },
+  "baseline": {
+    "configPath": "config/oil-thermal-watch-baseline.json",
+    "configSchemaVersion": "oil-thermal-baseline-production-v1",
+    "status": "not_established",
+    "minSamplesPerFacility": 8,
+    "minRepeatSources": 2,
+    "facilityCount": 12,
+    "baselineFacilityCount": 0,
+    "facilitiesWithEstablishedBaseline": 0,
+    "repeatedObservationRule": {
+      "requiresEstablishedBaseline": true,
+      "requiresAboveBaselineStrength": true,
+      "minRepeatSources": 2,
+      "rowCountP95Margin": 1,
+      "maxFrpP95Margin": 1,
+      "elevatedMinFrp": 50,
+      "elevatedMinHighConfidenceCount": 2,
+      "elevatedMinFrpOver50Count": 1,
+      "elevatedMinFrpOver100Count": 1
+    },
+    "notes": [
+      "P24 baseline policy is committed before enough historical samples exist; facility baseline rows start empty by design.",
+      "A facility baseline is established only after minSamplesPerFacility valid samples and facility-specific p95 fields are present.",
+      "Repeated observation requires both multi-source repeatability and above-baseline strength; single-pass FIRMS detections remain manual-review thermal proxy only.",
+      "This baseline file never stores MAP_KEY, raw FIRMS rows, raw URLs, outage claims, supply-disruption claims, or oil-price direction."
+    ]
+  },
   "aggregate": {
     "rowCount": 20,
     "latestAcqAt": "2026-06-22T08:58:00Z",
@@ -66,12 +93,15 @@
     "dayNightCounts": {
       "N": 20
     },
-    "latestAgeHours": 11,
+    "latestAgeHours": 11.7,
     "facilityCount": 12,
     "facilitiesWithDetections": 6,
     "requestCount": 36,
     "requestErrorCount": 0,
     "baselineStatus": "not_established",
+    "repeatedObservationCount": 0,
+    "elevatedRepeatedObservationCount": 0,
+    "facilitiesWithEstablishedBaseline": 0,
     "facilitiesByAnomalyLevel": {
       "low_signal": 5,
       "none_observed": 6,
@@ -100,11 +130,35 @@
       "dayNightCounts": {
         "N": 2
       },
-      "latestAgeHours": 11,
+      "latestAgeHours": 11.7,
+      "rawSignalLevel": "low_signal",
+      "baselineComparison": {
+        "status": "not_established",
+        "sampleCount": 0,
+        "requiredSampleCount": 8,
+        "windowDays": null,
+        "lastSampleAt": null,
+        "rowCountP95": null,
+        "maxFrpP95": null,
+        "highConfidenceCountP95": null,
+        "frpOver50CountP95": null,
+        "frpOver100CountP95": null,
+        "sourcesWithDetectionsP95": null,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": false,
+        "maxFrpAboveP95": false,
+        "highConfidenceAboveP95": false,
+        "frpOver50AboveP95": false,
+        "aboveBaselineStrength": false,
+        "repeatedObservation": false,
+        "elevatedRepeatedObservation": false,
+        "reason": "baseline_missing_or_insufficient_samples"
+      },
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "not_established",
-      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_marathon_galveston_bay_tx",
@@ -124,10 +178,34 @@
       "frpOver100Count": 0,
       "dayNightCounts": {},
       "latestAgeHours": null,
+      "rawSignalLevel": "none_observed",
+      "baselineComparison": {
+        "status": "not_established",
+        "sampleCount": 0,
+        "requiredSampleCount": 8,
+        "windowDays": null,
+        "lastSampleAt": null,
+        "rowCountP95": null,
+        "maxFrpP95": null,
+        "highConfidenceCountP95": null,
+        "frpOver50CountP95": null,
+        "frpOver100CountP95": null,
+        "sourcesWithDetectionsP95": null,
+        "sourcesWithDetections": 0,
+        "sourceRepeatMet": false,
+        "rowCountAboveP95": false,
+        "maxFrpAboveP95": false,
+        "highConfidenceAboveP95": false,
+        "frpOver50AboveP95": false,
+        "aboveBaselineStrength": false,
+        "repeatedObservation": false,
+        "elevatedRepeatedObservation": false,
+        "reason": "baseline_missing_or_insufficient_samples"
+      },
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "not_established",
-      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_marathon_garyville_la",
@@ -147,10 +225,34 @@
       "frpOver100Count": 0,
       "dayNightCounts": {},
       "latestAgeHours": null,
+      "rawSignalLevel": "none_observed",
+      "baselineComparison": {
+        "status": "not_established",
+        "sampleCount": 0,
+        "requiredSampleCount": 8,
+        "windowDays": null,
+        "lastSampleAt": null,
+        "rowCountP95": null,
+        "maxFrpP95": null,
+        "highConfidenceCountP95": null,
+        "frpOver50CountP95": null,
+        "frpOver100CountP95": null,
+        "sourcesWithDetectionsP95": null,
+        "sourcesWithDetections": 0,
+        "sourceRepeatMet": false,
+        "rowCountAboveP95": false,
+        "maxFrpAboveP95": false,
+        "highConfidenceAboveP95": false,
+        "frpOver50AboveP95": false,
+        "aboveBaselineStrength": false,
+        "repeatedObservation": false,
+        "elevatedRepeatedObservation": false,
+        "reason": "baseline_missing_or_insufficient_samples"
+      },
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "not_established",
-      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_exxon_baytown_tx",
@@ -173,11 +275,35 @@
       "dayNightCounts": {
         "N": 2
       },
-      "latestAgeHours": 12.6,
+      "latestAgeHours": 13.4,
+      "rawSignalLevel": "low_signal",
+      "baselineComparison": {
+        "status": "not_established",
+        "sampleCount": 0,
+        "requiredSampleCount": 8,
+        "windowDays": null,
+        "lastSampleAt": null,
+        "rowCountP95": null,
+        "maxFrpP95": null,
+        "highConfidenceCountP95": null,
+        "frpOver50CountP95": null,
+        "frpOver100CountP95": null,
+        "sourcesWithDetectionsP95": null,
+        "sourcesWithDetections": 1,
+        "sourceRepeatMet": false,
+        "rowCountAboveP95": false,
+        "maxFrpAboveP95": false,
+        "highConfidenceAboveP95": false,
+        "frpOver50AboveP95": false,
+        "aboveBaselineStrength": false,
+        "repeatedObservation": false,
+        "elevatedRepeatedObservation": false,
+        "reason": "baseline_missing_or_insufficient_samples"
+      },
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "not_established",
-      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_exxon_baton_rouge_la",
@@ -197,10 +323,34 @@
       "frpOver100Count": 0,
       "dayNightCounts": {},
       "latestAgeHours": null,
+      "rawSignalLevel": "none_observed",
+      "baselineComparison": {
+        "status": "not_established",
+        "sampleCount": 0,
+        "requiredSampleCount": 8,
+        "windowDays": null,
+        "lastSampleAt": null,
+        "rowCountP95": null,
+        "maxFrpP95": null,
+        "highConfidenceCountP95": null,
+        "frpOver50CountP95": null,
+        "frpOver100CountP95": null,
+        "sourcesWithDetectionsP95": null,
+        "sourcesWithDetections": 0,
+        "sourceRepeatMet": false,
+        "rowCountAboveP95": false,
+        "maxFrpAboveP95": false,
+        "highConfidenceAboveP95": false,
+        "frpOver50AboveP95": false,
+        "aboveBaselineStrength": false,
+        "repeatedObservation": false,
+        "elevatedRepeatedObservation": false,
+        "reason": "baseline_missing_or_insufficient_samples"
+      },
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "not_established",
-      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_citgo_lake_charles_la",
@@ -223,11 +373,35 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 11,
+      "latestAgeHours": 11.7,
+      "rawSignalLevel": "watch",
+      "baselineComparison": {
+        "status": "not_established",
+        "sampleCount": 0,
+        "requiredSampleCount": 8,
+        "windowDays": null,
+        "lastSampleAt": null,
+        "rowCountP95": null,
+        "maxFrpP95": null,
+        "highConfidenceCountP95": null,
+        "frpOver50CountP95": null,
+        "frpOver100CountP95": null,
+        "sourcesWithDetectionsP95": null,
+        "sourcesWithDetections": 3,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": false,
+        "maxFrpAboveP95": false,
+        "highConfidenceAboveP95": false,
+        "frpOver50AboveP95": false,
+        "aboveBaselineStrength": false,
+        "repeatedObservation": false,
+        "elevatedRepeatedObservation": false,
+        "reason": "baseline_missing_or_insufficient_samples"
+      },
       "anomalyLevel": "watch",
       "anomalyLabelZh": "观察",
       "baselineStatus": "not_established",
-      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_exxon_beaumont_tx",
@@ -250,11 +424,35 @@
       "dayNightCounts": {
         "N": 3
       },
-      "latestAgeHours": 11,
+      "latestAgeHours": 11.7,
+      "rawSignalLevel": "low_signal",
+      "baselineComparison": {
+        "status": "not_established",
+        "sampleCount": 0,
+        "requiredSampleCount": 8,
+        "windowDays": null,
+        "lastSampleAt": null,
+        "rowCountP95": null,
+        "maxFrpP95": null,
+        "highConfidenceCountP95": null,
+        "frpOver50CountP95": null,
+        "frpOver100CountP95": null,
+        "sourcesWithDetectionsP95": null,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": false,
+        "maxFrpAboveP95": false,
+        "highConfidenceAboveP95": false,
+        "frpOver50AboveP95": false,
+        "aboveBaselineStrength": false,
+        "repeatedObservation": false,
+        "elevatedRepeatedObservation": false,
+        "reason": "baseline_missing_or_insufficient_samples"
+      },
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "not_established",
-      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_deer_park_tx",
@@ -277,11 +475,35 @@
       "dayNightCounts": {
         "N": 3
       },
-      "latestAgeHours": 11.5,
+      "latestAgeHours": 12.3,
+      "rawSignalLevel": "low_signal",
+      "baselineComparison": {
+        "status": "not_established",
+        "sampleCount": 0,
+        "requiredSampleCount": 8,
+        "windowDays": null,
+        "lastSampleAt": null,
+        "rowCountP95": null,
+        "maxFrpP95": null,
+        "highConfidenceCountP95": null,
+        "frpOver50CountP95": null,
+        "frpOver100CountP95": null,
+        "sourcesWithDetectionsP95": null,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": false,
+        "maxFrpAboveP95": false,
+        "highConfidenceAboveP95": false,
+        "frpOver50AboveP95": false,
+        "aboveBaselineStrength": false,
+        "repeatedObservation": false,
+        "elevatedRepeatedObservation": false,
+        "reason": "baseline_missing_or_insufficient_samples"
+      },
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "not_established",
-      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_valero_corpus_christi_tx",
@@ -304,11 +526,35 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 11,
+      "latestAgeHours": 11.7,
+      "rawSignalLevel": "low_signal",
+      "baselineComparison": {
+        "status": "not_established",
+        "sampleCount": 0,
+        "requiredSampleCount": 8,
+        "windowDays": null,
+        "lastSampleAt": null,
+        "rowCountP95": null,
+        "maxFrpP95": null,
+        "highConfidenceCountP95": null,
+        "frpOver50CountP95": null,
+        "frpOver100CountP95": null,
+        "sourcesWithDetectionsP95": null,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": false,
+        "maxFrpAboveP95": false,
+        "highConfidenceAboveP95": false,
+        "frpOver50AboveP95": false,
+        "aboveBaselineStrength": false,
+        "repeatedObservation": false,
+        "elevatedRepeatedObservation": false,
+        "reason": "baseline_missing_or_insufficient_samples"
+      },
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "not_established",
-      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_phillips_sweeny_tx",
@@ -328,10 +574,34 @@
       "frpOver100Count": 0,
       "dayNightCounts": {},
       "latestAgeHours": null,
+      "rawSignalLevel": "none_observed",
+      "baselineComparison": {
+        "status": "not_established",
+        "sampleCount": 0,
+        "requiredSampleCount": 8,
+        "windowDays": null,
+        "lastSampleAt": null,
+        "rowCountP95": null,
+        "maxFrpP95": null,
+        "highConfidenceCountP95": null,
+        "frpOver50CountP95": null,
+        "frpOver100CountP95": null,
+        "sourcesWithDetectionsP95": null,
+        "sourcesWithDetections": 0,
+        "sourceRepeatMet": false,
+        "rowCountAboveP95": false,
+        "maxFrpAboveP95": false,
+        "highConfidenceAboveP95": false,
+        "frpOver50AboveP95": false,
+        "aboveBaselineStrength": false,
+        "repeatedObservation": false,
+        "elevatedRepeatedObservation": false,
+        "reason": "baseline_missing_or_insufficient_samples"
+      },
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "not_established",
-      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_phillips_belle_chasse_la",
@@ -351,10 +621,34 @@
       "frpOver100Count": 0,
       "dayNightCounts": {},
       "latestAgeHours": null,
+      "rawSignalLevel": "none_observed",
+      "baselineComparison": {
+        "status": "not_established",
+        "sampleCount": 0,
+        "requiredSampleCount": 8,
+        "windowDays": null,
+        "lastSampleAt": null,
+        "rowCountP95": null,
+        "maxFrpP95": null,
+        "highConfidenceCountP95": null,
+        "frpOver50CountP95": null,
+        "frpOver100CountP95": null,
+        "sourcesWithDetectionsP95": null,
+        "sourcesWithDetections": 0,
+        "sourceRepeatMet": false,
+        "rowCountAboveP95": false,
+        "maxFrpAboveP95": false,
+        "highConfidenceAboveP95": false,
+        "frpOver50AboveP95": false,
+        "aboveBaselineStrength": false,
+        "repeatedObservation": false,
+        "elevatedRepeatedObservation": false,
+        "reason": "baseline_missing_or_insufficient_samples"
+      },
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "not_established",
-      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_shell_norco_la",
@@ -374,10 +668,34 @@
       "frpOver100Count": 0,
       "dayNightCounts": {},
       "latestAgeHours": null,
+      "rawSignalLevel": "none_observed",
+      "baselineComparison": {
+        "status": "not_established",
+        "sampleCount": 0,
+        "requiredSampleCount": 8,
+        "windowDays": null,
+        "lastSampleAt": null,
+        "rowCountP95": null,
+        "maxFrpP95": null,
+        "highConfidenceCountP95": null,
+        "frpOver50CountP95": null,
+        "frpOver100CountP95": null,
+        "sourcesWithDetectionsP95": null,
+        "sourcesWithDetections": 0,
+        "sourceRepeatMet": false,
+        "rowCountAboveP95": false,
+        "maxFrpAboveP95": false,
+        "highConfidenceAboveP95": false,
+        "frpOver50AboveP95": false,
+        "aboveBaselineStrength": false,
+        "repeatedObservation": false,
+        "elevatedRepeatedObservation": false,
+        "reason": "baseline_missing_or_insufficient_samples"
+      },
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "not_established",
-      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     }
   ],
   "productionImpact": {
@@ -395,6 +713,6 @@
   "limitationsZh": [
     "FIRMS/VIIRS 是热异常和火点代理,不是炼厂事故、停产、断供或油价方向确认。",
     "生产展示只保留设施级聚合摘要,不保存 MAP_KEY、raw URL 或原始火点明细。",
-    "历史基线尚未建立前,任何热异常计数都只能作为人工复核观察。"
+    "基线与重复观测规则只用于人工复核分层,不确认事故、断供或油价方向。"
   ]
 }
