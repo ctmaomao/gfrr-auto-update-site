@@ -103,6 +103,12 @@ const ENERGY_TEXT_IDS = [
   'odp-global-overlay-transport',
   'odp-global-overlay-confidence',
   'odp-global-overlay-note',
+  'odp-news-event-status',
+  'odp-news-event-window',
+  'odp-news-event-conflict',
+  'odp-news-event-sanctions',
+  'odp-news-event-market',
+  'odp-news-event-note',
   'odp-qc-ledger-status',
   'odp-qc-ledger-wpsr',
   'odp-qc-ledger-odp',
@@ -142,6 +148,48 @@ const COVERAGE_CHOKEPOINT_KEYS = [
   'capeGoodHope',
   'gibraltar',
 ];
+const EVENT_REGION_ZH = {
+  india: '印度',
+  ukraine: '乌克兰',
+  indonesia: '印度尼西亚',
+  palestine: '巴勒斯坦',
+  mexico: '墨西哥',
+  russia: '俄罗斯',
+  lebanon: '黎巴嫩',
+  nigeria: '尼日利亚',
+  spain: '西班牙',
+  colombia: '哥伦比亚',
+  iran: '伊朗',
+  iraq: '伊拉克',
+  israel: '以色列',
+  yemen: '也门',
+  sudan: '苏丹',
+  taiwan: '台湾',
+  syria: '叙利亚',
+  oman: '阿曼',
+  kuwait: '科威特',
+  qatar: '卡塔尔',
+  'saudi arabia': '沙特',
+  'united arab emirates': '阿联酋',
+  'korea, north': '朝鲜',
+};
+const OIL_EVENT_WATCH_REGIONS = new Set([
+  'iran',
+  'iraq',
+  'kuwait',
+  'qatar',
+  'saudi arabia',
+  'united arab emirates',
+  'oman',
+  'yemen',
+  'israel',
+  'palestine',
+  'lebanon',
+  'syria',
+  'russia',
+  'ukraine',
+  'nigeria',
+]);
 const CORE_WPSR_KEYS = [
   'crudeStocksExSpr',
   'sprStocks',
@@ -288,6 +336,7 @@ function clearEnergyAddendum() {
   setToneClass('odp-pulse-factor-status', 'odp-pulse-factor-status', '');
   setToneClass('odp-global-forecast-status', 'odp-global-forecast-status', '');
   setToneClass('odp-global-overlay-status', 'odp-global-overlay-status', '');
+  setToneClass('odp-news-event-status', 'odp-news-event-status', '');
   setToneClass('odp-qc-ledger-status', 'odp-qc-ledger-status', '');
   setToneClass('odp-energy-spare-regime', 'odp-energy-regime', '');
   const coreHost = $('odp-energy-transport-core');
@@ -649,6 +698,92 @@ function renderGlobalOverlay(oilData, radarData) {
   setLeafText('odp-global-overlay-confidence', `${GLOBAL_OVERLAY_CONFIDENCE_ZH[overlay.confidenceAdjustment] || '不调整'} · ${overlay.confidence || 'low'}`);
   setLeafText('odp-global-overlay-note', `${reasonText} 期别:库存 ${windows.inventoryPeriod || '—'} / 闲置 ${windows.sparePeriod || '—'} / PortWatch ${windows.transportDate || '—'}。${sourceText}`);
 }
+function eventSourceStatusZh(status) {
+  return ({
+    ok: '已接入',
+    stale: '沿用缓存',
+    error: '源不可用',
+    manual_required: '等待手动源',
+    not_configured: '未配置',
+    disabled: '未启用',
+  })[status] || '源不可用';
+}
+function eventRegionName(value) {
+  if (typeof value === 'string') return value.trim();
+  if (value && typeof value.key === 'string') return value.key.trim();
+  return '';
+}
+function eventRegionZh(value) {
+  const key = eventRegionName(value);
+  if (!key) return '';
+  return EVENT_REGION_ZH[key.toLowerCase()] || key;
+}
+function uniqueEventRegions(values) {
+  const out = [];
+  const seen = new Set();
+  for (const value of values || []) {
+    const key = eventRegionName(value);
+    const normalized = key.toLowerCase();
+    if (!key || seen.has(normalized)) continue;
+    seen.add(normalized);
+    out.push(key);
+  }
+  return out;
+}
+function renderOilEventNewsLayer(worldOrderStressData) {
+  const gdelt = worldOrderStressData?.externalSources?.gdelt || {};
+  const summary = gdelt.summary && typeof gdelt.summary === 'object' ? gdelt.summary : {};
+  const status = typeof gdelt.status === 'string' ? gdelt.status : '';
+  const conflictEvents = Math.max(0, Math.round(firstNumber(summary.conflictEvents, summary.totalEvents, summary.totalArticles) ?? 0));
+  const sanctionsEvents = Math.max(0, Math.round(firstNumber(summary.sanctionsEvents) ?? 0));
+  const chokepointEvents = Math.max(0, Math.round(firstNumber(summary.blockadeOrChokepointEvents) ?? 0));
+  const totalArticles = Math.max(0, Math.round(firstNumber(summary.totalArticles, summary.totalEvents) ?? 0));
+  const keyConflictRegions = uniqueEventRegions(summary.keyConflictRegions);
+  const visibleRegions = uniqueEventRegions([
+    ...keyConflictRegions,
+    ...(Array.isArray(summary.regionsCovered) ? summary.regionsCovered : []),
+    ...(Array.isArray(summary.topCountries) ? summary.topCountries : []),
+  ]);
+  const oilWatchRegions = visibleRegions.filter((region) => OIL_EVENT_WATCH_REGIONS.has(region.toLowerCase()));
+  const regionText = visibleRegions.slice(0, 4).map(eventRegionZh).filter(Boolean).join(' / ') || '—';
+  const oilRegionText = oilWatchRegions.slice(0, 4).map(eventRegionZh).filter(Boolean).join(' / ');
+  const fetchedAt = formatUtcMinute(gdelt.lastFetchedAt || summary.attemptedAt);
+  const cached = summary.usedCachedSummary === true ? ' · 缓存' : '';
+  const marketInput = worldOrderStressData?.marketConfirmationInput || {};
+  const marketBrent = firstNumber(marketInput.brent);
+  const marketAge = Number.isFinite(marketInput.ageMinutes) ? ` · ${Math.round(marketInput.ageMinutes)} 分钟龄` : '';
+  const marketAt = marketAge || (formatUtcMinute(marketInput.updatedAt) ? ` · ${formatUtcMinute(marketInput.updatedAt)}` : '');
+  const marketText = Number.isFinite(marketBrent)
+    ? `Brent ${formatUsd(marketBrent)}${marketAt}`
+    : '市场确认暂不可用';
+
+  let statusText = eventSourceStatusZh(status);
+  let tone = '';
+  if (status === 'ok' && (chokepointEvents > 0 || sanctionsEvents > 0 || oilWatchRegions.length > 0 || conflictEvents > 0)) {
+    statusText = '广义事件观察';
+    tone = 'yellow';
+  } else if (status === 'ok') {
+    statusText = '未见事件压力';
+    tone = 'green';
+  } else if (status === 'stale') {
+    tone = 'yellow';
+  }
+
+  const eventContext = oilRegionText
+    ? `重点地区含 ${oilRegionText},作为能源事件背景观察。`
+    : '未从广义摘要中识别出重点能源地区。';
+  const directContext = chokepointEvents > 0 || sanctionsEvents > 0
+    ? `制裁 ${sanctionsEvents} / 通道 ${chokepointEvents} 条需人工核验。`
+    : '当前摘要未给出制裁或通道中断的直接计数。';
+
+  setLeafText('odp-news-event-status', statusText);
+  setToneClass('odp-news-event-status', 'odp-news-event-status', tone);
+  setLeafText('odp-news-event-window', `${fetchedAt || '—'}${cached} · ${totalArticles} 条报道代理`);
+  setLeafText('odp-news-event-conflict', `${conflictEvents} 条 · ${regionText}`);
+  setLeafText('odp-news-event-sanctions', `制裁 ${sanctionsEvents} / 通道 ${chokepointEvents}`);
+  setLeafText('odp-news-event-market', marketText);
+  setLeafText('odp-news-event-note', `本层复用已有 GDELT 广义新闻事件摘要,用于提示油价相关地缘背景是否需要观察;它不是 ODP 专用新闻 API,也不确认霍尔木兹通道中断、断供或船舶级流向。${eventContext}${directContext}后续只有与价格结构、咽喉转运、库存/供需锚点和卫星/设施事件同时印证时,才提高事件观察置信度。`);
+}
 function renderDataQcLedger(oilData, radarData, worldOrderStressData) {
   const evidence = oilData && oilData.evidence ? oilData.evidence : {};
   const alignment = wpsrAlignment(evidence);
@@ -775,10 +910,11 @@ function renderEnergyAddendum(radarData, worldOrderStressData, oilData) {
   renderPulseFactorCheck(oilData, radarData, worldOrderStressData);
   renderGlobalForecastGap(oilData, radarData);
   renderGlobalOverlay(oilData, radarData);
+  renderOilEventNewsLayer(worldOrderStressData);
   renderDataQcLedger(oilData, radarData, worldOrderStressData);
   renderSpareCapacity(macroDrivers.energySpareCapacity);
   renderEnergyTransport(macroDrivers.energyTransport);
-  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、OECD 库存/全球净抽库、P6B 全球确认层、数据时点/QC、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
+  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、OECD 库存/全球净抽库、P6B 全球确认层、新闻事件观察、数据时点/QC、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
 }
 
 function reasonInventory(sig, ev) {

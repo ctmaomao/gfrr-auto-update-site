@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=odp-timing-tiers-1';
+﻿import { formatFiniteNumber } from './format.js?v=odp-news-event-watch-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

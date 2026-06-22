@@ -350,6 +350,8 @@ WTI / Brent / 裂解价差 / 期限结构由 `oil-directional-pressure.json` **�
 
 P9 起,ODP 每条 evidence 均携带时点分级 metadata:`T2_weekly_official_anchor` 用于 EIA WPSR 8 个周度官方锚,`T1_daily_market_proxy` 用于复用的 WTI / Brent / crack / curve 日频市场代理。该 metadata 只解释“快信号 vs 慢锚点”的证据节奏和校准关系;不代表已接入新闻 API、FIRMS/VIIRS 热异常、Kpler/Vortexa、API 周报、或任何新实时源,也不得被用于 scoring/decision/execution/position。
 
+P10 起,ODP 前端折叠详情新增 `NEWS EVENT WATCH / 新闻事件观察`,只读复用已有 `data/world-order-stress.json` 的 GDELT Cloud 广义冲突事件摘要和 Worker 市场确认 Brent 值。该复用不新增抓取请求、不读取浏览器外部 API、不写 `data/oil-directional-pressure.json`,也不代表已接入专用油价新闻 API、FIRMS/VIIRS 热异常、Kpler/Vortexa 或船舶级 AIS 流向。用户可见文案必须保留低置信边界:只能提示能源事件背景观察,不得写成通道中断、断供、真实油轮流量、战争概率或油价预测。
+
 **PR2 历史 cache**（`data/oil-directional-history.json`）：同 8 个 `PET.*.W` series、同 `/v2/seriesid/` route，由 `scripts/oil-directional/build-oil-directional-history.mjs`（零依赖，ADR-0013）一次性抓 2014-至今全周度史并切片落盘（每 series ~647 周，2014-01-03 起），作 **committed snapshot** 供回测 harness 离线、可复现回放（`check:all` 不联网）。fail-closed：失败 series → `sourceStatus:'missing'` / `points:[]`，不伪造。**仅供 PR2 回测 GATE**，不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / decision / Global Risk Heatmap。文件契约 + 分类器 / GATE / 预登记阈值见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)。
 
 ---

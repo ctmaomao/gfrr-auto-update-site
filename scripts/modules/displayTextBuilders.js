@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-timing-tiers-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-news-event-watch-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
