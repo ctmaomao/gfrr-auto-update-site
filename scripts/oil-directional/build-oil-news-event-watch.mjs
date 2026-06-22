@@ -1,0 +1,335 @@
+#!/usr/bin/env node
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import process from 'node:process';
+import { DEFAULT_SOURCES, QUERY_SET, runDiagnosis } from './diagnose-oil-news-events.mjs';
+
+const SCHEMA_VERSION = 'oil-news-event-watch-1';
+const MODULE = 'oil-news-event-watch';
+const DEFAULT_OUTPUT = 'data/oil-news-event-watch.json';
+const DEFAULT_WINDOW_DAYS = 7;
+const DEFAULT_MAX_RESULTS = 8;
+const BOUNDARY =
+  'production read-only ODP oil-news event watch; display-only/audit-only; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
+
+function parseArgs(argv) {
+  const options = {
+    output: DEFAULT_OUTPUT,
+    sources: DEFAULT_SOURCES,
+    windowDays: DEFAULT_WINDOW_DAYS,
+    maxResults: DEFAULT_MAX_RESULTS,
+    writeOutput: true,
+    dryRun: false
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === '--dry-run') {
+      options.dryRun = true;
+      continue;
+    }
+    if (arg === '--no-output') {
+      options.writeOutput = false;
+      continue;
+    }
+    const nextValue = () => {
+      const value = argv[index + 1];
+      if (!value || value.startsWith('--')) throw new Error(`Missing value for ${arg}`);
+      index += 1;
+      return value;
+    };
+    if (arg === '--output') {
+      options.output = nextValue();
+    } else if (arg === '--sources') {
+      options.sources = nextValue().split(',').map((value) => value.trim()).filter(Boolean);
+    } else if (arg === '--window-days') {
+      options.windowDays = Number(nextValue());
+    } else if (arg === '--max-results') {
+      options.maxResults = Number(nextValue());
+    } else {
+      throw new Error(`Unknown argument: ${arg}`);
+    }
+  }
+
+  const validSources = new Set(DEFAULT_SOURCES);
+  const invalidSources = options.sources.filter((source) => !validSources.has(source));
+  if (options.sources.length === 0 || invalidSources.length > 0) {
+    throw new Error(`Unsupported oil-news source(s): ${invalidSources.join(', ') || '(none)'}`);
+  }
+  if (!Number.isInteger(options.windowDays) || options.windowDays < 1 || options.windowDays > 31) {
+    throw new Error('Invalid --window-days. Expected integer 1..31.');
+  }
+  if (!Number.isInteger(options.maxResults) || options.maxResults < 1 || options.maxResults > 20) {
+    throw new Error('Invalid --max-results. Expected integer 1..20 for production compact watch.');
+  }
+  if (options.writeOutput && !resolve(options.output).endsWith(resolve(DEFAULT_OUTPUT))) {
+    throw new Error(`Refusing to write production oil-news artifact outside ${DEFAULT_OUTPUT}`);
+  }
+  return options;
+}
+
+function mapSourceStatus(status) {
+  return ({
+    ok: 'live',
+    partial: 'partial',
+    error: 'error',
+    not_configured: 'not_configured',
+    dry_run: 'dry_run'
+  })[status] || 'error';
+}
+
+function statusFromSources({ dryRun, sourceResults, liveSourceCount }) {
+  if (dryRun) return 'dry_run';
+  if (liveSourceCount === 0) return 'source_unavailable';
+  const configuredSources = sourceResults.filter((source) => source.status !== 'not_configured');
+  if (configuredSources.length === 0) return 'not_configured';
+  const fullLive = sourceResults.every((source) => source.status === 'ok');
+  return fullLive ? 'ok' : 'partial';
+}
+
+function displayStatusZh(status, signalState) {
+  if (status === 'dry_run') return 'Dry run';
+  if (status === 'source_unavailable') return '源暂不可用';
+  if (status === 'not_configured') return '待配置新闻源';
+  return ({
+    elevated_manual_review: '事件升高待核',
+    watch: '观察',
+    quiet: '未见直接压力',
+    source_unavailable: '源暂不可用'
+  })[signalState] || '观察层已接入';
+}
+
+function compactArticle(article) {
+  return {
+    title: typeof article.title === 'string' ? article.title : null,
+    url: typeof article.url === 'string' ? article.url : null,
+    domain: typeof article.domain === 'string' ? article.domain : null,
+    publishedAt: typeof article.publishedAt === 'string' ? article.publishedAt : null,
+    sources: Array.isArray(article.sources) ? article.sources.filter(Boolean) : [],
+    buckets: Array.isArray(article.buckets) ? article.buckets.filter(Boolean) : [],
+    queryIds: Array.isArray(article.queryIds) ? article.queryIds.filter(Boolean) : []
+  };
+}
+
+function compactBucket(bucket) {
+  return {
+    labelZh: bucket.labelZh,
+    articleCount: bucket.articleCount,
+    sourceCount: bucket.sourceCount,
+    weightedSignal: Number.isFinite(bucket.weightedScore) ? bucket.weightedScore : 0,
+    topArticles: Array.isArray(bucket.topArticles) ? bucket.topArticles.slice(0, 3).map(compactArticle) : []
+  };
+}
+
+function latestArticleAt(articles) {
+  const dates = articles
+    .map((article) => article.publishedAt)
+    .filter((value) => typeof value === 'string' && !Number.isNaN(Date.parse(value)))
+    .sort();
+  return dates.length ? dates[dates.length - 1] : null;
+}
+
+function ageHours(iso, generatedAt) {
+  if (!iso) return null;
+  const then = Date.parse(iso);
+  const now = Date.parse(generatedAt);
+  if (Number.isNaN(then) || Number.isNaN(now)) return null;
+  return Math.max(0, Math.round(((now - then) / 3600000) * 10) / 10);
+}
+
+function buildSourceStatus(sourceResults, diagnosis) {
+  const sanitizeError = (value) => {
+    if (!value) return null;
+    const text = String(value);
+    if (/API_KEYS?|Subscription-Token|Authorization|Bearer/iu.test(text)) return 'api_key_not_configured';
+    return text.slice(0, 160);
+  };
+  const bySource = Object.fromEntries(sourceResults.map((result) => [
+    result.source,
+    {
+      status: mapSourceStatus(result.status),
+      networkUsed: result.networkUsed === true,
+      successCount: Number.isFinite(result.successCount) ? result.successCount : 0,
+      failureCount: Number.isFinite(result.failureCount) ? result.failureCount : 0,
+      articleCount: Number.isFinite(result.articleCount) ? result.articleCount : 0,
+      queryRuns: Array.isArray(result.queryRuns)
+        ? result.queryRuns.map((query) => ({
+            queryId: query.queryId,
+            label: query.label,
+            status: query.status,
+            articleCount: Number.isFinite(query.articleCount) ? query.articleCount : 0,
+            error: sanitizeError(query.error)
+          }))
+        : []
+    }
+  ]));
+  return {
+    gdeltDoc: bySource.gdelt_doc?.status || 'not_queried',
+    tavily: bySource.tavily?.status || 'not_queried',
+    brave: bySource.brave?.status || 'not_queried',
+    tavilyKey: diagnosis.keyStatus?.tavily?.configured ? 'configured' : 'missing',
+    braveKey: diagnosis.keyStatus?.brave?.configured ? 'configured' : 'missing',
+    details: bySource
+  };
+}
+
+function productionImpact() {
+  return {
+    affectsValues: false,
+    affectsScoring: false,
+    affectsDecisionModel: false,
+    affectsExecutionLock: false,
+    affectsPositionGuidance: false,
+    affectsBrentPromotion: false,
+    affectsOdpFinalBias: false,
+    affectsGlobalRiskHeatmap: false,
+    affectsCrossValidation: false
+  };
+}
+
+function assertSanitized(artifact) {
+  const serialized = JSON.stringify(artifact);
+  const forbidden = [
+    'TAVILY_API_KEY',
+    'TAVILY_API_KEYS',
+    'BRAVE_API_KEY',
+    'BRAVE_API_KEYS',
+    'Authorization',
+    'X-Subscription-Token',
+    'Bearer ',
+    '"snippet"',
+    '"raw"',
+    '"body"'
+  ];
+  for (const needle of forbidden) {
+    if (serialized.includes(needle)) {
+      throw new Error(`Production oil-news artifact contains forbidden marker: ${needle}`);
+    }
+  }
+}
+
+function buildProductionArtifact(options, diagnosis) {
+  const generatedAt = new Date().toISOString();
+  const sourceResults = diagnosis.sourceResults || [];
+  const sourceStatus = buildSourceStatus(sourceResults, diagnosis);
+  const liveSourceCount = diagnosis.aggregate?.liveSourceCount ?? 0;
+  const status = statusFromSources({ dryRun: options.dryRun, sourceResults, liveSourceCount });
+  const signalState = options.dryRun ? 'dry_run' : (diagnosis.aggregate?.state || 'source_unavailable');
+  const topArticles = Array.isArray(diagnosis.topArticles)
+    ? diagnosis.topArticles.slice(0, 12).map(compactArticle)
+    : [];
+  const latestAt = latestArticleAt(topArticles);
+  const buckets = Object.fromEntries(Object.entries(diagnosis.buckets || {}).map(([key, bucket]) => [
+    key,
+    compactBucket(bucket)
+  ]));
+  const queryCount = sourceResults.reduce((sum, source) => sum + (Array.isArray(source.queryRuns) ? source.queryRuns.length : 0), 0);
+  const querySuccessCount = sourceResults.reduce((sum, source) => sum + (Number.isFinite(source.successCount) ? source.successCount : 0), 0);
+  const queryFailureCount = sourceResults.reduce((sum, source) => sum + (Number.isFinite(source.failureCount) ? source.failureCount : 0), 0);
+  const reasonZh = signalState === 'source_unavailable'
+    ? '新闻源本轮未返回可用结果,生产观察层保持 fail-closed,不推断油价事件压力。'
+    : (diagnosis.aggregate?.reasonZh || '新闻事件观察暂不可用。');
+
+  const artifact = {
+    schemaVersion: SCHEMA_VERSION,
+    module: MODULE,
+    generatedAt,
+    sourceKey: 'odp_oil_news_event_watch',
+    source: 'GDELT DOC public search + Tavily Search API + Brave News Search API',
+    sources: options.sources,
+    status,
+    signalState,
+    displayStatusZh: displayStatusZh(status, signalState),
+    sourceStatus,
+    freshness: {
+      windowDays: options.windowDays,
+      latestArticleAt: latestAt,
+      latestArticleAgeHours: ageHours(latestAt, generatedAt),
+      cadenceZh: '约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声'
+    },
+    queryCoverage: {
+      querySetVersion: 'odp-oil-news-query-set-p28',
+      queryCount,
+      querySuccessCount,
+      queryFailureCount,
+      topics: QUERY_SET.map((query) => ({
+        id: query.id,
+        label: query.label,
+        buckets: query.buckets
+      }))
+    },
+    aggregate: {
+      rawArticleCount: diagnosis.aggregate?.rawArticleCount ?? 0,
+      uniqueArticleCount: diagnosis.aggregate?.uniqueArticleCount ?? 0,
+      liveSourceCount,
+      configuredSourceCount: sourceResults.filter((source) => source.status !== 'not_configured').length,
+      bucketCountWithHits: diagnosis.aggregate?.bucketCountWithHits ?? 0,
+      confidence: diagnosis.aggregate?.confidence || 'none',
+      reasonZh
+    },
+    buckets,
+    topArticles,
+    recommendation: {
+      state: signalState,
+      operatorAction: signalState === 'elevated_manual_review'
+        ? 'manual_review_before_interpretation'
+        : 'display_only_cross_check',
+      noteZh: signalState === 'elevated_manual_review'
+        ? '多源新闻代理出现同类油价事件信号,需要人工核对标题、来源、时间和市场/物理层印证。'
+        : '新闻层仅作为事件背景观察,需与价格结构、库存/供需锚点、咽喉转运和卫星/设施事件交叉观察。'
+    },
+    productionDisplayApproved: true,
+    promotionEligible: false,
+    productionImpact: productionImpact(),
+    limitationsZh: [
+      '新闻搜索结果会重复转载、标题党化或延迟收录;本文件只保存 compact 摘要,不保存原始新闻正文。',
+      '本层不确认霍尔木兹关闭、航道中断、油轮流向、炼厂事故、断供、制裁影响或油价方向。',
+      '只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施层同时印证时,才适合提高人工观察置信度。'
+    ],
+    boundary: BOUNDARY
+  };
+  assertSanitized(artifact);
+  return artifact;
+}
+
+function writeJson(path, payload) {
+  const absolutePath = resolve(path);
+  mkdirSync(dirname(absolutePath), { recursive: true });
+  writeFileSync(absolutePath, `${JSON.stringify(payload, null, 2)}\n`);
+  return absolutePath;
+}
+
+async function main() {
+  const options = parseArgs(process.argv.slice(2));
+  const diagnosis = await runDiagnosis({
+    allowNetwork: !options.dryRun,
+    sources: options.sources,
+    windowDays: options.windowDays,
+    maxResults: options.maxResults,
+    output: '',
+    writeOutput: false,
+    strict: false,
+    printJson: false
+  });
+  const artifact = buildProductionArtifact(options, diagnosis);
+  const outputPath = options.writeOutput ? writeJson(options.output, artifact) : null;
+  console.log(JSON.stringify({
+    status: artifact.status,
+    signalState: artifact.signalState,
+    sourceStatus: {
+      gdeltDoc: artifact.sourceStatus.gdeltDoc,
+      tavily: artifact.sourceStatus.tavily,
+      brave: artifact.sourceStatus.brave,
+      tavilyKey: artifact.sourceStatus.tavilyKey,
+      braveKey: artifact.sourceStatus.braveKey
+    },
+    aggregate: artifact.aggregate,
+    outputPath,
+    boundary: artifact.boundary
+  }, null, 2));
+}
+
+main().catch((error) => {
+  console.error(`Oil news event watch build failed: ${error.message}`);
+  process.exit(1);
+});

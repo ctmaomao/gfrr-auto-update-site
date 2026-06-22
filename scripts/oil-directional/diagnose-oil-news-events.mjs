@@ -2,6 +2,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
 const DIAGNOSIS_VERSION = 'oil-news-events-diagnosis-p28';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-news/oil-news-events-diagnosis-latest.json';
@@ -304,7 +305,12 @@ function domainFromUrl(url) {
 
 function parseDateToIso(value) {
   if (typeof value !== 'string' || !value.trim()) return null;
-  const time = Date.parse(value);
+  const trimmed = value.trim();
+  const compact = trimmed.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/u);
+  if (compact) {
+    return `${compact[1]}-${compact[2]}-${compact[3]}T${compact[4]}:${compact[5]}:${compact[6]}Z`;
+  }
+  const time = Date.parse(trimmed);
   return Number.isFinite(time) ? new Date(time).toISOString() : null;
 }
 
@@ -861,7 +867,17 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error.stack || error.message);
-  process.exit(1);
-});
+export {
+  BUCKETS,
+  DEFAULT_SOURCES,
+  QUERY_SET,
+  getApiKeyState,
+  runDiagnosis
+};
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error.stack || error.message);
+    process.exit(1);
+  });
+}

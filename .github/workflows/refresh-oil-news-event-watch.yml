@@ -1,0 +1,50 @@
+name: Refresh Oil News Event Watch
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Every 2 hours; news search is faster than official inventory data but noisier.
+    - cron: '37 */2 * * *'
+
+concurrency:
+  group: gfrr-oil-news-event-watch-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          package-manager-cache: false
+
+      - run: npm ci
+
+      - name: Refresh oil news event watch
+        env:
+          TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
+          BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
+        run: npm run build:oil-news-event-watch
+
+      - run: npm run check:oil-news-event-watch
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/oil-news-event-watch.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: refresh oil news event watch"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git push
+          fi

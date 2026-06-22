@@ -81,6 +81,7 @@ const SUITES = {
     'check:oil-directional-score',
     'check:oil-directional-global-overlay',
     'check:oil-news-events-diagnosis',
+    'check:oil-news-event-watch',
     'check:oil-thermal-watch',
     'check:oil-directional-zh-copy',
     'check:firms-facilities-review',

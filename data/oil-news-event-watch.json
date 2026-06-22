@@ -1,0 +1,266 @@
+{
+  "schemaVersion": "oil-news-event-watch-1",
+  "module": "oil-news-event-watch",
+  "generatedAt": "2026-06-22T22:42:34.323Z",
+  "sourceKey": "odp_oil_news_event_watch",
+  "source": "GDELT DOC public search + Tavily Search API + Brave News Search API",
+  "sources": [
+    "gdelt_doc",
+    "tavily",
+    "brave"
+  ],
+  "status": "source_unavailable",
+  "signalState": "source_unavailable",
+  "displayStatusZh": "源暂不可用",
+  "sourceStatus": {
+    "gdeltDoc": "error",
+    "tavily": "not_configured",
+    "brave": "not_configured",
+    "tavilyKey": "missing",
+    "braveKey": "missing",
+    "details": {
+      "gdelt_doc": {
+        "status": "error",
+        "networkUsed": true,
+        "successCount": 0,
+        "failureCount": 4,
+        "articleCount": 0,
+        "queryRuns": [
+          {
+            "queryId": "chokepoint_shipping",
+            "label": "Chokepoint / tanker shipping",
+            "status": "error",
+            "articleCount": 0,
+            "error": "GDELT DOC HTTP 429"
+          },
+          {
+            "queryId": "sanctions_shadow_fleet",
+            "label": "Sanctions / shadow fleet",
+            "status": "error",
+            "articleCount": 0,
+            "error": "GDELT DOC HTTP 429"
+          },
+          {
+            "queryId": "facility_supply_disruption",
+            "label": "Facility / supply disruption",
+            "status": "error",
+            "articleCount": 0,
+            "error": "GDELT DOC HTTP 429"
+          },
+          {
+            "queryId": "market_reaction",
+            "label": "Oil market reaction",
+            "status": "error",
+            "articleCount": 0,
+            "error": "GDELT DOC HTTP 429"
+          }
+        ]
+      },
+      "tavily": {
+        "status": "not_configured",
+        "networkUsed": false,
+        "successCount": 0,
+        "failureCount": 4,
+        "articleCount": 0,
+        "queryRuns": [
+          {
+            "queryId": "chokepoint_shipping",
+            "label": "Chokepoint / tanker shipping",
+            "status": "skipped",
+            "articleCount": 0,
+            "error": "api_key_not_configured"
+          },
+          {
+            "queryId": "sanctions_shadow_fleet",
+            "label": "Sanctions / shadow fleet",
+            "status": "skipped",
+            "articleCount": 0,
+            "error": "api_key_not_configured"
+          },
+          {
+            "queryId": "facility_supply_disruption",
+            "label": "Facility / supply disruption",
+            "status": "skipped",
+            "articleCount": 0,
+            "error": "api_key_not_configured"
+          },
+          {
+            "queryId": "market_reaction",
+            "label": "Oil market reaction",
+            "status": "skipped",
+            "articleCount": 0,
+            "error": "api_key_not_configured"
+          }
+        ]
+      },
+      "brave": {
+        "status": "not_configured",
+        "networkUsed": false,
+        "successCount": 0,
+        "failureCount": 4,
+        "articleCount": 0,
+        "queryRuns": [
+          {
+            "queryId": "chokepoint_shipping",
+            "label": "Chokepoint / tanker shipping",
+            "status": "skipped",
+            "articleCount": 0,
+            "error": "api_key_not_configured"
+          },
+          {
+            "queryId": "sanctions_shadow_fleet",
+            "label": "Sanctions / shadow fleet",
+            "status": "skipped",
+            "articleCount": 0,
+            "error": "api_key_not_configured"
+          },
+          {
+            "queryId": "facility_supply_disruption",
+            "label": "Facility / supply disruption",
+            "status": "skipped",
+            "articleCount": 0,
+            "error": "api_key_not_configured"
+          },
+          {
+            "queryId": "market_reaction",
+            "label": "Oil market reaction",
+            "status": "skipped",
+            "articleCount": 0,
+            "error": "api_key_not_configured"
+          }
+        ]
+      }
+    }
+  },
+  "freshness": {
+    "windowDays": 7,
+    "latestArticleAt": null,
+    "latestArticleAgeHours": null,
+    "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
+  },
+  "queryCoverage": {
+    "querySetVersion": "odp-oil-news-query-set-p28",
+    "queryCount": 12,
+    "querySuccessCount": 0,
+    "queryFailureCount": 12,
+    "topics": [
+      {
+        "id": "chokepoint_shipping",
+        "label": "Chokepoint / tanker shipping",
+        "buckets": [
+          "chokepoint",
+          "tanker_shipping",
+          "middle_east_risk"
+        ]
+      },
+      {
+        "id": "sanctions_shadow_fleet",
+        "label": "Sanctions / shadow fleet",
+        "buckets": [
+          "sanctions",
+          "tanker_shipping"
+        ]
+      },
+      {
+        "id": "facility_supply_disruption",
+        "label": "Facility / supply disruption",
+        "buckets": [
+          "supply_disruption",
+          "facility_event"
+        ]
+      },
+      {
+        "id": "market_reaction",
+        "label": "Oil market reaction",
+        "buckets": [
+          "market_reaction"
+        ]
+      }
+    ]
+  },
+  "aggregate": {
+    "rawArticleCount": 0,
+    "uniqueArticleCount": 0,
+    "liveSourceCount": 0,
+    "configuredSourceCount": 1,
+    "bucketCountWithHits": 0,
+    "confidence": "none",
+    "reasonZh": "新闻源本轮未返回可用结果,生产观察层保持 fail-closed,不推断油价事件压力。"
+  },
+  "buckets": {
+    "chokepoint": {
+      "labelZh": "通道/咽喉",
+      "articleCount": 0,
+      "sourceCount": 0,
+      "weightedSignal": 0,
+      "topArticles": []
+    },
+    "sanctions": {
+      "labelZh": "制裁/禁运",
+      "articleCount": 0,
+      "sourceCount": 0,
+      "weightedSignal": 0,
+      "topArticles": []
+    },
+    "supply_disruption": {
+      "labelZh": "供应中断",
+      "articleCount": 0,
+      "sourceCount": 0,
+      "weightedSignal": 0,
+      "topArticles": []
+    },
+    "facility_event": {
+      "labelZh": "设施事件",
+      "articleCount": 0,
+      "sourceCount": 0,
+      "weightedSignal": 0,
+      "topArticles": []
+    },
+    "tanker_shipping": {
+      "labelZh": "油轮/航运",
+      "articleCount": 0,
+      "sourceCount": 0,
+      "weightedSignal": 0,
+      "topArticles": []
+    },
+    "middle_east_risk": {
+      "labelZh": "中东风险",
+      "articleCount": 0,
+      "sourceCount": 0,
+      "weightedSignal": 0,
+      "topArticles": []
+    },
+    "market_reaction": {
+      "labelZh": "市场反应",
+      "articleCount": 0,
+      "sourceCount": 0,
+      "weightedSignal": 0,
+      "topArticles": []
+    }
+  },
+  "topArticles": [],
+  "recommendation": {
+    "state": "source_unavailable",
+    "operatorAction": "display_only_cross_check",
+    "noteZh": "新闻层仅作为事件背景观察,需与价格结构、库存/供需锚点、咽喉转运和卫星/设施事件交叉观察。"
+  },
+  "productionDisplayApproved": true,
+  "promotionEligible": false,
+  "productionImpact": {
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "limitationsZh": [
+    "新闻搜索结果会重复转载、标题党化或延迟收录;本文件只保存 compact 摘要,不保存原始新闻正文。",
+    "本层不确认霍尔木兹关闭、航道中断、油轮流向、炼厂事故、断供、制裁影响或油价方向。",
+    "只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施层同时印证时,才适合提高人工观察置信度。"
+  ],
+  "boundary": "production read-only ODP oil-news event watch; display-only/audit-only; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}

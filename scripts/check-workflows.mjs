@@ -197,6 +197,36 @@ const contracts = [
       'data/oil-directional-pressure.json',
       'realtime/market.json'
     ]
+  },
+  {
+    file: '.github/workflows/refresh-oil-news-event-watch.yml',
+    required: [
+      'name: Refresh Oil News Event Watch',
+      'workflow_dispatch',
+      "cron: '37 */2 * * *'",
+      'permissions:',
+      'contents: write',
+      'concurrency',
+      'gfrr-oil-news-event-watch',
+      'actions/checkout@v6',
+      'actions/setup-node@v6',
+      'node-version: 24',
+      'package-manager-cache: false',
+      'TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}',
+      'BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}',
+      'npm run build:oil-news-event-watch',
+      'npm run check:oil-news-event-watch',
+      'data/oil-news-event-watch.json',
+      'chore: refresh oil news event watch',
+      'git pull --rebase origin "${GITHUB_REF_NAME}"'
+    ],
+    forbidden: [
+      'npm run build:data',
+      'scripts/run-daily-pipeline.mjs',
+      'data/radar-data.json',
+      'data/oil-directional-pressure.json',
+      'realtime/market.json'
+    ]
   }
 ];
 

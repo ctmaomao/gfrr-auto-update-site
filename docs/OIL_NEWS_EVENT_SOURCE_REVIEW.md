@@ -1,7 +1,9 @@
 # Oil News Event Source Review — ODP manual diagnosis
 
-Status: P28 adds a manual-only oil-news event diagnosis helper. It is a research
-and source-health artifact, not a production ODP input and not a market forecast.
+Status: P28 added a manual-only oil-news event diagnosis helper. P29 promotes the
+same source set into a production read-only display artifact. Both layers remain
+outside ODP scoring, `finalBias`, decision, execution, position, Brent promotion,
+Global Risk Heatmap, and cross-validation.
 
 ## Candidate Sources
 
@@ -51,6 +53,41 @@ The helper writes only:
 manual-artifacts/oil-news/oil-news-events-diagnosis-latest.json
 ```
 
+## Production Display-Only Watch
+
+P29 adds:
+
+```text
+scripts/oil-directional/build-oil-news-event-watch.mjs
+scripts/check-oil-news-event-watch-contract.mjs
+data/oil-news-event-watch.json
+.github/workflows/refresh-oil-news-event-watch.yml
+npm run build:oil-news-event-watch
+npm run check:oil-news-event-watch
+```
+
+The workflow runs every 2 hours and by manual dispatch. It uses GDELT DOC public
+search without a key and injects GitHub Secrets for:
+
+```text
+TAVILY_API_KEYS
+BRAVE_API_KEYS
+```
+
+The production artifact is sanitized:
+
+- no API keys, Authorization headers, raw provider response, snippets, body text,
+  or full article text;
+- compact source status, query status, bucket summaries, and top article
+  title/url/domain/publishedAt/source ids only;
+- `productionDisplayApproved=true`, `promotionEligible=false`, and all
+  `productionImpact.*=false`.
+
+Frontend ODP `NEWS EVENT WATCH` reads `data/oil-news-event-watch.json`. If that
+file is unavailable, the renderer can fall back to the older P10 World Order
+GDELT broad-event summary, but the production path is now the dedicated oil-news
+artifact.
+
 ## Query Buckets
 
 The initial query set intentionally focuses on ODP-relevant events:
@@ -73,6 +110,15 @@ P28 does not:
 - write `data/*.json` or `realtime/*.json`;
 - add a scheduled workflow;
 - modify frontend display;
+- change ODP classifier, `finalBias`, global overlay, values, scoring, decision,
+  execution, position, Brent promotion, Global Risk Heatmap, or cross-validation;
+- confirm Hormuz closure, tanker-flow disruption, refinery outage, supply
+  interruption, sanctions impact, or oil-price direction.
+
+P29 does not:
+
+- write `data/oil-directional-pressure.json`, `data/radar-data.json`, or
+  `realtime/*.json`;
 - change ODP classifier, `finalBias`, global overlay, values, scoring, decision,
   execution, position, Brent promotion, Global Risk Heatmap, or cross-validation;
 - confirm Hormuz closure, tanker-flow disruption, refinery outage, supply

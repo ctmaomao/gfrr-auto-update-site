@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-thermal-baseline-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-oil-news-watch-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

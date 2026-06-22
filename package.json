@@ -12,6 +12,7 @@
     "build:bubble-watch": "node scripts/build-bubble-watch.mjs",
     "build:oil-directional": "node scripts/oil-directional/build-oil-directional-pressure.mjs",
     "build:oil-thermal-watch": "node scripts/oil-directional/build-oil-thermal-watch.mjs",
+    "build:oil-news-event-watch": "node scripts/oil-directional/build-oil-news-event-watch.mjs",
     "build:oil-directional-history": "node scripts/oil-directional/build-oil-directional-history.mjs",
     "backtest:oil-directional": "node scripts/oil-directional/backtest-oil-directional.mjs",
     "write:external-ai-production": "node scripts/write-external-ai-production-data.mjs",
@@ -158,6 +159,7 @@
     "check:oil-directional-backtest": "node --check scripts/check-oil-directional-backtest.mjs && node scripts/check-oil-directional-backtest.mjs",
     "check:oil-directional-score": "node --check scripts/check-oil-directional-score.mjs && node scripts/check-oil-directional-score.mjs",
     "check:oil-directional-global-overlay": "node --check scripts/oil-directional/replay-global-overlay.mjs && node --check scripts/check-oil-directional-global-overlay.mjs && node scripts/check-oil-directional-global-overlay.mjs",
+    "check:oil-news-event-watch": "node --check scripts/oil-directional/build-oil-news-event-watch.mjs && node --check scripts/check-oil-news-event-watch-contract.mjs && node scripts/check-oil-news-event-watch-contract.mjs",
     "check:oil-thermal-watch": "node --check scripts/oil-directional/build-oil-thermal-watch.mjs && node --check scripts/check-oil-thermal-watch-contract.mjs && node scripts/check-oil-thermal-watch-contract.mjs",
     "check:oil-directional-zh-copy": "node --check scripts/check-oil-directional-zh-copy.mjs && node scripts/check-oil-directional-zh-copy.mjs"
   },

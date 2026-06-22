@@ -7,12 +7,13 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'odp-thermal-baseline-1';
+const APP_VERSION = 'odp-oil-news-watch-1';
 const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
 const OIL_DIRECTIONAL_URL = `./data/oil-directional-pressure.json?v=${APP_VERSION}`;
 const OIL_THERMAL_WATCH_URL = `./data/oil-thermal-watch.json?v=${APP_VERSION}`;
+const OIL_NEWS_EVENT_WATCH_URL = `./data/oil-news-event-watch.json?v=${APP_VERSION}`;
 const DATA_LOADING_CLASS = 'gfrr-data-loading';
 const DATA_READY_CLASS = 'gfrr-data-ready';
 const DATA_FAILED_CLASS = 'gfrr-data-failed';
@@ -67,14 +68,15 @@ function normalizeRadarReleaseVersion(radarData) {
 }
 
 async function loadAllData() {
-  // 并行 fetch 6 个 JSON 文件
-  const [radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData] = await Promise.all([
+  // 并行 fetch 7 个 JSON 文件
+  const [radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData, oilNewsEventWatchData] = await Promise.all([
     fetchJson(dataUrl, 'radar-data.json'),
     fetchJson(worldOrderStressUrl, 'world-order-stress.json'),
     fetchJson(MARKET_PRICING_METRICS_URL, 'market-pricing-metrics.json'),
     fetchJson(RADAR_HISTORY_URL, 'radar-history.json'),
     fetchJson(OIL_DIRECTIONAL_URL, 'oil-directional-pressure.json'),
     fetchJson(OIL_THERMAL_WATCH_URL, 'oil-thermal-watch.json'),
+    fetchJson(OIL_NEWS_EVENT_WATCH_URL, 'oil-news-event-watch.json'),
   ]);
 
   if (!radarData) {
@@ -95,6 +97,9 @@ async function loadAllData() {
   if (!oilThermalWatchData) {
     console.error('[app] WARN: oil-thermal-watch.json failed to load. Satellite thermal watch will use fallback.');
   }
+  if (!oilNewsEventWatchData) {
+    console.error('[app] WARN: oil-news-event-watch.json failed to load. Oil news event watch will use fallback.');
+  }
 
   return {
     radarData: normalizeRadarReleaseVersion(radarData),
@@ -103,6 +108,7 @@ async function loadAllData() {
     radarHistoryData,
     oilDirectionalData,
     oilThermalWatchData,
+    oilNewsEventWatchData,
   };
 }
 
@@ -176,15 +182,15 @@ function markDataUnavailable() {
   }
 }
 
-function allRenderableDataPresent({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData }) {
-  return Boolean(radarData && worldOrderStressData && marketPricingMetricsData && radarHistoryData && oilDirectionalData && oilThermalWatchData);
+function allRenderableDataPresent({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData, oilNewsEventWatchData }) {
+  return Boolean(radarData && worldOrderStressData && marketPricingMetricsData && radarHistoryData && oilDirectionalData && oilThermalWatchData && oilNewsEventWatchData);
 }
 
 // ---------------- 主入口 ----------------
 
 async function main() {
-  const { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData } = await loadAllData();
-  const dataReady = allRenderableDataPresent({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData });
+  const { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData, oilNewsEventWatchData } = await loadAllData();
+  const dataReady = allRenderableDataPresent({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData, oilNewsEventWatchData });
 
   // Stage 4a: 填充 issue-meta
   const issueMeta = deriveIssueMeta(radarData);
@@ -193,7 +199,7 @@ async function main() {
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=odp-thermal-baseline-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=odp-oil-news-watch-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
     macroOverviewRendered = true;
   } catch (error) {
@@ -204,7 +210,7 @@ async function main() {
   let oilDirectionalRendered = false;
   try {
     const { renderOilDirectional } = await import(`./modules/renderOilDirectional.js?v=${APP_VERSION}`);
-    renderOilDirectional({ oilData: oilDirectionalData, radarData, worldOrderStressData, oilThermalWatchData });
+    renderOilDirectional({ oilData: oilDirectionalData, radarData, worldOrderStressData, oilThermalWatchData, oilNewsEventWatchData });
     oilDirectionalRendered = true;
   } catch (error) {
     console.error('[app] Failed to import / run renderOilDirectional:', error);
@@ -224,6 +230,7 @@ async function main() {
     radarHistoryDataPresent: radarHistoryData !== null,
     oilDirectionalDataPresent: oilDirectionalData !== null,
     oilThermalWatchDataPresent: oilThermalWatchData !== null,
+    oilNewsEventWatchDataPresent: oilNewsEventWatchData !== null,
   });
 }
 

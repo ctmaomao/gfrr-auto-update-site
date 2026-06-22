@@ -737,7 +737,7 @@ function uniqueEventRegions(values) {
   }
   return out;
 }
-function renderOilEventNewsLayer(worldOrderStressData) {
+function renderLegacyOilEventNewsLayer(worldOrderStressData) {
   const gdelt = worldOrderStressData?.externalSources?.gdelt || {};
   const summary = gdelt.summary && typeof gdelt.summary === 'object' ? gdelt.summary : {};
   const status = typeof gdelt.status === 'string' ? gdelt.status : '';
@@ -790,6 +790,77 @@ function renderOilEventNewsLayer(worldOrderStressData) {
   setLeafText('odp-news-event-sanctions', `制裁 ${sanctionsEvents} / 通道 ${chokepointEvents}`);
   setLeafText('odp-news-event-market', marketText);
   setLeafText('odp-news-event-note', `本层复用已有 GDELT 广义新闻事件摘要,用于提示油价相关地缘背景是否需要观察;它不是 ODP 专用新闻 API,也不确认霍尔木兹通道中断、断供或船舶级流向。${eventContext}${directContext}后续只有与价格结构、咽喉转运、库存/供需锚点和卫星/设施事件同时印证时,才提高事件观察置信度。`);
+}
+function newsEventTone(data) {
+  if (!data || typeof data !== 'object') return '';
+  if (data.signalState === 'elevated_manual_review') return 'red';
+  if (data.signalState === 'watch' || data.status === 'partial' || data.status === 'source_unavailable') return 'yellow';
+  if (data.signalState === 'quiet' || data.status === 'ok') return 'green';
+  return '';
+}
+function newsBucketCount(data, key) {
+  const value = data?.buckets?.[key]?.articleCount;
+  return Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+}
+function newsSourceText(data) {
+  const status = data?.sourceStatus || {};
+  const label = {
+    live: 'live',
+    partial: 'partial',
+    error: 'error',
+    not_configured: '未配置',
+    not_queried: '未查询',
+    dry_run: 'dry-run',
+  };
+  return [
+    `GDELT ${label[status.gdeltDoc] || '—'}`,
+    `Tavily ${label[status.tavily] || '—'}`,
+    `Brave ${label[status.brave] || '—'}`,
+  ].join(' / ');
+}
+function newsWindowText(data) {
+  const freshness = data?.freshness || {};
+  const windowDays = Number.isFinite(freshness.windowDays) ? `${freshness.windowDays}天窗` : '窗口待核';
+  const latest = formatUtcMinute(freshness.latestArticleAt);
+  const generated = formatUtcMinute(data?.generatedAt);
+  const age = Number.isFinite(freshness.latestArticleAgeHours) ? ` · ${freshness.latestArticleAgeHours}小时龄` : '';
+  return `${windowDays} · ${latest || generated || '—'}${age}`;
+}
+function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
+  const data = oilNewsEventWatchData && oilNewsEventWatchData.schemaVersion === 'oil-news-event-watch-1'
+    ? oilNewsEventWatchData
+    : null;
+  if (!data) {
+    renderLegacyOilEventNewsLayer(worldOrderStressData);
+    return;
+  }
+
+  const chokepoint = newsBucketCount(data, 'chokepoint');
+  const supply = newsBucketCount(data, 'supply_disruption');
+  const facility = newsBucketCount(data, 'facility_event');
+  const sanctions = newsBucketCount(data, 'sanctions');
+  const shipping = newsBucketCount(data, 'tanker_shipping');
+  const middleEast = newsBucketCount(data, 'middle_east_risk');
+  const marketReaction = newsBucketCount(data, 'market_reaction');
+  const confidence = data.aggregate?.confidence || 'none';
+  const unique = Number.isFinite(data.aggregate?.uniqueArticleCount) ? Math.round(data.aggregate.uniqueArticleCount) : 0;
+  const liveSources = Number.isFinite(data.aggregate?.liveSourceCount) ? Math.round(data.aggregate.liveSourceCount) : 0;
+  const marketInput = worldOrderStressData?.marketConfirmationInput || {};
+  const marketBrent = firstNumber(marketInput.brent);
+  const marketAge = Number.isFinite(marketInput.ageMinutes) ? ` · ${Math.round(marketInput.ageMinutes)} 分钟龄` : '';
+  const marketAt = marketAge || (formatUtcMinute(marketInput.updatedAt) ? ` · ${formatUtcMinute(marketInput.updatedAt)}` : '');
+  const brentText = Number.isFinite(marketBrent)
+    ? `Brent ${formatUsd(marketBrent)}${marketAt}`
+    : 'Brent 市场确认暂不可用';
+  const stateText = data.displayStatusZh || '观察层已接入';
+
+  setLeafText('odp-news-event-status', stateText);
+  setToneClass('odp-news-event-status', 'odp-news-event-status', newsEventTone(data));
+  setLeafText('odp-news-event-window', `${newsWindowText(data)} · ${unique} 条专用报道代理`);
+  setLeafText('odp-news-event-conflict', `通道 ${chokepoint} / 供应 ${supply} / 设施 ${facility} · 中东 ${middleEast}`);
+  setLeafText('odp-news-event-sanctions', `制裁 ${sanctions} / 航运 ${shipping} · ${liveSources}/${data.sources?.length || 0} 源 · ${newsSourceText(data)}`);
+  setLeafText('odp-news-event-market', `市场反应 ${marketReaction} 条 · ${brentText}`);
+  setLeafText('odp-news-event-note', `${data.aggregate?.reasonZh || '专用油价新闻层暂不可用。'}本区读取 production read-only oil-news event watch(GDELT/Tavily/Brave),置信度 ${confidence};它不确认霍尔木兹关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施事件同时印证时,才适合提高人工观察置信度。`);
 }
 function thermalTone(data) {
   if (!data || typeof data !== 'object') return '';
@@ -989,14 +1060,14 @@ function renderEnergyTransport(transport) {
   setLeafText('odp-energy-transport-note', 'PortWatch 是 AIS 派生咽喉代理,可帮助观察霍尔木兹、苏伊士/曼德与好望角偏离;但本站未接 Kpler 或船舶级暗航行源,不能确认油轮关 AIS、科威特库存变化、封锁或真实油轮流量。');
   renderTransportCore(transport);
 }
-function renderEnergyAddendum(radarData, worldOrderStressData, oilData, oilThermalWatchData) {
+function renderEnergyAddendum(radarData, worldOrderStressData, oilData, oilThermalWatchData, oilNewsEventWatchData) {
   clearEnergyAddendum();
   const macroDrivers = radarData && radarData.macroDrivers ? radarData.macroDrivers : {};
   renderBrentBasisCheck(radarData, worldOrderStressData);
   renderPulseFactorCheck(oilData, radarData, worldOrderStressData);
   renderGlobalForecastGap(oilData, radarData);
   renderGlobalOverlay(oilData, radarData);
-  renderOilEventNewsLayer(worldOrderStressData);
+  renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData);
   renderSatelliteThermalWatch(oilThermalWatchData);
   renderDataQcLedger(oilData, radarData, worldOrderStressData);
   renderSpareCapacity(macroDrivers.energySpareCapacity);
@@ -1156,8 +1227,8 @@ function renderEvidenceList(ev) {
   host.replaceChildren(...groups);
 }
 
-export function renderOilDirectional({ oilData, radarData, worldOrderStressData, oilThermalWatchData }) {
-  renderEnergyAddendum(radarData, worldOrderStressData, oilData, oilThermalWatchData);
+export function renderOilDirectional({ oilData, radarData, worldOrderStressData, oilThermalWatchData, oilNewsEventWatchData }) {
+  renderEnergyAddendum(radarData, worldOrderStressData, oilData, oilThermalWatchData, oilNewsEventWatchData);
 
   if (!oilData || typeof oilData !== 'object') {
     setLeafText('odp-verdict', '数据不可用');
