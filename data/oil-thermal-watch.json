@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "oil-thermal-watch-1",
+  "module": "oil-thermal-watch",
+  "generatedAt": "2026-06-22T19:37:25.315Z",
+  "source": "NASA FIRMS Area API",
+  "sources": [
+    "VIIRS_SNPP_NRT",
+    "VIIRS_NOAA20_NRT",
+    "VIIRS_NOAA21_NRT"
+  ],
+  "status": "not_configured",
+  "signalState": "facility_whitelist_missing",
+  "displayStatusZh": "待设施白名单",
+  "sourceStatus": {
+    "mapKey": "configured",
+    "firms": "not_queried",
+    "facilities": "missing"
+  },
+  "freshness": {
+    "windowDays": 1,
+    "latestAcqAt": null,
+    "latestAgeHours": null,
+    "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
+  },
+  "facilityCoverage": {
+    "configPath": "config/oil-thermal-watch-facilities.json",
+    "configSchemaVersion": "oil-thermal-facilities-production-v1",
+    "whitelistStatus": "missing",
+    "facilityCount": 0,
+    "regions": [],
+    "assetTypes": [],
+    "requestCount": 0,
+    "requestBudget": {
+      "sourceCount": 3,
+      "sources": [
+        "VIIRS_SNPP_NRT",
+        "VIIRS_NOAA20_NRT",
+        "VIIRS_NOAA21_NRT"
+      ],
+      "maxFacilitiesPerRun": 50,
+      "maxRequestsPerRun": 150,
+      "maxFacilityBboxSpanDegrees": 1.5
+    },
+    "notes": [
+      "Production whitelist intentionally starts empty. Add operator-reviewed public refinery/terminal bbox rows in a later reviewed PR.",
+      "Facility bbox rows must be small boxes and must include sourceNote. This config never stores MAP_KEY."
+    ]
+  },
+  "aggregate": {
+    "rowCount": 0,
+    "latestAcqAt": null,
+    "maxFrp": null,
+    "confidenceCounts": {},
+    "highConfidenceCount": 0,
+    "frpOver50Count": 0,
+    "frpOver100Count": 0,
+    "dayNightCounts": {},
+    "facilityCount": 0,
+    "facilitiesWithDetections": 0,
+    "requestCount": 0,
+    "requestErrorCount": 0,
+    "baselineStatus": "not_established",
+    "facilitiesByAnomalyLevel": {}
+  },
+  "facilities": [],
+  "productionImpact": {
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundary": "production read-only satellite thermal watch; display-only/audit-only; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
+  "limitationsZh": [
+    "FIRMS/VIIRS 是热异常和火点代理,不是炼厂事故、停产、断供或油价方向确认。",
+    "生产展示只保留设施级聚合摘要,不保存 MAP_KEY、raw URL 或原始火点明细。",
+    "历史基线尚未建立前,任何热异常计数都只能作为人工复核观察。"
+  ]
+}

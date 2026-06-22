@@ -168,6 +168,35 @@ const contracts = [
       'scripts/run-daily-pipeline.mjs',
       'data/radar-data.json'
     ]
+  },
+  {
+    file: '.github/workflows/refresh-oil-thermal-watch.yml',
+    required: [
+      'name: Refresh Oil Thermal Watch',
+      'workflow_dispatch',
+      "cron: '17 */3 * * *'",
+      'permissions:',
+      'contents: write',
+      'concurrency',
+      'gfrr-oil-thermal-watch',
+      'actions/checkout@v6',
+      'actions/setup-node@v6',
+      'node-version: 24',
+      'package-manager-cache: false',
+      'FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}',
+      'npm run build:oil-thermal-watch',
+      'npm run check:oil-thermal-watch',
+      'data/oil-thermal-watch.json',
+      'chore: refresh oil thermal watch',
+      'git pull --rebase origin "${GITHUB_REF_NAME}"'
+    ],
+    forbidden: [
+      'npm run build:data',
+      'scripts/run-daily-pipeline.mjs',
+      'data/radar-data.json',
+      'data/oil-directional-pressure.json',
+      'realtime/market.json'
+    ]
   }
 ];
 

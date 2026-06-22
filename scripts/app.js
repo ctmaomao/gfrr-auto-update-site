@@ -7,11 +7,12 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'odp-wti-market-proxy-1';
+const APP_VERSION = 'odp-thermal-watch-shell-1';
 const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
 const OIL_DIRECTIONAL_URL = `./data/oil-directional-pressure.json?v=${APP_VERSION}`;
+const OIL_THERMAL_WATCH_URL = `./data/oil-thermal-watch.json?v=${APP_VERSION}`;
 const DATA_LOADING_CLASS = 'gfrr-data-loading';
 const DATA_READY_CLASS = 'gfrr-data-ready';
 const DATA_FAILED_CLASS = 'gfrr-data-failed';
@@ -66,13 +67,14 @@ function normalizeRadarReleaseVersion(radarData) {
 }
 
 async function loadAllData() {
-  // 并行 fetch 5 个 JSON 文件
-  const [radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData] = await Promise.all([
+  // 并行 fetch 6 个 JSON 文件
+  const [radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData] = await Promise.all([
     fetchJson(dataUrl, 'radar-data.json'),
     fetchJson(worldOrderStressUrl, 'world-order-stress.json'),
     fetchJson(MARKET_PRICING_METRICS_URL, 'market-pricing-metrics.json'),
     fetchJson(RADAR_HISTORY_URL, 'radar-history.json'),
     fetchJson(OIL_DIRECTIONAL_URL, 'oil-directional-pressure.json'),
+    fetchJson(OIL_THERMAL_WATCH_URL, 'oil-thermal-watch.json'),
   ]);
 
   if (!radarData) {
@@ -90,6 +92,9 @@ async function loadAllData() {
   if (!oilDirectionalData) {
     console.error('[app] WARN: oil-directional-pressure.json failed to load. Oil Directional theme will use fallback.');
   }
+  if (!oilThermalWatchData) {
+    console.error('[app] WARN: oil-thermal-watch.json failed to load. Satellite thermal watch will use fallback.');
+  }
 
   return {
     radarData: normalizeRadarReleaseVersion(radarData),
@@ -97,6 +102,7 @@ async function loadAllData() {
     marketPricingMetricsData,
     radarHistoryData,
     oilDirectionalData,
+    oilThermalWatchData,
   };
 }
 
@@ -170,15 +176,15 @@ function markDataUnavailable() {
   }
 }
 
-function allRenderableDataPresent({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData }) {
-  return Boolean(radarData && worldOrderStressData && marketPricingMetricsData && radarHistoryData && oilDirectionalData);
+function allRenderableDataPresent({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData }) {
+  return Boolean(radarData && worldOrderStressData && marketPricingMetricsData && radarHistoryData && oilDirectionalData && oilThermalWatchData);
 }
 
 // ---------------- 主入口 ----------------
 
 async function main() {
-  const { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData } = await loadAllData();
-  const dataReady = allRenderableDataPresent({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
+  const { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData } = await loadAllData();
+  const dataReady = allRenderableDataPresent({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData });
 
   // Stage 4a: 填充 issue-meta
   const issueMeta = deriveIssueMeta(radarData);
@@ -187,7 +193,7 @@ async function main() {
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=odp-wti-market-proxy-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=odp-thermal-watch-shell-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
     macroOverviewRendered = true;
   } catch (error) {
@@ -198,7 +204,7 @@ async function main() {
   let oilDirectionalRendered = false;
   try {
     const { renderOilDirectional } = await import(`./modules/renderOilDirectional.js?v=${APP_VERSION}`);
-    renderOilDirectional({ oilData: oilDirectionalData, radarData, worldOrderStressData });
+    renderOilDirectional({ oilData: oilDirectionalData, radarData, worldOrderStressData, oilThermalWatchData });
     oilDirectionalRendered = true;
   } catch (error) {
     console.error('[app] Failed to import / run renderOilDirectional:', error);
@@ -217,6 +223,7 @@ async function main() {
     marketPricingMetricsDataPresent: marketPricingMetricsData !== null,
     radarHistoryDataPresent: radarHistoryData !== null,
     oilDirectionalDataPresent: oilDirectionalData !== null,
+    oilThermalWatchDataPresent: oilThermalWatchData !== null,
   });
 }
 

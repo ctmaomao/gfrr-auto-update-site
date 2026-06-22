@@ -1,7 +1,9 @@
 # Oil Thermal Anomaly Source Review — NASA FIRMS / VIIRS candidate
 
-Status: P20 source-review + manual diagnostic tooling only. No runtime fetch, no workflow,
-no production data write.
+Status: P22 production read-only observation artifact is implemented, but facility
+coverage is intentionally not yet active. The committed production whitelist starts
+empty, so the website can show the FIRMS layer as wired while still requiring a
+reviewed facility-coordinate PR before any scheduled facility queries.
 
 ## Candidate Source
 
@@ -49,7 +51,7 @@ shipping disruption or oil-price direction.
 
 Allowed first production role:
 
-- `macroDrivers.energyThermalAnomaly` or a standalone ODP-side read-only artifact.
+- Standalone ODP-side read-only artifact: `data/oil-thermal-watch.json`.
 - Display-only / audit-only.
 - Facility-level anomaly count, maximum FRP, and latest observation age.
 - A confidence label based on source freshness, facility whitelist coverage and
@@ -93,7 +95,33 @@ Forbidden role:
 5. UI wording:
    - must say thermal anomaly / hotspot proxy;
    - must not say confirmed refinery accident, confirmed outage, supply interruption,
-     war probability or oil-price forecast.
+   war probability or oil-price forecast.
+
+## P22 Production Read-Only Artifact
+
+P22 adds the first production shell:
+
+```text
+config/oil-thermal-watch-facilities.json
+data/oil-thermal-watch.json
+.github/workflows/refresh-oil-thermal-watch.yml
+npm run build:oil-thermal-watch
+npm run check:oil-thermal-watch
+```
+
+The workflow reads `FIRMS_MAP_KEY` from GitHub Secrets and commits only the compact
+production artifact. It never commits the key, raw FIRMS URLs, or raw fire-point
+rows. The initial committed facility whitelist is intentionally empty, so the
+valid production state is `facility_whitelist_missing`: the API key may be present,
+but no facility boxes are queried until a later reviewed PR adds public, small-box
+facility rows with `region`, `assetType`, and `sourceNote`.
+
+P22 is assigned to the GitHub Actions backup/validation layer plus frontend display
+layer. It does not modify ODP build inputs, ODP `finalBias`, scoring, decision,
+execution, position, Brent promotion, Global Risk Heatmap, or cross-validation.
+Historical baseline remains `not_established`; any future detections must be shown
+as manual-review thermal proxy only until repeated-observation and baseline rules
+are approved.
 
 ## Current P11 Scope
 

@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=odp-wti-market-proxy-1';
+﻿import { formatFiniteNumber } from './format.js?v=odp-thermal-watch-shell-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

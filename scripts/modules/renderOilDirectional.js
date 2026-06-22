@@ -791,14 +791,65 @@ function renderOilEventNewsLayer(worldOrderStressData) {
   setLeafText('odp-news-event-market', marketText);
   setLeafText('odp-news-event-note', `本层复用已有 GDELT 广义新闻事件摘要,用于提示油价相关地缘背景是否需要观察;它不是 ODP 专用新闻 API,也不确认霍尔木兹通道中断、断供或船舶级流向。${eventContext}${directContext}后续只有与价格结构、咽喉转运、库存/供需锚点和卫星/设施事件同时印证时,才提高事件观察置信度。`);
 }
-function renderSatelliteThermalWatch() {
-  setLeafText('odp-thermal-status', '待接入');
-  setToneClass('odp-thermal-status', 'odp-thermal-status', 'yellow');
-  setLeafText('odp-thermal-source', 'NASA FIRMS / VIIRS NRT · 需免费 MAP_KEY');
-  setLeafText('odp-thermal-window', '分钟至数小时级 · 受卫星过境影响');
-  setLeafText('odp-thermal-facility', '炼厂/终端坐标白名单待建');
-  setLeafText('odp-thermal-signal', '热异常/火炬代理 · 未参与方向判断');
-  setLeafText('odp-thermal-note', '本区是卫星热异常高频物理信号插槽。正式接入前必须先建立设施坐标白名单、半径、FRP、置信度、昼夜和历史基线规则;否则全球火点会产生大量误报。当前不读取浏览器外部源,不确认炼厂事故、供应中断或油价预测,也不改变 ODP 方向判断。');
+function thermalTone(data) {
+  if (!data || typeof data !== 'object') return '';
+  if (data.status === 'source_unavailable') return 'yellow';
+  if (data.status === 'not_configured') return 'yellow';
+  if (data.signalState === 'baseline_building_elevated_watch') return 'yellow';
+  if (data.status === 'ok' || data.status === 'partial') return 'green';
+  return '';
+}
+function thermalWindowText(data) {
+  if (!data || typeof data !== 'object') return '分钟至数小时级 · 数据未加载';
+  const freshness = data.freshness || {};
+  const latest = formatUtcMinute(freshness.latestAcqAt);
+  const age = Number.isFinite(freshness.latestAgeHours) ? ` · ${freshness.latestAgeHours}小时龄` : '';
+  const windowDays = Number.isFinite(freshness.windowDays) ? `${freshness.windowDays}天窗` : '窗口待核';
+  return latest ? `${windowDays} · ${latest}${age}` : `${windowDays} · 尚未查询设施热异常`;
+}
+function thermalFacilityText(data) {
+  const coverage = data && data.facilityCoverage ? data.facilityCoverage : {};
+  const count = Number.isFinite(coverage.facilityCount) ? coverage.facilityCount : 0;
+  const regions = Array.isArray(coverage.regions) && coverage.regions.length ? ` · ${coverage.regions.join('/')}` : '';
+  const status = coverage.whitelistStatus === 'configured' ? '白名单已配置' : '白名单待建';
+  return `${count} 个设施 · ${status}${regions}`;
+}
+function thermalSignalText(data) {
+  const aggregate = data && data.aggregate ? data.aggregate : {};
+  const rowCount = Number.isFinite(aggregate.rowCount) ? aggregate.rowCount : 0;
+  const high = Number.isFinite(aggregate.highConfidenceCount) ? aggregate.highConfidenceCount : 0;
+  const maxFrp = Number.isFinite(aggregate.maxFrp) ? aggregate.maxFrp.toFixed(1) : '—';
+  const facilities = Number.isFinite(aggregate.facilitiesWithDetections) ? aggregate.facilitiesWithDetections : 0;
+  const baseline = aggregate.baselineStatus === 'not_established' ? '基线建立中' : '基线待核';
+  return `${rowCount} 条聚合热异常 · 高置信 ${high} · max FRP ${maxFrp} · ${facilities} 个设施有检出 · ${baseline}`;
+}
+function thermalNoteText(data) {
+  if (!data || typeof data !== 'object') {
+    return '卫星热异常观察层数据未加载;本区不读取浏览器外部源,不确认炼厂事故、供应中断或油价预测。';
+  }
+  if (data.signalState === 'facility_whitelist_missing' || data.signalState === 'map_key_or_facility_missing') {
+    return 'FIRMS 生产观察层已建好读取口径,但 committed 设施坐标白名单仍为空;下一步需要把炼厂/终端小 bbox、sourceNote 与历史基线规则补齐后才会查询设施热异常。';
+  }
+  if (data.signalState === 'map_key_missing') {
+    return 'FIRMS 生产观察层已建好,但本轮未检测到 MAP_KEY;GitHub Secret 或本地 key 配好后才会查询设施白名单。';
+  }
+  if (data.signalState === 'source_unavailable') {
+    return 'FIRMS 本轮查询失败或全部源不可用;保持 fail-closed,不沿用为事故、断供或油价方向判断。';
+  }
+  const elevated = data.signalState === 'baseline_building_elevated_watch';
+  const prefix = elevated ? '设施热异常聚合出现升高观察,需要人工复核。' : '设施热异常聚合已接入生产只读观察层。';
+  return `${prefix}历史基线尚未建立前,这些计数只能作为热源/火炬代理,不确认炼厂事故、供应中断或油价预测,也不改变 ODP 方向判断。`;
+}
+function renderSatelliteThermalWatch(oilThermalWatchData) {
+  const data = oilThermalWatchData && typeof oilThermalWatchData === 'object' ? oilThermalWatchData : null;
+  const sourceStatus = data?.sourceStatus?.firms ? ` · FIRMS ${data.sourceStatus.firms}` : '';
+  setLeafText('odp-thermal-status', data?.displayStatusZh || '数据未加载');
+  setToneClass('odp-thermal-status', 'odp-thermal-status', thermalTone(data));
+  setLeafText('odp-thermal-source', `NASA FIRMS / VIIRS NRT · production read-only${sourceStatus}`);
+  setLeafText('odp-thermal-window', thermalWindowText(data));
+  setLeafText('odp-thermal-facility', thermalFacilityText(data));
+  setLeafText('odp-thermal-signal', thermalSignalText(data));
+  setLeafText('odp-thermal-note', thermalNoteText(data));
 }
 function renderDataQcLedger(oilData, radarData, worldOrderStressData) {
   const evidence = oilData && oilData.evidence ? oilData.evidence : {};
@@ -919,7 +970,7 @@ function renderEnergyTransport(transport) {
   setLeafText('odp-energy-transport-note', 'PortWatch 是 AIS 派生咽喉代理,可帮助观察霍尔木兹、苏伊士/曼德与好望角偏离;但本站未接 Kpler 或船舶级暗航行源,不能确认油轮关 AIS、科威特库存变化、封锁或真实油轮流量。');
   renderTransportCore(transport);
 }
-function renderEnergyAddendum(radarData, worldOrderStressData, oilData) {
+function renderEnergyAddendum(radarData, worldOrderStressData, oilData, oilThermalWatchData) {
   clearEnergyAddendum();
   const macroDrivers = radarData && radarData.macroDrivers ? radarData.macroDrivers : {};
   renderBrentBasisCheck(radarData, worldOrderStressData);
@@ -927,7 +978,7 @@ function renderEnergyAddendum(radarData, worldOrderStressData, oilData) {
   renderGlobalForecastGap(oilData, radarData);
   renderGlobalOverlay(oilData, radarData);
   renderOilEventNewsLayer(worldOrderStressData);
-  renderSatelliteThermalWatch();
+  renderSatelliteThermalWatch(oilThermalWatchData);
   renderDataQcLedger(oilData, radarData, worldOrderStressData);
   renderSpareCapacity(macroDrivers.energySpareCapacity);
   renderEnergyTransport(macroDrivers.energyTransport);
@@ -1086,8 +1137,8 @@ function renderEvidenceList(ev) {
   host.replaceChildren(...groups);
 }
 
-export function renderOilDirectional({ oilData, radarData, worldOrderStressData }) {
-  renderEnergyAddendum(radarData, worldOrderStressData, oilData);
+export function renderOilDirectional({ oilData, radarData, worldOrderStressData, oilThermalWatchData }) {
+  renderEnergyAddendum(radarData, worldOrderStressData, oilData, oilThermalWatchData);
 
   if (!oilData || typeof oilData !== 'object') {
     setLeafText('odp-verdict', '数据不可用');

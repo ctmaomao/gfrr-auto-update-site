@@ -777,6 +777,8 @@ P20 仅新增 manual watch-pack aggregation review:`scripts/oil-directional/revi
 
 P21 新增 WTI 快速市场代理:`macroDrivers.inflationEnergy.wtiMarketProxy` 由 Daily pipeline 读取 Yahoo `CL=F` 公开 chart,作为 WTI futures market proxy。ODP `evidence.wtiPrice` 优先复用新鲜 `radar-data:macroDrivers.inflationEnergy.wtiMarketProxy`(`maxAgeDays=3`),缺失或过期时回退 `radar-data:macroDrivers.inflationEnergy.wti`(FRED `DCOILWTICO` 官方 WTI spot,低噪声但可能发布滞后)。该 proxy 只改变 ODP T1 日频市场代理展示的新鲜度与口径说明;不是官方 WTI spot,不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position、Brent promotion、Global Risk Heatmap 或 cross-validation。
 
+P22 新增独立生产只读 `data/oil-thermal-watch.json`:由 `Refresh Oil Thermal Watch` workflow 调用 `npm run build:oil-thermal-watch`,读取 GitHub Secret `FIRMS_MAP_KEY` 或本地 ignored key 文件,以及 committed `config/oil-thermal-watch-facilities.json` 设施白名单。当前 production whitelist 初始为空,因此合法状态可为 `status='not_configured'` / `signalState='facility_whitelist_missing'`;该状态代表 API/管线插槽已建好但设施坐标尚未批准,不是运行失败。artifact schema 为 `oil-thermal-watch-1`,只保存设施级聚合摘要、sourceStatus、freshness、facilityCoverage、aggregate、facilities sanitized rows、productionImpact false map、boundary 与 limitationsZh;不得保存 MAP_KEY、raw FIRMS URL 或原始火点明细。前端 ODP `SATELLITE THERMAL WATCH` 只读消费该 JSON,不改变 `data/oil-directional-pressure.json` schema、不进入 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation。历史基线未建立前,即使出现 `baseline_building_watch` 或 `baseline_building_elevated_watch`,也只能写成人工复核观察,不得写成炼厂事故、停产、断供或油价预测确认。
+
 ### oil-directional-history.json — ODP PR2 历史 cache + 回测 GATE contract
 
 PR2 新增**第二个独立文件** `data/oil-directional-history.json`:8 个 WPSR weekly series 的 2014-至今全周度史 committed snapshot,供回测 harness 离线、可复现回放。**仅供 backtest GATE**,不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / `decisionModel` / `executionLock` / `positionGuidance` / cross-validation / Global Risk Heatmap。zero-dependency build(ADR-0013)+ fail-closed。
@@ -847,7 +849,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-wti-market-proxy-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-watch-shell-1`）。
 
 稳定边界：
 
@@ -1070,26 +1072,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-wti-market-proxy-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+odp-thermal-watch-shell-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-wti-market-proxy-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-watch-shell-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-wti-market-proxy-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-wti-market-proxy-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-wti-market-proxy-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-thermal-watch-shell-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-thermal-watch-shell-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-thermal-watch-shell-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-wti-market-proxy-1
-npm run bump:frontend-asset-version -- odp-wti-market-proxy-1
+node scripts/bump-frontend-asset-version.mjs odp-thermal-watch-shell-1
+npm run bump:frontend-asset-version -- odp-thermal-watch-shell-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-wti-market-proxy-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-thermal-watch-shell-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

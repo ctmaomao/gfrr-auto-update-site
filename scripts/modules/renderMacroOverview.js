@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=odp-wti-market-proxy-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-wti-market-proxy-1';
-import { MODULE_LABELS } from './decision.js?v=odp-wti-market-proxy-1';
+} from './config.js?v=odp-thermal-watch-shell-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-thermal-watch-shell-1';
+import { MODULE_LABELS } from './decision.js?v=odp-thermal-watch-shell-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,8 +18,8 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=odp-wti-market-proxy-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=odp-wti-market-proxy-1';
+} from './macroOverviewDisplayHelpers.js?v=odp-thermal-watch-shell-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=odp-thermal-watch-shell-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
