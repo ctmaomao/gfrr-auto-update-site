@@ -1,35 +1,40 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-06-22T19:37:25.315Z",
+  "generatedAt": "2026-06-22T19:55:38.647Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
     "VIIRS_NOAA20_NRT",
     "VIIRS_NOAA21_NRT"
   ],
-  "status": "not_configured",
-  "signalState": "facility_whitelist_missing",
-  "displayStatusZh": "待设施白名单",
+  "status": "ok",
+  "signalState": "baseline_building_watch",
+  "displayStatusZh": "观察层已接入",
   "sourceStatus": {
     "mapKey": "configured",
-    "firms": "not_queried",
-    "facilities": "missing"
+    "firms": "live",
+    "facilities": "configured"
   },
   "freshness": {
     "windowDays": 1,
-    "latestAcqAt": null,
-    "latestAgeHours": null,
+    "latestAcqAt": "2026-06-22T08:58:00Z",
+    "latestAgeHours": 11,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
     "configPath": "config/oil-thermal-watch-facilities.json",
     "configSchemaVersion": "oil-thermal-facilities-production-v1",
-    "whitelistStatus": "missing",
-    "facilityCount": 0,
-    "regions": [],
-    "assetTypes": [],
-    "requestCount": 0,
+    "whitelistStatus": "configured",
+    "facilityCount": 12,
+    "regions": [
+      "US Gulf Coast / Texas",
+      "US Gulf Coast / Louisiana"
+    ],
+    "assetTypes": [
+      "refinery"
+    ],
+    "requestCount": 36,
     "requestBudget": {
       "sourceCount": 3,
       "sources": [
@@ -42,27 +47,339 @@
       "maxFacilityBboxSpanDegrees": 1.5
     },
     "notes": [
-      "Production whitelist intentionally starts empty. Add operator-reviewed public refinery/terminal bbox rows in a later reviewed PR.",
-      "Facility bbox rows must be small boxes and must include sourceNote. This config never stores MAP_KEY."
+      "Starter production whitelist uses directly downloadable EIA/HIFLD public refinery point data instead of manually invented coordinates.",
+      "Scope is intentionally conservative: U.S. Gulf Coast refineries only, no product terminals yet, no global refinery/terminal list yet.",
+      "Each bbox is a small FIRMS query box derived from an official point, not an exact refinery polygon.",
+      "This config never stores MAP_KEY and never approves thermal detections as incidents, outages, supply disruptions, or oil-price direction."
     ]
   },
   "aggregate": {
-    "rowCount": 0,
-    "latestAcqAt": null,
-    "maxFrp": null,
-    "confidenceCounts": {},
+    "rowCount": 20,
+    "latestAcqAt": "2026-06-22T08:58:00Z",
+    "maxFrp": 4.22,
+    "confidenceCounts": {
+      "n": 20
+    },
     "highConfidenceCount": 0,
     "frpOver50Count": 0,
     "frpOver100Count": 0,
-    "dayNightCounts": {},
-    "facilityCount": 0,
-    "facilitiesWithDetections": 0,
-    "requestCount": 0,
+    "dayNightCounts": {
+      "N": 20
+    },
+    "latestAgeHours": 11,
+    "facilityCount": 12,
+    "facilitiesWithDetections": 6,
+    "requestCount": 36,
     "requestErrorCount": 0,
     "baselineStatus": "not_established",
-    "facilitiesByAnomalyLevel": {}
+    "facilitiesByAnomalyLevel": {
+      "low_signal": 5,
+      "none_observed": 6,
+      "watch": 1
+    }
   },
-  "facilities": [],
+  "facilities": [
+    {
+      "id": "usgc_refinery_motiva_port_arthur_tx",
+      "label": "Motiva Port Arthur refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=Motiva Enterprises LLC; Site=Port Arthur; State=Texas; PADD=3; AD_Mbpd=639.7; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
+      "sourceAgreement": "2/3",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
+      "rowCount": 2,
+      "latestAcqAt": "2026-06-22T08:58:00Z",
+      "maxFrp": 3.79,
+      "confidenceCounts": {
+        "n": 2
+      },
+      "highConfidenceCount": 0,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "dayNightCounts": {
+        "N": 2
+      },
+      "latestAgeHours": 11,
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
+      "baselineStatus": "not_established",
+      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+    },
+    {
+      "id": "usgc_refinery_marathon_galveston_bay_tx",
+      "label": "Marathon Galveston Bay refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=MARATHON PETROLEUM CO LP; Site=Galveston Bay; State=Texas; PADD=3; AD_Mbpd=625.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
+      "sourceAgreement": "0/3",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
+      "rowCount": 0,
+      "latestAcqAt": null,
+      "maxFrp": null,
+      "confidenceCounts": {},
+      "highConfidenceCount": 0,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "dayNightCounts": {},
+      "latestAgeHours": null,
+      "anomalyLevel": "none_observed",
+      "anomalyLabelZh": "未观察到",
+      "baselineStatus": "not_established",
+      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+    },
+    {
+      "id": "usgc_refinery_marathon_garyville_la",
+      "label": "Marathon Garyville refinery",
+      "region": "US Gulf Coast / Louisiana",
+      "assetType": "refinery",
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=MARATHON PETROLEUM CO LP; Site=Garyville; State=Louisiana; PADD=3; AD_Mbpd=608.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
+      "sourceAgreement": "0/3",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
+      "rowCount": 0,
+      "latestAcqAt": null,
+      "maxFrp": null,
+      "confidenceCounts": {},
+      "highConfidenceCount": 0,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "dayNightCounts": {},
+      "latestAgeHours": null,
+      "anomalyLevel": "none_observed",
+      "anomalyLabelZh": "未观察到",
+      "baselineStatus": "not_established",
+      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+    },
+    {
+      "id": "usgc_refinery_exxon_baytown_tx",
+      "label": "ExxonMobil Baytown refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Baytown; State=Texas; PADD=3; AD_Mbpd=584.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
+      "sourceAgreement": "1/3",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
+      "rowCount": 2,
+      "latestAcqAt": "2026-06-22T07:18:00Z",
+      "maxFrp": 3,
+      "confidenceCounts": {
+        "n": 2
+      },
+      "highConfidenceCount": 0,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "dayNightCounts": {
+        "N": 2
+      },
+      "latestAgeHours": 12.6,
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
+      "baselineStatus": "not_established",
+      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+    },
+    {
+      "id": "usgc_refinery_exxon_baton_rouge_la",
+      "label": "ExxonMobil Baton Rouge refinery",
+      "region": "US Gulf Coast / Louisiana",
+      "assetType": "refinery",
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Baton Rouge; State=Louisiana; PADD=3; AD_Mbpd=542.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
+      "sourceAgreement": "0/3",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
+      "rowCount": 0,
+      "latestAcqAt": null,
+      "maxFrp": null,
+      "confidenceCounts": {},
+      "highConfidenceCount": 0,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "dayNightCounts": {},
+      "latestAgeHours": null,
+      "anomalyLevel": "none_observed",
+      "anomalyLabelZh": "未观察到",
+      "baselineStatus": "not_established",
+      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+    },
+    {
+      "id": "usgc_refinery_citgo_lake_charles_la",
+      "label": "CITGO Lake Charles refinery",
+      "region": "US Gulf Coast / Louisiana",
+      "assetType": "refinery",
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=CITGO PETROLEUM CORP; Site=Lake Charles; State=Louisiana; PADD=3; AD_Mbpd=440.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
+      "sourceAgreement": "3/3",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
+      "rowCount": 6,
+      "latestAcqAt": "2026-06-22T08:58:00Z",
+      "maxFrp": 3.31,
+      "confidenceCounts": {
+        "n": 6
+      },
+      "highConfidenceCount": 0,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "dayNightCounts": {
+        "N": 6
+      },
+      "latestAgeHours": 11,
+      "anomalyLevel": "watch",
+      "anomalyLabelZh": "观察",
+      "baselineStatus": "not_established",
+      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+    },
+    {
+      "id": "usgc_refinery_exxon_beaumont_tx",
+      "label": "ExxonMobil Beaumont refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Beaumont; State=Texas; PADD=3; AD_Mbpd=384.4; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
+      "sourceAgreement": "2/3",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
+      "rowCount": 3,
+      "latestAcqAt": "2026-06-22T08:58:00Z",
+      "maxFrp": 2.7,
+      "confidenceCounts": {
+        "n": 3
+      },
+      "highConfidenceCount": 0,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "dayNightCounts": {
+        "N": 3
+      },
+      "latestAgeHours": 11,
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
+      "baselineStatus": "not_established",
+      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+    },
+    {
+      "id": "usgc_refinery_deer_park_tx",
+      "label": "Deer Park refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=DEER PARK REFINING LTD PARTNERSHIP; Site=Deer Park; State=Texas; PADD=3; AD_Mbpd=340.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
+      "sourceAgreement": "2/3",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
+      "rowCount": 3,
+      "latestAcqAt": "2026-06-22T08:24:00Z",
+      "maxFrp": 4.22,
+      "confidenceCounts": {
+        "n": 3
+      },
+      "highConfidenceCount": 0,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "dayNightCounts": {
+        "N": 3
+      },
+      "latestAgeHours": 11.5,
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
+      "baselineStatus": "not_established",
+      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+    },
+    {
+      "id": "usgc_refinery_valero_corpus_christi_tx",
+      "label": "Valero Corpus Christi refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=VALERO REFINING CO TEXAS LP; Site=Corpus Christi; State=Texas; PADD=3; AD_Mbpd=297.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
+      "sourceAgreement": "2/3",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
+      "rowCount": 4,
+      "latestAcqAt": "2026-06-22T08:58:00Z",
+      "maxFrp": 1.1,
+      "confidenceCounts": {
+        "n": 4
+      },
+      "highConfidenceCount": 0,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "dayNightCounts": {
+        "N": 4
+      },
+      "latestAgeHours": 11,
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
+      "baselineStatus": "not_established",
+      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+    },
+    {
+      "id": "usgc_refinery_phillips_sweeny_tx",
+      "label": "Phillips 66 Sweeny refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=PHILLIPS 66 COMPANY; Site=Sweeny; State=Texas; PADD=3; AD_Mbpd=278.9; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
+      "sourceAgreement": "0/3",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
+      "rowCount": 0,
+      "latestAcqAt": null,
+      "maxFrp": null,
+      "confidenceCounts": {},
+      "highConfidenceCount": 0,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "dayNightCounts": {},
+      "latestAgeHours": null,
+      "anomalyLevel": "none_observed",
+      "anomalyLabelZh": "未观察到",
+      "baselineStatus": "not_established",
+      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+    },
+    {
+      "id": "usgc_refinery_phillips_belle_chasse_la",
+      "label": "Phillips 66 Belle Chasse refinery",
+      "region": "US Gulf Coast / Louisiana",
+      "assetType": "refinery",
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=PHILLIPS 66 COMPANY; Site=Belle Chasse; State=Louisiana; PADD=3; AD_Mbpd=269.1; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
+      "sourceAgreement": "0/3",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
+      "rowCount": 0,
+      "latestAcqAt": null,
+      "maxFrp": null,
+      "confidenceCounts": {},
+      "highConfidenceCount": 0,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "dayNightCounts": {},
+      "latestAgeHours": null,
+      "anomalyLevel": "none_observed",
+      "anomalyLabelZh": "未观察到",
+      "baselineStatus": "not_established",
+      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+    },
+    {
+      "id": "usgc_refinery_shell_norco_la",
+      "label": "Shell Norco refinery",
+      "region": "US Gulf Coast / Louisiana",
+      "assetType": "refinery",
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=SHELL OIL PRODUCTS US; Site=Norco; State=Louisiana; PADD=3; AD_Mbpd=250.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
+      "sourceAgreement": "0/3",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
+      "rowCount": 0,
+      "latestAcqAt": null,
+      "maxFrp": null,
+      "confidenceCounts": {},
+      "highConfidenceCount": 0,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "dayNightCounts": {},
+      "latestAgeHours": null,
+      "anomalyLevel": "none_observed",
+      "anomalyLabelZh": "未观察到",
+      "baselineStatus": "not_established",
+      "noteZh": "设施级热异常观察仅供人工复核;未建立历史基线前不确认事故、停产、断供或油价方向。"
+    }
+  ],
   "productionImpact": {
     "affectsValues": false,
     "affectsScoring": false,

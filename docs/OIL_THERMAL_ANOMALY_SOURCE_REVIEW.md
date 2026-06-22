@@ -1,9 +1,9 @@
 # Oil Thermal Anomaly Source Review — NASA FIRMS / VIIRS candidate
 
-Status: P22 production read-only observation artifact is implemented, but facility
-coverage is intentionally not yet active. The committed production whitelist starts
-empty, so the website can show the FIRMS layer as wired while still requiring a
-reviewed facility-coordinate PR before any scheduled facility queries.
+Status: P23 production read-only observation artifact is implemented with a
+conservative U.S. Gulf Coast refinery starter whitelist. Facility coverage is now
+active for a small EIA/HIFLD-derived refinery set, but historical baseline remains
+`not_established`, so any detection is still a manual-review thermal proxy only.
 
 ## Candidate Source
 
@@ -122,6 +122,53 @@ execution, position, Brent promotion, Global Risk Heatmap, or cross-validation.
 Historical baseline remains `not_established`; any future detections must be shown
 as manual-review thermal proxy only until repeated-observation and baseline rules
 are approved.
+
+## P23 Starter Facility Whitelist Source Review
+
+P23 adds the first committed production whitelist rows in
+`config/oil-thermal-watch-facilities.json`. The selected source is the directly
+downloadable EIA/HIFLD petroleum refineries GIS package:
+
+```text
+https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip
+```
+
+The package contains `Petroleum_Refineries_US_2021.shp` with 130 refinery point
+rows and fields including `Company`, `Site`, `State`, `PADD`, `AD_Mbpd`,
+`Latitude`, `Longitude`, `Source`, and `Period_`. The starter scope uses only
+large PADD 3 Texas/Louisiana refinery rows and converts each point to a small
+`+/-0.05 degree` FIRMS Area API watch box.
+
+Researched but not selected for this first production whitelist:
+
+- EIA refinery capacity reports / XLSX: authoritative for capacity, ownership and
+  location, but the EIA/HIFLD GIS package is more directly usable for coordinates.
+- Data.gov / DataLumos / Data Rescue HIFLD refinery pages: useful public
+  metadata and attribution, but the EIA map-data zip is the simplest reproducible
+  fetch path for this repo.
+- EIA petroleum product terminal GIS: directly downloadable and promising, but
+  terminal points are much noisier for thermal anomaly work, so they remain a
+  later reviewed expansion.
+- Global Energy Monitor oil infrastructure trackers: useful global infrastructure
+  research context, but current public pages focus on pipeline / project tracking,
+  not a ready refinery thermal-watch whitelist for this P23 cut.
+- University / paper projects such as OGNet / OGInfra: useful methodology context
+  for facility detection and satellite-fire modeling, not an operator-reviewed
+  refinery coordinate whitelist for this repo.
+
+Starter facilities:
+
+- 12 U.S. Gulf Coast refinery watch boxes.
+- Asset type: `refinery` only.
+- Regions: `US Gulf Coast / Texas`, `US Gulf Coast / Louisiana`.
+- Request budget: 12 facilities x 3 VIIRS NRT sources = 36 requests per run,
+  below the production limit of 150.
+
+P23 still does not add terminals, global facility coverage, exact refinery
+polygons, incident confirmation, outage confirmation, supply-disruption
+confirmation, oil-price prediction, scoring, `decisionModel`, `executionLock`,
+`positionGuidance`, Brent promotion, ODP `finalBias`, Global Risk Heatmap, or
+cross-validation impact.
 
 ## Current P11 Scope
 

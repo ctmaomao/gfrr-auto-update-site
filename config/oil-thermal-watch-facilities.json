@@ -1,8 +1,175 @@
 {
   "schemaVersion": "oil-thermal-facilities-production-v1",
+  "sourceSelection": {
+    "selectedSource": "EIA/HIFLD Petroleum_Refineries_US_EIA.zip",
+    "sourceUrl": "https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
+    "sourceDataset": "Petroleum_Refineries_US_2021.shp",
+    "sourcePeriod": "As of Jan. 1 2021",
+    "selectionMethod": "Starter whitelist uses large U.S. Gulf Coast PADD 3 refinery rows from the EIA/HIFLD shapefile, with nearby overlapping complexes reduced by operator judgment. Product terminals and global infrastructure trackers remain future reviewed scopes.",
+    "bboxRule": "Convert each source point to a +/-0.05 degree FIRMS Area API watch box. The box is a thermal-observation proxy, not a facility boundary."
+  },
   "notes": [
-    "Production whitelist intentionally starts empty. Add operator-reviewed public refinery/terminal bbox rows in a later reviewed PR.",
-    "Facility bbox rows must be small boxes and must include sourceNote. This config never stores MAP_KEY."
+    "Starter production whitelist uses directly downloadable EIA/HIFLD public refinery point data instead of manually invented coordinates.",
+    "Scope is intentionally conservative: U.S. Gulf Coast refineries only, no product terminals yet, no global refinery/terminal list yet.",
+    "Each bbox is a small FIRMS query box derived from an official point, not an exact refinery polygon.",
+    "This config never stores MAP_KEY and never approves thermal detections as incidents, outages, supply disruptions, or oil-price direction."
   ],
-  "facilities": []
+  "facilities": [
+    {
+      "id": "usgc_refinery_motiva_port_arthur_tx",
+      "label": "Motiva Port Arthur refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "bbox": [
+        -94.010709,
+        29.834891,
+        -93.910709,
+        29.934891
+      ],
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=Motiva Enterprises LLC; Site=Port Arthur; State=Texas; PADD=3; AD_Mbpd=639.7; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+    },
+    {
+      "id": "usgc_refinery_marathon_galveston_bay_tx",
+      "label": "Marathon Galveston Bay refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "bbox": [
+        -94.983456,
+        29.324692,
+        -94.883456,
+        29.424692
+      ],
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=MARATHON PETROLEUM CO LP; Site=Galveston Bay; State=Texas; PADD=3; AD_Mbpd=625.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+    },
+    {
+      "id": "usgc_refinery_marathon_garyville_la",
+      "label": "Marathon Garyville refinery",
+      "region": "US Gulf Coast / Louisiana",
+      "assetType": "refinery",
+      "bbox": [
+        -90.645952,
+        30.010139,
+        -90.545952,
+        30.110139
+      ],
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=MARATHON PETROLEUM CO LP; Site=Garyville; State=Louisiana; PADD=3; AD_Mbpd=608.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+    },
+    {
+      "id": "usgc_refinery_exxon_baytown_tx",
+      "label": "ExxonMobil Baytown refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "bbox": [
+        -95.026798,
+        29.711431,
+        -94.926798,
+        29.811431
+      ],
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Baytown; State=Texas; PADD=3; AD_Mbpd=584.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+    },
+    {
+      "id": "usgc_refinery_exxon_baton_rouge_la",
+      "label": "ExxonMobil Baton Rouge refinery",
+      "region": "US Gulf Coast / Louisiana",
+      "assetType": "refinery",
+      "bbox": [
+        -91.219797,
+        30.436272,
+        -91.119797,
+        30.536272
+      ],
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Baton Rouge; State=Louisiana; PADD=3; AD_Mbpd=542.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+    },
+    {
+      "id": "usgc_refinery_citgo_lake_charles_la",
+      "label": "CITGO Lake Charles refinery",
+      "region": "US Gulf Coast / Louisiana",
+      "assetType": "refinery",
+      "bbox": [
+        -93.382596,
+        30.131174,
+        -93.282596,
+        30.231174
+      ],
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=CITGO PETROLEUM CORP; Site=Lake Charles; State=Louisiana; PADD=3; AD_Mbpd=440.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+    },
+    {
+      "id": "usgc_refinery_exxon_beaumont_tx",
+      "label": "ExxonMobil Beaumont refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "bbox": [
+        -94.124933,
+        30.014923,
+        -94.024933,
+        30.114923
+      ],
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Beaumont; State=Texas; PADD=3; AD_Mbpd=384.4; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+    },
+    {
+      "id": "usgc_refinery_deer_park_tx",
+      "label": "Deer Park refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "bbox": [
+        -95.176797,
+        29.681441,
+        -95.076797,
+        29.781441
+      ],
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=DEER PARK REFINING LTD PARTNERSHIP; Site=Deer Park; State=Texas; PADD=3; AD_Mbpd=340.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+    },
+    {
+      "id": "usgc_refinery_valero_corpus_christi_tx",
+      "label": "Valero Corpus Christi refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "bbox": [
+        -97.534505,
+        27.766758,
+        -97.434505,
+        27.866758
+      ],
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=VALERO REFINING CO TEXAS LP; Site=Corpus Christi; State=Texas; PADD=3; AD_Mbpd=297.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+    },
+    {
+      "id": "usgc_refinery_phillips_sweeny_tx",
+      "label": "Phillips 66 Sweeny refinery",
+      "region": "US Gulf Coast / Texas",
+      "assetType": "refinery",
+      "bbox": [
+        -95.797538,
+        29.027881,
+        -95.697538,
+        29.127881
+      ],
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=PHILLIPS 66 COMPANY; Site=Sweeny; State=Texas; PADD=3; AD_Mbpd=278.9; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+    },
+    {
+      "id": "usgc_refinery_phillips_belle_chasse_la",
+      "label": "Phillips 66 Belle Chasse refinery",
+      "region": "US Gulf Coast / Louisiana",
+      "assetType": "refinery",
+      "bbox": [
+        -90.029839,
+        29.634405,
+        -89.929839,
+        29.734405
+      ],
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=PHILLIPS 66 COMPANY; Site=Belle Chasse; State=Louisiana; PADD=3; AD_Mbpd=269.1; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+    },
+    {
+      "id": "usgc_refinery_shell_norco_la",
+      "label": "Shell Norco refinery",
+      "region": "US Gulf Coast / Louisiana",
+      "assetType": "refinery",
+      "bbox": [
+        -90.45413,
+        29.951717,
+        -90.35413,
+        30.051717
+      ],
+      "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=SHELL OIL PRODUCTS US; Site=Norco; State=Louisiana; PADD=3; AD_Mbpd=250.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+    }
+  ]
 }

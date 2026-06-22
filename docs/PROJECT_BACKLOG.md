@@ -328,10 +328,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **上次会话结束于(2026-06-23 · ODP FIRMS P22 production read-only shell)**: P22 已开始/完成为生产只读壳层:新增 committed 空设施白名单、`data/oil-thermal-watch.json` compact artifact、`build:oil-thermal-watch`、`check:oil-thermal-watch`、`Refresh Oil Thermal Watch` workflow 与前端 ODP 卫星热异常区数据驱动渲染。该层只显示 `facility_whitelist_missing` / sourceStatus / freshness / sanitized aggregate,不保存 key、raw URL 或 raw 火点。
-- **当前进行中(2026-06-23 · ODP FIRMS P22)**: 本刀范围为 production display shell,不添加真实设施坐标。ODP `finalBias`、classifier、scoring、decision、execution、Heatmap、cross-validation、`radar-data.json` 与 `realtime` 均保持不接入。
-- **下一步建议(2026-06-23 · ODP FIRMS P22)**: 下一刀添加 operator-reviewed 设施白名单 starter set(小 bbox + region/assetType/sourceNote),再让 workflow 产生真实 facility-level aggregate;随后至少积累多轮 artifact 后另开基线/重复观测规则。
-- **阻塞或等待(2026-06-23 · ODP FIRMS P22)**: 无。GitHub Secret `FIRMS_MAP_KEY` 已可被新 workflow 使用;真实设施白名单仍需 reviewed PR。
+- **上次会话结束于(2026-06-23 · ODP FIRMS P23 starter facility whitelist)**: P22 production read-only shell 已扩展为 P23 starter whitelist: `config/oil-thermal-watch-facilities.json` 从空白改为 12 个 EIA/HIFLD `Petroleum_Refineries_US_2021.shp` 派生的 U.S. Gulf Coast Texas/Louisiana 炼厂小 bbox,并同步 `OIL_THERMAL_ANOMALY_SOURCE_REVIEW` / `DATA_SOURCES` / `DATA_CONTRACT`。该层仍只写 sanitized `data/oil-thermal-watch.json`,不保存 key、raw FIRMS URL 或 raw 火点。
+- **当前进行中(2026-06-23 · ODP FIRMS P23)**: 本刀范围为 production read-only facility-level aggregate。ODP `finalBias`、classifier、scoring、decision、execution、Heatmap、cross-validation、`radar-data.json` 与 `realtime` 均保持不接入。
+- **下一步建议(2026-06-23 · ODP FIRMS P23)**: 积累多轮 `data/oil-thermal-watch.json` 后另开 baseline / repeated-observation rule,再评估是否扩展 product terminals 或 global refinery/terminal coverage。无历史基线前,所有检出只能作为人工复核热异常代理。
+- **阻塞或等待(2026-06-23 · ODP FIRMS P23)**: 无。GitHub Secret `FIRMS_MAP_KEY` 与本地 ignored key file 路径均可用;后续 blocker 是历史基线尚未建立,不是 API/key 问题。
 
 - **上次会话结束于(2026-06-17 · Bubble Watch CEO hedging GDELT hardening + Tavily/Brave cross-check)**: `ceo_hedging` 已从 `GDELT -> Wind` 改为 `GDELT -> Tavily/Brave -> Wind`:GDELT DOC 2.0 public search 仍是免费主源,默认小样本请求,429/5xx 时按 `Retry-After` 或短退避只重试一次;GDELT 成功时 Tavily Search API `topic=news` + `time_range=month` 与 Brave News Search API `freshness=pm` 做第二/第三新闻源确认,GDELT 失败时 Tavily/Brave 做免费兜底,Tavily/Brave 均失败或未配置时才进入 Wind paid final fallback。红灯必须 GDELT/Tavily/Brave 至少两源确认,单一路径红色信号封顶为黄。GitHub workflows `refresh-bubble-watch.yml` 与 `audit-bubble-watch-sources.yml` 已注入 `TAVILY_API_KEYS` / `BRAVE_API_KEYS`;source-candidates、DATA_CONTRACT、DATA_SOURCES 已同步。密钥不写入仓库。
 - **当前进行中(2026-06-17 · Bubble Watch CEO hedging GDELT hardening + Tavily/Brave cross-check)**: 代码、workflow、checker 与文档已改并完成本地 secret smoke test。未改 `data/bubble-watch.json`、`data/bubble-watch-history.json`、`config/bubble-watch-curated.json`、主 GFRR `radar-data.json`、主 scoring/decision/execution/position 或 Worker runtime。
