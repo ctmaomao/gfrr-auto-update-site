@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "firms-thermal-baseline-manual-v1",
+  "generatedAt": "2026-06-22T00:00:00.000Z",
+  "baselineWindowDays": 30,
+  "notes": "Synthetic fixture only. Not a real facility baseline and not production data.",
+  "facilities": [
+    {
+      "id": "synthetic_refinery_watch_box",
+      "sampleCount": 12,
+      "rowCountP95": 4,
+      "maxFrpP95": 25,
+      "highConfidenceCountP95": 1,
+      "sourcesWithDetectionsP95": 1,
+      "frpOver50CountP95": 0,
+      "lastUpdatedAt": "2026-06-20T00:00:00.000Z"
+    }
+  ],
+  "boundary": "manual baseline fixture only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}

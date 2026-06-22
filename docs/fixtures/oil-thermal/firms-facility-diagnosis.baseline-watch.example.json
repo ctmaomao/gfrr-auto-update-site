@@ -1,0 +1,137 @@
+{
+  "schemaVersion": "firms-facility-thermal-diagnosis-1",
+  "status": "ok",
+  "diagnosis": "firms-facility-batch-detections-returned",
+  "generatedAt": "2026-06-22T00:00:00.000Z",
+  "mode": "facility_batch",
+  "sources": ["VIIRS_SNPP_NRT", "VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT"],
+  "strictFacilities": true,
+  "dayRange": 5,
+  "date": null,
+  "mapKeySource": "file:manual-artifacts/oil-thermal/firms-map-key.txt",
+  "aggregate": {
+    "rowCount": 14,
+    "latestAcqAt": "2026-06-21T22:52:00Z",
+    "maxFrp": 82.4,
+    "confidenceCounts": {
+      "h": 3,
+      "n": 11
+    },
+    "highConfidenceCount": 3,
+    "frpOver50Count": 2,
+    "frpOver100Count": 0,
+    "dayNightCounts": {
+      "N": 10,
+      "D": 4
+    },
+    "facilityCount": 1,
+    "requestCount": 3,
+    "facilitiesWithDetections": 1,
+    "facilitiesByAnomalyLevel": {
+      "elevated_watch": 1
+    }
+  },
+  "facilities": [
+    {
+      "id": "synthetic_refinery_watch_box",
+      "label": "Synthetic refinery watch box",
+      "region": "Synthetic region",
+      "assetType": "refinery",
+      "bbox": {
+        "west": 10,
+        "south": 20,
+        "east": 10.1,
+        "north": 20.1
+      },
+      "sourceNote": "Synthetic fixture only; not a real facility coordinate.",
+      "aggregate": {
+        "rowCount": 14,
+        "latestAcqAt": "2026-06-21T22:52:00Z",
+        "maxFrp": 82.4,
+        "confidenceCounts": {
+          "h": 3,
+          "n": 11
+        },
+        "highConfidenceCount": 3,
+        "frpOver50Count": 2,
+        "frpOver100Count": 0,
+        "dayNightCounts": {
+          "N": 10,
+          "D": 4
+        },
+        "sourcesChecked": 3,
+        "sourcesWithDetections": 2,
+        "sourceAgreement": "2/3",
+        "anomalyLevel": "elevated_watch",
+        "anomalyLabelZh": "升高观察",
+        "anomalyReason": "Synthetic fixture: multiple sources detected activity above threshold.",
+        "heuristicOnly": true
+      },
+      "sources": [
+        {
+          "status": "ok",
+          "diagnosis": "firms-api-ok-detections-returned",
+          "source": "VIIRS_SNPP_NRT",
+          "summary": {
+            "rowCount": 8,
+            "latestAcqAt": "2026-06-21T22:52:00Z",
+            "maxFrp": 82.4,
+            "confidenceCounts": {
+              "h": 2,
+              "n": 6
+            },
+            "highConfidenceCount": 2,
+            "frpOver50Count": 1,
+            "frpOver100Count": 0,
+            "dayNightCounts": {
+              "N": 6,
+              "D": 2
+            }
+          },
+          "redactedUrl": "https://firms.modaps.eosdis.nasa.gov/api/area/csv/<FIRMS_MAP_KEY>/VIIRS_SNPP_NRT/10,20,10.1,20.1/5"
+        },
+        {
+          "status": "ok",
+          "diagnosis": "firms-api-ok-detections-returned",
+          "source": "VIIRS_NOAA20_NRT",
+          "summary": {
+            "rowCount": 6,
+            "latestAcqAt": "2026-06-21T22:49:00Z",
+            "maxFrp": 61.2,
+            "confidenceCounts": {
+              "h": 1,
+              "n": 5
+            },
+            "highConfidenceCount": 1,
+            "frpOver50Count": 1,
+            "frpOver100Count": 0,
+            "dayNightCounts": {
+              "N": 4,
+              "D": 2
+            }
+          },
+          "redactedUrl": "https://firms.modaps.eosdis.nasa.gov/api/area/csv/<FIRMS_MAP_KEY>/VIIRS_NOAA20_NRT/10,20,10.1,20.1/5"
+        },
+        {
+          "status": "ok",
+          "diagnosis": "firms-api-ok-no-detections-in-bbox",
+          "source": "VIIRS_NOAA21_NRT",
+          "summary": {
+            "rowCount": 0,
+            "latestAcqAt": null,
+            "maxFrp": null,
+            "confidenceCounts": {},
+            "highConfidenceCount": 0,
+            "frpOver50Count": 0,
+            "frpOver100Count": 0,
+            "dayNightCounts": {}
+          },
+          "redactedUrl": "https://firms.modaps.eosdis.nasa.gov/api/area/csv/<FIRMS_MAP_KEY>/VIIRS_NOAA21_NRT/10,20,10.1,20.1/5"
+        }
+      ]
+    }
+  ],
+  "outputPath": "manual-artifacts/oil-thermal/firms-thermal-diagnosis-latest.json",
+  "boundary": "manual diagnostic only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
+  "notes": "Synthetic fixture only. Facility anomalyLevel is a manual diagnostic heuristic only."
+}

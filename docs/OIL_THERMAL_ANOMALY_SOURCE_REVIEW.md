@@ -1,6 +1,6 @@
 # Oil Thermal Anomaly Source Review — NASA FIRMS / VIIRS candidate
 
-Status: P18 source-review + manual diagnostic tooling only. No runtime fetch, no workflow,
+Status: P19 source-review + manual diagnostic tooling only. No runtime fetch, no workflow,
 no production data write.
 
 ## Candidate Source
@@ -343,3 +343,47 @@ npm run review:firms-facilities -- `
 `WARN` means the list can still be used for manual experimentation but is not ready
 as a credible facility watchlist. `FAIL` means the list should not be used for live
 batch requests until blockers are fixed. This review also keeps `promotionEligible=false`.
+
+### Thermal Baseline And Repeatability Review
+
+P19 adds an offline baseline review helper:
+
+```powershell
+npm run review:firms-thermal-baseline
+```
+
+By default it reads:
+
+```text
+manual-artifacts/oil-thermal/firms-thermal-diagnosis-latest.json
+manual-artifacts/oil-thermal/firms-thermal-baseline.json
+```
+
+and writes:
+
+```text
+manual-artifacts/oil-thermal/firms-thermal-baseline-review-latest.json
+```
+
+The baseline file is still a manual/ignored artifact. The helper does not fetch FIRMS,
+does not read the MAP_KEY and does not write production data. It compares each
+facility's current diagnostic aggregate against a manual baseline such as:
+
+- `sampleCount`
+- `rowCountP95`
+- `maxFrpP95`
+- `highConfidenceCountP95`
+- `sourcesWithDetectionsP95`
+- `frpOver50CountP95`
+
+The helper flags a repeated watch only when current detections show both:
+
+- enough source repeatability, controlled by `--min-repeat-sources`;
+- at least one strength metric above a sufficiently sampled baseline, controlled by
+  `--min-baseline-samples`.
+
+Missing baseline is explicit. Without `--require-baseline`, it is a `WARN`; with
+`--require-baseline`, it is a `FAIL`. Even when the review reports
+`elevated_manual_review_required`, it still means manual source review only. It is
+not an outage confirmation, not a supply interruption confirmation and not an oil
+price forecast.
