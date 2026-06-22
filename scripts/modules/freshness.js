@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-thermal-watch-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-wti-market-proxy-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

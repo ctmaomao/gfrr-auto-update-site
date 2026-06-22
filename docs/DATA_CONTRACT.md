@@ -420,7 +420,7 @@ M-74 新增三条 audit-only / display-only 生产数据层；Energy Stress Phas
 | `macroDrivers.worldEconomy` | Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11; Yahoo:^AXJO; Yahoo:^STI; Yahoo:^TWII; Yahoo:^NSEI; Yahoo:^BVSP | `stoxx50`, `nikkei225`, `dax`, `ftse100`, `cac40`, `stoxx600`, `kospi`, `asx200`, `sti`, `taiex`, `nifty50`, `bovespa`, per-index `price`, `changePct`, `changeWindow`, `updatedAt`, `sourceStatus`, parent `sourceStatus`, `updatedAt`, `source`, `notes` | STOXX 50 / Nikkei 225 / DAX / FTSE 100 / CAC 40 / STOXX 600 / KOSPI / ASX 200 / STI / TAIEX / Nifty 50 / Bovespa 是 C5 世界经济 display-only 公开指数代理；`changePct` 为 5d window decimal ratio；Nifty 数据完整度略低(Yahoo 偶缺 bar,resolver 已过滤非正/非 finite 点);V2X 留 pending，本层不接入 scoring / decision / execution / position |
 | `macroDrivers.euroVolatility` | DeutscheBoerse:quote_box:V2TX; STOXX(fallback) | `value`, `refDate`, `changePct`, `updatedAt`, `sourceStatus`, `source`, `notes` | VSTOXX / V2TX 是 C5 欧元区波动率 display-only 公开指数代理；主源为 boerse-frankfurt quote_box JSON(`DE000A0C3QF1`),STOXX 官页仅作 fallback；`refDate` 使用 Europe/Berlin 日期且 freshness 超过 5 自然日 fallback/missing；`changePct` 为 day-over-day decimal ratio；不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
 | `macroDrivers.chinaEquity` | Yahoo:000001.SS; Yahoo:^HSI; Yahoo:000300.SS | `sseComposite`, `hangSeng`, `csi300`, per-index `price`, `changePct`, `changeWindow`, `updatedAt`, `sourceStatus`, parent `sourceStatus`, `updatedAt`, `source`, `notes` | 上证综指 / 恒生指数 / 沪深 300 是 C6 中国宏观 display-only 公开股指代理；`changePct` 为 5d window decimal ratio；China PMI / CPI / 10Y / CFETS 留 pending，本层不接入 scoring / decision / execution / position |
-| `macroDrivers.inflationEnergy` | FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO | `cpi` (`headlineIndex`, `headlineYoY`, `headlineMoM`, `coreIndex`, `coreYoY`, `coreMoM`, `yoyWindow`, `updatedAt`, `seriesStatus`, `sourceStatus`) and `wti` (`price`, `changePct`, `changeWindow`, `updatedAt`, `sourceStatus`), parent `sourceStatus`, `updatedAt`, `source`, `notes` | US CPI headline/core 与 WTI 是 C1 通胀与能源 display-only 公开 FRED 代理；CPI YoY/MoM 与 WTI changePct 均为 decimal ratio,render 层乘 100；tone 仅展示,不接入 scoring / decision / execution / position |
+| `macroDrivers.inflationEnergy` | FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO; Yahoo:CL=F | `cpi` (`headlineIndex`, `headlineYoY`, `headlineMoM`, `coreIndex`, `coreYoY`, `coreMoM`, `yoyWindow`, `updatedAt`, `seriesStatus`, `sourceStatus`), `wti` (`price`, `changePct`, `changeWindow`, `updatedAt`, `sourceStatus`) and optional `wtiMarketProxy` (`price`, `changePct`, `changeWindow`, `updatedAt`, `sourceStatus`, `limitationZh`), parent `sourceStatus`, `updatedAt`, `source`, `notes` | US CPI headline/core 与 FRED WTI spot 是 C1 通胀与能源 display-only 公开 FRED 代理；`wtiMarketProxy` 为 Yahoo `CL=F` WTI futures 快速市场代理,用于 ODP T1 日频市场代理优先显示,不是 FRED 官方 spot；CPI YoY/MoM、WTI changePct 与 proxy changePct 均为 decimal ratio,render 层乘 100；tone 仅展示,不接入 scoring / decision / execution / position |
 | `macroDrivers.copperGold` | gold-api:HG; gold-api:XAU(备援 Yahoo:HG=F/GC=F) | `copper` / `gold` leg objects (`symbol`, `labelZh`, `price`, `changePct`, `changeWindow`, `updatedAt`, `source`, `sourceStatus`), parent `sourceStatus.{copper,gold,ratio}`, raw `ratio`, `ratioChangePct`, `ratioWindow`, `updatedAt`, `source`, `notes` | 铜金比是 C2 全球流动性 display-only 公开现货价(gold-api HG/XAU 主源,Yahoo HG=F/GC=F 备援——不同厂商,两腿全覆盖,gold-api 宕机时整比率仍可出)；schema 存原始 `copper/gold` 比率,前端显示 `×1000`;`ratioChangePct` 为日变化(较前日,vs 上一轮 Daily)decimal ratio,render 层乘 100；gold-api 实时端点只给现货价,故 changePct 由上轮价派生,Yahoo 备援腿 changePct 置 null(不混窗口);不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
 | `macroDrivers.chinaBond` | ChinaBond:MOF-yield-curve | `yield10y` object (`value`, `latestObsDate`, `updatedAt`, `source`, `sourceStatus`), parent `sourceStatus.yield10y`, `updatedAt`, `source`, `notes` | 中国 10 年国债收益率来自 ChinaBond 官方 `historyQuery` JSON；`value` 存 percent(例如 `1.72`),render 层显示 `%`；freshness 超过 7 天 fallback/missing；display-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
 | `macroDrivers.cfetsRmb` | ChinaMoney:CFETS-RmbIdx | `cfets`, `bis`, `sdr`, `latestObsDate`, parent `sourceStatus.cfets`, `updatedAt`, `source`, `notes` | CFETS 人民币篮子指数来自 ChinaMoney 官方 `RmbIdxHis` JSON,周频精确篮子,同记录含 BIS/SDR；freshness 超过 14 天 fallback/missing；display-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
@@ -709,7 +709,7 @@ ODP 是**独立数据文件** `data/oil-directional-pressure.json`(不在 `radar
 
 `evidence`(12 项,每项带 freshness 四件套 `frequency`/`ageDays`/`maxAgeDays`/`sourceStatus`):
 - 8 个 EIA(`crudeStocksExSpr`/`sprStocks`/`distillateStocks`/`gasolineStocks`/`refineryUtilization`/`refinerCrudeInputs`/`demandGasolineSupplied`/`demandDistillateSupplied`):`value`(number|null)、`unit` ∈ {`thousand barrels`,`thousand barrels per day`,`percent`}、`asOfDate`、`source` 以 `EIA:` 开头、`change1w/4w/13w`、`vs5yAvgPct`、`fiveYrRangePosition`、`historyWeeks`、`signalGroup`。
-- 复用价格 3 项(`wtiPrice`/`brentPrice`/`crackSpread`):`unit` `$/bbl`、`source` 以 `radar-data:` 开头(复用,不重抓)。
+- 复用价格 3 项(`wtiPrice`/`brentPrice`/`crackSpread`):`unit` `$/bbl`、`source` 以 `radar-data:` 开头(复用,不重抓)。`wtiPrice` 优先复用 `radar-data:macroDrivers.inflationEnergy.wtiMarketProxy`(Yahoo `CL=F` WTI futures 快速市场代理,`maxAgeDays=3`),缺失或过期时回退 `radar-data:macroDrivers.inflationEnergy.wti`(FRED `DCOILWTICO` 官方 WTI spot,低噪声但可能滞后)。
 - `curve`:`slopeRegime`、`frontMinusBack`(numeric,freshness 以此判定)、`confidence:'low'`、`limitationZh`、`source` 以 `radar-data:` 开头。
 - **P9 时点分级 metadata**(每个 evidence entry 必须携带):`latencyTier` ∈ {`T1_daily_market_proxy`,`T2_weekly_official_anchor`}、`latencyTierZh`、`timelinessZh`、`sourceRole`、`directionalUse`、`calibrationNoteZh`。当前 EIA 8 源均为 `T2_weekly_official_anchor`(低噪声官方周度锚);复用的 WTI / Brent / crack / curve 均为 `T1_daily_market_proxy`(较快市场/价格代理,需用 EIA 周度锚校准)。这些字段只服务证据时间节奏展示,不改变 `finalBias` / classifier / scoring / decision。
 
@@ -774,6 +774,8 @@ P18 仅新增 manual facility-list coverage review:`scripts/oil-directional/revi
 P19 仅新增 manual thermal-baseline repeatability review:`scripts/oil-directional/review-firms-thermal-baseline.mjs` + `npm run review:firms-thermal-baseline`,默认读取 ignored diagnosis artifact 与 ignored manual baseline artifact,可写 ignored review artifact。review schema 为 `firms-thermal-baseline-review-p19`,固定 `promotionEligible=false`,只比较当前 facility aggregate 与手动 baseline p95 字段,并要求 source repeatability + baseline exceedance 才输出 repeated/elevated watch。缺 baseline 必须显式 WARN 或在 `--require-baseline` 下 FAIL;不读取 MAP_KEY、不访问网络、不写 production data。`check:firms-thermal-baseline-review` 使用 synthetic committed fixtures 离线守门,并已加入 `check:oil-directional` suite。P19 不新增 ODP production schema、不进入 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation。
 
 P20 仅新增 manual watch-pack aggregation review:`scripts/oil-directional/review-firms-thermal-watch.mjs` + `npm run review:firms-thermal-watch`,默认读取 ignored P17/P18/P19 review artifacts,可写 ignored combined review artifact。review schema 为 `firms-thermal-watch-review-p20`,固定 `promotionEligible=false`,只汇总 facility coverage、thermal artifact review 与 baseline repeatability review,并输出 `signalState` / `manualReviewReadiness` / `futureIntegrationGate`。它会拒绝 schema/version/boundary/productionImpact 不合格的上游 review,但即使输出 `elevated_manual_review_required` 也只代表人工复核包,不是生产展示、workflow、ODP build 输入、事故确认、断供确认或油价预测。`check:firms-thermal-watch-review` 使用 committed review fixtures 离线守门,并已加入 `check:oil-directional` suite。P20 不新增 ODP production schema、不进入 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation。
+
+P21 新增 WTI 快速市场代理:`macroDrivers.inflationEnergy.wtiMarketProxy` 由 Daily pipeline 读取 Yahoo `CL=F` 公开 chart,作为 WTI futures market proxy。ODP `evidence.wtiPrice` 优先复用新鲜 `radar-data:macroDrivers.inflationEnergy.wtiMarketProxy`(`maxAgeDays=3`),缺失或过期时回退 `radar-data:macroDrivers.inflationEnergy.wti`(FRED `DCOILWTICO` 官方 WTI spot,低噪声但可能发布滞后)。该 proxy 只改变 ODP T1 日频市场代理展示的新鲜度与口径说明;不是官方 WTI spot,不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position、Brent promotion、Global Risk Heatmap 或 cross-validation。
 
 ### oil-directional-history.json — ODP PR2 历史 cache + 回测 GATE contract
 
@@ -845,7 +847,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-watch-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-wti-market-proxy-1`）。
 
 稳定边界：
 
@@ -1068,26 +1070,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-thermal-watch-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+odp-wti-market-proxy-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-watch-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-wti-market-proxy-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-thermal-watch-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-thermal-watch-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-thermal-watch-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-wti-market-proxy-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-wti-market-proxy-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-wti-market-proxy-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-thermal-watch-1
-npm run bump:frontend-asset-version -- odp-thermal-watch-1
+node scripts/bump-frontend-asset-version.mjs odp-wti-market-proxy-1
+npm run bump:frontend-asset-version -- odp-wti-market-proxy-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-thermal-watch-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-wti-market-proxy-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

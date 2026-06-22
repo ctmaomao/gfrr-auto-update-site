@@ -3,7 +3,7 @@
 //
 // Pulls EIA API v2 weekly petroleum physical series via the legacy route
 //   /v2/seriesid/PET.<id>.W
-// and reuses WTI / Brent / crack-spread / futures-curve from data/radar-data.json,
+// and reuses WTI market proxy / Brent / crack-spread / futures-curve from data/radar-data.json,
 // then writes data/oil-directional-pressure.json (evidence + freshness + seasonality).
 //
 // ADR-0013: this code writes to data/ (production data path) -> it MUST stay
@@ -225,26 +225,67 @@ function reuseFromRadar(builtMs) {
   try { radar = JSON.parse(readFileSync(RADAR_PATH, 'utf8')); }
   catch { return { _radarMissing: true }; }
   const bp = radar.brentPricingLayer || {};
-  const wti = ((radar.macroDrivers || {}).inflationEnergy || {}).wti || {};
+  const inflationEnergy = ((radar.macroDrivers || {}).inflationEnergy || {});
+  const wti = inflationEnergy.wti || {};
+  const wtiMarketProxy = inflationEnergy.wtiMarketProxy || {};
   const sb = bp.selectedBrent || {};
   const fpc = bp.futuresPriceCurve || {};
   const num = (v) => (Number.isFinite(Number(v)) ? round(Number(v), 3) : null);
-  const priceField = (value, iso, maxAge, source) => {
+  const priceField = (value, iso, maxAge, source, sourceStatusHint = null) => {
     const v = num(value);
     const a = ageDaysFrom(iso, builtMs);
+    const computedStatus = freshnessStatus(v, a, maxAge);
+    const sourceStatus = computedStatus === 'live' && sourceStatusHint === 'fallback'
+      ? 'fallback'
+      : computedStatus;
     return withTimingFields({
       value: v, unit: '$/bbl', asOfDate: iso || null, frequency: 'daily',
       ageDays: a, maxAgeDays: maxAge,
-      sourceStatus: freshnessStatus(v, a, maxAge),
+      sourceStatus,
       source,
     }, TIMING_TIERS.dailyMarketProxy, 'daily_market_price_proxy', '观察价格是否确认或背离周度物理链');
   };
+  const wtiMarketProxyField = priceField(
+    wtiMarketProxy.price,
+    wtiMarketProxy.updatedAt,
+    3,
+    'radar-data:macroDrivers.inflationEnergy.wtiMarketProxy',
+    wtiMarketProxy.sourceStatus
+  );
+  const wtiOfficialSpotField = priceField(
+    wti.price,
+    wti.updatedAt,
+    10,
+    'radar-data:macroDrivers.inflationEnergy.wti',
+    wti.sourceStatus
+  );
+  const wtiPrice = wtiMarketProxyField.sourceStatus === 'live' || wtiMarketProxyField.sourceStatus === 'fallback'
+    ? {
+        ...wtiMarketProxyField,
+        sourceRole: 'daily_market_futures_proxy',
+        proxyBasis: 'Yahoo CL=F WTI futures market proxy; not official WTI spot.',
+        officialSpotFallback: {
+          value: wtiOfficialSpotField.value,
+          asOfDate: wtiOfficialSpotField.asOfDate,
+          ageDays: wtiOfficialSpotField.ageDays,
+          sourceStatus: wtiOfficialSpotField.sourceStatus,
+          source: wtiOfficialSpotField.source,
+          noteZh: 'FRED DCOILWTICO 官方 WTI spot 保留为低噪声滞后校准源。'
+        },
+        limitationZh: 'WTI 市场代理优先使用 Yahoo CL=F 期货快照;不是 FRED 官方 WTI spot。'
+      }
+    : {
+        ...wtiOfficialSpotField,
+        proxyBasis: 'FRED DCOILWTICO official WTI spot fallback.',
+        marketProxyFallbackReason: 'wtiMarketProxy missing or stale',
+        limitationZh: 'WTI 快速市场代理不可用或过期,回退到 FRED 官方 WTI spot;该 spot 可能有数日发布滞后。'
+      };
   const crackAge = ageDaysFrom(radar.updatedAt, builtMs);
   const curveAge = ageDaysFrom(fpc.updatedAt, builtMs);
   const curveFmb = num(fpc.frontMinusBack);
   const curveHasData = curveFmb !== null && !!fpc.curveStatus && fpc.curveStatus !== 'missing';
   return {
-    wtiPrice: priceField(wti.price, wti.updatedAt, 10, 'radar-data:macroDrivers.inflationEnergy.wti'),
+    wtiPrice,
     brentPrice: priceField(sb.value, sb.observedAt, 5, 'radar-data:brentPricingLayer.selectedBrent'),
     crackSpread: withTimingFields({
       value: num(bp.crackSpread), unit: '$/bbl', asOfDate: radar.updatedAt || null,

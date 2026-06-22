@@ -30,7 +30,7 @@ ODP 的目标**不是预测绝对油价点位**,而是判断当前原油价格�
 
 | ODP 需要 | 复用现有字段 | 现有来源（已验证） | 复用方式 |
 |---|---|---|---|
-| WTI 现货 | `macroDrivers.inflationEnergy.wti` | FRED `DCOILWTICO`（`run-daily-pipeline.mjs` 内 `fetchFredSeries`） | ODP build 读已构建的 `radar-data.json` 快照,不重抓 |
+| WTI 市场代理 | `macroDrivers.inflationEnergy.wtiMarketProxy` 优先;缺失/过期回退 `macroDrivers.inflationEnergy.wti` | Yahoo `CL=F` WTI futures 快速代理;FRED `DCOILWTICO` 官方 WTI spot 作低噪声滞后 fallback | ODP build 读已构建的 `radar-data.json` 快照,不重抓;proxy 不是官方 spot |
 | Brent 现货 | `values.brent` / `brentPricingLayer.selectedBrent` | FRED `DCOILBRENTEU` + Yahoo `BZ=F` + TE promotion gate | 同上 |
 | 柴油裂解价差 | `brentPricingLayer.crackSpread` | FRED `DHOILNYH` × 42 − Brent | 同上 — ⚠️ **这是价格/利润代理,不是馏分油库存**;库存走 §1.2 `WDISTUS1` |
 | 期限结构 backwardation/contango | `brentPricingLayer.futuresPriceCurve.{slopeRegime, frontMinusBack, contracts[]}` | Yahoo `BZ` 月度期货代理（**已有,低置信**） | 复用;M1-M2 / M1-M6 可从 `contracts[]` 逐月价**派生**(仍低置信);缺则该信号降级"不参与裁决" |
@@ -119,7 +119,7 @@ PR1 只落 **evidence + freshness + seasonality**;`signals` / `finalBias` / `int
     "demandDistillateSupplied": { "..." },
     "demandGasolineSupplied":   { "..." },
 
-    "wtiPrice":   { "value":0,"unit":"$/bbl","frequency":"daily","maxAgeDays":4,"source":"radar-data:macroDrivers.inflationEnergy.wti" },
+    "wtiPrice":   { "value":0,"unit":"$/bbl","frequency":"daily","maxAgeDays":3,"source":"radar-data:macroDrivers.inflationEnergy.wtiMarketProxy" },
     "brentPrice": { "...","source":"radar-data:values.brent" },
     "crackSpread":{ "...","source":"radar-data:brentPricingLayer.crackSpread","note":"价格/裂解代理,非库存" },
     "curve":      { "slopeRegime":"backwardation|contango|flat|未知","frontMinusBack":0,

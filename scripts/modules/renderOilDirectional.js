@@ -220,7 +220,7 @@ const EVIDENCE_TIMING_ORDER = [
 ];
 const EVIDENCE_ROW_DEFS = [
   ['Brent 主显示', 'brentPrice'],
-  ['WTI 价格', 'wtiPrice'],
+  ['WTI 市场代理', 'wtiPrice'],
   ['柴油裂解价差', 'crackSpread'],
   ['期限结构', 'curve'],
   ['原油库存(ex-SPR)', 'crudeStocksExSpr'],

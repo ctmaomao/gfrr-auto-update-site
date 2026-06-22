@@ -132,17 +132,23 @@ const CHINA_EQUITY_INDEXES = [
   { key: 'hangSeng', symbol: '^HSI', labelZh: '恒生指数', min: 8000, max: 50000 },
   { key: 'csi300', symbol: '000300.SS', labelZh: '沪深 300', min: 1000, max: 9000 }
 ];
-const INFLATION_ENERGY_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO';
+const INFLATION_ENERGY_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO; Yahoo:CL=F';
 const INFLATION_CPI_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL';
 const INFLATION_WTI_SOURCE = 'FRED:DCOILWTICO';
+const INFLATION_WTI_MARKET_PROXY_SOURCE = 'Yahoo:CL=F';
 const INFLATION_ENERGY_DISPLAY_NOTE =
-  '通胀与能源 display-only 公开数据代理;tone 仅展示,不进 scoring/decision/execution/position。';
+  '通胀与能源 display-only 公开数据代理;WTI spot 为 FRED 官方滞后锚,WTI market proxy 为 Yahoo CL=F 快速市场代理;tone 仅展示,不进 scoring/decision/execution/position。';
 const CPI_DAYS_BACK = 450;
 const CPI_YOY_GAP_DAYS = 45;
 const CPI_MOM_GAP_DAYS = 20;
 const WTI_DAYS_BACK = 30;
 const WTI_CHANGE_WINDOW = '5d';
 const WTI_CHANGE_GAP_DAYS = 7;
+const WTI_MARKET_PROXY_SYMBOL = 'CL=F';
+const WTI_MARKET_PROXY_RANGE = '5d';
+const WTI_MARKET_PROXY_INTERVAL = '1d';
+const WTI_MARKET_PROXY_MIN = 10;
+const WTI_MARKET_PROXY_MAX = 250;
 const INFLATION_ENERGY_STATUS_RANK = { live: 0, fallback: 1, missing: 2 };
 const GOLD_API_PRICE_BASE = 'https://api.gold-api.com/price';
 const COPPER_GOLD_SOURCE = 'gold-api:HG; gold-api:XAU';
@@ -3682,6 +3688,59 @@ function buildInflationWti(result, previous) {
   return normalizePreviousInflationWti(previous) || buildMissingInflationWti();
 }
 
+function buildMissingInflationWtiMarketProxy() {
+  return {
+    price: null,
+    changePct: null,
+    changeWindow: WTI_CHANGE_WINDOW,
+    updatedAt: null,
+    source: INFLATION_WTI_MARKET_PROXY_SOURCE,
+    sourceStatus: 'missing',
+    basis: 'WTI futures market proxy, not official spot',
+    limitationZh: 'Yahoo CL=F 为 WTI 期货公开市场代理,不是 FRED 官方 WTI spot。'
+  };
+}
+
+function normalizePreviousInflationWtiMarketProxy(previous) {
+  if (!previous || typeof previous !== 'object' || !Number.isFinite(previous.price)) return null;
+  return {
+    price: +Number(previous.price).toFixed(2),
+    changePct: Number.isFinite(previous.changePct) ? +Number(previous.changePct).toFixed(4) : null,
+    changeWindow: typeof previous.changeWindow === 'string' && previous.changeWindow.trim()
+      ? previous.changeWindow
+      : WTI_CHANGE_WINDOW,
+    updatedAt: typeof previous.updatedAt === 'string' ? previous.updatedAt : null,
+    source: INFLATION_WTI_MARKET_PROXY_SOURCE,
+    sourceStatus: 'fallback',
+    basis: 'WTI futures market proxy, not official spot',
+    limitationZh: 'Yahoo CL=F 为 WTI 期货公开市场代理,不是 FRED 官方 WTI spot。'
+  };
+}
+
+function buildInflationWtiMarketProxy(result, previous) {
+  if (result.status === 'fulfilled') {
+    const quote = result.value;
+    if (
+      Number.isFinite(quote?.price)
+      && quote.price >= WTI_MARKET_PROXY_MIN
+      && quote.price <= WTI_MARKET_PROXY_MAX
+    ) {
+      return {
+        price: +Number(quote.price).toFixed(2),
+        changePct: Number.isFinite(quote.changePct) ? +Number(quote.changePct).toFixed(4) : null,
+        changeWindow: WTI_CHANGE_WINDOW,
+        updatedAt: typeof quote.updatedAt === 'string' ? quote.updatedAt : null,
+        source: INFLATION_WTI_MARKET_PROXY_SOURCE,
+        sourceStatus: 'live',
+        basis: 'WTI futures market proxy, not official spot',
+        limitationZh: 'Yahoo CL=F 为 WTI 期货公开市场代理,不是 FRED 官方 WTI spot。'
+      };
+    }
+  }
+
+  return normalizePreviousInflationWtiMarketProxy(previous) || buildMissingInflationWtiMarketProxy();
+}
+
 function buildInflationCpi(headline, core) {
   const seriesStatus = {
     headline: headline.status,
@@ -3716,24 +3775,34 @@ function buildMissingInflationEnergy(prevInflationEnergy = null) {
   }) || buildMissingInflationCpiSeries();
   const cpi = buildInflationCpi(headline, core);
   const wti = normalizePreviousInflationWti(prevInflationEnergy?.wti) || buildMissingInflationWti();
+  const wtiMarketProxy = normalizePreviousInflationWtiMarketProxy(prevInflationEnergy?.wtiMarketProxy)
+    || buildMissingInflationWtiMarketProxy();
   return {
-    updatedAt: latestIsoDate(cpi.updatedAt, wti.updatedAt, typeof prevInflationEnergy?.updatedAt === 'string' ? prevInflationEnergy.updatedAt : null),
+    updatedAt: latestIsoDate(
+      cpi.updatedAt,
+      wti.updatedAt,
+      wtiMarketProxy.updatedAt,
+      typeof prevInflationEnergy?.updatedAt === 'string' ? prevInflationEnergy.updatedAt : null
+    ),
     source: INFLATION_ENERGY_SOURCE,
     sourceStatus: {
       cpi: cpi.sourceStatus,
-      wti: wti.sourceStatus
+      wti: wti.sourceStatus,
+      wtiMarketProxy: wtiMarketProxy.sourceStatus
     },
     notes: INFLATION_ENERGY_DISPLAY_NOTE,
     cpi,
-    wti
+    wti,
+    wtiMarketProxy
   };
 }
 
 async function resolveInflationEnergy(prevInflationEnergy) {
-  const [headlineResult, coreResult, wtiResult] = await Promise.allSettled([
+  const [headlineResult, coreResult, wtiResult, wtiMarketProxyResult] = await Promise.allSettled([
     fetchFredSeries('CPIAUCSL', CPI_DAYS_BACK),
     fetchFredSeries('CPILFESL', CPI_DAYS_BACK),
-    fetchFredSeries('DCOILWTICO', WTI_DAYS_BACK)
+    fetchFredSeries('DCOILWTICO', WTI_DAYS_BACK),
+    fetchYahooChartQuote(WTI_MARKET_PROXY_SYMBOL, WTI_MARKET_PROXY_RANGE, WTI_MARKET_PROXY_INTERVAL)
   ]);
 
   const headline = buildInflationCpiSeries(headlineResult, prevInflationEnergy?.cpi, {
@@ -3748,17 +3817,23 @@ async function resolveInflationEnergy(prevInflationEnergy) {
   });
   const cpi = buildInflationCpi(headline, core);
   const wti = buildInflationWti(wtiResult, prevInflationEnergy?.wti);
+  const wtiMarketProxy = buildInflationWtiMarketProxy(
+    wtiMarketProxyResult,
+    prevInflationEnergy?.wtiMarketProxy
+  );
 
   return {
-    updatedAt: latestIsoDate(cpi.updatedAt, wti.updatedAt),
+    updatedAt: latestIsoDate(cpi.updatedAt, wti.updatedAt, wtiMarketProxy.updatedAt),
     source: INFLATION_ENERGY_SOURCE,
     sourceStatus: {
       cpi: cpi.sourceStatus,
-      wti: wti.sourceStatus
+      wti: wti.sourceStatus,
+      wtiMarketProxy: wtiMarketProxy.sourceStatus
     },
     notes: INFLATION_ENERGY_DISPLAY_NOTE,
     cpi,
-    wti
+    wti,
+    wtiMarketProxy
   };
 }
 

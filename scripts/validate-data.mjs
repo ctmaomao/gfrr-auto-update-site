@@ -155,9 +155,13 @@ const CHINA_EQUITY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 const VALID_CHINA_EQUITY_SOURCE = 'Yahoo:000001.SS; Yahoo:^HSI; Yahoo:000300.SS';
 const CHINA_EQUITY_KEYS = ['sseComposite', 'hangSeng', 'csi300'];
 const INFLATION_ENERGY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
-const VALID_INFLATION_ENERGY_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO';
+const VALID_INFLATION_ENERGY_SOURCES = new Set([
+  'FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO',
+  'FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO; Yahoo:CL=F'
+]);
 const VALID_INFLATION_CPI_SOURCE = 'FRED:CPIAUCSL; FRED:CPILFESL';
 const VALID_INFLATION_WTI_SOURCE = 'FRED:DCOILWTICO';
+const VALID_INFLATION_WTI_MARKET_PROXY_SOURCE = 'Yahoo:CL=F';
 const COPPER_GOLD_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
 // copperGold parent source is gold-api spot (HG/XAU) with a 1d (day-over-day vs
 // previous Daily run) window. Yahoo HG=F/GC=F is a per-leg fallback only — the
@@ -1408,12 +1412,15 @@ function validateMacroDriversInflationEnergy(dataPayload) {
   if (inflationEnergy === undefined) return;
   assertPlainObject(inflationEnergy, 'macroDrivers.inflationEnergy');
   validateNullableIsoString(inflationEnergy.updatedAt, 'macroDrivers.inflationEnergy.updatedAt');
-  assert(inflationEnergy.source === VALID_INFLATION_ENERGY_SOURCE, `macroDrivers.inflationEnergy.source must be ${VALID_INFLATION_ENERGY_SOURCE}`);
+  assert(VALID_INFLATION_ENERGY_SOURCES.has(inflationEnergy.source), `macroDrivers.inflationEnergy.source must be one of: ${[...VALID_INFLATION_ENERGY_SOURCES].join(' | ')}`);
   assertString(inflationEnergy.notes, 'macroDrivers.inflationEnergy.notes');
   assertPlainObject(inflationEnergy.sourceStatus, 'macroDrivers.inflationEnergy.sourceStatus');
   for (const key of ['cpi', 'wti']) {
     assert(Object.hasOwn(inflationEnergy.sourceStatus, key), `macroDrivers.inflationEnergy.sourceStatus.${key} is missing`);
     assert(INFLATION_ENERGY_SOURCE_STATUSES.has(inflationEnergy.sourceStatus[key]), `macroDrivers.inflationEnergy.sourceStatus.${key} is not supported`);
+  }
+  if (Object.hasOwn(inflationEnergy.sourceStatus, 'wtiMarketProxy')) {
+    assert(INFLATION_ENERGY_SOURCE_STATUSES.has(inflationEnergy.sourceStatus.wtiMarketProxy), 'macroDrivers.inflationEnergy.sourceStatus.wtiMarketProxy is not supported');
   }
 
   assertPlainObject(inflationEnergy.cpi, 'macroDrivers.inflationEnergy.cpi');
@@ -1446,6 +1453,24 @@ function validateMacroDriversInflationEnergy(dataPayload) {
   assertString(wti.sourceStatus, 'macroDrivers.inflationEnergy.wti.sourceStatus');
   assert(INFLATION_ENERGY_SOURCE_STATUSES.has(wti.sourceStatus), 'macroDrivers.inflationEnergy.wti.sourceStatus is not supported');
   assert(wti.sourceStatus === inflationEnergy.sourceStatus.wti, 'macroDrivers.inflationEnergy.wti.sourceStatus must match parent sourceStatus.wti');
+
+  if (inflationEnergy.wtiMarketProxy !== undefined) {
+    assertPlainObject(inflationEnergy.wtiMarketProxy, 'macroDrivers.inflationEnergy.wtiMarketProxy');
+    const wtiMarketProxy = inflationEnergy.wtiMarketProxy;
+    assert(isFiniteNumberOrNull(wtiMarketProxy.price), 'macroDrivers.inflationEnergy.wtiMarketProxy.price must be finite number or null');
+    assert(isFiniteNumberOrNull(wtiMarketProxy.changePct), 'macroDrivers.inflationEnergy.wtiMarketProxy.changePct must be finite number or null');
+    validateDecimalRatioRangeIfPresent(wtiMarketProxy.changePct, 'macroDrivers.inflationEnergy.wtiMarketProxy.changePct');
+    assertString(wtiMarketProxy.changeWindow, 'macroDrivers.inflationEnergy.wtiMarketProxy.changeWindow');
+    assert(wtiMarketProxy.changeWindow === '5d', 'macroDrivers.inflationEnergy.wtiMarketProxy.changeWindow must be 5d');
+    validateNullableIsoString(wtiMarketProxy.updatedAt, 'macroDrivers.inflationEnergy.wtiMarketProxy.updatedAt');
+    assert(wtiMarketProxy.source === VALID_INFLATION_WTI_MARKET_PROXY_SOURCE, `macroDrivers.inflationEnergy.wtiMarketProxy.source must be ${VALID_INFLATION_WTI_MARKET_PROXY_SOURCE}`);
+    assertString(wtiMarketProxy.sourceStatus, 'macroDrivers.inflationEnergy.wtiMarketProxy.sourceStatus');
+    assert(INFLATION_ENERGY_SOURCE_STATUSES.has(wtiMarketProxy.sourceStatus), 'macroDrivers.inflationEnergy.wtiMarketProxy.sourceStatus is not supported');
+    if (Object.hasOwn(inflationEnergy.sourceStatus, 'wtiMarketProxy')) {
+      assert(wtiMarketProxy.sourceStatus === inflationEnergy.sourceStatus.wtiMarketProxy, 'macroDrivers.inflationEnergy.wtiMarketProxy.sourceStatus must match parent sourceStatus.wtiMarketProxy');
+    }
+    assert(typeof wtiMarketProxy.limitationZh === 'string' && /期货|代理|官方/u.test(wtiMarketProxy.limitationZh), 'macroDrivers.inflationEnergy.wtiMarketProxy.limitationZh must describe futures/proxy limitation');
+  }
 }
 
 function validateMacroDriversCopperGold(dataPayload) {

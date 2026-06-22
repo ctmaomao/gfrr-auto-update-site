@@ -146,13 +146,14 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 | **Refresh 频率** | Realtime worker (high freq) + Daily pipeline 兜底；Market Pricing QQQ 每周自动 + NDX/IXIC Daily/manual history refresh |
 | **失败 fallback** | 失败时记录 `previewFetchStatus`,主 worker preview 不写入;前端通过 strict gate 回退 |
 | **影响 scoring?** | **仅 Brent**:Yahoo `BZ=F` 作为 Brent fresh confirmation(M-D-5+);**其他 secondary 不影响 scoring** |
-| **fetcher** | Worker secondary: `workers/gfrr-realtime-worker/src/worker-market-preview.js`;Market Pricing NDX/IXIC: `scripts/market-pricing/ndx-ixic-yahoo-history-refresh.mjs`;Market Pricing QQQ: `scripts/market-pricing/qqq-yahoo-history-refresh.mjs` |
+| **fetcher** | Worker secondary: `workers/gfrr-realtime-worker/src/worker-market-preview.js`;Daily display-only macro proxies: `scripts/run-daily-pipeline.mjs::fetchYahooChartQuote`;Market Pricing NDX/IXIC: `scripts/market-pricing/ndx-ixic-yahoo-history-refresh.mjs`;Market Pricing QQQ: `scripts/market-pricing/qqq-yahoo-history-refresh.mjs` |
 
 **当前消费的 symbol**:
 
 | Symbol | 含义 | 用途 |
 |---|---|---|
 | `BZ=F` | Brent crude futures | Brent fresh confirmation (D-5),与 FRED + TE 取一致 |
+| `CL=F` | WTI crude futures | `macroDrivers.inflationEnergy.wtiMarketProxy` Daily display-only 快速市场代理;ODP `wtiPrice` 优先复用它,缺失/过期时回退 FRED `DCOILWTICO`;不是官方 WTI spot,不进 scoring/decision/execution/position |
 | `^GSPC` | S&P 500 index | secondary diagnostics only (不影响 scoring,M-E-4) |
 | `^NDX` | Nasdaq 100 index | `marketPricingHistory.assets.ndx` Daily/manual history refresh;QQQ primary 的辅助横向对照,不进 Worker/scoring |
 | `^IXIC` | Nasdaq Composite index | `marketPricingHistory.assets.ixic` Daily/manual history refresh;Nasdaq 广度参照,不进 Worker/scoring |
@@ -346,7 +347,7 @@ See [`CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md`](CHINA_MACRO_LIQUIDITY_PR
 | `PET.WGFUPUS2.W` | 成品汽油 product supplied | 千桶/日 | demandDestructionRisk |
 | `PET.WDIUPUS2.W` | 馏分油 product supplied | 千桶/日 | demandDestructionRisk |
 
-WTI / Brent / 裂解价差 / 期限结构由 `oil-directional-pressure.json` **复用** `data/radar-data.json`(`macroDrivers.inflationEnergy.wti` / `brentPricingLayer.selectedBrent` / `.crackSpread` / `.futuresPriceCurve`),不重抓。P6B 起,ODP build 还会复用 `radar-data.macroDrivers.energyInventoryBalance` / `energySpareCapacity` / `energyTransport` 生成 `interpretation.globalOverlay` 慢变量确认层;该层仍 display-only,不改变 `finalBias` 枚举、不进入 scoring/decision/Heatmap。`macro-overview-narrative-v1` 可在首页 Macro Risk Overview 只读引用 ODP 作为油价方向证据,但不得把 ODP 并入 `values.*`、六大模块、cross-validation 或 Global Risk Heatmap。EIA = 美国政府公共领域数据,标注 source URL 即可。详见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
+WTI / Brent / 裂解价差 / 期限结构由 `oil-directional-pressure.json` **复用** `data/radar-data.json`(`macroDrivers.inflationEnergy.wtiMarketProxy` 优先,回退 `macroDrivers.inflationEnergy.wti` / `brentPricingLayer.selectedBrent` / `.crackSpread` / `.futuresPriceCurve`),不重抓。`wtiMarketProxy` 为 Yahoo `CL=F` WTI futures 快速市场代理,用于降低 ODP 的 WTI T1 证据滞后;FRED `DCOILWTICO` 官方 WTI spot 保留为低噪声滞后校准 fallback。P6B 起,ODP build 还会复用 `radar-data.macroDrivers.energyInventoryBalance` / `energySpareCapacity` / `energyTransport` 生成 `interpretation.globalOverlay` 慢变量确认层;该层仍 display-only,不改变 `finalBias` 枚举、不进入 scoring/decision/Heatmap。`macro-overview-narrative-v1` 可在首页 Macro Risk Overview 只读引用 ODP 作为油价方向证据,但不得把 ODP 并入 `values.*`、六大模块、cross-validation 或 Global Risk Heatmap。EIA = 美国政府公共领域数据,标注 source URL 即可。详见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
 
 P9 起,ODP 每条 evidence 均携带时点分级 metadata:`T2_weekly_official_anchor` 用于 EIA WPSR 8 个周度官方锚,`T1_daily_market_proxy` 用于复用的 WTI / Brent / crack / curve 日频市场代理。该 metadata 只解释“快信号 vs 慢锚点”的证据节奏和校准关系;不代表已接入新闻 API、FIRMS/VIIRS 热异常、Kpler/Vortexa、API 周报、或任何新实时源,也不得被用于 scoring/decision/execution/position。
 
@@ -662,5 +663,5 @@ documented attribution string and code is a contract violation.
 | `worldOrderStress.dimensions.economicWeaponization` | OFAC + (GDELT) |
 | `worldOrderStress.dimensions.peaceDividendRetreat` | SIPRI (年度) |
 | `worldOrderStress` GDELT narrative | GDELT Cloud v2 |
-| `data/oil-directional-pressure.json` (ODP, 独立文件) | EIA API v2 weekly petroleum (`PET.*.W`) + 复用 radar-data WTI/Brent/crack/curve + radar-history-full Brent ~4w 价格方向(PR3 背离层) + radar-data `energyInventoryBalance` / `energySpareCapacity` / `energyTransport` 慢变量(P6B global overlay, display-only) |
+| `data/oil-directional-pressure.json` (ODP, 独立文件) | EIA API v2 weekly petroleum (`PET.*.W`) + 复用 radar-data WTI market proxy(优先 `macroDrivers.inflationEnergy.wtiMarketProxy`,回退 FRED WTI spot)/Brent/crack/curve + radar-history-full Brent ~4w 价格方向(PR3 背离层) + radar-data `energyInventoryBalance` / `energySpareCapacity` / `energyTransport` 慢变量(P6B global overlay, display-only) |
 | `data/oil-directional-history.json` (ODP PR2 回测 cache) | EIA API v2 weekly petroleum (`PET.*.W`) 2014-至今 committed snapshot;仅 backtest replay,不进 live / scoring / Heatmap |
