@@ -64,8 +64,9 @@ npm run check:dom         # DOM id 契约
 3. **World Order 是 regime overlay,不是第七个底层风险模块** — 不得加入 scoring/decision/execution/position (违反 → 风险模型被偷换概念)
 4. **External AI 是只读展示层** — 不得让其 output 影响 scoring/decision/execution/position (违反 → AI 漂移直接污染决策)
 5. **改 `index.html` / `scripts/app.js` / `scripts/modules/*.js` 必须同步 bump frontend asset cache version** — 用 `npm run bump:frontend-asset-version` 自动取当前值并 bump (违反 → 用户拿到旧 JS / 旧 CSS,debug 灾难)
-6. **提交前必跑 `npm run check:all`** — 默认只读完整检查全绿才能提交,实际组成以 `package.json` 为准 (违反 → CI 红,Pages 部署中断)
-7. **Serial trunk mode** — 一次只推进一个逻辑任务,no stacked PR,旧 PR 不继续堆改
+6. **发布/展示版本与数据契约版本分离** — 当前 release/display version 是 `v28.0.10`;根级 `data.version` 与 `decisionModel.contractVersion` 仍是兼容数据契约 `v27.0`,不得机械全局替换 (违反 → 破坏历史兼容契约)
+7. **提交前必跑 `npm run check:all`** — 默认只读完整检查全绿才能提交,实际组成以 `package.json` 为准 (违反 → CI 红,Pages 部署中断)
+8. **Serial trunk mode** — 一次只推进一个逻辑任务,no stacked PR,旧 PR 不继续堆改
 
 ## NEVER
 

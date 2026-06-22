@@ -31,12 +31,13 @@
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `macro-overview-helper-extraction-1`）。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `release-version-semantics-v28.0.10-1`）。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
 当前关键边界：
 
+- 版本语义已收口为“双版本”:当前 release/display version 是 `v28.0.10`（package / release / 前端 ISSUE 显示 / 新 Daily 输出 `releaseVersion`）；根级 `data.version` 与 `decisionModel.contractVersion` 仍是兼容数据契约 `v27.0`，只有另开 reviewed contract migration 才能改。不得机械全局替换历史 `v27`。
 - Worker-first 主链路：worker 生成 `/market.worker-preview.json` 作为主 realtime payload。**M-94 V0 路径 C 重写后，前端入口改读 `data/radar-data.json` 静态快照，不再在前端跑 worker-first strict gate；`scripts/modules/realtime.js`（fetch + strict-gate 逻辑）按 M-94 要求保留但当前未接入重写后的前端、有意冻结（见 `docs/M94_V0_DATA_CONTRACT.md`）。是否在后续 stage 把 realtime overlay 重新接回前端属产品决策，须另开版本评审。**
 - serial trunk mode：所有任务基于 latest main，一次只推进一个逻辑任务，no stacked PR，旧 PR 不继续堆改。
 - `/market.secondary-preview.json` 只承载独立 secondary diagnostics，当前包含 VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB`、US10Y via Yahoo `^TNX` 与 SPX via Yahoo `^GSPC`；不得污染主 preview。
@@ -235,7 +236,7 @@ package.json scripts.check:all
 - `check:data:verbose`：输出 expected skip reason。
 - `check:data:strict-live-alignment`：把本地 realtime 与 `dailyRealtimeInput` 非同一快照视为失败。
 
-v28.0G-10 起，如果本地 realtime 与 `dailyRealtimeInput.updatedAt` 不匹配，默认 `check:data` 会静默跳过 live alignment 并继续其它检查；`Validation passed (v27.0)` 表示数据契约通过。
+v28.0G-10 起，如果本地 realtime 与 `dailyRealtimeInput.updatedAt` 不匹配，默认 `check:data` 会静默跳过 live alignment 并继续其它检查；`Validation passed (release v28.0.10; data contract v27.0)` 表示发布版本与兼容数据契约均通过当前校验。
 
 ## 6. 不同类型任务的检查要求
 

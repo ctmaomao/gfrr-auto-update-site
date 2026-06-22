@@ -53,6 +53,8 @@ const FRED_API_BASE = 'https://api.stlouisfed.org/fred/series/observations';
 const FRED_API_KEY = (process.env.FRED_API_KEY || '').trim();
 const EIA_API_KEY = (process.env.EIA_API_KEY || '').trim();
 const WIND_API_KEY = (process.env.WIND_API_KEY || '').trim();
+const RELEASE_VERSION = 'v28.0.10';
+const DATA_CONTRACT_VERSION = 'v27.0';
 const MAIN_SCORE_WIND_FALLBACK_ENV = 'GFRR_MAIN_SCORE_WIND_FALLBACK';
 const MAIN_SCORE_WIND_FALLBACK_ENABLED = process.env[MAIN_SCORE_WIND_FALLBACK_ENV] === '1';
 const MAIN_SCORE_WIND_TIMEOUT_MS = Number(process.env.GFRR_MAIN_SCORE_WIND_TIMEOUT_MS) > 0
@@ -61,7 +63,7 @@ const MAIN_SCORE_WIND_TIMEOUT_MS = Number(process.env.GFRR_MAIN_SCORE_WIND_TIMEO
 const MACRO_FETCH_TIMEOUT_MS = 10000;
 const MACRO_FETCH_RETRIES = 2;
 const MACRO_FETCH_RETRY_DELAY_MS = 800;
-const MACRO_USER_AGENT = 'gfr-v27.0-macro/1.0';
+const MACRO_USER_AGENT = `gfrr-${RELEASE_VERSION}-macro/1.0`;
 const ISM_PMI_LANDING_URL = 'https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/';
 const ISM_PMI_USER_AGENT = 'GFRRBot/1.0';
 const ISM_PMI_FETCH_TIMEOUT_MS = 8000;
@@ -11043,12 +11045,23 @@ function buildHistoryWindowFields(historyFull) {
   };
 }
 
+function buildVersionSemantics() {
+  return {
+    releaseVersion: RELEASE_VERSION,
+    dataContractVersion: DATA_CONTRACT_VERSION,
+    decisionModelContractVersion: DATA_CONTRACT_VERSION,
+    note: 'releaseVersion drives user-visible release display; version remains the legacy data contract marker.'
+  };
+}
+
 async function buildFallback() {
   const next = structuredClone(prevData);
-  next.version = 'v27.0';
+  next.version = DATA_CONTRACT_VERSION;
+  next.releaseVersion = RELEASE_VERSION;
+  next.versionSemantics = buildVersionSemantics();
   next.updatedAt = isoNow;
   next.decisionLine = '实时快变量暂不可用，系统沿用上次有效慢变量结构，但保留今日更新时间戳。';
-  next.summary = 'v27.0 日构建已退回到上次有效慢变量结构。';
+  next.summary = `${RELEASE_VERSION} 日构建已退回到上次有效慢变量结构。`;
   const prevInputs = (prevData && typeof prevData.displayInputsBaseline === 'object' && prevData.displayInputsBaseline)
     ? prevData.displayInputsBaseline
     : null;
@@ -11153,12 +11166,12 @@ async function build() {
   const shiftedHi = clampRange(Math.round(baseBandByLock.hi + structuralShift / 2), 10, 100);
   const totalExposureBandCN = `${shiftedLo}%-${shiftedHi}%`;
 
-  // v27: recovery.notes 构建 —— 若结构信号数据源全不可用则追加中文降级说明
+  // recovery.notes 构建 —— 若结构信号数据源全不可用则追加中文降级说明
   const recoveryNotes = scoringRealtime.notes && scoringRealtime.notes.length
     ? [...scoringRealtime.notes]
-    : ['v27.0 慢变量已由最新实时快照与结构性数据重算。'];
+    : [`${RELEASE_VERSION} 慢变量已由最新实时快照与结构性数据重算。`];
   if (allMacroMissing) {
-    recoveryNotes.push('结构信号数据源当前全部不可用，v27 结构门控已降级。');
+    recoveryNotes.push('结构信号数据源当前全部不可用，兼容结构门控已降级。');
   }
 
   const toFiniteOrNull = (value) => (Number.isFinite(value) ? value : null);
@@ -11212,7 +11225,9 @@ async function build() {
   });
 
   const data = {
-    version: 'v27.0',
+    version: DATA_CONTRACT_VERSION,
+    releaseVersion: RELEASE_VERSION,
+    versionSemantics: buildVersionSemantics(),
     updatedAt: isoNow,
     dailyRealtimeInput: buildDailyRealtimeInput(scoringRealtime),
     mainScoreSourcePolicy: mainScoreSourceResolution.audit,
@@ -11232,8 +11247,8 @@ async function build() {
     confidenceLevel: (scoringRealtime.cacheOnly ? '低' : scoringRealtime.degradedMode ? '中' : '高'),
     displayInputsBaseline,
     topRisks,
-    decisionLine: `当前已进入 v27.0 交易引擎模式：实时快变量${sourceModeLabel}，执行状态灯为${lock.levelLabel}。${activeSignals.length ? '已激活结构信号：' + activeSignals.map(s => s.label).join('、') + '。' : allMacroMissing ? '结构信号数据源暂不可用。' : ''}先看状态灯，再决定能不能动。`,
-    summary: `v27.0 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${risk.brent.toFixed(1)}、广义美元指数 ${risk.dxy.toFixed(2)}、波动率 ${risk.vix.toFixed(2)}、高收益利差 ${risk.hy.toFixed(2)}%。`,
+    decisionLine: `当前已进入 ${RELEASE_VERSION} 交易引擎模式：实时快变量${sourceModeLabel}，执行状态灯为${lock.levelLabel}。${activeSignals.length ? '已激活结构信号：' + activeSignals.map(s => s.label).join('、') + '。' : allMacroMissing ? '结构信号数据源暂不可用。' : ''}先看状态灯，再决定能不能动。`,
+    summary: `${RELEASE_VERSION} 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 ${risk.brent.toFixed(1)}、广义美元指数 ${risk.dxy.toFixed(2)}、波动率 ${risk.vix.toFixed(2)}、高收益利差 ${risk.hy.toFixed(2)}%。`,
     modules: risk.modules,
     riskCalibration: risk.riskCalibration,
     tailRiskOverlay: risk.tailRiskOverlay,
@@ -11524,7 +11539,7 @@ async function build() {
   };
 
   data.decisionModel = {
-    contractVersion: 'v27.0',
+    contractVersion: DATA_CONTRACT_VERSION,
     strategyState: lock.level === 'red' ? 'Defensive' : lock.level === 'yellow' ? 'Caution' : 'Balanced',
     stateLabel: lock.levelLabel,
     stateScore: risk.score,
@@ -11600,7 +11615,7 @@ async function main() {
   fs.writeFileSync(dataPath, JSON.stringify(built.data, null, 2));
   fs.writeFileSync(histPath, JSON.stringify(built.history, null, 2));
   fs.writeFileSync(histFullPath, JSON.stringify(built.historyFull, null, 2));
-  console.log('v27.0 雷达数据构建成功。');
+  console.log(`${RELEASE_VERSION} 雷达数据构建成功。`);
 }
 
 if (IS_MAIN) {

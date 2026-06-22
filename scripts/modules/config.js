@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=macro-overview-helper-extraction-1';
+﻿import { formatFiniteNumber } from './format.js?v=release-version-semantics-v28.0.10-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

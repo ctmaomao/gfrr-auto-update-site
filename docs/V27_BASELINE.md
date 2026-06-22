@@ -118,7 +118,7 @@ Pages deploy 也会在部署前分步骤运行这些检查，而不是直接运�
 - Realtime 每小时 6 次错峰调度能降低风险，但不能保证绝对实时。
 - Brent 网页来源仍可能解析失败。
 - Transmission Delta 需要 Daily 连续运行后才更有观察价值。
-- 本地 `validate-data` 可能出现 realtime 与 `dailyRealtimeInput` 不匹配 warning；只要最终 `Validation passed (v27.0)`，该 warning 可接受。
+- 本地 `validate-data` 可能出现 realtime 与 `dailyRealtimeInput` 不匹配 warning；只要最终输出当前 validator 的通过行（例如 `Validation passed (release v28.0.10; data contract v27.0)`），该 warning 可接受。
 
 ## 下一阶段推荐方向
 

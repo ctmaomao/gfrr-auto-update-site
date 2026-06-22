@@ -18,6 +18,8 @@ const dataPath = path.join(root, 'data', 'radar-data.json');
 const historyPath = path.join(root, 'data', 'radar-history.json');
 const realtimePath = path.join(root, 'realtime', 'market.json');
 const historyFullPath = path.join(root, 'data', 'radar-history-full.json');
+const RELEASE_VERSION = 'v28.0.10';
+const DATA_CONTRACT_VERSION = 'v27.0';
 const args = new Set(process.argv.slice(2));
 const supportedArgs = new Set(['--verbose', '--strict-live-alignment']);
 
@@ -2938,6 +2940,16 @@ function validateDecisionContract(dataPayload) {
   }
 }
 
+function validateVersionSemantics(dataPayload) {
+  if (dataPayload.releaseVersion === undefined && dataPayload.versionSemantics === undefined) return;
+  assert(dataPayload.version === DATA_CONTRACT_VERSION, `version must remain data contract ${DATA_CONTRACT_VERSION}`);
+  assert(dataPayload.releaseVersion === RELEASE_VERSION, `releaseVersion must be ${RELEASE_VERSION}`);
+  assertPlainObject(dataPayload.versionSemantics, 'versionSemantics');
+  assert(dataPayload.versionSemantics.releaseVersion === RELEASE_VERSION, `versionSemantics.releaseVersion must be ${RELEASE_VERSION}`);
+  assert(dataPayload.versionSemantics.dataContractVersion === DATA_CONTRACT_VERSION, `versionSemantics.dataContractVersion must be ${DATA_CONTRACT_VERSION}`);
+  assert(dataPayload.versionSemantics.decisionModelContractVersion === DATA_CONTRACT_VERSION, `versionSemantics.decisionModelContractVersion must be ${DATA_CONTRACT_VERSION}`);
+}
+
 function validateTransmissionDeltaMeta(dataPayload) {
   if (dataPayload.transmissionDeltaMeta === undefined) return;
   const meta = dataPayload.transmissionDeltaMeta;
@@ -3063,6 +3075,7 @@ validateDisplayInputsBaseline(data);
 validateMainScoreSourcePolicy(data);
 validateRealtimeBaselineAlignment(data, realtime);
 validateBrentValidation(realtime);
+validateVersionSemantics(data);
 validateDecisionContract(data);
 validateTransmissionDeltaContract(data, history, historyFull);
-console.log('Validation passed (v27.0)');
+console.log(`Validation passed (release ${RELEASE_VERSION}; data contract ${DATA_CONTRACT_VERSION})`);

@@ -2,6 +2,20 @@
 
 本文档定义 Global Financial Risk Radar 当前数据链路中的 canonical 字段、fallback 字段与验证/调试字段。后续升级应优先遵守这些契约，避免显示值、验证层、历史兼容字段被误用或误删。
 
+## 版本语义
+
+当前仓库采用“双版本”语义，避免把发布版本与兼容数据契约混用：
+
+- **Release/display version**: `v28.0.10`。用于 GitHub release / package version / 页面 ISSUE 显示 / 新 Daily 输出的 `releaseVersion`。
+- **Data contract version**: `v27.0`。根级 `data.version` 是历史兼容数据契约标记，不表示当前产品仍停留在 v27。
+- **Decision contract version**: `v27.0`。`decisionModel.contractVersion` 继续标记现有 decision payload 兼容契约；只有另开 reviewed contract migration 才能改变。
+- **Layer contract versions**: `aiInterpretationLayer.contractVersion`、`externalAiInterpretationLayer`、各 display-only layer 的 contractVersion 独立演进，不得被 release version 机械覆盖。
+- **Frontend asset version**: `scripts/app.js` 的 `APP_VERSION` 只是浏览器 cache busting token，不是产品发布号。
+
+新代码需要面向用户展示版本时应优先使用 `releaseVersion`；需要判断 JSON schema / 兼容契约时才使用 `version` 或 `decisionModel.contractVersion`。不得做 `v27.0 → v28.0.10` 的全局替换。
+
+旧 `data/radar-data.json` 快照若尚未由 Daily 重新生成，可能仍缺少 `releaseVersion`，且根级 `decisionLine` / `summary` 中保留旧发布文案。前端入口会在内存中做只读展示归一化；不要为了修正文案直接手工编辑 `data/*.json`。下次 Daily pipeline 会自然写入 `releaseVersion` 与 `versionSemantics`。
+
 ## 总体数据链路
 
 当前数据链路为：
@@ -806,7 +820,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `macro-overview-helper-extraction-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `release-version-semantics-v28.0.10-1`）。
 
 稳定边界：
 
@@ -1029,26 +1043,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-macro-overview-helper-extraction-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+release-version-semantics-v28.0.10-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `macro-overview-helper-extraction-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `release-version-semantics-v28.0.10-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=macro-overview-helper-extraction-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=macro-overview-helper-extraction-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `macro-overview-helper-extraction-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=release-version-semantics-v28.0.10-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=release-version-semantics-v28.0.10-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `release-version-semantics-v28.0.10-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs macro-overview-helper-extraction-1
-npm run bump:frontend-asset-version -- macro-overview-helper-extraction-1
+node scripts/bump-frontend-asset-version.mjs release-version-semantics-v28.0.10-1
+npm run bump:frontend-asset-version -- release-version-semantics-v28.0.10-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `macro-overview-helper-extraction-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `release-version-semantics-v28.0.10-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

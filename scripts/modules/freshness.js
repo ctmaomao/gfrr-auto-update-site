@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=macro-overview-helper-extraction-1';
+﻿import { fmtNumSafe } from './config.js?v=release-version-semantics-v28.0.10-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

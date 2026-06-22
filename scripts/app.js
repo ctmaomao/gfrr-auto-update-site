@@ -7,7 +7,8 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'macro-overview-helper-extraction-1';
+const APP_VERSION = 'release-version-semantics-v28.0.10-1';
+const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
 const OIL_DIRECTIONAL_URL = `./data/oil-directional-pressure.json?v=${APP_VERSION}`;
@@ -39,6 +40,31 @@ async function fetchJson(url, label) {
   }
 }
 
+function normalizeReleaseDisplayText(value, releaseVersion) {
+  if (typeof value !== 'string') return value;
+  return value
+    .replace(/^当前已进入 v27\.0 /u, `当前已进入 ${releaseVersion} `)
+    .replace(/^v27\.0 /u, `${releaseVersion} `);
+}
+
+function normalizeRadarReleaseVersion(radarData) {
+  if (!radarData || typeof radarData !== 'object') return radarData;
+  const releaseVersion = typeof radarData.releaseVersion === 'string' ? radarData.releaseVersion : RELEASE_VERSION_FALLBACK;
+  return {
+    ...radarData,
+    releaseVersion,
+    versionSemantics: radarData.versionSemantics && typeof radarData.versionSemantics === 'object'
+      ? radarData.versionSemantics
+      : {
+          releaseVersion,
+          dataContractVersion: typeof radarData.version === 'string' ? radarData.version : null,
+          decisionModelContractVersion: typeof radarData.decisionModel?.contractVersion === 'string' ? radarData.decisionModel.contractVersion : null,
+        },
+    decisionLine: normalizeReleaseDisplayText(radarData.decisionLine, releaseVersion),
+    summary: normalizeReleaseDisplayText(radarData.summary, releaseVersion),
+  };
+}
+
 async function loadAllData() {
   // 并行 fetch 5 个 JSON 文件
   const [radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData] = await Promise.all([
@@ -65,7 +91,13 @@ async function loadAllData() {
     console.error('[app] WARN: oil-directional-pressure.json failed to load. Oil Directional theme will use fallback.');
   }
 
-  return { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData };
+  return {
+    radarData: normalizeRadarReleaseVersion(radarData),
+    worldOrderStressData,
+    marketPricingMetricsData,
+    radarHistoryData,
+    oilDirectionalData,
+  };
 }
 
 // ---------------- issue-meta 填充(Stage 4a 不动)----------------
@@ -89,7 +121,8 @@ function formatAsOfTimestamp(updatedAtIso) {
 function deriveIssueMeta(radarData) {
   if (!radarData) return ISSUE_META_FALLBACK;
 
-  const version = typeof radarData.version === 'string' ? radarData.version : ISSUE_META_FALLBACK.issue;
+  // releaseVersion is the product/release display version; radarData.version remains the legacy data contract marker.
+  const version = typeof radarData.releaseVersion === 'string' ? radarData.releaseVersion : RELEASE_VERSION_FALLBACK;
   const updatedAt = typeof radarData.updatedAt === 'string' ? radarData.updatedAt : null;
   const sourceMode = radarData.dailyRealtimeInput && typeof radarData.dailyRealtimeInput.sourceMode === 'string'
     ? radarData.dailyRealtimeInput.sourceMode
@@ -154,7 +187,7 @@ async function main() {
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=macro-overview-helper-extraction-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=release-version-semantics-v28.0.10-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
     macroOverviewRendered = true;
   } catch (error) {

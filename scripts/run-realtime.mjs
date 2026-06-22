@@ -18,7 +18,8 @@ const FRED_API_KEY = (process.env.FRED_API_KEY || '').trim();
 const REQUEST_TIMEOUT_MS = 8000;
 const REQUEST_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
-const USER_AGENT = 'gfr-v27.0-realtime/1.0';
+const RELEASE_VERSION = 'v28.0.10';
+const USER_AGENT = `gfrr-${RELEASE_VERSION}-realtime/1.0`;
 const FRESHNESS_WINDOWS = RULES.freshnessWindows;
 const BRENT_VALIDATION_SOURCES = ['ice', 'barchart', 'stooq', 'marketwatch', 'oilprice', 'yahoo'];
 const BRENT_SOURCE_PREFERENCE = ['ice', 'barchart', 'stooq', 'marketwatch', 'oilprice', 'yahoo'];
@@ -1343,7 +1344,7 @@ async function main() {
     })();
   fs.mkdirSync(path.dirname(realtimePath), { recursive: true });
   fs.writeFileSync(realtimePath, JSON.stringify(payload, null, 2));
-  console.log('实时市场数据构建成功。(v27.0)');
+  console.log(`实时市场数据构建成功。(${RELEASE_VERSION})`);
 }
 
 main().catch((error) => {
