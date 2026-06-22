@@ -81,6 +81,7 @@ const SUITES = {
     'check:oil-directional-score',
     'check:oil-directional-global-overlay',
     'check:oil-directional-zh-copy',
+    'check:firms-facilities-review',
     'check:firms-thermal-review'
   ]
 };

@@ -1,6 +1,6 @@
 # Oil Thermal Anomaly Source Review — NASA FIRMS / VIIRS candidate
 
-Status: P17 source-review + manual diagnostic tooling only. No runtime fetch, no workflow,
+Status: P18 source-review + manual diagnostic tooling only. No runtime fetch, no workflow,
 no production data write.
 
 ## Candidate Source
@@ -300,3 +300,46 @@ The check suite uses a committed example artifact and does not depend on local k
 ```powershell
 npm run check:firms-thermal-review
 ```
+
+### Facility Coverage Review Helper
+
+P18 adds an offline facility-list coverage review:
+
+```powershell
+npm run review:firms-facilities
+```
+
+By default it reads:
+
+```text
+manual-artifacts/oil-thermal/facilities.json
+```
+
+and writes:
+
+```text
+manual-artifacts/oil-thermal/firms-facilities-review-latest.json
+```
+
+The helper does not read the FIRMS key and does not call the network. It reviews
+whether the facility list is suitable for a manual live batch:
+
+- facility count and estimated request budget;
+- duplicate or invalid facility ids;
+- missing labels, invalid bbox values or oversized bbox spans;
+- missing `region` / `assetType` / `sourceNote`;
+- example facility rows that still need replacement;
+- region and asset-type coverage counts;
+- optional required region coverage via `--require-regions`.
+
+Example:
+
+```powershell
+npm run review:firms-facilities -- `
+  --min-facilities 10 `
+  --require-regions "US Gulf,Mideast Gulf"
+```
+
+`WARN` means the list can still be used for manual experimentation but is not ready
+as a credible facility watchlist. `FAIL` means the list should not be used for live
+batch requests until blockers are fixed. This review also keeps `promotionEligible=false`.

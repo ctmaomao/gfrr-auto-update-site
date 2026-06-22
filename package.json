@@ -19,6 +19,8 @@
     "diagnose:reliefweb": "node scripts/world-order/diagnose-reliefweb-source.mjs",
     "diagnose:firms-thermal": "node scripts/oil-directional/diagnose-firms-thermal.mjs",
     "init:firms-facilities": "node scripts/oil-directional/diagnose-firms-thermal.mjs --init-facilities --strict-facilities",
+    "review:firms-facilities": "node scripts/oil-directional/review-firms-facilities.mjs",
+    "check:firms-facilities-review": "node --check scripts/oil-directional/review-firms-facilities.mjs && node scripts/oil-directional/review-firms-facilities.mjs --facilities docs/fixtures/oil-thermal/facilities.example.json --no-output",
     "review:firms-thermal": "node scripts/oil-directional/review-firms-thermal-diagnosis.mjs",
     "check:firms-thermal-review": "node --check scripts/oil-directional/review-firms-thermal-diagnosis.mjs && node scripts/oil-directional/review-firms-thermal-diagnosis.mjs --input docs/fixtures/oil-thermal/firms-facility-diagnosis.example.json --max-age-hours 1000000 --no-output",
     "audit:daily-worker": "node scripts/audit-daily-vs-worker.mjs",
