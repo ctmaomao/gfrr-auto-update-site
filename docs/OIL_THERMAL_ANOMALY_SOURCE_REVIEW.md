@@ -149,3 +149,51 @@ Use the dry run for syntax/argument checks without network or a key:
 ```powershell
 npm run diagnose:firms-thermal -- --dry-run
 ```
+
+## P13 Facility-Level Manual Batch Diagnostic
+
+P13 extends the same manual command with an operator-provided facility list:
+
+```powershell
+npm run diagnose:firms-thermal -- `
+  --facilities manual-artifacts/oil-thermal/facilities.json `
+  --sources VIIRS_SNPP_NRT,VIIRS_NOAA20_NRT,VIIRS_NOAA21_NRT `
+  --day-range 5
+```
+
+The facility list is intentionally ignored when placed under `manual-artifacts/`.
+The committed schema example is:
+
+```text
+docs/fixtures/oil-thermal/facilities.example.json
+```
+
+Each facility must have:
+
+- `id`
+- `label`
+- `bbox` as `west,south,east,north` string or `[west,south,east,north]` array
+- optional `region`
+- optional `assetType`
+- optional `sourceNote`
+
+Guardrails:
+
+- facility bbox max span is 1.5 degrees per axis;
+- max 50 facilities per manual run;
+- max 150 FIRMS requests per manual run;
+- `--sources` is allowed only with `--facilities`;
+- output still writes only the ignored manual artifact path.
+
+The batch artifact uses schema `firms-facility-thermal-diagnosis-1` and reports
+per-facility:
+
+- source-level row count, latest acquisition time, max FRP, confidence counts and
+  day/night counts;
+- aggregate `sourceAgreement` such as `2/3`;
+- `anomalyLevel` in `none_observed` / `low_signal` / `watch` /
+  `elevated_watch`.
+
+`anomalyLevel` is a manual diagnostic heuristic only. It is not a production signal,
+not an incident confirmation, not an outage confirmation, and not an oil-price
+forecast.
