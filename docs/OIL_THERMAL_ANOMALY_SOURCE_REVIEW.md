@@ -1,9 +1,10 @@
 # Oil Thermal Anomaly Source Review — NASA FIRMS / VIIRS candidate
 
-Status: P23 production read-only observation artifact is implemented with a
-conservative U.S. Gulf Coast refinery starter whitelist. Facility coverage is now
-active for a small EIA/HIFLD-derived refinery set, but historical baseline remains
-`not_established`, so any detection is still a manual-review thermal proxy only.
+Status: P25 production read-only observation artifact is implemented with a
+conservative U.S. Gulf Coast refinery starter whitelist plus a manual baseline
+sample review helper. Facility coverage is active for a small EIA/HIFLD-derived
+refinery set, but historical baseline remains `not_established`, so any detection
+is still a manual-review thermal proxy only.
 
 ## Candidate Source
 
@@ -204,6 +205,50 @@ P24 introduces possible future signal states such as `baseline_repeated_watch` a
 established facility rows. Therefore current production output remains
 `baseline_building_*` until enough samples are reviewed and committed in a later
 baseline refresh.
+
+## P25 Baseline Sample Accumulation Review
+
+P25 adds a manual/offline helper for reviewing multiple sanitized production watch
+artifacts:
+
+```text
+scripts/oil-directional/review-oil-thermal-baseline-samples.mjs
+npm run review:oil-thermal-baseline-samples
+npm run check:oil-thermal-baseline-samples-review
+```
+
+The helper reads one or more `oil-thermal-watch-1` artifacts, or a directory of
+such artifacts, and computes facility-level candidate p95 fields:
+
+- `rowCountP95`
+- `maxFrpP95`
+- `highConfidenceCountP95`
+- `frpOver50CountP95`
+- `frpOver100CountP95`
+- `sourcesWithDetectionsP95`
+
+Default output is ignored:
+
+```text
+manual-artifacts/oil-thermal/oil-thermal-baseline-samples-review-latest.json
+```
+
+The output contains `candidateBaseline.candidateOnly=true`,
+`promotionEligible=false`, and `productionBaselineWriteApproved=false`. It is a
+review packet only; it does not update `config/oil-thermal-watch-baseline.json`
+and does not approve a production baseline. A later reviewed change must still
+decide whether any candidate rows are mature enough to commit.
+
+With the current single committed production sample, the helper correctly returns
+`warn` / `collect_more_samples_before_baseline_candidate_review`: all 12 starter
+facilities need more samples before a baseline can be established. The committed
+synthetic fixtures only prove the math and contract path for the checker; they
+are not production thermal evidence.
+
+P25 does not read `FIRMS_MAP_KEY`, does not access the network, does not write
+`data/*.json` or `realtime/*.json`, and does not affect ODP build inputs, ODP
+`finalBias`, scoring, decision, execution, position, Brent promotion, Global Risk
+Heatmap, or cross-validation.
 
 ## Current P11 Scope
 

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "oil-thermal-watch-1",
+  "module": "oil-thermal-watch",
+  "generatedAt": "2026-06-21T00:00:00.000Z",
+  "status": "ok",
+  "signalState": "baseline_building_watch",
+  "sources": ["VIIRS_SNPP_NRT", "VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT"],
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "facilities": [
+    {
+      "id": "synthetic_refinery_alpha",
+      "label": "Synthetic Refinery Alpha",
+      "region": "Fixture region",
+      "assetType": "refinery",
+      "sourceAgreement": "2/3",
+      "rowCount": 4,
+      "latestAcqAt": "2026-06-20T22:00:00Z",
+      "maxFrp": 8,
+      "highConfidenceCount": 1,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "baselineComparison": {
+        "sourcesWithDetections": 2
+      }
+    },
+    {
+      "id": "synthetic_refinery_beta",
+      "label": "Synthetic Refinery Beta",
+      "region": "Fixture region",
+      "assetType": "refinery",
+      "sourceAgreement": "1/3",
+      "rowCount": 2,
+      "latestAcqAt": "2026-06-20T22:10:00Z",
+      "maxFrp": 5.1,
+      "highConfidenceCount": 0,
+      "frpOver50Count": 0,
+      "frpOver100Count": 0,
+      "baselineComparison": {
+        "sourcesWithDetections": 1
+      }
+    }
+  ],
+  "boundary": "fixture only; not production data"
+}
