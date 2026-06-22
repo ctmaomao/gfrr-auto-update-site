@@ -711,6 +711,7 @@ ODP 是**独立数据文件** `data/oil-directional-pressure.json`(不在 `radar
 - 8 个 EIA(`crudeStocksExSpr`/`sprStocks`/`distillateStocks`/`gasolineStocks`/`refineryUtilization`/`refinerCrudeInputs`/`demandGasolineSupplied`/`demandDistillateSupplied`):`value`(number|null)、`unit` ∈ {`thousand barrels`,`thousand barrels per day`,`percent`}、`asOfDate`、`source` 以 `EIA:` 开头、`change1w/4w/13w`、`vs5yAvgPct`、`fiveYrRangePosition`、`historyWeeks`、`signalGroup`。
 - 复用价格 3 项(`wtiPrice`/`brentPrice`/`crackSpread`):`unit` `$/bbl`、`source` 以 `radar-data:` 开头(复用,不重抓)。
 - `curve`:`slopeRegime`、`frontMinusBack`(numeric,freshness 以此判定)、`confidence:'low'`、`limitationZh`、`source` 以 `radar-data:` 开头。
+- **P9 时点分级 metadata**(每个 evidence entry 必须携带):`latencyTier` ∈ {`T1_daily_market_proxy`,`T2_weekly_official_anchor`}、`latencyTierZh`、`timelinessZh`、`sourceRole`、`directionalUse`、`calibrationNoteZh`。当前 EIA 8 源均为 `T2_weekly_official_anchor`(低噪声官方周度锚);复用的 WTI / Brent / crack / curve 均为 `T1_daily_market_proxy`(较快市场/价格代理,需用 EIA 周度锚校准)。这些字段只服务证据时间节奏展示,不改变 `finalBias` / classifier / scoring / decision。
 
 `seasonality`(仅 8 个 weekly EIA;missing series 不得携带):`weekOfYear`(1..53)、`seasonBucket` ∈ {`winter_heating`,`summer_driving`,`shoulder`}、`fiveYrSameWeekMean/Min/Max`、`sampleYears`(0..5)、`windowFallback` ∈ {`exact`,`±1week`}。
 
@@ -749,6 +750,8 @@ PR3 校验新增 `check:oil-directional-score`(finalBias 枚举 + `interpretatio
 P6B 校验在 `check:oil-directional-contract` / `check:oil-directional-score` 中对可选 `interpretation.globalOverlay` 做枚举与 display-only boundary 校验;旧 committed ODP artifact 尚未重新 build 时该字段可缺失,前端仅做只读回填并标注来源,直到下一次 ODP build 写入 artifact。
 
 P7 新增 `scripts/oil-directional/replay-global-overlay.mjs` + `check:oil-directional-global-overlay`:离线 replay `data/oil-directional-history.json` 的 PR2 预登记窗口,并用固定全球慢变量情景网格复核 P6B 阈值边界。该 checker 只验证 `evaluateGlobalOverlay()` 的不变量:不能写入或暴露 `finalBias` / `physicalBias`,不能 mutate `finalizeBias()` 结果,必须覆盖 unavailable / threshold-near-miss / confirms_false_down / demand cap / transport watch 分支。它不是油价收益回测,不联网,不写 `data/*.json`,不接入 scoring / decision / Heatmap。
+
+P9 新增证据时点分级:ODP artifact 仍只含现有 12 条 evidence,但每条 evidence 都必须声明其时间节奏与校准角色。前端在 `#oil-directional-pressure` 折叠详情中按 `T1 日频市场代理` 与 `T2 周频官方锚` 分组显示,用于解释“快信号 vs 慢锚点”的权衡。P9 不接入新闻、FIRMS/VIIRS、Kpler/Vortexa 或任何新外部源;不新增方向枚举;不改变 `finalizeBias()`、`evaluateGlobalOverlay()`、Brent promotion、scoring、decision、execution、position、Heatmap 或 cross-validation。
 
 ### oil-directional-history.json — ODP PR2 历史 cache + 回测 GATE contract
 
@@ -820,7 +823,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `release-version-semantics-v28.0.10-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-timing-tiers-1`）。
 
 稳定边界：
 
@@ -1043,26 +1046,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-release-version-semantics-v28.0.10-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+odp-timing-tiers-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `release-version-semantics-v28.0.10-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-timing-tiers-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=release-version-semantics-v28.0.10-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=release-version-semantics-v28.0.10-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `release-version-semantics-v28.0.10-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-timing-tiers-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-timing-tiers-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 保持旧 module graph,不作为本轮 cache bump 目标。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-timing-tiers-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs release-version-semantics-v28.0.10-1
-npm run bump:frontend-asset-version -- release-version-semantics-v28.0.10-1
+node scripts/bump-frontend-asset-version.mjs odp-timing-tiers-1
+npm run bump:frontend-asset-version -- odp-timing-tiers-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `release-version-semantics-v28.0.10-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-timing-tiers-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

@@ -43,6 +43,21 @@ const EIA_SERIES = [
   { key: 'demandDistillateSupplied', id: 'WDIUPUS2', unit: 'thousand barrels per day', signalGroup: 'demandDestructionRisk' },
 ];
 
+const TIMING_TIERS = Object.freeze({
+  weeklyOfficialAnchor: Object.freeze({
+    latencyTier: 'T2_weekly_official_anchor',
+    latencyTierZh: 'T2 周频官方锚',
+    timelinessZh: '低噪声、经过验证、约一周滞后',
+    calibrationNoteZh: '用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。',
+  }),
+  dailyMarketProxy: Object.freeze({
+    latencyTier: 'T1_daily_market_proxy',
+    latencyTierZh: 'T1 日频市场代理',
+    timelinessZh: '较快、代理口径、受 Daily 快照与公开源滞后约束',
+    calibrationNoteZh: '用于观察市场是否正在确认或否定周度物理链,不能单独决定方向。',
+  }),
+});
+
 function round(n, dp = 2) {
   if (!Number.isFinite(n)) return null;
   const f = 10 ** dp;
@@ -116,6 +131,18 @@ function numMaybe(value) {
   return Number.isFinite(Number(value)) ? round(Number(value), 3) : null;
 }
 
+function withTimingFields(evidence, tier, sourceRole, directionalUse) {
+  return {
+    ...evidence,
+    latencyTier: tier.latencyTier,
+    latencyTierZh: tier.latencyTierZh,
+    timelinessZh: tier.timelinessZh,
+    sourceRole,
+    directionalUse,
+    calibrationNoteZh: tier.calibrationNoteZh,
+  };
+}
+
 // Same week-of-year over the prior `years` years: snap to the nearest weekly
 // observation within +/-10 days of the same calendar date (ISO-week aligned,
 // with a +/-1 week fallback), NOT a rolling mean.
@@ -136,7 +163,7 @@ function sameWeekPriorYears(series, years = 5) {
 }
 
 function missingEvidence(cfg, reason) {
-  return {
+  return withTimingFields({
     value: null, unit: cfg.unit, asOfDate: null, frequency: 'weekly',
     ageDays: null, maxAgeDays: WEEKLY_MAX_AGE_DAYS, sourceStatus: 'missing',
     source: `EIA:api-v2:seriesid:PET.${cfg.id}.W`,
@@ -144,7 +171,7 @@ function missingEvidence(cfg, reason) {
     change1w: null, change4w: null, change13w: null, vs5yAvgPct: null,
     fiveYrRangePosition: null, historyWeeks: 0, signalGroup: cfg.signalGroup,
     fetchReason: reason,
-  };
+  }, TIMING_TIERS.weeklyOfficialAnchor, 'official_weekly_physical_anchor', '校准低噪声供需锚点;缺失时不得补值或硬判方向');
 }
 
 function buildEiaEvidence(cfg, fetched, builtMs) {
@@ -160,7 +187,7 @@ function buildEiaEvidence(cfg, fetched, builtMs) {
   const min = vals.length ? Math.min(...vals) : null;
   const max = vals.length ? Math.max(...vals) : null;
 
-  const evidence = {
+  const evidence = withTimingFields({
     value: round(latest.value, 3),
     unit: cfg.unit,
     asOfDate: latest.period,
@@ -178,7 +205,7 @@ function buildEiaEvidence(cfg, fetched, builtMs) {
       ? round((latest.value - min) / (max - min), 3) : null,
     historyWeeks: series.length,
     signalGroup: cfg.signalGroup,
-  };
+  }, TIMING_TIERS.weeklyOfficialAnchor, 'official_weekly_physical_anchor', '低噪声供需锚点,用于校准较快的市场和事件信号');
   const season = {
     weekOfYear: isoWeek(latest.period),
     seasonBucket: seasonBucket(latest.period),
@@ -205,12 +232,12 @@ function reuseFromRadar(builtMs) {
   const priceField = (value, iso, maxAge, source) => {
     const v = num(value);
     const a = ageDaysFrom(iso, builtMs);
-    return {
+    return withTimingFields({
       value: v, unit: '$/bbl', asOfDate: iso || null, frequency: 'daily',
       ageDays: a, maxAgeDays: maxAge,
       sourceStatus: freshnessStatus(v, a, maxAge),
       source,
-    };
+    }, TIMING_TIERS.dailyMarketProxy, 'daily_market_price_proxy', '观察价格是否确认或背离周度物理链');
   };
   const crackAge = ageDaysFrom(radar.updatedAt, builtMs);
   const curveAge = ageDaysFrom(fpc.updatedAt, builtMs);
@@ -219,15 +246,15 @@ function reuseFromRadar(builtMs) {
   return {
     wtiPrice: priceField(wti.price, wti.updatedAt, 10, 'radar-data:macroDrivers.inflationEnergy.wti'),
     brentPrice: priceField(sb.value, sb.observedAt, 5, 'radar-data:brentPricingLayer.selectedBrent'),
-    crackSpread: {
+    crackSpread: withTimingFields({
       value: num(bp.crackSpread), unit: '$/bbl', asOfDate: radar.updatedAt || null,
       frequency: 'daily', ageDays: crackAge, maxAgeDays: 10,
       sourceStatus: freshnessStatus(num(bp.crackSpread), crackAge, 10),
       change4w: num(bp.crackSpread4wChange), regime: bp.crackSpreadRegime || null,
       note: '价格/裂解代理,非馏分油库存',
       source: 'radar-data:brentPricingLayer.crackSpread',
-    },
-    curve: {
+    }, TIMING_TIERS.dailyMarketProxy, 'daily_downstream_margin_proxy', '观察成品油链条是否确认库存与炼厂压力'),
+    curve: withTimingFields({
       slopeRegime: fpc.slopeRegime || null, frontMinusBack: curveFmb,
       frontPrice: num(fpc.frontPrice), backPrice: num(fpc.backPrice),
       confidence: 'low', curveStatus: fpc.curveStatus || null,
@@ -236,7 +263,7 @@ function reuseFromRadar(builtMs) {
       sourceStatus: curveHasData ? freshnessStatus(curveFmb, curveAge, 4) : 'missing',
       source: 'radar-data:brentPricingLayer.futuresPriceCurve',
       limitationZh: '公开月度期货代理,非官方结算曲线',
-    },
+    }, TIMING_TIERS.dailyMarketProxy, 'daily_market_structure_proxy', '观察期限结构是否确认现货紧张或宽松'),
     globalEnergyContext: globalEnergyContextFromRadar(radar),
   };
 }

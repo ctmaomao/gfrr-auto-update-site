@@ -348,6 +348,8 @@ See [`CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md`](CHINA_MACRO_LIQUIDITY_PR
 
 WTI / Brent / 裂解价差 / 期限结构由 `oil-directional-pressure.json` **复用** `data/radar-data.json`(`macroDrivers.inflationEnergy.wti` / `brentPricingLayer.selectedBrent` / `.crackSpread` / `.futuresPriceCurve`),不重抓。P6B 起,ODP build 还会复用 `radar-data.macroDrivers.energyInventoryBalance` / `energySpareCapacity` / `energyTransport` 生成 `interpretation.globalOverlay` 慢变量确认层;该层仍 display-only,不改变 `finalBias` 枚举、不进入 scoring/decision/Heatmap。`macro-overview-narrative-v1` 可在首页 Macro Risk Overview 只读引用 ODP 作为油价方向证据,但不得把 ODP 并入 `values.*`、六大模块、cross-validation 或 Global Risk Heatmap。EIA = 美国政府公共领域数据,标注 source URL 即可。详见 [`OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md`](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
 
+P9 起,ODP 每条 evidence 均携带时点分级 metadata:`T2_weekly_official_anchor` 用于 EIA WPSR 8 个周度官方锚,`T1_daily_market_proxy` 用于复用的 WTI / Brent / crack / curve 日频市场代理。该 metadata 只解释“快信号 vs 慢锚点”的证据节奏和校准关系;不代表已接入新闻 API、FIRMS/VIIRS 热异常、Kpler/Vortexa、API 周报、或任何新实时源,也不得被用于 scoring/decision/execution/position。
+
 **PR2 历史 cache**（`data/oil-directional-history.json`）：同 8 个 `PET.*.W` series、同 `/v2/seriesid/` route，由 `scripts/oil-directional/build-oil-directional-history.mjs`（零依赖，ADR-0013）一次性抓 2014-至今全周度史并切片落盘（每 series ~647 周，2014-01-03 起），作 **committed snapshot** 供回测 harness 离线、可复现回放（`check:all` 不联网）。fail-closed：失败 series → `sourceStatus:'missing'` / `points:[]`，不伪造。**仅供 PR2 回测 GATE**，不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / decision / Global Risk Heatmap。文件契约 + 分类器 / GATE / 预登记阈值见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)。
 
 ---

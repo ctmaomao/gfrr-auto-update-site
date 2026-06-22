@@ -152,6 +152,32 @@ const CORE_WPSR_KEYS = [
   'demandGasolineSupplied',
   'demandDistillateSupplied',
 ];
+const EVIDENCE_TIMING_ORDER = [
+  {
+    tier: 'T1_daily_market_proxy',
+    title: 'T1 日频市场代理',
+    note: '较快但更受口径和代理源影响,用于观察价格是否确认或背离周度物理链。',
+  },
+  {
+    tier: 'T2_weekly_official_anchor',
+    title: 'T2 周频官方锚',
+    note: 'EIA WPSR 低噪声周度锚,用于校准更快但更嘈杂的市场、新闻、运输和卫星信号。',
+  },
+];
+const EVIDENCE_ROW_DEFS = [
+  ['Brent 主显示', 'brentPrice'],
+  ['WTI 价格', 'wtiPrice'],
+  ['柴油裂解价差', 'crackSpread'],
+  ['期限结构', 'curve'],
+  ['原油库存(ex-SPR)', 'crudeStocksExSpr'],
+  ['SPR 库存', 'sprStocks'],
+  ['馏分油库存', 'distillateStocks'],
+  ['汽油库存', 'gasolineStocks'],
+  ['炼厂开工率', 'refineryUtilization'],
+  ['炼厂原油投入', 'refinerCrudeInputs'],
+  ['汽油 product supplied', 'demandGasolineSupplied'],
+  ['馏分油 product supplied', 'demandDistillateSupplied'],
+];
 
 function signed(v, dp = 0) {
   if (!Number.isFinite(v)) return '—';
@@ -819,30 +845,92 @@ function buildHeadline(finalBias, it, sig) {
   }
 }
 
+function sourceStatusShort(status) {
+  return ({
+    live: 'live',
+    fallback: 'fallback',
+    stale: 'stale',
+    missing: 'missing',
+  })[status] || 'missing';
+}
+function evidenceValueText(e) {
+  if (!e || typeof e !== 'object') return '—';
+  if (Number.isFinite(e.value)) {
+    if (e.unit === '$/bbl') return `$${e.value.toFixed(2)}/bbl`;
+    if (e.unit === 'percent') return `${fixed(e.value, 1)}%`;
+    return `${Math.round(e.value)} ${e.unit || ''}`.trim();
+  }
+  if (Number.isFinite(e.frontMinusBack)) return `前-后 ${signed(e.frontMinusBack, 2)}`;
+  if (e.slopeRegime) return e.slopeRegime;
+  return '—';
+}
+function evidenceChangeText(e) {
+  if (!e || typeof e !== 'object') return '—';
+  if (Number.isFinite(e.change4w)) return `4w ${signed(e.change4w, e.unit === 'percent' ? 1 : 0)}`;
+  if (Number.isFinite(e.frontMinusBack)) return `状态 ${e.slopeRegime || '—'}`;
+  return sourceStatusShort(e.sourceStatus);
+}
+function evidenceFreshnessText(e) {
+  if (!e || typeof e !== 'object') return '—';
+  const asOf = compactDate(e.asOfDate) || '—';
+  const age = Number.isFinite(e.ageDays) ? `${Math.round(e.ageDays)}天龄` : '时点待核';
+  return `${sourceStatusShort(e.sourceStatus)} · ${asOf} · ${age}`;
+}
+function evidenceRoleText(e) {
+  if (!e || typeof e !== 'object') return '—';
+  const tier = e.latencyTierZh || e.latencyTier || '未分级';
+  const use = e.directionalUse || e.sourceRole || '用途待核';
+  return `${tier} · ${use}`;
+}
 function evidenceRow(label, e) {
   const row = document.createElement('div');
   row.className = 'odp-evidence-row';
   const make = (cls, text) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; return s; };
   row.appendChild(make('odp-ev-label', label));
-  row.appendChild(make('odp-ev-value', e && Number.isFinite(e.value) ? `${Math.round(e.value)} ${e.unit || ''}`.trim() : '—'));
-  row.appendChild(make('odp-ev-change', `4w ${signed(e && e.change4w)}`));
-  row.appendChild(make('odp-ev-range', `5y位 ${e && Number.isFinite(e.fiveYrRangePosition) ? (e.fiveYrRangePosition * 100).toFixed(0) + '%' : '—'}`));
+  row.appendChild(make('odp-ev-value', evidenceValueText(e)));
+  row.appendChild(make('odp-ev-change', evidenceFreshnessText(e)));
+  row.appendChild(make('odp-ev-range', `${evidenceChangeText(e)} · ${evidenceRoleText(e)}`));
   return row;
+}
+
+function evidenceTierGroup(tierMeta, rows) {
+  const group = document.createElement('section');
+  group.className = 'odp-evidence-tier';
+  const heading = document.createElement('div');
+  heading.className = 'odp-evidence-tier-heading';
+  const title = document.createElement('strong');
+  title.textContent = tierMeta.title;
+  const note = document.createElement('span');
+  note.textContent = tierMeta.note;
+  heading.append(title, note);
+  const body = document.createElement('div');
+  body.className = 'odp-evidence-tier-rows';
+  body.replaceChildren(...rows.map(([label, e]) => evidenceRow(label, e)));
+  group.append(heading, body);
+  return group;
 }
 
 function renderEvidenceList(ev) {
   const host = $('odp-evidence-list');
   if (!host) return;
-  const rows = [
-    ['原油库存(ex-SPR)', ev.crudeStocksExSpr],
-    ['SPR 库存', ev.sprStocks],
-    ['馏分油库存', ev.distillateStocks],
-    ['汽油库存', ev.gasolineStocks],
-    ['炼厂开工率', ev.refineryUtilization],
-    ['汽油 product supplied', ev.demandGasolineSupplied],
-    ['馏分油 product supplied', ev.demandDistillateSupplied],
-  ];
-  host.replaceChildren(...rows.map(([label, e]) => evidenceRow(label, e)));
+  const rows = EVIDENCE_ROW_DEFS
+    .map(([label, key]) => [label, ev[key]])
+    .filter(([, e]) => e && typeof e === 'object');
+  const groups = EVIDENCE_TIMING_ORDER
+    .map((tierMeta) => {
+      const tierRows = rows.filter(([, e]) => e.latencyTier === tierMeta.tier);
+      return tierRows.length ? evidenceTierGroup(tierMeta, tierRows) : null;
+    })
+    .filter(Boolean);
+  const unclassifiedRows = rows.filter(([, e]) => !EVIDENCE_TIMING_ORDER.some((tierMeta) => tierMeta.tier === e.latencyTier));
+  if (unclassifiedRows.length) {
+    groups.push(evidenceTierGroup({
+      tier: 'unclassified',
+      title: '未分级证据',
+      note: '该证据缺少 latencyTier,需在 ODP contract 中补齐后才能用于时间层级解读。',
+    }, unclassifiedRows));
+  }
+  host.replaceChildren(...groups);
 }
 
 export function renderOilDirectional({ oilData, radarData, worldOrderStressData }) {
