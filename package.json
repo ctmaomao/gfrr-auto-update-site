@@ -19,6 +19,8 @@
     "review:world-order": "node scripts/review-world-order-stress.mjs data/world-order-stress.json",
     "diagnose:reliefweb": "node scripts/world-order/diagnose-reliefweb-source.mjs",
     "diagnose:firms-thermal": "node scripts/oil-directional/diagnose-firms-thermal.mjs",
+    "diagnose:oil-news-events": "node scripts/oil-directional/diagnose-oil-news-events.mjs",
+    "check:oil-news-events-diagnosis": "node --check scripts/oil-directional/diagnose-oil-news-events.mjs && node scripts/oil-directional/diagnose-oil-news-events.mjs --dry-run --no-output",
     "init:firms-facilities": "node scripts/oil-directional/diagnose-firms-thermal.mjs --init-facilities --strict-facilities",
     "review:firms-facilities": "node scripts/oil-directional/review-firms-facilities.mjs",
     "check:firms-facilities-review": "node --check scripts/oil-directional/review-firms-facilities.mjs && node scripts/oil-directional/review-firms-facilities.mjs --facilities docs/fixtures/oil-thermal/facilities.example.json --no-output",

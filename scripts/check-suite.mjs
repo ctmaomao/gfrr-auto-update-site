@@ -80,6 +80,7 @@ const SUITES = {
     'check:oil-directional-backtest',
     'check:oil-directional-score',
     'check:oil-directional-global-overlay',
+    'check:oil-news-events-diagnosis',
     'check:oil-thermal-watch',
     'check:oil-directional-zh-copy',
     'check:firms-facilities-review',
