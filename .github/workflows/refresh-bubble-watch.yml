@@ -48,5 +48,6 @@ jobs:
           git add data/bubble-watch.json data/bubble-watch-history.json config/bubble-watch-curated.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: refresh bubble watch"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
             git push
           fi
