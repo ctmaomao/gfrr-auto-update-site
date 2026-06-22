@@ -1,6 +1,6 @@
 # Oil Thermal Anomaly Source Review — NASA FIRMS / VIIRS candidate
 
-Status: P11 source-review + frontend readiness slot only. No runtime fetch, no workflow,
+Status: P16 source-review + manual diagnostic tooling only. No runtime fetch, no workflow,
 no production data write.
 
 ## Candidate Source
@@ -191,9 +191,9 @@ Each facility must have:
 - `id`
 - `label`
 - `bbox` as `west,south,east,north` string or `[west,south,east,north]` array
-- optional `region`
-- optional `assetType`
-- optional `sourceNote`
+- `region` when using `--strict-facilities`
+- `assetType` when using `--strict-facilities`
+- `sourceNote` when using `--strict-facilities`
 
 Guardrails:
 
@@ -229,3 +229,32 @@ to suppress progress logs:
 ```powershell
 npm run diagnose:firms-thermal -- --facilities manual-artifacts/oil-thermal/facilities.json --quiet
 ```
+
+### Facility List Bootstrap And Strict Validation
+
+P16 adds a convenience initializer for the ignored local facility list:
+
+```powershell
+npm run init:firms-facilities
+```
+
+If `manual-artifacts/oil-thermal/facilities.json` does not exist, the command creates
+it from the committed example. If it already exists, the command validates it and
+does not overwrite operator edits. The generated/validated file remains ignored and
+must be filled with operator-reviewed public facility coordinates before any live
+facility diagnosis.
+
+The same strict validation can be used with dry-run or live facility batches:
+
+```powershell
+npm run diagnose:firms-thermal -- `
+  --dry-run `
+  --strict-facilities `
+  --facilities manual-artifacts/oil-thermal/facilities.json `
+  --sources VIIRS_SNPP_NRT,VIIRS_NOAA20_NRT,VIIRS_NOAA21_NRT `
+  --day-range 5
+```
+
+Strict mode requires `region`, `assetType` and `sourceNote` for every facility. This
+only improves manual review quality; it does not promote the facility list to a
+production whitelist.

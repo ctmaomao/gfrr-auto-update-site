@@ -8,6 +8,8 @@ const DEFAULT_BBOX = '47,23,58,31';
 const DEFAULT_DAY_RANGE = '1';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-thermal/firms-thermal-diagnosis-latest.json';
 const DEFAULT_MAP_KEY_FILE = 'manual-artifacts/oil-thermal/firms-map-key.txt';
+const DEFAULT_FACILITIES_PATH = 'manual-artifacts/oil-thermal/facilities.json';
+const DEFAULT_FACILITIES_TEMPLATE = 'docs/fixtures/oil-thermal/facilities.example.json';
 const DEFAULT_TIMEOUT_MS = 15000;
 const MAX_FACILITIES_PER_RUN = 50;
 const MAX_REQUESTS_PER_RUN = 150;
@@ -30,6 +32,8 @@ Options:
   --output <path>      JSON artifact path. Default: ${DEFAULT_OUTPUT}
   --map-key-file <p>   Local ignored key file fallback. Default: ${DEFAULT_MAP_KEY_FILE}
   --timeout-ms <ms>    Request timeout. Default: ${DEFAULT_TIMEOUT_MS}
+  --init-facilities    Create/validate the ignored facility list and exit. Default path: ${DEFAULT_FACILITIES_PATH}
+  --strict-facilities  Require facility region, assetType and sourceNote metadata.
   --dry-run            Validate arguments and print the redacted request plan without network.
   --no-output          Do not write the manual artifact.
   --quiet              Suppress progress logs; final JSON still prints.
@@ -48,6 +52,8 @@ function parseArgs(argv) {
     mapKeyFile: DEFAULT_MAP_KEY_FILE,
     mapKeyFileProvided: false,
     timeoutMs: DEFAULT_TIMEOUT_MS,
+    initFacilities: false,
+    strictFacilities: false,
     dryRun: false,
     writeOutput: true,
     progress: true
@@ -69,6 +75,14 @@ function parseArgs(argv) {
     }
     if (arg === '--quiet') {
       options.progress = false;
+      continue;
+    }
+    if (arg === '--init-facilities') {
+      options.initFacilities = true;
+      continue;
+    }
+    if (arg === '--strict-facilities') {
+      options.strictFacilities = true;
       continue;
     }
 
@@ -420,7 +434,7 @@ function resolveMapKey(options) {
   };
 }
 
-function readFacilityList(facilitiesPath) {
+function readFacilityList(facilitiesPath, options = {}) {
   if (!facilitiesPath) {
     return [];
   }
@@ -434,11 +448,16 @@ function readFacilityList(facilitiesPath) {
     throw new Error(`Too many facilities (${facilities.length}). Limit is ${MAX_FACILITIES_PER_RUN} per manual run.`);
   }
 
+  const seenFacilityIds = new Set();
   return facilities.map((facility, index) => {
     const id = String(facility.id ?? '').trim();
     if (!id || !/^[A-Za-z0-9_.:-]+$/.test(id)) {
       throw new Error(`Facility at index ${index} needs an id using letters, numbers, dot, colon, underscore or dash.`);
     }
+    if (seenFacilityIds.has(id)) {
+      throw new Error(`Duplicate facility id: ${id}`);
+    }
+    seenFacilityIds.add(id);
     const label = String(facility.label ?? facility.name ?? '').trim();
     if (!label) {
       throw new Error(`Facility ${id} needs a label.`);
@@ -447,12 +466,31 @@ function readFacilityList(facilitiesPath) {
       throw new Error(`Facility ${id} needs a bbox.`);
     }
     const bbox = parseBboxValue(facility.bbox, `facility ${id} bbox`, { facilityLevel: true });
+    const region = String(facility.region ?? '').trim();
+    const assetType = String(facility.assetType ?? '').trim();
+    const sourceNote = String(facility.sourceNote ?? '').trim();
+
+    if (options.strict) {
+      const missing = [];
+      if (!region) {
+        missing.push('region');
+      }
+      if (!assetType) {
+        missing.push('assetType');
+      }
+      if (!sourceNote) {
+        missing.push('sourceNote');
+      }
+      if (missing.length > 0) {
+        throw new Error(`Facility ${id} is missing strict metadata: ${missing.join(', ')}`);
+      }
+    }
 
     return {
       id,
       label,
-      region: facility.region ? String(facility.region) : null,
-      assetType: facility.assetType ? String(facility.assetType) : null,
+      region: region || null,
+      assetType: assetType || null,
       bbox: {
         west: bbox.values[0],
         south: bbox.values[1],
@@ -460,9 +498,42 @@ function readFacilityList(facilitiesPath) {
         north: bbox.values[3]
       },
       bboxString: bbox.string,
-      sourceNote: facility.sourceNote ? String(facility.sourceNote) : null
+      sourceNote: sourceNote || null
     };
   });
+}
+
+function initializeFacilitiesFile(options, generatedAt) {
+  const facilitiesPath = options.facilitiesPath || DEFAULT_FACILITIES_PATH;
+  const absoluteFacilitiesPath = resolve(facilitiesPath);
+  const absoluteTemplatePath = resolve(DEFAULT_FACILITIES_TEMPLATE);
+  const existed = existsSync(absoluteFacilitiesPath);
+
+  if (!existed) {
+    mkdirSync(dirname(absoluteFacilitiesPath), { recursive: true });
+    const template = readFileSync(absoluteTemplatePath, 'utf8');
+    writeFileSync(absoluteFacilitiesPath, template.endsWith('\n') ? template : `${template}\n`);
+  }
+
+  const facilities = readFacilityList(facilitiesPath, { strict: options.strictFacilities });
+  const normalizedPath = facilitiesPath.replace(/\\/g, '/');
+  const isIgnoredManualPath = normalizedPath.startsWith('manual-artifacts/oil-thermal/');
+
+  return {
+    schemaVersion: 'firms-facility-list-init-1',
+    status: existed ? 'exists' : 'created',
+    generatedAt,
+    facilitiesPath: absoluteFacilitiesPath,
+    templatePath: absoluteTemplatePath,
+    strictFacilities: options.strictFacilities,
+    isIgnoredManualPath,
+    facilityCount: facilities.length,
+    facilityIds: facilities.map((facility) => facility.id),
+    boundary: BOUNDARY,
+    notes: existed
+      ? 'Existing facility list was validated and not overwritten.'
+      : 'Created from the committed schema example. Replace example coordinates with operator-reviewed public facility coordinates before live diagnosis.'
+  };
 }
 
 function makeRequest({ source, bbox, dayRange, date }) {
@@ -594,10 +665,19 @@ async function runFacilityBatch({ mapKey, options, sourceList, dayRange, facilit
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const { sourceList, dayRange } = validateCommonOptions(options);
   const generatedAt = new Date().toISOString();
-  const facilities = readFacilityList(options.facilitiesPath);
+  if (options.initFacilities) {
+    const initResult = initializeFacilitiesFile(options, generatedAt);
+    console.log(JSON.stringify(initResult, null, 2));
+    return;
+  }
+
+  const { sourceList, dayRange } = validateCommonOptions(options);
+  const facilities = readFacilityList(options.facilitiesPath, { strict: options.strictFacilities });
   const isFacilityBatch = facilities.length > 0;
+  if (!isFacilityBatch && options.strictFacilities) {
+    throw new Error('--strict-facilities requires --facilities or --init-facilities.');
+  }
   if (!isFacilityBatch && sourceList.length !== 1) {
     throw new Error('--sources is only supported with --facilities. Use --source for single bbox mode.');
   }
@@ -623,6 +703,7 @@ async function main() {
           generatedAt,
           mode: 'facility_batch',
           sources: sourceList,
+          strictFacilities: options.strictFacilities,
           facilityCount: facilities.length,
           requestCount: facilities.length * sourceList.length,
           dayRange,
@@ -638,6 +719,7 @@ async function main() {
           mode: 'single_bbox',
           source: sourceList[0],
           sources: sourceList,
+          strictFacilities: options.strictFacilities,
           bbox: bboxValues,
           dayRange,
           date: options.date,
@@ -688,6 +770,7 @@ async function main() {
       generatedAt,
       mode: 'facility_batch',
       sources: sourceList,
+      strictFacilities: options.strictFacilities,
       dayRange,
       date: options.date,
       mapKeySource: keyResolution.source,
@@ -711,6 +794,7 @@ async function main() {
           diagnosis: artifact.diagnosis,
           mode: artifact.mode,
           sources: artifact.sources,
+          strictFacilities: artifact.strictFacilities,
           dayRange: artifact.dayRange,
           mapKeySource: artifact.mapKeySource,
           aggregate: artifact.aggregate,
