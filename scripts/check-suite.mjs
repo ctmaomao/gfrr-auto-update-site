@@ -83,7 +83,8 @@ const SUITES = {
     'check:oil-directional-zh-copy',
     'check:firms-facilities-review',
     'check:firms-thermal-review',
-    'check:firms-thermal-baseline-review'
+    'check:firms-thermal-baseline-review',
+    'check:firms-thermal-watch-review'
   ]
 };
 

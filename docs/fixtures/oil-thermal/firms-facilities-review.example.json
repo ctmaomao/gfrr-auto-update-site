@@ -1,0 +1,52 @@
+{
+  "reviewVersion": "firms-facilities-review-p18",
+  "generatedAt": "2026-06-22T00:00:00.000Z",
+  "input": {
+    "path": "docs/fixtures/oil-thermal/facilities.example.json",
+    "schemaVersion": "oil-thermal-facilities-manual-v1",
+    "manualArtifactPath": false
+  },
+  "status": "pass",
+  "recommendation": "ready_for_manual_diagnosis",
+  "promotionEligible": false,
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "requestBudget": {
+    "sources": ["VIIRS_SNPP_NRT", "VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT"],
+    "sourceCount": 3,
+    "maxRequestsPerRun": 150,
+    "facilityCount": 1,
+    "estimatedRequestsPerRun": 3,
+    "withinBudget": true
+  },
+  "coverage": {
+    "facilityCount": 1,
+    "minFacilities": 1,
+    "regionCount": 1,
+    "assetTypeCount": 1,
+    "regions": {
+      "Synthetic region": 1
+    },
+    "assetTypes": {
+      "refinery": 1
+    },
+    "exampleFacilityCount": 0,
+    "exampleFacilityIds": [],
+    "requiredRegions": [],
+    "missingRequiredRegions": []
+  },
+  "blockers": [],
+  "warnings": [],
+  "boundary": "manual facility-list review only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}

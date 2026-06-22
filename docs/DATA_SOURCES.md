@@ -370,6 +370,8 @@ P18 起,新增 `npm run review:firms-facilities` 作为 **manual-only** 设施�
 
 P19 起,新增 `npm run review:firms-thermal-baseline` 作为 **manual-only** 当前诊断 vs 手动历史基线复核辅助。它默认读取 ignored `firms-thermal-diagnosis-latest.json` 与 ignored `firms-thermal-baseline.json`,可写 ignored `firms-thermal-baseline-review-latest.json`;比较 `rowCountP95` / `maxFrpP95` / `highConfidenceCountP95` / `sourcesWithDetectionsP95` / `frpOver50CountP95` 等手动基线字段,并用 `--min-repeat-sources` 与 `--min-baseline-samples` 降低单次噪声。缺 baseline 显式 WARN,可用 `--require-baseline` 升为 FAIL。该 helper 不读取 MAP_KEY、不访问网络、不写 production data,输出 `promotionEligible=false`;`check:firms-thermal-baseline-review` 只用 synthetic committed fixtures 离线守门。
 
+P20 起,新增 `npm run review:firms-thermal-watch` 作为 **manual-only** FIRMS watch-pack 总审阅。它默认读取 P17/P18/P19 产生的 ignored review artifacts,合成 `firms-thermal-watch-review-latest.json`,检查上游 review schema、`promotionEligible=false`、productionImpact 全 false、manual-only boundary 与 FAIL 状态,并输出 `signalState` / `manualReviewReadiness` / `futureIntegrationGate`。该 helper 不读取 MAP_KEY、不访问网络、不写 production data,不批准 frontend display、scheduled workflow、ODP build input 或油价方向信号;`check:firms-thermal-watch-review` 只用 committed review fixtures 离线守门。
+
 **PR2 历史 cache**（`data/oil-directional-history.json`）：同 8 个 `PET.*.W` series、同 `/v2/seriesid/` route，由 `scripts/oil-directional/build-oil-directional-history.mjs`（零依赖，ADR-0013）一次性抓 2014-至今全周度史并切片落盘（每 series ~647 周，2014-01-03 起），作 **committed snapshot** 供回测 harness 离线、可复现回放（`check:all` 不联网）。fail-closed：失败 series → `sourceStatus:'missing'` / `points:[]`，不伪造。**仅供 PR2 回测 GATE**，不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / decision / Global Risk Heatmap。文件契约 + 分类器 / GATE / 预登记阈值见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)。
 
 ---

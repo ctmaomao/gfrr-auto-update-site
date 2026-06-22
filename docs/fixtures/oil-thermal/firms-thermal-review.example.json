@@ -1,0 +1,55 @@
+{
+  "reviewVersion": "firms-thermal-review-p17",
+  "generatedAt": "2026-06-22T00:00:00.000Z",
+  "input": {
+    "path": "docs/fixtures/oil-thermal/firms-facility-diagnosis.baseline-watch.example.json",
+    "schemaVersion": "firms-facility-thermal-diagnosis-1",
+    "mode": "facility_batch",
+    "diagnosis": "firms-facility-batch-detections-returned",
+    "artifactGeneratedAt": "2026-06-22T00:00:00.000Z",
+    "artifactAgeHours": 0,
+    "manualArtifactPath": false,
+    "maxAgeHours": 1000000
+  },
+  "status": "warn",
+  "recommendation": "elevated_manual_review_required",
+  "promotionEligible": false,
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "summary": {
+    "type": "facility_batch",
+    "sourcesChecked": 3,
+    "dayRange": 5,
+    "rowCount": 14,
+    "latestAcqAt": "2026-06-21T22:52:00Z",
+    "maxFrp": 82.4,
+    "highConfidenceCount": 3,
+    "frpOver50Count": 2,
+    "frpOver100Count": 0,
+    "facilityCount": 1,
+    "facilitiesWithDetections": 1,
+    "facilitiesByAnomalyLevel": {
+      "elevated_watch": 1
+    },
+    "exampleFacilityCount": 0,
+    "watchFacilityIds": ["synthetic_refinery_watch_box"],
+    "elevatedFacilityIds": ["synthetic_refinery_watch_box"]
+  },
+  "blockers": [],
+  "warnings": [
+    "Elevated heuristic watch in facilities: synthetic_refinery_watch_box"
+  ],
+  "nextAllowedStep": "Use this review only for manual source review. Production display or scheduled fetch still requires a separate reviewed PR.",
+  "boundary": "manual artifact review only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}

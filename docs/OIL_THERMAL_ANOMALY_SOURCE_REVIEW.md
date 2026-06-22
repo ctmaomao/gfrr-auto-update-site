@@ -1,6 +1,6 @@
 # Oil Thermal Anomaly Source Review — NASA FIRMS / VIIRS candidate
 
-Status: P19 source-review + manual diagnostic tooling only. No runtime fetch, no workflow,
+Status: P20 source-review + manual diagnostic tooling only. No runtime fetch, no workflow,
 no production data write.
 
 ## Candidate Source
@@ -387,3 +387,42 @@ Missing baseline is explicit. Without `--require-baseline`, it is a `WARN`; with
 `elevated_manual_review_required`, it still means manual source review only. It is
 not an outage confirmation, not a supply interruption confirmation and not an oil
 price forecast.
+
+### Combined Manual Watch Review
+
+P20 adds a final offline aggregation helper:
+
+```powershell
+npm run review:firms-thermal-watch
+```
+
+By default it reads the three ignored review artifacts produced by P17-P19:
+
+```text
+manual-artifacts/oil-thermal/firms-facilities-review-latest.json
+manual-artifacts/oil-thermal/firms-thermal-review-latest.json
+manual-artifacts/oil-thermal/firms-thermal-baseline-review-latest.json
+```
+
+and writes:
+
+```text
+manual-artifacts/oil-thermal/firms-thermal-watch-review-latest.json
+```
+
+The combined helper is the operator-facing watch-pack review. It does not fetch
+FIRMS, does not read the MAP_KEY, does not call other providers and does not write
+production data. It verifies that each upstream review keeps:
+
+- the expected review schema version;
+- `promotionEligible=false`;
+- all production-impact fields false;
+- the manual-only ODP boundary language;
+- no FAIL status before the pack is used for human analysis.
+
+It then summarizes facility coverage, current thermal detections, repeated/baseline
+signals and the next human steps. A `WARN` result can still mean the watch pack is
+usable for human review, but it never approves a production display, scheduled
+workflow, ODP build input or oil-price signal. Any future production display or
+workflow must still be a separate reviewed PR with a data contract, UI wording,
+stale/missing fallback and facility whitelist decision.

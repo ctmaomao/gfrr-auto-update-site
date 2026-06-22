@@ -1,0 +1,76 @@
+{
+  "reviewVersion": "firms-thermal-baseline-review-p19",
+  "generatedAt": "2026-06-22T00:00:00.000Z",
+  "input": {
+    "path": "docs/fixtures/oil-thermal/firms-facility-diagnosis.baseline-watch.example.json",
+    "schemaVersion": "firms-facility-thermal-diagnosis-1",
+    "mode": "facility_batch",
+    "manualArtifactPath": false
+  },
+  "baseline": {
+    "path": "docs/fixtures/oil-thermal/firms-thermal-baseline.example.json",
+    "status": "loaded",
+    "schemaVersion": "firms-thermal-baseline-manual-v1",
+    "baselineWindowDays": 30,
+    "minBaselineSamples": 5,
+    "minRepeatSources": 2,
+    "requireBaseline": false
+  },
+  "status": "warn",
+  "recommendation": "elevated_manual_review_required",
+  "promotionEligible": false,
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "summary": {
+    "facilityCount": 1,
+    "repeatedObservationCount": 1,
+    "elevatedRepeatedWatchCount": 1,
+    "missingBaselineCount": 0,
+    "weakBaselineCount": 0,
+    "reviewLevels": {
+      "elevated_repeated_watch": 1
+    }
+  },
+  "facilities": [
+    {
+      "id": "synthetic_refinery_watch_box",
+      "label": "Synthetic refinery watch box",
+      "baselineStatus": "baseline_ready",
+      "current": {
+        "rowCount": 14,
+        "maxFrp": 82.4,
+        "highConfidenceCount": 3,
+        "frpOver50Count": 2,
+        "sourcesWithDetections": 2,
+        "anomalyLevel": "elevated_watch",
+        "sourceAgreement": "2/3"
+      },
+      "repeatedObservation": true,
+      "aboveBaseline": {
+        "rowCount": true,
+        "maxFrp": true,
+        "highConfidenceCount": true,
+        "sourcesWithDetections": true,
+        "frpOver50Count": true
+      },
+      "reviewLevel": "elevated_repeated_watch",
+      "reason": "Synthetic fixture: multiple FIRMS sources detected activity above baseline."
+    }
+  ],
+  "blockers": [],
+  "warnings": [
+    "Elevated repeated thermal watch: synthetic_refinery_watch_box"
+  ],
+  "boundary": "manual thermal-baseline review only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}
