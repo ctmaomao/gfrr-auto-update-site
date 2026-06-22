@@ -354,6 +354,8 @@ P10 起,ODP 前端折叠详情新增 `NEWS EVENT WATCH / 新闻事件观察`,只
 
 P11 起,ODP 前端折叠详情新增 `SATELLITE THERMAL WATCH / 卫星热异常观察`,但当前只是 readiness slot:候选源为 NASA FIRMS / VIIRS NRT,正式 API 需要免费 `MAP_KEY`,且必须先建立炼厂/终端设施坐标白名单、半径/FRP/置信度/昼夜/历史基线规则。P11 不新增 FIRMS 抓取、不提交设施坐标、不写 `data/*.json`,也不得把全球火点写成炼厂事故、供应中断、真实油轮流量、战争概率或油价预测。source-review 见 [`OIL_THERMAL_ANOMALY_SOURCE_REVIEW.md`](OIL_THERMAL_ANOMALY_SOURCE_REVIEW.md)。
 
+P12 起,新增 `npm run diagnose:firms-thermal` 作为 **manual-only** FIRMS bounded-area smoke/diagnostic。它读取 operator 环境变量 `FIRMS_MAP_KEY`,默认查询 `VIIRS_SNPP_NRT` / `47,23,58,31` / `1` day,只写 ignored `manual-artifacts/oil-thermal/firms-thermal-diagnosis-latest.json`;header-only CSV 视为 API/key/path 正常但 bbox/window 无热异常。P12 仍不新增 scheduled workflow、不提交 MAP_KEY 或设施坐标、不写 `data/*.json` / `realtime/*.json`,不进入 production display、ODP `finalBias`、scoring、decision、execution、position、Brent promotion、Global Risk Heatmap 或 cross-validation。
+
 **PR2 历史 cache**（`data/oil-directional-history.json`）：同 8 个 `PET.*.W` series、同 `/v2/seriesid/` route，由 `scripts/oil-directional/build-oil-directional-history.mjs`（零依赖，ADR-0013）一次性抓 2014-至今全周度史并切片落盘（每 series ~647 周，2014-01-03 起），作 **committed snapshot** 供回测 harness 离线、可复现回放（`check:all` 不联网）。fail-closed：失败 series → `sourceStatus:'missing'` / `points:[]`，不伪造。**仅供 PR2 回测 GATE**，不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / decision / Global Risk Heatmap。文件契约 + 分类器 / GATE / 预登记阈值见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)。
 
 ---

@@ -111,3 +111,41 @@ P11 does not add:
 - facility coordinates;
 - model weights;
 - ODP classifier changes.
+
+## P12 Manual Diagnostic Scaffold
+
+P12 adds a local/manual diagnostic command only:
+
+```powershell
+$env:FIRMS_MAP_KEY = "<your NASA FIRMS MAP_KEY>"
+npm run diagnose:firms-thermal -- --bbox 47,23,58,31 --day-range 1
+```
+
+The command calls the bounded FIRMS Area API route and writes only an ignored
+manual artifact:
+
+```text
+manual-artifacts/oil-thermal/firms-thermal-diagnosis-latest.json
+```
+
+The default source is `VIIRS_SNPP_NRT`, the default bbox is `47,23,58,31`, and
+the default day range is `1`. A header-only CSV response is valid and means the
+API/key/path worked but there were no detections in that bounded area/window. The
+diagnostic summarizes row count, latest acquisition time, max FRP and confidence
+counts when detections exist.
+
+Boundary:
+
+- no committed MAP_KEY;
+- no scheduled workflow;
+- no browser-side FIRMS fetch;
+- no `data/*.json` or `realtime/*.json` write;
+- no facility whitelist yet;
+- no production display, scoring, decision, execution, position, Brent promotion,
+  ODP `finalBias`, Global Risk Heatmap or cross-validation impact.
+
+Use the dry run for syntax/argument checks without network or a key:
+
+```powershell
+npm run diagnose:firms-thermal -- --dry-run
+```

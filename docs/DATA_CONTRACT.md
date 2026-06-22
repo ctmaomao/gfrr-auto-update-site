@@ -757,6 +757,8 @@ P10 新增前端只读 `NEWS EVENT WATCH / 新闻事件观察`:该区不改变 `
 
 P11 新增前端只读 `SATELLITE THERMAL WATCH / 卫星热异常观察`:该区不改变任何 JSON schema,不新增 ODP build 输入,不读取浏览器外部源,只显示 NASA FIRMS / VIIRS NRT 作为候选高频物理信号且当前待接入。正式接入前必须另开 reviewed PR 定义设施坐标白名单、MAP_KEY secret 边界、查询预算、FRP/置信度/昼夜/重复观测阈值、历史基线和 fail-closed fallback。P11 不新增 FIRMS API call、不写 `data/*.json`、不接 scoring / decision / execution / position / `values.*` / Brent promotion / ODP `finalBias` / Global Risk Heatmap / cross-validation,也不得写成炼厂事故确认、供应中断确认或油价预测。
 
+P12 新增 `scripts/oil-directional/diagnose-firms-thermal.mjs` + `npm run diagnose:firms-thermal`,仅供 operator 本地/manual bounded-area FIRMS smoke/diagnostic。它读取环境变量 `FIRMS_MAP_KEY`,默认 `VIIRS_SNPP_NRT` / `47,23,58,31` / 1 day,只写 ignored `manual-artifacts/oil-thermal/firms-thermal-diagnosis-latest.json`。header-only CSV 是有效诊断结果(`firms-api-ok-no-detections-in-bbox`)。P12 不新增 schema、不写 `data/*.json` / `realtime/*.json`、不加 workflow、不提交 MAP_KEY 或设施坐标、不改变前端,不得进入 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation。
+
 ### oil-directional-history.json — ODP PR2 历史 cache + 回测 GATE contract
 
 PR2 新增**第二个独立文件** `data/oil-directional-history.json`:8 个 WPSR weekly series 的 2014-至今全周度史 committed snapshot,供回测 harness 离线、可复现回放。**仅供 backtest GATE**,不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / `decisionModel` / `executionLock` / `positionGuidance` / cross-validation / Global Risk Heatmap。zero-dependency build(ADR-0013)+ fail-closed。
