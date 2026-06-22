@@ -486,6 +486,38 @@ function writeJson(path, payload) {
   return absolutePath;
 }
 
+function withoutGeneratedAt(payload) {
+  const clone = JSON.parse(JSON.stringify(payload));
+  delete clone.generatedAt;
+  return clone;
+}
+
+function stabilizeUnqueriedArtifact(options, artifact) {
+  if (artifact.status !== 'not_configured' || artifact.sourceStatus?.firms !== 'not_queried') {
+    return artifact;
+  }
+  const outputPath = resolve(options.output);
+  if (!existsSync(outputPath)) {
+    return artifact;
+  }
+  try {
+    const previous = JSON.parse(readFileSync(outputPath, 'utf8'));
+    if (
+      previous?.schemaVersion === artifact.schemaVersion
+      && typeof previous.generatedAt === 'string'
+      && JSON.stringify(withoutGeneratedAt(previous)) === JSON.stringify(withoutGeneratedAt(artifact))
+    ) {
+      return {
+        ...artifact,
+        generatedAt: previous.generatedAt
+      };
+    }
+  } catch {
+    return artifact;
+  }
+  return artifact;
+}
+
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const generatedAt = new Date().toISOString();
@@ -527,6 +559,7 @@ async function main() {
     artifact = await buildLiveArtifact({ generatedAt, options, config, keyResolution });
   }
 
+  artifact = stabilizeUnqueriedArtifact(options, artifact);
   const outputPath = options.writeOutput ? writeJson(options.output, artifact) : null;
   console.log(JSON.stringify({
     status: artifact.status,
