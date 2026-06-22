@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 
@@ -7,6 +7,7 @@ const DEFAULT_SOURCE = 'VIIRS_SNPP_NRT';
 const DEFAULT_BBOX = '47,23,58,31';
 const DEFAULT_DAY_RANGE = '1';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-thermal/firms-thermal-diagnosis-latest.json';
+const DEFAULT_MAP_KEY_FILE = 'manual-artifacts/oil-thermal/firms-map-key.txt';
 const DEFAULT_TIMEOUT_MS = 15000;
 const MAX_FACILITIES_PER_RUN = 50;
 const MAX_REQUESTS_PER_RUN = 150;
@@ -27,6 +28,7 @@ Options:
   --day-range <1..5>   FIRMS day range. Default: ${DEFAULT_DAY_RANGE}
   --date <YYYY-MM-DD>  Optional FIRMS end date.
   --output <path>      JSON artifact path. Default: ${DEFAULT_OUTPUT}
+  --map-key-file <p>   Local ignored key file fallback. Default: ${DEFAULT_MAP_KEY_FILE}
   --timeout-ms <ms>    Request timeout. Default: ${DEFAULT_TIMEOUT_MS}
   --dry-run            Validate arguments and print the redacted request plan without network.
   --no-output          Do not write the manual artifact.
@@ -42,6 +44,8 @@ function parseArgs(argv) {
     dayRange: DEFAULT_DAY_RANGE,
     date: null,
     output: DEFAULT_OUTPUT,
+    mapKeyFile: DEFAULT_MAP_KEY_FILE,
+    mapKeyFileProvided: false,
     timeoutMs: DEFAULT_TIMEOUT_MS,
     dryRun: false,
     writeOutput: true
@@ -85,6 +89,9 @@ function parseArgs(argv) {
       options.date = nextValue();
     } else if (arg === '--output') {
       options.output = nextValue();
+    } else if (arg === '--map-key-file') {
+      options.mapKeyFile = nextValue();
+      options.mapKeyFileProvided = true;
     } else if (arg === '--timeout-ms') {
       options.timeoutMs = Number(nextValue());
     } else {
@@ -365,6 +372,41 @@ function writeJsonArtifact(outputPath, artifact) {
   return absolutePath;
 }
 
+function resolveMapKey(options) {
+  const envKey = String(process.env.FIRMS_MAP_KEY ?? '').trim();
+  if (envKey) {
+    return {
+      mapKey: envKey,
+      source: 'env:FIRMS_MAP_KEY',
+      checkedMapKeyFile: options.mapKeyFile
+    };
+  }
+
+  if (options.mapKeyFile) {
+    const absolutePath = resolve(options.mapKeyFile);
+    if (existsSync(absolutePath)) {
+      const fileKey = readFileSync(absolutePath, 'utf8').trim();
+      if (fileKey) {
+        return {
+          mapKey: fileKey,
+          source: `file:${options.mapKeyFile}`,
+          checkedMapKeyFile: options.mapKeyFile
+        };
+      }
+      throw new Error(`FIRMS map key file is empty: ${options.mapKeyFile}`);
+    }
+    if (options.mapKeyFileProvided) {
+      throw new Error(`FIRMS map key file was not found: ${options.mapKeyFile}`);
+    }
+  }
+
+  return {
+    mapKey: null,
+    source: null,
+    checkedMapKeyFile: options.mapKeyFile
+  };
+}
+
 function readFacilityList(facilitiesPath) {
   if (!facilitiesPath) {
     return [];
@@ -552,8 +594,7 @@ async function main() {
     options.bbox = parsedBbox.string;
   }
   options.dayRange = String(dayRange);
-
-  const mapKey = process.env.FIRMS_MAP_KEY;
+  const keyResolution = resolveMapKey(options);
 
   if (options.dryRun) {
     const dryRunPayload = isFacilityBatch
@@ -566,6 +607,8 @@ async function main() {
           requestCount: facilities.length * sourceList.length,
           dayRange,
           date: options.date,
+          keySource: keyResolution.source,
+          checkedMapKeyFile: keyResolution.checkedMapKeyFile,
           facilities: makeFacilityDryRunPlan(facilities, sourceList, options, dayRange),
           boundary: BOUNDARY
         }
@@ -578,6 +621,8 @@ async function main() {
           bbox: bboxValues,
           dayRange,
           date: options.date,
+          keySource: keyResolution.source,
+          checkedMapKeyFile: keyResolution.checkedMapKeyFile,
           redactedUrl: redactUrl(
             buildUrl(
               'DRY_RUN_MAP_KEY',
@@ -598,13 +643,15 @@ async function main() {
     return;
   }
 
-  if (!mapKey) {
-    throw new Error('FIRMS_MAP_KEY is not set. Set it as an environment variable before running this diagnostic.');
+  if (!keyResolution.mapKey) {
+    throw new Error(
+      `FIRMS MAP_KEY is not configured. Set FIRMS_MAP_KEY or create the ignored local key file: ${DEFAULT_MAP_KEY_FILE}`
+    );
   }
 
   if (isFacilityBatch) {
     const { facilityResults, aggregate } = await runFacilityBatch({
-      mapKey,
+      mapKey: keyResolution.mapKey,
       options,
       sourceList,
       dayRange,
@@ -622,6 +669,7 @@ async function main() {
       sources: sourceList,
       dayRange,
       date: options.date,
+      mapKeySource: keyResolution.source,
       aggregate,
       facilities: facilityResults,
       outputPath: options.writeOutput ? options.output : null,
@@ -643,6 +691,7 @@ async function main() {
           mode: artifact.mode,
           sources: artifact.sources,
           dayRange: artifact.dayRange,
+          mapKeySource: artifact.mapKeySource,
           aggregate: artifact.aggregate,
           outputPath: absoluteOutputPath,
           boundary: artifact.boundary
@@ -660,7 +709,7 @@ async function main() {
     dayRange,
     date: options.date
   });
-  const result = await runFirmsRequest(mapKey, request, options.timeoutMs);
+  const result = await runFirmsRequest(keyResolution.mapKey, request, options.timeoutMs);
   const summary = result.summary;
   const anomaly = deriveAnomalyLevel(summary);
 
@@ -678,6 +727,7 @@ async function main() {
     },
     dayRange,
     date: options.date,
+    mapKeySource: keyResolution.source,
     summary,
     anomalyLevel: anomaly.level,
     anomalyLabelZh: anomaly.labelZh,
@@ -705,6 +755,7 @@ async function main() {
         source: artifact.source,
         bbox: artifact.bbox,
         dayRange: artifact.dayRange,
+        mapKeySource: artifact.mapKeySource,
         summary: artifact.summary,
         anomalyLevel: artifact.anomalyLevel,
         outputPath: absoluteOutputPath,

@@ -761,6 +761,8 @@ P12 新增 `scripts/oil-directional/diagnose-firms-thermal.mjs` + `npm run diagn
 
 P13 扩展同一 manual diagnostic 支持设施级批量模式:`--facilities <ignored-json>` + `--sources <comma-list>`。设施清单必须由 operator 放在 ignored `manual-artifacts/` 路径,每个设施使用小 bbox(max span 1.5°),单轮上限 50 facilities / 150 FIRMS requests;仓库只提交 `docs/fixtures/oil-thermal/facilities.example.json` schema 示例,不是生产白名单。批量 artifact schema 为 `firms-facility-thermal-diagnosis-1`,包含 per-source summary、facility aggregate、`sourceAgreement` 与 heuristic-only `anomalyLevel`;这些字段仍只供人工 source review,不得进入 ODP build / schema / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation,也不得写成事故、停产、断供或油价预测确认。
 
+P14 仅新增本地 secret 读取便利性:`diagnose:firms-thermal` 先读 `FIRMS_MAP_KEY`,若缺失则读 ignored `manual-artifacts/oil-thermal/firms-map-key.txt` 或 `--map-key-file <path>`。artifact / console 只可记录 `mapKeySource`,不得记录 MAP_KEY 值。P14 不新增 workflow、不读取 GitHub secret、不提交 key、不改变任何 production schema 或 ODP 输出。
+
 ### oil-directional-history.json — ODP PR2 历史 cache + 回测 GATE contract
 
 PR2 新增**第二个独立文件** `data/oil-directional-history.json`:8 个 WPSR weekly series 的 2014-至今全周度史 committed snapshot,供回测 harness 离线、可复现回放。**仅供 backtest GATE**,不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / `decisionModel` / `executionLock` / `positionGuidance` / cross-validation / Global Risk Heatmap。zero-dependency build(ADR-0013)+ fail-closed。

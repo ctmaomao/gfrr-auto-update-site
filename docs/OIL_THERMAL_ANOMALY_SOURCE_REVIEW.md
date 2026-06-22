@@ -150,6 +150,24 @@ Use the dry run for syntax/argument checks without network or a key:
 npm run diagnose:firms-thermal -- --dry-run
 ```
 
+### Local Key Storage
+
+For repeat local diagnostics, the script also supports an ignored local key file:
+
+```text
+manual-artifacts/oil-thermal/firms-map-key.txt
+```
+
+Resolution order:
+
+1. `FIRMS_MAP_KEY` environment variable.
+2. `--map-key-file <path>` when provided, otherwise the default
+   `manual-artifacts/oil-thermal/firms-map-key.txt`.
+
+The key file must stay under ignored `manual-artifacts/`. The script never prints
+the key and only records `mapKeySource` such as `env:FIRMS_MAP_KEY` or
+`file:manual-artifacts/oil-thermal/firms-map-key.txt`.
+
 ## P13 Facility-Level Manual Batch Diagnostic
 
 P13 extends the same manual command with an operator-provided facility list:
