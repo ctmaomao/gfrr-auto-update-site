@@ -86,6 +86,7 @@ const SUITES = {
     'check:firms-thermal-review',
     'check:firms-thermal-baseline-review',
     'check:oil-thermal-watch-sample-archive',
+    'check:oil-thermal-watch-history-sample-archive',
     'check:oil-thermal-baseline-samples-review',
     'check:firms-thermal-watch-review'
   ]

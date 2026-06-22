@@ -280,9 +280,44 @@ The archive helper refuses raw FIRMS Area API URLs, refuses missing or truthy
 `productionImpact`, refuses unsafe input paths, and refuses to write outside
 `manual-artifacts/`. It does not read `FIRMS_MAP_KEY`, does not access the
 network, does not write production data, and does not approve a production
-baseline. The first archived local production sample remains a
-`collect_more_samples_before_baseline_candidate_review` state because only one
-sample is present.
+baseline. P26 by itself only archives the current local production artifact;
+P27's git-history helper can recover additional committed samples when they are
+available.
+
+## P27 Git-History Watch Sample Archive
+
+P27 adds a read-only git history archive helper:
+
+```text
+scripts/oil-directional/archive-oil-thermal-watch-history-samples.mjs
+npm run archive:oil-thermal-watch-history-samples
+npm run check:oil-thermal-watch-history-sample-archive
+```
+
+The helper inspects recent commits that touched `data/oil-thermal-watch.json`,
+extracts each commit's sanitized `oil-thermal-watch-1` artifact via `git show`,
+skips early watch shells with no facility rows, deduplicates by `generatedAt` and
+content hash, and writes valid samples into the same ignored archive directory
+used by P26:
+
+```text
+manual-artifacts/oil-thermal/watch-samples/
+```
+
+This lets an operator recover the latest committed production watch samples
+without manually running `archive:oil-thermal-watch-sample` after every scheduled
+refresh. Existing sample files are treated as `already_archived` instead of a
+fatal error, so the command is safe to repeat:
+
+```powershell
+npm run archive:oil-thermal-watch-history-samples -- --max-commits 40 --max-samples 8
+npm run review:oil-thermal-baseline-samples -- --input-dir manual-artifacts/oil-thermal/watch-samples
+```
+
+The helper uses local git history only. It does not read `FIRMS_MAP_KEY`, does
+not access the network, does not run FIRMS requests, does not write `data/*.json`
+or `realtime/*.json`, and does not approve production baseline rows. Every sidecar
+keeps `productionImpact` false and records the source commit hash for audit.
 
 ## Current P11 Scope
 
