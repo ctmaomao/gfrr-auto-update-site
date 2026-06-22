@@ -360,6 +360,8 @@ P13 起,`diagnose:firms-thermal` 支持 `--facilities manual-artifacts/oil-therm
 
 P14 起,`diagnose:firms-thermal` 可在未设置 `FIRMS_MAP_KEY` 时读取 ignored 本地 key 文件 `manual-artifacts/oil-thermal/firms-map-key.txt`(也可用 `--map-key-file <path>` 指定)。解析顺序为 env var 优先、key file 兜底;输出只记录 `mapKeySource`,不得打印或提交 MAP_KEY。该便利性只服务本地/manual diagnostic,不改变 P13 的 production 边界,不新增 workflow、不读取 GitHub secret、不写 production data。
 
+P15 起,`diagnose:firms-thermal` 在非 dry-run 时默认向 stderr 输出进度日志(设施 id、source、请求进度、row count),最终 JSON 仍输出到 stdout;可用 `--quiet` 关闭。进度日志不得包含 MAP_KEY 或 raw URL,仅解决批量请求时 PowerShell 看似无输出的问题;不改变 artifact schema、不写 production data、不新增 workflow。
+
 **PR2 历史 cache**（`data/oil-directional-history.json`）：同 8 个 `PET.*.W` series、同 `/v2/seriesid/` route，由 `scripts/oil-directional/build-oil-directional-history.mjs`（零依赖，ADR-0013）一次性抓 2014-至今全周度史并切片落盘（每 series ~647 周，2014-01-03 起），作 **committed snapshot** 供回测 harness 离线、可复现回放（`check:all` 不联网）。fail-closed：失败 series → `sourceStatus:'missing'` / `points:[]`，不伪造。**仅供 PR2 回测 GATE**，不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / decision / Global Risk Heatmap。文件契约 + 分类器 / GATE / 预登记阈值见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)。
 
 ---

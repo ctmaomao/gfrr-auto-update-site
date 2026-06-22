@@ -215,3 +215,17 @@ per-facility:
 `anomalyLevel` is a manual diagnostic heuristic only. It is not a production signal,
 not an incident confirmation, not an outage confirmation, and not an oil-price
 forecast.
+
+### Progress Logging
+
+P15 adds default progress logs for non-dry-run diagnostics. Progress logs are written
+to `stderr`, while the final machine-readable JSON remains on `stdout`. This keeps
+long facility batches observable without changing the artifact contract.
+
+The progress lines include facility id, source id, completed request count and row
+count. They must not include the FIRMS MAP_KEY or raw request URLs. Use `--quiet`
+to suppress progress logs:
+
+```powershell
+npm run diagnose:firms-thermal -- --facilities manual-artifacts/oil-thermal/facilities.json --quiet
+```

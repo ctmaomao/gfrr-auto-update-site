@@ -32,6 +32,7 @@ Options:
   --timeout-ms <ms>    Request timeout. Default: ${DEFAULT_TIMEOUT_MS}
   --dry-run            Validate arguments and print the redacted request plan without network.
   --no-output          Do not write the manual artifact.
+  --quiet              Suppress progress logs; final JSON still prints.
   --help               Show this help.`);
 }
 
@@ -48,7 +49,8 @@ function parseArgs(argv) {
     mapKeyFileProvided: false,
     timeoutMs: DEFAULT_TIMEOUT_MS,
     dryRun: false,
-    writeOutput: true
+    writeOutput: true,
+    progress: true
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -63,6 +65,10 @@ function parseArgs(argv) {
     }
     if (arg === '--no-output') {
       options.writeOutput = false;
+      continue;
+    }
+    if (arg === '--quiet') {
+      options.progress = false;
       continue;
     }
 
@@ -372,6 +378,13 @@ function writeJsonArtifact(outputPath, artifact) {
   return absolutePath;
 }
 
+function logProgress(options, message) {
+  if (!options.progress || options.dryRun) {
+    return;
+  }
+  process.stderr.write(`[firms-thermal] ${message}\n`);
+}
+
 function resolveMapKey(options) {
   const envKey = String(process.env.FIRMS_MAP_KEY ?? '').trim();
   if (envKey) {
@@ -525,7 +538,10 @@ async function runFacilityBatch({ mapKey, options, sourceList, dayRange, facilit
   }
 
   const facilityResults = [];
-  for (const facility of facilities) {
+  let completedRequests = 0;
+  logProgress(options, `facility batch start: facilities=${facilities.length}, sources=${sourceList.length}, requests=${requestCount}`);
+  for (const [facilityIndex, facility] of facilities.entries()) {
+    logProgress(options, `facility ${facilityIndex + 1}/${facilities.length}: ${facility.id} (${facility.label})`);
     const sourceResults = [];
     for (const source of sourceList) {
       const request = makeRequest({
@@ -535,7 +551,11 @@ async function runFacilityBatch({ mapKey, options, sourceList, dayRange, facilit
         date: options.date
       });
       try {
-        sourceResults.push(await runFirmsRequest(mapKey, request, options.timeoutMs));
+        logProgress(options, `request ${completedRequests + 1}/${requestCount}: ${facility.id} ${source}`);
+        const result = await runFirmsRequest(mapKey, request, options.timeoutMs);
+        completedRequests += 1;
+        logProgress(options, `done ${completedRequests}/${requestCount}: ${facility.id} ${source} rows=${result.summary.rowCount}`);
+        sourceResults.push(result);
       } catch (error) {
         throw new Error(`FIRMS request failed for facility ${facility.id} source ${source}: ${error.message}`);
       }
@@ -648,6 +668,7 @@ async function main() {
       `FIRMS MAP_KEY is not configured. Set FIRMS_MAP_KEY or create the ignored local key file: ${DEFAULT_MAP_KEY_FILE}`
     );
   }
+  logProgress(options, `using MAP_KEY source: ${keyResolution.source}`);
 
   if (isFacilityBatch) {
     const { facilityResults, aggregate } = await runFacilityBatch({
@@ -709,7 +730,9 @@ async function main() {
     dayRange,
     date: options.date
   });
+  logProgress(options, `single bbox request start: source=${request.source}, bbox=${request.bbox}, dayRange=${request.dayRange}`);
   const result = await runFirmsRequest(keyResolution.mapKey, request, options.timeoutMs);
+  logProgress(options, `single bbox request done: source=${request.source}, rows=${result.summary.rowCount}`);
   const summary = result.summary;
   const anomaly = deriveAnomalyLevel(summary);
 
