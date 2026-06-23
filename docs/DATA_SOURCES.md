@@ -528,6 +528,10 @@ PortWatch 字段是 AIS-derived chokepoint proxy,本项目只保存 latest、7d/
 | **影响 scoring?** | **是 (overlay)** — 进入 World Order Stress Overlay 的 `marketConfirmation` 与 4 个 supporting narrative;**不进入** scoring/decision/execution/position 主链 |
 | **fetcher** | `scripts/world-order/fetch-gdelt-cloud.mjs` (M-59 替换 legacy GDELT DOC API) |
 
+### GDELT site-wide source policy
+
+P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run check:gdelt-source-policy`。GDELT 在本项目中统一定义为低频、可缓存、需退避的全球新闻代理源,不得被新增模块当作高频实时 API 直接调用。当前登记的 GDELT endpoint 引用只允许存在于 World Order GDELT Cloud fetcher、ODP oil-news diagnosis helper、Bubble Watch `ceo_hedging` path、GDELT 相关 checker 和手动 API secret diagnostic workflow。新增 GDELT endpoint 字符串或 runtime 直连必须先更新 source policy 并通过 checker;后续整改方向为 shared wrapper + compact cache + 本地 bucket 分类。P35 不改变 runtime、不新增 workflow、不写 `data/*.json` / `realtime`,不改变 World Order/ODP/Bubble Watch scoring 或 display behavior。
+
 ---
 
 ### OFAC — Treasury sanctions feed

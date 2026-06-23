@@ -1030,6 +1030,10 @@ v28.0H-2C 起，`externalSources.gdelt.summary` 必须明确记录 query throttl
 - 当 `externalSources.gdelt.status="stale"` 时，`usedCachedSummary=true` 且 `cacheReason` 非空。
 - 当 `externalSources.gdelt.status="error"` 时，`successCount=0`。
 
+#### GDELT source policy guard
+
+P35 起,`docs/GDELT_SOURCE_POLICY.md` 是全站 GDELT 使用边界。`check:gdelt-source-policy` 必须在 `check:all` 中运行,并扫描 `scripts/`、`.github/workflows/` 与 `workers/` 下的 runtime/check 文件。除 policy allowlist 中登记的现有 endpoint-reference 文件外,不得新增 `api.gdeltproject.org/api/v2`、`gdeltcloud.com/api/v2` 或等价 GDELT endpoint marker。P35 是 guard-only:不改变 World Order、ODP oil-news 或 Bubble Watch runtime,不新增 production schema,不写 `data/*.json` / `realtime`,也不把 GDELT 信号接入 scoring / decision / execution / position / Brent promotion / ODP `finalBias` / Global Risk Heatmap / cross-validation。
+
 #### SIPRI normalized input
 
 v28.0H-3 起，SIPRI 支持手动标准化导入。真实输入路径为：
