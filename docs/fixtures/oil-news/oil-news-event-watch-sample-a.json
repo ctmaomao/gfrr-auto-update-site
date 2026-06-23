@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "oil-news-event-watch-1",
+  "module": "oil-news-event-watch",
+  "generatedAt": "2026-06-23T00:00:00.000Z",
+  "status": "partial",
+  "signalState": "watch",
+  "sourceStatus": {
+    "gdeltDoc": "partial",
+    "tavily": "live",
+    "brave": "live",
+    "tavilyKey": "configured",
+    "braveKey": "configured"
+  },
+  "freshness": {
+    "latestArticleAt": "2026-06-22T23:00:00.000Z",
+    "latestArticleAgeHours": 1
+  },
+  "queryCoverage": {
+    "queryCount": 12,
+    "querySuccessCount": 10,
+    "queryFailureCount": 2
+  },
+  "aggregate": {
+    "rawArticleCount": 30,
+    "uniqueArticleCount": 28,
+    "liveSourceCount": 3,
+    "configuredSourceCount": 3,
+    "bucketCountWithHits": 4,
+    "confidence": "medium_low"
+  },
+  "buckets": {
+    "chokepoint": {
+      "articleCount": 12,
+      "sourceCount": 3,
+      "weightedSignal": 36
+    },
+    "sanctions": {
+      "articleCount": 4,
+      "sourceCount": 2,
+      "weightedSignal": 8
+    },
+    "market_reaction": {
+      "articleCount": 6,
+      "sourceCount": 2,
+      "weightedSignal": 6
+    }
+  },
+  "topArticles": [
+    {
+      "title": "Oil market watches tanker traffic after regional risk headlines",
+      "url": "https://example.com/oil-news-a",
+      "domain": "example.com",
+      "publishedAt": "2026-06-22T23:00:00.000Z",
+      "sources": [
+        "tavily",
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "market_reaction"
+      ],
+      "queryIds": [
+        "chokepoint_shipping"
+      ]
+    }
+  ],
+  "productionDisplayApproved": true,
+  "promotionEligible": false,
+  "productionImpact": {
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  }
+}

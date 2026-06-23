@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "oil-news-event-watch-1",
+  "module": "oil-news-event-watch",
+  "generatedAt": "2026-06-23T02:00:00.000Z",
+  "status": "partial",
+  "signalState": "watch",
+  "sourceStatus": {
+    "gdeltDoc": "partial",
+    "tavily": "live",
+    "brave": "live",
+    "tavilyKey": "configured",
+    "braveKey": "configured"
+  },
+  "freshness": {
+    "latestArticleAt": "2026-06-23T01:00:00.000Z",
+    "latestArticleAgeHours": 1
+  },
+  "queryCoverage": {
+    "queryCount": 12,
+    "querySuccessCount": 11,
+    "queryFailureCount": 1
+  },
+  "aggregate": {
+    "rawArticleCount": 34,
+    "uniqueArticleCount": 31,
+    "liveSourceCount": 3,
+    "configuredSourceCount": 3,
+    "bucketCountWithHits": 4,
+    "confidence": "medium_low"
+  },
+  "buckets": {
+    "chokepoint": {
+      "articleCount": 14,
+      "sourceCount": 3,
+      "weightedSignal": 42
+    },
+    "sanctions": {
+      "articleCount": 5,
+      "sourceCount": 2,
+      "weightedSignal": 10
+    },
+    "market_reaction": {
+      "articleCount": 8,
+      "sourceCount": 2,
+      "weightedSignal": 8
+    }
+  },
+  "topArticles": [
+    {
+      "title": "Energy traders monitor shipping insurance and prompt crude spreads",
+      "url": "https://example.com/oil-news-b",
+      "domain": "example.com",
+      "publishedAt": "2026-06-23T01:00:00.000Z",
+      "sources": [
+        "tavily",
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "market_reaction"
+      ],
+      "queryIds": [
+        "market_reaction"
+      ]
+    }
+  ],
+  "productionDisplayApproved": true,
+  "promotionEligible": false,
+  "productionImpact": {
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  }
+}

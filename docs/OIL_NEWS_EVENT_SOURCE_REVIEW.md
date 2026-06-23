@@ -1,9 +1,10 @@
 # Oil News Event Source Review — ODP manual diagnosis
 
 Status: P28 added a manual-only oil-news event diagnosis helper. P29 promotes the
-same source set into a production read-only display artifact. Both layers remain
-outside ODP scoring, `finalBias`, decision, execution, position, Brent promotion,
-Global Risk Heatmap, and cross-validation.
+same source set into a production read-only display artifact. P30 adds a
+manual/local sample calibration review. All layers remain outside ODP scoring,
+`finalBias`, decision, execution, position, Brent promotion, Global Risk Heatmap,
+and cross-validation.
 
 ## Candidate Sources
 
@@ -88,6 +89,32 @@ file is unavailable, the renderer can fall back to the older P10 World Order
 GDELT broad-event summary, but the production path is now the dedicated oil-news
 artifact.
 
+## Sample Calibration Review
+
+P30 adds:
+
+```text
+scripts/oil-directional/review-oil-news-event-watch-samples.mjs
+npm run review:oil-news-event-watch-samples
+npm run check:oil-news-event-watch-samples-review
+```
+
+The helper is local/manual and no-network. By default it reads git history for
+recent sanitized `data/oil-news-event-watch.json` samples. It may also read
+tracked fixtures or ignored manual artifacts with repeated `--input` or
+`--input-dir`.
+
+The review writes only:
+
+```text
+manual-artifacts/oil-news/oil-news-event-watch-samples-review-latest.json
+```
+
+The current first two production workflow samples proved Tavily and Brave live
+cross-checks are configured, while GDELT DOC was unstable across adjacent runs.
+The sample review therefore marks source calibration ready for manual review but
+keeps headline display not ready when high-claim title language appears.
+
 ## Query Buckets
 
 The initial query set intentionally focuses on ODP-relevant events:
@@ -119,6 +146,16 @@ P29 does not:
 
 - write `data/oil-directional-pressure.json`, `data/radar-data.json`, or
   `realtime/*.json`;
+- change ODP classifier, `finalBias`, global overlay, values, scoring, decision,
+  execution, position, Brent promotion, Global Risk Heatmap, or cross-validation;
+- confirm Hormuz closure, tanker-flow disruption, refinery outage, supply
+  interruption, sanctions impact, or oil-price direction.
+
+P30 does not:
+
+- access network sources or read API keys;
+- write `data/*.json`, `realtime/*.json`, or production baseline/config files;
+- modify frontend display or expose article headlines;
 - change ODP classifier, `finalBias`, global overlay, values, scoring, decision,
   execution, position, Brent promotion, Global Risk Heatmap, or cross-validation;
 - confirm Hormuz closure, tanker-flow disruption, refinery outage, supply
