@@ -108,6 +108,7 @@ const ENERGY_TEXT_IDS = [
   'odp-news-event-conflict',
   'odp-news-event-sanctions',
   'odp-news-event-headline-gate',
+  'odp-news-event-source-health',
   'odp-news-event-market',
   'odp-news-event-title-risk',
   'odp-news-event-note',
@@ -346,6 +347,7 @@ function clearEnergyAddendum() {
   setToneClass('odp-global-overlay-status', 'odp-global-overlay-status', '');
   setToneClass('odp-news-event-status', 'odp-news-event-status', '');
   setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', '');
+  setToneClass('odp-news-event-source-health', 'odp-news-source-health', '');
   setToneClass('odp-thermal-status', 'odp-thermal-status', '');
   setToneClass('odp-qc-ledger-status', 'odp-qc-ledger-status', '');
   setToneClass('odp-energy-spare-regime', 'odp-energy-regime', '');
@@ -793,6 +795,8 @@ function renderLegacyOilEventNewsLayer(worldOrderStressData) {
   setLeafText('odp-news-event-sanctions', `制裁 ${sanctionsEvents} / 通道 ${chokepointEvents}`);
   setLeafText('odp-news-event-headline-gate', '专用闸门未接入');
   setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', 'yellow');
+  setLeafText('odp-news-event-source-health', '广义 GDELT 摘要 · 专用三源未接入');
+  setToneClass('odp-news-event-source-health', 'odp-news-source-health', 'yellow');
   setLeafText('odp-news-event-market', marketText);
   setLeafText('odp-news-event-title-risk', '缺专用标题风险字段 · 不展示标题原文');
   setLeafText('odp-news-event-note', `本层复用已有 GDELT 广义新闻事件摘要,用于提示油价相关地缘背景是否需要观察;它不是 ODP 专用新闻 API,也不确认霍尔木兹通道中断、断供或船舶级流向。${eventContext}${directContext}后续只有与价格结构、咽喉转运、库存/供需锚点和卫星/设施事件同时印证时,才提高事件观察置信度。`);
@@ -808,21 +812,77 @@ function newsBucketCount(data, key) {
   const value = data?.buckets?.[key]?.articleCount;
   return Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
 }
-function newsSourceText(data) {
-  const status = data?.sourceStatus || {};
-  const label = {
-    live: 'live',
-    partial: 'partial',
-    error: 'error',
+const NEWS_SOURCE_HEALTH_FIELDS = [
+  ['gdeltDoc', 'GDELT'],
+  ['tavily', 'Tavily'],
+  ['brave', 'Brave'],
+];
+function newsSourceStateZh(status) {
+  return ({
+    live: '可用',
+    partial: '部分可用',
+    error: '降级',
     not_configured: '未配置',
     not_queried: '未查询',
-    dry_run: 'dry-run',
-  };
-  return [
-    `GDELT ${label[status.gdeltDoc] || '—'}`,
-    `Tavily ${label[status.tavily] || '—'}`,
-    `Brave ${label[status.brave] || '—'}`,
-  ].join(' / ');
+    dry_run: '演练',
+  })[status] || '待核';
+}
+function newsSourceCount(data) {
+  return Array.isArray(data?.sources) && data.sources.length > 0
+    ? data.sources.length
+    : NEWS_SOURCE_HEALTH_FIELDS.length;
+}
+function newsDegradedSources(data) {
+  const status = data?.sourceStatus || {};
+  return NEWS_SOURCE_HEALTH_FIELDS
+    .map(([key, label]) => ({ label, state: status[key] }))
+    .filter((source) => source.state && source.state !== 'live')
+    .map((source) => `${source.label}${newsSourceStateZh(source.state)}`);
+}
+function newsQueryCoverageText(data) {
+  const coverage = data?.queryCoverage || {};
+  const queryCount = Number.isFinite(coverage.queryCount) ? Math.round(coverage.queryCount) : null;
+  const successCount = Number.isFinite(coverage.querySuccessCount) ? Math.round(coverage.querySuccessCount) : null;
+  if (!queryCount || successCount === null) return '查询覆盖待核';
+  return `查询 ${successCount}/${queryCount} 成功`;
+}
+function newsSourceHealthText(data) {
+  const total = newsSourceCount(data);
+  const liveSources = Number.isFinite(data?.aggregate?.liveSourceCount)
+    ? Math.round(data.aggregate.liveSourceCount)
+    : 0;
+  const configured = Number.isFinite(data?.aggregate?.configuredSourceCount)
+    ? Math.round(data.aggregate.configuredSourceCount)
+    : null;
+  const configuredText = configured !== null && configured < total ? ` · ${configured}/${total} 已配置` : '';
+  const degraded = newsDegradedSources(data);
+  const degradedText = degraded.length ? degraded.join('、') : '三源正常';
+  const closedText = data?.status === 'source_unavailable' ? ' · 失败关闭' : '';
+  return `公开源 ${liveSources}/${total} 可用${configuredText} · ${newsQueryCoverageText(data)} · ${degradedText}${closedText}`;
+}
+function newsSourceHealthTone(data) {
+  if (!data || typeof data !== 'object') return '';
+  if (data.status === 'ok') return 'green';
+  if (data.status === 'partial' || data.status === 'source_unavailable' || data.status === 'not_configured') return 'yellow';
+  return '';
+}
+function newsFallbackContextText(data) {
+  if (!data || typeof data !== 'object') return '来源状态待核;观察层不补推断。';
+  if (data.status === 'source_unavailable') {
+    return '本轮新闻源不可用,观察层失败关闭,不沿用旧报道或单一路径推断事件压力。';
+  }
+  if (data.status === 'not_configured') {
+    return '新闻源尚未完整配置,只保留背景观察,不提高事件置信度。';
+  }
+  if (data.status === 'partial') {
+    const degraded = newsDegradedSources(data);
+    const degradedText = degraded.length ? `${degraded.join('、')}。` : '部分来源降级。';
+    return `${degradedText}本层仍需多源重合与市场/物理信号交叉核验,不把单一路径报道写成确认事件。`;
+  }
+  if (data.status === 'ok') {
+    return '三路新闻索引均可用,但新闻层仍只是事件代理,需要与市场/物理证据交叉核验。';
+  }
+  return '来源状态待核;观察层不补推断。';
 }
 function newsWindowText(data) {
   const freshness = data?.freshness || {};
@@ -876,7 +936,6 @@ function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
   const marketReaction = newsBucketCount(data, 'market_reaction');
   const confidence = data.aggregate?.confidence || 'none';
   const unique = Number.isFinite(data.aggregate?.uniqueArticleCount) ? Math.round(data.aggregate.uniqueArticleCount) : 0;
-  const liveSources = Number.isFinite(data.aggregate?.liveSourceCount) ? Math.round(data.aggregate.liveSourceCount) : 0;
   const marketInput = worldOrderStressData?.marketConfirmationInput || {};
   const marketBrent = firstNumber(marketInput.brent);
   const marketAge = Number.isFinite(marketInput.ageMinutes) ? ` · ${Math.round(marketInput.ageMinutes)} 分钟龄` : '';
@@ -890,12 +949,14 @@ function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
   setToneClass('odp-news-event-status', 'odp-news-event-status', newsEventTone(data));
   setLeafText('odp-news-event-window', `${newsWindowText(data)} · ${unique} 条专用报道代理`);
   setLeafText('odp-news-event-conflict', `通道 ${chokepoint} / 供应 ${supply} / 设施 ${facility} · 中东 ${middleEast}`);
-  setLeafText('odp-news-event-sanctions', `制裁 ${sanctions} / 航运 ${shipping} · ${liveSources}/${data.sources?.length || 0} 源 · ${newsSourceText(data)}`);
+  setLeafText('odp-news-event-sanctions', `制裁 ${sanctions} / 航运 ${shipping}`);
   setLeafText('odp-news-event-headline-gate', headlineReadinessText(data));
   setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', headlineReadinessTone(data));
+  setLeafText('odp-news-event-source-health', newsSourceHealthText(data));
+  setToneClass('odp-news-event-source-health', 'odp-news-source-health', newsSourceHealthTone(data));
   setLeafText('odp-news-event-market', `市场反应 ${marketReaction} 条 · ${brentText}`);
   setLeafText('odp-news-event-title-risk', titleRiskText(data));
-  setLeafText('odp-news-event-note', `${data.aggregate?.reasonZh || '专用油价新闻层暂不可用。'}本区读取 production read-only oil-news event watch(GDELT/Tavily/Brave),置信度 ${confidence};标题只做聚合风险闸门,不展示原文标题。它不确认霍尔木兹关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施事件同时印证时,才适合提高人工观察置信度。`);
+  setLeafText('odp-news-event-note', `${data.aggregate?.reasonZh || '专用油价新闻层暂不可用。'}${newsFallbackContextText(data)}本区读取 production read-only oil-news event watch(GDELT/Tavily/Brave),置信度 ${confidence};标题只做聚合风险闸门,不展示原文标题。它不确认霍尔木兹关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施事件同时印证时,才适合提高人工观察置信度。`);
 }
 function thermalTone(data) {
   if (!data || typeof data !== 'object') return '';

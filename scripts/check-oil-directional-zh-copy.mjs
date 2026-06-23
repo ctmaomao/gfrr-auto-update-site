@@ -10,6 +10,9 @@
 // reviewed manually under DESIGN.md §4.1/§5.6 + ADR-0014.
 // P32: the oil-news event watch may display headline readiness and title-risk
 // aggregate counts only. It must not render article titles or iterate topArticles.
+// P33: oil-news event watch source health/fallback copy must stay explicit:
+// aggregate source health is allowed, but no single news path may be written as
+// a confirmed oil event.
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -56,6 +59,12 @@ if (!src.includes('headlineDisplayReadiness') || !src.includes('titleRisk')) {
 }
 if (!src.includes('不展示标题原文')) {
   fail('ODP oil-news copy must explicitly state that original headlines are not displayed');
+}
+if (!src.includes('odp-news-event-source-health') || !src.includes('newsSourceHealthText')) {
+  fail('ODP renderer must expose dedicated oil-news source-health/fallback text');
+}
+if (!src.includes('失败关闭') || !src.includes('不把单一路径报道写成确认事件')) {
+  fail('ODP oil-news source-health copy must preserve fail-closed and no-single-path-confirmation wording');
 }
 
 if (errors.length > 0) {

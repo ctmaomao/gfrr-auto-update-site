@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-oil-news-headline-guard-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-oil-news-source-health-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

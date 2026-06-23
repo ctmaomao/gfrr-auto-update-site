@@ -4,9 +4,10 @@ Status: P28 added a manual-only oil-news event diagnosis helper. P29 promotes th
 same source set into a production read-only display artifact. P30 adds a
 manual/local sample calibration review. P31 adds production title-risk and
 headline-display readiness guards. P32 surfaces those guards in the frontend
-without rendering article headlines. All layers remain outside ODP scoring,
-`finalBias`, decision, execution, position, Brent promotion, Global Risk Heatmap,
-and cross-validation.
+without rendering article headlines. P33 surfaces source health/fallback wording
+without adding sources or changing the artifact schema. All layers remain outside
+ODP scoring, `finalBias`, decision, execution, position, Brent promotion, Global
+Risk Heatmap, and cross-validation.
 
 ## Candidate Sources
 
@@ -141,6 +142,16 @@ headline readiness state, high-claim title count, evaluated title count, source
 domain count, and an explicit "no original headline display" notice. The renderer
 must not read `topArticles` or show article titles. `check:oil-directional-zh-copy`
 guards this frontend boundary.
+
+P33 adds frontend source-health/fallback wording. The ODP `NEWS EVENT WATCH`
+surface may show only aggregate source health from existing fields:
+`sourceStatus`, `queryCoverage`, and `aggregate.liveSourceCount`. It can say
+whether GDELT / Tavily / Brave are available, degraded, missing, or in dry-run
+mode, and it can show query success counts. It must not add provider calls, read
+raw provider responses, display article titles, or treat a single news path as a
+confirmed chokepoint closure, supply outage, tanker-flow fact, refinery accident,
+sanctions effect, or oil-price direction. Legacy World Order GDELT fallback must
+be labeled as not being the dedicated three-source oil-news layer.
 
 ## Query Buckets
 

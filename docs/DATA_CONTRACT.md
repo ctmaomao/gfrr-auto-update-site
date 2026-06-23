@@ -765,6 +765,8 @@ P31 扩展 `data/oil-news-event-watch.json` production schema:新增 `titleRisk`
 
 P32 前端只读消费 P31 的 `titleRisk` / `headlineDisplayReadiness` 聚合字段,在 ODP `NEWS EVENT WATCH` 中展示标题闸门与标题风险计数。该展示只能使用 readiness state、high-claim count、evaluated count、source-domain count 与"不展示标题原文"提示;不得读取或渲染 `topArticles` 标题列表。`check:oil-directional-zh-copy` 必须阻止 `renderOilDirectional.js` 引用 `topArticles`,并要求保留 headline readiness / title-risk 聚合 guard copy。P32 不改变 production artifact schema、不写 `data/*.json` / `realtime/*.json`、不新增抓取源、不改变 P29 workflow,不得进入 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation。
 
+P33 前端只读消费 P29 artifact 既有 `sourceStatus` / `queryCoverage` / `aggregate.liveSourceCount`,在 ODP `NEWS EVENT WATCH` 中展示 `来源健康` 聚合文案:三源可用性、查询成功率、降级来源和失败关闭语义。该展示不得增加 artifact 字段,不得读取或渲染 `topArticles`,不得把 GDELT/Tavily/Brave 单一路径新闻报道写成事件确认;legacy World Order GDELT fallback 必须标明专用三源未接入。`check:oil-directional-zh-copy` 必须要求 source-health/fallback copy 保留"失败关闭"与"不把单一路径报道写成确认事件"边界。P33 不写 `data/*.json` / `realtime/*.json`、不新增抓取源、不改变 P29 workflow,不得进入 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation。
+
 P11 新增前端只读 `SATELLITE THERMAL WATCH / 卫星热异常观察`:该区不改变任何 JSON schema,不新增 ODP build 输入,不读取浏览器外部源,只显示 NASA FIRMS / VIIRS NRT 作为候选高频物理信号且当前待接入。正式接入前必须另开 reviewed PR 定义设施坐标白名单、MAP_KEY secret 边界、查询预算、FRP/置信度/昼夜/重复观测阈值、历史基线和 fail-closed fallback。P11 不新增 FIRMS API call、不写 `data/*.json`、不接 scoring / decision / execution / position / `values.*` / Brent promotion / ODP `finalBias` / Global Risk Heatmap / cross-validation,也不得写成炼厂事故确认、供应中断确认或油价预测。
 
 P12 新增 `scripts/oil-directional/diagnose-firms-thermal.mjs` + `npm run diagnose:firms-thermal`,仅供 operator 本地/manual bounded-area FIRMS smoke/diagnostic。它读取环境变量 `FIRMS_MAP_KEY`,默认 `VIIRS_SNPP_NRT` / `47,23,58,31` / 1 day,只写 ignored `manual-artifacts/oil-thermal/firms-thermal-diagnosis-latest.json`。header-only CSV 是有效诊断结果(`firms-api-ok-no-detections-in-bbox`)。P12 不新增 schema、不写 `data/*.json` / `realtime/*.json`、不加 workflow、不提交 MAP_KEY 或设施坐标、不改变前端,不得进入 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation。
@@ -869,7 +871,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-oil-news-headline-guard-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-oil-news-source-health-1`）。
 
 稳定边界：
 
@@ -1092,26 +1094,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-oil-news-headline-guard-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+odp-oil-news-source-health-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-oil-news-headline-guard-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-oil-news-source-health-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-oil-news-headline-guard-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-oil-news-headline-guard-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 即使被 helper 机械更新 import query,也仍不是当前前端 runtime 入口或 realtime overlay 重接入。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-oil-news-headline-guard-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-oil-news-source-health-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-oil-news-source-health-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 即使被 helper 机械更新 import query,也仍不是当前前端 runtime 入口或 realtime overlay 重接入。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-oil-news-source-health-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-oil-news-headline-guard-1
-npm run bump:frontend-asset-version -- odp-oil-news-headline-guard-1
+node scripts/bump-frontend-asset-version.mjs odp-oil-news-source-health-1
+npm run bump:frontend-asset-version -- odp-oil-news-source-health-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-oil-news-headline-guard-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-oil-news-source-health-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
