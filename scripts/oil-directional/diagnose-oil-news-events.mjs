@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { fetchGdeltDocJson, sanitizeGdeltDiagnostics } from '../gdelt/fetch-gdelt.mjs';
 
 const DIAGNOSIS_VERSION = 'oil-news-events-diagnosis-p28';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-news/oil-news-events-diagnosis-latest.json';
@@ -381,22 +382,25 @@ async function fetchGdeltDoc(querySpec, options) {
     timespan: `${options.windowDays}d`,
     sort: 'HybridRel'
   });
-  const json = await fetchWithTimeout(`https://api.gdeltproject.org/api/v2/doc/doc?${params}`, {
-    asJson: true,
-    headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json' },
+  const { json, diagnostics } = await fetchGdeltDocJson({
+    queryParams: params,
+    userAgent: BROWSER_UA,
     timeoutMs: FETCH_TIMEOUT_MS,
     label: 'GDELT DOC'
   });
   const articles = Array.isArray(json?.articles) ? json.articles : [];
-  return articles.map((item) => normalizeArticle({
-    source: 'gdelt_doc',
-    querySpec,
-    title: item.title,
-    url: item.url,
-    sourceName: item.domain,
-    publishedAt: item.seendate,
-    snippet: item.socialimage ? `image:${item.socialimage}` : ''
-  }));
+  return {
+    articles: articles.map((item) => normalizeArticle({
+      source: 'gdelt_doc',
+      querySpec,
+      title: item.title,
+      url: item.url,
+      sourceName: item.domain,
+      publishedAt: item.seendate,
+      snippet: item.socialimage ? `image:${item.socialimage}` : ''
+    })),
+    requestDiagnostics: sanitizeGdeltDiagnostics(diagnostics)
+  };
 }
 
 async function fetchTavily(querySpec, options, keys) {
@@ -575,8 +579,11 @@ async function collectSource(source, options, keyState) {
   for (const querySpec of QUERY_SET) {
     try {
       let rows;
+      let requestDiagnostics = null;
       if (source === 'gdelt_doc') {
-        rows = await fetchGdeltDoc(querySpec, options);
+        const result = await fetchGdeltDoc(querySpec, options);
+        rows = result.articles;
+        requestDiagnostics = result.requestDiagnostics;
       } else if (source === 'tavily') {
         rows = await fetchTavily(querySpec, options, keyState._keys.tavily);
       } else if (source === 'brave') {
@@ -590,7 +597,8 @@ async function collectSource(source, options, keyState) {
         queryId: querySpec.id,
         label: querySpec.label,
         status: 'ok',
-        articleCount: rows.length
+        articleCount: rows.length,
+        requestDiagnostics
       });
     } catch (error) {
       failureCount += 1;
@@ -598,7 +606,8 @@ async function collectSource(source, options, keyState) {
         queryId: querySpec.id,
         label: querySpec.label,
         status: 'error',
-        error: compactSnippet(error.message, 180)
+        error: compactSnippet(error.message, 180),
+        requestDiagnostics: error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null
       });
     }
   }

@@ -7,7 +7,10 @@ headline-display readiness guards. P32 surfaces those guards in the frontend
 without rendering article headlines. P33 surfaces source health/fallback wording
 without adding sources or changing the artifact schema. P34 adds a local
 source-health sample review so the fallback wording can be checked against
-recent sanitized history. All layers remain outside ODP scoring, `finalBias`,
+recent sanitized history. P36 moves ODP GDELT DOC requests behind the shared
+`scripts/gdelt/fetch-gdelt.mjs` wrapper so rate limiting, `Retry-After`, timeout,
+bounded retry, serial request discipline, and sanitized diagnostics are handled
+outside the feature module. All layers remain outside ODP scoring, `finalBias`,
 decision, execution, position, Brent promotion, Global Risk Heatmap, and
 cross-validation.
 
@@ -37,9 +40,15 @@ Keys are never printed and these paths remain ignored.
 
 ```text
 scripts/oil-directional/diagnose-oil-news-events.mjs
+scripts/gdelt/fetch-gdelt.mjs
 npm run diagnose:oil-news-events
 npm run check:oil-news-events-diagnosis
 ```
+
+P36 requires the diagnosis helper to call the shared GDELT wrapper instead of
+containing a direct GDELT endpoint string. The wrapper is still source-access
+plumbing only; it does not add cache artifacts, workflows, frontend fields, or
+scoring authority.
 
 Default mode is dry-run/no-network:
 
@@ -73,7 +82,7 @@ npm run check:oil-news-event-watch
 ```
 
 The workflow runs every 2 hours and by manual dispatch. It uses GDELT DOC public
-search without a key and injects GitHub Secrets for:
+search without a key through the shared wrapper and injects GitHub Secrets for:
 
 ```text
 TAVILY_API_KEYS

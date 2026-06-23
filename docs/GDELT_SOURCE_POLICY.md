@@ -18,7 +18,7 @@ Official GDELT references:
 | Consumer | Current source | Runtime path | Cadence | Current fallback |
 |---|---|---|---|---|
 | World Order Stress | GDELT Cloud v2 `events/summary` | `scripts/world-order/fetch-gdelt-cloud.mjs` | daily workflow / explicit build | previous `data/world-order-stress.json` GDELT summary can be reused as `stale` |
-| ODP Oil News Event Watch | GDELT DOC 2.0 `doc/doc` plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs`; production writer calls it through `scripts/oil-directional/build-oil-news-event-watch.mjs` | 2h workflow / manual dispatch | Tavily / Brave source health remains visible; source failure stays display-only |
+| ODP Oil News Event Watch | GDELT DOC 2.0 `doc/doc` plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer calls diagnosis through `scripts/oil-directional/build-oil-news-event-watch.mjs` | 2h workflow / manual dispatch | Tavily / Brave source health remains visible; source failure stays display-only |
 | Bubble Watch `ceo_hedging` | GDELT DOC 2.0 `doc/doc` plus Tavily / Brave / Wind fallback | `scripts/build-bubble-watch.mjs` | weekly build plus source-health audit | Tavily / Brave free fallback first; Wind paid final fallback only when enabled |
 | API secret diagnostic | GDELT Cloud v2 smoke checks | `.github/workflows/test-api-secrets.yml` | manual diagnostic | diagnostic-only; not production data |
 
@@ -60,7 +60,7 @@ scripts/build-bubble-watch.mjs
 scripts/check-gdelt-cloud-fetcher-integration.mjs
 scripts/check-gdelt-source-policy.mjs
 scripts/check-workflows.mjs
-scripts/oil-directional/diagnose-oil-news-events.mjs
+scripts/gdelt/fetch-gdelt.mjs
 scripts/world-order/fetch-gdelt-cloud.mjs
 ```
 
@@ -76,11 +76,13 @@ P35, current phase:
 - Add the static direct-endpoint guard.
 - Do not change runtime behavior.
 
-P36 candidate:
+P36, current phase:
 
 - Add a shared GDELT wrapper / adapter with serial request discipline,
   `Retry-After` handling, bounded retries, timeout, and sanitized diagnostics.
-- Start moving ODP oil-news GDELT DOC calls behind that wrapper.
+- Move ODP oil-news GDELT DOC calls behind that wrapper.
+- Keep Bubble Watch and World Order direct paths registered until their own
+  migration phases.
 
 P37 candidate:
 

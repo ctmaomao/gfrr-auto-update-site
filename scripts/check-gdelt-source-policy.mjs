@@ -14,7 +14,7 @@ const ALLOWED_ENDPOINT_REFERENCE_FILES = new Map([
   ['scripts/check-gdelt-cloud-fetcher-integration.mjs', 'GDELT Cloud integration checker'],
   ['scripts/check-gdelt-source-policy.mjs', 'self-check allowlist and endpoint guard'],
   ['scripts/check-workflows.mjs', 'workflow coverage checker with GDELT Cloud assertions'],
-  ['scripts/oil-directional/diagnose-oil-news-events.mjs', 'registered ODP oil-news GDELT DOC path'],
+  ['scripts/gdelt/fetch-gdelt.mjs', 'shared GDELT wrapper with serial request discipline'],
   ['scripts/world-order/fetch-gdelt-cloud.mjs', 'registered World Order GDELT Cloud path']
 ]);
 
@@ -24,9 +24,19 @@ const REQUIRED_POLICY_PHRASES = [
   'New GDELT calls must not be added directly to feature modules',
   'Queries should be broad and locally classified',
   'GDELT calls must be serial or centrally throttled',
-  'P36 candidate',
+  'P36, current phase',
   'P37 candidate',
+  'scripts/gdelt/fetch-gdelt.mjs',
   'data/gdelt-news-cache.json'
+];
+
+const REQUIRED_WRAPPER_PHRASES = [
+  'let gdeltRequestQueue = Promise.resolve()',
+  'parseRetryAfterMs',
+  'DEFAULT_GDELT_MAX_RETRIES',
+  'DEFAULT_GDELT_MIN_INTERVAL_MS',
+  'sanitizeGdeltDiagnostics',
+  'fetchGdeltDocJson'
 ];
 
 const errors = [];
@@ -140,6 +150,36 @@ function checkEndpointReferences() {
   return filesWithEndpointReferences;
 }
 
+function checkSharedWrapperContract() {
+  const wrapperPath = 'scripts/gdelt/fetch-gdelt.mjs';
+  const oilNewsPath = 'scripts/oil-directional/diagnose-oil-news-events.mjs';
+  if (!existsSync(resolve(wrapperPath))) {
+    fail(`${wrapperPath} missing`);
+    return;
+  }
+  const wrapper = readText(wrapperPath);
+  for (const phrase of REQUIRED_WRAPPER_PHRASES) {
+    if (!wrapper.includes(phrase)) fail(`${wrapperPath} missing required wrapper phrase: ${phrase}`);
+  }
+  if (!/maxRetries\s*=\s*DEFAULT_GDELT_MAX_RETRIES/u.test(wrapper)) {
+    fail(`${wrapperPath} must expose bounded retry defaults`);
+  }
+  if (!wrapper.includes('Retry-After')) {
+    fail(`${wrapperPath} must read Retry-After`);
+  }
+  if (!existsSync(resolve(oilNewsPath))) {
+    fail(`${oilNewsPath} missing`);
+    return;
+  }
+  const oilNews = readText(oilNewsPath);
+  if (!oilNews.includes("../gdelt/fetch-gdelt.mjs") && !oilNews.includes('../gdelt/fetch-gdelt.mjs')) {
+    fail(`${oilNewsPath} must import shared GDELT wrapper`);
+  }
+  if (GDELT_ENDPOINT_RE.test(oilNews)) {
+    fail(`${oilNewsPath} must not contain direct GDELT endpoint markers after P36`);
+  }
+}
+
 function checkDataDocsAreNotScannedAsRuntime() {
   for (const root of ['data', 'docs', 'config']) {
     if (!existsSync(resolve(root))) continue;
@@ -151,6 +191,7 @@ function checkDataDocsAreNotScannedAsRuntime() {
 checkPolicyDoc();
 checkPackageWiring();
 const filesWithEndpointReferences = checkEndpointReferences();
+checkSharedWrapperContract();
 checkDataDocsAreNotScannedAsRuntime();
 
 if (errors.length > 0) {

@@ -1034,6 +1034,8 @@ v28.0H-2C 起，`externalSources.gdelt.summary` 必须明确记录 query throttl
 
 P35 起,`docs/GDELT_SOURCE_POLICY.md` 是全站 GDELT 使用边界。`check:gdelt-source-policy` 必须在 `check:all` 中运行,并扫描 `scripts/`、`.github/workflows/` 与 `workers/` 下的 runtime/check 文件。除 policy allowlist 中登记的现有 endpoint-reference 文件外,不得新增 `api.gdeltproject.org/api/v2`、`gdeltcloud.com/api/v2` 或等价 GDELT endpoint marker。P35 是 guard-only:不改变 World Order、ODP oil-news 或 Bubble Watch runtime,不新增 production schema,不写 `data/*.json` / `realtime`,也不把 GDELT 信号接入 scoring / decision / execution / position / Brent promotion / ODP `finalBias` / Global Risk Heatmap / cross-validation。
 
+P36 起,`scripts/gdelt/fetch-gdelt.mjs` 是 ODP oil-news 使用 GDELT DOC 的共享 wrapper。该 wrapper 必须保持 serial request queue、最小请求间隔、`Retry-After` 解析、有界重试、timeout 与 sanitized diagnostics;`scripts/oil-directional/diagnose-oil-news-events.mjs` 不得再包含直接 GDELT endpoint marker。P36 只收口 GDELT 请求入口与诊断元数据,不新增 production artifact 字段要求,不改变 P29 workflow cadence,不改变 `data/oil-news-event-watch.json` 的 promotion/display-only 边界,不接入 scoring / decision / execution / position / Brent promotion / ODP `finalBias` / Global Risk Heatmap / cross-validation。
+
 #### SIPRI normalized input
 
 v28.0H-3 起，SIPRI 支持手动标准化导入。真实输入路径为：
