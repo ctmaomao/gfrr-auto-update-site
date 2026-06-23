@@ -2,7 +2,8 @@
 
 Status: P28 added a manual-only oil-news event diagnosis helper. P29 promotes the
 same source set into a production read-only display artifact. P30 adds a
-manual/local sample calibration review. All layers remain outside ODP scoring,
+manual/local sample calibration review. P31 adds production title-risk and
+headline-display readiness guards. All layers remain outside ODP scoring,
 `finalBias`, decision, execution, position, Brent promotion, Global Risk Heatmap,
 and cross-validation.
 
@@ -114,6 +115,25 @@ The current first two production workflow samples proved Tavily and Brave live
 cross-checks are configured, while GDELT DOC was unstable across adjacent runs.
 The sample review therefore marks source calibration ready for manual review but
 keeps headline display not ready when high-claim title language appears.
+
+## Production Title-Risk Guard
+
+P31 extends `data/oil-news-event-watch.json` with:
+
+```text
+titleRisk
+headlineDisplayReadiness
+```
+
+`titleRisk` counts compact titles that contain high-claim terms such as
+blockade, closure, war, attack, mine, strike, shutdown, halt, or disruption.
+`headlineDisplayReadiness.displayHeadlinesApproved` must remain `false`.
+When any high-claim title is present, `headlineDisplayReadiness.state` must be
+`not_ready_high_claim_title_noise`.
+
+This does not remove sanitized compact titles from the audit artifact, but it
+does make direct headline display a separate reviewed UI/copy decision. The
+contract checker fails if the artifact claims title display is approved.
 
 ## Query Buckets
 

@@ -11,6 +11,12 @@ const SIGNAL_STATES = new Set(['quiet', 'watch', 'elevated_manual_review', 'sour
 const CONFIDENCE = new Set(['none', 'low', 'medium_low', 'medium']);
 const SOURCE_STATUSES = new Set(['live', 'partial', 'error', 'not_configured', 'not_queried', 'dry_run']);
 const KEY_STATUSES = new Set(['configured', 'missing']);
+const HEADLINE_READINESS_STATES = new Set([
+  'candidate_ready_for_review',
+  'dry_run_not_ready',
+  'not_ready_high_claim_title_noise',
+  'not_ready_source_unavailable'
+]);
 const PRODUCTION_FALSE_KEYS = [
   'affectsValues',
   'affectsScoring',
@@ -118,6 +124,46 @@ if (!Array.isArray(data.topArticles)) {
   }
 }
 
+if (!data.titleRisk || typeof data.titleRisk !== 'object') {
+  fail('titleRisk missing');
+} else {
+  if (data.titleRisk.ruleVersion !== 'oil-news-title-risk-p31') fail(`titleRisk.ruleVersion invalid: ${data.titleRisk.ruleVersion}`);
+  for (const field of ['evaluatedArticleCount', 'highClaimTitleCount', 'highClaimDomainCount']) {
+    if (!finiteNonNegative(data.titleRisk[field])) fail(`titleRisk.${field} must be non-negative number`);
+  }
+  for (const field of ['highClaimDomains', 'highClaimTerms']) {
+    if (!Array.isArray(data.titleRisk[field])) fail(`titleRisk.${field} must be array`);
+  }
+  if (data.titleRisk.directHeadlineDisplayAllowed !== false) fail('titleRisk.directHeadlineDisplayAllowed must remain false');
+  if (typeof data.titleRisk.noteZh !== 'string' || !data.titleRisk.noteZh) fail('titleRisk.noteZh must be non-empty');
+}
+
+if (!data.headlineDisplayReadiness || typeof data.headlineDisplayReadiness !== 'object') {
+  fail('headlineDisplayReadiness missing');
+} else {
+  if (!HEADLINE_READINESS_STATES.has(data.headlineDisplayReadiness.state)) {
+    fail(`headlineDisplayReadiness.state invalid: ${data.headlineDisplayReadiness.state}`);
+  }
+  if (data.headlineDisplayReadiness.displayHeadlinesApproved !== false) {
+    fail('headlineDisplayReadiness.displayHeadlinesApproved must remain false');
+  }
+  if (typeof data.headlineDisplayReadiness.reasonZh !== 'string' || !data.headlineDisplayReadiness.reasonZh) {
+    fail('headlineDisplayReadiness.reasonZh must be non-empty');
+  }
+  if (typeof data.headlineDisplayReadiness.requiredNextReview !== 'string' || !data.headlineDisplayReadiness.requiredNextReview) {
+    fail('headlineDisplayReadiness.requiredNextReview must be non-empty');
+  }
+}
+
+if (data.titleRisk && data.headlineDisplayReadiness) {
+  if (data.titleRisk.highClaimTitleCount > 0 && data.headlineDisplayReadiness.state !== 'not_ready_high_claim_title_noise') {
+    fail('headlineDisplayReadiness.state must be not_ready_high_claim_title_noise when high-claim titles exist');
+  }
+  if (data.titleRisk.highClaimTitleCount === 0 && data.headlineDisplayReadiness.state === 'not_ready_high_claim_title_noise') {
+    fail('headlineDisplayReadiness.state must not claim title noise when titleRisk.highClaimTitleCount is zero');
+  }
+}
+
 if (!data.recommendation || typeof data.recommendation !== 'object') {
   fail('recommendation missing');
 } else {
@@ -151,7 +197,9 @@ for (const needle of [
   'Bearer ',
   '"snippet"',
   '"body"',
-  '"rawResponse"'
+  '"rawResponse"',
+  '"displayHeadlinesApproved":true',
+  '"directHeadlineDisplayAllowed":true'
 ]) {
   if (serialized.includes(needle)) fail(`production artifact must not contain forbidden marker: ${needle}`);
 }

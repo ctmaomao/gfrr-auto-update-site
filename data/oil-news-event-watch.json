@@ -874,5 +874,30 @@
     "本层不确认霍尔木兹关闭、航道中断、油轮流向、炼厂事故、断供、制裁影响或油价方向。",
     "只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施层同时印证时,才适合提高人工观察置信度。"
   ],
-  "boundary": "production read-only ODP oil-news event watch; display-only/audit-only; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+  "boundary": "production read-only ODP oil-news event watch; display-only/audit-only; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
+  "titleRisk": {
+    "ruleVersion": "oil-news-title-risk-p31",
+    "evaluatedArticleCount": 12,
+    "highClaimTitleCount": 3,
+    "highClaimDomainCount": 3,
+    "highClaimDomains": [
+      "bloomberg.com",
+      "maritime-executive.com",
+      "northernpublicradio.org"
+    ],
+    "highClaimTerms": [
+      "attacks",
+      "blockade",
+      "halt",
+      "strikes"
+    ],
+    "directHeadlineDisplayAllowed": false,
+    "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
+  },
+  "headlineDisplayReadiness": {
+    "state": "not_ready_high_claim_title_noise",
+    "displayHeadlinesApproved": false,
+    "reasonZh": "本轮标题含高主张措辞,必须保持人工复核,不得直接进入前端标题展示。",
+    "requiredNextReview": "separate reviewed UI/copy PR with headline uncertainty copy and source attribution guards"
+  }
 }

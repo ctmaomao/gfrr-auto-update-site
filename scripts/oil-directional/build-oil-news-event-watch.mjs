@@ -9,6 +9,25 @@ const MODULE = 'oil-news-event-watch';
 const DEFAULT_OUTPUT = 'data/oil-news-event-watch.json';
 const DEFAULT_WINDOW_DAYS = 7;
 const DEFAULT_MAX_RESULTS = 8;
+const TITLE_RISK_RULE_VERSION = 'oil-news-title-risk-p31';
+const HIGH_CLAIM_TITLE_TERMS = [
+  'attack',
+  'attacks',
+  'blockade',
+  'closure',
+  'closed',
+  'disrupt',
+  'disrupted',
+  'disruption',
+  'halt',
+  'halts',
+  'mine',
+  'mines',
+  'shutdown',
+  'strike',
+  'strikes',
+  'war'
+];
 const BOUNDARY =
   'production read-only ODP oil-news event watch; display-only/audit-only; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
 
@@ -108,6 +127,56 @@ function compactArticle(article) {
     sources: Array.isArray(article.sources) ? article.sources.filter(Boolean) : [],
     buckets: Array.isArray(article.buckets) ? article.buckets.filter(Boolean) : [],
     queryIds: Array.isArray(article.queryIds) ? article.queryIds.filter(Boolean) : []
+  };
+}
+
+function titleMatchesTerm(title, term) {
+  if (typeof title !== 'string' || !title) return false;
+  return new RegExp(`\\b${term}\\b`, 'iu').test(title);
+}
+
+function titleClaimTerms(title) {
+  return HIGH_CLAIM_TITLE_TERMS.filter((term) => titleMatchesTerm(title, term));
+}
+
+function buildTitleRisk(topArticles) {
+  const highClaimArticles = topArticles.filter((article) => titleClaimTerms(article.title).length > 0);
+  const domains = [...new Set(highClaimArticles.map((article) => article.domain).filter(Boolean))].sort();
+  const terms = [...new Set(highClaimArticles.flatMap((article) => titleClaimTerms(article.title)))].sort();
+  return {
+    ruleVersion: TITLE_RISK_RULE_VERSION,
+    evaluatedArticleCount: topArticles.length,
+    highClaimTitleCount: highClaimArticles.length,
+    highClaimDomainCount: domains.length,
+    highClaimDomains: domains.slice(0, 12),
+    highClaimTerms: terms,
+    directHeadlineDisplayAllowed: false,
+    noteZh: highClaimArticles.length > 0
+      ? '本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。'
+      : '本轮 compact title 未触发高主张标题规则;标题展示仍需另开 reviewed UI/copy 审核。'
+  };
+}
+
+function buildHeadlineDisplayReadiness(status, titleRisk) {
+  let state = 'candidate_ready_for_review';
+  let reasonZh = '标题风险规则未触发,但仍需另开 reviewed UI/copy 审核后才可考虑展示标题。';
+
+  if (status === 'dry_run') {
+    state = 'dry_run_not_ready';
+    reasonZh = 'Dry-run artifact 不可用于标题展示。';
+  } else if (status === 'source_unavailable' || status === 'not_configured') {
+    state = 'not_ready_source_unavailable';
+    reasonZh = '新闻源不可用或未配置,不可展示标题。';
+  } else if (titleRisk.highClaimTitleCount > 0) {
+    state = 'not_ready_high_claim_title_noise';
+    reasonZh = '本轮标题含高主张措辞,必须保持人工复核,不得直接进入前端标题展示。';
+  }
+
+  return {
+    state,
+    displayHeadlinesApproved: false,
+    reasonZh,
+    requiredNextReview: 'separate reviewed UI/copy PR with headline uncertainty copy and source attribution guards'
   };
 }
 
@@ -218,6 +287,8 @@ function buildProductionArtifact(options, diagnosis) {
   const topArticles = Array.isArray(diagnosis.topArticles)
     ? diagnosis.topArticles.slice(0, 12).map(compactArticle)
     : [];
+  const titleRisk = buildTitleRisk(topArticles);
+  const headlineDisplayReadiness = buildHeadlineDisplayReadiness(status, titleRisk);
   const latestAt = latestArticleAt(topArticles);
   const buckets = Object.fromEntries(Object.entries(diagnosis.buckets || {}).map(([key, bucket]) => [
     key,
@@ -269,6 +340,8 @@ function buildProductionArtifact(options, diagnosis) {
     },
     buckets,
     topArticles,
+    titleRisk,
+    headlineDisplayReadiness,
     recommendation: {
       state: signalState,
       operatorAction: signalState === 'elevated_manual_review'
