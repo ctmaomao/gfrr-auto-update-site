@@ -3,7 +3,8 @@
 Status: P28 added a manual-only oil-news event diagnosis helper. P29 promotes the
 same source set into a production read-only display artifact. P30 adds a
 manual/local sample calibration review. P31 adds production title-risk and
-headline-display readiness guards. All layers remain outside ODP scoring,
+headline-display readiness guards. P32 surfaces those guards in the frontend
+without rendering article headlines. All layers remain outside ODP scoring,
 `finalBias`, decision, execution, position, Brent promotion, Global Risk Heatmap,
 and cross-validation.
 
@@ -134,6 +135,12 @@ When any high-claim title is present, `headlineDisplayReadiness.state` must be
 This does not remove sanitized compact titles from the audit artifact, but it
 does make direct headline display a separate reviewed UI/copy decision. The
 contract checker fails if the artifact claims title display is approved.
+
+P32 lets the ODP `NEWS EVENT WATCH` frontend show only aggregate guard text:
+headline readiness state, high-claim title count, evaluated title count, source
+domain count, and an explicit "no original headline display" notice. The renderer
+must not read `topArticles` or show article titles. `check:oil-directional-zh-copy`
+guards this frontend boundary.
 
 ## Query Buckets
 

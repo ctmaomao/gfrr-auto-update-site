@@ -107,7 +107,9 @@ const ENERGY_TEXT_IDS = [
   'odp-news-event-window',
   'odp-news-event-conflict',
   'odp-news-event-sanctions',
+  'odp-news-event-headline-gate',
   'odp-news-event-market',
+  'odp-news-event-title-risk',
   'odp-news-event-note',
   'odp-thermal-status',
   'odp-thermal-source',
@@ -343,6 +345,7 @@ function clearEnergyAddendum() {
   setToneClass('odp-global-forecast-status', 'odp-global-forecast-status', '');
   setToneClass('odp-global-overlay-status', 'odp-global-overlay-status', '');
   setToneClass('odp-news-event-status', 'odp-news-event-status', '');
+  setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', '');
   setToneClass('odp-thermal-status', 'odp-thermal-status', '');
   setToneClass('odp-qc-ledger-status', 'odp-qc-ledger-status', '');
   setToneClass('odp-energy-spare-regime', 'odp-energy-regime', '');
@@ -788,7 +791,10 @@ function renderLegacyOilEventNewsLayer(worldOrderStressData) {
   setLeafText('odp-news-event-window', `${fetchedAt || '—'}${cached} · ${totalArticles} 条报道代理`);
   setLeafText('odp-news-event-conflict', `${conflictEvents} 条 · ${regionText}`);
   setLeafText('odp-news-event-sanctions', `制裁 ${sanctionsEvents} / 通道 ${chokepointEvents}`);
+  setLeafText('odp-news-event-headline-gate', '专用闸门未接入');
+  setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', 'yellow');
   setLeafText('odp-news-event-market', marketText);
+  setLeafText('odp-news-event-title-risk', '缺专用标题风险字段 · 不展示标题原文');
   setLeafText('odp-news-event-note', `本层复用已有 GDELT 广义新闻事件摘要,用于提示油价相关地缘背景是否需要观察;它不是 ODP 专用新闻 API,也不确认霍尔木兹通道中断、断供或船舶级流向。${eventContext}${directContext}后续只有与价格结构、咽喉转运、库存/供需锚点和卫星/设施事件同时印证时,才提高事件观察置信度。`);
 }
 function newsEventTone(data) {
@@ -826,6 +832,32 @@ function newsWindowText(data) {
   const age = Number.isFinite(freshness.latestArticleAgeHours) ? ` · ${freshness.latestArticleAgeHours}小时龄` : '';
   return `${windowDays} · ${latest || generated || '—'}${age}`;
 }
+function headlineReadinessText(data) {
+  const readiness = data?.headlineDisplayReadiness || {};
+  if (readiness.displayHeadlinesApproved === true) return '异常 · 标题批准';
+  return ({
+    not_ready_high_claim_title_noise: '未批准 · 标题噪声',
+    not_ready_source_unavailable: '未批准 · 源不可用',
+    dry_run_not_ready: '未批准 · 演练模式',
+    candidate_ready_for_review: '待审阅 · 未批准',
+  })[readiness.state] || '未批准 · 待复核';
+}
+function headlineReadinessTone(data) {
+  const readiness = data?.headlineDisplayReadiness || {};
+  if (readiness.displayHeadlinesApproved === true) return 'red';
+  if (readiness.state === 'not_ready_high_claim_title_noise' || readiness.state === 'not_ready_source_unavailable') return 'yellow';
+  if (readiness.state === 'candidate_ready_for_review' || readiness.state === 'dry_run_not_ready') return 'yellow';
+  return '';
+}
+function titleRiskText(data) {
+  const titleRisk = data?.titleRisk || {};
+  const evaluated = Number.isFinite(titleRisk.evaluatedArticleCount) ? Math.round(titleRisk.evaluatedArticleCount) : null;
+  const highClaim = Number.isFinite(titleRisk.highClaimTitleCount) ? Math.round(titleRisk.highClaimTitleCount) : null;
+  const domains = Number.isFinite(titleRisk.highClaimDomainCount) ? Math.round(titleRisk.highClaimDomainCount) : null;
+  if (evaluated === null || highClaim === null) return '标题风险未计算 · 不展示标题原文';
+  const domainText = domains === null ? '域名待核' : `${domains} 个来源域`;
+  return `${highClaim}/${evaluated} 条高主张标题 · ${domainText} · 不展示标题原文`;
+}
 function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
   const data = oilNewsEventWatchData && oilNewsEventWatchData.schemaVersion === 'oil-news-event-watch-1'
     ? oilNewsEventWatchData
@@ -859,8 +891,11 @@ function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
   setLeafText('odp-news-event-window', `${newsWindowText(data)} · ${unique} 条专用报道代理`);
   setLeafText('odp-news-event-conflict', `通道 ${chokepoint} / 供应 ${supply} / 设施 ${facility} · 中东 ${middleEast}`);
   setLeafText('odp-news-event-sanctions', `制裁 ${sanctions} / 航运 ${shipping} · ${liveSources}/${data.sources?.length || 0} 源 · ${newsSourceText(data)}`);
+  setLeafText('odp-news-event-headline-gate', headlineReadinessText(data));
+  setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', headlineReadinessTone(data));
   setLeafText('odp-news-event-market', `市场反应 ${marketReaction} 条 · ${brentText}`);
-  setLeafText('odp-news-event-note', `${data.aggregate?.reasonZh || '专用油价新闻层暂不可用。'}本区读取 production read-only oil-news event watch(GDELT/Tavily/Brave),置信度 ${confidence};它不确认霍尔木兹关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施事件同时印证时,才适合提高人工观察置信度。`);
+  setLeafText('odp-news-event-title-risk', titleRiskText(data));
+  setLeafText('odp-news-event-note', `${data.aggregate?.reasonZh || '专用油价新闻层暂不可用。'}本区读取 production read-only oil-news event watch(GDELT/Tavily/Brave),置信度 ${confidence};标题只做聚合风险闸门,不展示原文标题。它不确认霍尔木兹关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施事件同时印证时,才适合提高人工观察置信度。`);
 }
 function thermalTone(data) {
   if (!data || typeof data !== 'object') return '';

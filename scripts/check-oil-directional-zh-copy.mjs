@@ -8,6 +8,8 @@
 // Scope = scripts/modules/renderOilDirectional.js (the dynamic Chinese copy). The static
 // index.html section copy is boundary disclaimers ("不进打分 / 执行 / 热力图") and is
 // reviewed manually under DESIGN.md §4.1/§5.6 + ADR-0014.
+// P32: the oil-news event watch may display headline readiness and title-risk
+// aggregate counts only. It must not render article titles or iterate topArticles.
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -43,6 +45,17 @@ if (!mapMatch) {
 // (3) Explicit insufficient -> 暂不判断 fallback present.
 if (!src.includes('暂不判断')) {
   fail("ODP UI copy must keep an explicit '暂不判断' fallback for insufficient data");
+}
+
+// (4) Oil-news headline guard: frontend must not expose article title lists.
+if (src.includes('topArticles')) {
+  fail('ODP renderer must not read oil-news topArticles; headline display is not approved');
+}
+if (!src.includes('headlineDisplayReadiness') || !src.includes('titleRisk')) {
+  fail('ODP renderer must expose oil-news headline readiness/title-risk aggregate guard text');
+}
+if (!src.includes('不展示标题原文')) {
+  fail('ODP oil-news copy must explicitly state that original headlines are not displayed');
 }
 
 if (errors.length > 0) {

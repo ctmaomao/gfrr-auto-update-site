@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-oil-news-watch-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-oil-news-headline-guard-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
