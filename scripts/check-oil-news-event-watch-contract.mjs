@@ -5,11 +5,14 @@ import { resolve } from 'node:path';
 const errors = [];
 const fail = (message) => errors.push(message);
 const data = JSON.parse(readFileSync(resolve('data/oil-news-event-watch.json'), 'utf8'));
+const gdeltCache = JSON.parse(readFileSync(resolve('data/gdelt-news-cache.json'), 'utf8'));
 
 const STATUSES = new Set(['ok', 'partial', 'source_unavailable', 'not_configured', 'dry_run']);
 const SIGNAL_STATES = new Set(['quiet', 'watch', 'elevated_manual_review', 'source_unavailable', 'dry_run']);
 const CONFIDENCE = new Set(['none', 'low', 'medium_low', 'medium']);
-const SOURCE_STATUSES = new Set(['live', 'partial', 'error', 'not_configured', 'not_queried', 'dry_run']);
+const SOURCE_STATUSES = new Set(['live', 'partial', 'error', 'stale', 'not_configured', 'not_queried', 'dry_run']);
+const CACHE_STATUSES = new Set(['ok', 'stale', 'error', 'not_initialized', 'dry_run']);
+const CACHE_SOURCE_STATUSES = new Set(['live', 'stale', 'error', 'not_initialized', 'dry_run']);
 const KEY_STATUSES = new Set(['configured', 'missing']);
 const HEADLINE_READINESS_STATES = new Set([
   'candidate_ready_for_review',
@@ -55,6 +58,67 @@ if (!data.sourceStatus || typeof data.sourceStatus !== 'object') {
     if (!KEY_STATUSES.has(data.sourceStatus[field])) fail(`sourceStatus.${field} invalid: ${data.sourceStatus[field]}`);
   }
   if (!data.sourceStatus.details || typeof data.sourceStatus.details !== 'object') fail('sourceStatus.details missing');
+}
+
+if (!gdeltCache || typeof gdeltCache !== 'object') {
+  fail('data/gdelt-news-cache.json missing or invalid');
+} else {
+  if (gdeltCache.schemaVersion !== 'gdelt-news-cache-p37') {
+    fail(`gdelt cache schemaVersion invalid: ${gdeltCache.schemaVersion}`);
+  }
+  if (gdeltCache.module !== 'gdelt-news-cache') fail(`gdelt cache module invalid: ${gdeltCache.module}`);
+  if (gdeltCache.cacheScope !== 'odp_oil_news_event_watch') {
+    fail(`gdelt cache cacheScope invalid: ${gdeltCache.cacheScope}`);
+  }
+  if (typeof gdeltCache.generatedAt !== 'string' || Number.isNaN(Date.parse(gdeltCache.generatedAt))) {
+    fail('gdelt cache generatedAt must be ISO');
+  }
+  if (!CACHE_STATUSES.has(gdeltCache.status)) fail(`gdelt cache status invalid: ${gdeltCache.status}`);
+  if (!CACHE_SOURCE_STATUSES.has(gdeltCache.sourceStatus)) {
+    fail(`gdelt cache sourceStatus invalid: ${gdeltCache.sourceStatus}`);
+  }
+  if (!gdeltCache.cachePolicy || gdeltCache.cachePolicy.lowFrequencyCache !== true ||
+      gdeltCache.cachePolicy.broadQueryLocalClassification !== true) {
+    fail('gdelt cache must declare lowFrequencyCache and broadQueryLocalClassification');
+  }
+  if (!gdeltCache.query || gdeltCache.query.id !== 'gdelt_broad_oil_news') {
+    fail('gdelt cache query.id must be gdelt_broad_oil_news');
+  }
+  if (!gdeltCache.aggregate || !finiteNonNegative(gdeltCache.aggregate.articleCount)) {
+    fail('gdelt cache aggregate.articleCount must be non-negative number');
+  }
+  if (!Array.isArray(gdeltCache.articles)) {
+    fail('gdelt cache articles must be array');
+  } else {
+    for (const [index, article] of gdeltCache.articles.entries()) {
+      const path = `gdeltCache.articles[${index}]`;
+      if (!article || typeof article !== 'object') {
+        fail(`${path} must be object`);
+        continue;
+      }
+      for (const field of ['title', 'url', 'domain', 'publishedAt']) {
+        if (!(article[field] === null || typeof article[field] === 'string')) fail(`${path}.${field} must be string|null`);
+      }
+      for (const field of ['buckets', 'queryIds']) {
+        if (!Array.isArray(article[field])) fail(`${path}.${field} must be array`);
+      }
+      if ('snippet' in article || 'raw' in article || 'body' in article || 'rawResponse' in article) {
+        fail(`${path} must not expose snippet/raw/body/rawResponse fields`);
+      }
+    }
+  }
+  if (gdeltCache.productionDisplayApproved !== false) fail('gdelt cache productionDisplayApproved must remain false');
+  if (gdeltCache.promotionEligible !== false) fail('gdelt cache promotionEligible must remain false');
+  if (!gdeltCache.productionImpact || typeof gdeltCache.productionImpact !== 'object') {
+    fail('gdelt cache productionImpact missing');
+  } else {
+    for (const field of PRODUCTION_FALSE_KEYS) {
+      if (gdeltCache.productionImpact[field] !== false) fail(`gdelt cache productionImpact.${field} must be false`);
+    }
+  }
+  if (typeof gdeltCache.boundary !== 'string' || !/display-only|audit-only/i.test(gdeltCache.boundary) || !/NOT in/u.test(gdeltCache.boundary)) {
+    fail('gdelt cache boundary must declare display-only/audit-only and NOT in guarded paths');
+  }
 }
 
 if (!data.freshness || typeof data.freshness !== 'object') {
@@ -187,6 +251,7 @@ if (typeof data.boundary !== 'string' || !/display-only|audit-only/i.test(data.b
 }
 
 const serialized = JSON.stringify(data);
+const cacheSerialized = JSON.stringify(gdeltCache);
 for (const needle of [
   'TAVILY_API_KEY',
   'TAVILY_API_KEYS',
@@ -202,9 +267,11 @@ for (const needle of [
   '"directHeadlineDisplayAllowed":true'
 ]) {
   if (serialized.includes(needle)) fail(`production artifact must not contain forbidden marker: ${needle}`);
+  if (cacheSerialized.includes(needle)) fail(`gdelt cache artifact must not contain forbidden marker: ${needle}`);
 }
 for (const unsafeClaim of ['已确认关闭', '已确认断供', '封锁确认', '油价预测', '战争概率']) {
   if (serialized.includes(unsafeClaim)) fail(`production artifact must not contain unsafe confirmation phrase: ${unsafeClaim}`);
+  if (cacheSerialized.includes(unsafeClaim)) fail(`gdelt cache artifact must not contain unsafe confirmation phrase: ${unsafeClaim}`);
 }
 
 if (errors.length > 0) {

@@ -42,7 +42,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/oil-news-event-watch.json
+          git add data/oil-news-event-watch.json data/gdelt-news-cache.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: refresh oil news event watch"
             git pull --rebase origin "${GITHUB_REF_NAME}"

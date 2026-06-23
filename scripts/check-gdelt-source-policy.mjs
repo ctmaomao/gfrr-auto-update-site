@@ -4,6 +4,7 @@ import { extname, join, relative, resolve } from 'node:path';
 
 const POLICY_DOC = 'docs/GDELT_SOURCE_POLICY.md';
 const PACKAGE_JSON = 'package.json';
+const GDELT_NEWS_CACHE = 'data/gdelt-news-cache.json';
 const SCAN_ROOTS = ['scripts', '.github/workflows', 'workers'];
 const SCAN_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.yml', '.yaml']);
 const GDELT_ENDPOINT_RE = /\b(?:https?:\/\/)?(?:api\.gdeltproject\.org|gdeltcloud\.com)\/api\/v2\b|GDELT_CLOUD_API_BASE/u;
@@ -25,7 +26,7 @@ const REQUIRED_POLICY_PHRASES = [
   'Queries should be broad and locally classified',
   'GDELT calls must be serial or centrally throttled',
   'P36, current phase',
-  'P37 candidate',
+  'P37, current phase',
   'scripts/gdelt/fetch-gdelt.mjs',
   'data/gdelt-news-cache.json'
 ];
@@ -37,6 +38,16 @@ const REQUIRED_WRAPPER_PHRASES = [
   'DEFAULT_GDELT_MIN_INTERVAL_MS',
   'sanitizeGdeltDiagnostics',
   'fetchGdeltDocJson'
+];
+
+const REQUIRED_ODP_CACHE_PHRASES = [
+  'GDELT_BROAD_QUERY_SPEC',
+  'gdelt_broad_oil_news',
+  'DEFAULT_GDELT_CACHE_OUTPUT',
+  'GDELT_CACHE_SCHEMA_VERSION',
+  'fetchGdeltDocBroad',
+  'single_broad_query_local_classification',
+  'sourceCaches'
 ];
 
 const errors = [];
@@ -177,6 +188,24 @@ function checkSharedWrapperContract() {
   }
   if (GDELT_ENDPOINT_RE.test(oilNews)) {
     fail(`${oilNewsPath} must not contain direct GDELT endpoint markers after P36`);
+  }
+  for (const phrase of REQUIRED_ODP_CACHE_PHRASES) {
+    if (!oilNews.includes(phrase)) fail(`${oilNewsPath} missing P37 ODP cache phrase: ${phrase}`);
+  }
+  if (!existsSync(resolve(GDELT_NEWS_CACHE))) {
+    fail(`${GDELT_NEWS_CACHE} missing`);
+  } else {
+    const cache = JSON.parse(readText(GDELT_NEWS_CACHE));
+    if (cache.schemaVersion !== 'gdelt-news-cache-p37') {
+      fail(`${GDELT_NEWS_CACHE} schemaVersion must be gdelt-news-cache-p37`);
+    }
+    if (cache.module !== 'gdelt-news-cache') fail(`${GDELT_NEWS_CACHE} module must be gdelt-news-cache`);
+    if (cache.query?.id !== 'gdelt_broad_oil_news') {
+      fail(`${GDELT_NEWS_CACHE} query.id must be gdelt_broad_oil_news`);
+    }
+    if (cache.cachePolicy?.broadQueryLocalClassification !== true) {
+      fail(`${GDELT_NEWS_CACHE} must declare broadQueryLocalClassification`);
+    }
   }
 }
 

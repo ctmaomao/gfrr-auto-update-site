@@ -1036,6 +1036,8 @@ P35 起,`docs/GDELT_SOURCE_POLICY.md` 是全站 GDELT 使用边界。`check:gdel
 
 P36 起,`scripts/gdelt/fetch-gdelt.mjs` 是 ODP oil-news 使用 GDELT DOC 的共享 wrapper。该 wrapper 必须保持 serial request queue、最小请求间隔、`Retry-After` 解析、有界重试、timeout 与 sanitized diagnostics;`scripts/oil-directional/diagnose-oil-news-events.mjs` 不得再包含直接 GDELT endpoint marker。P36 只收口 GDELT 请求入口与诊断元数据,不新增 production artifact 字段要求,不改变 P29 workflow cadence,不改变 `data/oil-news-event-watch.json` 的 promotion/display-only 边界,不接入 scoring / decision / execution / position / Brent promotion / ODP `finalBias` / Global Risk Heatmap / cross-validation。
 
+P37 起,`data/gdelt-news-cache.json` 是 GDELT DOC compact cache artifact,`schemaVersion="gdelt-news-cache-p37"`、`module="gdelt-news-cache"`、`cacheScope="odp_oil_news_event_watch"`。ODP oil-news 的 GDELT 分支必须只使用一条 `gdelt_broad_oil_news` broad query,再在本地按 chokepoint / sanctions / supply disruption / facility / tanker shipping / market reaction buckets 分类;不得恢复一组 bucket 一个 GDELT 请求的 fan-out。cache 只允许保存 compact `title/url/domain/publishedAt/buckets/queryIds`、脱敏 `requestDiagnostics`、cache policy、query metadata、productionImpact false map 与边界声明;不得保存 snippet、body、raw response、Authorization header、API key、cookie 或 bearer token。`Refresh Oil News Event Watch` workflow 必须同时提交 `data/oil-news-event-watch.json` 与 `data/gdelt-news-cache.json`。该 cache 不改变前端展示字段,不进入 scoring / decision / execution / position / Brent promotion / ODP `finalBias` / Global Risk Heatmap / cross-validation。
+
 #### SIPRI normalized input
 
 v28.0H-3 起，SIPRI 支持手动标准化导入。真实输入路径为：

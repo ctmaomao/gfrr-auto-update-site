@@ -10,9 +10,12 @@ source-health sample review so the fallback wording can be checked against
 recent sanitized history. P36 moves ODP GDELT DOC requests behind the shared
 `scripts/gdelt/fetch-gdelt.mjs` wrapper so rate limiting, `Retry-After`, timeout,
 bounded retry, serial request discipline, and sanitized diagnostics are handled
-outside the feature module. All layers remain outside ODP scoring, `finalBias`,
-decision, execution, position, Brent promotion, Global Risk Heatmap, and
-cross-validation.
+outside the feature module. P37 changes the GDELT leg from four per-topic DOC
+queries into one broad `gdelt_broad_oil_news` query plus local bucket
+classification, and writes the compact cache artifact
+`data/gdelt-news-cache.json`. All layers remain outside ODP scoring,
+`finalBias`, decision, execution, position, Brent promotion, Global Risk Heatmap,
+and cross-validation.
 
 ## Candidate Sources
 
@@ -50,6 +53,20 @@ containing a direct GDELT endpoint string. The wrapper is still source-access
 plumbing only; it does not add cache artifacts, workflows, frontend fields, or
 scoring authority.
 
+P37 adds the GDELT compact cache:
+
+```text
+data/gdelt-news-cache.json
+schemaVersion: gdelt-news-cache-p37
+query.id: gdelt_broad_oil_news
+```
+
+The cache stores only compact `title/url/domain/publishedAt/buckets/queryIds`
+rows plus sanitized request diagnostics and cache policy. It must not contain
+snippets, body text, raw provider responses, keys, headers, cookies, or bearer
+tokens. The cache is a low-frequency source artifact for reuse and fallback; it
+does not grant headline display, event confirmation, or scoring authority.
+
 Default mode is dry-run/no-network:
 
 ```powershell
@@ -82,7 +99,9 @@ npm run check:oil-news-event-watch
 ```
 
 The workflow runs every 2 hours and by manual dispatch. It uses GDELT DOC public
-search without a key through the shared wrapper and injects GitHub Secrets for:
+search without a key through the shared wrapper and writes both
+`data/oil-news-event-watch.json` and `data/gdelt-news-cache.json`. It injects
+GitHub Secrets for:
 
 ```text
 TAVILY_API_KEYS

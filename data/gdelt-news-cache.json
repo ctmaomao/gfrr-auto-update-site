@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "gdelt-news-cache-p37",
+  "module": "gdelt-news-cache",
+  "generatedAt": "2026-06-23T00:00:00.000Z",
+  "sourceKey": "gdelt_news_cache",
+  "cacheScope": "odp_oil_news_event_watch",
+  "status": "not_initialized",
+  "sourceStatus": "not_initialized",
+  "requestMode": "placeholder_until_next_oil_news_refresh",
+  "source": "GDELT DOC public search",
+  "cachePolicy": {
+    "ttlMinutes": 30,
+    "staleMaxHours": 6,
+    "lowFrequencyCache": true,
+    "broadQueryLocalClassification": true
+  },
+  "query": {
+    "id": "gdelt_broad_oil_news",
+    "label": "GDELT broad oil-news cache query",
+    "query": "((oil OR crude OR Brent OR WTI OR tanker OR refinery OR pipeline OR terminal OR port OR \"oil prices\") (Hormuz OR \"Red Sea\" OR \"Bab el-Mandeb\" OR Suez OR sanction OR sanctions OR OFAC OR \"shadow fleet\" OR outage OR fire OR explosion OR attack OR shutdown OR disruption OR blockade OR \"risk premium\" OR futures))",
+    "windowDays": null,
+    "maxRecords": null,
+    "mode": "ArtList",
+    "sort": "HybridRel"
+  },
+  "requestDiagnostics": null,
+  "aggregate": {
+    "articleCount": 0,
+    "bucketCounts": {}
+  },
+  "articles": [],
+  "error": "placeholder cache; next Refresh Oil News Event Watch run will write live or error cache state",
+  "promotionEligible": false,
+  "productionDisplayApproved": false,
+  "productionImpact": {
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "limitationsZh": [
+    "GDELT 是低频缓存型新闻代理源,不是高频实时行情或事件确认源。",
+    "本 cache 只保存 compact 摘要,不保存 snippet、正文或 raw response。",
+    "本 cache 不确认通道关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。"
+  ],
+  "boundary": "production read-only GDELT compact news cache for ODP oil-news event watch; display-only/audit-only cache; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}

@@ -10,11 +10,18 @@ const DEFAULT_OUTPUT = 'manual-artifacts/oil-news/oil-news-events-diagnosis-late
 const DEFAULT_WINDOW_DAYS = 7;
 const DEFAULT_MAX_RESULTS = 12;
 const DEFAULT_SOURCES = ['gdelt_doc', 'tavily', 'brave'];
+const DEFAULT_GDELT_CACHE_OUTPUT = 'data/gdelt-news-cache.json';
+const GDELT_CACHE_SCHEMA_VERSION = 'gdelt-news-cache-p37';
+const GDELT_CACHE_MODULE = 'gdelt-news-cache';
+const GDELT_CACHE_TTL_MINUTES = 30;
+const GDELT_STALE_MAX_HOURS = 6;
 const FETCH_TIMEOUT_MS = 20000;
 const UA = 'gfrr-odp-oil-news-diagnosis/1.0 (+https://github.com/ctmaomao/gfrr-auto-update-site)';
 const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
 const BOUNDARY =
   'manual ODP oil-news event diagnosis only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
+const GDELT_CACHE_BOUNDARY =
+  'production read-only GDELT compact news cache for ODP oil-news event watch; display-only/audit-only cache; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
 
 const QUERY_SET = [
   {
@@ -46,6 +53,14 @@ const QUERY_SET = [
     buckets: ['market_reaction']
   }
 ];
+
+const GDELT_BROAD_QUERY_SPEC = {
+  id: 'gdelt_broad_oil_news',
+  label: 'GDELT broad oil-news cache query',
+  query:
+    '((oil OR crude OR Brent OR WTI OR tanker OR refinery OR pipeline OR terminal OR port OR "oil prices") (Hormuz OR "Red Sea" OR "Bab el-Mandeb" OR Suez OR sanction OR sanctions OR OFAC OR "shadow fleet" OR outage OR fire OR explosion OR attack OR shutdown OR disruption OR blockade OR "risk premium" OR futures))',
+  buckets: []
+};
 
 const BUCKETS = {
   chokepoint: {
@@ -123,6 +138,7 @@ function parseArgs(argv) {
     sources: DEFAULT_SOURCES,
     windowDays: DEFAULT_WINDOW_DAYS,
     maxResults: DEFAULT_MAX_RESULTS,
+    gdeltCachePath: DEFAULT_GDELT_CACHE_OUTPUT,
     output: DEFAULT_OUTPUT,
     writeOutput: true,
     strict: false,
@@ -322,6 +338,21 @@ function sourceEnabled(options, source) {
 function dryRunSourceResult(source, options, keyState) {
   const needsKey = source === 'tavily' || source === 'brave';
   const keyInfo = source === 'tavily' ? keyState.tavily : source === 'brave' ? keyState.brave : null;
+  const plannedRequests = source === 'gdelt_doc'
+    ? [{
+        queryId: GDELT_BROAD_QUERY_SPEC.id,
+        label: GDELT_BROAD_QUERY_SPEC.label,
+        maxResults: effectiveGdeltMaxRecords(options),
+        windowDays: options.windowDays,
+        requestMode: 'single_broad_query_local_classification',
+        cachePath: safeRelativePath(options.gdeltCachePath) || options.gdeltCachePath
+      }]
+    : QUERY_SET.map((query) => ({
+        queryId: query.id,
+        label: query.label,
+        maxResults: options.maxResults,
+        windowDays: options.windowDays
+      }));
   return {
     source,
     status: 'dry_run',
@@ -330,12 +361,7 @@ function dryRunSourceResult(source, options, keyState) {
     requiresKey: needsKey,
     keyConfigured: needsKey ? keyInfo.configured : false,
     keySourceCount: needsKey ? keyInfo.sourceCount : 0,
-    plannedRequests: QUERY_SET.map((query) => ({
-      queryId: query.id,
-      label: query.label,
-      maxResults: options.maxResults,
-      windowDays: options.windowDays
-    })),
+    plannedRequests,
     articles: [],
     error: null
   };
@@ -373,34 +399,254 @@ async function fetchWithTimeout(url, fetchOptions = {}) {
   }
 }
 
-async function fetchGdeltDoc(querySpec, options) {
+function effectiveGdeltMaxRecords(options) {
+  return Math.max(1, Math.min(50, options.maxResults * QUERY_SET.length));
+}
+
+function cacheAgeMinutes(cache, nowMs = Date.now()) {
+  const generatedAtMs = Date.parse(cache?.generatedAt || '');
+  if (!Number.isFinite(generatedAtMs)) return null;
+  return Math.max(0, (nowMs - generatedAtMs) / 60000);
+}
+
+function readGdeltNewsCache(cachePath = DEFAULT_GDELT_CACHE_OUTPUT) {
+  const absolutePath = resolve(cachePath);
+  if (!existsSync(absolutePath)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(absolutePath, 'utf8'));
+    if (parsed?.schemaVersion !== GDELT_CACHE_SCHEMA_VERSION || parsed?.module !== GDELT_CACHE_MODULE) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function cacheUsability(cache, nowMs = Date.now()) {
+  if (!cache || !Array.isArray(cache.articles) || cache.articles.length === 0) return 'unusable';
+  const ageMinutes = cacheAgeMinutes(cache, nowMs);
+  if (!Number.isFinite(ageMinutes)) return 'unusable';
+  if (ageMinutes <= GDELT_CACHE_TTL_MINUTES) return 'fresh';
+  if (ageMinutes <= GDELT_STALE_MAX_HOURS * 60) return 'stale';
+  return 'expired';
+}
+
+function compactGdeltCacheArticle(article) {
+  return {
+    title: article.title || null,
+    url: article.url || null,
+    domain: article.domain || null,
+    publishedAt: article.publishedAt || null,
+    buckets: Array.isArray(article.buckets) ? article.buckets.filter(Boolean).sort() : [],
+    queryIds: [GDELT_BROAD_QUERY_SPEC.id]
+  };
+}
+
+function articlesFromGdeltCache(cache) {
+  if (!cache || !Array.isArray(cache.articles)) return [];
+  return cache.articles.map((article) => {
+    const text = `${article.title || ''} ${article.url || ''}`;
+    return {
+      source: 'gdelt_doc',
+      queryId: GDELT_BROAD_QUERY_SPEC.id,
+      queryLabel: GDELT_BROAD_QUERY_SPEC.label,
+      title: compactSnippet(article.title, 180) || null,
+      url: normalizeUrl(article.url),
+      domain: article.domain || domainFromUrl(article.url),
+      publishedAt: parseDateToIso(article.publishedAt),
+      snippet: null,
+      searchScore: null,
+      buckets: Array.isArray(article.buckets) && article.buckets.length
+        ? [...new Set(article.buckets)].sort()
+        : classifyBuckets(text, [])
+    };
+  });
+}
+
+function productionImpactFalseMap() {
+  return {
+    affectsValues: false,
+    affectsScoring: false,
+    affectsDecisionModel: false,
+    affectsExecutionLock: false,
+    affectsPositionGuidance: false,
+    affectsBrentPromotion: false,
+    affectsOdpFinalBias: false,
+    affectsGlobalRiskHeatmap: false,
+    affectsCrossValidation: false
+  };
+}
+
+function buildGdeltNewsCacheArtifact({
+  generatedAt = new Date().toISOString(),
+  status,
+  sourceStatus,
+  requestMode,
+  articles = [],
+  requestDiagnostics = null,
+  error = null
+}) {
+  const compactArticles = articles.map(compactGdeltCacheArticle);
+  const bucketCounts = Object.fromEntries(Object.keys(BUCKETS).map((bucket) => [
+    bucket,
+    compactArticles.filter((article) => article.buckets.includes(bucket)).length
+  ]));
+  return {
+    schemaVersion: GDELT_CACHE_SCHEMA_VERSION,
+    module: GDELT_CACHE_MODULE,
+    generatedAt,
+    sourceKey: 'gdelt_news_cache',
+    cacheScope: 'odp_oil_news_event_watch',
+    status,
+    sourceStatus,
+    requestMode,
+    source: 'GDELT DOC public search',
+    cachePolicy: {
+      ttlMinutes: GDELT_CACHE_TTL_MINUTES,
+      staleMaxHours: GDELT_STALE_MAX_HOURS,
+      lowFrequencyCache: true,
+      broadQueryLocalClassification: true
+    },
+    query: {
+      id: GDELT_BROAD_QUERY_SPEC.id,
+      label: GDELT_BROAD_QUERY_SPEC.label,
+      query: GDELT_BROAD_QUERY_SPEC.query,
+      windowDays: null,
+      maxRecords: null,
+      mode: 'ArtList',
+      sort: 'HybridRel'
+    },
+    requestDiagnostics: requestDiagnostics ? sanitizeGdeltDiagnostics(requestDiagnostics) : null,
+    aggregate: {
+      articleCount: compactArticles.length,
+      bucketCounts
+    },
+    articles: compactArticles,
+    error: error ? compactSnippet(error, 180) : null,
+    promotionEligible: false,
+    productionDisplayApproved: false,
+    productionImpact: productionImpactFalseMap(),
+    limitationsZh: [
+      'GDELT 是低频缓存型新闻代理源,不是高频实时行情或事件确认源。',
+      '本 cache 只保存 compact title/url/domain/publishedAt/bucket 摘要,不保存 snippet、正文或 raw response。',
+      '本 cache 不确认通道关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。'
+    ],
+    boundary: GDELT_CACHE_BOUNDARY
+  };
+}
+
+function withGdeltCacheQueryMetadata(cacheArtifact, options) {
+  return {
+    ...cacheArtifact,
+    query: {
+      ...cacheArtifact.query,
+      windowDays: options.windowDays,
+      maxRecords: effectiveGdeltMaxRecords(options)
+    }
+  };
+}
+
+async function fetchGdeltDocBroad(options) {
+  const existingCache = readGdeltNewsCache(options.gdeltCachePath);
+  const usability = cacheUsability(existingCache);
+  if (usability === 'fresh') {
+    const articles = articlesFromGdeltCache(existingCache);
+    return {
+      articles,
+      requestDiagnostics: {
+        provider: 'gdelt',
+        endpointType: 'doc',
+        label: 'GDELT DOC broad cache hit',
+        status: null,
+        attempts: 0,
+        retryCount: 0,
+        rateLimited: false,
+        timeout: false,
+        retryAfterSeconds: null,
+        timeoutMs: FETCH_TIMEOUT_MS,
+        minIntervalMs: null,
+        maxRetries: null,
+        retryAfterCapSeconds: null,
+        elapsedMs: 0,
+        errorCode: 'cache_hit'
+      },
+      cacheArtifact: existingCache,
+      queryRunStatus: 'cache_hit',
+      sourceStatus: 'ok',
+      networkUsed: false
+    };
+  }
+
   const params = new URLSearchParams({
-    query: querySpec.query,
+    query: GDELT_BROAD_QUERY_SPEC.query,
     mode: 'ArtList',
     format: 'json',
-    maxrecords: String(options.maxResults),
+    maxrecords: String(effectiveGdeltMaxRecords(options)),
     timespan: `${options.windowDays}d`,
     sort: 'HybridRel'
   });
-  const { json, diagnostics } = await fetchGdeltDocJson({
-    queryParams: params,
-    userAgent: BROWSER_UA,
-    timeoutMs: FETCH_TIMEOUT_MS,
-    label: 'GDELT DOC'
-  });
-  const articles = Array.isArray(json?.articles) ? json.articles : [];
-  return {
-    articles: articles.map((item) => normalizeArticle({
+  try {
+    const { json, diagnostics } = await fetchGdeltDocJson({
+      queryParams: params,
+      userAgent: BROWSER_UA,
+      timeoutMs: FETCH_TIMEOUT_MS,
+      label: 'GDELT DOC broad oil-news cache'
+    });
+    const articles = (Array.isArray(json?.articles) ? json.articles : []).map((item) => normalizeArticle({
       source: 'gdelt_doc',
-      querySpec,
+      querySpec: GDELT_BROAD_QUERY_SPEC,
       title: item.title,
       url: item.url,
       sourceName: item.domain,
       publishedAt: item.seendate,
       snippet: item.socialimage ? `image:${item.socialimage}` : ''
-    })),
-    requestDiagnostics: sanitizeGdeltDiagnostics(diagnostics)
-  };
+    }));
+    const cacheArtifact = withGdeltCacheQueryMetadata(buildGdeltNewsCacheArtifact({
+      status: 'ok',
+      sourceStatus: 'live',
+      requestMode: 'live_broad_query',
+      articles,
+      requestDiagnostics: diagnostics
+    }), options);
+    return {
+      articles,
+      requestDiagnostics: sanitizeGdeltDiagnostics(diagnostics),
+      cacheArtifact,
+      queryRunStatus: 'ok',
+      sourceStatus: 'ok',
+      networkUsed: true
+    };
+  } catch (error) {
+    if (usability === 'stale') {
+      const articles = articlesFromGdeltCache(existingCache);
+      return {
+        articles,
+        requestDiagnostics: error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null,
+        cacheArtifact: {
+          ...existingCache,
+          status: 'stale',
+          sourceStatus: 'stale',
+          requestMode: 'stale_cache_after_fetch_error',
+          error: compactSnippet(error.message, 180)
+        },
+        queryRunStatus: 'stale_cache',
+        sourceStatus: 'stale',
+        networkUsed: true,
+        error: error.message
+      };
+    }
+    const cacheArtifact = withGdeltCacheQueryMetadata(buildGdeltNewsCacheArtifact({
+      status: 'error',
+      sourceStatus: 'error',
+      requestMode: 'live_broad_query_failed',
+      articles: [],
+      requestDiagnostics: error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null,
+      error: error.message
+    }), options);
+    error.cacheArtifact = cacheArtifact;
+    throw error;
+  }
 }
 
 async function fetchTavily(querySpec, options, keys) {
@@ -534,6 +780,64 @@ async function collectSource(source, options, keyState) {
   let successCount = 0;
   let failureCount = 0;
 
+  if (source === 'gdelt_doc') {
+    try {
+      const result = await fetchGdeltDocBroad(options);
+      articles.push(...result.articles);
+      successCount = result.sourceStatus === 'ok' ? 1 : 0;
+      failureCount = result.sourceStatus === 'stale' ? 1 : 0;
+      queryRuns.push({
+        queryId: GDELT_BROAD_QUERY_SPEC.id,
+        label: GDELT_BROAD_QUERY_SPEC.label,
+        status: result.queryRunStatus,
+        articleCount: result.articles.length,
+        requestMode: 'single_broad_query_local_classification',
+        cachePath: safeRelativePath(options.gdeltCachePath) || options.gdeltCachePath,
+        requestDiagnostics: result.requestDiagnostics,
+        error: result.error ? compactSnippet(result.error, 180) : null
+      });
+      return {
+        source,
+        status: result.sourceStatus,
+        enabled: true,
+        networkUsed: result.networkUsed === true,
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        queryRuns,
+        successCount,
+        failureCount,
+        articles,
+        error: result.sourceStatus === 'stale' ? 'gdelt live query failed; using stale cache' : null,
+        cacheArtifact: result.cacheArtifact || null
+      };
+    } catch (error) {
+      queryRuns.push({
+        queryId: GDELT_BROAD_QUERY_SPEC.id,
+        label: GDELT_BROAD_QUERY_SPEC.label,
+        status: 'error',
+        articleCount: 0,
+        requestMode: 'single_broad_query_local_classification',
+        cachePath: safeRelativePath(options.gdeltCachePath) || options.gdeltCachePath,
+        error: compactSnippet(error.message, 180),
+        requestDiagnostics: error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null
+      });
+      return {
+        source,
+        status: 'error',
+        enabled: true,
+        networkUsed: true,
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        queryRuns,
+        successCount: 0,
+        failureCount: 1,
+        articles: [],
+        error: 'GDELT broad oil-news query failed',
+        cacheArtifact: error.cacheArtifact || null
+      };
+    }
+  }
+
   if (source === 'tavily' && keyState._keys.tavily.length === 0) {
     return {
       source,
@@ -579,12 +883,7 @@ async function collectSource(source, options, keyState) {
   for (const querySpec of QUERY_SET) {
     try {
       let rows;
-      let requestDiagnostics = null;
-      if (source === 'gdelt_doc') {
-        const result = await fetchGdeltDoc(querySpec, options);
-        rows = result.articles;
-        requestDiagnostics = result.requestDiagnostics;
-      } else if (source === 'tavily') {
+      if (source === 'tavily') {
         rows = await fetchTavily(querySpec, options, keyState._keys.tavily);
       } else if (source === 'brave') {
         rows = await fetchBrave(querySpec, options, keyState._keys.brave);
@@ -597,8 +896,7 @@ async function collectSource(source, options, keyState) {
         queryId: querySpec.id,
         label: querySpec.label,
         status: 'ok',
-        articleCount: rows.length,
-        requestDiagnostics
+        articleCount: rows.length
       });
     } catch (error) {
       failureCount += 1;
@@ -606,8 +904,7 @@ async function collectSource(source, options, keyState) {
         queryId: querySpec.id,
         label: querySpec.label,
         status: 'error',
-        error: compactSnippet(error.message, 180),
-        requestDiagnostics: error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null
+        error: compactSnippet(error.message, 180)
       });
     }
   }
@@ -748,6 +1045,9 @@ function createArtifact(options, keyState, sourceResults) {
     error: result.error || null,
     plannedRequests: result.plannedRequests || null
   }));
+  const sourceCaches = Object.fromEntries(sourceResults
+    .filter((result) => result.cacheArtifact)
+    .map((result) => [result.source, result.cacheArtifact]));
   const recommendation = deriveRecommendation(buckets, sourceResults);
   const status = options.allowNetwork
     ? recommendation.state === 'source_unavailable' ? 'warn' : 'ok'
@@ -764,6 +1064,14 @@ function createArtifact(options, keyState, sourceResults) {
       sources: options.sources,
       windowDays: options.windowDays,
       maxResultsPerQuery: options.maxResults,
+      gdeltCachePath: safeRelativePath(options.gdeltCachePath) || options.gdeltCachePath,
+      gdeltRequestMode: 'single_broad_query_local_classification',
+      gdeltBroadQuery: {
+        id: GDELT_BROAD_QUERY_SPEC.id,
+        label: GDELT_BROAD_QUERY_SPEC.label,
+        query: GDELT_BROAD_QUERY_SPEC.query,
+        maxRecords: effectiveGdeltMaxRecords(options)
+      },
       querySet: QUERY_SET.map((query) => ({
         id: query.id,
         label: query.label,
@@ -784,10 +1092,12 @@ function createArtifact(options, keyState, sourceResults) {
       }
     },
     sourceResults: sourcePublic,
+    sourceCaches,
     aggregate: {
       rawArticleCount: allArticles.length,
       uniqueArticleCount: deduped.length,
       liveSourceCount: sourceResults.filter((source) => ['ok', 'partial'].includes(source.status)).length,
+      staleSourceCount: sourceResults.filter((source) => source.status === 'stale').length,
       bucketCountWithHits: Object.values(buckets).filter((bucket) => bucket.articleCount > 0).length,
       state: recommendation.state,
       confidence: recommendation.confidence,
@@ -879,6 +1189,10 @@ async function main() {
 export {
   BUCKETS,
   DEFAULT_SOURCES,
+  DEFAULT_GDELT_CACHE_OUTPUT,
+  GDELT_BROAD_QUERY_SPEC,
+  GDELT_CACHE_MODULE,
+  GDELT_CACHE_SCHEMA_VERSION,
   QUERY_SET,
   getApiKeyState,
   runDiagnosis

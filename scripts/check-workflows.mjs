@@ -217,6 +217,7 @@ const contracts = [
       'npm run build:oil-news-event-watch',
       'npm run check:oil-news-event-watch',
       'data/oil-news-event-watch.json',
+      'data/gdelt-news-cache.json',
       'chore: refresh oil news event watch',
       'git pull --rebase origin "${GITHUB_REF_NAME}"'
     ],

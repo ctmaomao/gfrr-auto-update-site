@@ -2,7 +2,15 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
-import { DEFAULT_SOURCES, QUERY_SET, runDiagnosis } from './diagnose-oil-news-events.mjs';
+import {
+  DEFAULT_GDELT_CACHE_OUTPUT,
+  DEFAULT_SOURCES,
+  GDELT_BROAD_QUERY_SPEC,
+  GDELT_CACHE_MODULE,
+  GDELT_CACHE_SCHEMA_VERSION,
+  QUERY_SET,
+  runDiagnosis
+} from './diagnose-oil-news-events.mjs';
 
 const SCHEMA_VERSION = 'oil-news-event-watch-1';
 const MODULE = 'oil-news-event-watch';
@@ -34,6 +42,7 @@ const BOUNDARY =
 function parseArgs(argv) {
   const options = {
     output: DEFAULT_OUTPUT,
+    gdeltCacheOutput: DEFAULT_GDELT_CACHE_OUTPUT,
     sources: DEFAULT_SOURCES,
     windowDays: DEFAULT_WINDOW_DAYS,
     maxResults: DEFAULT_MAX_RESULTS,
@@ -61,6 +70,8 @@ function parseArgs(argv) {
       options.output = nextValue();
     } else if (arg === '--sources') {
       options.sources = nextValue().split(',').map((value) => value.trim()).filter(Boolean);
+    } else if (arg === '--gdelt-cache-output') {
+      options.gdeltCacheOutput = nextValue();
     } else if (arg === '--window-days') {
       options.windowDays = Number(nextValue());
     } else if (arg === '--max-results') {
@@ -84,6 +95,9 @@ function parseArgs(argv) {
   if (options.writeOutput && !resolve(options.output).endsWith(resolve(DEFAULT_OUTPUT))) {
     throw new Error(`Refusing to write production oil-news artifact outside ${DEFAULT_OUTPUT}`);
   }
+  if (options.writeOutput && !resolve(options.gdeltCacheOutput).endsWith(resolve(DEFAULT_GDELT_CACHE_OUTPUT))) {
+    throw new Error(`Refusing to write GDELT cache artifact outside ${DEFAULT_GDELT_CACHE_OUTPUT}`);
+  }
   return options;
 }
 
@@ -93,7 +107,8 @@ function mapSourceStatus(status) {
     partial: 'partial',
     error: 'error',
     not_configured: 'not_configured',
-    dry_run: 'dry_run'
+    dry_run: 'dry_run',
+    stale: 'stale'
   })[status] || 'error';
 }
 
@@ -306,7 +321,7 @@ function buildProductionArtifact(options, diagnosis) {
     module: MODULE,
     generatedAt,
     sourceKey: 'odp_oil_news_event_watch',
-    source: 'GDELT DOC public search + Tavily Search API + Brave News Search API',
+    source: 'GDELT DOC broad cache + Tavily Search API + Brave News Search API',
     sources: options.sources,
     status,
     signalState,
@@ -320,6 +335,11 @@ function buildProductionArtifact(options, diagnosis) {
     },
     queryCoverage: {
       querySetVersion: 'odp-oil-news-query-set-p28',
+      gdeltQuerySetVersion: 'gdelt-broad-oil-news-cache-p37',
+      gdeltBroadQuery: {
+        id: GDELT_BROAD_QUERY_SPEC.id,
+        label: GDELT_BROAD_QUERY_SPEC.label
+      },
       queryCount,
       querySuccessCount,
       queryFailureCount,
@@ -365,6 +385,54 @@ function buildProductionArtifact(options, diagnosis) {
   return artifact;
 }
 
+function buildGdeltCacheArtifact(diagnosis) {
+  const cache = diagnosis.sourceCaches?.gdelt_doc;
+  if (cache && cache.schemaVersion === GDELT_CACHE_SCHEMA_VERSION && cache.module === GDELT_CACHE_MODULE) {
+    return cache;
+  }
+  return {
+    schemaVersion: GDELT_CACHE_SCHEMA_VERSION,
+    module: GDELT_CACHE_MODULE,
+    generatedAt: new Date().toISOString(),
+    sourceKey: 'gdelt_news_cache',
+    cacheScope: 'odp_oil_news_event_watch',
+    status: 'not_initialized',
+    sourceStatus: 'not_initialized',
+    requestMode: 'no_gdelt_source_result',
+    source: 'GDELT DOC public search',
+    cachePolicy: {
+      ttlMinutes: 30,
+      staleMaxHours: 6,
+      lowFrequencyCache: true,
+      broadQueryLocalClassification: true
+    },
+    query: {
+      id: GDELT_BROAD_QUERY_SPEC.id,
+      label: GDELT_BROAD_QUERY_SPEC.label,
+      query: GDELT_BROAD_QUERY_SPEC.query,
+      windowDays: null,
+      maxRecords: null,
+      mode: 'ArtList',
+      sort: 'HybridRel'
+    },
+    requestDiagnostics: null,
+    aggregate: {
+      articleCount: 0,
+      bucketCounts: {}
+    },
+    articles: [],
+    error: 'gdelt source was not selected',
+    promotionEligible: false,
+    productionDisplayApproved: false,
+    productionImpact: productionImpact(),
+    limitationsZh: [
+      'GDELT 是低频缓存型新闻代理源,不是高频实时行情或事件确认源。',
+      '本 cache 只保存 compact 摘要,不保存 snippet、正文或 raw response。'
+    ],
+    boundary: 'production read-only GDELT compact news cache for ODP oil-news event watch; display-only/audit-only cache; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation'
+  };
+}
+
 function writeJson(path, payload) {
   const absolutePath = resolve(path);
   mkdirSync(dirname(absolutePath), { recursive: true });
@@ -379,13 +447,16 @@ async function main() {
     sources: options.sources,
     windowDays: options.windowDays,
     maxResults: options.maxResults,
+    gdeltCachePath: options.gdeltCacheOutput,
     output: '',
     writeOutput: false,
     strict: false,
     printJson: false
   });
   const artifact = buildProductionArtifact(options, diagnosis);
+  const gdeltCacheArtifact = buildGdeltCacheArtifact(diagnosis);
   const outputPath = options.writeOutput ? writeJson(options.output, artifact) : null;
+  const gdeltCacheOutputPath = options.writeOutput ? writeJson(options.gdeltCacheOutput, gdeltCacheArtifact) : null;
   console.log(JSON.stringify({
     status: artifact.status,
     signalState: artifact.signalState,
@@ -398,6 +469,7 @@ async function main() {
     },
     aggregate: artifact.aggregate,
     outputPath,
+    gdeltCacheOutputPath,
     boundary: artifact.boundary
   }, null, 2));
 }
