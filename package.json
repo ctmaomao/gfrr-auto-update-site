@@ -24,6 +24,8 @@
     "check:oil-news-events-diagnosis": "node --check scripts/oil-directional/diagnose-oil-news-events.mjs && node scripts/oil-directional/diagnose-oil-news-events.mjs --dry-run --no-output",
     "review:oil-news-event-watch-samples": "node scripts/oil-directional/review-oil-news-event-watch-samples.mjs",
     "check:oil-news-event-watch-samples-review": "node --check scripts/oil-directional/review-oil-news-event-watch-samples.mjs && node scripts/oil-directional/review-oil-news-event-watch-samples.mjs --input docs/fixtures/oil-news/oil-news-event-watch-sample-a.json --input docs/fixtures/oil-news/oil-news-event-watch-sample-b.json --min-samples 2 --no-output",
+    "review:oil-news-source-health-samples": "node scripts/oil-directional/review-oil-news-source-health-samples.mjs",
+    "check:oil-news-source-health-samples-review": "node --check scripts/oil-directional/review-oil-news-source-health-samples.mjs && node scripts/oil-directional/review-oil-news-source-health-samples.mjs --input docs/fixtures/oil-news/oil-news-event-watch-sample-a.json --input docs/fixtures/oil-news/oil-news-event-watch-sample-b.json --min-samples 2 --no-output",
     "init:firms-facilities": "node scripts/oil-directional/diagnose-firms-thermal.mjs --init-facilities --strict-facilities",
     "review:firms-facilities": "node scripts/oil-directional/review-firms-facilities.mjs",
     "check:firms-facilities-review": "node --check scripts/oil-directional/review-firms-facilities.mjs && node scripts/oil-directional/review-firms-facilities.mjs --facilities docs/fixtures/oil-thermal/facilities.example.json --no-output",

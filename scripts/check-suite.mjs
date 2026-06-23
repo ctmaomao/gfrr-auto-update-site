@@ -83,6 +83,7 @@ const SUITES = {
     'check:oil-news-events-diagnosis',
     'check:oil-news-event-watch',
     'check:oil-news-event-watch-samples-review',
+    'check:oil-news-source-health-samples-review',
     'check:oil-thermal-watch',
     'check:oil-directional-zh-copy',
     'check:firms-facilities-review',

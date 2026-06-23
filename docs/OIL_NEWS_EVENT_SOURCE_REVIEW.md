@@ -5,9 +5,11 @@ same source set into a production read-only display artifact. P30 adds a
 manual/local sample calibration review. P31 adds production title-risk and
 headline-display readiness guards. P32 surfaces those guards in the frontend
 without rendering article headlines. P33 surfaces source health/fallback wording
-without adding sources or changing the artifact schema. All layers remain outside
-ODP scoring, `finalBias`, decision, execution, position, Brent promotion, Global
-Risk Heatmap, and cross-validation.
+without adding sources or changing the artifact schema. P34 adds a local
+source-health sample review so the fallback wording can be checked against
+recent sanitized history. All layers remain outside ODP scoring, `finalBias`,
+decision, execution, position, Brent promotion, Global Risk Heatmap, and
+cross-validation.
 
 ## Candidate Sources
 
@@ -153,6 +155,33 @@ confirmed chokepoint closure, supply outage, tanker-flow fact, refinery accident
 sanctions effect, or oil-price direction. Legacy World Order GDELT fallback must
 be labeled as not being the dedicated three-source oil-news layer.
 
+P34 adds:
+
+```text
+scripts/oil-directional/review-oil-news-source-health-samples.mjs
+npm run review:oil-news-source-health-samples
+npm run check:oil-news-source-health-samples-review
+```
+
+The helper is local/manual and no-network. By default it reads git history for
+recent sanitized `data/oil-news-event-watch.json` samples. It may also read
+tracked fixtures or ignored manual artifacts with repeated `--input` or
+`--input-dir`.
+
+The review writes only:
+
+```text
+manual-artifacts/oil-news/oil-news-source-health-samples-review-latest.json
+```
+
+It focuses on source-health and fallback stability rather than bucket narrative:
+per-source status counts, live/usable rates, query success-rate range, degraded
+provider errors, fail-closed copy readiness, and headline-display guard status.
+The output intentionally omits article title strings. Its current expected use
+is to decide whether GDELT should remain a noisy backup while Tavily/Brave do the
+cross-checking, and whether `NEWS EVENT WATCH` should keep the same source-health
+and fallback wording.
+
 ## Query Buckets
 
 The initial query set intentionally focuses on ODP-relevant events:
@@ -194,6 +223,18 @@ P30 does not:
 - access network sources or read API keys;
 - write `data/*.json`, `realtime/*.json`, or production baseline/config files;
 - modify frontend display or expose article headlines;
+- change ODP classifier, `finalBias`, global overlay, values, scoring, decision,
+  execution, position, Brent promotion, Global Risk Heatmap, or cross-validation;
+- confirm Hormuz closure, tanker-flow disruption, refinery outage, supply
+  interruption, sanctions impact, or oil-price direction.
+
+P34 does not:
+
+- access network sources or read API keys;
+- write `data/*.json`, `realtime/*.json`, production baseline/config files, or
+  frontend assets;
+- add a workflow, change P29 cadence, or change the production artifact schema;
+- expose article headlines in its review artifact;
 - change ODP classifier, `finalBias`, global overlay, values, scoring, decision,
   execution, position, Brent promotion, Global Risk Heatmap, or cross-validation;
 - confirm Hormuz closure, tanker-flow disruption, refinery outage, supply
