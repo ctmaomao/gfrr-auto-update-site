@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-23T04:01:21.694Z",
+  "generatedAt": "2026-06-23T04:02:48.515Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC public search + Tavily Search API + Brave News Search API",
   "sources": [
@@ -13,25 +13,25 @@
   "signalState": "elevated_manual_review",
   "displayStatusZh": "事件升高待核",
   "sourceStatus": {
-    "gdeltDoc": "partial",
+    "gdeltDoc": "error",
     "tavily": "live",
     "brave": "live",
     "tavilyKey": "configured",
     "braveKey": "configured",
     "details": {
       "gdelt_doc": {
-        "status": "partial",
+        "status": "error",
         "networkUsed": true,
-        "successCount": 2,
-        "failureCount": 2,
-        "articleCount": 16,
+        "successCount": 0,
+        "failureCount": 4,
+        "articleCount": 0,
         "queryRuns": [
           {
             "queryId": "chokepoint_shipping",
             "label": "Chokepoint / tanker shipping",
-            "status": "ok",
-            "articleCount": 8,
-            "error": null
+            "status": "error",
+            "articleCount": 0,
+            "error": "fetch failed"
           },
           {
             "queryId": "sanctions_shadow_fleet",
@@ -43,16 +43,16 @@
           {
             "queryId": "facility_supply_disruption",
             "label": "Facility / supply disruption",
-            "status": "ok",
-            "articleCount": 8,
-            "error": null
+            "status": "error",
+            "articleCount": 0,
+            "error": "GDELT DOC HTTP 429"
           },
           {
             "queryId": "market_reaction",
             "label": "Oil market reaction",
             "status": "error",
             "articleCount": 0,
-            "error": "fetch failed"
+            "error": "GDELT DOC HTTP 429"
           }
         ]
       },
@@ -141,8 +141,8 @@
   "queryCoverage": {
     "querySetVersion": "odp-oil-news-query-set-p28",
     "queryCount": 12,
-    "querySuccessCount": 10,
-    "queryFailureCount": 2,
+    "querySuccessCount": 8,
+    "queryFailureCount": 4,
     "topics": [
       {
         "id": "chokepoint_shipping",
@@ -179,9 +179,9 @@
     ]
   },
   "aggregate": {
-    "rawArticleCount": 80,
-    "uniqueArticleCount": 78,
-    "liveSourceCount": 3,
+    "rawArticleCount": 64,
+    "uniqueArticleCount": 62,
+    "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
     "confidence": "medium",
@@ -190,17 +190,17 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 57,
-      "sourceCount": 3,
-      "weightedSignal": 513,
+      "articleCount": 47,
+      "sourceCount": 2,
+      "weightedSignal": 282,
       "topArticles": [
         {
-          "title": "Iran New Trump Card ? The Strait of Hormuz Could Be Shut At Will Despite US Deal",
-          "url": "https://www.benzinga.com/news/politics/26/06/53242483/irans-new-trump-card-the-strait-of-hormuz-could-be-shut-at-will-despite-us-deal",
-          "domain": "benzinga.com",
-          "publishedAt": null,
+          "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
+          "url": "https://www.jpost.com/middle-east/iran-news/article-899722",
+          "domain": "jpost.com",
+          "publishedAt": "2026-06-17T14:38:20.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
@@ -212,16 +212,17 @@
           ]
         },
         {
-          "title": "The Strait of Hormuz is reopening , but global shipping wont return to normal for months - 19 - Jun - 2026",
-          "url": "https://home.nzcity.co.nz/news/article.aspx?id=448270&fm=psp,tst",
-          "domain": "home.nzcity.co.nz",
-          "publishedAt": null,
+          "title": "Three Iranian tankers exit U.S. blockade for first time in months as shipowners eye Hormuz in 'wary disbelief' - CNBC",
+          "url": "https://www.cnbc.com/2026/06/17/iranian-tankers-oil-shipment-us-iran-deal-strait-of-hormuz-.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-06-17T04:54:22.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
             "middle_east_risk",
+            "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
@@ -229,15 +230,16 @@
           ]
         },
         {
-          "title": "The Strait of Hormuz is reopening , but global shipping wont return to normal for months - 19 - Jun - 2026",
-          "url": "https://home.nzcity.co.nz/news/article.aspx?id=448270&fm=psp,tsf",
-          "domain": "home.nzcity.co.nz",
-          "publishedAt": null,
+          "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
+          "url": "https://www.oilandgas360.com/hormuz-reopening-gains-momentum-as-tankers-resume-transit/",
+          "domain": "oilandgas360.com",
+          "publishedAt": "2026-06-18T17:30:58.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
+            "market_reaction",
             "middle_east_risk",
             "tanker_shipping"
           ],
@@ -308,106 +310,116 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 30,
-      "sourceCount": 3,
-      "weightedSignal": 270,
+      "articleCount": 22,
+      "sourceCount": 2,
+      "weightedSignal": 132,
       "topArticles": [
         {
-          "title": "Московский НПЗ - Генштаб ВСУ подтвердил поражение | Новости на Gazeta . ua",
-          "url": "https://gazeta.ua/ru/articles/politics/_postradali-moskovskij-npz-i-neftebaza-genshtab-soobschil-o-posledstviyah-massirovannoj-ataki-na-stolicu-rossii/1252969",
-          "domain": "gazeta.ua",
-          "publishedAt": null,
+          "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
+          "url": "https://cryptobriefing.com/strait-of-hormuz-closure-may-extend-to-years-end-due-to-80-mines-report/",
+          "domain": "cryptobriefing.com",
+          "publishedAt": "2026-06-20T23:18:55.000Z",
           "sources": [
-            "gdelt_doc"
-          ],
-          "buckets": [
-            "facility_event",
-            "supply_disruption"
-          ],
-          "queryIds": [
-            "facility_supply_disruption"
-          ]
-        },
-        {
-          "title": "震撼影片曝 ！ 莫斯科最大煉油廠遇襲 澤倫斯基 ： 你們將陷一片火海 - 國際",
-          "url": "https://news.ltn.com.tw/news/world/breakingnews/5476858",
-          "domain": "news.ltn.com.tw",
-          "publishedAt": null,
-          "sources": [
-            "gdelt_doc"
-          ],
-          "buckets": [
-            "facility_event",
-            "supply_disruption"
-          ],
-          "queryIds": [
-            "facility_supply_disruption"
-          ]
-        },
-        {
-          "title": "Russian fuel shortage deepens after Ukrainian drone strike hits Moscow refinery",
-          "url": "https://www.albawaba.com/news/russian-fuel-shortage-deepens-after-1630524",
-          "domain": "albawaba.com",
-          "publishedAt": null,
-          "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
-            "facility_event",
-            "supply_disruption"
+            "middle_east_risk",
+            "supply_disruption",
+            "tanker_shipping"
           ],
           "queryIds": [
-            "facility_supply_disruption"
+            "chokepoint_shipping"
+          ]
+        },
+        {
+          "title": "Trump’s War Now Means Iran Can Shut Strait Of Hormuz Anytime, U.S. Intel Finds - Yahoo",
+          "url": "https://www.yahoo.com/news/politics/articles/trump-war-now-means-iran-161936772.html",
+          "domain": "yahoo.com",
+          "publishedAt": "2026-06-16T16:19:36.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "middle_east_risk",
+            "supply_disruption",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
+          ]
+        },
+        {
+          "title": "Back to where we started? - Oil & Gas 360",
+          "url": "https://www.oilandgas360.com/back-to-where-we-started/",
+          "domain": "oilandgas360.com",
+          "publishedAt": "2026-06-16T21:30:45.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "market_reaction",
+            "middle_east_risk",
+            "supply_disruption",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
           ]
         }
       ]
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 30,
-      "sourceCount": 3,
-      "weightedSignal": 180,
+      "articleCount": 22,
+      "sourceCount": 2,
+      "weightedSignal": 88,
       "topArticles": [
         {
-          "title": "Московский НПЗ - Генштаб ВСУ подтвердил поражение | Новости на Gazeta . ua",
-          "url": "https://gazeta.ua/ru/articles/politics/_postradali-moskovskij-npz-i-neftebaza-genshtab-soobschil-o-posledstviyah-massirovannoj-ataki-na-stolicu-rossii/1252969",
-          "domain": "gazeta.ua",
-          "publishedAt": null,
+          "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
+          "url": "https://www.reuters.com/business/energy/iraq-export-crude-naphtha-through-syria-after-hormuz-shock-2026-06-19/",
+          "domain": "reuters.com",
+          "publishedAt": "2026-06-19T15:16:41.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
+            "chokepoint",
             "facility_event",
-            "supply_disruption"
+            "middle_east_risk",
+            "supply_disruption",
+            "tanker_shipping"
           ],
           "queryIds": [
-            "facility_supply_disruption"
+            "chokepoint_shipping"
           ]
         },
         {
-          "title": "震撼影片曝 ！ 莫斯科最大煉油廠遇襲 澤倫斯基 ： 你們將陷一片火海 - 國際",
-          "url": "https://news.ltn.com.tw/news/world/breakingnews/5476858",
-          "domain": "news.ltn.com.tw",
-          "publishedAt": null,
+          "title": "First Russian shadow fleet vessel enters Channel since Smyrtos boarding - BBC",
+          "url": "https://www.bbc.com/news/articles/cgk6d12lz6jo",
+          "domain": "bbc.com",
+          "publishedAt": "2026-06-18T11:20:20.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "facility_event",
-            "supply_disruption"
+            "sanctions",
+            "tanker_shipping"
           ],
           "queryIds": [
-            "facility_supply_disruption"
+            "sanctions_shadow_fleet"
           ]
         },
         {
-          "title": "Russian fuel shortage deepens after Ukrainian drone strike hits Moscow refinery",
-          "url": "https://www.albawaba.com/news/russian-fuel-shortage-deepens-after-1630524",
-          "domain": "albawaba.com",
-          "publishedAt": null,
+          "title": "Ukrainian drone hits Moscow region's largest refinery - Reuters",
+          "url": "https://www.reuters.com/world/moscow-oil-refinery-damaged-ukrainian-drone-attack-mayor-says-2026-06-16/",
+          "domain": "reuters.com",
+          "publishedAt": "2026-06-16T10:43:43.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
@@ -422,17 +434,17 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 45,
-      "sourceCount": 3,
-      "weightedSignal": 202.5,
+      "articleCount": 37,
+      "sourceCount": 2,
+      "weightedSignal": 111,
       "topArticles": [
         {
-          "title": "Iran New Trump Card ? The Strait of Hormuz Could Be Shut At Will Despite US Deal",
-          "url": "https://www.benzinga.com/news/politics/26/06/53242483/irans-new-trump-card-the-strait-of-hormuz-could-be-shut-at-will-despite-us-deal",
-          "domain": "benzinga.com",
-          "publishedAt": null,
+          "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
+          "url": "https://www.jpost.com/middle-east/iran-news/article-899722",
+          "domain": "jpost.com",
+          "publishedAt": "2026-06-17T14:38:20.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
@@ -444,16 +456,17 @@
           ]
         },
         {
-          "title": "The Strait of Hormuz is reopening , but global shipping wont return to normal for months - 19 - Jun - 2026",
-          "url": "https://home.nzcity.co.nz/news/article.aspx?id=448270&fm=psp,tst",
-          "domain": "home.nzcity.co.nz",
-          "publishedAt": null,
+          "title": "Three Iranian tankers exit U.S. blockade for first time in months as shipowners eye Hormuz in 'wary disbelief' - CNBC",
+          "url": "https://www.cnbc.com/2026/06/17/iranian-tankers-oil-shipment-us-iran-deal-strait-of-hormuz-.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-06-17T04:54:22.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
             "middle_east_risk",
+            "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
@@ -461,15 +474,16 @@
           ]
         },
         {
-          "title": "The Strait of Hormuz is reopening , but global shipping wont return to normal for months - 19 - Jun - 2026",
-          "url": "https://home.nzcity.co.nz/news/article.aspx?id=448270&fm=psp,tsf",
-          "domain": "home.nzcity.co.nz",
-          "publishedAt": null,
+          "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
+          "url": "https://www.oilandgas360.com/hormuz-reopening-gains-momentum-as-tankers-resume-transit/",
+          "domain": "oilandgas360.com",
+          "publishedAt": "2026-06-18T17:30:58.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
+            "market_reaction",
             "middle_east_risk",
             "tanker_shipping"
           ],
@@ -481,17 +495,17 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 55,
-      "sourceCount": 3,
-      "weightedSignal": 247.5,
+      "articleCount": 47,
+      "sourceCount": 2,
+      "weightedSignal": 141,
       "topArticles": [
         {
-          "title": "Iran New Trump Card ? The Strait of Hormuz Could Be Shut At Will Despite US Deal",
-          "url": "https://www.benzinga.com/news/politics/26/06/53242483/irans-new-trump-card-the-strait-of-hormuz-could-be-shut-at-will-despite-us-deal",
-          "domain": "benzinga.com",
-          "publishedAt": null,
+          "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
+          "url": "https://www.jpost.com/middle-east/iran-news/article-899722",
+          "domain": "jpost.com",
+          "publishedAt": "2026-06-17T14:38:20.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
@@ -503,16 +517,17 @@
           ]
         },
         {
-          "title": "The Strait of Hormuz is reopening , but global shipping wont return to normal for months - 19 - Jun - 2026",
-          "url": "https://home.nzcity.co.nz/news/article.aspx?id=448270&fm=psp,tst",
-          "domain": "home.nzcity.co.nz",
-          "publishedAt": null,
+          "title": "Three Iranian tankers exit U.S. blockade for first time in months as shipowners eye Hormuz in 'wary disbelief' - CNBC",
+          "url": "https://www.cnbc.com/2026/06/17/iranian-tankers-oil-shipment-us-iran-deal-strait-of-hormuz-.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-06-17T04:54:22.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
             "middle_east_risk",
+            "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
@@ -520,15 +535,16 @@
           ]
         },
         {
-          "title": "The Strait of Hormuz is reopening , but global shipping wont return to normal for months - 19 - Jun - 2026",
-          "url": "https://home.nzcity.co.nz/news/article.aspx?id=448270&fm=psp,tsf",
-          "domain": "home.nzcity.co.nz",
-          "publishedAt": null,
+          "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
+          "url": "https://www.oilandgas360.com/hormuz-reopening-gains-momentum-as-tankers-resume-transit/",
+          "domain": "oilandgas360.com",
+          "publishedAt": "2026-06-18T17:30:58.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
+            "market_reaction",
             "middle_east_risk",
             "tanker_shipping"
           ],
