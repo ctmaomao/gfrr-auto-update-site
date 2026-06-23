@@ -85,6 +85,7 @@ const appJs = read('scripts/app.js');
 const buildSrc = read('scripts/build-bubble-watch.mjs');
 const sourceCandidates = JSON.parse(read('config/bubble-watch-source-candidates.json'));
 const curatedConfig = JSON.parse(read('config/bubble-watch-curated.json'));
+const gdeltBubbleCache = JSON.parse(read('data/gdelt-bubble-watch-cache.json'));
 
 // ---- 1. contract ----
 check('contract', data.contractVersion === 'bubble-watch-v1', `contractVersion 异常: ${data.contractVersion}`);
@@ -107,6 +108,22 @@ for (const ind of data.indicators || []) {
 check('contract', EXPECTED_IDS.every((id) => ids.has(id)) && ids.size === EXPECTED_IDS.length,
   `指标 id 集不等于预登记 ${EXPECTED_IDS.length} 项 (got ${ids.size})`);
 const indicatorById = Object.fromEntries((data.indicators || []).map((ind) => [ind.id, ind]));
+
+check('contract', gdeltBubbleCache.schemaVersion === 'gdelt-bubble-watch-cache-p38',
+  `GDELT Bubble cache schemaVersion 异常: ${gdeltBubbleCache.schemaVersion}`);
+check('contract', gdeltBubbleCache.module === 'gdelt-bubble-watch-cache', 'GDELT Bubble cache module 异常');
+check('contract', gdeltBubbleCache.cacheScope === 'bubble_watch_ceo_hedging', `GDELT Bubble cache scope 异常: ${gdeltBubbleCache.cacheScope}`);
+check('contract', ['ok', 'stale', 'error', 'not_initialized'].includes(gdeltBubbleCache.status),
+  `GDELT Bubble cache status 异常: ${gdeltBubbleCache.status}`);
+check('contract', ['live', 'stale', 'error', 'not_initialized'].includes(gdeltBubbleCache.sourceStatus),
+  `GDELT Bubble cache sourceStatus 异常: ${gdeltBubbleCache.sourceStatus}`);
+check('contract', gdeltBubbleCache.cachePolicy?.lowFrequencyCache === true && gdeltBubbleCache.cachePolicy?.broadQueryLocalClassification === true,
+  'GDELT Bubble cache 必须声明 lowFrequencyCache + broadQueryLocalClassification');
+check('contract', gdeltBubbleCache.query?.id === 'gdelt_bubble_ceo_hedging', 'GDELT Bubble cache query.id 异常');
+check('contract', Array.isArray(gdeltBubbleCache.articles), 'GDELT Bubble cache articles 必须为数组');
+for (const field of ['affectsValues', 'affectsScoring', 'affectsDecisionModel', 'affectsExecutionLock', 'affectsPositionGuidance', 'affectsBrentPromotion', 'affectsOdpFinalBias', 'affectsGlobalRiskHeatmap', 'affectsCrossValidation']) {
+  check('contract', gdeltBubbleCache.productionImpact?.[field] === false, `GDELT Bubble cache productionImpact.${field} 必须为 false`);
+}
 
 const s = data.summary || {};
 const red = (data.indicators || []).filter((i) => i.status === 'red').length;
@@ -244,8 +261,10 @@ check('contract', candidateEntries.ceo_hedging?.freeSourceCandidates?.some((sour
   'ceo_hedging source candidates 缺 Brave 免费新闻交叉确认');
 check('contract', buildSrc.includes('fetchCeoHedgingFromBraveNews') && buildSrc.includes('BRAVE_API_KEYS'),
   'ceo_hedging build path 必须保留 Brave 免费新闻交叉确认');
-check('contract', buildSrc.includes('fetchGdeltDocCeoHedgingArticles') && buildSrc.includes('gdeltRetryDelayMs') && buildSrc.includes('Retry-After'),
-  'ceo_hedging GDELT public search 必须保留有界退避重试');
+check('contract', buildSrc.includes("from './gdelt/fetch-gdelt.mjs'") && buildSrc.includes('fetchGdeltDocJson') && buildSrc.includes('GDELT_BUBBLE_CACHE_SCHEMA_VERSION'),
+  'ceo_hedging GDELT public search 必须走共享 wrapper + Bubble compact cache');
+check('contract', buildSrc.includes('readGdeltBubbleWatchCache') && buildSrc.includes('writeGdeltBubbleWatchCache') && buildSrc.includes('GDELT_BUBBLE_CACHE_TTL_HOURS'),
+  'ceo_hedging GDELT public search 必须保留低频缓存与 stale fallback');
 check('contract', buildSrc.includes('mergeCeoHedgingNewsConfirmations') && buildSrc.includes('Brave News Search API'),
   'ceo_hedging 必须保留 Tavily/Brave 交叉确认路径');
 check('contract', buildSrc.includes('capSingleSourceCeoHedgingRed') && buildSrc.includes('redRequiresTwoIndependentNewsSources'),

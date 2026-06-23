@@ -5,13 +5,13 @@ import { extname, join, relative, resolve } from 'node:path';
 const POLICY_DOC = 'docs/GDELT_SOURCE_POLICY.md';
 const PACKAGE_JSON = 'package.json';
 const GDELT_NEWS_CACHE = 'data/gdelt-news-cache.json';
+const GDELT_BUBBLE_CACHE = 'data/gdelt-bubble-watch-cache.json';
 const SCAN_ROOTS = ['scripts', '.github/workflows', 'workers'];
 const SCAN_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.yml', '.yaml']);
 const GDELT_ENDPOINT_RE = /\b(?:https?:\/\/)?(?:api\.gdeltproject\.org|gdeltcloud\.com)\/api\/v2\b|GDELT_CLOUD_API_BASE/u;
 
 const ALLOWED_ENDPOINT_REFERENCE_FILES = new Map([
   ['.github/workflows/test-api-secrets.yml', 'manual API secret diagnostic workflow'],
-  ['scripts/build-bubble-watch.mjs', 'registered Bubble Watch ceo_hedging GDELT DOC path'],
   ['scripts/check-gdelt-cloud-fetcher-integration.mjs', 'GDELT Cloud integration checker'],
   ['scripts/check-gdelt-source-policy.mjs', 'self-check allowlist and endpoint guard'],
   ['scripts/check-workflows.mjs', 'workflow coverage checker with GDELT Cloud assertions'],
@@ -27,8 +27,10 @@ const REQUIRED_POLICY_PHRASES = [
   'GDELT calls must be serial or centrally throttled',
   'P36, current phase',
   'P37, current phase',
+  'P38, current phase',
   'scripts/gdelt/fetch-gdelt.mjs',
-  'data/gdelt-news-cache.json'
+  'data/gdelt-news-cache.json',
+  'data/gdelt-bubble-watch-cache.json'
 ];
 
 const REQUIRED_WRAPPER_PHRASES = [
@@ -48,6 +50,15 @@ const REQUIRED_ODP_CACHE_PHRASES = [
   'fetchGdeltDocBroad',
   'single_broad_query_local_classification',
   'sourceCaches'
+];
+
+const REQUIRED_BUBBLE_CACHE_PHRASES = [
+  'fetchGdeltDocJson',
+  'GDELT_BUBBLE_CACHE_SCHEMA_VERSION',
+  'readGdeltBubbleWatchCache',
+  'writeGdeltBubbleWatchCache',
+  'GDELT_BUBBLE_CACHE_TTL_HOURS',
+  'GDELT_BUBBLE_STALE_MAX_DAYS'
 ];
 
 const errors = [];
@@ -192,6 +203,21 @@ function checkSharedWrapperContract() {
   for (const phrase of REQUIRED_ODP_CACHE_PHRASES) {
     if (!oilNews.includes(phrase)) fail(`${oilNewsPath} missing P37 ODP cache phrase: ${phrase}`);
   }
+  const bubblePath = 'scripts/build-bubble-watch.mjs';
+  if (!existsSync(resolve(bubblePath))) {
+    fail(`${bubblePath} missing`);
+  } else {
+    const bubble = readText(bubblePath);
+    if (!bubble.includes("./gdelt/fetch-gdelt.mjs") && !bubble.includes('./gdelt/fetch-gdelt.mjs')) {
+      fail(`${bubblePath} must import shared GDELT wrapper after P38`);
+    }
+    if (GDELT_ENDPOINT_RE.test(bubble)) {
+      fail(`${bubblePath} must not contain direct GDELT endpoint markers after P38`);
+    }
+    for (const phrase of REQUIRED_BUBBLE_CACHE_PHRASES) {
+      if (!bubble.includes(phrase)) fail(`${bubblePath} missing P38 Bubble cache phrase: ${phrase}`);
+    }
+  }
   if (!existsSync(resolve(GDELT_NEWS_CACHE))) {
     fail(`${GDELT_NEWS_CACHE} missing`);
   } else {
@@ -205,6 +231,22 @@ function checkSharedWrapperContract() {
     }
     if (cache.cachePolicy?.broadQueryLocalClassification !== true) {
       fail(`${GDELT_NEWS_CACHE} must declare broadQueryLocalClassification`);
+    }
+  }
+  if (!existsSync(resolve(GDELT_BUBBLE_CACHE))) {
+    fail(`${GDELT_BUBBLE_CACHE} missing`);
+  } else {
+    const cache = JSON.parse(readText(GDELT_BUBBLE_CACHE));
+    if (cache.schemaVersion !== 'gdelt-bubble-watch-cache-p38') {
+      fail(`${GDELT_BUBBLE_CACHE} schemaVersion must be gdelt-bubble-watch-cache-p38`);
+    }
+    if (cache.module !== 'gdelt-bubble-watch-cache') fail(`${GDELT_BUBBLE_CACHE} module must be gdelt-bubble-watch-cache`);
+    if (cache.cacheScope !== 'bubble_watch_ceo_hedging') fail(`${GDELT_BUBBLE_CACHE} cacheScope must be bubble_watch_ceo_hedging`);
+    if (cache.query?.id !== 'gdelt_bubble_ceo_hedging') {
+      fail(`${GDELT_BUBBLE_CACHE} query.id must be gdelt_bubble_ceo_hedging`);
+    }
+    if (cache.cachePolicy?.lowFrequencyCache !== true || cache.cachePolicy?.broadQueryLocalClassification !== true) {
+      fail(`${GDELT_BUBBLE_CACHE} must declare lowFrequencyCache and broadQueryLocalClassification`);
     }
   }
 }

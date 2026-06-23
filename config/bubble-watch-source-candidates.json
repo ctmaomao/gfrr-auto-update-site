@@ -497,9 +497,9 @@
         {
           "source": "GDELT DOC 2.0 public news search",
           "url": "https://api.gdeltproject.org/api/v2/doc/doc",
-          "cadence": "weekly",
-          "role": "public-news evidence counter for AI bubble / irrational / overbuild language",
-          "limitations": "Rate-limited and media-driven; builder uses reduced-result queries plus one bounded backoff retry on 429/5xx. Automatic result remains conservative and falls back on failure."
+          "cadence": "weekly cache-first",
+          "role": "low-frequency compact-cache public-news evidence counter for AI bubble / irrational / overbuild language",
+          "limitations": "Rate-limited and media-driven; P38 builder reads data/gdelt-bubble-watch-cache.json first and only refreshes live when the cache is outside the fresh window. Stale cache is explicit, automatic result remains conservative, and Tavily/Brave/Wind fallback remains available on failure."
         },
         {
           "source": "Tavily Search API",

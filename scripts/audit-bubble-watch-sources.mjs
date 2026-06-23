@@ -13,6 +13,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SNAPSHOT_FILES = [
   'data/bubble-watch.json',
   'data/bubble-watch-history.json',
+  'data/gdelt-bubble-watch-cache.json',
   'config/bubble-watch-curated.json'
 ];
 const REPORT_PATH = path.join(ROOT, 'manual-artifacts', 'bubble-watch-source-health-latest.json');

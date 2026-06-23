@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gdelt-bubble-watch-cache-p38",
+  "module": "gdelt-bubble-watch-cache",
+  "generatedAt": "2026-06-23T00:00:00.000Z",
+  "sourceKey": "gdelt_bubble_watch_ceo_hedging",
+  "cacheScope": "bubble_watch_ceo_hedging",
+  "status": "not_initialized",
+  "sourceStatus": "not_initialized",
+  "requestMode": "placeholder_until_next_bubble_watch_refresh",
+  "source": "GDELT DOC public search",
+  "cachePolicy": {
+    "ttlHours": 132,
+    "staleMaxDays": 21,
+    "lowFrequencyCache": true,
+    "broadQueryLocalClassification": true
+  },
+  "query": {
+    "id": "gdelt_bubble_ceo_hedging",
+    "label": "GDELT Bubble Watch CEO hedging cache query",
+    "query": "(\"AI bubble\" OR \"artificial intelligence bubble\" OR \"AI overbuild\" OR \"AI capex bubble\")",
+    "mode": "ArtList",
+    "maxrecords": "20",
+    "timespan": "30d",
+    "sort": "HybridRel"
+  },
+  "requestDiagnostics": null,
+  "aggregate": {
+    "articleCount": 0
+  },
+  "articles": [],
+  "error": "placeholder cache; next Refresh Bubble Watch run will write live or error cache state",
+  "promotionEligible": false,
+  "productionDisplayApproved": false,
+  "productionImpact": {
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "limitationsZh": [
+    "GDELT 是低频缓存型新闻代理源,不是高频实时新闻或事件确认源。",
+    "本 cache 只保存 compact 标题、URL、domain 与时间戳,不保存正文、snippet 或 raw response。",
+    "本 cache 不确认 AI 泡沫、CEO 集体承认过热、市场顶部或交易信号。"
+  ],
+  "boundary": "production read-only GDELT compact news cache for Bubble Watch ceo_hedging; display-only/audit-only cache; NOT in GFRR values, scoring, decision, execution, position, ODP finalBias, Brent promotion, Global Risk Heatmap, or cross-validation"
+}

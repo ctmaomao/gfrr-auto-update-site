@@ -17,12 +17,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fetchGdeltDocJson, sanitizeGdeltDiagnostics } from './gdelt/fetch-gdelt.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG_PATH = path.join(ROOT, 'config', 'bubble-watch-curated.json');
 const SOURCE_CANDIDATES_PATH = path.join(ROOT, 'config', 'bubble-watch-source-candidates.json');
 const OUT_PATH = path.join(ROOT, 'data', 'bubble-watch.json');
 const HISTORY_PATH = path.join(ROOT, 'data', 'bubble-watch-history.json');
+const GDELT_BUBBLE_CACHE_PATH = path.join(ROOT, 'data', 'gdelt-bubble-watch-cache.json');
 
 const UA = 'gfrr-bubble-watch/1.0 (+https://github.com/ctmaomao/gfrr-auto-update-site)';
 // SEC EDGAR 要求 UA 携带联系方式(无邮箱式 UA 会 403)
@@ -49,6 +51,11 @@ const STATUS_ZH = { green: '绿', yellow: '黄', red: '红' };
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
 const TIER_LABEL_EN = { observation: 'Observation', caution: 'Moderate Caution', alert: 'High Risk Alert', top: 'Systemic Top' };
 const NARRATIVE_ENGINE_VERSION = 'bubble-watch-narrative-v1';
+const GDELT_BUBBLE_CACHE_SCHEMA_VERSION = 'gdelt-bubble-watch-cache-p38';
+const GDELT_BUBBLE_CACHE_MODULE = 'gdelt-bubble-watch-cache';
+const GDELT_BUBBLE_CACHE_TTL_HOURS = 132;
+const GDELT_BUBBLE_STALE_MAX_DAYS = 21;
+const GDELT_BUBBLE_CACHE_BOUNDARY = 'production read-only GDELT compact news cache for Bubble Watch ceo_hedging; display-only/audit-only cache; NOT in GFRR values, scoring, decision, execution, position, ODP finalBias, Brent promotion, Global Risk Heatmap, or cross-validation';
 const PROXY_CONFIDENCE_CALIBRATION_IDS = new Set([
   'insider_sell_buy',
   'ai_ipo_pipeline',
@@ -2822,10 +2829,7 @@ function classifyCeoHedgingEvidence(relevantCount, executiveHitCount) {
 const CEO_HEDGING_STATUS_RANK = { green: 0, yellow: 1, red: 2 };
 const CEO_HEDGING_STATUS_DISPLAY = { green: '无', yellow: '部分', red: '普遍' };
 const GDELT_CEO_HEDGING_QUERY = '("AI bubble" OR "artificial intelligence bubble" OR "AI overbuild" OR "AI capex bubble")';
-const GDELT_CEO_HEDGING_ATTEMPTS = [
-  { label: 'primary_30d_hybrid', maxrecords: '20', timespan: '30d', sort: 'HybridRel' },
-  { label: 'rate_limit_retry_14d_datedesc', maxrecords: '12', timespan: '14d', sort: 'DateDesc' }
-];
+const GDELT_CEO_HEDGING_QUERY_SPEC = { label: 'weekly_30d_hybrid_cache', maxrecords: '20', timespan: '30d', sort: 'HybridRel' };
 
 function rankCeoHedgingStatus(status) {
   return CEO_HEDGING_STATUS_RANK[status] ?? 0;
@@ -2897,6 +2901,118 @@ function collectCeoHedgingEvidenceText(entries) {
     ])
     .map((article) => `${article.title || ''} ${article.snippet || ''} ${article.source || ''}`)
     .join(' ');
+}
+
+function ageHours(isoValue) {
+  const ms = Date.now() - Date.parse(isoValue || '');
+  if (!Number.isFinite(ms)) return null;
+  return Math.max(0, ms / 3600000);
+}
+
+function gdeltBubbleCacheAgeStatus(cache) {
+  const hours = ageHours(cache?.generatedAt);
+  if (!Number.isFinite(hours)) return 'invalid';
+  if (hours <= GDELT_BUBBLE_CACHE_TTL_HOURS) return 'fresh';
+  if (hours <= GDELT_BUBBLE_STALE_MAX_DAYS * 24) return 'stale';
+  return 'expired';
+}
+
+function readGdeltBubbleWatchCache() {
+  try {
+    if (!fs.existsSync(GDELT_BUBBLE_CACHE_PATH)) return { cache: null, reason: 'missing' };
+    const cache = JSON.parse(fs.readFileSync(GDELT_BUBBLE_CACHE_PATH, 'utf8'));
+    if (cache?.schemaVersion !== GDELT_BUBBLE_CACHE_SCHEMA_VERSION || cache?.module !== GDELT_BUBBLE_CACHE_MODULE) {
+      return { cache: null, reason: 'schema_mismatch' };
+    }
+    if (cache.cacheScope !== 'bubble_watch_ceo_hedging') return { cache: null, reason: 'scope_mismatch' };
+    if (!Array.isArray(cache.articles)) return { cache: null, reason: 'articles_not_array' };
+    return { cache, reason: 'ok' };
+  } catch (error) {
+    return { cache: null, reason: `read_error:${compactSnippet(error.message, 80)}` };
+  }
+}
+
+function compactGdeltBubbleArticle(article) {
+  return {
+    title: compactSnippet(article?.title || '', 220) || null,
+    url: article?.url || null,
+    domain: article?.domain || null,
+    seendate: article?.seendate || article?.seenDate || null
+  };
+}
+
+function articlesFromGdeltBubbleCache(cache) {
+  return (Array.isArray(cache?.articles) ? cache.articles : []).map((article) => ({
+    title: article.title || '',
+    url: article.url || '',
+    domain: article.domain || null,
+    seendate: article.seendate || null
+  }));
+}
+
+function writeGdeltBubbleWatchCache({
+  status,
+  sourceStatus,
+  requestMode,
+  articles = [],
+  request = GDELT_CEO_HEDGING_QUERY_SPEC,
+  requestDiagnostics = null,
+  error = null
+}) {
+  const compactArticles = articles.map(compactGdeltBubbleArticle);
+  const cache = {
+    schemaVersion: GDELT_BUBBLE_CACHE_SCHEMA_VERSION,
+    module: GDELT_BUBBLE_CACHE_MODULE,
+    generatedAt: new Date().toISOString(),
+    sourceKey: 'gdelt_bubble_watch_ceo_hedging',
+    cacheScope: 'bubble_watch_ceo_hedging',
+    status,
+    sourceStatus,
+    requestMode,
+    source: 'GDELT DOC public search',
+    cachePolicy: {
+      ttlHours: GDELT_BUBBLE_CACHE_TTL_HOURS,
+      staleMaxDays: GDELT_BUBBLE_STALE_MAX_DAYS,
+      lowFrequencyCache: true,
+      broadQueryLocalClassification: true
+    },
+    query: {
+      id: 'gdelt_bubble_ceo_hedging',
+      label: 'GDELT Bubble Watch CEO hedging cache query',
+      query: GDELT_CEO_HEDGING_QUERY,
+      mode: 'ArtList',
+      maxrecords: request.maxrecords || null,
+      timespan: request.timespan || null,
+      sort: request.sort || null
+    },
+    requestDiagnostics: requestDiagnostics ? sanitizeGdeltDiagnostics(requestDiagnostics) : null,
+    aggregate: {
+      articleCount: compactArticles.length
+    },
+    articles: compactArticles,
+    error: error ? compactSnippet(error.message || error, 180) : null,
+    promotionEligible: false,
+    productionDisplayApproved: false,
+    productionImpact: {
+      affectsValues: false,
+      affectsScoring: false,
+      affectsDecisionModel: false,
+      affectsExecutionLock: false,
+      affectsPositionGuidance: false,
+      affectsBrentPromotion: false,
+      affectsOdpFinalBias: false,
+      affectsGlobalRiskHeatmap: false,
+      affectsCrossValidation: false
+    },
+    limitationsZh: [
+      'GDELT 是低频缓存型新闻代理源,不是高频实时新闻或事件确认源。',
+      '本 cache 只保存 compact 标题、URL、domain 与时间戳,不保存正文、snippet 或 raw response。',
+      '本 cache 不确认 AI 泡沫、CEO 集体承认过热、市场顶部或交易信号。'
+    ],
+    boundary: GDELT_BUBBLE_CACHE_BOUNDARY
+  };
+  fs.writeFileSync(GDELT_BUBBLE_CACHE_PATH, `${JSON.stringify(cache, null, 2)}\n`);
+  return cache;
 }
 
 function buildCeoHedgingPublicNarrative(entries, status) {
@@ -2989,75 +3105,124 @@ function mergeCeoHedgingNewsConfirmations(primaryEntry, confirmationEntries, opt
   };
 }
 
-function gdeltRetryDelayMs(error) {
-  const retryAfterSeconds = Number.parseInt(error?.retryAfter || '', 10);
-  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
-    return Math.min(Math.max(retryAfterSeconds * 1000, 8000), 25000);
-  }
-  return 8000;
-}
-
-function shouldRetryGdeltDocSearch(error) {
-  const status = Number(error?.status);
-  return !Number.isFinite(status) || status === 429 || status >= 500;
-}
-
 async function fetchGdeltDocCeoHedgingArticles() {
-  const attempts = [];
-  let lastError = null;
-  for (let i = 0; i < GDELT_CEO_HEDGING_ATTEMPTS.length; i++) {
-    const attempt = GDELT_CEO_HEDGING_ATTEMPTS[i];
-    if (i > 0) {
-      const waitMs = gdeltRetryDelayMs(lastError);
-      console.warn(`[bubble-watch] GDELT CEO hedging retry after ${waitMs}ms via ${attempt.label}`);
-      await delay(waitMs);
-    }
-    const params = new URLSearchParams({
-      query: GDELT_CEO_HEDGING_QUERY,
-      mode: 'ArtList',
-      format: 'json',
-      maxrecords: attempt.maxrecords,
-      timespan: attempt.timespan,
-      sort: attempt.sort
-    });
-    try {
-      const json = await fetchWithTimeout(`https://api.gdeltproject.org/api/v2/doc/doc?${params}`, {
-        asJson: true,
-        headers: { 'User-Agent': BROWSER_UA },
-        timeoutMs: 15000
-      });
-      attempts.push({ ...attempt, status: 'ok' });
-      return { articles: Array.isArray(json?.articles) ? json.articles : [], request: attempt, attempts };
-    } catch (error) {
-      lastError = error;
-      attempts.push({ ...attempt, status: 'failed', error: compactSnippet(error.message, 140), retryAfter: error.retryAfter || null });
-      console.warn(`[bubble-watch] GDELT CEO hedging ${attempt.label} failed: ${error.message}`);
-      if (!shouldRetryGdeltDocSearch(error) || i === GDELT_CEO_HEDGING_ATTEMPTS.length - 1) break;
-    }
+  const cached = readGdeltBubbleWatchCache();
+  const cacheStatus = gdeltBubbleCacheAgeStatus(cached.cache);
+  const cacheUsable = cached.cache?.status === 'ok' && Array.isArray(cached.cache?.articles);
+  if (cacheUsable && cacheStatus === 'fresh') {
+    return {
+      articles: articlesFromGdeltBubbleCache(cached.cache),
+      request: {
+        ...GDELT_CEO_HEDGING_QUERY_SPEC,
+        label: 'fresh_cache',
+        cacheStatus
+      },
+      attempts: [],
+      cacheStatus,
+      cacheGeneratedAt: cached.cache.generatedAt,
+      requestDiagnostics: cached.cache.requestDiagnostics || null
+    };
   }
-  const error = lastError || new Error('GDELT DOC search failed without response');
-  error.gdeltAttempts = attempts;
-  throw error;
+
+  const params = new URLSearchParams({
+    query: GDELT_CEO_HEDGING_QUERY,
+    mode: 'ArtList',
+    format: 'json',
+    maxrecords: GDELT_CEO_HEDGING_QUERY_SPEC.maxrecords,
+    timespan: GDELT_CEO_HEDGING_QUERY_SPEC.timespan,
+    sort: GDELT_CEO_HEDGING_QUERY_SPEC.sort
+  });
+
+  try {
+    const { json, diagnostics } = await fetchGdeltDocJson({
+      queryParams: params,
+      userAgent: BROWSER_UA,
+      timeoutMs: 15000,
+      maxRetries: 1,
+      label: 'Bubble Watch CEO hedging GDELT DOC'
+    });
+    const articles = Array.isArray(json?.articles) ? json.articles : [];
+    writeGdeltBubbleWatchCache({
+      status: 'ok',
+      sourceStatus: 'live',
+      requestMode: 'live_weekly_query',
+      articles,
+      request: GDELT_CEO_HEDGING_QUERY_SPEC,
+      requestDiagnostics: diagnostics
+    });
+    return {
+      articles,
+      request: {
+        ...GDELT_CEO_HEDGING_QUERY_SPEC,
+        cacheStatus: 'refreshed_live'
+      },
+      attempts: [{ ...GDELT_CEO_HEDGING_QUERY_SPEC, status: 'ok' }],
+      cacheStatus: 'refreshed_live',
+      requestDiagnostics: diagnostics
+    };
+  } catch (error) {
+    console.warn(`[bubble-watch] GDELT CEO hedging live query failed: ${error.message}`);
+    if (cacheUsable && cacheStatus === 'stale') {
+      return {
+        articles: articlesFromGdeltBubbleCache(cached.cache),
+        request: {
+          ...GDELT_CEO_HEDGING_QUERY_SPEC,
+          label: 'stale_cache_live_failed',
+          cacheStatus
+        },
+        attempts: [{ ...GDELT_CEO_HEDGING_QUERY_SPEC, status: 'failed', error: compactSnippet(error.message, 140) }],
+        cacheStatus,
+        cacheGeneratedAt: cached.cache.generatedAt,
+        liveFailure: error.message,
+        requestDiagnostics: error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null
+      };
+    }
+    writeGdeltBubbleWatchCache({
+      status: 'error',
+      sourceStatus: 'error',
+      requestMode: 'live_weekly_query_failed_no_usable_cache',
+      articles: cached.cache?.articles || [],
+      request: GDELT_CEO_HEDGING_QUERY_SPEC,
+      requestDiagnostics: error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null,
+      error
+    });
+    const wrapped = new Error(`GDELT DOC search failed and no usable Bubble Watch cache was available: ${error.message}`);
+    wrapped.gdeltAttempts = [{ ...GDELT_CEO_HEDGING_QUERY_SPEC, status: 'failed', error: compactSnippet(error.message, 140), cacheRead: cached.reason, cacheStatus }];
+    wrapped.gdeltDiagnostics = error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null;
+    throw wrapped;
+  }
 }
 
 async function fetchCeoHedgingFromGdeltPublic() {
-  const { articles, request, attempts } = await fetchGdeltDocCeoHedgingArticles();
+  const { articles, request, attempts, cacheStatus, cacheGeneratedAt, liveFailure, requestDiagnostics } = await fetchGdeltDocCeoHedgingArticles();
   const executiveRe = /\b(CEO|chief executive|Altman|Nadella|Huang|Musk|Zuckerberg|Pichai|Ellison|Hock Tan|Lisa Su)\b/iu;
   const overheatRe = /\b(bubble|overbuild|overbuilt|overheated|irrational|mania|capex)\b/iu;
   const relevant = articles.filter((a) => overheatRe.test(`${a.title || ''} ${a.url || ''}`));
   const executiveHits = relevant.filter((a) => executiveRe.test(`${a.title || ''} ${a.url || ''}`));
   const { status, display } = classifyCeoHedgingEvidence(relevant.length, executiveHits.length);
   const windowText = request.timespan === '14d' ? '近 14 天' : '近 30 天';
+  const cacheText = cacheStatus === 'fresh'
+    ? `本次读取 ${GDELT_BUBBLE_CACHE_TTL_HOURS} 小时内 fresh cache`
+    : cacheStatus === 'stale'
+      ? `live 查询失败后读取 ${GDELT_BUBBLE_STALE_MAX_DAYS} 天内 stale cache`
+      : '本次 live 查询并刷新 compact cache';
   return {
     status,
     value_display: display,
-    source_name: 'GDELT DOC 2.0 public news search',
-    note: `GDELT DOC 2.0 ${windowText}公开新闻检索(${request.label}):AI bubble/overbuild/capex 相关报道 ${relevant.length} 条,其中带 CEO/核心高管姓名线索 ${executiveHits.length} 条;该项按媒体中高管对冲语言频率保守判为「${display}」。判级:普遍承认过热=红 / 部分=黄 / 无=绿`,
+    source_name: 'GDELT DOC 2.0 public news search cache',
+    note: `GDELT DOC 2.0 ${windowText}公开新闻检索(${request.label}):AI bubble/overbuild/capex 相关报道 ${relevant.length} 条,其中带 CEO/核心高管姓名线索 ${executiveHits.length} 条;${cacheText};该项按媒体中高管对冲语言频率保守判为「${display}」。判级:普遍承认过热=红 / 部分=黄 / 无=绿`,
     detail: {
       source: 'GDELT DOC 2.0',
       query: GDELT_CEO_HEDGING_QUERY,
       gdeltRequest: request,
       gdeltAttempts: attempts,
+      gdeltCache: {
+        schemaVersion: GDELT_BUBBLE_CACHE_SCHEMA_VERSION,
+        cacheStatus: cacheStatus || 'unknown',
+        cacheGeneratedAt: cacheGeneratedAt || null,
+        liveFailure: liveFailure || null
+      },
+      requestDiagnostics: requestDiagnostics ? sanitizeGdeltDiagnostics(requestDiagnostics) : null,
       articleCount: relevant.length,
       executiveHitCount: executiveHits.length,
       topArticles: relevant.slice(0, 5).map((a) => ({ title: a.title || null, url: a.url || null, domain: a.domain || null, seendate: a.seendate || null }))

@@ -19,7 +19,7 @@ Official GDELT references:
 |---|---|---|---|---|
 | World Order Stress | GDELT Cloud v2 `events/summary` | `scripts/world-order/fetch-gdelt-cloud.mjs` | daily workflow / explicit build | previous `data/world-order-stress.json` GDELT summary can be reused as `stale` |
 | ODP Oil News Event Watch | GDELT DOC 2.0 broad cache query plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-news-cache.json` | 2h workflow / manual dispatch | Tavily / Brave source health remains visible; GDELT cache can be `ok` / `stale` / `error` / `not_initialized` |
-| Bubble Watch `ceo_hedging` | GDELT DOC 2.0 `doc/doc` plus Tavily / Brave / Wind fallback | `scripts/build-bubble-watch.mjs` | weekly build plus source-health audit | Tavily / Brave free fallback first; Wind paid final fallback only when enabled |
+| Bubble Watch `ceo_hedging` | GDELT DOC 2.0 compact cache plus Tavily / Brave / Wind fallback | `scripts/build-bubble-watch.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-bubble-watch-cache.json` | weekly build plus source-health audit | fresh/stale GDELT cache first; Tavily / Brave free fallback; Wind paid final fallback only when enabled |
 | API secret diagnostic | GDELT Cloud v2 smoke checks | `.github/workflows/test-api-secrets.yml` | manual diagnostic | diagnostic-only; not production data |
 
 ## Rules
@@ -56,7 +56,6 @@ Allowed endpoint-reference files for this phase:
 
 ```text
 .github/workflows/test-api-secrets.yml
-scripts/build-bubble-watch.mjs
 scripts/check-gdelt-cloud-fetcher-integration.mjs
 scripts/check-gdelt-source-policy.mjs
 scripts/check-workflows.mjs
@@ -81,8 +80,7 @@ P36, current phase:
 - Add a shared GDELT wrapper / adapter with serial request discipline,
   `Retry-After` handling, bounded retries, timeout, and sanitized diagnostics.
 - Move ODP oil-news GDELT DOC calls behind that wrapper.
-- Keep Bubble Watch and World Order direct paths registered until their own
-  migration phases.
+- Keep World Order direct path registered until its own migration phase.
 
 P37, current phase:
 
@@ -94,10 +92,15 @@ P37, current phase:
   decision, execution, position, Brent promotion, Global Risk Heatmap, and
   cross-validation.
 
-P38 candidate:
+P38, current phase:
 
-- Move Bubble Watch `ceo_hedging` to read the shared GDELT cache/wrapper before
-  Tavily / Brave / Wind fallback.
+- Move Bubble Watch `ceo_hedging` to the shared GDELT wrapper.
+- Add `data/gdelt-bubble-watch-cache.json` as a compact cache artifact for
+  Bubble Watch CEO hedging evidence.
+- Keep Refresh Bubble Watch as the only writer that commits the Bubble cache;
+  source-health audit snapshots and restores it to remain read-only.
+- Keep Tavily / Brave / Wind fallback behavior and the red-requires-two-sources
+  rule unchanged.
 
 P39 candidate:
 
