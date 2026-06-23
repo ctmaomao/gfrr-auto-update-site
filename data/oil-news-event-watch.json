@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-23T10:12:43.314Z",
+  "generatedAt": "2026-06-23T13:24:10.374Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -31,7 +31,7 @@
             "label": "GDELT broad oil-news cache query",
             "status": "error",
             "articleCount": 0,
-            "error": "GDELT DOC broad oil-news cache HTTP 429 after 2 attempt(s)"
+            "error": "GDELT DOC broad oil-news cache JSON parse failed"
           }
         ]
       },
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-06-22T15:03:50.000Z",
-    "latestArticleAgeHours": 19.1,
+    "latestArticleAgeHours": 22.3,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 46,
+      "articleCount": 45,
       "sourceCount": 2,
-      "weightedSignal": 276,
+      "weightedSignal": 270,
       "topArticles": [
         {
           "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
@@ -235,9 +235,9 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 22,
+      "articleCount": 21,
       "sourceCount": 2,
-      "weightedSignal": 88,
+      "weightedSignal": 84,
       "topArticles": [
         {
           "title": "Three Iranian tankers exit U.S. blockade for first time in months as shipowners eye Hormuz in 'wary disbelief' - CNBC",
@@ -258,15 +258,15 @@
           ]
         },
         {
-          "title": "First Russian shadow fleet vessel enters Channel since Smyrtos boarding - BBC",
-          "url": "https://www.bbc.com/news/articles/cgk6d12lz6jo",
+          "title": "Captain of seized Russian shadow fleet tanker appears in court - BBC",
+          "url": "https://www.bbc.com/news/articles/c9324y4yer4o",
           "domain": "bbc.com",
-          "publishedAt": "2026-06-18T11:20:20.000Z",
+          "publishedAt": "2026-06-16T16:10:12.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
-            "facility_event",
+            "chokepoint",
             "sanctions",
             "tanker_shipping"
           ],
@@ -275,10 +275,10 @@
           ]
         },
         {
-          "title": "Ukraine Hits 244-Meter Shadow Fleet Tanker, 2 Bridges and Multiple Russian Command Posts Overnight - Kyiv Post",
-          "url": "https://www.kyivpost.com/post/78392",
-          "domain": "kyivpost.com",
-          "publishedAt": "2026-06-17T19:26:00.000Z",
+          "title": "Trump Predicts Restoration of U.S. Sanctions on Russian Oil \"Soon\" - The Maritime Executive",
+          "url": "https://maritime-executive.com/article/trump-predicts-restoration-of-u-s-sanctions-on-russian-oil-soon",
+          "domain": "maritime-executive.com",
+          "publishedAt": "2026-06-16T21:14:08.000Z",
           "sources": [
             "tavily"
           ],
@@ -295,9 +295,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 21,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 126,
+      "weightedSignal": 132,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -358,9 +358,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 22,
+      "articleCount": 21,
       "sourceCount": 2,
-      "weightedSignal": 88,
+      "weightedSignal": 84,
       "topArticles": [
         {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
@@ -544,9 +544,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 21,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 42,
+      "weightedSignal": 44,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -799,10 +799,10 @@
       ]
     },
     {
-      "title": "Ras Laffan: Explosion at Qatar’s key gas station kills 13 and leaves dozens injured | The Independent",
-      "url": "https://independent.co.uk/news/world/explosion-qatar-ras-laffan-barzan-iran-war-b3000223.html",
-      "domain": "independent.co.uk",
-      "publishedAt": "2026-06-22T13:37:51.000Z",
+      "title": "Qatar says gas export terminal blast killed 13 as workers tried to resume operations",
+      "url": "https://nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
+      "domain": "nbcnews.com",
+      "publishedAt": "2026-06-22T15:03:50.000Z",
       "sources": [
         "brave"
       ],
@@ -817,10 +817,10 @@
       ]
     },
     {
-      "title": "Qatar says gas export terminal blast killed 13 as workers tried to resume operations",
-      "url": "https://nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
-      "domain": "nbcnews.com",
-      "publishedAt": "2026-06-22T15:03:50.000Z",
+      "title": "Ras Laffan: Explosion at Qatar’s key gas station kills 13 and leaves dozens injured | The Independent",
+      "url": "https://independent.co.uk/news/world/explosion-qatar-ras-laffan-barzan-iran-war-b3000223.html",
+      "domain": "independent.co.uk",
+      "publishedAt": "2026-06-22T13:37:51.000Z",
       "sources": [
         "brave"
       ],
