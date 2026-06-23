@@ -1,9 +1,9 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-23T04:43:31.453Z",
+  "generatedAt": "2026-06-23T10:12:43.314Z",
   "sourceKey": "odp_oil_news_event_watch",
-  "source": "GDELT DOC public search + Tavily Search API + Brave News Search API",
+  "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
     "gdelt_doc",
     "tavily",
@@ -23,36 +23,15 @@
         "status": "error",
         "networkUsed": true,
         "successCount": 0,
-        "failureCount": 4,
+        "failureCount": 1,
         "articleCount": 0,
         "queryRuns": [
           {
-            "queryId": "chokepoint_shipping",
-            "label": "Chokepoint / tanker shipping",
+            "queryId": "gdelt_broad_oil_news",
+            "label": "GDELT broad oil-news cache query",
             "status": "error",
             "articleCount": 0,
-            "error": "GDELT DOC HTTP 429"
-          },
-          {
-            "queryId": "sanctions_shadow_fleet",
-            "label": "Sanctions / shadow fleet",
-            "status": "error",
-            "articleCount": 0,
-            "error": "GDELT DOC HTTP 429"
-          },
-          {
-            "queryId": "facility_supply_disruption",
-            "label": "Facility / supply disruption",
-            "status": "error",
-            "articleCount": 0,
-            "error": "GDELT DOC HTTP 429"
-          },
-          {
-            "queryId": "market_reaction",
-            "label": "Oil market reaction",
-            "status": "error",
-            "articleCount": 0,
-            "error": "GDELT DOC HTTP 429"
+            "error": "GDELT DOC broad oil-news cache HTTP 429 after 2 attempt(s)"
           }
         ]
       },
@@ -134,15 +113,20 @@
   },
   "freshness": {
     "windowDays": 7,
-    "latestArticleAt": "2026-06-22T13:37:51.000Z",
-    "latestArticleAgeHours": 15.1,
+    "latestArticleAt": "2026-06-22T15:03:50.000Z",
+    "latestArticleAgeHours": 19.1,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
     "querySetVersion": "odp-oil-news-query-set-p28",
-    "queryCount": 12,
+    "gdeltQuerySetVersion": "gdelt-broad-oil-news-cache-p37",
+    "gdeltBroadQuery": {
+      "id": "gdelt_broad_oil_news",
+      "label": "GDELT broad oil-news cache query"
+    },
+    "queryCount": 9,
     "querySuccessCount": 8,
-    "queryFailureCount": 4,
+    "queryFailureCount": 1,
     "topics": [
       {
         "id": "chokepoint_shipping",
@@ -180,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 64,
-    "uniqueArticleCount": 60,
+    "uniqueArticleCount": 61,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -251,9 +235,9 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 20,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 80,
+      "weightedSignal": 88,
       "topArticles": [
         {
           "title": "Three Iranian tankers exit U.S. blockade for first time in months as shipowners eye Hormuz in 'wary disbelief' - CNBC",
@@ -374,9 +358,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 21,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 84,
+      "weightedSignal": 88,
       "topArticles": [
         {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
@@ -438,9 +422,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 36,
+      "articleCount": 35,
       "sourceCount": 2,
-      "weightedSignal": 108,
+      "weightedSignal": 105,
       "topArticles": [
         {
           "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
@@ -499,9 +483,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 46,
+      "articleCount": 47,
       "sourceCount": 2,
-      "weightedSignal": 138,
+      "weightedSignal": 141,
       "topArticles": [
         {
           "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
@@ -643,24 +627,6 @@
       "queryIds": [
         "facility_supply_disruption",
         "market_reaction"
-      ]
-    },
-    {
-      "title": "Ukrainian drone hits Moscow region's largest refinery - Reuters",
-      "url": "https://www.reuters.com/world/moscow-oil-refinery-damaged-ukrainian-drone-attack-mayor-says-2026-06-16/",
-      "domain": "reuters.com",
-      "publishedAt": "2026-06-16T10:43:43.000Z",
-      "sources": [
-        "brave",
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
       ]
     },
     {
@@ -815,10 +781,10 @@
       ]
     },
     {
-      "title": "Qatar says gas export terminal explosion killed 13 people and hurt dozens | AP News",
-      "url": "https://apnews.com/article/qatar-explosion-ras-laffan-b8a36eea8889899b2fa499c5e247a08f",
-      "domain": "apnews.com",
-      "publishedAt": "2026-06-22T01:54:32.000Z",
+      "title": "Qatar says gas export terminal blast killed 13, injured dozens more - ABC News",
+      "url": "https://abcnews.com/International/wireStory/explosion-qatar-restarts-gas-export-terminal-hurts-54-134085065",
+      "domain": "abcnews.com",
+      "publishedAt": "2026-06-22T01:54:00.000Z",
       "sources": [
         "brave"
       ],
@@ -849,32 +815,26 @@
       "queryIds": [
         "facility_supply_disruption"
       ]
+    },
+    {
+      "title": "Qatar says gas export terminal blast killed 13 as workers tried to resume operations",
+      "url": "https://nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
+      "domain": "nbcnews.com",
+      "publishedAt": "2026-06-22T15:03:50.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
     }
   ],
-  "recommendation": {
-    "state": "elevated_manual_review",
-    "operatorAction": "manual_review_before_interpretation",
-    "noteZh": "多源新闻代理出现同类油价事件信号,需要人工核对标题、来源、时间和市场/物理层印证。"
-  },
-  "productionDisplayApproved": true,
-  "promotionEligible": false,
-  "productionImpact": {
-    "affectsValues": false,
-    "affectsScoring": false,
-    "affectsDecisionModel": false,
-    "affectsExecutionLock": false,
-    "affectsPositionGuidance": false,
-    "affectsBrentPromotion": false,
-    "affectsOdpFinalBias": false,
-    "affectsGlobalRiskHeatmap": false,
-    "affectsCrossValidation": false
-  },
-  "limitationsZh": [
-    "新闻搜索结果会重复转载、标题党化或延迟收录;本文件只保存 compact 摘要,不保存原始新闻正文。",
-    "本层不确认霍尔木兹关闭、航道中断、油轮流向、炼厂事故、断供、制裁影响或油价方向。",
-    "只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施层同时印证时,才适合提高人工观察置信度。"
-  ],
-  "boundary": "production read-only ODP oil-news event watch; display-only/audit-only; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
@@ -899,5 +859,29 @@
     "displayHeadlinesApproved": false,
     "reasonZh": "本轮标题含高主张措辞,必须保持人工复核,不得直接进入前端标题展示。",
     "requiredNextReview": "separate reviewed UI/copy PR with headline uncertainty copy and source attribution guards"
-  }
+  },
+  "recommendation": {
+    "state": "elevated_manual_review",
+    "operatorAction": "manual_review_before_interpretation",
+    "noteZh": "多源新闻代理出现同类油价事件信号,需要人工核对标题、来源、时间和市场/物理层印证。"
+  },
+  "productionDisplayApproved": true,
+  "promotionEligible": false,
+  "productionImpact": {
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "limitationsZh": [
+    "新闻搜索结果会重复转载、标题党化或延迟收录;本文件只保存 compact 摘要,不保存原始新闻正文。",
+    "本层不确认霍尔木兹关闭、航道中断、油轮流向、炼厂事故、断供、制裁影响或油价方向。",
+    "只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施层同时印证时,才适合提高人工观察置信度。"
+  ],
+  "boundary": "production read-only ODP oil-news event watch; display-only/audit-only; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
 }
