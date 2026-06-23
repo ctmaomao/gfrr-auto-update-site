@@ -1,7 +1,7 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-06-23T13:24:03.249Z",
+  "generatedAt": "2026-06-23T17:01:45.523Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
   "status": "error",
@@ -27,7 +27,7 @@
     "provider": "gdelt",
     "endpointType": "doc",
     "label": "GDELT DOC broad oil-news cache",
-    "status": 200,
+    "status": 429,
     "attempts": 2,
     "retryCount": 1,
     "rateLimited": true,
@@ -37,8 +37,8 @@
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 24287,
-    "errorCode": "json_parse_failed"
+    "elapsedMs": 29331,
+    "errorCode": "rate_limited"
   },
   "aggregate": {
     "articleCount": 0,
@@ -53,7 +53,7 @@
     }
   },
   "articles": [],
-  "error": "GDELT DOC broad oil-news cache JSON parse failed",
+  "error": "GDELT DOC broad oil-news cache HTTP 429 after 2 attempt(s)",
   "promotionEligible": false,
   "productionDisplayApproved": false,
   "productionImpact": {
