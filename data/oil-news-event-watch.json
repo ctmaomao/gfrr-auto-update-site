@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-23T04:02:48.515Z",
+  "generatedAt": "2026-06-23T04:43:31.453Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC public search + Tavily Search API + Brave News Search API",
   "sources": [
@@ -31,7 +31,7 @@
             "label": "Chokepoint / tanker shipping",
             "status": "error",
             "articleCount": 0,
-            "error": "fetch failed"
+            "error": "GDELT DOC HTTP 429"
           },
           {
             "queryId": "sanctions_shadow_fleet",
@@ -135,7 +135,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-06-22T13:37:51.000Z",
-    "latestArticleAgeHours": 14.4,
+    "latestArticleAgeHours": 15.1,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -180,7 +180,7 @@
   },
   "aggregate": {
     "rawArticleCount": 64,
-    "uniqueArticleCount": 62,
+    "uniqueArticleCount": 60,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -190,9 +190,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 47,
+      "articleCount": 46,
       "sourceCount": 2,
-      "weightedSignal": 282,
+      "weightedSignal": 276,
       "topArticles": [
         {
           "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
@@ -274,22 +274,6 @@
           ]
         },
         {
-          "title": "UK Expands Russia Sanctions With Focus On Shadow Fleet - Marine News Magazine",
-          "url": "https://www.marinelink.com/news/uk-expands-russia-sanctions-focus-shadow-540330",
-          "domain": "marinelink.com",
-          "publishedAt": "2026-06-16T04:02:32.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "sanctions",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "sanctions_shadow_fleet"
-          ]
-        },
-        {
           "title": "First Russian shadow fleet vessel enters Channel since Smyrtos boarding - BBC",
           "url": "https://www.bbc.com/news/articles/cgk6d12lz6jo",
           "domain": "bbc.com",
@@ -305,14 +289,31 @@
           "queryIds": [
             "sanctions_shadow_fleet"
           ]
+        },
+        {
+          "title": "Ukraine Hits 244-Meter Shadow Fleet Tanker, 2 Bridges and Multiple Russian Command Posts Overnight - Kyiv Post",
+          "url": "https://www.kyivpost.com/post/78392",
+          "domain": "kyivpost.com",
+          "publishedAt": "2026-06-17T19:26:00.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "sanctions",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "sanctions_shadow_fleet"
+          ]
         }
       ]
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 22,
+      "articleCount": 21,
       "sourceCount": 2,
-      "weightedSignal": 132,
+      "weightedSignal": 126,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -373,9 +374,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 22,
+      "articleCount": 21,
       "sourceCount": 2,
-      "weightedSignal": 88,
+      "weightedSignal": 84,
       "topArticles": [
         {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
@@ -414,29 +415,32 @@
           ]
         },
         {
-          "title": "Ukrainian drone hits Moscow region's largest refinery - Reuters",
-          "url": "https://www.reuters.com/world/moscow-oil-refinery-damaged-ukrainian-drone-attack-mayor-says-2026-06-16/",
-          "domain": "reuters.com",
-          "publishedAt": "2026-06-16T10:43:43.000Z",
+          "title": "Ukraine Strikes Sanctioned Tanker in the Black Sea - The Maritime Executive",
+          "url": "https://maritime-executive.com/article/ukraine-strikes-sanctioned-tanker-in-the-black-sea",
+          "domain": "maritime-executive.com",
+          "publishedAt": "2026-06-17T16:02:19.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
             "chokepoint",
             "facility_event",
-            "supply_disruption"
+            "sanctions",
+            "supply_disruption",
+            "tanker_shipping"
           ],
           "queryIds": [
-            "facility_supply_disruption"
+            "facility_supply_disruption",
+            "sanctions_shadow_fleet"
           ]
         }
       ]
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 37,
+      "articleCount": 36,
       "sourceCount": 2,
-      "weightedSignal": 111,
+      "weightedSignal": 108,
       "topArticles": [
         {
           "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
@@ -495,9 +499,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 47,
+      "articleCount": 46,
       "sourceCount": 2,
-      "weightedSignal": 141,
+      "weightedSignal": 138,
       "topArticles": [
         {
           "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
@@ -642,6 +646,24 @@
       ]
     },
     {
+      "title": "Ukrainian drone hits Moscow region's largest refinery - Reuters",
+      "url": "https://www.reuters.com/world/moscow-oil-refinery-damaged-ukrainian-drone-attack-mayor-says-2026-06-16/",
+      "domain": "reuters.com",
+      "publishedAt": "2026-06-16T10:43:43.000Z",
+      "sources": [
+        "brave",
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
+    },
+    {
       "title": "Strait of Hormuz Deal Sparks Uncertainty Over Who Controls Key Oil Route - Newsweek",
       "url": "https://newsweek.com/hormuz-uncertainty-grows-as-questions-mount-over-control-after-60-day-deal-12100981",
       "domain": "newsweek.com",
@@ -660,6 +682,26 @@
       "queryIds": [
         "chokepoint_shipping",
         "facility_supply_disruption"
+      ]
+    },
+    {
+      "title": "Ukraine Strikes Sanctioned Tanker in the Black Sea - The Maritime Executive",
+      "url": "https://maritime-executive.com/article/ukraine-strikes-sanctioned-tanker-in-the-black-sea",
+      "domain": "maritime-executive.com",
+      "publishedAt": "2026-06-17T16:02:19.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "sanctions",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "facility_supply_disruption",
+        "sanctions_shadow_fleet"
       ]
     },
     {
@@ -713,24 +755,6 @@
         "facility_event",
         "sanctions",
         "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
-      "title": "Ukraine Strikes Sanctioned Tanker in the Black Sea - The Maritime Executive",
-      "url": "https://maritime-executive.com/article/ukraine-strikes-sanctioned-tanker-in-the-black-sea",
-      "domain": "maritime-executive.com",
-      "publishedAt": "2026-06-17T16:02:19.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "supply_disruption",
-        "tanker_shipping"
       ],
       "queryIds": [
         "facility_supply_disruption"
@@ -813,24 +837,6 @@
       "url": "https://independent.co.uk/news/world/explosion-qatar-ras-laffan-barzan-iran-war-b3000223.html",
       "domain": "independent.co.uk",
       "publishedAt": "2026-06-22T13:37:51.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
-      "title": "Qatar’s Largest Gas Plant Rocked By Massive Explosion; Scary Scenes In Doha’s Ras Laffan - Times of India Videos",
-      "url": "https://timesofindia.indiatimes.com/videos/international/qatars-largest-gas-plant-rocked-by-massive-explosion-scary-scenes-in-dohas-ras-laffan/videoshow/131899195.cms",
-      "domain": "timesofindia.indiatimes.com",
-      "publishedAt": "2026-06-22T04:02:17.000Z",
       "sources": [
         "brave"
       ],
