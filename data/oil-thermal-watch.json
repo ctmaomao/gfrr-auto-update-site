@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-06-23T15:25:50.326Z",
+  "generatedAt": "2026-06-23T20:23:52.931Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -18,8 +18,8 @@
   },
   "freshness": {
     "windowDays": 1,
-    "latestAcqAt": "2026-06-23T08:58:00Z",
-    "latestAgeHours": 6.5,
+    "latestAcqAt": "2026-06-23T19:56:00Z",
+    "latestAgeHours": 0.5,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -81,19 +81,20 @@
     ]
   },
   "aggregate": {
-    "rowCount": 60,
-    "latestAcqAt": "2026-06-23T08:58:00Z",
-    "maxFrp": 5.98,
+    "rowCount": 62,
+    "latestAcqAt": "2026-06-23T19:56:00Z",
+    "maxFrp": 11.67,
     "confidenceCounts": {
-      "n": 60
+      "n": 62
     },
     "highConfidenceCount": 0,
     "frpOver50Count": 0,
     "frpOver100Count": 0,
     "dayNightCounts": {
+      "D": 2,
       "N": 60
     },
-    "latestAgeHours": 6.5,
+    "latestAgeHours": 0.5,
     "facilityCount": 12,
     "facilitiesWithDetections": 10,
     "requestCount": 36,
@@ -115,22 +116,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=Motiva Enterprises LLC; Site=Port Arthur; State=Texas; PADD=3; AD_Mbpd=639.7; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "2/3",
+      "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 3,
-      "latestAcqAt": "2026-06-23T08:58:00Z",
+      "rowCount": 4,
+      "latestAcqAt": "2026-06-23T19:56:00Z",
       "maxFrp": 3.41,
       "confidenceCounts": {
-        "n": 3
+        "n": 4
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
+        "D": 1,
         "N": 3
       },
-      "latestAgeHours": 6.5,
+      "latestAgeHours": 0.5,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "not_established",
@@ -144,7 +146,7 @@
         "frpOver50CountP95": null,
         "frpOver100CountP95": null,
         "sourcesWithDetectionsP95": null,
-        "sourcesWithDetections": 2,
+        "sourcesWithDetections": 3,
         "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -181,7 +183,7 @@
       "dayNightCounts": {
         "N": 8
       },
-      "latestAgeHours": 6.5,
+      "latestAgeHours": 11.4,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "not_established",
@@ -279,7 +281,7 @@
       "dayNightCounts": {
         "N": 5
       },
-      "latestAgeHours": 6.5,
+      "latestAgeHours": 11.4,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "not_established",
@@ -330,7 +332,7 @@
       "dayNightCounts": {
         "N": 5
       },
-      "latestAgeHours": 6.5,
+      "latestAgeHours": 11.4,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "not_established",
@@ -381,7 +383,7 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 6.5,
+      "latestAgeHours": 11.4,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "not_established",
@@ -432,7 +434,7 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 6.8,
+      "latestAgeHours": 11.7,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "not_established",
@@ -483,7 +485,7 @@
       "dayNightCounts": {
         "N": 12
       },
-      "latestAgeHours": 6.5,
+      "latestAgeHours": 11.4,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "not_established",
@@ -534,7 +536,7 @@
       "dayNightCounts": {
         "N": 2
       },
-      "latestAgeHours": 7.3,
+      "latestAgeHours": 12.3,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "not_established",
@@ -585,7 +587,7 @@
       "dayNightCounts": {
         "N": 3
       },
-      "latestAgeHours": 6.8,
+      "latestAgeHours": 11.7,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "not_established",
@@ -671,19 +673,20 @@
       "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 14,
-      "latestAcqAt": "2026-06-23T08:39:00Z",
-      "maxFrp": 5.98,
+      "rowCount": 15,
+      "latestAcqAt": "2026-06-23T19:21:00Z",
+      "maxFrp": 11.67,
       "confidenceCounts": {
-        "n": 14
+        "n": 15
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 14
+        "N": 14,
+        "D": 1
       },
-      "latestAgeHours": 6.8,
+      "latestAgeHours": 1,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "not_established",
