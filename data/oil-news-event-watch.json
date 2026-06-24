@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-24T15:20:23.008Z",
+  "generatedAt": "2026-06-24T18:19:31.756Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -113,8 +113,8 @@
   },
   "freshness": {
     "windowDays": 7,
-    "latestArticleAt": "2026-06-23T17:30:20.000Z",
-    "latestArticleAgeHours": 21.8,
+    "latestArticleAt": "2026-06-24T15:42:08.000Z",
+    "latestArticleAgeHours": 2.6,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 64,
-    "uniqueArticleCount": 61,
+    "uniqueArticleCount": 62,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 42,
+      "articleCount": 44,
       "sourceCount": 2,
-      "weightedSignal": 252,
+      "weightedSignal": 264,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -295,9 +295,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 21,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 126,
+      "weightedSignal": 132,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -359,9 +359,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 24,
+      "articleCount": 25,
       "sourceCount": 2,
-      "weightedSignal": 96,
+      "weightedSignal": 100,
       "topArticles": [
         {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
@@ -383,10 +383,10 @@
           ]
         },
         {
-          "title": "Hormuz Reopening Shifts Focus to Gulf Oil Storage and Shipping - WSJ",
-          "url": "https://www.wsj.com/business/energy-oil/hormuz-reopening-shifts-focus-to-gulf-oil-storage-and-shipping-53430fa8",
-          "domain": "wsj.com",
-          "publishedAt": "2026-06-19T11:27:00.000Z",
+          "title": "Oil Shipments Through Hormuz Pick Up on Back End of Ceasefire - Marine News Magazine",
+          "url": "https://www.marinelink.com/news/oil-shipments-hormuz-pick-back-end-540490",
+          "domain": "marinelink.com",
+          "publishedAt": "2026-06-19T12:15:10.000Z",
           "sources": [
             "tavily"
           ],
@@ -483,9 +483,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 49,
+      "articleCount": 53,
       "sourceCount": 2,
-      "weightedSignal": 147,
+      "weightedSignal": 159,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -545,9 +545,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 24,
+      "articleCount": 23,
       "sourceCount": 2,
-      "weightedSignal": 48,
+      "weightedSignal": 46,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -631,43 +631,24 @@
       ]
     },
     {
-      "title": "Strait of Hormuz Deal Sparks Uncertainty Over Who Controls Key Oil Route - Newsweek",
-      "url": "https://newsweek.com/hormuz-uncertainty-grows-as-questions-mount-over-control-after-60-day-deal-12100981",
-      "domain": "newsweek.com",
-      "publishedAt": "2026-06-21T17:07:26.000Z",
+      "title": "Oil extends decline as Trump accuses oil firms of 'gouging' consumers - CNBC",
+      "url": "https://www.cnbc.com/2026/06/24/oil-prices-wti-brent-crude-trump-doj-gasoline-prices-strait-of-hormuz.html",
+      "domain": "cnbc.com",
+      "publishedAt": "2026-06-24T05:09:35.000Z",
       "sources": [
-        "brave"
+        "brave",
+        "tavily"
       ],
       "buckets": [
         "chokepoint",
         "facility_event",
         "market_reaction",
         "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "chokepoint_shipping",
-        "facility_supply_disruption"
-      ]
-    },
-    {
-      "title": "Ukraine Strikes Sanctioned Tanker in the Black Sea - The Maritime Executive",
-      "url": "https://maritime-executive.com/article/ukraine-strikes-sanctioned-tanker-in-the-black-sea",
-      "domain": "maritime-executive.com",
-      "publishedAt": "2026-06-17T16:02:19.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
         "sanctions",
-        "supply_disruption",
         "tanker_shipping"
       ],
       "queryIds": [
-        "facility_supply_disruption",
+        "market_reaction",
         "sanctions_shadow_fleet"
       ]
     },
@@ -710,6 +691,25 @@
       ]
     },
     {
+      "title": "Oil extends losses, WTI crude falls below $70 for first time since early March - Oil & Gas 360",
+      "url": "https://www.oilandgas360.com/oil-extends-losses-wti-crude-falls-below-70-for-first-time-since-early-march/",
+      "domain": "oilandgas360.com",
+      "publishedAt": "2026-06-24T15:42:08.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "market_reaction"
+      ]
+    },
+    {
       "title": "Hormuz reopens, but obstacles remain as oil markets seek path to normalcy - World Oil",
       "url": "https://worldoil.com/news/2026/6/19/hormuz-reopens-but-obstacles-remain-as-oil-markets-seek-path-to-normalcy/",
       "domain": "worldoil.com",
@@ -726,6 +726,25 @@
       ],
       "queryIds": [
         "chokepoint_shipping"
+      ]
+    },
+    {
+      "title": "Hormuz Reopening Shifts Focus to Gulf Oil Storage and Shipping - WSJ",
+      "url": "https://www.wsj.com/business/energy-oil/hormuz-reopening-shifts-focus-to-gulf-oil-storage-and-shipping-53430fa8",
+      "domain": "wsj.com",
+      "publishedAt": "2026-06-19T11:27:00.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "sanctions",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "sanctions_shadow_fleet"
       ]
     },
     {
@@ -801,30 +820,12 @@
       ]
     },
     {
-      "title": "Qatar says gas export terminal blast killed 13, injured dozens more - ABC News",
-      "url": "https://abcnews.com/International/wireStory/explosion-qatar-restarts-gas-export-terminal-hurts-54-134085065",
-      "domain": "abcnews.com",
-      "publishedAt": "2026-06-22T01:54:00.000Z",
+      "title": "Explosion at Qatar Gas Plant Leaves Dozens Injured, 18 Missing - WSJ",
+      "url": "https://www.wsj.com/business/energy-oil/explosion-at-qatar-gas-plant-leaves-dozens-injured-18-missing-8ae33c9b",
+      "domain": "wsj.com",
+      "publishedAt": "2026-06-22T08:06:00.000Z",
       "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
-      "title": "Qatar says gas export terminal blast killed 13 as workers tried to resume operations",
-      "url": "https://nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
-      "domain": "nbcnews.com",
-      "publishedAt": "2026-06-22T15:03:50.000Z",
-      "sources": [
-        "brave"
+        "tavily"
       ],
       "buckets": [
         "chokepoint",
@@ -840,15 +841,13 @@
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 2,
-    "highClaimDomainCount": 2,
+    "highClaimTitleCount": 1,
+    "highClaimDomainCount": 1,
     "highClaimDomains": [
-      "bloomberg.com",
-      "maritime-executive.com"
+      "bloomberg.com"
     ],
     "highClaimTerms": [
-      "blockade",
-      "strikes"
+      "blockade"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
