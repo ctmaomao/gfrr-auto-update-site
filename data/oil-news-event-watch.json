@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-23T23:37:18.072Z",
+  "generatedAt": "2026-06-24T04:48:25.084Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -113,8 +113,8 @@
   },
   "freshness": {
     "windowDays": 7,
-    "latestArticleAt": "2026-06-23T20:36:50.000Z",
-    "latestArticleAgeHours": 3,
+    "latestArticleAt": "2026-06-23T17:30:20.000Z",
+    "latestArticleAgeHours": 11.3,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 43,
+      "articleCount": 41,
       "sourceCount": 2,
-      "weightedSignal": 258,
+      "weightedSignal": 246,
       "topArticles": [
         {
           "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
@@ -235,9 +235,9 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 22,
+      "articleCount": 19,
       "sourceCount": 2,
-      "weightedSignal": 88,
+      "weightedSignal": 76,
       "topArticles": [
         {
           "title": "Three Iranian tankers exit U.S. blockade for first time in months as shipowners eye Hormuz in 'wary disbelief' - CNBC",
@@ -296,9 +296,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 20,
+      "articleCount": 21,
       "sourceCount": 2,
-      "weightedSignal": 120,
+      "weightedSignal": 126,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -361,9 +361,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 25,
+      "articleCount": 23,
       "sourceCount": 2,
-      "weightedSignal": 100,
+      "weightedSignal": 92,
       "topArticles": [
         {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
@@ -385,24 +385,6 @@
           ]
         },
         {
-          "title": "Global trade chessboard: Israel and Turkey compete to control future supply routes - Ynetnews",
-          "url": "https://www.ynetnews.com/opinions-analysis/article/sy4ih8jmfl",
-          "domain": "ynetnews.com",
-          "publishedAt": "2026-06-16T23:55:00.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "facility_event",
-            "middle_east_risk",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "chokepoint_shipping"
-          ]
-        },
-        {
           "title": "First Russian shadow fleet vessel enters Channel since Smyrtos boarding - BBC",
           "url": "https://www.bbc.com/news/articles/cgk6d12lz6jo",
           "domain": "bbc.com",
@@ -416,6 +398,26 @@
             "tanker_shipping"
           ],
           "queryIds": [
+            "sanctions_shadow_fleet"
+          ]
+        },
+        {
+          "title": "Ukraine Strikes Sanctioned Tanker in the Black Sea - The Maritime Executive",
+          "url": "https://maritime-executive.com/article/ukraine-strikes-sanctioned-tanker-in-the-black-sea",
+          "domain": "maritime-executive.com",
+          "publishedAt": "2026-06-17T16:02:19.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "facility_event",
+            "sanctions",
+            "supply_disruption",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "facility_supply_disruption",
             "sanctions_shadow_fleet"
           ]
         }
@@ -484,9 +486,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 46,
+      "articleCount": 48,
       "sourceCount": 2,
-      "weightedSignal": 138,
+      "weightedSignal": 144,
       "topArticles": [
         {
           "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
@@ -545,9 +547,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 20,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 40,
+      "weightedSignal": 44,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -729,25 +731,6 @@
       ]
     },
     {
-      "title": "FAQ: What to know about Treasury Department's temporary license for Iranian oil sales - ABC News",
-      "url": "https://abcnews.com/Politics/faq-treasury-departments-temporary-license-iranian-oil-sales/story?id=134135294",
-      "domain": "abcnews.com",
-      "publishedAt": "2026-06-23T20:36:50.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "sanctions",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "sanctions_shadow_fleet"
-      ]
-    },
-    {
       "title": "Explosion at Qatar natural gas export terminal injures 54, leaves 18 missing - NBC News",
       "url": "https://www.nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
       "domain": "nbcnews.com",
@@ -802,10 +785,10 @@
       ]
     },
     {
-      "title": "Qatar says gas export terminal blast killed 13, injured dozens more - ABC News",
-      "url": "https://abcnews.com/International/wireStory/explosion-qatar-restarts-gas-export-terminal-hurts-54-134085065",
-      "domain": "abcnews.com",
-      "publishedAt": "2026-06-22T01:54:00.000Z",
+      "title": "Qatar says gas export terminal explosion killed 13 people and hurt dozens | AP News",
+      "url": "https://apnews.com/article/qatar-explosion-ras-laffan-b8a36eea8889899b2fa499c5e247a08f",
+      "domain": "apnews.com",
+      "publishedAt": "2026-06-22T01:54:32.000Z",
       "sources": [
         "brave"
       ],
@@ -824,6 +807,24 @@
       "url": "https://nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
       "domain": "nbcnews.com",
       "publishedAt": "2026-06-22T15:03:50.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
+    },
+    {
+      "title": "Qatar’s Largest Gas Plant Rocked By Massive Explosion; Scary Scenes In Doha’s Ras Laffan - Times of India Videos",
+      "url": "https://timesofindia.indiatimes.com/videos/international/qatars-largest-gas-plant-rocked-by-massive-explosion-scary-scenes-in-dohas-ras-laffan/videoshow/131899195.cms",
+      "domain": "timesofindia.indiatimes.com",
+      "publishedAt": "2026-06-22T04:02:17.000Z",
       "sources": [
         "brave"
       ],
