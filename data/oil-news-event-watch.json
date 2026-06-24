@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-24T12:34:44.143Z",
+  "generatedAt": "2026-06-24T15:20:23.008Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -21,7 +21,7 @@
     "details": {
       "gdelt_doc": {
         "status": "error",
-        "networkUsed": true,
+        "networkUsed": false,
         "successCount": 0,
         "failureCount": 1,
         "articleCount": 0,
@@ -29,7 +29,7 @@
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "error",
+            "status": "error_cooldown_cache_hit",
             "articleCount": 0,
             "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
           }
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-06-23T17:30:20.000Z",
-    "latestArticleAgeHours": 19.1,
+    "latestArticleAgeHours": 21.8,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -174,27 +174,10 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 41,
+      "articleCount": 42,
       "sourceCount": 2,
-      "weightedSignal": 246,
+      "weightedSignal": 252,
       "topArticles": [
-        {
-          "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
-          "url": "https://www.jpost.com/middle-east/iran-news/article-899722",
-          "domain": "jpost.com",
-          "publishedAt": "2026-06-17T14:38:20.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "middle_east_risk",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "chokepoint_shipping"
-          ]
-        },
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
           "url": "https://www.oilandgas360.com/hormuz-reopening-gains-momentum-as-tankers-resume-transit/",
@@ -225,6 +208,24 @@
             "chokepoint",
             "market_reaction",
             "middle_east_risk",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
+          ]
+        },
+        {
+          "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
+          "url": "https://cryptobriefing.com/strait-of-hormuz-closure-may-extend-to-years-end-due-to-80-mines-report/",
+          "domain": "cryptobriefing.com",
+          "publishedAt": "2026-06-20T23:18:55.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "middle_east_risk",
+            "supply_disruption",
             "tanker_shipping"
           ],
           "queryIds": [
@@ -317,6 +318,25 @@
           ]
         },
         {
+          "title": "Hormuz reopens, but obstacles remain as oil markets seek path to normalcy - World Oil",
+          "url": "https://worldoil.com/news/2026/6/19/hormuz-reopens-but-obstacles-remain-as-oil-markets-seek-path-to-normalcy/",
+          "domain": "worldoil.com",
+          "publishedAt": "2026-06-19T20:45:46.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "market_reaction",
+            "middle_east_risk",
+            "supply_disruption",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
+          ]
+        },
+        {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
           "url": "https://www.reuters.com/business/energy/iraq-export-crude-naphtha-through-syria-after-hormuz-shock-2026-06-19/",
           "domain": "reuters.com",
@@ -334,32 +354,14 @@
           "queryIds": [
             "chokepoint_shipping"
           ]
-        },
-        {
-          "title": "Explosion at Qatar natural gas export terminal injures 54, leaves 18 missing - NBC News",
-          "url": "https://www.nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
-          "domain": "nbcnews.com",
-          "publishedAt": "2026-06-22T03:05:30.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "facility_event",
-            "middle_east_risk",
-            "supply_disruption"
-          ],
-          "queryIds": [
-            "facility_supply_disruption"
-          ]
         }
       ]
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 26,
+      "articleCount": 24,
       "sourceCount": 2,
-      "weightedSignal": 104,
+      "weightedSignal": 96,
       "topArticles": [
         {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
@@ -424,23 +426,6 @@
       "weightedSignal": 105,
       "topArticles": [
         {
-          "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
-          "url": "https://www.jpost.com/middle-east/iran-news/article-899722",
-          "domain": "jpost.com",
-          "publishedAt": "2026-06-17T14:38:20.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "middle_east_risk",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "chokepoint_shipping"
-          ]
-        },
-        {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
           "url": "https://www.oilandgas360.com/hormuz-reopening-gains-momentum-as-tankers-resume-transit/",
           "domain": "oilandgas360.com",
@@ -470,6 +455,24 @@
             "chokepoint",
             "market_reaction",
             "middle_east_risk",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
+          ]
+        },
+        {
+          "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
+          "url": "https://cryptobriefing.com/strait-of-hormuz-closure-may-extend-to-years-end-due-to-80-mines-report/",
+          "domain": "cryptobriefing.com",
+          "publishedAt": "2026-06-20T23:18:55.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "middle_east_risk",
+            "supply_disruption",
             "tanker_shipping"
           ],
           "queryIds": [
@@ -485,23 +488,6 @@
       "weightedSignal": 147,
       "topArticles": [
         {
-          "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
-          "url": "https://www.jpost.com/middle-east/iran-news/article-899722",
-          "domain": "jpost.com",
-          "publishedAt": "2026-06-17T14:38:20.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "middle_east_risk",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "chokepoint_shipping"
-          ]
-        },
-        {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
           "url": "https://www.oilandgas360.com/hormuz-reopening-gains-momentum-as-tankers-resume-transit/",
           "domain": "oilandgas360.com",
@@ -536,14 +522,32 @@
           "queryIds": [
             "chokepoint_shipping"
           ]
+        },
+        {
+          "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
+          "url": "https://cryptobriefing.com/strait-of-hormuz-closure-may-extend-to-years-end-due-to-80-mines-report/",
+          "domain": "cryptobriefing.com",
+          "publishedAt": "2026-06-20T23:18:55.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "middle_east_risk",
+            "supply_disruption",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
+          ]
         }
       ]
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 22,
+      "articleCount": 24,
       "sourceCount": 2,
-      "weightedSignal": 44,
+      "weightedSignal": 48,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -582,20 +586,22 @@
           ]
         },
         {
-          "title": "Brent Oil Rises Over $1 After US-Iran Talks, Strait of Hormuz Tensions - Global Banking & Finance Review",
-          "url": "https://www.globalbankingandfinance.com/brent-oil-rises-1-bbl-bumpy-start-us-iran-peace-talks/",
-          "domain": "globalbankingandfinance.com",
-          "publishedAt": "2026-06-21T22:17:22.000Z",
+          "title": "Hormuz reopens, but obstacles remain as oil markets seek path to normalcy - World Oil",
+          "url": "https://worldoil.com/news/2026/6/19/hormuz-reopens-but-obstacles-remain-as-oil-markets-seek-path-to-normalcy/",
+          "domain": "worldoil.com",
+          "publishedAt": "2026-06-19T20:45:46.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
             "chokepoint",
             "market_reaction",
-            "middle_east_risk"
+            "middle_east_risk",
+            "supply_disruption",
+            "tanker_shipping"
           ],
           "queryIds": [
-            "market_reaction"
+            "chokepoint_shipping"
           ]
         }
       ]
@@ -625,27 +631,6 @@
       ]
     },
     {
-      "title": "Iran sends tankers loaded with oil past US military blockade - BBC",
-      "url": "https://www.bbc.com/news/articles/cpq37yxexd9o",
-      "domain": "bbc.com",
-      "publishedAt": "2026-06-17T13:27:47.000Z",
-      "sources": [
-        "brave",
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "sanctions",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "chokepoint_shipping",
-        "sanctions_shadow_fleet"
-      ]
-    },
-    {
       "title": "Strait of Hormuz Deal Sparks Uncertainty Over Who Controls Key Oil Route - Newsweek",
       "url": "https://newsweek.com/hormuz-uncertainty-grows-as-questions-mount-over-control-after-60-day-deal-12100981",
       "domain": "newsweek.com",
@@ -664,6 +649,26 @@
       "queryIds": [
         "chokepoint_shipping",
         "facility_supply_disruption"
+      ]
+    },
+    {
+      "title": "Ukraine Strikes Sanctioned Tanker in the Black Sea - The Maritime Executive",
+      "url": "https://maritime-executive.com/article/ukraine-strikes-sanctioned-tanker-in-the-black-sea",
+      "domain": "maritime-executive.com",
+      "publishedAt": "2026-06-17T16:02:19.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "sanctions",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "facility_supply_disruption",
+        "sanctions_shadow_fleet"
       ]
     },
     {
@@ -702,6 +707,25 @@
       ],
       "queryIds": [
         "facility_supply_disruption"
+      ]
+    },
+    {
+      "title": "Hormuz reopens, but obstacles remain as oil markets seek path to normalcy - World Oil",
+      "url": "https://worldoil.com/news/2026/6/19/hormuz-reopens-but-obstacles-remain-as-oil-markets-seek-path-to-normalcy/",
+      "domain": "worldoil.com",
+      "publishedAt": "2026-06-19T20:45:46.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping"
       ]
     },
     {
@@ -811,24 +835,6 @@
       "queryIds": [
         "facility_supply_disruption"
       ]
-    },
-    {
-      "title": "Qatar’s Largest Gas Plant Rocked By Massive Explosion; Scary Scenes In Doha’s Ras Laffan - Times of India Videos",
-      "url": "https://timesofindia.indiatimes.com/videos/international/qatars-largest-gas-plant-rocked-by-massive-explosion-scary-scenes-in-dohas-ras-laffan/videoshow/131899195.cms",
-      "domain": "timesofindia.indiatimes.com",
-      "publishedAt": "2026-06-22T04:02:17.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
     }
   ],
   "titleRisk": {
@@ -837,11 +843,12 @@
     "highClaimTitleCount": 2,
     "highClaimDomainCount": 2,
     "highClaimDomains": [
-      "bbc.com",
-      "bloomberg.com"
+      "bloomberg.com",
+      "maritime-executive.com"
     ],
     "highClaimTerms": [
-      "blockade"
+      "blockade",
+      "strikes"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
