@@ -28,6 +28,7 @@ const REQUIRED_POLICY_PHRASES = [
   'P36, current phase',
   'P37, current phase',
   'P38, current phase',
+  '6h fresh-cache or 6h error-cooldown',
   'scripts/gdelt/fetch-gdelt.mjs',
   'data/gdelt-news-cache.json',
   'data/gdelt-bubble-watch-cache.json'
@@ -47,6 +48,10 @@ const REQUIRED_ODP_CACHE_PHRASES = [
   'gdelt_broad_oil_news',
   'DEFAULT_GDELT_CACHE_OUTPUT',
   'GDELT_CACHE_SCHEMA_VERSION',
+  'GDELT_CACHE_TTL_MINUTES',
+  'GDELT_ERROR_COOLDOWN_HOURS',
+  'GDELT_STALE_MAX_HOURS',
+  'error_cooldown_cache_hit',
   'fetchGdeltDocBroad',
   'single_broad_query_local_classification',
   'sourceCaches'
@@ -202,6 +207,18 @@ function checkSharedWrapperContract() {
   }
   for (const phrase of REQUIRED_ODP_CACHE_PHRASES) {
     if (!oilNews.includes(phrase)) fail(`${oilNewsPath} missing P37 ODP cache phrase: ${phrase}`);
+  }
+  if (!/GDELT_CACHE_TTL_MINUTES\s*=\s*360/u.test(oilNews)) {
+    fail(`${oilNewsPath} must keep ODP GDELT fresh-cache TTL at 360 minutes`);
+  }
+  if (!/GDELT_STALE_MAX_HOURS\s*=\s*24/u.test(oilNews)) {
+    fail(`${oilNewsPath} must keep ODP GDELT stale-cache fallback at 24 hours`);
+  }
+  if (!/GDELT_ERROR_COOLDOWN_HOURS\s*=\s*6/u.test(oilNews)) {
+    fail(`${oilNewsPath} must keep ODP GDELT error cooldown at 6 hours`);
+  }
+  if (!oilNews.includes('maxRetries: 0')) {
+    fail(`${oilNewsPath} must keep ODP GDELT live attempts single-attempt after cache/cooldown expiry`);
   }
   const bubblePath = 'scripts/build-bubble-watch.mjs';
   if (!existsSync(resolve(bubblePath))) {

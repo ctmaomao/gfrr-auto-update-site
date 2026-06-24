@@ -8,6 +8,9 @@ import {
   GDELT_BROAD_QUERY_SPEC,
   GDELT_CACHE_MODULE,
   GDELT_CACHE_SCHEMA_VERSION,
+  GDELT_CACHE_TTL_MINUTES,
+  GDELT_ERROR_COOLDOWN_HOURS,
+  GDELT_STALE_MAX_HOURS,
   QUERY_SET,
   runDiagnosis
 } from './diagnose-oil-news-events.mjs';
@@ -401,10 +404,12 @@ function buildGdeltCacheArtifact(diagnosis) {
     requestMode: 'no_gdelt_source_result',
     source: 'GDELT DOC public search',
     cachePolicy: {
-      ttlMinutes: 30,
-      staleMaxHours: 6,
+      ttlMinutes: GDELT_CACHE_TTL_MINUTES,
+      staleMaxHours: GDELT_STALE_MAX_HOURS,
+      errorCooldownHours: GDELT_ERROR_COOLDOWN_HOURS,
       lowFrequencyCache: true,
-      broadQueryLocalClassification: true
+      broadQueryLocalClassification: true,
+      liveRetryPolicy: 'single_attempt_after_cache_or_error_cooldown'
     },
     query: {
       id: GDELT_BROAD_QUERY_SPEC.id,

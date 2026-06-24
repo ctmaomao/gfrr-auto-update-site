@@ -13,8 +13,9 @@ const DEFAULT_SOURCES = ['gdelt_doc', 'tavily', 'brave'];
 const DEFAULT_GDELT_CACHE_OUTPUT = 'data/gdelt-news-cache.json';
 const GDELT_CACHE_SCHEMA_VERSION = 'gdelt-news-cache-p37';
 const GDELT_CACHE_MODULE = 'gdelt-news-cache';
-const GDELT_CACHE_TTL_MINUTES = 30;
-const GDELT_STALE_MAX_HOURS = 6;
+const GDELT_CACHE_TTL_MINUTES = 360;
+const GDELT_STALE_MAX_HOURS = 24;
+const GDELT_ERROR_COOLDOWN_HOURS = 6;
 const FETCH_TIMEOUT_MS = 20000;
 const UA = 'gfrr-odp-oil-news-diagnosis/1.0 (+https://github.com/ctmaomao/gfrr-auto-update-site)';
 const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
@@ -424,12 +425,36 @@ function readGdeltNewsCache(cachePath = DEFAULT_GDELT_CACHE_OUTPUT) {
 }
 
 function cacheUsability(cache, nowMs = Date.now()) {
-  if (!cache || !Array.isArray(cache.articles) || cache.articles.length === 0) return 'unusable';
+  if (!cache) return 'unusable';
   const ageMinutes = cacheAgeMinutes(cache, nowMs);
   if (!Number.isFinite(ageMinutes)) return 'unusable';
+  if (cache.status === 'error' || cache.sourceStatus === 'error') {
+    if (ageMinutes <= GDELT_ERROR_COOLDOWN_HOURS * 60) return 'error_cooldown';
+    return 'expired';
+  }
+  if (!Array.isArray(cache.articles) || cache.articles.length === 0) return 'unusable';
   if (ageMinutes <= GDELT_CACHE_TTL_MINUTES) return 'fresh';
   if (ageMinutes <= GDELT_STALE_MAX_HOURS * 60) return 'stale';
   return 'expired';
+}
+
+function gdeltCachePolicy() {
+  return {
+    ttlMinutes: GDELT_CACHE_TTL_MINUTES,
+    staleMaxHours: GDELT_STALE_MAX_HOURS,
+    errorCooldownHours: GDELT_ERROR_COOLDOWN_HOURS,
+    lowFrequencyCache: true,
+    broadQueryLocalClassification: true,
+    liveRetryPolicy: 'single_attempt_after_cache_or_error_cooldown'
+  };
+}
+
+function normalizeGdeltCachePolicy(cache) {
+  if (!cache || typeof cache !== 'object') return cache;
+  return {
+    ...cache,
+    cachePolicy: gdeltCachePolicy()
+  };
 }
 
 function compactGdeltCacheArticle(article) {
@@ -502,12 +527,7 @@ function buildGdeltNewsCacheArtifact({
     sourceStatus,
     requestMode,
     source: 'GDELT DOC public search',
-    cachePolicy: {
-      ttlMinutes: GDELT_CACHE_TTL_MINUTES,
-      staleMaxHours: GDELT_STALE_MAX_HOURS,
-      lowFrequencyCache: true,
-      broadQueryLocalClassification: true
-    },
+    cachePolicy: gdeltCachePolicy(),
     query: {
       id: GDELT_BROAD_QUERY_SPEC.id,
       label: GDELT_BROAD_QUERY_SPEC.label,
@@ -571,10 +591,45 @@ async function fetchGdeltDocBroad(options) {
         elapsedMs: 0,
         errorCode: 'cache_hit'
       },
-      cacheArtifact: existingCache,
+      cacheArtifact: normalizeGdeltCachePolicy(existingCache),
       queryRunStatus: 'cache_hit',
       sourceStatus: 'ok',
       networkUsed: false
+    };
+  }
+  if (usability === 'error_cooldown') {
+    return {
+      articles: [],
+      requestDiagnostics: existingCache.requestDiagnostics
+        ? {
+            ...sanitizeGdeltDiagnostics(existingCache.requestDiagnostics),
+            errorCode: 'error_cooldown_cache_hit'
+          }
+        : {
+            provider: 'gdelt',
+            endpointType: 'doc',
+            label: 'GDELT DOC broad error cooldown cache hit',
+            status: null,
+            attempts: 0,
+            retryCount: 0,
+            rateLimited: false,
+            timeout: false,
+            retryAfterSeconds: null,
+            timeoutMs: FETCH_TIMEOUT_MS,
+            minIntervalMs: null,
+            maxRetries: 0,
+            retryAfterCapSeconds: null,
+            elapsedMs: 0,
+            errorCode: 'error_cooldown_cache_hit'
+          },
+      cacheArtifact: normalizeGdeltCachePolicy({
+        ...existingCache,
+        requestMode: 'error_cooldown_cache_hit'
+      }),
+      queryRunStatus: 'error_cooldown_cache_hit',
+      sourceStatus: 'error',
+      networkUsed: false,
+      error: existingCache.error || 'GDELT live query skipped during error cooldown'
     };
   }
 
@@ -591,6 +646,7 @@ async function fetchGdeltDocBroad(options) {
       queryParams: params,
       userAgent: BROWSER_UA,
       timeoutMs: FETCH_TIMEOUT_MS,
+      maxRetries: 0,
       label: 'GDELT DOC broad oil-news cache'
     });
     const articles = (Array.isArray(json?.articles) ? json.articles : []).map((item) => normalizeArticle({
@@ -624,7 +680,7 @@ async function fetchGdeltDocBroad(options) {
         articles,
         requestDiagnostics: error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null,
         cacheArtifact: {
-          ...existingCache,
+          ...normalizeGdeltCachePolicy(existingCache),
           status: 'stale',
           sourceStatus: 'stale',
           requestMode: 'stale_cache_after_fetch_error',
@@ -785,7 +841,7 @@ async function collectSource(source, options, keyState) {
       const result = await fetchGdeltDocBroad(options);
       articles.push(...result.articles);
       successCount = result.sourceStatus === 'ok' ? 1 : 0;
-      failureCount = result.sourceStatus === 'stale' ? 1 : 0;
+      failureCount = result.sourceStatus === 'stale' || result.sourceStatus === 'error' ? 1 : 0;
       queryRuns.push({
         queryId: GDELT_BROAD_QUERY_SPEC.id,
         label: GDELT_BROAD_QUERY_SPEC.label,
@@ -807,7 +863,11 @@ async function collectSource(source, options, keyState) {
         successCount,
         failureCount,
         articles,
-        error: result.sourceStatus === 'stale' ? 'gdelt live query failed; using stale cache' : null,
+        error: result.sourceStatus === 'stale'
+          ? 'gdelt live query failed; using stale cache'
+          : result.sourceStatus === 'error'
+            ? 'gdelt live query skipped or failed under low-frequency cache policy'
+            : null,
         cacheArtifact: result.cacheArtifact || null
       };
     } catch (error) {
@@ -1193,6 +1253,9 @@ export {
   GDELT_BROAD_QUERY_SPEC,
   GDELT_CACHE_MODULE,
   GDELT_CACHE_SCHEMA_VERSION,
+  GDELT_CACHE_TTL_MINUTES,
+  GDELT_ERROR_COOLDOWN_HOURS,
+  GDELT_STALE_MAX_HOURS,
   QUERY_SET,
   getApiKeyState,
   runDiagnosis
