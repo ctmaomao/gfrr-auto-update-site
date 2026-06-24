@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-24T21:55:39.165Z",
+  "generatedAt": "2026-06-24T23:45:10.589Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -113,8 +113,8 @@
   },
   "freshness": {
     "windowDays": 7,
-    "latestArticleAt": "2026-06-24T15:42:08.000Z",
-    "latestArticleAgeHours": 6.2,
+    "latestArticleAt": "2026-06-24T21:33:27.000Z",
+    "latestArticleAgeHours": 2.2,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 64,
-    "uniqueArticleCount": 62,
+    "uniqueArticleCount": 61,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 45,
+      "articleCount": 42,
       "sourceCount": 2,
-      "weightedSignal": 270,
+      "weightedSignal": 252,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -236,9 +236,9 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 17,
+      "articleCount": 16,
       "sourceCount": 2,
-      "weightedSignal": 68,
+      "weightedSignal": 64,
       "topArticles": [
         {
           "title": "Hormuz Reopening Shifts Focus to Gulf Oil Storage and Shipping - WSJ",
@@ -361,9 +361,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 24,
+      "articleCount": 26,
       "sourceCount": 2,
-      "weightedSignal": 96,
+      "weightedSignal": 104,
       "topArticles": [
         {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
@@ -426,9 +426,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 37,
+      "articleCount": 35,
       "sourceCount": 2,
-      "weightedSignal": 111,
+      "weightedSignal": 105,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -488,9 +488,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 53,
+      "articleCount": 52,
       "sourceCount": 2,
-      "weightedSignal": 159,
+      "weightedSignal": 156,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -550,9 +550,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 26,
+      "articleCount": 25,
       "sourceCount": 2,
-      "weightedSignal": 52,
+      "weightedSignal": 50,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -694,6 +694,25 @@
       ]
     },
     {
+      "title": "Another Hormuz? The Red Sea’s Threat to the Global Economy | Council on Foreign Relations",
+      "url": "https://cfr.org/articles/another-hormuz-the-red-seas-threat-to-the-global-economy",
+      "domain": "cfr.org",
+      "publishedAt": "2026-06-24T21:33:27.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping"
+      ]
+    },
+    {
       "title": "Oil extends losses, WTI crude falls below $70 for first time since early March - Oil & Gas 360",
       "url": "https://www.oilandgas360.com/oil-extends-losses-wti-crude-falls-below-70-for-first-time-since-early-march/",
       "domain": "oilandgas360.com",
@@ -709,6 +728,26 @@
         "supply_disruption"
       ],
       "queryIds": [
+        "market_reaction"
+      ]
+    },
+    {
+      "title": "Oil nears pre-war levels, but a top economist warns lower prices could mean higher inflation",
+      "url": "https://businessinsider.com/oil-prices-brent-wti-inflation-torsten-slok-iran-war-economy-2026-6",
+      "domain": "businessinsider.com",
+      "publishedAt": "2026-06-24T19:54:24.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "facility_supply_disruption",
         "market_reaction"
       ]
     },
@@ -749,25 +788,6 @@
       "queryIds": [
         "chokepoint_shipping",
         "sanctions_shadow_fleet"
-      ]
-    },
-    {
-      "title": "WTI Crude Falls Below $70 Mark; Trump Says Strait of Hormuz Won't Charge Fees, Two Major Crude Futures Plunge Nearly 5% Again",
-      "url": "https://tradingkey.com/analysis/commodities/oil/261988246-crude-oil-price-wti-70-brent-75-trump-hormuz-tradingkey",
-      "domain": "tradingkey.com",
-      "publishedAt": "2026-06-24T14:59:30.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "market_reaction"
       ]
     },
     {
@@ -823,24 +843,6 @@
       "queryIds": [
         "facility_supply_disruption"
       ]
-    },
-    {
-      "title": "Iran Resumes Kharg Island Oil Loadings After US Blockade Lifted - Bloomberg.com",
-      "url": "https://www.bloomberg.com/news/articles/2026-06-20/iran-resumes-kharg-island-oil-loadings-after-us-blockade-lifted",
-      "domain": "bloomberg.com",
-      "publishedAt": "2026-06-20T15:14:11.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
     }
   ],
   "titleRisk": {
@@ -849,10 +851,10 @@
     "highClaimTitleCount": 1,
     "highClaimDomainCount": 1,
     "highClaimDomains": [
-      "bloomberg.com"
+      "businessinsider.com"
     ],
     "highClaimTerms": [
-      "blockade"
+      "war"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
