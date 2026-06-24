@@ -58,6 +58,14 @@ const TIMING_TIERS = Object.freeze({
   }),
 });
 
+const DIRECTIONAL_ROLES = Object.freeze({
+  corePhysicalAnchor: 'core_physical_anchor',
+  marketConfirmation: 'market_confirmation',
+  globalSlowVariable: 'global_slow_variable',
+  highFrequencyWatch: 'high_frequency_watch',
+  dataQuality: 'data_quality',
+});
+
 function round(n, dp = 2) {
   if (!Number.isFinite(n)) return null;
   const f = 10 ** dp;
@@ -131,13 +139,14 @@ function numMaybe(value) {
   return Number.isFinite(Number(value)) ? round(Number(value), 3) : null;
 }
 
-function withTimingFields(evidence, tier, sourceRole, directionalUse) {
+function withTimingFields(evidence, tier, sourceRole, directionalUse, directionalRole) {
   return {
     ...evidence,
     latencyTier: tier.latencyTier,
     latencyTierZh: tier.latencyTierZh,
     timelinessZh: tier.timelinessZh,
     sourceRole,
+    directionalRole,
     directionalUse,
     calibrationNoteZh: tier.calibrationNoteZh,
   };
@@ -171,7 +180,7 @@ function missingEvidence(cfg, reason) {
     change1w: null, change4w: null, change13w: null, vs5yAvgPct: null,
     fiveYrRangePosition: null, historyWeeks: 0, signalGroup: cfg.signalGroup,
     fetchReason: reason,
-  }, TIMING_TIERS.weeklyOfficialAnchor, 'official_weekly_physical_anchor', '校准低噪声供需锚点;缺失时不得补值或硬判方向');
+  }, TIMING_TIERS.weeklyOfficialAnchor, 'official_weekly_physical_anchor', '校准低噪声供需锚点;缺失时不得补值或硬判方向', DIRECTIONAL_ROLES.corePhysicalAnchor);
 }
 
 function buildEiaEvidence(cfg, fetched, builtMs) {
@@ -205,7 +214,7 @@ function buildEiaEvidence(cfg, fetched, builtMs) {
       ? round((latest.value - min) / (max - min), 3) : null,
     historyWeeks: series.length,
     signalGroup: cfg.signalGroup,
-  }, TIMING_TIERS.weeklyOfficialAnchor, 'official_weekly_physical_anchor', '低噪声供需锚点,用于校准较快的市场和事件信号');
+  }, TIMING_TIERS.weeklyOfficialAnchor, 'official_weekly_physical_anchor', '低噪声供需锚点,用于校准较快的市场和事件信号', DIRECTIONAL_ROLES.corePhysicalAnchor);
   const season = {
     weekOfYear: isoWeek(latest.period),
     seasonBucket: seasonBucket(latest.period),
@@ -243,7 +252,7 @@ function reuseFromRadar(builtMs) {
       ageDays: a, maxAgeDays: maxAge,
       sourceStatus,
       source,
-    }, TIMING_TIERS.dailyMarketProxy, 'daily_market_price_proxy', '观察价格是否确认或背离周度物理链');
+    }, TIMING_TIERS.dailyMarketProxy, 'daily_market_price_proxy', '观察价格是否确认或背离周度物理链', DIRECTIONAL_ROLES.marketConfirmation);
   };
   const wtiMarketProxyField = priceField(
     wtiMarketProxy.price,
@@ -294,7 +303,7 @@ function reuseFromRadar(builtMs) {
       change4w: num(bp.crackSpread4wChange), regime: bp.crackSpreadRegime || null,
       note: '价格/裂解代理,非馏分油库存',
       source: 'radar-data:brentPricingLayer.crackSpread',
-    }, TIMING_TIERS.dailyMarketProxy, 'daily_downstream_margin_proxy', '观察成品油链条是否确认库存与炼厂压力'),
+    }, TIMING_TIERS.dailyMarketProxy, 'daily_downstream_margin_proxy', '观察成品油链条是否确认库存与炼厂压力', DIRECTIONAL_ROLES.marketConfirmation),
     curve: withTimingFields({
       slopeRegime: fpc.slopeRegime || null, frontMinusBack: curveFmb,
       frontPrice: num(fpc.frontPrice), backPrice: num(fpc.backPrice),
@@ -304,7 +313,7 @@ function reuseFromRadar(builtMs) {
       sourceStatus: curveHasData ? freshnessStatus(curveFmb, curveAge, 4) : 'missing',
       source: 'radar-data:brentPricingLayer.futuresPriceCurve',
       limitationZh: '公开月度期货代理,非官方结算曲线',
-    }, TIMING_TIERS.dailyMarketProxy, 'daily_market_structure_proxy', '观察期限结构是否确认现货紧张或宽松'),
+    }, TIMING_TIERS.dailyMarketProxy, 'daily_market_structure_proxy', '观察期限结构是否确认现货紧张或宽松', DIRECTIONAL_ROLES.marketConfirmation),
     globalEnergyContext: globalEnergyContextFromRadar(radar),
   };
 }

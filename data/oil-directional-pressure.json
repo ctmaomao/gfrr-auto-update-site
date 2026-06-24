@@ -2,7 +2,7 @@
   "schemaVersion": "odp-1",
   "module": "oil-directional-pressure",
   "boundary": "audit-only/display-only; NOT in values/scoring/decisionModel/executionLock/positionGuidance; Global Risk Heatmap independent",
-  "builtAt": "2026-06-22T12:04:41.497Z",
+  "builtAt": "2026-06-24T11:12:41.341Z",
   "ingestion": {
     "mode": "A",
     "provider": "EIA API v2",
@@ -14,7 +14,7 @@
       "unit": "thousand barrels",
       "asOfDate": "2026-06-12",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WCESTUS1.W",
@@ -30,6 +30,7 @@
       "latencyTierZh": "T2 周频官方锚",
       "timelinessZh": "低噪声、经过验证、约一周滞后",
       "sourceRole": "official_weekly_physical_anchor",
+      "directionalRole": "core_physical_anchor",
       "directionalUse": "低噪声供需锚点,用于校准较快的市场和事件信号",
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
@@ -38,7 +39,7 @@
       "unit": "thousand barrels",
       "asOfDate": "2026-06-12",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WCSSTUS1.W",
@@ -54,6 +55,7 @@
       "latencyTierZh": "T2 周频官方锚",
       "timelinessZh": "低噪声、经过验证、约一周滞后",
       "sourceRole": "official_weekly_physical_anchor",
+      "directionalRole": "core_physical_anchor",
       "directionalUse": "低噪声供需锚点,用于校准较快的市场和事件信号",
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
@@ -62,7 +64,7 @@
       "unit": "thousand barrels",
       "asOfDate": "2026-06-12",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WDISTUS1.W",
@@ -78,6 +80,7 @@
       "latencyTierZh": "T2 周频官方锚",
       "timelinessZh": "低噪声、经过验证、约一周滞后",
       "sourceRole": "official_weekly_physical_anchor",
+      "directionalRole": "core_physical_anchor",
       "directionalUse": "低噪声供需锚点,用于校准较快的市场和事件信号",
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
@@ -86,7 +89,7 @@
       "unit": "thousand barrels",
       "asOfDate": "2026-06-12",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WGTSTUS1.W",
@@ -102,6 +105,7 @@
       "latencyTierZh": "T2 周频官方锚",
       "timelinessZh": "低噪声、经过验证、约一周滞后",
       "sourceRole": "official_weekly_physical_anchor",
+      "directionalRole": "core_physical_anchor",
       "directionalUse": "低噪声供需锚点,用于校准较快的市场和事件信号",
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
@@ -110,7 +114,7 @@
       "unit": "percent",
       "asOfDate": "2026-06-12",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WPULEUS3.W",
@@ -126,6 +130,7 @@
       "latencyTierZh": "T2 周频官方锚",
       "timelinessZh": "低噪声、经过验证、约一周滞后",
       "sourceRole": "official_weekly_physical_anchor",
+      "directionalRole": "core_physical_anchor",
       "directionalUse": "低噪声供需锚点,用于校准较快的市场和事件信号",
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
@@ -134,7 +139,7 @@
       "unit": "thousand barrels per day",
       "asOfDate": "2026-06-12",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WCRRIUS2.W",
@@ -150,6 +155,7 @@
       "latencyTierZh": "T2 周频官方锚",
       "timelinessZh": "低噪声、经过验证、约一周滞后",
       "sourceRole": "official_weekly_physical_anchor",
+      "directionalRole": "core_physical_anchor",
       "directionalUse": "低噪声供需锚点,用于校准较快的市场和事件信号",
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
@@ -158,7 +164,7 @@
       "unit": "thousand barrels per day",
       "asOfDate": "2026-06-12",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WGFUPUS2.W",
@@ -174,6 +180,7 @@
       "latencyTierZh": "T2 周频官方锚",
       "timelinessZh": "低噪声、经过验证、约一周滞后",
       "sourceRole": "official_weekly_physical_anchor",
+      "directionalRole": "core_physical_anchor",
       "directionalUse": "低噪声供需锚点,用于校准较快的市场和事件信号",
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
@@ -182,7 +189,7 @@
       "unit": "thousand barrels per day",
       "asOfDate": "2026-06-12",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WDIUPUS2.W",
@@ -198,15 +205,16 @@
       "latencyTierZh": "T2 周频官方锚",
       "timelinessZh": "低噪声、经过验证、约一周滞后",
       "sourceRole": "official_weekly_physical_anchor",
+      "directionalRole": "core_physical_anchor",
       "directionalUse": "低噪声供需锚点,用于校准较快的市场和事件信号",
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
     "wtiPrice": {
-      "value": 75.22,
+      "value": 72.86,
       "unit": "$/bbl",
-      "asOfDate": "2026-06-22T04:00:00.000Z",
+      "asOfDate": "2026-06-23T04:00:00.000Z",
       "frequency": "daily",
-      "ageDays": 0,
+      "ageDays": 1,
       "maxAgeDays": 3,
       "sourceStatus": "live",
       "source": "radar-data:macroDrivers.inflationEnergy.wtiMarketProxy",
@@ -214,13 +222,14 @@
       "latencyTierZh": "T1 日频市场代理",
       "timelinessZh": "较快、代理口径、受 Daily 快照与公开源滞后约束",
       "sourceRole": "daily_market_futures_proxy",
+      "directionalRole": "market_confirmation",
       "directionalUse": "观察价格是否确认或背离周度物理链",
       "calibrationNoteZh": "用于观察市场是否正在确认或否定周度物理链,不能单独决定方向。",
       "proxyBasis": "Yahoo CL=F WTI futures market proxy; not official WTI spot.",
       "officialSpotFallback": {
         "value": 84.65,
         "asOfDate": "2026-06-15T00:00:00Z",
-        "ageDays": 8,
+        "ageDays": 9,
         "sourceStatus": "live",
         "source": "radar-data:macroDrivers.inflationEnergy.wti",
         "noteZh": "FRED DCOILWTICO 官方 WTI spot 保留为低噪声滞后校准源。"
@@ -228,11 +237,11 @@
       "limitationZh": "WTI 市场代理优先使用 Yahoo CL=F 期货快照;不是 FRED 官方 WTI spot。"
     },
     "brentPrice": {
-      "value": 84.36,
+      "value": 76.8,
       "unit": "$/bbl",
-      "asOfDate": "2026-06-22T11:16:22.912Z",
+      "asOfDate": "2026-06-23T22:46:22.199Z",
       "frequency": "daily",
-      "ageDays": 0,
+      "ageDays": 1,
       "maxAgeDays": 5,
       "sourceStatus": "live",
       "source": "radar-data:brentPricingLayer.selectedBrent",
@@ -240,13 +249,14 @@
       "latencyTierZh": "T1 日频市场代理",
       "timelinessZh": "较快、代理口径、受 Daily 快照与公开源滞后约束",
       "sourceRole": "daily_market_price_proxy",
+      "directionalRole": "market_confirmation",
       "directionalUse": "观察价格是否确认或背离周度物理链",
       "calibrationNoteZh": "用于观察市场是否正在确认或否定周度物理链,不能单独决定方向。"
     },
     "crackSpread": {
-      "value": 48.99,
+      "value": 56.55,
       "unit": "$/bbl",
-      "asOfDate": "2026-06-22T12:03:20.680Z",
+      "asOfDate": "2026-06-23T23:34:48.843Z",
       "frequency": "daily",
       "ageDays": 0,
       "maxAgeDays": 10,
@@ -259,19 +269,20 @@
       "latencyTierZh": "T1 日频市场代理",
       "timelinessZh": "较快、代理口径、受 Daily 快照与公开源滞后约束",
       "sourceRole": "daily_downstream_margin_proxy",
+      "directionalRole": "market_confirmation",
       "directionalUse": "观察成品油链条是否确认库存与炼厂压力",
       "calibrationNoteZh": "用于观察市场是否正在确认或否定周度物理链,不能单独决定方向。"
     },
     "curve": {
       "slopeRegime": "backwardation",
-      "frontMinusBack": 4.93,
-      "frontPrice": 80.59,
-      "backPrice": 75.66,
+      "frontMinusBack": 2.27,
+      "frontPrice": 76.69,
+      "backPrice": 74.42,
       "confidence": "low",
       "curveStatus": "live_proxy_priced",
       "frequency": "daily",
-      "asOfDate": "2026-06-22T04:00:00.000Z",
-      "ageDays": 0,
+      "asOfDate": "2026-06-23T04:00:00.000Z",
+      "ageDays": 1,
       "maxAgeDays": 4,
       "sourceStatus": "live",
       "source": "radar-data:brentPricingLayer.futuresPriceCurve",
@@ -280,6 +291,7 @@
       "latencyTierZh": "T1 日频市场代理",
       "timelinessZh": "较快、代理口径、受 Daily 快照与公开源滞后约束",
       "sourceRole": "daily_market_structure_proxy",
+      "directionalRole": "market_confirmation",
       "directionalUse": "观察期限结构是否确认现货紧张或宽松",
       "calibrationNoteZh": "用于观察市场是否正在确认或否定周度物理链,不能单独决定方向。"
     }
@@ -393,7 +405,7 @@
     },
     "futuresCurveConfirmation": "not_used_in_backtest",
     "priceContext": {
-      "brentChangePct4w": -27.73,
+      "brentChangePct4w": -34.21,
       "curveSlopeRegime": "backwardation",
       "crackChange4w": -31.75,
       "priceDirectionSource": "radar-history-full:brent~4w"
@@ -418,7 +430,7 @@
       "supplyBuffer": "extremely_tight",
       "inventoryBalance": "acute_draw",
       "demandState": "downshift_watch",
-      "transportRisk": "normal",
+      "transportRisk": "chokepoint_watch_low_confidence",
       "confirmationCount": 3,
       "confidenceAdjustment": "up_with_demand_cap",
       "confidence": "low",
@@ -426,18 +438,20 @@
         "oecdCommercialInventory",
         "globalInventoryDraw",
         "opecSpareCapacity",
-        "globalDemandDownshift"
+        "globalDemandDownshift",
+        "transportChokepoint"
       ],
       "reasons": [
         "OECD 商业库存低于同期或同比明显下降。",
         "全球净库存变化显示抽库。",
         "OPEC 闲置产能缓冲偏薄。",
-        "全球消费预测同比下修,对上行压力形成置信上限。"
+        "全球消费预测同比下修,对上行压力形成置信上限。",
+        "PortWatch 咽喉代理触发低置信事件风险观察,不确认暗航行或封锁。"
       ],
       "sourceWindows": {
         "inventoryPeriod": "2026-06",
         "sparePeriod": "2026-06",
-        "transportDate": "2026-06-14"
+        "transportDate": "2026-06-21"
       },
       "boundary": "display-only global/monthly confirmation overlay; NOT in values/scoring/decision/execution/position"
     },

@@ -19,11 +19,22 @@ const EIA_KEYS = [
 const REUSE_PRICE_KEYS = ['wtiPrice', 'brentPrice', 'crackSpread'];
 const UNITS = new Set(['thousand barrels', 'thousand barrels per day', 'percent', '$/bbl']);
 const LATENCY_TIERS = new Set(['T1_daily_market_proxy', 'T2_weekly_official_anchor']);
+const DIRECTIONAL_ROLES = new Set([
+  'core_physical_anchor',
+  'market_confirmation',
+  'global_slow_variable',
+  'high_frequency_watch',
+  'data_quality',
+]);
 
-function validateTimingFields(e, path, expectedTier) {
+function validateTimingFields(e, path, expectedTier, expectedDirectionalRole) {
   if (!LATENCY_TIERS.has(e.latencyTier)) fail(`${path}.latencyTier unsupported: ${e.latencyTier}`);
   if (expectedTier && e.latencyTier !== expectedTier) fail(`${path}.latencyTier must be ${expectedTier}, got: ${e.latencyTier}`);
-  for (const field of ['latencyTierZh', 'timelinessZh', 'sourceRole', 'directionalUse', 'calibrationNoteZh']) {
+  if (!DIRECTIONAL_ROLES.has(e.directionalRole)) fail(`${path}.directionalRole unsupported: ${e.directionalRole}`);
+  if (expectedDirectionalRole && e.directionalRole !== expectedDirectionalRole) {
+    fail(`${path}.directionalRole must be ${expectedDirectionalRole}, got: ${e.directionalRole}`);
+  }
+  for (const field of ['latencyTierZh', 'timelinessZh', 'sourceRole', 'directionalRole', 'directionalUse', 'calibrationNoteZh']) {
     if (typeof e[field] !== 'string' || !e[field]) fail(`${path}.${field} must be a non-empty string`);
   }
   if (!/校准|确认|背离|锚点/u.test(e.directionalUse + e.calibrationNoteZh)) {
@@ -50,7 +61,7 @@ if (!ev || typeof ev !== 'object') {
   for (const k of EIA_KEYS) {
     const e = ev[k];
     if (!e || typeof e !== 'object') { fail(`evidence.${k} is not an object`); continue; }
-    validateTimingFields(e, `evidence.${k}`, 'T2_weekly_official_anchor');
+    validateTimingFields(e, `evidence.${k}`, 'T2_weekly_official_anchor', 'core_physical_anchor');
     if (!numOrNull(e.value)) fail(`evidence.${k}.value must be number|null`);
     if (!UNITS.has(e.unit)) fail(`evidence.${k}.unit unsupported: ${e.unit}`);
     if (typeof e.source !== 'string' || !e.source.startsWith('EIA:')) fail(`evidence.${k}.source must start with 'EIA:'`);
@@ -65,7 +76,7 @@ if (!ev || typeof ev !== 'object') {
   for (const k of REUSE_PRICE_KEYS) {
     const e = ev[k];
     if (!e || typeof e !== 'object') { fail(`evidence.${k} is not an object`); continue; }
-    validateTimingFields(e, `evidence.${k}`, 'T1_daily_market_proxy');
+    validateTimingFields(e, `evidence.${k}`, 'T1_daily_market_proxy', 'market_confirmation');
     if (!numOrNull(e.value)) fail(`evidence.${k}.value must be number|null`);
     if (e.unit !== '$/bbl') fail(`evidence.${k}.unit must be '$/bbl'`);
     if (typeof e.source !== 'string' || !e.source.startsWith('radar-data:')) {
@@ -77,7 +88,7 @@ if (!ev || typeof ev !== 'object') {
   if (!c || typeof c !== 'object') {
     fail('evidence.curve is not an object');
   } else {
-    validateTimingFields(c, 'evidence.curve', 'T1_daily_market_proxy');
+    validateTimingFields(c, 'evidence.curve', 'T1_daily_market_proxy', 'market_confirmation');
     if (c.slopeRegime !== null && typeof c.slopeRegime !== 'string') fail('evidence.curve.slopeRegime must be string|null');
     if (!numOrNull(c.frontMinusBack)) fail('evidence.curve.frontMinusBack must be number|null');
     if (c.confidence !== 'low') fail("evidence.curve.confidence must be 'low' (public monthly proxy)");
