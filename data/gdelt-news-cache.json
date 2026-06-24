@@ -6,13 +6,15 @@
   "cacheScope": "odp_oil_news_event_watch",
   "status": "error",
   "sourceStatus": "error",
-  "requestMode": "live_broad_query_failed",
+  "requestMode": "error_cooldown_cache_hit",
   "source": "GDELT DOC public search",
   "cachePolicy": {
-    "ttlMinutes": 30,
-    "staleMaxHours": 6,
+    "ttlMinutes": 360,
+    "staleMaxHours": 24,
+    "errorCooldownHours": 6,
     "lowFrequencyCache": true,
-    "broadQueryLocalClassification": true
+    "broadQueryLocalClassification": true,
+    "liveRetryPolicy": "single_attempt_after_cache_or_error_cooldown"
   },
   "query": {
     "id": "gdelt_broad_oil_news",
