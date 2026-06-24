@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-24T09:59:00.190Z",
+  "generatedAt": "2026-06-24T12:34:44.143Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -21,7 +21,7 @@
     "details": {
       "gdelt_doc": {
         "status": "error",
-        "networkUsed": false,
+        "networkUsed": true,
         "successCount": 0,
         "failureCount": 1,
         "articleCount": 0,
@@ -29,9 +29,9 @@
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "error_cooldown_cache_hit",
+            "status": "error",
             "articleCount": 0,
-            "error": "GDELT DOC broad oil-news cache HTTP 429 after 2 attempt(s)"
+            "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
           }
         ]
       },
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-06-23T17:30:20.000Z",
-    "latestArticleAgeHours": 16.5,
+    "latestArticleAgeHours": 19.1,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -294,9 +294,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 22,
+      "articleCount": 21,
       "sourceCount": 2,
-      "weightedSignal": 132,
+      "weightedSignal": 126,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -317,25 +317,6 @@
           ]
         },
         {
-          "title": "Hormuz reopens, but obstacles remain as oil markets seek path to normalcy - World Oil",
-          "url": "https://worldoil.com/news/2026/6/19/hormuz-reopens-but-obstacles-remain-as-oil-markets-seek-path-to-normalcy/",
-          "domain": "worldoil.com",
-          "publishedAt": "2026-06-19T20:45:46.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "market_reaction",
-            "middle_east_risk",
-            "supply_disruption",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "chokepoint_shipping"
-          ]
-        },
-        {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
           "url": "https://www.reuters.com/business/energy/iraq-export-crude-naphtha-through-syria-after-hormuz-shock-2026-06-19/",
           "domain": "reuters.com",
@@ -353,14 +334,32 @@
           "queryIds": [
             "chokepoint_shipping"
           ]
+        },
+        {
+          "title": "Explosion at Qatar natural gas export terminal injures 54, leaves 18 missing - NBC News",
+          "url": "https://www.nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
+          "domain": "nbcnews.com",
+          "publishedAt": "2026-06-22T03:05:30.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "facility_event",
+            "middle_east_risk",
+            "supply_disruption"
+          ],
+          "queryIds": [
+            "facility_supply_disruption"
+          ]
         }
       ]
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 25,
+      "articleCount": 26,
       "sourceCount": 2,
-      "weightedSignal": 100,
+      "weightedSignal": 104,
       "topArticles": [
         {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
@@ -375,6 +374,24 @@
             "facility_event",
             "middle_east_risk",
             "supply_disruption",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
+          ]
+        },
+        {
+          "title": "Hormuz Reopening Shifts Focus to Gulf Oil Storage and Shipping - WSJ",
+          "url": "https://www.wsj.com/business/energy-oil/hormuz-reopening-shifts-focus-to-gulf-oil-storage-and-shipping-53430fa8",
+          "domain": "wsj.com",
+          "publishedAt": "2026-06-19T11:27:00.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "facility_event",
+            "middle_east_risk",
             "tanker_shipping"
           ],
           "queryIds": [
@@ -397,32 +414,14 @@
           "queryIds": [
             "sanctions_shadow_fleet"
           ]
-        },
-        {
-          "title": "Ukraine Strikes Sanctioned Tanker in the Black Sea - The Maritime Executive",
-          "url": "https://maritime-executive.com/article/ukraine-strikes-sanctioned-tanker-in-the-black-sea",
-          "domain": "maritime-executive.com",
-          "publishedAt": "2026-06-17T16:02:19.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "facility_event",
-            "sanctions",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "sanctions_shadow_fleet"
-          ]
         }
       ]
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 34,
+      "articleCount": 35,
       "sourceCount": 2,
-      "weightedSignal": 102,
+      "weightedSignal": 105,
       "topArticles": [
         {
           "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
@@ -481,9 +480,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 50,
+      "articleCount": 49,
       "sourceCount": 2,
-      "weightedSignal": 150,
+      "weightedSignal": 147,
       "topArticles": [
         {
           "title": "Iranian oil tankers passed US blockade of Hormuz Strait this week - The Jerusalem Post",
@@ -542,9 +541,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 23,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 46,
+      "weightedSignal": 44,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -583,22 +582,20 @@
           ]
         },
         {
-          "title": "Hormuz reopens, but obstacles remain as oil markets seek path to normalcy - World Oil",
-          "url": "https://worldoil.com/news/2026/6/19/hormuz-reopens-but-obstacles-remain-as-oil-markets-seek-path-to-normalcy/",
-          "domain": "worldoil.com",
-          "publishedAt": "2026-06-19T20:45:46.000Z",
+          "title": "Brent Oil Rises Over $1 After US-Iran Talks, Strait of Hormuz Tensions - Global Banking & Finance Review",
+          "url": "https://www.globalbankingandfinance.com/brent-oil-rises-1-bbl-bumpy-start-us-iran-peace-talks/",
+          "domain": "globalbankingandfinance.com",
+          "publishedAt": "2026-06-21T22:17:22.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
             "chokepoint",
             "market_reaction",
-            "middle_east_risk",
-            "supply_disruption",
-            "tanker_shipping"
+            "middle_east_risk"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "market_reaction"
           ]
         }
       ]
@@ -708,22 +705,39 @@
       ]
     },
     {
-      "title": "Hormuz reopens, but obstacles remain as oil markets seek path to normalcy - World Oil",
-      "url": "https://worldoil.com/news/2026/6/19/hormuz-reopens-but-obstacles-remain-as-oil-markets-seek-path-to-normalcy/",
-      "domain": "worldoil.com",
-      "publishedAt": "2026-06-19T20:45:46.000Z",
+      "title": "Explosion at Qatar natural gas export terminal injures 54, leaves 18 missing - NBC News",
+      "url": "https://www.nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
+      "domain": "nbcnews.com",
+      "publishedAt": "2026-06-22T03:05:30.000Z",
       "sources": [
         "tavily"
       ],
       "buckets": [
         "chokepoint",
-        "market_reaction",
+        "facility_event",
         "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
+        "supply_disruption"
       ],
       "queryIds": [
-        "chokepoint_shipping"
+        "facility_supply_disruption"
+      ]
+    },
+    {
+      "title": "Explosion as Qatar restarts gas export terminal hurts 54 and leaves 18 missing - Houston Chronicle",
+      "url": "https://www.houstonchronicle.com/news/world/article/explosion-as-qatar-restarts-gas-export-terminal-22314427.php",
+      "domain": "houstonchronicle.com",
+      "publishedAt": "2026-06-22T03:56:53.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
       ]
     },
     {
@@ -745,28 +759,10 @@
       ]
     },
     {
-      "title": "U.S. crude oil inventories decrease by 8.3 million barrels - Oil & Gas 360",
-      "url": "https://www.oilandgas360.com/crude-inventories-06-12/",
-      "domain": "oilandgas360.com",
-      "publishedAt": "2026-06-17T16:33:49.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
-      "title": "Iran peace deal is looking ‘flimsier by the hour’ - Sky News Australia",
-      "url": "https://www.skynews.com.au/opinion/iran-peace-deal-is-looking-flimsier-by-the-hour/video/f8b06c84e9eaa0da6ac1bfc7d392c41b",
-      "domain": "skynews.com.au",
-      "publishedAt": "2026-06-22T11:55:32.000Z",
+      "title": "Iran Resumes Kharg Island Oil Loadings After US Blockade Lifted - Bloomberg.com",
+      "url": "https://www.bloomberg.com/news/articles/2026-06-20/iran-resumes-kharg-island-oil-loadings-after-us-blockade-lifted",
+      "domain": "bloomberg.com",
+      "publishedAt": "2026-06-20T15:14:11.000Z",
       "sources": [
         "tavily"
       ],
@@ -838,10 +834,11 @@
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 1,
-    "highClaimDomainCount": 1,
+    "highClaimTitleCount": 2,
+    "highClaimDomainCount": 2,
     "highClaimDomains": [
-      "bbc.com"
+      "bbc.com",
+      "bloomberg.com"
     ],
     "highClaimTerms": [
       "blockade"
