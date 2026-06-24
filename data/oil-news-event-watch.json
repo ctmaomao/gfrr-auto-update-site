@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-24T20:19:53.838Z",
+  "generatedAt": "2026-06-24T21:55:39.165Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -21,7 +21,7 @@
     "details": {
       "gdelt_doc": {
         "status": "error",
-        "networkUsed": true,
+        "networkUsed": false,
         "successCount": 0,
         "failureCount": 1,
         "articleCount": 0,
@@ -29,7 +29,7 @@
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "error",
+            "status": "error_cooldown_cache_hit",
             "articleCount": 0,
             "error": "GDELT DOC broad oil-news cache JSON parse failed"
           }
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-06-24T15:42:08.000Z",
-    "latestArticleAgeHours": 4.6,
+    "latestArticleAgeHours": 6.2,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -361,9 +361,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 25,
+      "articleCount": 24,
       "sourceCount": 2,
-      "weightedSignal": 100,
+      "weightedSignal": 96,
       "topArticles": [
         {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
@@ -426,9 +426,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 36,
+      "articleCount": 37,
       "sourceCount": 2,
-      "weightedSignal": 108,
+      "weightedSignal": 111,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -488,9 +488,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 56,
+      "articleCount": 53,
       "sourceCount": 2,
-      "weightedSignal": 168,
+      "weightedSignal": 159,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -550,9 +550,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 25,
+      "articleCount": 26,
       "sourceCount": 2,
-      "weightedSignal": 50,
+      "weightedSignal": 52,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -752,25 +752,6 @@
       ]
     },
     {
-      "title": "FAQ: What to know about Treasury Department's temporary license for Iranian oil sales - ABC News",
-      "url": "https://abcnews.com/Politics/faq-treasury-departments-temporary-license-iranian-oil-sales/story?id=134135294",
-      "domain": "abcnews.com",
-      "publishedAt": "2026-06-23T20:36:50.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "sanctions",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "sanctions_shadow_fleet"
-      ]
-    },
-    {
       "title": "WTI Crude Falls Below $70 Mark; Trump Says Strait of Hormuz Won't Charge Fees, Two Major Crude Futures Plunge Nearly 5% Again",
       "url": "https://tradingkey.com/analysis/commodities/oil/261988246-crude-oil-price-wti-70-brent-75-trump-hormuz-tradingkey",
       "domain": "tradingkey.com",
@@ -842,22 +823,44 @@
       "queryIds": [
         "facility_supply_disruption"
       ]
+    },
+    {
+      "title": "Iran Resumes Kharg Island Oil Loadings After US Blockade Lifted - Bloomberg.com",
+      "url": "https://www.bloomberg.com/news/articles/2026-06-20/iran-resumes-kharg-island-oil-loadings-after-us-blockade-lifted",
+      "domain": "bloomberg.com",
+      "publishedAt": "2026-06-20T15:14:11.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
     }
   ],
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 0,
-    "highClaimDomainCount": 0,
-    "highClaimDomains": [],
-    "highClaimTerms": [],
+    "highClaimTitleCount": 1,
+    "highClaimDomainCount": 1,
+    "highClaimDomains": [
+      "bloomberg.com"
+    ],
+    "highClaimTerms": [
+      "blockade"
+    ],
     "directHeadlineDisplayAllowed": false,
-    "noteZh": "本轮 compact title 未触发高主张标题规则;标题展示仍需另开 reviewed UI/copy 审核。"
+    "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
   },
   "headlineDisplayReadiness": {
-    "state": "candidate_ready_for_review",
+    "state": "not_ready_high_claim_title_noise",
     "displayHeadlinesApproved": false,
-    "reasonZh": "标题风险规则未触发,但仍需另开 reviewed UI/copy 审核后才可考虑展示标题。",
+    "reasonZh": "本轮标题含高主张措辞,必须保持人工复核,不得直接进入前端标题展示。",
     "requiredNextReview": "separate reviewed UI/copy PR with headline uncertainty copy and source attribution guards"
   },
   "recommendation": {
