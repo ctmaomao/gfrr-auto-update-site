@@ -186,6 +186,20 @@ function buildAttribution({ reconcile, signals, priceContext, crackChange4w, glo
   };
 
   if (!signals || reconcile.finalBias === 'insufficient_data') {
+    attribution.supportEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.dataQuality,
+      '主支撑待恢复',
+      '当前没有完整的同周 EIA 周度物理链,ODP 不生成方向性主支撑。',
+      ['evidence'],
+      'no_directional_support',
+    ));
+    attribution.counterEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.dataQuality,
+      '市场代理不补位',
+      '价格、新闻和观察层在官方物理锚缺失时不能替代方向判读。',
+      ['brentPrice', 'curve', 'oilNewsEventWatch', 'oilThermalWatch'],
+      'prevents_proxy_override',
+    ));
     attribution.confidenceCaps.push(attributionItem(
       DIRECTIONAL_ROLES.dataQuality,
       '周度物理链不完整',

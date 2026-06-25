@@ -1,0 +1,187 @@
+{
+  "schemaVersion": "odp-attribution-fixtures-p42",
+  "module": "oil-directional-attribution-fixtures",
+  "boundary": "offline fixture only; display-only attribution guard; NOT in scoring/decision/execution/position",
+  "cases": [
+    {
+      "name": "strong_bullish_core_support",
+      "finalBias": "strong_bullish",
+      "attribution": {
+        "schemaVersion": "odp-attribution-1",
+        "boundary": "display-only attribution; qualitative explanation only; NOT in values/scoring/decision/execution/position",
+        "primaryThesis": "周度物理链显示库存与成品油端同时偏紧,当前判读以物理压力为主。",
+        "supportEvidence": [
+          {
+            "role": "core_physical_anchor",
+            "label": "商业原油库存偏紧",
+            "stance": "supports_physical_pressure",
+            "evidenceKeys": ["crudeStocksExSpr"],
+            "text": "商业原油库存偏低并去化,构成方向主支撑。"
+          }
+        ],
+        "counterEvidence": [
+          {
+            "role": "market_confirmation",
+            "label": "Brent 价格回落",
+            "stance": "counters_physical_pressure",
+            "evidenceKeys": ["brentPrice"],
+            "text": "价格回落是反证,但不直接覆盖周度物理链。"
+          }
+        ],
+        "confidenceCaps": [
+          {
+            "role": "data_quality",
+            "label": "官方周报天然滞后",
+            "stance": "caps_timeliness",
+            "evidenceKeys": ["crudeStocksExSpr", "distillateStocks"],
+            "text": "EIA 是低噪声官方锚,但对当前流向存在发布滞后。"
+          }
+        ],
+        "viewChangeTriggers": [
+          {
+            "role": "core_physical_anchor",
+            "label": "物理链转松",
+            "stance": "would_weaken_physical_bias",
+            "evidenceKeys": ["crudeStocksExSpr", "distillateStocks", "refineryUtilization"],
+            "text": "库存回补、馏分油修复和炼厂开工回落会削弱该判断。"
+          }
+        ]
+      }
+    },
+    {
+      "name": "false_down_physical_stress",
+      "finalBias": "false_down_physical_stress",
+      "attribution": {
+        "schemaVersion": "odp-attribution-1",
+        "boundary": "display-only attribution; qualitative explanation only; NOT in values/scoring/decision/execution/position",
+        "primaryThesis": "价格下跌与周度物理链偏紧并存,当前判读是价格未完全确认物理压力解除。",
+        "supportEvidence": [
+          {
+            "role": "core_physical_anchor",
+            "label": "馏分油库存偏紧",
+            "stance": "supports_product_stress",
+            "evidenceKeys": ["distillateStocks", "crackSpread"],
+            "text": "成品油链条偏紧说明下跌没有被物理端完全确认。"
+          }
+        ],
+        "counterEvidence": [
+          {
+            "role": "market_confirmation",
+            "label": "Brent 价格回落",
+            "stance": "counters_physical_pressure",
+            "evidenceKeys": ["brentPrice"],
+            "text": "价格回落是最重要反证,因此只能表达背离而不是强行上行。"
+          }
+        ],
+        "confidenceCaps": [
+          {
+            "role": "high_frequency_watch",
+            "label": "新闻与卫星仍为观察层",
+            "stance": "keeps_watch_layer_separate",
+            "evidenceKeys": ["oilNewsEventWatch", "oilThermalWatch"],
+            "text": "观察层必须与价格结构和周度库存交叉印证后才提高置信。"
+          }
+        ],
+        "viewChangeTriggers": [
+          {
+            "role": "market_confirmation",
+            "label": "价格结构确认宽松",
+            "stance": "would_confirm_market_easing",
+            "evidenceKeys": ["brentPrice", "curve"],
+            "text": "若 Brent 继续回落且曲线转为 contango,背离会转为宽松确认。"
+          }
+        ]
+      }
+    },
+    {
+      "name": "bearish_core_loose",
+      "finalBias": "bearish",
+      "attribution": {
+        "schemaVersion": "odp-attribution-1",
+        "boundary": "display-only attribution; qualitative explanation only; NOT in values/scoring/decision/execution/position",
+        "primaryThesis": "周度物理链偏松或需求转弱,当前判读不支持物理端上行压力。",
+        "supportEvidence": [
+          {
+            "role": "core_physical_anchor",
+            "label": "需求端转弱",
+            "stance": "supports_bearish_physical_view",
+            "evidenceKeys": ["demandGasolineSupplied", "demandDistillateSupplied"],
+            "text": "产品供应均值转弱时,物理压力更可能来自需求放缓。"
+          }
+        ],
+        "counterEvidence": [
+          {
+            "role": "market_confirmation",
+            "label": "期限结构仍偏紧",
+            "stance": "counters_bearish_view",
+            "evidenceKeys": ["curve"],
+            "text": "若曲线仍 backwardation,需要防止把需求转弱误读为全面宽松。"
+          }
+        ],
+        "confidenceCaps": [
+          {
+            "role": "global_slow_variable",
+            "label": "全球慢变量待确认",
+            "stance": "caps_global_confidence",
+            "evidenceKeys": ["interpretation.globalOverlay"],
+            "text": "全球库存、净抽库与闲置产能未同向前,不扩大 bearish 结论。"
+          }
+        ],
+        "viewChangeTriggers": [
+          {
+            "role": "core_physical_anchor",
+            "label": "库存重新去化",
+            "stance": "would_reverse_view",
+            "evidenceKeys": ["crudeStocksExSpr", "distillateStocks"],
+            "text": "若核心库存重新去化并扩散到成品油,该 bearish 判断应被削弱。"
+          }
+        ]
+      }
+    },
+    {
+      "name": "insufficient_data_no_proxy_override",
+      "finalBias": "insufficient_data",
+      "attribution": {
+        "schemaVersion": "odp-attribution-1",
+        "boundary": "display-only attribution; qualitative explanation only; NOT in values/scoring/decision/execution/position",
+        "primaryThesis": "周度物理链数据不足,当前不做方向判读。",
+        "supportEvidence": [
+          {
+            "role": "data_quality",
+            "label": "主支撑待恢复",
+            "stance": "no_directional_support",
+            "evidenceKeys": ["evidence"],
+            "text": "当前没有完整的同周官方周度物理链,不生成方向主支撑。"
+          }
+        ],
+        "counterEvidence": [
+          {
+            "role": "data_quality",
+            "label": "市场代理不补位",
+            "stance": "prevents_proxy_override",
+            "evidenceKeys": ["brentPrice", "curve", "oilNewsEventWatch", "oilThermalWatch"],
+            "text": "价格、新闻和观察层不能替代缺失的官方物理锚。"
+          }
+        ],
+        "confidenceCaps": [
+          {
+            "role": "data_quality",
+            "label": "周度物理链不完整",
+            "stance": "blocks_directional_view",
+            "evidenceKeys": ["evidence"],
+            "text": "EIA 周度锚未满足同周完整条件,因此不做方向判断。"
+          }
+        ],
+        "viewChangeTriggers": [
+          {
+            "role": "core_physical_anchor",
+            "label": "恢复同周完整锚点",
+            "stance": "restores_model_input",
+            "evidenceKeys": ["crudeStocksExSpr", "distillateStocks", "refineryUtilization"],
+            "text": "8 个 EIA 周度源重新同周 live 后,才重新生成物理链方向归因。"
+          }
+        ]
+      }
+    }
+  ]
+}
