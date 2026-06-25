@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-25T09:54:44.469Z",
+  "generatedAt": "2026-06-25T12:38:39.368Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -21,7 +21,7 @@
     "details": {
       "gdelt_doc": {
         "status": "error",
-        "networkUsed": false,
+        "networkUsed": true,
         "successCount": 0,
         "failureCount": 1,
         "articleCount": 0,
@@ -29,9 +29,9 @@
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "error_cooldown_cache_hit",
+            "status": "error",
             "articleCount": 0,
-            "error": "GDELT DOC broad oil-news cache JSON parse failed"
+            "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
           }
         ]
       },
@@ -113,8 +113,8 @@
   },
   "freshness": {
     "windowDays": 7,
-    "latestArticleAt": "2026-06-24T21:33:27.000Z",
-    "latestArticleAgeHours": 12.4,
+    "latestArticleAt": "2026-06-25T08:30:38.000Z",
+    "latestArticleAgeHours": 4.1,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 64,
-    "uniqueArticleCount": 62,
+    "uniqueArticleCount": 61,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -208,10 +208,12 @@
             "chokepoint",
             "market_reaction",
             "middle_east_risk",
+            "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
           ]
         },
         {
@@ -236,24 +238,27 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 19,
+      "articleCount": 18,
       "sourceCount": 2,
-      "weightedSignal": 76,
+      "weightedSignal": 72,
       "topArticles": [
         {
-          "title": "First Russian shadow fleet vessel enters Channel since Smyrtos boarding - BBC",
-          "url": "https://www.bbc.com/news/articles/cgk6d12lz6jo",
-          "domain": "bbc.com",
-          "publishedAt": "2026-06-18T11:20:20.000Z",
+          "title": "Hormuz reopening gains momentum as tankers resume transit - World Oil",
+          "url": "https://worldoil.com/news/2026/6/18/hormuz-reopening-gains-momentum-as-tankers-resume-transit/",
+          "domain": "worldoil.com",
+          "publishedAt": "2026-06-18T15:03:22.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
-            "facility_event",
+            "chokepoint",
+            "market_reaction",
+            "middle_east_risk",
             "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
+            "chokepoint_shipping",
             "sanctions_shadow_fleet"
           ]
         },
@@ -296,9 +301,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 22,
+      "articleCount": 24,
       "sourceCount": 2,
-      "weightedSignal": 132,
+      "weightedSignal": 144,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -360,9 +365,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 26,
+      "articleCount": 25,
       "sourceCount": 2,
-      "weightedSignal": 104,
+      "weightedSignal": 100,
       "topArticles": [
         {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
@@ -384,23 +389,6 @@
           ]
         },
         {
-          "title": "First Russian shadow fleet vessel enters Channel since Smyrtos boarding - BBC",
-          "url": "https://www.bbc.com/news/articles/cgk6d12lz6jo",
-          "domain": "bbc.com",
-          "publishedAt": "2026-06-18T11:20:20.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "facility_event",
-            "sanctions",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "sanctions_shadow_fleet"
-          ]
-        },
-        {
           "title": "Hormuz Reopening Shifts Focus to Gulf Oil Storage and Shipping - WSJ",
           "url": "https://www.wsj.com/business/energy-oil/hormuz-reopening-shifts-focus-to-gulf-oil-storage-and-shipping-53430fa8",
           "domain": "wsj.com",
@@ -418,14 +406,31 @@
           "queryIds": [
             "sanctions_shadow_fleet"
           ]
+        },
+        {
+          "title": "Second Moscow refinery attack this week damages units, sparks fires, sources say",
+          "url": "/goto?url=CAESuwEB7keqTaKG1Duf_ztcRNo3TCMmvJbmeYKbS75-L8KIEmIAOq0gSODaJBGeMF3gt0AQ59zphu4cJNMQe2Y3LU2omblJ4GdrIek1E5VMbT10JJYtc17SHnAMzb-nAKLF8vGWpL_hjsiMDytHA84NcFwEFjUpIkoPVA3HUzDRmTUqs3zLCbvIBKuPHMb_YCYTQ8lZe22QRJYJ-rLQtORDdRK4vVfoasng-WzWZWkDiqr2HNSJ8pETprlL2Dz6",
+          "domain": null,
+          "publishedAt": "2026-06-19T12:38:36.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "facility_event",
+            "supply_disruption"
+          ],
+          "queryIds": [
+            "facility_supply_disruption"
+          ]
         }
       ]
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 38,
+      "articleCount": 35,
       "sourceCount": 2,
-      "weightedSignal": 114,
+      "weightedSignal": 105,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -457,10 +462,12 @@
             "chokepoint",
             "market_reaction",
             "middle_east_risk",
+            "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
           ]
         },
         {
@@ -485,9 +492,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 53,
+      "articleCount": 46,
       "sourceCount": 2,
-      "weightedSignal": 159,
+      "weightedSignal": 138,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -519,10 +526,12 @@
             "chokepoint",
             "market_reaction",
             "middle_east_risk",
+            "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
           ]
         },
         {
@@ -547,9 +556,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 26,
+      "articleCount": 25,
       "sourceCount": 2,
-      "weightedSignal": 52,
+      "weightedSignal": 50,
       "topArticles": [
         {
           "title": "Hormuz reopening gains momentum as tankers resume transit - Oil & Gas 360",
@@ -581,10 +590,12 @@
             "chokepoint",
             "market_reaction",
             "middle_east_risk",
+            "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
           ]
         },
         {
@@ -633,26 +644,6 @@
       ]
     },
     {
-      "title": "Strait of Hormuz Deal Sparks Uncertainty Over Who Controls Key Oil Route - Newsweek",
-      "url": "https://newsweek.com/hormuz-uncertainty-grows-as-questions-mount-over-control-after-60-day-deal-12100981",
-      "domain": "newsweek.com",
-      "publishedAt": "2026-06-21T17:07:26.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
       "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
       "url": "https://www.reuters.com/business/energy/iraq-export-crude-naphtha-through-syria-after-hormuz-shock-2026-06-19/",
       "domain": "reuters.com",
@@ -669,25 +660,6 @@
       ],
       "queryIds": [
         "chokepoint_shipping"
-      ]
-    },
-    {
-      "title": "Phillips 66 CEO says Hormuz supply disruptions may linger amid shipping uncertainty - Oil & Gas 360",
-      "url": "https://www.oilandgas360.com/phillips-66-ceo-says-hormuz-supply-disruptions-may-linger-amid-shipping-uncertainty/",
-      "domain": "oilandgas360.com",
-      "publishedAt": "2026-06-23T17:30:20.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
       ]
     },
     {
@@ -787,12 +759,68 @@
       ]
     },
     {
-      "title": "Explosion at Qatar natural gas export terminal injures 54, leaves 18 missing - NBC News",
-      "url": "https://www.nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
+      "title": "WTI Crude Falls Below $70 Mark; Trump Says Strait of Hormuz Won't Charge Fees, Two Major Crude Futures Plunge Nearly 5% Again",
+      "url": "https://tradingkey.com/analysis/commodities/oil/261988246-crude-oil-price-wti-70-brent-75-trump-hormuz-tradingkey",
+      "domain": "tradingkey.com",
+      "publishedAt": "2026-06-24T14:59:30.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "market_reaction"
+      ]
+    },
+    {
+      "title": "Brent Oil Erases Wartime Gains as Hormuz Reopening Boosts Supply - Bloomberg",
+      "url": "https://www.bloomberg.com/news/articles/2026-06-24/latest-oil-market-news-and-analysis-for-june-25",
+      "domain": "bloomberg.com",
+      "publishedAt": "2026-06-25T08:30:38.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "sanctions"
+      ],
+      "queryIds": [
+        "market_reaction"
+      ]
+    },
+    {
+      "title": "Qatar says gas export terminal blast killed 13, injured dozens more - ABC News",
+      "url": "https://abcnews.com/International/wireStory/explosion-qatar-restarts-gas-export-terminal-hurts-54-134085065",
+      "domain": "abcnews.com",
+      "publishedAt": "2026-06-22T01:54:00.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
+    },
+    {
+      "title": "Qatar says gas export terminal blast killed 13 as workers tried to resume operations",
+      "url": "https://nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
       "domain": "nbcnews.com",
-      "publishedAt": "2026-06-22T03:05:30.000Z",
+      "publishedAt": "2026-06-22T15:03:50.000Z",
       "sources": [
-        "tavily"
+        "brave"
       ],
       "buckets": [
         "chokepoint",
@@ -805,36 +833,18 @@
       ]
     },
     {
-      "title": "Explosion as Qatar restarts gas export terminal hurts 54 and leaves 18 missing - Houston Chronicle",
-      "url": "https://www.houstonchronicle.com/news/world/article/explosion-as-qatar-restarts-gas-export-terminal-22314427.php",
-      "domain": "houstonchronicle.com",
-      "publishedAt": "2026-06-22T03:56:53.000Z",
+      "title": "Ukraine's refinery attacks wipe out quarter of Russia's gasoline output, Reuters reports",
+      "url": "https://newsukraine.rbc.ua/news/refinery-attacks-wipe-out-quarter-of-russia-1782245480.html",
+      "domain": "newsukraine.rbc.ua",
+      "publishedAt": "2026-06-23T20:20:20.000Z",
       "sources": [
-        "tavily"
+        "brave"
       ],
       "buckets": [
         "chokepoint",
         "facility_event",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
-      "title": "Dozens injured, 18 missing after blast during restart at giant Qatar LNG site - CNBC",
-      "url": "https://www.cnbc.com/2026/06/22/dozens-injured-and-18-missing-after-explosion-at-qatar-lng-site.html",
-      "domain": "cnbc.com",
-      "publishedAt": "2026-06-22T04:54:19.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption"
+        "supply_disruption",
+        "tanker_shipping"
       ],
       "queryIds": [
         "facility_supply_disruption"
@@ -844,12 +854,14 @@
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 1,
-    "highClaimDomainCount": 1,
+    "highClaimTitleCount": 2,
+    "highClaimDomainCount": 2,
     "highClaimDomains": [
-      "businessinsider.com"
+      "businessinsider.com",
+      "newsukraine.rbc.ua"
     ],
     "highClaimTerms": [
+      "attacks",
       "war"
     ],
     "directHeadlineDisplayAllowed": false,
