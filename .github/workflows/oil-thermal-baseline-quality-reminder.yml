@@ -1,0 +1,47 @@
+name: Oil Thermal Baseline Quality Reminder
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '47 */12 * * *'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oil-thermal-baseline-quality-reminder-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  monitor:
+    name: Monitor oil thermal baseline quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository with history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run baseline quality monitor
+        run: npm run monitor:oil-thermal-baseline-quality -- --github-summary
+
+      - name: Upload monitor artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: oil-thermal-baseline-quality-monitor
+          path: manual-artifacts/oil-thermal/oil-thermal-baseline-quality-monitor-latest.json
+          if-no-files-found: error
+          retention-days: 30

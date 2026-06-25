@@ -476,6 +476,44 @@ P50 does not add or allow:
 - scoring, decision, execution, position, Brent promotion, Global Risk Heatmap or
   cross-validation impact.
 
+## P51 Baseline Quality Reminder / Artifact-Only Monitor
+
+P51 adds an artifact-only quality monitor for the rolling baseline:
+
+```text
+scripts/oil-directional/monitor-oil-thermal-baseline-quality.mjs
+npm run monitor:oil-thermal-baseline-quality
+npm run check:oil-thermal-baseline-quality-monitor
+.github/workflows/oil-thermal-baseline-quality-reminder.yml
+```
+
+The workflow runs every 12 hours and can also be manually dispatched. It checks
+recent git history for committed `data/oil-thermal-watch.json` samples by reusing
+the P47 preparation path, compares the candidate sample window against the current
+production baseline quality, and uploads only an ignored monitor artifact:
+
+```text
+manual-artifacts/oil-thermal/oil-thermal-baseline-quality-monitor-latest.json
+```
+
+If the candidate crosses the 7-day or 30-day quality threshold, the monitor reports
+`baseline_quality_threshold_ready` and prints the manual promotion command. It does
+not run that command, does not open a PR, does not commit, and does not write
+`config/oil-thermal-watch-baseline.json`.
+
+The workflow is intentionally read-only:
+
+- `permissions.contents=read`;
+- checkout uses `fetch-depth: 0` only so git-history samples are available;
+- no `FIRMS_MAP_KEY` secret is injected;
+- no FIRMS API request is made;
+- no `data/*.json`, `realtime/*.json`, or production config file is committed.
+
+P51 is a reminder surface only. It does not confirm incidents, outages, supply
+disruptions or oil-price direction, and it still does not affect ODP build inputs,
+ODP `finalBias`, scoring, decision, execution, position, Brent promotion, Global
+Risk Heatmap or cross-validation.
+
 ## Current P11 Scope
 
 P11 only adds a visible ODP readiness slot: `SATELLITE THERMAL WATCH / 卫星热异常观察`.

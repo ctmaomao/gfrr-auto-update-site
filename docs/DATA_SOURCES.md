@@ -407,6 +407,8 @@ P49 起,新增 `npm run refresh:oil-thermal-baseline-candidate` 作为 **manual/
 
 P50 起,ODP 前端 `SATELLITE THERMAL WATCH` 将 `data/oil-thermal-watch.json.baseline.sourceReview` 显示成 `基线质量` 行:质量标签、样本数、样本窗口天数与 quality transition。该展示只解释 P49 已产出的 production read-only 摘要,不触发新 FIRMS 请求、不写生产数据、不改变 baseline config、不确认事故/断供/封锁/油价方向,也不进入 ODP build input、`finalBias`、Brent promotion、`values.*`、scoring、decision、execution、position、Global Risk Heatmap 或 cross-validation。
 
+P51 起,新增 `Oil Thermal Baseline Quality Reminder` artifact-only monitor workflow。它每 12 小时或手动触发运行 `npm run monitor:oil-thermal-baseline-quality -- --github-summary`,通过 git history 重建 sanitized watch sample review,只判断 baseline quality 是否从 `<7d` 进入 `7-30d` 或从 `7-30d` 进入 `>=30d`。该 workflow 仅 `contents: read`,使用 `fetch-depth: 0`,上传 `manual-artifacts/oil-thermal/oil-thermal-baseline-quality-monitor-latest.json` artifact,不读取 `FIRMS_MAP_KEY`,不请求 FIRMS,不写 production baseline config,不 commit/push。若门槛已到,它只提示人工 review / `refresh:oil-thermal-baseline-candidate -- --write-production-baseline` 命令,不自动执行。P51 仍不确认事故、断供、封锁或油价方向,不进入 ODP build input、`finalBias`、Brent promotion、`values.*`、scoring、decision、execution、position、Global Risk Heatmap 或 cross-validation。
+
 **PR2 历史 cache**（`data/oil-directional-history.json`）：同 8 个 `PET.*.W` series、同 `/v2/seriesid/` route，由 `scripts/oil-directional/build-oil-directional-history.mjs`（零依赖，ADR-0013）一次性抓 2014-至今全周度史并切片落盘（每 series ~647 周，2014-01-03 起），作 **committed snapshot** 供回测 harness 离线、可复现回放（`check:all` 不联网）。fail-closed：失败 series → `sourceStatus:'missing'` / `points:[]`，不伪造。**仅供 PR2 回测 GATE**，不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / decision / Global Risk Heatmap。文件契约 + 分类器 / GATE / 预登记阈值见 [`DATA_CONTRACT.md`](DATA_CONTRACT.md)。
 
 ---

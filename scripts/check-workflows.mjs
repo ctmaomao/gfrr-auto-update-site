@@ -199,6 +199,39 @@ const contracts = [
     ]
   },
   {
+    file: '.github/workflows/oil-thermal-baseline-quality-reminder.yml',
+    required: [
+      'name: Oil Thermal Baseline Quality Reminder',
+      'workflow_dispatch',
+      "cron: '47 */12 * * *'",
+      'permissions:',
+      'contents: read',
+      'concurrency',
+      'oil-thermal-baseline-quality-reminder',
+      'actions/checkout@v6',
+      'fetch-depth: 0',
+      'actions/setup-node@v6',
+      'node-version: 24',
+      'package-manager-cache: false',
+      'npm run monitor:oil-thermal-baseline-quality -- --github-summary',
+      'actions/upload-artifact@v7',
+      'oil-thermal-baseline-quality-monitor',
+      'retention-days: 30'
+    ],
+    forbidden: [
+      'contents: write',
+      'git push',
+      'git commit',
+      'FIRMS_MAP_KEY',
+      'npm run build:oil-thermal-watch',
+      '--write-production-baseline',
+      'data/radar-data.json',
+      'data/oil-directional-pressure.json',
+      'data/oil-thermal-watch.json',
+      'realtime/market.json'
+    ]
+  },
+  {
     file: '.github/workflows/refresh-oil-news-event-watch.yml',
     required: [
       'name: Refresh Oil News Event Watch',
