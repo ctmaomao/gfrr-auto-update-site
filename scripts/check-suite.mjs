@@ -97,6 +97,7 @@ const SUITES = {
     'check:oil-thermal-watch-sample-archive',
     'check:oil-thermal-watch-history-sample-archive',
     'check:oil-thermal-baseline-samples-review',
+    'check:oil-thermal-baseline-readiness-prep',
     'check:firms-thermal-watch-review'
   ]
 };
