@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=odp-reading-structure-1';
+﻿import { formatFiniteNumber } from './format.js?v=odp-responsive-readability-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

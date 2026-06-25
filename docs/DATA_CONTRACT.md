@@ -735,6 +735,8 @@ P44 新增 `check:oil-directional-narrative-consistency`:ODP 标题、verdict、
 
 P45 新增 `check:oil-directional-reading-structure`:ODP 前端阅读路径固定为 `01 VERDICT` → `02 EVIDENCE CHAIN` → `03 COUNTERWEIGHT` → `04 证据矩阵与审计详情`,把结论、支撑链、反证/置信边界和折叠证据矩阵分层展示。该 checker 静态校验 DOM 顺序、ODP detail 默认折叠、关键 ID 保留、CSS 使用 DESIGN.md 字体/边框 token、frontend asset version 已 bump。它只改变展示组织,不改变 `data/*.json`、classifier、`finalBias`、scoring、decision、execution、Heatmap 或 cross-validation。
 
+P46 新增 `check:oil-directional-responsive-readability`:ODP 前端在 760px 以下必须把方向结论、支撑链条、反证边界、证据时效摘要、证据矩阵改为单列阅读流;在 600px 以下必须把 meta、原因列表、能源补充 metrics 与核心资产行改为窄屏单列,并保持 ODP detail 默认折叠。该 checker 静态校验 ODP responsive CSS、asset bump、DESIGN.md token/no-shadow/no-radius 约束,并禁止 responsive/mobile/readability score 等第二套方向评分 marker。它只改变移动端展示密度与可读性,不改变 `data/*.json`、classifier、`finalBias`、scoring、decision、execution、Heatmap 或 cross-validation。
+
 **物理>金融裁决**(grounded `OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md` §5):classifier 先出物理 bias(6 类),`finalizeBias()` 再叠**价格背离层**——价格表象与物理链背离时信物理:
 
 - 油价跌 + 物理偏紧(库存 tight/drawAccel/extremeTight)+ backwardation + 柴油紧 → `false_down_physical_stress`;
@@ -882,7 +884,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-reading-structure-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-responsive-readability-1`）。
 
 稳定边界：
 
@@ -1115,26 +1117,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-reading-structure-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+odp-responsive-readability-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-reading-structure-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-responsive-readability-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-reading-structure-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-reading-structure-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 即使被 helper 机械更新 import query,也仍不是当前前端 runtime 入口或 realtime overlay 重接入。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-reading-structure-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-responsive-readability-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-responsive-readability-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 即使被 helper 机械更新 import query,也仍不是当前前端 runtime 入口或 realtime overlay 重接入。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-responsive-readability-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-reading-structure-1
-npm run bump:frontend-asset-version -- odp-reading-structure-1
+node scripts/bump-frontend-asset-version.mjs odp-responsive-readability-1
+npm run bump:frontend-asset-version -- odp-responsive-readability-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-reading-structure-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-responsive-readability-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

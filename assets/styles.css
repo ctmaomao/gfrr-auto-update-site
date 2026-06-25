@@ -521,12 +521,23 @@
   .odp-boundary-note { font-family: var(--font-serif); font-size: 12px; font-style: italic; line-height: 1.7; color: var(--paper-muted); margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--paper-line); }
 
   @media (max-width: 760px) {
+    .odp-reader-flow { gap: 16px; }
+    .odp-flow-block { padding-top: 12px; }
     .odp-flow-heading,
     .odp-support-grid,
     .odp-challenge-panels,
     .odp-ladder,
     .odp-evidence-timing-summary,
     .odp-reason-panels { grid-template-columns: minmax(0, 1fr); }
+    .odp-flow-heading,
+    .odp-support-grid,
+    .odp-challenge-panels,
+    .odp-ladder,
+    .odp-evidence-timing-summary,
+    .odp-reason-panels { gap: 12px; }
+    .odp-flow-heading { gap: 4px; }
+    .odp-flow-heading strong { font-size: 17px; }
+    .odp-flow-heading em { font-size: 12px; }
     .odp-evidence-tier-heading,
     .odp-evidence-row { grid-template-columns: minmax(0, 1fr); }
     .odp-evidence-tier-heading { gap: 4px; }
@@ -576,9 +587,18 @@
     /* 长 inline code / 段落内无空格斜杠串(如 NDX/QQQ/IXIC)在窄屏换行(PC 不变)*/
     .appendix-narrative code { white-space: normal; overflow-wrap: anywhere; }
     .appendix-narrative p { overflow-wrap: anywhere; }
-    .odp-energy-metrics { grid-template-columns: 1fr 1fr; }
-    .odp-energy-metrics div.wide { grid-column: span 2; }
+    #oil-directional-pressure .editorial-section-body { padding-left: 0; padding-right: 0; }
+    .odp-meta { display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; }
+    .odp-meta > div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px; align-items: baseline; min-width: 0; }
+    .odp-meta dd { min-width: 0; overflow-wrap: anywhere; }
+    .odp-reasons li { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+    .odp-reason-label { align-self: start; }
+    .odp-attribution-panel li { font-size: 12px; }
+    .odp-evidence-timing-summary { gap: 10px; }
+    .odp-energy-metrics { grid-template-columns: minmax(0, 1fr); }
+    .odp-energy-metrics div.wide { grid-column: auto; }
     .odp-energy-core-list { grid-template-columns: 1fr; }
+    .odp-energy-core-item { grid-template-columns: minmax(0, 1fr); gap: 2px; }
     /* 资产收益矩阵 6 列表:窄屏给表保底宽度,外层容器横向滚动——表在容器内横滑,
        不挤压列、不触发整页横向滚动(PC 上表 width:100% 放得下,wrapper 不出滚动条)*/
     .asset-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }

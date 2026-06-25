@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const errors = [];
+const CURRENT_ASSET_VERSION = 'odp-responsive-readability-1';
 const fail = (message) => errors.push(message);
 
 function read(path) {
@@ -130,9 +131,9 @@ for (const marker of [
 requireIncludes('scripts/check-suite.mjs', suite, 'check:oil-directional-reading-structure');
 
 for (const marker of [
-  "const APP_VERSION = 'odp-reading-structure-1'",
-  'assets/styles.css?v=odp-reading-structure-1',
-  'scripts/app.js?v=odp-reading-structure-1',
+  `const APP_VERSION = '${CURRENT_ASSET_VERSION}'`,
+  `assets/styles.css?v=${CURRENT_ASSET_VERSION}`,
+  `scripts/app.js?v=${CURRENT_ASSET_VERSION}`,
 ]) {
   const source = marker.startsWith('const APP_VERSION') ? app : html;
   requireIncludes('asset version', source, marker);
