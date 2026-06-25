@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-evidence-timing-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-reading-structure-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

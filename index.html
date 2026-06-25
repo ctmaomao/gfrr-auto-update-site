@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=odp-evidence-timing-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=odp-reading-structure-1" />
 </head>
 <body class="gfrr-data-loading">
   <nav class="page-bookmarks" aria-label="站内页面切换">
@@ -460,89 +460,112 @@
         <span class="section-note">独立能源专题 · EIA 周度物理链 + Brent 公开代理 · 仅供参考,不参与平台评分</span>
       </header>
       <div class="editorial-section-body">
-        <p class="odp-headline" id="odp-headline">—</p>
-        <p class="odp-brent-basis-alert" id="odp-brent-basis-alert">—</p>
-        <dl class="odp-meta">
-          <div><dt>物理判断</dt><dd id="odp-physical-bias">—</dd></div>
-          <div><dt>价格背离</dt><dd id="odp-divergence">—</dd></div>
-          <div><dt>置信度</dt><dd id="odp-confidence">—</dd></div>
-          <div><dt>数据充分度</dt><dd id="odp-data-sufficiency">—</dd></div>
-          <div><dt>截至</dt><dd id="odp-asof">—</dd></div>
-        </dl>
-        <div class="odp-ladder" aria-label="ODP 判断链">
-          <article class="odp-ladder-card">
-            <span class="odp-ladder-kicker">1 · CORE PHYSICAL CHAIN</span>
-            <strong>核心物理链</strong>
-            <p id="odp-ladder-core">—</p>
-          </article>
-          <article class="odp-ladder-card">
-            <span class="odp-ladder-kicker">2 · MARKET CONFIRMATION</span>
-            <strong>市场确认</strong>
-            <p id="odp-ladder-market">—</p>
-          </article>
-          <article class="odp-ladder-card">
-            <span class="odp-ladder-kicker">3 · GLOBAL CONTEXT</span>
-            <strong>全球慢变量</strong>
-            <p id="odp-ladder-global">—</p>
-          </article>
-          <article class="odp-ladder-card">
-            <span class="odp-ladder-kicker">4 · EVENT WATCH / DATA QC</span>
-            <strong>观察层与时点</strong>
-            <p id="odp-ladder-watch">—</p>
-          </article>
-        </div>
-        <div class="odp-attribution" aria-label="ODP 归因与反证">
-          <p class="odp-attribution-thesis" id="odp-attribution-thesis">—</p>
-          <div class="odp-attribution-panels">
-            <section class="odp-attribution-panel">
-              <span class="odp-attribution-kicker">ATTRIBUTION</span>
-              <strong>方向归因</strong>
-              <ul id="odp-attribution-support"></ul>
-            </section>
-            <section class="odp-attribution-panel">
-              <span class="odp-attribution-kicker">COUNTER EVIDENCE</span>
-              <strong>主要反证</strong>
-              <ul id="odp-attribution-counter"></ul>
-            </section>
-            <section class="odp-attribution-panel">
-              <span class="odp-attribution-kicker">CONFIDENCE CAP</span>
-              <strong>置信封顶</strong>
-              <ul id="odp-attribution-caps"></ul>
-            </section>
-            <section class="odp-attribution-panel">
-              <span class="odp-attribution-kicker">VIEW CHANGE</span>
-              <strong>改变判断条件</strong>
-              <ul id="odp-attribution-triggers"></ul>
-            </section>
-          </div>
-        </div>
-        <div class="odp-reason-panels" aria-label="ODP 方向拆解">
-          <section class="odp-reason-panel">
-            <div class="odp-reason-panel-heading">
-              <span>核心物理锚</span>
-              <strong>EIA 周度链</strong>
+        <div class="odp-reader-flow" aria-label="ODP 阅读路径">
+          <article class="odp-flow-block odp-flow-verdict">
+            <div class="odp-flow-heading">
+              <span>01 · VERDICT</span>
+              <strong>方向结论</strong>
+              <em>方向结论、价格背离、置信度与数据充分度。</em>
             </div>
-            <ul class="odp-reasons">
-              <li><span class="odp-reason-label">柴油 / 馏分油</span><span id="odp-reason-diesel">—</span></li>
-              <li><span class="odp-reason-label">炼厂 / 裂解价差</span><span id="odp-reason-refinery">—</span></li>
-              <li><span class="odp-reason-label">商业原油库存</span><span id="odp-reason-inventory">—</span></li>
-              <li><span class="odp-reason-label">SPR 缓冲</span><span id="odp-reason-spr">—</span></li>
-              <li><span class="odp-reason-label">需求</span><span id="odp-reason-demand">—</span></li>
-            </ul>
+            <p class="odp-headline" id="odp-headline">—</p>
+            <p class="odp-brent-basis-alert" id="odp-brent-basis-alert">—</p>
+            <dl class="odp-meta">
+              <div><dt>物理判断</dt><dd id="odp-physical-bias">—</dd></div>
+              <div><dt>价格背离</dt><dd id="odp-divergence">—</dd></div>
+              <div><dt>置信度</dt><dd id="odp-confidence">—</dd></div>
+              <div><dt>数据充分度</dt><dd id="odp-data-sufficiency">—</dd></div>
+              <div><dt>截至</dt><dd id="odp-asof">—</dd></div>
+            </dl>
+          </article>
+          <section class="odp-flow-block odp-flow-why">
+            <div class="odp-flow-heading">
+              <span>02 · EVIDENCE CHAIN</span>
+              <strong>为什么这样判断</strong>
+              <em>周度物理链是主锚,价格、期限结构和慢变量只做确认或背离。</em>
+            </div>
+            <p class="odp-attribution-thesis" id="odp-attribution-thesis">—</p>
+            <div class="odp-ladder" aria-label="ODP 判断链">
+              <article class="odp-ladder-card">
+                <span class="odp-ladder-kicker">1 · CORE PHYSICAL CHAIN</span>
+                <strong>核心物理链</strong>
+                <p id="odp-ladder-core">—</p>
+              </article>
+              <article class="odp-ladder-card">
+                <span class="odp-ladder-kicker">2 · MARKET CONFIRMATION</span>
+                <strong>市场确认</strong>
+                <p id="odp-ladder-market">—</p>
+              </article>
+              <article class="odp-ladder-card">
+                <span class="odp-ladder-kicker">3 · GLOBAL CONTEXT</span>
+                <strong>全球慢变量</strong>
+                <p id="odp-ladder-global">—</p>
+              </article>
+              <article class="odp-ladder-card">
+                <span class="odp-ladder-kicker">4 · EVENT WATCH / DATA QC</span>
+                <strong>观察层与时点</strong>
+                <p id="odp-ladder-watch">—</p>
+              </article>
+            </div>
+            <div class="odp-support-grid">
+              <section class="odp-attribution-panel odp-support-panel">
+                <span class="odp-attribution-kicker">ATTRIBUTION</span>
+                <strong>方向归因</strong>
+                <ul id="odp-attribution-support"></ul>
+              </section>
+              <div class="odp-reason-panels" aria-label="ODP 方向拆解">
+                <section class="odp-reason-panel">
+                  <div class="odp-reason-panel-heading">
+                    <span>核心物理锚</span>
+                    <strong>EIA 周度链</strong>
+                  </div>
+                  <ul class="odp-reasons">
+                    <li><span class="odp-reason-label">柴油 / 馏分油</span><span id="odp-reason-diesel">—</span></li>
+                    <li><span class="odp-reason-label">炼厂 / 裂解价差</span><span id="odp-reason-refinery">—</span></li>
+                    <li><span class="odp-reason-label">商业原油库存</span><span id="odp-reason-inventory">—</span></li>
+                    <li><span class="odp-reason-label">SPR 缓冲</span><span id="odp-reason-spr">—</span></li>
+                    <li><span class="odp-reason-label">需求</span><span id="odp-reason-demand">—</span></li>
+                  </ul>
+                </section>
+                <section class="odp-reason-panel">
+                  <div class="odp-reason-panel-heading">
+                    <span>市场确认</span>
+                    <strong>价格 / 期限结构</strong>
+                  </div>
+                  <ul class="odp-reasons">
+                    <li><span class="odp-reason-label">期限结构</span><span id="odp-reason-curve">—</span></li>
+                  </ul>
+                </section>
+              </div>
+            </div>
           </section>
-          <section class="odp-reason-panel">
-            <div class="odp-reason-panel-heading">
-              <span>市场确认</span>
-              <strong>价格 / 期限结构</strong>
+          <section class="odp-flow-block odp-flow-challenge">
+            <div class="odp-flow-heading">
+              <span>03 · COUNTERWEIGHT</span>
+              <strong>反证与置信边界</strong>
+              <em>反证、置信封顶与改变判断条件。</em>
             </div>
-            <ul class="odp-reasons">
-              <li><span class="odp-reason-label">期限结构</span><span id="odp-reason-curve">—</span></li>
-            </ul>
+            <div class="odp-challenge-panels" aria-label="ODP 反证与置信边界">
+              <section class="odp-attribution-panel">
+                <span class="odp-attribution-kicker">COUNTER EVIDENCE</span>
+                <strong>主要反证</strong>
+                <ul id="odp-attribution-counter"></ul>
+              </section>
+              <section class="odp-attribution-panel">
+                <span class="odp-attribution-kicker">CONFIDENCE CAP</span>
+                <strong>置信封顶</strong>
+                <ul id="odp-attribution-caps"></ul>
+              </section>
+              <section class="odp-attribution-panel">
+                <span class="odp-attribution-kicker">VIEW CHANGE</span>
+                <strong>改变判断条件</strong>
+                <ul id="odp-attribution-triggers"></ul>
+              </section>
+            </div>
           </section>
         </div>
         <details class="editorial-folded-content odp-detail">
           <summary>
-            <span><span class="fold-marker"></span> 证据矩阵与审计详情 <em>· 角色分组 / 时点分级 / 观察层边界</em></span>
+            <span><span class="fold-marker"></span> 04 · 证据矩阵与审计详情 <em>· 角色分组 / 时点分级 / 观察层边界</em></span>
             <span class="fold-label">展开/收起</span>
           </summary>
           <div class="editorial-section-body">
@@ -1223,6 +1246,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=odp-evidence-timing-1"></script>
+  <script type="module" src="scripts/app.js?v=odp-reading-structure-1"></script>
 </body>
 </html>

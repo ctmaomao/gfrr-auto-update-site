@@ -82,6 +82,7 @@ const SUITES = {
     'check:oil-directional-attribution',
     'check:oil-directional-evidence-timing',
     'check:oil-directional-narrative-consistency',
+    'check:oil-directional-reading-structure',
     'check:oil-directional-global-overlay',
     'check:oil-news-events-diagnosis',
     'check:oil-news-event-watch',

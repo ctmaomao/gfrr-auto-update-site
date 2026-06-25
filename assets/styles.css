@@ -445,20 +445,26 @@
   #oil-directional-pressure .odp-energy-regime.red { color: var(--risk-red); }
   #oil-directional-pressure .odp-energy-regime.yellow { color: var(--risk-yellow); }
   #oil-directional-pressure .odp-energy-regime.green { color: var(--risk-green); }
-  .odp-headline { font-family: var(--font-serif); font-size: 16px; line-height: 1.8; color: var(--paper-warm); margin: 8px 0 18px 0; }
-  .odp-brent-basis-alert { font-family: var(--font-serif); font-size: 13px; line-height: 1.7; color: var(--paper-muted); margin: -6px 0 16px 0; padding: 9px 0 0 0; border-top: 1px dotted var(--paper-line); }
-  .odp-meta { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0 0 18px 0; padding: 12px 0; border-top: 1px solid var(--paper-line); border-bottom: 1px solid var(--paper-line); font-family: var(--font-mono); font-size: 12px; }
+  .odp-reader-flow { display: grid; gap: 18px; margin: 0 0 18px 0; }
+  .odp-flow-block { border-top: 2px solid var(--paper-line-strong); padding-top: 14px; min-width: 0; }
+  .odp-flow-heading { display: grid; grid-template-columns: minmax(112px, 0.28fr) minmax(150px, 0.44fr) minmax(0, 1fr); gap: 10px 18px; align-items: baseline; margin: 0 0 10px 0; }
+  .odp-flow-heading span { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; color: var(--paper-muted); text-transform: uppercase; }
+  .odp-flow-heading strong { font-family: var(--font-display); font-size: 18px; line-height: 1.25; font-weight: 900; color: var(--paper-ink); }
+  .odp-flow-heading em { font-family: var(--font-serif); font-size: 12.5px; line-height: 1.6; font-style: italic; color: var(--paper-muted); overflow-wrap: anywhere; }
+  .odp-headline { font-family: var(--font-serif); font-size: 16px; line-height: 1.8; color: var(--paper-warm); margin: 8px 0 14px 0; }
+  .odp-brent-basis-alert { font-family: var(--font-serif); font-size: 13px; line-height: 1.7; color: var(--paper-muted); margin: 0 0 14px 0; padding: 9px 0 0 0; border-top: 1px dotted var(--paper-line); }
+  .odp-meta { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0; padding: 12px 0; border-top: 1px solid var(--paper-line); border-bottom: 1px solid var(--paper-line); font-family: var(--font-mono); font-size: 12px; }
   .odp-meta > div { display: flex; gap: 8px; align-items: baseline; }
   .odp-meta dt { color: var(--paper-muted); letter-spacing: 0.1em; text-transform: uppercase; font-size: 10px; }
   .odp-meta dd { margin: 0; color: var(--paper-ink); font-weight: 600; }
-  .odp-ladder { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 0 0 18px 0; padding: 14px 0; border-bottom: 1px solid var(--paper-line); }
+  .odp-ladder { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 0 0 16px 0; padding: 12px 0 14px 0; border-top: 1px solid var(--paper-line); border-bottom: 1px solid var(--paper-line); }
   .odp-ladder-card { min-width: 0; border-top: 3px solid var(--paper-line-strong); padding: 10px 0 0 0; }
   .odp-ladder-card strong { display: block; margin: 4px 0 6px 0; font-family: var(--font-display); font-size: 16px; color: var(--paper-ink); }
   .odp-ladder-card p { margin: 0; font-family: var(--font-serif); font-size: 13px; line-height: 1.65; color: var(--paper-warm); overflow-wrap: anywhere; }
   .odp-ladder-kicker { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--paper-muted); text-transform: uppercase; }
-  .odp-attribution { margin: 0 0 20px 0; padding: 0 0 16px 0; border-bottom: 1px solid var(--paper-line); }
-  .odp-attribution-thesis { margin: 0 0 12px 0; font-family: var(--font-display); font-size: 18px; line-height: 1.45; font-weight: 700; color: var(--paper-ink); }
-  .odp-attribution-panels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .odp-attribution-thesis { margin: 0 0 14px 0; padding-bottom: 12px; border-bottom: 1px solid var(--paper-line); font-family: var(--font-display); font-size: 18px; line-height: 1.45; font-weight: 700; color: var(--paper-ink); }
+  .odp-support-grid { display: grid; grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.75fr); gap: 18px 24px; align-items: start; }
+  .odp-challenge-panels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
   .odp-attribution-panel { min-width: 0; border-top: 1px solid var(--paper-line-strong); padding-top: 9px; }
   .odp-attribution-kicker { display: block; margin: 0 0 4px 0; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--paper-muted); text-transform: uppercase; }
   .odp-attribution-panel strong { display: block; margin: 0 0 6px 0; font-family: var(--font-display); font-size: 15px; color: var(--paper-ink); }
@@ -466,7 +472,7 @@
   .odp-attribution-panel li { margin: 0; padding: 0 0 7px 0; border-bottom: 1px dotted var(--paper-line); font-family: var(--font-serif); font-size: 12.5px; line-height: 1.55; color: var(--paper-warm); overflow-wrap: anywhere; }
   .odp-attribution-panel li strong { display: inline; margin: 0; font-family: var(--font-serif); font-size: 12.5px; font-weight: 700; color: var(--paper-ink); }
   .odp-attribution-panel li span { color: var(--paper-warm); }
-  .odp-reason-panels { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 18px 24px; margin: 0 0 18px 0; }
+  .odp-reason-panels { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 18px 24px; margin: 0; }
   .odp-reason-panel { min-width: 0; border-top: 1px solid var(--paper-line-strong); padding-top: 10px; }
   .odp-reason-panel-heading { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; margin: 0 0 8px 0; }
   .odp-reason-panel-heading span { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--paper-muted); text-transform: uppercase; }
@@ -515,8 +521,10 @@
   .odp-boundary-note { font-family: var(--font-serif); font-size: 12px; font-style: italic; line-height: 1.7; color: var(--paper-muted); margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--paper-line); }
 
   @media (max-width: 760px) {
+    .odp-flow-heading,
+    .odp-support-grid,
+    .odp-challenge-panels,
     .odp-ladder,
-    .odp-attribution-panels,
     .odp-evidence-timing-summary,
     .odp-reason-panels { grid-template-columns: minmax(0, 1fr); }
     .odp-evidence-tier-heading,
