@@ -731,6 +731,8 @@ P42 新增 `check:oil-directional-attribution`:用 live artifact + `docs/fixture
 
 P43 新增 `check:oil-directional-evidence-timing`:ODP 前端证据矩阵必须在证据列表前展示时效分层摘要,把 T2 官方周度锚、T1 日频市场代理、新闻/卫星高频观察层分开说明。该 checker 静态核对 DOM/CSS/renderer marker,并用 live ODP artifact 验证 8 个 T2 官方锚仍是 `core_physical_anchor`、至少 4 个 T1 市场代理仍是 `market_confirmation`;不得引入 timing/freshness/evidence score 或 weight。它只改变展示组织,不改变 `data/*.json`、classifier、`finalBias`、scoring、decision、execution、Heatmap 或 cross-validation。
 
+P44 新增 `check:oil-directional-narrative-consistency`:ODP 标题、verdict、价格背离文案、`insufficient_data` 分支、新闻/卫星高频观察层和 attribution 文案必须围绕同一个 `finalBias` 自洽。该 checker 用 live ODP artifact + `docs/fixtures/oil-directional/odp-narrative-consistency-fixtures.json` 离线校验 `false_down_physical_stress`、`false_up_unconfirmed`、`strong_bullish`、`insufficient_data` 四类叙事不变量,并禁止断供/战争/封锁确认、交易动作词、概率/score/weight 等第二套方向评分 marker。它不联网、不写 `data/*.json`,不改 classifier、`finalBias`、scoring、decision、execution、Heatmap 或 cross-validation。
+
 **物理>金融裁决**(grounded `OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md` §5):classifier 先出物理 bias(6 类),`finalizeBias()` 再叠**价格背离层**——价格表象与物理链背离时信物理:
 
 - 油价跌 + 物理偏紧(库存 tight/drawAccel/extremeTight)+ backwardation + 柴油紧 → `false_down_physical_stress`;

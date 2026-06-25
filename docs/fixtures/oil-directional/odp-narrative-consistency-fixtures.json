@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "odp-narrative-consistency-fixtures-p44",
+  "module": "oil-directional-narrative-consistency-fixtures",
+  "boundary": "offline fixture only; display-only narrative consistency guard; NOT in values/scoring/decision/execution/position/Heatmap/cross-validation",
+  "cases": [
+    {
+      "name": "false_down_physical_stress",
+      "finalBias": "false_down_physical_stress",
+      "requiredRendererTokens": [
+        "假性下跌 · 物理压力仍强",
+        "价格下跌 · 物理仍紧",
+        "价格回落",
+        "物理链仍偏紧",
+        "下跌未获物理确认"
+      ],
+      "forbiddenRendererTokens": [
+        "确认宽松",
+        "断供确认",
+        "建议买入",
+        "做多"
+      ]
+    },
+    {
+      "name": "false_up_unconfirmed",
+      "finalBias": "false_up_unconfirmed",
+      "requiredRendererTokens": [
+        "假性上涨 · 缺物理确认",
+        "价格上涨 · 物理偏松",
+        "价格走高",
+        "物理链偏松",
+        "上涨缺物理确认"
+      ],
+      "forbiddenRendererTokens": [
+        "确认紧张",
+        "供应中断确认",
+        "建议卖出",
+        "做空"
+      ]
+    },
+    {
+      "name": "strong_bullish",
+      "finalBias": "strong_bullish",
+      "requiredRendererTokens": [
+        "强看涨 · 物理紧张",
+        "物理链强紧张",
+        "库存加速去化",
+        "炼厂高开工"
+      ],
+      "forbiddenRendererTokens": [
+        "价格回落",
+        "上涨缺物理确认",
+        "暂不给出方向判断"
+      ]
+    },
+    {
+      "name": "insufficient_data",
+      "finalBias": "insufficient_data",
+      "requiredRendererTokens": [
+        "数据不足 · 暂不判断",
+        "本周物理链数据不足",
+        "暂不给出方向判断",
+        "市场层等待完整物理链",
+        "不替代缺失的周度物理锚"
+      ],
+      "forbiddenRendererTokens": [
+        "新闻确认方向",
+        "卫星确认方向",
+        "价格代理补位",
+        "方向压力成立"
+      ]
+    }
+  ],
+  "watchLayerRequiredTokens": [
+    "观察层只提示人工复核",
+    "不确认断供",
+    "设施事故",
+    "改变 finalBias",
+    "两者只做观察层"
+  ],
+  "forbiddenOverreachTokens": [
+    "断供确认",
+    "供应中断确认",
+    "封锁确认",
+    "战争确认",
+    "确认霍尔木兹关闭",
+    "油价必然",
+    "确定上涨",
+    "确定下跌",
+    "建议买入",
+    "建议卖出",
+    "做多",
+    "做空",
+    "加仓",
+    "减仓",
+    "入场",
+    "离场"
+  ],
+  "forbiddenSecondScoreTokens": [
+    "narrativeScore",
+    "storyScore",
+    "directionScore",
+    "narrativeWeight",
+    "priceProbability",
+    "oilDirectionProbability"
+  ]
+}
