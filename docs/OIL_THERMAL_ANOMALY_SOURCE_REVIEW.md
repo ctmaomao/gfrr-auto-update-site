@@ -391,6 +391,55 @@ P48 still does not add or allow:
 - scoring, decision, execution, position, Brent promotion, Global Risk Heatmap or
   cross-validation impact.
 
+## P49 Baseline Quality Aging / Rolling Refresh
+
+P49 turns the P47 + P48 manual sequence into a reusable rolling refresh wrapper:
+
+```text
+scripts/oil-directional/refresh-oil-thermal-baseline-candidate.mjs
+npm run refresh:oil-thermal-baseline-candidate
+npm run refresh:oil-thermal-baseline-candidate -- --write-production-baseline
+npm run check:oil-thermal-baseline-rolling-refresh
+```
+
+The wrapper first runs the git-history sample archive and P25 baseline sample
+review, then calls the P49 promotion helper. By default it does not write the
+production baseline config; `--write-production-baseline` is still required for
+`config/oil-thermal-watch-baseline.json` to change.
+
+Baseline quality now ages by sample window:
+
+- `<7 days` -> `starter_short_window`;
+- `7-30 days` -> `starter_observation_window`;
+- `>=30 days` -> `established_observation_window`.
+
+The production config records `qualityPolicy`, `qualityTransition` and
+`previousBaseline` in `sourceReview`. This makes later refreshes auditable: a
+larger sample set can improve the label only when the observed window actually
+ages far enough, not merely because the script was rerun.
+
+The local P49 refresh advanced the committed baseline from:
+
+- 15 samples / `sampleWindowDays=2.36` / `starter_short_window`
+
+to:
+
+- 16 samples / `sampleWindowDays=2.48` / `starter_short_window`;
+- `qualityTransition=unchanged`.
+
+`build:oil-thermal-watch` now exposes a compact
+`data/oil-thermal-watch.json.baseline.sourceReview` summary so the display layer
+can explain that the current baseline is established but still short-window.
+
+P49 still does not add or allow:
+
+- incident confirmation;
+- outage or supply-disruption confirmation;
+- oil-price direction;
+- ODP `finalBias` mutation;
+- scoring, decision, execution, position, Brent promotion, Global Risk Heatmap or
+  cross-validation impact.
+
 ## Current P11 Scope
 
 P11 only adds a visible ODP readiness slot: `SATELLITE THERMAL WATCH / 卫星热异常观察`.

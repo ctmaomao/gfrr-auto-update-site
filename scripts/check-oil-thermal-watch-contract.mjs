@@ -33,6 +33,11 @@ const ANOMALY_LEVELS = new Set([
   'elevated_repeated_watch'
 ]);
 const BASELINE_STATUSES = new Set(['missing', 'not_established', 'insufficient_samples', 'partial', 'established']);
+const BASELINE_QUALITIES = new Set([
+  'starter_short_window',
+  'starter_observation_window',
+  'established_observation_window'
+]);
 const PRODUCTION_FALSE_KEYS = [
   'affectsValues',
   'affectsScoring',
@@ -115,6 +120,24 @@ if (!data.baseline || typeof data.baseline !== 'object') {
   } else if (data.baseline.repeatedObservationRule.requiresEstablishedBaseline !== true
     || data.baseline.repeatedObservationRule.requiresAboveBaselineStrength !== true) {
     fail('baseline.repeatedObservationRule must require established baseline and above-baseline strength');
+  }
+  if (baselineConfig.sourceReview) {
+    if (!data.baseline.sourceReview || typeof data.baseline.sourceReview !== 'object') {
+      fail('baseline.sourceReview must be exposed when config sourceReview exists');
+    } else {
+      if (data.baseline.sourceReview.baselineQuality !== baselineConfig.sourceReview.baselineQuality) {
+        fail('baseline.sourceReview.baselineQuality must match config sourceReview');
+      }
+      if (!BASELINE_QUALITIES.has(data.baseline.sourceReview.baselineQuality)) {
+        fail(`baseline.sourceReview.baselineQuality invalid: ${data.baseline.sourceReview.baselineQuality}`);
+      }
+      if (!finiteOrNull(data.baseline.sourceReview.sampleWindowDays)) {
+        fail('baseline.sourceReview.sampleWindowDays must be number|null');
+      }
+      if (!Array.isArray(data.baseline.sourceReview.caveats)) {
+        fail('baseline.sourceReview.caveats must be an array');
+      }
+    }
   }
 }
 

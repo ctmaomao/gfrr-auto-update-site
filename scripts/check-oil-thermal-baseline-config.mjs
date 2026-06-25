@@ -12,6 +12,21 @@ const rows = Array.isArray(baseline.facilities) ? baseline.facilities : [];
 const rowIds = new Set();
 
 const VALID_STATUS = new Set(['not_established', 'partial', 'established']);
+const VALID_PROMOTION_VERSIONS = new Set([
+  'oil-thermal-baseline-promotion-p48',
+  'oil-thermal-baseline-promotion-p49'
+]);
+const VALID_PROMOTION_STAGES = new Set(['P48', 'P49']);
+const VALID_BASELINE_QUALITIES = [
+  'starter_short_window',
+  'starter_observation_window',
+  'established_observation_window'
+];
+const VALID_QUALITY_TRANSITIONS = new Set(['new', 'unchanged', 'upgraded', 'downgraded']);
+const QUALITY_POLICY = {
+  starterShortWindowMaxDays: 7,
+  starterObservationWindowMaxDays: 30
+};
 const POLICY_FIELDS = [
   'minSamplesPerFacility',
   'minRepeatSources',
@@ -39,6 +54,12 @@ function isIso(value) {
 
 function isNonNegativeNumber(value) {
   return Number.isFinite(value) && value >= 0;
+}
+
+function expectedBaselineQuality(sampleWindowDays) {
+  if (sampleWindowDays < QUALITY_POLICY.starterShortWindowMaxDays) return 'starter_short_window';
+  if (sampleWindowDays < QUALITY_POLICY.starterObservationWindowMaxDays) return 'starter_observation_window';
+  return 'established_observation_window';
 }
 
 function checkNoSensitiveText(payload) {
@@ -85,22 +106,55 @@ if (baseline.status === 'established') {
   if (!review || typeof review !== 'object' || Array.isArray(review)) {
     fail('sourceReview must be present for established baseline');
   } else {
-    if (review.promotionVersion !== 'oil-thermal-baseline-promotion-p48') {
+    if (!VALID_PROMOTION_VERSIONS.has(review.promotionVersion)) {
       fail(`sourceReview.promotionVersion invalid: ${review.promotionVersion}`);
     }
-    if (review.promotionStage !== 'P48') fail(`sourceReview.promotionStage invalid: ${review.promotionStage}`);
-    if (!['starter_short_window', 'starter_observation_window', 'established_observation_window'].includes(review.baselineQuality)) {
+    if (!VALID_PROMOTION_STAGES.has(review.promotionStage)) fail(`sourceReview.promotionStage invalid: ${review.promotionStage}`);
+    if (!VALID_BASELINE_QUALITIES.includes(review.baselineQuality)) {
       fail(`sourceReview.baselineQuality invalid: ${review.baselineQuality}`);
+    }
+    if ('qualityTransition' in review && !VALID_QUALITY_TRANSITIONS.has(review.qualityTransition)) {
+      fail(`sourceReview.qualityTransition invalid: ${review.qualityTransition}`);
+    }
+    if (review.qualityPolicy) {
+      if (review.qualityPolicy.starterShortWindowMaxDays !== QUALITY_POLICY.starterShortWindowMaxDays) {
+        fail('sourceReview.qualityPolicy.starterShortWindowMaxDays must be 7');
+      }
+      if (review.qualityPolicy.starterObservationWindowMaxDays !== QUALITY_POLICY.starterObservationWindowMaxDays) {
+        fail('sourceReview.qualityPolicy.starterObservationWindowMaxDays must be 30');
+      }
+      if (!Array.isArray(review.qualityPolicy.qualityOrder)
+        || review.qualityPolicy.qualityOrder.join('|') !== VALID_BASELINE_QUALITIES.join('|')) {
+        fail('sourceReview.qualityPolicy.qualityOrder must preserve quality aging order');
+      }
+    }
+    if (review.previousBaseline !== null && review.previousBaseline !== undefined) {
+      if (typeof review.previousBaseline !== 'object' || Array.isArray(review.previousBaseline)) {
+        fail('sourceReview.previousBaseline must be object|null');
+      } else if (review.previousBaseline.baselineQuality !== null
+        && !VALID_BASELINE_QUALITIES.includes(review.previousBaseline.baselineQuality)) {
+        fail(`sourceReview.previousBaseline.baselineQuality invalid: ${review.previousBaseline.baselineQuality}`);
+      }
     }
     if (!isNonNegativeNumber(review.sampleCount) || review.sampleCount < baseline.policy.minSamplesPerFacility) {
       fail('sourceReview.sampleCount must satisfy policy.minSamplesPerFacility');
     }
     if (!isNonNegativeNumber(review.sampleWindowDays)) fail('sourceReview.sampleWindowDays must be non-negative number');
-    if (review.sampleWindowDays < 7 && review.baselineQuality !== 'starter_short_window') {
-      fail('short sample window must be labelled starter_short_window');
+    const expectedQuality = isNonNegativeNumber(review.sampleWindowDays)
+      ? expectedBaselineQuality(review.sampleWindowDays)
+      : null;
+    if (expectedQuality && review.baselineQuality !== expectedQuality) {
+      fail(`sampleWindowDays=${review.sampleWindowDays} must be labelled ${expectedQuality}`);
     }
-    if (!Array.isArray(review.caveats) || !review.caveats.join(' ').includes('short')) {
+    const caveatText = Array.isArray(review.caveats) ? review.caveats.join(' ') : '';
+    if (!caveatText) {
+      fail('sourceReview.caveats must document baseline limits');
+    } else if (review.baselineQuality === 'starter_short_window' && !caveatText.includes('short')) {
       fail('sourceReview.caveats must mention short starter-window limitations');
+    } else if (review.baselineQuality === 'starter_observation_window' && !/7-30|30 days|not a mature/u.test(caveatText)) {
+      fail('sourceReview.caveats must mention 7-30 day observation-window limitations');
+    } else if (review.baselineQuality === 'established_observation_window' && !/30\+|30 days|manual source review/u.test(caveatText)) {
+      fail('sourceReview.caveats must mention 30+ day/manual-review limitations');
     }
   }
 }

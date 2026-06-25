@@ -3,14 +3,23 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
 
-const PROMOTION_VERSION = 'oil-thermal-baseline-promotion-p48';
+const PROMOTION_VERSION = 'oil-thermal-baseline-promotion-p49';
 const DEFAULT_REVIEW = 'manual-artifacts/oil-thermal/oil-thermal-baseline-samples-review-latest.json';
 const DEFAULT_READINESS = 'manual-artifacts/oil-thermal/oil-thermal-baseline-readiness-latest.json';
 const DEFAULT_FACILITIES = 'config/oil-thermal-watch-facilities.json';
 const DEFAULT_OUTPUT = 'config/oil-thermal-watch-baseline.json';
 const DEFAULT_MIN_SAMPLES = 8;
 const BOUNDARY =
-  'production oil thermal starter baseline config; display-only repeated-observation gate only; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
+  'production oil thermal rolling baseline config; display-only repeated-observation gate only; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
+const QUALITY_POLICY = {
+  starterShortWindowMaxDays: 7,
+  starterObservationWindowMaxDays: 30,
+  qualityOrder: [
+    'starter_short_window',
+    'starter_observation_window',
+    'established_observation_window'
+  ]
+};
 
 const FULL_POLICY_DEFAULTS = {
   minSamplesPerFacility: 8,
@@ -104,10 +113,10 @@ function parseArgs(argv) {
     throw new Error(`Refusing readiness artifact outside manual-artifacts/: ${options.readiness}`);
   }
   if (safeRelativePath(options.facilities) !== DEFAULT_FACILITIES) {
-    throw new Error(`P48 only promotes against ${DEFAULT_FACILITIES}`);
+    throw new Error(`P49 only promotes against ${DEFAULT_FACILITIES}`);
   }
   if (safeRelativePath(options.output) !== DEFAULT_OUTPUT) {
-    throw new Error(`P48 only writes ${DEFAULT_OUTPUT}`);
+    throw new Error(`P49 only writes ${DEFAULT_OUTPUT}`);
   }
 
   return options;
@@ -169,7 +178,7 @@ function validateArtifacts({ review, readiness, facilitiesConfig, options }) {
   if (review.status !== 'pass') throw new Error(`P25 review must be pass, got ${review.status}`);
   if (readiness.status !== 'ok') throw new Error(`P47 readiness must be ok, got ${readiness.status}`);
   if (review.candidateBaseline?.candidateOnly !== true) {
-    throw new Error('P25 candidateBaseline.candidateOnly must be true before P48 promotion.');
+    throw new Error('P25 candidateBaseline.candidateOnly must be true before P49 rolling promotion.');
   }
   if (review.candidateBaseline?.status !== 'established') {
     throw new Error(`P25 candidate baseline must be established, got ${review.candidateBaseline?.status}`);
@@ -222,9 +231,54 @@ function normalizePolicy(existingPolicy, candidatePolicy, minSamples) {
 }
 
 function baselineQuality(sampleWindowDays) {
-  if (sampleWindowDays < 7) return 'starter_short_window';
-  if (sampleWindowDays < 30) return 'starter_observation_window';
+  if (sampleWindowDays < QUALITY_POLICY.starterShortWindowMaxDays) return 'starter_short_window';
+  if (sampleWindowDays < QUALITY_POLICY.starterObservationWindowMaxDays) return 'starter_observation_window';
   return 'established_observation_window';
+}
+
+function qualityRank(quality) {
+  return QUALITY_POLICY.qualityOrder.indexOf(quality);
+}
+
+function previousBaselineSnapshot(existingBaseline) {
+  const review = existingBaseline?.sourceReview;
+  if (!review || typeof review !== 'object' || Array.isArray(review)) return null;
+  const baselineQualityValue = typeof review.baselineQuality === 'string' ? review.baselineQuality : null;
+  return {
+    promotionVersion: typeof review.promotionVersion === 'string' ? review.promotionVersion : null,
+    promotionStage: typeof review.promotionStage === 'string' ? review.promotionStage : null,
+    baselineQuality: baselineQualityValue,
+    sampleCount: Number.isFinite(review.sampleCount) ? review.sampleCount : null,
+    sampleWindowDays: Number.isFinite(review.sampleWindowDays) ? review.sampleWindowDays : null,
+    lastSampleAt: typeof review.lastSampleAt === 'string' ? review.lastSampleAt : null
+  };
+}
+
+function qualityTransition(previousBaseline, nextQuality) {
+  const previousQuality = previousBaseline?.baselineQuality;
+  const previousRank = qualityRank(previousQuality);
+  const nextRank = qualityRank(nextQuality);
+  if (previousRank < 0) return 'new';
+  if (nextRank > previousRank) return 'upgraded';
+  if (nextRank < previousRank) return 'downgraded';
+  return 'unchanged';
+}
+
+function caveatsForQuality(quality) {
+  const qualityCaveat = (() => {
+    if (quality === 'starter_short_window') {
+      return 'The current sample window is short (<7 days); repeated/elevated observations remain manual-review prompts, not incident or supply-disruption confirmation.';
+    }
+    if (quality === 'starter_observation_window') {
+      return 'The current sample window is 7-30 days; the baseline is improving but is not a mature seasonal or long-history operating baseline.';
+    }
+    return 'The current sample window is 30+ days; the baseline is more durable, but repeated/elevated observations still require manual source review.';
+  })();
+  return [
+    'Rolling baseline is derived from sanitized production watch samples only.',
+    qualityCaveat,
+    'P25/P47 artifacts remain non-promotional review packets; P49 rolling refresh is the separate explicit production-config promotion.'
+  ];
 }
 
 function promoteRows({ candidateRows, facilities, minSamples }) {
@@ -258,6 +312,8 @@ function promoteRows({ candidateRows, facilities, minSamples }) {
 function buildBaselineConfig({ review, readiness, facilitiesConfig, existingBaseline, options }) {
   const sampleWindowDays = numberOrThrow(review.summary?.sampleWindowDays, 'review.summary.sampleWindowDays');
   const quality = baselineQuality(sampleWindowDays);
+  const previousBaseline = previousBaselineSnapshot(existingBaseline);
+  const transition = qualityTransition(previousBaseline, quality);
   const facilities = facilitiesConfig.facilities;
   const promotedRows = promoteRows({
     candidateRows: review.candidateBaseline.facilities,
@@ -271,8 +327,11 @@ function buildBaselineConfig({ review, readiness, facilitiesConfig, existingBase
     establishedAt: isoOrThrow(review.generatedAt, 'review.generatedAt'),
     sourceReview: {
       promotionVersion: PROMOTION_VERSION,
-      promotionStage: 'P48',
+      promotionStage: 'P49',
       baselineQuality: quality,
+      qualityPolicy: QUALITY_POLICY,
+      qualityTransition: transition,
+      previousBaseline,
       reviewArtifact: DEFAULT_REVIEW,
       reviewVersion: review.reviewVersion,
       reviewGeneratedAt: isoOrThrow(review.generatedAt, 'review.generatedAt'),
@@ -285,15 +344,11 @@ function buildBaselineConfig({ review, readiness, facilitiesConfig, existingBase
       sampleWindowDays,
       facilityCount: facilities.length,
       facilitiesReadyForBaseline: numberOrThrow(review.summary.facilitiesReadyForBaseline, 'review.summary.facilitiesReadyForBaseline'),
-      caveats: [
-        'Starter baseline is derived from sanitized production watch samples only.',
-        'The current sample window is short; repeated/elevated observations remain manual-review prompts, not incident or supply-disruption confirmation.',
-        'P25/P47 artifacts remain non-promotional review packets; P48 is the separate reviewed production-config promotion.'
-      ]
+      caveats: caveatsForQuality(quality)
     },
     notes: [
-      'P48 promotes operator-reviewed starter p95 rows from P25/P47 sanitized oil-thermal-watch history samples.',
-      'This is a starter thermal baseline for repeated-observation gating, not a mature seasonal or long-history refinery operating baseline.',
+      'P49 rolling refresh promotes operator-reviewed p95 rows from P25/P47 sanitized oil-thermal-watch history samples.',
+      'Baseline quality ages by sampleWindowDays: <7 days starter_short_window, 7-30 days starter_observation_window, 30+ days established_observation_window.',
       'Repeated observation still requires established facility baseline, multi-source repeatability, and above-baseline strength.',
       'This baseline file never stores MAP_KEY, raw FIRMS rows, raw URLs, outage claims, supply-disruption claims, or oil-price direction.',
       'Satellite thermal watch remains production read-only and does not enter ODP finalBias, scoring, decision, execution, position, Brent promotion, Global Risk Heatmap, or cross-validation.'
@@ -315,6 +370,8 @@ function printSummary(result) {
   console.log(`Oil thermal baseline candidate promotion: ${result.writeMode}`);
   console.log(`status: ${result.baseline.status}`);
   console.log(`baselineQuality: ${result.baseline.sourceReview.baselineQuality}`);
+  console.log(`qualityTransition: ${result.baseline.sourceReview.qualityTransition}`);
+  console.log(`previousBaselineQuality: ${result.baseline.sourceReview.previousBaseline?.baselineQuality ?? 'none'}`);
   console.log(`sampleCount: ${result.baseline.sourceReview.sampleCount}`);
   console.log(`sampleWindowDays: ${result.baseline.sourceReview.sampleWindowDays}`);
   console.log(`facilityCount: ${result.baseline.sourceReview.facilityCount}`);
@@ -331,7 +388,7 @@ function main() {
   const existingBaseline = readJson(options.output);
   validateArtifacts({ review, readiness, facilitiesConfig, options });
   const baseline = buildBaselineConfig({ review, readiness, facilitiesConfig, existingBaseline, options });
-  ensureNoRawSensitiveText(baseline, 'P48 baseline config');
+  ensureNoRawSensitiveText(baseline, 'P49 baseline config');
   const outputPath = options.writeProductionBaseline ? writeJson(options.output, baseline) : null;
   const result = {
     promotionVersion: PROMOTION_VERSION,

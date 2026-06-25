@@ -183,6 +183,24 @@ function validIsoOrNull(value) {
   return Number.isNaN(Date.parse(value)) ? null : value;
 }
 
+function normalizeBaselineSourceReview(rawReview) {
+  if (!rawReview || typeof rawReview !== 'object' || Array.isArray(rawReview)) return null;
+  const caveats = Array.isArray(rawReview.caveats)
+    ? rawReview.caveats.filter((note) => typeof note === 'string')
+    : [];
+  return {
+    promotionVersion: typeof rawReview.promotionVersion === 'string' ? rawReview.promotionVersion : null,
+    promotionStage: typeof rawReview.promotionStage === 'string' ? rawReview.promotionStage : null,
+    baselineQuality: typeof rawReview.baselineQuality === 'string' ? rawReview.baselineQuality : null,
+    qualityTransition: typeof rawReview.qualityTransition === 'string' ? rawReview.qualityTransition : null,
+    sampleCount: finiteNumberOrNull(rawReview.sampleCount),
+    sampleWindowDays: finiteNumberOrNull(rawReview.sampleWindowDays),
+    firstSampleAt: validIsoOrNull(rawReview.firstSampleAt),
+    lastSampleAt: validIsoOrNull(rawReview.lastSampleAt),
+    caveats
+  };
+}
+
 function readBaselineConfig(path) {
   const absolutePath = resolve(path);
   if (!existsSync(absolutePath)) {
@@ -190,6 +208,7 @@ function readBaselineConfig(path) {
       schemaVersion: 'oil-thermal-baseline-production-v1',
       status: 'missing',
       notes: ['Baseline config file is missing; repeated-observation rules stay disabled.'],
+      sourceReview: null,
       policy: { ...DEFAULT_BASELINE_POLICY },
       facilitiesById: new Map()
     };
@@ -219,6 +238,7 @@ function readBaselineConfig(path) {
     schemaVersion: parsed.schemaVersion ?? 'oil-thermal-baseline-production-v1',
     status: String(parsed.status ?? 'not_established'),
     notes: Array.isArray(parsed.notes) ? parsed.notes.filter((note) => typeof note === 'string') : [],
+    sourceReview: normalizeBaselineSourceReview(parsed.sourceReview),
     policy,
     facilitiesById
   };
@@ -262,6 +282,7 @@ function buildBaselineArtifact({ options, config, baselineConfig }) {
     facilityCount: facilities.length,
     baselineFacilityCount: facilities.filter((facility) => baselineConfig.facilitiesById.has(facility.id)).length,
     facilitiesWithEstablishedBaseline: establishedCount,
+    sourceReview: baselineConfig.sourceReview,
     repeatedObservationRule: {
       requiresEstablishedBaseline: true,
       requiresAboveBaselineStrength: true,
