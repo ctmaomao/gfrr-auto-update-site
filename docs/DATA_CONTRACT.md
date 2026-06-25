@@ -729,6 +729,8 @@ freshness 不变式:`value` 缺 → `missing`;present 且 `ageDays` 无 → `sta
 
 P42 新增 `check:oil-directional-attribution`:用 live artifact + `docs/fixtures/oil-directional/odp-attribution-fixtures.json` 离线回放强制 attribution 保持定性解释层。该 checker 校验 P41 schema、非空解释 lane、allowed role/evidence refs、无 score/weight/probability/directive keys、insufficient_data 不得让价格/新闻/卫星代理补位,并静态核对前端 attribution DOM/renderer marker。它不联网、不写 `data/*.json`,不接入 scoring / decision / execution / position / Heatmap / cross-validation。
 
+P43 新增 `check:oil-directional-evidence-timing`:ODP 前端证据矩阵必须在证据列表前展示时效分层摘要,把 T2 官方周度锚、T1 日频市场代理、新闻/卫星高频观察层分开说明。该 checker 静态核对 DOM/CSS/renderer marker,并用 live ODP artifact 验证 8 个 T2 官方锚仍是 `core_physical_anchor`、至少 4 个 T1 市场代理仍是 `market_confirmation`;不得引入 timing/freshness/evidence score 或 weight。它只改变展示组织,不改变 `data/*.json`、classifier、`finalBias`、scoring、decision、execution、Heatmap 或 cross-validation。
+
 **物理>金融裁决**(grounded `OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md` §5):classifier 先出物理 bias(6 类),`finalizeBias()` 再叠**价格背离层**——价格表象与物理链背离时信物理:
 
 - 油价跌 + 物理偏紧(库存 tight/drawAccel/extremeTight)+ backwardation + 柴油紧 → `false_down_physical_stress`;
@@ -876,7 +878,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-attribution-layer-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-evidence-timing-1`）。
 
 稳定边界：
 
@@ -1109,26 +1111,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-attribution-layer-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
+odp-evidence-timing-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。触发原因是 Android Chrome cached old module graph：普通窗口缓存旧 `scripts/app.js` / ES module graph 后，仍可能显示 Actions/FRED 旧逻辑；无痕窗口正常则证明线上 Worker-first runtime 正常。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-attribution-layer-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-evidence-timing-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-attribution-layer-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-attribution-layer-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 即使被 helper 机械更新 import query,也仍不是当前前端 runtime 入口或 realtime overlay 重接入。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-attribution-layer-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-evidence-timing-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-evidence-timing-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 即使被 helper 机械更新 import query,也仍不是当前前端 runtime 入口或 realtime overlay 重接入。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-evidence-timing-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-attribution-layer-1
-npm run bump:frontend-asset-version -- odp-attribution-layer-1
+node scripts/bump-frontend-asset-version.mjs odp-evidence-timing-1
+npm run bump:frontend-asset-version -- odp-evidence-timing-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-attribution-layer-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-evidence-timing-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

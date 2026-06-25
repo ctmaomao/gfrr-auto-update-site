@@ -92,6 +92,7 @@ const ATTRIBUTION_LIST_IDS = [
   'odp-attribution-caps',
   'odp-attribution-triggers',
 ];
+const EVIDENCE_TIMING_SUMMARY_ID = 'odp-evidence-timing-summary';
 const ENERGY_TEXT_IDS = [
   'odp-brent-basis-alert',
   'odp-brent-basis-status',
@@ -1305,6 +1306,59 @@ function evidenceRoleText(e) {
   const use = e.directionalUse || e.sourceRole || '用途待核';
   return `${tier} · ${use}`;
 }
+function evidenceStatusSummary(rows) {
+  if (!rows.length) return '0 项';
+  const live = rows.filter(({ e }) => e.sourceStatus === 'live').length;
+  const stale = rows.filter(({ e }) => e.sourceStatus === 'stale').length;
+  const fallback = rows.filter(({ e }) => e.sourceStatus === 'fallback').length;
+  const missing = rows.filter(({ e }) => e.sourceStatus === 'missing').length;
+  const parts = [`${live}/${rows.length} live`];
+  if (stale) parts.push(`${stale} stale`);
+  if (fallback) parts.push(`${fallback} fallback`);
+  if (missing) parts.push(`${missing} missing`);
+  return parts.join(' · ');
+}
+function evidenceDateSummary(rows) {
+  const dates = Array.from(new Set(rows.map(({ e }) => compactDate(e.asOfDate)).filter(Boolean)));
+  if (dates.length === 1) return `截至 ${dates[0]}`;
+  if (dates.length > 1) return `${dates.length} 个时点`;
+  return '时点待核';
+}
+function evidenceTimingCard(kicker, title, text) {
+  const card = document.createElement('article');
+  card.className = 'odp-evidence-timing-card';
+  const label = document.createElement('span');
+  label.textContent = kicker;
+  const heading = document.createElement('strong');
+  heading.textContent = title;
+  const body = document.createElement('p');
+  body.textContent = text;
+  card.append(label, heading, body);
+  return card;
+}
+function clearEvidenceTimingSummary() {
+  const host = $(EVIDENCE_TIMING_SUMMARY_ID);
+  if (host) host.textContent = '—';
+}
+function renderEvidenceTimingSummary(ev, oilThermalWatchData, oilNewsEventWatchData) {
+  const host = $(EVIDENCE_TIMING_SUMMARY_ID);
+  if (!host) return;
+  const rows = EVIDENCE_ROW_DEFS
+    .map(([label, key]) => ({ label, key, e: ev && ev[key] }))
+    .filter(({ e }) => e && typeof e === 'object');
+  const officialRows = rows.filter(({ e }) => e.latencyTier === 'T2_weekly_official_anchor');
+  const marketRows = rows.filter(({ e }) => e.latencyTier === 'T1_daily_market_proxy');
+  const newsState = oilNewsEventWatchData?.displayStatusZh || oilNewsEventWatchData?.state || '新闻层未加载';
+  const thermalState = oilThermalWatchData?.displayStatusZh || oilThermalWatchData?.status || '卫星层未加载';
+  const officialText = `${evidenceStatusSummary(officialRows)} · ${evidenceDateSummary(officialRows)}。低噪声官方周度锚,用于校准更快但更嘈杂的代理信号。`;
+  const marketText = `${evidenceStatusSummary(marketRows)} · ${evidenceDateSummary(marketRows)}。Brent/WTI/裂差/曲线只确认或背离物理链,不单独生成方向。`;
+  const watchText = `新闻 ${newsState} · 卫星 ${thermalState}。观察层只提示人工复核,不确认断供、设施事故或改变 finalBias。`;
+  host.replaceChildren(
+    evidenceTimingCard('T2 OFFICIAL WEEKLY ANCHOR', '官方周度锚', officialText),
+    evidenceTimingCard('T1 MARKET PROXY', '日频市场代理', marketText),
+    evidenceTimingCard('EVENT / THERMAL WATCH', '高频观察层', watchText),
+  );
+}
 function curveRegimeZh(regime) {
   return ({
     backwardation: 'backwardation(现货偏紧)',
@@ -1448,6 +1502,7 @@ export function renderOilDirectional({ oilData, radarData, worldOrderStressData,
     for (const id of ['odp-physical-bias', 'odp-divergence', 'odp-confidence', 'odp-data-sufficiency', 'odp-asof', 'odp-evidence-note']) setLeafText(id, '—');
     for (const id of LADDER_IDS) setLeafText(id, '—');
     clearAttribution();
+    clearEvidenceTimingSummary();
     for (const id of REASON_IDS) setLeafText(id, '—');
     const host = $('odp-evidence-list');
     if (host) host.replaceChildren();
@@ -1481,6 +1536,7 @@ export function renderOilDirectional({ oilData, radarData, worldOrderStressData,
     setLeafText('odp-evidence-note', '本周物理链数据不足(非 8 源同周 live),暂不给出方向判断。');
     setLeafText('odp-ladder-market', '市场层等待完整物理链后再做确认或背离说明。');
     setLeafText('odp-ladder-global', '全球慢变量只做背景观察,不替代缺失的周度物理锚。');
+    renderEvidenceTimingSummary(ev, oilThermalWatchData, oilNewsEventWatchData);
     const host = $('odp-evidence-list');
     if (host) host.replaceChildren();
     return;
@@ -1493,5 +1549,6 @@ export function renderOilDirectional({ oilData, radarData, worldOrderStressData,
   setLeafText('odp-reason-spr', reasonSpr(sig));
   setLeafText('odp-reason-demand', reasonDemand(sig));
   setLeafText('odp-evidence-note', `物理链 = 馏分油库存 -> 裂解价差/炼厂开工 -> 商业原油库存 -> Brent 期限结构;8 个周度源来自 EIA WPSR(截至 ${crudeAsOf}),价格方向取布伦特近 ~4 周变动,期限结构为低置信公开代理;本层仅供参考,不参与平台的风险打分与决策。`);
+  renderEvidenceTimingSummary(ev, oilThermalWatchData, oilNewsEventWatchData);
   renderEvidenceList(ev);
 }

@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-attribution-layer-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-evidence-timing-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

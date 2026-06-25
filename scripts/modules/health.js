@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-attribution-layer-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-attribution-layer-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-evidence-timing-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-evidence-timing-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

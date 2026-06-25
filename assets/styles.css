@@ -479,6 +479,11 @@
   .odp-detail-subhead:first-child { margin-top: 4px; border-top: none; padding-top: 0; }
   .odp-detail-subhead span { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; color: var(--paper-muted); text-transform: uppercase; }
   .odp-detail-subhead strong { font-family: var(--font-display); font-size: 17px; color: var(--paper-ink); }
+  .odp-evidence-timing-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 10px 0 14px 0; padding: 10px 0; border-top: 1px solid var(--paper-line); border-bottom: 1px solid var(--paper-line); }
+  .odp-evidence-timing-card { min-width: 0; border-top: 3px solid var(--paper-line-strong); padding-top: 8px; }
+  .odp-evidence-timing-card span { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--paper-muted); text-transform: uppercase; }
+  .odp-evidence-timing-card strong { display: block; margin: 4px 0 5px 0; font-family: var(--font-display); font-size: 15px; color: var(--paper-ink); }
+  .odp-evidence-timing-card p { margin: 0; font-family: var(--font-serif); font-size: 12.5px; line-height: 1.6; color: var(--paper-warm); overflow-wrap: anywhere; }
   .odp-evidence-list { display: grid; gap: 12px; margin: 10px 0; }
   .odp-evidence-tier { padding: 10px 0 2px 0; border-top: 1px solid var(--paper-line-strong); }
   .odp-evidence-tier:first-child { border-top: none; }
@@ -512,6 +517,7 @@
   @media (max-width: 760px) {
     .odp-ladder,
     .odp-attribution-panels,
+    .odp-evidence-timing-summary,
     .odp-reason-panels { grid-template-columns: minmax(0, 1fr); }
     .odp-evidence-tier-heading,
     .odp-evidence-row { grid-template-columns: minmax(0, 1fr); }
