@@ -70,9 +70,21 @@ const DATA_SUFFICIENCY_ZH = {
   insufficient: '不足 · 暂不判断',
 };
 
+const CONFIDENCE_ZH = {
+  low: '低 · 需交叉确认',
+  moderate: '中 · 多源部分确认',
+  high: '高 · 多源同向',
+};
+
 const REASON_IDS = [
   'odp-reason-inventory', 'odp-reason-diesel', 'odp-reason-curve',
   'odp-reason-refinery', 'odp-reason-spr', 'odp-reason-demand',
+];
+const LADDER_IDS = [
+  'odp-ladder-core',
+  'odp-ladder-market',
+  'odp-ladder-global',
+  'odp-ladder-watch',
 ];
 const ENERGY_TEXT_IDS = [
   'odp-brent-basis-alert',
@@ -209,16 +221,31 @@ const CORE_WPSR_KEYS = [
   'demandGasolineSupplied',
   'demandDistillateSupplied',
 ];
-const EVIDENCE_TIMING_ORDER = [
+const EVIDENCE_ROLE_ORDER = [
   {
-    tier: 'T1_daily_market_proxy',
-    title: 'T1 日频市场代理',
-    note: '较快但更受口径和代理源影响,用于观察价格是否确认或背离周度物理链。',
+    role: 'core_physical_anchor',
+    title: '核心物理锚',
+    note: 'EIA WPSR 低噪声周度锚,是 ODP 判断链的主依据,用于校准更快但更嘈杂的信号。',
   },
   {
-    tier: 'T2_weekly_official_anchor',
-    title: 'T2 周频官方锚',
-    note: 'EIA WPSR 低噪声周度锚,用于校准更快但更嘈杂的市场、新闻、运输和卫星信号。',
+    role: 'market_confirmation',
+    title: '市场确认',
+    note: 'WTI / Brent / 裂解价差 / 期限结构为较快代理,只用于确认或背离周度物理链。',
+  },
+  {
+    role: 'global_slow_variable',
+    title: '全球慢变量',
+    note: '月度或日度慢变量只解释供应缓冲和需求上限,不覆盖周度物理链。',
+  },
+  {
+    role: 'high_frequency_watch',
+    title: '高频观察层',
+    note: '新闻、卫星与运输事件只提示人工观察,不确认断供、事故或油价方向。',
+  },
+  {
+    role: 'data_quality',
+    title: '数据质量',
+    note: '时间戳、source health 和降级状态用于解释置信度,不生成方向判断。',
   },
 ];
 const EVIDENCE_ROW_DEFS = [
@@ -1272,6 +1299,46 @@ function evidenceRoleText(e) {
   const use = e.directionalUse || e.sourceRole || '用途待核';
   return `${tier} · ${use}`;
 }
+function curveRegimeZh(regime) {
+  return ({
+    backwardation: 'backwardation(现货偏紧)',
+    contango: 'contango(远月溢价)',
+    flat: '近似平坦',
+  })[regime] || (regime || '期限结构待核');
+}
+function buildCoreLadderText(it, ev, crudeAsOf) {
+  const physical = PHYSICAL_BIAS_ZH[it.physicalBias] || '物理判断待核';
+  const sufficiency = DATA_SUFFICIENCY_ZH[it.dataSufficiency] || '数据充分度待核';
+  const crude = ev.crudeStocksExSpr || {};
+  const distillate = ev.distillateStocks || {};
+  const crudeTight = Number.isFinite(crude.vs5yAvgPct) ? `原油较5年 ${pct(crude.vs5yAvgPct)}` : '原油库存待核';
+  const distillateTight = Number.isFinite(distillate.vs5yAvgPct) ? `馏分油较5年 ${pct(distillate.vs5yAvgPct)}` : '馏分油库存待核';
+  return `${physical} · ${sufficiency}; EIA 周度锚截至 ${crudeAsOf || '—'}, ${crudeTight}, ${distillateTight}。`;
+}
+function buildMarketLadderText(it, sig, ev) {
+  const pc = sig?.priceContext || {};
+  const brentMove = Number.isFinite(pc.brentChangePct4w) ? `Brent 近4周 ${pct(pc.brentChangePct4w, 1)}` : 'Brent 近4周方向待核';
+  const curve = ev.curve || {};
+  const curveText = curveRegimeZh(pc.curveSlopeRegime || curve.slopeRegime);
+  const divergence = DIVERGENCE_ZH[it.divergence] || '背离待核';
+  return `${brentMove} · ${curveText}; ${divergence},市场层只确认或背离物理链。`;
+}
+function buildGlobalLadderText(it) {
+  const overlay = it.globalOverlay && typeof it.globalOverlay === 'object' ? it.globalOverlay : null;
+  if (!overlay || overlay.status !== 'active') return '全球库存、闲置产能与咽喉转运慢变量证据不足,保持周度物理链主判定。';
+  const effect = GLOBAL_OVERLAY_EFFECT_ZH[overlay.effect] || '保持主判定';
+  const supply = GLOBAL_OVERLAY_SUPPLY_ZH[overlay.supplyBuffer] || '供应缓冲待核';
+  const demand = GLOBAL_OVERLAY_DEMAND_ZH[overlay.demandState] || '需求待核';
+  const confidence = GLOBAL_OVERLAY_CONFIDENCE_ZH[overlay.confidenceAdjustment] || '不调整';
+  return `${effect} · ${supply} · ${demand}; 置信修正: ${confidence},不新增方向枚举。`;
+}
+function buildWatchLadderText(oilThermalWatchData, oilNewsEventWatchData) {
+  const newsText = oilNewsEventWatchData?.displayStatusZh
+    || newsSourceHealthText(oilNewsEventWatchData)
+    || '新闻层未加载';
+  const thermalText = oilThermalWatchData?.displayStatusZh || '卫星热异常未加载';
+  return `新闻 ${newsText} · 卫星 ${thermalText}; 两者只做观察层,不确认断供、事故或油价方向。`;
+}
 function evidenceRow(label, e) {
   const row = document.createElement('div');
   row.className = 'odp-evidence-row';
@@ -1306,18 +1373,18 @@ function renderEvidenceList(ev) {
   const rows = EVIDENCE_ROW_DEFS
     .map(([label, key]) => [label, ev[key]])
     .filter(([, e]) => e && typeof e === 'object');
-  const groups = EVIDENCE_TIMING_ORDER
-    .map((tierMeta) => {
-      const tierRows = rows.filter(([, e]) => e.latencyTier === tierMeta.tier);
-      return tierRows.length ? evidenceTierGroup(tierMeta, tierRows) : null;
+  const groups = EVIDENCE_ROLE_ORDER
+    .map((roleMeta) => {
+      const roleRows = rows.filter(([, e]) => e.directionalRole === roleMeta.role);
+      return roleRows.length ? evidenceTierGroup(roleMeta, roleRows) : null;
     })
     .filter(Boolean);
-  const unclassifiedRows = rows.filter(([, e]) => !EVIDENCE_TIMING_ORDER.some((tierMeta) => tierMeta.tier === e.latencyTier));
+  const unclassifiedRows = rows.filter(([, e]) => !EVIDENCE_ROLE_ORDER.some((roleMeta) => roleMeta.role === e.directionalRole));
   if (unclassifiedRows.length) {
     groups.push(evidenceTierGroup({
       tier: 'unclassified',
       title: '未分级证据',
-      note: '该证据缺少 latencyTier,需在 ODP contract 中补齐后才能用于时间层级解读。',
+      note: '该证据缺少 directionalRole,需在 ODP contract 中补齐后才能用于判断链分组。',
     }, unclassifiedRows));
   }
   host.replaceChildren(...groups);
@@ -1331,7 +1398,8 @@ export function renderOilDirectional({ oilData, radarData, worldOrderStressData,
     setLeafText('hero-odp-ref-verdict', '数据不可用');
     setToneClass('odp-verdict', 'section-title', '');
     setLeafText('odp-headline', '油价方向研判数据未能加载,暂不显示。');
-    for (const id of ['odp-physical-bias', 'odp-divergence', 'odp-data-sufficiency', 'odp-asof', 'odp-evidence-note']) setLeafText(id, '—');
+    for (const id of ['odp-physical-bias', 'odp-divergence', 'odp-confidence', 'odp-data-sufficiency', 'odp-asof', 'odp-evidence-note']) setLeafText(id, '—');
+    for (const id of LADDER_IDS) setLeafText(id, '—');
     for (const id of REASON_IDS) setLeafText(id, '—');
     const host = $('odp-evidence-list');
     if (host) host.replaceChildren();
@@ -1350,13 +1418,20 @@ export function renderOilDirectional({ oilData, radarData, worldOrderStressData,
   setLeafText('odp-headline', buildHeadline(finalBias, it, sig));
   setLeafText('odp-physical-bias', PHYSICAL_BIAS_ZH[it.physicalBias] || '—');
   setLeafText('odp-divergence', DIVERGENCE_ZH[it.divergence] || '—');
+  setLeafText('odp-confidence', CONFIDENCE_ZH[it.confidence] || it.confidence || '—');
   setLeafText('odp-data-sufficiency', DATA_SUFFICIENCY_ZH[it.dataSufficiency] || '—');
   setLeafText('odp-asof', crudeAsOf);
+  setLeafText('odp-ladder-core', buildCoreLadderText(it, ev, crudeAsOf));
+  setLeafText('odp-ladder-market', buildMarketLadderText(it, sig, ev));
+  setLeafText('odp-ladder-global', buildGlobalLadderText(it));
+  setLeafText('odp-ladder-watch', buildWatchLadderText(oilThermalWatchData, oilNewsEventWatchData));
 
   if (!sig) {
     // insufficient_data -> 暂不判断, no fabricated reasons; clear any prior evidence rows.
     for (const id of REASON_IDS) setLeafText(id, '暂不判断');
     setLeafText('odp-evidence-note', '本周物理链数据不足(非 8 源同周 live),暂不给出方向判断。');
+    setLeafText('odp-ladder-market', '市场层等待完整物理链后再做确认或背离说明。');
+    setLeafText('odp-ladder-global', '全球慢变量只做背景观察,不替代缺失的周度物理锚。');
     const host = $('odp-evidence-list');
     if (host) host.replaceChildren();
     return;
