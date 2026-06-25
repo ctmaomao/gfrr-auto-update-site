@@ -440,6 +440,42 @@ P49 still does not add or allow:
 - scoring, decision, execution, position, Brent promotion, Global Risk Heatmap or
   cross-validation impact.
 
+## P50 Baseline Quality Frontend Display
+
+P50 adds one display row to the ODP `SATELLITE THERMAL WATCH` panel:
+
+```text
+基线质量
+```
+
+The row reads only:
+
+```text
+data/oil-thermal-watch.json.baseline.sourceReview
+```
+
+and displays the current `baselineQuality`, `sampleCount`, `sampleWindowDays` and
+`qualityTransition`. For the current P49 artifact this means the user sees that
+the facility baseline is established, but still `starter_short_window` because
+the observed sample window is below 7 days.
+
+P50 also updates the renderer note and watch-ladder copy so the short-window
+starter caveat is visible where the thermal watch is summarized. The copy must
+continue to say this is not a mature seasonal or long-history operating
+baseline.
+
+P50 does not add or allow:
+
+- new FIRMS requests;
+- production data writes;
+- baseline-config changes;
+- incident confirmation;
+- outage or supply-disruption confirmation;
+- oil-price direction;
+- ODP `finalBias` mutation;
+- scoring, decision, execution, position, Brent promotion, Global Risk Heatmap or
+  cross-validation impact.
+
 ## Current P11 Scope
 
 P11 only adds a visible ODP readiness slot: `SATELLITE THERMAL WATCH / 卫星热异常观察`.

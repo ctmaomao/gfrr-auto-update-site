@@ -13,6 +13,8 @@
 // P33: oil-news event watch source health/fallback copy must stay explicit:
 // aggregate source health is allowed, but no single news path may be written as
 // a confirmed oil event.
+// P50: satellite thermal watch must expose baseline quality/sample-window copy
+// and keep the short-window starter caveat visible.
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -65,6 +67,21 @@ if (!src.includes('odp-news-event-source-health') || !src.includes('newsSourceHe
 }
 if (!src.includes('失败关闭') || !src.includes('不把单一路径报道写成确认事件')) {
   fail('ODP oil-news source-health copy must preserve fail-closed and no-single-path-confirmation wording');
+}
+if (!src.includes('odp-thermal-baseline-quality') || !src.includes('thermalBaselineQualityText')) {
+  fail('ODP satellite thermal watch must expose baseline quality/sample-window text');
+}
+for (const marker of [
+  '短窗口起步基线',
+  '小于 7 天',
+  '不是成熟季节性或长历史运行基线',
+]) {
+  if (!src.includes(marker)) {
+    fail(`ODP satellite thermal baseline copy must preserve marker: ${marker}`);
+  }
+}
+if (!src.includes('sampleWindowDays') || !src.includes('sampleCount') || !src.includes('starter_short_window')) {
+  fail('ODP satellite thermal baseline copy must read sampleWindowDays and starter_short_window');
 }
 
 if (errors.length > 0) {

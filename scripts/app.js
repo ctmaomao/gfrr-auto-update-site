@@ -7,7 +7,7 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'odp-responsive-readability-1';
+const APP_VERSION = 'odp-thermal-baseline-quality-1';
 const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const errors = [];
-const CURRENT_ASSET_VERSION = 'odp-responsive-readability-1';
+const CURRENT_ASSET_VERSION = 'odp-thermal-baseline-quality-1';
 const fail = (message) => errors.push(message);
 
 function read(path) {

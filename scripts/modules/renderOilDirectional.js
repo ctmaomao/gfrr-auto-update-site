@@ -135,6 +135,7 @@ const ENERGY_TEXT_IDS = [
   'odp-thermal-source',
   'odp-thermal-window',
   'odp-thermal-facility',
+  'odp-thermal-baseline-quality',
   'odp-thermal-signal',
   'odp-thermal-note',
   'odp-qc-ledger-status',
@@ -383,6 +384,7 @@ function clearEnergyAddendum() {
   setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', '');
   setToneClass('odp-news-event-source-health', 'odp-news-source-health', '');
   setToneClass('odp-thermal-status', 'odp-thermal-status', '');
+  setToneClass('odp-thermal-baseline-quality', 'odp-thermal-baseline-quality', '');
   setToneClass('odp-qc-ledger-status', 'odp-qc-ledger-status', '');
   setToneClass('odp-energy-spare-regime', 'odp-energy-regime', '');
   const coreHost = $('odp-energy-transport-core');
@@ -1017,6 +1019,51 @@ function thermalFacilityText(data) {
   const status = coverage.whitelistStatus === 'configured' ? '白名单已配置' : '白名单待建';
   return `${count} 个设施 · ${status}${regions}`;
 }
+function thermalBaselineQualityLabel(quality) {
+  return ({
+    starter_short_window: '短窗口起步基线',
+    starter_observation_window: '观察窗口起步基线',
+    established_observation_window: '30天+观察窗口',
+  })[quality] || '质量待核';
+}
+function thermalBaselineQualityText(data) {
+  const review = data?.baseline?.sourceReview || {};
+  const baseline = data?.baseline || {};
+  const quality = review.baselineQuality;
+  const sampleCount = Number.isFinite(review.sampleCount) ? Math.round(review.sampleCount) : null;
+  const sampleWindowDays = Number.isFinite(review.sampleWindowDays) ? review.sampleWindowDays : null;
+  const transition = review.qualityTransition ? ` · ${review.qualityTransition}` : '';
+  if (!quality) {
+    const status = baseline.status || 'missing';
+    return status === 'established'
+      ? '基线已建立 · 质量待核'
+      : '基线质量待建立';
+  }
+  const samples = sampleCount !== null ? `${sampleCount}样本` : '样本待核';
+  const window = sampleWindowDays !== null ? `${sampleWindowDays.toFixed(2)}天窗` : '窗口待核';
+  return `${thermalBaselineQualityLabel(quality)} · ${samples} · ${window}${transition}`;
+}
+function thermalBaselineQualityTone(data) {
+  const quality = data?.baseline?.sourceReview?.baselineQuality;
+  if (quality === 'established_observation_window') return 'green';
+  if (quality === 'starter_observation_window' || quality === 'starter_short_window') return 'yellow';
+  return '';
+}
+function thermalBaselineQualityNote(data) {
+  const review = data?.baseline?.sourceReview || {};
+  const quality = review.baselineQuality;
+  const caveats = Array.isArray(review.caveats) ? review.caveats.filter(Boolean) : [];
+  if (quality === 'starter_short_window') {
+    return '当前设施基线已建立,但样本窗口仍小于 7 天,只能作为短窗口起步基线使用。';
+  }
+  if (quality === 'starter_observation_window') {
+    return '当前设施基线进入 7-30 天观察窗口,稳定性提升,但仍不是成熟季节性或长历史运行基线。';
+  }
+  if (quality === 'established_observation_window') {
+    return '当前设施基线已有 30 天以上观察窗口,但热异常仍需多源重复与人工复核,不自动确认事故或断供。';
+  }
+  return caveats[0] || '基线质量尚未建立,热异常只作为人工复核代理。';
+}
 function thermalSignalText(data) {
   const aggregate = data && data.aggregate ? data.aggregate : {};
   const baseline = data && data.baseline ? data.baseline : {};
@@ -1051,10 +1098,10 @@ function thermalNoteText(data) {
     return 'FIRMS 本轮查询失败或全部源不可用;保持 fail-closed,不沿用为事故、断供或油价方向判断。';
   }
   if (data.signalState === 'baseline_elevated_repeated_watch' || data.signalState === 'baseline_repeated_watch') {
-    return '设施热异常同时满足历史基线超阈值与多源重复观测,需要人工复核;它仍不确认炼厂事故、供应中断或油价预测,也不改变 ODP 方向判断。';
+    return `设施热异常同时满足历史基线超阈值与多源重复观测,需要人工复核;${thermalBaselineQualityNote(data)}它仍不确认炼厂事故、供应中断或油价预测,也不改变 ODP 方向判断。`;
   }
   if (data.signalState === 'baseline_established_no_detections' || data.signalState === 'baseline_established_no_repeated_signal') {
-    return '设施热异常观察已接入基线解释框架,但本轮未满足超基线强度与多源重复观测的组合条件;不确认炼厂事故、供应中断或油价预测。';
+    return `设施热异常观察已接入基线解释框架。${thermalBaselineQualityNote(data)}本轮未满足超基线强度与多源重复观测的组合条件;不确认炼厂事故、供应中断或油价预测。`;
   }
   const elevated = data.signalState === 'baseline_building_elevated_watch';
   const prefix = elevated ? '设施热异常聚合出现基线建立期升高观察,需要人工复核。' : '设施热异常聚合已接入生产只读观察层。';
@@ -1068,6 +1115,8 @@ function renderSatelliteThermalWatch(oilThermalWatchData) {
   setLeafText('odp-thermal-source', `NASA FIRMS / VIIRS NRT · production read-only${sourceStatus}`);
   setLeafText('odp-thermal-window', thermalWindowText(data));
   setLeafText('odp-thermal-facility', thermalFacilityText(data));
+  setLeafText('odp-thermal-baseline-quality', thermalBaselineQualityText(data));
+  setToneClass('odp-thermal-baseline-quality', 'odp-thermal-baseline-quality', thermalBaselineQualityTone(data));
   setLeafText('odp-thermal-signal', thermalSignalText(data));
   setLeafText('odp-thermal-note', thermalNoteText(data));
 }
@@ -1397,7 +1446,8 @@ function buildWatchLadderText(oilThermalWatchData, oilNewsEventWatchData) {
     || newsSourceHealthText(oilNewsEventWatchData)
     || '新闻层未加载';
   const thermalText = oilThermalWatchData?.displayStatusZh || '卫星热异常未加载';
-  return `新闻 ${newsText} · 卫星 ${thermalText}; 两者只做观察层,不确认断供、事故或油价方向。`;
+  const thermalQuality = thermalBaselineQualityText(oilThermalWatchData);
+  return `新闻 ${newsText} · 卫星 ${thermalText} · ${thermalQuality}; 两者只做观察层,不确认断供、事故或油价方向。`;
 }
 function attributionListItem(item) {
   const li = document.createElement('li');
