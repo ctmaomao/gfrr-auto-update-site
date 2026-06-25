@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=odp-decision-ladder-1';
+﻿import { formatFiniteNumber } from './format.js?v=odp-attribution-layer-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

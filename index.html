@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=odp-decision-ladder-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=odp-attribution-layer-1" />
 </head>
 <body class="gfrr-data-loading">
   <nav class="page-bookmarks" aria-label="站内页面切换">
@@ -490,6 +490,31 @@
             <strong>观察层与时点</strong>
             <p id="odp-ladder-watch">—</p>
           </article>
+        </div>
+        <div class="odp-attribution" aria-label="ODP 归因与反证">
+          <p class="odp-attribution-thesis" id="odp-attribution-thesis">—</p>
+          <div class="odp-attribution-panels">
+            <section class="odp-attribution-panel">
+              <span class="odp-attribution-kicker">ATTRIBUTION</span>
+              <strong>方向归因</strong>
+              <ul id="odp-attribution-support"></ul>
+            </section>
+            <section class="odp-attribution-panel">
+              <span class="odp-attribution-kicker">COUNTER EVIDENCE</span>
+              <strong>主要反证</strong>
+              <ul id="odp-attribution-counter"></ul>
+            </section>
+            <section class="odp-attribution-panel">
+              <span class="odp-attribution-kicker">CONFIDENCE CAP</span>
+              <strong>置信封顶</strong>
+              <ul id="odp-attribution-caps"></ul>
+            </section>
+            <section class="odp-attribution-panel">
+              <span class="odp-attribution-kicker">VIEW CHANGE</span>
+              <strong>改变判断条件</strong>
+              <ul id="odp-attribution-triggers"></ul>
+            </section>
+          </div>
         </div>
         <div class="odp-reason-panels" aria-label="ODP 方向拆解">
           <section class="odp-reason-panel">
@@ -1197,6 +1222,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=odp-decision-ladder-1"></script>
+  <script type="module" src="scripts/app.js?v=odp-attribution-layer-1"></script>
 </body>
 </html>

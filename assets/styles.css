@@ -456,6 +456,16 @@
   .odp-ladder-card strong { display: block; margin: 4px 0 6px 0; font-family: var(--font-display); font-size: 16px; color: var(--paper-ink); }
   .odp-ladder-card p { margin: 0; font-family: var(--font-serif); font-size: 13px; line-height: 1.65; color: var(--paper-warm); overflow-wrap: anywhere; }
   .odp-ladder-kicker { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--paper-muted); text-transform: uppercase; }
+  .odp-attribution { margin: 0 0 20px 0; padding: 0 0 16px 0; border-bottom: 1px solid var(--paper-line); }
+  .odp-attribution-thesis { margin: 0 0 12px 0; font-family: var(--font-display); font-size: 18px; line-height: 1.45; font-weight: 700; color: var(--paper-ink); }
+  .odp-attribution-panels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .odp-attribution-panel { min-width: 0; border-top: 1px solid var(--paper-line-strong); padding-top: 9px; }
+  .odp-attribution-kicker { display: block; margin: 0 0 4px 0; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--paper-muted); text-transform: uppercase; }
+  .odp-attribution-panel strong { display: block; margin: 0 0 6px 0; font-family: var(--font-display); font-size: 15px; color: var(--paper-ink); }
+  .odp-attribution-panel ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+  .odp-attribution-panel li { margin: 0; padding: 0 0 7px 0; border-bottom: 1px dotted var(--paper-line); font-family: var(--font-serif); font-size: 12.5px; line-height: 1.55; color: var(--paper-warm); overflow-wrap: anywhere; }
+  .odp-attribution-panel li strong { display: inline; margin: 0; font-family: var(--font-serif); font-size: 12.5px; font-weight: 700; color: var(--paper-ink); }
+  .odp-attribution-panel li span { color: var(--paper-warm); }
   .odp-reason-panels { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 18px 24px; margin: 0 0 18px 0; }
   .odp-reason-panel { min-width: 0; border-top: 1px solid var(--paper-line-strong); padding-top: 10px; }
   .odp-reason-panel-heading { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; margin: 0 0 8px 0; }
@@ -501,6 +511,7 @@
 
   @media (max-width: 760px) {
     .odp-ladder,
+    .odp-attribution-panels,
     .odp-reason-panels { grid-template-columns: minmax(0, 1fr); }
     .odp-evidence-tier-heading,
     .odp-evidence-row { grid-template-columns: minmax(0, 1fr); }

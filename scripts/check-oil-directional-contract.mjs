@@ -26,6 +26,8 @@ const DIRECTIONAL_ROLES = new Set([
   'high_frequency_watch',
   'data_quality',
 ]);
+const ATTRIBUTION_ARRAYS = ['supportEvidence', 'counterEvidence', 'confidenceCaps', 'viewChangeTriggers'];
+const ATTRIBUTION_FORBIDDEN_KEY_RE = /(score|weight|probability|decision|execution|position|guidance|triggerMonitor|actionQueue)/i;
 
 function validateTimingFields(e, path, expectedTier, expectedDirectionalRole) {
   if (!LATENCY_TIERS.has(e.latencyTier)) fail(`${path}.latencyTier unsupported: ${e.latencyTier}`);
@@ -39,6 +41,54 @@ function validateTimingFields(e, path, expectedTier, expectedDirectionalRole) {
   }
   if (!/校准|确认|背离|锚点/u.test(e.directionalUse + e.calibrationNoteZh)) {
     fail(`${path}.directionalUse/calibrationNoteZh must describe calibration/confirmation semantics`);
+  }
+}
+
+function validateAttributionItem(item, path) {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) {
+    fail(`${path} must be an object`);
+    return;
+  }
+  for (const key of Object.keys(item)) {
+    if (ATTRIBUTION_FORBIDDEN_KEY_RE.test(key)) {
+      fail(`${path}.${key} is forbidden in qualitative attribution`);
+    }
+  }
+  if (!DIRECTIONAL_ROLES.has(item.role)) fail(`${path}.role unsupported: ${item.role}`);
+  for (const field of ['label', 'stance', 'text']) {
+    if (typeof item[field] !== 'string' || !item[field]) fail(`${path}.${field} must be a non-empty string`);
+  }
+  if (!Array.isArray(item.evidenceKeys) || !item.evidenceKeys.every((v) => typeof v === 'string' && v)) {
+    fail(`${path}.evidenceKeys must be a non-empty string array`);
+  }
+}
+
+function validateAttribution(attribution) {
+  if (!attribution || typeof attribution !== 'object' || Array.isArray(attribution)) {
+    fail('interpretation.attribution must be a non-null object');
+    return;
+  }
+  for (const key of Object.keys(attribution)) {
+    if (ATTRIBUTION_FORBIDDEN_KEY_RE.test(key)) {
+      fail(`interpretation.attribution.${key} is forbidden in qualitative attribution`);
+    }
+  }
+  if (attribution.schemaVersion !== 'odp-attribution-1') {
+    fail(`interpretation.attribution.schemaVersion must be 'odp-attribution-1', got: ${attribution.schemaVersion}`);
+  }
+  if (typeof attribution.boundary !== 'string' || !/display-only|NOT in/i.test(attribution.boundary)) {
+    fail('interpretation.attribution.boundary must reaffirm display-only / NOT in scoring paths');
+  }
+  if (typeof attribution.primaryThesis !== 'string' || !attribution.primaryThesis) {
+    fail('interpretation.attribution.primaryThesis must be a non-empty string');
+  }
+  for (const field of ATTRIBUTION_ARRAYS) {
+    const rows = attribution[field];
+    if (!Array.isArray(rows) || rows.length === 0) {
+      fail(`interpretation.attribution.${field} must be a non-empty array`);
+      continue;
+    }
+    rows.forEach((item, idx) => validateAttributionItem(item, `interpretation.attribution.${field}[${idx}]`));
   }
 }
 
@@ -136,6 +186,7 @@ if (typeof data.interpretation !== 'object' || data.interpretation === null || A
       }
     }
   }
+  validateAttribution(data.interpretation.attribution);
 }
 
 if (errors.length > 0) {

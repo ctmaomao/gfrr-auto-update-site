@@ -20,6 +20,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { classifyAt, evaluateGlobalOverlay, finalizeBias } from './odp-classifier.mjs';
 
 const SCHEMA_VERSION = 'odp-1';
+const ATTRIBUTION_SCHEMA_VERSION = 'odp-attribution-1';
 const OUT_PATH = 'data/oil-directional-pressure.json';
 const RADAR_PATH = 'data/radar-data.json';
 const HISTORY_PATH = 'data/radar-history-full.json';
@@ -65,6 +66,8 @@ const DIRECTIONAL_ROLES = Object.freeze({
   highFrequencyWatch: 'high_frequency_watch',
   dataQuality: 'data_quality',
 });
+const ATTRIBUTION_BOUNDARY =
+  'display-only attribution; qualitative explanation only; NOT in values/scoring/decision/execution/position';
 
 function round(n, dp = 2) {
   if (!Number.isFinite(n)) return null;
@@ -137,6 +140,250 @@ function changeNObsAgo(series, n) {
 
 function numMaybe(value) {
   return Number.isFinite(Number(value)) ? round(Number(value), 3) : null;
+}
+
+function attributionItem(role, label, text, evidenceKeys, stance) {
+  return {
+    role,
+    label,
+    stance,
+    evidenceKeys: Array.isArray(evidenceKeys) ? evidenceKeys : [],
+    text,
+  };
+}
+
+function attributionThesis(reconcile) {
+  switch (reconcile.finalBias) {
+    case 'false_down_physical_stress':
+      return '价格下跌与周度物理链偏紧并存,当前判读是价格未完全确认物理压力解除。';
+    case 'false_up_unconfirmed':
+      return '价格上涨缺少周度物理链确认,当前判读保留上涨未确认风险。';
+    case 'strong_bullish':
+      return '周度物理链显示库存与成品油端同时偏紧,当前判读以物理压力为主。';
+    case 'moderate_bullish':
+      return '周度物理链偏紧但未形成全面极端压力,当前判读为温和上行压力。';
+    case 'product_crisis':
+      return '压力主要集中在馏分油/成品油链条,当前判读不是单纯原油库存故事。';
+    case 'bearish':
+      return '周度物理链偏松或需求转弱,当前判读不支持物理端上行压力。';
+    case 'neutral_range':
+      return '周度物理链未给出明确方向,当前判读以区间观察为主。';
+    case 'insufficient_data':
+    default:
+      return '周度物理链数据不足,当前不做方向判读。';
+  }
+}
+
+function buildAttribution({ reconcile, signals, priceContext, crackChange4w, globalOverlay, dataSufficiency }) {
+  const attribution = {
+    schemaVersion: ATTRIBUTION_SCHEMA_VERSION,
+    boundary: ATTRIBUTION_BOUNDARY,
+    primaryThesis: attributionThesis(reconcile),
+    supportEvidence: [],
+    counterEvidence: [],
+    confidenceCaps: [],
+    viewChangeTriggers: [],
+  };
+
+  if (!signals || reconcile.finalBias === 'insufficient_data') {
+    attribution.confidenceCaps.push(attributionItem(
+      DIRECTIONAL_ROLES.dataQuality,
+      '周度物理链不完整',
+      'EIA 周度锚未满足同周完整条件,因此不把价格、新闻或观察层提升为方向判断。',
+      ['evidence'],
+      'blocks_directional_view',
+    ));
+    attribution.viewChangeTriggers.push(attributionItem(
+      DIRECTIONAL_ROLES.corePhysicalAnchor,
+      '恢复同周完整锚点',
+      '8 个 EIA 周度源重新同周 live 后,才重新生成物理链方向归因。',
+      ['crudeStocksExSpr', 'distillateStocks', 'refineryUtilization'],
+      'restores_model_input',
+    ));
+    return attribution;
+  }
+
+  const inv = signals.inventoryDrawPressure || {};
+  const dist = signals.dieselProductStress || {};
+  const refinery = signals.refineryConfirmation || {};
+  const spr = signals.sprBufferEffectiveness || {};
+  const demand = signals.demandDestructionRisk || {};
+  const curveRegime = priceContext.curveSlopeRegime;
+
+  if (inv.drawAccel || inv.tight || inv.extremeTight) {
+    attribution.supportEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.corePhysicalAnchor,
+      '商业原油库存偏紧',
+      '商业原油库存相对 5 年同期偏低并出现去化,这是当前物理压力的主锚之一。',
+      ['crudeStocksExSpr'],
+      'supports_physical_pressure',
+    ));
+  }
+  if (dist.tight || dist.extremeTight) {
+    attribution.supportEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.corePhysicalAnchor,
+      '馏分油库存偏紧',
+      '馏分油库存处在偏紧区间,说明压力不只来自原油库存,还延伸到成品油链条。',
+      ['distillateStocks', 'crackSpread'],
+      'supports_product_stress',
+    ));
+  }
+  if (refinery.high) {
+    attribution.supportEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.corePhysicalAnchor,
+      '炼厂加工端确认',
+      '炼厂开工率偏高,与库存去化共同说明需求/加工端仍在消耗物理库存。',
+      ['refineryUtilization', 'refinerCrudeInputs'],
+      'supports_physical_confirmation',
+    ));
+  }
+  if (spr.bufferInsufficient) {
+    attribution.supportEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.corePhysicalAnchor,
+      'SPR 缓冲有限',
+      'SPR 变化没有抵消商业库存去化,政策缓冲端未削弱物理压力结论。',
+      ['sprStocks', 'crudeStocksExSpr'],
+      'supports_buffer_tightness',
+    ));
+  }
+  if (curveRegime === 'backwardation') {
+    attribution.supportEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.marketConfirmation,
+      '期限结构仍偏紧',
+      '公开期货曲线呈 backwardation,市场结构没有确认物理宽松。',
+      ['curve'],
+      'confirms_physical_tightness',
+    ));
+  }
+  if (globalOverlay && globalOverlay.status === 'active' && /^confirms_/.test(globalOverlay.effect || '')) {
+    attribution.supportEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.globalSlowVariable,
+      '全球慢变量同向',
+      'OECD 库存、全球净抽库或闲置产能慢变量对周度物理链形成背景确认。',
+      ['interpretation.globalOverlay'],
+      'supports_context_confirmation',
+    ));
+  }
+
+  if (Number.isFinite(priceContext.changePct4w) && priceContext.changePct4w < 0) {
+    attribution.counterEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.marketConfirmation,
+      'Brent 价格回落',
+      '近 4 周 Brent 下跌是当前判读的主要反证;ODP 将其解释为价格与物理链背离,而非直接确认物理宽松。',
+      ['brentPrice'],
+      'counters_physical_pressure',
+    ));
+  }
+  if (Number.isFinite(crackChange4w) && crackChange4w < 0) {
+    attribution.counterEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.marketConfirmation,
+      '裂解价差收窄',
+      '裂解价差 4 周收窄说明成品油利润代理没有继续扩张,因此会限制成品油压力的置信表达。',
+      ['crackSpread'],
+      'caps_product_confirmation',
+    ));
+  }
+  if (demand.demandFalling || demand.demandDestruction) {
+    attribution.counterEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.corePhysicalAnchor,
+      '需求端转弱',
+      '产品供应均值出现转弱时,物理压力可能从供应紧张转为需求放缓,需要降低方向确定性。',
+      ['demandGasolineSupplied', 'demandDistillateSupplied'],
+      'counters_demand_side',
+    ));
+  }
+  if (globalOverlay && /demand/.test(globalOverlay.demandState || '')) {
+    attribution.counterEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.globalSlowVariable,
+      '全球需求下修观察',
+      '全球消费慢变量若出现下修,会对物理偏紧结论形成上限,不能把供应偏紧单线外推。',
+      ['interpretation.globalOverlay'],
+      'caps_global_confidence',
+    ));
+  }
+
+  if (dataSufficiency !== 'full') {
+    attribution.confidenceCaps.push(attributionItem(
+      DIRECTIONAL_ROLES.dataQuality,
+      'EIA 同周完整性不足',
+      '周度物理锚不是 8 源同周完整时,结论只能降级显示,不能让市场代理补位。',
+      ['evidence'],
+      'caps_confidence',
+    ));
+  }
+  attribution.confidenceCaps.push(attributionItem(
+    DIRECTIONAL_ROLES.dataQuality,
+    '官方周报天然滞后',
+    'EIA WPSR 是低噪声官方锚,但对当前流向存在发布滞后;快速信号只能用于确认或观察。',
+    ['crudeStocksExSpr', 'distillateStocks'],
+    'caps_timeliness',
+  ));
+  if (globalOverlay && globalOverlay.confidenceAdjustment === 'up_with_demand_cap') {
+    attribution.confidenceCaps.push(attributionItem(
+      DIRECTIONAL_ROLES.globalSlowVariable,
+      '上调但受需求封顶',
+      '全球慢变量增强物理链解释,但需求下修观察使置信度不能继续上调。',
+      ['interpretation.globalOverlay'],
+      'caps_confidence',
+    ));
+  }
+  attribution.confidenceCaps.push(attributionItem(
+    DIRECTIONAL_ROLES.highFrequencyWatch,
+    '新闻与卫星仍为观察层',
+    '新闻事件和卫星热异常没有与价格结构、周度库存和设施基线同时印证前,不改变 ODP 方向判读。',
+    ['oilNewsEventWatch', 'oilThermalWatch'],
+    'keeps_watch_layer_separate',
+  ));
+
+  attribution.viewChangeTriggers.push(attributionItem(
+    DIRECTIONAL_ROLES.corePhysicalAnchor,
+    '物理链转松',
+    '若商业原油库存回补、馏分油库存修复、炼厂开工回落同时出现,当前物理偏紧归因会失效。',
+    ['crudeStocksExSpr', 'distillateStocks', 'refineryUtilization'],
+    'would_weaken_physical_bias',
+  ));
+  attribution.viewChangeTriggers.push(attributionItem(
+    DIRECTIONAL_ROLES.marketConfirmation,
+    '价格结构确认宽松',
+    '若 Brent 继续回落且公开曲线转为 contango,市场层将从背离转为确认宽松。',
+    ['brentPrice', 'curve'],
+    'would_confirm_market_easing',
+  ));
+  attribution.viewChangeTriggers.push(attributionItem(
+    DIRECTIONAL_ROLES.corePhysicalAnchor,
+    '需求破坏明确',
+    '若 product supplied 明确转弱并持续,供应紧张叙事需要被需求放缓叙事覆盖。',
+    ['demandGasolineSupplied', 'demandDistillateSupplied'],
+    'would_cap_or_reverse_view',
+  ));
+  attribution.viewChangeTriggers.push(attributionItem(
+    DIRECTIONAL_ROLES.highFrequencyWatch,
+    '观察层获得交叉印证',
+    '新闻、卫星或咽喉转运异常只有在价格结构、设施基线和周度库存同时印证后,才提高事件观察置信度。',
+    ['oilNewsEventWatch', 'oilThermalWatch', 'interpretation.globalOverlay'],
+    'would_raise_event_confidence',
+  ));
+
+  if (!attribution.supportEvidence.length) {
+    attribution.supportEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.dataQuality,
+      '未形成主支撑',
+      '当前没有足够同向证据形成主支撑,维持审慎观察。',
+      ['evidence'],
+      'neutral_context',
+    ));
+  }
+  if (!attribution.counterEvidence.length) {
+    attribution.counterEvidence.push(attributionItem(
+      DIRECTIONAL_ROLES.dataQuality,
+      '反证暂未主导',
+      '当前反向证据不足以覆盖周度物理链,但仍需要继续观察价格结构与需求端。',
+      ['brentPrice', 'curve', 'demandGasolineSupplied'],
+      'no_dominant_counter',
+    ));
+  }
+
+  return attribution;
 }
 
 function withTimingFields(evidence, tier, sourceRole, directionalUse, directionalRole) {
@@ -458,6 +705,14 @@ async function main() {
       priceDirectionSource: brentChangePct4w === null ? 'unavailable' : 'radar-history-full:brent~4w',
     },
   };
+  const attribution = buildAttribution({
+    reconcile,
+    signals,
+    priceContext: priceContextForModel,
+    crackChange4w,
+    globalOverlay,
+    dataSufficiency,
+  });
 
   const interpretation = {
     physicalBias: reconcile.physicalBias,
@@ -468,6 +723,7 @@ async function main() {
     confidence: globalOverlay && globalOverlay.confidence ? globalOverlay.confidence : 'low',
     dataSufficiency,
     globalOverlay,
+    attribution,
     note: 'physical-chain verdict; price-divergence and P6B global overlays are display-only confirms/guards. Audit-only/display-only, NOT in scoring/decision.',
   };
 

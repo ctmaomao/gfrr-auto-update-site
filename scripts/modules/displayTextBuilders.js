@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-decision-ladder-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-attribution-layer-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

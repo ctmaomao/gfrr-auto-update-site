@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=odp-decision-ladder-1';
-import { formatOnRrpYiUsd } from './format.js?v=odp-decision-ladder-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=odp-attribution-layer-1';
+import { formatOnRrpYiUsd } from './format.js?v=odp-attribution-layer-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

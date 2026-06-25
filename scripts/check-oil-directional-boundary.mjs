@@ -52,6 +52,21 @@ if (odp.interpretation && typeof odp.interpretation === 'object') {
   if (typeof odp.interpretation.note !== 'string' || !/audit-only|display-only/i.test(odp.interpretation.note)) {
     fail('interpretation.note must reaffirm audit-only/display-only (display-only verdict)');
   }
+  const attribution = odp.interpretation.attribution;
+  if (attribution !== undefined) {
+    if (!attribution || typeof attribution !== 'object' || Array.isArray(attribution)) {
+      fail('interpretation.attribution must be an object when present');
+    } else {
+      if (typeof attribution.boundary !== 'string' || !/display-only/i.test(attribution.boundary) || !/NOT in/i.test(attribution.boundary)) {
+        fail('interpretation.attribution.boundary must reaffirm display-only and NOT in scoring/decision paths');
+      }
+      for (const forbidden of FORBIDDEN_OUTPUT_KEYS) {
+        if (forbidden in attribution) {
+          fail(`interpretation.attribution must not carry a '${forbidden}' directive key`);
+        }
+      }
+    }
+  }
 }
 
 // 4) Global Risk Heatmap independence: ODP evidence must not merge heatmap state.

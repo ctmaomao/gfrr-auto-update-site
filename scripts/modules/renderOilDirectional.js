@@ -86,6 +86,12 @@ const LADDER_IDS = [
   'odp-ladder-global',
   'odp-ladder-watch',
 ];
+const ATTRIBUTION_LIST_IDS = [
+  'odp-attribution-support',
+  'odp-attribution-counter',
+  'odp-attribution-caps',
+  'odp-attribution-triggers',
+];
 const ENERGY_TEXT_IDS = [
   'odp-brent-basis-alert',
   'odp-brent-basis-status',
@@ -1339,6 +1345,47 @@ function buildWatchLadderText(oilThermalWatchData, oilNewsEventWatchData) {
   const thermalText = oilThermalWatchData?.displayStatusZh || '卫星热异常未加载';
   return `新闻 ${newsText} · 卫星 ${thermalText}; 两者只做观察层,不确认断供、事故或油价方向。`;
 }
+function attributionListItem(item) {
+  const li = document.createElement('li');
+  const title = document.createElement('strong');
+  title.textContent = item && item.label ? `${item.label}:` : '归因:';
+  const text = document.createElement('span');
+  text.textContent = item && item.text ? ` ${item.text}` : ' 暂无可展示解释。';
+  li.append(title, text);
+  return li;
+}
+function renderAttributionList(id, rows, fallbackText) {
+  const host = $(id);
+  if (!host) return;
+  const safeRows = Array.isArray(rows) ? rows.filter((row) => row && typeof row === 'object').slice(0, 4) : [];
+  if (!safeRows.length) {
+    host.replaceChildren(attributionListItem({ label: '待补充', text: fallbackText }));
+    return;
+  }
+  host.replaceChildren(...safeRows.map(attributionListItem));
+}
+function clearAttribution() {
+  setLeafText('odp-attribution-thesis', '—');
+  for (const id of ATTRIBUTION_LIST_IDS) {
+    const host = $(id);
+    if (host) host.replaceChildren();
+  }
+}
+function renderAttribution(attribution) {
+  if (!attribution || typeof attribution !== 'object') {
+    setLeafText('odp-attribution-thesis', '归因层暂不可用;当前仍只展示 ODP 主判读与证据矩阵。');
+    renderAttributionList('odp-attribution-support', [], '等待 ODP attribution artifact。');
+    renderAttributionList('odp-attribution-counter', [], '等待 ODP attribution artifact。');
+    renderAttributionList('odp-attribution-caps', [], '等待 ODP attribution artifact。');
+    renderAttributionList('odp-attribution-triggers', [], '等待 ODP attribution artifact。');
+    return;
+  }
+  setLeafText('odp-attribution-thesis', attribution.primaryThesis || '归因层已加载,但主论点待补充。');
+  renderAttributionList('odp-attribution-support', attribution.supportEvidence, '当前没有形成可展示的主支撑。');
+  renderAttributionList('odp-attribution-counter', attribution.counterEvidence, '当前反证暂未主导。');
+  renderAttributionList('odp-attribution-caps', attribution.confidenceCaps, '当前没有额外置信封顶说明。');
+  renderAttributionList('odp-attribution-triggers', attribution.viewChangeTriggers, '当前没有列出改变判断条件。');
+}
 function evidenceRow(label, e) {
   const row = document.createElement('div');
   row.className = 'odp-evidence-row';
@@ -1400,6 +1447,7 @@ export function renderOilDirectional({ oilData, radarData, worldOrderStressData,
     setLeafText('odp-headline', '油价方向研判数据未能加载,暂不显示。');
     for (const id of ['odp-physical-bias', 'odp-divergence', 'odp-confidence', 'odp-data-sufficiency', 'odp-asof', 'odp-evidence-note']) setLeafText(id, '—');
     for (const id of LADDER_IDS) setLeafText(id, '—');
+    clearAttribution();
     for (const id of REASON_IDS) setLeafText(id, '—');
     const host = $('odp-evidence-list');
     if (host) host.replaceChildren();
@@ -1425,6 +1473,7 @@ export function renderOilDirectional({ oilData, radarData, worldOrderStressData,
   setLeafText('odp-ladder-market', buildMarketLadderText(it, sig, ev));
   setLeafText('odp-ladder-global', buildGlobalLadderText(it));
   setLeafText('odp-ladder-watch', buildWatchLadderText(oilThermalWatchData, oilNewsEventWatchData));
+  renderAttribution(it.attribution);
 
   if (!sig) {
     // insufficient_data -> 暂不判断, no fabricated reasons; clear any prior evidence rows.
