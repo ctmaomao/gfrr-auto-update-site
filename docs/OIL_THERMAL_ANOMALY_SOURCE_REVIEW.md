@@ -1,10 +1,12 @@
 # Oil Thermal Anomaly Source Review — NASA FIRMS / VIIRS candidate
 
-Status: P25 production read-only observation artifact is implemented with a
-conservative U.S. Gulf Coast refinery starter whitelist plus a manual baseline
-sample review helper. Facility coverage is active for a small EIA/HIFLD-derived
-refinery set, but historical baseline remains `not_established`, so any detection
-is still a manual-review thermal proxy only.
+Status: P48 production read-only observation artifact is implemented with a
+conservative U.S. Gulf Coast refinery starter whitelist plus a starter production
+baseline. Facility coverage is active for a small EIA/HIFLD-derived refinery set.
+The baseline is established for all 12 starter facilities, but it is explicitly
+`starter_short_window` because it comes from 15 sanitized production-watch samples
+over 2.36 days. Any repeated/elevated observation is still a manual-review thermal
+proxy only.
 
 ## Candidate Source
 
@@ -179,8 +181,8 @@ P24 adds the production baseline policy file:
 config/oil-thermal-watch-baseline.json
 ```
 
-The committed baseline file intentionally starts with `status=not_established`
-and an empty `facilities[]` list. It defines only the minimum evidence policy for
+The original P24 baseline file intentionally started with `status=not_established`
+and an empty `facilities[]` list. It defined the minimum evidence policy for
 future facility baselines:
 
 - at least 8 valid samples per facility before a baseline is established;
@@ -200,11 +202,10 @@ Without both gates, a FIRMS detection remains a baseline-building or low-signal
 thermal proxy. This prevents a refinery's normal heat output, flare stack activity
 or single satellite pass from being promoted into an incident interpretation.
 
-P24 introduces possible future signal states such as `baseline_repeated_watch` and
-`baseline_elevated_repeated_watch`, but the current committed baseline has no
-established facility rows. Therefore current production output remains
-`baseline_building_*` until enough samples are reviewed and committed in a later
-baseline refresh.
+P24 introduced possible future signal states such as `baseline_repeated_watch` and
+`baseline_elevated_repeated_watch`. P48 later promotes reviewed starter rows, so
+current production output can move into `baseline_established_*` states while still
+keeping all incident, outage and oil-price language out of the signal.
 
 ## P25 Baseline Sample Accumulation Review
 
@@ -239,11 +240,12 @@ review packet only; it does not update `config/oil-thermal-watch-baseline.json`
 and does not approve a production baseline. A later reviewed change must still
 decide whether any candidate rows are mature enough to commit.
 
-With the current single committed production sample, the helper correctly returns
-`warn` / `collect_more_samples_before_baseline_candidate_review`: all 12 starter
-facilities need more samples before a baseline can be established. The committed
-synthetic fixtures only prove the math and contract path for the checker; they
-are not production thermal evidence.
+At P25 introduction time, a single committed production sample correctly returned
+`warn` / `collect_more_samples_before_baseline_candidate_review`. After later P47
+history recovery and P48 promotion, the same helper can review the ignored sample
+archive and produce established starter candidate rows. The committed synthetic
+fixtures only prove the math and contract path for the checker; they are not
+production thermal evidence.
 
 P25 does not read `FIRMS_MAP_KEY`, does not access the network, does not write
 `data/*.json` or `realtime/*.json`, and does not affect ODP build inputs, ODP
@@ -318,6 +320,76 @@ The helper uses local git history only. It does not read `FIRMS_MAP_KEY`, does
 not access the network, does not run FIRMS requests, does not write `data/*.json`
 or `realtime/*.json`, and does not approve production baseline rows. Every sidecar
 keeps `productionImpact` false and records the source commit hash for audit.
+
+## P47 Baseline Readiness Preparation
+
+P47 adds a local preparation wrapper:
+
+```text
+scripts/oil-directional/prepare-oil-thermal-baseline-review.mjs
+npm run prepare:oil-thermal-baseline-review
+npm run check:oil-thermal-baseline-readiness-prep
+```
+
+The helper chains the P27 git-history archive and the P25 baseline sample review.
+It writes only ignored artifacts under:
+
+```text
+manual-artifacts/oil-thermal/watch-samples/
+manual-artifacts/oil-thermal/oil-thermal-baseline-samples-review-latest.json
+manual-artifacts/oil-thermal/oil-thermal-baseline-readiness-latest.json
+```
+
+The P47 readiness artifact reported 15 valid unique production-watch samples and
+12/12 starter facilities ready for baseline review. It still kept
+`promotionEligible=false` and `productionBaselineWriteApproved=false`; readiness
+only means a separate reviewed production-config promotion can be considered.
+
+## P48 Starter Production Baseline Promotion
+
+P48 adds the reviewed production-config promotion path:
+
+```text
+scripts/oil-directional/promote-oil-thermal-baseline-candidate.mjs
+npm run promote:oil-thermal-baseline-candidate -- --write-production-baseline
+npm run check:oil-thermal-baseline-config
+```
+
+The promotion reads the P25/P47 ignored review artifacts and writes:
+
+```text
+config/oil-thermal-watch-baseline.json
+```
+
+only when `--write-production-baseline` is explicitly provided. The committed
+baseline now has:
+
+- `status=established`;
+- 12 U.S. Gulf Coast refinery rows matching the production whitelist;
+- 15 sanitized production-watch samples per facility;
+- `sampleWindowDays=2.36`;
+- `sourceReview.baselineQuality=starter_short_window`.
+
+This is a starter p95 baseline. It is enough to move the production watch from
+baseline-building copy into established-baseline copy, but it is not a mature
+seasonal or long-history operating baseline. The short-window caveat must remain
+visible in the config review metadata, and the frontend wording must continue to
+say manual-review thermal proxy only.
+
+P48 also allows `build:oil-thermal-watch` to refresh `data/oil-thermal-watch.json`
+with `baseline.status=established`. In the local P48 refresh, the live FIRMS result
+was `baseline_established_no_detections`: 36 requests completed, 12/12 facilities
+had established baselines, and no current detections were returned in the 1-day
+window.
+
+P48 still does not add or allow:
+
+- incident confirmation;
+- outage or supply-disruption confirmation;
+- oil-price direction;
+- ODP `finalBias` mutation;
+- scoring, decision, execution, position, Brent promotion, Global Risk Heatmap or
+  cross-validation impact.
 
 ## Current P11 Scope
 
