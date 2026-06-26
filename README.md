@@ -2,7 +2,7 @@
 
 Global Financial Risk Radar 是一个静态部署的宏观风险驾驶舱。它把 realtime 快变量、Daily baseline、风险模块、解释层和运维检查组织成可审计的网站,用于观察宏观风险状态和策略约束。
 
-在线访问: <https://ctmaomao.github.io/gfrr-auto-update-site/>
+在线访问: <https://ctmaomao.github.io/gfrr-auto-update-site/>   <https://radar.gfrfinradar.uk/>
 
 ## 核心定位
 
