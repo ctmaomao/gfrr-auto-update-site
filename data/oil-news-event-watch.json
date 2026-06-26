@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-25T23:54:28.916Z",
+  "generatedAt": "2026-06-26T04:52:00.568Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -21,7 +21,7 @@
     "details": {
       "gdelt_doc": {
         "status": "error",
-        "networkUsed": false,
+        "networkUsed": true,
         "successCount": 0,
         "failureCount": 1,
         "articleCount": 0,
@@ -29,9 +29,9 @@
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "error_cooldown_cache_hit",
+            "status": "error",
             "articleCount": 0,
-            "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
+            "error": "GDELT DOC broad oil-news cache JSON parse failed"
           }
         ]
       },
@@ -113,8 +113,8 @@
   },
   "freshness": {
     "windowDays": 7,
-    "latestArticleAt": "2026-06-25T16:30:00.000Z",
-    "latestArticleAgeHours": 7.4,
+    "latestArticleAt": "2026-06-26T04:31:40.000Z",
+    "latestArticleAgeHours": 0.3,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 48,
+      "articleCount": 50,
       "sourceCount": 2,
-      "weightedSignal": 288,
+      "weightedSignal": 300,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -214,11 +214,12 @@
           ]
         },
         {
-          "title": "Hormuz Traffic Thins Friday as Shipowners Err on Side of Safety - Insurance Journal",
-          "url": "https://www.insurancejournal.com/news/international/2026/06/19/874498.htm",
-          "domain": "insurancejournal.com",
-          "publishedAt": "2026-06-19T10:10:49.000Z",
+          "title": "An oil tanker navigates the Strait of Hormuz despite threats from Iran’s Revolutionary Guard - AP News",
+          "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-25-2026-862164c2aecbdc376dea434198eaf75f",
+          "domain": "apnews.com",
+          "publishedAt": "2026-06-25T06:11:51.000Z",
           "sources": [
+            "brave",
             "tavily"
           ],
           "buckets": [
@@ -296,9 +297,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 20,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 120,
+      "weightedSignal": 132,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -359,9 +360,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 28,
+      "articleCount": 30,
       "sourceCount": 2,
-      "weightedSignal": 112,
+      "weightedSignal": 120,
       "topArticles": [
         {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
@@ -422,9 +423,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 38,
+      "articleCount": 39,
       "sourceCount": 2,
-      "weightedSignal": 114,
+      "weightedSignal": 117,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -462,11 +463,12 @@
           ]
         },
         {
-          "title": "Hormuz Traffic Thins Friday as Shipowners Err on Side of Safety - Insurance Journal",
-          "url": "https://www.insurancejournal.com/news/international/2026/06/19/874498.htm",
-          "domain": "insurancejournal.com",
-          "publishedAt": "2026-06-19T10:10:49.000Z",
+          "title": "An oil tanker navigates the Strait of Hormuz despite threats from Iran’s Revolutionary Guard - AP News",
+          "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-25-2026-862164c2aecbdc376dea434198eaf75f",
+          "domain": "apnews.com",
+          "publishedAt": "2026-06-25T06:11:51.000Z",
           "sources": [
+            "brave",
             "tavily"
           ],
           "buckets": [
@@ -482,9 +484,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 51,
+      "articleCount": 52,
       "sourceCount": 2,
-      "weightedSignal": 153,
+      "weightedSignal": 156,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -522,11 +524,12 @@
           ]
         },
         {
-          "title": "Hormuz Traffic Thins Friday as Shipowners Err on Side of Safety - Insurance Journal",
-          "url": "https://www.insurancejournal.com/news/international/2026/06/19/874498.htm",
-          "domain": "insurancejournal.com",
-          "publishedAt": "2026-06-19T10:10:49.000Z",
+          "title": "An oil tanker navigates the Strait of Hormuz despite threats from Iran’s Revolutionary Guard - AP News",
+          "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-25-2026-862164c2aecbdc376dea434198eaf75f",
+          "domain": "apnews.com",
+          "publishedAt": "2026-06-25T06:11:51.000Z",
           "sources": [
+            "brave",
             "tavily"
           ],
           "buckets": [
@@ -542,9 +545,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 26,
+      "articleCount": 28,
       "sourceCount": 2,
-      "weightedSignal": 52,
+      "weightedSignal": 56,
       "topArticles": [
         {
           "title": "Hormuz traffic rebound returns oil to prewar rates, as US reassures wary Gulf allies - The Times of Israel",
@@ -648,6 +651,26 @@
       ]
     },
     {
+      "title": "Oil edges lower amid resumption of strait shipments even as vessel hit near Oman - Reuters",
+      "url": "https://www.reuters.com/business/energy/oil-edges-lower-amid-resumption-strait-shipments-even-vessel-hit-near-oman-2026-06-26/",
+      "domain": "reuters.com",
+      "publishedAt": "2026-06-26T04:31:40.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "market_reaction"
+      ]
+    },
+    {
       "title": "Strait of Hormuz Reopens for Oil Tankers Following U.S.-Iran Deal",
       "url": "https://discoveryalert.com.au/strait-hormuz-oil-tankers-reopening-crisis-2026-market",
       "domain": "discoveryalert.com.au",
@@ -745,6 +768,46 @@
       ]
     },
     {
+      "title": "Rosneft Proposes Oil Firms to Refine 30% of Crude in Russia to Ease Fuel Crunch | OilPrice.com",
+      "url": "https://oilprice.com/Latest-Energy-News/World-News/Rosneft-Proposes-Oil-Firms-to-Refine-30-of-Crude-in-Russia-to-Ease-Fuel-Crunch.html",
+      "domain": "oilprice.com",
+      "publishedAt": "2026-06-24T16:30:00.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "sanctions",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "sanctions_shadow_fleet"
+      ]
+    },
+    {
+      "title": "Crude slips toward $70 as tankers return to Hormuz after US-Iran reach peace deal - The Times of India",
+      "url": "https://timesofindia.indiatimes.com/business/international-business/crude-slips-toward-70-as-tankers-return-to-hormuz-after-us-iran-reach-peace-deal-oil-price-on-june-25/articleshow/131980091.cms",
+      "domain": "timesofindia.indiatimes.com",
+      "publishedAt": "2026-06-25T01:44:00.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "sanctions",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "sanctions_shadow_fleet"
+      ]
+    },
+    {
       "title": "Major Saudi Oil Terminal Roars Back to Life as Gulf Supply Recovery Accelerates | OilPrice.com",
       "url": "https://oilprice.com/Latest-Energy-News/World-News/Major-Saudi-Oil-Terminal-Roars-Back-to-Life-as-Gulf-Supply-Recovery-Accelerates.html",
       "domain": "oilprice.com",
@@ -764,10 +827,10 @@
       ]
     },
     {
-      "title": "Oil extends losses, WTI crude falls below $70 for first time since early March - Oil & Gas 360",
-      "url": "https://www.oilandgas360.com/oil-extends-losses-wti-crude-falls-below-70-for-first-time-since-early-march/",
+      "title": "Brent falls as Israel, Hezbollah agree to ceasefire - Oil & Gas 360",
+      "url": "https://www.oilandgas360.com/brent-falls-as-israel-hezbollah-agree-to-ceasefire/",
       "domain": "oilandgas360.com",
-      "publishedAt": "2026-06-24T15:42:08.000Z",
+      "publishedAt": "2026-06-19T16:08:12.000Z",
       "sources": [
         "tavily"
       ],
@@ -775,62 +838,6 @@
         "chokepoint",
         "facility_event",
         "market_reaction",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "market_reaction"
-      ]
-    },
-    {
-      "title": "Crude Oil Prices Fall as Oil Supplies Flow Through the Strait of Hormuz",
-      "url": "https://barchart.com/story/news/2607632/crude-oil-prices-fall-as-oil-supplies-flow-through-the-strait-of-hormuz",
-      "domain": "barchart.com",
-      "publishedAt": "2026-06-23T15:33:38.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
-      "title": "Hormuz Reopening Shifts Focus to Gulf Oil Storage and Shipping - WSJ",
-      "url": "https://www.wsj.com/business/energy-oil/hormuz-reopening-shifts-focus-to-gulf-oil-storage-and-shipping-53430fa8",
-      "domain": "wsj.com",
-      "publishedAt": "2026-06-19T11:27:00.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "sanctions",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "sanctions_shadow_fleet"
-      ]
-    },
-    {
-      "title": "Explosion at Qatar natural gas export terminal injures 54, leaves 18 missing - NBC News",
-      "url": "https://www.nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
-      "domain": "nbcnews.com",
-      "publishedAt": "2026-06-22T03:05:30.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
         "middle_east_risk",
         "supply_disruption"
       ],
