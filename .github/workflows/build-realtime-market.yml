@@ -36,6 +36,9 @@ jobs:
       - name: Generate realtime market
         run: npm run build:realtime
 
+      - name: Validate realtime payload
+        run: npm run check:realtime-local-schema
+
       - name: Summarize realtime output
         run: |
           node <<'NODE'

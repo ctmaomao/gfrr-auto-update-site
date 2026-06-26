@@ -13,6 +13,8 @@ const contracts = [
       'actions/checkout@v6',
       'actions/setup-node@v6',
       'node-version: 24',
+      'Validate realtime payload',
+      'npm run check:realtime-local-schema',
       'Summarize realtime output',
       'Commit updated realtime file'
     ]
