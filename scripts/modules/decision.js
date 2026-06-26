@@ -297,6 +297,58 @@ export function deriveStrategyState(stateScore) {
   return 'Risk-On';
 }
 
+const STRATEGY_STATE_DEFAULT_SCORE = 55;
+const STRATEGY_STATE_SCORE_BUMPS = Object.freeze({
+  recent3dDelta: [
+    { min: 12, bump: 18 },
+    { min: 6, bump: 10 },
+    { min: 3, bump: 6 },
+    { max: -12, bump: -14 },
+    { max: -6, bump: -8 },
+    { max: -3, bump: -4 }
+  ],
+  resonanceCount: [
+    { min: 5, bump: 18 },
+    { eq: 4, bump: 12 },
+    { eq: 3, bump: 8 },
+    { eq: 2, bump: 4 }
+  ],
+  severeResonanceCount: [
+    { min: 3, bump: 10 },
+    { eq: 2, bump: 6 }
+  ],
+  extremeThresholdCount: [
+    { min: 3, bump: 24 },
+    { min: 1, bump: 14 }
+  ],
+  highRiskStreakDays: [
+    { min: 7, bump: 12 },
+    { min: 5, bump: 8 },
+    { min: 3, bump: 5 }
+  ],
+  healthLevel: Object.freeze({
+    '仅基线': 6,
+    '已过期': 8,
+    '降级': 4,
+    '健康': -2
+  }),
+  executionLevel: Object.freeze({
+    red: 4,
+    yellow: 2,
+    green: -2
+  }),
+  realtimeFallbackUsed: 3
+});
+
+function scoreBumpFromRules(value, rules) {
+  for (const rule of rules) {
+    if ('min' in rule && value >= rule.min) return rule.bump;
+    if ('max' in rule && value <= rule.max) return rule.bump;
+    if ('eq' in rule && value === rule.eq) return rule.bump;
+  }
+  return 0;
+}
+
 export function buildStrategyStateMeta(data, history, metadata, healthDashboard) {
   const totalRiskScore = Number(data?.score);
   const scoreSeries = createScoreSeries(history, totalRiskScore);
@@ -351,32 +403,15 @@ export function buildStrategyStateMeta(data, history, metadata, healthDashboard)
 export function calculateStrategyStateEngine(data, history, metadata, healthDashboard) {
   const stateMeta = buildStrategyStateMeta(data, history, metadata, healthDashboard);
   const executionLevel = data?.tradingSystem?.executionLock?.level;
-  let stateScore = Number.isFinite(stateMeta.totalRiskScore) ? stateMeta.totalRiskScore : 55;
-  if (stateMeta.recent3dDelta >= 12) stateScore += 18;
-  else if (stateMeta.recent3dDelta >= 6) stateScore += 10;
-  else if (stateMeta.recent3dDelta >= 3) stateScore += 6;
-  else if (stateMeta.recent3dDelta <= -12) stateScore -= 14;
-  else if (stateMeta.recent3dDelta <= -6) stateScore -= 8;
-  else if (stateMeta.recent3dDelta <= -3) stateScore -= 4;
-  if (stateMeta.resonanceCount >= 5) stateScore += 18;
-  else if (stateMeta.resonanceCount === 4) stateScore += 12;
-  else if (stateMeta.resonanceCount === 3) stateScore += 8;
-  else if (stateMeta.resonanceCount === 2) stateScore += 4;
-  if (stateMeta.severeResonanceCount >= 3) stateScore += 10;
-  else if (stateMeta.severeResonanceCount === 2) stateScore += 6;
-  if (stateMeta.extremeThresholdCount >= 3) stateScore += 24;
-  else if (stateMeta.extremeThresholdCount >= 1) stateScore += 14;
-  if (stateMeta.highRiskStreakDays >= 7) stateScore += 12;
-  else if (stateMeta.highRiskStreakDays >= 5) stateScore += 8;
-  else if (stateMeta.highRiskStreakDays >= 3) stateScore += 5;
-  if (stateMeta.healthLevel === '仅基线') stateScore += 6;
-  else if (stateMeta.healthLevel === '已过期') stateScore += 8;
-  else if (stateMeta.healthLevel === '降级') stateScore += 4;
-  else if (stateMeta.healthLevel === '健康') stateScore -= 2;
-  if (executionLevel === 'red') stateScore += 4;
-  else if (executionLevel === 'yellow') stateScore += 2;
-  else if (executionLevel === 'green') stateScore -= 2;
-  if (metadata.realtimeFallbackUsed) stateScore += 3;
+  let stateScore = Number.isFinite(stateMeta.totalRiskScore) ? stateMeta.totalRiskScore : STRATEGY_STATE_DEFAULT_SCORE;
+  stateScore += scoreBumpFromRules(stateMeta.recent3dDelta, STRATEGY_STATE_SCORE_BUMPS.recent3dDelta);
+  stateScore += scoreBumpFromRules(stateMeta.resonanceCount, STRATEGY_STATE_SCORE_BUMPS.resonanceCount);
+  stateScore += scoreBumpFromRules(stateMeta.severeResonanceCount, STRATEGY_STATE_SCORE_BUMPS.severeResonanceCount);
+  stateScore += scoreBumpFromRules(stateMeta.extremeThresholdCount, STRATEGY_STATE_SCORE_BUMPS.extremeThresholdCount);
+  stateScore += scoreBumpFromRules(stateMeta.highRiskStreakDays, STRATEGY_STATE_SCORE_BUMPS.highRiskStreakDays);
+  stateScore += STRATEGY_STATE_SCORE_BUMPS.healthLevel[stateMeta.healthLevel] ?? 0;
+  stateScore += STRATEGY_STATE_SCORE_BUMPS.executionLevel[executionLevel] ?? 0;
+  if (metadata.realtimeFallbackUsed) stateScore += STRATEGY_STATE_SCORE_BUMPS.realtimeFallbackUsed;
 
   const bumpFromPipeline = Number(data?.decisionModel?.structuralScoreBump);
   if (Number.isFinite(bumpFromPipeline)) {

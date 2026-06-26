@@ -35,6 +35,12 @@ const PREVIEW_ERROR_MAX = 180;
 const SCHEDULE_SLOT_MS = 3 * 60 * 1000;
 const SECONDARY_PREVIEW_MIN_INTERVAL_MS = 30 * 60 * 1000;
 const SECONDARY_PREVIEW_TIMEOUT_MS = 4000;
+const SECONDARY_PREVIEW_USER_AGENT =
+  'Mozilla/5.0 (compatible; GFRRWorkerSecondaryPreview/28.0E-0; +https://ctmaomao.github.io/gfrr-auto-update-site/)';
+const SECONDARY_PREVIEW_ACCEPT = Object.freeze({
+  csv: 'text/csv,text/plain,*/*',
+  json: 'application/json,text/plain,*/*',
+});
 
 function truncatePreviewError(msg) {
   if (msg == null || msg === '') return null;
@@ -431,16 +437,20 @@ async function shouldSkipSecondaryPreview(env, nowMs) {
   }
 }
 
-async function fetchCboeVixLatest() {
+function withSecondaryPreviewTimestamp(url) {
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}t=${Date.now()}`;
+}
+
+async function fetchSecondarySource({ url, accept, parser }) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SECONDARY_PREVIEW_TIMEOUT_MS);
   try {
-    const response = await fetch(`${CBOE_VIX_HISTORY_URL}?t=${Date.now()}`, {
+    const response = await fetch(withSecondaryPreviewTimestamp(url), {
       cache: 'no-store',
       headers: {
-        Accept: 'text/csv,text/plain,*/*',
-        'User-Agent':
-          'Mozilla/5.0 (compatible; GFRRWorkerSecondaryPreview/28.0E-0; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
+        Accept: accept,
+        'User-Agent': SECONDARY_PREVIEW_USER_AGENT,
       },
       signal: controller.signal,
     });
@@ -448,102 +458,50 @@ async function fetchCboeVixLatest() {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    return parseCboeVixHistory(text);
+    return parser(text);
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function fetchCboeVixLatest() {
+  return fetchSecondarySource({
+    url: CBOE_VIX_HISTORY_URL,
+    accept: SECONDARY_PREVIEW_ACCEPT.csv,
+    parser: parseCboeVixHistory,
+  });
 }
 
 async function fetchYahooGoldSecondaryLatest() {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), SECONDARY_PREVIEW_TIMEOUT_MS);
-  try {
-    const response = await fetch(`${YAHOO_GOLD_SECONDARY_URL}&t=${Date.now()}`, {
-      cache: 'no-store',
-      headers: {
-        Accept: 'application/json,text/plain,*/*',
-        'User-Agent':
-          'Mozilla/5.0 (compatible; GFRRWorkerSecondaryPreview/28.0E-0; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
-      },
-      signal: controller.signal,
-    });
-    const text = await response.text();
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return parseYahooGoldChart(text);
-  } finally {
-    clearTimeout(timer);
-  }
+  return fetchSecondarySource({
+    url: YAHOO_GOLD_SECONDARY_URL,
+    accept: SECONDARY_PREVIEW_ACCEPT.json,
+    parser: parseYahooGoldChart,
+  });
 }
 
 async function fetchYahooDxySecondaryLatest() {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), SECONDARY_PREVIEW_TIMEOUT_MS);
-  try {
-    const response = await fetch(`${YAHOO_DXY_SECONDARY_URL}&t=${Date.now()}`, {
-      cache: 'no-store',
-      headers: {
-        Accept: 'application/json,text/plain,*/*',
-        'User-Agent':
-          'Mozilla/5.0 (compatible; GFRRWorkerSecondaryPreview/28.0E-0; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
-      },
-      signal: controller.signal,
-    });
-    const text = await response.text();
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return parseYahooDxyChart(text);
-  } finally {
-    clearTimeout(timer);
-  }
+  return fetchSecondarySource({
+    url: YAHOO_DXY_SECONDARY_URL,
+    accept: SECONDARY_PREVIEW_ACCEPT.json,
+    parser: parseYahooDxyChart,
+  });
 }
 
 async function fetchYahooUs10ySecondaryLatest() {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), SECONDARY_PREVIEW_TIMEOUT_MS);
-  try {
-    const response = await fetch(`${YAHOO_US10Y_SECONDARY_URL}&t=${Date.now()}`, {
-      cache: 'no-store',
-      headers: {
-        Accept: 'application/json,text/plain,*/*',
-        'User-Agent':
-          'Mozilla/5.0 (compatible; GFRRWorkerSecondaryPreview/28.0E-0; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
-      },
-      signal: controller.signal,
-    });
-    const text = await response.text();
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return parseYahooUs10yChart(text);
-  } finally {
-    clearTimeout(timer);
-  }
+  return fetchSecondarySource({
+    url: YAHOO_US10Y_SECONDARY_URL,
+    accept: SECONDARY_PREVIEW_ACCEPT.json,
+    parser: parseYahooUs10yChart,
+  });
 }
 
 async function fetchYahooSpxSecondaryLatest() {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), SECONDARY_PREVIEW_TIMEOUT_MS);
-  try {
-    const response = await fetch(`${YAHOO_SPX_SECONDARY_URL}&t=${Date.now()}`, {
-      cache: 'no-store',
-      headers: {
-        Accept: 'application/json,text/plain,*/*',
-        'User-Agent':
-          'Mozilla/5.0 (compatible; GFRRWorkerSecondaryPreview/28.0E-0; +https://ctmaomao.github.io/gfrr-auto-update-site/)',
-      },
-      signal: controller.signal,
-    });
-    const text = await response.text();
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return parseYahooSpxChart(text);
-  } finally {
-    clearTimeout(timer);
-  }
+  return fetchSecondarySource({
+    url: YAHOO_SPX_SECONDARY_URL,
+    accept: SECONDARY_PREVIEW_ACCEPT.json,
+    parser: parseYahooSpxChart,
+  });
 }
 
 async function buildSecondarySourceResult(fetcher) {

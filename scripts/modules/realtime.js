@@ -39,12 +39,59 @@ const LOCAL_FALLBACK_MAX_AGE_MINUTES = 180;
 const LOCAL_FALLBACK_KEY_FIELDS = ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'gold', 'spx'];
 const LOCAL_FALLBACK_MIN_FINITE_KEY_FIELDS = 5;
 
+// Preserved frozen realtime overlay coefficients; keep named to avoid accidental threshold drift.
+const REALTIME_RISK_SCALE = Object.freeze({
+  oil: { base: 60, multiplier: 2 },
+  dollar: { base: 95, multiplier: 8 },
+  hy: { base: 2.5, multiplier: 35 },
+  vix: { base: 12, multiplier: 7 },
+  rate: { base: 2.5, multiplier: 22 },
+  realRate: { base: 0.5, multiplier: 33 },
+  inflationBreakeven: { base: 1.5, multiplier: 45, oilWeight: 0.35 }
+});
+
+const REALTIME_MODULE_BLEND_WEIGHTS = Object.freeze({
+  geopolitical: { base: 0.4, oil: 0.45, vix: 0.15 },
+  energy: { base: 0.25, oil: 0.75 },
+  inflation: { base: 0.25, inflation: 0.75 },
+  liquidity: { base: 0.2, dollar: 0.3, hy: 0.3, vix: 0.12, rate: 0.08 },
+  debt: { base: 0.25, realRate: 0.45, rate: 0.25, hy: 0.05 },
+  banking: { base: 0.2, hy: 0.55, vix: 0.2, dollar: 0.05 }
+});
+
+const REALTIME_TOTAL_SCORE_WEIGHTS = Object.freeze({
+  geopolitical: 0.15,
+  energy: 0.16,
+  inflation: 0.18,
+  liquidity: 0.20,
+  debt: 0.17,
+  banking: 0.14
+});
+
+const REALTIME_EXECUTION_THRESHOLDS = Object.freeze({
+  hardStop: { liquidity: 75, brent: 110, hy: 4.5, vix: 28, totalScore: 82 },
+  caution: { liquidity: 60, brent: 90, hy: 3.7, vix: 20, totalScore: 65 },
+  reset: { vix: 18, hy: 3.7, brent: 95, criticalMissing: 2 }
+});
+
+function errorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+async function fetchJsonOrThrow(url, label) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`${label} HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
 export async function fetchBaselineData() {
-  return fetch(dataUrl).then((r) => r.json());
+  return fetchJsonOrThrow(dataUrl, 'baseline');
 }
 
 export async function fetchHistoryData() {
-  return fetch(historyUrl).then((r) => r.json());
+  return fetchJsonOrThrow(historyUrl, 'history');
 }
 
 export async function fetchWorldOrderStressData() {
@@ -64,7 +111,7 @@ export async function fetchWorldOrderStressData() {
   } catch (error) {
     return {
       unavailable: true,
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMessage(error),
       sourceUrl: worldOrderStressUrl
     };
   }
@@ -119,6 +166,14 @@ function parseLocalFallbackTimestamp(value) {
   const normalized = value.includes('T') ? value : `${value}T00:00:00Z`;
   const time = Date.parse(normalized);
   return Number.isFinite(time) ? time : null;
+}
+
+function clampRiskScore(value) {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function scaleRealtimeRisk(value, scale) {
+  return value === null ? null : clampRiskScore((value - scale.base) * scale.multiplier);
 }
 
 export function isLocalRealtimeFallbackUsable(payload, nowMs = Date.now()) {
@@ -484,7 +539,7 @@ export async function fetchRealtimePayload() {
         }
       };
     } catch (error) {
-      lastError = `${attempt.source}:${error.message}`;
+      lastError = `${attempt.source}:${errorMessage(error)}`;
     }
   }
   return {
@@ -756,61 +811,72 @@ export function applyRealtimeOverlay(base, realtimePayload) {
   const spx = getRealtimeNumber(realtimePayload.values, 'spx');
   const breakeven10y = getRealtimeNumber(realtimePayload.values, 'breakeven10y');
 
-  const oilRisk = brent === null ? null : Math.max(0, Math.min(100, Math.round((brent - 60) * 2)));
-  const dollarRisk = dxy === null ? null : Math.max(0, Math.min(100, Math.round((dxy - 95) * 8)));
-  const hyRisk = hy === null ? null : Math.max(0, Math.min(100, Math.round((hy - 2.5) * 35)));
-  const vixRisk = vix === null ? null : Math.max(0, Math.min(100, Math.round((vix - 12) * 7)));
-  const rateRisk = us10y === null ? null : Math.max(0, Math.min(100, Math.round((us10y - 2.5) * 22)));
-  const realRisk = real10y === null ? null : Math.max(0, Math.min(100, Math.round((real10y - 0.5) * 33)));
+  const oilRisk = scaleRealtimeRisk(brent, REALTIME_RISK_SCALE.oil);
+  const dollarRisk = scaleRealtimeRisk(dxy, REALTIME_RISK_SCALE.dollar);
+  const hyRisk = scaleRealtimeRisk(hy, REALTIME_RISK_SCALE.hy);
+  const vixRisk = scaleRealtimeRisk(vix, REALTIME_RISK_SCALE.vix);
+  const rateRisk = scaleRealtimeRisk(us10y, REALTIME_RISK_SCALE.rate);
+  const realRisk = scaleRealtimeRisk(real10y, REALTIME_RISK_SCALE.realRate);
   const inflationRisk = breakeven10y === null || oilRisk === null
     ? null
-    : Math.max(0, Math.min(100, Math.round((breakeven10y - 1.5) * 45 + oilRisk * 0.35)));
+    : clampRiskScore(
+      (breakeven10y - REALTIME_RISK_SCALE.inflationBreakeven.base) * REALTIME_RISK_SCALE.inflationBreakeven.multiplier
+      + oilRisk * REALTIME_RISK_SCALE.inflationBreakeven.oilWeight
+    );
 
   if (oilRisk !== null && vixRisk !== null) {
-    next.modules.geopolitical = Math.max(0, Math.min(100, Math.round((next.modules.geopolitical * 0.4) + (oilRisk * 0.45) + (vixRisk * 0.15))));
+    const weights = REALTIME_MODULE_BLEND_WEIGHTS.geopolitical;
+    next.modules.geopolitical = clampRiskScore((next.modules.geopolitical * weights.base) + (oilRisk * weights.oil) + (vixRisk * weights.vix));
   }
   if (oilRisk !== null) {
-    next.modules.energy = Math.max(0, Math.min(100, Math.round((next.modules.energy * 0.25) + oilRisk * 0.75)));
+    const weights = REALTIME_MODULE_BLEND_WEIGHTS.energy;
+    next.modules.energy = clampRiskScore((next.modules.energy * weights.base) + oilRisk * weights.oil);
   }
   if (inflationRisk !== null) {
-    next.modules.inflation = Math.max(0, Math.min(100, Math.round((next.modules.inflation * 0.25) + inflationRisk * 0.75)));
+    const weights = REALTIME_MODULE_BLEND_WEIGHTS.inflation;
+    next.modules.inflation = clampRiskScore((next.modules.inflation * weights.base) + inflationRisk * weights.inflation);
   }
   if (dollarRisk !== null && hyRisk !== null && vixRisk !== null && rateRisk !== null) {
-    next.modules.liquidity = Math.max(0, Math.min(100, Math.round((next.modules.liquidity * 0.2) + dollarRisk * 0.3 + hyRisk * 0.3 + vixRisk * 0.12 + rateRisk * 0.08)));
+    const weights = REALTIME_MODULE_BLEND_WEIGHTS.liquidity;
+    next.modules.liquidity = clampRiskScore((next.modules.liquidity * weights.base) + dollarRisk * weights.dollar + hyRisk * weights.hy + vixRisk * weights.vix + rateRisk * weights.rate);
   }
   if (realRisk !== null && rateRisk !== null && hyRisk !== null) {
-    next.modules.debt = Math.max(0, Math.min(100, Math.round((next.modules.debt * 0.25) + realRisk * 0.45 + rateRisk * 0.25 + hyRisk * 0.05)));
+    const weights = REALTIME_MODULE_BLEND_WEIGHTS.debt;
+    next.modules.debt = clampRiskScore((next.modules.debt * weights.base) + realRisk * weights.realRate + rateRisk * weights.rate + hyRisk * weights.hy);
   }
   if (hyRisk !== null && vixRisk !== null && dollarRisk !== null) {
-    next.modules.banking = Math.max(0, Math.min(100, Math.round((next.modules.banking * 0.2) + hyRisk * 0.55 + vixRisk * 0.2 + dollarRisk * 0.05)));
+    const weights = REALTIME_MODULE_BLEND_WEIGHTS.banking;
+    next.modules.banking = clampRiskScore((next.modules.banking * weights.base) + hyRisk * weights.hy + vixRisk * weights.vix + dollarRisk * weights.dollar);
   }
 
   const totalScore = Math.round(
-    next.modules.geopolitical * 0.15 +
-    next.modules.energy * 0.16 +
-    next.modules.inflation * 0.18 +
-    next.modules.liquidity * 0.20 +
-    next.modules.debt * 0.17 +
-    next.modules.banking * 0.14
+    next.modules.geopolitical * REALTIME_TOTAL_SCORE_WEIGHTS.geopolitical +
+    next.modules.energy * REALTIME_TOTAL_SCORE_WEIGHTS.energy +
+    next.modules.inflation * REALTIME_TOTAL_SCORE_WEIGHTS.inflation +
+    next.modules.liquidity * REALTIME_TOTAL_SCORE_WEIGHTS.liquidity +
+    next.modules.debt * REALTIME_TOTAL_SCORE_WEIGHTS.debt +
+    next.modules.banking * REALTIME_TOTAL_SCORE_WEIGHTS.banking
   );
   next.score = totalScore;
   next.liquidityIndex.score = next.modules.liquidity;
   next.liquidityIndex.regime = next.modules.liquidity >= 70 ? '限制性偏紧' : next.modules.liquidity >= 55 ? '偏紧缓解' : '流动性修复';
   next.liquidityIndex.directionLabel = realtimePayload.cacheOnly ? '快变量缓存模式' : realtimePayload.degradedMode ? '快变量带回退' : '快变量已实时覆盖';
 
+  const hardStopThresholds = REALTIME_EXECUTION_THRESHOLDS.hardStop;
+  const cautionThresholds = REALTIME_EXECUTION_THRESHOLDS.caution;
   const hardStopBase = realtimePayload.cacheOnly
-    || next.modules.liquidity >= 75
-    || (brent !== null && brent >= 110)
-    || (hy !== null && hy >= 4.5)
-    || (vix !== null && vix >= 28)
-    || totalScore >= 82;
+    || next.modules.liquidity >= hardStopThresholds.liquidity
+    || (brent !== null && brent >= hardStopThresholds.brent)
+    || (hy !== null && hy >= hardStopThresholds.hy)
+    || (vix !== null && vix >= hardStopThresholds.vix)
+    || totalScore >= hardStopThresholds.totalScore;
   const cautionBase = !hardStopBase && (
     realtimePayload.degradedMode
-    || next.modules.liquidity >= 60
-    || (brent !== null && brent >= 90)
-    || (hy !== null && hy >= 3.7)
-    || (vix !== null && vix >= 20)
-    || totalScore >= 65
+    || next.modules.liquidity >= cautionThresholds.liquidity
+    || (brent !== null && brent >= cautionThresholds.brent)
+    || (hy !== null && hy >= cautionThresholds.hy)
+    || (vix !== null && vix >= cautionThresholds.vix)
+    || totalScore >= cautionThresholds.totalScore
   );
 
   const gating = readStructuralGatingFromBase(base);
@@ -902,16 +968,17 @@ export function applyRealtimeOverlay(base, realtimePayload) {
     const prevReset = Array.isArray(base?.tradingSystem?.riskControl?.resetThresholds)
       ? base.tradingSystem.riskControl.resetThresholds
       : [];
+    const resetThresholds = REALTIME_EXECUTION_THRESHOLDS.reset;
     const realtimeHardRules = [
-      '流动性 ≥ 75：总仓位降至 42%。',
-      '布伦特 ≥ 110：能源上调，股票下调。',
-      '高收益利差 ≥ 4.5%：暂停新增风险仓位。',
-      '波动率指数 ≥ 28：切入红灯。'
+      `流动性 ≥ ${hardStopThresholds.liquidity}：总仓位降至 42%。`,
+      `布伦特 ≥ ${hardStopThresholds.brent}：能源上调，股票下调。`,
+      `高收益利差 ≥ ${hardStopThresholds.hy}%：暂停新增风险仓位。`,
+      `波动率指数 ≥ ${hardStopThresholds.vix}：切入红灯。`
     ];
     const realtimeResetRules = [
-      '波动率指数 < 18 且高收益利差 < 3.7：才允许回到绿灯。',
-      '布伦特 < 95 且美元走弱：才允许提高成长仓。',
-      '关键缺失 < 2：解除数据回退约束。'
+      `波动率指数 < ${resetThresholds.vix} 且高收益利差 < ${resetThresholds.hy}：才允许回到绿灯。`,
+      `布伦特 < ${resetThresholds.brent} 且美元走弱：才允许提高成长仓。`,
+      `关键缺失 < ${resetThresholds.criticalMissing}：解除数据回退约束。`
     ];
     const pipelineStructuralHard = prevHard.filter((rule) => {
       const text = String(rule);
