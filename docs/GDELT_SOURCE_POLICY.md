@@ -116,6 +116,19 @@ P39, current phase:
   must not affect `values.*`, main scoring, decision, execution, position, ODP
   oil direction, Brent promotion, Global Risk Heatmap, or cross-validation.
 
+P40, current phase:
+
+- Add `npm run review:gdelt-cache-health` and `npm run check:gdelt-cache-health`
+  as read-only post-migration cache health review commands.
+- The review reads `data/gdelt-news-cache.json`,
+  `data/gdelt-bubble-watch-cache.json`, `data/gdelt-world-order-cache.json`,
+  and their production artifacts to distinguish true cache/schema failures from
+  expected post-migration refresh lag.
+- Default review/check mode does not fetch external sources, does not write
+  production data, and treats post-migration placeholder/seed/old-query states
+  as `WATCH` rather than hard failure. Operators may use `--strict` for manual
+  hard review after scheduled refreshes have had time to run.
+
 Future source-review only:
 
 - Evaluate GDELT Web NGrams 3.0 for high-frequency narrative heat.
@@ -126,6 +139,8 @@ Future source-review only:
 
 ```powershell
 npm run check:gdelt-source-policy
+npm run review:gdelt-cache-health -- --no-output
+npm run check:gdelt-cache-health
 npm run check:all
 ```
 
