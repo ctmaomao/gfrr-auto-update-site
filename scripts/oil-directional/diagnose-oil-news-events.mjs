@@ -16,6 +16,7 @@ const GDELT_CACHE_MODULE = 'gdelt-news-cache';
 const GDELT_CACHE_TTL_MINUTES = 360;
 const GDELT_STALE_MAX_HOURS = 24;
 const GDELT_ERROR_COOLDOWN_HOURS = 6;
+const GDELT_BROAD_QUERY_MAX_CHARS = 180;
 const FETCH_TIMEOUT_MS = 20000;
 const UA = 'gfrr-odp-oil-news-diagnosis/1.0 (+https://github.com/ctmaomao/gfrr-auto-update-site)';
 const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
@@ -59,9 +60,17 @@ const GDELT_BROAD_QUERY_SPEC = {
   id: 'gdelt_broad_oil_news',
   label: 'GDELT broad oil-news cache query',
   query:
-    '((oil OR crude OR Brent OR WTI OR tanker OR refinery OR pipeline OR terminal OR port OR "oil prices") (Hormuz OR "Red Sea" OR "Bab el-Mandeb" OR Suez OR sanction OR sanctions OR OFAC OR "shadow fleet" OR outage OR fire OR explosion OR attack OR shutdown OR disruption OR blockade OR "risk premium" OR futures))',
+    '(oil OR crude OR Brent OR WTI OR tanker OR refinery) (Hormuz OR "Red Sea" OR sanction OR outage OR attack OR disruption OR futures)',
   buckets: []
 };
+
+function assertGdeltBroadQueryWithinSafeLength() {
+  if (GDELT_BROAD_QUERY_SPEC.query.length > GDELT_BROAD_QUERY_MAX_CHARS) {
+    throw new Error(
+      `GDELT broad oil-news query is too long (${GDELT_BROAD_QUERY_SPEC.query.length}/${GDELT_BROAD_QUERY_MAX_CHARS}); keep it broad but compact to avoid GDELT 200/non-JSON rejection pages`
+    );
+  }
+}
 
 const BUCKETS = {
   chokepoint: {
@@ -424,8 +433,17 @@ function readGdeltNewsCache(cachePath = DEFAULT_GDELT_CACHE_OUTPUT) {
   }
 }
 
-function cacheUsability(cache, nowMs = Date.now()) {
+function cacheMatchesCurrentGdeltQuery(cache, options = {}) {
+  if (!cache?.query || typeof cache.query !== 'object') return false;
+  if (cache.query.id !== GDELT_BROAD_QUERY_SPEC.id) return false;
+  if (cache.query.query !== GDELT_BROAD_QUERY_SPEC.query) return false;
+  if (Number(cache.query.windowDays) !== Number(options.windowDays)) return false;
+  return true;
+}
+
+function cacheUsability(cache, options = {}, nowMs = Date.now()) {
   if (!cache) return 'unusable';
+  if (!cacheMatchesCurrentGdeltQuery(cache, options)) return 'expired';
   const ageMinutes = cacheAgeMinutes(cache, nowMs);
   if (!Number.isFinite(ageMinutes)) return 'unusable';
   if (cache.status === 'error' || cache.sourceStatus === 'error') {
@@ -569,7 +587,7 @@ function withGdeltCacheQueryMetadata(cacheArtifact, options) {
 
 async function fetchGdeltDocBroad(options) {
   const existingCache = readGdeltNewsCache(options.gdeltCachePath);
-  const usability = cacheUsability(existingCache);
+  const usability = cacheUsability(existingCache, options);
   if (usability === 'fresh') {
     const articles = articlesFromGdeltCache(existingCache);
     return {
@@ -1192,6 +1210,7 @@ function createArtifact(options, keyState, sourceResults) {
 }
 
 async function runDiagnosis(options) {
+  assertGdeltBroadQueryWithinSafeLength();
   const keyState = getApiKeyState();
   const sources = options.sources;
   let sourceResults;

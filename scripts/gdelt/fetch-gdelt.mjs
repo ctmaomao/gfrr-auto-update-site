@@ -36,6 +36,32 @@ function retryAfterSeconds(retryAfterMs) {
   return Math.round((retryAfterMs / 1000) * 10) / 10;
 }
 
+function classifyGdeltParseFailure(text) {
+  const compactText = String(text || '').replace(/\s+/gu, ' ').trim();
+  if (/query was too short or too long/iu.test(compactText)) {
+    return {
+      errorCode: 'query_rejected_length',
+      message: 'query rejected by GDELT because it was too short or too long'
+    };
+  }
+  if (/please limit requests|rate limit|too many requests/iu.test(compactText)) {
+    return {
+      errorCode: 'rate_limited',
+      message: 'rate limited by GDELT'
+    };
+  }
+  if (/^\s*</u.test(String(text || ''))) {
+    return {
+      errorCode: 'non_json_html_response',
+      message: 'returned non-JSON HTML response'
+    };
+  }
+  return {
+    errorCode: 'json_parse_failed',
+    message: 'JSON parse failed'
+  };
+}
+
 async function runSerializedGdeltRequest(task, minIntervalMs) {
   const run = gdeltRequestQueue.then(async () => {
     const waitMs = Math.max(0, lastGdeltCallStartedAt + minIntervalMs - Date.now());
@@ -185,7 +211,8 @@ async function fetchGdeltJson(url, {
             }))
           };
         } catch (parseError) {
-          throw createGdeltError(`${label} JSON parse failed`, buildDiagnostics({
+          const parseFailure = classifyGdeltParseFailure(text);
+          throw createGdeltError(`${label} ${parseFailure.message}`, buildDiagnostics({
             endpointType,
             label,
             attempts,
@@ -195,7 +222,7 @@ async function fetchGdeltJson(url, {
             retryAfterCapMs,
             startedAtMs,
             status: response.status,
-            errorCode: 'json_parse_failed'
+            errorCode: parseFailure.errorCode
           }));
         }
       }
