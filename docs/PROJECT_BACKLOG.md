@@ -12,7 +12,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | Release/display version | `v28.0.10` |
 | Data/decision contract version | 根级 `data.version` 与 `decisionModel.contractVersion` 保持兼容契约 `v27.0` |
 | Cache version | `safe-dom-rendering-1` |
-| check:all 项数 | 23 顶层项 / ~86 leaf checks(checker 精简 Phase 1+2 后 + `check:gdelt-source-policy` + `check:gdelt-cache-health` + `check:realtime-js-frozen` + `check:worker-syntax` + `check:frontend-safe-dom-rendering` + ODP `oil-directional` 套件 26 leaf + `check:frontend-zh-copy` + `check:bubble-watch` 7 leaf + `check:main-score-wind-fallback`)|
+| check:all 项数 | 24 顶层项 / ~89 leaf checks(checker 精简 Phase 1+2 后 + `check:gdelt-source-policy` + `check:gdelt-cache-health` + `check:realtime-js-frozen` + `check:worker-syntax` + `check:realtime-local-schema` + `check:frontend-safe-dom-rendering` + ODP `oil-directional` 套件 26 leaf + `check:frontend-zh-copy` + `check:bubble-watch` 8 leaf + `check:market-pricing` 8 leaf + `check:main-score-wind-fallback`)|
 | 最后审计日期 | 2026-06-05(全站 `.md` doc-slim 审计 Batch 1a→5余项,docs-only;两大 scope-of-record 簇 External AI / Market Pricing 收口 + 三 Operating Document changelog tail 折叠,详见 Section 5 + Session Handoff)。上次系统审计 2026-06-02(Codex 只读审计 7 findings 全收口,详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |

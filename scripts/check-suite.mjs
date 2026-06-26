@@ -65,6 +65,7 @@ const SUITES = {
     'check:market-pricing-first-real-record-write-scaffold',
     'check:market-pricing-weekly-history-buildup',
     'check:market-pricing-metrics-calculation-scaffold',
+    'check:market-pricing-metrics-schema',
     'check:market-pricing-multi-asset',
     'check:market-pricing-ndx-ixic-implementation'
   ],
