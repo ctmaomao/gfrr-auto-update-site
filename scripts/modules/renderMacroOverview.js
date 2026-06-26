@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=safe-dom-rendering-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=safe-dom-rendering-1';
-import { MODULE_LABELS } from './decision.js?v=safe-dom-rendering-1';
+} from './config.js?v=odp-fold-after-verdict-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-fold-after-verdict-1';
+import { MODULE_LABELS } from './decision.js?v=odp-fold-after-verdict-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,8 +18,8 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=safe-dom-rendering-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=safe-dom-rendering-1';
+} from './macroOverviewDisplayHelpers.js?v=odp-fold-after-verdict-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=odp-fold-after-verdict-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

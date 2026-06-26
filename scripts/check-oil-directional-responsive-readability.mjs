@@ -124,14 +124,19 @@ for (const marker of [
   '01 · VERDICT',
   '02 · EVIDENCE CHAIN',
   '03 · COUNTERWEIGHT',
-  '04 · 证据矩阵与审计详情',
+  'class="odp-flow-block odp-detail"',
+  '04 · DETAIL LEDGER',
   'id="odp-evidence-timing-summary"',
 ]) {
   requireIncludes('ODP section structure', odpHtml, marker);
 }
 
-if (/<details[^>]*class="[^"]*\bodp-detail\b[^"]*"[^>]*\bopen\b/i.test(odpHtml)) {
-  fail('ODP detail must remain folded by default; remove open attribute');
+if (/<details[^>]*class="[^"]*\bodp-after-verdict-fold\b[^"]*"[^>]*\bopen\b/i.test(odpHtml)) {
+  fail('ODP 02-04 fold must remain folded by default; remove open attribute');
+}
+
+if (/<details[^>]*class="[^"]*\bodp-detail\b[^"]*"/i.test(odpHtml)) {
+  fail('ODP 04 detail must be a peer .odp-flow-block, not a nested details block');
 }
 
 const odpCssLines = css

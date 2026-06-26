@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=safe-dom-rendering-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=safe-dom-rendering-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-fold-after-verdict-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-fold-after-verdict-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

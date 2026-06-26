@@ -69,7 +69,8 @@ requireOrder('ODP reading flow', odpHtml, [
   'id="odp-attribution-counter"',
   'id="odp-attribution-caps"',
   'id="odp-attribution-triggers"',
-  '04 · 证据矩阵与审计详情',
+  'class="odp-flow-block odp-detail"',
+  '04 · DETAIL LEDGER',
   'id="odp-evidence-timing-summary"',
   'id="odp-evidence-list"',
 ]);
@@ -94,8 +95,12 @@ for (const id of [
   requireIncludes('ODP section', odpHtml, `id="${id}"`);
 }
 
-if (/<details[^>]*class="[^"]*\bodp-detail\b[^"]*"[^>]*\bopen\b/i.test(odpHtml)) {
-  fail('ODP detail must remain folded by default; remove open attribute');
+if (/<details[^>]*class="[^"]*\bodp-after-verdict-fold\b[^"]*"[^>]*\bopen\b/i.test(odpHtml)) {
+  fail('ODP 02-04 fold must remain folded by default; remove open attribute');
+}
+
+if (/<details[^>]*class="[^"]*\bodp-detail\b[^"]*"/i.test(odpHtml)) {
+  fail('ODP 04 detail must be a peer .odp-flow-block, not a nested details block');
 }
 
 requireIncludes('ODP section note', odpHtml, '不参与平台评分');
@@ -151,4 +156,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log('Oil Directional Pressure reading-structure check: PASS (01 verdict -> 02 evidence -> 03 counterweight -> 04 details)');
+console.log('Oil Directional Pressure reading-structure check: PASS (01 verdict visible -> folded 02 evidence / 03 counterweight / 04 details peers)');

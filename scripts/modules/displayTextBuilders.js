@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=safe-dom-rendering-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-fold-after-verdict-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
