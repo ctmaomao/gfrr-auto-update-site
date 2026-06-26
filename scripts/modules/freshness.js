@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=realtime-frozen-guard-1';
+﻿import { fmtNumSafe } from './config.js?v=safe-dom-rendering-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

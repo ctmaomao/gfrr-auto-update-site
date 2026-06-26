@@ -13,7 +13,7 @@
 
 - **整体结论**：GFRR v28.0.10 在 v28.0J 稳定基线上**未发现基线边界违反或活跃安全漏洞**。6 条核心架构边界（解释层↔决策层隔离、External AI 隔离、版本分离、secondary diagnostics 隔离、World Order overlay、Brent freshness gate）均合规。三位成员独立产出后由主理人交叉验证关键发现点并去重合并。
 - **严重度分布（原始审查）**：🔴严重 0 项 / 🟠高 4 项 / 🟡中 14 项 / 🟢低 8 项
-- **整改复核（2026-06-26）**：4 项高优先级问题已全部关闭；#7/#8/#10/#14 已关闭；#21 经当前代码复核后关闭；#23 降级为可选语义/fixture 补盲。剩余项均为 P1/P2 渐进式加固或需另开版本评审事项。
+- **整改复核（2026-06-26）**：4 项高优先级问题已全部关闭；#7/#8/#9/#10/#14 已关闭；#21 经当前代码复核后关闭；#23 降级为可选语义/fixture 补盲。剩余项均为 P1/P2 渐进式加固或需另开版本评审事项。
 
 ---
 
@@ -27,7 +27,7 @@
 | 关键行动项 | 7 条（见文末行动清单） |
 | 基线边界违反 | 无 |
 | 活跃安全漏洞 | 无 |
-| 建议下一步 | ① #9 作为前端安全 patch 单独推进；② #15/#16/#20 按架构/文档评审处理；③ #17/#18/#22 作为测试盲区加固分批推进 |
+| 建议下一步 | ① #15/#16/#20 按架构/文档评审处理；② #17/#18/#22 作为测试盲区加固分批推进；③ #5/#6/#11/#12/#13 作为剩余 Cody 中优先级项分批处理 |
 
 ---
 
@@ -41,6 +41,7 @@
 | #4 Worker 源码语法盲区 | ✅ 已关闭 | commit `73c2f7a2`：新增 `check:worker-syntax` 并接入 `check:all` |
 | #7 Worker diagnostic finalUrl 泄露风险 | ✅ 已关闭 | Worker `finalUrl` 现统一走 `sanitizeDiagnosticUrl` 去除 query/hash；`check:workflows` 加回归守卫 |
 | #8 scheduled KV 写入无诊断 | ✅ 已关闭 | `scheduled` primary KV write 已加 try/catch + `console.warn`，失败时不继续写 secondary preview；`check:workflows` 加回归守卫 |
+| #9 前端动态 innerHTML | ✅ 已关闭 | `scripts/app.js` 与 `renderMacroOverview.js` 的动态 `innerHTML` 已改为 `textContent`/DOM 节点创建，保留 `<strong>` / `<sup>` 视觉结构；新增 `check:frontend-safe-dom-rendering`，frontend asset 已 bump |
 | #10 OFAC URL allowlist | ✅ 已关闭 | `fetch-ofac.mjs` 已限制 HTTPS + `ofac.treasury.gov` allowlist；无效 config 走现有 fail-closed fallback；`check:workflows` 加回归守卫 |
 | #14 TE HTML price fallback regex 过宽 | ✅ 已关闭 | `parsePriceFromHtml` 最后 fallback 已要求 `$`/price/last/close/value/USD/dollars 上下文并缩小窗口；`check:workflows` 加回归守卫 |
 | #15 ADR-0002 路径 | ✏️ 已改写为待办 | 正确路径为 `docs/ADR/0002-worker-first-realtime.md`，问题仍有效 |
@@ -82,7 +83,7 @@
 | 6 | 正确性 | scripts/modules/realtime.js:481 | catch 块 `lastError = \`${attempt.source}:${error.message}\`` 未做类型检查。若 error 非 Error 对象（如 `throw "string"`），`error.message` 为 undefined，产生 `"github-realtime-data:undefined"` 无用信息。 | 改为 `error instanceof Error ? error.message : String(error)` | Cody |
 | 7 | 安全（已关闭） | workers/gfrr-realtime-worker/src/worker-market-preview.js:133,160 | 原始发现：`fetchTextWithDiagnostics` 中 `finalUrl: response.url \|\| url` 在 FRED API 调用时会存储含 `api_key` 查询参数的完整 URL。 | ✅ 已修复：Worker `finalUrl` 统一走 `sanitizeDiagnosticUrl` 去除 query/hash；`check:workflows` 加回归守卫 | Cody |
 | 8 | 正确性（已关闭） | workers/gfrr-realtime-worker/src/index.js:848-854 | 原始发现：`scheduled` handler 中 `await env.GFRR_MARKET_KV.put(...)` 无 try/catch。KV 写入失败时异常传播到 Worker 运行时，scheduled event 静默失败且无诊断。 | ✅ 已修复：primary KV write 已加 try/catch + `console.warn`；失败时 `return`，不继续写 secondary preview；`check:workflows` 加回归守卫 | Cody |
-| 9 | 安全 | scripts/app.js:161 | `issueEl.innerHTML = \`<strong>ISSUE ${meta.issue}</strong>\`` 用 innerHTML 拼接 `meta.issue`。虽来自 pipeline 产出，但若 `radar-data.json` 被篡改可导致 XSS。`renderMacroOverview.js:53,62` 有类似 innerHTML 模式。 | 若 `meta.issue` 是纯标识符，用 `textContent` 替代；若需 HTML 格式，对动态值做转义 | Cody |
+| 9 | 安全（已关闭） | scripts/app.js:161 / scripts/modules/renderMacroOverview.js:53,62 | 原始发现：`issueEl.innerHTML` 拼接 `meta.issue`，`renderMacroOverview.js` 两处类似动态 `innerHTML` 模式。虽来自 pipeline 产出，但若 `radar-data.json` 被篡改可导致 XSS。 | ✅ 已修复：三处均改为 `textContent`/DOM 节点创建，保留 `<strong>` / `<sup>` 视觉结构；新增 `check:frontend-safe-dom-rendering`，frontend asset 已 bump | Cody |
 | 10 | 安全（已关闭） | scripts/world-order/fetch-ofac.mjs:60 | 原始发现：`config.recentActionsUrl` 直接作为 fetch URL 使用，未校验是否 HTTPS 或在允许域名列表内。 | ✅ 已修复：新增 `normalizeOfacUrl`，限制 HTTPS + `ofac.treasury.gov` allowlist；无效配置走现有 fail-closed fallback；`check:workflows` 加回归守卫 | Cody |
 | 11 | 可维护性 | scripts/modules/realtime.js:753-780 | `applyRealtimeOverlay` 大量未文档化魔法数字：`(brent-60)*2`、`(dxy-95)*8`、`(hy-2.5)*35`、`(vix-12)*7`、`(us10y-2.5)*22` 等。阈值和系数直接影响 scoring，无注释说明依据。 | 提取为命名常量并注释来源（如 `BRENT_RISK_BASE=60, BRENT_RISK_MULTIPLIER=2`） | Cody |
 | 12 | 可维护性 | workers/gfrr-realtime-worker/src/index.js:434-547 | 5 个几乎完全相同的函数（`fetchCboeVixLatest`/`fetchYahooGoldSecondaryLatest`/`fetchYahooDxySecondaryLatest`/`fetchYahooUs10ySecondaryLatest`/`fetchYahooSpxSecondaryLatest`），仅 URL 和 parser 不同，约 110 行重复代码。 | 抽取为单一参数化函数 `fetchSecondarySource(url, parser, sourceName)` | Cody |
@@ -141,7 +142,7 @@
 
 ## 🧪 测试覆盖评估（Tessa 原始产出摘要）
 
-### check:all 覆盖矩阵（23 顶层 / ~85 leaf checks，2026-06-26 复核）
+### check:all 覆盖矩阵（23 顶层 / ~86 leaf checks，2026-06-26 复核）
 
 | check 命令 | leaf 数 | 覆盖契约 | 状态 |
 |------------|---------|---------|------|
@@ -150,7 +151,7 @@
 | check:gdelt-cache-health | 1 | GDELT 三条 cache 路径只读健康复核（WATCH 不阻断默认 check） | 🟢 |
 | check:modules | 1 | scripts/modules/*.js import 可加载性 | 🟢 |
 | check:realtime-js-frozen | 1 | M-94 Path C frozen realtime module 边界、app.js 不重接入、asset bump helper skip | 🟢 |
-| check:frontend-live-contracts | 8 | loading-state/observation-reaction/thematic-card-ia/null-zero-guards/dom/macro-overview-narrative/macro-overview-display-helpers/macro-coherence-display-only | 🟢 |
+| check:frontend-live-contracts | 9 | loading-state/safe-dom-rendering/observation-reaction/thematic-card-ia/null-zero-guards/dom/macro-overview-narrative/macro-overview-display-helpers/macro-coherence-display-only | 🟢 |
 | check:external-ai | 10 | manual-workflow/provider-workflow/production-refresh-workflow/workflow-artifacts/output/production-contract/provenance-completeness/production-write-guard/frontend-hidden-scaffold/production-provider-path | 🟢 |
 | check:data | 1 | radar-data.json + radar-history.json + realtime/market.json + radar-history-full.json 全量 schema（~150KB 脚本，~200+ 字段契约） | 🟢 |
 | check:brent | 3 | promotion-audit-fields/crack-spread/public-proxy-source-review | 🟢 |
@@ -209,7 +210,7 @@
 | 3 | config.js `workerFirstEnabled` 旁加 FROZEN 注释；realtime.js 顶部加 `@frozen` JSDoc；新增静态 `check-realtime-js-frozen.mjs` 接入 check:all；asset bump helper 跳过 frozen module | 前端/测试 | P0 | 否 | ✅ 已完成：`75d442db` |
 | 4 | 新增 `check-worker-syntax.mjs`：递归 `node --check workers/gfrr-realtime-worker/src/*.js`，接入 check:all（check:syntax 之后） | 测试 | P0 | 否 | ✅ 已完成：`73c2f7a2` |
 | 5 | 新开 ADR-0018 记录 M-94 V0 路径 C 前端重写决策；ADR-0002 追加 amendment 标注 point 2 superseded | 架构 | P1 | 否 | 下一迭代 |
-| 6 | 修复剩余 Cody 中优先级问题（#5/#6 realtime.js response.ok/error 类型、#9 app.js innerHTML、#11/#13 魔法数字、#12 重复函数） | 多角色 | P1 | 否 | 后续迭代分批 |
+| 6 | 修复剩余 Cody 中优先级问题（#5/#6 realtime.js response.ok/error 类型、#11/#13 魔法数字、#12 重复函数） | 多角色 | P1 | 否 | 后续迭代分批 |
 | 7 | 新增 `check-bubble-watch-dom.mjs` + `check-market-pricing-metrics-schema.mjs` 补测试盲区 | 测试 | P1 | 否 | 后续迭代 |
 
 **需另开版本评审（不在本审查行动清单内，排入 backlog）**：
@@ -232,7 +233,7 @@
 
 - **Cody（代码审查师）原始产出**：17 条发现（4🟠高 + 8🟡中 + 5🟢低），覆盖 worker/external-ai/world-order/market-pricing/modules/daily-pipeline。完整发现已整合入本报告"审查发现"表（#1-#2, #5-#14）。结论：Approve with suggestions。
 - **Archi（系统架构师）原始产出**：10 条边界检查 + 3 条耦合热点 + 10 条 ADR 合规性 + 原始 20 个 CI workflows 评估 + 6 条漂移风险 + 7 条改进建议。2026-06-26 复核当前 `.github/workflows` 为 21 个文件。完整产出已整合入本报告"架构影响评估"段及发现 #3/#15/#16/#19/#20/#21/#26。结论：6 条核心边界未违反，整体合规。
-- **Tessa（测试专家）原始产出**：check:all 原始 20 顶层/~78 leaf 覆盖矩阵 + 原始 20 个 CI workflows 覆盖矩阵 + 6 条测试盲区 + 5 条回归风险点 + 6 条改进建议。2026-06-26 复核后当前 check:all 为 23 顶层/~85 leaf，当前 workflow 文件数为 21；#4 与 bump 盲区已关闭，#23 降级。完整产出已整合入本报告"测试覆盖评估"段及发现 #4/#17/#18/#22/#23/#24/#25。结论：测试体系高度成熟，剩余盲区可继续叠加 check 脚本补齐。
+- **Tessa（测试专家）原始产出**：check:all 原始 20 顶层/~78 leaf 覆盖矩阵 + 原始 20 个 CI workflows 覆盖矩阵 + 6 条测试盲区 + 5 条回归风险点 + 6 条改进建议。2026-06-26 复核后当前 check:all 为 23 顶层/~86 leaf，当前 workflow 文件数为 21；#4 与 bump 盲区已关闭，#9 已加 safe DOM 渲染守门，#23 降级。完整产出已整合入本报告"测试覆盖评估"段及发现 #4/#17/#18/#22/#23/#24/#25。结论：测试体系高度成熟，剩余盲区可继续叠加 check 脚本补齐。
 - **主理人（Zhen）交叉验证**：核实 app.js 不 import realtime.js、worker-market-preview.js:875 no-op ternary、realtime.js git log 冻结状态三个关键交叉发现点。
 
 ---

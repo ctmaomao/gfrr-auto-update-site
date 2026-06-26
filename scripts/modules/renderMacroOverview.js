@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=realtime-frozen-guard-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=realtime-frozen-guard-1';
-import { MODULE_LABELS } from './decision.js?v=realtime-frozen-guard-1';
+} from './config.js?v=safe-dom-rendering-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=safe-dom-rendering-1';
+import { MODULE_LABELS } from './decision.js?v=safe-dom-rendering-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,8 +18,8 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=realtime-frozen-guard-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=realtime-frozen-guard-1';
+} from './macroOverviewDisplayHelpers.js?v=safe-dom-rendering-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=safe-dom-rendering-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -50,7 +50,11 @@ function renderHero({ radarData, worldOrderStressData, marketPricingMetricsData,
     if (Number.isFinite(radarData.score)) {
       const valueEl = $('hero-score-value');
       if (valueEl) {
-        valueEl.innerHTML = `${radarData.score}<sup>/100</sup>`;
+        valueEl.textContent = '';
+        valueEl.append(document.createTextNode(String(radarData.score)));
+        const denominator = document.createElement('sup');
+        denominator.textContent = '/100';
+        valueEl.append(denominator);
       }
     }
 
@@ -59,7 +63,10 @@ function renderHero({ radarData, worldOrderStressData, marketPricingMetricsData,
     if (breakdown) {
       const breakdownEl = $('hero-breakdown-counts');
       if (breakdownEl) {
-        breakdownEl.innerHTML = `<strong>${breakdown.red} 红 / ${breakdown.yellow} 黄 / ${breakdown.green} 绿</strong>`;
+        breakdownEl.textContent = '';
+        const strong = document.createElement('strong');
+        strong.textContent = `${breakdown.red} 红 / ${breakdown.yellow} 黄 / ${breakdown.green} 绿`;
+        breakdownEl.append(strong);
       }
     }
 

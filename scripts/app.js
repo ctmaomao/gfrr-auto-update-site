@@ -7,7 +7,7 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'realtime-frozen-guard-1';
+const APP_VERSION = 'safe-dom-rendering-1';
 const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
@@ -158,7 +158,10 @@ function applyIssueMetaToDom(meta) {
   const cacheEl = document.getElementById('issue-meta-cache');
 
   if (issueEl) {
-    issueEl.innerHTML = `<strong>ISSUE ${meta.issue}</strong>`;
+    issueEl.textContent = '';
+    const strong = document.createElement('strong');
+    strong.textContent = `ISSUE ${meta.issue}`;
+    issueEl.append(strong);
   }
   if (asOfEl) {
     asOfEl.textContent = `AS OF ${meta.asOf}`;
@@ -199,7 +202,7 @@ async function main() {
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=realtime-frozen-guard-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=safe-dom-rendering-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
     macroOverviewRendered = true;
   } catch (error) {

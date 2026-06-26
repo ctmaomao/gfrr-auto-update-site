@@ -4,7 +4,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const CURRENT_ASSET_VERSION = 'realtime-frozen-guard-1';
 const errors = [];
 
 function fail(message) {
@@ -17,6 +16,12 @@ function read(path) {
 
 function requireIncludes(scope, text, marker) {
   if (!text.includes(marker)) fail(`${scope}: missing ${marker}`);
+}
+
+function currentAssetVersion(appText) {
+  const match = appText.match(/const\s+APP_VERSION\s*=\s*['"]([^'"]+)['"]/u);
+  if (!match) fail('scripts/app.js: missing APP_VERSION for asset-version guard');
+  return match?.[1] || '';
 }
 
 function extractBlockAfter(text, marker, afterIndex = 0) {
@@ -59,6 +64,7 @@ const packageJson = read('package.json');
 const suite = read('scripts/check-suite.mjs');
 const renderOilDirectional = read('scripts/modules/renderOilDirectional.js');
 const realtime = read('scripts/modules/realtime.js');
+const currentVersion = currentAssetVersion(app);
 
 const sectionStart = html.indexOf('id="oil-directional-pressure"');
 const sectionEnd = html.indexOf('id="detail-data"', sectionStart);
@@ -157,15 +163,15 @@ for (const marker of [
 requireIncludes('scripts/check-suite.mjs', suite, 'check:oil-directional-responsive-readability');
 
 for (const marker of [
-  `const APP_VERSION = '${CURRENT_ASSET_VERSION}'`,
-  `assets/styles.css?v=${CURRENT_ASSET_VERSION}`,
-  `scripts/app.js?v=${CURRENT_ASSET_VERSION}`,
+  `const APP_VERSION = '${currentVersion}'`,
+  `assets/styles.css?v=${currentVersion}`,
+  `scripts/app.js?v=${currentVersion}`,
 ]) {
   const source = marker.startsWith('const APP_VERSION') ? app : html;
   requireIncludes('asset version', source, marker);
 }
 
-if (realtime.includes(CURRENT_ASSET_VERSION)) {
+if (currentVersion && realtime.includes(currentVersion)) {
   fail('scripts/modules/realtime.js is frozen/unconnected and must not be asset-bumped for P46');
 }
 

@@ -4,7 +4,6 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const errors = [];
-const CURRENT_ASSET_VERSION = 'realtime-frozen-guard-1';
 const fail = (message) => errors.push(message);
 
 function read(path) {
@@ -13,6 +12,12 @@ function read(path) {
 
 function requireIncludes(scope, text, marker) {
   if (!text.includes(marker)) fail(`${scope}: missing ${marker}`);
+}
+
+function currentAssetVersion(appText) {
+  const match = appText.match(/const\s+APP_VERSION\s*=\s*['"]([^'"]+)['"]/u);
+  if (!match) fail('scripts/app.js: missing APP_VERSION for asset-version guard');
+  return match?.[1] || '';
 }
 
 function requireOrder(scope, text, markers) {
@@ -33,6 +38,7 @@ const css = read('assets/styles.css');
 const app = read('scripts/app.js');
 const packageJson = read('package.json');
 const suite = read('scripts/check-suite.mjs');
+const currentVersion = currentAssetVersion(app);
 
 const sectionStart = html.indexOf('id="oil-directional-pressure"');
 const sectionEnd = html.indexOf('id="detail-data"', sectionStart);
@@ -131,9 +137,9 @@ for (const marker of [
 requireIncludes('scripts/check-suite.mjs', suite, 'check:oil-directional-reading-structure');
 
 for (const marker of [
-  `const APP_VERSION = '${CURRENT_ASSET_VERSION}'`,
-  `assets/styles.css?v=${CURRENT_ASSET_VERSION}`,
-  `scripts/app.js?v=${CURRENT_ASSET_VERSION}`,
+  `const APP_VERSION = '${currentVersion}'`,
+  `assets/styles.css?v=${currentVersion}`,
+  `scripts/app.js?v=${currentVersion}`,
 ]) {
   const source = marker.startsWith('const APP_VERSION') ? app : html;
   requireIncludes('asset version', source, marker);
