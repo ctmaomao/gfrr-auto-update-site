@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-26T12:32:09.046Z",
+  "generatedAt": "2026-06-26T15:13:00.941Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -113,8 +113,8 @@
   },
   "freshness": {
     "windowDays": 7,
-    "latestArticleAt": "2026-06-26T06:52:48.000Z",
-    "latestArticleAgeHours": 5.7,
+    "latestArticleAt": "2026-06-26T10:30:00.000Z",
+    "latestArticleAgeHours": 4.7,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -293,9 +293,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 22,
+      "articleCount": 21,
       "sourceCount": 2,
-      "weightedSignal": 132,
+      "weightedSignal": 126,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -356,9 +356,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 27,
+      "articleCount": 25,
       "sourceCount": 2,
-      "weightedSignal": 108,
+      "weightedSignal": 100,
       "topArticles": [
         {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
@@ -418,9 +418,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 43,
+      "articleCount": 40,
       "sourceCount": 2,
-      "weightedSignal": 129,
+      "weightedSignal": 120,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -478,9 +478,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 52,
+      "articleCount": 51,
       "sourceCount": 2,
-      "weightedSignal": 156,
+      "weightedSignal": 153,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -538,10 +538,28 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 28,
+      "articleCount": 29,
       "sourceCount": 2,
-      "weightedSignal": 56,
+      "weightedSignal": 58,
       "topArticles": [
+        {
+          "title": "As Strait of Hormuz Opens, Oil Falls - Marine News Magazine",
+          "url": "https://www.marinelink.com/news/strait-hormuz-opens-oil-falls-540679",
+          "domain": "marinelink.com",
+          "publishedAt": "2026-06-26T07:37:06.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "market_reaction",
+            "middle_east_risk",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
+          ]
+        },
         {
           "title": "Hormuz traffic rebound returns oil to prewar rates, as US reassures wary Gulf allies - The Times of Israel",
           "url": "https://www.timesofisrael.com/hormuz-traffic-rebound-returns-oil-to-prewar-rates-as-us-reassures-wary-gulf-allies/",
@@ -570,24 +588,6 @@
           ],
           "buckets": [
             "chokepoint",
-            "market_reaction",
-            "middle_east_risk",
-            "sanctions",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "sanctions_shadow_fleet"
-          ]
-        },
-        {
-          "title": "Here’s How Much Iran Could Make From US Oil Sanctions Waiver - Newsweek",
-          "url": "https://www.newsweek.com/heres-how-much-iran-could-make-from-us-oil-sanctions-waiver-12109782",
-          "domain": "newsweek.com",
-          "publishedAt": "2026-06-23T18:23:00.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
             "market_reaction",
             "middle_east_risk",
             "sanctions",
@@ -642,50 +642,10 @@
       ]
     },
     {
-      "title": "Oil edges lower amid resumption of strait shipments even as vessel hit near Oman - Reuters",
-      "url": "https://www.reuters.com/business/energy/oil-edges-lower-amid-resumption-strait-shipments-even-vessel-hit-near-oman-2026-06-26/",
-      "domain": "reuters.com",
-      "publishedAt": "2026-06-26T04:31:40.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "market_reaction"
-      ]
-    },
-    {
       "title": "Strait of Hormuz Reopens for Oil Tankers Following U.S.-Iran Deal",
       "url": "https://discoveryalert.com.au/strait-hormuz-oil-tankers-reopening-crisis-2026-market",
       "domain": "discoveryalert.com.au",
       "publishedAt": "2026-06-24T19:15:33.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
-      "title": "Short-covering illusion? Why the attack failed to rescue oil prices",
-      "url": "https://news.futunn.com/en/post/75144773/short-covering-illusion-why-the-attack-failed-to-rescue-oil",
-      "domain": "news.futunn.com",
-      "publishedAt": "2026-06-26T06:52:48.000Z",
       "sources": [
         "brave"
       ],
@@ -835,26 +795,60 @@
       "queryIds": [
         "facility_supply_disruption"
       ]
+    },
+    {
+      "title": "Oil extends losses, WTI crude falls below $70 for first time since early March - Oil & Gas 360",
+      "url": "https://www.oilandgas360.com/oil-extends-losses-wti-crude-falls-below-70-for-first-time-since-early-march/",
+      "domain": "oilandgas360.com",
+      "publishedAt": "2026-06-24T15:42:08.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "market_reaction"
+      ]
+    },
+    {
+      "title": "Hormuz Shipping Confidence Is Still Shaky | OilPrice.com",
+      "url": "https://oilprice.com/Latest-Energy-News/World-News/Hormuz-Shipping-Confidence-Is-Still-Shaky.html",
+      "domain": "oilprice.com",
+      "publishedAt": "2026-06-26T10:30:00.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
     }
   ],
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 1,
-    "highClaimDomainCount": 1,
-    "highClaimDomains": [
-      "news.futunn.com"
-    ],
-    "highClaimTerms": [
-      "attack"
-    ],
+    "highClaimTitleCount": 0,
+    "highClaimDomainCount": 0,
+    "highClaimDomains": [],
+    "highClaimTerms": [],
     "directHeadlineDisplayAllowed": false,
-    "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
+    "noteZh": "本轮 compact title 未触发高主张标题规则;标题展示仍需另开 reviewed UI/copy 审核。"
   },
   "headlineDisplayReadiness": {
-    "state": "not_ready_high_claim_title_noise",
+    "state": "candidate_ready_for_review",
     "displayHeadlinesApproved": false,
-    "reasonZh": "本轮标题含高主张措辞,必须保持人工复核,不得直接进入前端标题展示。",
+    "reasonZh": "标题风险规则未触发,但仍需另开 reviewed UI/copy 审核后才可考虑展示标题。",
     "requiredNextReview": "separate reviewed UI/copy PR with headline uncertainty copy and source attribution guards"
   },
   "claimPolarity": {
@@ -862,10 +856,10 @@
     "evaluatedArticleCount": 12,
     "claimCount": 12,
     "polarityCounts": {
-      "risk_escalation": 1,
+      "risk_escalation": 0,
       "risk_deescalation": 2,
       "mixed_or_contested": 0,
-      "market_reaction_only": 8,
+      "market_reaction_only": 9,
       "unclear_or_high_claim": 1
     },
     "eventTypeCounts": {
@@ -878,25 +872,23 @@
       "general_energy": 0
     },
     "sourceTierCounts": {
-      "primary_wire_or_official": 3,
+      "primary_wire_or_official": 2,
       "major_financial_media": 1,
-      "industry_trade": 5,
-      "aggregator_or_blog": 3,
+      "industry_trade": 7,
+      "aggregator_or_blog": 2,
       "low_confidence": 0
     },
     "contradiction": {
-      "state": "mixed_claims",
-      "eventTypes": [
-        "chokepoint"
-      ],
+      "state": "risk_deescalation_dominant",
+      "eventTypes": [],
       "details": [
         {
           "eventType": "chokepoint",
           "claimCount": 11,
-          "riskEscalation": 1,
+          "riskEscalation": 0,
           "riskDeescalation": 2,
           "mixedOrContested": 0,
-          "contradiction": true
+          "contradiction": false
         },
         {
           "eventType": "facility",
