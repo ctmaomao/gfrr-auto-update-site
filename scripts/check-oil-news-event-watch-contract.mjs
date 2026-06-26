@@ -20,6 +20,29 @@ const HEADLINE_READINESS_STATES = new Set([
   'not_ready_high_claim_title_noise',
   'not_ready_source_unavailable'
 ]);
+const CLAIM_POLARITIES = new Set([
+  'risk_escalation',
+  'risk_deescalation',
+  'mixed_or_contested',
+  'market_reaction_only',
+  'unclear_or_high_claim'
+]);
+const CLAIM_EVENT_TYPES = new Set([
+  'chokepoint',
+  'shipping',
+  'sanctions',
+  'facility',
+  'supply',
+  'market_reaction',
+  'general_energy'
+]);
+const CLAIM_SOURCE_TIERS = new Set([
+  'primary_wire_or_official',
+  'major_financial_media',
+  'industry_trade',
+  'aggregator_or_blog',
+  'low_confidence'
+]);
 const PRODUCTION_FALSE_KEYS = [
   'affectsValues',
   'affectsScoring',
@@ -216,6 +239,60 @@ if (!data.headlineDisplayReadiness || typeof data.headlineDisplayReadiness !== '
   }
   if (typeof data.headlineDisplayReadiness.requiredNextReview !== 'string' || !data.headlineDisplayReadiness.requiredNextReview) {
     fail('headlineDisplayReadiness.requiredNextReview must be non-empty');
+  }
+}
+
+if (!data.claimPolarity || typeof data.claimPolarity !== 'object') {
+  fail('claimPolarity missing');
+} else {
+  if (data.claimPolarity.ruleVersion !== 'oil-news-claim-polarity-p53') {
+    fail(`claimPolarity.ruleVersion invalid: ${data.claimPolarity.ruleVersion}`);
+  }
+  for (const field of ['evaluatedArticleCount', 'claimCount']) {
+    if (!finiteNonNegative(data.claimPolarity[field])) fail(`claimPolarity.${field} must be non-negative number`);
+  }
+  const countMaps = [
+    ['polarityCounts', CLAIM_POLARITIES],
+    ['eventTypeCounts', CLAIM_EVENT_TYPES],
+    ['sourceTierCounts', CLAIM_SOURCE_TIERS]
+  ];
+  for (const [field, allowedKeys] of countMaps) {
+    const map = data.claimPolarity[field];
+    if (!map || typeof map !== 'object' || Array.isArray(map)) {
+      fail(`claimPolarity.${field} must be object`);
+      continue;
+    }
+    for (const key of allowedKeys) {
+      if (!finiteNonNegative(map[key])) fail(`claimPolarity.${field}.${key} must be non-negative number`);
+    }
+  }
+  const contradiction = data.claimPolarity.contradiction;
+  if (!contradiction || typeof contradiction !== 'object') {
+    fail('claimPolarity.contradiction missing');
+  } else {
+    if (!['mixed_claims', 'risk_escalation_dominant', 'risk_deescalation_dominant', 'no_directional_claim_dominance'].includes(contradiction.state)) {
+      fail(`claimPolarity.contradiction.state invalid: ${contradiction.state}`);
+    }
+    if (!Array.isArray(contradiction.eventTypes)) fail('claimPolarity.contradiction.eventTypes must be array');
+    if (!Array.isArray(contradiction.details)) fail('claimPolarity.contradiction.details must be array');
+  }
+  if (data.claimPolarity.displayMode !== 'aggregate_only_no_headlines') {
+    fail(`claimPolarity.displayMode invalid: ${data.claimPolarity.displayMode}`);
+  }
+  if (data.claimPolarity.directHeadlineDisplayAllowed !== false) {
+    fail('claimPolarity.directHeadlineDisplayAllowed must remain false');
+  }
+  if (data.claimPolarity.originalHeadlineDisplayAllowed !== false) {
+    fail('claimPolarity.originalHeadlineDisplayAllowed must remain false');
+  }
+  if (typeof data.claimPolarity.noteZh !== 'string' || !data.claimPolarity.noteZh.includes('不得展示标题原文')) {
+    fail('claimPolarity.noteZh must keep no-headline-display wording');
+  }
+  const claimPolaritySerialized = JSON.stringify(data.claimPolarity);
+  for (const forbiddenField of ['"title"', '"url"', '"titleHash"', '"snippet"', '"body"', '"rawResponse"']) {
+    if (claimPolaritySerialized.includes(forbiddenField)) {
+      fail(`claimPolarity must be aggregate-only and must not contain ${forbiddenField}`);
+    }
   }
 }
 

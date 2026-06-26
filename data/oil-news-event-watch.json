@@ -862,6 +862,60 @@
     "reasonZh": "标题风险规则未触发,但仍需另开 reviewed UI/copy 审核后才可考虑展示标题。",
     "requiredNextReview": "separate reviewed UI/copy PR with headline uncertainty copy and source attribution guards"
   },
+  "claimPolarity": {
+    "ruleVersion": "oil-news-claim-polarity-p53",
+    "evaluatedArticleCount": 12,
+    "claimCount": 12,
+    "polarityCounts": {
+      "risk_escalation": 0,
+      "risk_deescalation": 2,
+      "mixed_or_contested": 0,
+      "market_reaction_only": 9,
+      "unclear_or_high_claim": 1
+    },
+    "eventTypeCounts": {
+      "chokepoint": 11,
+      "shipping": 0,
+      "sanctions": 0,
+      "facility": 1,
+      "supply": 0,
+      "market_reaction": 0,
+      "general_energy": 0
+    },
+    "sourceTierCounts": {
+      "primary_wire_or_official": 3,
+      "major_financial_media": 1,
+      "industry_trade": 5,
+      "aggregator_or_blog": 3,
+      "low_confidence": 0
+    },
+    "contradiction": {
+      "state": "risk_deescalation_dominant",
+      "eventTypes": [],
+      "details": [
+        {
+          "eventType": "chokepoint",
+          "claimCount": 11,
+          "riskEscalation": 0,
+          "riskDeescalation": 2,
+          "mixedOrContested": 0,
+          "contradiction": false
+        },
+        {
+          "eventType": "facility",
+          "claimCount": 1,
+          "riskEscalation": 0,
+          "riskDeescalation": 0,
+          "mixedOrContested": 0,
+          "contradiction": false
+        }
+      ]
+    },
+    "displayMode": "aggregate_only_no_headlines",
+    "directHeadlineDisplayAllowed": false,
+    "originalHeadlineDisplayAllowed": false,
+    "noteZh": "主张方向只基于 compact title 做本地分类聚合;前端只能展示计数与混合状态,不得展示标题原文、URL 或把新闻主张写成确认事件。"
+  },
   "recommendation": {
     "state": "elevated_manual_review",
     "operatorAction": "manual_review_before_interpretation",

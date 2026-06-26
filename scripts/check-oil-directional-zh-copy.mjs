@@ -13,6 +13,8 @@
 // P33: oil-news event watch source health/fallback copy must stay explicit:
 // aggregate source health is allowed, but no single news path may be written as
 // a confirmed oil event.
+// P53: claim polarity may be rendered only as aggregate counts from the production
+// artifact; the renderer still must not read article lists or expose headlines.
 // P50: satellite thermal watch must expose baseline quality/sample-window copy
 // and keep the short-window starter caveat visible.
 
@@ -59,8 +61,14 @@ if (src.includes('topArticles')) {
 if (!src.includes('headlineDisplayReadiness') || !src.includes('titleRisk')) {
   fail('ODP renderer must expose oil-news headline readiness/title-risk aggregate guard text');
 }
+if (!src.includes('claimPolarity') || !src.includes('odp-news-event-claim-polarity') || !src.includes('claimPolarityText')) {
+  fail('ODP renderer must expose oil-news claim polarity aggregate text');
+}
 if (!src.includes('不展示标题原文')) {
   fail('ODP oil-news copy must explicitly state that original headlines are not displayed');
+}
+if (!src.includes('主张方向只显示聚合计数')) {
+  fail('ODP oil-news claim-polarity copy must preserve aggregate-count-only wording');
 }
 if (!src.includes('odp-news-event-source-health') || !src.includes('newsSourceHealthText')) {
   fail('ODP renderer must expose dedicated oil-news source-health/fallback text');

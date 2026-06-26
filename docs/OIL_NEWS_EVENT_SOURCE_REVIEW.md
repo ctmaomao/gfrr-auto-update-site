@@ -13,7 +13,9 @@ bounded retry, serial request discipline, and sanitized diagnostics are handled
 outside the feature module. P37 changes the GDELT leg from four per-topic DOC
 queries into one broad `gdelt_broad_oil_news` query plus local bucket
 classification, and writes the compact cache artifact
-`data/gdelt-news-cache.json`. All layers remain outside ODP scoring,
+`data/gdelt-news-cache.json`. P52 adds a manual claim-ledger review, and P53
+adds a production `claimPolarity` aggregate plus frontend aggregate display
+without exposing headlines or URLs. All layers remain outside ODP scoring,
 `finalBias`, decision, execution, position, Brent promotion, Global Risk Heatmap,
 and cross-validation.
 
@@ -258,6 +260,46 @@ facts, facility incidents, sanctions impact, supply interruptions or oil-price
 direction. It does not change ODP classifier, `finalBias`, global overlay, values,
 scoring, decision, execution, position, Brent promotion, Global Risk Heatmap or
 cross-validation.
+
+## P53 Frontend Claim Polarity Aggregate
+
+P53 promotes only the aggregate shape of the P52 classification into the
+production oil-news watch artifact:
+
+```text
+data/oil-news-event-watch.json.claimPolarity
+ruleVersion = oil-news-claim-polarity-p53
+displayMode = aggregate_only_no_headlines
+```
+
+The production field is intentionally more restrictive than the manual P52
+ledger. It contains only:
+
+- `polarityCounts`: `risk_escalation`, `risk_deescalation`,
+  `mixed_or_contested`, `market_reaction_only`, `unclear_or_high_claim`;
+- `eventTypeCounts`: chokepoint, shipping, sanctions, facility, supply,
+  market-reaction, general-energy counts;
+- `sourceTierCounts`: primary/wire, major financial, industry trade,
+  aggregator/blog, low-confidence counts;
+- `contradiction.state`: `mixed_claims`, `risk_escalation_dominant`,
+  `risk_deescalation_dominant`, or `no_directional_claim_dominance`.
+
+It must not contain article titles, URLs, title hashes, snippets, bodies, raw
+responses, or headline-display approval. `check:oil-news-event-watch` rejects
+those fields inside `claimPolarity`.
+
+The frontend `NEWS EVENT WATCH` renders this as a single aggregate row:
+
+```text
+主张方向: 升温 N / 降温 N / 混合 N / 市场 N · 新闻升温主导/新闻降温主导/混合待核/未见方向冲突 · 不展示标题原文
+```
+
+The renderer still must not read `topArticles`; `check:oil-directional-zh-copy`
+keeps that static guard. A mixed claim state means manual review is required. It
+does not confirm a chokepoint closure/reopening, tanker-flow fact, facility
+incident, sanctions impact, supply interruption, or oil-price direction, and it
+does not feed ODP `finalBias`, scoring, decision, execution, position, Brent
+promotion, Global Risk Heatmap, or cross-validation.
 
 ## Query Buckets
 

@@ -129,6 +129,7 @@ const ENERGY_TEXT_IDS = [
   'odp-news-event-headline-gate',
   'odp-news-event-source-health',
   'odp-news-event-market',
+  'odp-news-event-claim-polarity',
   'odp-news-event-title-risk',
   'odp-news-event-note',
   'odp-thermal-status',
@@ -383,6 +384,7 @@ function clearEnergyAddendum() {
   setToneClass('odp-news-event-status', 'odp-news-event-status', '');
   setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', '');
   setToneClass('odp-news-event-source-health', 'odp-news-source-health', '');
+  setToneClass('odp-news-event-claim-polarity', 'odp-news-claim-polarity', '');
   setToneClass('odp-thermal-status', 'odp-thermal-status', '');
   setToneClass('odp-thermal-baseline-quality', 'odp-thermal-baseline-quality', '');
   setToneClass('odp-qc-ledger-status', 'odp-qc-ledger-status', '');
@@ -954,6 +956,42 @@ function titleRiskText(data) {
   const domainText = domains === null ? '域名待核' : `${domains} 个来源域`;
   return `${highClaim}/${evaluated} 条高主张标题 · ${domainText} · 不展示标题原文`;
 }
+function claimPolarityCount(counts, key) {
+  return Number.isFinite(counts?.[key]) ? Math.round(counts[key]) : 0;
+}
+function claimPolarityText(data) {
+  const layer = data?.claimPolarity || {};
+  const counts = layer.polarityCounts || {};
+  if (layer.ruleVersion !== 'oil-news-claim-polarity-p53') {
+    return '主张方向聚合待计算 · 不展示标题原文';
+  }
+  const escalation = claimPolarityCount(counts, 'risk_escalation');
+  const deescalation = claimPolarityCount(counts, 'risk_deescalation');
+  const mixed = claimPolarityCount(counts, 'mixed_or_contested');
+  const marketOnly = claimPolarityCount(counts, 'market_reaction_only');
+  const unclear = claimPolarityCount(counts, 'unclear_or_high_claim');
+  const state = ({
+    mixed_claims: '混合待核',
+    risk_escalation_dominant: '新闻升温主导',
+    risk_deescalation_dominant: '新闻降温主导',
+    no_directional_claim_dominance: '未见方向冲突',
+  })[layer.contradiction?.state] || '状态待核';
+  const unclearText = unclear > 0 ? ` / 未明 ${unclear}` : '';
+  return `升温 ${escalation} / 降温 ${deescalation} / 混合 ${mixed} / 市场 ${marketOnly}${unclearText} · ${state} · 不展示标题原文`;
+}
+function claimPolarityTone(data) {
+  const layer = data?.claimPolarity || {};
+  const counts = layer.polarityCounts || {};
+  const escalation = claimPolarityCount(counts, 'risk_escalation');
+  const deescalation = claimPolarityCount(counts, 'risk_deescalation');
+  const mixed = claimPolarityCount(counts, 'mixed_or_contested');
+  if (layer.contradiction?.state === 'mixed_claims' || mixed > 0) return 'yellow';
+  if (layer.contradiction?.state === 'risk_escalation_dominant') return 'red';
+  if (layer.contradiction?.state === 'risk_deescalation_dominant') return 'green';
+  if (escalation > deescalation && escalation > 0) return 'red';
+  if (deescalation > escalation && deescalation > 0) return 'green';
+  return '';
+}
 function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
   const data = oilNewsEventWatchData && oilNewsEventWatchData.schemaVersion === 'oil-news-event-watch-1'
     ? oilNewsEventWatchData
@@ -991,8 +1029,10 @@ function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
   setLeafText('odp-news-event-source-health', newsSourceHealthText(data));
   setToneClass('odp-news-event-source-health', 'odp-news-source-health', newsSourceHealthTone(data));
   setLeafText('odp-news-event-market', `市场反应 ${marketReaction} 条 · ${brentText}`);
+  setLeafText('odp-news-event-claim-polarity', claimPolarityText(data));
+  setToneClass('odp-news-event-claim-polarity', 'odp-news-claim-polarity', claimPolarityTone(data));
   setLeafText('odp-news-event-title-risk', titleRiskText(data));
-  setLeafText('odp-news-event-note', `${data.aggregate?.reasonZh || '专用油价新闻层暂不可用。'}${newsFallbackContextText(data)}本区读取 production read-only oil-news event watch(GDELT/Tavily/Brave),置信度 ${confidence};标题只做聚合风险闸门,不展示原文标题。它不确认霍尔木兹关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施事件同时印证时,才适合提高人工观察置信度。`);
+  setLeafText('odp-news-event-note', `${data.aggregate?.reasonZh || '专用油价新闻层暂不可用。'}${newsFallbackContextText(data)}本区读取 production read-only oil-news event watch(GDELT/Tavily/Brave),置信度 ${confidence};标题只做聚合风险闸门,主张方向只显示聚合计数,不展示原文标题。它不确认霍尔木兹关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施事件同时印证时,才适合提高人工观察置信度。`);
 }
 function thermalTone(data) {
   if (!data || typeof data !== 'object') return '';

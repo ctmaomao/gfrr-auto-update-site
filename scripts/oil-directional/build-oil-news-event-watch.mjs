@@ -14,6 +14,7 @@ import {
   QUERY_SET,
   runDiagnosis
 } from './diagnose-oil-news-events.mjs';
+import { buildClaimPolarityAggregate } from './oil-news-claim-classifier.mjs';
 
 const SCHEMA_VERSION = 'oil-news-event-watch-1';
 const MODULE = 'oil-news-event-watch';
@@ -307,6 +308,7 @@ function buildProductionArtifact(options, diagnosis) {
     : [];
   const titleRisk = buildTitleRisk(topArticles);
   const headlineDisplayReadiness = buildHeadlineDisplayReadiness(status, titleRisk);
+  const claimPolarity = buildClaimPolarityAggregate(topArticles);
   const latestAt = latestArticleAt(topArticles);
   const buckets = Object.fromEntries(Object.entries(diagnosis.buckets || {}).map(([key, bucket]) => [
     key,
@@ -365,6 +367,7 @@ function buildProductionArtifact(options, diagnosis) {
     topArticles,
     titleRisk,
     headlineDisplayReadiness,
+    claimPolarity,
     recommendation: {
       state: signalState,
       operatorAction: signalState === 'elevated_manual_review'
