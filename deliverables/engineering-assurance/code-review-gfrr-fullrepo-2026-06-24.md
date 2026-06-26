@@ -13,7 +13,7 @@
 
 - **整体结论**：GFRR v28.0.10 在 v28.0J 稳定基线上**未发现基线边界违反或活跃安全漏洞**。6 条核心架构边界（解释层↔决策层隔离、External AI 隔离、版本分离、secondary diagnostics 隔离、World Order overlay、Brent freshness gate）均合规。三位成员独立产出后由主理人交叉验证关键发现点并去重合并。
 - **严重度分布（原始审查）**：🔴严重 0 项 / 🟠高 4 项 / 🟡中 14 项 / 🟢低 8 项
-- **整改复核（2026-06-26）**：4 项高优先级问题已全部关闭；#5/#6/#7/#8/#9/#10/#11/#12/#13/#14/#15/#16/#17/#18/#19/#20/#22 已关闭；#21 经当前代码复核后关闭；#23 降级为可选语义/fixture 补盲。剩余项为 #24/#25/#26 可选 CI/文档加固。
+- **整改复核（2026-06-26）**：4 项高优先级问题已全部关闭；#5/#6/#7/#8/#9/#10/#11/#12/#13/#14/#15/#16/#17/#18/#19/#20/#22/#24 已关闭；#21 经当前代码复核后关闭；#23 降级为可选语义/fixture 补盲。剩余项为 #25/#26 可选 CI/文档加固。
 
 ---
 
@@ -27,7 +27,7 @@
 | 关键行动项 | 7 条（见文末行动清单） |
 | 基线边界违反 | 无 |
 | 活跃安全漏洞 | 无 |
-| 建议下一步 | #24/#25/#26 作为可选 CI/文档加固 |
+| 建议下一步 | #25/#26 作为可选 CI/文档加固 |
 
 ---
 
@@ -52,10 +52,11 @@
 | #17 Bubble Watch DOM 守门 | ✅ 已关闭 | 新增 `scripts/check-bubble-watch-dom.mjs`，校验 `bubble-watch.html` 内联渲染脚本写入的字面 DOM id 均存在；接入 `check:bubble-watch` |
 | #18 market-pricing metrics schema | ✅ 已关闭 | 新增 `scripts/check-market-pricing-metrics-schema.mjs`，直接校验 `data/market-pricing-metrics.json` 必需字段、三资产覆盖、records/range/count mirror 与 display-only boundary；接入 `check:market-pricing` |
 | #20 ADR-0008 external AI 措辞 stale | ✅ 已关闭 | `docs/ADR/0008-external-ai-read-only.md` 追加 clarification，区分 rule-based `aiInterpretationLayer` 与 live read-only `externalAiInterpretationLayer` |
-| #19 CI workflow 计数 | ✅ 已关闭 | `CLAUDE.md` 不再硬编码 GitHub Actions ×12，改为以 `.github/workflows/` 实际文件为准；当前复核文件数为 21 |
+| #19 CI workflow 计数 | ✅ 已关闭 | `CLAUDE.md` 不再硬编码 GitHub Actions ×12，改为以 `.github/workflows/` 实际文件为准；当前复核文件数为 22 |
 | #21 Pages failure-trigger 噪音 | ✅ 已关闭 | 当前 `.github/workflows/deploy-static-site-to-pages.yml` 已有 `if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'` |
 | #22 local realtime schema | ✅ 已关闭 | 新增 `scripts/check-realtime-local-schema.mjs`，只做本地 `realtime/market.json` 结构守门（values/sourceMode/healthScore/sourceStatus/sourceDetails/fieldFreshness/brentValidation），不把 freshness 漂移作为硬失败；接入 `check:all` |
 | #23 treasury scripts 语法盲区 | ⬇️ 已降级 | `check:syntax` 已覆盖 `scripts/treasury-fiscal-data/*.mjs` 语法；剩余只是可选语义/fixture check |
+| #24 PR check:all gate | ✅ 已关闭 | 新增只读 `.github/workflows/check-all-pr.yml`，在 `pull_request` → `main` 与手动触发时运行 `npm ci` + `npm run check:all`；`check:workflows` 已纳入契约守门 |
 
 ---
 
@@ -105,12 +106,12 @@
 
 | # | 类别 | 文件/位置 | 问题描述 | 建议修复 | 来源 |
 |---|------|-----------|---------|---------|------|
-| 19 | 文档漂移（已关闭） | CLAUDE.md tech stack 表 | 原始发现：称「CI ×12」，当前 `.github/workflows` 为 21 个 workflow 文件。 | ✅ 已修复：不再硬编码数量，改为“数量以 `.github/workflows/` 实际文件为准” | Archi + Tessa |
+| 19 | 文档漂移（已关闭） | CLAUDE.md tech stack 表 | 原始发现：称「CI ×12」，当前 `.github/workflows` 为 22 个 workflow 文件。 | ✅ 已修复：不再硬编码数量，改为“数量以 `.github/workflows/` 实际文件为准” | Archi + Tessa |
 | 20 | 文档 stale（已关闭） | docs/ADR/0008-external-ai-read-only.md point 3 | 原始发现：「当前默认 generatedByExternalAi=false、不调用任何 provider」描述 pre-production 态。当前 externalAiInterpretationLayer 已 live（provider=deepseek, status=valid）。 | ✅ 已修复：ADR-0008 追加 clarification，区分 rule-based `aiInterpretationLayer` 与 live read-only `externalAiInterpretationLayer` | Archi |
 | 21 | CI 噪音（已关闭） | deploy-static-site-to-pages.yml:18-19 / job if | 原始担忧：`workflow_run: types: [completed]` 可能让失败 upstream 触发 deploy run。当前复核发现 deploy job 已有 success conclusion gate。 | ✅ 已关闭：当前 `jobs.deploy.if` 已要求 `workflow_run.conclusion == 'success'`，无需改动 | Archi |
 | 22 | 测试盲区（已关闭） | realtime/market.json 本地文件 | 原始发现：`validate-data.mjs` 仅校验文件存在 + JSON.parse + 部分 cross-validation。详细 schema 校验在 `check-realtime-health.mjs`（URL fetch，非本地文件）。 | ✅ 已修复：新增 `check-realtime-local-schema.mjs` 校验 values/sourceMode/healthScore/sourceStatus/sourceDetails/fieldFreshness/brentValidation；接入 `check:all`，且不把本地 fallback freshness 漂移当硬失败 | Tessa |
 | 23 | 测试盲区（已降级） | scripts/treasury-fiscal-data/*.mjs | 原始担忧：3 个脚本有 npm script 但无 check:* 守门。当前复核：`check:syntax` 已递归覆盖 `scripts/treasury-fiscal-data/*.mjs` 的语法检查。 | ⬇️ 降级为可选语义/fixture check；不再作为语法盲区 | Tessa |
-| 24 | CI 回归 | 无 pull_request 触发 check:all | check:all 只在 push(main) 和 workflow_run 触发。PR 合并前无自动 check:all 门。但 push(main) 会触发 deploy workflow 的 check:all，失败则不部署（post-merge 兜底）。 | 评估是否在 PR 加 check:all gate（权衡 CI 成本） | Tessa |
+| 24 | CI 回归（已关闭） | 无 pull_request 触发 check:all | 原始发现：check:all 只在 push(main) 和 workflow_run 触发，PR 合并前无自动 check:all 门。 | ✅ 已修复：新增只读 `Check All PR` workflow，`pull_request` 到 `main` 时运行 `npm ci` + `npm run check:all`；不写 main、不部署 Pages、不读取 secrets，并由 `check:workflows` 守门 | Tessa |
 | 25 | CI 回归 | build-realtime-market.yml | build:realtime → 直接 commit 到 realtime-data branch，build 后无 check 守门。Daily pipeline 的 check:data 下游兜底。 | 可选加轻量 check 步骤 | Tessa |
 | 26 | 时序滞后 | external-ai-production-refresh.yml (23:50) vs build-daily-radar-data.yml (22:30) | External AI Refresh 在 Daily pipeline 之后运行。Daily pipeline preserve 的是前一天的外部 AI 层，新外部 AI 层要到次日 22:30 才被 Daily 消费。1 天滞后对日频简报可接受，但需文档化。 | 在 OPERATIONS.md 文档化此 1 天滞后 | Archi |
 
@@ -173,7 +174,7 @@
 | check:gdelt-cloud-fetcher-integration | 1 | GDELT Cloud fetcher 存在性 + workflow 标记 | 🟢 |
 | check:gdelt-source-policy | 1 | 全仓 GDELT endpoint allowlist 扫描 | 🟢 |
 | check:node-runtime | 1 | workflows actions/* 版本 Node24 pin 一致 | 🟢 |
-| check:workflows | 1 | 当前 21 个 workflow 文件的 YAML 结构契约与 Pages 触发覆盖 | 🟢 |
+| check:workflows | 1 | 当前 22 个 workflow 文件的 YAML 结构契约与 Pages 触发覆盖 | 🟢 |
 | check:docs | 1 | docs/ markdown 链接有效性 | 🟢 |
 | check:main-score-wind-fallback | 1 | main-score-source-policy 契约 + ADR-0017 | 🟢 |
 | check:world-order | 1 | world-order-stress.json 契约 | 🟢 |
@@ -241,8 +242,8 @@
 ## 📚 数据来源 & 成员产出索引
 
 - **Cody（代码审查师）原始产出**：17 条发现（4🟠高 + 8🟡中 + 5🟢低），覆盖 worker/external-ai/world-order/market-pricing/modules/daily-pipeline。完整发现已整合入本报告"审查发现"表（#1-#2, #5-#14）。结论：Approve with suggestions。
-- **Archi（系统架构师）原始产出**：10 条边界检查 + 3 条耦合热点 + 10 条 ADR 合规性 + 原始 20 个 CI workflows 评估 + 6 条漂移风险 + 7 条改进建议。2026-06-26 复核当前 `.github/workflows` 为 21 个文件。完整产出已整合入本报告"架构影响评估"段及发现 #3/#15/#16/#19/#20/#21/#26。结论：6 条核心边界未违反，整体合规。
-- **Tessa（测试专家）原始产出**：check:all 原始 20 顶层/~78 leaf 覆盖矩阵 + 原始 20 个 CI workflows 覆盖矩阵 + 6 条测试盲区 + 5 条回归风险点 + 6 条改进建议。2026-06-26 复核后当前 check:all 为 24 顶层/~89 leaf，当前 workflow 文件数为 21；#4/#17/#18/#22 与 bump 盲区已关闭，#9 已加 safe DOM 渲染守门，#23 降级。完整产出已整合入本报告"测试覆盖评估"段及发现 #4/#17/#18/#22/#23/#24/#25。结论：测试体系高度成熟，剩余盲区可继续叠加 check 脚本补齐。
+- **Archi（系统架构师）原始产出**：10 条边界检查 + 3 条耦合热点 + 10 条 ADR 合规性 + 原始 20 个 CI workflows 评估 + 6 条漂移风险 + 7 条改进建议。2026-06-26 复核当前 `.github/workflows` 为 22 个文件。完整产出已整合入本报告"架构影响评估"段及发现 #3/#15/#16/#19/#20/#21/#26。结论：6 条核心边界未违反，整体合规。
+- **Tessa（测试专家）原始产出**：check:all 原始 20 顶层/~78 leaf 覆盖矩阵 + 原始 20 个 CI workflows 覆盖矩阵 + 6 条测试盲区 + 5 条回归风险点 + 6 条改进建议。2026-06-26 复核后当前 check:all 为 24 顶层/~89 leaf，当前 workflow 文件数为 22；#4/#17/#18/#22 与 bump 盲区已关闭，#9 已加 safe DOM 渲染守门，#23 降级，#24 已加 PR check:all gate。完整产出已整合入本报告"测试覆盖评估"段及发现 #4/#17/#18/#22/#23/#24/#25。结论：测试体系高度成熟，剩余盲区可继续叠加 check 脚本补齐。
 - **主理人（Zhen）交叉验证**：核实 app.js 不 import realtime.js、worker-market-preview.js:875 no-op ternary、realtime.js git log 冻结状态三个关键交叉发现点。
 
 ---

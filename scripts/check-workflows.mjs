@@ -78,6 +78,35 @@ const contracts = [
     ]
   },
   {
+    file: '.github/workflows/check-all-pr.yml',
+    required: [
+      'name: Check All PR',
+      'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true',
+      'workflow_dispatch:',
+      'pull_request:',
+      'branches:',
+      '- main',
+      'permissions:',
+      'contents: read',
+      'concurrency:',
+      'actions/checkout@v6',
+      'actions/setup-node@v6',
+      'node-version: 24',
+      'package-manager-cache: false',
+      'npm ci',
+      'npm run check:all'
+    ],
+    forbidden: [
+      'contents: write',
+      'pull_request_target',
+      'secrets.',
+      'git push',
+      'git commit',
+      'deploy-pages',
+      'upload-pages-artifact'
+    ]
+  },
+  {
     file: '.github/workflows/check-realtime-health.yml',
     required: [
       'name: Check Realtime Health',
