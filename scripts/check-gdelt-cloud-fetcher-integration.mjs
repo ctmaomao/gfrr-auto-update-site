@@ -16,6 +16,7 @@ const legacyDiagnosticPath = 'scripts/world-order/diagnose-gdelt-source.mjs';
 const workflowPath = '.github/workflows/refresh-world-order-stress.yml';
 const buildPath = 'scripts/build-world-order-stress.mjs';
 const narrativePath = 'scripts/modules/buildCrossValidationMatrix.js';
+const cachePath = 'data/gdelt-world-order-cache.json';
 
 if (!existsSync(resolve(fetcherPath))) fail('M-59: GDELT Cloud fetcher missing');
 if (!existsSync(resolve(workflowPath))) fail('M-59: Refresh World Order Stress workflow missing');
@@ -32,21 +33,30 @@ for (const needle of [
   'npm run build:world-order',
   'npm run check:world-order',
   "cron: '0 23 * * *'",
-  'continue-on-error: true'
+  'continue-on-error: true',
+  'data/gdelt-world-order-cache.json'
 ]) {
   if (!workflowContent.includes(needle)) fail(`M-59 workflow: missing "${needle}"`);
 }
 
 for (const needle of [
   'process.env.GDELT_CLOUD_API_KEY',
-  'https://gdeltcloud.com/api/v2',
+  '../gdelt/fetch-gdelt.mjs',
+  'fetchGdeltCloudJson',
+  'DEFAULT_GDELT_WORLD_ORDER_CACHE_OUTPUT',
+  'readGdeltWorldOrderCache',
   'event_family',
   'group_by',
-  'Authorization',
-  'Bearer',
-  'KEY_CONFLICT_REGIONS'
+  'KEY_CONFLICT_REGIONS',
+  'maxRetries: 0'
 ]) {
   if (!fetcherContent.includes(needle)) fail(`M-59 fetcher: missing "${needle}"`);
+}
+if (fetcherContent.includes('https://gdeltcloud.com/api/v2')) {
+  fail('P39 fetcher: direct GDELT Cloud endpoint must live only in shared wrapper');
+}
+if (fetcherContent.includes('fetch(')) {
+  fail('P39 fetcher: direct fetch must not be reintroduced');
 }
 
 if (!buildContent.includes('fetchGdeltCloudSummary')) {
@@ -54,6 +64,13 @@ if (!buildContent.includes('fetchGdeltCloudSummary')) {
 }
 if (!buildContent.includes('fetch-gdelt-cloud.mjs')) {
   fail('M-59 build script: fetch-gdelt-cloud.mjs import path missing');
+}
+for (const needle of [
+  'DEFAULT_GDELT_WORLD_ORDER_CACHE_OUTPUT',
+  'gdeltCacheArtifact',
+  'stripBuildOnlyFields'
+]) {
+  if (!buildContent.includes(needle)) fail(`P39 build script: missing "${needle}"`);
 }
 if (buildContent.includes('fetch-gdelt.mjs')) {
   fail('M-59 build script: legacy fetch-gdelt.mjs import still present');
@@ -79,10 +96,28 @@ for (const [path, content] of [
   if (gdeltTokenPattern.test(content)) fail(`M-59 secret leak guard: gdelt_sk token literal found in ${path}`);
 }
 
+if (!existsSync(resolve(cachePath))) {
+  fail('P39: World Order GDELT cache missing');
+} else {
+  const cache = JSON.parse(readText(cachePath));
+  if (cache.schemaVersion !== 'gdelt-world-order-cache-p39') {
+    fail('P39 cache: schemaVersion must be gdelt-world-order-cache-p39');
+  }
+  if (cache.cacheScope !== 'world_order_gdelt_cloud') {
+    fail('P39 cache: cacheScope must be world_order_gdelt_cloud');
+  }
+  if (cache.cachePolicy?.lowFrequencyCache !== true || cache.cachePolicy?.singleAttemptAfterCacheExpiry !== true) {
+    fail('P39 cache: must declare lowFrequencyCache + singleAttemptAfterCacheExpiry');
+  }
+  if (cache.cachePolicy?.rawProviderResponseStored !== false || cache.cachePolicy?.authorizationStored !== false) {
+    fail('P39 cache: must declare no raw provider response or authorization storage');
+  }
+}
+
 if (errors.length > 0) {
   console.error('GDELT Cloud fetcher integration check FAILED:');
   errors.forEach((error) => console.error('  -', error));
   process.exit(1);
 }
 
-console.log('GDELT Cloud fetcher integration check: PASS (Cloud v2 fetcher + workflow + narrative branches + legacy deletion locked)');
+console.log('GDELT Cloud fetcher integration check: PASS (Cloud v2 shared wrapper/cache + workflow + narrative branches + legacy deletion locked)');

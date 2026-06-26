@@ -2,7 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { fetchGdeltCloudSummary } from './world-order/fetch-gdelt-cloud.mjs';
+import {
+  DEFAULT_GDELT_WORLD_ORDER_CACHE_OUTPUT,
+  fetchGdeltCloudSummary
+} from './world-order/fetch-gdelt-cloud.mjs';
 import { fetchOfacSummary } from './world-order/fetch-ofac.mjs';
 import { importSipriSummary } from './world-order/import-sipri.mjs';
 import { fetchAcledSummary } from './world-order/fetch-acled.mjs';
@@ -21,6 +24,7 @@ const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
 const configPath = path.join(root, 'config', 'world-order-rules.json');
 const outputPath = path.join(root, 'data', 'world-order-stress.json');
+const gdeltCacheOutputPath = path.join(root, DEFAULT_GDELT_WORLD_ORDER_CACHE_OUTPUT);
 const radarDataPath = path.join(root, 'data', 'radar-data.json');
 const realtimePath = path.join(root, 'realtime', 'market.json');
 
@@ -44,6 +48,12 @@ function normalizeSourceMap(sources) {
     });
   }
   return normalized;
+}
+
+function stripBuildOnlyFields(source) {
+  if (!source || typeof source !== 'object') return source;
+  const { cacheArtifact: _cacheArtifact, ...publicSource } = source;
+  return publicSource;
 }
 
 function freshnessFromSources(sources) {
@@ -139,12 +149,14 @@ async function main() {
   const dataPayload = readJsonIfExists(radarDataPath, {});
   const realtimePayload = readJsonIfExists(realtimePath, {});
 
-  const [gdelt, ofac, sipri, acled] = await Promise.all([
+  const [gdeltRaw, ofac, sipri, acled] = await Promise.all([
     fetchGdeltCloudSummary({ config: rules.gdelt, previousSource: previous?.externalSources?.gdelt }),
     fetchOfacSummary({ config: rules.ofac, previousSource: previous?.externalSources?.ofac }),
     importSipriSummary({ config: rules.sipri, previousSource: previous?.externalSources?.sipri }),
     fetchAcledSummary({ config: rules.acled, previousSource: previous?.externalSources?.acled })
   ]);
+  const gdeltCacheArtifact = gdeltRaw?.cacheArtifact || null;
+  const gdelt = stripBuildOnlyFields(gdeltRaw);
 
   const externalSources = normalizeSourceMap({ gdelt, ofac, sipri, acled });
   const marketConfirmationInput = await selectMarketConfirmationInput({ dataPayload, realtimePayload });
@@ -193,6 +205,10 @@ async function main() {
   });
 
   fs.writeFileSync(outputPath, `${JSON.stringify(output, null, 2)}\n`);
+  if (gdeltCacheArtifact) {
+    fs.writeFileSync(gdeltCacheOutputPath, `${JSON.stringify(compactObject(gdeltCacheArtifact), null, 2)}\n`);
+    console.log(`World order GDELT cache written: ${path.relative(root, gdeltCacheOutputPath)}`);
+  }
   console.log(`World order stress data written: ${path.relative(root, outputPath)}`);
   printBuildSummary(output);
 }

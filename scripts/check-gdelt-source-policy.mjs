@@ -6,6 +6,7 @@ const POLICY_DOC = 'docs/GDELT_SOURCE_POLICY.md';
 const PACKAGE_JSON = 'package.json';
 const GDELT_NEWS_CACHE = 'data/gdelt-news-cache.json';
 const GDELT_BUBBLE_CACHE = 'data/gdelt-bubble-watch-cache.json';
+const GDELT_WORLD_ORDER_CACHE = 'data/gdelt-world-order-cache.json';
 const SCAN_ROOTS = ['scripts', '.github/workflows', 'workers'];
 const SCAN_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.yml', '.yaml']);
 const GDELT_ENDPOINT_RE = /\b(?:https?:\/\/)?(?:api\.gdeltproject\.org|gdeltcloud\.com)\/api\/v2\b|GDELT_CLOUD_API_BASE/u;
@@ -14,9 +15,7 @@ const ALLOWED_ENDPOINT_REFERENCE_FILES = new Map([
   ['.github/workflows/test-api-secrets.yml', 'manual API secret diagnostic workflow'],
   ['scripts/check-gdelt-cloud-fetcher-integration.mjs', 'GDELT Cloud integration checker'],
   ['scripts/check-gdelt-source-policy.mjs', 'self-check allowlist and endpoint guard'],
-  ['scripts/check-workflows.mjs', 'workflow coverage checker with GDELT Cloud assertions'],
-  ['scripts/gdelt/fetch-gdelt.mjs', 'shared GDELT wrapper with serial request discipline'],
-  ['scripts/world-order/fetch-gdelt-cloud.mjs', 'registered World Order GDELT Cloud path']
+  ['scripts/gdelt/fetch-gdelt.mjs', 'shared GDELT wrapper with serial request discipline']
 ]);
 
 const REQUIRED_POLICY_PHRASES = [
@@ -28,10 +27,12 @@ const REQUIRED_POLICY_PHRASES = [
   'P36, current phase',
   'P37, current phase',
   'P38, current phase',
+  'P39, current phase',
   '6h fresh-cache or 6h error-cooldown',
   'scripts/gdelt/fetch-gdelt.mjs',
   'data/gdelt-news-cache.json',
-  'data/gdelt-bubble-watch-cache.json'
+  'data/gdelt-bubble-watch-cache.json',
+  'data/gdelt-world-order-cache.json'
 ];
 
 const REQUIRED_WRAPPER_PHRASES = [
@@ -40,6 +41,7 @@ const REQUIRED_WRAPPER_PHRASES = [
   'DEFAULT_GDELT_MAX_RETRIES',
   'DEFAULT_GDELT_MIN_INTERVAL_MS',
   'sanitizeGdeltDiagnostics',
+  'fetchGdeltCloudJson',
   'fetchGdeltDocJson'
 ];
 
@@ -64,6 +66,18 @@ const REQUIRED_BUBBLE_CACHE_PHRASES = [
   'writeGdeltBubbleWatchCache',
   'GDELT_BUBBLE_CACHE_TTL_HOURS',
   'GDELT_BUBBLE_STALE_MAX_DAYS'
+];
+
+const REQUIRED_WORLD_ORDER_CACHE_PHRASES = [
+  'fetchGdeltCloudJson',
+  'GDELT_WORLD_ORDER_CACHE_SCHEMA_VERSION',
+  'DEFAULT_GDELT_WORLD_ORDER_CACHE_OUTPUT',
+  'readGdeltWorldOrderCache',
+  'GDELT_WORLD_ORDER_CACHE_TTL_HOURS',
+  'GDELT_WORLD_ORDER_STALE_MAX_HOURS',
+  'GDELT_WORLD_ORDER_ERROR_COOLDOWN_HOURS',
+  'singleAttemptAfterCacheExpiry',
+  'maxRetries: 0'
 ];
 
 const errors = [];
@@ -220,6 +234,33 @@ function checkSharedWrapperContract() {
   if (!oilNews.includes('maxRetries: 0')) {
     fail(`${oilNewsPath} must keep ODP GDELT live attempts single-attempt after cache/cooldown expiry`);
   }
+  const worldOrderPath = 'scripts/world-order/fetch-gdelt-cloud.mjs';
+  if (!existsSync(resolve(worldOrderPath))) {
+    fail(`${worldOrderPath} missing`);
+  } else {
+    const worldOrder = readText(worldOrderPath);
+    if (!worldOrder.includes("../gdelt/fetch-gdelt.mjs") && !worldOrder.includes('../gdelt/fetch-gdelt.mjs')) {
+      fail(`${worldOrderPath} must import shared GDELT wrapper after P39`);
+    }
+    if (GDELT_ENDPOINT_RE.test(worldOrder)) {
+      fail(`${worldOrderPath} must not contain direct GDELT endpoint markers after P39`);
+    }
+    for (const phrase of REQUIRED_WORLD_ORDER_CACHE_PHRASES) {
+      if (!worldOrder.includes(phrase)) fail(`${worldOrderPath} missing P39 World Order cache phrase: ${phrase}`);
+    }
+  }
+  const worldOrderBuildPath = 'scripts/build-world-order-stress.mjs';
+  if (!existsSync(resolve(worldOrderBuildPath))) {
+    fail(`${worldOrderBuildPath} missing`);
+  } else {
+    const worldOrderBuild = readText(worldOrderBuildPath);
+    if (!worldOrderBuild.includes('DEFAULT_GDELT_WORLD_ORDER_CACHE_OUTPUT')) {
+      fail(`${worldOrderBuildPath} must write the World Order GDELT cache after P39`);
+    }
+    if (!worldOrderBuild.includes('stripBuildOnlyFields')) {
+      fail(`${worldOrderBuildPath} must strip cacheArtifact from public world-order-stress.json`);
+    }
+  }
   const bubblePath = 'scripts/build-bubble-watch.mjs';
   if (!existsSync(resolve(bubblePath))) {
     fail(`${bubblePath} missing`);
@@ -264,6 +305,25 @@ function checkSharedWrapperContract() {
     }
     if (cache.cachePolicy?.lowFrequencyCache !== true || cache.cachePolicy?.broadQueryLocalClassification !== true) {
       fail(`${GDELT_BUBBLE_CACHE} must declare lowFrequencyCache and broadQueryLocalClassification`);
+    }
+  }
+  if (!existsSync(resolve(GDELT_WORLD_ORDER_CACHE))) {
+    fail(`${GDELT_WORLD_ORDER_CACHE} missing`);
+  } else {
+    const cache = JSON.parse(readText(GDELT_WORLD_ORDER_CACHE));
+    if (cache.schemaVersion !== 'gdelt-world-order-cache-p39') {
+      fail(`${GDELT_WORLD_ORDER_CACHE} schemaVersion must be gdelt-world-order-cache-p39`);
+    }
+    if (cache.module !== 'gdelt-world-order-cache') fail(`${GDELT_WORLD_ORDER_CACHE} module must be gdelt-world-order-cache`);
+    if (cache.cacheScope !== 'world_order_gdelt_cloud') fail(`${GDELT_WORLD_ORDER_CACHE} cacheScope must be world_order_gdelt_cloud`);
+    if (cache.query?.id !== 'gdelt_world_order_conflict_country_summary') {
+      fail(`${GDELT_WORLD_ORDER_CACHE} query.id must be gdelt_world_order_conflict_country_summary`);
+    }
+    if (cache.cachePolicy?.lowFrequencyCache !== true || cache.cachePolicy?.singleAttemptAfterCacheExpiry !== true) {
+      fail(`${GDELT_WORLD_ORDER_CACHE} must declare lowFrequencyCache and singleAttemptAfterCacheExpiry`);
+    }
+    if (cache.cachePolicy?.sharedWrapper !== 'scripts/gdelt/fetch-gdelt.mjs') {
+      fail(`${GDELT_WORLD_ORDER_CACHE} must declare shared wrapper path`);
     }
   }
 }

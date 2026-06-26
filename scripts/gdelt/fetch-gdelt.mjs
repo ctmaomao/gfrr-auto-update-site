@@ -1,4 +1,5 @@
 const GDELT_DOC_API_BASE = 'https://api.gdeltproject.org/api/v2/doc/doc';
+const GDELT_CLOUD_API_BASE = 'https://gdeltcloud.com/api/v2';
 
 const DEFAULT_GDELT_TIMEOUT_MS = 20000;
 const DEFAULT_GDELT_MIN_INTERVAL_MS = 8000;
@@ -282,11 +283,42 @@ async function fetchGdeltDocJson({
   });
 }
 
+async function fetchGdeltCloudJson({
+  path = '/events/summary',
+  queryParams,
+  apiKey,
+  userAgent = DEFAULT_GDELT_UA,
+  timeoutMs = DEFAULT_GDELT_TIMEOUT_MS,
+  minIntervalMs = DEFAULT_GDELT_MIN_INTERVAL_MS,
+  maxRetries = DEFAULT_GDELT_MAX_RETRIES,
+  retryAfterCapMs = DEFAULT_GDELT_RETRY_AFTER_CAP_MS,
+  label = 'GDELT Cloud'
+} = {}) {
+  const trimmedPath = typeof path === 'string' && path.startsWith('/') ? path : `/${String(path || '')}`;
+  const params = queryParams instanceof URLSearchParams
+    ? queryParams
+    : new URLSearchParams(queryParams || {});
+  return fetchGdeltJson(`${GDELT_CLOUD_API_BASE}${trimmedPath}?${params.toString()}`, {
+    endpointType: 'cloud',
+    label,
+    headers: {
+      Authorization: `Bearer ${apiKey || ''}`,
+      'User-Agent': userAgent,
+      Accept: 'application/json'
+    },
+    timeoutMs,
+    minIntervalMs,
+    maxRetries,
+    retryAfterCapMs
+  });
+}
+
 export {
   DEFAULT_GDELT_MAX_RETRIES,
   DEFAULT_GDELT_MIN_INTERVAL_MS,
   DEFAULT_GDELT_RETRY_AFTER_CAP_MS,
   DEFAULT_GDELT_TIMEOUT_MS,
+  fetchGdeltCloudJson,
   fetchGdeltDocJson,
   sanitizeGdeltDiagnostics
 };

@@ -538,15 +538,15 @@ PortWatch 字段是 AIS-derived chokepoint proxy,本项目只保存 latest、7d/
 | 字段 | 值 |
 |---|---|
 | **License** | 商业 + free tier;需 `GDELT_CLOUD_API_KEY` Bearer |
-| **Quota** | free tier 有限,本项目 daily 1 次 |
-| **Refresh 频率** | `refresh-world-order-stress.yml` (daily) |
-| **失败 fallback** | `externalSources.gdelt.status = 'error'`;world_order 仍可 build,但 GDELT supporting branch 标记 missing |
-| **影响 scoring?** | **是 (overlay)** — 进入 World Order Stress Overlay 的 `marketConfirmation` 与 4 个 supporting narrative;**不进入** scoring/decision/execution/position 主链 |
-| **fetcher** | `scripts/world-order/fetch-gdelt-cloud.mjs` (M-59 替换 legacy GDELT DOC API) |
+| **Quota** | free tier 有限;P39 起 daily build 先读 `data/gdelt-world-order-cache.json`,12 小时内 manual rerun 不再 live 请求 |
+| **Refresh 频率** | `refresh-world-order-stress.yml` (daily);cache 超窗后最多单次 live Cloud attempt |
+| **失败 fallback** | 12h fresh cache → live single attempt → 72h stale cache → previous `data/world-order-stress.json` GDELT summary;仍不可用时标记 `error` / `not_configured` |
+| **影响 scoring?** | **overlay only** — 进入 World Order Stress Overlay;**不进入** values / main scoring / decision / execution / position / ODP oil direction / Brent promotion / Global Risk Heatmap / cross-validation |
+| **fetcher** | `scripts/world-order/fetch-gdelt-cloud.mjs` via shared wrapper `scripts/gdelt/fetch-gdelt.mjs`;cache artifact `data/gdelt-world-order-cache.json` |
 
 ### GDELT site-wide source policy
 
-P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run check:gdelt-source-policy`。GDELT 在本项目中统一定义为低频、可缓存、需退避的全球新闻代理源,不得被新增模块当作高频实时 API 直接调用。P36 起,ODP oil-news GDELT DOC 请求已迁入共享 wrapper `scripts/gdelt/fetch-gdelt.mjs`,由 wrapper 统一处理串行请求、`Retry-After`、bounded retry、timeout 与 sanitized diagnostics;ODP diagnosis helper 不再持有直接 GDELT endpoint。P37 起,ODP GDELT 改为单条 broad query + 本地 bucket 分类,并落地 `data/gdelt-news-cache.json` compact cache。P39a 起,Oil News GDELT DOC 增加 6 小时 fresh cache、24 小时 stale fallback、6 小时 error cooldown 与 single-attempt live policy,降低 429 风险。P38 起,Bubble Watch `ceo_hedging` 也迁入共享 wrapper,并新增 `data/gdelt-bubble-watch-cache.json` compact cache;Refresh Bubble Watch 周一提交该 cache,source-health audit 只读运行后恢复该文件。当前登记的 GDELT endpoint 引用只允许存在于共享 wrapper、World Order GDELT Cloud fetcher、GDELT 相关 checker 和手动 API secret diagnostic workflow。新增 GDELT endpoint 字符串或 runtime 直连必须先更新 source policy 并通过 checker;后续整改方向为迁移 World Order 读取 wrapper/cache。P39a 不改变 World Order/ODP/Bubble Watch scoring 或 frontend display behavior。
+P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run check:gdelt-source-policy`。GDELT 在本项目中统一定义为低频、可缓存、需退避的全球新闻代理源,不得被新增模块当作高频实时 API 直接调用。P36 起,ODP oil-news GDELT DOC 请求已迁入共享 wrapper `scripts/gdelt/fetch-gdelt.mjs`,由 wrapper 统一处理串行请求、`Retry-After`、bounded retry、timeout 与 sanitized diagnostics;ODP diagnosis helper 不再持有直接 GDELT endpoint。P37 起,ODP GDELT 改为单条 broad query + 本地 bucket 分类,并落地 `data/gdelt-news-cache.json` compact cache。P39a 起,Oil News GDELT DOC 增加 6 小时 fresh cache、24 小时 stale fallback、6 小时 error cooldown 与 single-attempt live policy,降低 429 风险。P38 起,Bubble Watch `ceo_hedging` 也迁入共享 wrapper,并新增 `data/gdelt-bubble-watch-cache.json` compact cache;Refresh Bubble Watch 周一提交该 cache,source-health audit 只读运行后恢复该文件。P39 起,World Order GDELT Cloud 也迁入共享 wrapper + `data/gdelt-world-order-cache.json`:12 小时 fresh cache、72 小时 stale fallback、6 小时 error cooldown、cache 过期后单次 live Cloud attempt;`refresh-world-order-stress.yml` 同步提交该 cache。当前登记的 GDELT endpoint 引用只允许存在于共享 wrapper、GDELT 相关 checker 和手动 API secret diagnostic workflow。新增 GDELT endpoint 字符串或 runtime 直连必须先更新 source policy 并通过 checker。P39 不改变 World Order/ODP/Bubble Watch scoring 或 frontend display behavior。
 
 ---
 

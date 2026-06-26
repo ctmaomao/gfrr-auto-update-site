@@ -43,7 +43,7 @@ GDELT status 规则：
 
 - `ok`：核心 query 多数成功，并生成非空摘要。
 - `partial`：至少一个 query 成功，即使其它 query 失败或出现 429，也使用成功数据生成当前摘要。
-- `stale`：本轮 query 全部失败，但旧 `data/world-order-stress.json` 中有可复用 GDELT summary；此时使用缓存并记录 cache reason。
+- `stale`：本轮 Cloud live query 不可用，但 `data/gdelt-world-order-cache.json` 的 72 小时 stale cache 或旧 `data/world-order-stress.json` 中有可复用 GDELT summary；此时使用缓存并记录 cache reason。
 - `error`：本轮 query 全部失败且没有旧 summary 可用。
 
 `partial` / `stale` 会降低 confidence，但不会让模块崩溃，也不会把单个 429 伪装成成功。
@@ -89,14 +89,15 @@ sanitizer 读取 `manual-artifacts/world-order/acled-input/weekly/` 下的本地
 ## 缓存与失败策略
 
 - 单源失败不覆盖旧成功缓存为空。
-- 如果旧 `data/world-order-stress.json` 中有该源摘要，本轮可沿用旧摘要并标记 `stale`。
+- P39 起,GDELT Cloud 优先使用 `data/gdelt-world-order-cache.json`:12 小时内 fresh cache 直接读取;cache 超窗后最多单次 live Cloud attempt;live 失败但 72 小时内有 cache 时标记 `stale`;近期 error cache 6 小时内不重复硬打。
+- 如果 GDELT cache 不可用但旧 `data/world-order-stress.json` 中有该源摘要，本轮可沿用旧摘要并标记 `stale`。
 - 如果没有旧缓存，则输出明确 empty summary，并标记 `error` / `manual_required` / `not_configured`。
 - 外部源失败会降低 `confidence`，但不会阻止最终 JSON 生成。
 - 不允许输出 `NaN`、`undefined` 或空白字段。
 
 ## 构建与检查
 
-`npm run build:world-order` 用于显式刷新 World Order Stress 数据。它会访问 GDELT / OFAC,读取 SIPRI / ACLED 本地派生文件,并写入 `data/world-order-stress.json`。因此 build:world-order is manual / explicit because it fetches external data and writes data/world-order-stress.json。
+`npm run build:world-order` 用于显式刷新 World Order Stress 数据。它会访问 GDELT / OFAC,读取 SIPRI / ACLED 本地派生文件,并写入 `data/world-order-stress.json`;P39 起,GDELT Cloud 成功或缓存命中时也会写入 `data/gdelt-world-order-cache.json`。因此 build:world-order is manual / explicit because it fetches external data and writes data/world-order-stress.json plus the GDELT cache artifact。
 
 `npm run check:world-order` 只验证现有 `data/world-order-stress.json` 的结构、枚举、分数范围、证据字段和禁止文案，不抓取外部数据，不重写数据文件。
 
@@ -104,7 +105,7 @@ sanitizer 读取 `manual-artifacts/world-order/acled-input/weekly/` 下的本地
 
 ### 当前自动刷新与 history 交互
 
-当前仓库已经存在 `refresh-world-order-stress.yml` daily workflow (`0 23 * * *`)。它会运行 `npm run build:world-order` 并提交 `data/world-order-stress.json`; build step 使用 `continue-on-error: true`。`build-daily-radar-data.yml` 在 `30 22 * * *` 先运行，写入 `data/radar-data.json`、`data/radar-history.json` 与 `data/radar-history-full.json`。
+当前仓库已经存在 `refresh-world-order-stress.yml` daily workflow (`0 23 * * *`)。它会运行 `npm run build:world-order` 并提交 `data/world-order-stress.json` 与 `data/gdelt-world-order-cache.json`; build step 使用 `continue-on-error: true`。`build-daily-radar-data.yml` 在 `30 22 * * *` 先运行，写入 `data/radar-data.json`、`data/radar-history.json` 与 `data/radar-history-full.json`。
 
 因此 Daily history 注入 World Order overlay 时，读取到的通常是上一轮已经提交的 `data/world-order-stress.json`，而不是 23:00 当轮尚未生成的文件。history snapshot 必须记录 `worldOrderStress.observedAt = data/world-order-stress.json.updatedAt`，并由前端用 observedAt 判断 insufficient history 与 stale tail。
 
@@ -112,7 +113,7 @@ Overlay history accumulation 只用于 `#macro-risk-overview` 的趋势展示。
 
 ## v28.0H-4 手动刷新与工作流准备
 
-当前 World Order Stress 使用手动刷新，不自动刷新，不新增 scheduled workflow。scheduled refresh 后续再评估，因为 GDELT 仍可能 timeout / 429，外部源刷新频率不应过高，先观察手动刷新稳定性。
+历史 H-4 阶段使用手动刷新;当前已存在 scheduled workflow。P39 后,GDELT Cloud 仍按低频代理源处理,通过 `data/gdelt-world-order-cache.json` 限制 manual rerun 与 scheduled rerun 对 Cloud API 的重复请求。
 
 手动刷新：
 
@@ -120,7 +121,7 @@ Overlay history accumulation 只用于 `#macro-risk-overview` 的趋势展示。
 npm run build:world-order
 ```
 
-`build:world-order` 会访问 GDELT / OFAC,读取 SIPRI / ACLED 本地派生文件,并写入 `data/world-order-stress.json`。构建完成后会输出 World Order Stress Build Summary，包含 score、state、confidence、freshness、GDELT / OFAC / SIPRI / ACLED 状态、marketConfirmation 输入源和 warnings。
+`build:world-order` 会访问 GDELT / OFAC,读取 SIPRI / ACLED 本地派生文件,并写入 `data/world-order-stress.json`;GDELT Cloud 分支会优先读/写 `data/gdelt-world-order-cache.json`。构建完成后会输出 World Order Stress Build Summary，包含 score、state、confidence、freshness、GDELT / OFAC / SIPRI / ACLED 状态、marketConfirmation 输入源和 warnings。
 
 本地检查：
 

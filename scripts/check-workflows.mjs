@@ -159,6 +159,7 @@ const contracts = [
       'continue-on-error: true',
       'npm run check:world-order',
       'data/world-order-stress.json',
+      'data/gdelt-world-order-cache.json',
       'chore: refresh world order stress'
     ],
     forbidden: [
@@ -1033,7 +1034,9 @@ if (fs.existsSync(worldOrderGdeltFile)) {
   const text = fs.readFileSync(worldOrderGdeltFile, 'utf8');
   for (const needle of [
     'GDELT_CLOUD_API_KEY',
-    'https://gdeltcloud.com/api/v2',
+    '../gdelt/fetch-gdelt.mjs',
+    'fetchGdeltCloudJson',
+    'DEFAULT_GDELT_WORLD_ORDER_CACHE_OUTPUT',
     'KEY_CONFLICT_REGIONS',
     'successCount',
     'usedCachedSummary',
@@ -1116,8 +1119,9 @@ if (!fs.existsSync(worldOrderDocFile)) {
     '示例数据不会参与评分',
     'v28.0H-4',
     '手动刷新',
-    '不自动刷新',
-    'scheduled refresh 后续再评估',
+    'scheduled workflow',
+    'data/gdelt-world-order-cache.json',
+    'P39',
     'GDELT stale / partial 可接受条件',
     'v28.0H-4A',
     'diagnose:gdelt',
