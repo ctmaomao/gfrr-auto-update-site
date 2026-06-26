@@ -82,6 +82,20 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
+function writeJsonAtomically(filePath, value) {
+  const dir = path.dirname(filePath);
+  const base = path.basename(filePath);
+  const tmpPath = path.join(dir, `.${base}.${process.pid}.${Date.now()}.tmp`);
+
+  try {
+    fs.writeFileSync(tmpPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+    fs.renameSync(tmpPath, filePath);
+  } catch (error) {
+    if (fs.existsSync(tmpPath)) fs.rmSync(tmpPath, { force: true });
+    throw error;
+  }
+}
+
 function getPath(root, fieldPath) {
   let current = root;
   for (const field of fieldPath.split('.')) {
@@ -172,7 +186,7 @@ function writeProductionData(targetPath, layer, expectedDisplayState) {
     externalAiInterpretationLayer: layer,
   };
 
-  fs.writeFileSync(targetPath, `${JSON.stringify(nextData, null, 2)}\n`);
+  writeJsonAtomically(targetPath, nextData);
 }
 
 function main() {
