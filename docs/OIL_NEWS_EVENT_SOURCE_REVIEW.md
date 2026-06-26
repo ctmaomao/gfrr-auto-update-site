@@ -210,6 +210,55 @@ is to decide whether GDELT should remain a noisy backup while Tavily/Brave do th
 cross-checking, and whether `NEWS EVENT WATCH` should keep the same source-health
 and fallback wording.
 
+## P52 Claim Ledger Review
+
+P52 adds a manual/local no-network claim-ledger helper:
+
+```text
+scripts/oil-directional/review-oil-news-claim-ledger.mjs
+npm run review:oil-news-claim-ledger
+npm run check:oil-news-claim-ledger-review
+```
+
+The helper reads recent sanitized `data/oil-news-event-watch.json` samples from
+git history by default, or tracked fixtures / ignored manual artifacts with
+repeated `--input` or `--input-dir`. It uses the already-sanitized compact title
+inside the review process only, then writes an ignored ledger artifact:
+
+```text
+manual-artifacts/oil-news/oil-news-claim-ledger-latest.json
+```
+
+The ledger output intentionally does not include original article titles or URLs.
+Each compact claim is represented by `titleHash`, domain, source tier, event type,
+claim polarity, bucket ids, query ids and trigger-term classes. This allows manual
+review of the event structure without creating a new headline-display surface.
+
+Claim polarity values:
+
+- `risk_escalation`: closure, blockade, mine, attack, outage, sanction, explosion
+  or similar high-risk language;
+- `risk_deescalation`: reopening, resume, restart, return, lifted, waiver, truce
+  or similar risk-premium easing language;
+- `mixed_or_contested`: escalation and de-escalation language in the same claim;
+- `market_reaction_only`: price / futures / spread / trader reaction without a
+  direct event claim;
+- `unclear_or_high_claim`: not enough structure to classify safely.
+
+The review also reports event-type counts, source-tier counts, and whether the
+same event family contains mixed escalation and de-escalation claims. That mixed
+state is the key P52 behavior: a high bucket count no longer automatically means
+"oil supply risk up"; it can instead mean "news claims conflict and require human
+review."
+
+P52 does not access network sources or read API keys. It does not write
+`data/*.json`, `realtime/*.json`, production config files or frontend assets. It
+does not approve headline display, confirm Hormuz closure/reopening, tanker-flow
+facts, facility incidents, sanctions impact, supply interruptions or oil-price
+direction. It does not change ODP classifier, `finalBias`, global overlay, values,
+scoring, decision, execution, position, Brent promotion, Global Risk Heatmap or
+cross-validation.
+
 ## Query Buckets
 
 The initial query set intentionally focuses on ODP-relevant events:
