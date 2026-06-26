@@ -872,7 +872,7 @@ function buildBrentPromotionDecision(anchorDetail, brentValidation, nowMs, previ
     selectedValue,
     selectedSource: 'yahoo:BZ=F+tradingeconomics:brent-crude-oil-average',
     selectedObservedAt: yahoo.timestamp ?? null,
-    confidence: moveAssessment.moveStatus === 'confirmed-extreme-move' ? 'high' : 'high',
+    confidence: 'high',
     reason: moveAssessment.moveStatus === 'confirmed-extreme-move'
       ? 'promoted-confirmed-extreme-move-with-fresh-yahoo-and-tradingeconomics-confirmation'
       : 'promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation',
