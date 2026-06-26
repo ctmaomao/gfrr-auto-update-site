@@ -13,7 +13,7 @@
 
 - **整体结论**：GFRR v28.0.10 在 v28.0J 稳定基线上**未发现基线边界违反或活跃安全漏洞**。6 条核心架构边界（解释层↔决策层隔离、External AI 隔离、版本分离、secondary diagnostics 隔离、World Order overlay、Brent freshness gate）均合规。三位成员独立产出后由主理人交叉验证关键发现点并去重合并。
 - **严重度分布（原始审查）**：🔴严重 0 项 / 🟠高 4 项 / 🟡中 14 项 / 🟢低 8 项
-- **整改复核（2026-06-26）**：4 项高优先级问题已全部关闭；#7/#8/#9/#10/#14 已关闭；#21 经当前代码复核后关闭；#23 降级为可选语义/fixture 补盲。剩余项均为 P1/P2 渐进式加固或需另开版本评审事项。
+- **整改复核（2026-06-26）**：4 项高优先级问题已全部关闭；#7/#8/#9/#10/#14/#15/#19/#20 已关闭；#21 经当前代码复核后关闭；#23 降级为可选语义/fixture 补盲。剩余项均为 P1/P2 渐进式加固或需另开版本评审事项。
 
 ---
 
@@ -27,7 +27,7 @@
 | 关键行动项 | 7 条（见文末行动清单） |
 | 基线边界违反 | 无 |
 | 活跃安全漏洞 | 无 |
-| 建议下一步 | ① #15/#16/#20 按架构/文档评审处理；② #17/#18/#22 作为测试盲区加固分批推进；③ #5/#6/#11/#12/#13 作为剩余 Cody 中优先级项分批处理 |
+| 建议下一步 | ① #17/#18/#22 作为测试盲区加固分批推进；② #5/#6/#11/#12/#13 作为剩余 Cody 中优先级项分批处理；③ #16 需另开版本评审 |
 
 ---
 
@@ -44,9 +44,9 @@
 | #9 前端动态 innerHTML | ✅ 已关闭 | `scripts/app.js` 与 `renderMacroOverview.js` 的动态 `innerHTML` 已改为 `textContent`/DOM 节点创建，保留 `<strong>` / `<sup>` 视觉结构；新增 `check:frontend-safe-dom-rendering`，frontend asset 已 bump |
 | #10 OFAC URL allowlist | ✅ 已关闭 | `fetch-ofac.mjs` 已限制 HTTPS + `ofac.treasury.gov` allowlist；无效 config 走现有 fail-closed fallback；`check:workflows` 加回归守卫 |
 | #14 TE HTML price fallback regex 过宽 | ✅ 已关闭 | `parsePriceFromHtml` 最后 fallback 已要求 `$`/price/last/close/value/USD/dollars 上下文并缩小窗口；`check:workflows` 加回归守卫 |
-| #15 ADR-0002 路径 | ✏️ 已改写为待办 | 正确路径为 `docs/ADR/0002-worker-first-realtime.md`，问题仍有效 |
-| #20 ADR-0008 路径/措辞 | ✏️ 已改写为待办 | 正确路径为 `docs/ADR/0008-external-ai-read-only.md`，需区分 rule-based layer 与 live external layer |
-| #19 CI workflow 计数 | ✏️ 已改写为待办 | `CLAUDE.md` 仍写 GitHub Actions ×12；当前 `.github/workflows` 为 21 个文件，应改为“以目录实际文件为准”或更新为 21 |
+| #15 ADR-0002 路径 / M-94 Path C ADR 缺口 | ✅ 已关闭 | 新增 `docs/ADR/0018-m94-path-c-static-frontend-runtime.md`；`docs/ADR/0002-worker-first-realtime.md` 追加 amendment，`docs/ADR/0007-effective-display-inputs-canonical.md` 追加 clarification，标注前端 strict gate 已由 ADR-0018 superseded |
+| #20 ADR-0008 external AI 措辞 stale | ✅ 已关闭 | `docs/ADR/0008-external-ai-read-only.md` 追加 clarification，区分 rule-based `aiInterpretationLayer` 与 live read-only `externalAiInterpretationLayer` |
+| #19 CI workflow 计数 | ✅ 已关闭 | `CLAUDE.md` 不再硬编码 GitHub Actions ×12，改为以 `.github/workflows/` 实际文件为准；当前复核文件数为 21 |
 | #21 Pages failure-trigger 噪音 | ✅ 已关闭 | 当前 `.github/workflows/deploy-static-site-to-pages.yml` 已有 `if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'` |
 | #23 treasury scripts 语法盲区 | ⬇️ 已降级 | `check:syntax` 已覆盖 `scripts/treasury-fiscal-data/*.mjs` 语法；剩余只是可选语义/fixture check |
 
@@ -89,7 +89,7 @@
 | 12 | 可维护性 | workers/gfrr-realtime-worker/src/index.js:434-547 | 5 个几乎完全相同的函数（`fetchCboeVixLatest`/`fetchYahooGoldSecondaryLatest`/`fetchYahooDxySecondaryLatest`/`fetchYahooUs10ySecondaryLatest`/`fetchYahooSpxSecondaryLatest`），仅 URL 和 parser 不同，约 110 行重复代码。 | 抽取为单一参数化函数 `fetchSecondarySource(url, parser, sourceName)` | Cody |
 | 13 | 可维护性 | scripts/modules/decision.js:351-386 | `calculateStrategyStateEngine` 大量魔法数字：`+=18`/`+=10`/`+=6`/`-=14`/`+=24`/`+=14`/`+=12` 等，无命名常量，直接影响策略状态判定。 | 提取为命名常量对象 `SCORE_BUMP = { RECENT3D_DELTA_LARGE: 18, ... }` | Cody |
 | 14 | 正确性（已关闭） | workers/gfrr-realtime-worker/src/worker-market-preview.js:1004 | 原始发现：`parsePriceFromHtml` 最后 regex 可匹配 "Brent" 后 600 字符内任意 2-3 位数字。虽仅用于 TE 诊断候选（不参与 promotion consensus），但错误值会出现在 diagnostic 输出。 | ✅ 已修复：fallback regex 已要求 `$`/price/last/close/value/USD/dollars 上下文并缩小窗口；`check:workflows` 加回归守卫 | Cody |
-| 15 | 架构 | docs/ADR/0002-worker-first-realtime.md point 2 | ADR-0002 point 2「前端 strict gate 校验 worker preview 新鲜度」描述的是 M-94 前架构。M-94 V0 路径 C 后前端改读静态快照，不跑 strict gate。新接手者读 ADR-0002 会误以为前端仍跑 strict gate。 | 新开 ADR-0018 记录 M-94 V0 路径 C 决策；ADR-0002 追加 amendment 标注 point 2 superseded | Archi |
+| 15 | 架构（已关闭） | docs/ADR/0002-worker-first-realtime.md point 2 | 原始发现：ADR-0002 point 2「前端 strict gate 校验 worker preview 新鲜度」描述的是 M-94 前架构。M-94 V0 路径 C 后前端改读静态快照，不跑 strict gate。 | ✅ 已修复：新增 ADR-0018 记录 M-94 Path C 静态前端 runtime；ADR-0002 追加 amendment，ADR-0007 追加 clarification，标注前端 strict gate 已由 ADR-0018 superseded | Archi |
 | 16 | 架构 | scripts/run-daily-pipeline.mjs:2463-2467 | Daily pipeline 开头检查 `previous?.externalAiInterpretationLayer`，若缺失/不符合 production-contract 直接 `throw`，阻断整个 Daily 构建。External AI 本应是「可禁用的只读展示层」（ADR-0008: 禁用不影响决策），但硬依赖 guard 使 External AI 层缺失会阻断 Daily pipeline，间接违背设计意图。 | **[需另开版本评审]** 将硬 throw 降级为 soft warning + fallback to null/placeholder layer。当前基线下记录为技术债 | Archi |
 | 17 | 测试盲区 | bubble-watch.html + 渲染脚本 | `check:dom` 只校验 `index.html` vs `scripts/modules/*.js`。`bubble-watch.html` 是独立第二页面，其渲染 id 无契约守门。改名/typo 导致渲染静默失败。 | 新增 `check-bubble-watch-dom.mjs`：校验 bubble-watch 渲染脚本写入的字面 id 在 bubble-watch.html 中存在 | Tessa |
 | 18 | 测试盲区 | data/market-pricing-metrics.json | 365KB 生产数据文件被前端 `renderMacroOverview.js` 消费，但 `check:market-pricing` suite 的 7 leaf 校验 history/scaffold/calculation 逻辑，不直接校验该 JSON 的 schema。schema 漂移导致前端渲染 undefined/NaN。 | 新增 `check-market-pricing-metrics-schema.mjs`：校验必需字段、数值类型、asset 覆盖，接入 check:market-pricing suite | Tessa |
@@ -98,8 +98,8 @@
 
 | # | 类别 | 文件/位置 | 问题描述 | 建议修复 | 来源 |
 |---|------|-----------|---------|---------|------|
-| 19 | 文档漂移 | CLAUDE.md tech stack 表 | 称「CI ×12」，当前 `.github/workflows` 为 21 个 workflow 文件。 | ×12 → “以 .github/workflows/ 实际文件为准”，或更新为 21 | Archi + Tessa |
-| 20 | 文档 stale | docs/ADR/0008-external-ai-read-only.md point 3 | 「当前默认 generatedByExternalAi=false、不调用任何 provider」描述 pre-production 态。当前 externalAiInterpretationLayer 已 live（provider=deepseek, status=valid）。 | reconcile point 3 措辞，区分 rule-based `aiInterpretationLayer`（仍不调 provider）与 `externalAiInterpretationLayer`（已 live） | Archi |
+| 19 | 文档漂移（已关闭） | CLAUDE.md tech stack 表 | 原始发现：称「CI ×12」，当前 `.github/workflows` 为 21 个 workflow 文件。 | ✅ 已修复：不再硬编码数量，改为“数量以 `.github/workflows/` 实际文件为准” | Archi + Tessa |
+| 20 | 文档 stale（已关闭） | docs/ADR/0008-external-ai-read-only.md point 3 | 原始发现：「当前默认 generatedByExternalAi=false、不调用任何 provider」描述 pre-production 态。当前 externalAiInterpretationLayer 已 live（provider=deepseek, status=valid）。 | ✅ 已修复：ADR-0008 追加 clarification，区分 rule-based `aiInterpretationLayer` 与 live read-only `externalAiInterpretationLayer` | Archi |
 | 21 | CI 噪音（已关闭） | deploy-static-site-to-pages.yml:18-19 / job if | 原始担忧：`workflow_run: types: [completed]` 可能让失败 upstream 触发 deploy run。当前复核发现 deploy job 已有 success conclusion gate。 | ✅ 已关闭：当前 `jobs.deploy.if` 已要求 `workflow_run.conclusion == 'success'`，无需改动 | Archi |
 | 22 | 测试盲区 | realtime/market.json 本地文件 | `validate-data.mjs` 仅校验文件存在 + JSON.parse + 部分 cross-validation。详细 schema 校验在 `check-realtime-health.mjs`（URL fetch，非本地文件）。本地快照结构异常只在 Daily check:data 间接暴露。 | 新增 `check-realtime-local-schema.mjs`：校验 values/sourceMode/healthScore/brentValidation 结构 | Tessa |
 | 23 | 测试盲区（已降级） | scripts/treasury-fiscal-data/*.mjs | 原始担忧：3 个脚本有 npm script 但无 check:* 守门。当前复核：`check:syntax` 已递归覆盖 `scripts/treasury-fiscal-data/*.mjs` 的语法检查。 | ⬇️ 降级为可选语义/fixture check；不再作为语法盲区 | Tessa |
@@ -122,15 +122,15 @@
 | 5 | secondary diagnostics 隔离 | 🟢合规 | Worker 独立 endpoint `/market.secondary-preview.json` + 独立 KV key `market:secondary-preview` + sourceMode='secondary-preview' |
 | 6 | World Order 是 regime overlay | 🟢合规 | app.js:74 只 fetch 静态快照，不接 decisionModel/scoring |
 | 7 | CI/CD workflows 架构 | 🟢合规 | deploy workflow 虽监听 `completed`，但 job-level `if` 已要求 upstream conclusion success（发现 #21 已关闭） |
-| 8 | ADR-0002 Worker-first | 🟡部分 stale | point 2「前端 strict gate」已由 M-94 V0 路径 C 改变（见发现 #15） |
+| 8 | ADR-0002 Worker-first | 🟢已补 ADR | point 2「前端 strict gate」已由 ADR-0018 记录的 M-94 V0 路径 C 静态前端 runtime supersede |
 | 9 | ADR-0007 effectiveDisplayInputs | 🟢合规 | freshness.js 共享信任闸门 + realtime.js buildEffectiveDisplayInputs 合成（冻结但合规） |
 | 10 | ADR-0017 Wind paid fallback | 🟢合规（重点观察） | Wind 可进主分数，经 source-policy 仲裁 + score-impact guard + env + API key 四重门。评分输入面扩大——付费源首次进入 scoring |
 
 ### ADR 合规性总览
 
 - 🟢合规：ADR-0001（零依赖）/ 0003（secondary）/ 0004（World Order）/ 0005（console.log）/ 0007（effectiveDisplayInputs）/ 0009（Brent freshness）/ 0017（Wind fallback）
-- 🟡部分 stale / 措辞 stale：ADR-0002 point 2（见发现 #15）/ ADR-0008 point 3（见发现 #20）
-- **ADR 缺口**：M-94 V0 路径 C 前端重写是重大架构变更，但无对应 ADR。建议新开 ADR-0018。
+- 🟢已补充：ADR-0002 point 2 已由 ADR-0018 supersede；ADR-0008 已追加 rule-based layer vs live external layer clarification
+- **ADR 缺口已关闭**：M-94 V0 路径 C 前端重写已由 ADR-0018 记录。
 
 ### 耦合热点
 
@@ -209,7 +209,7 @@
 | 2 | write-external-ai-production-data.mjs:175 改用 writeJsonAtomically 原子写入（参照 qqq-yahoo-history-refresh.mjs 模式） | pipeline 开发 | P0 | 否 | ✅ 已完成：`57027461` |
 | 3 | config.js `workerFirstEnabled` 旁加 FROZEN 注释；realtime.js 顶部加 `@frozen` JSDoc；新增静态 `check-realtime-js-frozen.mjs` 接入 check:all；asset bump helper 跳过 frozen module | 前端/测试 | P0 | 否 | ✅ 已完成：`75d442db` |
 | 4 | 新增 `check-worker-syntax.mjs`：递归 `node --check workers/gfrr-realtime-worker/src/*.js`，接入 check:all（check:syntax 之后） | 测试 | P0 | 否 | ✅ 已完成：`73c2f7a2` |
-| 5 | 新开 ADR-0018 记录 M-94 V0 路径 C 前端重写决策；ADR-0002 追加 amendment 标注 point 2 superseded | 架构 | P1 | 否 | 下一迭代 |
+| 5 | 新开 ADR-0018 记录 M-94 V0 路径 C 前端重写决策；ADR-0002 追加 amendment 标注 point 2 superseded | 架构 | P1 | 否 | ✅ 已完成 |
 | 6 | 修复剩余 Cody 中优先级问题（#5/#6 realtime.js response.ok/error 类型、#11/#13 魔法数字、#12 重复函数） | 多角色 | P1 | 否 | 后续迭代分批 |
 | 7 | 新增 `check-bubble-watch-dom.mjs` + `check-market-pricing-metrics-schema.mjs` 补测试盲区 | 测试 | P1 | 否 | 后续迭代 |
 

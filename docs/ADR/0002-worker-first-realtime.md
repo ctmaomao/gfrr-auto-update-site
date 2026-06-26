@@ -40,3 +40,18 @@ Actions 兜底。
 ⚠️ **NEVER** 把 Daily pipeline 的主输入从 `realtime-data` 切到 Worker
 endpoint (违反会破坏 Daily 与 realtime 的 baseline-vs-overlay 关系);
 任何切换需另开 ADR。
+
+## 2026-06-26 Amendment: frontend strict gate superseded by ADR-0018
+
+Decision point 2 described the pre-M-94 frontend behavior. M-94 V0 Path C
+changed the current homepage frontend into a static Daily snapshot reader:
+the homepage now reads `data/radar-data.json` and does not import or run the
+old frontend worker strict gate. The retained `scripts/modules/realtime.js`
+module is intentionally frozen and unconnected.
+
+Worker-generated `/market.worker-preview.json` remains the main Worker
+realtime preview endpoint for Worker health and diagnostics. Daily pipeline
+input still remains GitHub `realtime-data`, as stated above.
+
+The current frontend runtime decision is recorded in
+[ADR-0018](0018-m94-path-c-static-frontend-runtime.md).

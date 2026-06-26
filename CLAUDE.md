@@ -16,7 +16,7 @@ Global Financial Risk Radar (GFRR) v28 — 每日更新的机构级宏观风险�
 | Frontend | Vanilla JS + ES modules + 单页 `index.html`,无框架、无打包器 |
 | Realtime | Cloudflare Workers + KV (`workers/gfrr-realtime-worker`) |
 | Data | JSON files in `data/`,无数据库 |
-| CI/CD | GitHub Actions × 12 → GitHub Pages |
+| CI/CD | GitHub Actions（数量以 `.github/workflows/` 实际文件为准）→ GitHub Pages |
 | Dependencies | **0 production deps**,只声明 engines |
 
 ## Key commands

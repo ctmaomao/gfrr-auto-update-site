@@ -47,6 +47,21 @@
 ⚠️ **NEVER** 修改 `dxy` / `rt-dxy` / `values.dxy` / `displayInputsBaseline.dxy`
 等字段名 (内部契约依赖)。
 
+## 2026-06-26 Clarification: M-94 Path C static frontend
+
+Decision point 2 describes the pre-M-94 frontend overlay path. Under the
+current M-94 V0 Path C runtime recorded in
+[ADR-0018](0018-m94-path-c-static-frontend-runtime.md), the homepage frontend
+does not run `buildRuntimeState` or strict-gate Worker preview in-browser.
+
+For the current homepage, `data.__effectiveDisplayInputs` is consumed from the
+static Daily snapshot in `data/radar-data.json`. The frozen
+`scripts/modules/realtime.js` path may still contain the older overlay
+composition logic, but it is intentionally unconnected to the current frontend.
+
+The canonical display rule still holds: renderers must not bypass
+`data.__effectiveDisplayInputs` to read raw realtime values directly.
+
 ## References
 
 - `docs/DATA_CONTRACT.md`

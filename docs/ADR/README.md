@@ -26,6 +26,7 @@
 | [ADR-0015](0015-move-bond-volatility-structural-gate.md) | MOVE (债券/利率波动率) enters via structural gating, not a 7th risk module | Accepted |
 | [ADR-0016](0016-bubble-watch-second-page.md) | AI 泡沫监测作为第二独立页面 + 自有周更数据管线 (display-only) | Accepted |
 | [ADR-0017](0017-main-score-wind-fallback-policy.md) | Wind paid fallback may enter main radar scoring only through source arbitration and replay gates | Accepted |
+| [ADR-0018](0018-m94-path-c-static-frontend-runtime.md) | M-94 Path C frontend consumes static daily snapshot | Accepted |
 
 ## Superseded
 
