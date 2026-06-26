@@ -17,6 +17,9 @@
 // artifact; the renderer still must not read article lists or expose headlines.
 // P50: satellite thermal watch must expose baseline quality/sample-window copy
 // and keep the short-window starter caveat visible.
+// P54: cross-confirmation may compare oil-news, market, satellite/facility and
+// EIA layers only as display-only confirmation text. It must not change ODP
+// finalBias or promote any single source into a confirmed event.
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -90,6 +93,19 @@ for (const marker of [
 }
 if (!src.includes('sampleWindowDays') || !src.includes('sampleCount') || !src.includes('starter_short_window')) {
   fail('ODP satellite thermal baseline copy must read sampleWindowDays and starter_short_window');
+}
+if (!src.includes('renderCrossConfirmation') || !src.includes('odp-cross-confirmation-status')) {
+  fail('ODP renderer must expose P54 cross-confirmation display-only status');
+}
+for (const marker of [
+  '高频未跟随 EIA',
+  '只读比较新闻、市场、卫星/设施与 EIA 是否同向',
+  '不改 ODP 方向结论',
+  '不确认断供',
+]) {
+  if (!src.includes(marker)) {
+    fail(`ODP cross-confirmation copy must preserve marker: ${marker}`);
+  }
 }
 
 if (errors.length > 0) {

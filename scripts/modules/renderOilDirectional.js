@@ -139,6 +139,13 @@ const ENERGY_TEXT_IDS = [
   'odp-thermal-baseline-quality',
   'odp-thermal-signal',
   'odp-thermal-note',
+  'odp-cross-confirmation-status',
+  'odp-cross-confirmation-eia',
+  'odp-cross-confirmation-market',
+  'odp-cross-confirmation-news',
+  'odp-cross-confirmation-thermal',
+  'odp-cross-confirmation-summary',
+  'odp-cross-confirmation-note',
   'odp-qc-ledger-status',
   'odp-qc-ledger-wpsr',
   'odp-qc-ledger-odp',
@@ -387,6 +394,7 @@ function clearEnergyAddendum() {
   setToneClass('odp-news-event-claim-polarity', 'odp-news-claim-polarity', '');
   setToneClass('odp-thermal-status', 'odp-thermal-status', '');
   setToneClass('odp-thermal-baseline-quality', 'odp-thermal-baseline-quality', '');
+  setToneClass('odp-cross-confirmation-status', 'odp-cross-confirmation-status', '');
   setToneClass('odp-qc-ledger-status', 'odp-qc-ledger-status', '');
   setToneClass('odp-energy-spare-regime', 'odp-energy-regime', '');
   const coreHost = $('odp-energy-transport-core');
@@ -1160,6 +1168,203 @@ function renderSatelliteThermalWatch(oilThermalWatchData) {
   setLeafText('odp-thermal-signal', thermalSignalText(data));
   setLeafText('odp-thermal-note', thermalNoteText(data));
 }
+function officialEiaRows(oilData) {
+  const evidence = oilData && oilData.evidence && typeof oilData.evidence === 'object' ? oilData.evidence : {};
+  return Object.values(evidence).filter((row) => row && row.latencyTier === 'T2_weekly_official_anchor');
+}
+function crossEiaLayer(oilData) {
+  const rows = officialEiaRows(oilData);
+  const liveCount = rows.filter((row) => row.sourceStatus === 'live').length;
+  const dates = [...new Set(rows.map((row) => row.asOfDate).filter(Boolean))];
+  const ages = rows.map((row) => firstNumber(row.ageDays)).filter(Number.isFinite);
+  const maxAge = ages.length ? Math.max(...ages) : null;
+  const physicalBias = oilData?.interpretation?.physicalBias || oilData?.finalBias || 'insufficient_data';
+  const tight = ['strong_bullish', 'moderate_bullish', 'product_crisis', 'false_down_physical_stress'].includes(physicalBias);
+  const loose = ['bearish', 'false_up_unconfirmed'].includes(physicalBias);
+  const stance = tight ? 'tight' : loose ? 'loose' : physicalBias === 'neutral_range' ? 'neutral' : 'unknown';
+  const label = stance === 'tight'
+    ? 'EIA 周度锚偏紧'
+    : stance === 'loose'
+      ? 'EIA 周度锚偏松'
+      : stance === 'neutral'
+        ? 'EIA 周度锚中性'
+        : 'EIA 周度锚待核';
+  const dateText = dates.length === 1 ? dates[0] : (dates.length ? `${dates.length} 个日期` : '日期待核');
+  const ageText = maxAge !== null ? ` · ${Math.round(maxAge)}天龄` : '';
+  const liveText = rows.length ? `${liveCount}/${rows.length}源 live` : '官方源待核';
+  return {
+    stance,
+    text: `${label} · ${liveText} · ${dateText}${ageText}`,
+  };
+}
+function crossMarketLayer(oilData, worldOrderStressData) {
+  const priceContext = oilData?.signals?.priceContext || {};
+  const priceVsPhysical = oilData?.interpretation?.priceVsPhysical || '';
+  const brent4w = firstNumber(priceContext.brentChangePct4w);
+  const curve = priceContext.curveSlopeRegime || '结构待核';
+  const marketInput = worldOrderStressData?.marketConfirmationInput || {};
+  const brent = firstNumber(marketInput.brent);
+  const age = Number.isFinite(marketInput.ageMinutes) ? `${Math.round(marketInput.ageMinutes)}分钟龄` : formatUtcMinute(marketInput.updatedAt);
+
+  let stance = 'unknown';
+  let label = '市场确认待核';
+  if (priceVsPhysical === 'price_down_physical_tight') {
+    stance = 'easing_vs_tight';
+    label = '价格背离物理紧张';
+  } else if (priceVsPhysical === 'price_up_physical_tight') {
+    stance = 'tight_confirm';
+    label = '价格同向确认偏紧';
+  } else if (Number.isFinite(brent4w) && brent4w <= -1) {
+    stance = 'easing';
+    label = '价格层偏降温';
+  } else if (Number.isFinite(brent4w) && brent4w >= 1) {
+    stance = 'tight_confirm';
+    label = '价格层偏升温';
+  } else if (Number.isFinite(brent4w)) {
+    stance = 'neutral';
+    label = '价格层中性';
+  }
+
+  const brentText = Number.isFinite(brent) ? `Brent ${formatUsd(brent)}` : 'Brent —';
+  const ageText = age ? ` · ${age}` : '';
+  const changeText = Number.isFinite(brent4w) ? ` · 4周 ${pct(brent4w, 1)}` : '';
+  return {
+    stance,
+    text: `${label} · ${brentText}${ageText}${changeText} · ${curve}`,
+  };
+}
+function crossNewsLayer(oilNewsEventWatchData) {
+  const data = oilNewsEventWatchData && oilNewsEventWatchData.schemaVersion === 'oil-news-event-watch-1'
+    ? oilNewsEventWatchData
+    : null;
+  if (!data) {
+    return { stance: 'unknown', text: '专用新闻层未加载 · 不确认事件' };
+  }
+  const counts = data.claimPolarity?.polarityCounts || {};
+  const escalation = claimPolarityCount(counts, 'risk_escalation');
+  const deescalation = claimPolarityCount(counts, 'risk_deescalation');
+  const mixed = claimPolarityCount(counts, 'mixed_or_contested');
+  const marketOnly = claimPolarityCount(counts, 'market_reaction_only');
+  const state = data.claimPolarity?.contradiction?.state;
+  let stance = 'unknown';
+  let label = '新闻主张待核';
+  if (state === 'risk_escalation_dominant' || escalation > deescalation) {
+    stance = 'tight';
+    label = '新闻升温主导';
+  } else if (state === 'risk_deescalation_dominant' || deescalation > escalation) {
+    stance = 'easing';
+    label = '新闻降温主导';
+  } else if (state === 'mixed_claims' || mixed > 0) {
+    stance = 'mixed';
+    label = '新闻混合待核';
+  } else if (data.signalState === 'elevated_manual_review') {
+    stance = 'watch';
+    label = '事件升高待核';
+  } else {
+    stance = 'neutral';
+    label = '新闻方向不明';
+  }
+  const source = newsSourceHealthText(data);
+  return {
+    stance,
+    text: `${label} · 升温 ${escalation} / 降温 ${deescalation} / 混合 ${mixed} / 市场 ${marketOnly} · ${source}`,
+  };
+}
+function crossThermalLayer(oilThermalWatchData) {
+  const data = oilThermalWatchData && typeof oilThermalWatchData === 'object' ? oilThermalWatchData : null;
+  if (!data) return { stance: 'unknown', text: '卫星/设施层未加载 · 不确认事故' };
+  const aggregate = data.aggregate || {};
+  const repeated = Number.isFinite(aggregate.repeatedObservationCount) ? Math.round(aggregate.repeatedObservationCount) : 0;
+  const elevated = Number.isFinite(aggregate.elevatedRepeatedObservationCount) ? Math.round(aggregate.elevatedRepeatedObservationCount) : 0;
+  const detections = Number.isFinite(aggregate.facilitiesWithDetections) ? Math.round(aggregate.facilitiesWithDetections) : 0;
+  const facilities = Number.isFinite(data.facilityCoverage?.facilityCount) ? Math.round(data.facilityCoverage.facilityCount) : (Number.isFinite(aggregate.facilityCount) ? Math.round(aggregate.facilityCount) : 0);
+  const baseline = data.baseline?.sourceReview?.baselineQuality ? thermalBaselineQualityLabel(data.baseline.sourceReview.baselineQuality) : '基线待核';
+  let stance = 'no_confirm';
+  let label = '未见设施热异常印证';
+  if (data.signalState === 'source_unavailable' || data.status === 'source_unavailable' || data.status === 'not_configured') {
+    stance = 'unknown';
+    label = '卫星/设施源降级';
+  } else if (data.signalState === 'baseline_elevated_repeated_watch' || elevated > 0) {
+    stance = 'tight_watch';
+    label = '设施热异常升高待核';
+  } else if (data.signalState === 'baseline_repeated_watch' || repeated > 0) {
+    stance = 'tight_watch';
+    label = '设施热异常重复待核';
+  }
+  return {
+    stance,
+    text: `${label} · 重复 ${repeated} / 升高 ${elevated} · 检出 ${detections}/${facilities} · ${baseline}`,
+  };
+}
+function crossConfirmationSummary(eia, market, news, thermal) {
+  const tightConfirmations = [
+    eia.stance === 'tight',
+    market.stance === 'tight_confirm',
+    news.stance === 'tight',
+    thermal.stance === 'tight_watch',
+  ].filter(Boolean).length;
+  const easingSignals = [
+    market.stance === 'easing' || market.stance === 'easing_vs_tight',
+    news.stance === 'easing',
+  ].filter(Boolean).length;
+
+  if (eia.stance === 'tight' && market.stance === 'easing_vs_tight' && news.stance === 'easing' && thermal.stance === 'no_confirm') {
+    return {
+      tone: 'yellow',
+      status: '确认不足 · 高频未跟随 EIA',
+      summary: 'EIA 周度物理链偏紧,但市场价格、新闻主张和设施热异常没有同步升温;保持观察,不提高事件观察置信度。',
+    };
+  }
+  if (eia.stance === 'tight' && tightConfirmations >= 3) {
+    return {
+      tone: 'red',
+      status: '多层印证 · 偏紧同向',
+      summary: 'EIA 周度锚与至少两个高频观察层同向偏紧;仍需人工复核事件主张,但观察置信度高于单一来源。',
+    };
+  }
+  if (eia.stance === 'tight' && tightConfirmations >= 2) {
+    return {
+      tone: 'yellow',
+      status: '部分印证 · 偏紧待核',
+      summary: 'EIA 周度锚偏紧,且至少一个高频观察层同向;仍不足以确认断供、封锁或设施事故。',
+    };
+  }
+  if (eia.stance === 'tight' && easingSignals > 0) {
+    return {
+      tone: 'yellow',
+      status: '背离待核 · 高频降温',
+      summary: 'EIA 周度锚偏紧,但新闻或价格层显示降温;优先解释为跨节奏背离,不把单一路径写成确认事件。',
+    };
+  }
+  if (eia.stance === 'loose' && (market.stance === 'easing' || news.stance === 'easing')) {
+    return {
+      tone: 'green',
+      status: '多层印证 · 宽松同向',
+      summary: 'EIA 周度锚与新闻或市场层同向降温;仍需等待下一轮周度锚和高频观察更新。',
+    };
+  }
+  return {
+    tone: '',
+    status: '确认不足 · 待更多证据',
+    summary: '四层证据暂未形成清晰同向关系;保持 display-only 观察,不提高事件观察置信度。',
+  };
+}
+function renderCrossConfirmation(oilData, worldOrderStressData, oilThermalWatchData, oilNewsEventWatchData) {
+  const eia = crossEiaLayer(oilData);
+  const market = crossMarketLayer(oilData, worldOrderStressData);
+  const news = crossNewsLayer(oilNewsEventWatchData);
+  const thermal = crossThermalLayer(oilThermalWatchData);
+  const confirmation = crossConfirmationSummary(eia, market, news, thermal);
+
+  setLeafText('odp-cross-confirmation-status', confirmation.status);
+  setToneClass('odp-cross-confirmation-status', 'odp-cross-confirmation-status', confirmation.tone);
+  setLeafText('odp-cross-confirmation-eia', eia.text);
+  setLeafText('odp-cross-confirmation-market', market.text);
+  setLeafText('odp-cross-confirmation-news', news.text);
+  setLeafText('odp-cross-confirmation-thermal', thermal.text);
+  setLeafText('odp-cross-confirmation-summary', confirmation.summary);
+  setLeafText('odp-cross-confirmation-note', `${confirmation.summary} P54 cross-confirmation 只读比较新闻、市场、卫星/设施与 EIA 是否同向;不改 ODP 方向结论、平台打分、决策、执行、Heatmap 或 cross-validation,也不确认断供、封锁、炼厂事故、制裁影响或油价方向。`);
+}
 function renderDataQcLedger(oilData, radarData, worldOrderStressData) {
   const evidence = oilData && oilData.evidence ? oilData.evidence : {};
   const alignment = wpsrAlignment(evidence);
@@ -1288,10 +1493,11 @@ function renderEnergyAddendum(radarData, worldOrderStressData, oilData, oilTherm
   renderGlobalOverlay(oilData, radarData);
   renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData);
   renderSatelliteThermalWatch(oilThermalWatchData);
+  renderCrossConfirmation(oilData, worldOrderStressData, oilThermalWatchData, oilNewsEventWatchData);
   renderDataQcLedger(oilData, radarData, worldOrderStressData);
   renderSpareCapacity(macroDrivers.energySpareCapacity);
   renderEnergyTransport(macroDrivers.energyTransport);
-  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、OECD 库存/全球净抽库、P6B 全球确认层、新闻事件观察、卫星热异常观察、数据时点/QC、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
+  setLeafText('odp-energy-source-boundary', '边界:Brent 口径校验、Pulse 三因子校验、OECD 库存/全球净抽库、P6B 全球确认层、新闻事件观察、卫星热异常观察、交叉确认、数据时点/QC、OPEC 闲置产能与咽喉转运均为仅供参考的能源观察层,不参与平台的风险打分与决策。');
 }
 
 function reasonInventory(sig, ev) {

@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-oil-news-claim-polarity-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-oil-cross-confirmation-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
