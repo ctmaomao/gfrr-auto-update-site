@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-26T09:59:20.507Z",
+  "generatedAt": "2026-06-26T12:32:09.046Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -21,7 +21,7 @@
     "details": {
       "gdelt_doc": {
         "status": "error",
-        "networkUsed": true,
+        "networkUsed": false,
         "successCount": 0,
         "failureCount": 1,
         "articleCount": 0,
@@ -29,7 +29,7 @@
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "error",
+            "status": "error_cooldown_cache_hit",
             "articleCount": 0,
             "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
           }
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-06-26T06:52:48.000Z",
-    "latestArticleAgeHours": 3.1,
+    "latestArticleAgeHours": 5.7,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -197,10 +197,10 @@
           ]
         },
         {
-          "title": "Fears in Strait of Hormuz as tanker struck after Iran warned ships to turn back - New York Post",
-          "url": "https://nypost.com/2026/06/25/world-news/fears-in-strait-of-hormuz-as-tanker-struck-after-iran-warned-ships-to-turn-back/",
-          "domain": "nypost.com",
-          "publishedAt": "2026-06-25T16:31:08.000Z",
+          "title": "Shipping rebounds in Strait of Hormuz one week after U.S.-Iran deal – but fragile confidence threatens recovery - CNBC",
+          "url": "https://www.cnbc.com/2026/06/26/strait-of-hormuz-shipping-oil-us-iran.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-06-26T09:36:24.000Z",
           "sources": [
             "tavily"
           ],
@@ -214,12 +214,11 @@
           ]
         },
         {
-          "title": "An oil tanker navigates the Strait of Hormuz despite threats from Iran’s Revolutionary Guard - AP News",
-          "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-25-2026-862164c2aecbdc376dea434198eaf75f",
-          "domain": "apnews.com",
-          "publishedAt": "2026-06-25T06:11:51.000Z",
+          "title": "Fears in Strait of Hormuz as tanker struck after Iran warned ships to turn back - New York Post",
+          "url": "https://nypost.com/2026/06/25/world-news/fears-in-strait-of-hormuz-as-tanker-struck-after-iran-warned-ships-to-turn-back/",
+          "domain": "nypost.com",
+          "publishedAt": "2026-06-25T16:31:08.000Z",
           "sources": [
-            "brave",
             "tavily"
           ],
           "buckets": [
@@ -294,9 +293,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 23,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 138,
+      "weightedSignal": 132,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -357,9 +356,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 29,
+      "articleCount": 27,
       "sourceCount": 2,
-      "weightedSignal": 116,
+      "weightedSignal": 108,
       "topArticles": [
         {
           "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
@@ -398,10 +397,10 @@
           ]
         },
         {
-          "title": "Hormuz Reopening Shifts Focus to Gulf Oil Storage and Shipping - WSJ",
-          "url": "https://www.wsj.com/business/energy-oil/hormuz-reopening-shifts-focus-to-gulf-oil-storage-and-shipping-53430fa8",
-          "domain": "wsj.com",
-          "publishedAt": "2026-06-19T11:27:00.000Z",
+          "title": "Explosion at Qatar natural gas export terminal injures 54, leaves 18 missing - NBC News",
+          "url": "https://www.nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
+          "domain": "nbcnews.com",
+          "publishedAt": "2026-06-22T03:05:30.000Z",
           "sources": [
             "tavily"
           ],
@@ -409,11 +408,10 @@
             "chokepoint",
             "facility_event",
             "middle_east_risk",
-            "sanctions",
-            "tanker_shipping"
+            "supply_disruption"
           ],
           "queryIds": [
-            "sanctions_shadow_fleet"
+            "facility_supply_disruption"
           ]
         }
       ]
@@ -443,6 +441,23 @@
           ]
         },
         {
+          "title": "Shipping rebounds in Strait of Hormuz one week after U.S.-Iran deal – but fragile confidence threatens recovery - CNBC",
+          "url": "https://www.cnbc.com/2026/06/26/strait-of-hormuz-shipping-oil-us-iran.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-06-26T09:36:24.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "middle_east_risk",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
+          ]
+        },
+        {
           "title": "Fears in Strait of Hormuz as tanker struck after Iran warned ships to turn back - New York Post",
           "url": "https://nypost.com/2026/06/25/world-news/fears-in-strait-of-hormuz-as-tanker-struck-after-iran-warned-ships-to-turn-back/",
           "domain": "nypost.com",
@@ -458,32 +473,14 @@
           "queryIds": [
             "chokepoint_shipping"
           ]
-        },
-        {
-          "title": "An oil tanker navigates the Strait of Hormuz despite threats from Iran’s Revolutionary Guard - AP News",
-          "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-25-2026-862164c2aecbdc376dea434198eaf75f",
-          "domain": "apnews.com",
-          "publishedAt": "2026-06-25T06:11:51.000Z",
-          "sources": [
-            "brave",
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "middle_east_risk",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "chokepoint_shipping"
-          ]
         }
       ]
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 53,
+      "articleCount": 52,
       "sourceCount": 2,
-      "weightedSignal": 159,
+      "weightedSignal": 156,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -504,6 +501,23 @@
           ]
         },
         {
+          "title": "Shipping rebounds in Strait of Hormuz one week after U.S.-Iran deal – but fragile confidence threatens recovery - CNBC",
+          "url": "https://www.cnbc.com/2026/06/26/strait-of-hormuz-shipping-oil-us-iran.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-06-26T09:36:24.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "middle_east_risk",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
+          ]
+        },
+        {
           "title": "Fears in Strait of Hormuz as tanker struck after Iran warned ships to turn back - New York Post",
           "url": "https://nypost.com/2026/06/25/world-news/fears-in-strait-of-hormuz-as-tanker-struck-after-iran-warned-ships-to-turn-back/",
           "domain": "nypost.com",
@@ -519,32 +533,14 @@
           "queryIds": [
             "chokepoint_shipping"
           ]
-        },
-        {
-          "title": "An oil tanker navigates the Strait of Hormuz despite threats from Iran’s Revolutionary Guard - AP News",
-          "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-25-2026-862164c2aecbdc376dea434198eaf75f",
-          "domain": "apnews.com",
-          "publishedAt": "2026-06-25T06:11:51.000Z",
-          "sources": [
-            "brave",
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "middle_east_risk",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "chokepoint_shipping"
-          ]
         }
       ]
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 29,
+      "articleCount": 28,
       "sourceCount": 2,
-      "weightedSignal": 58,
+      "weightedSignal": 56,
       "topArticles": [
         {
           "title": "Hormuz traffic rebound returns oil to prewar rates, as US reassures wary Gulf allies - The Times of Israel",
@@ -706,26 +702,6 @@
       ]
     },
     {
-      "title": "Oil prices ease after spiking over halt to Strait of Hormuz evacuation plan | US-Israel war on Iran | Al Jazeera",
-      "url": "https://aljazeera.com/economy/2026/6/26/oil-prices-climb-after-attack-in-strait-of-hormuz-halts-evacuation-plan",
-      "domain": "aljazeera.com",
-      "publishedAt": "2026-06-26T02:35:10.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
       "title": "Iraq to export crude, naphtha through Syria after Hormuz shock - Reuters",
       "url": "https://www.reuters.com/business/energy/iraq-export-crude-naphtha-through-syria-after-hormuz-shock-2026-06-19/",
       "domain": "reuters.com",
@@ -840,21 +816,37 @@
       "queryIds": [
         "facility_supply_disruption"
       ]
+    },
+    {
+      "title": "Brent falls as Israel, Hezbollah agree to ceasefire - Oil & Gas 360",
+      "url": "https://www.oilandgas360.com/brent-falls-as-israel-hezbollah-agree-to-ceasefire/",
+      "domain": "oilandgas360.com",
+      "publishedAt": "2026-06-19T16:08:12.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
     }
   ],
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 2,
-    "highClaimDomainCount": 2,
+    "highClaimTitleCount": 1,
+    "highClaimDomainCount": 1,
     "highClaimDomains": [
-      "aljazeera.com",
       "news.futunn.com"
     ],
     "highClaimTerms": [
-      "attack",
-      "halt",
-      "war"
+      "attack"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
@@ -870,8 +862,8 @@
     "evaluatedArticleCount": 12,
     "claimCount": 12,
     "polarityCounts": {
-      "risk_escalation": 2,
-      "risk_deescalation": 1,
+      "risk_escalation": 1,
+      "risk_deescalation": 2,
       "mixed_or_contested": 0,
       "market_reaction_only": 8,
       "unclear_or_high_claim": 1
@@ -888,8 +880,8 @@
     "sourceTierCounts": {
       "primary_wire_or_official": 3,
       "major_financial_media": 1,
-      "industry_trade": 4,
-      "aggregator_or_blog": 4,
+      "industry_trade": 5,
+      "aggregator_or_blog": 3,
       "low_confidence": 0
     },
     "contradiction": {
@@ -901,8 +893,8 @@
         {
           "eventType": "chokepoint",
           "claimCount": 11,
-          "riskEscalation": 2,
-          "riskDeescalation": 1,
+          "riskEscalation": 1,
+          "riskDeescalation": 2,
           "mixedOrContested": 0,
           "contradiction": true
         },
