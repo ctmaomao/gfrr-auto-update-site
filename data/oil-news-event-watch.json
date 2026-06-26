@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-26T21:49:07.425Z",
+  "generatedAt": "2026-06-26T23:44:26.767Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -113,8 +113,8 @@
   },
   "freshness": {
     "windowDays": 7,
-    "latestArticleAt": "2026-06-26T10:30:00.000Z",
-    "latestArticleAgeHours": 11.3,
+    "latestArticleAt": "2026-06-26T22:04:00.000Z",
+    "latestArticleAgeHours": 1.7,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 53,
+      "articleCount": 51,
       "sourceCount": 2,
-      "weightedSignal": 318,
+      "weightedSignal": 306,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -293,9 +293,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 23,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 138,
+      "weightedSignal": 132,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -355,9 +355,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 23,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 92,
+      "weightedSignal": 88,
       "topArticles": [
         {
           "title": "French Forces Detain Tanker in Continuing Crackdown on Shadow Fleet - The Maritime Executive",
@@ -416,9 +416,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 43,
+      "articleCount": 42,
       "sourceCount": 2,
-      "weightedSignal": 129,
+      "weightedSignal": 126,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -536,9 +536,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 28,
+      "articleCount": 25,
       "sourceCount": 2,
-      "weightedSignal": 56,
+      "weightedSignal": 50,
       "topArticles": [
         {
           "title": "As Strait of Hormuz Opens, Oil Falls - Marine News Magazine",
@@ -618,12 +618,12 @@
       ]
     },
     {
-      "title": "Oil edges lower amid resumption of strait shipments even as vessel hit near Oman - Reuters",
-      "url": "https://www.reuters.com/business/energy/oil-edges-lower-amid-resumption-strait-shipments-even-vessel-hit-near-oman-2026-06-26/",
-      "domain": "reuters.com",
-      "publishedAt": "2026-06-26T04:31:40.000Z",
+      "title": "Strait of Hormuz Reopens for Oil Tankers Following U.S.-Iran Deal",
+      "url": "https://discoveryalert.com.au/strait-hormuz-oil-tankers-reopening-crisis-2026-market",
+      "domain": "discoveryalert.com.au",
+      "publishedAt": "2026-06-24T19:15:33.000Z",
       "sources": [
-        "tavily"
+        "brave"
       ],
       "buckets": [
         "chokepoint",
@@ -638,17 +638,16 @@
       ]
     },
     {
-      "title": "Strait of Hormuz Reopens for Oil Tankers Following U.S.-Iran Deal",
-      "url": "https://discoveryalert.com.au/strait-hormuz-oil-tankers-reopening-crisis-2026-market",
-      "domain": "discoveryalert.com.au",
-      "publishedAt": "2026-06-24T19:15:33.000Z",
+      "title": "Saudi Aramco resumes oil loading at Ras Tanura in boost to supply | Gulf Times - Gulf Times",
+      "url": "https://www.gulf-times.com/article/728160/business/saudi-aramco-resumes-oil-loading-at-ras-tanura-in-boost-to-supply/amp",
+      "domain": "gulf-times.com",
+      "publishedAt": "2026-06-26T22:04:00.000Z",
       "sources": [
-        "brave"
+        "tavily"
       ],
       "buckets": [
         "chokepoint",
         "facility_event",
-        "market_reaction",
         "middle_east_risk",
         "supply_disruption",
         "tanker_shipping"
@@ -700,26 +699,6 @@
       "url": "https://oilprice.com/Latest-Energy-News/World-News/Rosneft-Proposes-Oil-Firms-to-Refine-30-of-Crude-in-Russia-to-Ease-Fuel-Crunch.html",
       "domain": "oilprice.com",
       "publishedAt": "2026-06-24T16:30:00.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "sanctions",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "sanctions_shadow_fleet"
-      ]
-    },
-    {
-      "title": "Crude slips toward $70 as tankers return to Hormuz after US-Iran reach peace deal - The Times of India",
-      "url": "https://timesofindia.indiatimes.com/business/international-business/crude-slips-toward-70-as-tankers-return-to-hormuz-after-us-iran-reach-peace-deal-oil-price-on-june-25/articleshow/131980091.cms",
-      "domain": "timesofindia.indiatimes.com",
-      "publishedAt": "2026-06-25T01:44:00.000Z",
       "sources": [
         "brave"
       ],
@@ -829,6 +808,25 @@
       "queryIds": [
         "facility_supply_disruption"
       ]
+    },
+    {
+      "title": "US waives sanctions on Iranian crude: Here's why Indian refiners are still hesistant to buy it - The Times of India",
+      "url": "https://timesofindia.indiatimes.com/business/india-business/us-waives-sanctions-on-iranian-crude-heres-why-indian-refiners-are-still-hesistant-to-buy-it/articleshow/132013394.cms",
+      "domain": "timesofindia.indiatimes.com",
+      "publishedAt": "2026-06-26T10:35:00.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "facility_event",
+        "middle_east_risk",
+        "sanctions",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "sanctions_shadow_fleet"
+      ]
     }
   ],
   "titleRisk": {
@@ -857,47 +855,61 @@
     "evaluatedArticleCount": 12,
     "claimCount": 12,
     "polarityCounts": {
-      "risk_escalation": 1,
+      "risk_escalation": 2,
       "risk_deescalation": 1,
       "mixed_or_contested": 0,
-      "market_reaction_only": 8,
+      "market_reaction_only": 7,
       "unclear_or_high_claim": 2
     },
     "eventTypeCounts": {
-      "chokepoint": 11,
-      "shipping": 0,
+      "chokepoint": 9,
+      "shipping": 1,
       "sanctions": 0,
       "facility": 1,
-      "supply": 0,
+      "supply": 1,
       "market_reaction": 0,
       "general_energy": 0
     },
     "sourceTierCounts": {
-      "primary_wire_or_official": 3,
+      "primary_wire_or_official": 2,
       "major_financial_media": 1,
       "industry_trade": 6,
-      "aggregator_or_blog": 2,
+      "aggregator_or_blog": 3,
       "low_confidence": 0
     },
     "contradiction": {
-      "state": "mixed_claims",
-      "eventTypes": [
-        "chokepoint"
-      ],
+      "state": "risk_escalation_dominant",
+      "eventTypes": [],
       "details": [
         {
           "eventType": "chokepoint",
-          "claimCount": 11,
+          "claimCount": 9,
           "riskEscalation": 1,
-          "riskDeescalation": 1,
+          "riskDeescalation": 0,
           "mixedOrContested": 0,
-          "contradiction": true
+          "contradiction": false
+        },
+        {
+          "eventType": "shipping",
+          "claimCount": 1,
+          "riskEscalation": 1,
+          "riskDeescalation": 0,
+          "mixedOrContested": 0,
+          "contradiction": false
         },
         {
           "eventType": "facility",
           "claimCount": 1,
           "riskEscalation": 0,
           "riskDeescalation": 0,
+          "mixedOrContested": 0,
+          "contradiction": false
+        },
+        {
+          "eventType": "supply",
+          "claimCount": 1,
+          "riskEscalation": 0,
+          "riskDeescalation": 1,
           "mixedOrContested": 0,
           "contradiction": false
         }
