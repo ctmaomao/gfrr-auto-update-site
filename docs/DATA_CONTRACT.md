@@ -2010,11 +2010,11 @@ display coverage polish 不改 production contract;raw provenance / artifact IDs
 
 ## v28.0M-3H externalAiInterpretationLayer preservation
 
-**【当前活规则,非纯历史】** `data/radar-data.json` 须跨日常 radar refresh 保留 contract-valid `externalAiInterpretationLayer`:普通 refresh **不得**删除 `displayEnabled` / `boundaries.frontendDisplayApproved` / `qualityReview.promotionEligible` / non-impact 边界 flags,**不得**编辑 external AI 生成文本;**`External AI Production Refresh` 是唯一批准的自动 provider 写入路径**;future data 更新仍须过 production contract validation + write guard。
+**【当前活规则,非纯历史】** `data/radar-data.json` 须跨日常 radar refresh 优先保留 contract-valid `externalAiInterpretationLayer`:普通 refresh **不得**删除 `displayEnabled` / `boundaries.frontendDisplayApproved` / `qualityReview.promotionEligible` / non-impact 边界 flags,**不得**编辑 external AI 生成文本;**`External AI Production Refresh` 是唯一批准的自动 provider 写入路径**;future data 更新仍须过 production contract validation + write guard。若上一轮 layer 缺失或不符合 production contract,普通 Daily refresh 不得阻断整条数据构建,应写入 disabled scaffold 并 fallback 到 rule-based `aiInterpretationLayer`,等待 approved production refresh 恢复可见 external AI 层。
 
 ## v28.0M-3H-1 externalAiInterpretationLayer preservation audit
 
-**【当前活规则,非纯历史】** preservation hotfix post-merge 审计通过:普通 refresh 须保留 layer(而非以 disabled scaffold 覆盖);`displayEnabled` / `frontendDisplayApproved` 须为 boolean,`qualityReview.promotionEligible=false` 与 non-impact 边界(no scoring/decision/execution/position)仍必需;future 改动须过 production contract validation + write guard + frontend scaffold check + `check:data` + `check:all`。
+**【当前活规则,非纯历史】** preservation hotfix post-merge 审计通过:普通 refresh 须在 layer contract-valid 时原样保留(不得以 disabled scaffold 覆盖有效生产层);`displayEnabled` / `frontendDisplayApproved` 须为 boolean,`qualityReview.promotionEligible=false` 与 non-impact 边界(no scoring/decision/execution/position)仍必需。若 layer 缺失或 contract-invalid,Daily 可 fail-soft 写入 disabled scaffold,但不得生成 provider 文本或调用外部 AI;future 改动须过 production contract validation + write guard + frontend scaffold check + `check:data` + `check:all`。
 
 ## v28.0M-4 macro overview read-only derivation boundary
 

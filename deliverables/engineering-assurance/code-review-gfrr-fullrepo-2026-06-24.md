@@ -13,7 +13,7 @@
 
 - **整体结论**：GFRR v28.0.10 在 v28.0J 稳定基线上**未发现基线边界违反或活跃安全漏洞**。6 条核心架构边界（解释层↔决策层隔离、External AI 隔离、版本分离、secondary diagnostics 隔离、World Order overlay、Brent freshness gate）均合规。三位成员独立产出后由主理人交叉验证关键发现点并去重合并。
 - **严重度分布（原始审查）**：🔴严重 0 项 / 🟠高 4 项 / 🟡中 14 项 / 🟢低 8 项
-- **整改复核（2026-06-26）**：4 项高优先级问题已全部关闭；#5/#6/#7/#8/#9/#10/#11/#12/#13/#14/#15/#17/#18/#19/#20/#22 已关闭；#21 经当前代码复核后关闭；#23 降级为可选语义/fixture 补盲。剩余项为 #16 版本评审项与 #24/#25/#26 可选 CI/文档加固。
+- **整改复核（2026-06-26）**：4 项高优先级问题已全部关闭；#5/#6/#7/#8/#9/#10/#11/#12/#13/#14/#15/#16/#17/#18/#19/#20/#22 已关闭；#21 经当前代码复核后关闭；#23 降级为可选语义/fixture 补盲。剩余项为 #24/#25/#26 可选 CI/文档加固。
 
 ---
 
@@ -21,13 +21,13 @@
 
 | 项目 | 内容 |
 |------|------|
-| 整体评级 | 🟡 有条件通过（P0 已关闭，剩余 P1/P2） |
+| 整体评级 | 🟡 有条件通过（P0/P1 已关闭，剩余可选 P2） |
 | 阻塞项数量 | 0 |
 | 高优先级问题 | 原始 4 项；2026-06-26 已关闭 4 项 |
 | 关键行动项 | 7 条（见文末行动清单） |
 | 基线边界违反 | 无 |
 | 活跃安全漏洞 | 无 |
-| 建议下一步 | ① #16 需另开版本评审；② #24/#25/#26 作为可选 CI/文档加固 |
+| 建议下一步 | #24/#25/#26 作为可选 CI/文档加固 |
 
 ---
 
@@ -48,6 +48,7 @@
 | #12 Worker secondary fetch 重复函数 | ✅ 已关闭 | 5 个 secondary diagnostics fetcher 共享 `fetchSecondarySource`，保留原 fetcher 名称供现有 workflow checker 识别 |
 | #14 TE HTML price fallback regex 过宽 | ✅ 已关闭 | `parsePriceFromHtml` 最后 fallback 已要求 `$`/price/last/close/value/USD/dollars 上下文并缩小窗口；`check:workflows` 加回归守卫 |
 | #15 ADR-0002 路径 / M-94 Path C ADR 缺口 | ✅ 已关闭 | 新增 `docs/ADR/0018-m94-path-c-static-frontend-runtime.md`；`docs/ADR/0002-worker-first-realtime.md` 追加 amendment，`docs/ADR/0007-effective-display-inputs-canonical.md` 追加 clarification，标注前端 strict gate 已由 ADR-0018 superseded |
+| #16 Daily external AI 硬依赖 | ✅ 已关闭 | `run-daily-pipeline.mjs` 现优先 preserve contract-valid production layer；缺失/不兼容时 fail-soft 写入 disabled scaffold + `aiInterpretationLayer` fallback，不调用 provider、不生成外部 AI 文本 |
 | #17 Bubble Watch DOM 守门 | ✅ 已关闭 | 新增 `scripts/check-bubble-watch-dom.mjs`，校验 `bubble-watch.html` 内联渲染脚本写入的字面 DOM id 均存在；接入 `check:bubble-watch` |
 | #18 market-pricing metrics schema | ✅ 已关闭 | 新增 `scripts/check-market-pricing-metrics-schema.mjs`，直接校验 `data/market-pricing-metrics.json` 必需字段、三资产覆盖、records/range/count mirror 与 display-only boundary；接入 `check:market-pricing` |
 | #20 ADR-0008 external AI 措辞 stale | ✅ 已关闭 | `docs/ADR/0008-external-ai-read-only.md` 追加 clarification，区分 rule-based `aiInterpretationLayer` 与 live read-only `externalAiInterpretationLayer` |
@@ -96,7 +97,7 @@
 | 13 | 可维护性（已关闭） | scripts/modules/decision.js:351-386 | 原始发现：`calculateStrategyStateEngine` 大量魔法数字：`+=18`/`+=10`/`+=6`/`-=14`/`+=24`/`+=14`/`+=12` 等，无命名常量。 | ✅ 已修复：提取 `STRATEGY_STATE_SCORE_BUMPS` 与 `scoreBumpFromRules`，保持原打分结果 | Cody |
 | 14 | 正确性（已关闭） | workers/gfrr-realtime-worker/src/worker-market-preview.js:1004 | 原始发现：`parsePriceFromHtml` 最后 regex 可匹配 "Brent" 后 600 字符内任意 2-3 位数字。虽仅用于 TE 诊断候选（不参与 promotion consensus），但错误值会出现在 diagnostic 输出。 | ✅ 已修复：fallback regex 已要求 `$`/price/last/close/value/USD/dollars 上下文并缩小窗口；`check:workflows` 加回归守卫 | Cody |
 | 15 | 架构（已关闭） | docs/ADR/0002-worker-first-realtime.md point 2 | 原始发现：ADR-0002 point 2「前端 strict gate 校验 worker preview 新鲜度」描述的是 M-94 前架构。M-94 V0 路径 C 后前端改读静态快照，不跑 strict gate。 | ✅ 已修复：新增 ADR-0018 记录 M-94 Path C 静态前端 runtime；ADR-0002 追加 amendment，ADR-0007 追加 clarification，标注前端 strict gate 已由 ADR-0018 superseded | Archi |
-| 16 | 架构 | scripts/run-daily-pipeline.mjs:2463-2467 | Daily pipeline 开头检查 `previous?.externalAiInterpretationLayer`，若缺失/不符合 production-contract 直接 `throw`，阻断整个 Daily 构建。External AI 本应是「可禁用的只读展示层」（ADR-0008: 禁用不影响决策），但硬依赖 guard 使 External AI 层缺失会阻断 Daily pipeline，间接违背设计意图。 | **[需另开版本评审]** 将硬 throw 降级为 soft warning + fallback to null/placeholder layer。当前基线下记录为技术债 | Archi |
+| 16 | 架构（已关闭） | scripts/run-daily-pipeline.mjs:2463-2467 | 原始发现：Daily pipeline 开头检查 `previous?.externalAiInterpretationLayer`，若缺失/不符合 production-contract 直接 `throw`，阻断整个 Daily 构建。External AI 本应是「可禁用的只读展示层」。 | ✅ 已修复：preserve 有效 production layer；缺失/不兼容时写入 disabled scaffold 并 fallback 到 rule-based `aiInterpretationLayer`，同时记录 recovery note；不调用 provider、不编辑外部 AI 生成文本 | Archi |
 | 17 | 测试盲区（已关闭） | bubble-watch.html + 渲染脚本 | 原始发现：`check:dom` 只校验 `index.html` vs `scripts/modules/*.js`。`bubble-watch.html` 是独立第二页面，其渲染 id 无契约守门。 | ✅ 已修复：新增 `check-bubble-watch-dom.mjs` 校验 second-page literal DOM id；接入 `check:bubble-watch` | Tessa |
 | 18 | 测试盲区（已关闭） | data/market-pricing-metrics.json | 原始发现：365KB 生产数据文件被前端 `renderMacroOverview.js` 消费，但 `check:market-pricing` suite 不直接校验该 JSON 的 schema。 | ✅ 已修复：新增 `check-market-pricing-metrics-schema.mjs` 校验必需字段、数值类型、asset 覆盖、records/range/count mirror 与 boundary；接入 `check:market-pricing` suite | Tessa |
 
@@ -123,7 +124,7 @@
 |---|------|------|---------|
 | 1 | Worker-first 主链路完整性 | 🟢已加守门 | app.js 不 import realtime.js；realtime.js 保留但已加 frozen 标记、asset bump skip 与 `check:realtime-js-frozen` 守门（见发现 #3） |
 | 2 | 解释层↔决策层隔离 | 🟢合规 | run-daily-pipeline.mjs:11185-11203 scoring 路径只读 scoringRealtime+macroDrivers，不读 dailyBrief/divergenceLayer/brentPricingLayer；buildAiInterpretationLayer 单向读取作 evidence context，不写回 |
-| 3 | External AI 隔离边界 | 🟢合规（含漂移点） | 唯一生成路径 = external-ai-production-refresh workflow；ADR-0008 守护链在位；Daily pipeline 硬依赖 guard（见发现 #16） |
+| 3 | External AI 隔离边界 | 🟢合规（含漂移点已关闭） | 唯一生成路径 = external-ai-production-refresh workflow；ADR-0008 守护链在位；Daily pipeline 现 preserve-first，异常时仅 fallback disabled scaffold（见发现 #16） |
 | 4 | 数据契约版本管理 | 🟢合规 | RELEASE_VERSION='v28.0.10' / DATA_CONTRACT_VERSION='v27.0' 清晰分离；app.js normalizeRadarReleaseVersion 只读展示归一化 |
 | 5 | secondary diagnostics 隔离 | 🟢合规 | Worker 独立 endpoint `/market.secondary-preview.json` + 独立 KV key `market:secondary-preview` + sourceMode='secondary-preview' |
 | 6 | World Order 是 regime overlay | 🟢合规 | app.js:74 只 fetch 静态快照，不接 decisionModel/scoring |
@@ -140,7 +141,7 @@
 
 ### 耦合热点
 
-1. **Daily pipeline → externalAiInterpretationLayer 硬依赖**（🟡 需关注）— 见发现 #16
+1. **Daily pipeline → externalAiInterpretationLayer 硬依赖**（✅ 已关闭）— 见发现 #16
 2. **aiInterpretationLayer 读取 decisionModel 作 context**（🟢 合规单向）— line 2339 显式标注 `decision_context_separated`
 3. **Deploy 触发链含 External AI Production Refresh**（🟢 当前合规）— read-only 层完成后触发 Pages 合理；failure upstream 已由 job-level success gate 阻断（见发现 #21）
 
@@ -222,8 +223,7 @@
 | 6 | 修复剩余 Cody 中优先级问题（#5/#6 realtime.js response.ok/error 类型、#11/#13 魔法数字、#12 重复函数） | 多角色 | P1 | 否 | ✅ 已完成 |
 | 7 | 新增 `check-bubble-watch-dom.mjs` + `check-market-pricing-metrics-schema.mjs` + `check-realtime-local-schema.mjs` 补测试盲区 | 测试 | P1 | 否 | ✅ 已完成 |
 
-**需另开版本评审（不在本审查行动清单内，排入 backlog）**：
-- Daily pipeline externalAiInterpretationLayer 硬依赖降级为 soft warning（发现 #16）
+**可选后续（不阻塞本审查）**：
 - realtime.js 冻结代码归档至 `_frozen/` 或加 lint 禁止 import（发现 #3 加固版）
 
 ---

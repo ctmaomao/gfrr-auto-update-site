@@ -55,6 +55,16 @@ const EIA_API_KEY = (process.env.EIA_API_KEY || '').trim();
 const WIND_API_KEY = (process.env.WIND_API_KEY || '').trim();
 const RELEASE_VERSION = 'v28.0.10';
 const DATA_CONTRACT_VERSION = 'v27.0';
+const EXTERNAL_AI_SCAFFOLD_CONTRACT_VERSION = 'v28.0K-3A';
+const EXTERNAL_AI_SCAFFOLD_MODE = 'external_ai_disabled_scaffold';
+const EXTERNAL_AI_SCAFFOLD_LAYERS_AVAILABLE = [
+  'dailyBrief',
+  'divergenceLayer',
+  'brentPricingLayer',
+  'macroDrivers.consumer',
+  'aiInterpretationLayer',
+  'decisionModel'
+];
 const MAIN_SCORE_WIND_FALLBACK_ENV = 'GFRR_MAIN_SCORE_WIND_FALLBACK';
 const MAIN_SCORE_WIND_FALLBACK_ENABLED = process.env[MAIN_SCORE_WIND_FALLBACK_ENV] === '1';
 const MAIN_SCORE_WIND_TIMEOUT_MS = Number(process.env.GFRR_MAIN_SCORE_WIND_TIMEOUT_MS) > 0
@@ -2437,7 +2447,7 @@ function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function isPreservableExternalAiLayer(layer) {
+export function isPreservableExternalAiLayer(layer) {
   const qualityReview = isRecord(layer?.qualityReview) ? layer.qualityReview : null;
   const boundaries = isRecord(layer?.boundaries) ? layer.boundaries : null;
   return isRecord(layer)
@@ -2459,13 +2469,84 @@ function isPreservableExternalAiLayer(layer) {
     && typeof boundaries.frontendDisplayApproved === 'boolean';
 }
 
-function preserveExternalAiInterpretationLayer(next, previous = prevData) {
+export function buildDisabledExternalAiFallbackLayer({ generatedAt = isoNow, reason = 'missing_or_invalid_production_layer' } = {}) {
+  const reasonZh = reason === 'missing_production_layer'
+    ? '未找到可保留的生产外部 AI 层，本轮回退到规则化解释层。'
+    : '既有外部 AI 层不符合当前生产契约，本轮回退到规则化解释层。';
+  return {
+    contractVersion: EXTERNAL_AI_SCAFFOLD_CONTRACT_VERSION,
+    generatedAt,
+    enabled: false,
+    status: 'disabled',
+    displayEnabled: false,
+    provider: 'none',
+    model: null,
+    mode: EXTERNAL_AI_SCAFFOLD_MODE,
+    summaryZh: '外部 AI 解读层本轮不可用，页面使用规则化解释层作为回退。',
+    inputDigest: {
+      inputVersion: `${RELEASE_VERSION}-daily-external-ai-fallback`,
+      siteStructuredDataOnly: true,
+      layersAvailable: EXTERNAL_AI_SCAFFOLD_LAYERS_AVAILABLE,
+      usesPrivateUserData: false,
+      usesSecrets: false,
+      usesExternalMarketData: false,
+      noteZh: 'Daily 普通刷新未调用外部 AI API，也未生成新的外部 AI 文本。'
+    },
+    output: null,
+    audit: {
+      outputValidated: false,
+      validator: 'check-external-ai-output',
+      auditStatus: 'not_applicable',
+      auditFlags: ['daily_external_ai_preservation_fallback'],
+      bannedCopyPassed: null,
+      sourceAttributionPresent: null,
+      boundariesValid: true
+    },
+    fallback: {
+      used: true,
+      fallbackLayer: 'aiInterpretationLayer',
+      reasonZh
+    },
+    confidence: {
+      level: 'low',
+      score: 0,
+      reasonZh: '未展示外部 AI 输出，仅保留规则化解释层。'
+    },
+    dataGaps: ['externalAiInterpretationLayer production layer missing or incompatible'],
+    limitations: ['External AI Production Refresh remains the only approved automatic provider write path.'],
+    boundaries: {
+      displayOnly: true,
+      diagnosticOnly: true,
+      externalAiGenerated: false,
+      usesExternalAiApi: false,
+      affectsScoring: false,
+      affectsDecisionModel: false,
+      affectsExecutionLock: false,
+      affectsPositionGuidance: false,
+      notInvestmentAdvice: true,
+      frontendDisplayApproved: false
+    }
+  };
+}
+
+export function preserveExternalAiInterpretationLayer(next, previous = prevData) {
   const layer = previous?.externalAiInterpretationLayer;
-  if (!isPreservableExternalAiLayer(layer)) {
-    throw new Error('Refusing to build radar data because existing externalAiInterpretationLayer is missing or not production-contract compatible. Restore the last valid layer or run the approved External AI Production Refresh before normal radar refresh.');
+  if (isPreservableExternalAiLayer(layer)) {
+    next.externalAiInterpretationLayer = structuredClone(layer);
+    return { preserved: true, fallbackUsed: false, reason: null };
   }
-  next.externalAiInterpretationLayer = structuredClone(layer);
-  return next;
+
+  const reason = layer === undefined || layer === null
+    ? 'missing_production_layer'
+    : 'invalid_production_layer';
+  next.externalAiInterpretationLayer = buildDisabledExternalAiFallbackLayer({ reason });
+  const warning = `external-ai-fallback:${reason}`;
+  if (isRecord(next.recovery)) {
+    const notes = Array.isArray(next.recovery.notes) ? next.recovery.notes : [];
+    next.recovery.notes = [...notes, warning];
+  }
+  console.warn(`[external-ai-preservation] ${warning}; using aiInterpretationLayer fallback until External AI Production Refresh restores a valid layer.`);
+  return { preserved: false, fallbackUsed: true, reason };
 }
 
 function sleep(ms) {

@@ -1242,7 +1242,7 @@ Design reference:
 
 ### v28.0M-3H external AI layer preservation hotfix
 
-Ordinary radar data refresh must preserve the current production `externalAiInterpretationLayer`. `External AI Production Refresh` remains the only approved automatic path for changing external AI content.
+Ordinary radar data refresh must preserve the current production `externalAiInterpretationLayer` when it is contract-valid. `External AI Production Refresh` remains the only approved automatic path for changing external AI content.
 
 If `check:external-ai-production-write-guard` fails after a `chore: refresh radar data` commit:
 
@@ -1252,11 +1252,12 @@ If `check:external-ai-production-write-guard` fails after a `chore: refresh rada
 - Run `npm run check:external-ai-frontend-hidden-scaffold`.
 - Do not manually edit external AI generated text.
 - Do not call DeepSeek or rerun the provider just to repair ordinary refresh damage.
-- Repair by preserving the last valid production external AI layer from git history, or rerun the approved `External AI Production Refresh` only after the preservation bug is fixed and operator review says a refresh is appropriate.
+- Repair by preserving the last valid production external AI layer from git history, or rerun the approved `External AI Production Refresh` only after the preservation bug is fixed and operator review says a refresh is appropriate. If the previous layer is missing or contract-invalid before an ordinary Daily refresh starts, the Daily pipeline may fail soft to a disabled scaffold and rule-based `aiInterpretationLayer` fallback instead of blocking the whole radar build.
 
 Rollback and repair boundaries:
 
 - A normal radar refresh may update current market and radar fields, but must carry forward the existing valid external AI layer unchanged.
+- If no valid external AI layer is available, a normal radar refresh may write the disabled scaffold only as a fallback; it must not call DeepSeek, generate new provider text, or mark external AI display as approved.
 - If unsafe copy appears or display gates are malformed, revert the damaging data refresh or restore the latest contract-valid layer.
 - Treat the known non-blocking `check:world-order` warning as separate from external AI preservation when `check:all` passes.
 
@@ -1267,7 +1268,8 @@ v28.0M-3H-1 records that the preservation hotfix passed post-merge audit after P
 Operator guidance:
 
 - If `check:external-ai-production-write-guard` fails after `chore: refresh radar data`, first inspect whether ordinary radar refresh preserved `externalAiInterpretationLayer`.
-- Ordinary radar refresh should not overwrite `externalAiInterpretationLayer` with the disabled scaffold.
+- Ordinary radar refresh should not overwrite a valid production `externalAiInterpretationLayer` with the disabled scaffold.
+- If the previous layer is missing or production-contract-invalid, ordinary radar refresh may write the disabled scaffold and fall back to rule-based `aiInterpretationLayer` rather than fail the whole Daily build.
 - Do not manually edit external AI generated text.
 - Do not rerun the provider repeatedly to repair ordinary radar refresh damage.
 - `External AI Production Refresh` remains the only approved automatic path for changing external AI content.
