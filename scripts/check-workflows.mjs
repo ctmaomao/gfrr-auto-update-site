@@ -1216,10 +1216,18 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
       'clearTimeout(timer)',
       'options.timeoutMs',
       'WORKER_FETCH_TIMEOUT_MS',
+      'sanitizeDiagnosticUrl(response.url || url)',
+      'sanitizeDiagnosticUrl(url)',
     ]) {
       if (!fetchHelperBlock.includes(needle)) {
-        addRuntimeFailure(workerContract.mainPreviewFile, `fetchTextWithDiagnostics missing timeout guard "${needle}"`);
+        addRuntimeFailure(workerContract.mainPreviewFile, `fetchTextWithDiagnostics missing required guard "${needle}"`);
       }
+    }
+    if (/finalUrl:\s*(?:response\.url\s*\|\|\s*url|url)\s*,/u.test(fetchHelperBlock)) {
+      addRuntimeFailure(
+        workerContract.mainPreviewFile,
+        'fetchTextWithDiagnostics finalUrl must use sanitizeDiagnosticUrl to avoid leaking query params',
+      );
     }
   } else {
     addRuntimeFailure(workerContract.mainPreviewFile, 'missing fetchTextWithDiagnostics timeout guard block');

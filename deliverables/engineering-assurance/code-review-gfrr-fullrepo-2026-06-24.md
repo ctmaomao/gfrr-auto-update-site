@@ -13,7 +13,7 @@
 
 - **整体结论**：GFRR v28.0.10 在 v28.0J 稳定基线上**未发现基线边界违反或活跃安全漏洞**。6 条核心架构边界（解释层↔决策层隔离、External AI 隔离、版本分离、secondary diagnostics 隔离、World Order overlay、Brent freshness gate）均合规。三位成员独立产出后由主理人交叉验证关键发现点并去重合并。
 - **严重度分布（原始审查）**：🔴严重 0 项 / 🟠高 4 项 / 🟡中 14 项 / 🟢低 8 项
-- **整改复核（2026-06-26）**：4 项高优先级问题已全部关闭；#21 经当前代码复核后关闭；#23 降级为可选语义/fixture 补盲。剩余项均为 P1/P2 渐进式加固或需另开版本评审事项。
+- **整改复核（2026-06-26）**：4 项高优先级问题已全部关闭；#7 已关闭；#21 经当前代码复核后关闭；#23 降级为可选语义/fixture 补盲。剩余项均为 P1/P2 渐进式加固或需另开版本评审事项。
 
 ---
 
@@ -27,7 +27,7 @@
 | 关键行动项 | 7 条（见文末行动清单） |
 | 基线边界违反 | 无 |
 | 活跃安全漏洞 | 无 |
-| 建议下一步 | ① 优先修复 #7/#8/#10/#14 等小半径中优先级问题；② #9 作为前端安全 patch 单独推进；③ #15/#16/#20 按架构/文档评审处理 |
+| 建议下一步 | ① 优先修复 #8/#10/#14 等小半径中优先级问题；② #9 作为前端安全 patch 单独推进；③ #15/#16/#20 按架构/文档评审处理 |
 
 ---
 
@@ -39,6 +39,7 @@
 | #2 非原子生产 JSON 写入 | ✅ 已关闭 | commit `57027461`：`writeJsonAtomically` tmp+rename 写入 |
 | #3 frozen realtime 边界漂移 | ✅ 已关闭并改写方案 | commit `75d442db`：加 `@frozen` / config 注释 / `check:realtime-js-frozen`；同时让 asset bump helper 跳过 `scripts/modules/realtime.js`，不采用原报告里的 `git diff --exit-code` 守门 |
 | #4 Worker 源码语法盲区 | ✅ 已关闭 | commit `73c2f7a2`：新增 `check:worker-syntax` 并接入 `check:all` |
+| #7 Worker diagnostic finalUrl 泄露风险 | ✅ 已关闭 | Worker `finalUrl` 现统一走 `sanitizeDiagnosticUrl` 去除 query/hash；`check:workflows` 加回归守卫 |
 | #15 ADR-0002 路径 | ✏️ 已改写为待办 | 正确路径为 `docs/ADR/0002-worker-first-realtime.md`，问题仍有效 |
 | #20 ADR-0008 路径/措辞 | ✏️ 已改写为待办 | 正确路径为 `docs/ADR/0008-external-ai-read-only.md`，需区分 rule-based layer 与 live external layer |
 | #19 CI workflow 计数 | ✏️ 已改写为待办 | `CLAUDE.md` 仍写 GitHub Actions ×12；当前 `.github/workflows` 为 21 个文件，应改为“以目录实际文件为准”或更新为 21 |
@@ -76,7 +77,7 @@
 |---|------|---------|---------|---------|------|
 | 5 | 正确性 | scripts/modules/realtime.js:37-42 | `fetchBaselineData`/`fetchHistoryData` 执行 `fetch(url).then(r => r.json())` 未检查 `response.ok`。GitHub Pages 返回 404/500 HTML 错误页时 `r.json()` 抛 SyntaxError，错误信息不含 HTTP 状态。同文件 `fetchWorldOrderStressData`(:44) 已有正确 `response.ok` 检查，存在不一致。 | `.then()` 中加 `if (!r.ok) throw new Error('baseline HTTP ' + r.status)` 再 `.json()` | Cody |
 | 6 | 正确性 | scripts/modules/realtime.js:481 | catch 块 `lastError = \`${attempt.source}:${error.message}\`` 未做类型检查。若 error 非 Error 对象（如 `throw "string"`），`error.message` 为 undefined，产生 `"github-realtime-data:undefined"` 无用信息。 | 改为 `error instanceof Error ? error.message : String(error)` | Cody |
-| 7 | 安全 | workers/gfrr-realtime-worker/src/worker-market-preview.js:133,160 | `fetchTextWithDiagnostics` 中 `finalUrl: response.url \|\| url` 在 FRED API 调用时会存储含 `api_key` 查询参数的完整 URL。当前 diagnostic 对象未直接写入 KV payload，但在内存中携带 API key，未来任何将 diagnostic 纳入输出的改动都会泄露 key。 | `normalizeDiagnostic` 中对 finalUrl 脱敏：只保留 `new URL(finalUrl).origin + .pathname`，移除 query params | Cody |
+| 7 | 安全（已关闭） | workers/gfrr-realtime-worker/src/worker-market-preview.js:133,160 | 原始发现：`fetchTextWithDiagnostics` 中 `finalUrl: response.url \|\| url` 在 FRED API 调用时会存储含 `api_key` 查询参数的完整 URL。 | ✅ 已修复：Worker `finalUrl` 统一走 `sanitizeDiagnosticUrl` 去除 query/hash；`check:workflows` 加回归守卫 | Cody |
 | 8 | 正确性 | workers/gfrr-realtime-worker/src/index.js:848-854 | `scheduled` handler 中 `await env.GFRR_MARKET_KV.put(...)` 无 try/catch。KV 写入失败（配额超限/网络错误）时异常传播到 Worker 运行时，scheduled event 静默失败且无诊断。Cloudflare Workers 默认不重试失败的 scheduled events。 | 包裹 try/catch，失败时 `console.warn` 记录错误信息（不含敏感数据） | Cody |
 | 9 | 安全 | scripts/app.js:161 | `issueEl.innerHTML = \`<strong>ISSUE ${meta.issue}</strong>\`` 用 innerHTML 拼接 `meta.issue`。虽来自 pipeline 产出，但若 `radar-data.json` 被篡改可导致 XSS。`renderMacroOverview.js:53,62` 有类似 innerHTML 模式。 | 若 `meta.issue` 是纯标识符，用 `textContent` 替代；若需 HTML 格式，对动态值做转义 | Cody |
 | 10 | 安全 | scripts/world-order/fetch-ofac.mjs:60 | `const url = config.recentActionsUrl \|\| 'https://ofac.treasury.gov/recent-actions'` 直接使用 config URL，未校验是否 HTTPS 或在允许域名列表内。config 来自版本控制，风险较低，但若 config 被篡改可致 SSRF。 | 添加 URL allowlist 校验：`ALLOWED_OFAC_HOSTS = ['ofac.treasury.gov']` | Cody |
@@ -205,7 +206,7 @@
 | 3 | config.js `workerFirstEnabled` 旁加 FROZEN 注释；realtime.js 顶部加 `@frozen` JSDoc；新增静态 `check-realtime-js-frozen.mjs` 接入 check:all；asset bump helper 跳过 frozen module | 前端/测试 | P0 | 否 | ✅ 已完成：`75d442db` |
 | 4 | 新增 `check-worker-syntax.mjs`：递归 `node --check workers/gfrr-realtime-worker/src/*.js`，接入 check:all（check:syntax 之后） | 测试 | P0 | 否 | ✅ 已完成：`73c2f7a2` |
 | 5 | 新开 ADR-0018 记录 M-94 V0 路径 C 前端重写决策；ADR-0002 追加 amendment 标注 point 2 superseded | 架构 | P1 | 否 | 下一迭代 |
-| 6 | 修复 Cody #5-#14 的 10 项中优先级问题（realtime.js response.ok/error 类型、worker KV try/catch、app.js innerHTML、ofac SSRF、魔法数字、重复函数、regex 收紧） | 多角色 | P1 | 否 | 后续迭代分批 |
+| 6 | 修复剩余 Cody 中优先级问题（#5/#6 realtime.js response.ok/error 类型、#8 worker KV try/catch、#9 app.js innerHTML、#10 OFAC allowlist、#11/#13 魔法数字、#12 重复函数、#14 regex 收紧） | 多角色 | P1 | 否 | 后续迭代分批 |
 | 7 | 新增 `check-bubble-watch-dom.mjs` + `check-market-pricing-metrics-schema.mjs` 补测试盲区 | 测试 | P1 | 否 | 后续迭代 |
 
 **需另开版本评审（不在本审查行动清单内，排入 backlog）**：

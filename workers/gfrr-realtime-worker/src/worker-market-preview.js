@@ -86,13 +86,22 @@ function sourceReason(status, error) {
   return null;
 }
 
+function sanitizeDiagnosticUrl(value) {
+  try {
+    const parsed = new URL(String(value || ''));
+    return `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    return String(value || '').split(/[?#]/u)[0] || null;
+  }
+}
+
 function normalizeDiagnostic(result) {
   return {
     ok: result.ok,
     status: result.status,
     statusText: result.statusText,
     urlHost: result.urlHost,
-    finalUrl: result.finalUrl,
+    finalUrl: sanitizeDiagnosticUrl(result.finalUrl),
     contentType: result.contentType,
     bodyLength: result.bodyLength,
     durationMs: result.durationMs,
@@ -130,7 +139,7 @@ async function fetchTextWithDiagnostics(url, options = {}) {
         status: response.status,
         statusText: response.statusText,
         urlHost: parsedUrl.host,
-        finalUrl: response.url || url,
+        finalUrl: sanitizeDiagnosticUrl(response.url || url),
         contentType: response.headers.get('content-type'),
         bodyLength: text.length,
         durationMs: Date.now() - startedAt,
@@ -152,7 +161,7 @@ async function fetchTextWithDiagnostics(url, options = {}) {
         status: null,
         statusText: null,
         urlHost: parsedUrl.host,
-        finalUrl: url,
+        finalUrl: sanitizeDiagnosticUrl(url),
         contentType: null,
         bodyLength: 0,
         durationMs: Date.now() - startedAt,
@@ -1024,7 +1033,7 @@ function buildProbeFetchSummary(probeId, url, result) {
     httpStatus: result.status,
     contentType: result.contentType,
     bodyLength: result.bodyLength,
-    finalUrl: result.finalUrl,
+    finalUrl: sanitizeDiagnosticUrl(result.finalUrl),
   };
 }
 
