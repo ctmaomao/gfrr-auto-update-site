@@ -13,7 +13,7 @@
 
 - **整体结论**：GFRR v28.0.10 在 v28.0J 稳定基线上**未发现基线边界违反或活跃安全漏洞**。6 条核心架构边界（解释层↔决策层隔离、External AI 隔离、版本分离、secondary diagnostics 隔离、World Order overlay、Brent freshness gate）均合规。三位成员独立产出后由主理人交叉验证关键发现点并去重合并。
 - **严重度分布（原始审查）**：🔴严重 0 项 / 🟠高 4 项 / 🟡中 14 项 / 🟢低 8 项
-- **整改复核（2026-06-26）**：4 项高优先级问题已全部关闭；#5/#6/#7/#8/#9/#10/#11/#12/#13/#14/#15/#16/#17/#18/#19/#20/#22/#24/#25 已关闭；#21 经当前代码复核后关闭；#23 降级为可选语义/fixture 补盲。剩余项为 #26 可选文档加固。
+- **整改复核（2026-06-26）**：4 项高优先级问题已全部关闭；#5/#6/#7/#8/#9/#10/#11/#12/#13/#14/#15/#16/#17/#18/#19/#20/#22/#24/#25/#26 已关闭；#21 经当前代码复核后关闭；#23 降级为可选语义/fixture 补盲，不再作为阻塞整改项。
 
 ---
 
@@ -21,13 +21,13 @@
 
 | 项目 | 内容 |
 |------|------|
-| 整体评级 | 🟡 有条件通过（P0/P1 已关闭，剩余可选 P2） |
+| 整体评级 | 🟢 通过（P0/P1 已关闭，仅 #23 保留为降级可选补盲） |
 | 阻塞项数量 | 0 |
 | 高优先级问题 | 原始 4 项；2026-06-26 已关闭 4 项 |
 | 关键行动项 | 7 条（见文末行动清单） |
 | 基线边界违反 | 无 |
 | 活跃安全漏洞 | 无 |
-| 建议下一步 | #26 作为可选文档加固 |
+| 建议下一步 | 本轮工程审查整改可收口；#23 可作为后续可选语义/fixture 补盲 |
 
 ---
 
@@ -58,6 +58,7 @@
 | #23 treasury scripts 语法盲区 | ⬇️ 已降级 | `check:syntax` 已覆盖 `scripts/treasury-fiscal-data/*.mjs` 语法；剩余只是可选语义/fixture check |
 | #24 PR check:all gate | ✅ 已关闭 | 新增只读 `.github/workflows/check-all-pr.yml`，在 `pull_request` → `main` 与手动触发时运行 `npm ci` + `npm run check:all`；`check:workflows` 已纳入契约守门 |
 | #25 realtime-data publish guard | ✅ 已关闭 | `.github/workflows/build-realtime-market.yml` 在 `npm run build:realtime` 后、切换/提交 `realtime-data` 前运行 `npm run check:realtime-local-schema`；`check:workflows` 已纳入契约守门 |
+| #26 External AI / Daily 时序说明 | ✅ 已关闭 | `docs/OPERATIONS.md` 新增 External AI refresh / Daily consumption timing，说明 Daily 22:30 UTC、External AI 23:50 UTC 的预期顺序、约 1 天 preserve/消费滞后、fallback 与禁止手工改 JSON / 为对齐时间重跑 provider |
 
 ---
 
@@ -114,7 +115,7 @@
 | 23 | 测试盲区（已降级） | scripts/treasury-fiscal-data/*.mjs | 原始担忧：3 个脚本有 npm script 但无 check:* 守门。当前复核：`check:syntax` 已递归覆盖 `scripts/treasury-fiscal-data/*.mjs` 的语法检查。 | ⬇️ 降级为可选语义/fixture check；不再作为语法盲区 | Tessa |
 | 24 | CI 回归（已关闭） | 无 pull_request 触发 check:all | 原始发现：check:all 只在 push(main) 和 workflow_run 触发，PR 合并前无自动 check:all 门。 | ✅ 已修复：新增只读 `Check All PR` workflow，`pull_request` 到 `main` 时运行 `npm ci` + `npm run check:all`；不写 main、不部署 Pages、不读取 secrets，并由 `check:workflows` 守门 | Tessa |
 | 25 | CI 回归（已关闭） | build-realtime-market.yml | 原始发现：build:realtime → 直接 commit 到 realtime-data branch，build 后无 check 守门。Daily pipeline 的 check:data 下游兜底。 | ✅ 已修复：生成 `realtime/market.json` 后立即运行 `npm run check:realtime-local-schema`，通过后才进入 summary 与 `realtime-data` 分支 commit/push；`check:workflows` 守门该步骤 | Tessa |
-| 26 | 时序滞后 | external-ai-production-refresh.yml (23:50) vs build-daily-radar-data.yml (22:30) | External AI Refresh 在 Daily pipeline 之后运行。Daily pipeline preserve 的是前一天的外部 AI 层，新外部 AI 层要到次日 22:30 才被 Daily 消费。1 天滞后对日频简报可接受，但需文档化。 | 在 OPERATIONS.md 文档化此 1 天滞后 | Archi |
+| 26 | 时序滞后（已关闭） | external-ai-production-refresh.yml (23:50) vs build-daily-radar-data.yml (22:30) | 原始发现：External AI Refresh 在 Daily pipeline 之后运行。Daily pipeline preserve 的是前一次有效外部 AI 层，新外部 AI 层要到下一次 Daily 才被 Daily output 消费；约 1 天滞后对日频简报可接受，但需文档化。 | ✅ 已修复：`docs/OPERATIONS.md` 已文档化 UTC cron 顺序、successful refresh 可独立写 production layer、Daily preserve 的自然滞后、fallback 行为与禁止手工改 JSON / 为对齐时间重跑 provider | Archi |
 
 ---
 
@@ -236,7 +237,7 @@
 - **原始审查未运行 check:all**：原始 2026-06-24 审查为静态分析 + 源码阅读。2026-06-26 四个 P0 整改提交前均已运行相关定向检查与 `npm run check:all`。
 - **Worker runtime 兼容性未验证**：`check:worker-syntax` 已覆盖 Worker 源码语法；但 Workers 用 Cloudflare Workers 运行时（非 Node.js），`node --check` 不能验证 Worker-specific API 兼容性。
 - **ADR 体系完整性未全面审计**：Archi 评估了 10 个核心 ADR 的合规性，但 docs/ADR/ 下可能有更多 ADR 未纳入本次评估。
-- **External AI 时序滞后**（发现 #26）对日频简报可接受，但若未来改为更高频率刷新需重新评估。
+- **External AI 时序滞后**（发现 #26）已在 `docs/OPERATIONS.md` 文档化；对日频简报可接受，但若未来改为更高频率刷新需重新评估。
 
 ---
 

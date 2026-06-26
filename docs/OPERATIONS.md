@@ -111,6 +111,14 @@ _(历史 v28.0K-3A:当时 `status="disabled"` 为预期、回退 rule-based laye
 8. 输出异常时 fallback 到 rule-based `aiInterpretationLayer`,不要手改产物。
 9. `External AI Production Refresh` 的 scheduled 默认源为 `analyst_compact_v1`；rollback 时手动 `workflow_dispatch` 选择 `input_source=local_compact`。
 
+### External AI refresh / Daily consumption timing
+
+GitHub Actions cron 使用 UTC。当前 `Build Daily Radar Data` 每日 `22:30 UTC` 运行，`External AI Production Refresh` 每日 `23:50 UTC` 运行。该顺序是预期状态：Daily 普通刷新不会调用 DeepSeek，也不会生成新的 external AI 文本；它只会 preserve 上一次已通过生产契约的 `externalAiInterpretationLayer`，若该层缺失或不兼容则回退到 disabled scaffold + rule-based `aiInterpretationLayer`。
+
+`External AI Production Refresh` 是独立的 production layer 写入路径。它在 provider output、quality review、projection、`check:external-ai-production-contract`、`check:external-ai-production-write-guard`、`check:data` 与 `check:all` 全部通过后，只允许提交 `data/radar-data.json`。因此一次成功的 23:50 refresh 可以在 Pages 重新部署后让页面看到新的 `externalAiInterpretationLayer`，但它会晚于当天 22:30 Daily；下一次 Daily 才会把该生产层作为 previous data preserve 进入新的 Daily output。
+
+如果看到 `data/radar-data.json` 中 Daily 生成时间与 `externalAiInterpretationLayer.generatedAt` 不同，不要按事故处理，也不要为对齐时间而重跑付费 provider 或手工编辑 JSON。日频简报允许这类约 1 天内的时序差；只有当 external AI output contract 失败、质量审查失败、provider failure、缺失超过预期刷新窗口，或显示层没有 fallback 到 rule-based `aiInterpretationLayer` 时，才按 external AI incident 排查。
+
 ## Stable Observation Audit
 
 v28.0K-3D originally added a read-only stable observation gate for the v28.0K baseline. M-44 deprecates that legacy gate because it was hard-coded to the disabled external-AI scaffold era and no longer matches the v28.0L+ production External AI state.
@@ -1137,8 +1145,8 @@ v28.0L-4A adds the first production refresh workflow for the visible external AI
 Schedule:
 
 - Workflow: `External AI Production Refresh`.
-- Daily schedule: `23:50 UTC`.
-- The schedule is intended to run after the current data generation time around `23:29 UTC`.
+- Refresh schedule: `23:50 UTC`.
+- The schedule intentionally runs after `Build Daily Radar Data` (`22:30 UTC`) so the refresh can use the latest daily site data while the next Daily run preserves the refreshed layer.
 - Scheduled runs use `input_source=analyst_compact_v1` by default. `local_compact` remains available as a manual dispatch rollback option.
 - Do not add additional schedules.
 
@@ -1198,7 +1206,7 @@ Rollback:
 - If unsafe copy appears, revert immediately.
 - If Global Risk Heatmap layout changes, revert immediately.
 
-- **L-4A-1** production refresh workflow audit sync:首个成功 manual run `25611392014`(commit `c32af65`,只改 `data/radar-data.json` 33+/37−,`productionDataWritten=true`/`displayEnabled=true`/`promotionEligible=false`,全 checks 过);daily `23:50 UTC` schedule 就绪,勿手编 layer/加 schedule/retry。
+- **L-4A-1** production refresh workflow audit sync:首个成功 manual run `25611392014`(commit `c32af65`,只改 `data/radar-data.json` 33+/37−,`productionDataWritten=true`/`displayEnabled=true`/`promotionEligible=false`,全 checks 过);scheduled `23:50 UTC` refresh 就绪,勿手编 layer/加 schedule/retry。
 - **L-4B** display coverage polish note:frontend-only,显示更多已验证 layer 字段的 capped 安全摘要;勿 rerun/编辑 AI 文本;过长则在 `scripts/modules/renderExternalAi.js` 降 cap;raw provenance/run ID/artifact ID 仍隐藏。
 - **L-4B-1** display coverage audit-sync:coverage 完成(frontend-only);`External AI Production Refresh` 仍是唯一批准自动 provider 路径。
 
