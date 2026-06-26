@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=odp-oil-cross-confirmation-1';
-import { formatOnRrpYiUsd } from './format.js?v=odp-oil-cross-confirmation-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=realtime-frozen-guard-1';
+import { formatOnRrpYiUsd } from './format.js?v=realtime-frozen-guard-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

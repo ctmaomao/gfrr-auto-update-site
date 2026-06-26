@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=odp-oil-cross-confirmation-1';
+﻿import { formatFiniteNumber } from './format.js?v=realtime-frozen-guard-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
@@ -7,6 +7,8 @@ export const worldOrderStressUrl = './data/world-order-stress.json';
 export const REMOTE_REALTIME_URL = 'https://raw.githubusercontent.com/ctmaomao/gfrr-auto-update-site/realtime-data/realtime/market.json';
 export const WORKER_GENERATED_REALTIME_URL = 'https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json';
 export const realtimeSourcePolicy = {
+  // FROZEN: M-94 V0 Path C keeps frontend runtime on static radar-data.json.
+  // Do not reconnect worker-first realtime overlay without a reviewed product decision.
   workerFirstEnabled: true,
   workerEndpoint: WORKER_GENERATED_REALTIME_URL,
   workerTimeoutMs: 4500,

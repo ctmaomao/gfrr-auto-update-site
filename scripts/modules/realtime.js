@@ -1,4 +1,10 @@
-﻿import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=odp-evidence-timing-1';
+﻿/**
+ * @frozen M-94 V0 Path C
+ * Retained for historical worker-first overlay logic, but intentionally not
+ * imported by scripts/app.js. Reconnecting this module to the frontend requires
+ * a reviewed product decision.
+ */
+import { dataUrl, historyUrl, localRealtimeUrl, worldOrderStressUrl, REMOTE_REALTIME_URL, realtimeSourcePolicy, fmtNumSafe } from './config.js?v=odp-evidence-timing-1';
 import {
   computeAgeMinutes,
   classifyFreshnessLevel,

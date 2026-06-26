@@ -5,6 +5,9 @@ const version = process.argv[2];
 const safeVersionPattern = /^[A-Za-z0-9._-]+$/u;
 const usage = 'Usage: node scripts/bump-frontend-asset-version.mjs <version>';
 const moduleDir = 'scripts/modules';
+const FROZEN_FRONTEND_MODULE_FILES = new Set([
+  'scripts/modules/realtime.js',
+]);
 const fixedFiles = [
   'index.html',
   'scripts/app.js',
@@ -39,7 +42,8 @@ function listModuleFiles() {
   if (!fs.existsSync(moduleDir)) return [];
   return fs.readdirSync(moduleDir)
     .filter((file) => file.endsWith('.js'))
-    .map((file) => path.join(moduleDir, file).replaceAll('\\', '/'));
+    .map((file) => path.join(moduleDir, file).replaceAll('\\', '/'))
+    .filter((file) => !FROZEN_FRONTEND_MODULE_FILES.has(file));
 }
 
 function replaceFrontendAssetVersion(text) {

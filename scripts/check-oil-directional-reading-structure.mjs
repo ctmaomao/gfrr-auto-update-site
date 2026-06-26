@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const errors = [];
-const CURRENT_ASSET_VERSION = 'odp-oil-cross-confirmation-1';
+const CURRENT_ASSET_VERSION = 'realtime-frozen-guard-1';
 const fail = (message) => errors.push(message);
 
 function read(path) {

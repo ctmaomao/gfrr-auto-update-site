@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-oil-cross-confirmation-1';
+﻿import { fmtNumSafe } from './config.js?v=realtime-frozen-guard-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
