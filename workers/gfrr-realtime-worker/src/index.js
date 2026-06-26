@@ -847,7 +847,15 @@ export default {
 
   async scheduled(_event, env) {
     const { key, value } = await buildScheduledPreviewOrStatusPayload(Date.now(), env);
-    await env.GFRR_MARKET_KV.put(key, JSON.stringify(value));
+    try {
+      await env.GFRR_MARKET_KV.put(key, JSON.stringify(value));
+    } catch (err) {
+      console.warn('scheduled primary KV write failed', {
+        key,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return;
+    }
     if (key === MARKET_WORKER_GENERATED_PREVIEW_KEY) {
       await tryWriteSecondaryPreview(env);
     }

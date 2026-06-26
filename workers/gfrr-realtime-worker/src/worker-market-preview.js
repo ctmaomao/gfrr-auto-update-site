@@ -1010,7 +1010,7 @@ function parsePriceFromHtml(text) {
     /data-last-price=["']?([0-9][0-9.,]*)/i,
     /data-price=["']?([0-9][0-9.,]*)/i,
     /"price"\s*:\s*"?([0-9][0-9.,]*)"?/i,
-    /(?:Brent|BZW00|Crude Oil)[\s\S]{0,600}?([0-9]{2,3}(?:\.[0-9]{1,4})?)/i,
+    /(?:Brent|BZW00|Crude Oil)[\s\S]{0,240}?(?:[$]\s*|(?:price|last|close|value|usd|dollars?)\s*[:=]?\s*["']?\s*)([0-9]{2,3}(?:\.[0-9]{1,4})?)/i,
   ];
 
   for (const pattern of candidates) {

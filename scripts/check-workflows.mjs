@@ -380,6 +380,7 @@ const worldOrderBuildScriptFile = 'scripts/build-world-order-stress.mjs';
 const worldOrderCheckScriptFile = 'scripts/check-world-order-stress.mjs';
 const worldOrderReviewScriptFile = 'scripts/review-world-order-stress.mjs';
 const worldOrderReliefWebDiagnosisFile = 'scripts/world-order/diagnose-reliefweb-source.mjs';
+const worldOrderOfacFile = 'scripts/world-order/fetch-ofac.mjs';
 const worldOrderSourceReviewFile = 'docs/WORLD_ORDER_SOURCE_REVIEW.md';
 const worldOrderRequiredFiles = [
   'scripts/build-world-order-stress.mjs',
@@ -1049,6 +1050,27 @@ if (fs.existsSync(worldOrderGdeltFile)) {
 } else {
   addRuntimeFailure(worldOrderGdeltFile, 'world order GDELT fetcher missing');
 }
+if (fs.existsSync(worldOrderOfacFile)) {
+  const text = fs.readFileSync(worldOrderOfacFile, 'utf8');
+  for (const needle of [
+    'DEFAULT_OFAC_RECENT_ACTIONS_URL',
+    'ALLOWED_OFAC_HOSTS',
+    'ofac.treasury.gov',
+    'function normalizeOfacUrl',
+    "url.protocol !== 'https:'",
+    '!ALLOWED_OFAC_HOSTS.has(url.hostname)',
+    'normalizeOfacUrl(config.recentActionsUrl)',
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(worldOrderOfacFile, `missing OFAC URL allowlist guard "${needle}"`);
+    }
+  }
+  if (/const\s+url\s*=\s*config\.recentActionsUrl\s*\|\|/u.test(text)) {
+    addRuntimeFailure(worldOrderOfacFile, 'OFAC recentActionsUrl must be normalized before fetch');
+  }
+} else {
+  addRuntimeFailure(worldOrderOfacFile, 'world order OFAC fetcher missing');
+}
 if (fs.existsSync(worldOrderSipriExampleFile)) {
   const text = fs.readFileSync(worldOrderSipriExampleFile, 'utf8');
   for (const needle of [
@@ -1252,6 +1274,18 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
   } else {
     addRuntimeFailure(workerContract.mainPreviewFile, 'missing Trading Economics diagnostic candidate block');
   }
+  if (text.includes('(?:Brent|BZW00|Crude Oil)[\\s\\S]{0,600}?([0-9]{2,3}')) {
+    addRuntimeFailure(
+      workerContract.mainPreviewFile,
+      'Trading Economics HTML price fallback must not match arbitrary 2-3 digit numbers after Brent text',
+    );
+  }
+  if (!text.includes('(?:price|last|close|value|usd|dollars?)')) {
+    addRuntimeFailure(
+      workerContract.mainPreviewFile,
+      'Trading Economics HTML price fallback must require nearby price context',
+    );
+  }
   const promotionDecisionStart = text.indexOf('function buildBrentPromotionDecision');
   const summarizeCandidateStart = text.indexOf('function summarizeBrentCandidate', promotionDecisionStart);
   if (
@@ -1417,6 +1451,27 @@ if (fs.existsSync(workerContract.routerFile)) {
   }
   if (!/MARKET_SECONDARY_PREVIEW_KEY\s*=\s*['"]market:secondary-preview['"]/u.test(text)) {
     addRuntimeFailure(workerContract.routerFile, 'secondary preview must continue using market:secondary-preview KV key');
+  }
+  const scheduledStart = text.indexOf('async scheduled(_event, env)');
+  const scheduledBlock = scheduledStart === -1 ? '' : text.slice(scheduledStart);
+  if (scheduledStart === -1) {
+    addRuntimeFailure(workerContract.routerFile, 'missing scheduled handler');
+  } else {
+    const hasGuardedPrimaryWrite = [
+      'try {',
+      'await env.GFRR_MARKET_KV.put(key, JSON.stringify(value));',
+      '} catch (err) {',
+      "console.warn('scheduled primary KV write failed'",
+    ].every((needle) => scheduledBlock.includes(needle));
+    if (!hasGuardedPrimaryWrite) {
+      addRuntimeFailure(workerContract.routerFile, 'scheduled primary KV write must be guarded with try/catch diagnostics');
+    }
+    const catchStart = scheduledBlock.indexOf('} catch (err)');
+    const secondaryStart = scheduledBlock.indexOf('await tryWriteSecondaryPreview', catchStart);
+    const catchBlock = secondaryStart === -1 ? scheduledBlock.slice(catchStart) : scheduledBlock.slice(catchStart, secondaryStart);
+    if (!catchBlock.includes('return;')) {
+      addRuntimeFailure(workerContract.routerFile, 'scheduled primary KV write failure must not proceed to secondary preview write');
+    }
   }
 } else {
   addRuntimeFailure(workerContract.routerFile, 'worker router file missing');

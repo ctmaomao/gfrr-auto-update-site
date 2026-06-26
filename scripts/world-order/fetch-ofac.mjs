@@ -8,6 +8,17 @@ import {
   withPreviousSummaryOnFailure
 } from './normalize-world-order-inputs.mjs';
 
+const DEFAULT_OFAC_RECENT_ACTIONS_URL = 'https://ofac.treasury.gov/recent-actions';
+const ALLOWED_OFAC_HOSTS = new Set(['ofac.treasury.gov']);
+
+function normalizeOfacUrl(value) {
+  const url = new URL(value || DEFAULT_OFAC_RECENT_ACTIONS_URL);
+  if (url.protocol !== 'https:' || !ALLOWED_OFAC_HOSTS.has(url.hostname)) {
+    throw new Error(`OFAC recentActionsUrl is not allowlisted: ${url.origin}`);
+  }
+  return url.toString();
+}
+
 function stripHtml(value) {
   return String(value || '')
     .replace(/<script[\s\S]*?<\/script>/giu, ' ')
@@ -57,10 +68,9 @@ export async function fetchOfacSummary({ config = {}, previousSource = null } = 
     });
   }
 
-  const url = config.recentActionsUrl || 'https://ofac.treasury.gov/recent-actions';
-  const timeoutMs = Number.isFinite(config.timeoutMs) ? config.timeoutMs : 9000;
-
   try {
+    const url = normalizeOfacUrl(config.recentActionsUrl);
+    const timeoutMs = Number.isFinite(config.timeoutMs) ? config.timeoutMs : 9000;
     const response = await fetchTextWithTimeout(url, timeoutMs);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
