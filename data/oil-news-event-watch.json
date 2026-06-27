@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-27T11:57:24.655Z",
+  "generatedAt": "2026-06-27T14:15:16.067Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -21,7 +21,7 @@
     "details": {
       "gdelt_doc": {
         "status": "error",
-        "networkUsed": true,
+        "networkUsed": false,
         "successCount": 0,
         "failureCount": 1,
         "articleCount": 0,
@@ -29,7 +29,7 @@
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "error",
+            "status": "error_cooldown_cache_hit",
             "articleCount": 0,
             "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
           }
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-06-27T08:03:59.000Z",
-    "latestArticleAgeHours": 3.9,
+    "latestArticleAgeHours": 6.2,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -234,9 +234,9 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 19,
+      "articleCount": 20,
       "sourceCount": 2,
-      "weightedSignal": 76,
+      "weightedSignal": 80,
       "topArticles": [
         {
           "title": "France Seizes ‘Shadow Fleet’ Tanker, Stepping Up Pressure on Russia - Insurance Journal",
@@ -293,9 +293,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 21,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 126,
+      "weightedSignal": 132,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -356,9 +356,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 23,
+      "articleCount": 24,
       "sourceCount": 2,
-      "weightedSignal": 92,
+      "weightedSignal": 96,
       "topArticles": [
         {
           "title": "French Forces Detain Tanker in Continuing Crackdown on Shadow Fleet - The Maritime Executive",
@@ -538,9 +538,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 24,
+      "articleCount": 26,
       "sourceCount": 2,
-      "weightedSignal": 48,
+      "weightedSignal": 52,
       "topArticles": [
         {
           "title": "As Strait of Hormuz Opens, Oil Falls - Marine News Magazine",
@@ -602,6 +602,27 @@
   },
   "topArticles": [
     {
+      "title": "As Strait of Hormuz Opens, Oil Falls",
+      "url": "https://marinelink.com/news/strait-hormuz-opens-oil-falls-540679",
+      "domain": "marinelink.com",
+      "publishedAt": "2026-06-26T07:37:06.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "sanctions",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
+    },
+    {
       "title": "An oil tanker navigates the Strait of Hormuz despite threats from Iran’s Revolutionary Guard - AP News",
       "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-25-2026-862164c2aecbdc376dea434198eaf75f",
       "domain": "apnews.com",
@@ -620,10 +641,10 @@
       ]
     },
     {
-      "title": "Strait of Hormuz Reopens for Oil Tankers Following U.S.-Iran Deal",
-      "url": "https://discoveryalert.com.au/strait-hormuz-oil-tankers-reopening-crisis-2026-market",
-      "domain": "discoveryalert.com.au",
-      "publishedAt": "2026-06-24T19:15:33.000Z",
+      "title": "Iran Strikes Cargo Vessel in the Strait of Hormuz Putting Oil Trade on Edge | IBTimes",
+      "url": "https://ibtimes.com/iran-strikes-cargo-vessel-strait-hormuz-putting-oil-trade-edge-3804583",
+      "domain": "ibtimes.com",
+      "publishedAt": "2026-06-26T10:57:26.000Z",
       "sources": [
         "brave"
       ],
@@ -636,7 +657,7 @@
         "tanker_shipping"
       ],
       "queryIds": [
-        "facility_supply_disruption"
+        "chokepoint_shipping"
       ]
     },
     {
@@ -756,10 +777,10 @@
       ]
     },
     {
-      "title": "Hormuz Crisis Sparks a Middle East Pipeline BoomHormuz Crisis Sparks a Middle East Pipeline Boom | OilPrice.com",
-      "url": "https://oilprice.com/Energy/Crude-Oil/Hormuz-Crisis-Sparks-a-Middle-East-Pipeline-Boom.html",
+      "title": "Major Saudi Oil Terminal Roars Back to Life as Gulf Supply Recovery Accelerates | OilPrice.com",
+      "url": "https://oilprice.com/Latest-Energy-News/World-News/Major-Saudi-Oil-Terminal-Roars-Back-to-Life-as-Gulf-Supply-Recovery-Accelerates.html",
       "domain": "oilprice.com",
-      "publishedAt": "2026-06-21T21:00:00.000Z",
+      "publishedAt": "2026-06-25T16:30:00.000Z",
       "sources": [
         "brave"
       ],
@@ -775,10 +796,10 @@
       ]
     },
     {
-      "title": "Major Saudi Oil Terminal Roars Back to Life as Gulf Supply Recovery Accelerates | OilPrice.com",
-      "url": "https://oilprice.com/Latest-Energy-News/World-News/Major-Saudi-Oil-Terminal-Roars-Back-to-Life-as-Gulf-Supply-Recovery-Accelerates.html",
+      "title": "Hormuz Crisis Sparks a Middle East Pipeline BoomHormuz Crisis Sparks a Middle East Pipeline Boom | OilPrice.com",
+      "url": "https://oilprice.com/Energy/Crude-Oil/Hormuz-Crisis-Sparks-a-Middle-East-Pipeline-Boom.html",
       "domain": "oilprice.com",
-      "publishedAt": "2026-06-25T16:30:00.000Z",
+      "publishedAt": "2026-06-21T21:00:00.000Z",
       "sources": [
         "brave"
       ],
@@ -811,38 +832,21 @@
       "queryIds": [
         "facility_supply_disruption"
       ]
-    },
-    {
-      "title": "Oil extends losses, WTI crude falls below $70 for first time since early March - Oil & Gas 360",
-      "url": "https://www.oilandgas360.com/oil-extends-losses-wti-crude-falls-below-70-for-first-time-since-early-march/",
-      "domain": "oilandgas360.com",
-      "publishedAt": "2026-06-24T15:42:08.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "market_reaction"
-      ]
     }
   ],
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 1,
-    "highClaimDomainCount": 1,
+    "highClaimTitleCount": 2,
+    "highClaimDomainCount": 2,
     "highClaimDomains": [
-      "bloomberg.com"
+      "bloomberg.com",
+      "ibtimes.com"
     ],
     "highClaimTerms": [
       "attack",
-      "halt"
+      "halt",
+      "strikes"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
@@ -858,10 +862,10 @@
     "evaluatedArticleCount": 12,
     "claimCount": 12,
     "polarityCounts": {
-      "risk_escalation": 1,
+      "risk_escalation": 2,
       "risk_deescalation": 3,
       "mixed_or_contested": 0,
-      "market_reaction_only": 6,
+      "market_reaction_only": 5,
       "unclear_or_high_claim": 2
     },
     "eventTypeCounts": {
@@ -889,7 +893,7 @@
         {
           "eventType": "chokepoint",
           "claimCount": 9,
-          "riskEscalation": 1,
+          "riskEscalation": 2,
           "riskDeescalation": 1,
           "mixedOrContested": 0,
           "contradiction": true
