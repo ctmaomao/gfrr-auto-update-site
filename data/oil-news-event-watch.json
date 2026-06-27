@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-27T19:54:23.241Z",
+  "generatedAt": "2026-06-27T21:39:36.253Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -21,7 +21,7 @@
     "details": {
       "gdelt_doc": {
         "status": "error",
-        "networkUsed": true,
+        "networkUsed": false,
         "successCount": 0,
         "failureCount": 1,
         "articleCount": 0,
@@ -29,7 +29,7 @@
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "error",
+            "status": "error_cooldown_cache_hit",
             "articleCount": 0,
             "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
           }
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-06-27T08:03:59.000Z",
-    "latestArticleAgeHours": 11.8,
+    "latestArticleAgeHours": 13.6,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -293,9 +293,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 21,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 126,
+      "weightedSignal": 132,
       "topArticles": [
         {
           "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
@@ -355,9 +355,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 23,
+      "articleCount": 24,
       "sourceCount": 2,
-      "weightedSignal": 92,
+      "weightedSignal": 96,
       "topArticles": [
         {
           "title": "French Forces Detain Tanker in Continuing Crackdown on Shadow Fleet - The Maritime Executive",
@@ -476,9 +476,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 48,
+      "articleCount": 47,
       "sourceCount": 2,
-      "weightedSignal": 144,
+      "weightedSignal": 141,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -536,9 +536,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 24,
+      "articleCount": 25,
       "sourceCount": 2,
-      "weightedSignal": 48,
+      "weightedSignal": 50,
       "topArticles": [
         {
           "title": "As Strait of Hormuz Opens, Oil Falls - Marine News Magazine",
@@ -622,6 +622,26 @@
       "url": "https://ibtimes.com/iran-strikes-cargo-vessel-strait-hormuz-putting-oil-trade-edge-3804583",
       "domain": "ibtimes.com",
       "publishedAt": "2026-06-26T10:57:26.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping"
+      ]
+    },
+    {
+      "title": "Strait of Hormuz attack puts fragile ceasefire to the test",
+      "url": "https://thenationaldesk.com/news/americas-news-now/strait-of-hormuz-attack-puts-fragile-ceasefire-to-the-test-vessel-damage-faith-freedom-washington-agreement",
+      "domain": "thenationaldesk.com",
+      "publishedAt": "2026-06-26T15:52:33.000Z",
       "sources": [
         "brave"
       ],
@@ -807,34 +827,17 @@
       "queryIds": [
         "sanctions_shadow_fleet"
       ]
-    },
-    {
-      "title": "Explosion at Qatar natural gas export terminal injures 54, leaves 18 missing - NBC News",
-      "url": "https://www.nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
-      "domain": "nbcnews.com",
-      "publishedAt": "2026-06-22T03:05:30.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
     }
   ],
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 2,
-    "highClaimDomainCount": 2,
+    "highClaimTitleCount": 3,
+    "highClaimDomainCount": 3,
     "highClaimDomains": [
       "bloomberg.com",
-      "ibtimes.com"
+      "ibtimes.com",
+      "thenationaldesk.com"
     ],
     "highClaimTerms": [
       "attack",
@@ -855,39 +858,41 @@
     "evaluatedArticleCount": 12,
     "claimCount": 12,
     "polarityCounts": {
-      "risk_escalation": 4,
+      "risk_escalation": 3,
       "risk_deescalation": 2,
-      "mixed_or_contested": 0,
+      "mixed_or_contested": 1,
       "market_reaction_only": 4,
       "unclear_or_high_claim": 2
     },
     "eventTypeCounts": {
-      "chokepoint": 7,
+      "chokepoint": 8,
       "shipping": 1,
       "sanctions": 0,
-      "facility": 2,
+      "facility": 1,
       "supply": 2,
       "market_reaction": 0,
       "general_energy": 0
     },
     "sourceTierCounts": {
       "primary_wire_or_official": 2,
-      "major_financial_media": 3,
+      "major_financial_media": 2,
       "industry_trade": 3,
-      "aggregator_or_blog": 4,
+      "aggregator_or_blog": 5,
       "low_confidence": 0
     },
     "contradiction": {
-      "state": "risk_escalation_dominant",
-      "eventTypes": [],
+      "state": "mixed_claims",
+      "eventTypes": [
+        "chokepoint"
+      ],
       "details": [
         {
           "eventType": "chokepoint",
-          "claimCount": 7,
+          "claimCount": 8,
           "riskEscalation": 2,
           "riskDeescalation": 0,
-          "mixedOrContested": 0,
-          "contradiction": false
+          "mixedOrContested": 1,
+          "contradiction": true
         },
         {
           "eventType": "shipping",
@@ -899,8 +904,8 @@
         },
         {
           "eventType": "facility",
-          "claimCount": 2,
-          "riskEscalation": 1,
+          "claimCount": 1,
+          "riskEscalation": 0,
           "riskDeescalation": 0,
           "mixedOrContested": 0,
           "contradiction": false
