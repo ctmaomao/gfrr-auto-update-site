@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-27T17:39:05.465Z",
+  "generatedAt": "2026-06-27T19:54:23.241Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -21,7 +21,7 @@
     "details": {
       "gdelt_doc": {
         "status": "error",
-        "networkUsed": false,
+        "networkUsed": true,
         "successCount": 0,
         "failureCount": 1,
         "articleCount": 0,
@@ -29,7 +29,7 @@
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "error_cooldown_cache_hit",
+            "status": "error",
             "articleCount": 0,
             "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
           }
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-06-27T08:03:59.000Z",
-    "latestArticleAgeHours": 9.6,
+    "latestArticleAgeHours": 11.8,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 64,
-    "uniqueArticleCount": 62,
+    "uniqueArticleCount": 63,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 49,
+      "articleCount": 50,
       "sourceCount": 2,
-      "weightedSignal": 294,
+      "weightedSignal": 300,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -416,9 +416,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 41,
+      "articleCount": 43,
       "sourceCount": 2,
-      "weightedSignal": 123,
+      "weightedSignal": 129,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -476,9 +476,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 47,
+      "articleCount": 48,
       "sourceCount": 2,
-      "weightedSignal": 141,
+      "weightedSignal": 144,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -600,26 +600,6 @@
   },
   "topArticles": [
     {
-      "title": "Oil Prices Hover Around Prewar Levels as Gulf Shipping Jumps - The New York Times",
-      "url": "https://www.nytimes.com/2026/06/25/business/oil-prices-gas-iran.html",
-      "domain": "nytimes.com",
-      "publishedAt": "2026-06-25T05:26:18.000Z",
-      "sources": [
-        "brave",
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "chokepoint_shipping",
-        "market_reaction"
-      ]
-    },
-    {
       "title": "An oil tanker navigates the Strait of Hormuz despite threats from Iran’s Revolutionary Guard - AP News",
       "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-25-2026-862164c2aecbdc376dea434198eaf75f",
       "domain": "apnews.com",
@@ -631,6 +611,26 @@
       "buckets": [
         "chokepoint",
         "middle_east_risk",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping"
+      ]
+    },
+    {
+      "title": "Iran Strikes Cargo Vessel in the Strait of Hormuz Putting Oil Trade on Edge | IBTimes",
+      "url": "https://ibtimes.com/iran-strikes-cargo-vessel-strait-hormuz-putting-oil-trade-edge-3804583",
+      "domain": "ibtimes.com",
+      "publishedAt": "2026-06-26T10:57:26.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption",
         "tanker_shipping"
       ],
       "queryIds": [
@@ -695,30 +695,10 @@
       ]
     },
     {
-      "title": "Crude slips toward $70 as tankers return to Hormuz after US-Iran reach peace deal - The Times of India",
-      "url": "https://timesofindia.indiatimes.com/business/international-business/crude-slips-toward-70-as-tankers-return-to-hormuz-after-us-iran-reach-peace-deal-oil-price-on-june-25/articleshow/131980091.cms",
-      "domain": "timesofindia.indiatimes.com",
-      "publishedAt": "2026-06-25T01:44:00.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "sanctions",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "sanctions_shadow_fleet"
-      ]
-    },
-    {
-      "title": "Major Saudi Oil Terminal Roars Back to Life as Gulf Supply Recovery Accelerates | OilPrice.com",
-      "url": "https://oilprice.com/Latest-Energy-News/World-News/Major-Saudi-Oil-Terminal-Roars-Back-to-Life-as-Gulf-Supply-Recovery-Accelerates.html",
+      "title": "Hormuz Crisis Sparks a Middle East Pipeline BoomHormuz Crisis Sparks a Middle East Pipeline Boom | OilPrice.com",
+      "url": "https://oilprice.com/Energy/Crude-Oil/Hormuz-Crisis-Sparks-a-Middle-East-Pipeline-Boom.html",
       "domain": "oilprice.com",
-      "publishedAt": "2026-06-25T16:30:00.000Z",
+      "publishedAt": "2026-06-21T21:00:00.000Z",
       "sources": [
         "brave"
       ],
@@ -734,10 +714,10 @@
       ]
     },
     {
-      "title": "Hormuz Crisis Sparks a Middle East Pipeline BoomHormuz Crisis Sparks a Middle East Pipeline Boom | OilPrice.com",
-      "url": "https://oilprice.com/Energy/Crude-Oil/Hormuz-Crisis-Sparks-a-Middle-East-Pipeline-Boom.html",
+      "title": "Major Saudi Oil Terminal Roars Back to Life as Gulf Supply Recovery Accelerates | OilPrice.com",
+      "url": "https://oilprice.com/Latest-Energy-News/World-News/Major-Saudi-Oil-Terminal-Roars-Back-to-Life-as-Gulf-Supply-Recovery-Accelerates.html",
       "domain": "oilprice.com",
-      "publishedAt": "2026-06-21T21:00:00.000Z",
+      "publishedAt": "2026-06-25T16:30:00.000Z",
       "sources": [
         "brave"
       ],
@@ -810,22 +790,40 @@
       ]
     },
     {
-      "title": "IRGC warns against new Hormuz route for ships: What we know | US-Israel war on Iran News | Al Jazeera",
-      "url": "https://aljazeera.com/news/2026/6/25/irgc-warns-against-new-hormuz-route-for-ships-what-we-know",
-      "domain": "aljazeera.com",
-      "publishedAt": "2026-06-25T14:33:54.000Z",
+      "title": "US waives sanctions on Iranian crude: Here's why Indian refiners are still hesistant to buy it - The Times of India",
+      "url": "https://timesofindia.indiatimes.com/business/india-business/us-waives-sanctions-on-iranian-crude-heres-why-indian-refiners-are-still-hesistant-to-buy-it/articleshow/132013394.cms",
+      "domain": "timesofindia.indiatimes.com",
+      "publishedAt": "2026-06-26T10:35:00.000Z",
       "sources": [
         "brave"
       ],
       "buckets": [
-        "chokepoint",
-        "market_reaction",
+        "facility_event",
         "middle_east_risk",
+        "sanctions",
         "supply_disruption",
         "tanker_shipping"
       ],
       "queryIds": [
-        "chokepoint_shipping"
+        "sanctions_shadow_fleet"
+      ]
+    },
+    {
+      "title": "Explosion at Qatar natural gas export terminal injures 54, leaves 18 missing - NBC News",
+      "url": "https://www.nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
+      "domain": "nbcnews.com",
+      "publishedAt": "2026-06-22T03:05:30.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
       ]
     }
   ],
@@ -835,13 +833,13 @@
     "highClaimTitleCount": 2,
     "highClaimDomainCount": 2,
     "highClaimDomains": [
-      "aljazeera.com",
-      "bloomberg.com"
+      "bloomberg.com",
+      "ibtimes.com"
     ],
     "highClaimTerms": [
       "attack",
       "halt",
-      "war"
+      "strikes"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
@@ -857,54 +855,52 @@
     "evaluatedArticleCount": 12,
     "claimCount": 12,
     "polarityCounts": {
-      "risk_escalation": 2,
-      "risk_deescalation": 3,
+      "risk_escalation": 4,
+      "risk_deescalation": 2,
       "mixed_or_contested": 0,
-      "market_reaction_only": 5,
+      "market_reaction_only": 4,
       "unclear_or_high_claim": 2
     },
     "eventTypeCounts": {
-      "chokepoint": 8,
+      "chokepoint": 7,
       "shipping": 1,
       "sanctions": 0,
-      "facility": 1,
+      "facility": 2,
       "supply": 2,
       "market_reaction": 0,
       "general_energy": 0
     },
     "sourceTierCounts": {
       "primary_wire_or_official": 2,
-      "major_financial_media": 2,
+      "major_financial_media": 3,
       "industry_trade": 3,
-      "aggregator_or_blog": 5,
+      "aggregator_or_blog": 4,
       "low_confidence": 0
     },
     "contradiction": {
-      "state": "mixed_claims",
-      "eventTypes": [
-        "chokepoint"
-      ],
+      "state": "risk_escalation_dominant",
+      "eventTypes": [],
       "details": [
         {
           "eventType": "chokepoint",
-          "claimCount": 8,
+          "claimCount": 7,
           "riskEscalation": 2,
-          "riskDeescalation": 1,
+          "riskDeescalation": 0,
           "mixedOrContested": 0,
-          "contradiction": true
+          "contradiction": false
         },
         {
           "eventType": "shipping",
           "claimCount": 1,
-          "riskEscalation": 0,
+          "riskEscalation": 1,
           "riskDeescalation": 0,
           "mixedOrContested": 0,
           "contradiction": false
         },
         {
           "eventType": "facility",
-          "claimCount": 1,
-          "riskEscalation": 0,
+          "claimCount": 2,
+          "riskEscalation": 1,
           "riskDeescalation": 0,
           "mixedOrContested": 0,
           "contradiction": false
