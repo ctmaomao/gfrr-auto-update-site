@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-27T15:50:01.125Z",
+  "generatedAt": "2026-06-27T17:39:05.465Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-06-27T08:03:59.000Z",
-    "latestArticleAgeHours": 7.8,
+    "latestArticleAgeHours": 9.6,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 50,
+      "articleCount": 49,
       "sourceCount": 2,
-      "weightedSignal": 300,
+      "weightedSignal": 294,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -234,9 +234,9 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 20,
+      "articleCount": 18,
       "sourceCount": 2,
-      "weightedSignal": 80,
+      "weightedSignal": 72,
       "topArticles": [
         {
           "title": "France Seizes ‘Shadow Fleet’ Tanker, Stepping Up Pressure on Russia - Insurance Journal",
@@ -416,9 +416,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 42,
+      "articleCount": 41,
       "sourceCount": 2,
-      "weightedSignal": 126,
+      "weightedSignal": 123,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -476,9 +476,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 48,
+      "articleCount": 47,
       "sourceCount": 2,
-      "weightedSignal": 144,
+      "weightedSignal": 141,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -536,9 +536,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 25,
+      "articleCount": 24,
       "sourceCount": 2,
-      "weightedSignal": 50,
+      "weightedSignal": 48,
       "topArticles": [
         {
           "title": "As Strait of Hormuz Opens, Oil Falls - Marine News Magazine",
@@ -620,27 +620,6 @@
       ]
     },
     {
-      "title": "As Strait of Hormuz Opens, Oil Falls",
-      "url": "https://marinelink.com/news/strait-hormuz-opens-oil-falls-540679",
-      "domain": "marinelink.com",
-      "publishedAt": "2026-06-26T07:37:06.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "sanctions",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
       "title": "An oil tanker navigates the Strait of Hormuz despite threats from Iran’s Revolutionary Guard - AP News",
       "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-25-2026-862164c2aecbdc376dea434198eaf75f",
       "domain": "apnews.com",
@@ -713,26 +692,6 @@
       ],
       "queryIds": [
         "chokepoint_shipping"
-      ]
-    },
-    {
-      "title": "Rosneft Proposes Oil Firms to Refine 30% of Crude in Russia to Ease Fuel Crunch | OilPrice.com",
-      "url": "https://oilprice.com/Latest-Energy-News/World-News/Rosneft-Proposes-Oil-Firms-to-Refine-30-of-Crude-in-Russia-to-Ease-Fuel-Crunch.html",
-      "domain": "oilprice.com",
-      "publishedAt": "2026-06-24T16:30:00.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "sanctions",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "sanctions_shadow_fleet"
       ]
     },
     {
@@ -813,36 +772,76 @@
       ]
     },
     {
-      "title": "Saudi Aramco Ras Tanura Oil Loading Resumed in 2026",
-      "url": "https://discoveryalert.com.au/ras-tanura-oil-loading-hormuz-vlcc-restart-2026",
-      "domain": "discoveryalert.com.au",
-      "publishedAt": "2026-06-26T04:00:42.000Z",
+      "title": "Oil extends losses, WTI crude falls below $70 for first time since early March - Oil & Gas 360",
+      "url": "https://www.oilandgas360.com/oil-extends-losses-wti-crude-falls-below-70-for-first-time-since-early-march/",
+      "domain": "oilandgas360.com",
+      "publishedAt": "2026-06-24T15:42:08.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "market_reaction"
+      ]
+    },
+    {
+      "title": "Oil Prices Decline Amidst Improved Shipping in Hormuz Strait",
+      "url": "https://gurufocus.com/news/8934503/oil-prices-decline-amidst-improved-shipping-in-hormuz-strait",
+      "domain": "gurufocus.com",
+      "publishedAt": "2026-06-26T16:10:41.000Z",
       "sources": [
         "brave"
       ],
       "buckets": [
         "chokepoint",
         "facility_event",
-        "middle_east_risk",
+        "market_reaction",
         "supply_disruption",
         "tanker_shipping"
       ],
       "queryIds": [
         "facility_supply_disruption"
       ]
+    },
+    {
+      "title": "IRGC warns against new Hormuz route for ships: What we know | US-Israel war on Iran News | Al Jazeera",
+      "url": "https://aljazeera.com/news/2026/6/25/irgc-warns-against-new-hormuz-route-for-ships-what-we-know",
+      "domain": "aljazeera.com",
+      "publishedAt": "2026-06-25T14:33:54.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping"
+      ]
     }
   ],
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 1,
-    "highClaimDomainCount": 1,
+    "highClaimTitleCount": 2,
+    "highClaimDomainCount": 2,
     "highClaimDomains": [
+      "aljazeera.com",
       "bloomberg.com"
     ],
     "highClaimTerms": [
       "attack",
-      "halt"
+      "halt",
+      "war"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
@@ -858,8 +857,8 @@
     "evaluatedArticleCount": 12,
     "claimCount": 12,
     "polarityCounts": {
-      "risk_escalation": 1,
-      "risk_deescalation": 4,
+      "risk_escalation": 2,
+      "risk_deescalation": 3,
       "mixed_or_contested": 0,
       "market_reaction_only": 5,
       "unclear_or_high_claim": 2
@@ -876,8 +875,8 @@
     "sourceTierCounts": {
       "primary_wire_or_official": 2,
       "major_financial_media": 2,
-      "industry_trade": 4,
-      "aggregator_or_blog": 4,
+      "industry_trade": 3,
+      "aggregator_or_blog": 5,
       "low_confidence": 0
     },
     "contradiction": {
@@ -889,8 +888,8 @@
         {
           "eventType": "chokepoint",
           "claimCount": 8,
-          "riskEscalation": 1,
-          "riskDeescalation": 2,
+          "riskEscalation": 2,
+          "riskDeescalation": 1,
           "mixedOrContested": 0,
           "contradiction": true
         },
