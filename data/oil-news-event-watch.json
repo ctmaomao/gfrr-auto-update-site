@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-27T21:39:36.253Z",
+  "generatedAt": "2026-06-27T23:35:29.577Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-06-27T08:03:59.000Z",
-    "latestArticleAgeHours": 13.6,
+    "latestArticleAgeHours": 15.5,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -196,17 +196,16 @@
           ]
         },
         {
-          "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
-          "url": "https://cryptobriefing.com/strait-of-hormuz-closure-may-extend-to-years-end-due-to-80-mines-report/",
-          "domain": "cryptobriefing.com",
-          "publishedAt": "2026-06-20T23:18:55.000Z",
+          "title": "Shipping rebounds in Strait of Hormuz one week after U.S.-Iran deal – but fragile confidence threatens recovery - CNBC",
+          "url": "https://www.cnbc.com/2026/06/26/strait-of-hormuz-shipping-oil-us-iran.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-06-26T09:36:24.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
             "chokepoint",
             "middle_east_risk",
-            "supply_disruption",
             "tanker_shipping"
           ],
           "queryIds": [
@@ -214,10 +213,10 @@
           ]
         },
         {
-          "title": "Shipping rebounds in Strait of Hormuz one week after U.S.-Iran deal – but fragile confidence threatens recovery - CNBC",
-          "url": "https://www.cnbc.com/2026/06/26/strait-of-hormuz-shipping-oil-us-iran.html",
-          "domain": "cnbc.com",
-          "publishedAt": "2026-06-26T09:36:24.000Z",
+          "title": "Fears in Strait of Hormuz as tanker struck after Iran warned ships to turn back - New York Post",
+          "url": "https://nypost.com/2026/06/25/world-news/fears-in-strait-of-hormuz-as-tanker-struck-after-iran-warned-ships-to-turn-back/",
+          "domain": "nypost.com",
+          "publishedAt": "2026-06-25T16:31:08.000Z",
           "sources": [
             "tavily"
           ],
@@ -293,28 +292,10 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 22,
+      "articleCount": 20,
       "sourceCount": 2,
-      "weightedSignal": 132,
+      "weightedSignal": 120,
       "topArticles": [
-        {
-          "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
-          "url": "https://cryptobriefing.com/strait-of-hormuz-closure-may-extend-to-years-end-due-to-80-mines-report/",
-          "domain": "cryptobriefing.com",
-          "publishedAt": "2026-06-20T23:18:55.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "middle_east_risk",
-            "supply_disruption",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "chokepoint_shipping"
-          ]
-        },
         {
           "title": "Saudi Aramco resumes oil loading at Ras Tanura in boost to supply - CNBC",
           "url": "https://www.cnbc.com/2026/06/27/saudi-aramco-resumes-oil-loading-at-ras-tanura-in-boost-to-supply.html",
@@ -345,6 +326,24 @@
           "buckets": [
             "chokepoint",
             "facility_event",
+            "supply_disruption"
+          ],
+          "queryIds": [
+            "facility_supply_disruption"
+          ]
+        },
+        {
+          "title": "Explosion at Qatar natural gas export terminal injures 54, leaves 18 missing - NBC News",
+          "url": "https://www.nbcnews.com/world/quatar/explosion-qatar-gas-export-terminal-rcna351103",
+          "domain": "nbcnews.com",
+          "publishedAt": "2026-06-22T03:05:30.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "facility_event",
+            "middle_east_risk",
             "supply_disruption"
           ],
           "queryIds": [
@@ -416,9 +415,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 43,
+      "articleCount": 44,
       "sourceCount": 2,
-      "weightedSignal": 129,
+      "weightedSignal": 132,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -438,17 +437,16 @@
           ]
         },
         {
-          "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
-          "url": "https://cryptobriefing.com/strait-of-hormuz-closure-may-extend-to-years-end-due-to-80-mines-report/",
-          "domain": "cryptobriefing.com",
-          "publishedAt": "2026-06-20T23:18:55.000Z",
+          "title": "Shipping rebounds in Strait of Hormuz one week after U.S.-Iran deal – but fragile confidence threatens recovery - CNBC",
+          "url": "https://www.cnbc.com/2026/06/26/strait-of-hormuz-shipping-oil-us-iran.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-06-26T09:36:24.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
             "chokepoint",
             "middle_east_risk",
-            "supply_disruption",
             "tanker_shipping"
           ],
           "queryIds": [
@@ -456,10 +454,10 @@
           ]
         },
         {
-          "title": "Shipping rebounds in Strait of Hormuz one week after U.S.-Iran deal – but fragile confidence threatens recovery - CNBC",
-          "url": "https://www.cnbc.com/2026/06/26/strait-of-hormuz-shipping-oil-us-iran.html",
-          "domain": "cnbc.com",
-          "publishedAt": "2026-06-26T09:36:24.000Z",
+          "title": "Fears in Strait of Hormuz as tanker struck after Iran warned ships to turn back - New York Post",
+          "url": "https://nypost.com/2026/06/25/world-news/fears-in-strait-of-hormuz-as-tanker-struck-after-iran-warned-ships-to-turn-back/",
+          "domain": "nypost.com",
+          "publishedAt": "2026-06-25T16:31:08.000Z",
           "sources": [
             "tavily"
           ],
@@ -476,9 +474,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 47,
+      "articleCount": 46,
       "sourceCount": 2,
-      "weightedSignal": 141,
+      "weightedSignal": 138,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -498,17 +496,16 @@
           ]
         },
         {
-          "title": "Strait of Hormuz closure may extend to year’s end due to 80 mines: report - Crypto Briefing",
-          "url": "https://cryptobriefing.com/strait-of-hormuz-closure-may-extend-to-years-end-due-to-80-mines-report/",
-          "domain": "cryptobriefing.com",
-          "publishedAt": "2026-06-20T23:18:55.000Z",
+          "title": "Shipping rebounds in Strait of Hormuz one week after U.S.-Iran deal – but fragile confidence threatens recovery - CNBC",
+          "url": "https://www.cnbc.com/2026/06/26/strait-of-hormuz-shipping-oil-us-iran.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-06-26T09:36:24.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
             "chokepoint",
             "middle_east_risk",
-            "supply_disruption",
             "tanker_shipping"
           ],
           "queryIds": [
@@ -516,10 +513,10 @@
           ]
         },
         {
-          "title": "Shipping rebounds in Strait of Hormuz one week after U.S.-Iran deal – but fragile confidence threatens recovery - CNBC",
-          "url": "https://www.cnbc.com/2026/06/26/strait-of-hormuz-shipping-oil-us-iran.html",
-          "domain": "cnbc.com",
-          "publishedAt": "2026-06-26T09:36:24.000Z",
+          "title": "Fears in Strait of Hormuz as tanker struck after Iran warned ships to turn back - New York Post",
+          "url": "https://nypost.com/2026/06/25/world-news/fears-in-strait-of-hormuz-as-tanker-struck-after-iran-warned-ships-to-turn-back/",
+          "domain": "nypost.com",
+          "publishedAt": "2026-06-25T16:31:08.000Z",
           "sources": [
             "tavily"
           ],
@@ -622,26 +619,6 @@
       "url": "https://ibtimes.com/iran-strikes-cargo-vessel-strait-hormuz-putting-oil-trade-edge-3804583",
       "domain": "ibtimes.com",
       "publishedAt": "2026-06-26T10:57:26.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "chokepoint_shipping"
-      ]
-    },
-    {
-      "title": "Strait of Hormuz attack puts fragile ceasefire to the test",
-      "url": "https://thenationaldesk.com/news/americas-news-now/strait-of-hormuz-attack-puts-fragile-ceasefire-to-the-test-vessel-damage-faith-freedom-washington-agreement",
-      "domain": "thenationaldesk.com",
-      "publishedAt": "2026-06-26T15:52:33.000Z",
       "sources": [
         "brave"
       ],
@@ -810,6 +787,25 @@
       ]
     },
     {
+      "title": "Hormuz Shipping Confidence Is Still Shaky | OilPrice.com",
+      "url": "https://oilprice.com/Latest-Energy-News/World-News/Hormuz-Shipping-Confidence-Is-Still-Shaky.html",
+      "domain": "oilprice.com",
+      "publishedAt": "2026-06-26T10:30:00.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
+    },
+    {
       "title": "US waives sanctions on Iranian crude: Here's why Indian refiners are still hesistant to buy it - The Times of India",
       "url": "https://timesofindia.indiatimes.com/business/india-business/us-waives-sanctions-on-iranian-crude-heres-why-indian-refiners-are-still-hesistant-to-buy-it/articleshow/132013394.cms",
       "domain": "timesofindia.indiatimes.com",
@@ -832,12 +828,11 @@
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 3,
-    "highClaimDomainCount": 3,
+    "highClaimTitleCount": 2,
+    "highClaimDomainCount": 2,
     "highClaimDomains": [
       "bloomberg.com",
-      "ibtimes.com",
-      "thenationaldesk.com"
+      "ibtimes.com"
     ],
     "highClaimTerms": [
       "attack",
@@ -860,8 +855,8 @@
     "polarityCounts": {
       "risk_escalation": 3,
       "risk_deescalation": 2,
-      "mixed_or_contested": 1,
-      "market_reaction_only": 4,
+      "mixed_or_contested": 0,
+      "market_reaction_only": 5,
       "unclear_or_high_claim": 2
     },
     "eventTypeCounts": {
@@ -876,23 +871,21 @@
     "sourceTierCounts": {
       "primary_wire_or_official": 2,
       "major_financial_media": 2,
-      "industry_trade": 3,
-      "aggregator_or_blog": 5,
+      "industry_trade": 4,
+      "aggregator_or_blog": 4,
       "low_confidence": 0
     },
     "contradiction": {
-      "state": "mixed_claims",
-      "eventTypes": [
-        "chokepoint"
-      ],
+      "state": "risk_escalation_dominant",
+      "eventTypes": [],
       "details": [
         {
           "eventType": "chokepoint",
           "claimCount": 8,
           "riskEscalation": 2,
           "riskDeescalation": 0,
-          "mixedOrContested": 1,
-          "contradiction": true
+          "mixedOrContested": 0,
+          "contradiction": false
         },
         {
           "eventType": "shipping",
