@@ -545,6 +545,8 @@ P2 route-level oil tanker freight confirmation source-review identifies Baltic E
 
 `review:transport-shock-confirmation-factor-manual-sample` is the P-score-3 manual sample scaffold. It reads only `manual-artifacts/transport-shock-confirmation-factor/` or `docs/fixtures/transport-shock-confirmation-factor/` and writes only ignored `manual-artifacts/transport-shock-confirmation-factor/` review JSON with schema `transport-shock-confirmation-factor-manual-sample-review-v1`. It is manual sample scaffold only: no live fetch, no production data write, no workflow/Worker/frontend change, no shadow score, no ODP `finalBias`, no main judgment weighting, and no cross-validation input.
 
+`review:transport-shock-confirmation-factor-manual-samples` is the P-score-4 manual sample collection review. It reads only manual-sample review artifacts from `manual-artifacts/transport-shock-confirmation-factor/` or `docs/fixtures/transport-shock-confirmation-factor/`, aggregates bucket/source/direction coverage, and writes only ignored `manual-artifacts/transport-shock-confirmation-factor/` review JSON with schema `transport-shock-confirmation-factor-manual-samples-review-v1`. It is still a sample collection review only: no live fetch, no production data write, no workflow/Worker/frontend change, no shadow score, no ODP `finalBias`, no main judgment weighting, and no cross-validation input.
+
 ---
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)

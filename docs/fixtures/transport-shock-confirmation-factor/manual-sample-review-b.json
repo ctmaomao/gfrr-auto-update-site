@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-manual-sample-review-v1",
+  "contractVersion": "transport-shock-confirmation-factor-manual-sample-scaffold-v1",
+  "status": "dry_run_only",
+  "generatedAt": "2026-06-29T00:00:00.000Z",
+  "inputPath": "docs/fixtures/transport-shock-confirmation-factor/manual-sample-input.json",
+  "promotionEligible": false,
+  "productionWriteApproved": false,
+  "shadowScoreApproved": false,
+  "frontendDisplayApproved": false,
+  "eligibleForMainScore": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "review": {
+    "acceptedObservationCount": 3,
+    "rejectedObservationCount": 0,
+    "directionCounts": {
+      "tightening": 1,
+      "easing": 1,
+      "mixed": 1
+    },
+    "bucketCoverage": {
+      "free_route_linked_tanker_transport_pressure_proxy": 2,
+      "baltic_weekly_tanker_report_public_route_signal": 1
+    },
+    "sourceCoverage": {
+      "solactive_breakwave_wet_freight_futures_index": 1,
+      "ice_td3c_public_product_page": 1,
+      "baltic_weekly_tanker_report_public_route_signal": 1
+    },
+    "acceptedObservations": [
+      {
+        "sourceKey": "solactive_breakwave_wet_freight_futures_index",
+        "bucketKey": "free_route_linked_tanker_transport_pressure_proxy",
+        "observedAt": "2026-06-29T00:00:00.000Z",
+        "routeCode": "TD3C",
+        "direction": "tightening",
+        "strength": 0.58,
+        "citationHostHint": "solactive.com",
+        "sourceCitationHash": "fixture-solactive-b",
+        "rawCitationStored": false
+      },
+      {
+        "sourceKey": "ice_td3c_public_product_page",
+        "bucketKey": "free_route_linked_tanker_transport_pressure_proxy",
+        "observedAt": "2026-06-29T00:00:00.000Z",
+        "routeCode": "TD3C",
+        "direction": "easing",
+        "strength": 0.35,
+        "citationHostHint": "ice.com",
+        "sourceCitationHash": "fixture-ice-b",
+        "rawCitationStored": false
+      },
+      {
+        "sourceKey": "baltic_weekly_tanker_report_public_route_signal",
+        "bucketKey": "baltic_weekly_tanker_report_public_route_signal",
+        "observedAt": "2026-06-29T00:00:00.000Z",
+        "routeCode": "TD20",
+        "direction": "mixed",
+        "strength": 0.45,
+        "citationHostHint": "balticexchange.com",
+        "sourceCitationHash": "fixture-baltic-b",
+        "rawCitationStored": false
+      }
+    ],
+    "rejectedObservations": []
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "affectsScoring": false,
+    "affectsMainJudgment": false
+  },
+  "limitationZh": "fixture only"
+}
