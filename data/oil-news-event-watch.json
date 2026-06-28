@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-28T21:40:50.648Z",
+  "generatedAt": "2026-06-28T23:40:41.497Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -113,8 +113,8 @@
   },
   "freshness": {
     "windowDays": 7,
-    "latestArticleAt": "2026-06-28T14:41:40.000Z",
-    "latestArticleAgeHours": 7,
+    "latestArticleAt": "2026-06-28T08:00:00.000Z",
+    "latestArticleAgeHours": 15.7,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -233,9 +233,9 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 20,
+      "articleCount": 19,
       "sourceCount": 2,
-      "weightedSignal": 80,
+      "weightedSignal": 76,
       "topArticles": [
         {
           "title": "France Seizes ‘Shadow Fleet’ Tanker, Stepping Up Pressure on Russia - Insurance Journal",
@@ -292,10 +292,26 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 20,
+      "articleCount": 19,
       "sourceCount": 2,
-      "weightedSignal": 120,
+      "weightedSignal": 114,
       "topArticles": [
+        {
+          "title": "NYT Strands Hints for June 28, 2026 - The New York Times",
+          "url": "https://www.nytimes.com/2026/06/27/crosswords/strands-sidekick-847.html",
+          "domain": "nytimes.com",
+          "publishedAt": "2026-06-27T10:00:09.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "facility_event",
+            "supply_disruption"
+          ],
+          "queryIds": [
+            "facility_supply_disruption"
+          ]
+        },
         {
           "title": "Saudi Aramco helicopter crash kills 14 nationals - CNN",
           "url": "https://www.cnn.com/2026/06/28/business/saudi-aramco-helicopter-crash-intl",
@@ -315,35 +331,16 @@
           ]
         },
         {
-          "title": "Saudi Aramco resumes oil loading at Ras Tanura in boost to supply - CNBC",
-          "url": "https://www.cnbc.com/2026/06/27/saudi-aramco-resumes-oil-loading-at-ras-tanura-in-boost-to-supply.html",
-          "domain": "cnbc.com",
-          "publishedAt": "2026-06-27T08:03:59.000Z",
+          "title": "Saudi Aramco helicopter crash kills 14, state new agency says - Reuters",
+          "url": "https://www.reuters.com/world/saudi-aramco-helicopter-crash-kills-14-state-new-agency-says-2026-06-28/",
+          "domain": "reuters.com",
+          "publishedAt": "2026-06-28T11:50:56.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
-            "chokepoint",
             "facility_event",
             "middle_east_risk",
-            "supply_disruption",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "facility_supply_disruption"
-          ]
-        },
-        {
-          "title": "Russia's 4th-largest oil refinery shuts down after Ukrainian drone strike, Reuters reports - The Kyiv Independent",
-          "url": "https://kyivindependent.com/russias-4th-largest-oil-refinery-shuts-down-after-ukrainian-drone-strike-reuters-reports/",
-          "domain": "kyivindependent.com",
-          "publishedAt": "2026-06-25T21:40:48.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "facility_event",
             "supply_disruption"
           ],
           "queryIds": [
@@ -354,9 +351,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 25,
+      "articleCount": 26,
       "sourceCount": 2,
-      "weightedSignal": 100,
+      "weightedSignal": 104,
       "topArticles": [
         {
           "title": "French Forces Detain Tanker in Continuing Crackdown on Shadow Fleet - The Maritime Executive",
@@ -376,6 +373,22 @@
           ]
         },
         {
+          "title": "NYT Strands Hints for June 28, 2026 - The New York Times",
+          "url": "https://www.nytimes.com/2026/06/27/crosswords/strands-sidekick-847.html",
+          "domain": "nytimes.com",
+          "publishedAt": "2026-06-27T10:00:09.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "facility_event",
+            "supply_disruption"
+          ],
+          "queryIds": [
+            "facility_supply_disruption"
+          ]
+        },
+        {
           "title": "Saudi Aramco helicopter crash kills 14 nationals - CNN",
           "url": "https://www.cnn.com/2026/06/28/business/saudi-aramco-helicopter-crash-intl",
           "domain": "cnn.com",
@@ -392,33 +405,14 @@
           "queryIds": [
             "facility_supply_disruption"
           ]
-        },
-        {
-          "title": "Saudi Aramco resumes oil loading at Ras Tanura in boost to supply - CNBC",
-          "url": "https://www.cnbc.com/2026/06/27/saudi-aramco-resumes-oil-loading-at-ras-tanura-in-boost-to-supply.html",
-          "domain": "cnbc.com",
-          "publishedAt": "2026-06-27T08:03:59.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "facility_event",
-            "middle_east_risk",
-            "supply_disruption",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "facility_supply_disruption"
-          ]
         }
       ]
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 43,
+      "articleCount": 46,
       "sourceCount": 2,
-      "weightedSignal": 129,
+      "weightedSignal": 138,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -475,9 +469,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 45,
+      "articleCount": 46,
       "sourceCount": 2,
-      "weightedSignal": 135,
+      "weightedSignal": 138,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -534,9 +528,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 22,
+      "articleCount": 23,
       "sourceCount": 2,
-      "weightedSignal": 44,
+      "weightedSignal": 46,
       "topArticles": [
         {
           "title": "As Strait of Hormuz Opens, Oil Falls - Marine News Magazine",
@@ -575,10 +569,10 @@
           ]
         },
         {
-          "title": "Oil Prices Hover Around Prewar Levels as Gulf Shipping Jumps - The New York Times",
-          "url": "https://www.nytimes.com/2026/06/25/business/oil-prices-gas-iran.html",
-          "domain": "nytimes.com",
-          "publishedAt": "2026-06-25T05:26:18.000Z",
+          "title": "Hormuz traffic rebound returns oil to prewar rates, as US reassures wary Gulf allies - The Times of Israel",
+          "url": "https://www.timesofisrael.com/hormuz-traffic-rebound-returns-oil-to-prewar-rates-as-us-reassures-wary-gulf-allies/",
+          "domain": "timesofisrael.com",
+          "publishedAt": "2026-06-25T00:00:00.000Z",
           "sources": [
             "tavily"
           ],
@@ -586,16 +580,39 @@
             "chokepoint",
             "market_reaction",
             "middle_east_risk",
+            "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
-            "market_reaction"
+            "sanctions_shadow_fleet"
           ]
         }
       ]
     }
   },
   "topArticles": [
+    {
+      "title": "Brent Erases Iran War Premium as Hormuz Flows Show Signs of Recovery - Crude Oil Prices Today | OilPrice.com",
+      "url": "https://oilprice.com/Energy/Energy-General/Brent-Erases-Iran-War-Premium-as-Hormuz-Flows-Show-Signs-of-Recovery.html",
+      "domain": "oilprice.com",
+      "publishedAt": "2026-06-26T16:19:44.000Z",
+      "sources": [
+        "brave",
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "sanctions",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "market_reaction",
+        "sanctions_shadow_fleet"
+      ]
+    },
     {
       "title": "Saudi Aramco resumes oil loading at Ras Tanura in boost to supply",
       "url": "https://cnbc.com/amp/2026/06/27/saudi-aramco-resumes-oil-loading-at-ras-tanura-in-boost-to-supply.html",
@@ -617,28 +634,30 @@
       ]
     },
     {
-      "title": "An oil tanker navigates the Strait of Hormuz despite threats from Iran’s Revolutionary Guard - AP News",
-      "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-25-2026-862164c2aecbdc376dea434198eaf75f",
-      "domain": "apnews.com",
-      "publishedAt": "2026-06-25T06:11:51.000Z",
+      "title": "VOTE: Who do you blame for gas prices not dropping quickly enough? - The National News Desk",
+      "url": "https://thenationaldesk.com/news/americas-news-now/vote-who-do-you-blame-for-gas-prices-not-dropping-quickly-enough-question-of-the-day-strait-of-hormuz-iran-war-president-trump-ceasefire-oil-companies-prices",
+      "domain": "thenationaldesk.com",
+      "publishedAt": "2026-06-26T13:59:55.000Z",
       "sources": [
-        "brave",
         "tavily"
       ],
       "buckets": [
         "chokepoint",
+        "facility_event",
+        "market_reaction",
         "middle_east_risk",
+        "supply_disruption",
         "tanker_shipping"
       ],
       "queryIds": [
-        "chokepoint_shipping"
+        "facility_supply_disruption"
       ]
     },
     {
-      "title": "Saudi Aramco resumes oil loading at Ras Tanura in boost to supply - CNBC",
-      "url": "https://www.cnbc.com/2026/06/27/saudi-aramco-resumes-oil-loading-at-ras-tanura-in-boost-to-supply.html",
-      "domain": "cnbc.com",
-      "publishedAt": "2026-06-27T08:03:59.000Z",
+      "title": "Ras Laffan explosion, Iranian attack, confirm restart risks for Hormuz plants – Chemicals and the Economy - ICIS",
+      "url": "https://www.icis.com/chemicals-and-the-economy/2026/06/ras-laffan-explosion-iranian-attack-confirm-restart-risks-for-hormuz-plants/",
+      "domain": "icis.com",
+      "publishedAt": "2026-06-28T08:00:00.000Z",
       "sources": [
         "tavily"
       ],
@@ -673,30 +692,29 @@
       ]
     },
     {
-      "title": "Brent Erases Iran War Premium as Hormuz Flows Show Signs of Recovery | OilPrice.com",
-      "url": "https://oilprice.com/Energy/Energy-General/Brent-Erases-Iran-War-Premium-as-Hormuz-Flows-Show-Signs-of-Recovery.html",
+      "title": "Hormuz Crisis Sparks a Middle East Pipeline BoomHormuz Crisis Sparks a Middle East Pipeline Boom | OilPrice.com",
+      "url": "https://oilprice.com/Energy/Crude-Oil/Hormuz-Crisis-Sparks-a-Middle-East-Pipeline-Boom.html",
       "domain": "oilprice.com",
-      "publishedAt": "2026-06-26T16:19:44.000Z",
+      "publishedAt": "2026-06-21T21:00:00.000Z",
       "sources": [
         "brave"
       ],
       "buckets": [
         "chokepoint",
         "facility_event",
-        "market_reaction",
         "middle_east_risk",
-        "sanctions",
+        "supply_disruption",
         "tanker_shipping"
       ],
       "queryIds": [
-        "sanctions_shadow_fleet"
+        "facility_supply_disruption"
       ]
     },
     {
-      "title": "Hormuz Crisis Sparks a Middle East Pipeline BoomHormuz Crisis Sparks a Middle East Pipeline Boom | OilPrice.com",
-      "url": "https://oilprice.com/Energy/Crude-Oil/Hormuz-Crisis-Sparks-a-Middle-East-Pipeline-Boom.html",
-      "domain": "oilprice.com",
-      "publishedAt": "2026-06-21T21:00:00.000Z",
+      "title": "Strait of Hormuz Attack Fails to Halt Oil Tanker Traffic, for Now - Bloomberg",
+      "url": "https://bloomberg.com/news/newsletters/2026-06-26/strait-of-hormuz-attack-fails-to-halt-oil-tanker-traffic-for-now",
+      "domain": "bloomberg.com",
+      "publishedAt": "2026-06-26T09:01:12.000Z",
       "sources": [
         "brave"
       ],
@@ -731,10 +749,10 @@
       ]
     },
     {
-      "title": "Strait of Hormuz Attack Fails to Halt Oil Tanker Traffic, for Now - Bloomberg",
-      "url": "https://bloomberg.com/news/newsletters/2026-06-26/strait-of-hormuz-attack-fails-to-halt-oil-tanker-traffic-for-now",
-      "domain": "bloomberg.com",
-      "publishedAt": "2026-06-26T09:01:12.000Z",
+      "title": "US strikes Iran in response to attack on ship | AP News",
+      "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-26-2026-8c1a77eb82d25f00de814958114c7296",
+      "domain": "apnews.com",
+      "publishedAt": "2026-06-26T13:25:40.000Z",
       "sources": [
         "brave"
       ],
@@ -805,38 +823,23 @@
       "queryIds": [
         "sanctions_shadow_fleet"
       ]
-    },
-    {
-      "title": "Saudi Aramco helicopter crash kills 14 nationals - CNN",
-      "url": "https://www.cnn.com/2026/06/28/business/saudi-aramco-helicopter-crash-intl",
-      "domain": "cnn.com",
-      "publishedAt": "2026-06-28T14:41:40.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
     }
   ],
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 2,
-    "highClaimDomainCount": 2,
+    "highClaimTitleCount": 4,
+    "highClaimDomainCount": 4,
     "highClaimDomains": [
+      "apnews.com",
       "bloomberg.com",
+      "icis.com",
       "oilprice.com"
     ],
     "highClaimTerms": [
       "attack",
       "halt",
+      "strikes",
       "war"
     ],
     "directHeadlineDisplayAllowed": false,
@@ -853,39 +856,41 @@
     "evaluatedArticleCount": 12,
     "claimCount": 12,
     "polarityCounts": {
-      "risk_escalation": 3,
-      "risk_deescalation": 2,
-      "mixed_or_contested": 0,
+      "risk_escalation": 4,
+      "risk_deescalation": 1,
+      "mixed_or_contested": 1,
       "market_reaction_only": 4,
-      "unclear_or_high_claim": 3
+      "unclear_or_high_claim": 2
     },
     "eventTypeCounts": {
-      "chokepoint": 8,
+      "chokepoint": 9,
       "shipping": 1,
       "sanctions": 0,
       "facility": 1,
-      "supply": 2,
+      "supply": 1,
       "market_reaction": 0,
       "general_energy": 0
     },
     "sourceTierCounts": {
       "primary_wire_or_official": 2,
-      "major_financial_media": 3,
+      "major_financial_media": 2,
       "industry_trade": 5,
-      "aggregator_or_blog": 2,
+      "aggregator_or_blog": 3,
       "low_confidence": 0
     },
     "contradiction": {
-      "state": "risk_escalation_dominant",
-      "eventTypes": [],
+      "state": "mixed_claims",
+      "eventTypes": [
+        "chokepoint"
+      ],
       "details": [
         {
           "eventType": "chokepoint",
-          "claimCount": 8,
-          "riskEscalation": 2,
+          "claimCount": 9,
+          "riskEscalation": 3,
           "riskDeescalation": 0,
-          "mixedOrContested": 0,
-          "contradiction": false
+          "mixedOrContested": 1,
+          "contradiction": true
         },
         {
           "eventType": "shipping",
@@ -905,9 +910,9 @@
         },
         {
           "eventType": "supply",
-          "claimCount": 2,
+          "claimCount": 1,
           "riskEscalation": 0,
-          "riskDeescalation": 2,
+          "riskDeescalation": 1,
           "mixedOrContested": 0,
           "contradiction": false
         }
