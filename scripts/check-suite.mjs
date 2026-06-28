@@ -67,7 +67,8 @@ const SUITES = {
     'check:route-level-tanker-freight-source-rights-approval-gate',
     'check:route-level-tanker-freight-baltic-context-policy',
     'check:route-level-tanker-freight-disabled-writer-scaffold',
-    'check:route-level-tanker-freight-source-rights-approval-template'
+    'check:route-level-tanker-freight-source-rights-approval-template',
+    'check:route-level-tanker-freight-source-rights-artifact-review'
   ],
   'narrative-density': [
     'check:world-order-narrative-density',

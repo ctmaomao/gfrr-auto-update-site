@@ -93,6 +93,7 @@
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITER_CONTRACT_DESIGN.md` (route-level tanker freight production writer contract design; future `macroDrivers.energyTransport.routeFreightConfirmation` field contract only, no writer / no production write)
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_GATE.md` (route-level tanker freight source-rights approval gate; manual source-rights gate keeps production writes blocked until explicit approval)
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_TEMPLATE.md` (route-level tanker freight source-rights approval template; template-only manual evidence shape, grants no approval)
+- `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_ARTIFACT_REVIEW.md` (route-level tanker freight source-rights artifact review; local/manual ignored artifact reviewer, no gate update approval)
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_BALTIC_CONTEXT_POLICY.md` (route-level tanker freight Baltic context policy; keeps existing Baltic Freight as broad context unless a separate deprecation/merge review is approved)
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_DISABLED_WRITER_SCAFFOLD.md` (route-level tanker freight disabled writer scaffold; manual-artifact-only disabled projection, no production write)
 - `docs/ENERGY_STRESS_FRONTEND_DISPLAY_BRIEF.md` (owner-approved docs-only frontend display brief for surfacing OPEC spare capacity + PortWatch inside existing ODP details; no UI implementation yet)

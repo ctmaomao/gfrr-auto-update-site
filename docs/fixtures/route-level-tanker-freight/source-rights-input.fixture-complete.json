@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "route-level-tanker-freight-source-rights-input-v1",
+  "fixtureOnly": true,
+  "preparedAt": "2026-06-28T00:00:00.000Z",
+  "futureProductionField": "macroDrivers.energyTransport.routeFreightConfirmation",
+  "sourceKey": "example_route_level_tanker_freight_source_not_real",
+  "requiredApprovalEvidence": {
+    "sourceOwner": "Example source owner for fixture only",
+    "deliveryPath": "operator supplied manual evidence fixture",
+    "permittedAutomatedAccess": "fixture says no automated access is approved by this file",
+    "permittedStorageFields": [
+      "routeCode",
+      "assessmentDate",
+      "bucketKey",
+      "unit",
+      "value",
+      "changePct"
+    ],
+    "permittedRedistributionOrDisplay": "fixture-only example; no real redistribution approval",
+    "rawResponseStoragePolicy": "do not store raw source text",
+    "routeDefinitionRights": "fixture-only route definition review example",
+    "freshnessCadence": "daily_or_weekly_review_required",
+    "attributionCopy": "Example attribution copy for fixture only",
+    "terminationOrRevocationHandling": "remove source and fall back to not_connected"
+  },
+  "approvalClaims": {
+    "sourceApproved": true,
+    "liveFetchApproved": true,
+    "productionWriteApproved": true,
+    "routeValueRedistributionApproved": true,
+    "sourceRightsStatus": "approved",
+    "frontendImplementationApproved": false,
+    "workflowAutomationApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "worldOrderWeightsApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "operatorReview": {
+    "reviewedAt": "2026-06-28T00:00:00.000Z",
+    "reviewer": "fixture-only",
+    "attestation": "Fixture only. This is not real source-rights approval and cannot update the gate."
+  }
+}
