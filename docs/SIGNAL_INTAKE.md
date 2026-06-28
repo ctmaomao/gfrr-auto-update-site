@@ -131,6 +131,7 @@
 - Transport Shock Confirmation Factor shadow-score projection: `transport-shock-confirmation-factor-shadow-score-v1` 是 P-score-5 local/manual ignored artifact 投影 helper;`project:transport-shock-confirmation-factor-shadow-score` 只读 manual samples review,输出 capped `manual_route_signal_slice_only` 候选影子分,不联网、不写 production data、不接 frontend/workflow/Worker、不生成 complete factor score、不改变 ODP finalBias 或主判断打分。
 - Transport Shock Confirmation Factor display projection: `transport-shock-confirmation-factor-display-projection-v1` 是 P-score-6 local/manual ignored artifact 投影 helper;`project:transport-shock-confirmation-factor-display-projection` 只读 shadow-score projection,输出 `manual_shadow_projection_ready_non_production` 前端卡片设计候选,不联网、不写 production data、不接 frontend/workflow/Worker、不批准 direct display、不改变 ODP finalBias 或主判断打分。
 - Transport Shock Confirmation Factor frontend card: `transport-shock-confirmation-factor-frontend-card-v1` 是 P-score-7 display-only thematic card;前端只读 production payload 的 `macroDrivers.energyTransport.transportShockCandidate` 可选候选字段,缺失时显示数据不足,不得读取 manual artifacts、不得写 production data、不得接 workflow/Worker、不得改变 ODP finalBias 或主判断打分。
+- Transport Shock Confirmation Factor production refresh verification: `transport-shock-confirmation-factor-production-refresh-v1` 是 P-score-8 read-only guard;只核验 Daily writer 是否具备 production payload 字段写入路径并只读 `data/radar-data.json`,当前缺字段时输出 `awaiting_production_refresh` / WATCH,字段出现后校验 candidate-only 边界;不得触发 Daily、不得联网、不得写 production data、不得改变 ODP finalBias 或主判断打分。
 
 ## 6. Rejection Rules / 拒绝或暂缓规则
 
