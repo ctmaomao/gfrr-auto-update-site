@@ -124,6 +124,7 @@
 - Route-level tanker freight source-rights gate update proposal review: `route-level-tanker-freight-source-rights-gate-update-proposal-review-v1` 只是 manual/local ignored proposal reviewer;`review:route-level-tanker-freight-source-rights-gate-update-proposal` 不应用 proposal、不写 gate fixture,真实 proposal 最多进入 human-authored PR review,更不进入 ODP finalBias 或主判断打分。
 - Route-level tanker freight Baltic context policy: `route-level-tanker-freight-baltic-context-policy-v1` 只是 docs/checker-only coexistence policy;当前决策为 `keep_baltic_freight_as_broad_context` 与 `additive_card_until_separate_deprecation_review`,不删除现有 `Baltic Freight` 卡,也不把 BDTI/BCTI/BDI 当作路线级确认或主判断打分输入。
 - Route-level tanker freight disabled writer scaffold: `route-level-tanker-freight-disabled-writer-scaffold-v1` 只是 manual-artifact-only disabled projection;`project:route-level-tanker-freight-disabled-writer` 只输出 ignored artifact,状态为 `disabled_no_production_write`,candidate field 保持 `not_connected` / `manual_review_required` / `productionWriteAttempted=false`,不写生产字段、不接 frontend/workflow/Worker,更不进入 ODP finalBias 或主判断打分。
+- Transport Shock Confirmation Factor source-to-score contract: `transport-shock-confirmation-factor-source-to-score-contract-v1` 是 P-score-1 contract only,把 Free Route-Linked Tanker Transport Pressure Proxy 与 Baltic Weekly Tanker Report public route-signal 列为未来输入候选,并复用 PortWatch/StockQ/Oil News/Oil Thermal/Brent curve 等现有证据作为未来 shadow score 输入;当前 `contract_only_no_shadow_score`,不抓新源、不写 production data、不加前端卡、不改变 ODP finalBias 或主判断打分。
 
 ## 6. Rejection Rules / 拒绝或暂缓规则
 

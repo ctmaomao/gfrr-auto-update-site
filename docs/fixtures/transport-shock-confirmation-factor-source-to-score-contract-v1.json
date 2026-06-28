@@ -1,0 +1,158 @@
+{
+  "contractVersion": "transport-shock-confirmation-factor-source-to-score-contract-v1",
+  "kind": "transport_shock_confirmation_factor_source_to_score_contract",
+  "status": "contract_only_no_shadow_score",
+  "createdAt": "2026-06-28",
+  "futureFactorKey": "transportShockConfirmationFactor",
+  "futureDisplayName": "Transport Shock Confirmation Factor",
+  "futureDisplayNameZh": "运输冲击确认因子",
+  "currentProductionState": {
+    "factorConnected": false,
+    "shadowScoreGenerated": false,
+    "frontendCardImplemented": false,
+    "odpCandidateOverlayConnected": false,
+    "odpFinalBiasAffected": false,
+    "eligibleForMainScore": false,
+    "routeFreightConfirmation": "not_connected"
+  },
+  "candidateInputBaskets": [
+    {
+      "basketKey": "portwatch_chokepoint_physical_proxy",
+      "sourceFamily": "macroDrivers.energyTransport / IMF PortWatch",
+      "currentStatus": "connected_display_only",
+      "targetRole": "core_transport_anomaly",
+      "targetWeightPct": 30,
+      "newLiveFetchApprovedByThisContract": false,
+      "productionScoringApprovedByThisContract": false
+    },
+    {
+      "basketKey": "stockq_aggregate_tanker_freight_proxy",
+      "sourceFamily": "macroDrivers.shippingFreight / StockQ BDTI+BCTI",
+      "currentStatus": "connected_display_only",
+      "targetRole": "freight_pressure_confirmation",
+      "targetWeightPct": 15,
+      "newLiveFetchApprovedByThisContract": false,
+      "productionScoringApprovedByThisContract": false
+    },
+    {
+      "basketKey": "free_route_linked_wet_freight_proxy",
+      "sourceFamily": "Solactive wet freight futures index candidate plus CME/ICE TD3C link-only/manual reference",
+      "currentStatus": "source_review_pending",
+      "targetRole": "route_linked_market_proxy",
+      "targetWeightPct": 10,
+      "newLiveFetchApprovedByThisContract": false,
+      "productionScoringApprovedByThisContract": false
+    },
+    {
+      "basketKey": "baltic_weekly_tanker_report_route_text",
+      "sourceFamily": "Baltic Weekly Tanker Report public route-signal candidate",
+      "currentStatus": "source_review_pending",
+      "targetRole": "weekly_route_direction_text",
+      "targetWeightPct": 15,
+      "newLiveFetchApprovedByThisContract": false,
+      "productionScoringApprovedByThisContract": false
+    },
+    {
+      "basketKey": "oil_news_event_watch",
+      "sourceFamily": "data/oil-news-event-watch.json",
+      "currentStatus": "connected_display_only",
+      "targetRole": "event_claim_and_contradiction_signal",
+      "targetWeightPct": 15,
+      "newLiveFetchApprovedByThisContract": false,
+      "productionScoringApprovedByThisContract": false
+    },
+    {
+      "basketKey": "odp_market_confirmation",
+      "sourceFamily": "ODP Brent price, curve, and crack spread evidence",
+      "currentStatus": "connected_display_only",
+      "targetRole": "price_structure_confirmation",
+      "targetWeightPct": 10,
+      "newLiveFetchApprovedByThisContract": false,
+      "productionScoringApprovedByThisContract": false
+    },
+    {
+      "basketKey": "oil_thermal_facility_confirmation",
+      "sourceFamily": "data/oil-thermal-watch.json",
+      "currentStatus": "connected_display_only",
+      "targetRole": "facility_disruption_cross_check",
+      "targetWeightPct": 5,
+      "newLiveFetchApprovedByThisContract": false,
+      "productionScoringApprovedByThisContract": false
+    }
+  ],
+  "newDataWorkstreams": [
+    {
+      "workstreamKey": "free_route_linked_tanker_transport_pressure_proxy",
+      "status": "source_review_pending",
+      "plannedSources": [
+        "IMF PortWatch / IEA chokepoint context",
+        "StockQ BDTI/BCTI",
+        "Solactive wet freight futures index candidate",
+        "CME/ICE TD3C link-only/manual reference"
+      ],
+      "liveFetchApprovedByThisContract": false,
+      "productionWriteApprovedByThisContract": false
+    },
+    {
+      "workstreamKey": "baltic_weekly_tanker_report_public_route_signal",
+      "status": "source_review_pending",
+      "plannedSources": [
+        "Baltic Weekly Tanker Report public route-signal source-review"
+      ],
+      "liveFetchApprovedByThisContract": false,
+      "productionWriteApprovedByThisContract": false,
+      "routeValueScrapingApprovedByThisContract": false
+    }
+  ],
+  "promotionPath": [
+    "P-score-1 source-to-score contract",
+    "P-score-2 free proxy + Baltic Weekly source-review",
+    "P-score-3 shadow score builder",
+    "P-score-4 frontend card display",
+    "P-score-5 sample archive / history",
+    "P-score-6 backtest / hit-rate review",
+    "P-score-7 ODP candidate overlay",
+    "P-score-8 low-weight ODP integration review",
+    "P-score-9 frontend contribution explanation",
+    "P-score-10 guard checks"
+  ],
+  "minimumGuardrailsBeforeOdpImpact": {
+    "requiresFreshPhysicalTransportInput": true,
+    "requiresNonNewsConfirmation": true,
+    "newsAloneCannotScore": true,
+    "singleChokepointCannotOverride": true,
+    "routeFreightValuesRequireSourceRights": true,
+    "balticWeeklyTextIsNotDailyRouteAssessment": true,
+    "thermalRequiresBaselineAndRepeat": true,
+    "eiaDemandOrInventoryRelaxationCapsContribution": true,
+    "requiresBacktestReview": true,
+    "maxInitialOdpContributionPct": 8
+  },
+  "approvalState": {
+    "shadowScoreApproved": false,
+    "frontendCardApproved": false,
+    "sourceReviewApproved": false,
+    "liveFetchApproved": false,
+    "productionWriteApproved": false,
+    "odpCandidateOverlayApproved": false,
+    "odpFinalBiasApproved": false,
+    "mainScoreApproved": false,
+    "brentPromotionApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "boundaries": {
+    "contractOnly": true,
+    "noNewDataSource": true,
+    "noLiveFetch": true,
+    "noProductionDataWrite": true,
+    "noFrontendImplementation": true,
+    "noWorkflowAutomation": true,
+    "noWorkerRuntimeChange": true,
+    "noOdpFinalBiasChange": true,
+    "noBrentPromotion": true,
+    "noScoringDecisionExecutionPositionImpact": true,
+    "noGlobalRiskHeatmapImpact": true,
+    "noCrossValidationInput": true
+  }
+}

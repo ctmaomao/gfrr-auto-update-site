@@ -107,6 +107,7 @@ const SUITES = {
     'check:oil-directional-reading-structure',
     'check:oil-directional-responsive-readability',
     'check:oil-directional-global-overlay',
+    'check:transport-shock-confirmation-factor-source-to-score-contract',
     'check:oil-news-events-diagnosis',
     'check:oil-news-event-watch',
     'check:oil-news-event-watch-samples-review',

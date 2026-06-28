@@ -537,6 +537,10 @@ P2 route-level oil tanker freight confirmation source-review identifies Baltic E
 
 [`ROUTE_LEVEL_TANKER_FREIGHT_DISABLED_WRITER_SCAFFOLD.md`](ROUTE_LEVEL_TANKER_FREIGHT_DISABLED_WRITER_SCAFFOLD.md) is the Route-level tanker freight disabled writer scaffold. `project:route-level-tanker-freight-disabled-writer` emits only ignored `route-level-tanker-freight-disabled-writer-scaffold-v1` manual artifacts with status `disabled_no_production_write`, candidate field status `not_connected`, and `sourceRightsStatus=manual_review_required`;it does not write production data, does not read external sources or API keys, and does not approve frontend/workflow/Worker runtime, ODP `finalBias`, Brent promotion, or main-score eligibility.
 
+### Transport Shock Confirmation Factor (P-score-1 contract only)
+
+[`TRANSPORT_SHOCK_CONFIRMATION_FACTOR_SOURCE_TO_SCORE_CONTRACT.md`](TRANSPORT_SHOCK_CONFIRMATION_FACTOR_SOURCE_TO_SCORE_CONTRACT.md) defines the P-score-1 source-to-score contract for a future `Transport Shock Confirmation Factor` / `transportShockConfirmationFactor`. The contract combines already-connected display-only evidence (`macroDrivers.energyTransport` PortWatch, `macroDrivers.shippingFreight` StockQ BDTI/BCTI, `data/oil-news-event-watch.json`, `data/oil-thermal-watch.json`, and ODP Brent/curve/crack evidence) with two future source-review candidates: **Free Route-Linked Tanker Transport Pressure Proxy** (Solactive wet freight futures candidate plus CME/ICE TD3C link-only/manual reference) and **Baltic Weekly Tanker Report public route-signal**. Current status is `contract_only_no_shadow_score`: no new live fetch, no Solactive ingestion, no Baltic Weekly parsing, no CME/ICE value scraping, no production data write, no frontend card, no workflow/Worker change, no ODP `finalBias`, no Brent promotion, no main judgment weighting, no Global Risk Heatmap, and no cross-validation input.
+
 ---
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)
