@@ -118,6 +118,7 @@
 - Route-level tanker freight production writer contract design: `route-level-tanker-freight-production-writer-contract-design-v1` 只是 contract design only,定义未来 `macroDrivers.energyTransport.routeFreightConfirmation` 字段形状;状态为 `contract_design_only_no_writer`,不写 production data、不接 frontend/workflow/Worker、不 live fetch、不读 API key,allowed status 故意排除 `confirmed`,更不进入 ODP finalBias 或主判断打分。
 - Route-level tanker freight source-rights approval gate: `route-level-tanker-freight-source-rights-approval-gate-v1` 只是 manual source-rights gate;状态为 `manual_review_required_no_source_rights_approved`,block reason 为 `source_rights_and_redistribution_not_approved`;没有候选来源获得 live fetch、route-value redistribution、production write 或 frontend approval,因此不写生产字段、更不进入 ODP finalBias 或主判断打分。
 - Route-level tanker freight Baltic context policy: `route-level-tanker-freight-baltic-context-policy-v1` 只是 docs/checker-only coexistence policy;当前决策为 `keep_baltic_freight_as_broad_context` 与 `additive_card_until_separate_deprecation_review`,不删除现有 `Baltic Freight` 卡,也不把 BDTI/BCTI/BDI 当作路线级确认或主判断打分输入。
+- Route-level tanker freight disabled writer scaffold: `route-level-tanker-freight-disabled-writer-scaffold-v1` 只是 manual-artifact-only disabled projection;`project:route-level-tanker-freight-disabled-writer` 只输出 ignored artifact,状态为 `disabled_no_production_write`,candidate field 保持 `not_connected` / `manual_review_required` / `productionWriteAttempted=false`,不写生产字段、不接 frontend/workflow/Worker,更不进入 ODP finalBias 或主判断打分。
 
 ## 6. Rejection Rules / 拒绝或暂缓规则
 

@@ -523,6 +523,8 @@ P2 route-level oil tanker freight confirmation source-review identifies Baltic E
 
 [`ROUTE_LEVEL_TANKER_FREIGHT_BALTIC_CONTEXT_POLICY.md`](ROUTE_LEVEL_TANKER_FREIGHT_BALTIC_CONTEXT_POLICY.md) is the Route-level tanker freight Baltic context policy. The associated `route-level-tanker-freight-baltic-context-policy-v1` fixture locks the current IA decision as `keep_baltic_freight_as_broad_context` and `additive_card_until_separate_deprecation_review`: existing StockQ BDTI/BCTI/BDI remains broad freight context, not route-level confirmation, and deleting or merging the `Baltic Freight` card requires a separate reviewed deprecation path.
 
+[`ROUTE_LEVEL_TANKER_FREIGHT_DISABLED_WRITER_SCAFFOLD.md`](ROUTE_LEVEL_TANKER_FREIGHT_DISABLED_WRITER_SCAFFOLD.md) is the Route-level tanker freight disabled writer scaffold. `project:route-level-tanker-freight-disabled-writer` emits only ignored `route-level-tanker-freight-disabled-writer-scaffold-v1` manual artifacts with status `disabled_no_production_write`, candidate field status `not_connected`, and `sourceRightsStatus=manual_review_required`;it does not write production data, does not read external sources or API keys, and does not approve frontend/workflow/Worker runtime, ODP `finalBias`, Brent promotion, or main-score eligibility.
+
 ---
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)
