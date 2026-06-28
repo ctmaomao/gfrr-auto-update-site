@@ -507,6 +507,8 @@ P2 route-level oil tanker freight confirmation source-review identifies Baltic E
 
 `route-level-tanker-freight-display-contract-v1` is the display-only candidate contract that describes the future shape of a possible route-level tanker freight confirmation watch. Its status remains `contract_only_no_production_write`: it does not live fetch, does not read API keys, does not write production data, does not add frontend/workflow/Worker runtime, does not change `macroDrivers.energyTransport.routeFreightConfirmation`, and leaves current production `routeFreightConfirmation` as `not_connected`.
 
+`npm run project:route-level-tanker-freight-production-display` is the production display projection dry-run-only helper. It reads a `route-level-tanker-freight-manual-samples-review-v1` artifact, combines it with `route-level-tanker-freight-display-contract-v1`, and writes only an ignored `route-level-tanker-freight-production-display-projection-v1` projection under `manual-artifacts/route-level-tanker-freight/` unless `--no-output` is used. It is not production data and does not live fetch, read API keys, write `data/radar-data.json`, add frontend/workflow/Worker runtime, approve direct display, change `routeFreightConfirmation=not_connected`, or create main-score eligibility.
+
 ---
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)

@@ -110,6 +110,7 @@
 - Route-level tanker freight manual artifact scaffold: `review:route-level-tanker-freight-manual-artifact` 只做 local/manual dry-run review,输出 ignored manual artifact,不读 key、不联网、不写 production data、不保存 raw source text、不进入 route confirmation 或主判断打分。
 - Route-level tanker freight manual sample collection/review: `review:route-level-tanker-freight-manual-samples` 只聚合多份 proof-review artifacts 的样本数、bucket coverage 与 repeated route observations;仍不读 key、不联网、不写 production data、不进入 route confirmation 或主判断打分。
 - Route-level tanker freight display-only candidate contract: `route-level-tanker-freight-display-contract-v1` 只定义未来展示候选层形状,状态为 `contract_only_no_production_write`;不写 production data、不接 frontend/workflow/Worker、不改变 `routeFreightConfirmation=not_connected`,更不进入 ODP finalBias 或主判断打分。
+- Route-level tanker freight production display projection: `route-level-tanker-freight-production-display-projection-v1` 只由 `project:route-level-tanker-freight-production-display` 做 dry-run-only manual artifact 投影;不写 `data/radar-data.json`、不批准直接展示、不接 frontend/workflow/Worker、不改变 `routeFreightConfirmation=not_connected`,更不进入 ODP finalBias 或主判断打分。
 
 ## 6. Rejection Rules / 拒绝或暂缓规则
 
