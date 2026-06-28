@@ -7,7 +7,7 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'odp-fold-after-verdict-1';
+const APP_VERSION = 'frontend-failclosed-fallback-1';
 const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
@@ -185,15 +185,15 @@ function markDataUnavailable() {
   }
 }
 
-function allRenderableDataPresent({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData, oilNewsEventWatchData }) {
-  return Boolean(radarData && worldOrderStressData && marketPricingMetricsData && radarHistoryData && oilDirectionalData && oilThermalWatchData && oilNewsEventWatchData);
+function allRenderableDataPresent({ radarData }) {
+  return Boolean(radarData);
 }
 
 // ---------------- 主入口 ----------------
 
 async function main() {
   const { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData, oilNewsEventWatchData } = await loadAllData();
-  const dataReady = allRenderableDataPresent({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData, oilNewsEventWatchData });
+  const dataReady = allRenderableDataPresent({ radarData });
 
   // Stage 4a: 填充 issue-meta
   const issueMeta = deriveIssueMeta(radarData);
@@ -202,7 +202,7 @@ async function main() {
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=odp-fold-after-verdict-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=frontend-failclosed-fallback-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
     macroOverviewRendered = true;
   } catch (error) {

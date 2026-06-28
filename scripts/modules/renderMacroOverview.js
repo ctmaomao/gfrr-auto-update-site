@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=odp-fold-after-verdict-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-fold-after-verdict-1';
-import { MODULE_LABELS } from './decision.js?v=odp-fold-after-verdict-1';
+} from './config.js?v=frontend-failclosed-fallback-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-failclosed-fallback-1';
+import { MODULE_LABELS } from './decision.js?v=frontend-failclosed-fallback-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,8 +18,8 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=odp-fold-after-verdict-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=odp-fold-after-verdict-1';
+} from './macroOverviewDisplayHelpers.js?v=frontend-failclosed-fallback-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=frontend-failclosed-fallback-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -3295,6 +3295,31 @@ function renderExternalAiStructuredFields(layer) {
   setHidden('ext-ai-structured-output', !shown);
 }
 
+function isExternalAiVisibleForFrontend(layer) {
+  if (!layer || typeof layer !== 'object' || Array.isArray(layer)) return false;
+  const boundaries = layer.boundaries || {};
+  const qualityReview = layer.qualityReview || {};
+  const freshness = layer.freshness || {};
+
+  if (layer.displayEnabled !== true) return false;
+  if (layer.status !== 'valid') return false;
+  if (boundaries.frontendDisplayApproved !== true) return false;
+  if (boundaries.displayOnly !== true) return false;
+  if (boundaries.externalAiGenerated !== true) return false;
+  if (boundaries.usesExternalAiApi !== true) return false;
+  if (boundaries.affectsScoring !== false) return false;
+  if (boundaries.affectsDecisionModel !== false) return false;
+  if (boundaries.affectsExecutionLock !== false) return false;
+  if (boundaries.affectsPositionGuidance !== false) return false;
+  if (boundaries.notInvestmentAdvice !== true) return false;
+  if (boundaries.productionWriteApproved !== false) return false;
+  if (!['pass', 'warn'].includes(qualityReview.status)) return false;
+  if (qualityReview.recommendation !== 'pass_for_manual_review') return false;
+  if (qualityReview.promotionEligible !== false) return false;
+  if (freshness.isStale !== false) return false;
+  return true;
+}
+
 function allocationByTarget(positioning, target) {
   const allocations = positioning?.coreAllocations;
   if (!Array.isArray(allocations)) return null;
@@ -3312,7 +3337,12 @@ function setAllocationRow(slug, allocation) {
 function renderExternalAiAuxiliary({ radarData }) {
   try {
     const layer = radarData?.externalAiInterpretationLayer;
-    if (!layer || layer.displayEnabled === false) return;
+    if (!isExternalAiVisibleForFrontend(layer)) {
+      setHidden('external-ai-auxiliary', true);
+      setHidden('ext-ai-structured-output', true);
+      return;
+    }
+    setHidden('external-ai-auxiliary', false);
 
     if (textValue(layer.provider)) setLeafText('ext-ai-provider', layer.provider);
     if (textValue(layer.model)) setLeafText('ext-ai-model', layer.model);
@@ -3347,7 +3377,6 @@ function renderExternalAiAuxiliary({ radarData }) {
     if (boundaries.externalAiGenerated) boundaryParts.push('本 AI 解读层由外部 AI 生成');
     if (boundaries.displayOnly) boundaryParts.push('仅供展示参考,不参与平台的风险打分与决策');
     if (boundaries.notInvestmentAdvice) boundaryParts.push('不构成投资建议');
-    if (boundaries.frontendDisplayApproved === false) boundaryParts.push('前端展示未批准,仅显示占位');
     const boundaryText = boundaryParts.length > 0 ? `${boundaryParts.join(';')}。` : '';
     if (boundaryText) setLeafText('ext-ai-boundaries-text', boundaryText);
 

@@ -5,6 +5,7 @@ import { ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS } from './external-ai/pr
 const DATA_PATH = 'data/radar-data.json';
 const WORKFLOW_DIR = '.github/workflows';
 const APPROVED_PRODUCTION_REFRESH_WORKFLOW = '.github/workflows/external-ai-production-refresh.yml';
+const RENDER_MACRO_OVERVIEW_PATH = 'scripts/modules/renderMacroOverview.js';
 
 function readText(filePath) {
   return fs.readFileSync(filePath, 'utf8');
@@ -114,12 +115,34 @@ function validateNoAutomation(errors) {
   }
 }
 
+function validateFrontendFailClosedGuard(errors) {
+  const text = readText(RENDER_MACRO_OVERVIEW_PATH);
+  const requiredSnippets = [
+    'function isExternalAiVisibleForFrontend',
+    "layer.displayEnabled !== true",
+    "layer.status !== 'valid'",
+    'boundaries.frontendDisplayApproved !== true',
+    'boundaries.displayOnly !== true',
+    'boundaries.affectsScoring !== false',
+    "qualityReview.recommendation !== 'pass_for_manual_review'",
+    'qualityReview.promotionEligible !== false',
+    'freshness.isStale !== false',
+    "setHidden('external-ai-auxiliary', true)",
+    "setHidden('external-ai-auxiliary', false)",
+  ];
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) addError(errors, `frontend renderer must fail closed for External AI visible display; missing ${snippet}`);
+  }
+}
+
 function main() {
   const errors = [];
 
   try {
     validateProductionLayer(errors);
     validateNoAutomation(errors);
+    validateFrontendFailClosedGuard(errors);
   } catch (error) {
     addError(errors, error.message);
   }

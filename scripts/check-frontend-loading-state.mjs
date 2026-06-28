@@ -47,10 +47,17 @@ for (const snippet of [
   'function markDataReady()',
   'function markDataUnavailable()',
   'function allRenderableDataPresent',
-  'radarData && worldOrderStressData && marketPricingMetricsData && radarHistoryData && oilDirectionalData',
+  'return Boolean(radarData);',
   'dataReady && macroOverviewRendered && oilDirectionalRendered',
 ]) {
   assert(app.includes(snippet), `scripts/app.js missing loading-state guard snippet: ${snippet}`);
+}
+
+for (const snippet of [
+  'radarData && worldOrderStressData && marketPricingMetricsData && radarHistoryData && oilDirectionalData',
+  'oilDirectionalData && oilThermalWatchData && oilNewsEventWatchData',
+]) {
+  assertMissing(app, snippet, 'scripts/app.js');
 }
 
 assert(pkg.includes('"check:frontend-loading-state"'), 'package.json must expose check:frontend-loading-state.');

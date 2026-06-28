@@ -327,6 +327,41 @@ const contracts = [
       'data/oil-directional-pressure.json',
       'realtime/market.json'
     ]
+  },
+  {
+    file: '.github/workflows/refresh-bubble-watch.yml',
+    required: [
+      'name: Refresh Bubble Watch',
+      'workflow_dispatch',
+      "cron: '30 5 * * 1'",
+      'permissions:',
+      'contents: write',
+      'concurrency',
+      'gfrr-bubble-watch-${{ github.ref }}',
+      'actions/checkout@v6',
+      'actions/setup-node@v6',
+      'node-version: 24',
+      'package-manager-cache: false',
+      'FRED_API_KEY: ${{ secrets.FRED_API_KEY }}',
+      'TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}',
+      'BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}',
+      'WIND_API_KEY: ${{ secrets.WIND_API_KEY }}',
+      'npm run build:bubble-watch',
+      'npm run check:bubble-watch',
+      'data/bubble-watch.json',
+      'data/bubble-watch-history.json',
+      'data/gdelt-bubble-watch-cache.json',
+      'config/bubble-watch-curated.json',
+      'chore: refresh bubble watch',
+      'git pull --rebase origin "${GITHUB_REF_NAME}"'
+    ],
+    forbidden: [
+      'continue-on-error: true',
+      'npm run build:data',
+      'scripts/run-daily-pipeline.mjs',
+      'data/radar-data.json',
+      'realtime/market.json'
+    ]
   }
 ];
 
