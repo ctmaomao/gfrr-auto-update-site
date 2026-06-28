@@ -1,0 +1,99 @@
+{
+  "contractVersion": "route-level-tanker-freight-proof-of-source-design-v1",
+  "kind": "route_level_tanker_freight_proof_of_source_design",
+  "status": "design_only_no_live_fetch",
+  "reviewedAt": "2026-06-28",
+  "predecessor": "route-level-tanker-freight-source-review-v1",
+  "nextAllowedStep": "route_level_tanker_freight_manual_artifact_scaffold_dry_run_only",
+  "liveFetchApproved": false,
+  "productionDataWriteApproved": false,
+  "realtimeWriteApproved": false,
+  "workflowAutomationApproved": false,
+  "frontendDisplayApproved": false,
+  "odpFinalBiasApproved": false,
+  "brentPromotionApproved": false,
+  "mainScoreApproved": false,
+  "manualArtifactScaffoldApproved": true,
+  "manualArtifactScaffoldNetworkApproved": false,
+  "manualArtifactScaffoldProductionWriteApproved": false,
+  "currentProductionState": {
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "eligibleForMainScore": false
+  },
+  "sourceAcceptanceGates": [
+    "route_identity",
+    "source_ownership",
+    "usage_rights",
+    "freshness",
+    "unit_semantics",
+    "sanitization",
+    "fallback",
+    "non_scoring_boundary"
+  ],
+  "routeBuckets": [
+    {
+      "bucketKey": "hormuz_meg_crude",
+      "candidateRoutes": ["TD3C", "TD2", "TD8", "TD34_if_formally_published_and_licensed"],
+      "approvedForProduction": false
+    },
+    {
+      "bucketKey": "meg_clean_products",
+      "candidateRoutes": ["TC1", "TC5", "TC20"],
+      "approvedForProduction": false
+    },
+    {
+      "bucketKey": "red_sea_suez_cape_rerouting",
+      "candidateRoutes": ["TD15", "TD20", "TD22", "TD25"],
+      "approvedForProduction": false
+    },
+    {
+      "bucketKey": "aggregate_context_only",
+      "candidateRoutes": ["BDTI", "BCTI", "BDI"],
+      "approvedForProduction": false,
+      "routeLevelConfirmationApproved": false
+    }
+  ],
+  "manualArtifactCandidate": {
+    "inputSchemaVersion": "route-level-tanker-freight-manual-input-v1",
+    "reviewArtifactSchemaVersion": "route-level-tanker-freight-proof-review-v1",
+    "writesProductionData": false,
+    "usesNetwork": false,
+    "storesRawProviderResponse": false,
+    "outputPathPolicy": "manual-artifacts-only"
+  },
+  "futureProductionContractCandidate": {
+    "contractVersion": "route-level-tanker-freight-confirmation-v1",
+    "eligibleForMainScore": false,
+    "allowedStatuses": [
+      "unavailable",
+      "insufficient_source_rights",
+      "no_route_confirmation",
+      "watch",
+      "confirmed",
+      "contradicted"
+    ],
+    "allowedConfidence": ["none", "low", "medium"]
+  },
+  "boundaries": {
+    "designOnly": true,
+    "noLiveFetch": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsWorldOrderWeights": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  }
+}

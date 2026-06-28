@@ -53,7 +53,8 @@ const SUITES = {
     'check:macro-drivers-consumer-retail',
     'check:macro-drivers-commercial-real-estate',
     'check:macro-drivers-expanded-auto-ingestion',
-    'check:route-level-tanker-freight-source-review'
+    'check:route-level-tanker-freight-source-review',
+    'check:route-level-tanker-freight-proof-of-source-design'
   ],
   'narrative-density': [
     'check:world-order-narrative-density',
