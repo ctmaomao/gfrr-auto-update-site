@@ -1,0 +1,125 @@
+{
+  "contractVersion": "route-level-tanker-freight-source-review-v1",
+  "kind": "route_level_tanker_freight_confirmation_source_review",
+  "status": "review_only_no_source_approved",
+  "reviewedAt": "2026-06-28",
+  "intendedFutureLayer": "macroDrivers.energyTransport.routeFreightConfirmation",
+  "currentProductionState": {
+    "transportShockCandidateContractVersion": "transport-shock-candidate-v1",
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "eligibleForMainScore": false
+  },
+  "sourceSelectionFinalized": false,
+  "liveFetchApproved": false,
+  "productionDataWriteApproved": false,
+  "realtimeWriteApproved": false,
+  "workflowAutomationApproved": false,
+  "frontendDisplayApproved": false,
+  "odpFinalBiasApproved": false,
+  "brentPromotionApproved": false,
+  "mainScoreApproved": false,
+  "routeValueRedistributionApproved": false,
+  "candidateRouteBuckets": [
+    {
+      "bucketKey": "hormuz_meg_crude",
+      "candidateRoutes": ["TD3C", "TD2", "TD8", "TD34_if_formally_published_and_licensed"],
+      "intendedUse": "Strait of Hormuz / Middle East Gulf crude transport confirmation",
+      "approvedForProduction": false
+    },
+    {
+      "bucketKey": "meg_clean_products",
+      "candidateRoutes": ["TC1", "TC5", "TC20"],
+      "intendedUse": "Middle East Gulf clean/product tanker stress confirmation",
+      "approvedForProduction": false
+    },
+    {
+      "bucketKey": "red_sea_suez_cape_rerouting",
+      "candidateRoutes": ["TD15", "TD20", "TD22", "TD25"],
+      "intendedUse": "Suez / Bab el-Mandeb / Cape rerouting confirmation",
+      "approvedForProduction": false
+    }
+  ],
+  "candidateSources": [
+    {
+      "sourceKey": "baltic_exchange_tanker_route_assessments",
+      "sourceFamily": "Baltic Exchange official tanker route assessments",
+      "sourceUrls": [
+        "https://www.balticexchange.com/en/data-services/market-information0/tankers-services.html",
+        "https://www.balticexchange.com/content/dam/balticexchange/consumer/documents/data-services/documentation/ocean-bulk-guides-policies/GMB.pdf"
+      ],
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "routeValueRedistributionApproved": false,
+      "futureLayerCandidate": "route_definition_and_primary_route_assessment_family"
+    },
+    {
+      "sourceKey": "ice_wet_freight_derivatives",
+      "sourceFamily": "ICE wet freight futures/options",
+      "sourceUrls": [
+        "https://www.ice.com/products/Futures-Options/Freight/Wet-Freight"
+      ],
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "marketConfirmationApproved": false,
+      "futureLayerCandidate": "route_linked_freight_futures_confirmation"
+    },
+    {
+      "sourceKey": "cme_baltic_wet_freight_futures",
+      "sourceFamily": "CME Baltic wet freight futures",
+      "sourceUrls": [
+        "https://www.cmegroup.com/markets/freight/baltic-freight.html"
+      ],
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "marketConfirmationApproved": false,
+      "futureLayerCandidate": "route_linked_freight_futures_confirmation"
+    },
+    {
+      "sourceKey": "paid_route_level_freight_intelligence_vendors",
+      "sourceFamily": "Vortexa/Kpler/LSEG/Argus/Platts/Clarksons/Signal Ocean",
+      "sourceUrls": [],
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "futureLicensedOnly": true,
+      "futureLayerCandidate": "licensed_route_freight_and_vessel_flow_confirmation"
+    },
+    {
+      "sourceKey": "stockq_aggregate_baltic_context",
+      "sourceFamily": "Existing StockQ BDTI/BCTI/BDI aggregate context",
+      "sourceUrls": [],
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "aggregateContextOnly": true,
+      "routeLevelConfirmationApproved": false,
+      "futureLayerCandidate": "broad_context_only"
+    }
+  ],
+  "boundaries": {
+    "reviewOnly": true,
+    "noLiveFetch": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsWorldOrderWeights": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "nextAllowedStep": "route_level_tanker_freight_proof_of_source_design_no_live_fetch_no_production_data_write"
+}

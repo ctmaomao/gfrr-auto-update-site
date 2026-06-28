@@ -105,6 +105,7 @@
 - 作用：识别能源与地缘风险向贸易成本传导。
 - 初始级别：candidate。
 - M-71 public proxy source review: Baltic Exchange freight benchmarks 与 Freightos Baltic Index 是 Level 1/2 source-review candidate。Baltic / Freightos 只能作为 shipping / freight stress public proxy review,不得写成 Platts Dated Brent、不得推断具体 crude cargo price、不得直接进入 scoring 或 decision。
+- Route-level tanker freight confirmation source review: TD3C / TD8 / TC5 / TD15 / TD20 / TD22 / TD25 等路线级油轮运费只作为未来 `transportShockCandidate` 的确认层候选;当前 source-review only,不 live fetch,不写 production data,不改变 ODP `finalBias`、Brent promotion、scoring 或 decision。
 
 ## 6. Rejection Rules / 拒绝或暂缓规则
 

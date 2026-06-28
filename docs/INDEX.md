@@ -85,6 +85,7 @@
 - `docs/ENERGY_INVENTORY_BALANCE_SOURCE_REVIEW.md` (P6A source-review + implementation follow-up; EIA STEO OECD commercial inventory + global net inventory withdrawals → `macroDrivers.energyInventoryBalance`)
 - `docs/ENERGY_TRANSPORT_CHOKEPOINT_SOURCE_REVIEW.md` (Energy Stress Phase 2 source-review + implementation follow-up; IMF PortWatch chokepoint source → `macroDrivers.energyTransport`)
 - `docs/ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md` (owner-approved PortWatch implementation design contract; first runtime scope limited to Daily `macroDrivers.energyTransport` + validator/check/docs)
+- `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_REVIEW.md` (route-level tanker freight confirmation source-review only; future confirmation candidate for `transportShockCandidate`, no live fetch / no production write)
 - `docs/ENERGY_STRESS_FRONTEND_DISPLAY_BRIEF.md` (owner-approved docs-only frontend display brief for surfacing OPEC spare capacity + PortWatch inside existing ODP details; no UI implementation yet)
 - `docs/PORTWATCH_TOS_PIN_REVIEW.md` (docs-only terms pin review; exact ArcGIS `Daily_Chokepoints_Data` licenseInfo points to IMF terms, runtime enum change deferred)
 

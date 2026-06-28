@@ -52,7 +52,8 @@ const SUITES = {
     'check:macro-drivers-employment',
     'check:macro-drivers-consumer-retail',
     'check:macro-drivers-commercial-real-estate',
-    'check:macro-drivers-expanded-auto-ingestion'
+    'check:macro-drivers-expanded-auto-ingestion',
+    'check:route-level-tanker-freight-source-review'
   ],
   'narrative-density': [
     'check:world-order-narrative-density',

@@ -436,6 +436,7 @@ const ENERGY_TRANSPORT_WINDOW_DAYS = 120;
 const ENERGY_TRANSPORT_QUERY_RECORD_LIMIT = 1000;
 const ENERGY_TRANSPORT_STALE_DAYS = 21;
 const ENERGY_TRANSPORT_USAGE_TERMS_PINNED = 'imf_data_terms_pinned';
+const ENERGY_TRANSPORT_SHOCK_CANDIDATE_CONTRACT_VERSION = 'transport-shock-candidate-v1';
 const ENERGY_TRANSPORT_CORE_KEYS = ['suez', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar'];
 const ENERGY_TRANSPORT_CHOKEPOINTS = [
   { key: 'suez', portid: 'chokepoint1', portname: 'Suez Canal', core: true },
@@ -8239,8 +8240,147 @@ function buildEnergyTransportLimitation() {
 function buildEnergyTransportNotes() {
   return [
     'Sources: UN Global Platform; IMF PortWatch. Daily_Chokepoints_Data 为 AIS-derived chokepoint proxy;IMF Data Terms pinned via exact ArcGIS licenseInfo;display-only,不进 scoring/decision/execution/position。',
-    '本层只保存 compact 派生摘要(latest + 7d/30d average + deviation),不提交 PortWatch raw AIS-derived history;usageTermsPinned=imf_data_terms_pinned,redistributionCaveat=true(UN Global Platform / AIS 第三方上游 caveat 保留)。'
+    '本层只保存 compact 派生摘要(latest + 7d/30d average + deviation),不提交 PortWatch raw AIS-derived history;usageTermsPinned=imf_data_terms_pinned,redistributionCaveat=true(UN Global Platform / AIS 第三方上游 caveat 保留)。',
+    'transportShockCandidate 是可入分前的候选审计层:只读 PortWatch 咽喉代理,需要路线级油轮运费与市场确认后才可另开评分评审;当前不改变主分数。'
   ];
+}
+
+function buildEnergyTransportBoundaryFlags() {
+  return {
+    affectsValues: false,
+    affectsDisplayInputsBaseline: false,
+    affectsEffectiveDisplayInputs: false,
+    affectsScoring: false,
+    affectsDecisionModel: false,
+    affectsExecutionLock: false,
+    affectsPositionGuidance: false,
+    affectsBrentPromotion: false,
+    affectsWorldOrderWeights: false,
+    affectsGlobalRiskHeatmap: false,
+    affectsCrossValidation: false
+  };
+}
+
+function buildMissingEnergyTransportShockCandidate(reason = 'missing') {
+  return {
+    contractVersion: ENERGY_TRANSPORT_SHOCK_CANDIDATE_CONTRACT_VERSION,
+    status: 'unavailable',
+    score: null,
+    confidence: 'none',
+    candidateOnly: true,
+    auditOnly: true,
+    eligibleForMainScore: false,
+    confirmationStatus: 'unavailable',
+    routeFreightConfirmation: 'not_connected',
+    marketConfirmation: 'not_connected',
+    evidence: {
+      hormuzTankerVs30dPct: null,
+      hormuzCapacityTankerVs30dPct: null,
+      redSeaToCapeRegime: 'unknown',
+      suezBabTankerVs30dPct: null,
+      capeTankerVs30dPct: null,
+      stressedChokepointCount: null
+    },
+    drivers: [],
+    reasons: [`PortWatch 咽喉代理不可用或过期(${reason});运输冲击候选审计层不输出有效分。`],
+    boundaries: buildEnergyTransportBoundaryFlags(),
+    limitationZh: '运输冲击候选分仅为 PortWatch AIS 派生咽喉代理的审计读数;不确认封锁、断供、暗航行、战争概率或油价方向;不进 values、scoring、decision、execution、position、Brent promotion、World Order weights、Global Risk Heatmap 或 cross-validation。'
+  };
+}
+
+function scoreEnergyTransportDrop(value) {
+  if (!Number.isFinite(value)) return null;
+  if (value <= -0.75) return 90;
+  if (value <= -0.5) return 75;
+  if (value <= -0.3) return 60;
+  if (value <= -0.2) return 45;
+  return 15;
+}
+
+function buildEnergyTransportShockCandidate(chokepoints, reroutingProxy, sourceStatus = 'live') {
+  if (!chokepoints || typeof chokepoints !== 'object') {
+    return buildMissingEnergyTransportShockCandidate('missing_chokepoints');
+  }
+  if (sourceStatus !== 'live' && sourceStatus !== 'fallback') {
+    return buildMissingEnergyTransportShockCandidate(`source_status_${sourceStatus || 'missing'}`);
+  }
+
+  const hormuz = chokepoints.hormuz || {};
+  const hormuzTankerVs30dPct = Number.isFinite(hormuz.latestVs30dPct) ? hormuz.latestVs30dPct : null;
+  const hormuzCapacityTankerVs30dPct = Number.isFinite(hormuz.capacityTankerVs30dPct)
+    ? hormuz.capacityTankerVs30dPct
+    : null;
+  const hormuzRisk = Math.max(
+    scoreEnergyTransportDrop(hormuzTankerVs30dPct) ?? 0,
+    scoreEnergyTransportDrop(hormuzCapacityTankerVs30dPct) ?? 0
+  );
+  const stressedCoreKeys = ENERGY_TRANSPORT_CORE_KEYS.filter((key) => {
+    const node = chokepoints[key] || {};
+    return (
+      (Number.isFinite(node.capacityTankerVs30dPct) && node.capacityTankerVs30dPct <= -0.3) ||
+      (Number.isFinite(node.latestVs30dPct) && node.latestVs30dPct <= -0.3)
+    );
+  });
+  const stressedChokepointCount = stressedCoreKeys.length;
+  const aggregateRisk = stressedChokepointCount >= 2 ? Math.min(80, 30 + stressedChokepointCount * 15) : 15;
+  const redSeaToCapeRegime = typeof reroutingProxy?.redSeaToCapeRegime === 'string'
+    ? reroutingProxy.redSeaToCapeRegime
+    : 'unknown';
+  const reroutingRisk = redSeaToCapeRegime === 'rerouting_watch' ? 65 : 15;
+  const score = clamp(Math.max(hormuzRisk, aggregateRisk, reroutingRisk));
+  const status = score >= 75 ? 'elevated_watch' : score >= 50 ? 'watch' : 'normal';
+  const drivers = [];
+  const reasons = [];
+
+  if (hormuzRisk >= 75) {
+    drivers.push('hormuz_proxy_drop');
+    reasons.push('霍尔木兹油轮 count/capacity 代理显著低于30日均值;仅作 AIS 派生候选观察。');
+  } else if (hormuzRisk >= 45) {
+    drivers.push('hormuz_proxy_watch');
+    reasons.push('霍尔木兹油轮代理低于30日均值,但尚需路线级油轮运费与市场确认。');
+  }
+  if (stressedChokepointCount >= 2) {
+    drivers.push('multi_chokepoint_proxy_drop');
+    reasons.push(`核心咽喉中 ${stressedChokepointCount} 个油轮代理低于30日均值: ${stressedCoreKeys.join(', ')}。`);
+  }
+  if (redSeaToCapeRegime === 'rerouting_watch') {
+    drivers.push('red_sea_to_cape_rerouting_proxy');
+    reasons.push('红海/曼德-好望角绕行代理触发观察;仍需路线级运费和市场结构确认。');
+  }
+  if (!reasons.length) {
+    reasons.push('未见核心咽喉油轮代理形成高强度运输冲击候选;保持正常观察。');
+  }
+
+  return {
+    contractVersion: ENERGY_TRANSPORT_SHOCK_CANDIDATE_CONTRACT_VERSION,
+    status,
+    score,
+    confidence: 'low',
+    candidateOnly: true,
+    auditOnly: true,
+    eligibleForMainScore: false,
+    confirmationStatus: status === 'normal'
+      ? 'no_transport_shock_candidate'
+      : 'awaiting_route_freight_and_market_confirmation',
+    routeFreightConfirmation: 'not_connected',
+    marketConfirmation: 'not_connected',
+    evidence: {
+      hormuzTankerVs30dPct,
+      hormuzCapacityTankerVs30dPct,
+      redSeaToCapeRegime,
+      suezBabTankerVs30dPct: Number.isFinite(reroutingProxy?.suezBabTankerVs30dPct)
+        ? reroutingProxy.suezBabTankerVs30dPct
+        : null,
+      capeTankerVs30dPct: Number.isFinite(reroutingProxy?.capeTankerVs30dPct)
+        ? reroutingProxy.capeTankerVs30dPct
+        : null,
+      stressedChokepointCount
+    },
+    drivers,
+    reasons,
+    boundaries: buildEnergyTransportBoundaryFlags(),
+    limitationZh: '运输冲击候选分仅为 PortWatch AIS 派生咽喉代理的审计读数;不确认封锁、断供、暗航行、战争概率或油价方向;不进 values、scoring、decision、execution、position、Brent promotion、World Order weights、Global Risk Heatmap 或 cross-validation。'
+  };
 }
 
 function buildEmptyEnergyTransportChokepoints(status = 'missing') {
@@ -8292,6 +8432,7 @@ function buildMissingEnergyTransport(reason = 'missing') {
       capeTankerVs30dPct: null,
       notes: []
     },
+    transportShockCandidate: buildMissingEnergyTransportShockCandidate(reason),
     limitationZh: buildEnergyTransportLimitation(),
     notes: buildEnergyTransportNotes()
   };
@@ -8318,6 +8459,13 @@ function normalizePreviousEnergyTransport(prevEnergyTransport, reason = 'fetch_f
   )
     ? prevEnergyTransport.chokepoints
     : buildEmptyEnergyTransportChokepoints('missing');
+  const reroutingProxy = (
+    prevEnergyTransport.reroutingProxy &&
+    typeof prevEnergyTransport.reroutingProxy === 'object' &&
+    !Array.isArray(prevEnergyTransport.reroutingProxy)
+  )
+    ? prevEnergyTransport.reroutingProxy
+    : buildMissingEnergyTransport(reason).reroutingProxy;
   return {
     source: ENERGY_TRANSPORT_SOURCE,
     sourceUrl: ENERGY_TRANSPORT_SOURCE_URL,
@@ -8332,13 +8480,8 @@ function normalizePreviousEnergyTransport(prevEnergyTransport, reason = 'fetch_f
     lastEditDate: normalizeIsoOrNull(prevEnergyTransport.lastEditDate),
     fetchReason: reason,
     chokepoints: previousChokepoints,
-    reroutingProxy: (
-      prevEnergyTransport.reroutingProxy &&
-      typeof prevEnergyTransport.reroutingProxy === 'object' &&
-      !Array.isArray(prevEnergyTransport.reroutingProxy)
-    )
-      ? prevEnergyTransport.reroutingProxy
-      : buildMissingEnergyTransport(reason).reroutingProxy,
+    reroutingProxy,
+    transportShockCandidate: buildEnergyTransportShockCandidate(previousChokepoints, reroutingProxy, 'fallback'),
     limitationZh: typeof prevEnergyTransport.limitationZh === 'string'
       ? prevEnergyTransport.limitationZh
       : buildEnergyTransportLimitation(),
@@ -8521,6 +8664,7 @@ function buildEnergyTransportLayer(rows) {
       chokepoints
     };
   }
+  const reroutingProxy = classifyRedSeaToCapeRerouting(chokepoints);
   return {
     source: ENERGY_TRANSPORT_SOURCE,
     sourceUrl: ENERGY_TRANSPORT_SOURCE_URL,
@@ -8535,7 +8679,8 @@ function buildEnergyTransportLayer(rows) {
     lastEditDate: null,
     fetchReason: null,
     chokepoints,
-    reroutingProxy: classifyRedSeaToCapeRerouting(chokepoints),
+    reroutingProxy,
+    transportShockCandidate: buildEnergyTransportShockCandidate(chokepoints, reroutingProxy, 'live'),
     limitationZh: buildEnergyTransportLimitation(),
     notes: buildEnergyTransportNotes()
   };

@@ -125,6 +125,13 @@ const VALID_ENERGY_TRANSPORT_SOURCE = 'IMFPortWatch:Daily_Chokepoints_Data';
 const PREFERRED_ENERGY_TRANSPORT_USAGE_TERMS = 'imf_data_terms_pinned';
 const VALID_ENERGY_TRANSPORT_USAGE_TERMS = new Set(['partial', PREFERRED_ENERGY_TRANSPORT_USAGE_TERMS]);
 const VALID_ENERGY_TRANSPORT_REROUTING_REGIMES = new Set(['rerouting_watch', 'normal', 'unknown']);
+const VALID_ENERGY_TRANSPORT_SHOCK_STATUSES = new Set(['elevated_watch', 'watch', 'normal', 'unavailable']);
+const VALID_ENERGY_TRANSPORT_SHOCK_CONFIDENCE = new Set(['low', 'none']);
+const VALID_ENERGY_TRANSPORT_SHOCK_CONFIRMATION = new Set([
+  'awaiting_route_freight_and_market_confirmation',
+  'no_transport_shock_candidate',
+  'unavailable'
+]);
 const ENERGY_TRANSPORT_CHOKEPOINT_KEYS = ['suez', 'panama', 'bosporus', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar'];
 const ENERGY_TRANSPORT_CORE_KEYS = ['suez', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar'];
 const ENERGY_TRANSPORT_FORBIDDEN_KEYS = new Set([
@@ -1048,6 +1055,96 @@ function validateEnergyTransportChokepoint(node, fieldName) {
   assert(ENERGY_TRANSPORT_CHOKEPOINT_STATUSES.has(node.sourceStatus), `${fieldName}.sourceStatus is not supported`);
 }
 
+function validateEnergyTransportShockCandidate(candidate, fieldName, sourceStatus) {
+  assertPlainObject(candidate, fieldName);
+  for (const key of [
+    'contractVersion',
+    'status',
+    'score',
+    'confidence',
+    'candidateOnly',
+    'auditOnly',
+    'eligibleForMainScore',
+    'confirmationStatus',
+    'routeFreightConfirmation',
+    'marketConfirmation',
+    'evidence',
+    'drivers',
+    'reasons',
+    'boundaries',
+    'limitationZh'
+  ]) {
+    assert(Object.hasOwn(candidate, key), `${fieldName}.${key} is missing`);
+  }
+  assert(candidate.contractVersion === 'transport-shock-candidate-v1', `${fieldName}.contractVersion is not supported`);
+  assert(VALID_ENERGY_TRANSPORT_SHOCK_STATUSES.has(candidate.status), `${fieldName}.status is not supported`);
+  assert(VALID_ENERGY_TRANSPORT_SHOCK_CONFIDENCE.has(candidate.confidence), `${fieldName}.confidence is not supported`);
+  assert(VALID_ENERGY_TRANSPORT_SHOCK_CONFIRMATION.has(candidate.confirmationStatus), `${fieldName}.confirmationStatus is not supported`);
+  assert(candidate.candidateOnly === true, `${fieldName}.candidateOnly must be true`);
+  assert(candidate.auditOnly === true, `${fieldName}.auditOnly must be true`);
+  assert(candidate.eligibleForMainScore === false, `${fieldName}.eligibleForMainScore must be false`);
+  assert(candidate.routeFreightConfirmation === 'not_connected', `${fieldName}.routeFreightConfirmation must be not_connected`);
+  assert(candidate.marketConfirmation === 'not_connected', `${fieldName}.marketConfirmation must be not_connected`);
+  assert(isFiniteNumberOrNull(candidate.score), `${fieldName}.score must be finite number or null`);
+  if (candidate.status === 'unavailable') {
+    assert(candidate.score === null, `${fieldName}.score must be null when unavailable`);
+    assert(candidate.confidence === 'none', `${fieldName}.confidence must be none when unavailable`);
+  } else {
+    assert(Number.isFinite(candidate.score) && candidate.score >= 0 && candidate.score <= 100, `${fieldName}.score must be 0..100 when available`);
+    assert(candidate.confidence === 'low', `${fieldName}.confidence must remain low until route freight and market confirmation are connected`);
+  }
+  if (sourceStatus !== 'live' && sourceStatus !== 'fallback') {
+    assert(candidate.status === 'unavailable', `${fieldName}.status must be unavailable unless source is live/fallback`);
+  }
+
+  assertPlainObject(candidate.evidence, `${fieldName}.evidence`);
+  for (const key of [
+    'hormuzTankerVs30dPct',
+    'hormuzCapacityTankerVs30dPct',
+    'suezBabTankerVs30dPct',
+    'capeTankerVs30dPct'
+  ]) {
+    assert(Object.hasOwn(candidate.evidence, key), `${fieldName}.evidence.${key} is missing`);
+    validateDecimalRatioRangeIfPresent(candidate.evidence[key], `${fieldName}.evidence.${key}`);
+  }
+  assertString(candidate.evidence.redSeaToCapeRegime, `${fieldName}.evidence.redSeaToCapeRegime`);
+  assert(VALID_ENERGY_TRANSPORT_REROUTING_REGIMES.has(candidate.evidence.redSeaToCapeRegime), `${fieldName}.evidence.redSeaToCapeRegime is not supported`);
+  assert(isFiniteNumberOrNull(candidate.evidence.stressedChokepointCount), `${fieldName}.evidence.stressedChokepointCount must be finite number or null`);
+  if (Number.isFinite(candidate.evidence.stressedChokepointCount)) {
+    assert(Number.isInteger(candidate.evidence.stressedChokepointCount) && candidate.evidence.stressedChokepointCount >= 0 && candidate.evidence.stressedChokepointCount <= ENERGY_TRANSPORT_CORE_KEYS.length,
+      `${fieldName}.evidence.stressedChokepointCount must be an integer in core-key range`);
+  }
+
+  assertArray(candidate.drivers, `${fieldName}.drivers`);
+  candidate.drivers.forEach((item, index) => assertString(item, `${fieldName}.drivers[${index}]`));
+  assertArray(candidate.reasons, `${fieldName}.reasons`);
+  candidate.reasons.forEach((item, index) => assertString(item, `${fieldName}.reasons[${index}]`));
+  assertPlainObject(candidate.boundaries, `${fieldName}.boundaries`);
+  for (const key of [
+    'affectsValues',
+    'affectsDisplayInputsBaseline',
+    'affectsEffectiveDisplayInputs',
+    'affectsScoring',
+    'affectsDecisionModel',
+    'affectsExecutionLock',
+    'affectsPositionGuidance',
+    'affectsBrentPromotion',
+    'affectsWorldOrderWeights',
+    'affectsGlobalRiskHeatmap',
+    'affectsCrossValidation'
+  ]) {
+    assert(candidate.boundaries[key] === false, `${fieldName}.boundaries.${key} must be false`);
+  }
+  assertString(candidate.limitationZh, `${fieldName}.limitationZh`);
+  assert(
+    /候选|candidate/u.test(candidate.limitationZh) &&
+    /AIS/u.test(candidate.limitationZh) &&
+    /不确认|does not confirm|not confirm/u.test(candidate.limitationZh) &&
+    /不进|not in|scoring/u.test(candidate.limitationZh),
+    `${fieldName}.limitationZh must preserve candidate-only, AIS, no-confirmation, and no-scoring boundaries`
+  );
+}
+
 function validateMacroDriversEnergyTransport(dataPayload) {
   const layer = dataPayload?.macroDrivers?.energyTransport;
   // expand-then-contract: current committed snapshots may omit this new display-only layer until first Daily run.
@@ -1118,6 +1215,13 @@ function validateMacroDriversEnergyTransport(dataPayload) {
   }
   assertArray(layer.reroutingProxy.notes, 'macroDrivers.energyTransport.reroutingProxy.notes');
   layer.reroutingProxy.notes.forEach((item, index) => assertString(item, `macroDrivers.energyTransport.reroutingProxy.notes[${index}]`));
+  if (Object.hasOwn(layer, 'transportShockCandidate')) {
+    validateEnergyTransportShockCandidate(
+      layer.transportShockCandidate,
+      'macroDrivers.energyTransport.transportShockCandidate',
+      layer.sourceStatus.chokepoints
+    );
+  }
 
   assertString(layer.limitationZh, 'macroDrivers.energyTransport.limitationZh');
   assert(

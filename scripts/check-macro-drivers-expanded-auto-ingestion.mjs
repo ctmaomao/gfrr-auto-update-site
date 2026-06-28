@@ -126,6 +126,15 @@ if (energyTransport !== undefined) {
     if (energyTransport.usageTermsPinned !== 'imf_data_terms_pinned') fail('macroDrivers.energyTransport.usageTermsPinned must be imf_data_terms_pinned after PortWatch TOS pin proof');
     if (energyTransport.redistributionCaveat !== true) fail('macroDrivers.energyTransport.redistributionCaveat must be true');
     if (!isPlainObject(energyTransport.reroutingProxy)) fail('macroDrivers.energyTransport.reroutingProxy is missing');
+    if (isPlainObject(energyTransport.transportShockCandidate)) {
+      const candidate = energyTransport.transportShockCandidate;
+      if (candidate.candidateOnly !== true) fail('macroDrivers.energyTransport.transportShockCandidate.candidateOnly must be true');
+      if (candidate.auditOnly !== true) fail('macroDrivers.energyTransport.transportShockCandidate.auditOnly must be true');
+      if (candidate.eligibleForMainScore !== false) fail('macroDrivers.energyTransport.transportShockCandidate.eligibleForMainScore must be false');
+      if (candidate.boundaries?.affectsScoring !== false) fail('macroDrivers.energyTransport.transportShockCandidate.boundaries.affectsScoring must be false');
+      if (candidate.routeFreightConfirmation !== 'not_connected') fail('macroDrivers.energyTransport.transportShockCandidate.routeFreightConfirmation must be not_connected');
+      if (candidate.marketConfirmation !== 'not_connected') fail('macroDrivers.energyTransport.transportShockCandidate.marketConfirmation must be not_connected');
+    }
     const status = energyTransport.sourceStatus?.chokepoints;
     const requireLiveValues = status === 'live' || status === 'fallback';
     for (const key of ['suez', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar']) {
@@ -222,6 +231,8 @@ const requiredRunDailyMarkers = [
   'ENERGY_TRANSPORT_QUERY_URL',
   'buildEnergyTransportQueryUrl',
   'parseEnergyTransportRows',
+  'buildEnergyTransportShockCandidate',
+  'transportShockCandidate: buildEnergyTransportShockCandidate',
   'energyTransport: macroDrivers.energyTransport',
   'async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive)',
   "fetchYahooChartQuote('BIZD', '1mo', '1d')",
@@ -281,6 +292,8 @@ for (const marker of [
   'PASC_OECD_T3',
   'T3_STCHANGE_WORLD',
   'macroDrivers.energyTransport',
+  'transportShockCandidate',
+  'transport-shock-candidate-v1',
   'IMFPortWatch:Daily_Chokepoints_Data',
   'usageTermsPinned',
   'redistributionCaveat',
