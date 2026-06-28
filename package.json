@@ -142,6 +142,8 @@
     "check:brent-public-proxy-source-review": "node --check scripts/check-brent-public-proxy-source-review.mjs && node scripts/check-brent-public-proxy-source-review.mjs",
     "check:route-level-tanker-freight-source-review": "node --check scripts/check-route-level-tanker-freight-source-review.mjs && node scripts/check-route-level-tanker-freight-source-review.mjs",
     "check:route-level-tanker-freight-proof-of-source-design": "node --check scripts/check-route-level-tanker-freight-proof-of-source-design.mjs && node scripts/check-route-level-tanker-freight-proof-of-source-design.mjs",
+    "review:route-level-tanker-freight-manual-artifact": "node scripts/review-route-level-tanker-freight-manual-artifact.mjs",
+    "check:route-level-tanker-freight-manual-artifact-scaffold": "node --check scripts/review-route-level-tanker-freight-manual-artifact.mjs && node --check scripts/check-route-level-tanker-freight-manual-artifact-scaffold.mjs && node scripts/check-route-level-tanker-freight-manual-artifact-scaffold.mjs",
     "check:macro-drivers-fed-liquidity-extended": "node scripts/check-macro-drivers-fed-liquidity-extended.mjs",
     "check:fed-liquidity-repo-spread": "node scripts/check-fed-liquidity-repo-spread.mjs",
     "check:macro-drivers-credit-sloos": "node scripts/check-macro-drivers-credit-sloos.mjs",

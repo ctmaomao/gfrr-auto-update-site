@@ -71,10 +71,14 @@ turn `routeFreightConfirmation` into `confirmed`.
 
 ## 5. Manual Artifact Candidate Shape
 
-The next allowed implementation step is a local/manual artifact scaffold. It
-should read a user-provided file from `manual-artifacts/` and produce an
+The allowed implementation step is a local/manual artifact scaffold. It reads a
+user-provided file from `manual-artifacts/` or tracked fixtures and produces an
 ignored review artifact only. It must not fetch the internet or write
-production data.
+production data. The scaffold command is:
+
+```text
+npm run review:route-level-tanker-freight-manual-artifact
+```
 
 Candidate input shape:
 
@@ -192,11 +196,12 @@ marketConfirmation=not_connected
 
 ## 9. Current Decision
 
-This design is sufficient to start the next **manual artifact scaffold** slice:
+This design allowed the **manual artifact scaffold** slice:
 
 ```text
 route_level_tanker_freight_manual_artifact_scaffold_dry_run_only
 ```
 
-That next slice may add a local script and fixtures, but it must remain
-dry-run-only and ignored-artifact-only.
+That scaffold now exists as a local script and fixture-backed checker, but it
+remains dry-run-only and ignored-artifact-only. The next possible slice is
+manual sample collection/review, not live fetch or production display.
