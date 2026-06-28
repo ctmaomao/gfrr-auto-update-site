@@ -1,0 +1,74 @@
+{
+  "contractVersion": "route-level-tanker-freight-baltic-context-policy-v1",
+  "kind": "route_level_tanker_freight_baltic_context_policy",
+  "status": "docs_checker_only_no_frontend_change",
+  "createdAt": "2026-06-28",
+  "existingCard": {
+    "domId": "card-c1-shipping-freight",
+    "labelEn": "Baltic Freight",
+    "labelZh": "波罗的海运费",
+    "sourceField": "macroDrivers.shippingFreight",
+    "source": "StockQ:BDTI; StockQ:BCTI; StockQ:BDI",
+    "role": "broad_freight_context",
+    "deleteApproved": false,
+    "routeLevelConfirmationApproved": false,
+    "eligibleForMainScore": false
+  },
+  "futureRouteLevelCard": {
+    "proposedDomId": "c1-route-tanker-freight",
+    "labelEn": "Route Tanker Freight",
+    "labelZh": "路线级油轮运费",
+    "futureSourceField": "macroDrivers.energyTransport.routeFreightConfirmation",
+    "role": "route_level_oil_tanker_confirmation_watch",
+    "frontendImplementationApproved": false,
+    "productionWriteApproved": false,
+    "eligibleForMainScore": false
+  },
+  "iaDecision": {
+    "currentPolicy": "keep_baltic_freight_as_broad_context",
+    "futureImplementationMode": "additive_card_until_separate_deprecation_review",
+    "currentExpectedThematicCardCount": 51,
+    "futureAdditiveExpectedThematicCardCount": 52,
+    "deletionRequiresSeparateReview": true,
+    "mergeRequiresSeparateReview": true
+  },
+  "currentProductionState": {
+    "shippingFreightConnected": true,
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "sourceRightsStatus": "manual_review_required",
+    "eligibleForMainScore": false
+  },
+  "approvalState": {
+    "deleteBalticFreightApproved": false,
+    "mergeBalticFreightApproved": false,
+    "frontendImplementationApproved": false,
+    "productionDataWriteApproved": false,
+    "productionWriteApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "worldOrderWeightsApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "boundaries": {
+    "docsCheckerOnly": true,
+    "noFrontendChange": true,
+    "noCardDeletion": true,
+    "noThematicCardCountChange": true,
+    "noProductionDataWrite": true,
+    "noWorkflowAutomation": true,
+    "noWorkerRuntime": true,
+    "noRouteConfirmation": true,
+    "noScoring": true,
+    "noDecisionModel": true,
+    "noExecutionLock": true,
+    "noPositionGuidance": true,
+    "noBrentPromotion": true,
+    "noOdpFinalBias": true,
+    "noWorldOrderWeights": true,
+    "noGlobalRiskHeatmap": true,
+    "noCrossValidation": true
+  }
+}

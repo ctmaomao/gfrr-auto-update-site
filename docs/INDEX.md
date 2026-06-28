@@ -92,6 +92,7 @@
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_THEMATIC_CARD_BRIEF.md` (route-level tanker freight thematic card brief; docs-only final target for a future C1 通胀与能源 card, no frontend implementation / no production write)
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITER_CONTRACT_DESIGN.md` (route-level tanker freight production writer contract design; future `macroDrivers.energyTransport.routeFreightConfirmation` field contract only, no writer / no production write)
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_GATE.md` (route-level tanker freight source-rights approval gate; manual source-rights gate keeps production writes blocked until explicit approval)
+- `docs/ROUTE_LEVEL_TANKER_FREIGHT_BALTIC_CONTEXT_POLICY.md` (route-level tanker freight Baltic context policy; keeps existing Baltic Freight as broad context unless a separate deprecation/merge review is approved)
 - `docs/ENERGY_STRESS_FRONTEND_DISPLAY_BRIEF.md` (owner-approved docs-only frontend display brief for surfacing OPEC spare capacity + PortWatch inside existing ODP details; no UI implementation yet)
 - `docs/PORTWATCH_TOS_PIN_REVIEW.md` (docs-only terms pin review; exact ArcGIS `Daily_Chokepoints_Data` licenseInfo points to IMF terms, runtime enum change deferred)
 
