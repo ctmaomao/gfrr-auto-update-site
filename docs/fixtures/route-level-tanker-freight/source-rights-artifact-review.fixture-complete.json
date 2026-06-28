@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "route-level-tanker-freight-source-rights-artifact-review-v1",
+  "status": "fixture_only_reviewable_keep_blocked",
+  "recommendation": "fixture_only_validates_review_shape_keep_gate_blocked",
+  "generatedAt": "2026-06-28T00:00:00.000Z",
+  "inputPath": "docs/fixtures/route-level-tanker-freight/source-rights-input.fixture-complete.json",
+  "templateVersion": "route-level-tanker-freight-source-rights-approval-template-v1",
+  "currentGateStatus": "manual_review_required_no_source_rights_approved",
+  "futureProductionField": "macroDrivers.energyTransport.routeFreightConfirmation",
+  "dryRunOnly": true,
+  "promotionEligible": false,
+  "productionWriteApproved": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "eligibleForMainScore": false,
+  "sourceRightsStatus": "manual_review_required",
+  "inputSummary": {
+    "fixtureOnly": true,
+    "sourceKey": "example_route_level_tanker_freight_source_not_real",
+    "sourceOwnerHash": "fixture-source",
+    "operatorAttestationHash": "fixture-attestation",
+    "evidenceHash": "fixture-evidence"
+  },
+  "requiredEvidence": {
+    "complete": true,
+    "presentCount": 10,
+    "missingKeys": [],
+    "presentKeys": [
+      "sourceOwner",
+      "deliveryPath",
+      "permittedAutomatedAccess",
+      "permittedStorageFields",
+      "permittedRedistributionOrDisplay",
+      "rawResponseStoragePolicy",
+      "routeDefinitionRights",
+      "freshnessCadence",
+      "attributionCopy",
+      "terminationOrRevocationHandling"
+    ]
+  },
+  "approvalClaims": {
+    "sourceApproved": true,
+    "liveFetchApproved": true,
+    "productionWriteApproved": true,
+    "routeValueRedistributionApproved": true,
+    "sourceRightsStatus": "approved",
+    "frontendImplementationApproved": false,
+    "workflowAutomationApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "worldOrderWeightsApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "reviewDecision": {
+    "evidenceComplete": true,
+    "approvalClaimsComplete": true,
+    "claimsReadyForSeparateGateReview": true,
+    "gateUpdateApproved": false,
+    "gateUpdateEligibleFromThisArtifact": false,
+    "productionWriteApproved": false,
+    "blockReason": "source_rights_and_redistribution_not_approved",
+    "blockers": [
+      "source_rights_gate_requires_separate_review",
+      "fixture_only_not_usable_for_gate_update"
+    ],
+    "nextAllowedStep": "separate_source_rights_gate_update_review_required"
+  },
+  "currentProductionState": {
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "eligibleForMainScore": false
+  },
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "modifiesWorkerRuntime": false,
+    "modifiesWorkflow": false,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsWorldOrderWeights": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noRawSourceAgreementStored": true,
+    "noRawProviderResponseStored": true,
+    "notProductionData": true
+  }
+}
