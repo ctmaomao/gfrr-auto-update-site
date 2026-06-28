@@ -22,6 +22,21 @@ The local helper is:
 prepare:route-level-tanker-freight-source-rights-input
 ```
 
+The read-only guide helper is:
+
+```text
+guide:route-level-tanker-freight-source-rights-input
+```
+
+It emits:
+
+```text
+route-level-tanker-freight-source-rights-input-guide-v1
+```
+
+The guide is read-only. It lists present/missing evidence fields and approval
+claim status, but it does not edit the draft or approve source rights.
+
 By default it writes only:
 
 ```text

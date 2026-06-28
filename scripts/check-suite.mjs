@@ -69,6 +69,7 @@ const SUITES = {
     'check:route-level-tanker-freight-disabled-writer-scaffold',
     'check:route-level-tanker-freight-source-rights-approval-template',
     'check:route-level-tanker-freight-source-rights-input-prep',
+    'check:route-level-tanker-freight-source-rights-input-guide',
     'check:route-level-tanker-freight-source-rights-artifact-review',
     'check:route-level-tanker-freight-source-rights-gate-update-proposal',
     'check:route-level-tanker-freight-source-rights-gate-update-proposal-review'
