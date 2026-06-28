@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-shadow-score-v1",
+  "status": "shadow_score_projected_non_production",
+  "recommendation": "shadow_score_projection_ready_for_manual_review_keep_non_production",
+  "generatedAt": "2026-06-29T00:00:00.000Z",
+  "inputPath": "docs/fixtures/transport-shock-confirmation-factor/manual-samples-review-pass.json",
+  "inputStatus": "pass",
+  "candidateShadowScore": 70,
+  "candidateDirection": "tightening_watch",
+  "confidence": "low",
+  "scoreCap": 70,
+  "scoreScope": "manual_route_signal_slice_only",
+  "completeFactorScoreGenerated": false,
+  "productionShadowScoreGenerated": false,
+  "promotionEligible": false,
+  "productionWriteApproved": false,
+  "productionDisplayApproved": false,
+  "shadowScoreApproved": false,
+  "frontendDisplayApproved": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "eligibleForMainScore": false,
+  "componentScores": {
+    "sampleReadiness": 20,
+    "bucketCoverage": 20,
+    "sourceDiversity": 15,
+    "directionPressure": 15,
+    "scoreCap": 70
+  },
+  "evidenceSummary": {
+    "sampleCount": 2,
+    "usableSampleCount": 2,
+    "coveredBucketCount": 2,
+    "sourceCount": 4,
+    "directionCounts": {
+      "tightening": 3,
+      "easing": 1,
+      "mixed": 2,
+      "unavailable": 0
+    },
+    "netDirectionBias": 0.333,
+    "sampleWindow": {
+      "earliest": "2026-06-28T00:00:00.000Z",
+      "latest": "2026-06-29T00:00:00.000Z"
+    }
+  },
+  "blockers": [],
+  "warnings": [
+    "manual_route_signal_slice_only",
+    "missing_live_physical_market_news_thermal_cross_confirmation",
+    "production_shadow_score_not_generated"
+  ],
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "modifiesWorkerRuntime": false,
+    "modifiesWorkflow": false,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noRawProviderResponseStored": true,
+    "completeFactorScoreGenerated": false,
+    "manualRouteSignalSliceOnly": true
+  },
+  "boundary": "artifact-only Transport Shock Confirmation Factor manual route-signal shadow-score projection; not production data; not complete factor score; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
+  "limitationZh": "fixture only"
+}

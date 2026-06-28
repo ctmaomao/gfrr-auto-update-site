@@ -1,0 +1,184 @@
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const ROOT = process.cwd();
+const PROJECT_SCRIPT = 'scripts/project-transport-shock-confirmation-factor-display-projection.mjs';
+const SHADOW_FIXTURE = 'docs/fixtures/transport-shock-confirmation-factor/shadow-score-pass.json';
+
+const RUNTIME_FILES = [
+  'index.html',
+  'scripts/app.js',
+  'scripts/modules/renderOilDirectional.js',
+  'scripts/modules/renderMacroOverview.js',
+  'scripts/modules/buildCrossValidationMatrix.js',
+  'scripts/run-daily-pipeline.mjs',
+  'workers/gfrr-realtime-worker/src/worker-market-preview.js',
+  'data/radar-data.json',
+  'data/oil-directional-pressure.json'
+];
+
+const SCRIPT_FORBIDDEN_MARKERS = [
+  'process.env',
+  'fetch(',
+  'https.request',
+  'http.request',
+  'axios',
+  'node:https',
+  'node:http',
+  'data/radar-data.json',
+  'data/oil-directional-pressure.json',
+  'market.worker-preview.json'
+];
+
+const RUNTIME_FORBIDDEN_MARKERS = [
+  'transport-shock-confirmation-factor-display-projection-v1',
+  'project-transport-shock-confirmation-factor-display-projection',
+  'manual_shadow_projection_ready_non_production',
+  'transportShockConfirmationFactorDisplay'
+];
+
+function absolute(relativePath) {
+  return path.join(ROOT, relativePath);
+}
+
+function readText(relativePath) {
+  return fs.readFileSync(absolute(relativePath), 'utf8');
+}
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function runNode(args) {
+  const result = spawnSync(process.execPath, args, {
+    cwd: ROOT,
+    encoding: 'utf8',
+    maxBuffer: 10 * 1024 * 1024
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(`node ${args.join(' ')} failed: ${result.stderr || result.stdout}`);
+  return String(result.stdout || '');
+}
+
+function assertScriptSafety() {
+  assert(fs.existsSync(absolute(PROJECT_SCRIPT)), 'Transport shock display projection script is missing.');
+  const source = readText(PROJECT_SCRIPT);
+  for (const marker of SCRIPT_FORBIDDEN_MARKERS) {
+    assert(!source.includes(marker), `Display projection script contains forbidden marker: ${marker}`);
+  }
+  for (const marker of [
+    'artifact-only Transport Shock Confirmation Factor display projection',
+    'displayProjectionOnly',
+    'notProductionData',
+    'noNetworkCall',
+    'noEnvironmentRead',
+    'noProductionWrite',
+    'transportShockConfirmationFactor',
+    'not_connected',
+    'eligibleForMainScore'
+  ]) {
+    assert(source.includes(marker), `Display projection script missing required marker: ${marker}`);
+  }
+}
+
+function assertFixture() {
+  assert(fs.existsSync(absolute(SHADOW_FIXTURE)), 'Shadow-score fixture is missing.');
+  const fixture = JSON.parse(readText(SHADOW_FIXTURE));
+  assert(fixture.schemaVersion === 'transport-shock-confirmation-factor-shadow-score-v1', 'Shadow fixture schemaVersion mismatch.');
+  assert(fixture.status === 'shadow_score_projected_non_production', 'Shadow fixture status mismatch.');
+  assert(fixture.productionWriteApproved === false, 'Shadow fixture must not approve production write.');
+  assert(fixture.frontendDisplayApproved === false, 'Shadow fixture must not approve frontend display.');
+  assert(fixture.completeFactorScoreGenerated === false, 'Shadow fixture must not claim complete factor score.');
+  assert(fixture.routeFreightConfirmation === 'not_connected', 'Shadow fixture routeFreightConfirmation must stay not_connected.');
+  assert(fixture.eligibleForMainScore === false, 'Shadow fixture eligibleForMainScore must stay false.');
+}
+
+function assertProjectionOutput() {
+  const stdout = runNode([
+    PROJECT_SCRIPT,
+    '--input',
+    SHADOW_FIXTURE,
+    '--no-output',
+    '--json',
+    '--strict'
+  ]);
+  const projection = JSON.parse(stdout);
+  assert(projection.schemaVersion === 'transport-shock-confirmation-factor-display-projection-v1', 'Unexpected projection schemaVersion.');
+  assert(projection.status === 'dry_run_only', 'Projection must stay dry_run_only.');
+  assert(projection.projectionState === 'manual_shadow_projection_ready_non_production', 'Unexpected projection state.');
+  assert(projection.recommendation === 'ready_for_frontend_card_design_review_keep_non_production', 'Unexpected recommendation.');
+  assert(projection.displayCandidate.futureThematicBlock === 'C1 通胀与能源', 'Unexpected future thematic block.');
+  assert(projection.displayCandidate.directDisplayApproved === false, 'Projection must not approve direct display.');
+  assert(projection.displayCandidate.frontendImplementationApproved === false, 'Projection must not approve frontend implementation.');
+  assert(projection.displayCandidate.rawSourceTextDisplayed === false, 'Projection must not display raw source text.');
+  assert(projection.displayCandidate.candidateShadowScore === 70, 'Expected fixture candidate score 70.');
+  assert(projection.currentProductionState.transportShockConfirmationFactor === 'not_connected', 'Factor must remain not_connected.');
+  assert(projection.currentProductionState.routeFreightConfirmation === 'not_connected', 'routeFreightConfirmation must remain not_connected.');
+  assert(projection.currentProductionState.marketConfirmation === 'not_connected', 'marketConfirmation must remain not_connected.');
+  assert(projection.currentProductionState.eligibleForMainScore === false, 'eligibleForMainScore must stay false.');
+  for (const [key, value] of Object.entries(projection.approvals || {})) {
+    assert(value === false, `approvals.${key} must be false.`);
+  }
+  for (const [key, value] of Object.entries(projection.productionImpact || {})) {
+    assert(value === false, `productionImpact.${key} must be false.`);
+  }
+  assert(projection.boundaries.noNetworkCall === true, 'Projection must lock noNetworkCall.');
+  assert(projection.boundaries.noProductionWrite === true, 'Projection must lock noProductionWrite.');
+  assert(projection.boundaries.noFrontendChange === true, 'Projection must lock noFrontendChange.');
+  assert(projection.boundaries.notProductionData === true, 'Projection must mark notProductionData.');
+}
+
+function assertRuntimeRemainsUnwired() {
+  for (const relativePath of RUNTIME_FILES) {
+    assert(fs.existsSync(absolute(relativePath)), `${relativePath} is missing.`);
+    const source = readText(relativePath);
+    for (const marker of RUNTIME_FORBIDDEN_MARKERS) {
+      assert(!source.includes(marker), `${relativePath} contains display projection marker and may have been wired too early: ${marker}`);
+    }
+  }
+}
+
+function assertAuthorityDocs() {
+  const dataSources = readText('docs/DATA_SOURCES.md');
+  const dataContract = readText('docs/DATA_CONTRACT.md');
+  const signalIntake = readText('docs/SIGNAL_INTAKE.md');
+  const backlog = readText('docs/PROJECT_BACKLOG.md');
+  const agents = readText('AGENTS.md');
+  const packageJson = JSON.parse(readText('package.json'));
+  const checkSuite = readText('scripts/check-suite.mjs');
+
+  for (const marker of [
+    'project:transport-shock-confirmation-factor-display-projection',
+    'transport-shock-confirmation-factor-display-projection-v1',
+    'manual_shadow_projection_ready_non_production',
+    'displayProjectionOnly'
+  ]) {
+    assert(dataSources.includes(marker), `DATA_SOURCES missing marker: ${marker}`);
+  }
+  for (const marker of [
+    'transport-shock-confirmation-factor-display-projection-v1',
+    'ready_for_frontend_card_design_review_keep_non_production',
+    'directDisplayApproved=false',
+    'eligibleForMainScore=false'
+  ]) {
+    assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
+  }
+  assert(signalIntake.includes('transport-shock-confirmation-factor-display-projection-v1'), 'SIGNAL_INTAKE missing display projection marker.');
+  assert(backlog.includes('Transport Shock Confirmation Factor display projection'), 'PROJECT_BACKLOG missing display projection marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor display projection'), 'AGENTS.md missing display projection boundary.');
+  assert(packageJson.scripts['project:transport-shock-confirmation-factor-display-projection'], 'package.json missing display projection script.');
+  assert(packageJson.scripts['check:transport-shock-confirmation-factor-display-projection'], 'package.json missing display projection check.');
+  assert(checkSuite.includes('check:transport-shock-confirmation-factor-display-projection'), 'check-suite missing display projection check.');
+}
+
+function main() {
+  assertScriptSafety();
+  assertFixture();
+  assertProjectionOutput();
+  assertRuntimeRemainsUnwired();
+  assertAuthorityDocs();
+  console.log('Transport Shock Confirmation Factor display projection: PASS');
+}
+
+main();
