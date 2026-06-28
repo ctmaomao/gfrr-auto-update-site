@@ -505,6 +505,8 @@ P2 route-level oil tanker freight confirmation source-review identifies Baltic E
 
 `npm run review:route-level-tanker-freight-manual-samples` is the manual sample collection/review helper. It reads multiple `route-level-tanker-freight-proof-review-v1` artifacts from `manual-artifacts/route-level-tanker-freight/` or tracked fixtures, summarizes usable sample count, route bucket coverage, repeated route observations and blockers, and writes only ignored `route-level-tanker-freight-manual-samples-review-v1` output under `manual-artifacts/route-level-tanker-freight/`. It is still local/manual only: no network, no API key, no production write, no frontend, no workflow, no Worker runtime, no route confirmation, and no main-score eligibility.
 
+`route-level-tanker-freight-display-contract-v1` is the display-only candidate contract that describes the future shape of a possible route-level tanker freight confirmation watch. Its status remains `contract_only_no_production_write`: it does not live fetch, does not read API keys, does not write production data, does not add frontend/workflow/Worker runtime, does not change `macroDrivers.energyTransport.routeFreightConfirmation`, and leaves current production `routeFreightConfirmation` as `not_connected`.
+
 ---
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)

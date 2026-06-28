@@ -56,7 +56,8 @@ const SUITES = {
     'check:route-level-tanker-freight-source-review',
     'check:route-level-tanker-freight-proof-of-source-design',
     'check:route-level-tanker-freight-manual-artifact-scaffold',
-    'check:route-level-tanker-freight-manual-samples-review'
+    'check:route-level-tanker-freight-manual-samples-review',
+    'check:route-level-tanker-freight-display-contract'
   ],
   'narrative-density': [
     'check:world-order-narrative-density',
