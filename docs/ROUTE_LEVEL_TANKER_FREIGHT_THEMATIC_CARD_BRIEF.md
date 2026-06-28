@@ -94,13 +94,13 @@ or source excerpts.
 Card-count contract for this brief:
 
 ```text
-currentExpectedThematicCardCount=51
-futureExpectedThematicCardCount=52
+currentExpectedThematicCardCount=52
+futureExpectedThematicCardCount=53
 futureCardCountDelta=1
 ```
 
-The current checker count must remain 51 until the separate frontend
-implementation PR adds the card.
+The current checker count must remain 52 until a separate route-level tanker
+freight frontend implementation PR adds that route-level card.
 
 ---
 
@@ -111,8 +111,8 @@ A separate implementation PR must update all of these together:
 - `index.html`: add the C1 card DOM.
 - `scripts/modules/renderMacroOverview.js`: render the card from production
   data only.
-- `scripts/check-thematic-card-ia.mjs`: update expected card count from 51 to
-  52 and lock C1 count/order.
+- `scripts/check-thematic-card-ia.mjs`: update expected card count from 52 to
+  53 and lock C1 count/order.
 - DOM/render guards: include the new `c1-route-tanker-freight` id.
 - Chinese-copy guards: ensure no trade-action or confirmation-overclaim copy.
 - frontend asset version: run the repo bump workflow because frontend files

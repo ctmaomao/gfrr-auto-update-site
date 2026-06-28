@@ -51,8 +51,8 @@ Current approved path:
 ```text
 keep Baltic Freight as broad context
 future route-level card is additive if implemented
-current thematic card count remains 51
-future additive thematic card count would be 52
+current thematic card count remains 52
+future additive route-level card count would be 53
 ```
 
 Deletion or replacement is not approved in this policy.

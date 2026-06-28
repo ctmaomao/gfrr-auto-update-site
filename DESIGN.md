@@ -168,7 +168,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
       └─ #wow-key-changes                 本期关键变化
 
 ═══ Thematic reader path（8 主题卡阵）═══
-4. #macro-thematic-cards                  C1-C8 主题卡阵,51 张 indicator-card；C5/C6 观察层视觉置底
+4. #macro-thematic-cards                  C1-C8 主题卡阵,52 张 indicator-card；C5/C6 观察层视觉置底
 
 ═══ Static risk map（M-94 静态,M-95+ 再接真实区域算法）═══
 5. #global-risk-heatmap                   6 cells 静态 heatmap
@@ -364,7 +364,8 @@ runtime block 的基准结构:
 - `#macro-thematic-cards` 内必须有 8 个 `.reader-cat-block`
 - 视觉标题顺序为 C1 通胀与能源 / C2 全球流动性 / C3 信用与企业债 / C4 美国经济温度 / C7 市场情绪 / C8 地缘与世界秩序 / C5 世界经济 / C6 中国宏观
 - C5 世界经济与 C6 中国宏观保留历史编号、DOM id prefix 与 renderer 绑定,但视觉上必须置于 C7/C8 之后,作为区域 / 外部扩散观察层收尾
-- 总计 51 个 `article.indicator-card`
+- 总计 52 个 `article.indicator-card`
+- C1 通胀与能源包含新增 `Transport Shock / 运输冲击确认因子` 展示观察卡；它只读生产 payload 中的 `macroDrivers.energyTransport.transportShockCandidate` 候选字段,不得读取 manual artifacts,不得进入主判断打分。
 - 每张卡必须只显示公开代理 / 审计层 / 展示层证据,不得暗示正式源或非公开数据已接入
 - 观察层反应徽章必须表达“与有效主判断的关系”: `印证` 的颜色跟随有效主判断等级(观察期=绿 / 中度警戒=黄 / 高风险预警=橙 / 系统性顶部=红);`背离` 的颜色表达反向证据方向(缓和反证=绿,压力反证=黄);`背景` 与 `数据不足` 保持中性 / pending
 

@@ -49,8 +49,8 @@ function assertPolicyDoc() {
     'macroDrivers.energyTransport.routeFreightConfirmation',
     'keep Baltic Freight as broad context',
     'future route-level card is additive if implemented',
-    'current thematic card count remains 51',
-    'future additive thematic card count would be 52',
+    'current thematic card count remains 52',
+    'future additive route-level card count would be 53',
     'Deletion or replacement is not approved'
   ]) {
     assertIncludes(doc, marker, POLICY_DOC);
@@ -74,8 +74,8 @@ function assertPolicyFixture() {
   assert(policy.futureRouteLevelCard?.productionWriteApproved === false, 'Future route card production write must not be approved.');
   assert(policy.iaDecision?.currentPolicy === 'keep_baltic_freight_as_broad_context', 'Unexpected current policy.');
   assert(policy.iaDecision?.futureImplementationMode === 'additive_card_until_separate_deprecation_review', 'Unexpected future implementation mode.');
-  assert(policy.iaDecision?.currentExpectedThematicCardCount === 51, 'Current thematic card count must remain 51.');
-  assert(policy.iaDecision?.futureAdditiveExpectedThematicCardCount === 52, 'Future additive card count must be 52.');
+  assert(policy.iaDecision?.currentExpectedThematicCardCount === 52, 'Current thematic card count must remain 52.');
+  assert(policy.iaDecision?.futureAdditiveExpectedThematicCardCount === 53, 'Future additive card count must be 53.');
   assert(policy.iaDecision?.deletionRequiresSeparateReview === true, 'Deletion must require separate review.');
   assert(policy.iaDecision?.mergeRequiresSeparateReview === true, 'Merge must require separate review.');
   assert(policy.currentProductionState?.shippingFreightConnected === true, 'shippingFreight must remain connected.');
@@ -104,7 +104,7 @@ function assertFrontendState() {
     html.indexOf('<section class="editorial-section" id="macro-thematic-cards"'),
     html.indexOf('<section class="editorial-section" id="global-risk-heatmap"')
   ).match(/<article class="indicator-card/g) || []).length;
-  assert(thematicCardCount === 51, `Thematic card count must remain 51, got ${thematicCardCount}.`);
+  assert(thematicCardCount === 52, `Thematic card count must remain 52, got ${thematicCardCount}.`);
 }
 
 function assertProductionDataState() {

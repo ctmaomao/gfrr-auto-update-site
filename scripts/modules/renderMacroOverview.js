@@ -1247,6 +1247,19 @@ function signalFromFreightRegime(regime) {
   return 'neutral';
 }
 
+function signalFromTransportShockCandidate(candidate) {
+  if (!candidate || typeof candidate !== 'object') return 'unavailable';
+  const score = asNumber(candidate.score ?? candidate.candidateScore ?? candidate.manualCandidateScore);
+  const status = typeof candidate.status === 'string' ? candidate.status.toLowerCase() : '';
+  if (status.includes('elevated') || status.includes('watch') || (score !== null && score >= 60)) {
+    return 'stress';
+  }
+  if (status.includes('normal') || status.includes('benign') || score !== null) {
+    return 'neutral';
+  }
+  return 'unavailable';
+}
+
 function signalFromChinaInflation(cpi, ppi) {
   const c = asNumber(cpi);
   const p = asNumber(ppi);
@@ -2357,6 +2370,56 @@ function renderShippingFreight({ radarData }) {
   }
 }
 
+function renderTransportShockConfirmation({ radarData }) {
+  try {
+    const layer = radarData?.macroDrivers?.energyTransport;
+    const candidate = layer?.transportShockCandidate;
+    const reaction = setObservationReaction(
+      'c1-transport-shock-status',
+      'c1-transport-shock-badge',
+      radarData,
+      signalFromTransportShockCandidate(candidate)
+    );
+
+    const score = asNumber(candidate?.score ?? candidate?.candidateScore ?? candidate?.manualCandidateScore);
+    setLeafText('c1-transport-shock-number', score !== null ? score.toFixed(0) : '—');
+
+    const gateLabel = (value) => {
+      const text = typeof value === 'string' ? value.trim().toLowerCase() : '';
+      if (!text || text === 'not_connected' || text === 'not connected') return '未接入';
+      if (text.includes('manual')) return '人工复核';
+      if (text.includes('review')) return '待复核';
+      if (text.includes('blocked')) return '阻塞';
+      if (text.includes('connected')) return '已接入';
+      return value;
+    };
+    const routeGate = gateLabel(candidate?.routeFreightConfirmation ?? candidate?.routeFreightConfirmationStatus);
+    const marketGate = gateLabel(candidate?.marketConfirmation ?? candidate?.marketConfirmationStatus);
+    setLeafText('c1-transport-shock-route', routeGate);
+    setLeafText('c1-transport-shock-market', marketGate);
+
+    const evidence = candidate?.evidence || {};
+    const hormuzPct = asNumber(
+      evidence.hormuzTankerVs30dPct
+      ?? evidence.hormuzVs30dPct
+      ?? layer?.chokepoints?.hormuz?.capacityTankerVs30dPct
+      ?? layer?.chokepoints?.hormuz?.latestVs30dPct
+    );
+    const hormuzText = hormuzPct !== null ? `${signedFixed(hormuzPct * 100, 1)}% vs 30d` : '—';
+    setLeafText('c1-transport-shock-hormuz', hormuzText);
+
+    const statusText = candidate?.status ? `状态 ${candidate.status}` : '候选字段待刷新';
+    const sourceStatus = layer?.sourceStatus?.chokepoints ? `PortWatch ${layer.sourceStatus.chokepoints}` : 'PortWatch 待确认';
+    setLeafText('c1-transport-shock-aux', reactionText(reaction, `${statusText} · 路线 ${routeGate} · 市场 ${marketGate} · ${sourceStatus}`));
+    const firstReason = Array.isArray(candidate?.reasons) && candidate.reasons.length
+      ? candidate.reasons[0]
+      : '运输冲击确认因子仍在展示观察阶段;路线级油轮运费与市场确认未接入前,不进入主判断打分。';
+    setLeafText('c1-transport-shock-note', firstReason);
+  } catch (error) {
+    console.error('[renderMacroOverview] renderTransportShockConfirmation failed:', error);
+  }
+}
+
 function renderEuroVolatilityLeaf({ radarData }) {
   const euroVolatility = radarData?.macroDrivers?.euroVolatility;
   const value = asNumber(euroVolatility?.value);
@@ -3428,6 +3491,7 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   // Stage 5b: C1 inflation/energy + C2 global liquidity
   renderC1InflationEnergy({ radarData });
   renderShippingFreight({ radarData });
+  renderTransportShockConfirmation({ radarData });
   renderC2GlobalLiquidity({ radarData });
 
   // Stage 5c: C3 credit/corporate + C4 US economic temperature + C5 world economy

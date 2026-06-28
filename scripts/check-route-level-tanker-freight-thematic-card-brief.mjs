@@ -67,8 +67,8 @@ function assertBriefFixture() {
   assert(fixture.targetSection === '#macro-thematic-cards', 'Unexpected targetSection.');
   assert(fixture.targetThemeBlock === 'C1 通胀与能源 / INFLATION & ENERGY', 'Unexpected targetThemeBlock.');
   assert(fixture.proposedCardId === 'c1-route-tanker-freight', 'Unexpected proposedCardId.');
-  assert(fixture.currentExpectedThematicCardCount === 51, 'Current thematic card count must remain 51 in this brief.');
-  assert(fixture.futureExpectedThematicCardCount === 52, 'Future thematic card count must be 52 after implementation.');
+  assert(fixture.currentExpectedThematicCardCount === 52, 'Current thematic card count must remain 52 in this brief.');
+  assert(fixture.futureExpectedThematicCardCount === 53, 'Future thematic card count must be 53 after route-level tanker freight implementation.');
   assert(fixture.futureCardCountDelta === 1, 'Future card count delta must be 1.');
   assert(fixture.currentProductionState?.routeFreightConfirmation === 'not_connected', 'routeFreightConfirmation must stay not_connected.');
   assert(fixture.currentProductionState?.marketConfirmation === 'not_connected', 'marketConfirmation must stay not_connected.');
@@ -104,7 +104,7 @@ function assertFrontendRemainsUnwired() {
     }
   }
   const thematicChecker = readText('scripts/check-thematic-card-ia.mjs');
-  assert(thematicChecker.includes('expectedCardCount = 51'), 'Thematic card count must stay 51 until frontend implementation.');
+  assert(thematicChecker.includes('expectedCardCount = 52'), 'Thematic card count must stay 52 until route-level tanker freight frontend implementation.');
 }
 
 function assertProductionDataRemainsUnwired() {
