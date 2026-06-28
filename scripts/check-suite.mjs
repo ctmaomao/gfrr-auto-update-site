@@ -116,6 +116,7 @@ const SUITES = {
     'check:transport-shock-confirmation-factor-frontend-card',
     'check:transport-shock-confirmation-factor-production-refresh',
     'check:transport-shock-confirmation-factor-production-refresh-monitor',
+    'check:transport-shock-confirmation-factor-history-sample-archive',
     'check:oil-news-events-diagnosis',
     'check:oil-news-event-watch',
     'check:oil-news-event-watch-samples-review',

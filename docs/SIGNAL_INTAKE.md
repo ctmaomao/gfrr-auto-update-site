@@ -133,6 +133,7 @@
 - Transport Shock Confirmation Factor frontend card: `transport-shock-confirmation-factor-frontend-card-v1` 是 P-score-7 display-only thematic card;前端只读 production payload 的 `macroDrivers.energyTransport.transportShockCandidate` 可选候选字段,缺失时显示数据不足,不得读取 manual artifacts、不得写 production data、不得接 workflow/Worker、不得改变 ODP finalBias 或主判断打分。
 - Transport Shock Confirmation Factor production refresh verification: `transport-shock-confirmation-factor-production-refresh-v1` 是 P-score-8 read-only guard;只核验 Daily writer 是否具备 production payload 字段写入路径并只读 `data/radar-data.json`,当前缺字段时输出 `awaiting_production_refresh` / WATCH,字段出现后校验 candidate-only 边界;不得触发 Daily、不得联网、不得写 production data、不得改变 ODP finalBias 或主判断打分。
 - Transport Shock Confirmation Factor production refresh monitor: `transport-shock-confirmation-factor-production-refresh-monitor-p9` 是 P-score-9 artifact-only reminder;每天 23:19 UTC 或手动只读 committed `data/radar-data.json`,上传 ignored monitor artifact 和 GitHub Summary,用于观察下一轮 Daily 是否写出 `transportShockCandidate`;不得注入 secrets、不得触发 Daily、不得写 production data、不得改变 ODP finalBias 或主判断打分。
+- Transport Shock Confirmation Factor history sample archive: `transport-shock-confirmation-factor-history-sample-archive-p10` 是 P-score-10 local/manual ignored artifact sampler;只从 git history 的 committed `data/radar-data.json` 抽取 contract-valid `transportShockCandidate` compact 样本,当前字段未刷新时 `--allow-empty` 观察通过;不得联网、不得写 production data、不得改变 ODP finalBias 或主判断打分。
 
 ## 6. Rejection Rules / 拒绝或暂缓规则
 
