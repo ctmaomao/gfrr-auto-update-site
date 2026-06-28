@@ -1,0 +1,63 @@
+{
+  "contractVersion": "route-level-tanker-freight-thematic-card-brief-v1",
+  "kind": "route_level_tanker_freight_thematic_card_brief",
+  "status": "docs_only_no_frontend_implementation",
+  "createdAt": "2026-06-28",
+  "targetSection": "#macro-thematic-cards",
+  "targetThemeBlock": "C1 通胀与能源 / INFLATION & ENERGY",
+  "proposedCardId": "c1-route-tanker-freight",
+  "futureCardCountDelta": 1,
+  "currentExpectedThematicCardCount": 51,
+  "futureExpectedThematicCardCount": 52,
+  "currentProductionState": {
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "eligibleForMainScore": false,
+    "productionWriteApproved": false,
+    "frontendImplementationApproved": false
+  },
+  "requiredFutureProductionField": "radarData.macroDrivers.energyTransport.routeFreightConfirmation",
+  "fallbackContextField": "radarData.macroDrivers.energyTransport.transportShockCandidate",
+  "approvalState": {
+    "productionDataWriteApproved": false,
+    "productionWriteApproved": false,
+    "frontendImplementationApproved": false,
+    "workflowAutomationApproved": false,
+    "liveFetchApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "worldOrderWeightsApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "boundaries": {
+    "docsOnly": true,
+    "noFrontendImplementation": true,
+    "noProductionDataWrite": true,
+    "noWorkflowAutomation": true,
+    "noWorkerRuntime": true,
+    "noBrowserLiveFetch": true,
+    "noManualArtifactBrowserRead": true,
+    "noScoring": true,
+    "noDecisionModel": true,
+    "noExecutionLock": true,
+    "noPositionGuidance": true,
+    "noBrentPromotion": true,
+    "noOdpFinalBias": true,
+    "noWorldOrderWeights": true,
+    "noGlobalRiskHeatmap": true,
+    "noCrossValidation": true
+  },
+  "futureImplementationRequires": [
+    "production_writer_contract_design",
+    "source_rights_manual_approval",
+    "production_display_field",
+    "thematic_card_dom_update",
+    "render_macro_overview_update",
+    "thematic_card_ia_count_update",
+    "dom_checker_update",
+    "frontend_asset_version_bump",
+    "frontend_zh_copy_guard"
+  ]
+}

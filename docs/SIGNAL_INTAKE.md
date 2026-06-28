@@ -114,6 +114,7 @@
 - Route-level tanker freight production display projection review: `route-level-tanker-freight-production-display-projection-review-v1` 只由 `review:route-level-tanker-freight-production-display-projections` 聚合 dry-run projection artifacts;不批准 direct display、不写 production data、不接 frontend/workflow/Worker、不改变 `routeFreightConfirmation=not_connected`,更不进入 ODP finalBias 或主判断打分。
 - Route-level tanker freight frontend display brief: `route-level-tanker-freight-frontend-display-brief-v1` 只是 docs-only future UI contract,未来若展示也只能放进现有 ODP folded detail;当前不加 DOM、不改 renderer、不写 production data、不接 workflow/Worker、不改变 `routeFreightConfirmation=not_connected`,更不进入 ODP finalBias 或主判断打分。
 - Route-level tanker freight production write readiness: `route-level-tanker-freight-production-write-readiness-v1` 只是 manual/local pre-write gate;通过也只表示可另开 production writer contract design,source-rights 仍 manual_review_required,immediate production write 仍 blocked,`productionWriteApproved=false`,不写 production data、不接 frontend/workflow/Worker、不改变 `routeFreightConfirmation=not_connected`,更不进入 ODP finalBias 或主判断打分。
+- Route-level tanker freight thematic card brief: `route-level-tanker-freight-thematic-card-brief-v1` 只是 docs-only final UI target,记录未来可在 `C1 通胀与能源` 增加一张卡;当前不改 51 张 thematic card、不加 DOM、不改 renderer、不写 production data、不接 workflow/Worker、不改变 `routeFreightConfirmation=not_connected`,更不进入 ODP finalBias 或主判断打分。
 
 ## 6. Rejection Rules / 拒绝或暂缓规则
 

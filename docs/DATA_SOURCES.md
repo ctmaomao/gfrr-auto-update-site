@@ -515,6 +515,8 @@ P2 route-level oil tanker freight confirmation source-review identifies Baltic E
 
 [`ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITE_READINESS.md`](ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITE_READINESS.md) defines the Route-level tanker freight production write readiness gate. `npm run review:route-level-tanker-freight-production-write-readiness` reads the projection review, display contract, and frontend brief, then writes only an ignored `route-level-tanker-freight-production-write-readiness-v1` manual artifact. A passing artifact only means `ready_for_separate_production_write_design_keep_non_production`;source-rights remain `manual_review_required`, immediate production write remains blocked, and `productionWriteApproved=false`. It is no production write, no live fetch, no frontend, no workflow, no Worker runtime, no ODP `finalBias`, no Brent promotion, and no main-score eligibility.
 
+[`ROUTE_LEVEL_TANKER_FREIGHT_THEMATIC_CARD_BRIEF.md`](ROUTE_LEVEL_TANKER_FREIGHT_THEMATIC_CARD_BRIEF.md) is the Route-level tanker freight thematic card brief. The associated `route-level-tanker-freight-thematic-card-brief-v1` fixture records the final UI target as one future card inside `C1 通胀与能源 / INFLATION & ENERGY`, but it is docs-only and no frontend implementation. It does not change the current 51 thematic cards, does not add `c1-route-tanker-freight`, does not write production data, and does not approve ODP `finalBias`, Brent promotion, scoring, decision, Global Risk Heatmap, or cross-validation.
+
 ---
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)
