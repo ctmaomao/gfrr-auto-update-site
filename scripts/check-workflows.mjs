@@ -264,6 +264,40 @@ const contracts = [
     ]
   },
   {
+    file: '.github/workflows/transport-shock-confirmation-factor-production-refresh-monitor.yml',
+    required: [
+      'name: Transport Shock Production Refresh Monitor',
+      'workflow_dispatch',
+      "cron: '19 23 * * *'",
+      'permissions:',
+      'contents: read',
+      'concurrency',
+      'transport-shock-production-refresh-monitor',
+      'actions/checkout@v6',
+      'actions/setup-node@v6',
+      'node-version: 24',
+      'package-manager-cache: false',
+      'npm run monitor:transport-shock-confirmation-factor-production-refresh -- --github-summary',
+      'actions/upload-artifact@v7',
+      'transport-shock-production-refresh-monitor',
+      'retention-days: 14'
+    ],
+    forbidden: [
+      'contents: write',
+      'git push',
+      'git commit',
+      'FIRMS_MAP_KEY',
+      'TAVILY_API',
+      'BRAVE_API',
+      'npm run build:data',
+      'npm run build:oil-directional',
+      'scripts/run-daily-pipeline.mjs',
+      'data/radar-data.json',
+      'data/oil-directional-pressure.json',
+      'realtime/market.json'
+    ]
+  },
+  {
     file: '.github/workflows/refresh-oil-news-event-watch.yml',
     required: [
       'name: Refresh Oil News Event Watch',
