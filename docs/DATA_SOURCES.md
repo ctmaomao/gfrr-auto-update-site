@@ -517,6 +517,8 @@ P2 route-level oil tanker freight confirmation source-review identifies Baltic E
 
 [`ROUTE_LEVEL_TANKER_FREIGHT_THEMATIC_CARD_BRIEF.md`](ROUTE_LEVEL_TANKER_FREIGHT_THEMATIC_CARD_BRIEF.md) is the Route-level tanker freight thematic card brief. The associated `route-level-tanker-freight-thematic-card-brief-v1` fixture records the final UI target as one future card inside `C1 通胀与能源 / INFLATION & ENERGY`, but it is docs-only and no frontend implementation. It does not change the current 51 thematic cards, does not add `c1-route-tanker-freight`, does not write production data, and does not approve ODP `finalBias`, Brent promotion, scoring, decision, Global Risk Heatmap, or cross-validation.
 
+[`ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITER_CONTRACT_DESIGN.md`](ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITER_CONTRACT_DESIGN.md) is the Route-level tanker freight production writer contract design. The associated `route-level-tanker-freight-production-writer-contract-design-v1` fixture defines the future `macroDrivers.energyTransport.routeFreightConfirmation` field shape, but its status is `contract_design_only_no_writer`. It is no production data write, no frontend implementation, no workflow, no Worker runtime, no live fetch, no API key read, and no route confirmation;`confirmed` is intentionally excluded until a later reviewed source-rights and writer implementation path exists.
+
 ---
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)

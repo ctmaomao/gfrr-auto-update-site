@@ -1,0 +1,86 @@
+{
+  "contractVersion": "route-level-tanker-freight-production-writer-contract-design-v1",
+  "kind": "route_level_tanker_freight_production_writer_contract_design",
+  "status": "contract_design_only_no_writer",
+  "createdAt": "2026-06-28",
+  "futureProductionField": "macroDrivers.energyTransport.routeFreightConfirmation",
+  "currentProductionState": {
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "eligibleForMainScore": false,
+    "productionWriteApproved": false,
+    "sourceRightsStatus": "manual_review_required"
+  },
+  "requiredPreWriteInputs": [
+    "route-level-tanker-freight-production-write-readiness-v1",
+    "route-level-tanker-freight-display-contract-v1",
+    "route-level-tanker-freight-thematic-card-brief-v1",
+    "route-level-tanker-freight-source-rights-approval-v1"
+  ],
+  "futureFieldShape": {
+    "contractVersion": "route-level-tanker-freight-confirmation-v1",
+    "allowedStatuses": [
+      "not_connected",
+      "watch",
+      "contradicted",
+      "stale",
+      "unavailable"
+    ],
+    "defaultStatus": "not_connected",
+    "sourceMode": "manual_review_projection",
+    "allowedSourceModes": [
+      "manual_review_projection",
+      "production_source_unavailable",
+      "stale_fallback"
+    ],
+    "displayOnly": true,
+    "auditOnly": true,
+    "eligibleForMainScore": false,
+    "sourceRightsStatus": "manual_review_required",
+    "sampleReadiness": "manual_review_required",
+    "routeBuckets": [],
+    "routeCoverage": {
+      "observedBucketCount": 0,
+      "requiredBucketCount": 0,
+      "repeatedObservationCount": 0
+    },
+    "latestReviewedAt": null,
+    "staleAfterHours": 72,
+    "limitationZh": "路线级油轮运费仍需人工来源权利与样本复核;本层只做展示观察,不确认封锁、断供、油轮流向或油价方向。"
+  },
+  "approvalState": {
+    "productionDataWriteApproved": false,
+    "productionWriteApproved": false,
+    "frontendImplementationApproved": false,
+    "workflowAutomationApproved": false,
+    "liveFetchApproved": false,
+    "apiKeyReadApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "worldOrderWeightsApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "boundaries": {
+    "contractDesignOnly": true,
+    "noWriter": true,
+    "noProductionDataWrite": true,
+    "noFrontendImplementation": true,
+    "noWorkflowAutomation": true,
+    "noLiveFetch": true,
+    "noApiKeyRead": true,
+    "noManualArtifactBrowserRead": true,
+    "noRawLicensedSourceText": true,
+    "noScoring": true,
+    "noDecisionModel": true,
+    "noExecutionLock": true,
+    "noPositionGuidance": true,
+    "noBrentPromotion": true,
+    "noOdpFinalBias": true,
+    "noWorldOrderWeights": true,
+    "noGlobalRiskHeatmap": true,
+    "noCrossValidation": true
+  },
+  "nextAllowedStep": "source_rights_manual_approval_gate_or_production_writer_implementation_design_keep_disabled"
+}

@@ -62,7 +62,8 @@ const SUITES = {
     'check:route-level-tanker-freight-production-display-projection-review',
     'check:route-level-tanker-freight-frontend-display-brief',
     'check:route-level-tanker-freight-production-write-readiness',
-    'check:route-level-tanker-freight-thematic-card-brief'
+    'check:route-level-tanker-freight-thematic-card-brief',
+    'check:route-level-tanker-freight-production-writer-contract-design'
   ],
   'narrative-density': [
     'check:world-order-narrative-density',
