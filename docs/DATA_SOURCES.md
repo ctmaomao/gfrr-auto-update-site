@@ -519,6 +519,8 @@ P2 route-level oil tanker freight confirmation source-review identifies Baltic E
 
 [`ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITER_CONTRACT_DESIGN.md`](ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITER_CONTRACT_DESIGN.md) is the Route-level tanker freight production writer contract design. The associated `route-level-tanker-freight-production-writer-contract-design-v1` fixture defines the future `macroDrivers.energyTransport.routeFreightConfirmation` field shape, but its status is `contract_design_only_no_writer`. It is no production data write, no frontend implementation, no workflow, no Worker runtime, no live fetch, no API key read, and no route confirmation;`confirmed` is intentionally excluded until a later reviewed source-rights and writer implementation path exists.
 
+[`ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_GATE.md`](ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_GATE.md) is the Route-level tanker freight source-rights approval gate. The associated `route-level-tanker-freight-source-rights-approval-gate-v1` fixture keeps status `manual_review_required_no_source_rights_approved` and `source_rights_and_redistribution_not_approved`;it confirms no candidate source family currently has live fetch, route-value storage, redistribution, production write, workflow, frontend, ODP `finalBias`, Brent promotion, or main-score approval.
+
 ---
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)

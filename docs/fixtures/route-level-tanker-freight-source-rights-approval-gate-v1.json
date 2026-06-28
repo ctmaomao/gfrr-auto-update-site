@@ -1,0 +1,107 @@
+{
+  "contractVersion": "route-level-tanker-freight-source-rights-approval-gate-v1",
+  "kind": "route_level_tanker_freight_source_rights_approval_gate",
+  "status": "manual_review_required_no_source_rights_approved",
+  "createdAt": "2026-06-28",
+  "futureProductionField": "macroDrivers.energyTransport.routeFreightConfirmation",
+  "currentProductionState": {
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "eligibleForMainScore": false,
+    "productionWriteApproved": false,
+    "sourceRightsStatus": "manual_review_required"
+  },
+  "requiredReviewInputs": [
+    "route-level-tanker-freight-source-review-v1",
+    "route-level-tanker-freight-production-writer-contract-design-v1"
+  ],
+  "approvedSources": [],
+  "candidateSourceFamilies": [
+    {
+      "sourceKey": "baltic_exchange_tanker_route_assessments",
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "routeValueRedistributionApproved": false
+    },
+    {
+      "sourceKey": "ice_wet_freight_derivatives",
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "marketConfirmationApproved": false
+    },
+    {
+      "sourceKey": "cme_baltic_wet_freight_futures",
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "marketConfirmationApproved": false
+    },
+    {
+      "sourceKey": "paid_route_level_freight_intelligence_vendors",
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "futureLicensedOnly": true
+    },
+    {
+      "sourceKey": "stockq_aggregate_baltic_context",
+      "sourceApproved": false,
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "aggregateContextOnly": true,
+      "routeLevelConfirmationApproved": false
+    }
+  ],
+  "minimumApprovalFieldsBeforeProductionWrite": {
+    "sourceApproved": true,
+    "liveFetchApproved": true,
+    "productionWriteApproved": true,
+    "routeValueRedistributionApproved": true,
+    "sourceRightsStatus": "approved"
+  },
+  "gateDecision": {
+    "sourceRightsStatus": "manual_review_required",
+    "productionWriteBlocked": true,
+    "blockReason": "source_rights_and_redistribution_not_approved",
+    "nextAllowedStep": "manual_source_rights_review_or_disabled_writer_scaffold_only"
+  },
+  "approvalState": {
+    "sourceApproved": false,
+    "liveFetchApproved": false,
+    "apiKeyReadApproved": false,
+    "productionDataWriteApproved": false,
+    "productionWriteApproved": false,
+    "routeValueRedistributionApproved": false,
+    "frontendImplementationApproved": false,
+    "workflowAutomationApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "worldOrderWeightsApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "boundaries": {
+    "manualGateOnly": true,
+    "noApprovedSource": true,
+    "noProductionDataWrite": true,
+    "noFrontendImplementation": true,
+    "noWorkflowAutomation": true,
+    "noLiveFetch": true,
+    "noApiKeyRead": true,
+    "noManualArtifactBrowserRead": true,
+    "noRawLicensedRouteValues": true,
+    "noRouteConfirmation": true,
+    "noScoring": true,
+    "noDecisionModel": true,
+    "noExecutionLock": true,
+    "noPositionGuidance": true,
+    "noBrentPromotion": true,
+    "noOdpFinalBias": true,
+    "noWorldOrderWeights": true,
+    "noGlobalRiskHeatmap": true,
+    "noCrossValidation": true
+  }
+}

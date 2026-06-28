@@ -116,6 +116,7 @@
 - Route-level tanker freight production write readiness: `route-level-tanker-freight-production-write-readiness-v1` 只是 manual/local pre-write gate;通过也只表示可另开 production writer contract design,source-rights 仍 manual_review_required,immediate production write 仍 blocked,`productionWriteApproved=false`,不写 production data、不接 frontend/workflow/Worker、不改变 `routeFreightConfirmation=not_connected`,更不进入 ODP finalBias 或主判断打分。
 - Route-level tanker freight thematic card brief: `route-level-tanker-freight-thematic-card-brief-v1` 只是 docs-only final UI target,记录未来可在 `C1 通胀与能源` 增加一张卡;当前不改 51 张 thematic card、不加 DOM、不改 renderer、不写 production data、不接 workflow/Worker、不改变 `routeFreightConfirmation=not_connected`,更不进入 ODP finalBias 或主判断打分。
 - Route-level tanker freight production writer contract design: `route-level-tanker-freight-production-writer-contract-design-v1` 只是 contract design only,定义未来 `macroDrivers.energyTransport.routeFreightConfirmation` 字段形状;状态为 `contract_design_only_no_writer`,不写 production data、不接 frontend/workflow/Worker、不 live fetch、不读 API key,allowed status 故意排除 `confirmed`,更不进入 ODP finalBias 或主判断打分。
+- Route-level tanker freight source-rights approval gate: `route-level-tanker-freight-source-rights-approval-gate-v1` 只是 manual source-rights gate;状态为 `manual_review_required_no_source_rights_approved`,block reason 为 `source_rights_and_redistribution_not_approved`;没有候选来源获得 live fetch、route-value redistribution、production write 或 frontend approval,因此不写生产字段、更不进入 ODP finalBias 或主判断打分。
 
 ## 6. Rejection Rules / 拒绝或暂缓规则
 
