@@ -93,6 +93,7 @@
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITER_CONTRACT_DESIGN.md` (route-level tanker freight production writer contract design; future `macroDrivers.energyTransport.routeFreightConfirmation` field contract only, no writer / no production write)
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_GATE.md` (route-level tanker freight source-rights approval gate; manual source-rights gate keeps production writes blocked until explicit approval)
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_TEMPLATE.md` (route-level tanker freight source-rights approval template; template-only manual evidence shape, grants no approval)
+- `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_INPUT_PREP.md` (route-level tanker freight source-rights input prep; creates ignored local draft, grants no approval)
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_ARTIFACT_REVIEW.md` (route-level tanker freight source-rights artifact review; local/manual ignored artifact reviewer, no gate update approval)
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_GATE_UPDATE_PROPOSAL.md` (route-level tanker freight source-rights gate update proposal; dry-run proposal artifact, does not update gate)
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_GATE_UPDATE_PROPOSAL_REVIEW.md` (route-level tanker freight source-rights gate update proposal review; manual proposal reviewer, no apply/update)
