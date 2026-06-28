@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "route-level-tanker-freight-proof-review-v1",
+  "contractVersion": "route-level-tanker-freight-manual-artifact-scaffold-v1",
+  "status": "dry_run_only",
+  "recommendation": "manual_artifact_reviewable_keep_dry_run_only",
+  "generatedAt": "2026-06-26T12:00:00.000Z",
+  "dryRunOnly": true,
+  "promotionEligible": false,
+  "productionWriteApproved": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "eligibleForMainScore": false,
+  "review": {
+    "acceptedRouteCount": 3,
+    "contextOnlyCount": 1,
+    "rejectedRouteCount": 0,
+    "rejectedInputLevelIssueCount": 0,
+    "bucketCoverage": {
+      "hormuz_meg_crude": 1,
+      "meg_clean_products": 1,
+      "red_sea_suez_cape_rerouting": 1,
+      "aggregate_context_only": 1
+    },
+    "acceptedRoutes": [
+      {
+        "routeCode": "TD3C",
+        "bucketKey": "hormuz_meg_crude",
+        "role": "route_level_candidate",
+        "assessmentDate": "2026-06-26",
+        "unit": "Worldscale",
+        "value": 142.5,
+        "dailyChangePct": 3.2,
+        "weeklyChangePct": 17.4,
+        "sourceCitationHash": "f461345226f41065",
+        "sourceCitationHostHint": null,
+        "rawCitationStored": false
+      },
+      {
+        "routeCode": "TC5",
+        "bucketKey": "meg_clean_products",
+        "role": "route_level_candidate",
+        "assessmentDate": "2026-06-26",
+        "unit": "Worldscale",
+        "value": 151.1,
+        "dailyChangePct": 1.8,
+        "weeklyChangePct": 9.6,
+        "sourceCitationHash": "8068e873ca3b7854",
+        "sourceCitationHostHint": null,
+        "rawCitationStored": false
+      },
+      {
+        "routeCode": "TD20",
+        "bucketKey": "red_sea_suez_cape_rerouting",
+        "role": "route_level_candidate",
+        "assessmentDate": "2026-06-26",
+        "unit": "Worldscale",
+        "value": 118.7,
+        "dailyChangePct": -0.6,
+        "weeklyChangePct": 6.2,
+        "sourceCitationHash": "c90188956b13ffb2",
+        "sourceCitationHostHint": null,
+        "rawCitationStored": false
+      }
+    ],
+    "contextOnlyRoutes": [
+      {
+        "routeCode": "BDTI",
+        "bucketKey": "aggregate_context_only",
+        "role": "aggregate_context_only",
+        "assessmentDate": "2026-06-26",
+        "unit": "futures_settlement_unit",
+        "value": 1914,
+        "dailyChangePct": -4.97,
+        "weeklyChangePct": null,
+        "sourceCitationHash": "fddf89aaea3507d3",
+        "sourceCitationHostHint": null,
+        "rawCitationStored": false
+      }
+    ],
+    "rejectedRoutes": [],
+    "inputLevelIssues": []
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noRawProviderResponseStored": true,
+    "affectsScoring": false
+  }
+}

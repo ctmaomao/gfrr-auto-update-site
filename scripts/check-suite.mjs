@@ -55,7 +55,8 @@ const SUITES = {
     'check:macro-drivers-expanded-auto-ingestion',
     'check:route-level-tanker-freight-source-review',
     'check:route-level-tanker-freight-proof-of-source-design',
-    'check:route-level-tanker-freight-manual-artifact-scaffold'
+    'check:route-level-tanker-freight-manual-artifact-scaffold',
+    'check:route-level-tanker-freight-manual-samples-review'
   ],
   'narrative-density': [
     'check:world-order-narrative-density',

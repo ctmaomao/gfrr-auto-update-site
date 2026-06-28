@@ -108,6 +108,7 @@
 - Route-level tanker freight confirmation source review: TD3C / TD8 / TC5 / TD15 / TD20 / TD22 / TD25 等路线级油轮运费只作为未来 `transportShockCandidate` 的确认层候选;当前 source-review only,不 live fetch,不写 production data,不改变 ODP `finalBias`、Brent promotion、scoring 或 decision。
 - Route-level tanker freight proof-of-source design: 只允许 dry-run-only manual artifact scaffold;仍不得 live fetch、不得自动抓 Baltic/ICE/CME/vendor 页面、不得把 routeFreightConfirmation 从 `not_connected` 改成确认。
 - Route-level tanker freight manual artifact scaffold: `review:route-level-tanker-freight-manual-artifact` 只做 local/manual dry-run review,输出 ignored manual artifact,不读 key、不联网、不写 production data、不保存 raw source text、不进入 route confirmation 或主判断打分。
+- Route-level tanker freight manual sample collection/review: `review:route-level-tanker-freight-manual-samples` 只聚合多份 proof-review artifacts 的样本数、bucket coverage 与 repeated route observations;仍不读 key、不联网、不写 production data、不进入 route confirmation 或主判断打分。
 
 ## 6. Rejection Rules / 拒绝或暂缓规则
 

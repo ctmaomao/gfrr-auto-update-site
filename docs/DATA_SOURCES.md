@@ -503,6 +503,8 @@ P2 route-level oil tanker freight confirmation source-review identifies Baltic E
 
 `npm run review:route-level-tanker-freight-manual-artifact` is the dry-run-only local/manual artifact scaffold. It reads a user-provided JSON input from `manual-artifacts/route-level-tanker-freight/` or tracked fixtures, validates route codes/buckets/units/source-review claims, hashes citation hints instead of storing raw source text, and may write only ignored review output under `manual-artifacts/route-level-tanker-freight/`. It does not fetch Baltic/ICE/CME/vendor pages, does not read API keys, does not write production data, and does not change `routeFreightConfirmation=not_connected`.
 
+`npm run review:route-level-tanker-freight-manual-samples` is the manual sample collection/review helper. It reads multiple `route-level-tanker-freight-proof-review-v1` artifacts from `manual-artifacts/route-level-tanker-freight/` or tracked fixtures, summarizes usable sample count, route bucket coverage, repeated route observations and blockers, and writes only ignored `route-level-tanker-freight-manual-samples-review-v1` output under `manual-artifacts/route-level-tanker-freight/`. It is still local/manual only: no network, no API key, no production write, no frontend, no workflow, no Worker runtime, no route confirmation, and no main-score eligibility.
+
 ---
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)
