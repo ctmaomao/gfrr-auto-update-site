@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "route-level-tanker-freight-production-display-projection-review-v1",
+  "status": "pass",
+  "recommendation": "projection_review_ready_for_human_display_design_keep_non_production",
+  "generatedAt": "2026-06-27T13:30:00.000Z",
+  "minProjections": 1,
+  "inputCount": 1,
+  "projectionCount": 1,
+  "usableProjectionCount": 1,
+  "blockerCount": 0,
+  "warningCount": 0,
+  "promotionEligible": false,
+  "productionWriteApproved": false,
+  "productionDisplayApproved": false,
+  "directDisplayApproved": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "eligibleForMainScore": false,
+  "projectionStateCounts": {
+    "manual_review_ready_non_production": 1
+  },
+  "routeCoverage": [
+    {
+      "routeCode": "TC5",
+      "bucketKey": "meg_clean_products",
+      "projectionCount": 1,
+      "maxSampleCount": 2,
+      "maxAssessmentDateCount": 2,
+      "latestWeeklyChangePct": 11.3
+    },
+    {
+      "routeCode": "TD3C",
+      "bucketKey": "hormuz_meg_crude",
+      "projectionCount": 1,
+      "maxSampleCount": 2,
+      "maxAssessmentDateCount": 2,
+      "latestWeeklyChangePct": 20.8
+    }
+  ],
+  "projections": [
+    {
+      "projectionId": "1d2af5794e7bae75",
+      "sourcePath": "docs/fixtures/route-level-tanker-freight/production-display-projection-pass.json",
+      "generatedAt": "2026-06-27T13:00:00.000Z",
+      "projectionState": "manual_review_ready_non_production",
+      "usable": true,
+      "sampleCount": 2,
+      "usableSampleCount": 2,
+      "repeatedRouteCount": 2,
+      "observedRouteCount": 4,
+      "blockers": []
+    }
+  ],
+  "blockers": [],
+  "warnings": [],
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "modifiesWorkerRuntime": false,
+    "modifiesWorkflow": false,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsWorldOrderWeights": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noRawProviderResponseStored": true,
+    "notProductionData": true
+  },
+  "boundary": "manual/local route-level tanker freight production display projection review only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}

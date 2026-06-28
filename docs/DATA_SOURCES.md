@@ -513,6 +513,8 @@ P2 route-level oil tanker freight confirmation source-review identifies Baltic E
 
 [`ROUTE_LEVEL_TANKER_FREIGHT_FRONTEND_DISPLAY_BRIEF.md`](ROUTE_LEVEL_TANKER_FREIGHT_FRONTEND_DISPLAY_BRIEF.md) is the Route-level tanker freight frontend display brief. The associated `route-level-tanker-freight-frontend-display-brief-v1` fixture is docs-only: it describes a possible future folded-detail UI inside existing `#oil-directional-pressure`, but adds no frontend implementation, no production data write, no workflow, no Worker runtime, no live fetch, no ODP `finalBias`, and no main-score eligibility. It explicitly keeps the current production state as `routeFreightConfirmation=not_connected`, `marketConfirmation=not_connected`, and `eligibleForMainScore=false`.
 
+[`ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITE_READINESS.md`](ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITE_READINESS.md) defines the Route-level tanker freight production write readiness gate. `npm run review:route-level-tanker-freight-production-write-readiness` reads the projection review, display contract, and frontend brief, then writes only an ignored `route-level-tanker-freight-production-write-readiness-v1` manual artifact. A passing artifact only means `ready_for_separate_production_write_design_keep_non_production`;source-rights remain `manual_review_required`, immediate production write remains blocked, and `productionWriteApproved=false`. It is no production write, no live fetch, no frontend, no workflow, no Worker runtime, no ODP `finalBias`, no Brent promotion, and no main-score eligibility.
+
 ---
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)

@@ -88,6 +88,7 @@
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_REVIEW.md` (route-level tanker freight confirmation source-review only; future confirmation candidate for `transportShockCandidate`, no live fetch / no production write)
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_PROOF_OF_SOURCE_DESIGN.md` (route-level tanker freight proof-of-source design; next allowed step is dry-run-only manual artifact scaffold, no live fetch / no production write)
 - `docs/ROUTE_LEVEL_TANKER_FREIGHT_FRONTEND_DISPLAY_BRIEF.md` (route-level tanker freight frontend display brief; docs-only future UI contract inside existing ODP folded detail, no frontend implementation / no production write)
+- `docs/ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITE_READINESS.md` (route-level tanker freight production write readiness; manual/local pre-write gate only, source-rights/manual blockers remain, no production write)
 - `docs/ENERGY_STRESS_FRONTEND_DISPLAY_BRIEF.md` (owner-approved docs-only frontend display brief for surfacing OPEC spare capacity + PortWatch inside existing ODP details; no UI implementation yet)
 - `docs/PORTWATCH_TOS_PIN_REVIEW.md` (docs-only terms pin review; exact ArcGIS `Daily_Chokepoints_Data` licenseInfo points to IMF terms, runtime enum change deferred)
 
