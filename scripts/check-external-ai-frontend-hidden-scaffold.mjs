@@ -44,6 +44,46 @@ function normalizeRepoPath(filePath) {
   return filePath.split(path.sep).join('/');
 }
 
+function extractFunctionSource(text, functionName) {
+  const marker = `function ${functionName}`;
+  const start = text.indexOf(marker);
+  if (start < 0) throw new Error(`Unable to find ${functionName} in ${RENDER_MACRO_OVERVIEW_PATH}`);
+
+  const parenStart = text.indexOf('(', start);
+  if (parenStart < 0) throw new Error(`Unable to find signature for ${functionName} in ${RENDER_MACRO_OVERVIEW_PATH}`);
+
+  let parenDepth = 0;
+  let signatureEnd = -1;
+  for (let index = parenStart; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === '(') parenDepth += 1;
+    if (char === ')') {
+      parenDepth -= 1;
+      if (parenDepth === 0) {
+        signatureEnd = index;
+        break;
+      }
+    }
+  }
+
+  if (signatureEnd < 0) throw new Error(`Unable to parse signature for ${functionName} in ${RENDER_MACRO_OVERVIEW_PATH}`);
+
+  const braceStart = text.indexOf('{', signatureEnd);
+  if (braceStart < 0) throw new Error(`Unable to find body for ${functionName} in ${RENDER_MACRO_OVERVIEW_PATH}`);
+
+  let depth = 0;
+  for (let index = braceStart; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === '{') depth += 1;
+    if (char === '}') {
+      depth -= 1;
+      if (depth === 0) return text.slice(start, index + 1);
+    }
+  }
+
+  throw new Error(`Unable to parse ${functionName} in ${RENDER_MACRO_OVERVIEW_PATH}`);
+}
+
 function isApprovedProductionRefreshWorkflow(filePath, text) {
   if (normalizeRepoPath(filePath) !== APPROVED_PRODUCTION_REFRESH_WORKFLOW) return false;
   return text.includes('name: External AI Production Refresh')
@@ -136,6 +176,112 @@ function validateFrontendFailClosedGuard(errors) {
   }
 }
 
+function createApprovedVisibleLayer() {
+  return {
+    displayEnabled: true,
+    status: 'valid',
+    provider: 'deepseek',
+    model: 'deepseek-chat',
+    boundaries: {
+      frontendDisplayApproved: true,
+      displayOnly: true,
+      externalAiGenerated: true,
+      usesExternalAiApi: true,
+      affectsScoring: false,
+      affectsDecisionModel: false,
+      affectsExecutionLock: false,
+      affectsPositionGuidance: false,
+      notInvestmentAdvice: true,
+      productionWriteApproved: false,
+    },
+    qualityReview: {
+      status: 'pass',
+      recommendation: 'pass_for_manual_review',
+      promotionEligible: false,
+    },
+    freshness: {
+      isStale: false,
+    },
+  };
+}
+
+function cloneLayer(layer) {
+  return JSON.parse(JSON.stringify(layer));
+}
+
+function buildFrontendRendererHarness() {
+  const text = readText(RENDER_MACRO_OVERVIEW_PATH);
+  const calls = [];
+  const setHidden = (id, hidden) => calls.push({ id, hidden });
+  const harnessFactory = new Function(
+    'setHidden',
+    `${extractFunctionSource(text, 'isExternalAiVisibleForFrontend')}\n${extractFunctionSource(text, 'renderExternalAiAuxiliary')}\nreturn { isExternalAiVisibleForFrontend, renderExternalAiAuxiliary };`
+  );
+  const harness = harnessFactory(setHidden);
+  return {
+    ...harness,
+    calls,
+    resetCalls: () => {
+      calls.length = 0;
+    },
+  };
+}
+
+function validateFrontendFailClosedFixtures(errors) {
+  const harness = buildFrontendRendererHarness();
+  const approvedLayer = createApprovedVisibleLayer();
+
+  if (harness.isExternalAiVisibleForFrontend(approvedLayer) !== true) {
+    addError(errors, 'approved visible External AI fixture must pass frontend visibility gate');
+  }
+
+  const hiddenFixtures = [
+    ['missing layer', () => null],
+    ['displayEnabled false', (layer) => ({ ...layer, displayEnabled: false })],
+    ['status invalid', (layer) => ({ ...layer, status: 'invalid' })],
+    ['frontendDisplayApproved false', (layer) => ({
+      ...layer,
+      boundaries: { ...layer.boundaries, frontendDisplayApproved: false },
+    })],
+    ['qualityReview.status fail', (layer) => ({
+      ...layer,
+      qualityReview: { ...layer.qualityReview, status: 'fail' },
+    })],
+    ['qualityReview.recommendation rejected', (layer) => ({
+      ...layer,
+      qualityReview: { ...layer.qualityReview, recommendation: 'reject' },
+    })],
+    ['qualityReview.promotionEligible true', (layer) => ({
+      ...layer,
+      qualityReview: { ...layer.qualityReview, promotionEligible: true },
+    })],
+    ['freshness stale', (layer) => ({
+      ...layer,
+      freshness: { ...layer.freshness, isStale: true },
+    })],
+    ['affectsScoring true', (layer) => ({
+      ...layer,
+      boundaries: { ...layer.boundaries, affectsScoring: true },
+    })],
+  ];
+
+  for (const [name, mutate] of hiddenFixtures) {
+    const layer = mutate(cloneLayer(approvedLayer));
+    if (harness.isExternalAiVisibleForFrontend(layer) !== false) {
+      addError(errors, `External AI fixture must fail closed for ${name}`);
+      continue;
+    }
+
+    harness.resetCalls();
+    harness.renderExternalAiAuxiliary({ radarData: { externalAiInterpretationLayer: layer } });
+    const hiddenAuxiliary = harness.calls.some((call) => call.id === 'external-ai-auxiliary' && call.hidden === true);
+    const hiddenStructuredOutput = harness.calls.some((call) => call.id === 'ext-ai-structured-output' && call.hidden === true);
+    if (!hiddenAuxiliary || !hiddenStructuredOutput) {
+      addError(errors, `External AI renderer must hide auxiliary output for ${name}`);
+    }
+  }
+}
+
 function main() {
   const errors = [];
 
@@ -143,6 +289,7 @@ function main() {
     validateProductionLayer(errors);
     validateNoAutomation(errors);
     validateFrontendFailClosedGuard(errors);
+    validateFrontendFailClosedFixtures(errors);
   } catch (error) {
     addError(errors, error.message);
   }

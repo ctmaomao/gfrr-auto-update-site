@@ -15,6 +15,51 @@ function assertMissing(text, snippet, where) {
   assert(!text.includes(snippet), `${where} must not contain stale initial display snippet: ${snippet}`);
 }
 
+function extractFunctionSource(text, functionName) {
+  const marker = `function ${functionName}`;
+  const start = text.indexOf(marker);
+  if (start < 0) throw new Error(`Unable to find ${functionName}`);
+
+  const parenStart = text.indexOf('(', start);
+  if (parenStart < 0) throw new Error(`Unable to find signature for ${functionName}`);
+
+  let parenDepth = 0;
+  let signatureEnd = -1;
+  for (let index = parenStart; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === '(') parenDepth += 1;
+    if (char === ')') {
+      parenDepth -= 1;
+      if (parenDepth === 0) {
+        signatureEnd = index;
+        break;
+      }
+    }
+  }
+
+  if (signatureEnd < 0) throw new Error(`Unable to parse signature for ${functionName}`);
+
+  const braceStart = text.indexOf('{', signatureEnd);
+  if (braceStart < 0) throw new Error(`Unable to find body for ${functionName}`);
+
+  let depth = 0;
+  for (let index = braceStart; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === '{') depth += 1;
+    if (char === '}') {
+      depth -= 1;
+      if (depth === 0) return text.slice(start, index + 1);
+    }
+  }
+
+  throw new Error(`Unable to parse ${functionName}`);
+}
+
+function loadRenderableDataHarness(appText) {
+  const factory = new Function(`${extractFunctionSource(appText, 'allRenderableDataPresent')}\nreturn { allRenderableDataPresent };`);
+  return factory();
+}
+
 const html = readText('index.html');
 const css = readText('assets/styles.css');
 const app = readText('scripts/app.js');
@@ -59,6 +104,39 @@ for (const snippet of [
 ]) {
   assertMissing(app, snippet, 'scripts/app.js');
 }
+
+const { allRenderableDataPresent } = loadRenderableDataHarness(app);
+
+assert(
+  allRenderableDataPresent({
+    radarData: { score: 56 },
+    worldOrderStressData: null,
+    marketPricingMetricsData: null,
+    radarHistoryData: null,
+    oilDirectionalData: null,
+    oilThermalWatchData: null,
+    oilNewsEventWatchData: null,
+  }) === true,
+  'allRenderableDataPresent must allow homepage render when display-only auxiliary JSON files are missing.'
+);
+
+assert(
+  allRenderableDataPresent({
+    radarData: null,
+    worldOrderStressData: { score: 0 },
+    marketPricingMetricsData: {},
+    radarHistoryData: {},
+    oilDirectionalData: {},
+    oilThermalWatchData: {},
+    oilNewsEventWatchData: {},
+  }) === false,
+  'allRenderableDataPresent must fail closed when radar-data.json is missing.'
+);
+
+assert(
+  allRenderableDataPresent({ radarData: { score: 56 } }) === true,
+  'allRenderableDataPresent must key readiness only on radarData presence.'
+);
 
 assert(pkg.includes('"check:frontend-loading-state"'), 'package.json must expose check:frontend-loading-state.');
 assert(suite.includes("'check:frontend-loading-state'"), 'frontend-live-contracts suite must include check:frontend-loading-state.');
