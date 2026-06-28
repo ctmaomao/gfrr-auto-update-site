@@ -1,0 +1,65 @@
+{
+  "contractVersion": "route-level-tanker-freight-frontend-display-brief-v1",
+  "kind": "route_level_tanker_freight_frontend_display_brief",
+  "status": "docs_only_no_frontend_implementation",
+  "createdAt": "2026-06-28",
+  "targetSurface": "#oil-directional-pressure",
+  "placement": "folded_detail_only",
+  "currentProductionState": {
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "eligibleForMainScore": false
+  },
+  "allowedFutureInputs": [
+    "radarData.macroDrivers.energyTransport.transportShockCandidate",
+    "radarData.macroDrivers.energyTransport.routeFreightConfirmation",
+    "data/oil-directional-pressure.json"
+  ],
+  "manualArtifactsAreBrowserInputs": false,
+  "proposedDomIds": [
+    "odp-route-freight-watch",
+    "odp-route-freight-status",
+    "odp-route-freight-state",
+    "odp-route-freight-samples",
+    "odp-route-freight-routes",
+    "odp-route-freight-boundary"
+  ],
+  "approvalState": {
+    "frontendImplementationApproved": false,
+    "productionDataWriteApproved": false,
+    "workflowAutomationApproved": false,
+    "liveFetchApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "worldOrderWeightsApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "boundaries": {
+    "docsOnly": true,
+    "noFrontendImplementation": true,
+    "noProductionDataWrite": true,
+    "noWorkflowAutomation": true,
+    "noWorkerRuntime": true,
+    "noBrowserLiveFetch": true,
+    "noManualArtifactBrowserRead": true,
+    "noScoring": true,
+    "noDecisionModel": true,
+    "noExecutionLock": true,
+    "noPositionGuidance": true,
+    "noBrentPromotion": true,
+    "noOdpFinalBias": true,
+    "noWorldOrderWeights": true,
+    "noGlobalRiskHeatmap": true,
+    "noCrossValidation": true
+  },
+  "copyRules": {
+    "showAsObservationOnly": true,
+    "showNotConnectedUntilSeparateProductionWrite": true,
+    "doNotShowRawSourceText": true,
+    "doNotConfirmBlockadeOrSupplyCut": true,
+    "doNotClaimOfficialTradeStatistics": true,
+    "doNotClaimOilPriceForecast": true
+  }
+}

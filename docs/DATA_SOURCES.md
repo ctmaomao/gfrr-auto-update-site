@@ -511,6 +511,8 @@ P2 route-level oil tanker freight confirmation source-review identifies Baltic E
 
 `npm run review:route-level-tanker-freight-production-display-projections` is the production display projection review helper. It reads one or more `route-level-tanker-freight-production-display-projection-v1` artifacts, summarizes usable projection count, projection states and repeated route coverage, and writes only an ignored `route-level-tanker-freight-production-display-projection-review-v1` review artifact under `manual-artifacts/route-level-tanker-freight/`. It is still manual/local only and does not approve direct display, production write, frontend/workflow/Worker runtime, `routeFreightConfirmation` changes or main-score eligibility.
 
+[`ROUTE_LEVEL_TANKER_FREIGHT_FRONTEND_DISPLAY_BRIEF.md`](ROUTE_LEVEL_TANKER_FREIGHT_FRONTEND_DISPLAY_BRIEF.md) is the Route-level tanker freight frontend display brief. The associated `route-level-tanker-freight-frontend-display-brief-v1` fixture is docs-only: it describes a possible future folded-detail UI inside existing `#oil-directional-pressure`, but adds no frontend implementation, no production data write, no workflow, no Worker runtime, no live fetch, no ODP `finalBias`, and no main-score eligibility. It explicitly keeps the current production state as `routeFreightConfirmation=not_connected`, `marketConfirmation=not_connected`, and `eligibleForMainScore=false`.
+
 ---
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)

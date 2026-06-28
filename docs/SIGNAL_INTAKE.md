@@ -112,6 +112,7 @@
 - Route-level tanker freight display-only candidate contract: `route-level-tanker-freight-display-contract-v1` 只定义未来展示候选层形状,状态为 `contract_only_no_production_write`;不写 production data、不接 frontend/workflow/Worker、不改变 `routeFreightConfirmation=not_connected`,更不进入 ODP finalBias 或主判断打分。
 - Route-level tanker freight production display projection: `route-level-tanker-freight-production-display-projection-v1` 只由 `project:route-level-tanker-freight-production-display` 做 dry-run-only manual artifact 投影;不写 `data/radar-data.json`、不批准直接展示、不接 frontend/workflow/Worker、不改变 `routeFreightConfirmation=not_connected`,更不进入 ODP finalBias 或主判断打分。
 - Route-level tanker freight production display projection review: `route-level-tanker-freight-production-display-projection-review-v1` 只由 `review:route-level-tanker-freight-production-display-projections` 聚合 dry-run projection artifacts;不批准 direct display、不写 production data、不接 frontend/workflow/Worker、不改变 `routeFreightConfirmation=not_connected`,更不进入 ODP finalBias 或主判断打分。
+- Route-level tanker freight frontend display brief: `route-level-tanker-freight-frontend-display-brief-v1` 只是 docs-only future UI contract,未来若展示也只能放进现有 ODP folded detail;当前不加 DOM、不改 renderer、不写 production data、不接 workflow/Worker、不改变 `routeFreightConfirmation=not_connected`,更不进入 ODP finalBias 或主判断打分。
 
 ## 6. Rejection Rules / 拒绝或暂缓规则
 
