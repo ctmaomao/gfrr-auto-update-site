@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "route-level-tanker-freight-source-rights-gate-update-proposal-v1",
+  "status": "fixture_only_proposal_keep_gate_blocked",
+  "recommendation": "fixture_only_validates_proposal_shape_keep_gate_blocked",
+  "generatedAt": "2026-06-28T00:00:00.000Z",
+  "sourceRightsReview": {
+    "path": "docs/fixtures/route-level-tanker-freight/source-rights-artifact-review.fixture-complete.json",
+    "hash": "fixture-review",
+    "status": "fixture_only_reviewable_keep_blocked",
+    "fixtureOnly": true,
+    "sourceKey": "example_route_level_tanker_freight_source_not_real",
+    "claimsReadyForSeparateGateReview": true
+  },
+  "currentGate": {
+    "path": "docs/fixtures/route-level-tanker-freight-source-rights-approval-gate-v1.json",
+    "hash": "fixture-gate",
+    "status": "manual_review_required_no_source_rights_approved",
+    "blockReason": "source_rights_and_redistribution_not_approved",
+    "approvedSourcesCount": 0
+  },
+  "proposalDecision": {
+    "proposalReadyForHumanGateReview": false,
+    "gateUpdateApproved": false,
+    "writesGateFixture": false,
+    "productionWriteApproved": false,
+    "routeFreightConfirmation": "not_connected",
+    "sourceRightsStatus": "manual_review_required",
+    "blockReason": "fixture_only_not_usable_for_gate_update",
+    "blockers": [
+      "source_rights_gate_requires_separate_review",
+      "fixture_only_not_usable_for_gate_update"
+    ],
+    "nextAllowedStep": "collect_real_non_fixture_source_rights_review_artifact"
+  },
+  "proposedGatePatch": null,
+  "currentProductionState": {
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "eligibleForMainScore": false
+  },
+  "productionImpact": {
+    "writesGateFixture": false,
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "modifiesWorkerRuntime": false,
+    "modifiesWorkflow": false,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsWorldOrderWeights": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noGateFixtureWrite": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noRawSourceAgreementStored": true,
+    "notProductionData": true
+  }
+}
