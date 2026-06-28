@@ -543,6 +543,8 @@ P2 route-level oil tanker freight confirmation source-review identifies Baltic E
 
 [`TRANSPORT_SHOCK_CONFIRMATION_FACTOR_SOURCE_REVIEW.md`](TRANSPORT_SHOCK_CONFIRMATION_FACTOR_SOURCE_REVIEW.md) is the Transport Shock Confirmation Factor source-review (`transport-shock-confirmation-factor-source-review-v1`). It reviews the **Free Route-Linked Tanker Transport Pressure Proxy** (IMF PortWatch / IEA chokepoint context, Solactive Breakwave wet freight futures index candidate, CME/ICE TD3C link-only/manual references, StockQ aggregate BDTI/BCTI context) and the **Baltic Weekly Tanker Report public route-signal**. P-score-2 status is `source_review_ready_for_manual_sample_scaffold`: no live fetch, no production data write, no workflow/Worker/frontend change, no shadow score, no ODP `finalBias`, no main judgment weighting, and no cross-validation input.
 
+`review:transport-shock-confirmation-factor-manual-sample` is the P-score-3 manual sample scaffold. It reads only `manual-artifacts/transport-shock-confirmation-factor/` or `docs/fixtures/transport-shock-confirmation-factor/` and writes only ignored `manual-artifacts/transport-shock-confirmation-factor/` review JSON with schema `transport-shock-confirmation-factor-manual-sample-review-v1`. It is manual sample scaffold only: no live fetch, no production data write, no workflow/Worker/frontend change, no shadow score, no ODP `finalBias`, no main judgment weighting, and no cross-validation input.
+
 ---
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)

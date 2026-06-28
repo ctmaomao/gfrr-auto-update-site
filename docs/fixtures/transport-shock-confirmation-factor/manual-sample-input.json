@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-manual-sample-input-v1",
+  "asOf": "2026-06-28T00:00:00.000Z",
+  "sourceReviewContract": "transport-shock-confirmation-factor-source-review-v1",
+  "notes": "Fixture-only sample for manual scaffold validation. Not production data.",
+  "sourceRights": {
+    "manuallyCollected": true,
+    "liveFetchApproved": false,
+    "productionWriteApproved": false,
+    "redistributionApproved": false,
+    "scoreApproved": false
+  },
+  "observations": [
+    {
+      "sourceKey": "solactive_breakwave_wet_freight_futures_index",
+      "bucketKey": "free_route_linked_tanker_transport_pressure_proxy",
+      "observedAt": "2026-06-28T00:00:00.000Z",
+      "routeCode": "TD3C",
+      "direction": "tightening",
+      "strength": 0.62,
+      "citationUrl": "https://www.solactive.com/index/DE000SL0HLG3/"
+    },
+    {
+      "sourceKey": "cme_td3c_public_product_page",
+      "bucketKey": "free_route_linked_tanker_transport_pressure_proxy",
+      "observedAt": "2026-06-28T00:00:00.000Z",
+      "routeCode": "TD3C",
+      "direction": "tightening",
+      "strength": 0.55,
+      "citationUrl": "https://www.cmegroup.com/markets/energy/freight/tanker-route-td3-middle-eastern-gulf-meg-to-japan-250k-metric-tons-freight-swap-futures.html"
+    },
+    {
+      "sourceKey": "baltic_weekly_tanker_report_public_route_signal",
+      "bucketKey": "baltic_weekly_tanker_report_public_route_signal",
+      "observedAt": "2026-06-28T00:00:00.000Z",
+      "routeCode": "TD20",
+      "direction": "mixed",
+      "strength": 0.4,
+      "citationUrl": "https://www.balticexchange.com/en/data-services/WeeklyRoundup.html"
+    }
+  ]
+}
