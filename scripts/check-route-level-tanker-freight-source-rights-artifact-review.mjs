@@ -93,6 +93,27 @@ function runReviewFixture() {
   return JSON.parse(result.stdout);
 }
 
+function runReviewFixtureSummary() {
+  const result = spawnSync(process.execPath, [
+    REVIEW_SCRIPT,
+    '--input',
+    INPUT_FIXTURE,
+    '--template',
+    TEMPLATE_FIXTURE,
+    '--gate',
+    GATE_FIXTURE,
+    '--no-output',
+    '--strict'
+  ], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    maxBuffer: 10 * 1024 * 1024
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(`review helper fixture summary failed: ${result.stderr || result.stdout}`);
+  return result.stdout;
+}
+
 function assertDoc() {
   assert(fs.existsSync(absolute(REVIEW_DOC)), 'Source-rights artifact review doc is missing.');
   const doc = readText(REVIEW_DOC);
@@ -120,6 +141,8 @@ function assertScriptSafety() {
     'route-level-tanker-freight-source-rights-artifact-review-v1',
     'manual/local route-level tanker freight source-rights artifact review only',
     'claimsReadyForSeparateGateReview',
+    'missingEvidenceKeys',
+    'nextAllowedStep',
     'gateUpdateApproved',
     'productionWriteApproved',
     'not_connected'
@@ -130,6 +153,7 @@ function assertScriptSafety() {
 
 function assertFixtureReview() {
   const review = runReviewFixture();
+  const summary = runReviewFixtureSummary();
   assert(review.schemaVersion === 'route-level-tanker-freight-source-rights-artifact-review-v1', 'Unexpected review schemaVersion.');
   assert(review.status === 'fixture_only_reviewable_keep_blocked', 'Fixture review must remain fixture-only blocked.');
   assert(review.recommendation === 'fixture_only_validates_review_shape_keep_gate_blocked', 'Unexpected fixture recommendation.');
@@ -148,6 +172,9 @@ function assertFixtureReview() {
   assert(review.sourceRightsStatus === 'manual_review_required', 'sourceRightsStatus must stay manual_review_required.');
   assertAllFalse(review.productionImpact, 'review.productionImpact');
   assertAllTrue(review.boundaries, 'review.boundaries');
+  assertIncludes(summary, 'requiredEvidence: 10 present / 0 missing', 'review fixture summary');
+  assertIncludes(summary, 'missingEvidenceKeys: none', 'review fixture summary');
+  assertIncludes(summary, 'nextAllowedStep: separate_source_rights_gate_update_review_required', 'review fixture summary');
 }
 
 function assertGateStillBlocked() {

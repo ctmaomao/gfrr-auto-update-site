@@ -338,14 +338,19 @@ function writeJson(filePath, value) {
 }
 
 function printSummary(review) {
+  const missingKeys = review.requiredEvidence?.missingKeys || [];
+  const presentKeys = review.requiredEvidence?.presentKeys || [];
   console.log(`Route-level tanker freight source-rights artifact review: ${review.status}`);
   console.log(`recommendation: ${review.recommendation}`);
   console.log(`evidenceComplete: ${review.reviewDecision.evidenceComplete}`);
+  console.log(`requiredEvidence: ${presentKeys.length} present / ${missingKeys.length} missing`);
+  console.log(`missingEvidenceKeys: ${missingKeys.length > 0 ? missingKeys.join(',') : 'none'}`);
   console.log(`approvalClaimsComplete: ${review.reviewDecision.approvalClaimsComplete}`);
   console.log(`claimsReadyForSeparateGateReview: ${review.reviewDecision.claimsReadyForSeparateGateReview}`);
   console.log(`gateUpdateApproved: ${review.reviewDecision.gateUpdateApproved}`);
   console.log(`productionWriteApproved: ${review.productionWriteApproved}`);
   console.log(`routeFreightConfirmation: ${review.routeFreightConfirmation}`);
+  console.log(`nextAllowedStep: ${review.reviewDecision.nextAllowedStep}`);
   console.log(`boundary: ${review.boundary}`);
 }
 
