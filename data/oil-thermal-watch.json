@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-06-28T16:37:58.237Z",
+  "generatedAt": "2026-06-28T19:47:08.814Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -18,8 +18,8 @@
   },
   "freshness": {
     "windowDays": 1,
-    "latestAcqAt": "2026-06-28T09:05:00Z",
-    "latestAgeHours": 7.5,
+    "latestAcqAt": "2026-06-28T19:27:00Z",
+    "latestAgeHours": 0.3,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -97,19 +97,20 @@
     ]
   },
   "aggregate": {
-    "rowCount": 63,
-    "latestAcqAt": "2026-06-28T09:05:00Z",
+    "rowCount": 64,
+    "latestAcqAt": "2026-06-28T19:27:00Z",
     "maxFrp": 4.86,
     "confidenceCounts": {
-      "n": 63
+      "n": 64
     },
     "highConfidenceCount": 0,
     "frpOver50Count": 0,
     "frpOver100Count": 0,
     "dayNightCounts": {
-      "N": 63
+      "N": 63,
+      "D": 1
     },
-    "latestAgeHours": 7.5,
+    "latestAgeHours": 0.3,
     "facilityCount": 12,
     "facilitiesWithDetections": 11,
     "requestCount": 36,
@@ -134,20 +135,21 @@
       "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 4,
-      "latestAcqAt": "2026-06-28T08:09:00Z",
-      "maxFrp": 3.45,
+      "rowCount": 5,
+      "latestAcqAt": "2026-06-28T19:27:00Z",
+      "maxFrp": 4.5,
       "confidenceCounts": {
-        "n": 4
+        "n": 5
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 4
+        "N": 4,
+        "D": 1
       },
-      "latestAgeHours": 8.5,
-      "rawSignalLevel": "low_signal",
+      "latestAgeHours": 0.3,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 16,
@@ -197,7 +199,7 @@
       "dayNightCounts": {
         "N": 9
       },
-      "latestAgeHours": 7.5,
+      "latestAgeHours": 10.7,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -248,7 +250,7 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 7.9,
+      "latestAgeHours": 11,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -299,7 +301,7 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 7.5,
+      "latestAgeHours": 10.7,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -350,7 +352,7 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 7.9,
+      "latestAgeHours": 11,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -401,7 +403,7 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 7.9,
+      "latestAgeHours": 11,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -452,7 +454,7 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 7.5,
+      "latestAgeHours": 10.7,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -503,7 +505,7 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 7.5,
+      "latestAgeHours": 10.7,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -554,7 +556,7 @@
       "dayNightCounts": {
         "N": 1
       },
-      "latestAgeHours": 7.9,
+      "latestAgeHours": 11,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -605,7 +607,7 @@
       "dayNightCounts": {
         "N": 3
       },
-      "latestAgeHours": 7.5,
+      "latestAgeHours": 10.7,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -703,7 +705,7 @@
       "dayNightCounts": {
         "N": 16
       },
-      "latestAgeHours": 7.9,
+      "latestAgeHours": 11,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
