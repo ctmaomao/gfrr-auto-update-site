@@ -1,0 +1,151 @@
+{
+  "contractVersion": "transport-shock-confirmation-factor-source-review-v1",
+  "kind": "transport_shock_confirmation_factor_source_review",
+  "status": "source_review_ready_for_manual_sample_scaffold",
+  "intendedFutureLayer": "transportShockConfirmationFactor",
+  "generatedBy": "P-score-2 source-review fixture",
+  "approvalState": {
+    "sourceSelectionFinalized": false,
+    "liveFetchApproved": false,
+    "productionDataWriteApproved": false,
+    "workflowAutomationApproved": false,
+    "frontendDisplayApproved": false,
+    "shadowScoreApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "currentProductionState": {
+    "transportShockCandidateContract": "transport-shock-candidate-v1",
+    "eligibleForMainScore": false,
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "transportShockConfirmationFactorProductionFieldExists": false
+  },
+  "sourceFamilies": [
+    {
+      "sourceKey": "imf_portwatch_chokepoint_context",
+      "sourceType": "public_dataset_context",
+      "url": "https://portwatch.imf.org/search?collection=dataset",
+      "candidateRole": "physical_route_context_already_connected_display_only",
+      "futureUseApprovedByThisReview": "context_only",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "iea_middle_east_chokepoint_monitor",
+      "sourceType": "public_context_link",
+      "url": "https://www.iea.org/data-and-statistics/data-tools/middle-east-maritime-chokepoints-shipping-monitor",
+      "candidateRole": "middle_east_chokepoint_context",
+      "futureUseApprovedByThisReview": "link_only_context",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "solactive_breakwave_wet_freight_futures_index",
+      "sourceType": "public_index_page_candidate",
+      "url": "https://www.solactive.com/index/DE000SL0HLG3/",
+      "candidateRole": "route_linked_wet_freight_market_proxy",
+      "routeExposure": ["TD3C", "TD20"],
+      "futureUseApprovedByThisReview": "manual_or_link_only_sample_candidate",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "cme_td3c_public_product_page",
+      "sourceType": "public_product_page_reference",
+      "url": "https://www.cmegroup.com/markets/energy/freight/tanker-route-td3-middle-eastern-gulf-meg-to-japan-250k-metric-tons-freight-swap-futures.html",
+      "candidateRole": "td3c_link_only_manual_reference",
+      "routeExposure": ["TD3C"],
+      "futureUseApprovedByThisReview": "link_only_manual_reference",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "valueScrapingApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "ice_td3c_public_product_page",
+      "sourceType": "public_product_page_reference",
+      "url": "https://www.ice.com/products/57250507/TD3C-FFA-Middle-East-Gulf-to-China-%28Baltic%29-Future",
+      "candidateRole": "td3c_link_only_manual_reference",
+      "routeExposure": ["TD3C"],
+      "futureUseApprovedByThisReview": "link_only_manual_reference",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "valueScrapingApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "baltic_weekly_tanker_report_public_route_signal",
+      "sourceType": "public_weekly_text_candidate",
+      "url": "https://www.balticexchange.com/en/data-services/WeeklyRoundup.html",
+      "candidateRole": "weekly_route_text_direction_candidate",
+      "futureUseApprovedByThisReview": "text_only_manual_sample_candidate",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "routeValueRedistributionApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "baltic_daily_td_tc_route_assessments",
+      "sourceType": "licensed_daily_route_assessment_boundary",
+      "url": "https://www.balticexchange.com/en/data-services/market-information0/tankers-services.html",
+      "candidateRole": "rights_boundary_not_approved",
+      "futureUseApprovedByThisReview": "blocked_without_explicit_source_rights",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "routeValueRedistributionApproved": false,
+      "scoreApproved": false
+    }
+  ],
+  "candidateBuckets": [
+    {
+      "bucketKey": "free_route_linked_tanker_transport_pressure_proxy",
+      "inputs": [
+        "imf_portwatch_chokepoint_context",
+        "iea_middle_east_chokepoint_monitor",
+        "solactive_breakwave_wet_freight_futures_index",
+        "cme_td3c_public_product_page",
+        "ice_td3c_public_product_page",
+        "stockq_aggregate_bdti_bcti_context"
+      ],
+      "allowedFutureOutput": "tightening_easing_mixed_unavailable",
+      "productionApproved": false
+    },
+    {
+      "bucketKey": "baltic_weekly_tanker_report_public_route_signal",
+      "inputs": [
+        "baltic_weekly_tanker_report_public_route_signal"
+      ],
+      "allowedFutureOutput": "weekly_text_tightening_easing_mixed_unavailable",
+      "productionApproved": false
+    }
+  ],
+  "boundaries": {
+    "reviewOnly": true,
+    "noLiveFetch": true,
+    "noProductionWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noShadowScore": true,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "nextAllowedStep": "transport_shock_confirmation_factor_manual_sample_scaffold_no_live_fetch_no_production_write"
+}
