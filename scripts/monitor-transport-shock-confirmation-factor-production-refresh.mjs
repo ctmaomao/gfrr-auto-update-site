@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, lstatSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import process from 'node:process';
 
@@ -89,6 +89,36 @@ function safeRelativePath(filePath) {
 function isManualArtifactPath(filePath) {
   const relativePath = safeRelativePath(filePath);
   return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
+}
+
+function manualArtifactWritePathChain(filePath) {
+  if (!isManualArtifactPath(filePath)) {
+    throw new Error(`Refusing output outside manual-artifacts/: ${filePath}`);
+  }
+  const outputPath = resolve(filePath);
+  const rootPath = resolve('manual-artifacts');
+  const outputDir = dirname(outputPath);
+  const relativeDir = relative(rootPath, outputDir);
+  const paths = [rootPath];
+  let cursor = rootPath;
+  if (relativeDir) {
+    for (const segment of relativeDir.split(/[\\/]+/u).filter(Boolean)) {
+      cursor = resolve(cursor, segment);
+      paths.push(cursor);
+    }
+  }
+  paths.push(outputPath);
+  return paths;
+}
+
+function assertManualArtifactWritePath(filePath) {
+  for (const existingPath of manualArtifactWritePathChain(filePath)) {
+    if (!existsSync(existingPath)) continue;
+    if (lstatSync(existingPath).isSymbolicLink()) {
+      const displayPath = safeRelativePath(existingPath) || existingPath;
+      throw new Error(`Refusing output through symlink/junction path segment: ${displayPath}`);
+    }
+  }
 }
 
 function readCommittedJson(filePath) {
@@ -266,6 +296,7 @@ function writeMonitorArtifact(options, result) {
   if (options.dryRun || !options.writeOutput) return;
   const outputPath = resolve(options.output);
   mkdirSync(dirname(outputPath), { recursive: true });
+  assertManualArtifactWritePath(outputPath);
   writeFileSync(outputPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
 }
 
@@ -316,6 +347,7 @@ function runMonitorSelfTests() {
   if (validateGithubSummaryPath(resolve('manual-artifacts', 'summary.md'), env).ok) {
     throw new Error('Monitor self-test failed: GitHub summary path outside RUNNER_TEMP should be rejected');
   }
+  assertManualArtifactWritePath(DEFAULT_OUTPUT);
 }
 
 function assertMonitorBoundary(result) {

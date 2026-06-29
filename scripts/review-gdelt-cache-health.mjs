@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -31,7 +31,7 @@ function printUsage() {
 Options:
   --output <path>      Manual artifact output path. Default: ${DEFAULT_OUTPUT}
   --no-output          Do not write the review artifact.
-  --strict             Exit non-zero on WATCH/WARN/FAIL.
+  --strict             Exit non-zero on WATCH/WARN/FAIL. Default exits non-zero on FAIL.
   --json               Print full JSON review.
   --help               Show this help.`);
 }
@@ -86,6 +86,36 @@ function safeRelativePath(path) {
 function isManualArtifactPath(path) {
   const relativePath = safeRelativePath(path);
   return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
+}
+
+function manualArtifactWritePathChain(path) {
+  if (!isManualArtifactPath(path)) {
+    throw new Error(`Refusing output outside manual-artifacts/: ${path}`);
+  }
+  const outputPath = resolve(path);
+  const rootPath = resolve('manual-artifacts');
+  const outputDir = dirname(outputPath);
+  const relativeDir = relative(rootPath, outputDir);
+  const paths = [rootPath];
+  let cursor = rootPath;
+  if (relativeDir) {
+    for (const segment of relativeDir.split(/[\\/]+/u).filter(Boolean)) {
+      cursor = resolve(cursor, segment);
+      paths.push(cursor);
+    }
+  }
+  paths.push(outputPath);
+  return paths;
+}
+
+function assertManualArtifactWritePath(path) {
+  for (const existingPath of manualArtifactWritePathChain(path)) {
+    if (!existsSync(existingPath)) continue;
+    if (lstatSync(existingPath).isSymbolicLink()) {
+      const displayPath = safeRelativePath(existingPath) || existingPath;
+      throw new Error(`Refusing output through symlink/junction path segment: ${displayPath}`);
+    }
+  }
 }
 
 function readJson(path) {
@@ -158,8 +188,17 @@ function worstSeverity(rows) {
   return 'ok';
 }
 
-function hasFindingCode(rows, code) {
-  return rows.some((row) => row.findings.some((finding) => finding.code === code));
+function failFindingCodes(rows) {
+  return rows.flatMap((row) =>
+    row.findings
+      .filter((finding) => finding.severity === 'fail')
+      .map((finding) => finding.code)
+  );
+}
+
+function onlyBubblePlaceholderFail(rows) {
+  const codes = failFindingCodes(rows);
+  return codes.length > 0 && codes.every((code) => code === 'bubble_cache_placeholder_refresh_threshold_exceeded');
 }
 
 function awaitingPostMigrationRefresh(rows) {
@@ -169,7 +208,7 @@ function awaitingPostMigrationRefresh(rows) {
 }
 
 function recommendationFor(status, rows) {
-  if (hasFindingCode(rows, 'bubble_cache_placeholder_refresh_threshold_exceeded')) {
+  if (onlyBubblePlaceholderFail(rows)) {
     return 'investigate_bubble_watch_scheduled_refresh_then_rerun_review';
   }
   return status === 'fail'
@@ -179,6 +218,10 @@ function recommendationFor(status, rows) {
       : status === 'watch'
         ? 'wait_for_next_scheduled_refresh_then_rerun_review'
         : 'gdelt_cache_health_current';
+}
+
+function shouldExitNonZero(status, strict) {
+  return status === 'fail' || (strict && status !== 'ok');
 }
 
 function reviewOilNewsCache(nowMs) {
@@ -409,6 +452,10 @@ function runSelfTests() {
   assertSelfTest(bubblePlaceholderSeverity(2) === 'fail', 'placeholder becomes FAIL at threshold');
   assertSelfTest(isManualArtifactPath(DEFAULT_OUTPUT), 'default output path stays inside manual-artifacts');
   assertSelfTest(!isManualArtifactPath('data/gdelt-cache-health.json'), 'production data output path is rejected');
+  assertManualArtifactWritePath(DEFAULT_OUTPUT);
+  assertSelfTest(shouldExitNonZero('fail', false) === true, 'default mode exits non-zero on FAIL');
+  assertSelfTest(shouldExitNonZero('watch', false) === false, 'default mode keeps WATCH non-blocking');
+  assertSelfTest(shouldExitNonZero('watch', true) === true, 'strict mode exits non-zero on WATCH');
 
   const placeholderRow = reviewBubbleWatchCache(Date.parse('2026-07-06T05:30:00.000Z'), {
     schemaVersion: 'gdelt-bubble-watch-cache-p38',
@@ -431,6 +478,13 @@ function runSelfTests() {
   assertSelfTest(
     recommendationFor('fail', [placeholderRow]) === 'investigate_bubble_watch_scheduled_refresh_then_rerun_review',
     'placeholder threshold fail routes to scheduled refresh triage'
+  );
+  assertSelfTest(
+    recommendationFor('fail', [
+      placeholderRow,
+      { findings: [{ severity: 'fail', code: 'world_order_cache_schema_mismatch' }] }
+    ]) === 'fix_schema_or_policy_before_relying_on_gdelt_caches',
+    'mixed placeholder and schema fail routes to schema/policy triage'
   );
   assertSelfTest(
     awaitingPostMigrationRefresh([placeholderRow]) === true,
@@ -488,6 +542,7 @@ function buildReview() {
 function writeReview(review, outputPath) {
   const resolved = resolve(outputPath);
   mkdirSync(dirname(resolved), { recursive: true });
+  assertManualArtifactWritePath(resolved);
   writeFileSync(resolved, `${JSON.stringify(review, null, 2)}\n`, 'utf8');
   review.outputPath = resolved;
 }
@@ -514,7 +569,7 @@ async function main() {
   } else {
     printSummary(review);
   }
-  if (options.strict && review.status !== 'ok') process.exit(1);
+  if (shouldExitNonZero(review.status, options.strict)) process.exit(1);
 }
 
 export {

@@ -13,6 +13,71 @@ const parseCommittedJson = (path) => gitJsonAtCommit('HEAD', path);
 
 const CONTRACT_VERSION = 'transport-shock-candidate-v1';
 const failures = [];
+const NO_SCORE_WIRING_FORBIDDEN_SCOPES = [
+  {
+    file: 'scripts/modules/decision.js',
+    markers: [
+      'transportShockCandidate',
+      'transportShockConfirmationFactorProductionRefresh',
+      'transport-shock-confirmation-factor-production-refresh-v1',
+      'candidate_present_verified'
+    ]
+  },
+  {
+    file: 'scripts/modules/buildCrossValidationMatrix.js',
+    markers: [
+      'transportShockCandidate',
+      'transportShockConfirmationFactorProductionRefresh',
+      'transport-shock-confirmation-factor-production-refresh-v1',
+      'candidate_present_verified'
+    ]
+  },
+  {
+    file: 'scripts/modules/realtime.js',
+    markers: [
+      'transportShockCandidate',
+      'transportShockConfirmationFactorProductionRefresh',
+      'transport-shock-confirmation-factor-production-refresh-v1',
+      'candidate_present_verified'
+    ]
+  },
+  {
+    file: 'workers/gfrr-realtime-worker/src/index.js',
+    markers: [
+      'transportShockCandidate',
+      'transportShockConfirmationFactorProductionRefresh',
+      'transport-shock-confirmation-factor-production-refresh-v1',
+      'candidate_present_verified'
+    ]
+  },
+  {
+    file: 'workers/gfrr-realtime-worker/src/worker-market-preview.js',
+    markers: [
+      'transportShockCandidate',
+      'transportShockConfirmationFactorProductionRefresh',
+      'transport-shock-confirmation-factor-production-refresh-v1',
+      'candidate_present_verified'
+    ]
+  },
+  {
+    file: 'scripts/modules/renderOilDirectional.js',
+    markers: [
+      'transportShockCandidate',
+      'transportShockConfirmationFactorProductionRefresh',
+      'transport-shock-confirmation-factor-production-refresh-v1',
+      'candidate_present_verified'
+    ]
+  },
+  {
+    file: 'data/oil-directional-pressure.json',
+    markers: [
+      'transportShockCandidate',
+      'transportShockConfirmationFactorProductionRefresh',
+      'transport-shock-confirmation-factor-production-refresh-v1',
+      'candidate_present_verified'
+    ]
+  }
+];
 
 function fail(message) {
   failures.push(message);
@@ -52,16 +117,9 @@ function validateWriterPath() {
 }
 
 function validateNoScoreWiring() {
-  for (const file of [
-    'scripts/modules/buildCrossValidationMatrix.js',
-    'data/oil-directional-pressure.json'
-  ]) {
+  for (const { file, markers } of NO_SCORE_WIRING_FORBIDDEN_SCOPES) {
     const text = read(file);
-    for (const marker of [
-      'transportShockConfirmationFactorProductionRefresh',
-      'transport-shock-confirmation-factor-production-refresh-v1',
-      'candidate_present_verified'
-    ]) {
+    for (const marker of markers) {
       forbidMarker(text, marker, file);
     }
   }
