@@ -3,12 +3,13 @@ import fs from 'node:fs';
 import {
   MISSING_CANDIDATE_FAIL_AFTER_DAILY_REFRESHES,
   TRANSPORT_SHOCK_CANDIDATE_WRITER_MARKER,
+  gitJsonAtCommit,
   runTransportShockRefreshHistorySelfTests,
   summarizeMissingCandidateRefreshHistory
 } from './transport-shock-refresh-history.mjs';
 
 const read = (path) => fs.readFileSync(path, 'utf8');
-const parseJson = (path) => JSON.parse(read(path));
+const parseCommittedJson = (path) => gitJsonAtCommit('HEAD', path);
 
 const CONTRACT_VERSION = 'transport-shock-candidate-v1';
 const failures = [];
@@ -134,7 +135,7 @@ function validateCandidate(candidate) {
 }
 
 function inspectProductionPayload() {
-  const radar = parseJson('data/radar-data.json');
+  const radar = parseCommittedJson('data/radar-data.json');
   const energyTransport = radar?.macroDrivers?.energyTransport;
   if (!isPlainObject(energyTransport)) {
     fail('data/radar-data.json missing macroDrivers.energyTransport.');

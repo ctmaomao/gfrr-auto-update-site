@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import process from 'node:process';
 
 import {
   MISSING_CANDIDATE_FAIL_AFTER_DAILY_REFRESHES,
+  gitJsonAtCommit,
   runTransportShockRefreshHistorySelfTests,
   summarizeMissingCandidateRefreshHistory
 } from './transport-shock-refresh-history.mjs';
@@ -90,8 +91,8 @@ function isManualArtifactPath(filePath) {
   return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
 }
 
-function readJson(filePath) {
-  return JSON.parse(readFileSync(filePath, 'utf8'));
+function readCommittedJson(filePath) {
+  return gitJsonAtCommit('HEAD', filePath);
 }
 
 function isPlainObject(value) {
@@ -114,6 +115,30 @@ function falseBoundaryFlags(candidate) {
     'affectsGlobalRiskHeatmap',
     'affectsCrossValidation'
   ].every((key) => boundaries[key] === false);
+}
+
+function pathIsInside(basePath, targetPath) {
+  const relativePath = relative(resolve(basePath), resolve(targetPath));
+  return relativePath === '' || (!relativePath.startsWith('..') && !isAbsolute(relativePath));
+}
+
+function validateGithubSummaryPath(summaryPath, env = process.env) {
+  if (env.GITHUB_ACTIONS !== 'true') {
+    return { ok: false, reason: 'github_actions_env_required' };
+  }
+  if (!summaryPath) {
+    return { ok: false, reason: 'github_step_summary_missing' };
+  }
+  if (!env.RUNNER_TEMP) {
+    return { ok: false, reason: 'runner_temp_missing' };
+  }
+  if (!pathIsInside(env.RUNNER_TEMP, summaryPath)) {
+    return { ok: false, reason: 'summary_path_outside_runner_temp' };
+  }
+  if (env.GITHUB_WORKSPACE && pathIsInside(env.GITHUB_WORKSPACE, summaryPath)) {
+    return { ok: false, reason: 'summary_path_inside_workspace' };
+  }
+  return { ok: true, reason: null };
 }
 
 function summarizeCandidate(candidate) {
@@ -164,7 +189,7 @@ function classifyStatus(energyTransport, missingCandidateRefreshHistory) {
 }
 
 function createMonitorResult(options) {
-  const radar = readJson(RADAR_DATA_PATH);
+  const radar = readCommittedJson(RADAR_DATA_PATH);
   const energyTransport = radar?.macroDrivers?.energyTransport;
   const candidate = energyTransport?.transportShockCandidate;
   const missingCandidateRefreshHistory =
@@ -181,7 +206,8 @@ function createMonitorResult(options) {
     dryRun: options.dryRun,
     productionDataWriteApproved: false,
     payload: {
-      path: resolve(RADAR_DATA_PATH),
+      path: `HEAD:${RADAR_DATA_PATH}`,
+      readMode: 'git_show_HEAD',
       releaseVersion: radar?.releaseVersion ?? null,
       generatedAt: radar?.generatedAt ?? radar?.lastUpdated ?? null,
       energyTransportPresent: isPlainObject(energyTransport),
@@ -246,7 +272,10 @@ function writeMonitorArtifact(options, result) {
 function appendGithubSummary(options, result) {
   if (!options.githubSummary) return;
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;
-  if (!summaryPath) return;
+  const validation = validateGithubSummaryPath(summaryPath);
+  if (!validation.ok) {
+    throw new Error(`Refusing GitHub Summary path: ${validation.reason}`);
+  }
   const lines = [
     '## Transport Shock Production Refresh Monitor',
     '',
@@ -263,6 +292,30 @@ function appendGithubSummary(options, result) {
     ''
   ];
   appendFileSync(summaryPath, `${lines.join('\n')}\n`, 'utf8');
+}
+
+function runMonitorSelfTests() {
+  const runnerTemp = resolve('.tmp-runner-temp');
+  const workspace = resolve('.tmp-workspace');
+  const summaryPath = resolve(runnerTemp, '_runner_file_commands', 'step_summary');
+  const workspacePath = resolve(workspace, 'summary.md');
+  const env = {
+    GITHUB_ACTIONS: 'true',
+    RUNNER_TEMP: runnerTemp,
+    GITHUB_WORKSPACE: workspace
+  };
+  if (!validateGithubSummaryPath(summaryPath, env).ok) {
+    throw new Error('Monitor self-test failed: GitHub summary path inside RUNNER_TEMP should be allowed');
+  }
+  if (validateGithubSummaryPath(workspacePath, env).ok) {
+    throw new Error('Monitor self-test failed: GitHub summary path inside workspace should be rejected');
+  }
+  if (validateGithubSummaryPath(summaryPath, { ...env, GITHUB_ACTIONS: 'false' }).ok) {
+    throw new Error('Monitor self-test failed: GitHub summary path requires GitHub Actions environment');
+  }
+  if (validateGithubSummaryPath(resolve('manual-artifacts', 'summary.md'), env).ok) {
+    throw new Error('Monitor self-test failed: GitHub summary path outside RUNNER_TEMP should be rejected');
+  }
 }
 
 function assertMonitorBoundary(result) {
@@ -306,6 +359,7 @@ function printSummary(result) {
 
 function main() {
   runTransportShockRefreshHistorySelfTests();
+  runMonitorSelfTests();
   const options = parseArgs(process.argv.slice(2));
   const result = createMonitorResult(options);
   assertMonitorBoundary(result);

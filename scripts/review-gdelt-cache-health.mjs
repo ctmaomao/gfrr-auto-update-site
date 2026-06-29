@@ -158,6 +158,29 @@ function worstSeverity(rows) {
   return 'ok';
 }
 
+function hasFindingCode(rows, code) {
+  return rows.some((row) => row.findings.some((finding) => finding.code === code));
+}
+
+function awaitingPostMigrationRefresh(rows) {
+  return rows.some((row) => row.findings.some((finding) =>
+    /awaits_/u.test(finding.code) || finding.code === 'bubble_cache_placeholder_refresh_threshold_exceeded'
+  ));
+}
+
+function recommendationFor(status, rows) {
+  if (hasFindingCode(rows, 'bubble_cache_placeholder_refresh_threshold_exceeded')) {
+    return 'investigate_bubble_watch_scheduled_refresh_then_rerun_review';
+  }
+  return status === 'fail'
+    ? 'fix_schema_or_policy_before_relying_on_gdelt_caches'
+    : status === 'warn'
+      ? 'review_gdelt_cache_errors_before_next_promotion'
+      : status === 'watch'
+        ? 'wait_for_next_scheduled_refresh_then_rerun_review'
+        : 'gdelt_cache_health_current';
+}
+
 function reviewOilNewsCache(nowMs) {
   const row = {
     key: 'oil_news_gdelt_doc',
@@ -405,6 +428,14 @@ function runSelfTests() {
     placeholderRow.findings.some((finding) => finding.severity === 'fail' && finding.code === 'bubble_cache_placeholder_refresh_threshold_exceeded'),
     'placeholder fixture becomes FAIL at threshold'
   );
+  assertSelfTest(
+    recommendationFor('fail', [placeholderRow]) === 'investigate_bubble_watch_scheduled_refresh_then_rerun_review',
+    'placeholder threshold fail routes to scheduled refresh triage'
+  );
+  assertSelfTest(
+    awaitingPostMigrationRefresh([placeholderRow]) === true,
+    'placeholder threshold fail remains a post-migration refresh state'
+  );
 }
 
 function buildReview() {
@@ -422,13 +453,7 @@ function buildReview() {
       counts[finding.severity] = (counts[finding.severity] || 0) + 1;
       return counts;
     }, {});
-  const recommendation = status === 'fail'
-    ? 'fix_schema_or_policy_before_relying_on_gdelt_caches'
-    : status === 'warn'
-      ? 'review_gdelt_cache_errors_before_next_promotion'
-      : status === 'watch'
-        ? 'wait_for_next_scheduled_refresh_then_rerun_review'
-        : 'gdelt_cache_health_current';
+  const recommendation = recommendationFor(status, rows);
   return {
     reviewVersion: REVIEW_VERSION,
     generatedAt: now,
@@ -440,7 +465,7 @@ function buildReview() {
       issueCounts,
       hasJsonParseFailed: rows.some((row) => row.errorCode === 'json_parse_failed'),
       hasRateLimited: rows.some((row) => row.rateLimited === true),
-      awaitingPostMigrationRefresh: rows.some((row) => row.findings.some((finding) => /awaits_/u.test(finding.code)))
+      awaitingPostMigrationRefresh: awaitingPostMigrationRefresh(rows)
     },
     rows,
     productionImpact: {
