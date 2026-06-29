@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-bubble-watch-cache-p38",
   "module": "gdelt-bubble-watch-cache",
-  "generatedAt": "2026-06-23T00:00:00.000Z",
+  "generatedAt": "2026-06-29T10:04:40.714Z",
   "sourceKey": "gdelt_bubble_watch_ceo_hedging",
   "cacheScope": "bubble_watch_ceo_hedging",
-  "status": "not_initialized",
-  "sourceStatus": "not_initialized",
-  "requestMode": "placeholder_until_next_bubble_watch_refresh",
+  "status": "ok",
+  "sourceStatus": "live",
+  "requestMode": "live_weekly_query",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlHours": 132,
@@ -23,12 +23,149 @@
     "timespan": "30d",
     "sort": "HybridRel"
   },
-  "requestDiagnostics": null,
-  "aggregate": {
-    "articleCount": 0
+  "requestDiagnostics": {
+    "provider": "gdelt",
+    "endpointType": "doc",
+    "label": "Bubble Watch CEO hedging GDELT DOC",
+    "status": 200,
+    "attempts": 1,
+    "retryCount": 0,
+    "rateLimited": false,
+    "timeout": false,
+    "retryAfterSeconds": null,
+    "timeoutMs": 15000,
+    "minIntervalMs": 8000,
+    "maxRetries": 1,
+    "retryAfterCapSeconds": 15,
+    "elapsedMs": 11989,
+    "errorCode": null
   },
-  "articles": [],
-  "error": "placeholder cache; next Refresh Bubble Watch run will write live or error cache state",
+  "aggregate": {
+    "articleCount": 20
+  },
+  "articles": [
+    {
+      "title": "Prediction : Bitcoin Will Hit $100 , 000 By the End of 2026",
+      "url": "https://finance.yahoo.com/markets/crypto/articles/prediction-bitcoin-hit-100-000-181100713.html",
+      "domain": "finance.yahoo.com",
+      "seendate": "20260613T194500Z"
+    },
+    {
+      "title": "Scared of a stock market bubble ? These 3 charts will ease your darkest fears .",
+      "url": "https://finance.yahoo.com/markets/article/scared-of-a-stock-market-bubble-these-3-charts-will-ease-your-darkest-fears-134241607.html",
+      "domain": "finance.yahoo.com",
+      "seendate": "20260609T221500Z"
+    },
+    {
+      "title": "Economists trim Singapore 2026 growth forecast to 3 . 5 pct amid geopolitical risks : survey - Xinhua",
+      "url": "https://english.news.cn/20260617/18ad6e04d80d4706a172f930f5df3a04/c.html",
+      "domain": "english.news.cn",
+      "seendate": "20260617T141500Z"
+    },
+    {
+      "title": "Economists trim Singapore 2026 growth forecast to 3 . 5 pct amid geopolitical risks : survey - Xinhua",
+      "url": "https://english.news.cn/asiapacific/20260617/ee0cff0b3c124ea8943ef406e8deee98/c.html",
+      "domain": "english.news.cn",
+      "seendate": "20260617T143000Z"
+    },
+    {
+      "title": "Strong Earnings Are Inflating a Bubble As They Fuel Record High Stocks",
+      "url": "https://www.businessinsider.com/stock-market-bubble-ai-record-highs-earnings-ai-investing-stocks-2026-6",
+      "domain": "businessinsider.com",
+      "seendate": "20260603T211500Z"
+    },
+    {
+      "title": "Meet the AI Company That Can Thrive Even if an AI Bubble Bursts",
+      "url": "https://www.fool.com/investing/2026/06/06/meet-the-ai-company-that-can-thrive-even-if-an-ai/?source=iedfolrf0000001",
+      "domain": "fool.com",
+      "seendate": "20260607T034500Z"
+    },
+    {
+      "title": "Tech Stocks Just Did Something That Should Only Happen Once Every 4 Million Years",
+      "url": "https://www.fool.com/investing/2026/06/18/tech-stocks-just-did-something-that-should-only-ha/",
+      "domain": "fool.com",
+      "seendate": "20260618T121500Z"
+    },
+    {
+      "title": "Tech Stocks Just Did Something That Should Only Happen Once Every 4 Million Years",
+      "url": "https://www.fool.com/investing/2026/06/18/tech-stocks-just-did-something-that-should-only-ha/?source=iedfolrf0000001",
+      "domain": "fool.com",
+      "seendate": "20260618T103000Z"
+    },
+    {
+      "title": "How to burst the AI bubble : Strike at its roots",
+      "url": "https://arstechnica.com/gadgets/2026/06/how-to-burst-the-ai-bubble-strike-at-its-roots/",
+      "domain": "arstechnica.com",
+      "seendate": "20260623T134500Z"
+    },
+    {
+      "title": "Talk of a bubble is an insult to AI says SoftBank Son",
+      "url": "https://economictimes.indiatimes.com/tech/artificial-intelligence/talk-of-a-bubble-is-an-insult-to-ai-says-softbanks-son/articleshow/131957186.cms",
+      "domain": "economictimes.indiatimes.com",
+      "seendate": "20260624T071500Z"
+    },
+    {
+      "title": "Rachel Reeves set to go out with a bang – blow Andy Burnham sky high | Personal Finance | Finance",
+      "url": "https://www.express.co.uk/finance/personalfinance/2214096/rachel-reeves-go-out-with-bang-blow-andy-burnham-sky-high",
+      "domain": "express.co.uk",
+      "seendate": "20260606T110000Z"
+    },
+    {
+      "title": "Hartnett : Brace For June Event Risk , And CPI Print That Could Pop The Bubble",
+      "url": "https://www.zerohedge.com/markets/hartnett-brace-june-event-risk-and-cpi-print-could-pop-bubble",
+      "domain": "zerohedge.com",
+      "seendate": "20260607T210000Z"
+    },
+    {
+      "title": "BofA Desk Warns Nasdaq Crossing Bubble Threshold , Recommends Trade To Hedge Unwind",
+      "url": "https://www.zerohedge.com/markets/bofa-desk-warns-nasdaq-crossing-bubble-threshold-recommends-trade-hedge-unwind",
+      "domain": "zerohedge.com",
+      "seendate": "20260625T030000Z"
+    },
+    {
+      "title": "In The AI Age , A Tech Rout Affects The U . S . Stock Market A Lot",
+      "url": "https://www.forbes.com/sites/johnwerner/2026/06/23/in-the-ai-age-a-tech-rout-affects-the-us-stock-market-a-lot/",
+      "domain": "forbes.com",
+      "seendate": "20260623T183000Z"
+    },
+    {
+      "title": "OpenAI reportedly weighs significant token price cuts to win customers from Anthropic · Digg",
+      "url": "https://digg.com/tech/jhk9tk0r",
+      "domain": "digg.com",
+      "seendate": "20260611T124500Z"
+    },
+    {
+      "title": "Is the stock market in an AI bubble ? A recent warning sign suggests yes",
+      "url": "https://finance.yahoo.com/markets/stocks/articles/stock-market-ai-bubble-recent-181500850.html",
+      "domain": "finance.yahoo.com",
+      "seendate": "20260603T061500Z"
+    },
+    {
+      "title": "AI bubble heads and doomers seize on Sam Altman remark that AI costs are a huge issue for some companies",
+      "url": "https://finance.yahoo.com/sectors/technology/articles/ai-bubble-heads-doomers-seize-211545691.html",
+      "domain": "finance.yahoo.com",
+      "seendate": "20260604T230000Z"
+    },
+    {
+      "title": "AI bubble : Is tech investing still worth it ?",
+      "url": "https://www.straitstimes.com/business/will-the-ai-bubble-burst-we-break-down-if-tech-is-still-worth-investing-in",
+      "domain": "straitstimes.com",
+      "seendate": "20260601T024500Z"
+    },
+    {
+      "title": "BofA Sees No Sign of a Major Peak in Risk Assets Despite Strong Investor Optimism",
+      "url": "https://finance.yahoo.com/markets/stocks/articles/bofa-sees-no-sign-major-110000323.html",
+      "domain": "finance.yahoo.com",
+      "seendate": "20260621T121500Z"
+    },
+    {
+      "title": "Uber AI Doubts Are Just Normal Growing Pains",
+      "url": "https://www.bloomberg.com:443/opinion/articles/2026-06-04/uber-s-ai-doubts-are-just-normal-growing-pains",
+      "domain": "bloomberg.com",
+      "seendate": "20260604T213000Z"
+    }
+  ],
+  "error": null,
   "promotionEligible": false,
   "productionDisplayApproved": false,
   "productionImpact": {
