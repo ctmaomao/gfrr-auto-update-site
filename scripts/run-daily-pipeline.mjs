@@ -437,6 +437,7 @@ const ENERGY_TRANSPORT_QUERY_RECORD_LIMIT = 1000;
 const ENERGY_TRANSPORT_STALE_DAYS = 21;
 const ENERGY_TRANSPORT_USAGE_TERMS_PINNED = 'imf_data_terms_pinned';
 const ENERGY_TRANSPORT_SHOCK_CANDIDATE_CONTRACT_VERSION = 'transport-shock-candidate-v1';
+const ENERGY_TRANSPORT_SHOCK_CANDIDATE_WRITER_ANCHOR = 'transport-shock-candidate-writer-anchor-v1';
 const ENERGY_TRANSPORT_CORE_KEYS = ['suez', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar'];
 const ENERGY_TRANSPORT_CHOKEPOINTS = [
   { key: 'suez', portid: 'chokepoint1', portname: 'Suez Canal', core: true },

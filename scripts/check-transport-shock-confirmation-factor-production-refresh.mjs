@@ -95,6 +95,10 @@ function requireMarker(text, marker, file) {
   if (!text.includes(marker)) fail(`${file} missing marker: ${marker}`);
 }
 
+function requireMarkers(text, markers, file) {
+  for (const marker of markers) requireMarker(text, marker, file);
+}
+
 function forbidMarker(text, marker, file) {
   if (text.includes(marker)) fail(`${file} must not include marker: ${marker}`);
 }
@@ -126,25 +130,38 @@ function validateNoScoreWiring() {
 }
 
 function validateAuthorityDocs() {
-  const docs = {
-    dataSources: read('docs/DATA_SOURCES.md'),
-    dataContract: read('docs/DATA_CONTRACT.md'),
-    signalIntake: read('docs/SIGNAL_INTAKE.md'),
-    backlog: read('docs/PROJECT_BACKLOG.md'),
-    agents: read('AGENTS.md'),
-    packageJson: read('package.json'),
-    checkSuite: read('scripts/check-suite.mjs')
-  };
-  for (const [key, marker] of [
-    ['dataSources', 'Transport Shock Confirmation Factor production refresh verification(P-score-8)'],
-    ['dataContract', 'transport-shock-confirmation-factor-production-refresh-v1'],
-    ['signalIntake', 'Transport Shock Confirmation Factor production refresh verification'],
-    ['backlog', 'Transport Shock Confirmation Factor production refresh verification(2026-06-28,P-score-8 read-only)'],
-    ['agents', 'Transport Shock Confirmation Factor production refresh verification 只是 P-score-8 只读核验层'],
-    ['packageJson', 'check:transport-shock-confirmation-factor-production-refresh'],
-    ['checkSuite', 'check:transport-shock-confirmation-factor-production-refresh']
-  ]) {
-    requireMarker(docs[key], marker, key);
+  const docs = [
+    {
+      file: 'docs/DATA_SOURCES.md',
+      markers: ['P-score-8', 'check:transport-shock-confirmation-factor-production-refresh']
+    },
+    {
+      file: 'docs/DATA_CONTRACT.md',
+      markers: ['transport-shock-confirmation-factor-production-refresh-v1', 'P-score-8']
+    },
+    {
+      file: 'docs/SIGNAL_INTAKE.md',
+      markers: ['transport-shock-confirmation-factor-production-refresh-v1', 'P-score-8']
+    },
+    {
+      file: 'docs/PROJECT_BACKLOG.md',
+      markers: ['P-score-8', 'check:transport-shock-confirmation-factor-production-refresh']
+    },
+    {
+      file: 'AGENTS.md',
+      markers: ['transport-shock-confirmation-factor-production-refresh-v1', 'check:transport-shock-confirmation-factor-production-refresh']
+    },
+    {
+      file: 'package.json',
+      markers: ['check:transport-shock-confirmation-factor-production-refresh']
+    },
+    {
+      file: 'scripts/check-suite.mjs',
+      markers: ['check:transport-shock-confirmation-factor-production-refresh']
+    }
+  ];
+  for (const { file, markers } of docs) {
+    requireMarkers(read(file), markers, file);
   }
 }
 

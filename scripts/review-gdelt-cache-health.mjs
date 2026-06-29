@@ -23,6 +23,11 @@ const BUBBLE_WATCH_REFRESH_SCHEDULE_UTC = {
   minute: 30
 };
 const BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SCHEDULED_REFRESHES = 2;
+const SENSITIVE_CACHE_FIELD_RE = /^(?:authorization|authorizationHeader|apiKey|api_key|secret|token|bearer|bearerToken|cookie|cookies|setCookie|headers|requestHeaders|responseHeaders|rawProviderResponse|providerResponse|rawResponse|responseBody|rawBody|body)$/iu;
+const ALLOWED_SENSITIVE_POLICY_FLAG_PATHS = new Set([
+  'cachePolicy.rawProviderResponseStored',
+  'cachePolicy.authorizationStored'
+]);
 
 function printUsage() {
   console.log(`Usage:
@@ -145,6 +150,39 @@ function pushFinding(row, severity, code, message) {
   row.findings.push({ severity, code, message });
 }
 
+function collectForbiddenCacheFields(value, path = []) {
+  if (!value || typeof value !== 'object') return [];
+  const findings = [];
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      findings.push(...collectForbiddenCacheFields(item, [...path, String(index)]));
+    });
+    return findings;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    const childPath = [...path, key];
+    const dottedPath = childPath.join('.');
+    if (SENSITIVE_CACHE_FIELD_RE.test(key) && !ALLOWED_SENSITIVE_POLICY_FLAG_PATHS.has(dottedPath)) {
+      findings.push(dottedPath);
+    }
+    findings.push(...collectForbiddenCacheFields(child, childPath));
+  }
+  return findings;
+}
+
+function assertNoForbiddenCacheFields(row, cache, codePrefix) {
+  const paths = collectForbiddenCacheFields(cache);
+  if (paths.length === 0) return;
+  const sample = paths.slice(0, 5).join(', ');
+  const suffix = paths.length > 5 ? `, +${paths.length - 5} more` : '';
+  pushFinding(
+    row,
+    'fail',
+    `${codePrefix}_cache_forbidden_sensitive_or_raw_field`,
+    `GDELT cache contains forbidden sensitive/raw response field path(s): ${sample}${suffix}.`
+  );
+}
+
 function countWeeklyScheduleSlotsSince(startIso, nowMs, schedule) {
   const startMs = Date.parse(startIso || '');
   if (!Number.isFinite(startMs) || !Number.isFinite(nowMs)) return null;
@@ -257,6 +295,7 @@ function reviewOilNewsCache(nowMs) {
   row.rateLimited = cache.requestDiagnostics?.rateLimited === true || cache.requestDiagnostics?.status === 429;
   row.queryCurrent = cache.query?.query === GDELT_BROAD_QUERY_SPEC.query;
   row.articleCount = Array.isArray(cache.articles) ? cache.articles.length : null;
+  assertNoForbiddenCacheFields(row, cache, 'oil_news');
 
   if (cache.schemaVersion !== row.expectedSchemaVersion || cache.module !== 'gdelt-news-cache') {
     pushFinding(row, 'fail', 'oil_news_cache_schema_mismatch', 'Oil News GDELT cache schema/module mismatch.');
@@ -325,6 +364,7 @@ function reviewBubbleWatchCache(nowMs, cacheOverride = null) {
   row.errorCode = cache.requestDiagnostics?.errorCode || null;
   row.rateLimited = cache.requestDiagnostics?.rateLimited === true || cache.requestDiagnostics?.status === 429;
   row.articleCount = Array.isArray(cache.articles) ? cache.articles.length : null;
+  assertNoForbiddenCacheFields(row, cache, 'bubble');
 
   if (cache.schemaVersion !== row.expectedSchemaVersion || cache.module !== 'gdelt-bubble-watch-cache') {
     pushFinding(row, 'fail', 'bubble_cache_schema_mismatch', 'Bubble Watch GDELT cache schema/module mismatch.');
@@ -397,6 +437,7 @@ function reviewWorldOrderCache(nowMs) {
   row.errorCode = cache.requestDiagnostics?.errorCode || null;
   row.rateLimited = cache.requestDiagnostics?.rateLimited === true || cache.requestDiagnostics?.status === 429;
   row.totalEvents = Number.isFinite(Number(cache.summary?.totalEvents)) ? Number(cache.summary.totalEvents) : null;
+  assertNoForbiddenCacheFields(row, cache, 'world_order');
 
   if (cache.schemaVersion !== row.expectedSchemaVersion || cache.module !== 'gdelt-world-order-cache') {
     pushFinding(row, 'fail', 'world_order_cache_schema_mismatch', 'World Order GDELT cache schema/module mismatch.');
@@ -453,6 +494,22 @@ function runSelfTests() {
   assertSelfTest(isManualArtifactPath(DEFAULT_OUTPUT), 'default output path stays inside manual-artifacts');
   assertSelfTest(!isManualArtifactPath('data/gdelt-cache-health.json'), 'production data output path is rejected');
   assertManualArtifactWritePath(DEFAULT_OUTPUT);
+  assertSelfTest(
+    collectForbiddenCacheFields({ cachePolicy: { rawProviderResponseStored: false, authorizationStored: false } }).length === 0,
+    'policy flags for not storing raw/auth are allowed'
+  );
+  assertSelfTest(
+    collectForbiddenCacheFields({ requestDiagnostics: { status: 429 }, notes: ['Authorization header is not stored.'] }).length === 0,
+    'safe diagnostic fields and boundary notes do not trip sensitive scan'
+  );
+  assertSelfTest(
+    collectForbiddenCacheFields({ requestHeaders: { Authorization: 'Bearer redacted' } }).includes('requestHeaders'),
+    'request headers trip sensitive scan'
+  );
+  assertSelfTest(
+    collectForbiddenCacheFields({ rawProviderResponse: { ok: true } }).includes('rawProviderResponse'),
+    'raw provider response trips sensitive scan'
+  );
   assertSelfTest(shouldExitNonZero('fail', false) === true, 'default mode exits non-zero on FAIL');
   assertSelfTest(shouldExitNonZero('watch', false) === false, 'default mode keeps WATCH non-blocking');
   assertSelfTest(shouldExitNonZero('watch', true) === true, 'strict mode exits non-zero on WATCH');

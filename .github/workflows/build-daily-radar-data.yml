@@ -59,6 +59,7 @@ jobs:
         run: |
           node <<'NODE'
           const fs = require('fs');
+          const path = require('path');
           const data = JSON.parse(fs.readFileSync('data/radar-data.json', 'utf8'));
           const input = data.dailyRealtimeInput || {};
           const baseline = data.displayInputsBaseline || {};
@@ -85,6 +86,20 @@ jobs:
             }
           };
           const tableValue = (value) => short(value).replace(/\r?\n/g, ' ').replace(/\|/g, '\\|');
+          const pathIsInside = (basePath, targetPath) => {
+            const relativePath = path.relative(path.resolve(basePath), path.resolve(targetPath));
+            return relativePath === '' || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath));
+          };
+          const validateGithubSummaryPath = (summaryPath, env = process.env) => {
+            if (env.GITHUB_ACTIONS !== 'true') return { ok: false, reason: 'github_actions_env_required' };
+            if (!summaryPath) return { ok: false, reason: 'github_step_summary_missing' };
+            if (!env.RUNNER_TEMP) return { ok: false, reason: 'runner_temp_missing' };
+            if (!pathIsInside(env.RUNNER_TEMP, summaryPath)) return { ok: false, reason: 'summary_path_outside_runner_temp' };
+            if (env.GITHUB_WORKSPACE && pathIsInside(env.GITHUB_WORKSPACE, summaryPath)) {
+              return { ok: false, reason: 'summary_path_inside_workspace' };
+            }
+            return { ok: true };
+          };
           const pick = (...values) => {
             for (const value of values) {
               if (value !== null && value !== undefined && value !== '') return value;
@@ -201,7 +216,12 @@ jobs:
             ['largest positive', describeDeltaNode(largestPositive)],
             ['largest negative', describeDeltaNode(largestNegative)]
           ];
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
+          const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+          const summaryValidation = validateGithubSummaryPath(summaryPath);
+          if (!summaryValidation.ok) {
+            throw new Error(`Refusing GitHub Summary path: ${summaryValidation.reason}`);
+          }
+          fs.appendFileSync(summaryPath, [
             '## Daily Radar Summary',
             '',
             '| Item | Value |',

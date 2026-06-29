@@ -1,8 +1,8 @@
 import { execFileSync } from 'node:child_process';
 
 export const DAILY_REFRESH_SUBJECT = 'chore: refresh radar data';
-export const TRANSPORT_SHOCK_CANDIDATE_WRITER_MARKER =
-  "transportShockCandidate: buildEnergyTransportShockCandidate(chokepoints, reroutingProxy, 'live')";
+export const TRANSPORT_SHOCK_CANDIDATE_WRITER_ANCHOR = 'transport-shock-candidate-writer-anchor-v1';
+export const TRANSPORT_SHOCK_CANDIDATE_WRITER_MARKER = TRANSPORT_SHOCK_CANDIDATE_WRITER_ANCHOR;
 export const TRANSPORT_SHOCK_CANDIDATE_EXPECTED_AFTER_ISO = '2026-06-28T02:48:22.000Z';
 export const MISSING_CANDIDATE_FAIL_AFTER_DAILY_REFRESHES = 2;
 export const DAILY_REFRESH_SCHEDULE_UTC = {
