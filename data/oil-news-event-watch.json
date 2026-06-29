@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-29T20:26:58.748Z",
+  "generatedAt": "2026-06-29T21:53:54.375Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-06-29T18:30:00.000Z",
-    "latestArticleAgeHours": 1.9,
+    "latestArticleAgeHours": 3.4,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 47,
+      "articleCount": 46,
       "sourceCount": 2,
-      "weightedSignal": 282,
+      "weightedSignal": 276,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -476,9 +476,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 43,
+      "articleCount": 42,
       "sourceCount": 2,
-      "weightedSignal": 129,
+      "weightedSignal": 126,
       "topArticles": [
         {
           "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
@@ -536,9 +536,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 23,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 46,
+      "weightedSignal": 44,
       "topArticles": [
         {
           "title": "As Strait of Hormuz Opens, Oil Falls - Marine News Magazine",
@@ -559,25 +559,6 @@
           ]
         },
         {
-          "title": "Hormuz traffic rebound returns oil to prewar rates, as US reassures wary Gulf allies - The Times of Israel",
-          "url": "https://www.timesofisrael.com/hormuz-traffic-rebound-returns-oil-to-prewar-rates-as-us-reassures-wary-gulf-allies/",
-          "domain": "timesofisrael.com",
-          "publishedAt": "2026-06-25T00:00:00.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "market_reaction",
-            "middle_east_risk",
-            "sanctions",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "sanctions_shadow_fleet"
-          ]
-        },
-        {
           "title": "Oil Prices Hover Around Prewar Levels as Gulf Shipping Jumps - The New York Times",
           "url": "https://www.nytimes.com/2026/06/25/business/oil-prices-gas-iran.html",
           "domain": "nytimes.com",
@@ -591,6 +572,25 @@
             "market_reaction",
             "middle_east_risk",
             "tanker_shipping"
+          ],
+          "queryIds": [
+            "market_reaction"
+          ]
+        },
+        {
+          "title": "Oil extends losses, WTI crude falls below $70 for first time since early March - Oil & Gas 360",
+          "url": "https://www.oilandgas360.com/oil-extends-losses-wti-crude-falls-below-70-for-first-time-since-early-march/",
+          "domain": "oilandgas360.com",
+          "publishedAt": "2026-06-24T15:42:08.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "facility_event",
+            "market_reaction",
+            "middle_east_risk",
+            "supply_disruption"
           ],
           "queryIds": [
             "market_reaction"
@@ -795,10 +795,10 @@
       ]
     },
     {
-      "title": "Major Saudi Oil Terminal Roars Back to Life as Gulf Supply Recovery Accelerates | OilPrice.com",
-      "url": "https://oilprice.com/Latest-Energy-News/World-News/Major-Saudi-Oil-Terminal-Roars-Back-to-Life-as-Gulf-Supply-Recovery-Accelerates.html",
+      "title": "Gulf Producers Race to Load Oil and LNG as Hormuz Stays Open | OilPrice.com",
+      "url": "https://oilprice.com/Latest-Energy-News/World-News/Gulf-Producers-Race-to-Load-Oil-and-LNG-as-Hormuz-Stays-Open.html",
       "domain": "oilprice.com",
-      "publishedAt": "2026-06-25T16:30:00.000Z",
+      "publishedAt": "2026-06-29T14:30:00.000Z",
       "sources": [
         "brave"
       ],
@@ -866,10 +866,10 @@
       "unclear_or_high_claim": 1
     },
     "eventTypeCounts": {
-      "chokepoint": 6,
+      "chokepoint": 7,
       "shipping": 2,
       "sanctions": 0,
-      "facility": 1,
+      "facility": 0,
       "supply": 3,
       "market_reaction": 0,
       "general_energy": 0
@@ -887,7 +887,7 @@
       "details": [
         {
           "eventType": "chokepoint",
-          "claimCount": 6,
+          "claimCount": 7,
           "riskEscalation": 2,
           "riskDeescalation": 0,
           "mixedOrContested": 0,
@@ -896,14 +896,6 @@
         {
           "eventType": "shipping",
           "claimCount": 2,
-          "riskEscalation": 0,
-          "riskDeescalation": 0,
-          "mixedOrContested": 0,
-          "contradiction": false
-        },
-        {
-          "eventType": "facility",
-          "claimCount": 1,
           "riskEscalation": 0,
           "riskDeescalation": 0,
           "mixedOrContested": 0,
