@@ -1,5 +1,7 @@
 ﻿import fs from 'node:fs';
 
+import { DAILY_REFRESH_SCHEDULE_UTC } from './transport-shock-refresh-history.mjs';
+
 const contracts = [
   {
     file: '.github/workflows/build-realtime-market.yml',
@@ -381,6 +383,12 @@ function addForbiddenFailure(file, forbidden) {
 function addRuntimeFailure(file, message) {
   failures.push({ file, runtime: message });
   console.error(`Workflow runtime contract failed: ${file} ${message}`);
+}
+
+function requireSourceMarker(file, source, marker) {
+  if (!source.includes(marker)) {
+    addRuntimeFailure(file, `source marker missing: ${marker}`);
+  }
 }
 
 for (const contract of contracts) {
@@ -1582,6 +1590,45 @@ if (fs.existsSync(workerContract.routerFile)) {
 // deploy workflow's workflow_run.workflows list covers every commits-to-main
 // workflow (or excludes it with a reason), that listed entries match real
 // workflows, and that refresh-world-order-stress.yml has no obsolete Pages step.
+function checkRefreshScheduleConsistency() {
+  const dailyWorkflow = '.github/workflows/build-daily-radar-data.yml';
+  const transportCheck = 'scripts/check-transport-shock-confirmation-factor-production-refresh.mjs';
+  const transportMonitor = 'scripts/monitor-transport-shock-confirmation-factor-production-refresh.mjs';
+  const transportHelper = 'scripts/transport-shock-refresh-history.mjs';
+  const bubbleWorkflow = '.github/workflows/refresh-bubble-watch.yml';
+  const gdeltReview = 'scripts/review-gdelt-cache-health.mjs';
+
+  const dailyCron = `cron: '${DAILY_REFRESH_SCHEDULE_UTC.minute} ${DAILY_REFRESH_SCHEDULE_UTC.hour} * * *'`;
+  if (fs.existsSync(dailyWorkflow)) {
+    const dailySrc = fs.readFileSync(dailyWorkflow, 'utf8');
+    if (!dailySrc.includes(dailyCron)) {
+      addRuntimeFailure(dailyWorkflow, `Daily cron must match Transport Shock schedule constants: ${dailyCron}`);
+    }
+  }
+
+  for (const file of [transportCheck, transportMonitor]) {
+    const source = fs.readFileSync(file, 'utf8');
+    requireSourceMarker(file, source, "from './transport-shock-refresh-history.mjs'");
+  }
+
+  const helperSource = fs.readFileSync(transportHelper, 'utf8');
+  requireSourceMarker(transportHelper, helperSource, 'hour: 22');
+  requireSourceMarker(transportHelper, helperSource, 'minute: 30');
+
+  if (fs.existsSync(bubbleWorkflow)) {
+    const bubbleSource = fs.readFileSync(bubbleWorkflow, 'utf8');
+    const gdeltSource = fs.readFileSync(gdeltReview, 'utf8');
+    if (!bubbleSource.includes("cron: '30 5 * * 1'")) {
+      addRuntimeFailure(bubbleWorkflow, 'Bubble Watch cron must stay Monday 05:30 UTC or review-gdelt-cache-health schedule constants must be updated.');
+    }
+    for (const marker of ['dayOfWeek: 1', 'hour: 5', 'minute: 30']) {
+      requireSourceMarker(gdeltReview, gdeltSource, marker);
+    }
+  }
+}
+
+checkRefreshScheduleConsistency();
+
 // All assertions preserved verbatim; failures feed the aggregate exit via
 // addRuntimeFailure, and the operator-facing coverage report still prints.
 function checkPagesTriggerCoverage() {

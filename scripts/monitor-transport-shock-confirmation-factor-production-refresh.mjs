@@ -1,23 +1,19 @@
 #!/usr/bin/env node
-import { execFileSync } from 'node:child_process';
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
+
+import {
+  MISSING_CANDIDATE_FAIL_AFTER_DAILY_REFRESHES,
+  runTransportShockRefreshHistorySelfTests,
+  summarizeMissingCandidateRefreshHistory
+} from './transport-shock-refresh-history.mjs';
 
 const MONITOR_VERSION = 'transport-shock-production-refresh-monitor-p10';
 const DEFAULT_OUTPUT =
   'manual-artifacts/transport-shock-confirmation-factor/production-refresh-monitor-latest.json';
 const RADAR_DATA_PATH = 'data/radar-data.json';
 const CONTRACT_VERSION = 'transport-shock-candidate-v1';
-const DAILY_REFRESH_SUBJECT = 'chore: refresh radar data';
-const TRANSPORT_SHOCK_CANDIDATE_WRITER_MARKER =
-  "transportShockCandidate: buildEnergyTransportShockCandidate(chokepoints, reroutingProxy, 'live')";
-const TRANSPORT_SHOCK_CANDIDATE_EXPECTED_AFTER_ISO = '2026-06-28T02:48:22.000Z';
-const MISSING_CANDIDATE_FAIL_AFTER_DAILY_REFRESHES = 2;
-const DAILY_REFRESH_SCHEDULE_UTC = {
-  hour: 22,
-  minute: 30
-};
 const BOUNDARY =
   'artifact-only Transport Shock Confirmation Factor production refresh monitor; reads committed data/radar-data.json only; writes ignored manual-artifacts and GitHub Summary/artifact only; does not trigger Daily, fetch network, write production data, or affect ODP finalBias, Brent promotion, scoring, decision, Global Risk Heatmap, or cross-validation';
 
@@ -100,167 +96,6 @@ function readJson(filePath) {
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function gitOutput(args) {
-  try {
-    return execFileSync('git', args, {
-      encoding: 'utf8',
-      maxBuffer: 50 * 1024 * 1024,
-      stdio: ['ignore', 'pipe', 'ignore']
-    }).trim();
-  } catch {
-    return null;
-  }
-}
-
-function gitHistoryTrustStatus() {
-  const shallow = gitOutput(['rev-parse', '--is-shallow-repository']);
-  if (shallow === 'true') return { trusted: false, reason: 'git_history_shallow' };
-  if (shallow === null) return { trusted: false, reason: 'git_unavailable' };
-  return { trusted: true, reason: null };
-}
-
-function countDailyScheduleSlotsSince(startIso, endIso) {
-  const startMs = Date.parse(startIso || '');
-  const endMs = Date.parse(endIso || '');
-  if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return null;
-  if (endMs <= startMs) return 0;
-
-  const start = new Date(startMs);
-  const dayMs = 24 * 60 * 60 * 1000;
-  let cursorMs = Date.UTC(
-    start.getUTCFullYear(),
-    start.getUTCMonth(),
-    start.getUTCDate(),
-    DAILY_REFRESH_SCHEDULE_UTC.hour,
-    DAILY_REFRESH_SCHEDULE_UTC.minute,
-    0,
-    0
-  );
-  if (cursorMs <= startMs) cursorMs += dayMs;
-
-  let count = 0;
-  while (cursorMs <= endMs) {
-    count += 1;
-    cursorMs += dayMs;
-  }
-  return count;
-}
-
-function countConsecutiveDailyRefreshesMissingCandidate(records) {
-  let count = 0;
-  for (const record of records) {
-    if (record.candidatePresent === true) break;
-    count += 1;
-  }
-  return count;
-}
-
-function findTransportShockWriterAnchor() {
-  const trust = gitHistoryTrustStatus();
-  if (!trust.trusted) {
-    return {
-      commit: null,
-      committedAt: TRANSPORT_SHOCK_CANDIDATE_EXPECTED_AFTER_ISO,
-      source: trust.reason,
-      historyTrusted: false
-    };
-  }
-
-  const output = gitOutput([
-    'log',
-    '--reverse',
-    '--format=%H%x09%aI',
-    `-S${TRANSPORT_SHOCK_CANDIDATE_WRITER_MARKER}`,
-    '--',
-    'scripts/run-daily-pipeline.mjs'
-  ]);
-  const first = output?.split(/\r?\n/u).find(Boolean);
-  if (!first) {
-    return {
-      commit: null,
-      committedAt: TRANSPORT_SHOCK_CANDIDATE_EXPECTED_AFTER_ISO,
-      source: 'fallback_expected_after',
-      historyTrusted: true
-    };
-  }
-  const [commit, committedAt] = first.split('\t');
-  return {
-    commit,
-    committedAt: committedAt || TRANSPORT_SHOCK_CANDIDATE_EXPECTED_AFTER_ISO,
-    source: 'git_pickaxe',
-    historyTrusted: true
-  };
-}
-
-function summarizeMissingCandidateRefreshHistory(radar, energyTransport) {
-  const anchor = findTransportShockWriterAnchor();
-  const summary = {
-    source: anchor.commit ? 'git_history' : 'updatedAt_schedule_fallback',
-    anchorCommit: anchor.commit,
-    anchorCommittedAt: anchor.committedAt,
-    historyUnavailableReason: anchor.commit ? null : anchor.source,
-    failAfterDailyRefreshes: MISSING_CANDIDATE_FAIL_AFTER_DAILY_REFRESHES,
-    consecutiveDailyRefreshesMissingCandidate: 0,
-    inspectedDailyRefreshes: [],
-    historyAvailable: Boolean(anchor.commit && anchor.historyTrusted)
-  };
-
-  if (anchor.commit) {
-    const output = gitOutput([
-      'log',
-      '--format=%H%x09%s',
-      `${anchor.commit}..HEAD`,
-      '--',
-      RADAR_DATA_PATH
-    ]);
-    const dailyLines = (output || '')
-      .split(/\r?\n/u)
-      .filter(Boolean)
-      .map((line) => {
-        const [commit, subject] = line.split('\t');
-        return { commit, subject };
-      })
-      .filter((row) => row.subject === DAILY_REFRESH_SUBJECT);
-
-    for (const row of dailyLines) {
-      try {
-        const data = JSON.parse(execFileSync('git', ['show', `${row.commit}:${RADAR_DATA_PATH}`], {
-          encoding: 'utf8',
-          maxBuffer: 50 * 1024 * 1024,
-          stdio: ['ignore', 'pipe', 'ignore']
-        }));
-        const recordEnergyTransport = data?.macroDrivers?.energyTransport;
-        summary.inspectedDailyRefreshes.push({
-          commit: row.commit.slice(0, 8),
-          updatedAt: data?.updatedAt || null,
-          sourceStatus: recordEnergyTransport?.sourceStatus?.chokepoints || 'missing',
-          candidatePresent: recordEnergyTransport?.transportShockCandidate !== undefined
-        });
-      } catch {
-        summary.inspectedDailyRefreshes.push({
-          commit: row.commit.slice(0, 8),
-          updatedAt: null,
-          sourceStatus: 'unreadable',
-          candidatePresent: false
-        });
-        break;
-      }
-    }
-    summary.consecutiveDailyRefreshesMissingCandidate =
-      countConsecutiveDailyRefreshesMissingCandidate(summary.inspectedDailyRefreshes);
-    return summary;
-  }
-
-  const candidatePresent = energyTransport?.transportShockCandidate !== undefined;
-  const scheduledSlotsCoveredByCurrentData = countDailyScheduleSlotsSince(anchor.committedAt, radar?.updatedAt);
-  summary.scheduledSlotsCoveredByCurrentData = scheduledSlotsCoveredByCurrentData;
-  summary.consecutiveDailyRefreshesMissingCandidate =
-    candidatePresent === false && Number.isFinite(scheduledSlotsCoveredByCurrentData)
-      ? scheduledSlotsCoveredByCurrentData
-      : 0;
-  return summary;
 }
 
 function falseBoundaryFlags(candidate) {
@@ -470,6 +305,7 @@ function printSummary(result) {
 }
 
 function main() {
+  runTransportShockRefreshHistorySelfTests();
   const options = parseArgs(process.argv.slice(2));
   const result = createMonitorResult(options);
   assertMonitorBoundary(result);

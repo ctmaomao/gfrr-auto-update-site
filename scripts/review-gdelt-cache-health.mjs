@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
@@ -70,7 +70,22 @@ function parseArgs(argv) {
     }
     throw new Error(`Unknown argument: ${arg}`);
   }
+  if (!isManualArtifactPath(options.output)) {
+    throw new Error(`Refusing output outside manual-artifacts/: ${options.output}`);
+  }
   return options;
+}
+
+function safeRelativePath(path) {
+  const absolutePath = resolve(path);
+  const relativePath = relative(process.cwd(), absolutePath);
+  if (relativePath === '' || relativePath.startsWith('..')) return null;
+  return relativePath.replace(/\\/g, '/');
+}
+
+function isManualArtifactPath(path) {
+  const relativePath = safeRelativePath(path);
+  return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
 }
 
 function readJson(path) {
@@ -210,7 +225,7 @@ function reviewOilNewsCache(nowMs) {
   return row;
 }
 
-function reviewBubbleWatchCache(nowMs) {
+function reviewBubbleWatchCache(nowMs, cacheOverride = null) {
   const row = {
     key: 'bubble_watch_gdelt_doc',
     label: 'Bubble Watch GDELT DOC',
@@ -228,7 +243,9 @@ function reviewBubbleWatchCache(nowMs) {
     placeholderFailAfterScheduledRefreshes: BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SCHEDULED_REFRESHES,
     findings: []
   };
-  const cacheRead = readJson(CACHE_PATHS.bubbleWatch);
+  const cacheRead = cacheOverride
+    ? { ok: true, path: CACHE_PATHS.bubbleWatch, value: cacheOverride }
+    : readJson(CACHE_PATHS.bubbleWatch);
   if (!cacheRead.ok) {
     pushFinding(row, 'fail', 'bubble_cache_missing', `Unable to read ${CACHE_PATHS.bubbleWatch}: ${cacheRead.error}`);
     return row;
@@ -367,6 +384,27 @@ function runSelfTests() {
   );
   assertSelfTest(bubblePlaceholderSeverity(1) === 'watch', 'placeholder remains WATCH before threshold');
   assertSelfTest(bubblePlaceholderSeverity(2) === 'fail', 'placeholder becomes FAIL at threshold');
+  assertSelfTest(isManualArtifactPath(DEFAULT_OUTPUT), 'default output path stays inside manual-artifacts');
+  assertSelfTest(!isManualArtifactPath('data/gdelt-cache-health.json'), 'production data output path is rejected');
+
+  const placeholderRow = reviewBubbleWatchCache(Date.parse('2026-07-06T05:30:00.000Z'), {
+    schemaVersion: 'gdelt-bubble-watch-cache-p38',
+    module: 'gdelt-bubble-watch-cache',
+    cacheScope: 'bubble_watch_ceo_hedging',
+    cachePolicy: {
+      lowFrequencyCache: true,
+      broadQueryLocalClassification: true
+    },
+    status: 'not_initialized',
+    sourceStatus: 'missing',
+    requestMode: 'placeholder_until_next_bubble_watch_refresh',
+    generatedAt: placeholderGeneratedAt,
+    articles: []
+  });
+  assertSelfTest(
+    placeholderRow.findings.some((finding) => finding.severity === 'fail' && finding.code === 'bubble_cache_placeholder_refresh_threshold_exceeded'),
+    'placeholder fixture becomes FAIL at threshold'
+  );
 }
 
 function buildReview() {
