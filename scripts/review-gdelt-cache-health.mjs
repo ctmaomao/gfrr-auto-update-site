@@ -17,6 +17,12 @@ const CACHE_PATHS = {
 };
 const BOUNDARY =
   'read-only GDELT cache health review; does not fetch external sources, write production data, change scoring, decision, execution, position, ODP finalBias, Brent promotion, Global Risk Heatmap, or cross-validation';
+const BUBBLE_WATCH_REFRESH_SCHEDULE_UTC = {
+  dayOfWeek: 1,
+  hour: 5,
+  minute: 30
+};
+const BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SCHEDULED_REFRESHES = 2;
 
 function printUsage() {
   console.log(`Usage:
@@ -92,6 +98,41 @@ function compact(value, maxLength = 180) {
 
 function pushFinding(row, severity, code, message) {
   row.findings.push({ severity, code, message });
+}
+
+function countWeeklyScheduleSlotsSince(startIso, nowMs, schedule) {
+  const startMs = Date.parse(startIso || '');
+  if (!Number.isFinite(startMs) || !Number.isFinite(nowMs)) return null;
+  if (nowMs <= startMs) return 0;
+
+  const start = new Date(startMs);
+  const dayMs = 24 * 60 * 60 * 1000;
+  const weekMs = 7 * dayMs;
+  const daysUntilScheduled = (schedule.dayOfWeek - start.getUTCDay() + 7) % 7;
+  let cursorMs = Date.UTC(
+    start.getUTCFullYear(),
+    start.getUTCMonth(),
+    start.getUTCDate() + daysUntilScheduled,
+    schedule.hour,
+    schedule.minute,
+    0,
+    0
+  );
+  if (cursorMs <= startMs) cursorMs += weekMs;
+
+  let count = 0;
+  while (cursorMs <= nowMs) {
+    count += 1;
+    cursorMs += weekMs;
+  }
+  return count;
+}
+
+function bubblePlaceholderSeverity(elapsedScheduledRefreshes) {
+  return Number.isFinite(elapsedScheduledRefreshes)
+    && elapsedScheduledRefreshes >= BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SCHEDULED_REFRESHES
+    ? 'fail'
+    : 'watch';
 }
 
 function worstSeverity(rows) {
@@ -183,6 +224,8 @@ function reviewBubbleWatchCache(nowMs) {
     errorCode: null,
     rateLimited: false,
     articleCount: null,
+    placeholderScheduledRefreshesElapsed: null,
+    placeholderFailAfterScheduledRefreshes: BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SCHEDULED_REFRESHES,
     findings: []
   };
   const cacheRead = readJson(CACHE_PATHS.bubbleWatch);
@@ -210,7 +253,24 @@ function reviewBubbleWatchCache(nowMs) {
     pushFinding(row, 'fail', 'bubble_cache_policy_missing', 'Bubble Watch GDELT cache policy must declare lowFrequencyCache and broadQueryLocalClassification.');
   }
   if (row.status === 'not_initialized' || row.requestMode === 'placeholder_until_next_bubble_watch_refresh') {
-    pushFinding(row, 'watch', 'bubble_cache_awaits_first_post_p38_refresh', 'Bubble Watch GDELT cache is still the P38 placeholder; next weekly refresh should write live/error/stale state.');
+    row.placeholderScheduledRefreshesElapsed = countWeeklyScheduleSlotsSince(
+      row.generatedAt,
+      nowMs,
+      BUBBLE_WATCH_REFRESH_SCHEDULE_UTC
+    );
+    const severity = bubblePlaceholderSeverity(row.placeholderScheduledRefreshesElapsed);
+    const code = severity === 'fail'
+      ? 'bubble_cache_placeholder_refresh_threshold_exceeded'
+      : 'bubble_cache_awaits_first_post_p38_refresh';
+    const countLabel = row.placeholderScheduledRefreshesElapsed === null
+      ? 'unknown'
+      : String(row.placeholderScheduledRefreshesElapsed);
+    pushFinding(
+      row,
+      severity,
+      code,
+      `Bubble Watch GDELT cache is still the P38 placeholder after ${countLabel}/${BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SCHEDULED_REFRESHES} scheduled weekly refresh slots; refresh should write live/error/stale state.`
+    );
   }
   if (row.rateLimited) {
     pushFinding(row, 'watch', 'bubble_gdelt_rate_limited', 'Bubble Watch GDELT DOC is rate limited; Tavily/Brave/Wind fallback order should remain visible.');
@@ -287,6 +347,28 @@ function reviewWorldOrderCache(nowMs) {
   return row;
 }
 
+function assertSelfTest(condition, message) {
+  if (!condition) throw new Error(`GDELT cache health self-test failed: ${message}`);
+}
+
+function runSelfTests() {
+  const placeholderGeneratedAt = '2026-06-23T00:00:00.000Z';
+  assertSelfTest(
+    countWeeklyScheduleSlotsSince(placeholderGeneratedAt, Date.parse('2026-06-29T05:29:59.000Z'), BUBBLE_WATCH_REFRESH_SCHEDULE_UTC) === 0,
+    'weekly refresh count before first scheduled slot'
+  );
+  assertSelfTest(
+    countWeeklyScheduleSlotsSince(placeholderGeneratedAt, Date.parse('2026-06-29T05:30:00.000Z'), BUBBLE_WATCH_REFRESH_SCHEDULE_UTC) === 1,
+    'weekly refresh count at first scheduled slot'
+  );
+  assertSelfTest(
+    countWeeklyScheduleSlotsSince(placeholderGeneratedAt, Date.parse('2026-07-06T05:30:00.000Z'), BUBBLE_WATCH_REFRESH_SCHEDULE_UTC) === 2,
+    'weekly refresh count at second scheduled slot'
+  );
+  assertSelfTest(bubblePlaceholderSeverity(1) === 'watch', 'placeholder remains WATCH before threshold');
+  assertSelfTest(bubblePlaceholderSeverity(2) === 'fail', 'placeholder becomes FAIL at threshold');
+}
+
 function buildReview() {
   const now = new Date().toISOString();
   const nowMs = Date.parse(now);
@@ -360,6 +442,7 @@ function printSummary(review) {
 }
 
 async function main() {
+  runSelfTests();
   const options = parseArgs(process.argv.slice(2));
   const review = buildReview();
   if (options.writeOutput) writeReview(review, options.output);

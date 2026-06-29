@@ -274,6 +274,7 @@ const contracts = [
       'concurrency',
       'transport-shock-production-refresh-monitor',
       'actions/checkout@v6',
+      'fetch-depth: 0',
       'actions/setup-node@v6',
       'node-version: 24',
       'package-manager-cache: false',
