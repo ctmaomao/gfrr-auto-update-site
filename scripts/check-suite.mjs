@@ -126,6 +126,7 @@ const SUITES = {
     'check:transport-shock-confirmation-factor-free-proxy-score-design',
     'check:transport-shock-confirmation-factor-free-proxy-score-candidate',
     'check:transport-shock-confirmation-factor-free-proxy-score-replay',
+    'check:transport-shock-confirmation-factor-free-proxy-historical-replay-design',
     'check:oil-news-events-diagnosis',
     'check:oil-news-event-watch',
     'check:oil-news-event-watch-samples-review',

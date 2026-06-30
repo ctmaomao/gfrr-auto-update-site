@@ -1,0 +1,108 @@
+{
+  "contractVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-design-v1",
+  "kind": "transport_shock_free_proxy_historical_replay_design",
+  "status": "design_only_no_replay_execution",
+  "createdAt": "2026-06-30",
+  "dependsOn": [
+    "transport-shock-confirmation-factor-free-proxy-score-candidate-v1",
+    "transport-shock-confirmation-factor-free-proxy-score-replay-v1"
+  ],
+  "currentState": {
+    "historicalReplayRunnerImplemented": false,
+    "historicalBacktestPerformed": false,
+    "scoreIntegrationApproved": false,
+    "scoreWriteApproved": false,
+    "productionWriteApproved": false,
+    "eligibleForMainScore": false,
+    "candidateScoreContributionPct": 0
+  },
+  "requiredSampleFamilies": [
+    {
+      "familyKey": "known_disruption_tightening",
+      "minimumSamples": 3,
+      "expectedBehavior": "nonzero_only_if_physical_market_and_non_news_confirmation_align",
+      "canScoreAlone": false
+    },
+    {
+      "familyKey": "headline_only_false_positive",
+      "minimumSamples": 2,
+      "expectedContributionPct": 0,
+      "canScoreAlone": false
+    },
+    {
+      "familyKey": "single_chokepoint_noise",
+      "minimumSamples": 2,
+      "expectedContributionPct": 0,
+      "canScoreAlone": false
+    },
+    {
+      "familyKey": "stale_physical_proxy",
+      "minimumSamples": 2,
+      "expectedContributionPct": 0,
+      "canScoreAlone": false
+    },
+    {
+      "familyKey": "market_confirmation_divergence",
+      "minimumSamples": 2,
+      "expectedContributionPct": 0,
+      "canScoreAlone": false
+    },
+    {
+      "familyKey": "benign_baseline",
+      "minimumSamples": 6,
+      "expectedContributionPct": 0,
+      "canScoreAlone": false
+    }
+  ],
+  "minimumReplayDataset": {
+    "minimumProductionHistorySamples": 24,
+    "minimumFalsePositiveControlSamples": 6,
+    "minimumKnownDisruptionSamples": 3,
+    "minimumDistinctWeeks": 8,
+    "requiresCommittedProductionCandidateSamples": true,
+    "requiresNoRawProviderResponseStored": true
+  },
+  "passFailRules": {
+    "newsOnlyContributionPct": 0,
+    "singleChokepointOnlyContributionPct": 0,
+    "stalePortWatchContributionPct": 0,
+    "maximumFalsePositiveRate": 0.2,
+    "minimumKnownDisruptionDirectionalHitRate": 0.6,
+    "maximumMainScoreContributionPct": 3,
+    "requiresSeparateReviewedScorePr": true
+  },
+  "approvalState": {
+    "historicalReplayDesignApproved": false,
+    "historicalReplayRunnerApproved": false,
+    "historicalBacktestPerformed": false,
+    "scoreIntegrationApproved": false,
+    "scoreWriteApproved": false,
+    "productionWriteApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "boundaries": {
+    "designOnly": true,
+    "noReplayExecution": true,
+    "noNewLiveFetch": true,
+    "noProductionDataRead": true,
+    "noProductionDataWrite": true,
+    "noFrontendChange": true,
+    "noWorkflowAutomation": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreWrite": true,
+    "noOdpFinalBiasChange": true,
+    "noBrentPromotion": true,
+    "noScoringDecisionExecutionPositionImpact": true,
+    "noGlobalRiskHeatmapImpact": true,
+    "noCrossValidationInput": true
+  },
+  "nextAllowedSteps": [
+    "P-score-23 artifact-only historical replay sample scaffold",
+    "P-score-24 historical replay runner dry-run only",
+    "separate reviewed score integration PR only after replay gates pass"
+  ]
+}
