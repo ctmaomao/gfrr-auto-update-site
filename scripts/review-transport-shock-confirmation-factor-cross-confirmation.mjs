@@ -7,10 +7,12 @@ const SCHEMA_VERSION = 'transport-shock-confirmation-factor-cross-confirmation-v
 const CANDIDATE_VERSION = 'transport-shock-candidate-v1';
 const NEWS_GATE_SCHEMA = 'transport-shock-confirmation-factor-news-manual-gate-v1';
 const HIGH_FREQUENCY_SCHEMA = 'transport-shock-confirmation-factor-high-frequency-confirmation-v1';
+const MARKET_PROJECTION_SCHEMA = 'transport-shock-market-confirmation-display-projection-v1';
 const ODP_SCHEMA = 'odp-1';
 const DEFAULT_RADAR = 'data/radar-data.json';
 const DEFAULT_NEWS_GATE = 'manual-artifacts/transport-shock-confirmation-factor/news-manual-gate-latest.json';
 const DEFAULT_HIGH_FREQUENCY = 'manual-artifacts/transport-shock-confirmation-factor/high-frequency-confirmation-latest.json';
+const DEFAULT_MARKET_PROJECTION = 'manual-artifacts/transport-shock-confirmation-factor/market-confirmation-display-projection-latest.json';
 const DEFAULT_OIL_DIRECTIONAL = 'data/oil-directional-pressure.json';
 const DEFAULT_OUTPUT = 'manual-artifacts/transport-shock-confirmation-factor/cross-confirmation-latest.json';
 const BOUNDARY =
@@ -24,6 +26,7 @@ Options:
   --radar <path>           Radar data JSON. Default: ${DEFAULT_RADAR}
   --news-gate <path>       P-score-36 news manual gate artifact. Default: ${DEFAULT_NEWS_GATE}
   --high-frequency <path>  P-score-35 high-frequency confirmation artifact. Default: ${DEFAULT_HIGH_FREQUENCY}
+  --market-projection <path> Market-confirmation display projection artifact. Default: ${DEFAULT_MARKET_PROJECTION}
   --oil-directional <path> ODP JSON. Default: ${DEFAULT_OIL_DIRECTIONAL}
   --output <path>          Ignored cross-confirmation artifact. Default: ${DEFAULT_OUTPUT}
   --max-portwatch-age-days <n> Maximum PortWatch latestAgeDays. Default: 7
@@ -73,6 +76,7 @@ function parseArgs(argv) {
     radar: DEFAULT_RADAR,
     newsGate: DEFAULT_NEWS_GATE,
     highFrequency: DEFAULT_HIGH_FREQUENCY,
+    marketProjection: DEFAULT_MARKET_PROJECTION,
     oilDirectional: DEFAULT_OIL_DIRECTIONAL,
     output: DEFAULT_OUTPUT,
     maxPortWatchAgeDays: 7,
@@ -102,6 +106,7 @@ function parseArgs(argv) {
     if (arg === '--radar') options.radar = nextValue();
     else if (arg === '--news-gate') options.newsGate = nextValue();
     else if (arg === '--high-frequency') options.highFrequency = nextValue();
+    else if (arg === '--market-projection') options.marketProjection = nextValue();
     else if (arg === '--oil-directional') options.oilDirectional = nextValue();
     else if (arg === '--output') options.output = nextValue();
     else if (arg === '--max-portwatch-age-days') options.maxPortWatchAgeDays = Number(nextValue());
@@ -113,6 +118,7 @@ function parseArgs(argv) {
   if (!isRadarInputPath(options.radar)) throw new Error(`Refusing to read radar outside allowed paths: ${options.radar}`);
   if (!isManualOrFixtureInputPath(options.newsGate)) throw new Error(`Refusing to read news gate outside allowed paths: ${options.newsGate}`);
   if (!isManualOrFixtureInputPath(options.highFrequency)) throw new Error(`Refusing to read high-frequency artifact outside allowed paths: ${options.highFrequency}`);
+  if (!isManualOrFixtureInputPath(options.marketProjection)) throw new Error(`Refusing to read market projection outside allowed paths: ${options.marketProjection}`);
   if (!isOilDirectionalInputPath(options.oilDirectional)) {
     throw new Error(`Refusing to read oil directional outside allowed paths: ${options.oilDirectional}`);
   }
@@ -204,7 +210,46 @@ function candidateBoundaryOk(candidate) {
   ].every((key) => boundaryMap[key] === false);
 }
 
-function buildCandidateRows(radarInput, options) {
+function marketProjectionReady(marketInput) {
+  const projection = marketInput?.data;
+  const blockers = [];
+  if (!marketInput?.present) blockers.push('market_projection_missing');
+  if (projection?.schemaVersion !== MARKET_PROJECTION_SCHEMA) blockers.push('market_projection_schema_invalid');
+  if (projection?.status !== 'dry_run_only') blockers.push('market_projection_not_dry_run');
+  if (projection?.projectionState !== 'manual_market_confirmation_review_ready_non_production') blockers.push('market_projection_not_ready');
+  if (Number(projection?.input?.acceptedObservationCount || projection?.displayCandidate?.acceptedObservationCount || 0) < 3) {
+    blockers.push('market_projection_accepted_observations_below_threshold');
+  }
+  if (Number(projection?.input?.rejectedObservationCount || projection?.displayCandidate?.rejectedObservationCount || 0) > 0) {
+    blockers.push('market_projection_rejected_observations_present');
+  }
+  if (projection?.approvals?.marketConfirmationWriteApproved === true || projection?.approvals?.scoreWriteApproved === true) {
+    blockers.push('market_projection_write_approval_claimed');
+  }
+  if (projection?.currentProductionState?.marketConfirmation !== 'not_connected') {
+    blockers.push('market_projection_production_market_confirmation_claimed');
+  }
+  if (projection?.boundaries?.noMarketConfirmationWrite !== true || projection?.boundaries?.noScoreWrite !== true) {
+    blockers.push('market_projection_boundaries_invalid');
+  }
+  return {
+    ready: blockers.length === 0,
+    blockers,
+    evidence: {
+      inputPath: marketInput?.path ?? null,
+      schemaVersion: projection?.schemaVersion ?? null,
+      status: projection?.status ?? null,
+      projectionState: projection?.projectionState ?? null,
+      acceptedObservationCount: projection?.input?.acceptedObservationCount ?? projection?.displayCandidate?.acceptedObservationCount ?? null,
+      rejectedObservationCount: projection?.input?.rejectedObservationCount ?? projection?.displayCandidate?.rejectedObservationCount ?? null,
+      bucketCoverage: projection?.displayCandidate?.bucketCoverage ?? null,
+      currentProductionMarketConfirmation: projection?.currentProductionState?.marketConfirmation ?? null,
+      blockers
+    }
+  };
+}
+
+function buildCandidateRows(radarInput, marketInput, options) {
   const radar = radarInput.data;
   const energyTransport = radar?.macroDrivers?.energyTransport;
   const candidate = energyTransport?.transportShockCandidate;
@@ -220,6 +265,8 @@ function buildCandidateRows(radarInput, options) {
   const sourceStatus = energyTransport?.sourceStatus?.chokepoints ?? energyTransport?.sourceStatus ?? null;
   const fresh = sourceStatus === 'live' && latestAgeDays !== null && latestAgeDays <= options.maxPortWatchAgeDays;
   const candidateElevated = candidate?.status === 'elevated_watch' || candidate?.status === 'high_watch';
+  const market = marketProjectionReady(marketInput);
+  const marketConnected = candidate?.marketConfirmation === 'connected' || market.ready;
 
   return [
     row({
@@ -274,13 +321,15 @@ function buildCandidateRows(radarInput, options) {
     row({
       id: 'market_confirmation',
       labelZh: '市场价格结构确认',
-      status: candidate?.marketConfirmation === 'connected' ? 'pass' : 'blocker',
-      severity: 'hard_blocker',
-      reasonZh: candidate?.marketConfirmation === 'connected'
-        ? '市场确认已连接。'
-        : '市场确认仍未连接,不能把运输代理直接映射为油价方向判断。',
+      status: marketConnected ? 'pass' : 'blocker',
+      severity: marketConnected ? 'supporting' : 'hard_blocker',
+      reasonZh: marketConnected
+        ? '市场确认已有 manual/display-only projection 支撑;production marketConfirmation 仍保持 not_connected。'
+        : '市场确认仍未连接且缺少合格 manual projection,不能把运输代理直接映射为油价方向判断。',
       evidence: {
-        marketConfirmation: candidate?.marketConfirmation ?? null
+        productionMarketConfirmation: candidate?.marketConfirmation ?? null,
+        manualProjectionReady: market.ready,
+        manualProjection: market.evidence
       }
     })
   ];
@@ -375,7 +424,7 @@ function buildOdpAnchorRow(odpInput) {
 
 function buildReview(inputs, options) {
   const rows = [
-    ...buildCandidateRows(inputs.radar, options),
+    ...buildCandidateRows(inputs.radar, inputs.marketProjection, options),
     buildNewsGateRow(inputs.newsGate),
     buildHighFrequencyRow(inputs.highFrequency),
     buildOdpAnchorRow(inputs.oilDirectional)
@@ -441,6 +490,7 @@ function main() {
       radar: readJsonInput(options.radar),
       newsGate: readJsonInput(options.newsGate, { optional: true }),
       highFrequency: readJsonInput(options.highFrequency, { optional: true }),
+      marketProjection: readJsonInput(options.marketProjection, { optional: true }),
       oilDirectional: readJsonInput(options.oilDirectional)
     };
     const review = buildReview(inputs, options);

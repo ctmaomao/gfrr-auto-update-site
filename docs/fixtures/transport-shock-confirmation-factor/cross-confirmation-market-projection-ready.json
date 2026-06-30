@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "transport-shock-market-confirmation-display-projection-v1",
+  "status": "dry_run_only",
+  "projectionState": "manual_market_confirmation_review_ready_non_production",
+  "recommendation": "ready_for_human_display_design_review_keep_non_production",
+  "generatedAt": "2026-06-30T00:00:00.000Z",
+  "input": {
+    "sourcePath": "docs/fixtures/transport-shock-confirmation-factor/market-confirmation-manual-sample-review-pass.json",
+    "schemaVersion": "transport-shock-market-confirmation-manual-sample-review-v1",
+    "status": "dry_run_only",
+    "acceptedObservationCount": 4,
+    "rejectedObservationCount": 0
+  },
+  "displayCandidate": {
+    "directDisplayApproved": false,
+    "frontendImplementationApproved": false,
+    "rawSourceTextDisplayed": false,
+    "state": "manual_market_confirmation_review_ready_non_production",
+    "acceptedObservationCount": 4,
+    "rejectedObservationCount": 0,
+    "bucketCoverage": {
+      "brent_price_structure_confirmation": 2,
+      "oil_news_market_reaction_confirmation": 1,
+      "odp_market_stress_context": 1
+    }
+  },
+  "approvals": {
+    "productionDataWriteApproved": false,
+    "frontendDisplayApproved": false,
+    "marketConfirmationWriteApproved": false,
+    "scoreWriteApproved": false,
+    "mainScoreApproved": false
+  },
+  "currentProductionState": {
+    "transportShockConfirmationFactor": "not_connected",
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "eligibleForMainScore": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noMarketConfirmationWrite": true,
+    "noScoreWrite": true,
+    "notProductionData": true,
+    "displayProjectionOnly": true
+  },
+  "boundary": "fixture for display-only market projection ready state"
+}

@@ -7,6 +7,7 @@ const REVIEW_SCRIPT = 'scripts/review-transport-shock-confirmation-factor-cross-
 const FIXTURE_RADAR = 'docs/fixtures/transport-shock-confirmation-factor/score-readiness-radar.json';
 const FIXTURE_NEWS_GATE = 'docs/fixtures/transport-shock-confirmation-factor/cross-confirmation-news-manual-gate-blocked.json';
 const FIXTURE_HIGH_FREQUENCY = 'docs/fixtures/transport-shock-confirmation-factor/cross-confirmation-high-frequency-blocked.json';
+const FIXTURE_MARKET_PROJECTION = 'docs/fixtures/transport-shock-confirmation-factor/cross-confirmation-market-projection-ready.json';
 const FIXTURE_ODP = 'docs/fixtures/transport-shock-confirmation-factor/score-readiness-oil-directional.json';
 
 const RUNTIME_FILES = [
@@ -86,15 +87,18 @@ function assertScriptSafety() {
 }
 
 function assertFixtures() {
-  for (const fixture of [FIXTURE_RADAR, FIXTURE_NEWS_GATE, FIXTURE_HIGH_FREQUENCY, FIXTURE_ODP]) {
+  for (const fixture of [FIXTURE_RADAR, FIXTURE_NEWS_GATE, FIXTURE_HIGH_FREQUENCY, FIXTURE_MARKET_PROJECTION, FIXTURE_ODP]) {
     assert(fs.existsSync(absolute(fixture)), `Fixture missing: ${fixture}`);
   }
   const newsGate = JSON.parse(readText(FIXTURE_NEWS_GATE));
   const highFrequency = JSON.parse(readText(FIXTURE_HIGH_FREQUENCY));
+  const marketProjection = JSON.parse(readText(FIXTURE_MARKET_PROJECTION));
   assert(newsGate.schemaVersion === 'transport-shock-confirmation-factor-news-manual-gate-v1', 'News gate fixture schema mismatch.');
   assert(newsGate.gateClear === false, 'News gate fixture must exercise blocked gate.');
   assert(highFrequency.schemaVersion === 'transport-shock-confirmation-factor-high-frequency-confirmation-v1', 'High-frequency fixture schema mismatch.');
   assert(highFrequency.summary.thermalElevatedRepeatedObservation === false, 'High-frequency fixture must exercise missing elevated thermal observation.');
+  assert(marketProjection.schemaVersion === 'transport-shock-market-confirmation-display-projection-v1', 'Market projection fixture schema mismatch.');
+  assert(marketProjection.projectionState === 'manual_market_confirmation_review_ready_non_production', 'Market projection fixture must exercise ready display-only projection.');
 }
 
 function assertCrossConfirmationOutput() {
@@ -106,6 +110,8 @@ function assertCrossConfirmationOutput() {
     FIXTURE_NEWS_GATE,
     '--high-frequency',
     FIXTURE_HIGH_FREQUENCY,
+    '--market-projection',
+    FIXTURE_MARKET_PROJECTION,
     '--oil-directional',
     FIXTURE_ODP,
     '--no-output',
@@ -117,17 +123,18 @@ function assertCrossConfirmationOutput() {
   assert(review.recommendation === 'keep_transport_shock_candidate_display_only_until_blockers_clear', 'Unexpected recommendation.');
   assert(review.crossConfirmationReady === false, 'Cross-confirmation must not be ready.');
   assert(review.manualReviewRequired === true, 'Manual review must be required.');
-  assert(review.summary.hardBlockerCount >= 5, 'Expected hard blockers from stale PortWatch, route/market, news, and high-frequency.');
+  assert(review.summary.hardBlockerCount >= 4, 'Expected hard blockers from stale PortWatch, route, news, and high-frequency.');
   for (const blocker of [
     'portwatch_physical_proxy_freshness',
     'route_freight_confirmation',
-    'market_confirmation',
     'news_manual_gate',
     'high_frequency_physical_confirmation'
   ]) {
     assert(review.summary.hardBlockerIds.includes(blocker), `Expected hard blocker: ${blocker}`);
   }
+  assert(!review.summary.hardBlockerIds.includes('market_confirmation'), 'Market confirmation should pass with ready display-only projection fixture.');
   assert(review.rows.find((item) => item.id === 'production_transport_candidate')?.status === 'pass', 'Production candidate row should pass boundary checks.');
+  assert(review.rows.find((item) => item.id === 'market_confirmation')?.status === 'pass', 'Market confirmation row should pass with display-only projection fixture.');
   assert(review.rows.find((item) => item.id === 'odp_physical_anchor')?.status === 'pass', 'ODP anchor row should pass as supporting context.');
   assert(review.scoreReadinessApproved === false, 'Review must not approve score readiness.');
   assert(review.scoreWriteApproved === false, 'Review must not approve score write.');
