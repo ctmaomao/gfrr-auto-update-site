@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-30T20:31:23.962Z",
+  "generatedAt": "2026-06-30T21:58:24.179Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -21,7 +21,7 @@
     "details": {
       "gdelt_doc": {
         "status": "live",
-        "networkUsed": true,
+        "networkUsed": false,
         "successCount": 1,
         "failureCount": 0,
         "articleCount": 32,
@@ -29,7 +29,7 @@
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "ok",
+            "status": "cache_hit",
             "articleCount": 32,
             "error": null
           }
@@ -113,8 +113,8 @@
   },
   "freshness": {
     "windowDays": 7,
-    "latestArticleAt": "2026-06-29T18:30:00.000Z",
-    "latestArticleAgeHours": 26,
+    "latestArticleAt": "2026-06-30T21:00:00.000Z",
+    "latestArticleAgeHours": 1,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 96,
-    "uniqueArticleCount": 92,
+    "uniqueArticleCount": 91,
     "liveSourceCount": 3,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 60,
+      "articleCount": 58,
       "sourceCount": 3,
-      "weightedSignal": 540,
+      "weightedSignal": 522,
       "topArticles": [
         {
           "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
@@ -292,9 +292,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 21,
+      "articleCount": 22,
       "sourceCount": 3,
-      "weightedSignal": 189,
+      "weightedSignal": 198,
       "topArticles": [
         {
           "title": "Oil trade stabilises amid US - Iran halt to renewed hostilities",
@@ -351,9 +351,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 29,
+      "articleCount": 30,
       "sourceCount": 3,
-      "weightedSignal": 174,
+      "weightedSignal": 180,
       "topArticles": [
         {
           "title": "Oil Falls Back to Pre - War Levels as Hormuz Shipping Rebounds",
@@ -411,9 +411,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 43,
+      "articleCount": 41,
       "sourceCount": 3,
-      "weightedSignal": 193.5,
+      "weightedSignal": 184.5,
       "topArticles": [
         {
           "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
@@ -472,9 +472,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 51,
+      "articleCount": 49,
       "sourceCount": 3,
-      "weightedSignal": 229.5,
+      "weightedSignal": 220.5,
       "topArticles": [
         {
           "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
@@ -612,6 +612,27 @@
       ]
     },
     {
+      "title": "Why a Supply Crunch From Iran Could Send Oil Back Below $40 a Barrel | OilPrice.com",
+      "url": "https://oilprice.com/Energy/Oil-Prices/Why-a-Supply-Crunch-From-Iran-Could-Send-Oil-Back-Below-40-a-Barrel.html",
+      "domain": "oilprice.com",
+      "publishedAt": "2026-06-30T21:00:00.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "sanctions",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "sanctions_shadow_fleet"
+      ]
+    },
+    {
       "title": "An oil tanker navigates the Strait of Hormuz despite threats from Iran’s Revolutionary Guard - AP News",
       "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-25-2026-862164c2aecbdc376dea434198eaf75f",
       "domain": "apnews.com",
@@ -627,6 +648,27 @@
       ],
       "queryIds": [
         "chokepoint_shipping"
+      ]
+    },
+    {
+      "title": "Hormuz Tanker Traffic Recovers as Tensions Ease | OilPrice.com",
+      "url": "https://oilprice.com/Latest-Energy-News/World-News/Hormuz-Tanker-Traffic-Recovers-as-Tensions-Ease.html",
+      "domain": "oilprice.com",
+      "publishedAt": "2026-06-30T10:00:00.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping",
+        "facility_supply_disruption"
       ]
     },
     {
@@ -785,54 +827,14 @@
       "queryIds": [
         "sanctions_shadow_fleet"
       ]
-    },
-    {
-      "title": "Oil prices rise as renewed US-Iran strikes disrupt shipping in Hormuz | Commodity News - Business Standard",
-      "url": "https://business-standard.com/markets/commodities/oil-prices-rise-as-renewed-us-iran-strikes-disrupt-shipping-in-hormuz-126062900036_1.html",
-      "domain": "business-standard.com",
-      "publishedAt": "2026-06-29T02:27:26.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "sanctions",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "sanctions_shadow_fleet"
-      ]
-    },
-    {
-      "title": "Gulf Producers Race to Load Oil and LNG as Hormuz Stays Open | OilPrice.com",
-      "url": "https://oilprice.com/Latest-Energy-News/World-News/Gulf-Producers-Race-to-Load-Oil-and-LNG-as-Hormuz-Stays-Open.html",
-      "domain": "oilprice.com",
-      "publishedAt": "2026-06-29T14:30:00.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
     }
   ],
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 5,
-    "highClaimDomainCount": 5,
+    "highClaimTitleCount": 4,
+    "highClaimDomainCount": 4,
     "highClaimDomains": [
-      "business-standard.com",
       "icis.com",
       "marinelink.com",
       "nytimes.com",
@@ -840,9 +842,7 @@
     ],
     "highClaimTerms": [
       "attack",
-      "attacks",
-      "disrupt",
-      "strikes"
+      "attacks"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
@@ -858,26 +858,26 @@
     "evaluatedArticleCount": 12,
     "claimCount": 12,
     "polarityCounts": {
-      "risk_escalation": 4,
+      "risk_escalation": 3,
       "risk_deescalation": 1,
       "mixed_or_contested": 1,
-      "market_reaction_only": 5,
+      "market_reaction_only": 6,
       "unclear_or_high_claim": 1
     },
     "eventTypeCounts": {
-      "chokepoint": 8,
+      "chokepoint": 7,
       "shipping": 3,
       "sanctions": 0,
       "facility": 0,
-      "supply": 1,
+      "supply": 2,
       "market_reaction": 0,
       "general_energy": 0
     },
     "sourceTierCounts": {
       "primary_wire_or_official": 1,
       "major_financial_media": 2,
-      "industry_trade": 4,
-      "aggregator_or_blog": 5,
+      "industry_trade": 5,
+      "aggregator_or_blog": 4,
       "low_confidence": 0
     },
     "contradiction": {
@@ -888,8 +888,8 @@
       "details": [
         {
           "eventType": "chokepoint",
-          "claimCount": 8,
-          "riskEscalation": 3,
+          "claimCount": 7,
+          "riskEscalation": 2,
           "riskDeescalation": 0,
           "mixedOrContested": 1,
           "contradiction": true
@@ -904,7 +904,7 @@
         },
         {
           "eventType": "supply",
-          "claimCount": 1,
+          "claimCount": 2,
           "riskEscalation": 0,
           "riskDeescalation": 1,
           "mixedOrContested": 0,
