@@ -322,6 +322,8 @@ if (mag4Fcf?.provenance?.mode === 'auto') {
     `mag4_fcf_yoy 阈值 replay ${selfAudit.thresholdReplayStatus} 与发布状态 ${mag4Fcf.status} 不符`);
   check('contract', detail.externalReferenceAudit?.requiredForPublication === false,
     'mag4_fcf_yoy 外部参考审计只能是非必需的漂移提示');
+  check('contract', /estimated_or_editorial_cash-flow-pressure_snapshot/u.test(detail.externalReferenceAudit?.siteMethodology || ''),
+    'mag4_fcf_yoy 外部参考审计必须标明参考站估算/编辑压力口径不可等同本站 realized TTM 公式');
   check('contract', ['skipped_no_wind_key', 'not_run_in_builder_public_primary_succeeded'].includes(detail.windCrossCheck?.status),
     `mag4_fcf_yoy windCrossCheck.status 异常: ${detail.windCrossCheck?.status}`);
 }

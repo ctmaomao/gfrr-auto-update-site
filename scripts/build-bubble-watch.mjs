@@ -942,7 +942,7 @@ function buildMag4FcfExternalReferenceAudit() {
     role: 'optional_non_authoritative_drift_signal',
     requiredForPublication: false,
     referenceSource: 'external AI bubble monitor page, if reachable',
-    siteMethodology: 'realized trailing-4-quarter aggregate FCF YoY for AMZN/MSFT/GOOGL/META',
+    siteMethodology: 'estimated_or_editorial_cash-flow-pressure_snapshot; not formula-equivalent to local realized TTM AMZN/MSFT/GOOGL/META aggregate',
     arbitration: 'keep_local_realized_ttm_formula; do_not_override_with_forward_or_single-company_pressure_without_contract_change',
     disappearancePolicy: 'continue_local_realized_ttm_formula_when_reference_site_is_unreachable_or_removed'
   };
