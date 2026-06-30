@@ -1,0 +1,96 @@
+{
+  "monitorVersion": "transport-shock-free-proxy-score-readiness-gate-monitor-p32",
+  "generatedAt": "2026-06-30T09:40:00.000Z",
+  "status": "sample_targets_incomplete_collect_more",
+  "reminderOnly": true,
+  "dryRun": true,
+  "inputPath": "docs/fixtures/transport-shock-confirmation-factor/free-proxy-historical-replay-real-event-samples-review-ready.json",
+  "productionDataWriteApproved": false,
+  "scoreWriteApproved": false,
+  "scoreIntegrationApproved": false,
+  "eligibleForMainScore": false,
+  "gate": {
+    "schemaVersion": "transport-shock-confirmation-factor-free-proxy-score-readiness-gate-v1",
+    "status": "score_readiness_gate_collect_more_keep_no_score_write",
+    "recommendation": "continue_collecting_real_event_samples_before_score_integration_review",
+    "gatePassed": false,
+    "blockerCount": 4,
+    "blockerIds": [
+      "real_event_sample_count_below_threshold",
+      "known_disruption_sample_count_below_threshold",
+      "zero_control_sample_count_below_threshold",
+      "false_positive_rate_unavailable"
+    ]
+  },
+  "targetGaps": {
+    "realEventSamples": {
+      "observed": 1,
+      "target": 6,
+      "remaining": 5
+    },
+    "knownDisruptionSamples": {
+      "observed": 1,
+      "target": 3,
+      "remaining": 2
+    },
+    "zeroControlSamples": {
+      "observed": 0,
+      "target": 3,
+      "remaining": 3
+    },
+    "falsePositiveRate": {
+      "observed": null,
+      "targetMax": 0.2,
+      "measurable": false
+    },
+    "knownDisruptionDirectionalHitRate": {
+      "observed": 1,
+      "targetMin": 0.6,
+      "measurable": true
+    }
+  },
+  "nextSamplePriorities": [
+    {
+      "id": "collect_zero_control_real_event_samples",
+      "remaining": 3,
+      "reasonZh": "需要 headline-only / single-chokepoint noise / stale physical proxy / benign baseline 等零贡献控制样本,否则无法估计误报率。"
+    },
+    {
+      "id": "collect_known_disruption_real_event_samples",
+      "remaining": 2,
+      "reasonZh": "需要更多 known-disruption 样本证明方向命中,不能只靠单一扰动案例。"
+    },
+    {
+      "id": "collect_total_real_event_samples",
+      "remaining": 5,
+      "reasonZh": "真实事件样本总数未达最低门槛,继续补充 sanitized real-event sample archives。"
+    }
+  ],
+  "manualAction": {
+    "requiredNow": false,
+    "recommendation": "collect_real_event_samples_until_gate_targets_are_met",
+    "followUpCheck": "npm run monitor:transport-shock-confirmation-factor-free-proxy-score-readiness-gate -- --json"
+  },
+  "artifacts": {
+    "outputPath": null
+  },
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "modifiesWorkerRuntime": false,
+    "modifiesWorkflow": false,
+    "triggersDaily": false,
+    "fetchesNetwork": false,
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundary": "artifact-only Transport Shock free-proxy score-readiness gate monitor; runs P-score-31 gate only; writes ignored manual-artifacts only; does not fetch network, trigger Daily, write production data, change frontend/Worker, or affect ODP finalBias, Brent promotion, scoring, decision, Global Risk Heatmap, or cross-validation"
+}
