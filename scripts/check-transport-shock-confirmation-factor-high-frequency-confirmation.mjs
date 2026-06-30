@@ -1,0 +1,180 @@
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const ROOT = process.cwd();
+const REVIEW_SCRIPT = 'scripts/review-transport-shock-confirmation-factor-high-frequency-confirmation.mjs';
+const FIXTURE_NEWS_LEDGER = 'docs/fixtures/transport-shock-confirmation-factor/high-frequency-oil-news-claim-ledger.json';
+const FIXTURE_THERMAL_REPEATED = 'docs/fixtures/transport-shock-confirmation-factor/high-frequency-oil-thermal-repeated-watch.json';
+
+const RUNTIME_FILES = [
+  'index.html',
+  'scripts/app.js',
+  'scripts/modules/renderOilDirectional.js',
+  'scripts/modules/renderMacroOverview.js',
+  'scripts/modules/buildCrossValidationMatrix.js',
+  'scripts/run-daily-pipeline.mjs',
+  'workers/gfrr-realtime-worker/src/worker-market-preview.js',
+  'data/radar-data.json',
+  'data/oil-directional-pressure.json'
+];
+
+const SCRIPT_FORBIDDEN_MARKERS = [
+  'process.env',
+  'fetch(',
+  'https.request',
+  'http.request',
+  'axios',
+  'node:https',
+  'node:http',
+  'market.worker-preview.json',
+  'data/radar-data.json'
+];
+
+const RUNTIME_FORBIDDEN_MARKERS = [
+  'transport-shock-confirmation-factor-high-frequency-confirmation-v1',
+  'review-transport-shock-confirmation-factor-high-frequency-confirmation',
+  'high_frequency_confirmation_ready_for_separate_review_no_score_write'
+];
+
+function absolute(relativePath) {
+  return path.join(ROOT, relativePath);
+}
+
+function readText(relativePath) {
+  return fs.readFileSync(absolute(relativePath), 'utf8');
+}
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function runNode(args) {
+  const result = spawnSync(process.execPath, args, {
+    cwd: ROOT,
+    encoding: 'utf8',
+    maxBuffer: 10 * 1024 * 1024
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(`node ${args.join(' ')} failed: ${result.stderr || result.stdout}`);
+  return String(result.stdout || '');
+}
+
+function assertScriptSafety() {
+  assert(fs.existsSync(absolute(REVIEW_SCRIPT)), 'High-frequency confirmation review script is missing.');
+  const source = readText(REVIEW_SCRIPT);
+  for (const marker of SCRIPT_FORBIDDEN_MARKERS) {
+    assert(!source.includes(marker), `High-frequency confirmation script contains forbidden marker: ${marker}`);
+  }
+  for (const marker of [
+    'artifact-only high-frequency confirmation review',
+    'partial_progress_keep_display_only',
+    'news_repeated_elevated_and_thermal_repeated_observed_but_keep_manual_review',
+    'newsRepeatedElevatedObservation',
+    'thermalElevatedRepeatedObservation',
+    'noHeadlineTextOutput',
+    'noScoreWrite',
+    'eligibleForMainScore'
+  ]) {
+    assert(source.includes(marker), `High-frequency confirmation script missing required marker: ${marker}`);
+  }
+}
+
+function assertFixtures() {
+  for (const fixture of [FIXTURE_NEWS_LEDGER, FIXTURE_THERMAL_REPEATED]) {
+    assert(fs.existsSync(absolute(fixture)), `Fixture missing: ${fixture}`);
+  }
+  const news = JSON.parse(readText(FIXTURE_NEWS_LEDGER));
+  assert(news.reviewVersion === 'oil-news-claim-ledger-p52', 'News claim-ledger fixture schema mismatch.');
+  assert(news.displayReadiness.directHeadlineDisplayAllowed === false, 'News fixture must not allow headline display.');
+  const thermal = JSON.parse(readText(FIXTURE_THERMAL_REPEATED));
+  assert(thermal.schemaVersion === 'oil-thermal-watch-1', 'Thermal fixture schema mismatch.');
+  assert(thermal.aggregate.repeatedObservationCount > 0, 'Thermal fixture must include repeated observations.');
+  assert(thermal.aggregate.elevatedRepeatedObservationCount === 0, 'Thermal fixture must remain non-elevated.');
+}
+
+function assertReviewOutput() {
+  const stdout = runNode([
+    REVIEW_SCRIPT,
+    '--news-ledger',
+    FIXTURE_NEWS_LEDGER,
+    '--oil-thermal',
+    FIXTURE_THERMAL_REPEATED,
+    '--no-output',
+    '--json'
+  ]);
+  const review = JSON.parse(stdout);
+  assert(review.schemaVersion === 'transport-shock-confirmation-factor-high-frequency-confirmation-v1', 'Unexpected review schemaVersion.');
+  assert(review.status === 'partial_progress_keep_display_only', 'Expected partial progress, not score readiness.');
+  assert(review.recommendation === 'news_repeated_elevated_and_thermal_repeated_observed_but_keep_manual_review', 'Unexpected recommendation.');
+  assert(review.summary.newsRepeatedElevatedObservation === true, 'Expected news repeated elevated observation.');
+  assert(review.summary.newsManualReviewRequired === true, 'Expected news manual review to remain required.');
+  assert(review.summary.thermalRepeatedObservation === true, 'Expected thermal repeated observation.');
+  assert(review.summary.thermalElevatedRepeatedObservation === false, 'Thermal observation must not be elevated.');
+  assert(review.summary.readinessBlockers.includes('news_manual_review_required'), 'Expected news manual review blocker.');
+  assert(review.summary.readinessBlockers.includes('thermal_elevated_repeated_observation_missing'), 'Expected thermal elevated blocker.');
+  assert(review.scoreReadinessApproved === false, 'Review must not approve score readiness.');
+  assert(review.scoreWriteApproved === false, 'Review must not approve score write.');
+  assert(review.productionWriteApproved === false, 'Review must not approve production write.');
+  assert(review.frontendDisplayApproved === false, 'Review must not approve frontend display.');
+  assert(review.eligibleForMainScore === false, 'Review must not make factor main-score eligible.');
+  assert(review.productionImpact.affectsScoring === false, 'Review must not affect scoring.');
+  assert(review.productionImpact.affectsMainJudgment === false, 'Review must not affect main judgment.');
+  assert(review.boundaries.noNetworkCall === true, 'Review must lock noNetworkCall.');
+  assert(review.boundaries.noProductionWrite === true, 'Review must lock noProductionWrite.');
+  assert(review.boundaries.noScoreWrite === true, 'Review must lock noScoreWrite.');
+}
+
+function assertRuntimeRemainsUnwired() {
+  for (const relativePath of RUNTIME_FILES) {
+    assert(fs.existsSync(absolute(relativePath)), `${relativePath} is missing.`);
+    const source = readText(relativePath);
+    for (const marker of RUNTIME_FORBIDDEN_MARKERS) {
+      assert(!source.includes(marker), `${relativePath} contains high-frequency confirmation marker and may have been wired too early: ${marker}`);
+    }
+  }
+}
+
+function assertAuthorityDocs() {
+  const dataSources = readText('docs/DATA_SOURCES.md');
+  const dataContract = readText('docs/DATA_CONTRACT.md');
+  const signalIntake = readText('docs/SIGNAL_INTAKE.md');
+  const backlog = readText('docs/PROJECT_BACKLOG.md');
+  const agents = readText('AGENTS.md');
+  const packageJson = JSON.parse(readText('package.json'));
+  const checkSuite = readText('scripts/check-suite.mjs');
+
+  for (const marker of [
+    'review:transport-shock-confirmation-factor-high-frequency-confirmation',
+    'transport-shock-confirmation-factor-high-frequency-confirmation-v1',
+    'partial_progress_keep_display_only',
+    'no score write'
+  ]) {
+    assert(dataSources.includes(marker), `DATA_SOURCES missing marker: ${marker}`);
+  }
+  for (const marker of [
+    'transport-shock-confirmation-factor-high-frequency-confirmation-v1',
+    'newsRepeatedElevatedObservation',
+    'thermalElevatedRepeatedObservation',
+    'eligibleForMainScore=false'
+  ]) {
+    assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
+  }
+  assert(signalIntake.includes('transport-shock-confirmation-factor-high-frequency-confirmation-v1'), 'SIGNAL_INTAKE missing high-frequency confirmation marker.');
+  assert(backlog.includes('Transport Shock Confirmation Factor high-frequency confirmation review'), 'PROJECT_BACKLOG missing high-frequency confirmation marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor high-frequency confirmation review'), 'AGENTS.md missing high-frequency confirmation boundary.');
+  assert(packageJson.scripts['review:transport-shock-confirmation-factor-high-frequency-confirmation'], 'package.json missing review script.');
+  assert(packageJson.scripts['check:transport-shock-confirmation-factor-high-frequency-confirmation'], 'package.json missing checker script.');
+  assert(checkSuite.includes('check:transport-shock-confirmation-factor-high-frequency-confirmation'), 'check-suite missing high-frequency confirmation check.');
+}
+
+function main() {
+  assertScriptSafety();
+  assertFixtures();
+  assertReviewOutput();
+  assertRuntimeRemainsUnwired();
+  assertAuthorityDocs();
+  console.log('Transport Shock Confirmation Factor high-frequency confirmation review: PASS');
+}
+
+main();

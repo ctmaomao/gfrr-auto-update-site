@@ -1,0 +1,113 @@
+{
+  "reviewVersion": "oil-news-claim-ledger-p52",
+  "generatedAt": "2026-06-30T10:45:00.000Z",
+  "status": "warn",
+  "recommendation": "claim_ledger_ready_keep_manual_review",
+  "promotionEligible": false,
+  "productionDisplayApproved": false,
+  "summary": {
+    "sampleCount": 3,
+    "invalidSampleCount": 0,
+    "firstSampleAt": "2026-06-29T05:14:39.148Z",
+    "lastSampleAt": "2026-06-30T04:47:24.766Z",
+    "claimCount": 9,
+    "uniqueTitleHashCount": 5,
+    "lowConfidenceHighClaimCount": 1,
+    "directHeadlineDisplayAllowed": false
+  },
+  "polarityCounts": {
+    "risk_escalation": 4,
+    "risk_deescalation": 2,
+    "mixed_or_contested": 1,
+    "market_reaction_only": 2,
+    "unclear_or_high_claim": 0
+  },
+  "eventTypeCounts": {
+    "chokepoint": 4,
+    "shipping": 1,
+    "sanctions": 0,
+    "facility": 1,
+    "supply": 2,
+    "market_reaction": 1,
+    "general_energy": 0
+  },
+  "sourceTierCounts": {
+    "primary_wire_or_official": 2,
+    "major_financial_media": 3,
+    "industry_trade": 2,
+    "aggregator_or_blog": 2,
+    "low_confidence": 0
+  },
+  "contradiction": {
+    "state": "mixed_claims",
+    "riskEscalationCount": 4,
+    "riskDeescalationCount": 2
+  },
+  "displayReadiness": {
+    "directHeadlineDisplayAllowed": false,
+    "originalHeadlineOutputAllowed": false,
+    "claimSummaryDisplayCandidate": true,
+    "requiredNextReview": "separate reviewed frontend PR may show aggregate claim polarity only; no raw headline display"
+  },
+  "manualReviewPriorities": {
+    "mixedClaimsRequireHumanReview": true,
+    "escalationClaimsNeedMarketPhysicalCrossCheck": 5,
+    "deescalationClaimsMayReduceRiskPremium": 2,
+    "marketReactionOnlyClaimsShouldNotDriveEventConfidence": 2,
+    "lowConfidenceHighClaimCount": 1
+  },
+  "sampleOutcomes": [
+    {
+      "generatedAt": "2026-06-30T04:47:24.766Z",
+      "status": "ok",
+      "signalState": "elevated_manual_review",
+      "uniqueArticleCount": 92,
+      "liveSourceCount": 3,
+      "topArticleCount": 12,
+      "claimCount": 3,
+      "highClaimTitleCount": 2,
+      "displayHeadlinesApproved": false
+    },
+    {
+      "generatedAt": "2026-06-29T23:35:56.157Z",
+      "status": "partial",
+      "signalState": "elevated_manual_review",
+      "uniqueArticleCount": 61,
+      "liveSourceCount": 2,
+      "topArticleCount": 12,
+      "claimCount": 3,
+      "highClaimTitleCount": 1,
+      "displayHeadlinesApproved": false
+    },
+    {
+      "generatedAt": "2026-06-29T21:53:54.375Z",
+      "status": "partial",
+      "signalState": "elevated_manual_review",
+      "uniqueArticleCount": 61,
+      "liveSourceCount": 2,
+      "topArticleCount": 12,
+      "claimCount": 3,
+      "highClaimTitleCount": 0,
+      "displayHeadlinesApproved": false
+    }
+  ],
+  "warnings": [
+    "Risk escalation and de-escalation claims coexist in the same event family; keep event interpretation as mixed/manual-review.",
+    "Low-confidence or aggregator/blog domains carry high-claim escalation language; do not raise confidence without primary-source confirmation."
+  ],
+  "blockers": [],
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundary": "manual oil-news event watch sample review only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}

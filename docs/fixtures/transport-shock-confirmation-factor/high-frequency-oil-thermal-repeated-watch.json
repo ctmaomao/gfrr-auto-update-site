@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "oil-thermal-watch-1",
+  "module": "oil-thermal-watch",
+  "generatedAt": "2026-06-30T10:45:00.000Z",
+  "source": "NASA FIRMS Area API",
+  "sources": [
+    "VIIRS_SNPP_NRT",
+    "VIIRS_NOAA20_NRT",
+    "VIIRS_NOAA21_NRT"
+  ],
+  "status": "ok",
+  "signalState": "baseline_repeated_watch",
+  "displayStatusZh": "重复观察待核",
+  "sourceStatus": {
+    "mapKey": "configured",
+    "firms": "live",
+    "facilities": "configured"
+  },
+  "freshness": {
+    "windowDays": 5,
+    "latestAcqAt": "2026-06-30T08:28:00Z",
+    "latestAgeHours": 2.2,
+    "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
+  },
+  "baseline": {
+    "status": "established",
+    "sourceReview": {
+      "baselineQuality": "starter_short_window",
+      "sampleCount": 16,
+      "sampleWindowDays": 2.48,
+      "qualityTransition": "unchanged"
+    }
+  },
+  "aggregate": {
+    "rowCount": 314,
+    "latestAcqAt": "2026-06-30T08:28:00Z",
+    "maxFrp": 9.04,
+    "confidenceCounts": {
+      "n": 313,
+      "l": 1
+    },
+    "highConfidenceCount": 0,
+    "frpOver50Count": 0,
+    "frpOver100Count": 0,
+    "dayNightCounts": {
+      "D": 160,
+      "N": 154
+    },
+    "latestAgeHours": 2.2,
+    "facilityCount": 12,
+    "facilitiesWithDetections": 11,
+    "requestCount": 36,
+    "requestErrorCount": 0,
+    "baselineStatus": "established",
+    "repeatedObservationCount": 11,
+    "elevatedRepeatedObservationCount": 0,
+    "facilitiesWithEstablishedBaseline": 12,
+    "facilitiesByAnomalyLevel": {
+      "repeated_watch": 11,
+      "none_observed": 1
+    }
+  },
+  "facilities": [],
+  "productionImpact": {
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundary": "production read-only satellite thermal watch; display-only/audit-only; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
+  "limitationsZh": [
+    "FIRMS/VIIRS 是热异常和火点代理,不是炼厂事故、停产、断供或油价方向确认。",
+    "基线与重复观测规则只用于人工复核分层,不确认事故、断供或油价方向。"
+  ]
+}
