@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "transport-shock-market-confirmation-manual-sample-input-v1",
+  "sourceReviewContract": "transport-shock-confirmation-factor-market-confirmation-source-review-v1",
+  "sourceRights": {
+    "liveFetchApproved": false,
+    "productionWriteApproved": false,
+    "marketConfirmationWriteApproved": false,
+    "scoreApproved": false
+  },
+  "observations": [
+    {
+      "sourceKey": "brent_futures_price_curve_proxy",
+      "bucketKey": "brent_price_structure_confirmation",
+      "observedAt": "2026-06-29T04:00:00.000Z",
+      "direction": "tightening",
+      "strength": 42,
+      "value": 0.85,
+      "valueUnit": "front_minus_back_usd_per_bbl",
+      "citationUrl": "https://finance.yahoo.com/quote/BZ=F"
+    },
+    {
+      "sourceKey": "eia_brent_spot_proxy",
+      "bucketKey": "brent_price_structure_confirmation",
+      "observedAt": "2026-06-22T00:00:00.000Z",
+      "direction": "easing",
+      "strength": 35,
+      "value": -3.97,
+      "valueUnit": "daily_change_usd_per_bbl",
+      "citationUrl": "https://www.eia.gov/dnav/pet/hist/rbrted.htm"
+    },
+    {
+      "sourceKey": "oil_news_market_reaction_bucket",
+      "bucketKey": "oil_news_market_reaction_confirmation",
+      "observedAt": "2026-06-29T23:33:38.671Z",
+      "direction": "market_reaction_present",
+      "strength": 55,
+      "value": 26,
+      "valueUnit": "article_proxy_count",
+      "citationUrl": "https://www.gdeltproject.org/"
+    },
+    {
+      "sourceKey": "odp_crack_spread_proxy",
+      "bucketKey": "odp_market_stress_context",
+      "observedAt": "2026-06-29T23:33:38.671Z",
+      "direction": "mixed",
+      "strength": 30,
+      "value": null,
+      "valueUnit": null,
+      "citationUrl": "https://www.eia.gov/petroleum/"
+    }
+  ]
+}

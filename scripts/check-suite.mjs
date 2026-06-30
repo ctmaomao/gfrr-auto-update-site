@@ -121,6 +121,7 @@ const SUITES = {
     'check:transport-shock-confirmation-factor-score-readiness',
     'check:transport-shock-confirmation-factor-score-readiness-monitor',
     'check:transport-shock-confirmation-factor-market-confirmation-source-review',
+    'check:transport-shock-market-confirmation-manual-sample-scaffold',
     'check:oil-news-events-diagnosis',
     'check:oil-news-event-watch',
     'check:oil-news-event-watch-samples-review',
