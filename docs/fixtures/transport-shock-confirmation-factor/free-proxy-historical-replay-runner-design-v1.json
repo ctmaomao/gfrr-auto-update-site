@@ -1,0 +1,113 @@
+{
+  "contractVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-runner-design-v1",
+  "kind": "transport_shock_free_proxy_historical_replay_runner_design",
+  "status": "runner_design_only_no_replay_execution",
+  "createdAt": "2026-06-30",
+  "dependsOn": [
+    "transport-shock-confirmation-factor-free-proxy-historical-replay-design-v1",
+    "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-review-v1",
+    "transport-shock-confirmation-factor-free-proxy-historical-replay-samples-review-v1"
+  ],
+  "currentState": {
+    "historicalReplayRunnerImplemented": false,
+    "historicalReplayExecuted": false,
+    "historicalBacktestPerformed": false,
+    "scoreIntegrationApproved": false,
+    "scoreWriteApproved": false,
+    "productionWriteApproved": false,
+    "eligibleForMainScore": false,
+    "candidateScoreContributionPct": 0
+  },
+  "futureRunner": {
+    "commandCandidate": "replay:transport-shock-confirmation-factor-free-proxy-historical-replay",
+    "outputSchemaCandidate": "transport-shock-confirmation-factor-free-proxy-historical-replay-runner-v1",
+    "outputPathCandidate": "manual-artifacts/transport-shock-confirmation-factor/free-proxy-historical-replay-runner-latest.json",
+    "allowedInputSchemas": [
+      "transport-shock-confirmation-factor-free-proxy-historical-replay-samples-review-v1",
+      "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-review-v1"
+    ],
+    "allowedInputRoots": [
+      "manual-artifacts/transport-shock-confirmation-factor/",
+      "docs/fixtures/transport-shock-confirmation-factor/"
+    ],
+    "disallowedInputRoots": [
+      "data/",
+      "realtime/",
+      "workers/",
+      "manual-artifacts/bubble-watch-backtest/"
+    ],
+    "noLiveFetch": true,
+    "noEnvironmentRead": true,
+    "noProductionDataRead": true,
+    "noProductionDataWrite": true
+  },
+  "requiredReplayMetrics": {
+    "usableSampleCount": true,
+    "familyCoverage": true,
+    "zeroControlSampleCount": true,
+    "knownDisruptionSampleCount": true,
+    "zeroControlContributionPct": true,
+    "falsePositiveRate": true,
+    "knownDisruptionDirectionalHitRate": true,
+    "maximumCandidateContributionPct": true,
+    "blockers": true
+  },
+  "passFailRules": {
+    "newsOnlyContributionPct": 0,
+    "headlineOnlyFalsePositiveContributionPct": 0,
+    "singleChokepointOnlyContributionPct": 0,
+    "stalePortWatchContributionPct": 0,
+    "maximumFalsePositiveRate": 0.2,
+    "minimumKnownDisruptionDirectionalHitRate": 0.6,
+    "maximumCandidateContributionPct": 3,
+    "requiresZeroControlAggregateContributionZero": true,
+    "requiresSeparateReviewedScorePr": true
+  },
+  "hardFailClaims": [
+    "score_write_approved",
+    "production_write_approved",
+    "frontend_display_approved",
+    "worker_runtime_connected",
+    "odp_final_bias_changed",
+    "brent_promotion_changed",
+    "global_risk_heatmap_connected",
+    "cross_validation_connected",
+    "raw_citation_stored"
+  ],
+  "approvalState": {
+    "historicalReplayRunnerDesignApproved": false,
+    "historicalReplayRunnerImplemented": false,
+    "historicalBacktestPerformed": false,
+    "scoreIntegrationApproved": false,
+    "scoreWriteApproved": false,
+    "productionWriteApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "boundaries": {
+    "designOnly": true,
+    "noReplayExecution": true,
+    "noNewLiveFetch": true,
+    "noEnvironmentRead": true,
+    "noProductionDataRead": true,
+    "noProductionDataWrite": true,
+    "noFrontendChange": true,
+    "noWorkflowAutomation": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreWrite": true,
+    "noOdpFinalBiasChange": true,
+    "noBrentPromotion": true,
+    "noScoringDecisionExecutionPositionImpact": true,
+    "noGlobalRiskHeatmapImpact": true,
+    "noCrossValidationInput": true,
+    "noBubbleWatchChange": true
+  },
+  "nextAllowedSteps": [
+    "P-score-26 artifact-only historical replay runner dry-run scaffold",
+    "P-score-27 historical replay runner fixture review",
+    "separate reviewed score integration PR only after replay gates pass"
+  ]
+}
