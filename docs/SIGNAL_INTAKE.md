@@ -136,6 +136,7 @@
 - Transport Shock Confirmation Factor history sample archive: `transport-shock-confirmation-factor-history-sample-archive-p10` 是 P-score-10 local/manual ignored artifact sampler;只从 git history 的 committed `data/radar-data.json` 抽取 contract-valid `transportShockCandidate` compact 样本,当前字段未刷新时 `--allow-empty` 观察通过;不得联网、不得写 production data、不得改变 ODP finalBias 或主判断打分。
 - Transport Shock Confirmation Factor history samples review / frontend caveat: `transport-shock-confirmation-factor-history-samples-review-v1` 仍是 P-score-11 ignored artifact review;P-score-12 前端 caveat 只从 production payload 派生 `样本质量` 与 `数据龄`,不得读取 ignored artifact,不得把样本审阅结果写成 route/market confirmation 或主判断打分资格。
 - Transport Shock Confirmation Factor score-readiness matrix: `transport-shock-confirmation-factor-score-readiness-v1` 是 P-score-13 local/manual 入分前 hard gate;只读 production radar/Oil News/Oil Thermal/ODP 与可选 P-score-11 ignored review artifact,输出 ignored readiness matrix。当前预期 `not_ready_for_score`,并把 route freight confirmation、market confirmation、source-rights、news claim review、thermal repeated anomaly 与 PortWatch freshness 列为入分前缺口;不得写 production data、不得接 workflow/Worker/frontend、不得改变 ODP finalBias 或主判断打分。
+- Transport Shock Confirmation Factor score-readiness monitor: `transport-shock-score-readiness-monitor-p14` 每日 23:29 UTC 或手动运行本地 P-score-13 review,只上传 ignored monitor artifact/GitHub Summary;正常状态 `blockers_still_present`,未来若全部 blocker 清空也只能提示 `score_ready_requires_separate_review`,不得自动入分、不得写 production data、不得改变 ODP finalBias 或主判断打分。
 
 ## 6. Rejection Rules / 拒绝或暂缓规则
 
