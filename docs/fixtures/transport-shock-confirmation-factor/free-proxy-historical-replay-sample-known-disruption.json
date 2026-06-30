@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-input-v1",
+  "sampleId": "fixture-known-disruption-tightening-2024-01",
+  "familyKey": "known_disruption_tightening",
+  "sampleWindow": {
+    "startDate": "2024-01-10",
+    "endDate": "2024-01-17"
+  },
+  "expectedContributionPct": 2,
+  "observedCandidateContributionPct": 2,
+  "expectedBehavior": "positive_dry_run_contribution_no_score_write",
+  "confirmations": {
+    "portWatchFresh": true,
+    "nonNewsPhysicalConfirmation": true,
+    "marketConfirmationReview": true,
+    "thermalOrEiaAnchor": false
+  },
+  "evidence": [
+    {
+      "sourceFamily": "portwatch_chokepoint_proxy",
+      "sourceStatus": "display_only",
+      "direction": "tightening",
+      "confirmationType": "physical_proxy",
+      "sourceCitation": "https://portwatch.imf.org/chokepoints-fixture",
+      "rawCitationStored": false
+    },
+    {
+      "sourceFamily": "wet_freight_futures_proxy",
+      "sourceStatus": "display_only",
+      "direction": "tightening",
+      "confirmationType": "market_proxy",
+      "sourceCitation": "https://solactive.com/wet-freight-futures-fixture",
+      "rawCitationStored": false
+    },
+    {
+      "sourceFamily": "oil_news_claim_ledger",
+      "sourceStatus": "display_only",
+      "direction": "tightening",
+      "confirmationType": "news_claim_proxy",
+      "sourceCitation": "https://example.com/oil-news-claim-ledger-fixture",
+      "rawCitationStored": false
+    }
+  ],
+  "operatorNotes": "Synthetic fixture: known disruption with physical and market proxy confirmation may carry dry-run positive contribution, but still no score write."
+}

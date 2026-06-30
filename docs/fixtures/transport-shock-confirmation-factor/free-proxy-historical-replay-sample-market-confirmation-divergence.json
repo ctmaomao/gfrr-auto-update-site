@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-input-v1",
+  "sampleId": "fixture-market-confirmation-divergence-2025-03",
+  "familyKey": "market_confirmation_divergence",
+  "sampleWindow": {
+    "startDate": "2025-03-10",
+    "endDate": "2025-03-14"
+  },
+  "expectedContributionPct": 0,
+  "observedCandidateContributionPct": 0,
+  "expectedBehavior": "zero_contribution_no_score_write",
+  "confirmations": {
+    "portWatchFresh": true,
+    "nonNewsPhysicalConfirmation": true,
+    "marketConfirmationReview": false,
+    "thermalOrEiaAnchor": false
+  },
+  "evidence": [
+    {
+      "sourceFamily": "portwatch_chokepoint_proxy",
+      "sourceStatus": "display_only",
+      "direction": "tightening",
+      "confirmationType": "physical_proxy",
+      "sourceCitation": "https://example.com/transport-shock-market-confirmation-divergence-fixture",
+      "rawCitationStored": false
+    },
+    {
+      "sourceFamily": "wet_freight_futures_proxy",
+      "sourceStatus": "display_only",
+      "direction": "easing",
+      "confirmationType": "market_proxy_divergence",
+      "sourceCitation": "https://solactive.com/wet-freight-futures-fixture",
+      "rawCitationStored": false
+    }
+  ],
+  "operatorNotes": "Synthetic fixture: physical proxy without market confirmation must stay zero contribution."
+}

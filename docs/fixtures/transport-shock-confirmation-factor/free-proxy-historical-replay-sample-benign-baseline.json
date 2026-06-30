@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-input-v1",
+  "sampleId": "fixture-benign-baseline-2025-01",
+  "familyKey": "benign_baseline",
+  "sampleWindow": {
+    "startDate": "2025-01-06",
+    "endDate": "2025-01-10"
+  },
+  "expectedContributionPct": 0,
+  "observedCandidateContributionPct": 0,
+  "expectedBehavior": "zero_contribution_no_score_write",
+  "confirmations": {
+    "portWatchFresh": true,
+    "nonNewsPhysicalConfirmation": false,
+    "marketConfirmationReview": false,
+    "thermalOrEiaAnchor": false
+  },
+  "evidence": [
+    {
+      "sourceFamily": "portwatch_chokepoint_proxy",
+      "sourceStatus": "display_only",
+      "direction": "neutral",
+      "confirmationType": "benign_baseline",
+      "sourceCitation": "https://example.com/transport-shock-benign-baseline-fixture",
+      "rawCitationStored": false
+    }
+  ],
+  "operatorNotes": "Synthetic fixture: benign baseline must remain zero contribution."
+}

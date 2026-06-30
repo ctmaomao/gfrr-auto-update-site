@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-input-v1",
+  "sampleId": "fixture-stale-physical-proxy-2025-08",
+  "familyKey": "stale_physical_proxy",
+  "sampleWindow": {
+    "startDate": "2025-08-01",
+    "endDate": "2025-08-08"
+  },
+  "expectedContributionPct": 0,
+  "observedCandidateContributionPct": 0,
+  "expectedBehavior": "zero_contribution_no_score_write",
+  "confirmations": {
+    "portWatchFresh": false,
+    "nonNewsPhysicalConfirmation": true,
+    "marketConfirmationReview": false,
+    "thermalOrEiaAnchor": false
+  },
+  "evidence": [
+    {
+      "sourceFamily": "portwatch_chokepoint_proxy",
+      "sourceStatus": "stale",
+      "direction": "tightening",
+      "confirmationType": "stale_physical_proxy",
+      "sourceCitation": "https://example.com/transport-shock-stale-physical-proxy-fixture",
+      "rawCitationStored": false
+    }
+  ],
+  "operatorNotes": "Synthetic fixture: stale physical proxy must not contribute until freshness recovers."
+}

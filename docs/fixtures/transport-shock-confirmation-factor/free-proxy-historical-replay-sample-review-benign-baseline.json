@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-review-v1",
+  "contractVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-scaffold-v1",
+  "status": "sample_review_ready_keep_no_score_write",
+  "recommendation": "include_sample_in_future_artifact_only_replay_dataset",
+  "generatedAt": "2026-06-30T08:43:00.000Z",
+  "inputPath": "docs/fixtures/transport-shock-confirmation-factor/free-proxy-historical-replay-sample-benign-baseline.json",
+  "sampleId": "fixture-benign-baseline-2025-01",
+  "familyKey": "benign_baseline",
+  "sampleWindow": {
+    "startDate": "2025-01-06",
+    "endDate": "2025-01-10"
+  },
+  "expectedContributionPct": 0,
+  "observedCandidateContributionPct": 0,
+  "confirmations": {
+    "portWatchFresh": true,
+    "nonNewsPhysicalConfirmation": false,
+    "marketConfirmationReview": false,
+    "thermalOrEiaAnchor": false
+  },
+  "acceptedForFutureReplayDataset": true,
+  "historicalReplayRunnerImplemented": false,
+  "historicalBacktestPerformed": false,
+  "scoreIntegrationApproved": false,
+  "scoreWriteApproved": false,
+  "productionWriteApproved": false,
+  "mainScoreApproved": false,
+  "eligibleForMainScore": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "review": {
+    "evidenceCount": 1,
+    "compactEvidence": [
+      {
+        "sourceFamily": "portwatch_chokepoint_proxy",
+        "sourceStatus": "display_only",
+        "direction": "neutral",
+        "confirmationType": "benign_baseline",
+        "sourceCitationHash": "97611b0128494a346f25ed8a89b0cc3c775584927fb77f1cb6f0f407202d8346",
+        "sourceDomainHint": "example.com",
+        "rawCitationStored": false
+      }
+    ],
+    "rawCitationStored": false,
+    "blockers": [],
+    "warnings": [
+      "artifact_only_sample_review",
+      "future_replay_dataset_only"
+    ]
+  },
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "modifiesWorkerRuntime": false,
+    "modifiesWorkflow": false,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionDataRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreWrite": true,
+    "noReplayExecution": true,
+    "noHistoricalBacktestPerformed": true,
+    "rawCitationStored": false,
+    "affectsScoring": false,
+    "affectsMainJudgment": false
+  },
+  "boundary": "manual/local Transport Shock free-proxy historical replay sample scaffold only; writes ignored manual-artifacts only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
+  "limitationZh": "本审查只验证单条人工历史回放样本形状,不执行历史回放,不生成分数,不写生产数据,不进入今日总判断打分。"
+}

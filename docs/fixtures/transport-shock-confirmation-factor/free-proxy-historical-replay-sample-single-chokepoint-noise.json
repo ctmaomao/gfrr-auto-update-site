@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-input-v1",
+  "sampleId": "fixture-single-chokepoint-noise-2025-11",
+  "familyKey": "single_chokepoint_noise",
+  "sampleWindow": {
+    "startDate": "2025-11-03",
+    "endDate": "2025-11-07"
+  },
+  "expectedContributionPct": 0,
+  "observedCandidateContributionPct": 0,
+  "expectedBehavior": "zero_contribution_no_score_write",
+  "confirmations": {
+    "portWatchFresh": true,
+    "nonNewsPhysicalConfirmation": false,
+    "marketConfirmationReview": false,
+    "thermalOrEiaAnchor": false
+  },
+  "evidence": [
+    {
+      "sourceFamily": "portwatch_chokepoint_proxy",
+      "sourceStatus": "display_only",
+      "direction": "tightening",
+      "confirmationType": "single_source_chokepoint_noise",
+      "sourceCitation": "https://example.com/transport-shock-single-chokepoint-noise-fixture",
+      "rawCitationStored": false
+    }
+  ],
+  "operatorNotes": "Synthetic fixture: one chokepoint proxy alone must remain zero contribution."
+}
