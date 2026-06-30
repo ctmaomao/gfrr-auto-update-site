@@ -1,20 +1,20 @@
 {
   "contractVersion": "bubble-watch-v1",
   "issue_number": 13,
-  "as_of_date": "2026-06-29",
-  "generated_at": "2026-06-29T10:04:42.240Z",
+  "as_of_date": "2026-06-30",
+  "generated_at": "2026-06-30T07:06:43.596Z",
   "summary": {
     "total_indicators": 24,
-    "red_count": 4,
+    "red_count": 5,
     "yellow_count": 8,
-    "green_count": 12,
-    "primary_score_pct": 16.7,
+    "green_count": 11,
+    "primary_score_pct": 20.8,
     "primary_score_basis": "red_light_ratio",
-    "red_pct": 16.7,
-    "weighted_risk_score": 33.3,
+    "red_pct": 20.8,
+    "weighted_risk_score": 37.5,
     "verdict_label": "高风险预警",
     "verdict_label_en": "High Risk Alert",
-    "verdict_desc": "本周计数 4 红 / 8 黄 / 12 绿，红灯比例由 20.8% 降至 16.7%。本期翻灯 3 项: 「S&P 50 日均线上方比例」黄转绿、「数据中心 ABS 利差」黄转绿、「会计造假/round-tripping 事件」红转绿；基础判读落在「观察期」，有效判读为「高风险预警」。市场结构边际改善: S&P 50 日均线上方比例 ≈64%（绿）、市值加权 vs 等权重 -2.7%（绿） 显示广度和权重差距尚未同时转弱；但 AI 龙头内部人卖买比 ~8x（黄），风险偏好并非完全健康。资金面仍是核心压力: Mag4 自由现金流变化 -16%（黄）、AI 占 VC 投资比重 ~80%（红）、NVDA 客户投资/收入比 ≈49%（红）；同时，云厂商递延收入增速 +186%（绿） 说明需求仍在兑现。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。信用端仍托底: 高收益债利差 278 bps（绿）、数据中心 ABS 利差 收窄（绿）、Neocloud 信用事件 0 件（绿）；宏观端则是 Fed 政策方向 偏鹰（黄），叠加 资本开支指引市场反应 选择性惩罚（黄）。这让本期更像高风险观察，而不是信用断裂式顶部。因此，尽管红灯比例仍在「观察期」区间，估值与资金面共振继续抬高综合判读: 估值 2/3 红（CAPE 周期调整 PE 40.7、前 5 大权重占比 ≈25.0%）；资金面 2/4 红（AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%）。红灯集中在 CAPE 周期调整 PE 40.7、前 5 大权重占比 ≈25.0%、AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%；双类压力共振使有效判读维持「高风险预警」。",
+    "verdict_desc": "本周计数 5 红 / 8 黄 / 11 绿，红灯比例维持 20.8%。本期翻灯 3 项: 「S&P 50 日均线上方比例」黄转绿、「会计造假/round-tripping 事件」红转绿、「Fed 政策方向」黄转红；基础判读落在「观察期」，有效判读为「高风险预警」。市场结构边际改善: S&P 50 日均线上方比例 ≈65%（绿）、市值加权 vs 等权重 -2.4%（绿） 显示广度和权重差距尚未同时转弱；但 AI 龙头内部人卖买比 ~8x（黄），风险偏好并非完全健康。资金面仍是核心压力: Mag4 自由现金流变化 -16%（黄）、AI 占 VC 投资比重 ~80%（红）、NVDA 客户投资/收入比 ≈49%（红）；同时，云厂商递延收入增速 +186%（绿） 说明需求仍在兑现。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。信用端仍托底: 高收益债利差 283 bps（绿）、数据中心 ABS 利差 稳定（黄）、Neocloud 信用事件 0 件（绿）；宏观端则是 Fed 政策方向 隐含加息（红），叠加 资本开支指引市场反应 选择性惩罚（黄）。这让本期更像高风险观察，而不是信用断裂式顶部。因此，尽管红灯比例仍在「观察期」区间，估值与资金面共振继续抬高综合判读: 估值 2/3 红（CAPE 周期调整 PE 41.4、前 5 大权重占比 ≈25.1%）；资金面 2/4 红（AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%）。红灯集中在 CAPE 周期调整 PE 41.4、前 5 大权重占比 ≈25.1%、AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%、Fed 政策方向 隐含加息；双类压力共振使有效判读维持「高风险预警」。",
     "verdict_desc_source": "bubble-watch-narrative-v1",
     "narrative_plan": {
       "version": "bubble-watch-narrative-v1",
@@ -80,15 +80,15 @@
           "en": "CREDIT",
           "total": 4,
           "red": 0,
-          "yellow": 1,
-          "green": 3,
+          "yellow": 2,
+          "green": 2,
           "redItems": [],
           "yellowItems": [
+            "dc_abs_spread",
             "debt_capex_ratio"
           ],
           "greenItems": [
             "hy_oas",
-            "dc_abs_spread",
             "neocloud_credit"
           ]
         },
@@ -115,12 +115,13 @@
           "zh": "宏观",
           "en": "MACRO",
           "total": 4,
-          "red": 0,
-          "yellow": 3,
+          "red": 1,
+          "yellow": 2,
           "green": 1,
-          "redItems": [],
+          "redItems": [
+            "fed_policy"
+          ],
           "yellowItems": [
-            "fed_policy",
             "capex_reaction",
             "ceo_hedging"
           ],
@@ -134,15 +135,8 @@
           "indicator_id": "breadth_50d",
           "category": "market_structure",
           "status": "green",
-          "value_display": "≈64%",
-          "note_summary": "公开市场价格显示:S&P 500 成份股 501 只(Wikipedia 实时名单)中 322 只收于 50 日均线上方,占比 ≈64.3%"
-        },
-        {
-          "indicator_id": "dc_abs_spread",
-          "category": "credit",
-          "status": "green",
-          "value_display": "收窄",
-          "note_summary": "数据中心 ABS/类 REITs 样本 4 只,最新样本 G互联25A(2025-10-31、规模 8.6 亿元);中国:资产支持证券到期收益率(AAA):10年 最新 2.06%,4 周 -3.6bp、12 周 -17.3bp;新闻证据 1 条,支持词 6/压力词 0;新闻样本提到年分配率 4%-8%。样本券最新估值利差/收益率字段多为空，因此只判断融资条件方向，不当作正式数据中心专属连续利差"
+          "value_display": "≈65%",
+          "note_summary": "公开市场价格显示:S&P 500 成份股 500 只(Wikipedia 实时名单)中 325 只收于 50 日均线上方,占比 ≈65.0%"
         },
         {
           "indicator_id": "accounting_events",
@@ -152,11 +146,18 @@
           "note_summary": "SEC 与 DOJ 官方执法公告近两年未命中核心 AI 名单的会计造假、round-tripping 或欺诈正式事件;该项仍只能说明公开执法监测未见新红灯,不能替代完整法律尽调"
         },
         {
+          "indicator_id": "fed_policy",
+          "category": "macro",
+          "status": "red",
+          "value_display": "隐含加息",
+          "note_summary": "Fed 政策路径显示:目标区间 3.50-3.75%(mid 3.625%);SEP 点阵图当前年 median 3.8%(2026-06-17);ZQZ26.CBT 年末 Fed funds futures 隐含 3.93%;有效联邦基金利率 3.63%(60 日漂移 -1bp)、CPI 同比 4.3%(2026-05-01 口径)→ 判定「隐含加息」,政策路径高于当前目标区间,对极度拉伸估值构成更直接压制"
+        },
+        {
           "indicator_id": "spy_vs_rsp_6m",
           "category": "market_structure",
           "status": "green",
-          "value_display": "-2.7%",
-          "note_summary": "公开市场价格显示 6 个月回报:SPY +6.0% vs 等权重 RSP +8.7%,市值加权领先 -2.7%——头部与平均股差距可控"
+          "value_display": "-2.4%",
+          "note_summary": "公开市场价格显示 6 个月回报:SPY +7.9% vs 等权重 RSP +10.3%,市值加权领先 -2.4%——头部与平均股差距可控"
         },
         {
           "indicator_id": "ai_ipo_pipeline",
@@ -197,8 +198,15 @@
           "indicator_id": "hy_oas",
           "category": "credit",
           "status": "green",
-          "value_display": "278 bps",
-          "note_summary": "FRED 显示 ICE BofA 高收益债 OAS = 2.78%(278 bps,2026-06-25);长期均值约 394 bps——信用市场对 AI capex 烧钱仍未定价压力,是当前最支撑多头的指标"
+          "value_display": "283 bps",
+          "note_summary": "FRED 显示 ICE BofA 高收益债 OAS = 2.83%(283 bps,2026-06-26);长期均值约 394 bps——信用市场对 AI capex 烧钱仍未定价压力,是当前最支撑多头的指标"
+        },
+        {
+          "indicator_id": "dc_abs_spread",
+          "category": "credit",
+          "status": "yellow",
+          "value_display": "稳定",
+          "note_summary": "数据中心 ABS/类 REITs 样本 4 只,最新样本 G互联25A(2025-10-31、规模 8.6 亿元);中国:资产支持证券到期收益率(AAA):6个月 最新 1.42%,4 周 +5.2bp、12 周 -6.8bp;新闻证据 1 条,支持词 6/压力词 0;新闻样本提到年分配率 4%-8%。样本券最新估值利差/收益率字段多为空，因此只判断融资条件方向，不当作正式数据中心专属连续利差"
         },
         {
           "indicator_id": "neocloud_credit",
@@ -206,13 +214,6 @@
           "status": "green",
           "value_display": "0 件",
           "note_summary": "公开 neocloud 信用事件监测覆盖 CoreWeave/Lambda/Crusoe/Nebius 共 5 个页面,未命中违约、降级或困境重组词;同时记录 27 条融资/票据/credit facility 正常事件。该项不是完整评级数据库"
-        },
-        {
-          "indicator_id": "fed_policy",
-          "category": "macro",
-          "status": "yellow",
-          "value_display": "偏鹰",
-          "note_summary": "FRED 显示推导:有效联邦基金利率 3.63%(60 日漂移 -1bp)、CPI 同比 4.3%(2026-05-01 口径)→ 判定「偏鹰(维持高位)」,通胀仍高于 2% 目标、higher-for-longer 对极度拉伸的估值构成持续压制"
         }
       ],
       "sections": [
@@ -220,7 +221,7 @@
           "key": "scorecard",
           "role": "lead",
           "sourceIndicators": [],
-          "summaryZh": "本周计数 4 红 / 8 黄 / 12 绿，红灯比例由 20.8% 降至 16.7%。本期翻灯 3 项: 「S&P 50 日均线上方比例」黄转绿、「数据中心 ABS 利差」黄转绿、「会计造假/round-tripping 事件」红转绿；基础判读落在「观察期」，有效判读为「高风险预警」。"
+          "summaryZh": "本周计数 5 红 / 8 黄 / 11 绿，红灯比例维持 20.8%。本期翻灯 3 项: 「S&P 50 日均线上方比例」黄转绿、「会计造假/round-tripping 事件」红转绿、「Fed 政策方向」黄转红；基础判读落在「观察期」，有效判读为「高风险预警」。"
         },
         {
           "key": "market_structure",
@@ -230,7 +231,7 @@
             "spy_vs_rsp_6m",
             "insider_sell_buy"
           ],
-          "summaryZh": "市场结构边际改善: S&P 50 日均线上方比例 ≈64%（绿）、市值加权 vs 等权重 -2.7%（绿） 显示广度和权重差距尚未同时转弱；但 AI 龙头内部人卖买比 ~8x（黄），风险偏好并非完全健康。"
+          "summaryZh": "市场结构边际改善: S&P 50 日均线上方比例 ≈65%（绿）、市值加权 vs 等权重 -2.4%（绿） 显示广度和权重差距尚未同时转弱；但 AI 龙头内部人卖买比 ~8x（黄），风险偏好并非完全健康。"
         },
         {
           "key": "capital_fundamentals",
@@ -253,7 +254,7 @@
             "fed_policy",
             "capex_reaction"
           ],
-          "summaryZh": "信用端仍托底: 高收益债利差 278 bps（绿）、数据中心 ABS 利差 收窄（绿）、Neocloud 信用事件 0 件（绿）；宏观端则是 Fed 政策方向 偏鹰（黄），叠加 资本开支指引市场反应 选择性惩罚（黄）。这让本期更像高风险观察，而不是信用断裂式顶部。"
+          "summaryZh": "信用端仍托底: 高收益债利差 283 bps（绿）、数据中心 ABS 利差 稳定（黄）、Neocloud 信用事件 0 件（绿）；宏观端则是 Fed 政策方向 隐含加息（红），叠加 资本开支指引市场反应 选择性惩罚（黄）。这让本期更像高风险观察，而不是信用断裂式顶部。"
         },
         {
           "key": "override_conclusion",
@@ -262,15 +263,16 @@
             "cape",
             "top5_weight",
             "vc_ai_share",
-            "nvda_invest_revenue"
+            "nvda_invest_revenue",
+            "fed_policy"
           ],
-          "summaryZh": "因此，尽管红灯比例仍在「观察期」区间，估值与资金面共振继续抬高综合判读: 估值 2/3 红（CAPE 周期调整 PE 40.7、前 5 大权重占比 ≈25.0%）；资金面 2/4 红（AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%）。红灯集中在 CAPE 周期调整 PE 40.7、前 5 大权重占比 ≈25.0%、AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%；双类压力共振使有效判读维持「高风险预警」。"
+          "summaryZh": "因此，尽管红灯比例仍在「观察期」区间，估值与资金面共振继续抬高综合判读: 估值 2/3 红（CAPE 周期调整 PE 41.4、前 5 大权重占比 ≈25.1%）；资金面 2/4 红（AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%）。红灯集中在 CAPE 周期调整 PE 41.4、前 5 大权重占比 ≈25.1%、AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%、Fed 政策方向 隐含加息；双类压力共振使有效判读维持「高风险预警」。"
         }
       ],
       "limitations": [
         "24 项公开数据口径、0 项研究口径。",
         "5 项新闻或调查口径采用多源确认,灯色按样本强度保守发布。",
-        "黄灯压力读数 33.3% 仅用于趋势观察,不改变红灯比例阈值。",
+        "黄灯压力读数 37.5% 仅用于趋势观察,不改变红灯比例阈值。",
         "当前无过期指标。",
         "历史页面仅用于周度结构对照；本期正文由当前指标重新生成。"
       ]
@@ -305,14 +307,14 @@
       "threshold_text": ">35 红 / 25-35 黄 / <25 绿",
       "source_name": "CAPE 历史估值序列",
       "status": "red",
-      "value_display": "40.7",
-      "note": "multpl.com 最新可得数据 CAPE = 40.70,距 2000 年互联网泡沫峰值 44.19 约 8%;earnings yield ≈ 2.5%。阈值:>35 红 / 25-35 黄 / <25 绿",
+      "value_display": "41.4",
+      "note": "multpl.com 最新可得数据 CAPE = 41.39,距 2000 年互联网泡沫峰值 44.19 约 6%;earnings yield ≈ 2.4%。阈值:>35 红 / 25-35 黄 / <25 绿",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:03:02.619Z",
+        "fetchedAt": "2026-06-30T07:05:05.075Z",
         "detail": {
-          "cape": 40.7
+          "cape": 41.39
         }
       }
     },
@@ -324,25 +326,25 @@
       "threshold_text": ">25% 红 / 18-25% 黄 / <18% 绿",
       "source_name": "SPY 持仓集中度",
       "status": "red",
-      "value_display": "≈25.0%",
-      "note": "SPY 持仓表最新可得数据:前 5 大权重 NVDA / AAPL / MSFT / AMZN / GOOGL 合计 ≈25.0%,贴近 2000 年集中度极值区;市值高度押注少数 AI 龙头。阈值:>25% 红 / 18-25% 黄 / <18% 绿",
+      "value_display": "≈25.1%",
+      "note": "SPY 持仓表最新可得数据:前 5 大权重 NVDA / AAPL / MSFT / AMZN / GOOGL 合计 ≈25.1%,贴近 2000 年集中度极值区;市值高度押注少数 AI 龙头。阈值:>25% 红 / 18-25% 黄 / <18% 绿",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:03:02.920Z",
+        "fetchedAt": "2026-06-30T07:05:05.621Z",
         "detail": {
           "top5": [
             {
               "symbol": "NVDA",
-              "weight": 7.36
+              "weight": 7.38
             },
             {
               "symbol": "AAPL",
-              "weight": 6.58
+              "weight": 6.59
             },
             {
               "symbol": "MSFT",
-              "weight": 4.37
+              "weight": 4.38
             },
             {
               "symbol": "AMZN",
@@ -350,10 +352,10 @@
             },
             {
               "symbol": "GOOGL",
-              "weight": 3.12
+              "weight": 3.13
             }
           ],
-          "sum": 25.030000000000005
+          "sum": 25.08
         }
       }
     },
@@ -365,14 +367,14 @@
       "threshold_text": ">40 红 / 30-40 黄 / <30 绿",
       "source_name": "NVDA 远期估值",
       "status": "green",
-      "value_display": "≈19x",
-      "note": "StockAnalysis 最新可得数据 NVDA 远期 PE ≈ 19.4x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿",
+      "value_display": "≈20x",
+      "note": "StockAnalysis 最新可得数据 NVDA 远期 PE ≈ 19.6x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:03:03.100Z",
+        "fetchedAt": "2026-06-30T07:05:06.092Z",
         "detail": {
-          "forwardPe": 19.37
+          "forwardPe": 19.62
         }
       }
     },
@@ -389,7 +391,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:03:05.175Z",
+        "fetchedAt": "2026-06-30T07:05:10.361Z",
         "detail": {
           "yoyPct": 69.52159559297533,
           "source": "stockanalysis 季报镜像",
@@ -427,7 +429,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:03:05.218Z",
+        "fetchedAt": "2026-06-30T07:05:10.385Z",
         "detail": {
           "yoyPct": -15.752621143043793,
           "source": "stockanalysis 季报镜像",
@@ -547,7 +549,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:03:06.259Z",
+        "fetchedAt": "2026-06-30T07:05:20.094Z",
         "detail": {
           "source": "Crunchbase News WordPress API",
           "url": "https://news.crunchbase.com/venture/record-breaking-funding-ai-global-q1-2026/",
@@ -576,7 +578,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:03:06.833Z",
+        "fetchedAt": "2026-06-30T07:05:20.974Z",
         "detail": {
           "commitmentsUsd": 125000000000,
           "ltmRevenue": 253491000000,
@@ -593,16 +595,16 @@
       "threshold_text": "<40% 红 / 40-60% 黄 / >60% 绿",
       "source_name": "S&P 500 成份股价格广度",
       "status": "green",
-      "value_display": "≈64%",
-      "note": "公开市场价格显示:S&P 500 成份股 501 只(Wikipedia 实时名单)中 322 只收于 50 日均线上方,占比 ≈64.3%。阈值:<40% 红 / 40-60% 黄 / >60% 绿",
+      "value_display": "≈65%",
+      "note": "公开市场价格显示:S&P 500 成份股 500 只(Wikipedia 实时名单)中 325 只收于 50 日均线上方,占比 ≈65.0%。阈值:<40% 红 / 40-60% 黄 / >60% 绿",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:03:23.543Z",
+        "fetchedAt": "2026-06-30T07:05:47.412Z",
         "detail": {
-          "above": 322,
-          "counted": 501,
-          "pct": 64.27145708582835
+          "above": 325,
+          "counted": 500,
+          "pct": 65
         }
       }
     },
@@ -614,16 +616,16 @@
       "threshold_text": ">10% 红 / 5-10% 黄 / <5% 绿",
       "source_name": "市值加权与等权重 ETF",
       "status": "green",
-      "value_display": "-2.7%",
-      "note": "公开市场价格显示 6 个月回报:SPY +6.0% vs 等权重 RSP +8.7%,市值加权领先 -2.7%——头部与平均股差距可控。阈值:>10% 红 / 5-10% 黄 / <5% 绿",
+      "value_display": "-2.4%",
+      "note": "公开市场价格显示 6 个月回报:SPY +7.9% vs 等权重 RSP +10.3%,市值加权领先 -2.4%——头部与平均股差距可控。阈值:>10% 红 / 5-10% 黄 / <5% 绿",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:03:23.729Z",
+        "fetchedAt": "2026-06-30T07:05:47.747Z",
         "detail": {
-          "spyRet": 5.980957491986945,
-          "rspRet": 8.676102167966999,
-          "spread": -2.695144675980054
+          "spyRet": 7.858690480040284,
+          "rspRet": 10.268617384436258,
+          "spread": -2.4099269043959737
         }
       }
     },
@@ -640,11 +642,11 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:03:50.857Z",
+        "fetchedAt": "2026-06-30T07:05:50.144Z",
         "detail": {
           "buyUsd": 1926569,
-          "sellUsd": 4407301487,
-          "ratio": 2287.642688634562,
+          "sellUsd": 4405449377,
+          "ratio": 2286.681337133526,
           "sources": [
             {
               "symbol": "NVDA",
@@ -669,7 +671,7 @@
               "source": "OpenInsider public screener",
               "sourceMode": "openinsider_primary",
               "buyUsd": 1926569,
-              "sellUsd": 1160069866,
+              "sellUsd": 1158217756,
               "filingCount": null,
               "transactionCount": null
             }
@@ -687,7 +689,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-28",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 14,
               "syncedFromUpstream": true
             }
@@ -703,7 +705,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-28",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 14,
               "syncedFromUpstream": true
             }
@@ -724,7 +726,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:03:51.765Z",
+        "fetchedAt": "2026-06-30T07:05:51.171Z",
         "detail": {
           "source": "Crunchbase News public article search",
           "crunchbaseSource": "Crunchbase News WordPress API",
@@ -759,7 +761,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-28",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 21,
               "syncedFromUpstream": true
             }
@@ -775,7 +777,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-28",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 21,
               "syncedFromUpstream": true
             }
@@ -794,15 +796,15 @@
       "threshold_text": ">500 红 / 350-500 黄 / <350 绿",
       "source_name": "ICE BofA 高收益债利差",
       "status": "green",
-      "value_display": "278 bps",
-      "note": "FRED 显示 ICE BofA 高收益债 OAS = 2.78%(278 bps,2026-06-25);长期均值约 394 bps——信用市场对 AI capex 烧钱仍未定价压力,是当前最支撑多头的指标。阈值:>500 红 / 350-500 黄 / <350 绿",
+      "value_display": "283 bps",
+      "note": "FRED 显示 ICE BofA 高收益债 OAS = 2.83%(283 bps,2026-06-26);长期均值约 394 bps——信用市场对 AI capex 烧钱仍未定价压力,是当前最支撑多头的指标。阈值:>500 红 / 350-500 黄 / <350 绿",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:03:51.973Z",
+        "fetchedAt": "2026-06-30T07:05:51.629Z",
         "detail": {
-          "bps": 278,
-          "date": "2026-06-25"
+          "bps": 283,
+          "date": "2026-06-26"
         }
       }
     },
@@ -813,13 +815,13 @@
       "name_zh": "数据中心 ABS 利差",
       "threshold_text": "走阔 50bps+ = 红 / 稳定 = 黄 / 收窄 = 绿",
       "source_name": "数据中心证券样本与 ABS 基准",
-      "status": "green",
-      "value_display": "收窄",
-      "note": "数据中心 ABS/类 REITs 样本 4 只,最新样本 G互联25A(2025-10-31、规模 8.6 亿元);中国:资产支持证券到期收益率(AAA):10年 最新 2.06%,4 周 -3.6bp、12 周 -17.3bp;新闻证据 1 条,支持词 6/压力词 0;新闻样本提到年分配率 4%-8%。样本券最新估值利差/收益率字段多为空，因此只判断融资条件方向，不当作正式数据中心专属连续利差。判级:4 周走阔 ≥50bp=红 / ≥15bp 或压力词升温=黄 / 12 周收窄且需求证据充足=绿",
+      "status": "yellow",
+      "value_display": "稳定",
+      "note": "数据中心 ABS/类 REITs 样本 4 只,最新样本 G互联25A(2025-10-31、规模 8.6 亿元);中国:资产支持证券到期收益率(AAA):6个月 最新 1.42%,4 周 +5.2bp、12 周 -6.8bp;新闻证据 1 条,支持词 6/压力词 0;新闻样本提到年分配率 4%-8%。样本券最新估值利差/收益率字段多为空，因此只判断融资条件方向，不当作正式数据中心专属连续利差。判级:4 周走阔 ≥50bp=红 / ≥15bp 或压力词升温=黄 / 12 周收窄且需求证据充足=绿",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:04:13.767Z",
+        "fetchedAt": "2026-06-30T07:06:13.375Z",
         "detail": {
           "source": "Wind MCP paid optional",
           "directDataCenterYieldAvailable": false,
@@ -866,22 +868,22 @@
             }
           ],
           "benchmark": {
-            "name": "中国:资产支持证券到期收益率(AAA):10年",
-            "code": "M1016276",
+            "name": "中国:资产支持证券到期收益率(AAA):6个月",
+            "code": "M1016265",
             "latest": {
               "date": "20260629",
-              "value": 2.0625
+              "value": 1.4249
             },
             "p4w": {
               "date": "20260601",
-              "value": 2.0988
+              "value": 1.3726
             },
             "p12w": {
               "date": "20260403",
-              "value": 2.2352
+              "value": 1.493
             },
-            "change4wBp": -3.630000000000022,
-            "change12wBp": -17.269999999999985,
+            "change4wBp": 5.230000000000001,
+            "change12wBp": -6.810000000000005,
             "observationCount": 367
           },
           "news": {
@@ -921,7 +923,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:04:17.084Z",
+        "fetchedAt": "2026-06-30T07:06:17.481Z",
         "detail": {
           "source": "Morgan Stanley public AI capex financing split",
           "url": "https://www.morganstanley.com/insights/articles/ai-market-trends-institute-2026",
@@ -944,17 +946,17 @@
               {
                 "title": "Debt-fuelled AI buildout flirts with collapse",
                 "date": "2026-03-12",
-                "relevance": 0.5608
+                "relevance": 0.5601
               },
               {
                 "title": "市场依旧挺AI：谷歌数据中心建造商要发57亿美元垃圾债，创历史记录！",
                 "date": "2026-04-16",
-                "relevance": 0.5169
+                "relevance": 0.5163
               },
               {
                 "title": "AI基建融资潮“高烧”不退！谷歌(GOOGL.US)系数据中心领衔，市场抢购67亿美元高收益债",
                 "date": "2026-04-17",
-                "relevance": 0.5123
+                "relevance": 0.5118
               }
             ]
           },
@@ -977,7 +979,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:04:20.842Z",
+        "fetchedAt": "2026-06-30T07:06:23.332Z",
         "detail": {
           "source": "public neocloud credit-event monitor",
           "checkedPages": 5,
@@ -1044,7 +1046,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:04:20.917Z",
+        "fetchedAt": "2026-06-30T07:06:25.182Z",
         "detail": {
           "source": "OpenRouter /api/frontend/v1/rankings/market-share",
           "latestWeek": "2026-06-22",
@@ -1070,7 +1072,7 @@
           "prev4wTokens": 113365423650400,
           "droppedPartialWeek": {
             "date": "2026-06-29",
-            "totalTokens": 2803770628028
+            "totalTokens": 9069180301906
           },
           "momPct": 53.574313435569906,
           "prevMomPct": 30.09402519816875,
@@ -1093,24 +1095,24 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:04:21.073Z",
+        "fetchedAt": "2026-06-30T07:06:25.821Z",
         "detail": {
           "source": "OpenRouter v1 model-rankings-chart + frontend catalog models",
           "latestWeek": "2026-06-22",
           "latest4wTokens": 174100171044427,
           "prev4wTokens": 113365423650400,
-          "latest4wSpendProxyUsd": 170142124.7652739,
-          "prev4wSpendProxyUsd": 112466511.62621221,
+          "latest4wSpendProxyUsd": 170125263.7691893,
+          "prev4wSpendProxyUsd": 112471811.33158156,
           "tokenGrowthPct": 53.574313435569906,
-          "spendGrowthPct": 51.282477161512155,
-          "ratio": 1.044690436205718,
+          "spendGrowthPct": 51.26035737758134,
+          "ratio": 1.0451412392805628,
           "pricedCoveragePct": 58.10261940329843,
           "droppedPartialWeek": {
             "date": "2026-06-29",
-            "totalTokens": 2652410033527,
-            "pricedTokens": 1699545555469,
-            "spendProxyUsd": 3024979.849422562,
-            "othersTokens": 952864478058,
+            "totalTokens": 9017135935134,
+            "pricedTokens": 5474500645660,
+            "spendProxyUsd": 8067062.491825744,
+            "othersTokens": 3542635289474,
             "missingModels": []
           },
           "rows": [
@@ -1139,7 +1141,7 @@
               "date": "2026-06-22",
               "totalTokens": 46720348192435,
               "pricedTokens": 28112106761831,
-              "spendProxyUsd": 45353534.11898363,
+              "spendProxyUsd": 45336673.122899026,
               "othersTokens": 18608241430604
             }
           ],
@@ -1154,7 +1156,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-28",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 45,
               "syncedFromUpstream": true
             }
@@ -1170,7 +1172,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-28",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 45,
               "syncedFromUpstream": true
             }
@@ -1194,7 +1196,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:04:22.418Z",
+        "fetchedAt": "2026-06-30T07:06:31.032Z",
         "detail": {
           "source": "SaaStr WordPress public API",
           "milestones": [
@@ -1267,7 +1269,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:04:23.031Z",
+        "fetchedAt": "2026-06-30T07:06:32.426Z",
         "detail": {
           "source": "Google Cloud ROI of AI public report",
           "url": "https://cloud.google.com/transform/roi-of-ai-how-agents-help-business",
@@ -1284,7 +1286,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-28",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 120,
               "syncedFromUpstream": true
             }
@@ -1300,7 +1302,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-06-28",
-              "ageDays": 1,
+              "ageDays": 2,
               "maxAgeDays": 120,
               "syncedFromUpstream": true
             }
@@ -1324,7 +1326,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:04:25.548Z",
+        "fetchedAt": "2026-06-30T07:06:36.679Z",
         "detail": {
           "yoyPct": 185.5625170253337,
           "prevYoyPct": 87.60026788443905,
@@ -1389,20 +1391,11 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:04:27.900Z",
+        "fetchedAt": "2026-06-30T07:06:40.675Z",
         "detail": {
           "source": "SEC RSS + DOJ News API official monitor",
-          "checkedSources": 2,
-          "sourceFailures": [
-            {
-              "source": "SEC search:AI accounting",
-              "reason": "HTTP 403 for https://www.sec.gov/newsroom/press-releases?combine=artificial%20intelligence%20accounting%20fraud"
-            },
-            {
-              "source": "SEC search:Super Micro accounting",
-              "reason": "HTTP 403 for https://www.sec.gov/newsroom/press-releases?combine=Super%20Micro%20accounting"
-            }
-          ],
+          "checkedSources": 4,
+          "sourceFailures": [],
           "eventCount": 0,
           "events": [],
           "sourceCandidateStatus": "hybrid_live",
@@ -1417,18 +1410,46 @@
       "name_en": "Fed Policy Direction",
       "name_zh": "Fed 政策方向",
       "threshold_text": "加息=红 / 通胀压力=黄 / 降息=绿",
-      "source_name": "Fed 利率与 CPI",
-      "status": "yellow",
-      "value_display": "偏鹰",
-      "note": "FRED 显示推导:有效联邦基金利率 3.63%(60 日漂移 -1bp)、CPI 同比 4.3%(2026-05-01 口径)→ 判定「偏鹰(维持高位)」,通胀仍高于 2% 目标、higher-for-longer 对极度拉伸的估值构成持续压制。判级:加息=红 / 通胀压力=黄 / 降息=绿",
+      "source_name": "Fed 点阵图/期货/FRED",
+      "status": "red",
+      "value_display": "隐含加息",
+      "note": "Fed 政策路径显示:目标区间 3.50-3.75%(mid 3.625%);SEP 点阵图当前年 median 3.8%(2026-06-17);ZQZ26.CBT 年末 Fed funds futures 隐含 3.93%;有效联邦基金利率 3.63%(60 日漂移 -1bp)、CPI 同比 4.3%(2026-05-01 口径)→ 判定「隐含加息」,政策路径高于当前目标区间,对极度拉伸估值构成更直接压制。判级:加息=红 / 通胀压力=黄 / 降息=绿",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:04:28.248Z",
+        "fetchedAt": "2026-06-30T07:06:41.262Z",
         "detail": {
+          "policyPathEvidenceVersion": "fed_policy_path_v2",
           "dff": 3.63,
           "drift60dBp": -1.000000000000023,
-          "cpiYoy": 4.270032656680247
+          "cpiYoy": 4.270032656680247,
+          "cpiDate": "2026-05-01",
+          "targetLower": 3.5,
+          "targetUpper": 3.75,
+          "targetMid": 3.625,
+          "sepDotPlot": {
+            "sepProjectionDate": "2026-06-17",
+            "sepUrl": "https://www.federalreserve.gov/monetarypolicy/fomcprojtabl20260617.htm",
+            "dotPlotMedianCurrentYear": 3.8,
+            "dotPlotMedianNextYear": 3.6
+          },
+          "yearEndFedFundsFuture": {
+            "symbol": "ZQZ26.CBT",
+            "price": 96.06999969482422,
+            "impliedRate": 3.93,
+            "updatedAt": "2026-06-30T04:00:00.000Z"
+          },
+          "sepGap": 0.175,
+          "yearEndGap": 0.305,
+          "classificationReason": "policy_path_above_current_target",
+          "sourceStatus": {
+            "targetRange": "live",
+            "sepDotPlot": "live",
+            "yearEndFedFundsFuture": "live",
+            "dff": "live",
+            "cpi": "live"
+          },
+          "sourceFailures": []
         }
       }
     },
@@ -1441,20 +1462,20 @@
       "source_name": "公开财报与相对收益窗口",
       "status": "yellow",
       "value_display": "选择性惩罚",
-      "note": "公开季度现金流显示 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +71.0%;Yahoo 近 21 交易日相对 QQQ 平均 -9.5%、相对 SPY -9.8%,4/4 家跑输 QQQ 超 5pct。该口径观察高资本开支公司在财报期后的相对收益，不等同逐字财报指引文本。判级:系统性惩罚=红 / 偶发或选择性=黄 / 奖励=绿 价格惩罚已比较明显，但尚缺直接管理层下调或财报指引惩罚共振，因此按选择性惩罚而非系统性惩罚发布。",
+      "note": "公开季度现金流显示 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +71.0%;Yahoo 近 21 交易日相对 QQQ 平均 -10.1%、相对 SPY -9.9%,4/4 家跑输 QQQ 超 5pct。该口径观察高资本开支公司在财报期后的相对收益，不等同逐字财报指引文本。判级:系统性惩罚=红 / 偶发或选择性=黄 / 奖励=绿 价格惩罚已比较明显，但尚缺直接管理层下调或财报指引惩罚共振，因此按选择性惩罚而非系统性惩罚发布。",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:04:28.722Z",
+        "fetchedAt": "2026-06-30T07:06:42.081Z",
         "detail": {
           "source": "StockAnalysis quarterly cash-flow + Yahoo Chart",
           "benchmark": {
-            "qqq21": -3.1434631972112848,
-            "spy21": -2.8609161194016983
+            "qqq21": -1.5660629252900122,
+            "spy21": -1.8022761762452069
           },
           "avgCapexYoy": 71.02230187618855,
-          "avgExcessQqq": -9.515695039527094,
-          "avgExcessSpy": -9.798242117336681,
+          "avgExcessQqq": -10.14199491022299,
+          "avgExcessSpy": -9.905781659267797,
           "punishedCount": 4,
           "capexRows": [
             {
@@ -1485,31 +1506,31 @@
           "reactionRows": [
             {
               "ticker": "MSFT",
-              "ret21": -9.6,
-              "ret63": 1.9,
-              "excess21VsQqq": -6.5,
-              "excess21VsSpy": -6.8
+              "ret21": -13.7,
+              "ret63": 3.3,
+              "excess21VsQqq": -12.1,
+              "excess21VsSpy": -11.9
             },
             {
               "ticker": "META",
-              "ret21": -13.4,
-              "ret63": 0.5,
-              "excess21VsQqq": -10.2,
-              "excess21VsSpy": -10.5
+              "ret21": -11.4,
+              "ret63": 7,
+              "excess21VsQqq": -9.9,
+              "excess21VsSpy": -9.6
             },
             {
               "ticker": "AMZN",
-              "ret21": -14.4,
-              "ret63": 12.1,
-              "excess21VsQqq": -11.3,
-              "excess21VsSpy": -11.5
+              "ret21": -12.4,
+              "ret63": 20.5,
+              "excess21VsQqq": -10.8,
+              "excess21VsSpy": -10.6
             },
             {
               "ticker": "GOOGL",
-              "ret21": -13.2,
-              "ret63": 20.1,
-              "excess21VsQqq": -10.1,
-              "excess21VsSpy": -10.4
+              "ret21": -9.4,
+              "ret63": 28.9,
+              "excess21VsQqq": -7.8,
+              "excess21VsSpy": -7.5
             }
           ],
           "proxyConfidenceCalibration": {
@@ -1547,34 +1568,26 @@
       "source_name": "公开新闻与高管表态",
       "status": "yellow",
       "value_display": "部分",
-      "note": "对冲表态继续升温:Altman 关于 AI 成本压力的表态被多篇引用；Dimon 等金融高管的泡沫风险表述被市场关注；数据中心投入、capex 回报和过建风险被反复讨论。频率与强度偏高,但尚未看到 CEO 集体承认过热或暂停投入,维持黄灯。",
+      "note": "对冲表态继续升温:多篇新闻围绕 AI bubble、估值和回撤风险展开。频率与强度偏高,但尚未看到 CEO 集体承认过热或暂停投入,维持黄灯。",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-06-29T10:04:41.356Z",
+        "fetchedAt": "2026-06-30T07:06:42.093Z",
         "detail": {
-          "source": "GDELT DOC 2.0 + Tavily Search API + Brave News Search API",
+          "source": "GDELT DOC 2.0",
           "query": "(\"AI bubble\" OR \"artificial intelligence bubble\" OR \"AI overbuild\" OR \"AI capex bubble\")",
           "gdeltRequest": {
-            "label": "weekly_30d_hybrid_cache",
+            "label": "fresh_cache",
             "maxrecords": "20",
             "timespan": "30d",
             "sort": "HybridRel",
-            "cacheStatus": "refreshed_live"
+            "cacheStatus": "fresh"
           },
-          "gdeltAttempts": [
-            {
-              "label": "weekly_30d_hybrid_cache",
-              "maxrecords": "20",
-              "timespan": "30d",
-              "sort": "HybridRel",
-              "status": "ok"
-            }
-          ],
+          "gdeltAttempts": [],
           "gdeltCache": {
             "schemaVersion": "gdelt-bubble-watch-cache-p38",
-            "cacheStatus": "refreshed_live",
-            "cacheGeneratedAt": null,
+            "cacheStatus": "fresh",
+            "cacheGeneratedAt": "2026-06-29T10:04:40.714Z",
             "liveFailure": null
           },
           "requestDiagnostics": {
@@ -1598,7 +1611,7 @@
           "executiveHitCount": 1,
           "topArticles": [
             {
-              "title": "Scared of a stock market bubble ? These 3 charts will ease your darkest fears . ",
+              "title": "Scared of a stock market bubble ? These 3 charts will ease your darkest fears .",
               "url": "https://finance.yahoo.com/markets/article/scared-of-a-stock-market-bubble-these-3-charts-will-ease-your-darkest-fears-134241607.html",
               "domain": "finance.yahoo.com",
               "seendate": "20260609T221500Z"
@@ -1622,115 +1635,24 @@
               "seendate": "20260623T134500Z"
             },
             {
-              "title": "Talk of a bubble is an  insult to AI  says SoftBank Son",
+              "title": "Talk of a bubble is an insult to AI says SoftBank Son",
               "url": "https://economictimes.indiatimes.com/tech/artificial-intelligence/talk-of-a-bubble-is-an-insult-to-ai-says-softbanks-son/articleshow/131957186.cms",
               "domain": "economictimes.indiatimes.com",
               "seendate": "20260624T071500Z"
             }
           ],
           "freePrimaryFailure": null,
-          "sourceSummary": "GDELT DOC 2.0:部分(新闻10,高管1) / Tavily Search API:部分(新闻9,高管6) / Brave News Search API:部分(新闻10,高管4)",
+          "sourceSummary": "GDELT DOC 2.0:部分(新闻10,高管1) / Tavily Search API:不可用(TAVILY_API_KEYS 未配置) / Brave News Search API:不可用(BRAVE_API_KEYS 未配置)",
           "crossConfirmations": [
             {
               "source": "Tavily Search API",
-              "status": "yellow",
-              "value_display": "部分",
-              "articleCount": 9,
-              "executiveHitCount": 6,
-              "resultCount": 10,
-              "usage": {
-                "credits": 1
-              },
-              "requestId": "9aa83365-1cf7-4358-ad78-b5e765b88ae7",
-              "topArticles": [
-                {
-                  "title": "AllianceBernstein's CEO says you should be worried about an AI bubble - Business Insider",
-                  "url": "https://www.businessinsider.com/ai-bubble-sp500-valuations-tech-dot-com-seth-bernstein-ceo-2026-6",
-                  "score": 0.564027,
-                  "published_date": "Sat, 27 Jun 2026 09:10:01 GMT",
-                  "snippet": "# AllianceBernstein's CEO says you should be worried about an AI bubble. A recent NBER study showed that about 90% of 6,000 C-Suite professionals report that AI has had \"no impact…"
-                },
-                {
-                  "title": "Talk of a bubble is 'blasphemy against AI' says SoftBank's Son - Reuters",
-                  "url": "https://www.reuters.com/business/media-telecom/talk-bubble-is-an-insult-ai-says-softbanks-son-2026-06-24/",
-                  "score": 0.5504388,
-                  "published_date": "Wed, 24 Jun 2026 06:07:25 GMT",
-                  "snippet": "Exclusive news, data and analytics for financial market professionals Learn more about Refinitiv. ## Browse World. ## Browse Business. ## Browse Legal. Image 2: SoftBank Group Cha…"
-                },
-                {
-                  "title": "Magnitude of AI capex boost is hard to overstate, says JPMorgan's Santos - CNBC",
-                  "url": "https://www.cnbc.com/video/2026/06/25/magnitude-of-ai-capex-boost-is-hard-to-overstate-jpmorgans-santos.html",
-                  "score": 0.54855317,
-                  "published_date": "Thu, 25 Jun 2026 20:34:30 GMT",
-                  "snippet": "# Magnitude of AI capex boost is hard to overstate, says JPMorgan's Santos. CNBC's \"Closing Bell Overtime\" team breaks down the tech trade and the day's market action with Gabriel…"
-                },
-                {
-                  "title": "Revenge of the AI bubble - Axios",
-                  "url": "https://www.axios.com/2026/06/06/ai-bubble-economy-growth",
-                  "score": 0.40967003,
-                  "published_date": "Sat, 06 Jun 2026 12:59:11 GMT",
-                  "snippet": "# Revenge of the AI bubble. The AI bubble debate has lurched through at least three frenzied phases in the span of three years:. 2. **Mania:** Claude Code and autonomous agents ma…"
-                },
-                {
-                  "title": "AI bubble heads and doomers seize on Sam Altman's remark that AI costs are a 'huge issue' for some companies - Business Insider",
-                  "url": "https://www.businessinsider.com/ai-bubble-heads-doomers-sam-altman-ai-costs-huge-issue-2026-6",
-                  "score": 0.3865787,
-                  "published_date": "Thu, 04 Jun 2026 21:15:45 GMT",
-                  "snippet": "# AI bubble heads and doomers seize on Sam Altman's remark that AI costs are a 'huge issue' for some companies. Sam Altman said AI budgeting had recently become a \"huge issue\" for…"
-                }
-              ]
+              "status": "unavailable",
+              "reason": "TAVILY_API_KEYS 未配置"
             },
             {
               "source": "Brave News Search API",
-              "status": "yellow",
-              "value_display": "部分",
-              "articleCount": 10,
-              "executiveHitCount": 4,
-              "resultCount": 10,
-              "usage": null,
-              "requestId": null,
-              "topArticles": [
-                {
-                  "title": "The AI bubble has further to run despite the looming crash | Phillip Inman | The Guardian",
-                  "url": "https://www.theguardian.com/business/2026/jun/27/ai-bubble-crash-tech-firms-stock-markets",
-                  "age": "2 days ago",
-                  "page_age": "2026-06-27T15:00:07",
-                  "source": "www.theguardian.com",
-                  "snippet": "As tech firms make huge profits and investors fear losing out, both are doing their best to hold off the day of reckoning"
-                },
-                {
-                  "title": "Why the CEO of AllianceBernstein Says You Should Worry About an AI Bubble - Business Insider",
-                  "url": "https://www.businessinsider.com/ai-bubble-sp500-valuations-tech-dot-com-seth-bernstein-ceo-2026-6",
-                  "age": "2 days ago",
-                  "page_age": "2026-06-27T09:10:01",
-                  "source": "www.businessinsider.com",
-                  "snippet": "\"Is it likely we have a meaningful correction? I think it is,\" AllianceBernstein's CEO told Business Insider in an interview."
-                },
-                {
-                  "title": "AllianceBernstein's CEO says you should be worried about an AI bubble | Business Insider Africa",
-                  "url": "https://africa.businessinsider.com/markets/alliancebernsteins-ceo-says-you-should-be-worried-about-an-ai-bubble/jv9jy8g",
-                  "age": "2 days ago",
-                  "page_age": "2026-06-27T09:10:01",
-                  "source": "africa.businessinsider.com",
-                  "snippet": "In spite of the hype around artificial intelligence, not all executives are all that enamored by the hottest technology since the internet. | Business Insider Africa"
-                },
-                {
-                  "title": "Bursting Of AI Bubble, Collapse Of Circular Deals Are Among Top Risks To Global Financial System, BIS Warns<!-- --> | ZeroHedge",
-                  "url": "https://zerohedge.com/markets/bursting-ai-bubble-collapse-circular-deals-are-among-top-risks-global-financial-system-bis",
-                  "age": "7 hours ago",
-                  "page_age": "2026-06-29T03:33:56",
-                  "source": "zerohedge.com",
-                  "snippet": "ZeroHedge - On a long enough timeline, the survival rate for everyone drops to zero"
-                },
-                {
-                  "title": "Softbank CEO Who's Invested $64 Billion in OpenAI Says It's \"Blasphemy\" to Mention the AI Bubble",
-                  "url": "https://futurism.com/artificial-intelligence/softbank-ceo-blasphemy-ai-bubble",
-                  "age": "4 days ago",
-                  "page_age": "2026-06-25T18:52:29",
-                  "source": "futurism.com",
-                  "snippet": "During an annual general meeting, SoftBank CEO Masayoshi Son argued it was \"blasphemy against AI if ‌you say it's a bubble.\""
-                }
-              ]
+              "status": "unavailable",
+              "reason": "BRAVE_API_KEYS 未配置"
             }
           ],
           "crossConfirmationRule": {
@@ -1740,8 +1662,8 @@
               "Tavily Search API",
               "Brave News Search API"
             ],
-            "availableSourceCount": 3,
-            "confirmingSourceCount": 3,
+            "availableSourceCount": 1,
+            "confirmingSourceCount": 1,
             "strongestStatusBeforeCap": "yellow",
             "mergedStatus": "yellow"
           },
@@ -1760,8 +1682,8 @@
   "market_technical_heat": {
     "contractVersion": "bubble-watch-market-technical-heat-v1",
     "boundary": "display-only audit panel; excluded from 24-indicator red/yellow/green primary score, scoring, decision, execution, and position logic",
-    "as_of_date": "2026-06-26",
-    "generated_at": "2026-06-29T10:04:42.239Z",
+    "as_of_date": "2026-06-29",
+    "generated_at": "2026-06-30T07:06:43.596Z",
     "status": "yellow",
     "label": "升温观察",
     "heat_score": 20,
@@ -1797,7 +1719,7 @@
       "benchmark": "QQQ",
       "betaBenchmark": "SPY",
       "observationCount": 251,
-      "latestDate": "2026-06-26",
+      "latestDate": "2026-06-29",
       "failedSymbols": []
     },
     "source_priority": [
@@ -1832,13 +1754,13 @@
         "name_en": "AI Basket 21D vs QQQ",
         "threshold_text": ">+8pct 红 / +3~+8 黄 / <+3 绿",
         "status": "green",
-        "value_display": "-5.1pct",
-        "note": "等权 AI 篮子近 21 个交易日回报 -8.2%,QQQ -3.1%,相对超额 -5.1pct。该项只衡量公开市场短线追价热度,不进入红灯主分。",
+        "value_display": "-5.8pct",
+        "note": "等权 AI 篮子近 21 个交易日回报 -7.4%,QQQ -1.6%,相对超额 -5.8pct。该项只衡量公开市场短线追价热度,不进入红灯主分。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "basket21": -8.240605342531612,
-          "qqq21": -3.1434631972112848,
-          "excess21": -5.097142145320328
+          "basket21": -7.350310884178247,
+          "qqq21": -1.5660629252900122,
+          "excess21": -5.784247958888235
         }
       },
       {
@@ -1847,11 +1769,11 @@
         "name_en": "Equal-Weight Basket RSI",
         "threshold_text": "≥75 红 / 65-75 黄 / <65 绿",
         "status": "green",
-        "value_display": "44",
-        "note": "按等权 AI 篮子日线合成价计算 14 日 RSI=43.8。RSI 反映短线超买温度,不能替代估值或基本面判断。",
+        "value_display": "46",
+        "note": "按等权 AI 篮子日线合成价计算 14 日 RSI=46.1。RSI 反映短线超买温度,不能替代估值或基本面判断。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "rsi": 43.756477922850884,
+          "rsi": 46.118913976240066,
           "period": 14
         }
       },
@@ -1861,11 +1783,11 @@
         "name_en": "Bollinger %B",
         "threshold_text": "≥1.05 红 / 0.85-1.05 黄 / <0.85 绿",
         "status": "green",
-        "value_display": "0.16",
-        "note": "20 日 Bollinger %B=0.16;%B 接近或高于 1 表示价格贴近/突破上轨,属于短线过热信号。",
+        "value_display": "0.36",
+        "note": "20 日 Bollinger %B=0.36;%B 接近或高于 1 表示价格贴近/突破上轨,属于短线过热信号。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "pctB": 0.15811950091645957,
+          "pctB": 0.3588414990525691,
           "window": 20,
           "bandStdDev": 2
         }
@@ -1876,11 +1798,11 @@
         "name_en": "Distance from 200D SMA",
         "threshold_text": ">25% 红 / 10-25% 黄 / <10% 绿",
         "status": "yellow",
-        "value_display": "+12.1%",
-        "note": "等权 AI 篮子较 200 日均线偏离 +12.1%。该项捕捉趋势拥挤,不判断企业现金流兑现。",
+        "value_display": "+15.9%",
+        "note": "等权 AI 篮子较 200 日均线偏离 +15.9%。该项捕捉趋势拥挤,不判断企业现金流兑现。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "sma200Deviation": 12.099665105673454,
+          "sma200Deviation": 15.887932609783768,
           "window": 200
         }
       },
@@ -1890,12 +1812,12 @@
         "name_en": "60D Correlation / Beta",
         "threshold_text": "ρ≥0.75且β≥1.35 红 / ρ≥0.55或β≥1.15 黄 / 其余绿",
         "status": "yellow",
-        "value_display": "ρ 0.28 / β 2.14",
-        "note": "最近 60 个交易日 AI 篮子平均两两相关性 ρ=0.28,相对 SPY beta=2.14。相关性和 beta 同升时,代表主题交易更容易同涨同跌。",
+        "value_display": "ρ 0.28 / β 2.11",
+        "note": "最近 60 个交易日 AI 篮子平均两两相关性 ρ=0.28,相对 SPY beta=2.11。相关性和 beta 同升时,代表主题交易更容易同涨同跌。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "avgCorrelation": 0.2802676458442937,
-          "beta": 2.1365066063032456,
+          "avgCorrelation": 0.2800672618274301,
+          "beta": 2.1062969481468747,
           "window": 60,
           "pairCount": 28
         }
@@ -1949,23 +1871,23 @@
       "risk_score": 41.7
     },
     {
-      "week": "06-29",
-      "red_pct": 16.7,
-      "risk_score": 33.3
+      "week": "06-30",
+      "red_pct": 20.8,
+      "risk_score": 37.5
     }
   ],
   "wow_changes": [
     {
       "type": "status_downgrade",
-      "note": "「S&P 50 日均线上方比例」由黄转绿:当前 ≈64%。公开市场价格显示:S&P 500 成份股 501 只(Wikipedia 实时名单)中 322 只收于 50 日均线上方,占比 ≈64.3%。阈值:<40% 红 / 40-60% 黄 / >60% 绿"
-    },
-    {
-      "type": "status_downgrade",
-      "note": "「数据中心 ABS 利差」由黄转绿:当前 收窄。数据中心 ABS/类 REITs 样本 4 只,最新样本 G互联25A(2025-10-31、规模 8.6 亿元);中国:资产支持证券到期收益率(AAA):10年 最新 2.06%,4 周 -3.6bp、12 周 -17.3bp;新闻证据 1 条,支持词 6/压力词 0;新闻样本提到年分配率 4%-8%。样本券最新估值利差/收益率字段多为空，因此只判断融资条件方向，不当作正式数据中心专属连续利差。判级:4 周走阔 ≥50bp=红 / ≥15bp 或压力词升温=黄 / 12 周收窄且需求证据充足=绿"
+      "note": "「S&P 50 日均线上方比例」由黄转绿:当前 ≈65%。公开市场价格显示:S&P 500 成份股 500 只(Wikipedia 实时名单)中 325 只收于 50 日均线上方,占比 ≈65.0%。阈值:<40% 红 / 40-60% 黄 / >60% 绿"
     },
     {
       "type": "status_downgrade",
       "note": "「会计造假/round-tripping 事件」由红转绿:当前 0 件。SEC 与 DOJ 官方执法公告近两年未命中核心 AI 名单的会计造假、round-tripping 或欺诈正式事件;该项仍只能说明公开执法监测未见新红灯,不能替代完整法律尽调。判级:任何=红 / 调查=黄 / 无=绿"
+    },
+    {
+      "type": "status_upgrade",
+      "note": "「Fed 政策方向」由黄转红:当前 隐含加息。Fed 政策路径显示:目标区间 3.50-3.75%(mid 3.625%);SEP 点阵图当前年 median 3.8%(2026-06-17);ZQZ26.CBT 年末 Fed funds futures 隐含 3.93%;有效联邦基金利率 3.63%(60 日漂移 -1bp)、CPI 同比 4.3%(2026-05-01 口径)→ 判定「隐含加息」,政策路径高于当前目标区间,对极度拉伸估值构成更直接压制。判级:加息=红 / 通胀压力=黄 / 降息=绿"
     }
   ],
   "meta": {
@@ -1986,7 +1908,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-28",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 14,
           "syncedFromUpstream": true
         }
@@ -1999,7 +1921,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-28",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 21,
           "syncedFromUpstream": true
         }
@@ -2012,7 +1934,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-28",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 45,
           "syncedFromUpstream": true
         }
@@ -2025,7 +1947,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-28",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 120,
           "syncedFromUpstream": true
         }
@@ -2048,7 +1970,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-28",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 14,
           "syncedFromUpstream": true
         }
@@ -2061,7 +1983,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-28",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 21,
           "syncedFromUpstream": true
         }
@@ -2074,7 +1996,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-28",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 45,
           "syncedFromUpstream": true
         }
@@ -2087,7 +2009,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-06-28",
-          "ageDays": 1,
+          "ageDays": 2,
           "maxAgeDays": 120,
           "syncedFromUpstream": true
         }
@@ -2128,7 +2050,7 @@
       "reachable": true,
       "upstreamAsOf": "2026-06-28",
       "upstreamIssue": 12,
-      "adopted": 23,
+      "adopted": 0,
       "sourceUrl": "https://raw.githubusercontent.com/crystal-xiaoxiao/ai-bubble-monitor/main/docs/data/latest.json",
       "sourceKind": "latest",
       "snapshotName": null,

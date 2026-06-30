@@ -249,6 +249,10 @@ for (const id of [...HYBRID_LIVE_IDS, ...HYBRID_PAID_OPTIONAL_IDS]) {
 }
 check('contract', buildSrc.includes('fetchInsiderTotalsWithSecFallback') && buildSrc.includes('SEC EDGAR Form 4 ownership XML'),
   'insider_sell_buy 必须保留 SEC Form 4 官方兜底路径');
+check('contract', buildSrc.includes('fetchLatestFedSepMedians') && buildSrc.includes('fetchYearEndFedFundsFuture') && buildSrc.includes('fed_policy_path_v2'),
+  'fed_policy 必须保留 Fed SEP + 年末 Fed funds futures 政策路径证据');
+check('contract', indicatorById.fed_policy?.provenance?.detail?.policyPathEvidenceVersion === 'fed_policy_path_v2',
+  'fed_policy provenance 缺 fed_policy_path_v2 审计版本');
 check('contract', buildSrc.includes('fetchSecAiIpoFilingConfirmations') && buildSrc.includes('SEC EDGAR S-1/F-1 confirmation'),
   'ai_ipo_pipeline 必须保留 SEC S-1/F-1 官方申报确认路径');
 check('contract', candidateEntries.ai_ipo_pipeline?.freeSourceCandidates?.some((source) => /SEC EDGAR/iu.test(source.source || '') && /S-1|F-1|424B4/iu.test(`${source.role || ''} ${source.limitations || ''}`)),

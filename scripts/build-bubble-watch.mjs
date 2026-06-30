@@ -25,6 +25,8 @@ const SOURCE_CANDIDATES_PATH = path.join(ROOT, 'config', 'bubble-watch-source-ca
 const OUT_PATH = path.join(ROOT, 'data', 'bubble-watch.json');
 const HISTORY_PATH = path.join(ROOT, 'data', 'bubble-watch-history.json');
 const GDELT_BUBBLE_CACHE_PATH = path.join(ROOT, 'data', 'gdelt-bubble-watch-cache.json');
+const FED_BASE_URL = 'https://www.federalreserve.gov';
+const FED_CALENDAR_URL = 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm';
 
 const UA = 'gfrr-bubble-watch/1.0 (+https://github.com/ctmaomao/gfrr-auto-update-site)';
 // SEC EDGAR 要求 UA 携带联系方式(无邮箱式 UA 会 403)
@@ -97,7 +99,7 @@ const INDICATOR_DEFS = [
   { id: 'enterprise_deploy', category: 'fundamentals', name_en: 'Enterprise Production Deploy', name_zh: '企业生产环境部署率', threshold_text: '<50%=红 / 50-65%=黄 / >65%=绿', source_name: 'McKinsey / Deloitte(季度调查口径)', mode: 'curated' },
   { id: 'cloud_rpo_growth', category: 'fundamentals', name_en: 'Cloud RPO Growth', name_zh: '云厂商递延收入增速', threshold_text: '负增长=红 / 减速=黄 / 加速=绿', source_name: 'SEC EDGAR / StockAnalysis RPO metrics', mode: 'auto' },
   { id: 'accounting_events', category: 'macro', name_en: 'Round-Tripping / Accounting', name_zh: '会计造假/round-tripping 事件', threshold_text: '任何=红 / 调查=黄 / 无=绿', source_name: 'SEC / 公开执法报道(编辑口径)', mode: 'curated' },
-  { id: 'fed_policy', category: 'macro', name_en: 'Fed Policy Direction', name_zh: 'Fed 政策方向', threshold_text: '加息=红 / 通胀压力=黄 / 降息=绿', source_name: 'FRED DFF + CPI 推导', mode: 'auto' },
+  { id: 'fed_policy', category: 'macro', name_en: 'Fed Policy Direction', name_zh: 'Fed 政策方向', threshold_text: '加息=红 / 通胀压力=黄 / 降息=绿', source_name: 'Fed SEP / Fed funds futures / FRED', mode: 'auto' },
   { id: 'capex_reaction', category: 'macro', name_en: 'Capex Guidance Reaction', name_zh: '资本开支指引市场反应', threshold_text: '系统性惩罚=红 / 偶发=黄 / 奖励=绿', source_name: '财报市场反应(编辑口径)', mode: 'curated' },
   { id: 'ceo_hedging', category: 'macro', name_en: 'CEO Hedging Language', name_zh: 'CEO 表态对冲程度', threshold_text: '普遍承认过热=红 / 部分=黄 / 无=绿', source_name: '公开表态汇编(编辑口径)', mode: 'curated' }
 ];
@@ -261,6 +263,54 @@ function htmlToText(html) {
   return decodeHtmlEntities(stripTags(String(html || ''))).replace(/\s+/gu, ' ').trim();
 }
 
+function extractHtmlRows(html) {
+  return [...String(html || '').matchAll(/<tr[\s\S]*?<\/tr>/giu)].map((match) => match[0]);
+}
+
+function extractHtmlCells(rowHtml) {
+  return [...String(rowHtml || '').matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/giu)]
+    .map((match) => htmlToText(match[1]));
+}
+
+function parseLooseNumber(value) {
+  const match = String(value ?? '').replace(/,/gu, '').match(/[-+]?\d+(?:\.\d+)?/u);
+  return match ? Number(match[0]) : null;
+}
+
+function resolveFedUrl(pathOrUrl) {
+  if (typeof pathOrUrl !== 'string' || !pathOrUrl.trim()) return null;
+  if (/^https?:\/\//iu.test(pathOrUrl)) return pathOrUrl;
+  return `${FED_BASE_URL}${pathOrUrl.startsWith('/') ? '' : '/'}${pathOrUrl}`;
+}
+
+function latestDatedFedLink(html, pattern) {
+  const todayKey = isoDate().replace(/-/gu, '');
+  const links = [...String(html || '').matchAll(pattern)]
+    .map((match) => ({ href: match.groups?.href || null, date: match.groups?.date || null }))
+    .filter((item) => item.href && /^\d{8}$/u.test(item.date) && item.date <= todayKey);
+  if (!links.length) return null;
+  links.sort((a, b) => a.date.localeCompare(b.date));
+  return links[links.length - 1];
+}
+
+function parseFedSepMedians(html, sepUrl, sepDate) {
+  const fedFundsRow = extractHtmlRows(html)
+    .map(extractHtmlCells)
+    .find((cells) => /Federal funds rate/iu.test(cells[0] || ''));
+  if (!fedFundsRow) throw new Error('Fed SEP federal funds row missing');
+  const dotPlotMedianCurrentYear = parseLooseNumber(fedFundsRow[1]);
+  const dotPlotMedianNextYear = parseLooseNumber(fedFundsRow[2]);
+  if (!Number.isFinite(dotPlotMedianCurrentYear) && !Number.isFinite(dotPlotMedianNextYear)) {
+    throw new Error('Fed SEP federal funds medians unavailable');
+  }
+  return {
+    sepProjectionDate: sepDate?.replace(/^(\d{4})(\d{2})(\d{2})$/u, '$1-$2-$3') || null,
+    sepUrl,
+    dotPlotMedianCurrentYear: Number.isFinite(dotPlotMedianCurrentYear) ? dotPlotMedianCurrentYear : null,
+    dotPlotMedianNextYear: Number.isFinite(dotPlotMedianNextYear) ? dotPlotMedianNextYear : null
+  };
+}
+
 function compactSnippet(text, maxLen = 120) {
   const s = String(text || '').replace(/\s+/gu, ' ').trim();
   return s.length > maxLen ? `${s.slice(0, maxLen - 1)}…` : s;
@@ -350,6 +400,24 @@ async function yahooCloses(symbol, range = '6mo') {
   const closes = (result?.indicators?.quote?.[0]?.close || []).filter((v) => Number.isFinite(v));
   if (closes.length < 10) throw new Error(`Yahoo ${symbol} closes 不足 (${closes.length})`);
   return closes;
+}
+
+async function yahooLatestDailyQuote(symbol, range = '5d') {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=1d`;
+  const json = await fetchWithTimeout(url, { asJson: true, headers: { 'User-Agent': BROWSER_UA } });
+  const result = json?.chart?.result?.[0];
+  const timestamps = result?.timestamp || [];
+  const closes = result?.indicators?.quote?.[0]?.close || [];
+  for (let i = closes.length - 1; i >= 0; i--) {
+    if (Number.isFinite(closes[i]) && closes[i] > 0) {
+      return {
+        symbol,
+        price: closes[i],
+        updatedAt: Number.isFinite(timestamps[i]) ? new Date(timestamps[i] * 1000).toISOString() : null
+      };
+    }
+  }
+  throw new Error(`Yahoo ${symbol} latest close 不足`);
 }
 
 async function yahooDailyCloses(symbol, range = '1y') {
@@ -1413,32 +1481,78 @@ const autoBuilders = {
     return summarizeRpoGrowthPanel(publicRows, 'StockAnalysis/Fiscal.ai metrics 镜像', 'EDGAR 对当前运行环境不可达时采用免费公开二级源;Oracle 用年度 metrics,其余三家用季度 operating metrics。');
   },
   async fed_policy() {
-    const dff = await retry(() => fredObservations('DFF', 90), 'FRED DFF');
-    const cpi = await retry(() => fredObservations('CPIAUCSL', 14), 'FRED CPI');
+    const [dff, cpi, lowerRows, upperRows, sepResult, yearEndFutureResult] = await Promise.all([
+      retry(() => fredObservations('DFF', 90), 'FRED DFF'),
+      retry(() => fredObservations('CPIAUCSL', 14), 'FRED CPI'),
+      retry(() => fredObservations('DFEDTARL', 10), 'FRED DFEDTARL'),
+      retry(() => fredObservations('DFEDTARU', 10), 'FRED DFEDTARU'),
+      fetchLatestFedSepMedians().then((value) => ({ ok: true, value })).catch((error) => ({ ok: false, error: error.message })),
+      fetchYearEndFedFundsFuture().then((value) => ({ ok: true, value })).catch((error) => ({ ok: false, error: error.message }))
+    ]);
     const latest = dff[0].value;
     const past = dff[Math.min(60, dff.length - 1)].value;
     const drift = latest - past;
     const cpiYoy = ((cpi[0].value - cpi[12].value) / cpi[12].value) * 100;
-    let status;
-    let stance;
-    if (drift > 0.1) {
-      status = 'red';
-      stance = '重启加息';
-    } else if (drift < -0.1) {
-      status = 'green';
-      stance = '降息中';
-    } else if (cpiYoy > 2.5) {
-      status = 'yellow';
-      stance = '偏鹰(维持高位)';
-    } else {
-      status = 'green';
-      stance = '中性偏松';
-    }
+    const targetLower = lowerRows[0]?.value;
+    const targetUpper = upperRows[0]?.value;
+    const targetMid = Number.isFinite(targetLower) && Number.isFinite(targetUpper)
+      ? +(((targetLower + targetUpper) / 2)).toFixed(3)
+      : null;
+    const sep = sepResult.ok ? sepResult.value : null;
+    const yearEndFuture = yearEndFutureResult.ok ? yearEndFutureResult.value : null;
+    const classified = classifyFedPolicyPath({
+      drift,
+      cpiYoy,
+      targetMid,
+      sepCurrentYear: sep?.dotPlotMedianCurrentYear,
+      yearEndImplied: yearEndFuture?.impliedRate
+    });
+    const { status, stance } = classified;
+    const targetText = Number.isFinite(targetLower) && Number.isFinite(targetUpper)
+      ? `目标区间 ${targetLower.toFixed(2)}-${targetUpper.toFixed(2)}%(mid ${targetMid.toFixed(3)}%)`
+      : `有效联邦基金利率 ${latest.toFixed(2)}%`;
+    const sepText = Number.isFinite(sep?.dotPlotMedianCurrentYear)
+      ? `SEP 点阵图当前年 median ${sep.dotPlotMedianCurrentYear.toFixed(1)}%${sep.sepProjectionDate ? `(${sep.sepProjectionDate})` : ''}`
+      : `SEP 点阵图暂缺${sepResult.ok ? '' : `(${compactSnippet(sepResult.error, 70)})`}`;
+    const futureText = Number.isFinite(yearEndFuture?.impliedRate)
+      ? `${yearEndFuture.symbol} 年末 Fed funds futures 隐含 ${yearEndFuture.impliedRate.toFixed(2)}%`
+      : `年末 Fed funds futures 暂缺${yearEndFutureResult.ok ? '' : `(${compactSnippet(yearEndFutureResult.error, 70)})`}`;
+    const pressureText = status === 'red'
+      ? '政策路径高于当前目标区间,对极度拉伸估值构成更直接压制'
+      : status === 'yellow'
+        ? '通胀仍高于 2% 目标、higher-for-longer 对极度拉伸估值构成持续压制'
+        : '政策路径未显示再加息压力';
     return {
       status,
       value_display: status === 'yellow' ? '偏鹰' : stance,
-      note: `FRED 实拉推导:有效联邦基金利率 ${latest.toFixed(2)}%(60 日漂移 ${drift >= 0 ? '+' : ''}${(drift * 100).toFixed(0)}bp)、CPI 同比 ${cpiYoy.toFixed(1)}%(${cpi[0].date} 口径)→ 判定「${stance}」${status === 'yellow' ? ',通胀仍高于 2% 目标、higher-for-longer 对极度拉伸的估值构成持续压制' : ''}。判级:加息=红 / 通胀压力=黄 / 降息=绿`,
-      detail: { dff: latest, drift60dBp: drift * 100, cpiYoy }
+      source_name: 'Fed SEP / Fed funds futures / FRED',
+      note: `Fed 政策路径显示:${targetText};${sepText};${futureText};有效联邦基金利率 ${latest.toFixed(2)}%(60 日漂移 ${drift >= 0 ? '+' : ''}${(drift * 100).toFixed(0)}bp)、CPI 同比 ${cpiYoy.toFixed(1)}%(${cpi[0].date} 口径)→ 判定「${stance}」,${pressureText}。判级:加息=红 / 通胀压力=黄 / 降息=绿`,
+      detail: {
+        policyPathEvidenceVersion: 'fed_policy_path_v2',
+        dff: latest,
+        drift60dBp: drift * 100,
+        cpiYoy,
+        cpiDate: cpi[0].date,
+        targetLower,
+        targetUpper,
+        targetMid,
+        sepDotPlot: sep,
+        yearEndFedFundsFuture: yearEndFuture,
+        sepGap: classified.sepGap,
+        yearEndGap: classified.yearEndGap,
+        classificationReason: classified.reason,
+        sourceStatus: {
+          targetRange: Number.isFinite(targetMid) ? 'live' : 'missing',
+          sepDotPlot: sepResult.ok ? 'live' : 'missing',
+          yearEndFedFundsFuture: yearEndFutureResult.ok ? 'live' : 'missing',
+          dff: 'live',
+          cpi: 'live'
+        },
+        sourceFailures: [
+          sepResult.ok ? null : { source: 'FederalReserve:SEP', reason: sepResult.error },
+          yearEndFutureResult.ok ? null : { source: 'Yahoo:ZQ-year-end', reason: yearEndFutureResult.error }
+        ].filter(Boolean)
+      }
     };
   }
 };
@@ -2193,6 +2307,62 @@ function returnPctOverDays(closes, days) {
   const end = closes[closes.length - 1];
   if (!(start > 0 && end > 0)) throw new Error('Yahoo closes 含无效值');
   return ((end - start) / start) * 100;
+}
+
+async function fetchLatestFedSepMedians() {
+  const calendarHtml = await fetchWithTimeout(FED_CALENDAR_URL, {
+    headers: { 'User-Agent': 'GFRRBot/1.0' },
+    timeoutMs: 20000
+  });
+  const sep = latestDatedFedLink(
+    calendarHtml,
+    /href=["'](?<href>[^"']*monetarypolicy\/fomcprojtabl(?<date>\d{8})\.htm)["']/giu
+  );
+  if (!sep?.href) throw new Error('Fed SEP latest link missing');
+  const sepUrl = resolveFedUrl(sep.href);
+  const sepHtml = await fetchWithTimeout(sepUrl, {
+    headers: { 'User-Agent': 'GFRRBot/1.0' },
+    timeoutMs: 20000
+  });
+  return parseFedSepMedians(sepHtml, sepUrl, sep.date);
+}
+
+function yearEndFedFundsFutureSymbol(date = new Date()) {
+  const year = date.getUTCFullYear();
+  return `ZQZ${String(year).slice(-2)}.CBT`;
+}
+
+async function fetchYearEndFedFundsFuture() {
+  const symbol = yearEndFedFundsFutureSymbol();
+  const quote = await yahooLatestDailyQuote(symbol, '10d');
+  return {
+    symbol,
+    price: quote.price,
+    impliedRate: +(100 - quote.price).toFixed(3),
+    updatedAt: quote.updatedAt
+  };
+}
+
+function classifyFedPolicyPath({ drift, cpiYoy, targetMid, sepCurrentYear, yearEndImplied }) {
+  const sepGap = Number.isFinite(sepCurrentYear) && Number.isFinite(targetMid)
+    ? +(sepCurrentYear - targetMid).toFixed(3)
+    : null;
+  const yearEndGap = Number.isFinite(yearEndImplied) && Number.isFinite(targetMid)
+    ? +(yearEndImplied - targetMid).toFixed(3)
+    : null;
+  if ((Number.isFinite(sepGap) && sepGap >= 0.1) || (Number.isFinite(yearEndGap) && yearEndGap >= 0.15)) {
+    return { status: 'red', stance: '隐含加息', sepGap, yearEndGap, reason: 'policy_path_above_current_target' };
+  }
+  if (drift > 0.1) {
+    return { status: 'red', stance: '重启加息', sepGap, yearEndGap, reason: 'effective_rate_rising' };
+  }
+  if (drift < -0.1 && (!Number.isFinite(cpiYoy) || cpiYoy <= 2.5)) {
+    return { status: 'green', stance: '降息中', sepGap, yearEndGap, reason: 'effective_rate_falling_and_inflation_cooling' };
+  }
+  if (Number.isFinite(cpiYoy) && cpiYoy > 2.5) {
+    return { status: 'yellow', stance: '偏鹰(维持高位)', sepGap, yearEndGap, reason: 'inflation_above_target_without_clear_hike_path' };
+  }
+  return { status: 'green', stance: '中性偏松', sepGap, yearEndGap, reason: 'no_hike_path_and_inflation_near_target' };
 }
 
 async function fetchCapexReactionFromPublicProxy() {
@@ -3891,7 +4061,7 @@ const PUBLIC_SOURCE_LABELS = {
   enterprise_deploy: '企业 AI 部署调查',
   cloud_rpo_growth: '云厂商订单与 backlog 披露',
   accounting_events: 'SEC / DOJ 执法公告',
-  fed_policy: 'Fed 利率与 CPI',
+  fed_policy: 'Fed 点阵图/期货/FRED',
   capex_reaction: '公开财报与相对收益窗口',
   ceo_hedging: '公开新闻与高管表态'
 };
