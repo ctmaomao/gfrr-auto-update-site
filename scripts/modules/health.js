@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=transport-shock-caveat-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=transport-shock-caveat-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=transport-shock-score-gate-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=transport-shock-score-gate-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

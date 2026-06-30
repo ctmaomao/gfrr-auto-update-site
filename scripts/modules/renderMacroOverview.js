@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=transport-shock-caveat-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=transport-shock-caveat-1';
-import { MODULE_LABELS } from './decision.js?v=transport-shock-caveat-1';
+} from './config.js?v=transport-shock-score-gate-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=transport-shock-score-gate-1';
+import { MODULE_LABELS } from './decision.js?v=transport-shock-score-gate-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,8 +18,8 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=transport-shock-caveat-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=transport-shock-caveat-1';
+} from './macroOverviewDisplayHelpers.js?v=transport-shock-score-gate-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=transport-shock-score-gate-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2398,6 +2398,13 @@ function renderTransportShockConfirmation({ radarData }) {
     const marketGate = gateLabel(candidate?.marketConfirmation ?? candidate?.marketConfirmationStatus);
     setLeafText('c1-transport-shock-route', routeGate);
     setLeafText('c1-transport-shock-market', marketGate);
+    const gateReady = (value) => value === '已接入' || value === '人工复核' || value === '待复核';
+    const scoreGate = !candidate
+      ? '候选字段待刷新'
+      : gateReady(routeGate) && gateReady(marketGate)
+        ? '待独立评分审阅 · 仍不入分'
+        : '未达入分闸门 · 路线/市场缺口';
+    setLeafText('c1-transport-shock-score-gate', scoreGate);
 
     const evidence = candidate?.evidence || {};
     const hormuzPct = asNumber(

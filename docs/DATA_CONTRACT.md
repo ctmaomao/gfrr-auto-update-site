@@ -444,6 +444,8 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 
 `transport-shock-confirmation-factor-frontend-caveat-v1` 是 P-score-12 frontend display-only refinement 契约。现有 C1 `Transport Shock / 运输冲击确认因子` 卡可展示 `样本质量` 与 `数据龄` 两个 caveat,但只能由 production payload 的 `macroDrivers.energyTransport.latestAgeDays/sourceStatus` 与 `transportShockCandidate.confidence/routeFreightConfirmation/marketConfirmation` 派生。前端不得读取 `manual-artifacts/transport-shock-confirmation-factor/history-samples-review-latest.json`、不得把 P-score-11 review artifact 当作 production data、不得生成 route freight confirmation 或 market confirmation,不得改变 ODP `finalBias`、今日总判断打分、Brent promotion、Global Risk Heatmap 或 cross-validation。
 
+`transport-shock-confirmation-factor-frontend-scoring-gate-v1` 是 P-score-18 frontend display-only refinement 契约。现有 C1 `Transport Shock / 运输冲击确认因子` 卡可展示 `入分闸门` 行,但只能由 production payload 的 `transportShockCandidate.routeFreightConfirmation` / `marketConfirmation` 派生为 `未达入分闸门 · 路线/市场缺口` 或 `待独立评分审阅 · 仍不入分`。该行不得读取 P-score-17 projection artifact、不得写 production data、不得把 `marketConfirmation` 从 `not_connected` 改为 connected、不得批准 score write、不得改变 ODP `finalBias`、今日总判断打分、Brent promotion、Global Risk Heatmap 或 cross-validation。
+
 `transport-shock-confirmation-factor-score-readiness-v1` 是 P-score-13 local/manual score-readiness matrix 契约。`review:transport-shock-confirmation-factor-score-readiness` 只读 production `radar-data` / Oil News / Oil Thermal / ODP JSON 与可选 ignored P-score-11 history review artifact,输出 ignored `manual-artifacts/transport-shock-confirmation-factor/score-readiness-latest.json`。当前 contract 只允许给出 `not_ready_for_score` 或未来另开 review 后的 readiness diagnosis;推荐值固定为 `keep_display_only_collect_route_market_cross_confirmation`。矩阵检查 production candidate、PortWatch freshness、history sample quality、route-level tanker freight confirmation、market confirmation、source-rights approval、Oil News cross-confirmation、Oil Thermal facility confirmation 与 ODP physical anchor。当前所有 approval flags 必须保持 `eligibleForMainScore=false`、`promotionEligible=false`、`productionWriteApproved=false`、`scoreWriteApproved=false`、`frontendDisplayApproved=false`;不得联网、不得写 production data、不得接 workflow/Worker/frontend、不得改变 ODP `finalBias`、今日总判断打分、Brent promotion、Global Risk Heatmap 或 cross-validation。
 
 `transport-shock-score-readiness-monitor-p14` 是 P-score-14 score-readiness monitor / artifact-only monitor 契约。`monitor:transport-shock-confirmation-factor-score-readiness` 只运行本地 P-score-13 readiness review,输出 ignored `manual-artifacts/transport-shock-confirmation-factor/score-readiness-monitor-latest.json`;workflow `transport-shock-score-readiness-monitor.yml` 每日 23:29 UTC 或手动运行,只上传 artifact/GitHub Summary,权限固定 `contents: read`。正常状态为 `blockers_still_present`;若未来所有 hard blockers 清空,只能报告 `score_ready_requires_separate_review` 并要求另开 reviewed score-design PR,不得自动写分。该契约不读取 secrets、不 live fetch、不触发 Daily、不 commit/push、不写 production data、不接 frontend/Worker、不改变 ODP `finalBias`、今日总判断打分、Brent promotion、Global Risk Heatmap 或 cross-validation。
@@ -939,7 +941,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `transport-shock-caveat-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `transport-shock-score-gate-1`）。
 
 稳定边界：
 
@@ -1176,26 +1178,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-transport-shock-caveat-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 #9 frontend safe DOM rendering patch：移除 active frontend runtime 中的动态 `innerHTML` 写入，并继续通过 cache busting 避免浏览器沿用旧 module graph。
+transport-shock-score-gate-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 #9 frontend safe DOM rendering patch：移除 active frontend runtime 中的动态 `innerHTML` 写入，并继续通过 cache busting 避免浏览器沿用旧 module graph。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `transport-shock-caveat-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `transport-shock-score-gate-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=transport-shock-caveat-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=transport-shock-caveat-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `transport-shock-caveat-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=transport-shock-score-gate-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=transport-shock-score-gate-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `transport-shock-score-gate-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs transport-shock-caveat-1
-npm run bump:frontend-asset-version -- transport-shock-caveat-1
+node scripts/bump-frontend-asset-version.mjs transport-shock-score-gate-1
+npm run bump:frontend-asset-version -- transport-shock-score-gate-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `transport-shock-caveat-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `transport-shock-score-gate-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
