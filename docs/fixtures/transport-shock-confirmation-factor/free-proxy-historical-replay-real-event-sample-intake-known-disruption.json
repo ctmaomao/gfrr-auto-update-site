@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-input-v1",
+  "sampleId": "fixture-real-event-candidate-known-disruption-2024-01",
+  "familyKey": "known_disruption_tightening",
+  "sampleWindow": {
+    "startDate": "2024-01-10",
+    "endDate": "2024-01-17"
+  },
+  "expectedContributionPct": 2,
+  "observedCandidateContributionPct": 2,
+  "expectedBehavior": "positive_dry_run_contribution_no_score_write",
+  "confirmations": {
+    "portWatchFresh": true,
+    "nonNewsPhysicalConfirmation": true,
+    "marketConfirmationReview": true,
+    "thermalOrEiaAnchor": false
+  },
+  "sourceRights": {
+    "liveFetchApproved": false,
+    "productionWriteApproved": false,
+    "scoreApproved": false,
+    "redistributionApproved": false
+  },
+  "operatorAttestation": {
+    "realEventCandidate": true,
+    "sourceRightsReviewed": true,
+    "rawCitationStorageApproved": false,
+    "productionUseApproved": false,
+    "scoreUseApproved": false
+  },
+  "evidence": [
+    {
+      "sourceFamily": "portwatch_chokepoint_proxy",
+      "sourceStatus": "manual_reference",
+      "direction": "tightening",
+      "confirmationType": "physical_proxy",
+      "sourceCitation": "https://portwatch.imf.org/chokepoints-fixture",
+      "rawCitationStored": false
+    },
+    {
+      "sourceFamily": "wet_freight_futures_proxy",
+      "sourceStatus": "manual_reference",
+      "direction": "tightening",
+      "confirmationType": "market_proxy",
+      "sourceCitation": "https://solactive.com/wet-freight-futures-fixture",
+      "rawCitationStored": false
+    },
+    {
+      "sourceFamily": "oil_news_claim_ledger",
+      "sourceStatus": "manual_reference",
+      "direction": "tightening",
+      "confirmationType": "news_claim_proxy",
+      "sourceCitation": "https://example.com/oil-news-claim-ledger-fixture",
+      "rawCitationStored": false
+    }
+  ],
+  "operatorNotes": "Fixture for P-score-29 real-event intake helper only. It proves raw citation URLs are consumed from manual input and stripped from archived review output."
+}
