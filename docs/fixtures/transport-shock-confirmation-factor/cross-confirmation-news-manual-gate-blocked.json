@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-news-manual-gate-v1",
+  "status": "news_manual_gate_blocked_keep_manual_review",
+  "recommendation": "keep_news_in_manual_review_do_not_use_as_confirmation",
+  "generatedAt": "2026-06-30T00:00:00.000Z",
+  "inputPath": "docs/fixtures/transport-shock-confirmation-factor/high-frequency-oil-news-claim-ledger.json",
+  "inputPresent": true,
+  "gateClear": false,
+  "gateDecision": {
+    "sampleSufficiency": "blocker",
+    "repeatedElevatedNewsSamples": "pass",
+    "claimDirectionStability": "blocker",
+    "sourceTierRisk": "blocker",
+    "headlineGuard": "pass"
+  },
+  "evidence": {
+    "reviewVersion": "oil-news-claim-ledger-p52",
+    "upstreamStatus": "warn",
+    "sampleCount": 3,
+    "minSamples": 8,
+    "claimCount": 12,
+    "repeatedElevatedSampleCount": 3,
+    "lowConfidenceHighClaimCount": 2,
+    "contradictionState": "mixed_claims",
+    "headlineDisplayAllowed": false
+  },
+  "manualReviewRequired": true,
+  "manualReviewBlockers": [
+    "insufficient_claim_ledger_samples",
+    "mixed_claims_require_manual_review",
+    "low_confidence_high_claims_require_primary_source_review"
+  ],
+  "warnings": [
+    "upstream_claim_ledger_warn_status"
+  ],
+  "scoreReadinessApproved": false,
+  "scoreIntegrationApproved": false,
+  "scoreWriteApproved": false,
+  "productionWriteApproved": false,
+  "frontendDisplayApproved": false,
+  "eligibleForMainScore": false,
+  "promotionEligible": false,
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noHeadlineTextOutput": true,
+    "noRawProviderResponseStored": true,
+    "noScoreWrite": true
+  },
+  "boundary": "fixture for Transport Shock news manual gate blocked state"
+}

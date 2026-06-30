@@ -1,0 +1,196 @@
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const ROOT = process.cwd();
+const REVIEW_SCRIPT = 'scripts/review-transport-shock-confirmation-factor-cross-confirmation.mjs';
+const FIXTURE_RADAR = 'docs/fixtures/transport-shock-confirmation-factor/score-readiness-radar.json';
+const FIXTURE_NEWS_GATE = 'docs/fixtures/transport-shock-confirmation-factor/cross-confirmation-news-manual-gate-blocked.json';
+const FIXTURE_HIGH_FREQUENCY = 'docs/fixtures/transport-shock-confirmation-factor/cross-confirmation-high-frequency-blocked.json';
+const FIXTURE_ODP = 'docs/fixtures/transport-shock-confirmation-factor/score-readiness-oil-directional.json';
+
+const RUNTIME_FILES = [
+  'index.html',
+  'scripts/app.js',
+  'scripts/modules/renderOilDirectional.js',
+  'scripts/modules/renderMacroOverview.js',
+  'scripts/modules/buildCrossValidationMatrix.js',
+  'scripts/run-daily-pipeline.mjs',
+  'workers/gfrr-realtime-worker/src/worker-market-preview.js',
+  'data/radar-data.json',
+  'data/oil-directional-pressure.json'
+];
+
+const SCRIPT_FORBIDDEN_MARKERS = [
+  'process.env',
+  'fetch(',
+  'https.request',
+  'http.request',
+  'axios',
+  'node:https',
+  'node:http',
+  'market.worker-preview.json'
+];
+
+const RUNTIME_FORBIDDEN_MARKERS = [
+  'transport-shock-confirmation-factor-cross-confirmation-v1',
+  'review-transport-shock-confirmation-factor-cross-confirmation',
+  'cross_confirmation_candidate_ready_no_score_write'
+];
+
+function absolute(relativePath) {
+  return path.join(ROOT, relativePath);
+}
+
+function readText(relativePath) {
+  return fs.readFileSync(absolute(relativePath), 'utf8');
+}
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function runNode(args) {
+  const result = spawnSync(process.execPath, args, {
+    cwd: ROOT,
+    encoding: 'utf8',
+    maxBuffer: 10 * 1024 * 1024
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(`node ${args.join(' ')} failed: ${result.stderr || result.stdout}`);
+  return String(result.stdout || '');
+}
+
+function assertScriptSafety() {
+  assert(fs.existsSync(absolute(REVIEW_SCRIPT)), 'Cross-confirmation review script is missing.');
+  const source = readText(REVIEW_SCRIPT);
+  for (const marker of SCRIPT_FORBIDDEN_MARKERS) {
+    assert(!source.includes(marker), `Cross-confirmation script contains forbidden marker: ${marker}`);
+  }
+  for (const marker of [
+    'artifact-only Transport Shock cross-confirmation review',
+    'cross_confirmation_blocked_keep_display_only',
+    'keep_transport_shock_candidate_display_only_until_blockers_clear',
+    'news_manual_gate',
+    'high_frequency_physical_confirmation',
+    'route_freight_confirmation',
+    'market_confirmation',
+    'portwatch_physical_proxy_freshness',
+    'odp_physical_anchor',
+    'eligibleForMainScore',
+    'noScoreWrite',
+    'crossConfirmationReviewOnly'
+  ]) {
+    assert(source.includes(marker), `Cross-confirmation script missing required marker: ${marker}`);
+  }
+}
+
+function assertFixtures() {
+  for (const fixture of [FIXTURE_RADAR, FIXTURE_NEWS_GATE, FIXTURE_HIGH_FREQUENCY, FIXTURE_ODP]) {
+    assert(fs.existsSync(absolute(fixture)), `Fixture missing: ${fixture}`);
+  }
+  const newsGate = JSON.parse(readText(FIXTURE_NEWS_GATE));
+  const highFrequency = JSON.parse(readText(FIXTURE_HIGH_FREQUENCY));
+  assert(newsGate.schemaVersion === 'transport-shock-confirmation-factor-news-manual-gate-v1', 'News gate fixture schema mismatch.');
+  assert(newsGate.gateClear === false, 'News gate fixture must exercise blocked gate.');
+  assert(highFrequency.schemaVersion === 'transport-shock-confirmation-factor-high-frequency-confirmation-v1', 'High-frequency fixture schema mismatch.');
+  assert(highFrequency.summary.thermalElevatedRepeatedObservation === false, 'High-frequency fixture must exercise missing elevated thermal observation.');
+}
+
+function assertCrossConfirmationOutput() {
+  const stdout = runNode([
+    REVIEW_SCRIPT,
+    '--radar',
+    FIXTURE_RADAR,
+    '--news-gate',
+    FIXTURE_NEWS_GATE,
+    '--high-frequency',
+    FIXTURE_HIGH_FREQUENCY,
+    '--oil-directional',
+    FIXTURE_ODP,
+    '--no-output',
+    '--json'
+  ]);
+  const review = JSON.parse(stdout);
+  assert(review.schemaVersion === 'transport-shock-confirmation-factor-cross-confirmation-v1', 'Unexpected schemaVersion.');
+  assert(review.status === 'cross_confirmation_blocked_keep_display_only', 'Fixture must remain blocked/display-only.');
+  assert(review.recommendation === 'keep_transport_shock_candidate_display_only_until_blockers_clear', 'Unexpected recommendation.');
+  assert(review.crossConfirmationReady === false, 'Cross-confirmation must not be ready.');
+  assert(review.manualReviewRequired === true, 'Manual review must be required.');
+  assert(review.summary.hardBlockerCount >= 5, 'Expected hard blockers from stale PortWatch, route/market, news, and high-frequency.');
+  for (const blocker of [
+    'portwatch_physical_proxy_freshness',
+    'route_freight_confirmation',
+    'market_confirmation',
+    'news_manual_gate',
+    'high_frequency_physical_confirmation'
+  ]) {
+    assert(review.summary.hardBlockerIds.includes(blocker), `Expected hard blocker: ${blocker}`);
+  }
+  assert(review.rows.find((item) => item.id === 'production_transport_candidate')?.status === 'pass', 'Production candidate row should pass boundary checks.');
+  assert(review.rows.find((item) => item.id === 'odp_physical_anchor')?.status === 'pass', 'ODP anchor row should pass as supporting context.');
+  assert(review.scoreReadinessApproved === false, 'Review must not approve score readiness.');
+  assert(review.scoreWriteApproved === false, 'Review must not approve score write.');
+  assert(review.productionWriteApproved === false, 'Review must not approve production write.');
+  assert(review.frontendDisplayApproved === false, 'Review must not approve frontend display.');
+  assert(review.eligibleForMainScore === false, 'Review must not create main-score eligibility.');
+  assert(review.productionImpact.affectsScoring === false, 'Review must not affect scoring.');
+  assert(review.productionImpact.affectsMainJudgment === false, 'Review must not affect main judgment.');
+  assert(review.boundaries.noNetworkCall === true, 'Review must lock noNetworkCall.');
+  assert(review.boundaries.noProductionWrite === true, 'Review must lock noProductionWrite.');
+  assert(review.boundaries.noScoreWrite === true, 'Review must lock noScoreWrite.');
+  assert(review.boundaries.crossConfirmationReviewOnly === true, 'Review must lock crossConfirmationReviewOnly.');
+}
+
+function assertRuntimeRemainsUnwired() {
+  for (const relativePath of RUNTIME_FILES) {
+    assert(fs.existsSync(absolute(relativePath)), `${relativePath} is missing.`);
+    const source = readText(relativePath);
+    for (const marker of RUNTIME_FORBIDDEN_MARKERS) {
+      assert(!source.includes(marker), `${relativePath} contains cross-confirmation marker and may have been wired too early: ${marker}`);
+    }
+  }
+}
+
+function assertAuthorityDocs() {
+  const dataSources = readText('docs/DATA_SOURCES.md');
+  const dataContract = readText('docs/DATA_CONTRACT.md');
+  const signalIntake = readText('docs/SIGNAL_INTAKE.md');
+  const backlog = readText('docs/PROJECT_BACKLOG.md');
+  const agents = readText('AGENTS.md');
+  const packageJson = JSON.parse(readText('package.json'));
+  const checkSuite = readText('scripts/check-suite.mjs');
+
+  for (const marker of [
+    'review:transport-shock-confirmation-factor-cross-confirmation',
+    'transport-shock-confirmation-factor-cross-confirmation-v1',
+    'cross_confirmation_blocked_keep_display_only',
+    'no score write'
+  ]) {
+    assert(dataSources.includes(marker), `DATA_SOURCES missing marker: ${marker}`);
+  }
+  for (const marker of [
+    'transport-shock-confirmation-factor-cross-confirmation-v1',
+    'keep_transport_shock_candidate_display_only_until_blockers_clear',
+    'eligibleForMainScore=false'
+  ]) {
+    assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
+  }
+  assert(signalIntake.includes('transport-shock-confirmation-factor-cross-confirmation-v1'), 'SIGNAL_INTAKE missing cross-confirmation marker.');
+  assert(backlog.includes('Transport Shock Confirmation Factor cross-confirmation review'), 'PROJECT_BACKLOG missing cross-confirmation marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor cross-confirmation review'), 'AGENTS.md missing cross-confirmation boundary.');
+  assert(packageJson.scripts['review:transport-shock-confirmation-factor-cross-confirmation'], 'package.json missing review script.');
+  assert(packageJson.scripts['check:transport-shock-confirmation-factor-cross-confirmation'], 'package.json missing checker script.');
+  assert(checkSuite.includes('check:transport-shock-confirmation-factor-cross-confirmation'), 'check-suite missing cross-confirmation check.');
+}
+
+function main() {
+  assertScriptSafety();
+  assertFixtures();
+  assertCrossConfirmationOutput();
+  assertRuntimeRemainsUnwired();
+  assertAuthorityDocs();
+  console.log('Transport Shock Confirmation Factor cross-confirmation review: PASS');
+}
+
+main();

@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-high-frequency-confirmation-v1",
+  "status": "partial_progress_keep_display_only",
+  "recommendation": "news_repeated_elevated_and_thermal_repeated_observed_but_keep_manual_review",
+  "generatedAt": "2026-06-30T00:00:00.000Z",
+  "news": {
+    "status": "repeated_elevated_manual_review",
+    "repeatedElevatedObservation": true,
+    "manualReviewRequired": true,
+    "manualBlockers": [
+      "mixed_claims",
+      "low_confidence_high_claims"
+    ]
+  },
+  "thermal": {
+    "status": "repeated_observation_not_elevated",
+    "repeatedObservation": true,
+    "elevatedRepeatedObservation": false
+  },
+  "summary": {
+    "newsRepeatedElevatedObservation": true,
+    "newsManualReviewRequired": true,
+    "thermalRepeatedObservation": true,
+    "thermalElevatedRepeatedObservation": false,
+    "readinessBlockerCount": 2,
+    "readinessBlockers": [
+      "news_manual_review_required",
+      "thermal_elevated_repeated_observation_missing"
+    ],
+    "warningCount": 2
+  },
+  "scoreReadinessApproved": false,
+  "scoreIntegrationApproved": false,
+  "scoreWriteApproved": false,
+  "productionWriteApproved": false,
+  "frontendDisplayApproved": false,
+  "eligibleForMainScore": false,
+  "promotionEligible": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "blockers": [
+    "news_manual_review_required",
+    "thermal_elevated_repeated_observation_missing"
+  ],
+  "warnings": [
+    "news_claims_remain_manual_review_required",
+    "thermal_repeated_signal_not_elevated"
+  ],
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noRawProviderResponseStored": true,
+    "noHeadlineTextOutput": true,
+    "noScoreWrite": true
+  },
+  "boundary": "fixture for Transport Shock high-frequency partial blocker state"
+}
