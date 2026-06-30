@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-score-readiness-gate-v1",
+  "contractVersion": "transport-shock-confirmation-factor-free-proxy-score-readiness-gate-v1",
+  "status": "score_readiness_gate_ready_for_separate_review_keep_no_score_write",
+  "recommendation": "open_separate_score_integration_review_no_auto_wire",
+  "generatedAt": "2026-06-30T00:00:00.000Z",
+  "observed": {
+    "sampleCount": 6,
+    "usableSampleCount": 6,
+    "knownDisruptionDirectionalHitRate": 1,
+    "falsePositiveRate": 0
+  },
+  "gatePassed": true,
+  "scoreReadinessGatePassed": true,
+  "scoreReadinessApproved": false,
+  "scoreIntegrationApproved": false,
+  "scoreWriteApproved": false,
+  "productionWriteApproved": false,
+  "frontendDisplayApproved": false,
+  "mainScoreApproved": false,
+  "eligibleForMainScore": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "blockerCount": 0,
+  "blockers": [],
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionDataRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreIntegration": true,
+    "noScoreWrite": true,
+    "noMainJudgmentEligibility": true
+  },
+  "boundary": "fixture for free-proxy score-readiness gate passed but no score write"
+}
