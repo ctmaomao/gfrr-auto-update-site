@@ -1,0 +1,163 @@
+{
+  "contractVersion": "transport-shock-confirmation-factor-market-confirmation-source-review-v1",
+  "kind": "transport_shock_confirmation_factor_market_confirmation_source_review",
+  "status": "market_confirmation_source_review_ready_for_manual_sample_scaffold",
+  "intendedFutureField": "macroDrivers.energyTransport.transportShockCandidate.marketConfirmation",
+  "generatedBy": "P-score-15 market-confirmation source-review fixture",
+  "approvalState": {
+    "sourceSelectionFinalized": false,
+    "liveFetchApproved": false,
+    "newDataSourceApproved": false,
+    "productionDataWriteApproved": false,
+    "workflowAutomationApproved": false,
+    "frontendDisplayApproved": false,
+    "marketConfirmationWriteApproved": false,
+    "scoreWriteApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "currentProductionState": {
+    "transportShockCandidateContract": "transport-shock-candidate-v1",
+    "eligibleForMainScore": false,
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "transportShockConfirmationFactorProductionFieldExists": false
+  },
+  "sourceFamilies": [
+    {
+      "sourceKey": "brent_futures_price_curve_proxy",
+      "sourceType": "existing_public_proxy",
+      "productionPath": "brentPricingLayer.futuresPriceCurve",
+      "candidateRole": "price_structure_confirmation",
+      "futureUseApprovedByThisReview": "manual_sample_candidate_only",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "marketConfirmationWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "ice_brent_futures_structure_context",
+      "sourceType": "existing_public_structure_context",
+      "productionPath": "brentPricingLayer.futuresCurve",
+      "candidateRole": "contract_structure_context",
+      "futureUseApprovedByThisReview": "context_only",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "officialSettlementCurveClaimApproved": false,
+      "marketConfirmationWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "eia_brent_spot_proxy",
+      "sourceType": "existing_public_spot_proxy",
+      "productionPath": "brentPricingLayer.eiaBrentSpotProxy",
+      "candidateRole": "spot_proxy_cross_check",
+      "futureUseApprovedByThisReview": "manual_sample_candidate_only",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "datedBrentClaimApproved": false,
+      "marketConfirmationWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "odp_brent_wti_price_reaction_proxy",
+      "sourceType": "existing_odp_raw_evidence",
+      "productionPath": "data/oil-directional-pressure.json.evidence.brentPrice/wtiPrice",
+      "candidateRole": "price_reaction_context",
+      "futureUseApprovedByThisReview": "raw_evidence_candidate_only",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "usesOdpFinalBias": false,
+      "marketConfirmationWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "odp_crack_spread_proxy",
+      "sourceType": "existing_odp_raw_evidence",
+      "productionPath": "data/oil-directional-pressure.json.evidence.crackSpread",
+      "candidateRole": "product_market_stress_context",
+      "futureUseApprovedByThisReview": "raw_evidence_candidate_only",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "usesOdpFinalBias": false,
+      "marketConfirmationWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "oil_news_market_reaction_bucket",
+      "sourceType": "existing_display_only_news_aggregate",
+      "productionPath": "data/oil-news-event-watch.json",
+      "candidateRole": "market_reaction_context",
+      "futureUseApprovedByThisReview": "manual_claim_ledger_sample_candidate_only",
+      "liveFetchApproved": false,
+      "productionWriteApproved": false,
+      "headlineDisplayApproved": false,
+      "marketConfirmationWriteApproved": false,
+      "scoreApproved": false
+    }
+  ],
+  "candidateBuckets": [
+    {
+      "bucketKey": "brent_price_structure_confirmation",
+      "inputs": [
+        "brent_futures_price_curve_proxy",
+        "ice_brent_futures_structure_context",
+        "eia_brent_spot_proxy",
+        "odp_brent_wti_price_reaction_proxy"
+      ],
+      "allowedFutureOutput": "price_structure_tightening_price_structure_easing_mixed_unavailable",
+      "productionApproved": false
+    },
+    {
+      "bucketKey": "oil_news_market_reaction_confirmation",
+      "inputs": [
+        "oil_news_market_reaction_bucket"
+      ],
+      "allowedFutureOutput": "market_reaction_present_market_reaction_absent_contested_unavailable",
+      "productionApproved": false
+    },
+    {
+      "bucketKey": "odp_market_stress_context",
+      "inputs": [
+        "odp_brent_wti_price_reaction_proxy",
+        "odp_crack_spread_proxy"
+      ],
+      "allowedFutureOutput": "market_confirms_transport_stress_market_diverges_from_transport_stress_mixed_unavailable",
+      "productionApproved": false
+    }
+  ],
+  "interpretationRules": {
+    "marketAloneCannotConfirmTransportShock": true,
+    "requiresPhysicalRouteAgreementBeforeFutureConfirmation": true,
+    "requiresAnotherNonNewsConfirmationBeforeFutureConfirmation": true,
+    "odpFinalBiasCannotBeInput": true,
+    "priceReactionIsNotPhysicalConfirmation": true
+  },
+  "boundaries": {
+    "reviewOnly": true,
+    "noLiveFetch": true,
+    "noNewDataSource": true,
+    "noProductionWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noMarketConfirmationWrite": true,
+    "noScoreWrite": true,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "nextAllowedStep": "transport_shock_market_confirmation_manual_sample_scaffold_no_live_fetch_no_production_write"
+}

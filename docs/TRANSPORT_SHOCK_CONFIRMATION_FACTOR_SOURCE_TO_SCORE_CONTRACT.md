@@ -135,6 +135,7 @@ The only allowed sequence is:
 ```text
 P-score-1 source-to-score contract
   -> P-score-2 free proxy + Baltic Weekly source-review
+  -> P-score-15 market-confirmation source-review
   -> P-score-3 shadow score builder
   -> P-score-4 frontend card display
   -> P-score-5 sample archive / history
@@ -193,4 +194,3 @@ Current boundary:
 - no scoring / decision / execution / position impact
 - no Global Risk Heatmap impact
 - no cross-validation input
-
