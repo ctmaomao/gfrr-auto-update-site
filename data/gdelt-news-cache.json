@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-06-30T04:47:18.288Z",
+  "generatedAt": "2026-06-30T20:31:17.113Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
-  "status": "stale",
-  "sourceStatus": "stale",
-  "requestMode": "stale_cache_after_fetch_error",
+  "status": "ok",
+  "sourceStatus": "live",
+  "requestMode": "live_broad_query",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 360,
@@ -39,19 +39,19 @@
     "minIntervalMs": 8000,
     "maxRetries": 0,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 11886,
+    "elapsedMs": 18306,
     "errorCode": null
   },
   "aggregate": {
     "articleCount": 32,
     "bucketCounts": {
-      "chokepoint": 12,
+      "chokepoint": 13,
       "sanctions": 0,
       "supply_disruption": 1,
       "facility_event": 2,
-      "tanker_shipping": 4,
-      "middle_east_risk": 10,
-      "market_reaction": 21
+      "tanker_shipping": 3,
+      "middle_east_risk": 9,
+      "market_reaction": 22
     }
   },
   "articles": [
@@ -120,6 +120,19 @@
       "buckets": [
         "chokepoint",
         "middle_east_risk"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "title": "Oil trade stabilises amid US - Iran halt to renewed hostilities",
+      "url": "https://finance.yahoo.com/energy/articles/oil-trade-stabilises-amid-us-104450006.html",
+      "domain": "finance.yahoo.com",
+      "publishedAt": null,
+      "buckets": [
+        "middle_east_risk",
+        "supply_disruption"
       ],
       "queryIds": [
         "gdelt_broad_oil_news"
@@ -246,19 +259,6 @@
       ]
     },
     {
-      "title": "Oil trade stabilises amid US - Iran halt to renewed hostilities",
-      "url": "https://finance.yahoo.com/energy/articles/oil-trade-stabilises-amid-us-104450006.html",
-      "domain": "finance.yahoo.com",
-      "publishedAt": null,
-      "buckets": [
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
       "title": "Oil Prices : Oil prices today : Crude falls to four - month low as Hormuz traffic improves , Iran supply outlook weighs on market",
       "url": "https://timesofindia.indiatimes.com/business/international-business/oil-prices-today-24-june-2026-crude-falls-to-four-month-low-as-hormuz-traffic-improves-iran-supply-outlook-weighs-on-market/articleshow/131961480.cms",
       "domain": "timesofindia.indiatimes.com",
@@ -281,6 +281,30 @@
         "chokepoint",
         "market_reaction",
         "middle_east_risk"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "title": "Oil Markets Move From Fearing Shortages to Worrying About Surpluses",
+      "url": "https://www.businessinsider.com/crude-oil-prices-today-supply-demand-outlook-forecast-hormuz-exports-2026-6",
+      "domain": "businessinsider.com",
+      "publishedAt": null,
+      "buckets": [
+        "chokepoint"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "title": "The Oil Benchmark Named Brent Is Losing Its Brent",
+      "url": "https://oilprice.com/Latest-Energy-News/World-News/The-Oil-Benchmark-Named-Brent-Is-Losing-Its-Brent.html",
+      "domain": "oilprice.com",
+      "publishedAt": null,
+      "buckets": [
+        "market_reaction"
       ],
       "queryIds": [
         "gdelt_broad_oil_news"
@@ -331,6 +355,16 @@
       "buckets": [
         "market_reaction"
       ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "title": "The oil market has moved from fearing shortages to pricing in a very different future",
+      "url": "https://finance.yahoo.com/energy/articles/oil-market-moved-fearing-shortages-050337025.html",
+      "domain": "finance.yahoo.com",
+      "publishedAt": null,
+      "buckets": [],
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
@@ -397,6 +431,16 @@
       ]
     },
     {
+      "title": "中东美伊再度爆发冲突 ， 油价攀升 - CFi . CN 中财网",
+      "url": "http://www.cfi.net.cn/p20260629000633.html",
+      "domain": "cfi.net.cn",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
       "title": "Oil prices slip as Hormuz traffic resumes ; Brent heads for nearly 7 % weekly loss",
       "url": "https://www.moneycontrol.com/world/oil-prices-slip-as-hormuz-traffic-resumes-brent-heads-for-nearly-7-weekly-loss-article-13959194.html",
       "domain": "moneycontrol.com",
@@ -408,52 +452,9 @@
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
-    },
-    {
-      "title": "Oil Extends Losses As Supply Fears Fade",
-      "url": "https://www.rttnews.com/story.aspx?Id=3662621",
-      "domain": "rttnews.com",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil extends decline on rising Middle East supply",
-      "url": "https://www.thedailystar.net/business/news/oil-extends-decline-rising-middle-east-supply-4207966",
-      "domain": "thedailystar.net",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil edges lower amid resumption of strait shipments even as vessel hit near Oman",
-      "url": "https://www.businesstimes.com.sg/companies-markets/energy-commodities/oil-edges-lower-amid-resumption-strait-shipments-even-vessel-hit-near-oman",
-      "domain": "businesstimes.com.sg",
-      "publishedAt": null,
-      "buckets": [
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "中东美伊再度爆发冲突 ， 油价攀升 - CFi . CN 中财网",
-      "url": "http://www.cfi.net.cn/p20260629000633.html",
-      "domain": "cfi.net.cn",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
     }
   ],
-  "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)",
+  "error": null,
   "promotionEligible": false,
   "productionDisplayApproved": false,
   "productionImpact": {
