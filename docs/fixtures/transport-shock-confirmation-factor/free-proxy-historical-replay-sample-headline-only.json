@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-input-v1",
+  "sampleId": "fixture-headline-only-false-positive-2026-06",
+  "familyKey": "headline_only_false_positive",
+  "sampleWindow": {
+    "startDate": "2026-06-15",
+    "endDate": "2026-06-17"
+  },
+  "expectedContributionPct": 0,
+  "observedCandidateContributionPct": 0,
+  "expectedBehavior": "zero_contribution_no_score_write",
+  "confirmations": {
+    "portWatchFresh": false,
+    "nonNewsPhysicalConfirmation": false,
+    "marketConfirmationReview": false,
+    "thermalOrEiaAnchor": false
+  },
+  "evidence": [
+    {
+      "sourceFamily": "oil_news_market_reaction_claims",
+      "sourceStatus": "display_only",
+      "direction": "tightening",
+      "confirmationType": "news_only",
+      "sourceCitation": "https://example.com/transport-shock-headline-only-fixture",
+      "rawCitationStored": false
+    }
+  ],
+  "operatorNotes": "Synthetic fixture: headline-only transport stress must remain zero contribution."
+}
