@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-samples-review-v1",
+  "contractVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-samples-review-v1",
+  "status": "pass",
+  "recommendation": "historical_replay_sample_set_ready_keep_no_score_write",
+  "generatedAt": "2026-06-30T00:10:00.000Z",
+  "minSamples": 2,
+  "minZeroControlSamples": 1,
+  "inputCount": 2,
+  "sampleReviewCount": 2,
+  "usableSampleReviewCount": 2,
+  "zeroControlSampleCount": 1,
+  "knownDisruptionSampleCount": 1,
+  "blockerCount": 0,
+  "warningCount": 0,
+  "familyCoverage": {
+    "known_disruption_tightening": 1,
+    "headline_only_false_positive": 1,
+    "single_chokepoint_noise": 0,
+    "stale_physical_proxy": 0,
+    "market_confirmation_divergence": 0,
+    "benign_baseline": 0
+  },
+  "sampleWindow": {
+    "startDate": "2024-01-10",
+    "endDate": "2026-06-17"
+  },
+  "zeroControlContributionPct": 0,
+  "historicalReplayRunnerImplemented": false,
+  "historicalBacktestPerformed": false,
+  "scoreIntegrationApproved": false,
+  "scoreWriteApproved": false,
+  "productionWriteApproved": false,
+  "productionDisplayApproved": false,
+  "frontendDisplayApproved": false,
+  "mainScoreApproved": false,
+  "eligibleForMainScore": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "sampleReviews": [
+    {
+      "sampleReviewId": "fixture-headline-only",
+      "sourcePath": "docs/fixtures/transport-shock-confirmation-factor/free-proxy-historical-replay-sample-review-headline-only.json",
+      "sampleId": "fixture-headline-only-false-positive-2026-06",
+      "generatedAt": "2026-06-30T00:00:00.000Z",
+      "familyKey": "headline_only_false_positive",
+      "sampleWindow": {
+        "startDate": "2026-06-15",
+        "endDate": "2026-06-17"
+      },
+      "expectedContributionPct": 0,
+      "observedCandidateContributionPct": 0,
+      "evidenceCount": 1,
+      "usable": true,
+      "blockers": []
+    },
+    {
+      "sampleReviewId": "fixture-known-disruption",
+      "sourcePath": "docs/fixtures/transport-shock-confirmation-factor/free-proxy-historical-replay-sample-review-known-disruption.json",
+      "sampleId": "fixture-known-disruption-tightening-2024-01",
+      "generatedAt": "2026-06-30T00:05:00.000Z",
+      "familyKey": "known_disruption_tightening",
+      "sampleWindow": {
+        "startDate": "2024-01-10",
+        "endDate": "2024-01-17"
+      },
+      "expectedContributionPct": 2,
+      "observedCandidateContributionPct": 2,
+      "evidenceCount": 3,
+      "usable": true,
+      "blockers": []
+    }
+  ],
+  "blockers": [],
+  "warnings": [],
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "modifiesWorkerRuntime": false,
+    "modifiesWorkflow": false,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionDataRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreWrite": true,
+    "noReplayExecution": true,
+    "noHistoricalBacktestPerformed": true,
+    "rawCitationStored": false,
+    "affectsScoring": false,
+    "affectsMainJudgment": false
+  },
+  "boundary": "manual/local Transport Shock free-proxy historical replay sample set review only; writes ignored manual-artifacts only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
+  "limitationZh": "本审查只聚合人工历史回放样本审查结果,不执行历史回放,不生成分数,不写生产数据,不进入今日总判断打分。"
+}
