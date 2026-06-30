@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-history-sample-1",
+  "archivedFrom": "data/radar-data.json",
+  "payloadUpdatedAt": "2026-06-29T23:33:38.671Z",
+  "releaseVersion": "v28.0.10",
+  "energyTransport": {
+    "source": "IMFPortWatch:Daily_Chokepoints_Data",
+    "sourceStatus": {
+      "chokepoints": "live"
+    },
+    "usageTermsPinned": "imf_data_terms_pinned",
+    "redistributionCaveat": true,
+    "latestDate": "2026-06-21",
+    "latestAgeDays": 8,
+    "fetchedAt": "2026-06-29T23:33:38.671Z"
+  },
+  "transportShockCandidate": {
+    "contractVersion": "transport-shock-candidate-v1",
+    "status": "elevated_watch",
+    "score": 90,
+    "confidence": "low",
+    "candidateOnly": true,
+    "auditOnly": true,
+    "eligibleForMainScore": false,
+    "confirmationStatus": "awaiting_route_freight_and_market_confirmation",
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "evidence": {
+      "hormuzTankerVs30dPct": -1,
+      "hormuzCapacityTankerVs30dPct": -1,
+      "redSeaToCapeRegime": "normal",
+      "suezBabTankerVs30dPct": -0.0033,
+      "capeTankerVs30dPct": 0.3492,
+      "stressedChokepointCount": 2
+    },
+    "drivers": [
+      "hormuz_proxy_drop",
+      "multi_chokepoint_proxy_drop"
+    ],
+    "reasons": [
+      "Fixture PortWatch chokepoint proxy sample for history review.",
+      "Fixture multi-chokepoint proxy sample for history review."
+    ],
+    "boundaries": {
+      "affectsValues": false,
+      "affectsDisplayInputsBaseline": false,
+      "affectsEffectiveDisplayInputs": false,
+      "affectsScoring": false,
+      "affectsDecisionModel": false,
+      "affectsExecutionLock": false,
+      "affectsPositionGuidance": false,
+      "affectsBrentPromotion": false,
+      "affectsWorldOrderWeights": false,
+      "affectsGlobalRiskHeatmap": false,
+      "affectsCrossValidation": false
+    },
+    "limitationZh": "Fixture only; does not confirm chokepoint closure, outage, war probability, or oil direction."
+  },
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundary": "manual git-history Transport Shock Confirmation Factor candidate sample archive only; writes ignored manual-artifacts only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}
