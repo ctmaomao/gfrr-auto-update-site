@@ -253,6 +253,18 @@ check('contract', buildSrc.includes('fetchLatestFedSepMedians') && buildSrc.incl
   'fed_policy 必须保留 Fed SEP + 年末 Fed funds futures 政策路径证据');
 check('contract', indicatorById.fed_policy?.provenance?.detail?.policyPathEvidenceVersion === 'fed_policy_path_v2',
   'fed_policy provenance 缺 fed_policy_path_v2 审计版本');
+check('contract', buildSrc.includes('fetchBarchartS5fiBreadth') && buildSrc.includes('Barchart:$S5FI'),
+  'breadth_50d 必须优先尝试 Barchart $S5FI 直接广度源');
+check('contract', buildSrc.includes('capexResearchConfirmationAnchor') && buildSrc.includes('capex_market_repricing_research_confirmation_v1'),
+  'capex_reaction 必须允许新鲜上游研究周报确认系统性重定价证据');
+const capexReaction = indicatorById.capex_reaction;
+const capexResearchConfirmation = capexReaction?.provenance?.detail?.upstreamResearchConfirmation;
+if (capexResearchConfirmation?.confirmationPolicy === 'capex_market_repricing_research_confirmation_v1'
+  && Number(capexReaction?.provenance?.detail?.avgExcessQqq) <= -8
+  && Number(capexReaction?.provenance?.detail?.punishedCount) >= 3) {
+  check('contract', capexReaction.status === 'red' && capexReaction.value_display === '系统性惩罚',
+    'capex_reaction 本地价格代理红灯且上游研究确认时不得降档为黄灯');
+}
 check('contract', buildSrc.includes('fetchSecAiIpoFilingConfirmations') && buildSrc.includes('SEC EDGAR S-1/F-1 confirmation'),
   'ai_ipo_pipeline 必须保留 SEC S-1/F-1 官方申报确认路径');
 check('contract', candidateEntries.ai_ipo_pipeline?.freeSourceCandidates?.some((source) => /SEC EDGAR/iu.test(source.source || '') && /S-1|F-1|424B4/iu.test(`${source.role || ''} ${source.limitations || ''}`)),

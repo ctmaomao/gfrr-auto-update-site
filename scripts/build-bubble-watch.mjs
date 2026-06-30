@@ -85,7 +85,7 @@ const INDICATOR_DEFS = [
   { id: 'mag4_fcf_yoy', category: 'capital', name_en: 'Mag4 FCF YoY', name_zh: 'Mag4 自由现金流变化', threshold_text: '<-20% 红 / -20%~0 黄 / >0 绿', source_name: 'SEC EDGAR / stockanalysis 季报镜像', mode: 'auto' },
   { id: 'vc_ai_share', category: 'capital', name_en: 'AI / Total VC Funding', name_zh: 'AI 占 VC 投资比重', threshold_text: '>50% 红 / 30-50% 黄 / <30% 绿', source_name: 'Crunchbase / PitchBook(季度研究口径)', mode: 'curated' },
   { id: 'nvda_invest_revenue', category: 'capital', name_en: 'NVDA Customer Invest / Rev', name_zh: 'NVDA 客户投资/收入比', threshold_text: '>30% 红 / 15-30% 黄 / <15% 绿 (Lucent 99 峰值 24%)', source_name: '公开披露承诺 ÷ EDGAR/stockanalysis LTM 收入', mode: 'auto' },
-  { id: 'breadth_50d', category: 'market_structure', name_en: '% Above 50-Day MA', name_zh: 'S&P 50 日均线上方比例', threshold_text: '<40% 红 / 40-60% 黄 / >60% 绿', source_name: 'Yahoo Chart × Wikipedia 全成份股实算', mode: 'auto' },
+  { id: 'breadth_50d', category: 'market_structure', name_en: '% Above 50-Day MA', name_zh: 'S&P 50 日均线上方比例', threshold_text: '<40% 红 / 40-60% 黄 / >60% 绿', source_name: 'Barchart $S5FI / Yahoo Chart × Wikipedia fallback', mode: 'auto' },
   { id: 'spy_vs_rsp_6m', category: 'market_structure', name_en: 'SPY vs RSP 6M Spread', name_zh: '市值加权 vs 等权重', threshold_text: '>10% 红 / 5-10% 黄 / <5% 绿', source_name: 'Yahoo Chart(SPY/RSP 6 个月)', mode: 'auto' },
   { id: 'insider_sell_buy', category: 'market_structure', name_en: 'AI Insider Sell/Buy Ratio', name_zh: 'AI 龙头内部人卖买比', threshold_text: '>20x=红 / 5-20x=黄 / <5x=绿 (2000 峰值 23x)', source_name: 'OpenInsider / SEC Form 4', mode: 'auto' },
   { id: 'ai_ipo_pipeline', category: 'market_structure', name_en: 'AI IPO/SPAC Pipeline', name_zh: 'AI 一级市场发行', threshold_text: '洪流=红 / 升温=黄 / 平静=绿', source_name: '一级市场公开报道(编辑口径)', mode: 'curated' },
@@ -737,6 +737,19 @@ async function fetchSp500Constituents() {
   return [...seen];
 }
 
+async function fetchBarchartS5fiBreadth() {
+  const html = await fetchWithTimeout('https://www.barchart.com/stocks/quotes/$S5FI', { headers: { 'User-Agent': BROWSER_UA, Accept: 'text/html' } });
+  const normalized = html.replace(/&quot;/gu, '"').replace(/&amp;/gu, '&');
+  const valueMatch = normalized.match(/"symbolName":"S&P 500 Stocks Above 50-Day Average"[^{}]{0,900}?"lastPrice":"?([0-9.]+)/u)
+    || normalized.match(/"symbol":"\$S5FI"[^{}]{0,900}?"lastPrice":"?([0-9.]+)/u)
+    || normalized.match(/lastPrice":"?([0-9]{1,2}\.[0-9]+)/u);
+  const pct = Number(valueMatch?.[1]);
+  if (!Number.isFinite(pct) || pct < 0 || pct > 100) throw new Error('Barchart $S5FI 未解析到 0-100 区间 lastPrice');
+  const tradeTime = normalized.match(/"tradeTime":"([^"]+)"/u)?.[1] || null;
+  const sessionDate = normalized.match(/"sessionDateDisplayLong":"([^"]+)"/u)?.[1] || null;
+  return { pct, tradeTime, sessionDate };
+}
+
 // stockanalysis 季度报表镜像(SEC EDGAR 对数据中心 IP 封 403 时的二级源;
 // 服务端渲染表格,~20 个季度,单位 $M,列序 新→旧)
 const SA_FIN_CACHE = new Map();
@@ -1352,6 +1365,25 @@ const autoBuilders = {
     };
   },
   async breadth_50d() {
+    try {
+      const direct = await retry(fetchBarchartS5fiBreadth, 'Barchart $S5FI');
+      const status = direct.pct < 40 ? 'red' : direct.pct <= 60 ? 'yellow' : 'green';
+      return {
+        status,
+        value_display: `≈${direct.pct.toFixed(0)}%`,
+        source_name: 'Barchart $S5FI direct breadth index',
+        note: `Barchart $S5FI 直接广度指数显示 S&P 500 收于 50 日均线上方比例 ${direct.pct.toFixed(1)}%${direct.sessionDate ? `(${direct.sessionDate})` : ''};该源为 S&P 500 50 日均线广度直接指数。阈值:<40% 红 / 40-60% 黄 / >60% 绿`,
+        detail: {
+          source: 'Barchart:$S5FI',
+          pct: direct.pct,
+          tradeTime: direct.tradeTime,
+          sessionDate: direct.sessionDate,
+          fallbackCalculator: 'Yahoo Chart × Wikipedia constituents not used'
+        }
+      };
+    } catch (error) {
+      console.warn(`[bubble-watch] Barchart $S5FI 直接广度源失败,回退 Yahoo/Wikipedia 实算: ${error.message}`);
+    }
     const constituents = await retry(fetchSp500Constituents, 'Wikipedia S&P 500 名单');
     const symbols = constituents.map((s) => s.replace(/\./gu, '-'));
     const results = await mapPool(symbols, 5, async (symbol) => {
@@ -1373,8 +1405,8 @@ const autoBuilders = {
     return {
       status,
       value_display: `≈${pct.toFixed(0)}%`,
-      note: `Yahoo Chart 全市场实算:S&P 500 成份股 ${counted} 只(Wikipedia 实时名单)中 ${above} 只收于 50 日均线上方,占比 ≈${pct.toFixed(1)}%。阈值:<40% 红 / 40-60% 黄 / >60% 绿`,
-      detail: { above, counted, pct }
+      note: `Barchart $S5FI 直接源暂不可用,回退 Yahoo Chart 全市场实算:S&P 500 成份股 ${counted} 只(Wikipedia 实时名单)中 ${above} 只收于 50 日均线上方,占比 ≈${pct.toFixed(1)}%。阈值:<40% 红 / 40-60% 黄 / >60% 绿`,
+      detail: { source: 'Yahoo Chart × Wikipedia constituents fallback', above, counted, pct }
     };
   },
   async spy_vs_rsp_6m() {
@@ -1481,11 +1513,11 @@ const autoBuilders = {
     return summarizeRpoGrowthPanel(publicRows, 'StockAnalysis/Fiscal.ai metrics 镜像', 'EDGAR 对当前运行环境不可达时采用免费公开二级源;Oracle 用年度 metrics,其余三家用季度 operating metrics。');
   },
   async fed_policy() {
-    const [dff, cpi, lowerRows, upperRows, sepResult, yearEndFutureResult] = await Promise.all([
+    const [dff, cpi, lowerResult, upperResult, sepResult, yearEndFutureResult] = await Promise.all([
       retry(() => fredObservations('DFF', 90), 'FRED DFF'),
       retry(() => fredObservations('CPIAUCSL', 14), 'FRED CPI'),
-      retry(() => fredObservations('DFEDTARL', 10), 'FRED DFEDTARL'),
-      retry(() => fredObservations('DFEDTARU', 10), 'FRED DFEDTARU'),
+      retry(() => fredObservations('DFEDTARL', 10), 'FRED DFEDTARL').then((value) => ({ ok: true, value })).catch((error) => ({ ok: false, error: error.message })),
+      retry(() => fredObservations('DFEDTARU', 10), 'FRED DFEDTARU').then((value) => ({ ok: true, value })).catch((error) => ({ ok: false, error: error.message })),
       fetchLatestFedSepMedians().then((value) => ({ ok: true, value })).catch((error) => ({ ok: false, error: error.message })),
       fetchYearEndFedFundsFuture().then((value) => ({ ok: true, value })).catch((error) => ({ ok: false, error: error.message }))
     ]);
@@ -1493,11 +1525,11 @@ const autoBuilders = {
     const past = dff[Math.min(60, dff.length - 1)].value;
     const drift = latest - past;
     const cpiYoy = ((cpi[0].value - cpi[12].value) / cpi[12].value) * 100;
-    const targetLower = lowerRows[0]?.value;
-    const targetUpper = upperRows[0]?.value;
+    const targetLower = lowerResult.ok ? lowerResult.value[0]?.value : null;
+    const targetUpper = upperResult.ok ? upperResult.value[0]?.value : null;
     const targetMid = Number.isFinite(targetLower) && Number.isFinite(targetUpper)
       ? +(((targetLower + targetUpper) / 2)).toFixed(3)
-      : null;
+      : latest;
     const sep = sepResult.ok ? sepResult.value : null;
     const yearEndFuture = yearEndFutureResult.ok ? yearEndFutureResult.value : null;
     const classified = classifyFedPolicyPath({
@@ -1542,13 +1574,14 @@ const autoBuilders = {
         yearEndGap: classified.yearEndGap,
         classificationReason: classified.reason,
         sourceStatus: {
-          targetRange: Number.isFinite(targetMid) ? 'live' : 'missing',
+          targetRange: Number.isFinite(targetLower) && Number.isFinite(targetUpper) ? 'live' : 'missing',
           sepDotPlot: sepResult.ok ? 'live' : 'missing',
           yearEndFedFundsFuture: yearEndFutureResult.ok ? 'live' : 'missing',
           dff: 'live',
           cpi: 'live'
         },
         sourceFailures: [
+          lowerResult.ok && upperResult.ok ? null : { source: 'FRED:targetRange', reason: [lowerResult.error, upperResult.error].filter(Boolean).join('; ') },
           sepResult.ok ? null : { source: 'FederalReserve:SEP', reason: sepResult.error },
           yearEndFutureResult.ok ? null : { source: 'Yahoo:ZQ-year-end', reason: yearEndFutureResult.error }
         ].filter(Boolean)
@@ -3888,7 +3921,7 @@ function baseIndicator(def) {
   };
 }
 
-function hasStrongProxyConfirmation(id, result) {
+function hasStrongProxyConfirmation(id, result, entry) {
   const detail = result?.detail || {};
   switch (id) {
     case 'insider_sell_buy':
@@ -3899,9 +3932,15 @@ function hasStrongProxyConfirmation(id, result) {
       return Number(detail.confirmedIssueCount) >= 10
         || (Number(detail.evidenceCount) >= 8 && Array.isArray(detail.nameHits) && detail.nameHits.length >= 8);
     case 'capex_reaction':
-      return Number(detail.directGuidancePenaltyCount) >= 2
+      return (
+        Number(detail.directGuidancePenaltyCount) >= 2
         && Number(detail.punishedCount) >= 3
-        && Number(detail.avgExcessQqq) <= -8;
+        && Number(detail.avgExcessQqq) <= -8
+      ) || (
+        Boolean(capexResearchConfirmationAnchor(entry))
+        && Number(detail.punishedCount) >= 3
+        && Number(detail.avgExcessQqq) <= -8
+      );
     case 'ceo_hedging':
       return Number(detail.executiveHitCount) >= 6 && Number(detail.uniqueExecutiveCount) >= 4;
     case 'token_revenue_ratio':
@@ -3917,14 +3956,14 @@ function proxyConfidenceRuleText(id) {
   return {
     insider_sell_buy: '内部人卖买比需要独立 Form-4/SEC 聚合确认;单一 OpenInsider 买入近零导致的极端 ratio 最多按黄灯发布。',
     ai_ipo_pipeline: 'AI IPO 洪流需要接近模板口径的具体发行/待发公司数确认;单一 Crunchbase 新闻检索命中不足以升红。',
-    capex_reaction: '系统性 capex 惩罚需要价格代理叠加直接 earnings-call/指引惩罚证据;单一相对收益窗口最多按黄灯发布。',
+    capex_reaction: '系统性 capex 惩罚需要价格代理叠加直接 earnings-call/指引惩罚证据,或新鲜上游研究周报确认的系统性重定价证据;缺少研究/直接确认时单一相对收益窗口最多按黄灯发布。',
     ceo_hedging: 'CEO 普遍承认过热需要更多唯一高管与多篇直接表态确认;单一新闻搜索频率不足以升红。',
     token_revenue_ratio: 'OpenRouter token×catalog spend 只是平台代理;覆盖率和 ratio 未显著越线时不得把近 1x 噪声自动升黄。',
     enterprise_deploy: 'Google AI-agent production survey 是窄口径代理;未有第二调查源确认低部署率时不得把单一窄口径样本自动降档。'
   }[id] || '自动代理源未达到本地二次确认门槛。';
 }
 
-function proxyConfidenceTarget(def, result) {
+function proxyConfidenceTarget(def, result, entry) {
   const detail = result?.detail || {};
   switch (def.id) {
     case 'insider_sell_buy':
@@ -3936,7 +3975,7 @@ function proxyConfidenceTarget(def, result) {
         ? { status: 'yellow', value_display: '升温' }
         : null;
     case 'capex_reaction':
-      return result.status === 'red' && !hasStrongProxyConfirmation(def.id, result)
+      return result.status === 'red' && !hasStrongProxyConfirmation(def.id, result, entry)
         ? { status: 'yellow', value_display: '选择性惩罚' }
         : null;
     case 'ceo_hedging':
@@ -3984,11 +4023,50 @@ function freshCalibrationAnchor(entry, publishedStatus) {
   };
 }
 
+function capexResearchConfirmationAnchor(entry) {
+  if (!entry || entry.status !== 'red' || !entry.asOfDate || !entry.maxAgeDays) return null;
+  const ageDays = daysBetween(entry.asOfDate, isoDate());
+  if (ageDays > entry.maxAgeDays) return null;
+  const evidenceText = `${entry.value_display || ''} ${entry.note || ''}`;
+  const hasSystemicRepricingEvidence = /系统性惩罚|系统性重定价|市场反应|华尔街|要求拿出回报|B200|租赁价|半导体|纳指|selloff|repricing|return evidence|capex/iu.test(evidenceText);
+  if (!hasSystemicRepricingEvidence) return null;
+  return {
+    source: entry.syncedFromUpstream ? 'upstream_research_weekly' : 'local_curated_research_snapshot',
+    status: entry.status,
+    value_display: entry.value_display || null,
+    asOfDate: entry.asOfDate,
+    ageDays,
+    maxAgeDays: entry.maxAgeDays,
+    syncedFromUpstream: entry.syncedFromUpstream === true,
+    confirmationPolicy: 'capex_market_repricing_research_confirmation_v1'
+  };
+}
+
+function attachCapexResearchConfirmation(def, result, entry) {
+  if (def.id !== 'capex_reaction') return result;
+  const anchor = capexResearchConfirmationAnchor(entry);
+  if (!anchor) return result;
+  return {
+    ...result,
+    source_name: result.source_name === 'StockAnalysis capex + Yahoo relative-return proxy'
+      ? 'StockAnalysis/Yahoo proxy + upstream research calibration'
+      : result.source_name,
+    note: result.status === 'red'
+      ? `${result.note} 上游研究周报(${anchor.asOfDate})同步给出「${anchor.value_display || '系统性惩罚'}」,并记录 AI 板块系统性回调、半导体市值蒸发、B200 租赁价格下跌和市场要求 capex 回报证据等重定价线索;因此本轮价格代理红灯可按系统性惩罚发布。`
+      : result.note,
+    detail: {
+      ...(result.detail || {}),
+      upstreamResearchConfirmation: anchor
+    }
+  };
+}
+
 function calibrateProxyConfidenceResult(def, result, entry) {
+  result = attachCapexResearchConfirmation(def, result, entry);
   if (!PROXY_CONFIDENCE_CALIBRATION_IDS.has(def.id) || !STATUS_RANK.hasOwnProperty(result?.status)) {
     return result;
   }
-  const target = proxyConfidenceTarget(def, result);
+  const target = proxyConfidenceTarget(def, result, entry);
   if (!target || !STATUS_RANK.hasOwnProperty(target.status) || STATUS_RANK[result.status] <= STATUS_RANK[target.status]) {
     return {
       ...result,
@@ -4047,7 +4125,7 @@ const PUBLIC_SOURCE_LABELS = {
   mag4_fcf_yoy: '公开季度现金流',
   vc_ai_share: 'VC 市场季度研究',
   nvda_invest_revenue: '公开投资承诺与收入',
-  breadth_50d: 'S&P 500 成份股价格广度',
+  breadth_50d: 'Barchart $S5FI 市场广度',
   spy_vs_rsp_6m: '市值加权与等权重 ETF',
   insider_sell_buy: '内部人交易披露',
   ai_ipo_pipeline: '一级市场公开报道',
