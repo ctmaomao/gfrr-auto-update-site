@@ -1,0 +1,127 @@
+{
+  "contractVersion": "transport-shock-confirmation-factor-free-proxy-score-design-v1",
+  "kind": "transport_shock_free_proxy_low_weight_score_design",
+  "status": "design_only_no_score_write",
+  "createdAt": "2026-06-30",
+  "futureFactorKey": "transportShockConfirmationFactor",
+  "futureMode": "free_proxy_only_low_weight_candidate",
+  "currentProductionState": {
+    "candidatePresent": true,
+    "freeProxyScoreGenerated": false,
+    "productionScoreWritten": false,
+    "mainScoreAffected": false,
+    "odpFinalBiasAffected": false,
+    "eligibleForMainScore": false,
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected"
+  },
+  "scoreCap": {
+    "maxFutureMainScoreContributionPct": 3,
+    "newsOnlyContributionPct": 0,
+    "singleChokepointOnlyContributionPct": 0,
+    "stalePortWatchContributionPct": 0,
+    "reason": "Free proxies lack licensed route-level tanker freight specificity; cap stays below true route-level confirmation."
+  },
+  "eligibleFreeProxyFamilies": [
+    {
+      "familyKey": "portwatch_chokepoint_physical_proxy",
+      "currentStatus": "connected_display_only",
+      "role": "core_chokepoint_flow_proxy",
+      "canScoreAlone": false,
+      "productionScoringApprovedByThisContract": false
+    },
+    {
+      "familyKey": "stockq_aggregate_tanker_freight_context",
+      "currentStatus": "connected_display_only",
+      "role": "broad_freight_context",
+      "canScoreAlone": false,
+      "productionScoringApprovedByThisContract": false
+    },
+    {
+      "familyKey": "oil_news_market_reaction_claims",
+      "currentStatus": "connected_display_only",
+      "role": "event_and_market_reaction_context",
+      "canScoreAlone": false,
+      "productionScoringApprovedByThisContract": false
+    },
+    {
+      "familyKey": "oil_thermal_facility_confirmation",
+      "currentStatus": "connected_display_only",
+      "role": "facility_physical_cross_check",
+      "canScoreAlone": false,
+      "productionScoringApprovedByThisContract": false
+    },
+    {
+      "familyKey": "odp_eia_physical_anchor",
+      "currentStatus": "connected_display_only",
+      "role": "physical_balance_anchor",
+      "canScoreAlone": false,
+      "productionScoringApprovedByThisContract": false
+    },
+    {
+      "familyKey": "odp_market_confirmation_proxy",
+      "currentStatus": "manual_review_projection_only",
+      "role": "price_structure_confirmation",
+      "canScoreAlone": false,
+      "productionScoringApprovedByThisContract": false
+    }
+  ],
+  "excludedUntilSeparateApproval": [
+    {
+      "familyKey": "baltic_td_tc_route_assessment_values",
+      "reason": "Source rights and redistribution approval are absent.",
+      "liveFetchApprovedByThisContract": false,
+      "productionScoringApprovedByThisContract": false
+    },
+    {
+      "familyKey": "vendor_route_level_tanker_freight_values",
+      "reason": "Commercial or licensed source approval is absent.",
+      "liveFetchApprovedByThisContract": false,
+      "productionScoringApprovedByThisContract": false
+    }
+  ],
+  "minimumConditionsBeforeSeparateScorePr": {
+    "requiresProductionCandidatePresent": true,
+    "requiresCandidateOnlyTrue": true,
+    "requiresPortWatchLive": true,
+    "requiresPortWatchMaxAgeDays": 7,
+    "requiresNonNewsPhysicalConfirmation": true,
+    "requiresMarketConfirmationReview": true,
+    "requiresThermalOrEiaAnchor": true,
+    "requiresHistorySampleReview": true,
+    "requiresBacktestOrReplayReview": true,
+    "requiresNoSingleSourceOverride": true,
+    "requiresNewsAloneCannotScore": true,
+    "requiresRouteFreightUnavailableConfidenceCap": true
+  },
+  "nextAllowedSteps": [
+    "P-score-20 artifact-only free-proxy score candidate projection",
+    "P-score-21 backtest/replay review scaffold",
+    "separate reviewed score integration PR if every hard gate passes"
+  ],
+  "approvalState": {
+    "freeProxyScoreDesignApproved": false,
+    "freeProxyScoreGenerated": false,
+    "scoreWriteApproved": false,
+    "productionWriteApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "boundaries": {
+    "designOnly": true,
+    "noNewLiveFetch": true,
+    "noProductionDataWrite": true,
+    "noFrontendChange": true,
+    "noWorkflowAutomation": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreWrite": true,
+    "noOdpFinalBiasChange": true,
+    "noBrentPromotion": true,
+    "noScoringDecisionExecutionPositionImpact": true,
+    "noGlobalRiskHeatmapImpact": true,
+    "noCrossValidationInput": true
+  }
+}
