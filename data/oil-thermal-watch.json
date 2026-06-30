@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-06-30T10:02:24.133Z",
+  "generatedAt": "2026-06-30T14:44:45.437Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -19,7 +19,7 @@
   "freshness": {
     "windowDays": 1,
     "latestAcqAt": "2026-06-30T08:28:00Z",
-    "latestAgeHours": 1.6,
+    "latestAgeHours": 6.3,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -97,30 +97,30 @@
     ]
   },
   "aggregate": {
-    "rowCount": 74,
+    "rowCount": 72,
     "latestAcqAt": "2026-06-30T08:28:00Z",
-    "maxFrp": 6.11,
+    "maxFrp": 5.33,
     "confidenceCounts": {
-      "n": 74
+      "n": 72
     },
     "highConfidenceCount": 0,
     "frpOver50Count": 0,
     "frpOver100Count": 0,
     "dayNightCounts": {
-      "N": 74
+      "N": 72
     },
-    "latestAgeHours": 1.6,
+    "latestAgeHours": 6.3,
     "facilityCount": 12,
     "facilitiesWithDetections": 11,
     "requestCount": 36,
     "requestErrorCount": 0,
     "baselineStatus": "established",
-    "repeatedObservationCount": 4,
+    "repeatedObservationCount": 3,
     "elevatedRepeatedObservationCount": 0,
     "facilitiesWithEstablishedBaseline": 12,
     "facilitiesByAnomalyLevel": {
-      "low_signal": 7,
-      "repeated_watch": 4,
+      "low_signal": 8,
+      "repeated_watch": 3,
       "none_observed": 1
     }
   },
@@ -131,22 +131,22 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=Motiva Enterprises LLC; Site=Port Arthur; State=Texas; PADD=3; AD_Mbpd=639.7; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "2/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 3,
-      "latestAcqAt": "2026-06-30T08:27:00Z",
-      "maxFrp": 3.2,
+      "rowCount": 2,
+      "latestAcqAt": "2026-06-30T08:07:00Z",
+      "maxFrp": 3.21,
       "confidenceCounts": {
-        "n": 3
+        "n": 2
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 3
+        "N": 2
       },
-      "latestAgeHours": 1.6,
+      "latestAgeHours": 6.6,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -160,8 +160,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 2,
-        "sourceRepeatMet": true,
+        "sourcesWithDetections": 1,
+        "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -186,7 +186,7 @@
       "sourceStatus": "live",
       "requestErrorCount": 0,
       "rowCount": 9,
-      "latestAcqAt": "2026-06-30T08:27:00Z",
+      "latestAcqAt": "2026-06-30T08:28:00Z",
       "maxFrp": 4.74,
       "confidenceCounts": {
         "n": 9
@@ -197,7 +197,7 @@
       "dayNightCounts": {
         "N": 9
       },
-      "latestAgeHours": 1.6,
+      "latestAgeHours": 6.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -237,7 +237,7 @@
       "sourceStatus": "live",
       "requestErrorCount": 0,
       "rowCount": 5,
-      "latestAcqAt": "2026-06-30T08:27:00Z",
+      "latestAcqAt": "2026-06-30T08:26:00Z",
       "maxFrp": 3.9,
       "confidenceCounts": {
         "n": 5
@@ -248,7 +248,7 @@
       "dayNightCounts": {
         "N": 5
       },
-      "latestAgeHours": 1.6,
+      "latestAgeHours": 6.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -284,22 +284,22 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Baytown; State=Texas; PADD=3; AD_Mbpd=584.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "3/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 6,
-      "latestAcqAt": "2026-06-30T08:27:00Z",
-      "maxFrp": 6.11,
+      "rowCount": 5,
+      "latestAcqAt": "2026-06-30T08:28:00Z",
+      "maxFrp": 4.59,
       "confidenceCounts": {
-        "n": 6
+        "n": 5
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 6
+        "N": 5
       },
-      "latestAgeHours": 1.6,
+      "latestAgeHours": 6.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -313,21 +313,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 3,
+        "sourcesWithDetections": 2,
         "sourceRepeatMet": true,
         "rowCountAboveP95": false,
-        "maxFrpAboveP95": true,
+        "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": true,
-        "repeatedObservation": true,
+        "aboveBaselineStrength": false,
+        "repeatedObservation": false,
         "elevatedRepeatedObservation": false,
-        "reason": "above_baseline_repeated"
+        "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "repeated_watch",
-      "anomalyLabelZh": "重复观察",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_exxon_baton_rouge_la",
@@ -339,7 +339,7 @@
       "sourceStatus": "live",
       "requestErrorCount": 0,
       "rowCount": 4,
-      "latestAcqAt": "2026-06-30T08:27:00Z",
+      "latestAcqAt": "2026-06-30T08:26:00Z",
       "maxFrp": 5.33,
       "confidenceCounts": {
         "n": 4
@@ -350,7 +350,7 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 1.6,
+      "latestAgeHours": 6.3,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -390,7 +390,7 @@
       "sourceStatus": "live",
       "requestErrorCount": 0,
       "rowCount": 6,
-      "latestAcqAt": "2026-06-30T08:27:00Z",
+      "latestAcqAt": "2026-06-30T08:28:00Z",
       "maxFrp": 3.69,
       "confidenceCounts": {
         "n": 6
@@ -401,7 +401,7 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 1.6,
+      "latestAgeHours": 6.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -441,7 +441,7 @@
       "sourceStatus": "live",
       "requestErrorCount": 0,
       "rowCount": 5,
-      "latestAcqAt": "2026-06-30T08:27:00Z",
+      "latestAcqAt": "2026-06-30T08:28:00Z",
       "maxFrp": 3.23,
       "confidenceCounts": {
         "n": 5
@@ -452,7 +452,7 @@
       "dayNightCounts": {
         "N": 5
       },
-      "latestAgeHours": 1.6,
+      "latestAgeHours": 6.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -492,7 +492,7 @@
       "sourceStatus": "live",
       "requestErrorCount": 0,
       "rowCount": 6,
-      "latestAcqAt": "2026-06-30T08:27:00Z",
+      "latestAcqAt": "2026-06-30T08:28:00Z",
       "maxFrp": 3.5,
       "confidenceCounts": {
         "n": 6
@@ -503,7 +503,7 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 1.6,
+      "latestAgeHours": 6.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -544,7 +544,7 @@
       "requestErrorCount": 0,
       "rowCount": 5,
       "latestAcqAt": "2026-06-30T08:28:00Z",
-      "maxFrp": 3.48,
+      "maxFrp": 3.49,
       "confidenceCounts": {
         "n": 5
       },
@@ -554,7 +554,7 @@
       "dayNightCounts": {
         "N": 5
       },
-      "latestAgeHours": 1.6,
+      "latestAgeHours": 6.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -594,7 +594,7 @@
       "sourceStatus": "live",
       "requestErrorCount": 0,
       "rowCount": 6,
-      "latestAcqAt": "2026-06-30T08:27:00Z",
+      "latestAcqAt": "2026-06-30T08:28:00Z",
       "maxFrp": 3.72,
       "confidenceCounts": {
         "n": 6
@@ -605,7 +605,7 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 1.6,
+      "latestAgeHours": 6.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -692,8 +692,8 @@
       "sourceStatus": "live",
       "requestErrorCount": 0,
       "rowCount": 19,
-      "latestAcqAt": "2026-06-30T08:27:00Z",
-      "maxFrp": 4,
+      "latestAcqAt": "2026-06-30T08:26:00Z",
+      "maxFrp": 3.97,
       "confidenceCounts": {
         "n": 19
       },
@@ -703,7 +703,7 @@
       "dayNightCounts": {
         "N": 19
       },
-      "latestAgeHours": 1.6,
+      "latestAgeHours": 6.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
