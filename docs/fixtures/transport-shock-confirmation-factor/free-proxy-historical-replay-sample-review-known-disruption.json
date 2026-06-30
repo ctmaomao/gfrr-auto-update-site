@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-review-v1",
+  "contractVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-scaffold-v1",
+  "status": "sample_review_ready_keep_no_score_write",
+  "recommendation": "include_sample_in_future_artifact_only_replay_dataset",
+  "generatedAt": "2026-06-30T00:05:00.000Z",
+  "inputPath": "docs/fixtures/transport-shock-confirmation-factor/free-proxy-historical-replay-sample-known-disruption.json",
+  "sampleId": "fixture-known-disruption-tightening-2024-01",
+  "familyKey": "known_disruption_tightening",
+  "sampleWindow": {
+    "startDate": "2024-01-10",
+    "endDate": "2024-01-17"
+  },
+  "expectedContributionPct": 2,
+  "observedCandidateContributionPct": 2,
+  "confirmations": {
+    "portWatchFresh": true,
+    "nonNewsPhysicalConfirmation": true,
+    "marketConfirmationReview": true,
+    "thermalOrEiaAnchor": false
+  },
+  "acceptedForFutureReplayDataset": true,
+  "historicalReplayRunnerImplemented": false,
+  "historicalBacktestPerformed": false,
+  "scoreIntegrationApproved": false,
+  "scoreWriteApproved": false,
+  "productionWriteApproved": false,
+  "mainScoreApproved": false,
+  "eligibleForMainScore": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "review": {
+    "evidenceCount": 3,
+    "compactEvidence": [
+      {
+        "sourceFamily": "portwatch_chokepoint_proxy",
+        "sourceStatus": "display_only",
+        "direction": "tightening",
+        "confirmationType": "physical_proxy",
+        "sourceCitationHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sourceDomainHint": "portwatch.imf.org",
+        "rawCitationStored": false
+      },
+      {
+        "sourceFamily": "wet_freight_futures_proxy",
+        "sourceStatus": "display_only",
+        "direction": "tightening",
+        "confirmationType": "market_proxy",
+        "sourceCitationHash": "f0a5c6f7b4ef8a21e2d7f2e93ef8743c8e92dd858e80c10b5f0db1acfdce11f1",
+        "sourceDomainHint": "solactive.com",
+        "rawCitationStored": false
+      },
+      {
+        "sourceFamily": "oil_news_claim_ledger",
+        "sourceStatus": "display_only",
+        "direction": "tightening",
+        "confirmationType": "news_claim_proxy",
+        "sourceCitationHash": "d1f7d5b395f31a71732f81f9e7a6c67de6e3430ef3c71ae0e89d50c97fb97c11",
+        "sourceDomainHint": "example.com",
+        "rawCitationStored": false
+      }
+    ],
+    "rawCitationStored": false,
+    "blockers": [],
+    "warnings": [
+      "artifact_only_sample_review",
+      "future_replay_dataset_only"
+    ]
+  },
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "modifiesWorkerRuntime": false,
+    "modifiesWorkflow": false,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionDataRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreWrite": true,
+    "noReplayExecution": true,
+    "noHistoricalBacktestPerformed": true,
+    "rawCitationStored": false,
+    "affectsScoring": false,
+    "affectsMainJudgment": false
+  },
+  "boundary": "manual/local Transport Shock free-proxy historical replay sample scaffold only; writes ignored manual-artifacts only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
+  "limitationZh": "本审查只验证单条人工历史回放样本形状,不执行历史回放,不生成分数,不写生产数据,不进入今日总判断打分。"
+}
