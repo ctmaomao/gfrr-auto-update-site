@@ -4,9 +4,9 @@
   "generatedAt": "2026-06-30T04:47:18.288Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
-  "status": "ok",
-  "sourceStatus": "live",
-  "requestMode": "live_broad_query",
+  "status": "stale",
+  "sourceStatus": "stale",
+  "requestMode": "stale_cache_after_fetch_error",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 360,
@@ -453,7 +453,7 @@
       ]
     }
   ],
-  "error": null,
+  "error": "GDELT DOC broad oil-news cache fetch failed after 1 attempt(s)",
   "promotionEligible": false,
   "productionDisplayApproved": false,
   "productionImpact": {
