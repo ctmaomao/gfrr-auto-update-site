@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-06-30T15:14:13.304Z",
+  "generatedAt": "2026-06-30T18:20:17.376Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-06-30T10:00:00.000Z",
-    "latestArticleAgeHours": 5.2,
+    "latestArticleAgeHours": 8.3,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 96,
-    "uniqueArticleCount": 93,
+    "uniqueArticleCount": 90,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 60,
+      "articleCount": 56,
       "sourceCount": 3,
-      "weightedSignal": 540,
+      "weightedSignal": 504,
       "topArticles": [
         {
           "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
@@ -238,6 +238,25 @@
       "weightedSignal": 72,
       "topArticles": [
         {
+          "title": "Fears in Strait of Hormuz as tanker struck after Iran warned ships to turn back - New York Post",
+          "url": "https://nypost.com/2026/06/25/world-news/fears-in-strait-of-hormuz-as-tanker-struck-after-iran-warned-ships-to-turn-back/",
+          "domain": "nypost.com",
+          "publishedAt": "2026-06-25T16:31:08.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "middle_east_risk",
+            "sanctions",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
+          ]
+        },
+        {
           "title": "France Seizes ‘Shadow Fleet’ Tanker, Stepping Up Pressure on Russia - Insurance Journal",
           "url": "https://www.insurancejournal.com/news/international/2026/06/26/875257.htm",
           "domain": "insurancejournal.com",
@@ -259,23 +278,6 @@
           "url": "https://www.marinelink.com/news/french-navy-seizes-tanker-linked-russian-540663",
           "domain": "marinelink.com",
           "publishedAt": "2026-06-25T12:07:33.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "sanctions",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "sanctions_shadow_fleet"
-          ]
-        },
-        {
-          "title": "French commandos seize Putin’s ‘shadow fleet’ tanker off Sicily | Watch - Ynetnews",
-          "url": "https://www.ynetnews.com/article/bkajtj5zgx",
-          "domain": "ynetnews.com",
-          "publishedAt": "2026-06-25T13:38:05.000Z",
           "sources": [
             "tavily"
           ],
@@ -351,9 +353,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 33,
+      "articleCount": 31,
       "sourceCount": 3,
-      "weightedSignal": 198,
+      "weightedSignal": 186,
       "topArticles": [
         {
           "title": "Oil Falls Back to Pre - War Levels as Hormuz Shipping Rebounds",
@@ -411,9 +413,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 46,
+      "articleCount": 43,
       "sourceCount": 3,
-      "weightedSignal": 207,
+      "weightedSignal": 193.5,
       "topArticles": [
         {
           "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
@@ -472,9 +474,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 55,
+      "articleCount": 51,
       "sourceCount": 3,
-      "weightedSignal": 247.5,
+      "weightedSignal": 229.5,
       "topArticles": [
         {
           "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
@@ -650,6 +652,27 @@
       ]
     },
     {
+      "title": "Hormuz Tanker Traffic Recovers as Tensions Ease | OilPrice.com",
+      "url": "https://oilprice.com/Latest-Energy-News/World-News/Hormuz-Tanker-Traffic-Recovers-as-Tensions-Ease.html",
+      "domain": "oilprice.com",
+      "publishedAt": "2026-06-30T10:00:00.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping",
+        "facility_supply_disruption"
+      ]
+    },
+    {
       "title": "U.S. Indicates a Deal to Suspend Attacks in Strait but Iran Hasn’t Confirmed - The New York Times",
       "url": "https://nytimes.com/live/2026/06/28/world/us-iran-strikes-hormuz",
       "domain": "nytimes.com",
@@ -747,6 +770,26 @@
       ]
     },
     {
+      "title": "Hormuz traffic drops after fresh vessel attacks fuel security concerns | The Express Tribune",
+      "url": "https://tribune.com.pk/story/2615557/hormuz-traffic-drops-after-fresh-vessel-attacks-fuel-security-concerns",
+      "domain": "tribune.com.pk",
+      "publishedAt": "2026-06-29T09:08:08.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping",
+        "facility_supply_disruption"
+      ]
+    },
+    {
       "title": "Russia Adds New Vessel To Dark Fleet Amid Arctic 2 LNG Ramp Up | OilPrice.com",
       "url": "https://oilprice.com/Latest-Energy-News/World-News/Russia-Adds-New-Vessel-To-Dark-Fleet-Amid-Arctic-2-LNG-Ramp-Up.html",
       "domain": "oilprice.com",
@@ -785,45 +828,6 @@
       "queryIds": [
         "sanctions_shadow_fleet"
       ]
-    },
-    {
-      "title": "Oil prices rise as renewed US-Iran strikes disrupt shipping in Hormuz | Commodity News - Business Standard",
-      "url": "https://business-standard.com/markets/commodities/oil-prices-rise-as-renewed-us-iran-strikes-disrupt-shipping-in-hormuz-126062900036_1.html",
-      "domain": "business-standard.com",
-      "publishedAt": "2026-06-29T02:27:26.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "sanctions",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "sanctions_shadow_fleet"
-      ]
-    },
-    {
-      "title": "Hormuz Tanker Traffic Recovers as Tensions Ease | OilPrice.com",
-      "url": "https://oilprice.com/Latest-Energy-News/World-News/Hormuz-Tanker-Traffic-Recovers-as-Tensions-Ease.html",
-      "domain": "oilprice.com",
-      "publishedAt": "2026-06-30T10:00:00.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
     }
   ],
   "titleRisk": {
@@ -832,16 +836,14 @@
     "highClaimTitleCount": 4,
     "highClaimDomainCount": 4,
     "highClaimDomains": [
-      "business-standard.com",
       "icis.com",
       "marinelink.com",
-      "nytimes.com"
+      "nytimes.com",
+      "tribune.com.pk"
     ],
     "highClaimTerms": [
       "attack",
-      "attacks",
-      "disrupt",
-      "strikes"
+      "attacks"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
@@ -860,8 +862,8 @@
       "risk_escalation": 3,
       "risk_deescalation": 1,
       "mixed_or_contested": 1,
-      "market_reaction_only": 5,
-      "unclear_or_high_claim": 2
+      "market_reaction_only": 6,
+      "unclear_or_high_claim": 1
     },
     "eventTypeCounts": {
       "chokepoint": 8,
