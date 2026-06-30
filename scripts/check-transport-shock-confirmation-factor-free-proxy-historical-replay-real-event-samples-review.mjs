@@ -1,0 +1,194 @@
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const ROOT = process.cwd();
+const REVIEW_SCRIPT = 'scripts/review-transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples.mjs';
+const INTAKE_FIXTURE = 'docs/fixtures/transport-shock-confirmation-factor/free-proxy-historical-replay-real-event-sample-intake-known-disruption-pass.json';
+
+const RUNTIME_FILES = [
+  'index.html',
+  'scripts/app.js',
+  'scripts/modules/renderOilDirectional.js',
+  'scripts/modules/renderMacroOverview.js',
+  'scripts/modules/buildCrossValidationMatrix.js',
+  'scripts/run-daily-pipeline.mjs',
+  'workers/gfrr-realtime-worker/src/worker-market-preview.js',
+  'data/radar-data.json',
+  'data/oil-directional-pressure.json'
+];
+
+const SCRIPT_FORBIDDEN_MARKERS = [
+  'process.env',
+  'fetch(',
+  'https.request',
+  'http.request',
+  'axios',
+  'node:https',
+  'node:http',
+  'data/radar-data.json',
+  'data/oil-directional-pressure.json',
+  'market.worker-preview.json',
+  'bubble-watch'
+];
+
+const RUNTIME_FORBIDDEN_MARKERS = [
+  'transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples-review-v1',
+  'review-transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples',
+  'real_event_sample_set_review_ready_keep_no_score_write'
+];
+
+function absolute(relativePath) {
+  return path.join(ROOT, relativePath);
+}
+
+function readText(relativePath) {
+  return fs.readFileSync(absolute(relativePath), 'utf8');
+}
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function runNode(args) {
+  const result = spawnSync(process.execPath, args, {
+    cwd: ROOT,
+    encoding: 'utf8',
+    maxBuffer: 10 * 1024 * 1024
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(`node ${args.join(' ')} failed: ${result.stderr || result.stdout}`);
+  return String(result.stdout || '');
+}
+
+function assertReviewScriptSafety() {
+  assert(fs.existsSync(absolute(REVIEW_SCRIPT)), 'Real-event samples review script is missing.');
+  const source = readText(REVIEW_SCRIPT);
+  for (const marker of SCRIPT_FORBIDDEN_MARKERS) {
+    assert(!source.includes(marker), `Real-event samples review script contains forbidden marker: ${marker}`);
+  }
+  for (const marker of [
+    'manual/local Transport Shock free-proxy historical replay real-event sample-set aggregation/readiness review only',
+    'real_event_sample_set_review_ready_keep_no_score_write',
+    'scoreReadinessApproved',
+    'productionHistoricalReplayPerformed',
+    'historicalBacktestPerformed',
+    'scoreWriteApproved',
+    'eligibleForMainScore',
+    'rawCitationStored'
+  ]) {
+    assert(source.includes(marker), `Real-event samples review script missing required marker: ${marker}`);
+  }
+}
+
+function assertFixture() {
+  assert(fs.existsSync(absolute(INTAKE_FIXTURE)), 'Real-event intake fixture is missing.');
+  const fixture = JSON.parse(readText(INTAKE_FIXTURE));
+  assert(fixture.schemaVersion === 'transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-sample-intake-v1', 'Intake fixture schemaVersion mismatch.');
+  assert(fixture.status === 'real_event_sample_intake_ready_keep_no_score_write', 'Intake fixture must be ready/no-score-write.');
+  assert(fixture.sampleReview.status === 'sample_review_ready_keep_no_score_write', 'Intake fixture sampleReview status mismatch.');
+  assert(fixture.sampleReview.realEventCandidate === true, 'Intake fixture sampleReview must be real-event candidate.');
+  assert(fixture.sampleReview.scoreWriteApproved === false, 'Intake fixture must not approve score write.');
+  assert(fixture.sampleReview.productionWriteApproved === false, 'Intake fixture must not approve production write.');
+  assert(fixture.sampleReview.eligibleForMainScore === false, 'Intake fixture must not be eligible for main score.');
+  assert(fixture.sampleReview.review.rawCitationStored === false, 'Intake fixture must not store raw citation.');
+  assert(fixture.sampleReview.review.compactEvidence.every((row) => row.rawCitationStored === false), 'Compact evidence must not store raw citation.');
+  assert(!JSON.stringify(fixture.sampleReview).includes('https://'), 'Sample review fixture must not include raw URLs.');
+}
+
+function assertReviewOutput() {
+  const review = JSON.parse(runNode([
+    REVIEW_SCRIPT,
+    '--input',
+    INTAKE_FIXTURE,
+    '--min-samples',
+    '1',
+    '--min-known-disruption-samples',
+    '1',
+    '--min-zero-control-samples',
+    '0',
+    '--no-output',
+    '--json'
+  ]));
+  assert(review.schemaVersion === 'transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples-review-v1', 'Unexpected review schemaVersion.');
+  assert(review.contractVersion === 'transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-sample-set-review-v1', 'Unexpected review contractVersion.');
+  assert(review.status === 'real_event_sample_set_review_ready_keep_no_score_write', 'Expected real-event sample-set review ready.');
+  assert(review.recommendation === 'continue_collecting_real_event_samples_before_score_readiness_keep_no_score_write', 'Unexpected recommendation.');
+  assert(review.sampleCount === 1, 'Expected one sample.');
+  assert(review.usableSampleCount === 1, 'Expected one usable sample.');
+  assert(review.realEventCandidateCount === 1, 'Expected one real-event candidate.');
+  assert(review.knownDisruptionSampleCount === 1, 'Expected one known-disruption sample.');
+  assert(review.zeroControlSampleCount === 0, 'Expected zero zero-control real-event samples in starter fixture.');
+  assert(review.knownDisruptionDirectionalHitRate === 1, 'Known-disruption directional hit rate should be 1.');
+  assert(review.falsePositiveRate === null, 'False-positive rate should be null without zero controls.');
+  assert(review.familyCoverage.known_disruption_tightening === 1, 'Known-disruption family coverage missing.');
+  assert(review.scoreReadinessApproved === false, 'Review must not approve score readiness.');
+  assert(review.scoreWriteApproved === false, 'Review must not approve score write.');
+  assert(review.productionWriteApproved === false, 'Review must not approve production write.');
+  assert(review.eligibleForMainScore === false, 'Review must not be eligible for main score.');
+  assert(review.productionHistoricalReplayPerformed === false, 'Review must not claim production historical replay.');
+  assert(review.historicalBacktestPerformed === false, 'Review must not claim historical backtest.');
+  assert(review.productionImpact.affectsScoring === false, 'Review must not affect scoring.');
+  assert(review.productionImpact.affectsMainJudgment === false, 'Review must not affect main judgment.');
+  assert(review.boundaries.noNetworkCall === true, 'Review must lock noNetworkCall.');
+  assert(review.boundaries.noProductionWrite === true, 'Review must lock noProductionWrite.');
+  assert(review.boundaries.noScoreWrite === true, 'Review must lock noScoreWrite.');
+  assert(review.boundaries.noProductionReplayExecution === true, 'Review must lock noProductionReplayExecution.');
+  assert(!JSON.stringify(review).includes('https://'), 'Review output must not include raw URLs.');
+}
+
+function assertEmptyReviewIsNonFatalWhenAllowed() {
+  const review = JSON.parse(runNode([
+    REVIEW_SCRIPT,
+    '--input-dir',
+    'manual-artifacts/transport-shock-confirmation-factor/nonexistent-real-event-samples',
+    '--allow-empty',
+    '--no-output',
+    '--json'
+  ]));
+  assert(review.status === 'empty', 'Empty allowed review should return empty.');
+  assert(review.scoreWriteApproved === false, 'Empty review must not approve score write.');
+  assert(review.productionWriteApproved === false, 'Empty review must not approve production write.');
+}
+
+function assertRuntimeRemainsUnwired() {
+  for (const relativePath of RUNTIME_FILES) {
+    assert(fs.existsSync(absolute(relativePath)), `${relativePath} is missing.`);
+    const source = readText(relativePath);
+    for (const marker of RUNTIME_FORBIDDEN_MARKERS) {
+      assert(!source.includes(marker), `${relativePath} contains real-event samples review marker and may have been wired too early: ${marker}`);
+    }
+  }
+}
+
+function assertAuthorityDocs() {
+  const signalIntake = readText('docs/SIGNAL_INTAKE.md');
+  const backlog = readText('docs/PROJECT_BACKLOG.md');
+  const agents = readText('AGENTS.md');
+  const packageJson = JSON.parse(readText('package.json'));
+  const checkSuite = readText('scripts/check-suite.mjs');
+  for (const marker of [
+    'transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples-review-v1',
+    'real_event_sample_set_review_ready_keep_no_score_write',
+    'historicalBacktestPerformed=false'
+  ]) {
+    assert(signalIntake.includes(marker), `SIGNAL_INTAKE missing marker: ${marker}`);
+  }
+  assert(backlog.includes('Transport Shock Confirmation Factor free-proxy historical replay real-event sample-set review'), 'PROJECT_BACKLOG missing real-event sample-set review marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor free-proxy historical replay real-event sample-set review'), 'AGENTS.md missing real-event sample-set review boundary.');
+  assert(packageJson.scripts['review:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples'], 'package.json missing real-event samples review script.');
+  assert(packageJson.scripts['check:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples-review'], 'package.json missing real-event samples review checker.');
+  assert(checkSuite.includes('check:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples-review'), 'check-suite missing real-event samples review checker.');
+}
+
+function main() {
+  assertReviewScriptSafety();
+  assertFixture();
+  assertReviewOutput();
+  assertEmptyReviewIsNonFatalWhenAllowed();
+  assertRuntimeRemainsUnwired();
+  assertAuthorityDocs();
+  console.log('Transport Shock Confirmation Factor free-proxy historical replay real-event samples review: PASS');
+}
+
+main();

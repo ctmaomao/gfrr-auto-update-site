@@ -134,6 +134,7 @@ const SUITES = {
     'check:transport-shock-confirmation-factor-free-proxy-historical-replay-runner-review',
     'check:transport-shock-confirmation-factor-free-proxy-historical-replay-sample-expansion',
     'check:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-sample-intake',
+    'check:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples-review',
     'check:oil-news-events-diagnosis',
     'check:oil-news-event-watch',
     'check:oil-news-event-watch-samples-review',

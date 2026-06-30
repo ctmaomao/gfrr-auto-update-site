@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-sample-intake-v1",
+  "contractVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-sample-intake-manual-archive-v1",
+  "status": "real_event_sample_intake_ready_keep_no_score_write",
+  "recommendation": "archive_sanitized_review_under_manual_artifacts_keep_no_score_write",
+  "generatedAt": "2026-06-30T09:12:00.000Z",
+  "dryRun": true,
+  "inputPath": "docs/fixtures/transport-shock-confirmation-factor/free-proxy-historical-replay-real-event-sample-intake-known-disruption.json",
+  "output": {
+    "outputDir": "manual-artifacts/transport-shock-confirmation-factor/free-proxy-historical-replay-real-event-samples",
+    "reviewPath": "manual-artifacts/transport-shock-confirmation-factor/free-proxy-historical-replay-real-event-samples/fixture-real-event-candidate-known-disruption-2024-01-f03348bd770d.review.json",
+    "sidecarPath": "manual-artifacts/transport-shock-confirmation-factor/free-proxy-historical-replay-real-event-samples/fixture-real-event-candidate-known-disruption-2024-01-f03348bd770d.archive-meta.json",
+    "writeAttempted": false
+  },
+  "sampleReview": {
+    "schemaVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-sample-review-v1",
+    "contractVersion": "transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-sample-intake-manual-archive-v1",
+    "status": "sample_review_ready_keep_no_score_write",
+    "recommendation": "archive_sanitized_real_event_sample_for_future_artifact_only_replay_dataset",
+    "generatedAt": "2026-06-30T09:12:00.000Z",
+    "inputPath": "docs/fixtures/transport-shock-confirmation-factor/free-proxy-historical-replay-real-event-sample-intake-known-disruption.json",
+    "sampleId": "fixture-real-event-candidate-known-disruption-2024-01",
+    "familyKey": "known_disruption_tightening",
+    "sampleWindow": {
+      "startDate": "2024-01-10",
+      "endDate": "2024-01-17"
+    },
+    "expectedContributionPct": 2,
+    "observedCandidateContributionPct": 2,
+    "confirmations": {
+      "portWatchFresh": true,
+      "nonNewsPhysicalConfirmation": true,
+      "marketConfirmationReview": true,
+      "thermalOrEiaAnchor": false
+    },
+    "acceptedForFutureReplayDataset": true,
+    "realEventCandidate": true,
+    "historicalReplayRunnerImplemented": true,
+    "productionHistoricalReplayPerformed": false,
+    "historicalBacktestPerformed": false,
+    "scoreIntegrationApproved": false,
+    "scoreWriteApproved": false,
+    "productionWriteApproved": false,
+    "productionDisplayApproved": false,
+    "frontendDisplayApproved": false,
+    "mainScoreApproved": false,
+    "eligibleForMainScore": false,
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "review": {
+      "evidenceCount": 3,
+      "compactEvidence": [
+        {
+          "sourceFamily": "portwatch_chokepoint_proxy",
+          "sourceStatus": "manual_reference",
+          "direction": "tightening",
+          "confirmationType": "physical_proxy",
+          "sourceCitationHash": "b6c80e028613579194b4f28d969ef3d0f9eeabcc6d8ec417bbdd60b2064bd6dd",
+          "sourceDomainHint": "portwatch.imf.org",
+          "rawCitationStored": false
+        },
+        {
+          "sourceFamily": "wet_freight_futures_proxy",
+          "sourceStatus": "manual_reference",
+          "direction": "tightening",
+          "confirmationType": "market_proxy",
+          "sourceCitationHash": "7d1564769734d82861fcb86ea56dd0c6106b50a47c89d5c72b88f4dd5753cc34",
+          "sourceDomainHint": "solactive.com",
+          "rawCitationStored": false
+        },
+        {
+          "sourceFamily": "oil_news_claim_ledger",
+          "sourceStatus": "manual_reference",
+          "direction": "tightening",
+          "confirmationType": "news_claim_proxy",
+          "sourceCitationHash": "62ae6e4b83cedd0bf004b0ef9187140435ee9558ae891cf975dc7b7cbccd5d22",
+          "sourceDomainHint": "example.com",
+          "rawCitationStored": false
+        }
+      ],
+      "rawCitationStored": false,
+      "blockers": [],
+      "warnings": [
+        "manual_real_event_intake_only",
+        "future_replay_dataset_only"
+      ]
+    },
+    "boundaries": {
+      "outputOnlyToManualArtifacts": true,
+      "noNetworkCall": true,
+      "noEnvironmentRead": true,
+      "noProductionDataRead": true,
+      "noProductionWrite": true,
+      "noRealtimeWrite": true,
+      "noWorkflowChange": true,
+      "noFrontendChange": true,
+      "noWorkerRuntimeChange": true,
+      "noScoreWrite": true,
+      "noReplayExecution": true,
+      "noProductionReplayExecution": true,
+      "noHistoricalBacktestPerformed": true,
+      "rawCitationStored": false,
+      "affectsScoring": false,
+      "affectsMainJudgment": false
+    }
+  },
+  "blockerCount": 0,
+  "warningCount": 2,
+  "blockers": [],
+  "warnings": [
+    "manual_real_event_intake_only",
+    "raw_citations_sanitized_to_hash_domain_hint"
+  ],
+  "productionHistoricalReplayPerformed": false,
+  "historicalBacktestPerformed": false,
+  "scoreIntegrationApproved": false,
+  "scoreWriteApproved": false,
+  "productionWriteApproved": false,
+  "productionDisplayApproved": false,
+  "frontendDisplayApproved": false,
+  "mainScoreApproved": false,
+  "eligibleForMainScore": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionDataRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreWrite": true,
+    "noReplayExecution": true,
+    "noProductionReplayExecution": true,
+    "noHistoricalBacktestPerformed": true,
+    "rawCitationStored": false,
+    "affectsScoring": false,
+    "affectsMainJudgment": false
+  },
+  "boundary": "manual/local Transport Shock free-proxy historical replay real-event sample intake/archive helper only; writes ignored manual-artifacts only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}
