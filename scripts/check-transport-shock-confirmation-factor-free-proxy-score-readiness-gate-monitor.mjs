@@ -6,6 +6,7 @@ const ROOT = process.cwd();
 const MONITOR_SCRIPT = 'scripts/monitor-transport-shock-confirmation-factor-free-proxy-score-readiness-gate.mjs';
 const GATE_SCRIPT = 'scripts/review-transport-shock-confirmation-factor-free-proxy-score-readiness-gate.mjs';
 const REVIEW_FIXTURE = 'docs/fixtures/transport-shock-confirmation-factor/free-proxy-historical-replay-real-event-samples-review-ready.json';
+const WORKFLOW = '.github/workflows/transport-shock-free-proxy-score-readiness-gate-monitor.yml';
 
 const RUNTIME_FILES = [
   'index.html',
@@ -134,6 +135,34 @@ function assertRuntimeUnwired() {
   }
 }
 
+function assertWorkflow() {
+  assert(fs.existsSync(absolute(WORKFLOW)), 'Free-proxy score-readiness gate monitor workflow is missing.');
+  const workflow = readText(WORKFLOW);
+  for (const marker of [
+    'Transport Shock Free-Proxy Score-Readiness Gate Monitor',
+    'workflow_dispatch',
+    "cron: '39 23 * * *'",
+    'permissions:',
+    'contents: read',
+    'npm run review:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples -- --allow-empty',
+    'npm run monitor:transport-shock-confirmation-factor-free-proxy-score-readiness-gate',
+    'manual-artifacts/transport-shock-confirmation-factor/free-proxy-score-readiness-gate-monitor-latest.json',
+    'actions/upload-artifact@v7'
+  ]) {
+    assert(workflow.includes(marker), `Workflow missing marker: ${marker}`);
+  }
+  for (const forbidden of [
+    'secrets.',
+    'git push',
+    'git commit',
+    'npm run build:daily',
+    'repository_dispatch',
+    'workflow_run'
+  ]) {
+    assert(!workflow.includes(forbidden), `Workflow contains forbidden marker: ${forbidden}`);
+  }
+}
+
 function assertAuthorityDocs() {
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
   const backlog = readText('docs/PROJECT_BACKLOG.md');
@@ -159,6 +188,7 @@ function main() {
   assertMonitorScriptSafety();
   assertMonitorOutput();
   assertRuntimeUnwired();
+  assertWorkflow();
   assertAuthorityDocs();
   console.log('Transport Shock Confirmation Factor free-proxy score-readiness gate monitor: PASS');
 }
