@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=frontend-failclosed-fallback-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=frontend-failclosed-fallback-1';
-import { MODULE_LABELS } from './decision.js?v=frontend-failclosed-fallback-1';
+} from './config.js?v=transport-shock-caveat-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=transport-shock-caveat-1';
+import { MODULE_LABELS } from './decision.js?v=transport-shock-caveat-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,8 +18,8 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=frontend-failclosed-fallback-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=frontend-failclosed-fallback-1';
+} from './macroOverviewDisplayHelpers.js?v=transport-shock-caveat-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=transport-shock-caveat-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2374,6 +2374,7 @@ function renderTransportShockConfirmation({ radarData }) {
   try {
     const layer = radarData?.macroDrivers?.energyTransport;
     const candidate = layer?.transportShockCandidate;
+    const latestAgeDays = asNumber(layer?.latestAgeDays);
     const reaction = setObservationReaction(
       'c1-transport-shock-status',
       'c1-transport-shock-badge',
@@ -2408,13 +2409,29 @@ function renderTransportShockConfirmation({ radarData }) {
     const hormuzText = hormuzPct !== null ? `${signedFixed(hormuzPct * 100, 1)}% vs 30d` : '—';
     setLeafText('c1-transport-shock-hormuz', hormuzText);
 
+    const sampleQuality = !candidate
+      ? '候选字段待刷新'
+      : candidate.confidence === 'low'
+        ? '低置信观察 · 待路线/市场确认'
+        : '样本审阅中 · 不入分';
+    setLeafText('c1-transport-shock-sample-quality', sampleQuality);
+
+    const freshnessText = latestAgeDays !== null
+      ? `PortWatch ${latestAgeDays.toFixed(0)}天龄${latestAgeDays > 7 ? ' · 偏滞后' : ''}`
+      : 'PortWatch 数据龄待确认';
+    setLeafText('c1-transport-shock-freshness', freshnessText);
+
     const statusText = candidate?.status ? `状态 ${candidate.status}` : '候选字段待刷新';
     const sourceStatus = layer?.sourceStatus?.chokepoints ? `PortWatch ${layer.sourceStatus.chokepoints}` : 'PortWatch 待确认';
-    setLeafText('c1-transport-shock-aux', reactionText(reaction, `${statusText} · 路线 ${routeGate} · 市场 ${marketGate} · ${sourceStatus}`));
+    const ageSuffix = latestAgeDays !== null ? ` · ${latestAgeDays.toFixed(0)}天龄` : '';
+    setLeafText('c1-transport-shock-aux', reactionText(reaction, `${statusText} · 路线 ${routeGate} · 市场 ${marketGate} · ${sourceStatus}${ageSuffix}`));
     const firstReason = Array.isArray(candidate?.reasons) && candidate.reasons.length
       ? candidate.reasons[0]
       : '运输冲击确认因子仍在展示观察阶段;路线级油轮运费与市场确认未接入前,不进入主判断打分。';
-    setLeafText('c1-transport-shock-note', firstReason);
+    const ageCaveat = latestAgeDays !== null && latestAgeDays > 7
+      ? ' PortWatch 底层日期超过7天,只作滞后代理观察。'
+      : '';
+    setLeafText('c1-transport-shock-note', `${firstReason}${ageCaveat}`);
   } catch (error) {
     console.error('[renderMacroOverview] renderTransportShockConfirmation failed:', error);
   }

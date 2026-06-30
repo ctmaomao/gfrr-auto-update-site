@@ -442,6 +442,8 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 
 `transport-shock-confirmation-factor-history-samples-review-v1` 是 P-score-11 local/manual history sample review 契约。`review:transport-shock-confirmation-factor-history-samples` 只读 P-score-10 ignored archive samples 或 fixtures,忽略 `.archive-meta.json` sidecar,聚合 sample window、latestDate/latestAgeDays、sourceStatus、candidate status/score/confidence,并输出 ignored `manual-artifacts/transport-shock-confirmation-factor/history-samples-review-latest.json`。即使输出 `history_samples_review_ready_keep_display_only`,也只表示 git-history candidate 样本足够进入 display-only 稳定性审阅;不批准 production write、frontend display、shadow score、route freight confirmation、market confirmation、ODP `finalBias`、今日总判断打分、Brent promotion、Global Risk Heatmap 或 cross-validation。
 
+`transport-shock-confirmation-factor-frontend-caveat-v1` 是 P-score-12 frontend display-only refinement 契约。现有 C1 `Transport Shock / 运输冲击确认因子` 卡可展示 `样本质量` 与 `数据龄` 两个 caveat,但只能由 production payload 的 `macroDrivers.energyTransport.latestAgeDays/sourceStatus` 与 `transportShockCandidate.confidence/routeFreightConfirmation/marketConfirmation` 派生。前端不得读取 `manual-artifacts/transport-shock-confirmation-factor/history-samples-review-latest.json`、不得把 P-score-11 review artifact 当作 production data、不得生成 route freight confirmation 或 market confirmation,不得改变 ODP `finalBias`、今日总判断打分、Brent promotion、Global Risk Heatmap 或 cross-validation。
+
 | `macroDrivers.policyExpectations` | FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; CheckMySwap:USD-OIS-public-curve; FederalReserve:FOMC statement/SEP/minutes | `targetLower`, `targetUpper`, `targetMid`, `effectiveFedFundsRate`, `fedFundsFutureImpliedRate`, `fedFundsFuturesCurve`, `sofrFuturesCurve`, `oisForwardCurve`, `dotPlotMedianCurrentYear`, `statementUrl`, `policyTone`, `minutesUrl`, `minutesPolicyTone`, `minutesTopicCounts`, `policyExpectationRegime`, `oisForwardStatus` | Fed dot plot 使用 federalreserve.gov SEP accessible table 的 federal funds median；ZQ=F 与 ZQ monthly futures 是 Fed funds futures proxy；SR3 monthly SOFR futures 是担保融资利率曲线 proxy；CheckMySwap USD OIS public curve 来自 DTCC/CFTC public swap data；`fomcminutesYYYYMMDD.htm` 只做 keyword NLP 计数 |
 | `macroDrivers.privateCreditProxy` | Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; Yahoo:CCLFX; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public | `bdcEtfPrice`, `bdcEtf4wChange`, `pbdcEtfPrice`, `pbdcEtf4wChange`, `seniorLoanEtfPrice`, `seniorLoanEtf4wChange`, `intervalFundNavPrice`, `intervalFundNav4wChange`, `intervalFundNavUpdatedAt`, `intervalFundNavSymbol`, `intervalFundNavStatus`, `hyOas`, `igOas`, `igMinusHyOas`, `cdxHyPrice`, `cdxHyInstrument`, `cdxHyUpdatedAt`, `cdxIgPrice`, `cdxIgInstrument`, `cdxIgUpdatedAt`, `cdxHyStatus`, `cdxIgStatus`, `privateCreditMarksStatus`, `privateCreditProxyRegime`, `sourceStatus` | BIZD/PBDC 是 listed BDC public proxy；SRLN 是 senior loan ETF proxy；CCLFX 是 public interval-fund NAV proxy；HY/IG OAS 是 cash-bond spread proxy；ICE CDX 是 public EOD settlement price；private credit marks 仍只保留 manual/licensed input 状态 |
 | `macroDrivers.worldEconomy` | Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11; Yahoo:^AXJO; Yahoo:^STI; Yahoo:^TWII; Yahoo:^NSEI; Yahoo:^BVSP | `stoxx50`, `nikkei225`, `dax`, `ftse100`, `cac40`, `stoxx600`, `kospi`, `asx200`, `sti`, `taiex`, `nifty50`, `bovespa`, per-index `price`, `changePct`, `changeWindow`, `updatedAt`, `sourceStatus`, parent `sourceStatus`, `updatedAt`, `source`, `notes` | STOXX 50 / Nikkei 225 / DAX / FTSE 100 / CAC 40 / STOXX 600 / KOSPI / ASX 200 / STI / TAIEX / Nifty 50 / Bovespa 是 C5 世界经济 display-only 公开指数代理；`changePct` 为 5d window decimal ratio；Nifty 数据完整度略低(Yahoo 偶缺 bar,resolver 已过滤非正/非 finite 点);V2X 留 pending，本层不接入 scoring / decision / execution / position |
@@ -927,7 +929,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `frontend-failclosed-fallback-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `transport-shock-caveat-1`）。
 
 稳定边界：
 
@@ -1164,26 +1166,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-frontend-failclosed-fallback-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 #9 frontend safe DOM rendering patch：移除 active frontend runtime 中的动态 `innerHTML` 写入，并继续通过 cache busting 避免浏览器沿用旧 module graph。
+transport-shock-caveat-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 #9 frontend safe DOM rendering patch：移除 active frontend runtime 中的动态 `innerHTML` 写入，并继续通过 cache busting 避免浏览器沿用旧 module graph。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `frontend-failclosed-fallback-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `transport-shock-caveat-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=frontend-failclosed-fallback-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=frontend-failclosed-fallback-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `frontend-failclosed-fallback-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=transport-shock-caveat-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=transport-shock-caveat-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `transport-shock-caveat-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs frontend-failclosed-fallback-1
-npm run bump:frontend-asset-version -- frontend-failclosed-fallback-1
+node scripts/bump-frontend-asset-version.mjs transport-shock-caveat-1
+npm run bump:frontend-asset-version -- transport-shock-caveat-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `frontend-failclosed-fallback-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `transport-shock-caveat-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

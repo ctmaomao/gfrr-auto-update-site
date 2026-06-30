@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=frontend-failclosed-fallback-1';
+﻿import { fmtNumSafe } from './config.js?v=transport-shock-caveat-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

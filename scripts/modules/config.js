@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=frontend-failclosed-fallback-1';
+﻿import { formatFiniteNumber } from './format.js?v=transport-shock-caveat-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

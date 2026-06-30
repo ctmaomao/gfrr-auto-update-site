@@ -561,6 +561,8 @@ Transport Shock Confirmation Factor history sample archive(P-score-10) adds a lo
 
 Transport Shock Confirmation Factor history sample review(P-score-11) adds a local/manual quality review for the P-score-10 git-history archive. `review:transport-shock-confirmation-factor-history-samples` reads only ignored `manual-artifacts/transport-shock-confirmation-factor/history-samples/` or fixtures, ignores sidecar archive metadata, validates `transport-shock-confirmation-factor-history-sample-1` samples and emits `transport-shock-confirmation-factor-history-samples-review-v1` to ignored `manual-artifacts/transport-shock-confirmation-factor/history-samples-review-latest.json`. A `history_samples_review_ready_keep_display_only` result only means enough candidate history samples exist for display-only review; it is not production data write approval, not source-rights approval, not route/market confirmation, and not main judgment scoring eligibility.
 
+Transport Shock Confirmation Factor frontend caveat refinement(P-score-12) extends the existing C1 card with sample-quality and data-age caveats. The renderer still reads only production `radarData.macroDrivers.energyTransport` and `transportShockCandidate`; it does not read P-score-10/P-score-11 ignored artifacts. Sample-quality copy is derived from candidate confidence and route/market confirmation gates, while data-age copy is derived from `energyTransport.latestAgeDays`. It remains display-only and does not create route freight confirmation, market confirmation, source-rights approval, production write approval, or main judgment scoring eligibility.
+
 ---
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)

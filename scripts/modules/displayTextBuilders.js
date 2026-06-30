@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=frontend-failclosed-fallback-1';
+﻿import { fmtNumSafe } from './config.js?v=transport-shock-caveat-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
