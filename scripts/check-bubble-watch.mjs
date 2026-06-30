@@ -303,39 +303,41 @@ if (vcAiShare?.provenance?.mode === 'auto' && /Crunchbase News WordPress API/iu.
 const mag4Fcf = indicatorById.mag4_fcf_yoy;
 if (mag4Fcf?.provenance?.mode === 'auto') {
   const detail = mag4Fcf.provenance.detail || {};
-  check('contract', detail.formula === 'realized_ttm_aggregate_operating_cash_flow_plus_capex',
-    'mag4_fcf_yoy 必须声明 realized TTM aggregate OCF+Capex 公式');
-  check('contract', Array.isArray(detail.perCompany) && detail.perCompany.length === 4,
-    `mag4_fcf_yoy 必须四家公司齐全,当前 ${detail.perCompany?.length || 0}/4`);
-  const expectedMag4 = ['AMZN', 'MSFT', 'GOOGL', 'META'];
+  check('contract', detail.formula === 'big5_realized_ttm_cash_capex_to_operating_cash_flow',
+    'mag4_fcf_yoy 必须声明 Big5 realized TTM cash capex/OCF 公式');
+  check('contract', detail.adoptedModel === 'epoch_apollo_big5_cash_capex_to_ocf_coverage',
+    'mag4_fcf_yoy 必须标注采用 Epoch/Apollo 式 Big5 capex/OCF 覆盖率模型');
+  check('contract', Array.isArray(detail.perCompany) && detail.perCompany.length === 5,
+    `mag4_fcf_yoy 必须五家公司齐全,当前 ${detail.perCompany?.length || 0}/5`);
+  const expectedMag4 = ['AMZN', 'MSFT', 'GOOGL', 'META', 'ORCL'];
   const usedMag4 = new Set((detail.perCompany || []).map((row) => row.ticker));
   check('contract', expectedMag4.every((ticker) => usedMag4.has(ticker)) && usedMag4.size === expectedMag4.length,
-    'mag4_fcf_yoy perCompany 必须正好覆盖 AMZN/MSFT/GOOGL/META');
+    'mag4_fcf_yoy perCompany 必须正好覆盖 AMZN/MSFT/GOOGL/META/ORCL');
   const selfAudit = detail.selfContractAudit || {};
   check('contract', selfAudit.status === 'passed' && selfAudit.sourceIndependence === 'does_not_require_external_reference_site',
     'mag4_fcf_yoy 必须通过本站自有公式审计,且声明不依赖参考站');
-  check('contract', selfAudit.fallbackPolicy === 'use_local_realized_ttm_snapshot_only; upstream_or_reference_editorial_snapshots_are_not_eligible_fallback',
-    'mag4_fcf_yoy fallbackPolicy 必须禁止参考站/前瞻编辑口径作为备用快照');
-  check('contract', Math.abs(Number(selfAudit.yoyPct) - Number(selfAudit.replayYoyPct)) < 0.2,
-    `mag4_fcf_yoy 自审 yoyPct ${selfAudit.yoyPct} 与 replay ${selfAudit.replayYoyPct} 不符`);
+  check('contract', selfAudit.fallbackPolicy === 'use_local_big5_capex_ocf_snapshot_only; upstream_or_reference_editorial_snapshots_are_not_eligible_fallback',
+    'mag4_fcf_yoy fallbackPolicy 必须禁止参考站/前瞻编辑口径作为 Big5 capex/OCF 备用快照');
+  check('contract', Math.abs(Number(selfAudit.capexOcfPct) - Number(selfAudit.replayCapexOcfPct)) < 0.2,
+    `mag4_fcf_yoy 自审 capexOcfPct ${selfAudit.capexOcfPct} 与 replay ${selfAudit.replayCapexOcfPct} 不符`);
   check('contract', selfAudit.thresholdReplayStatus === mag4Fcf.status,
     `mag4_fcf_yoy 阈值 replay ${selfAudit.thresholdReplayStatus} 与发布状态 ${mag4Fcf.status} 不符`);
   check('contract', detail.externalReferenceAudit?.requiredForPublication === false,
     'mag4_fcf_yoy 外部参考审计只能是非必需的漂移提示');
-  check('contract', /estimated_or_editorial_cash-flow-pressure_snapshot/u.test(detail.externalReferenceAudit?.siteMethodology || ''),
-    'mag4_fcf_yoy 外部参考审计必须标明参考站估算/编辑压力口径不可等同本站 realized TTM 公式');
+  check('contract', /Epoch AI \/ Apollo style Big5/u.test(detail.externalReferenceAudit?.adoptedSourceLogic || ''),
+    'mag4_fcf_yoy 外部参考审计必须标明采用 Epoch/Apollo Big5 capex/OCF 逻辑');
   check('contract', ['skipped_no_wind_key', 'not_run_in_builder_public_primary_succeeded'].includes(detail.windCrossCheck?.status),
     `mag4_fcf_yoy windCrossCheck.status 异常: ${detail.windCrossCheck?.status}`);
 }
 const mag4Fallback = curatedConfig.autoFallback?.mag4_fcf_yoy || {};
-check('contract', mag4Fallback.fallbackContract === 'local_realized_ttm_snapshot_v1',
-  'mag4_fcf_yoy autoFallback 必须是本站 realized TTM 本地备用快照');
+check('contract', mag4Fallback.fallbackContract === 'local_big5_capex_ocf_snapshot_v1',
+  'mag4_fcf_yoy autoFallback 必须是本站 Big5 capex/OCF 本地备用快照');
 check('contract', mag4Fallback.syncedFromUpstream !== true,
   'mag4_fcf_yoy autoFallback 不得 syncedFromUpstream');
-check('contract', mag4Fallback.status === 'yellow' && /^-?1[0-9]%/u.test(mag4Fallback.value_display || ''),
+check('contract', mag4Fallback.status === 'red' && /^≈?7[0-9]%/u.test(mag4Fallback.value_display || ''),
   `mag4_fcf_yoy autoFallback 值异常:${mag4Fallback.status} ${mag4Fallback.value_display}`);
-check('contract', /不得替换为前瞻 FCF|参考站编辑口径/u.test(mag4Fallback.note || ''),
-  'mag4_fcf_yoy autoFallback note 必须写明禁止前瞻/参考站编辑口径替换');
+check('contract', /Big5 capex\/OCF|Epoch\/Apollo/u.test(mag4Fallback.note || ''),
+  'mag4_fcf_yoy autoFallback note 必须写明 Big5 capex/OCF 口径');
 
 // ---- 2. scoring replay ----
 function tierFromPct(p) {

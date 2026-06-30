@@ -144,13 +144,13 @@
       "syncedFromUpstream": true
     },
     "mag4_fcf_yoy": {
-      "status": "yellow",
-      "value_display": "-16%",
-      "note": "AMZN/MSFT/GOOGL/META 已披露季度现金流按本站固定口径计算:滚动 4 季自由现金流为经营现金流加资本开支,合计约 $183B,同比约 -16%(上年同期约 $217B)。该备用快照只用于公开季报源短暂不可达时延续同一 realized TTM 公式,不得替换为前瞻 FCF、单家公司压力或参考站编辑口径",
-      "asOfDate": "2026-06-18",
+      "status": "red",
+      "value_display": "≈75%",
+      "note": "AMZN/MSFT/GOOGL/META/ORCL 已披露季度现金流按本站 Big5 capex/OCF 固定口径计算:滚动 4 季经营现金流约 $649B,cash capex 约 $490B,capex/OCF 约 75%。该备用快照只用于公开季报源短暂不可达时延续同一 Epoch/Apollo 式现金流覆盖率公式,不得替换为前瞻 FCF、单家公司压力或参考站编辑口径",
+      "asOfDate": "2026-06-30",
       "maxAgeDays": 30,
       "syncedFromUpstream": false,
-      "fallbackContract": "local_realized_ttm_snapshot_v1"
+      "fallbackContract": "local_big5_capex_ocf_snapshot_v1"
     },
     "nvda_invest_revenue": {
       "status": "red",

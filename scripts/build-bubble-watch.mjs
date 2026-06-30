@@ -82,7 +82,7 @@ const INDICATOR_DEFS = [
   { id: 'top5_weight', category: 'valuation', name_en: 'S&P 500 Top-5 Weight', name_zh: '前 5 大权重占比', threshold_text: '>25% 红 / 18-25% 黄 / <18% 绿', source_name: 'SPY holdings (stockanalysis / slickcharts)', mode: 'auto' },
   { id: 'nvda_fpe', category: 'valuation', name_en: 'NVDA Forward P/E', name_zh: 'NVDA 远期 PE', threshold_text: '>40 红 / 30-40 黄 / <30 绿', source_name: 'GuruFocus / StockAnalysis', mode: 'auto' },
   { id: 'hyperscaler_capex_yoy', category: 'capital', name_en: 'Hyperscaler Capex YoY', name_zh: 'Hyperscaler 资本开支增速', threshold_text: '指引下调=红 / 加速=黄 / 稳健=绿', source_name: 'SEC EDGAR / stockanalysis 季报镜像', mode: 'auto' },
-  { id: 'mag4_fcf_yoy', category: 'capital', name_en: 'Mag4 FCF YoY', name_zh: 'Mag4 自由现金流变化', threshold_text: '<-20% 红 / -20%~0 黄 / >0 绿', source_name: 'SEC EDGAR / stockanalysis 季报镜像', mode: 'auto' },
+  { id: 'mag4_fcf_yoy', category: 'capital', name_en: 'Big5 Capex / OCF', name_zh: 'Big5 资本开支/经营现金流', threshold_text: '≥75%或2家>100%=红 / 60-75%或1家>100%=黄 / <60%=绿', source_name: 'SEC EDGAR / stockanalysis 季报镜像', mode: 'auto' },
   { id: 'vc_ai_share', category: 'capital', name_en: 'AI / Total VC Funding', name_zh: 'AI 占 VC 投资比重', threshold_text: '>50% 红 / 30-50% 黄 / <30% 绿', source_name: 'Crunchbase / PitchBook(季度研究口径)', mode: 'curated' },
   { id: 'nvda_invest_revenue', category: 'capital', name_en: 'NVDA Customer Invest / Rev', name_zh: 'NVDA 客户投资/收入比', threshold_text: '>30% 红 / 15-30% 黄 / <15% 绿 (Lucent 99 峰值 24%)', source_name: '公开披露承诺 ÷ EDGAR/stockanalysis LTM 收入', mode: 'auto' },
   { id: 'breadth_50d', category: 'market_structure', name_en: '% Above 50-Day MA', name_zh: 'S&P 50 日均线上方比例', threshold_text: '<40% 红 / 40-60% 黄 / >60% 绿', source_name: 'Barchart $S5FI / Yahoo Chart × Wikipedia fallback', mode: 'auto' },
@@ -901,50 +901,109 @@ function saT4qYoy(numsNewestFirst) {
   return { now, prev, yoyPct: ((now - prev) / Math.abs(prev)) * 100 };
 }
 
-function buildMag4FcfSelfContractAudit({ companies, sourceTag, now, prev, yoyPct, status, perCompany }) {
-  const replayNow = perCompany.reduce((acc, c) => acc + c.now, 0);
-  const replayPrev = perCompany.reduce((acc, c) => acc + c.prev, 0);
-  const replayYoyPct = ((replayNow - replayPrev) / Math.abs(replayPrev)) * 100;
-  const replayStatus = replayYoyPct < -20 ? 'red' : replayYoyPct < 0 ? 'yellow' : 'green';
+function trailing4qCapexOcfCoverage(rowsOldestFirst) {
+  if (rowsOldestFirst.length < 8) return null;
+  const rows = rowsOldestFirst.slice(-8);
+  const prevRows = rows.slice(0, 4);
+  const nowRows = rows.slice(4);
+  const sum = (items, key) => items.reduce((acc, row) => acc + row[key], 0);
+  const nowOcf = sum(nowRows, 'ocf');
+  const prevOcf = sum(prevRows, 'ocf');
+  const nowCapex = sum(nowRows, 'capex');
+  const prevCapex = sum(prevRows, 'capex');
+  if (!(nowOcf > 0 && prevOcf > 0)) return null;
+  return {
+    nowOcf,
+    prevOcf,
+    nowCapex,
+    prevCapex,
+    capexOcfPct: (nowCapex / nowOcf) * 100,
+    prevCapexOcfPct: (prevCapex / prevOcf) * 100,
+    fcfNow: nowOcf - nowCapex,
+    fcfPrev: prevOcf - prevCapex,
+    latestEnd: rows[rows.length - 1].end
+  };
+}
+
+function saT4qCapexOcfCoverage(ocfNewestFirst, capexNewestFirst) {
+  const n = Math.min(ocfNewestFirst.length, capexNewestFirst.length);
+  if (n < 8) return null;
+  const rowsOldestFirst = Array.from({ length: n }, (_, i) => ({
+    end: `stockanalysis-index-${i}`,
+    ocf: ocfNewestFirst[i],
+    capex: Math.abs(capexNewestFirst[i])
+  })).reverse();
+  return trailing4qCapexOcfCoverage(rowsOldestFirst);
+}
+
+function classifyHyperscalerCashFlowCoverage(ratioPct, over100Count) {
+  if (ratioPct >= 75 || over100Count >= 2) return 'red';
+  if (ratioPct >= 60 || over100Count >= 1) return 'yellow';
+  return 'green';
+}
+
+function buildHyperscalerCashFlowCoverageSelfContractAudit({ companies, sourceTag, ratioPct, status, perCompany, nowOcf, nowCapex, prevOcf, prevCapex }) {
+  const replayNowOcf = perCompany.reduce((acc, c) => acc + c.nowOcf, 0);
+  const replayNowCapex = perCompany.reduce((acc, c) => acc + c.nowCapex, 0);
+  const replayPrevOcf = perCompany.reduce((acc, c) => acc + c.prevOcf, 0);
+  const replayPrevCapex = perCompany.reduce((acc, c) => acc + c.prevCapex, 0);
+  const replayRatioPct = (replayNowCapex / replayNowOcf) * 100;
+  const over100Count = perCompany.filter((c) => c.capexOcfPct >= 100).length;
+  const replayStatus = classifyHyperscalerCashFlowCoverage(replayRatioPct, over100Count);
   return {
     status: 'passed',
-    formula: 'realized_ttm_aggregate_operating_cash_flow_plus_capex',
-    formulaText: 'sum(last four quarters of Operating Cash Flow + Capital Expenditures) / prior trailing four quarters - 1',
+    formula: 'big5_realized_ttm_cash_capex_to_operating_cash_flow',
+    formulaText: 'sum(last four quarters cash capital expenditures) / sum(last four quarters operating cash flow)',
+    legacyIndicatorId: 'mag4_fcf_yoy',
+    refitReason: 'same_score_slot_refit_from_fcf_yoy_to_epoch_apollo_style_cash_flow_coverage',
     source: sourceTag,
     sourcePriority: ['SEC EDGAR companyconcept', 'StockAnalysis quarterly cash-flow mirror'],
     sourceIndependence: 'does_not_require_external_reference_site',
     upstreamReferencePolicy: 'optional_non_authoritative_drift_signal_only',
-    fallbackPolicy: 'use_local_realized_ttm_snapshot_only; upstream_or_reference_editorial_snapshots_are_not_eligible_fallback',
+    fallbackPolicy: 'use_local_big5_capex_ocf_snapshot_only; upstream_or_reference_editorial_snapshots_are_not_eligible_fallback',
     requiredCompanies: companies,
     usedCompanies: perCompany.map((c) => c.ticker),
     minCompanyCount: companies.length,
-    aggregateNowB: Number((now / 1e9).toFixed(1)),
-    aggregatePrevB: Number((prev / 1e9).toFixed(1)),
-    yoyPct: Number(yoyPct.toFixed(1)),
-    replayAggregateNowB: Number((replayNow / 1e9).toFixed(1)),
-    replayAggregatePrevB: Number((replayPrev / 1e9).toFixed(1)),
-    replayYoyPct: Number(replayYoyPct.toFixed(1)),
-    thresholdRule: '<-20 red / -20~0 yellow / >0 green',
+    aggregateOcfB: Number((nowOcf / 1e9).toFixed(1)),
+    aggregateCapexB: Number((nowCapex / 1e9).toFixed(1)),
+    aggregateFcfB: Number(((nowOcf - nowCapex) / 1e9).toFixed(1)),
+    priorAggregateOcfB: Number((prevOcf / 1e9).toFixed(1)),
+    priorAggregateCapexB: Number((prevCapex / 1e9).toFixed(1)),
+    capexOcfPct: Number(ratioPct.toFixed(1)),
+    priorCapexOcfPct: Number(((prevCapex / prevOcf) * 100).toFixed(1)),
+    replayAggregateOcfB: Number((replayNowOcf / 1e9).toFixed(1)),
+    replayAggregateCapexB: Number((replayNowCapex / 1e9).toFixed(1)),
+    replayCapexOcfPct: Number(replayRatioPct.toFixed(1)),
+    companiesOver100Pct: over100Count,
+    thresholdRule: '>=75% or >=2 companies above 100% red / >=60% or >=1 company above 100% yellow / <60% green',
     thresholdReplayStatus: replayStatus,
     publishedStatus: status,
     perCompany: perCompany.map((c) => ({
       ticker: c.ticker,
-      fcfNowB: Number((c.now / 1e9).toFixed(1)),
-      fcfPrevB: Number((c.prev / 1e9).toFixed(1)),
-      yoyPct: Number(c.yoyPct.toFixed(1))
+      ocfTtmB: Number((c.nowOcf / 1e9).toFixed(1)),
+      capexTtmB: Number((c.nowCapex / 1e9).toFixed(1)),
+      fcfTtmB: Number((c.fcfNow / 1e9).toFixed(1)),
+      capexOcfPct: Number(c.capexOcfPct.toFixed(1))
     }))
   };
 }
 
-function buildMag4FcfExternalReferenceAudit() {
+function buildHyperscalerCashFlowCoverageReferenceAudit() {
   return {
     status: 'not_required_for_publication',
     role: 'optional_non_authoritative_drift_signal',
     requiredForPublication: false,
-    referenceSource: 'external AI bubble monitor page, if reachable',
-    siteMethodology: 'estimated_or_editorial_cash-flow-pressure_snapshot; not formula-equivalent to local realized TTM AMZN/MSFT/GOOGL/META aggregate',
-    arbitration: 'keep_local_realized_ttm_formula; do_not_override_with_forward_or_single-company_pressure_without_contract_change',
-    disappearancePolicy: 'continue_local_realized_ttm_formula_when_reference_site_is_unreachable_or_removed'
+    adoptedSourceLogic: 'Epoch AI / Apollo style Big5 hyperscaler cash capex divided by operating cash flow',
+    reviewedSourceLogic: [
+      { source: 'Epoch AI', logic: 'Big5 hyperscaler capex vs operating cash flow', decision: 'adopted_hard_and_sensitive' },
+      { source: 'Apollo', logic: 'hyperscaler capex as percent of operating cash flow', decision: 'adopted_as_confirmation' },
+      { source: 'Saxo', logic: 'Mag4 earnings and AI capex payback narrative', decision: 'sample_confirmation_not_formula' },
+      { source: 'Goldman Sachs', logic: 'AI capex payback and macro bubble debate', decision: 'framework_only' },
+      { source: 'Footnotes Analyst', logic: 'FCF quality and lease-adjusted hyperscaler cash-flow analysis', decision: 'methodology_warning' },
+      { source: 'AI bubble monitor reference site', logic: 'estimated/editorial FCF pressure snapshot', decision: 'drift_signal_not_hard_formula' }
+    ],
+    arbitration: 'publish_local_big5_capex_ocf_coverage; do_not_override_with_forward_or_single-company_pressure_without_contract_change',
+    disappearancePolicy: 'continue_local_big5_capex_ocf_formula_when_reference_site_is_unreachable_or_removed'
   };
 }
 
@@ -1280,21 +1339,22 @@ const autoBuilders = {
     };
   },
   async mag4_fcf_yoy() {
-    const companies = ['AMZN', 'MSFT', 'GOOGL', 'META'];
+    const companies = ['AMZN', 'MSFT', 'GOOGL', 'META', 'ORCL'];
     let perCompany = [];
     let sourceTag = 'SEC EDGAR';
     try {
       for (const ticker of companies) {
         const ocfUnits = await edgarConcept(EDGAR_CIK[ticker], ['NetCashProvidedByUsedInOperatingActivities', 'NetCashProvidedByUsedInOperatingActivitiesContinuingOperations']);
         const capexUnits = await edgarConcept(EDGAR_CIK[ticker], ['PaymentsToAcquirePropertyPlantAndEquipment', 'PaymentsToAcquireProductiveAssets']);
-        const ocfQ = deriveQuarterlySeries(ocfUnits);
-        const capexQ = new Map(deriveQuarterlySeries(capexUnits).map((q) => [q.end, q.val]));
-        const fcfQ = ocfQ.filter((q) => capexQ.has(q.end)).map((q) => ({ end: q.end, val: q.val - capexQ.get(q.end) }));
-        const yoy = trailing4qYoy(fcfQ);
-        if (yoy) perCompany.push({ ticker, ...yoy });
+        const capexQ = new Map(deriveQuarterlySeries(capexUnits).map((q) => [q.end, Math.abs(q.val)]));
+        const rows = deriveQuarterlySeries(ocfUnits)
+          .filter((q) => capexQ.has(q.end))
+          .map((q) => ({ end: q.end, ocf: q.val, capex: capexQ.get(q.end) }));
+        const coverage = trailing4qCapexOcfCoverage(rows);
+        if (coverage) perCompany.push({ ticker, ...coverage });
       }
     } catch (error) {
-      console.warn(`[bubble-watch] EDGAR FCF 链失败,改走 stockanalysis 镜像: ${error.message}`);
+      console.warn(`[bubble-watch] EDGAR Big5 cash-flow coverage 链失败,改走 stockanalysis 镜像: ${error.message}`);
       perCompany = [];
     }
     if (perCompany.length !== companies.length) {
@@ -1304,34 +1364,42 @@ const autoBuilders = {
         const html = await retry(() => fetchSaFinancialPage(ticker, 'cash-flow-statement/'), `SA cash-flow ${ticker}`);
         const ocf = parseSaQuarterlyRow(html, 'Operating Cash Flow');
         const capex = parseSaQuarterlyRow(html, 'Capital Expenditures'); // 负值
-        const n = Math.min(ocf.length, capex.length);
-        const fcf = Array.from({ length: n }, (_, i) => ocf[i] + capex[i]);
-        const yoy = saT4qYoy(fcf);
-        if (yoy) perCompany.push({ ticker, ...yoy });
+        const coverage = saT4qCapexOcfCoverage(ocf, capex);
+        if (coverage) perCompany.push({ ticker, ...coverage });
       }
     }
-    if (perCompany.length !== companies.length) throw new Error(`FCF 可用公司不足 (${perCompany.length}/${companies.length})`);
-    const now = perCompany.reduce((a, c) => a + c.now, 0);
-    const prev = perCompany.reduce((a, c) => a + c.prev, 0);
-    if (prev === 0) throw new Error('FCF 基期为 0');
-    const yoyPct = ((now - prev) / Math.abs(prev)) * 100;
-    const status = yoyPct < -20 ? 'red' : yoyPct < 0 ? 'yellow' : 'green';
+    if (perCompany.length !== companies.length) throw new Error(`Big5 cash-flow coverage 可用公司不足 (${perCompany.length}/${companies.length})`);
+    const nowOcf = perCompany.reduce((a, c) => a + c.nowOcf, 0);
+    const prevOcf = perCompany.reduce((a, c) => a + c.prevOcf, 0);
+    const nowCapex = perCompany.reduce((a, c) => a + c.nowCapex, 0);
+    const prevCapex = perCompany.reduce((a, c) => a + c.prevCapex, 0);
+    const ratioPct = (nowCapex / nowOcf) * 100;
+    const prevRatioPct = (prevCapex / prevOcf) * 100;
+    const ratioChangePct = ratioPct - prevRatioPct;
+    const over100Count = perCompany.filter((c) => c.capexOcfPct >= 100).length;
+    const status = classifyHyperscalerCashFlowCoverage(ratioPct, over100Count);
     return {
       status,
-      value_display: fmtPct(yoyPct, 0, true),
-      note: `${sourceTag}实拉 ${perCompany.map((c) => c.ticker).join('/')} 滚动 4 季自由现金流(经营现金流 − capex)合计 $${(now / 1e9).toFixed(0)}B,同比 ${fmtPct(yoyPct, 1, true)}(上年同期 $${(prev / 1e9).toFixed(0)}B)——巨额 capex ${yoyPct < 0 ? '正在吞噬现金流' : '尚未压垮现金流'}。阈值:<-20% 红 / -20%~0 黄 / >0 绿`,
+      value_display: `≈${ratioPct.toFixed(0)}%`,
+      note: `${sourceTag}实拉 ${perCompany.map((c) => c.ticker).join('/')} 滚动 4 季经营现金流 $${(nowOcf / 1e9).toFixed(0)}B、cash capex $${(nowCapex / 1e9).toFixed(0)}B,capex/OCF ≈${ratioPct.toFixed(1)}%(上年同期 ${prevRatioPct.toFixed(1)}%,变化 ${fmtPct(ratioChangePct, 1, true)});${over100Count}/5 家 capex 已超过 OCF。该口径采用 Epoch/Apollo 式 hyperscaler 现金流覆盖率,比单纯 FCF YoY 更敏感。阈值:≥75%或2家>100%=红 / 60-75%或1家>100%=黄 / <60%=绿`,
       detail: {
-        yoyPct,
+        ratioPct,
+        prevRatioPct,
+        ratioChangePct,
+        over100Count,
         source: sourceTag,
-        formula: 'realized_ttm_aggregate_operating_cash_flow_plus_capex',
+        formula: 'big5_realized_ttm_cash_capex_to_operating_cash_flow',
+        legacyFormula: 'realized_ttm_aggregate_operating_cash_flow_plus_capex',
+        adoptedModel: 'epoch_apollo_big5_cash_capex_to_ocf_coverage',
         perCompany: perCompany.map((c) => ({
           ticker: c.ticker,
-          fcfNowB: Number((c.now / 1e9).toFixed(1)),
-          fcfPrevB: Number((c.prev / 1e9).toFixed(1)),
-          yoyPct: Number(c.yoyPct.toFixed(1))
+          ocfTtmB: Number((c.nowOcf / 1e9).toFixed(1)),
+          capexTtmB: Number((c.nowCapex / 1e9).toFixed(1)),
+          fcfTtmB: Number((c.fcfNow / 1e9).toFixed(1)),
+          capexOcfPct: Number(c.capexOcfPct.toFixed(1))
         })),
-        selfContractAudit: buildMag4FcfSelfContractAudit({ companies, sourceTag, now, prev, yoyPct, status, perCompany }),
-        externalReferenceAudit: buildMag4FcfExternalReferenceAudit(),
+        selfContractAudit: buildHyperscalerCashFlowCoverageSelfContractAudit({ companies, sourceTag, ratioPct, status, perCompany, nowOcf, nowCapex, prevOcf, prevCapex }),
+        externalReferenceAudit: buildHyperscalerCashFlowCoverageReferenceAudit(),
         windCrossCheck: { status: WIND_API_KEY ? 'not_run_in_builder_public_primary_succeeded' : 'skipped_no_wind_key' }
       }
     };
