@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "transport-shock-market-confirmation-manual-sample-review-v1",
+  "contractVersion": "transport-shock-market-confirmation-manual-sample-scaffold-v1",
+  "sourceReviewContract": "transport-shock-confirmation-factor-market-confirmation-source-review-v1",
+  "status": "dry_run_only",
+  "generatedAt": "2026-06-30T00:00:00.000Z",
+  "inputPath": "docs/fixtures/transport-shock-confirmation-factor/market-confirmation-manual-sample-input.json",
+  "promotionEligible": false,
+  "productionWriteApproved": false,
+  "marketConfirmationWriteApproved": false,
+  "scoreWriteApproved": false,
+  "shadowScoreApproved": false,
+  "frontendDisplayApproved": false,
+  "eligibleForMainScore": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "review": {
+    "acceptedObservationCount": 4,
+    "rejectedObservationCount": 0,
+    "directionCounts": {
+      "tightening": 1,
+      "easing": 1,
+      "market_reaction_present": 1,
+      "mixed": 1
+    },
+    "bucketCoverage": {
+      "brent_price_structure_confirmation": 2,
+      "oil_news_market_reaction_confirmation": 1,
+      "odp_market_stress_context": 1
+    },
+    "sourceCoverage": {
+      "brent_futures_price_curve_proxy": 1,
+      "eia_brent_spot_proxy": 1,
+      "oil_news_market_reaction_bucket": 1,
+      "odp_crack_spread_proxy": 1
+    },
+    "acceptedObservations": [
+      {
+        "sourceKey": "brent_futures_price_curve_proxy",
+        "bucketKey": "brent_price_structure_confirmation",
+        "observedAt": "2026-06-29T04:00:00.000Z",
+        "direction": "tightening",
+        "strength": 42,
+        "value": 0.85,
+        "valueUnit": "front_minus_back_usd_per_bbl",
+        "citationHostHint": "finance.yahoo.com",
+        "sourceCitationHash": "a6abc8a9c8f6130c2ccfdc9a76cb09fb34dbb7c7ba7b42ea09f9a3ddb62e9cbc",
+        "rawCitationStored": false
+      },
+      {
+        "sourceKey": "eia_brent_spot_proxy",
+        "bucketKey": "brent_price_structure_confirmation",
+        "observedAt": "2026-06-22T00:00:00.000Z",
+        "direction": "easing",
+        "strength": 35,
+        "value": -3.97,
+        "valueUnit": "daily_change_usd_per_bbl",
+        "citationHostHint": "eia.gov",
+        "sourceCitationHash": "1da796893d897e899eb541ca2b5e263f9de89809759602a2755f0a693a1bb701",
+        "rawCitationStored": false
+      },
+      {
+        "sourceKey": "oil_news_market_reaction_bucket",
+        "bucketKey": "oil_news_market_reaction_confirmation",
+        "observedAt": "2026-06-29T23:33:38.671Z",
+        "direction": "market_reaction_present",
+        "strength": 55,
+        "value": 26,
+        "valueUnit": "article_proxy_count",
+        "citationHostHint": "gdeltproject.org",
+        "sourceCitationHash": "fdcdc97ed40d84f4d190559080cef59fedd3d7842d77524a67fec05e1b21506e",
+        "rawCitationStored": false
+      },
+      {
+        "sourceKey": "odp_crack_spread_proxy",
+        "bucketKey": "odp_market_stress_context",
+        "observedAt": "2026-06-29T23:33:38.671Z",
+        "direction": "mixed",
+        "strength": 30,
+        "value": null,
+        "valueUnit": null,
+        "citationHostHint": "eia.gov",
+        "sourceCitationHash": "3ea3b49c606bacf2787afbfda9a51773a016e7f0ce0721f94e0a1ebd229fa7c1",
+        "rawCitationStored": false
+      }
+    ],
+    "rejectedObservations": []
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noMarketConfirmationWrite": true,
+    "noScoreWrite": true,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "limitationZh": "人工市场确认样本审查仅用于 Transport Shock Confirmation Factor 后续样本整理;不抓取外部源、不写生产数据、不改变 marketConfirmation、ODP finalBias 或今日总判断打分。"
+}
