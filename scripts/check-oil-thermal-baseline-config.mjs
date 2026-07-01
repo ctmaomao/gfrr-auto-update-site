@@ -99,12 +99,21 @@ if (!Array.isArray(baseline.notes) || baseline.notes.length < 3) {
 if (baseline.status === 'not_established' && rows.length !== 0) {
   fail('not_established baseline must not contain facility rows');
 }
+if (baseline.status === 'partial') {
+  if (rows.length <= 0) fail('partial baseline must contain at least one established facility row');
+  if (rows.length >= facilities.length) {
+    fail(`partial baseline rows ${rows.length} must be fewer than facility whitelist ${facilities.length}`);
+  }
+  if (!isIso(baseline.establishedAt)) fail('establishedAt must be ISO for partial baseline');
+}
 if (baseline.status === 'established') {
   if (rows.length !== facilities.length) fail(`established baseline rows ${rows.length} must match facility whitelist ${facilities.length}`);
   if (!isIso(baseline.establishedAt)) fail('establishedAt must be ISO for established baseline');
+}
+if (baseline.status === 'partial' || baseline.status === 'established') {
   const review = baseline.sourceReview;
   if (!review || typeof review !== 'object' || Array.isArray(review)) {
-    fail('sourceReview must be present for established baseline');
+    fail(`sourceReview must be present for ${baseline.status} baseline`);
   } else {
     if (!VALID_PROMOTION_VERSIONS.has(review.promotionVersion)) {
       fail(`sourceReview.promotionVersion invalid: ${review.promotionVersion}`);
@@ -138,6 +147,12 @@ if (baseline.status === 'established') {
     }
     if (!isNonNegativeNumber(review.sampleCount) || review.sampleCount < baseline.policy.minSamplesPerFacility) {
       fail('sourceReview.sampleCount must satisfy policy.minSamplesPerFacility');
+    }
+    if (!Number.isInteger(review.facilityCount) || review.facilityCount !== rows.length) {
+      fail('sourceReview.facilityCount must match established baseline row count');
+    }
+    if (!Number.isInteger(review.facilitiesReadyForBaseline) || review.facilitiesReadyForBaseline !== rows.length) {
+      fail('sourceReview.facilitiesReadyForBaseline must match established baseline row count');
     }
     if (!isNonNegativeNumber(review.sampleWindowDays)) fail('sourceReview.sampleWindowDays must be non-negative number');
     const expectedQuality = isNonNegativeNumber(review.sampleWindowDays)

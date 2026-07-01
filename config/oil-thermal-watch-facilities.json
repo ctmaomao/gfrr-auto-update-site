@@ -1,17 +1,17 @@
 {
   "schemaVersion": "oil-thermal-facilities-production-v1",
   "sourceSelection": {
-    "selectedSource": "EIA/HIFLD Petroleum_Refineries_US_EIA.zip",
-    "sourceUrl": "https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-    "sourceDataset": "Petroleum_Refineries_US_2021.shp",
-    "sourcePeriod": "As of Jan. 1 2021",
-    "selectionMethod": "Starter whitelist uses large U.S. Gulf Coast PADD 3 refinery rows from the EIA/HIFLD shapefile, with nearby overlapping complexes reduced by operator judgment. Product terminals and global infrastructure trackers remain future reviewed scopes.",
+    "selectedSource": "EIA/HIFLD Petroleum_Refineries_US_EIA.zip + NGA GNS downloadable country files",
+    "sourceUrl": "https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip; https://geonames.nga.mil/geonames/GNSData/",
+    "sourceDataset": "US: Petroleum_Refineries_US_2021.shp; Middle East: Saudi Arabia.txt, Iran.txt, Israel.txt from NGA GNS country files",
+    "sourcePeriod": "US as of Jan. 1 2021; GNS country files downloaded from official index dated 2026-06-24/2026-06-25",
+    "selectionMethod": "Starter whitelist uses large U.S. Gulf Coast PADD 3 refinery rows from the EIA/HIFLD shapefile, with nearby overlapping complexes reduced by operator judgment. Middle East extension uses official NGA GNS feature points for Saudi Arabia, Iran, and Israel high-priority oil terminals, oil fields, processing/refinery areas, ports, and refinery-area proxies; each proxy row is explicitly marked in sourceNote. Product terminals and global infrastructure trackers remain future reviewed scopes.",
     "bboxRule": "Convert each source point to a +/-0.05 degree FIRMS Area API watch box. The box is a thermal-observation proxy, not a facility boundary."
   },
   "notes": [
-    "Starter production whitelist uses directly downloadable EIA/HIFLD public refinery point data instead of manually invented coordinates.",
-    "Scope is intentionally conservative: U.S. Gulf Coast refineries only, no product terminals yet, no global refinery/terminal list yet.",
-    "Each bbox is a small FIRMS query box derived from an official point, not an exact refinery polygon.",
+    "Starter production whitelist uses directly downloadable EIA/HIFLD public refinery point data and NGA GNS official foreign geographic names point data instead of manually invented coordinates.",
+    "Scope is intentionally conservative: U.S. Gulf Coast refineries plus a Middle East starter watch sample for Saudi Arabia, Iran, and Israel. This is not a complete global refinery, terminal, field, or chokepoint list.",
+    "Each bbox is a small FIRMS query box derived from an official point, not an exact refinery polygon. Middle East refinery-area rows may use official nearby city, port, harbor, or bay points when GNS has no exact refinery polygon.",
     "This config never stores MAP_KEY and never approves thermal detections as incidents, outages, supply disruptions, or oil-price direction."
   ],
   "facilities": [
@@ -170,6 +170,188 @@
         30.051717
       ],
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=SHELL OIL PRODUCTS US; Site=Norco; State=Louisiana; PADD=3; AD_Mbpd=250.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+    },
+    {
+      "id": "me_saudi_oil_terminal_ras_tanura",
+      "label": "Ras Tanura oil terminal area",
+      "region": "Middle East / Saudi Arabia",
+      "assetType": "oil_terminal",
+      "bbox": [
+        50.106389,
+        26.591944,
+        50.206389,
+        26.691944
+      ],
+      "sourceNote": "NGA GNS country file Saudi Arabia.txt; row full_name=Ras Tannura; desig_cd=TRMO; fc=S; cc_ft=SAU; adm1=SA-04; lat_dd=26.641944; long_dd=50.156389; mod_dt_ft=2016-12-14T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. Saudi Aramco ports-and-terminals documentation separately confirms Ras Tanura terminal/port context. This is an oil-terminal area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Saudi%20Arabia.zip"
+    },
+    {
+      "id": "me_saudi_oil_processing_abqaiq_buqayq",
+      "label": "Abqaiq/Buqayq oil processing area",
+      "region": "Middle East / Saudi Arabia",
+      "assetType": "oil_processing_area",
+      "bbox": [
+        49.683333,
+        26.05,
+        49.783333,
+        26.15
+      ],
+      "sourceNote": "NGA GNS country file Saudi Arabia.txt; row full_name=Buqayq; desig_cd=OILF; fc=L; cc_ft=SAU; adm1=SA-04; lat_dd=26.1; long_dd=49.733333; mod_dt_ft=2025-08-19T16:08:42.000Z; point converted to +/-0.05 degree FIRMS watch box. Saudi Aramco public material separately describes Abqaiq as a cornerstone oil/NGL facility. This is an oilfield/processing-area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Saudi%20Arabia.zip"
+    },
+    {
+      "id": "me_saudi_gosp_khurais",
+      "label": "Khurais GOSP area",
+      "region": "Middle East / Saudi Arabia",
+      "assetType": "gosp",
+      "bbox": [
+        48.013889,
+        25.009444,
+        48.113889,
+        25.109444
+      ],
+      "sourceNote": "NGA GNS country file Saudi Arabia.txt; row full_name=Khurais; desig_cd=GOSP; fc=S; cc_ft=SAU; adm1=SA-04; lat_dd=25.059444; long_dd=48.063889; mod_dt_ft=2015-11-24T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. This is a gas-oil separation plant area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Saudi%20Arabia.zip"
+    },
+    {
+      "id": "me_saudi_oil_field_shaybah",
+      "label": "Shaybah oil field area",
+      "region": "Middle East / Saudi Arabia",
+      "assetType": "oil_field",
+      "bbox": [
+        53.95,
+        22.45,
+        54.05,
+        22.55
+      ],
+      "sourceNote": "NGA GNS country file Saudi Arabia.txt; row full_name=Shaybah; desig_cd=OILF; fc=L; cc_ft=SAU; adm1=SA-04; lat_dd=22.5; long_dd=54; mod_dt_ft=2015-11-24T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. This is an oilfield area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Saudi%20Arabia.zip"
+    },
+    {
+      "id": "me_saudi_port_yanbu_industrial_city",
+      "label": "Yanbu Industrial City port area",
+      "region": "Middle East / Saudi Arabia",
+      "assetType": "port_terminal",
+      "bbox": [
+        38.172638,
+        23.900934,
+        38.272638,
+        24.000934
+      ],
+      "sourceNote": "NGA GNS country file Saudi Arabia.txt; row full_name=Madinat Yanbu al Sinaiyah Port; desig_cd=PRT; fc=L; cc_ft=SAU; adm1=SA-03; lat_dd=23.950934; long_dd=38.222638; mod_dt_ft=2011-04-27T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. This is a port/terminal area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Saudi%20Arabia.zip"
+    },
+    {
+      "id": "me_saudi_port_jazan",
+      "label": "Jazan port area",
+      "region": "Middle East / Saudi Arabia",
+      "assetType": "port_terminal",
+      "bbox": [
+        42.482684,
+        16.83835,
+        42.582684,
+        16.93835
+      ],
+      "sourceNote": "NGA GNS country file Saudi Arabia.txt; row full_name=Mina Jazan; desig_cd=PRT; fc=L; cc_ft=SAU; adm1=SA-02; lat_dd=16.88835; long_dd=42.532684; mod_dt_ft=2019-05-21T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. Saudi Aramco ports-and-terminals page lists Jazan Bulk Plant Terminal documentation. This is a port/terminal area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Saudi%20Arabia.zip"
+    },
+    {
+      "id": "me_iran_oil_terminal_kharg_island",
+      "label": "Kharg Island oil terminal area",
+      "region": "Middle East / Iran",
+      "assetType": "oil_terminal",
+      "bbox": [
+        50.278611,
+        29.2,
+        50.378611,
+        29.3
+      ],
+      "sourceNote": "NGA GNS country file Iran.txt; row full_name=Kharg Island Terminal; desig_cd=TRMO; fc=S; cc_ft=IRN; adm1=IR-000; lat_dd=29.25; long_dd=50.328611; mod_dt_ft=2025-04-29T13:40:15.000Z; point converted to +/-0.05 degree FIRMS watch box. This is an oil-terminal area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip"
+    },
+    {
+      "id": "me_iran_refinery_tehran_oil_refinery",
+      "label": "Tehran oil refinery area",
+      "region": "Middle East / Iran",
+      "assetType": "refinery",
+      "bbox": [
+        51.376886,
+        35.49293,
+        51.476886,
+        35.59293
+      ],
+      "sourceNote": "NGA GNS country file Iran.txt; row full_name=Palayeshgah-e Naft-e Tehran; desig_cd=OILR; fc=S; cc_ft=IRN; adm1=IR-23; lat_dd=35.54293; long_dd=51.426886; mod_dt_ft=2011-12-06T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. NIORDC contact/refineries pages separately list Tehran Oil Refining Company. This is a refinery point proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip"
+    },
+    {
+      "id": "me_iran_refinery_area_abadan",
+      "label": "Abadan refinery area",
+      "region": "Middle East / Iran",
+      "assetType": "refinery_area",
+      "bbox": [
+        48.2543,
+        30.2892,
+        48.3543,
+        30.3892
+      ],
+      "sourceNote": "NGA GNS country file Iran.txt; row full_name=Abadan; desig_cd=PPLA2; fc=P; cc_ft=IRN; adm1=IR-06; lat_dd=30.3392; long_dd=48.3043; mod_dt_ft=2014-08-08T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. NIORDC contact/refineries pages separately list Abadan Oil Refining Company. This is a refinery-area proxy from the official Abadan place point, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip"
+    },
+    {
+      "id": "me_iran_refinery_area_bandar_abbas",
+      "label": "Bandar Abbas refinery/port area",
+      "region": "Middle East / Iran",
+      "assetType": "refinery_area",
+      "bbox": [
+        56.1542,
+        27.0935,
+        56.2542,
+        27.1935
+      ],
+      "sourceNote": "NGA GNS country file Iran.txt; row full_name=Bandargah-e Bandar Abbas; desig_cd=PRT; fc=L; cc_ft=IRN; adm1=IR-22; lat_dd=27.1435; long_dd=56.2042; mod_dt_ft=2007-09-19T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. NIORDC contact/refineries pages separately list Bandar Abbas Oil Refining Company and address on Shahid Rajaei Hwy. This is a refinery/port-area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip"
+    },
+    {
+      "id": "me_iran_energy_area_asaluyeh",
+      "label": "Asaluyeh energy area",
+      "region": "Middle East / Iran",
+      "assetType": "energy_processing_area",
+      "bbox": [
+        52.557823,
+        27.423832,
+        52.657823,
+        27.523832
+      ],
+      "sourceNote": "NGA GNS country file Iran.txt; row full_name=Asaluyeh; desig_cd=PPLA2; fc=P; cc_ft=IRN; adm1=IR-18; lat_dd=27.47383219; long_dd=52.60782293; mod_dt_ft=2023-06-08T21:35:22.000Z; point converted to +/-0.05 degree FIRMS watch box. This is a broad energy-processing area proxy from the official place point, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip"
+    },
+    {
+      "id": "me_israel_refinery_area_haifa_bay",
+      "label": "Haifa Bay refinery area",
+      "region": "Middle East / Israel",
+      "assetType": "refinery_area",
+      "bbox": [
+        35.031473,
+        32.820326,
+        35.131473,
+        32.920326
+      ],
+      "sourceNote": "NGA GNS country file Israel.txt; row full_name=Haifa Bay Area; desig_cd=VAL; fc=T; cc_ft=ISR; adm1=IL-HA; lat_dd=32.870326; long_dd=35.081473; mod_dt_ft=2014-08-25T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. Bazan public page separately states Oil Refineries Ltd. is located in the Haifa Bay area. This is a refinery-area proxy from the official bay-area point, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Israel.zip"
+    },
+    {
+      "id": "me_israel_refinery_area_ashdod",
+      "label": "Ashdod refinery/port area",
+      "region": "Middle East / Israel",
+      "assetType": "refinery_area",
+      "bbox": [
+        34.588686,
+        31.77602,
+        34.688686,
+        31.87602
+      ],
+      "sourceNote": "NGA GNS country file Israel.txt; row full_name=Namel Ashdod; desig_cd=PRT; fc=L; cc_ft=ISR; adm1=IL-D; lat_dd=31.82602; long_dd=34.638686; mod_dt_ft=2014-01-17T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. Ashdod Refinery public page separately describes Ashdod Refinery as an Israeli energy/refining company. This is a refinery/port-area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Israel.zip"
+    },
+    {
+      "id": "me_israel_port_eilat",
+      "label": "Eilat port area",
+      "region": "Middle East / Israel",
+      "assetType": "port_terminal",
+      "bbox": [
+        34.891226,
+        29.482614,
+        34.991226,
+        29.582614
+      ],
+      "sourceNote": "NGA GNS country file Israel.txt; row full_name=Eilat Port; desig_cd=PRT; fc=L; cc_ft=ISR; adm1=IL-D; lat_dd=29.532614; long_dd=34.941226; mod_dt_ft=2017-04-07T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. This is a port/terminal area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Israel.zip"
     }
   ]
 }
