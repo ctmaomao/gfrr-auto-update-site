@@ -72,6 +72,7 @@ requireOrder('ODP reading flow', odpHtml, [
   'class="odp-flow-block odp-detail"',
   '04 · DETAIL LEDGER',
   'id="odp-evidence-timing-summary"',
+  'id="odp-evidence-readiness-matrix"',
   'id="odp-evidence-list"',
 ]);
 

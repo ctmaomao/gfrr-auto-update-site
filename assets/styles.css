@@ -498,6 +498,18 @@
   .odp-evidence-timing-card span { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--paper-muted); text-transform: uppercase; }
   .odp-evidence-timing-card strong { display: block; margin: 4px 0 5px 0; font-family: var(--font-display); font-size: 15px; color: var(--paper-ink); }
   .odp-evidence-timing-card p { margin: 0; font-family: var(--font-serif); font-size: 12.5px; line-height: 1.6; color: var(--paper-warm); overflow-wrap: anywhere; }
+  .odp-evidence-readiness-matrix { margin: 10px 0 14px 0; padding: 10px 0 12px 0; border-top: 1px solid var(--paper-line); border-bottom: 1px solid var(--paper-line); }
+  .odp-readiness-note { margin: 0 0 10px 0; font-family: var(--font-serif); font-size: 12.5px; line-height: 1.7; color: var(--paper-muted); }
+  .odp-readiness-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; }
+  .odp-readiness-item { min-width: 0; border-top: 3px solid var(--paper-line-strong); padding-top: 8px; }
+  .odp-readiness-item.red { border-top-color: var(--risk-red); }
+  .odp-readiness-item.yellow { border-top-color: var(--risk-yellow); }
+  .odp-readiness-item.green { border-top-color: var(--risk-green); }
+  .odp-readiness-kicker { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--paper-muted); text-transform: uppercase; }
+  .odp-readiness-item strong { display: block; margin: 4px 0 5px 0; font-family: var(--font-display); font-size: 15px; color: var(--paper-ink); }
+  .odp-readiness-item p { margin: 0 0 5px 0; font-family: var(--font-serif); font-size: 12.5px; line-height: 1.55; color: var(--paper-warm); overflow-wrap: anywhere; }
+  .odp-readiness-item .odp-readiness-status { font-family: var(--font-mono); font-size: 11.5px; color: var(--paper-ink); }
+  .odp-readiness-item .odp-readiness-gate { color: var(--paper-muted); }
   .odp-evidence-list { display: grid; gap: 12px; margin: 10px 0; }
   .odp-evidence-tier { padding: 10px 0 2px 0; border-top: 1px solid var(--paper-line-strong); }
   .odp-evidence-tier:first-child { border-top: none; }
@@ -536,12 +548,14 @@
     .odp-challenge-panels,
     .odp-ladder,
     .odp-evidence-timing-summary,
+    .odp-readiness-grid,
     .odp-reason-panels { grid-template-columns: minmax(0, 1fr); }
     .odp-flow-heading,
     .odp-support-grid,
     .odp-challenge-panels,
     .odp-ladder,
     .odp-evidence-timing-summary,
+    .odp-readiness-grid,
     .odp-reason-panels { gap: 12px; }
     .odp-flow-heading { gap: 4px; }
     .odp-flow-heading strong { font-size: 17px; }

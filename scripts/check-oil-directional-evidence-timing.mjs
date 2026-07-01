@@ -22,7 +22,7 @@ const requiredRendererMarkers = [
   'T2 OFFICIAL WEEKLY ANCHOR',
   'T1 MARKET PROXY',
   'EVENT / THERMAL WATCH',
-  '不确认断供、设施事故或改变 finalBias',
+  '不确认断供、设施事故或改变 ODP 方向结论',
 ];
 const requiredCssMarkers = [
   '.odp-evidence-timing-summary',

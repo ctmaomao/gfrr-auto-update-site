@@ -20,6 +20,8 @@
 // P54: cross-confirmation may compare oil-news, market, satellite/facility and
 // EIA layers only as display-only confirmation text. It must not change ODP
 // finalBias or promote any single source into a confirmed event.
+// P56: evidence readiness matrix may only classify source maturity/gates from
+// already-loaded layers; it must not become scoring or mutate finalBias.
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -106,6 +108,23 @@ for (const marker of [
   if (!src.includes(marker)) {
     fail(`ODP cross-confirmation copy must preserve marker: ${marker}`);
   }
+}
+if (!src.includes('renderEvidenceReadinessMatrix') || !src.includes('odp-evidence-readiness-matrix')) {
+  fail('ODP renderer must expose P56 evidence readiness matrix');
+}
+for (const marker of [
+  '证据成熟度',
+  '方向锚',
+  '闸门',
+  '不改变 ODP 方向结论',
+  '不进入平台打分',
+]) {
+  if (!src.includes(marker)) {
+    fail(`ODP evidence readiness matrix copy must preserve marker: ${marker}`);
+  }
+}
+if (!src.includes('PortWatch 新鲜度') || !src.includes('C1 Transport Shock')) {
+  fail('ODP evidence readiness matrix must preserve transport freshness and C1 Transport Shock boundary copy');
 }
 
 if (errors.length > 0) {
