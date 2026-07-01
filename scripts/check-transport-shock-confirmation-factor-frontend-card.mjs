@@ -38,6 +38,7 @@ for (const marker of [
   'c1-transport-shock-route',
   'c1-transport-shock-market',
   'c1-transport-shock-score-gate',
+  'c1-transport-shock-blockers',
   'c1-transport-shock-hormuz',
   'c1-transport-shock-sample-quality',
   'c1-transport-shock-freshness',
@@ -56,6 +57,9 @@ for (const marker of [
   'latestAgeDays',
   '未达入分闸门 · 路线/市场缺口',
   '待独立评分审阅 · 仍不入分',
+  '路线级油轮运费未确认',
+  '市场确认未接入',
+  '主判断入分未批准',
   '低置信观察 · 待路线/市场确认',
   'PortWatch 底层日期超过7天',
   'setObservationReaction('
@@ -93,9 +97,11 @@ for (const [fileKey, marker] of [
   ['projectBacklog', 'Transport Shock Confirmation Factor frontend card(2026-06-28,P-score-7 frontend display-only)'],
   ['projectBacklog', 'Transport Shock Confirmation Factor frontend caveat(2026-06-30,P-score-12 display-only)'],
   ['projectBacklog', 'Transport Shock Confirmation Factor frontend scoring-gate row'],
+  ['projectBacklog', 'Transport Shock Confirmation Factor frontend blocker row'],
   ['agents', 'Transport Shock Confirmation Factor frontend card 只是 P-score-7 前端展示层'],
   ['agents', 'Transport Shock Confirmation Factor frontend caveat 只是 P-score-12 display-only refinement'],
-  ['agents', 'Transport Shock Confirmation Factor frontend scoring-gate row 只是 P-score-18 display-only refinement']
+  ['agents', 'Transport Shock Confirmation Factor frontend scoring-gate row 只是 P-score-18 display-only refinement'],
+  ['agents', 'Transport Shock Confirmation Factor frontend blocker row 只是 P-score-40 display-only refinement']
 ]) {
   requireIncludes(fileKey, marker);
 }

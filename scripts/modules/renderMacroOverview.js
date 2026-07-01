@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=odp-evidence-readiness-matrix-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-evidence-readiness-matrix-1';
-import { MODULE_LABELS } from './decision.js?v=odp-evidence-readiness-matrix-1';
+} from './config.js?v=transport-shock-blocker-row-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=transport-shock-blocker-row-1';
+import { MODULE_LABELS } from './decision.js?v=transport-shock-blocker-row-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,8 +18,8 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=odp-evidence-readiness-matrix-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=odp-evidence-readiness-matrix-1';
+} from './macroOverviewDisplayHelpers.js?v=transport-shock-blocker-row-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=transport-shock-blocker-row-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2405,6 +2405,17 @@ function renderTransportShockConfirmation({ radarData }) {
         ? '待独立评分审阅 · 仍不入分'
         : '未达入分闸门 · 路线/市场缺口';
     setLeafText('c1-transport-shock-score-gate', scoreGate);
+
+    const blockers = [];
+    if (!candidate) blockers.push('候选字段待刷新');
+    if (!gateReady(routeGate)) blockers.push('路线级油轮运费未确认');
+    if (!gateReady(marketGate)) blockers.push('市场确认未接入');
+    if (latestAgeDays !== null && latestAgeDays > 7) blockers.push('PortWatch 数据龄偏滞后');
+    if (candidate && candidate.eligibleForMainScore !== true) blockers.push('主判断入分未批准');
+    const blockerText = blockers.length
+      ? blockers.slice(0, 4).join(' · ')
+      : '硬阻塞待复核清空 · 仍需独立评分审阅';
+    setLeafText('c1-transport-shock-blockers', blockerText);
 
     const evidence = candidate?.evidence || {};
     const hormuzPct = asNumber(

@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-evidence-readiness-matrix-1';
+﻿import { fmtNumSafe } from './config.js?v=transport-shock-blocker-row-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

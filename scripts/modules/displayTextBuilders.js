@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-evidence-readiness-matrix-1';
+﻿import { fmtNumSafe } from './config.js?v=transport-shock-blocker-row-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=odp-evidence-readiness-matrix-1';
-import { formatOnRrpYiUsd } from './format.js?v=odp-evidence-readiness-matrix-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=transport-shock-blocker-row-1';
+import { formatOnRrpYiUsd } from './format.js?v=transport-shock-blocker-row-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-evidence-readiness-matrix-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-evidence-readiness-matrix-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=transport-shock-blocker-row-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=transport-shock-blocker-row-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
