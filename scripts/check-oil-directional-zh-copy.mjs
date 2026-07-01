@@ -69,11 +69,17 @@ if (!src.includes('headlineDisplayReadiness') || !src.includes('titleRisk')) {
 if (!src.includes('claimPolarity') || !src.includes('odp-news-event-claim-polarity') || !src.includes('claimPolarityText')) {
   fail('ODP renderer must expose oil-news claim polarity aggregate text');
 }
+if (!src.includes('odp-news-event-claim-quality') || !src.includes('claimQualityText') || !src.includes('claimQualityTone')) {
+  fail('ODP renderer must expose oil-news claim quality aggregate text');
+}
 if (!src.includes('不展示标题原文')) {
   fail('ODP oil-news copy must explicitly state that original headlines are not displayed');
 }
 if (!src.includes('主张方向只显示聚合计数')) {
   fail('ODP oil-news claim-polarity copy must preserve aggregate-count-only wording');
+}
+if (!src.includes('质量待核') || !src.includes('标题未批准') || !src.includes('不把单一路径报道写成确认事件')) {
+  fail('ODP oil-news claim-quality copy must preserve review-gate and no-single-path wording');
 }
 if (!src.includes('odp-news-event-source-health') || !src.includes('newsSourceHealthText')) {
   fail('ODP renderer must expose dedicated oil-news source-health/fallback text');

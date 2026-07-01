@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=transport-shock-blocker-row-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-oil-news-claim-quality-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
