@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-01T20:26:23.011Z",
+  "generatedAt": "2026-07-01T22:05:22.675Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -13,25 +13,25 @@
   "signalState": "elevated_manual_review",
   "displayStatusZh": "事件升高待核",
   "sourceStatus": {
-    "gdeltDoc": "stale",
+    "gdeltDoc": "error",
     "tavily": "live",
     "brave": "live",
     "tavilyKey": "configured",
     "braveKey": "configured",
     "details": {
       "gdelt_doc": {
-        "status": "stale",
+        "status": "error",
         "networkUsed": true,
         "successCount": 0,
         "failureCount": 1,
-        "articleCount": 32,
+        "articleCount": 0,
         "queryRuns": [
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "stale_cache",
-            "articleCount": 32,
-            "error": "GDELT DOC broad oil-news cache fetch failed after 1 attempt(s)"
+            "status": "error",
+            "articleCount": 0,
+            "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
           }
         ]
       },
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-07-01T02:41:41.000Z",
-    "latestArticleAgeHours": 17.7,
+    "latestArticleAgeHours": 19.4,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -163,8 +163,8 @@
     ]
   },
   "aggregate": {
-    "rawArticleCount": 96,
-    "uniqueArticleCount": 92,
+    "rawArticleCount": 64,
+    "uniqueArticleCount": 61,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -174,59 +174,60 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 55,
-      "sourceCount": 3,
-      "weightedSignal": 495,
+      "articleCount": 45,
+      "sourceCount": 2,
+      "weightedSignal": 270,
       "topArticles": [
         {
-          "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
-          "url": "https://economictimes.indiatimes.com/news/international/us/why-are-oil-prices-up-today-and-will-brent-us-wti-crude-futures-continue-to-rise-or-fall-again-cargo-ship-attack-near-oman-lifts-crude-prices/articleshow/132003055.cms",
-          "domain": "economictimes.indiatimes.com",
-          "publishedAt": null,
+          "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
+          "url": "https://www.oilandgas360.com/traffic-through-strait-of-hormuz-slows-after-attack-on-ship/",
+          "domain": "oilandgas360.com",
+          "publishedAt": "2026-06-26T18:30:10.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
-            "market_reaction",
             "middle_east_risk",
             "tanker_shipping"
           ],
           "queryIds": [
-            "gdelt_broad_oil_news"
+            "chokepoint_shipping"
           ]
         },
         {
-          "title": "Oil Prices Rise as US - Iran Tensions Threaten Strait of Hormuz Oil Shipments",
-          "url": "http://www.econotimes.com/Oil-Prices-Rise-as-US-Iran-Tensions-Threaten-Strait-of-Hormuz-Oil-Shipments-1745341",
-          "domain": "econotimes.com",
-          "publishedAt": null,
+          "title": "Hormuz Traffic Drops Off as Vessel Attacks Raise Fresh Concerns - Bloomberg.com",
+          "url": "https://www.bloomberg.com/news/articles/2026-06-29/hormuz-traffic-drops-off-as-vessel-attacks-raise-fresh-concerns",
+          "domain": "bloomberg.com",
+          "publishedAt": "2026-06-29T12:57:19.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
-            "market_reaction",
-            "middle_east_risk"
+            "facility_event",
+            "middle_east_risk",
+            "tanker_shipping"
           ],
           "queryIds": [
-            "gdelt_broad_oil_news"
+            "chokepoint_shipping"
           ]
         },
         {
-          "title": "Crude oil prices fall up to 2 %, head for weekly losses as Hormuz supply fears ease",
-          "url": "https://economictimes.indiatimes.com/markets/commodities/news/crude-oil-prices-fall-up-to-2-head-for-weekly-losses-as-hormuz-supply-fears-ease/articleshow/132007792.cms",
-          "domain": "economictimes.indiatimes.com",
-          "publishedAt": null,
+          "title": "Shipping rebounds in Strait of Hormuz one week after U.S.-Iran deal – but fragile confidence threatens recovery - CNBC",
+          "url": "https://www.cnbc.com/2026/06/26/strait-of-hormuz-shipping-oil-us-iran.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-06-26T09:36:24.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
-            "market_reaction"
+            "middle_east_risk",
+            "tanker_shipping"
           ],
           "queryIds": [
-            "gdelt_broad_oil_news"
+            "chokepoint_shipping"
           ]
         }
       ]
@@ -237,23 +238,6 @@
       "sourceCount": 2,
       "weightedSignal": 76,
       "topArticles": [
-        {
-          "title": "Forget Hormuz. The Shadow Fleet Is The Next Maritime Crisis. - Forbes",
-          "url": "https://www.forbes.com/sites/jillgoldenziel/2026/06/26/forget-hormuz-the-shadow-fleet-is-the-next-maritime-crisis/",
-          "domain": "forbes.com",
-          "publishedAt": "2026-06-26T00:00:00.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "sanctions",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "sanctions_shadow_fleet"
-          ]
-        },
         {
           "title": "France Seizes ‘Shadow Fleet’ Tanker, Stepping Up Pressure on Russia - Insurance Journal",
           "url": "https://www.insurancejournal.com/news/international/2026/06/26/875257.htm",
@@ -272,15 +256,32 @@
           ]
         },
         {
-          "title": "North Sea oil and renewables: The UK’s next PM faces a defining energy policy decision - CNBC",
-          "url": "https://www.cnbc.com/2026/07/01/burnham-north-sea-oil-energy-security.html",
-          "domain": "cnbc.com",
-          "publishedAt": "2026-07-01T06:28:00.000Z",
+          "title": "French Navy Seizes Tanker Linked to Russian Shadow Fleet - Marine News Magazine",
+          "url": "https://www.marinelink.com/news/french-navy-seizes-tanker-linked-russian-540663",
+          "domain": "marinelink.com",
+          "publishedAt": "2026-06-25T12:07:33.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
-            "middle_east_risk",
+            "chokepoint",
+            "sanctions",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "sanctions_shadow_fleet"
+          ]
+        },
+        {
+          "title": "French commandos seize Putin’s ‘shadow fleet’ tanker off Sicily | Watch - Ynetnews",
+          "url": "https://www.ynetnews.com/article/bkajtj5zgx",
+          "domain": "ynetnews.com",
+          "publishedAt": "2026-06-25T13:38:05.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
             "sanctions",
             "tanker_shipping"
           ],
@@ -292,54 +293,33 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 23,
-      "sourceCount": 3,
-      "weightedSignal": 207,
+      "articleCount": 19,
+      "sourceCount": 2,
+      "weightedSignal": 114,
       "topArticles": [
         {
-          "title": "Oil trade stabilises amid US - Iran halt to renewed hostilities",
-          "url": "https://finance.yahoo.com/energy/articles/oil-trade-stabilises-amid-us-104450006.html",
-          "domain": "finance.yahoo.com",
-          "publishedAt": null,
+          "title": "Saudi Aramco helicopter crash kills 14 nationals - CNN",
+          "url": "https://www.cnn.com/2026/06/28/business/saudi-aramco-helicopter-crash-intl",
+          "domain": "cnn.com",
+          "publishedAt": "2026-06-28T14:41:40.000Z",
           "sources": [
-            "gdelt_doc"
-          ],
-          "buckets": [
-            "middle_east_risk",
-            "supply_disruption"
-          ],
-          "queryIds": [
-            "gdelt_broad_oil_news"
-          ]
-        },
-        {
-          "title": "Oil Markets Move From Fearing Shortages to Worrying About Surpluses",
-          "url": "https://www.businessinsider.com/crude-oil-prices-today-supply-demand-outlook-forecast-hormuz-exports-2026-6",
-          "domain": "businessinsider.com",
-          "publishedAt": null,
-          "sources": [
-            "gdelt_doc",
             "tavily"
           ],
           "buckets": [
             "chokepoint",
             "facility_event",
-            "market_reaction",
             "middle_east_risk",
-            "supply_disruption",
-            "tanker_shipping"
+            "supply_disruption"
           ],
           "queryIds": [
-            "chokepoint_shipping",
-            "facility_supply_disruption",
-            "gdelt_broad_oil_news"
+            "facility_supply_disruption"
           ]
         },
         {
-          "title": "Russia's 4th-largest oil refinery shuts down after Ukrainian drone strike, Reuters reports - The Kyiv Independent",
-          "url": "https://kyivindependent.com/russias-4th-largest-oil-refinery-shuts-down-after-ukrainian-drone-strike-reuters-reports/",
-          "domain": "kyivindependent.com",
-          "publishedAt": "2026-06-25T21:40:48.000Z",
+          "title": "Putin admits oil deficit and adjusted fuel plans amid Ukrainian strikes on refineries - Euronews",
+          "url": "https://www.euronews.com/my-europe/2026/06/29/putin-admits-oil-deficit-and-adjusted-fuel-plans-amid-ukrainian-strikes-on-refineries",
+          "domain": "euronews.com",
+          "publishedAt": "2026-06-29T05:14:05.000Z",
           "sources": [
             "tavily"
           ],
@@ -351,189 +331,179 @@
           "queryIds": [
             "facility_supply_disruption"
           ]
-        }
-      ]
-    },
-    "facility_event": {
-      "labelZh": "设施事件",
-      "articleCount": 28,
-      "sourceCount": 3,
-      "weightedSignal": 168,
-      "topArticles": [
-        {
-          "title": "Oil Falls Back to Pre - War Levels as Hormuz Shipping Rebounds",
-          "url": "https://www.theepochtimes.com/world/oil-falls-back-to-pre-war-levels-as-hormuz-shipping-rebounds-6053166",
-          "domain": "theepochtimes.com",
-          "publishedAt": null,
-          "sources": [
-            "gdelt_doc"
-          ],
-          "buckets": [
-            "chokepoint",
-            "facility_event",
-            "middle_east_risk",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "gdelt_broad_oil_news"
-          ]
         },
         {
-          "title": "Oil Markets Move From Fearing Shortages to Worrying About Surpluses",
-          "url": "https://www.businessinsider.com/crude-oil-prices-today-supply-demand-outlook-forecast-hormuz-exports-2026-6",
-          "domain": "businessinsider.com",
-          "publishedAt": null,
+          "title": "Saudi Aramco resumes oil loading at Ras Tanura in boost to supply - CNBC",
+          "url": "https://www.cnbc.com/2026/06/27/saudi-aramco-resumes-oil-loading-at-ras-tanura-in-boost-to-supply.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-06-27T08:03:59.000Z",
           "sources": [
-            "gdelt_doc",
             "tavily"
           ],
           "buckets": [
             "chokepoint",
             "facility_event",
-            "market_reaction",
             "middle_east_risk",
             "supply_disruption",
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping",
-            "facility_supply_disruption",
-            "gdelt_broad_oil_news"
+            "facility_supply_disruption"
+          ]
+        }
+      ]
+    },
+    "facility_event": {
+      "labelZh": "设施事件",
+      "articleCount": 27,
+      "sourceCount": 2,
+      "weightedSignal": 108,
+      "topArticles": [
+        {
+          "title": "Hormuz Traffic Drops Off as Vessel Attacks Raise Fresh Concerns - Bloomberg.com",
+          "url": "https://www.bloomberg.com/news/articles/2026-06-29/hormuz-traffic-drops-off-as-vessel-attacks-raise-fresh-concerns",
+          "domain": "bloomberg.com",
+          "publishedAt": "2026-06-29T12:57:19.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "facility_event",
+            "middle_east_risk",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
           ]
         },
         {
-          "title": "Oil prices continue falling , futures trading at lowest level since start of military conflict in Middle East",
-          "url": "https://news.am/en/news/1045694",
-          "domain": "news.am",
-          "publishedAt": null,
+          "title": "French Forces Detain Tanker in Continuing Crackdown on Shadow Fleet - The Maritime Executive",
+          "url": "https://maritime-executive.com/article/french-forces-detain-tanker-in-continuing-crackdown-on-shadow-fleet",
+          "domain": "maritime-executive.com",
+          "publishedAt": "2026-06-25T16:48:33.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "facility_event",
-            "market_reaction"
+            "sanctions",
+            "tanker_shipping"
           ],
           "queryIds": [
-            "gdelt_broad_oil_news"
+            "sanctions_shadow_fleet"
+          ]
+        },
+        {
+          "title": "Saudi Aramco helicopter crash kills 14 nationals - CNN",
+          "url": "https://www.cnn.com/2026/06/28/business/saudi-aramco-helicopter-crash-intl",
+          "domain": "cnn.com",
+          "publishedAt": "2026-06-28T14:41:40.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "facility_event",
+            "middle_east_risk",
+            "supply_disruption"
+          ],
+          "queryIds": [
+            "facility_supply_disruption"
           ]
         }
       ]
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 41,
-      "sourceCount": 3,
-      "weightedSignal": 184.5,
+      "articleCount": 37,
+      "sourceCount": 2,
+      "weightedSignal": 111,
       "topArticles": [
         {
-          "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
-          "url": "https://economictimes.indiatimes.com/news/international/us/why-are-oil-prices-up-today-and-will-brent-us-wti-crude-futures-continue-to-rise-or-fall-again-cargo-ship-attack-near-oman-lifts-crude-prices/articleshow/132003055.cms",
-          "domain": "economictimes.indiatimes.com",
-          "publishedAt": null,
+          "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
+          "url": "https://www.oilandgas360.com/traffic-through-strait-of-hormuz-slows-after-attack-on-ship/",
+          "domain": "oilandgas360.com",
+          "publishedAt": "2026-06-26T18:30:10.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
-            "market_reaction",
             "middle_east_risk",
             "tanker_shipping"
           ],
           "queryIds": [
-            "gdelt_broad_oil_news"
+            "chokepoint_shipping"
           ]
         },
         {
-          "title": "Oil Falls Back to Pre - War Levels as Hormuz Shipping Rebounds",
-          "url": "https://www.theepochtimes.com/world/oil-falls-back-to-pre-war-levels-as-hormuz-shipping-rebounds-6053166",
-          "domain": "theepochtimes.com",
-          "publishedAt": null,
+          "title": "Hormuz Traffic Drops Off as Vessel Attacks Raise Fresh Concerns - Bloomberg.com",
+          "url": "https://www.bloomberg.com/news/articles/2026-06-29/hormuz-traffic-drops-off-as-vessel-attacks-raise-fresh-concerns",
+          "domain": "bloomberg.com",
+          "publishedAt": "2026-06-29T12:57:19.000Z",
           "sources": [
-            "gdelt_doc"
-          ],
-          "buckets": [
-            "chokepoint",
-            "facility_event",
-            "middle_east_risk",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "gdelt_broad_oil_news"
-          ]
-        },
-        {
-          "title": "Oil Markets Move From Fearing Shortages to Worrying About Surpluses",
-          "url": "https://www.businessinsider.com/crude-oil-prices-today-supply-demand-outlook-forecast-hormuz-exports-2026-6",
-          "domain": "businessinsider.com",
-          "publishedAt": null,
-          "sources": [
-            "gdelt_doc",
             "tavily"
           ],
           "buckets": [
             "chokepoint",
             "facility_event",
-            "market_reaction",
             "middle_east_risk",
-            "supply_disruption",
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping",
-            "facility_supply_disruption",
-            "gdelt_broad_oil_news"
+            "chokepoint_shipping"
+          ]
+        },
+        {
+          "title": "Shipping rebounds in Strait of Hormuz one week after U.S.-Iran deal – but fragile confidence threatens recovery - CNBC",
+          "url": "https://www.cnbc.com/2026/06/26/strait-of-hormuz-shipping-oil-us-iran.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-06-26T09:36:24.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "middle_east_risk",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
           ]
         }
       ]
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 48,
-      "sourceCount": 3,
-      "weightedSignal": 216,
+      "articleCount": 36,
+      "sourceCount": 2,
+      "weightedSignal": 108,
       "topArticles": [
         {
-          "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
-          "url": "https://economictimes.indiatimes.com/news/international/us/why-are-oil-prices-up-today-and-will-brent-us-wti-crude-futures-continue-to-rise-or-fall-again-cargo-ship-attack-near-oman-lifts-crude-prices/articleshow/132003055.cms",
-          "domain": "economictimes.indiatimes.com",
-          "publishedAt": null,
+          "title": "Traffic through Strait of Hormuz slows after attack on ship - Oil & Gas 360",
+          "url": "https://www.oilandgas360.com/traffic-through-strait-of-hormuz-slows-after-attack-on-ship/",
+          "domain": "oilandgas360.com",
+          "publishedAt": "2026-06-26T18:30:10.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
-            "market_reaction",
             "middle_east_risk",
             "tanker_shipping"
           ],
           "queryIds": [
-            "gdelt_broad_oil_news"
+            "chokepoint_shipping"
           ]
         },
         {
-          "title": "Oil Prices Rise as US - Iran Tensions Threaten Strait of Hormuz Oil Shipments",
-          "url": "http://www.econotimes.com/Oil-Prices-Rise-as-US-Iran-Tensions-Threaten-Strait-of-Hormuz-Oil-Shipments-1745341",
-          "domain": "econotimes.com",
-          "publishedAt": null,
+          "title": "Hormuz Traffic Drops Off as Vessel Attacks Raise Fresh Concerns - Bloomberg.com",
+          "url": "https://www.bloomberg.com/news/articles/2026-06-29/hormuz-traffic-drops-off-as-vessel-attacks-raise-fresh-concerns",
+          "domain": "bloomberg.com",
+          "publishedAt": "2026-06-29T12:57:19.000Z",
           "sources": [
-            "gdelt_doc"
-          ],
-          "buckets": [
-            "chokepoint",
-            "market_reaction",
-            "middle_east_risk"
-          ],
-          "queryIds": [
-            "gdelt_broad_oil_news"
-          ]
-        },
-        {
-          "title": "Oil Falls Back to Pre - War Levels as Hormuz Shipping Rebounds",
-          "url": "https://www.theepochtimes.com/world/oil-falls-back-to-pre-war-levels-as-hormuz-shipping-rebounds-6053166",
-          "domain": "theepochtimes.com",
-          "publishedAt": null,
-          "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
@@ -542,24 +512,41 @@
             "tanker_shipping"
           ],
           "queryIds": [
-            "gdelt_broad_oil_news"
+            "chokepoint_shipping"
+          ]
+        },
+        {
+          "title": "Shipping rebounds in Strait of Hormuz one week after U.S.-Iran deal – but fragile confidence threatens recovery - CNBC",
+          "url": "https://www.cnbc.com/2026/06/26/strait-of-hormuz-shipping-oil-us-iran.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-06-26T09:36:24.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "middle_east_risk",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
           ]
         }
       ]
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 48,
-      "sourceCount": 3,
-      "weightedSignal": 144,
+      "articleCount": 24,
+      "sourceCount": 2,
+      "weightedSignal": 48,
       "topArticles": [
         {
-          "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
-          "url": "https://economictimes.indiatimes.com/news/international/us/why-are-oil-prices-up-today-and-will-brent-us-wti-crude-futures-continue-to-rise-or-fall-again-cargo-ship-attack-near-oman-lifts-crude-prices/articleshow/132003055.cms",
-          "domain": "economictimes.indiatimes.com",
-          "publishedAt": null,
+          "title": "As Strait of Hormuz Opens, Oil Falls - Marine News Magazine",
+          "url": "https://www.marinelink.com/news/strait-hormuz-opens-oil-falls-540679",
+          "domain": "marinelink.com",
+          "publishedAt": "2026-06-26T07:37:06.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
@@ -568,40 +555,44 @@
             "tanker_shipping"
           ],
           "queryIds": [
-            "gdelt_broad_oil_news"
+            "chokepoint_shipping"
           ]
         },
         {
-          "title": "Oil Prices Rise as US - Iran Tensions Threaten Strait of Hormuz Oil Shipments",
-          "url": "http://www.econotimes.com/Oil-Prices-Rise-as-US-Iran-Tensions-Threaten-Strait-of-Hormuz-Oil-Shipments-1745341",
-          "domain": "econotimes.com",
-          "publishedAt": null,
+          "title": "Full Steam Ahead In the Strait of Hormuz? Not So Fast - The Maritime Executive",
+          "url": "https://maritime-executive.com/editorials/full-steam-ahead-in-the-strait-of-hormuz-not-so-fast",
+          "domain": "maritime-executive.com",
+          "publishedAt": "2026-06-27T00:49:46.000Z",
           "sources": [
-            "gdelt_doc"
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
             "market_reaction",
-            "middle_east_risk"
+            "middle_east_risk",
+            "tanker_shipping"
           ],
           "queryIds": [
-            "gdelt_broad_oil_news"
+            "chokepoint_shipping"
           ]
         },
         {
-          "title": "Crude oil prices fall up to 2 %, head for weekly losses as Hormuz supply fears ease",
-          "url": "https://economictimes.indiatimes.com/markets/commodities/news/crude-oil-prices-fall-up-to-2-head-for-weekly-losses-as-hormuz-supply-fears-ease/articleshow/132007792.cms",
-          "domain": "economictimes.indiatimes.com",
-          "publishedAt": null,
+          "title": "Oil Prices Hover Around Prewar Levels as Gulf Shipping Jumps - The New York Times",
+          "url": "https://www.nytimes.com/2026/06/25/business/oil-prices-gas-iran.html",
+          "domain": "nytimes.com",
+          "publishedAt": "2026-06-25T05:26:18.000Z",
           "sources": [
-            "gdelt_doc"
+            "brave",
+            "tavily"
           ],
           "buckets": [
             "chokepoint",
-            "market_reaction"
+            "market_reaction",
+            "middle_east_risk",
+            "tanker_shipping"
           ],
           "queryIds": [
-            "gdelt_broad_oil_news"
+            "market_reaction"
           ]
         }
       ]
@@ -609,26 +600,22 @@
   },
   "topArticles": [
     {
-      "title": "Oil Markets Move From Fearing Shortages to Worrying About Surpluses",
-      "url": "https://www.businessinsider.com/crude-oil-prices-today-supply-demand-outlook-forecast-hormuz-exports-2026-6",
-      "domain": "businessinsider.com",
-      "publishedAt": null,
+      "title": "Oil Prices Hover Around Prewar Levels as Gulf Shipping Jumps - The New York Times",
+      "url": "https://www.nytimes.com/2026/06/25/business/oil-prices-gas-iran.html",
+      "domain": "nytimes.com",
+      "publishedAt": "2026-06-25T05:26:18.000Z",
       "sources": [
-        "gdelt_doc",
+        "brave",
         "tavily"
       ],
       "buckets": [
         "chokepoint",
-        "facility_event",
         "market_reaction",
         "middle_east_risk",
-        "supply_disruption",
         "tanker_shipping"
       ],
       "queryIds": [
-        "chokepoint_shipping",
-        "facility_supply_disruption",
-        "gdelt_broad_oil_news"
+        "market_reaction"
       ]
     },
     {
@@ -653,10 +640,66 @@
       ]
     },
     {
-      "title": "Another Hormuz? The Red Sea’s Threat to the Global Economy | Council on Foreign Relations",
-      "url": "https://cfr.org/articles/another-hormuz-the-red-seas-threat-to-the-global-economy",
-      "domain": "cfr.org",
-      "publishedAt": "2026-06-24T21:33:27.000Z",
+      "title": "An oil tanker navigates the Strait of Hormuz despite threats from Iran’s Revolutionary Guard - AP News",
+      "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-25-2026-862164c2aecbdc376dea434198eaf75f",
+      "domain": "apnews.com",
+      "publishedAt": "2026-06-25T06:11:51.000Z",
+      "sources": [
+        "brave",
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "middle_east_risk",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping"
+      ]
+    },
+    {
+      "title": "Saudi Aramco resumes oil loading at Ras Tanura in boost to supply - CNBC",
+      "url": "https://www.cnbc.com/2026/06/27/saudi-aramco-resumes-oil-loading-at-ras-tanura-in-boost-to-supply.html",
+      "domain": "cnbc.com",
+      "publishedAt": "2026-06-27T08:03:59.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
+    },
+    {
+      "title": "Saudi Aramco resumes oil loading at Ras Tanura in boost to supply | Gulf Times - Gulf Times",
+      "url": "https://www.gulf-times.com/article/728160/business/saudi-aramco-resumes-oil-loading-at-ras-tanura-in-boost-to-supply/amp",
+      "domain": "gulf-times.com",
+      "publishedAt": "2026-06-26T22:04:00.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
+    },
+    {
+      "title": "Hormuz traffic drops after fresh vessel attacks fuel security concerns | The Express Tribune",
+      "url": "https://tribune.com.pk/story/2615557/hormuz-traffic-drops-after-fresh-vessel-attacks-fuel-security-concerns",
+      "domain": "tribune.com.pk",
+      "publishedAt": "2026-06-29T09:08:08.000Z",
       "sources": [
         "brave"
       ],
@@ -668,7 +711,8 @@
         "tanker_shipping"
       ],
       "queryIds": [
-        "chokepoint_shipping"
+        "chokepoint_shipping",
+        "facility_supply_disruption"
       ]
     },
     {
@@ -751,25 +795,6 @@
       ]
     },
     {
-      "title": "Hormuz traffic drops after fresh vessel attacks fuel security concerns | The Express Tribune",
-      "url": "https://tribune.com.pk/story/2615557/hormuz-traffic-drops-after-fresh-vessel-attacks-fuel-security-concerns",
-      "domain": "tribune.com.pk",
-      "publishedAt": "2026-06-29T09:08:08.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
       "title": "Hormuz Tanker Traffic Recovers as Tensions Ease | OilPrice.com",
       "url": "https://oilprice.com/Latest-Energy-News/World-News/Hormuz-Tanker-Traffic-Recovers-as-Tensions-Ease.html",
       "domain": "oilprice.com",
@@ -802,44 +827,6 @@
         "market_reaction",
         "middle_east_risk",
         "supply_disruption"
-      ],
-      "queryIds": [
-        "market_reaction"
-      ]
-    },
-    {
-      "title": "U.S. refinery accidents, including in Pa., raise questions about cost impact as fuel demand rises",
-      "url": "https://inquirer.com/business/refinery-accidents-fuel-costs-monroe-energy-20260629.html",
-      "domain": "inquirer.com",
-      "publishedAt": "2026-06-29T10:01:00.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
-      "title": "360 Energy Pulse: What mattered in energy this week - Oil & Gas 360",
-      "url": "https://www.oilandgas360.com/360-energy-pulse-what-mattered-in-energy-this-week-2/",
-      "domain": "oilandgas360.com",
-      "publishedAt": "2026-06-26T21:30:36.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
       ],
       "queryIds": [
         "market_reaction"
@@ -877,25 +864,25 @@
     "claimCount": 12,
     "polarityCounts": {
       "risk_escalation": 3,
-      "risk_deescalation": 0,
+      "risk_deescalation": 2,
       "mixed_or_contested": 0,
-      "market_reaction_only": 7,
-      "unclear_or_high_claim": 2
+      "market_reaction_only": 6,
+      "unclear_or_high_claim": 1
     },
     "eventTypeCounts": {
-      "chokepoint": 10,
-      "shipping": 1,
+      "chokepoint": 8,
+      "shipping": 2,
       "sanctions": 0,
-      "facility": 1,
-      "supply": 0,
+      "facility": 0,
+      "supply": 2,
       "market_reaction": 0,
       "general_energy": 0
     },
     "sourceTierCounts": {
-      "primary_wire_or_official": 0,
-      "major_financial_media": 3,
-      "industry_trade": 6,
-      "aggregator_or_blog": 3,
+      "primary_wire_or_official": 1,
+      "major_financial_media": 2,
+      "industry_trade": 5,
+      "aggregator_or_blog": 4,
       "low_confidence": 0
     },
     "contradiction": {
@@ -904,7 +891,7 @@
       "details": [
         {
           "eventType": "chokepoint",
-          "claimCount": 10,
+          "claimCount": 8,
           "riskEscalation": 3,
           "riskDeescalation": 0,
           "mixedOrContested": 0,
@@ -912,17 +899,17 @@
         },
         {
           "eventType": "shipping",
-          "claimCount": 1,
+          "claimCount": 2,
           "riskEscalation": 0,
           "riskDeescalation": 0,
           "mixedOrContested": 0,
           "contradiction": false
         },
         {
-          "eventType": "facility",
-          "claimCount": 1,
+          "eventType": "supply",
+          "claimCount": 2,
           "riskEscalation": 0,
-          "riskDeescalation": 0,
+          "riskDeescalation": 2,
           "mixedOrContested": 0,
           "contradiction": false
         }

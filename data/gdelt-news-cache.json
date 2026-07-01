@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-06-30T20:31:17.113Z",
+  "generatedAt": "2026-07-01T22:05:16.121Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
-  "status": "stale",
-  "sourceStatus": "stale",
-  "requestMode": "stale_cache_after_fetch_error",
+  "status": "error",
+  "sourceStatus": "error",
+  "requestMode": "live_broad_query_failed",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 360,
@@ -29,432 +29,33 @@
     "provider": "gdelt",
     "endpointType": "doc",
     "label": "GDELT DOC broad oil-news cache",
-    "status": 200,
+    "status": 429,
     "attempts": 1,
     "retryCount": 0,
-    "rateLimited": false,
+    "rateLimited": true,
     "timeout": false,
     "retryAfterSeconds": null,
     "timeoutMs": 20000,
     "minIntervalMs": 8000,
     "maxRetries": 0,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 18306,
-    "errorCode": null
+    "elapsedMs": 11949,
+    "errorCode": "rate_limited"
   },
   "aggregate": {
-    "articleCount": 32,
+    "articleCount": 0,
     "bucketCounts": {
-      "chokepoint": 13,
+      "chokepoint": 0,
       "sanctions": 0,
-      "supply_disruption": 1,
-      "facility_event": 2,
-      "tanker_shipping": 3,
-      "middle_east_risk": 9,
-      "market_reaction": 22
+      "supply_disruption": 0,
+      "facility_event": 0,
+      "tanker_shipping": 0,
+      "middle_east_risk": 0,
+      "market_reaction": 0
     }
   },
-  "articles": [
-    {
-      "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
-      "url": "https://economictimes.indiatimes.com/news/international/us/why-are-oil-prices-up-today-and-will-brent-us-wti-crude-futures-continue-to-rise-or-fall-again-cargo-ship-attack-near-oman-lifts-crude-prices/articleshow/132003055.cms",
-      "domain": "economictimes.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil Prices Rise as US - Iran Tensions Threaten Strait of Hormuz Oil Shipments",
-      "url": "http://www.econotimes.com/Oil-Prices-Rise-as-US-Iran-Tensions-Threaten-Strait-of-Hormuz-Oil-Shipments-1745341",
-      "domain": "econotimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Crude oil prices fall up to 2 %, head for weekly losses as Hormuz supply fears ease",
-      "url": "https://economictimes.indiatimes.com/markets/commodities/news/crude-oil-prices-fall-up-to-2-head-for-weekly-losses-as-hormuz-supply-fears-ease/articleshow/132007792.cms",
-      "domain": "economictimes.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil Falls Back to Pre - War Levels as Hormuz Shipping Rebounds",
-      "url": "https://www.theepochtimes.com/world/oil-falls-back-to-pre-war-levels-as-hormuz-shipping-rebounds-6053166",
-      "domain": "theepochtimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Crude slips toward $70 as tankers return to Hormuz after US - Iran reach peace deal",
-      "url": "https://timesofindia.indiatimes.com/business/international-business/crude-slips-toward-70-as-tankers-return-to-hormuz-after-us-iran-reach-peace-deal-oil-price-on-june-25/articleshow/131980091.cms",
-      "domain": "timesofindia.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil trade stabilises amid US - Iran halt to renewed hostilities",
-      "url": "https://finance.yahoo.com/energy/articles/oil-trade-stabilises-amid-us-104450006.html",
-      "domain": "finance.yahoo.com",
-      "publishedAt": null,
-      "buckets": [
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Explainer : Brent , WTI and Middle Eastern crude -- key differences and why they matter",
-      "url": "http://www.venezuelastar.com/news/279144091/explainer-brent-wti-and-middle-eastern-crude-key-differences-and-why-they-matter",
-      "domain": "venezuelastar.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Explainer : Brent , WTI and Middle Eastern crude -- key differences and why they matter",
-      "url": "http://www.middleeaststar.com/news/279144091/explainer-brent-wti-and-middle-eastern-crude-key-differences-and-why-they-matter",
-      "domain": "middleeaststar.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Explainer : Brent , WTI and Middle Eastern crude -- key differences and why they matter",
-      "url": "http://www.vietnamtribune.com/news/279144091/explainer-brent-wti-and-middle-eastern-crude-key-differences-and-why-they-matter",
-      "domain": "vietnamtribune.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Explainer : Brent , WTI and Middle Eastern crude -- key differences and why they matter",
-      "url": "http://www.newyorkstatesman.com/news/279144091/explainer-brent-wti-and-middle-eastern-crude-key-differences-and-why-they-matter",
-      "domain": "newyorkstatesman.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Explainer : Brent , WTI and Middle Eastern crude -- key differences and why they matter",
-      "url": "http://www.arabherald.com/news/279144091/explainer-brent-wti-and-middle-eastern-crude-key-differences-and-why-they-matter",
-      "domain": "arabherald.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Explainer : Brent , WTI and Middle Eastern crude -- key differences and why they matter",
-      "url": "http://www.myanmarnews.net/news/279144091/explainer-brent-wti-and-middle-eastern-crude-key-differences-and-why-they-matter",
-      "domain": "myanmarnews.net",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Explainer : Brent , WTI and Middle Eastern crude -- key differences and why they matter",
-      "url": "http://www.sanantoniopost.com/news/279144091/explainer-brent-wti-and-middle-eastern-crude-key-differences-and-why-they-matter",
-      "domain": "sanantoniopost.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Explainer : Brent , WTI and Middle Eastern crude -- key differences and why they matter",
-      "url": "http://www.asiabulletin.com/news/279144091/explainer-brent-wti-and-middle-eastern-crude-key-differences-and-why-they-matter",
-      "domain": "asiabulletin.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Explainer : Brent , WTI and Middle Eastern crude -- key differences and why they matter",
-      "url": "http://www.nepalnational.com/news/279144091/explainer-brent-wti-and-middle-eastern-crude-key-differences-and-why-they-matter",
-      "domain": "nepalnational.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Explainer : Brent , WTI and Middle Eastern crude -- key differences and why they matter",
-      "url": "http://www.iranherald.com/news/279144091/explainer-brent-wti-and-middle-eastern-crude-key-differences-and-why-they-matter",
-      "domain": "iranherald.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil Prices : Oil prices today : Crude falls to four - month low as Hormuz traffic improves , Iran supply outlook weighs on market",
-      "url": "https://timesofindia.indiatimes.com/business/international-business/oil-prices-today-24-june-2026-crude-falls-to-four-month-low-as-hormuz-traffic-improves-iran-supply-outlook-weighs-on-market/articleshow/131961480.cms",
-      "domain": "timesofindia.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Brent hits lowest since before start of Iran war on expectations of smoother oil flows via Hormuz",
-      "url": "https://www.businesstimes.com.sg/companies-markets/energy-commodities/brent-hits-lowest-start-iran-war-expectations-smoother-oil-flows-hormuz",
-      "domain": "businesstimes.com.sg",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil Markets Move From Fearing Shortages to Worrying About Surpluses",
-      "url": "https://www.businessinsider.com/crude-oil-prices-today-supply-demand-outlook-forecast-hormuz-exports-2026-6",
-      "domain": "businessinsider.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "The Oil Benchmark Named Brent Is Losing Its Brent",
-      "url": "https://oilprice.com/Latest-Energy-News/World-News/The-Oil-Benchmark-Named-Brent-Is-Losing-Its-Brent.html",
-      "domain": "oilprice.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil Price Today ( June 25 ): Crude oil erases Iran war gains as Hormuz traffic boosts supply . What are experts saying ?",
-      "url": "https://economictimes.indiatimes.com/markets/commodities/news/oil-price-today-june-25-crude-oil-erases-iran-war-gains-as-hormuz-traffic-boosts-supply-what-are-experts-saying/articleshow/131980451.cms",
-      "domain": "economictimes.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil extends decline on rising Middle East supply",
-      "url": "https://www.geo.tv/latest/670205-oil-extends-decline-on-rising-middle-east-supply",
-      "domain": "geo.tv",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil prices continue falling , futures trading at lowest level since start of military conflict in Middle East",
-      "url": "https://news.am/en/news/1045694",
-      "domain": "news.am",
-      "publishedAt": null,
-      "buckets": [
-        "facility_event",
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Crude oil prices crash 42 % from April $126 peak . More downside coming ?",
-      "url": "https://economictimes.indiatimes.com/markets/commodities/news/crude-oil-prices-crash-42-from-aprils-126-peak-more-downside-coming/articleshow/131984296.cms",
-      "domain": "economictimes.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "The oil market has moved from fearing shortages to pricing in a very different future",
-      "url": "https://finance.yahoo.com/energy/articles/oil-market-moved-fearing-shortages-050337025.html",
-      "domain": "finance.yahoo.com",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil Holds Near Four - month Lows As Hormuz Traffic Improves",
-      "url": "https://www.rttnews.com/3662303/oil-holds-near-four-month-lows-as-hormuz-traffic-improves.aspx",
-      "domain": "rttnews.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil Holds Near Four - month Lows As Hormuz Traffic Improves",
-      "url": "https://www.rttnews.com/story.aspx?Id=3662303",
-      "domain": "rttnews.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Crude oil futures fall nearly 1 % as Hormuz tanker traffic improves",
-      "url": "https://www.thehindubusinessline.com/markets/commodities/crude-oil-futures-fall-nearly-1-as-hormuz-tanker-traffic-improves/article71140432.ece",
-      "domain": "thehindubusinessline.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Crude oil futures fall over 1 % as supply fears fade amid Iran deal optimism",
-      "url": "https://www.moneycontrol.com/news/business/markets/crude-oil-futures-fall-over-1-as-supply-fears-fade-amid-iran-deal-optimism-13958837.html",
-      "domain": "moneycontrol.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil extends decline on rising Middle East supply",
-      "url": "https://dunyanews.tv/en/Business/959158-oil-extends-decline-on-rising-middle-east-supply",
-      "domain": "dunyanews.tv",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "中东美伊再度爆发冲突 ， 油价攀升 - CFi . CN 中财网",
-      "url": "http://www.cfi.net.cn/p20260629000633.html",
-      "domain": "cfi.net.cn",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil prices slip as Hormuz traffic resumes ; Brent heads for nearly 7 % weekly loss",
-      "url": "https://www.moneycontrol.com/world/oil-prices-slip-as-hormuz-traffic-resumes-brent-heads-for-nearly-7-weekly-loss-article-13959194.html",
-      "domain": "moneycontrol.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    }
-  ],
-  "error": "GDELT DOC broad oil-news cache fetch failed after 1 attempt(s)",
+  "articles": [],
+  "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)",
   "promotionEligible": false,
   "productionDisplayApproved": false,
   "productionImpact": {
