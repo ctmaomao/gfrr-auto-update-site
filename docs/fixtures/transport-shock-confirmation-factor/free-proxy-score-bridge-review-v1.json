@@ -1,0 +1,89 @@
+{
+  "contractVersion": "transport-shock-free-proxy-score-bridge-review-v1",
+  "kind": "transport_shock_free_proxy_score_bridge_review",
+  "status": "bridge_review_route_freight_reclassified_high_frequency_still_blocked_no_score_write",
+  "generatedBy": "P-score-46 bridge-review fixture",
+  "inputsReviewed": {
+    "freeFreightAlternativeSourceReview": "transport-shock-free-freight-alternative-source-review-v1",
+    "satelliteHandlingPolicy": "transport-shock-satellite-handling-policy-v1",
+    "freeProxyScoreDesign": "transport-shock-confirmation-factor-free-proxy-score-design-v1",
+    "scoreIntegrationPreflight": "transport-shock-confirmation-factor-score-integration-preflight-v1"
+  },
+  "currentProductionState": {
+    "routeFreightConfirmation": "not_connected",
+    "highFrequencyPhysicalConfirmation": "blocked",
+    "eligibleForMainScore": false,
+    "scoreWriteApproved": false,
+    "productionWriteApproved": false
+  },
+  "bridgeDecision": {
+    "futurePathKey": "free_transport_pressure_proxy_low_weight_path",
+    "maxFutureMainScoreContributionPct": 3,
+    "routeFreightConfirmationCleared": false,
+    "routeFreightConfirmationRequiredForFreeProxyPath": false,
+    "routeFreightBlockerReclassification": "not_applicable_to_free_proxy_low_weight_path",
+    "trueRouteLevelTankerFreightStillUnavailable": true,
+    "unauthorizedScrapingApproved": false
+  },
+  "requiredPrerequisitesForBridgePreflight": {
+    "p44SourceReviewPresent": true,
+    "p44UnauthorizedScrapingBlocked": true,
+    "p19FreeProxyScoreDesignPresent": true,
+    "scoreCapAtOrBelow3Pct": true,
+    "freeProxyReadinessGateRequired": true,
+    "newsOnlyContributionPctZero": true,
+    "singleChokepointOnlyContributionPctZero": true,
+    "stalePortWatchContributionPctZero": true,
+    "noSingleSourceOverride": true
+  },
+  "hardBlockersThatRemain": [
+    {
+      "blockerId": "high_frequency_physical_confirmation",
+      "status": "hard_blocker_remains",
+      "clearedByThisBridge": false,
+      "clearancePath": "repeated_elevated_oil_thermal_or_separate_reviewed_thermal_bypass_policy"
+    }
+  ],
+  "blockedPaths": [
+    {
+      "pathKey": "licensed_route_level_tanker_freight_confirmation",
+      "reason": "source_rights_or_authorized_route_values_absent",
+      "routeFreightConfirmationApproved": false
+    },
+    {
+      "pathKey": "thermal_blocker_bypass",
+      "reason": "P45_does_not_approve_bypass",
+      "thermalBlockerBypassApproved": false
+    }
+  ],
+  "nextAllowedStep": "P-score-47 artifact-only free-proxy bridge preflight",
+  "approvalState": {
+    "bridgeReviewApprovedForArtifactPreflight": false,
+    "scoreIntegrationApproved": false,
+    "scoreWriteApproved": false,
+    "productionWriteApproved": false,
+    "frontendDisplayApproved": false,
+    "workflowAutomationApproved": false,
+    "workerRuntimeApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "boundaries": {
+    "bridgeReviewOnly": true,
+    "noUnauthorizedScraping": true,
+    "noRouteFreightConfirmationClear": true,
+    "noThermalBlockerBypass": true,
+    "noProductionWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreWrite": true,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  }
+}
