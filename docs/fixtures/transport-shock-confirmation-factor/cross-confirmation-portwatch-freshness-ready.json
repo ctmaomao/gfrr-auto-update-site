@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-portwatch-freshness-v1",
+  "status": "portwatch_freshness_probe_fresh_no_production_write",
+  "sourceMode": "fixture_or_manual_payload",
+  "latestDate": "2026-07-01",
+  "latestAgeDays": 1,
+  "supportsPortWatchFreshnessPass": true,
+  "missingCoreKeys": [],
+  "staleCoreKeys": [],
+  "preflightImpact": {
+    "canClearHardBlockerId": "portwatch_physical_proxy_freshness",
+    "cannotClearHardBlockerIds": [
+      "route_freight_confirmation",
+      "news_manual_gate",
+      "high_frequency_physical_confirmation"
+    ],
+    "scoreWriteApproved": false,
+    "eligibleForMainScore": false
+  }
+}

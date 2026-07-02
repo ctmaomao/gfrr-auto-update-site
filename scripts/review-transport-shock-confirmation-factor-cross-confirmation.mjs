@@ -8,11 +8,13 @@ const CANDIDATE_VERSION = 'transport-shock-candidate-v1';
 const NEWS_GATE_SCHEMA = 'transport-shock-confirmation-factor-news-manual-gate-v1';
 const HIGH_FREQUENCY_SCHEMA = 'transport-shock-confirmation-factor-high-frequency-confirmation-v1';
 const MARKET_PROJECTION_SCHEMA = 'transport-shock-market-confirmation-display-projection-v1';
+const PORTWATCH_FRESHNESS_SCHEMA = 'transport-shock-confirmation-factor-portwatch-freshness-v1';
 const ODP_SCHEMA = 'odp-1';
 const DEFAULT_RADAR = 'data/radar-data.json';
 const DEFAULT_NEWS_GATE = 'manual-artifacts/transport-shock-confirmation-factor/news-manual-gate-latest.json';
 const DEFAULT_HIGH_FREQUENCY = 'manual-artifacts/transport-shock-confirmation-factor/high-frequency-confirmation-latest.json';
 const DEFAULT_MARKET_PROJECTION = 'manual-artifacts/transport-shock-confirmation-factor/market-confirmation-display-projection-latest.json';
+const DEFAULT_PORTWATCH_FRESHNESS = 'manual-artifacts/transport-shock-confirmation-factor/portwatch-freshness-latest.json';
 const DEFAULT_OIL_DIRECTIONAL = 'data/oil-directional-pressure.json';
 const DEFAULT_OUTPUT = 'manual-artifacts/transport-shock-confirmation-factor/cross-confirmation-latest.json';
 const BOUNDARY =
@@ -27,6 +29,7 @@ Options:
   --news-gate <path>       P-score-36 news manual gate artifact. Default: ${DEFAULT_NEWS_GATE}
   --high-frequency <path>  P-score-35 high-frequency confirmation artifact. Default: ${DEFAULT_HIGH_FREQUENCY}
   --market-projection <path> Market-confirmation display projection artifact. Default: ${DEFAULT_MARKET_PROJECTION}
+  --portwatch-freshness <path> Optional P-score-40 PortWatch freshness probe. Default: ${DEFAULT_PORTWATCH_FRESHNESS}
   --oil-directional <path> ODP JSON. Default: ${DEFAULT_OIL_DIRECTIONAL}
   --output <path>          Ignored cross-confirmation artifact. Default: ${DEFAULT_OUTPUT}
   --max-portwatch-age-days <n> Maximum PortWatch latestAgeDays. Default: 7
@@ -77,6 +80,7 @@ function parseArgs(argv) {
     newsGate: DEFAULT_NEWS_GATE,
     highFrequency: DEFAULT_HIGH_FREQUENCY,
     marketProjection: DEFAULT_MARKET_PROJECTION,
+    portwatchFreshness: DEFAULT_PORTWATCH_FRESHNESS,
     oilDirectional: DEFAULT_OIL_DIRECTIONAL,
     output: DEFAULT_OUTPUT,
     maxPortWatchAgeDays: 7,
@@ -107,6 +111,7 @@ function parseArgs(argv) {
     else if (arg === '--news-gate') options.newsGate = nextValue();
     else if (arg === '--high-frequency') options.highFrequency = nextValue();
     else if (arg === '--market-projection') options.marketProjection = nextValue();
+    else if (arg === '--portwatch-freshness') options.portwatchFreshness = nextValue();
     else if (arg === '--oil-directional') options.oilDirectional = nextValue();
     else if (arg === '--output') options.output = nextValue();
     else if (arg === '--max-portwatch-age-days') options.maxPortWatchAgeDays = Number(nextValue());
@@ -119,6 +124,9 @@ function parseArgs(argv) {
   if (!isManualOrFixtureInputPath(options.newsGate)) throw new Error(`Refusing to read news gate outside allowed paths: ${options.newsGate}`);
   if (!isManualOrFixtureInputPath(options.highFrequency)) throw new Error(`Refusing to read high-frequency artifact outside allowed paths: ${options.highFrequency}`);
   if (!isManualOrFixtureInputPath(options.marketProjection)) throw new Error(`Refusing to read market projection outside allowed paths: ${options.marketProjection}`);
+  if (!isManualOrFixtureInputPath(options.portwatchFreshness)) {
+    throw new Error(`Refusing to read PortWatch freshness artifact outside allowed paths: ${options.portwatchFreshness}`);
+  }
   if (!isOilDirectionalInputPath(options.oilDirectional)) {
     throw new Error(`Refusing to read oil directional outside allowed paths: ${options.oilDirectional}`);
   }
@@ -249,7 +257,38 @@ function marketProjectionReady(marketInput) {
   };
 }
 
-function buildCandidateRows(radarInput, marketInput, options) {
+function portWatchFreshnessProbeReady(portwatchInput) {
+  const probe = portwatchInput?.data;
+  const blockers = [];
+  if (!portwatchInput?.present) blockers.push('portwatch_freshness_probe_missing');
+  if (probe?.schemaVersion !== PORTWATCH_FRESHNESS_SCHEMA) blockers.push('portwatch_freshness_schema_invalid');
+  if (probe?.preflightImpact?.scoreWriteApproved === true || probe?.preflightImpact?.eligibleForMainScore === true) {
+    blockers.push('portwatch_freshness_score_approval_claimed');
+  }
+  if (probe?.preflightImpact?.canClearHardBlockerId !== 'portwatch_physical_proxy_freshness') {
+    blockers.push('portwatch_freshness_clears_wrong_blocker');
+  }
+  if (probe?.supportsPortWatchFreshnessPass !== true) blockers.push('portwatch_freshness_not_supported');
+  return {
+    ready: blockers.length === 0,
+    blockers,
+    evidence: {
+      inputPath: portwatchInput?.path ?? null,
+      inputPresent: portwatchInput?.present === true,
+      schemaVersion: probe?.schemaVersion ?? null,
+      status: probe?.status ?? null,
+      sourceMode: probe?.sourceMode ?? null,
+      latestDate: probe?.latestDate ?? null,
+      latestAgeDays: probe?.latestAgeDays ?? null,
+      supportsPortWatchFreshnessPass: probe?.supportsPortWatchFreshnessPass === true,
+      canClearHardBlockerId: probe?.preflightImpact?.canClearHardBlockerId ?? null,
+      cannotClearHardBlockerIds: probe?.preflightImpact?.cannotClearHardBlockerIds ?? [],
+      blockers
+    }
+  };
+}
+
+function buildCandidateRows(radarInput, marketInput, portwatchInput, options) {
   const radar = radarInput.data;
   const energyTransport = radar?.macroDrivers?.energyTransport;
   const candidate = energyTransport?.transportShockCandidate;
@@ -263,7 +302,9 @@ function buildCandidateRows(radarInput, marketInput, options) {
 
   const latestAgeDays = asNumber(energyTransport?.latestAgeDays);
   const sourceStatus = energyTransport?.sourceStatus?.chokepoints ?? energyTransport?.sourceStatus ?? null;
-  const fresh = sourceStatus === 'live' && latestAgeDays !== null && latestAgeDays <= options.maxPortWatchAgeDays;
+  const productionFresh = sourceStatus === 'live' && latestAgeDays !== null && latestAgeDays <= options.maxPortWatchAgeDays;
+  const portwatchProbe = portWatchFreshnessProbeReady(portwatchInput);
+  const fresh = productionFresh || portwatchProbe.ready;
   const candidateElevated = candidate?.status === 'elevated_watch' || candidate?.status === 'high_watch';
   const market = marketProjectionReady(marketInput);
   const marketConnected = candidate?.marketConfirmation === 'connected' || market.ready;
@@ -295,15 +336,20 @@ function buildCandidateRows(radarInput, marketInput, options) {
       labelZh: 'PortWatch 物理代理新鲜度',
       status: fresh ? 'pass' : 'blocker',
       severity: fresh ? 'supporting' : 'hard_blocker',
-      reasonZh: fresh
-        ? 'PortWatch chokepoint proxy 为 live 且数据龄在阈值内,可作为交叉确认观察输入。'
-        : 'PortWatch chokepoint proxy 未达到今日交叉确认新鲜度要求,只能保留为展示候选背景。',
+      reasonZh: fresh && productionFresh
+        ? 'Production PortWatch chokepoint proxy 为 live 且数据龄在阈值内,可作为交叉确认观察输入。'
+        : fresh
+          ? 'P-score-40 PortWatch freshness probe 显示 live source 新鲜,可清理 PortWatch freshness blocker;production snapshot 仍需后续刷新。'
+          : 'PortWatch chokepoint proxy 未达到今日交叉确认新鲜度要求,只能保留为展示候选背景。',
       evidence: {
-        sourceStatus,
-        latestDate: energyTransport?.latestDate ?? null,
-        latestAgeDays,
+        productionSourceStatus: sourceStatus,
+        productionLatestDate: energyTransport?.latestDate ?? null,
+        productionLatestAgeDays: latestAgeDays,
         maxPortWatchAgeDays: options.maxPortWatchAgeDays,
-        candidateElevated
+        candidateElevated,
+        productionFresh,
+        manualProbeReady: portwatchProbe.ready,
+        manualProbe: portwatchProbe.evidence
       }
     }),
     row({
@@ -424,7 +470,7 @@ function buildOdpAnchorRow(odpInput) {
 
 function buildReview(inputs, options) {
   const rows = [
-    ...buildCandidateRows(inputs.radar, inputs.marketProjection, options),
+    ...buildCandidateRows(inputs.radar, inputs.marketProjection, inputs.portwatchFreshness, options),
     buildNewsGateRow(inputs.newsGate),
     buildHighFrequencyRow(inputs.highFrequency),
     buildOdpAnchorRow(inputs.oilDirectional)
@@ -491,6 +537,7 @@ function main() {
       newsGate: readJsonInput(options.newsGate, { optional: true }),
       highFrequency: readJsonInput(options.highFrequency, { optional: true }),
       marketProjection: readJsonInput(options.marketProjection, { optional: true }),
+      portwatchFreshness: readJsonInput(options.portwatchFreshness, { optional: true }),
       oilDirectional: readJsonInput(options.oilDirectional)
     };
     const review = buildReview(inputs, options);

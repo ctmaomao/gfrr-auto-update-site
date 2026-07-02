@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-portwatch-freshness-v1",
+  "status": "portwatch_freshness_probe_stale_or_partial_no_production_write",
+  "sourceMode": "fixture_or_manual_payload",
+  "latestDate": "2026-06-01",
+  "latestAgeDays": 31,
+  "supportsPortWatchFreshnessPass": false,
+  "missingCoreKeys": [],
+  "staleCoreKeys": ["suez", "babElMandeb", "malacca", "hormuz", "capeGoodHope", "gibraltar"],
+  "preflightImpact": {
+    "canClearHardBlockerId": null,
+    "cannotClearHardBlockerIds": [
+      "route_freight_confirmation",
+      "news_manual_gate",
+      "high_frequency_physical_confirmation"
+    ],
+    "scoreWriteApproved": false,
+    "eligibleForMainScore": false
+  }
+}
