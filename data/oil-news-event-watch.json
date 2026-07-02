@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-02T18:16:21.117Z",
+  "generatedAt": "2026-07-02T20:04:34.763Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -31,7 +31,7 @@
             "label": "GDELT broad oil-news cache query",
             "status": "stale_cache",
             "articleCount": 32,
-            "error": "GDELT DOC broad oil-news cache fetch failed after 1 attempt(s)"
+            "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
           }
         ]
       },
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-07-01T02:41:41.000Z",
-    "latestArticleAgeHours": 39.6,
+    "latestArticleAgeHours": 41.4,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 96,
-    "uniqueArticleCount": 94,
+    "uniqueArticleCount": 95,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 56,
+      "articleCount": 57,
       "sourceCount": 3,
-      "weightedSignal": 504,
+      "weightedSignal": 513,
       "topArticles": [
         {
           "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
@@ -351,9 +351,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 30,
+      "articleCount": 28,
       "sourceCount": 3,
-      "weightedSignal": 180,
+      "weightedSignal": 168,
       "topArticles": [
         {
           "title": "Oil Falls Back to Pre - War Levels as Hormuz Shipping Rebounds",
@@ -470,9 +470,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 54,
+      "articleCount": 55,
       "sourceCount": 3,
-      "weightedSignal": 243,
+      "weightedSignal": 247.5,
       "topArticles": [
         {
           "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
@@ -632,27 +632,6 @@
       ]
     },
     {
-      "title": "Hormuz Tanker Traffic Recovers as Tensions Ease | OilPrice.com",
-      "url": "https://oilprice.com/Latest-Energy-News/World-News/Hormuz-Tanker-Traffic-Recovers-as-Tensions-Ease.html",
-      "domain": "oilprice.com",
-      "publishedAt": "2026-06-30T10:00:00.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "chokepoint_shipping",
-        "facility_supply_disruption"
-      ]
-    },
-    {
       "title": "Oil prices rise as U.S. and Iran reach deal to halt attacks, U.S. oil above $70 per barrel again",
       "url": "https://cnbc.com/2026/06/29/oil-prices-wti-brent-crude-us-iran-strikes-strait-hormuz-talks.html",
       "domain": "cnbc.com",
@@ -711,10 +690,10 @@
       ]
     },
     {
-      "title": "Russia Adds New Vessel To Dark Fleet Amid Arctic 2 LNG Ramp Up | OilPrice.com",
-      "url": "https://oilprice.com/Latest-Energy-News/World-News/Russia-Adds-New-Vessel-To-Dark-Fleet-Amid-Arctic-2-LNG-Ramp-Up.html",
+      "title": "Oil Prices Climb as U.S.-Iran Flare-Up Shakes Market Complacency | OilPrice.com",
+      "url": "https://oilprice.com/Latest-Energy-News/World-News/Oil-Prices-Climb-as-US-Iran-Flare-Up-Shakes-Market-Complacency.html",
       "domain": "oilprice.com",
-      "publishedAt": "2026-06-29T18:30:00.000Z",
+      "publishedAt": "2026-06-29T10:31:00.000Z",
       "sources": [
         "brave"
       ],
@@ -728,6 +707,25 @@
       ],
       "queryIds": [
         "sanctions_shadow_fleet"
+      ]
+    },
+    {
+      "title": "Hormuz Tanker Traffic Recovers as Tensions Ease | OilPrice.com",
+      "url": "https://oilprice.com/Latest-Energy-News/World-News/Hormuz-Tanker-Traffic-Recovers-as-Tensions-Ease.html",
+      "domain": "oilprice.com",
+      "publishedAt": "2026-06-30T10:00:00.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
       ]
     },
     {
@@ -856,12 +854,12 @@
       "risk_escalation": 4,
       "risk_deescalation": 2,
       "mixed_or_contested": 0,
-      "market_reaction_only": 5,
-      "unclear_or_high_claim": 1
+      "market_reaction_only": 4,
+      "unclear_or_high_claim": 2
     },
     "eventTypeCounts": {
-      "chokepoint": 7,
-      "shipping": 2,
+      "chokepoint": 8,
+      "shipping": 1,
       "sanctions": 0,
       "facility": 1,
       "supply": 2,
@@ -881,7 +879,7 @@
       "details": [
         {
           "eventType": "chokepoint",
-          "claimCount": 7,
+          "claimCount": 8,
           "riskEscalation": 3,
           "riskDeescalation": 0,
           "mixedOrContested": 0,
@@ -889,7 +887,7 @@
         },
         {
           "eventType": "shipping",
-          "claimCount": 2,
+          "claimCount": 1,
           "riskEscalation": 1,
           "riskDeescalation": 0,
           "mixedOrContested": 0,
