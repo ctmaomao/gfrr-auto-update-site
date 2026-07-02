@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-02T14:41:46.926Z",
+  "generatedAt": "2026-07-02T18:16:21.117Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -31,7 +31,7 @@
             "label": "GDELT broad oil-news cache query",
             "status": "stale_cache",
             "articleCount": 32,
-            "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
+            "error": "GDELT DOC broad oil-news cache fetch failed after 1 attempt(s)"
           }
         ]
       },
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-07-01T02:41:41.000Z",
-    "latestArticleAgeHours": 36,
+    "latestArticleAgeHours": 39.6,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 96,
-    "uniqueArticleCount": 96,
+    "uniqueArticleCount": 94,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 57,
+      "articleCount": 56,
       "sourceCount": 3,
-      "weightedSignal": 513,
+      "weightedSignal": 504,
       "topArticles": [
         {
           "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
@@ -255,15 +255,15 @@
           ]
         },
         {
-          "title": "French Forces Detain Tanker in Continuing Crackdown on Shadow Fleet - The Maritime Executive",
-          "url": "https://maritime-executive.com/article/french-forces-detain-tanker-in-continuing-crackdown-on-shadow-fleet",
-          "domain": "maritime-executive.com",
-          "publishedAt": "2026-06-25T16:48:33.000Z",
+          "title": "Forget Hormuz. The Shadow Fleet Is The Next Maritime Crisis. - Forbes",
+          "url": "https://www.forbes.com/sites/jillgoldenziel/2026/06/26/forget-hormuz-the-shadow-fleet-is-the-next-maritime-crisis/",
+          "domain": "forbes.com",
+          "publishedAt": "2026-06-26T00:00:00.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
-            "facility_event",
+            "chokepoint",
             "sanctions",
             "tanker_shipping"
           ],
@@ -272,10 +272,10 @@
           ]
         },
         {
-          "title": "Forget Hormuz. The Shadow Fleet Is The Next Maritime Crisis. - Forbes",
-          "url": "https://www.forbes.com/sites/jillgoldenziel/2026/06/26/forget-hormuz-the-shadow-fleet-is-the-next-maritime-crisis/",
-          "domain": "forbes.com",
-          "publishedAt": "2026-06-26T00:00:00.000Z",
+          "title": "Ukraine Issues New Warning in Letter to the IMO for Ships Aiding Russia - The Maritime Executive",
+          "url": "https://maritime-executive.com/article/ukraine-issues-new-warning-in-letter-to-the-imo-for-ships-aiding-russia",
+          "domain": "maritime-executive.com",
+          "publishedAt": "2026-06-30T18:02:30.000Z",
           "sources": [
             "tavily"
           ],
@@ -292,9 +292,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 23,
+      "articleCount": 21,
       "sourceCount": 3,
-      "weightedSignal": 207,
+      "weightedSignal": 189,
       "topArticles": [
         {
           "title": "Oil trade stabilises amid US - Iran halt to renewed hostilities",
@@ -351,9 +351,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 32,
+      "articleCount": 30,
       "sourceCount": 3,
-      "weightedSignal": 192,
+      "weightedSignal": 180,
       "topArticles": [
         {
           "title": "Oil Falls Back to Pre - War Levels as Hormuz Shipping Rebounds",
@@ -410,9 +410,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 46,
+      "articleCount": 44,
       "sourceCount": 3,
-      "weightedSignal": 207,
+      "weightedSignal": 198,
       "topArticles": [
         {
           "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
@@ -470,9 +470,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 56,
+      "articleCount": 54,
       "sourceCount": 3,
-      "weightedSignal": 252,
+      "weightedSignal": 243,
       "topArticles": [
         {
           "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
@@ -531,9 +531,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 36,
+      "articleCount": 37,
       "sourceCount": 3,
-      "weightedSignal": 108,
+      "weightedSignal": 111,
       "topArticles": [
         {
           "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
@@ -632,6 +632,27 @@
       ]
     },
     {
+      "title": "Hormuz Tanker Traffic Recovers as Tensions Ease | OilPrice.com",
+      "url": "https://oilprice.com/Latest-Energy-News/World-News/Hormuz-Tanker-Traffic-Recovers-as-Tensions-Ease.html",
+      "domain": "oilprice.com",
+      "publishedAt": "2026-06-30T10:00:00.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping",
+        "facility_supply_disruption"
+      ]
+    },
+    {
       "title": "Oil prices rise as U.S. and Iran reach deal to halt attacks, U.S. oil above $70 per barrel again",
       "url": "https://cnbc.com/2026/06/29/oil-prices-wti-brent-crude-us-iran-strikes-strait-hormuz-talks.html",
       "domain": "cnbc.com",
@@ -710,25 +731,6 @@
       ]
     },
     {
-      "title": "Hormuz Tanker Traffic Recovers as Tensions Ease | OilPrice.com",
-      "url": "https://oilprice.com/Latest-Energy-News/World-News/Hormuz-Tanker-Traffic-Recovers-as-Tensions-Ease.html",
-      "domain": "oilprice.com",
-      "publishedAt": "2026-06-30T10:00:00.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
       "title": "Gulf Producers Race to Load Oil and LNG as Hormuz Stays Open | OilPrice.com",
       "url": "https://oilprice.com/Latest-Energy-News/World-News/Gulf-Producers-Race-to-Load-Oil-and-LNG-as-Hormuz-Stays-Open.html",
       "domain": "oilprice.com",
@@ -767,25 +769,6 @@
       ]
     },
     {
-      "title": "Oil falls below $75 as Hormuz traffic increases amid U.S.-Iran peace talks - Oil & Gas 360",
-      "url": "https://www.oilandgas360.com/oil-falls-below-75-as-hormuz-traffic-increases-amid-u-s-iran-peace-talks/",
-      "domain": "oilandgas360.com",
-      "publishedAt": "2026-06-25T15:30:49.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "market_reaction"
-      ]
-    },
-    {
       "title": "U.S. refinery accidents, including in Pa., raise questions about cost impact as fuel demand rises",
       "url": "https://inquirer.com/business/refinery-accidents-fuel-costs-monroe-energy-20260629.html",
       "domain": "inquirer.com",
@@ -821,6 +804,24 @@
       ],
       "queryIds": [
         "sanctions_shadow_fleet"
+      ]
+    },
+    {
+      "title": "Saudi Aramco helicopter crash kills 14 nationals - CNN",
+      "url": "https://www.cnn.com/2026/06/28/business/saudi-aramco-helicopter-crash-intl",
+      "domain": "cnn.com",
+      "publishedAt": "2026-06-28T14:41:40.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
       ]
     }
   ],
@@ -870,8 +871,8 @@
     "sourceTierCounts": {
       "primary_wire_or_official": 1,
       "major_financial_media": 3,
-      "industry_trade": 4,
-      "aggregator_or_blog": 4,
+      "industry_trade": 3,
+      "aggregator_or_blog": 5,
       "low_confidence": 0
     },
     "contradiction": {
