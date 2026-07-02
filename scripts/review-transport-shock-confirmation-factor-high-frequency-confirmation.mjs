@@ -6,7 +6,10 @@ import process from 'node:process';
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-high-frequency-confirmation-v1';
 const NEWS_SCHEMA = 'oil-news-claim-ledger-p52';
 const THERMAL_SCHEMA = 'oil-thermal-watch-1';
+const NEWS_MANUAL_GATE_SCHEMA = 'transport-shock-confirmation-factor-news-manual-gate-v1';
 const DEFAULT_NEWS_LEDGER = 'manual-artifacts/oil-news/oil-news-claim-ledger-latest.json';
+const DEFAULT_NEWS_MANUAL_GATE =
+  'manual-artifacts/transport-shock-confirmation-factor/news-manual-gate-latest.json';
 const DEFAULT_OIL_THERMAL = 'data/oil-thermal-watch.json';
 const DEFAULT_OUTPUT = 'manual-artifacts/transport-shock-confirmation-factor/high-frequency-confirmation-latest.json';
 const BOUNDARY =
@@ -18,6 +21,7 @@ function usage() {
 
 Options:
   --news-ledger <path>   Oil News claim ledger review. Default: ${DEFAULT_NEWS_LEDGER}
+  --news-manual-gate <path> Optional news manual gate artifact. Default: ${DEFAULT_NEWS_MANUAL_GATE}
   --oil-thermal <path>   Oil Thermal watch/probe artifact. Default: ${DEFAULT_OIL_THERMAL}
   --output <path>        Ignored review artifact. Default: ${DEFAULT_OUTPUT}
   --json                 Print full JSON review to stdout.
@@ -26,6 +30,7 @@ Options:
 
 Boundary:
   Reads only data/oil-thermal-watch.json, manual-artifacts/oil-news/,
+  manual-artifacts/transport-shock-confirmation-factor/,
   manual-artifacts/oil-thermal/, docs/fixtures/oil-news/,
   docs/fixtures/oil-thermal/, or docs/fixtures/transport-shock-confirmation-factor/.
   Writes only manual-artifacts/transport-shock-confirmation-factor/.
@@ -55,6 +60,12 @@ function isNewsInputPath(filePath) {
   return relativePath?.startsWith('manual-artifacts/oil-news/') === true || isFixturePath(filePath);
 }
 
+function isNewsManualGateInputPath(filePath) {
+  const relativePath = safeRelativePath(filePath);
+  return relativePath?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true
+    || isFixturePath(filePath);
+}
+
 function isThermalInputPath(filePath) {
   const relativePath = safeRelativePath(filePath);
   return relativePath === DEFAULT_OIL_THERMAL
@@ -65,6 +76,7 @@ function isThermalInputPath(filePath) {
 function parseArgs(argv) {
   const options = {
     newsLedger: DEFAULT_NEWS_LEDGER,
+    newsManualGate: DEFAULT_NEWS_MANUAL_GATE,
     oilThermal: DEFAULT_OIL_THERMAL,
     output: DEFAULT_OUTPUT,
     printJson: false,
@@ -92,6 +104,7 @@ function parseArgs(argv) {
       return value;
     };
     if (arg === '--news-ledger') options.newsLedger = nextValue();
+    else if (arg === '--news-manual-gate') options.newsManualGate = nextValue();
     else if (arg === '--oil-thermal') options.oilThermal = nextValue();
     else if (arg === '--output') options.output = nextValue();
     else throw new Error(`Unknown argument: ${arg}`);
@@ -99,6 +112,9 @@ function parseArgs(argv) {
 
   if (!isNewsInputPath(options.newsLedger)) {
     throw new Error(`Refusing to read news ledger outside allowed paths: ${options.newsLedger}`);
+  }
+  if (!isNewsManualGateInputPath(options.newsManualGate)) {
+    throw new Error(`Refusing to read news manual gate outside allowed paths: ${options.newsManualGate}`);
   }
   if (!isThermalInputPath(options.oilThermal)) {
     throw new Error(`Refusing to read oil thermal artifact outside allowed paths: ${options.oilThermal}`);
@@ -166,7 +182,38 @@ function boundaries() {
   };
 }
 
-function evaluateNews(input) {
+function evaluateNewsManualGate(input) {
+  const gate = input.data;
+  if (!input.present) {
+    return {
+      inputPath: input.path,
+      inputPresent: false,
+      ready: false,
+      status: 'missing',
+      gateClear: false,
+      blockers: ['news_manual_gate_missing']
+    };
+  }
+  const blockers = [];
+  if (gate?.schemaVersion !== NEWS_MANUAL_GATE_SCHEMA) blockers.push('news_manual_gate_schema_invalid');
+  if (gate?.gateClear !== true) blockers.push('news_manual_gate_not_clear');
+  if (gate?.scoreWriteApproved === true || gate?.eligibleForMainScore === true) {
+    blockers.push('news_manual_gate_score_approval_claimed');
+  }
+  return {
+    inputPath: input.path,
+    inputPresent: true,
+    ready: blockers.length === 0,
+    status: gate?.status ?? null,
+    gateClear: gate?.gateClear === true,
+    manualReviewBlockers: gate?.manualReviewBlockers ?? null,
+    rawRuleBlockers: gate?.rawRuleBlockers ?? null,
+    operatorReviewApplied: gate?.operatorReviewApplied === true,
+    blockers
+  };
+}
+
+function evaluateNews(input, manualGateInput) {
   const ledger = input.data;
   if (!input.present) {
     return {
@@ -208,14 +255,25 @@ function evaluateNews(input) {
   if (manualBlockers.length > 0) {
     warnings.push('news_claims_remain_manual_review_required');
   }
+  const manualGate = evaluateNewsManualGate(manualGateInput);
+  const manualGateClearsReview = manualGate.ready && manualBlockers.length > 0;
+  if (manualGateClearsReview) {
+    const warningIndex = warnings.indexOf('news_claims_remain_manual_review_required');
+    if (warningIndex >= 0) warnings.splice(warningIndex, 1);
+    warnings.push('news_manual_gate_applied_for_cross_confirmation_only');
+  }
 
   return {
     inputPath: input.path,
     inputPresent: true,
-    status: repeatedElevatedObservation ? 'repeated_elevated_manual_review' : 'not_repeated_elevated',
+    status: repeatedElevatedObservation
+      ? (manualGateClearsReview ? 'repeated_elevated_manual_gate_clear' : 'repeated_elevated_manual_review')
+      : 'not_repeated_elevated',
     repeatedElevatedObservation,
-    manualReviewRequired: manualBlockers.length > 0,
-    manualBlockers,
+    manualReviewRequired: manualBlockers.length > 0 && !manualGateClearsReview,
+    manualBlockers: manualGateClearsReview ? [] : manualBlockers,
+    rawManualBlockers: manualBlockers,
+    manualGate,
     blockers,
     warnings,
     evidence: {
@@ -298,7 +356,7 @@ function evaluateThermal(input) {
 }
 
 function buildReview(options, inputs) {
-  const news = evaluateNews(inputs.newsLedger);
+  const news = evaluateNews(inputs.newsLedger, inputs.newsManualGate);
   const thermal = evaluateThermal(inputs.oilThermal);
   const readinessBlockers = [
     ...news.blockers,
@@ -312,6 +370,9 @@ function buildReview(options, inputs) {
   const status = newsReady && thermalReady
     ? 'high_frequency_confirmation_ready_for_separate_review_no_score_write'
     : (partialProgress ? 'partial_progress_keep_display_only' : 'not_ready_keep_display_only');
+  const partialRecommendation = newsReady
+    ? 'news_gate_clear_and_thermal_repeated_observed_wait_for_elevated_thermal_confirmation'
+    : 'news_repeated_elevated_and_thermal_repeated_observed_but_keep_manual_review';
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -319,11 +380,12 @@ function buildReview(options, inputs) {
     recommendation: status === 'high_frequency_confirmation_ready_for_separate_review_no_score_write'
       ? 'open_separate_review_for_confirmation_design_keep_no_score_write'
       : (partialProgress
-        ? 'news_repeated_elevated_and_thermal_repeated_observed_but_keep_manual_review'
+        ? partialRecommendation
         : 'collect_more_cross_source_repeated_observations_keep_display_only'),
     generatedAt: new Date().toISOString(),
     inputPaths: {
       newsLedger: safeRelativePath(options.newsLedger),
+      newsManualGate: safeRelativePath(options.newsManualGate),
       oilThermal: safeRelativePath(options.oilThermal)
     },
     news,
@@ -377,6 +439,7 @@ function main() {
     const options = parseArgs(process.argv.slice(2));
     const review = buildReview(options, {
       newsLedger: readJsonInput(options.newsLedger),
+      newsManualGate: readJsonInput(options.newsManualGate),
       oilThermal: readJsonInput(options.oilThermal)
     });
     if (options.writeOutput) writeJson(options.output, review);

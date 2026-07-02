@@ -422,14 +422,28 @@ function buildHighFrequencyRow(highFrequencyInput) {
   if (hf?.summary?.thermalElevatedRepeatedObservation !== true) blockers.push('thermal_elevated_repeated_observation_missing');
   if (Array.isArray(hf?.blockers)) blockers.push(...hf.blockers);
   const uniqueBlockers = Array.from(new Set(blockers));
+  const highFrequencyBlockerReason = () => {
+    if (uniqueBlockers.length === 0) {
+      return '新闻重复升高与卫星/设施升高重复观察均通过,仍只可作为审阅输入。';
+    }
+    const missingParts = [];
+    if (uniqueBlockers.includes('news_manual_review_required')) missingParts.push('新闻仍需人工复核');
+    if (
+      uniqueBlockers.includes('thermal_elevated_repeated_observation_missing')
+      || uniqueBlockers.includes('thermal_repeated_observation_missing')
+      || uniqueBlockers.includes('oil_thermal_baseline_not_established')
+    ) {
+      missingParts.push('卫星/设施热异常确认不足');
+    }
+    if (missingParts.length === 0) missingParts.push('输入或边界检查未通过');
+    return `高频确认未完成:${missingParts.join('、')}。`;
+  };
   return row({
     id: 'high_frequency_physical_confirmation',
     labelZh: '新闻/卫星高频交叉确认',
     status: uniqueBlockers.length === 0 ? 'pass' : 'blocker',
     severity: uniqueBlockers.length === 0 ? 'supporting' : 'hard_blocker',
-    reasonZh: uniqueBlockers.length === 0
-      ? '新闻重复升高与卫星/设施升高重复观察均通过,仍只可作为审阅输入。'
-      : '高频确认未完成:新闻仍需人工复核或卫星设施未出现升高重复观察。',
+    reasonZh: highFrequencyBlockerReason(),
     evidence: {
       inputPath: highFrequencyInput.path,
       schemaVersion: hf?.schemaVersion ?? null,
