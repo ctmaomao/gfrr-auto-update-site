@@ -1,0 +1,169 @@
+{
+  "contractVersion": "transport-shock-free-freight-alternative-source-review-v1",
+  "kind": "transport_shock_free_freight_alternative_source_review",
+  "status": "source_review_free_alternatives_no_route_freight_confirmation",
+  "generatedBy": "P-score-44 source-review fixture",
+  "currentProductionState": {
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "eligibleForMainScore": false,
+    "freeProxyScoreApproved": false
+  },
+  "sourceFamilies": [
+    {
+      "sourceKey": "imf_portwatch_daily_chokepoints",
+      "sourceType": "public_ais_chokepoint_dataset",
+      "url": "https://portwatch.imf.org/pages/data-and-methodology",
+      "classification": "automatable_existing_context",
+      "candidateRole": "chokepoint_physical_proxy",
+      "routeFreightConfirmationApproved": false,
+      "liveFetchApprovedByThisReview": false,
+      "productionWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "stockq_bdti_bcti_bdi",
+      "sourceType": "public_broad_freight_context",
+      "url": "https://www.stockq.org/",
+      "classification": "existing_display_context",
+      "candidateRole": "broad_tanker_freight_direction_context",
+      "routeFreightConfirmationApproved": false,
+      "liveFetchApprovedByThisReview": false,
+      "productionWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "noaa_marinecadastre_ais",
+      "sourceType": "public_us_waters_ais_csv",
+      "url": "https://hub.marinecadastre.gov/pages/vesseltraffic",
+      "classification": "candidate_after_source_terms_review",
+      "candidateRole": "us_gulf_tanker_movement_proxy",
+      "coverageLimitation": "us_waters_not_hormuz_route_freight",
+      "routeFreightConfirmationApproved": false,
+      "rawAisRedistributionApproved": false,
+      "liveFetchApprovedByThisReview": false,
+      "productionWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "suez_canal_authority_statistics",
+      "sourceType": "official_slow_chokepoint_statistics",
+      "url": "https://www.suezcanal.gov.eg/English/Navigation/Pages/NavigationStatistics.aspx",
+      "classification": "candidate_after_source_terms_review",
+      "candidateRole": "slow_suez_transit_context",
+      "routeFreightConfirmationApproved": false,
+      "liveFetchApprovedByThisReview": false,
+      "productionWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "panama_canal_authority_statistics",
+      "sourceType": "official_slow_chokepoint_statistics",
+      "url": "https://pancanal.com/en/statistics/",
+      "classification": "candidate_after_source_terms_review",
+      "candidateRole": "slow_panama_transit_context",
+      "routeFreightConfirmationApproved": false,
+      "liveFetchApprovedByThisReview": false,
+      "productionWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "eia_iea_chokepoint_exposure",
+      "sourceType": "public_static_exposure_context",
+      "url": "https://www.eia.gov/international/analysis/special-topics/world_oil_transit_Chokepoints",
+      "secondaryUrl": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
+      "classification": "static_weight_context",
+      "candidateRole": "chokepoint_importance_weight_context",
+      "routeFreightConfirmationApproved": false,
+      "liveFetchApprovedByThisReview": false,
+      "productionWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "cme_td3c_delayed_product_page",
+      "sourceType": "public_product_page_reference",
+      "url": "https://www.cmegroup.com/markets/energy/freight/freight-route-td3c-platts.html",
+      "classification": "link_only_manual_reference",
+      "candidateRole": "td3c_route_reference",
+      "routeFreightConfirmationApproved": false,
+      "automatedValueCaptureApproved": false,
+      "liveFetchApprovedByThisReview": false,
+      "productionWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "ice_td3c_product_page",
+      "sourceType": "public_product_page_reference",
+      "url": "https://www.ice.com/products/67129839/TD3C-FFA-Middle-East-Gulf-to-China-Baltic-Average-Price-Options",
+      "classification": "link_only_manual_reference",
+      "candidateRole": "td3c_route_reference",
+      "routeFreightConfirmationApproved": false,
+      "automatedValueCaptureApproved": false,
+      "liveFetchApprovedByThisReview": false,
+      "productionWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "solactive_breakwave_wet_freight_index",
+      "sourceType": "public_index_reference",
+      "url": "https://www.solactive.com/index/DE000SL0HLG3/",
+      "classification": "link_only_manual_reference",
+      "candidateRole": "wet_freight_market_proxy_reference",
+      "routeFreightConfirmationApproved": false,
+      "automatedValueCaptureApproved": false,
+      "liveFetchApprovedByThisReview": false,
+      "productionWriteApproved": false,
+      "scoreApproved": false
+    },
+    {
+      "sourceKey": "baltic_daily_td_tc_route_assessments",
+      "sourceType": "licensed_daily_route_assessment_boundary",
+      "url": "https://www.balticexchange.com/en/data-services/market-information0/tankers-services.html",
+      "classification": "blocked_without_explicit_source_rights",
+      "candidateRole": "not_approved",
+      "routeFreightConfirmationApproved": false,
+      "automatedValueCaptureApproved": false,
+      "routeValueRedistributionApproved": false,
+      "liveFetchApprovedByThisReview": false,
+      "productionWriteApproved": false,
+      "scoreApproved": false
+    }
+  ],
+  "approvedFuturePath": {
+    "pathKey": "free_transport_pressure_proxy",
+    "notA": "route_freight_confirmation",
+    "maxFutureMainScoreContributionPct": 3,
+    "requiresSeparateScoreDesignReview": true,
+    "clearsRouteFreightConfirmation": false
+  },
+  "approvalState": {
+    "unauthorizedScrapingApproved": false,
+    "sourceSelectionFinalized": false,
+    "liveFetchApproved": false,
+    "productionDataWriteApproved": false,
+    "workflowAutomationApproved": false,
+    "frontendDisplayApproved": false,
+    "scoreWriteApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "boundaries": {
+    "reviewOnly": true,
+    "noUnauthorizedScraping": true,
+    "noRouteFreightConfirmation": true,
+    "noLiveFetch": true,
+    "noProductionWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreWrite": true,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "nextAllowedStep": "transport_shock_satellite_handling_policy_or_source_terms_review_no_score_write"
+}
