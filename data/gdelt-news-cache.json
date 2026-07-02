@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-07-02T04:43:15.745Z",
+  "generatedAt": "2026-07-02T23:40:25.886Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
-  "status": "stale",
-  "sourceStatus": "stale",
-  "requestMode": "stale_cache_after_fetch_error",
+  "status": "ok",
+  "sourceStatus": "live",
+  "requestMode": "live_broad_query",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 360,
@@ -39,37 +39,22 @@
     "minIntervalMs": 8000,
     "maxRetries": 0,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 16039,
+    "elapsedMs": 13443,
     "errorCode": null
   },
   "aggregate": {
     "articleCount": 32,
     "bucketCounts": {
-      "chokepoint": 10,
+      "chokepoint": 12,
       "sanctions": 0,
       "supply_disruption": 2,
-      "facility_event": 3,
-      "tanker_shipping": 5,
-      "middle_east_risk": 13,
-      "market_reaction": 13
+      "facility_event": 1,
+      "tanker_shipping": 4,
+      "middle_east_risk": 11,
+      "market_reaction": 12
     }
   },
   "articles": [
-    {
-      "title": "oil prices today : Why are oil prices up today , and will Brent , US WTI crude futures continue to rise or fall again ? Cargo ship attack near Oman lifts crude prices",
-      "url": "https://economictimes.indiatimes.com/news/international/us/why-are-oil-prices-up-today-and-will-brent-us-wti-crude-futures-continue-to-rise-or-fall-again-cargo-ship-attack-near-oman-lifts-crude-prices/articleshow/132003055.cms",
-      "domain": "economictimes.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
     {
       "title": "Oil Prices Rise as US - Iran Tensions Threaten Strait of Hormuz Oil Shipments",
       "url": "http://www.econotimes.com/Oil-Prices-Rise-as-US-Iran-Tensions-Threaten-Strait-of-Hormuz-Oil-Shipments-1745341",
@@ -92,21 +77,6 @@
       "buckets": [
         "chokepoint",
         "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil Falls Back to Pre - War Levels as Hormuz Shipping Rebounds",
-      "url": "https://www.theepochtimes.com/world/oil-falls-back-to-pre-war-levels-as-hormuz-shipping-rebounds-6053166",
-      "domain": "theepochtimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "tanker_shipping"
       ],
       "queryIds": [
         "gdelt_broad_oil_news"
@@ -150,67 +120,9 @@
       ]
     },
     {
-      "title": "Oil extends decline on rising Middle East supply",
-      "url": "https://www.geo.tv/latest/670205-oil-extends-decline-on-rising-middle-east-supply",
-      "domain": "geo.tv",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil prices continue falling , futures trading at lowest level since start of military conflict in Middle East",
-      "url": "https://news.am/en/news/1045694",
-      "domain": "news.am",
-      "publishedAt": null,
-      "buckets": [
-        "facility_event",
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Crude oil prices crash 42 % from April $126 peak . More downside coming ?",
-      "url": "https://economictimes.indiatimes.com/markets/commodities/news/crude-oil-prices-crash-42-from-aprils-126-peak-more-downside-coming/articleshow/131984296.cms",
-      "domain": "economictimes.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
       "title": "The oil market has moved from fearing shortages to pricing in a very different future",
       "url": "https://finance.yahoo.com/energy/articles/oil-market-moved-fearing-shortages-050337025.html",
       "domain": "finance.yahoo.com",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Crude oil futures fall over 1 % as supply fears fade amid Iran deal optimism",
-      "url": "https://www.moneycontrol.com/news/business/markets/crude-oil-futures-fall-over-1-as-supply-fears-fade-amid-iran-deal-optimism-13958837.html",
-      "domain": "moneycontrol.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil extends decline on rising Middle East supply",
-      "url": "https://dunyanews.tv/en/Business/959158-oil-extends-decline-on-rising-middle-east-supply",
-      "domain": "dunyanews.tv",
       "publishedAt": null,
       "buckets": [],
       "queryIds": [
@@ -249,26 +161,6 @@
         "chokepoint",
         "middle_east_risk"
       ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil Extends Losses As Supply Fears Fade",
-      "url": "https://www.rttnews.com/story.aspx?Id=3662621",
-      "domain": "rttnews.com",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "title": "Oil extends decline on rising Middle East supply",
-      "url": "https://www.thedailystar.net/business/news/oil-extends-decline-rising-middle-east-supply-4207966",
-      "domain": "thedailystar.net",
-      "publishedAt": null,
-      "buckets": [],
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
@@ -433,9 +325,113 @@
       ]
     },
     {
-      "title": "Oil extends decline as Middle East supply fears ease",
-      "url": "https://news.az/news/oil-extends-decline-as-middle-east-supply-fears-ease",
-      "domain": "news.az",
+      "title": "美伊停火引爆供给油价跳水 ， 但暗藏反转风险 _ 期市动态 _ 期货 _ 中金在线",
+      "url": "http://futures.cnfol.com/qishidongtai/20260629/32292828.shtml",
+      "domain": "futures.cnfol.com",
+      "publishedAt": null,
+      "buckets": [
+        "market_reaction"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "title": "美股期货拉升 ， 油价跳水 ！ 霍尔木兹海峡传出大消息",
+      "url": "https://www.stcn.com/article/detail/3982605.html",
+      "domain": "stcn.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "title": "Oil Prices Fall as Hormuz Flows Rise",
+      "url": "https://athens-times.com/oil-prices-fall-as-flows-through-strait-of-hormuz-rise-brent-near-73-wti-approaches-70/",
+      "domain": "athens-times.com",
+      "publishedAt": null,
+      "buckets": [
+        "chokepoint",
+        "market_reaction"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "title": "Crude oil stands at $75 as tankers head to Hormuz after four months of chaos",
+      "url": "https://timesofindia.indiatimes.com/business/international-business/crude-oil-stands-at-75-as-tankers-head-to-hormuz-after-four-months-of-chaos-on-june-26-2026/articleshow/132005767.cms",
+      "domain": "timesofindia.indiatimes.com",
+      "publishedAt": null,
+      "buckets": [
+        "chokepoint"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "title": "Oil Prices Near $70 a Barrel as Strait of Hormuz Evacuation Plan Raises Hopes for Normalized Flow – NaturalNews . com",
+      "url": "https://www.naturalnews.com/2026-06-28-oil-prices-hormuz-evacuation-plan-normalized-flow.html",
+      "domain": "naturalnews.com",
+      "publishedAt": null,
+      "buckets": [
+        "chokepoint",
+        "market_reaction"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "title": "美股期货拉升 油价直线跳水 ！ 霍尔木兹海峡传出大消息 _ 东方财富网",
+      "url": "https://finance.eastmoney.com/a/202606263784862327.html",
+      "domain": "finance.eastmoney.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "title": "美伊中東互襲重創和平協議 國際油價走揚 | 國際",
+      "url": "https://www.cna.com.tw/news/aopl/202606290045.aspx",
+      "domain": "cna.com.tw",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "title": "美伊中東互襲重創和平協議 國際油價走揚 | 國際",
+      "url": "https://www.cna.com.tw/news/aopl/202606290045.aspx",
+      "domain": "cna.com.tw",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "title": "Oil down 2 % amid resumption of Hormuz shipments even as vessel hit near Oman",
+      "url": "https://tribune.com.pk/story/2615211/oil-down-2-amid-resumption-of-hormuz-shipments-even-as-vessel-hit-near-oman",
+      "domain": "tribune.com.pk",
+      "publishedAt": null,
+      "buckets": [
+        "chokepoint",
+        "middle_east_risk",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "title": "Trump Warns Gasoline Retailers Of Big Problem If They Dont Lower Prices : President Acting Like Biden ,",
+      "url": "https://www.benzinga.com/news/politics/26/06/60177013/trump-warns-gasoline-retailers-to-cut-prices-as-anthony-pompliano-says-hes-acting-like-biden",
+      "domain": "benzinga.com",
       "publishedAt": null,
       "buckets": [],
       "queryIds": [
@@ -443,7 +439,7 @@
       ]
     }
   ],
-  "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)",
+  "error": null,
   "promotionEligible": false,
   "productionDisplayApproved": false,
   "productionImpact": {
