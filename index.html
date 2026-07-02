@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=transport-shock-score-impact-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=transport-shock-score-attribution-1" />
 </head>
 <body class="gfrr-data-loading">
   <nav class="page-bookmarks" aria-label="站内页面切换">
@@ -264,6 +264,14 @@
           <div class="mini-card" id="engine-card-b4"><div class="label">B4 Debt 债务</div><div class="num">—</div><div class="status">等待数据</div></div>
           <div class="mini-card" id="engine-card-b5"><div class="label">B5 Consumer 消费</div><div class="num">—</div><div class="status">等待数据</div></div>
           <div class="mini-card" id="engine-card-b6"><div class="label">B6 Geopolitical 地缘</div><div class="num">—</div><div class="status">等待数据</div></div>
+        </div>
+        <div class="runtime-block-body" id="transport-shock-score-attribution">
+          <div class="agg-rows">
+            <div><span class="k">Transport Shock 主分归因</span> · <span class="v" id="transport-shock-score-attribution-impact">主分影响待刷新</span></div>
+            <div><span class="k">触发原因</span> · <span class="v" id="transport-shock-score-attribution-reason">候选待刷新</span></div>
+            <div><span class="k">边界</span> · <span class="v" id="transport-shock-score-attribution-boundary">route / market confirmation 未接入</span></div>
+          </div>
+          <p class="note" id="transport-shock-score-attribution-note">只解释已写入 production payload 的 capped score impact;不确认路线级油轮运费、封锁、断供或油价方向。</p>
         </div>
       </div>
 
@@ -1277,6 +1285,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=transport-shock-score-impact-1"></script>
+  <script type="module" src="scripts/app.js?v=transport-shock-score-attribution-1"></script>
 </body>
 </html>

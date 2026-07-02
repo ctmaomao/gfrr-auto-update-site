@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-score-attribution-applied-fixture-v1",
+  "fixturePurpose": "frontend score attribution guard for a nonzero capped Transport Shock contribution",
+  "fixtureOnly": true,
+  "productionWriteApproved": false,
+  "transportShockScoringImpact": {
+    "contractVersion": "transport-shock-scoring-impact-v1",
+    "sourcePath": "macroDrivers.energyTransport.transportShockCandidate",
+    "applied": true,
+    "contributionPct": 3,
+    "maxContributionPct": 3,
+    "direction": "transport_shock_pressure_only",
+    "reason": "owner_approved_free_proxy_transport_pressure_low_weight_applied",
+    "scoreBeforeTransport": 57,
+    "scoreAfterTransport": 60,
+    "sourceStatus": "live",
+    "latestAgeDays": 1,
+    "candidateStatus": "elevated_watch",
+    "candidateScore": 82,
+    "guards": {
+      "candidatePresent": true,
+      "sourceLive": true,
+      "latestFresh": true,
+      "eligibleForMainScore": true,
+      "candidateScorePositive": true,
+      "pressureStatus": true,
+      "hardCapPct": 3,
+      "routeFreightConfirmationConnected": false,
+      "marketConfirmationConnected": false
+    }
+  },
+  "expectedDisplay": {
+    "impact": "+3 / +3",
+    "state": "已触发",
+    "reason": "授权免费代理触发",
+    "boundaryContains": [
+      "pressure-only",
+      "route/market 未接入",
+      "最高+3"
+    ]
+  },
+  "boundaries": {
+    "readsProductionPayloadOnly": true,
+    "readsManualArtifacts": false,
+    "writesProductionData": false,
+    "connectsRouteFreightConfirmation": false,
+    "connectsMarketConfirmation": false,
+    "changesOilDirectionalFinalBias": false,
+    "changesBrentPromotion": false,
+    "changesGlobalRiskHeatmap": false,
+    "changesCrossValidation": false,
+    "touchesBubbleWatch": false
+  }
+}

@@ -368,6 +368,7 @@ runtime block 的基准结构:
 - C1 通胀与能源包含新增 `Transport Shock / 运输冲击确认因子` 展示观察卡；它只读生产 payload 中的 `macroDrivers.energyTransport.transportShockCandidate` 与顶层 `transportShockScoringImpact`,不得读取 manual artifacts。
 - Transport Shock 卡片可显示 `入分闸门` 行,但只能由 production payload 的 capped score-impact 与 route / market gate 派生;该行只解释低权重 +3 cap 是否触发,不得改写 ODP finalBias、Brent promotion 或 route/market confirmation。
 - Transport Shock 卡片可显示 `主分影响` 行,只展示 `transportShockScoringImpact` 的当前贡献与 +3 上限;routeFreightConfirmation/marketConfirmation 仍必须保持独立边界。
+- `#homepage-risk-engines` 可显示 `Transport Shock 主分归因`,但只能复用顶层 `transportShockScoringImpact` 的 capped score impact、reason 与 scoreBeforeTransport/scoreAfterTransport;不得由前端自行计算主分或连接 route / market confirmation。
 - 每张卡必须只显示公开代理 / 审计层 / 展示层证据,不得暗示正式源或非公开数据已接入
 - 观察层反应徽章必须表达“与有效主判断的关系”: `印证` 的颜色跟随有效主判断等级(观察期=绿 / 中度警戒=黄 / 高风险预警=橙 / 系统性顶部=红);`背离` 的颜色表达反向证据方向(缓和反证=绿,压力反证=黄);`背景` 与 `数据不足` 保持中性 / pending
 

@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=transport-shock-score-impact-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=transport-shock-score-impact-1';
-import { MODULE_LABELS } from './decision.js?v=transport-shock-score-impact-1';
+} from './config.js?v=transport-shock-score-attribution-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=transport-shock-score-attribution-1';
+import { MODULE_LABELS } from './decision.js?v=transport-shock-score-attribution-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,8 +18,8 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=transport-shock-score-impact-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=transport-shock-score-impact-1';
+} from './macroOverviewDisplayHelpers.js?v=transport-shock-score-attribution-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=transport-shock-score-attribution-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -322,6 +322,71 @@ function renderMarketTemperature({ marketPricingMetricsData }) {
 
 // ---------- Block 8: Risk Engines ----------
 
+function transportShockImpactReasonLabel(reason) {
+  const text = typeof reason === 'string' ? reason.trim() : '';
+  if (text === 'candidate_not_eligible_zero_contribution') return '候选未升高';
+  if (text === 'candidate_missing_zero_contribution') return '候选缺失';
+  if (text === 'candidate_not_live_zero_contribution') return 'PortWatch 未 live';
+  if (text === 'candidate_stale_zero_contribution') return 'PortWatch 滞后';
+  if (text === 'candidate_not_pressure_status_zero_contribution') return '非压力状态';
+  if (text === 'candidate_score_not_positive_zero_contribution') return '候选分不足';
+  if (text === 'base_score_missing_zero_contribution') return '主分基线缺失';
+  if (text === 'candidate_score_below_contribution_threshold_zero_contribution') return '候选未达贡献阈值';
+  if (text === 'owner_approved_free_proxy_transport_pressure_low_weight_applied') return '授权免费代理触发';
+  return text || '影响待确认';
+}
+
+function transportShockImpactDisplay(impact) {
+  const known = impact?.contractVersion === 'transport-shock-scoring-impact-v1';
+  const contribution = asNumber(impact?.contributionPct);
+  const cap = asNumber(impact?.maxContributionPct) ?? 3;
+  const applied = known && impact?.applied === true && contribution !== null && contribution > 0;
+  const contributionText = contribution !== null
+    ? `${contribution > 0 ? '+' : ''}${contribution.toFixed(0)}`
+    : '—';
+  const capText = `+${cap.toFixed(0)}`;
+  const reasonLabel = transportShockImpactReasonLabel(impact?.reason);
+  const scoreBeforeTransport = asNumber(impact?.scoreBeforeTransport);
+  const scoreAfterTransport = asNumber(impact?.scoreAfterTransport);
+  const scorePath = scoreBeforeTransport !== null && scoreAfterTransport !== null
+    ? `主分 ${scoreBeforeTransport.toFixed(0)} -> ${scoreAfterTransport.toFixed(0)}`
+    : '主分路径待刷新';
+  const rowText = known
+    ? `${contributionText} / ${capText}${applied ? ' · 已触发' : ' · 当前0贡献'}`
+    : '主分影响待刷新';
+  return {
+    known,
+    applied,
+    contribution,
+    cap,
+    contributionText,
+    capText,
+    reasonLabel,
+    scoreBeforeTransport,
+    scoreAfterTransport,
+    scorePath,
+    rowText
+  };
+}
+
+function renderTransportShockScoreAttribution({ radarData }) {
+  try {
+    const impact = transportShockImpactDisplay(radarData?.transportShockScoringImpact);
+    setLeafText('transport-shock-score-attribution-impact', impact.known ? impact.rowText : '主分影响待刷新');
+    setLeafText('transport-shock-score-attribution-reason', impact.known ? impact.reasonLabel : '候选待刷新');
+    const boundary = impact.applied
+      ? `pressure-only · route/market 未接入 · 最高${impact.capText}`
+      : `pressure-only · 当前不改分 · 最高${impact.capText}`;
+    setLeafText('transport-shock-score-attribution-boundary', boundary);
+    const note = impact.known
+      ? `${impact.scorePath}。本归因只解释 production payload 已写入的 capped score impact;不确认封锁、断供、路线级油轮运费或油价方向。`
+      : '等待 production payload 写入 transportShockScoringImpact;本归因不从前端自行计算分数。';
+    setLeafText('transport-shock-score-attribution-note', note);
+  } catch (error) {
+    console.error('[renderMacroOverview] renderTransportShockScoreAttribution failed:', error);
+  }
+}
+
 function renderRiskEngines({ radarData }) {
   try {
     if (!radarData) return;
@@ -350,6 +415,7 @@ function renderRiskEngines({ radarData }) {
     if (geopoliticalTone) {
       setMiniCardState('engine-card-b6', geopoliticalTone, geopoliticalTone === 'green' ? '地缘降温' : '多战区压力');
     }
+    renderTransportShockScoreAttribution({ radarData });
   } catch (error) {
     console.error('[renderMacroOverview] renderRiskEngines failed:', error);
   }
@@ -2400,31 +2466,13 @@ function renderTransportShockConfirmation({ radarData }) {
     setLeafText('c1-transport-shock-route', routeGate);
     setLeafText('c1-transport-shock-market', marketGate);
     const gateReady = (value) => value === '已接入' || value === '人工复核' || value === '待复核';
-    const impactReasonLabel = (reason) => {
-      const text = typeof reason === 'string' ? reason.trim() : '';
-      if (text === 'candidate_not_eligible_zero_contribution') return '候选未升高';
-      if (text === 'candidate_missing_zero_contribution') return '候选缺失';
-      if (text === 'candidate_not_live_zero_contribution') return 'PortWatch 未 live';
-      if (text === 'candidate_stale_zero_contribution') return 'PortWatch 滞后';
-      if (text === 'candidate_not_pressure_status_zero_contribution') return '非压力状态';
-      if (text === 'candidate_score_not_positive_zero_contribution') return '候选分不足';
-      if (text === 'base_score_missing_zero_contribution') return '主分基线缺失';
-      if (text === 'candidate_score_below_contribution_threshold_zero_contribution') return '候选未达贡献阈值';
-      return text || '影响待确认';
-    };
-    const impactKnown = impact?.contractVersion === 'transport-shock-scoring-impact-v1';
-    const impactContribution = asNumber(impact?.contributionPct);
-    const impactMax = asNumber(impact?.maxContributionPct) ?? 3;
-    const impactApplied = impactKnown && impact?.applied === true && impactContribution !== null && impactContribution > 0;
-    const impactContributionText = impactContribution !== null
-      ? `${impactContribution > 0 ? '+' : ''}${impactContribution.toFixed(0)}`
-      : '—';
-    const impactCapText = `+${impactMax.toFixed(0)}`;
-    const impactReason = impactReasonLabel(impact?.reason);
-    const impactRowText = impactKnown
-      ? `${impactContributionText} / ${impactCapText}${impactApplied ? ' · 已触发' : ' · 当前0贡献'}`
-      : '主分影响待刷新';
-    setLeafText('c1-transport-shock-score-impact', impactRowText);
+    const impactDisplay = transportShockImpactDisplay(impact);
+    const impactKnown = impactDisplay.known;
+    const impactApplied = impactDisplay.applied;
+    const impactContributionText = impactDisplay.contributionText;
+    const impactCapText = impactDisplay.capText;
+    const impactReason = impactDisplay.reasonLabel;
+    setLeafText('c1-transport-shock-score-impact', impactDisplay.rowText);
     const scoreGate = !candidate
       ? '候选字段待刷新'
       : impactApplied
