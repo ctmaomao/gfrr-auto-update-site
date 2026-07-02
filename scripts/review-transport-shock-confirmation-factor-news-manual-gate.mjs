@@ -5,6 +5,7 @@ import process from 'node:process';
 
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-news-manual-gate-v1';
 const CLAIM_LEDGER_SCHEMA = 'oil-news-claim-ledger-p52';
+const OPERATOR_REVIEW_SCHEMA = 'transport-shock-confirmation-factor-news-operator-review-v1';
 const DEFAULT_CLAIM_LEDGER = 'manual-artifacts/oil-news/oil-news-claim-ledger-latest.json';
 const DEFAULT_OUTPUT = 'manual-artifacts/transport-shock-confirmation-factor/news-manual-gate-latest.json';
 const DEFAULT_MIN_SAMPLES = 8;
@@ -17,6 +18,7 @@ function usage() {
 
 Options:
   --claim-ledger <path>  Oil News claim-ledger review. Default: ${DEFAULT_CLAIM_LEDGER}
+  --operator-review <path> Optional delegated operator review artifact. Default: none
   --output <path>        Ignored manual gate artifact. Default: ${DEFAULT_OUTPUT}
   --min-samples <n>      Minimum claim-ledger samples. Default: ${DEFAULT_MIN_SAMPLES}
   --json                 Print full JSON review to stdout.
@@ -43,6 +45,12 @@ function isAllowedInputPath(filePath) {
     || relativePath?.startsWith('docs/fixtures/transport-shock-confirmation-factor/') === true;
 }
 
+function isAllowedOperatorReviewPath(filePath) {
+  const relativePath = safeRelativePath(filePath);
+  return relativePath?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true
+    || relativePath?.startsWith('docs/fixtures/transport-shock-confirmation-factor/') === true;
+}
+
 function isManualOutputPath(filePath) {
   return safeRelativePath(filePath)?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true;
 }
@@ -50,6 +58,7 @@ function isManualOutputPath(filePath) {
 function parseArgs(argv) {
   const options = {
     claimLedger: DEFAULT_CLAIM_LEDGER,
+    operatorReview: null,
     output: DEFAULT_OUTPUT,
     minSamples: DEFAULT_MIN_SAMPLES,
     printJson: false,
@@ -76,6 +85,7 @@ function parseArgs(argv) {
       return value;
     };
     if (arg === '--claim-ledger') options.claimLedger = nextValue();
+    else if (arg === '--operator-review') options.operatorReview = nextValue();
     else if (arg === '--output') options.output = nextValue();
     else if (arg === '--min-samples') options.minSamples = Number(nextValue());
     else throw new Error(`Unknown argument: ${arg}`);
@@ -85,6 +95,9 @@ function parseArgs(argv) {
   }
   if (!isAllowedInputPath(options.claimLedger)) {
     throw new Error(`Refusing to read claim ledger outside allowed paths: ${options.claimLedger}`);
+  }
+  if (options.operatorReview && !isAllowedOperatorReviewPath(options.operatorReview)) {
+    throw new Error(`Refusing to read operator review outside allowed paths: ${options.operatorReview}`);
   }
   if (options.writeOutput && !isManualOutputPath(options.output)) {
     throw new Error(`Refusing to write news manual gate outside manual-artifacts/transport-shock-confirmation-factor/: ${options.output}`);
@@ -101,6 +114,19 @@ function readInput(filePath) {
     present: true,
     path: safeRelativePath(filePath),
     ledger: JSON.parse(readFileSync(absolutePath, 'utf8'))
+  };
+}
+
+function readOptionalOperatorReview(filePath) {
+  if (!filePath) return { present: false, path: null, review: null };
+  const absolutePath = resolve(filePath);
+  if (!existsSync(absolutePath)) {
+    return { present: false, path: safeRelativePath(filePath), review: null };
+  }
+  return {
+    present: true,
+    path: safeRelativePath(filePath),
+    review: JSON.parse(readFileSync(absolutePath, 'utf8'))
   };
 }
 
@@ -153,7 +179,55 @@ function repeatedElevatedSampleCount(ledger) {
   )).length;
 }
 
-function evaluateGate(input, options) {
+function operatorReviewDisposition(input) {
+  const review = input?.review;
+  const blockers = [];
+  if (!input?.present) return { ready: false, blockers: ['operator_review_missing'], evidence: { inputPath: input?.path ?? null, inputPresent: false } };
+  if (review?.schemaVersion !== OPERATOR_REVIEW_SCHEMA) blockers.push('operator_review_schema_invalid');
+  if (review?.reviewerType !== 'codex_operator_delegate') blockers.push('operator_review_reviewer_type_invalid');
+  if (review?.approvals?.scoreWriteApproved === true || review?.approvals?.eligibleForMainScore === true) {
+    blockers.push('operator_review_score_approval_claimed');
+  }
+  if (review?.reviewFindings?.approvedForCrossConfirmation !== true) blockers.push('operator_review_not_approved_for_cross_confirmation');
+  if (review?.reviewFindings?.mixedClaimsDisposition !== 'axis_split_reviewed_not_direct_contradiction') {
+    blockers.push('operator_review_mixed_claims_not_resolved');
+  }
+  if (review?.reviewFindings?.lowConfidenceHighClaimsDisposition !== 'downgraded_to_non_confirming_context') {
+    blockers.push('operator_review_low_confidence_claims_not_downgraded');
+  }
+  if (review?.reviewFindings?.headlineDisposition !== 'headline_output_remains_blocked') {
+    blockers.push('operator_review_headline_guard_not_locked');
+  }
+  return {
+    ready: blockers.length === 0,
+    blockers,
+    evidence: {
+      inputPath: input.path,
+      inputPresent: true,
+      schemaVersion: review?.schemaVersion ?? null,
+      status: review?.status ?? null,
+      recommendation: review?.recommendation ?? null,
+      reviewerType: review?.reviewerType ?? null,
+      approvedForCrossConfirmation: review?.reviewFindings?.approvedForCrossConfirmation === true,
+      mixedClaimsDisposition: review?.reviewFindings?.mixedClaimsDisposition ?? null,
+      lowConfidenceHighClaimsDisposition: review?.reviewFindings?.lowConfidenceHighClaimsDisposition ?? null,
+      headlineDisposition: review?.reviewFindings?.headlineDisposition ?? null,
+      eventInterpretation: review?.reviewFindings?.eventInterpretation ?? null,
+      doesNotConfirm: review?.reviewFindings?.doesNotConfirm ?? [],
+      blockers
+    }
+  };
+}
+
+function applyOperatorReviewBlockerOverrides(blockers, operatorReview) {
+  if (!operatorReview.ready) return blockers;
+  return blockers.filter((blocker) => ![
+    'mixed_claims_require_manual_review',
+    'low_confidence_high_claims_require_primary_source_review'
+  ].includes(blocker));
+}
+
+function evaluateGate(input, options, operatorReviewInput = { present: false, path: null, review: null }) {
   const ledger = input.ledger;
   const blockers = [];
   const warnings = [];
@@ -179,13 +253,16 @@ function evaluateGate(input, options) {
   if (contradictionState === 'mixed_claims') blockers.push('mixed_claims_require_manual_review');
   if (lowConfidenceHighClaimCount > 0) blockers.push('low_confidence_high_claims_require_primary_source_review');
   if (headlineDisplayAllowed) blockers.push('headline_display_guard_failed');
+  const operatorReview = operatorReviewDisposition(operatorReviewInput);
+  const finalBlockers = applyOperatorReviewBlockerOverrides(blockers, operatorReview);
 
   if (contradictionState === 'risk_escalation_dominant' || contradictionState === 'risk_deescalation_dominant') {
     warnings.push('directional_claim_dominance_still_requires_market_physical_cross_check');
   }
   if (ledger?.status === 'warn') warnings.push('upstream_claim_ledger_warn_status');
+  if (operatorReview.ready) warnings.push('delegated_operator_review_applied_for_cross_confirmation_only');
 
-  const gateClear = blockers.length === 0;
+  const gateClear = finalBlockers.length === 0;
   return {
     schemaVersion: SCHEMA_VERSION,
     status: gateClear
@@ -201,8 +278,12 @@ function evaluateGate(input, options) {
     gateDecision: {
       sampleSufficiency: sampleCount >= options.minSamples ? 'pass' : 'blocker',
       repeatedElevatedNewsSamples: elevatedSampleCount >= 2 ? 'pass' : 'blocker',
-      claimDirectionStability: contradictionState === 'mixed_claims' ? 'blocker' : 'watch',
-      sourceTierRisk: lowConfidenceHighClaimCount > 0 ? 'blocker' : 'pass',
+      claimDirectionStability: contradictionState === 'mixed_claims'
+        ? (operatorReview.ready ? 'operator_review_pass' : 'blocker')
+        : 'watch',
+      sourceTierRisk: lowConfidenceHighClaimCount > 0
+        ? (operatorReview.ready ? 'operator_review_pass' : 'blocker')
+        : 'pass',
       headlineGuard: headlineDisplayAllowed ? 'blocker' : 'pass'
     },
     evidence: {
@@ -223,8 +304,11 @@ function evaluateGate(input, options) {
       sourceTierCounts: ledger?.sourceTierCounts ?? null,
       headlineDisplayAllowed
     },
+    operatorReviewApplied: operatorReview.ready,
+    operatorReview: operatorReview.evidence,
     manualReviewRequired: !gateClear,
-    manualReviewBlockers: blockers,
+    manualReviewBlockers: finalBlockers,
+    rawRuleBlockers: blockers,
     warnings,
     scoreReadinessApproved: false,
     scoreIntegrationApproved: false,
@@ -250,11 +334,13 @@ function printSummary(review) {
   console.log(`Transport Shock news manual gate: ${review.status}`);
   console.log(`recommendation: ${review.recommendation}`);
   console.log(`gateClear: ${review.gateClear}`);
+  console.log(`operatorReviewApplied: ${review.operatorReviewApplied}`);
   console.log(`sampleCount: ${review.evidence.sampleCount}`);
   console.log(`claimCount: ${review.evidence.claimCount}`);
   console.log(`contradictionState: ${review.evidence.contradictionState}`);
   console.log(`lowConfidenceHighClaimCount: ${review.evidence.lowConfidenceHighClaimCount}`);
   console.log(`manualReviewBlockers: ${review.manualReviewBlockers.join(', ') || 'none'}`);
+  console.log(`rawRuleBlockers: ${review.rawRuleBlockers.join(', ') || 'none'}`);
   console.log(`scoreWriteApproved: ${review.scoreWriteApproved}`);
   console.log(`boundary: ${review.boundary}`);
 }
@@ -262,7 +348,7 @@ function printSummary(review) {
 function main() {
   try {
     const options = parseArgs(process.argv.slice(2));
-    const review = evaluateGate(readInput(options.claimLedger), options);
+    const review = evaluateGate(readInput(options.claimLedger), options, readOptionalOperatorReview(options.operatorReview));
     if (options.writeOutput) writeJson(options.output, review);
     if (options.printJson) console.log(JSON.stringify(review, null, 2));
     else printSummary(review);

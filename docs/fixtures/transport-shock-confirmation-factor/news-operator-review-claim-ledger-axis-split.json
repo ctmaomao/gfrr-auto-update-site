@@ -1,0 +1,85 @@
+{
+  "reviewVersion": "oil-news-claim-ledger-p52",
+  "status": "warn",
+  "recommendation": "claim_ledger_ready_keep_manual_review",
+  "promotionEligible": false,
+  "productionDisplayApproved": false,
+  "summary": {
+    "sampleCount": 8,
+    "claimCount": 96,
+    "lowConfidenceHighClaimCount": 12,
+    "directHeadlineDisplayAllowed": false
+  },
+  "polarityCounts": {
+    "risk_escalation": 28,
+    "risk_deescalation": 10,
+    "mixed_or_contested": 6,
+    "market_reaction_only": 48,
+    "unclear_or_high_claim": 4
+  },
+  "eventTypeCounts": {
+    "chokepoint": 64,
+    "shipping": 16,
+    "sanctions": 0,
+    "facility": 2,
+    "supply": 14,
+    "market_reaction": 0,
+    "general_energy": 0
+  },
+  "sourceTierCounts": {
+    "primary_wire_or_official": 12,
+    "major_financial_media": 14,
+    "industry_trade": 42,
+    "aggregator_or_blog": 28,
+    "low_confidence": 0
+  },
+  "contradiction": {
+    "state": "mixed_claims",
+    "eventTypes": ["chokepoint"],
+    "details": [
+      {
+        "eventType": "chokepoint",
+        "escalation": 24,
+        "deescalation": 0,
+        "mixed": 6,
+        "contradiction": true
+      },
+      {
+        "eventType": "shipping",
+        "escalation": 4,
+        "deescalation": 0,
+        "mixed": 0,
+        "contradiction": false
+      },
+      {
+        "eventType": "supply",
+        "escalation": 0,
+        "deescalation": 10,
+        "mixed": 0,
+        "contradiction": false
+      }
+    ]
+  },
+  "displayReadiness": {
+    "directHeadlineDisplayAllowed": false,
+    "originalHeadlineOutputAllowed": false,
+    "claimSummaryDisplayCandidate": true
+  },
+  "sampleOutcomes": [
+    { "signalState": "elevated_manual_review", "liveSourceCount": 2 },
+    { "signalState": "elevated_manual_review", "liveSourceCount": 2 },
+    { "signalState": "elevated_manual_review", "liveSourceCount": 2 },
+    { "signalState": "elevated_manual_review", "liveSourceCount": 3 },
+    { "signalState": "elevated_manual_review", "liveSourceCount": 2 },
+    { "signalState": "elevated_manual_review", "liveSourceCount": 3 },
+    { "signalState": "elevated_manual_review", "liveSourceCount": 2 },
+    { "signalState": "elevated_manual_review", "liveSourceCount": 3 }
+  ],
+  "productionImpact": {
+    "writesProductionData": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsOdpFinalBias": false
+  },
+  "boundary": "fixture only"
+}

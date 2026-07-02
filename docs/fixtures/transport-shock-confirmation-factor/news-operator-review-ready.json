@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-news-operator-review-v1",
+  "status": "operator_review_clear_for_cross_confirmation_no_score_write",
+  "recommendation": "allow_news_manual_gate_to_treat_mixed_claims_as_reviewed_axis_split_keep_no_score_write",
+  "reviewerType": "codex_operator_delegate",
+  "reviewFindings": {
+    "approvedForCrossConfirmation": true,
+    "mixedClaimsDisposition": "axis_split_reviewed_not_direct_contradiction",
+    "lowConfidenceHighClaimsDisposition": "downgraded_to_non_confirming_context",
+    "headlineDisposition": "headline_output_remains_blocked",
+    "eventInterpretation": "chokepoint_security_risk_elevated_while_supply_flow_deescalation_claims_coexist",
+    "doesNotConfirm": [
+      "hormuz_closure",
+      "supply_disruption",
+      "route_freight_confirmation",
+      "oil_price_direction"
+    ]
+  },
+  "approvals": {
+    "newsManualGateCrossConfirmationReviewApproved": true,
+    "scoreWriteApproved": false,
+    "productionWriteApproved": false,
+    "frontendDisplayApproved": false,
+    "eligibleForMainScore": false
+  },
+  "boundaries": {
+    "noHeadlineTextOutput": true,
+    "noProductionWrite": true,
+    "noScoreWrite": true,
+    "delegatedOperatorReviewOnly": true
+  }
+}
