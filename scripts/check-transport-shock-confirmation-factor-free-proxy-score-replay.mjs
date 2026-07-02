@@ -5,6 +5,7 @@ import path from 'node:path';
 const ROOT = process.cwd();
 const REPLAY_SCRIPT = 'scripts/replay-transport-shock-confirmation-factor-free-proxy-score-candidate.mjs';
 const FIXTURE = 'docs/fixtures/transport-shock-confirmation-factor/free-proxy-score-candidate-blocked.json';
+const FIXTURE_READY = 'docs/fixtures/transport-shock-confirmation-factor/free-proxy-score-candidate-ready.json';
 
 const RUNTIME_FILES = [
   'index.html',
@@ -93,6 +94,14 @@ function assertFixture() {
   assert(fixture.scoreWriteApproved === false, 'Fixture must not approve score write.');
   assert(fixture.productionWriteApproved === false, 'Fixture must not approve production write.');
   assert(fixture.eligibleForMainScore === false, 'Fixture eligibleForMainScore must stay false.');
+  const readyFixture = JSON.parse(readText(FIXTURE_READY));
+  assert(readyFixture.schemaVersion === 'transport-shock-confirmation-factor-free-proxy-score-candidate-v1', 'Ready fixture schemaVersion mismatch.');
+  assert(readyFixture.status === 'free_proxy_score_candidate_ready_no_score_write', 'Ready fixture must be ready no-score-write candidate.');
+  assert(readyFixture.candidateScoreContributionPct === 3, 'Ready fixture candidate contribution must be capped at 3.');
+  assert(readyFixture.maxFutureMainScoreContributionPct === 3, 'Ready fixture max cap must be 3.');
+  assert(readyFixture.scoreWriteApproved === false, 'Ready fixture must not approve score write.');
+  assert(readyFixture.productionWriteApproved === false, 'Ready fixture must not approve production write.');
+  assert(readyFixture.eligibleForMainScore === false, 'Ready fixture eligibleForMainScore must stay false.');
 }
 
 function assertReplayOutput() {
@@ -129,6 +138,37 @@ function assertReplayOutput() {
   assert(replay.boundaries.noProductionWrite === true, 'Replay must lock noProductionWrite.');
   assert(replay.boundaries.noScoreWrite === true, 'Replay must lock noScoreWrite.');
   assert(replay.boundaries.noHistoricalBacktestPerformed === true, 'Replay must lock noHistoricalBacktestPerformed.');
+}
+
+function assertReadyReplayOutput() {
+  const stdout = runNode([
+    REPLAY_SCRIPT,
+    '--input',
+    FIXTURE_READY,
+    '--no-output',
+    '--json'
+  ]);
+  const replay = JSON.parse(stdout);
+  assert(replay.schemaVersion === 'transport-shock-confirmation-factor-free-proxy-score-replay-v1', 'Unexpected replay schemaVersion.');
+  assert(replay.status === 'free_proxy_score_replay_scaffold_pass_no_score_write', 'Expected ready replay scaffold pass no-score-write status.');
+  assert(replay.recommendation === 'ready_for_historical_replay_sample_design_keep_no_score_write', 'Unexpected recommendation.');
+  assert(replay.replayControlPass === true, 'Ready replay controls must pass.');
+  assert(replay.historicalBacktestPerformed === false, 'Historical backtest must not be claimed.');
+  assert(replay.inputStatus === 'free_proxy_score_candidate_ready_no_score_write', 'Replay should preserve ready input status.');
+  assert(replay.candidateScoreContributionPct === 3, 'Ready replay candidate contribution should remain 3.');
+  assert(replay.maxFutureMainScoreContributionPct === 3, 'Ready replay max cap should remain 3.');
+  for (const controlId of ['news_only', 'single_chokepoint_only', 'stale_portwatch', 'ready_candidate_cap']) {
+    const control = replay.controls.find((item) => item.id === controlId);
+    assert(control?.pass === true, `Ready replay control must pass: ${controlId}`);
+  }
+  assert(replay.scoreWriteApproved === false, 'Ready replay must not approve score write.');
+  assert(replay.productionWriteApproved === false, 'Ready replay must not approve production write.');
+  assert(replay.scoreIntegrationApproved === false, 'Ready replay must not approve score integration.');
+  assert(replay.eligibleForMainScore === false, 'Ready replay eligibleForMainScore must stay false.');
+  assert(replay.productionImpact.affectsScoring === false, 'Ready replay must not affect scoring.');
+  assert(replay.productionImpact.affectsMainJudgment === false, 'Ready replay must not affect main judgment.');
+  assert(replay.boundaries.noScoreWrite === true, 'Ready replay must lock noScoreWrite.');
+  assert(replay.boundaries.noHistoricalBacktestPerformed === true, 'Ready replay must lock noHistoricalBacktestPerformed.');
 }
 
 function assertRuntimeRemainsUnwired() {
@@ -178,6 +218,7 @@ function main() {
   assertScriptSafety();
   assertFixture();
   assertReplayOutput();
+  assertReadyReplayOutput();
   assertRuntimeRemainsUnwired();
   assertAuthorityDocs();
   console.log('Transport Shock Confirmation Factor free-proxy score replay scaffold: PASS');

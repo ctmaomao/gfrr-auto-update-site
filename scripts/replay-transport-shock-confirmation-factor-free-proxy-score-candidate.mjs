@@ -143,11 +143,25 @@ function boundaries() {
 function validateCandidate(input) {
   const blockers = [];
   const candidate = input.candidate;
+  const status = candidate?.status;
+  const contribution = Number(candidate?.candidateScoreContributionPct);
+  const maxContribution = Number(candidate?.maxFutureMainScoreContributionPct);
   if (input.missing) blockers.push('input_missing');
   if (!candidate || typeof candidate !== 'object') blockers.push('input_not_object');
   if (candidate?.schemaVersion !== INPUT_SCHEMA) blockers.push('input_schema_invalid');
-  if (candidate?.status !== 'free_proxy_score_candidate_blocked_no_score_write') blockers.push('candidate_status_not_blocked');
-  if (candidate?.candidateScoreContributionPct !== 0) blockers.push('candidate_contribution_not_zero');
+  if (!['free_proxy_score_candidate_blocked_no_score_write', 'free_proxy_score_candidate_ready_no_score_write'].includes(status)) {
+    blockers.push('candidate_status_invalid');
+  }
+  if (status === 'free_proxy_score_candidate_blocked_no_score_write' && contribution !== 0) {
+    blockers.push('blocked_candidate_contribution_not_zero');
+  }
+  if (status === 'free_proxy_score_candidate_ready_no_score_write') {
+    if (!Number.isFinite(contribution) || contribution <= 0) blockers.push('ready_candidate_contribution_missing');
+    if (!Number.isFinite(maxContribution) || maxContribution > 3) blockers.push('ready_candidate_cap_above_three_pct');
+    if (Number.isFinite(contribution) && Number.isFinite(maxContribution) && contribution > maxContribution) {
+      blockers.push('ready_candidate_contribution_above_cap');
+    }
+  }
   if (candidate?.scoreWriteApproved !== false) blockers.push('score_write_approved_claimed');
   if (candidate?.productionWriteApproved !== false) blockers.push('production_write_approved_claimed');
   if (candidate?.mainScoreApproved !== false) blockers.push('main_score_approved_claimed');
@@ -211,12 +225,20 @@ function replayControls(candidate) {
       observedContributionPct: 0,
       pass: candidate.hardCaps.stalePortWatchContributionPct === 0
     },
-    {
+    candidate.status === 'free_proxy_score_candidate_blocked_no_score_write' ? {
       id: 'blocked_candidate',
       description: 'Blocked candidate projection must remain zero contribution.',
       expectedContributionPct: 0,
       observedContributionPct: candidate.candidateScoreContributionPct,
       pass: candidate.candidateScoreContributionPct === 0
+    } : {
+      id: 'ready_candidate_cap',
+      description: 'Ready candidate projection must remain at or below the free-proxy cap.',
+      expectedContributionPct: candidate.maxFutureMainScoreContributionPct,
+      observedContributionPct: candidate.candidateScoreContributionPct,
+      pass: candidate.maxFutureMainScoreContributionPct <= 3
+        && candidate.candidateScoreContributionPct > 0
+        && candidate.candidateScoreContributionPct <= candidate.maxFutureMainScoreContributionPct
     }
   ];
   return controls;
@@ -245,6 +267,7 @@ function buildReplay(input) {
     historicalBacktestPerformed: false,
     historicalBacktestReady: false,
     replayScope: 'hard_cap_control_scaffold_only',
+    inputStatus: candidate.status,
     candidateScoreContributionPct: candidate.candidateScoreContributionPct,
     maxFutureMainScoreContributionPct: candidate.maxFutureMainScoreContributionPct,
     falsePositiveGuard: replayControlPass ? 'zero_contribution_controls_pass' : 'hard_cap_control_failed',
