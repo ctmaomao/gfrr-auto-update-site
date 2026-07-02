@@ -273,7 +273,7 @@ function inspectProductionPayload() {
     candidatePresent: true,
     candidateStatus: candidate.status,
     candidateScore: candidate.score,
-    recommendation: 'frontend_card_can_render_production_candidate_display_only'
+    recommendation: 'frontend_card_can_render_candidate_and_capped_score_impact'
   };
 }
 
@@ -312,7 +312,7 @@ function main() {
     console.log(`candidateScore: ${result.candidateScore ?? '—'}`);
   }
   console.log(`recommendation: ${result.recommendation}`);
-  console.log('boundary: read-only production refresh verification; no network, no production write, no scoring, no ODP finalBias, no cross-validation');
+  console.log('boundary: read-only production refresh verification; no network, no production write, no route/market confirmation write, no ODP finalBias, no Brent promotion, no Global Risk Heatmap, no cross-validation');
 }
 
 main();

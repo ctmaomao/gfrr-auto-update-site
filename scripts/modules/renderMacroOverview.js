@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=odp-oil-news-claim-quality-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-oil-news-claim-quality-1';
-import { MODULE_LABELS } from './decision.js?v=odp-oil-news-claim-quality-1';
+} from './config.js?v=transport-shock-score-impact-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=transport-shock-score-impact-1';
+import { MODULE_LABELS } from './decision.js?v=transport-shock-score-impact-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,8 +18,8 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=odp-oil-news-claim-quality-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=odp-oil-news-claim-quality-1';
+} from './macroOverviewDisplayHelpers.js?v=transport-shock-score-impact-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=transport-shock-score-impact-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2374,6 +2374,7 @@ function renderTransportShockConfirmation({ radarData }) {
   try {
     const layer = radarData?.macroDrivers?.energyTransport;
     const candidate = layer?.transportShockCandidate;
+    const impact = radarData?.transportShockScoringImpact;
     const latestAgeDays = asNumber(layer?.latestAgeDays);
     const reaction = setObservationReaction(
       'c1-transport-shock-status',
@@ -2399,22 +2400,52 @@ function renderTransportShockConfirmation({ radarData }) {
     setLeafText('c1-transport-shock-route', routeGate);
     setLeafText('c1-transport-shock-market', marketGate);
     const gateReady = (value) => value === '已接入' || value === '人工复核' || value === '待复核';
+    const impactReasonLabel = (reason) => {
+      const text = typeof reason === 'string' ? reason.trim() : '';
+      if (text === 'candidate_not_eligible_zero_contribution') return '候选未升高';
+      if (text === 'candidate_missing_zero_contribution') return '候选缺失';
+      if (text === 'candidate_not_live_zero_contribution') return 'PortWatch 未 live';
+      if (text === 'candidate_stale_zero_contribution') return 'PortWatch 滞后';
+      if (text === 'candidate_not_pressure_status_zero_contribution') return '非压力状态';
+      if (text === 'candidate_score_not_positive_zero_contribution') return '候选分不足';
+      if (text === 'base_score_missing_zero_contribution') return '主分基线缺失';
+      if (text === 'candidate_score_below_contribution_threshold_zero_contribution') return '候选未达贡献阈值';
+      return text || '影响待确认';
+    };
+    const impactKnown = impact?.contractVersion === 'transport-shock-scoring-impact-v1';
+    const impactContribution = asNumber(impact?.contributionPct);
+    const impactMax = asNumber(impact?.maxContributionPct) ?? 3;
+    const impactApplied = impactKnown && impact?.applied === true && impactContribution !== null && impactContribution > 0;
+    const impactContributionText = impactContribution !== null
+      ? `${impactContribution > 0 ? '+' : ''}${impactContribution.toFixed(0)}`
+      : '—';
+    const impactCapText = `+${impactMax.toFixed(0)}`;
+    const impactReason = impactReasonLabel(impact?.reason);
+    const impactRowText = impactKnown
+      ? `${impactContributionText} / ${impactCapText}${impactApplied ? ' · 已触发' : ' · 当前0贡献'}`
+      : '主分影响待刷新';
+    setLeafText('c1-transport-shock-score-impact', impactRowText);
     const scoreGate = !candidate
       ? '候选字段待刷新'
-      : gateReady(routeGate) && gateReady(marketGate)
-        ? '待独立评分审阅 · 仍不入分'
-        : '未达入分闸门 · 路线/市场缺口';
+      : impactApplied
+        ? `已触发低权重入分 · ${impactContributionText} / ${impactCapText}`
+        : impactKnown
+          ? `低权重闸门未触发 · ${impactReason}`
+          : gateReady(routeGate) && gateReady(marketGate)
+            ? '低权重影响待刷新'
+            : '低权重闸门待刷新';
     setLeafText('c1-transport-shock-score-gate', scoreGate);
 
     const blockers = [];
     if (!candidate) blockers.push('候选字段待刷新');
+    if (impactKnown && !impactApplied) blockers.push(`${impactReason} · 主分0贡献`);
+    if (!impactKnown) blockers.push('主分影响待刷新');
     if (!gateReady(routeGate)) blockers.push('路线级油轮运费未确认');
     if (!gateReady(marketGate)) blockers.push('市场确认未接入');
     if (latestAgeDays !== null && latestAgeDays > 7) blockers.push('PortWatch 数据龄偏滞后');
-    if (candidate && candidate.eligibleForMainScore !== true) blockers.push('主判断入分未批准');
     const blockerText = blockers.length
       ? blockers.slice(0, 4).join(' · ')
-      : '硬阻塞待复核清空 · 仍需独立评分审阅';
+      : '低权重闸门已触发 · 路线/市场仍单独观察';
     setLeafText('c1-transport-shock-blockers', blockerText);
 
     const evidence = candidate?.evidence || {};
@@ -2429,9 +2460,13 @@ function renderTransportShockConfirmation({ radarData }) {
 
     const sampleQuality = !candidate
       ? '候选字段待刷新'
-      : candidate.confidence === 'low'
+      : impactApplied
+        ? '低权重入分已触发 · 非路线确认'
+        : candidate.confidence === 'low'
         ? '低置信观察 · 待路线/市场确认'
-        : '样本审阅中 · 不入分';
+        : impactKnown
+          ? '低权重影响审阅中 · 当前0贡献'
+          : '样本审阅中 · 主分影响待刷新';
     setLeafText('c1-transport-shock-sample-quality', sampleQuality);
 
     const freshnessText = latestAgeDays !== null
@@ -2442,14 +2477,18 @@ function renderTransportShockConfirmation({ radarData }) {
     const statusText = candidate?.status ? `状态 ${candidate.status}` : '候选字段待刷新';
     const sourceStatus = layer?.sourceStatus?.chokepoints ? `PortWatch ${layer.sourceStatus.chokepoints}` : 'PortWatch 待确认';
     const ageSuffix = latestAgeDays !== null ? ` · ${latestAgeDays.toFixed(0)}天龄` : '';
-    setLeafText('c1-transport-shock-aux', reactionText(reaction, `${statusText} · 路线 ${routeGate} · 市场 ${marketGate} · ${sourceStatus}${ageSuffix}`));
+    const impactSummary = impactKnown ? `主分 ${impactContributionText} / ${impactCapText}` : '主分影响待刷新';
+    setLeafText('c1-transport-shock-aux', reactionText(reaction, `${statusText} · ${impactSummary} · 路线 ${routeGate} · 市场 ${marketGate} · ${sourceStatus}${ageSuffix}`));
     const firstReason = Array.isArray(candidate?.reasons) && candidate.reasons.length
       ? candidate.reasons[0]
-      : '运输冲击确认因子仍在展示观察阶段;路线级油轮运费与市场确认未接入前,不进入主判断打分。';
+      : '运输冲击确认因子读取 PortWatch free-proxy 候选与低权重主分影响;路线级油轮运费与市场确认仍是独立边界。';
+    const impactCaveat = impactKnown
+      ? ` 低权重主分影响 ${impactContributionText} / ${impactCapText};${impactApplied ? '已触发' : `当前0贡献:${impactReason}`}。`
+      : ' 低权重主分影响待下一轮生产刷新。';
     const ageCaveat = latestAgeDays !== null && latestAgeDays > 7
       ? ' PortWatch 底层日期超过7天,只作滞后代理观察。'
       : '';
-    setLeafText('c1-transport-shock-note', `${firstReason}${ageCaveat}`);
+    setLeafText('c1-transport-shock-note', `${firstReason}${impactCaveat}${ageCaveat}`);
   } catch (error) {
     console.error('[renderMacroOverview] renderTransportShockConfirmation failed:', error);
   }

@@ -16,7 +16,7 @@ const DEFAULT_OUTPUT =
 const RADAR_DATA_PATH = 'data/radar-data.json';
 const CONTRACT_VERSION = 'transport-shock-candidate-v1';
 const BOUNDARY =
-  'artifact-only Transport Shock Confirmation Factor production refresh monitor; reads committed data/radar-data.json only; writes ignored manual-artifacts and GitHub Summary/artifact only; does not trigger Daily, fetch network, write production data, or affect ODP finalBias, Brent promotion, scoring, decision, Global Risk Heatmap, or cross-validation';
+  'artifact-only Transport Shock Confirmation Factor production refresh monitor; reads committed data/radar-data.json only; writes ignored manual-artifacts and GitHub Summary/artifact only; does not trigger Daily, fetch network, write production data, connect route/market confirmation, or affect ODP finalBias, Brent promotion, Global Risk Heatmap, or cross-validation';
 
 function printUsage() {
   console.log(`Usage:
@@ -129,9 +129,19 @@ function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
-function falseBoundaryFlags(candidate) {
+function validBoundaryFlags(candidate, sourceStatus) {
   const boundaries = candidate?.boundaries;
   if (!isPlainObject(boundaries)) return false;
+  const runtimeScoringBoundaryKeys = new Set([
+    'affectsScoring',
+    'affectsDecisionModel',
+    'affectsExecutionLock',
+    'affectsPositionGuidance'
+  ]);
+  const mayAffectRuntimeScoring =
+    candidate?.eligibleForMainScore === true &&
+    sourceStatus === 'live' &&
+    ['watch', 'elevated_watch'].includes(candidate?.status);
   return [
     'affectsValues',
     'affectsDisplayInputsBaseline',
@@ -144,7 +154,10 @@ function falseBoundaryFlags(candidate) {
     'affectsWorldOrderWeights',
     'affectsGlobalRiskHeatmap',
     'affectsCrossValidation'
-  ].every((key) => boundaries[key] === false);
+  ].every((key) => {
+    if (mayAffectRuntimeScoring && runtimeScoringBoundaryKeys.has(key)) return boundaries[key] === true;
+    return boundaries[key] === false;
+  });
 }
 
 function pathIsInside(basePath, targetPath) {
@@ -171,7 +184,7 @@ function validateGithubSummaryPath(summaryPath, env = process.env) {
   return { ok: true, reason: null };
 }
 
-function summarizeCandidate(candidate) {
+function summarizeCandidate(candidate, sourceStatus) {
   if (!isPlainObject(candidate)) return null;
   return {
     contractVersion: candidate.contractVersion ?? null,
@@ -183,7 +196,7 @@ function summarizeCandidate(candidate) {
     eligibleForMainScore: candidate.eligibleForMainScore === true,
     routeFreightConfirmation: candidate.routeFreightConfirmation ?? null,
     marketConfirmation: candidate.marketConfirmation ?? null,
-    boundaryFlagsAllFalse: falseBoundaryFlags(candidate),
+    boundaryFlagsValid: validBoundaryFlags(candidate, sourceStatus),
     reasonCount: Array.isArray(candidate.reasons) ? candidate.reasons.length : 0,
     driverCount: Array.isArray(candidate.drivers) ? candidate.drivers.length : 0
   };
@@ -203,15 +216,22 @@ function classifyStatus(energyTransport, missingCandidateRefreshHistory) {
     return 'awaiting_production_refresh';
   }
   const candidate = energyTransport.transportShockCandidate;
-  const summary = summarizeCandidate(candidate);
+  const sourceStatus = energyTransport?.sourceStatus?.chokepoints ?? 'missing';
+  const summary = summarizeCandidate(candidate, sourceStatus);
+  const eligibleStateValid = summary.eligibleForMainScore === false || (
+    sourceStatus === 'live' &&
+    ['watch', 'elevated_watch'].includes(summary.status) &&
+    Number.isFinite(summary.score) &&
+    summary.score >= 50
+  );
   if (
     summary?.contractVersion === CONTRACT_VERSION &&
     summary.candidateOnly === true &&
     summary.auditOnly === true &&
-    summary.eligibleForMainScore === false &&
+    eligibleStateValid &&
     summary.routeFreightConfirmation === 'not_connected' &&
     summary.marketConfirmation === 'not_connected' &&
-    summary.boundaryFlagsAllFalse === true
+    summary.boundaryFlagsValid === true
   ) {
     return 'candidate_present_verified';
   }
@@ -224,9 +244,9 @@ function createMonitorResult(options) {
   const candidate = energyTransport?.transportShockCandidate;
   const missingCandidateRefreshHistory =
     candidate === undefined ? summarizeMissingCandidateRefreshHistory(radar, energyTransport) : null;
-  const status = classifyStatus(energyTransport, missingCandidateRefreshHistory);
-  const candidateSummary = summarizeCandidate(candidate);
   const sourceStatus = energyTransport?.sourceStatus?.chokepoints ?? 'missing';
+  const status = classifyStatus(energyTransport, missingCandidateRefreshHistory);
+  const candidateSummary = summarizeCandidate(candidate, sourceStatus);
 
   return {
     monitorVersion: MONITOR_VERSION,
@@ -266,7 +286,7 @@ function createMonitorResult(options) {
           : status === 'awaiting_production_refresh'
           ? 'wait_for_next_successful_daily_refresh_then_rerun_monitor'
           : status === 'candidate_present_verified'
-            ? 'production_candidate_available_for_display_only_frontend_card'
+            ? 'production_candidate_available_for_frontend_card_and_capped_score_impact'
             : 'review_daily_payload_and_p_score_8_contract_before_continuing',
       followUpCheck: 'npm run check:transport-shock-confirmation-factor-production-refresh'
     },
