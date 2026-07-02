@@ -1,0 +1,135 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+const ROOT = process.cwd();
+const FIXTURE = 'docs/fixtures/transport-shock-confirmation-factor/runtime-scoring-migration-authorization-v1.json';
+
+const RUNTIME_FILES = [
+  'index.html',
+  'scripts/app.js',
+  'scripts/modules/renderOilDirectional.js',
+  'scripts/modules/renderMacroOverview.js',
+  'scripts/modules/buildCrossValidationMatrix.js',
+  'scripts/run-daily-pipeline.mjs',
+  'workers/gfrr-realtime-worker/src/worker-market-preview.js',
+  'data/radar-data.json',
+  'data/oil-directional-pressure.json'
+];
+
+const RUNTIME_FORBIDDEN_MARKERS = [
+  'runtime_scoring_migration_authorized_capped_free_proxy',
+  'transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1',
+  'transportShockScoringImpact'
+];
+
+function absolute(relativePath) {
+  return path.join(ROOT, relativePath);
+}
+
+function readText(relativePath) {
+  return fs.readFileSync(absolute(relativePath), 'utf8');
+}
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function assertFixture() {
+  assert(fs.existsSync(absolute(FIXTURE)), 'Runtime scoring migration authorization fixture is missing.');
+  const authorization = JSON.parse(readText(FIXTURE));
+  assert(
+    authorization.schemaVersion === 'transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1',
+    'Authorization schemaVersion mismatch.'
+  );
+  assert(
+    authorization.status === 'runtime_scoring_migration_authorized_capped_free_proxy',
+    'Authorization status mismatch.'
+  );
+  assert(authorization.authorizedBy === 'owner_thread_approval', 'Authorization must record owner_thread_approval.');
+  assert(
+    authorization.authorizationScope === 'transport_shock_confirmation_factor_free_proxy_low_weight_runtime_scoring_migration',
+    'Authorization scope mismatch.'
+  );
+  assert(
+    authorization.approvedRuntimeSourcePath === 'macroDrivers.energyTransport.transportShockCandidate',
+    'Authorization runtime source path mismatch.'
+  );
+  assert(authorization.approvedScoreImpact.maxContributionPct === 3, 'Authorization cap must stay 3%.');
+  assert(authorization.approvedScoreImpact.defaultContributionPct === 0, 'Default contribution must stay fail-closed 0.');
+  assert(authorization.approvedScoreImpact.direction === 'transport_shock_pressure_only', 'Direction must stay pressure-only.');
+  assert(authorization.approvedScoreImpact.mayReduceMainScore === false, 'Authorization must not reduce main score.');
+  assert(authorization.approvedScoreImpact.mayOverrideCoreRiskModel === false, 'Authorization must not override core risk model.');
+  assert(authorization.approvedScoreImpact.mayOverrideOdpFinalBias === false, 'Authorization must not override ODP finalBias.');
+  assert(authorization.approvedScoreImpact.mayAffectBrentPromotion === false, 'Authorization must not affect Brent promotion.');
+  for (const guard of [
+    'candidate_missing_zero_contribution',
+    'candidate_not_live_zero_contribution',
+    'candidate_not_eligible_zero_contribution',
+    'hard_cap_three_pct'
+  ]) {
+    assert(authorization.requiredFailClosedGuards.includes(guard), `Authorization missing guard: ${guard}`);
+  }
+  assert(authorization.explicitlyStillNotApproved.routeFreightConfirmationConnected === false, 'Route freight confirmation must remain unapproved.');
+  assert(authorization.explicitlyStillNotApproved.odpFinalBiasMutation === false, 'ODP finalBias mutation must remain unapproved.');
+  assert(authorization.explicitlyStillNotApproved.bubbleWatchMutation === false, 'Bubble Watch mutation must remain unapproved.');
+  assert(
+    authorization.nextAllowedStep === 'implement_runtime_scoring_with_fail_closed_guards_and_checker',
+    'Authorization next step mismatch.'
+  );
+}
+
+function assertRuntimeStillUnwiredForAuthorizationStage() {
+  for (const relativePath of RUNTIME_FILES) {
+    assert(fs.existsSync(absolute(relativePath)), `${relativePath} is missing.`);
+    const source = readText(relativePath);
+    for (const marker of RUNTIME_FORBIDDEN_MARKERS) {
+      assert(!source.includes(marker), `${relativePath} contains authorization-stage marker before runtime implementation: ${marker}`);
+    }
+  }
+}
+
+function assertAuthorityDocs() {
+  const agents = readText('AGENTS.md');
+  const dataSources = readText('docs/DATA_SOURCES.md');
+  const dataContract = readText('docs/DATA_CONTRACT.md');
+  const signalIntake = readText('docs/SIGNAL_INTAKE.md');
+  const backlog = readText('docs/PROJECT_BACKLOG.md');
+  const packageJson = JSON.parse(readText('package.json'));
+  const checkSuite = readText('scripts/check-suite.mjs');
+  for (const marker of [
+    'transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1',
+    'runtime_scoring_migration_authorized_capped_free_proxy',
+    'owner_thread_approval',
+    'maxContributionPct=3'
+  ]) {
+    assert(agents.includes(marker), `AGENTS.md missing marker: ${marker}`);
+    assert(dataSources.includes(marker), `DATA_SOURCES missing marker: ${marker}`);
+  }
+  for (const marker of [
+    'transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1',
+    'transportShockScoringImpact',
+    'maxContributionPct=3',
+    'defaultContributionPct=0'
+  ]) {
+    assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
+  }
+  assert(signalIntake.includes('runtime_scoring_migration_authorized_capped_free_proxy'), 'SIGNAL_INTAKE missing authorization marker.');
+  assert(backlog.includes('Transport Shock Confirmation Factor runtime scoring migration authorization'), 'PROJECT_BACKLOG missing authorization marker.');
+  assert(
+    packageJson.scripts['check:transport-shock-confirmation-factor-runtime-scoring-migration-authorization'],
+    'package.json missing authorization checker.'
+  );
+  assert(
+    checkSuite.includes('check:transport-shock-confirmation-factor-runtime-scoring-migration-authorization'),
+    'check-suite missing authorization checker.'
+  );
+}
+
+function main() {
+  assertFixture();
+  assertRuntimeStillUnwiredForAuthorizationStage();
+  assertAuthorityDocs();
+  console.log('Transport Shock Confirmation Factor runtime scoring migration authorization: PASS');
+}
+
+main();

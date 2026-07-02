@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1",
+  "status": "runtime_scoring_migration_authorized_capped_free_proxy",
+  "authorizedAt": "2026-07-03T00:00:00.000Z",
+  "authorizedBy": "owner_thread_approval",
+  "authorizationScope": "transport_shock_confirmation_factor_free_proxy_low_weight_runtime_scoring_migration",
+  "approvedRuntimeSourcePath": "macroDrivers.energyTransport.transportShockCandidate",
+  "approvedScoreImpact": {
+    "maxContributionPct": 3,
+    "defaultContributionPct": 0,
+    "direction": "transport_shock_pressure_only",
+    "mayReduceMainScore": false,
+    "mayOverrideCoreRiskModel": false,
+    "mayOverrideOdpFinalBias": false,
+    "mayAffectBrentPromotion": false
+  },
+  "requiredFailClosedGuards": [
+    "feature_flag_or_static_authorization_guard",
+    "candidate_missing_zero_contribution",
+    "candidate_not_live_zero_contribution",
+    "candidate_not_normal_zero_contribution",
+    "candidate_not_eligible_zero_contribution",
+    "candidate_score_not_positive_zero_contribution",
+    "candidate_stale_zero_contribution",
+    "hard_cap_three_pct",
+    "no_news_only_override",
+    "no_single_chokepoint_override",
+    "no_stale_portwatch_override"
+  ],
+  "requiredRuntimeOutputs": [
+    "transportShockScoringImpact",
+    "transportShockScoringImpact.applied",
+    "transportShockScoringImpact.contributionPct",
+    "transportShockScoringImpact.reason",
+    "transportShockScoringImpact.guards"
+  ],
+  "explicitlyStillNotApproved": {
+    "routeFreightConfirmationConnected": false,
+    "marketConfirmationConnected": false,
+    "odpFinalBiasMutation": false,
+    "brentPromotionMutation": false,
+    "globalRiskHeatmapMutation": false,
+    "crossValidationMutation": false,
+    "bubbleWatchMutation": false
+  },
+  "nextAllowedStep": "implement_runtime_scoring_with_fail_closed_guards_and_checker",
+  "notesZh": [
+    "本授权只允许 Transport Shock 免费代理低权重路径进入主判断分数迁移,上限 3%。",
+    "本授权不允许连接真实路线级油轮运费确认,不允许改 ODP finalBias,不允许改 Brent promotion。"
+  ]
+}
