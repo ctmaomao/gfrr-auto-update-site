@@ -147,6 +147,7 @@ const SUITES = {
     'check:transport-shock-confirmation-factor-free-proxy-score-readiness-gate-monitor',
     'check:transport-shock-confirmation-factor-free-proxy-real-event-sample-input-prep',
     'check:transport-shock-free-freight-alternative-source-review',
+    'check:transport-shock-satellite-handling-policy',
     'check:oil-news-events-diagnosis',
     'check:oil-news-event-watch',
     'check:oil-news-event-watch-samples-review',

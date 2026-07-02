@@ -1,0 +1,116 @@
+{
+  "contractVersion": "transport-shock-satellite-handling-policy-v1",
+  "kind": "transport_shock_satellite_handling_policy",
+  "status": "policy_review_no_thermal_blocker_bypass",
+  "generatedBy": "P-score-45 policy-review fixture",
+  "currentProductionState": {
+    "highFrequencyPhysicalConfirmation": "blocked",
+    "thermalBlockerBypassApproved": false,
+    "routeFreightConfirmation": "not_connected",
+    "eligibleForMainScore": false
+  },
+  "baselineQualityWindows": [
+    {
+      "windowKey": "starter_under_7d",
+      "minDaysInclusive": 0,
+      "maxDaysExclusive": 7,
+      "confirmationAllowed": false,
+      "scoreAllowed": false
+    },
+    {
+      "windowKey": "minimum_7d_gate",
+      "minDaysInclusive": 7,
+      "maxDaysExclusive": 14,
+      "confirmationAllowed": false,
+      "scoreAllowed": false
+    },
+    {
+      "windowKey": "stronger_14d_gate",
+      "minDaysInclusive": 14,
+      "maxDaysExclusive": 30,
+      "confirmationAllowed": false,
+      "scoreAllowed": false
+    },
+    {
+      "windowKey": "preferred_30d_stable",
+      "minDaysInclusive": 30,
+      "maxDaysExclusive": null,
+      "confirmationAllowed": false,
+      "scoreAllowed": false
+    }
+  ],
+  "thermalSupportRequirements": {
+    "sourceLiveOrReviewedRecentArtifact": true,
+    "noExampleFacilities": true,
+    "baselineAtLeast7d": true,
+    "repeatedObservationRequired": true,
+    "elevatedRepeatedObservationRequired": true,
+    "facilityOrRegionOverlapsNewsOrTransportAxis": true,
+    "clearsHighFrequencyPhysicalByItself": false,
+    "requiresSeparateCrossConfirmationReview": true
+  },
+  "targetedProbePolicy": {
+    "allowed": true,
+    "triggeredBy": [
+      "oil_news_facility_mention",
+      "operator_review_facility_axis",
+      "transport_chokepoint_adjacent_facility"
+    ],
+    "allowedWindowsDays": [1, 3, 5],
+    "allowedOutputRoot": "manual-artifacts/oil-thermal/",
+    "writesProductionData": false,
+    "confirmsAccident": false,
+    "confirmsOutage": false,
+    "confirmsClosure": false,
+    "confirmsPriceDirection": false
+  },
+  "noDetectionPolicy": {
+    "classification": "negative_evidence_not_absence_proof",
+    "canReduceFacilityAccidentClaimConfidence": true,
+    "canDisplayCopy": "未见卫星热异常确认",
+    "canClearThermalBlocker": false,
+    "canClearRouteFreightBlocker": false,
+    "canClearMarketBlocker": false,
+    "canApproveScoreWrite": false
+  },
+  "bypassPolicy": {
+    "thermalBlockerBypassApprovedByThisPolicy": false,
+    "futureBypassRequiresSeparateReviewedPolicyChange": true,
+    "minimumFutureCompensatingSignals": [
+      "fresh_portwatch_physical_proxy",
+      "route_or_free_transport_proxy_review",
+      "market_structure_confirmation",
+      "news_gate_clear",
+      "odp_or_eia_physical_anchor"
+    ],
+    "falsePositiveControlsRequired": true
+  },
+  "approvalState": {
+    "thresholdDowngradeApproved": false,
+    "thermalBlockerBypassApproved": false,
+    "productionDataWriteApproved": false,
+    "workflowAutomationApproved": false,
+    "frontendDisplayApproved": false,
+    "scoreWriteApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "boundaries": {
+    "policyReviewOnly": true,
+    "noThresholdDowngrade": true,
+    "noThermalBlockerBypass": true,
+    "noProductionWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreWrite": true,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "nextAllowedStep": "continue_baseline_accumulation_or_targeted_probe_artifact_only_no_score_write"
+}
