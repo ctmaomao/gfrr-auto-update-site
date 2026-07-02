@@ -27,6 +27,14 @@ const EVENT_TYPES = [
   'market_reaction',
   'general_energy'
 ];
+const CLAIM_AXES = [
+  'transport_security',
+  'supply_flow',
+  'sanctions_policy',
+  'facility_operations',
+  'market_reaction',
+  'general_energy_context'
+];
 const SOURCE_TIERS = [
   'primary_wire_or_official',
   'major_financial_media',
@@ -390,6 +398,15 @@ function eventType(article) {
   return 'general_energy';
 }
 
+function claimAxis(type) {
+  if (type === 'chokepoint' || type === 'shipping') return 'transport_security';
+  if (type === 'supply') return 'supply_flow';
+  if (type === 'sanctions') return 'sanctions_policy';
+  if (type === 'facility') return 'facility_operations';
+  if (type === 'market_reaction') return 'market_reaction';
+  return 'general_energy_context';
+}
+
 function claimPolarity(article) {
   const title = String(article.title || '');
   const escalation = RISK_ESCALATION_RE.test(title);
@@ -416,6 +433,7 @@ function compactClaim(article, sample) {
     queryIds: Array.isArray(article.queryIds) ? article.queryIds.filter(Boolean).sort() : [],
     buckets: Array.isArray(article.buckets) ? article.buckets.filter(Boolean).sort() : [],
     eventType: type,
+    claimAxis: claimAxis(type),
     claimPolarity: polarity,
     triggerTerms: {
       escalation: termHits(article.title, ESCALATION_TERMS),
@@ -491,6 +509,60 @@ function fillCounts(keys, counts) {
   return Object.fromEntries(keys.map((key) => [key, counts[key] || 0]));
 }
 
+function axisCounts(claims) {
+  return Object.fromEntries(CLAIM_AXES.map((axis) => {
+    const rows = claims.filter((claim) => claim.claimAxis === axis);
+    const eventTypes = [...new Set(rows.map((claim) => claim.eventType).filter(Boolean))].sort();
+    return [axis, {
+      total: rows.length,
+      escalation: rows.filter((claim) => claim.claimPolarity === 'risk_escalation').length,
+      deescalation: rows.filter((claim) => claim.claimPolarity === 'risk_deescalation').length,
+      mixed: rows.filter((claim) => claim.claimPolarity === 'mixed_or_contested').length,
+      marketReactionOnly: rows.filter((claim) => claim.claimPolarity === 'market_reaction_only').length,
+      unclearOrHighClaim: rows.filter((claim) => claim.claimPolarity === 'unclear_or_high_claim').length,
+      lowConfidenceHighClaimCount: rows.filter((claim) => (
+        (claim.sourceTier === 'low_confidence' || claim.sourceTier === 'aggregator_or_blog') &&
+        (claim.claimPolarity === 'risk_escalation' || claim.claimPolarity === 'mixed_or_contested')
+      )).length,
+      eventTypes,
+      sourceTierCounts: fillCounts(SOURCE_TIERS, countBy(rows, 'sourceTier'))
+    }];
+  }));
+}
+
+function axisSplitState(counts, contradiction) {
+  const transport = counts.transport_security || {};
+  const supply = counts.supply_flow || {};
+  const transportRiskElevated = finiteNumber(transport.escalation) + finiteNumber(transport.mixed) > 0;
+  const supplyFlowDeescalating = finiteNumber(supply.deescalation) > 0
+    && finiteNumber(supply.escalation) === 0
+    && finiteNumber(supply.mixed) === 0;
+  const escalationAxes = CLAIM_AXES.filter((axis) => {
+    const row = counts[axis] || {};
+    return finiteNumber(row.escalation) + finiteNumber(row.mixed) > 0;
+  });
+  const deescalationAxes = CLAIM_AXES.filter((axis) => finiteNumber(counts[axis]?.deescalation) > 0);
+  const state = transportRiskElevated && supplyFlowDeescalating
+    ? 'security_risk_vs_supply_flow_split'
+    : (contradiction.state === 'mixed_claims' ? 'mixed_claims_not_axis_resolved' : 'not_needed');
+
+  return {
+    state,
+    supportsOperatorReview: state === 'security_risk_vs_supply_flow_split',
+    escalationAxes,
+    deescalationAxes,
+    interpretationCode: state === 'security_risk_vs_supply_flow_split'
+      ? 'transport_security_risk_elevated_while_supply_flow_deescalates'
+      : 'no_axis_split_clearance',
+    doesNotConfirm: [
+      'hormuz_closure',
+      'supply_disruption',
+      'route_freight_confirmation',
+      'oil_price_direction'
+    ]
+  };
+}
+
 function contradictionState(claims) {
   const byEventType = EVENT_TYPES.map((type) => {
     const rows = claims.filter((claim) => claim.eventType === type);
@@ -543,8 +615,11 @@ function buildReview(options, samples, invalid) {
   const generatedAts = validSamples.map((sample) => sample.generatedAt).sort();
   const polarityCounts = fillCounts(POLARITIES, countBy(allClaims, 'claimPolarity'));
   const eventTypeCounts = fillCounts(EVENT_TYPES, countBy(allClaims, 'eventType'));
+  const claimAxisCounts = fillCounts(CLAIM_AXES, countBy(allClaims, 'claimAxis'));
+  const axisCountDetails = axisCounts(allClaims);
   const sourceTierCounts = fillCounts(SOURCE_TIERS, countBy(allClaims, 'sourceTier'));
   const contradiction = contradictionState(allClaims);
+  const axisSplit = axisSplitState(axisCountDetails, contradiction);
   const lowConfidenceHighClaimCount = allClaims.filter((claim) => (
     (claim.sourceTier === 'low_confidence' || claim.sourceTier === 'aggregator_or_blog') &&
     (claim.claimPolarity === 'risk_escalation' || claim.claimPolarity === 'mixed_or_contested')
@@ -576,6 +651,9 @@ function buildReview(options, samples, invalid) {
     },
     polarityCounts,
     eventTypeCounts,
+    claimAxisCounts,
+    axisCounts: axisCountDetails,
+    axisSplit,
     sourceTierCounts,
     contradiction,
     displayReadiness: {
@@ -606,7 +684,8 @@ function buildReview(options, samples, invalid) {
       highClaimTitleCount: sample.titleRisk.highClaimTitleCount,
       displayHeadlinesApproved: sample.titleRisk.displayHeadlinesApproved,
       polarityCounts: fillCounts(POLARITIES, countBy(sample.claims, 'claimPolarity')),
-      eventTypeCounts: fillCounts(EVENT_TYPES, countBy(sample.claims, 'eventType'))
+      eventTypeCounts: fillCounts(EVENT_TYPES, countBy(sample.claims, 'eventType')),
+      claimAxisCounts: fillCounts(CLAIM_AXES, countBy(sample.claims, 'claimAxis'))
     })),
     invalid,
     warnings: [],

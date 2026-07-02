@@ -145,15 +145,21 @@ function buildReview(ledger, options) {
   const lowConfidenceHighClaimCount = asNumber(ledger?.summary?.lowConfidenceHighClaimCount);
   const contradictionState = ledger?.contradiction?.state ?? null;
   const contradictionDetails = Array.isArray(ledger?.contradiction?.details) ? ledger.contradiction.details : [];
+  const axisSplit = ledger?.axisSplit && typeof ledger.axisSplit === 'object' ? ledger.axisSplit : null;
+  const axisCounts = ledger?.axisCounts && typeof ledger.axisCounts === 'object' ? ledger.axisCounts : null;
   const chokepoint = contradictionDetails.find((item) => item?.eventType === 'chokepoint') || {};
   const supply = contradictionDetails.find((item) => item?.eventType === 'supply') || {};
   const sourceQualityOk = sourceQualitySufficient(ledger);
   const headlineGuardOk = ledger?.displayReadiness?.directHeadlineDisplayAllowed === false
     && ledger?.displayReadiness?.originalHeadlineOutputAllowed === false;
-  const axisSplitSupported = contradictionState === 'mixed_claims'
+  const fallbackAxisSplitSupported = contradictionState === 'mixed_claims'
     && asNumber(chokepoint.escalation) > 0
     && asNumber(supply.deescalation) > 0
     && asNumber(supply.escalation) === 0;
+  const axisSplitSupported = axisSplit?.supportsOperatorReview === true
+    && axisSplit?.state === 'security_risk_vs_supply_flow_split'
+    ? true
+    : fallbackAxisSplitSupported;
 
   if (sampleCount < options.minSamples) blockers.push('insufficient_claim_ledger_samples');
   if (claimCount <= 0) blockers.push('no_compact_claims');
@@ -191,7 +197,7 @@ function buildReview(ledger, options) {
         : 'unresolved',
       headlineDisposition: headlineGuardOk ? 'headline_output_remains_blocked' : 'headline_guard_failed',
       eventInterpretation: axisSplitSupported
-        ? 'chokepoint_security_risk_elevated_while_supply_flow_deescalation_claims_coexist'
+        ? (axisSplit?.interpretationCode ?? 'chokepoint_security_risk_elevated_while_supply_flow_deescalation_claims_coexist')
         : 'claim_direction_not_stable_enough_for_delegated_clearance',
       sourceQuality: sourceQualityOk ? 'sufficient_for_aggregate_review' : 'insufficient',
       doesNotConfirm: [
@@ -206,6 +212,9 @@ function buildReview(ledger, options) {
       contradictionDetails,
       polarityCounts: ledger?.polarityCounts ?? null,
       eventTypeCounts: ledger?.eventTypeCounts ?? null,
+      claimAxisCounts: ledger?.claimAxisCounts ?? null,
+      axisCounts,
+      axisSplit,
       sourceTierCounts: ledger?.sourceTierCounts ?? null,
       lowConfidenceHighClaimCount,
       directHeadlineDisplayAllowed: ledger?.displayReadiness?.directHeadlineDisplayAllowed === true,

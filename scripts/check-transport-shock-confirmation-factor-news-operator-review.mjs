@@ -81,6 +81,8 @@ function assertFixture() {
   const ledger = JSON.parse(readText(FIXTURE_LEDGER));
   assert(ledger.reviewVersion === 'oil-news-claim-ledger-p52', 'Fixture claim-ledger schema mismatch.');
   assert(ledger.contradiction.state === 'mixed_claims', 'Fixture must exercise mixed claims.');
+  assert(ledger.axisSplit?.state === 'security_risk_vs_supply_flow_split', 'Fixture must exercise reviewed axis split.');
+  assert(ledger.axisSplit?.supportsOperatorReview === true, 'Fixture axis split must support operator review.');
   assert(ledger.summary.lowConfidenceHighClaimCount > 0, 'Fixture must exercise low-confidence high claims.');
 }
 
@@ -99,6 +101,10 @@ function assertOperatorReviewOutput() {
   assert(review.reviewFindings.approvedForCrossConfirmation === true, 'Expected cross-confirmation approval.');
   assert(review.reviewFindings.mixedClaimsDisposition === 'axis_split_reviewed_not_direct_contradiction', 'Expected axis-split disposition.');
   assert(review.reviewFindings.lowConfidenceHighClaimsDisposition === 'downgraded_to_non_confirming_context', 'Expected low-confidence disposition.');
+  assert(review.reviewFindings.eventInterpretation === 'transport_security_risk_elevated_while_supply_flow_deescalates', 'Expected claim-axis interpretation.');
+  assert(review.evidence.axisSplit.state === 'security_risk_vs_supply_flow_split', 'Expected axisSplit evidence.');
+  assert(review.evidence.axisCounts.transport_security.escalation > 0, 'Expected transport security escalation evidence.');
+  assert(review.evidence.claimAxisCounts.supply_flow > 0, 'Expected supply-flow claim-axis evidence.');
   assert(review.reviewFindings.doesNotConfirm.includes('hormuz_closure'), 'Review must not confirm closure.');
   assert(review.reviewFindings.doesNotConfirm.includes('oil_price_direction'), 'Review must not confirm oil-price direction.');
   assert(review.approvals.scoreWriteApproved === false, 'Review must not approve score write.');

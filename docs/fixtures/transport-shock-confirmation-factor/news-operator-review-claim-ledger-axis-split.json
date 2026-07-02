@@ -26,6 +26,131 @@
     "market_reaction": 0,
     "general_energy": 0
   },
+  "claimAxisCounts": {
+    "transport_security": 80,
+    "supply_flow": 14,
+    "sanctions_policy": 0,
+    "facility_operations": 2,
+    "market_reaction": 0,
+    "general_energy_context": 0
+  },
+  "axisCounts": {
+    "transport_security": {
+      "total": 80,
+      "escalation": 28,
+      "deescalation": 0,
+      "mixed": 6,
+      "marketReactionOnly": 46,
+      "unclearOrHighClaim": 0,
+      "lowConfidenceHighClaimCount": 12,
+      "eventTypes": ["chokepoint", "shipping"],
+      "sourceTierCounts": {
+        "primary_wire_or_official": 10,
+        "major_financial_media": 12,
+        "industry_trade": 36,
+        "aggregator_or_blog": 22,
+        "low_confidence": 0
+      }
+    },
+    "supply_flow": {
+      "total": 14,
+      "escalation": 0,
+      "deescalation": 10,
+      "mixed": 0,
+      "marketReactionOnly": 2,
+      "unclearOrHighClaim": 2,
+      "lowConfidenceHighClaimCount": 0,
+      "eventTypes": ["supply"],
+      "sourceTierCounts": {
+        "primary_wire_or_official": 2,
+        "major_financial_media": 2,
+        "industry_trade": 4,
+        "aggregator_or_blog": 6,
+        "low_confidence": 0
+      }
+    },
+    "sanctions_policy": {
+      "total": 0,
+      "escalation": 0,
+      "deescalation": 0,
+      "mixed": 0,
+      "marketReactionOnly": 0,
+      "unclearOrHighClaim": 0,
+      "lowConfidenceHighClaimCount": 0,
+      "eventTypes": [],
+      "sourceTierCounts": {
+        "primary_wire_or_official": 0,
+        "major_financial_media": 0,
+        "industry_trade": 0,
+        "aggregator_or_blog": 0,
+        "low_confidence": 0
+      }
+    },
+    "facility_operations": {
+      "total": 2,
+      "escalation": 0,
+      "deescalation": 0,
+      "mixed": 0,
+      "marketReactionOnly": 0,
+      "unclearOrHighClaim": 2,
+      "lowConfidenceHighClaimCount": 0,
+      "eventTypes": ["facility"],
+      "sourceTierCounts": {
+        "primary_wire_or_official": 0,
+        "major_financial_media": 0,
+        "industry_trade": 2,
+        "aggregator_or_blog": 0,
+        "low_confidence": 0
+      }
+    },
+    "market_reaction": {
+      "total": 0,
+      "escalation": 0,
+      "deescalation": 0,
+      "mixed": 0,
+      "marketReactionOnly": 0,
+      "unclearOrHighClaim": 0,
+      "lowConfidenceHighClaimCount": 0,
+      "eventTypes": [],
+      "sourceTierCounts": {
+        "primary_wire_or_official": 0,
+        "major_financial_media": 0,
+        "industry_trade": 0,
+        "aggregator_or_blog": 0,
+        "low_confidence": 0
+      }
+    },
+    "general_energy_context": {
+      "total": 0,
+      "escalation": 0,
+      "deescalation": 0,
+      "mixed": 0,
+      "marketReactionOnly": 0,
+      "unclearOrHighClaim": 0,
+      "lowConfidenceHighClaimCount": 0,
+      "eventTypes": [],
+      "sourceTierCounts": {
+        "primary_wire_or_official": 0,
+        "major_financial_media": 0,
+        "industry_trade": 0,
+        "aggregator_or_blog": 0,
+        "low_confidence": 0
+      }
+    }
+  },
+  "axisSplit": {
+    "state": "security_risk_vs_supply_flow_split",
+    "supportsOperatorReview": true,
+    "escalationAxes": ["transport_security"],
+    "deescalationAxes": ["supply_flow"],
+    "interpretationCode": "transport_security_risk_elevated_while_supply_flow_deescalates",
+    "doesNotConfirm": [
+      "hormuz_closure",
+      "supply_disruption",
+      "route_freight_confirmation",
+      "oil_price_direction"
+    ]
+  },
   "sourceTierCounts": {
     "primary_wire_or_official": 12,
     "major_financial_media": 14,
