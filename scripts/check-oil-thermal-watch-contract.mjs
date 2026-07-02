@@ -49,6 +49,8 @@ const PRODUCTION_FALSE_KEYS = [
   'affectsGlobalRiskHeatmap',
   'affectsCrossValidation'
 ];
+const MAX_FIRMS_REQUESTS_PER_RUN = 150;
+const DEFAULT_SOURCE_COUNT = 3;
 
 function finiteOrNull(value) {
   return value === null || Number.isFinite(value);
@@ -70,6 +72,39 @@ function validateSummary(path, obj) {
     if (!obj[field] || typeof obj[field] !== 'object' || Array.isArray(obj[field])) fail(`${path}.${field} must be an object`);
   }
 }
+
+function validateFacilityConfig() {
+  if (!Array.isArray(config.facilities) || config.facilities.length === 0) {
+    fail('config.facilities must be a non-empty array');
+    return;
+  }
+  const seenFacilityIds = new Set();
+  for (const [index, facility] of config.facilities.entries()) {
+    const path = `config.facilities[${index}]`;
+    for (const field of ['id', 'label', 'region', 'assetType', 'sourceNote']) {
+      if (typeof facility[field] !== 'string' || !facility[field]) fail(`${path}.${field} must be non-empty string`);
+    }
+    if (seenFacilityIds.has(facility.id)) fail(`${path}.id must be unique: ${facility.id}`);
+    seenFacilityIds.add(facility.id);
+    if (!Array.isArray(facility.bbox) || facility.bbox.length !== 4) {
+      fail(`${path}.bbox must be [west,south,east,north]`);
+    } else {
+      const [west, south, east, north] = facility.bbox;
+      if (![west, south, east, north].every(Number.isFinite)) fail(`${path}.bbox values must be finite`);
+      if (!(west < east && south < north)) fail(`${path}.bbox must be ordered west<east and south<north`);
+      if (Math.abs((east ?? 0) - (west ?? 0)) > 1.5 || Math.abs((north ?? 0) - (south ?? 0)) > 1.5) {
+        fail(`${path}.bbox must stay within the small FIRMS watch-box limit`);
+      }
+    }
+    if (!/sourceUrl=/u.test(facility.sourceNote)) fail(`${path}.sourceNote must include sourceUrl`);
+  }
+  const requestCount = config.facilities.length * DEFAULT_SOURCE_COUNT;
+  if (requestCount > MAX_FIRMS_REQUESTS_PER_RUN) {
+    fail(`config.facilities exceeds FIRMS request budget: ${requestCount}/${MAX_FIRMS_REQUESTS_PER_RUN}`);
+  }
+}
+
+validateFacilityConfig();
 
 if (data.schemaVersion !== 'oil-thermal-watch-1') fail(`schemaVersion invalid: ${data.schemaVersion}`);
 if (data.module !== 'oil-thermal-watch') fail(`module invalid: ${data.module}`);

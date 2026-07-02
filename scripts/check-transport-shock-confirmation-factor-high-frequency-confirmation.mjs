@@ -7,6 +7,7 @@ const REVIEW_SCRIPT = 'scripts/review-transport-shock-confirmation-factor-high-f
 const FIXTURE_NEWS_LEDGER = 'docs/fixtures/transport-shock-confirmation-factor/high-frequency-oil-news-claim-ledger.json';
 const FIXTURE_NEWS_GATE_CLEAR = 'docs/fixtures/transport-shock-confirmation-factor/high-frequency-news-manual-gate-clear.json';
 const FIXTURE_THERMAL_REPEATED = 'docs/fixtures/transport-shock-confirmation-factor/high-frequency-oil-thermal-repeated-watch.json';
+const FIXTURE_THERMAL_PARTIAL_ELEVATED = 'docs/fixtures/transport-shock-confirmation-factor/high-frequency-oil-thermal-partial-elevated-watch.json';
 
 const RUNTIME_FILES = [
   'index.html',
@@ -84,7 +85,12 @@ function assertScriptSafety() {
 }
 
 function assertFixtures() {
-  for (const fixture of [FIXTURE_NEWS_LEDGER, FIXTURE_NEWS_GATE_CLEAR, FIXTURE_THERMAL_REPEATED]) {
+  for (const fixture of [
+    FIXTURE_NEWS_LEDGER,
+    FIXTURE_NEWS_GATE_CLEAR,
+    FIXTURE_THERMAL_REPEATED,
+    FIXTURE_THERMAL_PARTIAL_ELEVATED
+  ]) {
     assert(fs.existsSync(absolute(fixture)), `Fixture missing: ${fixture}`);
   }
   const news = JSON.parse(readText(FIXTURE_NEWS_LEDGER));
@@ -97,6 +103,10 @@ function assertFixtures() {
   assert(thermal.schemaVersion === 'oil-thermal-watch-1', 'Thermal fixture schema mismatch.');
   assert(thermal.aggregate.repeatedObservationCount > 0, 'Thermal fixture must include repeated observations.');
   assert(thermal.aggregate.elevatedRepeatedObservationCount === 0, 'Thermal fixture must remain non-elevated.');
+  const partialElevated = JSON.parse(readText(FIXTURE_THERMAL_PARTIAL_ELEVATED));
+  assert(partialElevated.baseline.status === 'partial', 'Partial elevated thermal fixture must use partial top-level baseline.');
+  assert(partialElevated.aggregate.facilitiesWithEstablishedBaseline > 0, 'Partial elevated thermal fixture must preserve established facility count.');
+  assert(partialElevated.aggregate.elevatedRepeatedObservationCount > 0, 'Partial elevated thermal fixture must include elevated repeated observations.');
 }
 
 function assertManualGateClearOutput() {
@@ -123,6 +133,30 @@ function assertManualGateClearOutput() {
   assert(review.summary.readinessBlockers.includes('thermal_elevated_repeated_observation_missing'), 'Thermal elevated blocker must remain.');
   assert(review.scoreWriteApproved === false, 'Gate-clear review must not approve score write.');
   assert(review.eligibleForMainScore === false, 'Gate-clear review must not approve main-score eligibility.');
+}
+
+function assertPartialBaselineElevatedOutput() {
+  const stdout = runNode([
+    REVIEW_SCRIPT,
+    '--news-ledger',
+    FIXTURE_NEWS_LEDGER,
+    '--news-manual-gate',
+    FIXTURE_NEWS_GATE_CLEAR,
+    '--oil-thermal',
+    FIXTURE_THERMAL_PARTIAL_ELEVATED,
+    '--no-output',
+    '--json'
+  ]);
+  const review = JSON.parse(stdout);
+  assert(review.status === 'high_frequency_confirmation_ready_for_separate_review_no_score_write', 'Partial baseline with facility-level elevated repeated observation should clear high-frequency review.');
+  assert(review.recommendation === 'open_separate_review_for_confirmation_design_keep_no_score_write', 'Unexpected partial-baseline elevated recommendation.');
+  assert(review.summary.thermalRepeatedObservation === true, 'Expected thermal repeated observation from facility-level established baseline.');
+  assert(review.summary.thermalElevatedRepeatedObservation === true, 'Expected thermal elevated repeated observation from facility-level established baseline.');
+  assert(!review.summary.readinessBlockers.includes('oil_thermal_baseline_not_established'), 'Partial top-level baseline must not block when established facility rows exist.');
+  assert(review.thermal.evidence.baselineStatus === 'partial', 'Evidence should preserve top-level partial baseline.');
+  assert(review.thermal.evidence.facilitiesWithEstablishedBaseline > 0, 'Evidence should expose established facility count.');
+  assert(review.scoreWriteApproved === false, 'High-frequency ready review must not approve score write.');
+  assert(review.eligibleForMainScore === false, 'High-frequency ready review must not approve main-score eligibility.');
 }
 
 function assertReviewOutput() {
@@ -207,6 +241,7 @@ function main() {
   assertFixtures();
   assertReviewOutput();
   assertManualGateClearOutput();
+  assertPartialBaselineElevatedOutput();
   assertRuntimeRemainsUnwired();
   assertAuthorityDocs();
   console.log('Transport Shock Confirmation Factor high-frequency confirmation review: PASS');

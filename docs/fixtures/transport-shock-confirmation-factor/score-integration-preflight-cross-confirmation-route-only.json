@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-cross-confirmation-v1",
+  "status": "cross_confirmation_blocked_keep_display_only",
+  "recommendation": "keep_transport_shock_candidate_display_only_until_blockers_clear",
+  "generatedAt": "2026-07-02T00:00:00.000Z",
+  "crossConfirmationReady": false,
+  "manualReviewRequired": true,
+  "summary": {
+    "rowCount": 7,
+    "hardBlockerCount": 1,
+    "hardBlockerIds": [
+      "route_freight_confirmation"
+    ],
+    "watchCount": 0,
+    "watchIds": []
+  },
+  "rows": [],
+  "scoreReadinessApproved": false,
+  "scoreIntegrationApproved": false,
+  "scoreWriteApproved": false,
+  "productionWriteApproved": false,
+  "frontendDisplayApproved": false,
+  "eligibleForMainScore": false,
+  "promotionEligible": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noRawProviderResponseStored": true,
+    "noHeadlineTextOutput": true,
+    "noScoreWrite": true,
+    "crossConfirmationReviewOnly": true
+  },
+  "boundary": "fixture for cross-confirmation route-only blocked state"
+}

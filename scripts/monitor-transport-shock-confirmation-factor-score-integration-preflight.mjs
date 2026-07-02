@@ -10,6 +10,8 @@ const DEFAULT_FREE_PROXY_GATE =
   'manual-artifacts/transport-shock-confirmation-factor/free-proxy-score-readiness-gate-latest.json';
 const DEFAULT_CROSS_CONFIRMATION =
   'manual-artifacts/transport-shock-confirmation-factor/cross-confirmation-latest.json';
+const DEFAULT_FREE_PROXY_BRIDGE_PREFLIGHT =
+  'manual-artifacts/transport-shock-confirmation-factor/free-proxy-bridge-preflight-latest.json';
 const DEFAULT_OUTPUT =
   'manual-artifacts/transport-shock-confirmation-factor/score-integration-preflight-monitor-latest.json';
 const BOUNDARY =
@@ -22,6 +24,8 @@ function usage() {
 Options:
   --free-proxy-gate <path>     P-score free-proxy readiness gate artifact. Default: ${DEFAULT_FREE_PROXY_GATE}
   --cross-confirmation <path>  P-score cross-confirmation artifact. Default: ${DEFAULT_CROSS_CONFIRMATION}
+  --free-proxy-bridge-preflight <path>
+                               Optional free-proxy bridge preflight artifact. Default: ${DEFAULT_FREE_PROXY_BRIDGE_PREFLIGHT}
   --output <path>              Ignored monitor artifact. Default: ${DEFAULT_OUTPUT}
   --dry-run                    Do not write ignored artifacts.
   --no-output                  Do not write the monitor artifact.
@@ -54,6 +58,7 @@ function parseArgs(argv) {
   const options = {
     freeProxyGate: DEFAULT_FREE_PROXY_GATE,
     crossConfirmation: DEFAULT_CROSS_CONFIRMATION,
+    freeProxyBridgePreflight: DEFAULT_FREE_PROXY_BRIDGE_PREFLIGHT,
     output: DEFAULT_OUTPUT,
     dryRun: false,
     writeOutput: true,
@@ -92,6 +97,7 @@ function parseArgs(argv) {
     };
     if (arg === '--free-proxy-gate') options.freeProxyGate = nextValue();
     else if (arg === '--cross-confirmation') options.crossConfirmation = nextValue();
+    else if (arg === '--free-proxy-bridge-preflight') options.freeProxyBridgePreflight = nextValue();
     else if (arg === '--output') options.output = nextValue();
     else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -101,6 +107,9 @@ function parseArgs(argv) {
   }
   if (!isAllowedInputPath(options.crossConfirmation)) {
     throw new Error(`Refusing to read cross-confirmation outside allowed paths: ${options.crossConfirmation}`);
+  }
+  if (!isAllowedInputPath(options.freeProxyBridgePreflight)) {
+    throw new Error(`Refusing to read free-proxy bridge preflight outside allowed paths: ${options.freeProxyBridgePreflight}`);
   }
   if (options.writeOutput && !isManualArtifactPath(options.output)) {
     throw new Error(`Refusing output outside manual-artifacts/transport-shock-confirmation-factor/: ${options.output}`);
@@ -161,6 +170,8 @@ function runPreflight(options) {
     options.freeProxyGate,
     '--cross-confirmation',
     options.crossConfirmation,
+    '--free-proxy-bridge-preflight',
+    options.freeProxyBridgePreflight,
     '--no-output',
     '--json'
   ], {
@@ -231,6 +242,8 @@ function compactPreflight(preflight) {
     blockerCount: preflight?.summary?.blockerCount ?? null,
     blockers: preflight?.summary?.blockers ?? [],
     crossConfirmationHardBlockerIds: preflight?.summary?.crossConfirmationHardBlockerIds ?? [],
+    reclassifiedCrossConfirmationHardBlockerIds: preflight?.summary?.reclassifiedCrossConfirmationHardBlockerIds ?? [],
+    remainingCrossConfirmationHardBlockerIds: preflight?.summary?.remainingCrossConfirmationHardBlockerIds ?? [],
     scoreWriteApproved: preflight?.scoreWriteApproved === true,
     productionWriteApproved: preflight?.productionWriteApproved === true,
     eligibleForMainScore: preflight?.eligibleForMainScore === true
@@ -239,7 +252,10 @@ function compactPreflight(preflight) {
 
 function createMonitor(options) {
   const preflight = runPreflight(options);
-  const hardBlockers = (preflight?.summary?.crossConfirmationHardBlockerIds ?? []).map(classifyHardBlocker);
+  const remainingHardBlockerIds = Array.isArray(preflight?.summary?.remainingCrossConfirmationHardBlockerIds)
+    ? preflight.summary.remainingCrossConfirmationHardBlockerIds
+    : (preflight?.summary?.crossConfirmationHardBlockerIds ?? []);
+  const hardBlockers = remainingHardBlockerIds.map(classifyHardBlocker);
   const nonCodeBlockers = hardBlockers.filter((item) => item.codeOnlyClearable === false);
   const status = classifyStatus(preflight, hardBlockers);
   return {
@@ -249,19 +265,22 @@ function createMonitor(options) {
     dryRun: options.dryRun,
     inputPaths: {
       freeProxyGate: safeRelativePath(options.freeProxyGate),
-      crossConfirmation: safeRelativePath(options.crossConfirmation)
+      crossConfirmation: safeRelativePath(options.crossConfirmation),
+      freeProxyBridgePreflight: safeRelativePath(options.freeProxyBridgePreflight)
     },
     preflight: compactPreflight(preflight),
     hardBlockers,
     codeOnlyCompletion: {
       complete: nonCodeBlockers.length === 0,
       remainingNonCodeBlockerIds: nonCodeBlockers.map((item) => item.id),
-      conclusion: nonCodeBlockers.length === 0
+      conclusion: preflight?.scoreIntegrationPreflightPassed === true
+        ? 'preflight_ready_requires_separate_review'
+        : nonCodeBlockers.length === 0
         ? 'remaining_blockers_are_refreshable_or_preflight_ready'
         : 'cannot_clear_remaining_blockers_with_code_only_changes'
     },
     manualAction: {
-      requiredBeforeMoreCode: nonCodeBlockers.length > 0,
+      requiredBeforeMoreCode: preflight?.scoreIntegrationPreflightPassed === true ? false : nonCodeBlockers.length > 0,
       recommendation: status === 'score_integration_preflight_ready_requires_separate_review'
         ? 'open_separate_reviewed_score_design_pr_do_not_auto_wire'
         : status === 'blocked_on_external_evidence_or_source_rights'

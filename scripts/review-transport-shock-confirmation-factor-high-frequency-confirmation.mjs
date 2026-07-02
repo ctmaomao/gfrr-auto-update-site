@@ -312,7 +312,13 @@ function evaluateThermal(input) {
 
   const aggregate = artifact?.aggregate || {};
   const baseline = artifact?.baseline || {};
-  const baselineEstablished = baseline.status === 'established' || aggregate.baselineStatus === 'established';
+  const facilitiesWithEstablishedBaseline = asNumber(
+    aggregate.facilitiesWithEstablishedBaseline,
+    asNumber(baseline.facilitiesWithEstablishedBaseline)
+  );
+  const baselineEstablished = baseline.status === 'established'
+    || aggregate.baselineStatus === 'established'
+    || facilitiesWithEstablishedBaseline > 0;
   const repeatedObservationCount = asNumber(aggregate.repeatedObservationCount);
   const elevatedRepeatedObservationCount = asNumber(aggregate.elevatedRepeatedObservationCount);
   const repeatedObservation = baselineEstablished && repeatedObservationCount > 0;
@@ -339,9 +345,11 @@ function evaluateThermal(input) {
       latestAcqAt: artifact?.freshness?.latestAcqAt ?? null,
       latestAgeHours: artifact?.freshness?.latestAgeHours ?? null,
       baselineStatus: baseline.status ?? null,
+      aggregateBaselineStatus: aggregate.baselineStatus ?? null,
       baselineQuality: baseline?.sourceReview?.baselineQuality ?? null,
       baselineSampleCount: baseline?.sourceReview?.sampleCount ?? null,
       facilityCount: aggregate.facilityCount ?? null,
+      facilitiesWithEstablishedBaseline,
       facilitiesWithDetections: aggregate.facilitiesWithDetections ?? null,
       repeatedObservationCount,
       elevatedRepeatedObservationCount,

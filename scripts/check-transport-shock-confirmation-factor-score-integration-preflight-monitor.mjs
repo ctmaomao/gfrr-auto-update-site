@@ -8,6 +8,10 @@ const FIXTURE_FREE_PROXY_GATE =
   'docs/fixtures/transport-shock-confirmation-factor/score-integration-preflight-free-proxy-gate-passed.json';
 const FIXTURE_CROSS_CONFIRMATION =
   'docs/fixtures/transport-shock-confirmation-factor/score-integration-preflight-cross-confirmation-blocked.json';
+const FIXTURE_CROSS_CONFIRMATION_ROUTE_ONLY =
+  'docs/fixtures/transport-shock-confirmation-factor/score-integration-preflight-cross-confirmation-route-only.json';
+const FIXTURE_FREE_PROXY_BRIDGE_PASSED =
+  'docs/fixtures/transport-shock-confirmation-factor/score-integration-preflight-free-proxy-bridge-passed.json';
 
 const RUNTIME_FILES = [
   'index.html',
@@ -52,6 +56,7 @@ function assertScriptSafety() {
   for (const marker of [
     'transport-shock-score-integration-preflight-monitor-p43',
     'blocked_on_external_evidence_or_source_rights',
+    'score_integration_preflight_ready_requires_separate_review',
     'source_rights_or_authorized_route_freight_required',
     'live_physical_confirmation_required',
     'cannot_clear_remaining_blockers_with_code_only_changes',
@@ -95,6 +100,36 @@ function assertMonitorOutput() {
   assert(monitor.productionImpact.affectsMainJudgment === false, 'Monitor must not affect main judgment.');
 }
 
+function assertReadyMonitorOutput() {
+  const stdout = runNode([
+    MONITOR_SCRIPT,
+    '--free-proxy-gate',
+    FIXTURE_FREE_PROXY_GATE,
+    '--cross-confirmation',
+    FIXTURE_CROSS_CONFIRMATION_ROUTE_ONLY,
+    '--free-proxy-bridge-preflight',
+    FIXTURE_FREE_PROXY_BRIDGE_PASSED,
+    '--dry-run',
+    '--no-output',
+    '--json'
+  ]);
+  const monitor = JSON.parse(stdout);
+  assert(monitor.monitorVersion === 'transport-shock-score-integration-preflight-monitor-p43', 'Unexpected ready monitor version.');
+  assert(monitor.status === 'score_integration_preflight_ready_requires_separate_review', 'Expected ready monitor status.');
+  assert(monitor.preflight.scoreIntegrationPreflightPassed === true, 'Ready monitor preflight should pass.');
+  assert(monitor.preflight.crossConfirmationHardBlockerIds.includes('route_freight_confirmation'), 'Ready monitor should preserve original route blocker evidence.');
+  assert(monitor.preflight.reclassifiedCrossConfirmationHardBlockerIds.includes('route_freight_confirmation'), 'Ready monitor should expose reclassified route blocker.');
+  assert(monitor.preflight.remainingCrossConfirmationHardBlockerIds.length === 0, 'Ready monitor should have no remaining hard blockers.');
+  assert(monitor.hardBlockers.length === 0, 'Ready monitor hardBlockers should only list remaining blockers.');
+  assert(monitor.codeOnlyCompletion.complete === true, 'Ready monitor codeOnlyCompletion should be complete.');
+  assert(monitor.codeOnlyCompletion.conclusion === 'preflight_ready_requires_separate_review', 'Unexpected ready monitor conclusion.');
+  assert(monitor.manualAction.requiredBeforeMoreCode === false, 'Ready monitor should not require more manual evidence before score-design code.');
+  assert(monitor.manualAction.recommendation === 'open_separate_reviewed_score_design_pr_do_not_auto_wire', 'Unexpected ready monitor recommendation.');
+  assert(monitor.scoreWriteApproved === false, 'Ready monitor must not approve score write.');
+  assert(monitor.productionWriteApproved === false, 'Ready monitor must not approve production write.');
+  assert(monitor.eligibleForMainScore === false, 'Ready monitor must not approve main-score eligibility.');
+}
+
 function assertRuntimeUnwired() {
   for (const relativePath of RUNTIME_FILES) {
     const source = readText(relativePath);
@@ -136,6 +171,7 @@ function assertAuthorityDocs() {
 function main() {
   assertScriptSafety();
   assertMonitorOutput();
+  assertReadyMonitorOutput();
   assertRuntimeUnwired();
   assertAuthorityDocs();
   console.log('Transport Shock Confirmation Factor score-integration preflight monitor: PASS');

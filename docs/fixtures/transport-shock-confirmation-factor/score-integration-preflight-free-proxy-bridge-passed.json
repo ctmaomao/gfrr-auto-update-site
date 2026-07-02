@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "transport-shock-free-proxy-bridge-preflight-v1",
+  "status": "free_proxy_bridge_preflight_ready_for_separate_score_design_no_score_write",
+  "recommendation": "open_separate_score_design_review_no_auto_wire",
+  "generatedAt": "2026-07-02T00:00:00.000Z",
+  "bridgePreflightPassed": true,
+  "summary": {
+    "checkCount": 3,
+    "blockerCount": 0,
+    "blockers": [],
+    "reclassifiedBlockerIds": [
+      "route_freight_confirmation"
+    ],
+    "remainingHardBlockerIds": []
+  },
+  "routeFreightConfirmation": "not_connected",
+  "routeFreightConfirmationCleared": false,
+  "freeProxyRouteFreightRequirement": "not_applicable_to_free_proxy_low_weight_path",
+  "highFrequencyPhysicalConfirmationRequired": true,
+  "scoreReadinessApproved": false,
+  "scoreIntegrationApproved": false,
+  "scoreWriteApproved": false,
+  "productionWriteApproved": false,
+  "frontendDisplayApproved": false,
+  "mainScoreApproved": false,
+  "eligibleForMainScore": false,
+  "promotionEligible": false,
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "modifiesWorkerRuntime": false,
+    "modifiesWorkflow": false,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreIntegration": true,
+    "noScoreWrite": true,
+    "noMainJudgmentEligibility": true,
+    "bridgePreflightOnly": true
+  },
+  "boundary": "fixture for free-proxy bridge passed state"
+}

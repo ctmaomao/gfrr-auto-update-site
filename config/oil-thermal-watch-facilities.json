@@ -3,14 +3,14 @@
   "sourceSelection": {
     "selectedSource": "EIA/HIFLD Petroleum_Refineries_US_EIA.zip + NGA GNS downloadable country files",
     "sourceUrl": "https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip; https://geonames.nga.mil/geonames/GNSData/",
-    "sourceDataset": "US: Petroleum_Refineries_US_2021.shp; Middle East: Saudi Arabia.txt, Iran.txt, Israel.txt from NGA GNS country files",
-    "sourcePeriod": "US as of Jan. 1 2021; GNS country files downloaded from official index dated 2026-06-24/2026-06-25",
-    "selectionMethod": "Starter whitelist uses large U.S. Gulf Coast PADD 3 refinery rows from the EIA/HIFLD shapefile, with nearby overlapping complexes reduced by operator judgment. Middle East extension uses official NGA GNS feature points for Saudi Arabia, Iran, and Israel high-priority oil terminals, oil fields, processing/refinery areas, ports, and refinery-area proxies; each proxy row is explicitly marked in sourceNote. Product terminals and global infrastructure trackers remain future reviewed scopes.",
+    "sourceDataset": "US: Petroleum_Refineries_US_2021.shp; Middle East: Saudi Arabia.txt, Iran.txt, Israel.txt, United Arab Emirates.txt, Qatar.txt, Kuwait.txt, Iraq.txt from NGA GNS country files",
+    "sourcePeriod": "US as of Jan. 1 2021; GNS country files downloaded from official index dated 2026-06-24/2026-06-25 with UAE/Qatar/Kuwait/Iraq spot downloads on 2026-07-02",
+    "selectionMethod": "Starter whitelist uses large U.S. Gulf Coast PADD 3 refinery rows from the EIA/HIFLD shapefile, with nearby overlapping complexes reduced by operator judgment. Middle East extension uses official NGA GNS feature points for Saudi Arabia, Iran, Israel, UAE, Qatar, Kuwait, and Iraq high-priority oil terminals, oil fields, processing/refinery areas, ports, and refinery-area proxies; each proxy row is explicitly marked in sourceNote. Product terminals and global infrastructure trackers remain future reviewed scopes.",
     "bboxRule": "Convert each source point to a +/-0.05 degree FIRMS Area API watch box. The box is a thermal-observation proxy, not a facility boundary."
   },
   "notes": [
     "Starter production whitelist uses directly downloadable EIA/HIFLD public refinery point data and NGA GNS official foreign geographic names point data instead of manually invented coordinates.",
-    "Scope is intentionally conservative: U.S. Gulf Coast refineries plus a Middle East starter watch sample for Saudi Arabia, Iran, and Israel. This is not a complete global refinery, terminal, field, or chokepoint list.",
+    "Scope is intentionally conservative: U.S. Gulf Coast refineries plus a Middle East starter watch sample for Saudi Arabia, Iran, Israel, UAE, Qatar, Kuwait, and Iraq. This is not a complete global refinery, terminal, field, or chokepoint list.",
     "Each bbox is a small FIRMS query box derived from an official point, not an exact refinery polygon. Middle East refinery-area rows may use official nearby city, port, harbor, or bay points when GNS has no exact refinery polygon.",
     "This config never stores MAP_KEY and never approves thermal detections as incidents, outages, supply disruptions, or oil-price direction."
   ],
@@ -352,6 +352,214 @@
         29.582614
       ],
       "sourceNote": "NGA GNS country file Israel.txt; row full_name=Eilat Port; desig_cd=PRT; fc=L; cc_ft=ISR; adm1=IL-D; lat_dd=29.532614; long_dd=34.941226; mod_dt_ft=2017-04-07T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. This is a port/terminal area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Israel.zip"
+    },
+    {
+      "id": "me_uae_ruwais_refinery_area",
+      "label": "Ruwais refinery area proxy",
+      "region": "Middle East / UAE / Abu Dhabi",
+      "assetType": "refinery_area_proxy",
+      "bbox": [
+        52.680556,
+        24.060278,
+        52.780556,
+        24.160278
+      ],
+      "sourceNote": "NGA GNS country file official point; country=United Arab Emirates; full_name=Ruwais; desig_cd=PPL; fc=P; cc_ft=ARE; adm1=AE-AZ; mod_dt_ft=1999-06-15T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/United%20Arab%20Emirates.zip"
+    },
+    {
+      "id": "me_uae_jebel_dhanna_terminal_area",
+      "label": "Jebel Dhanna terminal area proxy",
+      "region": "Middle East / UAE / Abu Dhabi",
+      "assetType": "export_terminal_proxy",
+      "bbox": [
+        52.581111,
+        24.141667,
+        52.681111,
+        24.241667
+      ],
+      "sourceNote": "NGA GNS country file official point; country=United Arab Emirates; full_name=Jebel Dhanna; desig_cd=TRMO; fc=S; cc_ft=ARE; adm1=AE-AZ; mod_dt_ft=1995-03-17T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/United%20Arab%20Emirates.zip"
+    },
+    {
+      "id": "me_uae_das_island_terminal_area",
+      "label": "Das Island terminal area proxy",
+      "region": "Middle East / UAE / Abu Dhabi",
+      "assetType": "export_terminal_proxy",
+      "bbox": [
+        52.833333,
+        25.1,
+        52.933333,
+        25.2
+      ],
+      "sourceNote": "NGA GNS country file official point; country=United Arab Emirates; full_name=Das Island Terminal; desig_cd=TRMO; fc=S; cc_ft=ARE; adm1=AE-AZ; mod_dt_ft=1993-12-13T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/United%20Arab%20Emirates.zip"
+    },
+    {
+      "id": "me_uae_fujairah_energy_port_area",
+      "label": "Fujairah energy port area proxy",
+      "region": "Middle East / UAE / Fujairah",
+      "assetType": "energy_port_proxy",
+      "bbox": [
+        56.291408,
+        25.066412,
+        56.391408,
+        25.166412
+      ],
+      "sourceNote": "NGA GNS country file official point; country=United Arab Emirates; full_name=Fujairah; desig_cd=PPLA; fc=P; cc_ft=ARE; adm1=AE-FU; mod_dt_ft=2011-03-02T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/United%20Arab%20Emirates.zip"
+    },
+    {
+      "id": "me_qatar_ras_laffan_energy_port_area",
+      "label": "Ras Laffan energy port area proxy",
+      "region": "Middle East / Qatar / Al Khor",
+      "assetType": "energy_port_proxy",
+      "bbox": [
+        51.542808,
+        25.854057,
+        51.642808,
+        25.954057
+      ],
+      "sourceNote": "NGA GNS country file official point; country=Qatar; full_name=Ra's Laffan; desig_cd=PT; fc=T; cc_ft=QAT; adm1=QA-KH; mod_dt_ft=2016-06-17T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Qatar.zip"
+    },
+    {
+      "id": "me_qatar_mesaieed_industrial_port_area",
+      "label": "Mesaieed industrial port area proxy",
+      "region": "Middle East / Qatar / Al Wakrah",
+      "assetType": "industrial_port_proxy",
+      "bbox": [
+        51.500669,
+        24.94226,
+        51.600669,
+        25.04226
+      ],
+      "sourceNote": "NGA GNS country file official point; country=Qatar; full_name=Musay'id; desig_cd=PPL; fc=P; cc_ft=QAT; adm1=QA-WA; mod_dt_ft=2016-05-12T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Qatar.zip"
+    },
+    {
+      "id": "me_qatar_dukhan_oilfield_area",
+      "label": "Dukhan oilfield area proxy",
+      "region": "Middle East / Qatar / Al Shahaniya",
+      "assetType": "oilfield_proxy",
+      "bbox": [
+        50.75,
+        25.25,
+        50.85,
+        25.35
+      ],
+      "sourceNote": "NGA GNS country file official point; country=Qatar; full_name=Dukhan; desig_cd=OILF; fc=L; cc_ft=QAT; adm1=QA-SH; mod_dt_ft=2017-11-08T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Qatar.zip"
+    },
+    {
+      "id": "me_qatar_halul_terminal_area",
+      "label": "Halul terminal island area proxy",
+      "region": "Middle East / Qatar / Offshore",
+      "assetType": "export_terminal_proxy",
+      "bbox": [
+        52.360696,
+        25.624687,
+        52.460696,
+        25.724687
+      ],
+      "sourceNote": "NGA GNS country file official point; country=Qatar; full_name=Halul; desig_cd=ISL; fc=T; cc_ft=QAT; adm1=QA-000; mod_dt_ft=2016-05-13T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Qatar.zip"
+    },
+    {
+      "id": "me_kuwait_mina_al_ahmadi_terminal_area",
+      "label": "Mina al Ahmadi terminal area proxy",
+      "region": "Middle East / Kuwait / Al Ahmadi",
+      "assetType": "refinery_terminal_proxy",
+      "bbox": [
+        48.091944,
+        29.013889,
+        48.191944,
+        29.113889
+      ],
+      "sourceNote": "NGA GNS country file official point; country=Kuwait; full_name=Mina al Ahmadi; desig_cd=TRMO; fc=S; cc_ft=KWT; adm1=KW-000; mod_dt_ft=2016-04-22T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Kuwait.zip"
+    },
+    {
+      "id": "me_kuwait_mina_abdullah_terminal_area",
+      "label": "Mina Abdullah terminal area proxy",
+      "region": "Middle East / Kuwait / Al Ahmadi",
+      "assetType": "refinery_terminal_proxy",
+      "bbox": [
+        48.110278,
+        28.966944,
+        48.210278,
+        29.066944
+      ],
+      "sourceNote": "NGA GNS country file official point; country=Kuwait; full_name=Mina Abdullah; desig_cd=TRMO; fc=S; cc_ft=KWT; adm1=KW-000; mod_dt_ft=2006-06-30T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Kuwait.zip"
+    },
+    {
+      "id": "me_kuwait_shuaiba_port_refinery_area",
+      "label": "Shuaiba port refinery area proxy",
+      "region": "Middle East / Kuwait / Al Ahmadi",
+      "assetType": "refinery_port_proxy",
+      "bbox": [
+        48.109167,
+        28.994722,
+        48.209167,
+        29.094722
+      ],
+      "sourceNote": "NGA GNS country file official point; country=Kuwait; full_name=Shuaiba Port; desig_cd=HBR; fc=H; cc_ft=KWT; adm1=KW-000; mod_dt_ft=2006-06-30T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Kuwait.zip"
+    },
+    {
+      "id": "me_kuwait_burgan_oilfield_area",
+      "label": "Burgan oilfield area proxy",
+      "region": "Middle East / Kuwait / Al Ahmadi",
+      "assetType": "oilfield_proxy",
+      "bbox": [
+        47.863056,
+        28.875,
+        47.963056,
+        28.975
+      ],
+      "sourceNote": "NGA GNS country file official point; country=Kuwait; full_name=Burgan; desig_cd=OILF; fc=L; cc_ft=KWT; adm1=KW-000; mod_dt_ft=2006-06-30T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Kuwait.zip"
+    },
+    {
+      "id": "me_iraq_khawr_al_amaya_terminal_area",
+      "label": "Khawr al Amaya terminal area proxy",
+      "region": "Middle East / Iraq / Offshore Basra",
+      "assetType": "export_terminal_proxy",
+      "bbox": [
+        48.756959,
+        29.733673,
+        48.856959,
+        29.833673
+      ],
+      "sourceNote": "NGA GNS country file official point; country=Iraq; full_name=Khawr al Amaya; desig_cd=TRMO; fc=S; cc_ft=IRQ; adm1=IQ-000; mod_dt_ft=2012-03-21T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iraq.zip"
+    },
+    {
+      "id": "me_iraq_zubair_oilfield_area",
+      "label": "Zubair oilfield area proxy",
+      "region": "Middle East / Iraq / Basra",
+      "assetType": "oilfield_proxy",
+      "bbox": [
+        47.5475,
+        30.307222,
+        47.6475,
+        30.407222
+      ],
+      "sourceNote": "NGA GNS country file official point; country=Iraq; full_name=Az Zubayr; desig_cd=OILF; fc=L; cc_ft=IRQ; adm1=IQ-BA; mod_dt_ft=1998-04-27T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iraq.zip"
+    },
+    {
+      "id": "me_iraq_rumaila_oilfield_area",
+      "label": "Rumaila oilfield area proxy",
+      "region": "Middle East / Iraq / Basra",
+      "assetType": "oilfield_proxy",
+      "bbox": [
+        47.305,
+        30.526944,
+        47.405,
+        30.626944
+      ],
+      "sourceNote": "NGA GNS country file official point; country=Iraq; full_name=Ar Rumaila; desig_cd=PPL; fc=P; cc_ft=IRQ; adm1=IQ-BA; mod_dt_ft=2002-10-22T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iraq.zip"
+    },
+    {
+      "id": "me_iraq_kirkuk_oilfield_area",
+      "label": "Kirkuk oilfield area proxy",
+      "region": "Middle East / Iraq / Kirkuk",
+      "assetType": "oilfield_proxy",
+      "bbox": [
+        44.41452,
+        35.399056,
+        44.51452,
+        35.499056
+      ],
+      "sourceNote": "NGA GNS country file official point; country=Iraq; full_name=Kirkuk; desig_cd=OILF; fc=L; cc_ft=IRQ; adm1=IQ-KI; mod_dt_ft=2012-04-16T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iraq.zip"
     }
   ]
 }
