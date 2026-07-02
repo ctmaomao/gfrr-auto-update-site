@@ -290,6 +290,8 @@
     "check:transport-shock-free-freight-alternative-source-review": "node --check scripts/check-transport-shock-free-freight-alternative-source-review.mjs && node scripts/check-transport-shock-free-freight-alternative-source-review.mjs",
     "check:transport-shock-satellite-handling-policy": "node --check scripts/check-transport-shock-satellite-handling-policy.mjs && node scripts/check-transport-shock-satellite-handling-policy.mjs",
     "check:transport-shock-free-proxy-score-bridge-review": "node --check scripts/check-transport-shock-free-proxy-score-bridge-review.mjs && node scripts/check-transport-shock-free-proxy-score-bridge-review.mjs",
+    "review:transport-shock-free-proxy-bridge-preflight": "node scripts/review-transport-shock-free-proxy-bridge-preflight.mjs",
+    "check:transport-shock-free-proxy-bridge-preflight": "node --check scripts/review-transport-shock-free-proxy-bridge-preflight.mjs && node --check scripts/check-transport-shock-free-proxy-bridge-preflight.mjs && node scripts/check-transport-shock-free-proxy-bridge-preflight.mjs",
     "check:oil-news-event-watch": "node --check scripts/oil-directional/oil-news-claim-classifier.mjs && node --check scripts/oil-directional/build-oil-news-event-watch.mjs && node --check scripts/check-oil-news-event-watch-contract.mjs && node scripts/check-oil-news-event-watch-contract.mjs",
     "check:oil-thermal-watch": "node --check scripts/oil-directional/build-oil-thermal-watch.mjs && node --check scripts/check-oil-thermal-watch-contract.mjs && node scripts/check-oil-thermal-watch-contract.mjs",
     "check:oil-directional-zh-copy": "node --check scripts/check-oil-directional-zh-copy.mjs && node scripts/check-oil-directional-zh-copy.mjs"

@@ -149,6 +149,7 @@ const SUITES = {
     'check:transport-shock-free-freight-alternative-source-review',
     'check:transport-shock-satellite-handling-policy',
     'check:transport-shock-free-proxy-score-bridge-review',
+    'check:transport-shock-free-proxy-bridge-preflight',
     'check:oil-news-events-diagnosis',
     'check:oil-news-event-watch',
     'check:oil-news-event-watch-samples-review',
