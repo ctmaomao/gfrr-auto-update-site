@@ -5,7 +5,9 @@ import process from 'node:process';
 
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-free-proxy-score-candidate-v1';
 const INPUT_SCHEMA = 'transport-shock-confirmation-factor-free-proxy-score-design-v1';
+const SCORE_READINESS_SCHEMA = 'transport-shock-confirmation-factor-score-readiness-v1';
 const DEFAULT_INPUT = 'docs/fixtures/transport-shock-confirmation-factor-free-proxy-score-design-v1.json';
+const DEFAULT_SCORE_READINESS = 'manual-artifacts/transport-shock-confirmation-factor/score-readiness-latest.json';
 const DEFAULT_OUTPUT = 'manual-artifacts/transport-shock-confirmation-factor/free-proxy-score-candidate-latest.json';
 const BOUNDARY = 'artifact-only Transport Shock Confirmation Factor free-proxy score candidate projection; no score write; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
 
@@ -15,6 +17,8 @@ function usage() {
 
 Options:
   --input <path>   Free-proxy score design fixture or ignored manual artifact. Default: ${DEFAULT_INPUT}
+  --score-readiness <path>
+                   Optional score-readiness matrix artifact. Default: ${DEFAULT_SCORE_READINESS}
   --output <path>  Ignored candidate artifact. Default: ${DEFAULT_OUTPUT}
   --json           Print full JSON projection to stdout.
   --no-output      Do not write ignored artifact.
@@ -41,13 +45,22 @@ function isAllowedDesignFixture(filePath) {
   return safeRelativePath(filePath) === DEFAULT_INPUT;
 }
 
+function isTransportShockFixturePath(filePath) {
+  return safeRelativePath(filePath)?.startsWith('docs/fixtures/transport-shock-confirmation-factor/') === true;
+}
+
 function isSafeInputPath(filePath) {
   return isAllowedDesignFixture(filePath) || isManualArtifactPath(filePath);
+}
+
+function isSafeScoreReadinessPath(filePath) {
+  return isManualArtifactPath(filePath) || isTransportShockFixturePath(filePath);
 }
 
 function parseArgs(argv) {
   const options = {
     input: DEFAULT_INPUT,
+    scoreReadiness: DEFAULT_SCORE_READINESS,
     output: DEFAULT_OUTPUT,
     printJson: false,
     writeOutput: true
@@ -73,11 +86,15 @@ function parseArgs(argv) {
       return value;
     };
     if (arg === '--input') options.input = nextValue();
+    else if (arg === '--score-readiness') options.scoreReadiness = nextValue();
     else if (arg === '--output') options.output = nextValue();
     else throw new Error(`Unknown argument: ${arg}`);
   }
   if (!isSafeInputPath(options.input)) {
     throw new Error(`Refusing to read input outside allowed design paths: ${options.input}`);
+  }
+  if (!isSafeScoreReadinessPath(options.scoreReadiness)) {
+    throw new Error(`Refusing to read score-readiness outside allowed paths: ${options.scoreReadiness}`);
   }
   if (options.writeOutput && !isManualArtifactPath(options.output)) {
     throw new Error(`Refusing to write candidate artifact outside manual-artifacts/transport-shock-confirmation-factor/: ${options.output}`);
@@ -85,7 +102,7 @@ function parseArgs(argv) {
   return options;
 }
 
-function readDesign(inputPath) {
+function readJsonInput(inputPath) {
   const absolutePath = resolve(inputPath);
   if (!existsSync(absolutePath)) {
     return {
@@ -97,7 +114,23 @@ function readDesign(inputPath) {
   return {
     missing: false,
     safePath: safeRelativePath(inputPath),
-    design: JSON.parse(readFileSync(absolutePath, 'utf8'))
+    data: JSON.parse(readFileSync(absolutePath, 'utf8'))
+  };
+}
+
+function readDesign(inputPath) {
+  const input = readJsonInput(inputPath);
+  return {
+    ...input,
+    design: input.data ?? null
+  };
+}
+
+function readScoreReadiness(inputPath) {
+  const input = readJsonInput(inputPath);
+  return {
+    ...input,
+    readiness: input.data ?? null
   };
 }
 
@@ -164,6 +197,28 @@ function validateDesign(input) {
   return blockers;
 }
 
+function validateScoreReadiness(input) {
+  const blockers = [];
+  const readiness = input.readiness;
+  if (input.missing) blockers.push('score_readiness_missing');
+  if (!readiness || typeof readiness !== 'object') blockers.push('score_readiness_not_object');
+  if (readiness?.schemaVersion !== SCORE_READINESS_SCHEMA) blockers.push('score_readiness_schema_invalid');
+  if (readiness?.status !== 'ready_for_score_design_review_no_score_write') {
+    blockers.push('score_readiness_not_design_ready');
+  }
+  if (readiness?.scoreReady !== true) blockers.push('score_ready_not_true');
+  if (readiness?.scoreReadyReason !== 'score_integration_preflight_passed_for_design_review_no_score_write') {
+    blockers.push('score_ready_reason_not_preflight');
+  }
+  if (Number(readiness?.summary?.hardBlockerCount ?? 1) !== 0) blockers.push('hard_blockers_remaining');
+  if (Number(readiness?.summary?.reclassifiedCount ?? 0) < 5) blockers.push('legacy_blockers_not_reclassified');
+  if (readiness?.scoreWriteApproved === true) blockers.push('score_write_approved_claimed');
+  if (readiness?.productionWriteApproved === true) blockers.push('production_write_approved_claimed');
+  if (readiness?.eligibleForMainScore === true) blockers.push('main_score_eligible_claimed');
+  if (readiness?.frontendDisplayApproved === true) blockers.push('frontend_display_approved_claimed');
+  return blockers;
+}
+
 function plannedComponentCaps(maxContributionPct) {
   return {
     portwatchChokepointPhysicalProxyPct: 1,
@@ -174,15 +229,23 @@ function plannedComponentCaps(maxContributionPct) {
   };
 }
 
-function buildBlockedProjection(input, blockers) {
+function buildBlockedProjection(input, readinessInput, blockers, {
+  status = 'free_proxy_score_candidate_blocked_no_score_write',
+  recommendation = 'collect_required_confirmations_before_separate_score_pr'
+} = {}) {
+  const scoreCap = input.design?.scoreCap || {};
   return {
     schemaVersion: SCHEMA_VERSION,
-    status: 'free_proxy_score_candidate_invalid_input',
-    recommendation: 'fix_free_proxy_score_design_keep_no_score_write',
+    status,
+    recommendation,
     generatedAt: new Date().toISOString(),
     inputPath: input.safePath,
+    scoreReadinessInputPath: readinessInput?.safePath ?? null,
     inputStatus: input.design?.status || (input.missing ? 'missing' : 'unknown'),
-    maxFutureMainScoreContributionPct: null,
+    scoreReadinessStatus: readinessInput?.readiness?.status || (readinessInput?.missing ? 'missing' : 'unknown'),
+    maxFutureMainScoreContributionPct: Number.isFinite(scoreCap.maxFutureMainScoreContributionPct)
+      ? scoreCap.maxFutureMainScoreContributionPct
+      : null,
     candidateScoreContributionPct: 0,
     confidence: 'none',
     scoreScope: 'free_proxy_only_low_weight_candidate',
@@ -193,6 +256,15 @@ function buildBlockedProjection(input, blockers) {
     eligibleForMainScore: false,
     routeFreightConfirmation: 'not_connected',
     marketConfirmation: 'not_connected',
+    hardCaps: {
+      newsOnlyContributionPct: Number.isFinite(scoreCap.newsOnlyContributionPct) ? scoreCap.newsOnlyContributionPct : 0,
+      singleChokepointOnlyContributionPct: Number.isFinite(scoreCap.singleChokepointOnlyContributionPct)
+        ? scoreCap.singleChokepointOnlyContributionPct
+        : 0,
+      stalePortWatchContributionPct: Number.isFinite(scoreCap.stalePortWatchContributionPct)
+        ? scoreCap.stalePortWatchContributionPct
+        : 0
+    },
     blockers,
     productionImpact: falseImpactMap(),
     boundaries: boundaries(),
@@ -200,46 +272,53 @@ function buildBlockedProjection(input, blockers) {
   };
 }
 
-function buildProjection(input) {
-  const blockers = validateDesign(input);
-  if (blockers.length > 0) return buildBlockedProjection(input, blockers);
+function buildProjection(input, readinessInput) {
+  const designBlockers = validateDesign(input);
+  const readinessBlockers = validateScoreReadiness(readinessInput);
+  const blockers = [
+    ...designBlockers.map((id) => `design:${id}`),
+    ...readinessBlockers.map((id) => `score_readiness:${id}`)
+  ];
+  if (designBlockers.length > 0) {
+    return buildBlockedProjection(input, readinessInput, blockers, {
+      status: 'free_proxy_score_candidate_invalid_input',
+      recommendation: 'fix_free_proxy_score_design_keep_no_score_write'
+    });
+  }
+  if (readinessBlockers.length > 0) return buildBlockedProjection(input, readinessInput, blockers);
 
   const design = input.design;
   const maxContributionPct = design.scoreCap.maxFutureMainScoreContributionPct;
-  const scoreBlockers = [
-    'portwatch_live_not_verified',
-    'non_news_physical_confirmation_missing',
-    'market_confirmation_review_missing',
-    'thermal_or_eia_anchor_missing',
-    'history_sample_review_missing',
-    'backtest_or_replay_review_missing'
-  ];
+  const readiness = readinessInput.readiness;
 
   return {
     schemaVersion: SCHEMA_VERSION,
-    status: 'free_proxy_score_candidate_blocked_no_score_write',
-    recommendation: 'collect_required_confirmations_before_separate_score_pr',
+    status: 'free_proxy_score_candidate_ready_no_score_write',
+    recommendation: 'open_separate_score_write_design_review_do_not_auto_wire',
     generatedAt: new Date().toISOString(),
     inputPath: input.safePath,
+    scoreReadinessInputPath: readinessInput.safePath,
     inputContractVersion: design.contractVersion,
     inputStatus: design.status,
+    scoreReadinessStatus: readiness.status,
+    scoreReadyReason: readiness.scoreReadyReason,
     futureFactorKey: design.futureFactorKey,
     futureMode: design.futureMode,
     maxFutureMainScoreContributionPct: maxContributionPct,
-    candidateScoreContributionPct: 0,
-    confidence: 'none',
+    candidateScoreContributionPct: maxContributionPct,
+    confidence: 'low',
     scoreScope: 'free_proxy_only_low_weight_candidate',
     capRationale: design.scoreCap.reason,
     plannedComponentCapsPct: plannedComponentCaps(maxContributionPct),
     gateStatus: {
       productionCandidatePresent: design.currentProductionState.candidatePresent === true ? 'pass_by_design_fixture' : 'missing',
       candidateOnlyTrue: design.currentProductionState.eligibleForMainScore === false ? 'pass_by_design_fixture' : 'missing',
-      portWatchLive: 'not_verified_in_artifact_only_projection',
-      nonNewsPhysicalConfirmation: 'missing',
-      marketConfirmationReview: 'missing',
-      thermalOrEiaAnchor: 'missing',
-      historySampleReview: 'missing',
-      backtestOrReplayReview: 'missing',
+      portWatchLive: 'pass_by_score_readiness',
+      nonNewsPhysicalConfirmation: 'pass_by_score_integration_preflight',
+      marketConfirmationReview: 'pass_by_score_integration_preflight',
+      thermalOrEiaAnchor: 'pass_by_score_integration_preflight',
+      historySampleReview: 'pass_by_score_readiness',
+      backtestOrReplayReview: 'pass_by_free_proxy_score_readiness_gate',
       noSingleSourceOverride: 'pass_by_design_fixture',
       newsAloneCannotScore: 'pass_by_design_fixture',
       routeFreightUnavailableConfidenceCap: 'pass_by_design_fixture'
@@ -250,6 +329,12 @@ function buildProjection(input) {
       stalePortWatchContributionPct: design.scoreCap.stalePortWatchContributionPct
     },
     requiredBeforeScorePr: design.minimumConditionsBeforeSeparateScorePr,
+    readinessSummary: {
+      hardBlockerCount: readiness.summary?.hardBlockerCount ?? null,
+      hardBlockerIds: Array.isArray(readiness.summary?.hardBlockerIds) ? readiness.summary.hardBlockerIds : [],
+      reclassifiedCount: readiness.summary?.reclassifiedCount ?? null,
+      scoreIntegrationPreflightStatus: readiness.scoreIntegrationPreflight?.status ?? null
+    },
     eligibleFreeProxyFamilies: design.eligibleFreeProxyFamilies.map((family) => ({
       familyKey: family.familyKey,
       role: family.role,
@@ -264,16 +349,16 @@ function buildProjection(input) {
     eligibleForMainScore: false,
     routeFreightConfirmation: 'not_connected',
     marketConfirmation: 'not_connected',
-    blockers: scoreBlockers,
+    blockers: [],
     warnings: [
       'artifact_only_projection',
-      'score_cap_design_exists_but_no_score_write',
+      'candidate_contribution_projected_but_no_score_write',
       'requires_separate_reviewed_score_pr'
     ],
     productionImpact: falseImpactMap(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
-    limitationZh: '本投影只把免费代理低权重入分设计转成候选审阅 artifact;当前所有关键确认门仍未满足,候选贡献固定为 0,不得写入生产数据或今日总判断打分。'
+    limitationZh: '本投影只把免费代理低权重路径转成候选贡献审阅 artifact;即使候选贡献达到 cap,仍不得写入生产数据、前端卡片、ODP finalBias 或今日总判断打分。'
   };
 }
 
@@ -295,7 +380,7 @@ function printSummary(projection) {
 function main() {
   try {
     const options = parseArgs(process.argv.slice(2));
-    const projection = buildProjection(readDesign(options.input));
+    const projection = buildProjection(readDesign(options.input), readScoreReadiness(options.scoreReadiness));
     if (options.writeOutput) writeJson(options.output, projection);
     if (options.printJson) console.log(JSON.stringify(projection, null, 2));
     else printSummary(projection);

@@ -5,6 +5,8 @@ import path from 'node:path';
 const ROOT = process.cwd();
 const PROJECT_SCRIPT = 'scripts/project-transport-shock-confirmation-factor-free-proxy-score-candidate.mjs';
 const FIXTURE = 'docs/fixtures/transport-shock-confirmation-factor-free-proxy-score-design-v1.json';
+const FIXTURE_READINESS_READY = 'docs/fixtures/transport-shock-confirmation-factor/score-readiness-ready-no-score-write.json';
+const FIXTURE_READINESS_MISSING = 'docs/fixtures/transport-shock-confirmation-factor/score-readiness-missing.json';
 
 const RUNTIME_FILES = [
   'index.html',
@@ -34,8 +36,9 @@ const SCRIPT_FORBIDDEN_MARKERS = [
 const RUNTIME_FORBIDDEN_MARKERS = [
   'transport-shock-confirmation-factor-free-proxy-score-candidate-v1',
   'project-transport-shock-confirmation-factor-free-proxy-score-candidate',
-  'free_proxy_score_candidate_blocked_no_score_write',
-  'transportShockFreeProxyScoreCandidate'
+    'free_proxy_score_candidate_blocked_no_score_write',
+    'free_proxy_score_candidate_ready_no_score_write',
+    'transportShockFreeProxyScoreCandidate'
 ];
 
 function absolute(relativePath) {
@@ -71,6 +74,8 @@ function assertScriptSafety() {
     'artifact-only Transport Shock Confirmation Factor free-proxy score candidate projection',
     'free_proxy_only_low_weight_candidate',
     'candidateScoreContributionPct',
+    'score-readiness',
+    'scoreReadinessInputPath',
     'noNetworkCall',
     'noProductionWrite',
     'noScoreWrite',
@@ -96,6 +101,11 @@ function assertFixture() {
   assert(fixture.currentProductionState.routeFreightConfirmation === 'not_connected', 'Fixture routeFreightConfirmation must stay not_connected.');
   assert(fixture.currentProductionState.marketConfirmation === 'not_connected', 'Fixture marketConfirmation must stay not_connected.');
   assert(fixture.currentProductionState.eligibleForMainScore === false, 'Fixture eligibleForMainScore must stay false.');
+  const readiness = JSON.parse(readText(FIXTURE_READINESS_READY));
+  assert(readiness.schemaVersion === 'transport-shock-confirmation-factor-score-readiness-v1', 'Readiness fixture schema mismatch.');
+  assert(readiness.status === 'ready_for_score_design_review_no_score_write', 'Readiness fixture must be design-review ready.');
+  assert(readiness.scoreReady === true, 'Readiness fixture scoreReady must be true.');
+  assert(readiness.scoreWriteApproved === false, 'Readiness fixture must not approve score write.');
 }
 
 function assertProjectionOutput() {
@@ -103,6 +113,8 @@ function assertProjectionOutput() {
     PROJECT_SCRIPT,
     '--input',
     FIXTURE,
+    '--score-readiness',
+    FIXTURE_READINESS_MISSING,
     '--no-output',
     '--json'
   ]);
@@ -125,12 +137,11 @@ function assertProjectionOutput() {
   assert(projection.routeFreightConfirmation === 'not_connected', 'routeFreightConfirmation must stay not_connected.');
   assert(projection.marketConfirmation === 'not_connected', 'marketConfirmation must stay not_connected.');
   for (const blocker of [
-    'portwatch_live_not_verified',
-    'non_news_physical_confirmation_missing',
-    'market_confirmation_review_missing',
-    'thermal_or_eia_anchor_missing',
-    'history_sample_review_missing',
-    'backtest_or_replay_review_missing'
+    'score_readiness:score_readiness_missing',
+    'score_readiness:score_readiness_not_object',
+    'score_readiness:score_readiness_schema_invalid',
+    'score_readiness:score_readiness_not_design_ready',
+    'score_readiness:score_ready_not_true'
   ]) {
     assert(projection.blockers.includes(blocker), `Projection missing blocker: ${blocker}`);
   }
@@ -139,6 +150,43 @@ function assertProjectionOutput() {
   assert(projection.boundaries.noNetworkCall === true, 'Projection must lock noNetworkCall.');
   assert(projection.boundaries.noProductionWrite === true, 'Projection must lock noProductionWrite.');
   assert(projection.boundaries.noScoreWrite === true, 'Projection must lock noScoreWrite.');
+}
+
+function assertReadyProjectionOutput() {
+  const stdout = runNode([
+    PROJECT_SCRIPT,
+    '--input',
+    FIXTURE,
+    '--score-readiness',
+    FIXTURE_READINESS_READY,
+    '--no-output',
+    '--json'
+  ]);
+  const projection = JSON.parse(stdout);
+  assert(projection.schemaVersion === 'transport-shock-confirmation-factor-free-proxy-score-candidate-v1', 'Unexpected projection schemaVersion.');
+  assert(projection.status === 'free_proxy_score_candidate_ready_no_score_write', 'Expected ready no-score-write projection.');
+  assert(projection.recommendation === 'open_separate_score_write_design_review_do_not_auto_wire', 'Unexpected ready recommendation.');
+  assert(projection.maxFutureMainScoreContributionPct === 3, 'Expected max future contribution cap of 3%.');
+  assert(projection.candidateScoreContributionPct === 3, 'Ready candidate contribution should equal the 3% cap.');
+  assert(projection.confidence === 'low', 'Ready candidate confidence must stay low.');
+  assert(projection.scoreReadinessStatus === 'ready_for_score_design_review_no_score_write', 'Unexpected score readiness status.');
+  assert(projection.scoreReadyReason === 'score_integration_preflight_passed_for_design_review_no_score_write', 'Unexpected scoreReadyReason.');
+  assert(projection.gateStatus.portWatchLive === 'pass_by_score_readiness', 'PortWatch gate should pass by readiness.');
+  assert(projection.gateStatus.backtestOrReplayReview === 'pass_by_free_proxy_score_readiness_gate', 'Replay gate should pass by readiness gate.');
+  assert(projection.readinessSummary.hardBlockerCount === 0, 'Ready projection must have no readiness hard blockers.');
+  assert(projection.scoreWriteApproved === false, 'Ready projection must not approve score write.');
+  assert(projection.productionWriteApproved === false, 'Ready projection must not approve production write.');
+  assert(projection.mainScoreApproved === false, 'Ready projection must not approve main score.');
+  assert(projection.freeProxyScoreGenerated === false, 'Ready projection must not claim generated production score.');
+  assert(projection.eligibleForMainScore === false, 'Ready projection must not make factor eligible for main score.');
+  assert(projection.routeFreightConfirmation === 'not_connected', 'routeFreightConfirmation must stay not_connected.');
+  assert(projection.marketConfirmation === 'not_connected', 'marketConfirmation must stay not_connected.');
+  assert(Array.isArray(projection.blockers) && projection.blockers.length === 0, 'Ready projection should have no projection blockers.');
+  assert(projection.warnings.includes('requires_separate_reviewed_score_pr'), 'Ready projection must still require separate reviewed score PR.');
+  assert(projection.productionImpact.affectsScoring === false, 'Ready projection must not affect scoring.');
+  assert(projection.productionImpact.affectsMainJudgment === false, 'Ready projection must not affect main judgment.');
+  assert(projection.boundaries.noProductionWrite === true, 'Ready projection must lock noProductionWrite.');
+  assert(projection.boundaries.noScoreWrite === true, 'Ready projection must lock noScoreWrite.');
 }
 
 function assertRuntimeRemainsUnwired() {
@@ -188,6 +236,7 @@ function main() {
   assertScriptSafety();
   assertFixture();
   assertProjectionOutput();
+  assertReadyProjectionOutput();
   assertRuntimeRemainsUnwired();
   assertAuthorityDocs();
   console.log('Transport Shock Confirmation Factor free-proxy score candidate projection: PASS');
