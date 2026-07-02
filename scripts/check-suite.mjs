@@ -121,6 +121,7 @@ const SUITES = {
     'check:transport-shock-confirmation-factor-score-readiness',
     'check:transport-shock-confirmation-factor-high-frequency-confirmation',
     'check:transport-shock-confirmation-factor-news-operator-review',
+    'check:transport-shock-confirmation-factor-news-operator-review-monitor',
     'check:transport-shock-confirmation-factor-news-manual-gate',
     'check:transport-shock-confirmation-factor-cross-confirmation',
     'check:transport-shock-confirmation-factor-score-integration-preflight',
