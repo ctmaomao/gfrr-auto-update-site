@@ -5,10 +5,13 @@ import path from 'node:path';
 const ROOT = process.cwd();
 const MONITOR_SCRIPT = 'scripts/monitor-transport-shock-confirmation-factor-score-readiness.mjs';
 const FIXTURE_RADAR = 'docs/fixtures/transport-shock-confirmation-factor/score-readiness-radar.json';
+const FIXTURE_RADAR_FRESH = 'docs/fixtures/transport-shock-confirmation-factor/score-readiness-radar-fresh.json';
 const FIXTURE_NEWS = 'docs/fixtures/transport-shock-confirmation-factor/score-readiness-oil-news.json';
 const FIXTURE_THERMAL = 'docs/fixtures/transport-shock-confirmation-factor/score-readiness-oil-thermal.json';
 const FIXTURE_ODP = 'docs/fixtures/transport-shock-confirmation-factor/score-readiness-oil-directional.json';
 const FIXTURE_HISTORY = 'docs/fixtures/transport-shock-confirmation-factor/history-samples-review-pass.json';
+const FIXTURE_PREFLIGHT_PASSED = 'docs/fixtures/transport-shock-confirmation-factor/score-readiness-preflight-passed.json';
+const FIXTURE_PREFLIGHT_MISSING = 'docs/fixtures/transport-shock-confirmation-factor/score-readiness-preflight-missing.json';
 const WORKFLOW = '.github/workflows/transport-shock-score-readiness-monitor.yml';
 
 const FORBIDDEN_SCRIPT_MARKERS = [
@@ -64,6 +67,7 @@ function assertMonitorScript() {
     'transport-shock-score-readiness-monitor-p14',
     'blockers_still_present',
     'score_ready_requires_separate_review',
+    'scoreIntegrationPreflightStatus',
     'keep_display_only_and_monitor_hard_blockers_after_refreshes',
     'artifact-only Transport Shock Confirmation Factor score-readiness monitor',
     'scoreWriteApproved: false',
@@ -86,6 +90,8 @@ function assertMonitorOutput() {
     FIXTURE_ODP,
     '--history-review',
     FIXTURE_HISTORY,
+    '--score-integration-preflight',
+    FIXTURE_PREFLIGHT_MISSING,
     '--dry-run',
     '--no-output',
     '--json'
@@ -105,6 +111,39 @@ function assertMonitorOutput() {
   assert(result.productionImpact.affectsScoring === false, 'Monitor must not affect scoring.');
   assert(result.productionImpact.affectsMainJudgment === false, 'Monitor must not affect main judgment.');
   assert(result.boundary.includes('does not fetch network'), 'Boundary must keep no-network discipline.');
+}
+
+function assertMonitorPreflightReadyOutput() {
+  const stdout = runNode([
+    MONITOR_SCRIPT,
+    '--radar',
+    FIXTURE_RADAR_FRESH,
+    '--oil-news',
+    FIXTURE_NEWS,
+    '--oil-thermal',
+    FIXTURE_THERMAL,
+    '--oil-directional',
+    FIXTURE_ODP,
+    '--history-review',
+    FIXTURE_HISTORY,
+    '--score-integration-preflight',
+    FIXTURE_PREFLIGHT_PASSED,
+    '--dry-run',
+    '--no-output',
+    '--json'
+  ]);
+  const result = JSON.parse(stdout);
+  assert(result.monitorVersion === 'transport-shock-score-readiness-monitor-p14', 'Unexpected monitor version.');
+  assert(result.status === 'score_ready_requires_separate_review', 'Preflight path should require separate score review.');
+  assert(result.readiness.status === 'ready_for_score_design_review_no_score_write', 'Readiness should be preflight-ready.');
+  assert(result.readiness.scoreReady === true, 'Preflight monitor should set scoreReady for separate review.');
+  assert(result.readiness.scoreReadyReason === 'score_integration_preflight_passed_for_design_review_no_score_write', 'Unexpected scoreReadyReason.');
+  assert(result.readiness.reclassifiedCount === 5, 'Expected five reclassified rows.');
+  assert(result.readiness.hardBlockerCount === 0, 'Expected no hard blockers.');
+  assert(result.scoreWriteApproved === false, 'Monitor must not approve score write.');
+  assert(result.productionDataWriteApproved === false, 'Monitor must not approve production write.');
+  assert(result.manualAction.requiredNow === true, 'Preflight-ready state should require manual score-design review.');
+  assert(result.manualAction.recommendation === 'open_separate_reviewed_score_design_pr_do_not_auto_wire', 'Unexpected ready recommendation.');
 }
 
 function assertRuntimeUnwired() {
@@ -167,6 +206,7 @@ function assertAuthorityDocs() {
 function main() {
   assertMonitorScript();
   assertMonitorOutput();
+  assertMonitorPreflightReadyOutput();
   assertRuntimeUnwired();
   assertWorkflow();
   assertAuthorityDocs();

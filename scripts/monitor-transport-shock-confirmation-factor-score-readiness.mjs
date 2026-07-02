@@ -14,6 +14,8 @@ const DEFAULT_OIL_THERMAL = 'data/oil-thermal-watch.json';
 const DEFAULT_OIL_DIRECTIONAL = 'data/oil-directional-pressure.json';
 const DEFAULT_HISTORY_REVIEW =
   'manual-artifacts/transport-shock-confirmation-factor/history-samples-review-latest.json';
+const DEFAULT_SCORE_INTEGRATION_PREFLIGHT =
+  'manual-artifacts/transport-shock-confirmation-factor/score-integration-preflight-latest.json';
 const BOUNDARY =
   'artifact-only Transport Shock Confirmation Factor score-readiness monitor; runs local readiness review only; writes ignored manual-artifacts and GitHub Summary/artifact only; does not fetch network, trigger Daily, write production data, change frontend/Worker, or affect ODP finalBias, Brent promotion, scoring, decision, Global Risk Heatmap, or cross-validation';
 
@@ -27,6 +29,8 @@ Options:
   --oil-thermal <path>      Oil thermal watch JSON. Default: ${DEFAULT_OIL_THERMAL}
   --oil-directional <path>  ODP JSON. Default: ${DEFAULT_OIL_DIRECTIONAL}
   --history-review <path>   P-score-11 review JSON. Default: ${DEFAULT_HISTORY_REVIEW}
+  --score-integration-preflight <path>
+                            Optional score-integration preflight JSON. Default: ${DEFAULT_SCORE_INTEGRATION_PREFLIGHT}
   --output <path>           Ignored monitor artifact. Default: ${DEFAULT_OUTPUT}
   --dry-run                 Do not write ignored artifacts.
   --no-output               Do not write the monitor artifact.
@@ -45,6 +49,7 @@ function parseArgs(argv) {
     oilThermal: DEFAULT_OIL_THERMAL,
     oilDirectional: DEFAULT_OIL_DIRECTIONAL,
     historyReview: DEFAULT_HISTORY_REVIEW,
+    scoreIntegrationPreflight: DEFAULT_SCORE_INTEGRATION_PREFLIGHT,
     output: DEFAULT_OUTPUT,
     dryRun: false,
     writeOutput: true,
@@ -87,6 +92,7 @@ function parseArgs(argv) {
     else if (arg === '--oil-thermal') options.oilThermal = nextValue();
     else if (arg === '--oil-directional') options.oilDirectional = nextValue();
     else if (arg === '--history-review') options.historyReview = nextValue();
+    else if (arg === '--score-integration-preflight') options.scoreIntegrationPreflight = nextValue();
     else if (arg === '--output') options.output = nextValue();
     else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -167,6 +173,8 @@ function runReadinessReview(options) {
     options.oilDirectional,
     '--history-review',
     options.historyReview,
+    '--score-integration-preflight',
+    options.scoreIntegrationPreflight,
     '--no-output',
     '--json'
   ];
@@ -194,6 +202,9 @@ function compactReadiness(readiness) {
       ? readiness.summary.hardBlockerIds
       : [],
     passCount: readiness?.summary?.passCount ?? null,
+    reclassifiedCount: readiness?.summary?.reclassifiedCount ?? null,
+    scoreReadyReason: readiness?.scoreReadyReason ?? null,
+    scoreIntegrationPreflightStatus: readiness?.scoreIntegrationPreflight?.status ?? null,
     routeFreightConfirmation: readiness?.routeFreightConfirmation ?? null,
     marketConfirmation: readiness?.marketConfirmation ?? null,
     eligibleForMainScore: readiness?.eligibleForMainScore === true,
@@ -227,7 +238,8 @@ function createMonitorResult(options) {
       oilNews: safeRelativePath(options.oilNews),
       oilThermal: safeRelativePath(options.oilThermal),
       oilDirectional: safeRelativePath(options.oilDirectional),
-      historyReview: safeRelativePath(options.historyReview)
+      historyReview: safeRelativePath(options.historyReview),
+      scoreIntegrationPreflight: safeRelativePath(options.scoreIntegrationPreflight)
     },
     readiness: compact,
     manualAction: {
@@ -286,6 +298,8 @@ function appendGithubSummary(options, result) {
     `- Score ready: \`${result.readiness.scoreReady}\``,
     `- Hard blockers: \`${result.readiness.hardBlockerCount}\``,
     `- Hard blocker ids: \`${result.readiness.hardBlockerIds.join(', ') || 'none'}\``,
+    `- Reclassified rows: \`${result.readiness.reclassifiedCount ?? 'n/a'}\``,
+    `- Score-ready reason: \`${result.readiness.scoreReadyReason ?? 'missing'}\``,
     `- Route freight confirmation: \`${result.readiness.routeFreightConfirmation ?? 'missing'}\``,
     `- Market confirmation: \`${result.readiness.marketConfirmation ?? 'missing'}\``,
     `- Manual action required now: \`${result.manualAction.requiredNow}\``,
@@ -341,6 +355,8 @@ function printSummary(result) {
   console.log(`scoreReady: ${result.readiness.scoreReady}`);
   console.log(`hardBlockerCount: ${result.readiness.hardBlockerCount}`);
   console.log(`hardBlockerIds: ${result.readiness.hardBlockerIds.join(', ') || 'none'}`);
+  console.log(`reclassifiedCount: ${result.readiness.reclassifiedCount ?? 'n/a'}`);
+  console.log(`scoreReadyReason: ${result.readiness.scoreReadyReason ?? 'missing'}`);
   console.log(`routeFreightConfirmation: ${result.readiness.routeFreightConfirmation ?? '—'}`);
   console.log(`marketConfirmation: ${result.readiness.marketConfirmation ?? '—'}`);
   console.log(`manualAction.requiredNow: ${result.manualAction.requiredNow}`);

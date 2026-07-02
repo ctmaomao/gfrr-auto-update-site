@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-score-integration-preflight-v1",
+  "status": "score_integration_preflight_ready_for_design_review_no_score_write",
+  "recommendation": "open_separate_score_design_pr_no_auto_wire",
+  "generatedAt": "2026-07-02T00:00:00.000Z",
+  "scoreIntegrationPreflightPassed": true,
+  "summary": {
+    "checkCount": 3,
+    "blockerCount": 0,
+    "blockers": [],
+    "crossConfirmationHardBlockerIds": [
+      "route_freight_confirmation"
+    ],
+    "reclassifiedCrossConfirmationHardBlockerIds": [
+      "route_freight_confirmation"
+    ],
+    "remainingCrossConfirmationHardBlockerIds": []
+  },
+  "checks": [],
+  "scoreReadinessApproved": false,
+  "scoreIntegrationApproved": false,
+  "scoreWriteApproved": false,
+  "productionWriteApproved": false,
+  "frontendDisplayApproved": false,
+  "mainScoreApproved": false,
+  "eligibleForMainScore": false,
+  "promotionEligible": false,
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "modifiesWorkerRuntime": false,
+    "modifiesWorkflow": false,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreIntegration": true,
+    "noScoreWrite": true,
+    "noMainJudgmentEligibility": true,
+    "scoreIntegrationPreflightOnly": true
+  },
+  "boundary": "fixture for score-readiness matrix preflight-ready path; no score write"
+}

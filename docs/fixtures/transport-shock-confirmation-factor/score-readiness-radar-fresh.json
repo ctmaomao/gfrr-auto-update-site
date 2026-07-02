@@ -1,0 +1,66 @@
+{
+  "updatedAt": "2026-07-02T00:00:00.000Z",
+  "macroDrivers": {
+    "energyTransport": {
+      "source": "IMFPortWatch:Daily_Chokepoints_Data",
+      "sourceStatus": {
+        "chokepoints": "live"
+      },
+      "latestDate": "2026-07-01",
+      "latestAgeDays": 1,
+      "transportShockCandidate": {
+        "contractVersion": "transport-shock-candidate-v1",
+        "status": "elevated_watch",
+        "score": 90,
+        "confidence": "low",
+        "candidateOnly": true,
+        "auditOnly": true,
+        "eligibleForMainScore": false,
+        "confirmationStatus": "awaiting_route_freight_and_market_confirmation",
+        "routeFreightConfirmation": "not_connected",
+        "marketConfirmation": "not_connected",
+        "evidence": {
+          "hormuzTankerVs30dPct": -1,
+          "hormuzCapacityTankerVs30dPct": -1,
+          "stressedChokepointCount": 2
+        },
+        "drivers": [
+          "hormuz_proxy_drop",
+          "multi_chokepoint_proxy_drop"
+        ],
+        "reasons": [
+          "Fresh PortWatch fixture for score-readiness preflight-ready path."
+        ],
+        "boundaries": {
+          "affectsValues": false,
+          "affectsDisplayInputsBaseline": false,
+          "affectsEffectiveDisplayInputs": false,
+          "affectsScoring": false,
+          "affectsDecisionModel": false,
+          "affectsExecutionLock": false,
+          "affectsPositionGuidance": false,
+          "affectsBrentPromotion": false,
+          "affectsWorldOrderWeights": false,
+          "affectsGlobalRiskHeatmap": false,
+          "affectsCrossValidation": false
+        }
+      }
+    },
+    "shippingFreight": {
+      "sourceStatus": {
+        "dirtyTanker": "live",
+        "cleanTanker": "live",
+        "dryBulk": "live"
+      },
+      "tankerFreightRegime": "高压",
+      "cleanTankerFreightRegime": "高压"
+    }
+  },
+  "brentPricingLayer": {
+    "futuresPriceCurve": {
+      "curveStatus": "live_proxy_priced",
+      "slopeRegime": "flat",
+      "frontMinusBack": 0.85
+    }
+  }
+}

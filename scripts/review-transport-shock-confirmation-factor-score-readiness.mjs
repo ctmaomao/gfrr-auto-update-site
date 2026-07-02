@@ -6,11 +6,14 @@ import process from 'node:process';
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-score-readiness-v1';
 const CANDIDATE_VERSION = 'transport-shock-candidate-v1';
 const HISTORY_REVIEW_VERSION = 'transport-shock-confirmation-factor-history-samples-review-v1';
+const SCORE_INTEGRATION_PREFLIGHT_VERSION = 'transport-shock-confirmation-factor-score-integration-preflight-v1';
 const DEFAULT_RADAR = 'data/radar-data.json';
 const DEFAULT_OIL_NEWS = 'data/oil-news-event-watch.json';
 const DEFAULT_OIL_THERMAL = 'data/oil-thermal-watch.json';
 const DEFAULT_OIL_DIRECTIONAL = 'data/oil-directional-pressure.json';
 const DEFAULT_HISTORY_REVIEW = 'manual-artifacts/transport-shock-confirmation-factor/history-samples-review-latest.json';
+const DEFAULT_SCORE_INTEGRATION_PREFLIGHT =
+  'manual-artifacts/transport-shock-confirmation-factor/score-integration-preflight-latest.json';
 const DEFAULT_OUTPUT = 'manual-artifacts/transport-shock-confirmation-factor/score-readiness-latest.json';
 const BOUNDARY =
   'artifact-only Transport Shock Confirmation Factor score-readiness matrix; read-only production/manual review inputs; not production data; no scoring write; not in values, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
@@ -25,6 +28,8 @@ Options:
   --oil-thermal <path>      Oil thermal watch JSON. Default: ${DEFAULT_OIL_THERMAL}
   --oil-directional <path>  ODP JSON. Default: ${DEFAULT_OIL_DIRECTIONAL}
   --history-review <path>   P-score-11 history samples review JSON. Default: ${DEFAULT_HISTORY_REVIEW}
+  --score-integration-preflight <path>
+                            Optional P-score score-integration preflight JSON. Default: ${DEFAULT_SCORE_INTEGRATION_PREFLIGHT}
   --output <path>           Ignored readiness matrix path. Default: ${DEFAULT_OUTPUT}
   --json                    Print full JSON matrix to stdout.
   --no-output               Do not write ignored artifact.
@@ -44,6 +49,7 @@ function parseArgs(argv) {
     oilThermal: DEFAULT_OIL_THERMAL,
     oilDirectional: DEFAULT_OIL_DIRECTIONAL,
     historyReview: DEFAULT_HISTORY_REVIEW,
+    scoreIntegrationPreflight: DEFAULT_SCORE_INTEGRATION_PREFLIGHT,
     output: DEFAULT_OUTPUT,
     printJson: false,
     writeOutput: true,
@@ -81,6 +87,7 @@ function parseArgs(argv) {
     else if (arg === '--oil-thermal') options.oilThermal = nextValue();
     else if (arg === '--oil-directional') options.oilDirectional = nextValue();
     else if (arg === '--history-review') options.historyReview = nextValue();
+    else if (arg === '--score-integration-preflight') options.scoreIntegrationPreflight = nextValue();
     else if (arg === '--output') options.output = nextValue();
     else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -90,7 +97,8 @@ function parseArgs(argv) {
     oilNews: options.oilNews,
     oilThermal: options.oilThermal,
     oilDirectional: options.oilDirectional,
-    historyReview: options.historyReview
+    historyReview: options.historyReview,
+    scoreIntegrationPreflight: options.scoreIntegrationPreflight
   })) {
     if (!isAllowedInputPath(filePath)) throw new Error(`Refusing to read ${label} outside allowed paths: ${filePath}`);
   }
@@ -413,8 +421,70 @@ function sourceRightsRow(radar) {
   });
 }
 
+function evaluateScoreIntegrationPreflight(preflight) {
+  if (!preflight) {
+    return {
+      present: false,
+      passed: false,
+      reclassifiedCrossConfirmationHardBlockerIds: [],
+      remainingCrossConfirmationHardBlockerIds: [],
+      blockers: ['score_integration_preflight_missing']
+    };
+  }
+  const reclassified = Array.isArray(preflight?.summary?.reclassifiedCrossConfirmationHardBlockerIds)
+    ? preflight.summary.reclassifiedCrossConfirmationHardBlockerIds
+    : [];
+  const remaining = Array.isArray(preflight?.summary?.remainingCrossConfirmationHardBlockerIds)
+    ? preflight.summary.remainingCrossConfirmationHardBlockerIds
+    : [];
+  const blockers = [];
+  if (preflight.schemaVersion !== SCORE_INTEGRATION_PREFLIGHT_VERSION) blockers.push('score_integration_preflight_schema_invalid');
+  if (preflight.scoreIntegrationPreflightPassed !== true) blockers.push('score_integration_preflight_not_passed');
+  if (preflight.scoreWriteApproved === true || preflight.eligibleForMainScore === true || preflight.productionWriteApproved === true) {
+    blockers.push('score_integration_preflight_approval_claimed');
+  }
+  if (remaining.length > 0) blockers.push('score_integration_preflight_remaining_blockers');
+  return {
+    present: true,
+    passed: blockers.length === 0,
+    schemaVersion: preflight.schemaVersion ?? null,
+    status: preflight.status ?? null,
+    recommendation: preflight.recommendation ?? null,
+    reclassifiedCrossConfirmationHardBlockerIds: reclassified,
+    remainingCrossConfirmationHardBlockerIds: remaining,
+    blockers
+  };
+}
+
+function applyScoreIntegrationPreflightRows(rows, preflightCheck) {
+  if (!preflightCheck.passed) return rows;
+  const reclassifiable = new Set([
+    'route_level_tanker_freight_confirmation',
+    'market_confirmation',
+    'route_freight_source_rights',
+    'oil_news_cross_confirmation',
+    'oil_thermal_facility_confirmation'
+  ]);
+  return rows.map((item) => {
+    if (!reclassifiable.has(item.id) || item.status !== 'blocker') return item;
+    return {
+      ...item,
+      status: 'preflight_reclassified',
+      severity: 'design_review_required',
+      reasonZh: `${item.reasonZh} 已由 score-integration preflight 作为低权重免费代理路径的设计审查前置条件重分类;这不是入分批准。`,
+      evidence: {
+        ...item.evidence,
+        scoreIntegrationPreflightApplied: true,
+        scoreIntegrationPreflightStatus: preflightCheck.status,
+        reclassifiedBy: 'transport-shock-confirmation-factor-score-integration-preflight-v1'
+      }
+    };
+  });
+}
+
 function buildReadiness(inputs, options) {
-  const rows = [
+  const preflightCheck = evaluateScoreIntegrationPreflight(inputs.scoreIntegrationPreflight);
+  const rows = applyScoreIntegrationPreflightRows([
     productionCandidateRow(inputs.radar),
     sourceFreshnessRow(inputs.radar),
     historyReviewRow(inputs.historyReview),
@@ -424,28 +494,42 @@ function buildReadiness(inputs, options) {
     newsRow(inputs.oilNews),
     thermalRow(inputs.oilThermal),
     odpAnchorRow(inputs.oilDirectional)
-  ];
+  ], preflightCheck);
   const hardBlockers = rows.filter((item) => item.status === 'blocker' && item.severity === 'hard_blocker');
   const supportingPasses = rows.filter((item) => item.status === 'pass');
-  const scoreReady = hardBlockers.length === 0
+  const legacyScoreReady = hardBlockers.length === 0
     && rows.some((item) => item.id === 'route_level_tanker_freight_confirmation' && item.status === 'pass')
     && rows.some((item) => item.id === 'market_confirmation' && item.status === 'pass');
+  const preflightDesignReady = hardBlockers.length === 0 && preflightCheck.passed;
+  const scoreReady = legacyScoreReady || preflightDesignReady;
+  const status = preflightDesignReady
+    ? 'ready_for_score_design_review_no_score_write'
+    : scoreReady
+      ? 'ready_for_separate_reviewed_score_design'
+      : 'not_ready_for_score';
+  const recommendation = scoreReady
+    ? 'open_separate_reviewed_score_design_pr_do_not_auto_wire'
+    : 'keep_display_only_collect_route_market_cross_confirmation';
 
   return {
     schemaVersion: SCHEMA_VERSION,
-    status: scoreReady ? 'ready_for_separate_reviewed_score_design' : 'not_ready_for_score',
-    recommendation: scoreReady
-      ? 'open_separate_reviewed_score_design_pr_do_not_auto_wire'
-      : 'keep_display_only_collect_route_market_cross_confirmation',
+    status,
+    recommendation,
     generatedAt: new Date().toISOString(),
     inputPaths: {
       radar: safeRelativePath(options.radar),
       oilNews: safeRelativePath(options.oilNews),
       oilThermal: safeRelativePath(options.oilThermal),
       oilDirectional: safeRelativePath(options.oilDirectional),
-      historyReview: safeRelativePath(options.historyReview)
+      historyReview: safeRelativePath(options.historyReview),
+      scoreIntegrationPreflight: safeRelativePath(options.scoreIntegrationPreflight)
     },
     scoreReady,
+    scoreReadyReason: preflightDesignReady
+      ? 'score_integration_preflight_passed_for_design_review_no_score_write'
+      : legacyScoreReady
+        ? 'legacy_route_and_market_confirmation_connected'
+        : 'hard_blockers_remaining',
     eligibleForMainScore: false,
     promotionEligible: false,
     productionWriteApproved: false,
@@ -456,9 +540,11 @@ function buildReadiness(inputs, options) {
     summary: {
       rowCount: rows.length,
       passCount: supportingPasses.length,
+      reclassifiedCount: rows.filter((item) => item.status === 'preflight_reclassified').length,
       hardBlockerCount: hardBlockers.length,
       hardBlockerIds: hardBlockers.map((item) => item.id)
     },
+    scoreIntegrationPreflight: preflightCheck,
     rows,
     missingForScore: hardBlockers.map((item) => ({
       id: item.id,
@@ -506,7 +592,8 @@ function main() {
       oilNews: readJson(options.oilNews),
       oilThermal: readJson(options.oilThermal),
       oilDirectional: readJson(options.oilDirectional),
-      historyReview: readJson(options.historyReview, { optional: true })
+      historyReview: readJson(options.historyReview, { optional: true }),
+      scoreIntegrationPreflight: readJson(options.scoreIntegrationPreflight, { optional: true })
     };
     const readiness = buildReadiness(inputs, options);
     if (options.writeOutput) writeJson(options.output, readiness);
